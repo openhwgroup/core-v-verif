@@ -34,7 +34,7 @@ demonstrates how you can run your own programs. Call `custom-vsim-run` or
 
 Supported SystemVerilog Simulators
 ----------------------------------
-At the time of this writting (2019-12-02) only The Metrics **_dsim_** and Cadence
+At the time of this writting (2019-12-02) only the Metrics **_dsim_** and Cadence
 **_Xcelium_** simulators are known to work.  Near future plans include
 support for Synopsys **_vcs_**.  Support for other SystemVerilog simulators
 is contingent on community interest and support.
