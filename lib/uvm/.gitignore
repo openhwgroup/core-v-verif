@@ -1,0 +1,70 @@
+*~
+core.*
+*.[oa]
+*.patch
+*.orig
+*.tar.gz
+*.diff
+*.BACKUP.*
+*.LOCAL.*
+*.REMOTE.*
+*.BASE.*
+*.d
+.ida*
+*.shm
+.lock
+
+
+# ius results are not for the vc
+irun.log
+INCA_libs
+.simvision
+irun.key
+xrun.log
+xcelium.d
+
+
+# created by flow
+*.fails
+qa
+*.post
+*.df
+.cmd.*
+.stderr.*
+.output.*
+.nfs*
+*.history
+
+
+
+# vcs results are not for the vc
+csrc
+simv*
+vc_hdrs.h
+ucli.key
+*.err
+
+# editor tmp / save files
+*.orig
+*.swp
+*.swo
+
+# questa results are not for the vc
+vsim.wlf
+wlf*
+questa.tops
+questa.fails*
+work
+*.vstf
+*.log
+transcript
+*.out
+
+# ND proj files
+uvm_ref/nd/Proj/Data/
+uvm_ref/nd/Proj/Languages.txt
+uvm_ref/nd/Proj/LastCrash.txt
+uvm_ref/nd/Proj/Menu_Backup.txt
+uvm_ref/nd/Proj/Menu_save.txt
+uvm_ref/nd/Proj/Topics.txt
+
