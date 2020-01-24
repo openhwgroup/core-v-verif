@@ -12,7 +12,7 @@
 class uvme_cv32_cntxt_c extends uvm_object;
    
    // Sub-environments context handles
-   uvme_${sub_env_name}_cntxt_c  ${sub_env_name}_cntxt;
+   // uvme_${sub_env_name}_cntxt_c  ${sub_env_name}_cntxt;
    
    // Agent context handles
    uvma_debug_cntxt_c  debug_cntxt;
