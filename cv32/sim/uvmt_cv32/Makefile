@@ -111,6 +111,11 @@ DSIM_RESULTS           ?= $(PWD)/dsim_results
 DSIM_WORK              ?= $(DSIM_RESULTS)/dsim_work
 DSIM_IMAGE              = dsim.out
 
+# xrun is the Cadence xcelium SystemVerilog simulator (https://cadence.com/)
+XRUN              = xrun
+XRUN_FLAGS        = -clean -smartorder -sv -uvm -timescale 1ns/1ps
+XRUN_DIR          = xcelium.d
+
 # UVM Environment
 export DV_UVMT_CV32_PATH  = $(PROJ_ROOT_DIR)/$(COREV_PROJ)/tb/uvmt_cv32
 export DV_UVME_CV32_PATH  = $(PROJ_ROOT_DIR)/$(COREV_PROJ)/env/uvme_cv32
@@ -187,8 +192,30 @@ all: clean_all dsim-hello_world
 ###############################################################################
 # SystemVerilog simulator compilation and run
 
+# Cadence Xcelium
+.PHONY: xrun-hello_world xrun-hello-world
+
+xrun-hello-world: xrun-hello_world
+
+xrun-hello_world: $(CV32E40P_PKG)
+	$(XRUN) \
+		$(XRUN_FLAGS) \
+		+incdir+$(DV_UVME_CV32_PATH) \
+		+incdir+$(DV_UVMT_CV32_PATH) \
+		-f $(CV32E40P_MANIFEST) \
+		-f $(DV_UVME_CV32_PATH)/uvme_cv32_pkg.flist \
+		-f $(DV_UVMT_CV32_PATH)/uvmt_cv32.flist \
+		-f $(DV_UVML_HRTBT_PATH)/uvml_hrtbt_pkg.flist \
+		-f $(DV_UVML_TRN_PATH)/uvml_trn_pkg.flist \
+		-f $(DV_UVML_LOGS_PATH)/uvml_logs_pkg.flist \
+		-f $(DV_UVML_SB_PATH)/uvml_sb_pkg.flist \
+		$(UVM_PLUSARGS) \
+		+firmware=$(CUSTOM)/hello_world.hex
+
+
+
 # Metrics dsim
-.PHONY: dsim-sim
+.PHONY: dsim-comp
 
 MKDIR_P = mkdir -p
 
@@ -210,7 +237,7 @@ dsim-comp: mk_results $(CV32E40P_PKG)
 		-f $(DV_UVME_CV32_PATH)/uvme_cv32_pkg.flist \
 		-f $(DV_UVMT_CV32_PATH)/uvmt_cv32.flist \
 		-work $(DSIM_WORK) \
-		+$(UVM_PLUSARGS) \
+		$(UVM_PLUSARGS) \
 		-genimage $(DSIM_IMAGE)
 
 dsim-no-firmware: dsim-comp
@@ -374,7 +401,7 @@ questa-unit-test-gui: vsim-run-gui
 ###############################################################################
 # Clean up your mess!
 
-.PHONY: clean_dsim clean_core_tests clean_all
+.PHONY: cean_xrun clean_xrun clean_dsim clean_core_tests clean_all
 
 # Metrics dsim cleanup
 clean_dsim:
@@ -389,7 +416,13 @@ clean_dsim:
 	rm -f $(DSIM_IMAGE)
 	rm -rf $(DSIM_RESULTS)
 
+# Cadence Xcelium xrun cleanup
+clean_xrun:
+	rm -vrf $(XRUN_DIR)
+	if [ -e xrun.history ]; then rm xrun.history; fi
+	if [ -e xrun.log ]; then rm xrun.log; fi
 
+# Questa cleanup
 clean_questa:
 	if [ -d $(VWORK) ]; then rm -r $(VWORK); fi
 	rm -f transcript vsim.wlf vsim.dbg trace_core*.log \
@@ -404,5 +437,5 @@ clean_core_tests:
 	find $(CORE_TEST_DIR) -name *.map -exec rm {} \;
 
 # All generated files plus the clone of the RTL
-clean_all: clean_questa clean_dsim clean_core_tests custom-clean firmware-clean
+clean_all: clean_xrun clean_questa clean_dsim clean_core_tests custom-clean firmware-clean
 	rm -rf $(CV32E40P_PKG)

@@ -120,7 +120,8 @@ task uvml_hrtbt_mon_c::run_phase(uvm_phase phase);
       
       #(startup_timeout * 1ns);
       if (!observed_heartbeat) begin
-         `uvm_fatal("HRTBT", $sformatf("Did not observe heartbeat in first %0dns", startup_timeout))
+         //`uvm_fatal("HRTBT", $sformatf("Did not observe heartbeat in first %0dns", startup_timeout))
+         `uvm_info("HRTBT", $sformatf("Did not observe heartbeat in first %0dns", startup_timeout), UVM_NONE)
       end
    end
    

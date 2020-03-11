@@ -21,7 +21,7 @@
 /**
  * Object created by Reset agent sequences extending uvma_reset_seq_base_c.
  */
-class uvma_reset_seq_item_c extends uvm_trn_seq_item_c;
+class uvma_reset_seq_item_c extends uvml_trn_seq_item_c;
    
    // TODO Add uvma_reset_seq_item_c fields
    //      Ex: rand bit [7:0]  abc;
