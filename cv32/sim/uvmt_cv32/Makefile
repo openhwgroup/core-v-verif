@@ -113,7 +113,8 @@ DSIM_IMAGE              = dsim.out
 
 # xrun is the Cadence xcelium SystemVerilog simulator (https://cadence.com/)
 XRUN              = xrun
-XRUN_FLAGS        = -clean -smartorder -sv -uvm -timescale 1ns/1ps
+XRUN_FLAGS        = -clean -smartorder -sv -uvm -top worklib.uvmt_cv32_tb -timescale 1ns/1ps
+XRUN_UVM_ARGS     = 
 XRUN_DIR          = xcelium.d
 
 # UVM Environment
@@ -200,18 +201,19 @@ xrun-hello-world: xrun-hello_world
 xrun-hello_world: $(CV32E40P_PKG)
 	$(XRUN) \
 		$(XRUN_FLAGS) \
+		$(XRUN_UVM_ARGS) \
 		+incdir+$(DV_UVME_CV32_PATH) \
 		+incdir+$(DV_UVMT_CV32_PATH) \
 		-f $(CV32E40P_MANIFEST) \
-		-f $(DV_UVME_CV32_PATH)/uvme_cv32_pkg.flist \
 		-f $(DV_UVMT_CV32_PATH)/uvmt_cv32.flist \
-		-f $(DV_UVML_HRTBT_PATH)/uvml_hrtbt_pkg.flist \
-		-f $(DV_UVML_TRN_PATH)/uvml_trn_pkg.flist \
-		-f $(DV_UVML_LOGS_PATH)/uvml_logs_pkg.flist \
-		-f $(DV_UVML_SB_PATH)/uvml_sb_pkg.flist \
 		$(UVM_PLUSARGS) \
 		+firmware=$(CUSTOM)/hello_world.hex
 
+#		-f $(DV_UVME_CV32_PATH)/uvme_cv32_pkg.flist \
+#		-f $(DV_UVML_HRTBT_PATH)/uvml_hrtbt_pkg.flist \
+#		-f $(DV_UVML_TRN_PATH)/uvml_trn_pkg.flist \
+#		-f $(DV_UVML_LOGS_PATH)/uvml_logs_pkg.flist \
+#		-f $(DV_UVML_SB_PATH)/uvml_sb_pkg.flist \
 
 
 # Metrics dsim
