@@ -38,7 +38,7 @@
 /**
  * Module wrapper for CV32 RTL DUT.
  */
-module uvmt_cv32_dut_wrap #(parameter INSTR_RDATA_WIDTH =  128,
+module uvmt_cv32_dut_wrap #(parameter INSTR_RDATA_WIDTH =  32,
                                       RAM_ADDR_WIDTH    =   20,
                                       PULP_SECURE       =    1
                            )
@@ -68,6 +68,8 @@ module uvmt_cv32_dut_wrap #(parameter INSTR_RDATA_WIDTH =  128,
     logic [31:0]                  data_rdata;
     logic [31:0]                  data_wdata;
 
+    logic [4:0]                   irq_id_out;
+    logic [4:0]                   irq_id_in;
 
     // Load the Instruction Memory 
     initial begin: load_instruction_memory
@@ -95,10 +97,11 @@ module uvmt_cv32_dut_wrap #(parameter INSTR_RDATA_WIDTH =  128,
     end
 
     // instantiate the core
-    riscv_core #(.INSTR_RDATA_WIDTH (INSTR_RDATA_WIDTH),
-                 .PULP_SECURE       (PULP_SECURE),
-                 .FPU               (0)
-                )
+    riscv_core #(
+          .PULP_CLUSTER(0),
+          .FPU(0),
+          .PULP_ZFINX(0),
+          .DM_HALTADDRESS(32'h1A110800))
     riscv_core_i
         (
          .clk_i                  ( clknrst_if.clk                 ),
@@ -126,25 +129,11 @@ module uvmt_cv32_dut_wrap #(parameter INSTR_RDATA_WIDTH =  128,
          .data_gnt_i             ( data_gnt                       ),
          .data_rvalid_i          ( data_rvalid                    ),
 
-         .apu_master_req_o       (                                ),
-         .apu_master_ready_o     (                                ),
-         .apu_master_gnt_i       (                                ),
-         .apu_master_operands_o  (                                ),
-         .apu_master_op_o        (                                ),
-         .apu_master_type_o      (                                ),
-         .apu_master_flags_o     (                                ),
-         .apu_master_valid_i     (                                ),
-         .apu_master_result_i    (                                ),
-         .apu_master_flags_i     (                                ),
-
          // TODO: interrupts significantly updated for CV32E40P
          //       Connect all interrupt signals to an SV interface
          //       and pass to ENV for an INTERRUPT AGENT to drive/monitor.
-         //.irq_i                  ( irq                            ),
-         //.irq_id_i               ( irq_id_in                      ),
          .irq_ack_o              ( irq_ack                           ),
          .irq_id_o               ( irq_id_out                        ),
-         .irq_sec_i              ( (core_interrupts_if.irq_sec||irq) ),
          .irq_software_i         ( core_interrupts_if.irq_software   ),
          .irq_timer_i            ( core_interrupts_if.irq_timer      ),
          .irq_external_i         ( core_interrupts_if.irq_external   ),
@@ -152,14 +141,11 @@ module uvmt_cv32_dut_wrap #(parameter INSTR_RDATA_WIDTH =  128,
          .irq_nmi_i              ( core_interrupts_if.irq_nmi        ),
          .irq_fastx_i            ( core_interrupts_if.irq_fastx      ),
 
-         .sec_lvl_o              ( core_status_if.sec_lvl            ),
-
          .debug_req_i            ( core_cntrl_if.debug_req           ),
 
          .fetch_enable_i         ( core_cntrl_if.fetch_en            ),
          .core_busy_o            ( core_status_if.core_busy          ),
 
-         .ext_perf_counters_i    ( core_cntrl_if.ext_perf_counters   ),
          .fregfile_disable_i     ( core_cntrl_if.fregfile_disable    )
         ); //riscv_core_i
 

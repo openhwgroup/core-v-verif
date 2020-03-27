@@ -92,7 +92,7 @@ endif
 
 # xrun is the Cadence xcelium SystemVerilog simulator (https://cadence.com/)
 XRUN              = xrun
-XRUN_FLAGS        = -clean -smartorder -sv -top worklib.tb_top -timescale 1ns/1ps
+XRUN_FLAGS        = -clean -smartorder -sv -disable_sem2009 -top worklib.tb_top -timescale 1ns/1ps
 XRUN_DIR          = xcelium.d
 
 # verilator configuration

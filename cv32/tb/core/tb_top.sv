@@ -14,7 +14,7 @@
 //              Jeremy Bennett <jeremy.bennett@embecosm.com>
 
 module tb_top
-    #(parameter INSTR_RDATA_WIDTH = 128,
+    #(parameter INSTR_RDATA_WIDTH = 32,
       parameter RAM_ADDR_WIDTH = 22,
       parameter BOOT_ADDR  = 'h80);
 
@@ -156,7 +156,7 @@ module tb_top
 `ifndef VERILATOR
     initial begin
         assert (INSTR_RDATA_WIDTH == 128 || INSTR_RDATA_WIDTH == 32)
-            else $fatal("invalid INSTR_RDATA_WIDTH, choose 32 or 128");
+            else $fatal(1, "invalid INSTR_RDATA_WIDTH, choose 32 or 128");
     end
 `endif
 

@@ -292,7 +292,7 @@ module mm_ram
       || data_addr_i == 32'h2000_000c
       || data_addr_i == 32'h2000_0010
       || data_addr_i[31:16] == 16'h1600))
-        else $fatal("out of bounds write to %08x with %08x",
+        else $fatal(1, "out of bounds write to %08x with %08x",
                     data_addr_i, data_wdata_i);
 `endif
 
@@ -566,7 +566,8 @@ module mm_ram
 
 `ifndef VERILATOR
   riscv_random_stall
-  #(.DATA_WIDTH(INSTR_RDATA_WIDTH))
+  #(.ADDR_WIDTH(RAM_ADDR_WIDTH),
+    .DATA_WIDTH(INSTR_RDATA_WIDTH))
   instr_random_stalls
   (
     .clk_i              ( clk_i                  ),
@@ -602,7 +603,8 @@ module mm_ram
     );
 
   riscv_random_stall
-  #(.DATA_WIDTH(32))
+  #(.ADDR_WIDTH(RAM_ADDR_WIDTH),
+    .DATA_WIDTH(32))
   data_random_stalls
   (
     .clk_i              ( clk_i                  ),

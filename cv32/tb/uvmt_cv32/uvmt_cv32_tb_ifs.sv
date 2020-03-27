@@ -100,7 +100,6 @@ endinterface : uvmt_cv32_vp_status_if
 interface uvmt_cv32_core_cntrl_if (
                                     output logic       fetch_en,
                                     output logic       fregfile_disable,
-                                    output logic       ext_perf_counters,
                                     // quasi static values
                                     output logic       clock_en,
                                     output logic       test_en,
@@ -118,7 +117,6 @@ interface uvmt_cv32_core_cntrl_if (
   initial begin: static_controls
     fetch_en          = 1'b0; // Enabled by go_fetch(), below
     fregfile_disable  = 1'b0;
-    ext_perf_counters = 1'b0; // TODO: set proper width (currently 0 in the RTL)
   end
 
   // TODO: randomize core_id and cluster_id (should have no affect?).
@@ -152,18 +150,16 @@ endinterface : uvmt_cv32_core_cntrl_if
 interface uvmt_cv32_core_interrupts_if (
                                     input  logic        irq_ack,        // dut output
                                     input  logic        irq_id,         // dut output
-                                    output logic        irq_sec,        // dut input
                                     output logic        irq_software,   // dut input
                                     output logic        irq_timer,      // dut input
                                     output logic        irq_external,   // dut input
-                                    output logic [15:0] irq_fast,       // dut input
+                                    output logic [14:0] irq_fast,       // dut input
                                     output logic        irq_nmi,        // dut input
                                     output logic [31:0] irq_fastx       // dut input
                                    );
   import uvm_pkg::*;
 
   initial begin
-    irq_sec      = 1'b0;
     irq_software = 1'b0;
     irq_timer    = 1'b0;
     irq_external = 1'b0;
@@ -179,8 +175,7 @@ endinterface : uvmt_cv32_core_interrupts_if
  * Core status signals.
  */
 interface uvmt_cv32_core_status_if (
-                                    input  logic       core_busy,
-                                    input  logic       sec_lvl
+                                    input  logic       core_busy
                                    );
 
   import uvm_pkg::*;
