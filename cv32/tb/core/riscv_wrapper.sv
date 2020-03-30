@@ -95,6 +95,17 @@ module riscv_wrapper
          .data_gnt_i             ( data_gnt              ),
          .data_rvalid_i          ( data_rvalid           ),
 
+         .apu_master_req_o       (                       ),
+         .apu_master_ready_o     (                       ),
+         .apu_master_gnt_i       (1'b0                   ),
+         .apu_master_operands_o  (                       ),
+         .apu_master_op_o        (                       ),
+         .apu_master_type_o      (                       ),
+         .apu_master_flags_o     (                       ),
+         .apu_master_valid_i     (1'b0                   ),
+         .apu_master_result_i    ( 'b0                   ),
+         .apu_master_flags_i     (5'b0                   ),
+
          .irq_ack_o              ( irq_ack               ),
          .irq_id_o               ( irq_id_out            ),
 
