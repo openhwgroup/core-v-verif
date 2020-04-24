@@ -132,15 +132,12 @@ VERI_CUSTOM                          = ../../tests/core/custom
 CV32_RISCV_TESTS_FIRMWARE            = $(CORE_TEST_DIR)/cv32_riscv_tests_firmware
 CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE = $(CORE_TEST_DIR)/cv32_riscv_compliance_tests_firmware
 RISCV_TESTS                          = $(CORE_TEST_DIR)/riscv_tests
-RISCV_COMPLIANCE_TESTS               = $(CORE_TEST_DIR)/riscv_compliance_tests
 RISCV_TEST_INCLUDES                  = -I$(CORE_TEST_DIR)/riscv_tests/ \
                                        -I$(CORE_TEST_DIR)/riscv_tests/macros/scalar \
                                        -I$(CORE_TEST_DIR)/riscv_tests/rv64ui \
                                        -I$(CORE_TEST_DIR)/riscv_tests/rv64um
 CV32_RISCV_TESTS_FIRMWARE_OBJS       = $(addprefix $(CV32_RISCV_TESTS_FIRMWARE)/, \
                                          start.o print.o sieve.o multest.o stats.o)
-CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE_OBJS = $(addprefix $(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE)/, \
-                                              start.o print.o sieve.o multest.o stats.o)
 RISCV_TESTS_OBJS         = $(addsuffix .o, \
                              $(basename $(wildcard $(RISCV_TESTS)/rv32ui/*.S)) \
                              $(basename $(wildcard $(RISCV_TESTS)/rv32um/*.S)) \
@@ -154,9 +151,6 @@ FIRMWARE_TEST_OBJS       = $(addsuffix .o, \
 FIRMWARE_SHORT_TEST_OBJS = $(addsuffix .o, \
                              $(basename $(wildcard $(RISCV_TESTS)/rv32ui/*.S)) \
                              $(basename $(wildcard $(RISCV_TESTS)/rv32um/*.S)))
-COMPLIANCE_TEST_OBJS     = $(addsuffix .o, \
-                             $(basename $(wildcard $(RISCV_COMPLIANCE_TESTS)/*.S)))
-
 
 # Thales verilator testbench compilation start
 
@@ -180,95 +174,151 @@ FIRMWARE_UNIT_TEST_OBJS   =  	$(addsuffix .o, \
 # Thales verilator testbench compilation end
 
 ###############################################################################
-# The sanity rule runs whatever is currently deemed to be the minimal test that
-# must be able to run (and pass!) prior to generating a pull-request.
-sanity: hello-world
+#Compliance test parameters
+
+CV32_ISA_ALL           = rv32i rv32im rv32imc rv32Zicsr rv32Zifencei
+
+CV32_ISA               = rv32i
+
+RV_COMPLIANCE_DIR      = $(abspath $(CORE_TEST_DIR)/riscv-compliance)
+RV_COMPLIANCE_TEST     = $(RV_COMPLIANCE_DIR)/riscv-test-suite/$(CV32_ISA)
+RV_COMPLIANCE_SRC      = $(wildcard $(RV_COMPLIANCE_TEST)/src/*.S)
+RV_COMPLIANCE_BUILD    = $(abspath $(CORE_TEST_DIR)/build/riscv-compliance/$(CV32_ISA))
+
+RV_COMPLIANCE_ELF     := $(patsubst $(RV_COMPLIANCE_TEST)/src/%.S, $(RV_COMPLIANCE_BUILD)/%.elf, $(RV_COMPLIANCE_SRC))
+
+RV_COMPLIANCE_HEX     := $(RV_COMPLIANCE_ELF:.elf=.hex)
+RV_COMPLIANCE_HEX     := $(filter-out $(RV_COMPLIANCE_BUILD)/I-ECALL-01.hex , $(RV_COMPLIANCE_HEX))
+RV_COMPLIANCE_HEX     := $(filter-out $(RV_COMPLIANCE_BUILD)/I-EBREAK-01.hex , $(RV_COMPLIANCE_HEX))
+RV_COMPLIANCE_HEX     := $(filter-out $(RV_COMPLIANCE_BUILD)/I-MISALIGN_JMP-01.hex , $(RV_COMPLIANCE_HEX))
+RV_COMPLIANCE_HEX     := $(filter-out $(RV_COMPLIANCE_BUILD)/I-MISALIGN_LDST-01.hex , $(RV_COMPLIANCE_HEX))
+
+RV_COMPLIANCE_UNIT_TEST = $(wildcard $(RV_COMPLIANCE_TEST)/src/$(TESTNAME).S)
+RV_COMPLIANCE_UNIT_HEX  = $(patsubst $(RV_COMPLIANCE_TEST)/src/%.S,$(RV_COMPLIANCE_BUILD)/%.hex,$(RV_COMPLIANCE_UNIT_TEST))
+
+OUTDIRS               += $(sort $(dir $(RV_COMPLIANCE_HEX)))
+
+RV_COMPLIANCE_INCLUDE := riscv-test-env riscv-test-env/p riscv-target/ri5cy
+RV_COMPLIANCE_INCLUDE := $(addprefix -I$(RV_COMPLIANCE_DIR)/, $(RV_COMPLIANCE_INCLUDE))
+
+RV_COMPLIANCE_FLAGS    = -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
+ifeq ($(filter $(CV32_ISA),rv32Zicsr rv32Zifencei),)
+RV_COMPLIANCE_FLAGS   += -march=$(CV32_ISA) -mabi=ilp32
+endif
+RV_COMPLIANCE_FLAGS   += $(RV_COMPLIANCE_INCLUDE) -DPRIV_MISA_S=0 -DPRIV_MISA_U=0
+RV_COMPLIANCE_FLAGS   += -DTRAPHANDLER="\"$(RV_COMPLIANCE_DIR)/riscv-target/ri5cy/device/rv32imc/handler.S\"" 
+
+RV_COMPLIANCE_LSCRIPT  = $(RV_COMPLIANCE_DIR)/riscv-target/ri5cy/device/rv32imc/link.ld
+
+vpath %.S $(RV_COMPLIANCE_TEST)/src/
+
+###############################################################################
+# Build parameters
+
+CC = $(RISCV_EXE_PREFIX)gcc
+AS = $(RISCV_EXE_PREFIX)gcc
+
+CFLAGS += -g -Os 
+CFLAGS += $(RISCV_TEST_INCLUDES)
+CFLAGS += -ffreestanding -nostdlib
+
+LDFLAGS = -lc -lm -lgcc
+
+###############################################################################
+# Help me!!!
+
+help:
+	@echo "make SIMULATOR={my_simulator} cv32_riscv_compliance_all"
+	@echo " -->  run all the RISC-V compliance tests"
+	@echo "make SIMULATOR={my_simulator} {test_suite}.cv32_riscv_compliance"
+	@echo " -->  run the test suite <test_suite> of the RISC-V compliance tests"
+	@echo "make SIMULATOR={my_simulator} cv32_riscv_compliance_unit CV32_ISA={test_suite} TESTNAME={test_name}"
+	@echo " -->  run the test <test_name> of the test suite <test_suite> of the RISC-V compliance tests"
+
+###############################################################################
+# Implicit rules
 
 # rules to generate hex (loadable by simulators) from elf
 %.hex: %.elf
 	$(RISCV_EXE_PREFIX)objcopy -O verilog $< $@
 
+###############################################################################
+# The sanity rule runs whatever is currently deemed to be the minimal test that
+# must be able to run (and pass!) prior to generating a pull-request.
+sanity: hello-world
+# HELLO WORLD: custom/hello_world.elf: ../../tests/core/custom/hello_world.c
+
 # Running custom programs:
 # We link with our custom crt0.s and syscalls.c against newlib so that we can
 # use the c standard library
-$(CUSTOM_DIR)/$(CUSTOM_PROG).elf: $(CUSTOM_DIR)/$(CUSTOM_PROG).c
-	$(RISCV_EXE_PREFIX)gcc -march=rv32imc -o $@ -w -Os -g -nostdlib \
-		-T $(CUSTOM_DIR)/link.ld  \
-		-static \
-		$(CUSTOM_DIR)/crt0.S \
-		$^ $(CUSTOM_DIR)/syscalls.c $(CUSTOM_DIR)/vectors.S \
-		-I $(RISCV)/riscv32-unknown-elf/include \
-		-L $(RISCV)/riscv32-unknown-elf/lib \
-		-lc -lm -lgcc
+$(CUSTOM_DIR)/%.elf: $(CUSTOM_DIR)/%.c
+	$(CC) -o $@ -w -Os -g -nostdlib -T $(CUSTOM)/link.ld -static \
+		$^ $(CUSTOM)/crt0.S $(CUSTOM)/syscalls.c $(CUSTOM)/vectors.S \
+		$(LDFLAGS)
 
-# HELLO WORLD: custom/hello_world.elf: ../../tests/core/custom/hello_world.c
-$(CUSTOM)/hello_world.elf: $(CUSTOM)/hello_world.c
-	$(RISCV_EXE_PREFIX)gcc -march=rv32imc -o $@ -w -Os -g -nostdlib \
-		-T $(CUSTOM)/link.ld  \
-		-static \
-		$(CUSTOM)/crt0.S \
-		$^ $(CUSTOM)/syscalls.c $(CUSTOM)/vectors.S \
-		-I $(RISCV)/riscv32-unknown-elf/include \
-		-L $(RISCV)/riscv32-unknown-elf/lib \
-		-lc -lm -lgcc
 custom-clean:
-	rm -rf $(CUSTOM)/hello_world.elf $(CUSTOM)/hello_world.hex
+	rm -rf $(CUSTOM_DIR)/*.elf $(CUSTOM_DIR)/*.hex
 
-
+###############################################################################
 
 # compile and dump RISCV_TESTS only
 $(CV32_RISCV_TESTS_FIRMWARE)/cv32_riscv_tests_firmware.elf: $(CV32_RISCV_TESTS_FIRMWARE_OBJS) $(RISCV_TESTS_OBJS) \
 							$(CV32_RISCV_TESTS_FIRMWARE)/link.ld
-	$(RISCV_EXE_PREFIX)gcc -g -Os -march=rv32imc -ffreestanding -nostdlib -o $@ \
-		$(RISCV_TEST_INCLUDES) \
+	$(CC) $(CFLAGS) -march=rv32imc -o $@ \
 		-Wl,-Bstatic,-T,$(CV32_RISCV_TESTS_FIRMWARE)/link.ld,-Map,$(CV32_RISCV_TESTS_FIRMWARE)/cv32_riscv_tests_firmware.map,--strip-debug \
 		$(CV32_RISCV_TESTS_FIRMWARE_OBJS) $(RISCV_TESTS_OBJS) -lgcc
 
 $(CV32_RISCV_TESTS_FIRMWARE)/start.o: $(CV32_RISCV_TESTS_FIRMWARE)/start.S
-	$(RISCV_EXE_PREFIX)gcc -c -march=rv32imc -g -o $@ $<
+	$(AS) -c -march=rv32imc -g -o $@ $<
 
-$(CV32_RISCV_TESTS_FIRMWARE)/%.o: $(CV32_RISCV_TESTS_FIRMWARE)/%.c
-	$(RISCV_EXE_PREFIX)gcc -c -march=rv32ic -g -Os --std=c99 -Wall \
-		$(RISCV_TEST_INCLUDES) \
-		-ffreestanding -nostdlib -o $@ $<
+###############################################################################
+# Run compliance tests
+# 
+# Note: make use of a simulator specific target called '%.${SIMULATOR}-run'
+#        that runs a simulation using the firmware passed as implicit argument
 
-# compile and dump RISCV_COMPLIANCE_TESTS only
-$(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE)/cv32_riscv_compliance_tests_firmware.elf: $(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE_OBJS) $(COMPLIANCE_TEST_OBJS) \
-							$(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE)/link.ld
-	$(RISCV_EXE_PREFIX)gcc -g -Os -march=rv32imc -ffreestanding -nostdlib -o $@ \
-		-D RUN_COMPLIANCE \
-		$(RISCV_TEST_INCLUDES) \
-		-Wl,-Bstatic,-T,$(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE)/link.ld,-Map,$(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE)/cv32_riscv_compliance_tests_firmware.map,--strip-debug \
-		$(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE_OBJS) $(COMPLIANCE_TEST_OBJS) -lgcc
+cv32_riscv_compliance_all: $(CV32_ISA_ALL:%=%.cv32_riscv_compliance)
 
-$(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE)/start.o: $(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE)/start.S
-	$(RISCV_EXE_PREFIX)gcc -c -march=rv32imc -D RUN_COMPLIANCE -g -o $@ $<
+%.cv32_riscv_compliance:
+	$(MAKE) --no-print-directory cv32_riscv_compliance_test CV32_ISA=$*
 
-$(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE)/%.o: $(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE)/%.c
-	$(RISCV_EXE_PREFIX)gcc -c -march=rv32ic -g -Os --std=c99 -Wall \
-		$(RISCV_TEST_INCLUDES) \
-		-ffreestanding -nostdlib -o $@ $<
+cv32_riscv_compliance_test: $(RV_COMPLIANCE_HEX) $(RV_COMPLIANCE_HEX:%=%.run_cv32_compliance_test)
+
+cv32_riscv_compliance_unit: $(RV_COMPLIANCE_UNIT_HEX) $(RV_COMPLIANCE_UNIT_HEX).run_cv32_compliance_test
+
+%.run_cv32_compliance_test: %.${SIMULATOR}-run
+	diff --strip-trailing-cr -q dump_sign.txt \
+		$(patsubst $(RV_COMPLIANCE_BUILD)/%.hex,$(RV_COMPLIANCE_TEST)/references/%.reference_output,$*)
+
+$(RV_COMPLIANCE_BUILD)/%.elf: %.S | $(OUTDIRS)
+	$(CC) $(RV_COMPLIANCE_FLAGS) -T$(RV_COMPLIANCE_LSCRIPT) $< -o $@
+
+###############################################################################
+# Implicit rules
+
+%.o: %.c
+	$(CC) -c $(CFLAGS) --std=c99 -Wall -o $@ $<
+
+###############################################################################
 
 # compile and dump picorv firmware
 
 # Thales start
 $(FIRMWARE)/firmware_unit_test.elf: $(FIRMWARE_OBJS) $(FIRMWARE_UNIT_TEST_OBJS) $(FIRMWARE)/link.ld
-	$(RISCV_EXE_PREFIX)gcc -g -Os -march=rv32imc -ffreestanding -nostdlib -o $@ \
-		$(RISCV_TEST_INCLUDES) \
+	$(CC) $(CFLAGS) -march=rv32imc -o $@ \
 		-D RUN_COMPLIANCE \
 		-Wl,-Bstatic,-T,$(FIRMWARE)/link.ld,-Map,$(FIRMWARE)/firmware.map,--strip-debug \
 		$(FIRMWARE_OBJS) $(FIRMWARE_UNIT_TEST_OBJS) -lgcc
 # Thales end
 
 $(FIRMWARE)/firmware.elf: $(FIRMWARE_OBJS) $(FIRMWARE_TEST_OBJS) $(COMPLIANCE_TEST_OBJS) $(FIRMWARE)/link.ld
-	$(RISCV_EXE_PREFIX)gcc -g -Os -march=rv32imc -ffreestanding -nostdlib -o $@ \
-		$(RISCV_TEST_INCLUDES) \
+	$(CC) $(CFLAGS) -march=rv32imc -o $@ \
 		-D RUN_COMPLIANCE \
 		-Wl,-Bstatic,-T,$(FIRMWARE)/link.ld,-Map,$(FIRMWARE)/firmware.map,--strip-debug \
 		$(FIRMWARE_OBJS) $(FIRMWARE_TEST_OBJS) $(COMPLIANCE_TEST_OBJS) -lgcc
 
 #$(FIRMWARE)/start.o: $(FIRMWARE)/start.S
-#	$(RISCV_EXE_PREFIX)gcc -c -march=rv32imc -g -D RUN_COMPLIANCE -o $@ $<
+#	$(CC) -c -march=rv32imc -g -D RUN_COMPLIANCE -o $@ $<
 
 # Thales start
 $(FIRMWARE)/start.o: $(FIRMWARE)/start.S
@@ -276,21 +326,19 @@ ifeq ($(UNIT_TEST_CMD),1)
 ifeq ($(FIRMWARE_UNIT_TEST_OBJS),)
 $(error no existing unit test in argument )
 else
-	$(RISCV_EXE_PREFIX)gcc -c -march=rv32imc -g -D RUN_COMPLIANCE  -DUNIT_TEST_CMD=$(UNIT_TEST_CMD) -DUNIT_TEST=$(UNIT_TEST) -DUNIT_TEST_RET=$(UNIT_TEST)_ret -o $@ $<
+	$(CC) -c -march=rv32imc -g -D RUN_COMPLIANCE  -DUNIT_TEST_CMD=$(UNIT_TEST_CMD) -DUNIT_TEST=$(UNIT_TEST) -DUNIT_TEST_RET=$(UNIT_TEST)_ret -o $@ $<
 endif
 else
-	$(RISCV_EXE_PREFIX)gcc -c -march=rv32imc -g -D RUN_COMPLIANCE  -DUNIT_TEST_CMD=$(UNIT_TEST_CMD) -o $@ $<
+	$(CC) -c -march=rv32imc -g -D RUN_COMPLIANCE  -DUNIT_TEST_CMD=$(UNIT_TEST_CMD) -o $@ $<
 endif
 # Thales end
 
 $(FIRMWARE)/%.o: $(FIRMWARE)/%.c
-	$(RISCV_EXE_PREFIX)gcc -c -march=rv32ic -g -Os --std=c99 -Wall \
-		$(RISCV_TEST_INCLUDES) \
-		-ffreestanding -nostdlib -o $@ $<
+	$(CC) -c -march=rv32ic $(CFLAGS) -o $@ $<
 
 $(RISCV_TESTS)/rv32ui/%.o: $(RISCV_TESTS)/rv32ui/%.S $(RISCV_TESTS)/riscv_test.h \
 			$(RISCV_TESTS)/macros/scalar/test_macros.h
-	$(RISCV_EXE_PREFIX)gcc -c -march=rv32im -g -o $@ \
+	$(CC) -c -march=rv32im -g -o $@ \
 		$(RISCV_TEST_INCLUDES) \
 		-DTEST_FUNC_NAME=$(notdir $(basename $<)) \
 		-DTEST_FUNC_TXT='"$(notdir $(basename $<))"' \
@@ -298,7 +346,7 @@ $(RISCV_TESTS)/rv32ui/%.o: $(RISCV_TESTS)/rv32ui/%.S $(RISCV_TESTS)/riscv_test.h
 
 $(RISCV_TESTS)/rv32um/%.o: $(RISCV_TESTS)/rv32um/%.S $(RISCV_TESTS)/riscv_test.h \
 			$(RISCV_TESTS)/macros/scalar/test_macros.h
-	$(RISCV_EXE_PREFIX)gcc -c -march=rv32im -g -o $@ \
+	$(CC) -c -march=rv32im -g -o $@ \
 		$(RISCV_TEST_INCLUDES) \
 		-DTEST_FUNC_NAME=$(notdir $(basename $<)) \
 		-DTEST_FUNC_TXT='"$(notdir $(basename $<))"' \
@@ -306,41 +354,11 @@ $(RISCV_TESTS)/rv32um/%.o: $(RISCV_TESTS)/rv32um/%.S $(RISCV_TESTS)/riscv_test.h
 
 $(RISCV_TESTS)/rv32uc/%.o: $(RISCV_TESTS)/rv32uc/%.S $(RISCV_TESTS)/riscv_test.h \
 			$(RISCV_TESTS)/macros/scalar/test_macros.h
-	$(RISCV_EXE_PREFIX)gcc -c -march=rv32im -g -o $@ \
+	$(CC) -c -march=rv32im -g -o $@ \
 		$(RISCV_TEST_INCLUDES) \
 		-DTEST_FUNC_NAME=$(notdir $(basename $<)) \
 		-DTEST_FUNC_TXT='"$(notdir $(basename $<))"' \
 		-DTEST_FUNC_RET=$(notdir $(basename $<))_ret $<
-
-# Build riscv_compliance_test. Make sure to escape dashes to underscores
-$(RISCV_COMPLIANCE_TESTS)/%.o: $(RISCV_COMPLIANCE_TESTS)/%.S $(RISCV_COMPLIANCE_TESTS)/riscv_test.h \
-			$(RISCV_COMPLIANCE_TESTS)/test_macros.h $(RISCV_COMPLIANCE_TESTS)/compliance_io.h \
-			$(RISCV_COMPLIANCE_TESTS)/compliance_test.h
-	$(RISCV_EXE_PREFIX)gcc -c -march=rv32im -g -o $@ \
-		-DTEST_FUNC_NAME=$(notdir $(subst -,_,$(basename $<))) \
-		-DTEST_FUNC_TXT='"$(notdir $(subst -,_,$(basename $<)))"' \
-		-DTEST_FUNC_RET=$(notdir $(subst -,_,$(basename $<)))_ret $<
-
-# in vsim
-.PHONY: firmware-vsim-run
-firmware-vsim-run: vsim-all $(FIRMWARE)/firmware.hex
-firmware-vsim-run: ALL_VSIM_FLAGS += "+firmware=$(FIRMWARE)/firmware.hex"
-firmware-vsim-run: vsim-run
-
-.PHONY: vsim-firmware-unit-test 
-vsim-firmware-unit-test:  firmware-unit-test-clean 
-vsim-firmware-unit-test:  $(FIRMWARE)/firmware_unit_test.hex 
-vsim-firmware-unit-test: ALL_VSIM_FLAGS += "+firmware=$(FIRMWARE)/firmware_unit_test.hex"
-vsim-firmware-unit-test: vsim-run
-
-.PHONY: firmware-vsim-run-gui
-firmware-vsim-run-gui: vsim-all $(FIRMWARE)/firmware.hex
-firmware-vsim-run-gui: ALL_VSIM_FLAGS += "+firmware=$(FIRMWARE)/firmware.hex"
-firmware-vsim-run-gui: vsim-run-gui
-
-# in questa
-
-
 
 # in dsim
 .PHONY: dsim-unit-test 
@@ -372,3 +390,13 @@ firmware-unit-test-clean:
 		$(FIRMWARE_OBJS) $(FIRMWARE_UNIT_TEST_OBJS)
 
 #endend
+
+# All generated files plus the clone of the RTL
+clean_all: $(SIMULATOR)-clean clean_core_tests clean_riscvdv clean_test_programs
+	rm -rf $(CV32E40P_PKG) $(CORE_TEST_DIR)/build
+
+###############################################################################
+# Utility rules
+
+$(OUTDIRS):
+	@mkdir -p $@
