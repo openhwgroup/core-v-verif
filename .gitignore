@@ -5,3 +5,6 @@
 *.o
 dsim.env
 *.swp
+*.bin
+cv32/sim/core/cobj_dir/
+cv32/sim/core/testbench_verilator
