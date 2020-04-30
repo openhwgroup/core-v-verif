@@ -113,7 +113,7 @@ endif
 #
 # riscv toolchain install path
 RISCV                   ?= /opt/riscv
-RISCV_EXE_PREFIX         = $(RISCV)/bin/riscv32-unknown-elf-
+RISCV_EXE_PREFIX        ?= $(RISCV)/bin/riscv32-unknown-elf-
 
 # CORE FIRMWARE vars. All of the C and assembler programs under CORE_TEST_DIR
 # are collectively known as "Core Firmware".  Yes, this is confusing because
