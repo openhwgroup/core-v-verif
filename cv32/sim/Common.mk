@@ -128,6 +128,7 @@ VERI_FIRMWARE                        = ../../tests/core/firmware
 CUSTOM                               = $(CORE_TEST_DIR)/custom
 CUSTOM_DIR                          ?= $(CUSTOM)
 CUSTOM_PROG                         ?= my_hello_world
+DEBUG_TEST                           = $(CORE_TEST_DIR)/debug_test
 VERI_CUSTOM                          = ../../tests/core/custom
 CV32_RISCV_TESTS_FIRMWARE            = $(CORE_TEST_DIR)/cv32_riscv_tests_firmware
 CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE = $(CORE_TEST_DIR)/cv32_riscv_compliance_tests_firmware
@@ -211,6 +212,20 @@ $(CUSTOM)/hello_world.elf: $(CUSTOM)/hello_world.c
 		-I $(RISCV)/riscv32-unknown-elf/include \
 		-L $(RISCV)/riscv32-unknown-elf/lib \
 		-lc -lm -lgcc
+
+# DEBUG TEST: 
+$(DEBUG_TEST)/debug_test.elf: $(DEBUG_TEST)/debug_test.c
+	$(RISCV_EXE_PREFIX)gcc -march=rv32imc -o $@ -w -Os -g -nostdlib \
+		-T $(DEBUG_TEST)/link.ld  \
+		-static \
+		$(DEBUG_TEST)/*.S \
+		$(DEBUG_TEST)/*.c \
+		-I $(RISCV)/riscv32-unknown-elf/include \
+		-L $(RISCV)/riscv32-unknown-elf/lib \
+		-lc -lm -lgcc
+	$(RISCV_EXE_PREFIX)objcopy -O verilog --remove-section=.debugger $(DEBUG_TEST)/debug_test.elf $(DEBUG_TEST)/debug_test.hex
+	$(RISCV_EXE_PREFIX)objcopy -O verilog   --only-section=.debugger --change-section-address .debugger=0x0  $(DEBUG_TEST)/debug_test.elf $(DEBUG_TEST)/debug_test_debugger.hex
+
 custom-clean:
 	rm -rf $(CUSTOM)/hello_world.elf $(CUSTOM)/hello_world.hex
 

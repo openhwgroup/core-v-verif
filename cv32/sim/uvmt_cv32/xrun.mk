@@ -65,6 +65,12 @@ hello-world: comp $(CUSTOM)/hello_world.hex
 		+UVM_TESTNAME=uvmt_cv32_firmware_test_c \
 		+firmware=$(CUSTOM)/hello_world.hex
 
+debug_test: comp $(DEBUG_TEST)/debug_test.elf
+	$(XRUN) -R -l xrun_debug_test.log \
+		+UVM_TESTNAME=$(UVM_TESTNAME) \
+		+firmware=$(DEBUG_TEST)/debug_test.hex \
+		+debugger=$(DEBUG_TEST)/debug_test_debugger.hex
+
 # Runs tests in cv32_riscv_tests/ only
 cv32-riscv-tests: comp $(CV32_RISCV_TESTS_FIRMWARE)/cv32_riscv_tests_firmware.hex
 	$(XRUN) -R -l xrun-riscv-tests.log \
