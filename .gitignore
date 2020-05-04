@@ -5,3 +5,7 @@
 *.o
 dsim.env
 *.swp
+cv64
+uvm/riscv-dv
+tools
+tests/riscv-compliance
