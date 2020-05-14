@@ -155,7 +155,13 @@ handle_unknown:
 
 end_handler:
 	csrr a0, mepc
+	lb t0, 0(a0)
+	li t1,0x3
+	and t0,t0,t1
 	addi a0, a0, 2
+	bne t0,t1,end_handler_cont
+	addi a0, a0, 2
+end_handler_cont:
 	csrw mepc, a0
         lw t0, 0(sp)
         lw t1, 4(sp)
