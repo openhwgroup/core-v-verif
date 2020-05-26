@@ -121,6 +121,7 @@ handle_ebreak:
 	j end_handler
 cont_handle_ebreak:
         //increment hart status     
+        sw x0, 0(a0)
         la a0, glb_ebreak_status  
         lw t0, 0(a0)
         addi t0,t0,1
@@ -140,6 +141,7 @@ handle_illegal_insn:
 	j end_handler
 cont_illegal_insn:
         //increment hart status     
+        sw x0, 0(a0)
         la a0, glb_illegal_insn_status  
         lw t0, 0(a0)
         addi t0,t0,1

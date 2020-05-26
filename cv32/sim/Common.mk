@@ -224,7 +224,9 @@ $(DEBUG_TEST)/debug_test.elf: $(DEBUG_TEST)/debug_test.c
 		-L $(RISCV)/riscv32-unknown-elf/lib \
 		-lc -lm -lgcc
 	$(RISCV_EXE_PREFIX)objcopy -O verilog --remove-section=.debugger $(DEBUG_TEST)/debug_test.elf $(DEBUG_TEST)/debug_test.hex
-	$(RISCV_EXE_PREFIX)objcopy -O verilog   --only-section=.debugger --change-section-address .debugger=0x0  $(DEBUG_TEST)/debug_test.elf $(DEBUG_TEST)/debug_test_debugger.hex
+	$(RISCV_EXE_PREFIX)objcopy -O verilog --only-section=.debugger           --change-section-address .debugger=0x0             \
+	                                      --only-section=.debugger_exception --change-section-address .debugger_exception=0x400 \
+	                            $(DEBUG_TEST)/debug_test.elf $(DEBUG_TEST)/debug_test_debugger.hex
 
 custom-clean:
 	rm -rf $(CUSTOM)/hello_world.elf $(CUSTOM)/hello_world.hex

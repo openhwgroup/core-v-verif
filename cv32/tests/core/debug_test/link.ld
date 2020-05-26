@@ -42,6 +42,10 @@ SECTIONS
         {
           KEEP(*(.debugger));
         } >dbg
+        .debugger_exception (0x1A110C00):
+        {
+          KEEP(*(.debugger_exception));
+        } >dbg
         /* Debugger Stack*/
         .debugger_stack         : ALIGN(16)
         {

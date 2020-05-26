@@ -24,7 +24,10 @@
 .global _debugger_start
 .global glb_debug_status
 .global glb_hart_status
+.global glb_expect_debug_entry
 .global __debugger_stack_start
+.global _debugger_fail
+.global _debugger_end
 .set test_ret_val, 0x20000000
 .set test_fail, 0x1
         
@@ -38,28 +41,83 @@ _debugger_start:
         sw t2, 8(a0)
         sw a1, 12(a0)
         sw a2, 16(a0)
-        // Increment glb_debug_status
-        la a1, glb_debug_status
+        // Check if expecting debug entry
+        la a1, glb_expect_debug_entry
         lw t1, 0(a1)
-        addi t1,t1,1
-        sw t1, 0(a1)
-        // Determine Test to execute in debugger code
+        beq x0,t1,_debugger_fail
+
+        // Determine Test to execute in debugger code based on glb_hart_status
         la a2, glb_hart_status
         lw t2, 0(a2)
-	li t0, 4
-	beq t2,t0,_debugger_end    // Test 4
+
+	// ebreak test will loop in debugger code over several iterations
+	//  and will increment the global status each time
 	li t0,5
 	beq t2,t0,_debugger_ebreak // Test 5
+
+	// For all other tests,
+	// Set debug status = hart status
+        la a1, glb_debug_status
+	sw t2, 0(a1)
+
+	li t0, 4
+	beq t2,t0,_debugger_simple    // Test 4
+
 	li t0,6
 	beq t2,t0,_debugger_csr    // Test 6
+
 	li t0,7
 	beq t2,t0,_debugger_trigger_setup    // Test 7
+
 	li t0,8
 	beq t2,t0,_debugger_trigger_match    // Test 8
+
 	li t0,9
 	beq t2,t0,_debugger_trigger_disable    // Test 9
+
+	li t0,10
+	beq t2,t0,_debugger_ebreak_entry    // Test 10
+
+	li t0,11
+	beq t2,t0,_debugger_csr_exception    // Test 11
+
+	li t0,12
+	beq t2,t0,_debugger_ecall_exception    // Test 12
+
+	li t0,13
+	beq t2,t0,_debugger_mret_call    // Test 13
+
+_debugger_csr_exception:
+	csrr t2,0xea8 // illegal insn
+
+_debugger_ecall_exception:
+	ecall // exception
+
+_debugger_mret_call:
+	mret // will invoke debugger exception routine
+
+_debugger_ebreak_entry:
+        la a1, glb_debug_status
+	li   t1, 4<<28 | 1<<6 | 3<<0 | 1<<15
+	csrr t2,dcsr
+	bne  t1,t2,_debugger_fail
+        csrr a1,dpc
+        addi a1,a1,2
+        csrw dpc,a1
+        //sw t1, 0(a1)
+        j  _debugger_end
+
+_debugger_simple:
+        la a1, glb_debug_status
+	//csrr t2,0xea8 // illegal insn
+        li t1, 1
+        //sw t1, 0(a1)
+        j  _debugger_end
+
 _debugger_csr:
 	// Check CSR access
+	// When done, set the ebreakm bit to allow next test to enter debug with ebreak
+
 	// TBD BUG FIXME : make sure appropriate list of CSR (from sspecifications)
 	//csrr t2,mvendorid
 	//csrr t2,marchid
@@ -71,6 +129,7 @@ _debugger_csr:
 	csrr t2,misa
 	csrr t2,mie
 	csrr t2,mtvec
+	//FIXME csrr t2,mtval
 
 	// machine trap handling
 	csrr t2,mscratch
@@ -93,6 +152,10 @@ _debugger_csr:
 	beq  x0,t2,_debugger_fail
 	//Already test this csrr t2,dscratch  //dscratch0
 	//Already test this csrr t2,0x7b3    //dscratch1
+
+        // Set ebreakm in dcsr
+	li   t1, 4<<28 | 3<<6 | 3<<0| 1<<15
+	csrw dcsr, t1
 
 	// ----------------------
 	// Trigger CSRs
@@ -133,7 +196,7 @@ _debugger_trigger_match:
 	//    8:6   Cause           = 2 Trigger
 	//    1:0   Privelege       = 3 Machine
 	// TBD FIXME BUG documentation update needed
-	li   t1, 4<<28 | 2<<6 | 3<<0
+	li   t1, 4<<28 | 2<<6 | 3<<0 | 1<<15
 	csrr t2,dcsr
 	bne  t1,t2,_debugger_fail
 
@@ -149,7 +212,7 @@ _debugger_trigger_disable:
 	//    8:6   Cause           = 3 debugger
 	//    1:0   Privelege       = 3 Machine
 	// TBD FIXME BUG documentation update needed
-	li   t1, 4<<28 | 3<<6 | 3<<0
+	li   t1, 4<<28 | 3<<6 | 3<<0 | 1<<15
 	csrr t2,dcsr
 	bne  t1,t2,_debugger_fail
 
@@ -158,10 +221,17 @@ _debugger_trigger_disable:
 	csrr t2,tdata1
 	bne  t1,t2,_debugger_fail
 	j    _debugger_end
+
 _debugger_ebreak:
-	// Repeat executing debug code until debug status = 4
-	li   t0, 4
-	beq  t1,t0,_debugger_end
+        // Increment glb_debug_status
+        la a1, glb_debug_status
+        lw t1, 0(a1)
+        addi t1,t1,1
+        sw t1, 0(a1)
+	// Repeat executing debug code until debug status = hart_status + 3
+	addi t0, t2, 3
+	beq  t1, t0, _debugger_end
+	// Debugger Un-Stack and call debugger code from start using ebreak
         csrr t0, 0x7b3
 	lw   t1, 4(a0)
         lw   t2, 8(a0)
@@ -170,7 +240,10 @@ _debugger_ebreak:
         csrr a0, dscratch
         ebreak
 _debugger_end:	
-        // Debugger Stack
+        // Clear debug entry expectation flag
+        la a1, glb_expect_debug_entry
+        sw x0, 0(a1)
+        // Debugger Un-Stack
         //lw t0, 0(a0)
         csrr t0, 0x7b3
         lw   t1, 4(a0)
