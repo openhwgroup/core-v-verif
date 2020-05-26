@@ -42,8 +42,8 @@ module uvmt_cv32_dut_wrap #(// DUT (riscv_core) parameters.
                             // https://github.com/openhwgroup/core-v-docs/blob/master/cores/cv32e40p/CV32E40P_and%20CV32E40_Features_Parameters.pdf
                             parameter PULP_HWLP           =  0,
                                       PULP_CLUSTER        =  0,
-                                      FPU                 =  0,
-                                      PULP_ZFINX          =  0,
+                                      FPU                 =   0,
+                                      PULP_ZFINX          =   0,
                                       NUM_MHPMCOUNTERS    =  1,
                             // Remaining parameters are used by TB components only
                                       INSTR_ADDR_WIDTH    =  32,
@@ -139,9 +139,9 @@ module uvmt_cv32_dut_wrap #(// DUT (riscv_core) parameters.
     // instantiate the core
     cv32e40p_core #(
                  .PULP_HWLP        (PULP_HWLP),
-                 .PULP_CLUSTER     (PULP_CLUSTER),
-                 .FPU              (FPU),
-                 .PULP_ZFINX       (PULP_ZFINX),
+                 .PULP_CLUSTER    (PULP_CLUSTER),
+                 .FPU             (FPU),
+                 .PULP_ZFINX      (PULP_ZFINX),
                  .NUM_MHPMCOUNTERS (NUM_MHPMCOUNTERS)
                 )
     riscv_core_i
@@ -156,6 +156,8 @@ module uvmt_cv32_dut_wrap #(// DUT (riscv_core) parameters.
          .mtvec_addr_i           ( core_cntrl_if.mtvec_addr       ),
          .dm_halt_addr_i         ( core_cntrl_if.dm_halt_addr     ),
          .hart_id_i              ( core_cntrl_if.hart_id          ),
+         .dm_exception_addr_i    (  32'h1A110C00                  ),
+
 
          .instr_req_o            ( instr_req                      ),
          .instr_gnt_i            ( instr_gnt                      ),
@@ -187,12 +189,12 @@ module uvmt_cv32_dut_wrap #(// DUT (riscv_core) parameters.
          //       Connect all interrupt signals to an SV interface
          //       and pass to ENV for an INTERRUPT AGENT to drive/monitor.
          .irq_i                  ( irq32                          ),
-         .irq_ack_o              ( irq_ack                        ),
+         .irq_ack_o              ( irq_ack                           ),
          .irq_id_o               ( irq_id5                        ),
 
          .debug_req_i            ( debug_req                      ),
 
-         .fetch_enable_i         ( core_cntrl_if.fetch_en         ),
+         .fetch_enable_i         ( core_cntrl_if.fetch_en            ),
          .core_sleep_o           ( core_status_if.core_busy       )
         ); //riscv_core_i
 
