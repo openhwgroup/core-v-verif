@@ -67,9 +67,9 @@ module riscv_wrapper
     // instantiate the core
     cv32e40p_core #(
                  .PULP_HWLP        (PULP_HWLP),
-                 .PULP_CLUSTER     (PULP_CLUSTER),
-                 .FPU              (FPU),
-                 .PULP_ZFINX       (PULP_ZFINX),
+                 .PULP_CLUSTER    (PULP_CLUSTER),
+                 .FPU             (FPU),
+                 .PULP_ZFINX      (PULP_ZFINX),
                  .NUM_MHPMCOUNTERS (NUM_MHPMCOUNTERS)
                 )
     riscv_core_i
@@ -83,6 +83,7 @@ module riscv_wrapper
          .boot_addr_i            ( BOOT_ADDR             ),
          .dm_halt_addr_i         ( DM_HALTADDRESS        ),
          .hart_id_i              ( HART_ID               ),
+         .dm_exception_addr_i    ( 32'h1A110C00          ),
 
          .instr_req_o            ( instr_req             ),
          .instr_gnt_i            ( instr_gnt             ),
