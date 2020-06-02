@@ -206,7 +206,7 @@ interface uvmt_cv32_step_compare_if;
    } reg_t;
 
    event        ovp_cpu_retire; // Was ovp.cpu.Retire
-   event        riscv_retire;   // Was riscv_core.riscv_tracer_i.retire
+   event        riscv_retire;   // Was cv32e40p_core_i.riscv_tracer_i.retire
    bit   [31:0] ovp_cpu_PCr;    // Was iss_wrap.cpu.PCr
    logic [31:0] insn_pc;
    bit         ovp_b1_Step;    // Was ovp.b1.Step = 0;

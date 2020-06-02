@@ -56,7 +56,7 @@ int main(int argc, char **argv, char **env)
 
 #ifdef MCY
     svSetScope(svGetScopeFromName(
-        "TOP.tb_top_verilator.riscv_wrapper_i.riscv_core_i.ex_stage_i.alu_i.int_div.div_i"));
+        "TOP.tb_top_verilator.riscv_wrapper_i.cv32e40p_core_i.ex_stage_i.alu_i.int_div.div_i"));
     svLogicVecVal idx = {0};
     idx.aval = mutidx;
     set_mutidx(&idx);

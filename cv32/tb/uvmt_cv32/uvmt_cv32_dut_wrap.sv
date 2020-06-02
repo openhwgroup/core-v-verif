@@ -38,7 +38,7 @@
 /**
  * Module wrapper for CV32 RTL DUT.
  */
-module uvmt_cv32_dut_wrap #(// DUT (riscv_core) parameters.
+module uvmt_cv32_dut_wrap #(// DUT (cv32e40p_core) parameters.
                             // https://github.com/openhwgroup/core-v-docs/blob/master/cores/cv32e40p/CV32E40P_and%20CV32E40_Features_Parameters.pdf
                             parameter PULP_HWLP           =  0,
                                       PULP_CLUSTER        =  0,
@@ -125,14 +125,14 @@ module uvmt_cv32_dut_wrap #(// DUT (riscv_core) parameters.
     end
 
     // instantiate the core
-    riscv_core #(
+    cv32e40p_core #(
                  .PULP_HWLP        (PULP_HWLP),
                  .PULP_CLUSTER     (PULP_CLUSTER),
                  .FPU              (FPU),
                  .PULP_ZFINX       (PULP_ZFINX),
                  .NUM_MHPMCOUNTERS (NUM_MHPMCOUNTERS)
                 )
-    riscv_core_i
+    cv32e40p_core_i
         (
          .clk_i                  ( clknrst_if.clk                 ),
          .rst_ni                 ( clknrst_if.reset_n             ),
@@ -189,7 +189,7 @@ module uvmt_cv32_dut_wrap #(// DUT (riscv_core) parameters.
 
          .fetch_enable_i         ( core_cntrl_if.fetch_en            ),
          .core_busy_o            ( core_status_if.core_busy          )
-        ); //riscv_core_i
+        ); //cv32e40p_core_i
 
     // this handles read to RAM and memory mapped virtual (pseudo) peripherals
     mm_ram #(.RAM_ADDR_WIDTH    (RAM_ADDR_WIDTH),
@@ -219,7 +219,7 @@ module uvmt_cv32_dut_wrap #(// DUT (riscv_core) parameters.
          .irq_id_o       ( irq_id_in                      ),
          .irq_o          ( irq                            ),
 
-         .pc_core_id_i   ( riscv_core_i.pc_id             ),
+         .pc_core_id_i   ( cv32e40p_core_i.pc_id          ),
 
          .tests_passed_o ( vp_status_if.tests_passed      ),
          .tests_failed_o ( vp_status_if.tests_failed      ),
