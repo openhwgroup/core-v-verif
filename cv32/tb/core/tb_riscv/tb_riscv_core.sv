@@ -98,7 +98,6 @@ module tb_riscv_core
   input  logic [4:0]  irq_id_i,
   output logic        irq_ack_o,
   output logic [4:0]  irq_id_o,
-  input  logic        irq_sec_i,
 
   output logic        sec_lvl_o,
 
@@ -224,7 +223,6 @@ logic [4:0]                    irq_core_resp_id_int;
     .irq_id_i                       ( irq_id_int              ),
     .irq_ack_o                      ( irq_ack_int             ),
     .irq_id_o                       ( irq_core_resp_id_int    ),
-    .irq_sec_i                      ( irq_sec_i               ),
 
     .sec_lvl_o                      ( sec_lvl_o               ),
 

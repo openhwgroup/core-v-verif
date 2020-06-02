@@ -32,10 +32,10 @@ module riscv_random_interrupt_generator
     input logic           rst_ni,
     input logic           clk_i,
     input logic           irq_i,
-    input logic   [4:0]   irq_id_i,
+    input logic   [5:0]   irq_id_i,
     input logic           irq_ack_i,
     output logic          irq_o,
-    output logic  [4:0]   irq_id_o,
+    output logic  [5:0]   irq_id_o,
     output logic          irq_ack_o,
     input logic  [31:0]   irq_mode_i,
     input logic  [31:0]   irq_min_cycles_i,
@@ -59,10 +59,10 @@ endclass : rand_irq_id
 
 logic [31:0] irq_mode_q;
 logic        irq_random;
-logic  [4:0] irq_id_random;
+logic  [5:0] irq_id_random;
 logic        irq_ack_random;
 logic        irq_monitor;
-logic  [4:0] irq_id_monitor;
+logic  [5:0] irq_id_monitor;
 logic        irq_ack_monitor;
 
 assign irq_ack_o = irq_ack_i;
