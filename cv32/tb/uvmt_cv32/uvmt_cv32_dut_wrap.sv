@@ -38,7 +38,7 @@
 /**
  * Module wrapper for CV32 RTL DUT.
  */
-module uvmt_cv32_dut_wrap #(// DUT (riscv_core) parameters.
+module uvmt_cv32_dut_wrap #(// DUT (cv32e40p_core) parameters.
                             // https://github.com/openhwgroup/core-v-docs/blob/master/cores/cv32e40p/CV32E40P_and%20CV32E40_Features_Parameters.pdf
                             parameter PULP_HWLP           =  0,
                                       PULP_CLUSTER        =  0,
@@ -157,7 +157,7 @@ module uvmt_cv32_dut_wrap #(// DUT (riscv_core) parameters.
 
     // --------------------------------------------
     // instantiate the core
-    riscv_core #(
+    cv32e40p_core #(
                  .PULP_HWLP        (PULP_HWLP),
                  .PULP_CLUSTER     (PULP_CLUSTER),
                  .FPU              (FPU),
@@ -205,15 +205,20 @@ module uvmt_cv32_dut_wrap #(// DUT (riscv_core) parameters.
          // TODO: interrupts significantly updated for CV32E40P
          //       Connect all interrupt signals to an SV interface
          //       and pass to ENV for an INTERRUPT AGENT to drive/monitor.
-         //.irq_i                  ( irq                            ),
-         //.irq_id_i               ( irq_id_in                      ),
-         //.irq_sec_i              ( (core_interrupts_if.irq_sec||irq) ),
+
+         .irq_i                  ( {
+                                   core_interrupts_if.irq_fast,
+                                   4'b0,
+                                   core_interrupts_if.irq_external,
+                                   3'b0,
+                                   core_interrupts_if.irq_timer,
+                                   3'b0,
+                                   core_interrupts_if.irq_software,
+                                   3'b0
+                                   }
+                                 ),
          .irq_ack_o              ( irq_ack                           ),
          .irq_id_o               ( irq_id                            ),
-         .irq_software_i         ( core_interrupts_if.irq_software   ),
-         .irq_timer_i            ( core_interrupts_if.irq_timer      ),
-         .irq_external_i         ( core_interrupts_if.irq_external   ),
-         .irq_fast_i             ( core_interrupts_if.irq_fast       ),
 
          .debug_req_i            ( debug_req                         ),
 

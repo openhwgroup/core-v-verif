@@ -101,15 +101,15 @@ module uvmt_cv32_step_compare
       step_compare_if.num_pc_checks++;
 
       // Compare GPR's
-      // Assuming that $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.riscv_tracer_i.insn_regs_write size is never > 1.  Check this.
+      // Assuming that $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.tracer_i.insn_regs_write size is never > 1.  Check this.
       // Note that dut_wrap is found 1 level up
-      insn_regs_write_size = $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.riscv_tracer_i.insn_regs_write.size();
+      insn_regs_write_size = $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.tracer_i.insn_regs_write.size();
       if (insn_regs_write_size > 1) begin
         `uvm_error("Step-and-Compare",  $sformatf("Assume insn_regs_write size is 0 or 1 but is %0d", insn_regs_write_size));
       end
-      else if (insn_regs_write_size == 1) begin // Get $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.riscv_tracer_i.insn_regs_write fields if size is 1
-         insn_regs_write_addr = $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.riscv_tracer_i.insn_regs_write[0].addr;
-         insn_regs_write_value = $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.riscv_tracer_i.insn_regs_write[0].value;
+      else if (insn_regs_write_size == 1) begin // Get $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.tracer_i.insn_regs_write fields if size is 1
+         insn_regs_write_addr = $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.tracer_i.insn_regs_write[0].addr;
+         insn_regs_write_value = $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.tracer_i.insn_regs_write[0].value;
          `uvm_info("Step-and-Compare", $sformatf("insn_regs_write queue[0] addr=0x%0x, value=0x%0x", insn_regs_write_addr, insn_regs_write_value), UVM_DEBUG);
       end
       
@@ -148,7 +148,7 @@ module uvmt_cv32_step_compare
                                     $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.cs_registers_i.mie_q.irq_software,
                                     3'b0};
              "mie1"    : csr_val = $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.cs_registers_i.mie1_q;
-             "mtvec"   : csr_val = {$root.uvmt_cv32_tb.dut_wrap.riscv_core_i.cs_registers_i.mtvec_q, 6'h0, $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.cs_registers_i.tvec_mode_q};
+             "mtvec"   : csr_val = {$root.uvmt_cv32_tb.dut_wrap.riscv_core_i.cs_registers_i.mtvec_q, 6'h0, $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.cs_registers_i.mtvec_mode_q};
              "mscratch": csr_val = $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.cs_registers_i.mscratch_q;
              "mepc"    : csr_val = $root.uvmt_cv32_tb.dut_wrap.riscv_core_i.cs_registers_i.mepc_q;
              "mcause"  : csr_val = {$root.uvmt_cv32_tb.dut_wrap.riscv_core_i.cs_registers_i.mcause_q[6], 
@@ -218,7 +218,7 @@ module uvmt_cv32_step_compare
         #0 ->ev_ovp;
     end
 
-    // riscv_core
+    // cv32e40p_core
     always @(step_compare_if.riscv_retire) begin
         step_rtl = 0;
         ret_rtl  = 1;

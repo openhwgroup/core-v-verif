@@ -22,9 +22,9 @@
 //                                                                                                              //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-import riscv_defines::*;
+import cv32e40p_defines::*;
 import perturbation_defines::*;
-`include "riscv_config.sv"
+`include "cv32e40p_config.sv"
 
 module riscv_random_stall
 

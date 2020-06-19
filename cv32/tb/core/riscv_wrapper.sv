@@ -63,7 +63,7 @@ module riscv_wrapper
     assign irq_sec     = '0;
 
     // instantiate the core
-    riscv_core #(
+    cv32e40p_core #(
                  .PULP_HWLP        (PULP_HWLP),
                  .PULP_CLUSTER     (PULP_CLUSTER),
                  .FPU              (FPU),
@@ -108,12 +108,19 @@ module riscv_wrapper
          .apu_master_result_i    (                       ),
          .apu_master_flags_i     (                       ),
 
+         .irq_i                  ( {
+                                   48'b0,                       // Fast
+                                   4'b0,
+                                   1'b0,                        // External
+                                   3'b0,
+                                   1'b0,                        // Timer
+                                   3'b0,
+                                   1'b0,                        // Software
+                                   3'b0
+                                   }
+                                 ),
          .irq_ack_o              ( irq_ack               ),
          .irq_id_o               ( irq_id                ),
-         .irq_software_i         (1'b0                   ),
-         .irq_timer_i            (1'b0                   ),
-         .irq_external_i         (1'b0                   ),
-         .irq_fast_i             ({48{1'b0}}             ),
 
          .debug_req_i            ( debug_req             ),
 
