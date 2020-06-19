@@ -33,7 +33,7 @@ VSIM      = vsim
 VWORK     = work
 
 # Build parameters
-VLOG_FLAGS    = -pedanticerrors -timescale "1ns/1ps" -mfcu +acc=rb \
+VLOG_FLAGS    =-L $(QUESTA_HOME)/uvm-1.2 -pedanticerrors -timescale "1ns/1ps" -mfcu +acc=rb \
     -suppress 2577 -suppress 2583 -suppress 2181 -suppress 13262 \
 #     -writetoplevels  uvmt_cv32_tb
 VOPT_FLAGS    = -debugdb -fsmdebug +acc #=mnprft
@@ -130,27 +130,27 @@ cv32-riscv-tests: \
 # Firmware test
 
 .PHONY: cv32-firmware
-cv32-firmware: vsim-all $(FIRMWARE)/firmware.hex
-cv32-firmware: VSIM_FLAGS += +firmware=$(FIRMWARE)/firmware.hex
-cv32-firmware: vsim-run
+cv32-firmware: \
+	$(FIRMWARE)/firmware.hex.$(SIMULATOR)-run
 
 ###############################################################################
 # firware unit test
 # ex: make questa-unit-test addi
 
-.PHONY: unit-test 
+
+
+.PHONY: unit-test
 unit-test:  firmware-unit-test-clean 
-unit-test:  $(FIRMWARE)/firmware_unit_test.hex 
-unit-test: VSIM_FLAGS += "+firmware=$(FIRMWARE)/firmware_unit_test.hex"
-unit-test: vsim-run
+unit-test:  $(FIRMWARE)/firmware_unit_test.hex
+unit-test:  $(FIRMWARE)/firmware_unit_test.hex.$(SIMULATOR)-run
+
 
 ###############################################################################
 # cv32_riscv_compliance_test_firmware
 
 .PHONY: cv32-riscv-compliance-tests
-cv32-riscv-compliance-tests: vsim-all $(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE)/cv32_riscv_compliance_tests_firmware.hex
-cv32-riscv-compliance-tests: VSIM_FLAGS += +firmware=$(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE)/cv32_riscv_compliance_tests_firmware.hex
-cv32-riscv-compliance-tests: vsim-run
+cv32-riscv-compliance-tests: \
+	$(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE)/cv32_riscv_compliance_tests_firmware.hex.$(SIMULATOR)-run
 
 
 ###############################################################################
@@ -158,9 +158,9 @@ cv32-riscv-compliance-tests: vsim-run
 
 clean:
 	if [ -d $(VWORK) ]; then rm -r $(VWORK); fi
-	rm -f transcript vsim.wlf vsim.dbg trace_core*.log \
+	rm -f transcript vsim.wlf vsim.dbg trace_core*.log dump_sign.txt\
 	.build-rtl .opt-rtl .lib-rtl *.vcd objdump
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_core_tests
-	rm -rf $(CV32E40P_PKG)
+clean_all: clean clean_core_tests clean_riscvdv clean_test_programs clean_new_riscv_compliance
+	rm -rf $(CV32E40P_PKG) $(CORE_TEST_DIR)/build

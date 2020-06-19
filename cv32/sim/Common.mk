@@ -64,6 +64,10 @@ RISCVDV_REPO    ?= https://github.com/google/riscv-dv
 RISCVDV_BRANCH  ?= master
 RISCVDV_HASH    ?= head
 
+RISCV_COMPLIANCE_REPO    ?= https://github.com/riscv/riscv-compliance
+RISCV_COMPLIANCE_BRANCH  ?= master
+RISCV_COMPLIANCE_HASH    ?= head
+
 # Generate command to clone the CV32E40P RTL
 ifeq ($(CV32E40P_BRANCH), master)
   TMP = git clone $(CV32E40P_REPO) --recurse $(CV32E40P_PKG)
@@ -104,6 +108,22 @@ else
   CLONE_RISCVDV_CMD = $(TMP3); cd $(RISCVDV_PKG); git checkout $(RISCVDV_HASH)
 endif
 # RISCV-DV repo var end
+
+
+# Generate command to clone RISCV-DV (Google's random instruction generator)
+ifeq ($(RISCV_COMPLIANCE_BRANCH), master)
+  TMP4 = git clone $(RISCV_COMPLIANCE_REPO) --recurse $(RISCV_COMPLIANCE_PKG)
+else
+  TMP4 = git clone -b $(RISCV_COMPLIANCE_BRANCH) --single-branch $(RISCV_COMPLIANCE_REPO) --recurse $(RISCV_COMPLIANCE_PKG)
+endif
+
+ifeq ($(RISCV_COMPLIANCE_HASH), head)
+  CLONE_RISCV_COMPLIANCE_CMD = $(TMP4)
+else
+  CLONE_RISCV_COMPLIANCE_CMD = $(TMP4); cd $(RISCV_COMPLIANCE_PKG); git checkout $(RISCV_COMPLIANCE_HASH)
+endif
+# RISCV-DV repo var end
+
 
 ###############################################################################
 # Imperas Instruction Set Simulator
@@ -200,7 +220,7 @@ CV32_ISA_ALL           = rv32i rv32im rv32imc rv32Zicsr rv32Zifencei
 
 CV32_ISA               = rv32i
 
-RV_COMPLIANCE_DIR      = $(abspath $(CORE_TEST_DIR)/new_riscv_compliance)
+RV_COMPLIANCE_DIR      = $(abspath $(RISCV_COMPLIANCE_PKG))
 RV_COMPLIANCE_TEST     = $(RV_COMPLIANCE_DIR)/riscv-test-suite/$(CV32_ISA)
 RV_COMPLIANCE_SRC      = $(wildcard $(RV_COMPLIANCE_TEST)/src/*.S)
 RV_COMPLIANCE_BUILD    = $(abspath $(CORE_TEST_DIR)/build/riscv-compliance/$(CV32_ISA))
@@ -226,7 +246,7 @@ ifeq ($(filter $(CV32_ISA),rv32Zicsr rv32Zifencei),)
 RV_COMPLIANCE_FLAGS   += -march=$(CV32_ISA) -mabi=ilp32
 endif
 RV_COMPLIANCE_FLAGS   += $(RV_COMPLIANCE_INCLUDE) -DPRIV_MISA_S=0 -DPRIV_MISA_U=0
-#RV_COMPLIANCE_FLAGS   += -DTRAPHANDLER="\"$(RV_COMPLIANCE_DIR)/riscv-target/ri5cy/device/rv32imc/handler.S\"" 
+RV_COMPLIANCE_FLAGS   += -DTRAPHANDLER="\"$(RV_COMPLIANCE_DIR)/riscv-target/ri5cy/device/rv32imc/handler.S\"" 
 
 RV_COMPLIANCE_LSCRIPT  = $(RV_COMPLIANCE_DIR)/riscv-target/ri5cy/device/rv32imc/link.ld
 
@@ -264,6 +284,43 @@ help:
 	$(RISCV_EXE_PREFIX)readelf -a $< > $*.readelf
 	$(RISCV_EXE_PREFIX)objdump -D $*.elf > $*.objdump
 
+###############################################################################
+# Run compliance tests
+# 
+# Note: make use of a simulator specific target called '%.${SIMULATOR}-run'
+#        that runs a simulation using the firmware passed as implicit argument
+
+path_compliance:
+	echo $(RV_COMPLIANCE_DIR)
+	echo $(RV_COMPLIANCE_TEST)
+	echo $(RV_COMPLIANCE_SRC)
+	echo $(RV_COMPLIANCE_BUILD)
+	echo $(RV_COMPLIANCE_ELF)
+	echo $(RV_COMPLIANCE_HEX)
+
+cv32-new-riscv-compliance-all:  $(CV32_ISA_ALL:%=%.cv32-new-riscv-compliance)
+
+%.cv32-new-riscv-compliance: $(RISCV_COMPLIANCE_PKG)
+	$(MAKE) --no-print-directory cv32-new-riscv-compliance-test CV32_ISA=$*
+
+cv32-new-riscv-compliance-test: $(RV_COMPLIANCE_HEX) $(RV_COMPLIANCE_HEX:%=%.run-cv32-new-compliance-test)
+
+#cv32-new-riscv-compliance-test: $(RV_COMPLIANCE_HEX) $(RV_COMPLIANCE_HEX:%=%.run-cv32-new-compliance-test)
+
+cv32-new-riscv-compliance-unit: $(RV_COMPLIANCE_UNIT_HEX) $(RV_COMPLIANCE_UNIT_HEX).run-cv32-new-compliance-test
+
+%.run-cv32-new-compliance-test: %.${SIMULATOR}-run
+	diff --strip-trailing-cr -q dump_sign.txt \
+		$(patsubst $(RV_COMPLIANCE_BUILD)/%.hex,$(RV_COMPLIANCE_TEST)/references/%.reference_output,$*)
+
+
+
+$(RV_COMPLIANCE_BUILD)/%.elf: %.S | $(OUTDIRS)
+	$(CC) $(RV_COMPLIANCE_FLAGS) -T$(RV_COMPLIANCE_LSCRIPT) $< -o $@
+
+#$(RV_COMPLIANCE_BUILD)/%.elf: %.S | $(OUTDIRS)
+#	make bsp
+#	$(CC) $(RV_COMPLIANCE_FLAGS) $^ -T $(BSP)/link.ld -L $(BSP) -lcv-verif $< -o $@
 
 ###############################################################################
 # The sanity rule runs whatever is currently deemed to be the minimal test that
@@ -404,7 +461,7 @@ clean-bsp:
 #../../tests/core/cv32_riscv_tests_firmware/cv32_riscv_tests_firmware.elf: $(CV32_RISCV_TESTS_FIRMWARE_OBJS) $(RISCV_TESTS_OBJS)
 $(CV32_RISCV_TESTS_FIRMWARE)/cv32_riscv_tests_firmware.elf: $(CV32_RISCV_TESTS_FIRMWARE_OBJS) $(RISCV_TESTS_OBJS)
 	$(CC) $(CFLAGS) -march=rv32imc -o $@ \
-		-Wl,-Bstatic,-T,$(CV32_RISCV_TESTS_FIRMWARE)/link.ld,-Map,$(CV32_RISCV_TESTS_FIRMWARE)/cv32_riscv_tests_firmware.map,--strip-debug \
+		-Wl,-Bstatic,-T,$(CV32_RISCV_TESTS_FIRMWARE)/link.ld, -Map,$(CV32_RISCV_TESTS_FIRMWARE)/cv32_riscv_tests_firmware.map,--strip-debug \
 		$(CV32_RISCV_TESTS_FIRMWARE_OBJS) $(RISCV_TESTS_OBJS) -lgcc
 
 $(CV32_RISCV_TESTS_FIRMWARE)/start.o: $(CV32_RISCV_TESTS_FIRMWARE)/start.S
@@ -431,31 +488,6 @@ $(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE)/start.o: $(CV32_RISCV_COMPLIANCE_TESTS_F
 #	$(CC) -c -mabi=ilp32 -march=rv32imc -g -Os --std=c99 -Wall \
 #		$(RISCV_TEST_INCLUDES) \
 #		-ffreestanding -nostdlib -o $@ $<
-
-
-###############################################################################
-# Run compliance tests
-# 
-# Note: make use of a simulator specific target called '%.${SIMULATOR}-run'
-#        that runs a simulation using the firmware passed as implicit argument
-
-
-cv32-new-riscv-compliance-all: $(CV32_ISA_ALL:%=%.cv32-new-riscv-compliance)
-
-%.cv32-new-riscv-compliance:
-	$(MAKE) --no-print-directory cv32-new-riscv-compliance-test CV32_ISA=$*
-
-cv32-new-riscv-compliance-test: $(RV_COMPLIANCE_HEX) $(RV_COMPLIANCE_HEX:%=%.run-cv32-new-compliance-test)
-
-cv32-new-riscv-compliance-unit: $(RV_COMPLIANCE_UNIT_HEX) $(RV_COMPLIANCE_UNIT_HEX).run-cv32-new-compliance-test
-
-%.run-cv32-new-compliance-test: %.${SIMULATOR}-run
-	diff --strip-trailing-cr -q dump_sign.txt \
-		$(patsubst $(RV_COMPLIANCE_BUILD)/%.hex,$(RV_COMPLIANCE_TEST)/references/%.reference_output,$*)
-
-$(RV_COMPLIANCE_BUILD)/%.elf: %.S | $(OUTDIRS)
-	make bsp
-	$(CC) $(RV_COMPLIANCE_FLAGS) $^ -T $(BSP)/link.ld -L $(BSP) -lcv-verif $< -o $@
 
 
 
@@ -574,3 +606,11 @@ firmware-unit-test-clean:
 		$(FIRMWARE_OBJS) $(FIRMWARE_UNIT_TEST_OBJS)
 
 #endend
+###############################################################################
+# Utility rules
+
+$(OUTDIRS):
+	@mkdir -p $@
+
+
+

@@ -113,6 +113,9 @@ export DESIGN_RTL_DIR = $(CV32E40P_PKG)/rtl
 RTLSRC_HOME   := $(CV32E40P_PKG)/rtl
 RTLSRC_INCDIR := $(RTLSRC_HOME)/include
 
+# New riscv-compliance
+RISCV_COMPLIANCE_PKG         := $(PROJ_ROOT_DIR)/cv32/tests/core/riscv-compliance
+
 
 ###############################################################################
 # Common Makefile:
@@ -133,6 +136,9 @@ $(CV32E40P_PKG):
 	$(CLONE_CV32E40P_CMD)
 	$(CLONE_FPNEW_CMD)
 #	$(CLONE_RISCVDV_CMD)
+
+$(RISCV_COMPLIANCE_PKG):
+	$(CLONE_RISCV_COMPLIANCE_CMD)
 
 
 ###############################################################################
@@ -180,4 +186,7 @@ clean_test_programs:
 
 clean_riscvdv:
 	rm -rf $(RISCVDV_PKG)
+
+clean_new_riscv_compliance:
+	rm -rf $(RISCV_COMPLIANCE_PKG)
 
