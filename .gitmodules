@@ -1,3 +1,0 @@
-[submodule "cv32/tests/core/riscv-compliance"]
-	path = cv32/tests/core/new_riscv_compliance
-	url = https://github.com/riscv/riscv-compliance
