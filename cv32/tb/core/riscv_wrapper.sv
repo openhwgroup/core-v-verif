@@ -17,7 +17,7 @@ module riscv_wrapper
                 RAM_ADDR_WIDTH    = 20,
                 BOOT_ADDR         = 'h80,
                 DM_HALTADDRESS    = 32'h1A11_0800,
-                HARD_ID           = 32'h0000_0000,
+                HART_ID           = 32'h0000_0000,
                 // Parameters used by DUT
                 PULP_HWLP         = 0,
                 PULP_CLUSTER      = 0,
@@ -51,7 +51,7 @@ module riscv_wrapper
     logic [31:0]                  data_wdata;
 
     // signals to debug unit
-    logic                         debug_req_i;
+    logic                         debug_req;
 
     // irq signals (not used)
     logic                         irq;
@@ -61,8 +61,6 @@ module riscv_wrapper
 
     // interrupts (only timer for now)
     assign irq_sec     = '0;
-
-    assign debug_req_i = 1'b0;
 
     // instantiate the core
     riscv_core #(
@@ -117,7 +115,7 @@ module riscv_wrapper
          .irq_external_i         (1'b0                   ),
          .irq_fast_i             ({48{1'b0}}             ),
 
-         .debug_req_i            ( debug_req_i           ),
+         .debug_req_i            ( debug_req             ),
 
          .fetch_enable_i         ( fetch_enable_i        ),
          .core_busy_o            ( core_busy_o           )
@@ -150,6 +148,8 @@ module riscv_wrapper
          .irq_ack_i      ( irq_ack                        ),
          .irq_id_o       (                                ),
          .irq_o          ( irq                            ),
+
+         .debug_req_o    ( debug_req                      ),
 
          .pc_core_id_i   ( riscv_core_i.pc_id             ),
 
