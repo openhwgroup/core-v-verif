@@ -40,10 +40,10 @@
  */
 module uvmt_cv32_dut_wrap #(// DUT (riscv_core) parameters.
                             // https://github.com/openhwgroup/core-v-docs/blob/master/cores/cv32e40p/CV32E40P_and%20CV32E40_Features_Parameters.pdf
-                            parameter PULP_HWLP           =  0,
+                            parameter PULP_XPULP          =  0,
                                       PULP_CLUSTER        =  0,
-                                      FPU                 =   0,
-                                      PULP_ZFINX          =   0,
+                                      FPU                 =  0,
+                                      PULP_ZFINX          =  0,
                                       NUM_MHPMCOUNTERS    =  1,
                             // Remaining parameters are used by TB components only
                                       INSTR_ADDR_WIDTH    =  32,
@@ -138,10 +138,10 @@ module uvmt_cv32_dut_wrap #(// DUT (riscv_core) parameters.
     // --------------------------------------------
     // instantiate the core
     cv32e40p_core #(
-                 .PULP_HWLP        (PULP_HWLP),
-                 .PULP_CLUSTER    (PULP_CLUSTER),
-                 .FPU             (FPU),
-                 .PULP_ZFINX      (PULP_ZFINX),
+                 .PULP_XPULP       (PULP_XPULP),
+                 .PULP_CLUSTER     (PULP_CLUSTER),
+                 .FPU              (FPU),
+                 .PULP_ZFINX       (PULP_ZFINX),
                  .NUM_MHPMCOUNTERS (NUM_MHPMCOUNTERS)
                 )
     riscv_core_i
@@ -189,14 +189,71 @@ module uvmt_cv32_dut_wrap #(// DUT (riscv_core) parameters.
          //       Connect all interrupt signals to an SV interface
          //       and pass to ENV for an INTERRUPT AGENT to drive/monitor.
          .irq_i                  ( irq32                          ),
-         .irq_ack_o              ( irq_ack                           ),
+         .irq_ack_o              ( irq_ack                        ),
          .irq_id_o               ( irq_id5                        ),
 
          .debug_req_i            ( debug_req                      ),
 
-         .fetch_enable_i         ( core_cntrl_if.fetch_en            ),
+         .fetch_enable_i         ( core_cntrl_if.fetch_en         ),
          .core_sleep_o           ( core_status_if.core_busy       )
         ); //riscv_core_i
+
+    bind cv32e40p_core cv32e40p_tracer tracer_i(
+      .clk_i              ( clknrst_if.clk                                    ), // always-running clock for tracing
+      .rst_n              ( clknrst_if.reset_n                                ),
+
+      .hart_id_i          ( core_cntrl_if.hart_id                             ),
+
+      .pc                 ( riscv_core_i.id_stage_i.pc_id_i                   ),
+      .instr              ( riscv_core_i.id_stage_i.instr                     ),
+      .controller_state_i ( riscv_core_i.id_stage_i.controller_i.ctrl_fsm_cs  ),
+      .compressed         ( riscv_core_i.id_stage_i.is_compressed_i           ),
+      .id_valid           ( riscv_core_i.id_stage_i.id_valid_o                ),
+      .is_decoding        ( riscv_core_i.id_stage_i.is_decoding_o             ),
+      .is_illegal         ( riscv_core_i.id_stage_i.illegal_insn_dec          ),
+      .rs1_value          ( riscv_core_i.id_stage_i.operand_a_fw_id           ),
+      .rs2_value          ( riscv_core_i.id_stage_i.operand_b_fw_id           ),
+      .rs3_value          ( riscv_core_i.id_stage_i.alu_operand_c             ),
+      .rs2_value_vec      ( riscv_core_i.id_stage_i.alu_operand_b             ),
+
+      .rs1_is_fp          ( riscv_core_i.id_stage_i.regfile_fp_a              ),
+      .rs2_is_fp          ( riscv_core_i.id_stage_i.regfile_fp_b              ),
+      .rs3_is_fp          ( riscv_core_i.id_stage_i.regfile_fp_c              ),
+      .rd_is_fp           ( riscv_core_i.id_stage_i.regfile_fp_d              ),
+
+      .ex_valid           ( riscv_core_i.ex_valid                             ),
+      .ex_reg_addr        ( riscv_core_i.regfile_alu_waddr_fw                 ),
+      .ex_reg_we          ( riscv_core_i.regfile_alu_we_fw                    ),
+      .ex_reg_wdata       ( riscv_core_i.regfile_alu_wdata_fw                 ),
+
+      .ex_data_addr       ( riscv_core_i.data_addr_o                          ),
+      .ex_data_req        ( riscv_core_i.data_req_o                           ),
+      .ex_data_gnt        ( riscv_core_i.data_gnt_i                           ),
+      .ex_data_we         ( riscv_core_i.data_we_o                            ),
+      .ex_data_wdata      ( riscv_core_i.data_wdata_o                         ),
+      .data_misaligned    ( riscv_core_i.data_misaligned                      ),
+
+      .wb_bypass          ( riscv_core_i.ex_stage_i.branch_in_ex_i            ),
+
+      .wb_valid           ( riscv_core_i.wb_valid                             ),
+      .wb_reg_addr        ( riscv_core_i.regfile_waddr_fw_wb_o                ),
+      .wb_reg_we          ( riscv_core_i.regfile_we_wb                        ),
+      .wb_reg_wdata       ( riscv_core_i.regfile_wdata                        ),
+
+      .imm_u_type         ( riscv_core_i.id_stage_i.imm_u_type                ),
+      .imm_uj_type        ( riscv_core_i.id_stage_i.imm_uj_type               ),
+      .imm_i_type         ( riscv_core_i.id_stage_i.imm_i_type                ),
+      .imm_iz_type        ( riscv_core_i.id_stage_i.imm_iz_type[11:0]         ),
+      .imm_z_type         ( riscv_core_i.id_stage_i.imm_z_type                ),
+      .imm_s_type         ( riscv_core_i.id_stage_i.imm_s_type                ),
+      .imm_sb_type        ( riscv_core_i.id_stage_i.imm_sb_type               ),
+      .imm_s2_type        ( riscv_core_i.id_stage_i.imm_s2_type               ),
+      .imm_s3_type        ( riscv_core_i.id_stage_i.imm_s3_type               ),
+      .imm_vs_type        ( riscv_core_i.id_stage_i.imm_vs_type               ),
+      .imm_vu_type        ( riscv_core_i.id_stage_i.imm_vu_type               ),
+      .imm_shuffle_type   ( riscv_core_i.id_stage_i.imm_shuffle_type          ),
+      .imm_clip_type      ( riscv_core_i.id_stage_i.instr_rdata_i[11:7]       )
+    );
 
     // this handles read to RAM and memory mapped virtual (pseudo) peripherals
     mm_ram #(.RAM_ADDR_WIDTH    (RAM_ADDR_WIDTH),
