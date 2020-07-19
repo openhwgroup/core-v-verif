@@ -76,6 +76,10 @@ RISCVDV_BRANCH  ?= master
 #                  Generation of riscv_pmp_test fails (we do not care for CV32E40P).
 RISCVDV_HASH    ?= 10fd4fa8b7d0808732ecf656c213866cae37045a
 
+SDFIRM_REPO	?= https://github.com/zetalog/sdfirm
+SDFIRM_BRANCH	?= master
+SDFIRM_HASH	?= 2a73a39be6a6820087ba7aecff54519496fce26d
+
 # Generate command to clone the CV32E40P RTL
 ifeq ($(CV32E40P_BRANCH), master)
   TMP = git clone $(CV32E40P_REPO) --recurse $(CV32E40P_PKG)
@@ -117,6 +121,20 @@ else
 endif
 # RISCV-DV repo var end
 
+# Generate command to clone SDFIRM
+ifeq ($(SDFIRM_BRANCH), master)
+  TMP4 = git clone $(SDFIRM_REPO) --recurse $(SDFIRM_PKG)
+else
+  TMP4 = git clone -b $(SDFIRM_BRANCH) --single-branch $(SDFIRM_REPO) --recurse $(SDFIRM_PKG)
+endif
+
+ifeq ($(SDFIRM_HASH), head)
+  CLONE_SDFIRM_CMD = $(TMP4)
+else
+  CLONE_SDFIRM_CMD = $(TMP4); cd $(SDFIRM_PKG); git checkout $(SDFIRM_HASH)
+endif
+# SDFIRM repo var end
+
 ###############################################################################
 # Imperas Instruction Set Simulator
 
@@ -152,6 +170,8 @@ CORE_TEST_DIR                        = $(PROJ_ROOT_DIR)/cv32/tests/core
 BSP                                  = $(PROJ_ROOT_DIR)/cv32/bsp
 FIRMWARE                             = $(CORE_TEST_DIR)/firmware
 VERI_FIRMWARE                        = ../../tests/core/firmware
+SDFIRM                               = $(CORE_TEST_DIR)/sdfirm
+VERI_SDFIRM                          = ../../tests/core/sdfirm
 CUSTOM                               = $(CORE_TEST_DIR)/custom
 CUSTOM_DIR                          ?= $(CUSTOM)
 CUSTOM_PROG                         ?= my_hello_world
@@ -324,6 +344,15 @@ $(CV32_RISCV_COMPLIANCE_TESTS_FIRMWARE)/%.o: $(CV32_RISCV_COMPLIANCE_TESTS_FIRMW
 		$(RISCV_TEST_INCLUDES) \
 		-ffreestanding -nostdlib -o $@ $<
 
+# compile and dump sdfirm
+$(SDFIRM)/arch/riscv/configs/corev_cv32_defconfig: clone_sdfirm_prog
+
+$(SDFIRM)/sdfirm.elf: $(SDFIRM)/arch/riscv/configs/corev_cv32_defconfig
+	(cd $(SDFIRM); \
+	 export CORSS_COMPILE=$(RISCV_EXE_PREFIX); export ARCH=riscv; \
+	 make $(notdir $<); make; \
+	 cp $(SDFIRM)/sdfirm $@)
+
 # compile and dump picorv firmware
 
 # Thales start
@@ -436,5 +465,10 @@ firmware-clean:
 firmware-unit-test-clean:
 	rm -vrf $(addprefix $(FIRMWARE)/firmware_unit_test., elf bin hex map) \
 		$(FIRMWARE_OBJS) $(FIRMWARE_UNIT_TEST_OBJS)
+
+.PHONY: sdfirm-clean
+sdfirm-clean:
+	(cd $(SDFIRM); make clean)
+	rm -vrf $(addprefix $(SDFIRM)/sdfirm., elf hex)
 
 #endend

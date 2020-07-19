@@ -146,6 +146,8 @@ FPNEW_PKG            := $(CV32E40P_PKG)/rtl/fpnew
 CV32E40P_MANIFEST    := $(CV32E40P_PKG)/cv32e40p_manifest.flist
 export DESIGN_RTL_DIR = $(CV32E40P_PKG)/rtl
 
+SDFIRM_PKG   := $(PROJ_ROOT_DIR)/cv32/tests/core/sdfirm
+
 # Shorthand rules for convience
 cv32e40p_pkg: $(CV32E40P_PKG)
 
@@ -471,6 +473,12 @@ custom: verilate $(VERI_CUSTOM)/$(CUSTOM_PROG).hex
 		"+firmware=$(VERI_CUSTOM)/$(CUSTOM_PROG).hex" \
 		| tee $(VERI_LOG_DIR)/$(CUSTOM_PROG).log
 
+sdfirm: verilate $(SDFIRM)/sdfirm.hex
+	mkdir -p $(VERI_LOG_DIR)
+	./testbench_verilator $(VERI_FLAGS) \
+		"+firmware=$(SDFIRM)/sdfirm.hex" \
+		| tee $(VERI_LOG_DIR)/sdfirm.log
+
 cv32-riscv-tests: verilate ../../tests/core/cv32_riscv_tests_firmware/cv32_riscv_tests_firmware.hex
 	mkdir -p $(VERI_LOG_DIR)
 	./testbench_verilator $(VERI_FLAGS) \
@@ -570,6 +578,12 @@ $(CV32E40P_PKG):
 	$(CLONE_CV32E40P_CMD)
 	$(CLONE_FPNEW_CMD)
 
+###############################################################################
+# SDFIRM program dependencies
+
+clone_sdfirm_prog:
+	$(CLONE_SDFIRM_CMD)
+
 
 ###############################################################################
 # general targets
@@ -585,10 +599,10 @@ tc-clean:
 	find $(CORE_TEST_DIR) -name *.map     -exec rm {} \;
 
 .PHONY: clean clean_all distclean
-clean: questa-clean tc-clean verilate-clean vcs-clean firmware-clean custom-clean dsim-clean xrun-clean vcs-clean
+clean: questa-clean tc-clean verilate-clean vcs-clean firmware-clean sdfirm-clean custom-clean dsim-clean xrun-clean vcs-clean
 
 distclean: clean
-	rm -rf riscv-fesvr riscv-isa-sim $(CV32E40P_PKG) work
+	rm -rf riscv-fesvr riscv-isa-sim $(CV32E40P_PKG) $(SDFIRM_PKG) work
 
 clean_all: distclean
 #endend
