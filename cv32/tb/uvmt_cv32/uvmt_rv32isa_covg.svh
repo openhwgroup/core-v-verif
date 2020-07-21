@@ -1381,19 +1381,29 @@ class riscv_32isa_coverage;
             "c.li"    : begin ins.asm=C_LI; c_li_cg.sample(ins); end
             "c.lui"    : begin ins.asm=C_LUI; c_lui_cg.sample(ins); end
 //    ,C_ADDI,C_ADDI16SP,C_ADDI4SPN
-//            "addi"     : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == c_get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi")) c_addi_cg.sample(ins);
-//            "addi16sp" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == c_get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi"))  c_addi16sp_cg.sample(ins);
-//            "addi4spn" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == c_get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi")) c_addi4spn_cg.sample(ins);
-            "c.addi"    : begin ins.asm=C_ADDI; c_addi_cg.sample(ins); end
-            "c.addi16sp"    : begin ins.asm=C_ADDI16SP; c_addi16sp_cg.sample(ins); end
-            "c.addi4spn"    : begin ins.asm=C_ADDI4SPN; c_addi4spn_cg.sample(ins); end
+// WORKAROUND
+            "addi"     : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi")) c_addi_cg.sample(ins);
+            "addi16sp" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi") &&
+                              get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == "x2") c_addi16sp_cg.sample(ins);
+            "addi4spn" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi") &&
+                              get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi") == "x2") c_addi4spn_cg.sample(ins);
+// NEW
+//            "addi"     : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi")) c_addi_cg.sample(ins);
+//            "addi16sp" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi"))  c_addi16sp_cg.sample(ins);
+//            "addi4spn" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi")) c_addi4spn_cg.sample(ins);
+// OLD
+//            "c.addi"    : begin ins.asm=C_ADDI; c_addi_cg.sample(ins); end
+//            "c.addi16sp"    : begin ins.asm=C_ADDI16SP; c_addi16sp_cg.sample(ins); end
+//            "c.addi4spn"    : begin ins.asm=C_ADDI4SPN; c_addi4spn_cg.sample(ins); end
 //    ,C_SLLI,C_SRLI,C_SRAI,C_ANDI,C_ADD
             "c.slli"    : begin ins.asm=C_SLLI; c_slli_cg.sample(ins); end
             "c.srli"    : begin ins.asm=C_SRLI; c_srli_cg.sample(ins); end
             "c.srai"    : begin ins.asm=C_SRAI; c_srai_cg.sample(ins); end
             "c.andi"    : begin ins.asm=C_ANDI; c_andi_cg.sample(ins); end
-            "c.add"    : begin ins.asm=C_ADD; c_add_cg.sample(ins); end
-//            "add"      : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "add")  == c_get_gpr_name(ins.ops[1].val, ins.ops[1].key, "add") ) c_add_cg.sample(ins);
+// WORKAROUND
+            "add"      : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "add")  == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "add") ) c_add_cg.sample(ins);
+// OLD
+//            "c.add"    : begin ins.asm=C_ADD; c_add_cg.sample(ins); end
 //    ,C_AND,C_OR,C_XOR,C_SUB,C_NOP,C_EBREAK
             "c.and"    : begin ins.asm=C_AND; c_and_cg.sample(ins); end
             "c.or"    : begin ins.asm=C_OR; c_or_cg.sample(ins); end
