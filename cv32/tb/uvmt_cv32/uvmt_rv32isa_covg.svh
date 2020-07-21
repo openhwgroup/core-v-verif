@@ -40,10 +40,6 @@
 // The following compressed instructions have not been added:
 // C_FLWSP,C_FLDSP,C_FSWSP,C_FSDSP,C_FLW,C_FLD,C_FSW,C_FSD,
 // C_J,C_JR,C_BEQZ,C_BNEZ,C_MV,C_SLLI64,C_SRLI64,C_SRAI64
-// The following compressed pseudo-instructions are included:
-// C_LWSP,C_SWSP,C_LW,C_SW,C_JAL,C_JALR,C_LI,C_LUI,C_ADDI,
-// C_ADDI16SP,C_ADDI4SPN,C_SLLI,C_SRLI,C_SRAI,C_ANDI,C_ADD,
-// C_AND,C_OR,C_XOR,C_SUB,C_NOP,C_EBREAK
 // The following instructions have been added:
 // FENCE
 typedef enum {
@@ -56,6 +52,11 @@ typedef enum {
     ,SRL,SRLI,SUB,SW,XOR,XORI
     ,MUL,MULH,MULHU,MULHSU
     ,DIV,REM,DIVU,REMU
+    ,C_LWSP,C_SWSP,C_LW,C_SW
+    ,C_JAL,C_JALR,C_LI,C_LUI
+    ,C_ADDI,C_ADDI16SP,C_ADDI4SPN
+    ,C_SLLI,C_SRLI,C_SRAI,C_ANDI,C_ADD
+    ,C_AND,C_OR,C_XOR,C_SUB,C_NOP,C_EBREAK
 } instr_name_t; // assembler
 
 
@@ -257,7 +258,9 @@ class riscv_32isa_coverage;
         return val;
     endfunction
 
-// TODO: add check for value is 16-bit
+// TODO: add check for value is less than 16-bit
+// FIXME : c_addi16spn_cg immediate is 6-bits wide
+// FIXME : c_addi4spn_cg immediate is 8-bits wide
     function int c_check_imm(string s, asm);
       int val;
         if (s[1] == "x") begin
@@ -456,9 +459,9 @@ class riscv_32isa_coverage;
     endgroup
 
 // TODO : case when rd = x0 counted but not singled out
-// FIXME: REVIEW AND UPDATE BY 17-July-2020
+// FIXME: DONE
     covergroup jal_cg with function sample(ins_t ins);
-        //option.per_instance = 1;
+        option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "jal");
         cp_jmp19   : coverpoint get_imm(ins.ops[1].val,"jal" ) {
             bins neg  = {[$:-1]};
@@ -942,113 +945,106 @@ class riscv_32isa_coverage;
 // TODO : DONE
     covergroup c_lwsp_cg     with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lw");
-        cp_imm6   : coverpoint get_imm(ins.ops[1].val, "lw") {
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lwsp");
+        cp_imm6   : coverpoint get_imm(ins.ops[1].val, "c.lwsp") {
             bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
-        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "lw");
+        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lwsp");
     endgroup
 
+// TODO : missing coverage of all combinations of source and destination operands.
 // TODO : DONE
     covergroup c_swsp_cg    with function sample(ins_t ins);
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.swsp");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.swsp");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.swsp" ) {
+        option.per_instance = 1;
+        cp_rs2   : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.swsp");
+        cp_imm6  : coverpoint get_imm(ins.ops[1].val, "c.swsp") {
+            bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
+        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.swsp");
     endgroup
 
-// TODO : review by 20-July-2020
-    covergroup c_fswsp_cg    with function sample(ins_t ins);
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.fswsp");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.fswsp");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.fswsp" ) {
-            bins zero = {0};
-            bins pos  = {[1:$]};
-        }
-    endgroup
-
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all combinations of source and destination operands.
+// TODO : DONE
     covergroup c_lw_cg       with function sample(ins_t ins);
+        option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lw");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.lw");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lw" ) {
+        cp_imm6   : coverpoint get_imm(ins.ops[1].val, "c.lw") {
+            bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
+        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lw");
     endgroup
 
-// TODO : review by 20-July-2020
-    covergroup c_flw_cg      with function sample(ins_t ins);
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.flw");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.flw");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.flw" ) {
-            bins zero = {0};
-            bins pos  = {[1:$]};
-        }
-    endgroup
-
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all combinations of source and destination operands.
+// TODO : DONE
     covergroup c_sw_cg       with function sample(ins_t ins);
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.sw");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.sw");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.sw" ) {
+        option.per_instance = 1;
+        cp_rs2   : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.sw" ) {
+            bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
+        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.sw");
     endgroup
 
-// TODO : review by 20-July-2020
-    covergroup c_fsw_cg       with function sample(ins_t ins);
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.fsw");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.fsw");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.fsw" ) {
-            bins zero = {0};
-            bins pos  = {[1:$]};
-        }
-    endgroup
-
-// TODO : review by 20-July-2020
+// TODO : case when rd = x0 counted but not singled out
+// FIXME: DONE
     covergroup c_jal_cg      with function sample(ins_t ins);
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.jal");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.jal");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.jal" ) {
+        option.per_instance = 1;
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c,jal");
+        cp_jmp11   : coverpoint get_imm(ins.ops[1].val,"c.jal" ) {
+            bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
     endgroup
 
-// TODO : review by 20-July-2020
+// TODO : unclear from the code why "key" values for cp_r0 and cp_r1 can be "R" or "C"
+// TODO : need to clarify if this is due to the diassembler and unrelated to RTL ISA
+// TODO : missing check of arbirary positive and negative immediate values
+// TODO : missing check of maximum positive and negative immediate values
+// FIXME: DONE
     covergroup c_jalr_cg with function sample(ins_t ins, gpr_name_t r0, gpr_name_t r1);
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.jalr");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.jalr");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.jalr" ) {
+        option.per_instance = 1;
+        cp_r0    : coverpoint r0 iff (ins.ops[0].key[0] == "R");
+        cp_r1    : coverpoint r1 iff (ins.ops[1].key[0] == "R");
+        cp_imm0   : coverpoint get_imm(ins.ops[0].val,"c.jalr" ) iff (ins.ops[0].key[0] == "C") {
+            bins neg  = {[$:-1]};
+            bins zero = {0};
+            bins pos  = {[1:$]};
+        }
+        cp_imm1   : coverpoint get_imm(ins.ops[1].val,"c.jalr" ) iff (ins.ops[1].key[0] == "C") {
+            bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
     endgroup
 
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all combinations of source and destination operands.
+// TODO : missing check of overflow/underflow
+// FIXME: DONE
     covergroup c_li_cg       with function sample(ins_t ins);
+        option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.li");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.li");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.li" ) {
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.li");
+        cp_imm6   : coverpoint get_imm(ins.ops[2].val,"c.li" ) {
+            bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
     endgroup
 
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all immediate values and destination registers.
+// FIXME: DONE
     covergroup c_lui_cg      with function sample(ins_t ins);
+        option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lui");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.lui");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lui" ) {
-            bins zero = {0};
-            bins pos  = {[1:$]};
-        }
+        cp_uimm6   : coverpoint get_imm(ins.ops[1].val,"c.lui" );
     endgroup
 
     // MikeT - 20200714: c_addi_cg redefined to reflect single register,
@@ -1062,10 +1058,15 @@ class riscv_32isa_coverage;
     //    }
     //endgroup
 
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all combinations of source and destination operands.
+// TODO : missing check of overflow/underflow
+// TODO : NOP covered by nop_cg cover group
+// FIXME: DONE
     covergroup c_addi_cg with function sample(ins_t ins);
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi");
-        cp_imm6  : coverpoint get_imm(ins.ops[2].val,"addi" ) {
+        option.per_instance = 1;
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.addi");
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.addi");
+        cp_imm6   : coverpoint get_imm(ins.ops[2].val,"c.addi" ) {
             bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
@@ -1084,10 +1085,15 @@ class riscv_32isa_coverage;
     //    }
     //endgroup
 
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all combinations of source and destination operands.
+// TODO : missing check of overflow/underflow
+// FIXME: DONE
     covergroup c_addi16sp_cg with function sample(ins_t ins);
+        option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.addi16sp");
-        cp_imm6  : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.addi16sp" ) {
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.addi16sp");
+        cp_imm6   : coverpoint get_imm(ins.ops[2].val,"c.addi16sp" ) {
+            bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
@@ -1105,51 +1111,67 @@ class riscv_32isa_coverage;
     //    }
     //endgroup
 
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all combinations of source and destination operands.
+// TODO : missing check of overflow/underflow
+// FIXME: DONE
     covergroup c_addi4spn_cg  with function sample(ins_t ins);
+        option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.addi4sp");
-        cp_imm8  : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.addi4sp" ) {
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.addi4sp");
+        cp_imm8   : coverpoint get_imm(ins.ops[2].val,"c.addi4sp" ) {
+            bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
     endgroup
     // MikeT - 20200714
 
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all combinations of source and destination operands.
+// FIXME: DONE
     covergroup c_slli_cg     with function sample(ins_t ins);
+        option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.slli");
         cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.slli");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.slli" ) {
+        cp_shamt5   : coverpoint get_imm(ins.ops[2].val, "c.slli" ) {
             bins zero = {0};
             bins pos  = {[1:$]};
         }
     endgroup
 
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all combinations of source and destination operands.
+// FIXME: DONE
     covergroup c_srli_cg     with function sample(ins_t ins);
+        option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.srli");
         cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.srli");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.srli" ) {
+        cp_shamt5   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.srli" ) {
             bins zero = {0};
             bins pos  = {[1:$]};
         }
     endgroup
 
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all combinations of source and destination operands.
+// TODO : missing check of arbirary positive and negative immediate values
+// FIXME: DONE
     covergroup c_srai_cg     with function sample(ins_t ins);
+        option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.srai");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.srai");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.srai" ) {
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.srai"){
+            bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
+        cp_shamt5   : coverpoint get_imm(ins.ops[2].val,"c.srai" );
     endgroup
 
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all combinations of source and destination operands.
+// FIXME: DONE
     covergroup c_andi_cg     with function sample(ins_t ins);
+        option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.andi");
         cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.andi");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.andi" ) {
+        cp_imm6   : coverpoint get_imm(ins.ops[2].val,"c.andi" ) {
+            bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
@@ -1168,72 +1190,67 @@ class riscv_32isa_coverage;
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // TODO : missing check of overflow/underflow
-// TODO : review by 20-July-2020
+// FIXME: DONE
     covergroup c_add_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd     : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "add");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "add");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "add");
+        cp_rd     : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.add");
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.add");
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.add");
     endgroup
     // MikeT - 20200714
 
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all combinations of source and destination operands.
+// FIXME: DONE
     covergroup c_and_cg      with function sample(ins_t ins);
+        option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.and");
         cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.and");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.and" ) {
-            bins zero = {0};
-            bins pos  = {[1:$]};
-        }
+        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.and");
     endgroup
 
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all combinations of source and destination operands.
+// FIXME: DONE
     covergroup c_or_cg       with function sample(ins_t ins);
+        option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.or");
         cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.or");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.or" ) {
-            bins zero = {0};
-            bins pos  = {[1:$]};
-        }
+        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.or");
     endgroup
 
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all combinations of source and destination operands.
+// FIXME: DONE
     covergroup c_xor_cg      with function sample(ins_t ins);
+        option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.xor");
         cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.xor");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.xor" ) {
-            bins zero = {0};
-            bins pos  = {[1:$]};
-        }
+        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.xor");
     endgroup
 
-// TODO : review by 20-July-2020
+// TODO : missing coverage of all combinations of source and destination operands.
+// TODO : missing check of overflow/underflow
+// FIXME: DONE
     covergroup c_sub_cg      with function sample(ins_t ins);
+        option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.sub");
         cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.sub");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.sub" ) {
-            bins zero = {0};
-            bins pos  = {[1:$]};
-        }
+        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.sub");
     endgroup
 
-// TODO : review by 20-July-2020
+// TODO : cover group for NOP (addi x0, x0, imm), may need to be merged into addi_cg
+// FIXME: DONE
     covergroup c_nop_cg      with function sample(ins_t ins);
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.nop");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.nop");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.nop" ) {
-            bins zero = {0};
-            bins pos  = {[1:$]};
+        option.per_instance = 1;
+        cp_asm   : coverpoint ins.asm == NOP {
+            ignore_bins zero = {0};
         }
     endgroup
 
-// TODO : review by 20-July-2020
+// TODO : only counting occurrence, ignoring when not called.
+// FIXME: DONE
     covergroup c_ebreak_cg   with function sample(ins_t ins);
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.ebreak");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.ebreak");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.ebreak" ) {
-            bins zero = {0};
-            bins pos  = {[1:$]};
+        option.per_instance = 1;
+        cp_asm   : coverpoint ins.asm == EBREAK {
+            ignore_bins zero = {0};
         }
     endgroup
 
@@ -1319,15 +1336,35 @@ class riscv_32isa_coverage;
 
     function void check_compressed(input ins_t ins);
         case (ins.ins_str)
-            "lw"    : if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lwsp")  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lwsp")
+            "lw"    : begin
+                ins.asm=C_LWSP;
+                if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lwsp")  && (get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lwsp") == "sp")
                              && c_check_imm(ins.ops[1].val, "c.lwsp")) c_lwsp_cg.sample(ins);
-            "c.swsp"    : begin ins.asm=C_SWSP; c_swsp_cg.sample(ins); end
-            "c.lw"    : begin ins.asm=C_LW; c_lw_cg.sample(ins); end
-            "c.sw"    : begin ins.asm=C_SW; c_sw_cg.sample(ins); end
-            "c.jal"    : begin ins.asm=C_JAL; c_jal_cg.sample(ins); end
-            "c.jalr"    : begin
-                gpr_name_t r0, r1;
+             end
+            "sw"    : begin
+                ins.asm=C_SWSP;
+                if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.swsp")  && (get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.swsp") == "sp")
+                             && c_check_imm(ins.ops[1].val, "c.swsp")) c_swsp_cg.sample(ins);
+             end
+            "lw"    : begin
+                ins.asm=C_LW;
+                if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lw")  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lw")
+                             && c_check_imm(ins.ops[1].val, "c.lw")) c_lw_cg.sample(ins);
+             end
+            "sw"    :  begin
+                ins.asm=C_SW;
+                if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.sw")  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.sw")
+                             && c_check_imm(ins.ops[1].val, "c.sw")) c_sw_cg.sample(ins);
+             end
+            "jal"   :  begin
+                ins.asm=C_JAL;
+                if ( (get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.jal") == "ra") && c_check_imm(ins.ops[1].val, "c.jal")) c_jal_cg.sample(ins);
+             end
+            "jalr"  :   begin
                 ins.asm=C_JALR;
+                begin
+                gpr_name_t r0, r1;
+                ins.asm=JALR;
                 if (ins.ops[0].key[0] == "R")
                     r0 = get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.jalr");
                 else
@@ -1336,29 +1373,34 @@ class riscv_32isa_coverage;
                     r1 = get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.jalr");
                 else
                     r1 = gpr_none;
-                c_jalr_cg.sample(ins, r0, r1);
+                if ( (get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.jalr") == "ra")  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.jalr")
+                      && c_check_imm(ins.ops[1].val, "c.jalr")) c_jalr_cg.sample(ins, r0, r1);
+                end
             end
+//    ,C_LI,C_LUI
             "c.li"    : begin ins.asm=C_LI; c_li_cg.sample(ins); end
             "c.lui"    : begin ins.asm=C_LUI; c_lui_cg.sample(ins); end
+//    ,C_ADDI,C_ADDI16SP,C_ADDI4SPN
+//            "addi"     : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == c_get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi")) c_addi_cg.sample(ins);
+//            "addi16sp" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == c_get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi"))  c_addi16sp_cg.sample(ins);
+//            "addi4spn" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == c_get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi")) c_addi4spn_cg.sample(ins);
             "c.addi"    : begin ins.asm=C_ADDI; c_addi_cg.sample(ins); end
             "c.addi16sp"    : begin ins.asm=C_ADDI16SP; c_addi16sp_cg.sample(ins); end
             "c.addi4spn"    : begin ins.asm=C_ADDI4SPN; c_addi4spn_cg.sample(ins); end
+//    ,C_SLLI,C_SRLI,C_SRAI,C_ANDI,C_ADD
             "c.slli"    : begin ins.asm=C_SLLI; c_slli_cg.sample(ins); end
             "c.srli"    : begin ins.asm=C_SRLI; c_srli_cg.sample(ins); end
             "c.srai"    : begin ins.asm=C_SRAI; c_srai_cg.sample(ins); end
             "c.andi"    : begin ins.asm=C_ANDI; c_andi_cg.sample(ins); end
             "c.add"    : begin ins.asm=C_ADD; c_add_cg.sample(ins); end
+//            "add"      : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "add")  == c_get_gpr_name(ins.ops[1].val, ins.ops[1].key, "add") ) c_add_cg.sample(ins);
+//    ,C_AND,C_OR,C_XOR,C_SUB,C_NOP,C_EBREAK
             "c.and"    : begin ins.asm=C_AND; c_and_cg.sample(ins); end
             "c.or"    : begin ins.asm=C_OR; c_or_cg.sample(ins); end
             "c.xor"    : begin ins.asm=C_XOR; c_xor_cg.sample(ins); end
             "c.sub"    : begin ins.asm=C_SUB; c_sub_cg.sample(ins); end
             "c.nop"    : begin ins.asm=C_NOP; c_nop_cg.sample(ins); end
             "c.ebreak"    : begin ins.asm=C_EBREAK; c_ebreak_cg.sample(ins); end
-
-            "add"      : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "add")  == c_get_gpr_name(ins.ops[1].val, ins.ops[1].key, "add") ) c_add_cg.sample(ins);
-            "addi"     : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == c_get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi")) c_addi_cg.sample(ins);
-            "addi16sp" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == c_get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi"))  c_addi16sp_cg.sample(ins);
-            "addi4spn" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == c_get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi")) c_addi4spn_cg.sample(ins);
             default: `uvm_info("RV32ISA Coverage", $sformatf("check_compressed(): ins [%0s] not yet checked", ins.ins_str), UVM_HIGH)
         endcase
     endfunction: check_compressed
