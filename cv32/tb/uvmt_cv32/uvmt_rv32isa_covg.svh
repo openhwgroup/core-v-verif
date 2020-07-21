@@ -138,7 +138,7 @@ class riscv_32isa_coverage;
             "t5": return gpr_name_t'(t5);
             "t6": return gpr_name_t'(t6);
             default: begin
-                `uvm_error("RV32ISA Coverage", $sformatf("get_gpr_name(): GPR [%0s] not recognized!", s), UVM_HIGH)
+                `uvm_error("RV32ISA Coverage", $sformatf("get_gpr_name(): GPR [%0s] not recognized!", s))
             end
         endcase
     endfunction
@@ -237,7 +237,7 @@ class riscv_32isa_coverage;
             "pmpcfg2": return csr_name_t'(pmpcfg2);
             "pmpcfg3": return csr_name_t'(pmpcfg3);
             default: begin
-                `uvm_error("RV32ISA Coverage", $sformatf("get_csr_name(): CSR [%0s] not recognized!", s), UVM_HIGH)
+                `uvm_error("RV32ISA Coverage", $sformatf("get_csr_name(): CSR [%0s] not recognized!", s))
             end
         endcase
     endfunction
