@@ -138,26 +138,25 @@ class riscv_32isa_coverage;
             "t5": return gpr_name_t'(t5);
             "t6": return gpr_name_t'(t6);
             default: begin
-                $display("ERROR: get_gpr_name(%0s) not found gpr for op(%0s) in (%0s)", s, r, asm);
-                $finish(-1);
+                `uvm_error("RV32ISA Coverage", $sformatf("get_gpr_name(): GPR [%0s] not recognized!", s), UVM_HIGH)
             end
         endcase
     endfunction
 
 // These are the General Purpouse Registers for Compressed instructions
-    function gpr_name_t c_check_gpr_name (string s, r, asm);
+    function logic c_check_gpr_name (string s, r, asm);
         case (s)
-            "s0": return gpr_name_t'(s0);
-            "s1": return gpr_name_t'(s1);
-            "a0": return gpr_name_t'(a0);
-            "a1": return gpr_name_t'(a1);
-            "a2": return gpr_name_t'(a2);
-            "a3": return gpr_name_t'(a3);
-            "a4": return gpr_name_t'(a4);
-            "a5": return gpr_name_t'(a5);
+            "s0": return 1;
+            "s1": return 1;
+            "a0": return 1;
+            "a1": return 1;
+            "a2": return 1;
+            "a3": return 1;
+            "a4": return 1;
+            "a5": return 1;
             default: begin
-                $display("ERROR: c_check_gpr_name(%0s) not found gpr for op(%0s) in (%0s)", s, r, asm);
-                $finish(-1);
+                `uvm_info("RV32ISA Coverage", $sformatf("c_check_gpr_name(): ins [%0s] not using on of: s0,s1,a0,a1,a2,a3,a4,a5", ins.ins_str), UVM_HIGH)
+                return 0;
             end
         endcase
     endfunction
@@ -238,8 +237,7 @@ class riscv_32isa_coverage;
             "pmpcfg2": return csr_name_t'(pmpcfg2);
             "pmpcfg3": return csr_name_t'(pmpcfg3);
             default: begin
-                $display("ERROR: get_csr_name(%0s) not found csr for op(%0s) in (%0s)", s, r, asm);
-                $finish(-1);
+                `uvm_error("RV32ISA Coverage", $sformatf("get_csr_name(): CSR [%0s] not recognized!", s), UVM_HIGH)
             end
         endcase
     endfunction
@@ -261,7 +259,7 @@ class riscv_32isa_coverage;
 // TODO: add check for value is less than 16-bit
 // FIXME : c_addi16spn_cg immediate is 6-bits wide
 // FIXME : c_addi4spn_cg immediate is 8-bits wide
-    function int c_check_imm(string s, asm);
+    function logic c_check_imm(string s, asm);
       int val;
         if (s[1] == "x") begin
             s = s.substr(2,s.len()-1);
@@ -275,8 +273,8 @@ class riscv_32isa_coverage;
         if ((val > -65536)&&(val < 65536)) begin
             return 1;
         end else begin
-             $display("ERROR: c_check_imm(%0s) is more than 16-bit wide for (%0s)", s, asm);
-             $finish(-1);
+            `uvm_info("RV32ISA Coverage", $sformatf("c_check_imm(): ins [%0s] not within 16-bit range", ins.ins_str), UVM_HIGH)
+            return 0;
         end
     endfunction
 
