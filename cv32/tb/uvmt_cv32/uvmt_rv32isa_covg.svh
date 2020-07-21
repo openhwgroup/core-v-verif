@@ -155,7 +155,7 @@ class riscv_32isa_coverage;
             "a4": return 1;
             "a5": return 1;
             default: begin
-                `uvm_info("RV32ISA Coverage", $sformatf("c_check_gpr_name(): ins [%0s] not using on of: s0,s1,a0,a1,a2,a3,a4,a5", ins.ins_str), UVM_HIGH)
+                `uvm_info("RV32ISA Coverage", $sformatf("c_check_gpr_name(): ins [%0s] not using on of: s0,s1,a0,a1,a2,a3,a4,a5", s), UVM_HIGH)
                 return 0;
             end
         endcase
@@ -273,7 +273,7 @@ class riscv_32isa_coverage;
         if ((val > -65536)&&(val < 65536)) begin
             return 1;
         end else begin
-            `uvm_info("RV32ISA Coverage", $sformatf("c_check_imm(): ins [%0s] not within 16-bit range", ins.ins_str), UVM_HIGH)
+            `uvm_info("RV32ISA Coverage", $sformatf("c_check_imm(): ins [%0s] not within 16-bit range", s), UVM_HIGH)
             return 0;
         end
     endfunction
