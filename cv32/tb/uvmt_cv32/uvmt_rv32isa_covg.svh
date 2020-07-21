@@ -37,12 +37,15 @@
 // The following pseudo-instructions have been removed:
 // BEQZ, BGEZ, BGT,BGTU,BGTZ, BLE,BLEU,BLEZ,BLTZ, BNEZ, ILLEGAL
 // J, JR, MV, NOT, NEG, NEGW, RET, SEQZ, SGTZ, SLTZ, SNEZ
-// The following pseudo-instructions have not been added:
-// C_FLDSP, C_FSDSP, C_FLD, C_FSD, C_J, C_JR, C_BEQZ, C_BNEZ,
-// C_MV, C_SLLI64, C_SRLI64, C_SRAI64
+// The following compressed instructions have not been added:
+// C_FLWSP,C_FLDSP,C_FSWSP,C_FSDSP,C_FLW,C_FLD,C_FSW,C_FSD,
+// C_J,C_JR,C_BEQZ,C_BNEZ,C_MV,C_SLLI64,C_SRLI64,C_SRAI64
+// The following compressed pseudo-instructions are included:
+// C_LWSP,C_SWSP,C_LW,C_SW,C_JAL,C_JALR,C_LI,C_LUI,C_ADDI,
+// C_ADDI16SP,C_ADDI4SPN,C_SLLI,C_SRLI,C_SRAI,C_ANDI,C_ADD,
+// C_AND,C_OR,C_XOR,C_SUB,C_NOP,C_EBREAK
 // The following instructions have been added:
 // FENCE
-
 typedef enum {
     ADD,ADDI,AND,ANDI,AUIPC,BEQ,BGE,BGEU
     ,BLTU,BNE,BLT, FENCE, EBREAK,ECALL
@@ -53,13 +56,6 @@ typedef enum {
     ,SRL,SRLI,SUB,SW,XOR,XORI
     ,MUL,MULH,MULHU,MULHSU
     ,DIV,REM,DIVU,REMU
-    ,C_LWSP,C_FLWSP,C_SWSP
-    ,C_FSWSP,C_LW,C_FLW
-    ,C_SW,C_FSW
-    ,C_JAL,C_JALR,C_LI,C_LUI,C_ADDI
-    ,C_ADDI16SP,C_ADDI4SPN,C_SLLI
-    ,C_SRLI,C_SRAI,C_ANDI,C_ADD,C_AND
-    ,C_OR,C_XOR,C_SUB,C_NOP,C_EBREAK
 } instr_name_t; // assembler
 
 
@@ -148,7 +144,7 @@ class riscv_32isa_coverage;
     endfunction
 
 // These are the General Purpouse Registers for Compressed instructions
-    function gpr_name_t c_get_gpr_name (string s, r, asm);
+    function gpr_name_t c_check_gpr_name (string s, r, asm);
         case (s)
             "s0": return gpr_name_t'(s0);
             "s1": return gpr_name_t'(s1);
@@ -159,7 +155,7 @@ class riscv_32isa_coverage;
             "a4": return gpr_name_t'(a4);
             "a5": return gpr_name_t'(a5);
             default: begin
-                $display("ERROR: c_get_gpr_name(%0s) not found gpr for op(%0s) in (%0s)", s, r, asm);
+                $display("ERROR: c_check_gpr_name(%0s) not found gpr for op(%0s) in (%0s)", s, r, asm);
                 $finish(-1);
             end
         endcase
@@ -262,7 +258,7 @@ class riscv_32isa_coverage;
     endfunction
 
 // TODO: add check for value is 16-bit
-    function int c_get_imm(string s, asm);
+    function int c_check_imm(string s, asm);
       int val;
         if (s[1] == "x") begin
             s = s.substr(2,s.len()-1);
@@ -273,9 +269,13 @@ class riscv_32isa_coverage;
         end else begin
             val = s.atoi();
         end
-        return val;
+        if ((val > -65536)&&(val < 65536)) begin
+            return 1;
+        end else begin
+             $display("ERROR: c_check_imm(%0s) is more than 16-bit wide for (%0s)", s, asm);
+             $finish(-1);
+        end
     endfunction
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Coverage of Base Integer Instruction Set, Version 2.1
@@ -934,31 +934,24 @@ class riscv_32isa_coverage;
 ///////////////////////////////////////////////////////////////////////////////
 
 // TODO : missing check that 32I & 32C instuctions aligned on 16/32-bit boundaries.
+// FIXME: the following instruction included in the verification plan are not
+//        supported and thus are not included in coverage code: C.FLWSP, C.FLDSP,
+//
 
 // TODO : missing coverage of all combinations of source and destination operands.
-// TODO : review by 20-July-2020
+// TODO : DONE
     covergroup c_lwsp_cg     with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lwsp");
-        cp_imm6   : coverpoint get_imm(ins.ops[1].val, ins.ops[1].key, "lwsp") {
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lw");
+        cp_imm6   : coverpoint get_imm(ins.ops[1].val, "lw") {
             bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
+        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "lw");
     endgroup
 
-// TODO : missing coverage of all combinations of source and destination operands.
-// TODO : review by 20-July-2020
-    covergroup c_flwsp_cg    with function sample(ins_t ins);
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.flwsp");
-        cp_imm   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.flwsp") {
-            bins neg  = {[$:-1]};
-            bins zero = {0};
-            bins pos  = {[1:$]};
-        }
-    endgroup
-
-// TODO : review by 20-July-2020
+// TODO : DONE
     covergroup c_swsp_cg    with function sample(ins_t ins);
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.swsp");
         cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.swsp");
@@ -1297,13 +1290,9 @@ class riscv_32isa_coverage;
         remu_cg = new();
         // The c_*_cg below are unmodified from the original
         c_lwsp_cg     = new();
-        c_flwsp_cg    = new();
         c_swsp_cg     = new();
-        c_fswsp_cg    = new();
         c_lw_cg       = new();
-        c_flw_cg      = new();
         c_sw_cg       = new();
-        c_fsw_cg      = new();
         c_jal_cg      = new();
         c_jalr_cg     = new();
         c_li_cg       = new();
@@ -1330,14 +1319,11 @@ class riscv_32isa_coverage;
 
     function void check_compressed(input ins_t ins);
         case (ins.ins_str)
-            "lwsp"    : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "add")  == c_get_gpr_name(ins.ops[1].val, ins.ops[1].key, "add") ) c_lwsp_cg.sample(ins);
-            "c.flwsp"    : begin ins.asm=C_FLWSP; c_flwsp_cg.sample(ins); end
+            "lw"    : if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lwsp")  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lwsp")
+                             && c_check_imm(ins.ops[1].val, "c.lwsp") c_lwsp_cg.sample(ins);
             "c.swsp"    : begin ins.asm=C_SWSP; c_swsp_cg.sample(ins); end
-            "c.fswsp"    : begin ins.asm=C_FSWSP; c_fswsp_cg.sample(ins); end
             "c.lw"    : begin ins.asm=C_LW; c_lw_cg.sample(ins); end
-            "c.flw"    : begin ins.asm=C_FLW; c_flw_cg.sample(ins); end
             "c.sw"    : begin ins.asm=C_SW; c_sw_cg.sample(ins); end
-            "c.fsw"    : begin ins.asm=C_FSW; c_fsw_cg.sample(ins); end
             "c.jal"    : begin ins.asm=C_JAL; c_jal_cg.sample(ins); end
             "c.jalr"    : begin
                 gpr_name_t r0, r1;
