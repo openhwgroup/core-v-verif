@@ -1344,16 +1344,16 @@ class riscv_32isa_coverage;
                 if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.swsp")  && (get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.swsp") == "sp")
                              && c_check_imm(ins.ops[1].val, "c.swsp")) c_swsp_cg.sample(ins);
              end
-            "lw"    : begin
-                ins.asm=C_LW;
-                if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lw")  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lw")
-                             && c_check_imm(ins.ops[1].val, "c.lw")) c_lw_cg.sample(ins);
-             end
-            "sw"    :  begin
-                ins.asm=C_SW;
-                if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.sw")  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.sw")
-                             && c_check_imm(ins.ops[1].val, "c.sw")) c_sw_cg.sample(ins);
-             end
+//            "lw"    : begin
+//                ins.asm=C_LW;
+//                if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lw")  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lw")
+//                             && c_check_imm(ins.ops[1].val, "c.lw")) c_lw_cg.sample(ins);
+//             end
+//            "sw"    :  begin
+//                ins.asm=C_SW;
+//                if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.sw")  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.sw")
+//                             && c_check_imm(ins.ops[1].val, "c.sw")) c_sw_cg.sample(ins);
+//             end
             "jal"   :  begin
                 ins.asm=C_JAL;
                 if ( (get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.jal") == "ra") && c_check_imm(ins.ops[1].val, "c.jal")) c_jal_cg.sample(ins);
