@@ -270,7 +270,7 @@ class riscv_32isa_coverage;
         end else begin
             val = s.atoi();
         end
-        if ((val > -65536)&&(val < 65536)) begin
+        if ((val > -127)&&(val < 127)) begin
             return 1;
         end else begin
             `uvm_info("RV32ISA Coverage", $sformatf("c_check_imm(): ins [%0s] not within 16-bit range", s), UVM_HIGH)
@@ -1336,8 +1336,8 @@ class riscv_32isa_coverage;
         case (ins.ins_str)
             "lw"    : begin
                 ins.asm=C_LWSP;
-                if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lwsp")  && (get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lwsp") == "sp")
-                             && c_check_imm(ins.ops[1].val, "c.lwsp")) c_lwsp_cg.sample(ins);
+                if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lwsp") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.lwsp")
+                     && c_check_imm(ins.ops[1].val, "c.lwsp")) c_lwsp_cg.sample(ins);
              end
             "sw"    : begin
                 ins.asm=C_SWSP;
