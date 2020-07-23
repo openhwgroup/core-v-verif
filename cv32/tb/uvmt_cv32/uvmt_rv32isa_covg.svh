@@ -1335,9 +1335,15 @@ class riscv_32isa_coverage;
     function void check_compressed(input ins_t ins);
         case (ins.ins_str)
             "lw"    : begin
-                ins.asm=C_LWSP;
                 if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lwsp") == get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lwsp")
-                     && c_check_imm(ins.ops[1].val, "c.lwsp")) c_lwsp_cg.sample(ins);
+                     && c_check_imm(ins.ops[1].val, "c.lwsp")) begin
+                    ins.asm=C_LWSP;
+                    c_lwsp_cg.sample(ins);
+                 end else if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lw")  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lw")
+                               && c_check_imm(ins.ops[1].val, "c.lw")) begin
+                    ins.asm=C_LW;
+                    c_lw_cg.sample(ins);
+                 end
              end
             "sw"    : begin
                 ins.asm=C_SWSP;
