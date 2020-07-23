@@ -138,7 +138,7 @@ class riscv_32isa_coverage;
             "t5": return gpr_name_t'(t5);
             "t6": return gpr_name_t'(t6);
             default: begin
-                `uvm_error("RV32ISA Coverage", $sformatf("get_gpr_name(): GPR [%0s] not recognized!", s))
+                `uvm_error("RV32ISA Coverage", $sformatf("get_gpr_name(): GPR [%0s] used by ins %s not recognized!", s, asm))
             end
         endcase
     endfunction
@@ -155,7 +155,7 @@ class riscv_32isa_coverage;
             "a4": return 1;
             "a5": return 1;
             default: begin
-                `uvm_info("RV32ISA Coverage", $sformatf("c_check_gpr_name(): ins [%0s] not using on of: s0,s1,a0,a1,a2,a3,a4,a5", s), UVM_HIGH)
+                `uvm_info("RV32ISA Coverage", $sformatf("c_check_gpr_name(): GPR [%0s] used by ins %s not one of: s0,s1,a0,a1,a2,a3,a4,a5", s, asm), UVM_HIGH)
                 return 0;
             end
         endcase
@@ -1336,7 +1336,7 @@ class riscv_32isa_coverage;
         case (ins.ins_str)
             "lw"    : begin
                 ins.asm=C_LWSP;
-                if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lwsp") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.lwsp")
+                if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lwsp") == get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lwsp")
                      && c_check_imm(ins.ops[1].val, "c.lwsp")) c_lwsp_cg.sample(ins);
              end
             "sw"    : begin
