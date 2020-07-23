@@ -24,7 +24,7 @@
 
 `ifdef COVERAGE
 //`include "class_coverage.svh"
-`include "uvmt_rv32isa_covg.svh"
+`include "uvmt_rv32isa_covg.sv"
 `endif
 
 /**

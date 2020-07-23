@@ -1339,12 +1339,12 @@ class riscv_32isa_coverage;
                      && c_check_imm(ins.ops[1].val, "c.lwsp")) begin
                     ins.asm=C_LWSP;
                     c_lwsp_cg.sample(ins);
-                   `uvm_info("RV32ISA Coverage", $sformatf("check_compressed( %0s ): checking ins %0s %0s %0s(%0s)", ins.asm.name, ins.ins_str, ins.ops[0].val, ins.ops[2].val, ins.ops[1].val), UVM_NONE) //UVM_HIGH)
+                   `uvm_info("RV32ISA Coverage", $sformatf("check_compressed( %0s ): checking ins %0s %0s %0s(%0s)", ins.asm.name, ins.ins_str, ins.ops[0].val, ins.ops[2].val, ins.ops[1].val), UVM_HIGH)
                  end else if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lw")  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lw")
                                && c_check_imm(ins.ops[1].val, "c.lw")) begin
                     ins.asm=C_LW;
                     c_lw_cg.sample(ins);
-                   `uvm_info("RV32ISA Coverage", $sformatf("check_compressed( %0s ): checking ins %0s %0s %0s(%0s)", ins.asm.name, ins.ins_str, ins.ops[0].val, ins.ops[2].val, ins.ops[1].val), UVM_NONE) //UVM_HIGH)
+                   `uvm_info("RV32ISA Coverage", $sformatf("check_compressed( %0s ): checking ins %0s %0s %0s(%0s)", ins.asm.name, ins.ins_str, ins.ops[0].val, ins.ops[2].val, ins.ops[1].val), UVM_HIGH)
                  end
              end
             "sw"    : begin
@@ -1352,7 +1352,7 @@ class riscv_32isa_coverage;
                              && c_check_imm(ins.ops[1].val, "c.swsp"))begin
                     ins.asm=C_SWSP;
                   c_swsp_cg.sample(ins);
-                   `uvm_info("RV32ISA Coverage", $sformatf("check_compressed( %0s ): checking ins %0s %0s %0s(%0s)", ins.asm.name, ins.ins_str, ins.ops[0].val, ins.ops[1].val, ins.ops[2].val), UVM_NONE) //UVM_HIGH)
+                   `uvm_info("RV32ISA Coverage", $sformatf("check_compressed( %0s ): checking ins %0s %0s %0s(%0s)", ins.asm.name, ins.ins_str, ins.ops[0].val, ins.ops[1].val, ins.ops[2].val), UVM_HIGH)
                  end
              end
 //            "lw"    : begin
@@ -1402,7 +1402,7 @@ class riscv_32isa_coverage;
                      && c_check_imm(ins.ops[1].val, "c.addi")) begin
                     ins.asm=C_ADDI;
                     c_addi_cg.sample(ins);
-                    `uvm_info("RV32ISA Coverage", $sformatf("check_compressed( %0s ): checking ins %0s %0s %0s(%0s)", ins.asm.name, ins.ins_str, ins.ops[0].val, ins.ops[1].val, ins.ops[2].val), UVM_NONE) //UVM_HIGH)
+                    `uvm_info("RV32ISA Coverage", $sformatf("check_compressed( %0s ): checking ins %0s %0s %0s(%0s)", ins.asm.name, ins.ins_str, ins.ops[0].val, ins.ops[1].val, ins.ops[2].val), UVM_HIGH)
                 end
              end
 //            "addi16sp" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi"))  c_addi16sp_cg.sample(ins);
