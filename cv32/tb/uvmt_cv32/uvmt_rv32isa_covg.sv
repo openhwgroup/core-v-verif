@@ -290,9 +290,15 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup add_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "add");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "add");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "add");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "add") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "add") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "add") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
@@ -301,8 +307,12 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup addi_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_imm11   : coverpoint get_imm(ins.ops[2].val,"addi" ) {
             bins neg  = {[$:-1]};
             bins zero = {0};
@@ -314,17 +324,27 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup and_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "and");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "and");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "and");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "and") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "and") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "and") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // FIXME: DONE
     covergroup andi_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "andi");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "andi");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "andi") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "andi") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_imm11   : coverpoint get_imm(ins.ops[2].val,"andi" ) {
             bins neg  = {[$:-1]};
             bins zero = {0};
@@ -336,7 +356,9 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup auipc_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "auipc");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "auipc") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_uimm20   : coverpoint get_imm(ins.ops[1].val,"auipc" ) {
             bins neg  = {[$:-1]};
             bins zero = {0};
@@ -349,8 +371,12 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup beq_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "beq");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "beq");
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "beq") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "beq") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_bra12   : coverpoint get_imm(ins.ops[2].val,"beq" ) {
             bins neg  = {[$:-1]};
             bins zero = {0};
@@ -363,8 +389,12 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup bge_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "bge");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "bge");
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "bge") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "bge") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_bra12   : coverpoint get_imm(ins.ops[2].val,"bge" ) {
             bins neg  = {[$:-1]};
             bins zero = {0};
@@ -376,8 +406,12 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup bgeu_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "bgeu");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "bgeu");
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "bgeu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "bgeu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_bra12   : coverpoint get_imm(ins.ops[2].val,"bgeu" ) {
             bins neg  = {[$:-1]};
             bins zero = {0};
@@ -390,8 +424,12 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup blt_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "blt");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "blt");
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "blt") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "blt") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_bra12   : coverpoint get_imm(ins.ops[2].val,"blt" ) {
             bins neg  = {[$:-1]};
             bins zero = {0};
@@ -417,8 +455,12 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup bne_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "bne");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "bne");
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "bne") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "bne") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_bra12   : coverpoint get_imm(ins.ops[2].val,"bne" ) {
             bins neg  = {[$:-1]};
             bins zero = {0};
@@ -460,7 +502,9 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup jal_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "jal");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "jal") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_jmp19   : coverpoint get_imm(ins.ops[1].val,"jal" ) {
             bins neg  = {[$:-1]};
             bins zero = {0};
@@ -496,13 +540,17 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup lb_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lb");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lb") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_imm11 : coverpoint get_imm(ins.ops[1].val, "lb") {
             bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
-        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "lb");
+        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "lb") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // FIXME : cover point for rs1 should be on ins.ops[1], unless format imm8(rs1) decoded
@@ -512,13 +560,17 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup lbu_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lbu");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lbu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_imm11    : coverpoint get_imm(ins.ops[1].val, "lbu") {
             bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
-        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "lbu");
+        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "lbu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // FIXME : cover point for rs1 should be on ins.ops[1], unless format imm8(rs1) decoded
@@ -528,13 +580,17 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup lh_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lh");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lh") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_imm11    : coverpoint get_imm(ins.ops[1].val, "lh") {
             bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
-        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "lh");
+        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "lh") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // FIXME : cover point for rs1 should be on ins.ops[1], unless format imm8(rs1) decoded
@@ -544,20 +600,26 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup lhu_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lhu");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lhu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_imm11    : coverpoint get_imm(ins.ops[1].val, "lhu") {
             bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
-        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "lhu");
+        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "lhu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : missing coverage of all immediate values and destination registers.
 // FIXME: DONE
     covergroup lui_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lui");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lui") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_uimm20   : coverpoint get_imm(ins.ops[1].val,"lui" );
     endgroup
 
@@ -568,13 +630,17 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup lw_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lw");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "lw") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_imm11 : coverpoint get_imm(ins.ops[1].val, "lw") {
             bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
-        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "lw");
+        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "lw") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : cover group for NOP (addi x0, x0, imm), may need to be merged into addi_cg
@@ -590,17 +656,27 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup or_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "or");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "or");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "or");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "or") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "or") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "or") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // FIXME: DONE
     covergroup ori_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "ori");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "ori");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "ori") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "ori") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_imm11   : coverpoint get_imm(ins.ops[2].val,"ori" ) {
             bins neg  = {[$:-1]};
             bins zero = {0};
@@ -615,13 +691,17 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup sb_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sb");
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sb") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_imm11  : coverpoint get_imm(ins.ops[1].val, "sb") {
             bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
-        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "sb");
+        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "sb") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // FIXME : cover point for rs1 should be on ins.ops[1], unless format imm8(rs1) decoded
@@ -631,30 +711,44 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup sh_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sh");
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sh") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_imm11  : coverpoint get_imm(ins.ops[1].val, "sh") {
             bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
-        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "sh");
+        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "sh") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // FIXME: DONE
     covergroup sll_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sll");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "sll");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "sll");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sll") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "sll") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "sll") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // FIXME: DONE
     covergroup slli_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "slli");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "slli");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "slli") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "slli") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_shamt5   : coverpoint get_imm(ins.ops[2].val,"slli" ) {
             bins zero = {0};
             bins pos  = {[1:$]};
@@ -665,17 +759,27 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup slt_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "slt");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "slt");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "slt");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "slt") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "slt") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "slt") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // FIXME: DONE
     covergroup slti_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "slti");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "slti");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "slti") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "slti") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_imm11   : coverpoint get_imm(ins.ops[2].val,"slti" ) {
             bins neg  = {[$:-1]};
             bins zero = {0};
@@ -688,10 +792,11 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup sltiu_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sltiu");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sltiu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "sltiu") {
-            bins zero = {0};
-            bins pos  = {[1:$]};
+            ignore_bins ignore_gprnone = {gpr_none};
         }
         cp_imm11   : coverpoint get_imm(ins.ops[2].val,"sltiu" ) {
             bins zero = {0};
@@ -703,9 +808,15 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup sltu_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sltu");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "sltu");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "sltu");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sltu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "sltu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "sltu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
@@ -714,9 +825,15 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup sra_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sra");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "sra");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "sra");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sra") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "sra") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "sra") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
@@ -724,30 +841,44 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup srai_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "srai");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "srai"){
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "srai") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "srai") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_shamt5   : coverpoint get_imm(ins.ops[2].val,"srai" ){
             bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
-        cp_shamt5   : coverpoint get_imm(ins.ops[2].val,"srai" );
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // FIXME: DONE
     covergroup srl_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "srl");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "srl");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "srl");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "srl") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "srl") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "srl") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // FIXME: DONE
     covergroup srli_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "srli");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "srli");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "srli") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "srli") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_shamt5   : coverpoint get_imm(ins.ops[2].val,"srli" ) {
             bins zero = {0};
             bins pos  = {[1:$]};
@@ -759,9 +890,15 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup sub_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sub");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "sub");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "sub");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sub") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "sub") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "sub") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // FIXME : cover point for rs1 should be on ins.ops[1], unless format imm8(rs1) decoded
@@ -772,13 +909,17 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup sw_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sw");
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "sw") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_imm11  : coverpoint get_imm(ins.ops[1].val, "sw") {
             bins neg  = {[$:-1]};
             bins zero = {0};
             bins pos  = {[1:$]};
         }
-        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "sw");
+        cp_rs1     : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "sw") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
@@ -786,9 +927,15 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup xor_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "xor");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "xor");
-        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "xor");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "xor") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "xor") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "xor") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
@@ -796,8 +943,12 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup xori_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "xori");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "xori");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "xori") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "xori") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_imm11   : coverpoint get_imm(ins.ops[2].val,"xori" ) {
             bins neg  = {[$:-1]};
             bins zero = {0};
@@ -814,25 +965,29 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup mul_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "mul");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "mul");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "mul");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "mul") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "mul") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "mul") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // FIXME: DONE
     covergroup mulh_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "mulh");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "mulh") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "mulh") {
-            bins neg  = {[$:-1]};
-            bins zero = {0};
-            bins pos  = {[1:$]};
+            ignore_bins ignore_gprnone = {gpr_none};
         }
         cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "mulh" ) {
-            bins neg  = {[$:-1]};
-            bins zero = {0};
-            bins pos  = {[1:$]};
+            ignore_bins ignore_gprnone = {gpr_none};
         }
     endgroup
 
@@ -840,9 +995,15 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup mulhu_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "mulhu");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "mulhu");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "mulhu");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "mulhu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "mulhu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "mulhu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
@@ -850,16 +1011,14 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup mulhsu_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "mulhsu");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "mulhsu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "mulhsu") {
-            bins neg  = {[$:-1]};
-            bins zero = {0};
-            bins pos  = {[1:$]};
+            ignore_bins ignore_gprnone = {gpr_none};
         }
         cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "mulhsu" ) {
-            bins neg  = {[$:-1]};
-            bins zero = {0};
-            bins pos  = {[1:$]};
+            ignore_bins ignore_gprnone = {gpr_none};
         }
     endgroup
 
@@ -872,16 +1031,14 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup div_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "div");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "div") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "div") {
-            bins neg  = {[$:-1]};
-            bins zero = {0};
-            bins pos  = {[1:$]};
+            ignore_bins ignore_gprnone = {gpr_none};
         }
         cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "div" ) {
-            bins neg  = {[$:-1]};
-            bins zero = {0};
-            bins pos  = {[1:$]};
+            ignore_bins ignore_gprnone = {gpr_none};
         }
     endgroup
 
@@ -891,16 +1048,14 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup rem_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "rem");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "rem") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "rem") {
-            bins neg  = {[$:-1]};
-            bins zero = {0};
-            bins pos  = {[1:$]};
+            ignore_bins ignore_gprnone = {gpr_none};
         }
         cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "rem" ) {
-            bins neg  = {[$:-1]};
-            bins zero = {0};
-            bins pos  = {[1:$]};
+            ignore_bins ignore_gprnone = {gpr_none};
         }
     endgroup
 
@@ -909,11 +1064,14 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup divu_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "divu");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "divu");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "divu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "divu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "divu" ) {
-            bins zero = {0};
-            bins pos  = {[1:$]};
+            ignore_bins ignore_gprnone = {gpr_none};
         }
     endgroup
 
@@ -922,11 +1080,14 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup remu_cg with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "remu");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "remu");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "remu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
+        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "remu") {
+            ignore_bins ignore_gprnone = {gpr_none};
+        }
         cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "remu" ) {
-            bins zero = {0};
-            bins pos  = {[1:$]};
+            ignore_bins ignore_gprnone = {gpr_none};
         }
     endgroup
 
