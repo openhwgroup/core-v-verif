@@ -26,7 +26,10 @@ module CPU
     BUS SysBus
 );
 
-    import "DPI-C" context task ovpEntry(input int i, input string s1, input string s2);
+    import uvm_pkg::*;
+
+    import "DPI-C" context task ovpEntry(input int, input string, input string);
+    import "DPI-C" context function void ovpExit(input int);
 
     export "DPI-C" task     busLoad;
     export "DPI-C" task     busStore;
@@ -74,11 +77,13 @@ module CPU
         PCr = retPC;
         Icount++;
         if (mode_disass == 1) begin
-            $display;
+            //$display;
             if (Icount==0) 
-                $display("[%0d] Initial State : %s", ID, Change);
+                `uvm_info("riscv_CV32E40P", $sformatf("[%0d] Initial State : %s", ID, Change), UVM_DEBUG)
+                //$display("[%0d] Initial State : %s", ID, Change);
             else
-                $display("I [%0d] %0d PCr=0x%x %s : %s", ID, Icount, PCr, Decode, Change);
+                `uvm_info("riscv_CV32E40P", $sformatf("I [%0d] %0d PCr=0x%x %s : %s", ID, Icount, PCr, Decode, Change), UVM_DEBUG)
+                //$display("I [%0d] %0d PCr=0x%x %s : %s", ID, Icount, PCr, Decode, Change);
         end
         Change = "";
         SysBus.Step = 0;
@@ -102,7 +107,10 @@ module CPU
             output int _STimerInterrupt,
             output int _MExternalInterrupt,
             output int _UExternalInterrupt,
-            output int _SExternalInterrupt);
+            output int _SExternalInterrupt,
+            output int _haltreq,
+            output int _resethaltreq);
+
 
         _terminate          = SysBus.Shutdown;
         _reset              = SysBus.reset;
@@ -117,12 +125,13 @@ module CPU
         _MExternalInterrupt = SysBus.MExternalInterrupt;
         _UExternalInterrupt = SysBus.UExternalInterrupt;
         _SExternalInterrupt = SysBus.SExternalInterrupt;
+
+        _haltreq            = SysBus.haltreq ;
+        _resethaltreq       = SysBus.resethaltreq ;
     endfunction
         
     function automatic void setDECODE (input string value);
-        //if (mode_disass == 1) begin
-            Decode = value;
-        //end
+        Decode = value;
     endfunction
     
     function automatic void setFetchDECODE ();
@@ -170,6 +179,7 @@ module CPU
     endfunction
     
     function automatic void setCSR (input string index, input longint value);
+        `uvm_info("riscv_CV32E40P", $sformatf("setCSR %16s %x %0t", index, value, $time), UVM_DEBUG)
         //$display("setCSR %16s %x %0t", index, value, $time);
         CSR[index] = value;
         if (mode_disass == 1) begin
@@ -215,8 +225,9 @@ module CPU
         endcase
 
         if (enable == 0) begin
-            $display("Data Misaligned address=0x%x size=%0d", address, size);
-            $finish(-1);
+            //$display("Data Misaligned address=0x%x size=%0d", address, size);
+            //$finish(-1);
+            `uvm_error("riscv_CV32E40P", $sformatf("Data Misaligned address=0x%x size=%0d", address, size))
         end
         return enable;
     endfunction
@@ -250,9 +261,10 @@ module CPU
         Uns32 ble    = getBLE(address, size);
         Uns32 dValue = getData(address, data);
         
-        `ifdef DEBUG
-        $display("%m %08X = %02x", address, data);
-        `endif
+        //`ifdef DEBUG
+        //$display("%m %08X = %02x", address, data);
+        //`endif
+        `uvm_info("riscv_CV32E40P", $sformatf("%08X = %02x", address, data), UVM_DEBUG);
         wValue = SysBus.read(idx) & ~(byte2bit(ble));
         wValue |= (dValue & byte2bit(ble));
         
@@ -269,15 +281,17 @@ module CPU
         automatic Uns32 dValue = getData(address, data);
 
         if (artifact) begin
-            `ifdef DEBUG
-            $display("%m [%x]<=(%0d)%x ELF_LOAD", address, size, dValue);
-            `endif
+            //`ifdef DEBUG
+            //$display("%m [%x]<=(%0d)%x ELF_LOAD", address, size, dValue);
+            //`endif
+            `uvm_info("riscv_CV32E40P", $sformatf("[%x]<=(%0d)%x ELF_LOAD", address, size, dValue), UVM_DEBUG)
             dmiWrite(address, size, data);
 
         end else begin
-            `ifdef DEBUG
-            $display("%m [%x]<=(%0d)%x Store", address, size, dValue);
-            `endif
+            //`ifdef DEBUG
+            //$display("%m [%x]<=(%0d)%x Store", address, size, dValue);
+            //`endif
+            `uvm_info("riscv_CV32E40P", $sformatf("[%x]<=(%0d)%x Store", address, size, dValue), UVM_DEBUG)
             SysBus.DAddr  <= address;
             SysBus.DSize  <= size;
             SysBus.Dwr    <= 1;
@@ -361,9 +375,10 @@ module CPU
             data = setData(address, SysBus.DData);
             SysBus.Drd   <= 0;
             
-            `ifdef DEBUG
-                $display("%m [%x]=>(%0d)%x Load", address, size, data);
-            `endif
+            //`ifdef DEBUG
+            //    $display("%m [%x]=>(%0d)%x Load", address, size, data);
+            //`endif
+            `uvm_info("riscv_CV32E40P", $sformatf("[%x]=>(%0d)%x Load", address, size, data), UVM_DEBUG)
         end
     endtask
     
@@ -423,9 +438,10 @@ module CPU
             data = setData(address, SysBus.IData);
             SysBus.Ird   <= 0;
             
-            `ifdef DEBUG
-                $display("%m [%x]=>(%0d)%x Fetch", address, size, data);
-            `endif
+            //`ifdef DEBUG
+            //    $display("%m [%x]=>(%0d)%x Fetch", address, size, data);
+            //`endif
+            `uvm_info("riscv_CV32E40P", $sformatf("[%x]=>(%0d)%x Fetch", address, size, data), UVM_DEBUG)
         end
     endtask
     
@@ -468,8 +484,9 @@ module CPU
     string elf_file;
     function automatic void elf_load();
         if (!($value$plusargs("elf_file=%s", elf_file))) begin
-            $display("FATAL: +elf_file=<elf filename> is required");
-            $fatal;
+            //$display("FATAL: +elf_file=<elf filename> is required");
+            //$fatal;
+            `uvm_fatal("riscv_CV32E40P", $sformatf("+elf_file=<elf filename> is required"))
         end
     endfunction
     
@@ -485,7 +502,11 @@ module CPU
         elf_load();
         cpu_cfg();
         ovpEntry(ID, ovpcfg, elf_file);
-        $finish;
+        //$finish;
     end
+    
+    //final begin
+    //    ovpExit(ID);
+    //end
  
 endmodule
