@@ -26,7 +26,9 @@ module CPU
     BUS SysBus
 );
 
+`ifdef UVM
     import uvm_pkg::*;
+`endif
 
     import "DPI-C" context task ovpEntry(input int, input string, input string);
     import "DPI-C" context function void ovpExit(input int);
@@ -77,13 +79,21 @@ module CPU
         PCr = retPC;
         Icount++;
         if (mode_disass == 1) begin
-            //$display;
-            if (Icount==0) 
+            `ifndef UVM
+            $display;
+            `endif
+            if (Icount==0)
+                `ifdef UVM
                 `uvm_info("riscv_CV32E40P", $sformatf("[%0d] Initial State : %s", ID, Change), UVM_DEBUG)
-                //$display("[%0d] Initial State : %s", ID, Change);
+                `else
+                $display("[%0d] Initial State : %s", ID, Change);
+                `endif
             else
+                `ifdef UVM
                 `uvm_info("riscv_CV32E40P", $sformatf("I [%0d] %0d PCr=0x%x %s : %s", ID, Icount, PCr, Decode, Change), UVM_DEBUG)
-                //$display("I [%0d] %0d PCr=0x%x %s : %s", ID, Icount, PCr, Decode, Change);
+                `else
+                $display("I [%0d] %0d PCr=0x%x %s : %s", ID, Icount, PCr, Decode, Change);
+                `endif
         end
         Change = "";
         SysBus.Step = 0;
@@ -179,8 +189,13 @@ module CPU
     endfunction
     
     function automatic void setCSR (input string index, input longint value);
+        `ifdef DEBUG
+        `ifdef UVM
         `uvm_info("riscv_CV32E40P", $sformatf("setCSR %16s %x %0t", index, value, $time), UVM_DEBUG)
-        //$display("setCSR %16s %x %0t", index, value, $time);
+        `else
+        $display("setCSR %16s %x %0t", index, value, $time);
+        `endif
+        `endif
         CSR[index] = value;
         if (mode_disass == 1) begin
             string ch;
@@ -225,9 +240,12 @@ module CPU
         endcase
 
         if (enable == 0) begin
-            //$display("Data Misaligned address=0x%x size=%0d", address, size);
-            //$finish(-1);
+            `ifdef UVM
             `uvm_error("riscv_CV32E40P", $sformatf("Data Misaligned address=0x%x size=%0d", address, size))
+            `else
+            $display("Data Misaligned address=0x%x size=%0d", address, size);
+            $finish(-1);
+            `endif
         end
         return enable;
     endfunction
@@ -261,10 +279,13 @@ module CPU
         Uns32 ble    = getBLE(address, size);
         Uns32 dValue = getData(address, data);
         
-        //`ifdef DEBUG
-        //$display("%m %08X = %02x", address, data);
-        //`endif
+        `ifdef DEBUG
+        `ifdef UVM
         `uvm_info("riscv_CV32E40P", $sformatf("%08X = %02x", address, data), UVM_DEBUG);
+        `else
+        $display("%m %08X = %02x", address, data);
+        `endif
+        `endif
         wValue = SysBus.read(idx) & ~(byte2bit(ble));
         wValue |= (dValue & byte2bit(ble));
         
@@ -281,17 +302,23 @@ module CPU
         automatic Uns32 dValue = getData(address, data);
 
         if (artifact) begin
-            //`ifdef DEBUG
-            //$display("%m [%x]<=(%0d)%x ELF_LOAD", address, size, dValue);
-            //`endif
+            `ifdef DEBUG
+            `ifdef UVM
             `uvm_info("riscv_CV32E40P", $sformatf("[%x]<=(%0d)%x ELF_LOAD", address, size, dValue), UVM_DEBUG)
+            `else
+            $display("%m [%x]<=(%0d)%x ELF_LOAD", address, size, dValue);
+            `endif
+            `endif
             dmiWrite(address, size, data);
 
         end else begin
-            //`ifdef DEBUG
-            //$display("%m [%x]<=(%0d)%x Store", address, size, dValue);
-            //`endif
+            `ifdef DEBUG
+            `ifdef UVM
             `uvm_info("riscv_CV32E40P", $sformatf("[%x]<=(%0d)%x Store", address, size, dValue), UVM_DEBUG)
+            `else
+            $display("%m [%x]<=(%0d)%x Store", address, size, dValue);
+            `endif
+            `endif
             SysBus.DAddr  <= address;
             SysBus.DSize  <= size;
             SysBus.Dwr    <= 1;
@@ -375,10 +402,13 @@ module CPU
             data = setData(address, SysBus.DData);
             SysBus.Drd   <= 0;
             
-            //`ifdef DEBUG
-            //    $display("%m [%x]=>(%0d)%x Load", address, size, data);
-            //`endif
+            `ifdef DEBUG
+            `ifdef UVM
             `uvm_info("riscv_CV32E40P", $sformatf("[%x]=>(%0d)%x Load", address, size, data), UVM_DEBUG)
+            `else
+            $display("%m [%x]=>(%0d)%x Load", address, size, data);
+            `endif
+            `endif
         end
     endtask
     
@@ -438,10 +468,13 @@ module CPU
             data = setData(address, SysBus.IData);
             SysBus.Ird   <= 0;
             
-            //`ifdef DEBUG
-            //    $display("%m [%x]=>(%0d)%x Fetch", address, size, data);
-            //`endif
+            `ifdef DEBUG
+            `ifdef UVM
             `uvm_info("riscv_CV32E40P", $sformatf("[%x]=>(%0d)%x Fetch", address, size, data), UVM_DEBUG)
+            `else
+                $display("%m [%x]=>(%0d)%x Fetch", address, size, data);
+            `endif
+            `endif
         end
     endtask
     
@@ -484,9 +517,12 @@ module CPU
     string elf_file;
     function automatic void elf_load();
         if (!($value$plusargs("elf_file=%s", elf_file))) begin
-            //$display("FATAL: +elf_file=<elf filename> is required");
-            //$fatal;
+            `ifdef UVM
             `uvm_fatal("riscv_CV32E40P", $sformatf("+elf_file=<elf filename> is required"))
+            `else
+            $display("FATAL: +elf_file=<elf filename> is required");
+            $fatal;
+            `endif
         end
     endfunction
     
@@ -502,11 +538,15 @@ module CPU
         elf_load();
         cpu_cfg();
         ovpEntry(ID, ovpcfg, elf_file);
-        //$finish;
+        `ifndef UVM
+        $finish;
+        `endif
     end
     
-    //final begin
-    //    ovpExit(ID);
-    //end
+    `ifndef UVM
+    final begin
+        ovpExit(ID);
+    end
+    `endif
  
 endmodule
