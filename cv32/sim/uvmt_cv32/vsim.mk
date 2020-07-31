@@ -71,6 +71,10 @@ no_rule:
 	@echo 'makefile: SIMULATOR is set to $(SIMULATOR), but no rule/target specified.'
 	@echo 'try "make SIMULATOR=vsim sanity" (or just "make sanity" if shell ENV variable SIMULATOR is already set).'
 
+# The sanity test is defined in ../Common.mk and will change over time.  Here
+# you can provide a simulator-specific target for sanity.
+sanity: questa-hello_world
+
 help:
 	vsim -help
 
