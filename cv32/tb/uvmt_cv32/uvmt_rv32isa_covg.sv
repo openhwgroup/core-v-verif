@@ -104,7 +104,7 @@ class riscv_32isa_coverage;
 // The following CSR ABI names are not currently included:
 // fp, pc
     function gpr_name_t get_gpr_name (string s, r, asm);
-        `uvm_info("RV32ISA Coverage", $sformatf("get_gpr_name(): GPR [%0s] used by ins %s being validated", s, asm), UVM_NONE) //HIGH)
+        `uvm_info("RV32ISA Coverage", $sformatf("get_gpr_name(): GPR [%0s] used by ins %s being validated", s, asm), UVM_HIGH)
         case (s)
             "zero": return gpr_name_t'(zero);
             "ra": return gpr_name_t'(ra);
@@ -146,7 +146,7 @@ class riscv_32isa_coverage;
 
 // These are the General Purpouse Registers for Compressed instructions
     function logic c_check_gpr_name (string s, r, asm);
-        `uvm_info("RV32ISA Coverage", $sformatf("c_check_gpr_name(): GPR [%0s] used by ins %s being validated", s, asm), UVM_NONE) //HIGH)
+        `uvm_info("RV32ISA Coverage", $sformatf("c_check_gpr_name(): GPR [%0s] used by ins %s being validated", s, asm), UVM_HIGH)
         case (s)
             "s0": return 1;
             "s1": return 1;
@@ -1173,7 +1173,7 @@ class riscv_32isa_coverage;
             bins gprval[] = {[s0:a5]};
         }
         cp_rs1    : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.li") {
-            bins gprval[] = {[s0:a5]};
+            bins gprval[] = {zero};
         }
         cp_imm6   : coverpoint get_imm(ins.ops[2].val,"c.li" ) {
             bins neg  = {[$:-1]};
@@ -1189,19 +1189,12 @@ class riscv_32isa_coverage;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lui") {
             bins gprval[] = {[s0:a5]};
         }
-        cp_uimm6   : coverpoint get_imm(ins.ops[1].val,"c.lui" );
+        cp_uimm6   : coverpoint get_imm(ins.ops[1].val,"c.lui" ) {
+            bins neg  = {[$:-1]};
+            bins zero = {0};
+            bins pos  = {[1:$]};
+        }
     endgroup
-
-    // MikeT - 20200714: c_addi_cg redefined to reflect single register,
-    //                   single immediate op-codes
-    //covergroup c_addi_cg     with function sample(ins_t ins);
-    //    cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.addi");
-    //    cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.addi");
-    //    cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.addi" ) {
-    //        bins zero = {0};
-    //        bins pos  = {[1:$]};
-    //    }
-    //endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // TODO : missing check of overflow/underflow
@@ -1223,18 +1216,6 @@ class riscv_32isa_coverage;
             bins pos  = {[1:$]};
         }
     endgroup
-    // MikeT - 20200714
-
-    // MikeT - 20200714: c_addi16sp_cg redefined to reflect single register,
-    //                   single immediate op-codes
-    //covergroup c_addi16sp_cg with function sample(ins_t ins);
-    //    cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.addi16sp");
-    //    cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.addi16sp");
-    //    cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.addi16sp" ) {
-    //        bins zero = {0};
-    //        bins pos  = {[1:$]};
-    //    }
-    //endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // TODO : missing check of overflow/underflow
@@ -1253,18 +1234,6 @@ class riscv_32isa_coverage;
             bins pos  = {[1:$]};
         }
     endgroup
-    // MikeT - 20200714
-
-    // MikeT - 20200714: c_addi4sp_cg redefined to reflect single register,
-    //                   single immediate op-codes
-    //covergroup c_addi4sp_cg  with function sample(ins_t ins);
-    //    cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.addi4sp");
-    //    cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.addi4sp");
-    //    cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.addi4sp" ) {
-    //        bins zero = {0};
-    //        bins pos  = {[1:$]};
-    //    }
-    //endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // TODO : missing check of overflow/underflow
@@ -1283,7 +1252,6 @@ class riscv_32isa_coverage;
             bins pos  = {[1:$]};
         }
     endgroup
-    // MikeT - 20200714
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // FIXME: DONE
@@ -1337,8 +1305,12 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup c_andi_cg     with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.andi");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.andi");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.andi") {
+            bins gprval[] = {[s0:a5]};
+        }
+        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.andi") {
+            bins gprval[] = {[s0:a5]};
+        }
         cp_imm6   : coverpoint get_imm(ins.ops[2].val,"c.andi" ) {
             bins neg  = {[$:-1]};
             bins zero = {0};
@@ -1346,24 +1318,12 @@ class riscv_32isa_coverage;
         }
     endgroup
 
-    // MikeT - 20200714: c_addi_cg redefined to reflect single destination register,
-    //                   single source register op-codes
-    //covergroup c_add_cg      with function sample(ins_t ins);
-    //    cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.add");
-    //    cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.add");
-    //    cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.add" ) {
-    //        bins zero = {0};
-    //        bins pos  = {[1:$]};
-    //    }
-    //endgroup
-
 // TODO : missing coverage of all combinations of source and destination operands.
 // TODO : missing check of overflow/underflow
 // FIXME: DONE
     covergroup c_add_cg with function sample(ins_t ins);
         option.per_instance = 1;
         cp_rd     : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.add");
-        cp_rs1    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.add");
         cp_rs2    : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.add");
     endgroup
     // MikeT - 20200714
@@ -1372,27 +1332,36 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup c_and_cg      with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.and");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.and");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.and");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.and") {
+            bins gprval[] = {[s0:a5]};
+        }
+        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.and") {
+            bins gprval[] = {[s0:a5]};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // FIXME: DONE
     covergroup c_or_cg       with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.or");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.or");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.or");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.or") {
+            bins gprval[] = {[s0:a5]};
+        }
+        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.or") {
+            bins gprval[] = {[s0:a5]};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
 // FIXME: DONE
     covergroup c_xor_cg      with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.xor");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.xor");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.xor");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.xor") {
+            bins gprval[] = {[s0:a5]};
+        }
+        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.xor") {
+            bins gprval[] = {[s0:a5]};
+        }
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
@@ -1400,9 +1369,12 @@ class riscv_32isa_coverage;
 // FIXME: DONE
     covergroup c_sub_cg      with function sample(ins_t ins);
         option.per_instance = 1;
-        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.sub");
-        cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.sub");
-        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.sub");
+        cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.sub") {
+            bins gprval[] = {[s0:a5]};
+        }
+        cp_rs2   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.sub") {
+            bins gprval[] = {[s0:a5]};
+        }
     endgroup
 
 // TODO : cover group for NOP (addi x0, x0, imm), may need to be merged into addi_cg
@@ -1505,14 +1477,17 @@ class riscv_32isa_coverage;
 
     function void check_compressed(input ins_t ins);
         case (ins.ins_str)
-            "c.lwsp"    : begin ins.asm=C_LWSP;  c_lwsp_cg.sample(ins);  end
-            "c.swsp"    : begin ins.asm=C_SWSP;  c_swsp_cg.sample(ins);  end
             "lw"    : begin
+                `uvm_info("rv32isa_covg", $sformatf("EXPECTING LW: %0s ins.ops[0].val = %0s, ins.ops[1].val = %0s, ins.ops[2].val = %0s", ins.asm.name, ins.ops[0].val, ins.ops[1].val, ins.ops[2].val), UVM_HIGH)
                 if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.lw")  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lw")
                      && c_check_imm(ins.ops[1].val, "c.lw")) begin
                     ins.asm=C_LW;
                     c_lw_cg.sample(ins);
-                 end
+                end
+                else if ( (get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.lwsp") == gpr_name_t'(sp))) begin
+                    ins.asm=C_LWSP;
+                    c_lwsp_cg.sample(ins);
+                end
              end
             "sw"    : begin
                 if ( c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.sw")  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.sw")
@@ -1520,10 +1495,14 @@ class riscv_32isa_coverage;
                       ins.asm=C_SW;
                       c_sw_cg.sample(ins);
                 end
+                else if ( (get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.swsp") == gpr_name_t'(sp))) begin
+                    ins.asm=C_SWSP;
+                    c_swsp_cg.sample(ins);
+                end
              end
             "jal"   :  begin
 //                `uvm_info("RV32ISA Coverage", $sformatf("check_compressed( %0s ): checking ins %0s %0s %0s(%0s)", ins.asm.name, ins.ins_str, ins.ops[0].val, ins.ops[2].val, ins.ops[1].val), UVM_NONE) //HIGH)
-                if ((get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.jal") == "sp")
+                if ((get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.jal") == gpr_name_t'(sp))
                   && c_check_imm(ins.ops[1].val, "c.jal")) begin
                     ins.asm=C_JAL;
                     c_jal_cg.sample(ins);
@@ -1531,7 +1510,7 @@ class riscv_32isa_coverage;
              end
             "jalr"  :   begin
 //                `uvm_info("RV32ISA Coverage", $sformatf("check_compressed( %0s ): checking ins %0s %0s %0s(%0s)", ins.asm.name, ins.ins_str, ins.ops[0].val, ins.ops[2].val, ins.ops[1].val), UVM_NONE) //HIGH)
-                if (  ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.jalr") == "ra") && c_check_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.jalr") ) begin
+                if (  ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.jalr") == gpr_name_t'(ra)) && c_check_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.jalr") ) begin
                     gpr_name_t r0, r1;
                     ins.asm=JALR;
                     if (ins.ops[0].key[0] == "R")
@@ -1542,32 +1521,22 @@ class riscv_32isa_coverage;
                         r1 = get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.jalr");
                     else
                         r1 = gpr_none;
-                    if ((get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.jalr") == "ra")  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.jalr")
+                    if ((get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.jalr") == gpr_name_t'(ra))  && c_check_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.jalr")
                           && get_imm(ins.ops[1].val, "c.jalr") == 0 )
                         c_jalr_cg.sample(ins, r0, r1);
                 end
             end
-//    ,C_LI,C_LUI
-//            "c.li"    : begin ins.asm=C_LI;  c_li_cg.sample(ins);  end
+//    C_LUI
             "c.lui"   : begin ins.asm=C_LUI; c_lui_cg.sample(ins); end
-//    ,C_ADDI,C_ADDI16SP,C_ADDI4SPN
-// WORKAROUND
-//            "addi"     : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi")) c_addi_cg.sample(ins);
-//            "addi16sp" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi") &&
-//                              get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == "sp") c_addi16sp_cg.sample(ins);
-//            "addi4spn" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi") &&
-//                              get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi") == "sp") c_addi4spn_cg.sample(ins);
-// NEW
             "addi"    : begin
                 `uvm_info("rv32isa_covg", $sformatf("EXPECTING ADDI: ins.ops[0].val = %0s, ins.ops[1].val = %0s", ins.ops[0].val, ins.ops[1].val), UVM_HIGH)
-                if (  c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.li") && ( get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.li") == gpr_name_t'("ra"))) begin
+                if (  c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.li") && ( get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.li") == gpr_name_t'(zero))) begin
                     ins.asm=C_LI;
                     c_li_cg.sample(ins);
                      end
                 else if ( (get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.addi16sp") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.addi16sp")) &&
                           (get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.addi16sp") == gpr_name_t'(sp))) begin
                     ins.asm=C_ADDI16SP;
-                    `uvm_info("rv32isa_covg", "Calling c_addi16sp_cg.sample()", UVM_HIGH)
                     c_addi16sp_cg.sample(ins);
                      end
                 else if ( (c_check_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.addi4spn")) &&
@@ -1578,29 +1547,63 @@ class riscv_32isa_coverage;
                 else if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.addi") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.addi")) begin
                     ins.asm=C_ADDI;
                     c_addi_cg.sample(ins);
-                    `uvm_info("RV32ISA Coverage", $sformatf("check_compressed( %0s ): checking ins %0s %0s %0s(%0s)", ins.asm.name, ins.ins_str, ins.ops[0].val, ins.ops[2].val, ins.ops[1].val), UVM_HIGH)
                 end
-             end
-//            "addi16sp" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi"))  c_addi16sp_cg.sample(ins);
-//            "addi4spn" : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "addi") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "addi")) c_addi4spn_cg.sample(ins);
-// OLD
-//            "c.addi"    : begin ins.asm=C_ADDI; c_addi_cg.sample(ins); end
-//            "c.addi16sp"    : begin ins.asm=C_ADDI16SP; c_addi16sp_cg.sample(ins); end
-//            "c.addi4spn"    : begin ins.asm=C_ADDI4SPN; c_addi4spn_cg.sample(ins); end
-//    ,C_SLLI,C_SRLI,C_SRAI,C_ANDI,C_ADD
-            "c.slli"    : begin ins.asm=C_SLLI; c_slli_cg.sample(ins); end
-            "c.srli"    : begin ins.asm=C_SRLI; c_srli_cg.sample(ins); end
-            "c.srai"    : begin ins.asm=C_SRAI; c_srai_cg.sample(ins); end
-            "c.andi"    : begin ins.asm=C_ANDI; c_andi_cg.sample(ins); end
-// WORKAROUND
-            "add"      : if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "add")  == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "add") ) c_add_cg.sample(ins);
-// OLD
-//            "c.add"    : begin ins.asm=C_ADD; c_add_cg.sample(ins); end
+            end
+            "slli"    : begin
+                if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.slli") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.slli")) begin
+                    ins.asm=C_SLLI;
+                    c_slli_cg.sample(ins);
+                end
+            end
+            "srli"    : begin
+                if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.srli") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.srli")) begin
+                    ins.asm=C_SRLI;
+                    c_srli_cg.sample(ins);
+                end
+            end
+            "srai"    : begin
+                if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.srai") == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.srai")) begin
+                    ins.asm=C_SRAI;
+                    c_srai_cg.sample(ins);
+                end
+            end
+            "andi"    : begin
+                if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.andi")  == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.andi") ) begin
+                    ins.asm=C_ANDI;
+                  c_andi_cg.sample(ins);
+                end
+            end
+            "add"      : begin
+                if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.add")  == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.add") ) begin
+                    ins.asm=C_ADD;
+                    c_add_cg.sample(ins);
+                end
+            end
 //    ,C_AND,C_OR,C_XOR,C_SUB,C_NOP,C_EBREAK
-            "c.and"    : begin ins.asm=C_AND; c_and_cg.sample(ins); end
-            "c.or"    : begin ins.asm=C_OR; c_or_cg.sample(ins); end
-            "c.xor"    : begin ins.asm=C_XOR; c_xor_cg.sample(ins); end
-            "c.sub"    : begin ins.asm=C_SUB; c_sub_cg.sample(ins); end
+            "and"    : begin
+                if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.and")  == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.and") ) begin
+                    ins.asm=C_AND;
+                    c_and_cg.sample(ins);
+                end
+            end
+            "or"    : begin
+                if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.or")  == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.or") ) begin
+                    ins.asm=C_OR;
+                  c_or_cg.sample(ins);
+                end
+            end
+            "xor"    : begin
+                if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.xor")  == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.xor") ) begin
+                    ins.asm=C_XOR;
+                  c_xor_cg.sample(ins);
+                end
+            end
+            "sub"    : begin
+                if ( get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.sub")  == get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.sub") ) begin
+                    ins.asm=C_SUB;
+                  c_sub_cg.sample(ins);
+                end
+            end
             "c.nop"    : begin ins.asm=C_NOP; c_nop_cg.sample(ins); end
             "c.ebreak"    : begin ins.asm=C_EBREAK; c_ebreak_cg.sample(ins); end
             default: `uvm_info("RV32ISA Coverage", $sformatf("check_compressed(): ins [%0s] not yet checked", ins.ins_str), UVM_HIGH)
