@@ -137,12 +137,7 @@ SIM_LIBS    := $(PROJ_ROOT_DIR)/lib/sim_libs
 # DESIGN_RTL_DIR is used by CV32E40P_MANIFEST file
 CV32E40P_PKG         := $(PROJ_ROOT_DIR)/core-v-cores/cv32e40p
 CV32E40P_RTLSRC_INCDIR  := $(CV32E40P_PKG)/rtl/include
-CV32E40P_RTLSRC_PKG  := $(CV32E40P_PKG)/rtl/fpnew/src/fpnew_pkg.sv \
-				$(addprefix $(CV32E40P_RTLSRC_INCDIR)/,\
-				cv32e40p_apu_core_package.sv cv32e40p_defines.sv \
-				cv32e40p_tracer_defines.sv)
-CV32E40P_RTLSRC  := $(filter-out $(CV32E40P_PKG)/rtl/cv32e40p_register_file_latch.sv, \
-                $(wildcard $(CV32E40P_PKG)/rtl/*.sv))
+
 FPNEW_PKG            := $(CV32E40P_PKG)/rtl/fpnew
 # FIXME: temporarily using a local manifest for the core.
 #        This is BAD PRACTICE and will be fixed with
@@ -496,12 +491,13 @@ verilate-clean: tc-clean
 ###############################################################################
 # Synopsys VCS
 
-vcsify: $(CV32E40P_PKG) $(FPNEW_PKG) $(CV32E40P_RTLSRC_PKG) $(CV32E40P_RTLSRC) $(TBSRC_PKG) $(TBSRC)
+vcsify: $(CV32E40P_PKG) $(FPNEW_PKG) $(TBSRC_PKG) $(TBSRC)
 	$(VCS) +vc -sverilog -race=all -ignore unique_checks -full64 \
 		-timescale=1ns/1ps \
 		-assert svaext \
 		-CC "-I$(VCS_HOME)/include -O3 -march=native" $(VCS_FLAGS) \
-		$(CV32E40P_RTLSRC_PKG) $(CV32E40P_RTLSRC) $(TBSRC_PKG) $(TBSRC) \
+		-f $(CV32E40P_MANIFEST) \
+		$(TBSRC_PKG) $(TBSRC) \
 		+incdir+$(CV32E40P_RTLSRC_INCDIR)
 
 RTLSRC_TB_TOP	:= $(basename $(notdir $(TBSRC_TOP)))
