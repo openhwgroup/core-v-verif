@@ -77,6 +77,15 @@ RISCVDV_BRANCH  ?= master
 #                  Generation of riscv_pmp_test fails (we do not care for CV32E40P).
 RISCVDV_HASH    ?= 10fd4fa8b7d0808732ecf656c213866cae37045a
 
+MIO_BASE_REPO    ?= https://github.com/Datum-Technology-Corporation/mio_base
+MIO_BASE_BRANCH  ?= master
+MIO_BASE_HASH    ?= head
+
+MIO_RISCV_REPO    ?= https://github.com/Datum-Technology-Corporation/mio_riscv
+MIO_RISCV_BRANCH  ?= master
+MIO_RISCV_HASH    ?= head
+
+
 # Generate command to clone the CV32E40P RTL
 ifeq ($(CV32E40P_BRANCH), master)
   TMP = git clone $(CV32E40P_REPO) --recurse $(CV32E40P_PKG)
@@ -117,6 +126,34 @@ else
   CLONE_RISCVDV_CMD = $(TMP3); cd $(RISCVDV_PKG); git checkout $(RISCVDV_HASH)
 endif
 # RISCV-DV repo var end
+
+# Generate command to clone MIO-Base (Moore.io's base project)
+ifeq ($(MIO_BASE_BRANCH), master)
+  TMP4 = git clone $(MIO_BASE_REPO) --recurse $(MIO_BASE_PKG)
+else
+  TMP4 = git clone -b $(MIO_BASE_BRANCH) --single-branch $(MIO_BASE_REPO) --recurse $(MIO_BASE_PKG)
+endif
+
+ifeq ($(MIO_BASE_HASH), head)
+  CLONE_MIO_BASE_CMD = $(TMP4)
+else
+  CLONE_MIO_BASE_CMD = $(TMP4); cd $(MIO_BASE_PKG); git checkout $(MIO_BASE_HASH)
+endif
+# MIO-BASE repo var end
+
+# Generate command to clone MIO-RISCV (Moore.io's RISCV project)
+ifeq ($(MIO_RISCV_BRANCH), master)
+  TMP5 = git clone $(MIO_RISCV_REPO) --recurse $(MIO_RISCV_PKG)
+else
+  TMP5 = git clone -b $(MIO_RISCV_BRANCH) --single-branch $(MIO_RISCV_REPO) --recurse $(MIO_RISCV_PKG)
+endif
+
+ifeq ($(MIO_RISCV_HASH), head)
+  CLONE_MIO_RISCV_CMD = $(TMP5)
+else
+  CLONE_MIO_RISCV_CMD = $(TMP5); cd $(MIO_RISCV_PKG); git checkout $(MIO_RISCV_HASH)
+endif
+# MIO-RISCV repo var end
 
 ###############################################################################
 # Imperas Instruction Set Simulator

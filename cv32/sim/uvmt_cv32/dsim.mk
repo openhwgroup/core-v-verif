@@ -320,12 +320,19 @@ gen_corev_jump_stress_test:
 		+directed_instr_1=riscv_jal_instr,20
 	mv *.S $(CORE_TEST_DIR)/custom
 
-corev-dv: clean_riscv-dv \
+corev-dv: echo "Call to target corev-dv" \
+          clean_riscv-dv \
 	  clone_riscv-dv \
 	  comp_riscv-dv \
 	  gen_corev_arithmetic_base_test \
 	  gen_corev_rand_instr_test \
 	  gen_corev_jump_stress_test
+
+mio-base: clean_mio_base \
+	  clone_mio_base 
+
+mio-riscv: clean_mio_riscv \
+	   clone_mio_riscv 
 
 ###############################################################################
 # Clean up your mess!
@@ -344,5 +351,5 @@ clean:
 	rm -rf $(DSIM_RESULTS)
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_core_tests clean_riscv-dv clean_test_programs
+clean_all: clean clean_core_tests clean_riscv-dv clean_mio_base clean_mio_riscv clean_test_programs
 	rm -rf $(CV32E40P_PKG)

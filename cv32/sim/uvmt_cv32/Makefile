@@ -63,13 +63,13 @@ SIMULATOR    ?= unsim
 USE_ISS      ?= YES
 
 # UVM Environment
-export DV_UVMT_CV32_PATH    = $(PROJ_ROOT_DIR)/$(COREV_PROJ)/tb/uvmt_cv32
-export DV_UVME_CV32_PATH    = $(PROJ_ROOT_DIR)/$(COREV_PROJ)/env/uvme_cv32
-export DV_UVML_HRTBT_PATH   = $(PROJ_ROOT_DIR)/lib/uvm_libs/uvml_hrtbt
-export DV_UVMA_CLKNRST_PATH = $(PROJ_ROOT_DIR)/lib/uvm_agents/uvma_clknrst
-export DV_UVML_TRN_PATH     = $(PROJ_ROOT_DIR)/lib/uvm_libs/uvml_trn
-export DV_UVML_LOGS_PATH    = $(PROJ_ROOT_DIR)/lib/uvm_libs/uvml_logs
-export DV_UVML_SB_PATH      = $(PROJ_ROOT_DIR)/lib/uvm_libs/uvml_sb
+export DV_UVMT_CV32_PATH        = $(PROJ_ROOT_DIR)/$(COREV_PROJ)/tb/uvmt_cv32
+export DV_UVME_CV32_PATH        = $(PROJ_ROOT_DIR)/$(COREV_PROJ)/env/uvme_cv32
+export DV_UVML_HRTBT_SRC_PATH   = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_hrtbt/src
+export DV_UVMA_CLKNRST_PATH     = $(PROJ_ROOT_DIR)/lib/uvm_agents/uvma_clknrst
+export DV_UVML_TRN_SRC_PATH     = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_trn/src
+export DV_UVML_LOGS_SRC_PATH    = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_logs/src
+export DV_UVML_SB_SRC_PATH      = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_sb/src
 
 export DV_OVPM_HOME         = $(PROJ_ROOT_DIR)/vendor_lib/imperas
 export DV_OVPM_MODEL        = $(DV_OVPM_HOME)/riscv_CV32E40P_OVPsim
@@ -86,6 +86,10 @@ RISCVDV_PKG   := $(PROJ_ROOT_DIR)/vendor_lib/google/riscv-dv
 COREVDV_PKG   := $(PROJ_ROOT_DIR)/vendor_lib/google/corev-dv
 export RISCV_DV_ROOT = $(RISCVDV_PKG)
 export COREV_DV_ROOT = $(COREVDV_PKG)
+
+# Moore.io packages
+MIO_BASE_PKG  := $(PROJ_ROOT_DIR)/vendor_lib/mio/base
+MIO_RISCV_PKG := $(PROJ_ROOT_DIR)/vendor_lib/mio/riscv
 
 # TB source files for the CV32E core
 TBSRC_TOP   := $(TBSRC_HOME)/uvmt_cv32/uvmt_cv32_tb.sv
@@ -136,9 +140,17 @@ clone_fpnew_rtl: clone_cv32e40p_rtl
 clone_riscv-dv:
 	$(CLONE_RISCVDV_CMD)
 
+clone_mio_base:
+	$(CLONE_MIO_BASE_CMD)
+
+clone_mio_riscv:
+	$(CLONE_MIO_RISCV_CMD)
+
 $(CV32E40P_PKG):
 	$(CLONE_CV32E40P_CMD)
 	$(CLONE_FPNEW_CMD)
+	$(CLONE_MIO_BASE_CMD)
+	$(CLONE_MIO_RISCV_CMD)
 
 
 ###############################################################################
@@ -192,4 +204,10 @@ clean_riscv-dv:
 	rm -rf $(RISCVDV_PKG)
 	rm -rf $(COREVDV_PKG)/out_*
 	find ../../tests/core/google-riscv-dv -name "*.S" -exec rm {} \;
+
+clean_mio_base:
+	rm -rf $(MIO_BASE_PKG)
+
+clean_mio_riscv:
+	rm -rf $(MIO_RISCV_PKG)
 
