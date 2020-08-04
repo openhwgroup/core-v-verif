@@ -29,6 +29,7 @@ DSIM_RESULTS           ?= $(PWD)/dsim_results
 DSIM_WORK              ?= $(DSIM_RESULTS)/dsim_work
 DSIM_IMAGE             ?= dsim.out
 DSIM_RUN_FLAGS         ?=
+DSIM_CODE_COV_SCOPE    ?= $(PWD)/../tools/dsim/ccov_scopes.txt
 DSIM_USE_ISS           ?= YES
 
 DSIM_FILE_LIST ?= -f $(DV_UVMT_CV32_PATH)/uvmt_cv32.flist
@@ -57,6 +58,14 @@ ifneq ($(DUMP_WAVES), 0)
 DSIM_ACC_FLAGS ?= +acc
 DSIM_DMP_FILE  ?= dsim.fst
 DSIM_DMP_FLAGS ?= -waves $(DSIM_DMP_FILE)
+endif
+
+# Variables to control code coverage collection command the line
+CCOV                   ?= 0
+
+ifneq ($(CCOV), 0)
+DSIM_USER_COMPILE_ARGS += -code-cov block -code-cov-scope-specs $(DSIM_CODE_COV_SCOPE)
+DSIM_RUN_FLAGS         += -code-cov block -code-cov-scope-specs $(DSIM_CODE_COV_SCOPE)
 endif
 
 .PHONY: sim
