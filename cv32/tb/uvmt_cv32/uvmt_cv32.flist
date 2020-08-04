@@ -21,6 +21,11 @@
 -f ${DV_UVML_TRN_SRC_PATH}/uvml_trn_pkg.flist
 -f ${DV_UVML_LOGS_SRC_PATH}/uvml_logs_pkg.flist
 -f ${DV_UVML_SB_SRC_PATH}/uvml_sb_pkg.flist
+-f ${DV_UVML_SB_SRC_PATH}/uvml_sb_pkg.flist
+-f ${DV_UVML_VERSION_SRC_PATH}/uvml_version_pkg.flist
+-f ${DV_UVML_RAL_SRC_PATH}/uvml_ral_pkg.flist
+-f ${DV_UVML_RISCV_GPR_SRC_PATH}/uvml_riscv_gpr_pkg.flist
+-f ${DV_UVML_RISCV_CSR_SRC_PATH}/uvml_riscv_csr_pkg.flist
 
 // Agents
 -f ${DV_UVMA_CLKNRST_PATH}/uvma_clknrst_pkg.flist

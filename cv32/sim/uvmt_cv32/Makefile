@@ -63,13 +63,17 @@ SIMULATOR    ?= unsim
 USE_ISS      ?= YES
 
 # UVM Environment
-export DV_UVMT_CV32_PATH        = $(PROJ_ROOT_DIR)/$(COREV_PROJ)/tb/uvmt_cv32
-export DV_UVME_CV32_PATH        = $(PROJ_ROOT_DIR)/$(COREV_PROJ)/env/uvme_cv32
-export DV_UVML_HRTBT_SRC_PATH   = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_hrtbt/src
-export DV_UVMA_CLKNRST_PATH     = $(PROJ_ROOT_DIR)/lib/uvm_agents/uvma_clknrst
-export DV_UVML_TRN_SRC_PATH     = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_trn/src
-export DV_UVML_LOGS_SRC_PATH    = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_logs/src
-export DV_UVML_SB_SRC_PATH      = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_sb/src
+export DV_UVMT_CV32_PATH           = $(PROJ_ROOT_DIR)/$(COREV_PROJ)/tb/uvmt_cv32
+export DV_UVME_CV32_PATH           = $(PROJ_ROOT_DIR)/$(COREV_PROJ)/env/uvme_cv32
+export DV_UVML_HRTBT_SRC_PATH      = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_hrtbt/src
+export DV_UVMA_CLKNRST_PATH        = $(PROJ_ROOT_DIR)/lib/uvm_agents/uvma_clknrst
+export DV_UVML_TRN_SRC_PATH        = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_trn/src
+export DV_UVML_LOGS_SRC_PATH       = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_logs/src
+export DV_UVML_SB_SRC_PATH         = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_sb/src
+export DV_UVML_VERSION_SRC_PATH    = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_version/src
+export DV_UVML_RAL_SRC_PATH        = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_ral/src
+export DV_UVML_RISCV_GPR_SRC_PATH  = $(PROJ_ROOT_DIR)/vendor_lib/mio/riscv/dv/uvml_riscv_gpr/src
+export DV_UVML_RISCV_CSR_SRC_PATH  = $(PROJ_ROOT_DIR)/vendor_lib/mio/riscv/dv/uvml_riscv_csr/src
 
 export DV_OVPM_HOME         = $(PROJ_ROOT_DIR)/vendor_lib/imperas
 export DV_OVPM_MODEL        = $(DV_OVPM_HOME)/riscv_CV32E40P_OVPsim

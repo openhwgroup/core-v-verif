@@ -36,11 +36,12 @@
  */
 package uvmt_cv32_pkg;
    
-   import uvm_pkg::*;
-   import uvme_cv32_pkg::*;
-   import uvml_hrtbt_pkg::*;
-   import uvml_logs_pkg::*;
-   //import uvma_debug_pkg::*;
+   import uvm_pkg           ::*;
+   import uvme_cv32_pkg     ::*;
+   import uvml_hrtbt_pkg    ::*;
+   import uvml_logs_pkg     ::*;
+   import uvml_riscv_gpr_pkg::*;
+   import uvml_riscv_csr_pkg::*;
    
    // Constants / Structs / Enums
    `include "uvmt_cv32_constants.sv"
