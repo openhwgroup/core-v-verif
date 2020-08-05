@@ -43,7 +43,7 @@ package uvme_cv32_pkg;
    `include "uvme_cv32_tdefs.sv"
    
    // Register Abstraction Layer
-   `include "uvme_cv32_ral.sv"
+   `include "uvme_cv32_reg_block.sv"
    
    // Objects
    `include "uvme_cv32_cfg.sv"

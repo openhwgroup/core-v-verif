@@ -1,7 +1,8 @@
+// 
 // Copyright 2020 OpenHW Group
 // Copyright 2020 Datum Technology Corporation
 // 
-// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+// Licensed under the Solderpad Hardware License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 // 
@@ -12,17 +13,30 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// 
 
 
-`ifndef __UVME_CV32_REG_IGNORE_BIT_BASH_LIST_SV__
-`define __UVME_CV32_REG_IGNORE_BIT_BASH_LIST_SV__
+`ifndef __UVML_RISCV_PKG_SV__
+`define __UVML_RISCV_PKG_SV__
 
 
-string  ignore_list[$] = '{
-   // TODO Add register blocks to CV32 ignore list for RAL bit bash automated testing
-   //      Ex: "block_name.reg_name", // One register at a time
-   //      Ex: "block_name.*", // One block at a time
-};
+// Pre-processor macros
+`include "uvm_macros.svh"
+`include "uvml_riscv_macros.sv"
 
 
-`endif // __UVME_${tb_name_uppercase}_REG_IGNORE_BIT_BASH_LIST_SV__
+/**
+ * Encapsulates all the types needed for RISC-V library.
+ */
+package uvml_riscv_pkg;
+   
+   import uvm_pkg::*;
+   
+   // Constants / Structs / Enums
+   `include "uvml_riscv_constants.sv"
+   `include "uvml_riscv_tdefs.sv"
+   
+endpackage : uvml_riscv_pkg
+
+
+`endif // __UVML_RISCV_PKG_SV__
