@@ -75,8 +75,9 @@ class uvme_cv32_cfg_c extends uvm_object;
    constraint agent_cfg_cons {
       if (enabled) {
          clknrst_cfg.enabled == 1;
-         tracer_cfg.enabled == 1;
+         //tracer_cfg .enabled == 1;
       }
+      tracer_cfg.enabled == 0; // DOP TEMP
       
       if (is_active == UVM_ACTIVE) {
          clknrst_cfg.is_active == UVM_ACTIVE;
@@ -85,7 +86,7 @@ class uvme_cv32_cfg_c extends uvm_object;
       
       if (trn_log_enabled) {
          clknrst_cfg.trn_log_enabled == 1;
-         debug_cfg.trn_log_enabled == 1;
+         tracer_cfg .trn_log_enabled == 1;
       }
    }
    
