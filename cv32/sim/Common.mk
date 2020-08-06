@@ -41,6 +41,21 @@
 ###############################################################################
 
 ###############################################################################
+# Common functions
+
+# Map multiple flag values to "YES" or NO
+# Use like this, to test variable MYVAR
+# ifeq ($(call IS_YES($(MYVAR)),YES)
+YES_VALS=Y YES 1 y yes TRUE true
+IS_YES=$(if $(filter $(YES_VALS),$(1)),YES,NO)
+NO_VALS=N NO 0 n no FALSE false
+IS_NO=$(if $(filter $(NO_VALS),$(1)),NO,YES)
+
+###############################################################################
+# Common variables
+BANNER=*******************************************************************************************
+
+###############################################################################
 # Variables to determine the the command to clone external repositories.
 # For each repo there are a set of variables:
 #      *_REPO:   URL to the repository in GitHub.
@@ -133,7 +148,8 @@ OVP_MODEL_DPI   = $(DV_OVPM_MODEL)/bin/Linux64/riscv_CV32E40P.dpi.so
 # Makefile first developed for the PULP-Platform RI5CY testbench.
 #
 # riscv toolchain install path
-RISCV            ?= /opt/riscv
+CV_SW_TOOLCHAIN  ?= /opt/riscv
+RISCV            ?= $(CV_SW_TOOLCHAIN)
 RISCV_EXE_PREFIX ?= $(RISCV)/bin/riscv32-unknown-elf-
 
 CFLAGS ?= -Os -g -static -mabi=ilp32 -march=rv32imc -Wall -pedantic
@@ -224,7 +240,8 @@ sanity: hello-world
 #    $* is file_name (w/o extension) of target
 %.hex: %.elf
 	$(RISCV_EXE_PREFIX)objcopy -O verilog $< $@ \
-		--change-section-address  .debugger=0x3FC000
+		--change-section-address  .debugger=0x3FC000 \
+		--change-section-address  .debugger_exception=0x3FC400
 	$(RISCV_EXE_PREFIX)readelf -a $< > $*.readelf
 	$(RISCV_EXE_PREFIX)objdump -D $*.elf > $*.objdump
 
