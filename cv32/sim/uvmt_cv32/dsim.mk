@@ -61,7 +61,7 @@ DSIM_DMP_FLAGS ?= -waves $(DSIM_DMP_FILE)
 endif
 
 # Variables to control code coverage collection command the line
-CCOV                   ?= 0
+CCOV                   ?= 1
 
 ifneq ($(CCOV), 0)
 DSIM_USER_COMPILE_ARGS += -code-cov block -code-cov-scope-specs $(DSIM_CODE_COV_SCOPE)
