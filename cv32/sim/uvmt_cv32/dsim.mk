@@ -91,7 +91,8 @@ mk_results:
 ################################################################################
 # DSIM compile target
 #      - TODO: cd $(DSIM_RESULTS) - incompatible with pkg file
-comp: mk_results $(CV32E40P_PKG) $(OVP_MODEL_DPI)
+#comp: mk_results $(CV32E40P_PKG) $(OVP_MODEL_DPI)
+comp: mk_results $(OVP_MODEL_DPI)
 	$(DSIM) \
 		$(DSIM_CMP_FLAGS) \
 		$(DSIM_UVM_ARGS) \
@@ -353,5 +354,6 @@ clean:
 	rm -rf $(DSIM_RESULTS)
 
 # All generated files plus the clone of the RTL
+#clean_all: clean clean_core_tests clean_riscv-dv clean_test_programs
+#	rm -rf $(CV32E40P_PKG)
 clean_all: clean clean_core_tests clean_riscv-dv clean_test_programs
-	rm -rf $(CV32E40P_PKG)

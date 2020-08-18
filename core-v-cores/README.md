@@ -1,3 +1,7 @@
+# IMPORTANT IMPORTANT IMPORTANT
+A cloned version of the RTL has been committed to this location *on this branch only*.
+This has been done for testing purposes and must not be merged to the master branch.
+
 ## CORE-V-CORES
 One or more CORE-V cores are cloned to this directory by the verification
 Makefiles.  For example you will see something like this in the simulation
