@@ -46,6 +46,7 @@ XRUN_ELAB_COV     = -covdut uvmt_cv32_tb -coverage b:e:f:t:u
 XRUN_RUN_COV      = -covscope uvmt_cv32_tb \
 					-nowarn CGDEFN
 NUM_TESTS        ?= 2
+
 XRUN_UVM_VERBOSITY ?= UVM_MEDIUM
 
 # Common QUIET flag defaults to -quiet unless VERBOSE is set
@@ -82,9 +83,9 @@ endif
 ################################################################################
 # Waveform (post-process) command line
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-WAVES_CMD = cd $(XRUN_RESULTS)/$(TEST) && $(INDAGO) -db ida.db
+WAVES_CMD = cd $(XRUN_RESULTS)/$(NAME) && $(INDAGO) -db ida.db
 else
-WAVES_CMD = cd $(XRUN_RESULTS)/$(TEST) && $(SIMVISION) waves.shm
+WAVES_CMD = cd $(XRUN_RESULTS)/$(NAME) && $(SIMVISION) waves.shm
 endif
 
 ################################################################################
@@ -188,7 +189,22 @@ ifeq ($(call IS_YES,$(XRUN_SINGLE_STEP)), YES)
 	XRUN_SIM_PREREQ = mk_xrun_dir $(CV32E40P_PKG) $(OVP_MODEL_DPI)
 	XRUN_COMP_RUN = $(XRUN_COMP) $(XRUN_RUN_BASE_FLAGS)
 endif
- 
+
+################################################################################
+# The new general test target
+test: $(XRUN_SIM_PREREQ) $(TEST_DIR)/$(NAME).hex
+	mkdir -p $(XRUN_RESULTS)/$(NAME) && \
+	cd $(XRUN_RESULTS)/$(NAME) && \
+		$(XRUN) \
+			-l xrun-$(NAME).log \
+			$(XRUN_COMP_RUN) \
+			-covtest $(NAME) \
+			$(PLUSARGS) \
+			+UVM_TESTNAME=$(UVM_TEST) \
+			+elf_file=$(TEST_DIR)/$(NAME).elf \
+			+nm_file=$(TEST_DIR)/$(NAME).nm \
+			+firmware=$(TEST_DIR)/$(NAME).hex
+
 ################################################################################
 # Custom test-programs.  See comment in dsim.mk for more info
 custom: $(XRUN_SIM_PREREQ) $(CUSTOM_DIR)/$(CUSTOM_PROG).hex
@@ -317,6 +333,7 @@ riscv-compliance: $(XRUN_SIM_PREREQ) $(COMPLIANCE).elf
 ###############################################################################
 # Use Google instruction stream generator (RISCV-DV) to create new test-programs
 comp_riscv-dv:
+	echo $(MAKECMDGOALS)
 	mkdir -p $(XRUN_RISCVDV_RESULTS)
 	cd $(XRUN_RISCVDV_RESULTS) && \
 	$(XRUN) $(XRUN_COMP_FLAGS) \
@@ -393,10 +410,23 @@ gen_corev_rand_interrupt_test:
 		+no_csr_instr=1
 	cp $(XRUN_RISCVDV_RESULTS)/corev_rand_interrupt_test/*.S $(CORE_TEST_DIR)/custom
 
-corev-dv: clean_riscv-dv \
-	clone_riscv-dv \
-	comp_riscv-dv \
-	gen_corev_arithmetic_base_test
+corev-dv: clean_riscv-dv clone_riscv-dv comp_riscv-dv
+	$(MAKE) gen-corev-dv TEST=corev_arithmetic_base_test NUM_TESTS=2
+	$(MAKE) gen-corev-dv TEST=corev_rand_instr_test NUM_TESTS=2
+	$(MAKE) gen-corev-dv TEST=corev_jump_stress_test NUM_TESTS=2	
+
+gen-corev-dv:
+	mkdir -p $(XRUN_RISCVDV_RESULTS)/$(TEST)
+	cd  $(XRUN_RISCVDV_RESULTS)/$(TEST) && rm -f *.S
+	cd  $(XRUN_RISCVDV_RESULTS)/$(TEST) && \
+	$(XRUN) -R $(XRUN_RUN_FLAGS) \
+		-xceligen rand_struct \
+		-l $(TEST).log \
+		+num_of_tests=$(NUM_TESTS) \
+		+UVM_TESTNAME=$(UVM_TEST) \
+		+asm_file_name_opts=$(TEST) \
+		$(PLUSARGS)
+	cp $(XRUN_RISCVDV_RESULTS)/$(TEST)/$(TEST)_*.S $(TEST_DIR)
 
 ################################################################################
 # Invoke post-process waveform viewer
