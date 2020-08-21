@@ -34,72 +34,9 @@
  *
  */
 
-// The following pseudo-instructions have been removed:
-// BEQZ, BGEZ, BGT,BGTU,BGTZ, BLE,BLEU,BLEZ,BLTZ, BNEZ, ILLEGAL
-// J, JR, MV, NOT, NEG, NEGW, RET, SEQZ, SGTZ, SLTZ, SNEZ
-// The following compressed instructions have not been added:
-// C_FLWSP,C_FLDSP,C_FSWSP,C_FSDSP,C_FLW,C_FLD,C_FSW,C_FSD,
-// C_J,C_JR,C_BEQZ,C_BNEZ,C_MV,C_SLLI64,C_SRLI64,C_SRAI64
-// The following instructions have been added:
-// FENCE
-typedef enum {
-    ADD,ADDI,AND,ANDI,AUIPC,BEQ,BGE,BGEU
-    ,BLTU,BNE,BLT, FENCE, EBREAK,ECALL
-    ,J,JAL,JALR,LB,LBU,LH,LHU
-    ,LUI,LW,NOP,OR
-    ,ORI, SB, SH,SLL,SLLI
-    ,SLT,SLTI,SLTIU,SLTU,SRA,SRAI
-    ,SRL,SRLI,SUB,SW,XOR,XORI
-    ,MUL,MULH,MULHU,MULHSU
-    ,DIV,REM,DIVU,REMU
-    ,C_LWSP,C_SWSP,C_LW,C_SW
-    ,C_JAL,C_JALR,C_LI,C_LUI
-    ,C_ADDI,C_ADDI16SP,C_ADDI4SPN
-    ,C_SLLI,C_SRLI,C_SRAI,C_ANDI,C_ADD
-    ,C_AND,C_OR,C_XOR,C_SUB,C_NOP,C_EBREAK
-} instr_name_t; // assembler
+class uvme_rv32isa_covg extends uvm_component;
 
-
-// The following CSR ABI names are not currently included:
-// fp, pc
-//"gpr_none" CSR ABI name added for JALR instruction check:
-typedef enum {
-    zero,ra,sp,gp,tp,t0,t1,t2,s0
-    ,s1,a0,a1,a2,a3,a4,a5,a6
-    ,a7,s2,s3,s4,s5,s6,s7,s8
-    ,s9,s10,s11,t3,t4,t5,t6
-    ,gpr_none
-} gpr_name_t; // ABI name
-
-// The following CSRs are not currently included:
-// mstatush, mtinst, mtval2, mhpmcounter3, ..., mhpmcounter31,
-// mhpmcounter3h, ..., mhpmcounter31h,
-//The following CSRs have been removed:
-// satp (supervisor-mode address translation and protection)
-typedef enum {
-    marchid,mcause,mcounteren,mcountinhibit,mcycle,mcycleh,medeleg,mepc,mhartid
-    ,mhpmevent10,mhpmevent11,mhpmevent12,mhpmevent13,mhpmevent14,mhpmevent15,mhpmevent16,mhpmevent17
-    ,mhpmevent18,mhpmevent19,mhpmevent20,mhpmevent21,mhpmevent22,mhpmevent23,mhpmevent24,mhpmevent25
-    ,mhpmevent26,mhpmevent27,mhpmevent28,mhpmevent29,mhpmevent3,mhpmevent30,mhpmevent31,mhpmevent4
-    ,mhpmevent5,mhpmevent6,mhpmevent7,mhpmevent8,mhpmevent9,mideleg,mie,mimpid
-    ,minstret,minstreth,mip,misa,mscratch,mstatus,mtval,mtvec
-    ,mvendorid,pmpaddr0,pmpaddr1,pmpaddr10,pmpaddr11,pmpaddr12,pmpaddr13,pmpaddr14
-    ,pmpaddr15,pmpaddr2,pmpaddr3,pmpaddr4,pmpaddr5,pmpaddr6,pmpaddr7,pmpaddr8
-    ,pmpaddr9,pmpcfg0,pmpcfg1,pmpcfg2,pmpcfg3
-} csr_name_t;
-
-typedef struct {
-    string key;
-    string val;
-} ops_t;
-
-typedef struct {
-    string ins_str;
-    instr_name_t asm;
-    ops_t ops[4];
-} ins_t;
-
-class riscv_32isa_coverage extends uvm_component;
+    uvme_cv32_cntxt_c cntxt;
 
 // The following CSR ABI names are not currently included:
 // fp, pc
@@ -1270,7 +1207,6 @@ class riscv_32isa_coverage extends uvm_component;
     endgroup
 
 // TODO : missing coverage of all combinations of source and destination operands.
-// FIXME: DONE
     covergroup c_srli_cg     with function sample(ins_t ins);
         option.per_instance = 1;
         cp_rd    : coverpoint get_gpr_name(ins.ops[0].val, ins.ops[0].key, "c.srli") {
@@ -1278,10 +1214,6 @@ class riscv_32isa_coverage extends uvm_component;
         }
         cp_rs1   : coverpoint get_gpr_name(ins.ops[1].val, ins.ops[1].key, "c.srli") {
             bins gprval[] = {[s0:a5]};
-        }
-        cp_shamt5   : coverpoint get_gpr_name(ins.ops[2].val, ins.ops[2].key, "c.srli" ) {
-            bins zero = {0};
-            bins pos  = {[1:$]};
         }
     endgroup
 
@@ -1400,9 +1332,11 @@ class riscv_32isa_coverage extends uvm_component;
         }
     endgroup
 
+    `uvm_component_utils(uvme_rv32isa_covg)
+
 // TODO : review by 20-July-2020
     function new(string name="rv32isa_covg", uvm_component parent=null);
-        super.new("parent", parent);
+        super.new(name, parent);
         add_cg        = new();
         addi_cg       = new();
         and_cg        = new();
@@ -1475,6 +1409,26 @@ class riscv_32isa_coverage extends uvm_component;
         c_nop_cg      = new();
         c_ebreak_cg   = new();
     endfunction: new
+
+    function void build_phase(uvm_phase phase);
+        super.build_phase(phase);
+
+        void'(uvm_config_db#(uvme_cv32_cntxt_c)::get(this, "", "cntxt", cntxt));
+        if (cntxt == null) begin
+            `uvm_fatal("RV32ISACOVG", "No cntxt object passed to model");
+        end
+    endfunction
+
+    task run_phase(uvm_phase phase);
+        super.run_phase(phase);
+
+        `uvm_info("rv32isa_covg", "The RV32ISA coverage model is running", UVM_LOW);
+
+        while (1) begin
+           @(cntxt.isa_covg_vif.ins_valid);
+           sample(cntxt.isa_covg_vif.ins);
+        end
+    endtask
 
     function void check_compressed(input ins_t ins);
         case (ins.ins_str)
@@ -1687,4 +1641,4 @@ class riscv_32isa_coverage extends uvm_component;
     endfunction: sample
 
 
-endclass : riscv_32isa_coverage
+endclass : uvme_rv32isa_covg
