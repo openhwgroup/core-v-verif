@@ -1,0 +1,3 @@
+[submodule "core-v-cores/cv32e40p"]
+	path = core-v-cores/cv32e40p
+	url = https://github.com/openhwgroup/cv32e40p.git
