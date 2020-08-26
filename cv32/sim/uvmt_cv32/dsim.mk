@@ -91,7 +91,8 @@ mk_results:
 ################################################################################
 # DSIM compile target
 #      - TODO: cd $(DSIM_RESULTS) - incompatible with pkg file
-comp: mk_results $(CV32E40P_PKG) $(OVP_MODEL_DPI)
+#comp: mk_results $(CV32E40P_PKG) $(OVP_MODEL_DPI)
+comp: mk_results $(FPNEW_PKG) $(OVP_MODEL_DPI)
 	$(DSIM) \
 		$(DSIM_CMP_FLAGS) \
 		$(DSIM_UVM_ARGS) \
