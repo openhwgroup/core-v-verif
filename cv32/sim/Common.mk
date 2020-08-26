@@ -237,9 +237,12 @@ sanity: hello-world
 ###############################################################################
 # Read YAML test specifications
 
-# If the gen-corev-dv target is defined then read in a test specification file
+# If the gen_corev-dv target is defined then read in a test specification file
 YAML2MAKE = $(PROJ_ROOT_DIR)/bin/yaml2make
-ifneq ($(filter gen-corev-dv,$(MAKECMDGOALS)),)
+ifneq ($(filter gen_corev-dv,$(MAKECMDGOALS)),)
+ifeq ($(TEST),)
+$(error ERROR must specify a TEST variable with gen_corev-dv target)
+endif
 GEN_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=corev-dv.yaml --debug)
 ifeq ($(GEN_FLAGS_MAKE),)
 $(error ERROR Could not find corev-dv.yaml for test: $(TEST))
@@ -250,6 +253,9 @@ endif
 # If the test target is defined then read in a test specification file
 TEST_YAML_PARSE_TARGETS=test waves cov
 ifneq ($(filter $(TEST_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
+ifeq ($(TEST),)
+$(error ERROR must specify a TEST variable)
+endif
 TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml --debug --run-index=$(RUN_INDEX))
 ifeq ($(TEST_FLAGS_MAKE),)
 $(error ERROR Could not find test.yaml for test: $(TEST))

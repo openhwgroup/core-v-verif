@@ -332,7 +332,7 @@ riscv-compliance: $(XRUN_SIM_PREREQ) $(COMPLIANCE).elf
 
 ###############################################################################
 # Use Google instruction stream generator (RISCV-DV) to create new test-programs
-comp_riscv-dv:
+comp_riscv-dv: $(RISCVDV_PKG)
 	echo $(MAKECMDGOALS)
 	mkdir -p $(XRUN_RISCVDV_RESULTS)
 	cd $(XRUN_RISCVDV_RESULTS) && \
@@ -411,11 +411,11 @@ gen_corev_rand_interrupt_test:
 	cp $(XRUN_RISCVDV_RESULTS)/corev_rand_interrupt_test/*.S $(CORE_TEST_DIR)/custom
 
 corev-dv: clean_riscv-dv clone_riscv-dv comp_riscv-dv
-	$(MAKE) gen-corev-dv TEST=corev_arithmetic_base_test NUM_TESTS=2
-	$(MAKE) gen-corev-dv TEST=corev_rand_instr_test NUM_TESTS=2
-	$(MAKE) gen-corev-dv TEST=corev_jump_stress_test NUM_TESTS=2	
+	$(MAKE) gen_corev-dv TEST=corev_arithmetic_base_test NUM_TESTS=2
+	$(MAKE) gen_corev-dv TEST=corev_rand_instr_test NUM_TESTS=2
+	$(MAKE) gen_corev-dv TEST=corev_jump_stress_test NUM_TESTS=2	
 
-gen-corev-dv:
+gen_corev-dv: 
 	mkdir -p $(XRUN_RISCVDV_RESULTS)/$(TEST)
 	cd  $(XRUN_RISCVDV_RESULTS)/$(TEST) && rm -f *.S
 	cd  $(XRUN_RISCVDV_RESULTS)/$(TEST) && \
