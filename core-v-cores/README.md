@@ -1,4 +1,12 @@
 ## CORE-V-CORES
+One or more CORE-V cores are cloned to this directory.  There are two methods
+by which this is done:
+
+### 1. Git Submodules
+This is currently how its done for CV32E40P **in this branch only**.
+
+### 2. Verification Makefiles
+For example you will see something like this in the simulation
 One or more CORE-V cores are cloned to this directory by the verification
 Makefiles.  For example you will see something like this in the simulation
 Makefiles:
