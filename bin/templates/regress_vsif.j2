@@ -28,7 +28,7 @@ session {{session}} {
 {% if lsf %}
     drm: lsf;
 {% endif %}
-    default_dispatch_parameters: <text>-q himem -o /dev/null -m lcmaus012</text>;
+    default_dispatch_parameters: <text>-q himem -o /dev/null -m lcmaus011</text>;
 }
 
 group cv32e40p {
@@ -53,6 +53,9 @@ group cv32e40p {
 {% endif %}
 {{indent}}    //  Test: {{t.name}} {{t.description}}
 {{indent}}    group {{t.name}} {
+{% if t.precmd %}
+{{indent}}        depends_on: ../precmd;
+{% endif %}
 {{indent}}        test run {
 {{indent}}            sv_seed: gen_random;
 {{indent}}            seed: [0..{{t.num-1}}];

@@ -1,30 +1,92 @@
-name: cv32_full_regression
-description: Full regression (all tests) for CV32
+# YAML file to specify a regression testlist
+---
+# Header
+name: cv32_full
+description: Full regression (all tests) for CV32E40P with step-and-compare against RM"
 
-builds: 
+# List of builds
+builds:
   corev-dv:
-    cmd: make corev-dv
+    # required: Make the corev-dv infrastructure    
+    cmd: makecv32 corev-dv
     dir: cv32/sim/uvmt_cv32
+    cov: 0
   uvmt_cv32:
-    cmd: make comp
-    dir: cv32/sim/uvmt_cv32
-    
+    # required: the make command to create the build
+    cmd: makecv32 comp
+    dir: cv32/sim/uvmt_cv32    
+    iss: 1
+
+# List of tests
 tests:
   hello-world:
     build: uvmt_cv32
-    description: UVM hello world test
+    description: uvm_hello_world_test
     dir: cv32/sim/uvmt_cv32
-    cmd: make hello-world
+    cmd: makecv32 hello-world
+
+  csr_instructions:
+    build: uvmt_cv32
+    description: CSR insturciton test
+    dir: cv32/sim/uvmt_cv32
+    cmd: makecv32 csr_instructions
+
+  cv324e0p_csr_access_test:
+    build: uvmt_cv32
+    description: CSR access test for CV32E40P
+    dir: cv32/sim/uvmt_cv32
+    cmd: makecv32 custom CUSTOM_PROG=cv32e40p_csr_access_test
+
+  requested_csr_por:
+    build: uvmt_cv32
+    description: CSR PoR test
+    dir: cv32/sim/uvmt_cv32
+    cmd: makecv32 custom CUSTOM_PROG=requested_csr_por
 
   modeled_csr_por:
     build: uvmt_cv32
     description: Modeled CSR PoR test
     dir: cv32/sim/uvmt_cv32
-    cmd: make custom CUSTOM_PROG=modeled_csr_por
+    cmd: makecv32 custom CUSTOM_PROG=modeled_csr_por
 
-  riscv_ebreak_test_0:
+  csr_instructions:
     build: uvmt_cv32
-    description: Static riscv-dv ebreak test
+    description: CSR Instruction Test
     dir: cv32/sim/uvmt_cv32
-    cmd: make custom CUSTOM_PROG=riscv_ebreak_test_0
+    cmd: makecv32 custom CUSTOM_PROG=csr_instructions
 
+  riscv_ebreak_test:
+    build: uvmt_cv32
+    description: Static riscv-dv ebreak
+    dir: cv32/sim/uvmt_cv32
+    cmd: makecv32 test TEST=riscv_ebreak_test
+
+  corev_arithmetic_base_test:
+    build: uvmt_cv32
+    description: Basic arithmetic test
+    dir: cv32/sim/uvmt_cv32
+    precmd: makecv32 gen_corev-dv TEST=corev_arithmetic_base_test
+    cmd: makecv32 test TEST=corev_arithmetic_base_test
+    num: 2
+
+  corev_random_instruction_test:
+    build: uvmt_cv32
+    description: Random instruciton test
+    dir: cv32/sim/uvmt_cv32
+    precmd: makecv32 gen_corev-dv TEST=corev_rand_instr_test
+    cmd: makecv32 test TEST=corev_rand_instr_test
+    num: 2
+
+  corev_jump_stress_test:
+    build: uvmt_cv32
+    description: Jump stress test
+    dir: cv32/sim/uvmt_cv32
+    precmd: makecv32 gen_corev-dv TEST=corev_jump_stress_test
+    cmd: makecv32 test TEST=corev_jump_stress_test
+    num: 2
+  
+  illegal:
+    build: uvmt_cv32
+    description: Illegal instruction test
+    dir: cv32/sim/uvmt_cv32
+    cmd: makecv32 test TEST=illegal

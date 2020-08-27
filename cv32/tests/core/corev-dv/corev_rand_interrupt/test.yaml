@@ -1,4 +1,4 @@
-# Test definition YAML for test
+# Test definition YAML for random interrupt test
 
 # corev-dv generator test
 name: corev_rand_interrupt_<RUN_INDEX>

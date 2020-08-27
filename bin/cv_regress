@@ -185,6 +185,7 @@ elif args.vsif:
     out_fh = open(args.outfile, 'w')
     out_fh.write(template.render(session=os.path.splitext(os.path.basename(args.outfile))[0],
                                  results_path=get_results_path(args.project),
+                                 project=args.project,
                                  regressions=regressions,
                                  lsf=args.lsf,
                                  unique_builds=unique_builds))
