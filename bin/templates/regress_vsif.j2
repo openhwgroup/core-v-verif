@@ -27,8 +27,10 @@ session {{session}} {
     top_dir: {{results_path}}/vmgr_sessions;
 {% if lsf %}
     drm: lsf;
+    max_runs_in_parallel: 20;
+    queuing_policy: round_robin;
+    default_dispatch_parameters: <text>{{lsf}}</text>;
 {% endif %}
-    default_dispatch_parameters: <text>-q himem -o /dev/null -m lcmaus011</text>;
 }
 
 group cv32e40p {
@@ -60,7 +62,7 @@ group cv32e40p {
 {{indent}}            sv_seed: gen_random;
 {{indent}}            seed: [0..{{t.num-1}}];
 {{indent}}            count: {{t.num}};
-{{indent}}            run_script: "cd {{t.dir}} && {{t.cmd}} COMP=0 CV_SIM_PREFIX= SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=$RUN_ENV(BRUN_SEED) RNDSEED=$RUN_ENV(BRUN_SV_SEED)";
+{{indent}}            run_script: "cd {{t.dir}} && {{t.cmd}} COMP=0 CV_SIM_PREFIX= SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=$RUN_ENV(BRUN_SEED) START_INDEX=$RUN_ENV(BRUN_SEED) RNDSEED=$RUN_ENV(BRUN_SV_SEED)";
 {{indent}}        };
 {{indent}}    };
 {% if t.precmd %}

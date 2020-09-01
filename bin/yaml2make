@@ -3,7 +3,8 @@
 ################################################################################
 #
 # Copyright 2020 OpenHW Group
-# 
+# Copyright 2020 Silicon Labs, Inc.
+#
 # Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -99,11 +100,11 @@ def read_file(test, type, run_index):
 
     return test_spec
 
-def emit_make(test_spec):
+def emit_make(test_spec, prefix):
     '''Emit a hash from the YAML test specification into a makefile that can be included'''
     fh = tempfile.NamedTemporaryFile(mode='w', delete=False)
     for k,v in sorted(test_spec.items()):
-        fh.write('{}={}\n'.format(k.upper(), v.rstrip()))
+        fh.write('{}{}={}\n'.format('' if not prefix else prefix.upper() + '_', k.upper(), v.rstrip()))
     fh.close()
 
     return fh.name
@@ -115,6 +116,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--test', help='Test to look for')
 parser.add_argument('-d', '--debug', action='store_true', help='Display debug messages')
 parser.add_argument('--yaml', choices=VALID_YAMLS, help='Name of YAML test specification to find')
+parser.add_argument('--prefix', help='Prefix to add to make variables generated')
 parser.add_argument('--run-index', default='0', help='Add a run index to append to test specifications')
 args = parser.parse_args()
 
@@ -132,7 +134,7 @@ if not args.test:
     os.sys.exit(2)
 
 test_spec = read_file(test=args.test, type=args.yaml, run_index=args.run_index)
-temp_file = emit_make(test_spec)
+temp_file = emit_make(test_spec=test_spec, prefix=args.prefix)
 
 logger.debug('File written to {}'.format(temp_file))
 print(temp_file)

@@ -244,11 +244,11 @@ sanity: hello-world
 
 # If the gen_corev-dv target is defined then read in a test specification file
 YAML2MAKE = $(PROJ_ROOT_DIR)/bin/yaml2make
-ifneq ($(filter gen_corev-dv,$(MAKECMDGOALS)),)
+ifneq ($(filter gen_riscv-dv,$(MAKECMDGOALS)),)
 ifeq ($(TEST),)
-$(error ERROR must specify a TEST variable with gen_corev-dv target)
+$(error ERROR must specify a TEST variable with gen_riscv-dv target)
 endif
-GEN_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=corev-dv.yaml --debug)
+GEN_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=corev-dv.yaml --debug --prefix=GEN)
 ifeq ($(GEN_FLAGS_MAKE),)
 $(error ERROR Could not find corev-dv.yaml for test: $(TEST))
 endif
@@ -261,7 +261,7 @@ ifneq ($(filter $(TEST_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
 ifeq ($(TEST),)
 $(error ERROR must specify a TEST variable)
 endif
-TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml --debug --run-index=$(RUN_INDEX))
+TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml --debug --run-index=$(RUN_INDEX) --prefix=TEST)
 ifeq ($(TEST_FLAGS_MAKE),)
 $(error ERROR Could not find test.yaml for test: $(TEST))
 endif

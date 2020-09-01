@@ -334,7 +334,7 @@ comp_corev-dv: clean_riscv-dv \
 	clone_riscv-dv \
 	comp_riscv-dv 
 
-corev-dv: comp_corev-dv \
+corev-dv: clone_riscv-dv comp_riscv-dv \
 	gen_corev_arithmetic_base_test \
 	gen_corev_rand_instr_test
 
