@@ -53,6 +53,10 @@ if (sys.version_info < (3,0,0)):
     print ('Requires python 3')
     exit(1)
     
+def get_filter_dir():
+    '''Fetch regression path using project'''
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), 'vmgr'))
+
 def get_regress_path(project):
     '''Fetch regression path using project'''
     return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', project, 'regress'))
@@ -189,6 +193,8 @@ elif args.vsif:
                                  project=args.project,
                                  regressions=regressions,
                                  lsf=args.lsf,
+                                 simulator=args.simulator,
+                                 filter_dir=get_filter_dir(),
                                  unique_builds=unique_builds))
     out_fh.close()
     

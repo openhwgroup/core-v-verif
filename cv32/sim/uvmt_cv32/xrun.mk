@@ -334,7 +334,6 @@ riscv-compliance: $(XRUN_SIM_PREREQ) $(COMPLIANCE).elf
 ###############################################################################
 # Use Google instruction stream generator (RISCV-DV) to create new test-programs
 comp_riscv-dv: $(RISCVDV_PKG)
-	echo $(MAKECMDGOALS)
 	mkdir -p $(XRUN_RISCVDV_RESULTS)
 	cd $(XRUN_RISCVDV_RESULTS) && \
 	$(XRUN) $(XRUN_COMP_FLAGS) \
