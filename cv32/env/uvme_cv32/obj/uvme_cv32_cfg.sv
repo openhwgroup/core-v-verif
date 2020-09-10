@@ -37,7 +37,7 @@ class uvme_cv32_cfg_c extends uvm_object;
    rand uvma_riscv_tracer_cfg_c  tracer_cfg ;
    
    // Objects
-   rand uvme_cv32_reg_block_c  cv32_ral;
+   rand uvme_cv32_reg_block_c  ral;
    rand uvml_sb_cfg_c          sb_gpr_rv32i_cfg;
    rand uvml_sb_cfg_c          sb_gpr_ext_m_cfg;
    rand uvml_sb_cfg_c          sb_gpr_ext_f_cfg;
@@ -55,7 +55,7 @@ class uvme_cv32_cfg_c extends uvm_object;
       `uvm_field_object(clknrst_cfg, UVM_DEFAULT)
       `uvm_field_object(tracer_cfg , UVM_DEFAULT)
       
-      `uvm_field_object(cv32_ral        , UVM_DEFAULT)
+      `uvm_field_object(ral             , UVM_DEFAULT)
       `uvm_field_object(sb_gpr_rv32i_cfg, UVM_DEFAULT)
       `uvm_field_object(sb_gpr_ext_m_cfg, UVM_DEFAULT)
       `uvm_field_object(sb_gpr_ext_f_cfg, UVM_DEFAULT)
@@ -106,9 +106,9 @@ function uvme_cv32_cfg_c::new(string name="uvme_cv32_cfg");
    clknrst_cfg = uvma_clknrst_cfg_c     ::type_id::create("clknrst_cfg");
    tracer_cfg  = uvma_riscv_tracer_cfg_c::type_id::create("tracer_cfg" );
    
-   cv32_ral = uvme_cv32_reg_block_c::type_id::create("cv32_ral");
-   cv32_ral.build();
-   cv32_ral.lock_model();
+   ral = uvme_cv32_reg_block_c::type_id::create("cv32_ral");
+   ral.build();
+   ral.lock_model();
    
    sb_gpr_rv32i_cfg = uvml_sb_cfg_c::type_id::create("sb_gpr_rv32i_cfg");
    sb_gpr_ext_m_cfg = uvml_sb_cfg_c::type_id::create("sb_gpr_ext_m_cfg");

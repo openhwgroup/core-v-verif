@@ -29,10 +29,10 @@ class uvme_cv32_sb_c extends uvm_scoreboard;
    uvme_cv32_cntxt_c  cntxt;
    
    // Components
-   uvml_sb_simplex_c  gpr_rv32i_sb;
-   uvml_sb_simplex_c  gpr_ext_m_sb;
-   uvml_sb_simplex_c  gpr_ext_f_sb;
-   uvml_sb_simplex_c  gpr_ext_c_sb;
+   uvml_sb_simplex_c#(uvml_riscv_gpr_var_rv32i_set_c)  gpr_rv32i_sb;
+   uvml_sb_simplex_c#(uvml_riscv_gpr_ext_m_set_c    )  gpr_ext_m_sb;
+   uvml_sb_simplex_c#(uvml_riscv_gpr_ext_f_set_c    )  gpr_ext_f_sb;
+   uvml_sb_simplex_c#(uvml_riscv_gpr_ext_c_set_c    )  gpr_ext_c_sb;
    
    
    `uvm_component_utils_begin(uvme_cv32_sb_c)
@@ -127,10 +127,10 @@ endfunction : assign_cntxt
 
 function void uvme_cv32_sb_c::create_sbs();
    
-   gpr_rv32i_sb = uvml_sb_simplex_c::type_id::create("gpr_rv32i_sb", this);
-   gpr_ext_m_sb = uvml_sb_simplex_c::type_id::create("gpr_ext_m_sb", this);
-   gpr_ext_f_sb = uvml_sb_simplex_c::type_id::create("gpr_ext_f_sb", this);
-   gpr_ext_c_sb = uvml_sb_simplex_c::type_id::create("gpr_ext_c_sb", this);
+   gpr_rv32i_sb = uvml_sb_simplex_c#(uvml_riscv_gpr_var_rv32i_set_c)::type_id::create("gpr_rv32i_sb", this);
+   gpr_ext_m_sb = uvml_sb_simplex_c#(uvml_riscv_gpr_ext_m_set_c    )::type_id::create("gpr_ext_m_sb", this);
+   gpr_ext_f_sb = uvml_sb_simplex_c#(uvml_riscv_gpr_ext_f_set_c    )::type_id::create("gpr_ext_f_sb", this);
+   gpr_ext_c_sb = uvml_sb_simplex_c#(uvml_riscv_gpr_ext_c_set_c    )::type_id::create("gpr_ext_c_sb", this);
    
 endfunction : create_sbs
 

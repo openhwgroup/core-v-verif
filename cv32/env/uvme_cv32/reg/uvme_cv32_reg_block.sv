@@ -1,19 +1,17 @@
-// 
+// Copyright 2020 OpenHW Group
 // Copyright 2020 Datum Technology Corporation
-// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 // 
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may
-// not use this file except in compliance with the License, or, at your option,
-// the Apache License version 2.0. You may obtain a copy of the License at
+// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 // 
-//     https://solderpad.org/licenses/SHL-2.1/
+//     https://solderpad.org/licenses/
 // 
-// Unless required by applicable law or agreed to in writing, any work
-// distributed under the License is distributed on an “AS IS” BASIS, WITHOUT
-// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-// License for the specific language governing permissions and limitations
-// under the License.
-// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 
 `ifndef __UVME_CV32_REG_BLOCK_SV__
@@ -68,19 +66,19 @@ endfunction : new
 
 function void uvme_cv32_reg_block_c::create_blocks();
    
-   user = uvme_cv32_ml_abc_reg_block_c::type_id::create("user");
+   user = uvme_cv32_user_reg_block_c::type_id::create("user");
    user.configure(this);
    user.build();
    
-   supervisor = uvme_cv32_ml_abc_reg_block_c::type_id::create("supervisor");
+   supervisor = uvme_cv32_supervisor_reg_block_c::type_id::create("supervisor");
    supervisor.configure(this);
    supervisor.build();
    
-   hypervisor = uvme_cv32_ml_abc_reg_block_c::type_id::create("hypervisor");
+   hypervisor = uvme_cv32_hypervisor_reg_block_c::type_id::create("hypervisor");
    hypervisor.configure(this);
    hypervisor.build();
    
-   machine = uvme_cv32_ml_abc_reg_block_c::type_id::create("machine");
+   machine = uvme_cv32_machine_reg_block_c::type_id::create("machine");
    machine.configure(this);
    machine.build();
    

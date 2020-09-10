@@ -68,10 +68,10 @@ function uvme_cv32_cntxt_c::new(string name="uvme_cv32_cntxt");
    clknrst_cntxt = uvma_clknrst_cntxt_c     ::type_id::create("clknrst_cntxt");
    tracer_cntxt  = uvma_riscv_tracer_cntxt_c::type_id::create("tracer_cntxt" );
    
-   sb_gpr_rv32i_cntxt = uvma_cv32_sb_cntxt_c::type_id::create("sb_gpr_rv32i_cntxt");
-   sb_gpr_ext_m_cntxt = uvma_cv32_sb_cntxt_c::type_id::create("sb_gpr_ext_m_cntxt");
-   sb_gpr_ext_f_cntxt = uvma_cv32_sb_cntxt_c::type_id::create("sb_gpr_ext_f_cntxt");
-   sb_gpr_ext_c_cntxt = uvma_cv32_sb_cntxt_c::type_id::create("sb_gpr_ext_c_cntxt");
+   sb_gpr_rv32i_cntxt = uvml_sb_cntxt_c::type_id::create("sb_gpr_rv32i_cntxt");
+   sb_gpr_ext_m_cntxt = uvml_sb_cntxt_c::type_id::create("sb_gpr_ext_m_cntxt");
+   sb_gpr_ext_f_cntxt = uvml_sb_cntxt_c::type_id::create("sb_gpr_ext_f_cntxt");
+   sb_gpr_ext_c_cntxt = uvml_sb_cntxt_c::type_id::create("sb_gpr_ext_c_cntxt");
    
    sample_cfg_e   = new("sample_cfg_e"  );
    sample_cntxt_e = new("sample_cntxt_e");

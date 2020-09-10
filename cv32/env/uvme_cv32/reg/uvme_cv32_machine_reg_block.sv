@@ -1,19 +1,17 @@
-// 
+// Copyright 2020 OpenHW Group
 // Copyright 2020 Datum Technology Corporation
-// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 // 
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may
-// not use this file except in compliance with the License, or, at your option,
-// the Apache License version 2.0. You may obtain a copy of the License at
+// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 // 
-//     https://solderpad.org/licenses/SHL-2.1/
+//     https://solderpad.org/licenses/
 // 
-// Unless required by applicable law or agreed to in writing, any work
-// distributed under the License is distributed on an “AS IS” BASIS, WITHOUT
-// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-// License for the specific language governing permissions and limitations
-// under the License.
-// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 
 `ifndef __UVME_CV32_MACHINE_REG_BLOCK_SV__
@@ -27,14 +25,14 @@
 class uvme_cv32_machine_reg_block_c extends uvml_ral_reg_block_c;
    
    // Sub-Blocks
-   rand uvml_riscv_csr_machine_information_reg_block_c      #(32)  information      ;
-   rand uvml_riscv_csr_machine_trap_setup_reg_block_c       #(32)  trap_setup       ;
-   rand uvml_riscv_csr_machine_trap_handling_reg_block_c    #(32)  trap_handling    ;
-   rand uvml_riscv_csr_machine_memory_protection_reg_block_c#(32)  memory_protection;
-   rand uvml_riscv_csr_machine_counter_timers_reg_block_c   #(32)  counter_timers   ;
-   rand uvml_riscv_csr_machine_counter_setup_reg_block_c    #(32)  counter_setup    ;
-   rand uvml_riscv_csr_machine_debug_trace_reg_block_c      #(32)  debug_trace      ;
-   rand uvml_riscv_csr_machine_debug_mode_reg_block_c       #(32)  debug_mode       ;
+   rand uvml_riscv_csr_machine_information_reg_block_c           #(32)  information      ;
+   rand uvml_riscv_csr_machine_trap_setup_reg_block_c            #(32)  trap_setup       ;
+   rand uvml_riscv_csr_machine_trap_handling_reg_block_c         #(32)  trap_handling    ;
+   rand uvml_riscv_csr_machine_memory_protection_rv32_reg_block_c#(32)  memory_protection;
+   rand uvml_riscv_csr_machine_counters_timers_rv32_reg_block_c         counters_timers  ;
+   rand uvml_riscv_csr_machine_counter_setup_reg_block_c         #(32)  counter_setup    ;
+   rand uvml_riscv_csr_machine_debug_trace_reg_block_c           #(32)  debug_trace      ;
+   rand uvml_riscv_csr_machine_debug_mode_reg_block_c            #(32)  debug_mode       ;
    
    
    `uvm_object_utils_begin(uvme_cv32_machine_reg_block_c)
@@ -42,7 +40,7 @@ class uvme_cv32_machine_reg_block_c extends uvml_ral_reg_block_c;
       `uvm_field_object(trap_setup       , UVM_DEFAULT)
       `uvm_field_object(trap_handling    , UVM_DEFAULT)
       `uvm_field_object(memory_protection, UVM_DEFAULT)
-      `uvm_field_object(counter_timers   , UVM_DEFAULT)
+      `uvm_field_object(counters_timers  , UVM_DEFAULT)
       `uvm_field_object(counter_setup    , UVM_DEFAULT)
       `uvm_field_object(debug_trace      , UVM_DEFAULT)
       `uvm_field_object(debug_mode       , UVM_DEFAULT)
@@ -88,13 +86,13 @@ function void uvme_cv32_machine_reg_block_c::create_blocks();
    trap_handling.configure(this);
    trap_handling.build();
    
-   memory_protection = uvml_riscv_csr_machine_memory_protection_reg_block_c#(32)::type_id::create("memory_protection");
+   memory_protection = uvml_riscv_csr_machine_memory_protection_rv32_reg_block_c#(32)::type_id::create("memory_protection");
    memory_protection.configure(this);
    memory_protection.build();
    
-   counter_timers = uvml_riscv_csr_machine_counter_timers_reg_block_c#(32)::type_id::create("counter_timers");
-   counter_timers.configure(this);
-   counter_timers.build();
+   counters_timers = uvml_riscv_csr_machine_counters_timers_rv32_reg_block_c::type_id::create("counters_timers");
+   counters_timers.configure(this);
+   counters_timers.build();
    
    counter_setup = uvml_riscv_csr_machine_counter_setup_reg_block_c#(32)::type_id::create("counter_setup");
    counter_setup.configure(this);

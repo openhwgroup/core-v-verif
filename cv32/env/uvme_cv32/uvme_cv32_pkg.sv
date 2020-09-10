@@ -32,17 +32,24 @@
  */
 package uvme_cv32_pkg;
    
-   import uvm_pkg         ::*;
-   import uvml_hrtbt_pkg  ::*;
-   import uvml_sb_pkg     ::*;
-   import uvma_clknrst_pkg::*;
-   //import uvma_debug_pkg::*;
+   import uvm_pkg              ::*;
+   import uvml_hrtbt_pkg       ::*;
+   import uvml_sb_pkg          ::*;
+   import uvml_ral_pkg         ::*;
+   import uvma_clknrst_pkg     ::*;
+   import uvma_riscv_tracer_pkg::*;
+   import uvml_riscv_gpr_pkg   ::*;
+   import uvml_riscv_csr_pkg   ::*;
    
    // Constants / Structs / Enums
    `include "uvme_cv32_constants.sv"
    `include "uvme_cv32_tdefs.sv"
    
    // Register Abstraction Layer
+   `include "uvme_cv32_hypervisor_reg_block.sv"
+   `include "uvme_cv32_machine_reg_block.sv"
+   `include "uvme_cv32_supervisor_reg_block.sv"
+   `include "uvme_cv32_user_reg_block.sv"
    `include "uvme_cv32_reg_block.sv"
    
    // Objects

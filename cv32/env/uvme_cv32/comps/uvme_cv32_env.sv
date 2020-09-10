@@ -29,7 +29,7 @@ class uvme_cv32_env_c extends uvm_env;
    uvme_cv32_cntxt_c  cntxt;
    
    // Register Abstraction Layer (RAL)
-   uvme_cv32_ral_c  cv32_ral;
+   uvme_cv32_reg_block_c  ral;
    
    // Components
    uvme_cv32_cov_model_c  cov_model;
@@ -223,17 +223,17 @@ endfunction: assign_cfg
 
 function void uvme_cv32_env_c::assign_cntxt();
    
-   uvm_config_db#(uvme_cv32_cntxt_c   )::set(this, "*"            , "cntxt", cntxt              );
-   uvm_config_db#(uvma_clknrst_cntxt_c)::set(this, "clknrst_agent", "cntxt", cntxt.clknrst_cntxt);
-   uvm_config_db#(uvma_debug_cntxt_c  )::set(this, "tracer_agent" , "cntxt", cntxt.tracer_cntxt );
+   uvm_config_db#(uvme_cv32_cntxt_c        )::set(this, "*"            , "cntxt", cntxt              );
+   uvm_config_db#(uvma_clknrst_cntxt_c     )::set(this, "clknrst_agent", "cntxt", cntxt.clknrst_cntxt);
+   uvm_config_db#(uvma_riscv_tracer_cntxt_c)::set(this, "tracer_agent" , "cntxt", cntxt.tracer_cntxt );
    
 endfunction: assign_cntxt
 
 
 function void uvme_cv32_env_c::create_agents();
    
-   clknrst_agent = uvma_clknrst_agent_c::type_id::create("clknrst_agent", this);
-   tracer_agent  = uvma_tracer_agent_c ::type_id::create("tracer_agent" , this);
+   clknrst_agent = uvma_clknrst_agent_c     ::type_id::create("clknrst_agent", this);
+   tracer_agent  = uvma_riscv_tracer_agent_c::type_id::create("tracer_agent" , this);
    
 endfunction: create_agents
 
@@ -279,10 +279,10 @@ endfunction: connect_predictor
 function void uvme_cv32_env_c::connect_scoreboard();
    
    // Connect agents -> scoreboard
-   tracer_agent.mon_gpr_rv32i_ap.connect(sb.gpr_rv32i_sb.act_export);
-   tracer_agent.mon_gpr_ext_m_ap.connect(sb.gpr_ext_m_sb.act_export);
-   tracer_agent.mon_gpr_ext_f_ap.connect(sb.gpr_ext_f_sb.act_export);
-   tracer_agent.mon_gpr_ext_c_ap.connect(sb.gpr_ext_c_sb.act_export);
+   //tracer_agent.mon_gpr_rv32i_ap.connect(sb.gpr_rv32i_sb.act_export);
+   //tracer_agent.mon_gpr_ext_m_ap.connect(sb.gpr_ext_m_sb.act_export);
+   //tracer_agent.mon_gpr_ext_f_ap.connect(sb.gpr_ext_f_sb.act_export);
+   //tracer_agent.mon_gpr_ext_c_ap.connect(sb.gpr_ext_c_sb.act_export);
    
    // Connect predictor -> scoreboard
    predictor.gpr_rv32i_ap.connect(sb.gpr_rv32i_sb.exp_export);
