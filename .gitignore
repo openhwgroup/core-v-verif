@@ -13,6 +13,10 @@ dsim.log
 dsim_results
 metrics.db
 metrics_history.db
+xrun_results
+vsim_results
+vmgr_sessions
+__pycache__
 *.swp
 /.cproject
 /.project
@@ -21,4 +25,6 @@ dvt_build.log
 xrun.history
 xrun.log
 xcelium.d/
-
+waves.shm/
+*.log
+stdout.txt

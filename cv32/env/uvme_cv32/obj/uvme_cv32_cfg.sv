@@ -35,6 +35,7 @@ class uvme_cv32_cfg_c extends uvm_object;
    // Agent cfg handles
    rand uvma_clknrst_cfg_c       clknrst_cfg;
    rand uvma_riscv_tracer_cfg_c  tracer_cfg ;
+   rand uvma_interrupt_cfg_c     interrupt_cfg;
    
    // Objects
    rand uvme_cv32_reg_block_c  ral;
@@ -52,8 +53,9 @@ class uvme_cv32_cfg_c extends uvm_object;
       `uvm_field_int (                         trn_log_enabled      , UVM_DEFAULT          )
       `uvm_field_int (                         sys_clk_period       , UVM_DEFAULT + UVM_DEC)
       
-      `uvm_field_object(clknrst_cfg, UVM_DEFAULT)
-      `uvm_field_object(tracer_cfg , UVM_DEFAULT)
+      `uvm_field_object(clknrst_cfg  , UVM_DEFAULT)
+      `uvm_field_object(tracer_cfg   , UVM_DEFAULT)
+      `uvm_field_object(interrupt_cfg, UVM_DEFAULT)
       
       `uvm_field_object(ral             , UVM_DEFAULT)
       `uvm_field_object(sb_gpr_rv32i_cfg, UVM_DEFAULT)
@@ -76,17 +78,20 @@ class uvme_cv32_cfg_c extends uvm_object;
       if (enabled) {
          clknrst_cfg.enabled == 1;
          //tracer_cfg .enabled == 1;
+         interrupt_cfg.enabled == 1;
       }
       tracer_cfg.enabled == 0; // DOP TEMP
       
       if (is_active == UVM_ACTIVE) {
          clknrst_cfg.is_active == UVM_ACTIVE;
+         interrupt_cfg.is_active == UVM_ACTIVE;
       }
       tracer_cfg.is_active == UVM_PASSIVE;
       
       if (trn_log_enabled) {
          clknrst_cfg.trn_log_enabled == 1;
          tracer_cfg .trn_log_enabled == 1;
+         interrupt_cfg.trn_log_enabled == 1;
       }
    }
    
@@ -103,8 +108,9 @@ function uvme_cv32_cfg_c::new(string name="uvme_cv32_cfg");
    
    super.new(name);
    
-   clknrst_cfg = uvma_clknrst_cfg_c     ::type_id::create("clknrst_cfg");
-   tracer_cfg  = uvma_riscv_tracer_cfg_c::type_id::create("tracer_cfg" );
+   clknrst_cfg   = uvma_clknrst_cfg_c     ::type_id::create("clknrst_cfg"  );
+   tracer_cfg    = uvma_riscv_tracer_cfg_c::type_id::create("tracer_cfg"   );
+   interrupt_cfg = uvma_interrupt_cfg_c   ::type_id::create("interrupt_cfg");
    
    ral = uvme_cv32_reg_block_c::type_id::create("cv32_ral");
    ral.build();

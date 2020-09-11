@@ -1,0 +1,101 @@
+{#
+
+################################################################################
+#
+# Copyright 2020 OpenHW Group
+# 
+# Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     https://solderpad.org/licenses/
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
+# 
+################################################################################
+
+#}
+{% import 'regress_macros.j2' as regress_macros -%}
+
+#!/bin/bash
+
+# --------------------------------------------------------------------------------------
+# Variables
+# --------------------------------------------------------------------------------------
+pass_count=0
+fail_count=0
+
+# --------------------------------------------------------------------------------------
+# Functions
+# --------------------------------------------------------------------------------------
+check_log () {
+    log=$1
+    simulation_passed="$2"
+    test_name=$3
+
+    if grep -q "${simulation_passed}" ${log}; then
+        echo "script: Test PASSED: ${test_name} Log: ${log}"
+        ((pass_count+=1))
+    else
+        echo "script: Test FAILED: ${test_name} Log: ${log}"
+        ((fail_count+=1))
+    fi
+}
+
+# --------------------------------------------------------------------------------------
+# Builds
+# --------------------------------------------------------------------------------------
+
+{% for b in unique_builds.values() %}
+# Build:{{b.name}} {{b.description}}
+echo "script: Running build: [cd {{b.dir}} && {{b.cmd}} SIMULATOR={{b.simulator}} USE_ISS={{regress_macros.yesorno(b.iss)}} COV={{regress_macros.yesorno(b.cov)}}]"
+pushd {{b.dir}} > /dev/null
+{{b.cmd}} SIMULATOR={{b.simulator}} USE_ISS={{regress_macros.yesorno(b.iss)}} COV={{regress_macros.yesorno(b.cov)}} >& /dev/null;
+popd > /dev/null
+
+{% endfor -%}
+
+# --------------------------------------------------------------------------------------
+# Tests
+# --------------------------------------------------------------------------------------
+
+{% for r in regressions %}
+{% for t in r.tests.values() %}
+# --> Test: {{t.name}} : {{t.description}}
+{% if t.precmd %}
+#  Test (Precommand): {{t.name}} {{t.description}}
+echo "script: Running precmd: [cd {{t.dir}} && {{t.precmd}} SIMULATOR={{t.simulator}} SEED=random GEN_NUM_TESTS={{t.num}}]"
+pushd {{t.dir}} > /dev/null
+{{t.precmd}} SIMULATOR={{t.simulator}} SEED=random GEN_NUM_TESTS={{t.num}} >& /dev/null;
+popd > /dev/null
+
+{% endif %}
+{% for run_index in range(t.num|int) %}
+{% set test_cmd = t.cmd|replace('<RUN_INDEX>', run_index) %}
+{% set test_log = t.log|replace('<RUN_INDEX>', run_index) %}
+# --> Test (Index: {{run_index}}): {{t.cmd}} : {{t.description}}
+echo "script: Running test [cd {{t.dir}} && {{test_cmd}} SIMULATOR={{t.simulator}} COMP=0 USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} SEED=random]"
+pushd {{t.dir}} > /dev/null
+{{test_cmd}} SIMULATOR={{t.simulator}} COMP=0 USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} SEED=random >& /dev/null;
+popd > /dev/null
+log={{t.dir}}/{{t.simulator}}_results/{{test_log}}/{{t.simulator}}-{{test_log}}.log
+check_log ${log} "{{t.simulation_passed}}" {{test_log}} 
+
+{% endfor %}
+
+{% endfor %}
+{% endfor %}
+
+echo "script: Passing tests: ${pass_count}"
+echo "script: Failing tests: ${fail_count}"
+
+if [ ${fail_count} -ne 0 ]; then
+    exit 1
+fi
+exit 0

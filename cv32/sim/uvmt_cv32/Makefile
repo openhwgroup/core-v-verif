@@ -42,8 +42,9 @@
 
 # "Constants"
 MAKE           = make
+MAKE_PATH     := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 COREV_PROJ     = cv32
-PROJ_ROOT_DIR  = $(PWD)/../../..
+PROJ_ROOT_DIR  = $(abspath $(MAKE_PATH)/../../..)
 DATE           = $(shell date +%F)
 .DEFAULT_GOAL := no_rule 
 
@@ -52,21 +53,30 @@ MKDIR_P = mkdir -p
 
 # Compile compile flags for all simulators (careful!)
 WAVES        ?= 0
-SV_CMP_FLAGS ?= 
+SV_CMP_FLAGS ?= "+define+CV32E40P_ASSERT_ON"
 TIMESCALE    ?= -timescale 1ns/1ps
 UVM_PLUSARGS ?=
 
 # User selectable SystemVerilog simulator targets/rules
-SIMULATOR    ?= unsim
+CV_SIMULATOR ?= unsim
+SIMULATOR    ?= $(CV_SIMULATOR)
 
 # Optionally exclude the OVPsim (not recommended)
 USE_ISS      ?= YES
+
+# Common Generation variables
+GEN_START_INDEX ?= 0
+GEN_NUM_TESTS   ?= 1
+
+# Commont test variables
+RUN_INDEX       ?= 0
 
 # UVM Environment
 export DV_UVMT_CV32_PATH              = $(PROJ_ROOT_DIR)/$(COREV_PROJ)/tb/uvmt_cv32
 export DV_UVME_CV32_PATH              = $(PROJ_ROOT_DIR)/$(COREV_PROJ)/env/uvme_cv32
 export DV_UVML_HRTBT_SRC_PATH         = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_hrtbt/src
 export DV_UVMA_CLKNRST_PATH           = $(PROJ_ROOT_DIR)/lib/uvm_agents/uvma_clknrst
+export DV_UVMA_INTERRUPT_PATH         = $(PROJ_ROOT_DIR)/lib/uvm_agents/uvma_interrupt
 export DV_UVML_TRN_SRC_PATH           = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_trn/src
 export DV_UVML_LOGS_SRC_PATH          = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_logs/src
 export DV_UVML_SB_SRC_PATH            = $(PROJ_ROOT_DIR)/vendor_lib/mio/base/dv/uvml_sb/src
@@ -93,8 +103,9 @@ export RISCV_DV_ROOT = $(RISCVDV_PKG)
 export COREV_DV_ROOT = $(COREVDV_PKG)
 
 # Moore.io packages
-MIO_BASE_PKG  := $(PROJ_ROOT_DIR)/vendor_lib/mio/base
-MIO_RISCV_PKG := $(PROJ_ROOT_DIR)/vendor_lib/mio/riscv
+MIO_BASE_PKG    := $(PROJ_ROOT_DIR)/vendor_lib/mio/base
+MIO_RISCV_PKG   := $(PROJ_ROOT_DIR)/vendor_lib/mio/riscv
+COMPLIANCE_PKG  := $(PROJ_ROOT_DIR)/vendor_lib/riscv/riscv-compliance
 
 # TB source files for the CV32E core
 TBSRC_TOP   := $(TBSRC_HOME)/uvmt_cv32/uvmt_cv32_tb.sv
@@ -118,20 +129,25 @@ RTLSRC_INCDIR := $(RTLSRC_HOME)/include
 
 ###############################################################################
 # Seed management for constrained-random sims
-SEED    ?= one
+SEED    ?= 1
 RNDSEED ?= 
 
 ifeq ($(SEED),random)
 RNDSEED = $(shell date +%N)
 else
+ifeq ($(SEED),)
+# Empty SEED variable selects 1
 RNDSEED = 1
+else
+RNDSEED = $(SEED)
+endif
 endif
 
 ###############################################################################
 # Common Makefile:
 #    - Core Firmware and the RISCV GCC Toolchain (SDK)
 #    - Variables for RTL dependencies
-include ../Common.mk
+include $(MAKE_PATH)/../Common.mk
 
 
 ###############################################################################
@@ -157,6 +173,37 @@ $(CV32E40P_PKG):
 	$(CLONE_MIO_BASE_CMD)
 	$(CLONE_MIO_RISCV_CMD)
 
+$(RISCVDV_PKG):
+	$(CLONE_RISCVDV_CMD)	
+
+###############################################################################
+# RISC-V Compliance Test-suite
+#     As much as possible, the test suite is used "out-of-the-box".  The
+#     "build_compliance" target below uses the Makefile supplied by the suite
+#     to compile all the individual test-programs in the suite to generate the
+#     elf and hex files used in simulation.  Each <sim>.mk is assumed to have a
+#     target to run the compiled test-program.
+
+# RISCV_ISA='rv32i|rv32im|rv32imc|rv32Zicsr|rv32Zifencei'
+RISCV_ISA ?= rv32i
+
+clone_compliance:
+	$(CLONE_COMPLIANCE_CMD)
+
+clr_compliance:
+	make clean -C $(PROJ_ROOT_DIR)/vendor_lib/riscv/riscv-compliance
+
+build_compliance: clone_compliance
+	make -i -C $(PROJ_ROOT_DIR)/vendor_lib/riscv/riscv-compliance \
+		RISCV_TARGET=OpenHW \
+		RISCV_DEVICE=cv32e40p \
+		NOTRAPS=1 \
+		RISCV_ISA=$(RISCV_ISA)
+
+all_compliance: clone_compliance
+	make build_compliance RISCV_ISA=rv32i   && \
+	make build_compliance RISCV_ISA=rv32im  && \
+	make build_compliance RISCV_ISA=rv32imc
 
 ###############################################################################
 # Include the targets/rules for the selected SystemVerilog simulator
@@ -164,18 +211,18 @@ $(CV32E40P_PKG):
 #include unsim.mk
 #else
 ifeq ($(SIMULATOR), dsim)
-include dsim.mk
+include $(MAKE_PATH)/dsim.mk
 else
 ifeq ($(SIMULATOR), xrun)
-include xrun.mk
+include $(MAKE_PATH)/xrun.mk
 else
 ifeq ($(SIMULATOR), vsim)
-include vsim.mk
+include $(MAKE_PATH)/vsim.mk
 else
 ifeq ($(SIMULATOR), vcs)
-include vcs.mk
+include $(MAKE_PATH)/vcs.mk
 else
-include unsim.mk
+include $(MAKE_PATH)/unsim.mk
 endif
 endif
 endif
@@ -198,12 +245,18 @@ clean_core_tests:
 	find $(CORE_TEST_DIR) -name corev_*.S -exec rm {} \;
 
 clean_test_programs:
-	find ../../tests/uvmt_cv32/test-programs -name *.o       -exec rm {} \;
-	find ../../tests/uvmt_cv32/test-programs -name *.hex     -exec rm {} \;
-	find ../../tests/uvmt_cv32/test-programs -name *.elf     -exec rm {} \;
-	find ../../tests/uvmt_cv32/test-programs -name *.map     -exec rm {} \;
-	find ../../tests/uvmt_cv32/test-programs -name *.readelf -exec rm {} \;
-	find ../../tests/uvmt_cv32/test-programs -name *.objdump -exec rm {} \;
+	find $(PROJ_ROOT_DIR)/cv32/tests/uvmt_cv32/test-programs -name *.o       -exec rm {} \;
+	find $(PROJ_ROOT_DIR)/cv32/tests/uvmt_cv32/test-programs -name *.hex     -exec rm {} \;
+	find $(PROJ_ROOT_DIR)/cv32/tests/uvmt_cv32/test-programs -name *.elf     -exec rm {} \;
+	find $(PROJ_ROOT_DIR)/cv32/tests/uvmt_cv32/test-programs -name *.map     -exec rm {} \;
+	find $(PROJ_ROOT_DIR)/cv32/tests/uvmt_cv32/test-programs -name *.readelf -exec rm {} \;
+	find $(PROJ_ROOT_DIR)/cv32/tests/uvmt_cv32/test-programs -name *.objdump -exec rm {} \;
+	find $(PROJ_ROOT_DIR)/cv32/tests/programs -name *.o       -exec rm {} \;
+	find $(PROJ_ROOT_DIR)/cv32/tests/programs -name *.hex     -exec rm {} \;
+	find $(PROJ_ROOT_DIR)/cv32/tests/programs -name *.elf     -exec rm {} \;
+	find $(PROJ_ROOT_DIR)/cv32/tests/programs -name *.map     -exec rm {} \;
+	find $(PROJ_ROOT_DIR)/cv32/tests/programs -name *.readelf -exec rm {} \;
+	find $(PROJ_ROOT_DIR)/cv32/tests/programs -name *.objdump -exec rm {} \;
 
 clean_riscv-dv:
 	rm -rf $(RISCVDV_PKG)
@@ -215,4 +268,7 @@ clean_mio_base:
 
 clean_mio_riscv:
 	rm -rf $(MIO_RISCV_PKG)
+
+clean_compliance:
+	rm -rf $(COMPLIANCE_PKG)
 

@@ -42,8 +42,8 @@ class uvmt_cv32_base_test_c extends uvm_test;
    uvme_cv32_vsqr_c  vsequencer;
    
    // Handles testbench interfaces
-   virtual uvmt_cv32_vp_status_if  vp_status_vif;  // virtual peripheral status
-   virtual uvmt_cv32_core_cntrl_if core_cntrl_vif; // control inputs to the core
+   virtual uvmt_cv32_vp_status_if    vp_status_vif;  // virtual peripheral status
+   virtual uvmt_cv32_core_cntrl_if   core_cntrl_vif; // control inputs to the core
    virtual uvmt_cv32_step_compare_if step_compare_vif;
    
    // Default sequences
@@ -194,11 +194,10 @@ function uvmt_cv32_base_test_c::new(string name="uvmt_cv32_base_test", uvm_compo
    //        UVM_INFO @ 9.750 ns : uvmt_cv32_dut_wrap.sv(79) reporter [DUT_WRAP] load_instr_mem asserted!
    rs = new("rs");
    
-   // Terminate simulation after a "reasonable" number of errors
-   rs.set_max_quit_count(.count(5), .overridable(0));
+   
+   // Terminate simulation after a "reasonable" number of errors   
    uvm_report_server::set_server(rs);
    reset_vseq = uvme_cv32_reset_vseq_c::type_id::create("reset_vseq");
-   
 endfunction : new
 
 
@@ -206,6 +205,8 @@ function void uvmt_cv32_base_test_c::build_phase(uvm_phase phase);
    
    super.build_phase(phase);
    
+   rs.set_max_quit_count(.count(5), .overridable(1));
+
    retrieve_vifs    ();
    create_cfg       ();
    randomize_test   ();
@@ -315,34 +316,25 @@ function void uvmt_cv32_base_test_c::phase_ended(uvm_phase phase);
      if(!(uvm_config_db#(bit      )::get(null, "*", "evalid", evalid))) `uvm_error("END_OF_TEST", "Cannot get valid from config_db.")
      if(!(uvm_config_db#(bit[31:0])::get(null, "*", "evalue", evalue))) `uvm_error("END_OF_TEST", "Cannot get evalue from config_db.")
 
-     // Use the DUT Wrapper Virtual Peripheral's status outputs to update report server status.
-     if (!tp) `uvm_warning("END_OF_TEST", "DUT WRAPPER virtual peripheral failed to flag test passed.")
+     // Use the DUT Wrapper Virtual Peripheral's status outputs to update report server status.   
      if (tf)  `uvm_error  ("END_OF_TEST", "DUT WRAPPER virtual peripheral flagged test failure.")
+     
+     // Check exit code if a valid exit code was written to Virtual Peripheral
      if (evalid) begin
-       // TODO: handle exit_value properly
-       `uvm_info("END_OF_TEST", $sformatf("DUT WRAPPER virtual peripheral signaled exit_value=%0h.", evalue), UVM_NONE)
+       if (evalue != 0) begin
+          `uvm_error("END_OF_TEST", $sformatf("DUT WRAPPER virtual peripheral signaled exit_value=%0h.", evalue))
+       end 
+       else begin
+         `uvm_info("END_OF_TEST", $sformatf("DUT WRAPPER virtual peripheral signaled exit_value=%0h.", evalue), UVM_NONE)
+       end
      end
-     else begin
-       `uvm_warning("END_OF_TEST", "DUT WRAPPER virtual peripheral failed to exit properly.")
-     end
-     //
 
-      // Report on number of ISS step and compare checks if the ISS is used
-      `ifdef ISS step_compare_vif.report_step_compare(); `endif
+     // Catch hanging tests.  If no exit code nor test pass/test fail status was ever written to Virtual Peripheral
+     // then mark test as failed
+     if (!tp && !evalid && !tf) `uvm_error("END_OF_TEST", "DUT WRAPPER virtual peripheral failed to flag test passed and failed to signal exit value.")   
 
-     /* This does not work because the vp_status signals are all pulses.
-     * TODO: add logic to latch pulses and used the latched values here.
-     // Use the DUT Wrapper Virtual Peripheral's status outputs to update report server status.
-     if (!vp_status_vif.tests_passed) `uvm_warning("END_OF_TEST", "DUT WRAPPER virtual peripheral failed to flag test passed.")
-     if (vp_status_vif.tests_failed)  `uvm_error  ("END_OF_TEST", "DUT WRAPPER virtual peripheral flagged test failure.")
-     if (vp_status_vif.exit_valid) begin
-       // TODO: handle exit_value properly
-       `uvm_info("END_OF_TEST", $sformatf("DUT WRAPPER virtual peripheral signaled exit_value=%0h.", vp_status_vif.exit_value), UVM_NONE)
-     end
-     else begin
-       `uvm_warning("END_OF_TEST", "DUT WRAPPER virtual peripheral failed to exit properly.")
-     end
-     */
+     // Report on number of ISS step and compare checks if the ISS is used
+     `ifdef ISS step_compare_vif.report_step_compare(); `endif
 
      print_banner("test finished");
    end

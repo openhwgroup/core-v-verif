@@ -29,14 +29,17 @@ DSIM_RESULTS           ?= $(PWD)/dsim_results
 DSIM_WORK              ?= $(DSIM_RESULTS)/dsim_work
 DSIM_IMAGE             ?= dsim.out
 DSIM_RUN_FLAGS         ?=
+DSIM_CODE_COV_SCOPE    ?= $(PWD)/../tools/dsim/ccov_scopes.txt
 DSIM_USE_ISS           ?= YES
 
 DSIM_FILE_LIST ?= -f $(DV_UVMT_CV32_PATH)/uvmt_cv32.flist
 ifeq ($(USE_ISS),YES)
     DSIM_FILE_LIST         += -f $(DV_UVMT_CV32_PATH)/imperas_iss.flist
     DSIM_USER_COMPILE_ARGS += "+define+ISS+CV32E40P_TRACE_EXECUTION"
-    DSIM_RUN_FLAGS         += +ovpcfg="--controlfile $(OVP_CTRL_FILE)"
+#    DSIM_USER_COMPILE_ARGS += "+define+CV32E40P_ASSERT_ON+ISS+CV32E40P_TRACE_EXECUTION"
+#    DSIM_RUN_FLAGS         += +ovpcfg="--controlfile $(OVP_CTRL_FILE)"
 endif
+DSIM_RUN_FLAGS         += $(USER_RUN_FLAGS)
 
 
 # Variables to control wave dumping from command the line
@@ -44,6 +47,8 @@ endif
 WAVES                  ?= 0
 WAVE                   ?= 0
 DUMP_WAVES             := 0
+# Code Coverage collected by default
+CCOV                   ?= 1
 
 ifneq ($(WAVES), 0)
 DUMP_WAVES = 1
@@ -57,6 +62,11 @@ ifneq ($(DUMP_WAVES), 0)
 DSIM_ACC_FLAGS ?= +acc
 DSIM_DMP_FILE  ?= dsim.fst
 DSIM_DMP_FLAGS ?= -waves $(DSIM_DMP_FILE)
+endif
+
+ifneq ($(CCOV), 0)
+	DSIM_USER_COMPILE_ARGS += -code-cov block -code-cov-scope-specs $(DSIM_CODE_COV_SCOPE)
+	DSIM_RUN_FLAGS         += -code-cov block -code-cov-scope-specs $(DSIM_CODE_COV_SCOPE)
 endif
 
 .PHONY: sim
@@ -108,13 +118,13 @@ comp: mk_results $(CV32E40P_PKG) $(OVP_MODEL_DPI)
 #   CUSTOM_DIR:   Absolute, not relative, path to the custom C program. Default
 #                 is `pwd`/../../tests/core/custom.
 #   CUSTOM_PROG:  C or assembler test-program that executes on the core. Default
-#                 is hello_world.c.
+#                 is hello-world.c.
 #   UVM_TESTNAME: Class identifer (not file path) of the UVM testcase run by
 #                 environment. Default is uvmt_cv32_firmware_test_c.
 #
 # Use cases:
 #   1: Full specification of the hello-world test:
-#      $ make custom SIMULATOR=dsim CUSTOM_DIR=`pwd`/../../tests/core/custom CUSTOM_PROG=hello_world UVM_TESTNAME=uvmt_cv32_firmware_test_c
+#      $ make custom SIMULATOR=dsim CUSTOM_DIR=`pwd`/../../tests/core/custom CUSTOM_PROG=hello-world UVM_TESTNAME=uvmt_cv32_firmware_test_c
 #
 #   2: Same thing, using the defaults in these Makefiles:
 #      $ make custom
@@ -146,21 +156,46 @@ asm: comp $(ASM_DIR)/$(ASM_PROG).hex $(ASM_DIR)/$(ASM_PROG).elf
 		+firmware=$(ASM_DIR)/$(ASM_PROG).hex \
 		+elf_file=$(ASM_DIR)/$(ASM_PROG).elf
 
+###############################################################################
+# Run a test-program from the RISC-V Compliance Test-suite. The parent Makefile
+# of this <sim>.mk implements "build_compliance", the target that compiles the
+# test-programs.
+#
+# There is a dependancy between RISCV_ISA and COMPLIANCE_PROG which *you* are
+# required to know.  For example, the I-ADD-01 test-program is part of the rv32i
+# testsuite.
+# So this works:
+#                make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ADD-01
+# But this does not:
+#                make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=I-ADD-01
+# 
+COMPLIANCE_PROG ?= I-ADD-01
+#compliance: comp
+compliance: comp build_compliance
+	mkdir -p $(DSIM_RESULTS)/$(COMPLIANCE_PROG) && cd $(DSIM_RESULTS)/$(COMPLIANCE_PROG)  && \
+	$(DSIM) -l dsim-$(COMPLIANCE_PROG).log -image $(DSIM_IMAGE) \
+		-work $(DSIM_WORK) $(DSIM_RUN_FLAGS) $(DSIM_DMP_FLAGS) \
+		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
+		-sv_lib $(OVP_MODEL_DPI) \
+		+UVM_TESTNAME=$(UVM_TESTNAME) \
+		+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).hex \
+		+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).elf
+
 ################################################################################
 # Commonly used targets:
 #      Here for historical reasons - mostly (completely?) superceeded by the
 #      custom target.
 #
-hello-world: comp $(CUSTOM)/hello_world.hex $(CUSTOM)/hello_world.elf
+hello-world: comp $(CUSTOM)/hello-world.hex $(CUSTOM)/hello-world.elf
 	mkdir -p $(DSIM_RESULTS)/hello-world && cd $(DSIM_RESULTS)/hello-world  && \
 	$(DSIM) -l dsim-hello-world.log -image $(DSIM_IMAGE) \
 		-work $(DSIM_WORK) $(DSIM_RUN_FLAGS) $(DSIM_DMP_FLAGS) \
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(OVP_MODEL_DPI) \
 		+UVM_TESTNAME=uvmt_cv32_firmware_test_c \
-		+firmware=$(CUSTOM)/hello_world.hex \
-		+elf_file=$(CUSTOM)/hello_world.elf
-#		+nm_file=$(CUSTOM)/hello_world.nm
+		+firmware=$(CUSTOM)/hello-world.hex \
+		+elf_file=$(CUSTOM)/hello-world.elf
+#		+nm_file=$(CUSTOM)/hello-world.nm
 #		+verbose
 
 debug_test: comp $(CORE_TEST_DIR)/debug_test/debug_test.hex
@@ -171,7 +206,7 @@ debug_test: comp $(CORE_TEST_DIR)/debug_test/debug_test.hex
 		-sv_lib $(OVP_MODEL_DPI) \
     +UVM_TESTNAME=uvmt_cv32_firmware_test_c \
     +firmware=$(CORE_TEST_DIR)/debug_test/debug_test.hex \
-    +elf_file=$(CORE_TEST_DIR)/debug_test/debug_test.elf \
+    +elf_file=$(CORE_TEST_DIR)/debug_test/debug_test.elf
 
 # Runs tests in riscv_tests/ only
 cv32-riscv-tests: comp $(CV32_RISCV_TESTS_FIRMWARE)/cv32_riscv_tests_firmware.hex $(CV32_RISCV_TESTS_FIRMWARE)/cv32_riscv_tests_firmware.elf
@@ -208,7 +243,7 @@ cv32-firmware: comp $(FIRMWARE)/firmware.hex $(FIRMWARE)/firmware.elf
 
 # Mythical no-test-program testcase.  Might never be used.  Not known tow work
 no-test-program: comp
-	mkdir -p $(DSIM_RESULTS)/hello_world && cd $(DSIM_RESULTS)/hello_world  && \
+	mkdir -p $(DSIM_RESULTS)/hello-world && cd $(DSIM_RESULTS)/hello-world  && \
 	$(DSIM) -l dsim-$(UVM_TESTNAME).log -image $(DSIM_IMAGE) \
 		-work $(DSIM_WORK) $(DSIM_RUN_FLAGS) $(DSIM_DMP_FLAGS) \
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
@@ -251,7 +286,7 @@ comp_riscv-dv:
 		+define+DSIM \
 		-suppress EnumMustBePositive \
 		-suppress SliceOOB \
-		+incdir+$(RISCVDV_PKG)/target/rv32imc \
+		+incdir+$(COREVDV_PKG)/target/cv32e40p \
 		+incdir+$(RISCVDV_PKG)/user_extension \
 		+incdir+$(RISCVDV_PKG)/tests \
 		+incdir+$(COREVDV_PKG) \
@@ -351,5 +386,6 @@ clean:
 	rm -rf $(DSIM_RESULTS)
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_core_tests clean_riscv-dv clean_mio_base clean_mio_riscv clean_test_programs
+clean_all: clean clean_core_tests clean_riscv-dv clean_mio_base clean_mio_riscv clean_test_programs clean-bsp clean_compliance
 	rm -rf $(CV32E40P_PKG)
+

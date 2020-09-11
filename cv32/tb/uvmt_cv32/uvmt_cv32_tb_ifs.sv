@@ -171,7 +171,7 @@ interface uvmt_cv32_core_cntrl_if (
     boot_addr         = 32'h0000_0080;
     mtvec_addr        = 32'h0000_0000;
     dm_halt_addr      = 32'h1A11_0800;
-    dm_exception_addr = 32'h1A11_0C00;
+    dm_exception_addr = 32'h1A11_1000;
     hart_id           = 32'h0000_0000;
 
     qsc_stat_str =                $sformatf("\tclock_en          = %0d\n", clock_en);
@@ -200,42 +200,6 @@ interface uvmt_cv32_core_cntrl_if (
 
 endinterface : uvmt_cv32_core_cntrl_if
 
-
-/**
- * Core interrupts
- */
-interface uvmt_cv32_core_interrupts_if
- #(
-   parameter NUM_FAST_INTR   = 48 //TODO: pass these in from the TB/DUT_WRAP
-             //NUM_XFASTX_INTR = 32  // _XFASTX_ deliberately choosen to make it visually distinct from _FAST_
-  )
-  (
-   input  logic                       irq_ack,        // dut output
-   input  logic                       irq_id,         // dut output
-   output logic                       irq_sec,        // dut input
-   output logic                       irq_software,   // dut input
-   output logic                       irq_timer,      // dut input
-   output logic                       irq_external,   // dut input
-   output logic [NUM_FAST_INTR-1:0]   irq_fast        // dut input
-   //output logic                       irq_nmi,        // dut input
-   //output logic [NUM_XFASTX_INTR-1:0] irq_fastx       // dut input
-  );
-
-  import uvm_pkg::*;
-
-  initial begin
-    irq_sec      = 1'b0;
-    irq_software = 1'b0;
-    irq_timer    = 1'b0;
-    irq_external = 1'b0;
-    irq_fast     = {NUM_FAST_INTR{1'b0}};
-    //irq_nmi      = 1'b0;
-    //irq_fastx    = {NUM_XFASTX_INTR{1'b0}};
-    `uvm_info("CORE_INTERRUPT_IF", "Interrupt inputs to CORE all tied low (for now).", UVM_NONE)
-  end
-
-endinterface : uvmt_cv32_core_interrupts_if
-
 /**
  * Core status signals.
  */
@@ -247,6 +211,20 @@ interface uvmt_cv32_core_status_if (
   import uvm_pkg::*;
 
 endinterface : uvmt_cv32_core_status_if
+
+/**
+ * ISA coverage interface
+ * ISS wrapper will fill in ins (instruction) and fire ins_valid event
+ */
+interface uvmt_cv32_isa_covg_if;
+
+  import uvm_pkg::*;
+  import uvme_cv32_pkg::*;
+
+  event ins_valid;
+  ins_t ins;
+
+endinterface : uvmt_cv32_isa_covg_if
 
 /**
  * Step and compare interface
@@ -271,6 +249,7 @@ interface uvmt_cv32_step_compare_if;
    event       ovp_cpu_busWait;  // Was call to ovp.cpu.busWait();
    logic   [31:0] ovp_cpu_GPR[32];
    logic [31:0][31:0] riscy_GPR; // packed dimensions, register index by data width
+   logic       deferint_prime; // Stages deferint for the ISS deferint signal
 
    int  num_pc_checks;
    int  num_gpr_checks;

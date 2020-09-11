@@ -41,6 +41,21 @@
 ###############################################################################
 
 ###############################################################################
+# Common functions
+
+# Map multiple flag values to "YES" or NO
+# Use like this, to test variable MYVAR
+# ifeq ($(call IS_YES($(MYVAR)),YES)
+YES_VALS=Y YES 1 y yes TRUE true
+IS_YES=$(if $(filter $(YES_VALS),$(1)),YES,NO)
+NO_VALS=N NO 0 n no FALSE false
+IS_NO=$(if $(filter $(NO_VALS),$(1)),NO,YES)
+
+###############################################################################
+# Common variables
+BANNER=*******************************************************************************************
+
+###############################################################################
 # Variables to determine the the command to clone external repositories.
 # For each repo there are a set of variables:
 #      *_REPO:   URL to the repository in GitHub.
@@ -53,8 +68,20 @@
 
 CV32E40P_REPO   ?= https://github.com/openhwgroup/cv32e40p
 CV32E40P_BRANCH ?= master
+#2020-09-09
+CV32E40P_HASH   ?= 7a0fe7afa3f520f4f67d07af3df47f91e6a04fe6
+#2020-09-08
+#CV32E40P_HASH   ?= cb07a7aa77465797fdaa5e783ce2e6bacb922bb3
+#2020-09-06
+#CV32E40P_HASH   ?= 3335dbcfcbdbec1c1f97fe13835fe13a63a321e0
+#2020-09-04
+#CV32E40P_HASH   ?= 6fbd88c645d2b51c316af6eda79bab3e4c284093
+#2020-08-28
+#CV32E40P_HASH   ?= 7c65d1a6cbbcbc7eb20abfd1a83988c94e4fd175
+#2020-08-18
+#CV32E40P_HASH   ?= 1607d8b675864db1aa013364fd4444a665331830
 #2020-07-16
-CV32E40P_HASH   ?= 916d92afc6bbc27b7ab65c503043982e1b6e3ab0
+#CV32E40P_HASH   ?= 916d92afc6bbc27b7ab65c503043982e1b6e3ab0
 #2020-07-09
 #CV32E40P_HASH   ?= 3deb55860001f8ac39cefa80b90566170b12391f
 #2020-07-07
@@ -63,8 +90,10 @@ CV32E40P_HASH   ?= 916d92afc6bbc27b7ab65c503043982e1b6e3ab0
 
 FPNEW_REPO      ?= https://github.com/pulp-platform/fpnew
 FPNEW_BRANCH    ?= master
+#2020-08-27
+FPNEW_HASH      ?= a0c021c360abcc94e434d41974a52bdcbf14d156
 #Note: this is one merge behind the head (as of 2020-06-11)
-FPNEW_HASH      ?= f108dfdd84f7c24dcdefb35790fafb3905bce552
+#FPNEW_HASH      ?= f108dfdd84f7c24dcdefb35790fafb3905bce552
 #Note: this is head (as of 2020-06-11).  Can't use it because of the worm
 #FPNEW_HASH      ?= babffe88fcf6d2931a7afa8d121b6a6ba4f532f7
 
@@ -85,6 +114,10 @@ MIO_RISCV_REPO    ?= https://github.com/Datum-Technology-Corporation/mio_riscv
 MIO_RISCV_BRANCH  ?= master
 MIO_RISCV_HASH    ?= head
 
+COMPLIANCE_REPO   ?= https://github.com/riscv/riscv-compliance
+COMPLIANCE_BRANCH ?= master
+# 2020-08-19
+COMPLIANCE_HASH   ?= c21a2e86afa3f7d4292a2dd26b759f3f29cde497
 
 # Generate command to clone the CV32E40P RTL
 ifeq ($(CV32E40P_BRANCH), master)
@@ -155,6 +188,20 @@ else
 endif
 # MIO-RISCV repo var end
 
+# Generate command to clone the RISCV Compliance Test-suite
+ifeq ($(COMPLIANCE_BRANCH), master)
+  TMP6 = git clone $(COMPLIANCE_REPO) --recurse $(COMPLIANCE_PKG)
+else
+  TMP6 = git clone -b $(COMPLIANCE_BRANCH) --single-branch $(COMPLIANCE_REPO) --recurse $(COMPLIANCE_PKG)
+endif
+
+ifeq ($(COMPLIANCE_HASH), head)
+  CLONE_COMPLIANCE_CMD = $(TMP6)
+else
+  CLONE_COMPLIANCE_CMD = $(TMP6); cd $(COMPLIANCE_PKG); git checkout $(COMPLIANCE_HASH)
+endif
+
+
 ###############################################################################
 # Imperas Instruction Set Simulator
 
@@ -162,7 +209,7 @@ DV_OVPM_HOME    = $(PROJ_ROOT_DIR)/vendor_lib/imperas
 DV_OVPM_MODEL   = $(DV_OVPM_HOME)/riscv_CV32E40P_OVPsim
 DV_OVPM_DESIGN  = $(DV_OVPM_HOME)/design
 OVP_MODEL_DPI   = $(DV_OVPM_MODEL)/bin/Linux64/riscv_CV32E40P.dpi.so
-OVP_CTRL_FILE   = $(DV_OVPM_DESIGN)/riscv_CV32E40P.ic
+#OVP_CTRL_FILE   = $(DV_OVPM_DESIGN)/riscv_CV32E40P.ic
 
 ###############################################################################
 # Build "firmware" for the CV32E40P "core" testbench and "uvmt_cv32"
@@ -170,7 +217,8 @@ OVP_CTRL_FILE   = $(DV_OVPM_DESIGN)/riscv_CV32E40P.ic
 # Makefile first developed for the PULP-Platform RI5CY testbench.
 #
 # riscv toolchain install path
-RISCV            ?= /opt/riscv
+CV_SW_TOOLCHAIN  ?= /opt/riscv
+RISCV            ?= $(CV_SW_TOOLCHAIN)
 RISCV_EXE_PREFIX ?= $(RISCV)/bin/riscv32-unknown-elf-
 
 CFLAGS ?= -Os -g -static -mabi=ilp32 -march=rv32imc -Wall -pedantic
@@ -229,7 +277,7 @@ COMPLIANCE_TEST_OBJS     = $(addsuffix .o, \
 # Thales verilator testbench compilation start
 
 SUPPORTED_COMMANDS := vsim-firmware-unit-test questa-unit-test questa-unit-test-gui dsim-unit-test vcs-unit-test
-SUPPORTS_MAKE_ARGS := $(findstring $(firstword $(MAKECMDGOALS)), $(SUPPORTED_COMMANDS))
+SUPPORTS_MAKE_ARGS := $(filter $(firstword $(MAKECMDGOALS)), $(SUPPORTED_COMMANDS))
 
 ifneq "$(SUPPORTS_MAKE_ARGS)" ""
   UNIT_TEST := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
@@ -253,6 +301,35 @@ FIRMWARE_UNIT_TEST_OBJS   =  	$(addsuffix .o, \
 sanity: hello-world
 
 ###############################################################################
+# Read YAML test specifications
+
+# If the gen_corev-dv target is defined then read in a test specification file
+YAML2MAKE = $(PROJ_ROOT_DIR)/bin/yaml2make
+ifneq ($(filter gen_corev-dv,$(MAKECMDGOALS)),)
+ifeq ($(TEST),)
+$(error ERROR must specify a TEST variable with gen_corev-dv target)
+endif
+GEN_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=corev-dv.yaml --debug --prefix=GEN)
+ifeq ($(GEN_FLAGS_MAKE),)
+$(error ERROR Could not find corev-dv.yaml for test: $(TEST))
+endif
+include $(GEN_FLAGS_MAKE)
+endif
+
+# If the test target is defined then read in a test specification file
+TEST_YAML_PARSE_TARGETS=test waves cov
+ifneq ($(filter $(TEST_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
+ifeq ($(TEST),)
+$(error ERROR must specify a TEST variable)
+endif
+TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml --debug --run-index=$(RUN_INDEX) --prefix=TEST)
+ifeq ($(TEST_FLAGS_MAKE),)
+$(error ERROR Could not find test.yaml for test: $(TEST))
+endif
+include $(TEST_FLAGS_MAKE)
+endif
+
+###############################################################################
 # Rule to generate hex (loadable by simulators) from elf
 # Relocate debugger to last 16KB of mm_ram
 #    $@ is the file being generated.
@@ -261,9 +338,10 @@ sanity: hello-world
 #    $* is file_name (w/o extension) of target
 %.hex: %.elf
 	$(RISCV_EXE_PREFIX)objcopy -O verilog $< $@ \
-		--change-section-address  .debugger=0x3FC000
+		--change-section-address  .debugger=0x3FC000 \
+		--change-section-address  .debugger_exception=0x3FC800
 	$(RISCV_EXE_PREFIX)readelf -a $< > $*.readelf
-	$(RISCV_EXE_PREFIX)objdump -D $*.elf > $*.objdump
+	$(RISCV_EXE_PREFIX)objdump -D -S $*.elf > $*.objdump
 
 bsp:
 	make -C $(BSP)
@@ -305,7 +383,6 @@ TEST_FILES        = $(filter %.c %.S,$(wildcard $(dir $*)*))
 # This target selected if both %.c and %.S exist
 .PRECIOUS : %.elf
 %.elf: %.c
-	make clean-bsp
 	make bsp
 	$(RISCV_EXE_PREFIX)gcc $(CFLAGS) -o $@ \
 		-nostartfiles \
@@ -313,7 +390,6 @@ TEST_FILES        = $(filter %.c %.S,$(wildcard $(dir $*)*))
 
 # This target selected if only %.S exists
 %.elf: %.S
-	make clean-bsp
 	make bsp
 	$(RISCV_EXE_PREFIX)gcc $(CFLAGS) -o $@ \
 		-nostartfiles \

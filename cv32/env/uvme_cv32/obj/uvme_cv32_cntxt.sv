@@ -27,6 +27,7 @@ class uvme_cv32_cntxt_c extends uvm_object;
    // Agent context handles
    uvma_clknrst_cntxt_c       clknrst_cntxt;
    uvma_riscv_tracer_cntxt_c  tracer_cntxt ;
+   uvma_interrupt_cntxt_c     interrupt_cntxt;
    
    // Scoreboard context handles
    uvml_sb_cntxt_c  sb_gpr_rv32i_cntxt;
@@ -40,8 +41,9 @@ class uvme_cv32_cntxt_c extends uvm_object;
    
    
    `uvm_object_utils_begin(uvme_cv32_cntxt_c)
-      `uvm_field_object(clknrst_cntxt, UVM_DEFAULT)
-      `uvm_field_object(tracer_cntxt , UVM_DEFAULT)
+      `uvm_field_object(clknrst_cntxt  , UVM_DEFAULT)
+      `uvm_field_object(tracer_cntxt   , UVM_DEFAULT)
+      `uvm_field_object(interrupt_cntxt, UVM_DEFAULT)
       
       `uvm_field_object(sb_gpr_rv32i_cntxt, UVM_DEFAULT)
       `uvm_field_object(sb_gpr_ext_m_cntxt, UVM_DEFAULT)
@@ -65,8 +67,9 @@ function uvme_cv32_cntxt_c::new(string name="uvme_cv32_cntxt");
    
    super.new(name);
    
-   clknrst_cntxt = uvma_clknrst_cntxt_c     ::type_id::create("clknrst_cntxt");
-   tracer_cntxt  = uvma_riscv_tracer_cntxt_c::type_id::create("tracer_cntxt" );
+   clknrst_cntxt   = uvma_clknrst_cntxt_c     ::type_id::create("clknrst_cntxt"  );
+   tracer_cntxt    = uvma_riscv_tracer_cntxt_c::type_id::create("tracer_cntxt"   );
+   interrupt_cntxt = uvma_interrupt_cntxt_c   ::type_id::create("interrupt_cntxt");
    
    sb_gpr_rv32i_cntxt = uvml_sb_cntxt_c::type_id::create("sb_gpr_rv32i_cntxt");
    sb_gpr_ext_m_cntxt = uvml_sb_cntxt_c::type_id::create("sb_gpr_ext_m_cntxt");
