@@ -81,6 +81,7 @@ export DV_UVML_TRN_PATH       = $(PROJ_ROOT_DIR)/lib/uvm_libs/uvml_trn
 export DV_UVML_LOGS_PATH      = $(PROJ_ROOT_DIR)/lib/uvm_libs/uvml_logs
 export DV_UVML_SB_PATH        = $(PROJ_ROOT_DIR)/lib/uvm_libs/uvml_sb
   
+export IMPERAS_TOOLS          = $(PROJ_ROOT_DIR)/vendor_lib/imperas/cv32e40p.ic
 export DV_OVPM_HOME           = $(PROJ_ROOT_DIR)/vendor_lib/imperas
 export DV_OVPM_MODEL          = $(DV_OVPM_HOME)/riscv_CV32E40P_OVPsim
 export DV_OVPM_DESIGN         = $(DV_OVPM_HOME)/verilog/design

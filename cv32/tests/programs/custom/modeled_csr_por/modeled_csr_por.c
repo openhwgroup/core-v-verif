@@ -433,8 +433,8 @@ int main(int argc, char *argv[])
     ++err_cnt;
   }
 
-  if (marchid_rval != 0x0) {
-    printf("ERROR: CSR MARCHID not zero!\n\n");
+  if (marchid_rval != 0x4) {
+    printf("ERROR: CSR MARCHID not 0x4!\n\n");
     ++err_cnt;
   }
 
@@ -494,7 +494,7 @@ int main(int argc, char *argv[])
   printf("\tmhpmcounterh3 = 0x%0x\n", mhpmcounterh[3]);
   printf("\tmhpmcounterh31= 0x%0x\n", mhpmcounterh[31]);
   printf("\tmvendorid     = 0x%0x\n", mvendorid_rval);
-  printf("\tmmarchid      = 0x%0x\n", marchid_rval);
+  printf("\tmarchid       = 0x%0x\n", marchid_rval);
   printf("\tmimpid        = 0x%0x\n", mimpid_rval);
   printf("\tmhartid       = 0x%0x\n", mhartid_rval);
 	printf("\n\n");
