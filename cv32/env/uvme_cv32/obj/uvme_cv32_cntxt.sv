@@ -38,6 +38,9 @@ class uvme_cv32_cntxt_c extends uvm_object;
    // Events
    uvm_event  sample_cfg_e;
    uvm_event  sample_cntxt_e;
+
+   // Interfaces
+   virtual uvmt_cv32_isa_covg_if  isa_covg_vif;
    
    
    `uvm_object_utils_begin(uvme_cv32_cntxt_c)

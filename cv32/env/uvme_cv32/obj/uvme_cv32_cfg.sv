@@ -68,7 +68,7 @@ class uvme_cv32_cfg_c extends uvm_object;
    constraint defaults_cons {
       soft enabled                == 0;
       soft is_active              == UVM_PASSIVE;
-      soft scoreboarding_enabled  == 1;
+      soft scoreboarding_enabled  == 0;
       soft cov_model_enabled      == 0;
       soft trn_log_enabled        == 1;
       soft sys_clk_period         == uvme_cv32_sys_default_clk_period; // see uvme_cv32_constants.sv
@@ -92,6 +92,19 @@ class uvme_cv32_cfg_c extends uvm_object;
          clknrst_cfg.trn_log_enabled == 1;
          tracer_cfg .trn_log_enabled == 1;
          interrupt_cfg.trn_log_enabled == 1;
+      }
+
+      if (scoreboarding_enabled) {
+	 sb_gpr_rv32i_cfg.enabled == 1;
+	 sb_gpr_ext_m_cfg.enabled == 1;
+	 sb_gpr_ext_f_cfg.enabled == 1;
+	 sb_gpr_ext_c_cfg.enabled == 1;
+      }
+      else {
+	 sb_gpr_rv32i_cfg.enabled == 0;
+	 sb_gpr_ext_m_cfg.enabled == 0;
+	 sb_gpr_ext_f_cfg.enabled == 0;
+	 sb_gpr_ext_c_cfg.enabled == 0;
       }
    }
    
