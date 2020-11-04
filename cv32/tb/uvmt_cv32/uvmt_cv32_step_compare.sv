@@ -237,8 +237,6 @@ module uvmt_cv32_step_compare
     */
     bit step_rtl = 0;
     bit step_ovp = 0;
-    event ev_ovp, ev_rtl;
-    event ev_compare;
     static integer instruction_count = 0;
    
     typedef enum {RESET,  // Needed to get an event on state so always block is initially entered
@@ -249,45 +247,98 @@ module uvmt_cv32_step_compare
    state_e state;
    initial begin
       pushRTL2RM("Initial");
-      step_compare_if.ovp_b1_Step <= 0;
+      //step_compare_if.ovp_b1_Step <= 0;
       step_compare_if.ovp_b1_Stepping <= 1;
       step_ovp <= 0;
       step_rtl <= 1;
       state <= STEP_RTL;
    end
    
+   bit rtl_exc, rtl_ret;
+   bit ovp_exc, ovp_ret;
+   bit [31:0] rtl_exc_pc;
+   always @step_compare_if.ovp_cpu_discard begin
+       ovp_exc = 1;
+   end
+   always @step_compare_if.ovp_cpu_retire begin
+       ovp_ret = 1;
+   end
+   always @(`CV32E40P_TRACER.clk_i) begin
+       if (!`CV32E40P_TRACER.id_valid && `CV32E40P_TRACER.is_illegal) begin
+           $display("%0t pc=%08X instr=%08X id_valid=%d is_illegal=%d", 
+               $time, `CV32E40P_TRACER.pc, `CV32E40P_TRACER.instr, `CV32E40P_TRACER.id_valid, 
+               `CV32E40P_TRACER.is_illegal);
+           rtl_exc_pc = `CV32E40P_TRACER.pc;
+           rtl_exc = 1;
+       end
+   end
+   always @step_compare_if.riscv_retire begin
+       rtl_ret = 1;
+   end
+      
    always @(*) begin
       case (state)
         STEP_RTL: begin
-           wait (step_compare_if.riscv_retire.triggered)
+           if (rtl_ret) begin
+               $display("%0t RTL Retire", $time);
+               clknrst_if.stop_clk();
+               step_rtl <= 0;
+               step_ovp <= 1;
+               rtl_ret <= 0;
+               pushRTL2RM("ret_rtl");
+               state <= STEP_OVP;
+               
+           end else if (rtl_exc) begin
+               $display("%0t RTL Except 0x%08x", $time, rtl_exc_pc);
+               rtl_exc <= 0;
+               state <= STEP_RTL;
+           end
+           /*
+           $display("%0t RTL Wait riscv_retire", $time);
+           wait (step_compare_if.riscv_retire.triggered);
            clknrst_if.stop_clk();
            step_rtl <= 0;
            step_ovp <= 1;
            pushRTL2RM("ret_rtl");
            state <= STEP_OVP;
+           */
         end
+        
         STEP_OVP: begin
-           wait (step_compare_if.ovp_cpu_retire.triggered)
-           step_ovp <= 0;
-           ->ev_ovp; // not used
-           ->`CV32E40P_TRACER.ovp_retire;
-           state <= COMPARE;
+           if (ovp_ret) begin
+               $display("%0t OVP Retire 0x%08X", $time, `CV32E40P_ISS.PCr);
+               step_ovp <= 0;
+               ovp_ret <= 0;
+               state <= COMPARE;
+               
+           end else if (ovp_exc) begin
+               $display("%0t OVP Except 0x%08X", $time, `CV32E40P_ISS.PCe);
+               ovp_exc <= 0;
+               state <= STEP_OVP;
+           end
+               
+           //$display("%0t RTL Wait ovp_cpu_retire", $time);
+           //wait (step_compare_if.ovp_cpu_retire.triggered);
+           //$display("%0t RTL Done ovp_cpu_retire", $time);
+           //step_ovp <= 0;
+           //state <= COMPARE;
         end
+        
         COMPARE: begin 
-           ->step_compare_if.ovp_cpu_busWait;
+           ->`CV32E40P_TRACER.ovp_retire;
            compare();
            step_rtl <= 1;
-           ->ev_compare;
            clknrst_if.start_clk();
            instruction_count += 1;           
            state <= STEP_RTL;
+           $display("%0t RTL/OVP Compare\n", $time);
         end
       endcase // case (state)      
    end
    
-    always @(step_ovp) begin
-        step_compare_if.ovp_b1_Step = step_ovp;
-    end
+   always @(step_ovp) begin
+      step_compare_if.ovp_b1_Step = step_ovp;
+   end
 
    always @(instruction_count) begin
       if (!(instruction_count % 10000)) begin

@@ -128,7 +128,8 @@ module uvmt_cv32_iss_wrap
    assign b1.Stepping = step_compare_if.ovp_b1_Stepping;
 
    always @(step_compare_if.ovp_cpu_busWait) cpu.busWait();
-   always @(cpu.Retire) -> step_compare_if.ovp_cpu_retire;
+   always @(cpu.Retire)  -> step_compare_if.ovp_cpu_retire;
+   always @(cpu.Discard) -> step_compare_if.ovp_cpu_discard;
 
     function void split(input string in_s, output string s1, s2);
         automatic int i;
