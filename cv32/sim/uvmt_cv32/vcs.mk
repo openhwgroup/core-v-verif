@@ -180,21 +180,21 @@ endif
 
 ################################################################################
 # Custom test-programs.  See comment in dsim.mk for more info
-custom: $(VCS_SIM_PREREQ) $(CUSTOM_DIR)/$(CUSTOM_PROG).hex
+custom: $(VCS_SIM_PREREQ) $(CUSTOM_DIR)/$(CUSTOM_PROG)/$(CUSTOM_PROG.hex
 	mkdir -p $(VCS_RESULTS)/$(CUSTOM_PROG) && cd $(VCS_RESULTS)/$(CUSTOM_PROG) && \
 	$(VCS_RESULTS)/$(SIMV) -l vcs-$(CUSTOM_PROG).log -cm_test $(CUSTOM_PROG) $(VCS_RUN_FLAGS) \
 		+UVM_TESTNAME=uvmt_cv32_firmware_test_c \
-		+elf_file=$(CUSTOM_DIR)/$(CUSTOM_PROG).elf \
-		+firmware=$(CUSTOM_DIR)/$(CUSTOM_PROG).hex
+		+elf_file=$(CUSTOM_DIR)/$(CUSTOM_PROG)/$(CUSTOM_PROG).elf \
+		+firmware=$(CUSTOM_DIR)/$(CUSTOM_PROG)/$(CUSTOM_PROG).hex
 
 ################################################################################
 # Explicit target tests
-hello-world:  $(VCS_SIM_PREREQ) $(CUSTOM)/hello-world.hex
+hello-world:  $(VCS_SIM_PREREQ) $(CUSTOM)/hello-world/hello-world.hex
 	mkdir -p $(VCS_RESULTS)/hello-world && cd $(VCS_RESULTS)/hello-world && \
 	$(VCS_RESULTS)/$(SIMV) -l vcs-hello-world.log -cm_name hello-world $(VCS_RUN_FLAGS) \
-		+elf_file=$(CUSTOM)/hello_world.elf \
+		+elf_file=$(CUSTOM)/hello-world/hello-world.elf \
 		+UVM_TESTNAME=uvmt_cv32_firmware_test_c \
-		+firmware=$(CUSTOM)/hello-world.hex
+		+firmware=$(CUSTOM)/hello-world/hello-world.hex
 
 interrupt_test:  $(VCS_SIM_PREREQ) $(CORE_TEST_DIR)/interrupt_test/interrupt_test.hex
 	mkdir -p $(VCS_RESULTS)/interrupt_test && cd $(VCS_RESULTS)/interrupt_test && \
