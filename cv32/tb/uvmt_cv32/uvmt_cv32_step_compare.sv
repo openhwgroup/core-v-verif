@@ -263,15 +263,32 @@ module uvmt_cv32_step_compare
    always @step_compare_if.ovp_cpu_retire begin
        ovp_ret = 1;
    end
-   always @(`CV32E40P_TRACER.clk_i) begin
-       if (!`CV32E40P_TRACER.id_valid && `CV32E40P_TRACER.is_illegal) begin
-           $display("%0t pc=%08X instr=%08X id_valid=%d is_illegal=%d", 
-               $time, `CV32E40P_TRACER.pc, `CV32E40P_TRACER.instr, `CV32E40P_TRACER.id_valid, 
-               `CV32E40P_TRACER.is_illegal);
-           rtl_exc_pc = `CV32E40P_TRACER.pc;
-           rtl_exc = 1;
-       end
+  
+   always_ff @(negedge `CV32E40P_CORE.clk_i) begin
+      if (`CV32E40P_CORE.id_stage_i.illegal_insn_dec && `CV32E40P_CORE.id_stage_i.is_decoding_o) begin
+          $display("%0t (ILLEGAL) pc_id=%08X illegal_insn_dec=%d is_decoding_o=%d", 
+              $time,
+              `CV32E40P_CORE.pc_id, `CV32E40P_CORE.id_stage_i.illegal_insn_dec, 
+              `CV32E40P_CORE.id_stage_i.is_decoding_o);
+      end
    end
+   always @(`CV32E40P_CORE.clk_i) begin
+       $display("%0t clk_i=%d debug_req_i=%d", $time, `CV32E40P_CORE.clk_i, `CV32E40P_CORE.debug_req_i);
+   end
+   always @($root.uvmt_cv32_tb.iss_wrap.b1.haltreq) begin
+       $display("%0t haltreq=%d", $time, $root.uvmt_cv32_tb.iss_wrap.b1.haltreq);
+   end
+   
+//   //always @(`CV32E40P_TRACER.clk_i) begin
+//   always @(*) begin
+//       //if (!`CV32E40P_TRACER.id_valid && `CV32E40P_TRACER.is_illegal) begin
+//           $display("%0t pc=%08X instr=%08X id_valid=%d is_illegal=%d", 
+//               $time, `CV32E40P_TRACER.pc, `CV32E40P_TRACER.instr, `CV32E40P_TRACER.id_valid, 
+//               `CV32E40P_TRACER.is_illegal);
+//           rtl_exc_pc = `CV32E40P_TRACER.pc;
+//           //rtl_exc = 1;
+//       //end
+//   end
    always @step_compare_if.riscv_retire begin
        rtl_ret = 1;
    end
@@ -291,7 +308,8 @@ module uvmt_cv32_step_compare
            end else if (rtl_exc) begin
                $display("%0t RTL Except 0x%08x", $time, rtl_exc_pc);
                rtl_exc <= 0;
-               state <= STEP_RTL;
+               pushRTL2RM("ret_rtl");
+               //state <= STEP_OVP;
            end
            /*
            $display("%0t RTL Wait riscv_retire", $time);
@@ -306,7 +324,7 @@ module uvmt_cv32_step_compare
         
         STEP_OVP: begin
            if (ovp_ret) begin
-               $display("%0t OVP Retire 0x%08X", $time, `CV32E40P_ISS.PCr);
+               $display("%0t OVP Retire 0x%08X (nextpc=0x%08X)", $time, `CV32E40P_ISS.PCr, `CV32E40P_ISS.PC);
                step_ovp <= 0;
                ovp_ret <= 0;
                state <= COMPARE;
@@ -314,7 +332,7 @@ module uvmt_cv32_step_compare
            end else if (ovp_exc) begin
                $display("%0t OVP Except 0x%08X", $time, `CV32E40P_ISS.PCe);
                ovp_exc <= 0;
-               state <= STEP_OVP;
+               //state <= STEP_RTL;
            end
                
            //$display("%0t RTL Wait ovp_cpu_retire", $time);
