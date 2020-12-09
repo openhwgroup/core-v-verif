@@ -166,6 +166,9 @@ $(CV32E40P_PKG):
 $(RISCVDV_PKG):
 	$(CLONE_RISCVDV_CMD)	
 
+$(COMPLIANCE_PKG):
+	$(CLONE_COMPLIANCE_CMD)
+
 ###############################################################################
 # RISC-V Compliance Test-suite
 #     As much as possible, the test suite is used "out-of-the-box".  The
@@ -175,7 +178,9 @@ $(RISCVDV_PKG):
 #     target to run the compiled test-program.
 
 # RISCV_ISA='rv32i|rv32im|rv32imc|rv32Zicsr|rv32Zifencei'
-RISCV_ISA ?= rv32i
+RISCV_ISA    ?= rv32i
+RISCV_TARGET ?= OpenHW
+RISCV_DEVICE ?= cv32e40p
 
 clone_compliance:
 	$(CLONE_COMPLIANCE_CMD)
@@ -183,21 +188,61 @@ clone_compliance:
 clr_compliance:
 	make clean -C $(PROJ_ROOT_DIR)/vendor_lib/riscv/riscv-compliance
 
-build_compliance: clone_compliance
-	make -i -C $(PROJ_ROOT_DIR)/vendor_lib/riscv/riscv-compliance \
-		RISCV_TARGET=OpenHW \
-		RISCV_DEVICE=cv32e40p \
+#	make -i -C $(PROJ_ROOT_DIR)/vendor_lib/riscv/riscv-compliance \
+
+build_compliance: $(COMPLIANCE_PKG)
+	make simulate -i -C $(PROJ_ROOT_DIR)/vendor_lib/riscv/riscv-compliance \
+		RISCV_TARGET=${RISCV_TARGET} \
+		RISCV_DEVICE=${RISCV_DEVICE} \
 		PATH=$(RISCV)/bin:$(PATH) \
 		RISCV_PREFIX=$(RISCV_PREFIX) \
 		NOTRAPS=1 \
 		RISCV_ISA=$(RISCV_ISA)
+#		VERBOSE=1
 
-all_compliance: clone_compliance
+all_compliance: $(COMPLIANCE_PKG)
 	make build_compliance RISCV_ISA=rv32i        && \
 	make build_compliance RISCV_ISA=rv32im       && \
 	make build_compliance RISCV_ISA=rv32imc      && \
 	make build_compliance RISCV_ISA=rv32Zicsr    && \
 	make build_compliance RISCV_ISA=rv32Zifencei
+
+# "compliance" is a simulator-specific target defined in <sim>.mk
+
+compliance_check_sig: compliance
+	@echo "Checking Compliance Signature for $(RISCV_ISA)/$(COMPLIANCE_PROG)"
+	@echo "Reference: $(REF)"
+	@echo "Signature: $(SIG)"
+	@export SUITEDIR=$(PROJ_ROOT_DIR)/vendor_lib/riscv/riscv-compliance/riscv-test-suite/$(RISCV_ISA) && \
+	export REF=$(REF) && export SIG=$(SIG) && export COMPL_PROG=$(COMPLIANCE_PROG) && \
+	export RISCV_TARGET=${RISCV_TARGET} && export RISCV_DEVICE=${RISCV_DEVICE} && \
+	export RISCV_ISA=${RISCV_ISA} export SIG_ROOT=${SIG_ROOT} && \
+	$(PROJ_ROOT_DIR)/bin/diff_signatures.sh | tee $(SIMULATOR)_results/$(COMPLIANCE_PROG)/diff_signatures.log
+
+compliance_check_all_sigs:
+	@$(MKDIR_P) $(SIMULATOR)_results/$(RISCV_ISA)
+	@echo "Checking Compliance Signature for all tests in $(RISCV_ISA)"
+	@export SUITEDIR=$(PROJ_ROOT_DIR)/vendor_lib/riscv/riscv-compliance/riscv-test-suite/$(RISCV_ISA) && \
+	export RISCV_TARGET=${RISCV_TARGET} && export RISCV_DEVICE=${RISCV_DEVICE} && \
+	export RISCV_ISA=${RISCV_ISA} export SIG_ROOT=${SIG_ROOT} && \
+	$(PROJ_ROOT_DIR)/bin/diff_signatures.sh $(RISCV_ISA) | tee $(SIMULATOR)_results/$(RISCV_ISA)/diff_signatures.log
+
+#	export REF=$(REF) && export SIG=$(SIG) && export COMPL_PROG=$(COMPLIANCE_PROG) && \
+
+compliance_regression:
+	make build_compliance RISCV_ISA=$(RISCV_ISA)
+	@export SIM_DIR=$(PROJ_ROOT_DIR)/cv32/sim/uvmt_cv32 && \
+	$(PROJ_ROOT_DIR)/bin/run_compliance.sh $(RISCV_ISA)
+	make compliance_check_all_sigs RISCV_ISA=$(RISCV_ISA)
+
+dah:
+	@export SIM_DIR=$(PROJ_ROOT_DIR)/cv32/sim/uvmt_cv32 && \
+	$(PROJ_ROOT_DIR)/bin/run_compliance.sh $(RISCV_ISA)
+
+#	make compliance_check_all_sigs RISCV_ISA=rv32im
+#	make compliance_check_all_sigs RISCV_ISA=rv32imc
+#	make compliance_check_all_sigs RISCV_ISA=rv32Zicsr
+#	make compliance_check_all_sigs RISCV_ISA=rv32Zifencei
 
 ###############################################################################
 # Include the targets/rules for the selected SystemVerilog simulator

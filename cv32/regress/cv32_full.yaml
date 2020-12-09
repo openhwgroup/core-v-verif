@@ -21,6 +21,19 @@ tests:
     dir: cv32/sim/uvmt_cv32
     cmd: make test COREV=YES TEST=hello-world
 
+#  mhpmcounter29_csr_access_test_1:
+#    build: uvmt_cv32
+#    description: mhpmcounter29_csr_access_test_1
+#    dir: cv32/sim/uvmt_cv32
+#    cmd: make test TEST=mhpmcounter29_csr_access_test_1 COREV=YES CFG=num_mhpmcounter_29
+
+  mhpmcounter29_csr_access_test_2:
+    build: uvmt_cv32
+    description: mhpmcounter29_csr_access_test_2
+    dir: cv32/sim/uvmt_cv32
+    cmd: make test TEST=mhpmcounter29_csr_access_test_2 COREV=YES CFG=num_mhpmcounter_29
+    iss: 0
+
   csr_instructions:
     build: uvmt_cv32
     description: CSR instruction test
@@ -230,7 +243,7 @@ tests:
     build: uvmt_cv32
     description: ISA function coverage test
     dir: cv32/sim/uvmt_cv32
-    cmd: make test TEST=isa_fcov_holes
+    cmd: make test COREV=YES TEST=isa_fcov_holes
 
   cv32e40p_csr_access_test:
     build: uvmt_cv32

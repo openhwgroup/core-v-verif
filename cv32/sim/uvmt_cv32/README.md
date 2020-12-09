@@ -2,10 +2,10 @@ Simulation Directory for CV32E UVM Verification Environment
 ==================================
 This is the directory in which you should run all tests of the UVM environment.
 The UVM testcases are at `../../tests/uvmt_cv32`, and the test-programs can be
-found in `cv32/tests/core`.  See the README in those directories for more information.
+found in `cv32/tests/program`.  See the README in those directories for more information.
 <br><br>
 Please refer to the [Verification Strategy](https://core-v-docs-verif-strat.readthedocs.io/en/latest/sim_tests.html#simulation-tests-in-the-uvm-environments)
-for a discussion on the distinction between a _testcase_ and a _test-program_ in this environment.
+for a discussion on the distinction between a _testcase_ (a SystemVerilog class extended from _uvm\_test_ that instantiates and controls the UVM environment) and a _test-program_ (a C or assembler program that runs on the core RTL model) in this environment.
 <br><br>
 To run the UVM environment you will need:
 - a run-time license for the Imperas OVPsim Instruction Set Simulator
@@ -114,12 +114,14 @@ using _xrun_.  Set the shell variable SIMULATOR to `xrun` to simply run **`make 
 later.  See [Issue 11](https://github.com/openhwgroup/core-v-verif/issues/11)
 for more info.
 <br>
-**2020-07-21**: there is also an issue with 20.06 which we are investigating.
 
 Running the environment with Mentor Graphics [Questa](https://www.mentor.com/products/fv/questa/) (vsim)
 ----------------------
 The command **make SIMULATOR=vsim sanity** will run the sanity testcase using _vsim_.
 Set the shell variable SIMULATOR to `vsim` to simply run **`make <target>`**.
+<br> <br>
+**Note for Mentor users:** This testbench is known to require Questa 2019.2 or later.
+<br>
 
 Running the environment with Synopsys VCS [VCS](https://www.synopsys.com/verification/simulation/vcs.html) (vcs)
 ----------------------
@@ -206,19 +208,25 @@ and run a test.  For example:
 **make gen_corev-dv test TEST=corev_rand_jump_stress_test**
 <br>
 
-RISC-V Compliance Test-suite
+RISC-V Compliance Test-suite and Regressions
 ---------------
-The CV32 UVM environment is able to run the [riscv-compliance](https://github.com/riscv/riscv-compliance)
-test-suite in step-and-compare mode with the ISS Reference Model.  As with riscv-dv, the compliance test-suite
-is cloned by the Makefiles to `vendor_lib/riscv` as needed.  Running the test-suite is a two step process:
-<br>
-**make all_compliance**
-<br>
-will clone riscv-compliance and compile the test-programs.  Below is an example of running a specific
-test-program from the suite:
-<br>
-**make compliance RISCV_ISA=rv32Zifencei COMPLIANCE_PROG=I-FENCE.I-01**
-<br>
+The CV32 UVM environment is able to run the [RISC-V compliance](https://github.com/riscv/riscv-compliance)
+test-suite in step-and-compare mode with the ISS Reference Model, and can optionally dump and check a signature
+file against a reference signature.  As with riscv-dv, the compliance test-suite
+is cloned by the Makefiles to `vendor_lib/riscv` as needed.  The form of the target to run a single test-program
+from the compliance test suite is as follows:
+```
+make compliance RISCV_ISA=<ISA> COMPLIANCE_PROG=<test-program>
+```
+To have the signature dumped and checked:
+```
+make compliance_check_sig RISCV_ISA=<ISA> COMPLIANCE_PROG=<test-program>
+```
+Note that running either of these targets will invoke the `all_compliance` target which clones riscv-compliance
+and compiles all the test-programs.  Below is an example of running a specific test-program from the suite:
+```
+make compliance RISCV_ISA=rv32Zifencei COMPLIANCE_PROG=I-FENCE.I-01
+```
 **Note:** There is a dependancy between RISCV_ISA and COMPLIANCE_PROG.  For example, because the I-ADD-01 test-program is part of the rv32i testsuite this works:
 ```
 make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ADD-01
@@ -227,9 +235,23 @@ But this does not:
 ```
 make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=I-ADD-01
 ```
-
-**TODO:** create a sript to run all compliance tests (this is not currently in place because we do it on the
-MetricsCI platform using the .metrics.json regression control script.
+The `compliance_check_sig` target can be used in the same way as above to run the simulation plus perform a post-simulation
+check of the signature file and the reference signature provided as part of the compliance test-suite.
+<br><br>
+Per-extension compliance regressions can be run using the `compliance_regression` target.   For example:
+```
+make compliance_regression RISCV_ISA=rv32imc
+```
+will run all compressed instruction tests in the compliance test-suite, diff the signature files and produce a summary report. Note that four of the test-programs
+in the rv32i compliance suite are deliberately ignored.  See [issue #412](https://github.com/openhwgroup/core-v-verif/issues/412).
+<br><br>
+The _cv_regress_ utility can also be used to run the compliance regression tests found in the [cv32_compliance](https://github.com/openhwgroup/core-v-verif/blob/master/cv32/regress/cv32_compliance.yaml) YAML regression
+specification.  This is supported for Metrics JSON (--metrics), shell script (--sh), and Cadence Vmanager VSIF (--vsif) output formats.  Use the following example:
+```
+# Shell script output
+% cv_regress --file=cv32_compliance --sim=xrun --sh
+% ./cv32_compliance.sh
+```
 
 Build Configurations
 --------------------

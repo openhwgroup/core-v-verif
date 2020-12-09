@@ -65,14 +65,18 @@ BANNER=*************************************************************************
 #                Set to 'master' to pull the master branch.
 #      *_HASH:   Value of the specific hash you wish to clone;
 #                Set to 'head' to pull the head of the branch you want.
-#      *_TAG:    Not yet supported (TODO).
+# THe CV32E40P repo also has a variable to clone a specific tag:
+#      *_TAG:    Value of the specific tag you wish to clone;
+#                Will override the HASH unless set to "none".
 #                
 
 export SHELL = /bin/bash
 
 CV32E40P_REPO   ?= https://github.com/openhwgroup/cv32e40p
 CV32E40P_BRANCH ?= master
-CV32E40P_HASH   ?= d922d0f
+CV32E40P_HASH   ?= 295b5fb
+#CV32E40P_TAG    ?= cv32e40p_v1.0.0
+CV32E40P_TAG    ?= none
 
 RISCVDV_REPO    ?= https://github.com/google/riscv-dv
 RISCVDV_BRANCH  ?= master
@@ -83,18 +87,25 @@ COMPLIANCE_BRANCH ?= master
 # 2020-08-19
 COMPLIANCE_HASH   ?= c21a2e86afa3f7d4292a2dd26b759f3f29cde497
 
-# Generate command to clone the CV32E40P RTL
+# Generate command to clone the CV32E40P RTL.
+
 ifeq ($(CV32E40P_BRANCH), master)
-  TMP = git clone $(CV32E40P_REPO) --recurse $(CV32E40P_PKG)
+  TMP = git clone $(CV32E40P_REPO) $(CV32E40P_PKG)
 else
-  TMP = git clone -b $(CV32E40P_BRANCH) --single-branch $(CV32E40P_REPO) --recurse $(CV32E40P_PKG)
+  TMP = git clone -b $(CV32E40P_BRANCH) --single-branch $(CV32E40P_REPO) $(CV32E40P_PKG)
 endif
 
-ifeq ($(CV32E40P_HASH), head)
-  CLONE_CV32E40P_CMD = $(TMP)
+# If a TAG is specified, the HASH is not considered
+ifeq ($(CV32E40P_TAG), none)
+  ifeq ($(CV32E40P_HASH), head)
+    CLONE_CV32E40P_CMD = $(TMP)
+  else
+    CLONE_CV32E40P_CMD = $(TMP); cd $(CV32E40P_PKG); git checkout $(CV32E40P_HASH)
+  endif
 else
-  CLONE_CV32E40P_CMD = $(TMP); cd $(CV32E40P_PKG); git checkout $(CV32E40P_HASH)
+  CLONE_CV32E40P_CMD = $(TMP); cd $(CV32E40P_PKG); git checkout tags/$(CV32E40P_TAG)
 endif
+
 # RTL repo vars end
 
 # Generate command to clone RISCV-DV (Google's random instruction generator)
@@ -203,7 +214,7 @@ ASM_DIR   ?= $(ASM)
 # Note that the DSIM targets allow for writing the log-files to arbitrary
 # locations, so all of these paths are absolute, except those used by Verilator.
 # TODO: clean this mess up!
-CORE_TEST_DIR                        = $(PROJ_ROOT_DIR)/cv32/tests/core
+CORE_TEST_DIR                        = $(PROJ_ROOT_DIR)/cv32/tests/programs
 BSP                                  = $(PROJ_ROOT_DIR)/cv32/bsp
 FIRMWARE                             = $(CORE_TEST_DIR)/firmware
 VERI_FIRMWARE                        = ../../tests/core/firmware
