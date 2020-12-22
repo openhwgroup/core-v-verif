@@ -58,7 +58,8 @@ import uvm_pkg::*;      // needed for the UVM messaging service (`uvm_info(), et
 `define CV32E40P_MMRAM  $root.uvmt_cv32_tb.dut_wrap.ram_i
 
 `define CV32E40P_OVP      $root.uvmt_cv32_tb.iss_wrap.cpu
-`define CV32E40P_OVP_RVVI $root.uvmt_cv32_tb.iss_wrap.cpu.state
+`define CV32E40P_OVP_RVVI  $root.uvmt_cv32_tb.iss_wrap.cpu.state
+`define CV32E40P_OVP_RVCTL $root.uvmt_cv32_tb.iss_wrap.cpu.control
 
 
 module uvmt_cv32_step_compare
@@ -251,7 +252,6 @@ module uvmt_cv32_step_compare
         3. Compare RTL <-> OVP
     */
     bit step_rtl;
-    bit step_ovp;
     event ev_compare;
     static integer instruction_count = 0;
    
@@ -263,9 +263,6 @@ module uvmt_cv32_step_compare
    state_e state;
    initial begin
       pushRTL2RM("Initial");
-      step_compare_if.ovp_b1_Step <= 0;
-      step_compare_if.ovp_b1_Stepping <= 1;
-      step_ovp <= 0;
       step_rtl <= 1;
       state <= STEP_RTL;
    end
@@ -276,16 +273,17 @@ module uvmt_cv32_step_compare
            wait (step_compare_if.riscv_retire.triggered)
            clknrst_if.stop_clk();
            step_rtl <= 0;
-           step_ovp <= 1;
            pushRTL2RM("ret_rtl");
+           `CV32E40P_OVP_RVCTL.stepi();
            state <= STEP_OVP;
         end
+        
         STEP_OVP: begin
            wait (step_compare_if.ovp_cpu_valid.triggered)
-           step_ovp <= 0;
            ->`CV32E40P_TRACER.ovp_retire;
            state <= COMPARE;
         end
+        
         COMPARE: begin 
            compare();
            step_rtl <= 1;
@@ -296,10 +294,6 @@ module uvmt_cv32_step_compare
         end
       endcase // case (state)      
    end
-   
-    always @(step_ovp) begin
-        step_compare_if.ovp_b1_Step = step_ovp;
-    end
 
    always @(instruction_count) begin
       if (!(instruction_count % 10000)) begin

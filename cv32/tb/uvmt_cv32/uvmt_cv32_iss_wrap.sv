@@ -48,19 +48,25 @@ module uvmt_cv32_iss_wrap
     CPU #(.ID(ID)) cpu(b1);
 
    assign b1.Clk = clknrst_if.clk;
-    
-   always @(step_compare_if.ovp_b1_Step) b1.Step = step_compare_if.ovp_b1_Step;
-   assign b1.Stepping = step_compare_if.ovp_b1_Stepping;
-
+   
+   // monitor rvvi updates
    always @(cpu.state.notify) begin
        int i;
        step_compare_if.ovp_cpu_PCr = cpu.state.pcr;
        for(i=0; i<32; i++)
            step_compare_if.ovp_cpu_GPR[i] = cpu.state.x[i];
 
+       // generate events
        if (cpu.state.valid) -> step_compare_if.ovp_cpu_valid;
        if (cpu.state.trap)  -> step_compare_if.ovp_cpu_trap;
-       
+   end
+
+   // monitor debug control updates
+   always @(cpu.control.notify) begin
+       step_compare_if.ovp_cpu_state_done  = cpu.control.state_done;
+       step_compare_if.ovp_cpu_state_stepi = cpu.control.state_stepi;
+       step_compare_if.ovp_cpu_state_stop  = cpu.control.state_stop;
+       step_compare_if.ovp_cpu_state_cont  = cpu.control.state_cont;
    end
 
     function void split(input string in_s, output string s1, s2);

@@ -54,7 +54,6 @@ interface BUS;
     // Bus helpers
     //
     bit Shutdown;
-    bit Step, Stepping;
     
     //
     // Bus direct transactors

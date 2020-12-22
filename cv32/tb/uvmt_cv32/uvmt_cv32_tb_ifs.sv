@@ -280,11 +280,11 @@ interface uvmt_cv32_step_compare_if;
    event        ovp_cpu_trap;       // Indicate exception occured 
    bit   [31:0] ovp_cpu_PCr;        // Was iss_wrap.cpu.PCr
    logic [31:0] ovp_cpu_GPR[32];
-   event        ovp_cpu_busWait;    // Was call to ovp.cpu.busWait();
+   bit          ovp_cpu_state_done;
+   bit          ovp_cpu_state_stepi;
+   bit          ovp_cpu_state_stop;
+   bit          ovp_cpu_state_cont;
 
-   bit          ovp_b1_Step;        // Was ovp.b1.Step = 0;
-   bit          ovp_b1_Stepping;    // Was ovp.b1.Stepping = 1;
-   
    event        riscv_retire;       // Was riscv_core.riscv_tracer_i.retire
    
    logic [31:0] insn_pc;

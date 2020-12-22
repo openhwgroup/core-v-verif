@@ -55,6 +55,46 @@ interface rvvi #(
     
 endinterface
 
+typedef enum { DONE, STEPI, STOP, CONT } rvctl_e;
+interface rvctl;
+
+    event    notify;
+    rvctl_e  cmd;
+    bit      ssmode;
+    
+    bit      state_done;
+    bit      state_stepi;
+    bit      state_stop;
+    bit      state_cont;
+    
+    initial ssmode = 1;
+    
+    assign state_done  = (cmd == DONE);
+    assign state_stepi = (cmd == STEPI);
+    assign state_stop  = (cmd == STOP);
+    assign state_cont  = (cmd == CONT);
+    
+    function automatic void done();
+        cmd = DONE;
+        ->notify;
+    endfunction 
+    function automatic void stepi();
+        cmd = STEPI;
+        ->notify;
+    endfunction    
+    function automatic void stop();
+        ssmode = 1;
+        cmd = STOP;
+        ->notify;
+    endfunction    
+    function automatic void cont();
+        ssmode = 0;
+        cmd = CONT;
+        ->notify;
+    endfunction
+    
+endinterface
+
 module CPU 
 #(
     parameter int ID = 0
@@ -88,12 +128,13 @@ module CPU
     export "DPI-C" task     setTRAP;
     export "DPI-C" function setDECODE;
     
-    rvvi state();
+    rvvi  state();
+    rvctl control();
     
     // From RTL
     bit [31:0] GPR_rtl[32];
     
-    /*
+/*
     always @state.notify begin
         if (state.valid) begin
             $display("<R> %s", state.decode);
@@ -103,8 +144,20 @@ module CPU
             $display("ERROR: %s", state.decode);
         end
     end
-    */
     
+    always @control.notify begin
+        if (control.cmd == DONE) begin
+            $display("<C> done");
+        end else if (control.cmd == STEPI) begin
+            $display("<C> stepi");
+        end else if (control.cmd == STOP) begin
+            $display("<C> stop");
+        end else if (control.cmd == CONT) begin
+            $display("<C> continue");
+        end
+    end
+*/
+
     //
     // Format message for UVM/SV environment
     //
@@ -126,8 +179,8 @@ module CPU
     endfunction
     
     task busStep;
-        if (SysBus.Stepping) begin
-            while (SysBus.Step == 0) begin
+        if (control.ssmode) begin
+            while (control.cmd != STEPI) begin
                 @(posedge SysBus.Clk);
             end
         end
@@ -144,9 +197,9 @@ module CPU
         input int retPC;
         input int nextPC;
     
-        SysBus.Step = 0;
+        control.done();
         
-        // RVFI
+        // RVVI
         state.nret  = nret; 
         state.trap  = 0; 
         state.valid = 1;
@@ -160,7 +213,7 @@ module CPU
         input int excPC;
         input int nextPC;
         
-        // RVFI
+        // RVVI
         state.nret  = nret; 
         state.trap  = 1; 
         state.valid = 0;
@@ -391,7 +444,7 @@ module CPU
             SysBus.Dbe   <= ble;
             SysBus.Drd   <= 1;
             
-            // Wait for the transfer to complete & stepping
+            // Wait for the transfer to complete & ssmode
             busWait;
             data = setData(address, SysBus.DData);
             SysBus.Drd   <= 0;
@@ -451,7 +504,7 @@ module CPU
             SysBus.Ibe   <= ble;
             SysBus.Ird   <= 1;
             
-            // Wait for the transfer to complete & stepping
+            // Wait for the transfer to complete & ssmode
             busWait;
             data = setData(address, SysBus.IData);
             SysBus.Ird   <= 0;
