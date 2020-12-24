@@ -43,39 +43,35 @@ interface rvvi #(
     bit [(XLEN-1):0] pcr;
     bit [(XLEN-1):0] pcw;
 
-    // X Registers
+    // Registers
     bit [(XLEN-1):0] x[32];
-    bit [(XLEN-1):0] rd_addr;
-    bit [(XLEN-1):0] rd_data;
-    bit              rd_valid;
-
     bit [(XLEN-1):0] f[32];
-    
     bit [(XLEN-1):0] CSR[string];
     
 endinterface
 
-typedef enum { DONE, STEPI, STOP, CONT } rvctl_e;
+typedef enum { IDLE, STEPI, STOP, CONT } rvctl_e;
 interface rvctl;
 
     event    notify;
+    
     rvctl_e  cmd;
     bit      ssmode;
     
-    bit      state_done;
+    bit      state_idle;
     bit      state_stepi;
     bit      state_stop;
     bit      state_cont;
     
     initial ssmode = 1;
     
-    assign state_done  = (cmd == DONE);
+    assign state_idle  = (cmd == IDLE);
     assign state_stepi = (cmd == STEPI);
     assign state_stop  = (cmd == STOP);
     assign state_cont  = (cmd == CONT);
     
-    function automatic void done();
-        cmd = DONE;
+    function automatic void idle();
+        cmd = IDLE;
         ->notify;
     endfunction 
     function automatic void stepi();
@@ -146,8 +142,8 @@ module CPU
     end
     
     always @control.notify begin
-        if (control.cmd == DONE) begin
-            $display("<C> done");
+        if (control.cmd == IDLE) begin
+            $display("<C> idle");
         end else if (control.cmd == STEPI) begin
             $display("<C> stepi");
         end else if (control.cmd == STOP) begin
@@ -197,7 +193,7 @@ module CPU
         input int retPC;
         input int nextPC;
     
-        control.done();
+        control.idle();
         
         // RVVI
         state.nret  = nret; 

@@ -63,7 +63,7 @@ module uvmt_cv32_iss_wrap
 
    // monitor debug control updates
    always @(cpu.control.notify) begin
-       step_compare_if.ovp_cpu_state_done  = cpu.control.state_done;
+       step_compare_if.ovp_cpu_state_idle  = cpu.control.state_idle;
        step_compare_if.ovp_cpu_state_stepi = cpu.control.state_stepi;
        step_compare_if.ovp_cpu_state_stop  = cpu.control.state_stop;
        step_compare_if.ovp_cpu_state_cont  = cpu.control.state_cont;

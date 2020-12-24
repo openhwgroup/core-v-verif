@@ -280,7 +280,7 @@ interface uvmt_cv32_step_compare_if;
    event        ovp_cpu_trap;       // Indicate exception occured 
    bit   [31:0] ovp_cpu_PCr;        // Was iss_wrap.cpu.PCr
    logic [31:0] ovp_cpu_GPR[32];
-   bit          ovp_cpu_state_done;
+   bit          ovp_cpu_state_idle;
    bit          ovp_cpu_state_stepi;
    bit          ovp_cpu_state_stop;
    bit          ovp_cpu_state_cont;
