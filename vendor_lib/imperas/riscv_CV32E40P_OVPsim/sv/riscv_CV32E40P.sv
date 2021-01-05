@@ -129,7 +129,6 @@ module CPU
     
     // From RTL
     bit [31:0] GPR_rtl[32];
-    
 /*
     always @state.notify begin
         if (state.valid) begin

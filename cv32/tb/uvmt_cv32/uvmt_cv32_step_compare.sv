@@ -269,19 +269,45 @@ module uvmt_cv32_step_compare
    
    always @(*) begin
       case (state)
+        RESET: begin
+            $display("Unexpected State");
+            $finish;
+        end
+        
         STEP_RTL: begin
-           wait (step_compare_if.riscv_retire.triggered)
-           clknrst_if.stop_clk();
-           step_rtl <= 0;
-           pushRTL2RM("ret_rtl");
-           `CV32E40P_OVP_RVCTL.stepi();
-           state <= STEP_OVP;
+           state <= RESET;
+           fork
+               begin
+                   @step_compare_if.riscv_retire;
+                   clknrst_if.stop_clk();
+                   step_rtl <= 0;
+                   pushRTL2RM("ret_rtl");
+                   `CV32E40P_OVP_RVCTL.stepi();
+                   state <= STEP_OVP;
+               end
+               begin
+                   @step_compare_if.riscv_trap;
+                   state <= STEP_RTL;
+               end
+          join_any
+          disable fork;
         end
         
         STEP_OVP: begin
-           wait (step_compare_if.ovp_cpu_valid.triggered)
-           ->`CV32E40P_TRACER.ovp_retire;
-           state <= COMPARE;
+           // wait on retire or trap
+           state <= RESET;
+           fork
+               begin
+                   @step_compare_if.ovp_cpu_valid;
+                   ->`CV32E40P_TRACER.ovp_retire;
+                   state <= COMPARE;
+               end
+               begin
+                   @step_compare_if.ovp_cpu_trap;
+                   state <= STEP_OVP;
+               end
+           join_any
+           disable fork;
         end
         
         COMPARE: begin 
@@ -292,7 +318,7 @@ module uvmt_cv32_step_compare
            instruction_count += 1;           
            state <= STEP_RTL;
         end
-      endcase // case (state)      
+      endcase // case (state)
    end
 
    always @(instruction_count) begin

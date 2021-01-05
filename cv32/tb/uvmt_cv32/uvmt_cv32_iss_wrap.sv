@@ -57,8 +57,14 @@ module uvmt_cv32_iss_wrap
            step_compare_if.ovp_cpu_GPR[i] = cpu.state.x[i];
 
        // generate events
-       if (cpu.state.valid) -> step_compare_if.ovp_cpu_valid;
-       if (cpu.state.trap)  -> step_compare_if.ovp_cpu_trap;
+       if (cpu.state.valid) begin
+           // $display("Instruction Retired %08X %08X", cpu.state.pcr, cpu.state.pcw);
+           -> step_compare_if.ovp_cpu_valid;
+       end else if (cpu.state.trap) begin
+           // $display("Instruction Fault %08X %08X", cpu.state.pcr, cpu.state.pcw);
+           -> step_compare_if.ovp_cpu_trap;
+       end
+       
    end
 
    // monitor debug control updates

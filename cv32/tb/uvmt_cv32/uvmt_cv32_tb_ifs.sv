@@ -286,6 +286,7 @@ interface uvmt_cv32_step_compare_if;
    bit          ovp_cpu_state_cont;
 
    event        riscv_retire;       // Was riscv_core.riscv_tracer_i.retire
+   event        riscv_trap;         // new event to indicate RTL took a trap
    
    logic [31:0] insn_pc;
    logic [31:0][31:0] riscy_GPR;    // packed dimensions, register index by data width
