@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2005-2020 Imperas Software Ltd., www.imperas.com
+ * Copyright (c) 2005-2021 Imperas Software Ltd., www.imperas.com
  *
  * The contents of this file are provided under the Software License
  * Agreement that you accepted before downloading this file.
@@ -20,18 +20,17 @@
 //`define DEBUG
 //`define UVM
 
-interface rvvi #(
+interface rvvi_s #(
     parameter int ILEN = 32,
     parameter int XLEN = 32
 );
 
     event            notify;
     
-    int              nret;  // index for event
-
     bit              valid; // Retired instruction
     bit              trap;  // Trapped instruction
     bit              halt;  // Halted  instruction
+    
     bit              intr;  // Flag first instruction of trap handler
     bit [(XLEN-1):0] order;
     bit [(ILEN-1):0] insn;
@@ -50,18 +49,18 @@ interface rvvi #(
     
 endinterface
 
-typedef enum { IDLE, STEPI, STOP, CONT } rvctl_e;
-interface rvctl;
+typedef enum { IDLE, STEPI, STOP, CONT } rvvi_c_e;
+interface rvvi_c;
 
-    event    notify;
+    event     notify;
     
-    rvctl_e  cmd;
-    bit      ssmode;
+    rvvi_c_e  cmd;
+    bit       ssmode;
     
-    bit      state_idle;
-    bit      state_stepi;
-    bit      state_stop;
-    bit      state_cont;
+    bit       state_idle;
+    bit       state_stepi;
+    bit       state_stop;
+    bit       state_cont;
     
     initial ssmode = 1;
     
@@ -124,8 +123,8 @@ module CPU
     export "DPI-C" task     setTRAP;
     export "DPI-C" function setDECODE;
     
-    rvvi  state();
-    rvctl control();
+    rvvi_s state();
+    rvvi_c control();
     
     // From RTL
     bit [31:0] GPR_rtl[32];
@@ -188,14 +187,13 @@ module CPU
     
     // Called at end of instruction transaction
     task setRETIRE;
-        input int nret;
+        input int hart;
         input int retPC;
         input int nextPC;
     
         control.idle();
         
-        // RVVI
-        state.nret  = nret; 
+        // RVVI_S
         state.trap  = 0; 
         state.valid = 1;
         state.pcr   = retPC;
@@ -204,12 +202,11 @@ module CPU
     endtask
 
     task setTRAP;
-        input int nret;
+        input int hart;
         input int excPC;
         input int nextPC;
         
-        // RVVI
-        state.nret  = nret; 
+        // RVVI_S
         state.trap  = 1; 
         state.valid = 0;
         state.pcr   = excPC;
