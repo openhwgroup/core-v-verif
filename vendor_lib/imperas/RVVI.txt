@@ -114,6 +114,7 @@ always @(*) begin
           state <= HALT;
         end
       join_any
+      disable fork;
     end
     
     TRAP: begin
