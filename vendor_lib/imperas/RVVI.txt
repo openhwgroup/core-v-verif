@@ -69,4 +69,73 @@ This is the address of the next instruction to be executed at a valid notify eve
 
 x, f, CSR:
 These arrays contain the values of the registers for the INTEGER, FLOATING-POINT, and CONTROL/STATE
+The state values are updated at the notify events for trap and valid.
+
+
+RVVI-C Interface
+----------------
+This interface provides the testbench with a set of commands and status to indicate the progress
+The interface contains functions similar to a debugger control for 
+- stepi
+- cont
+- stop
+the run control status is indicated by a state veriable, state changes are notified by an event 
+notify
+
+The status state variable is called cmd, indicating the current command in operation, this can be
+one of 
+IDLE, STEPI, STOP, CONT
+
+In order to control the interface the following flow would be a simple use model
+
+typedef enum {STOP, STEP, TRAP, HALT, EXAMINE} state_e; 
+state_e state;
+initial state <= STOP;
+always @(*) begin
+  case (state)
+    STOP: begin
+      cpu.control.stepi();      // call the method to step the device
+      state <= STEP;
+    end
+    
+    STEP: begin                 // wait on retire, trap or halt
+      state <= RESET;
+      fork
+        begin
+          @cpu.state.valid;
+          state <= EXAMINE;
+        end
+        begin
+          @cpu.state.trap;
+          state <= TRAP;
+        end
+        begin
+          @cpu.state.halt;
+          state <= HALT;
+        end
+      join_any
+    end
+    
+    TRAP: begin
+      $display("Device has trapped");
+      cpu.control.stepi();
+      state <= STEP;
+    end
+    
+    HALT: begin
+      $display("Device has halted");
+      cpu.control.stepi();
+      state <= STEP;
+    end
+    
+    EXAMINE: begin
+      $display("Interrogate state");
+      // cpu.state.x[] - GPR Registers
+      state <= STOP;
+    end
+end
+
+
+
+
 
