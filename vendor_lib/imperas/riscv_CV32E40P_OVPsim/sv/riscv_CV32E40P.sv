@@ -206,6 +206,8 @@ module CPU
         input int excPC;
         input int nextPC;
         
+        control.idle();
+        
         // RVVI_S
         state.trap  = 1; 
         state.valid = 0;

@@ -255,68 +255,107 @@ module uvmt_cv32_step_compare
     event ev_compare;
     static integer instruction_count = 0;
    
-    typedef enum {RESET,  // Needed to get an event on state so always block is initially entered
-                  STEP_RTL,
-                  STEP_OVP,
-                  COMPARE} state_e; 
+    typedef enum {
+        INIT,
+        IDLE,  // Needed to get an event on state so always block is initially entered
+        
+        RTL_STEP,
+        RTL_VALID,
+        RTL_TRAP,
+        RTL_HALT,
+        
+        RM_STEP,
+        RM_VALID,
+        RM_TRAP,
+        RM_HALT,
+        
+        CMP
+    } state_e; 
 
-   state_e state;
-   initial begin
-      pushRTL2RM("Initial");
-      step_rtl <= 1;
-      state <= STEP_RTL;
-   end
+   state_e state = INIT;
+   initial state <= IDLE; // cause an event for always @*
    
    always @(*) begin
       case (state)
-        RESET: begin
-            $display("Unexpected State");
-            $finish;
+        IDLE: begin
+            state <= RTL_STEP;
         end
         
-        STEP_RTL: begin
-           state <= RESET;
-           fork
-               begin
-                   @step_compare_if.riscv_retire;
-                   clknrst_if.stop_clk();
-                   step_rtl <= 0;
-                   pushRTL2RM("ret_rtl");
-                   `CV32E40P_OVP_RVCTL.stepi();
-                   state <= STEP_OVP;
-               end
-               begin
-                   @step_compare_if.riscv_trap;
-                   state <= STEP_RTL;
-               end
-          join_any
-          disable fork;
+        RTL_STEP: begin
+            clknrst_if.start_clk();
+            fork
+                begin
+                    @step_compare_if.riscv_retire;
+                    clknrst_if.stop_clk();
+                    step_rtl <= 0;
+                    state <= RTL_VALID;
+                end
+                begin
+                    @step_compare_if.riscv_trap;
+                    state <= RTL_TRAP;
+                end
+                begin
+                    @step_compare_if.riscv_halt;
+                    state <= RTL_HALT;
+                end
+            join_any
+            disable fork;
+        end
+
+        RTL_VALID: begin
+            state <= RM_STEP;
         end
         
-        STEP_OVP: begin
-           // wait on retire or trap
-           state <= RESET;
-           fork
-               begin
-                   @step_compare_if.ovp_cpu_valid;
-                   ->`CV32E40P_TRACER.ovp_retire;
-                   state <= COMPARE;
-               end
-               begin
-                   @step_compare_if.ovp_cpu_trap;
-                   state <= STEP_OVP;
-               end
-           join_any
-           disable fork;
+        RTL_TRAP: begin
+            //state <= RM_STEP; // needs additional work
+            state <= RTL_STEP;
         end
         
-        COMPARE: begin 
-           compare();
-           step_rtl <= 1;
-           ->ev_compare;
-           clknrst_if.start_clk();
-           instruction_count += 1;           
-           state <= STEP_RTL;
+        RTL_HALT: begin
+            state <= RTL_STEP;
+        end
+
+        RM_STEP: begin
+            pushRTL2RM("ret_rtl");
+            `CV32E40P_OVP_RVCTL.stepi();
+            fork
+                begin
+                    @step_compare_if.ovp_cpu_valid;
+                    ->`CV32E40P_TRACER.ovp_retire;
+                    state <= RM_VALID;
+                end
+                begin
+                    @step_compare_if.ovp_cpu_trap;
+                    state <= RM_TRAP;
+                end
+                begin
+                    @step_compare_if.ovp_cpu_halt;
+                    state <= RM_HALT;
+                end
+            join_any
+            disable fork;
+        end
+
+        RM_VALID: begin
+            state <= CMP;
+        end
+        
+        RM_TRAP: begin
+            //state <= CMP; // needs additional work
+            state <= RM_STEP;
+        end
+        
+        RM_HALT: begin
+            state <= RM_STEP;
+        end
+
+        CMP: begin 
+             compare();
+             step_rtl <= 1;
+             ->ev_compare;
+             instruction_count += 1;           
+             //state <= RTL_STEP;
+             state <= IDLE;
         end
       endcase // case (state)
    end

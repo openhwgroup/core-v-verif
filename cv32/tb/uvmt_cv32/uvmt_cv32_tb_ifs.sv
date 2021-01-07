@@ -278,6 +278,7 @@ interface uvmt_cv32_step_compare_if;
 
    event        ovp_cpu_valid;      // Indicate instruction successfully retired
    event        ovp_cpu_trap;       // Indicate exception occured 
+   event        ovp_cpu_halt;       // Indicate exception occured 
    bit   [31:0] ovp_cpu_PCr;        // Was iss_wrap.cpu.PCr
    logic [31:0] ovp_cpu_GPR[32];
    bit          ovp_cpu_state_idle;
@@ -287,6 +288,7 @@ interface uvmt_cv32_step_compare_if;
 
    event        riscv_retire;       // Was riscv_core.riscv_tracer_i.retire
    event        riscv_trap;         // new event to indicate RTL took a trap
+   event        riscv_halt;         // new event to indicate RTL took a halt
    
    logic [31:0] insn_pc;
    logic [31:0][31:0] riscy_GPR;    // packed dimensions, register index by data width

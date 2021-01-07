@@ -82,28 +82,33 @@ The interface contains functions similar to a debugger control for
 the run control status is indicated by a state veriable, state changes are notified by an event 
 notify
 
-The status state variable is called cmd, indicating the current command in operation, this can be
+The control state variable is called cmd, indicating the current command in operation, this can be
 one of 
 IDLE, STEPI, STOP, CONT
+additionally the control interface contains methods to step and run the device, for example
+
+stepi():
+Run the device until either an instruction provides a notify event of a trap or is valid, internally
+the interface will set the cmd state back to IDLE when either trap or valid occurs.
+
 
 In order to control the interface the following flow would be a simple use model
 
-typedef enum {STOP, STEP, TRAP, HALT, EXAMINE} state_e; 
-state_e state;
-initial state <= STOP;
+typedef enum {INIT, IDLE, STEP, VALID, TRAP, HALT, COMPARE} state_e; 
+state_e state = INIT;
+initial state <= IDLE; // force an event on state to sensitize always @(*)
 always @(*) begin
   case (state)
-    STOP: begin
-      cpu.control.stepi();      // call the method to step the device
+    IDLE: begin
       state <= STEP;
     end
     
     STEP: begin                 // wait on retire, trap or halt
-      state <= RESET;
+      cpu.control.stepi();      // call the method to step the device
       fork
         begin
           @cpu.state.valid;
-          state <= EXAMINE;
+          state <= VALID;
         end
         begin
           @cpu.state.trap;
@@ -117,22 +122,25 @@ always @(*) begin
       disable fork;
     end
     
+    VALID: begin
+      $display("Device has retired");
+      state <= COMPARE;
+    end
+    
     TRAP: begin
       $display("Device has trapped");
-      cpu.control.stepi();
       state <= STEP;
     end
     
     HALT: begin
       $display("Device has halted");
-      cpu.control.stepi();
       state <= STEP;
     end
     
-    EXAMINE: begin
+    COMPARE: begin
       $display("Interrogate state");
       // cpu.state.x[] - GPR Registers
-      state <= STOP;
+      state <= IDLE;
     end
 end
 
