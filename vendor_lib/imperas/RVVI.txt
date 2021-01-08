@@ -51,6 +51,9 @@ This signal contains the instruction count for the instruction being retired at 
 insn:
 This signal contains the instruction word which is at the trap or valid event
 
+isize:
+The size of the instruction held in insn, this should be either 2(compressed) or 4(uncompressed) 
+
 mode:
 This signal indicates the operating mode (Machine, Supervisor, User)
 
@@ -94,7 +97,7 @@ the interface will set the cmd state back to IDLE when either trap or valid occu
 
 In order to control the interface the following flow would be a simple use model
 
-typedef enum {INIT, IDLE, STEP, VALID, TRAP, HALT, COMPARE} state_e; 
+typedef enum {INIT, IDLE, STEP, VALID, TRAP, HALT, CMP} state_e; 
 state_e state = INIT;
 initial state <= IDLE; // force an event on state to sensitize always @(*)
 always @(*) begin
@@ -124,7 +127,7 @@ always @(*) begin
     
     VALID: begin
       $display("Device has retired");
-      state <= COMPARE;
+      state <= CMP;
     end
     
     TRAP: begin
@@ -137,7 +140,7 @@ always @(*) begin
       state <= STEP;
     end
     
-    COMPARE: begin
+    CMP: begin
       $display("Interrogate state");
       // cpu.state.x[] - GPR Registers
       state <= IDLE;

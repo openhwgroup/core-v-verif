@@ -34,6 +34,7 @@ interface rvvi_s #(
     bit              intr;  // Flag first instruction of trap handler
     bit [(XLEN-1):0] order;
     bit [(ILEN-1):0] insn;
+    bit [2:0]        isize;
     bit [1:0]        mode;
     bit [1:0]        ixl;
     
@@ -190,6 +191,7 @@ module CPU
         input int hart;
         input int retPC;
         input int nextPC;
+        input longint count;
     
         control.idle();
         
@@ -198,6 +200,7 @@ module CPU
         state.valid = 1;
         state.pcr   = retPC;
         state.pcw   = nextPC;
+        state.order = count;
         ->state.notify;
     endtask
 
@@ -205,6 +208,7 @@ module CPU
         input int hart;
         input int excPC;
         input int nextPC;
+        input longint count;
         
         control.idle();
         
@@ -213,6 +217,7 @@ module CPU
         state.valid = 0;
         state.pcr   = excPC;
         state.pcw   = nextPC;
+        state.order = count;
         ->state.notify;
     endtask
         
@@ -242,8 +247,10 @@ module CPU
         _resethaltreq       = SysBus.resethaltreq ;
     endfunction
         
-    function automatic void setDECODE (input string value);
+    function automatic void setDECODE (input string value, input int insn, input int isize);
         state.decode = value;
+        state.insn   = insn;
+        state.isize  = isize;
     endfunction
     
     function automatic void setGPR (input int index, input longint value);
