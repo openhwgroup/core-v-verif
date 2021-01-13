@@ -98,10 +98,10 @@ endinterface : uvmt_cv32_vp_status_if
  * Quasi-static core control signals.
  */
 interface uvmt_cv32_core_cntrl_if (
+                                    input               clk,
                                     output logic        fetch_en,
-                                    output logic        ext_perf_counters,
                                     // quasi static values
-                                    output logic        clock_en,
+                                    output logic        pulp_clock_en,
                                     output logic        scan_cg_en,
                                     output logic [31:0] boot_addr,
                                     output logic [31:0] mtvec_addr,
@@ -116,17 +116,21 @@ interface uvmt_cv32_core_cntrl_if (
 
   import uvm_pkg::*;
 
-  string qsc_stat_str; //Quasi Static Control Status
+  string       qsc_stat_str; //Quasi Static Control Status
+  wire         fb;
+  reg          lfsr_reset;
+  reg   [15:0] lfsr;
 
   covergroup core_cntrl_cg;
-    clock_enable: coverpoint clock_en {
-      bins enabled  = {1'b1};
-      bins disabled = {1'b0};
-    }
-    scan_enable: coverpoint scan_cg_en {
-      bins enabled  = {1'b1};
-      bins disabled = {1'b0};
-    }
+    // For CV32E40P, this s.b. tied to 0
+    //pulp_clock_enable: coverpoint pulp_clock_en {
+    //  bins enabled  = {1'b1};
+    //  bins disabled = {1'b0};
+    //}
+    //scan_enable: coverpoint scan_cg_en {
+    //  bins enabled  = {1'b1};
+    //  bins disabled = {1'b0};
+    //}
     boot_address: coverpoint boot_addr {
       bins low  = {[32'h0000_0000 : 32'h0000_FFFF]};
       bins med  = {[32'h0001_0000 : 32'hEFFF_FFFF]};
@@ -154,19 +158,17 @@ interface uvmt_cv32_core_cntrl_if (
     }
   endgroup: core_cntrl_cg
 
-  core_cntrl_cg core_cntrl_cg_inst;
-
-  initial begin: static_controls
-    fetch_en          = 1'b0; // Enabled by go_fetch(), below
-    ext_perf_counters = 1'b0; // TODO: set proper width (currently 0 in the RTL)
-  end
+  core_cntrl_cg core_cntrl_cg_inst = new();
 
   // TODO: randomize hart_id (should have no affect?).
   //       randomize boot_addr and mtvec addr (need to sync with the start address of the test program.
-  //       figure out what to do with test_en.
   initial begin: quasi_static_controls
 
-    clock_en          = 1'b1;
+
+    lfsr_reset        = 1'b1;
+    fetch_en          = 1'b0; // Enabled by go_fetch(), below
+    debug_req         = 1'b0;
+    pulp_clock_en     = 1'b0;
     scan_cg_en        = 1'b0;
     boot_addr         = 32'h0000_0080;
     mtvec_addr        = 32'h0000_0000;
@@ -187,7 +189,7 @@ interface uvmt_cv32_core_cntrl_if (
 `endif
     end
 
-    qsc_stat_str =                $sformatf("\tclock_en          = %0d\n", clock_en);
+    qsc_stat_str =                $sformatf("\tpulp_clock_en     = %0d\n", pulp_clock_en);
     qsc_stat_str = {qsc_stat_str, $sformatf("\tscan_cg_en        = %0d\n", scan_cg_en)};
     qsc_stat_str = {qsc_stat_str, $sformatf("\tboot_addr         = %8h\n", boot_addr)};
     qsc_stat_str = {qsc_stat_str, $sformatf("\tmtvec_addr        = %8h\n", mtvec_addr)};
@@ -198,18 +200,39 @@ interface uvmt_cv32_core_cntrl_if (
     `uvm_info("CORE_CNTRL_IF", $sformatf("Quasi-static CORE control inputs:\n%s", qsc_stat_str), UVM_NONE)
   end
 
-  // TODO: waiting for the User Manual to provide some guidance here...
-  initial begin: debug_control
-    debug_req  = 1'b0;
-  end
+  clocking drv_cb @(posedge clk);
+    output fetch_en;
+  endclocking : drv_cb
 
   /** Sets fetch_en to the core. */
-  function void go_fetch();
-    fetch_en = 1'b1;
+  //function void go_fetch();
+  task go_fetch();
+    drv_cb.fetch_en <= 1'b1;
     `uvm_info("CORE_CNTRL_IF", "uvmt_cv32_core_cntrl_if.go_fetch() called", UVM_DEBUG)
-    core_cntrl_cg_inst = new();
     core_cntrl_cg_inst.sample();
-  endfunction : go_fetch
+    repeat(10) @(posedge clk);
+    lfsr_reset <= 1'b0;
+  endtask : go_fetch
+
+  function void stop_fetch();
+    drv_cb.fetch_en <= 1'b0;
+	lfsr_reset      <= 1'b1;
+    `uvm_info("CORE_CNTRL_IF", "uvmt_cv32_core_cntrl_if.stop_fetch() called", UVM_DEBUG)
+  endfunction : stop_fetch
+
+  // LFSR used to "randomly" toggle fetch_en to show that
+  // the core ignores fetch_en after its initial assertion.
+  assign fb = !(lfsr[15] ^ lfsr[13] ^ lfsr[12] ^ lfsr[10]);
+
+  always @(posedge clk) begin
+    if (lfsr_reset) begin // active high reset
+      lfsr <= $urandom();
+    end
+    else begin
+      lfsr <= {lfsr[14:0], fb};
+      drv_cb.fetch_en <= lfsr[15];
+    end 
+  end 
 
 endinterface : uvmt_cv32_core_cntrl_if
 
@@ -253,16 +276,24 @@ interface uvmt_cv32_step_compare_if;
      logic [31:0] value;
    } reg_t;
 
-   event        ovp_cpu_retire; // Was ovp.cpu.Retire
-   event        riscv_retire;   // Was riscv_core.riscv_tracer_i.retire
-   bit   [31:0] ovp_cpu_PCr;    // Was iss_wrap.cpu.PCr
+   event        ovp_cpu_valid;      // Indicate instruction successfully retired
+   event        ovp_cpu_trap;       // Indicate exception occured 
+   event        ovp_cpu_halt;       // Indicate exception occured 
+   bit   [31:0] ovp_cpu_PCr;        // Was iss_wrap.cpu.PCr
+   logic [31:0] ovp_cpu_GPR[32];
+   bit          ovp_cpu_state_idle;
+   bit          ovp_cpu_state_stepi;
+   bit          ovp_cpu_state_stop;
+   bit          ovp_cpu_state_cont;
+
+   event        riscv_retire;       // Was riscv_core.riscv_tracer_i.retire
+   event        riscv_trap;         // new event to indicate RTL took a trap
+   event        riscv_halt;         // new event to indicate RTL took a halt
+   
    logic [31:0] insn_pc;
-   bit         ovp_b1_Step;    // Was ovp.b1.Step = 0;
-   bit         ovp_b1_Stepping; // Was ovp.b1.Stepping = 1;
-   event       ovp_cpu_busWait;  // Was call to ovp.cpu.busWait();
-   logic   [31:0] ovp_cpu_GPR[32];
-   logic [31:0][31:0] riscy_GPR; // packed dimensions, register index by data width
-   logic       deferint_prime; // Stages deferint for the ISS deferint signal
+   logic [31:0][31:0] riscy_GPR;    // packed dimensions, register index by data width
+   logic        deferint_prime;     // Stages deferint for the ISS deferint signal
+   logic        deferint_prime_ack; // Set low if deferint_prime was set due to interrupt ack (as opposed to wakeup)
 
    int  num_pc_checks;
    int  num_gpr_checks;
@@ -296,63 +327,69 @@ endinterface: uvmt_cv32_step_compare_if
 interface uvmt_cv32_debug_cov_assert_if
     import cv32e40p_pkg::*;
     (
-    input logic clk_i,
-    input logic rst_ni,
+    input  clk_i,
+    input  rst_ni,
 
     // Core inputs
-    input logic        fetch_enable_i, // external core fetch enable
+    input         fetch_enable_i, // external core fetch enable
 
     // External interrupt interface
-    input logic [31:0] irq_i,
-    input logic        irq_ack_o,
-    input logic [4:0]  irq_id_o,
-    input logic [31:0] mie_q,
+    input  [31:0] irq_i,
+    input         irq_ack_o,
+    input  [4:0]  irq_id_o,
+    input  [31:0] mie_q,
 
     // Instruction fetch stage
-    input logic        if_stage_instr_rvalid_i, // Instruction word is valid
-    input logic [31:0] if_stage_instr_rdata_i, // Instruction word data
+    input         if_stage_instr_rvalid_i, // Instruction word is valid
+    input  [31:0] if_stage_instr_rdata_i, // Instruction word data
 
     // Instruction ID stage (determines executed instructions)  
-    input logic        id_stage_instr_valid_i, // instruction word is valid
-    input logic [31:0] id_stage_instr_rdata_i, // Instruction word data
-    input logic        id_stage_is_compressed,
-    input logic [31:0] id_stage_pc, // Program counter in decode
-    input logic [31:0] if_stage_pc, // Program counter in fetch
-    input logic        is_decoding,
-    input logic        id_valid,
+    input         id_stage_instr_valid_i, // instruction word is valid
+    input  [31:0] id_stage_instr_rdata_i, // Instruction word data
+    input         id_stage_is_compressed,
+    input  [31:0] id_stage_pc, // Program counter in decode
+    input  [31:0] if_stage_pc, // Program counter in fetch
+    input         is_decoding,
+    input         id_valid,
     input wire ctrl_state_e  ctrl_fsm_cs,            // Controller FSM states with debug_req
-    input logic        illegal_insn_i,
-    input logic        illegal_insn_q, // output from controller
-    input logic        ecall_insn_i,
+    input         illegal_insn_i,
+    input         illegal_insn_q, // output from controller
+    input         ecall_insn_i,
+
+    input  [31:0] boot_addr_i,
 
     // Debug signals
-    input logic              debug_req_i, // From controller
-    input logic              debug_mode_q, // From controller
-    input logic [31:0] dcsr_q, // From controller
-    input logic [31:0] depc_q, // From cs regs
-    input logic [31:0] depc_n, // 
-    input logic [31:0] dm_halt_addr_i,
-    input logic [31:0] dm_exception_addr_i,
+    input         debug_req_i, // From controller
+    input         debug_mode_q, // From controller
+    input  [31:0] dcsr_q, // From controller
+    input  [31:0] depc_q, // From cs regs
+    input  [31:0] depc_n, // 
+    input  [31:0] dm_halt_addr_i,
+    input  [31:0] dm_exception_addr_i,
 
-    input logic [31:0] mcause_q,
-    input logic [31:0] mtvec,
-    input logic [31:0] mepc_q,
-    input logic [31:0] tdata1,
-    input logic [31:0] tdata2,
-    input logic trigger_match_i,
+    input  [5:0]  mcause_q,
+    input  [31:0] mtvec,
+    input  [31:0] mepc_q,
+    input  [31:0] tdata1,
+    input  [31:0] tdata2,
+    input  trigger_match_i,
 
     // Counter related input from cs_registers
-    input logic [31:0] mcountinhibit_q,
-    input logic [63:0] mcycle,
-    input logic [63:0] minstret,
-    input logic inst_ret,
+    input  [31:0] mcountinhibit_q,
+    input  [63:0] mcycle,
+    input  [63:0] minstret,
+    input  inst_ret,
     // WFI Interface
-    input logic core_sleep_o,
+    input  core_sleep_o,
 
-    input logic csr_access,
-    input logic [1:0] csr_op,
-    input logic [11:0] csr_addr,
-    input logic csr_we_int,
+    input  fence_i,
+      
+    input  csr_access,
+    input  [1:0] csr_op,
+    input  [1:0] csr_op_dec,
+    input  [11:0] csr_addr,
+    input  csr_we_int,
+
     output logic is_wfi,
     output logic in_wfi,
     output logic dpc_will_hit,
@@ -360,8 +397,10 @@ interface uvmt_cv32_debug_cov_assert_if
     output logic is_ebreak,
     output logic is_cebreak,
     output logic is_dret,
+    output logic is_mulhsu,
     output logic [31:0] pending_enabled_irq,
-    input logic pc_set
+    input  pc_set,
+    input  branch_in_decode
 );
 
   clocking mon_cb @(posedge clk_i);    
@@ -385,7 +424,7 @@ interface uvmt_cv32_debug_cov_assert_if
     illegal_insn_i,
     illegal_insn_q,
     ecall_insn_i,
-  
+    boot_addr_i, 
     debug_req_i,
     debug_mode_q,
     dcsr_q,
@@ -399,7 +438,7 @@ interface uvmt_cv32_debug_cov_assert_if
     tdata1,
     tdata2,
     trigger_match_i,
-
+    fence_i,
     mcountinhibit_q,
     mcycle,
     minstret,
@@ -408,6 +447,7 @@ interface uvmt_cv32_debug_cov_assert_if
     core_sleep_o,
     csr_access,
     csr_op,
+    csr_op_dec,
     csr_addr,
     is_wfi,
     in_wfi,
@@ -416,8 +456,10 @@ interface uvmt_cv32_debug_cov_assert_if
     is_ebreak,
     is_cebreak,
     is_dret,
+    is_mulhsu,
     pending_enabled_irq,
-    pc_set;
+    pc_set,
+    branch_in_decode;
   endclocking : mon_cb
 
 endinterface : uvmt_cv32_debug_cov_assert_if

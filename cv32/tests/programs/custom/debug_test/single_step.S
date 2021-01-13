@@ -70,6 +70,7 @@ _single_step:
     la a1, glb_step_info
     li t0, 3
     sw t0, 0(a1)
+
     csrr t0, dcsr // illegal
 
     la a1, glb_expect_illegal_insn
@@ -153,6 +154,51 @@ _irq_wait_loop:
     nop
     nop
 
+    # set step reason to 7 (step with c.ebreak)
+    la a1, glb_step_info
+    li t0, 7
+    sw t0, 0(a1)
+
+    # Ebreak to cover ebreak vs step cause priority
+    c.ebreak
+
+    # set step reason to 8 (step with ebreak)
+    la a1, glb_step_info
+    li t0, 8
+    sw t0, 0(a1)
+
+    # Ebreak to cover ebreak vs step cause priority
+    .4byte 0x00100073
+    
+    # Set step reason to 9, ebreak without dcsr.ebreakm
+    la a1, glb_step_info
+    li t0, 9
+    sw t0, 0(a1)
+    
+    # Expect to enter ebreak handler
+    la a0, glb_expect_ebreak_handler 
+    li t0, 1
+    sw t0, 0(a0)
+
+    .4byte 0x00100073
+
+     # Expect to enter ebreak handler
+    la a0, glb_expect_ebreak_handler 
+    li t0, 1
+    sw t0, 0(a0)
+    # Set step reason to 10, cebreak without dcsr.ebreakm
+    la a1, glb_step_info
+    li t0, 10
+    sw t0, 0(a1)
+    
+    c.ebreak
+    
+    # set step reason to 0, normal step
+    la a1, glb_step_info
+    li t0, 0
+    sw t0, 0(a1)
+
+    ecall
     // Cause 2, disable single stepping
     la a1, glb_step_info
     li t0, 2

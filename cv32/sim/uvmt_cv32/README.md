@@ -1,11 +1,11 @@
 Simulation Directory for CV32E UVM Verification Environment
 ==================================
 This is the directory in which you should run all tests of the UVM environment.
-The UVM testcases are at `../../tests/uvmt_cv32`, and the test-programs can be
-found in `cv32/tests/core`.  See the README in those directories for more information.
+The UVM testcases are at `cv32/tests/uvmt_cv32`, and the test-programs can be
+found in `cv32/tests/program`.  See the README in those directories for more information.
 <br><br>
 Please refer to the [Verification Strategy](https://core-v-docs-verif-strat.readthedocs.io/en/latest/sim_tests.html#simulation-tests-in-the-uvm-environments)
-for a discussion on the distinction between a _testcase_ and a _test-program_ in this environment.
+for a discussion on the distinction between a _testcase_ (a SystemVerilog class extended from _uvm\_test_ that instantiates and controls the UVM environment) and a _test-program_ (a C or assembler program that runs on the core RTL model) in this environment.
 <br><br>
 To run the UVM environment you will need:
 - a run-time license for the Imperas OVPsim Instruction Set Simulator
@@ -42,26 +42,22 @@ from the [IEEE Standards Association](https://standards.ieee.org/).
 
 RISC-V GCC Compilers
 --------------------
-Compiling the riscv-tests and riscv-compliance-tests requires a cross-compiler,
-often refered to as the "toolchain".  It is recommended that you use the
-[PULP RISCV GNU Toolchain](https://github.com/pulp-platform/pulp-riscv-gnu-toolchain)
-from the Pulp Platform team.  See [TOOLCHAIN](https://github.com/openhwgroup/core-v-verif/blob/master/cv32/sim/TOOLCHAIN.md)
+Compiling the test-programs requires a RISC-V cross-compiler,
+often refered to as the "toolchain".
+See [TOOLCHAIN](https://github.com/openhwgroup/core-v-verif/blob/master/cv32/sim/TOOLCHAIN.md)
 for detailed installation instructions.
 <br><br>
-Some teams use the [riscv-gcc](https://github.com/riscv/riscv-gcc) toolchain, but this
-does not support the custom PULP instructions.
-<br><br>
-**IMPORTANT:** Once the toolchain is set up, define a shell environment
-variable `RISCV` to the path of your RISC-V toolchain (e.g. `export RISCV=/opt/riscv`).
+**IMPORTANT:** The shell environment variable `RISCV` must point to the path of your
+toolchain (e.g. `export RISCV=/opt/riscv`). By default the Makefiles will attempt to compile
+your test-program using whatever is found at /opt/riscv using march=unknown.
 
 Makefiles
 -----------
 `Make` is used to generate the command-lines that compile and run simulations.
-The cwd of this README is `cv32/sim/uvmt_cv32` and the **Makefile** at this location is the
-'root' Makefile.  `../Common.mk` supports all common variables, rules
+`cv32/sim/uvmt_cv32/Makefile` is the
+'root' Makefile.  `cv32/sim/Common.mk` supports all common variables, rules
 and targets, including specific targets to clone the RTL from
-[cv32e40p](https://github.com/openhwgroup/cv32e40p) and
-[fpnew](https://github.com/pulp-platform/fpnew) as appropriate. Simulator-specific
+[cv32e40p](https://github.com/openhwgroup/cv32e40p). Simulator-specific
 Makefiles are used to build the command-line to run a specific test with a specific
 simulator.  These files are organized as shown below:
 ```
@@ -118,12 +114,14 @@ using _xrun_.  Set the shell variable SIMULATOR to `xrun` to simply run **`make 
 later.  See [Issue 11](https://github.com/openhwgroup/core-v-verif/issues/11)
 for more info.
 <br>
-**2020-07-21**: there is also an issue with 20.06 which we are investigating.
 
 Running the environment with Mentor Graphics [Questa](https://www.mentor.com/products/fv/questa/) (vsim)
 ----------------------
 The command **make SIMULATOR=vsim sanity** will run the sanity testcase using _vsim_.
 Set the shell variable SIMULATOR to `vsim` to simply run **`make <target>`**.
+<br> <br>
+**Note for Mentor users:** This testbench is known to require Questa 2019.2 or later.
+<br>
 
 Running the environment with Synopsys VCS [VCS](https://www.synopsys.com/verification/simulation/vcs.html) (vcs)
 ----------------------
@@ -175,14 +173,14 @@ The `make` commands here assume you have set your shell SIMULATION
 environment variable to your specific simulator (see above).
 <br>
 The general form to run a test is `make test TEST=<test-program>`, where _test-program_ is the filename
-of a test-program (without the file extension) of a test program located at ../../tests/programs/custom.
+of a test-program (without the file extension) of a test program located at cv32/tests/programs/custom.
 Each test-program (either C or assembler) has its own directory, which contains the program itself (either
 C or assembler) plus `test.yaml`, the test-program configuration file (see Build Configurations, below).
 <br>
 Here are a few examples
-* **make test TEST=hello-world**:<br>run the hello_world program found at `../../tests/programs/custom`.
-* **make test TEST=dhrystone**:<br>run the dhrystone program found at `../../tests/programs/custom`.
-* **make test TEST=riscv_arithmetic_basic_test**:<br>run the riscv_arithmetic_basic_test program found at `../../tests/programs/custom`.
+* **make test TEST=hello-world**:<br>run the hello_world program found at `cv32/tests/programs/custom`.
+* **make test TEST=dhrystone**:<br>run the dhrystone program found at `cv32/tests/programs/custom`.
+* **make test TEST=riscv_arithmetic_basic_test**:<br>run the riscv_arithmetic_basic_test program found at `cv32/tests/programs/custom`.
 <br>
 There are also a few targets that do something other than run a test.  The most popular is:
 <br>
@@ -190,39 +188,46 @@ There are also a few targets that do something other than run a test.  The most 
 <br>
 which deletes all SIMULATOR generated intermediates, waves and logs **plus** the cloned RTL code.
 
-Generated Tests
+COREV-DV Generated Tests
 ---------------
 The CV32 UVM environment uses the [Google riscv-dv](https://github.com/google/riscv-dv)
 generator to automate the generation of test-programs.  The generator
 is cloned by the Makefiles to `vendor_lib/google` as needed.  Specific
-classes ar extended to create a `corev-dv` genrator that is specific to this environment.
+classes ar extended to create a `corev-dv` generator that is specific to this environment.
 Note that riscv-dv is not modified, merely extended, allowing core-v-verif to stay
 up-to-date with the latest release of riscv-dv.
-<br>
-A complete list of generated test corev-dv programs is found at ../../tests/programs/corev-dv.
+<br><br>
+Riscv-dv uses test templates such as "riscv_arithmetic_basic_test" and "riscv_rand_jump_test".
+Corev-dv has a set of templates for corev-dv generated test-programs at `cv32/tests/programs/corev-dv`.
 Running these is a two-step process.  The first step is to clone riscv-dv and compile corev-dv:
-<br>
+<br><br>
 **make corev-dv**
-<br>
+<br><br>
 Note that the `corev-dv` target need only be run once.  The next step is to generate, compile
 and run a test.  For example:
-<br>
+<br><br>
 **make gen_corev-dv test TEST=corev_rand_jump_stress_test**
 <br>
 
-RISC-V Compliance Test-suite
+RISC-V Compliance Test-suite and Regressions
 ---------------
-The CV32 UVM environment is able to run the [riscv-compliance](https://github.com/riscv/riscv-compliance)
-test-suite in step-and-compare mode with the ISS Reference Model.  As with riscv-dv, the compliance test-suite
-is cloned by the Makefiles to `vendor_lib/riscv` as needed.  Running the test-suite is a two step process:
-<br>
-**make all_compliance**
-<br>
-will clone riscv-compliance and compile the test-programs.  Below is an example of running a specific
-test-program from the suite:
-<br>
-**make compliance RISCV_ISA=rv32Zifencei COMPLIANCE_PROG=I-FENCE.I-01**
-<br>
+The CV32 UVM environment is able to run the [RISC-V compliance](https://github.com/riscv/riscv-compliance)
+test-suite in step-and-compare mode with the ISS Reference Model, and can optionally dump and check a signature
+file against a reference signature.  As with riscv-dv, the compliance test-suite
+is cloned by the Makefiles to `vendor_lib/riscv` as needed.  The form of the target to run a single test-program
+from the compliance test suite is as follows:
+```
+make compliance RISCV_ISA=<ISA> COMPLIANCE_PROG=<test-program>
+```
+To have the signature dumped and checked:
+```
+make compliance_check_sig RISCV_ISA=<ISA> COMPLIANCE_PROG=<test-program>
+```
+Note that running either of these targets will invoke the `all_compliance` target which clones riscv-compliance
+and compiles all the test-programs.  Below is an example of running a specific test-program from the suite:
+```
+make compliance RISCV_ISA=rv32Zifencei COMPLIANCE_PROG=I-FENCE.I-01
+```
 **Note:** There is a dependancy between RISCV_ISA and COMPLIANCE_PROG.  For example, because the I-ADD-01 test-program is part of the rv32i testsuite this works:
 ```
 make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ADD-01
@@ -231,9 +236,23 @@ But this does not:
 ```
 make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=I-ADD-01
 ```
-
-**TODO:** create a sript to run all compliance tests (this is not currently in place because we do it on the
-MetricsCI platform using the .metrics.json regression control script.
+The `compliance_check_sig` target can be used in the same way as above to run the simulation plus perform a post-simulation
+check of the signature file and the reference signature provided as part of the compliance test-suite.
+<br><br>
+Per-extension compliance regressions can be run using the `compliance_regression` target.   For example:
+```
+make compliance_regression RISCV_ISA=rv32imc
+```
+will run all compressed instruction tests in the compliance test-suite, diff the signature files and produce a summary report. Note that four of the test-programs
+in the rv32i compliance suite are deliberately ignored.  See [issue #412](https://github.com/openhwgroup/core-v-verif/issues/412).
+<br><br>
+The _cv_regress_ utility can also be used to run the compliance regression tests found in the [cv32_compliance](https://github.com/openhwgroup/core-v-verif/blob/master/cv32/regress/cv32_compliance.yaml) YAML regression
+specification.  This is supported for Metrics JSON (--metrics), shell script (--sh), and Cadence Vmanager VSIF (--vsif) output formats.  Use the following example:
+```
+# Shell script output
+% cv_regress --file=cv32_compliance --sim=xrun --sh
+% ./cv32_compliance.sh
+```
 
 Build Configurations
 --------------------
@@ -300,7 +319,11 @@ If applicable for a simulator, line debugging will be enabled in the compile to 
 
 **make test TEST=hello-world GUI=1**
 
-### Set the UVM quit count
+### Passing run-time arguments to the simulator
+
+The Makefiles support a user controllable variable **USER_RUN_FLAGS** which can be used to pass run-time arguments.  Two typical use-cases for this are provided below:
+
+#### Set the UVM quit count
 
 All error signaling and handling is routed through the standard UVM report server for all OpenHW testbenches.  By default the UVM is configured 
 to allow up to 5 errors to be signaled before aborting the test.  There is a run-time plusarg to configure this that should work for all
@@ -308,6 +331,12 @@ tests.  Use the USER_RUN_FLAGS make variable with the standard UVM_MAX_QUIT_COUN
 and signals that you want UVM to use your plusarg over any internally configured quit count values.
 
 **make test TEST=hello-world USER_RUN_FLAGS=+UVM_MAX_QUIT_COUNT=10,NO**
+
+#### UVM verbosity control
+
+The following will increase the verbosity level to DEBUG.
+
+**make test TEST=hello-world USER_RUN_FLAGS=+UVM_VERBOSITY=UVM_DEBUG**
 
 ### Post-process Waveform Debug
 

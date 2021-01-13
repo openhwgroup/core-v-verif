@@ -23,6 +23,14 @@
 #
 ###############################################################################
 
+#
+# Cadence do not (officially) support Ubuntu, so suppress the nonzero return code from XRUN
+#
+OS_IS_UBUNTU = $(findstring Ubuntu,$(shell lsb_release -d))
+ifeq ($(OS_IS_UBUNTU),Ubuntu)
+    .IGNORE: hello-world comp test custom compliance comp_corev-dv corev-dv gen_corev-dv
+endif
+
 # Executables
 XRUN              = $(CV_SIM_PREFIX) xrun
 SIMVISION         = $(CV_TOOL_PREFIX) simvision
@@ -44,7 +52,7 @@ XRUN_RUN_BASE_FLAGS   ?= -64bit $(XRUN_GUI) -licqueue +UVM_VERBOSITY=$(XRUN_UVM_
                          $(XRUN_PLUSARGS) -svseed $(RNDSEED) -sv_lib $(OVP_MODEL_DPI)
 XRUN_GUI         ?=
 XRUN_SINGLE_STEP ?=
-XRUN_ELAB_COV     = -covdut uvmt_cv32_tb -coverage b:e:f:t:u
+XRUN_ELAB_COV     = -covdut uvmt_cv32_tb -coverage b:e:f:u
 XRUN_ELAB_COVFILE = -covfile ../../tools/xrun/covfile.tcl
 XRUN_RUN_COV      = -covscope uvmt_cv32_tb \
 					-nowarn CGDEFN
@@ -155,8 +163,49 @@ XRUN_RUN_FLAGS        += $(USER_RUN_FLAGS)
 ###############################################################################
 # Xcelium warning suppression
 
+# Xcelium constraint solver
+XRUN_RUN_FLAGS  += -nowarn XCLGNOPTM
+XRUN_RUN_FLAGS  += -nowarn RNDNOXCEL
+
+# Probes
+XRUN_RUN_FLAGS  += -nowarn PRLDYN
+
 # Allow extra semicolons
 XRUN_COMP_FLAGS += -nowarn UEXPSC
+
+# SOP expression evaluates to a constant - remove from coverage calculation
+XRUN_COMP_FLAGS += -nowarn COVSEC
+
+# Warning that no timescale defined for package, this is by design as no
+# core-v-verif code should contain its own timescale
+XRUN_COMP_FLAGS += -nowarn TSNSPK
+
+# Warning on expression coverage speedup (only counts always blocks in expression if output changes)
+XRUN_COMP_FLAGS += -nowarn COVVPO
+XRUN_RUN_COV    += -nowarn COVVPO
+
+# Warning about new style struct expression scoring
+XRUN_COMP_FLAGS += -nowarn COVEOS
+
+# +incdir in -f file not used
+XRUN_COMP_FLAGS += -nowarn SPDUSD
+
+# scoring events not included in expression coverage
+XRUN_COMP_FLAGS += -nowarn COVNSO
+
+# instance reporting warings for covergroups
+XRUN_COMP_FLAGS += -nowarn COVCGN
+XRUN_COMP_FLAGS += -nowarn CGPIZE
+
+# per_instance option is 0
+XRUN_COMP_FLAGS += -nowarn CGPIDF
+
+# deselect_coverage -all warnings
+XRUN_COMP_FLAGS += -nowarn CGNSWA
+
+# instance reporting warings for covergroups
+XRUN_RUN_COV    += -nowarn COVCGN
+XRUN_RUN_COV    += -nowarn CGPIZE
 
 # Un-named covergroup instances
 XRUN_RUN_COV    += -nowarn CGDEFN
@@ -179,10 +228,6 @@ mk_xrun_dir:
 # This special target is to support the special sanity target in the Common Makefile
 hello-world:
 	$(MAKE) test TEST=hello-world
-
-cv32_riscv_tests: cv32-riscv-tests 
-
-cv32_riscv_compliance_tests: cv32-riscv-compliance-tests 
 
 XRUN_COMP = $(XRUN_COMP_FLAGS) \
 		$(QUIET) \
@@ -257,17 +302,38 @@ custom: $(XRUN_SIM_PREREQ) $(CUSTOM_DIR)/$(CUSTOM_PROG).hex
 		+UVM_TESTNAME=uvmt_cv32_firmware_test_c \
 		+firmware=$(CUSTOM_DIR)/$(CUSTOM_PROG).hex
 
-################################################################################
-# Called from external compliance framework providing ELF, HEX, NM
-COMPLIANCE ?= missing
-riscv-compliance: $(XRUN_SIM_PREREQ) $(COMPLIANCE).elf
-	mkdir -p $(XRUN_RESULTS)/$(@) && cd $(XRUN_RESULTS)/$(@) && \
-	$(XRUN) -l xrun-$(@).log -covtest riscv-compliance $(XRUN_COMP_RUN) \
+###############################################################################
+# Run a single test-program from the RISC-V Compliance Test-suite. The parent
+# Makefile of this <sim>.mk implements "all_compliance", the target that
+# compiles the test-programs.
+#
+# There is a dependancy between RISCV_ISA and COMPLIANCE_PROG which *you* are
+# required to know.  For example, the I-ADD-01 test-program is part of the rv32i
+# testsuite.
+# So this works:
+#                make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ADD-01
+# But this does not:
+#                make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=I-ADD-01
+# 
+RISCV_ISA       ?= rv32i
+COMPLIANCE_PROG ?= I-ADD-01
+
+SIG_ROOT      ?= $(XRUN_RESULTS)
+SIG           ?= $(XRUN_RESULTS)/$(COMPLIANCE_PROG)/$(COMPLIANCE_PROG).signature_output
+REF           ?= $(COMPLIANCE_PKG)/riscv-test-suite/$(RISCV_ISA)/references/$(COMPLIANCE_PROG).reference_output
+TEST_PLUSARGS ?= +signature=$(COMPLIANCE_PROG).signature_output
+
+ifneq ($(call IS_NO,$(COMP)),NO)
+XRUN_COMPLIANCE_PREREQ = comp build_compliance
+endif
+
+compliance: $(XRUN_COMPLIANCE_PREREQ)
+	mkdir -p $(XRUN_RESULTS)/$(COMPLIANCE_PROG) && cd $(XRUN_RESULTS)/$(COMPLIANCE_PROG)  && \
+	export IMPERAS_TOOLS=$(PROJ_ROOT_DIR)/cv32/tests/cfg/ovpsim_no_pulp.ic && \
+	$(XRUN) -l xrun-$(COMPLIANCE_PROG).log -covtest riscv-compliance $(XRUN_COMP_RUN) $(TEST_PLUSARGS) \
 		+UVM_TESTNAME=uvmt_cv32_firmware_test_c \
-		+elf_file=$(COMPLIANCE).elf \
-		+nm_file=$(COMPLIANCE).nm \
-		+firmware=$(COMPLIANCE).hex \
-		+signature=$(COMPLIANCE).signature.output
+		+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).hex \
+		+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).elf
 
 ###############################################################################
 # Use Google instruction stream generator (RISCV-DV) to create new test-programs
@@ -288,7 +354,7 @@ comp_corev-dv: $(RISCVDV_PKG)
 
 corev-dv: clean_riscv-dv \
           clone_riscv-dv \
-		  comp_corev-dv
+	  comp_corev-dv
 
 gen_corev-dv: 
 	mkdir -p $(XRUN_COREVDV_RESULTS)/$(TEST)

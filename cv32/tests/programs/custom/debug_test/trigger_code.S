@@ -22,15 +22,37 @@
 .global _trigger_exit
 .global _trigger_test
 .global _trigger_code
-.global _trigger_test_wfi
-.global _trigger_code_wfi
+.global _trigger_test_ebreak
+.global _trigger_code_ebreak
+.global _trigger_code_illegal_insn
+.global _trigger_code_branch_insn
+.global _trigger_code_multicycle_insn
+.global _trigger_code_cebreak
 .type _trigger_code, @function
-.type _trigger_code_wfi, @function
-_trigger_code_wfi:
-    wfi
+.type _trigger_code_ebreak, @function
+.type _trigger_code_cebreak, @function
+.type _trigger_code_illegal_insn, @function
+.type _trigger_code_branch_insn, @function
+.type _trigger_code_multicycle_insn, @function
+ 
+
+_trigger_code_ebreak:
+    .4byte 0x00100073
     ret
 
-_trigger_test_wfi:
+_trigger_code_cebreak:
+    c.ebreak
+    ret
+_trigger_code_illegal_insn:
+    dret
+    ret
+_trigger_code_branch_insn:
+    beq t0, t1, __trigger_fail
+    ret
+_trigger_code_multicycle_insn:
+    mulhsu t0, t0, t1
+    ret
+_trigger_test_ebreak:
     addi sp,sp,-30
     sw t0, 0(sp)
     sw t1, 4(sp)
@@ -39,8 +61,48 @@ _trigger_test_wfi:
     sw a2, 16(sp)
     sw ra, 20(sp)
 
-    jal ra, _trigger_code_wfi
+    # a0 holds argument
+    # 0 - ebreak
+    # 1 - c.c.ebreak
+    # 2 - illegal instruction
+    # 3 - branch instruction
+    # 4 - multicycle instruction (mulhsu)
+
+    mv t1, a0
+    li t0, 0
+    beq t0, t1, _jmp_ebreak
+    
+    li t0, 1
+    beq t0, t1, _jmp_cebreak
+
+    li t0, 2
+    beq t0, t1, _jmp_illegal_insn
+
+    li t0, 3
+    beq t0, t1, _jmp_branch_insn
+
+    li t0, 4
+    beq t0, t1, _jmp_multicycle_insn
+
+_jmp_ebreak:
+    jal ra, _trigger_code_ebreak
     j __trigger_done
+_jmp_cebreak:
+    jal ra, _trigger_code_cebreak
+    j __trigger_done
+_jmp_illegal_insn:
+    jal ra, _trigger_code_illegal_insn
+    j __trigger_done
+_jmp_branch_insn:
+    jal ra, _trigger_code_branch_insn
+    j __trigger_done
+_jmp_multicycle_insn:
+    jal ra, _trigger_code_multicycle_insn
+    j __trigger_done
+
+#    j __trigger_done
+
+
      // We will trigger on the _trigger_code addess
 	// We should not expect the first instruction to execute
 	// The debugger code will move the PC to the trigger_exit_code
