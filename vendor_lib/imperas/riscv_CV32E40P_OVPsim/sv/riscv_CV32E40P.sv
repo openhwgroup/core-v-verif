@@ -380,10 +380,11 @@ module CPU
     endtask
      
     task busStore;
-        input int address;
-        input int size;
-        input int data;
-        input int artifact;
+        input  int address;
+        input  int size;
+        input  int data;
+        input  int artifact;
+        output int fault; 
         
         //
         // Are we over an address boundary ?
@@ -414,7 +415,9 @@ module CPU
             busStore32(address_lo, size_lo, lo, artifact);
             busStore32(address_hi, size_hi, hi, artifact);
         end
-
+        
+        // Determine fault logic
+        fault = 0;
     endtask
 
     function automatic void dmiRead(input int address, input int size, output int data);
@@ -461,6 +464,7 @@ module CPU
         input  int size;
         output int data; 
         input  int artifact; 
+        output int fault; 
 
         //
         // Are we over an address boundary ?
@@ -485,6 +489,9 @@ module CPU
         
             data = {hi, lo} >> ((address & 'h3) * 8);
         end
+
+        // Determine fault logic
+        fault = 0;
     endtask
 
     task busFetch32;
@@ -521,7 +528,7 @@ module CPU
         input  int size;
         output int data; 
         input  int artifact; 
-
+        
         //
         // Are we over an address boundary ?
         // firstly consider 32 bit
