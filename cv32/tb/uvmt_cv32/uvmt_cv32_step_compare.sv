@@ -57,9 +57,10 @@ import uvm_pkg::*;      // needed for the UVM messaging service (`uvm_info(), et
 `define CV32E40P_TRACER $root.uvmt_cv32_tb.dut_wrap.cv32e40p_wrapper_i.tracer_i
 `define CV32E40P_MMRAM  $root.uvmt_cv32_tb.dut_wrap.ram_i
 
-`define CV32E40P_OVP      $root.uvmt_cv32_tb.iss_wrap.cpu
-`define CV32E40P_OVP_RVVI  $root.uvmt_cv32_tb.iss_wrap.cpu.state
-`define CV32E40P_OVP_RVCTL $root.uvmt_cv32_tb.iss_wrap.cpu.control
+// TODO change names
+`define CV32E40P_RM              $root.uvmt_cv32_tb.iss_wrap.cpu
+`define CV32E40P_RM_RVVI_STATE   $root.uvmt_cv32_tb.iss_wrap.cpu.state
+`define CV32E40P_RM_RVVI_CONTROL $root.uvmt_cv32_tb.iss_wrap.cpu.control
 
 
 module uvmt_cv32_step_compare
@@ -125,7 +126,7 @@ module uvmt_cv32_step_compare
 
       // Compare PC
       //check_32bit(.compared("PC"), .expected(step_compare_if.ovp_cpu_PCr), .actual(step_compare_if.insn_pc));
-      check_32bit(.compared("PC"), .expected(`CV32E40P_OVP_RVVI.pcr), .actual(step_compare_if.insn_pc));
+      check_32bit(.compared("PC"), .expected(`CV32E40P_RM_RVVI_STATE.pc), .actual(step_compare_if.insn_pc));
       step_compare_if.num_pc_checks++;
 
       // Compare GPR's
@@ -155,7 +156,7 @@ module uvmt_cv32_step_compare
 
       // Compare CSR's
       `ifdef ISS
-        foreach(`CV32E40P_OVP_RVVI.CSR[index]) begin
+        foreach(`CV32E40P_RM_RVVI_STATE.csr[index]) begin
            step_compare_if.num_csr_checks++;
            ignore = 0;
            csr_val = 0;
@@ -225,9 +226,9 @@ module uvmt_cv32_step_compare
            endcase // case (index)
 
            if (!ignore)
-             check_32bit(.compared(index), .expected(`CV32E40P_OVP_RVVI.CSR[index]), .actual(csr_val));
+             check_32bit(.compared(index), .expected(`CV32E40P_RM_RVVI_STATE.csr[index]), .actual(csr_val));
 
-        end // foreach (ovp.cpu.CSR[index])
+        end // foreach (ovp.cpu.csr[index])
         
       `endif      
     endfunction // compare
@@ -240,7 +241,7 @@ module uvmt_cv32_step_compare
         if (`CV32E40P_TRACER.insn_regs_write.size()) begin
           gpr_addr  = `CV32E40P_TRACER.insn_regs_write[0].addr;
           gpr_value = `CV32E40P_TRACER.insn_regs_write[0].value;
-          `CV32E40P_OVP.GPR_rtl[gpr_addr] = gpr_value;
+          `CV32E40P_RM.GPR_rtl[gpr_addr] = gpr_value;
         end
     endfunction // pushRTL2RM
     
@@ -307,7 +308,7 @@ module uvmt_cv32_step_compare
         end
         
         RTL_TRAP: begin
-            //state <= RM_STEP; // needs additional work
+            //state <= RM_STEP; // TODO: RTL/RVVI needs additional work
             state <= RTL_STEP;
         end
         
@@ -317,7 +318,7 @@ module uvmt_cv32_step_compare
 
         RM_STEP: begin
             pushRTL2RM("ret_rtl");
-            `CV32E40P_OVP_RVCTL.stepi();
+            `CV32E40P_RM_RVVI_CONTROL.stepi();
             fork
                 begin
                     @step_compare_if.ovp_cpu_valid;
@@ -341,7 +342,7 @@ module uvmt_cv32_step_compare
         end
         
         RM_TRAP: begin
-            //state <= CMP; // needs additional work
+            //state <= CMP; // TODO: needs enabling after RTL/RVVI fix
             state <= RM_STEP;
         end
         
@@ -391,7 +392,7 @@ module uvmt_cv32_step_compare
 
 
     function automatic void sample();
-        string decode = `CV32E40P_OVP.Decode;
+        string decode = `CV32E40P_RM.Decode;
         string ins_str, op[4], key, val;
         int i;
         ins_t ins;

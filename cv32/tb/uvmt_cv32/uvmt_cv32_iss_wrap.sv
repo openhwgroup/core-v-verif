@@ -52,16 +52,16 @@ module uvmt_cv32_iss_wrap
    // monitor rvvi updates
    always @(cpu.state.notify) begin
        int i;
-       step_compare_if.ovp_cpu_PCr = cpu.state.pcr;
+       step_compare_if.ovp_cpu_PCr = cpu.state.pc;
        for(i=0; i<32; i++)
            step_compare_if.ovp_cpu_GPR[i] = cpu.state.x[i];
 
        // generate events
        if (cpu.state.valid) begin
-           // $display("Instruction Retired %08X %08X", cpu.state.pcr, cpu.state.pcw);
+           // $display("Instruction Retired %08X %08X", cpu.state.pc, cpu.state.pcw);
            -> step_compare_if.ovp_cpu_valid;
        end else if (cpu.state.trap) begin
-           // $display("Instruction Fault %08X %08X", cpu.state.pcr, cpu.state.pcw);
+           // $display("Instruction Fault %08X %08X", cpu.state.pc, cpu.state.pcw);
            -> step_compare_if.ovp_cpu_trap;
        end
        
