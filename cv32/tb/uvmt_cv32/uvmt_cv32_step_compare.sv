@@ -252,7 +252,6 @@ module uvmt_cv32_step_compare
            then run OVP for 1 instruction retirement
         3. Compare RTL <-> OVP
     */
-    bit step_rtl;
     event ev_compare;
     static integer instruction_count = 0;
    
@@ -288,7 +287,6 @@ module uvmt_cv32_step_compare
                 begin
                     @step_compare_if.riscv_retire;
                     clknrst_if.stop_clk();
-                    step_rtl <= 0;
                     state <= RTL_VALID;
                 end
                 begin
@@ -352,7 +350,6 @@ module uvmt_cv32_step_compare
 
         CMP: begin 
              compare();
-             step_rtl <= 1;
              ->ev_compare;
              instruction_count += 1;           
              //state <= RTL_STEP;
