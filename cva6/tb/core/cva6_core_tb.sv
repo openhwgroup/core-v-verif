@@ -111,6 +111,7 @@ module cva6_testharness #(
   end
 `endif
 
+  import ariane_pkg::*; // ${CVA6_DESIGN_HOME}/include/ariane_pkg.sv
 
   // ---------------
   // Core
@@ -119,18 +120,18 @@ module cva6_testharness #(
   ariane_axi::resp_t   axi_cva6_resp;
 
   ariane #(
-    .ArianeCfg  ( ariane_soc::ArianeSocCfg )
+    .ArianeCfg  ( ariane_pkg::ArianeDefaultConfig )
   ) cv64a6_inst (
-    .clk_i                ( clk_i               ),
-    .rst_ni               ( rst_ni              ),
-    .boot_addr_i          ( ariane_soc::ROMBase ), // start fetching from ROM
-    .hart_id_i            ( '0                  ),
-    .irq_i                ( 2'b00/*irqs*/       ),
-    .ipi_i                ( 1'b0 /*ipi */       ),
-    .time_irq_i           ( 1'b0 /*timer_irq*/  ),
-    .debug_req_i          ( 1'b0                ),
-    .axi_req_o            ( axi_cva6_req      ),
-    .axi_resp_i           ( axi_cva6_resp     )
+    .clk_i                ( clk_i                   ),
+    .rst_ni               ( rst_ni                  ),
+    .boot_addr_i          ( 64'h0000_0000_0001_0000 ), // was: ariane_soc::ROMBase
+    .hart_id_i            ( '0                      ),
+    .irq_i                ( 2'b00/*irqs*/           ),
+    .ipi_i                ( 1'b0 /*ipi */           ),
+    .time_irq_i           ( 1'b0 /*timer_irq*/      ),
+    .debug_req_i          ( 1'b0                    ),
+    .axi_req_o            ( axi_cva6_req            ),
+    .axi_resp_i           ( axi_cva6_resp           )
   );
 
 endmodule: cva6_testharness
