@@ -20,7 +20,7 @@
 //`define DEBUG
 //`define UVM
 
-interface rvvi_s #(
+interface RVVI_state #(
     parameter int ILEN = 32,
     parameter int XLEN = 32
 );
@@ -40,18 +40,18 @@ interface rvvi_s #(
     
     string           decode;
 
-    bit [(XLEN-1):0] pcr;
-    bit [(XLEN-1):0] pcw;
+    bit [(XLEN-1):0] pc;
+    bit [(XLEN-1):0] pcnext;
 
     // Registers
     bit [(XLEN-1):0] x[32];
     bit [(XLEN-1):0] f[32];
-    bit [(XLEN-1):0] CSR[string];
+    bit [(XLEN-1):0] csr[string];
     
 endinterface
 
 typedef enum { IDLE, STEPI, STOP, CONT } rvvi_c_e;
-interface rvvi_c;
+interface RVVI_control;
 
     event     notify;
     
@@ -124,8 +124,8 @@ module CPU
     export "DPI-C" task     setTRAP;
     export "DPI-C" function setDECODE;
     
-    rvvi_s state();
-    rvvi_c control();
+    RVVI_state   state();
+    RVVI_control control();
     
     // From RTL
     bit [31:0] GPR_rtl[32];
@@ -196,11 +196,11 @@ module CPU
         control.idle();
         
         // RVVI_S
-        state.trap  = 0; 
-        state.valid = 1;
-        state.pcr   = retPC;
-        state.pcw   = nextPC;
-        state.order = count;
+        state.trap   = 0; 
+        state.valid  = 1;
+        state.pc     = retPC;
+        state.pcnext = nextPC;
+        state.order  = count;
         ->state.notify;
     endtask
 
@@ -213,11 +213,11 @@ module CPU
         control.idle();
         
         // RVVI_S
-        state.trap  = 1; 
-        state.valid = 0;
-        state.pcr   = excPC;
-        state.pcw   = nextPC;
-        state.order = count;
+        state.trap   = 1; 
+        state.valid  = 0;
+        state.pc     = excPC;
+        state.pcnext = nextPC;
+        state.order  = count;
         ->state.notify;
     endtask
         
@@ -266,7 +266,7 @@ module CPU
     endfunction
     
     function automatic void setCSR (input string index, input longint value);
-        state.CSR[index] = value;
+        state.csr[index] = value;
     endfunction
 
     //
