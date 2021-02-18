@@ -58,9 +58,9 @@ import uvm_pkg::*;      // needed for the UVM messaging service (`uvm_info(), et
 `define CV32E40P_MMRAM  $root.uvmt_cv32e40p_tb.dut_wrap.ram_i
 
 // TODO change names
-`define CV32E40P_RM              $root.uvmt_cv32_tb.iss_wrap.cpu
-`define CV32E40P_RM_RVVI_STATE   $root.uvmt_cv32_tb.iss_wrap.cpu.state
-`define CV32E40P_RM_RVVI_CONTROL $root.uvmt_cv32_tb.iss_wrap.cpu.control
+`define CV32E40P_RM              $root.uvmt_cv32e40p_tb.iss_wrap.cpu
+`define CV32E40P_RM_RVVI_STATE   $root.uvmt_cv32e40p_tb.iss_wrap.cpu.state
+`define CV32E40P_RM_RVVI_CONTROL $root.uvmt_cv32e40p_tb.iss_wrap.cpu.control
 
 
 module uvmt_cv32e40p_step_compare
