@@ -189,6 +189,48 @@ dsim_run:
 
 dsim_all: dsim_clean dsim_comp dsim_run
 
+
+###############################################################################
+# XRUN specific variables, targets and rules
+XRUN               ?= xrun
+XRUN_WORK_DIR      ?= xrun_work
+XRUN_RESULTS_DIR   ?= xrun_$(RESULTS_DIR)
+XRUN_UVMHOME_ARG   ?= CDNS-1.2-ML
+XRUN_COMPL_LOG     ?= xrun_compl.log
+
+XRUN_COMP_FLAGS  ?= -64bit -disable_sem2009 -access +rwc \
+                    -sv -uvm -uvmhome $(XRUN_UVMHOME_ARG) \
+		    -clean -smartorder -sv -top worklib.ariane
+
+XRUN_DISABLED_WARNINGS := BIGWIX \
+			ZROMCW \
+			STRINT \
+			ENUMERR \
+			SPDUSD
+
+XRUN_DISABLED_WARNINGS := $(patsubst %, -nowarn %, $(XRUN_DISABLED_WARNINGS))
+
+XRUN_COMP = $(XRUN_COMP_FLAGS) \
+	$(XRUN_DISABLED_WARNINGS) \
+	-f ${CVA6_DESIGN_HOME}/cva6_manifest.flist \
+
+xrun_clean:
+	@echo "[XRUN] clean up"
+	rm -rf $(XRUN_RESULTS_DIR)/$(XRUN_WORK_DIR)
+
+xrun_comp: $(CVA6_WORK_DIR)
+	@echo "$(BANNER)"
+	@echo "[XRUN] Building Model"
+	mkdir -p $(XRUN_RESULTS_DIR)
+	cd $(XRUN_RESULTS_DIR) && $(XRUN)   \
+		$(XRUN_COMP)                \
+		-l $(XRUN_COMPL_LOG)        \
+		-elaborate
+
+xrun_sim:
+
+xrun_all: xrun_clean xrun_comp xrun_sim
+
 ###############################################################################
 # Common targets and rules
 
