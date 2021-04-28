@@ -276,7 +276,7 @@ bind cv32e40x_wrapper
       
       assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
       generate for (genvar gv_i = 0; gv_i < 32; gv_i++) begin : get_gpr
-        assign step_compare_if.riscy_GPR[gv_i] = dut_wrap.cv32e40x_wrapper_i.core_i.id_stage_i.register_file_wrapper_i.register_file_i.mem[gv_i];
+        assign step_compare_if.riscy_GPR[gv_i] = dut_wrap.cv32e40x_wrapper_i.core_i.register_file_wrapper_i.register_file_i.mem[gv_i];
       end
       endgenerate
 
