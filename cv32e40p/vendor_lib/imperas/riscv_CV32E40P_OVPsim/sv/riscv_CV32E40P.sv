@@ -104,9 +104,9 @@ module CPU
 `endif
 
     import "DPI-C" context task ovpEntry(input string s1, input string s2);
-    `ifndef UVM
+`ifndef UVM
     import "DPI-C" context function void ovpExit();
-    `endif
+`endif
 
     export "DPI-C" task     busFetch;
     export "DPI-C" task     busLoad;
@@ -575,20 +575,18 @@ module CPU
     endfunction
     
     initial begin
-        if ($test$plusargs("USE_ISS")) begin            
-            ovpcfg_load();
-            elf_load();
-            ovpEntry(ovpcfg, elf_file);
-            `ifndef UVM
-            $finish;
-            `endif
-        end
+        ovpcfg_load();
+        elf_load();
+        ovpEntry(ovpcfg, elf_file);
+    `ifndef UVM
+        $finish;
+    `endif
     end
     
-    `ifndef UVM
+`ifndef UVM
     final begin
         ovpExit();
     end
-    `endif
+`endif
  
 endmodule
