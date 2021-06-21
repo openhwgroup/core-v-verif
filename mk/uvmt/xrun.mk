@@ -194,6 +194,9 @@ XRUN_COMP_FLAGS += -nowarn TSNSPK
 XRUN_COMP_FLAGS += -nowarn COVVPO
 XRUN_RUN_COV    += -nowarn COVVPO
 
+# Warning on adding _T suffix to named block scoped assertion coverage
+XRUN_RUN_FLAGS  += -nowarn COVNBT
+
 # Warning about new style struct expression scoring
 XRUN_COMP_FLAGS += -nowarn COVEOS
 
@@ -311,6 +314,7 @@ test: $(XRUN_SIM_PREREQ) $(TEST_TEST_DIR)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX)
 			+elf_file=$(TEST_TEST_DIR)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
 			+nm_file=$(TEST_TEST_DIR)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).nm \
 			+firmware=$(TEST_TEST_DIR)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex
+	$(POST_TEST)
 
 ################################################################################
 # Custom test-programs.  See comment in dsim.mk for more info
