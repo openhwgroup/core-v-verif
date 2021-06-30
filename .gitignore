@@ -17,6 +17,7 @@ metrics.db
 metrics_history.db
 xrun_results
 vsim_results
+verilator_results
 vmgr_sessions
 __pycache__
 *.swp
