@@ -17,7 +17,9 @@
 
 `ifndef __UVME_CV32E40P_ENV_SV__
 `define __UVME_CV32E40P_ENV_SV__
-
+// Forward type declarations
+typedef class uvme_cv32e40p_instr_vseq_c ;
+typedef class uvme_cv32e40p_vp_vseq_c ;
 
 /**
  * Top-level component that encapsulates, builds and connects all other
@@ -36,11 +38,13 @@ class uvme_cv32e40p_env_c extends uvm_env;
    uvme_cv32e40p_vsqr_c       vsequencer;
    
    // Agents
-   uvma_clknrst_agent_c   clknrst_agent;
-   uvma_interrupt_agent_c interrupt_agent;
-   uvma_debug_agent_c     debug_agent;
-   uvma_obi_agent_c       obi_instr_agent;
-   uvma_obi_agent_c       obi_data_agent;
+   uvma_clknrst_agent_c     clknrst_agent;
+   uvma_interrupt_agent_c   interrupt_agent;
+   uvma_debug_agent_c       debug_agent;
+   uvma_obi_agent_c         obi_instr_agent;
+   uvma_obi_agent_c         obi_data_agent;
+   uvma_obi_memory_agent_c  obi_memory_instr_agent;
+   uvma_obi_memory_agent_c  obi_memory_data_agent ;
 
    
 
@@ -74,6 +78,11 @@ class uvme_cv32e40p_env_c extends uvm_env;
     * Print out final elaboration
     */
    extern virtual function void end_of_elaboration_phase(uvm_phase phase);   
+
+   /**
+    * Creates and starts the instruction and virtual peripheral sequences in active mode.
+    */
+   extern virtual task run_phase(uvm_phase phase); 
 
    /**
     * Assigns configuration handles to components using UVM Configuration Database.
@@ -141,16 +150,16 @@ function void uvme_cv32e40p_env_c::build_phase(uvm_phase phase);
    
    void'(uvm_config_db#(uvme_cv32e40p_cfg_c)::get(this, "", "cfg", cfg));
    if (!cfg) begin
-      `uvm_fatal("CFG", "Configuration handle is null")
+      `uvm_fatal("UVME_CV32E40P_ENV", "Configuration handle is null")
    end
    else begin
-      `uvm_info("CFG", $sformatf("Found configuration handle:\n%s", cfg.sprint()), UVM_DEBUG)
+      `uvm_info("UVME_CV32E40P_ENV", $sformatf("Found configuration handle:\n%s", cfg.sprint()), UVM_DEBUG)
    end
    
    if (cfg.enabled) begin
       void'(uvm_config_db#(uvme_cv32e40p_cntxt_c)::get(this, "", "cntxt", cntxt));
       if (!cntxt) begin
-         `uvm_info("CNTXT", "Context handle is null; creating.", UVM_DEBUG)
+         `uvm_info("UVME_CV32E40P_ENV", "Context handle is null; creating.", UVM_DEBUG)
          cntxt = uvme_cv32e40p_cntxt_c::type_id::create("cntxt");
       end
       
@@ -193,44 +202,72 @@ function void uvme_cv32e40p_env_c::connect_phase(uvm_phase phase);
 endfunction: connect_phase
 
 
+task uvme_cv32e40p_env_c::run_phase(uvm_phase phase);
+   
+   uvme_cv32e40p_instr_vseq_c  instr_vseq;
+   uvme_cv32e40p_vp_vseq_c     vp_vseq;
+   
+   if (cfg.is_active) begin
+      fork
+         begin
+            instr_vseq = uvme_cv32e40p_instr_vseq_c::type_id::create("instr_vseq");
+            instr_vseq.start(vsequencer);
+         end
+         
+         begin
+            vp_vseq = uvme_cv32e40p_vp_vseq_c::type_id::create("vp_vseq");
+            vp_vseq.start(vsequencer);
+         end
+      join_none
+   end
+   
+endtask : run_phase
+
+
 function void uvme_cv32e40p_env_c::end_of_elaboration_phase(uvm_phase phase);
    super.end_of_elaboration_phase(phase);
 
-   `uvm_info("UVMECV32E40PENV", $sformatf("Configuration:\n%s", cfg.sprint()), UVM_LOW)
+   `uvm_info("UVME_CV32E40P_ENV", $sformatf("Top-level environment configuration:\n%s", cfg.sprint()), UVM_LOW)
 
 endfunction : end_of_elaboration_phase
 
 function void uvme_cv32e40p_env_c::assign_cfg();
    
-   uvm_config_db#(uvme_cv32e40p_cfg_c)::set(this, "*", "cfg", cfg);
-   uvm_config_db#(uvma_clknrst_cfg_c)::set(this, "*clknrst_agent", "cfg", cfg.clknrst_cfg);
-   uvm_config_db#(uvma_interrupt_cfg_c)::set(this, "*interrupt_agent", "cfg", cfg.interrupt_cfg);
-   uvm_config_db#(uvma_debug_cfg_c)::set(this, "debug_agent", "cfg", cfg.debug_cfg);
-   uvm_config_db#(uvma_obi_cfg_c)::set(this, "obi_instr_agent", "cfg", cfg.obi_instr_cfg);
-   uvm_config_db#(uvma_obi_cfg_c)::set(this, "obi_data_agent", "cfg", cfg.obi_data_cfg);
+   uvm_config_db#(uvme_cv32e40p_cfg_c)  ::set(this, "*",                      "cfg", cfg);
+   uvm_config_db#(uvma_clknrst_cfg_c)   ::set(this, "*clknrst_agent",         "cfg", cfg.clknrst_cfg);
+   uvm_config_db#(uvma_interrupt_cfg_c) ::set(this, "*interrupt_agent",       "cfg", cfg.interrupt_cfg);
+   uvm_config_db#(uvma_debug_cfg_c)     ::set(this, "debug_agent",            "cfg", cfg.debug_cfg);
+   uvm_config_db#(uvma_obi_cfg_c)       ::set(this, "obi_instr_agent",        "cfg", cfg.obi_instr_cfg);
+   uvm_config_db#(uvma_obi_cfg_c)       ::set(this, "obi_data_agent",         "cfg", cfg.obi_data_cfg);
+   uvm_config_db#(uvma_obi_memory_cfg_c)::set(this, "obi_memory_instr_agent", "cfg", cfg.obi_memory_instr_cfg);
+   uvm_config_db#(uvma_obi_memory_cfg_c)::set(this, "obi_memory_data_agent",  "cfg", cfg.obi_memory_data_cfg);
    
 endfunction: assign_cfg
 
 
 function void uvme_cv32e40p_env_c::assign_cntxt();
    
-   uvm_config_db#(uvme_cv32e40p_cntxt_c)::set(this, "*", "cntxt", cntxt);
-   uvm_config_db#(uvma_clknrst_cntxt_c)::set(this, "clknrst_agent", "cntxt", cntxt.clknrst_cntxt);
-   uvm_config_db#(uvma_interrupt_cntxt_c)::set(this, "interrupt_agent", "cntxt", cntxt.interrupt_cntxt);
-   uvm_config_db#(uvma_debug_cntxt_c)::set(this, "debug_agent", "cntxt", cntxt.debug_cntxt);
-   uvm_config_db#(uvma_obi_cntxt_c)::set(this, "obi_instr_agent", "cntxt", cntxt.obi_instr_cntxt);
-   uvm_config_db#(uvma_obi_cntxt_c)::set(this, "obi_data_agent", "cntxt", cntxt.obi_data_cntxt);
+   uvm_config_db#(uvme_cv32e40p_cntxt_c)  ::set(this, "*",                      "cntxt", cntxt);
+   uvm_config_db#(uvma_clknrst_cntxt_c)   ::set(this, "clknrst_agent",          "cntxt", cntxt.clknrst_cntxt);
+   uvm_config_db#(uvma_interrupt_cntxt_c) ::set(this, "interrupt_agent",        "cntxt", cntxt.interrupt_cntxt);
+   uvm_config_db#(uvma_debug_cntxt_c)     ::set(this, "debug_agent",            "cntxt", cntxt.debug_cntxt);
+   uvm_config_db#(uvma_obi_cntxt_c)       ::set(this, "obi_instr_agent",        "cntxt", cntxt.obi_instr_cntxt);
+   uvm_config_db#(uvma_obi_cntxt_c)       ::set(this, "obi_data_agent",         "cntxt", cntxt.obi_data_cntxt);
+   uvm_config_db#(uvma_obi_memory_cntxt_c)::set(this, "obi_memory_instr_agent", "cntxt", cntxt.obi_memory_instr_cntxt);
+   uvm_config_db#(uvma_obi_memory_cntxt_c)::set(this, "obi_memory_data_agent",  "cntxt", cntxt.obi_memory_data_cntxt);
    
 endfunction: assign_cntxt
 
 
 function void uvme_cv32e40p_env_c::create_agents();
    
-   clknrst_agent = uvma_clknrst_agent_c::type_id::create("clknrst_agent", this);
-   interrupt_agent = uvma_interrupt_agent_c::type_id::create("interrupt_agent", this);
-   debug_agent = uvma_debug_agent_c::type_id::create("debug_agent", this);
-   obi_instr_agent = uvma_obi_agent_c::type_id::create("obi_instr_agent", this);
-   obi_data_agent  = uvma_obi_agent_c::type_id::create("obi_data_agent", this);
+   clknrst_agent           = uvma_clknrst_agent_c   ::type_id::create("clknrst_agent",          this);
+   interrupt_agent         = uvma_interrupt_agent_c ::type_id::create("interrupt_agent",        this);
+   debug_agent             = uvma_debug_agent_c     ::type_id::create("debug_agent",            this);
+   obi_instr_agent         = uvma_obi_agent_c       ::type_id::create("obi_instr_agent",        this);
+   obi_data_agent          = uvma_obi_agent_c       ::type_id::create("obi_data_agent",         this);
+   obi_memory_instr_agent  = uvma_obi_memory_agent_c::type_id::create("obi_memory_instr_agent", this);
+   obi_memory_data_agent   = uvma_obi_memory_agent_c::type_id::create("obi_memory_data_agent",  this);
    
 endfunction: create_agents
 
@@ -256,12 +293,12 @@ function void uvme_cv32e40p_env_c::create_cov_model();
    cov_model = uvme_cv32e40p_cov_model_c::type_id::create("cov_model", this);
    void'(uvm_config_db#(virtual uvmt_cv32e40p_isa_covg_if)::get(this, "", "isa_covg_vif", cntxt.isa_covg_vif));
    if (cntxt.isa_covg_vif == null) begin
-      `uvm_fatal("CNTXT", $sformatf("No uvmt_cv32e40p_isa_covg_if found in config database"))
+      `uvm_fatal("UVME_CV32E40P_ENV", $sformatf("No uvmt_cv32e40p_isa_covg_if found in config database"))
    end
 
    void'(uvm_config_db#(virtual uvmt_cv32e40p_debug_cov_assert_if)::get(this, "", "debug_cov_vif", cntxt.debug_cov_vif));
    if (cntxt.debug_cov_vif == null) begin
-      `uvm_fatal("CNTXT", $sformatf("No uvmt_cv32e40p_debug_cov_assert_if found in config database"))
+      `uvm_fatal("UVME_CV32E40P_ENV", $sformatf("No uvmt_cv32e40p_debug_cov_assert_if found in config database"))
    end
 endfunction: create_cov_model
 
@@ -295,9 +332,11 @@ endfunction: connect_coverage_model
 
 function void uvme_cv32e40p_env_c::assemble_vsequencer();
    
-   vsequencer.clknrst_sequencer   = clknrst_agent.sequencer;
-   vsequencer.interrupt_sequencer = interrupt_agent.sequencer;
-   vsequencer.debug_sequencer     = debug_agent.sequencer;
+   vsequencer.clknrst_sequencer          = clknrst_agent         .sequencer;
+   vsequencer.interrupt_sequencer        = interrupt_agent       .sequencer;
+   vsequencer.debug_sequencer            = debug_agent           .sequencer;
+   vsequencer.obi_memory_instr_sequencer = obi_memory_instr_agent.sequencer;
+   vsequencer.obi_memory_data_sequencer  = obi_memory_data_agent .sequencer;
    
 endfunction: assemble_vsequencer
 
