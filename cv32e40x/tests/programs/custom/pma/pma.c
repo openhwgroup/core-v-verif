@@ -220,6 +220,9 @@ int main(void) {
 
   // sanity check that aligned load is no problem
   reset_volatiles();
+  // Must initialize memory for ISS
+  __asm__ volatile("sw %0, 0(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR));
+  __asm__ volatile("sw %0, 4(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR));
   tmp = 0;
   __asm__ volatile("lw %0, 4(%1)" : "=r"(tmp) : "r"(IO_ADDR));
   assert_or_die(!tmp, 0, "error: load should not yield zero\n");  // TODO ensure memory content matches
@@ -245,7 +248,6 @@ int main(void) {
   assert_or_die(mcause, -1, "error: main access should not change mcause\n");
   assert_or_die(mepc, -1, "error: main access should not change mepc\n");
   assert_or_die(mtval, -1, "error: main access should not change mtval\n");
-
 
   // Non-naturally aligned stores to I/O regions
 
