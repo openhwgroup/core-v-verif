@@ -353,13 +353,6 @@ include $(CFG_FLAGS_MAKE)
 endif
 endif
 
-ifeq ($(CV_CORE),cv32e40p)
-OBJCOPY_REMAP_FLAGS = --change-section-address  .debugger=0x3FC000 \
- 		              --change-section-address  .debugger_exception=0x3FC800
-else
-OBJCOPY_REMAP_FLAGS = 
-endif
-
 ###############################################################################
 # Rule to generate hex (loadable by simulators) from elf
 # Relocate debugger to last 16KB of mm_ram
@@ -378,7 +371,11 @@ endif
 	@echo ""
 	$(RISCV_EXE_PREFIX)readelf -a $< > $*.readelf
 	@echo ""
-	$(RISCV_EXE_PREFIX)objdump -d -S $*.elf > $*.objdump
+	$(RISCV_EXE_PREFIX)objdump \
+		-d \
+		-M no-aliases \
+		-M numeric \
+		-S $*.elf > $*.objdump
 
 bsp:
 	@echo "$(BANNER)"
