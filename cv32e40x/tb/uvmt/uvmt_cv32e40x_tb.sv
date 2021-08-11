@@ -106,7 +106,7 @@ module uvmt_cv32e40x_tb;
                                                                    .rvfi_trap(rvfi_i.rvfi_trap[0]),
                                                                    .rvfi_halt(rvfi_i.rvfi_halt[0]),
                                                                    .rvfi_intr(rvfi_i.rvfi_intr[0]),
-                                                                   .rvfi_dbg(rvfi_i.rvfi_dbg[0]),
+                                                                   .rvfi_dbg(rvfi_i.rvfi_debug[0]),
                                                                    .rvfi_mode(rvfi_i.rvfi_mode[uvma_rvfi_pkg::MODE_WL*0+:uvma_rvfi_pkg::MODE_WL]),
                                                                    .rvfi_ixl(rvfi_i.rvfi_ixl[uvma_rvfi_pkg::IXL_WL*0+:uvma_rvfi_pkg::IXL_WL]),
                                                                    .rvfi_pc_rdata(rvfi_i.rvfi_pc_rdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]),
