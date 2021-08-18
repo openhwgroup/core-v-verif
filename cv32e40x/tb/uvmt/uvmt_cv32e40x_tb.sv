@@ -106,7 +106,11 @@ module uvmt_cv32e40x_tb;
                                                                    .rvfi_trap(rvfi_i.rvfi_trap[0]),
                                                                    .rvfi_halt(rvfi_i.rvfi_halt[0]),
                                                                    .rvfi_intr(rvfi_i.rvfi_intr[0]),
-                                                                   .rvfi_dbg(rvfi_i.rvfi_dbg[0]),
+                                                                // todo: Add support for the new debug signals, rvfi_dbg_mode and the 3-bit rvfi_dbg
+                                                                // .rvfi_dbg(rvfi_i.rvfi_dbg[uvme_cv32e40x_pkg::DBG_WL*0+:uvme_cv32e40x_pkg::DBG_WL]),
+                                                                // .rvfi_dbg_mode(rvfi_i.rvfi_dbg_mode[0]),
+                                                                   .rvfi_dbg(|rvfi_i.rvfi_dbg), // This is a temprary hack to get the behavior of the old single-bit rvfi_dbg
+                                                                //
                                                                    .rvfi_mode(rvfi_i.rvfi_mode[uvma_rvfi_pkg::MODE_WL*0+:uvma_rvfi_pkg::MODE_WL]),
                                                                    .rvfi_ixl(rvfi_i.rvfi_ixl[uvma_rvfi_pkg::IXL_WL*0+:uvma_rvfi_pkg::IXL_WL]),
                                                                    .rvfi_pc_rdata(rvfi_i.rvfi_pc_rdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]),
