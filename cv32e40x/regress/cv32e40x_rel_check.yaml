@@ -39,12 +39,6 @@ tests:
     dir: cv32e40x/sim/uvmt
     cmd: make test COREV=YES TEST=illegal_instr_test
 
-  cv32e40x_csr_access_test:
-    build: uvmt_cv32e40x
-    description: CSR Access Mode Test
-    dir: cv32e40x/sim/uvmt
-    cmd: make test COREV=YES TEST=cv32e40x_csr_access_test
-
   requested_csr_por:
     build: uvmt_cv32e40x
     description: CSR PoR test
@@ -252,8 +246,8 @@ tests:
     dir: cv32e40x/sim/uvmt
     cmd: make test COREV=YES TEST=cv32e40x_csr_access_test
 
-  cv32e40x_readonly_csr_access_test:
-    build: uvmt_cv32e40x
-    description: Manually generated CSR access test of RO CSRs
-    dir: cv32e40x/sim/uvmt
-    cmd: make test COREV=YES TEST=cv32e40x_readonly_csr_access_test
+  # FIXME:strichmo: Some instability in this test, not suitable for rel_check yet until 841 is fixed in OVPSIM
+    # build: uvmt_cv32e40x
+    # description: Manually generated CSR access test of RO CSRs
+    # dir: cv32e40x/sim/uvmt
+    # cmd: make test COREV=YES TEST=cv32e40x_readonly_csr_access_test
