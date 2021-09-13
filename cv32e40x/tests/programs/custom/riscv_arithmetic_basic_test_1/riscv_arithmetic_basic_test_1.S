@@ -2,7 +2,7 @@
 #.include "user_define.h"
 #.globl _start
 #.section .text
-#_start:           
+#_start:
 # END: riscv-dv
 # BEGIN: gtumbush
 .include "user_define.h"
@@ -17,7 +17,7 @@ _start:
 
 .globl _start_main
 .section .text
-_start_main:          
+_start_main:
 # END: gtumbush
 # BEGIN: riscv-dv
                   csrr x5, mhartid
@@ -28,20 +28,20 @@ _start_main:
 h0_start:
                   li x10, 0x40001104
                   csrw misa, x10
-kernel_sp:        
+kernel_sp:
                   la x31, kernel_stack_end
 
-trap_vec_init:    
+trap_vec_init:
                   la x10, mtvec_handler
                   ori x10, x10, 1
                   csrw 0x305, x10 # MTVEC
 
-mepc_setup:       
+mepc_setup:
                   la x10, init
                   csrw mepc, x10
                   j init_machine_mode
 
-init:             
+init:
                   li x0, 0xfd790eda
                   li x1, 0x80000000
                   li x2, 0x6
@@ -11358,13 +11358,13 @@ fast_exit:
                   wfi  /* we are done */
 ##End: Extracted from riscv_compliance_tests/riscv_test.h
 
-test_done:        
+test_done:
                   li gp, 1
                   ecall
-write_tohost:     
+write_tohost:
                   sw gp, tohost, t5
 
-_exit:            
+_exit:
                   j write_tohost
 
 init_machine_mode:
@@ -11373,7 +11373,7 @@ init_machine_mode:
                   li x10, 0x0
                   csrw 0x304, x10 # MIE
                   mret
-instr_end:        
+instr_end:
                   nop
 
 .section .data
@@ -12005,8 +12005,8 @@ mmode_intr_vector_15:
                   j mmode_intr_handler
                   1: j test_done
 
-.align 2
-mtvec_handler:    
+.align 8
+mtvec_handler:
                   .option norvc;
                   j mmode_exception_handler
                   j mmode_intr_vector_1
@@ -12086,9 +12086,9 @@ mmode_exception_handler:
                   li x2, 0x2 # ILLEGAL_INSTRUCTION
                   beq x10, x2, illegal_instr_handler
                   csrr x2, 0x343 # MTVAL
-                  1: jal x1, test_done 
+                  1: jal x1, test_done
 
-ecall_handler:    
+ecall_handler:
                   la x10, _start
                   sw x0, 0(x10)
                   sw x1, 4(x10)
@@ -12234,7 +12234,7 @@ store_fault_handler:
                   csrrw x15, 0x340, x15
                   mret
 
-ebreak_handler:   
+ebreak_handler:
                   csrr  x10, mepc
                   addi  x10, x10, 4
                   csrw  mepc, x10
@@ -12314,7 +12314,7 @@ illegal_instr_handler:
                   csrrw x15, 0x340, x15
                   mret
 
-pt_fault_handler: 
+pt_fault_handler:
                   nop
 
 .align 2

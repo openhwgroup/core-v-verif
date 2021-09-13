@@ -33,6 +33,7 @@ class cv32e40x_debug_rom_gen extends riscv_debug_rom_gen;
         // Insert section info so linker can place
         // debug code at the correct adress
         instr_stream.push_back(".section .debugger, \"ax\"");
+        instr_stream.push_back(".global __debugger_start");
 
         // CORE-V Addition
         // Cast CORE-V derived handle to enable fetching core-v config fields
@@ -151,6 +152,7 @@ class cv32e40x_debug_rom_gen extends riscv_debug_rom_gen;
         // Insert section info so linker can place
         // debug exception code at the correct adress
         instr_stream.push_back(".section .debugger_exception, \"ax\"");
+        instr_stream.push_back(".global __debugger_exception_start");
         //super.gen_debug_exception_handler();
 
         str = {"ebreak"};

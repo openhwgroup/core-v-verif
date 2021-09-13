@@ -210,6 +210,11 @@
    extern function void do_print(uvm_printer printer);
 
    /**
+    * Read the readelf file to get handler bootstrap addresses
+    */
+   extern function void read_readelf();
+
+   /**
     * Read a plusarg to fix a configuration value
     */
    extern function bit read_cfg_plusarg_xlen(string field, ref bit[MAX_XLEN-1:0] value);
@@ -265,6 +270,9 @@ function uvma_core_cntrl_cfg_c::new(string name="uvme_cv_base_cfg");
    if ($test$plusargs("USE_ISS"))
       use_iss = 1;
 
+   // Try to read handler bootstraap default from the readelf file (if provided)
+   read_readelf();
+
    // Read plusargs for defaults
    if (read_cfg_plusarg_xlen("hart_id", hart_id)) begin
       hart_id_plusarg_valid = 1;
@@ -297,6 +305,71 @@ function uvma_core_cntrl_cfg_c::new(string name="uvme_cv_base_cfg");
    end
 
 endfunction : new
+
+function void uvma_core_cntrl_cfg_c::read_readelf();
+
+   string file;
+
+   if ($value$plusargs("readelf_file=%s", file)) begin
+      int unsigned itb_lineno;
+      int fh;
+
+      fh = $fopen(file, "r");
+      if (fh == 0) begin
+         `uvm_fatal("CORECNTRLREADELF", $sformatf("Could not open readelf file: %s", file));
+      end
+
+      while (!$feof(fh)) begin
+         string line;
+         string args[8];
+         if ($fgets(line, fh)) begin
+
+            if ($sscanf(line, "%s %s %s %s %s %s %s %s", args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7])) begin
+               // Global __start -> boot_addr
+               if (args[7] == "_start") begin
+                  boot_addr = args[1].atohex();
+                  boot_addr.rand_mode(0);
+                  boot_addr_plusarg_valid = 1;
+                  `uvm_info("CORECNTRLREADELF", $sformatf("readelf: Setting Boot handler to 0x%08x", boot_addr), UVM_LOW);
+               end
+
+               // Global __nmi_start -> nmi_addr
+               if (args[7] == "__nmi_start") begin
+                  nmi_addr = args[1].atohex();
+                  nmi_addr.rand_mode(0);
+                  nmi_addr_plusarg_valid = 1;
+                  `uvm_info("CORECNTRLREADELF", $sformatf("readelf: Setting NMI handler to 0x%08x", nmi_addr), UVM_LOW);
+               end
+
+               // Global __vector_start -> mtvec_addr
+               if (args[7] == "__vector_start" || args[7] == "mtvec_handler") begin
+                  mtvec_addr = args[1].atohex();
+                  mtvec_addr.rand_mode(0);
+                  mtvec_addr_plusarg_valid = 1;
+                  `uvm_info("CORECNTRLREADELF", $sformatf("readelf: Setting MTVEC handler to 0x%08x", mtvec_addr), UVM_LOW);
+               end
+
+               // Global __debugger_start -> dm_halt_addr
+               if (args[7] == "__debugger_start") begin
+                  dm_halt_addr = args[1].atohex();
+                  dm_halt_addr.rand_mode(0);
+                  dm_halt_addr_plusarg_valid = 1;
+                  `uvm_info("CORECNTRLREADELF", $sformatf("readelf: Setting Debug Halt handler to 0x%08x", dm_halt_addr), UVM_LOW);
+               end
+
+               // Global __debugger_exception_star -> dm_exception_addr
+               if (args[7] == "__debugger_exception_star") begin
+                  dm_exception_addr = args[1].atohex();
+                  dm_exception_addr.rand_mode(0);
+                  dm_exception_addr_plusarg_valid = 1;
+                  `uvm_info("CORECNTRLREADELF", $sformatf("readelf: Setting Debug Exception handler to 0x%08x", dm_exception_addr), UVM_LOW);
+               end
+            end
+         end
+      end
+   end
+
+endfunction : read_readelf
 
 function bit uvma_core_cntrl_cfg_c::read_cfg_plusarg_xlen(string field, ref bit[MAX_XLEN-1:0] value);
 

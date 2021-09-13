@@ -32,10 +32,12 @@ SECTIONS
      DM_HaltAddress parameter in the RTL */
   .debugger (ORIGIN(dbg)):
   {
+    PROVIDE(__debugger_start = .);
     KEEP(*(.debugger));
   } >dbg
   .debugger_exception (0x1A111000):
   {
+   PROVIDE(__debugger_exception_start = .);
     KEEP(*(.debugger_exception));
   } >dbg
   /* Debugger Stack*/
@@ -47,9 +49,9 @@ SECTIONS
 
 
   /* NMI interrupt handler fixed entry point */
-  PROVIDE(__nmi_address = 0x100000);
+  PROVIDE(__nmi_start = 0x100000);
 
-  .nmi (__nmi_address):
+  .nmi (__nmi_start):
   {
     KEEP(*(.nmi));
   } >ram

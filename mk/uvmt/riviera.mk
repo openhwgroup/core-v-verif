@@ -306,6 +306,7 @@ custom: VSIM_TEST=$(CUSTOM_PROG)
 custom: VSIM_FLAGS += +firmware=$(CUSTOM_DIR)/$(CUSTOM_PROG).hex
 custom: VSIM_FLAGS += +elf_file=$(CUSTOM_DIR)/$(CUSTOM_PROG).elf
 custom: VSIM_FLAGS += +itb_file=$(CUSTOM_DIR)/$(CUSTOM_PROG).itb
+custom: VSIM_FLAGS += +readelf_file=$(CUSTOM_DIR)/$(CUSTOM_PROG).readelf
 custom: TEST_UVM_TEST=uvmt_$(CV_CORE_LC)_firmware_test_c
 custom: $(CUSTOM_DIR)/$(CUSTOM_PROG).hex run
 
