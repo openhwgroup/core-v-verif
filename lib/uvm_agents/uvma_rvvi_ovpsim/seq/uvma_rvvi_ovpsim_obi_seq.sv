@@ -34,6 +34,9 @@ class uvma_rvvi_ovpsim_obi_seq_c#(int ILEN=uvma_rvvi_pkg::DEFAULT_ILEN,
    // If an incoming OBI fetch with okay error reponse is received any previous error is cleared
    bit obi_i_error[bit[XLEN-1:2]];
 
+   bit obi_d_rd_error[bit[XLEN-1:0]];
+   bit obi_d_wr_error[bit[XLEN-1:0]];
+
    `uvm_object_param_utils(uvma_rvvi_ovpsim_obi_seq_c#(ILEN,XLEN))
    `uvm_declare_p_sequencer(uvma_rvvi_sqr_c#(ILEN,XLEN))
 
@@ -58,14 +61,14 @@ class uvma_rvvi_ovpsim_obi_seq_c#(int ILEN=uvma_rvvi_pkg::DEFAULT_ILEN,
    extern virtual task obi_d();
 
    /**
-     * RVVI monitor thread.  Annotate bus errors on RVVI I fetches when/if necessary
+     * RVVI monitor thread.  Annotate bus errors on RVVI I fetches based on OBI monitor inputs
      */
    extern virtual task rvvi_i_mon();
 
    /**
-     * For okay OBI I responses, clear any pending fetch errors
+     * RVVI monitor thread.  Annotate bus errors on RVVI D reads and writes based on OBI monitor inputs
      */
-   extern virtual function void clear_i_error(bit[XLEN-1:0] byte_address);
+   extern virtual task rvvi_d_mon();
 
    /**
      * For errored OBI responses, set fetch error
@@ -73,9 +76,44 @@ class uvma_rvvi_ovpsim_obi_seq_c#(int ILEN=uvma_rvvi_pkg::DEFAULT_ILEN,
    extern virtual function void set_i_error(bit[XLEN-1:0] byte_address);
 
    /**
+     * For okay OBI I responses, clear any pending fetch errors
+     */
+   extern virtual function void clear_i_error(bit[XLEN-1:0] byte_address);
+
+   /**
      * Used by RVVI, query if the I fetch should returned error
      */
    extern virtual function bit is_i_error(bit[XLEN-1:0] byte_address);
+
+   /**
+     * For errored OBI data read responses
+     */
+   extern virtual function void set_d_rd_error(bit[XLEN-1:0] byte_address);
+
+   /**
+     * For errored OBI data write responses
+     */
+   extern virtual function void set_d_wr_error(bit[XLEN-1:0] byte_address);
+
+   /**
+     * For OKAY OBI data read responses
+     */
+   extern virtual function void clear_d_rd_error(bit[XLEN-1:0] byte_address);
+
+   /**
+     * For OKAY OBI data write responses
+     */
+   extern virtual function void clear_d_wr_error(bit[XLEN-1:0] byte_address);
+
+   /**
+     * Used by RVVI, query if the D read should returned error
+     */
+   extern virtual function bit is_d_rd_error(bit[XLEN-1:0] byte_address);
+
+   /**
+     * Used by RVVI, query if the D write should returned error
+     */
+   extern virtual function bit is_d_wr_error(bit[XLEN-1:0] byte_address);
 
 endclass : uvma_rvvi_ovpsim_obi_seq_c
 
@@ -101,6 +139,7 @@ task uvma_rvvi_ovpsim_obi_seq_c::body();
       obi_d();
 
       rvvi_i_mon();
+      rvvi_d_mon();
    join
 
 endtask : body
@@ -117,6 +156,31 @@ task uvma_rvvi_ovpsim_obi_seq_c::rvvi_i_mon();
    end
 
 endtask : rvvi_i_mon
+
+task uvma_rvvi_ovpsim_obi_seq_c::rvvi_d_mon();
+
+   // Model InstructonBusFault generation as a combinatorial decode of IAddr and Ird
+   while (1) begin
+      @(ovpsim_cntxt.ovpsim_bus_vif.DAddr or
+        ovpsim_cntxt.ovpsim_bus_vif.Drd or
+        ovpsim_cntxt.ovpsim_bus_vif.Dwr);
+
+      // Read bus
+      if (ovpsim_cntxt.ovpsim_bus_vif.Drd && is_d_rd_error(ovpsim_cntxt.ovpsim_bus_vif.DAddr))
+         ovpsim_cntxt.ovpsim_bus_vif.LoadBusFaultNMI = 1'b1;
+      else
+         ovpsim_cntxt.ovpsim_bus_vif.LoadBusFaultNMI = 1'b0;
+
+      // Write bus
+      if (ovpsim_cntxt.ovpsim_bus_vif.Dwr && is_d_wr_error(ovpsim_cntxt.ovpsim_bus_vif.DAddr))
+         ovpsim_cntxt.ovpsim_bus_vif.StoreBusFaultNMI = 1'b1;
+      else
+         ovpsim_cntxt.ovpsim_bus_vif.StoreBusFaultNMI = 1'b0;
+
+      //#0.1ns;
+   end
+
+endtask : rvvi_d_mon
 
 task uvma_rvvi_ovpsim_obi_seq_c::obi_i();
 
@@ -140,6 +204,24 @@ task uvma_rvvi_ovpsim_obi_seq_c::obi_d();
 
       wait (p_sequencer.obi_d_q.size());
       trn = p_sequencer.obi_d_q.pop_front();
+
+      //$display("popped: %s", trn.access_type.name());
+      if (trn.access_type == UVMA_OBI_MEMORY_ACCESS_READ) begin
+         if (trn.err) begin
+            //$display("set it");
+            set_d_rd_error(trn.address);
+         end
+         else begin
+            //$display("clear it");
+            clear_d_rd_error(trn.address);
+         end
+      end
+      else begin
+         if (trn.err)
+            set_d_wr_error(trn.address);
+         else
+            clear_d_wr_error(trn.address);
+      end
    end
 
 endtask : obi_d
@@ -166,5 +248,46 @@ function bit uvma_rvvi_ovpsim_obi_seq_c::is_i_error(bit[XLEN-1:0] byte_address);
 
 endfunction : is_i_error
 
-`endif // __UVMA_RVVI_OVPSIM_OBI_SEQ_SV__
+function void uvma_rvvi_ovpsim_obi_seq_c::set_d_rd_error(bit[XLEN-1:0] byte_address);
 
+   obi_d_rd_error[byte_address[XLEN-1:0]] = 1;
+
+endfunction : set_d_rd_error
+
+function void uvma_rvvi_ovpsim_obi_seq_c::set_d_wr_error(bit[XLEN-1:0] byte_address);
+
+   obi_d_wr_error[byte_address[XLEN-1:0]] = 1;
+
+endfunction : set_d_wr_error
+
+function void uvma_rvvi_ovpsim_obi_seq_c::clear_d_rd_error(bit[XLEN-1:0] byte_address);
+
+   if (obi_d_rd_error.exists(byte_address[XLEN-1:0]))
+      obi_d_rd_error.delete(byte_address[XLEN-1:0]);
+
+endfunction : clear_d_rd_error
+
+function void uvma_rvvi_ovpsim_obi_seq_c::clear_d_wr_error(bit[XLEN-1:0] byte_address);
+
+   if (obi_d_wr_error.exists(byte_address[XLEN-1:0]))
+      obi_d_wr_error.delete(byte_address[XLEN-1:0]);
+
+endfunction : clear_d_wr_error
+
+function bit uvma_rvvi_ovpsim_obi_seq_c::is_d_rd_error(bit[XLEN-1:0] byte_address);
+
+   bit i_error = obi_d_rd_error.exists(byte_address[XLEN-1:0]) ? 1 : 0;
+
+   return i_error;
+
+endfunction : is_d_rd_error
+
+function bit uvma_rvvi_ovpsim_obi_seq_c::is_d_wr_error(bit[XLEN-1:0] byte_address);
+
+   bit i_error = obi_d_wr_error.exists(byte_address[XLEN-1:0]) ? 1 : 0;
+
+   return i_error;
+
+endfunction : is_d_wr_error
+
+`endif // __UVMA_RVVI_OVPSIM_OBI_SEQ_SV__
