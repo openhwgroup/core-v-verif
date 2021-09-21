@@ -76,7 +76,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
 
       ext_a_supported == 0;
       ext_p_supported == 0;
-      ext_b_supported == 0;
+//      ext_b_supported == 0; TODO. implement as in cv32e40x
       ext_v_supported == 0;
       ext_f_supported == 0;
       ext_d_supported == 0;
