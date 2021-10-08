@@ -426,14 +426,18 @@ corev-dv: clean_riscv-dv \
           clone_riscv-dv \
 	      comp_corev-dv
 
-# Copy (with cleanout) out final assembler files to test directory
+# Copy out final assembler files to test directory
 # This includes the generated linker script files if they are present in the
 # generated tests folder
-gen_corev-dv:
-	mkdir -p $(SIM_COREVDV_RESULTS)/$(TEST)
-	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
-		mkdir -p $(SIM_TEST_RESULTS)/$$idx/test_program; \
-	done
+RUNIDX_MAX_IDX = $$(($(GEN_START_INDEX) + $(GEN_NUM_TESTS) - 1))
+COREV_DV_IDX_LIST = $(shell seq $(GEN_START_INDEX) 1 $(RUNIDX_MAX_IDX))
+COREV_DV_FOLDER_LIST = $(abspath $(patsubst %,$(SIM_TEST_RESULTS)/%/test_program,$(COREV_DV_IDX_LIST)))
+
+mkdir_corevdv:
+	$(MKDIR_P) $(COREV_DV_FOLDER_LIST)
+	$(MKDIR_P) $(SIM_COREVDV_RESULTS)/$(TEST)
+
+gen_corev-dv: mkdir_corevdv
 	cd $(SIM_COREVDV_RESULTS)/$(TEST) && \
 		$(XRUN) -R -xmlibdirname ../xcelium.d \
 			$(XRUN_RUN_FLAGS) \
@@ -445,8 +449,7 @@ gen_corev-dv:
 			+asm_file_name_opts=$(TEST) \
 			+ldgen_cp_test_path=$(SIM_TEST_RESULTS) \
 			$(CFG_PLUSARGS) \
-			$(GEN_PLUSARGS)
-
+			$(GEN_PLUSARGS) && \
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		cp -f ${BSP}/link_corev-dv.ld ${SIM_TEST_RESULTS}/$$idx/test_program/link.ld; \
 		cp ${SIM_COREVDV_RESULTS}/${TEST}/${TEST}_$$idx.S ${SIM_TEST_RESULTS}/$$idx/test_program; \
