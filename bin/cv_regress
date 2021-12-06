@@ -166,12 +166,17 @@ def read_file(args, file):
     return regression
 
 # Defaults and globals
-VALID_SIMULATORS  = ('dsim', 'vsim', 'vcs', 'xrun')
-DEFAULT_SIMULATOR = 'dsim'
-VALID_TOOLCHAINS  = ('gnu','llvm','corev','pulp')
-DEFAULT_TOOLCHAIN = 'corev'
+VALID_SIMULATORS   = ('dsim', 'vsim', 'vcs', 'xrun')
+DEFAULT_SIMULATOR  = 'dsim'
+VALID_TOOLCHAINS   = ('gnu','llvm','corev','pulp')
+DEFAULT_TOOLCHAINS = {
+    'cv32e40p' : 'corev',
+    'cv32e40x' : 'gnu',
+    'cv32e40s' : 'gnu',
+    'cva6'     : 'corev',
+}
 
-VALID_PROJECTS = ('cv32e40p', 'cv32e40x', 'cv32e40s', 'cv64')
+VALID_PROJECTS = ('cv32e40p', 'cv32e40x', 'cv32e40s', 'cva6')
 try:
     DEFAULT_PROJECT = os.environ['CV_CORE']
 except KeyError:
@@ -200,11 +205,14 @@ parser.add_argument('--make', help='Substitute for make command (to use short-cu
 parser.add_argument('--makearg', action='append', help='Arguments to supply to each make command, can be specified multiple times')
 parser.add_argument('--sh', help='Select bash shell script output', action='store_true')
 parser.add_argument('--vsif', help='Select Vmanager VSIF output', action='store_true')
-parser.add_argument('--toolchain', help='Select toolchain to build with', choices=VALID_TOOLCHAINS, default=DEFAULT_TOOLCHAIN)
+parser.add_argument('--toolchain', help='Select toolchain to build with', choices=VALID_TOOLCHAINS, default=None)
 args = parser.parse_args()
 
 if args.debug:
     logger.setLevel(logging.DEBUG)
+
+if not args.toolchain:
+    args.toolchain = DEFAULT_TOOLCHAINS[args.project]
 
 # Validate arguments
 if not args.file:
