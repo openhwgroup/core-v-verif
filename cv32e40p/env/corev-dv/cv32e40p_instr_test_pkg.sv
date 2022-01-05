@@ -28,7 +28,6 @@ package cv32e40p_instr_test_pkg;
   `include "cv32e40p_compressed_instr.sv"
   `include "cv32e40p_illegal_instr.sv"
   `include "cv32e40p_privil_reg.sv"
-  `include "cv32e40p_privileged_common_seq.sv"
   `include "cv32e40p_instr_gen_config.sv"
   `include "cv32e40p_debug_rom_gen.sv"
   `include "cv32e40p_asm_program_gen.sv"  
