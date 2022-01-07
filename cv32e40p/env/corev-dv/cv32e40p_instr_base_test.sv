@@ -35,12 +35,11 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
     override_compressed_instr();
     override_illegal_instr();
     override_privil_reg();
-    override_privil_seq();
     override_debug_rom_gen();
     super.build_phase(phase);
   endfunction
 
-  virtual function void override_asm_program_gen();    
+  virtual function void override_asm_program_gen();
     uvm_factory::get().set_type_override_by_type(corev_asm_program_gen::get_type(),
                                                  cv32e40p_asm_program_gen::get_type());
   endfunction
@@ -63,11 +62,6 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
   virtual function void override_illegal_instr();
     uvm_factory::get().set_type_override_by_type(riscv_illegal_instr::get_type(),
                                                  cv32e40p_illegal_instr::get_type());
-  endfunction
-
-  virtual function void override_privil_seq();
-    uvm_factory::get().set_type_override_by_type(riscv_privileged_common_seq::get_type(),
-                                                 cv32e40p_privileged_common_seq::get_type());
   endfunction
 
   virtual function void override_debug_rom_gen();
