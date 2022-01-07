@@ -25,7 +25,7 @@ CV_CORE_TAG    ?= none
 
 RISCVDV_REPO    ?= https://github.com/google/riscv-dv
 RISCVDV_BRANCH  ?= master
-RISCVDV_HASH    ?= 0b625258549e733082c12e5dc749f05aefb07d5a
+RISCVDV_HASH    ?= 96c1ee6f371f2754c45b4831fcab95f6671689d9
 
 EMBENCH_REPO    ?= https://github.com/embench/embench-iot.git
 EMBENCH_BRANCH  ?= master
