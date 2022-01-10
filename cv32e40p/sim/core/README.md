@@ -35,7 +35,7 @@ to run the default test (hello_world).
 
 Running your own Assembler programs
 -----------------------------
-If you have a C or assembly program in `../../tests/core/custom`
+If you have a C or assembly program in `../../tests/programs/custom`
 then the following will work with Verilator:<br>
 ```
 make veri-test TEST=dhrystone
