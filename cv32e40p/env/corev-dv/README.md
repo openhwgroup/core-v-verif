@@ -5,11 +5,11 @@ specializations are implemented as either replacements (e.g the manifest) or ext
 <br><br>
 Compile logs, runtime logs and the generated programs are placed here in the same `out_<YYYY_MM_DD>` directory used by riscv-dv.
 <br>
-TODO: re-direct the generated assembly language tests-programs to a central location.
+<!-- TODO: re-direct the generated assembly language tests-programs to a central location. -->
 <br><br>
 The UVM environments in core-v-verif do not use the `run.py` python script to run the generator (although no changes are
 made preventing _you_ from doing so).  Look for the `gen_corev-dv` target in the simulator-specific makefiles in `$CORE_V_VERIF/mk/uvmt/`
-for an exmaple of how core-v-verif runs the generator.
+for an example of how core-v-verif runs the generator.
 <br><br>
 
 ## Extensions to Riscv-dv specific to cv32e40p
