@@ -8,8 +8,9 @@ Compile logs, runtime logs and the generated programs are placed here in the sam
 TODO: re-direct the generated assembly language tests-programs to a central location.
 <br><br>
 The UVM environments in core-v-verif do not use the `run.py` python script to run the generator (although no changes are
-made preventing _you_ from doing so).  Check out the appropriate Makefile(s) (e.g. `$PROJ_ROOT/cv32/sim/uvmt_cv32/Makefile`)
+made preventing _you_ from doing so).  Look for the `gen_corev-dv` target in the simulator-specific makefiles in `$CORE_V_VERIF/mk/uvmt/`
 for an exmaple of how core-v-verif runs the generator.
+<br><br>
 
 ## Common extensions to Riscv-dv
 The following sections describe common class extensions to riscv-dv that are created for core-v-verif, methods only implementing .super are omitted for brevity.
@@ -21,7 +22,7 @@ The following sections describe common class extensions to riscv-dv that are cre
 Description:<br>
 Main assembly generation routine.
 - Creates program header suitable for the core-v-verif environment.
-  - Main difference from `riscv_asm_program_gen` is the addition of mtvec symbols, and removed support fro multiple harts.
+  - Main difference from `riscv_asm_program_gen` is the addition of mtvec symbols, and removed support for multiple harts.
 - Sets up "Done" test printout and sets status register states upon completion.
 - Overrides ecall-handler override to facilitate ECALL-tests, as riscv-dv implementation terminates test when an ECALL is encountered.
 

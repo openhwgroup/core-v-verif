@@ -8,7 +8,7 @@ Compile logs, runtime logs and the generated programs are placed here in the sam
 TODO: re-direct the generated assembly language tests-programs to a central location.
 <br><br>
 The UVM environments in core-v-verif do not use the `run.py` python script to run the generator (although no changes are
-made preventing _you_ from doing so).  Check out the appropriate Makefile(s) (e.g. `$PROJ_ROOT/cv32/sim/uvmt_cv32/Makefile`)
+made preventing _you_ from doing so).  Look for the `gen_corev-dv` target in the simulator-specific makefiles in `$CORE_V_VERIF/mk/uvmt/`
 for an exmaple of how core-v-verif runs the generator.
 <br><br>
 
