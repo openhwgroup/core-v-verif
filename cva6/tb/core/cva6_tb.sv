@@ -31,7 +31,13 @@ module cva6_core_only_tb #(
 ) (
   input  logic verilator_clk_i,
   input  logic verilator_rstn_i,
-  output wire  tb_exit_o
+  output wire  tb_exit_o,
+//added for VP
+  output logic        tests_passed,
+  output logic        tests_failed,
+  output logic [31:0] exit_value,
+  output logic        exit_valid
+
 );
 
   localparam CLK_REPORT_COUNT  =  100;
@@ -146,7 +152,12 @@ module cva6_core_only_tb #(
     .addr_i     ( addr[$clog2(NUM_WORDS)-1+$clog2(AXI_DATA_WIDTH/8):$clog2(AXI_DATA_WIDTH/8)] ),
     .wdata_i    ( wdata                                                                       ),
     .be_i       ( be                                                                          ),
-    .rdata_o    ( rdata                                                                       )
+    .rdata_o    ( rdata                                                                       ),
+//added for VP
+    .tests_passed_o ( tests_passed                            ),
+    .tests_failed_o ( tests_failed                            ),
+    .exit_valid_o   ( exit_valid                              ),
+    .exit_value_o   ( exit_value                              )
   );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -205,5 +216,24 @@ module cva6_core_only_tb #(
       end
     end
   end
+
+// check if we succeded
+    always_ff @(posedge tb_clk, negedge tb_rstn) begin
+        if (tests_passed) begin
+            $display("ALL TESTS PASSED");
+            $finish;
+        end
+        if (tests_failed) begin
+            $display("TEST(S) FAILED!");
+            $finish;
+        end
+        if (exit_valid) begin
+            if (exit_value == 0)
+                $display("%m @ %0t: EXIT SUCCESS", $time);
+            else
+                $display("%m @ %0t: EXIT FAILURE: %d", exit_value, $time);
+            $finish;
+        end
+    end
 
 endmodule
