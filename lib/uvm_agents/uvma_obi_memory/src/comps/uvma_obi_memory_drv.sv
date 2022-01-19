@@ -392,11 +392,9 @@ task uvma_obi_memory_drv_c::drv_mstr_req(ref uvma_obi_memory_mstr_seq_item_c req
       @(mstr_mp.drv_mstr_cb);
    end
 
-   // Wait for rvalid
-   if (mstr_mp.drv_mstr_cb.rvalid !== 1'b1) begin
-      while (mstr_mp.drv_mstr_cb.rvalid !== 1'b1) begin
-         @(mstr_mp.drv_mstr_cb);
-      end
+   // Wait for rvalid and inject response latency (could be zero)
+   while (mstr_mp.drv_mstr_cb.rvalid !== 1'b1) begin
+      @(mstr_mp.drv_mstr_cb);
    end
    repeat (req.rready_latency) begin
       @(mstr_mp.drv_mstr_cb);
