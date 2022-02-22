@@ -20,7 +20,7 @@
 /*
  * provide UVM environment entry and exit points.
  */
-import cv32e40x_pkg::pma_region_t;
+import cv32e40x_pkg::pma_cfg_t;
 
   class cv32e40x_ldgen_c;
 
@@ -96,8 +96,8 @@ import cv32e40x_pkg::pma_region_t;
     int fhandle_dbg;
     int fhandle_fix;
 
-    pma_region_t regions[PMA_NUM_REGIONS][$];
-    pma_region_t temp_region;
+    pma_cfg_t regions[PMA_NUM_REGIONS][$];
+    pma_cfg_t temp_region;
     int temp_region_ctr;
     pma_adapted_memory_regions_c pma_adapted_memory;
 
