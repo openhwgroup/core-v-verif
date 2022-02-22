@@ -105,6 +105,9 @@ module uvmt_cv32e40s_interrupt_assert
 
   reg[31:0] expected_irq;
   logic     expected_irq_ack;
+  logic     is_mmode_mstatusmie = (priv_lvl == PRIV_LVL_M) && mstatus_mie;
+  logic     is_umode_uieuip     = (priv_lvl == PRIV_LVL_U) && (uie_q & uip);
+  logic     is_umode_miemip     = (priv_lvl == PRIV_LVL_U) && (mie_q & mip);
 
   reg[31:0] last_instr_rdata;
 
@@ -154,9 +157,6 @@ module uvmt_cv32e40s_interrupt_assert
                  $sformatf("irq_id_o output is 0x%0x which is disabled in MIE: 0x%08x", irq_id_o, mie_q));
 
   // irq_ack_o cannot be asserted without mstatus_mie or U-mode
-  logic is_mmode_mstatusmie = (priv_lvl == PRIV_LVL_M) && mstatus_mie;
-  logic is_umode_uieuip     = (priv_lvl == PRIV_LVL_U) && (uie_q & uip);
-  logic is_umode_miemip     = (priv_lvl == PRIV_LVL_U) && (mie_q & mip);
   a_irq_id_o_mstatus_mie_enabled: assert property (
     irq_ack_o
     |->
@@ -274,7 +274,7 @@ module uvmt_cv32e40s_interrupt_assert
       expected_irq <= next_irq_q;
   end
 
-  assign expected_irq_ack = next_irq_valid & mstatus_mie;
+  assign expected_irq_ack = next_irq_valid && (is_mmode_mstatusmie || is_umode_uieuip || is_umode_miemip);
 
   // Check expected interrupt wins
   property p_irq_arb;
@@ -290,9 +290,7 @@ module uvmt_cv32e40s_interrupt_assert
     irq_ack_o |-> expected_irq_ack;
   endproperty
   a_irq_expected: assert property(p_irq_expected)
-    else
-      `uvm_error(info_tag,
-                 $sformatf("Did not expect interrupt ack: %0d", irq_id_o))
+    else `uvm_error(info_tag, $sformatf("Did not expect interrupt ack: %0d", irq_id_o))
 
   // ---------------------------------------------------------------------------
   // The infamous "first" flag (kludge for $past() handling of t=0 values)
