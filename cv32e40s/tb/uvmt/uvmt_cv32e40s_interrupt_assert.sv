@@ -39,20 +39,22 @@ module uvmt_cv32e40s_interrupt_assert
     // CSR Interface
     input [5:0]  mcause_n, // mcause_n[5]: interrupt, mcause_n[4]: vector
     input [31:0] mip,     // machine interrupt pending
+    input [31:0] uip,     // user interrupt pending
     input [31:0] mie_q,   // machine interrupt enable
+    input [31:0] uie_q,   // user interrupt enable
     input        mstatus_mie, // machine mode interrupt enable
     input [1:0]  mtvec_mode_q, // machine mode interrupt vector mode
 
-    // Instruction fetch stage
+    // IF stage
     input        if_stage_instr_req_o,
     input        if_stage_instr_rvalid_i, // Instruction word is valid
     input [31:0] if_stage_instr_rdata_i, // Instruction word data
     input [ 1:0] alignbuf_outstanding, // Alignment buffer's number of outstanding transactions
 
-    // Instruction EX stage
+    // EX stage
     input        ex_stage_instr_valid, // EX pipeline stage has valid input
 
-    // Instruction WB stage (determines executed instructions)
+    // WB stage (determines executed instructions)
     input              wb_stage_instr_valid_i,    // instruction word is valid
     input [31:0]       wb_stage_instr_rdata_i,    // Instruction word data
     input              wb_stage_instr_err_i,      // OBI "err"
@@ -60,6 +62,9 @@ module uvmt_cv32e40s_interrupt_assert
 
     // Load-store unit status
     input              lsu_busy,
+
+    // Privilege
+    input privlvl_t [1:0] priv_lvl,
 
     // Determine whether to cancel instruction if branch taken
     input branch_taken_ex,
@@ -148,14 +153,19 @@ module uvmt_cv32e40s_interrupt_assert
       `uvm_error(info_tag,
                  $sformatf("irq_id_o output is 0x%0x which is disabled in MIE: 0x%08x", irq_id_o, mie_q));
 
-  // irq_ack_o cannot be asserted if mstatus_mie is deasserted
-  property p_irq_id_o_mstatus_mie_enabled;
-    irq_ack_o |-> mstatus_mie;
-  endproperty
-  a_irq_id_o_mstatus_mie_enabled: assert property(p_irq_id_o_mstatus_mie_enabled)
-    else
-      `uvm_error(info_tag,
-                 $sformatf("int_id_o output is 0x%0x but MSTATUS.MIE is disabled", irq_id_o));
+  // irq_ack_o cannot be asserted without mstatus_mie or U-mode
+  logic is_mmode_mstatusmie = (priv_lvl == PRIV_LVL_M) && mstatus_mie;
+  logic is_umode_uieuip     = (priv_lvl == PRIV_LVL_U) && (uie_q & uip);
+  logic is_umode_miemip     = (priv_lvl == PRIV_LVL_U) && (mie_q & mip);
+  a_irq_id_o_mstatus_mie_enabled: assert property (
+    irq_ack_o
+    |->
+    is_mmode_mstatusmie ^ (is_umode_uieuip || is_umode_miemip)
+  ) else `uvm_error(info_tag, $sformatf("interrupt handler taken but unexpected mie/uie"));
+  cov_irq_id_o_mstatus_mstatusmie: cover property (irq_ack_o #-# is_mmode_mstatusmie);
+  cov_irq_id_o_mstatus_uieuip:     cover property (irq_ack_o #-# is_umode_uieuip);
+  cov_irq_id_o_mstatus_miemip:     cover property (irq_ack_o #-# is_umode_miemip);
+
 
   // ---------------------------------------------------------------------------
   // Interrupt CSR checks
