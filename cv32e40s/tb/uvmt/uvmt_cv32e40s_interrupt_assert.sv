@@ -39,9 +39,7 @@ module uvmt_cv32e40s_interrupt_assert
     // CSR Interface
     input [5:0]  mcause_n, // mcause_n[5]: interrupt, mcause_n[4]: vector
     input [31:0] mip,     // machine interrupt pending
-    input [31:0] uip,     // user interrupt pending
     input [31:0] mie_q,   // machine interrupt enable
-    input [31:0] uie_q,   // user interrupt enable
     input        mstatus_mie,  // machine mode interrupt enable
     input        mstatus_tw,   // "timeout wait"
     input [1:0]  mtvec_mode_q, // machine mode interrupt vector mode
@@ -107,7 +105,6 @@ module uvmt_cv32e40s_interrupt_assert
   reg[31:0] expected_irq;
   logic     expected_irq_ack;
   wire      is_mmode_mstatusmie = (priv_lvl == PRIV_LVL_M) && mstatus_mie;
-  wire      is_umode_uieuip     = (priv_lvl == PRIV_LVL_U) && (uie_q & uip);
   wire      is_umode_miemip     = (priv_lvl == PRIV_LVL_U) && (mie_q & mip);
 
   reg[31:0] last_instr_rdata;
@@ -161,10 +158,9 @@ module uvmt_cv32e40s_interrupt_assert
   a_irq_id_o_mstatus_mie_enabled: assert property (
     irq_ack_o
     |->
-    is_mmode_mstatusmie ^ (is_umode_uieuip || is_umode_miemip)
-  ) else `uvm_error(info_tag, $sformatf("interrupt handler taken but unexpected mie/uie"));
+    is_mmode_mstatusmie ^ is_umode_miemip
+  ) else `uvm_error(info_tag, $sformatf("interrupt handler taken but unexpected mie"));
   cov_irq_id_o_mstatus_mstatusmie: cover property (irq_ack_o #-# is_mmode_mstatusmie);
-  cov_irq_id_o_mstatus_uieuip:     cover property (irq_ack_o #-# is_umode_uieuip);
   cov_irq_id_o_mstatus_miemip:     cover property (irq_ack_o #-# is_umode_miemip);
 
 
@@ -275,7 +271,7 @@ module uvmt_cv32e40s_interrupt_assert
       expected_irq <= next_irq_q;
   end
 
-  assign expected_irq_ack = next_irq_valid && (is_mmode_mstatusmie || is_umode_uieuip || is_umode_miemip);
+  assign expected_irq_ack = next_irq_valid && (is_mmode_mstatusmie || is_umode_miemip);
 
   // Check expected interrupt wins
   property p_irq_arb;

@@ -332,9 +332,7 @@ module uvmt_cv32e40s_tb;
     uvmt_cv32e40s_interrupt_assert interrupt_assert_i(
       .mcause_n     ({cs_registers_i.mcause_n.irq, cs_registers_i.mcause_n.exception_code[4:0]}),
       .mip          (cs_registers_i.mip),
-      .uip          (cs_registers_i.uip),
       .mie_q        (cs_registers_i.mie_q),
-      .uie_q        (cs_registers_i.uie_q),
       .mstatus_mie  (cs_registers_i.mstatus_q.mie),
       .mstatus_tw   (cs_registers_i.mstatus_q.tw),
       .mtvec_mode_q (cs_registers_i.mtvec_q.mode),
