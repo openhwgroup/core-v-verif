@@ -106,9 +106,9 @@ module uvmt_cv32e40s_interrupt_assert
 
   reg[31:0] expected_irq;
   logic     expected_irq_ack;
-  logic     is_mmode_mstatusmie = (priv_lvl == PRIV_LVL_M) && mstatus_mie;
-  logic     is_umode_uieuip     = (priv_lvl == PRIV_LVL_U) && (uie_q & uip);
-  logic     is_umode_miemip     = (priv_lvl == PRIV_LVL_U) && (mie_q & mip);
+  wire      is_mmode_mstatusmie = (priv_lvl == PRIV_LVL_M) && mstatus_mie;
+  wire      is_umode_uieuip     = (priv_lvl == PRIV_LVL_U) && (uie_q & uip);
+  wire      is_umode_miemip     = (priv_lvl == PRIV_LVL_U) && (mie_q & mip);
 
   reg[31:0] last_instr_rdata;
 
