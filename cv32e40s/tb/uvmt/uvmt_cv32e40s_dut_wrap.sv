@@ -45,7 +45,7 @@ module uvmt_cv32e40s_dut_wrap
   #(// DUT (riscv_core) parameters.
     parameter cv32e40s_pkg::b_ext_e B_EXT  = cv32e40s_pkg::B_NONE,
     parameter int          PMA_NUM_REGIONS =  0,
-    parameter pma_region_t PMA_CFG[PMA_NUM_REGIONS-1 : 0] = '{default:PMA_R_DEFAULT},
+    parameter pma_cfg_t    PMA_CFG[PMA_NUM_REGIONS-1 : 0] = '{default:PMA_R_DEFAULT},
     parameter int          PMP_NUM_REGIONS = 0,
     // Remaining parameters are used by TB components only
               INSTR_ADDR_WIDTH    =  32,
