@@ -13,7 +13,7 @@
 
 export SHELL = /bin/bash
 
-CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40x
+CV_CORE_REPO   ?= https://github.com/silabs-hfegran/cv32e40x
 CV_CORE_BRANCH ?= master
 CV_CORE_HASH   ?= 45545c989be4654d1400ebcfead53d57fadbb941
 CV_CORE_TAG    ?= none
@@ -31,11 +31,13 @@ EMBENCH_REPO    ?= https://github.com/embench/embench-iot.git
 EMBENCH_BRANCH  ?= master
 EMBENCH_HASH    ?= 6934ddd1ff445245ee032d4258fdeb9828b72af4
 
-COMPLIANCE_REPO   ?= https://github.com/strichmo/riscv-arch-test.git
-COMPLIANCE_BRANCH ?= strichmo/pr/cv32e40x_initial_old_compliance
-# 2020-08-19
-COMPLIANCE_HASH   ?= cf29051b177ba61b8c39de91c33d20d202697423
-
+# TODO: silabs-hfegran: Temporary fork compliance suite to support bitmanip and
+# new repository structure. Revert back to latest mainline when bitmanip PR has
+# been approved and local changes upstreamed.
+# 2022-02-21
+COMPLIANCE_REPO   ?= https://github.com/silabs-hfegran/riscv-arch-test.git
+COMPLIANCE_BRANCH ?= dev_hf_riscv_arch_test
+COMPLIANCE_HASH   ?= 43556e3ae4e98d5e739204f37a11769e14154b7e
 # This Spike repo is only cloned when the DPI disassembler needs to be rebuilt
 # Typically users can simply use the checked-in shared library
 DPI_DASM_SPIKE_REPO   ?= https://github.com/riscv/riscv-isa-sim.git
