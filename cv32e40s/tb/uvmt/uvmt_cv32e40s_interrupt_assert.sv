@@ -42,7 +42,8 @@ module uvmt_cv32e40s_interrupt_assert
     input [31:0] uip,     // user interrupt pending
     input [31:0] mie_q,   // machine interrupt enable
     input [31:0] uie_q,   // user interrupt enable
-    input        mstatus_mie, // machine mode interrupt enable
+    input        mstatus_mie,  // machine mode interrupt enable
+    input        mstatus_tw,   // "timeout wait"
     input [1:0]  mtvec_mode_q, // machine mode interrupt vector mode
 
     // IF stage
@@ -343,6 +344,7 @@ module uvmt_cv32e40s_interrupt_assert
                   (wb_stage_instr_rdata_i == WFI_INSTR_DATA) &&
                   !branch_taken_ex                           &&
                   !wb_stage_instr_err_i                      &&
+                  !((priv_lvl == PRIV_LVL_U) && mstatus_tw)  &&
                   (wb_stage_instr_mpu_status == MPU_OK);
   always @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin

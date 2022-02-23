@@ -336,6 +336,7 @@ module uvmt_cv32e40s_tb;
       .mie_q        (cs_registers_i.mie_q),
       .uie_q        (cs_registers_i.uie_q),
       .mstatus_mie  (cs_registers_i.mstatus_q.mie),
+      .mstatus_tw   (cs_registers_i.mstatus_q.tw),
       .mtvec_mode_q (cs_registers_i.mtvec_q.mode),
 
       .if_stage_instr_req_o    (if_stage_i.m_c_obi_instr_if.s_req.req),
