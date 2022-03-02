@@ -13,6 +13,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
+//
 
 
 `ifndef __UVME_CV32E40P_ENV_SV__
@@ -213,6 +216,20 @@ function void uvme_cv32e40p_env_c::connect_phase(uvm_phase phase);
 endfunction: connect_phase
 
 
+//@DVT_LINTER_WAIVER_START "MT20220302_01" disable UVM.2.1.16
+//
+// Waiving Verissimo UVM.2.1.16 - Randomization not allowed in components
+// The rationale for this lint rule is as follows:
+//       This restriction allows full control of item / sequence constraints from a test.
+//       A randomize call within a component cannot easily be constrained from a sequence or testcase.
+//
+// While the above, is correct, and ideally the calls to randomize() in this
+// task would be in the base-test, the check is being waived here for two reasons:
+//   1. This code has been in production for a long time and this change could
+//      be disruptive.
+//   2. The calls to randomize() are on sequences that are only randomized
+//      once in this ENV.
+//
 task uvme_cv32e40p_env_c::run_phase(uvm_phase phase);
 
    uvma_obi_memory_fw_preload_seq_c fw_preload_seq;
@@ -296,6 +313,7 @@ task uvme_cv32e40p_env_c::run_phase(uvm_phase phase);
    end
 
 endtask : run_phase
+//@DVT_LINTER_WAIVER_END "MT20220302_01"
 
 
 function void uvme_cv32e40p_env_c::end_of_elaboration_phase(uvm_phase phase);
