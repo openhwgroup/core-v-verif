@@ -63,7 +63,7 @@ module uvmt_cv32e40s_interrupt_assert
     input              lsu_busy,
 
     // Privilege
-    input privlvl_t [1:0] priv_lvl,
+    input privlvl_t    priv_lvl,
 
     // Determine whether to cancel instruction if branch taken
     input branch_taken_ex,

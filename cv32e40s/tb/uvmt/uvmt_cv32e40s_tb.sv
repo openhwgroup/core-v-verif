@@ -83,7 +83,7 @@ module uvmt_cv32e40s_tb;
                              .B_EXT             (uvmt_cv32e40s_pkg::B_EXT),
                              .PMA_NUM_REGIONS   (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
                              .PMA_CFG           (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG),
-                             .PMP_NUM_REGIONS   (CORE_PARAM_PMP_NUM_REGIONS),
+                             .PMP_NUM_REGIONS   (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS),
                              .INSTR_ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
                              .INSTR_RDATA_WIDTH (ENV_PARAM_INSTR_DATA_WIDTH),
                              .RAM_ADDR_WIDTH    (ENV_PARAM_RAM_ADDR_WIDTH)
@@ -486,6 +486,30 @@ module uvmt_cv32e40s_tb;
 
       .*
     );
+
+
+    bind cv32e40s_pmp :
+      uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp_i
+      uvmt_cv32e40s_pmp_assert#(
+        .PMP_GRANULARITY(PMP_GRANULARITY),
+        .PMP_NUM_REGIONS(PMP_NUM_REGIONS),
+        .IS_INSTR_SIDE(1'b1),
+        .MSECCFG_RESET_VAL(cv32e40s_pkg::MSECCFG_DEFAULT)
+      )
+      u_pmp_assert_if_stage(.rst_n(clknrst_if.reset_n),
+                            .*);
+
+    bind  cv32e40s_pmp :
+      uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp_i
+      uvmt_cv32e40s_pmp_assert#(
+        .PMP_GRANULARITY(PMP_GRANULARITY),
+        .PMP_NUM_REGIONS(PMP_NUM_REGIONS),
+        .IS_INSTR_SIDE(1'b0),
+        .MSECCFG_RESET_VAL(cv32e40s_pkg::MSECCFG_DEFAULT)
+      )
+      u_pmp_assert_lsu(.rst_n(clknrst_if.reset_n),
+                       .*);
+
 
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
 
