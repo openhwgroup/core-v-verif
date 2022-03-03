@@ -141,7 +141,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
 
    constraint default_cv32e40s_boot_cons {
       (!mhartid_plusarg_valid)           -> (mhartid           == 'h0000_0000);
-      (!mimpid_plusarg_valid)            -> (mimpid            == 'h0000_0000);
+      (!mimpid_patch_plusarg_valid)      -> (mimpid_patch      == 'h0        );
       (!boot_addr_plusarg_valid)         -> (boot_addr         == 'h0000_0080);
       (!mtvec_addr_plusarg_valid)        -> (mtvec_addr        == 'h0000_0000);
       (!nmi_addr_plusarg_valid)          -> (nmi_addr          == 'h0010_0000);
@@ -397,6 +397,7 @@ function void uvme_cv32e40s_cfg_c::sample_parameters(uvma_core_cntrl_cntxt_c cnt
       pma_regions[i].main           = e40s_cntxt.core_cntrl_vif.pma_cfg[i].main;
       pma_regions[i].bufferable     = e40s_cntxt.core_cntrl_vif.pma_cfg[i].bufferable;
       pma_regions[i].cacheable      = e40s_cntxt.core_cntrl_vif.pma_cfg[i].cacheable;
+      pma_regions[i].integrity      = e40s_cntxt.core_cntrl_vif.pma_cfg[i].integrity;
    end
 
    // Copy to the pma_configuration
