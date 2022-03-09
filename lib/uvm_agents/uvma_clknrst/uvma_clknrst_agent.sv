@@ -50,6 +50,13 @@ class uvma_clknrst_agent_c extends uvm_agent;
       `uvm_field_object(cntxt, UVM_DEFAULT)
    `uvm_component_utils_end
 
+   //@DVT_LINTER_WAIVER_START "MT20220303_01" disable SVTB.33.1.0
+   //
+   // Waiving Verissimo Lint error SVTB.33.1.0 - Duplication
+   //
+   // The following method declarations are 'boiler plate' and typically
+   // very similar from one agent to another.  This causes the "duplicate
+   // code" lint check on Verissimo to fire.
 
    /**
     * Default constructor.
@@ -109,8 +116,11 @@ class uvma_clknrst_agent_c extends uvm_agent;
     */
    extern function void connect_trn_loggers();
 
+   //@DVT_LINTER_WAIVER_END "MT20220303_01"
+
 endclass : uvma_clknrst_agent_c
 
+///////////////////////////////////////////////////////////////////////////////
 
 function uvma_clknrst_agent_c::new(string name="uvma_clknrst_agent", uvm_component parent=null);
 
