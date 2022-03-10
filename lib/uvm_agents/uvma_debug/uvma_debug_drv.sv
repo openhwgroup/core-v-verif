@@ -73,7 +73,7 @@ class uvma_debug_drv_c extends uvm_driver#(
     */
    extern virtual task drv_req(uvma_debug_seq_item_c req);
 
-   //@DVT_LINTER_WAIVER_END "MT20220303_01"
+   //@DVT_LINTER_WAIVER_END "MT20220303_02"
 
 endclass : uvma_debug_drv_c
 
