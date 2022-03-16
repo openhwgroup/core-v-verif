@@ -168,7 +168,7 @@ class uvma_clknrst_mon_trn_logger_json_c extends uvma_clknrst_mon_trn_logger_c;
 
 endclass : uvma_clknrst_mon_trn_logger_json_c
 
-//@DVT_LINTER_WAIVER_START "MT20220304_02" disable SVTB.33.2.0
-//@DVT_LINTER_WAIVER_START "MT20220304_01" disable SVTB.33.1.0
+//@DVT_LINTER_WAIVER_END "MT20220304_02"
+//@DVT_LINTER_WAIVER_END "MT20220304_01"
 
 `endif // __UVMA_CLKNRST_MON_TRN_LOGGER_SV__

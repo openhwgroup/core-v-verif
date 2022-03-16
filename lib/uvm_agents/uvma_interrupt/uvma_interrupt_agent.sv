@@ -50,7 +50,7 @@ class uvma_interrupt_agent_c extends uvm_agent;
       `uvm_field_object(cntxt, UVM_DEFAULT)
    `uvm_component_utils_end
 
-   //@DVT_LINTER_WAIVER_START "MT20220303_03" disable SVTB.33.1.0
+   //@DVT_LINTER_WAIVER_START "MT20220303_05" disable SVTB.33.1.0
    //
    // Waiving Verissimo Lint error SVTB.33.1.0 - Duplication
    //
@@ -116,7 +116,7 @@ class uvma_interrupt_agent_c extends uvm_agent;
     */
    extern function void connect_trn_loggers();
 
-   //@DVT_LINTER_WAIVER_END "MT20220303_03"
+   //@DVT_LINTER_WAIVER_END "MT20220303_05"
 
 endclass : uvma_interrupt_agent_c
 
