@@ -35,12 +35,12 @@
  */
 class uvmt_cv32e40p_firmware_test_c extends uvmt_cv32e40p_base_test_c;
 
+   `uvm_component_utils_begin(uvmt_cv32e40p_firmware_test_c)
+   `uvm_object_utils_end
+
    constraint test_type_cons {
      test_cfg.tpt == PREEXISTING_SELFCHECKING;
    }
-
-   `uvm_component_utils_begin(uvmt_cv32e40p_firmware_test_c)
-   `uvm_object_utils_end
 
    /**
     */
