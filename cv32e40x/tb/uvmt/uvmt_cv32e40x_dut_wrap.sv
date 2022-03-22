@@ -165,7 +165,7 @@ module uvmt_cv32e40x_dut_wrap
          .dm_halt_addr_i         ( core_cntrl_if.dm_halt_addr     ),
          .nmi_addr_i             ( core_cntrl_if.nmi_addr         ),
          .mhartid_i              ( core_cntrl_if.mhartid          ),
-         .mimpid_i               ( core_cntrl_if.mimpid           ),
+         .mimpid_patch_i         ( core_cntrl_if.mimpid_patch     ),
          .dm_exception_addr_i    ( core_cntrl_if.dm_exception_addr),
 
          .instr_req_o            ( obi_instr_if_i.req             ),
