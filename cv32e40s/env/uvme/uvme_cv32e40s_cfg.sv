@@ -19,6 +19,7 @@
 `define __UVME_CV32E40S_CFG_SV__
 
 
+import cv32e40s_pkg::*;
 /**
  * Object encapsulating all parameters for creating, connecting and running
  * CV32E40S environment (uvme_cv32e40s_env_c) components.
@@ -141,12 +142,14 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
 
    constraint default_cv32e40s_boot_cons {
       (!mhartid_plusarg_valid)           -> (mhartid           == 'h0000_0000);
-      (!mimpid_plusarg_valid)            -> (mimpid            == 'h0000_0000);
+      (!mimpid_patch_plusarg_valid)      -> (mimpid_patch      == 'h0        );
+      (!mimpid_plusarg_valid)            -> (mimpid            == {12'b0, MIMPID_MAJOR, 4'b0, MIMPID_MINOR, 4'b0, mimpid_patch[3:0]});
       (!boot_addr_plusarg_valid)         -> (boot_addr         == 'h0000_0080);
       (!mtvec_addr_plusarg_valid)        -> (mtvec_addr        == 'h0000_0000);
       (!nmi_addr_plusarg_valid)          -> (nmi_addr          == 'h0010_0000);
       (!dm_halt_addr_plusarg_valid)      -> (dm_halt_addr      == 'h1a11_0800);
       (!dm_exception_addr_plusarg_valid) -> (dm_exception_addr == 'h1a11_1000);
+      solve mimpid_patch before mimpid;
    }
 
    constraint agent_cfg_cons {
@@ -397,6 +400,7 @@ function void uvme_cv32e40s_cfg_c::sample_parameters(uvma_core_cntrl_cntxt_c cnt
       pma_regions[i].main           = e40s_cntxt.core_cntrl_vif.pma_cfg[i].main;
       pma_regions[i].bufferable     = e40s_cntxt.core_cntrl_vif.pma_cfg[i].bufferable;
       pma_regions[i].cacheable      = e40s_cntxt.core_cntrl_vif.pma_cfg[i].cacheable;
+      pma_regions[i].integrity      = e40s_cntxt.core_cntrl_vif.pma_cfg[i].integrity;
    end
 
    // Copy to the pma_configuration
