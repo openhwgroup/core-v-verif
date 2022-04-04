@@ -332,6 +332,7 @@ module CPU #(
         
         // Exception
         if (isvalid==0) begin
+            state.valid  = 0;   // E40P Only
             state.trap   = 1;
             state.pc     = RMData_state.excPC;
 
