@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2005-2021 Imperas Software Ltd., www.imperas.com
+ * Copyright (c) 2005-2022 Imperas Software Ltd., www.imperas.com
  *
  * The contents of this file are provided under the Software License
  * Agreement that you accepted before downloading this file.
@@ -89,9 +89,10 @@ interface RVVI_state #(
     //
     event            notify;
     
-    bit              valid; // Retired instruction
-    bit              trap;  // Trapped instruction
-    bit              halt;  // Halted  instruction
+    bit              valid; // Retired   instruction
+    bit              trap;  // Trapped   instruction
+    bit              halt;  // Halted    instruction
+    bit              sleep; // Sleeiping instruction
     
     bit              intr;  // Flag first instruction of trap handler
     bit [(XLEN-1):0] order;
@@ -303,6 +304,7 @@ module CPU #(
     
     task busWait;
         @(posedge bus.Clk);
+        if (state.valid==1) state.valid = 0;
         busStep;
     endtask
     
@@ -344,13 +346,8 @@ module CPU #(
             state.pc     = RMData_state.retPC;
         
         end else begin
-            state.valid = 0;
-            state.trap  = 1;
-            state.pc    = RMData_state.excPC;
+            $display("Unexpected isvalid=%0d %0t", isvalid, $time);
         end
-        
-        state.pcnext = RMData_state.nextPC;
-        state.order  = RMData_state.order;
         
         ->state.notify;
     endtask
