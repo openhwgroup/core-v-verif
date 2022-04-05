@@ -322,11 +322,27 @@ module CPU #(
         io.irq_id_o  = RMData_io.irq_id_o;
         io.DM        = RMData_io.DM;
                 
-        // RVVI_S
-        if (isvalid) begin
-            state.valid = 1;
-            state.trap  = 0;
-            state.pc    = RMData_state.retPC;
+        state.valid  = 1;
+        state.trap   = 0;
+        state.sleep  = 0;
+        state.pcnext = RMData_state.nextPC;
+        state.order  = RMData_state.order;
+        
+        // Exception
+        if (isvalid==0) begin
+            state.valid  = 0;   // E40P Only
+            state.trap   = 1;
+            state.pc     = RMData_state.excPC;
+
+        // Sleep
+        end else if (isvalid==1) begin
+            state.sleep  = 1;
+            state.pc     = RMData_state.retPC;
+          
+        // Retire
+        end else if (isvalid==2) begin
+            state.pc     = RMData_state.retPC;
+        
         end else begin
             state.valid = 0;
             state.trap  = 1;

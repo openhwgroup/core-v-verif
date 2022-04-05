@@ -45,7 +45,7 @@ module uvmt_cv32e40x_iss_wrap
                 .ROM_BYTE_SIZE(ROM_BYTE_SIZE),
                 .RAM_BYTE_SIZE(RAM_BYTE_SIZE)) ram(bus);
 
-   CPU #(.ID(ID), .VARIANT("CV32E40X")) cpu(bus, io);
+   CPU #(.ID(ID), .VARIANT("CV32E40X_V0.0.0")) cpu(bus, io);
 
    bit use_iss = 0;
 
