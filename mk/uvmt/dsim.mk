@@ -56,7 +56,7 @@ endif
 DSIM_PMA_INC += +incdir+$(TBSRC_HOME)/uvmt \
                 +incdir+$(CV_CORE_PKG)/rtl/include \
                 +incdir+$(CV_CORE_COREVDV_PKG)/ldgen \
-				+incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
+                +incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
 
 # Seed management for constrained-random sims. This is an intentional repeat
 # of the root Makefile: dsim regressions use random seeds by default.
@@ -178,6 +178,7 @@ test: $(DSIM_SIM_PREREQ) hex gen_ovpsim_ic
 			-sv_lib $(DPI_DASM_LIB) \
 			-sv_lib $(abspath $(SVLIB_LIB)) \
 			-sv_lib $(OVP_MODEL_DPI) \
+			-sv_lib $(IMPERAS_DV_MODEL) \
 			+UVM_TESTNAME=$(TEST_UVM_TEST) \
 			+firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
 			+elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
@@ -191,6 +192,7 @@ asm: comp $(ASM_DIR)/$(ASM_PROG).hex $(ASM_DIR)/$(ASM_PROG).elf
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
 		-sv_lib $(OVP_MODEL_DPI) \
+		-sv_lib $(IMPERAS_DV_MODEL) \
 		+UVM_TESTNAME=$(UVM_TESTNAME) \
 		+firmware=$(ASM_DIR)/$(ASM_PROG).hex \
 		+elf_file=$(ASM_DIR)/$(ASM_PROG).elf
@@ -225,6 +227,7 @@ compliance: comp build_compliance
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
 		-sv_lib $(OVP_MODEL_DPI) \
+		-sv_lib $(IMPERAS_DV_MODEL) \
 		+UVM_TESTNAME=$(UVM_TESTNAME) \
 		+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).hex \
 		+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).elf
@@ -243,6 +246,7 @@ no-test-program: comp
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
 		-sv_lib $(OVP_MODEL_DPI) \
+		-sv_lib $(IMPERAS_DV_MODEL) \
 		+UVM_TESTNAME=$(UVM_TESTNAME)
 
 ################################################################################
@@ -257,6 +261,7 @@ dsim-firmware-unit-test: comp
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
 		-sv_lib $(OVP_MODEL_DPI) \
+		-sv_lib $(IMPERAS_DV_MODEL) \
 		+UVM_TESTNAME=uvmt_$(CV_CORE_LC)_firmware_test_c \
 		+firmware=$(FIRMWARE)/firmware_unit_test.hex \
 		+elf_file=$(FIRMWARE)/firmware_unit_test.elf
