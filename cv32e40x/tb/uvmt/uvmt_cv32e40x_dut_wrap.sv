@@ -112,7 +112,7 @@ module uvmt_cv32e40x_dut_wrap
     assign obi_instr_if_i.rreadypar = 1'b0;
 
     // --------------------------------------------
-    // OBI Data agent v12.2 signal tie-offs
+    // OBI Data agent v1.2 signal tie-offs
     assign obi_data_if_i.auser      = 'b0;
     assign obi_data_if_i.wuser      = 'b0;
     assign obi_data_if_i.aid        = 'b0;

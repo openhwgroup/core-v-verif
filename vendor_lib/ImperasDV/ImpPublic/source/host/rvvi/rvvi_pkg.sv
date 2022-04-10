@@ -42,7 +42,7 @@ package rvvi_pkg;
   // Always write notes to stdout
   function automatic void msgnote (input string msg);
     `ifdef UVM
-      `uvm_info("", msg, UVM_NONE);
+      `uvm_info("", msg, UVM_NONE)
     `else
       $display("[NOTE] %s", msg);
     `endif
@@ -51,7 +51,7 @@ package rvvi_pkg;
   // Write debug messages if debug_level > 0
   function automatic void msgdebug (input string msg);
     `ifdef UVM
-      `uvm_info("", msg, UVM_DEBUG);
+      `uvm_info("", msg, UVM_DEBUG)
     `else
       if (debug_level) $display("[DEBUG] %s", msg);
     `endif
@@ -69,7 +69,7 @@ package rvvi_pkg;
   // Always write warning and increment warning count
   function automatic void msgwarn (input string msg);
     `ifdef UVM
-      `uvm_warn("", msg);
+      `uvm_warning("", msg)
     `else
       $display("[WARNING] %s", msg);
       ++warn_cnt;
@@ -79,7 +79,7 @@ package rvvi_pkg;
   // Always write errors and increment error count
   function automatic void msgerror (input string msg);
     `ifdef UVM
-      `uvm_error("", msg);
+      `uvm_error("", msg)
     `else
       $display("[ERROR] %s", msg);
       ++err_cnt;
@@ -101,33 +101,36 @@ package rvvi_pkg;
     terminate_sim(freason, FATAL);
   endfunction
 
-  function automatic void terminate_sim(input string reason = "", input bit fatal = 0);
-    automatic string tmsg, treason;
+  function automatic void terminate_sim(input string reason = "no reason given", input bit fatal = 0);
+    automatic string tmsg;
 
-    if (reason == "") begin
-      treason = "No reason given";
-    end
-    else begin
-      treason = reason;
-    end
+    `ifdef UVM
+      if (fatal) begin
+        `uvm_fatal("rvvi_pkg::terminate_sim() called due to fatal condition: %s.", reason)
+      end
+      else begin
+        // do not fatal-out if not explicitly indicated
+        `uvm_error("rvvi_pkg::terminate_sim() called due to non-fatal condition: %s.", reason)
+      end
+    `else
+      //if (cmpd_insn == 0) begin
+      //  msgerror($sformatf("%m @ %0t: No instructions compared!", $time));
+      //end
 
-    //if (cmpd_insn == 0) begin
-    //  msgerror($sformatf("%m @ %0t: No instructions compared!", $time));
-    //end
-
-    tmsg = $sformatf("%m @ %0t:\n", $time);
-    tmsg = {tmsg, $sformatf("       %0s: %s\n", (fatal ? "FATAL" : "Normal termination"), treason)};
-    tmsg = {tmsg, $sformatf("       Ran for %0d clock cycles\n", tb_cycles)};
-    tmsg = {tmsg, $sformatf("       Compared %0d instructions\n", cmpd_insn)};
-    tmsg = {tmsg, $sformatf("       Test %s", ((err_cnt > 0) || fatal) ? "FAILED" : "PASSED")};
-    if (fatal) begin
-      tmsg = {tmsg, $sformatf(" due to fatal error(s) and %0d non-fatal errors and %0d warnings.\n\n", err_cnt, warn_cnt)};
-    end
-    else begin
-      tmsg = {tmsg, $sformatf(" with %0d errors and %0d warnings.\n\n", err_cnt, warn_cnt)};
-    end
-    msgnote(tmsg);
-    $finish; // this should be the only call to $finish in the testbench
+      tmsg = $sformatf("%m @ %0t:\n", $time);
+      tmsg = {tmsg, $sformatf("       %0s: %s\n", (fatal ? "FATAL" : "Normal termination"), reason)};
+      tmsg = {tmsg, $sformatf("       Ran for %0d clock cycles\n", tb_cycles)};
+      tmsg = {tmsg, $sformatf("       Compared %0d instructions\n", cmpd_insn)};
+      tmsg = {tmsg, $sformatf("       Test %s", ((err_cnt > 0) || fatal) ? "FAILED" : "PASSED")};
+      if (fatal) begin
+        tmsg = {tmsg, $sformatf(" due to fatal error(s) and %0d non-fatal errors and %0d warnings.\n\n", err_cnt, warn_cnt)};
+      end
+      else begin
+        tmsg = {tmsg, $sformatf(" with %0d errors and %0d warnings.\n\n", err_cnt, warn_cnt)};
+      end
+      msgnote(tmsg);
+      $finish; // this should be the only call to $finish in the testbench
+    `endif // UVM
   endfunction
 
 endpackage: rvvi_pkg

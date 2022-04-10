@@ -35,7 +35,7 @@ DSIM_CODE_COV_SCOPE    ?= $(MAKE_PATH)/../tools/dsim/ccov_scopes.txt
 DSIM_USE_ISS           ?= YES
 
 DSIM_FILE_LIST         ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-DSIM_COMPILE_ARGS      += +define+$(CV_CORE_UC)_TRACE_EXECUTION
+DSIM_COMPILE_ARGS      += +define+$(CV_CORE_UC)_TRACE_EXECUTION+UVM
 DSIM_USER_COMPILE_ARGS ?=
 
 ifeq ($(USE_ISS),YES)
@@ -135,6 +135,7 @@ comp: mk_results $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI)
 		$(DSIM_USER_COMPILE_ARGS) \
 		+incdir+$(DV_UVME_PATH) \
 		+incdir+$(DV_UVMT_PATH) \
+		+incdir+$(CORE_V_VERIF)/vendor_lib/ImperasDV/ImpPublic/include/host \
 		-f $(CV_CORE_MANIFEST) \
 		$(DSIM_FILE_LIST) \
 		-work $(DSIM_WORK) \
@@ -156,7 +157,7 @@ gen_ovpsim_ic:
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
 		echo "$(CFG_OVPSIM)" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
 	fi
-export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic
+#export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic
 
 # Skip compile if COMP is specified and negative
 ifneq ($(call IS_NO,$(COMP)),NO)

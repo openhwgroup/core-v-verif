@@ -22,6 +22,9 @@
 `ifndef __UVMT_CV32E40X_TB_SV__
 `define __UVMT_CV32E40X_TB_SV__
 
+// Import the Imperas-DV RVVI API
+`include "rvvi/rvvi-api.svh" // located in $IMPERAS_HOME/ImpPublic/include/host
+//`include "rvvi_macros.svh"   // located in ./examples/openhwgroup_cv32e40x/systemverilog
 
 /**
  * Module encapsulating the CV32E40X DUT wrapper, and associated SV interfaces.
@@ -75,7 +78,19 @@ module uvmt_cv32e40x_tb;
                                                    .sec_lvl    ());     // Core status outputs
 
    // RVVI SystemVerilog Interface
-   RVVI_VLG                     rvvi_if();
+   RVVI_VLG #( .NHART(1), .ISSUE(1) ) rvvi_if();
+
+//   // TODO: do a proper job of binding this in (should it be in dut_wrap?)
+//   assign rvvi_if.clk            = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.clk;
+//   assign rvvi_if.valid[0][0]    = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_valid;
+//   assign rvvi_if.order[0][0]    = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_order;
+//   assign rvvi_if.insn[0][0]     = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_insn;
+//   assign rvvi_if.trap[0][0]     = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_trap;
+//   assign rvvi_if.intr[0][0]     = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_intr;
+//   assign rvvi_if.mode[0][0]     = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_mode;
+//   assign rvvi_if.ixl[0][0]      = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_ixl;
+//   assign rvvi_if.pc_rdata[0][0] = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_pc_rdata;
+//   assign rvvi_if.pc_wdata[0][0] = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_pc_wdata;
 
   /**
    * DUT WRAPPER instance:
@@ -104,39 +119,42 @@ module uvmt_cv32e40x_tb;
                             );
 
   bind cv32e40x_wrapper
-    uvma_rvfi_instr_if#(uvme_cv32e40x_pkg::ILEN,
-                        uvme_cv32e40x_pkg::XLEN) rvfi_instr_if_0_i(.clk(clk_i),
-                                                                   .reset_n(rst_ni),
-
-                                                                   .rvfi_valid(rvfi_i.rvfi_valid[0]),
-                                                                   .rvfi_order(rvfi_i.rvfi_order[uvma_rvfi_pkg::ORDER_WL*0+:uvma_rvfi_pkg::ORDER_WL]),
-                                                                   .rvfi_insn(rvfi_i.rvfi_insn[uvme_cv32e40x_pkg::ILEN*0+:uvme_cv32e40x_pkg::ILEN]),
-                                                                   .rvfi_trap(rvfi_i.rvfi_trap[11:0]),
-                                                                   .rvfi_halt(rvfi_i.rvfi_halt[0]),
-                                                                   .rvfi_intr(rvfi_i.rvfi_intr.intr),
-                                                                   .rvfi_dbg(rvfi_i.rvfi_dbg),
-                                                                   .rvfi_dbg_mode(rvfi_i.rvfi_dbg_mode),
-                                                                   .rvfi_nmip(rvfi_i.rvfi_nmip),
-                                                                   .rvfi_mode(rvfi_i.rvfi_mode[uvma_rvfi_pkg::MODE_WL*0+:uvma_rvfi_pkg::MODE_WL]),
-                                                                   .rvfi_ixl(rvfi_i.rvfi_ixl[uvma_rvfi_pkg::IXL_WL*0+:uvma_rvfi_pkg::IXL_WL]),
-                                                                   .rvfi_pc_rdata(rvfi_i.rvfi_pc_rdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]),
-                                                                   .rvfi_pc_wdata(rvfi_i.rvfi_pc_wdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]),
-                                                                   .rvfi_rs1_addr(rvfi_i.rvfi_rs1_addr[uvma_rvfi_pkg::GPR_ADDR_WL*0+:uvma_rvfi_pkg::GPR_ADDR_WL]),
-                                                                   .rvfi_rs1_rdata(rvfi_i.rvfi_rs1_rdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]),
-                                                                   .rvfi_rs2_addr(rvfi_i.rvfi_rs2_addr[uvma_rvfi_pkg::GPR_ADDR_WL*0+:uvma_rvfi_pkg::GPR_ADDR_WL]),
-                                                                   .rvfi_rs2_rdata(rvfi_i.rvfi_rs2_rdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]),
-                                                                   .rvfi_rs3_addr('0),
-                                                                   .rvfi_rs3_rdata('0),
-                                                                   .rvfi_rd1_addr(rvfi_i.rvfi_rd_addr[uvma_rvfi_pkg::GPR_ADDR_WL*0+:uvma_rvfi_pkg::GPR_ADDR_WL]),
-                                                                   .rvfi_rd1_wdata(rvfi_i.rvfi_rd_wdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]),
-                                                                   .rvfi_rd2_addr('0),
-                                                                   .rvfi_rd2_wdata('0),
-                                                                   .rvfi_mem_addr(rvfi_i.rvfi_mem_addr[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]),
-                                                                   .rvfi_mem_rdata(rvfi_i.rvfi_mem_rdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]),
-                                                                   .rvfi_mem_rmask(rvfi_i.rvfi_mem_rmask[uvme_cv32e40x_pkg::XLEN/8*0+:uvme_cv32e40x_pkg::XLEN/8]),
-                                                                   .rvfi_mem_wdata(rvfi_i.rvfi_mem_wdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]),
-                                                                   .rvfi_mem_wmask(rvfi_i.rvfi_mem_wmask[uvme_cv32e40x_pkg::XLEN/8*0+:uvme_cv32e40x_pkg::XLEN/8])
-                                                                   );
+    uvma_rvfi_instr_if #(
+                         uvme_cv32e40x_pkg::ILEN,
+                         uvme_cv32e40x_pkg::XLEN
+                        )
+                        rvfi_instr_if_0_i (
+                            .clk            ( clk_i                                                                          ),
+                            .reset_n        ( rst_ni                                                                         ),
+                            .rvfi_valid     ( rvfi_i.rvfi_valid[0]                                                           ),
+                            .rvfi_order     ( rvfi_i.rvfi_order[uvma_rvfi_pkg::ORDER_WL*0+:uvma_rvfi_pkg::ORDER_WL]          ),
+                            .rvfi_insn      ( rvfi_i.rvfi_insn[uvme_cv32e40x_pkg::ILEN*0+:uvme_cv32e40x_pkg::ILEN]           ),
+                            .rvfi_trap      ( rvfi_i.rvfi_trap[11:0]                                                         ),
+                            .rvfi_halt      ( rvfi_i.rvfi_halt[0]                                                            ),
+                            .rvfi_intr      ( rvfi_i.rvfi_intr.intr                                                          ),
+                            .rvfi_dbg       ( rvfi_i.rvfi_dbg                                                                ),
+                            .rvfi_dbg_mode  ( rvfi_i.rvfi_dbg_mode                                                           ),
+                            .rvfi_nmip      ( rvfi_i.rvfi_nmip                                                               ),
+                            .rvfi_mode      ( rvfi_i.rvfi_mode[uvma_rvfi_pkg::MODE_WL*0+:uvma_rvfi_pkg::MODE_WL]             ),
+                            .rvfi_ixl       ( rvfi_i.rvfi_ixl[uvma_rvfi_pkg::IXL_WL*0+:uvma_rvfi_pkg::IXL_WL]                ),
+                            .rvfi_pc_rdata  ( rvfi_i.rvfi_pc_rdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]       ),
+                            .rvfi_pc_wdata  ( rvfi_i.rvfi_pc_wdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]       ),
+                            .rvfi_rs1_addr  ( rvfi_i.rvfi_rs1_addr[uvma_rvfi_pkg::GPR_ADDR_WL*0+:uvma_rvfi_pkg::GPR_ADDR_WL] ),
+                            .rvfi_rs1_rdata ( rvfi_i.rvfi_rs1_rdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]      ),
+                            .rvfi_rs2_addr  ( rvfi_i.rvfi_rs2_addr[uvma_rvfi_pkg::GPR_ADDR_WL*0+:uvma_rvfi_pkg::GPR_ADDR_WL] ),
+                            .rvfi_rs2_rdata ( rvfi_i.rvfi_rs2_rdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]      ),
+                            .rvfi_rs3_addr  ( '0                                                                             ),
+                            .rvfi_rs3_rdata ( '0                                                                             ),
+                            .rvfi_rd1_addr  ( rvfi_i.rvfi_rd_addr[uvma_rvfi_pkg::GPR_ADDR_WL*0+:uvma_rvfi_pkg::GPR_ADDR_WL]  ),
+                            .rvfi_rd1_wdata ( rvfi_i.rvfi_rd_wdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]       ),
+                            .rvfi_rd2_addr  ( '0                                                                             ),
+                            .rvfi_rd2_wdata ( '0                                                                             ),
+                            .rvfi_mem_addr  ( rvfi_i.rvfi_mem_addr[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]       ),
+                            .rvfi_mem_rdata ( rvfi_i.rvfi_mem_rdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]      ),
+                            .rvfi_mem_rmask ( rvfi_i.rvfi_mem_rmask[uvme_cv32e40x_pkg::XLEN/8*0+:uvme_cv32e40x_pkg::XLEN/8]  ),
+                            .rvfi_mem_wdata ( rvfi_i.rvfi_mem_wdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]      ),
+                            .rvfi_mem_wmask ( rvfi_i.rvfi_mem_wmask[uvme_cv32e40x_pkg::XLEN/8*0+:uvme_cv32e40x_pkg::XLEN/8]  )
+                        );
 
   // RVFI CSR binds
   `RVFI_CSR_BIND(marchid)
@@ -519,8 +537,29 @@ module uvmt_cv32e40x_tb;
     */
    initial begin : test_bench_entry_point
 
+     string test_program_elf;
+
      // Specify time format for simulation (units_number, precision_number, suffix_string, minimum_field_width)
      $timeformat(-9, 3, " ns", 8);
+
+     // Initialize REF and load the test-program into it's memory (do this before initializing the DUT).
+     // TODO: is the test-bench entry the best place for this?
+     if (!rvviVersionCheck(11/*`RVVI_API_VERSION*/)) begin
+       `uvm_fatal("CV32E40X_TB", $sformatf("Expecting RVVI API version %0d.", `RVVI_API_VERSION))
+     end
+     // Test-program must have been compiled before we got here...
+     if ($value$plusargs("elf_file=%s", test_program_elf)) begin
+       `uvm_info("CV32E40X_TB", $sformatf("ImperasDV loading test_program %0s", test_program_elf), UVM_NONE)
+       if (!rvviRefInit(test_program_elf, "openhwgroup.ovpworld.org", "CV32E40X", 0, `RVVI_TRUE)) begin
+         `uvm_fatal("CV32E40X_TB", "rvviRefInit failed")
+       end
+       else begin
+         `uvm_info("CV32E40X_TB", "rvviRefInit() succeed", UVM_NONE)
+       end
+     end
+     else begin
+       `uvm_fatal("CV32E40X_TB", "No test_program specified")
+     end
 
      // Add interfaces handles to uvm_config_db
      uvm_config_db#(virtual uvma_isacov_if              )::set(.cntxt(null), .inst_name("*.env.isacov_agent"), .field_name("vif"), .value(isacov_if));
