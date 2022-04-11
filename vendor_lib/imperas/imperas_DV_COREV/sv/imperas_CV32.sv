@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2005-2021 Imperas Software Ltd., www.imperas.com
+ * Copyright (c) 2005-2022 Imperas Software Ltd., www.imperas.com
  *
  * The contents of this file are provided under the Software License
  * Agreement that you accepted before downloading this file.
@@ -89,9 +89,10 @@ interface RVVI_state #(
     //
     event            notify;
     
-    bit              valid; // Retired instruction
-    bit              trap;  // Trapped instruction
-    bit              halt;  // Halted  instruction
+    bit              valid; // Retired   instruction
+    bit              trap;  // Trapped   instruction
+    bit              halt;  // Halted    instruction
+    bit              sleep; // Sleeiping instruction
     
     bit              intr;  // Flag first instruction of trap handler
     bit [(XLEN-1):0] order;
@@ -303,6 +304,7 @@ module CPU #(
     
     task busWait;
         @(posedge bus.Clk);
+        if (state.valid==1) state.valid = 0;
         busStep;
     endtask
     
@@ -322,19 +324,30 @@ module CPU #(
         io.irq_id_o  = RMData_io.irq_id_o;
         io.DM        = RMData_io.DM;
                 
-        // RVVI_S
-        if (isvalid) begin
-            state.valid = 1;
-            state.trap  = 0;
-            state.pc    = RMData_state.retPC;
-        end else begin
-            state.valid = 0;
-            state.trap  = 1;
-            state.pc    = RMData_state.excPC;
-        end
-        
+        state.valid  = 1;
+        state.trap   = 0;
+        state.sleep  = 0;
         state.pcnext = RMData_state.nextPC;
         state.order  = RMData_state.order;
+        
+        // Exception
+        if (isvalid==0) begin
+            state.valid  = 0;   // E40P Only
+            state.trap   = 1;
+            state.pc     = RMData_state.excPC;
+
+        // Sleep
+        end else if (isvalid==1) begin
+            state.sleep  = 1;
+            state.pc     = RMData_state.retPC;
+          
+        // Retire
+        end else if (isvalid==2) begin
+            state.pc     = RMData_state.retPC;
+        
+        end else begin
+            $display("Unexpected isvalid=%0d %0t", isvalid, $time);
+        end
         
         ->state.notify;
     endtask

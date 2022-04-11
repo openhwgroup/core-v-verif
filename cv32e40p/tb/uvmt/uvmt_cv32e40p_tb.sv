@@ -327,7 +327,9 @@ module uvmt_cv32e40p_tb;
       */
     always @(negedge step_compare_if.ovp_cpu_state_stepi) begin
       if (iss_wrap.io.deferint == 0) begin
-        iss_wrap.io.deferint <= 1'b1;
+        if (iss_wrap.io.haltreq == 0) begin
+          iss_wrap.io.deferint <= 1'b1;
+        end
         deferint_ack <= 1'b1;
         irq_deferint_ack <= '0;
       end
@@ -414,6 +416,7 @@ module uvmt_cv32e40p_tb;
 
     always @(posedge clknrst_if_iss.clk or negedge clknrst_if_iss.reset_n) begin
       if (!clknrst_if_iss.reset_n) begin
+          iss_wrap.io.deferint <= 1'b1;
           iss_wrap.io.haltreq <= 1'b0;
           debug_req_state <= INACTIVE;
       end else begin
@@ -428,6 +431,7 @@ module uvmt_cv32e40p_tb;
                       debug_req_state <= DBG_TAKEN;
                       // Already in sync, assert halreq right away
                       if (count_retire == count_issue) begin
+                          iss_wrap.io.deferint <= 1'b0;
                           iss_wrap.io.haltreq <= 1'b1;
                       end
                   end
@@ -435,6 +439,7 @@ module uvmt_cv32e40p_tb;
               DBG_TAKEN: begin
                   // Assert haltreq when we are in sync
                   if (count_retire == count_issue) begin
+                      iss_wrap.io.deferint <= 1'b0;
                       iss_wrap.io.haltreq <= 1'b1;
                       debug_req_state <= DRIVE_REQ;
                   end

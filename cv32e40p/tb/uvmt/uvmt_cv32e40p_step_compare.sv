@@ -207,6 +207,7 @@ module uvmt_cv32e40p_step_compare
                                               `CV32E40P_CORE.cs_registers_i.mcause_q[4:0]};
           //  "mip"           : if (step_compare_if.deferint_prime == 0 || iss_wrap.io.deferint == 0) ignore = 1;
           //                    else csr_val = `CV32E40P_CORE.cs_registers_i.mip;
+            "mtval"         : ignore = 1;
             "mip"           : ignore = 1;
             "mhartid"       : csr_val = `CV32E40P_CORE.cs_registers_i.hart_id_i;
 
