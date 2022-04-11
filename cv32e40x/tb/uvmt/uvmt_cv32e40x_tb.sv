@@ -80,18 +80,6 @@ module uvmt_cv32e40x_tb;
    // RVVI SystemVerilog Interface
    RVVI_VLG #( .NHART(1), .ISSUE(1) ) rvvi_if();
 
-//   // TODO: do a proper job of binding this in (should it be in dut_wrap?)
-//   assign rvvi_if.clk            = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.clk;
-//   assign rvvi_if.valid[0][0]    = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_valid;
-//   assign rvvi_if.order[0][0]    = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_order;
-//   assign rvvi_if.insn[0][0]     = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_insn;
-//   assign rvvi_if.trap[0][0]     = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_trap;
-//   assign rvvi_if.intr[0][0]     = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_intr;
-//   assign rvvi_if.mode[0][0]     = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_mode;
-//   assign rvvi_if.ixl[0][0]      = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_ixl;
-//   assign rvvi_if.pc_rdata[0][0] = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_pc_rdata;
-//   assign rvvi_if.pc_wdata[0][0] = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_pc_wdata;
-
   /**
    * DUT WRAPPER instance:
    * This is an update of the riscv_wrapper.sv from PULP-Platform RI5CY project with
@@ -537,29 +525,8 @@ module uvmt_cv32e40x_tb;
     */
    initial begin : test_bench_entry_point
 
-     string test_program_elf;
-
      // Specify time format for simulation (units_number, precision_number, suffix_string, minimum_field_width)
      $timeformat(-9, 3, " ns", 8);
-
-     // Initialize REF and load the test-program into it's memory (do this before initializing the DUT).
-     // TODO: is the test-bench entry the best place for this?
-     if (!rvviVersionCheck(11/*`RVVI_API_VERSION*/)) begin
-       `uvm_fatal("CV32E40X_TB", $sformatf("Expecting RVVI API version %0d.", `RVVI_API_VERSION))
-     end
-     // Test-program must have been compiled before we got here...
-     if ($value$plusargs("elf_file=%s", test_program_elf)) begin
-       `uvm_info("CV32E40X_TB", $sformatf("ImperasDV loading test_program %0s", test_program_elf), UVM_NONE)
-       if (!rvviRefInit(test_program_elf, "openhwgroup.ovpworld.org", "CV32E40X", 0, `RVVI_TRUE)) begin
-         `uvm_fatal("CV32E40X_TB", "rvviRefInit failed")
-       end
-       else begin
-         `uvm_info("CV32E40X_TB", "rvviRefInit() succeed", UVM_NONE)
-       end
-     end
-     else begin
-       `uvm_fatal("CV32E40X_TB", "No test_program specified")
-     end
 
      // Add interfaces handles to uvm_config_db
      uvm_config_db#(virtual uvma_isacov_if              )::set(.cntxt(null), .inst_name("*.env.isacov_agent"), .field_name("vif"), .value(isacov_if));
@@ -729,6 +696,9 @@ module uvmt_cv32e40x_tb;
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_ADDR_WIDTH"),  .value(ENV_PARAM_INSTR_ADDR_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_DATA_WIDTH"),  .value(ENV_PARAM_INSTR_DATA_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_RAM_ADDR_WIDTH"),    .value(ENV_PARAM_RAM_ADDR_WIDTH)   );
+
+     // Start up ImperasDV
+     imperas_dv.ref_init();
 
      // Run test
      uvm_top.enable_print_topology = 0; // ENV coders enable this as a debug aid

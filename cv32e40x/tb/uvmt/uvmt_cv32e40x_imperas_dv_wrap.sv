@@ -19,15 +19,15 @@
 `ifndef __UVMT_CV32E40X_IMPERAS_DV_WRAP_SV__
 `define __UVMT_CV32E40X_IMPERAS_DV_WRAP_SV__
 
-// RVVI API macros.
-// TODO: where should leave live?
 `define DUT_PATH dut_wrap.cv32e40x_wrapper_i
 `define RVFI_IF  `DUT_PATH.rvfi_instr_if_0_i
 
-`define RVVI_DUT_CSR_SET(CSR_ADDR, CSR_NAME) \
+// RVVI API macros.
+// TODO: where should leave live?
+`define RVVI_DUT_CSR_SET(HARTD_ID, CSR_ADDR, CSR_NAME) \
 if (rvfi_csr_``CSR_NAME``_wmask) begin \
-  `uvm_info("RVVI_DUT_CSR_SET", $formatf("HART=0x%8h, CSR_ADDR=0x%3h, WDATA=0x%8h", tb_hart_id, CSR_ADDR, rvfi_csr_``CSR_NAME``_wdata), UVM_DEBUG) \
-  rvviDutCsrSet(tb_hart_id, ``CSR_ADDR, rvfi_csr_``CSR_NAME``_wdata); \
+  `uvm_info("RVVI_DUT_CSR_SET", $formatf("HART=0x%8h, CSR_ADDR=0x%3h, WDATA=0x%8h", HART_ID, CSR_ADDR, rvfi_csr_``CSR_NAME``_wdata), UVM_DEBUG) \
+  rvviDutCsrSet(HART_ID, ``CSR_ADDR, rvfi_csr_``CSR_NAME``_wdata); \
 end
 
 `define VLG2API_CSR_SET(CSR_ADDR, CSR_NAME) \
@@ -97,9 +97,9 @@ end
 //[ 3:0] [31:0]  CSR_TDATA_ADDR
 
 
-/**
- * Module wrapper for Imperas DV.
- */
+///////////////////////////////////////////////////////////////////////////////
+// Module wrapper for Imperas DV.
+
 module uvmt_cv32e40x_imperas_dv_wrap
   import uvm_pkg::*;
   #(
@@ -121,12 +121,13 @@ module uvmt_cv32e40x_imperas_dv_wrap
 
    VLG2LOG       vlg2log(rvvi);
 
+   string info_tag = "ImperasDV_wrap";
+
    ////////////////////////////////////////////////////////////////////////////
    // Adopted from:
    // ImperasDV/examples/openhwgroup_cv32e40x/systemverilog/cv32e40x_testbench.sv
 
    // TODO: do a proper job of binding this in
-   //assign rvvi.clk            = `DUT_PATH.rvfi_instr_if_0_i.clk;
    assign rvvi.clk            = `RVFI_IF.clk;
    assign rvvi.valid[0][0]    = `RVFI_IF.rvfi_valid;
    assign rvvi.order[0][0]    = `RVFI_IF.rvfi_order;
@@ -167,33 +168,25 @@ module uvmt_cv32e40x_imperas_dv_wrap
    `VLG2API_CSR_SET( `CSR_MIMPID_ADDR,        mimpid        )
    `VLG2API_CSR_SET( `CSR_MHARTID_ADDR,       mhartid       )
 
-//   always @(rvfi_csr_mtvec_wdata, rvfi_csr_mtvec_wmask,
-//            rvfi_csr_mtvec_rdata, rvfi_csr_mtvec_rmask) begin: mtvec_debug_msgs
-//     `uvm_info("ImperasDV Wrapper", $sformatf("rvfi_csr_mtvec_wdata:%x\nrvfi_csr_mtvec_wmask:%x\n",
-//                                               rvfi_csr_mtvec_wdata, rvfi_csr_mtvec_wmask), UVM_DEBUG)
-//     `uvm_info("ImperasDV Wrapper", $sformatf("rvfi_csr_mtvec_rdata:%x\nrvfi_csr_mtvec_rmask:%x\n",
-//                                               rvfi_csr_mtvec_rdata, rvfi_csr_mtvec_rmask), UVM_DEBUG)
-//   end
+   bit [31:0] XREG[32];
+   genvar gi;
+   generate
+       for(gi=0; gi<32; gi++)
+           assign rvvi.x_wdata[0][0][gi] = XREG[gi];
+   endgenerate
 
-//   bit [31:0] XREG[32];
-//   genvar gi;
-//   generate
-//       for(gi=0; gi<32; gi++)
-//           assign rvvi.x_wdata[0][0][gi] = XREG[gi];
-//   endgenerate
+   always @(*) begin
+       int i;
 
-//   always @(*) begin
-//       int i;
-//
-//       for (i=1; i<32; i++) begin
-//           XREG[i] = 32'b0;
-//           if (rvfi_rd_addr==5'(i))
-//               XREG[i] = rvfi_rd_wdata;
-//       end
-//   end
-//
-//   assign rvvi.x_wb[0][0] = 1 << rvfi_rd_addr;
-//
+       for (i=1; i<32; i++) begin
+           XREG[i] = 32'b0;
+           if (`RVFI_IF.rvfi_rd1_addr==5'(i))            // TODO: originally rvfi_rd_addr
+               XREG[i] = `RVFI_IF.rvfi_rd1_wdata;        // TODO: originally rvfi_rd_wdata
+       end
+   end
+
+   assign rvvi.x_wb[0][0] = 1 << `RVFI_IF.rvfi_rd1_addr; // TODO: originally rvfi_rd_addr
+
    ////////////////////////////////////////////////////////////////////////////
    // DEBUG REQUESTS: pass to the reference.
    //                 Include some paranoid checks as well.
@@ -216,68 +209,120 @@ module uvmt_cv32e40x_imperas_dv_wrap
      debug_req_net_prev = debug_req_net;
    end: pass_debug_req_to_ref
 
-//   ////////////////////////////////////////////////////////////////////////////
-//   // INTERRUPTS
-//   always @(posedge tb_clk) begin: pass_irq_to_ref
-//     static bit [31:0] prev_out_irq;
-//     static bit [31:0] out_irq;
-//     static bit [31:0] valid_irq;
-//     static bit [31:0] ack_irq;
-//
-//     if (rvfi_valid) begin
-//       valid_irq <= irq;
-//       ack_irq   <= 32'h0000_0000;
-//     end
-//     if (u_cv32e40x_wrapper.core_i.irq_ack) begin
-//       ack_irq <= irq;
-//     end
-//     out_irq      <= irq | valid_irq | ack_irq;
-//     prev_out_irq <= out_irq;
-//
-//     if (|irq === 1'bX) begin
-//       // tb_fetch_enable is indication the core should have come out of reset.
-//       if (tb_fetch_enable) begin
-//         msgerror($sformatf("%m @ %0t: irq unknown (%b)", $time, irq));
-//       end
-//     end
-//     else if (|irq === 1'bZ) begin
-//       msgfatal($sformatf("%m @ %0t: irq not driven(%b)", $time, irq));
-//     end
-//     else begin
-//       if ((tb_fetch_enable) && (prev_out_irq != out_irq)) begin
-//         // TODO: pass specific bit of irq
-//         /* */
-//         void'(rvvi.net_push("MSWInterrupt",        out_irq[ 3]));
-//         void'(rvvi.net_push("MTimerInterrupt",     out_irq[ 7]));
-//         void'(rvvi.net_push("MExternalInterrupt",  out_irq[11]));
-//         void'(rvvi.net_push("LocalInterrupt0",     out_irq[16]));
-//         void'(rvvi.net_push("LocalInterrupt1",     out_irq[17]));
-//         void'(rvvi.net_push("LocalInterrupt2",     out_irq[18]));
-//         void'(rvvi.net_push("LocalInterrupt3",     out_irq[19]));
-//         void'(rvvi.net_push("LocalInterrupt4",     out_irq[20]));
-//         void'(rvvi.net_push("LocalInterrupt5",     out_irq[21]));
-//         void'(rvvi.net_push("LocalInterrupt6",     out_irq[22]));
-//         void'(rvvi.net_push("LocalInterrupt7",     out_irq[23]));
-//         void'(rvvi.net_push("LocalInterrupt8",     out_irq[24]));
-//         void'(rvvi.net_push("LocalInterrupt9",     out_irq[25]));
-//         void'(rvvi.net_push("LocalInterrupt10",    out_irq[26]));
-//         void'(rvvi.net_push("LocalInterrupt11",    out_irq[27]));
-//         void'(rvvi.net_push("LocalInterrupt12",    out_irq[28]));
-//         void'(rvvi.net_push("LocalInterrupt13",    out_irq[29]));
-//         void'(rvvi.net_push("LocalInterrupt14",    out_irq[30]));
-//         void'(rvvi.net_push("LocalInterrupt15",    out_irq[31]));
-//         /* */
-//         msgdebug($sformatf("%m @ %0t: irq = %8x", $time, irq));
-//       end
-//     end
-//   end: pass_irq_to_ref
-//
-//   always @(irq) begin
-//     msgverbose($sformatf("%m @ %0t: irq = %08X", $time, irq));
-//     if (irq[15:12] !== 4'h0 || irq[10:8] !== 3'b000 || irq[6:4] !== 3'b000 || irq[2:0] !== 3'b000) begin
-//       //msgwarn($sformatf("%m @ %0t: Unsupported interrupt (irq == %8x). Reserved for future standard use.", $time, irq));
-//     end
-//   end
+   ////////////////////////////////////////////////////////////////////////////
+   // INTERRUPTS
+   always @(posedge rvvi.clk) begin: pass_irq_to_ref
+     static bit [31:0] prev_out_irq;
+     static bit [31:0] out_irq;
+     static bit [31:0] valid_irq;
+     static bit [31:0] ack_irq;
+
+     if (`RVFI_IF.rvfi_valid) begin
+       valid_irq <= `DUT_PATH.irq_i;
+       ack_irq   <= 32'h0000_0000;
+     end
+     if (`DUT_PATH.core_i.irq_ack) begin
+       ack_irq <= `DUT_PATH.irq_i;
+     end
+     out_irq      <= `DUT_PATH.irq_i | valid_irq | ack_irq;
+     prev_out_irq <= out_irq;
+
+     if (|`DUT_PATH.irq_i === 1'bX) begin
+       // fetch_enable is indication the core should have come out of reset.
+       if (`DUT_PATH.fetch_enable_i) begin
+         `uvm_error(info_tag, $sformatf("irq unknown (%b)", `DUT_PATH.irq_i))
+       end
+     end
+     else if (|`DUT_PATH.irq_i === 1'bZ) begin
+       `uvm_fatal(info_tag, $sformatf("irq not driven(%b)", `DUT_PATH.irq_i))
+     end
+     else begin
+       if ((`DUT_PATH.fetch_enable_i) && (prev_out_irq != out_irq)) begin
+         void'(rvvi.net_push("MSWInterrupt",        out_irq[ 3]));
+         void'(rvvi.net_push("MTimerInterrupt",     out_irq[ 7]));
+         void'(rvvi.net_push("MExternalInterrupt",  out_irq[11]));
+         void'(rvvi.net_push("LocalInterrupt0",     out_irq[16]));
+         void'(rvvi.net_push("LocalInterrupt1",     out_irq[17]));
+         void'(rvvi.net_push("LocalInterrupt2",     out_irq[18]));
+         void'(rvvi.net_push("LocalInterrupt3",     out_irq[19]));
+         void'(rvvi.net_push("LocalInterrupt4",     out_irq[20]));
+         void'(rvvi.net_push("LocalInterrupt5",     out_irq[21]));
+         void'(rvvi.net_push("LocalInterrupt6",     out_irq[22]));
+         void'(rvvi.net_push("LocalInterrupt7",     out_irq[23]));
+         void'(rvvi.net_push("LocalInterrupt8",     out_irq[24]));
+         void'(rvvi.net_push("LocalInterrupt9",     out_irq[25]));
+         void'(rvvi.net_push("LocalInterrupt10",    out_irq[26]));
+         void'(rvvi.net_push("LocalInterrupt11",    out_irq[27]));
+         void'(rvvi.net_push("LocalInterrupt12",    out_irq[28]));
+         void'(rvvi.net_push("LocalInterrupt13",    out_irq[29]));
+         void'(rvvi.net_push("LocalInterrupt14",    out_irq[30]));
+         void'(rvvi.net_push("LocalInterrupt15",    out_irq[31]));
+
+         `uvm_info(info_tag, $sformatf("irq = %8x", `DUT_PATH.irq_i), UVM_DEBUG)
+       end
+     end
+   end: pass_irq_to_ref
+
+   always @(`DUT_PATH.irq_i) begin: check_valid_interrupts
+     `uvm_info(info_tag, $sformatf("irq = %08X", `DUT_PATH.irq_i), UVM_DEBUG)
+     if (`DUT_PATH.irq_i[15:12] !== 4'h0 || `DUT_PATH.irq_i[10:8] !== 3'b000 || `DUT_PATH.irq_i[6:4] !== 3'b000 || `DUT_PATH.irq_i[2:0] !== 3'b000) begin
+       `uvm_warning(info_tag, $sformatf("Unsupported interrupt (irq == %8x). Reserved for future standard use.", `DUT_PATH.irq_i))
+     end
+   end: check_valid_interrupts
+
+  /////////////////////////////////////////////////////////////////////////////
+  // REF control
+
+  task ref_init;
+    string test_program_elf;
+    reg [31:0] hart_id;
+
+    // Initialize REF and load the test-program into it's memory (do this before initializing the DUT).
+    // TODO: is this the best place for this?
+    if (!rvviVersionCheck(11/*`RVVI_API_VERSION*/)) begin
+      `uvm_fatal(info_tag, $sformatf("Expecting RVVI API version %0d.", `RVVI_API_VERSION))
+    end
+    // Test-program must have been compiled before we got here...
+    if ($value$plusargs("elf_file=%s", test_program_elf)) begin
+      `uvm_info(info_tag, $sformatf("ImperasDV loading test_program %0s", test_program_elf), UVM_NONE)
+      if (!rvviRefInit(test_program_elf, "openhwgroup.ovpworld.org", "CV32E40X", 0, `RVVI_TRUE)) begin
+        `uvm_fatal(info_tag, "rvviRefInit failed")
+      end
+      else begin
+        `uvm_info(info_tag, "rvviRefInit() succeed", UVM_NONE)
+      end
+    end
+    else begin
+      `uvm_fatal(info_tag, "No test_program specified")
+    end
+
+    hart_id = 32'h0000_0000;
+
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLE_ADDR        ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLEH_ADDR       ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRET_ADDR      ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRETH_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLE_ADDR       ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MINSTRET_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER3_ADDR )); // TODO: deal with the MHPMCOUNTER CSRs properly.
+
+    rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR,       `RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_MSTATUS_ADDR,   `RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_MEPC_ADDR,      `RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_MCAUSE_ADDR,    `RVVI_FALSE);
+
+    rvviRefCsrCompareEnable(hart_id, `CSR_MISA_ADDR,      `RVVI_FALSE);
+
+    rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR,      `RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_DEPC_ADDR,      `RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_DSCRATCH0_ADDR, `RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_DSCRATCH1_ADDR, `RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_TDATA1_ADDR,    `RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_TDATA2_ADDR,    `RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR,     `RVVI_FALSE);
+
+    `uvm_info(info_tag, "ref_init() complete", UVM_NONE)
+  endtask // ref_init
 
 endmodule : uvmt_cv32e40x_imperas_dv_wrap
 
