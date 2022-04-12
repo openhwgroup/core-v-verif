@@ -471,7 +471,7 @@ function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();
       unsupported_csr_mask[PMPCFG1] = 1;
       unsupported_csr_mask[PMPCFG2] = 1;
       unsupported_csr_mask[PMPCFG3] = 1;
-      if (priv_spec_version == PRIV_VERSION_MASTER) begin
+      if (priv_spec_version == PRIV_VERSION_1_12) begin
          unsupported_csr_mask[PMPCFG4] = 1;
          unsupported_csr_mask[PMPCFG5] = 1;
          unsupported_csr_mask[PMPCFG6] = 1;
@@ -501,7 +501,7 @@ function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();
       unsupported_csr_mask[PMPADDR13] = 1;
       unsupported_csr_mask[PMPADDR14] = 1;
       unsupported_csr_mask[PMPADDR15] = 1;
-      if (priv_spec_version == PRIV_VERSION_MASTER) begin
+      if (priv_spec_version == PRIV_VERSION_1_12) begin
         unsupported_csr_mask[PMPADDR16] = 1;
         unsupported_csr_mask[PMPADDR17] = 1;
         unsupported_csr_mask[PMPADDR18] = 1;
@@ -570,7 +570,7 @@ function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();
       unsupported_csr_mask[MHPMCOUNTER3H+i] = 1;
    end
 
-  if (priv_spec_version != PRIV_VERSION_MASTER) begin
+  if (priv_spec_version != PRIV_VERSION_1_12) begin
     unsupported_csr_mask[MSTATUSH] = 1;
     unsupported_csr_mask[MCONFIGPTR] = 1;
   end
