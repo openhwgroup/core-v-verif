@@ -145,6 +145,7 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
      PRIV_VERSION_MASTER:   $fwrite(fh, $sformatf("--override root/cpu/priv_version=master\n"));
      PRIV_VERSION_1_10:     $fwrite(fh, $sformatf("--override root/cpu/priv_version=1.10\n"));
      PRIV_VERSION_1_11:     $fwrite(fh, $sformatf("--override root/cpu/priv_version=1.11\n"));
+     PRIV_VERSION_1_12:     $fwrite(fh, $sformatf("--override root/cpu/priv_version=1.12\n"));
      PRIV_VERSION_20190405: $fwrite(fh, $sformatf("--override root/cpu/priv_version=20190405\n"));
    endcase
 

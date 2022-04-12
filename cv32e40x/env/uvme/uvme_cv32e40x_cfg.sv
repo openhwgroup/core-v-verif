@@ -130,7 +130,7 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
       unaligned_access_amo_supported == 1;
 
       bitmanip_version        == BITMANIP_VERSION_1P00;
-      priv_spec_version       == PRIV_VERSION_MASTER;
+      priv_spec_version       == PRIV_VERSION_1_12;
       endianness              == ENDIAN_LITTLE;
 
       boot_addr_valid         == 1;
