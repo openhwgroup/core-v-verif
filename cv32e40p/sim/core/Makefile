@@ -72,7 +72,8 @@ SIM_BSP_RESULTS          = $(SIM_TEST_PROGRAM_RESULTS)/bsp
 SV_CMP_FLAGS =
 
 # Default "custom test-program"
-CUSTOM_PROG  ?= requested_csr_por
+CUSTOM        = $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs/custom
+CUSTOM_PROG  ?= hello-world
 TEST         ?= hello-world
 
 ###############################################################################
@@ -343,7 +344,7 @@ vsim-all:  .opt-rtl
 .PHONY: vsim-run
 vsim-run: ALL_VSIM_FLAGS += -c
 vsim-run: vsim-all
-	$(VSIM) -work $(VWORK) $(DPILIB_VSIM_OPT) $(ALL_VSIM_FLAGS)\
+	$(VSIM) -work $(VWORK) $(DPILIB_VSIM_OPT) $(ALL_VSIM_FLAGS) \
 	$(RTLSRC_VOPT_TB_TOP) -do 'source $(VSIM_SCRIPT); exit -f'
 
 
