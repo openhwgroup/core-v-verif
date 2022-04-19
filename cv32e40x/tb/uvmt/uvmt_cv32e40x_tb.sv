@@ -701,7 +701,7 @@ module uvmt_cv32e40x_tb;
      imperas_dv.ref_init();
 
      // Run test
-     uvm_top.enable_print_topology = 1; // ENV coders enable this as a debug aid
+     uvm_top.enable_print_topology = 0; // ENV coders enable this as a debug aid
      uvm_top.finish_on_completion  = 1;
      uvm_top.run_test();
    end : test_bench_entry_point
@@ -780,12 +780,13 @@ module uvmt_cv32e40x_tb;
 
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
 
-      //if (uvm_top.env.cfg.core_cfg.use_iss) begin
-      //   // Exit handler for OVPsim
-      //end
-      //else begin
+      // Shutdown the Reference Model
+      if (uvm_test_top.env.rvvi_ovpsim_agent.cfg.core_cfg.use_iss) begin
+         // Exit handler for OVPsim
+      end
+      else begin
          void'(rvviRefShutdown());
-      //end
+      end
 
 
       $display("\n%m: *** Test Summary ***\n");
