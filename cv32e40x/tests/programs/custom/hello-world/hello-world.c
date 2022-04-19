@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 
     /* inline assembly: read mvendorid and misa */
     __asm__ volatile("csrr %0, 0xF11" : "=r"(mvendorid_rval));
-//    __asm__ volatile("csrr %0, 0x301" : "=r"(misa_rval));
+    __asm__ volatile("csrr %0, 0x301" : "=r"(misa_rval));
     __asm__ volatile("csrr %0, 0xF12" : "=r"(marchid_rval));
     __asm__ volatile("csrr %0, 0xF13" : "=r"(mimpid_rval));
 
@@ -73,7 +73,6 @@ int main(int argc, char *argv[])
     printf("\tmvendorid = 0x%x\n", mvendorid_rval);
     printf("\tmarchid   = 0x%x\n", marchid_rval);
     printf("\tmimpid    = 0x%x\n", mimpid_rval);
-    /*
     printf("\tmisa      = 0x%x\n", misa_rval);
     mxl = ((misa_rval & 0xC0000000) >> 30); // MXL == MISA[31:30]
     switch (mxl) {
@@ -138,8 +137,7 @@ int main(int argc, char *argv[])
       return EXIT_FAILURE;
     }
     else {
-    */
       printf("\n");
       return EXIT_SUCCESS;
-    //}
+    }
 }

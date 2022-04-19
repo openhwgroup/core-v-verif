@@ -97,61 +97,69 @@ endfunction : end_of_elaboration_phase
 
 function void uvma_rvvi_ovpsim_agent_c::configure_iss();
 
-   // Append options from the core configuration into the ovpsim.ic file to ensure the Imperas ISS
-   // is configured as the core this RVVI is attached to
-   // File is opened in append mode because the Makefile creates an ovpsim.ic file before test execution
-   // and populates any configuration YAML defined options
-   // Note that such use shoulbe be for testing only and nearly all ovpsim.ic switches should be integrated to this method
+  // Append options from the core configuration into the ovpsim.ic file to ensure the Imperas ISS
+  // is configured as the core this RVVI is attached to
+  // File is opened in append mode because the Makefile creates an ovpsim.ic file before test execution
+  // and populates any configuration YAML defined options
+  // Note that such use shoulbe be for testing only and nearly all ovpsim.ic switches should be integrated to this method
 
-   int fh;
+  int    fh;       // file handle ISS control file (typically ovpsim.ic).
+  string refpath;  // root of config path in ISS control file.
 
-   fh = $fopen(cfg.core_cfg.iss_control_file, "a");
+  if (cfg.core_cfg.use_iss) begin
+     refpath = "root/cpu"; // path for OVPsim
+  end
+  else begin
+     refpath = "cpu";      // path for ImperasDV
+  end
 
-   // -------------------------------------------------------------------------------------
-   // ISA Extension support
-   // -------------------------------------------------------------------------------------
-   $fwrite(fh, $sformatf("--override root/cpu/misa_Extensions=0x%06x\n", cfg.core_cfg.get_misa()));
+  fh = $fopen(cfg.core_cfg.iss_control_file, "a");
+
+  // -------------------------------------------------------------------------------------
+  // ISA Extension support
+  // -------------------------------------------------------------------------------------
+  $fwrite(fh, $sformatf("--override %s/misa_Extensions=0x%06x\n", refpath, cfg.core_cfg.get_misa()));
   // TODO: cv32e40x: Remove when correct setting is applied to ovpsim
   if (cfg.core_cfg.core_name == "CV32E40X") begin
-      $fwrite(fh, $sformatf("--override root/cpu/tcontrol_undefined=0\n"));
+      $fwrite(fh, $sformatf("--override %s/tcontrol_undefined=0\n", refpath));
   end
 
    if (cfg.core_cfg.is_ext_b_supported()) begin
       // Bitmanip version
       case (cfg.core_cfg.bitmanip_version)
-         BITMANIP_VERSION_0P90:       $fwrite(fh, $sformatf("--override root/cpu/bitmanip_version=0.90\n"));
-         BITMANIP_VERSION_0P91:       $fwrite(fh, $sformatf("--override root/cpu/bitmanip_version=0.91\n"));
-         BITMANIP_VERSION_0P92:       $fwrite(fh, $sformatf("--override root/cpu/bitmanip_version=0.92\n"));
-         BITMANIP_VERSION_0P93:       $fwrite(fh, $sformatf("--override root/cpu/bitmanip_version=0.93\n"));
-         BITMANIP_VERSION_0P93_DRAFT: $fwrite(fh, $sformatf("--override root/cpu/bitmanip_version=0.93-draft\n"));
-         BITMANIP_VERSION_0P94:       $fwrite(fh, $sformatf("--override root/cpu/bitmanip_version=0.94\n"));
-         BITMANIP_VERSION_1P00:       $fwrite(fh, $sformatf("--override root/cpu/bitmanip_version=1.0.0\n"));
+         BITMANIP_VERSION_0P90:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.90\n",  refpath));
+         BITMANIP_VERSION_0P91:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.91\n",  refpath));
+         BITMANIP_VERSION_0P92:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.92\n",  refpath));
+         BITMANIP_VERSION_0P93:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.93\n",  refpath));
+         BITMANIP_VERSION_0P93_DRAFT: $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.93-draft\n", refpath));
+         BITMANIP_VERSION_0P94:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.94\n",  refpath));
+         BITMANIP_VERSION_1P00:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=1.0.0\n", refpath));
       endcase
 
       // Bitmanip extensions
-      $fwrite(fh, $sformatf("--override root/cpu/Zba=%0d\n", cfg.core_cfg.ext_zba_supported));
-      $fwrite(fh, $sformatf("--override root/cpu/Zbb=%0d\n", cfg.core_cfg.ext_zbb_supported));
-      $fwrite(fh, $sformatf("--override root/cpu/Zbc=%0d\n", cfg.core_cfg.ext_zbc_supported));
-      $fwrite(fh, $sformatf("--override root/cpu/Zbe=%0d\n", cfg.core_cfg.ext_zbe_supported));
-      $fwrite(fh, $sformatf("--override root/cpu/Zbf=%0d\n", cfg.core_cfg.ext_zbf_supported));
-      $fwrite(fh, $sformatf("--override root/cpu/Zbm=%0d\n", cfg.core_cfg.ext_zbm_supported));
-      $fwrite(fh, $sformatf("--override root/cpu/Zbp=%0d\n", cfg.core_cfg.ext_zbp_supported));
-      $fwrite(fh, $sformatf("--override root/cpu/Zbr=%0d\n", cfg.core_cfg.ext_zbr_supported));
-      $fwrite(fh, $sformatf("--override root/cpu/Zbs=%0d\n", cfg.core_cfg.ext_zbs_supported));
-      $fwrite(fh, $sformatf("--override root/cpu/Zbt=%0d\n", cfg.core_cfg.ext_zbt_supported));
+      $fwrite(fh, $sformatf("--override %s/Zba=%0d\n", refpath, cfg.core_cfg.ext_zba_supported));
+      $fwrite(fh, $sformatf("--override %s/Zbb=%0d\n", refpath, cfg.core_cfg.ext_zbb_supported));
+      $fwrite(fh, $sformatf("--override %s/Zbc=%0d\n", refpath, cfg.core_cfg.ext_zbc_supported));
+      $fwrite(fh, $sformatf("--override %s/Zbe=%0d\n", refpath, cfg.core_cfg.ext_zbe_supported));
+      $fwrite(fh, $sformatf("--override %s/Zbf=%0d\n", refpath, cfg.core_cfg.ext_zbf_supported));
+      $fwrite(fh, $sformatf("--override %s/Zbm=%0d\n", refpath, cfg.core_cfg.ext_zbm_supported));
+      $fwrite(fh, $sformatf("--override %s/Zbp=%0d\n", refpath, cfg.core_cfg.ext_zbp_supported));
+      $fwrite(fh, $sformatf("--override %s/Zbr=%0d\n", refpath, cfg.core_cfg.ext_zbr_supported));
+      $fwrite(fh, $sformatf("--override %s/Zbs=%0d\n", refpath, cfg.core_cfg.ext_zbs_supported));
+      $fwrite(fh, $sformatf("--override %s/Zbt=%0d\n", refpath, cfg.core_cfg.ext_zbt_supported));
    end
 
    case(cfg.core_cfg.priv_spec_version)
-     PRIV_VERSION_MASTER:   $fwrite(fh, $sformatf("--override root/cpu/priv_version=master\n"));
-     PRIV_VERSION_1_10:     $fwrite(fh, $sformatf("--override root/cpu/priv_version=1.10\n"));
-     PRIV_VERSION_1_11:     $fwrite(fh, $sformatf("--override root/cpu/priv_version=1.11\n"));
-     PRIV_VERSION_20190405: $fwrite(fh, $sformatf("--override root/cpu/priv_version=20190405\n"));
+     PRIV_VERSION_MASTER:   $fwrite(fh, $sformatf("--override %s/priv_version=master\n",   refpath));
+     PRIV_VERSION_1_10:     $fwrite(fh, $sformatf("--override %s/priv_version=1.10\n",     refpath));
+     PRIV_VERSION_1_11:     $fwrite(fh, $sformatf("--override %s/priv_version=1.11\n",     refpath));
+     PRIV_VERSION_20190405: $fwrite(fh, $sformatf("--override %s/priv_version=20190405\n", refpath));
    endcase
 
    if (cfg.core_cfg.priv_spec_version == PRIV_VERSION_MASTER) begin
      case(cfg.core_cfg.endianness)
-       ENDIAN_LITTLE, ENDIAN_BIG: $fwrite(fh, $sformatf("--override root/cpu/endianFixed=1\n"));
-       ENDIAN_MIXED:              $fwrite(fh, $sformatf("--override root/cpu/endianFixed=0\n"));
+       ENDIAN_LITTLE, ENDIAN_BIG: $fwrite(fh, $sformatf("--override %s/endianFixed=1\n", refpath));
+       ENDIAN_MIXED:              $fwrite(fh, $sformatf("--override %s/endianFixed=0\n", refpath));
      endcase
    end
 
@@ -159,31 +167,31 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    // -------------------------------------------------------------------------------------
    // Boot strap pins
    // -------------------------------------------------------------------------------------
-   $fwrite(fh, $sformatf("--override root/cpu/mhartid=%0d\n", cfg.core_cfg.mhartid));
-   $fwrite(fh, $sformatf("--override root/cpu/mimpid=%0d\n", cfg.core_cfg.mimpid));
-   $fwrite(fh, $sformatf("--override root/cpu/startaddress=0x%08x\n", cfg.core_cfg.boot_addr));
+   $fwrite(fh, $sformatf("--override %s/mhartid=%0d\n",          refpath, cfg.core_cfg.mhartid));
+   $fwrite(fh, $sformatf("--override %s/mimpid=%0d\n",           refpath, cfg.core_cfg.mimpid));
+   $fwrite(fh, $sformatf("--override %s/startaddress=0x%08x\n",  refpath, cfg.core_cfg.boot_addr));
    // Specification forces mtvec[0] high at reset regardless of bootstrap pin state of mtvec_addr_i]0]
-   $fwrite(fh, $sformatf("--override root/cpu/mtvec=0x%08x\n", cfg.core_cfg.mtvec_addr| 32'h1));
-   $fwrite(fh, $sformatf("--override root/cpu/nmi_address=0x%08x\n", cfg.core_cfg.nmi_addr));
-   $fwrite(fh, $sformatf("--override root/cpu/debug_address=0x%08x\n", cfg.core_cfg.dm_halt_addr));
-   $fwrite(fh, $sformatf("--override root/cpu/dexc_address=0x%08x\n", cfg.core_cfg.dm_exception_addr));
+   $fwrite(fh, $sformatf("--override %s/mtvec=0x%08x\n",         refpath, cfg.core_cfg.mtvec_addr| 32'h1));
+   $fwrite(fh, $sformatf("--override %s/nmi_address=0x%08x\n",   refpath, cfg.core_cfg.nmi_addr));
+   $fwrite(fh, $sformatf("--override %s/debug_address=0x%08x\n", refpath, cfg.core_cfg.dm_halt_addr));
+   $fwrite(fh, $sformatf("--override %s/dexc_address=0x%08x\n",  refpath, cfg.core_cfg.dm_exception_addr));
 
    // -------------------------------------------------------------------------------------
    // Parameters
    // -------------------------------------------------------------------------------------
 
    // NUM_MHPMCOUNTERS - Set zero in the noinhibit_mask to enable a counter, starting from index 3
-   $fwrite(fh, $sformatf("--override root/cpu/noinhibit_mask=0x%08x\n", cfg.core_cfg.get_noinhibit_mask()));
+   $fwrite(fh, $sformatf("--override %s/noinhibit_mask=0x%08x\n",                 refpath, cfg.core_cfg.get_noinhibit_mask()));
 
    // PMA Regions
-   $fwrite(fh, $sformatf("--override root/cpu/extension/PMA_NUM_REGIONS=%0d\n", cfg.core_cfg.pma_regions.size()));
+   $fwrite(fh, $sformatf("--override %s/extension/PMA_NUM_REGIONS=%0d\n",         refpath, cfg.core_cfg.pma_regions.size()));
    foreach (cfg.core_cfg.pma_regions[i]) begin
-      $fwrite(fh, $sformatf("--override root/cpu/extension/word_addr_low%0d=0x%08x\n", i, cfg.core_cfg.pma_regions[i].word_addr_low));
-      $fwrite(fh, $sformatf("--override root/cpu/extension/word_addr_high%0d=0x%08x\n", i, cfg.core_cfg.pma_regions[i].word_addr_high));
-      $fwrite(fh, $sformatf("--override root/cpu/extension/main%0d=%0d\n", i, cfg.core_cfg.pma_regions[i].main));
-      $fwrite(fh, $sformatf("--override root/cpu/extension/bufferable%0d=%0d\n", i, cfg.core_cfg.pma_regions[i].bufferable));
-      $fwrite(fh, $sformatf("--override root/cpu/extension/cacheable%0d=%0d\n", i, cfg.core_cfg.pma_regions[i].cacheable));
-      $fwrite(fh, $sformatf("--override root/cpu/extension/atomic%0d=%0d\n", i, cfg.core_cfg.pma_regions[i].atomic));
+      $fwrite(fh, $sformatf("--override %s/extension/word_addr_low%0d=0x%08x\n",  refpath, i, cfg.core_cfg.pma_regions[i].word_addr_low));
+      $fwrite(fh, $sformatf("--override %s/extension/word_addr_high%0d=0x%08x\n", refpath, i, cfg.core_cfg.pma_regions[i].word_addr_high));
+      $fwrite(fh, $sformatf("--override %s/extension/main%0d=%0d\n",              refpath, i, cfg.core_cfg.pma_regions[i].main));
+      $fwrite(fh, $sformatf("--override %s/extension/bufferable%0d=%0d\n",        refpath, i, cfg.core_cfg.pma_regions[i].bufferable));
+      $fwrite(fh, $sformatf("--override %s/extension/cacheable%0d=%0d\n",         refpath, i, cfg.core_cfg.pma_regions[i].cacheable));
+      $fwrite(fh, $sformatf("--override %s/extension/atomic%0d=%0d\n",            refpath, i, cfg.core_cfg.pma_regions[i].atomic));
    end
 
    $fclose(fh);

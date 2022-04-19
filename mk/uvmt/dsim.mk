@@ -144,10 +144,6 @@ comp: mk_results $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI)
 
 
 ################################################################################
-# General test execution target "test"
-#
-
-################################################################################
 # If the configuration specified OVPSIM arguments, generate an ovpsim.ic file and
 # set IMPERAS_TOOLS to point to it
 gen_ovpsim_ic:
@@ -156,8 +152,15 @@ gen_ovpsim_ic:
 	@touch $(SIM_RUN_RESULTS)/ovpsim.ic
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
 		echo "$(CFG_OVPSIM)" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
+	else \
+		echo "--override cpu/misa_Extensions=0x001106" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
 	fi
-#export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic
+export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic
+
+
+################################################################################
+# General test execution target "test"
+#
 
 # Skip compile if COMP is specified and negative
 ifneq ($(call IS_NO,$(COMP)),NO)

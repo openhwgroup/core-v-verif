@@ -701,7 +701,7 @@ module uvmt_cv32e40x_tb;
      imperas_dv.ref_init();
 
      // Run test
-     uvm_top.enable_print_topology = 0; // ENV coders enable this as a debug aid
+     uvm_top.enable_print_topology = 1; // ENV coders enable this as a debug aid
      uvm_top.finish_on_completion  = 1;
      uvm_top.run_test();
    end : test_bench_entry_point
@@ -721,7 +721,7 @@ module uvmt_cv32e40x_tb;
         end_ovpsim_init_time = svlib_pkg::sys_dayTime();
         `uvm_info("OVPSIM", $sformatf("Initialization time: %0d seconds", end_ovpsim_init_time - start_ovpsim_init_time), UVM_LOW)
       end
-    end
+   end
 
    //TODO verify these are correct with regards to isacov function
    always @(dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_valid) -> isacov_if.retire;
@@ -779,6 +779,14 @@ module uvmt_cv32e40x_tb;
       fatal_count   = rs.get_severity_count(UVM_FATAL);
 
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
+
+      //if (uvm_top.env.cfg.core_cfg.use_iss) begin
+      //   // Exit handler for OVPsim
+      //end
+      //else begin
+         void'(rvviRefShutdown());
+      //end
+
 
       $display("\n%m: *** Test Summary ***\n");
 

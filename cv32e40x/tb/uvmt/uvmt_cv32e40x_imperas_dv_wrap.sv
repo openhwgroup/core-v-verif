@@ -264,10 +264,10 @@ module uvmt_cv32e40x_imperas_dv_wrap
    end: pass_irq_to_ref
 
    always @(`DUT_PATH.irq_i) begin: check_valid_interrupts
-     `uvm_info(info_tag, $sformatf("irq = %08X", `DUT_PATH.irq_i), UVM_DEBUG)
-     if (`DUT_PATH.irq_i[15:12] !== 4'h0 || `DUT_PATH.irq_i[10:8] !== 3'b000 || `DUT_PATH.irq_i[6:4] !== 3'b000 || `DUT_PATH.irq_i[2:0] !== 3'b000) begin
-       `uvm_warning(info_tag, $sformatf("Unsupported interrupt (irq == %8x). Reserved for future standard use.", `DUT_PATH.irq_i))
-     end
+     `uvm_info(info_tag, $sformatf("irq = %08X", `DUT_PATH.irq_i), UVM_NONE)
+     //if (`DUT_PATH.irq_i[15:12] !== 4'h0 || `DUT_PATH.irq_i[10:8] !== 3'b000 || `DUT_PATH.irq_i[6:4] !== 3'b000 || `DUT_PATH.irq_i[2:0] !== 3'b000) begin
+     //  `uvm_warning(info_tag, $sformatf("Unsupported interrupt (irq == %8x). Reserved for future standard use.", `DUT_PATH.irq_i))
+     //end
    end: check_valid_interrupts
 
   /////////////////////////////////////////////////////////////////////////////
