@@ -780,8 +780,9 @@ module uvmt_cv32e40x_tb;
 
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
 
+      // FIXME
       // Shutdown the Reference Model
-      if (uvm_test_top.env.rvvi_ovpsim_agent.cfg.core_cfg.use_iss) begin
+      if (0/*uvm_test_top.env.rvvi_ovpsim_agent.cfg.core_cfg.use_iss*/) begin
          // Exit handler for OVPsim
       end
       else begin
