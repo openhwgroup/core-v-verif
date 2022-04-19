@@ -279,7 +279,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
 
     // Initialize REF and load the test-program into it's memory (do this before initializing the DUT).
     // TODO: is this the best place for this?
-    if (!rvviVersionCheck(11/*`RVVI_API_VERSION*/)) begin
+    if (!rvviVersionCheck(`RVVI_API_VERSION)) begin
       `uvm_fatal(info_tag, $sformatf("Expecting RVVI API version %0d.", `RVVI_API_VERSION))
     end
     // Test-program must have been compiled before we got here...
