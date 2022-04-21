@@ -18,6 +18,7 @@
 module uvmt_cv32e40x_interrupt_assert
   import uvm_pkg::*;
   import cv32e40x_pkg::*;
+  import uvmt_cv32e40x_pkg::*;
   (
 
     input clk,   // Gated clock
@@ -304,8 +305,9 @@ module uvmt_cv32e40x_interrupt_assert
   endproperty
   a_mip_irq_i: assert property(p_mip_irq_i)
     else
-      `uvm_error(info_tag,
-                 $sformatf("MIP of 0x%08x does not follow flopped irq_i input: 0x%08x", mip, $past(irq_i)));
+      `uvm_error(info_tag, $sformatf(
+        "MIP of 0x%08x does not follow flopped irq_i input: 0x%08x", mip, $past(irq_i)
+      ));
 
   // mip should not be reserved
   property p_mip_not_reserved;
