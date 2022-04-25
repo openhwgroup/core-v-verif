@@ -207,10 +207,12 @@ task uvma_rvvi_ovpsim_drv_c::stepi(REQ req);
 
    // External halt request to debug mode
    if (rvvi_ovpsim_seq_item.dbg_req) begin
+      rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint = 1'b0;
       rvvi_ovpsim_cntxt.ovpsim_io_vif.haltreq  = 1'b1;
       rvvi_ovpsim_cntxt.control_vif.stepi();
       @(rvvi_ovpsim_cntxt.state_vif.notify);
-      rvvi_ovpsim_cntxt.ovpsim_io_vif.haltreq = 1'b0;
+      rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint = 1'b1;
+      rvvi_ovpsim_cntxt.ovpsim_io_vif.haltreq  = 1'b0;
       @(posedge rvvi_ovpsim_cntxt.ovpsim_bus_vif.Clk);
    end
 
