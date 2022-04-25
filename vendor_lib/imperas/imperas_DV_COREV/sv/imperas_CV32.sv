@@ -393,7 +393,7 @@ module CPU #(
         SVData_io.InstructionBusFault = io.InstructionBusFault;
         
         SVData_state.cycles           = cycles;
-        
+
         svimp_push(SVData_io, SVData_state);
         initialized = 1;
     endfunction
