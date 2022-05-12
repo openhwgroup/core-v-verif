@@ -366,6 +366,8 @@ module uvmt_cv32e40s_tb;
 
   bind  cv32e40s_wrapper
     uvmt_cv32e40s_umode_assert  umode_assert_i (
+      .rvfi_valid          (rvfi_i.rvfi_valid),
+      .rvfi_csr_misa_rdata (rvfi_i.rvfi_csr_misa_rdata),
       .*
     );
 

@@ -16,6 +16,32 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
 
-module  uvmt_cv32e40s_umode_assert;
+module  uvmt_cv32e40s_umode_assert
+  import uvm_pkg::*;
+(
+  input  clk_i,
+  input  rst_ni,
+
+  input        rvfi_valid,
+  input [31:0] rvfi_csr_misa_rdata
+);
+
+  default clocking @(posedge clk_i); endclocking
+  default disable iff !rst_ni;
+
+  string info_tag = "CV32E40S_UMODE_ASSERT";
+
+  localparam int MISA_U_POS = 20;
+  localparam int MISA_S_POS = 18;
+  localparam int MISA_N_POS = 13;
+
+
+  a_misa_bits: assert property (
+    rvfi_valid
+    |->
+     rvfi_csr_misa_rdata[MISA_U_POS] &&
+    !rvfi_csr_misa_rdata[MISA_S_POS] &&
+    !rvfi_csr_misa_rdata[MISA_N_POS]
+  ) else `uvm_error(info_tag, "misa has wrong extension bits");
 
 endmodule : uvmt_cv32e40s_umode_assert
