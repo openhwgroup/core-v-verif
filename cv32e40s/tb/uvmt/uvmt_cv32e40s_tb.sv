@@ -388,7 +388,10 @@ module uvmt_cv32e40s_tb;
   // Core integration assertions
 
   bind cv32e40s_wrapper
-    uvmt_cv32e40s_integration_assert  integration_assert_i (.*);
+    uvmt_cv32e40s_integration_assert  integration_assert_i (
+      .nmi_addr_i ('0),  // TODO:ropeders connect or delete
+      .*
+    );
 
 
   // Debug assertion and coverage interface
@@ -460,7 +463,7 @@ module uvmt_cv32e40s_tb;
       .irq_id_o               (core_i.irq_id),
       .dm_halt_addr_i         (core_i.dm_halt_addr_i),
       .dm_exception_addr_i    (core_i.dm_exception_addr_i),
-      .nmi_addr_i             (core_i.nmi_addr_i),
+      .nmi_addr_i             ('0),  // TODO:ropeders  (core_i.nmi_addr_i),
       .core_sleep_o           (core_i.core_sleep_o),
       .irq_i                  (core_i.irq_i),
       .pc_set                 (core_i.ctrl_fsm.pc_set),
