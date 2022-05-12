@@ -333,7 +333,7 @@ module uvmt_cv32e40s_tb;
 
   // Bind in verification modules to the design
   bind cv32e40s_core
-    uvmt_cv32e40s_interrupt_assert interrupt_assert_i(
+    uvmt_cv32e40s_interrupt_assert  interrupt_assert_i (
       .mcause_n     ({cs_registers_i.mcause_n.irq, cs_registers_i.mcause_n.exception_code[4:0]}),
       .mip          (cs_registers_i.mip),
       .mie_q        (cs_registers_i.mie_q),
@@ -359,6 +359,13 @@ module uvmt_cv32e40s_tb;
       .irq_ack_o (core_i.irq_ack),
       .irq_id_o  (core_i.irq_id),
 
+      .*
+    );
+
+  // User-mode assertions
+
+  bind  cv32e40s_wrapper
+    uvmt_cv32e40s_umode_assert  umode_assert_i (
       .*
     );
 
