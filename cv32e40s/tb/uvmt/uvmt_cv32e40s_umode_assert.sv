@@ -17,21 +17,23 @@
 
 
 module  uvmt_cv32e40s_umode_assert
+  import cv32e40s_rvfi_pkg::*;
   import uvm_pkg::*;
 (
-  input  clk_i,
-  input  rst_ni,
+  input wire  clk_i,
+  input wire  rst_ni,
 
-  input        rvfi_valid,
-  input [ 2:0] rvfi_mode,
-  input [63:0] rvfi_order,
+  input wire         rvfi_valid,
+  input wire [ 2:0]  rvfi_mode,
+  input wire [63:0]  rvfi_order,
+  input rvfi_trap_t  rvfi_trap,
 
-  input [31:0] rvfi_csr_misa_rdata,
-  input [31:0] rvfi_csr_mscratch_rdata,
-  input [31:0] rvfi_csr_mscratch_rmask,
-  input [31:0] rvfi_csr_mscratch_wdata,
-  input [31:0] rvfi_csr_mscratch_wmask,
-  input [31:0] rvfi_csr_mstatus_rdata
+  input wire [31:0]  rvfi_csr_misa_rdata,
+  input wire [31:0]  rvfi_csr_mscratch_rdata,
+  input wire [31:0]  rvfi_csr_mscratch_rmask,
+  input wire [31:0]  rvfi_csr_mscratch_wdata,
+  input wire [31:0]  rvfi_csr_mscratch_wmask,
+  input wire [31:0]  rvfi_csr_mstatus_rdata
 );
 
   default clocking @(posedge clk_i); endclocking
@@ -45,6 +47,8 @@ module  uvmt_cv32e40s_umode_assert
 
   localparam int MPP_POS = 11;
   localparam int MPP_LEN =  2;
+  localparam int SPP_POS =  8;
+  localparam int SPP_LEN =  1;
 
   localparam int MODE_U = 2'b 00;
   localparam int MODE_M = 2'b 11;
@@ -92,6 +96,7 @@ module  uvmt_cv32e40s_umode_assert
     |->
     rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] inside {MODE_M, MODE_U}
     // TODO:ropeders sufficient with just "rdata" or need "wdata & wmask" too?
+    // TODO:ropeders cover with "mret" instr
   ) else `uvm_error(info_tag, "mpp can only hold user- and machine-mode");
   cov_mpp_mmode: cover property (
     rvfi_valid  &&
@@ -101,5 +106,37 @@ module  uvmt_cv32e40s_umode_assert
     rvfi_valid  &&
     (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == MODE_U)
   );
+
+  a_spp_zero: assert property (
+    rvfi_valid
+    |->
+    (rvfi_csr_mstatus_rdata[SPP_POS+:SPP_LEN] == 'd 0)
+  ) else `uvm_error(info_tag, "spp must be zero because supervisor-mode is not implemented");
+
+/* TODO:ropeders finish writing
+  a_trap_mpp: assert property (
+    rvfi_valid             &&
+    (rvfi_mode == MODE_U)  &&
+    rvfi_trap
+    |=>
+    (rvfi_valid [->1])
+    ##0
+    (rvfi_mode == MODE_M)  &&
+    (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == MODE_U)
+    // TODO:ropeders cross U/X and Exc/Int
+  ) else `uvm_error(info_tag, "when umode exceptions are handled, mpp must be umode");
+*/
+
+  a_traps_mmode: assert property (
+    rvfi_valid  &&
+    rvfi_trap
+    |=>
+    (rvfi_valid [->1])
+    ##0 (rvfi_mode == MODE_M)
+    // TODO:ropeders cross Exc/Int etc
+    // TODO:ropeders assert "rvfi_intr |-> mmode"?
+    // TODO:ropeders assert "if_id.valid |-> has_seen_iobi_req"?
+    // TODO:ropeders assert "!(rvfi_dbg_mode && (rvfi_mode != MODE_M))"?
+  ) else `uvm_error(info_tag, "all traps shall be handled in mmode");
 
 endmodule : uvmt_cv32e40s_umode_assert

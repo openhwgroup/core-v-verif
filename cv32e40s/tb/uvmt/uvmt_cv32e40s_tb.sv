@@ -369,6 +369,7 @@ module uvmt_cv32e40s_tb;
       .rvfi_valid (rvfi_i.rvfi_valid),
       .rvfi_mode  (rvfi_i.rvfi_mode),
       .rvfi_order (rvfi_i.rvfi_order),
+      .rvfi_trap  (rvfi_i.rvfi_trap),
 
       .rvfi_csr_misa_rdata     (rvfi_i.rvfi_csr_misa_rdata),
       .rvfi_csr_mscratch_rdata (rvfi_i.rvfi_csr_mscratch_rdata),
