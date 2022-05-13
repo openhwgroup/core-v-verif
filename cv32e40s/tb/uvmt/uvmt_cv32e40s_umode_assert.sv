@@ -17,6 +17,7 @@
 
 
 module  uvmt_cv32e40s_umode_assert
+  import cv32e40s_pkg::*;
   import cv32e40s_rvfi_pkg::*;
   import uvm_pkg::*;
 (
@@ -27,13 +28,18 @@ module  uvmt_cv32e40s_umode_assert
   input wire [ 2:0]  rvfi_mode,
   input wire [63:0]  rvfi_order,
   input rvfi_trap_t  rvfi_trap,
+  input rvfi_intr_t  rvfi_intr,
+  input wire [31:0]  rvfi_insn,
 
   input wire [31:0]  rvfi_csr_misa_rdata,
   input wire [31:0]  rvfi_csr_mscratch_rdata,
   input wire [31:0]  rvfi_csr_mscratch_rmask,
   input wire [31:0]  rvfi_csr_mscratch_wdata,
   input wire [31:0]  rvfi_csr_mscratch_wmask,
-  input wire [31:0]  rvfi_csr_mstatus_rdata
+  input wire [31:0]  rvfi_csr_mstatus_rdata,
+  input wire [31:0]  rvfi_csr_mstatus_wdata,
+  input wire [31:0]  rvfi_csr_mstatus_wmask,
+  input wire [31:0]  rvfi_csr_mcause_rdata
 );
 
   default clocking @(posedge clk_i); endclocking
@@ -45,13 +51,30 @@ module  uvmt_cv32e40s_umode_assert
   localparam int MISA_S_POS = 18;
   localparam int MISA_N_POS = 13;
 
-  localparam int MPP_POS = 11;
-  localparam int MPP_LEN =  2;
-  localparam int SPP_POS =  8;
-  localparam int SPP_LEN =  1;
+  localparam int MPP_POS  = 11;
+  localparam int MPP_LEN  =  2;
+  localparam int SPP_POS  =  8;
+  localparam int SPP_LEN  =  1;
+  localparam int MPRV_POS = 17;
+  localparam int MPRV_LEN =  1;
 
   localparam int MODE_U = 2'b 00;
   localparam int MODE_M = 2'b 11;
+
+  localparam int MRET_IDATA = 32'b 0011000_00010_00000_000_00000_1110011;
+
+  wire [31:0]  mstatus_writestate  = (rvfi_csr_mstatus_wdata &  rvfi_csr_mstatus_wmask);
+  wire [31:0]  mstatus_legacystate = (rvfi_csr_mstatus_rdata & ~rvfi_csr_mstatus_wmask);
+  wire [31:0]  mstatus_poststate   = (mstatus_writestate | mstatus_legacystate);
+
+  wire  is_rvfi_mret = (
+    rvfi_valid                &&
+    (rvfi_insn == MRET_IDATA) &&
+    !(
+      rvfi_trap.exception  &&
+      rvfi_trap.exception_cause inside {EXC_CAUSE_INSTR_FAULT, EXC_CAUSE_INSTR_BUS_FAULT}
+    )
+  );
 
 
   a_misa_bits: assert property (
@@ -137,6 +160,39 @@ module  uvmt_cv32e40s_umode_assert
     // TODO:ropeders assert "rvfi_intr |-> mmode"?
     // TODO:ropeders assert "if_id.valid |-> has_seen_iobi_req"?
     // TODO:ropeders assert "!(rvfi_dbg_mode && (rvfi_mode != MODE_M))"?
-  ) else `uvm_error(info_tag, "all traps shall be handled in mmode");
+  ) else `uvm_error(info_tag, "all trapsTODO shall be handled in mmode");
+
+  a_interrupt_mmode: assert property (
+    rvfi_valid    &&
+    rvfi_intr[0]  &&
+    (rvfi_intr.interrupt || rvfi_csr_mcause_rdata[31])
+    // TODO:ropeders ((rvfi_intr[0] && rvfi_intr.interrupt) || rvfi_csr_mcause_rdata[31])?
+    |->
+    (rvfi_mode == MODE_M)
+  ) else `uvm_error(info_tag, "all interrupts shall be handled in mmode");
+
+  a_mret_umode: assert property (
+    // TODO:ropeders use "is_rvfi_mret"
+    rvfi_valid                &&
+    (rvfi_insn == MRET_IDATA) &&
+    !(
+      rvfi_trap.exception  &&
+      rvfi_trap.exception_cause inside {EXC_CAUSE_INSTR_FAULT, EXC_CAUSE_INSTR_BUS_FAULT}
+    )
+    |->
+    //(rvfi_csr_mstatus_wdata[MPP_POS+:MPP_LEN] == MODE_U)  &&
+    //(rvfi_csr_mstatus_wmask[MPP_POS+:MPP_LEN] == 2'b 11)
+    mstatus_poststate[MPP_POS+:MPP_LEN] == MODE_U
+    // TODO:ropeders don't allow for "rdata" to "save the day"? Demand "wdata" correctness?
+    // TODO:ropeders refine property w/ clauses until realistic
+  ) else `uvm_error(info_tag, "mret should set mpp to umode");
+
+  a_mret_mprv: assert property (
+    is_rvfi_mret  &&
+    (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] != MODE_M)
+    |->
+    (mstatus_poststate[MPRV_POS+:MPRV_LEN] == 1'b 0)
+    // TODO:ropeders don't allow for "rdata" to "save the day"? Demand "wdata" correctness?
+  ) else `uvm_error(info_tag, "TODO");
 
 endmodule : uvmt_cv32e40s_umode_assert

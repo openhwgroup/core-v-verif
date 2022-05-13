@@ -370,6 +370,8 @@ module uvmt_cv32e40s_tb;
       .rvfi_mode  (rvfi_i.rvfi_mode),
       .rvfi_order (rvfi_i.rvfi_order),
       .rvfi_trap  (rvfi_i.rvfi_trap),
+      .rvfi_intr  (rvfi_i.rvfi_intr),
+      .rvfi_insn  (rvfi_i.rvfi_insn),
 
       .rvfi_csr_misa_rdata     (rvfi_i.rvfi_csr_misa_rdata),
       .rvfi_csr_mscratch_rdata (rvfi_i.rvfi_csr_mscratch_rdata),
@@ -377,6 +379,9 @@ module uvmt_cv32e40s_tb;
       .rvfi_csr_mscratch_wdata (rvfi_i.rvfi_csr_mscratch_wdata),
       .rvfi_csr_mscratch_wmask (rvfi_i.rvfi_csr_mscratch_wmask),
       .rvfi_csr_mstatus_rdata  (rvfi_i.rvfi_csr_mstatus_rdata),
+      .rvfi_csr_mstatus_wdata  (rvfi_i.rvfi_csr_mstatus_wdata),
+      .rvfi_csr_mstatus_wmask  (rvfi_i.rvfi_csr_mstatus_wmask),
+      .rvfi_csr_mcause_rdata   (rvfi_i.rvfi_csr_mcause_rdata),
 
       // TODO:ropeders possible to just bind to rvfi module?
 
