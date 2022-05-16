@@ -31,6 +31,7 @@ module  uvmt_cv32e40s_umode_assert
   input rvfi_intr_t  rvfi_intr,
   input wire [31:0]  rvfi_insn,
   input wire         rvfi_dbg_mode,
+  input wire [31:0]  rvfi_pc_rdata,
 
   input wire [31:0]  rvfi_csr_misa_rdata,
   input wire [31:0]  rvfi_csr_mscratch_rdata,
@@ -41,7 +42,10 @@ module  uvmt_cv32e40s_umode_assert
   input wire [31:0]  rvfi_csr_mstatus_wdata,
   input wire [31:0]  rvfi_csr_mstatus_wmask,
   input wire [31:0]  rvfi_csr_mcause_rdata,
-  input wire [31:0]  rvfi_csr_dcsr_rdata
+  input wire [31:0]  rvfi_csr_dcsr_rdata,
+
+  input wire         mpu_valid,
+  input wire [31:0]  mpu_addr
 );
 
   default clocking @(posedge clk_i); endclocking
@@ -115,6 +119,28 @@ module  uvmt_cv32e40s_umode_assert
     !is_rvfi_instrrevoked  &&
     (rvfi_insn == EBREAK_IDATA)
   );
+
+  reg         rvficycle_hasfetched;
+  reg [31:0]  rvficycle_firstfetchaddr;
+  always @(posedge clk_i) begin
+    if (rst_ni == 0) begin
+      rvficycle_hasfetched <= 0;
+      rvficycle_firstfetchaddr  <= 0;
+    end else begin
+      if (rvfi_valid) begin
+        rvficycle_hasfetched <= 0;
+        rvficycle_firstfetchaddr  <= 0;
+      end
+
+      if (mpu_valid) begin
+        rvficycle_hasfetched <= 1;
+
+        if (rvfi_valid || !rvficycle_hasfetched) begin
+          rvficycle_firstfetchaddr  <= mpu_addr;
+        end
+      end
+    end
+  end
 
 
   a_misa_bits: assert property (
@@ -321,5 +347,23 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_csr_mstatus_rdata[MPRV_POS+:MPRV_LEN] == 0)
     // TODO:ropeders cover mprv 0->0 and 1->0
   ) else `uvm_error(info_tag, "exiting dmode to umode should clear mprv");
+
+  property p_refetch;
+    int mode0;
+    ( rvfi_valid, mode0 = rvfi_mode)  ##1
+    ((rvfi_valid [->1]) ##0 (rvfi_mode != mode0))
+    // TODO:ropeders should compare against order=0 too
+    |->
+    rvficycle_hasfetched  &&
+    (rvficycle_firstfetchaddr == rvfi_pc_rdata);
+    // TODO:ropeders  rtl updates will likely reveal need for tweaking this property
+  endproperty : p_refetch
+  a_refetch: assert property (
+    p_refetch
+    // TODO:ropeders how to also make sure the refetch uses the updated mode?
+    // TODO:ropeders confirm that csr/mode update happens with the assumed timing relation to rvfi_valid
+    // TODO:ropeders how to SVA "if change then was fetch" instead of "if no fetch then no change"?
+    // TODO:ropeders write properties for all necessary cases (NoFetch, WrongFetch, ...)
+  ) else `uvm_error(info_tag, "priv mode change must cause refetch");
 
 endmodule : uvmt_cv32e40s_umode_assert
