@@ -57,23 +57,50 @@ module  uvmt_cv32e40s_umode_assert
   localparam int SPP_LEN  =  1;
   localparam int MPRV_POS = 17;
   localparam int MPRV_LEN =  1;
+  localparam int TW_POS   = 21;
+  localparam int TW_LEN   =  1;
 
   localparam int MODE_U = 2'b 00;
   localparam int MODE_M = 2'b 11;
 
-  localparam int MRET_IDATA = 32'b 0011000_00010_00000_000_00000_1110011;
+  localparam int MRET_IDATA    = 32'b 0011000_00010_00000_000_00000_1110011;
+  localparam int WFI_IDATA     = 32'b 0001000_00101_00000_000_00000_1110011;
+  localparam int CUSTOM0_IDATA = 32'b 100011_00000000000_000_00000_1110011;
+  localparam int CUSTOM0_IMASK = 32'b 111111_00000000000_111_00000_1111111;
+  localparam int CUSTOM1_IDATA = 32'b 110011_00000000000_000_00000_1110011;
+  localparam int CUSTOM1_IMASK = 32'b 111111_00000000000_111_00000_1111111;
+  localparam int URET_IDATA    = 32'b 0000000_00010_00000_000_00000_1110011;
 
   wire [31:0]  mstatus_writestate  = (rvfi_csr_mstatus_wdata &  rvfi_csr_mstatus_wmask);
   wire [31:0]  mstatus_legacystate = (rvfi_csr_mstatus_rdata & ~rvfi_csr_mstatus_wmask);
   wire [31:0]  mstatus_poststate   = (mstatus_writestate | mstatus_legacystate);
-
+  wire  is_rvfi_instrrevoked = (
+    rvfi_trap.exception  &&
+    (rvfi_trap.exception_cause inside {EXC_CAUSE_INSTR_FAULT, EXC_CAUSE_INSTR_BUS_FAULT})
+  );
   wire  is_rvfi_mret = (
-    rvfi_valid                &&
-    (rvfi_insn == MRET_IDATA) &&
-    !(
-      rvfi_trap.exception  &&
-      rvfi_trap.exception_cause inside {EXC_CAUSE_INSTR_FAULT, EXC_CAUSE_INSTR_BUS_FAULT}
+    rvfi_valid             &&
+    !is_rvfi_instrrevoked  &&
+    (rvfi_insn == MRET_IDATA)
+  );
+  wire  is_rvfi_wfi = (
+    rvfi_valid             &&
+    !is_rvfi_instrrevoked  &&
+    (rvfi_insn == WFI_IDATA)
+  );
+  wire  is_rvfi_custominstr = (
+    rvfi_valid             &&
+    !is_rvfi_instrrevoked  &&
+    (
+      ((rvfi_insn & CUSTOM0_IMASK) == CUSTOM0_IDATA)  ||
+      ((rvfi_insn & CUSTOM1_IMASK) == CUSTOM1_IDATA)
     )
+  );
+  wire  is_rvfi_uret = (
+    rvfi_valid             &&
+    !is_rvfi_instrrevoked  &&
+    (rvfi_insn == URET_IDATA)
+    // TODO:ropeders can condense these "is_..." signals?
   );
 
 
@@ -193,6 +220,39 @@ module  uvmt_cv32e40s_umode_assert
     |->
     (mstatus_poststate[MPRV_POS+:MPRV_LEN] == 1'b 0)
     // TODO:ropeders don't allow for "rdata" to "save the day"? Demand "wdata" correctness?
+  ) else `uvm_error(info_tag, "TODO");
+
+  cov_mret_in_umode: cover property (
+    is_rvfi_mret  &&
+    (rvfi_mode == MODE_U)
+  );
+
+  a_wfi_illegal: assert property (
+    is_rvfi_wfi            &&
+    (rvfi_mode == MODE_U)  &&
+    (rvfi_csr_mstatus_rdata[TW_POS+:TW_LEN] == 1)
+    |->
+    rvfi_trap[0]  &&
+    (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_custom_instr: assert property (
+    is_rvfi_custominstr
+    |->
+    rvfi_trap[0]  &&
+    (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+    // TODO:ropeders assert "!(rvfi_trap.exception && !rvfi_trap.exception_cause)"?
+    // TODO:ropeders assert "pipe.illegal ##0 ... rvfi_valid |-> trap"?
+    // TODO:ropeders cover "rvfi_dbg_mode && rvfi_trap"?
+    // TODO:ropeders debug why this CEXes
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_uret: assert property (
+    is_rvfi_uret
+    |->
+    rvfi_trap[0]  &&
+    (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+    // TODO:ropeders can condence these illegal_insn asserts w/ sequence?
   ) else `uvm_error(info_tag, "TODO");
 
 endmodule : uvmt_cv32e40s_umode_assert
