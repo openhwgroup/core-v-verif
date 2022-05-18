@@ -200,6 +200,7 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
                else begin
                   mon_trn.insn_interrupt    = 1;
                   mon_trn.insn_interrupt_id = { 1'b0, csr_mcause[XLEN-2:0] };
+                  `uvm_info("RVFIMON", $sformatf("External Interrupt: mcause=%0x", csr_mcause), UVM_HIGH)
                end
             end
          end
@@ -210,7 +211,7 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
              mon_trn.nmip[0] &&
              mon_trn.csrs["dcsr"].get_csr_retirement_data()[3])
          begin
-            `uvm_info("RVFIMON", $sformatf("Debug NMIP"), UVM_LOW);
+            `uvm_info("RVFIMON", $sformatf("Debug NMIP"), UVM_LOW)
 
             if (mon_trn.nmip[1] == 0) begin
                mon_trn.insn_nmi_load_fault = 1;
