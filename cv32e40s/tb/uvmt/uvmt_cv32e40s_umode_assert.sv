@@ -69,6 +69,12 @@ module  uvmt_cv32e40s_umode_assert
   localparam int EBREAKU_LEN =  1;
   localparam int PRV_POS     =  0;
   localparam int PRV_LEN     =  2;
+  localparam int XS_POS      = 15;
+  localparam int XS_LEN      =  2;
+  localparam int FS_POS      = 13;
+  localparam int FS_LEN      =  2;
+  localparam int SD_POS      = 31;
+  localparam int SD_LEN      =  1;
   // TODO:ropeders would be nice if these came from a trusted place instead of being defined here
 
   localparam int MODE_U = 2'b 00;
@@ -118,6 +124,12 @@ module  uvmt_cv32e40s_umode_assert
     rvfi_valid             &&
     !is_rvfi_instrrevoked  &&
     (rvfi_insn == EBREAK_IDATA)
+  );
+  wire  is_rvfi_csrinstr = (
+    rvfi_valid  &&
+    !is_rvfi_instrrevoked  &&
+    (rvfi_insn[ 6: 0] == 7'b 1110011) &&
+    (rvfi_insn[14:12] inside {1, 2, 3, 5, 6, 7})
   );
 
   reg         rvficycle_hasfetched;
@@ -352,7 +364,7 @@ module  uvmt_cv32e40s_umode_assert
     int mode0;
     ( rvfi_valid, mode0 = rvfi_mode)  ##1
     ((rvfi_valid [->1]) ##0 (rvfi_mode != mode0))
-    // TODO:ropeders should compare against order=0 too
+    // TODO:ropeders should compare against order=0 too  (helper-signal "rvfi_prev_mode"?)
     |->
     rvficycle_hasfetched  &&
     (rvficycle_firstfetchaddr == rvfi_pc_rdata);
@@ -365,5 +377,52 @@ module  uvmt_cv32e40s_umode_assert
     // TODO:ropeders how to SVA "if change then was fetch" instead of "if no fetch then no change"?
     // TODO:ropeders write properties for all necessary cases (NoFetch, WrongFetch, ...)
   ) else `uvm_error(info_tag, "priv mode change must cause refetch");
+
+  a_umode_extensions: assert property (
+    rvfi_valid
+    |->
+    !rvfi_csr_mstatus_rdata[XS_POS+:XS_LEN]  &&
+    !rvfi_csr_mstatus_rdata[FS_POS+:FS_LEN]  &&
+    !rvfi_csr_mstatus_rdata[SD_POS+:SD_LEN]
+  ) else `uvm_error(info_tag, "none of the mstatus umode extension bits shall be used");
+
+  a_illegal_csr_access: assert property (
+    is_rvfi_csrinstr       &&
+    (rvfi_mode == MODE_U)  &&
+    (rvfi_insn[29:28] != MODE_U)
+    |->
+    rvfi_trap[0]        &&
+    rvfi_trap.exception &&
+    (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+  ) else `uvm_error(info_tag, "access to higher lvl csrs is illegal");
+
+  property p_mret_mpp (int mode);
+    is_rvfi_mret  &&
+    (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == mode)  &&
+    !rvfi_dbg_mode
+    ##1
+    (rvfi_valid [->1])
+    ##0
+    !(rvfi_intr[0] && rvfi_intr.interrupt && rvfi_csr_mcause_rdata[31])  &&
+    !(rvfi_dbg_mode)
+    |->
+    (rvfi_mode == mode);
+  endproperty : p_mret_mpp
+  a_mret_mpp_umode: assert property (
+    p_mret_mpp(MODE_U)
+  ) else `uvm_error(info_tag, "TODO");
+  a_mret_mpp_mmode: assert property (
+    p_mret_mpp(MODE_M)
+  ) else `uvm_error(info_tag, "TODO");
+ /*
+  cov_mret_mpp_umode: cover property (
+    is_rvfi_mret  &&
+    (rvfi_mode == MODE_M)  &&
+    (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == MODE_U)  &&
+    !rvfi_dbg_mode
+    ##1
+    (rvfi_valid [->1])  ##0
+  );
+ */
 
 endmodule : uvmt_cv32e40s_umode_assert
