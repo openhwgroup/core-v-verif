@@ -80,6 +80,8 @@ module  uvmt_cv32e40s_umode_assert
   localparam int SD_LEN      =  1;
   localparam int CY_POS      =  0;
   localparam int CY_LEN      =  1;
+  localparam int MPRVEN_POS  =  4;
+  localparam int MPRVEN_LEN  =  1;
   // TODO:ropeders would be nice if these came from a trusted place instead of being defined here
 
   localparam int MODE_U = 2'b 00;
@@ -508,5 +510,39 @@ module  uvmt_cv32e40s_umode_assert
       // TODO:ropeders refactor to helper-signal?
     )
   ) else `uvm_error(info_tag, "TODO");
+
+  a_mprven_zero: assert property (
+    rvfi_valid
+    |->
+    (rvfi_csr_dcsr_rdata[MPRVEN_POS+:MPRVEN_LEN] == 0)
+  ) else `uvm_error(info_tag, "TODO");
+
+  property  p_prv_entry;
+    int mode;
+    (rvfi_valid && !rvfi_dbg_mode)  ##0
+    (1, mode = rvfi_mode)
+    ##1
+    (rvfi_valid [->1])  ##0
+    rvfi_dbg_mode
+    |->
+    (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == mode);
+  endproperty : p_prv_entry
+  a_prv_entry: assert property (
+    p_prv_entry
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_prv_supported: assert property (
+    rvfi_valid
+    |->
+    (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] inside {MODE_U, MODE_M})
+  ) else `uvm_error(info_tag, "TODO");
+  cov_prv_supported_umode: cover property (
+    rvfi_valid  &&
+    (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == MODE_U)
+  );
+  cov_prv_supported_mmode: cover property (
+    rvfi_valid  &&
+    (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == MODE_M)
+  );
 
 endmodule : uvmt_cv32e40s_umode_assert
