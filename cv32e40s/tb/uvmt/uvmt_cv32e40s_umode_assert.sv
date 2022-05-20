@@ -31,6 +31,7 @@ module  uvmt_cv32e40s_umode_assert
   input rvfi_intr_t  rvfi_intr,
   input wire [31:0]  rvfi_insn,
   input wire         rvfi_dbg_mode,
+  input wire [ 2:0]  rvfi_dbg,
   input wire [31:0]  rvfi_pc_rdata,
 
   input wire [31:0]  rvfi_csr_dcsr_rdata,
@@ -117,6 +118,11 @@ module  uvmt_cv32e40s_umode_assert
   wire  is_rvfi_instrrevoked = (
     rvfi_trap.exception  &&
     (rvfi_trap.exception_cause inside {EXC_CAUSE_INSTR_FAULT, EXC_CAUSE_INSTR_BUS_FAULT})
+  );
+  wire  is_rvfi_instrtriggered = (
+    rvfi_trap[0]     &&
+    rvfi_trap.debug  &&
+    (rvfi_trap.debug_cause == DBG_CAUSE_TRIGGER)
   );
   wire  is_rvfi_illegalinsn = (
     rvfi_trap[0]         &&
@@ -356,14 +362,38 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_mode == MODE_U)  &&
     rvfi_csr_dcsr_rdata[EBREAKU_POS+:EBREAKU_LEN]
     |=>
-    (rvfi_valid [->1])
-    ##0 rvfi_dbg_mode
+    (rvfi_valid [->1])  ##0
+    rvfi_dbg_mode
     // TODO:ropeders check rvfi_debug cause too?
     // TODO:ropeders is EBREAKU not supported?
   ) else `uvm_error(info_tag, "TODO");
   cov_ebreaku_bit: cover property (
     rvfi_csr_dcsr_rdata[EBREAKU_POS+:EBREAKU_LEN]
   );
+
+  a_ebreaku_off_except: assert property (
+    is_rvfi_ebreak         &&
+    (rvfi_mode == MODE_U)  &&
+    !rvfi_csr_dcsr_rdata[EBREAKU_POS+:EBREAKU_LEN]
+    |->
+    (
+      rvfi_trap[0]         &&
+      rvfi_trap.exception  &&
+      !rvfi_trap.debug     &&
+      (rvfi_trap.exception_cause == EXC_CAUSE_BREAKPOINT)
+    ) ^ (
+      is_rvfi_instrtriggered
+    )
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_ebreaku_off_nodebug: assert property (
+    is_rvfi_ebreak         &&
+    (rvfi_mode == MODE_U)  &&
+    !rvfi_csr_dcsr_rdata[EBREAKU_POS+:EBREAKU_LEN]
+    |=>
+    (rvfi_valid [->1])  ##0
+    (rvfi_dbg != DBG_CAUSE_EBREAK)
+  ) else `uvm_error(info_tag, "TODO");
 
   a_ecall_umode: assert property (
     is_rvfi_ecall  &&
@@ -376,10 +406,7 @@ module  uvmt_cv32e40s_umode_assert
       ((rvfi_csr_mcause_wdata & rvfi_csr_mcause_wmask) == EXC_CAUSE_ECALL_UMODE)
       // TODO:ropeders check mask is all ones?
     ) ^ (
-      rvfi_trap[0]  &&
-      rvfi_trap.debug  &&
-      (rvfi_trap.debug_cause == DBG_CAUSE_TRIGGER)
-      // TODO:ropeders should be in "revoked" clause?
+      is_rvfi_instrtriggered
     )
     // (might change when triggers are fully implemented)
     // TODO:ropeders don't trust the core pkg EXC_CAUSE defines?
@@ -458,9 +485,7 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_mode == MODE_U)  &&
     (rvfi_insn[29:28] != MODE_U)
     |->
-    rvfi_trap[0]        &&
-    rvfi_trap.exception &&
-    (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+    is_rvfi_illegalinsn
   ) else `uvm_error(info_tag, "access to higher lvl csrs is illegal");
 
   property p_mret_from_mpp (int mode);
@@ -558,9 +583,7 @@ module  uvmt_cv32e40s_umode_assert
       }
     )
     |->
-    rvfi_trap[0]         &&
-    rvfi_trap.exception  &&
-    (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+    is_rvfi_illegalinsn
   ) else `uvm_error(info_tag, "none of the n ext csrs should be present");
 
   a_mprven_zero: assert property (
@@ -605,5 +628,12 @@ module  uvmt_cv32e40s_umode_assert
     rvfi_trap.exception  &&
     (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
   ) else `uvm_error(info_tag, "medeleg and mideleg registers should not exist");
+
+asu_TODO_dbgpriv: assume property (
+  rvfi_valid && rvfi_dbg_mode
+  |->
+  (rvfi_mode == MODE_M)
+     // TODO:ropeders remove when RTL is fixed
+ );
 
 endmodule : uvmt_cv32e40s_umode_assert
