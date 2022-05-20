@@ -391,8 +391,8 @@ module uvmt_cv32e40s_tb;
 
       // TODO:ropeders possible to just bind to rvfi module?
 
-      .mpu_valid (core_i.if_stage_i.mpu_i.core_trans_valid_i),
-      .mpu_addr  (core_i.if_stage_i.mpu_i.core_trans_i.addr),
+      .impu_valid (core_i.if_stage_i.mpu_i.core_trans_valid_i),
+      .impu_addr  (core_i.if_stage_i.mpu_i.core_trans_i.addr),
 
       .*
     );

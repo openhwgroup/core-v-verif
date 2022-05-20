@@ -47,8 +47,8 @@ module  uvmt_cv32e40s_umode_assert
   input wire [31:0]  rvfi_csr_mstatus_wdata,
   input wire [31:0]  rvfi_csr_mstatus_wmask,
 
-  input wire         mpu_valid,
-  input wire [31:0]  mpu_addr
+  input wire         impu_valid,
+  input wire [31:0]  impu_addr
 );
 
   default clocking @(posedge clk_i); endclocking
@@ -97,7 +97,19 @@ module  uvmt_cv32e40s_umode_assert
   localparam int EBREAK_IDATA  = 32'b 000000000001_00000_000_00000_1110011;
   localparam int ECALL_IDATA   = 32'b 000000000000_00000_000_00000_1110011;
 
-  localparam int CSRADDR_CYCLE = 12'h C00;
+  localparam int CSRADDR_USTATUS    = 12'h 000;
+  localparam int CSRADDR_UIE        = 12'h 004;
+  localparam int CSRADDR_UTVEC      = 12'h 005;
+  localparam int CSRADDR_JVT        = 12'h 017;
+  localparam int CSRADDR_USCRATCH   = 12'h 040;
+  localparam int CSRADDR_UEPC       = 12'h 041;
+  localparam int CSRADDR_UCAUSE     = 12'h 042;
+  localparam int CSRADDR_UTVAL      = 12'h 043;
+  localparam int CSRADDR_UIP        = 12'h 044;
+  localparam int CSRADDR_CYCLE      = 12'h C00;
+  localparam int CSRADDR_MEDELEG    = 12'h 302;
+  localparam int CSRADDR_MIDELEG    = 12'h 303;
+  localparam int CSRADDR_MCOUNTEREN = 12'h 306;
 
   wire [31:0]  mstatus_writestate  = (rvfi_csr_mstatus_wdata &  rvfi_csr_mstatus_wmask);
   wire [31:0]  mstatus_legacystate = (rvfi_csr_mstatus_rdata & ~rvfi_csr_mstatus_wmask);
@@ -105,6 +117,11 @@ module  uvmt_cv32e40s_umode_assert
   wire  is_rvfi_instrrevoked = (
     rvfi_trap.exception  &&
     (rvfi_trap.exception_cause inside {EXC_CAUSE_INSTR_FAULT, EXC_CAUSE_INSTR_BUS_FAULT})
+  );
+  wire  is_rvfi_illegalinsn = (
+    rvfi_trap[0]         &&
+    rvfi_trap.exception  &&
+    (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
   );
   wire  is_rvfi_mret = (
     rvfi_valid             &&
@@ -159,11 +176,11 @@ module  uvmt_cv32e40s_umode_assert
         rvficycle_firstfetchaddr  <= 0;
       end
 
-      if (mpu_valid) begin
+      if (impu_valid) begin
         rvficycle_hasfetched <= 1;
 
         if (rvfi_valid || !rvficycle_hasfetched) begin
-          rvficycle_firstfetchaddr  <= mpu_addr;
+          rvficycle_firstfetchaddr  <= impu_addr;
         end
       end
     end
@@ -511,6 +528,41 @@ module  uvmt_cv32e40s_umode_assert
     )
   ) else `uvm_error(info_tag, "TODO");
 
+  a_mcounteren_access: assert property (
+    is_rvfi_csrinstr       &&
+    (rvfi_mode == MODE_M)  &&
+    (rvfi_insn[31:20] == CSRADDR_MCOUNTEREN)
+    |->
+    !(
+      rvfi_trap[0]         &&
+      rvfi_trap.exception  &&
+      (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+      // TODO:ropeders refactor to helper-signal
+    )
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_jvt_access: assert property (
+    is_rvfi_csrinstr  &&
+    (rvfi_insn[31:20] == CSRADDR_JVT)
+    |->
+    !is_rvfi_illegalinsn
+    // TODO:ropeders "Smstateen"
+    // TODO:ropeders "accessible" AND "effective"
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_next_csrs: assert property (
+    is_rvfi_csrinstr  &&
+    (rvfi_insn[31:20] inside {
+      CSRADDR_USTATUS, CSRADDR_UIE, CSRADDR_UTVEC, CSRADDR_USCRATCH,
+      CSRADDR_UEPC, CSRADDR_UCAUSE, CSRADDR_UTVAL, CSRADDR_UIP
+      }
+    )
+    |->
+    rvfi_trap[0]         &&
+    rvfi_trap.exception  &&
+    (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+  ) else `uvm_error(info_tag, "none of the n ext csrs should be present");
+
   a_mprven_zero: assert property (
     rvfi_valid
     |->
@@ -544,5 +596,14 @@ module  uvmt_cv32e40s_umode_assert
     rvfi_valid  &&
     (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == MODE_M)
   );
+
+  a_medeleg_mideleg: assert property (
+    is_rvfi_csrinstr  &&
+    (rvfi_insn[31:20] inside {CSRADDR_MEDELEG, CSRADDR_MIDELEG})
+    |->
+    rvfi_trap[0]         &&
+    rvfi_trap.exception  &&
+    (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+  ) else `uvm_error(info_tag, "medeleg and mideleg registers should not exist");
 
 endmodule : uvmt_cv32e40s_umode_assert
