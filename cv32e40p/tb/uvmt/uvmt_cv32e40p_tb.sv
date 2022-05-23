@@ -34,21 +34,40 @@ module uvmt_cv32e40p_tb;
    import uvmt_cv32e40p_pkg::*;
    import uvme_cv32e40p_pkg::*;
 
-   // DUT (core) parameters: refer to the CV2E40P User Manual.
+   // DUT (core) parameters: refer to the CV32E40P User Manual.
 `ifdef NO_PULP
-   parameter int CORE_PARAM_PULP_XPULP       = 0;
-   parameter int CORE_PARAM_PULP_CLUSTER     = 0;
-   parameter int CORE_PARAM_PULP_ZFINX       = 0;
+   parameter int CORE_PARAM_PULP_XPULP           = 0;
+   parameter int CORE_PARAM_PULP_CLUSTER         = 0;
+   parameter int CORE_PARAM_FPU                  = 0;
+   parameter int CORE_PARAM_PULP_ZFINX           = 0;
 `else
    `ifdef PULP
-      parameter int CORE_PARAM_PULP_XPULP       = 1;
-      parameter int CORE_PARAM_PULP_CLUSTER     = 0;
-      parameter int CORE_PARAM_PULP_ZFINX       = 0;
+      parameter int CORE_PARAM_PULP_XPULP        = 1;
+
+      `ifdef CLUSTER
+         parameter int CORE_PARAM_PULP_CLUSTER   = 1;
+      `else
+         parameter int CORE_PARAM_PULP_CLUSTER   = 0;
+      `endif
+
+      `ifdef FPU
+         parameter int CORE_PARAM_FPU            = 1;
+         `ifdef ZFINX
+            parameter int CORE_PARAM_PULP_ZFINX  = 1;
+         `else
+            parameter int CORE_PARAM_PULP_ZFINX  = 0;
+         `endif
+     `else
+         parameter int CORE_PARAM_FPU            = 0;
+         parameter int CORE_PARAM_PULP_ZFINX     = 0;
+      `endif
+
    `else
       // If you don't explicitly specify either NO_PULP or PULP, you get NO_PULP
-      parameter int CORE_PARAM_PULP_XPULP       = 0;
-      parameter int CORE_PARAM_PULP_CLUSTER     = 0;
-      parameter int CORE_PARAM_PULP_ZFINX       = 0;
+      parameter int CORE_PARAM_PULP_XPULP        = 0;
+      parameter int CORE_PARAM_PULP_CLUSTER      = 0;
+      parameter int CORE_PARAM_FPU               = 0;
+      parameter int CORE_PARAM_PULP_ZFINX        = 0;
    `endif
 `endif
 
@@ -112,6 +131,7 @@ module uvmt_cv32e40p_tb;
    uvmt_cv32e40p_dut_wrap  #(
                              .PULP_XPULP        (CORE_PARAM_PULP_XPULP),
                              .PULP_CLUSTER      (CORE_PARAM_PULP_CLUSTER),
+                             .FPU               (CORE_PARAM_FPU),
                              .PULP_ZFINX        (CORE_PARAM_PULP_ZFINX),
                              .NUM_MHPMCOUNTERS  (CORE_PARAM_NUM_MHPMCOUNTERS),
                              .INSTR_ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
@@ -498,6 +518,7 @@ module uvmt_cv32e40p_tb;
      // DUT and ENV parameters
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_XPULP"),       .value(CORE_PARAM_PULP_XPULP)      );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_CLUSTER"),     .value(CORE_PARAM_PULP_CLUSTER)    );
+     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_FPU"),              .value(CORE_PARAM_FPU)             );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_ZFINX"),       .value(CORE_PARAM_PULP_ZFINX)      );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_NUM_MHPMCOUNTERS"), .value(CORE_PARAM_NUM_MHPMCOUNTERS));
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_ADDR_WIDTH"),  .value(ENV_PARAM_INSTR_ADDR_WIDTH) );

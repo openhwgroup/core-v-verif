@@ -1,0 +1,7 @@
+name: matmul_32b_float
+uvm_test: uvmt_cv32e40p_firmware_test_c
+default_cflags: >
+    -O3
+    -march=rv32imafc
+description: >
+    Runs the 32 bit Floating Point Matrix Multiplication benchmark
