@@ -81,6 +81,7 @@ module  uvmt_cv32e40s_umode_assert
   localparam int SD_LEN      =  1;
   localparam int CY_POS      =  0;
   localparam int CY_LEN      =  1;
+  localparam int IR_POS      =  2;
   localparam int MPRVEN_POS  =  4;
   localparam int MPRVEN_LEN  =  1;
   // TODO:ropeders would be nice if these came from a trusted place instead of being defined here
@@ -108,6 +109,7 @@ module  uvmt_cv32e40s_umode_assert
   localparam int CSRADDR_UTVAL      = 12'h 043;
   localparam int CSRADDR_UIP        = 12'h 044;
   localparam int CSRADDR_CYCLE      = 12'h C00;
+  localparam int CSRADDR_HPM0       = 12'h C00;
   localparam int CSRADDR_MEDELEG    = 12'h 302;
   localparam int CSRADDR_MIDELEG    = 12'h 303;
   localparam int CSRADDR_MCOUNTEREN = 12'h 306;
@@ -190,6 +192,21 @@ module  uvmt_cv32e40s_umode_assert
         end
       end
     end
+  end
+
+  reg [1:0]  effective_rvfi_privmode;
+  always @(*) begin
+    effective_rvfi_privmode = MODE_U;
+
+    if (rvfi_dbg_mode) begin
+      effective_rvfi_privmode = rvfi_mode;
+    end else if (rvfi_csr_mstatus_rdata[MPRV_POS+:MPRV_LEN]) begin
+      effective_rvfi_privmode = rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN];
+    end else begin
+      effective_rvfi_privmode = rvfi_mode;
+    end
+
+    // TODO:ropeders ensure this "effective mode" model is comprehensive and complete (even if rtl agrees)
   end
 
 
@@ -322,8 +339,7 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_mode == MODE_U)  &&
     (rvfi_csr_mstatus_rdata[TW_POS+:TW_LEN] == 1)
     |->
-    rvfi_trap[0]  &&
-    (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+    is_rvfi_illegalinsn
   ) else `uvm_error(info_tag, "TODO");
 
   a_wfi_normal: assert property (
@@ -332,8 +348,7 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_csr_mstatus_rdata[TW_POS+:TW_LEN] == 0)
     |->
     !(
-      rvfi_trap[0]  &&
-      (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+      is_rvfi_illegalinsn
     )
     // TODO:ropeders check more specifically that wfi operation works as normal?
   ) else `uvm_error(info_tag, "TODO");
@@ -341,8 +356,7 @@ module  uvmt_cv32e40s_umode_assert
   a_custom_instr: assert property (
     is_rvfi_custominstr
     |->
-    rvfi_trap[0]  &&
-    (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+    is_rvfi_illegalinsn
     // TODO:ropeders assert "!(rvfi_trap.exception && !rvfi_trap.exception_cause)"?
     // TODO:ropeders assert "pipe.illegal ##0 ... rvfi_valid |-> trap"?
     // TODO:ropeders cover "rvfi_dbg_mode && rvfi_trap"?
@@ -352,8 +366,7 @@ module  uvmt_cv32e40s_umode_assert
   a_uret: assert property (
     is_rvfi_uret
     |->
-    rvfi_trap[0]  &&
-    (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+    is_rvfi_illegalinsn
     // TODO:ropeders can condence these illegal_insn asserts w/ sequence?
   ) else `uvm_error(info_tag, "TODO");
 
@@ -522,48 +535,32 @@ module  uvmt_cv32e40s_umode_assert
     is_rvfi_mret  &&
     (rvfi_mode == MODE_U)
     |->
-    (
-      rvfi_trap[0]  &&
-      rvfi_trap.exception  &&
-      (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
-    ) ^ (
-      rvfi_trap[0]  &&
-      rvfi_trap.debug  &&
-      (rvfi_trap.debug_cause == DBG_CAUSE_TRIGGER)
-      // TODO:ropeders refactor to helper-signal?
-    )
+    is_rvfi_illegalinsn ^ is_rvfi_instrtriggered
   ) else `uvm_error(info_tag, "TODO");
 
-  a_mcounteren_clear: assert property (
-    is_rvfi_csrinstr  &&
-    (rvfi_insn[31:20] == CSRADDR_CYCLE)  &&
-    // TODO:ropeders CY/TM/IR/HPMn all of them
-    (rvfi_mode == MODE_U)  &&
-    !rvfi_csr_mcounteren_rdata[CY_POS+:CY_LEN]
+  for (genvar i = 0; i < 31; i++) begin : gen_mcounteren_clear
+    a_check: assert property (
+      is_rvfi_csrinstr                        &&
+      (rvfi_mode == MODE_U)                   &&
+      (rvfi_insn[31:20] == CSRADDR_HPM0 + i)  &&
+      !rvfi_csr_mcounteren_rdata[i]
+      |->
+      is_rvfi_illegalinsn ^ is_rvfi_instrtriggered
+    ) else `uvm_error(info_tag, "when mcounteren bit is off then umode access is illegal");
+  end
+
+  a_mcounteren_zeros: assert property (
+    rvfi_valid
     |->
-    (
-      rvfi_trap[0]         &&
-      rvfi_trap.exception  &&
-      (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
-    ) ^ (
-      rvfi_trap[0]     &&
-      rvfi_trap.debug  &&
-      (rvfi_trap.debug_cause == DBG_CAUSE_TRIGGER)
-      // TODO:ropeders refactor to helper-signal?
-    )
-  ) else `uvm_error(info_tag, "TODO");
+    (rvfi_csr_mcounteren_rdata == 0)
+  ) else `uvm_error(info_tag, "not all bits in mcounteren can be non-zero");
 
   a_mcounteren_access: assert property (
     is_rvfi_csrinstr       &&
     (rvfi_mode == MODE_M)  &&
     (rvfi_insn[31:20] == CSRADDR_MCOUNTEREN)
     |->
-    !(
-      rvfi_trap[0]         &&
-      rvfi_trap.exception  &&
-      (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
-      // TODO:ropeders refactor to helper-signal
-    )
+    !is_rvfi_illegalinsn
   ) else `uvm_error(info_tag, "TODO");
 
   a_jvt_access: assert property (
@@ -624,10 +621,23 @@ module  uvmt_cv32e40s_umode_assert
     is_rvfi_csrinstr  &&
     (rvfi_insn[31:20] inside {CSRADDR_MEDELEG, CSRADDR_MIDELEG})
     |->
-    rvfi_trap[0]         &&
-    rvfi_trap.exception  &&
-    (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+    is_rvfi_illegalinsn
   ) else `uvm_error(info_tag, "medeleg and mideleg registers should not exist");
+
+/* TODO:ropeders enable (and tweak) when rvfi implementation has the new signals
+  a_prot_fetch: assert property (
+    rvfi_valid
+    |->
+    (rvfi_custom.instr_prot[2:1] == rvfi_mode)
+  ) else `uvm_error(info_tag, "the prot on fetch must match the mode on retirement");
+
+  a_prot_loadstore: assert property (
+    rvfi_valid  &&
+    is_rvfi_loadstore
+    |->
+    (rvfi_custom.loadstore_prot[2:1] == effective_rvfi_privmode)
+  ) else `uvm_error(info_tag, "the prot on load/store must match the effective mode on retirement");
+*/
 
 asu_TODO_dbgpriv: assume property (
   rvfi_valid && rvfi_dbg_mode
