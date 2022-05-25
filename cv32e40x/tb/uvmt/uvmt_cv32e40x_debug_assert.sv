@@ -410,8 +410,6 @@ module uvmt_cv32e40x_debug_assert
 
     // dret in D-mode will place dpc in mepc if re-entry is interrupted
 
-    /*
-    //TODO:mateilga reinstate this when the "kill" signal sensitivity in RVFI has been added
     property p_dmode_dret_pc_int;
         int dpc; (1, dpc =cov_assert_if.rvfi_csr_dpc_rdata)
         ##0(cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE)
@@ -420,14 +418,13 @@ module uvmt_cv32e40x_debug_assert
         ##0 (cov_assert_if.rvfi_intr && !cov_assert_if.rvfi_dbg_mode)
         |->
 
-        (cov_assert_if.rvfi_csr_mepc_wdata & cov_assert_if.rvfi_csr_mepc_wmask) == dpc;
+        cov_assert_if.rvfi_csr_mepc_rdata == dpc;
 
     endproperty
 
     a_dmode_dret_pc_int : assert property(p_dmode_dret_pc_int)
         else `uvm_error(info_tag, "Dret did not save dpc to mepc when return from debug mode was interrupted");
 
-    */
 
     // dret in D-mode will exit D-mode
 

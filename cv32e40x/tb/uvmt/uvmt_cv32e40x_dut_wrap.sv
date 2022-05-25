@@ -44,6 +44,7 @@ module uvmt_cv32e40x_dut_wrap
 
   #(// DUT (riscv_core) parameters.
     parameter NUM_MHPMCOUNTERS    =  1,
+    parameter USE_DEPRECATED_FEATURE_SET = 0,
     parameter cv32e40x_pkg::b_ext_e B_EXT  = cv32e40x_pkg::B_NONE,
     parameter int          PMA_NUM_REGIONS =  0,
     parameter pma_cfg_t PMA_CFG[PMA_NUM_REGIONS-1 : 0] = '{default:PMA_R_DEFAULT},

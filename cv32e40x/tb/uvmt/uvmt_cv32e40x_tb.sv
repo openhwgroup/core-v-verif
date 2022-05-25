@@ -115,7 +115,7 @@ module uvmt_cv32e40x_tb;
                                                                    .rvfi_insn(rvfi_i.rvfi_insn[uvme_cv32e40x_pkg::ILEN*0+:uvme_cv32e40x_pkg::ILEN]),
                                                                    .rvfi_trap(rvfi_i.rvfi_trap[11:0]),
                                                                    .rvfi_halt(rvfi_i.rvfi_halt[0]),
-                                                                   .rvfi_intr(rvfi_i.rvfi_intr.intr),
+                                                                   .rvfi_intr(rvfi_i.rvfi_intr),
                                                                    .rvfi_dbg(rvfi_i.rvfi_dbg),
                                                                    .rvfi_dbg_mode(rvfi_i.rvfi_dbg_mode),
                                                                    .rvfi_nmip(rvfi_i.rvfi_nmip),
@@ -479,6 +479,7 @@ module uvmt_cv32e40x_tb;
       .rvfi_pc_wdata          (rvfi_i.rvfi_pc_wdata),
       .rvfi_pc_rdata          (rvfi_i.rvfi_pc_rdata),
       .rvfi_csr_dpc_rdata     (rvfi_i.rvfi_csr_dpc_rdata),
+      .rvfi_csr_mepc_rdata    (rvfi_i.rvfi_csr_mepc_rdata),
       .rvfi_csr_mepc_wdata    (rvfi_i.rvfi_csr_mepc_wdata),
       .rvfi_csr_mepc_wmask    (rvfi_i.rvfi_csr_mepc_wmask),
 
@@ -511,9 +512,10 @@ module uvmt_cv32e40x_tb;
                                iss_wrap ( .clk_period(clknrst_if.clk_period),
                                           .clknrst_if(clknrst_if_iss)
                                  );
-    `endif
 
       assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
+      assign iss_wrap.cpu.io.nmi_addr = ({dut_wrap.cv32e40x_wrapper_i.rvfi_csr_mtvec_if_0_i.rvfi_csr_rdata[31:2], 2'b00}) + 32'h3c;
+    `endif
 
    /**
     * Test bench entry point.

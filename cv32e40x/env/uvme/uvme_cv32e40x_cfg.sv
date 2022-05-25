@@ -131,6 +131,7 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
 
       bitmanip_version        == BITMANIP_VERSION_1P00;
       priv_spec_version       == PRIV_VERSION_1_12;
+      debug_spec_version      == DEBUG_VERSION_1_0_0;
       endianness              == ENDIAN_LITTLE;
 
       boot_addr_valid         == 1;
@@ -141,14 +142,15 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
    }
 
    constraint default_cv32e40x_boot_cons {
-      (!mhartid_plusarg_valid)           -> (mhartid           == 'h0000_0000);
-      (!mimpid_patch_plusarg_valid)      -> (mimpid_patch      == 'h0        );
-      (!mimpid_plusarg_valid)            -> (mimpid            == {12'b0, MIMPID_MAJOR, 4'b0, MIMPID_MINOR, 4'b0, mimpid_patch[3:0]});
-      (!boot_addr_plusarg_valid)         -> (boot_addr         == 'h0000_0080);
-      (!mtvec_addr_plusarg_valid)        -> (mtvec_addr        == 'h0000_0000);
-      (!nmi_addr_plusarg_valid)          -> (nmi_addr          == 'h0010_0000);
-      (!dm_halt_addr_plusarg_valid)      -> (dm_halt_addr      == 'h1a11_0800);
-      (!dm_exception_addr_plusarg_valid) -> (dm_exception_addr == 'h1a11_1000);
+      (!mhartid_plusarg_valid)                  -> (mhartid           == 'h0000_0000);
+      (!mimpid_patch_plusarg_valid)             -> (mimpid_patch      == 'h0        );
+      (!mimpid_plusarg_valid)                   -> (mimpid            == {12'b0, MIMPID_MAJOR, 4'b0, MIMPID_MINOR, 4'b0, mimpid_patch[3:0]});
+      (!boot_addr_plusarg_valid)                -> (boot_addr         == 'h0000_0080);
+      (!mtvec_addr_plusarg_valid)               -> (mtvec_addr        == 'h0000_0000);
+      (!nmi_addr_plusarg_valid)                 -> (nmi_addr          == mtvec_addr + 'h3C /* 4*15 */ );
+      (!dm_halt_addr_plusarg_valid)             -> (dm_halt_addr      == 'h1a11_0800);
+      (!dm_exception_addr_plusarg_valid)        -> (dm_exception_addr == 'h1a11_1000);
+      solve mtvec_addr before nmi_addr;
       solve mimpid_patch before mimpid;
    }
 
@@ -339,7 +341,7 @@ function uvme_cv32e40x_cfg_c::new(string name="uvme_cv32e40x_cfg");
    isacov_cfg = uvma_isacov_cfg_c::type_id::create("isacov_cfg");
    clknrst_cfg  = uvma_clknrst_cfg_c::type_id::create("clknrst_cfg");
    interrupt_cfg = uvma_interrupt_cfg_c::type_id::create("interrupt_cfg");
-   debug_cfg = uvma_debug_cfg_c    ::type_id::create("debug_cfg");
+   debug_cfg = uvma_debug_cfg_c::type_id::create("debug_cfg");
    obi_memory_instr_cfg = uvma_obi_memory_cfg_c::type_id::create("obi_memory_instr_cfg");
    obi_memory_data_cfg  = uvma_obi_memory_cfg_c::type_id::create("obi_memory_data_cfg" );
    rvfi_cfg = uvma_rvfi_cfg_c#(ILEN,XLEN)::type_id::create("rvfi_cfg");
