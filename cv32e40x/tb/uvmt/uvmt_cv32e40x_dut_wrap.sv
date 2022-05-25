@@ -133,6 +133,8 @@ module uvmt_cv32e40x_dut_wrap
     // Connect to core_cntrl_if
     assign core_cntrl_if.num_mhpmcounters = NUM_MHPMCOUNTERS;
     assign core_cntrl_if.b_ext = B_EXT;
+
+    `ifndef FORMAL
     initial begin
       core_cntrl_if.pma_cfg = new[PMA_NUM_REGIONS];
       foreach (core_cntrl_if.pma_cfg[i]) begin
@@ -144,6 +146,7 @@ module uvmt_cv32e40x_dut_wrap
         core_cntrl_if.pma_cfg[i].atomic         = PMA_CFG[i].atomic;
       end
     end
+    `endif
 
     // --------------------------------------------
     // instantiate the core
@@ -163,7 +166,6 @@ module uvmt_cv32e40x_dut_wrap
          .boot_addr_i            ( core_cntrl_if.boot_addr        ),
          .mtvec_addr_i           ( core_cntrl_if.mtvec_addr       ),
          .dm_halt_addr_i         ( core_cntrl_if.dm_halt_addr     ),
-         .nmi_addr_i             ( core_cntrl_if.nmi_addr         ),
          .mhartid_i              ( core_cntrl_if.mhartid          ),
          .mimpid_patch_i         ( core_cntrl_if.mimpid_patch     ),
          .dm_exception_addr_i    ( core_cntrl_if.dm_exception_addr),
@@ -206,12 +208,9 @@ module uvmt_cv32e40x_dut_wrap
 
          .clic_irq_i             ( '0   /*todo: connect */        ),
          .clic_irq_id_i          ( '0   /*todo: connect */        ),
-         .clic_irq_il_i          ( '0   /*todo: connect */        ),
+         .clic_irq_level_i       ( '0   /*todo: connect */        ),
          .clic_irq_priv_i        ( '0   /*todo: connect */        ),
-         .clic_irq_hv_i          ( '0   /*todo: connect */        ),
-         .clic_irq_id_o          (      /*todo: connect */        ),
-         .clic_irq_mode_o        (      /*todo: connect */        ),
-         .clic_irq_exit_o        (      /*todo: connect */        ),
+         .clic_irq_shv_i         ( '0   /*todo: connect */        ),
 
          .fencei_flush_req_o     ( fencei_if_i.flush_req          ),
          .fencei_flush_ack_i     ( fencei_if_i.flush_ack          ),

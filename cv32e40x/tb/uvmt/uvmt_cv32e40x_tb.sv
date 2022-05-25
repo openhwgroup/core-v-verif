@@ -466,7 +466,6 @@ module uvmt_cv32e40x_tb;
       .irq_id_o               (core_i.irq_id),
       .dm_halt_addr_i         (core_i.dm_halt_addr_i),
       .dm_exception_addr_i    (core_i.dm_exception_addr_i),
-      .nmi_addr_i             (core_i.nmi_addr_i),
       .core_sleep_o           (core_i.core_sleep_o),
       .irq_i                  (core_i.irq_i),
       .pc_set                 (core_i.ctrl_fsm.pc_set),
@@ -502,6 +501,7 @@ module uvmt_cv32e40x_tb;
     /**
     * ISS WRAPPER instance:
     */
+    `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
       uvmt_cv32e40x_iss_wrap  #(
                                 .ID (0),
                                 .ROM_START_ADDR('h0),
@@ -511,12 +511,14 @@ module uvmt_cv32e40x_tb;
                                iss_wrap ( .clk_period(clknrst_if.clk_period),
                                           .clknrst_if(clknrst_if_iss)
                                  );
+    `endif
 
       assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
 
    /**
     * Test bench entry point.
     */
+   `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
    initial begin : test_bench_entry_point
 
      // Specify time format for simulation (units_number, precision_number, suffix_string, minimum_field_width)
@@ -689,6 +691,7 @@ module uvmt_cv32e40x_tb;
      uvm_top.finish_on_completion  = 1;
      uvm_top.run_test();
    end : test_bench_entry_point
+   `endif
 
    assign core_cntrl_if.clk = clknrst_if.clk;
 
@@ -696,6 +699,8 @@ module uvmt_cv32e40x_tb;
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
    longint start_ovpsim_init_time;
    longint end_ovpsim_init_time;
+
+   `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
    initial begin
       if (!$test$plusargs("DISABLE_OVPSIM")) begin
         #0.9ns;
@@ -706,9 +711,12 @@ module uvmt_cv32e40x_tb;
         `uvm_info("OVPSIM", $sformatf("Initialization time: %0d seconds", end_ovpsim_init_time - start_ovpsim_init_time), UVM_LOW)
       end
     end
+    `endif
 
    //TODO verify these are correct with regards to isacov function
+   `ifndef FORMAL // events ignored for formal - this avoids unnecessary warning
    always @(dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_valid) -> isacov_if.retire;
+   `endif
    assign isacov_if.instr = dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i.rvfi_insn;
    //assign isacov_if.is_compressed = dut_wrap.cv32e40x_wrapper_i.tracer_i.insn_compressed;
 
@@ -745,6 +753,7 @@ module uvmt_cv32e40x_tb;
    /**
     * End-of-test summary printout.
     */
+   `ifndef FORMAL // Formal ignores final blocks, this avoids unnecessary warning
    final begin: end_of_test
       string             summary_string;
       uvm_report_server  rs;
@@ -804,6 +813,7 @@ module uvmt_cv32e40x_tb;
          end
       end
    end
+   `endif
 
 endmodule : uvmt_cv32e40x_tb
 `default_nettype wire
