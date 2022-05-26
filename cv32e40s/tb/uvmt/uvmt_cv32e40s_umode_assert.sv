@@ -132,13 +132,16 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
   );
   wire  is_rvfi_mret = (
-    rvfi_valid             &&
-    !is_rvfi_instrrevoked  &&
+    rvfi_valid               &&
+    !is_rvfi_instrrevoked    &&
+    !rvfi_dbg_mode           &&
+    !is_rvfi_instrtriggered  &&
     (rvfi_insn == MRET_IDATA)
   );
   wire  is_rvfi_wfi = (
-    rvfi_valid             &&
-    !is_rvfi_instrrevoked  &&
+    rvfi_valid               &&
+    !is_rvfi_instrrevoked    &&
+    !is_rvfi_instrtriggered  &&
     (rvfi_insn == WFI_IDATA)
   );
   wire  is_rvfi_custominstr = (
@@ -168,6 +171,7 @@ module  uvmt_cv32e40s_umode_assert
   wire  is_rvfi_csrinstr = (
     rvfi_valid  &&
     !is_rvfi_instrrevoked  &&
+    !is_rvfi_instrtriggered  &&
     (rvfi_insn[ 6: 0] == 7'b 1110011) &&
     (rvfi_insn[14:12] inside {1, 2, 3, 5, 6, 7})
   );
@@ -231,9 +235,11 @@ module  uvmt_cv32e40s_umode_assert
   );
 
   a_initial_mode: assert property (
-    rvfi_valid && (rvfi_order inside {0, 1})  // TODO:ropeders use "rst_ni" instead of "rvfi_order"?
+    $past(rst_ni == 0)  ##0
+    (rvfi_valid [->1])
     |->
-    (rvfi_mode == MODE_M)
+    (rvfi_mode == MODE_M)  &&
+    (rvfi_order inside {0, 1})
   ) else `uvm_error(info_tag, "priv mode out of reset should be machine-mode");
 
   a_mscratch_reliable: assert property (
@@ -305,19 +311,9 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "all interrupts shall be handled in mmode");
 
   a_mret_to_mpp: assert property (
-    // TODO:ropeders use "is_rvfi_mret"
-    rvfi_valid                &&
-    (rvfi_insn == MRET_IDATA) &&
-    !(
-      rvfi_trap.exception  &&
-      rvfi_trap.exception_cause inside {EXC_CAUSE_INSTR_FAULT, EXC_CAUSE_INSTR_BUS_FAULT}
-    )
+    is_rvfi_mret
     |->
-    //(rvfi_csr_mstatus_wdata[MPP_POS+:MPP_LEN] == MODE_U)  &&
-    //(rvfi_csr_mstatus_wmask[MPP_POS+:MPP_LEN] == 2'b 11)
-    mstatus_poststate[MPP_POS+:MPP_LEN] == MODE_U
-    // TODO:ropeders don't allow for "rdata" to "save the day"? Demand "wdata" correctness?
-    // TODO:ropeders refine property w/ clauses until realistic
+    (mstatus_poststate[MPP_POS+:MPP_LEN] == MODE_U)
   ) else `uvm_error(info_tag, "mret should set mpp to umode");
 
   a_mret_mprv: assert property (
@@ -325,7 +321,6 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] != MODE_M)
     |->
     (mstatus_poststate[MPRV_POS+:MPRV_LEN] == 1'b 0)
-    // TODO:ropeders don't allow for "rdata" to "save the day"? Demand "wdata" correctness?
   ) else `uvm_error(info_tag, "TODO");
 
   cov_mret_in_umode: cover property (
@@ -457,6 +452,14 @@ module  uvmt_cv32e40s_umode_assert
       (rvfi_valid && !rvfi_dbg_mode && (rvfi_mode != MODE_M))
       p_dret_prv
   );
+  cov_prv_u: cover property (
+    rvfi_valid  &&
+    (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == MODE_U)
+  );
+  cov_prv_m: cover property (
+    rvfi_valid  &&
+    (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == MODE_M)
+  );
 
   a_dret_mprv: assert property (
     ( rvfi_valid &&          rvfi_dbg_mode)  ##1
@@ -471,18 +474,12 @@ module  uvmt_cv32e40s_umode_assert
     int mode0;
     ( rvfi_valid, mode0 = rvfi_mode)  ##1
     ((rvfi_valid [->1]) ##0 (rvfi_mode != mode0))
-    // TODO:ropeders should compare against order=0 too  (helper-signal "rvfi_prev_mode"?)
     |->
     rvficycle_hasfetched  &&
     (rvficycle_firstfetchaddr == rvfi_pc_rdata);
-    // TODO:ropeders  rtl updates will likely reveal need for tweaking this property
   endproperty : p_refetch
   a_refetch: assert property (
     p_refetch
-    // TODO:ropeders how to also make sure the refetch uses the updated mode?
-    // TODO:ropeders confirm that csr/mode update happens with the assumed timing relation to rvfi_valid
-    // TODO:ropeders how to SVA "if change then was fetch" instead of "if no fetch then no change"?
-    // TODO:ropeders write properties for all necessary cases (NoFetch, WrongFetch, ...)
   ) else `uvm_error(info_tag, "priv mode change must cause refetch");
 
   a_umode_extensions: assert property (
@@ -569,7 +566,6 @@ module  uvmt_cv32e40s_umode_assert
     |->
     !is_rvfi_illegalinsn
     // TODO:ropeders "Smstateen"
-    // TODO:ropeders "accessible" AND "effective"
   ) else `uvm_error(info_tag, "TODO");
 
   a_next_csrs: assert property (
