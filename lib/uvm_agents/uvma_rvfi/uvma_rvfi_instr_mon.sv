@@ -204,7 +204,7 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
              mon_trn.nmip[0] &&
              mon_trn.csrs["dcsr"].get_csr_retirement_data()[3])
          begin
-            `uvm_info("RVFIMON", $sformatf("Debug NMIP"), UVM_LOW);
+            `uvm_info("RVFIMON", $sformatf("Debug NMIP"), UVM_LOW)
 
             if (mon_trn.nmip[1] == 0) begin
                mon_trn.insn_nmi_load_fault = 1;
