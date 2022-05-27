@@ -25,7 +25,7 @@ module  uvmt_cv32e40s_umode_assert
   input wire  rst_ni,
 
   input wire         rvfi_valid,
-  input wire [ 2:0]  rvfi_mode,
+  input wire [ 1:0]  rvfi_mode,
   input wire [63:0]  rvfi_order,
   input rvfi_trap_t  rvfi_trap,
   input rvfi_intr_t  rvfi_intr,
@@ -593,11 +593,26 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_valid [->1])  ##0
     rvfi_dbg_mode
     |->
-    (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == mode);
+    if (!rvfi_intr[0]) (
+      (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == mode)
+    ) else (
+      (rvfi_intr.exception ^ rvfi_intr.interrupt)  &&
+      (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == MODE_M)
+    );
   endproperty : p_prv_entry
   a_prv_entry: assert property (
     p_prv_entry
   ) else `uvm_error(info_tag, "TODO");
+  cov_prv_entry_u: cover property (
+    reject_on
+      (rvfi_valid && rvfi_dbg_mode && (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] != MODE_U))
+      p_prv_entry
+  );
+  cov_prv_entry_m: cover property (
+    reject_on
+      (rvfi_valid && rvfi_dbg_mode && (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] != MODE_M))
+      p_prv_entry
+  );
 
   a_prv_supported: assert property (
     rvfi_valid
