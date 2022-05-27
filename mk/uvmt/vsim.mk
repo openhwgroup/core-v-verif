@@ -101,20 +101,20 @@ VSIM_LDGEN_FLAGS ?= \
 
 ###############################################################################
 # VLOG (Compilation)
-VLOG_FLAGS    ?= \
+VLOG_FLAGS ?= \
 				-suppress 2577 \
 				-suppress 2583 \
 				-suppress 13185 \
 				-suppress 13314 \
 				-suppress 13288 \
-        		-suppress 2181 \
+				-suppress 2181 \
 				-suppress 13262 \
 				-timescale "1ns/1ps" \
 				-sv \
-        		-mfcu \
-        		+acc=rb \
+				-mfcu \
+				+acc=rb \
 				$(QUIET) \
-        		-writetoplevels  uvmt_$(CV_CORE_LC)_tb
+				-writetoplevels  uvmt_$(CV_CORE_LC)_tb
 VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 
 VLOG_FLAGS += $(DPILIB_VLOG_OPT)
@@ -127,7 +127,7 @@ VLOG_FLAGS += "+define+UVM"
 ###############################################################################
 # VOPT (Optimization)
 VOPT_FLAGS    ?= \
-                 -debugdb \
+				-debugdb \
 				 -fsmdebug \
 				 -suppress 7034 \
 				 +acc \
@@ -416,6 +416,7 @@ compliance: $(VSIM_COMPLIANCE_PREREQ) $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 	cd $(COMPLIANCE_RUN_DIR) && \
 		$(VMAP) work $(SIM_CFG_RESULTS)/work
 	cd $(COMPLIANCE_RUN_DIR) && \
+	export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic && \
 		$(VSIM) \
 			-work $(VWORK) \
 			$(VSIM_FLAGS) \
@@ -428,7 +429,9 @@ compliance: $(VSIM_COMPLIANCE_PREREQ) $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 			+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).hex \
 			+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).elf
 
-compliance: export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic
+# This special target is to support the special sanity target in the Common Makefile
+hello-world:
+	$(MAKE) test TEST=hello-world
 
 ################################################################################
 # Questa simulation targets
@@ -446,7 +449,6 @@ gen_ovpsim_ic:
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
 		echo "$(CFG_OVPSIM)" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
 	fi
-export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic
 
 # Target to create work directory in $(VSIM_RESULTS)/
 lib: mk_vsim_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(TBSRC_PKG) $(TBSRC)
@@ -502,6 +504,7 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 	cd $(RUN_DIR) && \
 		$(VMAP) work $(SIM_CFG_RESULTS)/work
 	cd $(RUN_DIR) && \
+	export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic && \
 		$(VSIM) \
 			-work $(VWORK) \
 			$(VSIM_FLAGS) \
@@ -551,8 +554,10 @@ cov: $(COV_MERGE_TARGET)
 # Clean up your mess!
 
 clean:
-	rm -rf $(SIM_RESULTS)
+	rm -rf $(SIM_RUN_RESULTS)
+
+clean_rtl:
+	rm -rf $(CV_CORE_PKG)
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
-	rm -rf $(CV_CORE_PKG)
+clean_all: clean clean_rtl clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib

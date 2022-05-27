@@ -145,7 +145,7 @@ def main():
   # ----------------------------------------------------------------------------------------------
   # build benchmark object files (build_all.py)
   # ----------------------------------------------------------------------------------------------
-  cmd = ['build_all.py',
+  cmd = [f"{paths['embench']}/build_all.py",
          '--arch=corev32',
          '--board=corev32',
          f'--cflags=-I{paths["bsp"]}',
@@ -219,14 +219,14 @@ def main():
   logger.info(f"Starting benchmarking of {args.type}")
 
   if args.type == 'speed':
-    arglist = ['benchmark_speed.py', '--target-module=run_corev32',
+    arglist = [f"{paths['embench']}/benchmark_speed.py", '--target-module=run_corev32',
                f'--cpu-mhz={args.cpu_mhz}', f'--make-path={paths["make"]}',
                f'--timeout={args.timeout}',
                f'--simulator={args.simulator}']
     if parallel:
         arglist.append(f'--sim-parallel')
   else:
-    arglist = ['benchmark_size.py']
+    arglist = [f"{paths['embench']}/benchmark_size.py"]
 
   try:
     logger.info(f"Running: {' '.join(arglist)}")

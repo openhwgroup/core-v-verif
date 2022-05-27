@@ -9,8 +9,7 @@ compile_flags:
 # PULP_XPULP=0
 # Set as below
 # Debug options (add to ovpsim section as needed)
-#--trace --tracechange --traceshowicount --monitornets --tracemode
-#--showoverrides
+#--trace --tracechange --traceshowicount --tracemode --monitornets --showoverrides
 ovpsim: >
     --override root/cpu/misa_Extensions=0x801104
     --override root/cpu/marchid=4

@@ -306,7 +306,7 @@ RISCV_MARCH      = $(call RESOLVE_FLAG2,$(TEST_GNU_MARCH),$(GNU_MARCH))
 RISCV_CFLAGS     = $(call RESOLVE_FLAG2,$(TEST_GNU_CFLAGS),$(GNU_CFLAGS))
 endif
 
-ifeq ($(COREV_YES)),YES)
+ifeq ($(COREV_YES),YES)
 ifeq ($(call IS_YES,$(TEST_COREV_NOT_SUPPORTED)),YES)
 $(error test [$(TEST)] does not support the COREV toolchain)
 endif
@@ -516,6 +516,7 @@ else
 		-nostartfiles \
 		$(TEST_FILES) \
 		-T $(LD_FILE) \
+		-Xlinker -Map=$*.map \
 		$(LD_LIBRARY) \
 		-lcv-verif
 endif

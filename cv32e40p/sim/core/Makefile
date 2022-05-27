@@ -343,7 +343,7 @@ vsim-all:  .opt-rtl
 .PHONY: vsim-run
 vsim-run: ALL_VSIM_FLAGS += -c
 vsim-run: vsim-all
-	$(VSIM) -work $(VWORK) $(DPILIB_VSIM_OPT) $(ALL_VSIM_FLAGS)\
+	$(VSIM) -work $(VWORK) $(DPILIB_VSIM_OPT) $(ALL_VSIM_FLAGS) \
 	$(RTLSRC_VOPT_TB_TOP) -do 'source $(VSIM_SCRIPT); exit -f'
 
 

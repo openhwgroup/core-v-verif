@@ -186,11 +186,11 @@ VCS_COMP = $(VCS_COMP_FLAGS) \
 		$(UVM_PLUSARGS)
 
 comp: mk_vcs_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI)
-	cd $(SIM_CFG_RESULTS)/$(CFG) && $(VCS) $(VCS_COMP) -top uvmt_$(CV_CORE_LC)_tb
 	@echo "$(BANNER)"
 	@echo "* $(SIMULATOR) compile complete"
 	@echo "* Log: $(SIM_CFG_RESULTS)/vcs.log"
 	@echo "$(BANNER)"
+	cd $(SIM_CFG_RESULTS)/$(CFG) && $(VCS) $(VCS_COMP) -top uvmt_$(CV_CORE_LC)_tb
 
 ifneq ($(call IS_NO,$(COMP)),NO)
 VCS_SIM_PREREQ = comp
@@ -211,15 +211,14 @@ gen_ovpsim_ic:
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
 		echo "$(CFG_OVPSIM)" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
 	fi
-export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic
 
 ################################################################################
 # The new general test target
 
 test: $(VCS_SIM_PREREQ) hex gen_ovpsim_ic
-	echo $(IMPERAS_TOOLS)
 	mkdir -p $(SIM_RUN_RESULTS)
 	cd $(SIM_RUN_RESULTS) && \
+	export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic && \
 		$(VCS_RESULTS)/$(CFG)/$(SIMV) \
 			-l vcs-$(TEST_NAME).log \
 			-cm_name $(TEST_NAME) $(VCS_RUN_FLAGS) \
@@ -340,7 +339,7 @@ endif
 
 clean:
 	@echo "$(MAKEFILE_LIST)"
-	rm -rf $(SIM_RESULTS)
+	rm -rf $(SIM_RUN_RESULTS)
 
 # Files created by Eclipse when using the Imperas ISS + debugger
 clean_eclipse:
@@ -349,6 +348,8 @@ clean_eclipse:
 	rm  -f stdout.txt
 	rm  -rf workspace
 
-# All generated files plus the clone of the RTL
-clean_all: clean clean_eclipse clean_riscv-dv clean_test_programs clean-bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
+clean_rtl:
 	rm -rf $(CV_CORE_PKG)
+
+# All generated files plus the clone of the RTL
+clean_all: clean clean_rtl clean_eclipse clean_riscv-dv clean_test_programs clean-bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
