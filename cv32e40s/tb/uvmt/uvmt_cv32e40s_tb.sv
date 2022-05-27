@@ -390,8 +390,6 @@ module uvmt_cv32e40s_tb;
       .rvfi_csr_mstatus_wdata    (rvfi_i.rvfi_csr_mstatus_wdata),
       .rvfi_csr_mstatus_wmask    (rvfi_i.rvfi_csr_mstatus_wmask),
 
-      // TODO:ropeders possible to just bind to rvfi module?
-
       .impu_valid (core_i.if_stage_i.mpu_i.core_trans_valid_i),
       .impu_addr  (core_i.if_stage_i.mpu_i.core_trans_i.addr),
 

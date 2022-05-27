@@ -84,7 +84,6 @@ module  uvmt_cv32e40s_umode_assert
   localparam int IR_POS      =  2;
   localparam int MPRVEN_POS  =  4;
   localparam int MPRVEN_LEN  =  1;
-  // TODO:ropeders would be nice if these came from a trusted place instead of being defined here
 
   localparam int MODE_U = 2'b 00;
   localparam int MODE_M = 2'b 11;
@@ -156,7 +155,6 @@ module  uvmt_cv32e40s_umode_assert
     rvfi_valid             &&
     !is_rvfi_instrrevoked  &&
     (rvfi_insn == URET_IDATA)
-    // TODO:ropeders can condense these "is_..." signals?
   );
   wire  is_rvfi_ebreak = (
     rvfi_valid             &&
@@ -209,8 +207,6 @@ module  uvmt_cv32e40s_umode_assert
     end else begin
       effective_rvfi_privmode = rvfi_mode;
     end
-
-    // TODO:ropeders ensure this "effective mode" model is comprehensive and complete (even if rtl agrees)
   end
 
 
@@ -256,9 +252,7 @@ module  uvmt_cv32e40s_umode_assert
   a_mpp_mode: assert property (
     rvfi_valid
     |->
-    rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] inside {MODE_M, MODE_U}
-    // TODO:ropeders sufficient with just "rdata" or need "wdata & wmask" too?
-    // TODO:ropeders cover with "mret" instr
+    mstatus_poststate[MPP_POS+:MPP_LEN] inside {MODE_M, MODE_U}
   ) else `uvm_error(info_tag, "mpp can only hold user- and machine-mode");
   cov_mpp_mmode: cover property (
     rvfi_valid  &&
@@ -275,19 +269,19 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_csr_mstatus_rdata[SPP_POS+:SPP_LEN] == 'd 0)
   ) else `uvm_error(info_tag, "spp must be zero because supervisor-mode is not implemented");
 
-/* TODO:ropeders finish writing
-  a_trap_mpp: assert property (
-    rvfi_valid             &&
-    (rvfi_mode == MODE_U)  &&
-    rvfi_trap
+  property p_trap_mpp;
+    int mode;
+    (rvfi_valid && rvfi_trap)  ##0
+    (1, mode = rvfi_mode)
     |=>
-    (rvfi_valid [->1])
-    ##0
+    (rvfi_valid [->1])  ##0
     (rvfi_mode == MODE_M)  &&
-    (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == MODE_U)
-    // TODO:ropeders cross U/X and Exc/Int
-  ) else `uvm_error(info_tag, "when umode exceptions are handled, mpp must be umode");
-*/
+    (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == mode);
+  endproperty : p_trap_mpp
+  a_trap_mpp: assert property (
+    p_trap_mpp
+    // TODO:ropeders cov cross U/X and Exc/Int
+  ) else `uvm_error(info_tag, "when exceptions from mode y are handled, mpp must become y");
 
   a_traps_mmode: assert property (
     rvfi_valid  &&
@@ -295,20 +289,18 @@ module  uvmt_cv32e40s_umode_assert
     |=>
     (rvfi_valid [->1])
     ##0 (rvfi_mode == MODE_M)
-    // TODO:ropeders cross Exc/Int etc
+    // TODO:ropeders cov cross Exc/Int etc
     // TODO:ropeders assert "rvfi_intr |-> mmode"?
     // TODO:ropeders assert "if_id.valid |-> has_seen_iobi_req"?
     // TODO:ropeders assert "!(rvfi_dbg_mode && (rvfi_mode != MODE_M))"?
   ) else `uvm_error(info_tag, "all trapsTODO shall be handled in mmode");
 
   a_interrupt_mmode: assert property (
-    rvfi_valid    &&
-    rvfi_intr[0]  &&
-    (rvfi_intr.interrupt || rvfi_csr_mcause_rdata[31])
-    // TODO:ropeders ((rvfi_intr[0] && rvfi_intr.interrupt) || rvfi_csr_mcause_rdata[31])?
+    rvfi_valid  &&
+    rvfi_intr
     |->
     (rvfi_mode == MODE_M)
-  ) else `uvm_error(info_tag, "all interrupts shall be handled in mmode");
+  ) else `uvm_error(info_tag, "all traps shall be handled in mmode");
 
   a_mret_to_mpp: assert property (
     is_rvfi_mret
@@ -321,13 +313,7 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] != MODE_M)
     |->
     (mstatus_poststate[MPRV_POS+:MPRV_LEN] == 1'b 0)
-  ) else `uvm_error(info_tag, "TODO");
-
-  cov_mret_in_umode: cover property (
-    is_rvfi_mret  &&
-    (rvfi_mode == MODE_U)
-    // TODO:ropeders assert mret in umode fails
-  );
+  ) else `uvm_error(info_tag, "mret into umode must clear mstatus.mprv");
 
   a_wfi_illegal: assert property (
     is_rvfi_wfi            &&
@@ -335,7 +321,7 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_csr_mstatus_rdata[TW_POS+:TW_LEN] == 1)
     |->
     is_rvfi_illegalinsn
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "wfi in umode w/ tw==1 is illegal");
 
   a_wfi_normal: assert property (
     is_rvfi_wfi            &&
@@ -346,24 +332,19 @@ module  uvmt_cv32e40s_umode_assert
       is_rvfi_illegalinsn
     )
     // TODO:ropeders check more specifically that wfi operation works as normal?
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "wfi in umode w/ tw==0 is not illegal");
 
   a_custom_instr: assert property (
     is_rvfi_custominstr
     |->
     is_rvfi_illegalinsn
-    // TODO:ropeders assert "!(rvfi_trap.exception && !rvfi_trap.exception_cause)"?
-    // TODO:ropeders assert "pipe.illegal ##0 ... rvfi_valid |-> trap"?
-    // TODO:ropeders cover "rvfi_dbg_mode && rvfi_trap"?
-    // TODO:ropeders debug why this CEXes
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "user-level custom instrs are not supported");
 
   a_uret: assert property (
     is_rvfi_uret
     |->
     is_rvfi_illegalinsn
-    // TODO:ropeders can condence these illegal_insn asserts w/ sequence?
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "the uret instruction is not supported");
 
   a_ebreaku_on: assert property (
     is_rvfi_ebreak         &&
@@ -373,8 +354,7 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_valid [->1])  ##0
     rvfi_dbg_mode
     // TODO:ropeders check rvfi_debug cause too?
-    // TODO:ropeders is EBREAKU not supported?
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "umode ebreak with ebreaku should cause dmode");
   cov_ebreaku_bit: cover property (
     rvfi_csr_dcsr_rdata[EBREAKU_POS+:EBREAKU_LEN]
   );
@@ -392,7 +372,7 @@ module  uvmt_cv32e40s_umode_assert
     ) ^ (
       is_rvfi_instrtriggered
     )
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "umode ebreak wo/ ebreaku should cause exception");
 
   a_ebreaku_off_nodebug: assert property (
     is_rvfi_ebreak         &&
@@ -401,7 +381,7 @@ module  uvmt_cv32e40s_umode_assert
     |=>
     (rvfi_valid [->1])  ##0
     (rvfi_dbg != DBG_CAUSE_EBREAK)
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "umode ebreak wo/ ebreaku should not cause dmode");
 
   a_ecall_umode: assert property (
     is_rvfi_ecall  &&
@@ -418,16 +398,14 @@ module  uvmt_cv32e40s_umode_assert
     )
     // (might change when triggers are fully implemented)
     // TODO:ropeders don't trust the core pkg EXC_CAUSE defines?
-    // TODO:ropeders will named sequences improve readability?
-    // TODO:ropeders assert that exception_cause "always" matches mcause?
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "umode ecall causes umode ecall exception");
 
   a_dmode_mmode: assert property (
     rvfi_valid  &&
     rvfi_dbg_mode
     |->
     (rvfi_mode == MODE_M)
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "dmode must execute in mmode");
 
   property p_dret_prv;
     int prv;
@@ -445,7 +423,6 @@ module  uvmt_cv32e40s_umode_assert
     reject_on
       (rvfi_valid && !rvfi_dbg_mode && (rvfi_mode != MODE_U))
       p_dret_prv
-    // TODO:ropeders double check that these covers work as intended
   );
   cov_dret_prv_m: cover property (
     reject_on
@@ -517,7 +494,7 @@ module  uvmt_cv32e40s_umode_assert
   a_mret_from_mpp_mmode: assert property (
     p_mret_from_mpp(MODE_M)
   ) else `uvm_error(info_tag, "TODO");
- /*
+ /* TODO:ropeders ?
   cov_mret_from_mpp_umode: cover property (
     is_rvfi_mret  &&
     (rvfi_mode == MODE_M)  &&
@@ -650,11 +627,11 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "the prot on load/store must match the effective mode on retirement");
 */
 
-asu_TODO_dbgpriv: assume property (
-  rvfi_valid && rvfi_dbg_mode
-  |->
-  (rvfi_mode == MODE_M)
-     // TODO:ropeders remove when RTL is fixed
- );
+  a_dbgpriv: assert property (
+    rvfi_valid  &&
+    rvfi_dbg_mode
+    |->
+    (rvfi_mode == MODE_M)
+  );
 
 endmodule : uvmt_cv32e40s_umode_assert
