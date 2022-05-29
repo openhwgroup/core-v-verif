@@ -116,6 +116,9 @@ module  uvmt_cv32e40s_umode_assert
   wire [31:0]  mstatus_writestate  = (rvfi_csr_mstatus_wdata &  rvfi_csr_mstatus_wmask);
   wire [31:0]  mstatus_legacystate = (rvfi_csr_mstatus_rdata & ~rvfi_csr_mstatus_wmask);
   wire [31:0]  mstatus_poststate   = (mstatus_writestate | mstatus_legacystate);
+  wire [31:0]  mcause_writestate   = (rvfi_csr_mcause_wdata  &  rvfi_csr_mcause_wmask);
+  wire [31:0]  mcause_legacystate  = (rvfi_csr_mcause_rdata  & ~rvfi_csr_mcause_wmask);
+  wire [31:0]  mcause_poststate    = (mcause_writestate | mcause_legacystate);
   wire  is_rvfi_instrrevoked = (
     rvfi_trap.exception  &&
     (rvfi_trap.exception_cause inside {EXC_CAUSE_INSTR_FAULT, EXC_CAUSE_INSTR_BUS_FAULT})
@@ -242,7 +245,6 @@ module  uvmt_cv32e40s_umode_assert
     rvfi_valid && (rvfi_mode == MODE_U)
     |->
     (rvfi_csr_mscratch_wmask == 'd 0)
-    // TODO:ropeders what about "mscratchcsw" and "mscratchcswl" too?
   ) else `uvm_error(info_tag, "mscratch should not change in user-mode");
   cov_mscratch_changing: cover property (
     rvfi_valid  &&
@@ -287,13 +289,10 @@ module  uvmt_cv32e40s_umode_assert
     rvfi_valid  &&
     rvfi_trap
     |=>
-    (rvfi_valid [->1])
-    ##0 (rvfi_mode == MODE_M)
+    (rvfi_valid [->1])  ##0
+    (rvfi_mode == MODE_M)
     // TODO:ropeders cov cross Exc/Int etc
-    // TODO:ropeders assert "rvfi_intr |-> mmode"?
-    // TODO:ropeders assert "if_id.valid |-> has_seen_iobi_req"?
-    // TODO:ropeders assert "!(rvfi_dbg_mode && (rvfi_mode != MODE_M))"?
-  ) else `uvm_error(info_tag, "all trapsTODO shall be handled in mmode");
+  ) else `uvm_error(info_tag, "all traps handling shall happen in mmode");
 
   a_interrupt_mmode: assert property (
     rvfi_valid  &&
@@ -331,7 +330,6 @@ module  uvmt_cv32e40s_umode_assert
     !(
       is_rvfi_illegalinsn
     )
-    // TODO:ropeders check more specifically that wfi operation works as normal?
   ) else `uvm_error(info_tag, "wfi in umode w/ tw==0 is not illegal");
 
   a_custom_instr: assert property (
@@ -353,7 +351,6 @@ module  uvmt_cv32e40s_umode_assert
     |=>
     (rvfi_valid [->1])  ##0
     rvfi_dbg_mode
-    // TODO:ropeders check rvfi_debug cause too?
   ) else `uvm_error(info_tag, "umode ebreak with ebreaku should cause dmode");
   cov_ebreaku_bit: cover property (
     rvfi_csr_dcsr_rdata[EBREAKU_POS+:EBREAKU_LEN]
@@ -391,13 +388,10 @@ module  uvmt_cv32e40s_umode_assert
       rvfi_trap[0]  &&
       rvfi_trap.exception  &&
       (rvfi_trap.exception_cause == EXC_CAUSE_ECALL_UMODE)  &&
-      ((rvfi_csr_mcause_wdata & rvfi_csr_mcause_wmask) == EXC_CAUSE_ECALL_UMODE)
-      // TODO:ropeders check mask is all ones?
+      (mcause_poststate == EXC_CAUSE_ECALL_UMODE)
     ) ^ (
       is_rvfi_instrtriggered
     )
-    // (might change when triggers are fully implemented)
-    // TODO:ropeders don't trust the core pkg EXC_CAUSE defines?
   ) else `uvm_error(info_tag, "umode ecall causes umode ecall exception");
 
   a_dmode_mmode: assert property (
@@ -481,8 +475,7 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_mode == MODE_M)  &&
     !rvfi_dbg_mode
     ##1
-    (rvfi_valid [->1])
-    ##0
+    (rvfi_valid [->1])  ##0
     !(rvfi_intr[0] && rvfi_intr.interrupt && rvfi_csr_mcause_rdata[31])  &&
     !(rvfi_dbg_mode)
     |->
@@ -490,27 +483,17 @@ module  uvmt_cv32e40s_umode_assert
   endproperty : p_mret_from_mpp
   a_mret_from_mpp_umode: assert property (
     p_mret_from_mpp(MODE_U)
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "mret should result in privmode from mstatus.mpp (umode)");
   a_mret_from_mpp_mmode: assert property (
     p_mret_from_mpp(MODE_M)
-  ) else `uvm_error(info_tag, "TODO");
- /* TODO:ropeders ?
-  cov_mret_from_mpp_umode: cover property (
-    is_rvfi_mret  &&
-    (rvfi_mode == MODE_M)  &&
-    (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == MODE_U)  &&
-    !rvfi_dbg_mode
-    ##1
-    (rvfi_valid [->1])  ##0
-  );
- */
+  ) else `uvm_error(info_tag, "mret should result in privmode from mstatus.mpp (mmode)");
 
   a_mret_in_umode: assert property (
     is_rvfi_mret  &&
     (rvfi_mode == MODE_U)
     |->
     is_rvfi_illegalinsn ^ is_rvfi_instrtriggered
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "mret in umode is illegal");
 
   for (genvar i = 0; i < 31; i++) begin : gen_mcounteren_clear
     a_check: assert property (
@@ -535,15 +518,14 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_insn[31:20] == CSRADDR_MCOUNTEREN)
     |->
     !is_rvfi_illegalinsn
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "mcounteren must be implemented");
 
   a_jvt_access: assert property (
     is_rvfi_csrinstr  &&
     (rvfi_insn[31:20] == CSRADDR_JVT)
     |->
     !is_rvfi_illegalinsn
-    // TODO:ropeders "Smstateen"
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "jvt csr should be rw in both modes");
 
   a_next_csrs: assert property (
     is_rvfi_csrinstr  &&
@@ -560,7 +542,7 @@ module  uvmt_cv32e40s_umode_assert
     rvfi_valid
     |->
     (rvfi_csr_dcsr_rdata[MPRVEN_POS+:MPRVEN_LEN] == 0)
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "dcsr.mprven is not supported");
 
   property  p_prv_entry;
     int mode;
@@ -579,7 +561,7 @@ module  uvmt_cv32e40s_umode_assert
   endproperty : p_prv_entry
   a_prv_entry: assert property (
     p_prv_entry
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "on dbg entry, dcsr.prv should be previous privmode");
   cov_prv_entry_u: cover property (
     reject_on
       (rvfi_valid && rvfi_dbg_mode && (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] != MODE_U))
@@ -595,7 +577,7 @@ module  uvmt_cv32e40s_umode_assert
     rvfi_valid
     |->
     (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] inside {MODE_U, MODE_M})
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "dcsr.prv must hold supported privmodes");
   cov_prv_supported_umode: cover property (
     rvfi_valid  &&
     (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == MODE_U)
