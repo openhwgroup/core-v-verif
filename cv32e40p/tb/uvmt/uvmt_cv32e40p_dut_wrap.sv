@@ -121,16 +121,16 @@ module uvmt_cv32e40p_dut_wrap #(
 
     assign irq = irq_uvma | irq_vp;
 
-    // --------------------------------------------
-    // instantiate the core
-    cv32e40p_wrapper #(
+    // -------------------------------------------------------------
+    // Instantiate the Core and optional FPU plus logger and tracers
+    cv32e40p_tb_wrapper #(
                  .PULP_XPULP       (PULP_XPULP),
                  .PULP_CLUSTER     (PULP_CLUSTER),
                  .FPU              (FPU),
                  .PULP_ZFINX       (PULP_ZFINX),
                  .NUM_MHPMCOUNTERS (NUM_MHPMCOUNTERS)
                 )
-    cv32e40p_wrapper_i
+    cv32e40p_tb_wrapper_i
         (
          .clk_i                  ( clknrst_if.clk                 ),
          .rst_ni                 ( clknrst_if.reset_n             ),
@@ -170,7 +170,7 @@ module uvmt_cv32e40p_dut_wrap #(
 
          .fetch_enable_i         ( core_cntrl_if.fetch_en         ),
          .core_sleep_o           ( core_status_if.core_busy       )
-        ); // cv32e40p_wrapper_i
+        ); // cv32e40p_tb_wrapper_i
 
 
 endmodule : uvmt_cv32e40p_dut_wrap

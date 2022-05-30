@@ -187,60 +187,60 @@ module uvmt_cv32e40p_tb;
    uvmt_cv32e40p_debug_cov_assert_if debug_cov_assert_if(
     .clk_i(clknrst_if.clk),
     .rst_ni(clknrst_if.reset_n),
-    .fetch_enable_i(dut_wrap.cv32e40p_wrapper_i.core_i.fetch_enable_i),
-    .if_stage_instr_rvalid_i(dut_wrap.cv32e40p_wrapper_i.core_i.if_stage_i.instr_rvalid_i),
-    .if_stage_instr_rdata_i(dut_wrap.cv32e40p_wrapper_i.core_i.if_stage_i.instr_rdata_i),
-    .id_stage_instr_valid_i(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.instr_valid_i),
-    .id_stage_instr_rdata_i(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.instr_rdata_i),
-    .id_stage_is_compressed(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.is_compressed_i),
-    .id_valid(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.id_valid_i),
-    .is_decoding(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.is_decoding_o),
-    .id_stage_pc(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.pc_id_i),
-    .if_stage_pc(dut_wrap.cv32e40p_wrapper_i.core_i.if_stage_i.pc_if_o),
-    .mie_q(dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.mie_q),
-    .ctrl_fsm_cs(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ctrl_fsm_cs),
-    .illegal_insn_i(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_i),
-    .illegal_insn_q(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_q),
-    .ecall_insn_i(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ecall_insn_i),
-    .debug_req_i(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.debug_req_pending),
-    .debug_mode_q(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.debug_mode_q),
-    .dcsr_q(dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.dcsr_q),
-    .depc_q(dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.depc_q),
-    .depc_n(dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.depc_n),
-    .mcause_q(dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.mcause_q),
-    .mtvec({dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.mtvec_q, 8'h00}),
-    .mepc_q(dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.mepc_q),
-    .tdata1(dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.tmatch_control_rdata),
-    .tdata2(dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.tmatch_value_rdata),
-    .trigger_match_i(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.trigger_match_i),
-    .mcountinhibit_q(dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.mcountinhibit_q),
-    .mcycle(dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.mhpmcounter_q[0]),
-    .minstret(dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.mhpmcounter_q[2]),
-    .fence_i(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.decoder_i.fencei_insn_o),
+    .fetch_enable_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.fetch_enable_i),
+    .if_stage_instr_rvalid_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.if_stage_i.instr_rvalid_i),
+    .if_stage_instr_rdata_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.if_stage_i.instr_rdata_i),
+    .id_stage_instr_valid_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.instr_valid_i),
+    .id_stage_instr_rdata_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.instr_rdata_i),
+    .id_stage_is_compressed(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.is_compressed_i),
+    .id_valid(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.id_valid_i),
+    .is_decoding(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.is_decoding_o),
+    .id_stage_pc(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.pc_id_i),
+    .if_stage_pc(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.if_stage_i.pc_if_o),
+    .mie_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mie_q),
+    .ctrl_fsm_cs(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ctrl_fsm_cs),
+    .illegal_insn_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_i),
+    .illegal_insn_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_q),
+    .ecall_insn_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ecall_insn_i),
+    .debug_req_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.debug_req_pending),
+    .debug_mode_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.debug_mode_q),
+    .dcsr_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.dcsr_q),
+    .depc_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.depc_q),
+    .depc_n(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.depc_n),
+    .mcause_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mcause_q),
+    .mtvec({dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mtvec_q, 8'h00}),
+    .mepc_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mepc_q),
+    .tdata1(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.tmatch_control_rdata),
+    .tdata2(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.tmatch_value_rdata),
+    .trigger_match_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.trigger_match_i),
+    .mcountinhibit_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mcountinhibit_q),
+    .mcycle(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mhpmcounter_q[0]),
+    .minstret(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mhpmcounter_q[2]),
+    .fence_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.decoder_i.fencei_insn_o),
 
     // TODO: review this change from CV32E40P_HASH f6196bf to a26b194. It should be logically equivalent.
-    //assign debug_cov_assert_if.inst_ret = dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.inst_ret;
+    //assign debug_cov_assert_if.inst_ret = dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.inst_ret;
     // First attempt: this causes unexpected failures of a_minstret_count
-    //assign debug_cov_assert_if.inst_ret = (dut_wrap.cv32e40p_wrapper_i.core_i.id_valid &
-    //                                       dut_wrap.cv32e40p_wrapper_i.core_i.is_decoding);
+    //assign debug_cov_assert_if.inst_ret = (dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_valid &
+    //                                       dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.is_decoding);
     // Second attempt: (based on OK input).  This passes, but maybe only because p_minstret_count
     //                                       is the only property sensitive to inst_ret. Will
     //                                       this work in the general case?
-    .inst_ret(dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.mhpmevent_minstret_i),
-    .csr_access(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.csr_access),
-    .csr_op(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.csr_op),
-    .csr_op_dec(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.decoder_i.csr_op),
-    .csr_addr(dut_wrap.cv32e40p_wrapper_i.core_i.csr_addr),
-    .csr_we_int(dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.csr_we_int),
-    .irq_ack_o(dut_wrap.cv32e40p_wrapper_i.core_i.irq_ack_o),
-    .irq_id_o(dut_wrap.cv32e40p_wrapper_i.core_i.irq_id_o),
-    .dm_halt_addr_i(dut_wrap.cv32e40p_wrapper_i.core_i.dm_halt_addr_i),
-    .dm_exception_addr_i(dut_wrap.cv32e40p_wrapper_i.core_i.dm_exception_addr_i),
-    .core_sleep_o(dut_wrap.cv32e40p_wrapper_i.core_i.core_sleep_o),
-    .irq_i(dut_wrap.cv32e40p_wrapper_i.core_i.irq_i),
-    .pc_set(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.pc_set_o),
-    .boot_addr_i(dut_wrap.cv32e40p_wrapper_i.core_i.boot_addr_i),
-    .branch_in_decode(dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.branch_in_id),
+    .inst_ret(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mhpmevent_minstret_i),
+    .csr_access(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.csr_access),
+    .csr_op(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.csr_op),
+    .csr_op_dec(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.decoder_i.csr_op),
+    .csr_addr(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.csr_addr),
+    .csr_we_int(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.csr_we_int),
+    .irq_ack_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.irq_ack_o),
+    .irq_id_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.irq_id_o),
+    .dm_halt_addr_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.dm_halt_addr_i),
+    .dm_exception_addr_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.dm_exception_addr_i),
+    .core_sleep_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.core_sleep_o),
+    .irq_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.irq_i),
+    .pc_set(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.pc_set_o),
+    .boot_addr_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.boot_addr_i),
+    .branch_in_decode(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.branch_in_id),
 
     .is_wfi(),
     .in_wfi(),
@@ -274,9 +274,9 @@ module uvmt_cv32e40p_tb;
     uvmt_cv32e40p_step_compare step_compare (.clknrst_if(clknrst_if),
                                               .step_compare_if(step_compare_if) );
 
-    always @(dut_wrap.cv32e40p_wrapper_i.tracer_i.retire) -> step_compare_if.riscv_retire;
-    assign step_compare_if.insn_pc   = dut_wrap.cv32e40p_wrapper_i.tracer_i.insn_pc;
-    assign step_compare_if.riscy_GPR = dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.register_file_i.mem;
+    always @(dut_wrap.cv32e40p_tb_wrapper_i.tracer_i.retire) -> step_compare_if.riscv_retire;
+    assign step_compare_if.insn_pc   = dut_wrap.cv32e40p_tb_wrapper_i.tracer_i.insn_pc;
+    assign step_compare_if.riscy_GPR = dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.register_file_i.mem;
     assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
 
     // Connect step-and-compare signals to interrupt_if for functional coverage of instructions and interrupts
@@ -295,16 +295,16 @@ module uvmt_cv32e40p_tb;
       if (!clknrst_if.reset_n)
         core_sleep_o_d <= 1'b0;
       else
-        core_sleep_o_d <= dut_wrap.cv32e40p_wrapper_i.core_sleep_o;
+        core_sleep_o_d <= dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_sleep_o;
     end
 
     // Advance acknowledged interrupt to ISS when next valid instruction decode executes
     // Ignoring any instructon decodes in debug mode
-    wire id_start = dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.id_valid_o &
-                    dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.is_decoding_o &
-                    ~dut_wrap.cv32e40p_wrapper_i.core_i.debug_mode;
+    wire id_start = dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.id_valid_o &
+                    dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.is_decoding_o &
+                    ~dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.debug_mode;
 
-    assign irq_enabled = dut_wrap.cv32e40p_wrapper_i.irq_i & dut_wrap.cv32e40p_wrapper_i.core_i.cs_registers_i.mie_n;
+    assign irq_enabled = dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.irq_i & dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mie_n;
 
     /**
       * step_compare_if.deferint_prime is set to 0 (asserted) when the controller in ID commits to an interrupt
@@ -390,7 +390,7 @@ module uvmt_cv32e40p_tb;
         for (int irq_idx=0; irq_idx<32; irq_idx++) begin
 
           // Leave ISS side asserted as long as RTL interrupt line is asserted
-          if (dut_wrap.cv32e40p_wrapper_i.irq_i[irq_idx]) 
+          if (dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.irq_i[irq_idx]) 
             irq_mip[irq_idx] <= 1'b1;
           // If deferint is low and ovp_cpu_state_stepi is asserted, then interrupt was consumed by model
           // Clear it now to avoid mip miscompare
@@ -412,17 +412,17 @@ module uvmt_cv32e40p_tb;
       if (!clknrst_if.reset_n) begin
           count_issue <= 32'h0;
       end else begin
-          if ((dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.id_valid_o && dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.is_decoding_o &&
-              !dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_i) ||
-              (dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.is_decoding_o && dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ebrk_insn_i &&
-                !dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.trigger_match_i &&
-              (dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ebrk_force_debug_mode || dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.debug_mode_q))) begin
+          if ((dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.id_valid_o && dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.is_decoding_o &&
+              !dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_i) ||
+              (dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.is_decoding_o && dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ebrk_insn_i &&
+                !dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.trigger_match_i &&
+              (dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ebrk_force_debug_mode || dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.debug_mode_q))) begin
               count_issue <= count_issue + 1;
           end
       end
     end
 
-    always @(dut_wrap.cv32e40p_wrapper_i.tracer_i.retire or negedge clknrst_if.reset_n) begin
+    always @(dut_wrap.cv32e40p_tb_wrapper_i.tracer_i.retire or negedge clknrst_if.reset_n) begin
         if (!clknrst_if.reset_n) begin
             count_retire <= 32'h0;
         end else begin
@@ -445,8 +445,8 @@ module uvmt_cv32e40p_tb;
                   iss_wrap.io.haltreq <= 1'b0;
 
                   // Only drive haltreq if we have an external request
-                  if (dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ctrl_fsm_cs inside {cv32e40p_pkg::DBG_TAKEN_ID, cv32e40p_pkg::DBG_TAKEN_IF} &&
-                      dut_wrap.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.debug_req_pending) begin
+                  if (dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ctrl_fsm_cs inside {cv32e40p_pkg::DBG_TAKEN_ID, cv32e40p_pkg::DBG_TAKEN_IF} &&
+                      dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.debug_req_pending) begin
 
                       debug_req_state <= DBG_TAKEN;
                       // Already in sync, assert halreq right away

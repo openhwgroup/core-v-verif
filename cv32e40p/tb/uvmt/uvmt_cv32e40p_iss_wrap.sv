@@ -107,7 +107,7 @@ module uvmt_cv32e40p_iss_wrap
         int num = $sscanf (decode, "%s %s %s %s %s", ins_str, op[0], op[1], op[2], op[3]);
         isa_covg_if.ins.ins_str = ins_str;
         isa_covg_if.ins.pc = step_compare_if.ovp_cpu_PCr;
-        isa_covg_if.ins.compressed = dut_wrap.cv32e40p_wrapper_i.tracer_i.insn_compressed;
+        isa_covg_if.ins.compressed = dut_wrap.cv32e40p_tb_wrapper_i.tracer_i.insn_compressed;
         for (i=0; i<num-1; i++) begin
             split(op[i], key, val);
             isa_covg_if.ins.ops[i].key=key;
