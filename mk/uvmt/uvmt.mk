@@ -74,7 +74,19 @@ SIMULATOR    ?= $(CV_SIMULATOR)
 USE_ISS      ?= YES
 
 # Common configuration variables
-CFG             ?= default
+CFG          ?= default
+
+# FPU variable for manifest
+CFG_LC = $(shell echo $(CFG) | tr A-Z a-z)
+ifneq (,$(findstring fpu,$(CFG_LC)))
+# Configuration with FPU
+FPU = YES
+FPU_MANIFEST = _fpu
+else
+# Configuration without FPU
+FPU = NO
+FPU_MANIFEST = 
+endif
 
 # Common Generation variables
 GEN_START_INDEX ?= 0
@@ -167,7 +179,7 @@ RTLSRC_VOPT_TB_TOP	:= $(addsuffix _vopt, $(RTLSRC_VLOG_TB_TOP))
 # RTL source files for the CV32E core
 # DESIGN_RTL_DIR is used by CV32E40P_MANIFEST file
 CV_CORE_PKG          := $(CORE_V_VERIF)/core-v-cores/$(CV_CORE_LC)
-CV_CORE_MANIFEST     := $(CV_CORE_PKG)/$(CV_CORE_LC)_manifest.flist
+CV_CORE_MANIFEST     := $(CV_CORE_PKG)/$(CV_CORE_LC)$(FPU_MANIFEST)_manifest.flist
 export DESIGN_RTL_DIR = $(CV_CORE_PKG)/rtl
 
 RTLSRC_HOME   := $(CV_CORE_PKG)/rtl
