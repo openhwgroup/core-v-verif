@@ -1,4 +1,23 @@
-long int matA[N*M] __attribute__ ((aligned (4))) = {
+// Copyright 2020 OpenHW Group
+// Copyright 2020 Silicon Labs, Inc.
+//
+// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://solderpad.org/licenses/
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
+
+// Floating Point Input and Expected result Matrices
+
+float A[N*M] __attribute__ ((aligned (4))) = {
   0x4e3a67f8,  0x4e1da87f,  0x4e70c7b1,  0x4eb4f9e3,  0x4eddc42f,  0x4e94ada5,  0x4e8aa0ca,  0x4ebc7985,  0x4dfbd0cc,  0x4dc30d16,  0x4ec33e42,  0x4ede6e96,  0x4e791541,  0x4eed253d,  0x4ebbcbf3,  0x4e119ed5,
   0x4cf412f6,  0x4eca56f8,  0x4e217506,  0x4e82e773,  0x4ea01e96,  0x4cb2a6da,  0x4dd3e1d3,  0x4dcda1e8,  0x4d5627f2,  0x4d554ea9,  0x4c20f323,  0x4e6f7ed1,  0x4efde705,  0x4d9937b8,  0x4ee97715,  0x4ed2b2e7,
   0x4c582053,  0x4e805d4c,  0x4d62d5d3,  0x4e85fa38,  0x4d56ceb5,  0x4ee738b0,  0x4e31912f,  0x4ec3bef3,  0x4e7d99d3,  0x4e2321ad,  0x4ed78134,  0x4c2cd786,  0x4db8d391,  0x4e8f1b30,  0x4e9ad203,  0x4d0321ee,
@@ -17,7 +36,7 @@ long int matA[N*M] __attribute__ ((aligned (4))) = {
   0x4efc7e89,  0x4b0e5d80,  0x4e931027,  0x4e50874a,  0x4e57cfc7,  0x4edd7264,  0x4ea20eae,  0x4e9ff4e7,  0x4e4b7a22,  0x4ec90444,  0x4e22dfbb,  0x4e0b6115,  0x4e69aa5b,  0x4ef1d6a5,  0x4ea16458,  0x4d81578a
 };
 
-long int matB[N*M] __attribute__ ((aligned (4))) = {
+float B[N*M] __attribute__ ((aligned (4))) = {
   0x4e8aaec0,  0x4eb15709,  0x4eb916d9,  0x4efb426b,  0x4d8336e9,  0x4edcabbc,  0x4d6b1aeb,  0x4c8a91a8,  0x4e264218,  0x4ea6bd2d,  0x4ea0dbda,  0x4e99bc28,  0x4c19d321,  0x4ea4bbb4,  0x4e84926f,  0x4d47ff7a,
   0x4e97a3aa,  0x4e87a508,  0x4e7ea1b7,  0x4db9fac8,  0x4d3ca8bc,  0x4daafd7e,  0x4ec7a3f2,  0x4e67d950,  0x4e48577f,  0x4ede0340,  0x4ef9186b,  0x4e81923a,  0x4e49c94b,  0x4eb9b2f8,  0x4e5e3ab1,  0x4ef8b844,
   0x4e9d09df,  0x4e2ef70b,  0x4bd12fcc,  0x4ebc7950,  0x4e9124a5,  0x4e1fa497,  0x4d55094e,  0x4e671b2c,  0x4ede68c8,  0x4e83d482,  0x4ec9503f,  0x4ed56838,  0x4daed2a9,  0x4d3d5fcb,  0x4e439c2d,  0x4ea19305,
@@ -36,9 +55,9 @@ long int matB[N*M] __attribute__ ((aligned (4))) = {
   0x4eb7da71,  0x4d83ea41,  0x4e869f9c,  0x4ed56edb,  0x4ee00d74,  0x4e38cb84,  0x4e8e8b33,  0x4e2bee0a,  0x4dff2390,  0x4e021864,  0x4e945688,  0x4e1fad46,  0x4ed845ba,  0x4cb79124,  0x4dbe3983,  0x4e9de2e1
 };
 
-long int matC[N*M] __attribute__ ((aligned (4)));
+float C[N*M] __attribute__ ((aligned (4)));
 
-long int exp_res[N*M] __attribute__ ((aligned (4))) = {
+float exp_C[N*M] __attribute__ ((aligned (4))) = {
   0x5f86d0a9,  0x5f8a6c34,  0x5f95ef71,  0x5f901bf4,  0x5f9ec149,  0x5f912951,  0x5f6d0156,  0x5f8e3079,  0x5fadc893,  0x5fa0ca70,  0x5f859459,  0x5f648c21,  0x5fb2e794,  0x5f985df7,  0x5f9205aa,  0x5f98711b,
   0x5f296025,  0x5f3028dc,  0x5f5dc7c6,  0x5f54aea8,  0x5f485fea,  0x5f35dbed,  0x5f5a273d,  0x5f1bffe1,  0x5f56a059,  0x5f4a4626,  0x5f6656b3,  0x5f096f73,  0x5f7512d4,  0x5f4b1281,  0x5f535425,  0x5f640de7,
   0x5f60774a,  0x5f51ea89,  0x5f4095d9,  0x5f075cc7,  0x5f81e6ba,  0x5f400961,  0x5f2913d2,  0x5f3a6020,  0x5f6cb7a0,  0x5f821bc8,  0x5f35574f,  0x5f0cd2bb,  0x5f7a668f,  0x5f685533,  0x5f36f40d,  0x5f3fc1fe,

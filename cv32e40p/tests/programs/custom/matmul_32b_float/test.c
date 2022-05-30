@@ -1,3 +1,23 @@
+// Copyright 2020 OpenHW Group
+// Copyright 2020 Silicon Labs, Inc.
+//
+// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://solderpad.org/licenses/
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
+// 
+// Description : Multiplication of 2 Single Precision Floating Point Matrices
+// 
+
 #include <stdio.h>
 
 #define N 16
@@ -26,22 +46,21 @@ int checkInt (long int *B, long int *A, long int n)
 
 __attribute__((always_inline)) int cpu_perf_get_cycle()
 {
-  return *REG_TIME;
-//return 0; // to be used when USE_ISS=YES
+  unsigned int cycle;
+  __asm__ volatile("csrr %0, 0xB00" : "=r"(cycle)); // mcycle
+  return cycle;
 }
 
 int main()
 {
   int start_time, stop_time;
   static volatile int nb_cycles;
-  int error = 0, error_div = 0;
+  int error = 0;
 
-  float *A = matA;
-  float *B = matB;
-  float *C = matC;
-  float fdivC;
-  long int divC;
-  long int exp_divC = 0x6a;
+  volatile float fdiv;
+
+  // Enable mcycle counter
+  __asm__ volatile("csrwi 0x320, 0x1e"); // mcountinhibit.cy = 0
 
   start_time = cpu_perf_get_cycle();
 
@@ -59,21 +78,11 @@ int main()
   nb_cycles = stop_time - start_time;
   printf("STDOUT : Perf Counter cycles : %d\n", nb_cycles);
 
-  divC = matA[0] / 12345678 ;
-  printf("STDOUT : Long Integer Div 0x%08x / 0x%08x = 0x%08x\n", matA[0], 12345678, divC);
-
   // Fdiv example
-  fdivC = A[1] / B[1];
-  printf("STDOUT : Float Div 0x%08x / 0x%08x = 0x%08x\n", matA[1], matB[1], fdivC);
+  fdiv = A[0] / B[1];
 
-  error = checkInt(matC, exp_res, N*M);
-  printf("STDOUT : Number of errors in matmul %d\n", error);
-  if(divC != exp_divC){
-      error_div++;
-      printf("STDOUT : Error for Long Integer Div, expected %08x but result is %08x\n", exp_divC, divC);
-  }
-  printf("STDOUT : Number of errors in div %d\n", error_div);
-  error += error_div;
+  error = checkInt((long int *)C, (long int *)exp_C, N*M);
+  printf("STDOUT : Number of errors in matmul : %d\n", error);
 
   return error;
 }
