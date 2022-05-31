@@ -1,0 +1,79 @@
+# -*- Makefile -*-
+#*****************************************************************************
+#
+# DESCRIPTION: Verilator Example: Makefile for inside object directory
+#
+# This is executed in the object directory, and called by ../Makefile
+#
+# Copyright 2003-2019 by Wilson Snyder. This program is free software; you can
+# redistribute it and/or modify it under the terms of either the GNU
+# Lesser General Public License Version 3 or the Perl Artistic License
+# Version 2.0.
+#
+#*****************************************************************************
+
+default: $(VM_PREFIX)
+
+ifneq ($(MAKE_MAIN),0)
+   # Add main to classes rather then SC_SRCS to save a compiler run
+   VM_CLASSES += ${VM_PREFIX}__main $(VM_USER_CLASSES) $(VM_GLOBAL_FAST) $(VM_GLOBAL_SLOW)
+endif
+
+include $(VM_PREFIX).mk
+
+VPATH += ../../$(VM_USER_DIR)
+
+#######################################################################
+
+# Needed by DPI tests
+CPPFLAGS += -DVERILATOR=1
+
+# Debugging
+CPPFLAGS += -DVL_DEBUG=1
+# Assertions disabled as SystemC libraries are not clean
+#CPPFLAGS += -D_GLIBCXX_DEBUG
+
+# Needed by tracing routines
+CPPFLAGS += -DTEST_OBJ_DIR=$(TEST_OBJ_DIR)
+CPPFLAGS += -DVM_PREFIX=$(VM_PREFIX)
+CPPFLAGS += -DVM_PREFIX_INCLUDE="<$(VM_PREFIX).h>"
+CPPFLAGS += $(CPPFLAGS_DRIVER)
+CPPFLAGS += $(CPPFLAGS_DRIVER2)
+CPPFLAGS += $(CPPFLAGS_ADD)
+
+ifeq ($(CFG_WITH_LONGTESTS),yes)
+  ifeq ($(DRIVER_STD),newest)
+    CPPFLAGS += $(CFG_CXXFLAGS_STD_NEWEST)
+  else ifeq ($(DRIVER_STD),oldest)
+    CPPFLAGS += $(CFG_CXXFLAGS_STD_OLDEST)
+  endif
+endif
+
+#######################################################################
+# Linking final exe
+
+ifeq ($(VM_SC),1)
+   LIBS += $(SC_LIBS)
+endif
+
+.SUFFIXES:
+
+#Default compile, pick up OBJCACHE
+%.o:	%.cpp
+	$(OBJCACHE) $(CXX) -c $(CPPFLAGS) $(CXXFLAGS) $<
+
+#Default link, using normal make rules
+#$(VM_PREFIX): $(VK_GLOBAL_OBJS) $(VK_OBJS)
+#	$(LINK) $(LDFLAGS) -g $^ $(LOADLIBES) $(LDLIBS) -o $@ $(LIBS) 2>&1
+
+#Our own compile rules; Faster compile, all in one file
+$(VM_PREFIX)__ALLboth.cpp: $(VK_CLASSES_CPP) $(VK_SUPPORT_CPP)
+	$(VERILATOR_INCLUDER) -DVL_INLINE_OPT=inline $^ > $@
+
+$(VM_PREFIX)__ALLboth.o: $(VM_PREFIX)__ALLboth.cpp
+	$(OBJCACHE) $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(OPT_FAST) -c -o $@ $<
+
+ifneq ($(MAKE_MAIN),0)
+   $(VM_PREFIX): $(VM_PREFIX)__ALLboth.o
+	$(LINK) $(LDFLAGS) -g $^ $(LOADLIBES) $(LDLIBS) -o $@ $(LIBS) 2>&1
+endif

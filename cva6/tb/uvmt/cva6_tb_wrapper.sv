@@ -29,12 +29,10 @@ module cva6_tb_wrapper #(
   parameter int unsigned AXI_DATA_WIDTH    = 64,
   parameter int unsigned NUM_WORDS         = 2**25
 ) (
-  input  logic                         clk_i,
-  input  logic                         rst_ni,
-  output wire                          tb_exit_o,
-  output ariane_rvfi_pkg::rvfi_port_t  rvfi_o,
-  input  cvxif_pkg::cvxif_resp_t       cvxif_resp,
-  output cvxif_pkg::cvxif_req_t        cvxif_req
+  input logic clk_i,
+  input logic rst_ni,
+  output wire tb_exit_o,
+  output ariane_rvfi_pkg::rvfi_port_t  rvfi_o
 );
 
   ariane_axi::req_t    axi_ariane_req;
@@ -43,7 +41,7 @@ module cva6_tb_wrapper #(
   ariane_rvfi_pkg::rvfi_port_t  rvfi;
   assign rvfi_o = rvfi;
 
-  cva6 #(
+  ariane #(
     .ArianeCfg  ( ariane_soc::ArianeSocCfg )
   ) i_cva6 (
     .clk_i                ( clk_i                     ),
@@ -55,8 +53,6 @@ module cva6_tb_wrapper #(
     .time_irq_i           ( 1'b0  /*timer_irq*/       ),
     .debug_req_i          ( 1'b0                      ),
     .rvfi_o               ( rvfi                      ),
-    .cvxif_req_o          ( cvxif_req                 ),
-    .cvxif_resp_i         ( cvxif_resp                ),
     .axi_req_o            ( axi_ariane_req            ),
     .axi_resp_i           ( axi_ariane_resp           )
   );

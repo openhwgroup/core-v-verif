@@ -111,12 +111,7 @@ module cva6_core_only_tb #(
     .AXI_USER_WIDTH ( AXI_USER_WIDTH           )
   ) cva6_axi_bus();
 
-  axi_master_connect #(
-  ) i_axi_master_connect_cva6_to_mem (
-    .axi_req_i  (axi_ariane_req),
-    .axi_resp_o (axi_ariane_resp),
-    .master     (cva6_axi_bus)
-  );
+
 
   axi2mem #(
     .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),

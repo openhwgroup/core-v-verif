@@ -1,0 +1,11 @@
+prefix=/home/user3/testing_dir/core-v-verif/tools/spike
+exec_prefix=/home/user3/testing_dir/core-v-verif/tools/spike
+libdir=${prefix}/${exec_prefix}/lib
+includedir=${prefix}/${prefix}/include
+
+Name: riscv-dummy_rocc
+Description: Example RISC-V ROCC accelerator
+Version: git
+Libs: -Wl,-rpath,${libdir} -L${libdir} -ldummy_rocc
+Cflags: -I${includedir}
+URL: http://riscv.org/download.html#tab_spike

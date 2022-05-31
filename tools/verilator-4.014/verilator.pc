@@ -1,0 +1,13 @@
+prefix=/home/user3/testing_dir/core-v-verif/tools/verilator-4.014
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+datarootdir=${prefix}/share
+includedir=${datarootdir}/verilator/include
+
+Name: verilator
+Description: fast free Verilog simulator
+URL: http://www.veripool.org/verilator
+Version: 4.014 2019-05-08
+Requires:
+Libs:
+Cflags: -I${includedir} -I${includedir}/vltstd

@@ -1,0 +1,580 @@
+#*****************************************************************************
+# DESCRIPTION: Verilator top level: Makefile pre-configure version
+#
+# This file is part of Verilator.
+#
+# Code available from: http://www.veripool.org/verilator
+#
+#*****************************************************************************
+#
+# Copyright 2003-2019 by Wilson Snyder. This program is free software; you can
+# redistribute it and/or modify it under the terms of either the GNU
+# Lesser General Public License Version 3 or the Perl Artistic License
+# Version 2.0.
+#
+# Verilator is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+#****************************************************************************/
+#
+# make all	to compile and build Verilator.
+# make install	to install it.
+# make TAGS	to update tags tables.
+#
+# make clean  or  make mostlyclean
+#      Delete all files from the current directory that are normally
+#      created by building the program.	 Don't delete the files that
+#      record the configuration.  Also preserve files that could be made
+#      by building, but normally aren't because the distribution comes
+#      with them.
+#
+# make distclean
+#      Delete all files from the current directory that are created by
+#      configuring or building the program.  If you have unpacked the
+#      source and built the program without creating any other files,
+#      `make distclean' should leave only the files that were in the
+#      distribution.
+#
+# make maintainer-clean
+#      Delete everything from the current directory that can be
+#      reconstructed with this Makefile.  This typically includes
+#      everything deleted by distclean, plus more: C source files
+#      produced by Bison, tags tables, info files, and so on.
+
+#### Start of system configuration section. ####
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+HOST = @HOST@
+
+DOXYGEN = doxygen
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+MAKEINFO = makeinfo
+POD2TEXT = pod2text
+POD2LATEXFIX = $(srcdir)/src/pod2latexfix
+MKINSTALLDIRS = $(SHELL) $(srcdir)/src/mkinstalldirs
+PERL = @PERL@
+
+# Destination prefix for RPMs
+DESTDIR =
+
+#### Don't edit: You're much better using configure switches to set these
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+# Directory in which to install scripts.
+bindir = @bindir@
+
+# Directory in which to install manpages.
+mandir = @mandir@
+
+# Directory in which to install library files.
+datadir = @datadir@
+
+# Directory in which to install documentation info files.
+infodir = @infodir@
+
+# Directory in which to install package specific files
+# Generally ${prefix}/share/verilator
+pkgdatadir = @pkgdatadir@
+
+# Directory in which to install pkgconfig file
+# Generall ${prefix}/share/pkgconfig
+pkgconfigdir = @pkgconfigdir@
+
+# Directory in which to install data across multiple architectures
+datarootdir = @datarootdir@
+
+# Compile options
+CFG_WITH_CCWARN = @CFG_WITH_CCWARN@
+CFG_WITH_DEFENV = @CFG_WITH_DEFENV@
+CFG_WITH_LONGTESTS = @CFG_WITH_LONGTESTS@
+CFG_WITH_THREADED = @CFG_WITH_THREADED@
+PACKAGE_VERSION = @PACKAGE_VERSION@
+
+#### End of system configuration section. ####
+######################################################################
+
+.SUFFIXES:
+
+SHELL = /bin/sh
+
+SUBDIRS = src test_regress \
+	examples/hello_world_c  examples/hello_world_sc \
+	examples/tracing_c  examples/tracing_sc \
+
+INFOS = README README.html README.pdf internals.txt internals.html \
+        internals.pdf verilator.txt verilator.html verilator.pdf \
+	$(VL_INST_MAN_FILES)
+
+# Files that can be generated, but should be up to date for a distribution.
+DISTDEP = info Makefile
+
+DISTFILES_INC = $(INFOS) .gitignore Artistic COPYING COPYING.LESSER \
+	*.in *.ac \
+	Changes TODO \
+	MANIFEST.SKIP \
+	bin/verilator \
+	bin/verilator_coverage \
+	bin/verilator_difftree \
+	bin/verilator_gantt \
+	bin/verilator_includer \
+	bin/verilator_profcfunc \
+	doxygen-mainpage doxygen.config verilator_logo.png \
+	install-sh configure *.pod \
+	include/*.[chv]* \
+	include/*.in \
+	include/.*ignore \
+	include/gtkwave/*.[chv]* \
+	include/vltstd/*.[chv]* \
+	.*attributes */.*attributes  */*/.*attributes \
+	src/.*ignore src/*.in src/*.cpp src/*.[chly] \
+	src/astgen src/bisonpre src/*fix src/cppcheck_filtered \
+	src/vlcovgen src/mkinstalldirs \
+	src/.gdbinit \
+	src/*.pl src/*.pod \
+	examples/*/.*ignore examples/*/Makefile* \
+	examples/*/*.[chv]* examples/*/*.pl \
+	test_*/.*ignore test_*/Makefile* test_*/*.cpp \
+	test_*/*.pl test_*/*.v test_*/*.vc test_*/*.vh \
+	test_regress/t/t*/*.sv* \
+	test_regress/t/t*/*.v* \
+	test_regress/t/t*/*/*.sv* \
+	test_regress/t/t*/*/*.v* \
+	test_regress/t/*.cpp \
+	test_regress/t/*.h \
+	test_regress/t/*.dat \
+	test_regress/t/*.mem \
+	test_regress/t/*.out \
+	test_regress/t/*.pl \
+	test_regress/t/*.pf \
+	test_regress/t/*.v* \
+
+INST_PROJ_FILES = \
+	bin/verilator \
+	bin/verilator_coverage \
+	bin/verilator_gantt \
+	bin/verilator_includer \
+	bin/verilator_profcfunc \
+	include/verilated.mk \
+	include/*.[chv]* \
+	include/gtkwave/*.[chv]* \
+	include/vltstd/*.[chv]* \
+
+INST_PROJ_BIN_FILES = \
+	bin/verilator_bin \
+	bin/verilator_bin_dbg \
+	bin/verilator_coverage_bin_dbg \
+
+DISTFILES := $(DISTFILES_INC)
+
+ifeq ($(OBJCACHE_JOBS),)
+ifneq ($(OBJCACHE_HOSTS),)
+export OBJCACHE_JOBS := -j $(shell objcache --jobs "$(OBJCACHE_HOSTS)")
+endif
+endif
+
+default: all
+all: all_nomsg msg_test
+all_nomsg: verilator_exe $(VL_INST_MAN_FILES)
+
+.PHONY:verilator_exe
+.PHONY:verilator_bin
+.PHONY:verilator_bin_dbg
+.PHONY:verilator_coverage_bin_dbg
+verilator_exe verilator_bin verilator_bin_dbg verilator_coverage_bin_dbg:
+	@echo ------------------------------------------------------------
+	@echo "making verilator in src"
+	$(MAKE) -C src $(OBJCACHE_JOBS)
+
+.PHONY:msg_test
+msg_test: all_nomsg
+	@echo "Build complete!"
+	@echo
+	@echo "Now type 'make test' to test."
+	@echo
+
+.PHONY: test
+ifeq ($(CFG_WITH_LONGTESTS),yes)	# Local... Else don't burden users
+test: smoke-test examples test_regress
+else
+test: smoke-test examples
+endif
+	@echo "Tests passed!"
+	@echo
+	@echo "Now type 'make install' to install."
+	@echo "Or type 'make' inside an examples subdirectory."
+	@echo
+
+smoke-test: all_nomsg
+	test_regress/t/t_a_first_cc.pl
+	test_regress/t/t_a_first_sc.pl
+
+test_regress: all_nomsg
+	$(MAKE) -C test_regress
+
+examples: all_nomsg
+	for p in examples/* ; do \
+	  $(MAKE) -C $$p VERILATOR_ROOT=`pwd` || exit 10; \
+	done
+
+info: $(INFOS)
+
+# Use --no-split to avoid creating filenames > 14 chars.
+%.1: ${srcdir}/bin/%
+	pod2man $< $@
+
+verilator.txt: ${srcdir}/bin/verilator
+	$(POD2TEXT) $< $@
+
+verilator.html: ${srcdir}/bin/verilator
+	pod2html $< >$@
+
+# PDF needs DIST variables; but having configure.ac as dependency isn't detected
+verilator.pdf: ${srcdir}/bin/verilator Makefile $(POD2LATEXFIX)
+	pod2latex --full --out verilator.tex $<
+	$(PERL) $(POD2LATEXFIX) "$(DISTTITLE)" "${DISTDATE}" < verilator.tex > verilator2.tex
+	mv verilator2.tex verilator.tex
+	pdflatex verilator.tex
+	pdflatex verilator.tex
+	-rm -f verilator.toc verilator.aux verilator.idx verilator.out
+
+README: README.pod
+	-rm -f $@
+	$(POD2TEXT) --loose $< > $@
+
+README.html: README.pod
+	pod2html $< >$@
+
+# PDF needs DIST variables; but having configure.ac as dependency isn't detected
+README.pdf: README.pod Makefile $(POD2LATEXFIX)
+	pod2latex --full --out README.tex $<
+	$(PERL) $(POD2LATEXFIX) "$(DISTTITLE) README File" "${DISTDATE}" < README.tex > README2.tex
+	mv README2.tex README.tex
+	pdflatex README.tex
+	pdflatex README.tex
+	-rm -f README.toc README.aux README.idx README.out
+
+internals.txt: internals.pod
+	-rm -f $@
+	$(POD2TEXT) --loose $< > $@
+
+internals.html: internals.pod
+	pod2html $< >$@
+
+# PDF needs DIST variables; but having configure.ac as dependency isn't detected
+internals.pdf: internals.pod Makefile $(POD2LATEXFIX)
+	pod2latex --full --out internals.tex $<
+	$(PERL) $(POD2LATEXFIX) "$(DISTTITLE) Internals Manual" "${DISTDATE}" < internals.tex > internals2.tex
+	mv internals2.tex internals.tex
+	pdflatex internals.tex
+	pdflatex internals.tex
+	-rm -f internals.toc internals.aux internals.idx internals.out
+
+# See uninstall also - don't put wildcards in this variable, it might uninstall other stuff
+VL_INST_BIN_FILES = verilator verilator_bin verilator_bin_dbg verilator_coverage_bin_dbg \
+	verilator_coverage verilator_gantt verilator_includer verilator_profcfunc
+# Some scripts go into both the search path and pkgdatadir,
+# so they can be found by the user, and under $VERILATOR_ROOT.
+
+# See uninstall also - don't put wildcards in this variable, it might uninstall other stuff
+VL_INST_MAN_FILES = verilator.1 verilator_coverage.1 verilator_gantt.1 verilator_profcfunc.1
+
+VL_INST_INC_BLDDIR_FILES = \
+	include/verilated_config.h \
+	include/verilated.mk \
+
+# Files under srcdir, instead of build time
+VL_INST_INC_SRCDIR_FILES = \
+	include/*.[chv]* \
+	include/gtkwave/*.[chv]* \
+	include/vltstd/*.[chv]* \
+
+VL_INST_DATA_SRCDIR_FILES = \
+	examples/*/*.[chv]*  examples/*/Makefile* \
+
+installbin:
+	$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
+	( cd ${srcdir}/bin ; $(INSTALL_PROGRAM) verilator $(DESTDIR)$(bindir)/verilator )
+	( cd ${srcdir}/bin ; $(INSTALL_PROGRAM) verilator_coverage $(DESTDIR)$(bindir)/verilator_coverage )
+	( cd ${srcdir}/bin ; $(INSTALL_PROGRAM) verilator_gantt $(DESTDIR)$(bindir)/verilator_gantt )
+	( cd ${srcdir}/bin ; $(INSTALL_PROGRAM) verilator_profcfunc $(DESTDIR)$(bindir)/verilator_profcfunc )
+	( cd bin ; $(INSTALL_PROGRAM) verilator_bin $(DESTDIR)$(bindir)/verilator_bin )
+	( cd bin ; $(INSTALL_PROGRAM) verilator_bin_dbg $(DESTDIR)$(bindir)/verilator_bin_dbg )
+	( cd bin ; $(INSTALL_PROGRAM) verilator_coverage_bin_dbg $(DESTDIR)$(bindir)/verilator_coverage_bin_dbg )
+	$(MKINSTALLDIRS) $(DESTDIR)$(pkgdatadir)/bin
+	( cd ${srcdir}/bin ; $(INSTALL_PROGRAM) verilator_includer $(DESTDIR)$(pkgdatadir)/bin/verilator_includer )
+
+# Man files can either be part of the original kit, or built in current directory
+# So important we use $^ so VPATH is searched
+installman: $(VL_INST_MAN_FILES)
+	$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man1
+	for p in $^ ; do \
+	  $(INSTALL_DATA) $$p $(DESTDIR)$(mandir)/man1/$$p; \
+	done
+
+installdata:
+	$(MKINSTALLDIRS) $(DESTDIR)$(pkgdatadir)/include/gtkwave
+	$(MKINSTALLDIRS) $(DESTDIR)$(pkgdatadir)/include/vltstd
+	for p in $(VL_INST_INC_BLDDIR_FILES) ; do \
+	  $(INSTALL_DATA) $$p $(DESTDIR)$(pkgdatadir)/$$p; \
+	done
+	cd $(srcdir) \
+	; for p in $(VL_INST_INC_SRCDIR_FILES) ; do \
+	  $(INSTALL_DATA) $$p $(DESTDIR)$(pkgdatadir)/$$p; \
+	done
+	$(MKINSTALLDIRS) $(DESTDIR)$(pkgdatadir)/examples/hello_world_c
+	$(MKINSTALLDIRS) $(DESTDIR)$(pkgdatadir)/examples/hello_world_sc
+	$(MKINSTALLDIRS) $(DESTDIR)$(pkgdatadir)/examples/tracing_c
+	$(MKINSTALLDIRS) $(DESTDIR)$(pkgdatadir)/examples/tracing_sc
+	cd $(srcdir) \
+	; for p in $(VL_INST_DATA_SRCDIR_FILES) ; do \
+	  $(INSTALL_DATA) $$p $(DESTDIR)$(pkgdatadir)/$$p; \
+	done
+	$(MKINSTALLDIRS) $(DESTDIR)$(pkgconfigdir)
+	$(INSTALL_DATA) verilator.pc $(DESTDIR)$(pkgconfigdir)
+
+# We don't trust rm -rf, so rmdir instead as it will fail if user put in other files
+uninstall:
+	-cd $(DESTDIR)$(bindir) && rm -f $(VL_INST_BIN_FILES)
+	-cd $(DESTDIR)$(pkgdatadir)/bin && rm -f $(VL_INST_BIN_FILES)
+	-cd $(DESTDIR)$(mandir)/man1 && rm -f $(VL_INST_MAN_FILES)
+	-cd $(DESTDIR)$(pkgdatadir) && rm -f $(VL_INST_INC_BLDDIR_FILES)
+	-cd $(DESTDIR)$(pkgdatadir) && rm -f $(VL_INST_INC_SRCDIR_FILES)
+	-cd $(DESTDIR)$(pkgdatadir) && rm -f $(VL_INST_DATA_SRCDIR_FILES)
+	-rm $(DESTDIR)$(pkgconfigdir)/verilator.pc
+	-rmdir $(DESTDIR)$(pkgdatadir)/bin
+	-rmdir $(DESTDIR)$(pkgdatadir)/include/gtkwave
+	-rmdir $(DESTDIR)$(pkgdatadir)/include/vltstd
+	-rmdir $(DESTDIR)$(pkgdatadir)/include
+	-rmdir $(DESTDIR)$(pkgdatadir)/examples/hello_world_c
+	-rmdir $(DESTDIR)$(pkgdatadir)/examples/hello_world_sc
+	-rmdir $(DESTDIR)$(pkgdatadir)/examples/tracing_c
+	-rmdir $(DESTDIR)$(pkgdatadir)/examples/tracing_sc
+	-rmdir $(DESTDIR)$(pkgdatadir)/examples
+	-rmdir $(DESTDIR)$(pkgdatadir)
+	-rmdir $(DESTDIR)$(pkgconfigdir)
+
+install: all_nomsg install-all
+install-all: installbin installman installdata install-msg
+
+install-here: installman ftp
+
+ifeq ($(VERILATOR_AUTHOR_SITE),1)	# Local... Else don't burden users
+DISTNAMEREV = $(shell sed -e '/DTVERSION/!d' -e 's/.*verilator_\([^"]*\).*/\1/' -e q ${srcdir}/src/config_rev.h)
+
+DIRPROJECT := $(shell project_dir --project)
+VERILATOR_CAD_DIR = $(CAD_DIR)/verilator/$(DISTNAMEREV)/$(DIRPROJECT_ARCH)
+INST_PROJ_CVS = cp_if_cvs_diff
+
+install-project: dist
+	@echo "Install-project to $(DIRPROJECT)"
+	strip bin/verilator_bin*
+	strip bin/verilator_coverage_bin*
+	$(MAKE) install-project-quick
+	for p in $(VL_INST_MAN_FILES) ; do \
+	  $(INSTALL_DATA) $$p $(DIRPROJECT_PREFIX)/man/man1/$$p; \
+	done
+	$(INST_PROJ_CVS) $(DISTNAME).tgz $(DIRPROJECT)/hw/utils/verilator/verilator.tgz
+	rm $(DISTNAME).tgz
+
+install-project-quick:
+ifeq ($(CFG_WITH_DEFENV),yes)
+	@echo "%Error: Reconfigure with './configure --disable-defenv' to avoid hardcoded paths."
+	false
+endif
+	@echo "Install-project-quick (no strip) to $(DIRPROJECT)"
+	for p in $(INST_PROJ_FILES) ; do \
+	  $(INST_PROJ_CVS) $$p $(DIRPROJECT)/hw/utils/verilator/$$p; \
+	done
+	for p in $(INST_PROJ_BIN_FILES) ; do \
+	  $(INST_PROJ_CVS) $$p $(DIRPROJECT)/hw/utils/verilator/$$p-$(DIRPROJECT_ARCH); \
+	done
+
+install-cadtools: dist
+	@echo "Install-project to $(CAD_DIR)"
+	strip bin/verilator_bin*
+	strip bin/verilator_coverage_bin*
+	$(MAKE) install-cadtools-quick
+	$(MKINSTALLDIRS) $(VERILATOR_CAD_DIR)/man/man1
+	for p in $(VL_INST_MAN_FILES) ; do \
+	  $(INSTALL_DATA) $$p $(VERILATOR_CAD_DIR)/man/man1/$$p; \
+	done
+	$(INST_PROJ_CVS) $(DISTNAME).tgz $(VERILATOR_CAD_DIR)/verilator.tgz
+	rm $(DISTNAME).tgz
+
+install-cadtools-quick:
+ifeq ($(CFG_WITH_DEFENV),yes)
+	@echo "%Error: Reconfigure with './configure --disable-defenv' to avoid hardcoded paths."
+	false
+endif
+	@echo "Install-cadtools-quick (no strip) to $(VERILATOR_CAD_DIR)"
+	$(MKINSTALLDIRS) $(VERILATOR_CAD_DIR)/include/gtkwave
+	$(MKINSTALLDIRS) $(VERILATOR_CAD_DIR)/include/vltstd
+	$(MKINSTALLDIRS) $(VERILATOR_CAD_DIR)/bin
+	for p in $(INST_PROJ_FILES) ; do \
+	  $(INST_PROJ_CVS) $$p $(VERILATOR_CAD_DIR)/$$p; \
+	done
+	for p in $(INST_PROJ_BIN_FILES) ; do \
+	  $(INST_PROJ_CVS) $$p $(VERILATOR_CAD_DIR)/$$p; \
+	done
+
+# VERILATOR_AUTHOR_SITE
+endif
+
+# Use --xml flag to see the cppcheck code to use for suppression
+CPPCHECK_CPP = $(wildcard \
+	$(srcdir)/include/*.cpp \
+	$(srcdir)/src/*.cpp )
+CPPCHECK_H = $(wildcard \
+	$(srcdir)/include/*.h \
+	$(srcdir)/src/*.h )
+CPPCHECK = src/cppcheck_filtered
+CPPCHECK_FLAGS = --enable=all --inline-suppr \
+	--suppress=unusedScopedObject --suppress=cstyleCast --suppress=useInitializationList
+CPPCHECK_FLAGS += --xml
+CPPCHECK_DEP = $(subst .cpp,.cppcheck,$(CPPCHECK_CPP))
+CPPCHECK_INC = -I$(srcdir)/include -I$(srcdir)/src/obj_dbg -I$(srcdir)/src
+
+cppcheck: $(CPPCHECK_DEP)
+%.cppcheck: %.cpp
+	$(CPPCHECK) $(CPPCHECK_FLAGS) -DVL_DEBUG=1 -DVL_CPPCHECK=1 $(CPPCHECK_INC) $<
+
+CLANGTIDY = clang-tidy
+CLANGTIDY_FLAGS = -config=''
+CLANGTIDY_DEP = $(subst .h,.h.tidy,$(CPPCHECK_H)) \
+	$(subst .cpp,.cpp.tidy,$(CPPCHECK_CPP))
+
+clangtidy: $(CLANGTIDY_DEP)
+%.cpp.tidy: %.cpp
+	$(CLANGTIDY) $(CLANGTIDY_FLAGS) $< -- -DVL_DEBUG=1 -DVL_CPPCHECK=1 $(CPPCHECK_INC) | 2>&1 tee $@
+%.h.tidy: %.h
+	$(CLANGTIDY) $(CLANGTIDY_FLAGS) $< -- -DVL_DEBUG=1 -DVL_CPPCHECK=1 $(CPPCHECK_INC) | 2>&1 tee $@
+
+analyzer-src:
+	-rm -rf src/obj_dbg
+	scan-build $(MAKE) -k verilator_coverage_bin_dbg verilator_bin_dbg
+
+analyzer-include:
+	-rm -rf examples/*/obj*
+	scan-build $(MAKE) -k examples
+
+ftp: info
+
+install-msg:
+	@echo
+	@echo "Installed binaries to $(DESTDIR)$(bindir)/verilator"
+	@echo "Installed man to $(DESTDIR)$(mandir)/man1"
+	@echo "Installed examples to $(DESTDIR)$(pkgdatadir)/examples"
+	@echo
+	@echo "For documentation see 'man verilator' or 'verilator --help'"
+	@echo "For forums and to report bugs see http://www.veripool.org/verilator"
+	@echo
+
+IN_WILD := ${srcdir}/*.in ${srcdir}/*/*.in
+
+# autoheader might not change config_build.h.in, so touch it
+${srcdir}/config_build.h: ${srcdir}/config_build.h.in configure
+	cd ${srcdir} && autoheader
+	touch $@
+Makefile: Makefile.in config.status $(IN_WILD)
+	./config.status
+src/Makefile: src/Makefile.in Makefile
+config.status: configure
+	./config.status --recheck
+
+configure: configure.ac
+ifeq ($(CFG_WITH_CCWARN),yes)	# Local... Else don't burden users
+	autoconf --warnings=all
+else
+	autoconf
+endif
+
+maintainer-clean::
+	@echo "This command is intended for maintainers to use;"
+	@echo "rebuilding the deleted files requires autoconf."
+	rm -f configure
+
+clean mostlyclean distclean maintainer-clean maintainer-copy::
+	for dir in $(SUBDIRS); do \
+	  echo making $@ in $$dir ; \
+	  $(MAKE) -C $$dir $@ ; \
+	done
+
+clean mostlyclean distclean maintainer-clean::
+	rm -f $(SCRIPTS) *.tmp
+	rm -f *.aux *.cp *.cps *.dvi *.fn *.fns *.ky *.kys *.log
+	rm -f *.pg *.pgs *.toc *.tp *.tps *.vr *.vrs *.idx
+	rm -f *.ev *.evs *.ov *.ovs *.cv *.cvs *.ma *.mas
+	rm -f *.tex
+	rm -rf test_*/obj_dir
+	rm -rf examples/*/obj_dir examples/*/logs
+
+distclean maintainer-clean::
+	rm -f *.info* *.1 $(INFOS)
+	rm -f Makefile config.status config.cache config.log TAGS
+	rm -f verilator_bin* verilator_coverage_bin*
+	rm -f bin/verilator_bin* bin/verilator_coverage_bin*
+	rm -f include/verilated.mk include/verilated_config.h
+
+TAGFILES=${srcdir}/*/*.cpp ${srcdir}/*/*.h ${srcdir}/*/*.in \
+	${srcdir}/*.in ${srcdir}/*.pod
+
+TAGS:	$(TAGFILES)
+	etags $(TAGFILES)
+
+.PHONY: doxygen
+
+doxygen:
+	$(DOXYGEN) doxygen.config
+
+######################################################################
+# Test targets
+
+dist-file-list:
+	@echo "begin-dist-file-list:";  # Scripts look for this
+	@echo $(wildcard $(DISTFILES))
+	@echo "end-dist-file-list:";  # Scripts look for this
+
+print-cfg-with-threaded:
+	@echo $(CFG_WITH_THREADED)
+
+######################################################################
+# Distributions
+
+DISTTITLE := Verilator $(word 1,$(PACKAGE_VERSION))
+DISTNAME := verilator-$(word 1,$(PACKAGE_VERSION))
+DISTDATEPRE := $(word 2,$(PACKAGE_VERSION))
+DISTDATE := $(subst /,-,$(DISTDATEPRE))
+
+DISTTAGNAME := $(subst .,_,$(subst -,_,$(DISTNAME)))
+
+tag:
+	svnorcvs tag $(DISTTAGNAME)
+
+# Don't depend on DISTFILES because there's no rule for "standards.info*".
+dist: $(DISTDEP) maintainer-copy
+	-rm -fr $(DISTNAME)
+	for file in $(DISTFILES); do \
+	  mkdir -p `dirname $(DISTNAME)/$$file` >/dev/null ; \
+	  ln $$file $(DISTNAME)/$$file \
+	  || { echo copying $$file instead; cp -p $$file $(DISTNAME)/$$file;}; \
+	done; true;
+	chmod -R a+r $(DISTNAME)
+	tar chf $(DISTNAME).tar $(DISTNAME)
+	gzip --force --best $(DISTNAME).tar
+	mv $(DISTNAME).tar.gz $(DISTNAME).tgz
+	rm -fr $(DISTNAME)
+
+maintainer-diff:
+	svnorcvs diff $(DISTTAGNAME)
+
+preexist:
+	svnorcvs nexists $(DISTTAGNAME)
+
+maintainer-dist: preexist dist tag
+	svnorcvs release $(DISTNAME).tgz

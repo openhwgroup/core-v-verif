@@ -1,0 +1,11 @@
+prefix=/home/user3/testing_dir/core-v-verif/tools/spike
+exec_prefix=/home/user3/testing_dir/core-v-verif/tools/spike
+libdir=${prefix}/${exec_prefix}/lib
+includedir=${prefix}/${prefix}/include
+
+Name: riscv-softfloat
+Description: RISC-V softfloat library
+Version: git
+Libs: -Wl,-rpath,${libdir} -L${libdir} -lsoftfloat
+Cflags: -I${includedir}
+URL: http://riscv.org/download.html#tab_spike
