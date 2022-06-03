@@ -43,6 +43,10 @@ class uvma_rvfi_cfg_c#(int ILEN=DEFAULT_ILEN,
    rand int unsigned             nret;
 
    // Configuration of NMI handler (if present)
+   rand bit                      nmi_load_fault_enabled;
+   rand int unsigned             nmi_load_fault_cause;
+   rand bit                      nmi_store_fault_enabled;
+   rand int unsigned             nmi_store_fault_cause;
    rand bit                      nmi_handler_enabled;
    rand bit [XLEN-1:0]           nmi_handler_addr;
 
@@ -61,6 +65,10 @@ class uvma_rvfi_cfg_c#(int ILEN=DEFAULT_ILEN,
       `uvm_field_int (                         trn_log_enabled            , UVM_DEFAULT)
       `uvm_field_int (                         nmi_handler_enabled        , UVM_DEFAULT)
       `uvm_field_int (                         nmi_handler_addr           , UVM_DEFAULT)
+      `uvm_field_int (                         nmi_load_fault_enabled     , UVM_DEFAULT)
+      `uvm_field_int (                         nmi_load_fault_cause       , UVM_DEFAULT)
+      `uvm_field_int (                         nmi_store_fault_enabled    , UVM_DEFAULT)
+      `uvm_field_int (                         nmi_store_fault_cause      , UVM_DEFAULT)
       `uvm_field_int (                         insn_bus_fault_enabled     , UVM_DEFAULT)
       `uvm_field_int (                         insn_bus_fault_cause       , UVM_DEFAULT)
    `uvm_object_utils_end
@@ -80,6 +88,10 @@ class uvma_rvfi_cfg_c#(int ILEN=DEFAULT_ILEN,
       soft cov_model_enabled      == 0;
       soft trn_log_enabled        == 1;
       soft nret                   == 1;
+      soft nmi_load_fault_enabled  == 0;
+      soft nmi_load_fault_cause    == 0;
+      soft nmi_store_fault_enabled == 0;
+      soft nmi_store_fault_cause   == 0;
       soft nmi_handler_enabled    == 0;
       soft insn_bus_fault_enabled == 0;
    }

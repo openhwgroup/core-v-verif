@@ -49,7 +49,12 @@ endfunction : new
 
 task uvme_cv32e40p_vp_interrupt_timer_seq_c::set_interrupt();
 
-   cv32e40p_cntxt.interrupt_cntxt.vif.drv_cb.irq_drv <= interrupt_value;
+   if (cv32e40p_cntxt.interrupt_cntxt.vif != null) begin
+      cv32e40p_cntxt.interrupt_cntxt.vif.drv_cb.irq_drv <= interrupt_value;
+   end
+   else begin
+      `uvm_fatal("InterruptTimer_Seq", "cv32e40p_cntxt.interrupt_cntxt.vif does NOT exist")
+   end
 
 endtask : set_interrupt
 

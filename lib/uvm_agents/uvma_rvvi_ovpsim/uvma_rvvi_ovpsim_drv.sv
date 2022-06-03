@@ -127,6 +127,13 @@ task uvma_rvvi_ovpsim_drv_c::stepi(REQ req);
    if (!$cast(rvvi_ovpsim_seq_item, req)) begin
       `uvm_fatal(log_tag, "Failed to cast control_seq_item to ovpsim_control_seq_item");
    end
+   else begin
+      `uvm_info(log_tag, $sformatf("%s", rvvi_ovpsim_seq_item.convert2string()), UVM_DEBUG)
+      if (rvvi_ovpsim_seq_item.intr) begin
+         // `uvm_info ("UVMA_RVVI_OVPSIM_DRV", $sformatf("irq_i = %x", rvvi_ovpsim_cntxt.ovpsim_io_vif.irq_i), UVM_NONE)
+         // rvvi_ovpsim_seq_item.print();
+      end
+   end
 
    // Stop the clock
    stop_clknrst();
@@ -197,6 +204,8 @@ task uvma_rvvi_ovpsim_drv_c::stepi(REQ req);
 
    // Signal an interrupt to the ISS if mcause and rvfi_intr signals external interrupt
    if (rvvi_ovpsim_seq_item.intr) begin
+      // `uvm_info ("UVMA_RVVI_OVPSIM_DRV", $sformatf("irq_i = %x", rvvi_ovpsim_cntxt.ovpsim_io_vif.irq_i), UVM_NONE)
+      // rvvi_ovpsim_seq_item.print();
       rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint = 1'b0;
       rvvi_ovpsim_cntxt.ovpsim_io_vif.irq_i    = 1 << (rvvi_ovpsim_seq_item.intr_id);
       rvvi_ovpsim_cntxt.control_vif.stepi();
@@ -264,4 +273,3 @@ task uvma_rvvi_ovpsim_drv_c::restart_clknrst();
 endtask : restart_clknrst
 
 `endif // __UVMA_RVVI_OVPSIM_DRV_SV__
-
