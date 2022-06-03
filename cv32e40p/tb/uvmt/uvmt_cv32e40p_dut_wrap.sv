@@ -39,7 +39,8 @@
 /**
  * Module wrapper for CV32E40P RTL DUT.
  */
-module uvmt_cv32e40p_dut_wrap #(
+module uvmt_cv32e40p_dut_wrap 
+  #(
                             // CV32E40P parameters.  See User Manual.
                             parameter PULP_XPULP          =  0,
                                       PULP_CLUSTER        =  0,
@@ -50,18 +51,17 @@ module uvmt_cv32e40p_dut_wrap #(
                                       INSTR_ADDR_WIDTH    =  32,
                                       INSTR_RDATA_WIDTH   =  32,
                                       RAM_ADDR_WIDTH      =  22
-                           )
-
-                           (
-                            uvma_clknrst_if              clknrst_if,
-                            uvma_interrupt_if            interrupt_if,
-                            // vp_status_if is driven by ENV and used in TB
-                            uvma_interrupt_if            vp_interrupt_if,
-                            uvmt_cv32e40p_core_cntrl_if  core_cntrl_if,
-                            uvmt_cv32e40p_core_status_if core_status_if,
-                            uvma_obi_memory_if           obi_memory_instr_if,
-                            uvma_obi_memory_if           obi_memory_data_if
-                           );
+   )
+  (
+    uvma_clknrst_if              clknrst_if,
+    uvma_interrupt_if            interrupt_if,
+    // vp_status_if is driven by ENV and used in TB
+    uvma_interrupt_if            vp_interrupt_if,
+    uvme_cv32e40p_core_cntrl_if  core_cntrl_if,
+    uvmt_cv32e40p_core_status_if core_status_if,
+    uvma_obi_memory_if           obi_memory_instr_if,
+    uvma_obi_memory_if           obi_memory_data_if
+  );
 
     import uvm_pkg::*; // needed for the UVM messaging service (`uvm_info(), etc.)
 
@@ -135,13 +135,13 @@ module uvmt_cv32e40p_dut_wrap #(
          .clk_i                  ( clknrst_if.clk                 ),
          .rst_ni                 ( clknrst_if.reset_n             ),
 
-         .pulp_clock_en_i        ( core_cntrl_if.pulp_clock_en    ),
+         .pulp_clock_en_i        ( '0),//core_cntrl_if.pulp_clock_en    ),
          .scan_cg_en_i           ( core_cntrl_if.scan_cg_en       ),
 
          .boot_addr_i            ( core_cntrl_if.boot_addr        ),
          .mtvec_addr_i           ( core_cntrl_if.mtvec_addr       ),
          .dm_halt_addr_i         ( core_cntrl_if.dm_halt_addr     ),
-         .hart_id_i              ( core_cntrl_if.hart_id          ),
+         .hart_id_i              ( core_cntrl_if.mhartid          ),
          .dm_exception_addr_i    ( core_cntrl_if.dm_exception_addr),
 
          .instr_req_o            ( obi_memory_instr_if.req        ), // core to agent
