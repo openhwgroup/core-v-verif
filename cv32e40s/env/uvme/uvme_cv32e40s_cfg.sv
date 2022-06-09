@@ -114,15 +114,16 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          ext_zbc_supported == 1;
          ext_zbs_supported == 1;
       }
-      ext_zbe_supported == 0;
-      ext_zbf_supported == 0;
-      ext_zbm_supported == 0;
-      ext_zbp_supported == 0;
-      ext_zbr_supported == 0;
-      ext_zbt_supported == 0;
+      ext_zbe_supported    == 0;
+      ext_zbf_supported    == 0;
+      ext_zbm_supported    == 0;
+      ext_zbp_supported    == 0;
+      ext_zbr_supported    == 0;
+      ext_zbt_supported    == 0;
+      ext_nonstd_supported == 1;
 
       mode_s_supported == 0;
-      mode_u_supported == 0;
+      mode_u_supported == 1;
       pmp_supported == 0;
       debug_supported == 1;
 
@@ -130,7 +131,8 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       unaligned_access_amo_supported == 1;
 
       bitmanip_version        == BITMANIP_VERSION_1P00;
-      priv_spec_version       == PRIV_VERSION_MASTER;
+      priv_spec_version       == PRIV_VERSION_1_12;
+      debug_spec_version      == DEBUG_VERSION_1_0_0;
       endianness              == ENDIAN_LITTLE;
 
       boot_addr_valid         == 1;
@@ -423,6 +425,9 @@ endfunction : is_csr_check_disabled
 
 function void uvme_cv32e40s_cfg_c::configure_disable_csr_checks();
 
+   // TODO: remove when fixed in ISS
+   disable_csr_check("misa");
+
    // Need to check
    disable_csr_check("mcountinhibit");
 
@@ -466,6 +471,9 @@ function void uvme_cv32e40s_cfg_c::set_unsupported_csr_mask();
 
    // TODO:ropeders re-evaluate this when 40s is more stable
    unsupported_csr_mask[uvma_core_cntrl_pkg::TCONTROL] = 1;
+
+   unsupported_csr_mask[uvma_core_cntrl_pkg::MCONTEXT] = 1;
+   unsupported_csr_mask[uvma_core_cntrl_pkg::SCONTEXT] = 1;
 
    for (int i = 0; i < MAX_NUM_HPMCOUNTERS; i++) begin
       unsupported_csr_mask[uvma_core_cntrl_pkg::HPMCOUNTER3+i] = 1;

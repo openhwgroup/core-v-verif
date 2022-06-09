@@ -651,6 +651,12 @@ typedef enum {
 } bitmanip_version_t;
 
 typedef enum {
+  DEBUG_VERSION_0_13_2,
+  DEBUG_VERSION_0_14_0,
+  DEBUG_VERSION_1_0_0
+} debug_spec_version_t;
+
+typedef enum {
   PRIV_VERSION_1_12,
   PRIV_VERSION_1_11,
   PRIV_VERSION_1_10,

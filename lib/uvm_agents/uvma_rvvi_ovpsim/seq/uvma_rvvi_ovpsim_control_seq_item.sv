@@ -43,6 +43,12 @@ class uvma_rvvi_ovpsim_control_seq_item_c#(int ILEN=uvma_rvvi_pkg::DEFAULT_ILEN,
    // Set to signal nmi store fault
    rand bit nmi_store_fault;
 
+   // Set to signal nmi load parity fault
+   rand bit nmi_load_parity_fault;
+
+   // Set to signal nmi store parity fault
+   rand bit nmi_store_parity_fault;
+
    // Set to signal instruction bus error
    rand bit insn_bus_fault;
 
