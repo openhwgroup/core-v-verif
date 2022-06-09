@@ -109,7 +109,7 @@ module uvmt_cv32e40s_tb;
                                                                    .rvfi_insn(rvfi_i.rvfi_insn[uvme_cv32e40s_pkg::ILEN*0+:uvme_cv32e40s_pkg::ILEN]),
                                                                    .rvfi_trap(rvfi_i.rvfi_trap[11:0]),
                                                                    .rvfi_halt(rvfi_i.rvfi_halt[0]),
-                                                                   .rvfi_intr(rvfi_i.rvfi_intr[0]),
+                                                                   .rvfi_intr(rvfi_i.rvfi_intr),
                                                                    .rvfi_dbg(rvfi_i.rvfi_dbg),
                                                                    .rvfi_dbg_mode(rvfi_i.rvfi_dbg_mode),
                                                                    .rvfi_nmip(rvfi_i.rvfi_nmip),
@@ -461,7 +461,7 @@ module uvmt_cv32e40s_tb;
       .wb_buffer_state    (core_i.load_store_unit_i.write_buffer_i.state),
 
       .rvfi_valid         (rvfi_i.rvfi_valid),
-      .rvfi_intr          (rvfi_i.rvfi_intr),
+      .rvfi_intr          (rvfi_i.rvfi_intr.intr),
       .rvfi_dbg_mode      (rvfi_i.rvfi_dbg_mode),
 
       .*
@@ -550,7 +550,7 @@ module uvmt_cv32e40s_tb;
 
       .rvfi_valid             (rvfi_i.rvfi_valid),
       .rvfi_insn              (rvfi_i.rvfi_insn),
-      .rvfi_intr              (rvfi_i.rvfi_intr),
+      .rvfi_intr              (rvfi_i.rvfi_intr.intr),
       .rvfi_dbg               (rvfi_i.rvfi_dbg),
       .rvfi_dbg_mode          (rvfi_i.rvfi_dbg_mode),
       .rvfi_pc_wdata          (rvfi_i.rvfi_pc_wdata),

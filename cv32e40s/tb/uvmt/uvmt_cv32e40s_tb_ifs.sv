@@ -116,7 +116,7 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     // External interrupt interface
     input  [31:0] irq_i,
     input         irq_ack_o,
-    input  [4:0]  irq_id_o,
+    input  [9:0]  irq_id_o,
     input  [31:0] mie_q,
 
     input         ex_stage_csr_en,
