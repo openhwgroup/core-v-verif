@@ -120,7 +120,7 @@ task uvma_interrupt_drv_c::run_phase(uvm_phase phase);
    super.run_phase(phase);
 
    // Enable the driver in the interface
-   cntxt.vif.is_active = 1;
+   cntxt.vif.is_active = cfg.enabled;
 
    // Fork thread to deassert randomly asserted interrupts when acknowledged
    fork

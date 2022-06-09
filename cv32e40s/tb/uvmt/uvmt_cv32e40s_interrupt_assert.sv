@@ -332,7 +332,6 @@ module uvmt_cv32e40s_interrupt_assert
     else if (wb_stage_instr_valid_i) begin
       last_instr_rdata <= wb_stage_instr_rdata_i;
     end
-  end
 
   // ---------------------------------------------------------------------------
   // WFI Checks
@@ -359,7 +358,6 @@ module uvmt_cv32e40s_interrupt_assert
       else if (|pending_enabled_irq || debug_req_i)
         in_wfi_wfe <= 1'b0;
     end
-  end
 
   assign pipeline_ready_for_wfi = (alignbuf_outstanding == 0) && !lsu_busy;
 

@@ -79,6 +79,11 @@ class uvmt_cv32e40s_firmware_test_c extends uvmt_cv32e40s_base_test_c;
     */
    extern virtual task irq_noise();
 
+   /**
+    *  Start the clic interrupt sequencer to apply random clic interrupts during test
+    */
+   extern virtual task clic_noise();
+
 endclass : uvmt_cv32e40s_firmware_test_c
 
 
@@ -116,6 +121,7 @@ task uvmt_cv32e40s_firmware_test_c::run_phase(uvm_phase phase);
 
    if ($test$plusargs("gen_irq_noise")) begin
     fork
+      clic_noise();
       irq_noise();
     join_none
    end
@@ -200,4 +206,17 @@ task uvmt_cv32e40s_firmware_test_c::irq_noise();
   end
 endtask : irq_noise
 
+task uvmt_cv32e40s_firmware_test_c::clic_noise();
+  `uvm_info("TEST", "Starting CLIC Noise thread in UVM test", UVM_NONE);
+  while (1) begin
+    uvme_cv32e40s_clic_noise_c clic_noise_vseq;
+
+    clic_noise_vseq = uvme_cv32e40s_clic_noise_c::type_id::create("clic_noise_vseqr");
+
+    assert(clic_noise_vseq.randomize() with { });
+    clic_noise_vseq.start(vsequencer);
+    break;
+  end
+
+endtask : clic_noise
 `endif // __UVMT_CV32E40S_FIRMWARE_TEST_SV__
