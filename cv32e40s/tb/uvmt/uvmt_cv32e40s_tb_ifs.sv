@@ -140,7 +140,6 @@ interface uvmt_cv32e40s_debug_cov_assert_if
 
     // Core signals
     input  [31:0] boot_addr_i,
-    input  [31:0] nmi_addr_i,
     input         fetch_enable_i,
 
     input         rvfi_valid,
