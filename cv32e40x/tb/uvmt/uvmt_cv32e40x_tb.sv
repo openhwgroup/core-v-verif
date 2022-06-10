@@ -155,8 +155,6 @@ module uvmt_cv32e40x_tb;
   `RVFI_CSR_BIND(mip)
   `RVFI_CSR_BIND(mie)
   `RVFI_CSR_BIND(mhartid)
-  `RVFI_CSR_BIND(mcontext)
-  `RVFI_CSR_BIND(scontext)
   `RVFI_CSR_BIND(mimpid)
   `RVFI_CSR_BIND(minstret)
   `RVFI_CSR_BIND(minstreth)
@@ -342,7 +340,7 @@ module uvmt_cv32e40x_tb;
   bind cv32e40x_core
     uvmt_cv32e40x_interrupt_assert interrupt_assert_i(
       .mcause_n     ({cs_registers_i.mcause_n.irq, cs_registers_i.mcause_n.exception_code[4:0]}),
-      .mip          (cs_registers_i.mip),
+      .mip          (cs_registers_i.mip_rdata),
       .mie_q        (cs_registers_i.mie_q),
       .mstatus_mie  (cs_registers_i.mstatus_q.mie),
       .mtvec_mode_q (cs_registers_i.mtvec_q.mode),
@@ -443,8 +441,8 @@ module uvmt_cv32e40x_tb;
       .mcause_q               (core_i.cs_registers_i.mcause_q),
       .mtvec                  (core_i.cs_registers_i.mtvec_q),
       .mepc_q                 (core_i.cs_registers_i.mepc_q),
-      .tdata1                 (core_i.cs_registers_i.tmatch_control_q),
-      .tdata2                 (core_i.cs_registers_i.tmatch_value_q),
+      .tdata1                 (core_i.cs_registers_i.tdata1_q),
+      .tdata2                 (core_i.cs_registers_i.tdata2_q),
       .mcountinhibit_q        (core_i.cs_registers_i.mcountinhibit_q),
       .mcycle                 (core_i.cs_registers_i.mhpmcounter_q[0]),
       .minstret               (core_i.cs_registers_i.mhpmcounter_q[2]),
@@ -557,7 +555,6 @@ module uvmt_cv32e40x_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(mimpid)
      `RVFI_CSR_UVM_CONFIG_DB_SET(minstret)
      `RVFI_CSR_UVM_CONFIG_DB_SET(minstreth)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mcontext)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mcycle)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mcycleh)
 
@@ -565,7 +562,6 @@ module uvmt_cv32e40x_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(dpc)
      `RVFI_CSR_UVM_CONFIG_DB_SET(dscratch0)
      `RVFI_CSR_UVM_CONFIG_DB_SET(dscratch1)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(scontext)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tselect)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tdata1)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tdata2)
