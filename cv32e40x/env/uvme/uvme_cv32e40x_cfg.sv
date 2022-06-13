@@ -310,6 +310,11 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
     */
    extern virtual function void configure_disable_csr_checks();
 
+   /**
+    * Configure disabled CSRs
+    */
+   extern function void set_unsupported_csr_mask();
+
 endclass : uvme_cv32e40x_cfg_c
 
 function uvme_cv32e40x_cfg_c::new(string name="uvme_cv32e40x_cfg");
@@ -435,6 +440,13 @@ function void uvme_cv32e40x_cfg_c::configure_disable_csr_checks();
    end
 endfunction : configure_disable_csr_checks
 
+function void uvme_cv32e40x_cfg_c::set_unsupported_csr_mask();
+  super.set_unsupported_csr_mask();
+
+  unsupported_csr_mask[uvma_core_cntrl_pkg::MCONTEXT] = 1;
+  unsupported_csr_mask[uvma_core_cntrl_pkg::SCONTEXT] = 1;
+
+endfunction : set_unsupported_csr_mask
 
 `endif // __UVME_CV32E40X_CFG_SV__
 
