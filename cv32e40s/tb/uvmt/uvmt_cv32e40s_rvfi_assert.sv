@@ -20,16 +20,37 @@ module uvmt_cv32e40s_rvfi_assert
   import cv32e40s_pkg::*;
   import uvm_pkg::*;
 (
-  input clk_i,
-  input rst_ni
+  input  clk_i,
+  input  rst_ni,
+
+  input         rvfi_valid,
+  input [ 4:0]  rvfi_rs1_addr,
+  input [ 4:0]  rvfi_rs2_addr,
+  input [31:0]  rvfi_rs1_rdata,
+  input [31:0]  rvfi_rs2_rdata
 );
 
   default clocking @(posedge clk_i); endclocking
   default disable iff !rst_ni;
   string info_tag = "CV32E40S_RVFI_ASSERT";
 
-  a_TODO: assert property (
-    0
+
+  // rs1/rs2 Reset Values
+
+  property p_rs_resetvalue (addr, rdata);
+    $past(rst_ni == 0)  ##0
+    (rvfi_valid [->1])  ##0
+    addr
+    |->
+    (rdata == 0);  // TODO:ropeders use "RF_REG_RV"
+  endproperty : p_rs_resetvalue
+
+  a_rs1_resetvalue: assert property (
+    p_rs_resetvalue(rvfi_rs1_addr, rvfi_rs1_rdata)
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_rs2_resetvalue: assert property (
+    p_rs_resetvalue(rvfi_rs2_addr, rvfi_rs2_rdata)
   ) else `uvm_error(info_tag, "TODO");
 
 endmodule : uvmt_cv32e40s_rvfi_assert
