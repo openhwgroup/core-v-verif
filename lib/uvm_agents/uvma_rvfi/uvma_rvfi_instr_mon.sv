@@ -182,25 +182,21 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
          end
 
          // Decode interrupts that need to be communicated to ISS (external or NMI bus faults)
-         if (mon_trn.intr) begin
+         if (mon_trn.intr.intr && mon_trn.intr.interrupt) begin
             // The cause of the interrupt should be in the "rdata" field of the mcause CSR RVFI port
-            bit [XLEN-1:0] csr_mcause = mon_trn.csrs["mcause"].rdata;
 
+            // NMI - Load fault
+            if (cfg.nmi_load_fault_enabled && mon_trn.intr.cause == cfg.nmi_load_fault_cause) begin
+               mon_trn.insn_nmi_load_fault = 1;
+            end
+            // NMI - Store fault
+            else if (cfg.nmi_store_fault_enabled && mon_trn.intr.cause == cfg.nmi_store_fault_cause) begin
+               mon_trn.insn_nmi_store_fault = 1;
+            end
             // External interrupt
-            if (csr_mcause[31]) begin
-               // NMI - Load fault
-               if (cfg.nmi_load_fault_enabled && csr_mcause[XLEN-2:0] == cfg.nmi_load_fault_cause) begin
-                  mon_trn.insn_nmi_load_fault = 1;
-               end
-               // NMI - Store fault
-               else if (cfg.nmi_store_fault_enabled && csr_mcause[XLEN-2:0] == cfg.nmi_store_fault_cause) begin
-                  mon_trn.insn_nmi_store_fault = 1;
-               end
-               // External interrupt
-               else begin
-                  mon_trn.insn_interrupt    = 1;
-                  mon_trn.insn_interrupt_id = { 1'b0, csr_mcause[XLEN-2:0] };
-               end
+            else begin
+               mon_trn.insn_interrupt    = 1;
+               mon_trn.insn_interrupt_id = { 1'b0, mon_trn.intr.cause };
             end
          end
 

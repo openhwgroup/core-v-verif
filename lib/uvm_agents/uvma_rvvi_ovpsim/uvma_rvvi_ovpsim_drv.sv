@@ -98,9 +98,19 @@ class uvma_rvvi_ovpsim_drv_c#(int ILEN=uvma_rvvi_pkg::DEFAULT_ILEN,
    extern virtual task stepi_nmi_load_fault();
 
    /**
+    * Special RVVI step to signal a load parity fault NMI
+    */
+   extern virtual task stepi_nmi_load_parity_fault();
+
+   /**
     * Special RVVI step to signal a store fault NMI
     */
    extern virtual task stepi_nmi_store_fault();
+
+   /**
+    * Special RVVI step to signal a store parity fault NMI
+    */
+   extern virtual task stepi_nmi_store_parity_fault();
 
    /**
     * Special RVVI step to signal an external debug request
@@ -204,12 +214,12 @@ task uvma_rvvi_ovpsim_drv_c::stepi(REQ req);
    end
 
    // Signal a NMI to the ISS in M-mode
-   if (rvvi_ovpsim_seq_item.nmi_load_fault) begin
-      stepi_nmi_load_fault();
-   end
-   else if (rvvi_ovpsim_seq_item.nmi_store_fault) begin
-      stepi_nmi_store_fault();
-   end
+   case (1)
+     rvvi_ovpsim_seq_item.nmi_store_parity_fault: stepi_nmi_store_parity_fault();
+     rvvi_ovpsim_seq_item.nmi_load_parity_fault:  stepi_nmi_load_parity_fault();
+     rvvi_ovpsim_seq_item.nmi_store_parity_fault: stepi_nmi_store_fault();
+     rvvi_ovpsim_seq_item.nmi_load_parity_fault:  stepi_nmi_load_fault();
+   endcase
 
    // Signal an interrupt to the ISS if mcause and rvfi_intr signals external interrupt
    if (rvvi_ovpsim_seq_item.intr) begin
@@ -314,6 +324,20 @@ task uvma_rvvi_ovpsim_drv_c::stepi_nmi_load_fault();
 
 endtask : stepi_nmi_load_fault
 
+task uvma_rvvi_ovpsim_drv_c::stepi_nmi_load_parity_fault();
+
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint = 1'b0;
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.LoadParityFaultNMI = 1'b1;
+
+   rvvi_ovpsim_cntxt.control_vif.stepi();
+   @(rvvi_ovpsim_cntxt.state_vif.notify);
+
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint         = 1'b1;
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.LoadParityFaultNMI  = 1'b0;
+   @(posedge rvvi_ovpsim_cntxt.ovpsim_bus_vif.Clk);
+
+endtask : stepi_nmi_load_parity_fault
+
 task uvma_rvvi_ovpsim_drv_c::stepi_nmi_store_fault();
 
    rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint = 1'b0;
@@ -327,6 +351,20 @@ task uvma_rvvi_ovpsim_drv_c::stepi_nmi_store_fault();
    @(posedge rvvi_ovpsim_cntxt.ovpsim_bus_vif.Clk);
 
 endtask : stepi_nmi_store_fault
+
+task uvma_rvvi_ovpsim_drv_c::stepi_nmi_store_parity_fault();
+
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint = 1'b0;
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.StoreParityFaultNMI = 1'b1;
+
+   rvvi_ovpsim_cntxt.control_vif.stepi();
+   @(rvvi_ovpsim_cntxt.state_vif.notify);
+
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint         = 1'b1;
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.StoreParityFaultNMI = 1'b0;
+   @(posedge rvvi_ovpsim_cntxt.ovpsim_bus_vif.Clk);
+
+endtask : stepi_nmi_store_parity_fault
 
 task uvma_rvvi_ovpsim_drv_c::stepi_insn_bus_fault();
 

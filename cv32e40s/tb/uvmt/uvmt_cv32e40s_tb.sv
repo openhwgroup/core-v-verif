@@ -109,7 +109,7 @@ module uvmt_cv32e40s_tb;
                                                                    .rvfi_insn(rvfi_i.rvfi_insn[uvme_cv32e40s_pkg::ILEN*0+:uvme_cv32e40s_pkg::ILEN]),
                                                                    .rvfi_trap(rvfi_i.rvfi_trap[11:0]),
                                                                    .rvfi_halt(rvfi_i.rvfi_halt[0]),
-                                                                   .rvfi_intr(rvfi_i.rvfi_intr[0]),
+                                                                   .rvfi_intr(rvfi_i.rvfi_intr),
                                                                    .rvfi_dbg(rvfi_i.rvfi_dbg),
                                                                    .rvfi_dbg_mode(rvfi_i.rvfi_dbg_mode),
                                                                    .rvfi_nmip(rvfi_i.rvfi_nmip),
@@ -139,6 +139,9 @@ module uvmt_cv32e40s_tb;
   `RVFI_CSR_BIND(mcountinhibit)
   `RVFI_CSR_BIND(mstatus)
   `RVFI_CSR_BIND(mstatush)
+  `RVFI_CSR_BIND(mcounteren)
+  `RVFI_CSR_BIND(menvcfg)
+  `RVFI_CSR_BIND(menvcfgh)
   `RVFI_CSR_BIND(mvendorid)
   `RVFI_CSR_BIND(misa)
   `RVFI_CSR_BIND(mtvec)
@@ -149,8 +152,6 @@ module uvmt_cv32e40s_tb;
   `RVFI_CSR_BIND(mip)
   `RVFI_CSR_BIND(mie)
   `RVFI_CSR_BIND(mhartid)
-  `RVFI_CSR_BIND(mcontext)
-  `RVFI_CSR_BIND(scontext)
   `RVFI_CSR_BIND(mimpid)
   `RVFI_CSR_BIND(minstret)
   `RVFI_CSR_BIND(minstreth)
@@ -191,6 +192,88 @@ module uvmt_cv32e40s_tb;
   `RVFI_CSR_IDX_BIND(mhpmcounter,,29)
   `RVFI_CSR_IDX_BIND(mhpmcounter,,30)
   `RVFI_CSR_IDX_BIND(mhpmcounter,,31)
+
+  `RVFI_CSR_IDX_BIND(pmpcfg,,0)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,1)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,2)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,3)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,4)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,5)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,6)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,7)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,8)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,9)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,10)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,11)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,12)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,13)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,14)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,15)
+
+  `RVFI_CSR_IDX_BIND(pmpaddr,,0)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,1)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,2)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,3)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,4)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,5)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,6)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,7)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,8)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,9)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,10)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,11)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,12)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,13)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,14)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,15)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,16)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,17)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,18)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,19)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,20)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,21)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,22)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,23)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,24)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,25)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,26)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,27)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,28)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,29)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,30)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,31)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,32)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,33)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,34)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,35)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,36)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,37)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,38)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,39)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,40)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,41)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,42)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,43)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,44)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,45)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,46)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,47)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,48)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,49)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,50)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,51)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,52)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,53)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,54)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,55)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,56)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,57)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,58)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,59)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,60)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,61)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,62)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,63)
 
   `RVFI_CSR_IDX_BIND(mhpmevent,,3)
   `RVFI_CSR_IDX_BIND(mhpmevent,,4)
@@ -335,7 +418,7 @@ module uvmt_cv32e40s_tb;
   bind cv32e40s_core
     uvmt_cv32e40s_interrupt_assert interrupt_assert_i(
       .mcause_n     ({cs_registers_i.mcause_n.irq, cs_registers_i.mcause_n.exception_code[4:0]}),
-      .mip          (cs_registers_i.mip),
+      .mip          (cs_registers_i.mip_rdata),
       .mie_q        (cs_registers_i.mie_q),
       .mstatus_mie  (cs_registers_i.mstatus_q.mie),
       .mstatus_tw   (cs_registers_i.mstatus_q.tw),
@@ -378,7 +461,7 @@ module uvmt_cv32e40s_tb;
       .wb_buffer_state    (core_i.load_store_unit_i.write_buffer_i.state),
 
       .rvfi_valid         (rvfi_i.rvfi_valid),
-      .rvfi_intr          (rvfi_i.rvfi_intr),
+      .rvfi_intr          (rvfi_i.rvfi_intr.intr),
       .rvfi_dbg_mode      (rvfi_i.rvfi_dbg_mode),
 
       .*
@@ -445,8 +528,8 @@ module uvmt_cv32e40s_tb;
       .mcause_q               (core_i.cs_registers_i.mcause_q),
       .mtvec                  (core_i.cs_registers_i.mtvec_q),
       .mepc_q                 (core_i.cs_registers_i.mepc_q),
-      .tdata1                 (core_i.cs_registers_i.tmatch_control_q),
-      .tdata2                 (core_i.cs_registers_i.tmatch_value_q),
+      .tdata1                 (core_i.cs_registers_i.tdata1_q),
+      .tdata2                 (core_i.cs_registers_i.tdata2_q),
       .mcountinhibit_q        (core_i.cs_registers_i.mcountinhibit_q),
       .mcycle                 (core_i.cs_registers_i.mhpmcounter_q[0]),
       .minstret               (core_i.cs_registers_i.mhpmcounter_q[2]),
@@ -468,7 +551,6 @@ module uvmt_cv32e40s_tb;
       .irq_id_o               (core_i.irq_id),
       .dm_halt_addr_i         (core_i.dm_halt_addr_i),
       .dm_exception_addr_i    (core_i.dm_exception_addr_i),
-      .nmi_addr_i             (core_i.nmi_addr_i),
       .core_sleep_o           (core_i.core_sleep_o),
       .irq_i                  (core_i.irq_i),
       .pc_set                 (core_i.ctrl_fsm.pc_set),
@@ -476,7 +558,7 @@ module uvmt_cv32e40s_tb;
 
       .rvfi_valid             (rvfi_i.rvfi_valid),
       .rvfi_insn              (rvfi_i.rvfi_insn),
-      .rvfi_intr              (rvfi_i.rvfi_intr),
+      .rvfi_intr              (rvfi_i.rvfi_intr.intr),
       .rvfi_dbg               (rvfi_i.rvfi_dbg),
       .rvfi_dbg_mode          (rvfi_i.rvfi_dbg_mode),
       .rvfi_pc_wdata          (rvfi_i.rvfi_pc_wdata),
@@ -568,6 +650,9 @@ module uvmt_cv32e40s_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(mcountinhibit)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mstatus)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mstatush)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mcounteren)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(menvcfg)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(menvcfgh)
      `RVFI_CSR_UVM_CONFIG_DB_SET(misa)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mtvec)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mtval)
@@ -581,7 +666,6 @@ module uvmt_cv32e40s_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(mimpid)
      `RVFI_CSR_UVM_CONFIG_DB_SET(minstret)
      `RVFI_CSR_UVM_CONFIG_DB_SET(minstreth)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mcontext)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mcycle)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mcycleh)
 
@@ -589,12 +673,93 @@ module uvmt_cv32e40s_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(dpc)
      `RVFI_CSR_UVM_CONFIG_DB_SET(dscratch0)
      `RVFI_CSR_UVM_CONFIG_DB_SET(dscratch1)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(scontext)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tselect)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tdata1)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tdata2)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tdata3)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tinfo)
+
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg0)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg1)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg2)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg3)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg4)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg5)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg6)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg7)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg8)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg9)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg10)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg11)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg12)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg13)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg14)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg15)
+
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr0)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr1)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr2)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr3)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr4)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr5)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr6)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr7)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr8)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr9)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr10)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr11)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr12)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr13)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr14)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr15)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr16)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr17)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr18)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr19)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr20)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr21)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr22)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr23)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr24)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr25)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr26)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr27)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr28)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr29)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr30)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr31)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr32)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr33)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr34)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr35)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr36)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr37)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr38)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr39)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr40)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr41)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr42)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr43)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr44)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr45)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr46)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr47)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr48)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr49)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr50)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr51)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr52)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr53)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr54)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr55)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr56)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr57)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr58)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr59)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr60)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr61)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr62)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr63)
 
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmevent3)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmevent4)
@@ -717,6 +882,7 @@ module uvmt_cv32e40s_tb;
    end : test_bench_entry_point
 
    assign core_cntrl_if.clk = clknrst_if.clk;
+   assign iss_wrap.cpu.io.nmi_addr = ({dut_wrap.cv32e40s_wrapper_i.rvfi_csr_mtvec_if_0_i.rvfi_csr_rdata[31:2], 2'b00}) + 32'h3c;
 
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
