@@ -422,8 +422,8 @@ module uvmt_cv32e40s_pmp_assert
 
   // Helper functions
   function automatic int is_match_na4(input logic[$clog2(PMP_MAX_REGIONS)-1:0] region);
-    is_match_na4 = (csr_pmp_i.cfg[region].mode                   == PMP_MODE_NA4) &&
-                   (csr_pmp_i.addr[region][33:2+PMP_GRANULARITY] == pmp_req_addr_i[33:2+PMP_GRANULARITY]);
+    is_match_na4 = (csr_pmp_i.cfg[region].mode   == PMP_MODE_NA4)  &&
+                   (csr_pmp_i.addr[region][33:2] == pmp_req_addr_i[33:2]);
   endfunction : is_match_na4
 
   function automatic logic is_match_tor(input logic[$clog2(PMP_MAX_REGIONS)-1:0] region);
