@@ -87,8 +87,6 @@ interface uvmt_cv32e40x_vp_status_if (
   import uvm_pkg::*;
 
   // TODO: X/Z checks
-  //initial begin
-  //end
 
 endinterface : uvmt_cv32e40x_vp_status_if
 

@@ -112,7 +112,7 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    // -------------------------------------------------------------------------------------
    $fwrite(fh, $sformatf("--override root/cpu/misa_Extensions=0x%06x\n", cfg.core_cfg.get_misa()));
 
-   // TODO hf: cv32e40x: Remove when correct setting is applied to ovpsim
+   // TODO hf: Remove when correct setting is applied to ovpsim
    if (cfg.core_cfg.core_name == "CV32E40X") begin
        $fwrite(fh, $sformatf("--override root/cpu/tcontrol_undefined=0\n"));
    end
