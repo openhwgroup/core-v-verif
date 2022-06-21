@@ -24,6 +24,7 @@ module uvmt_cva6_dut_wrap # ( parameter int unsigned AXI_USER_WIDTH    = 1,
                            (
                             uvma_clknrst_if                     clknrst_if,
                             uvma_cvxif_intf                     cvxif_if,
+                            uvma_axi_intf                       axi_if,
                             output wire                         tb_exit_o,
                             output ariane_rvfi_pkg::rvfi_port_t rvfi_o
                            );
@@ -40,6 +41,7 @@ module uvmt_cva6_dut_wrap # ( parameter int unsigned AXI_USER_WIDTH    = 1,
          .rst_ni                 ( clknrst_if.reset_n             ),
          .cvxif_resp             ( cvxif_if.cvxif_resp_o          ),
          .cvxif_req              ( cvxif_if.cvxif_req_i           ),
+         .axi_slave              ( axi_if                         ),
          .tb_exit_o              ( tb_exit_o                      ),
          .rvfi_o                 ( rvfi_o                         )
 );
