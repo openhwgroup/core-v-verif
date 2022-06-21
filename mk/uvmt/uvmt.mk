@@ -239,9 +239,14 @@ $(SVLIB_PKG):
 #     target to run the compiled test-program.
 
 # RISCV_ISA='rv32i|rv32im|rv32imc|rv32Zicsr|rv32Zifencei'
-RISCV_ISA    ?= rv32i
-RISCV_TARGET ?= OpenHW
-RISCV_DEVICE ?= $(CV_CORE_LC)
+RISCV_ISA    ?= rv32i_m
+RISCV_TARGET ?= $(CV_CORE_LC)
+RISCV_DEVICE ?= I
+ifneq ($(RISCV_TARGET),cv32e40p)
+  COMPLIANCE_BITMANIP=make build_compliance RISCV_DEVICE=Bitmanip
+else
+  COMPLIANCE_BITMANIP=echo "Bitmanip not supported, skipping"
+endif
 
 clone_compliance:
 	$(CLONE_COMPLIANCE_CMD)
@@ -260,11 +265,12 @@ build_compliance: $(COMPLIANCE_PKG)
 #		VERBOSE=1
 
 all_compliance: $(COMPLIANCE_PKG)
-	make build_compliance RISCV_ISA=rv32i        && \
-	make build_compliance RISCV_ISA=rv32im       && \
-	make build_compliance RISCV_ISA=rv32imc      && \
-	make build_compliance RISCV_ISA=rv32Zicsr    && \
-	make build_compliance RISCV_ISA=rv32Zifencei
+	make build_compliance RISCV_DEVICE=I           && \
+	make build_compliance RISCV_DEVICE=M           && \
+	make build_compliance RISCV_DEVICE=C           && \
+	make build_compliance RISCV_DEVICE=Zifencei    && \
+	make build_compliance RISCV_DEVICE=privilege   && \
+	$(COMPLIANCE_BITMANIP)
 
 # "compliance" is a simulator-specific target defined in <sim>.mk
 COMPLIANCE_RESULTS = $(SIM_RESULTS)
@@ -273,7 +279,7 @@ compliance_check_sig: compliance
 	@echo "Checking Compliance Signature for $(RISCV_ISA)/$(COMPLIANCE_PROG)"
 	@echo "Reference: $(REF)"
 	@echo "Signature: $(SIG)"
-	@export SUITEDIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance/riscv-test-suite/$(RISCV_ISA) && \
+	@export SUITEDIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance/riscv-test-suite/$(RISCV_ISA)/$(RISCV_DEVICE) && \
 	export REF=$(REF) && export SIG=$(SIG) && export COMPL_PROG=$(COMPLIANCE_PROG) && \
 	export RISCV_TARGET=${RISCV_TARGET} && export RISCV_DEVICE=${RISCV_DEVICE} && \
 	export RISCV_ISA=${RISCV_ISA} export SIG_ROOT=${SIG_ROOT} && \
@@ -282,15 +288,15 @@ compliance_check_sig: compliance
 compliance_check_all_sigs:
 	@$(MKDIR_P) $(COMPLIANCE_RESULTS)/$(CFG)/$(RISCV_ISA)
 	@echo "Checking Compliance Signature for all tests in $(CFG)/$(RISCV_ISA)"
-	@export SUITEDIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance/riscv-test-suite/$(RISCV_ISA) && \
+	export SUITEDIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance/riscv-test-suite/$(RISCV_ISA)/$(RISCV_DEVICE) && \
 	export RISCV_TARGET=${RISCV_TARGET} && export RISCV_DEVICE=${RISCV_DEVICE} && \
 	export RISCV_ISA=${RISCV_ISA} export SIG_ROOT=${SIG_ROOT} && \
 	$(CORE_V_VERIF)/bin/diff_signatures.sh $(RISCV_ISA) | tee $(COMPLIANCE_RESULTS)/$(CFG)/$(RISCV_ISA)/diff_signatures.log
 
 compliance_regression:
-	make build_compliance RISCV_ISA=$(RISCV_ISA)
+	make build_compliance RISCV_ISA=$(RISCV_ISA) RISCV_DEVICE=$(RISCV_DEVICE)
 	@export SIM_DIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/sim/uvmt && \
-	$(CORE_V_VERIF)/bin/run_compliance.sh $(RISCV_ISA)
+	$(CORE_V_VERIF)/bin/run_compliance.sh $(RISCV_DEVICE)
 	make compliance_check_all_sigs RISCV_ISA=$(RISCV_ISA)
 
 dah:

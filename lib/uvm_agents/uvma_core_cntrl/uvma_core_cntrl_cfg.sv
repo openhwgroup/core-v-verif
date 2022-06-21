@@ -77,10 +77,12 @@
    rand debug_spec_version_t     debug_spec_version;
 
    rand bitmanip_version_t       bitmanip_version;
-
+   rand debug_spec_version_t     debug_spec_version;
    rand priv_spec_version_t      priv_spec_version;
 
    rand endianness_t             endianness;
+
+   rand int unsigned             clic_levels;
 
    rand bit                      unaligned_access_supported;
    rand bit                      unaligned_access_amo_supported;
@@ -155,6 +157,7 @@
       `uvm_field_int(                          ext_zbs_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zbt_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          mode_s_supported               , UVM_DEFAULT          )
+      `uvm_field_int(                          mode_h_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          mode_u_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          pmp_supported                  , UVM_DEFAULT          )
       `uvm_field_int(                          debug_supported                , UVM_DEFAULT          )
@@ -162,7 +165,9 @@
       `uvm_field_int(                          unaligned_access_amo_supported , UVM_DEFAULT          )
       `uvm_field_enum(bitmanip_version_t,      bitmanip_version               , UVM_DEFAULT          )
       `uvm_field_enum(priv_spec_version_t,     priv_spec_version              , UVM_DEFAULT          )
+      `uvm_field_enum(debug_spec_version_t,    debug_spec_version             , UVM_DEFAULT          )
       `uvm_field_enum(endianness_t,            endianness                     , UVM_DEFAULT          )
+      `uvm_field_int(                          clic_levels                    , UVM_DEFAULT          )
       `uvm_field_int(                          num_mhpmcounters               , UVM_DEFAULT          )
       `uvm_field_array_object(                 pma_regions                    , UVM_DEFAULT          )
       `uvm_field_int(                          mhartid                        , UVM_DEFAULT          )
@@ -190,6 +195,7 @@
       soft is_active              == UVM_PASSIVE;
       soft cov_model_enabled      == 1;
       soft trn_log_enabled        == 1;
+      soft mode_h_supported       == 0;
    }
 
    constraint riscv_cons_soft {
@@ -198,6 +204,7 @@
      soft endianness           == ENDIAN_LITTLE;
      soft mode_h_supported     == 0;
      soft ext_nonstd_supported == 0;
+     soft clic_levels        == 0;
    }
 
    constraint addr_xlen_align_cons {
@@ -403,7 +410,7 @@ function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();
       end
    end
 
-   // Remove S-mode CSRs is S mode not supported
+   // Remove S-mode CSRs if S mode not supported
    if (!mode_s_supported) begin
       unsupported_csr_mask[SSTATUS] = 1;
       unsupported_csr_mask[SEDELEG] = 1;
@@ -417,13 +424,16 @@ function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();
       unsupported_csr_mask[STVAL] = 1;
       unsupported_csr_mask[SIP] = 1;
       unsupported_csr_mask[SATP] = 1;
+      if (debug_spec_version == DEBUG_VERSION_1_0_0) begin
+        unsupported_csr_mask[SCONTEXT] = 1;
+      end
 
       unsupported_csr_mask[MEDELEG] = 1;
       unsupported_csr_mask[MIDELEG] = 1;
       unsupported_csr_mask[MCOUNTEREN] = 1;
    end
 
-   // Remove U-mode CSRs is S mode not supported
+   // Remove U-mode CSRs if S mode not supported
    if (!mode_u_supported) begin
       unsupported_csr_mask[USTATUS] = 1;
       unsupported_csr_mask[UIE] = 1;
@@ -580,6 +590,15 @@ function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();
   if (priv_spec_version != PRIV_VERSION_1_12) begin
     unsupported_csr_mask[MSTATUSH] = 1;
     unsupported_csr_mask[MCONFIGPTR] = 1;
+  end
+
+  // Remove support for hcontext alias (mcontext)
+  // when hypervisor mode is not supported
+  if (priv_spec_version == PRIV_VERSION_1_12 &&
+      debug_spec_version == DEBUG_VERSION_1_0_0 &&
+      mode_h_supported == 0)
+  begin
+      unsupported_csr_mask[MCONTEXT] = 1;
   end
 
   // TODO: These needs inclusion parameter classification

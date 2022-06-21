@@ -42,6 +42,7 @@ package uvmt_cv32e40x_pkg;
 
 
    // Constants / Parameters / Structs / Enums
+   `include "uvme_cv32e40x_constants.sv"
    `include "uvmt_cv32e40x_constants.sv"
    `include "uvmt_cv32e40x_tdefs.sv"
 
