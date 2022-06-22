@@ -74,8 +74,6 @@
    rand bit                      pmp_supported;
    rand bit                      debug_supported;
 
-   rand debug_spec_version_t     debug_spec_version;
-
    rand bitmanip_version_t       bitmanip_version;
    rand debug_spec_version_t     debug_spec_version;
    rand priv_spec_version_t      priv_spec_version;
