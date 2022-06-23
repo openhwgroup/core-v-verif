@@ -253,8 +253,6 @@ int main(int argc, char *argv[])
     __asm__ volatile("csrw  0x7a2, %0"     : "=r"(temp)); // Trigger TDATA2
     __asm__ volatile("csrw  0x7a3, %0"     : "=r"(temp)); // Trigger TDATA3
     __asm__ volatile("csrw  0x7a4, %0"     : "=r"(temp)); // Trigger TINFO
-    __asm__ volatile("csrw  0x7a8, %0"     : "=r"(temp)); // Trigger MCONTEXT
-    __asm__ volatile("csrw  0x7aa, %0"     : "=r"(temp)); // Trigger SCONTEXT
 
     // Read default value
     __asm__ volatile("csrr %0, 0x7a0"   : "=r"(temp)); // Trigger TSELECT
@@ -276,13 +274,6 @@ int main(int argc, char *argv[])
     __asm__ volatile("csrr %0, 0x7a4"   : "=r"(temp)); // Trigger TINFO
     // tmatch = 1<<2
     if(temp != 1<<2){printf("ERROR: TINFO Read %d \n",temp);TEST_FAILED;}
-
-    __asm__ volatile("csrr %0, 0x7a8"   : "=r"(temp)); // Trigger MCONTEXT
-    if(temp != 0x0){printf("ERROR: MCONTEXT Read\n");TEST_FAILED;}
-
-    __asm__ volatile("csrr %0, 0x7aa"   : "=r"(temp)); // Trigger SCONTEXT
-    if(temp != 0x0){printf("ERROR: SCONTEXT Read\n");TEST_FAILED;}
-
 
 
    // Do not expect or allow any more illegal instructions
