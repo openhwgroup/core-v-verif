@@ -125,6 +125,11 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
        $fwrite(fh, $sformatf("--override root/cpu/ecode_mask=2047\n"));
    end
 
+   // TODO:silabs-robin remove after rtl/iss has synched up at a stable versioning scheme
+   if (cfg.core_cfg.core_name == "CV32E40S") begin
+       $fwrite(fh, $sformatf("--override root/cpu/Zcb=0\n"));
+   end
+
    // TODO silabs-hfegran: Check that this is on by default in 40S model when ISS v0.4.0 is implemented
    // Already in rtl, so to match, it will be enabled now
    if (cfg.core_cfg.core_name == "CV32E40S") begin
