@@ -1,2 +1,4 @@
 name: no_bitmanip
 description: Default configuration for CV32E40X simulations
+ovpsim: >
+#  --trace --tracechange --traceshowicount --monitornets 

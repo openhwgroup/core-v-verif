@@ -14,7 +14,6 @@ volatile uint32_t nested_irq_valid        = 0;
 volatile uint32_t in_direct_handler       = 0;
 volatile uint32_t event;
 volatile uint32_t num_taken_interrupts;
-volatile uint32_t num_counted_interrupts;
 
 uint32_t IRQ_ID_PRIORITY [IRQ_NUM] = {
     FAST15_IRQ_ID   ,
@@ -115,7 +114,6 @@ void nested_irq_handler(uint32_t id) {
 
 void generic_irq_handler(uint32_t id) {
     asm volatile("csrr %0, mcause": "=r" (mmcause));
-    asm volatile("csrr %0, 0xB03" : "=r" (num_counted_interrupts));
     irq_id = id;
 
     // Increment if interrupt
@@ -223,7 +221,6 @@ __attribute__((interrupt ("machine"))) void u_sw_direct_irq_handler(void)  {
 int main(int argc, char *argv[]) {
     int retval;
 
-    num_counted_interrupts = 0;
     num_taken_interrupts   = 0;
 
     // Enable interrupt performance counter (mhpmcounter3)
@@ -288,12 +285,6 @@ int main(int argc, char *argv[]) {
 
     // Clear MIE for final WFI
     mie_disable_all();
-
-    // Check that the interrupt taken counter
-    if (num_counted_interrupts != num_taken_interrupts) {
-      printf("mhpmcounter3 (number of events taken) does not match actual interrupts taken: %0d != %0d\n", (int)num_counted_interrupts, (int)num_taken_interrupts);
-      return ERR_CODE_INTR_CNT;
-    }
 
     return EXIT_SUCCESS;
 }

@@ -20,7 +20,7 @@
 /*
  * provide UVM environment entry and exit points.
  */
-import cv32e40x_pkg::pma_region_t;
+import cv32e40x_pkg::pma_cfg_t;
 
   class cv32e40x_ldgen_c;
 
@@ -47,8 +47,8 @@ import cv32e40x_pkg::pma_region_t;
     parameter RAM_ORIGIN           = 32'h0000_0000;
     parameter RAM_LENGTH           = 32'h40_0000;
     parameter BOOT_ADDR            = 32'h80;
-    parameter NMI_ADDR             = 32'h0010_0000;
     parameter MTVEC_ADDR           = 32'h0000_0000;
+    parameter NMI_ADDR             = 32'h0010_0000;
     parameter DEBUG_ORIGIN         = 32'h1A11_0800;
     parameter DEBUG_EXCEPTION_ADDR = 32'h1A11_1000;
     parameter DEBUG_STACK_OFFSET   = 32'h80;
@@ -96,8 +96,8 @@ import cv32e40x_pkg::pma_region_t;
     int fhandle_dbg;
     int fhandle_fix;
 
-    pma_region_t regions[PMA_NUM_REGIONS][$];
-    pma_region_t temp_region;
+    pma_cfg_t regions[PMA_NUM_REGIONS][$];
+    pma_cfg_t temp_region;
     int temp_region_ctr;
     pma_adapted_memory_regions_c pma_adapted_memory;
 

@@ -97,9 +97,9 @@ task uvma_obi_memory_vp_sig_writer_seq_c::vp_body(uvma_obi_memory_mon_trn_c mon_
    if (mon_trn.access_type == UVMA_OBI_MEMORY_ACCESS_WRITE) begin
       case (get_vp_index(mon_trn))
          0: signature_start_address = mon_trn.data;
-         1: signature_end_address = mon_trn.data;
 
-         2: begin
+         1: begin
+            signature_end_address = mon_trn.data;
             for (int unsigned ii=signature_start_address; ii<signature_end_address; ii += 4) begin
                `uvm_info("VP_SIG_WRITER", "Dumping signature", UVM_HIGH/*NONE*/)
                if (use_sig_file) begin

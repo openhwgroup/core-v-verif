@@ -44,9 +44,10 @@ module uvmt_cv32e40x_dut_wrap
 
   #(// DUT (riscv_core) parameters.
     parameter NUM_MHPMCOUNTERS    =  1,
+    parameter USE_DEPRECATED_FEATURE_SET = 0,
     parameter cv32e40x_pkg::b_ext_e B_EXT  = cv32e40x_pkg::B_NONE,
     parameter int          PMA_NUM_REGIONS =  0,
-    parameter pma_region_t PMA_CFG[PMA_NUM_REGIONS-1 : 0] = '{default:PMA_R_DEFAULT},
+    parameter pma_cfg_t PMA_CFG[PMA_NUM_REGIONS-1 : 0] = '{default:PMA_R_DEFAULT},
     // Remaining parameters are used by TB components only
               INSTR_ADDR_WIDTH    =  32,
               INSTR_RDATA_WIDTH   =  32,
@@ -133,6 +134,8 @@ module uvmt_cv32e40x_dut_wrap
     // Connect to core_cntrl_if
     assign core_cntrl_if.num_mhpmcounters = NUM_MHPMCOUNTERS;
     assign core_cntrl_if.b_ext = B_EXT;
+
+    `ifndef FORMAL
     initial begin
       core_cntrl_if.pma_cfg = new[PMA_NUM_REGIONS];
       foreach (core_cntrl_if.pma_cfg[i]) begin
@@ -144,6 +147,7 @@ module uvmt_cv32e40x_dut_wrap
         core_cntrl_if.pma_cfg[i].atomic         = PMA_CFG[i].atomic;
       end
     end
+    `endif
 
     // --------------------------------------------
     // instantiate the core
@@ -163,9 +167,8 @@ module uvmt_cv32e40x_dut_wrap
          .boot_addr_i            ( core_cntrl_if.boot_addr        ),
          .mtvec_addr_i           ( core_cntrl_if.mtvec_addr       ),
          .dm_halt_addr_i         ( core_cntrl_if.dm_halt_addr     ),
-         .nmi_addr_i             ( core_cntrl_if.nmi_addr         ),
          .mhartid_i              ( core_cntrl_if.mhartid          ),
-         .mimpid_i               ( core_cntrl_if.mimpid           ),
+         .mimpid_patch_i         ( core_cntrl_if.mimpid_patch     ),
          .dm_exception_addr_i    ( core_cntrl_if.dm_exception_addr),
 
          .instr_req_o            ( obi_instr_if_i.req             ),
@@ -206,12 +209,9 @@ module uvmt_cv32e40x_dut_wrap
 
          .clic_irq_i             ( '0   /*todo: connect */        ),
          .clic_irq_id_i          ( '0   /*todo: connect */        ),
-         .clic_irq_il_i          ( '0   /*todo: connect */        ),
+         .clic_irq_level_i       ( '0   /*todo: connect */        ),
          .clic_irq_priv_i        ( '0   /*todo: connect */        ),
-         .clic_irq_hv_i          ( '0   /*todo: connect */        ),
-         .clic_irq_id_o          (      /*todo: connect */        ),
-         .clic_irq_mode_o        (      /*todo: connect */        ),
-         .clic_irq_exit_o        (      /*todo: connect */        ),
+         .clic_irq_shv_i         ( '0   /*todo: connect */        ),
 
          .fencei_flush_req_o     ( fencei_if_i.flush_req          ),
          .fencei_flush_ack_i     ( fencei_if_i.flush_ack          ),

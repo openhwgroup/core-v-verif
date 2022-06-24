@@ -385,25 +385,33 @@ corev-dv: clean_riscv-dv clone_riscv-dv comp_corev-dv
 # Makefile of this <sim>.mk implements "all_compliance", the target that
 # compiles the test-programs.
 #
-# There is a dependancy between RISCV_ISA and COMPLIANCE_PROG which *you* are
-# required to know.  For example, the I-ADD-01 test-program is part of the rv32i
-# testsuite.
+# There is a dependancy between RISCV_DEVICE and COMPLIANCE_PROG which *you*
+# are required to know. For example, the add-01 test-program is part of the
+# RISCV_DEVICE=I testsuite, where device denotes the ISA extension name.
 # So this works:
-#                make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ADD-01
+#                make compliance RISCV_DEVICE=I COMPLIANCE_PROG=add-01
 # But this does not:
-#                make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=I-ADD-01
+#                make compliance RISCV_DEVICE=C COMPLIANCE_PROG=add-01
 #
-RISCV_ISA       ?= rv32i
-COMPLIANCE_PROG ?= I-ADD-01
+RISCV_ISA       ?= rv32i_m
+RISCV_DEVICE    ?= I
+COMPLIANCE_PROG ?= add-01
 
 SIG_ROOT          ?= $(SIM_CFG_RESULTS)/$(RISCV_ISA)
 SIG               ?= $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX)/$(COMPLIANCE_PROG).signature_output
-REF               ?= $(COMPLIANCE_PKG)/riscv-test-suite/$(RISCV_ISA)/references/$(COMPLIANCE_PROG).reference_output
+REF               ?= $(COMPLIANCE_PKG)/riscv-test-suite/$(RISCV_ISA)/$(RISCV_DEVICE)/references/$(COMPLIANCE_PROG).reference_output
 COMPLIANCE_RUN_DIR = $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX)
 TEST_PLUSARGS     ?= +signature=$(COMPLIANCE_PROG).signature_output
 
 ifneq ($(call IS_NO,$(COMP)),NO)
 VSIM_COMPLIANCE_PREREQ = build_compliance
+endif
+
+# 40p workaround for ISS configuration
+ifeq ($(CV_CORE_LC),cv32e40p)
+	ISS_CFG = export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic
+else
+	ISS_CFG = IMPERAS_TOOLS=$(COMPLIANCE_RUN_DIR)/ovpsim.ic
 endif
 
 # Target to run VSIM (i.e. run the simulation)
@@ -415,6 +423,7 @@ compliance: $(VSIM_COMPLIANCE_PREREQ) $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 	mkdir -p $(COMPLIANCE_RUN_DIR) && \
 	cd $(COMPLIANCE_RUN_DIR) && \
 		$(VMAP) work $(SIM_CFG_RESULTS)/work
+	$(ISS_CFG) && \
 	cd $(COMPLIANCE_RUN_DIR) && \
 		$(VSIM) \
 			-work $(VWORK) \
@@ -425,10 +434,8 @@ compliance: $(VSIM_COMPLIANCE_PREREQ) $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 			$(RTLSRC_VOPT_TB_TOP) \
 			$(CFG_PLUSARGS) \
 			$(TEST_PLUSARGS) \
-			+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).hex \
-			+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).elf
-
-compliance: export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic
+			+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(RISCV_DEVICE)/$(COMPLIANCE_PROG).hex \
+			+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(RISCV_DEVICE)/$(COMPLIANCE_PROG).elf
 
 ################################################################################
 # Questa simulation targets
