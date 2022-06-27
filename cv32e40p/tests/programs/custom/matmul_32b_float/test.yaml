@@ -1,0 +1,6 @@
+name: matmul_32b_float
+uvm_test: uvmt_cv32e40p_firmware_test_c
+default_cflags: >
+    -O3 -g -static -mabi=ilp32 -march=$(RISCV_MARCH) -Wall -pedantic
+description: >
+    Runs the Single Precision Floating Point Matrices Multiplication benchmark
