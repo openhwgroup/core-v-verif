@@ -27,6 +27,7 @@ class uvma_axi_r_mon_c extends uvm_monitor;
    extern virtual function void build_phase(uvm_phase phase);
    extern virtual task run_phase(uvm_phase phase);
    extern task monitor_r_items();
+   extern task observe_reset();
 
 endclass:uvma_axi_r_mon_c
 
@@ -47,7 +48,11 @@ endfunction
 
 task uvma_axi_r_mon_c::run_phase(uvm_phase phase);
    super.run_phase(phase);
-   this.monitor_r_items();
+   fork
+      this.observe_reset();
+      this.monitor_r_items();
+   join_none
+
 endtask: run_phase
 
 task uvma_axi_r_mon_c::monitor_r_items();
@@ -67,5 +72,18 @@ task uvma_axi_r_mon_c::monitor_r_items();
       @(passive_mp.psv_axi_cb);
    end
 endtask:  monitor_r_items
+
+task uvma_axi_r_mon_c::observe_reset();
+
+   forever begin
+      wait (cntxt.axi_vi.rst_n === 0);
+      cntxt.reset_state = UVMA_AXI_RESET_STATE_IN_RESET;
+      `uvm_info(get_type_name(), $sformatf("RESET_STATE_IN_RESET"), UVM_LOW)
+      wait (cntxt.axi_vi.rst_n === 1);
+      cntxt.reset_state = UVMA_AXI_RESET_STATE_POST_RESET;
+      `uvm_info(get_type_name(), $sformatf("RESET_STATE_POST_RESET"), UVM_LOW)
+   end
+
+endtask : observe_reset
 
 `endif

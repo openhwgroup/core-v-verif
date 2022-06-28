@@ -24,7 +24,10 @@ class uvma_axi_cntxt_c extends uvm_object;
    uvm_event  sample_cfg_e;
    uvm_event  sample_cntxt_e;
 
+   uvma_axi_reset_state_enum  reset_state = UVMA_AXI_RESET_STATE_PRE_RESET;
+
    `uvm_object_utils_begin(uvma_axi_cntxt_c)
+      `uvm_field_enum(uvma_axi_reset_state_enum, reset_state, UVM_DEFAULT)
       `uvm_field_event(sample_cfg_e, UVM_DEFAULT)
       `uvm_field_event(sample_cntxt_e, UVM_DEFAULT)
    `uvm_object_utils_end

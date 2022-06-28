@@ -19,6 +19,8 @@ class uvma_axi_w_mon_c extends uvm_monitor;
 
    uvma_axi_w_item_c                                w_item;
    uvm_analysis_port #(uvma_axi_w_item_c)           uvma_w_mon_port;
+   uvm_analysis_port #(uvma_axi_w_item_c)           w_mtr2mem_port;
+   uvma_axi_cfg_c     cfg;
    uvma_axi_cntxt_c   cntxt;
 
    // Handles to virtual interface modport
@@ -34,6 +36,7 @@ endclass:uvma_axi_w_mon_c
 function uvma_axi_w_mon_c::new(string name = "uvma_axi_w_mon_c", uvm_component parent);
    super.new(name, parent);
    uvma_w_mon_port = new("uvma_w_mon_port", this);
+   w_mtr2mem_port  = new("w_mtr2mem_port", this);
 endfunction
 
 function void uvma_axi_w_mon_c::build_phase(uvm_phase phase);
@@ -44,6 +47,10 @@ function void uvma_axi_w_mon_c::build_phase(uvm_phase phase);
       end
    passive_mp = cntxt.axi_vi.passive;
    w_item = uvma_axi_w_item_c::type_id::create("w_item", this);
+   void'(uvm_config_db#(uvma_axi_cfg_c)::get(this, "", "cfg", cfg));
+   if (cfg == null) begin
+      `uvm_fatal("CFG", "Configuration handle is null")
+   end
 endfunction
 
 task uvma_axi_w_mon_c::run_phase(uvm_phase phase);
@@ -64,6 +71,10 @@ task uvma_axi_w_mon_c::monitor_w_items();
          w_item.w_valid = passive_mp.psv_axi_cb.w_valid;
          w_item.w_ready = passive_mp.psv_axi_cb.w_ready;
          uvma_w_mon_port.write(w_item);
+         if( cfg.is_active == UVM_ACTIVE) begin
+            // send to memory
+            w_mtr2mem_port.write(w_item);
+         end
       end
       @(passive_mp.psv_axi_cb);
    end

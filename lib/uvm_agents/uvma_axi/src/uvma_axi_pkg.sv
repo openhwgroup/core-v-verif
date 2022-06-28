@@ -44,33 +44,48 @@ package uvma_axi_pkg;
    parameter AXI_BVALID_DLY  = 3;   //b_valid goes low for a random number of clk cycles (between 0 and AXI_BVALID_DLY)
    parameter AXI_ARREADY_DLY = 4;   //ar_ready goes low for a random number of clk cycles (between 0 and AXI_ARREADY_DLY)
 
+   `include "uvma_axi_tdefs.sv"
+
     // Objects
+   `include "uvma_axi_cfg.sv"
    `include "uvma_axi_cntxt.sv"
 
    // AW
    `include "uvma_axi_aw_item.sv"
+   `include "uvma_axi_aw_drv.sv"
    `include "uvma_axi_aw_mon.sv"
    `include "uvma_axi_aw_agent.sv"
 
    // W
    `include "uvma_axi_w_item.sv"
+   `include "uvma_axi_w_drv.sv"
    `include "uvma_axi_w_mon.sv"
    `include "uvma_axi_w_agent.sv"
 
    // B
    `include "uvma_axi_b_item.sv"
+   `include "uvma_axi_b_sqr.sv"
+   `include "uvma_axi_b_seq.sv"
+   `include "uvma_axi_b_drv.sv"
    `include "uvma_axi_b_mon.sv"
    `include "uvma_axi_b_agent.sv"
 
    // AR
    `include "uvma_axi_ar_item.sv"
+   `include "uvma_axi_ar_drv.sv"
    `include "uvma_axi_ar_mon.sv"
    `include "uvma_axi_ar_agent.sv"
 
    // R
    `include "uvma_axi_r_item.sv"
+   `include "uvma_axi_r_sqr.sv"
+   `include "uvma_axi_r_seq.sv"
+   `include "uvma_axi_r_drv.sv"
    `include "uvma_axi_r_mon.sv"
    `include "uvma_axi_r_agent.sv"
+
+  // local memory
+   `include "uvma_axi_mem.sv"
 
    //Top Agent
    `include "uvma_axi_agent.sv"
