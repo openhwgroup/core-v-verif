@@ -348,7 +348,7 @@ function void cv32e40x_ldgen_c::create_pma_section_file(string filepath);
         $fdisplay(fhandle_pma, { indent(L1), ".region_", $sformatf("%0d %0s", i, section_location), ":" });
         $fdisplay(fhandle_pma, { indent(L1), "{" });
         $fdisplay(fhandle_pma, { indent(L2), "KEEP(*(.region_", $sformatf("%0d", i), "));" });
-        $fdisplay(fhandle_pma, { indent(L1), "}"});
+        $fdisplay(fhandle_pma, { indent(L1), "} > region_", $sformatf("%0d", i) });
       end
     end
     $fdisplay(fhandle_pma, "}");
