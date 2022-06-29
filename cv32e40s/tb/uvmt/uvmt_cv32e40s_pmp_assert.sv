@@ -1,6 +1,7 @@
 module uvmt_cv32e40s_pmp_assert
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
+  import cv32e40s_rvfi_pkg::*;
   #(
     parameter int       PMP_GRANULARITY   = 0,
     parameter int       PMP_NUM_REGIONS   = 0,
@@ -17,11 +18,28 @@ module uvmt_cv32e40s_pmp_assert
 
    // Privilege mode
    input privlvl_t    priv_lvl_i,
+
    // Access checking
    input logic [33:0] pmp_req_addr_i,
    input pmp_req_e    pmp_req_type_i,
-   input logic        pmp_req_err_o
+   input logic        pmp_req_err_o,
+
+   // RVFI
+   input logic        rvfi_valid,
+   input logic [31:0] rvfi_insn,
+   input logic [ 1:0] rvfi_mode,
+   input rvfi_trap_t  rvfi_trap
   );
+
+  localparam logic [1:0] MODE_U = 2'b 00;
+  localparam logic [1:0] MODE_M = 2'b 11;
+
+  localparam logic [5:0] EXC_INSTR_ACC_FAULT    = 6'd 1;
+  localparam logic [5:0] EXC_ILL_INSTR          = 6'd 2;
+  localparam logic [5:0] EXC_INSTR_BUS_FAULT    = 6'd 48;
+  localparam logic [5:0] EXC_INSTR_CHKSUM_FAULT = 6'd 49;
+
+  localparam logic [2:0] DBG_TRIGGER = 3'd 2;
 
   typedef struct packed {
     logic rwx_nolock;
@@ -802,5 +820,52 @@ module uvmt_cv32e40s_pmp_assert
       $rose(rst_n) |-> csr_pmp_i.mseccfg === MSECCFG_RESET_VAL
     );
   end endgenerate
+
+
+  // RVFI
+
+  wire  is_rvfi_csr_instr =
+    rvfi_valid  &&
+    (rvfi_insn[6:0] == 7'b 1110011)  &&
+    (rvfi_insn[14:12] inside {1, 2, 3, 5, 6, 7});
+  wire  is_rvfi_exception =
+    rvfi_valid  &&
+    rvfi_trap.trap  &&
+    rvfi_trap.exception;
+  wire  is_rvfi_exc_ill_instr =
+    is_rvfi_exception  &&
+    (rvfi_trap.exception_cause == EXC_ILL_INSTR);
+  wire  is_rvfi_exc_instr_acc_fault =
+    is_rvfi_exception  &&
+    (rvfi_trap.exception_cause == EXC_INSTR_ACC_FAULT);
+  wire  is_rvfi_exc_instr_bus_fault=
+    is_rvfi_exception  &&
+    (rvfi_trap.exception_cause == EXC_INSTR_BUS_FAULT);
+  wire  is_rvfi_exc_instr_chksum_fault=
+    is_rvfi_exception  &&
+    (rvfi_trap.exception_cause == EXC_INSTR_CHKSUM_FAULT);
+  wire  is_rvfi_dbg_trigger =
+    rvfi_valid  &&
+    rvfi_trap.debug  &&
+    (rvfi_trap.debug_cause == DBG_TRIGGER);
+
+  // PMP CSRs only accessible from M-mode
+  property p_csrs_mmode_only;
+    is_rvfi_csr_instr  &&
+    (rvfi_mode == MODE_U)  &&
+    (rvfi_insn[31:20] inside {['h3A0 : 'h3EF], 'h747, 'h757})
+    |->
+    is_rvfi_exc_ill_instr  ^
+    is_rvfi_exc_instr_acc_fault  ^
+    is_rvfi_dbg_trigger ^
+    is_rvfi_exc_instr_bus_fault  ^
+    is_rvfi_exc_instr_chksum_fault;
+  endproperty : p_csrs_mmode_only
+  a_csrs_mmode_only: assert property (
+    p_csrs_mmode_only
+  );
+  cov_csrs_mmod_only: cover property (
+    p_csrs_mmode_only  and  is_rvfi_exc_ill_instr
+  );
 
 endmodule : uvmt_cv32e40s_pmp_assert
