@@ -368,6 +368,10 @@ module uvmt_cv32e40p_step_compare
             "mhpmcounterh30": ignore  = 1;
             "mhpmcounterh31": ignore  = 1;
 
+            "fcsr"          : csr_val = {24'b0, `CV32E40P_CORE.cs_registers_i.frm_q, `CV32E40P_CORE.cs_registers_i.fflags_q};
+            "frm"           : csr_val = {29'b0, `CV32E40P_CORE.cs_registers_i.frm_q};
+            "fflags"        : csr_val = {27'b0, `CV32E40P_CORE.cs_registers_i.fflags_q};
+
             default: begin
               `uvm_error("STEP_COMPARE", $sformatf("index=%s does not match a CSR name", index))
               ignore = 1;
