@@ -37,7 +37,11 @@
 #endif
 
 #ifdef PULP
+#ifndef FPU
 #define EXP_MISA 0x40801104
+#else
+#define EXP_MISA 0x40801124
+#endif
 #endif
 
 
