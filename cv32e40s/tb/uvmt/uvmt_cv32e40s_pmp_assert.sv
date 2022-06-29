@@ -473,12 +473,12 @@ module uvmt_cv32e40s_pmp_assert
 
     mask = '1;
     if (PMP_GRANULARITY >= 1) begin
-      mask[0:PMP_GRANULARITY-1] = '0;  // TODO remove or assume+assert?
+      mask[PMP_GRANULARITY-1:0] = '0;  // TODO remove or assume+assert?
     end
 
     csr_addr = csr_pmp_i.addr[i][33:2];
     if (PMP_GRANULARITY >= 2) begin
-      csr_addr[0:PMP_GRANULARITY-2] = '1;  // TODO should be assumed+assert?
+      csr_addr[PMP_GRANULARITY-2:0] = '1;  // TODO should be assumed+assert?
     end
 
     for (int j = 0; j < 32; j++) begin

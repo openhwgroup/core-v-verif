@@ -27,10 +27,16 @@
    `endif
 
    `ifdef PMP_ENABLE_2
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
      parameter int CORE_PARAM_PMP_NUM_REGIONS = 2;
    `elsif PMP_ENABLE_64
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
      parameter int CORE_PARAM_PMP_NUM_REGIONS = 64;
+   `elsif PMP_G3R3
+     parameter int CORE_PARAM_PMP_GRANULARITY = 3;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 3;
    `else
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
      parameter int CORE_PARAM_PMP_NUM_REGIONS = 0;
    `endif
 
