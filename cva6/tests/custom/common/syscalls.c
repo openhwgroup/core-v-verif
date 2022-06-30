@@ -55,7 +55,12 @@ static uintptr_t syscall(uintptr_t which, uintptr_t arg0, uintptr_t arg1, uintpt
   return magic_mem[0];
 }
 
+#if (XLEN == 32)
+#define NUM_COUNTERS 4
+#else
 #define NUM_COUNTERS 2
+#endif
+
 static uintptr_t counters[NUM_COUNTERS];
 static char* counter_names[NUM_COUNTERS];
 
@@ -71,8 +76,17 @@ void setStats(int enable)
 
   READ_CTR(mcycle);
   READ_CTR(minstret);
+#if (XLEN == 32)
+  READ_CTR(mcycleh);
+  READ_CTR(minstreth);
+#endif
 
 #undef READ_CTR
+}
+
+uintptr_t getStats(int counterid)
+{
+  return counters[counterid];
 }
 
 void __attribute__((noreturn)) tohost_exit(uintptr_t code)
@@ -154,6 +168,17 @@ void _init(int cid, int nc)
     printstr(buf);
 
   exit(ret);
+}
+
+int puts(const char *s)
+{
+  const char *p = s;
+
+  while (*p)
+    putchar(*p++);
+
+  putchar('\n');
+  return 0;
 }
 
 #undef putchar
