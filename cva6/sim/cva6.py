@@ -566,7 +566,7 @@ def run_c(c_test, iss_yaml, isa, target, mabi, gcc_opts, iss_opts, output_dir,
     base_cmd = parse_iss_yaml(iss, iss_yaml, isa, target, setting_dir, debug_cmd)
     cmd = get_iss_cmd(base_cmd, elf, target, log)
     logging.info("[%0s] Running ISS simulation: %s" % (iss, cmd))
-    run_cmd(cmd, 300, debug_cmd = debug_cmd)
+    run_cmd(cmd, 1000, debug_cmd = debug_cmd)
     logging.info("[%0s] Running ISS simulation: %s ...done" % (iss, elf))
   if len(iss_list) == 2:
     compare_iss_log(iss_list, log_list, report)
@@ -752,7 +752,7 @@ def setup_parser():
                       help="Simulation options for the generator")
   parser.add_argument("--gcc_opts", type=str, default="",
                       help="GCC compile options")
-  parser.add_argument("--issrun_opts", type=str, default="+debug_disable=1",
+  parser.add_argument("--issrun_opts", type=str, default="+debug_disable=1 +time_out=500000 ",
                       help="simulation run options")
   parser.add_argument("--isscomp_opts", type=str, default="",
                       help="simulation comp options")
