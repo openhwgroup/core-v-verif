@@ -392,7 +392,7 @@ module uvmt_cv32e40s_debug_assert
         else `uvm_error(info_tag, "Executing dret in M-mode did not result in illegal instruction");
 
 
-     // dret in D-mode will restore pc (if no re-entry or interrupt intervenes)
+    // dret in D-mode will restore pc (if no re-entry or interrupt intervenes)
 
     property p_dmode_dret_pc;
         int dpc; (1, dpc =cov_assert_if.rvfi_csr_dpc_rdata)
@@ -410,8 +410,6 @@ module uvmt_cv32e40s_debug_assert
 
     // dret in D-mode will place dpc in mepc if re-entry is interrupted
 
-    /*
-    //TODO:mateilga reinstate this when the "kill" signal sensitivity in RVFI has been added
     property p_dmode_dret_pc_int;
         int dpc; (1, dpc =cov_assert_if.rvfi_csr_dpc_rdata)
         ##0(cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE)
@@ -420,14 +418,12 @@ module uvmt_cv32e40s_debug_assert
         ##0 (cov_assert_if.rvfi_intr && !cov_assert_if.rvfi_dbg_mode)
         |->
 
-        (cov_assert_if.rvfi_csr_mepc_wdata & cov_assert_if.rvfi_csr_mepc_wmask) == dpc;
+        cov_assert_if.rvfi_csr_mepc_rdata == dpc;
 
     endproperty
 
     a_dmode_dret_pc_int : assert property(p_dmode_dret_pc_int)
         else `uvm_error(info_tag, "Dret did not save dpc to mepc when return from debug mode was interrupted");
-
-    */
 
     // dret in D-mode will exit D-mode
 
@@ -610,7 +606,7 @@ module uvmt_cv32e40s_debug_assert
                 //TODO:ropeders shouldn't "nmi_allowed" be trustable without "ctrl_fsm_cs"?
                 //TODO:ropeders shouldn't "dcsr.nmip" be usable as a "dpc" pedictor?
                 //TODO:ropeders shouldn't there be an assert for "dpc" not only on first instr in dmode?
-                pc_at_dbg_req <= mtvec_addr + 'h3c;
+              pc_at_dbg_req <= mtvec_addr + 'h3C; // mtvec_addr + 'h3c = nmi_addr
             end
             if(cov_assert_if.debug_mode_q && started_decoding_in_debug) begin
                 pc_at_dbg_req <= pc_at_dbg_req;
@@ -682,7 +678,6 @@ module uvmt_cv32e40s_debug_assert
         cov_assert_if.wb_valid
         && ((cov_assert_if.wb_stage_instr_rdata_i & WFI_INSTR_MASK) == WFI_INSTR_OPCODE)
         && !cov_assert_if.wb_err
-        && !cov_assert_if.wb_illegal
         && (cov_assert_if.wb_mpu_status == MPU_OK);
     assign cov_assert_if.is_dret =
         cov_assert_if.wb_valid
