@@ -422,8 +422,10 @@ module uvmt_cv32e40s_debug_assert
 
     endproperty
 
+/* TODO:ropeders re-enable when fixed in 40x
     a_dmode_dret_pc_int : assert property(p_dmode_dret_pc_int)
         else `uvm_error(info_tag, "Dret did not save dpc to mepc when return from debug mode was interrupted");
+*/
 
     // dret in D-mode will exit D-mode
 

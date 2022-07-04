@@ -558,6 +558,7 @@ module uvmt_cv32e40s_tb;
       .rvfi_csr_dpc_rdata     (rvfi_i.rvfi_csr_dpc_rdata),
       .rvfi_csr_mepc_wdata    (rvfi_i.rvfi_csr_mepc_wdata),
       .rvfi_csr_mepc_wmask    (rvfi_i.rvfi_csr_mepc_wmask),
+      .rvfi_csr_mepc_rdata    (rvfi_i.rvfi_csr_mepc_rdata),
 
 
 
