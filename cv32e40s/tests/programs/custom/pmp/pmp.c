@@ -2,7 +2,7 @@
 // #include <stdlib.h>
 
 #include "pmp.h"
-
+CSRS glb_csrs;
 int main(int argc, char *argv[])
 {
   // reset_registers();

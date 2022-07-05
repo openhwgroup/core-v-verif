@@ -22,6 +22,7 @@ umode:
   csrrw x0, 0x341, ra
   la a0, umode_msg
   jal ra, puts
+
   lw s0, 4(sp)
   add sp, sp, 4
   // return to next line in main

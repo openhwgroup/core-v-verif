@@ -1,58 +1,152 @@
 #include "pmp.h"
 
+extern CSRS glb_csrs;
 CSRS csrs;
+
+void user_code()
+{
+  printf("\tChecking U mode RAM acess\n");
+  // initialize to 0
+  uint32_t myarray[64] = {0};
+  for (int i = 0; i < 64; i++)
+  {
+    if (myarray[i] != 0)
+    {
+      printf("\tInconsistant value to initializer!\n");
+      printf("\tmyarray[%d] = %lx\n", i, myarray[i]);
+    }
+  }
+
+  for (int i = 0; i < 64; i++)
+  {
+    myarray[i] = i;
+
+    if (myarray[i] != i)
+    {
+      printf("\tValues are not updated accordingly!\n");
+      printf("\tExpected values = %d\n", i);
+      printf("\tmyarray[%d] = %lx\n", i, myarray[i]);
+    }
+  }
+  printf("\tU-mode has the access to RAM\n");
+}
 
 void pmpcfgxtest()
 {
-  uint32_t randpmpcfgx;
-  // csrs.pmpcfgx[0] = read_csr(0x3a0);
-  // csrs.pmpcfgx[1] = read_csr(0x3a1);
-  // csrs.pmpcfgx[2] = read_csr(0x3a2);
-  // csrs.pmpcfgx[3] = read_csr(0x3a3);
-  // csrs.pmpcfgx[4] = read_csr(0x3a4);
-  // csrs.pmpcfgx[5] = read_csr(0x3a5);
-  // csrs.pmpcfgx[6] = read_csr(0x3a6);
-  // csrs.pmpcfgx[7] = read_csr(0x3a7);
-  // csrs.pmpcfgx[8] = read_csr(0x3a8);
-  // csrs.pmpcfgx[9] = read_csr(0x3a9);
-  // csrs.pmpcfgx[10] = read_csr(0x3aa);
-  // csrs.pmpcfgx[11] = read_csr(0x3ab);
-  // csrs.pmpcfgx[12] = read_csr(0x3ac);
-  // csrs.pmpcfgx[13] = read_csr(0x3ad);
-  // csrs.pmpcfgx[14] = read_csr(0x3ae);
-  // csrs.pmpcfgx[15] = read_csr(0x3af);
-  // for (int i = 0; i < 15; i++)
-  // {
-  //   printf("\npmpcfgx[%d] = %x\n\n", i, csrs.pmpcfgx[i]);
-  // }
-  change_mode();
-  printf("\npritning in U mode\n\n");
-  printf("\nattempting writing or reading CSRS in U mode\n\n");
-  // back from the trap, reading mstatus
-  // int randpmpcfgx = read_csr(0x3a9);
-  asm volatile("csrrs %0, mstatus, x0\n"
-               : "=r"(randpmpcfgx));
-  printf("\tout of  handler\n\n");
-  // csrs.mstatus = read_csr(0x300); this is illegal!!!! LOOP
-  __asm__ volatile("csrrs %0, mstatus, x0\n"
-               : "=r"(csrs.mstatus));
-  printf("\ncsrs.mstatus = x%lx\n", csrs.mstatus);
+  uint32_t pmpcfgx;
 
-  if (csrs.mstatus == 0x1800)
+  asm volatile("csrrs %0, 0x3A9, x0\n"
+               : "=r"(pmpcfgx));
+  // printf("\nM mode pmpcfgx = 0x%lx\n\n", pmpcfgx);
+
+  change_mode();
+  printf("\tU mode pmpcfg check\n");
+  user_code();
+
+
+  printf("\tAttempting writing or reading CSRS in U mode\n\n");
+  // back from the trap, reading mstatus
+  // pmpcfgx = read_csr(0x3a9);
+  asm volatile("csrrw x0, mstatus, %0\n"
+               : "=r"(pmpcfgx));
+
+  printf("\tout of  handler\n");
+
+
+  if (glb_csrs.mcause == 2)
   {
-    printf("\nback in M mode\n\n");
-    // int randpmpcfgx = read_csr(0x3a9);
-    printf("\ncore is back to M mode\n\n");
+    printf("\tIllegal instruction exception triggered as expected\n");
+    // int pmpcfgx = read_csr(0x3a9);
+    printf("\tComparing pmpcfgx values M:U\n");
     asm volatile("csrrs %0, 0x3A9, x0\n"
-               : "=r"(randpmpcfgx));
-    if (randpmpcfgx == csrs.pmpcfgx[9])
+                 : "=r"(csrs.pmpcfgx[9]));
+    if (pmpcfgx == csrs.pmpcfgx[9])
     {
-      printf("\npmpcfg[9] value is not overwriten\n\n");
+      printf("\tpmpcfg[9] value is not overwriten\n\n");
     }
     else
     {
-      printf("\nXXXXX pmpcfg value is overwriten XXXXX\n\n");
-      printf("\nXXXXX pmpcfg test failed XXXXX\n\n");
+      printf("\tpmpcfg value is overwriten\n");
+      printf("\tpmpcfg test failed\n\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+}
+
+void pmpaddrxtest()
+{
+  uint32_t pmpaddrx;
+
+  asm volatile("csrrs %0, 0x3Ba, x0\n"
+               : "=r"(pmpaddrx));
+
+  change_mode();
+  printf("\tU mode pmpaddr check\n");
+  user_code();
+
+  printf("\tAttempting writing or reading CSRS in U mode aaaaa\n\n");
+  // back from the trap, reading mstatus
+  // pmpcfgx = read_csr(0x3a9);
+  asm volatile("csrrw x0, mstatus, %0\n" ::"r"(pmpaddrx));
+
+  printf("\tout of  handler\n");
+
+
+  if (glb_csrs.mcause == 2)
+  {
+    printf("\tIllegal instruction exception triggered as expected\n");
+    // int pmpcfgx = read_csr(0x3a9);
+    printf("\tComparing pmpaddr values M:U\n");
+    asm volatile("csrrs %0, 0x3Ba, x0\n"
+                 : "=r"(csrs.pmpaddrx[10]));
+    if (pmpaddrx == csrs.pmpaddrx[10])
+    {
+      printf("\tpmpaddr[9] value is not overwriten\n\n");
+    }
+    else
+    {
+      printf("\tpmpaddr value is overwriten\n");
+      printf("\tpmpaddr test failed\n\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+}
+
+void mseccfgtest()
+{
+  uint32_t mseccfg;
+
+  asm volatile("csrrs %0, 0x747, x0\n"
+               : "=r"(mseccfg));
+
+  change_mode();
+  printf("\tU mode mseccfg check\n");
+  user_code();
+
+  printf("\tAttempting writing or reading CSRS in U mode aaaaa\n\n");
+  // back from the trap, reading mstatus
+  // pmpcfgx = read_csr(0x3a9);
+  asm volatile("csrrw x0, mstatus, %0\n"
+               :
+               : "r"(mseccfg));
+
+  printf("\tout of  handler\n");
+
+  if (glb_csrs.mcause == 2)
+  {
+    printf("\tIllegal instruction exception triggered as expected\n");
+    // int pmpcfgx = read_csr(0x3a9);
+    printf("\tComparing pmpcfgx values M:U\n");
+    asm volatile("csrrs %0, 0x3A9, x0\n"
+                 : "=r"(csrs.mseccfg));
+    if (mseccfg == csrs.mseccfg)
+    {
+      printf("\tmseccfg value is not overwriten\n\n");
+    }
+    else
+    {
+      printf("\tpmpcfg value is overwriten\n");
+      printf("\tpmpcfg test failed\n\n");
       exit(EXIT_FAILURE);
     }
   }
@@ -60,8 +154,6 @@ void pmpcfgxtest()
 
 void mmode_only()
 {
-  // int *readdata; this is illegal!!!LOOOP
-
   // set pmp addr to 0xffff-ffff
   asm volatile(
       "li t0, 0xFFFFFFFF\n"
@@ -70,5 +162,10 @@ void mmode_only()
       "csrrw x0, 0x3a0, t0\n");
 
   pmpcfgxtest();
+  printf("----------------------------------\n");
+  pmpaddrxtest();
+  printf("----------------------------------\n");
+  mseccfgtest();
+
   exit(EXIT_SUCCESS);
 }
