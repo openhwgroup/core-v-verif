@@ -752,7 +752,7 @@ def setup_parser():
                       help="Simulation options for the generator")
   parser.add_argument("--gcc_opts", type=str, default="",
                       help="GCC compile options")
-  parser.add_argument("--issrun_opts", type=str, default="+debug_disable=1 +time_out=500000 ",
+  parser.add_argument("--issrun_opts", type=str, default="+debug_disable=1 +time_out=3000000 ",
                       help="simulation run options")
   parser.add_argument("--isscomp_opts", type=str, default="",
                       help="simulation comp options")
@@ -864,6 +864,9 @@ def load_config(args, cwd):
     elif args.target == "cv32a6_imac_sv0":
       args.mabi = "ilp32"
       args.isa  = "rv32imac"
+    elif args.target == "cv32a6_im_sv0":
+      args.mabi = "ilp32"
+      args.isa  = "rv32im"
     elif args.target == "cv32a6_imac_sv32":
       args.mabi = "ilp32"
       args.isa  = "rv32imac"
