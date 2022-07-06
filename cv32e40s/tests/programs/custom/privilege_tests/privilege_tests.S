@@ -19,6 +19,7 @@ change_exec_mode:
 	// Zero "mstatus" to set MPP=umode
 	li	t0, 0x1800
 	csrrc   x0, mstatus, t0 // clear the mstatus (mpp -> User mode).
+	csrrs   x0, mstatus, a0 // set the incoming bits to the mpp.
 
 	// set mepc to point to ecall
 	la t0, set_ecall //this will pouint to the label below.
