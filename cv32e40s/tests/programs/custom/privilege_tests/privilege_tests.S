@@ -1,13 +1,13 @@
 .section .text
 
 
+// imported variable
+.global input_mode
+
 // Functions
 .global change_exec_mode
 .global setup_pmp
 
-// Flags
-.global gbl_request_mmode // do I need these ? 
-.global mode_status // do I need these ? 
 
 
 change_exec_mode:
@@ -34,7 +34,10 @@ set_ecall:
 	addi	sp, sp, 4
 	jalr	x0, 0(ra)
 
+
+// Probably don't need this. Quick pmp hack to allow user supreme pmp access.
 // void setup_pmp(void)
+
 setup_pmp:
 	// Set pmp addr to 0xFFFF_FFFF
 	li	t0, 0xFFFFFFFF

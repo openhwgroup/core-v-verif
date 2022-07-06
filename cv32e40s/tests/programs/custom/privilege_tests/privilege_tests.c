@@ -3,10 +3,21 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "corev_uvmt.h"
 
-extern volatile int  setup_pmp(), change_exec_mode();
+
+static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
+  if (actual != expect) {
+    printf(msg);
+    printf("expected = 0x%lx (%ld), got = 0x%lx (%ld)\n", expect, (int32_t)expect, actual, (int32_t)actual);
+    exit(EXIT_FAILURE);
+  }
+}
+
+
+extern volatile int  setup_pmp(), change_exec_mode(), input_mode;
 int t;
-unsigned int mstatus;
+unsigned int mstatus, pmp1, pmp2;
 
 __attribute__ ((interrupt ("machine")))
 void u_sw_irq_handler(void) { // remove this trap handler and insert an 'ecall handler' instead. 
@@ -27,12 +38,17 @@ void u_sw_irq_handler(void) { // remove this trap handler and insert an 'ecall h
 
 
 int privilege_test(void){
-  change_exec_mode();
-  printf("now outside assembly and the handler\n");
-  printf("this is the mstatus register\n");
-  printf("%X\n", mstatus);
+  int errorint = 0; // 0 no error, 1 error.
+  // Todo:
+  /* 
+    - make the change_exec_mode function take arguments.
+    - create to for loop to check all the different supported modes.
+   */
 
-  return 0;
+  change_exec_mode();
+  assert_or_die(mstatus, 0, "error: core did not enter usermode as expected\n");
+
+  return errorint;
 }
 
 
@@ -40,8 +56,13 @@ int privilege_test(void){
 
 int main(void){
   //setup_pmp();
+  //TODO:
+  /* 
+    - setup for multifunction. maybe have variables for each test and check if any return wrong value (1?)
+  
+   */
   t = privilege_test();
 
 
-  return 0;
+  return EXIT_SUCCESS;
 }

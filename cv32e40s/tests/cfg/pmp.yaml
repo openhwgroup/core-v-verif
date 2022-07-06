@@ -1,6 +1,6 @@
 name: pmp
 description: Default pmp configuration for CV32E40S simulations
-compile_flags:
+compile_flags: >
    +define+PMP_ENABLE_64
 ovpsim: >
     --override root/cpu/PMP_registers=64
