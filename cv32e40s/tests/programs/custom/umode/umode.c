@@ -58,7 +58,7 @@ int main(void) {
   x = myfunc();
   printf("x = %d\n", x);
 
-  setup_pmp(); // still in machine-mode here
+  setup_pmp();
 
   x = 0;
   printf("x = %d\n", x);
