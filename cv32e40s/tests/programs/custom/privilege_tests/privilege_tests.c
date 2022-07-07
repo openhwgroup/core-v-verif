@@ -64,6 +64,15 @@ void privilege_test(void){
 
 }
 
+void reset_mode(void){
+/* 
+To satisfy the testing criteria this test must run first
+this is to ensure 'Ensure that M-mode is the first mode entered after reset.
+*/
+__asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus)); // read the mstatus register
+assert_or_die(mstatus, 0x1800, "error: core did not enter M-mode after reset\n");
+printf("reset_mode test checked succesfully\n");
+};
 
 
 
@@ -71,10 +80,13 @@ int main(void){
   //setup_pmp();
   //TODO:
   /* 
-    - setup for multifunction. maybe have variables for each test and check if any return wrong value (1?)
+
   
    */
-  privilege_test();
+  reset_mode();
+  // privilege_test();
+
+
 
 
 
