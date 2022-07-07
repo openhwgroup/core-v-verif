@@ -1,15 +1,14 @@
 name: default
 description: Default configuration for CV32E40S simulations
 compile_flags:
-  #+define+ZBA_ZBB_ZBC_ZBS
+    +define+ZBA_ZBB_ZBC_ZBS
 ovpsim: >
-  #--showoverrides
-  #--trace --tracechange --traceshowicount --monitornets
+    # --showoverrides
+    # --trace --tracechange --traceshowicount --monitornets
 cflags: >
 plusargs: >
-  #+enable_zba_extension=1
-  #+enable_zbb_extension=1
-  #+enable_zbc_extension=1
-  #+enable_zbs_extension=1
-cv_sw_march: rv32imc
-#cv_sw_march: rv32imc_zba1p00_zbb1p00_zbc1p00_zbs1p00
+    +enable_zba_extension=1
+    +enable_zbb_extension=1
+    +enable_zbc_extension=1
+    +enable_zbs_extension=1
+cv_sw_march: rv32imc_zba1p00_zbb1p00_zbc1p00_zbs1p00
