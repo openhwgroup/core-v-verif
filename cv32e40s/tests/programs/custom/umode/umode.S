@@ -28,7 +28,7 @@ utext_end:
 run_in_umode:
 	// Save "ra" to stack
 	addi	sp, sp, -4
-	sw	ra, 0(sp) // store ra into memory location sp+0
+	sw	ra, 0(sp)
 
 	// Zero "mstatus" to set MPP=umode (note: shouldve bitcleared)
 	addi	t0, x0, 0
@@ -68,3 +68,16 @@ setup_pmp:
 	// Return to caller
 	jalr	x0, 0(ra)
 
+
+handler_set_mmode:
+	// Set "mstatus.MPP" to M-mode (note: shouldve bitset)
+	li	t0, (3 << 11)
+	csrrw   x0, mstatus, t0
+
+	// Incrument "mepc"
+	csrrw	t0, mepc, x0
+	addi	t0, t0, 4
+	csrrw	x0, mepc, t0
+
+	// Return to trap-requester
+	mret

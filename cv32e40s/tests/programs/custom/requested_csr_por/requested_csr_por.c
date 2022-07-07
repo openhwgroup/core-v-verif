@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define EXP_MISA 0x40101104
+#define EXP_MISA 0x40901104
 
 int main(int argc, char *argv[])
 {
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
   unsigned int mcounteren_rval, mcountinhibit_rval, mphmevent_rval[32];
   unsigned int mscratch_rval, mepc_rval, mcause_rval, mtval_rval, mip_rval;
   unsigned int tselect_rval, tdata1_rval, tdata2_rval, tdata3_rval, tinfo_rval;
-  unsigned int mcontext_rval, scontext_rval, dcsr_rval, dpc_rval, dscratch0_rval, dscratch1_rval;
+  unsigned int dcsr_rval, dpc_rval, dscratch0_rval, dscratch1_rval;
   unsigned int mcycle_rval, minstret_rval, mhpmcounter_rval[32], mcycleh_rval;
   unsigned int minstreth_rval, mhpmcounterh[32];
   unsigned int mvendorid_rval, marchid_rval, mimpid_rval, mhartid_rval;
@@ -159,23 +159,11 @@ int main(int argc, char *argv[])
     ++err_cnt;
   }
 
-  __asm__ volatile("csrr %0, 0x7A8" : "=r"(mcontext_rval));  // unimplemented in model
-  __asm__ volatile("csrr %0, 0x7AA" : "=r"(scontext_rval));  // unimplemented in model
   // IMPERAS - Debug mode enabled
   //__asm__ volatile("csrr %0, 0x7B0" : "=r"(dcsr_rval));      // only accessible in Debug mode
   //__asm__ volatile("csrr %0, 0x7B1" : "=r"(dpc_rval));       // only accessible in Debug mode
   //__asm__ volatile("csrr %0, 0x7B2" : "=r"(dscratch0_rval)); // only accessible in Debug mode
   //__asm__ volatile("csrr %0, 0x7B3" : "=r"(dscratch1_rval)); // only accessible in Debug mode
-
-  if (mcontext_rval != 0x0) {
-    printf("ERROR: CSR MCONTEXT not 0x0!\n\n");
-    ++err_cnt;
-  }
-
-  if (scontext_rval != 0x0) {
-    printf("ERROR: CSR SCONTEXT not 0x0!\n\n");
-    ++err_cnt;
-  }
 
   //if (dcsr_rval != 0x0) {
   //  printf("ERROR: CSR DCSR not 0x0!\n\n");
@@ -333,8 +321,8 @@ int main(int argc, char *argv[])
 
   __asm__ volatile("csrr %0, 0x320" : "=r"(mcountinhibit_rval));
 
-  if (mcountinhibit_rval != 0xD) {
-    printf("ERROR: CSR MCOUNTINHIBIT not 0xD!\n\n");
+  if (mcountinhibit_rval != 0x5) {
+    printf("ERROR: CSR MCOUNTINHIBIT not 0x5!\n\n");
     ++err_cnt;
   }
 
@@ -412,8 +400,6 @@ int main(int argc, char *argv[])
   printf("\ttdata2        = 0x%0x\n", tdata2_rval);
   printf("\ttdata3        = 0x%0x\n", tdata3_rval);
   printf("\ttinfo         = 0x%0x\n", tinfo_rval);
-  printf("\tmcontext      = 0x%0x\n", mcontext_rval);
-  printf("\tscontext      = 0x%0x\n", scontext_rval);
   //printf("\tdcsr          = 0x%0x\n", dcsr_rval);
   //printf("\tdpc           = 0x%0x\n", dpc_rval);
   //printf("\tdscratch0     = 0x%0x\n", dscratch0_rval);

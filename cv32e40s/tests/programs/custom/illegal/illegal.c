@@ -3,7 +3,7 @@
 
 // This is an illegal instruction that is not decodable (in the C extension space)
 static void illegalCExtOP() {
-    asm(".short 0x9e41 \n");
+    asm(".short 0x3084 \n");
     return;
 }
 
