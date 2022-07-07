@@ -40,8 +40,8 @@ class uvma_rvfi_instr_seq_item_c#(int ILEN=DEFAULT_ILEN,
    rand bit                      insn_interrupt;
    rand int unsigned             insn_interrupt_id;
    rand bit                      insn_bus_fault;
-   rand bit                      insn_nmi_store_fault;
-   rand bit                      insn_nmi_load_fault;
+   rand bit                      insn_nmi;
+   rand int unsigned             insn_nmi_cause;
 
    rand bit [XLEN-1:0]           pc_rdata;
    rand bit [XLEN-1:0]           pc_wdata;
@@ -84,8 +84,8 @@ class uvma_rvfi_instr_seq_item_c#(int ILEN=DEFAULT_ILEN,
       `uvm_field_int(insn_interrupt, UVM_DEFAULT)
       `uvm_field_int(insn_interrupt_id, UVM_DEFAULT)
       `uvm_field_int(insn_bus_fault, UVM_DEFAULT)
-      `uvm_field_int(insn_nmi_load_fault, UVM_DEFAULT)
-      `uvm_field_int(insn_nmi_store_fault, UVM_DEFAULT)
+      `uvm_field_int(insn_nmi, UVM_DEFAULT)
+      `uvm_field_int(insn_nmi_cause, UVM_DEFAULT)
       `uvm_field_enum(uvma_rvfi_mode, mode, UVM_DEFAULT)
       `uvm_field_int(ixl, UVM_DEFAULT)
       `uvm_field_int(pc_rdata, UVM_DEFAULT)
@@ -189,10 +189,10 @@ function string uvma_rvfi_instr_seq_item_c::convert2string();
       convert2string = $sformatf("%s HALT", convert2string);
    if (insn_interrupt)
       convert2string = $sformatf("%s INTR %0d", convert2string, this.insn_interrupt_id);
-   if (insn_nmi_load_fault)
-      convert2string = $sformatf("%s NMI LOAD", convert2string);
-   if (insn_nmi_store_fault)
-      convert2string = $sformatf("%s NMI STORE", convert2string);
+   if (insn_nmi)
+      convert2string = $sformatf("%s NMI DECTED", convert2string);
+   if (insn_nmi_cause)
+      convert2string = $sformatf("%s NMI CAUSE: %0d", convert2string, this.insn_nmi_cause);
    if (insn_bus_fault)
       convert2string = $sformatf("%s INSN_BUS_FAULT", convert2string);
    if (dbg)

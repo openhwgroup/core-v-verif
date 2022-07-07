@@ -22,7 +22,7 @@ module cv32e40x_tb_wrapper
                 BOOT_ADDR         = 'h80,
                 DM_HALTADDRESS    = 32'h1A11_0800,
                 HART_ID           = 32'h0000_0000,
-                IMP_ID            = 32'h0000_0000,
+                IMP_PATCH_ID      = 4'h0,
                 // Parameters used by DUT
                 NUM_MHPMCOUNTERS  = 1
     )
@@ -92,7 +92,7 @@ module cv32e40x_tb_wrapper
          .mtvec_addr_i           ( '0                    ), // TODO
          .dm_halt_addr_i         ( DM_HALTADDRESS        ),
          .mhartid_i              ( HART_ID               ),
-         .mimpid_i               ( IMP_ID                ),
+         .mimpid_patch_i         ( IMP_PATCH_ID          ),
          .dm_exception_addr_i    ( '0                    ), // TODO
          .nmi_addr_i             ( '0                    ), // TODO
 
