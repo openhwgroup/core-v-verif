@@ -87,8 +87,6 @@ interface uvmt_cv32e40s_vp_status_if (
   import uvm_pkg::*;
 
   // TODO: X/Z checks
-  initial begin
-  end
 
 endinterface : uvmt_cv32e40s_vp_status_if
 
@@ -109,6 +107,7 @@ endinterface : uvmt_cv32e40s_core_status_if
 // Interface to debug assertions and covergroups
 interface uvmt_cv32e40s_debug_cov_assert_if
     import cv32e40s_pkg::*;
+    import cv32e40s_rvfi_pkg::*;
     (
     input  clk_i,
     input  rst_ni,
@@ -142,16 +141,17 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     input  [31:0] boot_addr_i,
     input         fetch_enable_i,
 
-    input         rvfi_valid,
-    input  [31:0] rvfi_insn,
-    input         rvfi_intr,
-    input  [2:0]  rvfi_dbg,
-    input         rvfi_dbg_mode,
-    input  [31:0] rvfi_pc_wdata,
-    input  [31:0] rvfi_pc_rdata,
-    input  [31:0] rvfi_csr_dpc_rdata,
-    input  [31:0] rvfi_csr_mepc_wdata,
-    input  [31:0] rvfi_csr_mepc_wmask,
+    input              rvfi_valid,
+    input  [31:0]      rvfi_insn,
+    input  rvfi_intr_t rvfi_intr,
+    input  [2:0]       rvfi_dbg,
+    input              rvfi_dbg_mode,
+    input  [31:0]      rvfi_pc_wdata,
+    input  [31:0]      rvfi_pc_rdata,
+    input  [31:0]      rvfi_csr_dpc_rdata,
+    input  [31:0]      rvfi_csr_mepc_rdata,
+    input  [31:0]      rvfi_csr_mepc_wdata,
+    input  [31:0]      rvfi_csr_mepc_wmask,
 
     // Debug signals
     input         debug_req_i, // From controller

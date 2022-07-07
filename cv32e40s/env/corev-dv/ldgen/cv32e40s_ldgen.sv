@@ -47,8 +47,8 @@ import cv32e40s_pkg::pma_cfg_t;
     parameter RAM_ORIGIN           = 32'h0000_0000;
     parameter RAM_LENGTH           = 32'h40_0000;
     parameter BOOT_ADDR            = 32'h80;
-    parameter NMI_ADDR             = 32'h0010_0000;
     parameter MTVEC_ADDR           = 32'h0000_0000;
+    parameter NMI_ADDR             = 32'h0010_0000;
     parameter DEBUG_ORIGIN         = 32'h1A11_0800;
     parameter DEBUG_EXCEPTION_ADDR = 32'h1A11_1000;
     parameter DEBUG_STACK_OFFSET   = 32'h80;
@@ -348,7 +348,7 @@ function void cv32e40s_ldgen_c::create_pma_section_file(string filepath);
         $fdisplay(fhandle_pma, { indent(L1), ".region_", $sformatf("%0d %0s", i, section_location), ":" });
         $fdisplay(fhandle_pma, { indent(L1), "{" });
         $fdisplay(fhandle_pma, { indent(L2), "KEEP(*(.region_", $sformatf("%0d", i), "));" });
-        $fdisplay(fhandle_pma, { indent(L1), "}"});
+        $fdisplay(fhandle_pma, { indent(L1), "} > region_", $sformatf("%0d", i) });
       end
     end
     $fdisplay(fhandle_pma, "}");
