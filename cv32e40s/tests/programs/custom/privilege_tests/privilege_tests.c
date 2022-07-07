@@ -84,7 +84,8 @@ int main(void){
   
    */
   reset_mode();
-  // privilege_test();
+  // privilege_test(); // this test is disable until github cv32e40s issue 243 is solved.
+  
 
 
 
