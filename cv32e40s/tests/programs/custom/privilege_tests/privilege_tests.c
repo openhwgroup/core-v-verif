@@ -18,7 +18,7 @@ static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
 // extern and global variable declaration
 extern volatile void  setup_pmp(), change_exec_mode(int);
 // extern volatile int input_mode;
-unsigned int mstatus, pmp1, pmp2;
+unsigned int mstatus;
 
 
 // Rewritten interrupt handler
@@ -26,10 +26,10 @@ __attribute__ ((interrupt ("machine")))
 void u_sw_irq_handler(void) {
   unsigned int mepc, tmstatus;
 
-  printf("--- entered trap handler --- \n");
+  // printf("--- entered trap handler --- \n");
 
   __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus)); // read the mstatus register
-  printf("handler mstatus: %X\n", mstatus);
+  // printf("handler mstatus: %X\n", mstatus);
   __asm__ volatile("csrrw %0, mepc, x0" : "=r"(mepc)); // read the mepc
 
   
@@ -52,10 +52,16 @@ void privilege_test(void){
 
   for (int i = 0; i <= 3; i++){
   input_mode = i << 11;
-  printf("input to the test is: %x\n", input_mode);
+  // printf("input to the test is: %x\n", input_mode);
   change_exec_mode(input_mode);
-  assert_or_die(mstatus, 0, "error: core did not enter privilege mode as expected\n");
-  }
+  if (i == 3) { // All legal cases return 0 (user-mode or last legal '0'), except Machine-mode 3
+    assert_or_die(mstatus, 3, "error: core did not enter privilege mode as expected\n");
+    
+    }else {
+    assert_or_die(mstatus, 0, "error: core did not enter privilege mode as expected\n");
+    };
+  };
+
 }
 
 
