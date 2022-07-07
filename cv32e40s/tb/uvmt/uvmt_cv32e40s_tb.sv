@@ -584,11 +584,17 @@ module uvmt_cv32e40s_tb;
         .IS_INSTR_SIDE(1'b1),
         .MSECCFG_RESET_VAL(cv32e40s_pkg::MSECCFG_DEFAULT)
       )
-      u_pmp_assert_if_stage(.rst_n(clknrst_if.reset_n),
-                            .rvfi_valid(rvfi_i.rvfi_valid),
-                            .rvfi_insn(rvfi_i.rvfi_insn),
-                            .rvfi_mode(rvfi_i.rvfi_mode),
-                            .rvfi_trap(rvfi_i.rvfi_trap),
+      u_pmp_assert_if_stage(.rst_n (clknrst_if.reset_n),
+                            .rvfi_valid (rvfi_i.rvfi_valid),
+                            .rvfi_insn (rvfi_i.rvfi_insn),
+                            .rvfi_mode (rvfi_i.rvfi_mode),
+                            .rvfi_trap (rvfi_i.rvfi_trap),
+                            .rvfi_csr_pmpcfg_rdata (rvfi_i.rvfi_csr_pmpcfg_rdata),
+                            .rvfi_csr_pmpaddr_rdata (rvfi_i.rvfi_csr_pmpaddr_rdata),
+                            .rvfi_csr_mseccfg_rdata (rvfi_i.rvfi_csr_mseccfg_rdata),
+                            .rvfi_csr_mseccfgh_rdata (rvfi_i.rvfi_csr_mseccfgh_rdata),
+                            .rvfi_rd_addr (rvfi_i.rvfi_rd_addr),
+                            .rvfi_rd_wdata (rvfi_i.rvfi_rd_wdata),
                             .*);
 
     bind  cv32e40s_pmp :
@@ -599,11 +605,17 @@ module uvmt_cv32e40s_tb;
         .IS_INSTR_SIDE(1'b0),
         .MSECCFG_RESET_VAL(cv32e40s_pkg::MSECCFG_DEFAULT)
       )
-      u_pmp_assert_lsu(.rst_n(clknrst_if.reset_n),
-                       .rvfi_valid(rvfi_i.rvfi_valid),
-                       .rvfi_insn(rvfi_i.rvfi_insn),
-                       .rvfi_mode(rvfi_i.rvfi_mode),
-                       .rvfi_trap(rvfi_i.rvfi_trap),
+      u_pmp_assert_lsu(.rst_n (clknrst_if.reset_n),
+                       .rvfi_valid (rvfi_i.rvfi_valid),
+                       .rvfi_insn (rvfi_i.rvfi_insn),
+                       .rvfi_mode (rvfi_i.rvfi_mode),
+                       .rvfi_trap (rvfi_i.rvfi_trap),
+                       .rvfi_csr_pmpcfg_rdata (rvfi_i.rvfi_csr_pmpcfg_rdata),
+                       .rvfi_csr_pmpaddr_rdata (rvfi_i.rvfi_csr_pmpaddr_rdata),
+                       .rvfi_csr_mseccfg_rdata (rvfi_i.rvfi_csr_mseccfg_rdata),
+                       .rvfi_csr_mseccfgh_rdata (rvfi_i.rvfi_csr_mseccfgh_rdata),
+                       .rvfi_rd_addr (rvfi_i.rvfi_rd_addr),
+                       .rvfi_rd_wdata (rvfi_i.rvfi_rd_wdata),
                        .*);
 
 

@@ -28,7 +28,13 @@ module uvmt_cv32e40s_pmp_assert
    input logic        rvfi_valid,
    input logic [31:0] rvfi_insn,
    input logic [ 1:0] rvfi_mode,
-   input rvfi_trap_t  rvfi_trap
+   input rvfi_trap_t  rvfi_trap,
+   input logic [PMP_MAX_REGIONS/4-1:0][31:0] rvfi_csr_pmpcfg_rdata,
+   input logic [PMP_MAX_REGIONS-1:0]  [31:0] rvfi_csr_pmpaddr_rdata,
+   input logic [31:0] rvfi_csr_mseccfg_rdata,
+   input logic [31:0] rvfi_csr_mseccfgh_rdata,
+   input logic [ 4:0] rvfi_rd_addr,
+   input logic [31:0] rvfi_rd_wdata
   );
 
   localparam logic [1:0] MODE_U = 2'b 00;
@@ -40,6 +46,14 @@ module uvmt_cv32e40s_pmp_assert
   localparam logic [5:0] EXC_INSTR_CHKSUM_FAULT = 6'd 49;
 
   localparam logic [2:0] DBG_TRIGGER = 3'd 2;
+
+  localparam int NUM_CFG_REGS  = 16;
+  localparam int NUM_ADDR_REGS = 64;
+
+  localparam int CSRADDR_FIRST_PMPCFG  = 12'h 3A0;
+  localparam int CSRADDR_FIRST_PMPADDR = 12'h 3B0;
+
+  `define max(a,b) ((a) > (b) ? (a) : (b))
 
   typedef struct packed {
     logic rwx_nolock;
@@ -108,6 +122,7 @@ module uvmt_cv32e40s_pmp_assert
   } match_status_t;
 
   match_status_t match_status;
+  pmp_csr_t      rvfi_pmp_csr_rdata;
 
   default clocking @(posedge clk); endclocking
   default disable iff !(rst_n);
@@ -473,12 +488,12 @@ module uvmt_cv32e40s_pmp_assert
 
     mask = '1;
     if (PMP_GRANULARITY >= 1) begin
-      mask[PMP_GRANULARITY-1:0] = '0;  // TODO remove or assume+assert?
+      mask[`max(PMP_GRANULARITY-1, 0) : 0] = '0;  // TODO remove or assume+assert?
     end
 
     csr_addr = csr_pmp_i.addr[i][33:2];
     if (PMP_GRANULARITY >= 2) begin
-      csr_addr[PMP_GRANULARITY-2:0] = '1;  // TODO should be assumed+assert?
+      csr_addr[`max(PMP_GRANULARITY-2, 0) : 0] = '1;  // TODO should be assumed+assert?
     end
 
     for (int j = 0; j < 32; j++) begin
@@ -824,6 +839,7 @@ module uvmt_cv32e40s_pmp_assert
 
   // RVFI
 
+  // Helper signals
   wire  is_rvfi_csr_instr =
     rvfi_valid  &&
     (rvfi_insn[6:0] == 7'b 1110011)  &&
@@ -848,6 +864,23 @@ module uvmt_cv32e40s_pmp_assert
     rvfi_valid  &&
     rvfi_trap.debug  &&
     (rvfi_trap.debug_cause == DBG_TRIGGER);
+  wire  is_rvfi_csr_read_instr =
+    rvfi_valid  &&
+    (rvfi_insn[6:0] == 7'b 1110011)  &&
+    (rvfi_insn[14:12] inside {1, 2, 3, 5, 6, 7})  &&
+    rvfi_rd_addr;
+
+  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_pmp_csr_readout
+    localparam pmpcfg_reg_i    = i / 4;
+    localparam pmpcfg_field_hi = (8 * (i % 4)) + 7;
+    localparam pmpcfg_field_lo = (8 * (i % 4));
+
+    assign rvfi_pmp_csr_rdata.cfg[i]  = rvfi_csr_pmpcfg_rdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
+    //assign rvfi_pmp_csr_rdata.cfg[i]  = rvfi_csr_pmpcfg_rdata[i / 4][(8 * (i % 4)) + 7 : (8 * (i % 4))];
+    assign rvfi_pmp_csr_rdata.addr[i] = rvfi_csr_pmpaddr_rdata[i];
+  end
+  assign rvfi_pmp_csr_rdata.mseccfg[0] = rvfi_csr_mseccfg_rdata;
+  assign rvfi_pmp_csr_rdata.mseccfg[1] = rvfi_csr_mseccfgh_rdata;
 
   // PMP CSRs only accessible from M-mode
   property p_csrs_mmode_only;
@@ -867,5 +900,39 @@ module uvmt_cv32e40s_pmp_assert
   cov_csrs_mmod_only: cover property (
     p_csrs_mmode_only  and  is_rvfi_exc_ill_instr
   );
+
+  // NAPOT, some bits read as ones, depending on G
+  if (PMP_GRANULARITY >= 2) begin: gen_napot_ones_g2
+    //TODO:ropeders no magic numbers
+
+    for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_napot_ones_i
+      a_napot_ones: assert property (
+        rvfi_valid  &&
+        rvfi_pmp_csr_rdata.cfg[i].mode[1]
+        |->
+        (rvfi_pmp_csr_rdata.addr[i][PMP_GRANULARITY-2:0] == '1)
+      );
+    end
+  end
+
+  // Software-view on PMP CSRs matches RVFI-view
+  for (genvar i = 0; i < NUM_CFG_REGS; i++) begin: gen_swview_cfg
+    a_pmpcfg_swview: assert property (
+      // TODO:ropeders no magic numbers
+      is_rvfi_csr_read_instr  &&
+      (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + i))
+      |->
+      (rvfi_rd_wdata == rvfi_csr_pmpcfg_rdata[i])
+    );
+  end
+  for (genvar i = 0; i < NUM_ADDR_REGS; i++) begin: gen_swview_addr
+    a_pmpaddr_swview: assert property (
+      // TODO:ropeders no magic numbers
+      is_rvfi_csr_read_instr  &&
+      (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + i))
+      |->
+      (rvfi_rd_wdata == rvfi_csr_pmpaddr_rdata[i])
+    );
+  end
 
 endmodule : uvmt_cv32e40s_pmp_assert
