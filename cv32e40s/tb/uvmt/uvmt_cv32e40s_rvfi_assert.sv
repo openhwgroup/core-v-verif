@@ -27,7 +27,9 @@ module uvmt_cv32e40s_rvfi_assert
   input [ 4:0]  rvfi_rs1_addr,
   input [ 4:0]  rvfi_rs2_addr,
   input [31:0]  rvfi_rs1_rdata,
-  input [31:0]  rvfi_rs2_rdata
+  input [31:0]  rvfi_rs2_rdata,
+  input [ 2:0]  rvfi_dbg,
+  input [31:0]  rvfi_csr_dcsr_rdata
 );
 
   default clocking @(posedge clk_i); endclocking
@@ -47,10 +49,20 @@ module uvmt_cv32e40s_rvfi_assert
 
   a_rs1_resetvalue: assert property (
     p_rs_resetvalue(rvfi_rs1_addr, rvfi_rs1_rdata)
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "unexpected 'rs1' reset value");
 
   a_rs2_resetvalue: assert property (
     p_rs_resetvalue(rvfi_rs2_addr, rvfi_rs2_rdata)
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "unexpected 'rs2' reset value");
+
+
+  // RVFI debug cause matches dcsr debug cause
+
+  a_dbg_cause: assert property (
+    rvfi_valid  &&
+    rvfi_dbg
+    |->
+    (rvfi_dbg == rvfi_csr_dcsr_rdata[8:6])
+  ) else `uvm_error(info_tag, "'rvfi_dbg' did not match 'dcsr.cause'");
 
 endmodule : uvmt_cv32e40s_rvfi_assert
