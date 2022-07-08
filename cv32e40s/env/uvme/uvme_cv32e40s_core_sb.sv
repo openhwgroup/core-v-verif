@@ -323,6 +323,8 @@ endfunction : check_instr
 function void uvme_cv32e40s_core_sb_c::check_gpr(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) rvfi_instr,
                                                  uvma_rvvi_state_seq_item_c#(ILEN,XLEN) rvvi_state);
 
+
+   /*
    // gpt_checked_cnt represents the GPR "updates" checked, so skip writes to x0
    if (rvfi_instr.rd1_addr !=0 || rvfi_instr.rd2_addr != 0)
       gpr_checked_cnt++;
@@ -333,6 +335,18 @@ function void uvme_cv32e40s_core_sb_c::check_gpr(uvma_rvfi_instr_seq_item_c#(ILE
    if (rvfi_instr.rd2_addr != 0)
       x[rvfi_instr.rd2_addr] = rvfi_instr.rd2_wdata;
 
+   */
+   //TODO:MT swap this in, remove above
+   if (rvfi_instr.gpr_wmask[31:1] != 0) begin
+      gpr_checked_cnt++;
+   end
+
+   for (int i = 1; i < 32; i++) begin
+      if (rvfi_instr.gpr_wmask[i]) begin
+         x[i] = rvfi_instr.get_gpr_wdata(i);
+      end
+   end
+
    for (int i = 0; i < 32; i++) begin
       if (x[i] != rvvi_state.x[i]) begin
          `uvm_error("CORESB", $sformatf("GPR Mismatch, order: %0d, pc: 0x%08x, rvfi_x[%0d] = 0x%08x, rvvi_x[%0d] = 0x%08x",
@@ -342,6 +356,7 @@ function void uvme_cv32e40s_core_sb_c::check_gpr(uvma_rvfi_instr_seq_item_c#(ILE
                                           i, rvvi_state.x[i]));
       end
    end
+
 
 endfunction : check_gpr
 

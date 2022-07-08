@@ -134,6 +134,7 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    // Already in rtl, so to match, it will be enabled now
    if (cfg.core_cfg.core_name == "CV32E40S") begin
      $fwrite(fh, $sformatf("--override root/cpu/Smstateen=T\n"));
+     $fwrite(fh, $sformatf("--override root/cpu/cycle_undefined=1\n"));
    end
 
    // TODO hf: Find a better way to put this in the 40x/40s-structure
