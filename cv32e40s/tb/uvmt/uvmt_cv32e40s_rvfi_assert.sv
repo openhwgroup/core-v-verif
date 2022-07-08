@@ -18,18 +18,21 @@
 
 module uvmt_cv32e40s_rvfi_assert
   import cv32e40s_pkg::*;
+  import cv32e40s_rvfi_pkg::*;
   import uvm_pkg::*;
 (
   input  clk_i,
   input  rst_ni,
 
-  input         rvfi_valid,
-  input [ 4:0]  rvfi_rs1_addr,
-  input [ 4:0]  rvfi_rs2_addr,
-  input [31:0]  rvfi_rs1_rdata,
-  input [31:0]  rvfi_rs2_rdata,
-  input [ 2:0]  rvfi_dbg,
-  input [31:0]  rvfi_csr_dcsr_rdata
+  input             rvfi_valid,
+  input [ 4:0]      rvfi_rs1_addr,
+  input [ 4:0]      rvfi_rs2_addr,
+  input [31:0]      rvfi_rs1_rdata,
+  input [31:0]      rvfi_rs2_rdata,
+  input [ 2:0]      rvfi_dbg,
+  input [31:0]      rvfi_csr_dcsr_rdata,
+  input rvfi_trap_t rvfi_trap,
+  input rvfi_intr_t rvfi_intr
 );
 
   default clocking @(posedge clk_i); endclocking
@@ -37,7 +40,7 @@ module uvmt_cv32e40s_rvfi_assert
   string info_tag = "CV32E40S_RVFI_ASSERT";
 
 
-  // rs1/rs2 Reset Values
+  // rs1/rs2 reset values
 
   property p_rs_resetvalue (addr, rdata);
     $past(rst_ni == 0)  ##0
@@ -64,5 +67,29 @@ module uvmt_cv32e40s_rvfi_assert
     |->
     (rvfi_dbg == rvfi_csr_dcsr_rdata[8:6])
   ) else `uvm_error(info_tag, "'rvfi_dbg' did not match 'dcsr.cause'");
+
+
+  // Exceptions/Interrupts/Debugs have a cause
+
+  a_exceptions_cause: assert property (
+    rvfi_valid  &&
+    rvfi_trap.exception
+    |->
+    rvfi_trap.exception_cause
+  ) else `uvm_error(info_tag, "rvfi_trap exceptions must have a cause");
+
+  a_interrupts_cause: assert property (
+    rvfi_valid  &&
+    rvfi_intr
+    |->
+    rvfi_intr.cause
+  ) else `uvm_error(info_tag, "rvfi_intr interrupts must have a cause");
+
+  a_debugs_cause: assert property (
+    rvfi_valid  &&
+    rvfi_trap.debug
+    |->
+    rvfi_trap.debug_cause
+  ) else `uvm_error(info_tag, "rvfi_trap debugs must have a cause");
 
 endmodule : uvmt_cv32e40s_rvfi_assert
