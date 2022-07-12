@@ -18,14 +18,6 @@ CV_CORE_BRANCH ?= master
 CV_CORE_HASH   ?= 1da7c4097158094915073c7a89be5fb48549f907
 CV_CORE_TAG    ?= none
 
-# RISCVDV_REPO    ?= https://github.com/google/riscv-dv
-# RISCVDV_BRANCH  ?= master
-# RISCVDV_HASH    ?= 96c1ee6f371f2754c45b4831fcab95f6671689d9
-
-# TODO: silabs-hfegran, remove this temporary fix when riscv-dv changes get upstreamed
-#RISCVDV_REPO    ?= https://github.com/silabs-hfegran/riscv-dv.git
-#RISCVDV_BRANCH  ?= dev_hf_rvdv_csr_updates
-#RISCVDV_HASH    ?= 87d9ae2d60d928e3c6afcd6ff1aacb5298f2904b
 RISCVDV_REPO    ?= https://github.com/google/riscv-dv
 RISCVDV_BRANCH  ?= master
 RISCVDV_HASH    ?= 4860da2bb661d5dae9e621d78715ca71111eef24
