@@ -2,7 +2,7 @@
 
 
 // imported variable
-.global input_mode
+.global reg_input
 
 // Functions
 .global change_exec_mode
