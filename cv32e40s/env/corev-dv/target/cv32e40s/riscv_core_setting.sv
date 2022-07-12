@@ -45,6 +45,9 @@ bit [31:0] valid_interrupt_mask = 32'hffff_0888;
 // Physical memory protection support
 bit support_pmp = 0;
 
+// Enhanced physical memory protection support
+bit support_epmp = 0;
+
 // Debug mode support
 bit support_debug_mode = 1;
 
