@@ -15,17 +15,12 @@ export SHELL = /bin/bash
 
 CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40s
 CV_CORE_BRANCH ?= master
-CV_CORE_HASH   ?= 463bd7d187c587190a463d9b9f8458ee58201449
+CV_CORE_HASH   ?= 6ea0aec538c3c3e2e00ebfb471c6b01e9de8a5b8
 CV_CORE_TAG    ?= none
 
-# RISCVDV_REPO    ?= https://github.com/google/riscv-dv
-# RISCVDV_BRANCH  ?= master
-# RISCVDV_HASH    ?= 96c1ee6f371f2754c45b4831fcab95f6671689d9
-
-# TODO: silabs-hfegran, remove this temporary fix when riscv-dv changes get upstreamed
-RISCVDV_REPO    ?= https://github.com/silabs-hfegran/riscv-dv.git
-RISCVDV_BRANCH  ?= dev_hf_rvdv_csr_updates
-RISCVDV_HASH    ?= 87d9ae2d60d928e3c6afcd6ff1aacb5298f2904b
+RISCVDV_REPO    ?= https://github.com/google/riscv-dv
+RISCVDV_BRANCH  ?= master
+RISCVDV_HASH    ?= 4860da2bb661d5dae9e621d78715ca71111eef24
 
 EMBENCH_REPO    ?= https://github.com/embench/embench-iot.git
 EMBENCH_BRANCH  ?= master
