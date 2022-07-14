@@ -2,22 +2,19 @@
 #ifndef PMP_H
 #define PMP_H
 
+// #define CODE_SECTION ".text"
+// #define CODE __attribute__((section(CODE_SECTION)))
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-// #include "chg_mode.S"
+#include <math.h>
 
-#define PMP_R 0x01
-#define PMP_W 0x02
-#define PMP_X 0x04
-#define PMP_A 0x18
-#define PMP_L 0x80
-#define PMP_SHIFT 2
+// functional functions
+// int setbits(int regvalue, char *fieldname);
 
-#define PMP_TOR 0x08
-#define PMP_NA4 0x10
-#define PMP_NAPOT 0x18
 
+// test cases
 void reset_registers();
 
 void default_full();
@@ -26,19 +23,18 @@ void default_none();
 // void change_mode(int mode);
 void change_mode();
 void mmode_only();
+void napot_matching();
 
-// typedef struct pmpxcfg_struct{
-//   int r;
-//   int w;
-//   int x;
-//   int a;
-//   int l;
-// } pmpxcfg;
+// typedef struct PMPXCFG_STRUCT
+// { // bits from lsb to msb  as left to right
+//   uint8_t read : 1, write : 1, exe : 1, mode : 2, b65 : 2, lock : 1, b8 : 1;
+// } __attribute__((packed)) PMPXCFG;
 
-// typedef struct pmpcfg_struct
+// typedef struct PMPCFGX_STRUCT
 // {
-//   pmpxcfg pmp0cfg
-// } pmpcfgx;
+//   PMPXCFG *pmpxcfg;
+//   uint32_t cfgx;
+// } PMPCFGX;
 
 typedef struct CSRS_STUCT
 {
@@ -54,29 +50,15 @@ typedef struct CSRS_STUCT
   uint32_t *pmpaddrx;
   uint32_t mcause;
   uint32_t mepc;
+  // low 32bits
   uint32_t mseccfg;
+  // high 32bits
+  uint32_t mseccfgh;
 } CSRS;
 
-#endif
-
-#ifdef __GNUC__
-
-#define read_csr(reg) ({ unsigned long __tmp; \
-  asm volatile ("csrr %0, " #reg : "=r"(__tmp)); \
-  __tmp; })
-
-#define write_csr(reg, val) ({ asm volatile("csrw " #reg ", %0" ::"rK"(val)); })
-
-#define swap_csr(reg, val) ({ unsigned long __tmp; \
-  asm volatile ("csrrw %0, " #reg ", %1" : "=r"(__tmp) : "rK"(val)); \
-  __tmp; })
-
-#define set_csr(reg, bit) ({ unsigned long __tmp; \
-  asm volatile ("csrrs %0, " #reg ", %1" : "=r"(__tmp) : "rK"(bit)); \
-  __tmp; })
-
-#define clear_csr(reg, bit) ({ unsigned long __tmp; \
-  asm volatile ("csrrc %0, " #reg ", %1" : "=r"(__tmp) : "rK"(bit)); \
-  __tmp; })
+// globals
+extern CSRS glb_csrs;
+// extern PMPXCFG glb_pmpxcfg;
+// extern PMPCFGX glb_pmpcfgx;
 
 #endif

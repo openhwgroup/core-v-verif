@@ -1,7 +1,6 @@
 #include "pmp.h"
 
-extern CSRS glb_csrs;
-CSRS csrs;
+static CSRS csrs;
 
 void user_code()
 {

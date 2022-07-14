@@ -2,7 +2,6 @@
 // #include <stdlib.h>
 
 #include "pmp.h"
-extern CSRS glb_csrs;
 
 __attribute__((interrupt("machine"))) void u_sw_irq_handler(void)
 {
