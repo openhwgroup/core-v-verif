@@ -13,16 +13,10 @@
 
 export SHELL = /bin/bash
 
-#CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40s
-#CV_CORE_BRANCH ?= master
-#CV_CORE_HASH   ?= 1da7c4097158094915073c7a89be5fb48549f907
-#CV_CORE_TAG    ?= none
-
-CV_CORE_REPO   ?= https://github.com/silabs-oysteink/cv32e40s
-CV_CORE_BRANCH ?= silabs-oysteink_rvfi-gpr-test
-CV_CORE_HASH   ?= 494d7c8b8316ab8e5133f94131df9bc6806e15d9
+CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40s
+CV_CORE_BRANCH ?= master
+CV_CORE_HASH   ?= 6ea0aec538c3c3e2e00ebfb471c6b01e9de8a5b8
 CV_CORE_TAG    ?= none
-
 
 # RISCVDV_REPO    ?= https://github.com/google/riscv-dv
 # RISCVDV_BRANCH  ?= master

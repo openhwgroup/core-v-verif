@@ -43,5 +43,6 @@ localparam TRAP_DBG_CAUSE_WL     = 3;
 
 localparam DEFAULT_ILEN     = 32;
 localparam DEFAULT_XLEN     = 32;
+localparam DEFAULT_NRET     = 1;
 
 `endif // __UVMA_RVFI_CONSTANTS_SV__

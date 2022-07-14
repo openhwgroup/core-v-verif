@@ -109,11 +109,6 @@ class uvma_rvvi_ovpsim_control_seq_item_c#(int ILEN=uvma_rvvi_pkg::DEFAULT_ILEN,
    extern function string convert2string();
 
    /*
-    * Return GPR data
-    */
-   //extern function bit [XLEN-1:0] get_gpr_data(int gpr);
-
-   /*
     * Return GPR wdata
     */
    extern function bit [XLEN-1:0] get_gpr_wdata(int gpr);
@@ -172,24 +167,12 @@ endfunction : convert2string
 
 
 function bit [XLEN-1:0] uvma_rvvi_ovpsim_control_seq_item_c::get_gpr_wdata(int gpr);
-  return gpr_wdata[gpr*XLEN +:8];
+  return gpr_wdata[gpr*XLEN +:XLEN];
 endfunction : get_gpr_wdata
 
 function bit [XLEN-1:0] uvma_rvvi_ovpsim_control_seq_item_c::get_gpr_rdata(int gpr);
-  return gpr_rdata[gpr*XLEN +:8];
+  return gpr_rdata[gpr*XLEN +:XLEN];
 endfunction : get_gpr_rdata
-
-/*
-function bit [XLEN-1:0] get_gpr_data(int gpr);
-  if (gpr_wmask[gpr]) begin
-    return gpr_wdata[gpr*XLEN +:8];
-  end else begin
-    return gpr_rdata[gpr*XLEN +:8];
-  end
-endfunction : get_gpr_data
-*/
-
-
 
 function bit [XLEN-1:0] uvma_rvvi_ovpsim_control_seq_item_c::get_mem_data_word(int txn);
   bit [XLEN-1:0] ret;
