@@ -1,8 +1,8 @@
-.global set_u_mode
+.global set_csr_loop
 .global loop_reg
 
 
-set_u_mode: // puts the core in usermode.
+set_csr_loop: // puts the core in usermode.
 	// setup the return adress to stack.
 	addi	sp, sp, -4
 	// store the ra to the stack pointer.
@@ -19,8 +19,9 @@ set_u_mode: // puts the core in usermode.
 
 loop_reg: // csr privilege loop test
 
-li	t0, 0x1800
-//la	reg_val, a0 // doing the same to the argument 
+li	t0, 0x1800 // just something for the operand
+
+// Start of generated code.
 csrrs  t0, 0x100, x0 
 csrrw  x0, 0x100, t0 
 csrrs  x0, 0x100, t0 
@@ -12264,7 +12265,7 @@ csrrc  x0, 0xff3, t0
 csrrs  t0, 0xff4, x0 
 csrrw  x0, 0xff4, t0 
 csrrs  x0, 0xff4, t0 
-csrrc  x0, 0xff4, t0 
+csrrc  x0, 0xff4, t0
 csrrs  t0, 0xff5, x0 
 csrrw  x0, 0xff5, t0 
 csrrs  x0, 0xff5, t0 
@@ -12309,6 +12310,8 @@ csrrs  t0, 0xfff, x0
 csrrw  x0, 0xfff, t0 
 csrrs  x0, 0xfff, t0 
 csrrc  x0, 0xfff, t0 
+//end of generated code
+
 // return to main
 lw	ra, 0(sp)
 addi	sp, sp, 4
