@@ -1,11 +1,11 @@
 #include "pmp.h"
 
-uint32_t calc_size(unsigned int cfg);
-int calc_top(int cfg);
-int calc_base(int cfg);
+uint32_t calc_size(uint32_t cfg);
+uint32_t calc_top(uint32_t cfg);
+uint32_t calc_base(uint32_t cfg);
 
-int calc_base(int cfg) {
-  int base;
+uint32_t calc_base(uint32_t cfg) {
+  uint32_t base;
   if (calc_size(cfg) > cfg) {
     return 0;
   }
@@ -13,15 +13,15 @@ int calc_base(int cfg) {
   return base;
 }
 
-int calc_top(int cfg) {
-  int top;
+uint32_t calc_top(uint32_t cfg) {
+  uint32_t top;
   top = calc_base(cfg) | (calc_size(cfg) - 1);
   return top;
 }
 
-uint32_t calc_size(unsigned int in_cfg) {
+uint32_t calc_size(uint32_t in_cfg) {
   uint32_t size = 0;
-  unsigned int lv = 0, c, cfg;
+  uint32_t lv = 0, c, cfg;
   cfg = in_cfg;
 
   for (c = 0; cfg; ++c)

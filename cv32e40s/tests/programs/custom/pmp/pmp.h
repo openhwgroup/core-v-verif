@@ -22,8 +22,11 @@ void default_none();
 
 // void change_mode(int mode);
 void change_mode();
+void umode();
+
 void mmode_only();
 void napot_matching();
+void tor_macthing();
 
 // typedef struct PMPXCFG_STRUCT
 // { // bits from lsb to msb  as left to right

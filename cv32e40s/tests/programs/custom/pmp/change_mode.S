@@ -1,6 +1,7 @@
 .section .text
 
 .global change_mode
+.global umode
 // .global user_code
 // .global rwcsrs
 
@@ -25,7 +26,7 @@ umode:
 
   lw s0, 4(sp)
   add sp, sp, 4
-  // return to next line in main
+  // return to next line in main and complete switch to Umode
   mret
 
 // mmode:
