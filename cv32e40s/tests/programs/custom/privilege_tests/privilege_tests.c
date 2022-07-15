@@ -6,6 +6,7 @@
 #include "corev_uvmt.h"
 
 
+
 // Declaration of assert 
 static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
   if (actual != expect) {
@@ -21,8 +22,7 @@ unsigned int mstatus, mscratchg;
 
 
 //control variables for the status handler
-int thand, excc;
-
+volatile int thand, excc;
 
 
 // Rewritten interrupt handler
@@ -30,6 +30,16 @@ __attribute__ ((interrupt ("machine")))
 void u_sw_irq_handler(void) {
   unsigned int mepc, tmstatus;
   //printf("entered trap handler\n");
+
+
+  if (thand == 5) {// In this case trap is expected behaviour, increment mepc and move on.
+    __asm__ volatile("csrrw %0, mepc, x0" : "=r"(mepc)); // read the mepc
+
+    mepc += 4;
+
+    __asm__ volatile("csrrw x0, mepc, %0" :: "r"(mepc)); // write to the mepc 
+  }
+
 
   if (thand == 4) { // dummy mode to set the core into macine mode. 
   tmstatus = 0x1800;
@@ -73,13 +83,15 @@ void u_sw_irq_handler(void) {
 
 
   if (thand == 1) {// This is csr_privilege_loop behaviour
+    excc += 1;
+    //printf("The excc is now: %d\n", excc);
     __asm__ volatile("csrrw %0, mepc, x0" : "=r"(mepc)); // read the mepc
 
     mepc += 4;
 
     __asm__ volatile("csrrw x0, mepc, %0" :: "r"(mepc)); // write to the mepc 
 
-    excc++;
+
   }
 
 
@@ -135,9 +147,34 @@ ensure illegal instruction exception happens.
   excc = 0; // set interrupt counter to 0
   setup_pmp();
   set_csr_loop();
-  assert_or_die(excc, 12288, "Some tests seem to not have triggered the exception handler!\n");
+  assert_or_die(excc, 12288, "Some illegal csr access attempts seem to not have triggered the exception handler!\n");
 }
 
+
+void csr_cross_privilege(void) {
+/* 
+Try all kinds of access to all implemented U- and M-mode CSR registers while in U- and M-mode (cross), ensure appropriate access grant/deny. (Caveat) There is only one register, JVT.
+ */
+
+  excc = 0;
+  thand = 1; 
+  setup_pmp();
+  set_u_mode();
+  unsigned int utest;
+  __asm__ volatile("csrrs %0, 0x017, x0" : "=r"(utest)); // read
+  __asm__ volatile("csrrw x0, 0x017, %0" :: "r"(utest)); // write
+  __asm__ volatile("csrrs x0, 0x017, %0" :: "r"(utest)); // set
+  __asm__ volatile("csrrc x0, 0x017, %0" :: "r"(utest)); // clear
+  __asm__ volatile("csrrw x0, 0x017, %0" :: "r"(utest)); // write again to 'reset' the initial value of the register before moving to another test
+  assert_or_die(excc, 0, "Some tests seem to have triggered the exception handler, user should have access to this register\n"); 
+
+
+
+/* csrrs  t0, 0xff5, x0 
+csrrw  x0, 0xff5, t0 
+csrrs  x0, 0xff5, t0 
+csrrc  x0, 0xff5, t0  */
+}
 
 void misa_check(void) {
  /* 
@@ -189,6 +226,46 @@ void mscratch_reliable_check(void){
   assert_or_die(mscratch, mscratchg, "error: mscratch register changed after attempted user mode read\n");
 }
 
+void should_not_exist_check(void) {
+/* 
+Catch all funciton for registers which should not exist according to the intern v-plan (Summer 2022) for the cv32e40s core.
+*/
+unsigned int csr_acc, user, misa;
+csr_acc = 0x1800; // some std value
+set_m_mode();
+thand = 5; // sets the behavior of the exception handler.
+// SPP should be 0 as S-mode is not implemented.
+__asm__ volatile("csrrw %0, misa, x0" : "=r"(misa));
+user = (misa & 1 << 18) >> 18;
+assert_or_die(user, 0, "error: Supervisor-mode set in the misa register\n");
+
+
+thand = 1; // setting the trap handler behaviour
+excc = 0; // resetting the trap handler count
+
+// mcounteren should exist
+__asm__ volatile("csrrw %0, mcounteren, x0" : "=r"(csr_acc));
+assert_or_die(excc, 0, "error: reading the mcounteren register should not trap in M-mode\n");
+
+
+// mideleg and medeleg register should not be implemented
+__asm__ volatile("csrrw %0, mideleg, x0" : "=r"(csr_acc));
+__asm__ volatile("csrrw %0, medeleg, x0" : "=r"(csr_acc));
+
+//various N-mode register should not exist anymore.
+__asm__ volatile("csrrw %0, ustatus, x0"  : "=r"(csr_acc));
+__asm__ volatile("csrrw %0, uie, x0"      : "=r"(csr_acc));
+__asm__ volatile("csrrw %0, utvec, x0"    : "=r"(csr_acc));
+__asm__ volatile("csrrw %0, uscratch, x0" : "=r"(csr_acc));
+__asm__ volatile("csrrw %0, uepc, x0"     : "=r"(csr_acc));
+__asm__ volatile("csrrw %0, ucause, x0"   : "=r"(csr_acc));
+__asm__ volatile("csrrw %0, utval, x0"    : "=r"(csr_acc));
+__asm__ volatile("csrrw %0, uip, x0"      : "=r"(csr_acc));
+
+assert_or_die(excc, 10, "error: some of the unimplemented registers did not trap on instrs attempt\n");
+}
+
+
 int main(void){
   //TODO:
   /* 
@@ -196,13 +273,14 @@ int main(void){
   
    */
 
-  reset_mode();
-  privilege_test();
-  csr_privilege_loop(); // this test takes 5-6 minutes (+40 minutes with IRFCV-trace ON)
-  misa_check();
-  mstatus_implement_check();
-  mscratch_reliable_check();
-  
+  // reset_mode();
+  // privilege_test();
+  // csr_privilege_loop(); // this test takes 5-6 minutes (+40 minutes with IRFCV-trace ON)
+  //csr_cross_privilege(); // TODO: This test will fail until the JVT-register is implemented.
+  // misa_check();
+  // mstatus_implement_check();
+  // mscratch_reliable_check();
+  should_not_exist_check();
 
 
 
