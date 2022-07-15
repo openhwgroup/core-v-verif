@@ -1,6 +1,6 @@
 #include "pmp.h"
 
-#define ABOVEDEBUG 0x1a111801
+#define ABOVEDEBUG 0x10000
 
 void tor_macthing()
 {
@@ -24,8 +24,8 @@ void tor_macthing()
   //  TODO:R
   //  set pmp regions from ABOVEDEBUG - ABOVEDEBUG+4*150
   asm volatile("csrrw x0, 0x3b0, %0\n"
-               "csrrw x0, 0x3b1, %1\n" ::"r"(ABOVEDEBUG),
-               "r"(ABOVEDEBUG + 4 * 150));
+               "csrrw x0, 0x3b1, %1\n" ::"r"(ABOVEDEBUG>>2),
+               "r"((ABOVEDEBUG>>2)+256));
   // set pmp mode to TOR for pmpaddr0 & pmpaddr1
   // asm volatile("csrrw x0, 0x3a0, %0" ::"r"(tor | tor << 8));
   // set RAM to read
@@ -33,7 +33,9 @@ void tor_macthing()
   // set pmp.l to enforce rules ???
   // asm volatile("csrrw x0, 0x3a0, %0" ::"r"(lock | lock << 8));
   // set pmpcfg0/1 read and TOR
-  asm volatile("csrrw x0, 0x3a0, %0" ::"r"(0x8900));
+
+  // asm volatile("csrrw x0, 0x3a0, %0" ::"r"(0x8900));
+  asm volatile("csrrwi x0, 0x3a0, 0x8900");
 
   // umode();
   // asm volatile("csrrs %0, 0x3a , x0"
@@ -54,8 +56,8 @@ void tor_macthing()
 
   asm volatile("lw %0, 0(%1)"
                : "=r"(temp)
-               : "r"(ABOVEDEBUG + 4 * 150 + 16));
-  printf("\t\n loading from address 0x%x\n", ABOVEDEBUG + 4 * 150 + 16);
+               : "r"(ABOVEDEBUG + 4 * 500));
+  printf("\t\n loading from address 0x%x\n", ABOVEDEBUG +4*500);
   printf("\t\n value %d\n\n", temp);
 
   // TODO:RW
