@@ -18,7 +18,7 @@ static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
 
 // extern and global variable declaration
 extern volatile void  setup_pmp(), change_exec_mode(int), set_csr_loop(), set_u_mode();
-unsigned int mstatus, mscratchg;
+volatile unsigned int mstatus, mscratchg, mie, mip;
 
 
 //control variables for the status handler
@@ -31,6 +31,16 @@ void u_sw_irq_handler(void) {
   unsigned int mepc, tmstatus;
   //printf("entered trap handler\n");
 
+
+  if (thand == 6) {// read mip, mie, and move on. 
+    __asm__ volatile("csrrw %0, mip, x0" : "=r"(mip)); // read the mepc
+    __asm__ volatile("csrrw %0, mie, x0" : "=r"(mie)); // read the mepc
+    __asm__ volatile("csrrw %0, mepc, x0" : "=r"(mepc)); // read the mepc
+
+    mepc += 4;
+
+    __asm__ volatile("csrrw x0, mepc, %0" :: "r"(mepc)); // write to the mepc 
+  }
 
   if (thand == 5) {// In this case trap is expected behaviour, increment mepc and move on.
     __asm__ volatile("csrrw %0, mepc, x0" : "=r"(mepc)); // read the mepc
@@ -110,6 +120,7 @@ __asm__ volatile("ecall");
 void privilege_test(void){
   int input_mode = 0;
   unsigned int mmask;
+  thand = 0;
 
   for (int i = 0; i <= 3; i++){
     input_mode = i << 11;
@@ -122,7 +133,7 @@ void privilege_test(void){
         assert_or_die(mmask, 0x0, "error: core did not enter privilege mode as expected\n");
       };
   };
-  printf("privilege_test exited succesfully\n");
+
 }
 
 void reset_mode(void){
@@ -132,7 +143,7 @@ this is to ensure 'Ensure that M-mode is the first mode entered after reset.
 */
 __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus)); // read the mstatus register
 assert_or_die(mstatus, 0x1800, "error: core did not enter M-mode after reset\n");
-printf("reset_mode test exited succesfully\n");
+
 }
 
 
@@ -188,7 +199,7 @@ void misa_check(void) {
   reserved = (misa & 1 << 13) >> 13;
   assert_or_die(user, 1, "error: User-mode not set in the misa register\n");
   assert_or_die(reserved, 0, "error: N-bit set in the misa register\n");
-  printf("misa_check test exited succesfully\n");
+
 }
 
 void mstatus_implement_check(void){
@@ -204,7 +215,7 @@ void mstatus_implement_check(void){
   assert_or_die(XS, 0x0, "error: XS set in the mstatus register\n");
   assert_or_die(FS, 0x0, "error: FS set in the mstatus register\n");
   assert_or_die(SD, 0, "error: SD set in the mstatus register\n");
-  printf("mstatus_implement_check test exited succesfully\n");
+
 
 
 }
@@ -224,6 +235,7 @@ void mscratch_reliable_check(void){
   set_u_mode();
   __asm__ volatile("csrrw x0, mscratch, %0" :: "r"(uwrite)); // write to the mscratch (in user mode)
   assert_or_die(mscratch, mscratchg, "error: mscratch register changed after attempted user mode read\n");
+
 }
 
 void should_not_exist_check(void) {
@@ -265,6 +277,47 @@ __asm__ volatile("csrrw %0, uip, x0"      : "=r"(csr_acc));
 assert_or_die(excc, 10, "error: some of the unimplemented registers did not trap on instrs attempt\n");
 }
 
+void no_u_traps(void) {
+  /* 
+  U-mode interrupts are not supported. The 'zero-bits' in the 'mip' and 'mie' should remain zero.
+  */
+  unsigned int mask, garb, mipr, mier;
+  mask = 0xF777; // zero bits mask
+  mipr = mier = mask;
+  thand = 6; // set trap handler behaviour
+  setup_pmp();
+  set_u_mode();
+  __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(garb)); // illegal read 
+  mipr = mip & mask;
+  mier = mie & mask;
+  assert_or_die(mier, 0x0, "error: zero-fields in the mier changed after interrrupts\n");
+  assert_or_die(mipr, 0x0, "error: zero-fields in the mipr changed after interrupts\n");
+
+}
+
+void proper_xpp_val(void) {
+/* 
+When a trap is taken from privilege mode y into x, xPP is set to y. Assert this is true for M- and U-mode.
+*/
+  thand = 0;
+  int input_mode = 0;
+  unsigned int mmask;
+  __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus));
+  setup_pmp();
+  set_u_mode();
+  for (int i = 0; i <= 3; i = i + 3){
+    input_mode = i << 11;
+    change_exec_mode(input_mode);
+    mmask = (mstatus & 3 << 11); // mask to get just the MPP field.
+    if (i == 0) {
+        assert_or_die(mmask, 0x0, "error: MPP does not display previous mode U-mode as expected\n");
+        }
+    if (i == 3) {
+      assert_or_die(mmask, 0x1800, "error: MPP does not display previous mode M-mode as expected\n");
+      }     
+  };
+}
+
 
 int main(void){
   //TODO:
@@ -275,13 +328,14 @@ int main(void){
 
   // reset_mode();
   // privilege_test();
-  // csr_privilege_loop(); // this test takes 5-6 minutes (+40 minutes with IRFCV-trace ON)
-  //csr_cross_privilege(); // TODO: This test will fail until the JVT-register is implemented.
+  //csr_privilege_loop(); // this test takes 5-6 minutes (+40 minutes with IRFCV-trace ON)
+  //sr_cross_privilege(); // TODO: This test will fail until the JVT-register is implemented.
   // misa_check();
   // mstatus_implement_check();
   // mscratch_reliable_check();
-  should_not_exist_check();
-
+  // should_not_exist_check();
+  // no_u_traps();
+  // proper_xpp_val();
 
 
 
