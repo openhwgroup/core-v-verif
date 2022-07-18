@@ -41,9 +41,10 @@ package uvma_rvfi_pkg;
    // Analysis implementation declarations
    `uvm_analysis_imp_decl(_rvfi_instr)
 
-   // Constants / Structs / Enums
+   // Constants / Structs / Enums / Functions
    `include "uvma_rvfi_constants.sv"
    `include "uvma_rvfi_tdefs.sv"
+   `include "uvma_rvfi_funcs.sv"
 
    // Objects
    `include "uvma_rvfi_cfg.sv"
