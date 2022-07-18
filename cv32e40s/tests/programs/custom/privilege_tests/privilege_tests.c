@@ -318,6 +318,21 @@ When a trap is taken from privilege mode y into x, xPP is set to y. Assert this 
   };
 }
 
+void proper_ret_priv(void) {
+/* 
+Assert that U-mode is set in the MPP after returning from a M-mode.
+*/
+unsigned int mmask;
+thand = 0;
+setup_pmp();
+set_u_mode();
+__asm__ volatile("mret");
+__asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus));
+mmask = (mstatus & (3 << 11)); // mask to get the MPP field.
+assert_or_die(mmask, 0x0, "error: MPP is not set to least privileged mode after executing mret\n");
+mmask = (mstatus & (1 << 17)); // mask to get the MPRV field.
+assert_or_die(mmask, 0x0, "error: MPRV is not set to 0 after executing mret\n");
+}
 
 int main(void){
   //TODO:
@@ -336,7 +351,7 @@ int main(void){
   // should_not_exist_check();
   // no_u_traps();
   // proper_xpp_val();
-
+  proper_ret_priv();
 
 
   return EXIT_SUCCESS;
