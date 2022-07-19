@@ -16,9 +16,47 @@ static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
   }
 }
 
+unsigned int return_field(unsigned int x, int start, int stop){
+/* 
+Takes a register and the desired bit-field LSB start, MSB stop. Returns the bifield.
+Ex. return_field(mstatus, 11, 12) --> mstatus[12:11] --> MPP field.
+*/
+  //printf("entered return_field\n");
+  //printf("return input value is: %08X\n", x);
+   if (stop == start){
+   
+   x = (x & 1 << start) >> start ;
+   }else{
+   x = (x & 3 << start) >> start; 
+  //printf("return output value is: %08X\n", x);    
+   }
+  return x;
+}
+
+
+/*
+unsigned int return_field(unsigned int register, int start, int stop) {
+// Takes an unsigned int (like mstatus), and a start and stop bit. 
+//  Result should be return_field(mstatus, 12, 11) --> MPP field.
+ 
+  unsigned int bitfield;
+ 
+  if (stop == 0) {
+  bitfield = (register & 1 << start) >> start;
+
+  }else {
+  bitfield = (register & 1 << 18) >> 18;
+  }
+  return bitfield;
+}
+*/
+
+
+
+
 // extern and global variable declaration
 extern volatile void  setup_pmp(), change_exec_mode(int), set_csr_loop(), set_u_mode();
-volatile unsigned int mstatus, mscratchg, mie, mip;
+volatile unsigned int mstatus, mscratchg, mie, mip, mcause;
 
 
 //control variables for the status handler
@@ -334,6 +372,65 @@ mmask = (mstatus & (1 << 17)); // mask to get the MPRV field.
 assert_or_die(mmask, 0x0, "error: MPRV is not set to 0 after executing mret\n");
 }
 
+// Illegal instruction fault is mcause[10:0] == 2
+void check_wfi_trap(void) {
+  /* 
+  When in U-mode and TW=1 in mstatus, executing a WFI should trap to an illegal exception.
+  */
+  thand = 0;
+  unsigned int set_tw, pmstatus, rmcause;
+  set_tw = 0x200000; // mask for TW in mstatus
+  setup_pmp();
+  set_m_mode();
+  __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus));
+  pmstatus = mstatus | set_tw;
+  __asm__ volatile("csrrw x0, mstatus, %0" :: "r"(pmstatus));
+  set_u_mode();
+  __asm__ volatile("wfi");
+  __asm__ volatile("csrrw %0, mcause, x0" : "=r"(rmcause));
+  printf("mcause is: %08X\n", rmcause);  pmstatus = rmcause & 0x2;
+  assert_or_die(pmstatus, 0x2, "error: mcause not showing illegal insn exception after TW WFI trap.\n");
+}
+
+void correct_ecall(void) {
+  /* 
+  Be in U-mode, execute ecall, ensure that an exception is taken and mcause is set correctly.
+  */
+  unsigned int rmcause, pmstatus;
+  setup_pmp();
+  set_u_mode();
+  __asm__ volatile("ecall");
+  __asm__ volatile("csrrw %0, mcause, x0" : "=r"(rmcause));   
+  pmstatus = rmcause & 0x8;
+  assert_or_die(rmcause, 0x08, "error: mcause not showing ecall code after U-mode ecall.\n");
+
+}
+
+void correct_xret(void) {
+  /* 
+  Be in U-mode, execute MRET, ensure that it does not execute like it does in M-mode: Raise illegal exception, priv mode goes to M and not MPP, MPP becomes U, MPRV is unchanged.
+  */
+ volatile int MPRVs, mcode, MPP, MPRVt;
+
+  __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus));
+  // printf("this is the mstatus: %08X\n", mstatus);
+  MPRVs = return_field(mstatus, 17, 17);
+  setup_pmp();
+  set_u_mode();
+  __asm__ volatile("mret");
+  __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus));
+  // printf("this is the mstatus: %08X\n", mstatus);
+  MPP = return_field(mstatus, 11, 12);
+  MPRVt = return_field(mstatus, 17, 17);
+  __asm__ volatile("csrrw %0, mcause, x0" : "=r"(mcause));
+  // printf("this is the mcause: %08X\n", mcause);
+  mcode = return_field(mcause, 1, 1);
+  // printf("this is the mcode: %08X\n", mcode);
+  assert_or_die(MPRVt, MPRVs, "error: MPRV changed state after illegal mret\n");
+  assert_or_die(mcode, 1, "error: mcause did not report illegall exception\n");
+  assert_or_die(MPP, 0x0, "error: MPP not set to U-mode after illegal insn.\n");
+
+}
 int main(void){
   //TODO:
   /* 
@@ -351,7 +448,11 @@ int main(void){
   // should_not_exist_check();
   // no_u_traps();
   // proper_xpp_val();
-  proper_ret_priv();
+  //proper_ret_priv();
+  //check_wfi_trap();
+  //correct_ecall();
+  //correct_xret();
+
 
 
   return EXIT_SUCCESS;
