@@ -34,28 +34,9 @@ Ex. return_field(mstatus, 11, 12) --> mstatus[12:11] --> MPP field.
 }
 
 
-/*
-unsigned int return_field(unsigned int register, int start, int stop) {
-// Takes an unsigned int (like mstatus), and a start and stop bit. 
-//  Result should be return_field(mstatus, 12, 11) --> MPP field.
- 
-  unsigned int bitfield;
- 
-  if (stop == 0) {
-  bitfield = (register & 1 << start) >> start;
-
-  }else {
-  bitfield = (register & 1 << 18) >> 18;
-  }
-  return bitfield;
-}
-*/
-
-
-
 
 // extern and global variable declaration
-extern volatile void  setup_pmp(), change_exec_mode(int), set_csr_loop(), set_u_mode();
+extern volatile void  setup_pmp(), change_exec_mode(int), set_csr_loop(), set_u_mode(), illegal_custom();
 volatile unsigned int mstatus, mscratchg, mie, mip, mcause;
 
 
@@ -431,6 +412,24 @@ void correct_xret(void) {
   assert_or_die(MPP, 0x0, "error: MPP not set to U-mode after illegal insn.\n");
 
 }
+
+
+
+void illegal_custom_loop(void){
+/* 
+Try all kinds of accesses (R, W, RW, S, C, …) to all M-level CSRs while in U-level;
+ensure illegal instruction exception happens.
+*/
+
+  // see the gen_loop.py file for which registers are included in the test
+  thand = 1; // set u_sw_irq_handler to correct behaviour
+  excc = 0; // set interrupt counter to 0
+  setup_pmp();
+  illegal_custom();
+  assert_or_die(excc, 131072, "Some illegal U-mode custom intructions did not trap!\n");
+}
+
+
 int main(void){
   //TODO:
   /* 
@@ -452,8 +451,7 @@ int main(void){
   //check_wfi_trap();
   //correct_ecall();
   //correct_xret();
-
-
+  illegal_custom_loop();
 
   return EXIT_SUCCESS;
 }
