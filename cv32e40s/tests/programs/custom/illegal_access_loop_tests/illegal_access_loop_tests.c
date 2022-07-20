@@ -4,8 +4,8 @@
 #include <stdint.h>
 
 // extern and global variable declaration
-extern volatile void  setup_pmp(), set_u_mode(), illegal_custom();
-extern volatile unsigned int illegal_full();
+extern volatile void  setup_pmp();
+extern volatile unsigned int illegal_full(), csr_loop();
 
 // Declaration of assert 
 static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
@@ -16,14 +16,23 @@ static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
   }
 }
 
-
-int main(void){
-
-    //illegal_custom_loop(); // long test + 60 minutes 
-    //csr_privilege_loop();
+void illegal_custom_loop(void) {
     unsigned int epp;
     setup_pmp();
     epp = illegal_full();
-    printf("This is the epp val: %08X\n", epp);
-    exit(EXIT_SUCCESS);
+    assert_or_die(epp, 131072, "error: not all illegal custom instructions triggered the trap handler\n");
+}
+
+void csr_privilege_loop(void) {
+    unsigned int epp;
+    setup_pmp();
+    epp = csr_loop();
+    assert_or_die(epp, 12288, "error: not all illegal csr instructions triggered the trap handler\n");
+}
+
+int main(void){
+
+    illegal_custom_loop(); // long test + 60 minutes 
+    csr_privilege_loop();
+
 }

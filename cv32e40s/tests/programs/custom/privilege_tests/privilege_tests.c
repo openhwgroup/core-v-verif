@@ -165,22 +165,6 @@ assert_or_die(mstatus, 0x1800, "error: core did not enter M-mode after reset\n")
 
 }
 
-
-void csr_privilege_loop(void){
-/* 
-Try all kinds of accesses (R, W, RW, S, C, …) to all M-level CSRs while in U-level;
-ensure illegal instruction exception happens.
-*/
-
-  // see the gen_loop.py file for which registers are included in the test
-  thand = 1; // set u_sw_irq_handler to correct behaviour
-  excc = 0; // set interrupt counter to 0
-  setup_pmp();
-  set_csr_loop();
-  assert_or_die(excc, 12288, "Some illegal csr access attempts seem to not have triggered the exception handler!\n");
-}
-
-
 void csr_cross_privilege(void) {
 /* 
 Try all kinds of access to all implemented U- and M-mode CSR registers while in U- and M-mode (cross), ensure appropriate access grant/deny. (Caveat) There is only one register, JVT.
@@ -413,23 +397,6 @@ void correct_xret(void) {
 
 }
 
-
-
-void illegal_custom_loop(void){
-/* 
-Try all kinds of accesses (R, W, RW, S, C, …) to all M-level CSRs while in U-level;
-ensure illegal instruction exception happens.
-*/
-
-  // see the gen_loop.py file for which registers are included in the test
-  thand = 1; // set u_sw_irq_handler to correct behaviour
-  excc = 0; // set interrupt counter to 0
-  setup_pmp();
-  illegal_custom();
-  assert_or_die(excc, 131072, "Some illegal U-mode custom intructions did not trap!\n");
-}
-
-
 int main(void){
   //TODO:
   /* 
@@ -439,7 +406,6 @@ int main(void){
 
   // reset_mode();
   // privilege_test();
-  //csr_privilege_loop(); // this test takes 5-6 minutes (+40 minutes with IRFCV-trace ON)
   //sr_cross_privilege(); // TODO: This test will fail until the JVT-register is implemented.
   // misa_check();
   // mstatus_implement_check();
@@ -451,7 +417,6 @@ int main(void){
   //check_wfi_trap();
   //correct_ecall();
   //correct_xret();
-  illegal_custom_loop();
 
   return EXIT_SUCCESS;
 }

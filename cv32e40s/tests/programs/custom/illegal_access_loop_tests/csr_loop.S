@@ -1,25 +1,71 @@
-.global set_csr_loop
-.global loop_reg
+.global csr_custom
+.global csr_instr
+.global csr_loop
+.global u_sw_irq_handler
+
+csr_loop:
+	addi sp,sp,-48
+	sw ra, 0(sp)
+	sw s0, 4(sp)
+	sw s1, 8(sp)
+	sw s2, 12(sp)
+	sw s3, 16(sp)
+	sw s4, 20(sp)
+	sw s5, 24(sp)
+	sw s6, 28(sp)
+	sw s7, 32(sp)
+	sw s8, 36(sp)
+	sw s9, 40(sp)
+	sw s10, 44(sp)
+	sw s11, 48(sp)
+	li s2, 0
+	j csr_custom
 
 
-set_csr_loop: // puts the core in usermode.
-	// setup the return adress to stack.
-	addi	sp, sp, -4
-	// store the ra to the stack pointer.
-	sw	ra, 0(sp)
+/* // Included in illegal_custom.S
+u_sw_irq_handler:
+
+	addi s2, s2, 1
+
+	csrrw 	t0, mepc, x0
+	addi t0, t0, 4
+	csrrw   x0, mepc, t0 // increment to the next 
+	mret
+*/
+
+end_handler_ret:
+	addi a0, s2, 0 // load the increment to return value
+	// return stack and load to c
+	lw ra, 0(sp)
+	lw s0, 4(sp)
+	lw s1, 8(sp)
+	lw s2, 12(sp)
+	lw s3, 16(sp)
+	lw s4, 20(sp)
+	lw s5, 24(sp)
+	lw s6, 28(sp)
+	lw s7, 32(sp)
+	lw s8, 36(sp)
+	lw s9, 40(sp)
+	lw s10, 44(sp)
+	lw s11, 48(sp)
+	addi sp,sp,48
+	jalr x0, 0(ra)
+
+
+
+csr_custom: // puts the core in usermode.
 
 	// Zero "mstatus" to set MPP=umode
 	li	t0, 0x1800
 	csrrc   x0, mstatus, t0 // clear the mstatus (mpp -> User mode).
-	la t0, loop_reg //this will pouint to the label below.
+	la t0, csr_instr //this will pouint to the label below.
 	csrrw   x0, mepc, t0
 
 	mret // call the mret to execute mode change.
 
 
-loop_reg: // csr privilege loop test
-
-li	t0, 0x1800 // just something for the operand
+csr_instr: // csr privilege loop test
 
 // Start of generated code.
 csrrs  t0, 0x100, x0 
@@ -12312,7 +12358,4 @@ csrrs  x0, 0xfff, t0
 csrrc  x0, 0xfff, t0 
 //end of generated code
 
-// return to main
-lw	ra, 0(sp)
-addi	sp, sp, 4
-jalr	x0, 0(ra)
+j end_handler_ret
