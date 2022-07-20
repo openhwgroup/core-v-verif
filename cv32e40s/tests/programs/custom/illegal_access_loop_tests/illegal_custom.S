@@ -1,3 +1,4 @@
+/*
 .global illegal_custom
 .global ill_instr
 
@@ -131096,3 +131097,4 @@ ill_instr: // csr privilege loop test
 lw	ra, 0(sp)
 addi	sp, sp, 4
 jalr	x0, 0(ra)
+*/
