@@ -397,26 +397,34 @@ void correct_xret(void) {
 
 }
 
+void check_uret(){
+/* Executing uret should give an illegal instruction exception. */
+
+  int mcode;
+  __asm__ volatile("uret");
+  __asm__ volatile("csrrw %0, mcause, x0" : "=r"(mcause));
+  mcode = return_field(mcause, 1, 1);
+  assert_or_die(mcode, 1, "error: mcause did not report illegal exception on 'uret' call\n");
+}
+
 int main(void){
-  //TODO:
-  /* 
+/* 
+  reset_mode();
+  privilege_test();
+  // sr_cross_privilege(); // TODO: This test will fail until the JVT-register is implemented.
+  misa_check();
+  mstatus_implement_check();
+  mscratch_reliable_check();
+  should_not_exist_check();
+  no_u_traps();
+  proper_xpp_val();
+  proper_ret_priv();
+  check_wfi_trap();
+  correct_ecall();
+  correct_xret();
+  check_uret();
+*/
 
-  
-   */
-
-  // reset_mode();
-  // privilege_test();
-  //sr_cross_privilege(); // TODO: This test will fail until the JVT-register is implemented.
-  // misa_check();
-  // mstatus_implement_check();
-  // mscratch_reliable_check();
-  // should_not_exist_check();
-  // no_u_traps();
-  // proper_xpp_val();
-  //proper_ret_priv();
-  //check_wfi_trap();
-  //correct_ecall();
-  //correct_xret();
 
   return EXIT_SUCCESS;
 }
