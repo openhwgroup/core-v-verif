@@ -3,21 +3,10 @@ script to generate the csr_register_loop
 
 """
 
-"""
-practice_dict = {} # might need this ? 
+input_string = "// Start of generated code." # start string to look for 
+pointer = 0 # file pointer 
+filename = "csr_loop.S"
 
-f = open("csr_loop_test.txt", "w")
-
-
-for i in range(256, 4096):
-    h = hex(i)
-    f.write("csrrs  t0, " + h + ", x0 " + "\n")
-    f.write("csrrw  x0, " + h + ", t0 " + "\n")
-    f.write("csrrs  x0, " + h + ", t0 " + "\n")
-    f.write("csrrc  x0, " + h + ", t0 " + "\n")
-    f.write("\n")
-
-"""
 
 # register list fetched manually, contains all U-, S-, R-, and M-mode CSR registers
 reg_str = """
@@ -55,36 +44,33 @@ reg_str = """
 0xFC0-0xFFF
 """
 
-# generate the register
-f = open("csr_loop_test.txt", "w")
-string_split = (reg_str.split("\n"))
-string_split = string_split[1:-1]
-
-for register in string_split:
-    ranges = register.split("-")
-    rstart = int(ranges[0], 16)
-    rend = int(ranges[1], 16)
-    for i in range(rstart, rend+1):
-        h = hex(i)
-        if i == 4095:
-            f.write("csrrs  t0, " + h + ", x0 " + "\n")
-            f.write("csrrw  x0, " + h + ", t0 " + "\n")
-            f.write("csrrs  x0, " + h + ", t0 " + "\n")
-            f.write("csrrc  x0, " + h + ", t0")
-        else:
+def generator():
+    num_lines = 0
+    string_split = (reg_str.split("\n"))
+    string_split = string_split[1:-1]
+    f.seek(pointer)
+    for register in string_split:
+        ranges = register.split("-")
+        rstart = int(ranges[0], 16)
+        rend = int(ranges[1], 16)
+        for i in range(rstart, rend+1):
+            num_lines += 4
+            h = hex(i)
             f.write("csrrs  t0, " + h + ", x0 " + "\n")
             f.write("csrrw  x0, " + h + ", t0 " + "\n")
             f.write("csrrs  x0, " + h + ", t0 " + "\n")
             f.write("csrrc  x0, " + h + ", t0 " + "\n")
+    f.write("//end of generated code\n")
+    f.write("\n")
+    f.write("j end_handler_ret")
+    return num_lines
 
-f.close()
 
+with open(filename, "r+") as f:
+    while f.readline().strip("\n") != input_string:
+        pass
+    pointer = f.tell()
+    num_lines = generator()
 
-# check and print the number of generated commands
-f = open("csr_loop_test.txt", "r")
-lines = f.read().split("\n")
-instr = 0
-for line in lines:
-    instr += 1
+print(num_lines, "lines written to file '" + filename + "'")
 
-print(instr, "lines written to file.")

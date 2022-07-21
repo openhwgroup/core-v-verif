@@ -67,6 +67,7 @@ illegal_custom: // puts the core in usermode.
 
 ill_instr: // csr privilege loop test
 
+// This is the start of the generated code
 .word(0xcc000073)
 .word(0xcc0000f3)
 .word(0xcc000173)
@@ -131139,5 +131140,6 @@ ill_instr: // csr privilege loop test
 .word(0x8fff8ef3)
 .word(0x8fff8f73)
 .word(0x8fff8ff3)
+//end of generated code
 
 j end_handler_ret

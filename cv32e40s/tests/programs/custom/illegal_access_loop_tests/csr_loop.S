@@ -12311,7 +12311,7 @@ csrrc  x0, 0xff3, t0
 csrrs  t0, 0xff4, x0 
 csrrw  x0, 0xff4, t0 
 csrrs  x0, 0xff4, t0 
-csrrc  x0, 0xff4, t0
+csrrc  x0, 0xff4, t0 
 csrrs  t0, 0xff5, x0 
 csrrw  x0, 0xff5, t0 
 csrrs  x0, 0xff5, t0 
