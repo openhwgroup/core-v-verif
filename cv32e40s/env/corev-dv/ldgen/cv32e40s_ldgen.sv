@@ -118,11 +118,11 @@ import cv32e40s_pkg::pma_cfg_t;
       if (!($value$plusargs("boot_addr=0x%x", boot_addr))) begin
         boot_addr = BOOT_ADDR;
       end
-      if (!($value$plusargs("nmi_addr=0x%x", nmi_addr))) begin
-        nmi_addr = NMI_ADDR;
-      end
       if (!($value$plusargs("mtvec_addr=0x%x", mtvec_addr))) begin
         mtvec_addr = MTVEC_ADDR;
+      end
+      if (!($value$plusargs("nmi_addr=0x%x", nmi_addr))) begin
+        nmi_addr = mtvec_addr + 4*15;
       end
       if (!($value$plusargs("dm_halt_addr=0x%x", dbg_origin_addr))) begin
         dbg_origin_addr = DEBUG_ORIGIN;
