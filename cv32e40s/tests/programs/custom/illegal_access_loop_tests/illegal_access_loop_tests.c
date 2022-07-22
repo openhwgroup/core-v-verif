@@ -33,6 +33,6 @@ void csr_privilege_loop(void) {
 int main(void){
 
     illegal_custom_loop(); // long test, 22 minutes 
-    //csr_privilege_loop();
+    csr_privilege_loop();
 
 }

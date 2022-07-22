@@ -3,12 +3,12 @@ script to generate the csr_register_loop
 
 """
 
-input_string = "// Start of generated code." # start string to look for 
+input_string = "// Start of generated code." # start string, this will move the wrie HEAD
 pointer = 0 # file pointer 
-filename = "csr_loop.S"
+filename = "csr_privilege_loop.S" # file which will be written to 
 
 
-# register list fetched manually, contains all U-, S-, R-, and M-mode CSR registers
+# register list fetched manually from the spec (V20211203), contains all U-, S-, R-, and M-mode CSR registers
 reg_str = """
 0x100-0x1FF
 0x500-0x57F
@@ -45,13 +45,16 @@ reg_str = """
 """
 
 def generator():
-    num_lines = 0
+    """  
+    This is the function which generates the csr_commands. It attempts to Read, Write, Clear and Set for every CSR in the list above. 
+    """
+    num_lines = 0 # printed later to help debugging, and assertion checks in C.
     string_split = (reg_str.split("\n"))
     string_split = string_split[1:-1]
     f.seek(pointer)
     for register in string_split:
         ranges = register.split("-")
-        rstart = int(ranges[0], 16)
+        rstart = int(ranges[0], 16) # int(x, 16) converts to hex repr.
         rend = int(ranges[1], 16)
         for i in range(rstart, rend+1):
             num_lines += 4
@@ -67,10 +70,11 @@ def generator():
 
 
 with open(filename, "r+") as f:
-    while f.readline().strip("\n") != input_string:
+    while f.readline().strip("\n") != input_string: # place header after input_string
         pass
     pointer = f.tell()
     num_lines = generator()
+    f.truncate() # removes all lines after the last generated line
 
-print(num_lines, "lines written to file '" + filename + "'")
+print(num_lines, "lines written to file '" + filename + "'") # user info
 
