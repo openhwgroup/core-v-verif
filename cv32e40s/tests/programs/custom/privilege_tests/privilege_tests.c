@@ -408,6 +408,39 @@ void check_uret(){
 }
 
 
+/*  
+List of trigger registers
+tselect
+tdata1 - 2 - 3 
+etrigger
+tinfo
+tcontrol
+
+
+*/
+
+void access_trigger(){
+/* Access to all trigger registers should be illegal while the core is in usermode*/
+  thand = 1;
+  excc = 0;
+  unsigned int csr_acc;
+  setup_pmp();
+  set_u_mode();
+  __asm__ volatile("csrrw %0, tselect, x0"      : "=r"(csr_acc));
+  __asm__ volatile("csrrw %0, tdata1, x0"       : "=r"(csr_acc));
+  __asm__ volatile("csrrw %0, tdata2, x0"       : "=r"(csr_acc));
+  __asm__ volatile("csrrw %0, tdata3, x0"       : "=r"(csr_acc));
+  __asm__ volatile("csrrw %0, etrigger, x0"     : "=r"(csr_acc));
+  __asm__ volatile("csrrw %0, tinfo, x0"        : "=r"(csr_acc));
+  __asm__ volatile("csrrw %0, tcontrol, x0"     : "=r"(csr_acc));
+  __asm__ volatile("csrrw %0, tinfo, x0"        : "=r"(csr_acc));
+  __asm__ volatile("csrrw %0, tcontrol, x0"     : "=r"(csr_acc));
+  assert_or_die(excc, 9, "error: not all u-mode attempts to access trigger registers trapped\n");
+}
+
+
+
+
 int main(void){
 /* 
   reset_mode();
@@ -425,7 +458,7 @@ int main(void){
   correct_xret();
   check_uret();
 */
-
+  access_trigger();
 
 
   return EXIT_SUCCESS;
