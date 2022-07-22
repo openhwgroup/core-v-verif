@@ -407,20 +407,6 @@ void check_uret(){
   assert_or_die(mcode, 1, "error: mcause did not report illegal exception on 'uret' call\n");
 }
 
-void mcounteren_exceptions(void){
-/*When the CY, TM, IR, or HPMn bit in the mcounteren register is clear, attempts to read the cycle, time, instret, or hpmcountern register while executing in S-mode or U-mode will cause an illegal instruction exception */
-unsigned int csr_acc; // TODO: Remove this  ? 
-__asm__ volatile("csrrw x0, mcounteren, x0"); // zero out the register
-setup_pmp();
-set_u_mode();
-thand = 1;
-excc = 0;
-__asm__ volatile("csrrw %0, cycle, x0"        : "=r"(csr_acc));
-__asm__ volatile("csrrw %0, time, x0"         : "=r"(csr_acc));
-__asm__ volatile("csrrw %0, instret, x0"      : "=r"(csr_acc));
-//__asm__ volatile("csrrw %0, hpmcountern, x0"  : "=r"(csr_acc));
-assert_or_die(excc, 3, "error: Core did not trap on illegal mcounteren reads\n");
-}
 
 int main(void){
 /* 
@@ -438,7 +424,6 @@ int main(void){
   correct_ecall();
   correct_xret();
   check_uret();
-  mcounteren_exceptions();
 */
 
 
