@@ -63,9 +63,9 @@ def generator():
             f.write("csrrw  x0, " + h + ", t0 " + "\n")
             f.write("csrrs  x0, " + h + ", t0 " + "\n")
             f.write("csrrc  x0, " + h + ", t0 " + "\n")
-    f.write("//end of generated code\n")
+    f.write("j end_handler_ret\n")
     f.write("\n")
-    f.write("j end_handler_ret")
+    f.write("//end of generated code")
     return num_lines
 
 

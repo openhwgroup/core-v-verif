@@ -12356,6 +12356,6 @@ csrrs  t0, 0xfff, x0
 csrrw  x0, 0xfff, t0 
 csrrs  x0, 0xfff, t0 
 csrrc  x0, 0xfff, t0 
-//end of generated code
-
 j end_handler_ret
+
+//end of generated code

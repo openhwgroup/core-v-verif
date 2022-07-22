@@ -25,9 +25,9 @@ def generator():
                 f.write(".word(" + hex(h) + ")" + "\n")
                 
     # These lines are manually added at the end 
-    f.write("//end of generated code\n")
+    f.write("j end_handler_ret\n")
     f.write("\n")
-    f.write("j end_handler_ret")
+    f.write("//end of generated code")
     return num_lines
 
 

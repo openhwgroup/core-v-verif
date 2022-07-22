@@ -131140,6 +131140,6 @@ ill_instr: // csr privilege loop test
 .word(0x8fff8ef3)
 .word(0x8fff8f73)
 .word(0x8fff8ff3)
-//end of generated code
-
 j end_handler_ret
+
+//end of generated code
