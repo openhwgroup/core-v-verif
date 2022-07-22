@@ -434,7 +434,7 @@ function void cv32e40s_ldgen_c::create_fixed_addr_section_file(string filepath);
     display_fatal($sformatf("Unable to open %s", filepath));
   end
   if (pma_adapted_memory.region.size == 0) begin
-    nmi_separate_region = 1;
+    nmi_separate_region = 0;
   end
 
   foreach (pma_adapted_memory.region[i]) begin
@@ -480,18 +480,25 @@ function void cv32e40s_ldgen_c::create_fixed_addr_section_file(string filepath);
   $fdisplay(fhandle_fix, "{");
   $fdisplay(fhandle_fix, { indent(L1), "/* CORE-V: interrupt vectors */" });
   $fdisplay(fhandle_fix, { indent(L1), "PROVIDE(__vector_start = ", $sformatf("0x%08x", mtvec_addr), ");" });
+  $fdisplay(fhandle_fix, { indent(L1), "mtvec_handler = DEFINED(vectored_mode) ? ABSOLUTE(", $sformatf("0x%08x", mtvec_addr), ") : mtvec_handler;"});
   $fdisplay(fhandle_fix, { indent(L1), ".mtvec_bootstrap (__vector_start) :" });
   $fdisplay(fhandle_fix, { indent(L1), "{" });
   $fdisplay(fhandle_fix, { indent(L2), "KEEP(*(.mtvec_bootstrap));" });
   $fdisplay(fhandle_fix, { indent(L1), "}", mtvec_memory_area, "\n" });
+
+  $fdisplay(fhandle_fix, { indent(L1), ".mtvec_handler (__vector_start) :" });
+  $fdisplay(fhandle_fix, { indent(L1), "{" });
+  $fdisplay(fhandle_fix, { indent(L2), "*(.mtvec*);" });
+  $fdisplay(fhandle_fix, { indent(L2), "KEEP(*(.mtvec_handler));" });
+  $fdisplay(fhandle_fix, { indent(L1), "}", mtvec_memory_area, "\n" });
+
   $fdisplay(fhandle_fix, { indent(L1), "/* CORE-V: we want a fixed entry point */" });
   $fdisplay(fhandle_fix, { indent(L1), "PROVIDE(__boot_address = ", $sformatf("0x%08x", boot_addr), ");\n" });
   $fdisplay(fhandle_fix, { indent(L1), "/* NMI interrupt handler fixed entry point */" });
-  $fdisplay(fhandle_fix, { indent(L1), "nmi_handler = ABSOLUTE(", $sformatf("0x%08x",  nmi_addr), ");" });
-  $fdisplay(fhandle_fix, { indent(L1), ".nmi (", $sformatf("0x%08x", nmi_addr), ") :" });
+  $fdisplay(fhandle_fix, { indent(L1), $sformatf(".nmi_bootstrap DEFINED(vectored_mode) ? (0x%08x) : .", nmi_addr), " :"});
   $fdisplay(fhandle_fix, { indent(L1), "{" });
-  $fdisplay(fhandle_fix, { indent(L2), "KEEP(*(.nmi));" });
-  $fdisplay(fhandle_fix, { indent(L1), "}", nmi_memory_area });
+  $fdisplay(fhandle_fix, { indent(L2), "KEEP(*(.nmi_bootstrap));" });
+  $fdisplay(fhandle_fix, { indent(L1), "}", nmi_memory_area, "\n" });
   $fdisplay(fhandle_fix, "}");
 
   $fclose(fhandle_fix);

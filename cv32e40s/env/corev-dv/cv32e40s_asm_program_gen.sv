@@ -47,9 +47,9 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
           !riscv_instr_pkg::support_umode_trap) continue;
       if (riscv_instr_pkg::supported_privileged_mode[i] < cfg.init_privileged_mode) continue;
       tvec_name = trap_vec_reg.name();
-      // mtvec_handler is not the actual symbol for the trap handler in our implementation
-      // This ensures that we load the intended mtvec addreses instead of where the mtvec
-      // address 0 jumps to.
+      // for the vectored mode, mtvec_handler is not the actual symbol for the trap handler
+      // in our implementation. This ensures that we load the intended mtvec addreses instead
+      // of where the mtvec address 0 jumps to.
       if (tvec_name.tolower == "mtvec") begin
         instr = {instr, $sformatf("la x%0d, __vector_start", cfg.gpr[0])};
       end else begin
@@ -206,7 +206,11 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
                     $sformatf("j %0s%0smode_exception_handler", hart_prefix(hart), mode)};
     // Redirect the interrupt to the corresponding interrupt handler
     for (int i = 1; i < max_interrupt_vector_num; i++) begin
-      instr.push_back($sformatf("j %0s%0smode_intr_vector_%0d", hart_prefix(hart), mode, i));
+      if (i == 15) begin
+        instr.push_back($sformatf("j nmi_handler"));
+      end else begin
+        instr.push_back($sformatf("j %0s%0smode_intr_vector_%0d", hart_prefix(hart), mode, i));
+      end
     end
     if (!cfg.disable_compressed_instr) begin
       instr = {instr, ".option rvc;"};
@@ -454,13 +458,17 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
 
   // generate NMI handler.
   // will be placed at a fixed address in memory, set in linker file
-  //TODO: verify correct functionality when NMI test capability is ready
   virtual function void gen_nmi_handler_section(int hart);
     string nmi_handler_instr[$];
 
     // Insert section info so linker can place
     // debug code at the correct adress
-    instr_stream.push_back(".section .nmi, \"ax\"");
+    // We do not want a specific region for the handler code
+    // in case of direct mode interrupts, as its location is
+    // dynamically allocated
+    if (cfg.mtvec_mode == DIRECT) begin
+      instr_stream.push_back(".section .nmi, \"ax\"");
+    end
 
     // read relevant csr's
     nmi_handler_instr.push_back($sformatf("csrr x%0d, mepc", cfg.gpr[0]));
@@ -474,5 +482,28 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
     gen_section(get_label($sformatf("nmi_handler"), hart),
                 nmi_handler_instr);
   endfunction : gen_nmi_handler_section
+
+  virtual function void gen_section(string label, string instr[$]);
+    string str;
+    if(label == "mtvec_handler" && cfg.mtvec_mode == VECTORED) begin
+      str = ".section .mtvec_handler, \"ax\"";
+      instr_stream.push_back(str);
+      str = format_string($sformatf("%0s:", label), LABEL_STR_LEN);
+      instr_stream.push_back(str);
+    end else if(label != "") begin
+      str = format_string($sformatf("%0s:", label), LABEL_STR_LEN);
+      instr_stream.push_back(str);
+    end
+    foreach(instr[i]) begin
+      str = {indent, instr[i]};
+      instr_stream.push_back(str);
+      if (i == instr.size() - 1) begin
+        str = ".section .text";
+        instr_stream.push_back("");
+        instr_stream.push_back(str);
+      end
+    end
+    instr_stream.push_back("");
+  endfunction : gen_section
 
 endclass : cv32e40s_asm_program_gen
