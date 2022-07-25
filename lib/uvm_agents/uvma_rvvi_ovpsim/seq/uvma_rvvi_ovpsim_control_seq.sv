@@ -76,6 +76,11 @@ task uvma_rvvi_ovpsim_control_seq_c::step_rm(uvma_rvfi_instr_seq_item_c#(ILEN,XL
       rd1_addr == rvfi_instr.rd1_addr;
       rd1_wdata == rvfi_instr.rd1_wdata;
 
+      gpr_rdata == rvfi_instr.gpr_rdata;
+      gpr_rmask == rvfi_instr.gpr_rmask;
+      gpr_wdata == rvfi_instr.gpr_wdata;
+      gpr_wmask == rvfi_instr.gpr_wmask;
+
       mem_addr == rvfi_instr.mem_addr;
       mem_rdata == rvfi_instr.mem_rdata;
       mem_rmask == rvfi_instr.mem_rmask;
