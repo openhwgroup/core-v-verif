@@ -25,6 +25,8 @@
 
 #define TICKS_ADDR 0x15001004
 
+#define MSTATUS_FS 0x00006000
+
 volatile int * const REG_TIME = (int *) TICKS_ADDR;
 
 #include "stimuli.h"
@@ -44,7 +46,24 @@ int checkInt (long int *B, long int *A, long int n)
   return err;
 }
 
-__attribute__((always_inline)) int cpu_perf_get_cycle()
+void fp_enable ()
+{
+  unsigned int fs = MSTATUS_FS & (MSTATUS_FS >> 1);
+
+  __asm__ volatile("csrs mstatus, %0;"
+                   "csrwi fcsr, 0;"
+                   : : "r"(fs));
+
+}
+
+void mcycle_counter_enable ()
+{
+  // Enable mcycle counter
+  __asm__ volatile("csrci 0x320, 0x1"); // mcountinhibit.cy = 0
+
+}
+
+int cpu_perf_get_cycle()
 {
   unsigned int cycle;
   __asm__ volatile("csrr %0, 0xB00" : "=r"(cycle)); // mcycle
@@ -59,8 +78,11 @@ int main()
 
   volatile float fdiv;
 
+  // Floating Point enable
+  fp_enable();
+
   // Enable mcycle counter
-  __asm__ volatile("csrwi 0x320, 0x1e"); // mcountinhibit.cy = 0
+  mcycle_counter_enable();
 
   start_time = cpu_perf_get_cycle();
 
