@@ -156,6 +156,9 @@ task uvma_rvvi_ovpsim_drv_c::stepi(REQ req);
    bit[31:0] mem_val_update = 0;
    bit[31:0] mem_val_prev = 0;
    bit[XLEN-1:0] mask = 'h0;
+   bit[XLEN-1:0] mem_addr = 0;
+   bit[(XLEN/8)-1:0] mem_rmask = 0;
+
 
    uvma_rvvi_ovpsim_control_seq_item_c#(ILEN,XLEN) rvvi_ovpsim_seq_item;
 
@@ -174,36 +177,42 @@ task uvma_rvvi_ovpsim_drv_c::stepi(REQ req);
 
    // Check for read of volatile memory locations, backdoor init the RVVI memory when found to ensure
    // the ISS sees the same data as the DUT
-   if (rvvi_ovpsim_seq_item.mem_rmask && cfg.is_mem_addr_volatile(rvvi_ovpsim_seq_item.mem_addr)) begin
+   for (int i = 0; i < NMEM; i++) begin
 
-      // handle misaligned case
-      mem_val_update = rvvi_ovpsim_seq_item.mem_rdata;
-      if (rvvi_ovpsim_seq_item.mem_addr[1:0] != 0) begin
-         mem_val_update <<= 8*rvvi_ovpsim_seq_item.mem_addr[1:0];
+      if ((rvvi_ovpsim_seq_item.check_mem_act(i) & 'b10)  && cfg.is_mem_addr_volatile(rvvi_ovpsim_seq_item.get_mem_addr(i))) begin
+         mem_addr = rvvi_ovpsim_seq_item.get_mem_addr(i);
+         mem_rmask = rvvi_ovpsim_seq_item.get_mem_rmask(i);
+
+         // handle misaligned case
+         mem_val_update = rvvi_ovpsim_seq_item.get_mem_data_word(i);
+         if (mem_addr[1:0] != 0) begin
+           mem_val_update <<= 8*mem_addr[1:0];
+         end
+
+         for (int i=0; i < XLEN/8; i++)
+         begin
+           bit [7:0] mask_val;
+           mask_val = mem_rmask[i] ? 8'hFF : 8'h00;
+           mask[(i+1)*8-1-:8] = mask_val;
+         end
+
+         mem_val_prev = rvvi_ovpsim_cntxt.ovpsim_mem_vif.mem[mem_addr >> 2];
+         rvvi_ovpsim_cntxt.ovpsim_mem_vif.mem[mem_addr >> 2] = (mem_val_prev & ~mask) | (mem_val_update & mask);
+
+         `uvm_info("RVVIDRV", $sformatf("Setting volatile bus read data @ 0x%08x to 0x%08x",
+                                       mem_addr,
+                                       (mem_val_prev & ~mask) | (mem_val_update & mask)), UVM_HIGH);
+
       end
-
-      for (int i=0; i < XLEN/8; i++)
-      begin
-         bit [7:0] mask_val;
-         mask_val = rvvi_ovpsim_seq_item.mem_rmask[i] ? 8'hFF : 8'h00;
-         mask[(i+1)*8-1-:8] = mask_val;
-      end
-
-      mem_val_prev = rvvi_ovpsim_cntxt.ovpsim_mem_vif.mem[rvvi_ovpsim_seq_item.mem_addr >> 2];
-      rvvi_ovpsim_cntxt.ovpsim_mem_vif.mem[rvvi_ovpsim_seq_item.mem_addr >> 2] = (mem_val_prev & ~mask) | (mem_val_update & mask);
-
-      `uvm_info("RVVIDRV", $sformatf("Setting volatile bus read data @ 0x%08x to 0x%08x",
-                                     rvvi_ovpsim_seq_item.mem_addr,
-                                     (mem_val_prev & ~mask) | (mem_val_update & mask)), UVM_HIGH);
 
    end
-  
+
    // Signal a debug to ISS. Interrupts that was not retired due to debug
    // are also signaled here
    if (rvvi_ovpsim_seq_item.dbg_req) begin
       stepi_debug(rvvi_ovpsim_seq_item.nmi, rvvi_ovpsim_seq_item.intr, rvvi_ovpsim_seq_item.nmi_cause, rvvi_ovpsim_seq_item.intr_id);
    end else begin
-      
+
       // Signal a NMI to the ISS in M-mode
       if (rvvi_ovpsim_seq_item.nmi) begin
          stepi_nmi(rvvi_ovpsim_seq_item.nmi_cause);
@@ -220,13 +229,19 @@ task uvma_rvvi_ovpsim_drv_c::stepi(REQ req);
       stepi_insn_bus_fault();
    end
 
-   // Update irq_i to match mip CSR
+   // Update irq_i to match mip CSRF1 harassment
+
    rvvi_ovpsim_cntxt.ovpsim_io_vif.irq_i = rvvi_ovpsim_seq_item.mip;
 
    // If the RVFI instruction wrote to a GPR, update it in the volatile backdoor register back
    // so the ISS can update voltaile reads (e.g. mcycle, I/O registers, etc.)
-   if (rvvi_ovpsim_seq_item.rd1_addr != 0)
-      rvvi_ovpsim_cntxt.state_vif.GPR_rtl[rvvi_ovpsim_seq_item.rd1_addr] = rvvi_ovpsim_seq_item.rd1_wdata;
+   if (rvvi_ovpsim_seq_item.gpr_wmask) begin
+      for (int i = 1; i < 32; i++) begin
+         if (rvvi_ovpsim_seq_item.gpr_wmask[i]) begin
+            rvvi_ovpsim_cntxt.state_vif.GPR_rtl[i] = rvvi_ovpsim_seq_item.get_gpr_wdata(i);
+         end
+      end
+   end
 
    // --------------------------------------------------------------------------------
    // Step the ISS to get to the next instruction and wait for ISS to complete
@@ -272,12 +287,12 @@ endtask : restart_clknrst
 task uvma_rvvi_ovpsim_drv_c::stepi_debug(bit nmi, bit intr, int unsigned nmi_cause, int unsigned intr_id);
    rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint = 1'b0;
    rvvi_ovpsim_cntxt.ovpsim_io_vif.haltreq  = 1'b1;
-   
+
    if (nmi) begin
       rvvi_ovpsim_cntxt.ovpsim_io_vif.nmi       = 1'b1;
       rvvi_ovpsim_cntxt.ovpsim_io_vif.nmi_cause = nmi_cause;
    end
-   
+
    if (intr) begin
       rvvi_ovpsim_cntxt.ovpsim_io_vif.irq_i    = 1 << (intr_id);
       rvvi_ovpsim_cntxt.ovpsim_io_vif.intr     = 1'b1;
