@@ -56,9 +56,6 @@ module uvmt_cv32e40s_pmp_assert
   `define max(a,b) ((a) > (b) ? (a) : (b))
 
   typedef struct packed {
-    logic rwx_nolock;
-    logic rwx_lock;
-
     logic r_mmode_r;
     logic r_mmode_lr;
     logic w_mmode_w;
@@ -441,9 +438,12 @@ module uvmt_cv32e40s_pmp_assert
         // ------------------------------------------------------------
         // No matching region found, allow only M-access, and only if MMWP bit is not set
         case ( {pmp_req_type_i, priv_lvl_i} )
-          { PMP_ACC_READ,  PRIV_LVL_M }: match_status.val_access_allowed_reason.r_mmode_nomatch_nommwp_r = !csr_pmp_i.mseccfg.mmwp;
-          { PMP_ACC_WRITE, PRIV_LVL_M }: match_status.val_access_allowed_reason.w_mmode_nomatch_nommwp_w = !csr_pmp_i.mseccfg.mmwp;
-          { PMP_ACC_EXEC,  PRIV_LVL_M }: match_status.val_access_allowed_reason.x_mmode_nomatch_nommwp_x = !csr_pmp_i.mseccfg.mmwp;
+          { PMP_ACC_READ,  PRIV_LVL_M }:
+            match_status.val_access_allowed_reason.r_mmode_nomatch_nommwp_r = !csr_pmp_i.mseccfg.mmwp;
+          { PMP_ACC_WRITE, PRIV_LVL_M }:
+            match_status.val_access_allowed_reason.w_mmode_nomatch_nommwp_w = !csr_pmp_i.mseccfg.mmwp;
+          { PMP_ACC_EXEC,  PRIV_LVL_M }:
+            match_status.val_access_allowed_reason.x_mmode_nomatch_nommwp_x = !csr_pmp_i.mseccfg.mmwp && !csr_pmp_i.mseccfg.mml;
         endcase
         match_status.is_access_allowed_no_match = |match_status.val_access_allowed_reason;
       end
