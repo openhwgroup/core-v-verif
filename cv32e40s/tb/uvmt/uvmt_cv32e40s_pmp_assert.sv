@@ -652,8 +652,16 @@ module uvmt_cv32e40s_pmp_assert
   // NA4 only available in G=1
   generate for (genvar region = 0; region < PMP_NUM_REGIONS; region++) begin: gen_na4onlyg0
     a_na4_only_g0: assert property (
-      csr_pmp_i.cfg[region].mode == PMP_MODE_NA4 |->
-        PMP_GRANULARITY === 1'b0
+      (csr_pmp_i.cfg[region].mode == PMP_MODE_NA4)
+      |->
+      (PMP_GRANULARITY === 1'b 0)
+    );
+
+    a_na4_not_when_g: assert property (
+      // "Redundant" assert for (antecedent) coverage
+      (PMP_GRANULARITY !== 1'b 0)
+      |->
+      (csr_pmp_i.cfg[region].mode !== PMP_MODE_NA4)
     );
   end endgenerate
 
@@ -876,7 +884,6 @@ module uvmt_cv32e40s_pmp_assert
     localparam pmpcfg_field_lo = (8 * (i % 4));
 
     assign rvfi_pmp_csr_rdata.cfg[i]  = rvfi_csr_pmpcfg_rdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
-    //assign rvfi_pmp_csr_rdata.cfg[i]  = rvfi_csr_pmpcfg_rdata[i / 4][(8 * (i % 4)) + 7 : (8 * (i % 4))];
     assign rvfi_pmp_csr_rdata.addr[i] = rvfi_csr_pmpaddr_rdata[i];
   end
   assign rvfi_pmp_csr_rdata.mseccfg[0] = rvfi_csr_mseccfg_rdata;
