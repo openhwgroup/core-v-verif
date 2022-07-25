@@ -128,11 +128,15 @@ module uvmt_cv32e40s_tb;
                                                                    .rvfi_rd1_wdata(rvfi_i.rvfi_rd_wdata[uvme_cv32e40s_pkg::XLEN*0+:uvme_cv32e40s_pkg::XLEN]),
                                                                    .rvfi_rd2_addr('0),
                                                                    .rvfi_rd2_wdata('0),
-                                                                   .rvfi_mem_addr(rvfi_i.rvfi_mem_addr[uvme_cv32e40s_pkg::XLEN*0+:uvme_cv32e40s_pkg::XLEN]),
-                                                                   .rvfi_mem_rdata(rvfi_i.rvfi_mem_rdata[uvme_cv32e40s_pkg::XLEN*0+:uvme_cv32e40s_pkg::XLEN]),
-                                                                   .rvfi_mem_rmask(rvfi_i.rvfi_mem_rmask[uvme_cv32e40s_pkg::XLEN/8*0+:uvme_cv32e40s_pkg::XLEN/8]),
-                                                                   .rvfi_mem_wdata(rvfi_i.rvfi_mem_wdata[uvme_cv32e40s_pkg::XLEN*0+:uvme_cv32e40s_pkg::XLEN]),
-                                                                   .rvfi_mem_wmask(rvfi_i.rvfi_mem_wmask[uvme_cv32e40s_pkg::XLEN/8*0+:uvme_cv32e40s_pkg::XLEN/8])
+                                                                   .rvfi_gpr_rdata(rvfi_i.rvfi_gpr_rdata[32*uvme_cv32e40s_pkg::XLEN*0  +:32*uvme_cv32e40s_pkg::XLEN]),
+                                                                   .rvfi_gpr_rmask(rvfi_i.rvfi_gpr_rmask[32*0  +:32]),
+                                                                   .rvfi_gpr_wdata(rvfi_i.rvfi_gpr_wdata[32*uvme_cv32e40s_pkg::XLEN*0  +:32*uvme_cv32e40s_pkg::XLEN]),
+                                                                   .rvfi_gpr_wmask(rvfi_i.rvfi_gpr_wmask[32*0  +:32]),
+                                                                   .rvfi_mem_addr(rvfi_i.rvfi_mem_addr[  uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN]),
+                                                                   .rvfi_mem_rdata(rvfi_i.rvfi_mem_rdata[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN]),
+                                                                   .rvfi_mem_rmask(rvfi_i.rvfi_mem_rmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8]),
+                                                                   .rvfi_mem_wdata(rvfi_i.rvfi_mem_wdata[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN]),
+                                                                   .rvfi_mem_wmask(rvfi_i.rvfi_mem_wmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8])
                                                                    );
 
   // RVFI CSR binds
