@@ -5,7 +5,7 @@
 void tor_macthing()
 {
   int temp;
-  int tor = (1 << 3), read = 1, write = 1 << 1, exe = 1 << 2, lock = 1 << 7;
+  // int tor = (1 << 3), read = 1, write = 1 << 1, exe = 1 << 2, lock = 1 << 7;
   // set pmp addr to 0xffff-ffff
   // asm volatile(
   //     "li t0, 0xFFFFFFFF\n"
@@ -33,9 +33,11 @@ void tor_macthing()
   // set pmp.l to enforce rules ???
   // asm volatile("csrrw x0, 0x3a0, %0" ::"r"(lock | lock << 8));
   // set pmpcfg0/1 read and TOR
+  asm volatile("csrrw x0, 0x3a0, %0" ::"r"(0x8900));
 
-  // asm volatile("csrrw x0, 0x3a0, %0" ::"r"(0x8900));
-  asm volatile("csrrwi x0, 0x3a0, 0x8900");
+  // cfg0.Ltor, cfg1.LtorR
+  // asm volatile("csrrw x0, 0x3a0, %0" ::"r"(0x5958));
+
 
   // umode();
   // asm volatile("csrrs %0, 0x3a , x0"

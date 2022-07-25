@@ -135,3 +135,8 @@
   // TODO: region for X
   // TODO: region for RWX
 // }
+
+void dummy()
+{
+  return;
+}
