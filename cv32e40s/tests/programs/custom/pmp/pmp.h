@@ -1,43 +1,42 @@
+// Copyright 2022 OpenHW Group
+// Copyright 2022 Silicon Labs, Inc.
+//
+// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://solderpad.org/licenses/
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
 #ifndef PMP_H
 #define PMP_H
-
-// #define CODE_SECTION ".text"
-// #define CODE __attribute__((section(CODE_SECTION)))
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
 
-// functional functions
-// int setbits(int regvalue, char *fieldname);
-
-
-// test cases
+// test functions
 void reset_registers();
 
 void default_full();
 void default_none();
 
-// void change_mode(int mode);
 void change_mode();
 void umode();
 
 void mmode_only();
 void napot_matching();
 void tor_macthing();
-
-// typedef struct PMPXCFG_STRUCT
-// { // bits from lsb to msb  as left to right
-//   uint8_t read : 1, write : 1, exe : 1, mode : 2, b65 : 2, lock : 1, b8 : 1;
-// } __attribute__((packed)) PMPXCFG;
-
-// typedef struct PMPCFGX_STRUCT
-// {
-//   PMPXCFG *pmpxcfg;
-//   uint32_t cfgx;
-// } PMPCFGX;
+void tor_zero();
+void tor_nomatch();
 
 typedef struct CSRS_STUCT
 {
@@ -61,7 +60,5 @@ typedef struct CSRS_STUCT
 
 // globals
 extern CSRS glb_csrs;
-// extern PMPXCFG glb_pmpxcfg;
-// extern PMPCFGX glb_pmpcfgx;
 
 #endif

@@ -1,3 +1,20 @@
+// Copyright 2022 OpenHW Group
+// Copyright 2022 Silicon Labs, Inc.
+//
+// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://solderpad.org/licenses/
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
+
 #include "pmp.h"
 
 static CSRS csrs;
@@ -36,7 +53,6 @@ void pmpcfgxtest()
 
   asm volatile("csrrs %0, 0x3A9, x0\n"
                : "=r"(pmpcfgx));
-  // printf("\nM mode pmpcfgx = 0x%lx\n\n", pmpcfgx);
 
   change_mode();
   printf("\tU mode pmpcfg check\n");
@@ -45,7 +61,6 @@ void pmpcfgxtest()
 
   printf("\tAttempting writing or reading CSRS in U mode\n\n");
   // back from the trap, reading mstatus
-  // pmpcfgx = read_csr(0x3a9);
   asm volatile("csrrw x0, mstatus, %0\n"
                : "=r"(pmpcfgx));
 
@@ -55,7 +70,6 @@ void pmpcfgxtest()
   if (glb_csrs.mcause == 2)
   {
     printf("\tIllegal instruction exception triggered as expected\n");
-    // int pmpcfgx = read_csr(0x3a9);
     printf("\tComparing pmpcfgx values M:U\n");
     asm volatile("csrrs %0, 0x3A9, x0\n"
                  : "=r"(csrs.pmpcfgx[9]));
@@ -83,9 +97,8 @@ void pmpaddrxtest()
   printf("\tU mode pmpaddr check\n");
   user_code();
 
-  printf("\tAttempting writing or reading CSRS in U mode aaaaa\n\n");
+  printf("\tAttempting writing or reading CSRS in U mode\n\n");
   // back from the trap, reading mstatus
-  // pmpcfgx = read_csr(0x3a9);
   asm volatile("csrrw x0, mstatus, %0\n" ::"r"(pmpaddrx));
 
   printf("\tout of  handler\n");
@@ -94,7 +107,6 @@ void pmpaddrxtest()
   if (glb_csrs.mcause == 2)
   {
     printf("\tIllegal instruction exception triggered as expected\n");
-    // int pmpcfgx = read_csr(0x3a9);
     printf("\tComparing pmpaddr values M:U\n");
     asm volatile("csrrs %0, 0x3Ba, x0\n"
                  : "=r"(csrs.pmpaddrx[10]));
@@ -122,9 +134,8 @@ void mseccfgtest()
   printf("\tU mode mseccfg check\n");
   user_code();
 
-  printf("\tAttempting writing or reading CSRS in U mode aaaaa\n\n");
+  printf("\tAttempting writing or reading CSRS in U mode\n\n");
   // back from the trap, reading mstatus
-  // pmpcfgx = read_csr(0x3a9);
   asm volatile("csrrw x0, mstatus, %0\n"
                :
                : "r"(mseccfg));
@@ -134,7 +145,6 @@ void mseccfgtest()
   if (glb_csrs.mcause == 2)
   {
     printf("\tIllegal instruction exception triggered as expected\n");
-    // int pmpcfgx = read_csr(0x3a9);
     printf("\tComparing pmpcfgx values M:U\n");
     asm volatile("csrrs %0, 0x3A9, x0\n"
                  : "=r"(csrs.mseccfg));

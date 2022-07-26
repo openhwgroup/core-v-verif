@@ -1,70 +1,75 @@
+// Copyright 2022 OpenHW Group
+// Copyright 2022 Silicon Labs, Inc.
+//
+// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://solderpad.org/licenses/
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
+
 #include "pmp.h"
 
-#define ABOVEDEBUG 0x10000
+#define opns 0x10000
+
+// stay away from 0x0-0xFFF, addresses close to your stack pointer, and within 0x1000-0x40_0000 and not 0x1A11_0800-0x1A11_1800 (Debug)
+// do no use pmpaddr0 as of conflicting sticky bit in TorZero
 
 void tor_macthing()
 {
   int temp;
-  // int tor = (1 << 3), read = 1, write = 1 << 1, exe = 1 << 2, lock = 1 << 7;
-  // set pmp addr to 0xffff-ffff
-  // asm volatile(
-  //     "li t0, 0xFFFFFFFF\n"
-  //     "csrrw x0, pmpaddr0, t0\n"
-  //     "li t0, ((1<<3)+7)\n"
-  //     "csrrw x0, 0x3a0, t0\n");
 
-  // write certain values to designated RAM region in M mode
-  // for (uint32_t i = ABOVEDEBUG; i <= ABOVEDEBUG + 4 * 150; i++)
-  // {
-  asm volatile("sw %0, 0(%1)" ::"r"(1), "r"(ABOVEDEBUG));
-  asm volatile("sw %0, 0(%1)" ::"r"(5), "r"(ABOVEDEBUG - 5));
+  asm volatile("sw %0, 0(%1)" ::"r"(1), "r"(opns));
+  asm volatile("sw %0, 0(%1)" ::"r"(5), "r"(opns - 4 * 5));
 
-  // }
-
-  //  TODO:R
-  //  set pmp regions from ABOVEDEBUG - ABOVEDEBUG+4*150
-  asm volatile("csrrw x0, 0x3b0, %0\n"
-               "csrrw x0, 0x3b1, %1\n" ::"r"(ABOVEDEBUG>>2),
-               "r"((ABOVEDEBUG>>2)+256));
+  //  TODO:R range [addr0:addr1)
+  //  set pmp regions from opns - opns+4*150
+  asm volatile("csrrw x0, 0x3b1, %0\n"
+               "csrrw x0, 0x3b2, %1\n" ::"r"(opns >> 2),
+               "r"((opns >> 2) + 256));
   // set pmp mode to TOR for pmpaddr0 & pmpaddr1
-  // asm volatile("csrrw x0, 0x3a0, %0" ::"r"(tor | tor << 8));
-  // set RAM to read
-  // asm volatile("csrrw x0, 0x3a0, %0" ::"r"(read | read << 8));
-  // set pmp.l to enforce rules ???
-  // asm volatile("csrrw x0, 0x3a0, %0" ::"r"(lock | lock << 8));
   // set pmpcfg0/1 read and TOR
-  asm volatile("csrrw x0, 0x3a0, %0" ::"r"(0x8900));
+  // asm volatile("csrrw x0, 0x3a0, %0" ::"r"(0x8900));
 
-  // cfg0.Ltor, cfg1.LtorR
-  // asm volatile("csrrw x0, 0x3a0, %0" ::"r"(0x5958));
+  // cfg1.Ltor, cfg2.LtorR
+  asm volatile("csrrw x0, 0x3a0, %0" ::"r"(0x999800));
 
+  asm volatile("lw %0, 0(%1)"
+               : "=r"(temp)
+               : "r"(opns));
+  printf("\t\n loading from address 0x%x\n", opns);
+  printf("\t\n value %d\n\n", temp);
+
+  asm volatile("lw %0, 0(%1)"
+               : "=r"(temp)
+               : "r"(opns - 4 * 5));
+  printf("\t\n loading from address 0x%x\n", opns - 4 * 5);
+  printf("\t\n value %d\n\n", temp);
+
+  asm volatile("lw %0, 0(%1)"
+               : "=r"(temp)
+               : "r"(opns + 4 * 500));
+  printf("\t\n loading from address 0x%x\n", opns + 4 * 500);
+  printf("\t\n value %d\n\n", temp);
+
+  // TODO:RW range [addr2:addr3)
+  // asm volatile("csrrw x0, 0x3b2, %0\n"
+  //              "csrrw x0, 0x3b3, %1\n" ::"r"(2*(opns >> 2)),
+  //              "r"(2*(opns >> 2) + 256));
+
+  // TODO:RX
+
+  // TODO:X
 
   // umode();
   // asm volatile("csrrs %0, 0x3a , x0"
   //              : "=r"(temp));
   // printf("\t\n0x3a0 value is %x\n\n", temp);
-
-  asm volatile("lw %0, 0(%1)"
-               : "=r"(temp)
-               : "r"(ABOVEDEBUG));
-  printf("\t\n loading from address 0x%x\n", ABOVEDEBUG);
-  printf("\t\n value %d\n\n", temp);
-
-  asm volatile("lw %0, 0(%1)"
-               : "=r"(temp)
-               : "r"(ABOVEDEBUG - 5));
-  printf("\t\n loading from address 0x%x\n", ABOVEDEBUG - 5);
-  printf("\t\n value %d\n\n", temp);
-
-  asm volatile("lw %0, 0(%1)"
-               : "=r"(temp)
-               : "r"(ABOVEDEBUG + 4 * 500));
-  printf("\t\n loading from address 0x%x\n", ABOVEDEBUG +4*500);
-  printf("\t\n value %d\n\n", temp);
-
-  // TODO:RW
-
-  // TODO:RX
-
-  // TODO:X
 }
