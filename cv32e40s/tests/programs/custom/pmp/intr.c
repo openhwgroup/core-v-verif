@@ -44,11 +44,7 @@ __attribute__((interrupt("machine"))) void u_sw_irq_handler(void)
   __asm__ volatile("csrrw x0, mstatus, %0"
                    :
                    : "r"(glb_csrs.mstatus));
-  // printf("\tmstatus = 0x%lx before exiting handler\n", glb_csrs.mstatus);
-  // __asm__ volatile("csrrw x0, mstatus, %0"
-  //                  :
-  //                  : "r"(mstatus));
-  // printf("\tmstatus = x%x before exiting handler\n", mstatus);
+
   return;
 
   exit(EXIT_FAILURE);
