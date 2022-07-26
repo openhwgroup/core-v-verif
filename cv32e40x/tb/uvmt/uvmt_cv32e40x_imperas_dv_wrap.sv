@@ -114,8 +114,8 @@ module uvmt_cv32e40x_imperas_dv_wrap
                    .CMP_GPR     (1),
                    .CMP_FPR     (0),
                    .CMP_VR      (0),
-                   .CMP_CSR     (1),
-                   .MISCOMPARES (1)
+                   .CMP_CSR     (1)
+                   //.MISCOMPARES (1)
                  )
                  vlg2api(rvvi);
 
@@ -285,7 +285,8 @@ module uvmt_cv32e40x_imperas_dv_wrap
     // Test-program must have been compiled before we got here...
     if ($value$plusargs("elf_file=%s", test_program_elf)) begin
       `uvm_info(info_tag, $sformatf("ImperasDV loading test_program %0s", test_program_elf), UVM_NONE)
-      if (!rvviRefInit(test_program_elf, "openhwgroup.ovpworld.org", "CV32E40X", 0, `RVVI_TRUE)) begin
+      //if (!rvviRefInit(test_program_elf, "openhwgroup.ovpworld.org", "CV32E40X_V0.2.0", 0, `RVVI_TRUE)) begin
+      if (!rvviRefInit(test_program_elf, "openhwgroup.ovpworld.org", "CV32E40X", 0)) begin
         `uvm_fatal(info_tag, "rvviRefInit failed")
       end
       else begin
@@ -320,6 +321,9 @@ module uvmt_cv32e40x_imperas_dv_wrap
     rvviRefCsrCompareEnable(hart_id, `CSR_TDATA1_ADDR,    `RVVI_FALSE);
     rvviRefCsrCompareEnable(hart_id, `CSR_TDATA2_ADDR,    `RVVI_FALSE);
     rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR,     `RVVI_FALSE);
+
+    // Add IO regions of memory
+    void'(rvviRefMemorySetVolatile('h00800040, 'h00800043)); //TODO: deal with int return value
 
     `uvm_info(info_tag, "ref_init() complete", UVM_NONE)
   endtask // ref_init

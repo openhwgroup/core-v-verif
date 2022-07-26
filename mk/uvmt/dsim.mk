@@ -135,13 +135,14 @@ comp: mk_results $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI)
 		$(DSIM_USER_COMPILE_ARGS) \
 		+incdir+$(DV_UVME_PATH) \
 		+incdir+$(DV_UVMT_PATH) \
-		+incdir+$(CORE_V_VERIF)/vendor_lib/ImperasDV/ImpPublic/include/host \
 		-f $(CV_CORE_MANIFEST) \
 		$(DSIM_FILE_LIST) \
 		-work $(DSIM_WORK) \
 		+$(UVM_PLUSARGS) \
 		-genimage $(DSIM_IMAGE)
 
+#		TODO: discuss location of ImperasDV with Imperas.
+#		+incdir+$(CORE_V_VERIF)/vendor_lib/ImperasDV/ImpPublic/include/host \
 
 ################################################################################
 # If the configuration specified OVPSIM arguments, generate an ovpsim.ic file and
