@@ -60,11 +60,16 @@ interface uvma_rvfi_instr_if
     input logic [GPR_ADDR_WL-1:0]    rvfi_rd2_addr,
     input logic [XLEN-1:0]           rvfi_rd2_wdata,
 
-    input logic [XLEN-1:0]           rvfi_mem_addr,
-    input logic [XLEN-1:0]           rvfi_mem_rdata,
-    input logic [XLEN/8-1:0]         rvfi_mem_rmask,
-    input logic [XLEN-1:0]           rvfi_mem_wdata,
-    input logic [XLEN/8-1:0]         rvfi_mem_wmask
+    input logic [(32*XLEN)-1:0]      rvfi_gpr_rdata,
+    input logic [(32)-1:0]           rvfi_gpr_rmask,
+    input logic [(32*XLEN)-1:0]      rvfi_gpr_wdata,
+    input logic [(32)-1:0]           rvfi_gpr_wmask,
+
+    input logic [(NMEM*XLEN)-1:0]    rvfi_mem_addr,
+    input logic [(NMEM*XLEN)-1:0]    rvfi_mem_rdata,
+    input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_rmask,
+    input logic [(NMEM*XLEN)-1:0]    rvfi_mem_wdata,
+    input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask
 
   );
 
@@ -116,6 +121,10 @@ interface uvma_rvfi_instr_if
         rvfi_rd1_wdata,
         rvfi_rd2_addr,
         rvfi_rd2_wdata,
+        rvfi_gpr_rdata,
+        rvfi_gpr_rmask,
+        rvfi_gpr_wdata,
+        rvfi_gpr_wmask,
         rvfi_mem_addr,
         rvfi_mem_rdata,
         rvfi_mem_rmask,
