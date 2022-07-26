@@ -19,21 +19,13 @@
 
 .global change_mode
 .global umode
-// .global user_code
-// .global rwcsrs
-
 
 change_mode:
-  // to U mode if =0
-  // beq a0, x0, umode
-  // to M mode if !=0
-  // bne a0, x0, mmode
 
 umode:
   addi sp, sp, -4
   sw s0, 0(sp)
   // set mstatus to U mode
-  // 1: auipc t0, %pcrel_hi(
   li t0, 0x1800
   csrrc x0, 0x300, t0
   // assing ra to mepc
@@ -45,8 +37,6 @@ umode:
   add sp, sp, 4
   // return to next line in main and complete switch to Umode
   mret
-
-
 
 .section .rodata
 umode_msg:
