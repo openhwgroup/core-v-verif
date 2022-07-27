@@ -28,18 +28,18 @@ void default_none()
   // if in m mode change to u mode
   if (mstatus == 0x1800)
   {
-    printf("\nooooo out of reset ooooo\n");
+    printf("\n\t Out of reset\n");
     // printf("\nmepc before mode switching = %lx\n", rtnaddr);
 
     change_mode();
     // asm volatile("ecall");
     __asm__ volatile("csrrs %0, 0x300, x0\n"
                      : "=r"(mstatus));
-    printf("\nbbbbb back from the handler to M mode mmmmm\n");
+    printf("\n Back from the handler to M mode\n");
     __asm__ volatile("csrrs %0, 0x300, x0\n"
                      : "=r"(mstatus));
-    printf("\tmstatus = %lx\n", mstatus);
-    printf("\nuuuu U mode test pass uuuuu\n\n");
+    printf("\t mstatus = %lx\n", mstatus);
+    printf("\t U mode test pass \n\n");
   }
   exit(EXIT_FAILURE);
 }

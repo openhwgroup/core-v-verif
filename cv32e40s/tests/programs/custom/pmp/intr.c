@@ -21,12 +21,45 @@ CSRS glb_csrs; // only used for exception check
 
 __attribute__((interrupt("machine"))) void u_sw_irq_handler(void)
 {
-  printf("\nxxxxx User permission denied xxxxx\n");
+  // printf("\nxxxxx User permission denied xxxxx\n");
   printf("\tu_sw_irq_handler\n");
 
   __asm__ volatile("csrrw %0, mcause, x0"
                    : "=r"(glb_csrs.mcause));
-  printf("\tmcause = 0x%lx\n", glb_csrs.mcause);
+  // printf("\tmcause = 0x%lx\n", glb_csrs.mcause);
+
+  if (glb_csrs.mcause == 0)
+  {
+    printf("\tInstruction address misaligned\n\n");
+  }
+  else if (glb_csrs.mcause == 1)
+  {
+    printf("\tInstruction access fault\n\n");
+  }
+  else if (glb_csrs.mcause == 2)
+  {
+    printf("\tIllegal instruction\n\n");
+  }
+  else if (glb_csrs.mcause == 3)
+  {
+    printf("\tBreakpoint\n\n");
+  }
+  else if (glb_csrs.mcause == 4)
+  {
+    printf("\tLoad address misaligned\n\n");
+  }
+  else if (glb_csrs.mcause == 5)
+  {
+    printf("\tLoad access fault\n\n");
+  }
+  else if (glb_csrs.mcause == 6)
+  {
+    printf("\tStore/AMO address misaligned\n\n");
+  }
+  else if (glb_csrs.mcause == 7)
+  {
+    printf("\tStore/AMO access fault\n\n");
+  }
 
   // Increment "mepc"
   __asm__ volatile("csrrw %0, mepc, x0"
@@ -44,11 +77,7 @@ __attribute__((interrupt("machine"))) void u_sw_irq_handler(void)
   __asm__ volatile("csrrw x0, mstatus, %0"
                    :
                    : "r"(glb_csrs.mstatus));
-  // printf("\tmstatus = 0x%lx before exiting handler\n", glb_csrs.mstatus);
-  // __asm__ volatile("csrrw x0, mstatus, %0"
-  //                  :
-  //                  : "r"(mstatus));
-  // printf("\tmstatus = x%x before exiting handler\n", mstatus);
+
   return;
 
   exit(EXIT_FAILURE);
