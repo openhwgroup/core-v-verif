@@ -581,7 +581,7 @@ module uvmt_cv32e40s_tb;
 
 
     bind cv32e40s_pmp :
-      uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp_i
+      uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i
       uvmt_cv32e40s_pmp_assert#(
         .PMP_GRANULARITY(PMP_GRANULARITY),
         .PMP_NUM_REGIONS(PMP_NUM_REGIONS),
@@ -592,7 +592,7 @@ module uvmt_cv32e40s_tb;
                             .*);
 
     bind  cv32e40s_pmp :
-      uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp_i
+      uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i
       uvmt_cv32e40s_pmp_assert#(
         .PMP_GRANULARITY(PMP_GRANULARITY),
         .PMP_NUM_REGIONS(PMP_NUM_REGIONS),
