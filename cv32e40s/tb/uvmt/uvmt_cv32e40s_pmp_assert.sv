@@ -34,7 +34,8 @@ module uvmt_cv32e40s_pmp_assert
    input logic [31:0] rvfi_csr_mseccfg_rdata,
    input logic [31:0] rvfi_csr_mseccfgh_rdata,
    input logic [ 4:0] rvfi_rd_addr,
-   input logic [31:0] rvfi_rd_wdata
+   input logic [31:0] rvfi_rd_wdata,
+   input logic [ 4:0] rvfi_rs1_addr
   );
 
   localparam logic [1:0] MODE_U = 2'b 00;
@@ -119,7 +120,7 @@ module uvmt_cv32e40s_pmp_assert
   } match_status_t;
 
   match_status_t match_status;
-  pmp_csr_t      rvfi_pmp_csr_rdata;
+  pmp_csr_t      pmp_csr_rvfi_rdata;
 
   default clocking @(posedge clk); endclocking
   default disable iff !(rst_n);
@@ -873,21 +874,22 @@ module uvmt_cv32e40s_pmp_assert
     rvfi_trap.debug  &&
     (rvfi_trap.debug_cause == DBG_TRIGGER);
   wire  is_rvfi_csr_read_instr =
-    rvfi_valid  &&
-    (rvfi_insn[6:0] == 7'b 1110011)  &&
-    (rvfi_insn[14:12] inside {1, 2, 3, 5, 6, 7})  &&
+    is_rvfi_csr_instr  &&
     rvfi_rd_addr;
+  wire  is_rvfi_csr_write_instr =
+    is_rvfi_csr_instr  &&
+    rvfi_rs1_addr;
 
-  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_pmp_csr_readout
+  for (genvar i = 0; i < PMP_MAX_REGIONS; i++) begin: gen_pmp_csr_readout
     localparam pmpcfg_reg_i    = i / 4;
     localparam pmpcfg_field_hi = (8 * (i % 4)) + 7;
     localparam pmpcfg_field_lo = (8 * (i % 4));
 
-    assign rvfi_pmp_csr_rdata.cfg[i]  = rvfi_csr_pmpcfg_rdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
-    assign rvfi_pmp_csr_rdata.addr[i] = rvfi_csr_pmpaddr_rdata[i];
+    assign pmp_csr_rvfi_rdata.cfg[i]  = rvfi_csr_pmpcfg_rdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
+    assign pmp_csr_rvfi_rdata.addr[i] = rvfi_csr_pmpaddr_rdata[i];
   end
-  assign rvfi_pmp_csr_rdata.mseccfg[0] = rvfi_csr_mseccfg_rdata;
-  assign rvfi_pmp_csr_rdata.mseccfg[1] = rvfi_csr_mseccfgh_rdata;
+  assign pmp_csr_rvfi_rdata.mseccfg[0] = rvfi_csr_mseccfg_rdata;
+  assign pmp_csr_rvfi_rdata.mseccfg[1] = rvfi_csr_mseccfgh_rdata;
 
   // PMP CSRs only accessible from M-mode
   property p_csrs_mmode_only;
@@ -911,13 +913,24 @@ module uvmt_cv32e40s_pmp_assert
   // NAPOT, some bits read as ones, depending on G
   if (PMP_GRANULARITY >= 2) begin: gen_napot_ones_g2
     //TODO:ropeders no magic numbers
-
     for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_napot_ones_i
       a_napot_ones: assert property (
         rvfi_valid  &&
-        rvfi_pmp_csr_rdata.cfg[i].mode[1]
+        pmp_csr_rvfi_rdata.cfg[i].mode[1]
         |->
-        (rvfi_pmp_csr_rdata.addr[i][PMP_GRANULARITY-2:0] == '1)
+        (pmp_csr_rvfi_rdata.addr[i][PMP_GRANULARITY-2:0] == '1)
+      );
+    end
+  end
+
+  // OFF/TOR, some bits read as zeros, depending on G
+  if (PMP_GRANULARITY >= 1) begin: gen_all_zeros_g1
+    for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_all_zeros_i
+      a_all_zeros: assert property (
+        rvfi_valid  &&
+        (pmp_csr_rvfi_rdata.cfg[i].mode[1] === 1'b 0)
+        |->
+        (pmp_csr_rvfi_rdata.addr[i][PMP_GRANULARITY-1:0] == '0)
       );
     end
   end
@@ -941,5 +954,33 @@ module uvmt_cv32e40s_pmp_assert
       (rvfi_rd_wdata == rvfi_csr_pmpaddr_rdata[i])
     );
   end
+
+  // Software views does not change underlying register value
+  property p_storage_unaffected(i);
+    logic [31:0] pmpaddr;
+    accept_on (
+      is_rvfi_csr_write_instr  &&
+      (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + i))
+    )
+      rvfi_valid  ##0
+      pmp_csr_rvfi_rdata.cfg[i].mode[1]  ##0
+      (1, pmpaddr = pmp_csr_rvfi_rdata.addr[i])
+      ##1
+      (rvfi_valid [->1])  ##0
+      (pmp_csr_rvfi_rdata.cfg[i].mode[1] == 1'b 0)
+      ##1
+      (rvfi_valid [->1])  ##0
+      pmp_csr_rvfi_rdata.cfg[i].mode[1]
+    |->
+    (pmp_csr_rvfi_rdata.addr[i][31:0] == pmpaddr);
+    // Note, this _can_ be generalized more, but at a complexity/readability cost
+  endproperty : p_storage_unaffected
+  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_storage_unaffected
+    a_storage_unaffected: assert property (
+      p_storage_unaffected(i)
+    );
+  end
+
+  // TODO:ropeders "uvm_error" on all assertions
 
 endmodule : uvmt_cv32e40s_pmp_assert

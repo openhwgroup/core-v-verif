@@ -600,6 +600,7 @@ module uvmt_cv32e40s_tb;
                             .rvfi_csr_mseccfgh_rdata (rvfi_i.rvfi_csr_mseccfgh_rdata),
                             .rvfi_rd_addr (rvfi_i.rvfi_rd_addr),
                             .rvfi_rd_wdata (rvfi_i.rvfi_rd_wdata),
+                            .rvfi_rs1_addr (rvfi_i.rvfi_rs1_addr),
                             .*);
 
     bind  cv32e40s_pmp :
@@ -621,6 +622,7 @@ module uvmt_cv32e40s_tb;
                        .rvfi_csr_mseccfgh_rdata (rvfi_i.rvfi_csr_mseccfgh_rdata),
                        .rvfi_rd_addr (rvfi_i.rvfi_rd_addr),
                        .rvfi_rd_wdata (rvfi_i.rvfi_rd_wdata),
+                       .rvfi_rs1_addr (rvfi_i.rvfi_rs1_addr),
                        .*);
 
 
