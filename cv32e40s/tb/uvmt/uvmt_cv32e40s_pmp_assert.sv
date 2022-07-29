@@ -97,7 +97,9 @@ module uvmt_cv32e40s_pmp_assert
 
   // Check legal reasons to accept access
 
-  always @* begin
+  // always @* begin
+  always_comb begin
+
     match_status = {<<{'0}};
 
     for (int region = 0; region < PMP_NUM_REGIONS; region++) begin

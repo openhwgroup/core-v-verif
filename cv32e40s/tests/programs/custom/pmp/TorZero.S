@@ -17,78 +17,68 @@
 
 .section .text
 
+.global xr_test
+.global xw_test
+.global loadtrap
 
-.global tor_zero
-
-tor_zero:
+xr_test:
+// xr_test(int toread/ output, uint32_t addr)
 // setup stack
-  addi sp, sp, -288
-  sw ra, 284(sp)
-  sw s0, 280(sp)
-  addi s0, sp, 288
+  addi sp, sp, -28
+  sw ra, 24(sp)
+  sw s0, 20(sp)
+  addi s0, sp, 28
 
-// designate a range for addr0, base=0x2000
-  li a5,0x2000>>2
-  // addi a5, a5, 2000
-  csrrw x0, 0x3b0, a5
-
-  //set cfg0.torR
-  csrrwi x0, 0x3a0, 0xf
-
-  call change_mode
-
-  // load from designated range
-  li t0, 0x1fd0
-  lw a1, 0(t0)
-  // la a0, loadpass_msg
-  // jal ra, puts
+  // write to argument a0 from addr a1
+  // load content from address a1 to t0
+  lw t0, 0(a1)
+  // store t0 to address a0 (argument)
+  sw t0, 0(a0)
 
 // pop stack
-  lw s0,280(sp)
-  lw ra,284(sp)
-  addi sp,sp,288
+  lw s0,20(sp)
+  lw ra,24(sp)
+  addi sp,sp,28
+  jr ra
+
+xw_test:
+// xw_test(int towrite/ input, uint32_t addr)
+// setup stack
+  addi sp, sp, -28
+  sw ra, 24(sp)
+  sw s0, 20(sp)
+  addi s0, sp, 28
+
+  // write argument to address
+  sw a0, 0(a1)
+
+// pop stack
+  lw s0,20(sp)
+  lw ra,24(sp)
+  addi sp,sp,28
+  jr ra
+
+loadtrap:
+  // setup stack
+  addi sp, sp, -28
+  sw ra, 24(sp)
+  sw s0, 20(sp)
+  addi s0, sp, 28
+
+  // addiw t0, zero, 0x8888
+  li t0, 0x8888
+  li t1, 11
+  sw t1, 0(t0)
+
+  // pop stack
+  lw s0,20(sp)
+  lw ra,24(sp)
+  addi sp,sp,28
   jr ra
 
 .section .rodata
-loadpass_msg:
-  .string "\n\t back in M mode \n"
+exe_msg:
+  .string "\n\t xr tested, back in M mode \n"
 
-
-// loadram:
-//   addi sp,sp,-288
-//   sw ra,284(sp)
-//   sw s0,280(sp)
-//   addi s0,sp,288
-//   addi a5,s0,-276
-//   li a4,256
-//   mv a2,a4
-//   li a1,0
-//   mv a0,a5
-//   call memset
-//   sw zero,-20(s0)
-//   j .L2
-// .L3:
-//   lw a4,-20(s0)
-//   li a5,4096
-//   addi a5,a5,-2048
-//   add a5,a4,a5
-//   slli a5,a5,2
-//   lw a4, 0(a5)
-//   lw a5,-20(s0)
-//   slli a5,a5,2
-//   addi a5,a5,-16
-//   add a5,a5,s0
-//   sw a4,-260(a5)
-//   lw a5,-20(s0)
-//   addi a5,a5,1
-//   sw a5,-20(s0)
-// .L2:
-//   lw a4,-20(s0)
-//   li a5,63
-//   ble a4,a5,.L3
-//   nop
-//   nop
-//   lw ra,284(sp)
-//   lw s0,280(sp)
-//   addi sp,sp,288
-//   jr ra
+load_msg:
+  .string "\n\t load, back in M mode \n"

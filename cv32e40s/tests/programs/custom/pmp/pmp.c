@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
 
   // matching tests have sticky bits
   tor_zero();
+  // tor_zeros();
   // napot_matching();
   // tor_macthing();
 
