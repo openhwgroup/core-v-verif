@@ -35,7 +35,8 @@ module uvmt_cv32e40s_pmp_assert
    input logic [31:0] rvfi_csr_mseccfgh_rdata,
    input logic [ 4:0] rvfi_rd_addr,
    input logic [31:0] rvfi_rd_wdata,
-   input logic [ 4:0] rvfi_rs1_addr
+   input logic [ 4:0] rvfi_rs1_addr,
+   input logic [31:0] rvfi_rs1_rdata
   );
 
   localparam logic [1:0] MODE_U = 2'b 00;
@@ -878,7 +879,8 @@ module uvmt_cv32e40s_pmp_assert
     rvfi_rd_addr;
   wire  is_rvfi_csr_write_instr =
     is_rvfi_csr_instr  &&
-    rvfi_rs1_addr;
+    rvfi_rs1_addr  &&
+    !((rvfi_insn[14:12] inside {3'b 010, 3'b 011}) && !rvfi_rs1_rdata);  // CSRRS/C wo/ high bits
 
   for (genvar i = 0; i < PMP_MAX_REGIONS; i++) begin: gen_pmp_csr_readout
     localparam pmpcfg_reg_i    = i / 4;
@@ -982,5 +984,20 @@ module uvmt_cv32e40s_pmp_assert
   end
 
   // TODO:ropeders "uvm_error" on all assertions
+
+  // Software-view can read the granularity level
+  a_granularity_determination: assert property (
+    (is_rvfi_csr_instr && (rvfi_insn[14:12] == 3'b 001)) &&  // CSRRW instr,
+    (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + 0))    &&  // to a "pmpaddr" CSR,
+    ((rvfi_rs1_rdata == '1) && rvfi_rs1_addr)            &&  // writing all ones.
+    (pmp_csr_rvfi_rdata.cfg[0] == '0)                    &&  // Related cfg is 0,
+    (pmp_csr_rvfi_rdata.cfg[0+1] == '0)                  &&  // above cfg is 0.
+    !rvfi_trap                                               // (Trap doesn't meddle.)
+    |=>
+    (rvfi_valid [->1])  ##0
+    (rvfi_csr_pmpaddr_rdata[0][31:PMP_GRANULARITY] == '1)  &&
+    (rvfi_csr_pmpaddr_rdata[0][PMP_GRANULARITY-1:0] == '0)
+    // Note: _Can_ be generalized for all i
+  );
 
 endmodule : uvmt_cv32e40s_pmp_assert
