@@ -888,10 +888,9 @@ module uvmt_cv32e40s_pmp_assert
     localparam pmpcfg_field_lo = (8 * (i % 4));
 
     assign pmp_csr_rvfi_rdata.cfg[i]  = rvfi_csr_pmpcfg_rdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
-    assign pmp_csr_rvfi_rdata.addr[i] = rvfi_csr_pmpaddr_rdata[i];
+    assign pmp_csr_rvfi_rdata.addr[i] = rvfi_csr_pmpaddr_rdata[i];  // TODO:ropeders is this assignment correct?
   end
-  assign pmp_csr_rvfi_rdata.mseccfg[0] = rvfi_csr_mseccfg_rdata;
-  assign pmp_csr_rvfi_rdata.mseccfg[1] = rvfi_csr_mseccfgh_rdata;
+  assign pmp_csr_rvfi_rdata.mseccfg = {rvfi_csr_mseccfgh_rdata, rvfi_csr_mseccfg_rdata};
 
   // PMP CSRs only accessible from M-mode
   property p_csrs_mmode_only;
@@ -999,5 +998,46 @@ module uvmt_cv32e40s_pmp_assert
     (rvfi_csr_pmpaddr_rdata[0][PMP_GRANULARITY-1:0] == '0)
     // Note: _Can_ be generalized for all i
   );
+
+  // Locking is forever
+  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_until_reset
+    a_until_reset: assert property (
+      pmp_csr_rvfi_rdata.cfg[i].lock  &&
+      !pmp_csr_rvfi_rdata.mseccfg.rlb
+      |->
+      always pmp_csr_rvfi_rdata.cfg[i].lock
+    );
+  end
+
+  // Locked entries, ignore pmpicfg/pmpaddri writes
+  a_ignore_writes_notrap: assert property (
+    is_rvfi_csr_write_instr  &&
+    (rvfi_insn[31:20] inside {(CSRADDR_FIRST_PMPADDR + 0), (CSRADDR_FIRST_PMPCFG + 0)})  &&
+    (pmp_csr_rvfi_rdata.cfg[0].lock && !pmp_csr_rvfi_rdata.mseccfg.rlb)  &&
+    (rvfi_mode == MODE_M)
+    |->
+    (rvfi_trap.exception_cause != EXC_ILL_INSTR)
+  );
+  a_ignore_writes_nochange: assert property (
+    rvfi_valid &&
+    (pmp_csr_rvfi_rdata.cfg[0].lock && !pmp_csr_rvfi_rdata.mseccfg.rlb)
+    |=>
+    always (
+      !$changed(pmp_csr_rvfi_rdata.cfg[0])  &&
+      !$changed(pmp_csr_rvfi_rdata.addr[0])
+    )
+  );
+  // Note, can be easily checked for all i
+
+  // Locked TOR, ignore i-1 addr writes
+  for (genvar i = 1; i < PMP_NUM_REGIONS; i++) begin: gen_ignore_tor
+    a_ignore_tor: assert property (
+      rvfi_valid &&
+      (pmp_csr_rvfi_rdata.cfg[i].lock && !pmp_csr_rvfi_rdata.mseccfg.rlb)  &&
+      (pmp_csr_rvfi_rdata.cfg[i].mode == PMP_MODE_TOR)
+      |=>
+      always !$changed(pmp_csr_rvfi_rdata.addr[i-1][31:PMP_GRANULARITY])
+    );
+  end
 
 endmodule : uvmt_cv32e40s_pmp_assert
