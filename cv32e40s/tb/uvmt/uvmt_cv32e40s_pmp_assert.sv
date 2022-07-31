@@ -36,7 +36,11 @@ module uvmt_cv32e40s_pmp_assert
    input logic [ 4:0] rvfi_rd_addr,
    input logic [31:0] rvfi_rd_wdata,
    input logic [ 4:0] rvfi_rs1_addr,
-   input logic [31:0] rvfi_rs1_rdata
+   input logic [31:0] rvfi_rs1_rdata,
+
+   // OBI
+   input logic        obi_req,
+   input logic [31:0] obi_addr
   );
 
   localparam logic [1:0] MODE_U = 2'b 00;
@@ -827,6 +831,15 @@ module uvmt_cv32e40s_pmp_assert
         pmp_req_err_o
     );
 
+    // M-mode fails if: no match, and "mseccfg.MMWP"
+    a_nomatch_mmode_mmwp_fails: assert property (
+      (priv_lvl_i == PRIV_LVL_M)  &&
+      !match_status.is_matched  &&
+      csr_pmp_i.mseccfg.mmwp
+      |->
+      pmp_req_err_o
+    );
+
     // U-mode or L=1 succeed only if RWX
     a_uorl_onlyif_rwx: assert property (
       ( priv_lvl_i == PRIV_LVL_U || match_status.is_matched == 1'b1 ) && !pmp_req_err_o |->
@@ -845,6 +858,20 @@ module uvmt_cv32e40s_pmp_assert
       $rose(rst_n) |-> csr_pmp_i.mseccfg === MSECCFG_RESET_VAL
     );
   end endgenerate
+
+  // Denied accesses don't reach the bus
+  property p_suppress_req;
+    logic [31:0] addr;
+    pmp_req_err_o  ##0
+    (1, addr = pmp_req_addr_i)
+    |->
+    (!(obi_req && (obi_addr == addr)))
+    until
+    ((pmp_req_addr_i == addr) && !pmp_req_err_o);
+  endproperty : p_suppress_req
+  a_suppress_req: assert property (
+    p_suppress_req
+  );
 
 
   // RVFI
@@ -1023,8 +1050,8 @@ module uvmt_cv32e40s_pmp_assert
     (pmp_csr_rvfi_rdata.cfg[0].lock && !pmp_csr_rvfi_rdata.mseccfg.rlb)
     |=>
     always (
-      !$changed(pmp_csr_rvfi_rdata.cfg[0])  &&
-      !$changed(pmp_csr_rvfi_rdata.addr[0])
+      $stable(pmp_csr_rvfi_rdata.cfg[0])  &&
+      $stable(pmp_csr_rvfi_rdata.addr[0])
     )
   );
   // Note, can be easily checked for all i
@@ -1036,7 +1063,7 @@ module uvmt_cv32e40s_pmp_assert
       (pmp_csr_rvfi_rdata.cfg[i].lock && !pmp_csr_rvfi_rdata.mseccfg.rlb)  &&
       (pmp_csr_rvfi_rdata.cfg[i].mode == PMP_MODE_TOR)
       |=>
-      always !$changed(pmp_csr_rvfi_rdata.addr[i-1][31:PMP_GRANULARITY])
+      always $stable(pmp_csr_rvfi_rdata.addr[i-1][31:PMP_GRANULARITY])
     );
   end
 

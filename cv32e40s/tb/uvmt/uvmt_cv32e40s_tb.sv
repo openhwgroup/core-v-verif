@@ -602,6 +602,8 @@ module uvmt_cv32e40s_tb;
                             .rvfi_rd_wdata (rvfi_i.rvfi_rd_wdata),
                             .rvfi_rs1_addr (rvfi_i.rvfi_rs1_addr),
                             .rvfi_rs1_rdata (rvfi_i.rvfi_rs1_rdata),
+                            .obi_req (core_i.instr_req_o),
+                            .obi_addr (core_i.instr_addr_o),
                             .*);
 
     bind  cv32e40s_pmp :
@@ -625,6 +627,8 @@ module uvmt_cv32e40s_tb;
                        .rvfi_rd_wdata (rvfi_i.rvfi_rd_wdata),
                        .rvfi_rs1_addr (rvfi_i.rvfi_rs1_addr),
                        .rvfi_rs1_rdata (rvfi_i.rvfi_rs1_rdata),
+                       .obi_req (core_i.data_req_o),
+                       .obi_addr (core_i.data_addr_o),
                        .*);
 
 
