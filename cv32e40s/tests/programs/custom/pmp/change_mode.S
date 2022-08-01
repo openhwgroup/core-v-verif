@@ -40,4 +40,4 @@ umode:
 
 .section .rodata
 umode_msg:
-  .string "\n\tSwiting to U mode\n"
+  .string "\n\tSwitching to U mode\n"

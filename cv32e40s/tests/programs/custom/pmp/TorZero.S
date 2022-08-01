@@ -17,12 +17,11 @@
 
 .section .text
 
-.global xr_test
-.global xw_test
-.global loadtrap
+.global load4addr
+.global store2addr
 
-xr_test:
-// xr_test(int toread/ output, uint32_t addr)
+load4addr:
+// load4addr(int toread/ output, uint32_t addr)
 // setup stack
   addi sp, sp, -28
   sw ra, 24(sp)
@@ -39,10 +38,11 @@ xr_test:
   lw s0,20(sp)
   lw ra,24(sp)
   addi sp,sp,28
-  jr ra
+  // jr ra
+  ret
 
-xw_test:
-// xw_test(int towrite/ input, uint32_t addr)
+store2addr:
+// store2addr(int towrite/ input, uint32_t addr)
 // setup stack
   addi sp, sp, -28
   sw ra, 24(sp)
@@ -53,32 +53,9 @@ xw_test:
   sw a0, 0(a1)
 
 // pop stack
+  addi x0, x0, 0 //mret in intr jmps to the next line
   lw s0,20(sp)
   lw ra,24(sp)
   addi sp,sp,28
-  jr ra
-
-loadtrap:
-  // setup stack
-  addi sp, sp, -28
-  sw ra, 24(sp)
-  sw s0, 20(sp)
-  addi s0, sp, 28
-
-  // addiw t0, zero, 0x8888
-  li t0, 0x8888
-  li t1, 11
-  sw t1, 0(t0)
-
-  // pop stack
-  lw s0,20(sp)
-  lw ra,24(sp)
-  addi sp,sp,28
-  jr ra
-
-.section .rodata
-exe_msg:
-  .string "\n\t xr tested, back in M mode \n"
-
-load_msg:
-  .string "\n\t load, back in M mode \n"
+  // jr ra
+  ret
