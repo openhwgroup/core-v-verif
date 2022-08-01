@@ -72,88 +72,6 @@
 #      - type: ...
 #      - ...
 
-# User CSRs not implemented for first release of CV32E40S
-#- csr: cycle
-#  description: >
-#    (HPM) Cycle Counter
-#  address: 0xC00
-#  privilege_mode: M
-#  rv32:
-#    - field_name: cycle
-#      description: >
-#        Read-only unprivileged shadow of the lower 32 bits of the 64 bit machine mode cycle counter.
-#      type: R
-#      reset_val: 0
-#      msb: 31
-#      lsb: 0
-#- csr: instret
-#  description: >
-#    (HPM) Instruction-Retired Counter
-#  address: 0xC02
-#  privilege_mode: M
-#  rv32:
-#    - field_name: instret
-#      description: >
-#        Read-only unprivileged shadow of the lower 32 bits of the 64 bit machine mode instruction retired counter.
-#      type: R
-#      reset_val: 0
-#      msb: 31
-#      lsb: 0
-#- csr: hpmcounter3
-#  description: >
-#    (HPM) Performance-Monitoring Counter3
-#  address: 0xC03
-#  privilege_mode: M
-#  rv32:
-#    - field_name: counter3
-#      description: >
-#        Read-only unprivileged shadow of the lower 32 bits of the 64 bit machine performance counter.
-#      type: R
-#      reset_val: 0
-#      msb: 31
-#      lsb: 0
-#- csr: cycleh
-#  description: >
-#    (HPM) Upper 32 Cycle Counter
-#  address: 0xC80
-#  privilege_mode: M
-#  rv32:
-#    - field_name: cycleh
-#      description: >
-#        Read-only unprivileged shadow of the upper 32 bits of the 64 bit machine mode cycle counter.
-#      type: R
-#      reset_val: 0
-#      msb: 31
-#      lsb: 0
-#- csr: instreth
-#  description: >
-#    (HPM) Upper 32 Instruction-Retired Counter
-#  address: 0xC82
-#  privilege_mode: M
-#  rv32:
-#    - field_name: instreth
-#      description: >
-#        Read-only unprivileged shadow of the upper 32 bits of the 64 bit machine mode instruction retired counter.
-#      type: R
-#      reset_val: 0
-#      msb: 31
-#      lsb: 0
-#- csr: hpmcounter3h
-#  description: >
-#    (HPM) Upper 32 Performance-Monitoring Counter3
-#  address: 0xC83
-#  privilege_mode: M
-#  rv32:
-#    - field_name: counter3h
-#      description: >
-#        Read-only unprivileged shadow of the upper 32 bits of the 64 bit machine performance counter.
-#      type: R
-#      reset_val: 0
-#      msb: 31
-#      lsb: 0
-
-# User Custom CSRs not verified for first release of CV32E40S
-
 # Machine CSRs
 
 # mcycle(h) and minstret(h) are done here because out of reset mcountinhibit
@@ -211,6 +129,7 @@
       reset_val: 0
       msb: 31
       lsb: 0
+
 - csr: mhpmcounter3
   description: >
     Lower 32-bit Machine Performance Monitoring Counter
@@ -220,7 +139,7 @@
     - field_name: Count
       description: >
         Lower 32-bits of 64-bit machine performance-monitoring counter
-      type: RW
+      type: R
       reset_val: 0
       msb: 31
       lsb: 0
@@ -233,51 +152,811 @@
     - field_name: Count
       description: >
         Upper 32-bits of 64-bit machine performance-monitoring counter
-      type: RW
+      type: R
       reset_val: 0
       msb: 31
       lsb: 0
+
+- csr: mhpmcounter4
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB04
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter4h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB84
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter5
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB05
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter5h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB85
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter6
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB06
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter6h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB86
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter7
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB07
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter7h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB87
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter8
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB08
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter8h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB88
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter9
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB09
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter9h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB89
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter10
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB0A
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter10h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB8A
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter11
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB0B
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter11h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB8B
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter12
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB0C
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter12h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB8C
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter13
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB0D
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter13h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB8D
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter14
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB0E
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter14h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB8E
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter15
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB0F
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter15h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB8F
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter16
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB10
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter16h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB90
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter17
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB11
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter17h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB91
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter18
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB12
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter18h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB92
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter19
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB13
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter19h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB93
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter20
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB14
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter20h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB94
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter21
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB15
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter21h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB95
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter22
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB16
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter22h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB96
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter23
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB17
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter23h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB97
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter24
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB18
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter24h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB98
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter25
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB19
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter25h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB99
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter26
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB1A
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter26h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB9A
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter27
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB1B
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter27h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB9B
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter28
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB1C
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter28h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB9C
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter29
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB1D
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter29h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB9D
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter30
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB1E
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter30h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB9E
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmcounter31
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB1F
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter31h
+  description: >
+    Upper 32-bit Machine Performance Monitoring Counter
+  address: 0xB9F
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 32-bits of 64-bit machine performance-monitoring counter
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
 - csr: mstatus
   description: >
-    Machine ISA Register
+    Machine Status Register
   address: 0x300
   privilege_mode: M
   rv32:
+    - field_name: TW
+      description: >
+        Timeout wait
+      type: WARL
+      reset_val: 0
+      msb: 21
+      lsb: 21
+    - field_name: MPRV
+      description: >
+        Modify Privilege
+      type: RW
+      reset_val: 0
+      msb: 17
+      lsb: 17
     - field_name: MPP
       description: >
         Machine Previous Privilege mode, hardwired to 3'b11 when User mode not enabled
-      type: R
+      type: WARL
       reset_val: 3
       msb: 12
       lsb: 11
+      warl_legalize: |
+        # Can only be set to 0 or 3
+        val_out = val_in if ((val_in == 0x3) or (val_in == 0x0)) else val_orig
     - field_name: PMIE
       description: >
           Previous Machine Interrupt Enable
-      type: WARL
+      type: RW
       reset_val: 0
       msb: 7
       lsb: 7
-    - field_name: PUIE
-      description: >
-          Previous User Interrupt Enable
-      type: R
-      reset_val: 0
-      msb: 4
-      lsb: 4
     - field_name: MIE
       description: >
           Machine Interrupt Enable
-      type: WARL
+      type: RW
       reset_val: 0
       msb: 3
       lsb: 3
-    - field_name: UIE
-      description: >
-          User Interrupt Enable
-      type: R
-      reset_val: 0
-      msb: 0
-      lsb: 0
 - csr: misa
   description: >
     Machine ISA Register
@@ -307,28 +986,28 @@
     - field_name: MFIE
       description: >
         Machine Fast Interrupt Enables
-      type: WARL
+      type: RW
       reset_val: 0
       msb: 31
       lsb: 16
     - field_name: MEIE
       description: >
         Machine External Interrupt Enable
-      type: WARL
+      type: RW
       reset_val: 0
       msb: 11
       lsb: 11
     - field_name: MTIE
       description: >
         Machine Timer Interrupt Enable
-      type: WARL
+      type: RW
       reset_val: 0
       msb: 7
       lsb: 7
     - field_name: MSIE
       description: >
         Machine Software Interrupt Enable
-      type: WARL
+      type: RW
       reset_val: 0
       msb: 3
       lsb: 3
@@ -369,42 +1048,6 @@
       msb: 0
       lsb: 0
 
-### Not supported in CV32E40S ###
-#- csr: menvcfg
-#  description: >
-#    Machine Environment Configuration Register
-#  address: 0x30A
-#  privilege_mode: M
-#  rv32:
-#    - field_name: FIOM
-#      description: >
-#        Fence of IO Implies Memory
-#      type: RW
-#      reset_val: 0
-#      msb: 0
-#      lsb: 0
-#    - field_name: CBIE
-#      description: >
-#        Cache Block Invalidate Instruction Enable
-#      type: RW
-#      reset_val: 0
-#      msb: 5
-#      lsb: 4
-#    - field_name: CBCFE
-#      description: >
-#        Cache Block Clean and Flush Instruction Enable
-#      type: RW
-#      reset_val: 0
-#      msb: 6
-#      lsb: 6
-#    - field_name: CBZE
-#      description: >
-#        Cache Block Zero Instruction Enable
-#      type: RW
-#      reset_val: 0
-#      msb: 7
-#      lsb: 7
-
 - csr: mstatush
   description: >
     Machine ISA register
@@ -426,20 +1069,274 @@
       msb: 5
       lsb: 5
 
-### Not supported in CV32E40s ###
-#- csr: menvcfgh
+- csr: menvcfgh
+  description: >
+    Machine Environment Configuration (h)
+  address: 0x31A
+  privilege_mode: M
+  rv32:
+    - field_name: STCE
+      description: >
+        STimecmp Enable
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 31
+    - field_name: Reserved_30_0
+      description: >
+        Hardcoded zero
+      type: WPRI
+      reset_val: 0
+      msb: 30
+      lsb: 0
+
+# 0.4.0:
+- csr: mcounteren
+  description: >
+    Machine Counter Enable
+  address: 0x306
+  privilege_mode: M
+  rv32:
+    - field_name: Enable
+      description: >
+        Always 0
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+# 0.2.0:
+#- csr: mcounteren
 #  description: >
-#    Machine Environment Configuration (h)
-#  address: 0x31A
+#    Machine Counter Enable
+#  address: 0x306
 #  privilege_mode: M
 #  rv32:
-#    - field_name: STCE
+#    - field_name: Reserved_31_3
 #      description: >
-#        STimecmp Enable
-#      type: RW
+#        Always 0
+#      type: WARL
 #      reset_val: 0
 #      msb: 31
-#      lsb: 31
+#      lsb: 3
+#      warl_legalize: |
+#        val_out = val_in if 0 else val_orig
+#    - field_name: IR
+#      description: >
+#        instret enable for user mode
+#      type: RW
+#      reset_val: 0
+#      msb: 2
+#      lsb: 2
+#    - field_name: Reserved_1_1
+#      description: >
+#        Always 0
+#      type: WARL
+#      reset_val: 0
+#      msb: 1
+#      lsb: 1
+#      warl_legalize: |
+#        val_out = val_in if 0 else val_orig
+#    - field_name: CY
+#      description: >
+#        Cycle enable for user mode
+#      type: RW
+#      reset_val: 0
+#      msb: 0
+#      lsb: 0
+
+- csr: menvcfg
+  description: >
+    Machine Environment Configuration Register
+  address: 0x30A
+  privilege_mode: M
+  rv32:
+    - field_name: FIOM
+      description: >
+        Fence of IO Implies Memory
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0
+    - field_name: CBIE
+      description: >
+        Cache Block Invalidate Instruction Enable
+      type: R
+      reset_val: 0
+      msb: 5
+      lsb: 4
+    - field_name: CBCFE
+      description: >
+        Cache Block Clean and Flush Instruction Enable
+      type: R
+      reset_val: 0
+      msb: 6
+      lsb: 6
+    - field_name: CBZE
+      description: >
+        Cache Block Zero Instruction Enable
+      type: R
+      reset_val: 0
+      msb: 7
+      lsb: 7
+
+- csr: mstateen0
+  description: >
+    Machine State Enable 0
+  address: 0x30C
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_3
+      description: >
+        Reserved bits
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 3
+      warl_legalize: |
+        val_out = 0
+    - field_name: State_Enable
+      description: >
+        State enable
+      type: RW
+      reset_val: 0
+      msb: 2
+      lsb: 2
+    - field_name: Reserved_1_0
+      description: >
+        Reserved bits
+      type: WARL
+      reset_val: 0
+      msb: 1
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+- csr: mstateen1
+  description: >
+    Machine State Enable 1
+  address: 0x30D
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_0
+      description: >
+        Reserved bits
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+- csr: mstateen2
+  description: >
+    Machine State Enable 2
+  address: 0x30E
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_0
+      description: >
+        Reserved bits
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+- csr: mstateen3
+  description: >
+    Machine State Enable 3
+  address: 0x30F
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_0
+      description: >
+        Reserved bits
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+- csr: menvcfgh
+  description: >
+    Machine Environment Configuration
+  address: 0x31A
+  privilege_mode: M
+  rv32:
+    - field_name: STCE
+      description: >
+        STCE
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 31
+    - field_name: Reserved_30_0
+      description: >
+        Reserved
+      type: WPRI
+      reset_val: 0
+      msb: 30
+      lsb: 0
+
+- csr: mstateen0h
+  description: >
+    Machine state enable 0h
+  address: 0x31C
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_0
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+- csr: mstateen1h
+  description: >
+    Machine state enable 1h
+  address: 0x31C
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_0
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+- csr: mstateen2h
+  description: >
+    Machine state enable 2h
+  address: 0x31C
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_0
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+- csr: mstateen3h
+  description: >
+    Machine state enable 3h
+  address: 0x31C
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_0
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
 
 - csr: mcountinhibit
   description: >
@@ -450,17 +1347,12 @@
     - field_name: Selectors 31..4
       description: >
         Selectors for mhpmcounter31..4 inhibit (assuming NUM_MHPMCOUNTER set to 1)
-      type: R
+      type: WARL
       reset_val: 0
       msb: 31
-      lsb: 4
-    - field_name: Selectors 3
-      description: >
-        Selectors for mhpmcounter3 inhibit (assuming NUM_MHPMCOUNTER set to 1)
-      type: WARL
-      reset_val: 1
-      msb: 3
       lsb: 3
+      warl_legalize: |
+        val_out = 0
     - field_name: minstret inhibit
       description: >
         Inhibit minstret counting
@@ -482,7 +1374,7 @@
       reset_val: 1
       msb: 0
       lsb: 0
-# MHPMEVENT4..31 not full modeled by RM
+
 - csr: mhpmevent3
   description: >
     (HPM) Machine Performance-Monitoring Event Selector 3
@@ -495,14 +1387,400 @@
       type: R
       reset_val: 0
       msb: 31
-      lsb: 16
-    - field_name: Selectors
-      description: >
-        Event selector
-      type: WARL
-      reset_val: 0
-      msb: 15
       lsb: 0
+
+- csr: mhpmevent4
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 4
+  address: 0x324
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent5
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 5
+  address: 0x325
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent6
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 6
+  address: 0x326
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent7
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 7
+  address: 0x327
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent8
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 8
+  address: 0x328
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent9
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 9
+  address: 0x329
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent10
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 10
+  address: 0x32a
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent11
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 11
+  address: 0x32b
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent12
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 12
+  address: 0x32c
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent13
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 13
+  address: 0x32d
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent14
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 14
+  address: 0x32e
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent15
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 15
+  address: 0x32f
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent16
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 16
+  address: 0x330
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent17
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 17
+  address: 0x331
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent18
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 18
+  address: 0x332
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent19
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 19
+  address: 0x333
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent20
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 20
+  address: 0x334
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent21
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 21
+  address: 0x335
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent22
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 22
+  address: 0x336
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent23
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 23
+  address: 0x337
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent24
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 24
+  address: 0x338
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent25
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 25
+  address: 0x339
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent26
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 26
+  address: 0x33a
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent27
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 27
+  address: 0x33b
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent28
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 28
+  address: 0x33c
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent29
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 29
+  address: 0x33d
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent30
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 30
+  address: 0x33e
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mhpmevent31
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 31
+  address: 0x33f
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
 - csr: mscratch
   description: >
     Machine Scratch-pad Register
@@ -512,10 +1790,11 @@
     - field_name: MXL
       description: >
         Scratch-pad
-      type: WARL
+      type: RW
       reset_val: 0
       msb: 31
       lsb: 0
+
 - csr: mepc
   description: >
     Machine Exception Program Counter
@@ -536,7 +1815,7 @@
       reset_val: 0
       msb: 0
       lsb: 0
-# TODO Clic needs changes to this
+
 - csr: mcause
   description: >
     Machine Exception Cause
@@ -546,7 +1825,7 @@
     - field_name: Interrupt
       description: >
           Set when exception triggered by interrupt
-      type: WARL
+      type: RW
       reset_val: 0
       msb: 31
       lsb: 31
@@ -564,6 +1843,7 @@
       reset_val: 0
       msb: 10
       lsb: 0
+
 - csr: mtval
   description: >
     Machine Trap Value
@@ -577,6 +1857,7 @@
       reset_val: 0
       msb: 31
       lsb: 0
+
 - csr: mip
   description: >
     Machine Interrupt Pending
@@ -604,73 +1885,87 @@
       reset_val: 0
       msb: 11
       lsb: 11
-    - field_name: Timer
+    - field_name: Reserved_10
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 10
+      lsb: 10
+    - field_name: SEIP
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 9
+      lsb: 9
+    - field_name: Reserved_8
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 8
+      lsb: 8
+    - field_name: MTIP
       description: >
          Machine Timer Interrupt Pending
       type: R
       reset_val: 0
       msb: 7
       lsb: 7
-    - field_name: Software
+    - field_name: Reserved_6
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 6
+      lsb: 6
+    - field_name: STIP
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 5
+      lsb: 5
+    - field_name: Reserved_4
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 4
+      lsb: 4
+    - field_name: MSIP
       description: >
          Machine Software Interrupt Pending
       type: R
       reset_val: 0
       msb: 3
       lsb: 3
+    - field_name: Reserved_2
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 2
+      lsb: 2
+    - field_name: SSIP
+      description: >
+         Always zero
+      type: WARL
+      reset_val: 0
+      msb: 3
+      lsb: 3
+      warl_legalize: |
+        val_out = 0
+    - field_name: Reserved_0
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0
 
-### Not Supported in CV32E40S ###
-#- csr: henvcfg
-#  description: >
-#    Hypervisor Environment Configuration Register
-#  address: 0x61A
-#  privilege_mode: M
-#  rv32:
-#    - field_name: FIOM
-#      description: >
-#        Fence of IO Implies Memory
-#      type: R
-#      reset_val: 0
-#      msb: 0
-#      lsb: 0
-#    - field_name: CBIE
-#      description: >
-#        Cache Block Invalidate Instruction Enable
-#      type: R
-#      reset_val: 0
-#      msb: 5
-#      lsb: 4
-#    - field_name: CBCFE
-#      description: >
-#        Cache Block Clean and Flush Instruction Enable
-#      type: R
-#      reset_val: 0
-#      msb: 6
-#      lsb: 6
-#    - field_name: CBZE
-#      description: >
-#        Cache Block Zero Instruction Enable
-#      type: R
-#      reset_val: 0
-#      msb: 7
-#      lsb: 7
-
-### Not Supported in CV32E40S ###
-#- csr: henvcfgh
-#  description: >
-#    Hypervisor Environment Configuration (h)
-#  address: 0x31A
-#  privilege_mode: M
-#  rv32:
-#    - field_name: STCE
-#      description: >
-#        STimecmp Enable
-#      type: R
-#      reset_val: 0
-#      msb: 31
-#      lsb: 31
-
-### Not Supported in CV32E40S ###
+### PMP registers require manual testing ###
 #- csr: mseccfg
 #  description: >
 #    Machine Security Configuration
@@ -713,7 +2008,6 @@
 #      msb: 9
 #      lsb: 9
 
-### Not supported in CV32E40S ###
 #- csr: mseccfgh
 #  description: >
 #    Machine Security Configuration (h)
@@ -925,6 +2219,43 @@
       reset_val: 0
       msb: 31
       lsb: 0
+
+# Only if Zc = 1
+#- csr: jvt
+#  description: >
+#    Jump vector table
+#  address: 0x017
+#  privilege_mode: U
+#  rv32:
+#    - field_name: Base_31_10
+#      description: >
+#        Upper bits of vector table base address, 1024 byte aligned
+#      type: WARL
+#      reset_val: 0
+#      msb: 31
+#      lsb: 10
+#    - field_name: Base_9_6
+#      description: >
+#        Lower bits of vector table base address, 1024 byte aligned always 0
+#      type: WARL
+#      reset_val: 0
+#      msb: 9
+#      lsb: 6
+#      warl_legalize: |
+#        val_out = val_in if val_in == 0 else val_orig
+#    - field_name: Mode
+#      description: >
+#        Jump table mode
+#      type: WARL
+#      reset_val: 0
+#      msb: 5
+#      lsb: 0
+#      warl_legalize: |
+#        val_out = val_in if val_in == 0 else val_orig
+
+
+# jvt, pmp-registers excluded *for now*
+
 ###############################################################################
 # mvendorid, marchid, mimpid, mhartid and mconfigptr are temporarily
 # excluded from auto-generation of access testing as all bits in these CSRs are
@@ -932,75 +2263,75 @@
 # Access modes to these CSRs is tested in a separate, manually written test-
 # program.
 #
-#- csr: mvendorid
-#  description: >
-#    Machine Vendor ID
-#  address: 0xF11
-#  privilege_mode: M
-#  rv32:
-#    - field_name: Bank
-#      description: >
-#       Number of continuation codes in JEDEC manufacturer ID
-#      type: R
-#      reset_val: 12
-#      msb: 31
-#      lsb: 7
-#    - field_name: ID
-#      description: >
-#       Final byte of JEDEC manufacturer ID, discarding the parity bit.
-#      type: R
-#      reset_val: 2
-#      msb: 6
-#      lsb: 0
-#- csr: marchid
-#  description: >
-#    Machine Architecture ID
-#  address: 0xF12
-#  privilege_mode: M
-#  rv32:
-#    - field_name: ID
-#      description: >
-#        Machine Architecture ID of CV32E40S is 4
-#      type: R
-#      reset_val: 4
-#      msb: 31
-#      lsb: 0
-#- csr: mimpid
-#  description: >
-#    Machine Implementation ID
-#  address: 0xF13
-#  privilege_mode: M
-#  rv32:
-#    - field_name: ID
-#      description: >
-#        Machine Implementation ID
-#      type: R
-#      reset_val: 0
-#      msb: 31
-#      lsb: 0
-#- csr: mhartid
-#  description: >
-#    Machine Hart ID
-#  address: 0xF14
-#  privilege_mode: M
-#  rv32:
-#    - field_name: Hart
-#      description: >
-#        mhartid_i
-#      type: R
-#      reset_val: 0
-#      msb: 31
-#      lsb: 0
-#- csr: mconfigptr
-#  description: >
-#    Machine configuration pointer
-#  address: 0xF15
-#  privilege_mode: M
-#  rv32:
-#    -field_name: zero (reserved)
-#    description: >
-#      Always return zero
-#    type: R
-#    reset_val: 0
-#    msb: 31
-#    lsb: 0
+- csr: mvendorid
+  description: >
+    Machine Vendor ID
+  address: 0xF11
+  privilege_mode: M
+  rv32:
+    - field_name: Bank
+      description: >
+       Number of continuation codes in JEDEC manufacturer ID
+      type: R
+      reset_val: 12
+      msb: 31
+      lsb: 7
+    - field_name: ID
+      description: >
+       Final byte of JEDEC manufacturer ID, discarding the parity bit.
+      type: R
+      reset_val: 2
+      msb: 6
+      lsb: 0
+- csr: marchid
+  description: >
+    Machine Architecture ID
+  address: 0xF12
+  privilege_mode: M
+  rv32:
+    - field_name: ID
+      description: >
+        Machine Architecture ID of CV32E40S is 4
+      type: R
+      reset_val: 4
+      msb: 31
+      lsb: 0
+- csr: mimpid
+  description: >
+    Machine Implementation ID
+  address: 0xF13
+  privilege_mode: M
+  rv32:
+    - field_name: ID
+      description: >
+        Machine Implementation ID
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhartid
+  description: >
+    Machine Hart ID
+  address: 0xF14
+  privilege_mode: M
+  rv32:
+    - field_name: Hart
+      description: >
+        mhartid_i
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mconfigptr
+  description: >
+    Machine configuration pointer
+  address: 0xF15
+  privilege_mode: M
+  rv32:
+    - field_name: zero (reserved)
+      description: >
+        Always return zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0

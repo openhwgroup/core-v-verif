@@ -3,7 +3,8 @@ description: Default configuration for CV32E40S simulations
 compile_flags:
     +define+ZBA_ZBB_ZBC_ZBS
 ovpsim: >
-    # --showoverrides
+    --showoverrides
+    --override root/cpu/envcfg_mask=0x0
     # --trace --tracechange --traceshowicount --monitornets
 cflags: >
 plusargs: >
