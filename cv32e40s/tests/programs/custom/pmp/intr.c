@@ -17,14 +17,14 @@
 
 #include "pmp.h"
 
-CSRS glb_csrs; // only used for exception check
+volatile CSRS glb_csrs; // only used for exception check
 
 __attribute__((interrupt("machine"))) void u_sw_irq_handler(void)
 {
   // printf("\nxxxxx User permission denied xxxxx\n");
   printf("\tu_sw_irq_handler\n");
 
-  __asm__ volatile("csrrw %0, mcause, x0"
+  __asm__ volatile("csrrs %0, mcause, x0"
                    : "=r"(glb_csrs.mcause));
   // printf("\tmcause = 0x%lx\n", glb_csrs.mcause);
 

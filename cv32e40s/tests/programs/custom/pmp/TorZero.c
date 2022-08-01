@@ -25,6 +25,7 @@ extern void store2addr(int input, unsigned int addr);
 void tor_zero()
 {
   int temp[64] = {0};
+  uint32_t mcause = 1111;
   // designate a range for addr0
   asm volatile("csrrw x0, 0x3b0, %0" ::"r"((0x8888 >> 2)));
   asm volatile("csrrw x0, 0x3b1, %0" ::"r"((0xffffffff >> 2)));
@@ -37,20 +38,22 @@ void tor_zero()
   asm volatile("csrrw x0, 0x3a0, %0" ::"r"(0xf0d));
   change_mode();
 
-  load4addr((unsigned int)&temp[63], 0x7777 + 63 * 4);
+  load4addr((unsigned int *)&temp[63], 0x7777 + 63 * 4);
 
   // to trap
   store2addr(11, 0x4444);
-  if (glb_csr.mcause == 7)
+  asm volatile("csrrs %0, mcause, x0"
+               : "=r"(mcause));
+  if (mcause == 7)
   {
-    printf("\n\t entry0 XR test passed");
+    printf("\n\t pmpaddr0 XR test passed");
   }
   else
   {
     exit(EXIT_FAILURE);
   }
   printf("\n\t back in M mode ");
-  printf("\n\t temp[63] = %d @0x%x", temp[63], (unsigned int)&temp[63]);
+  printf("\n\t temp[63] = %d", temp[63]);
   printf("\n\t ------------------------------------------------- \n");
 
   // set cfg0.torXWR-torWR
@@ -58,9 +61,11 @@ void tor_zero()
   change_mode();
 
   store2addr(11, 0x7770);
-  if (glb_csr.mcause == 1)
+  asm volatile("csrrs %0, mcause, x0"
+               : "=r"(mcause));
+  if (mcause == 1)
   {
-    printf("\n\t entry0 WR test passed");
+    printf("\n\t pmpaddr0 WR test passed");
   }
   else
   {
@@ -68,5 +73,18 @@ void tor_zero()
   }
   printf("\n\t ------------------------------------------------- \n");
 
-  // TODO: try different entry0 sizes
+  // access outside region0
+  store2addr(14, 0x9999);
+  load4addr((unsigned int *)&temp[8], 0x9999);
+  if (temp[8] == 14)
+  {
+    printf("\n\t access outside pmpaddr0 test passed");
+  }
+  else
+  {
+    exit(EXIT_FAILURE);
+  }
+  printf("\n\t ------------------------------------------------- \n");
+
+  // TODO: try different pmpaddr0 sizes
 }

@@ -23,10 +23,10 @@
 load4addr:
 // load4addr(int toread/ output, uint32_t addr)
 // setup stack
-  addi sp, sp, -28
-  sw ra, 24(sp)
-  sw s0, 20(sp)
-  addi s0, sp, 28
+  addi sp, sp, -8
+  sw ra, 4(sp)
+  // sw s0, 20(sp)
+  // addi s0, sp, 28
 
   // write to argument a0 from addr a1
   // load content from address a1 to t0
@@ -35,27 +35,27 @@ load4addr:
   sw t0, 0(a0)
 
 // pop stack
-  lw s0,20(sp)
-  lw ra,24(sp)
-  addi sp,sp,28
+  // lw s0,20(sp)
+  lw ra,4(sp)
+  addi sp,sp,8
   // jr ra
   ret
 
 store2addr:
 // store2addr(int towrite/ input, uint32_t addr)
 // setup stack
-  addi sp, sp, -28
-  sw ra, 24(sp)
-  sw s0, 20(sp)
-  addi s0, sp, 28
+  addi sp, sp, -8
+  sw ra, 4(sp)
+  // sw s0, 20(sp)
+  // addi s0, sp, 28
 
   // write argument to address
   sw a0, 0(a1)
 
 // pop stack
   addi x0, x0, 0 //mret in intr jmps to the next line
-  lw s0,20(sp)
-  lw ra,24(sp)
-  addi sp,sp,28
+  // lw s0,20(sp)
+  lw ra,4(sp)
+  addi sp,sp,8
   // jr ra
   ret
