@@ -590,20 +590,6 @@ module uvmt_cv32e40s_tb;
         .MSECCFG_RESET_VAL(cv32e40s_pkg::MSECCFG_DEFAULT)
       )
       u_pmp_assert_if_stage(.rst_n (clknrst_if.reset_n),
-                            .rvfi_valid (rvfi_i.rvfi_valid),
-                            .rvfi_insn (rvfi_i.rvfi_insn),
-                            .rvfi_mode (rvfi_i.rvfi_mode),
-                            .rvfi_trap (rvfi_i.rvfi_trap),
-                            .rvfi_csr_pmpcfg_rdata (rvfi_i.rvfi_csr_pmpcfg_rdata),
-                            .rvfi_csr_pmpaddr_rdata (rvfi_i.rvfi_csr_pmpaddr_rdata),
-                            .rvfi_csr_mseccfg_rdata (rvfi_i.rvfi_csr_mseccfg_rdata),
-                            .rvfi_csr_mseccfgh_rdata (rvfi_i.rvfi_csr_mseccfgh_rdata),
-                            .rvfi_rd_addr (rvfi_i.rvfi_rd_addr),
-                            .rvfi_rd_wdata (rvfi_i.rvfi_rd_wdata),
-                            .rvfi_rs1_addr (rvfi_i.rvfi_rs1_addr),
-                            .rvfi_rs1_rdata (rvfi_i.rvfi_rs1_rdata),
-                            .obi_req (core_i.instr_req_o),
-                            .obi_addr (core_i.instr_addr_o),
                             .*);
 
     bind  cv32e40s_pmp :
@@ -615,21 +601,15 @@ module uvmt_cv32e40s_tb;
         .MSECCFG_RESET_VAL(cv32e40s_pkg::MSECCFG_DEFAULT)
       )
       u_pmp_assert_lsu(.rst_n (clknrst_if.reset_n),
-                       .rvfi_valid (rvfi_i.rvfi_valid),
-                       .rvfi_insn (rvfi_i.rvfi_insn),
-                       .rvfi_mode (rvfi_i.rvfi_mode),
-                       .rvfi_trap (rvfi_i.rvfi_trap),
-                       .rvfi_csr_pmpcfg_rdata (rvfi_i.rvfi_csr_pmpcfg_rdata),
-                       .rvfi_csr_pmpaddr_rdata (rvfi_i.rvfi_csr_pmpaddr_rdata),
-                       .rvfi_csr_mseccfg_rdata (rvfi_i.rvfi_csr_mseccfg_rdata),
-                       .rvfi_csr_mseccfgh_rdata (rvfi_i.rvfi_csr_mseccfgh_rdata),
-                       .rvfi_rd_addr (rvfi_i.rvfi_rd_addr),
-                       .rvfi_rd_wdata (rvfi_i.rvfi_rd_wdata),
-                       .rvfi_rs1_addr (rvfi_i.rvfi_rs1_addr),
-                       .rvfi_rs1_rdata (rvfi_i.rvfi_rs1_rdata),
-                       .obi_req (core_i.data_req_o),
-                       .obi_addr (core_i.data_addr_o),
                        .*);
+
+    bind  cv32e40s_wrapper.rvfi_i
+      uvmt_cv32e40s_pmprvfi_assert #(
+        .PMP_GRANULARITY (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY),
+        .PMP_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS)
+      ) pmprvfi_assert_i (
+        .*
+      );
 
 
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
