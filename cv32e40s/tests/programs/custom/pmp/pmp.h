@@ -23,20 +23,22 @@
 #include <time.h>
 #include <math.h>
 
-// test functions
+// vplan tests
 void reset_registers();
-
 void default_full();
 void default_none();
-
-void change_mode();
-void umode();
-
 void mmode_only();
 void napot_matching();
 void tor_macthing();
 void tor_zero();
 void tor_nomatch();
+void tor_nomatch();
+
+// assembly
+void change_mode();
+void umode();
+void load4addr(unsigned int *output_addr, unsigned int addr);
+void store2addr(int input, unsigned int addr);
 
 typedef struct CSRS_STUCT
 {

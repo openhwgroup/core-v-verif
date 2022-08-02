@@ -15,29 +15,8 @@
 //
 // SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
-.section .text
+#include "pmp.h"
 
-.global change_mode
-.global umode
-
-change_mode:
-
-umode:
-  addi sp, sp, -4
-  sw s0, 0(sp)
-  // set mstatus to U mode
-  li t0, 0x1800
-  csrrc x0, 0x300, t0
-  // assing ra to mepc
-  csrrw x0, 0x341, ra
-  la a0, umode_msg
-  jal ra, puts
-
-  lw s0, 4(sp)
-  add sp, sp, 4
-  // return to next line in main and complete switch to Umode
-  mret
-
-.section .rodata
-umode_msg:
-  .string "\n\tSwitching to U mode\n"
+void tor_macthing(){
+  
+}

@@ -19,9 +19,6 @@
 
 // stay away from 0x0-0xFFF, addresses close to your stack pointer, and within 0x1000-0x40_0000 and not 0x1A11_0800-0x1A11_1800 (Debug)
 
-extern void load4addr(unsigned int *output_addr, unsigned int addr);
-extern void store2addr(int input, unsigned int addr);
-
 void tor_zero()
 {
   int temp[64] = {0};
@@ -53,7 +50,14 @@ void tor_zero()
     exit(EXIT_FAILURE);
   }
   printf("\n\t back in M mode ");
-  printf("\n\t temp[63] = %d", temp[63]);
+  if (temp[63] == 67)
+  {
+    printf("\n\t temp[63] = %d as expected", temp[63]);
+  }
+  else
+  {
+    exit(EXIT_FAILURE);
+  }
   printf("\n\t ------------------------------------------------- \n");
 
   // set cfg0.torXWR-torWR

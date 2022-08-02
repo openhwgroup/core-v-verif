@@ -28,8 +28,8 @@ int main(int argc, char *argv[])
   // mmode_only();
 
   // matching tests have sticky bits
-  tor_zero();
-  // tor_zeros();
+  // tor_zero();
+  tor_nomatch();
   // napot_matching();
   // tor_macthing();
 
