@@ -30,8 +30,8 @@ int main(int argc, char *argv[])
   // matching tests have sticky bits
   // tor_zero();
   tor_nomatch();
-  // napot_matching();
   // tor_macthing();
+  // napot_matching();
 
   exit(EXIT_SUCCESS);
 }
