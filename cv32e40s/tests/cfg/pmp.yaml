@@ -4,7 +4,6 @@ compile_flags: >
    +define+PMP_ENABLE_64
 ovpsim: >
     --override root/cpu/PMP_registers=64
-    --showoverrides
 cflags: >
 plusargs: >
 cv_sw_march: rv32imc

@@ -101,18 +101,18 @@ void u_sw_irq_handler(void) {
   }
 
   if (thand == 2) {// mscratch_reliable_check()
-    __asm__ volatile("csrrw %0, mscratch, x0" : "=r"(mscratchg));
+    __asm__ volatile("csrrs %0, mscratch, x0" : "=r"(mscratchg));
 
-    increment_mepc(); 
 
     tmstatus = 0x1800;
 
     __asm__ volatile("csrrs x0, mstatus, %0" :: "r"(tmstatus)); // set machine mode 
+    increment_mepc(); 
   }
 
 
   if (thand == 0) { // This is the privilege_test behavior
-    __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus)); // read the mstatus register
+    __asm__ volatile("csrrs %0, mstatus, x0" : "=r"(mstatus)); // read the mstatus register
  
     increment_mepc();
 
@@ -175,7 +175,7 @@ Try all kinds of access to all implemented U- and M-mode CSR registers while in 
 
   excc = 0;
   thand = 1; 
-  setup_pmp();
+  //setup_pmp();
   set_u_mode();
   unsigned int utest;
   __asm__ volatile("csrrs %0, 0x017, x0" : "=r"(utest)); // read
@@ -211,7 +211,6 @@ void mstatus_implement_check(void){
   XS = (mstatus & 3 << 15);// >> 15;
   FS = (mstatus & 3 << 13);// >> 13;
   SD = (mstatus & 1 << 31);// >> 31;
-  //printf("%08X\n", mstatus);
   assert_or_die(XS, 0x0, "error: XS set in the mstatus register\n");
   assert_or_die(FS, 0x0, "error: FS set in the mstatus register\n");
   assert_or_die(SD, 0, "error: SD set in the mstatus register\n");
@@ -226,12 +225,11 @@ void mscratch_reliable_check(void){
   change to u-mode, attempt to write to mscratch, trap and assert that mscratch is the same.
   */
   thand = 2; // set the exception handler behavior.
-  unsigned int mscratch, uwrite;
+  volatile unsigned int mscratch, uwrite;
   uwrite = 0x1800;
 
 
-  __asm__ volatile("csrrw %0, mscratch, x0" : "=r"(mscratch));
-  setup_pmp();
+  __asm__ volatile("csrrs %0, mscratch, x0" : "=r"(mscratch));
   set_u_mode();
   __asm__ volatile("csrrw x0, mscratch, %0" :: "r"(uwrite)); // write to the mscratch (in user mode)
   assert_or_die(mscratch, mscratchg, "error: mscratch register changed after attempted user mode read\n");
@@ -285,7 +283,6 @@ void no_u_traps(void) {
   mask = 0xF777; // zero bits mask
   mipr = mier = mask;
   thand = 6; // set trap handler behaviour
-  setup_pmp();
   set_u_mode();
   __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(garb)); // illegal read 
   mipr = mip & mask;
@@ -303,7 +300,6 @@ When a trap is taken from privilege mode y into x, xPP is set to y. Assert this 
   int input_mode = 0;
   unsigned int mmask;
   __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus));
-  setup_pmp();
   set_u_mode();
   for (int i = 0; i <= 3; i = i + 3){
     input_mode = i << 11;
@@ -319,22 +315,20 @@ When a trap is taken from privilege mode y into x, xPP is set to y. Assert this 
 }
 
 void proper_ret_priv(void) {
-/* 
-Assert that U-mode is set in the MPP after returning from a M-mode.
-*/
-unsigned int mmask;
-thand = 0;
-setup_pmp();
-set_u_mode();
-__asm__ volatile("mret");
-__asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus));
-mmask = (mstatus & (3 << 11)); // mask to get the MPP field.
-assert_or_die(mmask, 0x0, "error: MPP is not set to least privileged mode after executing mret\n");
-mmask = (mstatus & (1 << 17)); // mask to get the MPRV field.
-assert_or_die(mmask, 0x0, "error: MPRV is not set to 0 after executing mret\n");
+  /* 
+  Assert that U-mode is set in the MPP after returning from a M-mode.
+  */
+  unsigned int mmask;
+  thand = 0;
+  set_u_mode();
+  __asm__ volatile("mret");
+  __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus));
+  mmask = (mstatus & (3 << 11)); // mask to get the MPP field.
+  assert_or_die(mmask, 0x0, "error: MPP is not set to least privileged mode after executing mret\n");
+  mmask = (mstatus & (1 << 17)); // mask to get the MPRV field.
+  assert_or_die(mmask, 0x0, "error: MPRV is not set to 0 after executing mret\n");
 }
 
-// Illegal instruction fault is mcause[10:0] == 2
 void check_wfi_trap(void) {
   /* 
   When in U-mode and TW=1 in mstatus, executing a WFI should trap to an illegal exception.
@@ -342,7 +336,6 @@ void check_wfi_trap(void) {
   thand = 0;
   unsigned int set_tw, pmstatus, rmcause;
   set_tw = 0x200000; // mask for TW in mstatus
-  setup_pmp();
   set_m_mode();
   __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus));
   pmstatus = mstatus | set_tw;
@@ -350,7 +343,6 @@ void check_wfi_trap(void) {
   set_u_mode();
   __asm__ volatile("wfi");
   __asm__ volatile("csrrw %0, mcause, x0" : "=r"(rmcause));
-  //printf("mcause is: %08X\n", rmcause);  
   pmstatus = rmcause & 0x2;
   assert_or_die(pmstatus, 0x2, "error: mcause not showing illegal insn exception after TW WFI trap.\n");
 }
@@ -360,7 +352,6 @@ void correct_ecall(void) {
   Be in U-mode, execute ecall, ensure that an exception is taken and mcause is set correctly.
   */
   unsigned int rmcause, pmstatus;
-  setup_pmp();
   set_u_mode();
   __asm__ volatile("ecall");
   __asm__ volatile("csrrw %0, mcause, x0" : "=r"(rmcause));   
@@ -376,19 +367,17 @@ void correct_xret(void) {
  volatile int MPRVs, mcode, MPP, MPRVt;
 
   __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus));
-  // printf("this is the mstatus: %08X\n", mstatus);
   MPRVs = return_field(mstatus, 17, 17);
-  setup_pmp();
   set_u_mode();
   __asm__ volatile("mret");
   __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus));
-  // printf("this is the mstatus: %08X\n", mstatus);
+  
   MPP = return_field(mstatus, 11, 12);
   MPRVt = return_field(mstatus, 17, 17);
   __asm__ volatile("csrrw %0, mcause, x0" : "=r"(mcause));
-  // printf("this is the mcause: %08X\n", mcause);
+  
   mcode = return_field(mcause, 1, 1);
-  // printf("this is the mcode: %08X\n", mcode);
+  
   assert_or_die(MPRVt, MPRVs, "error: MPRV changed state after illegal mret\n");
   assert_or_die(mcode, 1, "error: mcause did not report illegal exception\n");
   assert_or_die(MPP, 0x0, "error: MPP not set to U-mode after illegal insn.\n");
@@ -411,7 +400,7 @@ void access_trigger(){
   thand = 1;
   excc = 0;
   unsigned int csr_acc;
-  setup_pmp();
+  
   set_u_mode();
   __asm__ volatile("csrrw %0, tselect, x0"      : "=r"(csr_acc));
   __asm__ volatile("csrrw %0, tdata1, x0"       : "=r"(csr_acc));
@@ -427,6 +416,7 @@ void access_trigger(){
 
 int main(void){
 
+  setup_pmp();
   reset_mode();
   privilege_test();
   // sr_cross_privilege(); // TODO: This test will fail until the JVT-register is implemented.
@@ -442,7 +432,6 @@ int main(void){
   correct_xret();
   check_uret();
   access_trigger();
-
 
   return EXIT_SUCCESS;
 }

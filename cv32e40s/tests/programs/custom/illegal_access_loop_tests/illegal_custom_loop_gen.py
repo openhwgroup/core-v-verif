@@ -21,9 +21,10 @@
 *******************************************************************************
 """
 
-func6 = {35, 51} # usermode unprivileged function codes
-outer_loop = 2048 # 11-bit custom instruction
-inner_loop = 32 # 5-bit custom instruction
+func6 = {35, 51} # 'funct6' bit-field usermode unprivileged function codes
+outer_loop = 2048 # 11-bit custom-field instruction
+inner_loop = 32 # 5-bit custom-field instruction
+# ref Figure 3.30: SYSTEM instruction encodings designated for custom use (PRIVSPEC V20211203)
 
 opcode = 115 # SYSTEM OPCODE
 

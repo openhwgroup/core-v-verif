@@ -29,7 +29,7 @@
 // extern and global variable declaration
 extern volatile void  setup_pmp();
 extern volatile unsigned int illegal_full(), csr_loop(), mco_loop(), Check_mcounteren();
-
+extern volatile int gbl_mysignaltothehandler = 0;
 
 // Declaration of assert 
 static __inline__ void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
@@ -41,10 +41,9 @@ static __inline__ void assert_or_die(uint32_t actual, uint32_t expect, char *msg
 }
 
 void change_m_mode(void) {
-  //s4 is x20
-  __asm__ volatile("addi s4, x0, 0x3"); // add 3 to the s4 register, which will be read by the trap handler late
+  gbl_mysignaltothehandler = 1; // Set trap handler behavior
   __asm__ volatile("ecall");
-  __asm__ volatile("li s4, 0"); // Reset the value after entering machine mode
+  gbl_mysignaltothehandler = 0; // reset to avoid looping. 
 }
 
 void illegal_custom_loop(void) {
@@ -53,8 +52,8 @@ void illegal_custom_loop(void) {
     */
     change_m_mode();
     volatile unsigned int epp = 0;
-    //setup_pmp();
     epp = illegal_full();
+    // The assert number stems from the 'illegal_custom_loop.py' script. The number is printed in the terminal once writing is complete.
     assert_or_die(epp, 131072, "error: not all illegal custom instructions triggered the trap handler\n");
 }
 
@@ -64,8 +63,8 @@ void csr_privilege_loop(void) {
     */
     change_m_mode();
     volatile unsigned int ecc = 0;
-    //setup_pmp();
     ecc = csr_loop();
+    // The assert number stems from the 'csr_privilege_gen.py' script. The number is printed in the terminal once writing is complete.
     assert_or_die(ecc, 12288, "error: not all illegal csr instructions triggered the trap handler\n");
 }
 
@@ -75,8 +74,8 @@ void mcounteren_privilege_loop(void) {
     volatile unsigned int mcounter_a_val;
     mcounter_a_val = Check_mcounteren(); // load mcounteren into 'mcounter_a_val'
     assert_or_die(mcounter_a_val, 0x0, "error: mcounteren illegitimate value\n"); // assert register is zeroed 
-    //setup_pmp();
     emm = mco_loop();
+    // The assert number stems from the 'illegal_mcounteren_loop_gen.py' script. The number is printed in the terminal once writing is complete.
     assert_or_die(emm, 32, "error: executions based on zeroed mcounteren did not all trap correctly\n");
 }
 

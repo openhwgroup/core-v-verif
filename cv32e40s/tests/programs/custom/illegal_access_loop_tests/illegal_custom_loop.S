@@ -20,12 +20,16 @@
 **
 *******************************************************************************
 */
+#include "corev_uvmt.h"
+
 
 .global illegal_custom
 .global ill_instr
 .global illegal_full
 .global u_sw_irq_handler
 .global put_m_mode
+.global gbl_mysignaltothehandler
+
 
 illegal_full:
 	addi sp,sp,-52
@@ -48,11 +52,9 @@ illegal_full:
 
 
 u_sw_irq_handler:
-
-
-	// Check the s4 and if some value, then change to machine mode and move on instead.
-	li t0, 0x3
-	beq s4, t0, put_m_mode
+	la t0, gbl_mysignaltothehandler
+	lw t0, 0(t0)
+	bnez t0, put_m_mode
 
 	addi s2, s2, 1 // increement every trap
 
@@ -88,7 +90,7 @@ end_handler_ret:
 	lw s11, 48(sp)
 	addi sp,sp,52
 	ret
-	//jalr x0, 0(ra)
+
 
 
 

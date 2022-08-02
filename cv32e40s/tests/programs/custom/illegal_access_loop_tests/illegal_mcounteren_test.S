@@ -47,12 +47,8 @@ mco_loop:
 
 
 Check_mcounteren: // read and return the mcounteren value 
-
-
 	add a0, x0, x0
 	csrr a0, mcounteren
-
-
 	ret	
 
 end_handler_ret:
@@ -72,13 +68,11 @@ end_handler_ret:
 	lw s11, 48(sp)
 	addi sp,sp,52
 	ret
-	//jalr x0, 0(ra)
+
 
 
 
 mco_custom: // puts the core in usermode.
-
-	// Zero "mstatus" to set MPP=umode
 	li	t0, 0x1800
 	csrrc   x0, mstatus, t0 // clear the mstatus (mpp -> User mode).
 	la t0, mco_instr //this will pouint to the label below.
