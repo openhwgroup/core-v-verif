@@ -67,8 +67,42 @@ end
 `define CSR_DPC_ADDR           32'h7B0
 `define CSR_MCYCLE_ADDR        32'hB00
 `define CSR_MINSTRET_ADDR      32'hB02
-`define CSR_MHPMCOUNTER3_ADDR  32'hB03
+
 //[31:0] [31:0]  CSR_MHPMCOUNTER_ADDR 32'hB03..32'hB1F
+`define CSR_MHPMCOUNTER3_ADDR  32'hB03
+`define CSR_MHPMCOUNTER4_ADDR  32'hB04
+`define CSR_MHPMCOUNTER5_ADDR  32'hB05
+`define CSR_MHPMCOUNTER6_ADDR  32'hB06
+`define CSR_MHPMCOUNTER7_ADDR  32'hB07
+`define CSR_MHPMCOUNTER8_ADDR  32'hB08
+`define CSR_MHPMCOUNTER9_ADDR  32'hB09
+`define CSR_MHPMCOUNTER10_ADDR 32'hB0A
+`define CSR_MHPMCOUNTER11_ADDR 32'hB0B
+`define CSR_MHPMCOUNTER12_ADDR 32'hB0C
+`define CSR_MHPMCOUNTER13_ADDR 32'hB0D
+`define CSR_MHPMCOUNTER14_ADDR 32'hB0E
+`define CSR_MHPMCOUNTER15_ADDR 32'hB0F
+`define CSR_MHPMCOUNTER16_ADDR 32'hB10
+`define CSR_MHPMCOUNTER17_ADDR 32'hB11
+`define CSR_MHPMCOUNTER18_ADDR 32'hB12
+`define CSR_MHPMCOUNTER19_ADDR 32'hB13
+`define CSR_MHPMCOUNTER20_ADDR 32'hB14
+`define CSR_MHPMCOUNTER21_ADDR 32'hB15
+`define CSR_MHPMCOUNTER22_ADDR 32'hB16
+`define CSR_MHPMCOUNTER23_ADDR 32'hB17
+`define CSR_MHPMCOUNTER24_ADDR 32'hB18
+`define CSR_MHPMCOUNTER25_ADDR 32'hB19
+`define CSR_MHPMCOUNTER26_ADDR 32'hB1A
+`define CSR_MHPMCOUNTER27_ADDR 32'hB1B
+`define CSR_MHPMCOUNTER28_ADDR 32'hB1C
+`define CSR_MHPMCOUNTER29_ADDR 32'hB1D
+`define CSR_MHPMCOUNTER30_ADDR 32'hB1E
+`define CSR_MHPMCOUNTER31_ADDR 32'hB1F
+
+`define CSR_MHPMCOUNTER3H_ADDR 32'hB83
+
+`define CSR_MHPMEVENT3_ADDR    32'h323
+
 `define CSR_MCYCLEH_ADDR       32'hB80
 `define CSR_MINSTRETH_ADDR     32'hB82
 //[31:0] [31:0]  CSR_MHPMCOUNTERH_ADDR 32'hB83..32'hB9F
@@ -305,7 +339,11 @@ module uvmt_cv32e40x_imperas_dv_wrap
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRETH_ADDR     ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLE_ADDR       ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MINSTRET_ADDR     ));
-    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER3_ADDR )); // TODO: deal with the MHPMCOUNTER CSRs properly.
+    
+    // TODO: deal with the MHPMCOUNTER CSRs properly.
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER3_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER3H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT3_ADDR ));
 
     rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR,       `RVVI_FALSE);
     rvviRefCsrCompareEnable(hart_id, `CSR_MSTATUS_ADDR,   `RVVI_FALSE);
@@ -323,7 +361,10 @@ module uvmt_cv32e40x_imperas_dv_wrap
     rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR,     `RVVI_FALSE);
 
     // Add IO regions of memory
-    void'(rvviRefMemorySetVolatile('h00800040, 'h00800043)); //TODO: deal with int return value
+    // According to silabs this range is 0x0080_0000 to 0x0080_0FFF
+//    void'(rvviRefMemorySetVolatile('h00800040, 'h00800043)); //TODO: deal with int return value
+    void'(rvviRefMemorySetVolatile('h00800000, 'h00800FFF)); //TODO: deal with int return value
+
 
     `uvm_info(info_tag, "ref_init() complete", UVM_NONE)
   endtask // ref_init

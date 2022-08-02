@@ -116,9 +116,13 @@ function void uvme_cv32e40x_vp_fencei_tamper_seq_c::write_rtl_mem();
   cntxt.mem.write((addr + 1), data[15: 8]);
   cntxt.mem.write((addr + 2), data[23:16]);
   cntxt.mem.write((addr + 3), data[31:24]);
-
 endfunction : write_rtl_mem
 
+import "DPI-C" function void rvviRefMemoryWrite(
+    input int hartId,
+    input longint address,
+    input longint data,
+    input int size);
 
 function void uvme_cv32e40x_vp_fencei_tamper_seq_c::write_iss_mem();
 
@@ -158,6 +162,9 @@ function void uvme_cv32e40x_vp_fencei_tamper_seq_c::write_iss_mem();
   // Write to iss ram
   rvvi_ovpsim_cntxt.ovpsim_mem_vif.mem[addr_lo] = data_lo;
   rvvi_ovpsim_cntxt.ovpsim_mem_vif.mem[addr_hi] = data_hi;
+
+  $display("%m addr=0x%08X data=%08X", addr, data);
+  rvviRefMemoryWrite(0, addr, data, 4);
 
 endfunction : write_iss_mem
 
