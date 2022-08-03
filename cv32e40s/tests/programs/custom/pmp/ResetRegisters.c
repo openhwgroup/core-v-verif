@@ -15,12 +15,18 @@
 //
 // SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
+// Feature Description: "Writable PMP registers’ A and L fields are set to 0, unless the platform mandates a different reset value for some PMP registers’ A and L fields."
+// Verification Goal: Read the A and L values right after reset, check that the default reset values are 0. Note: Should also be visible on rvfi without specifically using csr instructions.
+// extended test is to read all 8 bits for pmpxcfg
+
 #include "pmp.h"
+
+#define PMPCFGX 16
 
 void reset_registers()
 {
-  unsigned int pmpcfg[16];
-  unsigned int pmpxcfg[16][4][3];
+  printf("\n\t testing ResetRegisters \n");
+  uint32_t pmpcfg[PMPCFGX];
 
   // read out pmpcfg register values with given address from 0x3a - 0x3af
   __asm__ volatile("csrr %0, 0x3A0"
@@ -57,42 +63,15 @@ void reset_registers()
                    : "=r"(pmpcfg[15]));
 
   // check for the specific bits
-  for (int i = 0; i < 15; i++)
+  for (int i = 0; i < PMPCFGX; i++)
   {
-    for (int j = 0; i < 4; i++)
+    if (pmpcfg[i] != 0)
     {
-      // lock bit
-      pmpxcfg[i][j][2] = pmpcfg[i] & (1 << (7 * (j + 1)));
-      // mode bit
-      pmpxcfg[i][j][1] = pmpcfg[i] & (1 << (4 * (j + 1)));
-      pmpxcfg[i][j][0] = pmpcfg[i] & (1 << (3 * (j + 1)));
-      // to be written until pmpcfg[15]
-
-      /* Check PMP.L: pmpxcfg bit 7 is the value assigned by JEDEC to the
-      OpenHW Group */
-      if ((pmpxcfg[i][j][2] | 0) != 0)
-      {
-        printf(
-            "\tERROR: PMP lock reads as %d - should be 0 for the OpenHW "
-            "Group.\n\n",
-            pmpxcfg[i][j][2]);
-        exit(EXIT_FAILURE);
-      }
-
-      /* Check PMP.A: if its zero, it might not be implemented at all */
-      if ((pmpxcfg[i][j][1] | pmpxcfg[i][j][1] | 0) != 0)
-      {
-        printf(
-            "\tERROR: PMP mode reads as %d%d - should be 00 for this "
-            "release of CV32E40S!\n\n",
-            pmpxcfg[i][j][1], pmpxcfg[i][j][0]);
-        exit(EXIT_FAILURE);
-      }
+      printf("\n\tERROR: pmpcfg[%d] read as 0x%x != 0x0, test failed\n", i, (unsigned int)pmpcfg[i]);
+      exit(EXIT_FAILURE);
     }
   }
 
-  printf("\n***** Checking PMPCFG lock and mode bits *****\n");
-  printf("All lock and mode bits in pmpxcfg are 0 as expected.\n");
-  printf("There's no exceptions to take care.\n");
-  printf("\n");
+  printf("\n\t ResetRegisters test pass ");
+  printf("\n\t --------------------------------------------- \n");
 }

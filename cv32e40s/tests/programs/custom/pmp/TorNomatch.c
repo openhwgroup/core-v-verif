@@ -37,9 +37,9 @@ void tor_nomatch()
   umode();
   // // try to access orderly region 0x0 - 0xffff_f
   store2addr(13, 0xffff);
-  load4addr(0xfff1, 0xffff);
+  load4addr((uint32_t*)0xfff1, 0xffff);
 
-  // // to trap and bring back to M mode
+  // to trap and bring back to M mode
   asm volatile("csrrs %0, mstatus, x0"
                : "=r"(mcause));
   // to read from 0xfff1

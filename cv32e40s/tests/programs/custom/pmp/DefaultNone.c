@@ -15,31 +15,54 @@
 //
 // SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
+// "PMP can grant permissions to S and U modes, which by default have none"
+
+// Feature Description: "PMP can grant permissions to S and U modes, which by default have none"
+// Verification Goal: Check that, out of reset, given no extraordinary reset values, and given no change to the pmp csrs, then U-mode has no access permissions.
+
 #include "pmp.h"
 
 void default_none()
 {
-  uint32_t mstatus;
+  uint32_t temp[64] = {0};
+  uint32_t mcause = 11111; // set an arbitrary value
+  printf("\n\t testing DefaultNone\n");
+  // get random address value
+  __asm__ volatile("lw %0, 0(%1)"
+                   : "=r"(temp[63])
+                   : "r"(RANDOM_REG));
+  printf("\n\t temp[63] = 0x%lx\n", temp[63]);
 
-  // int mpp = 0x1800;
-  __asm__ volatile("csrrs %0, 0x300, x0\n"
-                   //  "csrrs %1, 0x341, x0\n"
-                   : "=r"(mstatus));
-  // if in m mode change to u mode
-  if (mstatus == 0x1800)
+  umode();
+  // store an arbiturary value to address, should trap
+  // store2addr(15, temp[63]);
+  asm volatile("sw %0, 0(%1)" ::"r"(15), "r"(temp[63]));
+
+  printf("\n\t Back in M mode \n");
+  asm volatile("csrrw %0, mcause, x0"
+               : "=r"(mcause));
+  printf("\n\t mcause = 0x%lx\n", mcause);
+
+  if (mcause != 1)
   {
-    printf("\n\t Out of reset\n");
-    // printf("\nmepc before mode switching = %lx\n", rtnaddr);
-
-    change_mode();
-    // asm volatile("ecall");
-    __asm__ volatile("csrrs %0, 0x300, x0\n"
-                     : "=r"(mstatus));
-    printf("\n Back from the handler to M mode\n");
-    __asm__ volatile("csrrs %0, 0x300, x0\n"
-                     : "=r"(mstatus));
-    printf("\t mstatus = %lx\n", mstatus);
-    printf("\t U mode test pass \n\n");
+    exit(EXIT_FAILURE);
   }
-  exit(EXIT_FAILURE);
+  printf("\n\t &temp[0] = 0x%lx\n", (uint32_t)&temp[0]);
+
+  umode();
+  // attempt to load from address, should trap
+  // load4addr((uint32_t *)&temp[0], temp[63]);
+  asm volatile("lw %0, 0(%1)" :"=r"(temp[0]): "r"(temp[63]));
+
+  printf("\n\t Back in M mode \n");
+  asm volatile("csrrw %0, mcause, x0"
+               : "=r"(mcause));
+  printf("\n\t mcause = 0x%lx\n", mcause);
+
+  if (mcause != 1)
+  {
+    exit(EXIT_FAILURE);
+  }
+  printf("\n\t DefaultNone test pass ");
+  printf("\n\t --------------------------------------------- \n");
 }

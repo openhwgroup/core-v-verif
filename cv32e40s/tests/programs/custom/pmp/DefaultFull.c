@@ -15,38 +15,35 @@
 //
 // SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
+// Feature Description: "can revoke permissions from M-mode, which by default has full permissions"
+// Verification Goal: Check that, out of/ after reset, given no extraordinary reset values, and given no change to the pmp csrs, then M-mode has full access permissions.
+
 #include "pmp.h"
+#define RANDOM_REG 0x00800040
 
 void default_full()
 {
-  printf("\nxxxxx Checking DefaultFull xxxxxx\n");
+  printf("\n\t testing DefaultFull\n");
   // initialize to 0
-  uint32_t myarray[64] = {0};
-  for (int i = 0; i < 64; i++)
-  {
-    if (myarray[i] != 0)
-    {
-      printf("\nInconsistant value to initializer!\n");
-      printf("\nmyarray[%d] = %lx\n", i, myarray[i]);
-      printf("\n");
-      // exit(EXIT_FAILURE);
-      exit(EXIT_FAILURE);
-    }
-  }
+  volatile uint32_t temp[64] = {0};
 
-  for (int i = 0; i < 64; i++)
-  {
-    myarray[i] = i;
+  // get random address value
+  __asm__ volatile("lw %0, 0(%1)"
+                   : "=r"(temp[63])
+                   : "r"(RANDOM_REG));
 
-    if (myarray[i] != i)
-    {
-      printf("\nValues are not updated accordingly!\n");
-      printf("Expected values = %d\n", i);
-      printf("myarray[%d] = %lx\n", i, myarray[i]);
-      printf("\n");
-      exit(EXIT_FAILURE);
-    }
+  // store an arbitrary value to an arbitrary address
+  store2addr(13, temp[63]);
+  load4addr((uint32_t *)&temp[0], temp[63]);
+
+  if (temp[0] == 13)
+  {
+    printf("\n\t DefaultFull test pass ");
+    printf("\n\t --------------------------------------------- \n");
   }
-  printf("\nM-mode has the full access permissions.\n");
-  printf("There's no exceptions to take care.\n");
+  else
+  {
+    printf("\n\t RAM values are not as expected ");
+    exit(EXIT_FAILURE);
+  }
 }

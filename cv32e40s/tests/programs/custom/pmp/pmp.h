@@ -23,6 +23,8 @@
 #include <time.h>
 #include <math.h>
 
+#define RANDOM_REG 0x00800040
+
 // vplan tests
 void reset_registers();
 void default_full();
@@ -34,11 +36,12 @@ void tor_zero();
 void tor_nomatch();
 void tor_nomatch();
 
-// assembly
+// helper
 void change_mode();
 void umode();
-void load4addr(unsigned int *output_addr, unsigned int addr);
-void store2addr(int input, unsigned int addr);
+void load4addr(uint32_t *output_addr, uint32_t addr);
+void store2addr(int input, uint32_t addr);
+uint32_t lcg_parkmiller(uint32_t *state);
 
 typedef struct CSRS_STUCT
 {

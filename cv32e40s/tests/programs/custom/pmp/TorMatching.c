@@ -18,13 +18,73 @@
 #include "pmp.h"
 
 void tor_macthing(){
-  // designate region0 and region 63 to be XWR for TEXT and stack to fucntio normally
-  asm volatile("csrrw x0, 0x3b0, %0" ::"r"((0x200000 >> 2))); // set to half  of heap
-  // asm volatile("csrrw x0, 0x3b1, %0" ::"r"((0xfffff >> 2)));
-  asm volatile("csrrw x0, 0x3ef, %0" ::"r"((0xffffffff >> 2)));
 
-  // set cfg63.torXWR
-  // asm volatile("csrrw x0, 0x3ef, %0" ::"r"(0xf000000));
+  int temp[64] = {0};
+  // to  make sure temp values are not the same.
+  for (int i = 0; i < 64; i++)
+  {
+    temp[i] = i + 1;
+  }
+  // asign mcause an abiturary value
+  uint32_t mcause = 11111;
+
+  // // 0 regions, verify the entire RAM
+  // umode();
+  // //  to trap and bring back to M mode
+  // store2addr(13, 0xffff);
+  // asm volatile("csrrs %0, mcause, x0"
+  //              : "=r"(mcause));
+  // if (mcause == 1)
+  // {
+  //   printf("\n\t 0 region access test pass ");
+  //   printf("\n\t Back in M mode ");
+  //   printf("\n\t --------------------------------------------- \n");
+  // }
+  // else
+  // {
+  //   exit(EXIT_FAILURE);
+  // }
+
+  // 1 region to cover the entire RAM cfg0.XWR = 111
+  asm volatile("csrrw x0, 0x3b0, %0" ::"r"((0xffffffff >> 2)));
+  asm volatile("csrrwi x0, 0x3a0, 0x7");
+  umode();
+  // write to RAM
+  for (int i = 0; i < 64; i++)
+  {
+    temp[i] = i + 11;
+  }
+  // read from RAM and compare
+  for (int i = 0; i < 64; i++)
+  {
+    if (temp[i] != i + 11)
+    {
+      exit(EXIT_FAILURE);
+    }
+  }
+  // to trap and bring back to M mode
+  asm volatile("csrrs %0, mstatus, x0"
+               : "=r"(temp[63]));
+  asm volatile("csrrs %0, mcause, x0"
+               : "=r"(mcause));
+  if (mcause == 2)
+  {
+    printf("\n\t 1 region access test pass ");
+    printf("\n\t Back in M mode ");
+    printf("\n\t --------------------------------------------- \n");
+  }
+
+  // designate region0 and region 63 to be XWR for TEXT and stack to fucntio normally
+  // asm volatile("csrrw x0, 0x3b0, %0" ::"r"((0x200000 >> 2))); // set to half of heap size
+  // asm volatile("csrrw x0, 0x3b1, %0" ::"r"((0xfffff >> 2)));
+  // asm volatile("csrrw x0, 0x3ee, %0" ::"r"((0xffdfffff >> 2))); // set to half of stack size
+  // asm volatile("csrrw x0, 0x3ef, %0" ::"r"((0xffffffff >> 2)));
+  // set cfg0.XWR
+  // asm volatile("csrrwi x0, 3a0, 0x7");
+  // set cfg60/61/62 off, cfg63.torXWR
+  // asm volatile("csrrw x0, 0x3af, %0" ::"r"(0xf000000));
+
+  // test region0 and region63
 
   // designate region 9, stack_end = 0x400000
   // asm volatile("csrrw x0, 0x3b9, %0" ::"r"((0xf00000 >> 2)));
