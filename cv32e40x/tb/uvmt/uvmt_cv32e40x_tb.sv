@@ -698,7 +698,7 @@ module uvmt_cv32e40x_tb;
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_RAM_ADDR_WIDTH"),    .value(ENV_PARAM_RAM_ADDR_WIDTH)   );
 
      // Start up ImperasDV
-     imperas_dv.ref_init();
+     //imperas_dv.ref_init();
 
      // Run test
      uvm_top.enable_print_topology = 0; // ENV coders enable this as a debug aid
@@ -708,6 +708,12 @@ module uvmt_cv32e40x_tb;
 
    assign core_cntrl_if.clk = clknrst_if.clk;
 
+   // overcome race
+   initial begin
+      #0.9ns;
+     imperas_dv.ref_init();
+   end
+   
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
    longint start_ovpsim_init_time;
