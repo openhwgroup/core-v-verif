@@ -224,6 +224,8 @@ module uvmt_cv32e40x_imperas_dv_wrap
    ////////////////////////////////////////////////////////////////////////////
    // DEBUG REQUESTS: pass to the reference.
    //                 Include some paranoid checks as well.
+//`define HALT_MODE_1
+`ifdef HALT_MODE_1
    logic debug_req_prev;
    bit   debug_req, debug_req_net, debug_req_net_prev;
    assign debug_req = `DUT_PATH.debug_req_i;
@@ -238,71 +240,66 @@ module uvmt_cv32e40x_imperas_dv_wrap
 
      if (debug_req_net_prev != debug_req_net) begin
        void'(rvvi.net_push("haltreq", debug_req_net));
+       `uvm_info(info_tag, $sformatf("%t order=%0d haltreq=%08x", 
+           $time, `RVFI_IF.rvfi_order, debug_req_net), UVM_DEBUG)
      end
 
      debug_req_net_prev = debug_req_net;
    end: pass_debug_req_to_ref
+`else
+/*
+    always @(`DUT_PATH.debug_req_i) begin: pass_debug_req_to_ref
+      void'(rvvi.net_push("haltreq", `DUT_PATH.debug_req_i));
+      `uvm_info(info_tag, $sformatf("%t order=%0d haltreq=%08x", 
+          $time, `RVFI_IF.rvfi_order, `DUT_PATH.debug_req_i), UVM_NONE)
+    end: pass_debug_req_to_ref
+*/    
+    // seems the halt has to be held high for 2 calls to simulator
+    /* */
+    always @(posedge rvvi.clk) begin: pass_debug_req_to_ref
+      static int pulse = 0;
+      if (`DUT_PATH.debug_req_i) begin
+        pulse = 5;
+        void'(rvvi.net_push("haltreq", `DUT_PATH.debug_req_i));
+        `uvm_info(info_tag, $sformatf("%t order=%0d haltreq=%08x pulse=%0d", 
+            $time, `RVFI_IF.rvfi_order, `DUT_PATH.debug_req_i, pulse), UVM_DEBUG)
+      end else begin
+        if (pulse > 0) begin
+          pulse--;
+          if (pulse==0) void'(rvvi.net_push("haltreq", `DUT_PATH.debug_req_i));
+            `uvm_info(info_tag, $sformatf("%t order=%0d haltreq=%08x pulse=%0d", 
+                $time, `RVFI_IF.rvfi_order, `DUT_PATH.debug_req_i, pulse), UVM_DEBUG)
+        end
+      end
+    end: pass_debug_req_to_ref
+    /* */
+`endif
 
    ////////////////////////////////////////////////////////////////////////////
    // INTERRUPTS
-   always @(posedge rvvi.clk) begin: pass_irq_to_ref
-     static bit [31:0] prev_out_irq;
-     static bit [31:0] out_irq;
-     static bit [31:0] valid_irq;
-     static bit [31:0] ack_irq;
-
-     if (`RVFI_IF.rvfi_valid) begin
-       valid_irq <= `DUT_PATH.irq_i;
-       ack_irq   <= 32'h0000_0000;
-     end
-     if (`DUT_PATH.core_i.irq_ack) begin
-       ack_irq <= `DUT_PATH.irq_i;
-     end
-     out_irq      <= `DUT_PATH.irq_i | valid_irq | ack_irq;
-     prev_out_irq <= out_irq;
-
-     if (|`DUT_PATH.irq_i === 1'bX) begin
-       // fetch_enable is indication the core should have come out of reset.
-       if (`DUT_PATH.fetch_enable_i) begin
-         `uvm_error(info_tag, $sformatf("irq unknown (%b)", `DUT_PATH.irq_i))
-       end
-     end
-     else if (|`DUT_PATH.irq_i === 1'bZ) begin
-       `uvm_fatal(info_tag, $sformatf("irq not driven(%b)", `DUT_PATH.irq_i))
-     end
-     else begin
-       if ((`DUT_PATH.fetch_enable_i) && (prev_out_irq != out_irq)) begin
-         void'(rvvi.net_push("MSWInterrupt",        out_irq[ 3]));
-         void'(rvvi.net_push("MTimerInterrupt",     out_irq[ 7]));
-         void'(rvvi.net_push("MExternalInterrupt",  out_irq[11]));
-         void'(rvvi.net_push("LocalInterrupt0",     out_irq[16]));
-         void'(rvvi.net_push("LocalInterrupt1",     out_irq[17]));
-         void'(rvvi.net_push("LocalInterrupt2",     out_irq[18]));
-         void'(rvvi.net_push("LocalInterrupt3",     out_irq[19]));
-         void'(rvvi.net_push("LocalInterrupt4",     out_irq[20]));
-         void'(rvvi.net_push("LocalInterrupt5",     out_irq[21]));
-         void'(rvvi.net_push("LocalInterrupt6",     out_irq[22]));
-         void'(rvvi.net_push("LocalInterrupt7",     out_irq[23]));
-         void'(rvvi.net_push("LocalInterrupt8",     out_irq[24]));
-         void'(rvvi.net_push("LocalInterrupt9",     out_irq[25]));
-         void'(rvvi.net_push("LocalInterrupt10",    out_irq[26]));
-         void'(rvvi.net_push("LocalInterrupt11",    out_irq[27]));
-         void'(rvvi.net_push("LocalInterrupt12",    out_irq[28]));
-         void'(rvvi.net_push("LocalInterrupt13",    out_irq[29]));
-         void'(rvvi.net_push("LocalInterrupt14",    out_irq[30]));
-         void'(rvvi.net_push("LocalInterrupt15",    out_irq[31]));
-
-         `uvm_info(info_tag, $sformatf("irq = %8x", `DUT_PATH.irq_i), UVM_DEBUG)
-       end
-     end
+   always @(`DUT_PATH.irq_i) begin: pass_irq_to_ref
+     void'(rvvi.net_push("MSWInterrupt",        `DUT_PATH.irq_i[ 3]));
+     void'(rvvi.net_push("MTimerInterrupt",     `DUT_PATH.irq_i[ 7]));
+     void'(rvvi.net_push("MExternalInterrupt",  `DUT_PATH.irq_i[11]));
+     void'(rvvi.net_push("LocalInterrupt0",     `DUT_PATH.irq_i[16]));
+     void'(rvvi.net_push("LocalInterrupt1",     `DUT_PATH.irq_i[17]));
+     void'(rvvi.net_push("LocalInterrupt2",     `DUT_PATH.irq_i[18]));
+     void'(rvvi.net_push("LocalInterrupt3",     `DUT_PATH.irq_i[19]));
+     void'(rvvi.net_push("LocalInterrupt4",     `DUT_PATH.irq_i[20]));
+     void'(rvvi.net_push("LocalInterrupt5",     `DUT_PATH.irq_i[21]));
+     void'(rvvi.net_push("LocalInterrupt6",     `DUT_PATH.irq_i[22]));
+     void'(rvvi.net_push("LocalInterrupt7",     `DUT_PATH.irq_i[23]));
+     void'(rvvi.net_push("LocalInterrupt8",     `DUT_PATH.irq_i[24]));
+     void'(rvvi.net_push("LocalInterrupt9",     `DUT_PATH.irq_i[25]));
+     void'(rvvi.net_push("LocalInterrupt10",    `DUT_PATH.irq_i[26]));
+     void'(rvvi.net_push("LocalInterrupt11",    `DUT_PATH.irq_i[27]));
+     void'(rvvi.net_push("LocalInterrupt12",    `DUT_PATH.irq_i[28]));
+     void'(rvvi.net_push("LocalInterrupt13",    `DUT_PATH.irq_i[29]));
+     void'(rvvi.net_push("LocalInterrupt14",    `DUT_PATH.irq_i[30]));
+     void'(rvvi.net_push("LocalInterrupt15",    `DUT_PATH.irq_i[31]));
+     `uvm_info(info_tag, $sformatf("%t order=%0d irq=%08x", 
+         $time, `RVFI_IF.rvfi_order, `DUT_PATH.irq_i), UVM_DEBUG)
    end: pass_irq_to_ref
-
-   always @(`DUT_PATH.irq_i) begin: check_valid_interrupts
-     `uvm_info(info_tag, $sformatf("irq = %08X", `DUT_PATH.irq_i), UVM_NONE)
-     //if (`DUT_PATH.irq_i[15:12] !== 4'h0 || `DUT_PATH.irq_i[10:8] !== 3'b000 || `DUT_PATH.irq_i[6:4] !== 3'b000 || `DUT_PATH.irq_i[2:0] !== 3'b000) begin
-     //  `uvm_warning(info_tag, $sformatf("Unsupported interrupt (irq == %8x). Reserved for future standard use.", `DUT_PATH.irq_i))
-     //end
-   end: check_valid_interrupts
 
   /////////////////////////////////////////////////////////////////////////////
   // REF control
