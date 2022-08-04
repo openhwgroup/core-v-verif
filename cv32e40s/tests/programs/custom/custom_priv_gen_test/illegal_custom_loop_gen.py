@@ -21,12 +21,12 @@
 *******************************************************************************
 """
 
-func6 = {35, 51} # 'funct6' bit-field usermode unprivileged function codes
-outer_loop = 2048 # 11-bit custom-field instruction
-inner_loop = 32 # 5-bit custom-field instruction
+func6 = {35, 51} # 'funct6' bit-field codes: 100011, 110011
+outer_loop = 2048 # 'custom11' bit-field range (2^11)
+inner_loop = 32 # 'custom5' bit-field range (2^5)
 # ref Figure 3.30: SYSTEM instruction encodings designated for custom use (PRIVSPEC V20211203)
 
-opcode = 115 # SYSTEM OPCODE
+opcode = 115 # SYSTEM OPCODE 1110011
 
 input_string = "// This is the start of the generated code" # start string to move write HEAD.
 pointer = 0 # file pointer 

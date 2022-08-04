@@ -52,26 +52,14 @@ illegal_full:
 
 
 u_sw_irq_handler:
-	la t0, gbl_mysignaltothehandler
-	lw t0, 0(t0)
-	bnez t0, put_m_mode
 
-	addi s2, s2, 1 // increement every trap
+	addi s2, s2, 1 // increments every trap, TODO: more better comment
 
 	csrrw 	t0, mepc, x0
 	addi t0, t0, 4
-	csrrw   x0, mepc, t0 // increment to the next 
+	csrrw   x0, mepc, t0 // increment to the next instruction
 	mret
 
-
-
-put_m_mode:
-	li t0, 0x1800 // set std. machine mode
-	csrrw x0, mstatus, t0
-	csrrw 	t0, mepc, x0
-	addi t0, t0, 4
-	csrrw   x0, mepc, t0 // increment to the next 
-	mret
 
 end_handler_ret:
 	addi a0, s2, 0 // load function return value

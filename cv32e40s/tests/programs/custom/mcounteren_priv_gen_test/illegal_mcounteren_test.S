@@ -26,6 +26,7 @@
 .global mco_loop
 .global u_sw_irq_handler
 .global Check_mcounteren
+.global gbl_mysignaltothehandler
 
 mco_loop:
 	addi sp,sp,-52
@@ -69,7 +70,14 @@ end_handler_ret:
 	addi sp,sp,52
 	ret
 
+u_sw_irq_handler:
 
+	addi s2, s2, 1 // increments every trap, TODO: more better comment
+
+	csrrw 	t0, mepc, x0
+	addi t0, t0, 4
+	csrrw   x0, mepc, t0 // increment to the next 
+	mret
 
 
 mco_custom: // puts the core in usermode.

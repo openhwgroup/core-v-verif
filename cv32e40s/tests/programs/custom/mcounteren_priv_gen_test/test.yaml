@@ -1,0 +1,4 @@
+name: mcounteren_priv_gen_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Generated test to check illegal access of csr's

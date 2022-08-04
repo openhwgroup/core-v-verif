@@ -25,6 +25,8 @@
 .global csr_instr
 .global csr_loop
 .global u_sw_irq_handler
+.global gbl_mysignaltothehandler
+
 
 csr_loop:
 	addi sp,sp,-52
@@ -65,6 +67,15 @@ end_handler_ret:
 	ret
 	//jalr x0, 0(ra)
 
+u_sw_irq_handler:
+
+	addi s2, s2, 1 // increments every trap, TODO: more better comment
+
+	csrrw 	t0, mepc, x0
+	addi t0, t0, 4
+	csrrw   x0, mepc, t0 // increment to the next 
+	mret
+
 
 
 csr_custom: // puts the core in usermode.
@@ -76,6 +87,7 @@ csr_custom: // puts the core in usermode.
 	csrrw   x0, mepc, t0
 
 	mret // call the mret to execute mode change.
+
 
 
 csr_instr: // csr privilege loop test

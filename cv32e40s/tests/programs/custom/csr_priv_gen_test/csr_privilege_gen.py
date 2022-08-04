@@ -69,7 +69,7 @@ def generator():
     """
     num_lines = 0 # printed later to help debugging, and assertion checks in C.
     string_split = (reg_str.split("\n"))
-    string_split = string_split[1:-1] # removes empty lines after the string_split command
+    string_split = string_split[1:-1] # removes empty lines before and after the string_split command
     f.seek(pointer)
     for register in string_split:
         ranges = register.split("-")
