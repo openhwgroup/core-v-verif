@@ -15,8 +15,6 @@
 //
 // SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
-// "PMP can grant permissions to S and U modes, which by default have none"
-
 // Feature Description: "PMP can grant permissions to S and U modes, which by default have none"
 // Verification Goal: Check that, out of reset, given no extraordinary reset values, and given no change to the pmp csrs, then U-mode has no access permissions.
 
@@ -24,43 +22,64 @@
 
 void default_none()
 {
-  uint32_t temp[64] = {0};
   uint32_t mcause = 11111; // set an arbitrary value
   printf("\n\t testing DefaultNone\n");
-  // get random address value
-  __asm__ volatile("lw %0, 0(%1)"
-                   : "=r"(temp[63])
-                   : "r"(RANDOM_REG));
-  printf("\n\t temp[63] = 0x%lx\n", temp[63]);
 
+  // execution permission test
   umode();
-  // store an arbiturary value to address, should trap
-  // store2addr(15, temp[63]);
-  asm volatile("sw %0, 0(%1)" ::"r"(15), "r"(temp[63]));
+  // this line is supposed to trap
+  asm volatile("addi t0, t1, 0x12"); // 0x12 as arbitary value
 
-  printf("\n\t Back in M mode \n");
+  printf("\n\t Back in M mode ");
   asm volatile("csrrw %0, mcause, x0"
                : "=r"(mcause));
-  printf("\n\t mcause = 0x%lx\n", mcause);
-
-  if (mcause != 1)
+  if (mcause == 1)
   {
+    printf("\n\t Execution permission test pass ");
+    printf("\n\t ------------------------------ \n");
+  }
+  else
+  {
+    printf("\n\t Execution permission test failed \n");
     exit(EXIT_FAILURE);
   }
-  printf("\n\t &temp[0] = 0x%lx\n", (uint32_t)&temp[0]);
 
+  // store permission test
   umode();
-  // attempt to load from address, should trap
-  // load4addr((uint32_t *)&temp[0], temp[63]);
-  asm volatile("lw %0, 0(%1)" :"=r"(temp[0]): "r"(temp[63]));
+  // this line is supposed to trap
+  asm volatile("sw t0, 0(t1)"); // to be  improve: using a random value to replace t1
 
-  printf("\n\t Back in M mode \n");
+  printf("\n\t Back in M mode ");
   asm volatile("csrrw %0, mcause, x0"
                : "=r"(mcause));
-  printf("\n\t mcause = 0x%lx\n", mcause);
-
-  if (mcause != 1)
+  if (mcause == 1)
   {
+    printf("\n\t Store permission test pass ");
+    printf("\n\t ------------------------------ \n");
+    }
+    else
+    {
+      printf("\n\t Store permission test failed \n");
+      exit(EXIT_FAILURE);
+    }
+
+  // load permission test
+  umode();
+  // this line is supposed to trap
+  asm volatile("lw t0, 0(t1)"); // to be  improve: using a random value to replace t1
+  printf("\n\t Back in M mode ");
+  asm volatile("csrrw %0, mcause, x0"
+               : "=r"(mcause));
+  // printf("\n\t mcause = 0x%lx\n", mcause);
+
+  if (mcause == 1)
+  {
+    printf("\n\t Load permission test pass");
+    printf("\n\t ------------------------------ \n");
+  }
+  else
+  {
+    printf("\n\t Load permission test failed \n");
     exit(EXIT_FAILURE);
   }
   printf("\n\t DefaultNone test pass ");

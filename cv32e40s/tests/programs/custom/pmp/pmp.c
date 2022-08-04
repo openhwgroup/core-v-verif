@@ -22,7 +22,6 @@ int main(int argc, char *argv[])
   // out of reset tests
   // reset_registers();
   // default_full();
-
   // default_none();
 
   // First time changing CSRs

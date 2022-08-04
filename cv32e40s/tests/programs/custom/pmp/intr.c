@@ -19,46 +19,54 @@
 
 volatile CSRS glb_csrs; // only used for exception check
 
+// int glb_trap_expected = 0;
+
 __attribute__((interrupt("machine"))) void u_sw_irq_handler(void)
 {
   // printf("\nxxxxx User permission denied xxxxx\n");
-  printf("\t u_sw_irq_handler \n");
-
+  printf("\n\t u_sw_irq_handler ");
   __asm__ volatile("csrrs %0, mcause, x0"
                    : "=r"(glb_csrs.mcause));
-  // printf("\t mcause = 0x%lx\n", glb_csrs.mcause);
+  // printf("\n\t mcause = 0x%lx\n", glb_csrs.mcause);
+  // if (glb_trap_expected == 0)
+  // {
+  //   /* unexpected */
+  //   printf("\n\t Unexpected exception ");
+  // }
+  // reset the flag
+  // glb_trap_expected = 0;
 
   if (glb_csrs.mcause == 0)
   {
-    printf("\t Instruction address misaligned \n\n");
+    printf("\n\t Instruction address misaligned ");
   }
   else if (glb_csrs.mcause == 1)
   {
-    printf("\t Instruction access fault \n\n");
+    printf("\n\t Instruction access fault ");
   }
   else if (glb_csrs.mcause == 2)
   {
-    printf("\t Illegal instruction \n\n");
+    printf("\n\t Illegal instruction ");
   }
   else if (glb_csrs.mcause == 3)
   {
-    printf("\t Breakpoint \n\n");
+    printf("\n\t Breakpoint ");
   }
   else if (glb_csrs.mcause == 4)
   {
-    printf("\t Load address misaligned \n\n");
+    printf("\n\t Load address misaligned ");
   }
   else if (glb_csrs.mcause == 5)
   {
-    printf("\t Load access fault \n\n");
+    printf("\n\t Load access fault ");
   }
   else if (glb_csrs.mcause == 6)
   {
-    printf("\t Store/AMO address misaligned \n\n");
+    printf("\n\t Store/AMO address misaligned ");
   }
   else if (glb_csrs.mcause == 7)
   {
-    printf("\t Store/AMO access fault \n\n");
+    printf("\n\t Store/AMO access fault ");
   }
 
   // Increment "mepc"

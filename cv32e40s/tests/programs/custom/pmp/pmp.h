@@ -65,5 +65,7 @@ typedef struct CSRS_STUCT
 
 // globals
 extern volatile CSRS glb_csrs;
+// flag to check exception
+extern int glb_trap_expected;
 
 #endif

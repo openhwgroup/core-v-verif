@@ -21,43 +21,54 @@
 // Feature Description: "If PMP entry 0’s A field is set to TOR, zero is used for the lower bound, and so it matches any address y < pmpaddr0."
 // Verification Goal: Configure entry 0 as tor regions of different sizes, try accesses within and outside the regions, ensure that the outcomes corresponds to the designated ranges.
 
-#define RAMSPACE 0XFFFFFFFF
+#define RAMSPACE 0X100000000
+#define ARBITARY 0XFFFF
+
+// int x[100]
 
 void tor_zero()
 {
   uint32_t temp[64] = {0};
+  int value = 4; // used to add to value for disdinguishing from 0
   uint32_t mcause = 1111;
-  // get random value to temp[63]
-  __asm__ volatile("lw %0, 0(%1)"
-                   : "=r"(temp[63])
-                   : "r"(RANDOM_REG));
+  printf("\n\t testing TorZero\n");
+
+  // temp[63] = *((uint32_t *)RANDOM_REG);
 
   // designate a range for addr0, addr1
-  asm volatile("csrrw x0, 0x3b0, %0" ::"r"((temp[63] >> 2)));
+  asm volatile("csrrw x0, 0x3b0, %0" ::"r"((ARBITARY >> 2)));
   asm volatile("csrrw x0, 0x3b1, %0" ::"r"((RAMSPACE >> 2)));
-  printf("\n\t temp[63] = 0x%lx ", temp[63]);
-
   for (int i = 0; i < 64; i++)
   {
-    // store value (i + temp[63]/3) to address temp[63]/2
-    asm volatile("sw %0, 0(%1)" ::"r"((temp[63] / 3) + i), "r"(temp[63] / 2 + i * 4));
+    // store value (i + value) to address ARBITARY/2
+    asm volatile("sw %0, 0(%1)" ::"r"(i + value), "r"((uint32_t)(ARBITARY / 4 + i * 4)));
   }
 
   // set cfg0.torXWR-torXR
   asm volatile("csrrw x0, 0x3a0, %0" ::"r"(0xf0d));
   umode();
-  // load one value from the address range (temp[63]/2) -- (temp[63]/2+63*4)
-  load4addr((uint32_t *)&temp[0], temp[63] / 2 + 63 * 4);
+  // load one value from the address range (ARBITARY/2) -- (ARBITARY/2+63*4)
+  load4addr((uint32_t *)&temp[0], (ARBITARY / 4));
+  // asm volatile("lw %0, 0(%1)"
+  //              : "=r"(temp[0])
+  //              : "r"(ARBITARY / 2 + 63 * 4));
 
-  // to trap, store abitary value to address temp[63]/4
-  store2addr(11, temp[63] / 4);
+  // to trap, store abitary value to address ARBITARY/4
+  asm volatile("sw t0, 0(t1)");
   asm volatile("csrrw %0, mcause, x0"
                : "=r"(mcause));
   printf("\n\t back in M mode ");
-  if (mcause == 7 && temp[0] == ((temp[63] / 3) + 63))
+  if (mcause == 7)
   {
-    printf("\n\t pmpaddr0 XR test passed");
-    printf("\n\t temp[63] = %d as expected", temp[63]);
+    printf("\n\t pmpaddr0 store permission test pass ");
+    if (temp[0] == value)
+    {
+      printf("\n\t pmpaddr0 load permission test pass ");
+    }
+    else
+    {
+      exit(EXIT_FAILURE);
+    }
   }
   else
   {
