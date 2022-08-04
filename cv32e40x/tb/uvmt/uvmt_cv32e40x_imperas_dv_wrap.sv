@@ -224,38 +224,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
    ////////////////////////////////////////////////////////////////////////////
    // DEBUG REQUESTS: pass to the reference.
    //                 Include some paranoid checks as well.
-//`define HALT_MODE_1
-`ifdef HALT_MODE_1
-   logic debug_req_prev;
-   bit   debug_req, debug_req_net, debug_req_net_prev;
-   assign debug_req = `DUT_PATH.debug_req_i;
-   always @(posedge rvvi.clk) begin: pass_debug_req_to_ref
-     if (debug_req) begin
-         debug_req_net <= debug_req;
-     end
-
-     if (`RVFI_IF.rvfi_valid) begin
-       debug_req_net <= debug_req;
-     end
-
-     if (debug_req_net_prev != debug_req_net) begin
-       void'(rvvi.net_push("haltreq", debug_req_net));
-       `uvm_info(info_tag, $sformatf("%t order=%0d haltreq=%08x", 
-           $time, `RVFI_IF.rvfi_order, debug_req_net), UVM_DEBUG)
-     end
-
-     debug_req_net_prev = debug_req_net;
-   end: pass_debug_req_to_ref
-`else
-/*
-    always @(`DUT_PATH.debug_req_i) begin: pass_debug_req_to_ref
-      void'(rvvi.net_push("haltreq", `DUT_PATH.debug_req_i));
-      `uvm_info(info_tag, $sformatf("%t order=%0d haltreq=%08x", 
-          $time, `RVFI_IF.rvfi_order, `DUT_PATH.debug_req_i), UVM_NONE)
-    end: pass_debug_req_to_ref
-*/    
-    // seems the halt has to be held high for 2 calls to simulator
-    /* */
+   // seems the halt has to be held high for 2 calls to simulator
     always @(posedge rvvi.clk) begin: pass_debug_req_to_ref
       static int pulse = 0;
       if (`DUT_PATH.debug_req_i) begin
@@ -272,8 +241,33 @@ module uvmt_cv32e40x_imperas_dv_wrap
         end
       end
     end: pass_debug_req_to_ref
-    /* */
-`endif
+
+   ////////////////////////////////////////////////////////////////////////////
+   // Non-Maskable INTERRUPTS
+   always @(posedge rvvi.clk) begin
+     static bit data_err_i;
+     static bit data_rvalid_i;
+     
+     // if change
+     if (data_err_i != `DUT_PATH.data_err_i) begin
+       `uvm_info(info_tag, $sformatf("%t SET data_err=%0d rvalid=%0d", 
+         $time, `DUT_PATH.data_err_i, `DUT_PATH.data_rvalid_i), UVM_DEBUG);
+       // if active
+       if (`DUT_PATH.data_err_i) begin
+         if (`DUT_PATH.data_rvalid_i) begin
+           void'(rvvi.net_push("nmi_cause", 1024)); // Load Error 
+         end else begin
+           void'(rvvi.net_push("nmi_cause", 1025)); // Store Error 
+         end
+       end
+       void'(rvvi.net_push("nmi", `DUT_PATH.data_err_i));
+     end
+
+     // next value
+     data_err_i    = `DUT_PATH.data_err_i;
+     data_rvalid_i = `DUT_PATH.data_rvalid_i;
+     
+   end
 
    ////////////////////////////////////////////////////////////////////////////
    // INTERRUPTS
