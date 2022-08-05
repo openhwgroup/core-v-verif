@@ -17,6 +17,9 @@
 
 #include "pmp.h"
 
+// Feature Description: "If pmpaddri−1 ≥ pmpaddri and pmpcfgi.A=TOR, then PMP entry i matches no addresses."
+// Verification Goal: Set up tor regions where the addresses are not in increasing order, try accesses on or within the designated "reverse" regions, ensure that they are treated as if there is no match.
+
 void tor_nomatch()
 {
   int temp[64] = {0};

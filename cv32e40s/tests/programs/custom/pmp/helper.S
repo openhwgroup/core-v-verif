@@ -19,17 +19,20 @@
 
 .global change_mode
 .global umode
+.global umode_jmp
 
 .global load4addr
 .global store2addr
 
+// changes modes
 change_mode:
-
+// changes to User mode
 umode:
   addi sp, sp, -4
   sw s0, 0(sp)
   // set mstatus to U mode
   li t0, 0x1800
+  // mstatus = 0x300
   csrrc x0, 0x300, t0
   // assing ra to mepc
   csrrw x0, 0x341, ra
@@ -41,8 +44,8 @@ umode:
   // return to next line in main and complete switch to Umode
   mret
 
-load4addr:
 // load4addr(int toread/ output, uint32_t addr)
+load4addr:
 // setup stack
   addi sp, sp, -8
   sw ra, 4(sp)
@@ -58,8 +61,8 @@ load4addr:
   addi sp,sp,8
   ret
 
-store2addr:
 // store2addr(int towrite/ input, uint32_t addr)
+store2addr:
 // setup stack
   addi sp, sp, -8
   sw ra, 4(sp)
@@ -73,6 +76,31 @@ store2addr:
   addi sp,sp,8
   ret
 
+
+// void umode_jmp(uint32_t *addr)
+umode_jmp:
+  csrrw x0, mepc, a0
+
+  // set mstatus to U mode
+  li t0, 0x1800
+  // mstatus = 0x300
+  csrrc x0, 0x300, t0
+
+  // Put a jump instr in *addr
+  la t1, myjal
+  lw t1, 0(t1)
+  sw t1, 0(a0)
+
+  la t0, myret
+  mret
+
+// jumps to myret
+myjal:
+  jalr x0, t0
+
+myret:
+  nop // this line should trap
+  ret // return to the C file after the umode_jmp
 
 .section .rodata
 umode_msg:

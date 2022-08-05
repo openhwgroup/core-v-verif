@@ -15,10 +15,10 @@
 //
 // SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
-// Feature Description: "PMP can grant permissions to S and U modes, which by default have none"
-// Verification Goal: Check that, out of reset, given no extraordinary reset values, and given no change to the pmp csrs, then U-mode has no access permissions.
-
 #include "pmp.h"
+
+// Verification Goal: Check that, out of reset, given no extraordinary reset values, and given no change to the pmp csrs, then U-mode has no access permissions.
+// Feature Description: "PMP can grant permissions to S and U modes, which by default have none"
 
 void default_none()
 {
@@ -56,12 +56,12 @@ void default_none()
   {
     printf("\n\t Store permission test pass ");
     printf("\n\t ------------------------------ \n");
-    }
-    else
-    {
-      printf("\n\t Store permission test failed \n");
-      exit(EXIT_FAILURE);
-    }
+  }
+  else
+  {
+    printf("\n\t Store permission test failed \n");
+    exit(EXIT_FAILURE);
+  }
 
   // load permission test
   umode();

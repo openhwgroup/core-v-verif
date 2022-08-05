@@ -19,22 +19,14 @@
 
 volatile CSRS glb_csrs; // only used for exception check
 
-// int glb_trap_expected = 0;
+// volatile int glb_trap_expected = 0;
 
 __attribute__((interrupt("machine"))) void u_sw_irq_handler(void)
 {
-  // printf("\nxxxxx User permission denied xxxxx\n");
+  uint32_t instr_word;
   printf("\n\t u_sw_irq_handler ");
   __asm__ volatile("csrrs %0, mcause, x0"
                    : "=r"(glb_csrs.mcause));
-  // printf("\n\t mcause = 0x%lx\n", glb_csrs.mcause);
-  // if (glb_trap_expected == 0)
-  // {
-  //   /* unexpected */
-  //   printf("\n\t Unexpected exception ");
-  // }
-  // reset the flag
-  // glb_trap_expected = 0;
 
   if (glb_csrs.mcause == 0)
   {
@@ -72,7 +64,16 @@ __attribute__((interrupt("machine"))) void u_sw_irq_handler(void)
   // Increment "mepc"
   __asm__ volatile("csrrw %0, mepc, x0"
                    : "=r"(glb_csrs.mepc));
-  glb_csrs.mepc += 4;
+  instr_word = *(uint32_t *)glb_csrs.mepc;
+  if ((instr_word & 3) == 3)
+  {
+    glb_csrs.mepc += 4;
+  }
+  else
+  {
+    glb_csrs.mepc += 2;
+  }
+
   __asm__ volatile("csrrw x0, mepc, %0"
                    :
                    : "r"(glb_csrs.mepc));
@@ -87,6 +88,4 @@ __attribute__((interrupt("machine"))) void u_sw_irq_handler(void)
                    : "r"(glb_csrs.mstatus));
 
   return;
-
-  exit(EXIT_FAILURE);
 }

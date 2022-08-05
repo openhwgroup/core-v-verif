@@ -15,43 +15,70 @@
 //
 // SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
+#include "pmp.h"
+
 // Feature Description: "PMP CSRs are only accessible to M-mode."
 // Verification Goal: Try to access any of the pmp CSRs from U-mode, ensure that it always gives "illegal instruction exception" and that the CSRs are not updated.
 
-#include "pmp.h"
-
-static CSRS csrs;
-
 void pmpcfgxtest()
 {
-  int temp[64] = {0};
-  uint32_t pmpcfgx;
-  uint32_t mcause = 11111; // set an arbitrary value
+  volatile uint32_t temp[64] = {0};
+  volatile uint32_t pmpcfgx_before_test;
+  volatile uint32_t pmpcfgx_after_test;
+  uint32_t mcause = 11111; // set an arbitrary value other than mcause defaults
+  volatile int illegal_count = 0;
 
   printf("\n\t U mode pmpcfg test");
 
   // load content from pmpcfgx and store in variable
   asm volatile("csrrs %0, 0x3A9, x0"
-               : "=r"(pmpcfgx));
+               : "=r"(pmpcfgx_before_test));
+  // printf("\n\t pmpcfgx_before_test = 0x%lx\n", pmpcfgx_before_test);
+
   // get random value to temp[63]
   __asm__ volatile("lw %0, 0(%1)"
                    : "=r"(temp[63])
                    : "r"(RANDOM_REG));
-  umode();
+  // printf("\n\t random reg = 0x%lx\n", temp[63]);
 
-  // attempting to read and write pmpcfg, should trap
-  asm volatile("csrrw %0, 0x3a9, %1"
-               : "=r"(pmpcfgx)
-               : "r"(temp[63]));
+  // change to Umode and try to write to csr, should trap
+  umode();
+  asm volatile("csrrw x0, 0x3a9, %0" ::"r"(temp[63]));
+  // trap end the first time
+  asm volatile("csrrw %0, mcause, x0"
+               : "=r"(mcause));
+  if (mcause == 2)
+  {
+    illegal_count += 1;
+  }
+  // change to Umode and try to read to csr, should trap
+  umode();
+  asm volatile("csrrs %0, 0x3a9, x0"
+               : "=r"(temp[62]));
+  // trap end the second time
+  asm volatile("csrrw %0, mcause, x0"
+               : "=r"(mcause));
+  if (mcause == 2)
+  {
+    illegal_count += 1;
+  }
 
   printf("\n\t Back in M mode ");
-  if (glb_csrs.mcause == 2)
+  if (illegal_count != 2)
   {
-    printf("\n\t Illegal instruction exception triggered as expected ");
-    printf("\n\t Comparing pmpcfgx values M:U mode ");
+    printf("\n\t Expected trap count = 2, but read as %d \n", illegal_count);
+    exit(EXIT_FAILURE);
+  }
+  if (mcause == 2)
+  {
+    // printf("\n\t Illegal instruction exception triggered as expected ");
+    // printf("\n\t Comparing pmpcfg values M:U mode ");
+
     asm volatile("csrrs %0, 0x3A9, x0"
-                 : "=r"(csrs.pmpcfgx[9]));
-    if (pmpcfgx != csrs.pmpcfgx[9])
+                 : "=r"(pmpcfgx_after_test));
+    // printf("\n\t pmpcfgx_after_test = 0x%lx\n", pmpcfgx_after_test);
+
+    if (pmpcfgx_after_test != pmpcfgx_before_test)
     {
       printf("\n\t pmpcfg value overwritten, test failed\n");
       exit(EXIT_FAILURE);
@@ -59,7 +86,7 @@ void pmpcfgxtest()
     else
     {
       printf("\n\t U mode pmpcfg test pass ");
-      printf("\n\t --------------------------------------------- \n");
+      printf("\n\t ------------------------ \n");
     }
   }
   else
@@ -73,28 +100,51 @@ void pmpcfgxtest()
 
 void pmpaddrxtest()
 {
-  uint32_t pmpaddrx;
-  int temp[64] = {0};
+  uint32_t pmpaddrx_before_test;
+  uint32_t pmpaddrx_after_test;
+  uint32_t temp[64] = {0};
   uint32_t mcause = 11111; // set an arbitrary value
+  volatile int illegal_count = 0;
   printf("\n\t U mode pmpaddr test ");
 
   asm volatile("csrrs %0, 0x3Ba, x0\n"
-               : "=r"(pmpaddrx));
+               : "=r"(pmpaddrx_before_test));
 
-  change_mode();
-  // attempting to read and write pmpaddr, should trap
-  asm volatile("csrrw %0, 0x3ba, %1"
-               : "=r"(pmpaddrx)
-               : "r"(temp[63]));
+  // change to Umode and try to write to csr, should trap
+  umode();
+  asm volatile("csrrw x0, 0x3ba, %0" ::"r"(temp[63]));
+  // trap end the first time
+  asm volatile("csrrw %0, mcause, x0"
+               : "=r"(mcause));
+  if (mcause == 2)
+  {
+    illegal_count += 1;
+  }
+  // change to Umode and try to read to csr, should trap
+  umode();
+  asm volatile("csrrs %0, 0x3ba, x0"
+               : "=r"(temp[62]));
+  // trap end the second time
+  asm volatile("csrrw %0, mcause, x0"
+               : "=r"(mcause));
+  if (mcause == 2)
+  {
+    illegal_count += 1;
+  }
 
   printf("\n\t Back in M mode ");
-  if (glb_csrs.mcause == 2)
+  if (illegal_count != 2)
   {
-    printf("\n\t Illegal instruction exception triggered as expected ");
-    printf("\n\t Comparing pmpaddr values M:U mode");
+    printf("\n\t Expected trap count = 2, but read as %d \n", illegal_count);
+    exit(EXIT_FAILURE);
+  }
+  if (mcause == 2)
+  {
+    // printf("\n\t Illegal instruction exception triggered as expected ");
+    // printf("\n\t Comparing pmpaddr values M:U mode");
     asm volatile("csrrs %0, 0x3Ba, x0"
-                 : "=r"(csrs.pmpaddrx[10]));
-    if (pmpaddrx != csrs.pmpaddrx[10])
+                 : "=r"(pmpaddrx_after_test));
+    if (pmpaddrx_before_test != pmpaddrx_after_test)
     {
       printf("\n\t pmpaddr value overwritten, test failed\n");
       exit(EXIT_FAILURE);
@@ -102,7 +152,7 @@ void pmpaddrxtest()
     else
     {
       printf("\n\t U mode pmpaddr test pass ");
-      printf("\n\t --------------------------------------------- \n");
+      printf("\n\t ------------------------ \n");
     }
   }
   else
@@ -116,28 +166,51 @@ void pmpaddrxtest()
 
 void mseccfgtest()
 {
-  uint32_t mseccfg;
-  int temp[64] = {0};
+  uint32_t mseccfg_before_test;
+  uint32_t mseccfg_after_test;
+  uint32_t temp[64] = {0};
   uint32_t mcause = 11111; // set an arbitrary value
-  asm volatile("csrrs %0, 0x747, x0"
-               : "=r"(mseccfg));
-
-  change_mode();
+  volatile int illegal_count = 0;
+  // read the mseccfg(0x747) value before test and then to compare
   printf("\t U mode mseccfg check");
+  asm volatile("csrrs %0, 0x747, x0"
+               : "=r"(mseccfg_before_test));
 
-  // attempting to read and write from mseccfg, should trap
-  asm volatile("csrrw %0, 0x3ba, %1"
-               : "=r"(mseccfg)
-               : "r"(temp[63]));
+  // change to Umode and try to write to csr, should trap
+  umode();
+  asm volatile("csrrs x0, 0x747, %0" ::"r"(temp[63]));
+  // trap end the first time
+  asm volatile("csrrw %0, mcause, x0"
+               : "=r"(mcause));
+  if (mcause == 2)
+  {
+    illegal_count += 1;
+  }
+  // change to Umode and try to read to csr, should trap
+  umode();
+  asm volatile("csrrs %0, 0x747, x0"
+               : "=r"(temp[62]));
+  // trap end the second time
+  asm volatile("csrrw %0, mcause, x0"
+               : "=r"(mcause));
+  if (mcause == 2)
+  {
+    illegal_count += 1;
+  }
 
   printf("\n\t Back in M mode ");
-  if (glb_csrs.mcause == 2)
+  if (illegal_count != 2)
   {
-    printf("\n\t Illegal instruction exception triggered as expected ");
-    printf("\n\t Comparing pmpcfgx values M:U mode");
-    asm volatile("csrrs %0, 0x3A9, x0"
-                 : "=r"(csrs.mseccfg));
-    if (mseccfg != csrs.mseccfg)
+    printf("\n\t Expected trap count = 2, but read as %d \n", illegal_count);
+    exit(EXIT_FAILURE);
+  }
+  if (mcause == 2)
+  {
+    // printf("\n\t Illegal instruction exception triggered as expected ");
+    // printf("\n\t Comparing mseccfg values M:U mode");
+    asm volatile("csrrs %0, 0x747, x0"
+                 : "=r"(mseccfg_after_test));
+    if (mseccfg_after_test != mseccfg_before_test)
     {
       printf("\n\t mseccfg values overwritten, test failed\n");
       exit(EXIT_FAILURE);
@@ -145,7 +218,7 @@ void mseccfgtest()
     else
     {
       printf("\n\t U mode mseccfg test pass ");
-      printf("\n\t --------------------------------------------- \n");
+      printf("\n\t ------------------------ \n");
     }
   }
   else

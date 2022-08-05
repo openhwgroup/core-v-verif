@@ -20,18 +20,16 @@
 int main(int argc, char *argv[])
 {
   // out of reset tests
-  // reset_registers();
-  // default_full();
-  // default_none();
+  reset_registers();
+  default_full();
+  default_none();
 
   // First time changing CSRs
-  // mmode_only();
+  mmode_only();
 
   // matching tests have sticky bits
   tor_zero();
-  // tor_nomatch();
-  // tor_macthing();
-  // napot_matching();
+  tor_nomatch();
 
   exit(EXIT_SUCCESS);
 }

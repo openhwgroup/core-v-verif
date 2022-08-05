@@ -42,6 +42,7 @@ void umode();
 void load4addr(uint32_t *output_addr, uint32_t addr);
 void store2addr(int input, uint32_t addr);
 uint32_t lcg_parkmiller(uint32_t *state);
+void umode_jmp(uint32_t *addr);
 
 typedef struct CSRS_STUCT
 {
@@ -66,6 +67,6 @@ typedef struct CSRS_STUCT
 // globals
 extern volatile CSRS glb_csrs;
 // flag to check exception
-extern int glb_trap_expected;
+extern volatile int glb_trap_expected;
 
 #endif
