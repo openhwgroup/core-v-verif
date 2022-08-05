@@ -37,11 +37,11 @@ class uvma_rvvi_ovpsim_control_seq_item_c#(int ILEN=uvma_rvvi_pkg::DEFAULT_ILEN,
    // Set to signal in debug mode
    rand bit dbg_mode;
 
-   // Set to signal nmi load fault
-   rand bit nmi_load_fault;
+   // Set to signal nmi 
+   rand bit nmi;
 
-   // Set to signal nmi store fault
-   rand bit nmi_store_fault;
+   // Set to signal nmi cause
+   rand bit [XLEN-1:0] nmi_cause;
 
    // Set to signal instruction bus error
    rand bit insn_bus_fault;
@@ -67,8 +67,8 @@ class uvma_rvvi_ovpsim_control_seq_item_c#(int ILEN=uvma_rvvi_pkg::DEFAULT_ILEN,
       `uvm_field_int(intr,            UVM_DEFAULT)
       `uvm_field_int(dbg_req,         UVM_DEFAULT)
       `uvm_field_int(dbg_mode,        UVM_DEFAULT)
-      `uvm_field_int(nmi_load_fault,  UVM_DEFAULT)
-      `uvm_field_int(nmi_store_fault, UVM_DEFAULT)
+      `uvm_field_int(nmi,             UVM_DEFAULT)
+      `uvm_field_int(nmi_cause,       UVM_DEFAULT)
       `uvm_field_int(insn_bus_fault,  UVM_DEFAULT)
       `uvm_field_int(mip,             UVM_DEFAULT)
       `uvm_field_int(intr_id,         UVM_DEFAULT)
