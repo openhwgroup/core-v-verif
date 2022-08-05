@@ -156,7 +156,7 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
      PRIV_VERSION_20190405: $fwrite(fh, $sformatf("--override %s/priv_version=20190405\n", refpath));
    endcase
 
-   if (cfg.core_cfg.priv_spec_version == PRIV_VERSION_MASTER) begin
+   if (cfg.core_cfg.priv_spec_version == PRIV_VERSION_1_12) begin
      case(cfg.core_cfg.endianness)
        ENDIAN_LITTLE, ENDIAN_BIG: $fwrite(fh, $sformatf("--override %s/endianFixed=1\n", refpath));
        ENDIAN_MIXED:              $fwrite(fh, $sformatf("--override %s/endianFixed=0\n", refpath));
@@ -194,6 +194,8 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
       $fwrite(fh, $sformatf("--override %s/extension/atomic%0d=%0d\n",            refpath, i, cfg.core_cfg.pma_regions[i].atomic));
    end
 
+   // Enable use of hw reg names instead of abi
+   $fwrite(fh, $sformatf("--override root/cpu/use_hw_reg_names=T\n"));
    $fclose(fh);
 
 endfunction : configure_iss

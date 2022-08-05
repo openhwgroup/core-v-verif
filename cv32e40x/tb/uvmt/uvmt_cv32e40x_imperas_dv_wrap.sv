@@ -185,8 +185,9 @@ module uvmt_cv32e40x_imperas_dv_wrap
    `VLG2API_CSR_SET( `CSR_MIP_ADDR,           mip           )
    `VLG2API_CSR_SET( `CSR_TSELECT_ADDR,       tselect       )
    `VLG2API_CSR_SET( `CSR_TINFO_ADDR,         tinfo         )
-   `VLG2API_CSR_SET( `CSR_MCONTEXT_ADDR,      mcontext      )
-   `VLG2API_CSR_SET( `CSR_SCONTEXT_ADDR,      scontext      )
+// FIXME
+//   `VLG2API_CSR_SET( `CSR_MCONTEXT_ADDR,      mcontext      )
+//   `VLG2API_CSR_SET( `CSR_SCONTEXT_ADDR,      scontext      )
    `VLG2API_CSR_SET( `CSR_DCSR_ADDR,          dcsr          )
    `VLG2API_CSR_SET( `CSR_DPC_ADDR,           dpc           )
    `VLG2API_CSR_SET( `CSR_MCYCLE_ADDR,        mcycle        )

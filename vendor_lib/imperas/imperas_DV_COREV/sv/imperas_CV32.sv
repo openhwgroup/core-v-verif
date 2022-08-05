@@ -27,9 +27,11 @@
 typedef struct {
     Uns64 reset;
     Uns64 reset_addr;
+    
     Uns64 nmi;
     Uns64 nmi_cause;
     Uns64 nmi_addr;
+    
     Uns64 MSWInterrupt;
     Uns64 MTimerInterrupt;
     Uns64 MExternalInterrupt;
@@ -49,13 +51,15 @@ typedef struct {
     Uns64 LocalInterrupt13;
     Uns64 LocalInterrupt14;
     Uns64 LocalInterrupt15;
+    
     Uns64 haltreq;
     Uns64 resethaltreq;
+    
     Uns64 deferint;
+    
     Uns64 IllegalInstruction;
-    Uns64 LoadBusFaultNMI;
-    Uns64 StoreBusFaultNMI;
     Uns64 InstructionBusFault;
+
 } SVData_ioT;
 
 typedef struct {
@@ -77,6 +81,7 @@ typedef struct {
 typedef struct {
     // Signals from SV
     Uns64 cycles;
+    Uns64 intr;
 } SVData_stateT;
 
 `ifndef DMI_RAM_PATH
@@ -169,16 +174,16 @@ interface RVVI_io;
     bit  [31:0] irq_i;     // Active high level sensitive interrupt inputs
     bit         irq_ack_o; // Interrupt acknowledge
     bit  [4:0]  irq_id_o;  // Interrupt index for taken interrupt - only valid on irq_ack_o = 1
-    bit         deferint;  // Artifact signal to gate the last stage of interrupt
+    bit         deferint;  // Artifact signal to gate the last stage of interrupt/debug
+    bit         intr;      // artifact to indicate taking a double exception, delay the debugreq
     
     bit         haltreq;
     bit         resethaltreq;
     bit         DM;
     
-    bit         LoadBusFaultNMI;     // signal memory interface error (E40X)
-    bit         StoreBusFaultNMI;    // signal memory interface error (E40X)
+    bit         IllegalInstruction; 
     bit         InstructionBusFault; // signal memory interface error (E40X)
-    
+
     bit         Shutdown;
 endinterface
 
@@ -242,7 +247,7 @@ module CPU #(
     SVData_ioT    SVData_io;
     RMData_stateT RMData_state;
     SVData_stateT SVData_state;
-
+    
     //
     // PASS IO Asynchronously
     //
@@ -256,9 +261,8 @@ module CPU #(
         io.deferint or
         io.haltreq or
         io.resethaltreq or
-        io.LoadBusFaultNMI or
-        io.StoreBusFaultNMI or
         io.InstructionBusFault or
+        io.intr or
         cycles
     ) begin
         if (initialized) svimp_netupdate();
@@ -335,6 +339,7 @@ module CPU #(
         
         // Exception
         if (isvalid==0) begin
+            state.valid  = 0;   // E40P Only
             state.trap   = 1;
             state.pc     = RMData_state.excPC;
 
@@ -389,13 +394,13 @@ module CPU #(
         SVData_io.haltreq             = io.haltreq;
         SVData_io.resethaltreq        = io.resethaltreq;
         
-        SVData_io.LoadBusFaultNMI     = io.LoadBusFaultNMI;
-        SVData_io.StoreBusFaultNMI    = io.StoreBusFaultNMI;
-        
         SVData_io.InstructionBusFault = io.InstructionBusFault;
         
+        SVData_io.IllegalInstruction  = io.IllegalInstruction;
+
         SVData_state.cycles           = cycles;
-        
+        SVData_state.intr             = io.intr;
+
         svimp_push(SVData_io, SVData_state);
         initialized = 1;
     endfunction
@@ -519,7 +524,6 @@ module CPU #(
             // wait for the transfer to complete
             busWait;
             bus.Dwr    = 0;
-            SVData_io.StoreBusFaultNMI = io.StoreBusFaultNMI;
         end
     endtask
      
@@ -594,8 +598,6 @@ module CPU #(
             data      = setData(address, bus.DData);
             bus.Drd   = 0;
 
-            SVData_io.LoadBusFaultNMI = io.LoadBusFaultNMI;
-            
             msginfo($sformatf("[%x]=>(%0d)%x Load", address, size, data));
         end
     endtask

@@ -87,8 +87,6 @@ interface uvmt_cv32e40x_vp_status_if (
   import uvm_pkg::*;
 
   // TODO: X/Z checks
-  initial begin
-  end
 
 endinterface : uvmt_cv32e40x_vp_status_if
 
@@ -116,7 +114,7 @@ interface uvmt_cv32e40x_debug_cov_assert_if
     // External interrupt interface
     input  [31:0] irq_i,
     input         irq_ack_o,
-    input  [4:0]  irq_id_o,
+    input  [9:0]  irq_id_o,
     input  [31:0] mie_q,
 
     input         ex_stage_csr_en,
@@ -140,7 +138,6 @@ interface uvmt_cv32e40x_debug_cov_assert_if
 
     // Core signals
     input  [31:0] boot_addr_i,
-    input  [31:0] nmi_addr_i,
     input         fetch_enable_i,
 
     input         rvfi_valid,
@@ -151,6 +148,7 @@ interface uvmt_cv32e40x_debug_cov_assert_if
     input  [31:0] rvfi_pc_wdata,
     input  [31:0] rvfi_pc_rdata,
     input  [31:0] rvfi_csr_dpc_rdata,
+    input  [31:0] rvfi_csr_mepc_rdata,
     input  [31:0] rvfi_csr_mepc_wdata,
     input  [31:0] rvfi_csr_mepc_wmask,
 

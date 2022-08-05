@@ -18,6 +18,7 @@
 module uvmt_cv32e40x_interrupt_assert
   import uvm_pkg::*;
   import cv32e40x_pkg::*;
+  import uvmt_cv32e40x_pkg::*;
   (
 
     input clk,   // Gated clock
@@ -30,7 +31,7 @@ module uvmt_cv32e40x_interrupt_assert
     // External interrupt interface
     input [31:0] irq_i,
     input        irq_ack_o,
-    input [4:0]  irq_id_o,
+    input [9:0]  irq_id_o,
 
     // External debug req (for WFI modeling)
     input        debug_req_i,
@@ -132,7 +133,7 @@ module uvmt_cv32e40x_interrupt_assert
 
   // irq_id_o is never a reserved irq
   property p_irq_id_o_not_reserved;
-    irq_ack_o |-> VALID_IRQ_MASK[irq_id_o];
+    irq_ack_o |-> VALID_IRQ_MASK[irq_id_o[4:0]];
   endproperty
   a_irq_id_o_not_reserved: assert property(p_irq_id_o_not_reserved)
     else
@@ -141,7 +142,7 @@ module uvmt_cv32e40x_interrupt_assert
 
   // irq_id_o is never a disabled irq
   property p_irq_id_o_mie_enabled;
-    irq_ack_o |-> mie_q[irq_id_o];
+    irq_ack_o |-> mie_q[irq_id_o[4:0]];
   endproperty
   a_irq_id_o_mie_enabled: assert property(p_irq_id_o_mie_enabled)
     else
@@ -304,8 +305,9 @@ module uvmt_cv32e40x_interrupt_assert
   endproperty
   a_mip_irq_i: assert property(p_mip_irq_i)
     else
-      `uvm_error(info_tag,
-                 $sformatf("MIP of 0x%08x does not follow flopped irq_i input: 0x%08x", mip, $past(irq_i)));
+      `uvm_error(info_tag, $sformatf(
+        "MIP of 0x%08x does not follow flopped irq_i input: 0x%08x", mip, $past(irq_i)
+      ));
 
   // mip should not be reserved
   property p_mip_not_reserved;
