@@ -43,6 +43,9 @@ proc cvfv_rerun {} {
   analyze  -sv12  ../../tb/uvmt/uvmt_cv32e40x_tb_ifs.sv
 
   elaborate  -top  uvmt_cv32e40x_tb
+
+  clock  clknrst_if.clk
+  reset  ~clknrst_if.reset_n
 }
 
 cvfv_rerun
