@@ -16,7 +16,11 @@
 # SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
 
-# TODO:silabs-robin  Move to `core-v-verif/mk/`, generalize for re-use.
+# TODO:silabs-robin  Move parts to `core-v-verif/mk/`, generalize for re-use.
+
+
+# TODO:silabs-robin  No hardcoded paths.
+export DESIGN_RTL_DIR = ../../../core-v-cores/cv32e40x/rtl/
 
 
 fv:
