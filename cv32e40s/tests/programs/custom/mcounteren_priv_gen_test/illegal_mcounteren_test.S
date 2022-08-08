@@ -27,7 +27,8 @@
 .global u_sw_irq_handler
 .global Check_mcounteren
 // Immediate for the trap handler to check to make sure its not looping in infinitely
-#define MaxExceptions 32
+#include "mcounteren_priv_gen_test.h"
+
 
 mco_loop: // function called from the .c test code. 
 	addi sp,sp,-52
@@ -45,10 +46,10 @@ mco_loop: // function called from the .c test code.
 	sw s10, 44(sp)
 	sw s11, 48(sp)
 	li s2, 0
-	li s3, MaxExceptions // load reference value to sanity-check max exceptions
+	li s3, ILLEGALLY_GENERATED_INSN // load reference value to sanity-check max exceptions
 	j mco_custom
 
-exception_max_traps: // if trap count exceeds 'MaxExceptions' break and return 0 instead
+exception_max_traps: // if trap count exceeds 'ILLEGALLY_GENERATED_INSN' break and return 0 instead
 	li s2, 0
 	j end_handler_ret
 
@@ -98,7 +99,7 @@ mco_custom: // puts the core in usermode.
 mco_instr: // start of mcounteren loop test
 
 // Start of generated code
-csrrs  t0, 0xc00, x0
+csrrs  t0, 0xc00, x0 
 csrrs  t0, 0xc01, x0 
 csrrs  t0, 0xc02, x0 
 csrrs  t0, 0xc03, x0 
@@ -132,4 +133,4 @@ csrrs  t0, 0xc1e, x0
 csrrs  t0, 0xc1f, x0 
 j end_handler_ret
 
-//end of generated code
+// end of generated code

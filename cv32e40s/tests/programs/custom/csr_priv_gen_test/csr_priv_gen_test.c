@@ -25,15 +25,12 @@
 #include <stdlib.h>
 #include "corev_uvmt.h"
 #include <stdint.h>
-
-// extern and global variable declaration|
+#include "csr_priv_gen_test.h"
+// extern and global variable declaration
 extern volatile void  setup_pmp();
 // assembly function which runs and counts all the illegal instructions and exceptions (respectively)
 extern volatile uint32_t csr_loop();
-//extern volatile uint8_t gbl_mysignaltothehandler = 0;
 volatile uint32_t exception_trap_increment_counter;
-// Number of illegaly generated lines as reported by the 'csr_privilege_gen.py' file
-#define ILLEGALLY_GENERATED_INSN 12288
 
 // Assert function 
 static __inline__ void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {

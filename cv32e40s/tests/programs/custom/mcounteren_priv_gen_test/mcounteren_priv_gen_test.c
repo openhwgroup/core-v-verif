@@ -24,8 +24,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "corev_uvmt.h"
-#include <stdint.h>|
-
+#include <stdint.h>
+#include "mcounteren_priv_gen_test.h"
 // extern and global variable declaration
 extern volatile void  setup_pmp();
 // assembly function which runs and counts all the illegal instructions and exceptions (respectively)
@@ -34,9 +34,6 @@ extern volatile uint32_t mco_loop();
 extern volatile uint32_t Check_mcounteren();
 //extern volatile uint8_t gbl_mysignaltothehandler = 0;
 volatile uint32_t exception_trap_increment_counter;
-#define MCOUNTEREN_DEFAULT_VAL 0x0
-// Number of illegaly generated lines as reported by the 'illegal_mcounteren_loop_gen.py'
-#define ILLEGALLY_GENERATED_INSN 32
 
 
 // Assert function 
@@ -50,7 +47,7 @@ static __inline__ void assert_or_die(uint32_t actual, uint32_t expect, char *msg
 
 
 
-int main(void){ 
+int main(void){
 
     setup_pmp(); // set the pmp regions for U-mode.
 
@@ -58,7 +55,7 @@ int main(void){
     mcounteren_assert_val = Check_mcounteren(); // load mcounteren into 'mcounteren_assert_val'
     assert_or_die(mcounteren_assert_val, MCOUNTEREN_DEFAULT_VAL, "error: mcounteren illegitimate value\n"); // assert register is zeroed 
     exception_trap_increment_counter = mco_loop();
-
+    
     // Looks for 0 return value, which means no trapped executions or number of traps exceeded number of illegal excecutions
     if (exception_trap_increment_counter == 0){
       printf("trap count exceeded number of generated instructions or instructions were not generated!\n");

@@ -23,7 +23,11 @@
 
 
 input_string = "// Start of generated code." # start string, this will move the wrie HEAD
+header_string = "//start of the function header" # start string which the script looks for
+header_val = "ILLEGALLY_GENERATED_INSN" # value which gets changed
 pointer = 0 # file pointer 
+headername = "csr_priv_gen_test.h" # name of the header file
+num_lines = 0 # numebr of lines written to file
 filename = "csr_privilege_loop.S" # file which will be written to 
 
 
@@ -87,6 +91,12 @@ def generator():
     f.write("//end of generated code")
     return num_lines
 
+def header_gen():
+    f.seek(pointer)
+    f.write("// Number of illegaly generated lines as reported by the 'csr_privilege_gen.py'\n")
+    f.write("#define ILLEGALLY_GENERATED_INSN " + str(num_lines) + "\n")
+    f.write("\n")
+    f.write("#endif")
 
 with open(filename, "r+") as f:
     while f.readline().strip("\n") != input_string: # place header after input_string
@@ -95,5 +105,14 @@ with open(filename, "r+") as f:
     num_lines = generator()
     f.truncate() # removes all lines after the last generated line
 
+with open(headername, "r+") as f:
+    while f.readline().strip("\n") != header_string: # place HEAD after input_string
+        pass
+    pointer = f.tell()
+    header_gen()
+    f.truncate() # removes all lines after the last generated line
+
+
 print(num_lines, "lines written to file '" + filename + "'") # user info
+print("Also changed " + header_val + " value to " + str(num_lines) + " in the '" + headername + "' file") # user info
 

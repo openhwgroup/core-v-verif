@@ -26,7 +26,7 @@
 .global csr_loop
 .global u_sw_irq_handler
 // Immediate for the trap handler to check to make sure its not looping in infinitely
-#define MaxExceptions 12288
+#include "csr_priv_gen_test.h"
 
 csr_loop:
 	addi sp,sp,-52
@@ -44,10 +44,10 @@ csr_loop:
 	sw s10, 44(sp)
 	sw s11, 48(sp)
 	li s2, 0
-	li s3, MaxExceptions // load reference value to sanity-check max exceptions
+	li s3, ILLEGALLY_GENERATED_INSN // load reference value to sanity-check max exceptions
 	j csr_custom
 
-exception_max_traps: // if trap count exceeds 'MaxExceptions' break and return 0 instead
+exception_max_traps: // if trap count exceeds 'ILLEGALLY_GENERATED_INSN' break and return 0 instead
 	li s2, 0
 	j end_handler_ret
 

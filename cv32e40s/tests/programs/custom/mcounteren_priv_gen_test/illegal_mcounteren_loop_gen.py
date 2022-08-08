@@ -22,10 +22,12 @@
  """
 
 input_string = "// Start of generated code" # start string, this will move the wrie HEAD
+header_string = "#define MCOUNTEREN_DEFAULT_VAL 0x0" # start string script looks for
+header_val = "ILLEGALLY_GENERATED_INSN" # value which gets changed
 pointer = 0 # file pointer 
 filename = "illegal_mcounteren_test.S" # file which will be written to 
-
-
+headername = "mcounteren_priv_gen_test.h" # name of the header file
+num_lines = 0 # numebr of lines written to file
 # register list fetched manually from the spec (V20211203), contains all S-, R-, and M-mode CSR registers
 reg_str = """
 0xC00-0xC1F
@@ -49,8 +51,15 @@ def generator():
             f.write("csrrs  t0, " + h + ", x0 " + "\n")
     f.write("j end_handler_ret\n")
     f.write("\n")
-    f.write("//end of generated code")
+    f.write("// end of generated code")
     return num_lines
+
+def header_gen():
+    f.seek(pointer)
+    f.write("// Number of illegaly generated lines as reported by the 'illegal_mcounteren_loop_gen.py'\n")
+    f.write("#define ILLEGALLY_GENERATED_INSN " + str(num_lines) + "\n")
+    f.write("\n")
+    f.write("#endif")
 
 
 with open(filename, "r+") as f:
@@ -60,4 +69,16 @@ with open(filename, "r+") as f:
     num_lines = generator()
     f.truncate() # removes all lines after the last generated line
 
+
+
+
+with open(headername, "r+") as f:
+    while f.readline().strip("\n") != header_string: # place HEAD after input_string
+        pass
+    pointer = f.tell()
+    header_gen()
+    f.truncate() # removes all lines after the last generated line
+
+
 print(num_lines, "lines written to file '" + filename + "'") # user info
+print("Also changed " + header_val + " value to " + str(num_lines) + " in the '" + headername + "' file") # user info
