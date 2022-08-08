@@ -80,9 +80,9 @@ u_sw_irq_handler:
 
 	addi s2, s2, 1 // increments every trap
 	bgt s2, s3, exception_max_traps // check if trap counter has exceeded number of illegal instructions
-	csrrw 	t0, mepc, x0
-	addi t0, t0, 4
-	csrrw   x0, mepc, t0 // increment to the next execution 
+	// csrrw 	t0, mepc, x0
+	addi s4, s4, 4 // increment s4 which holds the pc value (saves a cssrw per loop)
+	csrrw   x0, mepc, s4 // increment to the next execution 
 	mret
 
 
@@ -90,15 +90,15 @@ mco_custom: // puts the core in usermode.
 	li	t0, 0x1800
 	csrrc   x0, mstatus, t0 // clear the mstatus (mpp -> User mode).
 	la t0, mco_instr // load mco_instr to the mepc
+	la s4, mco_instr // load mco to the s4 register for optimization in the trap handler
 	csrrw   x0, mepc, t0
-
 	mret // call the mret to execute mode change.
 
 
 mco_instr: // start of mcounteren loop test
 
 // Start of generated code
-csrrs  t0, 0xc00, x0 
+csrrs  t0, 0xc00, x0
 csrrs  t0, 0xc01, x0 
 csrrs  t0, 0xc02, x0 
 csrrs  t0, 0xc03, x0 

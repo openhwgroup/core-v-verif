@@ -74,9 +74,9 @@ u_sw_irq_handler:
 
 	addi s2, s2, 1 // increment the saved register for every trap
 	bgt s2, s3, exception_max_traps // check if trap counter has exceeded number of illegal instructions
-	csrrw 	t0, mepc, x0
-	addi t0, t0, 4
-	csrrw   x0, mepc, t0 // increment to the next execution in the mepc
+	//csrrwi 	t0, mepc, x0
+	addi s4, s4, 4 // using s4 saves us one csrsw cmd. per loop.
+	csrrw   x0, mepc, s4 // increment to the next execution in the mepc
 	mret
 
 
@@ -87,6 +87,7 @@ csr_custom: // puts the core in usermode and starts the test
 	li	t0, 0x1800
 	csrrc   x0, mstatus, t0 // clear the mstatus (mpp -> User mode).
 	la t0, csr_instr // load the csr_instr symbol to the mepc
+	la s4, csr_instr // load csr_instr to the s4 register for optimization in the trap 
 	csrrw   x0, mepc, t0
 
 	mret // call the mret to execute mode change.
