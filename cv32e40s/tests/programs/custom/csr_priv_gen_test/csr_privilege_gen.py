@@ -70,7 +70,7 @@ def generator():
     num_lines = 0 # printed later to help debugging, and assertion checks in C.
     string_split = (reg_str.split("\n"))
     string_split = string_split[1:-1] # removes empty lines before and after the string_split command
-    f.seek(pointer)
+    f.seek(pointer) # set write  HEAD 
     for register in string_split:
         ranges = register.split("-")
         rstart = int(ranges[0], 16) # int(x, 16) converts to hex repr.
@@ -91,7 +91,7 @@ def generator():
 with open(filename, "r+") as f:
     while f.readline().strip("\n") != input_string: # place header after input_string
         pass
-    pointer = f.tell()
+    pointer = f.tell() # Save pointer location to set proper HEAD position in generator()
     num_lines = generator()
     f.truncate() # removes all lines after the last generated line
 

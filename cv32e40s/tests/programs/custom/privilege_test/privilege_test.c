@@ -82,9 +82,9 @@ volatile trap_behavior_t trap_handler_beh;
 #define M_MODE 0x3
 //user mode bit-code b'00
 #define U_MODE 0x0
-// "N" bit
+// misa.N bit
 #define N_BIT 13
-// "U" bit
+// misa.U bit
 #define U_BIT 20
 //XS bit in the mstatus register
 #define XS_BIT 15
@@ -96,9 +96,7 @@ volatile trap_behavior_t trap_handler_beh;
 #define SPP_BIT 18
 // mstatus.TW bit
 #define TW_BIT 21
-// mcause enivonment call value
-//#define MCAUSE_ECALL_CODE 0x8
-// mcause ecall bit
+// mcause ecall code bit-range
 #define ECALL_BIT 3
 // mcause instruction access fault bit
 #define INSN_ACC_BIT 0

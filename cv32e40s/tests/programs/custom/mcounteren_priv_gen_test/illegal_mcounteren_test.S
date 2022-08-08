@@ -26,9 +26,10 @@
 .global mco_loop
 .global u_sw_irq_handler
 .global Check_mcounteren
-.global gbl_mysignaltothehandler
+// Immediate for the trap handler to check to make sure its not looping in infinitely
+#define MaxExceptions 32
 
-mco_loop:
+mco_loop: // function called from the .c test code. 
 	addi sp,sp,-52
 	sw ra, 0(sp)
 	sw s0, 4(sp)
@@ -44,7 +45,12 @@ mco_loop:
 	sw s10, 44(sp)
 	sw s11, 48(sp)
 	li s2, 0
+	li s3, MaxExceptions // load reference value to sanity-check max exceptions
 	j mco_custom
+
+exception_max_traps: // if trap count exceeds 'MaxExceptions' break and return 0 instead
+	li s2, 0
+	j end_handler_ret
 
 
 Check_mcounteren: // read and return the mcounteren value 
@@ -72,24 +78,24 @@ end_handler_ret:
 
 u_sw_irq_handler:
 
-	addi s2, s2, 1 // increments every trap, TODO: more better comment
-
+	addi s2, s2, 1 // increments every trap
+	bgt s2, s3, exception_max_traps // check if trap counter has exceeded number of illegal instructions
 	csrrw 	t0, mepc, x0
 	addi t0, t0, 4
-	csrrw   x0, mepc, t0 // increment to the next 
+	csrrw   x0, mepc, t0 // increment to the next execution 
 	mret
 
 
 mco_custom: // puts the core in usermode.
 	li	t0, 0x1800
 	csrrc   x0, mstatus, t0 // clear the mstatus (mpp -> User mode).
-	la t0, mco_instr //this will pouint to the label below.
+	la t0, mco_instr // load mco_instr to the mepc
 	csrrw   x0, mepc, t0
 
 	mret // call the mret to execute mode change.
 
 
-mco_instr: // csr privilege loop test
+mco_instr: // start of mcounteren loop test
 
 // Start of generated code
 csrrs  t0, 0xc00, x0 

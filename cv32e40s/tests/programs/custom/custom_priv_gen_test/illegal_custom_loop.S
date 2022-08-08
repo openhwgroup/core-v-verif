@@ -28,8 +28,8 @@
 .global illegal_full
 .global u_sw_irq_handler
 .global put_m_mode
-.global gbl_mysignaltothehandler
-
+// Immediate for the trap handler to check to make sure its not looping in infinitely
+#define MaxExceptions 131072
 
 illegal_full:
 	addi sp,sp,-52
@@ -47,14 +47,17 @@ illegal_full:
 	sw s10, 44(sp)
 	sw s11, 48(sp)
 	li s2, 0
+	li s3, MaxExceptions // load reference value to sanity-check max exceptions
 	j illegal_custom
 
-
+exception_max_traps: // if trap count exceeds 'MaxExceptions' break and return 0 instead
+	li s2, 0
+	j end_handler_ret
 
 u_sw_irq_handler:
 
 	addi s2, s2, 1 // increments every trap, TODO: more better comment
-
+	bgt s2, s3, exception_max_traps // check if trap counter has exceeded number of illegal instructions
 	csrrw 	t0, mepc, x0
 	addi t0, t0, 4
 	csrrw   x0, mepc, t0 // increment to the next instruction
