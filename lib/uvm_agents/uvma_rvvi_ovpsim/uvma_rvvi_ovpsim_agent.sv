@@ -172,7 +172,7 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    $fwrite(fh, $sformatf("--override %s/startaddress=0x%08x\n",  refpath, cfg.core_cfg.boot_addr));
    // Specification forces mtvec[0] high at reset regardless of bootstrap pin state of mtvec_addr_i]0]
    $fwrite(fh, $sformatf("--override %s/mtvec=0x%08x\n",         refpath, cfg.core_cfg.mtvec_addr| 32'h1));
-   $fwrite(fh, $sformatf("--override %s/nmi_address=0x%08x\n",   refpath, cfg.core_cfg.nmi_addr));
+   //$fwrite(fh, $sformatf("--override %s/nmi_address=0x%08x\n",   refpath, cfg.core_cfg.nmi_addr));
    $fwrite(fh, $sformatf("--override %s/debug_address=0x%08x\n", refpath, cfg.core_cfg.dm_halt_addr));
    $fwrite(fh, $sformatf("--override %s/dexc_address=0x%08x\n",  refpath, cfg.core_cfg.dm_exception_addr));
 
@@ -195,7 +195,7 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    end
 
    // Enable use of hw reg names instead of abi
-   $fwrite(fh, $sformatf("--override root/cpu/use_hw_reg_names=T\n"));
+   $fwrite(fh, $sformatf("--override %s/use_hw_reg_names=T\n", refpath));
    $fclose(fh);
 
 endfunction : configure_iss
