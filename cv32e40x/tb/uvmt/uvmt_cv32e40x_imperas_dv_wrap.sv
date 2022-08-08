@@ -225,48 +225,64 @@ module uvmt_cv32e40x_imperas_dv_wrap
    ////////////////////////////////////////////////////////////////////////////
    // DEBUG REQUESTS: pass to the reference.
    //                 Include some paranoid checks as well.
-   // seems the halt has to be held high for 2 calls to simulator
-    always @(posedge rvvi.clk) begin: pass_debug_req_to_ref
-      static int pulse = 0;
-      if (`DUT_PATH.debug_req_i) begin
-        pulse = 5;
-        void'(rvvi.net_push("haltreq", `DUT_PATH.debug_req_i));
-        `uvm_info(info_tag, $sformatf("%t order=%0d haltreq=%08x pulse=%0d", 
-            $time, `RVFI_IF.rvfi_order, `DUT_PATH.debug_req_i, pulse), UVM_DEBUG)
-      end else begin
-        if (pulse > 0) begin
-          pulse--;
-          if (pulse==0) void'(rvvi.net_push("haltreq", `DUT_PATH.debug_req_i));
-            `uvm_info(info_tag, $sformatf("%t order=%0d haltreq=%08x pulse=%0d", 
-                $time, `RVFI_IF.rvfi_order, `DUT_PATH.debug_req_i, pulse), UVM_DEBUG)
-        end
-      end
-    end: pass_debug_req_to_ref
+   // seems the halt has to be held high for N calls to simulator
+   always @(posedge rvvi.clk) begin: pass_debug_req_to_ref
+     static int pulse = 0;
+     if (`DUT_PATH.debug_req_i) begin
+       pulse = 5;
+       void'(rvvi.net_push("haltreq", `DUT_PATH.debug_req_i));
+       `uvm_info(info_tag, $sformatf("%t order=%0d haltreq=%08x pulse=%0d", 
+           $time, `RVFI_IF.rvfi_order, `DUT_PATH.debug_req_i, pulse), UVM_DEBUG)
+     end else begin
+       if (pulse > 0) begin
+         pulse--;
+         if (pulse==0) void'(rvvi.net_push("haltreq", `DUT_PATH.debug_req_i));
+           `uvm_info(info_tag, $sformatf("%t order=%0d haltreq=%08x pulse=%0d", 
+               $time, `RVFI_IF.rvfi_order, `DUT_PATH.debug_req_i, pulse), UVM_DEBUG)
+       end
+     end
+   end: pass_debug_req_to_ref
 
    ////////////////////////////////////////////////////////////////////////////
    // Non-Maskable INTERRUPTS
+   bit ldstQ[$];
    always @(posedge rvvi.clk) begin
-     static bit data_err_i;
-     static bit data_rvalid_i;
+     bit nmi;
+     bit ldst;
+     int NMI_cause = 0;
+ 
+     // for each Load/Store push request into queue
+     // for each valid pop from queue
+     if (`DUT_PATH.data_req_o) begin
+       // push into queue
+       ldstQ.push_front(`DUT_PATH.data_we_o);
+     end
      
-     // if change
-     if (data_err_i != `DUT_PATH.data_err_i) begin
-       `uvm_info(info_tag, $sformatf("%t SET data_err=%0d rvalid=%0d", 
-         $time, `DUT_PATH.data_err_i, `DUT_PATH.data_rvalid_i), UVM_DEBUG);
-       // if active
-       if (`DUT_PATH.data_err_i) begin
-         if (`DUT_PATH.data_rvalid_i) begin
-           void'(rvvi.net_push("nmi_cause", 1024)); // Load Error 
+     if (`DUT_PATH.data_rvalid_i) begin
+       if (ldstQ.size() > 0) begin
+         ldst = ldstQ.pop_back();
+         if (ldst) begin
+           NMI_cause = 1025; // Store
          end else begin
-           void'(rvvi.net_push("nmi_cause", 1025)); // Store Error 
+           NMI_cause = 1024; // Load
          end
+       end else begin
+         // Error attempting to pop a value when list is empty
+         `uvm_info(info_tag, $sformatf("ERROR!!! pop Q empty"), UVM_INFO);
        end
-       void'(rvvi.net_push("nmi", `DUT_PATH.data_err_i));
      end
 
-     // next value
-     data_err_i    = `DUT_PATH.data_err_i;
-     data_rvalid_i = `DUT_PATH.data_rvalid_i;
+     if (`DUT_PATH.data_err_i && `DUT_PATH.data_rvalid_i) begin
+       `uvm_info(info_tag, $sformatf("%t SET nmi - cause=%0d %0s", $time, NMI_cause, (ldst ? "Load" : "Store")), UVM_DEBUG);
+       nmi = 1;
+       // Need some decode logic
+       void'(rvvi.net_push("nmi_cause", NMI_cause)); // Load/Store Error 
+       void'(rvvi.net_push("nmi", 1));
+     end else if (nmi) begin
+       `uvm_info(info_tag, $sformatf("%t CLR nmi", $time), UVM_DEBUG);
+       nmi = 0;
+       void'(rvvi.net_push("nmi", 0));
+     end
      
    end
 
