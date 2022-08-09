@@ -605,6 +605,9 @@ module uvmt_cv32e40s_tb;
 
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
 
+    bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i));
+
+
     //uvmt_cv32e40s_rvvi_handcar u_rvvi_handcar();
     /**
     * ISS WRAPPER instance:
