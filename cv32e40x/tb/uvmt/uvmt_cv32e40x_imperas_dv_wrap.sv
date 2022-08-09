@@ -246,7 +246,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
    ////////////////////////////////////////////////////////////////////////////
    // Non-Maskable INTERRUPTS
    bit ldstQ[$];
-   always @(posedge rvvi.clk) begin
+   always @(posedge rvvi.clk) begin: pass_nmi_to_ref
      bit nmi;
      bit ldst;
      int NMI_cause = 0;
@@ -283,33 +283,36 @@ module uvmt_cv32e40x_imperas_dv_wrap
        nmi = 0;
        void'(rvvi.net_push("nmi", 0));
      end
-     
-   end
+   end: pass_nmi_to_ref
 
    ////////////////////////////////////////////////////////////////////////////
    // INTERRUPTS
-   always @(`DUT_PATH.irq_i) begin: pass_irq_to_ref
-     void'(rvvi.net_push("MSWInterrupt",        `DUT_PATH.irq_i[ 3]));
-     void'(rvvi.net_push("MTimerInterrupt",     `DUT_PATH.irq_i[ 7]));
-     void'(rvvi.net_push("MExternalInterrupt",  `DUT_PATH.irq_i[11]));
-     void'(rvvi.net_push("LocalInterrupt0",     `DUT_PATH.irq_i[16]));
-     void'(rvvi.net_push("LocalInterrupt1",     `DUT_PATH.irq_i[17]));
-     void'(rvvi.net_push("LocalInterrupt2",     `DUT_PATH.irq_i[18]));
-     void'(rvvi.net_push("LocalInterrupt3",     `DUT_PATH.irq_i[19]));
-     void'(rvvi.net_push("LocalInterrupt4",     `DUT_PATH.irq_i[20]));
-     void'(rvvi.net_push("LocalInterrupt5",     `DUT_PATH.irq_i[21]));
-     void'(rvvi.net_push("LocalInterrupt6",     `DUT_PATH.irq_i[22]));
-     void'(rvvi.net_push("LocalInterrupt7",     `DUT_PATH.irq_i[23]));
-     void'(rvvi.net_push("LocalInterrupt8",     `DUT_PATH.irq_i[24]));
-     void'(rvvi.net_push("LocalInterrupt9",     `DUT_PATH.irq_i[25]));
-     void'(rvvi.net_push("LocalInterrupt10",    `DUT_PATH.irq_i[26]));
-     void'(rvvi.net_push("LocalInterrupt11",    `DUT_PATH.irq_i[27]));
-     void'(rvvi.net_push("LocalInterrupt12",    `DUT_PATH.irq_i[28]));
-     void'(rvvi.net_push("LocalInterrupt13",    `DUT_PATH.irq_i[29]));
-     void'(rvvi.net_push("LocalInterrupt14",    `DUT_PATH.irq_i[30]));
-     void'(rvvi.net_push("LocalInterrupt15",    `DUT_PATH.irq_i[31]));
-     `uvm_info(info_tag, $sformatf("%t order=%0d irq=%08x", 
-         $time, `RVFI_IF.rvfi_order, `DUT_PATH.irq_i), UVM_DEBUG)
+   always @(posedge rvvi.clk) begin: pass_irq_to_ref
+     static bit [31:0] irq;
+     if (irq != `DUT_PATH.irq_i) begin
+       void'(rvvi.net_push("MSWInterrupt",        `DUT_PATH.irq_i[ 3]));
+       void'(rvvi.net_push("MTimerInterrupt",     `DUT_PATH.irq_i[ 7]));
+       void'(rvvi.net_push("MExternalInterrupt",  `DUT_PATH.irq_i[11]));
+       void'(rvvi.net_push("LocalInterrupt0",     `DUT_PATH.irq_i[16]));
+       void'(rvvi.net_push("LocalInterrupt1",     `DUT_PATH.irq_i[17]));
+       void'(rvvi.net_push("LocalInterrupt2",     `DUT_PATH.irq_i[18]));
+       void'(rvvi.net_push("LocalInterrupt3",     `DUT_PATH.irq_i[19]));
+       void'(rvvi.net_push("LocalInterrupt4",     `DUT_PATH.irq_i[20]));
+       void'(rvvi.net_push("LocalInterrupt5",     `DUT_PATH.irq_i[21]));
+       void'(rvvi.net_push("LocalInterrupt6",     `DUT_PATH.irq_i[22]));
+       void'(rvvi.net_push("LocalInterrupt7",     `DUT_PATH.irq_i[23]));
+       void'(rvvi.net_push("LocalInterrupt8",     `DUT_PATH.irq_i[24]));
+       void'(rvvi.net_push("LocalInterrupt9",     `DUT_PATH.irq_i[25]));
+       void'(rvvi.net_push("LocalInterrupt10",    `DUT_PATH.irq_i[26]));
+       void'(rvvi.net_push("LocalInterrupt11",    `DUT_PATH.irq_i[27]));
+       void'(rvvi.net_push("LocalInterrupt12",    `DUT_PATH.irq_i[28]));
+       void'(rvvi.net_push("LocalInterrupt13",    `DUT_PATH.irq_i[29]));
+       void'(rvvi.net_push("LocalInterrupt14",    `DUT_PATH.irq_i[30]));
+       void'(rvvi.net_push("LocalInterrupt15",    `DUT_PATH.irq_i[31]));
+       `uvm_info(info_tag, $sformatf("%t order=%0d irq=%08x", 
+           $time, `RVFI_IF.rvfi_order, `DUT_PATH.irq_i), UVM_DEBUG)
+     end
+     irq = `DUT_PATH.irq_i;
    end: pass_irq_to_ref
 
   /////////////////////////////////////////////////////////////////////////////
