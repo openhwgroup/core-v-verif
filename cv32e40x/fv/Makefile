@@ -20,7 +20,7 @@
 
 
 # TODO:silabs-robin  No hardcoded paths.
-export DESIGN_RTL_DIR = ../../../core-v-cores/cv32e40x/rtl/
+export DESIGN_RTL_DIR = ../../core-v-cores/cv32e40x/rtl/
 
 
 fv:

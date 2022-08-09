@@ -24,23 +24,23 @@ proc cvfv_rerun {} {
 
   analyze  -sv12  uvm_pkg.sv
   analyze  -sv12  defines.sv
-  analyze  -sv12  -f  ../../../core-v-cores/cv32e40x/cv32e40x_manifest.flist
+  analyze  -sv12  -f  ../../core-v-cores/cv32e40x/cv32e40x_manifest.flist
   analyze  -sv12                                \
-    +incdir+../../tb/uvmt/                      \
-    +incdir+../../../lib/uvm_agents/uvma_rvfi   \
-    +incdir+../../../lib/uvm_agents/uvma_fencei \
+    +incdir+../tb/uvmt/                      \
+    +incdir+../../lib/uvm_agents/uvma_rvfi   \
+    +incdir+../../lib/uvm_agents/uvma_fencei \
     dummy_pkg.sv
   analyze  -sv12                                          \
-    ../../../lib/uvm_agents/uvma_fencei/uvma_fencei_if.sv \
-    ../../../lib/uvm_agents/uvma_rvfi/uvma_rvfi_instr_if.sv
-  analyze  -sv12  ../../tb/uvmt/uvmt_cv32e40x_tb.sv
-  analyze  -sv12  ../../tb/uvmt/uvmt_cv32e40x_dut_wrap.sv
+    ../../lib/uvm_agents/uvma_fencei/uvma_fencei_if.sv \
+    ../../lib/uvm_agents/uvma_rvfi/uvma_rvfi_instr_if.sv
+  analyze  -sv12  ../tb/uvmt/uvmt_cv32e40x_tb.sv
+  analyze  -sv12  ../tb/uvmt/uvmt_cv32e40x_dut_wrap.sv
   analyze  -sv12                                      \
-    ../../tb/uvmt/uvmt_cv32e40x_interrupt_assert.sv   \
-    ../../tb/uvmt/uvmt_cv32e40x_debug_assert.sv       \
-    ../../tb/uvmt/uvmt_cv32e40x_fencei_assert.sv      \
-    ../../tb/uvmt/uvmt_cv32e40x_integration_assert.sv
-  analyze  -sv12  ../../tb/uvmt/uvmt_cv32e40x_tb_ifs.sv
+    ../tb/uvmt/uvmt_cv32e40x_interrupt_assert.sv   \
+    ../tb/uvmt/uvmt_cv32e40x_debug_assert.sv       \
+    ../tb/uvmt/uvmt_cv32e40x_fencei_assert.sv      \
+    ../tb/uvmt/uvmt_cv32e40x_integration_assert.sv
+  analyze  -sv12  ../tb/uvmt/uvmt_cv32e40x_tb_ifs.sv
 
   elaborate  -top  uvmt_cv32e40x_tb
 
