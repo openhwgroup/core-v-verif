@@ -152,6 +152,8 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
       (!mimpid_plusarg_valid)            -> (mimpid            == {12'b0, 4'h0, 4'b0, 4'h0, 4'b0, mimpid_patch[3:0]});
       (!boot_addr_plusarg_valid)         -> (boot_addr         == 'h0000_0080);
       (!mtvec_addr_plusarg_valid)        -> (mtvec_addr        == 'h0000_0000);
+      (!dm_halt_addr_plusarg_valid)      -> (dm_halt_addr      == 'h1A11_0800);
+      (!dm_exception_addr_plusarg_valid) -> (dm_exception_addr == 'h1A11_1000);
    }
 
    constraint agent_cfg_cons {
