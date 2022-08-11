@@ -159,6 +159,7 @@ int main(void){// TODO: test will failed until issue #278 in core-v-verif/cv32e4
   /*
   Have dcsr.ebreaku=0, be in U-mode, execute ebreak, ensure "normal" ebreak behavior and no debug entry.
   */
+  assert_or_die(glb_debug_status, 0, "Error: Core was in debug mode before test start!");
   set_u_mode();
   asm volatile("ebreak");
   assert_or_die(wmcause, 0x3, "Error: Illegal 'ebreak' did not trigger breakpoint exception!");

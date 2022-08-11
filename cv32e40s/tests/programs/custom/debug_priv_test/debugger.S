@@ -45,6 +45,8 @@
 // Written by assembly debug code. Contains dcsr register value
 .global glb_dcsr_register
 
+// dcsr.ebreaku bit
+#define EBREAKU_BIT		0x1000 
 
 /* 
 Starts executing when 'DEBUG_REQ_CONTROL_REG = debug_req_control.bits' is set in 'debug_priv_test.c'. 
@@ -161,23 +163,29 @@ Check_prv_test_2:
 /*
 Write unsupported modes to dcsr.prv, ensure the value read back is unchanged from the previous value.
 */
-Check_unsupported_modes:
+Check_unsupported_modes: // TODO: sim this test again.
 	li t0, 0x3
 	csrrs x0, dcsr, t0 // preload supported M-mode to get a reference
 
 	// Check S-mode
 	li t1, 0x1
-	csrrs x0, dcsr, t1
-	csrrs t1, dcsr, x0
-	and t1, t1, t0
-	bne t1, t0, Unsupported_check_failed
+	csrrs t2, dcsr, x0	
+	and t2, t2, t1  
+	csrrw x0, dcsr, t1
+
+	csrrs t2, dcsr, x0	
+	and t2, t2, t0
+	bne t2, t0, Unsupported_check_failed
 
 	// Check R-mode 
 	li t1, 0x2
-	csrrs x0, dcsr, t1
-	csrrs t1, dcsr, x0
-	and t1, t1, t0
-	bne t1, t0, Unsupported_check_failed
+	csrrs t2, dcsr, x0	
+	and t2, t2, t1  
+	csrrw x0, dcsr, t1
+
+	csrrs t2, dcsr, x0	
+	and t2, t2, t0
+	bne t2, t0, Unsupported_check_failed
 
 	j end_debugger
 
@@ -197,8 +205,7 @@ Unsupported_check_failed: // if unsupported mode is written to dcsr.prv go here
 Have dcsr.ebreaku=1, be in U-mode, execute ebreak, ensure debug entry happens instead of "normal" ebreak behavior.
 */
 Set_ebreaku_bit:
-	lw t0, 0(x0)
-	lui t0, 1
+	li t0, EBREAKU_BIT
 	csrrs x0, dcsr, t0
 	j end_debugger
 
