@@ -14,8 +14,8 @@
 // limitations under the License.
 
 
-`ifndef __UVME_CV32E40X_CORE_CNTRL_BASE_SEQ_C__
-`define __UVME_CV32E40X_CORE_CNTRL_BASE_SEQ_C__
+`ifndef __UVME_CV32E40P_CORE_CNTRL_BASE_SEQ_C__
+`define __UVME_CV32E40P_CORE_CNTRL_BASE_SEQ_C__
 
 /**
  * Virtual sequence responsible for controlling fetch_en during tests
@@ -44,13 +44,13 @@ endfunction : new
 task uvme_cv32e40p_core_cntrl_base_seq_c::pre_start();
 
   if (!$cast(cfg, p_sequencer.cfg)) begin
-    `uvm_fatal("E40XCORECNTRLSEQ", $sformatf("Could not cast p_sequencer.cfg to uvme_cv32e40p_cfg"))
+    `uvm_fatal("E40PCORECNTRLSEQ", $sformatf("Could not cast p_sequencer.cfg to uvme_cv32e40p_cfg"))
   end
 
   if (!$cast(cntxt, p_sequencer.cntxt)) begin
-    `uvm_fatal("E40XCORECNTRLSEQ", $sformatf("Could not cast p_sequencer.cntxt' to uvme_cv32e40p_cntxt'"))
+    `uvm_fatal("E40PCORECNTRLSEQ", $sformatf("Could not cast p_sequencer.cntxt' to uvme_cv32e40p_cntxt'"))
   end
 
 endtask : pre_start
 
-`endif // __UVME_CV32E40X_CORE_CNTRL_BASE_SEQ_C__
+`endif // __UVME_CV32E40P_CORE_CNTRL_BASE_SEQ_C__

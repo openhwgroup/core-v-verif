@@ -17,16 +17,16 @@
 //
 
 
-`ifndef __UVMA_CV32E40X_CORE_CNTRL_AGENT_SV__
-`define __UVMA_CV32E40X_CORE_CNTRL_AGENT_SV__
+`ifndef __UVMA_CV32E40P_CORE_CNTRL_AGENT_SV__
+`define __UVMA_CV32E40P_CORE_CNTRL_AGENT_SV__
 
 /**
- * Core control agent defined for the CV32E40X
+ * Core control agent defined for the CV32E40P
  */
 class uvma_cv32e40p_core_cntrl_agent_c extends uvma_core_cntrl_agent_c;
 
 
-   string log_tag = "CV32E40XCORECTRLAGT";
+   string log_tag = "CV32E40PCORECTRLAGT";
 
    `uvm_component_utils_begin(uvma_cv32e40p_core_cntrl_agent_c)
    `uvm_component_utils_end
@@ -114,4 +114,4 @@ task uvma_cv32e40p_core_cntrl_agent_c::start_fetch_toggle_seq();
 
 endtask : start_fetch_toggle_seq
 
-`endif // __UVMA_CV32E40X_CORE_CNTRL_AGENT_SV__
+`endif // __UVMA_CV32E40P_CORE_CNTRL_AGENT_SV__

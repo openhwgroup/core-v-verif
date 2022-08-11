@@ -14,8 +14,8 @@
 // limitations under the License.
 
 
-`ifndef __UVME_CV32E40X_FETCH_TOGGLE_SEQ_C__
-`define __UVME_CV32E40X_FETCH_TOGGLE_SEQ_C__
+`ifndef __UVME_CV32E40P_FETCH_TOGGLE_SEQ_C__
+`define __UVME_CV32E40P_FETCH_TOGGLE_SEQ_C__
 
 /**
  * Virtual sequence responsible for controlling fetch_en during tests
@@ -126,4 +126,4 @@ task uvme_cv32e40p_fetch_toggle_seq_c::fetch_random_toggle();
 
 endtask : fetch_random_toggle
 
-`endif // __UVME_CV32E40X_FETCH_TOGGLE_SEQ_C__
+`endif // __UVME_CV32E40P_FETCH_TOGGLE_SEQ_C__

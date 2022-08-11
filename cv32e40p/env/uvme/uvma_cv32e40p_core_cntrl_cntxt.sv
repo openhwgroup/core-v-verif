@@ -15,8 +15,8 @@
 // limitations under the License.
 
 
-`ifndef __UVMA_CV32E40X_CORE_CNTRL_CNTXT_SV__
-`define __UVMA_CV32E40X_CORE_CNTRL_CNTXT_SV__
+`ifndef __UVMA_CV32E40P_CORE_CNTRL_CNTXT_SV__
+`define __UVMA_CV32E40P_CORE_CNTRL_CNTXT_SV__
 
 
 /**
@@ -48,4 +48,4 @@ endfunction : new
 `pragma protect end
 
 
-`endif // __UVMA_CV32E40X_CORE_CNTRL_CNTXT_SV__
+`endif // __UVMA_CV32E40P_CORE_CNTRL_CNTXT_SV__

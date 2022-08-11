@@ -356,7 +356,7 @@ function bit uvme_cv32e40p_cfg_c::is_csr_check_disabled(string name);
 
    // Fatal error if passed a CSR check which is non-existent
    if (!csr_name2addr.exists(name)) begin
-      `uvm_fatal("CV32E40XCFG", $sformatf("CSR [%s] does not exist", name));
+      `uvm_fatal("CV32E40PCFG", $sformatf("CSR [%s] does not exist", name));
    end
 
    return disable_csr_check_mask[csr_name2addr[name]];

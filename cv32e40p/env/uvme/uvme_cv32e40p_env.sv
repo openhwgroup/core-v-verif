@@ -213,7 +213,7 @@ function void uvme_cv32e40p_env_c::connect_phase(uvm_phase phase);
 
          connect_rvfi_rvvi();
          if (!$cast(rvvi_ovpsim_agent, rvvi_agent)) begin
-            `uvm_fatal("UVMECV32E40XENV", "Could not cast agent to rvvi_ovpsim_agent");
+            `uvm_fatal("UVMECV32PENV", "Could not cast agent to rvvi_ovpsim_agent");
          end
          rvvi_ovpsim_agent.set_clknrst_sequencer(clknrst_agent.sequencer);
       end
@@ -510,4 +510,3 @@ endfunction: assemble_vsequencer
 
 
 `endif // __UVME_CV32E40P_ENV_SV__
-

@@ -21,7 +21,7 @@
 
 
 /**
- * Virtual sequence implementing the cv32e40x virtual peripherals.
+ * Virtual sequence implementing the cv32e40p virtual peripherals.
  * TODO Move most of the functionality to a cv32e env base class.
  */
 class uvme_cv32e40p_vp_rand_num_seq_c extends uvma_obi_memory_vp_base_seq_c;
@@ -65,7 +65,7 @@ endfunction  : get_num_words
 
 task uvme_cv32e40p_vp_rand_num_seq_c::vp_body(uvma_obi_memory_mon_trn_c mon_trn);
 
-   uvma_obi_memory_slv_seq_item_c  slv_rsp;   
+   uvma_obi_memory_slv_seq_item_c  slv_rsp;
 
    `uvm_create(slv_rsp)
 
