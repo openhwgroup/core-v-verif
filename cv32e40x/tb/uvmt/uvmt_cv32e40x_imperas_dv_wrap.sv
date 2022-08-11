@@ -22,14 +22,6 @@
 `define DUT_PATH dut_wrap.cv32e40x_wrapper_i
 `define RVFI_IF  `DUT_PATH.rvfi_instr_if_0_i
 
-// RVVI API macros.
-// TODO: where should leave live?
-`define RVVI_DUT_CSR_SET(HARTD_ID, CSR_ADDR, CSR_NAME) \
-if (rvfi_csr_``CSR_NAME``_wmask) begin \
-  `uvm_info("RVVI_DUT_CSR_SET", $formatf("HART=0x%8h, CSR_ADDR=0x%3h, WDATA=0x%8h", HART_ID, CSR_ADDR, rvfi_csr_``CSR_NAME``_wdata), UVM_DEBUG) \
-  rvviDutCsrSet(HART_ID, ``CSR_ADDR, rvfi_csr_``CSR_NAME``_wdata); \
-end
-
 `define VLG2API_CSR_SET(CSR_ADDR, CSR_NAME) \
     assign rvvi.csr   [0][0][``CSR_ADDR] =  (`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wdata) & (`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask); \
     assign rvvi.csr_wb[0][0][``CSR_ADDR] = |(`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask);
