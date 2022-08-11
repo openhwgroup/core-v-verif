@@ -488,23 +488,31 @@ module uvmt_cv32e40s_tb;
 	//.<xsecure input> (<wrapper signal>),
 
    
-	// Core signals: cpuctrl rdata registeret cannot be read by rvfi (use core instead)
+	// Core signals		
       .core_csr_cpuctrl_rdata_dataindtiming	(core_i.xsecure_ctrl.cpuctrl.dataindtiming),
       .core_csr_cpuctrl_rdata_rnddummy		(core_i.xsecure_ctrl.cpuctrl.rnddummy),
       .core_csr_cpuctrl_rdata_rndhint		(core_i.xsecure_ctrl.cpuctrl.rndhint),
 
-      // RVFI:
       .rvfi_valid             (rvfi_i.rvfi_valid),
       .rvfi_insn              (rvfi_i.rvfi_insn[31:0]),
       .rvfi_trap              (rvfi_i.rvfi_trap.trap),
-       
+      
+      // Not usable, becuase reads out 0 only, therefore we have core signals
+      // instead!
+      .rvfi_csr_cpuctrl_rdata_dataindtiming	(rvfi_i.rvfi_csr_cpuctrl_rdata[0]),
+      .rvfi_csr_cpuctrl_rdata_rnddummy		(rvfi_i.rvfi_csr_cpuctrl_rdata[1]),
+      .rvfi_csr_cpuctrl_rdata_rndhint		(rvfi_i.rvfi_csr_cpuctrl_rdata[2]),
+  
       .rvfi_csr_mcycle_rdata	(rvfi_i.rvfi_csr_mcycle_rdata),
       .rvfi_csr_mcycle_wdata	(rvfi_i.rvfi_csr_mcycle_wdata),
       .rvfi_csr_mcycle_wmask	(rvfi_i.rvfi_csr_mcycle_wmask),
-
-      .rvfi_csr_mcountinhibit_rdata	(rvfi_i.rvfi_csr_mcountinhibit_rdata[0]),
-     
-     .*
+      
+      //.rvfi_csr_cpuctrl_rmask_dataindtiming	(rvfi_i.rvfi_csr_cpuctrl_rmask[0]),
+      
+      //.rvfi_pc_wdata          (rvfi_i.rvfi_pc_wdata),
+      //.rvfi_pc_rdata          (rvfi_i.rvfi_pc_rdata),
+      //.rvfi_csr_dpc_rdata     (rvfi_i.rvfi_csr_dpc_rdata),
+	.*
     );
  
     // Xsecure assertions
