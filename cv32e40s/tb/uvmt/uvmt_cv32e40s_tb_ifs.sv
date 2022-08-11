@@ -104,6 +104,43 @@ interface uvmt_cv32e40s_core_status_if (
 
 endinterface : uvmt_cv32e40s_core_status_if
 
+
+
+// Interface to xsecure assertions and covergroups
+interface uvmt_cv32e40s_xsecure_cov_assert_if   
+    import cv32e40s_pkg::*;
+    import cv32e40s_rvfi_pkg::*;
+    (
+    input  clk_i,
+    input  rst_ni,
+    
+    // Core:
+    input core_csr_cpuctrl_rdata_dataindtiming,
+    input core_csr_cpuctrl_rdata_rnddummy,
+    input core_csr_cpuctrl_rdata_rndhint, 
+    
+    // RVFI:
+    input rvfi_valid,
+    input [31:0] rvfi_insn,
+    input rvfi_trap,
+ 
+    input [31:0] rvfi_csr_mcycle_rdata,
+    input [31:0] rvfi_csr_mcycle_wdata,
+    input [31:0] rvfi_csr_mcycle_wmask,
+
+    input rvfi_csr_mcountinhibit_rdata
+);
+
+  //clocking mon_cb_xsecure @(posedge clk_i);
+    //input #1step
+    
+    // Clocked signals
+
+  //endclocking : mon_cb_xsecure
+
+endinterface : uvmt_cv32e40s_xsecure_cov_assert_if
+
+
 // Interface to debug assertions and covergroups
 interface uvmt_cv32e40s_debug_cov_assert_if
     import cv32e40s_pkg::*;
