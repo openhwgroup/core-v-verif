@@ -24,7 +24,7 @@
 
 `define STRINGIFY(x) `"x`"
 
-// (wdata & wmask) | (rdata & ~wmask & rmask)
+// CSR = (wdata & wmask) | (rdata & ~wmask & rmask)
 `define VLG2API_CSR_SET(CSR_ADDR, CSR_NAME) \
     bit csr_``CSR_NAME``_wb; \
     wire [31:0] csr_``CSR_NAME``_w; \
