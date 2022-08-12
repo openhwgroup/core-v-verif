@@ -23,22 +23,19 @@
 `define RVFI_IF  `DUT_PATH.rvfi_instr_if_0_i
 
 `define STRINGIFY(x) `"x`"
+
+// (wdata & wmask) | (rdata & ~wmask & rmask)
 `define VLG2API_CSR_SET(CSR_ADDR, CSR_NAME) \
     bit csr_``CSR_NAME``_wb; \
-    bit [31:0] csr_``CSR_NAME; \
-    assign rvvi.csr[0][0][``CSR_ADDR]    = csr_``CSR_NAME; \
+    wire [31:0] csr_``CSR_NAME``_w; \
+    wire [31:0] csr_``CSR_NAME``_r; \
+    assign csr_``CSR_NAME``_w = `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wdata &   `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask; \
+    assign csr_``CSR_NAME``_r = `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rdata & ~(`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask) & `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rmask; \
+    assign rvvi.csr[0][0][``CSR_ADDR]    = csr_``CSR_NAME``_w | csr_``CSR_NAME``_r; \
     assign rvvi.csr_wb[0][0][``CSR_ADDR] = csr_``CSR_NAME``_wb; \
-    always @(`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rdata) begin \
+    always @(rvvi.csr[0][0][``CSR_ADDR]) begin \
         csr_``CSR_NAME``_wb = 1; \
-        csr_``CSR_NAME = csr_``CSR_NAME & ~(`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rmask); \
-        csr_``CSR_NAME = csr_``CSR_NAME | (`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rdata & `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rmask); \
         if (0) $display("CSR RD %0s val=%08X mask=%08X", `STRINGIFY(``CSR_NAME), `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rdata,  `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rmask); \
-    end \
-    always @(`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wdata) begin \
-        csr_``CSR_NAME``_wb = 1; \
-        csr_``CSR_NAME = csr_``CSR_NAME & ~(`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask); \
-        csr_``CSR_NAME = csr_``CSR_NAME | (`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wdata & `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask); \
-        if (0) $display("CSR WR %0s val=%08X mask=%08X", `STRINGIFY(``CSR_NAME), `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wdata,  `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask); \
     end \
     always @(posedge rvvi.clk) begin \
         if (`RVFI_IF.rvfi_valid && csr_``CSR_NAME``_wb) begin \
@@ -351,13 +348,14 @@ module uvmt_cv32e40x_imperas_dv_wrap
      $display("rvvi.csr[0][0][CSR_MIP_ADDR]=%08X", rvvi.csr[0][0][`CSR_MIP_ADDR]);
      $display("rvvi.csr_wb[0][0][CSR_MIP_ADDR]=%0d", rvvi.csr_wb[0][0][`CSR_MIP_ADDR]);
    end   
+
    always_comb begin
      $display("mie_rdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mie_if_0_i.rvfi_csr_rdata, `DUT_PATH.rvfi_csr_mie_if_0_i.rvfi_csr_rmask);
      $display("mie_wdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mie_if_0_i.rvfi_csr_wdata, `DUT_PATH.rvfi_csr_mie_if_0_i.rvfi_csr_wmask);
      $display("rvvi.csr[0][0][CSR_MIE_ADDR]=%08X", rvvi.csr[0][0][`CSR_MIE_ADDR]);
      $display("rvvi.csr_wb[0][0][CSR_MIE_ADDR]=%0d", rvvi.csr_wb[0][0][`CSR_MIE_ADDR]);
    end
-*/
+   */
    /*
    bit csr_mcause_wb;
    assign rvvi.csr[0][0][`CSR_MCAUSE_ADDR]    = `DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_rdata;
