@@ -22,9 +22,29 @@
 `define DUT_PATH dut_wrap.cv32e40x_wrapper_i
 `define RVFI_IF  `DUT_PATH.rvfi_instr_if_0_i
 
+`define STRINGIFY(x) `"x`"
 `define VLG2API_CSR_SET(CSR_ADDR, CSR_NAME) \
-    assign rvvi.csr   [0][0][``CSR_ADDR] =  (`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wdata) & (`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask); \
-    assign rvvi.csr_wb[0][0][``CSR_ADDR] = |(`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask);
+    bit csr_``CSR_NAME``_wb; \
+    bit [31:0] csr_``CSR_NAME; \
+    assign rvvi.csr[0][0][``CSR_ADDR]    = csr_``CSR_NAME; \
+    assign rvvi.csr_wb[0][0][``CSR_ADDR] = csr_``CSR_NAME``_wb; \
+    always @(`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rdata) begin \
+        csr_``CSR_NAME``_wb = 1; \
+        csr_``CSR_NAME = csr_``CSR_NAME & ~(`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rmask); \
+        csr_``CSR_NAME = csr_``CSR_NAME | (`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rdata & `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rmask); \
+        if (0) $display("CSR RD %0s val=%08X mask=%08X", `STRINGIFY(``CSR_NAME), `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rdata,  `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rmask); \
+    end \
+    always @(`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wdata) begin \
+        csr_``CSR_NAME``_wb = 1; \
+        csr_``CSR_NAME = csr_``CSR_NAME & ~(`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask); \
+        csr_``CSR_NAME = csr_``CSR_NAME | (`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wdata & `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask); \
+        if (0) $display("CSR WR %0s val=%08X mask=%08X", `STRINGIFY(``CSR_NAME), `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wdata,  `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask); \
+    end \
+    always @(posedge rvvi.clk) begin \
+        if (`RVFI_IF.rvfi_valid && csr_``CSR_NAME``_wb) begin \
+            csr_``CSR_NAME``_wb = 0; \
+        end \
+    end 
 
 // CSR definitions
 // TODO: this information should already be available in a similar form elsewhere.
@@ -177,9 +197,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
    `VLG2API_CSR_SET( `CSR_MIP_ADDR,           mip           )
    `VLG2API_CSR_SET( `CSR_TSELECT_ADDR,       tselect       )
    `VLG2API_CSR_SET( `CSR_TINFO_ADDR,         tinfo         )
-// FIXME
-//   `VLG2API_CSR_SET( `CSR_MCONTEXT_ADDR,      mcontext      )
-//   `VLG2API_CSR_SET( `CSR_SCONTEXT_ADDR,      scontext      )
    `VLG2API_CSR_SET( `CSR_DCSR_ADDR,          dcsr          )
    `VLG2API_CSR_SET( `CSR_DPC_ADDR,           dpc           )
    `VLG2API_CSR_SET( `CSR_MCYCLE_ADDR,        mcycle        )
@@ -187,8 +204,8 @@ module uvmt_cv32e40x_imperas_dv_wrap
    `VLG2API_CSR_SET( `CSR_MCYCLEH_ADDR,       mcycleh       )
    `VLG2API_CSR_SET( `CSR_MINSTRETH_ADDR,     minstreth     )
 //   `VLG2API_CSR_SET( `CSR_CYCLE_ADDR,         cycle         )
-   `VLG2API_CSR_SET( `CSR_INSTRET_ADDR,       minstret      )
-   `VLG2API_CSR_SET( `CSR_CYCLEH_ADDR,        mcycleh       )
+//   `VLG2API_CSR_SET( `CSR_INSTRET_ADDR,       minstret      )
+//   `VLG2API_CSR_SET( `CSR_CYCLEH_ADDR,        mcycleh       )
 //   `VLG2API_CSR_SET( `CSR_INSTRETH_ADDR,      instreth      )
 //   `VLG2API_CSR_SET( `CSR_MVENDORID_ADDR,     mvendorid     )
    `VLG2API_CSR_SET( `CSR_MARCHID_ADDR,       marchid       )
@@ -250,7 +267,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
        ldstQ.push_front(`DUT_PATH.data_we_o);
      end
      
-     if (`DUT_PATH.data_rvalid_i) begin
+     if (`RVFI_IF.rvfi_valid) begin
        if (ldstQ.size() > 0) begin
          ldst = ldstQ.pop_back();
          if (ldst) begin
@@ -258,9 +275,9 @@ module uvmt_cv32e40x_imperas_dv_wrap
          end else begin
            NMI_cause = 1024; // Load
          end
-       end else begin
-         // Error attempting to pop a value when list is empty
-         `uvm_info(info_tag, $sformatf("ERROR!!! pop Q empty"), UVM_INFO);
+       //end else begin
+       //  // Error attempting to pop a value when list is empty
+       //  `uvm_info(info_tag, $sformatf("ERROR!!! pop Q empty"), UVM_INFO);
        end
      end
 
@@ -280,33 +297,83 @@ module uvmt_cv32e40x_imperas_dv_wrap
    ////////////////////////////////////////////////////////////////////////////
    // INTERRUPTS
    always @(posedge rvvi.clk) begin: pass_irq_to_ref
-     static bit [31:0] irq;
-     if (irq != `DUT_PATH.irq_i) begin
-       void'(rvvi.net_push("MSWInterrupt",        `DUT_PATH.irq_i[ 3]));
-       void'(rvvi.net_push("MTimerInterrupt",     `DUT_PATH.irq_i[ 7]));
-       void'(rvvi.net_push("MExternalInterrupt",  `DUT_PATH.irq_i[11]));
-       void'(rvvi.net_push("LocalInterrupt0",     `DUT_PATH.irq_i[16]));
-       void'(rvvi.net_push("LocalInterrupt1",     `DUT_PATH.irq_i[17]));
-       void'(rvvi.net_push("LocalInterrupt2",     `DUT_PATH.irq_i[18]));
-       void'(rvvi.net_push("LocalInterrupt3",     `DUT_PATH.irq_i[19]));
-       void'(rvvi.net_push("LocalInterrupt4",     `DUT_PATH.irq_i[20]));
-       void'(rvvi.net_push("LocalInterrupt5",     `DUT_PATH.irq_i[21]));
-       void'(rvvi.net_push("LocalInterrupt6",     `DUT_PATH.irq_i[22]));
-       void'(rvvi.net_push("LocalInterrupt7",     `DUT_PATH.irq_i[23]));
-       void'(rvvi.net_push("LocalInterrupt8",     `DUT_PATH.irq_i[24]));
-       void'(rvvi.net_push("LocalInterrupt9",     `DUT_PATH.irq_i[25]));
-       void'(rvvi.net_push("LocalInterrupt10",    `DUT_PATH.irq_i[26]));
-       void'(rvvi.net_push("LocalInterrupt11",    `DUT_PATH.irq_i[27]));
-       void'(rvvi.net_push("LocalInterrupt12",    `DUT_PATH.irq_i[28]));
-       void'(rvvi.net_push("LocalInterrupt13",    `DUT_PATH.irq_i[29]));
-       void'(rvvi.net_push("LocalInterrupt14",    `DUT_PATH.irq_i[30]));
-       void'(rvvi.net_push("LocalInterrupt15",    `DUT_PATH.irq_i[31]));
-       `uvm_info(info_tag, $sformatf("%t order=%0d irq=%08x", 
-           $time, `RVFI_IF.rvfi_order, `DUT_PATH.irq_i), UVM_DEBUG)
+     static bit [31:0] irq_in;
+     static bit [31:0] irq_out;
+     
+     irq_in = `DUT_PATH.irq_i;
+     
+     if (irq_out != irq_in) begin
+       // gate this with mip ?
+       void'(rvvi.net_push("MSWInterrupt",        irq_in[ 3]));
+       void'(rvvi.net_push("MTimerInterrupt",     irq_in[ 7]));
+       void'(rvvi.net_push("MExternalInterrupt",  irq_in[11]));
+       void'(rvvi.net_push("LocalInterrupt0",     irq_in[16]));
+       void'(rvvi.net_push("LocalInterrupt1",     irq_in[17]));
+       void'(rvvi.net_push("LocalInterrupt2",     irq_in[18]));
+       void'(rvvi.net_push("LocalInterrupt3",     irq_in[19]));
+       void'(rvvi.net_push("LocalInterrupt4",     irq_in[20]));
+       void'(rvvi.net_push("LocalInterrupt5",     irq_in[21]));
+       void'(rvvi.net_push("LocalInterrupt6",     irq_in[22]));
+       void'(rvvi.net_push("LocalInterrupt7",     irq_in[23]));
+       void'(rvvi.net_push("LocalInterrupt8",     irq_in[24]));
+       void'(rvvi.net_push("LocalInterrupt9",     irq_in[25]));
+       void'(rvvi.net_push("LocalInterrupt10",    irq_in[26]));
+       void'(rvvi.net_push("LocalInterrupt11",    irq_in[27]));
+       void'(rvvi.net_push("LocalInterrupt12",    irq_in[28]));
+       void'(rvvi.net_push("LocalInterrupt13",    irq_in[29]));
+       void'(rvvi.net_push("LocalInterrupt14",    irq_in[30]));
+       void'(rvvi.net_push("LocalInterrupt15",    irq_in[31]));
+       `uvm_info(info_tag, $sformatf("%t order=%0d irq_in=%08x", 
+           $time, `RVFI_IF.rvfi_order, irq_in), UVM_DEBUG)
      end
-     irq = `DUT_PATH.irq_i;
+     irq_out = irq_in;
+     
    end: pass_irq_to_ref
-
+   /*
+   always_comb begin
+     $display("mcause_rdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_rdata, `DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_rmask);
+     $display("mcause_wdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_wdata, `DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_wmask);
+     $display("rvvi.csr[0][0][CSR_MCAUSE_ADDR]=%08X", rvvi.csr[0][0][`CSR_MCAUSE_ADDR]);
+     $display("rvvi.csr_wb[0][0][CSR_MCAUSE_ADDR]=%0d", rvvi.csr_wb[0][0][`CSR_MCAUSE_ADDR]);
+   end   
+   always_comb begin
+     $display("mstatus_rdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mstatus_if_0_i.rvfi_csr_rdata, `DUT_PATH.rvfi_csr_mstatus_if_0_i.rvfi_csr_rmask);
+     $display("mstatus_wdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mstatus_if_0_i.rvfi_csr_wdata, `DUT_PATH.rvfi_csr_mstatus_if_0_i.rvfi_csr_wmask);
+     $display("rvvi.csr[0][0][CSR_MSTATUS_ADDR]=%08X", rvvi.csr[0][0][`CSR_MSTATUS_ADDR]);
+     $display("rvvi.csr_wb[0][0][CSR_MSTATUS_ADDR]=%0d", rvvi.csr_wb[0][0][`CSR_MSTATUS_ADDR]);
+   end   
+   always_comb begin
+     $display("irq=%08X", `DUT_PATH.irq_i);
+   end
+   always_comb begin
+     $display("mip_rdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mip_if_0_i.rvfi_csr_rdata, `DUT_PATH.rvfi_csr_mip_if_0_i.rvfi_csr_rmask);
+     $display("mip_wdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mip_if_0_i.rvfi_csr_wdata, `DUT_PATH.rvfi_csr_mip_if_0_i.rvfi_csr_wmask);
+     $display("rvvi.csr[0][0][CSR_MIP_ADDR]=%08X", rvvi.csr[0][0][`CSR_MIP_ADDR]);
+     $display("rvvi.csr_wb[0][0][CSR_MIP_ADDR]=%0d", rvvi.csr_wb[0][0][`CSR_MIP_ADDR]);
+   end   
+   always_comb begin
+     $display("mie_rdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mie_if_0_i.rvfi_csr_rdata, `DUT_PATH.rvfi_csr_mie_if_0_i.rvfi_csr_rmask);
+     $display("mie_wdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mie_if_0_i.rvfi_csr_wdata, `DUT_PATH.rvfi_csr_mie_if_0_i.rvfi_csr_wmask);
+     $display("rvvi.csr[0][0][CSR_MIE_ADDR]=%08X", rvvi.csr[0][0][`CSR_MIE_ADDR]);
+     $display("rvvi.csr_wb[0][0][CSR_MIE_ADDR]=%0d", rvvi.csr_wb[0][0][`CSR_MIE_ADDR]);
+   end
+*/
+   /*
+   bit csr_mcause_wb;
+   assign rvvi.csr[0][0][`CSR_MCAUSE_ADDR]    = `DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_rdata;
+   assign rvvi.csr_wb[0][0][`CSR_MCAUSE_ADDR] = csr_mcause_wb;
+   always @(`DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_rdata) begin
+       csr_mcause_wb = 1;
+       $display("change begin mcause");
+   end
+   always @(posedge rvvi.clk) begin : always_MCAUSE
+       if (`RVFI_IF.rvfi_valid && csr_mcause_wb) begin
+           csr_mcause_wb = 0;
+           $display("change end mcause");
+       end
+   end 
+   */
+  
   /////////////////////////////////////////////////////////////////////////////
   // REF control
 
@@ -351,7 +418,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
     rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR,       `RVVI_FALSE);
     rvviRefCsrCompareEnable(hart_id, `CSR_MSTATUS_ADDR,   `RVVI_FALSE);
     rvviRefCsrCompareEnable(hart_id, `CSR_MEPC_ADDR,      `RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_MCAUSE_ADDR,    `RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_MCAUSE_ADDR,    `RVVI_TRUE);
 
     rvviRefCsrCompareEnable(hart_id, `CSR_MISA_ADDR,      `RVVI_FALSE);
 
