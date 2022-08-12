@@ -159,10 +159,11 @@ int main(void){// TODO: test will failed until issue #278 in core-v-verif/cv32e4
   /*
   Have dcsr.ebreaku=0, be in U-mode, execute ebreak, ensure "normal" ebreak behavior and no debug entry.
   */
-  assert_or_die(glb_debug_status, 0, "Error: Core was in debug mode before test start!");
+  assert_or_die(glb_debug_status, 0, "Error: Core was in debug mode before test start!\n");
   set_u_mode();
   asm volatile("ebreak");
-  assert_or_die(wmcause, 0x3, "Error: Illegal 'ebreak' did not trigger breakpoint exception!");
+  assert_or_die(glb_debug_status, 0, "Error: core unexpectedly entered debug mode!\n");
+  assert_or_die(wmcause, 0x3, "Error: Illegal 'ebreak' did not trigger breakpoint exception!\n");
 
 
 
@@ -194,6 +195,7 @@ int main(void){// TODO: test will failed until issue #278 in core-v-verif/cv32e4
   run_debug_mode();
   asm volatile("ecall");
   uint32_t check_MPP_bit = get_field(wmstatus, MPP_FIELD[0], MPP_FIELD[1]);
+  assert_or_die(check_MPP_bit, 0x3, "Error: previous privilege mode did not match the one set in dcsr.prv before exiting debug mode!\n");  
   uint32_t check_prv_bit = get_field(glb_check_prv_test_val, PRV_FIELD[0], PRV_FIELD[1]);
   assert_or_die(check_MPP_bit, check_prv_bit, "Error: previous privilege mode did not match the one set in dcsr.prv before exiting debug mode!\n");
   glb_check_prv_test = 0;
@@ -203,6 +205,7 @@ int main(void){// TODO: test will failed until issue #278 in core-v-verif/cv32e4
   run_debug_mode();
   asm volatile("ecall");
   check_MPP_bit = get_field(wmstatus, MPP_FIELD[0], MPP_FIELD[1]);
+  assert_or_die(check_MPP_bit, 0x0, "Error: previous privilege mode did not match the one set in dcsr.prv before exiting debug mode!\n");  
   check_prv_bit = get_field(glb_check_prv_test_val, PRV_FIELD[0], PRV_FIELD[1]);
   assert_or_die(check_MPP_bit, check_prv_bit, "Error: previous privilege mode did not match the one set in dcsr.prv before exiting debug mode!\n");
   glb_check_prv_test_2 = 0;
