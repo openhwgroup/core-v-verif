@@ -257,27 +257,31 @@ module uvmt_cv32e40x_imperas_dv_wrap
      bit ldst;
      int NMI_cause = 0;
  
-     // for each Load/Store push request into queue
-     // for each valid pop from queue
-     if (`DUT_PATH.data_req_o) begin
-       // push into queue
-       ldstQ.push_front(`DUT_PATH.data_we_o);
-     end
-     
-     if (`RVFI_IF.rvfi_valid) begin
+     if (`DUT_PATH.data_rvalid_i) begin
+       //$display("%t %m Q size=%0d", $time, ldstQ.size());
+       `uvm_info(info_tag, $sformatf("%t %m Q size=%0d", $time, ldstQ.size()), UVM_DEBUG);
        if (ldstQ.size() > 0) begin
          ldst = ldstQ.pop_back();
+         `uvm_info(info_tag, $sformatf("%t %m POP ldst=%0d", $time, ldst), UVM_DEBUG);
          if (ldst) begin
            NMI_cause = 1025; // Store
          end else begin
            NMI_cause = 1024; // Load
          end
-       //end else begin
-       //  // Error attempting to pop a value when list is empty
-       //  `uvm_info(info_tag, $sformatf("ERROR!!! pop Q empty"), UVM_INFO);
+       end else begin
+         // Error attempting to pop a value when list is empty
+         `uvm_info(info_tag, $sformatf("ERROR!!! pop Q empty"), UVM_DEBUG);
        end
      end
 
+     // for each Load/Store push request into queue
+     // for each valid pop from queue
+     if (`DUT_PATH.data_req_o && `DUT_PATH.data_gnt_i) begin
+       // push into queue
+       `uvm_info(info_tag, $sformatf("%t %m PUSH ldst=%0d", $time, `DUT_PATH.data_we_o), UVM_DEBUG);
+       ldstQ.push_front(`DUT_PATH.data_we_o);
+     end
+     
      if (`DUT_PATH.data_err_i && `DUT_PATH.data_rvalid_i) begin
        `uvm_info(info_tag, $sformatf("%t SET nmi - cause=%0d %0s", $time, NMI_cause, (ldst ? "Load" : "Store")), UVM_DEBUG);
        nmi = 1;
