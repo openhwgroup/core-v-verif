@@ -145,6 +145,7 @@
 
 module uvmt_cv32e40x_imperas_dv_wrap
   import uvm_pkg::*;
+  import uvme_cv32e40x_pkg::*;
   #(
    )
 
@@ -165,6 +166,20 @@ module uvmt_cv32e40x_imperas_dv_wrap
    VLG2LOG       vlg2log(rvvi);
 
    string info_tag = "ImperasDV_wrap";
+
+   // Make the UVM environment configuration available to the Reference Model as needed.
+   uvme_cv32e40x_cfg_c  uvm_env_cfg;
+
+   initial begin
+     @(rvvi.clk);
+     void'(uvm_config_db#(uvme_cv32e40x_cfg_c)::get(null, "uvm_test_top.env", "cfg", uvm_env_cfg));
+     if (!uvm_env_cfg) begin
+      `uvm_fatal(info_tag, "Configuration handle is null")
+     end
+     else begin
+      `uvm_info(info_tag, $sformatf("Found UVM environment configuration handle:\n%s", uvm_env_cfg.sprint()), UVM_DEBUG)
+     end
+   end
 
    ////////////////////////////////////////////////////////////////////////////
    // Adopted from:
@@ -252,11 +267,12 @@ module uvmt_cv32e40x_imperas_dv_wrap
    ////////////////////////////////////////////////////////////////////////////
    // Non-Maskable INTERRUPTS
    bit ldstQ[$];
+   int NMI_cause;
    always @(posedge rvvi.clk) begin: pass_nmi_to_ref
      bit nmi;
      bit ldst;
-     int NMI_cause = 0;
- 
+     NMI_cause = 0;
+
      if (`DUT_PATH.data_rvalid_i) begin
        //$display("%t %m Q size=%0d", $time, ldstQ.size());
        `uvm_info(info_tag, $sformatf("%t %m Q size=%0d", $time, ldstQ.size()), UVM_DEBUG);
@@ -281,7 +297,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
        `uvm_info(info_tag, $sformatf("%t %m PUSH ldst=%0d", $time, `DUT_PATH.data_we_o), UVM_DEBUG);
        ldstQ.push_front(`DUT_PATH.data_we_o);
      end
-     
+
      if (`DUT_PATH.data_err_i && `DUT_PATH.data_rvalid_i) begin
        `uvm_info(info_tag, $sformatf("%t SET nmi - cause=%0d %0s", $time, NMI_cause, (ldst ? "Load" : "Store")), UVM_DEBUG);
        nmi = 1;
@@ -300,9 +316,9 @@ module uvmt_cv32e40x_imperas_dv_wrap
    always @(posedge rvvi.clk) begin: pass_irq_to_ref
      static bit [31:0] irq_in;
      static bit [31:0] irq_out;
-     
+
      irq_in = `DUT_PATH.irq_i;
-     
+
      if (irq_out != irq_in) begin
        // gate this with mip ?
        void'(rvvi.net_push("MSWInterrupt",        irq_in[ 3]));
@@ -328,7 +344,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
            $time, `RVFI_IF.rvfi_order, irq_in), UVM_DEBUG)
      end
      irq_out = irq_in;
-     
+
    end: pass_irq_to_ref
    /*
    always_comb begin
@@ -336,13 +352,13 @@ module uvmt_cv32e40x_imperas_dv_wrap
      $display("mcause_wdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_wdata, `DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_wmask);
      $display("rvvi.csr[0][0][CSR_MCAUSE_ADDR]=%08X", rvvi.csr[0][0][`CSR_MCAUSE_ADDR]);
      $display("rvvi.csr_wb[0][0][CSR_MCAUSE_ADDR]=%0d", rvvi.csr_wb[0][0][`CSR_MCAUSE_ADDR]);
-   end   
+   end
    always_comb begin
      $display("mstatus_rdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mstatus_if_0_i.rvfi_csr_rdata, `DUT_PATH.rvfi_csr_mstatus_if_0_i.rvfi_csr_rmask);
      $display("mstatus_wdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mstatus_if_0_i.rvfi_csr_wdata, `DUT_PATH.rvfi_csr_mstatus_if_0_i.rvfi_csr_wmask);
      $display("rvvi.csr[0][0][CSR_MSTATUS_ADDR]=%08X", rvvi.csr[0][0][`CSR_MSTATUS_ADDR]);
      $display("rvvi.csr_wb[0][0][CSR_MSTATUS_ADDR]=%0d", rvvi.csr_wb[0][0][`CSR_MSTATUS_ADDR]);
-   end   
+   end
    always_comb begin
      $display("irq=%08X", `DUT_PATH.irq_i);
    end
@@ -351,7 +367,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
      $display("mip_wdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mip_if_0_i.rvfi_csr_wdata, `DUT_PATH.rvfi_csr_mip_if_0_i.rvfi_csr_wmask);
      $display("rvvi.csr[0][0][CSR_MIP_ADDR]=%08X", rvvi.csr[0][0][`CSR_MIP_ADDR]);
      $display("rvvi.csr_wb[0][0][CSR_MIP_ADDR]=%0d", rvvi.csr_wb[0][0][`CSR_MIP_ADDR]);
-   end   
+   end
 
    always_comb begin
      $display("mie_rdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mie_if_0_i.rvfi_csr_rdata, `DUT_PATH.rvfi_csr_mie_if_0_i.rvfi_csr_rmask);
@@ -373,9 +389,9 @@ module uvmt_cv32e40x_imperas_dv_wrap
            csr_mcause_wb = 0;
            $display("change end mcause");
        end
-   end 
+   end
    */
-  
+
   /////////////////////////////////////////////////////////////////////////////
   // REF control
 
@@ -411,7 +427,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRETH_ADDR     ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLE_ADDR       ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MINSTRET_ADDR     ));
-    
+
     // TODO: deal with the MHPMCOUNTER CSRs properly.
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER3_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER3H_ADDR ));
