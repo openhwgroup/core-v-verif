@@ -274,7 +274,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
      NMI_cause = 0;
 
      if (`DUT_PATH.data_rvalid_i) begin
-       //$display("%t %m Q size=%0d", $time, ldstQ.size());
        `uvm_info(info_tag, $sformatf("%t %m Q size=%0d", $time, ldstQ.size()), UVM_DEBUG);
        if (ldstQ.size() > 0) begin
          ldst = ldstQ.pop_back();
@@ -311,6 +310,34 @@ module uvmt_cv32e40x_imperas_dv_wrap
      end
    end: pass_nmi_to_ref
 
+//   always @(posedge rvvi.clk) begin: pass_nmi_to_ref
+//      // `RVFI_IF.insn_nmi = 0;
+//      if (`RVFI_IF.intr.intr && `RVFI_IF.valid) begin
+//         // NMI detected
+//         if ((cfg.nmi_load_fault_enabled && `RVFI_IF.intr.cause == cfg.nmi_load_fault_cause) ||
+//            (cfg.nmi_store_fault_enabled && `RVFI_IF.intr.cause == cfg.nmi_store_fault_cause)) begin
+//            void'(rvvi.net_push("nmi_cause", `RVFI_IF.intr.cause)); // Load/Store Error
+//            void'(rvvi.net_push("nmi", 1));
+//            //mon_trn.insn_nmi = 1;
+//            //mon_trn.insn_nmi_cause = mon_trn.intr.cause;
+//         end else begin
+//            void'(rvvi.net_push("nmi", 0));
+//         end
+//         // External interrupt
+//         //else begin
+//         //   mon_trn.insn_interrupt    = 1;
+//         //   mon_trn.insn_interrupt_id = { 1'b0, mon_trn.intr.cause };
+//         //end
+//      end else begin
+//         void'(rvvi.net_push("nmi", 0));
+//      end
+//   end: pass_nmi_to_ref
+   
+   
+   ////////////////////////////////////////////////////////////////////////////
+   // External Exceptions
+   // InstructionBusFault
+   
    ////////////////////////////////////////////////////////////////////////////
    // INTERRUPTS
    always @(posedge rvvi.clk) begin: pass_irq_to_ref
