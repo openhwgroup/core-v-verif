@@ -108,5 +108,17 @@ function bit [1:0] rvfi_check_mem_act(  int txn,
 
 endfunction : rvfi_check_mem_act
 
+function bit rvfi_match_instr(  bit [ DEFAULT_XLEN-1:0] instr,
+                                bit [ DEFAULT_XLEN-1:0] ref_instr,
+                                bit [ DEFAULT_XLEN-1:0] ref_mask
+                                );
 
+  if ((instr & ref_mask) == ref_instr) begin
+    return 1;
+  end
+  else begin
+    return 0;
+  end
+
+endfunction : rvfi_match_instr
 `endif // __UVMA_RVFI_FUNCS_SV__
