@@ -44,7 +44,6 @@ package uvma_rvfi_pkg;
    // Constants / Structs / Enums / Functions
    `include "uvma_rvfi_constants.sv"
    `include "uvma_rvfi_tdefs.sv"
-   `include "uvma_rvfi_funcs.sv"
 
    // Objects
    `include "uvma_rvfi_cfg.sv"
