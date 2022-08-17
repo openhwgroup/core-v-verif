@@ -1,8 +1,8 @@
 //
-// Copyright 2020 OpenHW Group
-// Copyright 2020 Datum Technology Corporation
+// Copyright 2022 OpenHW Group
+// Copyright 2022 Silicon Labs
 //
-// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+// Licensed under the Solderpad Hardware Licence, Version 2.1 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
@@ -33,6 +33,8 @@ module uvmt_cv32e40s_support_logic
     // ---------------------------------------------------------------------------
     // Local variables
     // ---------------------------------------------------------------------------
+    // Signal indicates an exception is active for a multiop instruction,
+    // in other words a subop has triggered an exception. WB stage timing.
     logic exception_active;
 
 
@@ -49,17 +51,16 @@ module uvmt_cv32e40s_support_logic
         support_if.req_after_exception_o <= 0;
         exception_active <= 0;
       end else  begin
-
-        if (rvfi.rvfi_valid) begin
-          support_if.req_after_exception_o <= 0;
-          exception_active <= 0;
-        end else if (support_if.ctrl_fsm_o_i.pc_set && (support_if.ctrl_fsm_o_i.pc_mux == PC_TRAP_DBE || support_if.ctrl_fsm_o_i.pc_mux == PC_TRAP_EXC)) begin
-          exception_active <= 1;
+        if (support_if.ctrl_fsm_o_i.pc_set && (support_if.ctrl_fsm_o_i.pc_mux == PC_TRAP_DBE || support_if.ctrl_fsm_o_i.pc_mux == PC_TRAP_EXC)) begin
           if (support_if.data_bus_req_i) begin
             support_if.req_after_exception_o <= 1;
           end
+          exception_active <= 1;
+        end else if (rvfi.rvfi_valid) begin
+          exception_active <= 0;
+          support_if.req_after_exception_o <= 0;
 
-        end else if (exception_active && support_if.data_bus_req_i)  begin
+        end else if (exception_active && support_if.data_bus_req_i) begin
           support_if.req_after_exception_o <= 1;
         end
 

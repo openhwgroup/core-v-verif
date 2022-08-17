@@ -144,16 +144,11 @@ interface uvma_rvfi_instr_if
   // Check if instruction is of a certain type
   // Usage: ref_mask sets the parts of the instruction you want to compare,
   //        ref_instr is the reference to match
-  function bit match_instr( bit [ DEFAULT_XLEN-1:0] ref_instr,
-                            bit [ DEFAULT_XLEN-1:0] ref_mask
-                            );
+  function logic match_instr( bit [ DEFAULT_XLEN-1:0] ref_instr,
+                              bit [ DEFAULT_XLEN-1:0] ref_mask
+                              );
 
-  if ((rvfi_insn & ref_mask) == ref_instr) begin
-    return 1;
-  end
-  else begin
-    return 0;
-  end
+  return ((rvfi_insn & ref_mask) == ref_instr);
 
   endfunction : match_instr
 
@@ -193,14 +188,14 @@ endfunction : get_mem_addr
 //Return rmask of memory transaction "txn"
 function bit [( DEFAULT_XLEN/8)-1:0] get_mem_rmask( int txn);
 
-   return rvfi_mem_rmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)];
+  return rvfi_mem_rmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)];
 
 endfunction : get_mem_rmask
 
 //Return wmask of memory transaction "txn"
 function bit [( DEFAULT_XLEN/8)-1:0] get_mem_wmask( int txn);
 
-   return rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)];
+  return rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)];
 
 endfunction : get_mem_wmask
 
@@ -211,17 +206,17 @@ endfunction : get_mem_wmask
 //indicates any activity.
 //return {read, write}
 function bit [1:0] check_mem_act(  int txn);
-   static bit read = 0;
-   static bit write = 0;
+  static bit read = 0;
+  static bit write = 0;
 
-   if (rvfi_mem_rmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)]) begin
-      read = 1;
-   end
-   if (rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)]) begin
-      write = 1;
-   end
+  if (rvfi_mem_rmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)]) begin
+    read = 1;
+  end
+  if (rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)]) begin
+    write = 1;
+  end
 
-   return {read,write};
+  return {read,write};
 
 endfunction : check_mem_act
 

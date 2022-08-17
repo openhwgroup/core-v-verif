@@ -1,8 +1,8 @@
 //
-// Copyright 2020 OpenHW Group
-// Copyright 2020 Datum Technology Corporation
+// Copyright 2022 OpenHW Group
+// Copyright 2022 Silicon Labs
 //
-// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+// Licensed under the Solderpad Hardware Licence, Version 2.1 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
