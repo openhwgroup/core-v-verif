@@ -1,3 +1,5 @@
+`default_nettype none
+
 module uvmt_cv32e40s_pmprvfi_assert
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
@@ -7,22 +9,22 @@ module uvmt_cv32e40s_pmprvfi_assert
   parameter int  PMP_NUM_REGIONS = 0
 )(
   // Clock and Reset
-  input logic  clk_i,
-  input logic  rst_ni,
+  input wire  clk_i,
+  input wire  rst_ni,
 
   // RVFI
-  input logic         rvfi_valid,
-  input logic [31:0]  rvfi_insn,
-  input logic [ 1:0]  rvfi_mode,
-  input rvfi_trap_t   rvfi_trap,
-  input logic [PMP_MAX_REGIONS/4-1:0][31:0]  rvfi_csr_pmpcfg_rdata,
-  input logic [PMP_MAX_REGIONS-1:0]  [31:0]  rvfi_csr_pmpaddr_rdata,
-  input logic [31:0]  rvfi_csr_mseccfg_rdata,
-  input logic [31:0]  rvfi_csr_mseccfgh_rdata,
-  input logic [ 4:0]  rvfi_rd_addr,
-  input logic [31:0]  rvfi_rd_wdata,
-  input logic [ 4:0]  rvfi_rs1_addr,
-  input logic [31:0]  rvfi_rs1_rdata
+  input wire         rvfi_valid,
+  input wire [31:0]  rvfi_insn,
+  input wire [ 1:0]  rvfi_mode,
+  input rvfi_trap_t  rvfi_trap,
+  input wire [PMP_MAX_REGIONS/4-1:0][31:0]  rvfi_csr_pmpcfg_rdata,
+  input wire [PMP_MAX_REGIONS-1:0]  [31:0]  rvfi_csr_pmpaddr_rdata,
+  input wire [31:0]  rvfi_csr_mseccfg_rdata,
+  input wire [31:0]  rvfi_csr_mseccfgh_rdata,
+  input wire [ 4:0]  rvfi_rd_addr,
+  input wire [31:0]  rvfi_rd_wdata,
+  input wire [ 4:0]  rvfi_rs1_addr,
+  input wire [31:0]  rvfi_rs1_rdata
 );
 
   // Defines
@@ -76,10 +78,11 @@ module uvmt_cv32e40s_pmprvfi_assert
   wire  is_rvfi_csr_read_instr =
     is_rvfi_csr_instr  &&
     rvfi_rd_addr;
+    // TODO:ropeders double check correctness
   wire  is_rvfi_csr_write_instr =
     is_rvfi_csr_instr  &&
-    rvfi_rs1_addr  &&
-    !((rvfi_insn[14:12] inside {3'b 010, 3'b 011}) && !rvfi_rs1_rdata);  // CSRRS/C wo/ high bits
+    !((rvfi_insn[13:12] inside {2'b 10, 2'b 11}) && !rvfi_rs1_addr);  // CSRRS/C[I] w/ rs1=x0/0
+    // TODO:ropeders double check correctness
 
   pmp_csr_t  pmp_csr_rvfi_rdata;
   for (genvar i = 0; i < PMP_MAX_REGIONS; i++) begin: gen_pmp_csr_readout
@@ -230,6 +233,29 @@ module uvmt_cv32e40s_pmprvfi_assert
       $stable(pmp_csr_rvfi_rdata.addr[0])
     )
   );
+/*
+  a_not_ignore_writes_cfg: assert property (
+    is_rvfi_csr_write_instr  &&
+    (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + 0))  &&
+    ?
+    |->
+    ?
+  );
+*/
+  property p_not_ignore_writes_cfg;
+    logic [7:0] cfg;
+    rvfi_valid  &&
+    pmp_csr_rvfi_rdata.cfg[1].lock  &&
+    (pmp_csr_rvfi_rdata.cfg[1].mode == PMP_MODE_TOR)  ##0
+    (1, cfg = pmp_csr_rvfi_rdata.cfg[0])
+    ##1
+    (rvfi_valid [->1])  ##0
+    (pmp_csr_rvfi_rdata.cfg[0] != cfg);
+  endproperty : p_not_ignore_writes_cfg
+  cov_not_ignore_writes_cfg: cover property (
+    p_not_ignore_writes_cfg
+    // TODO:silabs-robin  Write "a_not_ignore_writes_cfg".
+  );
   // Note, can be easily checked for all i
 
   // Locked TOR, ignore i-1 addr writes
@@ -244,3 +270,5 @@ module uvmt_cv32e40s_pmprvfi_assert
   end
 
 endmodule : uvmt_cv32e40s_pmprvfi_assert
+
+`default_nettype wire

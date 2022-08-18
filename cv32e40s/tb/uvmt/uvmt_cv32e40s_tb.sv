@@ -603,7 +603,8 @@ module uvmt_cv32e40s_tb;
       u_pmp_assert_lsu(.rst_n (clknrst_if.reset_n),
                        .*);
 
-    bind  cv32e40s_wrapper.rvfi_i
+    //TODO:silabs-robin  bind  cv32e40s_wrapper.rvfi_i
+    bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i
       uvmt_cv32e40s_pmprvfi_assert #(
         .PMP_GRANULARITY (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY),
         .PMP_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS)
@@ -888,7 +889,7 @@ module uvmt_cv32e40s_tb;
    end : test_bench_entry_point
 
    assign core_cntrl_if.clk = clknrst_if.clk;
-   assign iss_wrap.cpu.io.nmi_addr = ({dut_wrap.cv32e40s_wrapper_i.rvfi_csr_mtvec_if_0_i.rvfi_csr_rdata[31:2], 2'b00}) + 32'h3c;
+   //TODO silabs-robin (fix free net)  assign iss_wrap.cpu.io.nmi_addr = ({dut_wrap.cv32e40s_wrapper_i.rvfi_csr_mtvec_if_0_i.rvfi_csr_rdata[31:2], 2'b00}) + 32'h3c;
 
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
