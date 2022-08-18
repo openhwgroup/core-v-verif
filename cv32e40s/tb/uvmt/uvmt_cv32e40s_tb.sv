@@ -579,6 +579,15 @@ module uvmt_cv32e40s_tb;
       .*
     );
 
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_support_logic_if support_logic_if (
+
+      .ctrl_fsm_o_i(core_i.controller_i.controller_fsm_i.ctrl_fsm_o),
+      .data_bus_req_i(obi_data_if_i.req),
+
+      .*
+    );
+
 
     bind cv32e40s_pmp :
       uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i
@@ -602,8 +611,16 @@ module uvmt_cv32e40s_tb;
       u_pmp_assert_lsu(.rst_n(clknrst_if.reset_n),
                        .*);
 
+    bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if_0_i),
+                                                                      .support_if(support_logic_if.write)
+                                                                      );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
+
+    bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
+                                                              .support_if(support_logic_if.read)
+                                                              );
+
 
     //uvmt_cv32e40s_rvvi_handcar u_rvvi_handcar();
     /**
@@ -860,6 +877,7 @@ module uvmt_cv32e40s_tb;
      uvm_config_db#(virtual uvme_cv32e40s_core_cntrl_if     )::set(.cntxt(null), .inst_name("*"), .field_name("core_cntrl_vif"),      .value(core_cntrl_if)     );
      uvm_config_db#(virtual uvmt_cv32e40s_core_status_if    )::set(.cntxt(null), .inst_name("*"), .field_name("core_status_vif"),     .value(core_status_if)    );
      uvm_config_db#(virtual uvmt_cv32e40s_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"), .field_name("debug_cov_vif"),.value(dut_wrap.cv32e40s_wrapper_i.debug_cov_assert_if));
+     uvm_config_db#(virtual uvmt_cv32e40s_support_logic_if)::set(.cntxt(null), .inst_name("*.env"), .field_name("support_logic_vif"),.value(dut_wrap.cv32e40s_wrapper_i.support_logic_if));
 
      // Make the DUT Wrapper Virtual Peripheral's status outputs available to the base_test
      uvm_config_db#(bit      )::set(.cntxt(null), .inst_name("*"), .field_name("tp"),     .value(1'b0)        );
