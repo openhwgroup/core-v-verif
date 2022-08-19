@@ -318,7 +318,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     |->
     rvfi_trap
   );
-  // TODO:silabs-robin  Can assert the opposite? Must assert data-side too.
+  // TODO:silabs-robin  Can assert the opposite?
 
   // TODO  ("WaitUpdate"/"AffectSuccessors")
   a_noloadstore_musttrap: assert property (

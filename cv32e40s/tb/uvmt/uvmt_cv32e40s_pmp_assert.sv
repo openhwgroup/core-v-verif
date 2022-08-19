@@ -24,7 +24,12 @@ module uvmt_cv32e40s_pmp_assert
    // Access checking
    input wire [33:0]     pmp_req_addr_i,
    input wire pmp_req_e  pmp_req_type_i,
-   input wire            pmp_req_err_o
+   input wire            pmp_req_err_o,
+
+   // OBI
+   input wire         obi_req,
+   input wire [31:0]  obi_addr,
+   input wire         obi_gnt
   );
 
 
@@ -411,21 +416,52 @@ module uvmt_cv32e40s_pmp_assert
     );
   end endgenerate
 
-/* TODO:ropeders this is not correctly written
-  // Denied accesses don't reach the bus
-  property p_suppress_req;
-    logic [31:0] addr;
-    pmp_req_err_o  ##0
-    (1, addr = pmp_req_addr_i)
-    |->
-    (!(obi_req && (obi_addr == addr)))
-    until
-    ((pmp_req_addr_i == addr) && !pmp_req_err_o);
-  endproperty : p_suppress_req
-  a_suppress_req: assert property (
-    p_suppress_req
-  );
-*/
+  // Denied accesses don't reach the bus (instr-side)
+  if (IS_INSTR_SIDE) begin: gen_supress_req_instr
+    property p_suppress_req_instr;
+      logic [31:0]  addr;
+      pmp_req_err_o  ##0
+      (1, addr = pmp_req_addr_i)
+      |->
+      (!(obi_req && (obi_addr == addr)))
+      until
+      ((pmp_req_addr_i == addr) && !pmp_req_err_o);
+    endproperty : p_suppress_req_instr
+    a_suppress_req_instr: assert property (
+      p_suppress_req_instr
+    );
+  end
+
+  // Denied accesses don't reach the bus (data-side)
+  if (!IS_INSTR_SIDE) begin: gen_supress_req_data
+    property p_suppress_req_data;
+      logic [31:0]  addr;
+
+      // When "addr" is denied
+      pmp_req_err_o  ##0
+      (1, addr = pmp_req_addr_i)
+
+      |->
+
+      (
+        !obi_req                                            ^  // OBI is quelled
+        ($past(obi_req && !obi_gnt) && (obi_addr == addr))  ^  // (...or has leftovers)
+        (obi_req && (obi_addr != addr))                        // (...or does something completely different
+      )
+      until
+      (
+        // New attempt, got permission
+        (pmp_req_addr_i == addr)  &&
+        !pmp_req_err_o
+        // Note: Can add timeout if proven to be resource-hungry
+      )
+      ;
+    endproperty : p_suppress_req_data
+    a_suppress_req_data: assert property (
+      p_suppress_req_data
+    );
+    // TODO:silabs-robin  Add covers, or get reviews, and become convinced this is "bullet proof".
+  end
 
 endmodule : uvmt_cv32e40s_pmp_assert
 
