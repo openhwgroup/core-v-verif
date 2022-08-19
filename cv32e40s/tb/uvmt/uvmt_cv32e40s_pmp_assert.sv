@@ -57,10 +57,8 @@ module uvmt_cv32e40s_pmp_assert
 
   match_status_t  match_status;
   uvmt_cv32e40s_pmp_model #(
-    .PMP_GRANULARITY   (PMP_GRANULARITY),
-    .PMP_NUM_REGIONS   (PMP_NUM_REGIONS),
-    .IS_INSTR_SIDE     (IS_INSTR_SIDE),
-    .MSECCFG_RESET_VAL (MSECCFG_RESET_VAL)
+    .PMP_GRANULARITY  (PMP_GRANULARITY),
+    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
   ) model_i (
     .match_status_o (match_status),
     .*

@@ -1,9 +1,10 @@
 `default_nettype none
 
 module uvmt_cv32e40s_pmprvfi_assert
-  import uvm_pkg::*;
   import cv32e40s_pkg::*;
   import cv32e40s_rvfi_pkg::*;
+  import uvm_pkg::*;
+  import uvmt_cv32e40s_pkg::*;
 #(
   parameter int  PMP_GRANULARITY = 0,
   parameter int  PMP_NUM_REGIONS = 0
@@ -24,10 +25,16 @@ module uvmt_cv32e40s_pmprvfi_assert
   input wire [ 4:0]  rvfi_rd_addr,
   input wire [31:0]  rvfi_rd_wdata,
   input wire [ 4:0]  rvfi_rs1_addr,
-  input wire [31:0]  rvfi_rs1_rdata
+  input wire [31:0]  rvfi_rs1_rdata,
+  input wire [31:0]  rvfi_pc_rdata,
+  input wire [31:0]  rvfi_mem_addr,
+  input wire [ 3:0]  rvfi_mem_wmask,
+  input wire [ 3:0]  rvfi_mem_rmask
 );
 
+
   // Defines
+
   localparam logic [1:0] MODE_U = 2'b 00;
   localparam logic [1:0] MODE_M = 2'b 11;
 
@@ -46,11 +53,13 @@ module uvmt_cv32e40s_pmprvfi_assert
 
 
   // Defaults
+
   default clocking @(posedge clk_i); endclocking
   default disable iff !(rst_ni);
 
 
   // Helper signals
+
   wire  is_rvfi_csr_instr =
     rvfi_valid  &&
     (rvfi_insn[6:0] == 7'b 1110011)  &&
@@ -91,9 +100,42 @@ module uvmt_cv32e40s_pmprvfi_assert
     localparam pmpcfg_field_lo = (8 * (i % 4));
 
     assign pmp_csr_rvfi_rdata.cfg[i]  = rvfi_csr_pmpcfg_rdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
-    assign pmp_csr_rvfi_rdata.addr[i] = rvfi_csr_pmpaddr_rdata[i];  // TODO:ropeders is this assignment correct?
+    assign pmp_csr_rvfi_rdata.addr[i] = {rvfi_csr_pmpaddr_rdata[i], 2'b 00};  // TODO:ropeders is this assignment correct?
   end
   assign pmp_csr_rvfi_rdata.mseccfg = {rvfi_csr_mseccfgh_rdata, rvfi_csr_mseccfg_rdata};
+
+  match_status_t  match_status_instr;
+  match_status_t  match_status_data;
+  uvmt_cv32e40s_pmp_model #(
+    .PMP_GRANULARITY  (PMP_GRANULARITY),
+    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
+  ) model_instr_i (
+    .clk   (clk_i),
+    .rst_n (rst_ni),
+
+    .csr_pmp_i      (pmp_csr_rvfi_rdata),
+    .priv_lvl_i     (privlvl_t'(rvfi_mode)),
+    .pmp_req_addr_i (rvfi_pc_rdata),
+    .pmp_req_type_i (PMP_ACC_EXEC),
+    .pmp_req_err_o  ('Z),
+
+    .match_status_o (match_status_instr)
+  );
+  uvmt_cv32e40s_pmp_model #(
+    .PMP_GRANULARITY  (PMP_GRANULARITY),
+    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
+  ) model_data_i (
+    .clk   (clk_i),
+    .rst_n (rst_ni),
+
+    .csr_pmp_i      (pmp_csr_rvfi_rdata),
+    .priv_lvl_i     (privlvl_t'(rvfi_mode)),
+    .pmp_req_addr_i (rvfi_mem_addr),  // TODO:silabs-robin  Multi-op instructions
+    .pmp_req_type_i (rvfi_mem_wmask ? PMP_ACC_WRITE : PMP_ACC_READ),  // TODO:silabs-robin  Not completely accurate...
+    .pmp_req_err_o  ('Z),
+
+    .match_status_o (match_status_data)
+  );
 
 
   // Assertions
@@ -268,6 +310,24 @@ module uvmt_cv32e40s_pmprvfi_assert
       always $stable(pmp_csr_rvfi_rdata.addr[i-1][31:PMP_GRANULARITY])
     );
   end
+
+  // TODO  ("WaitUpdate"/"AffectSuccessors")
+  a_noexec_musttrap: assert property (
+    rvfi_valid  &&
+    !match_status_instr.is_access_allowed
+    |->
+    rvfi_trap
+  );
+  // TODO:silabs-robin  Can assert the opposite? Must assert data-side too.
+
+  // TODO  ("WaitUpdate"/"AffectSuccessors")
+  a_noloadstore_musttrap: assert property (
+    rvfi_valid  &&
+    (rvfi_mem_rmask || rvfi_mem_wmask)  &&
+    !match_status_data.is_access_allowed
+    |->
+    rvfi_trap
+  );
 
 endmodule : uvmt_cv32e40s_pmprvfi_assert
 

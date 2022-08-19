@@ -6,9 +6,7 @@ module uvmt_cv32e40s_pmp_model
   import uvmt_cv32e40s_pkg::*;
   #(
     parameter int       PMP_GRANULARITY   = 0,
-    parameter int       PMP_NUM_REGIONS   = 0,
-    parameter int       IS_INSTR_SIDE     = 0,
-    parameter mseccfg_t MSECCFG_RESET_VAL = MSECCFG_DEFAULT
+    parameter int       PMP_NUM_REGIONS   = 0
   )
   (
    // Clock and Reset
