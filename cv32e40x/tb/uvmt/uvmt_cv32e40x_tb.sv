@@ -78,7 +78,7 @@ module uvmt_cv32e40x_tb;
                                                    .sec_lvl    ());     // Core status outputs
 
    // RVVI SystemVerilog Interface
-   RVVI_VLG #( .NHART(1), .ISSUE(1) ) rvvi_if();
+   RVVI_VLG #( .NHART(1), .RETIRE(1)) rvvi_if();
 
   /**
    * DUT WRAPPER instance:

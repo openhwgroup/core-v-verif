@@ -182,7 +182,7 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
 
    // NUM_MHPMCOUNTERS - Set zero in the noinhibit_mask to enable a counter, starting from index 3
    $fwrite(fh, $sformatf("--override %s/noinhibit_mask=0x%08x\n",                 refpath, cfg.core_cfg.get_noinhibit_mask()));
-   //$fwrite(fh, $sformatf("--override %s/extension/mcountinhibit_reset=0x%08x\n",  refpath, cfg.core_cfg.get_noinhibit_mask()));
+   $fwrite(fh, $sformatf("--override %s/extension/mcountinhibit_reset=0x%08x\n",  refpath, ~(cfg.core_cfg.get_noinhibit_mask())));
 
    // PMA Regions
    $fwrite(fh, $sformatf("--override %s/extension/PMA_NUM_REGIONS=%0d\n",         refpath, cfg.core_cfg.pma_regions.size()));

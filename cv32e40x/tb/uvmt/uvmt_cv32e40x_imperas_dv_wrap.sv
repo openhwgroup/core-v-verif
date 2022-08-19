@@ -108,9 +108,65 @@
 `define CSR_MHPMCOUNTER30_ADDR 32'hB1E
 `define CSR_MHPMCOUNTER31_ADDR 32'hB1F
 
-`define CSR_MHPMCOUNTER3H_ADDR 32'hB83
+`define CSR_MHPMCOUNTER3H_ADDR  32'hB83
+`define CSR_MHPMCOUNTER4H_ADDR  32'hB84
+`define CSR_MHPMCOUNTER5H_ADDR  32'hB85
+`define CSR_MHPMCOUNTER6H_ADDR  32'hB86
+`define CSR_MHPMCOUNTER7H_ADDR  32'hB87
+`define CSR_MHPMCOUNTER8H_ADDR  32'hB88
+`define CSR_MHPMCOUNTER9H_ADDR  32'hB89
+`define CSR_MHPMCOUNTER10H_ADDR 32'hB8A
+`define CSR_MHPMCOUNTER11H_ADDR 32'hB8B
+`define CSR_MHPMCOUNTER12H_ADDR 32'hB8C
+`define CSR_MHPMCOUNTER13H_ADDR 32'hB8D
+`define CSR_MHPMCOUNTER14H_ADDR 32'hB8E
+`define CSR_MHPMCOUNTER15H_ADDR 32'hB8F
+`define CSR_MHPMCOUNTER16H_ADDR 32'hB90
+`define CSR_MHPMCOUNTER17H_ADDR 32'hB91
+`define CSR_MHPMCOUNTER18H_ADDR 32'hB92
+`define CSR_MHPMCOUNTER19H_ADDR 32'hB93
+`define CSR_MHPMCOUNTER20H_ADDR 32'hB94
+`define CSR_MHPMCOUNTER21H_ADDR 32'hB95
+`define CSR_MHPMCOUNTER22H_ADDR 32'hB96
+`define CSR_MHPMCOUNTER23H_ADDR 32'hB97
+`define CSR_MHPMCOUNTER24H_ADDR 32'hB98
+`define CSR_MHPMCOUNTER25H_ADDR 32'hB99
+`define CSR_MHPMCOUNTER26H_ADDR 32'hB9A
+`define CSR_MHPMCOUNTER27H_ADDR 32'hB9B
+`define CSR_MHPMCOUNTER28H_ADDR 32'hB9C
+`define CSR_MHPMCOUNTER29H_ADDR 32'hB9D
+`define CSR_MHPMCOUNTER30H_ADDR 32'hB9E
+`define CSR_MHPMCOUNTER31H_ADDR 32'hB9F
 
-`define CSR_MHPMEVENT3_ADDR    32'h323
+`define CSR_MHPMEVENT3_ADDR  32'h323
+`define CSR_MHPMEVENT4_ADDR  32'h324
+`define CSR_MHPMEVENT5_ADDR  32'h325
+`define CSR_MHPMEVENT6_ADDR  32'h326
+`define CSR_MHPMEVENT7_ADDR  32'h327
+`define CSR_MHPMEVENT8_ADDR  32'h328
+`define CSR_MHPMEVENT9_ADDR  32'h329
+`define CSR_MHPMEVENT10_ADDR 32'h32A
+`define CSR_MHPMEVENT11_ADDR 32'h32B
+`define CSR_MHPMEVENT12_ADDR 32'h32C
+`define CSR_MHPMEVENT13_ADDR 32'h32D
+`define CSR_MHPMEVENT14_ADDR 32'h32E
+`define CSR_MHPMEVENT15_ADDR 32'h32F
+`define CSR_MHPMEVENT16_ADDR 32'h330
+`define CSR_MHPMEVENT17_ADDR 32'h331
+`define CSR_MHPMEVENT18_ADDR 32'h332
+`define CSR_MHPMEVENT19_ADDR 32'h333
+`define CSR_MHPMEVENT20_ADDR 32'h334
+`define CSR_MHPMEVENT21_ADDR 32'h335
+`define CSR_MHPMEVENT22_ADDR 32'h336
+`define CSR_MHPMEVENT23_ADDR 32'h337
+`define CSR_MHPMEVENT24_ADDR 32'h338
+`define CSR_MHPMEVENT25_ADDR 32'h339
+`define CSR_MHPMEVENT26_ADDR 32'h33A
+`define CSR_MHPMEVENT27_ADDR 32'h33B
+`define CSR_MHPMEVENT28_ADDR 32'h33C
+`define CSR_MHPMEVENT29_ADDR 32'h33D
+`define CSR_MHPMEVENT30_ADDR 32'h33E
+`define CSR_MHPMEVENT31_ADDR 32'h33F
 
 `define CSR_MCYCLEH_ADDR       32'hB80
 `define CSR_MINSTRETH_ADDR     32'hB82
@@ -142,6 +198,9 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module wrapper for Imperas DV.
+
+//`define USE_IMPERASDV
+`ifdef USE_IMPERASDV
 
 module uvmt_cv32e40x_imperas_dv_wrap
   import uvm_pkg::*;
@@ -310,33 +369,129 @@ module uvmt_cv32e40x_imperas_dv_wrap
      end
    end: pass_nmi_to_ref
 
-//   always @(posedge rvvi.clk) begin: pass_nmi_to_ref
-//      // `RVFI_IF.insn_nmi = 0;
-//      if (`RVFI_IF.intr.intr && `RVFI_IF.valid) begin
-//         // NMI detected
-//         if ((cfg.nmi_load_fault_enabled && `RVFI_IF.intr.cause == cfg.nmi_load_fault_cause) ||
-//            (cfg.nmi_store_fault_enabled && `RVFI_IF.intr.cause == cfg.nmi_store_fault_cause)) begin
-//            void'(rvvi.net_push("nmi_cause", `RVFI_IF.intr.cause)); // Load/Store Error
-//            void'(rvvi.net_push("nmi", 1));
-//            //mon_trn.insn_nmi = 1;
-//            //mon_trn.insn_nmi_cause = mon_trn.intr.cause;
-//         end else begin
-//            void'(rvvi.net_push("nmi", 0));
-//         end
-//         // External interrupt
-//         //else begin
-//         //   mon_trn.insn_interrupt    = 1;
-//         //   mon_trn.insn_interrupt_id = { 1'b0, mon_trn.intr.cause };
-//         //end
-//      end else begin
-//         void'(rvvi.net_push("nmi", 0));
-//      end
-//   end: pass_nmi_to_ref
-   
-   
+   ////////////////////////////////////////////////////////////////////////////
+   // Non-Maskable INTERRUPTS
+/*
+   bit [10:0] nmi_cause;
+   bit [10:0] rvfi_intr;
+   bit [10:0] rvfi_valid;
+   always_comb begin
+       rvfi_intr  = `RVFI_IF.rvfi_intr >> 3;
+       rvfi_valid = `RVFI_IF.rvfi_valid;
+       $display("rvfi_valid=%0d rvfi_intr=%0d", rvfi_valid, rvfi_intr);
+       if (rvfi_valid) begin
+           if (rvfi_intr>=32) begin
+               $display("%t comb SET nmi_cause=%0d", $time, rvfi_intr);
+               void'(rvvi.net_push("nmi_cause", rvfi_intr));
+               void'(rvvi.net_push("nmi", 1));
+           end else begin
+               $display("%t comb CLR nmi_cause=%0d", $time, rvfi_intr);
+               void'(rvvi.net_push("nmi", 0));
+           end
+       end
+   end
+*/
+//   always @(posedge rvvi.clk or (rvfi_valid)) begin: nmit_setclr
+ /*  always @(posedge rvvi.clk) begin: nmit_setclr
+       bit nmi;
+       if (rvfi_valid) begin
+           if (rvfi_intr>=32) begin
+               $display("%t comb SET nmi_cause=%0d", $time, rvfi_intr);
+               void'(rvvi.net_push("nmi_cause", rvfi_intr));
+               void'(rvvi.net_push("nmi", 1));
+               nmi = 1;
+           end else if (nmi==1) begin
+               $display("%t edge CLR nmi_cause=%0d", $time, rvfi_intr);
+               void'(rvvi.net_push("nmi", 0));
+               nmi = 0;
+           end
+       end
+   end */
+
    ////////////////////////////////////////////////////////////////////////////
    // External Exceptions
-   // InstructionBusFault
+   // InstructionBusFault - extract from rvfi_trap ?
+   // Set Asynchronously - Clear Synchronously
+//   bit InstructionBusFault;
+//   bit [10:0] rvfi_cause;
+//   always_comb begin
+//       rvfi_cause = `RVFI_IF.rvfi_trap >> 3;
+//       //$display("rvfi_cause = %0d", rvfi_cause);
+//   end
+//   always @(posedge rvvi.clk or (rvfi_cause==48)) begin: InstructionBusFault_setclr
+//       if (rvfi_cause==48) begin
+//           //$display("%t comb InstructionBusFault=1", $time);
+//           void'(rvvi.net_push("InstructionBusFault", 1));
+//           InstructionBusFault = 1;
+//       end else if (InstructionBusFault==1) begin
+//           //$display("%t edge InstructionBusFault=0", $time);
+//           void'(rvvi.net_push("InstructionBusFault", 0));
+//           InstructionBusFault = 0;
+//       end
+//   end
+   
+   // RVFI Monitor
+   bit InstructionBusFault;
+   always @InstructionBusFault $display("InstructionBusFault=%X %t", InstructionBusFault, $time);
+   always @(*) begin
+       bit        trap_trap;
+       bit        trap_exception;
+       bit        trap_debug;
+       bit [5:0]  trap_exception_cause;
+       bit [2:0]  trap_debug_cause;
+       //bit        trap_cause_type;
+       
+       bit        intr_intr;
+       bit        intr_exception;
+       bit        intr_interrupt;
+       bit [10:0] intr_cause;
+       
+       if (`RVFI_IF.rvfi_valid) begin
+           // [0]=trap, [1]=exception, [2]=debug [8:3]=exception_cause, [11:9]=debug_cause, [13:12]=cause_type
+           trap_trap            = `RVFI_IF.rvfi_trap[0];
+           trap_exception       = `RVFI_IF.rvfi_trap[1];
+           trap_debug           = `RVFI_IF.rvfi_trap[2];
+           trap_exception_cause = `RVFI_IF.rvfi_trap[8:3];
+           trap_debug_cause     = `RVFI_IF.rvfi_trap[11:9];
+           //trap_cause_type      = `RVFI_IF.rvfi_trap[12];
+           
+           intr_intr            = `RVFI_IF.rvfi_intr.intr;
+           intr_exception       = `RVFI_IF.rvfi_intr.exception;
+           intr_interrupt       = `RVFI_IF.rvfi_intr.interrupt;
+           intr_cause           = `RVFI_IF.rvfi_intr.cause;
+
+           $display("\nRVFI Valid %t", $time);
+           $display("valid      = %X", `RVFI_IF.rvfi_valid);
+           $display("order      = %X", `RVFI_IF.rvfi_order);
+           $display("insn       = %X", `RVFI_IF.rvfi_insn);
+           $display("trap       trap=%X exception=%X debug=%X exception_cause=0x%X debug_cause=0x%X", 
+               trap_trap, trap_exception, trap_debug, trap_exception_cause, trap_debug_cause);
+           $display("halt       = %X", `RVFI_IF.rvfi_halt);
+           $display("dbg        = %X", `RVFI_IF.rvfi_dbg);
+           $display("dbg_mode   = %X", `RVFI_IF.rvfi_dbg_mode);
+           
+           // [0]=nmi, [1]=0/load:1/store
+           $display("nmip       nmi=%X nmi_load0_store1=%X", `RVFI_IF.rvfi_nmip[0], `RVFI_IF.rvfi_nmip[1]);
+           $display("intr       intr=%X exception=%X interrupt=%X cause=0x%X", 
+               intr_intr, intr_exception, intr_interrupt, intr_cause);
+           $display("mode       = %X", `RVFI_IF.rvfi_mode);
+           $display("ixl        = %X", `RVFI_IF.rvfi_ixl);
+           $display("pc_rdata   = %X", `RVFI_IF.rvfi_pc_rdata);
+           $display("pc_wdata   = %X", `RVFI_IF.rvfi_pc_wdata);
+       
+           if (trap_trap && trap_exception && trap_exception_cause=='h30) begin
+               if (!InstructionBusFault) 
+                   void'(rvvi.net_push("InstructionBusFault", 1));
+               InstructionBusFault = 1;
+
+           end else begin
+               if (InstructionBusFault) 
+                   void'(rvvi.net_push("InstructionBusFault", 0));
+               InstructionBusFault = 0;
+           
+           end
+       end
+   end
    
    ////////////////////////////////////////////////////////////////////////////
    // INTERRUPTS
@@ -373,51 +528,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
      irq_out = irq_in;
 
    end: pass_irq_to_ref
-   /*
-   always_comb begin
-     $display("mcause_rdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_rdata, `DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_rmask);
-     $display("mcause_wdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_wdata, `DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_wmask);
-     $display("rvvi.csr[0][0][CSR_MCAUSE_ADDR]=%08X", rvvi.csr[0][0][`CSR_MCAUSE_ADDR]);
-     $display("rvvi.csr_wb[0][0][CSR_MCAUSE_ADDR]=%0d", rvvi.csr_wb[0][0][`CSR_MCAUSE_ADDR]);
-   end
-   always_comb begin
-     $display("mstatus_rdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mstatus_if_0_i.rvfi_csr_rdata, `DUT_PATH.rvfi_csr_mstatus_if_0_i.rvfi_csr_rmask);
-     $display("mstatus_wdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mstatus_if_0_i.rvfi_csr_wdata, `DUT_PATH.rvfi_csr_mstatus_if_0_i.rvfi_csr_wmask);
-     $display("rvvi.csr[0][0][CSR_MSTATUS_ADDR]=%08X", rvvi.csr[0][0][`CSR_MSTATUS_ADDR]);
-     $display("rvvi.csr_wb[0][0][CSR_MSTATUS_ADDR]=%0d", rvvi.csr_wb[0][0][`CSR_MSTATUS_ADDR]);
-   end
-   always_comb begin
-     $display("irq=%08X", `DUT_PATH.irq_i);
-   end
-   always_comb begin
-     $display("mip_rdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mip_if_0_i.rvfi_csr_rdata, `DUT_PATH.rvfi_csr_mip_if_0_i.rvfi_csr_rmask);
-     $display("mip_wdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mip_if_0_i.rvfi_csr_wdata, `DUT_PATH.rvfi_csr_mip_if_0_i.rvfi_csr_wmask);
-     $display("rvvi.csr[0][0][CSR_MIP_ADDR]=%08X", rvvi.csr[0][0][`CSR_MIP_ADDR]);
-     $display("rvvi.csr_wb[0][0][CSR_MIP_ADDR]=%0d", rvvi.csr_wb[0][0][`CSR_MIP_ADDR]);
-   end
-
-   always_comb begin
-     $display("mie_rdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mie_if_0_i.rvfi_csr_rdata, `DUT_PATH.rvfi_csr_mie_if_0_i.rvfi_csr_rmask);
-     $display("mie_wdata=%08X mask=%08X", `DUT_PATH.rvfi_csr_mie_if_0_i.rvfi_csr_wdata, `DUT_PATH.rvfi_csr_mie_if_0_i.rvfi_csr_wmask);
-     $display("rvvi.csr[0][0][CSR_MIE_ADDR]=%08X", rvvi.csr[0][0][`CSR_MIE_ADDR]);
-     $display("rvvi.csr_wb[0][0][CSR_MIE_ADDR]=%0d", rvvi.csr_wb[0][0][`CSR_MIE_ADDR]);
-   end
-   */
-   /*
-   bit csr_mcause_wb;
-   assign rvvi.csr[0][0][`CSR_MCAUSE_ADDR]    = `DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_rdata;
-   assign rvvi.csr_wb[0][0][`CSR_MCAUSE_ADDR] = csr_mcause_wb;
-   always @(`DUT_PATH.rvfi_csr_mcause_if_0_i.rvfi_csr_rdata) begin
-       csr_mcause_wb = 1;
-       $display("change begin mcause");
-   end
-   always @(posedge rvvi.clk) begin : always_MCAUSE
-       if (`RVFI_IF.rvfi_valid && csr_mcause_wb) begin
-           csr_mcause_wb = 0;
-           $display("change end mcause");
-       end
-   end
-   */
 
   /////////////////////////////////////////////////////////////////////////////
   // REF control
@@ -453,12 +563,101 @@ module uvmt_cv32e40x_imperas_dv_wrap
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRET_ADDR      ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRETH_ADDR     ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLE_ADDR       ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLEH_ADDR      ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MINSTRET_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MINSTRETH_ADDR    ));
 
     // TODO: deal with the MHPMCOUNTER CSRs properly.
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER3_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER3H_ADDR ));
-    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT3_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT3_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER4_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER4H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT4_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER5_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER5H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT5_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER6_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER6H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT6_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER7_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER7H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT7_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER8_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER8H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT8_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER9_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER9H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT9_ADDR ));
+
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER10_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER10H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT10_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER11_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER11H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT11_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER12_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER12H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT12_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER13_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER13H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT13_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER14_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER14H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT14_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER15_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER15H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT15_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER16_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER16H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT16_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER17_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER17H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT17_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER18_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER18H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT18_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER19_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER19H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT19_ADDR ));
+
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER20_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER20H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT20_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER21_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER21H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT21_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER22_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER22H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT22_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER23_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER23H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT23_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER24_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER24H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT24_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER25_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER25H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT25_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER26_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER26H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT26_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER27_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER27H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT27_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER28_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER28H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT28_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER29_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER29H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT29_ADDR ));
+
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER30_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER30H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT30_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER31_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER31H_ADDR ));
+    void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT31_ADDR ));
 
     rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR,       `RVVI_FALSE);
     rvviRefCsrCompareEnable(hart_id, `CSR_MSTATUS_ADDR,   `RVVI_FALSE);
@@ -485,6 +684,24 @@ module uvmt_cv32e40x_imperas_dv_wrap
   endtask // ref_init
 
 endmodule : uvmt_cv32e40x_imperas_dv_wrap
+
+`else // ! USE_IMPERASDV
+    
+    module uvmt_cv32e40x_imperas_dv_wrap
+      import uvm_pkg::*;
+      import uvme_cv32e40x_pkg::*;
+      #(
+       )
+
+       (
+        RVVI_VLG  rvvi // RVVI SystemVerilog Interface
+       );
+    
+       task ref_init;
+       endtask
+endmodule : uvmt_cv32e40x_imperas_dv_wrap
+
+`endif  // USE_IMPERASDV
 
 `endif // __UVMT_CV32E40X_IMPERAS_DV_WRAP_SV__
 
