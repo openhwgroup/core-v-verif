@@ -32,9 +32,6 @@ EMBENCH_REPO        ?= TODO_dontwanttodefinethis
 COMPLIANCE_REPO     ?= TODO_dontwanttodefinethis
 DPI_DASM_SPIKE_REPO ?= TODO_dontwanttodefinethis
 
-# TODO:silabs-robin  No hardcoded paths.
-export DESIGN_RTL_DIR = ../../core-v-cores/cv32e40x/rtl/
-
 include  $(CORE_V_VERIF)/mk/fv/fv.mk
 
 

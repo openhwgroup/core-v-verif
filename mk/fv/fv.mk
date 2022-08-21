@@ -22,7 +22,9 @@
 default_target:  fv
 
 
-CV_CORE_PKG := $(CORE_V_VERIF)/core-v-cores/$(CV_CORE)
+CV_CORE_PKG ?= $(CORE_V_VERIF)/core-v-cores/$(CV_CORE)
+
+export DESIGN_RTL_DIR ?= $(CV_CORE_PKG)/rtl
 
 include $(CORE_V_VERIF)/mk/Common.mk
 
