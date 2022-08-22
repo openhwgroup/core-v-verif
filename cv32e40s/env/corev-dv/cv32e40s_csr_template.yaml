@@ -957,6 +957,7 @@
       reset_val: 0
       msb: 3
       lsb: 3
+
 - csr: misa
   description: >
     Machine ISA Register
@@ -977,6 +978,7 @@
       reset_val: 0x901104
       msb: 25
       lsb: 0
+
 - csr: mie
   description: >
     Machine Interrupt Enable
@@ -1011,8 +1013,7 @@
       reset_val: 0
       msb: 3
       lsb: 3
-# TODO mtvec needs update and regen of test for 40s
-# how to handle clic&non-clic here?
+### COND CLINT
 - csr: mtvec
   description: >
     Machine Trap-Vector Base Address
@@ -1047,7 +1048,17 @@
       reset_val: 1
       msb: 0
       lsb: 0
-
+### COND CLIC
+#- csr: mtvec
+#  description: >
+#    Machine Trap-Vector Base Address
+#  address: 0x305
+#  privilege_mode: M
+#  rv32:
+#    ###################### TODO COMPLETE #########################
+#- csr: mtvt
+#    ###################### TODO COMPLETE #########################
+### ENDCOND
 - csr: mstatush
   description: >
     Machine ISA register
@@ -1068,275 +1079,6 @@
       reset_val: 0
       msb: 5
       lsb: 5
-
-- csr: menvcfgh
-  description: >
-    Machine Environment Configuration (h)
-  address: 0x31A
-  privilege_mode: M
-  rv32:
-    - field_name: STCE
-      description: >
-        STimecmp Enable
-      type: R
-      reset_val: 0
-      msb: 31
-      lsb: 31
-    - field_name: Reserved_30_0
-      description: >
-        Hardcoded zero
-      type: WPRI
-      reset_val: 0
-      msb: 30
-      lsb: 0
-
-# 0.4.0:
-- csr: mcounteren
-  description: >
-    Machine Counter Enable
-  address: 0x306
-  privilege_mode: M
-  rv32:
-    - field_name: Enable
-      description: >
-        Always 0
-      type: WARL
-      reset_val: 0
-      msb: 31
-      lsb: 0
-      warl_legalize: |
-        val_out = 0
-# 0.2.0:
-#- csr: mcounteren
-#  description: >
-#    Machine Counter Enable
-#  address: 0x306
-#  privilege_mode: M
-#  rv32:
-#    - field_name: Reserved_31_3
-#      description: >
-#        Always 0
-#      type: WARL
-#      reset_val: 0
-#      msb: 31
-#      lsb: 3
-#      warl_legalize: |
-#        val_out = val_in if 0 else val_orig
-#    - field_name: IR
-#      description: >
-#        instret enable for user mode
-#      type: RW
-#      reset_val: 0
-#      msb: 2
-#      lsb: 2
-#    - field_name: Reserved_1_1
-#      description: >
-#        Always 0
-#      type: WARL
-#      reset_val: 0
-#      msb: 1
-#      lsb: 1
-#      warl_legalize: |
-#        val_out = val_in if 0 else val_orig
-#    - field_name: CY
-#      description: >
-#        Cycle enable for user mode
-#      type: RW
-#      reset_val: 0
-#      msb: 0
-#      lsb: 0
-
-- csr: menvcfg
-  description: >
-    Machine Environment Configuration Register
-  address: 0x30A
-  privilege_mode: M
-  rv32:
-    - field_name: FIOM
-      description: >
-        Fence of IO Implies Memory
-      type: R
-      reset_val: 0
-      msb: 0
-      lsb: 0
-    - field_name: CBIE
-      description: >
-        Cache Block Invalidate Instruction Enable
-      type: R
-      reset_val: 0
-      msb: 5
-      lsb: 4
-    - field_name: CBCFE
-      description: >
-        Cache Block Clean and Flush Instruction Enable
-      type: R
-      reset_val: 0
-      msb: 6
-      lsb: 6
-    - field_name: CBZE
-      description: >
-        Cache Block Zero Instruction Enable
-      type: R
-      reset_val: 0
-      msb: 7
-      lsb: 7
-
-- csr: mstateen0
-  description: >
-    Machine State Enable 0
-  address: 0x30C
-  privilege_mode: M
-  rv32:
-    - field_name: Reserved_31_3
-      description: >
-        Reserved bits
-      type: WARL
-      reset_val: 0
-      msb: 31
-      lsb: 3
-      warl_legalize: |
-        val_out = 0
-    - field_name: State_Enable
-      description: >
-        State enable
-      type: RW
-      reset_val: 0
-      msb: 2
-      lsb: 2
-    - field_name: Reserved_1_0
-      description: >
-        Reserved bits
-      type: WARL
-      reset_val: 0
-      msb: 1
-      lsb: 0
-      warl_legalize: |
-        val_out = 0
-
-- csr: mstateen1
-  description: >
-    Machine State Enable 1
-  address: 0x30D
-  privilege_mode: M
-  rv32:
-    - field_name: Reserved_31_0
-      description: >
-        Reserved bits
-      type: WARL
-      reset_val: 0
-      msb: 31
-      lsb: 0
-      warl_legalize: |
-        val_out = 0
-
-- csr: mstateen2
-  description: >
-    Machine State Enable 2
-  address: 0x30E
-  privilege_mode: M
-  rv32:
-    - field_name: Reserved_31_0
-      description: >
-        Reserved bits
-      type: WARL
-      reset_val: 0
-      msb: 31
-      lsb: 0
-      warl_legalize: |
-        val_out = 0
-
-- csr: mstateen3
-  description: >
-    Machine State Enable 3
-  address: 0x30F
-  privilege_mode: M
-  rv32:
-    - field_name: Reserved_31_0
-      description: >
-        Reserved bits
-      type: WARL
-      reset_val: 0
-      msb: 31
-      lsb: 0
-      warl_legalize: |
-        val_out = 0
-
-- csr: menvcfgh
-  description: >
-    Machine Environment Configuration
-  address: 0x31A
-  privilege_mode: M
-  rv32:
-    - field_name: STCE
-      description: >
-        STCE
-      type: R
-      reset_val: 0
-      msb: 31
-      lsb: 31
-    - field_name: Reserved_30_0
-      description: >
-        Reserved
-      type: WPRI
-      reset_val: 0
-      msb: 30
-      lsb: 0
-
-- csr: mstateen0h
-  description: >
-    Machine state enable 0h
-  address: 0x31C
-  privilege_mode: M
-  rv32:
-    - field_name: Reserved_31_0
-      type: WARL
-      reset_val: 0
-      msb: 31
-      lsb: 0
-      warl_legalize: |
-        val_out = 0
-
-- csr: mstateen1h
-  description: >
-    Machine state enable 1h
-  address: 0x31C
-  privilege_mode: M
-  rv32:
-    - field_name: Reserved_31_0
-      type: WARL
-      reset_val: 0
-      msb: 31
-      lsb: 0
-      warl_legalize: |
-        val_out = 0
-
-- csr: mstateen2h
-  description: >
-    Machine state enable 2h
-  address: 0x31C
-  privilege_mode: M
-  rv32:
-    - field_name: Reserved_31_0
-      type: WARL
-      reset_val: 0
-      msb: 31
-      lsb: 0
-      warl_legalize: |
-        val_out = 0
-
-- csr: mstateen3h
-  description: >
-    Machine state enable 3h
-  address: 0x31C
-  privilege_mode: M
-  rv32:
-    - field_name: Reserved_31_0
-      type: WARL
-      reset_val: 0
-      msb: 31
-      lsb: 0
-      warl_legalize: |
-        val_out = 0
 
 - csr: mcountinhibit
   description: >
@@ -1964,6 +1706,397 @@
       reset_val: 0
       msb: 0
       lsb: 0
+### COND CLIC
+- csr: mnxti
+  description: >
+    Machine next interrupt
+  address: 0x345
+  privilege_mode: M
+  rv32:
+    - field_name: MNXTI
+      description: >
+        Machine next interrupt handler address and interrupt enable
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: minstatus
+  description: >
+    Machine interrupt status
+  address: 0x346
+  privilege_mode: M
+  rv32:
+    - field_name: MIL
+      description: >
+        Machine interrupt level
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 24
+    - field_name: Reserved_23_16
+      description: >
+        Reserved
+      type: R
+      reset_val: 0
+      msb: 23
+      lsb: 16
+    - field_name: SIL
+      description: >
+        Supervisor interrupt level
+      type: R
+      reset_val: 0
+      msb: 15
+      lsb: 8
+    - field_name: UIL
+      description: >
+        User interrupt level
+      type: R
+      reset_val: 0
+      msb: 7
+      lsb: 0
+
+- csr: mintthresh
+  description: >
+    Machine interrupt threshold
+  address: 0x347
+  privilege_mode: M
+  rv32:
+    - field_name: reserved_31_8
+      description: >
+        Reserved
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 8
+    - field_name: TH
+      description: >
+        Threshold
+      type: RW
+      reset_val: 0
+      msb: 7
+      lsb: 0
+
+- csr: mscratchcsw
+  description: >
+    Machine scratch swap for privilege mode change
+  address: 0x348
+  privilege_mode: M
+  rv32:
+    - field_name: MSCRATCHCSW
+      description: >
+        Machine scratch swap for privelege mode change
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mscratchcswl
+  description: >
+    Machine scratch swap for privilege level change
+  address: 0x349
+  privilege_mode: M
+  rv32:
+    - field_name: MSCRATCHCSWL
+      description: >
+        Machine scratch swap for privilege level change
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+- csr: mclicbase
+  description: >
+    CLIC base
+  address: 0x34A
+  privilege_mode: M
+  rv32:
+    - field_name: MCLICBASE
+      description: >
+        mclicbase
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 12
+    - field_name: Reserved_31_12
+      description: >
+        Reserved
+      type: R
+      reset_val: 0
+      msb: 11
+      lsb: 0
+### ENDCOND
+
+- csr: menvcfgh
+  description: >
+    Machine Environment Configuration (h)
+  address: 0x31A
+  privilege_mode: M
+  rv32:
+    - field_name: STCE
+      description: >
+        STimecmp Enable
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 31
+    - field_name: Reserved_30_0
+      description: >
+        Hardcoded zero
+      type: WPRI
+      reset_val: 0
+      msb: 30
+      lsb: 0
+
+# 0.4.0:
+- csr: mcounteren
+  description: >
+    Machine Counter Enable
+  address: 0x306
+  privilege_mode: M
+  rv32:
+    - field_name: Enable
+      description: >
+        Always 0
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+# 0.2.0:
+#- csr: mcounteren
+#  description: >
+#    Machine Counter Enable
+#  address: 0x306
+#  privilege_mode: M
+#  rv32:
+#    - field_name: Reserved_31_3
+#      description: >
+#        Always 0
+#      type: WARL
+#      reset_val: 0
+#      msb: 31
+#      lsb: 3
+#      warl_legalize: |
+#        val_out = val_in if 0 else val_orig
+#    - field_name: IR
+#      description: >
+#        instret enable for user mode
+#      type: RW
+#      reset_val: 0
+#      msb: 2
+#      lsb: 2
+#    - field_name: Reserved_1_1
+#      description: >
+#        Always 0
+#      type: WARL
+#      reset_val: 0
+#      msb: 1
+#      lsb: 1
+#      warl_legalize: |
+#        val_out = val_in if 0 else val_orig
+#    - field_name: CY
+#      description: >
+#        Cycle enable for user mode
+#      type: RW
+#      reset_val: 0
+#      msb: 0
+#      lsb: 0
+
+- csr: menvcfg
+  description: >
+    Machine Environment Configuration Register
+  address: 0x30A
+  privilege_mode: M
+  rv32:
+    - field_name: FIOM
+      description: >
+        Fence of IO Implies Memory
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0
+    - field_name: CBIE
+      description: >
+        Cache Block Invalidate Instruction Enable
+      type: R
+      reset_val: 0
+      msb: 5
+      lsb: 4
+    - field_name: CBCFE
+      description: >
+        Cache Block Clean and Flush Instruction Enable
+      type: R
+      reset_val: 0
+      msb: 6
+      lsb: 6
+    - field_name: CBZE
+      description: >
+        Cache Block Zero Instruction Enable
+      type: R
+      reset_val: 0
+      msb: 7
+      lsb: 7
+
+- csr: mstateen0
+  description: >
+    Machine State Enable 0
+  address: 0x30C
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_3
+      description: >
+        Reserved bits
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 3
+      warl_legalize: |
+        val_out = 0
+    - field_name: State_Enable
+      description: >
+        State enable
+      type: RW
+      reset_val: 0
+      msb: 2
+      lsb: 2
+    - field_name: Reserved_1_0
+      description: >
+        Reserved bits
+      type: WARL
+      reset_val: 0
+      msb: 1
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+- csr: mstateen1
+  description: >
+    Machine State Enable 1
+  address: 0x30D
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_0
+      description: >
+        Reserved bits
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+- csr: mstateen2
+  description: >
+    Machine State Enable 2
+  address: 0x30E
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_0
+      description: >
+        Reserved bits
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+- csr: mstateen3
+  description: >
+    Machine State Enable 3
+  address: 0x30F
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_0
+      description: >
+        Reserved bits
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+- csr: menvcfgh
+  description: >
+    Machine Environment Configuration
+  address: 0x31A
+  privilege_mode: M
+  rv32:
+    - field_name: STCE
+      description: >
+        STCE
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 31
+    - field_name: Reserved_30_0
+      description: >
+        Reserved
+      type: WPRI
+      reset_val: 0
+      msb: 30
+      lsb: 0
+
+- csr: mstateen0h
+  description: >
+    Machine state enable 0h
+  address: 0x31C
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_0
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+- csr: mstateen1h
+  description: >
+    Machine state enable 1h
+  address: 0x31C
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_0
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+- csr: mstateen2h
+  description: >
+    Machine state enable 2h
+  address: 0x31C
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_0
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+- csr: mstateen3h
+  description: >
+    Machine state enable 3h
+  address: 0x31C
+  privilege_mode: M
+  rv32:
+    - field_name: Reserved_31_0
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 0
+      warl_legalize: |
+        val_out = 0
+
+
 
 ### PMP registers require manual testing ###
 #- csr: mseccfg
@@ -2220,38 +2353,39 @@
       msb: 31
       lsb: 0
 
-# Only if Zc = 1
-#- csr: jvt
-#  description: >
-#    Jump vector table
-#  address: 0x017
-#  privilege_mode: U
-#  rv32:
-#    - field_name: Base_31_10
-#      description: >
-#        Upper bits of vector table base address, 1024 byte aligned
-#      type: WARL
-#      reset_val: 0
-#      msb: 31
-#      lsb: 10
-#    - field_name: Base_9_6
-#      description: >
-#        Lower bits of vector table base address, 1024 byte aligned always 0
-#      type: WARL
-#      reset_val: 0
-#      msb: 9
-#      lsb: 6
-#      warl_legalize: |
-#        val_out = val_in if val_in == 0 else val_orig
-#    - field_name: Mode
-#      description: >
-#        Jump table mode
-#      type: WARL
-#      reset_val: 0
-#      msb: 5
-#      lsb: 0
-#      warl_legalize: |
-#        val_out = val_in if val_in == 0 else val_orig
+### COND ZC
+- csr: jvt
+  description: >
+    Jump vector table
+  address: 0x017
+  privilege_mode: U
+  rv32:
+    - field_name: Base_31_10
+      description: >
+        Upper bits of vector table base address, 1024 byte aligned
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 10
+    - field_name: Base_9_6
+      description: >
+        Lower bits of vector table base address, 1024 byte aligned always 0
+      type: WARL
+      reset_val: 0
+      msb: 9
+      lsb: 6
+      warl_legalize: |
+        val_out = val_in if val_in == 0 else val_orig
+    - field_name: Mode
+      description: >
+        Jump table mode
+      type: WARL
+      reset_val: 0
+      msb: 5
+      lsb: 0
+      warl_legalize: |
+        val_out = val_in if val_in == 0 else val_orig
+### ENDCOND
 
 
 # jvt, pmp-registers excluded *for now*
@@ -2322,6 +2456,51 @@
       reset_val: 0
       msb: 31
       lsb: 0
+### ENDCOND
+### COND PMP 64
+- csr: someregister_Test_63
+  description: >
+    PMP_TEST
+  address: 0xFFF
+  privilege_mode: M
+  rv32:
+    - field_name: zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+### COND PMP 63
+- csr: someregister_Test_62
+  description: >
+    PMP_TEST
+  address: 0xFFF
+  privilege_mode: M
+  rv32:
+    - field_name: zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+### COND PMP 62
+- csr: someregister_Test_61
+  description: >
+    PMP_TEST
+  address: 0xFFF
+  privilege_mode: M
+  rv32:
+    - field_name: zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+### ENDCOND
+### COND CLIC
 - csr: mconfigptr
   description: >
     Machine configuration pointer
@@ -2335,3 +2514,4 @@
       reset_val: 0
       msb: 31
       lsb: 0
+### ENDCOND
