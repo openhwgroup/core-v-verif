@@ -199,7 +199,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Module wrapper for Imperas DV.
 
-//`define USE_IMPERASDV
+`define USE_IMPERASDV
 `ifdef USE_IMPERASDV
 
 module uvmt_cv32e40x_imperas_dv_wrap
@@ -306,7 +306,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
    // DEBUG REQUESTS: pass to the reference.
    //                 Include some paranoid checks as well.
    // seems the halt has to be held high for N calls to simulator
-   always @(posedge rvvi.clk) begin: pass_debug_req_to_ref
+   always @(posedge rvvi.clk) begin: Monitor_DEBUG
      static int pulse = 0;
      if (`DUT_PATH.debug_req_i) begin
        pulse = 5;
@@ -321,119 +321,13 @@ module uvmt_cv32e40x_imperas_dv_wrap
                $time, `RVFI_IF.rvfi_order, `DUT_PATH.debug_req_i, pulse), UVM_DEBUG)
        end
      end
-   end: pass_debug_req_to_ref
-
-   ////////////////////////////////////////////////////////////////////////////
-   // Non-Maskable INTERRUPTS
-   bit ldstQ[$];
-   int NMI_cause;
-   always @(posedge rvvi.clk) begin: pass_nmi_to_ref
-     bit nmi;
-     bit ldst;
-     NMI_cause = 0;
-
-     if (`DUT_PATH.data_rvalid_i) begin
-       `uvm_info(info_tag, $sformatf("%t %m Q size=%0d", $time, ldstQ.size()), UVM_DEBUG);
-       if (ldstQ.size() > 0) begin
-         ldst = ldstQ.pop_back();
-         `uvm_info(info_tag, $sformatf("%t %m POP ldst=%0d", $time, ldst), UVM_DEBUG);
-         if (ldst) begin
-           NMI_cause = 1025; // Store
-         end else begin
-           NMI_cause = 1024; // Load
-         end
-       end else begin
-         // Error attempting to pop a value when list is empty
-         `uvm_info(info_tag, $sformatf("ERROR!!! pop Q empty"), UVM_DEBUG);
-       end
-     end
-
-     // for each Load/Store push request into queue
-     // for each valid pop from queue
-     if (`DUT_PATH.data_req_o && `DUT_PATH.data_gnt_i) begin
-       // push into queue
-       `uvm_info(info_tag, $sformatf("%t %m PUSH ldst=%0d", $time, `DUT_PATH.data_we_o), UVM_DEBUG);
-       ldstQ.push_front(`DUT_PATH.data_we_o);
-     end
-
-     if (`DUT_PATH.data_err_i && `DUT_PATH.data_rvalid_i) begin
-       `uvm_info(info_tag, $sformatf("%t SET nmi - cause=%0d %0s", $time, NMI_cause, (ldst ? "Load" : "Store")), UVM_DEBUG);
-       nmi = 1;
-       // Need some decode logic
-       void'(rvvi.net_push("nmi_cause", NMI_cause)); // Load/Store Error 
-       void'(rvvi.net_push("nmi", 1));
-     end else if (nmi) begin
-       `uvm_info(info_tag, $sformatf("%t CLR nmi", $time), UVM_DEBUG);
-       nmi = 0;
-       void'(rvvi.net_push("nmi", 0));
-     end
-   end: pass_nmi_to_ref
-
-   ////////////////////////////////////////////////////////////////////////////
-   // Non-Maskable INTERRUPTS
-/*
-   bit [10:0] nmi_cause;
-   bit [10:0] rvfi_intr;
-   bit [10:0] rvfi_valid;
-   always_comb begin
-       rvfi_intr  = `RVFI_IF.rvfi_intr >> 3;
-       rvfi_valid = `RVFI_IF.rvfi_valid;
-       $display("rvfi_valid=%0d rvfi_intr=%0d", rvfi_valid, rvfi_intr);
-       if (rvfi_valid) begin
-           if (rvfi_intr>=32) begin
-               $display("%t comb SET nmi_cause=%0d", $time, rvfi_intr);
-               void'(rvvi.net_push("nmi_cause", rvfi_intr));
-               void'(rvvi.net_push("nmi", 1));
-           end else begin
-               $display("%t comb CLR nmi_cause=%0d", $time, rvfi_intr);
-               void'(rvvi.net_push("nmi", 0));
-           end
-       end
-   end
-*/
-//   always @(posedge rvvi.clk or (rvfi_valid)) begin: nmit_setclr
- /*  always @(posedge rvvi.clk) begin: nmit_setclr
-       bit nmi;
-       if (rvfi_valid) begin
-           if (rvfi_intr>=32) begin
-               $display("%t comb SET nmi_cause=%0d", $time, rvfi_intr);
-               void'(rvvi.net_push("nmi_cause", rvfi_intr));
-               void'(rvvi.net_push("nmi", 1));
-               nmi = 1;
-           end else if (nmi==1) begin
-               $display("%t edge CLR nmi_cause=%0d", $time, rvfi_intr);
-               void'(rvvi.net_push("nmi", 0));
-               nmi = 0;
-           end
-       end
-   end */
-
-   ////////////////////////////////////////////////////////////////////////////
-   // External Exceptions
-   // InstructionBusFault - extract from rvfi_trap ?
-   // Set Asynchronously - Clear Synchronously
-//   bit InstructionBusFault;
-//   bit [10:0] rvfi_cause;
-//   always_comb begin
-//       rvfi_cause = `RVFI_IF.rvfi_trap >> 3;
-//       //$display("rvfi_cause = %0d", rvfi_cause);
-//   end
-//   always @(posedge rvvi.clk or (rvfi_cause==48)) begin: InstructionBusFault_setclr
-//       if (rvfi_cause==48) begin
-//           //$display("%t comb InstructionBusFault=1", $time);
-//           void'(rvvi.net_push("InstructionBusFault", 1));
-//           InstructionBusFault = 1;
-//       end else if (InstructionBusFault==1) begin
-//           //$display("%t edge InstructionBusFault=0", $time);
-//           void'(rvvi.net_push("InstructionBusFault", 0));
-//           InstructionBusFault = 0;
-//       end
-//   end
+   end: Monitor_DEBUG
    
-   // RVFI Monitor
+   ////////////////////////////////////////////////////////////////////////////
+   // RVFI Monitor: pass NMI Load/Store and Fetch to the ref
    bit InstructionBusFault;
-   always @InstructionBusFault $display("InstructionBusFault=%X %t", InstructionBusFault, $time);
-   always @(*) begin
+   bit DataBusFault;
+   always @(*) begin: Monitor_RVFI
        bit        trap_trap;
        bit        trap_exception;
        bit        trap_debug;
@@ -445,6 +339,9 @@ module uvmt_cv32e40x_imperas_dv_wrap
        bit        intr_exception;
        bit        intr_interrupt;
        bit [10:0] intr_cause;
+       
+       bit        nmi_pending;
+       bit        nmi_load_store;
        
        if (`RVFI_IF.rvfi_valid) begin
            // [0]=trap, [1]=exception, [2]=debug [8:3]=exception_cause, [11:9]=debug_cause, [13:12]=cause_type
@@ -459,7 +356,40 @@ module uvmt_cv32e40x_imperas_dv_wrap
            intr_exception       = `RVFI_IF.rvfi_intr.exception;
            intr_interrupt       = `RVFI_IF.rvfi_intr.interrupt;
            intr_cause           = `RVFI_IF.rvfi_intr.cause;
+           
+           nmi_pending          = `RVFI_IF.rvfi_nmip[0];
+           nmi_load_store       = `RVFI_IF.rvfi_nmip[1];
+           
+           // NMI Load Store
+           if (nmi_pending) begin
+               if (nmi_load_store==0) begin
+                   // Load
+                   void'(rvvi.net_push("nmi_cause", 1024)); // Load Error 
+               end else begin
+                   // Store
+                   void'(rvvi.net_push("nmi_cause", 1025)); // Store Error 
+               end
+               if (!DataBusFault)
+                   void'(rvvi.net_push("nmi", 1));
+               DataBusFault = 1;
+           end else begin
+               if (DataBusFault)
+                   void'(rvvi.net_push("nmi", 0));
+               DataBusFault = 0;
+           end
 
+           // NMI Fetch
+           if (trap_trap && trap_exception && trap_exception_cause==48) begin
+               if (!InstructionBusFault) 
+                   void'(rvvi.net_push("InstructionBusFault", 1));
+               InstructionBusFault = 1;
+           end else begin
+               if (InstructionBusFault) 
+                   void'(rvvi.net_push("InstructionBusFault", 0));
+               InstructionBusFault = 0;
+           end
+           
+`ifdef FOOBARTRACE
            $display("\nRVFI Valid %t", $time);
            $display("valid      = %X", `RVFI_IF.rvfi_valid);
            $display("order      = %X", `RVFI_IF.rvfi_order);
@@ -478,29 +408,18 @@ module uvmt_cv32e40x_imperas_dv_wrap
            $display("ixl        = %X", `RVFI_IF.rvfi_ixl);
            $display("pc_rdata   = %X", `RVFI_IF.rvfi_pc_rdata);
            $display("pc_wdata   = %X", `RVFI_IF.rvfi_pc_wdata);
-       
-           if (trap_trap && trap_exception && trap_exception_cause=='h30) begin
-               if (!InstructionBusFault) 
-                   void'(rvvi.net_push("InstructionBusFault", 1));
-               InstructionBusFault = 1;
+`endif
 
-           end else begin
-               if (InstructionBusFault) 
-                   void'(rvvi.net_push("InstructionBusFault", 0));
-               InstructionBusFault = 0;
-           
-           end
        end
-   end
-   
+   end: Monitor_RVFI
+
    ////////////////////////////////////////////////////////////////////////////
    // INTERRUPTS
-   always @(posedge rvvi.clk) begin: pass_irq_to_ref
+   always @(posedge rvvi.clk) begin: Monitor_IRQ
      static bit [31:0] irq_in;
      static bit [31:0] irq_out;
 
      irq_in = `DUT_PATH.irq_i;
-
      if (irq_out != irq_in) begin
        // gate this with mip ?
        void'(rvvi.net_push("MSWInterrupt",        irq_in[ 3]));
@@ -527,7 +446,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
      end
      irq_out = irq_in;
 
-   end: pass_irq_to_ref
+   end: Monitor_IRQ
 
   /////////////////////////////////////////////////////////////////////////////
   // REF control
@@ -678,7 +597,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
     // According to silabs this range is 0x0080_0000 to 0x0080_0FFF
 //    void'(rvviRefMemorySetVolatile('h00800040, 'h00800043)); //TODO: deal with int return value
     void'(rvviRefMemorySetVolatile('h00800000, 'h00800FFF)); //TODO: deal with int return value
-
 
     `uvm_info(info_tag, "ref_init() complete", UVM_NONE)
   endtask // ref_init
