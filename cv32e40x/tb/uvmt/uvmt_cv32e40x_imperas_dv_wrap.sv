@@ -360,32 +360,34 @@ module uvmt_cv32e40x_imperas_dv_wrap
            nmi_pending          = `RVFI_IF.rvfi_nmip[0];
            nmi_load_store       = `RVFI_IF.rvfi_nmip[1];
            
+           //
            // NMI Load Store
-           if (nmi_pending) begin
-               if (nmi_load_store==0) begin
-                   // Load
-                   void'(rvvi.net_push("nmi_cause", 1024)); // Load Error 
-               end else begin
-                   // Store
-                   void'(rvvi.net_push("nmi_cause", 1025)); // Store Error 
-               end
-               if (!DataBusFault)
+           //
+           if (intr_intr && intr_interrupt && ((intr_cause==1024 || intr_cause==1025))) begin
+               // Load / Store
+               void'(rvvi.net_push("nmi_cause", intr_cause)); // Load Error = 1024, Store Error = 1025
+               if (!DataBusFault) begin
                    void'(rvvi.net_push("nmi", 1));
-               DataBusFault = 1;
+               end
            end else begin
-               if (DataBusFault)
+               if (DataBusFault) begin
                    void'(rvvi.net_push("nmi", 0));
+               end
                DataBusFault = 0;
            end
 
+           //
            // NMI Fetch
+           //
            if (trap_trap && trap_exception && trap_exception_cause==48) begin
-               if (!InstructionBusFault) 
+               if (!InstructionBusFault) begin
                    void'(rvvi.net_push("InstructionBusFault", 1));
+               end
                InstructionBusFault = 1;
            end else begin
-               if (InstructionBusFault) 
+               if (InstructionBusFault) begin
                    void'(rvvi.net_push("InstructionBusFault", 0));
+               end
                InstructionBusFault = 0;
            end
            
@@ -592,7 +594,37 @@ module uvmt_cv32e40x_imperas_dv_wrap
     rvviRefCsrCompareEnable(hart_id, `CSR_TDATA1_ADDR,    `RVVI_FALSE);
     rvviRefCsrCompareEnable(hart_id, `CSR_TDATA2_ADDR,    `RVVI_FALSE);
     rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR,     `RVVI_FALSE);
+    
+    // define asynchronous grouping
+    // Interrupts
+    rvviRefNetGroupSet(rvviRefNetIndexGet("MSWInterrupt"),        1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("MTimerInterrupt"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("MExternalInterrupt"),  1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt0"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt1"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt2"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt3"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt4"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt5"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt6"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt7"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt8"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt9"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt10"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt11"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt12"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt13"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt14"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt15"),    1);
 
+    // NMI
+    rvviRefNetGroupSet(rvviRefNetIndexGet("nmi"),                 2);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("nmi_cause"),           2);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("InstructionBusFault"), 2);
+
+    // Debug
+    rvviRefNetGroupSet(rvviRefNetIndexGet("haltreq"),             3);
+    
     // Add IO regions of memory
     // According to silabs this range is 0x0080_0000 to 0x0080_0FFF
 //    void'(rvviRefMemorySetVolatile('h00800040, 'h00800043)); //TODO: deal with int return value
