@@ -29,7 +29,11 @@ module uvmt_cv32e40s_pmp_assert
    // OBI
    input wire         obi_req,
    input wire [31:0]  obi_addr,
-   input wire         obi_gnt
+   input wire         obi_gnt,
+
+   // RVFI
+   input wire         rvfi_valid,
+   input wire [31:0]  rvfi_pc_rdata
   );
 
 
@@ -416,16 +420,37 @@ module uvmt_cv32e40s_pmp_assert
     );
   end endgenerate
 
-  // Denied accesses don't reach the bus (instr-side)
+  // Denied accesses don't reach the bus, or don't retire (instr-side)
   if (IS_INSTR_SIDE) begin: gen_supress_req_instr
     property p_suppress_req_instr;
-      logic [31:0]  addr;
-      pmp_req_err_o  ##0
-      (1, addr = pmp_req_addr_i)
-      |->
-      (!(obi_req && (obi_addr == addr)))
-      until
-      ((pmp_req_addr_i == addr) && !pmp_req_err_o);
+      logic [31:0]  addr = 0;
+
+      (
+        // Addr denied, but retires
+        pmp_req_err_o  ##0
+        (1, addr = pmp_req_addr_i)  ##0
+        ((rvfi_valid && (rvfi_pc_rdata == addr)) [->1])
+      )
+      implies
+      (
+        (
+          // Doesn't reach bus, until retirement
+          (
+            !(obi_req && (obi_addr == addr))  ||  // (Forbidden addr doesn't reach bus)
+            $past(obi_req && !obi_gnt)            // (Excuse ongoing remnant)
+          )
+          throughout
+          ((rvfi_valid && (rvfi_pc_rdata == addr)) [->1])
+        )
+        or
+        (
+          // ...or, re-attempt got permission
+          (!pmp_req_err_o && (pmp_req_addr_i[31:2] == addr[31:2]))
+          within
+          ((rvfi_valid && (rvfi_pc_rdata == addr)) [->1])
+        )
+      )
+      ;
     endproperty : p_suppress_req_instr
     a_suppress_req_instr: assert property (
       p_suppress_req_instr
