@@ -333,7 +333,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
        bit        trap_debug;
        bit [5:0]  trap_exception_cause;
        bit [2:0]  trap_debug_cause;
-       //bit        trap_cause_type;
+       bit [1:0]  trap_cause_type;
        
        bit        intr_intr;
        bit        intr_exception;
@@ -350,7 +350,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
            trap_debug           = `RVFI_IF.rvfi_trap[2];
            trap_exception_cause = `RVFI_IF.rvfi_trap[8:3];
            trap_debug_cause     = `RVFI_IF.rvfi_trap[11:9];
-           //trap_cause_type      = `RVFI_IF.rvfi_trap[12];
+           trap_cause_type      = `RVFI_IF.rvfi_trap[13:12];
            
            intr_intr            = `RVFI_IF.rvfi_intr.intr;
            intr_exception       = `RVFI_IF.rvfi_intr.exception;
@@ -396,8 +396,8 @@ module uvmt_cv32e40x_imperas_dv_wrap
            $display("valid      = %X", `RVFI_IF.rvfi_valid);
            $display("order      = %X", `RVFI_IF.rvfi_order);
            $display("insn       = %X", `RVFI_IF.rvfi_insn);
-           $display("trap       trap=%X exception=%X debug=%X exception_cause=0x%X debug_cause=0x%X", 
-               trap_trap, trap_exception, trap_debug, trap_exception_cause, trap_debug_cause);
+           $display("trap       trap=%X exception=%X debug=%X exception_cause=0x%X debug_cause=0x%X cause_type=0x%X", 
+               trap_trap, trap_exception, trap_debug, trap_exception_cause, trap_debug_cause, trap_cause_type);
            $display("halt       = %X", `RVFI_IF.rvfi_halt);
            $display("dbg        = %X", `RVFI_IF.rvfi_dbg);
            $display("dbg_mode   = %X", `RVFI_IF.rvfi_dbg_mode);
