@@ -584,6 +584,7 @@ module uvmt_cv32e40s_tb;
 
       .ctrl_fsm_o_i(core_i.controller_i.controller_fsm_i.ctrl_fsm_o),
       .data_bus_req_i(obi_data_if_i.req),
+      .data_bus_gnt_i(obi_data_if_i.gnt),
 
       .*
     );

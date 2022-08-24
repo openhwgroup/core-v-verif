@@ -272,7 +272,8 @@ interface uvmt_cv32e40s_support_logic_if
 
       // core signals
       input ctrl_fsm_t  ctrl_fsm_o_i,
-      input             data_bus_req_i
+      input             data_bus_req_i,
+      input             data_bus_gnt_i
 
    );
 
@@ -295,6 +296,7 @@ interface uvmt_cv32e40s_support_logic_if
 
             ctrl_fsm_o_i,
             data_bus_req_i,
+            data_bus_gnt_i,
 
       output req_after_exception_o
 
