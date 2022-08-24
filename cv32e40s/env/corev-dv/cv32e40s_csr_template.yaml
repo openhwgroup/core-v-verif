@@ -35,7 +35,7 @@
 # Assumptions:
 #       1. Configuration core input mtvec_addr_i == 32'h0000_0000
 #       2. Configuration core input mhartid_i == 32'h0000_0000
-#       3. Configuration core input mimpid_i == 32'h0000_0000
+#       3. Configuration core input mimpid_patch_i == 4'h0
 #       4. Core RTL parameters set as per User Manual defaults.
 ################################################################################
 #- csr: CSR_NAME
@@ -295,7 +295,7 @@
       description: >
           Encodes all supported ISA extensions
       type: R
-      reset_val: 0x101104
+      reset_val: 0x901104
       msb: 25
       lsb: 0
 - csr: mie
@@ -332,25 +332,27 @@
       reset_val: 0
       msb: 3
       lsb: 3
+# TODO mtvec needs update and regen of test for 40s
+# how to handle clic&non-clic here?
 - csr: mtvec
   description: >
     Machine Trap-Vector Base Address
   address: 0x305
   privilege_mode: M
   rv32:
-    - field_name: BASE[31:8]
+    - field_name: BASE[31:7]
       description: >
-        Trap-handler base address, always aligned to 256 bytes
+        Trap-handler base address, always aligned to 128 bytes
       type: WARL
       reset_val: 0 # assumes mtvec_i == 0
       msb: 31
-      lsb: 8
-    - field_name: BASE[7:2]
+      lsb: 7
+    - field_name: BASE[6:2]
       description: >
-        Trap-handler base address, always aligned to 256 bytes
+        Trap-handler base address, always aligned to 128 bytes
       type: R
       reset_val: 0
-      msb: 7
+      msb: 6
       lsb: 2
     - field_name: MODE[1]
       description: >
@@ -534,6 +536,7 @@
       reset_val: 0
       msb: 0
       lsb: 0
+# TODO Clic needs changes to this
 - csr: mcause
   description: >
     Machine Exception Cause
@@ -553,13 +556,13 @@
       type: R
       reset_val: 0
       msb: 30
-      lsb: 8
+      lsb: 11
     - field_name: ecode
       description: >
           Exception Code
       type: WARL
       reset_val: 0
-      msb: 7
+      msb: 10
       lsb: 0
 - csr: mtval
   description: >
@@ -909,28 +912,15 @@
       reset_val: 4
       msb: 15
       lsb: 0
-- csr: mcontext
+- csr: tcontrol
   description: >
-    Machine Context Register
-  address: 0x7A8
+    Trigger control
+  address: 0x7A5
   privilege_mode: M
   rv32:
-    - field_name: Zero
+    - field_name: zero (reserved)
       description: >
-        CV32E40S does not support the features requiring this register.
-      type: R
-      reset_val: 0
-      msb: 31
-      lsb: 0
-- csr: mscontext
-  description: >
-    Supervisor Context Register
-  address: 0x7AA
-  privilege_mode: M
-  rv32:
-    - field_name: Zero
-      description: >
-        CV32E40S does not support the features requiring this register.
+        Always return zero
       type: R
       reset_val: 0
       msb: 31

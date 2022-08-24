@@ -19,6 +19,7 @@
 `define __UVME_CV32E40S_CFG_SV__
 
 
+import cv32e40s_pkg::*;
 /**
  * Object encapsulating all parameters for creating, connecting and running
  * CV32E40S environment (uvme_cv32e40s_env_c) components.
@@ -113,15 +114,16 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          ext_zbc_supported == 1;
          ext_zbs_supported == 1;
       }
-      ext_zbe_supported == 0;
-      ext_zbf_supported == 0;
-      ext_zbm_supported == 0;
-      ext_zbp_supported == 0;
-      ext_zbr_supported == 0;
-      ext_zbt_supported == 0;
+      ext_zbe_supported    == 0;
+      ext_zbf_supported    == 0;
+      ext_zbm_supported    == 0;
+      ext_zbp_supported    == 0;
+      ext_zbr_supported    == 0;
+      ext_zbt_supported    == 0;
+      ext_nonstd_supported == 1;
 
       mode_s_supported == 0;
-      mode_u_supported == 0;
+      mode_u_supported == 1;
       pmp_supported == 0;
       debug_supported == 1;
 
@@ -129,7 +131,8 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       unaligned_access_amo_supported == 1;
 
       bitmanip_version        == BITMANIP_VERSION_1P00;
-      priv_spec_version       == PRIV_VERSION_MASTER;
+      priv_spec_version       == PRIV_VERSION_1_12;
+      debug_spec_version      == DEBUG_VERSION_1_0_0;
       endianness              == ENDIAN_LITTLE;
 
       boot_addr_valid         == 1;
@@ -141,12 +144,14 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
 
    constraint default_cv32e40s_boot_cons {
       (!mhartid_plusarg_valid)           -> (mhartid           == 'h0000_0000);
-      (!mimpid_plusarg_valid)            -> (mimpid            == 'h0000_0000);
+      (!mimpid_patch_plusarg_valid)      -> (mimpid_patch      == 'h0        );
+      (!mimpid_plusarg_valid)            -> (mimpid            == {12'b0, MIMPID_MAJOR, 4'b0, MIMPID_MINOR, 4'b0, mimpid_patch[3:0]});
       (!boot_addr_plusarg_valid)         -> (boot_addr         == 'h0000_0080);
       (!mtvec_addr_plusarg_valid)        -> (mtvec_addr        == 'h0000_0000);
       (!nmi_addr_plusarg_valid)          -> (nmi_addr          == 'h0010_0000);
       (!dm_halt_addr_plusarg_valid)      -> (dm_halt_addr      == 'h1a11_0800);
       (!dm_exception_addr_plusarg_valid) -> (dm_exception_addr == 'h1a11_1000);
+      solve mimpid_patch before mimpid;
    }
 
    constraint agent_cfg_cons {
@@ -397,6 +402,7 @@ function void uvme_cv32e40s_cfg_c::sample_parameters(uvma_core_cntrl_cntxt_c cnt
       pma_regions[i].main           = e40s_cntxt.core_cntrl_vif.pma_cfg[i].main;
       pma_regions[i].bufferable     = e40s_cntxt.core_cntrl_vif.pma_cfg[i].bufferable;
       pma_regions[i].cacheable      = e40s_cntxt.core_cntrl_vif.pma_cfg[i].cacheable;
+      pma_regions[i].integrity      = e40s_cntxt.core_cntrl_vif.pma_cfg[i].integrity;
    end
 
    // Copy to the pma_configuration
@@ -418,6 +424,9 @@ function bit uvme_cv32e40s_cfg_c::is_csr_check_disabled(string name);
 endfunction : is_csr_check_disabled
 
 function void uvme_cv32e40s_cfg_c::configure_disable_csr_checks();
+
+   // TODO: remove when fixed in ISS
+   disable_csr_check("misa");
 
    // Need to check
    disable_csr_check("mcountinhibit");
@@ -462,6 +471,9 @@ function void uvme_cv32e40s_cfg_c::set_unsupported_csr_mask();
 
    // TODO:ropeders re-evaluate this when 40s is more stable
    unsupported_csr_mask[uvma_core_cntrl_pkg::TCONTROL] = 1;
+
+   unsupported_csr_mask[uvma_core_cntrl_pkg::MCONTEXT] = 1;
+   unsupported_csr_mask[uvma_core_cntrl_pkg::SCONTEXT] = 1;
 
    for (int i = 0; i < MAX_NUM_HPMCOUNTERS; i++) begin
       unsupported_csr_mask[uvma_core_cntrl_pkg::HPMCOUNTER3+i] = 1;

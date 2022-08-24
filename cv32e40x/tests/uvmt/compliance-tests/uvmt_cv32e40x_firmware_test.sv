@@ -34,11 +34,11 @@
  */
 class uvmt_cv32e40x_firmware_test_c extends uvmt_cv32e40x_base_test_c;
 
-   //constraint env_cfg_cons {
-   //   env_cfg.enabled         == 1;
-   //   env_cfg.is_active       == UVM_ACTIVE;
-   //   env_cfg.trn_log_enabled == 1;
-   //}
+   constraint env_cfg_cons {
+      env_cfg.enabled         == 1;
+      env_cfg.is_active       == UVM_ACTIVE;
+      env_cfg.trn_log_enabled == 1;
+   }
 
    constraint test_type_cons {
      test_cfg.tpt == PREEXISTING_SELFCHECKING;

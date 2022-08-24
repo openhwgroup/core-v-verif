@@ -15,7 +15,7 @@
 
 `include "cv32e40s_pkg.sv"
 
-import cv32e40s_pkg::pma_region_t;
+import cv32e40s_pkg::pma_cfg_t;
 
 `include "uvmt_cv32e40s_constants.sv"
 `include "pma_adapted_mem_region_gen.sv"

@@ -87,8 +87,6 @@ interface uvmt_cv32e40s_vp_status_if (
   import uvm_pkg::*;
 
   // TODO: X/Z checks
-  initial begin
-  end
 
 endinterface : uvmt_cv32e40s_vp_status_if
 
@@ -109,6 +107,7 @@ endinterface : uvmt_cv32e40s_core_status_if
 // Interface to debug assertions and covergroups
 interface uvmt_cv32e40s_debug_cov_assert_if
     import cv32e40s_pkg::*;
+    import cv32e40s_rvfi_pkg::*;
     (
     input  clk_i,
     input  rst_ni,
@@ -116,7 +115,7 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     // External interrupt interface
     input  [31:0] irq_i,
     input         irq_ack_o,
-    input  [4:0]  irq_id_o,
+    input  [9:0]  irq_id_o,
     input  [31:0] mie_q,
 
     input         ex_stage_csr_en,
@@ -140,19 +139,19 @@ interface uvmt_cv32e40s_debug_cov_assert_if
 
     // Core signals
     input  [31:0] boot_addr_i,
-    input  [31:0] nmi_addr_i,
     input         fetch_enable_i,
 
-    input         rvfi_valid,
-    input  [31:0] rvfi_insn,
-    input         rvfi_intr,
-    input  [2:0]  rvfi_dbg,
-    input         rvfi_dbg_mode,
-    input  [31:0] rvfi_pc_wdata,
-    input  [31:0] rvfi_pc_rdata,
-    input  [31:0] rvfi_csr_dpc_rdata,
-    input  [31:0] rvfi_csr_mepc_wdata,
-    input  [31:0] rvfi_csr_mepc_wmask,
+    input              rvfi_valid,
+    input  [31:0]      rvfi_insn,
+    input  rvfi_intr_t rvfi_intr,
+    input  [2:0]       rvfi_dbg,
+    input              rvfi_dbg_mode,
+    input  [31:0]      rvfi_pc_wdata,
+    input  [31:0]      rvfi_pc_rdata,
+    input  [31:0]      rvfi_csr_dpc_rdata,
+    input  [31:0]      rvfi_csr_mepc_rdata,
+    input  [31:0]      rvfi_csr_mepc_wdata,
+    input  [31:0]      rvfi_csr_mepc_wmask,
 
     // Debug signals
     input         debug_req_i, // From controller
@@ -263,5 +262,54 @@ interface uvmt_cv32e40s_debug_cov_assert_if
   endclocking : mon_cb
 
 endinterface : uvmt_cv32e40s_debug_cov_assert_if
+
+interface uvmt_cv32e40s_support_logic_if
+   import cv32e40s_pkg::*;
+   import uvma_rvfi_pkg::*;
+   (
+      input    clk_i,
+      input    rst_ni,
+
+      // core signals
+      input ctrl_fsm_t  ctrl_fsm_o_i,
+      input             data_bus_req_i,
+      input             data_bus_gnt_i
+
+   );
+
+   //results for modport
+   logic req_after_exception_o;
+
+   clocking mon_cb @(posedge clk_i);
+      input #1step
+
+      ctrl_fsm_o_i,
+      data_bus_req_i,
+
+      req_after_exception_o;
+
+   endclocking : mon_cb
+
+   modport write (
+      input clk_i,
+            rst_ni,
+
+            ctrl_fsm_o_i,
+            data_bus_req_i,
+            data_bus_gnt_i,
+
+      output req_after_exception_o
+
+   );
+
+   modport read (
+      input clk_i,
+            rst_ni,
+
+            req_after_exception_o
+   );
+
+
+endinterface : uvmt_cv32e40s_support_logic_if
 
 `endif // __UVMT_CV32E40S_TB_IFS_SV__
