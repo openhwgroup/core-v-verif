@@ -18,10 +18,6 @@ module uvmt_cv32e40s_pmprvfi_assert
   input wire [31:0]  rvfi_insn,
   input wire [ 1:0]  rvfi_mode,
   input rvfi_trap_t  rvfi_trap,
-  input wire [PMP_MAX_REGIONS/4-1:0][31:0]  rvfi_csr_pmpcfg_rdata,
-  input wire [PMP_MAX_REGIONS-1:0]  [31:0]  rvfi_csr_pmpaddr_rdata,
-  input wire [31:0]  rvfi_csr_mseccfg_rdata,
-  input wire [31:0]  rvfi_csr_mseccfgh_rdata,
   input wire [ 4:0]  rvfi_rd_addr,
   input wire [31:0]  rvfi_rd_wdata,
   input wire [ 4:0]  rvfi_rs1_addr,
@@ -29,7 +25,26 @@ module uvmt_cv32e40s_pmprvfi_assert
   input wire [31:0]  rvfi_pc_rdata,
   input wire [31:0]  rvfi_mem_addr,
   input wire [ 3:0]  rvfi_mem_wmask,
-  input wire [ 3:0]  rvfi_mem_rmask
+  input wire [ 3:0]  rvfi_mem_rmask,
+
+  // RVFI CSR
+  //(pmpcfg)
+  input wire [PMP_MAX_REGIONS/4-1:0][31:0]  rvfi_csr_pmpcfg_rdata,
+  input wire [PMP_MAX_REGIONS/4-1:0][31:0]  rvfi_csr_pmpcfg_wdata,
+  input wire [PMP_MAX_REGIONS/4-1:0][31:0]  rvfi_csr_pmpcfg_wmask,
+  //(pmpaddr)
+  input wire [PMP_MAX_REGIONS-1:0]  [31:0]  rvfi_csr_pmpaddr_rdata,
+  input wire [PMP_MAX_REGIONS-1:0]  [31:0]  rvfi_csr_pmpaddr_wdata,
+  input wire [PMP_MAX_REGIONS-1:0]  [31:0]  rvfi_csr_pmpaddr_wmask,
+  //(mseccfg[h])
+  input wire [31:0]  rvfi_csr_mseccfg_rdata,
+  input wire [31:0]  rvfi_csr_mseccfg_wdata,
+  input wire [31:0]  rvfi_csr_mseccfg_wmask,
+  input wire [31:0]  rvfi_csr_mseccfgh_rdata,
+  input wire [31:0]  rvfi_csr_mseccfgh_wdata,
+  input wire [31:0]  rvfi_csr_mseccfgh_wmask,
+  //(mstatus)
+  input wire [31:0]  rvfi_csr_mstatus_rdata
 );
 
 
@@ -92,17 +107,30 @@ module uvmt_cv32e40s_pmprvfi_assert
     is_rvfi_csr_instr  &&
     !((rvfi_insn[13:12] inside {2'b 10, 2'b 11}) && !rvfi_rs1_addr);  // CSRRS/C[I] w/ rs1=x0/0
     // TODO:ropeders double check correctness
+  wire [1:0]  rvfi_effective_mode =
+    rvfi_csr_mstatus_rdata[17]      ?  // "mstatus.MPRV", modify privilege?
+      rvfi_csr_mstatus_rdata[12:11] :  // "mstatus.MPP", act as if "mode==MPP"
+      rvfi_mode;                       // Else, act as actual mode
 
   pmp_csr_t  pmp_csr_rvfi_rdata;
+  pmp_csr_t  pmp_csr_rvfi_wdata;
+  pmp_csr_t  pmp_csr_rvfi_wmask;
   for (genvar i = 0; i < PMP_MAX_REGIONS; i++) begin: gen_pmp_csr_readout
     localparam pmpcfg_reg_i    = i / 4;
     localparam pmpcfg_field_hi = (8 * (i % 4)) + 7;
     localparam pmpcfg_field_lo = (8 * (i % 4));
 
     assign pmp_csr_rvfi_rdata.cfg[i]  = rvfi_csr_pmpcfg_rdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
+    assign pmp_csr_rvfi_wdata.cfg[i]  = rvfi_csr_pmpcfg_wdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
+    assign pmp_csr_rvfi_wmask.cfg[i]  = rvfi_csr_pmpcfg_wmask[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
+
     assign pmp_csr_rvfi_rdata.addr[i] = {rvfi_csr_pmpaddr_rdata[i], 2'b 00};  // TODO:ropeders is this assignment correct?
+    assign pmp_csr_rvfi_wdata.addr[i] = {rvfi_csr_pmpaddr_wdata[i], 2'b 00};  // TODO:ropeders is this assignment correct?
+    assign pmp_csr_rvfi_wmask.addr[i] = {rvfi_csr_pmpaddr_wmask[i], 2'b 00};  // TODO:ropeders is this assignment correct?
   end
   assign pmp_csr_rvfi_rdata.mseccfg = {rvfi_csr_mseccfgh_rdata, rvfi_csr_mseccfg_rdata};
+  assign pmp_csr_rvfi_wdata.mseccfg = {rvfi_csr_mseccfgh_wdata, rvfi_csr_mseccfg_wdata};
+  assign pmp_csr_rvfi_wmask.mseccfg = {rvfi_csr_mseccfgh_wmask, rvfi_csr_mseccfg_wmask};
 
   match_status_t  match_status_instr;
   match_status_t  match_status_data;
@@ -114,7 +142,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     .rst_n (rst_ni),
 
     .csr_pmp_i      (pmp_csr_rvfi_rdata),
-    .priv_lvl_i     (privlvl_t'(rvfi_mode)),
+    .priv_lvl_i     (privlvl_t'(rvfi_effective_mode)),
     .pmp_req_addr_i (rvfi_pc_rdata),
     .pmp_req_type_i (PMP_ACC_EXEC),
     .pmp_req_err_o  ('Z),
@@ -129,7 +157,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     .rst_n (rst_ni),
 
     .csr_pmp_i      (pmp_csr_rvfi_rdata),
-    .priv_lvl_i     (privlvl_t'(rvfi_mode)),
+    .priv_lvl_i     (privlvl_t'(rvfi_effective_mode)),
     .pmp_req_addr_i (rvfi_mem_addr),  // TODO:silabs-robin  Multi-op instructions
     .pmp_req_type_i (rvfi_mem_wmask ? PMP_ACC_WRITE : PMP_ACC_READ),  // TODO:silabs-robin  Not completely accurate...
     .pmp_req_err_o  ('Z),
@@ -258,47 +286,92 @@ module uvmt_cv32e40s_pmprvfi_assert
   end
 
   // Locked entries, ignore pmpicfg/pmpaddri writes
-  a_ignore_writes_notrap: assert property (
-    is_rvfi_csr_write_instr  &&
-    (rvfi_insn[31:20] inside {(CSRADDR_FIRST_PMPADDR + 0), (CSRADDR_FIRST_PMPCFG + 0)})  &&
-    (pmp_csr_rvfi_rdata.cfg[0].lock && !pmp_csr_rvfi_rdata.mseccfg.rlb)  &&
-    (rvfi_mode == MODE_M)
-    |->
-    (rvfi_trap.exception_cause != EXC_ILL_INSTR)
-  );
-  a_ignore_writes_nochange: assert property (
-    rvfi_valid &&
-    (pmp_csr_rvfi_rdata.cfg[0].lock && !pmp_csr_rvfi_rdata.mseccfg.rlb)
-    |=>
-    always (
-      $stable(pmp_csr_rvfi_rdata.cfg[0])  &&
-      $stable(pmp_csr_rvfi_rdata.addr[0])
-    )
-  );
-/*
-  a_not_ignore_writes_cfg: assert property (
-    is_rvfi_csr_write_instr  &&
-    (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + 0))  &&
-    ?
-    |->
-    ?
-  );
-*/
-  property p_not_ignore_writes_cfg;
-    logic [7:0] cfg;
-    rvfi_valid  &&
-    pmp_csr_rvfi_rdata.cfg[1].lock  &&
-    (pmp_csr_rvfi_rdata.cfg[1].mode == PMP_MODE_TOR)  ##0
-    (1, cfg = pmp_csr_rvfi_rdata.cfg[0])
-    ##1
-    (rvfi_valid [->1])  ##0
-    (pmp_csr_rvfi_rdata.cfg[0] != cfg);
-  endproperty : p_not_ignore_writes_cfg
-  cov_not_ignore_writes_cfg: cover property (
-    p_not_ignore_writes_cfg
-    // TODO:silabs-robin  Write "a_not_ignore_writes_cfg".
-  );
-  // Note, can be easily checked for all i
+  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_ignore_writes_notrap
+    // "Ignored writes" don't trap:
+    a_ignore_writes_notrap: assert property (
+      is_rvfi_csr_write_instr  &&
+      (rvfi_insn[31:20] inside {(CSRADDR_FIRST_PMPADDR + i), (CSRADDR_FIRST_PMPCFG + i)})  &&
+      (pmp_csr_rvfi_rdata.cfg[i].lock && !pmp_csr_rvfi_rdata.mseccfg.rlb)  &&
+      (rvfi_mode == MODE_M)
+      |->
+      (rvfi_trap.exception_cause != EXC_ILL_INSTR)
+    );
+  end
+
+  // Locked entries, ignore pmpicfg/pmpaddri writes
+  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_ignore_writes_nochange
+    // Ignored writes means stable data
+    a_ignore_writes_nochange: assert property (
+      rvfi_valid &&
+      (pmp_csr_rvfi_rdata.cfg[i].lock && !pmp_csr_rvfi_rdata.mseccfg.rlb)
+      |=>
+      always (
+        $stable(pmp_csr_rvfi_rdata.cfg[i])  &&
+        $stable(pmp_csr_rvfi_rdata.addr[i])
+      )
+    );
+  end
+
+  // Locked entries, ignore pmpicfg/pmpaddri writes
+  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_not_ignore_writes_torcfg
+    // We can see change even if "above config" is locked TOR
+    property p_not_ignore_writes_torcfg;
+      logic [7:0] cfg;
+      rvfi_valid  &&
+      pmp_csr_rvfi_rdata.cfg[i+1].lock  &&
+      (pmp_csr_rvfi_rdata.cfg[i+1].mode == PMP_MODE_TOR)  ##0
+      (1, cfg = pmp_csr_rvfi_rdata.cfg[i])
+      ##1
+      (rvfi_valid [->1])  ##0
+      (pmp_csr_rvfi_rdata.cfg[i] != cfg);
+    endproperty : p_not_ignore_writes_torcfg
+    cov_not_ignore_writes_torcfg: cover property (
+      p_not_ignore_writes_torcfg
+    );
+  end
+
+  // Locked entries, ignore pmpicfg/pmpaddri writes
+  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_not_ignore_writes_cfg
+    // Non-ignored cfg-writes take effect
+    wire pmpncfg_t  cfg_expected = rectify_cfg_write(pmp_csr_rvfi_rdata.cfg[i], rvfi_rs1_rdata[8*(i%4) +: 8]);
+    property  p_not_ignore_writes_cfg;
+      (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw"
+      (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + i/4))          &&  // ...to cfg's csr
+      !pmp_csr_rvfi_rdata.cfg[i].lock                             &&  // ...cfg not locked
+      (!rvfi_trap)                                                    // (...executes ok)
+      |->
+      (pmp_csr_rvfi_wmask.cfg[i] == 8'h FF)  &&  // Must write cfg
+      (pmp_csr_rvfi_wdata.cfg[i] == cfg_expected)
+      // TODO:silabs-robin  Use validator function on rdata always?
+      ;
+    endproperty : p_not_ignore_writes_cfg
+    a_not_ignore_writes_cfg: assert property (
+      p_not_ignore_writes_cfg
+    );
+    cov_not_ignore_writes_cfg_updates: cover property (
+      if (pmp_csr_rvfi_wdata.cfg[i] != pmp_csr_rvfi_rdata.cfg[i]) (
+        p_not_ignore_writes_cfg
+      )
+    );
+  end
+
+  // RVFI: Reported CSR (cfg) writes take effect
+  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_rvfi_csr_writes
+    property  p_rvfi_csr_writes;
+      logic [7:0]  cfg, cfg_r, cfg_w;
+      rvfi_valid  ##0
+      (1, cfg_w = (pmp_csr_rvfi_wdata.cfg[i] &  pmp_csr_rvfi_wmask.cfg[i]))  ##0
+      (1, cfg_r = (pmp_csr_rvfi_rdata.cfg[i] & ~pmp_csr_rvfi_wmask.cfg[i]))  ##0
+      (1, cfg = (cfg_r | cfg_w))
+      |=>
+      (rvfi_valid [->1])  ##0
+      (pmp_csr_rvfi_rdata.cfg[i] == cfg)
+      ;
+    endproperty : p_rvfi_csr_writes
+    a_rvfi_csr_writes: assert property (
+      p_rvfi_csr_writes
+    );
+  end
 
   // Locked TOR, ignore i-1 addr writes
   for (genvar i = 1; i < PMP_NUM_REGIONS; i++) begin: gen_ignore_tor
@@ -328,6 +401,38 @@ module uvmt_cv32e40s_pmprvfi_assert
     |->
     rvfi_trap
   );
+
+  // RWX has reservations
+  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_rwx_mml
+    a_rwx_mml: assert property (
+      !pmp_csr_rvfi_rdata.mseccfg.mml
+      |->
+      (pmp_csr_rvfi_rdata.cfg[i][1:0] != 2'b 10)
+    );
+  end
+
+  function automatic pmpncfg_t  rectify_cfg_write (pmpncfg_t cfg_pre, pmpncfg_t cfg_attempt);
+    pmpncfg_t  cfg_rfied;
+
+    cfg_rfied = cfg_attempt;  // Initial assumption: Attempt is ok
+
+    if ((cfg_attempt[2:0] inside {2, 6}) && !pmp_csr_rvfi_rdata.mseccfg.mml) begin
+      cfg_rfied[2:0] = cfg_pre[2:0];
+    end
+
+    if ((PMP_GRANULARITY >= 1) && (cfg_attempt.mode == PMP_MODE_NA4)) begin
+      cfg_rfied.mode = cfg_pre.mode;
+    end
+
+    if (cfg_pre.lock && !pmp_csr_rvfi_rdata.mseccfg.rlb) begin
+      cfg_rfied = cfg_pre;  // Locked config can't change
+    end
+
+    cfg_rfied.zero0 = '0;  // Must be zero in any case
+
+    // TODO:silabs-robin  Move function to shared functions file?
+    return  cfg_rfied;
+  endfunction : rectify_cfg_write
 
 endmodule : uvmt_cv32e40s_pmprvfi_assert
 
