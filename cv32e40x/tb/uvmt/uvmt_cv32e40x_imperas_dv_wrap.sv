@@ -24,18 +24,19 @@
 
 `define STRINGIFY(x) `"x`"
 
-// CSR = (wdata & wmask) | (rdata & ~wmask & rmask)
-`define VLG2API_CSR_SET(CSR_ADDR, CSR_NAME) \
+////////////////////////////////////////////////////////////////////////////
+// Assign the rvvi CSR values from RVFI - CSR = (wdata & wmask) | (rdata & ~wmask)
+////////////////////////////////////////////////////////////////////////////
+`define RVVI_SET_CSR(CSR_ADDR, CSR_NAME) \
     bit csr_``CSR_NAME``_wb; \
     wire [31:0] csr_``CSR_NAME``_w; \
     wire [31:0] csr_``CSR_NAME``_r; \
     assign csr_``CSR_NAME``_w = `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wdata &   `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask; \
-    assign csr_``CSR_NAME``_r = `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rdata & ~(`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask) & `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rmask; \
+    assign csr_``CSR_NAME``_r = `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rdata & ~(`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask); \
     assign rvvi.csr[0][0][``CSR_ADDR]    = csr_``CSR_NAME``_w | csr_``CSR_NAME``_r; \
     assign rvvi.csr_wb[0][0][``CSR_ADDR] = csr_``CSR_NAME``_wb; \
     always @(rvvi.csr[0][0][``CSR_ADDR]) begin \
         csr_``CSR_NAME``_wb = 1; \
-        if (0) $display("CSR RD %0s val=%08X mask=%08X", `STRINGIFY(``CSR_NAME), `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rdata,  `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rmask); \
     end \
     always @(posedge rvvi.clk) begin \
         if (`RVFI_IF.rvfi_valid && csr_``CSR_NAME``_wb) begin \
@@ -43,8 +44,24 @@
         end \
     end 
 
+////////////////////////////////////////////////////////////////////////////
+// Assign the NET IRQ values from the core irq inputs
+////////////////////////////////////////////////////////////////////////////
+`define RVVI_SET_IRQ(IRQ_NAME, IRQ_IDX) \
+    if (`DUT_PATH.irq_i[IRQ_IDX]==1 && irq_latch[IRQ_IDX]==0) begin \
+        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 1)); \
+        irq_latch[IRQ_IDX] = 1; \
+    end
+
+`define RVVI_CLR_IRQ(IRQ_NAME, IRQ_IDX) \
+    if (`RVFI_IF.rvfi_valid && `DUT_PATH.irq_i[IRQ_IDX]==0 && irq_latch[IRQ_IDX]==1) begin \
+        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 0)); \
+        irq_latch[IRQ_IDX] = 0; \
+    end
+
+////////////////////////////////////////////////////////////////////////////
 // CSR definitions
-// TODO: this information should already be available in a similar form elsewhere.
+////////////////////////////////////////////////////////////////////////////
 `define CSR_MSTATUS_ADDR       32'h300
 `define CSR_MISA_ADDR          32'h301
 `define CSR_MIE_ADDR           32'h304
@@ -73,11 +90,12 @@
 `define CSR_MSCONTEXT_ADDR     32'h7A9 // ???
 `define CSR_SCONTEXT_ADDR      32'h7AA
 `define CSR_DCSR_ADDR          32'h7B0
-`define CSR_DPC_ADDR           32'h7B0
+`define CSR_DPC_ADDR           32'h7B1
+`define CSR_DSCRATCH0_ADDR     32'h7B2
+`define CSR_DSCRATCH1_ADDR     32'h7B3
 `define CSR_MCYCLE_ADDR        32'hB00
 `define CSR_MINSTRET_ADDR      32'hB02
 
-//[31:0] [31:0]  CSR_MHPMCOUNTER_ADDR 32'hB03..32'hB1F
 `define CSR_MHPMCOUNTER3_ADDR  32'hB03
 `define CSR_MHPMCOUNTER4_ADDR  32'hB04
 `define CSR_MHPMCOUNTER5_ADDR  32'hB05
@@ -181,11 +199,6 @@
 `define CSR_CYCLEH_ADDR        32'hC80
 `define CSR_INSTRETH_ADDR      32'hC82
 
-`define CSR_DCSR_ADDR          32'h7B0
-`define CSR_DEPC_ADDR          32'h7B1
-`define CSR_DSCRATCH0_ADDR     32'h7B2
-`define CSR_DSCRATCH1_ADDR     32'h7B3
-
 //[31:0]         CSR_MSECCFG_ADDR
 //[31:0]         CSR_MSECCFGH_ADDR
 //[15:0] [31:0]  CSR_PMPADDR_ADDR
@@ -198,7 +211,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module wrapper for Imperas DV.
-
+////////////////////////////////////////////////////////////////////////////
 `define USE_IMPERASDV
 `ifdef USE_IMPERASDV
 
@@ -209,20 +222,20 @@ module uvmt_cv32e40x_imperas_dv_wrap
    )
 
    (
-    RVVI_VLG  rvvi // RVVI SystemVerilog Interface
+           rvviTrace  rvvi // RVVI SystemVerilog Interface
    );
 
-   VLG2API       #(.CMP_PC      (1),
+   trace2api       #(.CMP_PC      (1),
                    .CMP_INS     (1),
                    .CMP_GPR     (1),
                    .CMP_FPR     (0),
                    .CMP_VR      (0),
                    .CMP_CSR     (1)
                    //.MISCOMPARES (1)
-                 )
-                 vlg2api(rvvi);
+                   )
+                   trace2api(rvvi);
 
-   VLG2LOG       vlg2log(rvvi);
+   trace2log       trace2log(rvvi);
 
    string info_tag = "ImperasDV_wrap";
 
@@ -243,8 +256,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
    ////////////////////////////////////////////////////////////////////////////
    // Adopted from:
    // ImperasDV/examples/openhwgroup_cv32e40x/systemverilog/cv32e40x_testbench.sv
-
-   // TODO: do a proper job of binding this in
+   ////////////////////////////////////////////////////////////////////////////
    assign rvvi.clk            = `RVFI_IF.clk;
    assign rvvi.valid[0][0]    = `RVFI_IF.rvfi_valid;
    assign rvvi.order[0][0]    = `RVFI_IF.rvfi_order;
@@ -256,33 +268,37 @@ module uvmt_cv32e40x_imperas_dv_wrap
    assign rvvi.pc_rdata[0][0] = `RVFI_IF.rvfi_pc_rdata;
    assign rvvi.pc_wdata[0][0] = `RVFI_IF.rvfi_pc_wdata;
 
-   `VLG2API_CSR_SET( `CSR_MSTATUS_ADDR,       mstatus       )
-   `VLG2API_CSR_SET( `CSR_MISA_ADDR,          misa          )
-   `VLG2API_CSR_SET( `CSR_MIE_ADDR,           mie           )
-   `VLG2API_CSR_SET( `CSR_MTVEC_ADDR,         mtvec         )
-   `VLG2API_CSR_SET( `CSR_MCOUNTINHIBIT_ADDR, mcountinhibit )
-   `VLG2API_CSR_SET( `CSR_MSCRATCH_ADDR,      mscratch      )
-   `VLG2API_CSR_SET( `CSR_MEPC_ADDR,          mepc          )
-   `VLG2API_CSR_SET( `CSR_MCAUSE_ADDR,        mcause        )
-   `VLG2API_CSR_SET( `CSR_MTVAL_ADDR,         mtval         )
-   `VLG2API_CSR_SET( `CSR_MIP_ADDR,           mip           )
-   `VLG2API_CSR_SET( `CSR_TSELECT_ADDR,       tselect       )
-   `VLG2API_CSR_SET( `CSR_TINFO_ADDR,         tinfo         )
-   `VLG2API_CSR_SET( `CSR_DCSR_ADDR,          dcsr          )
-   `VLG2API_CSR_SET( `CSR_DPC_ADDR,           dpc           )
-   `VLG2API_CSR_SET( `CSR_MCYCLE_ADDR,        mcycle        )
-   `VLG2API_CSR_SET( `CSR_MINSTRET_ADDR,      minstret      )
-   `VLG2API_CSR_SET( `CSR_MCYCLEH_ADDR,       mcycleh       )
-   `VLG2API_CSR_SET( `CSR_MINSTRETH_ADDR,     minstreth     )
-//   `VLG2API_CSR_SET( `CSR_CYCLE_ADDR,         cycle         )
-//   `VLG2API_CSR_SET( `CSR_INSTRET_ADDR,       minstret      )
-//   `VLG2API_CSR_SET( `CSR_CYCLEH_ADDR,        mcycleh       )
-//   `VLG2API_CSR_SET( `CSR_INSTRETH_ADDR,      instreth      )
-//   `VLG2API_CSR_SET( `CSR_MVENDORID_ADDR,     mvendorid     )
-   `VLG2API_CSR_SET( `CSR_MARCHID_ADDR,       marchid       )
-   `VLG2API_CSR_SET( `CSR_MIMPID_ADDR,        mimpid        )
-   `VLG2API_CSR_SET( `CSR_MHARTID_ADDR,       mhartid       )
+   `RVVI_SET_CSR( `CSR_MSTATUS_ADDR,       mstatus       )
+   `RVVI_SET_CSR( `CSR_MISA_ADDR,          misa          )
+   `RVVI_SET_CSR( `CSR_MIE_ADDR,           mie           )
+   `RVVI_SET_CSR( `CSR_MTVEC_ADDR,         mtvec         )
+   `RVVI_SET_CSR( `CSR_MCOUNTINHIBIT_ADDR, mcountinhibit )
+   `RVVI_SET_CSR( `CSR_MSCRATCH_ADDR,      mscratch      )
+   `RVVI_SET_CSR( `CSR_MEPC_ADDR,          mepc          )
+   `RVVI_SET_CSR( `CSR_MCAUSE_ADDR,        mcause        )
+   `RVVI_SET_CSR( `CSR_MTVAL_ADDR,         mtval         )
+   `RVVI_SET_CSR( `CSR_MIP_ADDR,           mip           )
+   `RVVI_SET_CSR( `CSR_MCYCLE_ADDR,        mcycle        )
+   `RVVI_SET_CSR( `CSR_MINSTRET_ADDR,      minstret      )
+   `RVVI_SET_CSR( `CSR_MCYCLEH_ADDR,       mcycleh       )
+   `RVVI_SET_CSR( `CSR_MINSTRETH_ADDR,     minstreth     )
+   `RVVI_SET_CSR( `CSR_MVENDORID_ADDR,     mvendorid     )
+   `RVVI_SET_CSR( `CSR_MARCHID_ADDR,       marchid       )
+   `RVVI_SET_CSR( `CSR_MIMPID_ADDR,        mimpid        )
+   `RVVI_SET_CSR( `CSR_MHARTID_ADDR,       mhartid       )
 
+   `RVVI_SET_CSR( `CSR_TSELECT_ADDR,       tselect       )
+   `RVVI_SET_CSR( `CSR_DCSR_ADDR,          dcsr          )
+   `RVVI_SET_CSR( `CSR_DPC_ADDR,           dpc           )
+   `RVVI_SET_CSR( `CSR_DSCRATCH0_ADDR,     dscratch0     )
+   `RVVI_SET_CSR( `CSR_DSCRATCH1_ADDR,     dscratch1     )
+   `RVVI_SET_CSR( `CSR_TDATA1_ADDR,        tdata1        )
+   `RVVI_SET_CSR( `CSR_TDATA2_ADDR,        tdata2        )
+   `RVVI_SET_CSR( `CSR_TINFO_ADDR,         tinfo         )
+
+   ////////////////////////////////////////////////////////////////////////////
+   // Assign the RVVI GPR registers
+   ////////////////////////////////////////////////////////////////////////////
    bit [31:0] XREG[32];
    genvar gi;
    generate
@@ -292,7 +308,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
 
    always @(*) begin
        int i;
-
        for (i=1; i<32; i++) begin
            XREG[i] = 32'b0;
            if (`RVFI_IF.rvfi_rd1_addr==5'(i))            // TODO: originally rvfi_rd_addr
@@ -303,28 +318,76 @@ module uvmt_cv32e40x_imperas_dv_wrap
    assign rvvi.x_wb[0][0] = 1 << `RVFI_IF.rvfi_rd1_addr; // TODO: originally rvfi_rd_addr
 
    ////////////////////////////////////////////////////////////////////////////
-   // DEBUG REQUESTS: pass to the reference.
-   //                 Include some paranoid checks as well.
-   // seems the halt has to be held high for N calls to simulator
-   always @(posedge rvvi.clk) begin: Monitor_DEBUG
-     static int pulse = 0;
-     if (`DUT_PATH.debug_req_i) begin
-       pulse = 5;
-       void'(rvvi.net_push("haltreq", `DUT_PATH.debug_req_i));
-       `uvm_info(info_tag, $sformatf("%t order=%0d haltreq=%08x pulse=%0d", 
-           $time, `RVFI_IF.rvfi_order, `DUT_PATH.debug_req_i, pulse), UVM_DEBUG)
-     end else begin
-       if (pulse > 0) begin
-         pulse--;
-         if (pulse==0) void'(rvvi.net_push("haltreq", `DUT_PATH.debug_req_i));
-           `uvm_info(info_tag, $sformatf("%t order=%0d haltreq=%08x pulse=%0d", 
-               $time, `RVFI_IF.rvfi_order, `DUT_PATH.debug_req_i, pulse), UVM_DEBUG)
-       end
+   // DEBUG REQUESTS, 
+   // assert when 0->1
+   // negate when posedge clk && valid=1 && debug=0
+   ////////////////////////////////////////////////////////////////////////////
+   bit DebugReq;
+   always @(*) begin: Set_DebugReq
+     if (`DUT_PATH.debug_req_i==1 && DebugReq==0) begin
+         void'(rvvi.net_push("haltreq", 1));
+         DebugReq = 1;
      end
-   end: Monitor_DEBUG
-   
+   end: Set_DebugReq
+   always @(posedge `RVFI_IF.clk) begin: Clr_DebugReq
+       if (`RVFI_IF.rvfi_valid && `DUT_PATH.debug_req_i==0 && DebugReq==1) begin
+           void'(rvvi.net_push("haltreq", 0));
+           DebugReq = 0;
+       end
+   end: Clr_DebugReq
+
+   ////////////////////////////////////////////////////////////////////////////
+   // INTERRUPTS
+   // assert when 0->1
+   // negate when posedge clk && valid=1 && debug=0
+   ////////////////////////////////////////////////////////////////////////////
+   bit [31:0] irq_latch;
+   always @(*) begin: Set_Irq
+       `RVVI_SET_IRQ(MSWInterrupt,        3)
+       `RVVI_SET_IRQ(MTimerInterrupt,     7)
+       `RVVI_SET_IRQ(MExternalInterrupt, 11)
+       `RVVI_SET_IRQ(LocalInterrupt0,    16)
+       `RVVI_SET_IRQ(LocalInterrupt1,    17)
+       `RVVI_SET_IRQ(LocalInterrupt2,    18)
+       `RVVI_SET_IRQ(LocalInterrupt3,    19)
+       `RVVI_SET_IRQ(LocalInterrupt4,    20)
+       `RVVI_SET_IRQ(LocalInterrupt5,    21)
+       `RVVI_SET_IRQ(LocalInterrupt6,    22)
+       `RVVI_SET_IRQ(LocalInterrupt7,    23)
+       `RVVI_SET_IRQ(LocalInterrupt8,    24)
+       `RVVI_SET_IRQ(LocalInterrupt9,    25)
+       `RVVI_SET_IRQ(LocalInterrupt10,   26)
+       `RVVI_SET_IRQ(LocalInterrupt11,   27)
+       `RVVI_SET_IRQ(LocalInterrupt12,   28)
+       `RVVI_SET_IRQ(LocalInterrupt13,   29)
+       `RVVI_SET_IRQ(LocalInterrupt14,   30)
+       `RVVI_SET_IRQ(LocalInterrupt15,   31)
+   end: Set_Irq
+   always @(posedge `RVFI_IF.clk) begin: Clr_Irq
+       `RVVI_CLR_IRQ(MSWInterrupt,        3)
+       `RVVI_CLR_IRQ(MTimerInterrupt,     7)
+       `RVVI_CLR_IRQ(MExternalInterrupt, 11)
+       `RVVI_CLR_IRQ(LocalInterrupt0,    16)
+       `RVVI_CLR_IRQ(LocalInterrupt1,    17)
+       `RVVI_CLR_IRQ(LocalInterrupt2,    18)
+       `RVVI_CLR_IRQ(LocalInterrupt3,    19)
+       `RVVI_CLR_IRQ(LocalInterrupt4,    20)
+       `RVVI_CLR_IRQ(LocalInterrupt5,    21)
+       `RVVI_CLR_IRQ(LocalInterrupt6,    22)
+       `RVVI_CLR_IRQ(LocalInterrupt7,    23)
+       `RVVI_CLR_IRQ(LocalInterrupt8,    24)
+       `RVVI_CLR_IRQ(LocalInterrupt9,    25)
+       `RVVI_CLR_IRQ(LocalInterrupt10,   26)
+       `RVVI_CLR_IRQ(LocalInterrupt11,   27)
+       `RVVI_CLR_IRQ(LocalInterrupt12,   28)
+       `RVVI_CLR_IRQ(LocalInterrupt13,   29)
+       `RVVI_CLR_IRQ(LocalInterrupt14,   30)
+       `RVVI_CLR_IRQ(LocalInterrupt15,   31)
+   end: Clr_Irq
+
    ////////////////////////////////////////////////////////////////////////////
    // RVFI Monitor: pass NMI Load/Store and Fetch to the ref
+   ////////////////////////////////////////////////////////////////////////////
    bit InstructionBusFault;
    bit DataBusFault;
    always @(*) begin: Monitor_RVFI
@@ -344,13 +407,12 @@ module uvmt_cv32e40x_imperas_dv_wrap
        bit        nmi_load_store;
        
        if (`RVFI_IF.rvfi_valid) begin
-           // [0]=trap, [1]=exception, [2]=debug [8:3]=exception_cause, [11:9]=debug_cause, [13:12]=cause_type
-           trap_trap            = `RVFI_IF.rvfi_trap[0];
-           trap_exception       = `RVFI_IF.rvfi_trap[1];
-           trap_debug           = `RVFI_IF.rvfi_trap[2];
-           trap_exception_cause = `RVFI_IF.rvfi_trap[8:3];
-           trap_debug_cause     = `RVFI_IF.rvfi_trap[11:9];
-           trap_cause_type      = `RVFI_IF.rvfi_trap[13:12];
+           trap_trap            = `RVFI_IF.rvfi_trap.trap;
+           trap_exception       = `RVFI_IF.rvfi_trap.exception;
+           trap_debug           = `RVFI_IF.rvfi_trap.debug;
+           trap_exception_cause = `RVFI_IF.rvfi_trap.exception_cause;
+           trap_debug_cause     = `RVFI_IF.rvfi_trap.debug_cause;
+           trap_cause_type      = `RVFI_IF.rvfi_trap.cause_type;
            
            intr_intr            = `RVFI_IF.rvfi_intr.intr;
            intr_exception       = `RVFI_IF.rvfi_intr.exception;
@@ -361,7 +423,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
            nmi_load_store       = `RVFI_IF.rvfi_nmip[1];
            
            //
-           // NMI Load Store
+           // Load Store - NMI
            //
            if (intr_intr && intr_interrupt && ((intr_cause==1024 || intr_cause==1025))) begin
                // Load / Store
@@ -377,7 +439,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
            end
 
            //
-           // NMI Fetch
+           //  Fetch - Exception
            //
            if (trap_trap && trap_exception && trap_exception_cause==48) begin
                if (!InstructionBusFault) begin
@@ -390,69 +452,30 @@ module uvmt_cv32e40x_imperas_dv_wrap
                end
                InstructionBusFault = 0;
            end
-           
-`ifdef FOOBARTRACE
-           $display("\nRVFI Valid %t", $time);
-           $display("valid      = %X", `RVFI_IF.rvfi_valid);
-           $display("order      = %X", `RVFI_IF.rvfi_order);
-           $display("insn       = %X", `RVFI_IF.rvfi_insn);
-           $display("trap       trap=%X exception=%X debug=%X exception_cause=0x%X debug_cause=0x%X cause_type=0x%X", 
-               trap_trap, trap_exception, trap_debug, trap_exception_cause, trap_debug_cause, trap_cause_type);
-           $display("halt       = %X", `RVFI_IF.rvfi_halt);
-           $display("dbg        = %X", `RVFI_IF.rvfi_dbg);
-           $display("dbg_mode   = %X", `RVFI_IF.rvfi_dbg_mode);
-           
-           // [0]=nmi, [1]=0/load:1/store
-           $display("nmip       nmi=%X nmi_load0_store1=%X", `RVFI_IF.rvfi_nmip[0], `RVFI_IF.rvfi_nmip[1]);
-           $display("intr       intr=%X exception=%X interrupt=%X cause=0x%X", 
-               intr_intr, intr_exception, intr_interrupt, intr_cause);
-           $display("mode       = %X", `RVFI_IF.rvfi_mode);
-           $display("ixl        = %X", `RVFI_IF.rvfi_ixl);
-           $display("pc_rdata   = %X", `RVFI_IF.rvfi_pc_rdata);
-           $display("pc_wdata   = %X", `RVFI_IF.rvfi_pc_wdata);
-`endif
 
+           `uvm_info(info_tag, $sformatf("\nRVFI Valid %t", $time), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("valid      = %X", `RVFI_IF.rvfi_valid), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("order      = %X", `RVFI_IF.rvfi_order), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("insn       = %X", `RVFI_IF.rvfi_insn), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("trap       trap=%X exception=%X debug=%X exception_cause=0x%X debug_cause=0x%X cause_type=0x%X", 
+                   trap_trap, trap_exception, trap_debug, trap_exception_cause, trap_debug_cause, trap_cause_type), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("halt       = %X", `RVFI_IF.rvfi_halt), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("dbg        = %X", `RVFI_IF.rvfi_dbg), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("dbg_mode   = %X", `RVFI_IF.rvfi_dbg_mode), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("nmip       nmi=%X nmi_load0_store1=%X", `RVFI_IF.rvfi_nmip[0], `RVFI_IF.rvfi_nmip[1]), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("intr       intr=%X exception=%X interrupt=%X cause=0x%X", 
+                   intr_intr, intr_exception, intr_interrupt, intr_cause), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("mode       = %X", `RVFI_IF.rvfi_mode), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("ixl        = %X", `RVFI_IF.rvfi_ixl), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("pc_rdata   = %X", `RVFI_IF.rvfi_pc_rdata), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("pc_wdata   = %X", `RVFI_IF.rvfi_pc_wdata), UVM_DEBUG)
        end
    end: Monitor_RVFI
 
-   ////////////////////////////////////////////////////////////////////////////
-   // INTERRUPTS
-   always @(posedge rvvi.clk) begin: Monitor_IRQ
-     static bit [31:0] irq_in;
-     static bit [31:0] irq_out;
-
-     irq_in = `DUT_PATH.irq_i;
-     if (irq_out != irq_in) begin
-       // gate this with mip ?
-       void'(rvvi.net_push("MSWInterrupt",        irq_in[ 3]));
-       void'(rvvi.net_push("MTimerInterrupt",     irq_in[ 7]));
-       void'(rvvi.net_push("MExternalInterrupt",  irq_in[11]));
-       void'(rvvi.net_push("LocalInterrupt0",     irq_in[16]));
-       void'(rvvi.net_push("LocalInterrupt1",     irq_in[17]));
-       void'(rvvi.net_push("LocalInterrupt2",     irq_in[18]));
-       void'(rvvi.net_push("LocalInterrupt3",     irq_in[19]));
-       void'(rvvi.net_push("LocalInterrupt4",     irq_in[20]));
-       void'(rvvi.net_push("LocalInterrupt5",     irq_in[21]));
-       void'(rvvi.net_push("LocalInterrupt6",     irq_in[22]));
-       void'(rvvi.net_push("LocalInterrupt7",     irq_in[23]));
-       void'(rvvi.net_push("LocalInterrupt8",     irq_in[24]));
-       void'(rvvi.net_push("LocalInterrupt9",     irq_in[25]));
-       void'(rvvi.net_push("LocalInterrupt10",    irq_in[26]));
-       void'(rvvi.net_push("LocalInterrupt11",    irq_in[27]));
-       void'(rvvi.net_push("LocalInterrupt12",    irq_in[28]));
-       void'(rvvi.net_push("LocalInterrupt13",    irq_in[29]));
-       void'(rvvi.net_push("LocalInterrupt14",    irq_in[30]));
-       void'(rvvi.net_push("LocalInterrupt15",    irq_in[31]));
-       `uvm_info(info_tag, $sformatf("%t order=%0d irq_in=%08x", 
-           $time, `RVFI_IF.rvfi_order, irq_in), UVM_DEBUG)
-     end
-     irq_out = irq_in;
-
-   end: Monitor_IRQ
 
   /////////////////////////////////////////////////////////////////////////////
   // REF control
-
+  /////////////////////////////////////////////////////////////////////////////
   task ref_init;
     string test_program_elf;
     reg [31:0] hart_id;
@@ -510,7 +533,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER9_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER9H_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT9_ADDR ));
-
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER10_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER10H_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT10_ADDR ));
@@ -541,7 +563,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER19_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER19H_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT19_ADDR ));
-
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER20_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER20H_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT20_ADDR ));
@@ -572,7 +593,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER29_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER29H_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT29_ADDR ));
-
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER30_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER30H_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT30_ADDR ));
@@ -580,21 +600,12 @@ module uvmt_cv32e40x_imperas_dv_wrap
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER31H_ADDR ));
     void'(rvviRefCsrSetVolatile(hart_id,   `CSR_MHPMEVENT31_ADDR ));
 
-    rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR,       `RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_MSTATUS_ADDR,   `RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_MEPC_ADDR,      `RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_MCAUSE_ADDR,    `RVVI_TRUE);
-
-    rvviRefCsrCompareEnable(hart_id, `CSR_MISA_ADDR,      `RVVI_FALSE);
-
-    rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR,      `RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_DEPC_ADDR,      `RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_DSCRATCH0_ADDR, `RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_DSCRATCH1_ADDR, `RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_TDATA1_ADDR,    `RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_TDATA2_ADDR,    `RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR,     `RVVI_FALSE);
-    
+    // Mask out pending bits, due to interrupts showing as pending
+    // and enabled but not taken immediately due to instructions 
+    // in-flight, eg Load/Store
+    rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR, `RVVI_FALSE);
+    rvviRefCsrCompareMask(hart_id,   `CSR_DCSR_ADDR, ~('h8));
+            
     // define asynchronous grouping
     // Interrupts
     rvviRefNetGroupSet(rvviRefNetIndexGet("MSWInterrupt"),        1);
@@ -627,7 +638,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
     
     // Add IO regions of memory
     // According to silabs this range is 0x0080_0000 to 0x0080_0FFF
-//    void'(rvviRefMemorySetVolatile('h00800040, 'h00800043)); //TODO: deal with int return value
     void'(rvviRefMemorySetVolatile('h00800000, 'h00800FFF)); //TODO: deal with int return value
 
     `uvm_info(info_tag, "ref_init() complete", UVM_NONE)
@@ -644,7 +654,7 @@ endmodule : uvmt_cv32e40x_imperas_dv_wrap
        )
 
        (
-        RVVI_VLG  rvvi // RVVI SystemVerilog Interface
+               rvviTrace  rvvi // RVVI SystemVerilog Interface
        );
     
        task ref_init;

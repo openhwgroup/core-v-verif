@@ -78,7 +78,7 @@ module uvmt_cv32e40x_tb;
                                                    .sec_lvl    ());     // Core status outputs
 
    // RVVI SystemVerilog Interface
-   RVVI_VLG #( .NHART(1), .RETIRE(1)) rvvi_if();
+   rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
 
   /**
    * DUT WRAPPER instance:
@@ -661,7 +661,7 @@ module uvmt_cv32e40x_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(mconfigptr)
 
      // IMPERAS_DV interface
-     uvm_config_db#(virtual RVVI_VLG)::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("rvvi_vif"), .value(rvvi_if));
+     uvm_config_db#(virtual rvviTrace)::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("rvvi_vif"), .value(rvvi_if));
 
      // IMPERAS OVPsim ISS interfaces (planned for deprecation)
      uvm_config_db#(virtual RVVI_state#(.ILEN(uvme_cv32e40x_pkg::ILEN),

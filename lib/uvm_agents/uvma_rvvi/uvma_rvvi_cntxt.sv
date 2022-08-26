@@ -33,7 +33,7 @@ class uvma_rvvi_cntxt_c#(int ILEN=DEFAULT_ILEN,
    virtual RVVI_control            control_vif;
 
    // V2 "RVVI Verilog" interface
-   virtual RVVI_VLG                rvvi_vif;
+   virtual rvviTrace               rvvi_vif;
 
    // Events
    uvm_event  sample_cfg_e;
