@@ -342,7 +342,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       |->
       (pmp_csr_rvfi_wmask.cfg[i] == 8'h FF)  &&  // Must write cfg
       (pmp_csr_rvfi_wdata.cfg[i] == cfg_expected)
-      // TODO:silabs-robin  Use validator function on rdata always?
+      // TODO:silabs-robin  Use validator function on rdata/wdata always?
       ;
     endproperty : p_not_ignore_writes_cfg
     a_not_ignore_writes_cfg: assert property (
@@ -390,8 +390,16 @@ module uvmt_cv32e40s_pmprvfi_assert
     !match_status_instr.is_access_allowed
     |->
     rvfi_trap
+    // TODO:silabs-robin  Can assert the opposite too?
   );
-  // TODO:silabs-robin  Can assert the opposite?
+  a_noexec_cause: assert property (
+    rvfi_valid  &&
+    !match_status_instr.is_access_allowed  &&
+    rvfi_trap.exception
+    |->
+    (rvfi_trap.exception_cause == EXC_INSTR_ACC_FAULT)
+    // Note, if we implement etrigger etc then priority will change
+  );
 
   // TODO  ("WaitUpdate"/"AffectSuccessors")
   a_noloadstore_musttrap: assert property (
@@ -411,6 +419,8 @@ module uvmt_cv32e40s_pmprvfi_assert
     );
   end
 
+
+  // Translate write-attempts to legal values
   function automatic pmpncfg_t  rectify_cfg_write (pmpncfg_t cfg_pre, pmpncfg_t cfg_attempt);
     pmpncfg_t  cfg_rfied;
 
