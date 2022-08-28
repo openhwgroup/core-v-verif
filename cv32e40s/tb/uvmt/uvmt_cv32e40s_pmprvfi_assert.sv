@@ -55,6 +55,8 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   localparam logic [5:0] EXC_INSTR_ACC_FAULT    = 6'd 1;
   localparam logic [5:0] EXC_ILL_INSTR          = 6'd 2;
+  localparam logic [5:0] EXC_LOAD_ACC_FAULT     = 6'd 5;
+  localparam logic [5:0] EXC_STORE_ACC_FAULT    = 6'd 7;
   localparam logic [5:0] EXC_INSTR_BUS_FAULT    = 6'd 48;
   localparam logic [5:0] EXC_INSTR_CHKSUM_FAULT = 6'd 49;
 
@@ -408,6 +410,20 @@ module uvmt_cv32e40s_pmprvfi_assert
     !match_status_data.is_access_allowed
     |->
     rvfi_trap
+  );
+  a_noloadstore_cause_load: assert property (
+    (rvfi_valid && rvfi_mem_rmask)  &&
+    !match_status_data.is_access_allowed  &&
+    rvfi_trap.exception
+    |->
+    (rvfi_trap.exception_cause == EXC_LOAD_ACC_FAULT)
+  );
+  a_noloadstore_cause_store: assert property (
+    (rvfi_valid && rvfi_mem_wmask)  &&
+    !match_status_data.is_access_allowed  &&
+    rvfi_trap.exception
+    |->
+    (rvfi_trap.exception_cause == EXC_STORE_ACC_FAULT)
   );
 
   // RWX has reservations
