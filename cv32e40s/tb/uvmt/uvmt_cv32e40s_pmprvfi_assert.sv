@@ -111,8 +111,24 @@ module uvmt_cv32e40s_pmprvfi_assert
     // TODO:ropeders double check correctness
   wire [1:0]  rvfi_effective_mode =
     rvfi_csr_mstatus_rdata[17]      ?  // "mstatus.MPRV", modify privilege?
-      rvfi_csr_mstatus_rdata[12:11] :  // "mstatus.MPP", act as if "mode==MPP"
+      rvfi_csr_mstatus_rdata[12:11] :  // "mstatus.MPP", loadstores act as if "mode==MPP"
       rvfi_mode;                       // Else, act as actual mode
+  wire [31:0]  rvfi_mem_upperaddr =  // TODO:silabs-robin  "32:0" to avoid overflow problems?
+    (rvfi_mem_rmask[3] || rvfi_mem_wmask[3]) ? (
+      rvfi_mem_addr + 3
+    ) : (
+      (rvfi_mem_rmask[2] || rvfi_mem_wmask[2]) ? (
+        rvfi_mem_addr + 2
+      ) : (
+        (rvfi_mem_rmask[1] || rvfi_mem_wmask[1]) ? (
+          rvfi_mem_addr + 1
+        ) : (
+          rvfi_mem_addr
+        )
+      )
+    );
+  wire  is_split_datatrans =
+    (rvfi_mem_upperaddr[31:2] != rvfi_mem_addr[31:2]);
 
   pmp_csr_t  pmp_csr_rvfi_rdata;
   pmp_csr_t  pmp_csr_rvfi_wdata;
@@ -136,6 +152,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   match_status_t  match_status_instr;
   match_status_t  match_status_data;
+  match_status_t  match_status_upperdata;
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
     .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
@@ -144,7 +161,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     .rst_n (rst_ni),
 
     .csr_pmp_i      (pmp_csr_rvfi_rdata),
-    .priv_lvl_i     (privlvl_t'(rvfi_effective_mode)),
+    .priv_lvl_i     (privlvl_t'(rvfi_mode)),
     .pmp_req_addr_i (rvfi_pc_rdata),
     .pmp_req_type_i (PMP_ACC_EXEC),
     .pmp_req_err_o  ('Z),
@@ -165,6 +182,21 @@ module uvmt_cv32e40s_pmprvfi_assert
     .pmp_req_err_o  ('Z),
 
     .match_status_o (match_status_data)
+  );
+  uvmt_cv32e40s_pmp_model #(
+    .PMP_GRANULARITY  (PMP_GRANULARITY),
+    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
+  ) model_upperdata_i (
+    .clk   (clk_i),
+    .rst_n (rst_ni),
+
+    .csr_pmp_i      (pmp_csr_rvfi_rdata),
+    .priv_lvl_i     (privlvl_t'(rvfi_effective_mode)),
+    .pmp_req_addr_i (rvfi_mem_upperaddr),  // TODO:silabs-robin  Multi-op instructions
+    .pmp_req_type_i (rvfi_mem_wmask ? PMP_ACC_WRITE : PMP_ACC_READ),  // TODO:silabs-robin  Not completely accurate...
+    .pmp_req_err_o  ('Z),
+
+    .match_status_o (match_status_upperdata)
   );
 
 
@@ -424,6 +456,14 @@ module uvmt_cv32e40s_pmprvfi_assert
     rvfi_trap.exception
     |->
     (rvfi_trap.exception_cause == EXC_STORE_ACC_FAULT)
+  );
+  a_noloadstore_splittrap: assert property (
+    rvfi_valid  &&
+    is_split_datatrans  &&
+    !match_status_upperdata.is_access_allowed
+    |->
+    rvfi_trap
+    // TODO:silabs-robin  Instr-side.
   );
 
   // RWX has reservations
