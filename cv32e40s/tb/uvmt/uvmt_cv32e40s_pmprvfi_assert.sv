@@ -67,6 +67,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   localparam int CSRADDR_FIRST_PMPCFG  = 12'h 3A0;
   localparam int CSRADDR_FIRST_PMPADDR = 12'h 3B0;
+  localparam int CSRADDR_MSECCFG       = 12'h 747;
 
 
   // Defaults
@@ -318,6 +319,23 @@ module uvmt_cv32e40s_pmprvfi_assert
       always pmp_csr_rvfi_rdata.cfg[i].lock
     );
   end
+  // Stickiness isn't effectuated before triggered  (vplan "UntilReset")
+  property  p_until_reset_notbefore;
+    logic  rlb;
+    $rose(rst_ni)                                               ##0
+    (rvfi_valid [->1])                                          ##0  // First retire
+    (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  ##0  // ..."csrrw"
+    (rvfi_insn[31:20] == CSRADDR_MSECCFG)                       ##0  // ...to mseccfg
+    !rvfi_trap                                                  ##0
+    (1, rlb = rvfi_rs1_rdata[2])                                     // (Write-attempt)
+    |->
+    pmp_csr_rvfi_wmask.mseccfg.rlb          &&  // Must attempt
+    (pmp_csr_rvfi_wdata.mseccfg.rlb == rlb)     // Must succeed
+    ;
+  endproperty : p_until_reset_notbefore
+  a_until_reset_notbefore: assert property (
+    p_until_reset_notbefore
+  );
 
   // Locked entries, ignore pmpicfg/pmpaddri writes
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_ignore_writes_notrap
@@ -377,6 +395,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       (pmp_csr_rvfi_wmask.cfg[i] == 8'h FF)  &&  // Must write cfg
       (pmp_csr_rvfi_wdata.cfg[i] == cfg_expected)
       // TODO:silabs-robin  Use validator function on rdata/wdata always?
+      // TODO:silabs-robin  Make this property "write-generic" and not just for "!locked"?
       ;
     endproperty : p_not_ignore_writes_cfg
     a_not_ignore_writes_cfg: assert property (
@@ -386,6 +405,17 @@ module uvmt_cv32e40s_pmprvfi_assert
       if (pmp_csr_rvfi_wdata.cfg[i] != pmp_csr_rvfi_rdata.cfg[i]) (
         p_not_ignore_writes_cfg
       )
+    );
+  end
+
+  // Written cfg is legal  (vplan "ExecIgnored", ...)
+  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_cfgwdata_legal
+    wire [7:0] rectified_cfg = rectify_cfg_write(pmp_csr_rvfi_rdata.cfg[i], pmp_csr_rvfi_wdata.cfg[i]);
+    a_cfgwdata_legal: assert property (
+      rvfi_valid  &&
+      pmp_csr_rvfi_wmask.cfg[i]
+      |->
+      (pmp_csr_rvfi_wdata.cfg[i] == rectified_cfg)
     );
   end
 
@@ -480,21 +510,38 @@ module uvmt_cv32e40s_pmprvfi_assert
   function automatic pmpncfg_t  rectify_cfg_write (pmpncfg_t cfg_pre, pmpncfg_t cfg_attempt);
     pmpncfg_t  cfg_rfied;
 
-    cfg_rfied = cfg_attempt;  // Initial assumption: Attempt is ok
+    // Initial assumption: Attempt is ok
+    cfg_rfied = cfg_attempt;
 
-    if ((cfg_attempt[2:0] inside {2, 6}) && !pmp_csr_rvfi_rdata.mseccfg.mml) begin
-      cfg_rfied[2:0] = cfg_pre[2:0];
+    // Pick "pre-state" where required
+    begin
+      // RWX collective WARL
+      if ((cfg_attempt[2:0] inside {2, 6}) && !pmp_csr_rvfi_rdata.mseccfg.mml) begin
+        cfg_rfied[2:0] = cfg_pre[2:0];
+      end
+
+      // NA4, G=0
+      if ((PMP_GRANULARITY >= 1) && (cfg_attempt.mode == PMP_MODE_NA4)) begin
+        cfg_rfied.mode = cfg_pre.mode;
+      end
+
+      // Locked config can't change
+      if (cfg_pre.lock && !pmp_csr_rvfi_rdata.mseccfg.rlb) begin
+        cfg_rfied = cfg_pre;
+      end
+
+      // MML, no locked-executable
+      if (
+        (pmp_csr_rvfi_rdata.mseccfg.mml && !pmp_csr_rvfi_rdata.mseccfg.rlb)  &&
+        (cfg_attempt.lock && cfg_attempt.exec))
+        // TODO:silabs-robin  && (wdata != rdata))  // Unchanged is not "adding"
+      begin
+        cfg_rfied = cfg_pre;
+      end
     end
 
-    if ((PMP_GRANULARITY >= 1) && (cfg_attempt.mode == PMP_MODE_NA4)) begin
-      cfg_rfied.mode = cfg_pre.mode;
-    end
-
-    if (cfg_pre.lock && !pmp_csr_rvfi_rdata.mseccfg.rlb) begin
-      cfg_rfied = cfg_pre;  // Locked config can't change
-    end
-
-    cfg_rfied.zero0 = '0;  // Must be zero in any case
+    // Tied zero
+    cfg_rfied.zero0 = '0;
 
     // TODO:silabs-robin  Move function to shared functions file?
     return  cfg_rfied;
