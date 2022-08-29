@@ -88,24 +88,19 @@ class uvma_rvvi_ovpsim_drv_c#(int ILEN=uvma_rvvi_pkg::DEFAULT_ILEN,
    extern virtual task halt(REQ req);
 
    /**
+    * Special RVVI step to signal debug is to be taken
+    */
+   extern virtual task stepi_debug(bit nmi, bit intr, int unsigned nmi_cause, int unsigned intr_id);
+
+   /**
     * Special RVVI step to signal an external interrupt is to be taken
     */
    extern virtual task stepi_ext_intr(int unsigned intr_id);
 
    /**
-    * Special RVVI step to signal a load fault NMI
+    * Special RVVI step to signal an NMI
     */
-   extern virtual task stepi_nmi_load_fault();
-
-   /**
-    * Special RVVI step to signal a store fault NMI
-    */
-   extern virtual task stepi_nmi_store_fault();
-
-   /**
-    * Special RVVI step to signal an external debug request
-    */
-   extern virtual task stepi_haltreq();
+   extern virtual task stepi_nmi(int unsigned cause);
 
    /**
     * Special RVVI step to signal an instruction bus fault
@@ -202,23 +197,22 @@ task uvma_rvvi_ovpsim_drv_c::stepi(REQ req);
                                      (mem_val_prev & ~mask) | (mem_val_update & mask)), UVM_HIGH);
 
    end
-
-   // Signal a NMI to the ISS in M-mode
-   if (rvvi_ovpsim_seq_item.nmi_load_fault) begin
-      stepi_nmi_load_fault();
-   end
-   else if (rvvi_ovpsim_seq_item.nmi_store_fault) begin
-      stepi_nmi_store_fault();
-   end
-
-   // Signal an interrupt to the ISS if mcause and rvfi_intr signals external interrupt
-   if (rvvi_ovpsim_seq_item.intr) begin
-      stepi_ext_intr(rvvi_ovpsim_seq_item.intr_id);
-   end
-
-   // External halt request to debug mode
+  
+   // Signal a debug to ISS. Interrupts that was not retired due to debug
+   // are also signaled here
    if (rvvi_ovpsim_seq_item.dbg_req) begin
-      stepi_haltreq();
+      stepi_debug(rvvi_ovpsim_seq_item.nmi, rvvi_ovpsim_seq_item.intr, rvvi_ovpsim_seq_item.nmi_cause, rvvi_ovpsim_seq_item.intr_id);
+   end else begin
+      
+      // Signal a NMI to the ISS in M-mode
+      if (rvvi_ovpsim_seq_item.nmi) begin
+         stepi_nmi(rvvi_ovpsim_seq_item.nmi_cause);
+      end
+
+      // Signal an interrupt to the ISS if mcause and rvfi_intr signals external interrupt
+      if (rvvi_ovpsim_seq_item.intr) begin
+         stepi_ext_intr(rvvi_ovpsim_seq_item.intr_id);
+      end
    end
 
    // Signal instruction bus fault
@@ -275,58 +269,62 @@ task uvma_rvvi_ovpsim_drv_c::restart_clknrst();
 
 endtask : restart_clknrst
 
-task uvma_rvvi_ovpsim_drv_c::stepi_haltreq();
-
-   rvvi_ovpsim_cntxt.ovpsim_io_vif.haltreq  = 1'b1;
-
-   rvvi_ovpsim_cntxt.control_vif.stepi();
-   @(rvvi_ovpsim_cntxt.state_vif.notify);
-
-   rvvi_ovpsim_cntxt.ovpsim_io_vif.haltreq = 1'b0;
-   @(posedge rvvi_ovpsim_cntxt.ovpsim_bus_vif.Clk);
-
-endtask : stepi_haltreq
-
-task uvma_rvvi_ovpsim_drv_c::stepi_ext_intr(int unsigned intr_id);
-
+task uvma_rvvi_ovpsim_drv_c::stepi_debug(bit nmi, bit intr, int unsigned nmi_cause, int unsigned intr_id);
    rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint = 1'b0;
-   rvvi_ovpsim_cntxt.ovpsim_io_vif.irq_i    = 1 << (intr_id);
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.haltreq  = 1'b1;
+   
+   if (nmi) begin
+      rvvi_ovpsim_cntxt.ovpsim_io_vif.nmi       = 1'b1;
+      rvvi_ovpsim_cntxt.ovpsim_io_vif.nmi_cause = nmi_cause;
+   end
+   
+   if (intr) begin
+      rvvi_ovpsim_cntxt.ovpsim_io_vif.irq_i    = 1 << (intr_id);
+      rvvi_ovpsim_cntxt.ovpsim_io_vif.intr     = 1'b1;
+   end
 
    rvvi_ovpsim_cntxt.control_vif.stepi();
    @(rvvi_ovpsim_cntxt.state_vif.notify);
 
    rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint = 1'b1;
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.haltreq  = 1'b0;
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.intr     = 1'b0;
+
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.nmi       = 1'b0;
+
+   @(posedge rvvi_ovpsim_cntxt.ovpsim_bus_vif.Clk);
+endtask : stepi_debug
+
+task uvma_rvvi_ovpsim_drv_c::stepi_ext_intr(int unsigned intr_id);
+
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint = 1'b0;
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.irq_i    = 1 << (intr_id);
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.intr     = 1'b1;
+
+   rvvi_ovpsim_cntxt.control_vif.stepi();
+   @(rvvi_ovpsim_cntxt.state_vif.notify);
+
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint = 1'b1;
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.intr     = 1'b0;
    @(posedge rvvi_ovpsim_cntxt.ovpsim_bus_vif.Clk);
 
 endtask : stepi_ext_intr
 
-task uvma_rvvi_ovpsim_drv_c::stepi_nmi_load_fault();
+task uvma_rvvi_ovpsim_drv_c::stepi_nmi(int unsigned cause);
 
    rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint = 1'b0;
-   rvvi_ovpsim_cntxt.ovpsim_io_vif.LoadBusFaultNMI = 1'b1;
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.nmi_cause = cause;
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.nmi       = 1'b1;
 
    rvvi_ovpsim_cntxt.control_vif.stepi();
    @(rvvi_ovpsim_cntxt.state_vif.notify);
 
    rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint         = 1'b1;
-   rvvi_ovpsim_cntxt.ovpsim_io_vif.LoadBusFaultNMI  = 1'b0;
+   rvvi_ovpsim_cntxt.ovpsim_io_vif.nmi              = 1'b0;
    @(posedge rvvi_ovpsim_cntxt.ovpsim_bus_vif.Clk);
 
-endtask : stepi_nmi_load_fault
+endtask : stepi_nmi
 
-task uvma_rvvi_ovpsim_drv_c::stepi_nmi_store_fault();
-
-   rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint = 1'b0;
-   rvvi_ovpsim_cntxt.ovpsim_io_vif.StoreBusFaultNMI = 1'b1;
-
-   rvvi_ovpsim_cntxt.control_vif.stepi();
-   @(rvvi_ovpsim_cntxt.state_vif.notify);
-
-   rvvi_ovpsim_cntxt.ovpsim_io_vif.deferint         = 1'b1;
-   rvvi_ovpsim_cntxt.ovpsim_io_vif.StoreBusFaultNMI = 1'b0;
-   @(posedge rvvi_ovpsim_cntxt.ovpsim_bus_vif.Clk);
-
-endtask : stepi_nmi_store_fault
 
 task uvma_rvvi_ovpsim_drv_c::stepi_insn_bus_fault();
 

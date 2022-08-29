@@ -30,8 +30,7 @@ module uvmt_cv32e40x_integration_assert
   input [31:0] boot_addr_i,
   input [31:0] dm_exception_addr_i,
   input [31:0] dm_halt_addr_i,
-  input [31:0] mtvec_addr_i,
-  input [31:0] nmi_addr_i
+  input [31:0] mtvec_addr_i
 );
 
   default clocking @(posedge clk_i); endclocking
@@ -66,10 +65,6 @@ module uvmt_cv32e40x_integration_assert
   a_stable_mtvecaddr : assert property (p_stable_addr(mtvec_addr_i))
     else `uvm_error(info_tag, "mtvec_addr_i changed after fetch_enable_i");
 
-  a_stable_nmiaddr : assert property (p_stable_addr(nmi_addr_i))
-    else `uvm_error(info_tag, "nmi_addr_i changed after fetch_enable_i");
-
-
   // Check that addresses are word-aligned
 
   property p_aligned_addr(addr);
@@ -86,8 +81,5 @@ module uvmt_cv32e40x_integration_assert
     else `uvm_error(info_tag, "dm_halt_addr_i not word-aligned");
 
   //a_aligned_mtvecaddr is not required by the user manual as per now
-
-  a_aligned_nmiaddr : assert property (p_aligned_addr(nmi_addr_i))
-    else `uvm_error(info_tag, "nmi_addr_i not word-aligned");
 
 endmodule : uvmt_cv32e40x_integration_assert

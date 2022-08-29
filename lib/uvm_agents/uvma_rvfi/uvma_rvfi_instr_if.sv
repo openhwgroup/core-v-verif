@@ -28,43 +28,43 @@ interface uvma_rvfi_instr_if
     int XLEN=DEFAULT_XLEN)
   //import uvma_rvfi_pkg::*;
   (
-    input                      clk,
-    input                      reset_n,
+    input logic                      clk,
+    input logic                      reset_n,
 
-    input                      rvfi_valid,
-    input [ORDER_WL-1:0]       rvfi_order,
-    input [ILEN-1:0]           rvfi_insn,
-    input [TRAP_WL-1:0]        rvfi_trap,
-    input                      rvfi_halt,
-    input [RVFI_DBG_WL-1:0]    rvfi_dbg,
-    input                      rvfi_dbg_mode,
-    input [RVFI_NMIP_WL-1:0]   rvfi_nmip,
-    input                      rvfi_intr,
-    input [MODE_WL-1:0]        rvfi_mode,
-    input [IXL_WL-1:0]         rvfi_ixl,
-    input [XLEN-1:0]           rvfi_pc_rdata,
-    input [XLEN-1:0]           rvfi_pc_wdata,
+    input logic                      rvfi_valid,
+    input logic [ORDER_WL-1:0]       rvfi_order,
+    input logic [ILEN-1:0]           rvfi_insn,
+    input rvfi_trap_t                rvfi_trap,
+    input logic                      rvfi_halt,
+    input logic [RVFI_DBG_WL-1:0]    rvfi_dbg,
+    input logic                      rvfi_dbg_mode,
+    input logic [RVFI_NMIP_WL-1:0]   rvfi_nmip,
+    input rvfi_intr_t                rvfi_intr,
+    input logic [MODE_WL-1:0]        rvfi_mode,
+    input logic [IXL_WL-1:0]         rvfi_ixl,
+    input logic [XLEN-1:0]           rvfi_pc_rdata,
+    input logic [XLEN-1:0]           rvfi_pc_wdata,
 
-    input [GPR_ADDR_WL-1:0]    rvfi_rs1_addr,
-    input [XLEN-1:0]           rvfi_rs1_rdata,
+    input logic [GPR_ADDR_WL-1:0]    rvfi_rs1_addr,
+    input logic [XLEN-1:0]           rvfi_rs1_rdata,
 
-    input [GPR_ADDR_WL-1:0]    rvfi_rs2_addr,
-    input [XLEN-1:0]           rvfi_rs2_rdata,
+    input logic [GPR_ADDR_WL-1:0]    rvfi_rs2_addr,
+    input logic [XLEN-1:0]           rvfi_rs2_rdata,
 
-    input [GPR_ADDR_WL-1:0]    rvfi_rs3_addr,
-    input [XLEN-1:0]           rvfi_rs3_rdata,
+    input logic [GPR_ADDR_WL-1:0]    rvfi_rs3_addr,
+    input logic [XLEN-1:0]           rvfi_rs3_rdata,
 
-    input [GPR_ADDR_WL-1:0]    rvfi_rd1_addr,
-    input [XLEN-1:0]           rvfi_rd1_wdata,
+    input logic [GPR_ADDR_WL-1:0]    rvfi_rd1_addr,
+    input logic [XLEN-1:0]           rvfi_rd1_wdata,
 
-    input [GPR_ADDR_WL-1:0]    rvfi_rd2_addr,
-    input [XLEN-1:0]           rvfi_rd2_wdata,
+    input logic [GPR_ADDR_WL-1:0]    rvfi_rd2_addr,
+    input logic [XLEN-1:0]           rvfi_rd2_wdata,
 
-    input [XLEN-1:0]           rvfi_mem_addr,
-    input [XLEN-1:0]           rvfi_mem_rdata,
-    input [XLEN/8-1:0]         rvfi_mem_rmask,
-    input [XLEN-1:0]           rvfi_mem_wdata,
-    input [XLEN/8-1:0]         rvfi_mem_wmask
+    input logic [XLEN-1:0]           rvfi_mem_addr,
+    input logic [XLEN-1:0]           rvfi_mem_rdata,
+    input logic [XLEN/8-1:0]         rvfi_mem_rmask,
+    input logic [XLEN-1:0]           rvfi_mem_wdata,
+    input logic [XLEN/8-1:0]         rvfi_mem_wmask
 
   );
 

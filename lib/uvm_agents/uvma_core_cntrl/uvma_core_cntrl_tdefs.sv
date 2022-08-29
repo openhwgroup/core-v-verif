@@ -1,13 +1,13 @@
 // Copyright 2020 OpenHW Group
 // Copyright 2020 Datum Technology Corporation
 // Copyright 2020 Silicon Labs, Inc.
-// 
+//
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     https://solderpad.org/licenses/
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -651,11 +651,18 @@ typedef enum {
 } bitmanip_version_t;
 
 typedef enum {
+  PRIV_VERSION_1_12,
   PRIV_VERSION_1_11,
   PRIV_VERSION_1_10,
   PRIV_VERSION_20190405,
   PRIV_VERSION_MASTER
 } priv_spec_version_t;
+
+typedef enum {
+  DEBUG_VERSION_1_0_0,
+  DEBUG_VERSION_0_13_2,
+  DEBUG_VERSION_UNDEFINED
+} debug_spec_version_t;
 
 typedef enum {
   ENDIAN_LITTLE,

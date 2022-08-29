@@ -111,10 +111,26 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    // ISA Extension support
    // -------------------------------------------------------------------------------------
    $fwrite(fh, $sformatf("--override root/cpu/misa_Extensions=0x%06x\n", cfg.core_cfg.get_misa()));
-  // TODO: cv32e40x: Remove when correct setting is applied to ovpsim
-  if (cfg.core_cfg.core_name == "CV32E40X") begin
-      $fwrite(fh, $sformatf("--override root/cpu/tcontrol_undefined=0\n"));
-  end
+
+   // TODO hf: Remove when correct setting is applied to ovpsim
+   if (cfg.core_cfg.core_name == "CV32E40X") begin
+       $fwrite(fh, $sformatf("--override root/cpu/tcontrol_undefined=0\n"));
+   end
+
+   // TODO hf: Find a better way to put this in the 40x/40s-structure
+   if (cfg.core_cfg.core_name == "CV32E40X" || cfg.core_cfg.core_name == "CV32E40S") begin
+     $fwrite(fh, $sformatf("--override root/cpu/scontext_undefined=1\n"));
+     $fwrite(fh, $sformatf("--override root/cpu/ecode_mask=0x7ff\n"));
+     $fwrite(fh, $sformatf("--override root/cpu/mtvec_mask=0xffffff81\n"));
+      /* Comment back in when we activate Zc
+     //TODO:MT make these part of the configuration
+     $fwrite(fh, $sformatf("--override root/cpu/Zca=1\n"));
+     $fwrite(fh, $sformatf("--override root/cpu/Zcb=1\n"));
+     $fwrite(fh, $sformatf("--override root/cpu/Zcmb=1\n"));
+     $fwrite(fh, $sformatf("--override root/cpu/Zcmp=1\n"));
+     $fwrite(fh, $sformatf("--override root/cpu/Zcmt=1\n"));
+   */
+   end
 
    if (cfg.core_cfg.is_ext_b_supported()) begin
       // Bitmanip version
@@ -145,10 +161,11 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
      PRIV_VERSION_MASTER:   $fwrite(fh, $sformatf("--override root/cpu/priv_version=master\n"));
      PRIV_VERSION_1_10:     $fwrite(fh, $sformatf("--override root/cpu/priv_version=1.10\n"));
      PRIV_VERSION_1_11:     $fwrite(fh, $sformatf("--override root/cpu/priv_version=1.11\n"));
+     PRIV_VERSION_1_12:     $fwrite(fh, $sformatf("--override root/cpu/priv_version=1.12\n"));
      PRIV_VERSION_20190405: $fwrite(fh, $sformatf("--override root/cpu/priv_version=20190405\n"));
    endcase
 
-   if (cfg.core_cfg.priv_spec_version == PRIV_VERSION_MASTER) begin
+   if (cfg.core_cfg.priv_spec_version == PRIV_VERSION_1_12) begin
      case(cfg.core_cfg.endianness)
        ENDIAN_LITTLE, ENDIAN_BIG: $fwrite(fh, $sformatf("--override root/cpu/endianFixed=1\n"));
        ENDIAN_MIXED:              $fwrite(fh, $sformatf("--override root/cpu/endianFixed=0\n"));
@@ -163,7 +180,7 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    $fwrite(fh, $sformatf("--override root/cpu/mimpid=%0d\n", cfg.core_cfg.mimpid));
    $fwrite(fh, $sformatf("--override root/cpu/startaddress=0x%08x\n", cfg.core_cfg.boot_addr));
    // Specification forces mtvec[0] high at reset regardless of bootstrap pin state of mtvec_addr_i]0]
-   $fwrite(fh, $sformatf("--override root/cpu/mtvec=0x%08x\n", cfg.core_cfg.mtvec_addr| 32'h1));
+   $fwrite(fh, $sformatf("--override root/cpu/mtvec=0x%08x\n", cfg.core_cfg.mtvec_addr | 32'b1));
    $fwrite(fh, $sformatf("--override root/cpu/nmi_address=0x%08x\n", cfg.core_cfg.nmi_addr));
    $fwrite(fh, $sformatf("--override root/cpu/debug_address=0x%08x\n", cfg.core_cfg.dm_halt_addr));
    $fwrite(fh, $sformatf("--override root/cpu/dexc_address=0x%08x\n", cfg.core_cfg.dm_exception_addr));
@@ -186,6 +203,8 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
       $fwrite(fh, $sformatf("--override root/cpu/extension/atomic%0d=%0d\n", i, cfg.core_cfg.pma_regions[i].atomic));
    end
 
+   // Enable use of hw reg names instead of abi
+   $fwrite(fh, $sformatf("--override root/cpu/use_hw_reg_names=T\n"));
    $fclose(fh);
 
 endfunction : configure_iss

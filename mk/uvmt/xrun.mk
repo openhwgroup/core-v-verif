@@ -376,38 +376,46 @@ test: $(XRUN_SIM_PREREQ) hex gen_ovpsim_ic
 # Makefile of this <sim>.mk implements "all_compliance", the target that
 # compiles the test-programs.
 #
-# There is a dependancy between RISCV_ISA and COMPLIANCE_PROG which *you* are
-# required to know.  For example, the I-ADD-01 test-program is part of the rv32i
-# testsuite.
+# There is a dependancy between RISCV_DEVICE and COMPLIANCE_PROG which *you*
+# are # required to know. For example, the add-01 test-program is part of the
+# RISCV_DEVICE=I testsuite, where device denotes the ISA extension name.
 # So this works:
-#                make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ADD-01
+#                make compliance RISCV_DEVICE=I COMPLIANCE_PROG=add-01
 # But this does not:
-#                make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=I-ADD-01
+#                make compliance RISCV_DEVICE=C COMPLIANCE_PROG=add-01
 #
-RISCV_ISA       ?= rv32i
-COMPLIANCE_PROG ?= I-ADD-01
+RISCV_ISA       ?= rv32i_m
+RISCV_DEVICE		?= I
+COMPLIANCE_PROG ?= add-01
 
 SIG_ROOT      ?= $(SIM_CFG_RESULTS)/$(RISCV_ISA)
 SIG           ?= $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX)/$(COMPLIANCE_PROG).signature_output
-REF           ?= $(COMPLIANCE_PKG)/riscv-test-suite/$(RISCV_ISA)/references/$(COMPLIANCE_PROG).reference_output
+REF           ?= $(COMPLIANCE_PKG)/riscv-test-suite/$(RISCV_ISA)/$(RISCV_DEVICE)/references/$(COMPLIANCE_PROG).reference_output
 TEST_PLUSARGS ?= +signature=$(COMPLIANCE_PROG).signature_output
 
 ifneq ($(call IS_NO,$(COMP)),NO)
 XRUN_COMPLIANCE_PREREQ = comp build_compliance
 endif
 
+# 40p workaround for ISS configuration
+ifeq ($(CV_CORE_LC),cv32e40p)
+  ISS_CFG = export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic
+else
+  ISS_CFG = export IMPERAS_TOOLS=ovpsim.ic
+endif
+
 compliance: $(XRUN_COMPLIANCE_PREREQ)
 	mkdir -p $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX) && \
     cd $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX)  && \
-	export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic && \
+	$(ISS_CFG) && \
 	$(XRUN) -R -xmlibdirname ../../../xcelium.d \
 		-l xrun-$(COMPLIANCE_PROG).log \
 		-covtest riscv-compliance $(XRUN_COMP_RUN) \
 		$(TEST_PLUSARGS) \
 		$(XRUN_RUN_WAVES_FLAGS) \
 		+UVM_TESTNAME=uvmt_$(CV_CORE_LC)_firmware_test_c \
-		+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).hex \
-		+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).elf
+		+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(RISCV_DEVICE)/$(COMPLIANCE_PROG).hex \
+		+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(RISCV_DEVICE)/$(COMPLIANCE_PROG).elf
 
 
 
