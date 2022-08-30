@@ -48,6 +48,9 @@
    // Does this memory support atomics
    rand bit                      atomic;
 
+   // Does this memory support integrity
+   rand bit                      integrity;
+
    `uvm_object_utils_begin(uvma_core_cntrl_pma_region_c);
       `uvm_field_enum(corev_mxl_t,  xlen            , UVM_DEFAULT | UVM_NOPRINT)
       `uvm_field_int(               word_addr_low   , UVM_DEFAULT | UVM_NOPRINT)
@@ -56,6 +59,7 @@
       `uvm_field_int(               bufferable      , UVM_DEFAULT | UVM_NOPRINT)
       `uvm_field_int(               cacheable       , UVM_DEFAULT | UVM_NOPRINT)
       `uvm_field_int(               atomic          , UVM_DEFAULT | UVM_NOPRINT)
+      `uvm_field_int(               integrity       , UVM_DEFAULT | UVM_NOPRINT)
    `uvm_field_utils_end
 
    constraint addr_range_cons {
@@ -111,6 +115,7 @@ function void uvma_core_cntrl_pma_region_c::do_print(uvm_printer printer);
    printer.print_field("bufferable", bufferable, 1);
    printer.print_field("cacheable", cacheable, 1);
    printer.print_field("atomic", atomic, 1);
+   printer.print_field("integrity", integrity, 1);
 
 endfunction : do_print
 

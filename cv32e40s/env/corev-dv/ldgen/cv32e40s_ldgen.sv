@@ -20,7 +20,7 @@
 /*
  * provide UVM environment entry and exit points.
  */
-import cv32e40s_pkg::pma_region_t;
+import cv32e40s_pkg::pma_cfg_t;
 
   class cv32e40s_ldgen_c;
 
@@ -47,8 +47,8 @@ import cv32e40s_pkg::pma_region_t;
     parameter RAM_ORIGIN           = 32'h0000_0000;
     parameter RAM_LENGTH           = 32'h40_0000;
     parameter BOOT_ADDR            = 32'h80;
-    parameter NMI_ADDR             = 32'h0010_0000;
     parameter MTVEC_ADDR           = 32'h0000_0000;
+    parameter NMI_ADDR             = 32'h0010_0000;
     parameter DEBUG_ORIGIN         = 32'h1A11_0800;
     parameter DEBUG_EXCEPTION_ADDR = 32'h1A11_1000;
     parameter DEBUG_STACK_OFFSET   = 32'h80;
@@ -96,8 +96,8 @@ import cv32e40s_pkg::pma_region_t;
     int fhandle_dbg;
     int fhandle_fix;
 
-    pma_region_t regions[PMA_NUM_REGIONS][$];
-    pma_region_t temp_region;
+    pma_cfg_t regions[PMA_NUM_REGIONS][$];
+    pma_cfg_t temp_region;
     int temp_region_ctr;
     pma_adapted_memory_regions_c pma_adapted_memory;
 
@@ -118,11 +118,11 @@ import cv32e40s_pkg::pma_region_t;
       if (!($value$plusargs("boot_addr=0x%x", boot_addr))) begin
         boot_addr = BOOT_ADDR;
       end
-      if (!($value$plusargs("nmi_addr=0x%x", nmi_addr))) begin
-        nmi_addr = NMI_ADDR;
-      end
       if (!($value$plusargs("mtvec_addr=0x%x", mtvec_addr))) begin
         mtvec_addr = MTVEC_ADDR;
+      end
+      if (!($value$plusargs("nmi_addr=0x%x", nmi_addr))) begin
+        nmi_addr = mtvec_addr + 4*15;
       end
       if (!($value$plusargs("dm_halt_addr=0x%x", dbg_origin_addr))) begin
         dbg_origin_addr = DEBUG_ORIGIN;
@@ -348,7 +348,7 @@ function void cv32e40s_ldgen_c::create_pma_section_file(string filepath);
         $fdisplay(fhandle_pma, { indent(L1), ".region_", $sformatf("%0d %0s", i, section_location), ":" });
         $fdisplay(fhandle_pma, { indent(L1), "{" });
         $fdisplay(fhandle_pma, { indent(L2), "KEEP(*(.region_", $sformatf("%0d", i), "));" });
-        $fdisplay(fhandle_pma, { indent(L1), "}"});
+        $fdisplay(fhandle_pma, { indent(L1), "} > region_", $sformatf("%0d", i) });
       end
     end
     $fdisplay(fhandle_pma, "}");
@@ -434,7 +434,7 @@ function void cv32e40s_ldgen_c::create_fixed_addr_section_file(string filepath);
     display_fatal($sformatf("Unable to open %s", filepath));
   end
   if (pma_adapted_memory.region.size == 0) begin
-    nmi_separate_region = 1;
+    nmi_separate_region = 0;
   end
 
   foreach (pma_adapted_memory.region[i]) begin
@@ -480,18 +480,25 @@ function void cv32e40s_ldgen_c::create_fixed_addr_section_file(string filepath);
   $fdisplay(fhandle_fix, "{");
   $fdisplay(fhandle_fix, { indent(L1), "/* CORE-V: interrupt vectors */" });
   $fdisplay(fhandle_fix, { indent(L1), "PROVIDE(__vector_start = ", $sformatf("0x%08x", mtvec_addr), ");" });
+  $fdisplay(fhandle_fix, { indent(L1), "mtvec_handler = DEFINED(vectored_mode) ? ABSOLUTE(", $sformatf("0x%08x", mtvec_addr), ") : mtvec_handler;"});
   $fdisplay(fhandle_fix, { indent(L1), ".mtvec_bootstrap (__vector_start) :" });
   $fdisplay(fhandle_fix, { indent(L1), "{" });
   $fdisplay(fhandle_fix, { indent(L2), "KEEP(*(.mtvec_bootstrap));" });
   $fdisplay(fhandle_fix, { indent(L1), "}", mtvec_memory_area, "\n" });
+
+  $fdisplay(fhandle_fix, { indent(L1), ".mtvec_handler (__vector_start) :" });
+  $fdisplay(fhandle_fix, { indent(L1), "{" });
+  $fdisplay(fhandle_fix, { indent(L2), "*(.mtvec*);" });
+  $fdisplay(fhandle_fix, { indent(L2), "KEEP(*(.mtvec_handler));" });
+  $fdisplay(fhandle_fix, { indent(L1), "}", mtvec_memory_area, "\n" });
+
   $fdisplay(fhandle_fix, { indent(L1), "/* CORE-V: we want a fixed entry point */" });
   $fdisplay(fhandle_fix, { indent(L1), "PROVIDE(__boot_address = ", $sformatf("0x%08x", boot_addr), ");\n" });
   $fdisplay(fhandle_fix, { indent(L1), "/* NMI interrupt handler fixed entry point */" });
-  $fdisplay(fhandle_fix, { indent(L1), "nmi_handler = ABSOLUTE(", $sformatf("0x%08x",  nmi_addr), ");" });
-  $fdisplay(fhandle_fix, { indent(L1), ".nmi (", $sformatf("0x%08x", nmi_addr), ") :" });
+  $fdisplay(fhandle_fix, { indent(L1), $sformatf(".nmi_bootstrap ABSOLUTE(0x%08x) ", nmi_addr), " :"});
   $fdisplay(fhandle_fix, { indent(L1), "{" });
-  $fdisplay(fhandle_fix, { indent(L2), "KEEP(*(.nmi));" });
-  $fdisplay(fhandle_fix, { indent(L1), "}", nmi_memory_area });
+  $fdisplay(fhandle_fix, { indent(L2), "KEEP(*(.nmi_bootstrap));" });
+  $fdisplay(fhandle_fix, { indent(L1), "}", nmi_memory_area, "\n" });
   $fdisplay(fhandle_fix, "}");
 
   $fclose(fhandle_fix);
