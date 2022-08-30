@@ -34,11 +34,11 @@
   iterations: 1
   path_var: TESTS_PATH
   gcc_opts: "-static -misa-spec=2.2 -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S -I../tests/custom/env -I../tests/custom/common -T ../tests/custom/common/test.ld -lgcc"
-  asm_tests: <path_var>/custom/regression/compressed-fpreg-commits-rv64.S
+  asm_tests: <path_var>/custom/issues/compressed-fpreg-commits-rv64.S
 
 - test: compressed-fpreg-commits-rv32
   iterations: 1
   path_var: TESTS_PATH
   gcc_opts: "-static -misa-spec=2.2 -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S -I../tests/custom/env -I../tests/custom/common -T ../tests/custom/common/test.ld -lgcc"
-  asm_tests: <path_var>/custom/regression/compressed-fpreg-commits-rv32.S
+  asm_tests: <path_var>/custom/issues/compressed-fpreg-commits-rv32.S
 

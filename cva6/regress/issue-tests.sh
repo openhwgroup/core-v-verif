@@ -24,10 +24,10 @@ if ! [ -n "$DV_SIMULATORS" ]; then
 fi
 
 cd cva6/sim/
-python3 cva6.py --testlist=../tests/testlist_regression.yaml --test compressed-fpreg-commits-rv64 --iss_yaml cva6.yaml --target cv64a6_imafdc_sv39 --iss=$DV_SIMULATORS $DV_OPTS
+python3 cva6.py --testlist=../tests/testlist_issues.yaml --test compressed-fpreg-commits-rv64 --iss_yaml cva6.yaml --target cv64a6_imafdc_sv39 --iss=$DV_SIMULATORS $DV_OPTS
 make -C ../../core-v-cores/cva6 clean
 make clean_all
-python3 cva6.py --testlist=../tests/testlist_regression.yaml --test compressed-fpreg-commits-rv32 --iss_yaml cva6.yaml --target cv32a6_imafc_sv32 --iss=$DV_SIMULATORS $DV_OPTS
+python3 cva6.py --testlist=../tests/testlist_issues.yaml --test compressed-fpreg-commits-rv32 --iss_yaml cva6.yaml --target cv32a6_imafc_sv32 --iss=$DV_SIMULATORS $DV_OPTS
 make -C ../../core-v-cores/cva6 clean
 make clean_all
 
