@@ -47,21 +47,6 @@
 ////////////////////////////////////////////////////////////////////////////
 // Assign the NET IRQ values from the core irq inputs
 ////////////////////////////////////////////////////////////////////////////
-//`define RVVI_SET_IRQ(IRQ_NAME, IRQ_IDX) \
-//    if (`DUT_PATH.irq_i[IRQ_IDX]) begin \
-//        if (!IRQ[IRQ_IDX]) begin \
-//            if (0) $display("%0s -> 1", `STRINGIFY(``IRQ_NAME)); \
-//            void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 1)); \
-//        end \
-//        IRQ[IRQ_IDX] = 1; \
-//    end else begin \
-//        if (IRQ[IRQ_IDX]) begin \
-//            if (0) $display("%0s -> 0", `STRINGIFY(``IRQ_NAME)); \
-//            void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 0)); \
-//        end \
-//        IRQ[IRQ_IDX] = 0; \
-//    end
-
 `define RVVI_SET_IRQ(IRQ_NAME, IRQ_IDX) \
     if (`DUT_PATH.irq_i[IRQ_IDX]==1 && IRQ[IRQ_IDX]==0) begin \
         void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 1)); \
@@ -382,30 +367,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
            if (IRQ[31]) void'(rvvi.net_push("LocalInterrupt15",   IRQ[31]));
        end
    end: Set_Irq
-   /*
-   bit [31:0] IRQ;
-   always @(*) begin: Set_Irq
-       `RVVI_SET_IRQ(MSWInterrupt,        3)
-       `RVVI_SET_IRQ(MTimerInterrupt,     7)
-       `RVVI_SET_IRQ(MExternalInterrupt, 11)
-       `RVVI_SET_IRQ(LocalInterrupt0,    16)
-       `RVVI_SET_IRQ(LocalInterrupt1,    17)
-       `RVVI_SET_IRQ(LocalInterrupt2,    18)
-       `RVVI_SET_IRQ(LocalInterrupt3,    19)
-       `RVVI_SET_IRQ(LocalInterrupt4,    20)
-       `RVVI_SET_IRQ(LocalInterrupt5,    21)
-       `RVVI_SET_IRQ(LocalInterrupt6,    22)
-       `RVVI_SET_IRQ(LocalInterrupt7,    23)
-       `RVVI_SET_IRQ(LocalInterrupt8,    24)
-       `RVVI_SET_IRQ(LocalInterrupt9,    25)
-       `RVVI_SET_IRQ(LocalInterrupt10,   26)
-       `RVVI_SET_IRQ(LocalInterrupt11,   27)
-       `RVVI_SET_IRQ(LocalInterrupt12,   28)
-       `RVVI_SET_IRQ(LocalInterrupt13,   29)
-       `RVVI_SET_IRQ(LocalInterrupt14,   30)
-       `RVVI_SET_IRQ(LocalInterrupt15,   31)
-   end: Set_Irq
-   */
    always @(posedge `RVFI_IF.clk) begin: Clr_Irq
        `RVVI_CLR_IRQ(MSWInterrupt,        3)
        `RVVI_CLR_IRQ(MTimerInterrupt,     7)
