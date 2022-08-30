@@ -29,5 +29,5 @@ shared library and the variables provided to customize.
 
 
 ```
-% make svlib CV_CORE=cv32e40p
+% make svlib CV_CORE=cv32e20
 ```
