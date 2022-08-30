@@ -29,6 +29,7 @@ module uvmt_cv32e40s_zc_assert
   // ---------------------------------------------------------------------------
   // Local parameters
   // ---------------------------------------------------------------------------
+`ifndef DSIM
   localparam PUSH_POP_INSTR_MASK      = 32'h FFFF_FF03;
   localparam PUSH_INSTR_REF           = 32'h 0000_B802;
   localparam POP_INSTR_REF            = 32'h 0000_BA02;
@@ -38,6 +39,22 @@ module uvmt_cv32e40s_zc_assert
   localparam MVA_INSTR_MASK           = 32'h FFFF_FC63;
   localparam MVA01S_INSTR_REF         = 32'h 0000_AC62;
   localparam MVSA01_INSTR_REF         = 32'h 0000_AC22;
+`else  // DSIM
+  // As of DSIM version 20220822.0.0 or earlier, the DSIM User Guide reports
+  // the following "known issue":
+  //   Only variables, nets, expressions and event expressions can be passed as
+  //   arguments to named sequences and properties. Arguments or local variables
+  //   of type sequence or property are not yet supported.
+  int PUSH_POP_INSTR_MASK      = 32'h FFFF_FF03;
+  int PUSH_INSTR_REF           = 32'h 0000_B802;
+  int POP_INSTR_REF            = 32'h 0000_BA02;
+  int POPRET_INSTR_REF         = 32'h 0000_BE02;
+  int POPRETZ_INSTR_REF        = 32'h 0000_BC02;
+
+  int MVA_INSTR_MASK           = 32'h FFFF_FC63;
+  int MVA01S_INSTR_REF         = 32'h 0000_AC62;
+  int MVSA01_INSTR_REF         = 32'h 0000_AC22;
+`endif // DSIM
 
 
 
