@@ -327,7 +327,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  ##0  // ..."csrrw"
     (rvfi_insn[31:20] == CSRADDR_MSECCFG)                       ##0  // ...to mseccfg
     !rvfi_trap                                                  ##0
-    (1, rlb = rvfi_rs1_rdata[2])                                     // (Write-attempt)
+    (1, rlb = rvfi_rs1_rdata[2])                                     // (Write-attempt's data)
     |->
     pmp_csr_rvfi_wmask.mseccfg.rlb          &&  // Must attempt
     (pmp_csr_rvfi_wdata.mseccfg.rlb == rlb)     // Must succeed
@@ -382,32 +382,37 @@ module uvmt_cv32e40s_pmprvfi_assert
     );
   end
 
-  // Locked entries, ignore pmpicfg/pmpaddri writes
+  // Written cfg is written as expected
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_not_ignore_writes_cfg
-    // Non-ignored cfg-writes take effect
     wire pmpncfg_t  cfg_expected = rectify_cfg_write(pmp_csr_rvfi_rdata.cfg[i], rvfi_rs1_rdata[8*(i%4) +: 8]);
-    property  p_not_ignore_writes_cfg;
+    property  p_cfg_expected;
       (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw"
       (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + i/4))          &&  // ...to cfg's csr
-      !pmp_csr_rvfi_rdata.cfg[i].lock                             &&  // ...cfg not locked
-      (!rvfi_trap)                                                    // (...executes ok)
+      (!rvfi_trap)
       |->
       (pmp_csr_rvfi_wmask.cfg[i] == 8'h FF)  &&  // Must write cfg
       (pmp_csr_rvfi_wdata.cfg[i] == cfg_expected)
-      // TODO:silabs-robin  Use validator function on rdata/wdata always?
-      // TODO:silabs-robin  Make this property "write-generic" and not just for "!locked"?
       ;
-    endproperty : p_not_ignore_writes_cfg
-    a_not_ignore_writes_cfg: assert property (
-      p_not_ignore_writes_cfg
+    endproperty : p_cfg_expected
+    a_cfg_expected: assert property (
+      p_cfg_expected
     );
-    cov_not_ignore_writes_cfg_updates: cover property (
+    a_not_ignore_writes_cfg_unlocked: assert property (
+      // Locked entries, ignore pmpicfg/pmpaddri writes
+      p_cfg_expected  and
+      !pmp_csr_rvfi_rdata.cfg[i].lock
+      // This is redundant, but explicitly covers non-locked regions
+    );
+    cov_cfg_expected_updates: cover property (
       if (pmp_csr_rvfi_wdata.cfg[i] != pmp_csr_rvfi_rdata.cfg[i]) (
-        p_not_ignore_writes_cfg
+        p_cfg_expected
       )
     );
+    cov_cfg_expected_ones: cover property (
+      p_cfg_expected  and
+      (rvfi_rs1_rdata[8*(i%4) +: 8] == '1)
+    );
   end
-
   // Written cfg is legal  (vplan "ExecIgnored", ...)
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_cfgwdata_legal
     wire [7:0] rectified_cfg = rectify_cfg_write(pmp_csr_rvfi_rdata.cfg[i], pmp_csr_rvfi_wdata.cfg[i]);
@@ -416,6 +421,22 @@ module uvmt_cv32e40s_pmprvfi_assert
       pmp_csr_rvfi_wmask.cfg[i]
       |->
       (pmp_csr_rvfi_wdata.cfg[i] == rectified_cfg)
+    );
+  end
+  // Read cfg is as expected
+  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_cfgrdata_expected
+    property p_cfgrdata_expected;
+      pmpncfg_t  cfg_prev;
+      rvfi_valid  ##0
+      (1, cfg_prev = pmp_csr_rvfi_rdata.cfg[i])
+      ##1
+      (rvfi_valid [->1])
+      |->
+      (pmp_csr_rvfi_rdata.cfg[i] == rectify_cfg_write(cfg_prev, pmp_csr_rvfi_rdata.cfg[i]))
+      ;
+    endproperty : p_cfgrdata_expected
+    a_cfgrdata_expected: assert property (
+      p_cfgrdata_expected
     );
   end
 
@@ -505,6 +526,32 @@ module uvmt_cv32e40s_pmprvfi_assert
     );
   end
 
+  // RLB lifts restrictions
+  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_rlblifts_lockedexec
+    wire pmpncfg_t  cfg_attempt = rvfi_rs1_rdata[8*(i%4) +: 8];
+    a_rlblifts_lockedexec: assert property (
+      pmp_csr_rvfi_rdata.mseccfg.rlb  &&
+      pmp_csr_rvfi_rdata.mseccfg.mml
+      ##0
+      (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw"
+      (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + i/4))          &&  // ...to cfg's csr
+      !rvfi_trap
+      ##0
+      ({cfg_attempt.lock, cfg_attempt.read, cfg_attempt.write, cfg_attempt.exec}
+        inside {4'b 1001, 4'b 1010, 4'b 1011, 4'b 1101})
+      |->
+      //({pmp_csr_rvfi_wdata.cfg[i].lock, pmp_csr_rvfi_wdata.cfg[i].read, pmp_csr_rvfi_wdata.cfg[i].write, pmp_csr_rvfi_wdata.cfg[i].exec}
+      //  inside {4'b 1001, 4'b 1010, 4'b 1011, 4'b 1101})
+      // TODO:robin-silabs  && (wdata == attempt) ?
+      (pmp_csr_rvfi_wdata.cfg[i] == cfg_attempt)
+    );
+  end
+  cov_rlb_mml: cover property (
+    rvfi_valid  &&
+    pmp_csr_rvfi_rdata.mseccfg.rlb  &&
+    pmp_csr_rvfi_rdata.mseccfg.mml
+  );
+
 
   // Translate write-attempts to legal values
   function automatic pmpncfg_t  rectify_cfg_write (pmpncfg_t cfg_pre, pmpncfg_t cfg_attempt);
@@ -533,10 +580,13 @@ module uvmt_cv32e40s_pmprvfi_assert
       // MML, no locked-executable
       if (
         (pmp_csr_rvfi_rdata.mseccfg.mml && !pmp_csr_rvfi_rdata.mseccfg.rlb)  &&
-        (cfg_attempt.lock && cfg_attempt.exec))
+        ({cfg_attempt.lock, cfg_attempt.read, cfg_attempt.write, cfg_attempt.exec}
+          inside {4'b 1001, 4'b 1010, 4'b 1011, 4'b 1101})
         // TODO:silabs-robin  && (wdata != rdata))  // Unchanged is not "adding"
+      )
       begin
         cfg_rfied = cfg_pre;
+        // TODO:silabs-robin  Test "a_cfg_expected" without this clause.
       end
     end
 
