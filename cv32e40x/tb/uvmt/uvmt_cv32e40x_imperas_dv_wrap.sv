@@ -47,18 +47,26 @@
 ////////////////////////////////////////////////////////////////////////////
 // Assign the NET IRQ values from the core irq inputs
 ////////////////////////////////////////////////////////////////////////////
+//`define RVVI_SET_IRQ(IRQ_NAME, IRQ_IDX) \
+//    if (IRQ[IRQ_IDX]!=IRQ_NEXT[IRQ_IDX] && IRQ_NEXT[IRQ_IDX]==1) begin \
+//        if(1) $display("RVVI_SET_IRQ %0s", `STRINGIFY(``IRQ_NAME)); \
+//        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 1)); \
+//        IRQ[IRQ_IDX] = 1; \
+//    end
+//
+//`define RVVI_CLR_IRQ(IRQ_NAME, IRQ_IDX) \
+//    if (`RVFI_IF.rvfi_valid && `DUT_PATH.irq_i[IRQ_IDX]==0 && IRQ[IRQ_IDX]==1) begin \
+//        if(1) $display("RVVI_CLR_IRQ %0s", `STRINGIFY(``IRQ_NAME)); \
+//        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 0)); \
+//        IRQ[IRQ_IDX] = 0; \
+//    end
+
 `define RVVI_SET_IRQ(IRQ_NAME, IRQ_IDX) \
-    if (`DUT_PATH.irq_i[IRQ_IDX]==1 && IRQ[IRQ_IDX]==0) begin \
-        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 1)); \
-        IRQ[IRQ_IDX] = 1; \
+    if (IRQ[IRQ_IDX]!=IRQ_NEXT[IRQ_IDX]) begin \
+        if(0) $display("RVVI_SET_IRQ %0s=%0d", `STRINGIFY(``IRQ_NAME), IRQ_NEXT[IRQ_IDX]); \
+        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), IRQ_NEXT[IRQ_IDX])); \
+        IRQ[IRQ_IDX] = IRQ_NEXT[IRQ_IDX]; \
     end
-
-`define RVVI_CLR_IRQ(IRQ_NAME, IRQ_IDX) \
-    if (`RVFI_IF.rvfi_valid && `DUT_PATH.irq_i[IRQ_IDX]==0 && IRQ[IRQ_IDX]==1) begin \
-        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 0)); \
-        IRQ[IRQ_IDX] = 0; \
-    end
-
 ////////////////////////////////////////////////////////////////////////////
 // CSR definitions
 ////////////////////////////////////////////////////////////////////////////
@@ -69,7 +77,6 @@
 `define CSR_MTVT_ADDR          32'h307 // only available when SMCLIC=1
 `define CSR_MSTATUSH_ADDR      32'h310
 `define CSR_MCOUNTINHIBIT_ADDR 32'h320
-//[31:0] [31:0]  CSR_MHPMEVENT 32'h323..32'h33F
 `define CSR_MSCRATCH_ADDR      32'h340
 `define CSR_MEPC_ADDR          32'h341
 `define CSR_MCAUSE_ADDR        32'h342
@@ -343,51 +350,55 @@ module uvmt_cv32e40x_imperas_dv_wrap
    ////////////////////////////////////////////////////////////////////////////
    bit [31:0] IRQ, IRQ_NEXT;
    always @(*) begin: Set_Irq
-       IRQ_NEXT = (rvvi.csr[0][0][`CSR_MIP_ADDR] | (1 << `RVFI_IF.rvfi_intr.cause[4:0]));
-       if (IRQ != IRQ_NEXT) begin
-           IRQ |= IRQ_NEXT;
-           if (IRQ[3])  void'(rvvi.net_push("MSWInterrupt",       IRQ[ 3]));
-           if (IRQ[7])  void'(rvvi.net_push("MTimerInterrupt",    IRQ[ 7]));
-           if (IRQ[11]) void'(rvvi.net_push("MExternalInterrupt", IRQ[11]));
-           if (IRQ[16]) void'(rvvi.net_push("LocalInterrupt0",    IRQ[16]));
-           if (IRQ[17]) void'(rvvi.net_push("LocalInterrupt1",    IRQ[17]));
-           if (IRQ[18]) void'(rvvi.net_push("LocalInterrupt2",    IRQ[18]));
-           if (IRQ[19]) void'(rvvi.net_push("LocalInterrupt3",    IRQ[19]));
-           if (IRQ[20]) void'(rvvi.net_push("LocalInterrupt4",    IRQ[20]));
-           if (IRQ[21]) void'(rvvi.net_push("LocalInterrupt5",    IRQ[21]));
-           if (IRQ[22]) void'(rvvi.net_push("LocalInterrupt6",    IRQ[22]));
-           if (IRQ[23]) void'(rvvi.net_push("LocalInterrupt7",    IRQ[23]));
-           if (IRQ[24]) void'(rvvi.net_push("LocalInterrupt8",    IRQ[24]));
-           if (IRQ[25]) void'(rvvi.net_push("LocalInterrupt9",    IRQ[25]));
-           if (IRQ[26]) void'(rvvi.net_push("LocalInterrupt10",   IRQ[26]));
-           if (IRQ[27]) void'(rvvi.net_push("LocalInterrupt11",   IRQ[27]));
-           if (IRQ[28]) void'(rvvi.net_push("LocalInterrupt12",   IRQ[28]));
-           if (IRQ[29]) void'(rvvi.net_push("LocalInterrupt13",   IRQ[29]));
-           if (IRQ[30]) void'(rvvi.net_push("LocalInterrupt14",   IRQ[30]));
-           if (IRQ[31]) void'(rvvi.net_push("LocalInterrupt15",   IRQ[31]));
-       end
+       //IRQ_NEXT = (rvvi.csr[0][0][`CSR_MIP_ADDR] | (1 << `RVFI_IF.rvfi_intr.cause[4:0]));
+       IRQ_NEXT = (1 << `RVFI_IF.rvfi_intr.cause[4:0]);
+       `RVVI_SET_IRQ(MSWInterrupt,        3)
+       `RVVI_SET_IRQ(MTimerInterrupt,     7)
+       `RVVI_SET_IRQ(MExternalInterrupt, 11)
+       `RVVI_SET_IRQ(LocalInterrupt0,    16)
+       `RVVI_SET_IRQ(LocalInterrupt1,    17)
+       `RVVI_SET_IRQ(LocalInterrupt2,    18)
+       `RVVI_SET_IRQ(LocalInterrupt3,    19)
+       `RVVI_SET_IRQ(LocalInterrupt4,    20)
+       `RVVI_SET_IRQ(LocalInterrupt5,    21)
+       `RVVI_SET_IRQ(LocalInterrupt6,    22)
+       `RVVI_SET_IRQ(LocalInterrupt7,    23)
+       `RVVI_SET_IRQ(LocalInterrupt8,    24)
+       `RVVI_SET_IRQ(LocalInterrupt9,    25)
+       `RVVI_SET_IRQ(LocalInterrupt10,   26)
+       `RVVI_SET_IRQ(LocalInterrupt11,   27)
+       `RVVI_SET_IRQ(LocalInterrupt12,   28)
+       `RVVI_SET_IRQ(LocalInterrupt13,   29)
+       `RVVI_SET_IRQ(LocalInterrupt14,   30)
+       `RVVI_SET_IRQ(LocalInterrupt15,   31)
    end: Set_Irq
-   always @(posedge `RVFI_IF.clk) begin: Clr_Irq
-       `RVVI_CLR_IRQ(MSWInterrupt,        3)
-       `RVVI_CLR_IRQ(MTimerInterrupt,     7)
-       `RVVI_CLR_IRQ(MExternalInterrupt, 11)
-       `RVVI_CLR_IRQ(LocalInterrupt0,    16)
-       `RVVI_CLR_IRQ(LocalInterrupt1,    17)
-       `RVVI_CLR_IRQ(LocalInterrupt2,    18)
-       `RVVI_CLR_IRQ(LocalInterrupt3,    19)
-       `RVVI_CLR_IRQ(LocalInterrupt4,    20)
-       `RVVI_CLR_IRQ(LocalInterrupt5,    21)
-       `RVVI_CLR_IRQ(LocalInterrupt6,    22)
-       `RVVI_CLR_IRQ(LocalInterrupt7,    23)
-       `RVVI_CLR_IRQ(LocalInterrupt8,    24)
-       `RVVI_CLR_IRQ(LocalInterrupt9,    25)
-       `RVVI_CLR_IRQ(LocalInterrupt10,   26)
-       `RVVI_CLR_IRQ(LocalInterrupt11,   27)
-       `RVVI_CLR_IRQ(LocalInterrupt12,   28)
-       `RVVI_CLR_IRQ(LocalInterrupt13,   29)
-       `RVVI_CLR_IRQ(LocalInterrupt14,   30)
-       `RVVI_CLR_IRQ(LocalInterrupt15,   31)
-   end: Clr_Irq
+//   always @(posedge `RVFI_IF.clk) begin: Clr_Irq
+//       `RVVI_CLR_IRQ(MSWInterrupt,        3)
+//       `RVVI_CLR_IRQ(MTimerInterrupt,     7)
+//       `RVVI_CLR_IRQ(MExternalInterrupt, 11)
+//       `RVVI_CLR_IRQ(LocalInterrupt0,    16)
+//       `RVVI_CLR_IRQ(LocalInterrupt1,    17)
+//       `RVVI_CLR_IRQ(LocalInterrupt2,    18)
+//       `RVVI_CLR_IRQ(LocalInterrupt3,    19)
+//       `RVVI_CLR_IRQ(LocalInterrupt4,    20)
+//       `RVVI_CLR_IRQ(LocalInterrupt5,    21)
+//       `RVVI_CLR_IRQ(LocalInterrupt6,    22)
+//       `RVVI_CLR_IRQ(LocalInterrupt7,    23)
+//       `RVVI_CLR_IRQ(LocalInterrupt8,    24)
+//       `RVVI_CLR_IRQ(LocalInterrupt9,    25)
+//       `RVVI_CLR_IRQ(LocalInterrupt10,   26)
+//       `RVVI_CLR_IRQ(LocalInterrupt11,   27)
+//       `RVVI_CLR_IRQ(LocalInterrupt12,   28)
+//       `RVVI_CLR_IRQ(LocalInterrupt13,   29)
+//       `RVVI_CLR_IRQ(LocalInterrupt14,   30)
+//       `RVVI_CLR_IRQ(LocalInterrupt15,   31)
+//   end: Clr_Irq
+//   always @(`DUT_PATH.irq_i) begin: Chg_Irq
+//       $display("irq_i=%08X", `DUT_PATH.irq_i);
+//   end: Chg_Irq
+//   always @(IRQ) begin
+//       $display("IRQ=%08X", IRQ);
+//   end
    
    ////////////////////////////////////////////////////////////////////////////
    // RVFI Monitor: pass NMI Load/Store and Fetch to the ref
@@ -410,6 +421,8 @@ module uvmt_cv32e40x_imperas_dv_wrap
        bit        nmi_pending;
        bit        nmi_load_store;
        
+       bit        nmi_c1, nmi_c2;
+       
        if (`RVFI_IF.rvfi_valid) begin
            trap_trap            = `RVFI_IF.rvfi_trap.trap;
            trap_exception       = `RVFI_IF.rvfi_trap.exception;
@@ -429,7 +442,10 @@ module uvmt_cv32e40x_imperas_dv_wrap
            //
            // Load Store - NMI
            //
-           if (intr_intr && intr_interrupt && ((intr_cause==1024 || intr_cause==1025))) begin
+           nmi_c1 = (intr_intr && intr_interrupt && ((intr_cause==1024 || intr_cause==1025)));
+           nmi_c2 = nmi_pending;
+
+           if (nmi_c1 || nmi_c2) begin
                // Load / Store
                void'(rvvi.net_push("nmi_cause", intr_cause)); // Load Error = 1024, Store Error = 1025
                if (!DataBusFault) begin
