@@ -47,19 +47,44 @@
 ////////////////////////////////////////////////////////////////////////////
 // Assign the NET IRQ values from the core irq inputs
 ////////////////////////////////////////////////////////////////////////////
+    // OK for both
+//`define RVVI_SET_IRQ(IRQ_NAME, IRQ_IDX) \
+//    if (IRQ[IRQ_IDX]!=IRQ_NEXT[IRQ_IDX] && IRQ_NEXT[IRQ_IDX]==1) begin \
+//        if(0) $display("RVVI_SET_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)); \
+//        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 1)); \
+//        IRQ[IRQ_IDX] = 1; \
+//    end
+        
 `define RVVI_SET_IRQ(IRQ_NAME, IRQ_IDX) \
-    if (IRQ[IRQ_IDX]!=IRQ_NEXT[IRQ_IDX] && IRQ_NEXT[IRQ_IDX]==1) begin \
-        if(0) $display("RVVI_SET_IRQ %0s", `STRINGIFY(``IRQ_NAME)); \
+    if (IRQ[IRQ_IDX]==0 && IRQ_NEXT[IRQ_IDX]==1) begin \
+        if(0) $display("RVVI_SET_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)); \
         void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 1)); \
         IRQ[IRQ_IDX] = 1; \
     end
+        // interrupt_test ok
+//`define RVVI_CLR_IRQ(IRQ_NAME, IRQ_IDX) \
+//    if (`RVFI_IF.rvfi_valid && `DUT_PATH.irq_i[IRQ_IDX]==0 && IRQ[IRQ_IDX]==1) begin \
+//        if(1) $display("RVVI_CLR_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)); \
+//        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 0)); \
+//        IRQ[IRQ_IDX] = 0; \
+//    end
 
+        // corev_rand_instr_obi_err OK
+//`define RVVI_CLR_IRQ(IRQ_NAME, IRQ_IDX) \
+//    if (`RVFI_IF.rvfi_valid && IRQ[IRQ_IDX]!=IRQ_NEXT[IRQ_IDX] && IRQ_NEXT[IRQ_IDX]==0) begin \
+//        if(1) $display("RVVI_CLR_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)); \
+//        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 0)); \
+//        IRQ[IRQ_IDX] = 0; \
+//    end
+
+    // OK for both
 `define RVVI_CLR_IRQ(IRQ_NAME, IRQ_IDX) \
-    if (`RVFI_IF.rvfi_valid && `DUT_PATH.irq_i[IRQ_IDX]==0 && IRQ[IRQ_IDX]==1) begin \
-        if(0) $display("RVVI_CLR_IRQ %0s", `STRINGIFY(``IRQ_NAME)); \
+    if (`RVFI_IF.rvfi_valid && IRQ[IRQ_IDX]==1 && (IRQ_NEXT[IRQ_IDX]==0 || `DUT_PATH.irq_i[IRQ_IDX]==0)) begin \
+        if(0) $display("RVVI_CLR_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)); \
         void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 0)); \
         IRQ[IRQ_IDX] = 0; \
     end
+
 
 ////////////////////////////////////////////////////////////////////////////
 // CSR definitions
@@ -344,7 +369,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
    ////////////////////////////////////////////////////////////////////////////
    bit [31:0] IRQ, IRQ_NEXT;
    always @(*) begin: Set_Irq
-       IRQ_NEXT = (rvvi.csr[0][0][`CSR_MIP_ADDR] | (1 << `RVFI_IF.rvfi_intr.cause[4:0]));
+       IRQ_NEXT = (rvvi.csr[0][0][`CSR_MIP_ADDR] | (`RVFI_IF.rvfi_intr.interrupt << `RVFI_IF.rvfi_intr.cause[4:0]));
        `RVVI_SET_IRQ(MSWInterrupt,        3)
        `RVVI_SET_IRQ(MTimerInterrupt,     7)
        `RVVI_SET_IRQ(MExternalInterrupt, 11)
