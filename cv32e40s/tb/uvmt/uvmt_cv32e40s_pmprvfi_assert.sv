@@ -379,11 +379,12 @@ module uvmt_cv32e40s_pmprvfi_assert
     endproperty : p_not_ignore_writes_torcfg
     cov_not_ignore_writes_torcfg: cover property (
       p_not_ignore_writes_torcfg
+      // TODO:silabs-robin  Reconsider, rewrite.
     );
   end
 
   // Written cfg is written as expected
-  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_not_ignore_writes_cfg
+  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_cfg_expected
     wire pmpncfg_t  cfg_expected = rectify_cfg_write(pmp_csr_rvfi_rdata.cfg[i], rvfi_rs1_rdata[8*(i%4) +: 8]);
     property  p_cfg_expected;
       (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw"
@@ -392,13 +393,14 @@ module uvmt_cv32e40s_pmprvfi_assert
       |->
       (pmp_csr_rvfi_wmask.cfg[i] == 8'h FF)  &&  // Must write cfg
       (pmp_csr_rvfi_wdata.cfg[i] == cfg_expected)
+      // Note, this doesn't check csrr(s/c)[i]
       ;
     endproperty : p_cfg_expected
     a_cfg_expected: assert property (
       p_cfg_expected
     );
     a_not_ignore_writes_cfg_unlocked: assert property (
-      // Locked entries, ignore pmpicfg/pmpaddri writes
+      // Locked entries, ignore pmpicfg writes
       p_cfg_expected  and
       !pmp_csr_rvfi_rdata.cfg[i].lock
       // This is redundant, but explicitly covers non-locked regions
@@ -437,6 +439,39 @@ module uvmt_cv32e40s_pmprvfi_assert
     endproperty : p_cfgrdata_expected
     a_cfgrdata_expected: assert property (
       p_cfgrdata_expected
+    );
+  end
+
+  // addr/addr-1  unlocked->unstable
+  sequence  seq_csrrw_pmpaddri(i);
+    (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw"
+    (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + i))         &&  // ...to addr csr
+    (!rvfi_trap)
+    ;
+  endsequence : seq_csrrw_pmpaddri
+  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_addr_writes
+    a_addr_writeattempt: assert property (
+      seq_csrrw_pmpaddri(i)
+      |->
+      (pmp_csr_rvfi_wmask.addr[i][33:2] == 32'h FFFF_FFFF)
+    );
+    a_addr_nonlocked: assert property (
+      seq_csrrw_pmpaddri(i)  and
+      !pmp_csr_rvfi_rdata.cfg[i].lock
+      |->
+      (pmp_csr_rvfi_wdata.addr[i][33:2] == rvfi_rs1_rdata)
+      // TODO:silabs-robin  This might not be complete. Waiting for RTL/RVFI fix first.
+    );
+  end
+  for (genvar i = 1; i < PMP_NUM_REGIONS; i++) begin: gen_addr_tor
+    a_addr_nonlocked_tor: assert property (
+      seq_csrrw_pmpaddri(i - 1)                         and
+      (pmp_csr_rvfi_rdata.cfg[i].mode == PMP_MODE_TOR)  and
+      !pmp_csr_rvfi_rdata.cfg[i  ].lock                 and
+      !pmp_csr_rvfi_rdata.cfg[i-1].lock
+      |->
+      (pmp_csr_rvfi_wdata.addr[i-1] == rvfi_rs1_rdata)
+      // TODO:silabs-robin  This might not be complete. Waiting for RTL/RVFI fix first.
     );
   end
 
