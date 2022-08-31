@@ -400,8 +400,9 @@ module uvmt_cv32e40s_debug_assert
     // dret in D-mode will restore pc (if no re-entry or interrupt intervenes)
 
     property p_dmode_dret_pc;
-        int dpc; (1, dpc = cov_assert_if.rvfi_csr_dpc_rdata)
-        ##0(cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE)
+        int dpc;
+        (cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE,
+         dpc = cov_assert_if.rvfi_csr_dpc_rdata)
         ##1
         cov_assert_if.rvfi_valid[->1]
         ##0 (!cov_assert_if.rvfi_intr && !cov_assert_if.rvfi_dbg_mode)
@@ -416,8 +417,9 @@ module uvmt_cv32e40s_debug_assert
     // dret in D-mode will place dpc in mepc if re-entry is interrupted (excluding nmi)
 
     property p_dmode_dret_pc_int;
-        int dpc; (1, dpc = cov_assert_if.rvfi_csr_dpc_rdata)
-        ##0(cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE)
+        int dpc;
+        (cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE,
+         dpc = cov_assert_if.rvfi_csr_dpc_rdata)
         ##1
         cov_assert_if.rvfi_valid[->1]
         ##0 (cov_assert_if.rvfi_intr && !cov_assert_if.rvfi_dbg_mode && !is_rvfi_nmi_handler)
@@ -432,8 +434,9 @@ module uvmt_cv32e40s_debug_assert
     // dret in D-mode can be followed by nmi where "mepc=dpc"
 
     property p_dmode_dret_pc_nmi_eq;
-        int dpc; (1, dpc = cov_assert_if.rvfi_csr_dpc_rdata)
-        ##0(cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE)
+        int dpc;
+        (cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE,
+         dpc = cov_assert_if.rvfi_csr_dpc_rdata)
         ##1
         cov_assert_if.rvfi_valid[->1]
         ##0 (!cov_assert_if.rvfi_dbg_mode && is_rvfi_nmi_handler)
@@ -446,8 +449,9 @@ module uvmt_cv32e40s_debug_assert
     // dret in D-mode can be followed by nmi where "mepc!=dpc"
 
     property p_dmode_dret_pc_nmi_neq;
-        int dpc; (1, dpc = cov_assert_if.rvfi_csr_dpc_rdata)
-        ##0(cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE)
+        int dpc;
+        (cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE,
+         dpc = cov_assert_if.rvfi_csr_dpc_rdata)
         ##1
         cov_assert_if.rvfi_valid[->1]
         ##0 (!cov_assert_if.rvfi_dbg_mode && is_rvfi_nmi_handler)

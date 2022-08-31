@@ -263,4 +263,53 @@ interface uvmt_cv32e40s_debug_cov_assert_if
 
 endinterface : uvmt_cv32e40s_debug_cov_assert_if
 
+interface uvmt_cv32e40s_support_logic_if
+   import cv32e40s_pkg::*;
+   import uvma_rvfi_pkg::*;
+   (
+      input    clk_i,
+      input    rst_ni,
+
+      // core signals
+      input ctrl_fsm_t  ctrl_fsm_o_i,
+      input             data_bus_req_i,
+      input             data_bus_gnt_i
+
+   );
+
+   //results for modport
+   logic req_after_exception_o;
+
+   clocking mon_cb @(posedge clk_i);
+      input #1step
+
+      ctrl_fsm_o_i,
+      data_bus_req_i,
+
+      req_after_exception_o;
+
+   endclocking : mon_cb
+
+   modport write (
+      input clk_i,
+            rst_ni,
+
+            ctrl_fsm_o_i,
+            data_bus_req_i,
+            data_bus_gnt_i,
+
+      output req_after_exception_o
+
+   );
+
+   modport read (
+      input clk_i,
+            rst_ni,
+
+            req_after_exception_o
+   );
+
+
+endinterface : uvmt_cv32e40s_support_logic_if
+
 `endif // __UVMT_CV32E40S_TB_IFS_SV__
