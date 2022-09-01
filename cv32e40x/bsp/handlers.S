@@ -24,8 +24,8 @@
 #define EXCEPTION_INSN_BUS_FAULT 48
 
 /* NMI interrupt codes */
-#define INTERRUPT_LOAD_BUS_FAULT  (128 | (0x1 << 31))
-#define INTERRUPT_STORE_BUS_FAULT (129 | (0x1 << 31))
+#define INTERRUPT_LOAD_BUS_FAULT  (1024 | (0x1 << 31))
+#define INTERRUPT_STORE_BUS_FAULT (1025 | (0x1 << 31))
 
 .section .text.handlers
 .global __no_irq_handler

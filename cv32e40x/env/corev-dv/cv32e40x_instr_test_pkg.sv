@@ -22,7 +22,7 @@ package cv32e40x_instr_test_pkg;
   import riscv_signature_pkg::*;
   import corev_instr_test_pkg::*;
 
-  import cv32e40x_pkg::pma_region_t;
+  import cv32e40x_pkg::pma_cfg_t;
 
   `include "uvmt_cv32e40x_constants.sv"
   `include "pma_adapted_mem_region_gen.sv"
