@@ -37,25 +37,6 @@ module uvmt_cv32e40s_pmp_assert
   );
 
 
-  // Defines
-
-  // TODO:ropeders removed unused "pmprvfi" definitions
-  localparam logic [5:0] EXC_INSTR_ACC_FAULT    = 6'd 1;
-  localparam logic [5:0] EXC_ILL_INSTR          = 6'd 2;
-  localparam logic [5:0] EXC_INSTR_BUS_FAULT    = 6'd 48;
-  localparam logic [5:0] EXC_INSTR_CHKSUM_FAULT = 6'd 49;
-
-  localparam logic [2:0] DBG_TRIGGER = 3'd 2;
-
-  localparam int NUM_CFG_REGS  = 16;
-  localparam int NUM_ADDR_REGS = 64;
-
-  localparam int CSRADDR_FIRST_PMPCFG  = 12'h 3A0;
-  localparam int CSRADDR_FIRST_PMPADDR = 12'h 3B0;
-
-  `define max(a,b) ((a) > (b) ? (a) : (b))
-
-
   // Defaults
 
   default clocking @(posedge clk); endclocking
@@ -185,7 +166,7 @@ module uvmt_cv32e40s_pmp_assert
   generate
     if (PMP_NUM_REGIONS > 0) begin : gen_cg_common
       covergroup cg_internals_common @(posedge clk);
-        // TODO:silabs-robin  cp_ismatch_tor:   coverpoint is_match_tor(match_status.val_index) iff (match_status.is_matched);
+        cp_ismatch_tor:   coverpoint model_i.is_match_tor(match_status.val_index) iff (match_status.is_matched);
 
         cp_napot_min_8byte: coverpoint { pmp_req_addr_i[2], csr_pmp_i.addr[match_status.val_index][2] }
           iff (csr_pmp_i.cfg[match_status.val_index].mode == PMP_MODE_NAPOT &&

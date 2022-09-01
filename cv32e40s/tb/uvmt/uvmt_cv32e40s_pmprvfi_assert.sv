@@ -105,16 +105,16 @@ module uvmt_cv32e40s_pmprvfi_assert
   wire  is_rvfi_csr_read_instr =
     is_rvfi_csr_instr  &&
     rvfi_rd_addr;
-    // TODO:ropeders double check correctness
+    // TODO:silabs-robin double check correctness
   wire  is_rvfi_csr_write_instr =
     is_rvfi_csr_instr  &&
     !((rvfi_insn[13:12] inside {2'b 10, 2'b 11}) && !rvfi_rs1_addr);  // CSRRS/C[I] w/ rs1=x0/0
-    // TODO:ropeders double check correctness
+    // TODO:silabs-robin double check correctness
   wire [1:0]  rvfi_effective_mode =
     rvfi_csr_mstatus_rdata[17]      ?  // "mstatus.MPRV", modify privilege?
       rvfi_csr_mstatus_rdata[12:11] :  // "mstatus.MPP", loadstores act as if "mode==MPP"
       rvfi_mode;                       // Else, act as actual mode
-  wire [31:0]  rvfi_mem_upperaddr =  // TODO:silabs-robin  "32:0" to avoid overflow problems?
+  wire [31:0]  rvfi_mem_upperaddr =
     (rvfi_mem_rmask[3] || rvfi_mem_wmask[3]) ? (
       rvfi_mem_addr + 3
     ) : (
@@ -128,8 +128,16 @@ module uvmt_cv32e40s_pmprvfi_assert
         )
       )
     );
+  wire [31:0]  rvfi_pc_upperrdata =
+    (rvfi_insn[1:0] == 2'b 11) ? (
+      rvfi_pc_rdata + 3
+    ) : (
+      rvfi_pc_rdata + 1
+    );
   wire  is_split_datatrans =
     (rvfi_mem_upperaddr[31:2] != rvfi_mem_addr[31:2]);
+  wire  is_split_instrtrans =
+    (rvfi_pc_upperrdata[31:2] != rvfi_pc_rdata[31:2]);
 
   pmp_csr_t  pmp_csr_rvfi_rdata;
   pmp_csr_t  pmp_csr_rvfi_wdata;
@@ -143,9 +151,9 @@ module uvmt_cv32e40s_pmprvfi_assert
     assign pmp_csr_rvfi_wdata.cfg[i]  = rvfi_csr_pmpcfg_wdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
     assign pmp_csr_rvfi_wmask.cfg[i]  = rvfi_csr_pmpcfg_wmask[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
 
-    assign pmp_csr_rvfi_rdata.addr[i] = {rvfi_csr_pmpaddr_rdata[i], 2'b 00};  // TODO:ropeders is this assignment correct?
-    assign pmp_csr_rvfi_wdata.addr[i] = {rvfi_csr_pmpaddr_wdata[i], 2'b 00};  // TODO:ropeders is this assignment correct?
-    assign pmp_csr_rvfi_wmask.addr[i] = {rvfi_csr_pmpaddr_wmask[i], 2'b 00};  // TODO:ropeders is this assignment correct?
+    assign pmp_csr_rvfi_rdata.addr[i] = {rvfi_csr_pmpaddr_rdata[i], 2'b 00};  // TODO:silabs-robin are these assignment correct?
+    assign pmp_csr_rvfi_wdata.addr[i] = {rvfi_csr_pmpaddr_wdata[i], 2'b 00};
+    assign pmp_csr_rvfi_wmask.addr[i] = {rvfi_csr_pmpaddr_wmask[i], 2'b 00};
   end
   assign pmp_csr_rvfi_rdata.mseccfg = {rvfi_csr_mseccfgh_rdata, rvfi_csr_mseccfg_rdata};
   assign pmp_csr_rvfi_wdata.mseccfg = {rvfi_csr_mseccfgh_wdata, rvfi_csr_mseccfg_wdata};
@@ -153,6 +161,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   match_status_t  match_status_instr;
   match_status_t  match_status_data;
+  match_status_t  match_status_upperinstr;
   match_status_t  match_status_upperdata;
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
@@ -183,6 +192,21 @@ module uvmt_cv32e40s_pmprvfi_assert
     .pmp_req_err_o  ('Z),
 
     .match_status_o (match_status_data)
+  );
+  uvmt_cv32e40s_pmp_model #(
+    .PMP_GRANULARITY  (PMP_GRANULARITY),
+    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
+  ) model_upperinstr_i (
+    .clk   (clk_i),
+    .rst_n (rst_ni),
+
+    .csr_pmp_i      (pmp_csr_rvfi_rdata),
+    .priv_lvl_i     (privlvl_t'(rvfi_mode)),
+    .pmp_req_addr_i (rvfi_pc_upperrdata),
+    .pmp_req_type_i (PMP_ACC_EXEC),
+    .pmp_req_err_o  ('Z),
+
+    .match_status_o (match_status_instr)
   );
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
@@ -224,7 +248,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   // NAPOT, some bits read as ones, depending on G
   if (PMP_GRANULARITY >= 2) begin: gen_napot_ones_g2
-    //TODO:ropeders no magic numbers
+    //TODO:silabs-robin no magic numbers
     for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_napot_ones_i
       a_napot_ones: assert property (
         rvfi_valid  &&
@@ -250,7 +274,7 @@ module uvmt_cv32e40s_pmprvfi_assert
   // Software-view on PMP CSRs matches RVFI-view
   for (genvar i = 0; i < NUM_CFG_REGS; i++) begin: gen_swview_cfg
     a_pmpcfg_swview: assert property (
-      // TODO:ropeders no magic numbers
+      // TODO:silabs-robin no magic numbers
       is_rvfi_csr_read_instr  &&
       (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + i))
       |->
@@ -259,7 +283,7 @@ module uvmt_cv32e40s_pmprvfi_assert
   end
   for (genvar i = 0; i < NUM_ADDR_REGS; i++) begin: gen_swview_addr
     a_pmpaddr_swview: assert property (
-      // TODO:ropeders no magic numbers
+      // TODO:silabs-robin no magic numbers
       is_rvfi_csr_read_instr  &&
       (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + i))
       |->
@@ -293,7 +317,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     );
   end
 
-  // TODO:ropeders "uvm_error" on all assertions
+  // TODO:silabs-robin "uvm_error" on all assertions?
 
   // Software-view can read the granularity level
   a_granularity_determination: assert property (
@@ -379,7 +403,6 @@ module uvmt_cv32e40s_pmprvfi_assert
     endproperty : p_not_ignore_writes_torcfg
     cov_not_ignore_writes_torcfg: cover property (
       p_not_ignore_writes_torcfg
-      // TODO:silabs-robin  Reconsider, rewrite.
     );
   end
 
@@ -504,7 +527,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     );
   end
 
-  // TODO  ("WaitUpdate"/"AffectSuccessors")
+  // Expected response on missing execute permission (vplan "WaitUpdate"/"AffectSuccessors")
   a_noexec_musttrap: assert property (
     rvfi_valid  &&
     !match_status_instr.is_access_allowed
@@ -520,8 +543,15 @@ module uvmt_cv32e40s_pmprvfi_assert
     (rvfi_trap.exception_cause == EXC_INSTR_ACC_FAULT)
     // Note, if we implement etrigger etc then priority will change
   );
+  a_noexec_splittrap: assert property (
+    rvfi_valid  &&
+    is_split_instrtrans  &&
+    !match_status_upperinstr.is_access_allowed
+    |->
+    rvfi_trap
+  );
 
-  // TODO  ("WaitUpdate"/"AffectSuccessors")
+  // Expected response on missing loadstore permission (vplan "WaitUpdate"/"AffectSuccessors")
   a_noloadstore_musttrap: assert property (
     rvfi_valid  &&
     (rvfi_mem_rmask || rvfi_mem_wmask)  &&
@@ -549,7 +579,6 @@ module uvmt_cv32e40s_pmprvfi_assert
     !match_status_upperdata.is_access_allowed
     |->
     rvfi_trap
-    // TODO:silabs-robin  Instr-side.
   );
 
   // RWX has reservations
@@ -568,18 +597,16 @@ module uvmt_cv32e40s_pmprvfi_assert
       pmp_csr_rvfi_rdata.mseccfg.rlb  &&
       pmp_csr_rvfi_rdata.mseccfg.mml
       ##0
-      (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw"
+      (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw" instr
       (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + i/4))          &&  // ...to cfg's csr
       !rvfi_trap
       ##0
       ({cfg_attempt.lock, cfg_attempt.read, cfg_attempt.write, cfg_attempt.exec}
         inside {4'b 1001, 4'b 1010, 4'b 1011, 4'b 1101})
       |->
-      //({pmp_csr_rvfi_wdata.cfg[i].lock, pmp_csr_rvfi_wdata.cfg[i].read, pmp_csr_rvfi_wdata.cfg[i].write, pmp_csr_rvfi_wdata.cfg[i].exec}
-      //  inside {4'b 1001, 4'b 1010, 4'b 1011, 4'b 1101})
-      // TODO:robin-silabs  && (wdata == attempt) ?
       (pmp_csr_rvfi_wdata.cfg[i] == cfg_attempt)
     );
+    // Note, "lockedexec" is just one case of a restriction that RLB lifts.
   end
   cov_rlb_mml: cover property (
     rvfi_valid  &&
@@ -617,7 +644,6 @@ module uvmt_cv32e40s_pmprvfi_assert
         (pmp_csr_rvfi_rdata.mseccfg.mml && !pmp_csr_rvfi_rdata.mseccfg.rlb)  &&
         ({cfg_attempt.lock, cfg_attempt.read, cfg_attempt.write, cfg_attempt.exec}
           inside {4'b 1001, 4'b 1010, 4'b 1011, 4'b 1101})
-        // TODO:silabs-robin  && (wdata != rdata))  // Unchanged is not "adding"
       )
       begin
         cfg_rfied = cfg_pre;
@@ -628,7 +654,6 @@ module uvmt_cv32e40s_pmprvfi_assert
     // Tied zero
     cfg_rfied.zero0 = '0;
 
-    // TODO:silabs-robin  Move function to shared functions file?
     return  cfg_rfied;
   endfunction : rectify_cfg_write
 
