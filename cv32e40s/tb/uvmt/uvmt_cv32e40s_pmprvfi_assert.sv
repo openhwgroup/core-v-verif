@@ -206,7 +206,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     .pmp_req_type_i (PMP_ACC_EXEC),
     .pmp_req_err_o  ('Z),
 
-    .match_status_o (match_status_instr)
+    .match_status_o (match_status_upperinstr)
   );
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
@@ -254,7 +254,14 @@ module uvmt_cv32e40s_pmprvfi_assert
         rvfi_valid  &&
         pmp_csr_rvfi_rdata.cfg[i].mode[1]
         |->
-        (pmp_csr_rvfi_rdata.addr[i][PMP_GRANULARITY-2:0] == '1)
+        (pmp_csr_rvfi_rdata.addr[i][PMP_GRANULARITY:2] == '1)
+      );
+      cov_napot_ones: cover property (
+        // The ones doesn't have to extend past the required part
+        rvfi_valid  &&
+        pmp_csr_rvfi_rdata.cfg[i].mode[1]  &&
+        (pmp_csr_rvfi_rdata.addr[i][PMP_GRANULARITY+1] != 1'b 1)
+        // Note, this cover only checks part of what an assert could
       );
     end
   end
@@ -523,7 +530,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       (pmp_csr_rvfi_rdata.cfg[i].lock && !pmp_csr_rvfi_rdata.mseccfg.rlb)  &&
       (pmp_csr_rvfi_rdata.cfg[i].mode == PMP_MODE_TOR)
       |=>
-      always $stable(pmp_csr_rvfi_rdata.addr[i-1][31:PMP_GRANULARITY])
+      always $stable(pmp_csr_rvfi_rdata.addr[i-1][31+2:PMP_GRANULARITY+2])
     );
   end
 
