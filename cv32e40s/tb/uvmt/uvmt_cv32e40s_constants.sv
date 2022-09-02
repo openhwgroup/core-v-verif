@@ -32,6 +32,9 @@
    `elsif PMP_ENABLE_64
      parameter int CORE_PARAM_PMP_GRANULARITY = 0;
      parameter int CORE_PARAM_PMP_NUM_REGIONS = 64;
+   `elsif PMP_G1R5
+     parameter int CORE_PARAM_PMP_GRANULARITY = 1;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 5;
    `elsif PMP_G3R3
      parameter int CORE_PARAM_PMP_GRANULARITY = 3;
      parameter int CORE_PARAM_PMP_NUM_REGIONS = 3;

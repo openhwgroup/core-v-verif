@@ -341,7 +341,10 @@ module uvmt_cv32e40s_pmprvfi_assert
     |=>
     (rvfi_valid [->1])  ##0
     (rvfi_csr_pmpaddr_rdata[0][31:PMP_GRANULARITY] == '1)  &&
-    (rvfi_csr_pmpaddr_rdata[0][`max(PMP_GRANULARITY-1, 0) : 0] == '0)
+    (
+      (rvfi_csr_pmpaddr_rdata[0][`max(PMP_GRANULARITY-1, 0) : 0] == '0)  ^
+      (PMP_GRANULARITY == 0)
+    )
     // Note: _Can_ be generalized for all i
   );
 
@@ -400,7 +403,7 @@ module uvmt_cv32e40s_pmprvfi_assert
   end
 
   // Locked entries, ignore pmpicfg/pmpaddri writes
-  for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_not_ignore_writes_torcfg
+  for (genvar i = 0; i < PMP_NUM_REGIONS - 1; i++) begin: gen_not_ignore_writes_torcfg
     // We can see change even if "above config" is locked TOR
     property p_not_ignore_writes_torcfg;
       logic [7:0] cfg;
