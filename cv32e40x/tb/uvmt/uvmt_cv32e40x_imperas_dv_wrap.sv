@@ -47,37 +47,13 @@
 ////////////////////////////////////////////////////////////////////////////
 // Assign the NET IRQ values from the core irq inputs
 ////////////////////////////////////////////////////////////////////////////
-    // OK for both
-//`define RVVI_SET_IRQ(IRQ_NAME, IRQ_IDX) \
-//    if (IRQ[IRQ_IDX]!=IRQ_NEXT[IRQ_IDX] && IRQ_NEXT[IRQ_IDX]==1) begin \
-//        if(0) $display("RVVI_SET_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)); \
-//        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 1)); \
-//        IRQ[IRQ_IDX] = 1; \
-//    end
-        
 `define RVVI_SET_IRQ(IRQ_NAME, IRQ_IDX) \
     if (IRQ[IRQ_IDX]==0 && IRQ_NEXT[IRQ_IDX]==1) begin \
         if(0) $display("RVVI_SET_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)); \
         void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 1)); \
         IRQ[IRQ_IDX] = 1; \
     end
-        // interrupt_test ok
-//`define RVVI_CLR_IRQ(IRQ_NAME, IRQ_IDX) \
-//    if (`RVFI_IF.rvfi_valid && `DUT_PATH.irq_i[IRQ_IDX]==0 && IRQ[IRQ_IDX]==1) begin \
-//        if(1) $display("RVVI_CLR_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)); \
-//        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 0)); \
-//        IRQ[IRQ_IDX] = 0; \
-//    end
 
-        // corev_rand_instr_obi_err OK
-//`define RVVI_CLR_IRQ(IRQ_NAME, IRQ_IDX) \
-//    if (`RVFI_IF.rvfi_valid && IRQ[IRQ_IDX]!=IRQ_NEXT[IRQ_IDX] && IRQ_NEXT[IRQ_IDX]==0) begin \
-//        if(1) $display("RVVI_CLR_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)); \
-//        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 0)); \
-//        IRQ[IRQ_IDX] = 0; \
-//    end
-
-    // OK for both
 `define RVVI_CLR_IRQ(IRQ_NAME, IRQ_IDX) \
     if (`RVFI_IF.rvfi_valid && IRQ[IRQ_IDX]==1 && (IRQ_NEXT[IRQ_IDX]==0 || `DUT_PATH.irq_i[IRQ_IDX]==0)) begin \
         if(0) $display("RVVI_CLR_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)); \
@@ -348,17 +324,18 @@ module uvmt_cv32e40x_imperas_dv_wrap
    // assert when 0->1
    // negate when posedge clk && valid=1 && debug=0
    ////////////////////////////////////////////////////////////////////////////
-   bit DebugReq;
+   bit DREQ, DREQ_NEXT;
    always @(*) begin: Set_DebugReq
-     if (`DUT_PATH.debug_req_i==1 && DebugReq==0) begin
-         void'(rvvi.net_push("haltreq", 1));
-         DebugReq = 1;
-     end
+       DREQ_NEXT = `DUT_PATH.debug_req_i | (`RVFI_IF.rvfi_dbg==3 && `RVFI_IF.rvfi_dbg_mode);
+       if (DREQ==0 && DREQ_NEXT==1) begin
+           void'(rvvi.net_push("haltreq", 1));
+           DREQ = 1;
+       end
    end: Set_DebugReq
    always @(posedge `RVFI_IF.clk) begin: Clr_DebugReq
-       if (`RVFI_IF.rvfi_valid && `DUT_PATH.debug_req_i==0 && DebugReq==1) begin
+       if (`RVFI_IF.rvfi_valid && DREQ==1 && DREQ_NEXT==0) begin
            void'(rvvi.net_push("haltreq", 0));
-           DebugReq = 0;
+           DREQ = 0;
        end
    end: Clr_DebugReq
 
@@ -411,6 +388,14 @@ module uvmt_cv32e40x_imperas_dv_wrap
        `RVVI_CLR_IRQ(LocalInterrupt14,   30)
        `RVVI_CLR_IRQ(LocalInterrupt15,   31)
    end: Clr_Irq
+   
+//   wire [31:0] MIP, MIE, MSTATUS;
+//   assign MIP     = rvvi.csr[0][0][`CSR_MIP_ADDR];
+//   assign MIE     = rvvi.csr[0][0][`CSR_MIE_ADDR];
+//   assign MSTATUS = rvvi.csr[0][0][`CSR_MSTATUS_ADDR];
+//   always @(*) begin
+//       if (MSTATUS & 'h8) $display("IRQ PE = %08X", MIP & MIE);
+//   end
 //   always @(`DUT_PATH.irq_i) begin: Chg_Irq
 //       $display("irq_i=%08X", `DUT_PATH.irq_i);
 //   end: Chg_Irq
@@ -489,6 +474,24 @@ module uvmt_cv32e40x_imperas_dv_wrap
                    void'(rvvi.net_push("InstructionBusFault", 0));
                end
                InstructionBusFault = 0;
+           end
+           
+           // Report warnings of some special events
+           // If we have entered debug Mode and there is a haltreq
+           // and we have an intr - then these need scheduling
+           // 2 exception events occured siultaneously
+           if (`RVFI_IF.rvfi_dbg_mode && `RVFI_IF.rvfi_dbg=='h3 && intr_intr) begin
+               $display("##################################################################");
+               $display("# WARNING: intr & debug, intr_cause=%0d exception followed by debug request", intr_cause);
+               $display("##################################################################");
+           end
+           
+           // simultaneous intr and trap
+           // 2 exception events occured siultaneously
+           if (intr_intr && trap_exception_cause) begin
+               $display("##################################################################");
+               $display("# WARNING: intr & trap, intr_cause=%0d trap_exception_cause=%0d", intr_cause, trap_exception_cause);
+               $display("##################################################################");
            end
            
 //           `uvm_info(info_tag, $sformatf("\nRVFI Valid %t", $time), UVM_INFO)
