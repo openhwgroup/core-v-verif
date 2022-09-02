@@ -475,7 +475,7 @@ module uvmt_cv32e40s_pmprvfi_assert
   // addr/addr-1  unlocked->unstable
   sequence  seq_csrrw_pmpaddri(i);
     (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw"
-    (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + i))         &&  // ...to addr csr
+    (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + i))           &&  // ...to addr csr
     (!rvfi_trap)
     ;
   endsequence : seq_csrrw_pmpaddri
@@ -489,8 +489,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       seq_csrrw_pmpaddri(i)  and
       !pmp_csr_rvfi_rdata.cfg[i].lock
       |->
-      (pmp_csr_rvfi_wdata.addr[i][33:2] == rvfi_rs1_rdata)
-      // TODO:silabs-robin  This might not be complete. Waiting for RTL/RVFI fix first.
+      (pmp_csr_rvfi_wdata.addr[i][33:2+PMP_GRANULARITY] == rvfi_rs1_rdata[31:PMP_GRANULARITY])
     );
   end
   for (genvar i = 1; i < PMP_NUM_REGIONS; i++) begin: gen_addr_tor
@@ -505,9 +504,10 @@ module uvmt_cv32e40s_pmprvfi_assert
     );
   end
 
-  // RVFI: Reported CSR (cfg) writes take effect
+  // RVFI: Reported CSR writes take effect
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_rvfi_csr_writes
-    property  p_rvfi_csr_writes;
+    // cfg:
+    property  p_rvfi_cfg_writes;
       logic [7:0]  cfg, cfg_r, cfg_w;
       rvfi_valid  ##0
       (1, cfg_w = (pmp_csr_rvfi_wdata.cfg[i] &  pmp_csr_rvfi_wmask.cfg[i]))  ##0
@@ -517,20 +517,43 @@ module uvmt_cv32e40s_pmprvfi_assert
       (rvfi_valid [->1])  ##0
       (pmp_csr_rvfi_rdata.cfg[i] == cfg)
       ;
-    endproperty : p_rvfi_csr_writes
-    a_rvfi_csr_writes: assert property (
-      p_rvfi_csr_writes
+    endproperty : p_rvfi_cfg_writes
+    a_rvfi_cfg_writes: assert property (
+      p_rvfi_cfg_writes
+    );
+    // addr:
+    property  p_rvfi_addr_writes;
+      logic [31:0]  addr, addr_r, addr_w;
+      rvfi_valid                                                                ##0
+      (1, addr_w = (pmp_csr_rvfi_wdata.addr[i][33:2] &  pmp_csr_rvfi_wmask.addr[i][33:2]))  ##0
+      (1, addr_r = (pmp_csr_rvfi_rdata.addr[i][33:2] & ~pmp_csr_rvfi_wmask.addr[i][33:2]))  ##0
+      (1, addr = (addr_r | addr_w))
+      |=>
+      (rvfi_valid [->1])  ##0
+      (pmp_csr_rvfi_rdata.addr[i][31+2:PMP_GRANULARITY+2] == addr[31:PMP_GRANULARITY])
+      ;
+    endproperty : p_rvfi_addr_writes;
+    a_rvfi_addr_writes: assert property (
+      p_rvfi_addr_writes
     );
   end
 
   // Locked TOR, ignore i-1 addr writes
   for (genvar i = 1; i < PMP_NUM_REGIONS; i++) begin: gen_ignore_tor
-    a_ignore_tor: assert property (
+    a_ignore_tor_stable: assert property (
       rvfi_valid &&
       (pmp_csr_rvfi_rdata.cfg[i].lock && !pmp_csr_rvfi_rdata.mseccfg.rlb)  &&
       (pmp_csr_rvfi_rdata.cfg[i].mode == PMP_MODE_TOR)
       |=>
       always $stable(pmp_csr_rvfi_rdata.addr[i-1][31+2:PMP_GRANULARITY+2])
+    );
+    a_ignore_tor_wdata: assert property (
+      rvfi_valid &&
+      (pmp_csr_rvfi_rdata.cfg[i].lock && !pmp_csr_rvfi_rdata.mseccfg.rlb)  &&
+      (pmp_csr_rvfi_rdata.cfg[i].mode == PMP_MODE_TOR)
+      |->
+      (pmp_csr_rvfi_wmask.addr[i-1] == 0)  ||
+      (pmp_csr_rvfi_wdata.addr[i-1] == pmp_csr_rvfi_rdata.addr[i-1])
     );
   end
 
