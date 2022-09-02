@@ -16,7 +16,7 @@ module uvmt_cv32e40s_pmp_assert
    input wire            rst_n,
 
    // Interface to CSRs
-   input pmp_csr_t       csr_pmp_i,
+   input wire pmp_csr_t  csr_pmp_i,
 
    // Privilege mode
    input wire privlvl_t  priv_lvl_i,
@@ -409,7 +409,7 @@ module uvmt_cv32e40s_pmp_assert
       (
         // Addr denied, but retires
         pmp_req_err_o  ##0
-        (1, addr = pmp_req_addr_i)  ##0
+        (1, addr = pmp_req_addr_i[31:0])  ##0
         ((rvfi_valid && (rvfi_pc_rdata == addr)) [->1])
       )
       implies
@@ -445,7 +445,7 @@ module uvmt_cv32e40s_pmp_assert
 
       // When "addr" is denied
       pmp_req_err_o  ##0
-      (1, addr = pmp_req_addr_i)
+      (1, addr = pmp_req_addr_i[31:0])
 
       |->
 

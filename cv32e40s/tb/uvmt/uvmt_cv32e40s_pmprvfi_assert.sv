@@ -14,18 +14,18 @@ module uvmt_cv32e40s_pmprvfi_assert
   input wire  rst_ni,
 
   // RVFI
-  input wire         rvfi_valid,
-  input wire [31:0]  rvfi_insn,
-  input wire [ 1:0]  rvfi_mode,
-  input rvfi_trap_t  rvfi_trap,
-  input wire [ 4:0]  rvfi_rd_addr,
-  input wire [31:0]  rvfi_rd_wdata,
-  input wire [ 4:0]  rvfi_rs1_addr,
-  input wire [31:0]  rvfi_rs1_rdata,
-  input wire [31:0]  rvfi_pc_rdata,
-  input wire [31:0]  rvfi_mem_addr,
-  input wire [ 3:0]  rvfi_mem_wmask,
-  input wire [ 3:0]  rvfi_mem_rmask,
+  input wire              rvfi_valid,
+  input wire [31:0]       rvfi_insn,
+  input wire [ 1:0]       rvfi_mode,
+  input wire rvfi_trap_t  rvfi_trap,
+  input wire [ 4:0]       rvfi_rd_addr,
+  input wire [31:0]       rvfi_rd_wdata,
+  input wire [ 4:0]       rvfi_rs1_addr,
+  input wire [31:0]       rvfi_rs1_rdata,
+  input wire [31:0]       rvfi_pc_rdata,
+  input wire [31:0]       rvfi_mem_addr,
+  input wire [ 3:0]       rvfi_mem_wmask,
+  input wire [ 3:0]       rvfi_mem_rmask,
 
   // RVFI CSR
   //(pmpcfg)
@@ -49,6 +49,8 @@ module uvmt_cv32e40s_pmprvfi_assert
 
 
   // Defines
+
+  `define  max(a,b)  ((a) > (b) ? (a) : (b))
 
   localparam logic [1:0] MODE_U = 2'b 00;
   localparam logic [1:0] MODE_M = 2'b 11;
@@ -143,21 +145,21 @@ module uvmt_cv32e40s_pmprvfi_assert
   pmp_csr_t  pmp_csr_rvfi_wdata;
   pmp_csr_t  pmp_csr_rvfi_wmask;
   for (genvar i = 0; i < PMP_MAX_REGIONS; i++) begin: gen_pmp_csr_readout
-    localparam pmpcfg_reg_i    = i / 4;
-    localparam pmpcfg_field_hi = (8 * (i % 4)) + 7;
-    localparam pmpcfg_field_lo = (8 * (i % 4));
+    localparam  pmpcfg_reg_i    = i / 4;
+    localparam  pmpcfg_field_hi = (8 * (i % 4)) + 7;
+    localparam  pmpcfg_field_lo = (8 * (i % 4));
 
-    assign pmp_csr_rvfi_rdata.cfg[i]  = rvfi_csr_pmpcfg_rdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
-    assign pmp_csr_rvfi_wdata.cfg[i]  = rvfi_csr_pmpcfg_wdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
-    assign pmp_csr_rvfi_wmask.cfg[i]  = rvfi_csr_pmpcfg_wmask[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
+    assign  pmp_csr_rvfi_rdata.cfg[i]  = rvfi_csr_pmpcfg_rdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
+    assign  pmp_csr_rvfi_wdata.cfg[i]  = rvfi_csr_pmpcfg_wdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
+    assign  pmp_csr_rvfi_wmask.cfg[i]  = rvfi_csr_pmpcfg_wmask[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
 
-    assign pmp_csr_rvfi_rdata.addr[i] = {rvfi_csr_pmpaddr_rdata[i], 2'b 00};  // TODO:silabs-robin are these assignment correct?
-    assign pmp_csr_rvfi_wdata.addr[i] = {rvfi_csr_pmpaddr_wdata[i], 2'b 00};
-    assign pmp_csr_rvfi_wmask.addr[i] = {rvfi_csr_pmpaddr_wmask[i], 2'b 00};
+    assign  pmp_csr_rvfi_rdata.addr[i] = {rvfi_csr_pmpaddr_rdata[i], 2'b 00};  // TODO:silabs-robin are these assignment correct?
+    assign  pmp_csr_rvfi_wdata.addr[i] = {rvfi_csr_pmpaddr_wdata[i], 2'b 00};
+    assign  pmp_csr_rvfi_wmask.addr[i] = {rvfi_csr_pmpaddr_wmask[i], 2'b 00};
   end
-  assign pmp_csr_rvfi_rdata.mseccfg = {rvfi_csr_mseccfgh_rdata, rvfi_csr_mseccfg_rdata};
-  assign pmp_csr_rvfi_wdata.mseccfg = {rvfi_csr_mseccfgh_wdata, rvfi_csr_mseccfg_wdata};
-  assign pmp_csr_rvfi_wmask.mseccfg = {rvfi_csr_mseccfgh_wmask, rvfi_csr_mseccfg_wmask};
+  assign  pmp_csr_rvfi_rdata.mseccfg = rvfi_csr_mseccfg_rdata;
+  assign  pmp_csr_rvfi_wdata.mseccfg = rvfi_csr_mseccfg_wdata;
+  assign  pmp_csr_rvfi_wmask.mseccfg = rvfi_csr_mseccfg_wmask;
 
   match_status_t  match_status_instr;
   match_status_t  match_status_data;
@@ -172,7 +174,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
     .csr_pmp_i      (pmp_csr_rvfi_rdata),
     .priv_lvl_i     (privlvl_t'(rvfi_mode)),
-    .pmp_req_addr_i (rvfi_pc_rdata),
+    .pmp_req_addr_i ({2'b 00, rvfi_pc_rdata}),
     .pmp_req_type_i (PMP_ACC_EXEC),
     .pmp_req_err_o  ('Z),
 
@@ -187,7 +189,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
     .csr_pmp_i      (pmp_csr_rvfi_rdata),
     .priv_lvl_i     (privlvl_t'(rvfi_effective_mode)),
-    .pmp_req_addr_i (rvfi_mem_addr),  // TODO:silabs-robin  Multi-op instructions
+    .pmp_req_addr_i ({2'b 00, rvfi_mem_addr}),  // TODO:silabs-robin  Multi-op instructions
     .pmp_req_type_i (rvfi_mem_wmask ? PMP_ACC_WRITE : PMP_ACC_READ),  // TODO:silabs-robin  Not completely accurate...
     .pmp_req_err_o  ('Z),
 
@@ -202,7 +204,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
     .csr_pmp_i      (pmp_csr_rvfi_rdata),
     .priv_lvl_i     (privlvl_t'(rvfi_mode)),
-    .pmp_req_addr_i (rvfi_pc_upperrdata),
+    .pmp_req_addr_i ({2'b 00, rvfi_pc_upperrdata}),
     .pmp_req_type_i (PMP_ACC_EXEC),
     .pmp_req_err_o  ('Z),
 
@@ -217,7 +219,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
     .csr_pmp_i      (pmp_csr_rvfi_rdata),
     .priv_lvl_i     (privlvl_t'(rvfi_effective_mode)),
-    .pmp_req_addr_i (rvfi_mem_upperaddr),  // TODO:silabs-robin  Multi-op instructions
+    .pmp_req_addr_i ({2'b 00, rvfi_mem_upperaddr}),  // TODO:silabs-robin  Multi-op instructions
     .pmp_req_type_i (rvfi_mem_wmask ? PMP_ACC_WRITE : PMP_ACC_READ),  // TODO:silabs-robin  Not completely accurate...
     .pmp_req_err_o  ('Z),
 
@@ -300,22 +302,24 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   // Software views does not change underlying register value
   property p_storage_unaffected(i);
-    logic [31:0] pmpaddr;
+    logic [33:0] pmpaddr;
     accept_on (
+      // (A new write resets this behavior)
       is_rvfi_csr_write_instr  &&
       (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + i))
     )
-      rvfi_valid  ##0
-      pmp_csr_rvfi_rdata.cfg[i].mode[1]  ##0
-      (1, pmpaddr = pmp_csr_rvfi_rdata.addr[i])
+      rvfi_valid                                ##0
+      pmp_csr_rvfi_rdata.cfg[i].mode[1]         ##0  // NAPOT/NA4
+      (1, pmpaddr = pmp_csr_rvfi_rdata.addr[i])      // (Save pmpaddr)
       ##1
       (rvfi_valid [->1])  ##0
-      (pmp_csr_rvfi_rdata.cfg[i].mode[1] == 1'b 0)
+      (pmp_csr_rvfi_rdata.cfg[i].mode[1] == 1'b 0)  // TOR/OFF
+      // (Could cover rdata being different than pmpaddr)
       ##1
       (rvfi_valid [->1])  ##0
-      pmp_csr_rvfi_rdata.cfg[i].mode[1]
+      pmp_csr_rvfi_rdata.cfg[i].mode[1]  // NAPOT/NA4
     |->
-    (pmp_csr_rvfi_rdata.addr[i][31:0] == pmpaddr);
+    (pmp_csr_rvfi_rdata.addr[i] == pmpaddr);  // (Unchanged pmpaddr?)
     // Note, this _can_ be generalized more, but at a complexity/readability cost
   endproperty : p_storage_unaffected
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_storage_unaffected
@@ -337,7 +341,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     |=>
     (rvfi_valid [->1])  ##0
     (rvfi_csr_pmpaddr_rdata[0][31:PMP_GRANULARITY] == '1)  &&
-    (rvfi_csr_pmpaddr_rdata[0][PMP_GRANULARITY-1:0] == '0)
+    (rvfi_csr_pmpaddr_rdata[0][`max(PMP_GRANULARITY-1, 0) : 0] == '0)
     // Note: _Can_ be generalized for all i
   );
 

@@ -14,7 +14,7 @@ module uvmt_cv32e40s_pmp_model
    input wire  rst_n,
 
    // Interface to CSRs
-   input pmp_csr_t  csr_pmp_i,
+   input wire pmp_csr_t  csr_pmp_i,
 
    // Privilege mode
    input wire privlvl_t  priv_lvl_i,
@@ -43,7 +43,7 @@ module uvmt_cv32e40s_pmp_model
       match_status_o.is_any_locked = csr_pmp_i.cfg[region].lock ? 1'b1 : match_status_o.is_any_locked;
     end
 
-    for (int region = 0; region < PMP_NUM_REGIONS; region++) begin
+    for (logic[$clog2(PMP_MAX_REGIONS)-1:0] region = 0; region < PMP_NUM_REGIONS; region++) begin
       if (is_match_na4(region) || is_match_tor(region) || is_match_napot(region)) begin
         match_status_o.val_index  = region;
         match_status_o.is_matched = 1'b1;
@@ -373,7 +373,7 @@ module uvmt_cv32e40s_pmp_model
 
     req  = pmp_req_addr_i[33:2+PMP_GRANULARITY];
     hi   = csr_pmp_i.addr[region][33:2+PMP_GRANULARITY];
-    lo   = (region > 0) ? csr_pmp_i.addr[region - 1'b1][33:2+PMP_GRANULARITY] : 0;
+    lo   = (region > 0) ? csr_pmp_i.addr[region - 1'b1][33:2+PMP_GRANULARITY] : '0;
 
     is_match_tor = (csr_pmp_i.cfg[region].mode == PMP_MODE_TOR) &&
                    (lo   <= req) &&
