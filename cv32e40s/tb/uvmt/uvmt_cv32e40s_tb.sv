@@ -481,30 +481,74 @@ module uvmt_cv32e40s_tb;
 
   // Xsecure assertion and coverage interface
 
-  // Instantiate xsecure assertions
-
   bind cv32e40s_wrapper	
-    uvmt_cv32e40s_xsecure_cov_assert_if  xsecure_cov_assert_if (
-	//.<xsecure input> (<wrapper signal>),
-
+    uvmt_cv32e40s_xsecure_if  xsecure_if (
    
 	// Core signals: cpuctrl rdata registeret cannot be read by rvfi (use core instead)
-      .core_csr_cpuctrl_rdata_dataindtiming	(core_i.xsecure_ctrl.cpuctrl.dataindtiming),
-      .core_csr_cpuctrl_rdata_rnddummy		(core_i.xsecure_ctrl.cpuctrl.rnddummy),
-      .core_csr_cpuctrl_rdata_rndhint		(core_i.xsecure_ctrl.cpuctrl.rndhint),
+      // Gated clock
+      .core_clk_gated                                     (core_i.clk),
 
-      // RVFI:
-      .rvfi_valid             (rvfi_i.rvfi_valid),
-      .rvfi_insn              (rvfi_i.rvfi_insn[31:0]),
-      .rvfi_trap              (rvfi_i.rvfi_trap.trap),
-       
-      .rvfi_csr_mcycle_rdata	(rvfi_i.rvfi_csr_mcycle_rdata),
-      .rvfi_csr_mcycle_wdata	(rvfi_i.rvfi_csr_mcycle_wdata),
-      .rvfi_csr_mcycle_wmask	(rvfi_i.rvfi_csr_mcycle_wmask),
+      // CSR
+      .core_alert_minor_o (alert_minor_o),
 
-      .rvfi_csr_mcountinhibit_rdata	(rvfi_i.rvfi_csr_mcountinhibit_rdata[0]),
-     
-     .*
+      .core_xsecure_ctrl_cpuctrl_dataindtiming	          (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
+      .core_xsecure_ctrl_cpuctrl_rnddummy		              (core_i.xsecure_ctrl.cpuctrl.rnddummy),
+
+      .core_xsecure_ctrl_cpuctrl_rnddummyfreq             (core_i.xsecure_ctrl.cpuctrl[19:16]),
+      .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
+
+      .core_cs_registers_xsecure_lfsr_lockup              (core_i.cs_registers_i.xsecure.lfsr_lockup),
+      .core_controller_controller_fsm_debug_mode_q        (core_i.controller_i.controller_fsm_i.debug_mode_q),
+
+      .core_cs_registers_mhpmcounter_mcycle               (core_i.cs_registers_i.mcycle_o),
+      .core_cs_registers_mhpmcounter_minstret             (core_i.cs_registers_i.mhpmcounter_q[2]),
+      .core_cs_registers_mhpmcounter_31_to_3              (core_i.cs_registers_i.mhpmcounter_q[31:3]),
+      .core_cs_registers_mhpmevent_31_to_3                (core_i.cs_registers_i.mhpmevent_q[31:3]),
+      .core_cs_registers_mcountinhibit_q_mcycle_inhibit   (core_i.cs_registers_i.mcountinhibit_q[0]),
+      .core_cs_registers_mcountinhibit_q_minstret_inhibit (core_i.cs_registers_i.mcountinhibit_q[2]),
+      
+      .core_cs_registers_csr_en_gated                     (core_i.cs_registers_i.csr_en_gated),
+      .core_cs_registers_csr_waddr                        (core_i.cs_registers_i.csr_waddr),
+
+      .core_LFSR0_CFG_default_seed                        (core_i.LFSR0_CFG.default_seed),
+      .core_LFSR1_CFG_default_seed                        (core_i.LFSR1_CFG.default_seed),
+      .core_LFSR2_CFG_default_seed                        (core_i.LFSR2_CFG.default_seed),
+
+      .core_xsecure_ctrl_lfsr0                            (core_i.xsecure_ctrl.lfsr0),
+      .core_xsecure_ctrl_lfsr1                            (core_i.xsecure_ctrl.lfsr1),
+      .core_xsecure_ctrl_lfsr2                            (core_i.xsecure_ctrl.lfsr2),
+
+      .core_cs_registers_xsecure_lfsr0_seed_we            (core_i.cs_registers_i.xsecure.lfsr0_i.seed_we_i),
+      .core_cs_registers_xsecure_lfsr1_seed_we            (core_i.cs_registers_i.xsecure.lfsr1_i.seed_we_i),
+      .core_cs_registers_xsecure_lfsr2_seed_we            (core_i.cs_registers_i.xsecure.lfsr2_i.seed_we_i),
+
+      // IF stage
+      .core_if_stage_if_valid_o                           (core_i.if_stage_i.if_valid_o),
+      .core_if_stage_id_ready_i                           (core_i.if_stage_i.id_ready_i),
+
+      .core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs1 (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.lfsr_rs1),
+      .core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs2 (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.lfsr_rs2),
+
+      .core_if_stage_instr_meta_n_dummy                   (core_i.if_stage_i.instr_meta_n.dummy),
+
+      // IF ID pipe
+      .core_if_id_pipe_instr_meta_dummy                   (core_i.if_id_pipe.instr_meta.dummy),
+      .core_if_id_pipe_instr_bus_resp_rdata               (core_i.if_id_pipe.instr.bus_resp.rdata),
+
+      // ID stage
+      .core_id_stage_id_valid_o                           (core_i.id_stage_i.id_valid_o),
+      .core_id_stage_ex_ready_i                           (core_i.id_stage_i.ex_ready_i),
+      
+      // ID EX pipe
+      .core_id_ex_pipe_instr_meta_dummy                   (core_i.id_ex_pipe.instr_meta.dummy),
+      .core_id_ex_pipe_instr_bus_resp_rdata               (core_i.id_ex_pipe.instr.bus_resp.rdata),
+      
+      // EX WB pipe
+      .core_wb_stage_ex_wb_pipe_instr_meta_dummy          (core_i.wb_stage_i.ex_wb_pipe_i.instr_meta.dummy),
+
+      // WB stage
+      .core_wb_stage_wb_valid_o                           (core_i.wb_stage_i.wb_valid_o),
+      .*
     );
  
     // Xsecure assertions
@@ -513,8 +557,8 @@ module uvmt_cv32e40s_tb;
     uvmt_cv32e40s_xsecure_assert #(
 	.SECURE	(cv32e40s_pkg::SECURE)
     ) xsecure_assert_i 	(
-    	.cov_assert_if	(xsecure_cov_assert_if)
-	//.rvfi	(rvfi_instr_if_0_i)
+    	.xsecure_if	(xsecure_if),
+	    .rvfi_if	  (rvfi_instr_if_0_i)
     );
 
   // Debug assertion and coverage interface

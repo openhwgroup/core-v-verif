@@ -107,38 +107,81 @@ endinterface : uvmt_cv32e40s_core_status_if
 
 
 // Interface to xsecure assertions and covergroups
-interface uvmt_cv32e40s_xsecure_cov_assert_if   
+interface uvmt_cv32e40s_xsecure_if   
     import cv32e40s_pkg::*;
     import cv32e40s_rvfi_pkg::*;
     (
-    input  clk_i,
-    input  rst_ni,
-    
-    // Core:
-    input core_csr_cpuctrl_rdata_dataindtiming,
-    input core_csr_cpuctrl_rdata_rnddummy,
-    input core_csr_cpuctrl_rdata_rndhint, 
-    
-    // RVFI:
-    input rvfi_valid,
-    input [31:0] rvfi_insn,
-    input rvfi_trap,
- 
-    input [31:0] rvfi_csr_mcycle_rdata,
-    input [31:0] rvfi_csr_mcycle_wdata,
-    input [31:0] rvfi_csr_mcycle_wmask,
+    input logic  clk_i,
+    input logic  rst_ni,
 
-    input rvfi_csr_mcountinhibit_rdata
+    // CORE:
+    input logic core_clk_gated,
+
+    // CSR
+    //input logic core_alert_major_o,
+    input logic core_alert_minor_o,
+
+    input logic core_xsecure_ctrl_cpuctrl_dataindtiming,
+    input logic core_xsecure_ctrl_cpuctrl_rnddummy,
+    //input logic core_cpuctrl_rndhint,	
+
+    input logic [3:0] core_xsecure_ctrl_cpuctrl_rnddummyfreq,
+    input logic core_if_stage_gen_dummy_instr_dummy_instr_dummy_en,
+    input logic [2:0] core_cs_registers_xsecure_lfsr_lockup,
+    input logic core_controller_controller_fsm_debug_mode_q,
+
+    input logic [31:0] core_cs_registers_mhpmcounter_mcycle,
+    input logic [31:0] core_cs_registers_mhpmcounter_minstret,
+    input logic [31:3] [63:0] core_cs_registers_mhpmcounter_31_to_3,
+    input logic [31:3] [31:0] core_cs_registers_mhpmevent_31_to_3,
+    input logic core_cs_registers_mcountinhibit_q_mcycle_inhibit,
+    input logic core_cs_registers_mcountinhibit_q_minstret_inhibit,
+    input logic core_cs_registers_csr_en_gated,
+    input logic [11:0] core_cs_registers_csr_waddr,
+
+    input logic [31:0] core_LFSR0_CFG_default_seed,
+    input logic [31:0] core_LFSR1_CFG_default_seed,
+    input logic [31:0] core_LFSR2_CFG_default_seed,
+
+    input logic [31:0] core_xsecure_ctrl_lfsr0,
+    input logic [31:0] core_xsecure_ctrl_lfsr1,
+    input logic [31:0] core_xsecure_ctrl_lfsr2,
+
+    input logic core_cs_registers_xsecure_lfsr0_seed_we,
+    input logic core_cs_registers_xsecure_lfsr1_seed_we,
+    input logic core_cs_registers_xsecure_lfsr2_seed_we,
+
+    // IF stage
+    input logic core_if_stage_if_valid_o,
+    input logic core_if_stage_id_ready_i,
+
+    input logic [4:0] core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs1,
+    input logic [4:0] core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs2,
+
+    input logic core_if_stage_instr_meta_n_dummy,
+
+    // IF ID pipe
+    input logic core_if_id_pipe_instr_meta_dummy,
+    input logic [31:0] core_if_id_pipe_instr_bus_resp_rdata,
+
+    // ID stage
+    input logic core_id_stage_id_valid_o,
+    input logic core_id_stage_ex_ready_i,
+
+    // ID EX pipe
+    input logic core_id_ex_pipe_instr_meta_dummy,
+    input logic [31:0] core_id_ex_pipe_instr_bus_resp_rdata,
+
+    // EX WB pipe
+    input logic core_wb_stage_ex_wb_pipe_instr_meta_dummy,
+
+    // WB stage
+    input logic core_wb_stage_wb_valid_o
+      
 );
 
-  //clocking mon_cb_xsecure @(posedge clk_i);
-    //input #1step
-    
-    // Clocked signals
 
-  //endclocking : mon_cb_xsecure
-
-endinterface : uvmt_cv32e40s_xsecure_cov_assert_if
+endinterface : uvmt_cv32e40s_xsecure_if
 
 
 // Interface to debug assertions and covergroups
