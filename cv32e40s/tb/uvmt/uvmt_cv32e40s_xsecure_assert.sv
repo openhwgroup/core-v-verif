@@ -11,7 +11,7 @@ module uvmt_cv32e40s_xsecure_assert
    uvma_rvfi_instr_if rvfi_if
   );
 
-  //TODO: change rvfi_trap and rvfi_intr from using bit position to struct fields when the rvfi interface is updated
+  //TODO: change rvfi_trap from using bit position to struct fields when the rvfi interface is updated
 
   // Local parameters:
   localparam no_lockup_errors = 3'b000;
@@ -102,7 +102,7 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure we look at a valid instruction
     rvfi_if.rvfi_valid
 
-    //Make sure the instruction is associated with a trap and an exception error and not an interrupt error
+    //Make sure the instruction is associated with a trap and an exception error
     && rvfi_if.rvfi_trap[0]
     && rvfi_if.rvfi_trap[1]
 
@@ -136,15 +136,15 @@ module uvmt_cv32e40s_xsecure_assert
     
     rvfi_if.rvfi_valid
 
-    && rvfi_if.rvfi_intr[0]
+    && rvfi_if.rvfi_intr.intr
     
-    && !rvfi_if.rvfi_intr[1]
+    && !rvfi_if.rvfi_intr.exception
     
-    && rvfi_if.rvfi_intr[2]
+    && rvfi_if.rvfi_intr.interrupt
     
-    && (rvfi_if.rvfi_intr[13:3] == error_code_load_bus_fault_nmi
+    && (rvfi_if.rvfi_intr.cause == error_code_load_bus_fault_nmi
 
-    || rvfi_if.rvfi_intr[13:3] == error_code_store_bus_fault_nmi)
+    || rvfi_if.rvfi_intr.cause == error_code_store_bus_fault_nmi)
 
     |=>
     xsecure_if.core_alert_minor_o
