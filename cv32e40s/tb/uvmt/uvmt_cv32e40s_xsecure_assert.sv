@@ -131,7 +131,7 @@ module uvmt_cv32e40s_xsecure_assert
   //TODO: Not passing because of possibly rtl bug
   //TODO: Need to check this after bug is fixed
   //TODO: Comment when passing
-  a_xsecure_security_alert_minor_7_and_8_rvfi: assert property (
+  a_xsecure_security_alert_minor_7_and_8: assert property (
     
     rvfi_if.rvfi_valid
 
@@ -177,7 +177,7 @@ module uvmt_cv32e40s_xsecure_assert
   );
   
 
-  c_xsecure_core_div_rem_timing_clk: cover property (
+  c_xsecure_core_div_rem_timing: cover property (
 
     //Make sure we detect an DIV or REM instruction in rvfi
     s_rvfi_normal_instruction(func7_div_rem_instruction, func3_div_rem_instruction, cv32e40s_pkg::OPCODE_OP)
@@ -223,7 +223,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// DIV/REM TIMING //////////
 
-  a_xsecure_core_div_rem_timing_clk: assert property (
+  a_xsecure_core_div_rem_timing: assert property (
     
     //Make sure we detect an DIV or REM instruction in rvfi
     s_rvfi_normal_instruction(func7_div_rem_instruction, func3_div_rem_instruction, cv32e40s_pkg::OPCODE_OP)
