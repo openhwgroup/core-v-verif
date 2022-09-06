@@ -1,11 +1,12 @@
-name: pmp
-description: Default pmp configuration for CV32E40S simulations
-compile_flags: >
-    +define+PMP_ENABLE_64
+name: pmp_g3r3
+description: pmp config with GRANULARITY=3 and NUM_REGIONS=3
+compile_flags:
+    +define+PMP_G3R3
     +define+ZBA_ZBB_ZBC_ZBS
 ovpsim: >
-    --override root/cpu/PMP_registers=64
-    # --showoverrides
+    --override root/cpu/PMP_grain=3
+    --override root/cpu/PMP_registers=3
+    #--showoverrides
 cflags: >
 plusargs: >
     +enable_zba_extension=1

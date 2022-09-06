@@ -83,6 +83,7 @@ module uvmt_cv32e40s_tb;
                              .B_EXT             (uvmt_cv32e40s_pkg::B_EXT),
                              .PMA_NUM_REGIONS   (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
                              .PMA_CFG           (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG),
+                             .PMP_GRANULARITY   (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY),
                              .PMP_NUM_REGIONS   (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS),
                              .INSTR_ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
                              .INSTR_RDATA_WIDTH (ENV_PARAM_INSTR_DATA_WIDTH),
@@ -598,7 +599,12 @@ module uvmt_cv32e40s_tb;
         .IS_INSTR_SIDE(1'b1),
         .MSECCFG_RESET_VAL(cv32e40s_pkg::MSECCFG_DEFAULT)
       )
-      u_pmp_assert_if_stage(.rst_n(clknrst_if.reset_n),
+      u_pmp_assert_if_stage(.rst_n (clknrst_if.reset_n),
+                            .obi_req (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.instr_req_o),
+                            .obi_addr (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.instr_addr_o),
+                            .obi_gnt (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.instr_gnt_i),
+                            .rvfi_valid (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_valid),
+                            .rvfi_pc_rdata (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_pc_rdata),
                             .*);
 
     bind  cv32e40s_pmp :
@@ -609,8 +615,24 @@ module uvmt_cv32e40s_tb;
         .IS_INSTR_SIDE(1'b0),
         .MSECCFG_RESET_VAL(cv32e40s_pkg::MSECCFG_DEFAULT)
       )
-      u_pmp_assert_lsu(.rst_n(clknrst_if.reset_n),
+      u_pmp_assert_lsu(.rst_n (clknrst_if.reset_n),
+                       .obi_req (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.data_req_o),
+                       .obi_addr (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.data_addr_o),
+                       .obi_gnt (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.data_gnt_i),
+                       .rvfi_valid (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_valid),
+                       .rvfi_pc_rdata (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_pc_rdata),
                        .*);
+
+    bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i
+      uvmt_cv32e40s_pmprvfi_assert #(
+        .PMP_GRANULARITY (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY),
+        .PMP_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS)
+      ) pmprvfi_assert_i (
+        .rvfi_mem_addr  (rvfi_mem_addr [31:0]),
+        .rvfi_mem_wmask (rvfi_mem_wmask[ 3:0]),
+        .rvfi_mem_rmask (rvfi_mem_rmask[ 3:0]),
+        .*
+      );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if_0_i),
                                                                       .support_if(support_logic_if.write)
@@ -898,7 +920,9 @@ module uvmt_cv32e40s_tb;
    end : test_bench_entry_point
 
    assign core_cntrl_if.clk = clknrst_if.clk;
-   assign iss_wrap.cpu.io.nmi_addr = ({dut_wrap.cv32e40s_wrapper_i.rvfi_csr_mtvec_if_0_i.rvfi_csr_rdata[31:2], 2'b00}) + 32'h3c;
+  `ifndef  FORMAL
+     assign iss_wrap.cpu.io.nmi_addr = ({dut_wrap.cv32e40s_wrapper_i.rvfi_csr_mtvec_if_0_i.rvfi_csr_rdata[31:2], 2'b00}) + 32'h3c;
+  `endif
 
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
