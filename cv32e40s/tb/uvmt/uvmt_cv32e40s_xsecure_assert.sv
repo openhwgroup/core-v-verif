@@ -216,14 +216,14 @@ module uvmt_cv32e40s_xsecure_assert
 
   sequence seq_rvfi_not_valid_for_34_cycles;
     
-    //Make sure rvfi_valid is off for 35 cycles
+    //Make sure rvfi_valid is off for 34 cycles
     !rvfi_if.rvfi_valid[*34] ##1 1;
 
   endsequence
 
   sequence seq_set_rvfi_valid_once_as_memory_instruction_during_the_past_34_cycles;
     
-    //Make sure a memory instruction is retired in a 35 cycle interval.
+    //Make sure a memory instruction is retired in a 34 cycle interval.
 
     //Make sure rvfi_valid is low an unknown number of cycles
     !rvfi_if.rvfi_valid[*0:33]
@@ -251,7 +251,7 @@ module uvmt_cv32e40s_xsecure_assert
     and $past(xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
     
     |->
-    //Make sure that there are at least 35 cycles from the last retired instruction 
+    //Make sure that there are at least 34 cycles from the last retired instruction 
     seq_rvfi_not_valid_for_34_cycles.triggered
     
     //or the retired instructions are loads or stores
