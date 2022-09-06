@@ -484,7 +484,7 @@ module uvmt_cv32e40s_tb;
   bind cv32e40s_wrapper	
     uvmt_cv32e40s_xsecure_if  xsecure_if (
    
-	// Core signals: cpuctrl rdata registeret cannot be read by rvfi (use core instead)
+	    // Core signals: cpuctrl rdata registeret cannot be read by rvfi, we must therefore use core signales instead
       // Gated clock
       .core_clk_gated                                     (core_i.clk),
 

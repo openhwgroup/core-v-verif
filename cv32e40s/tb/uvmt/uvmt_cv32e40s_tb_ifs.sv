@@ -118,12 +118,10 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_clk_gated,
 
     // CSR
-    //input logic core_alert_major_o,
     input logic core_alert_minor_o,
 
     input logic core_xsecure_ctrl_cpuctrl_dataindtiming,
     input logic core_xsecure_ctrl_cpuctrl_rnddummy,
-    //input logic core_cpuctrl_rndhint,	
 
     input logic [3:0] core_xsecure_ctrl_cpuctrl_rnddummyfreq,
     input logic core_if_stage_gen_dummy_instr_dummy_instr_dummy_en,
