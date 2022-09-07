@@ -34,7 +34,7 @@ module uvmt_cv32e40s_xsecure_assert
   localparam OPCODE_BIT_15_TO_13_COMPR_BRANCH = 3'b11x;
   localparam OPCODE_BIT_1_TO_0_COMPR_BRANCH = 2'b01;
 
-  localparam REGISTER_MHPMCOUNTER_MCYCLE_FULL = 32'hFFFFFFFF;
+  localparam REGISTER_MHPMCOUNTER_MCYCLE_FULL = 64'hFFFFFFFFFFFFFFFF;
 
   localparam REGISTER_x0 = 5'b00000;
 
@@ -202,8 +202,8 @@ module uvmt_cv32e40s_xsecure_assert
 
     //Make sure that the instruction before the branch instruction was not a load or a store (rvfi stage):
     //We use past 2 because branching needs two cycles to complete execution due to PC harning safety.
-    && $past(!|rvfi_if.rvfi_mem_rmask,2)
-    && $past(!|rvfi_if.rvfi_mem_wmask,2)
+    && $past(!(|rvfi_if.rvfi_mem_rmask),2)
+    && $past(!(|rvfi_if.rvfi_mem_wmask),2)
 
     //Make sure there are at least one instruction stall after every branch, because a branch is allways taken.
     //We would expect 2 instruction stalls, but since the branch instruction is recalculated in id stage we have only one stall, instead of two.
@@ -388,8 +388,8 @@ module uvmt_cv32e40s_xsecure_assert
     !xsecure_if.core_cs_registers_mcountinhibit_q_mcycle_inhibit
      
     //Make sure we do not write to the mcycle csr register
-    and ($past(!xsecure_if.core_cs_registers_csr_en_gated)
-    && $past(xsecure_if.core_cs_registers_csr_waddr != cv32e40s_pkg::CSR_MCYCLE))
+    and !($past(xsecure_if.core_cs_registers_csr_en_gated)
+    && ($past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLE)) || $past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLEH))
     
     |->
     //Make sure the mcycle counts every cycle (including the clock cycles dummy instruction occurs)
@@ -397,6 +397,9 @@ module uvmt_cv32e40s_xsecure_assert
     
     //But make sure it resets in case of overflow
     or xsecure_if.core_cs_registers_mhpmcounter_mcycle == '0 && $past(xsecure_if.core_cs_registers_mhpmcounter_mcycle) == REGISTER_MHPMCOUNTER_MCYCLE_FULL
+
+    //And allow the first mcycle count to not increment
+    or xsecure_if.core_cs_registers_mhpmcounter_mcycle == $past(xsecure_if.core_cs_registers_mhpmcounter_mcycle) && $past(xsecure_if.core_cs_registers_mcountinhibit_q_mcycle_inhibit)
 
   ) else `uvm_error(info_tag, "Dummy instructions do not update the mcycle register\n");
 
@@ -426,7 +429,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// DUMMY INSTRUCTION FREQUENCY //////////
 
-  sequence seq_dummy_instruction_within_normal_valid_instructions(integer num_normal_valid_instructions);    
+  sequence seq_dummy_instruction_within_normal_valid_instructions (num_normal_valid_instructions);    
     //Make sure we detect a dummy instruction inbetween the x valid instructions
 
     //Make sure we detect 0 to x number of normal valid instrctions in the if stage
@@ -442,7 +445,7 @@ module uvmt_cv32e40s_xsecure_assert
   endsequence
   
   
-  property p_xsecure_dummy_instruction_frequency(integer num_normal_valid_instructions_per_dummy_instruction, logic [3:0] rnddummyfreq_value);
+  property p_xsecure_dummy_instruction_frequency(num_normal_valid_instructions_per_dummy_instruction, logic [3:0] rnddummyfreq_value);
     
     //Make sure the dummy setting is on
     (xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy

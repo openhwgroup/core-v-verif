@@ -128,7 +128,7 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [2:0] core_cs_registers_xsecure_lfsr_lockup,
     input logic core_controller_controller_fsm_debug_mode_q,
 
-    input logic [31:0] core_cs_registers_mhpmcounter_mcycle,
+    input logic [63:0] core_cs_registers_mhpmcounter_mcycle,
     input logic [31:0] core_cs_registers_mhpmcounter_minstret,
     input logic [31:3] [63:0] core_cs_registers_mhpmcounter_31_to_3,
     input logic [31:3] [31:0] core_cs_registers_mhpmevent_31_to_3,

@@ -489,7 +489,7 @@ module uvmt_cv32e40s_tb;
       .core_clk_gated                                     (core_i.clk),
 
       // CSR
-      .core_alert_minor_o (alert_minor_o),
+      .core_alert_minor_o                                 (alert_minor_o),
 
       .core_xsecure_ctrl_cpuctrl_dataindtiming	          (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
       .core_xsecure_ctrl_cpuctrl_rnddummy		              (core_i.xsecure_ctrl.cpuctrl.rnddummy),
