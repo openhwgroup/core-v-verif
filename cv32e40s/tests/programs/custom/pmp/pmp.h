@@ -39,8 +39,8 @@ void tor_nomatch();
 // helper
 void change_mode();
 void umode();
-void load4addr(uint32_t *output_addr, uint32_t addr);
-void store2addr(int input, uint32_t addr);
+void load4addr(uint32_t *output_addr, uint32_t *addr);
+void store2addr(int input, uint32_t *addr);
 uint32_t lcg_parkmiller(uint32_t *state);
 void umode_jmp(uint32_t *addr);
 

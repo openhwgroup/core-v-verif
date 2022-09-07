@@ -60,6 +60,18 @@ __attribute__((interrupt("machine"))) void u_sw_irq_handler(void)
   {
     printf("\n\t Store/AMO access fault ");
   }
+  else if (glb_csrs.mcause == 8)
+  {
+    printf("\n\t Environment call from U-Mode (ECALL)\n");
+  }
+  else if (glb_csrs.mcause == 11)
+  {
+    printf("\n\t Environment call from M-Mode (ECALL)\n");
+  }
+  else
+  {
+    printf("\n\t (some other mcause reason, %lu)", glb_csrs.mcause);
+  }
 
   // Increment "mepc"
   __asm__ volatile("csrrw %0, mepc, x0"
