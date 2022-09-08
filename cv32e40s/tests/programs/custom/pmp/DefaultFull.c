@@ -33,8 +33,8 @@ void default_full()
                    : "r"(RANDOM_REG));
 
   // store an arbitrary value to an arbitrary address
-  store2addr(13, temp[63]);
-  load4addr((uint32_t *)&temp[0], temp[63]);
+  store2addr(13, (uint32_t *)temp[63]);
+  load4addr((uint32_t *)&temp[0], (uint32_t *)temp[63]);
 
   if (temp[0] == 13)
   {

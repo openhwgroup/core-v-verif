@@ -38,13 +38,6 @@ void tor_nomatch()
     temp[i] = i + 1;
   }
 
-/* TODO
-  // Let everything be executable
-  __asm__ volatile("csrw 0x3EF, %0" : : "r"(0xFFFFffff));  // 0x3EF=pmpaddr63
-  __asm__ volatile("csrw 0x3EE, %0" : : "r"(0x0));
-  __asm__ volatile("csrw 0x3AF, %0" : : "r"(0x0f000000));  // TOR+XWR on entry 63, 0x3AF=pmpcfg15
-*/
-
   // designate "orderly" region up through first half of "temp[]", "torXWR"
   upperaddr = ((uint32_t)(&temp[31])) >> 2;
   loweraddr = 0;
@@ -78,12 +71,12 @@ void tor_nomatch()
     exit(EXIT_FAILURE);
   }
 
-  store2addr(13, &temp[1]);
+  store2addr(13, (uint32_t *)&temp[1]);
   if (glb_csrs.mcause) {
     printf("\n\t store should not except\n");
     exit(EXIT_FAILURE);
   }
-  load4addr(&temp[2], &temp[1]);
+  load4addr((uint32_t *)&temp[2], (uint32_t *)&temp[1]);
   if (glb_csrs.mcause) {
     printf("\n\t loadstore should not except\n");
     exit(EXIT_FAILURE);
@@ -129,7 +122,7 @@ void tor_nomatch()
   }
 
   // this should trap and bring to M mode
-  store2addr(13, &temp[33]);
+  store2addr(13, (uint32_t *)&temp[33]);
 
   asm volatile("csrrs %0, mcause, x0"
                : "=r"(mcause));
