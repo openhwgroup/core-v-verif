@@ -335,7 +335,9 @@ module uvmt_cv32e40x_imperas_dv_wrap
    ////////////////////////////////////////////////////////////////////////////
    bit DREQ, DREQ_NEXT;
    always @(*) begin: Set_DebugReq
-       DREQ_NEXT = `DUT_PATH.debug_req_i | (`RVFI_IF.rvfi_dbg==3 && `RVFI_IF.rvfi_dbg_mode);
+       // this requires a sync on DCAUSE
+       //DREQ_NEXT = `DUT_PATH.debug_req_i | (`RVFI_IF.rvfi_dbg==3 && `RVFI_IF.rvfi_dbg_mode);
+       DREQ_NEXT = (`RVFI_IF.rvfi_dbg==3 && `RVFI_IF.rvfi_dbg_mode);
        if (DREQ==0 && DREQ_NEXT==1) begin
            void'(rvvi.net_push("haltreq", 1));
            DREQ = 1;
@@ -537,9 +539,9 @@ module uvmt_cv32e40x_imperas_dv_wrap
            // and we have an intr - then these need scheduling
            // 2 exception events occured simultaneously
            if (`RVFI_IF.rvfi_dbg_mode && `RVFI_IF.rvfi_dbg=='h3 && intr_intr) begin
-               $display("##################################################################");
+               $display("################################################################################");
                $display("# WARNING: intr & debug, intr_cause=%0d exception followed by debug request", intr_cause);
-               $display("##################################################################");
+               $display("################################################################################");
                // Resync
                resync_hart = 1;
            end
@@ -547,9 +549,9 @@ module uvmt_cv32e40x_imperas_dv_wrap
            // simultaneous intr and trap
            // 2 exception events occured siultaneously
            if (intr_intr && trap_exception_cause) begin
-               $display("##################################################################");
+               $display("################################################################################");
                $display("# WARNING: intr & trap, intr_cause=%0d trap_exception_cause=%0d", intr_cause, trap_exception_cause);
-               $display("##################################################################");
+               $display("################################################################################");
                // Resync
                resync_hart = 1;
            end
