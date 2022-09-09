@@ -258,12 +258,21 @@ module uvmt_cv32e40x_imperas_dv_wrap
    ////////////////////////////////////////////////////////////////////////////
    // Adopted from:
    // ImperasDV/examples/openhwgroup_cv32e40x/systemverilog/cv32e40x_testbench.sv
+   //
+   // InstrunctionBusFault(48) is in fact a TRAP which is derived externally
+   // This is strange as other program TRAPS are derived by the model, for now
+   // We have to ensure we do not step the REF model for this TRAP as it will
+   // Step too far. So instead we block it as being VALID, but pass on the 
+   // signals.
+   // maybe we need a different way to communicate this to the model, for
+   // instance the ability to register a callback on fetch, in order to assert
+   // this signal.
    ////////////////////////////////////////////////////////////////////////////
    assign rvvi.clk            = `RVFI_IF.clk;
    assign rvvi.valid[0][0]    = `RVFI_IF.rvfi_valid;
    assign rvvi.order[0][0]    = `RVFI_IF.rvfi_order;
    assign rvvi.insn[0][0]     = `RVFI_IF.rvfi_insn;
-   assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap;
+   assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap.trap & (`RVFI_IF.rvfi_trap.exception_cause==48);
    assign rvvi.intr[0][0]     = `RVFI_IF.rvfi_intr;
    assign rvvi.mode[0][0]     = `RVFI_IF.rvfi_mode;
    assign rvvi.ixl[0][0]      = `RVFI_IF.rvfi_ixl;
@@ -389,12 +398,15 @@ module uvmt_cv32e40x_imperas_dv_wrap
        `RVVI_CLR_IRQ(LocalInterrupt15,   31)
    end: Clr_Irq
    
-//   wire [31:0] MIP, MIE, MSTATUS;
+//   wire [31:0] MIP, MIE, MSTATUS, MCAUSE;
 //   assign MIP     = rvvi.csr[0][0][`CSR_MIP_ADDR];
 //   assign MIE     = rvvi.csr[0][0][`CSR_MIE_ADDR];
 //   assign MSTATUS = rvvi.csr[0][0][`CSR_MSTATUS_ADDR];
+//   assign MCAUSE  = rvvi.csr[0][0][`CSR_MCAUSE_ADDR];
+//
 //   always @(*) begin
 //       if (MSTATUS & 'h8) $display("IRQ PE = %08X", MIP & MIE);
+//       $display("MCAUSE=%08X csr_MCAUSE_wb=%0d", MCAUSE, csr_mcause_wb);
 //   end
 //   always @(`DUT_PATH.irq_i) begin: Chg_Irq
 //       $display("irq_i=%08X", `DUT_PATH.irq_i);
@@ -408,6 +420,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
    ////////////////////////////////////////////////////////////////////////////
    bit InstructionBusFault;
    bit DataBusFault;
+   bit resync_hart;
    always @(*) begin: Monitor_RVFI
        bit        trap_trap;
        bit        trap_exception;
@@ -426,6 +439,8 @@ module uvmt_cv32e40x_imperas_dv_wrap
        
        bit        nmi_c1, nmi_c2;
        
+       resync_hart = 0;
+
        if (`RVFI_IF.rvfi_valid) begin
            trap_trap            = `RVFI_IF.rvfi_trap.trap;
            trap_exception       = `RVFI_IF.rvfi_trap.exception;
@@ -442,6 +457,47 @@ module uvmt_cv32e40x_imperas_dv_wrap
            nmi_pending          = `RVFI_IF.rvfi_nmip[0];
            nmi_load_store       = `RVFI_IF.rvfi_nmip[1];
            
+           if (0) begin
+              `uvm_info(info_tag, $sformatf("\nRVFI Valid %t", $time), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("valid      = %X", `RVFI_IF.rvfi_valid), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("order      = %X", `RVFI_IF.rvfi_order), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("insn       = %X", `RVFI_IF.rvfi_insn), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("trap       trap=%X exception=%X debug=%X exception_cause=0x%X debug_cause=0x%X cause_type=0x%X", 
+                      trap_trap, trap_exception, trap_debug, trap_exception_cause, trap_debug_cause, trap_cause_type), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("halt       = %X", `RVFI_IF.rvfi_halt), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("dbg        = %X", `RVFI_IF.rvfi_dbg), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("dbg_mode   = %X", `RVFI_IF.rvfi_dbg_mode), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("nmip       nmi=%X nmi_load0_store1=%X", `RVFI_IF.rvfi_nmip[0], `RVFI_IF.rvfi_nmip[1]), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("intr       intr=%X exception=%X interrupt=%X cause=0x%X", 
+                      intr_intr, intr_exception, intr_interrupt, intr_cause), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("mode       = %X", `RVFI_IF.rvfi_mode), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("ixl        = %X", `RVFI_IF.rvfi_ixl), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("pc_rdata   = %X", `RVFI_IF.rvfi_pc_rdata), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("pc_wdata   = %X", `RVFI_IF.rvfi_pc_wdata), UVM_INFO)
+           end
+
+           // It is illegal for both of these to be actve
+//           if (trap_trap & intr_intr) begin                   
+//               $display("##################################################################");
+//               $display("# NOTE: TRAP & INTR:");
+//               $display("# NOTE:     TRAP exc=%0d exc_cause=%0d dbg=%0d dbg_cause=%0d cause_type=%0d",
+//                       trap_exception, trap_debug, trap_exception_cause, trap_debug_cause, trap_cause_type);
+//               $display("# NOTE:     INTR exc=%0d interrupt=%0d cause=%0d",
+//                   intr_exception, intr_interrupt, intr_cause);
+//               $display("##################################################################");
+//               $fatal;
+//           end else if (trap_trap) begin
+//               $display("##################################################################");
+//               $display("# NOTE: TRAP exc=%0d exc_cause=%0d dbg=%0d dbg_cause=%0d cause_type=%0d",
+//                   trap_exception, trap_debug, trap_exception_cause, trap_debug_cause, trap_cause_type);
+//               $display("##################################################################");
+//           end else if (intr_intr) begin
+//               $display("##################################################################");
+//               $display("# NOTE: INTR exc=%0d interrupt=%0d cause=%0d",
+//                   intr_exception, intr_interrupt, intr_cause);
+//               $display("##################################################################");
+//           end
+
            //
            // Load Store - NMI
            //
@@ -462,7 +518,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
            end
 
            //
-           //  Fetch - Exception
+           //  Fetch - Exception on TRAP
            //
            if (trap_trap && trap_exception && trap_exception_cause==48) begin
                if (!InstructionBusFault) begin
@@ -479,11 +535,13 @@ module uvmt_cv32e40x_imperas_dv_wrap
            // Report warnings of some special events
            // If we have entered debug Mode and there is a haltreq
            // and we have an intr - then these need scheduling
-           // 2 exception events occured siultaneously
+           // 2 exception events occured simultaneously
            if (`RVFI_IF.rvfi_dbg_mode && `RVFI_IF.rvfi_dbg=='h3 && intr_intr) begin
                $display("##################################################################");
                $display("# WARNING: intr & debug, intr_cause=%0d exception followed by debug request", intr_cause);
                $display("##################################################################");
+               // Resync
+               resync_hart = 1;
            end
            
            // simultaneous intr and trap
@@ -492,27 +550,13 @@ module uvmt_cv32e40x_imperas_dv_wrap
                $display("##################################################################");
                $display("# WARNING: intr & trap, intr_cause=%0d trap_exception_cause=%0d", intr_cause, trap_exception_cause);
                $display("##################################################################");
+               // Resync
+               resync_hart = 1;
            end
-           
-//           `uvm_info(info_tag, $sformatf("\nRVFI Valid %t", $time), UVM_INFO)
-//           `uvm_info(info_tag, $sformatf("valid      = %X", `RVFI_IF.rvfi_valid), UVM_INFO)
-//           `uvm_info(info_tag, $sformatf("order      = %X", `RVFI_IF.rvfi_order), UVM_INFO)
-//           `uvm_info(info_tag, $sformatf("insn       = %X", `RVFI_IF.rvfi_insn), UVM_INFO)
-//           `uvm_info(info_tag, $sformatf("trap       trap=%X exception=%X debug=%X exception_cause=0x%X debug_cause=0x%X cause_type=0x%X", 
-//                   trap_trap, trap_exception, trap_debug, trap_exception_cause, trap_debug_cause, trap_cause_type), UVM_INFO)
-//           `uvm_info(info_tag, $sformatf("halt       = %X", `RVFI_IF.rvfi_halt), UVM_INFO)
-//           `uvm_info(info_tag, $sformatf("dbg        = %X", `RVFI_IF.rvfi_dbg), UVM_INFO)
-//           `uvm_info(info_tag, $sformatf("dbg_mode   = %X", `RVFI_IF.rvfi_dbg_mode), UVM_INFO)
-//           `uvm_info(info_tag, $sformatf("nmip       nmi=%X nmi_load0_store1=%X", `RVFI_IF.rvfi_nmip[0], `RVFI_IF.rvfi_nmip[1]), UVM_INFO)
-//           `uvm_info(info_tag, $sformatf("intr       intr=%X exception=%X interrupt=%X cause=0x%X", 
-//                   intr_intr, intr_exception, intr_interrupt, intr_cause), UVM_INFO)
-//           `uvm_info(info_tag, $sformatf("mode       = %X", `RVFI_IF.rvfi_mode), UVM_INFO)
-//           `uvm_info(info_tag, $sformatf("ixl        = %X", `RVFI_IF.rvfi_ixl), UVM_INFO)
-//           `uvm_info(info_tag, $sformatf("pc_rdata   = %X", `RVFI_IF.rvfi_pc_rdata), UVM_INFO)
-//           `uvm_info(info_tag, $sformatf("pc_wdata   = %X", `RVFI_IF.rvfi_pc_wdata), UVM_INFO)
        end
    end: Monitor_RVFI
 
+   assign rvvi.resync[0] = resync_hart;
 
   /////////////////////////////////////////////////////////////////////////////
   // REF control
@@ -672,11 +716,11 @@ module uvmt_cv32e40x_imperas_dv_wrap
     rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt13"),    1);
     rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt14"),    1);
     rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt15"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("InstructionBusFault"), 1);
 
     // NMI
     rvviRefNetGroupSet(rvviRefNetIndexGet("nmi"),                 2);
     rvviRefNetGroupSet(rvviRefNetIndexGet("nmi_cause"),           2);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("InstructionBusFault"), 2);
 
     // Debug
     rvviRefNetGroupSet(rvviRefNetIndexGet("haltreq"),             3);
