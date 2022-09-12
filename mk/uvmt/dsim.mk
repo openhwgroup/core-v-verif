@@ -38,7 +38,12 @@ DSIM_FILE_LIST         ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 DSIM_FILE_LIST         += -f $(DV_UVMT_PATH)/imperas_iss.flist
 DSIM_COMPILE_ARGS      += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 
-DSIM_USER_COMPILE_ARGS ?=
+ifeq ($(CV_CORE_UC),CV32E40S)
+DSIM_USER_COMPILE_ARGS = -no-sva
+else
+DSIM_USER_COMPILE_ARGS =
+endif
+
 ifeq ($(USE_ISS),YES)
 	DSIM_RUN_FLAGS     += +USE_ISS
 else
