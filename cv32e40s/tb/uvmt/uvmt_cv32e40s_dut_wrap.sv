@@ -47,6 +47,7 @@ module uvmt_cv32e40s_dut_wrap
     parameter int          PMA_NUM_REGIONS =  0,
     parameter pma_cfg_t    PMA_CFG[PMA_NUM_REGIONS-1 : 0] = '{default:PMA_R_DEFAULT},
     parameter int          PMP_NUM_REGIONS = 0,
+    parameter int          PMP_GRANULARITY = 0,
     // Remaining parameters are used by TB components only
               INSTR_ADDR_WIDTH    =  32,
               INSTR_RDATA_WIDTH   =  32,
@@ -143,6 +144,7 @@ module uvmt_cv32e40s_dut_wrap
                       .B_EXT            (B_EXT),
                       .PMA_NUM_REGIONS  (PMA_NUM_REGIONS),
                       .PMA_CFG          (PMA_CFG),
+                      .PMP_GRANULARITY  (PMP_GRANULARITY),
                       .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
                       )
     cv32e40s_wrapper_i
@@ -201,11 +203,6 @@ module uvmt_cv32e40s_dut_wrap
          .clic_irq_level_i       ( '0   /*todo: connect */        ),
          .clic_irq_priv_i        ( '0   /*todo: connect */        ),
          .clic_irq_shv_i         ( '0   /*todo: connect */        ),
-         //.clic_irq_il_i          ( '0   /*todo: connect */        ),
-         //.clic_irq_hv_i          ( '0   /*todo: connect */        ),
-         //.clic_irq_id_o          (      /*todo: connect */        ),
-         //.clic_irq_mode_o        (      /*todo: connect */        ),
-         //.clic_irq_exit_o        (      /*todo: connect */        ),
 
          .fencei_flush_req_o     ( fencei_if_i.flush_req          ),
          .fencei_flush_ack_i     ( fencei_if_i.flush_ack          ),

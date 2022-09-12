@@ -30,7 +30,7 @@ module uvmt_cv32e40s_interrupt_assert
     // External interrupt interface
     input [31:0] irq_i,
     input        irq_ack_o,
-    input [4:0]  irq_id_o,
+    input [9:0]  irq_id_o,
 
     // External debug req (for WFI modeling)
     input        debug_req_i,
