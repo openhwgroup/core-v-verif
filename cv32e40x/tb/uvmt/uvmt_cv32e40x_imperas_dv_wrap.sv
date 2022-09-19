@@ -233,7 +233,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
                    .CMP_FPR     (0),
                    .CMP_VR      (0),
                    .CMP_CSR     (1)
-                   //.MISCOMPARES (1)
                    )
                    trace2api(rvvi);
 
@@ -272,7 +271,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
    assign rvvi.valid[0][0]    = `RVFI_IF.rvfi_valid;
    assign rvvi.order[0][0]    = `RVFI_IF.rvfi_order;
    assign rvvi.insn[0][0]     = `RVFI_IF.rvfi_insn;
-   assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap.trap & (`RVFI_IF.rvfi_trap.exception_cause==48);
+   assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap.trap & (`RVFI_IF.rvfi_trap.exception_cause==48); // externally generated TRAP event
    assign rvvi.intr[0][0]     = `RVFI_IF.rvfi_intr;
    assign rvvi.mode[0][0]     = `RVFI_IF.rvfi_mode;
    assign rvvi.ixl[0][0]      = `RVFI_IF.rvfi_ixl;
@@ -422,7 +421,9 @@ module uvmt_cv32e40x_imperas_dv_wrap
    ////////////////////////////////////////////////////////////////////////////
    bit InstructionBusFault;
    bit DataBusFault;
+   int DataBusFaultCause;
    bit resync_hart;
+   
    always @(*) begin: Monitor_RVFI
        bit        trap_trap;
        bit        trap_exception;
@@ -458,11 +459,11 @@ module uvmt_cv32e40x_imperas_dv_wrap
            
            nmi_pending          = `RVFI_IF.rvfi_nmip[0];
            nmi_load_store       = `RVFI_IF.rvfi_nmip[1];
-           
+
            if (0) begin
               `uvm_info(info_tag, $sformatf("\nRVFI Valid %t", $time), UVM_INFO)
               `uvm_info(info_tag, $sformatf("valid      = %X", `RVFI_IF.rvfi_valid), UVM_INFO)
-              `uvm_info(info_tag, $sformatf("order      = %X", `RVFI_IF.rvfi_order), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("order      = %0d", `RVFI_IF.rvfi_order), UVM_INFO)
               `uvm_info(info_tag, $sformatf("insn       = %X", `RVFI_IF.rvfi_insn), UVM_INFO)
               `uvm_info(info_tag, $sformatf("trap       trap=%X exception=%X debug=%X exception_cause=0x%X debug_cause=0x%X cause_type=0x%X", 
                       trap_trap, trap_exception, trap_debug, trap_exception_cause, trap_debug_cause, trap_cause_type), UVM_INFO)
@@ -478,40 +479,22 @@ module uvmt_cv32e40x_imperas_dv_wrap
               `uvm_info(info_tag, $sformatf("pc_wdata   = %X", `RVFI_IF.rvfi_pc_wdata), UVM_INFO)
            end
 
-           // It is illegal for both of these to be actve
-//           if (trap_trap & intr_intr) begin                   
-//               $display("##################################################################");
-//               $display("# NOTE: TRAP & INTR:");
-//               $display("# NOTE:     TRAP exc=%0d exc_cause=%0d dbg=%0d dbg_cause=%0d cause_type=%0d",
-//                       trap_exception, trap_debug, trap_exception_cause, trap_debug_cause, trap_cause_type);
-//               $display("# NOTE:     INTR exc=%0d interrupt=%0d cause=%0d",
-//                   intr_exception, intr_interrupt, intr_cause);
-//               $display("##################################################################");
-//               $fatal;
-//           end else if (trap_trap) begin
-//               $display("##################################################################");
-//               $display("# NOTE: TRAP exc=%0d exc_cause=%0d dbg=%0d dbg_cause=%0d cause_type=%0d",
-//                   trap_exception, trap_debug, trap_exception_cause, trap_debug_cause, trap_cause_type);
-//               $display("##################################################################");
-//           end else if (intr_intr) begin
-//               $display("##################################################################");
-//               $display("# NOTE: INTR exc=%0d interrupt=%0d cause=%0d",
-//                   intr_exception, intr_interrupt, intr_cause);
-//               $display("##################################################################");
-//           end
-
            //
            // Load Store - NMI
            //
            nmi_c1 = (intr_intr && intr_interrupt && ((intr_cause==1024 || intr_cause==1025)));
            nmi_c2 = nmi_pending;
-
+           
            if (nmi_c1 || nmi_c2) begin
                // Load / Store
-               void'(rvvi.net_push("nmi_cause", intr_cause)); // Load Error = 1024, Store Error = 1025
+               if (DataBusFaultCause != intr_cause) begin
+                   void'(rvvi.net_push("nmi_cause", intr_cause)); // Load Error = 1024, Store Error = 1025
+               end
                if (!DataBusFault) begin
                    void'(rvvi.net_push("nmi", 1));
                end
+               DataBusFault = 1;
+               DataBusFaultCause = intr_cause;
            end else begin
                if (DataBusFault) begin
                    void'(rvvi.net_push("nmi", 0));
@@ -555,6 +538,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
                // Resync
                resync_hart = 1;
            end
+           
        end
    end: Monitor_RVFI
 
@@ -575,7 +559,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
     // Test-program must have been compiled before we got here...
     if ($value$plusargs("elf_file=%s", test_program_elf)) begin
       `uvm_info(info_tag, $sformatf("ImperasDV loading test_program %0s", test_program_elf), UVM_NONE)
-      //if (!rvviRefInit(test_program_elf, "openhwgroup.ovpworld.org", "CV32E40X_V0.2.0", 0, `RVVI_TRUE)) begin
       if (!rvviRefInit(test_program_elf, "openhwgroup.ovpworld.org", "CV32E40X", 0)) begin
         `uvm_fatal(info_tag, "rvviRefInit failed")
       end
@@ -600,7 +583,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
 
     // cannot predict this register due to latency between
     // pending and taken
-    //void'(rvviRefCsrSetVolatile(hart_id, `CSR_MIP_ADDR          ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MIP_ADDR          ));
 
     // TODO: deal with the MHPMCOUNTER CSRs properly.
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER3_ADDR ));
@@ -718,14 +701,15 @@ module uvmt_cv32e40x_imperas_dv_wrap
     rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt13"),    1);
     rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt14"),    1);
     rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt15"),    1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("InstructionBusFault"), 1);
+    
+    rvviRefNetGroupSet(rvviRefNetIndexGet("InstructionBusFault"), 2);
 
     // NMI
-    rvviRefNetGroupSet(rvviRefNetIndexGet("nmi"),                 2);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("nmi_cause"),           2);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("nmi"),                 3);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("nmi_cause"),           3);
 
     // Debug
-    rvviRefNetGroupSet(rvviRefNetIndexGet("haltreq"),             3);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("haltreq"),             4);
     
     // Add IO regions of memory
     // According to silabs this range is 0x0080_0000 to 0x0080_0FFF
