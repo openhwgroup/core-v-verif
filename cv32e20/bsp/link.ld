@@ -47,7 +47,7 @@ SECTIONS
   } >dbg
 
   /* CORE-V: we want a fixed entry point */
-  PROVIDE(__boot_address = 0x80);
+  PROVIDE(__boot_address = 0x800);
 
   /* CORE-V: interrupt vectors */
   .vectors (ORIGIN(ram)):

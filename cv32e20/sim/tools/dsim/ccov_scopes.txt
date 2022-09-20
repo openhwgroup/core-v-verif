@@ -1,0 +1,19 @@
+# Copyright 2022 OpenHW Group
+#
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# Code Coverage Scope Specification file for DSIM
+#
+# Example from DSIM User Manual: path top.testbench.dut +
+#
+# We want to instrument and collect code coverage for the CORE and all levels
+# of hierarchy below the top of the core. Also, in the DSIM compile-time args,
+# top is defined as uvmt_cv32_tb, so compile-time command looks something like:
+# 
+#  dsim -top uvmt_cv32_tb \
+#       -code-cov block \
+#       -code-cov-scope-specs ccov_scopes.txt \
+#       -f $(MANIFEST)
+#
+# TODO: need the proper path to the top-level of the CV32E20 RTL core.
+#path uvmt_cv32e20_tb.dut_wrap.cv32e20_tb_wrapper_i.cv32e20_wrapper_i.core_i +

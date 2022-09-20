@@ -223,7 +223,7 @@ module uvma_obi_memory_assert
   endproperty : p_addr_be_consistent
   a_addr_be_consistent: assert property(p_addr_be_consistent)
   else
-    `uvm_error(info_tag, $sformatf("be of 0x%01x not consistent with addr 0x%08x", $sampled(be), $sampled(addr)));
+    ;//`uvm_warning(info_tag, $sformatf("be of 0x%01x not consistent with addr 0x%08x", $sampled(be), $sampled(addr)));
 
 
 endmodule : uvma_obi_memory_assert

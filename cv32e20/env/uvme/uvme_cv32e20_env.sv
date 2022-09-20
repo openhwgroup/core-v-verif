@@ -340,14 +340,14 @@ function void uvme_cv32e20_env_c::retrieve_vifs();
       `uvm_fatal("UVME_CV32E20_ENV", $sformatf("No uvmt_cv32e20_debug_cov_assert_if found in config database"))
    end
 
-   // fixme:strichmo:This is a hack, that can be removed when RVFI/RVVI is enabled
+   // TODO This was a hack, that can be removed when RVFI/RVVI is enabled
    // This enables the vp_rnd_num_seq to backdoor update memories when a "volatile" register is read
-   if (!uvm_config_db#(virtual RVVI_memory)::get(this, "", "rvvi_memory_vif", cntxt.rvvi_memory_vif)) begin
-      `uvm_fatal("VIF", $sformatf("Could not find rvvi_memory_vif handle of type %s in uvm_config_db", $typename(cntxt.rvvi_memory_vif)))
-   end
-   else begin
-      `uvm_info("VIF", $sformatf("Found rvvi_memory_vifhandle of type %s in uvm_config_db", $typename(cntxt.rvvi_memory_vif)), UVM_DEBUG)
-   end
+   //if (!uvm_config_db#(virtual RVVI_memory)::get(this, "", "rvvi_memory_vif", cntxt.rvvi_memory_vif)) begin
+   //   `uvm_fatal("VIF", $sformatf("Could not find rvvi_memory_vif handle of type %s in uvm_config_db", $typename(cntxt.rvvi_memory_vif)))
+   //end
+   //else begin
+   //   `uvm_info("VIF", $sformatf("Found rvvi_memory_vifhandle of type %s in uvm_config_db", $typename(cntxt.rvvi_memory_vif)), UVM_DEBUG)
+   //end
 
 endfunction: retrieve_vifs
 

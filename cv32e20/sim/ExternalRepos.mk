@@ -10,9 +10,10 @@
 
 export SHELL = /bin/bash
 
-CV_CORE_REPO   ?= https://github.com/openhwgroup/cve2
+CV_CORE_REPO   ?= https://github.com/MikeOpenHWGroup/cve2
 CV_CORE_BRANCH ?= main
-CV_CORE_HASH   ?= 2ea2863
+#CV_CORE_HASH   ?= 2ea2863
+CV_CORE_HASH   ?= 0f6177b
 CV_CORE_TAG    ?= none
 
 RISCVDV_REPO    ?= https://github.com/google/riscv-dv

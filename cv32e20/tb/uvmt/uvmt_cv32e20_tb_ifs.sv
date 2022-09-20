@@ -2,21 +2,19 @@
 
 // Copyright 2020,2022 OpenHW Group
 // Copyright 2020 Datum Technology Corporation
-// 
+//
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     https://solderpad.org/licenses/
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
-
-
+//
 
 // This file specifies all interfaces used by the CV32E20 test bench (uvmt_cv32e20_tb).
 // Most interfaces support tasks to allow control by the ENV or test cases.
@@ -31,14 +29,14 @@
 interface uvmt_cv32e20_clk_gen_if (output logic core_clock, output logic core_reset_n);
 
    import uvm_pkg::*;
-   
+
    bit       start_clk               = 0;
    // TODO: get the uvme_cv32e20_* values from random ENV CFG members.
    realtime  core_clock_period       = 1500ps; // uvme_cv32e20_clk_period * 1ps;
    realtime  reset_deassert_duration = 7400ps; // uvme_cv32e20_reset_deassert_duarion * 1ps;
    realtime  reset_assert_duration   = 7400ps; // uvme_cv32e20_reset_assert_duarion * 1ps;
-   
-   
+
+
    /**
     * Generates clock and reset signals.
     * If reset_n comes up de-asserted (1'b1), wait a bit, then assert, then de-assert
@@ -321,12 +319,13 @@ interface uvmt_cv32e20_step_compare_if;
          `uvm_error("step_compare", "CSR was checked 0 times!");
       end
    endfunction // report_step_compare
-   
+
 endinterface: uvmt_cv32e20_step_compare_if
 
+// TODO: the interface below is cloned from the CV32E40P.
+//       It must be replaced with an CV32E20-specific version.
 // Interface to debug assertions and covergroups
 interface uvmt_cv32e20_debug_cov_assert_if
-    import cv32e20_pkg::*;
     (
     input  clk_i,
     input  rst_ni,
@@ -352,7 +351,7 @@ interface uvmt_cv32e20_debug_cov_assert_if
     input  [31:0] if_stage_pc, // Program counter in fetch
     input         is_decoding,
     input         id_valid,
-    input wire ctrl_state_e  ctrl_fsm_cs,            // Controller FSM states with debug_req
+    //input wire ctrl_state_e  ctrl_fsm_cs,            // Controller FSM states with debug_req
     input         illegal_insn_i,
     input         illegal_insn_q, // output from controller
     input         ecall_insn_i,
@@ -364,7 +363,7 @@ interface uvmt_cv32e20_debug_cov_assert_if
     input         debug_mode_q, // From controller
     input  [31:0] dcsr_q, // From controller
     input  [31:0] depc_q, // From cs regs
-    input  [31:0] depc_n, // 
+    input  [31:0] depc_n, //
     input  [31:0] dm_halt_addr_i,
     input  [31:0] dm_exception_addr_i,
 
@@ -384,7 +383,7 @@ interface uvmt_cv32e20_debug_cov_assert_if
     input  core_sleep_o,
 
     input  fence_i,
-      
+
     input  csr_access,
     input  [1:0] csr_op,
     input  [1:0] csr_op_dec,
@@ -421,7 +420,7 @@ interface uvmt_cv32e20_debug_cov_assert_if
     id_stage_is_compressed,
     id_stage_pc,
     if_stage_pc,
-    ctrl_fsm_cs,
+    //ctrl_fsm_cs,
     illegal_insn_i,
     illegal_insn_q,
     ecall_insn_i,
@@ -444,7 +443,7 @@ interface uvmt_cv32e20_debug_cov_assert_if
     mcycle,
     minstret,
     inst_ret,
-    
+
     core_sleep_o,
     csr_access,
     csr_op,

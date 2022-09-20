@@ -41,12 +41,14 @@ class uvme_debug_covg extends uvm_component;
     * Covergroups
     */
 
-  covergroup cg_debug_mode_ext ;
-          `per_instance_fcov
-          state: coverpoint cntxt.debug_cov_vif.mon_cb.ctrl_fsm_cs{
-              ignore_bins ignore_pulp_states = {cv32e20_pkg::ELW_EXE, cv32e20_pkg::IRQ_FLUSH_ELW, cv32e20_pkg::DECODE_HWLOOP};
-          }
-  endgroup : cg_debug_mode_ext
+  // TODO: this covergroup is from the CV32E40P and is probably meaningless in
+  // the CV32E20 contenxt.  Needs to be reviewed.
+  //covergroup cg_debug_mode_ext ;
+  //        `per_instance_fcov
+  //        state: coverpoint cntxt.debug_cov_vif.mon_cb.ctrl_fsm_cs{
+  //            ignore_bins ignore_pulp_states = {cv32e20_pkg::ELW_EXE, cv32e20_pkg::IRQ_FLUSH_ELW, cv32e20_pkg::DECODE_HWLOOP};
+  //        }
+  //endgroup : cg_debug_mode_ext
 
   // Waive duplicate code since embedded covergroups are used
   //@DVT_LINTER_WAIVER_START "SR20211012_1" disable SVTB.33.1.0
@@ -369,16 +371,18 @@ class uvme_debug_covg extends uvm_component;
     endgroup
 
     // Cover that we get a debug_req_i while in RESET state
-    covergroup cg_debug_at_reset;
-        `per_instance_fcov
-        state : coverpoint cntxt.debug_cov_vif.mon_cb.ctrl_fsm_cs {
-            bins reset= {cv32e20_pkg::RESET};
-        }
-         dbg : coverpoint cntxt.debug_cov_vif.mon_cb.debug_req_i {
-            bins active= {1'b1};
-        }
-        dbg_at_reset : cross state, dbg;
-    endgroup
+    // TODO: this covergroup is from the CV32E40P and is probably meaningless in
+    // the CV32E20 contenxt.  Needs to be reviewed.
+    //covergroup cg_debug_at_reset;
+    //    `per_instance_fcov
+    //    state : coverpoint cntxt.debug_cov_vif.mon_cb.ctrl_fsm_cs {
+    //        bins reset= {cv32e20_pkg::RESET};
+    //    }
+    //     dbg : coverpoint cntxt.debug_cov_vif.mon_cb.debug_req_i {
+    //        bins active= {1'b1};
+    //    }
+    //    dbg_at_reset : cross state, dbg;
+    //endgroup
 
     // Cover that we execute fence and fence.i in debug mode
     covergroup cg_fence_in_debug;
@@ -430,7 +434,9 @@ endclass : uvme_debug_covg
 function uvme_debug_covg::new(string name = "debug_covg", uvm_component parent = null);
     super.new(name, parent);
 
-    cg_debug_mode_ext = new();
+    //TODO: remove
+    //cg_debug_mode_ext = new();
+    //cg_debug_at_reset = new();
     cg_ebreak_execute_with_ebreakm = new();
     cg_cebreak_execute_with_ebreakm = new();
     cg_ebreak_execute_without_ebreakm = new();
@@ -449,7 +455,6 @@ function uvme_debug_covg::new(string name = "debug_covg", uvm_component parent =
     cg_debug_regs_m_mode = new();
     cg_trigger_regs = new();
     cg_counters_enabled = new();
-    cg_debug_at_reset = new();
     cg_fence_in_debug = new();
     cg_debug_causes = new();
 endfunction : new
@@ -478,7 +483,8 @@ task uvme_debug_covg::sample_debug_req_i();
   while(1) begin
     @(posedge cntxt.debug_cov_vif.mon_cb.debug_req_i);
 
-    cg_debug_mode_ext.sample();
+    //TODO: remove
+    //cg_debug_mode_ext.sample();
   end
 endtask : sample_debug_req_i
 
@@ -504,7 +510,8 @@ task uvme_debug_covg::sample_clk_i();
     cg_debug_regs_m_mode.sample();
     cg_trigger_regs.sample();
     cg_counters_enabled.sample();
-    cg_debug_at_reset.sample();
+    //TODO: remove
+    //cg_debug_at_reset.sample();
     cg_fence_in_debug.sample();
     cg_debug_causes.sample();
   end

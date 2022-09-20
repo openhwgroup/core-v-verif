@@ -53,8 +53,11 @@
 import uvm_pkg::*;      // needed for the UVM messaging service (`uvm_info(), etc.)
 
 `include "uvm_macros.svh"
-`define CV32E20_CORE   $root.uvmt_cv32e20_tb.dut_wrap.cv32e20_wrapper_i.core_i
-`define CV32E20_TRACER $root.uvmt_cv32e20_tb.dut_wrap.cv32e20_wrapper_i.tracer_i
+//TODO:
+//`define CV32E20_CORE   $root.uvmt_cv32e20_tb.dut_wrap.cv32e20_wrapper_i.core_i
+//`define CV32E20_TRACER $root.uvmt_cv32e20_tb.dut_wrap.cv32e20_wrapper_i.tracer_i
+`define CV32E20_CORE   $root.uvmt_cv32e20_tb.dut_wrap.cv32e20_top_i.core_i
+`define CV32E20_TRACER $root.uvmt_cv32e20_tb.dut_wrap.cv32e20_top_i.tracer_i
 
 // TODO change names
 `define CV32E20_RM              $root.uvmt_cv32e20_tb.iss_wrap.cpu

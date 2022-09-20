@@ -27,19 +27,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//FIXME: the core tb does not have the ability to select PULP/NO_PULP at
-//       compile-time, so we set a default MISA to NO_PULP value.  This
-//       needs to be fixed, but for now does not affect UVM env.
-#define EXP_MISA 0x40001104
+// MVENDORID CSR: 0x602 is the value assigned by JEDEC to the OpenHW Group
+#define EXP_MVENDORID 0x00000000
+//#define EXP_MVENDORID 0x00000602
 
-#ifdef NO_PULP
-#define EXP_MISA 0x40001104
-#endif
+//#define EXP_MISA 0x40001104
+#define EXP_MISA 0x40101104
 
-#ifdef PULP
-#define EXP_MISA 0x40801104
-#endif
+//#define EXP_MARCHID 0x00000004
+#define EXP_MARCHID 0x00000016
 
+#define EXP_MIMPID 0x00000000
 
 int main(int argc, char *argv[])
 {
@@ -54,27 +52,23 @@ int main(int argc, char *argv[])
     __asm__ volatile("csrr %0, 0xF12" : "=r"(marchid_rval));
     __asm__ volatile("csrr %0, 0xF13" : "=r"(mimpid_rval));
 
-    /* Check MVENDORID CSR: 0x602 is the value assigned by JEDEC to the OpenHW Group */
-    if (mvendorid_rval != 0x00000602) {
-      printf("\tERROR: CSR MVENDORID reads as 0x%x - should be 0x00000602 for the OpenHW Group.\n\n", mvendorid_rval);
+    if (mvendorid_rval != EXP_MVENDORID) {
+      printf("\tERROR: CSR MVENDORID reads as 0x%x - should be 0x%x for the OpenHW Group.\n\n", mvendorid_rval, EXP_MVENDORID);
       return EXIT_FAILURE;
     }
 
-    /* Check MISA CSR: if its zero, it might not be implemented at all */
     if (misa_rval != EXP_MISA) {
       printf("\tERROR: CSR MISA reads as 0x%x - should be 0x%x for this release of CV32E20!\n\n", misa_rval, EXP_MISA);
       return EXIT_FAILURE;
     }
 
-    /* Check MARCHID CSR: 0x4 is the value assigned by the RISC-V Foundation to CV32E20 */
-    if (marchid_rval != 0x00000004) {
-      printf("\tERROR: CSR MARCHID reads as 0x%x - should be 0x00000004 for CV32E20.\n\n", marchid_rval);
+    if (marchid_rval != EXP_MARCHID) {
+      printf("\tERROR: CSR MARCHID reads as 0x%x - should be 0x%x for CV32E20.\n\n", marchid_rval, EXP_MARCHID);
       return EXIT_FAILURE;
     }
 
-    /* Check MIMPID CSR: 0x0 is the value assigned by the OpenHW Group to the first release of CV32E20 */
-    if (mimpid_rval != 0x00000000) {
-      printf("\tERROR: CSR MIMPID reads as 0x%x - should be 0x00000000 for this release of CV32E20.\n\n", mimpid_rval);
+    if (mimpid_rval != EXP_MIMPID) {
+      printf("\tERROR: CSR MIMPID reads as 0x%x - should be 0x%x for this release of CV32E20.\n\n", mimpid_rval, EXP_MIMPID);
       return EXIT_FAILURE;
     }
 

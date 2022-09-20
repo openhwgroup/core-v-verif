@@ -146,311 +146,320 @@ module uvmt_cv32e20_tb;
       .IS_1P2(0)
     ) obi_data_memory_assert_i(.obi(obi_memory_data_if));
 
+  // TODO: these are CV32E40P-specific interfaces.
+  //       Replace with a CV32E20-specific version.
   // Bind in verification modules to the design
-  bind cv32e20_core 
-    uvmt_cv32e20_interrupt_assert interrupt_assert_i(.mcause_n(cs_registers_i.mcause_n),
-                                                      .mip(cs_registers_i.mip),
-                                                      .mie_q(cs_registers_i.mie_q),
-                                                      .mie_n(cs_registers_i.mie_n),
-                                                      .mstatus_mie(cs_registers_i.mstatus_q.mie),
-                                                      .mtvec_mode_q(cs_registers_i.mtvec_mode_q),
-                                                      .if_stage_instr_rvalid_i(if_stage_i.instr_rvalid_i),
-                                                      .if_stage_instr_rdata_i(if_stage_i.instr_rdata_i),
-                                                      .id_stage_instr_valid_i(id_stage_i.instr_valid_i),
-                                                      .id_stage_instr_rdata_i(id_stage_i.instr_rdata_i),
-                                                      .branch_taken_ex(id_stage_i.branch_taken_ex),
-                                                      .ctrl_fsm_cs(id_stage_i.controller_i.ctrl_fsm_cs),
-                                                      .debug_mode_q(id_stage_i.controller_i.debug_mode_q),
-                                                      .*);
+  //bind cv32e20_core
+  //  uvmt_cv32e20_interrupt_assert interrupt_assert_i(.mcause_n(cs_registers_i.mcause_n),
+  //                                                    .mip(cs_registers_i.mip),
+  //                                                    .mie_q(cs_registers_i.mie_q),
+  //                                                    .mie_n(cs_registers_i.mie_n),
+  //                                                    .mstatus_mie(cs_registers_i.mstatus_q.mie),
+  //                                                    .mtvec_mode_q(cs_registers_i.mtvec_mode_q),
+  //                                                    .if_stage_instr_rvalid_i(if_stage_i.instr_rvalid_i),
+  //                                                    .if_stage_instr_rdata_i(if_stage_i.instr_rdata_i),
+  //                                                    .id_stage_instr_valid_i(id_stage_i.instr_valid_i),
+  //                                                    .id_stage_instr_rdata_i(id_stage_i.instr_rdata_i),
+  //                                                    .branch_taken_ex(id_stage_i.branch_taken_ex),
+  //                                                    .ctrl_fsm_cs(id_stage_i.controller_i.ctrl_fsm_cs),
+  //                                                    .debug_mode_q(id_stage_i.controller_i.debug_mode_q),
+  //                                                    .*);
 
    // Debug assertion and coverage interface
    uvmt_cv32e20_debug_cov_assert_if debug_cov_assert_if(
-    .clk_i(clknrst_if.clk),
-    .rst_ni(clknrst_if.reset_n),
-    .fetch_enable_i(dut_wrap.cv32e20_wrapper_i.core_i.fetch_enable_i),
-    .if_stage_instr_rvalid_i(dut_wrap.cv32e20_wrapper_i.core_i.if_stage_i.instr_rvalid_i),
-    .if_stage_instr_rdata_i(dut_wrap.cv32e20_wrapper_i.core_i.if_stage_i.instr_rdata_i),
-    .id_stage_instr_valid_i(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.instr_valid_i),
-    .id_stage_instr_rdata_i(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.instr_rdata_i),
-    .id_stage_is_compressed(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.is_compressed_i),
-    .id_valid(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.id_valid_i),
-    .is_decoding(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.is_decoding_o),
-    .id_stage_pc(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.pc_id_i),
-    .if_stage_pc(dut_wrap.cv32e20_wrapper_i.core_i.if_stage_i.pc_if_o),
-    .mie_q(dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.mie_q),
-    .ctrl_fsm_cs(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.ctrl_fsm_cs),
-    .illegal_insn_i(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_i),
-    .illegal_insn_q(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_q),
-    .ecall_insn_i(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.ecall_insn_i),
-    .debug_req_i(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.debug_req_pending),
-    .debug_mode_q(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.debug_mode_q),
-    .dcsr_q(dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.dcsr_q),
-    .depc_q(dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.depc_q),
-    .depc_n(dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.depc_n),
-    .mcause_q(dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.mcause_q),
-    .mtvec({dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.mtvec_q, 8'h00}),
-    .mepc_q(dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.mepc_q),
-    .tdata1(dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.tmatch_control_rdata),
-    .tdata2(dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.tmatch_value_rdata),
-    .trigger_match_i(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.trigger_match_i),
-    .mcountinhibit_q(dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.mcountinhibit_q),
-    .mcycle(dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.mhpmcounter_q[0]),
-    .minstret(dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.mhpmcounter_q[2]),
-    .fence_i(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.decoder_i.fencei_insn_o),
+    .clk_i                   (clknrst_if.clk),
+    .rst_ni                  (clknrst_if.reset_n),
 
-    // TODO: review this change from CV32E20_HASH f6196bf to a26b194. It should be logically equivalent.
-    //assign debug_cov_assert_if.inst_ret = dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.inst_ret;
-    // First attempt: this causes unexpected failures of a_minstret_count
-    //assign debug_cov_assert_if.inst_ret = (dut_wrap.cv32e20_wrapper_i.core_i.id_valid &
-    //                                       dut_wrap.cv32e20_wrapper_i.core_i.is_decoding);
-    // Second attempt: (based on OK input).  This passes, but maybe only because p_minstret_count
-    //                                       is the only property sensitive to inst_ret. Will
-    //                                       this work in the general case?
-    .inst_ret(dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.mhpmevent_minstret_i),
-    .csr_access(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.csr_access),
-    .csr_op(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.csr_op),
-    .csr_op_dec(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.decoder_i.csr_op),
-    .csr_addr(dut_wrap.cv32e20_wrapper_i.core_i.csr_addr),
-    .csr_we_int(dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.csr_we_int),
-    .irq_ack_o(dut_wrap.cv32e20_wrapper_i.core_i.irq_ack_o),
-    .irq_id_o(dut_wrap.cv32e20_wrapper_i.core_i.irq_id_o),
-    .dm_halt_addr_i(dut_wrap.cv32e20_wrapper_i.core_i.dm_halt_addr_i),
-    .dm_exception_addr_i(dut_wrap.cv32e20_wrapper_i.core_i.dm_exception_addr_i),
-    .core_sleep_o(dut_wrap.cv32e20_wrapper_i.core_i.core_sleep_o),
-    .irq_i(dut_wrap.cv32e20_wrapper_i.core_i.irq_i),
-    .pc_set(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.pc_set_o),
-    .boot_addr_i(dut_wrap.cv32e20_wrapper_i.core_i.boot_addr_i),
-    .branch_in_decode(dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.branch_in_id),
+    .fetch_enable_i          (),
 
-    .is_wfi(),
-    .in_wfi(),
-    .dpc_will_hit(),
-    .addr_match(),
-    .is_ebreak(),
-    .is_cebreak(),
-    .is_dret(),
-    .is_mulhsu(),
-    .pending_enabled_irq()
+    // External interrupt interface
+    .irq_i                   (),
+    .irq_ack_o               (),
+    .irq_id_o                (),
+    .mie_q                   (),
+
+    .if_stage_instr_rvalid_i (),
+    .if_stage_instr_rdata_i  (),
+    .id_stage_instr_valid_i  (),
+    .id_stage_instr_rdata_i  (),
+    .id_stage_is_compressed  (),
+    .id_stage_pc             (),
+    .if_stage_pc             (),
+    .is_decoding             (),
+    .id_valid                (),
+    //.ctrl_fsm_cs             (),
+    .illegal_insn_i          (),
+    .illegal_insn_q          (),
+    .ecall_insn_i            (),
+
+    .boot_addr_i             (),
+
+    .debug_req_i             (),
+    .debug_mode_q            (),
+    .dcsr_q                  (),
+    .depc_q                  (),
+    .depc_n                  (),
+    .dm_halt_addr_i          (),
+    .dm_exception_addr_i     (),
+
+    .mcause_q                (),
+    .mtvec                   (),
+    .mepc_q                  (),
+    .tdata1                  (),
+    .tdata2                  (),
+    .trigger_match_i         (),
+
+    .mcountinhibit_q         (),
+    .mcycle                  (),
+    .minstret                (),
+    .inst_ret                (),
+    .core_sleep_o            (),
+    .fence_i                 (),
+
+    .csr_access              (),
+    .csr_op                  (),
+    .csr_op_dec              (),
+    .csr_addr                (),
+    .csr_we_int              (),
+
+    .is_wfi                  (),
+    .in_wfi                  (),
+    .dpc_will_hit            (),
+    .addr_match              (),
+    .is_ebreak               (),
+    .is_cebreak              (),
+    .is_dret                 (),
+    .is_mulhsu               (),
+    .pending_enabled_irq     (),
+    .pc_set                  (),
+    .branch_in_decode        ()
   );
 
   // Instantiate debug assertions
-  uvmt_cv32e20_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
+  // TODO: replace with CV32E20-specific DEBUG assertions
+  uvmt_cv32e20_debug_assert u_debug_assert(/*.cov_assert_if(debug_cov_assert_if)*/);
 
-  /**
-   * ISS WRAPPER instance:
-   */
-    uvmt_cv32e20_iss_wrap  #(
-                              .ID (0)
-                              )
-                              iss_wrap (.clk_period(clknrst_if.clk_period),
-                                        .clknrst_if(clknrst_if_iss),
-                                        .step_compare_if(step_compare_if),
-                                        .isa_covg_if(isa_covg_if)
-                                );
+  /////////////////////////////////////////////////////////////////////////////
+  // TODO: integrate the RVFI-to-RVVI-to-ImperasDV logic here.
+  ///**
+  // * ISS WRAPPER instance:
+  // */
+  //  uvmt_cv32e20_iss_wrap  #(
+  //                            .ID (0)
+  //                            )
+  //                            iss_wrap (.clk_period(clknrst_if.clk_period),
+  //                                      .clknrst_if(clknrst_if_iss),
+  //                                      .step_compare_if(step_compare_if),
+  //                                      .isa_covg_if(isa_covg_if)
+  //                              );
 
-    /**
-    * Step-and-Compare logic 
-    */
-    uvmt_cv32e20_step_compare step_compare (.clknrst_if(clknrst_if),
-                                              .step_compare_if(step_compare_if) );
+  //  /**
+  //  * Step-and-Compare logic
+  //  */
+  //  uvmt_cv32e20_step_compare step_compare (.clknrst_if(clknrst_if),
+  //                                            .step_compare_if(step_compare_if) );
 
-    always @(dut_wrap.cv32e20_wrapper_i.tracer_i.retire) -> step_compare_if.riscv_retire;
-    assign step_compare_if.insn_pc   = dut_wrap.cv32e20_wrapper_i.tracer_i.insn_pc;
-    assign step_compare_if.riscy_GPR = dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.register_file_i.mem;
-    assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
+  //  always @(dut_wrap.cv32e20_wrapper_i.tracer_i.retire) -> step_compare_if.riscv_retire;
+  //  assign step_compare_if.insn_pc   = dut_wrap.cv32e20_wrapper_i.tracer_i.insn_pc;
+  //  assign step_compare_if.riscy_GPR = dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.register_file_i.mem;
+  //  assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
 
-    // Connect step-and-compare signals to interrupt_if for functional coverage of instructions and interrupts
-    assign interrupt_if.deferint = iss_wrap.io.deferint;
-    assign interrupt_if.ovp_cpu_state_stepi = step_compare_if.ovp_cpu_state_stepi;
+  //  // Connect step-and-compare signals to interrupt_if for functional coverage of instructions and interrupts
+  //  assign interrupt_if.deferint = iss_wrap.io.deferint;
+  //  assign interrupt_if.ovp_cpu_state_stepi = step_compare_if.ovp_cpu_state_stepi;
 
-    // Interrupt modeling logic - used to time interrupt entry from RTL to the ISS    
-    wire [31:0] irq_enabled;
-    reg [31:0] irq_deferint_ack;
-    reg [31:0] irq_deferint_sleep;
-    reg        deferint_ack;      
-    reg [31:0] irq_mip;
-    reg core_sleep_o_d;
+  //  // Interrupt modeling logic - used to time interrupt entry from RTL to the ISS    
+  //  wire [31:0] irq_enabled;
+  //  reg [31:0] irq_deferint_ack;
+  //  reg [31:0] irq_deferint_sleep;
+  //  reg        deferint_ack;      
+  //  reg [31:0] irq_mip;
+  //  reg core_sleep_o_d;
 
-    always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-      if (!clknrst_if.reset_n)
-        core_sleep_o_d <= 1'b0;
-      else
-        core_sleep_o_d <= dut_wrap.cv32e20_wrapper_i.core_sleep_o;
-    end
+  //  always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
+  //    if (!clknrst_if.reset_n)
+  //      core_sleep_o_d <= 1'b0;
+  //    else
+  //      core_sleep_o_d <= dut_wrap.cv32e20_wrapper_i.core_sleep_o;
+  //  end
 
-    // Advance acknowledged interrupt to ISS when next valid instruction decode executes
-    // Ignoring any instructon decodes in debug mode
-    wire id_start = dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.id_valid_o &
-                    dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.is_decoding_o &
-                    ~dut_wrap.cv32e20_wrapper_i.core_i.debug_mode;
+  //  // Advance acknowledged interrupt to ISS when next valid instruction decode executes
+  //  // Ignoring any instructon decodes in debug mode
+  //  wire id_start = dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.id_valid_o &
+  //                  dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.is_decoding_o &
+  //                  ~dut_wrap.cv32e20_wrapper_i.core_i.debug_mode;
 
-    assign irq_enabled = dut_wrap.cv32e20_wrapper_i.irq_i & dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.mie_n;
+  //  assign irq_enabled = dut_wrap.cv32e20_wrapper_i.irq_i & dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.mie_n;
 
-    /**
-      * step_compare_if.deferint_prime is set to 0 (asserted) when the controller in ID commits to an interrupt
-        derefint_prime is then reset to 1 when the ID stage commits to the next instruction (which should be the MTVEC entry address)
-    */
-    always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-      if (!clknrst_if_iss.reset_n) begin
-        step_compare_if.deferint_prime     <= 1'b1;
-        step_compare_if.deferint_prime_ack <= 1'b1;
-      end
-      else if (dut_wrap.irq_ack) begin
-        step_compare_if.deferint_prime     <= 1'b0;
-        step_compare_if.deferint_prime_ack <= 1'b0;
-      end
-      else if (core_sleep_o_d && irq_enabled) begin
-        step_compare_if.deferint_prime <= 1'b0;
-      end
-      else if (id_start && !step_compare_if.deferint_prime) begin
-        step_compare_if.deferint_prime     <= 1'b1;
-        step_compare_if.deferint_prime_ack <= 1'b1;
-      end
-    end
+  //  /**
+  //    * step_compare_if.deferint_prime is set to 0 (asserted) when the controller in ID commits to an interrupt
+  //      derefint_prime is then reset to 1 when the ID stage commits to the next instruction (which should be the MTVEC entry address)
+  //  */
+  //  always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
+  //    if (!clknrst_if_iss.reset_n) begin
+  //      step_compare_if.deferint_prime     <= 1'b1;
+  //      step_compare_if.deferint_prime_ack <= 1'b1;
+  //    end
+  //    else if (dut_wrap.irq_ack) begin
+  //      step_compare_if.deferint_prime     <= 1'b0;
+  //      step_compare_if.deferint_prime_ack <= 1'b0;
+  //    end
+  //    else if (core_sleep_o_d && irq_enabled) begin
+  //      step_compare_if.deferint_prime <= 1'b0;
+  //    end
+  //    else if (id_start && !step_compare_if.deferint_prime) begin
+  //      step_compare_if.deferint_prime     <= 1'b1;
+  //      step_compare_if.deferint_prime_ack <= 1'b1;
+  //    end
+  //  end
 
-    /**
-      * When the ID stage commits, we set deferint to the ISS to signal to look at the interrrupts
-      */
-    always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-      if (!clknrst_if_iss.reset_n) begin
-        iss_wrap.io.deferint <= 1'b1;
-        deferint_ack <= 1'b1;
-      end
-      else if (id_start && !step_compare_if.deferint_prime) begin
-        iss_wrap.io.deferint <= 1'b0;
-        deferint_ack <= step_compare_if.deferint_prime_ack;
-      end
-    end
+  //  /**
+  //    * When the ID stage commits, we set deferint to the ISS to signal to look at the interrrupts
+  //    */
+  //  always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
+  //    if (!clknrst_if_iss.reset_n) begin
+  //      iss_wrap.io.deferint <= 1'b1;
+  //      deferint_ack <= 1'b1;
+  //    end
+  //    else if (id_start && !step_compare_if.deferint_prime) begin
+  //      iss_wrap.io.deferint <= 1'b0;
+  //      deferint_ack <= step_compare_if.deferint_prime_ack;
+  //    end
+  //  end
 
-    /**
-      * deferint deassertion logic, on negedge of ovp_cpu_state_stepi from the ISS the deferint has been consumed 
-      */
-    always @(negedge step_compare_if.ovp_cpu_state_stepi) begin
-      if (iss_wrap.io.deferint == 0) begin
-        iss_wrap.io.deferint <= 1'b1;
-        deferint_ack <= 1'b1;
-        irq_deferint_ack <= '0;
-      end
-      irq_deferint_sleep <= '0;
-    end
+  //  /**
+  //    * deferint deassertion logic, on negedge of ovp_cpu_state_stepi from the ISS the deferint has been consumed 
+  //    */
+  //  always @(negedge step_compare_if.ovp_cpu_state_stepi) begin
+  //    if (iss_wrap.io.deferint == 0) begin
+  //      iss_wrap.io.deferint <= 1'b1;
+  //      deferint_ack <= 1'b1;
+  //      irq_deferint_ack <= '0;
+  //    end
+  //    irq_deferint_sleep <= '0;
+  //  end
 
-    /**
-      * irq_deferint_ack will capture the asserted interrupt to present to the ISS later
-      * since the autoclear/ack interface can clear the IRQ long before the ISS sees it
-      */
-    always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-      if (!clknrst_if.reset_n)
-        irq_deferint_ack <= '0;
-      else if (dut_wrap.irq_ack)
-        irq_deferint_ack <= (1 << dut_wrap.irq_id);
-    end
+  //  /**
+  //    * irq_deferint_ack will capture the asserted interrupt to present to the ISS later
+  //    * since the autoclear/ack interface can clear the IRQ long before the ISS sees it
+  //    */
+  //  always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
+  //    if (!clknrst_if.reset_n)
+  //      irq_deferint_ack <= '0;
+  //    else if (dut_wrap.irq_ack)
+  //      irq_deferint_ack <= (1 << dut_wrap.irq_id);
+  //  end
 
-    always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-      if (!clknrst_if.reset_n)
-        irq_deferint_sleep <= '0;
-      else if (core_sleep_o_d)
-        irq_deferint_sleep <= irq_enabled;
-    end
+  //  always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
+  //    if (!clknrst_if.reset_n)
+  //      irq_deferint_sleep <= '0;
+  //    else if (core_sleep_o_d)
+  //      irq_deferint_sleep <= irq_enabled;
+  //  end
 
-    always @*
-      iss_wrap.io.irq_i = iss_wrap.io.deferint ? dut_wrap.irq :
-                          !deferint_ack ? irq_deferint_ack :
-                          irq_deferint_sleep;
+  //  always @*
+  //    iss_wrap.io.irq_i = iss_wrap.io.deferint ? dut_wrap.irq :
+  //                        !deferint_ack ? irq_deferint_ack :
+  //                        irq_deferint_sleep;
 
-    /**
-      * Interrupt assertion to iss_wrap, note this runs on the ISS clock (skewed from core clock)
-      */
-    always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-      if (!clknrst_if.reset_n) begin
-        irq_mip <= '0;
-      end
-      else begin
-        for (int irq_idx=0; irq_idx<32; irq_idx++) begin
+  //  /**
+  //    * Interrupt assertion to iss_wrap, note this runs on the ISS clock (skewed from core clock)
+  //    */
+  //  always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
+  //    if (!clknrst_if.reset_n) begin
+  //      irq_mip <= '0;
+  //    end
+  //    else begin
+  //      for (int irq_idx=0; irq_idx<32; irq_idx++) begin
 
-          // Leave ISS side asserted as long as RTL interrupt line is asserted
-          if (dut_wrap.cv32e20_wrapper_i.irq_i[irq_idx]) 
-            irq_mip[irq_idx] <= 1'b1;
-          // If deferint is low and ovp_cpu_state_stepi is asserted, then interrupt was consumed by model
-          // Clear it now to avoid mip miscompare
-          else if (step_compare_if.ovp_cpu_state_stepi && iss_wrap.io.deferint == 0)
-            irq_mip[irq_idx] <= 1'b0;
-          // If RTL interrupt deasserts, but the core has not taken the interrupt, then clear ISS irq
-          else if (iss_wrap.io.deferint == 1)
-            irq_mip[irq_idx] <= 1'b0;
-        end
-      end
-    end
+  //        // Leave ISS side asserted as long as RTL interrupt line is asserted
+  //        if (dut_wrap.cv32e20_wrapper_i.irq_i[irq_idx]) 
+  //          irq_mip[irq_idx] <= 1'b1;
+  //        // If deferint is low and ovp_cpu_state_stepi is asserted, then interrupt was consumed by model
+  //        // Clear it now to avoid mip miscompare
+  //        else if (step_compare_if.ovp_cpu_state_stepi && iss_wrap.io.deferint == 0)
+  //          irq_mip[irq_idx] <= 1'b0;
+  //        // If RTL interrupt deasserts, but the core has not taken the interrupt, then clear ISS irq
+  //        else if (iss_wrap.io.deferint == 1)
+  //          irq_mip[irq_idx] <= 1'b0;
+  //      end
+  //    end
+  //  end
 
-    // Count number of issued and retired instructions
-    // This makes synchronizing haltreq to RM easier
-    logic [31:0] count_issue;
-    logic [31:0] count_retire;
+  //  // Count number of issued and retired instructions
+  //  // This makes synchronizing haltreq to RM easier
+  //  logic [31:0] count_issue;
+  //  logic [31:0] count_retire;
 
-    always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-      if (!clknrst_if.reset_n) begin
-          count_issue <= 32'h0;
-      end else begin
-          if ((dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.id_valid_o && dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.is_decoding_o &&
-              !dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_i) ||
-              (dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.is_decoding_o && dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.ebrk_insn_i &&
-                !dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.trigger_match_i &&
-              (dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.ebrk_force_debug_mode || dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.debug_mode_q))) begin
-              count_issue <= count_issue + 1;
-          end
-      end
-    end
+  //  always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
+  //    if (!clknrst_if.reset_n) begin
+  //        count_issue <= 32'h0;
+  //    end else begin
+  //        if ((dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.id_valid_o && dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.is_decoding_o &&
+  //            !dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_i) ||
+  //            (dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.is_decoding_o && dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.ebrk_insn_i &&
+  //              !dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.trigger_match_i &&
+  //            (dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.ebrk_force_debug_mode || dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.debug_mode_q))) begin
+  //            count_issue <= count_issue + 1;
+  //        end
+  //    end
+  //  end
 
-    always @(dut_wrap.cv32e20_wrapper_i.tracer_i.retire or negedge clknrst_if.reset_n) begin
-        if (!clknrst_if.reset_n) begin
-            count_retire <= 32'h0;
-        end else begin
-            count_retire <= count_retire + 1;
-        end
-    end
+  //  always @(dut_wrap.cv32e20_wrapper_i.tracer_i.retire or negedge clknrst_if.reset_n) begin
+  //      if (!clknrst_if.reset_n) begin
+  //          count_retire <= 32'h0;
+  //      end else begin
+  //          count_retire <= count_retire + 1;
+  //      end
+  //  end
 
-    // A simple FSM for controlling haltreq into RM
-    typedef enum logic [1:0] {INACTIVE, DBG_TAKEN, DRIVE_REQ} dbg_state_e;
-    dbg_state_e debug_req_state;
+  //  // A simple FSM for controlling haltreq into RM
+  //  typedef enum logic [1:0] {INACTIVE, DBG_TAKEN, DRIVE_REQ} dbg_state_e;
+  //  dbg_state_e debug_req_state;
 
-    always @(posedge clknrst_if_iss.clk or negedge clknrst_if_iss.reset_n) begin
-      if (!clknrst_if_iss.reset_n) begin
-          iss_wrap.io.haltreq <= 1'b0;
-          debug_req_state <= INACTIVE;
-      end else begin
-          unique case(debug_req_state)
-              INACTIVE: begin
-                  iss_wrap.io.haltreq <= 1'b0;
+  //  always @(posedge clknrst_if_iss.clk or negedge clknrst_if_iss.reset_n) begin
+  //    if (!clknrst_if_iss.reset_n) begin
+  //        iss_wrap.io.haltreq <= 1'b0;
+  //        debug_req_state <= INACTIVE;
+  //    end else begin
+  //        unique case(debug_req_state)
+  //            INACTIVE: begin
+  //                iss_wrap.io.haltreq <= 1'b0;
 
-                  // Only drive haltreq if we have an external request
-                  if (dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.ctrl_fsm_cs inside {cv32e20_pkg::DBG_TAKEN_ID, cv32e20_pkg::DBG_TAKEN_IF} &&
-                      dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.debug_req_pending) begin
+  //                // Only drive haltreq if we have an external request
+  //                // TODO: replace with ImperasDV
+  //                //if (dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.ctrl_fsm_cs inside {cv32e20_pkg::DBG_TAKEN_ID, cv32e20_pkg::DBG_TAKEN_IF} &&
+  //                //    dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.debug_req_pending) begin
+  //                if (dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.debug_req_pending) begin
 
-                      debug_req_state <= DBG_TAKEN;
-                      // Already in sync, assert halreq right away
-                      if (count_retire == count_issue) begin
-                          iss_wrap.io.haltreq <= 1'b1;
-                      end
-                  end
-              end
-              DBG_TAKEN: begin
-                  // Assert haltreq when we are in sync
-                  if (count_retire == count_issue) begin
-                      iss_wrap.io.haltreq <= 1'b1;
-                      debug_req_state <= DRIVE_REQ;
-                  end
-              end
-              DRIVE_REQ: begin
-                  // Deassert haltreq when DM is observed
-                  if(iss_wrap.io.DM == 1'b1) begin
-                      debug_req_state <= INACTIVE;
-                  end
-              end
-              default: begin
-                  debug_req_state <= INACTIVE;
-              end
-          endcase
-      end
-    end
+  //                    debug_req_state <= DBG_TAKEN;
+  //                    // Already in sync, assert halreq right away
+  //                    if (count_retire == count_issue) begin
+  //                        iss_wrap.io.haltreq <= 1'b1;
+  //                    end
+  //                end
+  //            end
+  //            DBG_TAKEN: begin
+  //                // Assert haltreq when we are in sync
+  //                if (count_retire == count_issue) begin
+  //                    iss_wrap.io.haltreq <= 1'b1;
+  //                    debug_req_state <= DRIVE_REQ;
+  //                end
+  //            end
+  //            DRIVE_REQ: begin
+  //                // Deassert haltreq when DM is observed
+  //                if(iss_wrap.io.DM == 1'b1) begin
+  //                    debug_req_state <= INACTIVE;
+  //                end
+  //            end
+  //            default: begin
+  //                debug_req_state <= INACTIVE;
+  //            end
+  //        endcase
+  //    end
+  //  end
+  // // End of ISS WRAPPER instanitation and step-and-compare logic.
+  /////////////////////////////////////////////////////////////////////////////
 
    /**
     * Test bench entry point.
@@ -482,7 +491,8 @@ module uvmt_cv32e20_tb;
      uvm_config_db#(virtual uvmt_cv32e20_isa_covg_if        )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("isa_covg_vif"),     .value(isa_covg_if)                                );
      uvm_config_db#(virtual uvma_interrupt_if                )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("intr_vif"),         .value(interrupt_if)                               );
      uvm_config_db#(virtual uvma_debug_if                    )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_vif"),        .value(debug_if)                                   );
-     uvm_config_db#(virtual RVVI_memory                      )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("rvvi_memory_vif"),  .value(iss_wrap.ram.memory)                        );
+     // TODO: fix this
+     //uvm_config_db#(virtual RVVI_memory                      )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("rvvi_memory_vif"),  .value(iss_wrap.ram.memory)                        );
 
      // Make the DUT Wrapper Virtual Peripheral's status outputs available to the base_test
      uvm_config_db#(bit      )::set(.cntxt(null), .inst_name("*"), .field_name("tp"),     .value(1'b0)        );

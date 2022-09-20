@@ -338,9 +338,10 @@ function void uvmt_cv32e20_base_test_c::phase_ended(uvm_phase phase);
      if (!tp && !evalid && !tf) `uvm_error("END_OF_TEST", "DUT WRAPPER virtual peripheral failed to flag test passed and failed to signal exit value.")
 
      // Report on number of ISS step and compare checks if the ISS is used
-     if ($test$plusargs("USE_ISS")) begin
-       step_compare_vif.report_step_compare();
-     end
+     // TODO: remove old strp-and-compare from the environment (in favor of ImperasDV)
+     //if ($test$plusargs("USE_ISS")) begin
+     //  step_compare_vif.report_step_compare();
+     //end
 
      print_banner("test finished");
    end
