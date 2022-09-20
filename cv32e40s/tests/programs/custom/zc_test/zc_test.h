@@ -56,6 +56,8 @@ volatile enum ttype test_active;
 volatile uint32_t test_instr_num;
 volatile uint32_t exp_irq;
 volatile uint32_t failureCount;
+volatile uint32_t rnd0;
+volatile uint32_t rnd1;
 volatile uint32_t iteratorVault;
 extern volatile uint32_t glb_irq_line;
 extern volatile uint32_t glb_irq_delay;

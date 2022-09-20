@@ -38,7 +38,7 @@ void vp_assert_irq(uint32_t mask, uint32_t cycle_delay) {
 }
 
 uint32_t vp_random_num(uint32_t upper_bound, uint32_t lower_bound) {
-    uint32_t random_num = *((volatile int *) CV_VP_RANDOM_NUM_BASE);
+    uint32_t random_num = *((volatile uint32_t *) CV_VP_RANDOM_NUM_BASE);
     uint32_t num = (random_num  % (upper_bound - lower_bound + 1)) + lower_bound;
     return num;
 }
@@ -81,7 +81,7 @@ void m_external_irq_handler(void) {
   }
   test_instr_num += 1;
 
-  printf("\n\nexternal interrupt encountered\n\n");
+  printf("external interrupt encountered\n");
   ex_traps_entered += 1;
 
   __asm__ volatile("csrrs %0, mepc, x0" : "=r"(mepc));
@@ -102,7 +102,6 @@ void m_external_irq_handler(void) {
 
 int main(int argc, char *argv[])
 {
-  uint32_t rnd0, rnd1;
   exp_irq = 0;
   failureCount = 0;
   ex_traps_entered = 0;
@@ -113,20 +112,20 @@ int main(int argc, char *argv[])
 
   enable_all_irq();
 
-  printf("Testing push/pop instructions. \n");
+  printf("\n\nTesting push/pop instructions. \n");
   test_active = pushpop;
 
   for (int i = PUSH_RLIST_MIN; i <= PUSH_RLIST_MAX; i++)
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
     glb_irq_delay = vp_random_num(i-2, 1);
-    printf("testing rlist %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
+    printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
 
     exp_irq += 2;
     interrupt_push_pop(i);
   }
 
-  printf("Testing popret instructions. \n");
+  printf("\n\nTesting popret instructions. \n");
   test_active = popret;
   test_instr_num = 0;
 
@@ -135,13 +134,13 @@ int main(int argc, char *argv[])
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
     glb_irq_delay = vp_random_num(i-2, 1);
-    printf("testing rlist %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
+    printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
 
     exp_irq += 1;
     interrupt_popret(i);
   }
 
-  printf("Testing popretz instructions. \n");
+  printf("\n\nTesting popretz instructions. \n");
   test_active = popretz;
   test_instr_num = 0;
 
@@ -150,7 +149,7 @@ int main(int argc, char *argv[])
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
     glb_irq_delay = vp_random_num(i-2, 1);
-    printf("testing rlist %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
+    printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
 
     exp_irq += 1;
     interrupt_popretz(i);
@@ -159,17 +158,17 @@ int main(int argc, char *argv[])
 
 
 
-  printf("Testing mvsa01 instructions. \n");
+  printf("\n\nTesting mvsa01 instructions. \n");
   test_active = mvsa;
   test_instr_num = 0;
   //creating random values for the target registers
-  rnd0 = vp_random_num(0xFFFFFFFF, 0x0);
-  rnd1 = vp_random_num(0xFFFFFFFF, 0x0);
+  rnd0 = vp_random_num(0x7FFFFFFF, 0x0);
+  rnd1 = vp_random_num(0x7FFFFFFF, 0x0);
   for (int i = 0; i < MVSA_INSTR_SIZE; i++)
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
     glb_irq_delay = 3;
-    printf("testing mvsa case %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
+    printf("\n\ntesting mvsa case %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
 
     exp_irq += 1;
     iteratorVault = i;
@@ -177,17 +176,17 @@ int main(int argc, char *argv[])
     i = iteratorVault;
   }
 
-  printf("Testing mva01s instructions. \n");
+  printf("\n\nTesting mva01s instructions. \n");
   test_active = mvas;
   test_instr_num = 0;
   //creating random values for the target registers
-  rnd0 = vp_random_num(0xFFFFFFFF, 0x0);
-  rnd1 = vp_random_num(0xFFFFFFFF, 0x0);
+  rnd0 = vp_random_num(0x7FFFFFFF, 0x0);
+  rnd1 = vp_random_num(0x7FFFFFFF, 0x0);
   for (int i = 0; i < MVAS_INSTR_SIZE; i++)
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
     glb_irq_delay = 3;
-    printf("testing mvsa case %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
+    printf("\n\ntesting mvsa case %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
 
     exp_irq += 1;
     iteratorVault = i;

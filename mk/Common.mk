@@ -313,7 +313,7 @@ RISCV_MARCH      = $(CV_SW_MARCH)
 RISCV_CC         = $(CV_SW_CC)
 RISCV_CFLAGS     = $(CV_SW_CFLAGS)
 
-CFLAGS ?= -O0 -g -static -mabi=ilp32 -march=$(RISCV_MARCH) -Wall -pedantic $(RISCV_CFLAGS)
+CFLAGS ?= -Os -g -static -mabi=ilp32 -march=$(RISCV_MARCH) -Wall -pedantic $(RISCV_CFLAGS)
 
 $(warning RISCV set to $(RISCV))
 $(warning RISCV_PREFIX set to $(RISCV_PREFIX))
