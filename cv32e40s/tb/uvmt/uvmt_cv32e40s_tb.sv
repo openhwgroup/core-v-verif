@@ -477,6 +477,7 @@ module uvmt_cv32e40s_tb;
       .rvfi_csr_mstatus_rdata    (rvfi_i.rvfi_csr_mstatus_rdata),
       .rvfi_csr_mstatus_wdata    (rvfi_i.rvfi_csr_mstatus_wdata),
       .rvfi_csr_mstatus_wmask    (rvfi_i.rvfi_csr_mstatus_wmask),
+      .rvfi_csr_mstateen0_rdata  (rvfi_i.rvfi_csr_mstateen0_rdata),
 
       .impu_valid (core_i.if_stage_i.mpu_i.core_trans_valid_i),
       .impu_addr  (core_i.if_stage_i.mpu_i.core_trans_i.addr),
