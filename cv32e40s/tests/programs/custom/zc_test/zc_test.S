@@ -145,6 +145,39 @@ trigger_irq:
   //return to caller
   jalr	x0, 0(ra)
 
+  /*
+  ** The rest of this file consist of generated functions that work in the following manner:
+  ** interrupt_push_pop:
+  **    input value determines which rlist to test (case statement)
+  **    jump to interrupt trigger routine
+  **      - sets an interrupt to hit the atomic part of the following instruction,
+  **      - set up from C test by global variables
+  **    run push instruction to test
+  **    jump to interrupt trigger routine
+  **    run pop instruction to test
+  **
+  ** interrupt_popret/popretz
+  **    input value determines which rlist to test (case statement)
+  **    load ra with the address for thenext instruction after the popret
+  **      to enable the popret to return to the program
+  **    make a push to keep the stack pointer valid after the function call
+  **    jump to interrupt trigger routine
+  **    run popret/z instruction to test
+  **
+  ** interrupt mvsa
+  **    input value determines which sreg combination to test (case statement)
+  **    populate registers with random data
+  **    jump to interrupt trigger routine
+  **    run mvsa01 instruction to test
+  **
+  **
+  ** interrupt mvsa
+  **    input value determines which sreg combination to test (case statement)
+  **    populate registers with random data
+  **    jump to interrupt trigger routine
+  **    run mva01s instruction to test
+  **
+  */
 
 
 //Generated Functions
@@ -167,6 +200,7 @@ interrupt_push_pop:
     cm.pop {ra}, 64
     nop
     nop
+    j pp_case_end
 
 
 
@@ -184,6 +218,7 @@ interrupt_push_pop:
     cm.pop {ra, s0}, 64
     nop
     nop
+    j pp_case_end
 
 
 
@@ -201,6 +236,7 @@ interrupt_push_pop:
     cm.pop {ra, s0-s1}, 64
     nop
     nop
+    j pp_case_end
 
 
 
@@ -218,6 +254,7 @@ interrupt_push_pop:
     cm.pop {ra, s0-s2}, 64
     nop
     nop
+    j pp_case_end
 
 
 
@@ -235,6 +272,7 @@ interrupt_push_pop:
     cm.pop {ra, s0-s3}, 64
     nop
     nop
+    j pp_case_end
 
 
 
@@ -252,6 +290,7 @@ interrupt_push_pop:
     cm.pop {ra, s0-s4}, 64
     nop
     nop
+    j pp_case_end
 
 
 
@@ -269,6 +308,7 @@ interrupt_push_pop:
     cm.pop {ra, s0-s5}, 64
     nop
     nop
+    j pp_case_end
 
 
 
@@ -286,6 +326,7 @@ interrupt_push_pop:
     cm.pop {ra, s0-s6}, 64
     nop
     nop
+    j pp_case_end
 
 
 
@@ -303,6 +344,7 @@ interrupt_push_pop:
     cm.pop {ra, s0-s7}, 64
     nop
     nop
+    j pp_case_end
 
 
 
@@ -320,6 +362,7 @@ interrupt_push_pop:
     cm.pop {ra, s0-s8}, 64
     nop
     nop
+    j pp_case_end
 
 
 
@@ -337,6 +380,7 @@ interrupt_push_pop:
     cm.pop {ra, s0-s9}, 64
     nop
     nop
+    j pp_case_end
 
 
 
@@ -354,6 +398,7 @@ interrupt_push_pop:
     cm.pop {ra, s0-s11}, 64
     nop
     nop
+    j pp_case_end
 
 
 
@@ -381,6 +426,7 @@ interrupt_popret:
   popret_0_ret:
     nop
     nop
+    j pr_case_end
 
 
 
@@ -395,6 +441,7 @@ interrupt_popret:
   popret_1_ret:
     nop
     nop
+    j pr_case_end
 
 
 
@@ -409,6 +456,7 @@ interrupt_popret:
   popret_2_ret:
     nop
     nop
+    j pr_case_end
 
 
 
@@ -423,6 +471,7 @@ interrupt_popret:
   popret_3_ret:
     nop
     nop
+    j pr_case_end
 
 
 
@@ -437,6 +486,7 @@ interrupt_popret:
   popret_4_ret:
     nop
     nop
+    j pr_case_end
 
 
 
@@ -451,6 +501,7 @@ interrupt_popret:
   popret_5_ret:
     nop
     nop
+    j pr_case_end
 
 
 
@@ -465,6 +516,7 @@ interrupt_popret:
   popret_6_ret:
     nop
     nop
+    j pr_case_end
 
 
 
@@ -479,6 +531,7 @@ interrupt_popret:
   popret_7_ret:
     nop
     nop
+    j pr_case_end
 
 
 
@@ -493,6 +546,7 @@ interrupt_popret:
   popret_8_ret:
     nop
     nop
+    j pr_case_end
 
 
 
@@ -507,6 +561,7 @@ interrupt_popret:
   popret_9_ret:
     nop
     nop
+    j pr_case_end
 
 
 
@@ -521,6 +576,7 @@ interrupt_popret:
   popret_10_ret:
     nop
     nop
+    j pr_case_end
 
 
 
@@ -535,6 +591,7 @@ interrupt_popret:
   popret_11_ret:
     nop
     nop
+    j pr_case_end
 
 
 
@@ -559,6 +616,7 @@ interrupt_popretz:
   popretz_0_ret:
     nop
     nop
+    j prz_case_end
 
 
 
@@ -573,6 +631,7 @@ interrupt_popretz:
   popretz_1_ret:
     nop
     nop
+    j prz_case_end
 
 
 
@@ -587,6 +646,7 @@ interrupt_popretz:
   popretz_2_ret:
     nop
     nop
+    j prz_case_end
 
 
 
@@ -601,6 +661,7 @@ interrupt_popretz:
   popretz_3_ret:
     nop
     nop
+    j prz_case_end
 
 
 
@@ -615,6 +676,7 @@ interrupt_popretz:
   popretz_4_ret:
     nop
     nop
+    j prz_case_end
 
 
 
@@ -629,6 +691,7 @@ interrupt_popretz:
   popretz_5_ret:
     nop
     nop
+    j prz_case_end
 
 
 
@@ -643,6 +706,7 @@ interrupt_popretz:
   popretz_6_ret:
     nop
     nop
+    j prz_case_end
 
 
 
@@ -657,6 +721,7 @@ interrupt_popretz:
   popretz_7_ret:
     nop
     nop
+    j prz_case_end
 
 
 
@@ -671,6 +736,7 @@ interrupt_popretz:
   popretz_8_ret:
     nop
     nop
+    j prz_case_end
 
 
 
@@ -685,6 +751,7 @@ interrupt_popretz:
   popretz_9_ret:
     nop
     nop
+    j prz_case_end
 
 
 
@@ -699,6 +766,7 @@ interrupt_popretz:
   popretz_10_ret:
     nop
     nop
+    j prz_case_end
 
 
 
@@ -713,6 +781,7 @@ interrupt_popretz:
   popretz_11_ret:
     nop
     nop
+    j prz_case_end
 
 
 
@@ -736,6 +805,7 @@ interrupt_mvsa:
     cm.mvsa01 s2, s6
     nop
     nop
+    j sa_case_end
 
 
 
@@ -749,6 +819,7 @@ interrupt_mvsa:
     cm.mvsa01 s2, s3
     nop
     nop
+    j sa_case_end
 
 
 
@@ -762,6 +833,7 @@ interrupt_mvsa:
     cm.mvsa01 s2, s1
     nop
     nop
+    j sa_case_end
 
 
 
@@ -775,6 +847,7 @@ interrupt_mvsa:
     cm.mvsa01 s2, s0
     nop
     nop
+    j sa_case_end
 
 
 
@@ -788,6 +861,7 @@ interrupt_mvsa:
     cm.mvsa01 s4, s6
     nop
     nop
+    j sa_case_end
 
 
 
@@ -801,6 +875,7 @@ interrupt_mvsa:
     cm.mvsa01 s4, s3
     nop
     nop
+    j sa_case_end
 
 
 
@@ -814,6 +889,7 @@ interrupt_mvsa:
     cm.mvsa01 s4, s1
     nop
     nop
+    j sa_case_end
 
 
 
@@ -827,6 +903,7 @@ interrupt_mvsa:
     cm.mvsa01 s4, s0
     nop
     nop
+    j sa_case_end
 
 
 
@@ -840,6 +917,7 @@ interrupt_mvsa:
     cm.mvsa01 s5, s6
     nop
     nop
+    j sa_case_end
 
 
 
@@ -853,6 +931,7 @@ interrupt_mvsa:
     cm.mvsa01 s5, s3
     nop
     nop
+    j sa_case_end
 
 
 
@@ -866,6 +945,7 @@ interrupt_mvsa:
     cm.mvsa01 s5, s1
     nop
     nop
+    j sa_case_end
 
 
 
@@ -879,6 +959,7 @@ interrupt_mvsa:
     cm.mvsa01 s5, s0
     nop
     nop
+    j sa_case_end
 
 
 
@@ -892,6 +973,7 @@ interrupt_mvsa:
     cm.mvsa01 s7, s6
     nop
     nop
+    j sa_case_end
 
 
 
@@ -905,6 +987,7 @@ interrupt_mvsa:
     cm.mvsa01 s7, s3
     nop
     nop
+    j sa_case_end
 
 
 
@@ -918,6 +1001,7 @@ interrupt_mvsa:
     cm.mvsa01 s7, s1
     nop
     nop
+    j sa_case_end
 
 
 
@@ -931,6 +1015,7 @@ interrupt_mvsa:
     cm.mvsa01 s7, s0
     nop
     nop
+    j sa_case_end
 
 
 
@@ -957,6 +1042,7 @@ interrupt_mvas:
     cm.mva01s s2, s6
     nop
     nop
+    j as_case_end
 
 
 
@@ -970,6 +1056,7 @@ interrupt_mvas:
     cm.mva01s s2, s3
     nop
     nop
+    j as_case_end
 
 
 
@@ -983,6 +1070,7 @@ interrupt_mvas:
     cm.mva01s s2, s1
     nop
     nop
+    j as_case_end
 
 
 
@@ -996,6 +1084,7 @@ interrupt_mvas:
     cm.mva01s s2, s0
     nop
     nop
+    j as_case_end
 
 
 
@@ -1009,6 +1098,7 @@ interrupt_mvas:
     cm.mva01s s4, s6
     nop
     nop
+    j as_case_end
 
 
 
@@ -1022,6 +1112,7 @@ interrupt_mvas:
     cm.mva01s s4, s3
     nop
     nop
+    j as_case_end
 
 
 
@@ -1035,6 +1126,7 @@ interrupt_mvas:
     cm.mva01s s4, s1
     nop
     nop
+    j as_case_end
 
 
 
@@ -1048,6 +1140,7 @@ interrupt_mvas:
     cm.mva01s s4, s0
     nop
     nop
+    j as_case_end
 
 
 
@@ -1061,6 +1154,7 @@ interrupt_mvas:
     cm.mva01s s5, s6
     nop
     nop
+    j as_case_end
 
 
 
@@ -1074,6 +1168,7 @@ interrupt_mvas:
     cm.mva01s s5, s3
     nop
     nop
+    j as_case_end
 
 
 
@@ -1087,6 +1182,7 @@ interrupt_mvas:
     cm.mva01s s5, s1
     nop
     nop
+    j as_case_end
 
 
 
@@ -1100,6 +1196,7 @@ interrupt_mvas:
     cm.mva01s s5, s0
     nop
     nop
+    j as_case_end
 
 
 
@@ -1113,6 +1210,7 @@ interrupt_mvas:
     cm.mva01s s7, s6
     nop
     nop
+    j as_case_end
 
 
 
@@ -1126,6 +1224,7 @@ interrupt_mvas:
     cm.mva01s s7, s3
     nop
     nop
+    j as_case_end
 
 
 
@@ -1139,6 +1238,7 @@ interrupt_mvas:
     cm.mva01s s7, s1
     nop
     nop
+    j as_case_end
 
 
 
@@ -1152,6 +1252,7 @@ interrupt_mvas:
     cm.mva01s s7, s0
     nop
     nop
+    j as_case_end
 
 
 

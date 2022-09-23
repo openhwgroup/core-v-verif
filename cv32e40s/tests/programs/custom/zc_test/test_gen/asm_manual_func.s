@@ -41,3 +41,36 @@ trigger_irq:
   //return to caller
   jalr	x0, 0(ra)
 
+  /*
+  ** The rest of this file consist of generated functions that work in the following manner:
+  ** interrupt_push_pop:
+  **    input value determines which rlist to test (case statement)
+  **    jump to interrupt trigger routine
+  **      - sets an interrupt to hit the atomic part of the following instruction,
+  **      - set up from C test by global variables
+  **    run push instruction to test
+  **    jump to interrupt trigger routine
+  **    run pop instruction to test
+  **
+  ** interrupt_popret/popretz
+  **    input value determines which rlist to test (case statement)
+  **    load ra with the address for thenext instruction after the popret
+  **      to enable the popret to return to the program
+  **    make a push to keep the stack pointer valid after the function call
+  **    jump to interrupt trigger routine
+  **    run popret/z instruction to test
+  **
+  ** interrupt mvsa
+  **    input value determines which sreg combination to test (case statement)
+  **    populate registers with random data
+  **    jump to interrupt trigger routine
+  **    run mvsa01 instruction to test
+  **
+  **
+  ** interrupt mvsa
+  **    input value determines which sreg combination to test (case statement)
+  **    populate registers with random data
+  **    jump to interrupt trigger routine
+  **    run mva01s instruction to test
+  **
+  */

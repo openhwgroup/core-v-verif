@@ -38,6 +38,13 @@ void vp_assert_irq(uint32_t mask, uint32_t cycle_delay) {
 }
 
 uint32_t vp_random_num(uint32_t upper_bound, uint32_t lower_bound) {
+
+    if ((upper_bound == 0xFFFFFFFF) && (lower_bound == 0)) {
+      printf("ERROR: Illegal input value for function vp_random_num\n");
+      printf("upper_bound = 0xFFFFFFFF and lower_bound = 0x0 causes overflow\n");
+      exit(EXIT_FAILURE);
+    }
+
     uint32_t random_num = *((volatile uint32_t *) CV_VP_RANDOM_NUM_BASE);
     uint32_t num = (random_num  % (upper_bound - lower_bound + 1)) + lower_bound;
     return num;
@@ -156,14 +163,12 @@ int main(int argc, char *argv[])
   }
 
 
-
-
   printf("\n\nTesting mvsa01 instructions. \n");
   test_active = mvsa;
   test_instr_num = 0;
   //creating random values for the target registers
-  rnd0 = vp_random_num(0x7FFFFFFF, 0x0);
-  rnd1 = vp_random_num(0x7FFFFFFF, 0x0);
+  rnd0 = vp_random_num(0xFFFFFFFE, 0x0);
+  rnd1 = vp_random_num(0xFFFFFFFE, 0x0);
   for (int i = 0; i < MVSA_INSTR_SIZE; i++)
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
@@ -180,8 +185,8 @@ int main(int argc, char *argv[])
   test_active = mvas;
   test_instr_num = 0;
   //creating random values for the target registers
-  rnd0 = vp_random_num(0x7FFFFFFF, 0x0);
-  rnd1 = vp_random_num(0x7FFFFFFF, 0x0);
+  rnd0 = vp_random_num(0xFFFFFFFE, 0x0);
+  rnd1 = vp_random_num(0xFFFFFFFE, 0x0);
   for (int i = 0; i < MVAS_INSTR_SIZE; i++)
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;

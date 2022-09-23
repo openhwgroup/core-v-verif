@@ -141,7 +141,6 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
      $fwrite(fh, $sformatf("--override root/cpu/scontext_undefined=1\n"));
      $fwrite(fh, $sformatf("--override root/cpu/ecode_mask=0x7ff\n"));
      $fwrite(fh, $sformatf("--override root/cpu/mtvec_mask=0xffffff81\n"));
-     //TODO:MT make these part of the configuration
      $fwrite(fh, $sformatf("--override root/cpu/Zca=1\n"));
      $fwrite(fh, $sformatf("--override root/cpu/Zcb=1\n"));
      $fwrite(fh, $sformatf("--override root/cpu/Zcmp=1\n"));

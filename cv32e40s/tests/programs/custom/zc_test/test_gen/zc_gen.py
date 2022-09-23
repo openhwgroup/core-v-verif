@@ -83,7 +83,8 @@ for i in range(0, len(pushPopRlists)):
 
   #Generate instruction for test
   asmFuncTemp.append("    cm.pop {"+pushPopRlists[i]+"}, 64\n")
-  asmFuncTemp.append("    nop\n    nop\n\n")
+  asmFuncTemp.append("    nop\n    nop\n")
+  asmFuncTemp.append("    j pp_case_end\n\n")
 
   pushTagCount += 1
 
@@ -142,7 +143,8 @@ for i in range(0, len(pushPopRlists)):
   asmFuncTemp.append("    cm.popret {"+pushPopRlists[i]+"}, 64\n")
 
   asmFuncTemp.append("  "+tag+"_ret:\n")
-  asmFuncTemp.append("    nop\n    nop\n\n")
+  asmFuncTemp.append("    nop\n    nop\n")
+  asmFuncTemp.append("    j pr_case_end\n\n")
 
   popretTagCount += 1
 
@@ -201,7 +203,8 @@ for i in range(0, len(pushPopRlists)):
   asmFuncTemp.append("    cm.popretz {"+pushPopRlists[i]+"}, 64\n")
 
   asmFuncTemp.append("  "+tag+"_ret:\n")
-  asmFuncTemp.append("    nop\n    nop\n\n")
+  asmFuncTemp.append("    nop\n    nop\n")
+  asmFuncTemp.append("    j prz_case_end\n\n")
 
   popretzTagCount += 1
 
@@ -252,7 +255,8 @@ for s1 in sreg1List:
 
     #Generate instruction for test
     asmFuncTemp.append("    cm.mvsa01 "+s1+", "+s2+"\n")
-    asmFuncTemp.append("    nop\n    nop\n\n")
+    asmFuncTemp.append("    nop\n    nop\n")
+    asmFuncTemp.append("    j sa_case_end\n\n")
 
     mvsaTagCount += 1
 
@@ -302,7 +306,8 @@ for s1 in sreg1List:
 
     #Generate instruction for test
     asmFuncTemp.append("    cm.mva01s "+s1+", "+s2+"\n")
-    asmFuncTemp.append("    nop\n    nop\n\n")
+    asmFuncTemp.append("    nop\n    nop\n")
+    asmFuncTemp.append("    j as_case_end\n\n")
 
     mvasTagCount += 1
 
