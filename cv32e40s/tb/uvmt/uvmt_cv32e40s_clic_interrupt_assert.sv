@@ -1,6 +1,6 @@
 //
 // Copyright 2020 OpenHW Group
-// Copyright 2020 Datum Technology Corporation
+// Copyright 2022 Silicon Laboratories, Inc.
 //
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
     input logic [31:0]                rvfi_mepc_wdata,
     input logic [31:0]                rvfi_mepc_wmask,
-    input logic                       rvfi_mepc_we,
     input logic [31:0]                rvfi_mepc_rdata,
     input logic [31:0]                rvfi_mepc_rmask,
     input logic [31:0]                rvfi_dpc_rdata,
@@ -354,7 +353,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     DPC           = 12'h7B1,
     DSCRATCH0     = 12'h7B2,
     DSCRATCH1     = 12'h7B3
-} csr_name_t;
+  } csr_name_t;
 
   typedef struct packed {
     csr_name_t           csr;
@@ -533,13 +532,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
   logic is_valid_mnxti_write;
   logic is_valid_mnxti_read;
   logic is_wfi;
-
-  int   obi_in_flight;
-  int   obi_in_flight_n;
-  int   obi_data_in_flight;
-  int   obi_data_in_flight_n;
-  logic incr_data_obi;
-  logic decr_data_obi;
 
   logic is_load_bus_fault;
   logic is_store_bus_fault;
@@ -903,23 +895,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // Enabled and pending interrupts should eventually be taken,
     // assuming that the request is not retracted
     // ------------------------------------------------------------------------
-
-    assign incr_data_obi = obi_data_req && obi_data_gnt && !obi_data_rvalid;
-    assign decr_data_obi = !(obi_data_req && obi_data_gnt) && obi_data_rvalid && (obi_data_in_flight > 0);
-
-
-    always @(posedge clk_i) begin
-      if (!rst_ni) begin
-        obi_data_in_flight <= 0;
-      end else begin
-        obi_data_in_flight <= obi_data_in_flight + incr_data_obi;
-        obi_data_in_flight <= obi_data_in_flight - decr_data_obi;
-      end
-    end
-
-    always @* begin
-      obi_data_in_flight_n <= obi_data_in_flight - decr_data_obi + incr_data_obi;
-    end
 
     localparam MAX_STALL_CYCLES = 20;
 
@@ -2022,27 +1997,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // PC should be set to the address fetched from the mtvt pointer after
     // taking an shv interrupt
     // ------------------------------------------------------------------------
-
-    logic incr_obi;
-    logic decr_obi;
-    assign incr_obi =   obi_instr_req && obi_instr_gnt && !obi_instr_rvalid;
-    assign decr_obi = !(obi_instr_req && obi_instr_gnt) && obi_instr_rvalid && (obi_in_flight > 0);
-
-    always @* begin
-      if (!rst_ni) begin
-        obi_in_flight_n <= 0;
-      end else begin
-        obi_in_flight_n <= obi_in_flight - decr_obi + incr_obi;
-      end
-    end
-
-    always @(posedge clk_i) begin
-      if (!rst_ni) begin
-        obi_in_flight <= 0;
-      end else begin
-        obi_in_flight <= obi_in_flight + incr_obi - decr_obi;
-      end
-    end
 
     property p_pc_to_mtvt_for_taken_shv_interrupt;
       logic [31:0] pointer_value = '0;
