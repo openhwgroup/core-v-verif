@@ -42,7 +42,7 @@ variant         ?=
 # TRACE_FAST, TRACE_COMPACT and VERDI are mutually exclusive and imply non-empty DEBUG.
 ifneq ($(TRACE_FAST),)
 ifneq ($(TRACE_COMPACT),)
-$(error  ariables TRACE_FAST and TRACE_COMPACT are mutually exclusive, please unset one of them)
+$(error Variables TRACE_FAST and TRACE_COMPACT are mutually exclusive, please unset one of them)
 endif
 ifneq ($(VERDI),)
 $(error Variables TRACE_FAST and VERDI are mutually exclusive, please unset one of them)
@@ -115,7 +115,7 @@ vcs-testharness:
 
 veri-testharness:
 	make -C $(path_var) verilate target=$(target) defines=$(subst +define+,,$(isscomp_opts))
-	$(path_var)/work-ver/Variane_testharness $(elf) $(issrun_opts)
+	$(path_var)/work-ver/Variane_testharness $(if $(TRACE_COMPACT), -f verilator.fst) $(if $(TRACE_FAST), -v verilator.vcd) $(elf) $(issrun_opts)
 	$(tool_path)/spike-dasm --isa=$(target_isa) < ./trace_rvfi_hart_00.dasm > $(log)
 	# If present, move default trace files to per-test directory.
 	[ ! -f verilator.fst ] || mv verilator.fst `dirname $(log)`/`basename $(log) .log`.$(target).fst
