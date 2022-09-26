@@ -1,0 +1,6 @@
+name: zc_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Directed test for Zc extension
+plusargs: >
+    +rand_stall_obi_disable
