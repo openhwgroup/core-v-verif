@@ -920,6 +920,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
     // Pending and enabled interrupts will eventually be taken if the conditions are right
     // Excludes checking in blocking regions (debug, exception handlers, nmi)
+    // Deliberately written as a liveness property, might want to exclude or constrain
+    // for sim to avoid the liveness issues.
     property p_always_taken;
       sync_accept_on(
            core_in_debug
@@ -1001,19 +1003,46 @@ module uvmt_cv32e40s_clic_interrupt_assert
         $sformatf("irq ack prerequisites not met and ack occurred"));
 
     // ------------------------------------------------------------------------
+    // There should be no irq_ack unless there was a pending and enabled irq
+    // ------------------------------------------------------------------------
+    property p_no_irq_no_ack;
+      // Never irq_ack unless we had a valid and pending interrupt present.
+i         !(irq_level_ok_valid
+       || irq_priv_ok_valid
+      |=>
+          !irq_ack
+      ;
+    endproperty : p_no_irq_no_ack
+
+    a_no_irq_no_ack : assert property (p_no_irq_no_ack)
+    else
+      `uvm_error(info_tag,
+        $sformatf("irq ack prerequisites not met and ack occurred"));
+
+    // ------------------------------------------------------------------------
     // There should be no irq_ack on taken nmi
     // ------------------------------------------------------------------------
 
     property p_nmi_taken_no_ack;
-        irq_ack
-      |->
-        (rvfi_valid && !is_cause_nmi)[->1];
+
+          irq_ack &&
+      ##0 rvfi_valid[->1]
+      |=>
+          // No nmi should have caused this ack unless reasons below
+          !is_cause_nmi
+      or
+          // first instruction of handler gets bus fault
+          is_cause_nmi
+       && rvfi_intr.cause == INSTR_BUS_FAULT // FIXME: Check correct fault
+      ;
     endproperty : p_nmi_taken_no_ack
 
     a_nmi_taken_no_ack: assert property (p_nmi_taken_no_ack)
     else
       `uvm_error(info_tag,
         $sformatf("There should be no irq_ack for a taken nmi"));
+
+    property p_nmi_no
 
     // ------------------------------------------------------------------------
     // Only one irq_ack per irq
