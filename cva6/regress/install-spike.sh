@@ -1,4 +1,4 @@
-# Copyright 2021 Thales DIS design services SAS
+# Copyright 2021-2022 Thales DIS design services SAS
 #
 # Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -8,7 +8,7 @@
 # Original Author: Jean-Roch COULON (jean-roch.coulon@thalesgroup.fr)
 
 set -e
-VERSION="59a9277ac1e3f9aca630fb035d1dbacaa091e375"
+VERSION="e93b9cbbbcd3ad0a02ae298e9f1a2d98d3ac0153"
 
 if [ -z ${NUM_JOBS} ]; then
     NUM_JOBS=1
@@ -22,7 +22,14 @@ if [ ! -f "$SPIKE_ROOT/bin/spike"  ]; then
     git clone https://github.com/riscv/riscv-isa-sim.git 
     cd riscv-isa-sim
     git checkout $VERSION
-    git apply $PATCH_DIR/spike-shared-fesvr-lib.patch
+    # Apply Spike patches.
+    git apply $PATCH_DIR/spike/patches/spike-shared-fesvr-lib.patch
+    git apply $PATCH_DIR/spike/patches/spike-cvxif-extension.patch
+    git apply $PATCH_DIR/spike/patches/spike-dlopen-diagnostics.patch
+    # Recursively copy Spike files related to CVXIF extension into current
+    # directory.
+    cp -rpa $PATCH_DIR/spike/cvxif-ext-files/* .
+    # Build and install Spike (including extensions).
     mkdir -p build
     cd build
     ../configure --enable-commitlog --prefix="$SPIKE_ROOT"
@@ -31,6 +38,4 @@ if [ ! -f "$SPIKE_ROOT/bin/spike"  ]; then
 else
     echo "Using Spike from cached directory."
 fi
-
-
 
