@@ -806,6 +806,7 @@ module uvmt_cv32e40s_tb;
     // TODO find a better way
     assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.ctrl_fsm_o_i   = dut_wrap.cv32e40s_wrapper_i.core_i.controller_i.controller_fsm_i.ctrl_fsm_o;
     assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_req_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_req.req;
+    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_gnt_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_gnt.gnt;
     assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.clk_i          = dut_wrap.cv32e40s_wrapper_i.core_i.clk_i;
     assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.rst_ni         = dut_wrap.cv32e40s_wrapper_i.core_i.rst_ni;
 

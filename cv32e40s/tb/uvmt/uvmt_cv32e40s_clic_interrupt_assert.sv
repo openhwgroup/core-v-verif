@@ -927,13 +927,10 @@ module uvmt_cv32e40s_clic_interrupt_assert
            core_in_debug
         || rvfi_intr.exception
         || rvfi_trap.exception
-      //            || dut_wrap.cv32e40s_wrapper_i.rvfi_i.nmi_pending_i
         || is_cause_nmi
         || !$stable(clic, @(posedge clk_i))
-        || !(irq_level_ok_valid || irq_priv_ok_valid)
                 )
-
-      irq_level_ok_valid || irq_priv_ok_valid
+      seq_irq_pend(1'b1)
       implies
         s_eventually irq_ack;
 
@@ -963,37 +960,44 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // irq_ack should only be asserted on taken interrupts
     // ------------------------------------------------------------------------
 
-    logic irq_level_ok_valid;
-    logic irq_priv_ok_valid;
-
     logic [7:0] effective_clic_level;
 
     always_comb begin
       effective_clic_level = mintthresh_fields.th > mintstatus_fields.mil ? mintthresh_fields.th : mintstatus_fields.mil;
     end
 
-    assign irq_level_ok_valid = mstatus_fields.mie
-                                && clic.irq
-                                && (clic.priv == current_priv_mode)
-                                && (clic.level > effective_clic_level);
+    sequence seq_irq_pend(bit ok = 1'b1);
+      // valid pending
+      ok ##0 (
+            (mstatus_fields.mie
+         && $past(clic.irq)
+         && $past(clic.priv) == current_priv_mode
+         && $past(clic.level) > effective_clic_level)
+        or
+            ($past(clic.irq)
+         && $past(clic.priv) > current_priv_mode
+         && $past(clic.level) > 0)
+      )
 
-    assign irq_priv_ok_valid = clic.irq
-                               && (clic.priv > current_priv_mode)
-                               && (clic.level > 0);
+      or
+      // no valid pending
+      !ok ##0 (
+            !(mstatus_fields.mie
+         && $past(clic.irq)
+         && $past(clic.priv) == current_priv_mode
+         && $past(clic.level) > effective_clic_level)
+        and
+            !($past(clic.irq)
+         && $past(clic.priv) > current_priv_mode
+         && $past(clic.level) > 0)
+      )
+      ;
+    endsequence : seq_irq_pend
 
     property p_irq_ack_valid;
         irq_ack
       |->
-      /*either*/
-           mstatus_fields.mie
-        && $past(clic.irq)
-        && $past(clic.priv) == current_priv_mode
-        && $past(clic.level) > effective_clic_level
-
-      or
-           $past(clic.irq)
-        && $past(clic.priv) > current_priv_mode
-        && $past(clic.level) > 0
+        seq_irq_pend(1'b1)
       ;
     endproperty : p_irq_ack_valid
 
@@ -1006,10 +1010,9 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // There should be no irq_ack unless there was a pending and enabled irq
     // ------------------------------------------------------------------------
     property p_no_irq_no_ack;
-      // Never irq_ack unless we had a valid and pending interrupt present.
-i         !(irq_level_ok_valid
-       || irq_priv_ok_valid
-      |=>
+          // Never irq_ack unless we had a valid and pending interrupt present.
+          seq_irq_pend(1'b0).triggered
+      |->
           !irq_ack
       ;
     endproperty : p_no_irq_no_ack
@@ -1021,28 +1024,15 @@ i         !(irq_level_ok_valid
 
     // ------------------------------------------------------------------------
     // There should be no irq_ack on taken nmi
+    //
+    // Ideally would like to have an assertion for this case, but it is not
+    // possible to separate cases on rvfi where the taken interrupts handler
+    // is interrupted by nmi, and thus appears to have an ack caused by nmi
+    //
+    // The remaining cases will be covered by no irq_ack without valid,
+    // pending irq, and that ack always occurs together with a valid pending
+    // interrupt condition.
     // ------------------------------------------------------------------------
-
-    property p_nmi_taken_no_ack;
-
-          irq_ack &&
-      ##0 rvfi_valid[->1]
-      |=>
-          // No nmi should have caused this ack unless reasons below
-          !is_cause_nmi
-      or
-          // first instruction of handler gets bus fault
-          is_cause_nmi
-       && rvfi_intr.cause == INSTR_BUS_FAULT // FIXME: Check correct fault
-      ;
-    endproperty : p_nmi_taken_no_ack
-
-    a_nmi_taken_no_ack: assert property (p_nmi_taken_no_ack)
-    else
-      `uvm_error(info_tag,
-        $sformatf("There should be no irq_ack for a taken nmi"));
-
-    property p_nmi_no
 
     // ------------------------------------------------------------------------
     // Only one irq_ack per irq
@@ -1363,7 +1353,7 @@ i         !(irq_level_ok_valid
         $sformatf("Fencei should _always_ make writes to mtvt visible to next taken shv interrupt"));
 
     // ------------------------------------------------------------------------
-    // Function ptr reads treated as if fetch
+    // mtvt aligned correctly
     // ------------------------------------------------------------------------
 
     property p_mtvt_alignment_correct;
@@ -1572,16 +1562,6 @@ i         !(irq_level_ok_valid
 
     p_mpp: assert property (p_mstatus_mpp_neq_mcause_mpp);
     p_mpie: assert property (p_mstatus_mpie_neq_mcause_mpie);
-
-    weird_csr_access_cover_1 : cover property (
-      p_mcause_we_cover
-    );
-    weird_csr_access_cover_2 : cover property (
-      p_mstatus_we_cover
-    );
-    weird_csr_access_cover_3 : cover property (
-      p_mnxti_we_cover
-    );
 
     property p_mcause_mpp_reflects_previous_privilege_mode;
       bit [1:0] mode_prev = 2'b11;
