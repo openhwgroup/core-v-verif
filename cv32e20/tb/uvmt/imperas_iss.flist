@@ -15,9 +15,9 @@
 // limitations under the License.
 // 
 
-// CV32 test bench files
-${TBSRC_HOME}/uvmt/uvmt_cv32e20_step_compare.sv
-${TBSRC_HOME}/uvmt/uvmt_cv32e20_iss_wrap.sv
+// FIXME: replace with ImperasDV
+//${TBSRC_HOME}/uvmt/uvmt_cv32e20_step_compare.sv
+//${TBSRC_HOME}/uvmt/uvmt_cv32e20_iss_wrap.sv
 
 // Vendor Libraries
 +incdir+${DV_OVPM_DESIGN}

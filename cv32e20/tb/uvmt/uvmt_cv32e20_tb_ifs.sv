@@ -121,15 +121,6 @@ interface uvmt_cv32e20_core_cntrl_if (
   reg   [15:0] lfsr;
 
   covergroup core_cntrl_cg;
-    // For CV32E20E40P, this s.b. tied to 0
-    //pulp_clock_enable: coverpoint pulp_clock_en {
-    //  bins enabled  = {1'b1};
-    //  bins disabled = {1'b0};
-    //}
-    //scan_enable: coverpoint scan_cg_en {
-    //  bins enabled  = {1'b1};
-    //  bins disabled = {1'b0};
-    //}
     boot_address: coverpoint boot_addr {
       bins low  = {[32'h0000_0000 : 32'h0000_FFFF]};
       bins med  = {[32'h0001_0000 : 32'hEFFF_FFFF]};

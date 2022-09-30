@@ -174,6 +174,8 @@ XRUN_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 XRUN_USER_COMPILE_ARGS += +define+RVFI
 XRUN_USER_COMPILE_ARGS += +define+UVM
+# FIXME: See https://github.com/openhwgroup/cve2/issues/15
+XRUN_USER_COMPILE_ARGS += +define+SYNTHESIS
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 	XRUN_PLUSARGS += +USE_ISS
 else

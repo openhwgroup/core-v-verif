@@ -20,7 +20,7 @@
 `ifndef __UVMT_CV32E20_STEP_COMPARE_SV__
 `define __UVMT_CV32E20_STEP_COMPARE_SV__
 
-// Step-and-Compare between the CV32E20E40P and Imperas OVPsim ISS
+// Step-and-Compare between the CV32E20 and Imperas OVPsim ISS
 // Cloned from the Imperas demo at $(IMPERAS_HOME)/RTL_OVPmodel_step_compare/verilog_testbench/testbench.sv
 
 /*
