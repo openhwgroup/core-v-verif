@@ -52,7 +52,16 @@ module uvmt_cv32e40s_tb;
    uvma_clknrst_if              clknrst_if_iss();
    uvma_debug_if                debug_if();
    uvma_interrupt_if            interrupt_if();
-   uvma_obi_memory_if           obi_instr_if_i(
+   uvma_obi_memory_if #(
+     .AUSER_WIDTH (32),  // TODO:silabs-robin  Correct widths sat via named definitions, everywhere
+     .WUSER_WIDTH (32),
+     .RUSER_WIDTH (32),
+     .ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
+     .DATA_WIDTH  (32),
+     .ID_WIDTH    (32),
+     .ACHK_WIDTH  (32),
+     .RCHK_WIDTH  (32)
+   ) obi_instr_if_i (
      .clk(clknrst_if.clk),
      .reset_n(clknrst_if.reset_n)
    );
@@ -402,7 +411,7 @@ module uvmt_cv32e40s_tb;
       .RUSER_WIDTH(0),
       .ID_WIDTH(0),
       .ACHK_WIDTH(0),
-      .RCHK_WIDTH(0),
+      .RCHK_WIDTH(0),  // TODO:silabs-robin  These (and similars) must be specified
       .IS_1P2(1)
     ) obi_instr_memory_assert_i(.obi(obi_instr_if_i));
 
