@@ -172,7 +172,6 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    $fwrite(fh, $sformatf("--override %s/startaddress=0x%08x\n",  refpath, cfg.core_cfg.boot_addr));
    // Specification forces mtvec[0] high at reset regardless of bootstrap pin state of mtvec_addr_i]0]
    $fwrite(fh, $sformatf("--override %s/mtvec=0x%08x\n",         refpath, cfg.core_cfg.mtvec_addr| 32'h1));
-   //$fwrite(fh, $sformatf("--override %s/nmi_address=0x%08x\n",   refpath, cfg.core_cfg.nmi_addr));
    $fwrite(fh, $sformatf("--override %s/debug_address=0x%08x\n", refpath, cfg.core_cfg.dm_halt_addr));
    $fwrite(fh, $sformatf("--override %s/dexc_address=0x%08x\n",  refpath, cfg.core_cfg.dm_exception_addr));
 
@@ -181,7 +180,7 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    // -------------------------------------------------------------------------------------
 
    // NUM_MHPMCOUNTERS - Set zero in the noinhibit_mask to enable a counter, starting from index 3
-   $fwrite(fh, $sformatf("--override %s/noinhibit_mask=0x%08x\n",                 refpath, cfg.core_cfg.get_noinhibit_mask()));
+   //$fwrite(fh, $sformatf("--override %s/noinhibit_mask=0x%08x\n",                 refpath, cfg.core_cfg.get_noinhibit_mask()));
    $fwrite(fh, $sformatf("--override %s/extension/mcountinhibit_reset=0x%08x\n",  refpath, ~(cfg.core_cfg.get_noinhibit_mask())));
 
    // PMA Regions

@@ -163,7 +163,6 @@ function void uvme_cv32e40x_vp_fencei_tamper_seq_c::write_iss_mem();
   rvvi_ovpsim_cntxt.ovpsim_mem_vif.mem[addr_lo] = data_lo;
   rvvi_ovpsim_cntxt.ovpsim_mem_vif.mem[addr_hi] = data_hi;
 
-  $display("%m addr=0x%08X data=%08X", addr, data);
   rvviRefMemoryWrite(0, addr, data, 4);
 
 endfunction : write_iss_mem

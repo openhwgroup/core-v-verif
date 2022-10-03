@@ -796,8 +796,7 @@ module uvmt_cv32e40x_tb;
          void'(rvviRefShutdown());
       end
 
-
-      $display("\n%m: *** Test Summary ***\n");
+      `uvm_info("DV_WRAP", $sformatf("\n%m: *** Test Summary ***\n"), UVM_DEBUG);
 
       if (sim_finished && (err_count == 0) && (fatal_count == 0)) begin
          $display("    PPPPPPP    AAAAAA    SSSSSS    SSSSSS   EEEEEEEE  DDDDDDD     ");

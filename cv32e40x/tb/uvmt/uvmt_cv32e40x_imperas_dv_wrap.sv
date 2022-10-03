@@ -49,14 +49,14 @@
 ////////////////////////////////////////////////////////////////////////////
 `define RVVI_SET_IRQ(IRQ_NAME, IRQ_IDX) \
     if (IRQ[IRQ_IDX]==0 && IRQ_NEXT[IRQ_IDX]==1) begin \
-        if(0) $display("RVVI_SET_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)); \
+        `uvm_info("DV_WRAP", $sformatf("RVVI_SET_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)), UVM_DEBUG); \
         void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 1)); \
         IRQ[IRQ_IDX] = 1; \
     end
 
 `define RVVI_CLR_IRQ(IRQ_NAME, IRQ_IDX) \
     if (`RVFI_IF.rvfi_valid && IRQ[IRQ_IDX]==1 && (IRQ_NEXT[IRQ_IDX]==0 || `DUT_PATH.irq_i[IRQ_IDX]==0)) begin \
-        if(0) $display("RVVI_CLR_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)); \
+        `uvm_info("DV_WRAP", $sformatf("RVVI_CLR_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)), UVM_DEBUG); \
         void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 0)); \
         IRQ[IRQ_IDX] = 0; \
     end
@@ -190,26 +190,15 @@
 
 `define CSR_MCYCLEH_ADDR       32'hB80
 `define CSR_MINSTRETH_ADDR     32'hB82
-//[31:0] [31:0]  CSR_MHPMCOUNTERH_ADDR 32'hB83..32'hB9F
 `define CSR_MVENDORID_ADDR     32'hF11
 `define CSR_MARCHID_ADDR       32'hF12
 `define CSR_MIMPID_ADDR        32'hF13
 `define CSR_MHARTID_ADDR       32'hF14
-`define CSR_MCONFIGPTR_ADDR    32'hF15 // huh?
+`define CSR_MCONFIGPTR_ADDR    32'hF15
 `define CSR_CYCLE_ADDR         32'hC00
 `define CSR_INSTRET_ADDR       32'hC02
 `define CSR_CYCLEH_ADDR        32'hC80
 `define CSR_INSTRETH_ADDR      32'hC82
-
-//[31:0]         CSR_MSECCFG_ADDR
-//[31:0]         CSR_MSECCFGH_ADDR
-//[15:0] [31:0]  CSR_PMPADDR_ADDR
-//[ 3:0] [31:0]  CSR_PMPCFG_ADDR
-//[31:0] [31:0]  CSR_HPMCOUNTERH_ADDR
-//[31:0] [31:0]  CSR_HPMCOUNTER_ADDR
-//[ 1:0] [31:0]  CSR_DSCRATCH_ADDR
-//[ 3:0] [31:0]  CSR_TDATA_ADDR
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module wrapper for Imperas DV.
@@ -320,8 +309,12 @@ module uvmt_cv32e40x_imperas_dv_wrap
        int i;
        for (i=1; i<32; i++) begin
            XREG[i] = 32'b0;
-           if (`RVFI_IF.rvfi_rd1_addr==5'(i))            // TODO: originally rvfi_rd_addr
-               XREG[i] = `RVFI_IF.rvfi_rd1_wdata;        // TODO: originally rvfi_rd_wdata
+           // TODO: This current RVFI implementation will only allow a single destination
+           //       register to be written. For some instructions this is not sufficient
+           //       This code will need enhancing once the RVFI has the ability to describe
+           //       multiple target register writes, for a single instruction
+           if (`RVFI_IF.rvfi_rd1_addr==5'(i))
+               XREG[i] = `RVFI_IF.rvfi_rd1_wdata;
        end
    end
 
@@ -335,7 +328,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
    bit DREQ, DREQ_NEXT;
    always @(*) begin: Set_DebugReq
        // this requires a sync on DCAUSE
-       //DREQ_NEXT = `DUT_PATH.debug_req_i | (`RVFI_IF.rvfi_dbg==3 && `RVFI_IF.rvfi_dbg_mode);
        DREQ_NEXT = (`RVFI_IF.rvfi_dbg==3 && `RVFI_IF.rvfi_dbg_mode);
        if (DREQ==0 && DREQ_NEXT==1) begin
            void'(rvvi.net_push("haltreq", 1));
@@ -399,23 +391,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
        `RVVI_CLR_IRQ(LocalInterrupt15,   31)
    end: Clr_Irq
    
-//   wire [31:0] MIP, MIE, MSTATUS, MCAUSE;
-//   assign MIP     = rvvi.csr[0][0][`CSR_MIP_ADDR];
-//   assign MIE     = rvvi.csr[0][0][`CSR_MIE_ADDR];
-//   assign MSTATUS = rvvi.csr[0][0][`CSR_MSTATUS_ADDR];
-//   assign MCAUSE  = rvvi.csr[0][0][`CSR_MCAUSE_ADDR];
-//
-//   always @(*) begin
-//       if (MSTATUS & 'h8) $display("IRQ PE = %08X", MIP & MIE);
-//       $display("MCAUSE=%08X csr_MCAUSE_wb=%0d", MCAUSE, csr_mcause_wb);
-//   end
-//   always @(`DUT_PATH.irq_i) begin: Chg_Irq
-//       $display("irq_i=%08X", `DUT_PATH.irq_i);
-//   end: Chg_Irq
-//   always @(IRQ) begin
-//       $display("IRQ=%08X", IRQ);
-//   end
-   
    ////////////////////////////////////////////////////////////////////////////
    // RVFI Monitor: pass NMI Load/Store and Fetch to the ref
    ////////////////////////////////////////////////////////////////////////////
@@ -423,8 +398,9 @@ module uvmt_cv32e40x_imperas_dv_wrap
    bit DataBusFault;
    int DataBusFaultCause;
    bit resync_hart;
+   int order;
    
-   always @(*) begin: Monitor_RVFI
+   always_comb begin: Monitor_RVFI
        bit        trap_trap;
        bit        trap_exception;
        bit        trap_debug;
@@ -442,9 +418,13 @@ module uvmt_cv32e40x_imperas_dv_wrap
        
        bit        nmi_c1, nmi_c2;
        
+       bit        ifault;
+       
        resync_hart = 0;
 
-       if (`RVFI_IF.rvfi_valid) begin
+       if (`RVFI_IF.rvfi_valid && (order != `RVFI_IF.rvfi_order)) begin
+           order                = `RVFI_IF.rvfi_order;
+
            trap_trap            = `RVFI_IF.rvfi_trap.trap;
            trap_exception       = `RVFI_IF.rvfi_trap.exception;
            trap_debug           = `RVFI_IF.rvfi_trap.debug;
@@ -459,9 +439,9 @@ module uvmt_cv32e40x_imperas_dv_wrap
            
            nmi_pending          = `RVFI_IF.rvfi_nmip[0];
            nmi_load_store       = `RVFI_IF.rvfi_nmip[1];
-
+           
            if (0) begin
-              `uvm_info(info_tag, $sformatf("\nRVFI Valid %t", $time), UVM_INFO)
+              `uvm_info(info_tag, $sformatf("RVFI Valid %t", $time), UVM_INFO)
               `uvm_info(info_tag, $sformatf("valid      = %X", `RVFI_IF.rvfi_valid), UVM_INFO)
               `uvm_info(info_tag, $sformatf("order      = %0d", `RVFI_IF.rvfi_order), UVM_INFO)
               `uvm_info(info_tag, $sformatf("insn       = %X", `RVFI_IF.rvfi_insn), UVM_INFO)
@@ -501,7 +481,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
                end
                DataBusFault = 0;
            end
-
+           
            //
            //  Fetch - Exception on TRAP
            //
@@ -522,22 +502,18 @@ module uvmt_cv32e40x_imperas_dv_wrap
            // and we have an intr - then these need scheduling
            // 2 exception events occured simultaneously
            if (`RVFI_IF.rvfi_dbg_mode && `RVFI_IF.rvfi_dbg=='h3 && intr_intr) begin
-               $display("################################################################################");
-               $display("# WARNING: intr & debug, intr_cause=%0d exception followed by debug request", intr_cause);
-               $display("################################################################################");
+               `uvm_warning(info_tag, $sformatf("# intr & debug, intr_cause=%0d exception followed by debug request", intr_cause))
                // Resync
                resync_hart = 1;
            end
            
            // simultaneous intr and trap
            // 2 exception events occured siultaneously
-           if (intr_intr && trap_exception_cause) begin
-               $display("################################################################################");
-               $display("# WARNING: intr & trap, intr_cause=%0d trap_exception_cause=%0d", intr_cause, trap_exception_cause);
-               $display("################################################################################");
-               // Resync
-               resync_hart = 1;
-           end
+//           if (intr_intr && trap_exception_cause) begin
+//               `uvm_warning(info_tag, $sformatf("# intr & trap, intr_cause=%0d trap_exception_cause=%0d", intr_cause, trap_exception_cause))
+//               // Resync
+//               resync_hart = 1;
+//           end
            
        end
    end: Monitor_RVFI
@@ -558,12 +534,12 @@ module uvmt_cv32e40x_imperas_dv_wrap
     end
     // Test-program must have been compiled before we got here...
     if ($value$plusargs("elf_file=%s", test_program_elf)) begin
-      `uvm_info(info_tag, $sformatf("ImperasDV loading test_program %0s", test_program_elf), UVM_NONE)
+      `uvm_info(info_tag, $sformatf("ImperasDV loading test_program %0s", test_program_elf), UVM_LOW)
       if (!rvviRefInit(test_program_elf, "openhwgroup.ovpworld.org", "CV32E40X", 0)) begin
         `uvm_fatal(info_tag, "rvviRefInit failed")
       end
       else begin
-        `uvm_info(info_tag, "rvviRefInit() succeed", UVM_NONE)
+        `uvm_info(info_tag, "rvviRefInit() succeed", UVM_LOW)
       end
     end
     else begin
@@ -678,7 +654,8 @@ module uvmt_cv32e40x_imperas_dv_wrap
     // and enabled but not taken immediately due to instructions 
     // in-flight, eg Load/Store
     rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR, `RVVI_FALSE);
-    rvviRefCsrCompareMask(hart_id,   `CSR_DCSR_ADDR, ~('h8));
+    //rvviRefCsrCompareMask(hart_id,   `CSR_DCSR_ADDR, ~('h8));
+    void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
             
     // define asynchronous grouping
     // Interrupts
@@ -715,7 +692,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
     // According to silabs this range is 0x0080_0000 to 0x0080_0FFF
     void'(rvviRefMemorySetVolatile('h00800000, 'h00800FFF)); //TODO: deal with int return value
 
-    `uvm_info(info_tag, "ref_init() complete", UVM_NONE)
+    `uvm_info(info_tag, "ref_init() complete", UVM_LOW)
   endtask // ref_init
 
 endmodule : uvmt_cv32e40x_imperas_dv_wrap
