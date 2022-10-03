@@ -450,6 +450,7 @@ module uvmt_cv32e40s_tb;
       .*
     );
 
+
   // User-mode assertions
 
   bind  cv32e40s_wrapper
@@ -484,6 +485,20 @@ module uvmt_cv32e40s_tb;
 
       .*
     );
+
+
+  // User-mode Coverage
+
+  bind  cv32e40s_wrapper
+    uvmt_cv32e40s_umode_cov  umode_cov_i (
+      .rvfi_valid     (rvfi_i.rvfi_valid),
+      .rvfi_trap      (rvfi_i.rvfi_trap),
+      .rvfi_insn      (rvfi_i.rvfi_insn),
+      .rvfi_rs1_rdata (rvfi_i.rvfi_rs1_rdata),
+
+      .*
+    );
+
 
   // Fence.i assertions
 
