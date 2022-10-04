@@ -10,11 +10,20 @@ module  uvmt_cv32e40s_umode_cov
   input wire         rvfi_valid,
   input rvfi_trap_t  rvfi_trap,
   input wire [31:0]  rvfi_insn,
-  input wire [31:0]  rvfi_rs1_rdata
+  input wire [31:0]  rvfi_rs1_rdata,
+  input wire [31:0]  rvfi_pc_rdata,
+
+  input wire         obi_iside_req,
+  input wire         obi_iside_gnt,
+  input wire [31:0]  obi_iside_addr,
+  input wire [ 2:0]  obi_iside_prot
 );
 
 
-  // Helper Typedefs
+  // Helper Definitions
+
+  localparam int  MODE_U = 2'b 00;
+  localparam int  MODE_M = 2'b 11;
 
   typedef struct packed {
     logic [31:13]  dontcare1;
@@ -40,6 +49,10 @@ module  uvmt_cv32e40s_umode_cov
     !rvfi_trap  &&
     (rvfi_insn == 32'b 0011000_00010_00000_000_00000_1110011);
 
+  wire  is_obi_iside_aphase =
+    obi_iside_req  &&
+    obi_iside_gnt  ;
+
 
   // Helper Sequences
 
@@ -56,7 +69,7 @@ module  uvmt_cv32e40s_umode_cov
   endsequence : seq_write_mpp
 
 
-  // Cover: SupportedLevels & MppValues
+  // Cover: "SupportedLevels" & "MppValues"
 
   for (genvar mode = 0; mode <= 3; mode++) begin : gen_try_goto_mode
     cov_try_goto_mode: cover property (
@@ -74,6 +87,37 @@ module  uvmt_cv32e40s_umode_cov
       is_rvfi_notrap_mret
     );
   end : gen_try_goto_mode
+
+
+  // Cover: "Refetch"
+
+  sequence  seq_refetch_as (logic [1:0]  mode);
+    logic [31:0]  addr;
+
+    is_obi_iside_aphase            ##0
+    (obi_iside_prot[2:1] != mode)  ##0
+    (1, addr = obi_iside_addr)
+    // TODO:silabs-robin  Will be resource-hungry in sim?
+
+    // TODO:silabs-robin  Cover with 0/1/2 other fetches between?
+    // TODO:silabs-robin  No rvfi_valid on same addr before final one?
+
+    ##1
+    (is_obi_iside_aphase [->1])    ##0
+    (obi_iside_prot[2:1] == mode)  ##0
+    (obi_iside_addr == addr)
+ //TODO?   ((is_obi_iside_aphase && (obi_iside_addr == addr)) [->1])  ##0
+
+    ##5  // (Traverse pipeline)
+    (rvfi_valid [->1])  ##0
+    (rvfi_pc_rdata == addr)
+ //TODO?   ((rvfi_valid && (rvfi_pc_rdata == addr)) [->1])
+    ;
+  endsequence : seq_refetch_as
+
+  cov_refetch_as_umode: cover property (seq_refetch_as(MODE_U));
+  cov_refetch_as_mmode: cover property (seq_refetch_as(MODE_M));
+  // TODO:silabs-robin  Cover with/without trap
 
 
 endmodule : uvmt_cv32e40s_umode_cov

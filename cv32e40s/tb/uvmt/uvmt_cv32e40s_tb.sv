@@ -504,6 +504,13 @@ module uvmt_cv32e40s_tb;
       .rvfi_trap      (rvfi_i.rvfi_trap),
       .rvfi_insn      (rvfi_i.rvfi_insn),
       .rvfi_rs1_rdata (rvfi_i.rvfi_rs1_rdata),
+      .rvfi_pc_rdata  (rvfi_i.rvfi_pc_rdata),
+
+
+      .obi_iside_req  (core_i.instr_req_o),
+      .obi_iside_gnt  (core_i.instr_gnt_i),
+      .obi_iside_addr (core_i.instr_addr_o),
+      .obi_iside_prot (core_i.instr_prot_o),
 
       .*
     );
