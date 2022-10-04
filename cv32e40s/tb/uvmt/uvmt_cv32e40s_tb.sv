@@ -489,8 +489,11 @@ module uvmt_cv32e40s_tb;
       .rvfi_csr_mstatus_wmask    (rvfi_i.rvfi_csr_mstatus_wmask),
       .rvfi_csr_mstateen0_rdata  (rvfi_i.rvfi_csr_mstateen0_rdata),
 
-      .impu_valid (core_i.if_stage_i.mpu_i.core_trans_valid_i),
-      .impu_addr  (core_i.if_stage_i.mpu_i.core_trans_i.addr),
+      .mpu_iside_valid (core_i.if_stage_i.mpu_i.core_trans_valid_i),
+      .mpu_iside_addr  (core_i.if_stage_i.mpu_i.core_trans_i.addr),
+
+      .obi_iside_prot (core_i.instr_prot_o),
+      .obi_dside_prot (core_i.data_prot_o),
 
       .*
     );
@@ -505,7 +508,8 @@ module uvmt_cv32e40s_tb;
       .rvfi_insn      (rvfi_i.rvfi_insn),
       .rvfi_rs1_rdata (rvfi_i.rvfi_rs1_rdata),
       .rvfi_pc_rdata  (rvfi_i.rvfi_pc_rdata),
-
+      .rvfi_mode      (rvfi_i.rvfi_mode),
+      .rvfi_rd_addr   (rvfi_i.rvfi_rd_addr),
 
       .obi_iside_req  (core_i.instr_req_o),
       .obi_iside_gnt  (core_i.instr_gnt_i),
