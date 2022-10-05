@@ -2,4 +2,8 @@ name: pma
 description: PMA configuration for regions and attributes
 compile_flags:
     +define+PMA_CUSTOM_CFG
-
+ovpsim: >
+    # --showoverrides
+    # --trace --tracechange --traceshowicount --monitornets
+cflags: >
+cv_sw_march: rv32im_zicsr_zca_zifencei

@@ -436,7 +436,7 @@ module uvmt_cv32e40s_tb;
 
       .ex_stage_instr_valid (ex_stage_i.id_ex_pipe_i.instr_valid),
 
-      .wb_stage_instr_valid_i    (wb_stage_i.instr_valid),
+      .wb_stage_instr_valid_i    (wb_stage_i.ex_wb_pipe_i.instr_valid),
       .wb_stage_instr_rdata_i    (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
       .wb_stage_instr_err_i      (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.err),
       .wb_stage_instr_mpu_status (wb_stage_i.ex_wb_pipe_i.instr.mpu_status),
@@ -482,9 +482,9 @@ module uvmt_cv32e40s_tb;
 
   // Xsecure assertion and coverage interface
 
-  bind cv32e40s_wrapper	
+  bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_if  xsecure_if (
-   
+
 	    // Core signals: cpuctrl rdata registeret cannot be read by rvfi, we must therefore use core signales instead
       // Gated clock
       .core_clk_gated                                     (core_i.clk),
@@ -507,7 +507,7 @@ module uvmt_cv32e40s_tb;
       .core_cs_registers_mhpmevent_31_to_3                (core_i.cs_registers_i.mhpmevent_q[31:3]),
       .core_cs_registers_mcountinhibit_q_mcycle_inhibit   (core_i.cs_registers_i.mcountinhibit_q[0]),
       .core_cs_registers_mcountinhibit_q_minstret_inhibit (core_i.cs_registers_i.mcountinhibit_q[2]),
-      
+
       .core_cs_registers_csr_en_gated                     (core_i.cs_registers_i.csr_en_gated),
       .core_cs_registers_csr_waddr                        (core_i.cs_registers_i.csr_waddr),
 
@@ -539,11 +539,11 @@ module uvmt_cv32e40s_tb;
       // ID stage
       .core_id_stage_id_valid_o                           (core_i.id_stage_i.id_valid_o),
       .core_id_stage_ex_ready_i                           (core_i.id_stage_i.ex_ready_i),
-      
+
       // ID EX pipe
       .core_id_ex_pipe_instr_meta_dummy                   (core_i.id_ex_pipe.instr_meta.dummy),
       .core_id_ex_pipe_instr_bus_resp_rdata               (core_i.id_ex_pipe.instr.bus_resp.rdata),
-      
+
       // EX WB pipe
       .core_wb_stage_ex_wb_pipe_instr_meta_dummy          (core_i.wb_stage_i.ex_wb_pipe_i.instr_meta.dummy),
 
@@ -551,7 +551,7 @@ module uvmt_cv32e40s_tb;
       .core_wb_stage_wb_valid_o                           (core_i.wb_stage_i.wb_valid_o),
       .*
     );
- 
+
     // Xsecure assertions
 
  bind cv32e40s_wrapper
