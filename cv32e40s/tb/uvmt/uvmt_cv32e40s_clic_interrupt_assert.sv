@@ -208,7 +208,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     ECALL_U_MODE        = 11'd8,
     ECALL_M_MODE        = 11'd11,
     INSTR_BUS_FAULT     = 11'd48,
-    INSTR_PARITY_FAULT  = 11'd49,
+    INSTR_PARITY_FAULT  = 11'd25,
     NMI_LOAD            = 11'd1024,
     NMI_STORE           = 11'd1025,
     NMI_LOAD_PARITY     = 11'd1026,
@@ -543,20 +543,23 @@ module uvmt_cv32e40s_clic_interrupt_assert
   logic is_invalid_instr_word;
   logic is_cause_nmi;
   logic is_cause_interrupt;
+  logic is_cause_instr_access_fault;
+  logic is_cause_instr_bus_fault;
   logic is_trap_exception;
   logic is_intr_ecall_ebreak;
   logic is_intr_exception;
 
-  assign is_load_bus_fault     = (rvfi_intr.cause == NMI_LOAD           && rvfi_intr.intr == 1 && rvfi_intr.interrupt == 1);
-  assign is_store_bus_fault    = (rvfi_intr.cause == NMI_STORE          && rvfi_intr.intr == 1 && rvfi_intr.interrupt == 1);
-  assign is_load_parity_fault  = (rvfi_intr.cause == NMI_LOAD_PARITY    && rvfi_intr.intr == 1 && rvfi_intr.interrupt == 1);
-  assign is_store_parity_fault = (rvfi_intr.cause == NMI_STORE_PARITY   && rvfi_intr.intr == 1 && rvfi_intr.interrupt == 1);
-  assign is_cause_nmi          = (rvfi_intr.cause inside { NMI_LOAD, NMI_STORE, NMI_LOAD_PARITY, NMI_STORE_PARITY })
-                                  && rvfi_intr.intr
-                                  && rvfi_intr.interrupt;
-  assign is_cause_interrupt    = !( rvfi_intr.cause inside {NMI_LOAD, NMI_STORE, NMI_LOAD_PARITY, NMI_STORE_PARITY})
-                                 && rvfi_intr.intr
-                                 && rvfi_intr.interrupt;
+  assign is_load_bus_fault           = (rvfi_intr.cause == NMI_LOAD           && rvfi_intr.intr == 1 && rvfi_intr.interrupt == 1);
+  assign is_store_bus_fault          = (rvfi_intr.cause == NMI_STORE          && rvfi_intr.intr == 1 && rvfi_intr.interrupt == 1);
+  assign is_load_parity_fault        = (rvfi_intr.cause == NMI_LOAD_PARITY    && rvfi_intr.intr == 1 && rvfi_intr.interrupt == 1);
+  assign is_store_parity_fault       = (rvfi_intr.cause == NMI_STORE_PARITY   && rvfi_intr.intr == 1 && rvfi_intr.interrupt == 1);
+  assign is_cause_instr_access_fault = (rvfi_intr.cause == INSTR_ACCESS_FAULT && rvfi_intr.intr == 1 && rvfi_intr.exception == 1);
+  assign is_cause_instr_bus_fault    = (rvfi_intr.cause == INSTR_BUS_FAULT    && rvfi_intr.intr == 1 && rvfi_intr.exception == 1);
+  assign is_cause_instr_parity_fault = (rvfi_intr.cause == INSTR_PARITY_FAULT && rvfi_intr.intr == 1 && rvfi_intr.exception == 1);
+
+  assign is_cause_nmi                = (rvfi_intr.cause inside { NMI_LOAD, NMI_STORE, NMI_LOAD_PARITY, NMI_STORE_PARITY }) && rvfi_intr.intr && rvfi_intr.interrupt;
+  assign is_cause_interrupt          = !(rvfi_intr.cause inside { NMI_LOAD, NMI_STORE, NMI_LOAD_PARITY, NMI_STORE_PARITY }) && rvfi_intr.intr && rvfi_intr.interrupt;
+
   assign is_interrupt_taken    = (rvfi_intr.intr == 1'b1 && rvfi_intr.interrupt == 1'b1);
 
   assign is_instr_access_fault = (rvfi_trap.exception_cause == INSTR_ACCESS_FAULT && rvfi_trap.exception == 1 && rvfi_trap.trap == 1);
@@ -928,7 +931,10 @@ module uvmt_cv32e40s_clic_interrupt_assert
         || rvfi_intr.exception
         || rvfi_trap.exception
         || is_cause_nmi
-        || !$stable(clic, @(posedge clk_i))
+        || $changed(clic, @(posedge clk_i))
+        || $changed(mstatus_fields.mie, @(posedge clk_i))
+        || $changed(mintthresh_fields.th, @(posedge clk_i))
+        || $changed(mintstatus_fields.mil, @(posedge clk_i))
                 )
       seq_irq_pend(1'b1)
       implies
@@ -1057,12 +1063,17 @@ module uvmt_cv32e40s_clic_interrupt_assert
             irq_ack
         ##1 rvfi_valid[->1]
       |->
-            rvfi_intr.intr
-         && rvfi_intr.interrupt
+            // all the following are rvfi_intr-based signals
+            is_cause_interrupt
       or
-            rvfi_trap.debug
+            is_cause_nmi
       or
-            rvfi_trap.exception;
+            is_cause_instr_access_fault
+      or
+            is_cause_instr_bus_fault
+      or
+            is_cause_instr_parity_fault
+      ;
     endproperty : p_every_ack_followed_by_rvfi_intr
 
     a_every_ack_followed_by_rvfi_intr: assert property (p_every_ack_followed_by_rvfi_intr)
