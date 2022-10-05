@@ -47,20 +47,10 @@
 ////////////////////////////////////////////////////////////////////////////
 // Assign the NET IRQ values from the core irq inputs
 ////////////////////////////////////////////////////////////////////////////
-`define RVVI_SET_IRQ(IRQ_NAME, IRQ_IDX) \
-    if (IRQ[IRQ_IDX]==0 && IRQ_NEXT[IRQ_IDX]==1) begin \
-        `uvm_info("DV_WRAP", $sformatf("RVVI_SET_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)), UVM_DEBUG); \
-        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 1)); \
-        IRQ[IRQ_IDX] = 1; \
+`define RVVI_WRITE_IRQ(IRQ_NAME, IRQ_IDX) \
+    always @(*) begin \
+        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), `DUT_PATH.irq_i[IRQ_IDX])); \
     end
-
-`define RVVI_CLR_IRQ(IRQ_NAME, IRQ_IDX) \
-    if (`RVFI_IF.rvfi_valid && IRQ[IRQ_IDX]==1 && (IRQ_NEXT[IRQ_IDX]==0 || `DUT_PATH.irq_i[IRQ_IDX]==0)) begin \
-        `uvm_info("DV_WRAP", $sformatf("RVVI_CLR_IRQ %t %0s", $time, `STRINGIFY(``IRQ_NAME)), UVM_DEBUG); \
-        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), 0)); \
-        IRQ[IRQ_IDX] = 0; \
-    end
-
 
 ////////////////////////////////////////////////////////////////////////////
 // CSR definitions
@@ -346,50 +336,25 @@ module uvmt_cv32e40x_imperas_dv_wrap
    // assert when MIP or cause bit
    // negate when posedge clk && valid=1 && debug=0
    ////////////////////////////////////////////////////////////////////////////
-   bit [31:0] IRQ, IRQ_NEXT;
-   always @(*) begin: Set_Irq
-       IRQ_NEXT = (rvvi.csr[0][0][`CSR_MIP_ADDR] | (`RVFI_IF.rvfi_intr.interrupt << `RVFI_IF.rvfi_intr.cause[4:0]));
-       `RVVI_SET_IRQ(MSWInterrupt,        3)
-       `RVVI_SET_IRQ(MTimerInterrupt,     7)
-       `RVVI_SET_IRQ(MExternalInterrupt, 11)
-       `RVVI_SET_IRQ(LocalInterrupt0,    16)
-       `RVVI_SET_IRQ(LocalInterrupt1,    17)
-       `RVVI_SET_IRQ(LocalInterrupt2,    18)
-       `RVVI_SET_IRQ(LocalInterrupt3,    19)
-       `RVVI_SET_IRQ(LocalInterrupt4,    20)
-       `RVVI_SET_IRQ(LocalInterrupt5,    21)
-       `RVVI_SET_IRQ(LocalInterrupt6,    22)
-       `RVVI_SET_IRQ(LocalInterrupt7,    23)
-       `RVVI_SET_IRQ(LocalInterrupt8,    24)
-       `RVVI_SET_IRQ(LocalInterrupt9,    25)
-       `RVVI_SET_IRQ(LocalInterrupt10,   26)
-       `RVVI_SET_IRQ(LocalInterrupt11,   27)
-       `RVVI_SET_IRQ(LocalInterrupt12,   28)
-       `RVVI_SET_IRQ(LocalInterrupt13,   29)
-       `RVVI_SET_IRQ(LocalInterrupt14,   30)
-       `RVVI_SET_IRQ(LocalInterrupt15,   31)
-   end: Set_Irq
-   always @(posedge `RVFI_IF.clk) begin: Clr_Irq
-       `RVVI_CLR_IRQ(MSWInterrupt,        3)
-       `RVVI_CLR_IRQ(MTimerInterrupt,     7)
-       `RVVI_CLR_IRQ(MExternalInterrupt, 11)
-       `RVVI_CLR_IRQ(LocalInterrupt0,    16)
-       `RVVI_CLR_IRQ(LocalInterrupt1,    17)
-       `RVVI_CLR_IRQ(LocalInterrupt2,    18)
-       `RVVI_CLR_IRQ(LocalInterrupt3,    19)
-       `RVVI_CLR_IRQ(LocalInterrupt4,    20)
-       `RVVI_CLR_IRQ(LocalInterrupt5,    21)
-       `RVVI_CLR_IRQ(LocalInterrupt6,    22)
-       `RVVI_CLR_IRQ(LocalInterrupt7,    23)
-       `RVVI_CLR_IRQ(LocalInterrupt8,    24)
-       `RVVI_CLR_IRQ(LocalInterrupt9,    25)
-       `RVVI_CLR_IRQ(LocalInterrupt10,   26)
-       `RVVI_CLR_IRQ(LocalInterrupt11,   27)
-       `RVVI_CLR_IRQ(LocalInterrupt12,   28)
-       `RVVI_CLR_IRQ(LocalInterrupt13,   29)
-       `RVVI_CLR_IRQ(LocalInterrupt14,   30)
-       `RVVI_CLR_IRQ(LocalInterrupt15,   31)
-   end: Clr_Irq
+  `RVVI_WRITE_IRQ(MSWInterrupt,        3)
+  `RVVI_WRITE_IRQ(MTimerInterrupt,     7)
+  `RVVI_WRITE_IRQ(MExternalInterrupt, 11)
+  `RVVI_WRITE_IRQ(LocalInterrupt0,    16)
+  `RVVI_WRITE_IRQ(LocalInterrupt1,    17)
+  `RVVI_WRITE_IRQ(LocalInterrupt2,    18)
+  `RVVI_WRITE_IRQ(LocalInterrupt3,    19)
+  `RVVI_WRITE_IRQ(LocalInterrupt4,    20)
+  `RVVI_WRITE_IRQ(LocalInterrupt5,    21)
+  `RVVI_WRITE_IRQ(LocalInterrupt6,    22)
+  `RVVI_WRITE_IRQ(LocalInterrupt7,    23)
+  `RVVI_WRITE_IRQ(LocalInterrupt8,    24)
+  `RVVI_WRITE_IRQ(LocalInterrupt9,    25)
+  `RVVI_WRITE_IRQ(LocalInterrupt10,   26)
+  `RVVI_WRITE_IRQ(LocalInterrupt11,   27)
+  `RVVI_WRITE_IRQ(LocalInterrupt12,   28)
+  `RVVI_WRITE_IRQ(LocalInterrupt13,   29)
+  `RVVI_WRITE_IRQ(LocalInterrupt14,   30)
+  `RVVI_WRITE_IRQ(LocalInterrupt15,   31)
    
    ////////////////////////////////////////////////////////////////////////////
    // RVFI Monitor: pass NMI Load/Store and Fetch to the ref
@@ -440,24 +405,23 @@ module uvmt_cv32e40x_imperas_dv_wrap
            nmi_pending          = `RVFI_IF.rvfi_nmip[0];
            nmi_load_store       = `RVFI_IF.rvfi_nmip[1];
            
-           if (0) begin
-              `uvm_info(info_tag, $sformatf("RVFI Valid %t", $time), UVM_INFO)
-              `uvm_info(info_tag, $sformatf("valid      = %X", `RVFI_IF.rvfi_valid), UVM_INFO)
-              `uvm_info(info_tag, $sformatf("order      = %0d", `RVFI_IF.rvfi_order), UVM_INFO)
-              `uvm_info(info_tag, $sformatf("insn       = %X", `RVFI_IF.rvfi_insn), UVM_INFO)
-              `uvm_info(info_tag, $sformatf("trap       trap=%X exception=%X debug=%X exception_cause=0x%X debug_cause=0x%X cause_type=0x%X", 
-                      trap_trap, trap_exception, trap_debug, trap_exception_cause, trap_debug_cause, trap_cause_type), UVM_INFO)
-              `uvm_info(info_tag, $sformatf("halt       = %X", `RVFI_IF.rvfi_halt), UVM_INFO)
-              `uvm_info(info_tag, $sformatf("dbg        = %X", `RVFI_IF.rvfi_dbg), UVM_INFO)
-              `uvm_info(info_tag, $sformatf("dbg_mode   = %X", `RVFI_IF.rvfi_dbg_mode), UVM_INFO)
-              `uvm_info(info_tag, $sformatf("nmip       nmi=%X nmi_load0_store1=%X", `RVFI_IF.rvfi_nmip[0], `RVFI_IF.rvfi_nmip[1]), UVM_INFO)
-              `uvm_info(info_tag, $sformatf("intr       intr=%X exception=%X interrupt=%X cause=0x%X", 
-                      intr_intr, intr_exception, intr_interrupt, intr_cause), UVM_INFO)
-              `uvm_info(info_tag, $sformatf("mode       = %X", `RVFI_IF.rvfi_mode), UVM_INFO)
-              `uvm_info(info_tag, $sformatf("ixl        = %X", `RVFI_IF.rvfi_ixl), UVM_INFO)
-              `uvm_info(info_tag, $sformatf("pc_rdata   = %X", `RVFI_IF.rvfi_pc_rdata), UVM_INFO)
-              `uvm_info(info_tag, $sformatf("pc_wdata   = %X", `RVFI_IF.rvfi_pc_wdata), UVM_INFO)
-           end
+           // Only in debug Mode
+           `uvm_info(info_tag, $sformatf("RVFI Valid %t", $time), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("valid      = %X", `RVFI_IF.rvfi_valid), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("order      = %0d", `RVFI_IF.rvfi_order), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("insn       = %X", `RVFI_IF.rvfi_insn), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("trap       trap=%X exception=%X debug=%X exception_cause=0x%X debug_cause=0x%X cause_type=0x%X", 
+                 trap_trap, trap_exception, trap_debug, trap_exception_cause, trap_debug_cause, trap_cause_type), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("halt       = %X", `RVFI_IF.rvfi_halt), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("dbg        = %X", `RVFI_IF.rvfi_dbg), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("dbg_mode   = %X", `RVFI_IF.rvfi_dbg_mode), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("nmip       nmi=%X nmi_load0_store1=%X", `RVFI_IF.rvfi_nmip[0], `RVFI_IF.rvfi_nmip[1]), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("intr       intr=%X exception=%X interrupt=%X cause=0x%X", 
+                 intr_intr, intr_exception, intr_interrupt, intr_cause), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("mode       = %X", `RVFI_IF.rvfi_mode), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("ixl        = %X", `RVFI_IF.rvfi_ixl), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("pc_rdata   = %X", `RVFI_IF.rvfi_pc_rdata), UVM_DEBUG)
+           `uvm_info(info_tag, $sformatf("pc_wdata   = %X", `RVFI_IF.rvfi_pc_wdata), UVM_DEBUG)
 
            //
            // Load Store - NMI
@@ -496,25 +460,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
                end
                InstructionBusFault = 0;
            end
-           
-           // Report warnings of some special events
-           // If we have entered debug Mode and there is a haltreq
-           // and we have an intr - then these need scheduling
-           // 2 exception events occured simultaneously
-           if (`RVFI_IF.rvfi_dbg_mode && `RVFI_IF.rvfi_dbg=='h3 && intr_intr) begin
-               `uvm_warning(info_tag, $sformatf("# intr & debug, intr_cause=%0d exception followed by debug request", intr_cause))
-               // Resync
-               resync_hart = 1;
-           end
-           
-           // simultaneous intr and trap
-           // 2 exception events occured siultaneously
-//           if (intr_intr && trap_exception_cause) begin
-//               `uvm_warning(info_tag, $sformatf("# intr & trap, intr_cause=%0d trap_exception_cause=%0d", intr_cause, trap_exception_cause))
-//               // Resync
-//               resync_hart = 1;
-//           end
-           
+
        end
    end: Monitor_RVFI
 
