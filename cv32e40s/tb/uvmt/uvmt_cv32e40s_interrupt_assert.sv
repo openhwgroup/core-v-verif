@@ -92,7 +92,7 @@ module uvmt_cv32e40s_interrupt_assert
   wire [31:0] pending_enabled_irq;
   wire [31:0] pending_enabled_irq_q;
 
-  reg  in_wfi; // Local model of WFI state of core
+  reg  in_wfi_wfe; // Local model of WFI state of core
 
   reg[31:0] irq_q;
 
@@ -346,17 +346,18 @@ module uvmt_cv32e40s_interrupt_assert
     assign is_wfe = wb_stage_instr_valid_i                   &&
                   (wb_stage_instr_rdata_i == WFE_INSTR_DATA) &&
                   !branch_taken_ex                           &&
+                  !((priv_lvl == PRIV_LVL_U) && mstatus_tw)  &&
                   !wb_stage_instr_err_i                      &&
                   (wb_stage_instr_mpu_status == MPU_OK);
   always @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      in_wfi <= 1'b0;
+      in_wfi_wfe <= 1'b0;
     end
     else begin
-      if ((is_wfi || is_wfe) && !in_wfi)
-        in_wfi <= 1'b1;
+      if ((is_wfi || is_wfe) && !in_wfi_wfe) //
+        in_wfi_wfe <= 1'b1;
       else if (|pending_enabled_irq || debug_req_i)
-        in_wfi <= 1'b0;
+        in_wfi_wfe <= 1'b0;
     end
   end
 
@@ -364,10 +365,10 @@ module uvmt_cv32e40s_interrupt_assert
 
   // WFI assertion will assert core_sleep_o (in WFI_TO_CORE_SLEEP_LATENCY cycles after wb, given ideal conditions)
   property p_wfi_assert_core_sleep_o;
-    !in_wfi
-    ##1 (in_wfi && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i)[*(WFI_TO_CORE_SLEEP_LATENCY-1)]
+    !in_wfi_wfe
+    ##1 (in_wfi_wfe && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i)[*(WFI_TO_CORE_SLEEP_LATENCY-1)]
     ##1 (
-      (in_wfi && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i)
+      (in_wfi_wfe && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i)
         throughout $past(pipeline_ready_for_wfi)[->1]
       )
     |->
@@ -381,9 +382,9 @@ module uvmt_cv32e40s_interrupt_assert
 
   // WFI assertion will assert core_sleep_o (after required conditions are met)
   property p_wfi_assert_core_sleep_o_cond;
-    !in_wfi
+    !in_wfi_wfe
     ##1 (
-      (in_wfi && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i)
+      (in_wfi_wfe && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i)
       throughout (##1 ($past(pipeline_ready_for_wfi)[->1]) )
       )
     |->
@@ -397,7 +398,7 @@ module uvmt_cv32e40s_interrupt_assert
 
   // core_sleep_o deassertion in wfi should be followed by WFI deassertion
   property p_core_sleep_deassert;
-    $fell(core_sleep_o) ##0 in_wfi |-> ##1 !in_wfi;
+    $fell(core_sleep_o) ##0 in_wfi_wfe |-> ##1 !in_wfi_wfe;
   endproperty
   a_core_sleep_deassert: assert property(p_core_sleep_deassert)
     else
@@ -415,15 +416,15 @@ module uvmt_cv32e40s_interrupt_assert
 
   // Outside of WFI, the core should not sleep
   a_wfi_deny_core_sleep_o: assert property (
-    !in_wfi |-> !core_sleep_o
+    !in_wfi_wfe |-> !core_sleep_o
   ) else
     `uvm_error(info_tag, "Only WFI should trigger core sleep");
 
   // WFI wakeup to next instruction fetch/execution
   property p_wfi_wake_to_instr_fetch;
     disable iff (!rst_ni || !fetch_enable_i || debug_mode_q)
-    core_sleep_o && in_wfi
-    ##1 !in_wfi[->1]
+    core_sleep_o && in_wfi_wfe
+    ##1 !in_wfi_wfe[->1]
     |->
     ##[0:WFI_WAKEUP_LATENCY]
       ($rose(if_stage_instr_req_o)  // IF starts fetching again
@@ -436,7 +437,7 @@ module uvmt_cv32e40s_interrupt_assert
 
   // Cover property, detect sleep deassertion due to asserted and non-asserted interrupts
   property p_wfi_wake_mstatus_mie(irq, mie);
-    $fell(in_wfi) ##0 irq_i[irq] ##0 mie_q[irq] ##0 mstatus_mie == mie;
+    $fell(in_wfi_wfe) ##0 irq_i[irq] ##0 mie_q[irq] ##0 mstatus_mie == mie;
   endproperty
 
   generate for(genvar gv_i = 0; gv_i < 32; gv_i++) begin : gen_wfi_cov
