@@ -24,7 +24,9 @@ module uvmt_cv32e40s_clic_interrupt_assert
     parameter int   SMCLIC_ID_WIDTH = 5,
     parameter int   NUM_IRQ         = 32
   )(
+    // gated clock
     input logic                       clk,
+    // global clock
     input logic                       clk_i,
     input logic                       rst_ni,
     input logic                       fetch_enable,
@@ -469,6 +471,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     ECALL,
     EBREAK,
     WFI,
+    WFE,
     SB,
     SH,
     SW,
@@ -482,7 +485,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // Pseudo name, class of instruction
     STORE_INSN,
     LOAD_INSN
-  } insn_names_e;
+  } instr_names_e;
 
   logic core_not_in_debug;
   logic core_in_debug;
@@ -521,17 +524,18 @@ module uvmt_cv32e40s_clic_interrupt_assert
   logic is_mscratchcswl_access_instr;
   logic is_csr_write;
   logic is_csr_read;
-  logic is_mret_insn;
-  logic is_fencei_insn;
+  logic is_mret_instr;
+  logic is_fencei_instr;
   logic is_interrupt_allowed;
-  logic is_dret_insn;
+  logic is_dret_instr;
+  logic is_wfi_instr;
+  logic is_wfe_instr;
 
-  logic is_load_insn;
-  logic is_store_insn;
+  logic is_load_instr;
+  logic is_store_instr;
 
   logic is_valid_mnxti_write;
   logic is_valid_mnxti_read;
-  logic is_wfi;
 
   logic is_load_bus_fault;
   logic is_store_bus_fault;
@@ -548,6 +552,12 @@ module uvmt_cv32e40s_clic_interrupt_assert
   logic is_trap_exception;
   logic is_intr_ecall_ebreak;
   logic is_intr_exception;
+
+  logic is_wfe_wakeup_event;
+  assign is_wfe_wakeup_event = dut_wrap.cv32e40s_wrapper_i.wu_wfe_i; // TODO: pass through if
+
+  assign is_wfi_instr = is_instr(rvfi_insn, WFI);
+  assign is_wfe_instr = is_instr(rvfi_insn, WFE);
 
   assign is_load_bus_fault           = (rvfi_intr.cause == NMI_LOAD           && rvfi_intr.intr == 1 && rvfi_intr.interrupt == 1);
   assign is_store_bus_fault          = (rvfi_intr.cause == NMI_STORE          && rvfi_intr.intr == 1 && rvfi_intr.interrupt == 1);
@@ -691,86 +701,91 @@ module uvmt_cv32e40s_clic_interrupt_assert
   end
 
 
-  function is_insn(uncompressed_instr_t insn, insn_names_e insn_type);
+  function is_instr(uncompressed_instr_t instr, instr_names_e instr_type);
     if (is_invalid_instr_word) begin
       return 1'b0;
     end
 
-    case (insn_type)
-      FENCEI : return (   (insn.opcode         == MISC_MEM)
-                       && (insn.n.i.rd         == 5'b0_0000)
-                       && (insn.n.i.funct3     == 3'b001)
-                       && (insn.n.i.rs1        == 5'b0_0000)
-                       && (insn.n.i.imm        == 12'h000));
-      ECALL  : return (   (insn.opcode         == SYSTEM)
-                       && (insn.n.i.imm        == 12'b0000_0000_0000));
-      EBREAK : return (   (insn.opcode         == SYSTEM)
-                       && (insn.n.i.imm        == 12'b0000_0000_0001));
-      CEBREAK: return (   (insn                == 32'b0000_0000_1001_0010)); // compressed
-      MRET   : return (   (insn.opcode         == SYSTEM)
-                       && (insn.n.r.rd         == 5'b0_0000)
-                       && (insn.n.r.n.m.funct7 == 12'b001_1000)
-                       && (insn.n.r.n.m.rs2    == 5'b0_0010)
-                       && (insn.n.r.rs1        == 5'b0_0000)
-                       && (insn.n.r.funct3     == 3'b000));
-      DRET   : return (   (insn.opcode         == SYSTEM)
-                       && (insn.n.r.n.funct12  == 12'b0111_1011_0010));
-      WFI    : return (   (insn.opcode         == SYSTEM)
-                       && (insn.n.r.rd         == 5'b0_0000)
-                       && (insn.n.r.funct3     == 3'b000)
-                       && (insn.n.r.rs1        == 5'b0_0000)
-                       && (insn.n.r.n.funct12  == 12'b0001_0000_0101));
-      SB     : return (   (insn.opcode         == STORE)
-                       && (insn.n.s.funct3     == FUNCT3_SB));
-      SH     : return (   (insn.opcode         == STORE)
-                       && (insn.n.s.funct3     == FUNCT3_SH));
-      SW     : return (   (insn.opcode         == STORE)
-                       && (insn.n.s.funct3     == FUNCT3_SW));
-      STORE_INSN : return (insn.opcode         == STORE)
-                       && (insn.n.s.funct3 inside { FUNCT3_SB, FUNCT3_SH, FUNCT3_SW });
-      LB     : return (   (insn.opcode         == LOAD)
-                       && (insn.n.i.funct3     == FUNCT3_LB));
-      LH     : return (   (insn.opcode         == LOAD)
-                       && (insn.n.i.funct3     == FUNCT3_LH));
-      LW     : return (   (insn.opcode         == LOAD)
-                       && (insn.n.i.funct3     == FUNCT3_LW));
-      LBU    : return (   (insn.opcode         == LOAD)
-                       && (insn.n.i.funct3     == FUNCT3_LBU));
-      LHU    : return (   (insn.opcode         == LOAD)
-                       && (insn.n.i.funct3     == FUNCT3_LHU));
-      LOAD_INSN  : return (insn.opcode         == LOAD)
-                       && (insn.n.i.funct3 inside { FUNCT3_LB, FUNCT3_LH, FUNCT3_LW, FUNCT3_LBU, FUNCT3_LHU });
+    case (instr_type)
+      FENCEI : return (   (instr.opcode         == MISC_MEM)
+                       && (instr.n.i.rd         == 5'b0_0000)
+                       && (instr.n.i.funct3     == 3'b001)
+                       && (instr.n.i.rs1        == 5'b0_0000)
+                       && (instr.n.i.imm        == 12'h000));
+      ECALL  : return (   (instr.opcode         == SYSTEM)
+                       && (instr.n.i.imm        == 12'b0000_0000_0000));
+      EBREAK : return (   (instr.opcode         == SYSTEM)
+                       && (instr.n.i.imm        == 12'b0000_0000_0001));
+      CEBREAK: return (   (instr                == 32'b0000_0000_1001_0010)); // compressed
+      MRET   : return (   (instr.opcode         == SYSTEM)
+                       && (instr.n.r.rd         == 5'b0_0000)
+                       && (instr.n.r.n.m.funct7 == 12'b001_1000)
+                       && (instr.n.r.n.m.rs2    == 5'b0_0010)
+                       && (instr.n.r.rs1        == 5'b0_0000)
+                       && (instr.n.r.funct3     == 3'b000));
+      DRET   : return (   (instr.opcode         == SYSTEM)
+                       && (instr.n.r.n.funct12  == 12'b0111_1011_0010));
+      WFI    : return (   (instr.opcode         == SYSTEM)
+                       && (instr.n.r.rd         == 5'b0_0000)
+                       && (instr.n.r.funct3     == 3'b000)
+                       && (instr.n.r.rs1        == 5'b0_0000)
+                       && (instr.n.r.n.funct12  == 12'b0001_0000_0101));
+      WFE    : return (   (instr.opcode         == SYSTEM)
+                       && (instr.n.r.rd         == 5'b0_0000)
+                       && (instr.n.r.funct3     == 3'b000)
+                       && (instr.n.r.rs1        == 5'b0_0000)
+                       && (instr.n.r.n.funct12  == 12'b1000_1100_0000));
+      SB     : return (   (instr.opcode         == STORE)
+                       && (instr.n.s.funct3     == FUNCT3_SB));
+      SH     : return (   (instr.opcode         == STORE)
+                       && (instr.n.s.funct3     == FUNCT3_SH));
+      SW     : return (   (instr.opcode         == STORE)
+                       && (instr.n.s.funct3     == FUNCT3_SW));
+      STORE_INSN : return (instr.opcode         == STORE)
+                       && (instr.n.s.funct3 inside { FUNCT3_SB, FUNCT3_SH, FUNCT3_SW });
+      LB     : return (   (instr.opcode         == LOAD)
+                       && (instr.n.i.funct3     == FUNCT3_LB));
+      LH     : return (   (instr.opcode         == LOAD)
+                       && (instr.n.i.funct3     == FUNCT3_LH));
+      LW     : return (   (instr.opcode         == LOAD)
+                       && (instr.n.i.funct3     == FUNCT3_LW));
+      LBU    : return (   (instr.opcode         == LOAD)
+                       && (instr.n.i.funct3     == FUNCT3_LBU));
+      LHU    : return (   (instr.opcode         == LOAD)
+                       && (instr.n.i.funct3     == FUNCT3_LHU));
+      LOAD_INSN  : return (instr.opcode         == LOAD)
+                       && (instr.n.i.funct3 inside { FUNCT3_LB, FUNCT3_LH, FUNCT3_LW, FUNCT3_LBU, FUNCT3_LHU });
     endcase
-  endfunction : is_insn
+  endfunction : is_instr
 
-  assign is_mret_insn   = rvfi_valid && is_insn(rvfi_insn, MRET);
-  assign is_dret_insn   = rvfi_valid && is_insn(rvfi_insn, DRET);
-  assign is_fencei_insn = rvfi_valid && is_insn(rvfi_insn, FENCEI);
+  assign is_mret_instr   = rvfi_valid && is_instr(rvfi_insn, MRET);
+  assign is_dret_instr   = rvfi_valid && is_instr(rvfi_insn, DRET);
+  assign is_fencei_instr = rvfi_valid && is_instr(rvfi_insn, FENCEI);
 
-  assign is_store_insn  = rvfi_valid && is_insn(rvfi_insn, STORE_INSN);
-  assign is_load_insn   = rvfi_valid && is_insn(rvfi_insn, LOAD_INSN);
+  assign is_store_instr  = rvfi_valid && is_instr(rvfi_insn, STORE_INSN);
+  assign is_load_instr   = rvfi_valid && is_instr(rvfi_insn, LOAD_INSN);
 
-  function logic is_store_insn_addr_in_mtvt_region(uncompressed_instr_t insn);
+  function logic is_store_instr_addr_in_mtvt_region(uncompressed_instr_t instr);
     automatic logic [31:0] base   = 0;
     automatic logic [11:0] offset = 0;
-    case (is_insn(insn, STORE_INSN))
+    case (is_instr(instr, STORE_INSN))
       1: offset = s_imm;
       0: return 1'b0;
     endcase
     base = rvfi_rs1_rdata;
     return base + offset inside { [mtvt : mtvt + ((2**SMCLIC_ID_WIDTH * 4))] } ? 1'b1 : 1'b0;
-  endfunction : is_store_insn_addr_in_mtvt_region
+  endfunction : is_store_instr_addr_in_mtvt_region
 
-  function logic is_load_insn_addr_in_mtvt_region(uncompressed_instr_t insn);
+  function logic is_load_instr_addr_in_mtvt_region(uncompressed_instr_t instr);
     automatic logic [31:0] base = 0;
     automatic logic [11:0] offset = 0;
-    case (is_insn(insn, LOAD_INSN))
+    case (is_instr(instr, LOAD_INSN))
       1: offset = i_imm;
       0: return 1'b0;
     endcase
     base = rvfi_rs1_rdata;
     return base + offset inside { [mtvt : mtvt + ((2**SMCLIC_ID_WIDTH * 4))] } ? 1'b1 : 1'b0;
-  endfunction : is_load_insn_addr_in_mtvt_region
+  endfunction : is_load_instr_addr_in_mtvt_region
 
   generate
   if (SMCLIC) begin : gen_clic_assertions
@@ -845,7 +860,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
             rvfi_pc_rdata == ({$past(mtvec_fields.base_31_7), $past(mtvec_fields.base_6_2), 2'b00} + NMI_OFFSET + 2)
          && (mapped_instr.opcode[1:0] != 2'b11)
       or
-            is_dret_insn
+            is_dret_instr
         ##1 rvfi_valid[->1]
         ##0 rvfi_pc_rdata == ({$past(mtvec_fields.base_31_7), $past(mtvec_fields.base_6_2), 2'b00} + NMI_OFFSET)
          && !rvfi_dbg_mode
@@ -915,11 +930,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
     property p_instr_valid_delay;
         !rvfi_valid |-> !rvfi_valid[*0:MAX_RVFI_VALID_DELAY] ##1 rvfi_valid;
     endproperty
-
-
-    // TODO: fix
-    assign is_wfi = dut_wrap.cv32e40s_wrapper_i.rvfi_i.sys_wfi_insn_wb_i;
-
 
     // Pending and enabled interrupts will eventually be taken if the conditions are right
     // Excludes checking in blocking regions (debug, exception handlers, nmi)
@@ -1063,7 +1073,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
             irq_ack
         ##1 rvfi_valid[->1]
       |->
-            // all the following are rvfi_intr-based signals
+            // all the following are rvfi_intr-based signals.
             is_cause_interrupt
       or
             is_cause_nmi
@@ -1300,7 +1310,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     end
 
     logic is_mtvt_load_event;
-    assign is_mtvt_store_event = is_store_insn_addr_in_mtvt_region(rvfi_insn) && !rvfi_trap.exception && rvfi_valid;
+    assign is_mtvt_store_event = is_store_instr_addr_in_mtvt_region(rvfi_insn) && !rvfi_trap.exception && rvfi_valid;
     assign is_mtvt_load_event  = is_read_mtvt_table_val_obi;
 
     always@* begin
@@ -1335,7 +1345,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
         !$stable(mtvt, @(posedge clk_i))
       )
         s_store_mtvt_value
-        ##1 (is_fencei_insn && rvfi_valid)[->1]
+        ##1 (is_fencei_instr && rvfi_valid)[->1]
         ##1 (irq_ack && clic_core.shv)[->1]
         ##1 rvfi_valid[->1]
       |->
@@ -2170,31 +2180,41 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
     // WFI wakeup required
     // ------------------------------------------------------------------------
-    property p_wfi_wakeup_condition_valid;
+    property p_wfi_wfe_wakeup_condition_valid;
+      logic             sampled_wfe_wakeup_event;
       clic_irq_bundle_t sampled_clic;
       logic [7:0]       sampled_level;
       priv_mode_t       sampled_priv;
+
       core_sleep_o ##1 // first cycle $fell will fail out of reset
             ($fell(core_sleep_o),
               sampled_clic = clic,
               sampled_priv = priv_mode_t'(current_priv_mode),
-              sampled_level = effective_clic_level)
+              sampled_level = effective_clic_level,
+              sampled_wfe_wakeup_event = is_wfe_wakeup_event)
         ##1 rvfi_valid[->1]
       |->
-            sampled_clic.irq
+        // Interrupt triggered wake up  *both wfe and wfi*
+        ##0 sampled_clic.irq
          && sampled_clic.priv  == sampled_priv
          && sampled_clic.level > sampled_level
       or
-            sampled_clic.irq
+        // Interrupt triggered wake up  *both wfe and wfi*
+        ##0 sampled_clic.irq
          && sampled_clic.priv  > sampled_priv
          && sampled_clic.level > 0
       or
+        // Debug request *both wfe and wfi*
         ##1 rvfi_valid[->1]
         ##0 rvfi_dbg_mode == 1'b1
+      or
+        // Wakeup from wfe-pin, *wfe only*
+            is_wfe_instr
+        ##0 sampled_wfe_wakeup_event
       ;
-    endproperty : p_wfi_wakeup_condition_valid
+    endproperty : p_wfi_wfe_wakeup_condition_valid
 
-    a_wfi_wakeup_condition_valid: assert property (p_wfi_wakeup_condition_valid)
+    a_wfi_wfe_wakeup_condition_valid: assert property (p_wfi_wfe_wakeup_condition_valid)
     else
       `uvm_error(info_tag,
         $sformatf("core should have woken up"));
@@ -2202,7 +2222,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
     // WFI wakeup forbidden
     // ------------------------------------------------------------------------
-    property p_wfi_wakeup_condition_not_valid;
+    property p_wfi_wfe_wakeup_condition_not_valid;
         core_sleep_o
       ##1
        !((  clic.irq
@@ -2213,15 +2233,24 @@ module uvmt_cv32e40s_clic_interrupt_assert
          && clic.priv  > priv_mode_t'(current_priv_mode)
          && clic.level > 0))
       |->
+        // Stay asleep
         $stable(core_sleep_o)
       or
+        // We slept due to wfe, pin can wake us up
+            is_wfe_wakeup_event
+        ##0 !core_sleep_o
+        ##0 rvfi_valid[->1]
+        ##0 is_wfe_instr
+
+      or
+        // We woke up due to a debug request, first retire wfi, then take debug
             !core_sleep_o
         ##0 rvfi_valid[->2]
         ##0 rvfi_dbg_mode
       ;
-    endproperty : p_wfi_wakeup_condition_not_valid
+    endproperty : p_wfi_wfe_wakeup_condition_not_valid
 
-    a_wfi_wakeup_condition_not_valid: assert property (p_wfi_wakeup_condition_not_valid)
+    a_wfi_wfe_wakeup_condition_not_valid: assert property (p_wfi_wfe_wakeup_condition_not_valid)
     else
       `uvm_error(info_tag,
         $sformatf("core should not have woken up"));
@@ -2229,14 +2258,14 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
     // WFI entry causes core to stop
     // ------------------------------------------------------------------------
-    property p_wfi_causes_core_to_stop;
+    property p_wfi_wfe_causes_core_to_stop;
       core_sleep_o
       |->
         !rvfi_valid
       ;
-    endproperty : p_wfi_causes_core_to_stop
+    endproperty : p_wfi_wfe_causes_core_to_stop
 
-    a_wfi_causes_core_to_stop: assert property (p_wfi_causes_core_to_stop)
+    a_wfi_wfe_causes_core_to_stop: assert property (p_wfi_wfe_causes_core_to_stop)
     else
       `uvm_error(info_tag,
         $sformatf("core should not execute anything in wfi"));
@@ -2244,14 +2273,14 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
     // WFI entry causes core clock to be gated
     // ------------------------------------------------------------------------
-    property p_wfi_causes_clock_gating;
+    property p_wfi_wfe_causes_clock_gating;
       core_sleep_o
       |->
         $stable(clk)
       ;
-    endproperty : p_wfi_causes_clock_gating
+    endproperty : p_wfi_wfe_causes_clock_gating
 
-    a_wfi_causes_clock_gating: assert property (p_wfi_causes_clock_gating)
+    a_wfi_wfe_causes_clock_gating: assert property (p_wfi_wfe_causes_clock_gating)
     else
       `uvm_error(info_tag,
         $sformatf("core clk should be gated in wfi"));
@@ -2259,15 +2288,18 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
     // WFI: core_sleep_o only asserted during wfi
     // ------------------------------------------------------------------------
-    property p_core_sleep_o_only_during_wfi;
+    property p_core_sleep_o_only_during_wfi_wfe;
       core_sleep_o
       |->
             rvfi_valid[->1]
-        ##0 is_insn(rvfi_insn, WFI)
+        ##0 is_wfi_instr
+      or
+            rvfi_valid[->1]
+        ##0 is_wfe_instr
       ;
-    endproperty : p_core_sleep_o_only_during_wfi
+    endproperty : p_core_sleep_o_only_during_wfi_wfe
 
-    a_core_sleep_o_only_during_wfi: assert property (p_core_sleep_o_only_during_wfi)
+    a_core_sleep_o_only_during_wfi_wfe: assert property (p_core_sleep_o_only_during_wfi_wfe)
     else
       `uvm_error(info_tag,
         $sformatf("core_sleep_o should only be asserted during wfi"));
@@ -2307,7 +2339,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
       logic sampled_irq_occurred;
 
           // last cycle after mret, before new rvfi_valid
-          (rvfi_valid && is_last_mret_insn,
+          (rvfi_valid && is_last_mret_instr,
            sampled_pc_wdata = rvfi_pc_wdata)
        ##1 rvfi_valid[->1]
       |->
@@ -2388,16 +2420,16 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
     assign last_valid_instr_csr = csr_instr_t'(last_valid_instr);
 
-    logic is_last_mret_insn;
-    logic is_last_dret_insn;
+    logic is_last_mret_instr;
+    logic is_last_dret_instr;
 
     property p_last_valid_instr_reset_state;
         !fetch_enable |-> last_valid_instr == 'h0;
     endproperty : p_last_valid_instr_reset_state
 
     // Keep track of last retired instruction type
-    assign is_last_mret_insn   = is_insn(last_valid_instr, MRET);
-    assign is_last_dret_insn   = is_insn(last_valid_instr, DRET);
+    assign is_last_mret_instr   = is_instr(last_valid_instr, MRET);
+    assign is_last_dret_instr   = is_instr(last_valid_instr, DRET);
 
     function logic[7:0] max_level(logic[7:0] a, logic[7:0] b);
       max_level = a > b ? a : b;
@@ -2411,14 +2443,14 @@ module uvmt_cv32e40s_clic_interrupt_assert
       |->
           // first cycle ack, no mret, mpp machine mode
           $past(irq_ack)
-       && !$past(is_mret_insn)
+       && !$past(is_mret_instr)
        && $past(mcause_fields.mpp) == M_MODE
        && mintstatus_fields.mil == clic_oic.level
        && clic_oic.level > max_level($past(mintthresh_fields.th), $past(mintstatus_fields.mil))
       or
          // first cycle ack, no mret, mpp user mode
           $past(irq_ack)
-       && !$past(is_mret_insn)
+       && !$past(is_mret_instr)
        && $past(mcause_fields.mpp) == U_MODE
        && mintstatus_fields.mil == clic_oic.level
        && clic_oic.level > 0
@@ -2427,7 +2459,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
          // mret sets mil to mpil, but at next rvfi_valid this is replaced by
          // the il of the taken interrupt
           $past(irq_ack)
-       && $past(is_mret_insn)
+       && $past(is_mret_instr)
        && mintstatus_fields.mil == mcause_fields.mpil
       ##1 mintstatus_fields.mil == clic_oic.level
       or
@@ -2441,7 +2473,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
       or
           // first cycle ack, mret, mpp user mode
           $past(irq_ack)
-       && $past(is_mret_insn)
+       && $past(is_mret_instr)
        && $past(mcause_fields.mpp) == U_MODE
        && $past(mintstatus_fields.mil) == $past(mcause_fields.mpil)
       ##1 mintstatus_fields.mil > 0
@@ -2450,7 +2482,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
          // no taken interrupt and mret
          // mret updates mil to mpil
           !$past(irq_ack)
-       && $past(is_mret_insn)
+       && $past(is_mret_instr)
        && mintstatus_fields.mil == mcause_fields.mpil
       or
           // no taken interrupt but mnxti updated mil with pending interrupt
@@ -2459,7 +2491,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
       or
           // last instruction before taken interrupt is dret, with prv set to user mode
           // vertical interrupt handling
-          (is_last_dret_insn || $past(is_dret_insn))
+          (is_last_dret_instr || $past(is_dret_instr))
        && $past(irq_ack)
        && $past(dcsr_fields.prv) == U_MODE
       ##1 mintstatus_fields.mil > 0
@@ -2467,20 +2499,20 @@ module uvmt_cv32e40s_clic_interrupt_assert
       or
           // last instruction before taken interrupt is dret, with prv set to machine mode
           // horizontal interrupt handling
-          (is_last_dret_insn || $past(is_dret_insn))
+          (is_last_dret_instr || $past(is_dret_instr))
        && $past(irq_ack)
        && $past(dcsr_fields.prv) == M_MODE
       ##1 clic_oic.level > max_level($past(mintthresh_fields.th), $past(mintstatus_fields.mil))
        && clic_oic.level == mintstatus_fields.mil
       or
           // pure mret, no irq, no prior back to back instruction in wb
-          is_mret_insn
+          is_mret_instr
        && !irq_ack
        && mintstatus_fields.mil == mcause_fields.mpil
       or
            // mret retire immediately prior to ack, with mpp machine mode
            irq_ack
-       &&  is_mret_insn
+       &&  is_mret_instr
        &&  mcause_fields.mpp == M_MODE
        &&  mintstatus_fields.mil == mcause_fields.mpil
       ##1  mintstatus_fields.mil == clic_oic.level
@@ -2488,7 +2520,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
       or
            // mret retire immediately prior to ack, with mpp user mode
            irq_ack
-       &&  is_mret_insn
+       &&  is_mret_instr
        &&  mcause_fields.mpp == U_MODE
        &&  mintstatus_fields.mil == mcause_fields.mpil
       ##1  mintstatus_fields.mil == clic_oic.level
@@ -2553,7 +2585,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
       or
             // first handler instruction is mret, level should not be changed
             rvfi_valid[->1]
-        ##0 is_mret_insn
+        ##0 is_mret_instr
         &&  rvfi_mode == M_MODE
         &&  $stable(mintstatus_fields.mil)  // FIXME: Known issue, leaving comment to avoid debugging until fixed
       ;
