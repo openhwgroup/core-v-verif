@@ -505,11 +505,19 @@ module uvmt_cv32e40s_tb;
     uvmt_cv32e40s_umode_cov  umode_cov_i (
       .rvfi_valid     (rvfi_i.rvfi_valid),
       .rvfi_trap      (rvfi_i.rvfi_trap),
+      .rvfi_intr      (rvfi_i.rvfi_intr),
       .rvfi_insn      (rvfi_i.rvfi_insn),
       .rvfi_rs1_rdata (rvfi_i.rvfi_rs1_rdata),
       .rvfi_pc_rdata  (rvfi_i.rvfi_pc_rdata),
       .rvfi_mode      (rvfi_i.rvfi_mode),
       .rvfi_rd_addr   (rvfi_i.rvfi_rd_addr),
+      .rvfi_dbg_mode  (rvfi_i.rvfi_dbg_mode),
+      .rvfi_order     (rvfi_i.rvfi_order),
+      .rvfi_mem_rmask (rvfi_i.rvfi_mem_rmask),
+      .rvfi_mem_wmask (rvfi_i.rvfi_mem_wmask),
+
+      .rvfi_csr_mstatus_rdata (rvfi_i.rvfi_csr_mstatus_rdata),
+      .rvfi_csr_mstatus_rmask (rvfi_i.rvfi_csr_mstatus_rmask),
 
       .obi_iside_req  (core_i.instr_req_o),
       .obi_iside_gnt  (core_i.instr_gnt_i),
