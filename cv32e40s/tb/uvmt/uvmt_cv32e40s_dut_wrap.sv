@@ -126,6 +126,7 @@ module uvmt_cv32e40s_dut_wrap
     // --------------------------------------------
     // Connect to core_cntrl_if
     assign core_cntrl_if.b_ext = B_EXT;
+    `ifndef FORMAL
     initial begin
       core_cntrl_if.pma_cfg = new[PMA_NUM_REGIONS];
       foreach (core_cntrl_if.pma_cfg[i]) begin
@@ -137,6 +138,7 @@ module uvmt_cv32e40s_dut_wrap
         core_cntrl_if.pma_cfg[i].integrity      = PMA_CFG[i].integrity;
       end
     end
+    `endif
 
     // --------------------------------------------
     // instantiate the core
