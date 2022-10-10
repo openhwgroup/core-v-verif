@@ -22,13 +22,14 @@ module  uvmt_cv32e40s_umode_cov
 
   input wire [31:0]  rvfi_csr_mstatus_rdata,
   input wire [31:0]  rvfi_csr_mstatus_rmask,
+  input wire [31:0]  rvfi_csr_dcsr_rdata,
+  input wire [31:0]  rvfi_csr_dcsr_rmask,
 
   input wire         obi_iside_req,
   input wire         obi_iside_gnt,
   input wire [31:0]  obi_iside_addr,
   input wire [ 2:0]  obi_iside_prot
 );
-//TODO:silabs-robin  Only include any of this if "coverage_enabled"
 
 
   // Helper Definitions
@@ -112,10 +113,18 @@ module  uvmt_cv32e40s_umode_cov
   wire mstatus_t  have_rvfi_mstatus_rdata =
     (rvfi_csr_mstatus_rdata & rvfi_csr_mstatus_rmask);
 
+  wire dcsr_t  have_rvfi_dcsr_rdata =
+    (rvfi_csr_dcsr_rdata & rvfi_csr_dcsr_rmask);
+
   wire  is_rvfi_notrap_mret =
     rvfi_valid  &&
     !rvfi_trap  &&
     (rvfi_insn == 32'b 0011000_00010_00000_000_00000_1110011);
+
+  wire  is_rvfi_notrap_dret =
+    rvfi_valid  &&
+    !rvfi_trap  &&
+    (rvfi_insn == 32'h 7b20_0073);
 
   wire  is_obi_iside_aphase =
     obi_iside_req  &&
@@ -164,8 +173,7 @@ module  uvmt_cv32e40s_umode_cov
   for (genvar mode = 0; mode <= 3; mode++) begin : gen_try_goto_mode
     cov_try_goto_mode: cover property (
       seq_write_mstatus_mpp (mode)  ##0
-      // TODO can have non-mpp-changing retires in-between
-      seq_next_rvfi_valid   ##0
+      seq_next_rvfi_valid           ##0
       is_rvfi_notrap_mret
     );
 
@@ -197,26 +205,30 @@ module  uvmt_cv32e40s_umode_cov
     (obi_iside_prot[2:1] != mode)  ##0
     (1, addr = obi_iside_addr)
 
-    // TODO:silabs-robin  Will be resource-hungry in sim?
-    // TODO:silabs-robin  Cover with 0/1/2 other fetches between?
-    // TODO:silabs-robin  No rvfi_valid on same addr before final one?
-
     ##1
     (is_obi_iside_aphase [->1])    ##0
     (obi_iside_prot[2:1] == mode)  ##0
     (obi_iside_addr == addr)
-    // TODO?  ((is_obi_iside_aphase && (obi_iside_addr == addr)) [->1])  ##0
 
     ##5  // (Traverse pipeline)
-    (rvfi_valid [->1])  ##0
-    (rvfi_pc_rdata == addr)
-    // TODO?  ((rvfi_valid && (rvfi_pc_rdata == addr)) [->1])
+    (rvfi_valid [->1])       ##0
+    (rvfi_pc_rdata == addr)  ##0
+    (rvfi_mode == mode)
     ;
   endsequence : seq_refetch_as
 
-  cov_refetch_as_umode: cover property (seq_refetch_as(MODE_U));
-  cov_refetch_as_mmode: cover property (seq_refetch_as(MODE_M));
-  // TODO:silabs-robin  Cover with/without trap
+  cov_refetch_as_umode_notrap: cover property (
+    seq_refetch_as(MODE_U) ##0 !rvfi_trap
+  );
+  cov_refetch_as_mmode_notrap: cover property (
+    seq_refetch_as(MODE_M) ##0 !rvfi_trap
+  );
+  cov_refetch_as_umode_trap: cover property (
+    seq_refetch_as(MODE_U) ##0  rvfi_trap.exception
+  );
+  cov_refetch_as_mmode_trap: cover property (
+    seq_refetch_as(MODE_M) ##0  rvfi_trap.exception
+  );
 
 
   // Cover: "TrapsMmode"  (Helper Covers)
@@ -254,19 +266,29 @@ module  uvmt_cv32e40s_umode_cov
   `endif
 
 
+  // Cover: "ResumeMprv"  (Helper Covers)
+
+  cov_umode_mprv: cover property (
+    rvfi_valid                            &&
+    have_rvfi_mstatus_rdata.mprv          &&
+    (have_rvfi_dcsr_rdata.prv == MODE_U)  &&
+    is_rvfi_notrap_dret
+    ##1
+    (rvfi_valid [->1])
+  );
+
+
   // Covergroup, mixed features
 
-  covergroup  cg @(posedge clk_i);
+  covergroup  cg  @(posedge clk_i);
     // Coverpoints
-
-    // TODO:silabs-robin  "InstrProt" and "DataProt"?
 
     cp_mode: coverpoint  rvfi_mode  iff (rvfi_valid) {
       bins  mmode = {MODE_M};
       bins  umode = {MODE_U};
     }
 
-    /* TODO:silabs-robin  Conditionally include if "cov_enable_pedantic"
+    /* Enable for extra pedantic checking
     cp_csraddr: coverpoint  rvfi_insn[31:20]  iff (is_rvfi_csr_instr) {
       bins  addr[4096] = {[0:$]};
     }
@@ -327,9 +349,18 @@ module  uvmt_cv32e40s_umode_cov
       bins  off = {1'b 0};
     }
 
+    cp_dret: coverpoint  is_rvfi_notrap_dret  iff (rvfi_valid) {
+      bins  dret = {1'b 1};
+    }
+
+    cp_prv: coverpoint  have_rvfi_dcsr_rdata.prv  iff (rvfi_valid) {
+      bins  mmode = {MODE_M};
+      bins  umode = {MODE_U};
+    }
+
     // Crosses
 
-    /* TODO:silabs-robin  Conditionally include if "cov_enable_pedantic"
+    /* Enable for extra pedantic checking
     x_mode_csraddr: cross cp_mode, cp_csraddr;
     */
 
@@ -339,7 +370,6 @@ module  uvmt_cv32e40s_umode_cov
 
     // "TrapMpp"
     x_mpp_excint: cross cp_mpp, cp_excint  iff (!rvfi_dbg_mode);
-    // TODO cross w/ {isdbg, wasdbg}?
 
     // "TrapsMmode"
     x_prevmode_excint: cross cp_prevmode, cp_excint;
@@ -354,12 +384,12 @@ module  uvmt_cv32e40s_umode_cov
     x_dmode_loadstore_mprv_mpp:
       cross cp_dmode, cp_loadstore, cp_mprv, cp_mpp
       iff (!rvfi_trap);
+
+    // "ResumeMprv"
+    x_dret_mprv_prv: cross cp_dret, cp_mprv, cp_prv;
   endgroup
 
   cg  cg_inst = new;
-
-
-  // TODO:silabs-robin  Remove cover-related todos from asserts file
 
 
 endmodule : uvmt_cv32e40s_umode_cov

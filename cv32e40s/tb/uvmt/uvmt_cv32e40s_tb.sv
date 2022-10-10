@@ -518,6 +518,8 @@ module uvmt_cv32e40s_tb;
 
       .rvfi_csr_mstatus_rdata (rvfi_i.rvfi_csr_mstatus_rdata),
       .rvfi_csr_mstatus_rmask (rvfi_i.rvfi_csr_mstatus_rmask),
+      .rvfi_csr_dcsr_rdata    (rvfi_i.rvfi_csr_dcsr_rdata),
+      .rvfi_csr_dcsr_rmask    (rvfi_i.rvfi_csr_dcsr_rmask),
 
       .obi_iside_req  (core_i.instr_req_o),
       .obi_iside_gnt  (core_i.instr_gnt_i),
