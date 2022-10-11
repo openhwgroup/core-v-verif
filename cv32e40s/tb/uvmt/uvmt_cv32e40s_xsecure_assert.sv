@@ -16,13 +16,13 @@ module uvmt_cv32e40s_xsecure_assert
   // Local parameters:
   localparam NO_LOCKUP_ERRORS = 3'b000;
   localparam LOCKUP_ERROR = 1'b1;
-  
+
   localparam ERROR_CODE_INSTRUCTION_ACCESS_FAULT = 6'd1;
   localparam ERROR_CODE_ILLEGAL_INSTRUCTION_FAULT = 6'd2;
   localparam ERROR_CODE_LOAD_ACCESS_FAULT = 6'd5;
   localparam ERROR_CODE_STORE_AMO_ACCESS_FAULT = 6'd7;
   localparam ERROR_CODE_INSTRUCTION_BUS_FAULT = 6'd24;
-  
+
   localparam FUNC7_BRANCH_INSTRUCTION = 7'bxxxxxxx;
   localparam FUNC3_BRANCH_INSTRUCTION = 3'bxxx;
 
@@ -42,9 +42,9 @@ module uvmt_cv32e40s_xsecure_assert
   localparam FREQ_SETTING_8 = 4'b0001;
   localparam FREQ_SETTING_16 = 4'b001x;
   localparam FREQ_SETTING_32 = 4'b01xx;
-  localparam FREQ_SETTING_64 = 4'b1xxx;  
-  
-  
+  localparam FREQ_SETTING_64 = 4'b1xxx;
+
+
   // Default settings:
   default clocking @(posedge xsecure_if.clk_i); endclocking
   default disable iff (!(xsecure_if.rst_ni) | !(SECURE));
@@ -54,10 +54,10 @@ module uvmt_cv32e40s_xsecure_assert
   /////////////////////////////////////////////////////////////////////
   ///////////////////////// GENERAL SEQUENCES /////////////////////////
   /////////////////////////////////////////////////////////////////////
-  
+
 
   sequence seq_rvfi_normal_instruction (logic [6:0] func7, logic [2:0] func3, logic [6:0] opcode);
-    
+
     //Make sure there is no traped instruction
     !rvfi_if.rvfi_trap[0]
 
@@ -83,11 +83,19 @@ module uvmt_cv32e40s_xsecure_assert
   endsequence
 
   property p_xsecure_setting_default_off(logic xsecure_setting);
-    
+
     //Make sure that when exiting reset mode the xsecure setting is off
     $rose(xsecure_if.rst_ni)
     |->
     !xsecure_setting;
+  endproperty
+
+  property p_xsecure_setting_default_on(logic xsecure_setting);
+
+    //Make sure that when exiting reset mode the xsecure setting is off
+    $rose(xsecure_if.rst_ni)
+    |->
+    xsecure_setting;
   endproperty
 
 
@@ -98,7 +106,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// SECURITY ALERTS MINOR //////////
   a_xsecure_security_alert_minor_1: assert property (
-    
+
     //Make sure we detect a lockup error
     xsecure_if.core_cs_registers_xsecure_lfsr_lockup != NO_LOCKUP_ERRORS
 
@@ -110,7 +118,7 @@ module uvmt_cv32e40s_xsecure_assert
 
 
   a_xsecure_security_alert_minor_2_to_6: assert property (
-    
+
     //Make sure we look at a valid instruction
     rvfi_if.rvfi_valid
 
@@ -123,18 +131,18 @@ module uvmt_cv32e40s_xsecure_assert
 
     //Illegal instruction fault
     || rvfi_if.rvfi_trap[8:3] == ERROR_CODE_ILLEGAL_INSTRUCTION_FAULT
-    
+
     //Load access fault
     || rvfi_if.rvfi_trap[8:3] == ERROR_CODE_LOAD_ACCESS_FAULT
-    
+
     //Store/AMO access fault
     || rvfi_if.rvfi_trap[8:3] == ERROR_CODE_STORE_AMO_ACCESS_FAULT
-    
+
     //Instruction bus fault
     || rvfi_if.rvfi_trap[8:3] == ERROR_CODE_INSTRUCTION_BUS_FAULT)
 
     //TODO: The error is handled in WB stage and notify the alert minor signal in the next stage (the current/rvfi stage)
-    |-> 
+    |->
     xsecure_if.core_alert_minor_o
 
   ) else `uvm_error(info_tag, "Exception errors do not set minor alret\n");
@@ -165,7 +173,7 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure it is possible that the branch instruction is directly followed by another instruction (as the branch is not taken)
     ##1 rvfi_if.rvfi_valid
   );
-  
+
 
   c_xsecure_core_div_rem_timing: cover property (
 
@@ -174,7 +182,7 @@ module uvmt_cv32e40s_xsecure_assert
 
     //Make sure data independent timing was off when the DIV/REM instruction was in EX stage
     and $past(!xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
-    
+
     //Make sure that it is possible that the instruction was directly followed by another instruction
     && $past(rvfi_if.rvfi_valid)
 
@@ -182,17 +190,17 @@ module uvmt_cv32e40s_xsecure_assert
 
 
   ////////// DATA INDEPENDENT TIMING DEFAULT OFF //////////
-  
-  a_xsecure_dataindtiming_default_off: assert property (
-	  p_xsecure_setting_default_off(
+
+  a_xsecure_dataindtiming_default_on: assert property (
+	  p_xsecure_setting_default_on(
 	  xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming)
-  ) else `uvm_error(info_tag, "Data independent timing is not off when exiting reset\n");
- 
+  ) else `uvm_error(info_tag, "Data independent timing is not on when exiting reset\n");
+
 
   ////////// BRANCH TIMING //////////
 
   a_xsecure_branch_timing: assert property (
-  
+
     //Make sure a branch instruction is executed:
     (seq_rvfi_normal_instruction(FUNC7_BRANCH_INSTRUCTION, FUNC3_BRANCH_INSTRUCTION, cv32e40s_pkg::OPCODE_BRANCH)
     or seq_rvfi_normal_compressed_instruction(OPCODE_BIT_15_TO_13_COMPR_BRANCH, OPCODE_BIT_1_TO_0_COMPR_BRANCH))
@@ -215,21 +223,21 @@ module uvmt_cv32e40s_xsecure_assert
   ////////// DIV/REM TIMING //////////
 
   sequence seq_rvfi_not_valid_for_34_cycles;
-    
+
     //Make sure rvfi_valid is off for 34 cycles
     !rvfi_if.rvfi_valid[*34] ##1 1;
 
   endsequence
 
   sequence seq_set_rvfi_valid_once_as_memory_instruction_during_the_past_34_cycles;
-    
+
     //Make sure a memory instruction is retired in a 34 cycle interval.
 
     //Make sure rvfi_valid is low an unknown number of cycles
     !rvfi_if.rvfi_valid[*0:33]
 
     //Make sure that once the rvfi_valid is high we retire a memory instruction
-    ##1 (rvfi_if.rvfi_valid 
+    ##1 (rvfi_if.rvfi_valid
     && (rvfi_if.rvfi_mem_rmask || rvfi_if.rvfi_mem_wmask))
 
     //Make sure rvfi_valid is off in an unknown number of cycles
@@ -242,18 +250,18 @@ module uvmt_cv32e40s_xsecure_assert
 
 
   a_xsecure_core_div_rem_timing: assert property (
-    
+
     //Make sure we detect an DIV or REM instruction in rvfi
     seq_rvfi_normal_instruction(FUNC7_DIV_REM_INSTRUCTION, FUNC3_DIV_REM_INSTRUCTION, cv32e40s_pkg::OPCODE_OP)
 
     //Make sure data independent timing was on when the DIV/REM instruction was in EX stage
     //(Checks only the last cycle the branch instruction is in EX stage because if data independent timing is on, in the last cycle DIV/REM is in EX, it must also been on in he previouse cycles)
     and $past(xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
-    
+
     |->
-    //Make sure that there are at least 34 cycles from the last retired instruction 
+    //Make sure that there are at least 34 cycles from the last retired instruction
     seq_rvfi_not_valid_for_34_cycles.triggered
-    
+
     //or the retired instructions are loads or stores
     or seq_set_rvfi_valid_once_as_memory_instruction_during_the_past_34_cycles.triggered
 
@@ -266,15 +274,15 @@ module uvmt_cv32e40s_xsecure_assert
 
 
   ////////// DUMMY INSTRUCTIONS ARE CONFIGURABLE /////////
-  
-  // Check that we generate dummy instructions when dummy bit is on: 
+
+  // Check that we generate dummy instructions when dummy bit is on:
   // a_xsecure_dummy_instruction_frequency
 
   // Check that we do not generate dummy instructions when the dummy bit is off:
 
-  a_xsecure_dummy_instruction_not_generated_when_dummybit_is_off: assert property( 
-    
-    //Make sure the dummy instruction settings is off    
+  a_xsecure_dummy_instruction_not_generated_when_dummybit_is_off: assert property(
+
+    //Make sure the dummy instruction settings is off
     !xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy
 
     //Make sure we look at an valid instruction
@@ -284,19 +292,19 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure we dont generate dummy instructions
     |=>
     !xsecure_if.core_if_id_pipe_instr_meta_dummy
-  
+
   ) else `uvm_error(info_tag, "We generate dummy instructions even though the dummy setting is off\n");
 
 
   ////////// DUMMY INSTRUCTION INSTERTED IN IF /////////
-  
-  a_xsecure_dummy_instruction_in_if: assert property( 
-    
+
+  a_xsecure_dummy_instruction_in_if: assert property(
+
     //Make sure we detect an new instruction in the id ex pipe
     $past(xsecure_if.core_id_stage_id_valid_o)
     && $past(xsecure_if.core_id_stage_ex_ready_i)
 
-    //Make sure the dummy instruction settings is on when fetching the instruction    
+    //Make sure the dummy instruction settings is on when fetching the instruction
     && xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy
 
     //Make sure the detected instruction is an dummy instruction
@@ -310,8 +318,8 @@ module uvmt_cv32e40s_xsecure_assert
 
 
   ////////// DUMMY INSTRUCTION BLTU JUMPS TO NEXT NON-DUMMY INSTRUCTION //////////
-  
-  a_xsecure_dummy_instruction_bltu_jumping: assert property( 
+
+  a_xsecure_dummy_instruction_bltu_jumping: assert property(
 
     //Make sure we detect an new instruction in the id ex pipe
     $past(xsecure_if.core_id_stage_id_valid_o)
@@ -323,7 +331,7 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure we have BLTU dummy instruction
     && xsecure_if.core_id_ex_pipe_instr_bus_resp_rdata[6:0] == cv32e40s_pkg::OPCODE_BRANCH
     && xsecure_if.core_id_ex_pipe_instr_bus_resp_rdata[14:12] == FUNC3_BLTU_INSTRUCTION
-    
+
     //Make sure we jump to next instruction
     //(PC change to next instruction before inserting an dummy instruction, the jump should therefore be 0)
     |->
@@ -334,67 +342,67 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// DUMMY INSTRUCTION OPERAND SOURCES //////////
 
-  a_xsecure_dummy_instruction_operands_from_LFSR1_and_LFSR2: assert property ( 
-    
+  a_xsecure_dummy_instruction_operands_from_LFSR1_and_LFSR2: assert property (
+
     //Make sure we detect an new instruction in the if id pipe
     $past(xsecure_if.core_if_stage_if_valid_o)
     && $past(xsecure_if.core_if_stage_id_ready_i)
 
-    //Make sure the dummy instruction settings is on when fetching the instruction    
+    //Make sure the dummy instruction settings is on when fetching the instruction
     && xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy
 
     //Make sure the detected instruction is an dummy instruction
     && xsecure_if.core_if_id_pipe_instr_meta_dummy
-    
+
     |->
     //Check that the sr1 part of the instruction originates from the LFSR1 register
     xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[19:15] == $past(xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs1)
-    
+
     //Check that the sr2 part of the instruction originates from the LFSR2 register
     && xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[24:20] == $past(xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs2)
-    
+
   ) else `uvm_error(info_tag, "Dummy instructions do not fetch data from LFSR1 and LFSR2\n");
 
 
   ////////// DUMMY INSTRUCTION DESTINATION //////////
 
-  a_xsecure_dummy_instruction_destination_is_x0: assert property ( 
-    
+  a_xsecure_dummy_instruction_destination_is_x0: assert property (
+
     //Make sure we detect an new instruction in the if id pipe
     $past(xsecure_if.core_if_stage_if_valid_o)
     && $past(xsecure_if.core_if_stage_id_ready_i)
 
-    //Make sure the dummy instruction settings is on when fetching the instruction    
+    //Make sure the dummy instruction settings is on when fetching the instruction
     && xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy
 
     //Make sure the detected instruction is an dummy instruction
     && xsecure_if.core_if_id_pipe_instr_meta_dummy
-    
+
     |->
-    //Check that the destination register is x0 
+    //Check that the destination register is x0
     xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[11:7] == REGISTER_x0
-    
+
   ) else `uvm_error(info_tag, "The results of the dummy instructions are not stored in the x0 register\n");
 
 
   ////////// DUMMY INSTRUCTION UPDATES MCYCLE //////////
 
   a_xsecure_dummy_instruction_updates_mcycle: assert property (
-    
-    //Make sure the gated clock is active 
+
+    //Make sure the gated clock is active
     @(posedge xsecure_if.core_clk_gated)
 
     //Make sure that mcycle is on (not inhibit)
     !xsecure_if.core_cs_registers_mcountinhibit_q_mcycle_inhibit
-     
+
     //Make sure we do not write to the mcycle csr register
     and !($past(xsecure_if.core_cs_registers_csr_en_gated)
     && ($past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLE)) || $past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLEH))
-    
+
     |->
     //Make sure the mcycle counts every cycle (including the clock cycles dummy instruction occurs)
     xsecure_if.core_cs_registers_mhpmcounter_mcycle == ($past(xsecure_if.core_cs_registers_mhpmcounter_mcycle) + 1)
-    
+
     //But make sure it resets in case of overflow
     or xsecure_if.core_cs_registers_mhpmcounter_mcycle == '0 && $past(xsecure_if.core_cs_registers_mhpmcounter_mcycle) == REGISTER_MHPMCOUNTER_MCYCLE_FULL
 
@@ -407,13 +415,13 @@ module uvmt_cv32e40s_xsecure_assert
   ////////// DUMMY INSTRUCTION DO NOT UPDATE MINSTRET //////////
 
   a_xsecure_dummy_instruction_do_not_update_minstret: assert property (
-    
-    //Make sure the gated clock is active 
+
+    //Make sure the gated clock is active
     @(posedge xsecure_if.core_clk_gated)
 
     //Make sure that minstret is on (not inhibit)
     !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
-     
+
     //Make sure we have an dummy instruction
     && xsecure_if.core_wb_stage_ex_wb_pipe_instr_meta_dummy
 
@@ -429,7 +437,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// DUMMY INSTRUCTION FREQUENCY //////////
 
-  sequence seq_dummy_instruction_within_normal_valid_instructions (num_normal_valid_instructions);    
+  sequence seq_dummy_instruction_within_normal_valid_instructions (num_normal_valid_instructions);
     //Make sure we detect a dummy instruction inbetween the x valid instructions
 
     //Make sure we detect 0 to x number of normal valid instrctions in the if stage
@@ -443,33 +451,33 @@ module uvmt_cv32e40s_xsecure_assert
     ##0 (xsecure_if.core_if_stage_if_valid_o
     && xsecure_if.core_if_stage_id_ready_i)[->0:(num_normal_valid_instructions)];
   endsequence
-  
-  
+
+
   property p_xsecure_dummy_instruction_frequency(num_normal_valid_instructions_per_dummy_instruction, logic [3:0] rnddummyfreq_value);
-    
+
     //Make sure the dummy setting is on
     (xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy
-    
+
     //Make sure the frequency of dummy instructions is set to correct value
     && xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummyfreq == rnddummyfreq_value
 
     //Make sure there are no lockup errors
     && xsecure_if.core_cs_registers_xsecure_lfsr_lockup == NO_LOCKUP_ERRORS
-    
+
     //Make sure the controller is not in debug mode
     && !xsecure_if.core_controller_controller_fsm_debug_mode_q
 
     //Make sure the dummy instructions are allways enabled
     && xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_dummy_en)
-    
+
     //Make sure we detect new instructions in the if id pipe
     throughout (xsecure_if.core_if_stage_if_valid_o
     && xsecure_if.core_if_stage_id_ready_i)[->(num_normal_valid_instructions_per_dummy_instruction + 1)]
 
     //Make sure that we detect one valid dummy instruction inbetween the number of normal valid instructions
-    |-> 
+    |->
     seq_dummy_instruction_within_normal_valid_instructions(num_normal_valid_instructions_per_dummy_instruction + 1).triggered;
-  
+
   endproperty
 
 
@@ -479,7 +487,7 @@ module uvmt_cv32e40s_xsecure_assert
       4,
       FREQ_SETTING_4)
   ) else `uvm_error(info_tag, "Frequency of dummy instructions are not 1-4\n");
- 
+
   //FREQ = 8
   a_xsecure_dummy_instruction_frequency_8: assert property (
 	  p_xsecure_dummy_instruction_frequency(
@@ -510,12 +518,12 @@ module uvmt_cv32e40s_xsecure_assert
 
 
   ////////// DUMMY INSTRUCTION RESET SEED AT LOCKUP ERRORS //////////
- 
+
   property p_xsecure_dummy_instruction_LFSRx_lockup_reset(integer x, logic core_cs_registers_xsecure_lfsrx_seed_we, logic [31:0] core_xsecure_ctrl_lfsrx, logic [31:0] core_LFSRx_CFG_default_seed);
-    
+
     //Make sure the dummy setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy
-    
+
     //Make sure there is a lockup error on register x
     && xsecure_if.core_cs_registers_xsecure_lfsr_lockup[x] == LOCKUP_ERROR
 
@@ -536,7 +544,7 @@ module uvmt_cv32e40s_xsecure_assert
 	    xsecure_if.core_xsecure_ctrl_lfsr0,
       xsecure_if.core_LFSR0_CFG_default_seed)
   ) else `uvm_error(info_tag, "LFSR0 does not reset to default value when when there is a lookup error (given that we do not write to the register)\n");
- 
+
   //LFSR1
   a_xsecure_dummy_instruction_LFSR1_lockup_reset: assert property (
 	  p_xsecure_dummy_instruction_LFSRx_lockup_reset(
@@ -562,15 +570,15 @@ module uvmt_cv32e40s_xsecure_assert
 
 
   a_xsecure_reduction_of_profiling_infrastructure_mhpmevent_31_to_3_are_zero: assert property (
-    
+
     //Make sure the mhpmevent 3 to 31 are hardwired to zero
     |xsecure_if.core_cs_registers_mhpmevent_31_to_3 == 1'b0
-  
+
   ) else `uvm_error(info_tag, "The mhpmevent registers 31 to 3 is not hardwired to zero\n");
 
 
   a_xsecure_reduction_of_profiling_infrastructure_mhpmcounter_31_to_3_are_zero: assert property (
-    
+
     //Make sure the mhpmcounter 3 to 31 are hardwired to zero
     //(we include mhpmcounterh in the mhpmcounter signal)
     |xsecure_if.core_cs_registers_mhpmcounter_31_to_3 == 1'b0

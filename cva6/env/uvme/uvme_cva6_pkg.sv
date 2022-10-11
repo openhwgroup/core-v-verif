@@ -42,6 +42,7 @@ package uvme_cva6_pkg;
    import uvml_sb_pkg     ::*;
    import uvml_trn_pkg    ::*;
    import uvma_clknrst_pkg::*;
+   import uvma_cvxif_pkg::*;
 
    // Constants / Structs / Enums
    `include "uvme_cva6_constants.sv"
@@ -57,6 +58,8 @@ package uvme_cva6_pkg;
    // Environment components
    `include "uvme_cva6_sb.sv"
    `include "uvme_cva6_vsqr.sv"
+   `include "uvme_cvxif_covg.sv"
+   `include "uvme_cva6_cov_model.sv"
    `include "uvme_cva6_env.sv"
 
    // Virtual sequences
