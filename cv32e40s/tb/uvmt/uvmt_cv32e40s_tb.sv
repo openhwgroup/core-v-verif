@@ -421,7 +421,7 @@ module uvmt_cv32e40s_tb;
 
   // Bind in verification modules to the design
   bind cv32e40s_core
-    uvmt_cv32e40s_interrupt_assert interrupt_assert_i(
+    uvmt_cv32e40s_interrupt_assert  interrupt_assert_i (
       .mcause_n     ({cs_registers_i.mcause_n.irq, cs_registers_i.mcause_n.exception_code[4:0]}),
       .mip          (cs_registers_i.mip_rdata),
       .mie_q        (cs_registers_i.mie_q),
@@ -450,6 +450,41 @@ module uvmt_cv32e40s_tb;
       .*
     );
 
+  // User-mode assertions
+
+  bind  cv32e40s_wrapper
+    uvmt_cv32e40s_umode_assert  umode_assert_i (
+      .rvfi_valid    (rvfi_i.rvfi_valid),
+      .rvfi_mode     (rvfi_i.rvfi_mode),
+      .rvfi_order    (rvfi_i.rvfi_order),
+      .rvfi_trap     (rvfi_i.rvfi_trap),
+      .rvfi_intr     (rvfi_i.rvfi_intr),
+      .rvfi_insn     (rvfi_i.rvfi_insn),
+      .rvfi_dbg_mode (rvfi_i.rvfi_dbg_mode),
+      .rvfi_dbg      (rvfi_i.rvfi_dbg),
+      .rvfi_pc_rdata (rvfi_i.rvfi_pc_rdata),
+
+      .rvfi_csr_dcsr_rdata       (rvfi_i.rvfi_csr_dcsr_rdata),
+      .rvfi_csr_mcause_rdata     (rvfi_i.rvfi_csr_mcause_rdata),
+      .rvfi_csr_mcause_wdata     (rvfi_i.rvfi_csr_mcause_wdata),
+      .rvfi_csr_mcause_wmask     (rvfi_i.rvfi_csr_mcause_wmask),
+      .rvfi_csr_mcounteren_rdata (rvfi_i.rvfi_csr_mcounteren_rdata),
+      .rvfi_csr_misa_rdata       (rvfi_i.rvfi_csr_misa_rdata),
+      .rvfi_csr_mscratch_rdata   (rvfi_i.rvfi_csr_mscratch_rdata),
+      .rvfi_csr_mscratch_rmask   (rvfi_i.rvfi_csr_mscratch_rmask),
+      .rvfi_csr_mscratch_wdata   (rvfi_i.rvfi_csr_mscratch_wdata),
+      .rvfi_csr_mscratch_wmask   (rvfi_i.rvfi_csr_mscratch_wmask),
+      .rvfi_csr_mstatus_rdata    (rvfi_i.rvfi_csr_mstatus_rdata),
+      .rvfi_csr_mstatus_wdata    (rvfi_i.rvfi_csr_mstatus_wdata),
+      .rvfi_csr_mstatus_wmask    (rvfi_i.rvfi_csr_mstatus_wmask),
+      .rvfi_csr_mstateen0_rdata  (rvfi_i.rvfi_csr_mstateen0_rdata),
+
+      .impu_valid (core_i.if_stage_i.mpu_i.core_trans_valid_i),
+      .impu_addr  (core_i.if_stage_i.mpu_i.core_trans_i.addr),
+
+      .*
+    );
+
   // Fence.i assertions
 
   bind cv32e40s_wrapper
@@ -473,12 +508,13 @@ module uvmt_cv32e40s_tb;
     );
 
 
-
-
   // Core integration assertions
 
   bind cv32e40s_wrapper
-    uvmt_cv32e40s_integration_assert  integration_assert_i (.*);
+    uvmt_cv32e40s_integration_assert  integration_assert_i (
+      .*
+    );
+
 
   // Xsecure assertion and coverage interface
 
