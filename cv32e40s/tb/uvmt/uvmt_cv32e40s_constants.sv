@@ -26,6 +26,12 @@
       parameter cv32e40s_pkg::b_ext_e B_EXT = cv32e40s_pkg::B_NONE;
    `endif
 
+   `ifdef SMCLIC_EN
+         parameter logic SMCLIC = 1'b1;
+   `else
+         parameter logic SMCLIC = 1'b0;
+   `endif
+
    `ifdef PMP_ENABLE_2
      parameter int CORE_PARAM_PMP_GRANULARITY = 0;
      parameter int CORE_PARAM_PMP_NUM_REGIONS = 2;
