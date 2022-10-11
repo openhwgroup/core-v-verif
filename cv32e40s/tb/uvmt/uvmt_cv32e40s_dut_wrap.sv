@@ -92,6 +92,11 @@ module uvmt_cv32e40s_dut_wrap
     assign debug_if.reset_n  = clknrst_if.reset_n;
 
 
+    // OBI Instruction agent v1.2 signal tie-offs
+    assign obi_instr_if_i.we = 'd 0;
+    assign obi_instr_if_i.be = 'h F;  // Assume 32-bit full bus reads
+
+
     // --------------------------------------------
     // Connect to uvma_interrupt_if
     assign interrupt_if.clk                     = clknrst_if.clk;

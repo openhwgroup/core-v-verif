@@ -53,17 +53,19 @@ module uvmt_cv32e40s_tb;
    uvma_debug_if                debug_if();
    uvma_interrupt_if            interrupt_if();
    uvma_obi_memory_if #(
-     .AUSER_WIDTH (32),  // TODO:silabs-robin  Correct widths sat via named definitions, everywhere
+    /* TODO:silabs-robin  Correct widths sat via named definitions, everywhere!!! Important!
+     .AUSER_WIDTH (32),
      .WUSER_WIDTH (32),
      .RUSER_WIDTH (32),
      .ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
      .DATA_WIDTH  (32),
      .ID_WIDTH    (32),
-     .ACHK_WIDTH  (32),
-     .RCHK_WIDTH  (32)
+     .ACHK_WIDTH  (ENV_PARAM_ACHK_WIDTH),
+     .RCHK_WIDTH  (ENV_PARAM_RCHK_WIDTH)
+    */
    ) obi_instr_if_i (
-     .clk(clknrst_if.clk),
-     .reset_n(clknrst_if.reset_n)
+     .clk     (clknrst_if.clk),
+     .reset_n (clknrst_if.reset_n)
    );
    uvma_obi_memory_if           obi_data_if_i(
      .clk(clknrst_if.clk),
@@ -837,18 +839,18 @@ module uvmt_cv32e40s_tb;
      $timeformat(-9, 3, " ns", 8);
 
      // Add interfaces handles to uvm_config_db
-     uvm_config_db#(virtual uvma_isacov_if              )::set(.cntxt(null), .inst_name("*.env.isacov_agent"), .field_name("vif"), .value(isacov_if));
-     uvm_config_db#(virtual uvma_debug_if               )::set(.cntxt(null), .inst_name("*.env.debug_agent"), .field_name("vif"), .value(debug_if));
-     uvm_config_db#(virtual uvma_clknrst_if             )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"), .field_name("vif"),        .value(clknrst_if));
-     uvm_config_db#(virtual uvma_interrupt_if           )::set(.cntxt(null), .inst_name("*.env.interrupt_agent"), .field_name("vif"),      .value(interrupt_if));
-     uvm_config_db#(virtual uvma_obi_memory_if          )::set(.cntxt(null), .inst_name("*.env.obi_memory_instr_agent"), .field_name("vif"), .value(obi_instr_if_i) );
-     uvm_config_db#(virtual uvma_obi_memory_if          )::set(.cntxt(null), .inst_name("*.env.obi_memory_data_agent"),  .field_name("vif"), .value(obi_data_if_i) );
-     uvm_config_db#(virtual uvma_fencei_if              )::set(.cntxt(null), .inst_name("*.env.fencei"),     .field_name("vif"), .value(fencei_if_i));
-     uvm_config_db#(virtual uvma_rvfi_instr_if          )::set(.cntxt(null), .inst_name("*.env.rvfi_agent"), .field_name("instr_vif0"),.value(dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i));
-     uvm_config_db#(virtual uvma_fencei_if              )::set(.cntxt(null), .inst_name("*.env.fencei_agent"), .field_name("fencei_vif"),     .value(fencei_if_i)  );
-     uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if  )::set(.cntxt(null), .inst_name("*"),                .field_name("vp_status_vif"),    .value(vp_status_if) );
-     uvm_config_db#(virtual uvma_interrupt_if           )::set(.cntxt(null), .inst_name("*.env"),            .field_name("intr_vif"),         .value(interrupt_if) );
-     uvm_config_db#(virtual uvma_debug_if               )::set(.cntxt(null), .inst_name("*.env"),            .field_name("debug_vif"),        .value(debug_if)     );
+     uvm_config_db#(virtual uvma_isacov_if             )::set( .cntxt(null), .inst_name("*.env.isacov_agent"),           .field_name("vif"),           .value(isacov_if)      );
+     uvm_config_db#(virtual uvma_debug_if              )::set( .cntxt(null), .inst_name("*.env.debug_agent"),            .field_name("vif"),           .value(debug_if)       );
+     uvm_config_db#(virtual uvma_clknrst_if            )::set( .cntxt(null), .inst_name("*.env.clknrst_agent"),          .field_name("vif"),           .value(clknrst_if)     );
+     uvm_config_db#(virtual uvma_interrupt_if          )::set( .cntxt(null), .inst_name("*.env.interrupt_agent"),        .field_name("vif"),           .value(interrupt_if)   );
+     uvm_config_db#(virtual uvma_obi_memory_if         )::set( .cntxt(null), .inst_name("*.env.obi_memory_instr_agent"), .field_name("vif"),           .value(obi_instr_if_i) );
+     uvm_config_db#(virtual uvma_obi_memory_if         )::set( .cntxt(null), .inst_name("*.env.obi_memory_data_agent"),  .field_name("vif"),           .value(obi_data_if_i)  );
+     uvm_config_db#(virtual uvma_fencei_if             )::set( .cntxt(null), .inst_name("*.env.fencei"),                 .field_name("vif"),           .value(fencei_if_i)    );
+     uvm_config_db#(virtual uvma_rvfi_instr_if         )::set( .cntxt(null), .inst_name("*.env.rvfi_agent"),             .field_name("instr_vif0"),    .value(dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i));
+     uvm_config_db#(virtual uvma_fencei_if             )::set( .cntxt(null), .inst_name("*.env.fencei_agent"),           .field_name("fencei_vif"),    .value(fencei_if_i)    );
+     uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if )::set( .cntxt(null), .inst_name("*"),                            .field_name("vp_status_vif"), .value(vp_status_if)   );
+     uvm_config_db#(virtual uvma_interrupt_if          )::set( .cntxt(null), .inst_name("*.env"),                        .field_name("intr_vif"),      .value(interrupt_if)   );
+     uvm_config_db#(virtual uvma_debug_if              )::set( .cntxt(null), .inst_name("*.env"),                        .field_name("debug_vif"),     .value(debug_if)       );
 //     uvm_config_db#(virtual uvmt_cv32e40s_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"),       .field_name("debug_cov_vif"),    .value(debug_cov_assert_if));
      `RVFI_CSR_UVM_CONFIG_DB_SET(marchid)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mcountinhibit)

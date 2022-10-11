@@ -1,3 +1,22 @@
+// Copyright 2022 Silicon Labs, Inc.
+// Copyright 2022 OpenHW Group
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Licensed under the Solderpad Hardware License v 2.1 (the "License"); you may
+// not use this file except in compliance with the License, or, at your option,
+// the Apache License version 2.0.
+//
+// You may obtain a copy of the License at
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
 `default_nettype none
 
 
@@ -7,18 +26,18 @@ module  uvmt_cv32e40s_umode_cov
   input wire  clk_i,
   input wire  rst_ni,
 
-  input wire         rvfi_valid,
-  input rvfi_trap_t  rvfi_trap,
-  input rvfi_intr_t  rvfi_intr,
-  input wire [31:0]  rvfi_insn,
-  input wire [31:0]  rvfi_rs1_rdata,
-  input wire [31:0]  rvfi_pc_rdata,
-  input wire [ 1:0]  rvfi_mode,
-  input wire [ 4:0]  rvfi_rd_addr,
-  input wire         rvfi_dbg_mode,
-  input wire [63:0]  rvfi_order,
-  input wire [ 3:0]  rvfi_mem_rmask,
-  input wire [ 3:0]  rvfi_mem_wmask,
+  input wire              rvfi_valid,
+  input wire rvfi_trap_t  rvfi_trap,
+  input wire rvfi_intr_t  rvfi_intr,
+  input wire [31:0]       rvfi_insn,
+  input wire [31:0]       rvfi_rs1_rdata,
+  input wire [31:0]       rvfi_pc_rdata,
+  input wire [ 1:0]       rvfi_mode,
+  input wire [ 4:0]       rvfi_rd_addr,
+  input wire              rvfi_dbg_mode,
+  input wire [63:0]       rvfi_order,
+  input wire [ 3:0]       rvfi_mem_rmask,
+  input wire [ 3:0]       rvfi_mem_wmask,
 
   input wire [31:0]  rvfi_csr_mstatus_rdata,
   input wire [31:0]  rvfi_csr_mstatus_rmask,
@@ -30,6 +49,12 @@ module  uvmt_cv32e40s_umode_cov
   input wire [31:0]  obi_iside_addr,
   input wire [ 2:0]  obi_iside_prot
 );
+
+
+  // Clock & Reset
+
+  default clocking @(posedge clk_i); endclocking
+  default disable iff !rst_ni;
 
 
   // Helper Definitions
