@@ -1,0 +1,46 @@
+# Copyright 2022 Silicon Labs, Inc.
+# Copyright 2022 OpenHW Group
+#
+# Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://solderpad.org/licenses/
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
+
+
+# Defines and includes
+
+CORE_V_VERIF ?= $(realpath ../..)
+
+CV_CORE ?= cv32e40x
+
+CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40x
+CV_CORE_BRANCH ?= master
+CV_CORE_TAG    ?= none
+CV_CORE_HASH   ?= head
+
+RISCVDV_REPO        ?= TODO_dontwanttodefinethis
+EMBENCH_REPO        ?= TODO_dontwanttodefinethis
+COMPLIANCE_REPO     ?= TODO_dontwanttodefinethis
+DPI_DASM_SPIKE_REPO ?= TODO_dontwanttodefinethis
+
+include  $(CORE_V_VERIF)/mk/fv/fv.mk
+
+
+# Make target
+
+ifndef  CV_SIM_PREFIX
+  $(warning  CV_SIM_PREFIX undefined)
+endif
+
+fv:  $(CV_CORE_PKG)
+	$(CV_SIM_PREFIX)  jaspergold  jg.tcl
+	# TODO:robin-silabs  Move to "mk/fv/jg.mk"?

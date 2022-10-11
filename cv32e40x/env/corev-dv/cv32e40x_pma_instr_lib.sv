@@ -43,6 +43,7 @@ virtual class corev_load_store_pma_base_stream extends riscv_load_store_rand_ins
   constraint valid_addr_reg_c {
     use_compressed -> (addr_reg inside {[S0:A5]});
     !use_compressed -> (addr_reg inside {[T0:T6]});
+    addr_reg inside {cfg.gpr};
   }
 
   constraint valid_index_c {
@@ -95,6 +96,8 @@ class corev_load_pma_instr_stream extends corev_load_store_pma_base_stream;
     use_compressed -> (dest_reg inside {[S0:A5]});
     !use_compressed -> (dest_reg inside {[T0:T6]});
     dest_reg != addr_reg;
+    dest_reg inside {cfg.gpr};
+    addr_reg inside {cfg.gpr};
   }
 
   `uvm_object_utils(corev_load_pma_instr_stream)
@@ -247,6 +250,8 @@ class corev_load_store_pma_mixed_instr_stream extends corev_load_store_pma_base_
     use_compressed -> (dest_reg inside {[S0:A5]});
     !use_compressed -> (dest_reg inside {[T0:T6]});
     dest_reg != addr_reg;
+    dest_reg inside {cfg.gpr};
+    addr_reg inside {cfg.gpr};
   }
 
   `uvm_object_utils(corev_load_store_pma_mixed_instr_stream)
