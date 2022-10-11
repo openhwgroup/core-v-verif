@@ -306,6 +306,8 @@ module  uvmt_cv32e40s_umode_cov
   // Covergroup, mixed features
 
   covergroup  cg  @(posedge clk_i);
+    option.per_instance = 1;
+
     // Coverpoints
 
     cp_mode: coverpoint  rvfi_mode  iff (rvfi_valid) {
