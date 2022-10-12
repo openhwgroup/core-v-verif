@@ -195,10 +195,10 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// DATA INDEPENDENT TIMING DEFAULT OFF //////////
 
-  a_xsecure_dataindtiming_default_off: assert property (
-	  p_xsecure_setting_default_off(
+  a_xsecure_dataindtiming_default_on: assert property (
+	  p_xsecure_setting_default_on(
 	  xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming)
-  ) else `uvm_error(info_tag, "Data independent timing is not off when exiting reset.\n");
+  ) else `uvm_error(info_tag, "Data independent timing is not on when exiting reset.\n");
 
 
   ////////// BRANCH TIMING //////////
