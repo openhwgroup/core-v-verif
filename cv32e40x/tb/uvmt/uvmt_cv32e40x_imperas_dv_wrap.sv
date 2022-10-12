@@ -48,8 +48,10 @@
 // Assign the NET IRQ values from the core irq inputs
 ////////////////////////////////////////////////////////////////////////////
 `define RVVI_WRITE_IRQ(IRQ_NAME, IRQ_IDX) \
-    always @(*) begin \
-        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), `DUT_PATH.irq_i[IRQ_IDX])); \
+    wire   irq_``IRQ_NAME; \
+    assign irq_``IRQ_NAME = `DUT_PATH.irq_i[IRQ_IDX]; \
+    always @(irq_``IRQ_NAME) begin \
+        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), irq_``IRQ_NAME)); \
     end
 
 ////////////////////////////////////////////////////////////////////////////
@@ -362,7 +364,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
    bit InstructionBusFault;
    bit DataBusFault;
    int DataBusFaultCause;
-   bit resync_hart;
    int order;
    
    always_comb begin: Monitor_RVFI
@@ -385,8 +386,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
        
        bit        ifault;
        
-       resync_hart = 0;
-
        if (`RVFI_IF.rvfi_valid && (order != `RVFI_IF.rvfi_order)) begin
            order                = `RVFI_IF.rvfi_order;
 
@@ -463,8 +462,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
 
        end
    end: Monitor_RVFI
-
-   assign rvvi.resync[0] = resync_hart;
 
   /////////////////////////////////////////////////////////////////////////////
   // REF control
