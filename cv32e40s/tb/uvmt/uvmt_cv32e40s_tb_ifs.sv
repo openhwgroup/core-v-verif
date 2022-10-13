@@ -124,19 +124,6 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] core_rf_wdata_wb,
     input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [REGFILE_NUM_WORDS],
 
-    //TODO: allign
-    input logic core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_dummy_insert_o,
-    input logic core_i_cs_registers_i_xsecure_lfsr0_i_shift_i,
-    //input logic [5:0] core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_lfsr_cnt,
-    //input logic [31:0] core_i_cs_registers_i_xsecure_lfsr0_i_lfsr_q,
-    input logic [31:0] core_i_cs_registers_i_xsecure_lfsr0_i_lfsr_n,
-    //TODO: next phase
-    //input logic core_i_cs_registers_i_xsecure_lfsr0_i_lockup_shift,
-    //input logic core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_xsecure_ctrl_i_cntrst,
-    //input logic [6:0] core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_cnt_q,
-    input logic core_i_if_stage_i_instr_hint,
-    input logic core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_instr_issued_i,
-
     // CSR
     input logic core_alert_minor_o,
     input logic core_alert_major_o,
@@ -224,6 +211,7 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [4:0] core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs2,
 
     input logic core_if_stage_instr_meta_n_dummy,
+    input logic core_i_if_stage_i_instr_hint,
 
     // IF ID pipe
     input logic core_if_id_pipe_instr_meta_dummy,

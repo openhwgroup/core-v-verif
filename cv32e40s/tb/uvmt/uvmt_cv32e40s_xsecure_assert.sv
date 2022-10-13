@@ -438,50 +438,8 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// DUMMY INSTRUCTION FREQUENCY //////////
 
-  c_xsecure_dummy_lfsr_after_lockup_gives_default_seed_is_4: cover property (
-    xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_dummy_en
-    &&
-    !xsecure_if.core_i_if_stage_i_instr_hint
-    &&
-    xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummyfreq == '0 //Ta denne vekk??
-    throughout
-    1 ##1 1 ##1 1 ##1
-    (xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_dummy_insert_o & xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_instr_issued_i)
-    ##0
-    xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_shift_i
-    ##0
-    xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_lfsr_n == 0
 
-  );
-
-  c_xsecure_dummy_check_if_4_instruction_before_dummy_is_possible: cover property (
-    xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_dummy_en
-    &&
-    !xsecure_if.core_i_if_stage_i_instr_hint
-    &&
-    xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummyfreq == '0
-    throughout
-    ##1 1 ##1
-    (!xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_dummy_insert_o & xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_instr_issued_i)[*4]
-    ##1
-    xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_dummy_insert_o & xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_instr_issued_i
-  );
-
-
-  c_xsecure_dummy_check_if_5_instruction_before_dummy_is_possible: cover property (
-    xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_dummy_en
-    &&
-    !xsecure_if.core_i_if_stage_i_instr_hint
-    &&
-    xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummyfreq == '0
-    throughout
-    ##1 1 ##1
-    (!xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_dummy_insert_o & xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_instr_issued_i)[*5]
-    ##1
-    xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_dummy_insert_o & xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_instr_issued_i
-  );
-
-  sequence seq_dummy_instruction_within_normal_valid_instructions (num_normal_valid_instructions); //TODO: endre navn
+  sequence seq_dummy_instruction_within_normal_valid_instructions (num_normal_valid_instructions);
     //Make sure we detect a dummy instruction
     xsecure_if.core_if_stage_instr_meta_n_dummy
     && xsecure_if.core_if_stage_if_valid_o
@@ -504,7 +462,7 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure the controller is not in debug mode
     && !xsecure_if.core_controller_controller_fsm_debug_mode_q
 
-    && !xsecure_if.core_i_if_stage_i_instr_hint //TODO: sjekk!!
+    && !xsecure_if.core_i_if_stage_i_instr_hint
 
     //Make sure the dummy instructions are allways enabled
     && xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_dummy_en
