@@ -640,6 +640,20 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_rf_wdata_wb                                                                                                 (core_i.rf_wdata_wb),
       .core_register_file_wrapper_register_file_mem                                                                     (core_i.register_file_wrapper_i.register_file_i.mem),
 
+      //TODO: allign
+      .core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_dummy_insert_o (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_insert_o),
+      .core_i_cs_registers_i_xsecure_lfsr0_i_shift_i (core_i.cs_registers_i.xsecure.lfsr0_i.shift_i),
+      //.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_lfsr_cnt (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.lfsr_cnt),
+      //.core_i_cs_registers_i_xsecure_lfsr0_i_lfsr_q (core_i.cs_registers_i.xsecure.lfsr0_i.lfsr_q),
+      .core_i_cs_registers_i_xsecure_lfsr0_i_lfsr_n (core_i.cs_registers_i.xsecure.lfsr0_i.lfsr_n),
+      //TODO: next phase
+      //.core_i_cs_registers_i_xsecure_lfsr0_i_lockup_shift (core_i.cs_registers_i.xsecure.lfsr0_i.lockup_shift),
+      //.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_xsecure_ctrl_i_cntrst (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.xsecure_ctrl_i.cntrst),
+      //.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_cnt_q (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.cnt_q),
+      .core_i_if_stage_i_instr_hint (core_i.if_stage_i.instr_hint),
+      .core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_instr_issued_i (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.instr_issued_i),
+
+
       // CSR
       .core_alert_minor_o                                                                                               (core_i.alert_minor_o),
       .core_alert_major_o                                                                                               (core_i.alert_major_o),

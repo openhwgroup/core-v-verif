@@ -149,7 +149,7 @@ module uvmt_cv32e40s_xsecure_assert
     |->
     xsecure_if.core_alert_minor_o
 
-  ) else `uvm_error(info_tag, "Exception errors do not set minor alret.\n");
+  ) else `uvm_error(info_tag, "Exception errors do not set minor alert.\n");
 
 
   ///////////////////////////////////////////////////////////////////////////
@@ -438,15 +438,51 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// DUMMY INSTRUCTION FREQUENCY //////////
 
-  sequence seq_dummy_instruction_within_normal_valid_instructions (num_normal_valid_instructions);
-    //Make sure we detect a dummy instruction inbetween the x valid instructions
+  c_xsecure_dummy_lfsr_after_lockup_gives_default_seed_is_4: cover property (
+    xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_dummy_en
+    &&
+    !xsecure_if.core_i_if_stage_i_instr_hint
+    &&
+    xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummyfreq == '0 //Ta denne vekk??
+    throughout
+    1 ##1 1 ##1 1 ##1
+    (xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_dummy_insert_o & xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_instr_issued_i)
+    ##0
+    xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_shift_i
+    ##0
+    xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_lfsr_n == 0
 
-    //Make sure we detect 0 to x number of normal valid instrctions in the if stage
-    //(xsecure_if.core_if_stage_if_valid_o
-    //&& xsecure_if.core_if_stage_id_ready_i)[->0:(num_normal_valid_instructions)]
+  );
 
+  c_xsecure_dummy_check_if_4_instruction_before_dummy_is_possible: cover property (
+    xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_dummy_en
+    &&
+    !xsecure_if.core_i_if_stage_i_instr_hint
+    &&
+    xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummyfreq == '0
+    throughout
+    ##1 1 ##1
+    (!xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_dummy_insert_o & xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_instr_issued_i)[*4]
+    ##1
+    xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_dummy_insert_o & xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_instr_issued_i
+  );
+
+
+  c_xsecure_dummy_check_if_5_instruction_before_dummy_is_possible: cover property (
+    xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_dummy_en
+    &&
+    !xsecure_if.core_i_if_stage_i_instr_hint
+    &&
+    xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummyfreq == '0
+    throughout
+    ##1 1 ##1
+    (!xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_dummy_insert_o & xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_instr_issued_i)[*5]
+    ##1
+    xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_dummy_insert_o & xsecure_if.core_i_if_stage_i_gen_dummy_instr_dummy_instr_i_instr_issued_i
+  );
+
+  sequence seq_dummy_instruction_within_normal_valid_instructions (num_normal_valid_instructions); //TODO: endre navn
     //Make sure we detect a dummy instruction
-    //##0
     xsecure_if.core_if_stage_instr_meta_n_dummy
     && xsecure_if.core_if_stage_if_valid_o
     && xsecure_if.core_if_stage_id_ready_i
@@ -468,8 +504,10 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure the controller is not in debug mode
     && !xsecure_if.core_controller_controller_fsm_debug_mode_q
 
+    && !xsecure_if.core_i_if_stage_i_instr_hint //TODO: sjekk!!
+
     //Make sure the dummy instructions are allways enabled
-    //&& xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_dummy_en)
+    && xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_dummy_en
     )
     //Make sure we detect new instructions in the if id pipe
     throughout (xsecure_if.core_if_stage_if_valid_o
@@ -477,8 +515,7 @@ module uvmt_cv32e40s_xsecure_assert
 
     //Make sure that we detect one valid dummy instruction inbetween the number of normal valid instructions
     |->
-    seq_dummy_instruction_within_normal_valid_instructions(num_normal_valid_instructions_per_dummy_instruction + 1).triggered;
-    //seq_dummy_instruction_within_normal_valid_instructions(num_normal_valid_instructions_per_dummy_instruction-1).triggered;
+    seq_dummy_instruction_within_normal_valid_instructions(num_normal_valid_instructions_per_dummy_instruction).triggered;
 
   endproperty
 
@@ -589,7 +626,7 @@ module uvmt_cv32e40s_xsecure_assert
 
 
   ////////////////////////////////////////////////////////////////
-  ///////////////////////// CSR HARDNING /////////////////////////
+  ///////////////////////// CSR HARDENING /////////////////////////
   ////////////////////////////////////////////////////////////////
 
 
@@ -660,7 +697,6 @@ module uvmt_cv32e40s_xsecure_assert
         //Make sure the smclic csr registers are shadowed at all times if smclic is enabled
 
         //MTVT
-        //Make sure it is possible to vary the lenght of the mtvt_addr signal
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q & cv32e40s_pkg::CSR_MTVT_MASK)
 
         //MTVEC
@@ -970,7 +1006,7 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure we update the gpr memory
     xsecure_if.core_rf_we_wb
 
-    //Make sure the adress is not xR0
+    //Make sure the adress is not x0
     && xsecure_if.core_rf_waddr_wb != 5'b00000
 
     //Make sure the local memory is updated in the same manner as the gpr memory
