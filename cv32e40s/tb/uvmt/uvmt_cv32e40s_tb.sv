@@ -89,7 +89,7 @@ module uvmt_cv32e40s_tb;
                              .INSTR_ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
                              .INSTR_RDATA_WIDTH (ENV_PARAM_INSTR_DATA_WIDTH),
                              .RAM_ADDR_WIDTH    (ENV_PARAM_RAM_ADDR_WIDTH),
-                             .SMCLIC            (uvmt_cv32e40s_pkg::SMCLIC)
+                             .SMCLIC            (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC)
                             )
                             dut_wrap (
                               .clknrst_if(clknrst_if),
@@ -459,7 +459,7 @@ module uvmt_cv32e40s_tb;
   // CLIC assertions
   bind cv32e40s_core
     uvmt_cv32e40s_clic_interrupt_assert#(
-      .SMCLIC(uvmt_cv32e40s_pkg::SMCLIC)
+      .SMCLIC(uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC)
     ) clic_assert_i(
       .dpc                 (cs_registers_i.dpc_rdata),
       .mintstatus          (cs_registers_i.mintstatus_rdata),
@@ -538,6 +538,8 @@ module uvmt_cv32e40s_tb;
       .rvfi_trap           (rvfi_i.rvfi_trap),
       .rvfi_dbg_mode       (rvfi_i.rvfi_dbg_mode),
       .rvfi_dbg            (rvfi_i.rvfi_dbg),
+
+      .wu_wfe              (dut_wrap.cv32e40s_wrapper_i.wu_wfe_i),
       .core_sleep_o        (core_i.core_sleep_o),
       .*
     );

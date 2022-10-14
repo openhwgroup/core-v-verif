@@ -219,7 +219,7 @@ endtask : deassert_irq
 task uvma_interrupt_drv_c::irq_ack_clear();
    while(1) begin
       @(cntxt.vif.mon_cb);
-      if (cntxt.vif.mon_cb.irq_ack) begin
+      if (cntxt.vif.mon_cb.irq_ack && cfg.enabled) begin
          // Try to get the semaphore for the irq_id,
          // If we can't get it, then this irq is managed by assert_irq_until_ack and we will ignore this ack
          // Otherwise deassert the interrupt

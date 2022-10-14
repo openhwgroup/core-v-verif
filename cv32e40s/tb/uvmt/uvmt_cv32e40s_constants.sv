@@ -19,9 +19,9 @@
 `define __UVMT_CV32E40S_CONSTANTS_SV__
 
    `ifdef SMCLIC_EN
-      parameter int SMCLIC = 1;
+      parameter int CORE_PARAM_SMCLIC = 1;
    `else
-      parameter int SMCLIC = 0;
+      parameter int CORE_PARAM_SMCLIC = 0;
    `endif
    // Add various clic configurations
 

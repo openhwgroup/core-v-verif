@@ -113,6 +113,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     input logic                       rvfi_dbg_mode,
     input logic [2:0]                 rvfi_dbg,
 
+    input logic                       wu_wfe,
     input logic                       core_sleep_o
   );
 
@@ -554,7 +555,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
   logic is_intr_exception;
 
   logic is_wfe_wakeup_event;
-  assign is_wfe_wakeup_event = dut_wrap.cv32e40s_wrapper_i.wu_wfe_i; // TODO: pass through if
+  assign is_wfe_wakeup_event = wu_wfe;
 
   assign is_wfi_instr = is_instr(rvfi_insn, WFI);
   assign is_wfe_instr = is_instr(rvfi_insn, WFE);
@@ -2672,18 +2673,27 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
 
     `ifdef FORMAL
+      // Stability assumes
       r_fetch_enable_stable:                   restrict property (fetch_enable |-> $stable(mtvec_addr_i));
       r_clic_mode_assume:                      restrict property (p_clic_mode_only);
       r_irq_i:                                 restrict property (irq_i == 0);
-      r_mtvt_table_read_equals_value_written:  restrict property (p_mtvt_table_read_equals_value_written);
+
+      // prevents undefined latch value out of reset in formal
+      r_last_valid_init_state:                 restrict property (p_last_valid_instr_reset_state);
+      r_irq_ack_occurred_zero_out_of_of_reset: restrict property (p_irq_ack_occurred_zero_out_of_reset);
+
+      // Sanity cover for mtvt table helper logic
+      c_mtvt_table_read_equals_value_written:  cover property (p_mtvt_table_read_equals_value_written);
+
+      `ifdef CLIC_DELAY_RESTRICTIONS // TODO: (silabs-hfegran) temporary fix, implement with tcl script later
+      // These attempts to restrict the amount of bus-induced delays during formal analysis to help reach
+      // a bounded proof, as in theory infinte bus stalls are possible.
       // Limit data and instr stalls for formal convergence, consider removing when assertion set matures
       r_instr_load_stalls:                     restrict property (p_obi_instr_max_load_stalls);
       r_data_load_stalls:                      restrict property (p_obi_data_max_load_stalls);
       r_instr_valid_delay:                     restrict property (p_instr_valid_delay);
-      // prevents undefined latch value out of reset in formal
-      r_last_valid_init_state:                 restrict property (p_last_valid_instr_reset_state);
-      r_irq_ack_occurred_zero_out_of_of_reset: restrict property (p_irq_ack_occurred_zero_out_of_reset);
-      c_mtvt_table_read_equals_value_written:  cover property (p_mtvt_table_read_equals_value_written);
+      `endif
+
     `endif
 
   end

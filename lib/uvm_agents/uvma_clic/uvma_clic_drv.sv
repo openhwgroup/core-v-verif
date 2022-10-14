@@ -1,7 +1,7 @@
 //
 // Copyright 2020 OpenHW Group
 // Copyright 2020 Datum Technology Corporation
-// Copyright 2020 Silicon Labs, Inc.
+// Copyright 2022 Silicon Labs, Inc.
 //
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -215,7 +215,7 @@ endtask : deassert_irq
 task uvma_clic_drv_c::irq_ack_clear();
    while(1) begin
       @(cntxt.vif.mon_cb);
-      if (cntxt.vif.mon_cb.irq_ack) begin
+      if (cntxt.vif.mon_cb.irq_ack && cfg.enabled) begin
          // Try to get the semaphore for the irq_id,
          // If we can't get it, then this irq is managed by assert_irq_until_ack and we will ignore this ack
          // Otherwise deassert the interrupt
@@ -223,9 +223,9 @@ task uvma_clic_drv_c::irq_ack_clear();
 
          irq_id  = cntxt.vif.mon_cb.clic_irq_id_drv;
 
-         `uvm_info("IRQDRV", $sformatf("irq_ack_clear: ack for IRQ: %0d", irq_id), UVM_DEBUG);
+         `uvm_info("IRQDRV", $sformatf("irq_ack_clear: ack for IRQ: %0d", irq_id), UVM_LOW);
          if (assert_until_ack_sem[irq_id].try_get(1)) begin
-            `uvm_info("IRQDRV", $sformatf("irq_ack_clear: Clearing IRQ: %0d", irq_id), UVM_DEBUG);
+            `uvm_info("IRQDRV", $sformatf("irq_ack_clear: Clearing IRQ: %0d", irq_id), UVM_LOW);
             cntxt.vif.drv_cb.clic_irq_drv       <= 1'b0;
             cntxt.vif.drv_cb.clic_irq_id_drv    <= req.index;
             cntxt.vif.drv_cb.clic_irq_shv_drv   <= req.sel_hardware_vectoring;
