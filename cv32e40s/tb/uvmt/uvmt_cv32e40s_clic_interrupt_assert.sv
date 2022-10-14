@@ -1620,13 +1620,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // in the current context
     // ------------------------------------------------------------------------
 
-    // FIXME: warning
-    always_comb begin
-      if (!rst_ni) begin
-        clic_oic <= '0;
-      end else if (irq_ack) begin
-        clic_oic <= clic_core;
-      end
+    always_latch begin
+      clic_oic = irq_ack ? clic_core : clic_oic;
     end
 
     sequence seq_irq_req_unchanged;

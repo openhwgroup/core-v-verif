@@ -23,9 +23,7 @@
  * Encapsulates all signals and clocking of Interrupt interface. Used by
  * monitor and driver.
  */
-interface uvma_clic_if#(SMCLIC_ID_WIDTH = 5)
-   (
-   );
+interface uvma_clic_if#(SMCLIC_ID_WIDTH = 5)();
 
     // ---------------------------------------------------------------------------
     // Interface wires
@@ -77,10 +75,12 @@ interface uvma_clic_if#(SMCLIC_ID_WIDTH = 5)
 
     assign clic_irq_priv_masked = is_mmode_irq_only ? 2'b11 : clic_irq_priv_drv;
 
+    `ifndef FORMAL // suppress warning, initial is not supported in formal
     initial begin
         is_active = 1'b0;
         clic_irq_drv = '0;
     end
+    `endif
 
     /**
         * Used by target DUT.

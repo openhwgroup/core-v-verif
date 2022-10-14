@@ -111,7 +111,7 @@ module uvmt_cv32e40s_tb;
                                                                    .rvfi_valid(rvfi_i.rvfi_valid[0]),
                                                                    .rvfi_order(rvfi_i.rvfi_order[uvma_rvfi_pkg::ORDER_WL*0+:uvma_rvfi_pkg::ORDER_WL]),
                                                                    .rvfi_insn(rvfi_i.rvfi_insn[uvme_cv32e40s_pkg::ILEN*0+:uvme_cv32e40s_pkg::ILEN]),
-                                                                   .rvfi_trap(rvfi_i.rvfi_trap[11:0]),
+                                                                   .rvfi_trap(rvfi_i.rvfi_trap),
                                                                    .rvfi_halt(rvfi_i.rvfi_halt[0]),
                                                                    .rvfi_intr(rvfi_i.rvfi_intr),
                                                                    .rvfi_dbg(rvfi_i.rvfi_dbg),
@@ -602,14 +602,6 @@ module uvmt_cv32e40s_tb;
       .*
     );
 
-<<<<<<< 5524721d4a2e70904534b020a7b33efe96ac0c2a
-
-||||||| merged common ancestors
-
-
-
-=======
->>>>>>> Clic assertions and necessary infrastructure updates
   // Core integration assertions
 
   bind cv32e40s_wrapper
