@@ -120,6 +120,7 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
       ext_zbp_supported == 0;
       ext_zbr_supported == 0;
       ext_zbt_supported == 0;
+      ext_nonstd_supported == 1;
 
       mode_s_supported == 0;
       mode_u_supported == 0;

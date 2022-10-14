@@ -353,7 +353,7 @@ module uvmt_cv32e40x_tb;
 
       .ex_stage_instr_valid (ex_stage_i.id_ex_pipe_i.instr_valid),
 
-      .wb_stage_instr_valid_i    (wb_stage_i.instr_valid),
+      .wb_stage_instr_valid_i    (wb_stage_i.ex_wb_pipe_i.instr_valid),
       .wb_stage_instr_rdata_i    (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
       .wb_stage_instr_err_i      (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.err),
       .wb_stage_instr_mpu_status (wb_stage_i.ex_wb_pipe_i.instr.mpu_status),
@@ -708,7 +708,7 @@ module uvmt_cv32e40x_tb;
       #0.9ns;
      imperas_dv.ref_init();
    end
-   
+
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
    longint start_ovpsim_init_time;
