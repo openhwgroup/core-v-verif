@@ -15,7 +15,14 @@ export SHELL = /bin/bash
 
 CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40x
 CV_CORE_BRANCH ?= master
-CV_CORE_HASH   ?= 48d60fee15a261692e2d1f81b151924512ad08f5
+# lsu bug
+#CV_CORE_HASH   ?= 00d6e3cdb874c690752717e6a06aa1d658c7eb62
+## lsu fix ????
+##CV_CORE_HASH   ?= ac4bafd518603b8244fe0147e068c48dd00bdc01
+
+# new
+CV_CORE_HASH   ?= d21637e486718a239cfd8e587067350eaf5d0d0d
+
 CV_CORE_TAG    ?= none
 
 RISCVDV_REPO    ?= https://github.com/google/riscv-dv
