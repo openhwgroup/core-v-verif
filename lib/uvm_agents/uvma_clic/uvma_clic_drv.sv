@@ -223,9 +223,9 @@ task uvma_clic_drv_c::irq_ack_clear();
 
          irq_id  = cntxt.vif.mon_cb.clic_irq_id_drv;
 
-         `uvm_info("IRQDRV", $sformatf("irq_ack_clear: ack for IRQ: %0d", irq_id), UVM_LOW);
+         `uvm_info("IRQDRV", $sformatf("irq_ack_clear: ack for IRQ: %0d", irq_id), UVM_DEBUG);
          if (assert_until_ack_sem[irq_id].try_get(1)) begin
-            `uvm_info("IRQDRV", $sformatf("irq_ack_clear: Clearing IRQ: %0d", irq_id), UVM_LOW);
+            `uvm_info("IRQDRV", $sformatf("irq_ack_clear: Clearing IRQ: %0d", irq_id), UVM_DEBUG);
             cntxt.vif.drv_cb.clic_irq_drv       <= 1'b0;
             cntxt.vif.drv_cb.clic_irq_id_drv    <= req.index;
             cntxt.vif.drv_cb.clic_irq_shv_drv   <= req.sel_hardware_vectoring;
