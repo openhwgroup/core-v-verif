@@ -425,7 +425,7 @@ module uvmt_cv32e40s_tb;
   // Bind in verification modules to the design
   `ifndef SMCLIC_EN
   bind cv32e40s_core
-    uvmt_cv32e40s_interrupt_assert  interrupt_assert_i (
+    uvmt_cv32e40s_interrupt_assert interrupt_assert_i(
       .mcause_n     ({cs_registers_i.mcause_n.irq, cs_registers_i.mcause_n.exception_code[4:0]}),
       .mip          (cs_registers_i.mip_rdata),
       .mie_q        (cs_registers_i.mie_q),
@@ -602,94 +602,269 @@ module uvmt_cv32e40s_tb;
       .*
     );
 
+
   // Core integration assertions
 
   bind cv32e40s_wrapper
-    uvmt_cv32e40s_integration_assert  integration_assert_i (
-      .*
-    );
+    uvmt_cv32e40s_integration_assert  integration_assert_i (.*);
 
 
-  // Xsecure assertion and coverage interface
+  logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q;
+  logic [PMP_MAX_REGIONS-1:0][31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q;
+
+  logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q;
+  logic [PMP_MAX_REGIONS-1:0][31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q;
+
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q;
+
+  // SMCLIC
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q;
+
+  logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q;
+
+
+  // BASE
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q;
+
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q;
+
+
+  // PMP register
+  generate
+    if (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS > 0) begin
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q     = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.gen_hardened.shadow_q);
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q                 = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.rdata_q);
+
+    end else begin
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q     = '0;
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q                 = '0;
+
+    end
+  endgenerate
+
+generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n++) begin
+    // Shadow:
+    assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.gen_hardened.shadow_q;
+    assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.gen_hardened.shadow_q;
+
+    // CSR:
+    assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q[n]  = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.rdata_q;
+    assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.rdata_q;
+
+  end endgenerate
+
+
+  generate
+    if (SMCLIC==1) begin
+
+      //Shadow registers - SMILIC
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q         = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvt_csr_i.gen_hardened.shadow_q);
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q        = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvec_csr_i.gen_hardened.shadow_q);
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q   = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintstatus_csr_i.gen_hardened.shadow_q);
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q   = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintthresh_csr_i.gen_hardened.shadow_q);
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q    = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mclicbase_csr_i.gen_hardened.shadow_q);
+
+      //Shadow registers - BASIC
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q    = '0;
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q      = '0;
+
+      //CSR registers - SMCLIC
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q                      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvt_csr_i.rdata_q);
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q                     = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvec_csr_i.rdata_q);
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q                = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintstatus_csr_i.rdata_q);
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q                = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintthresh_csr_i.rdata_q);
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q                 = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mclicbase_csr_i.rdata_q);
+
+      //CSR registers - BASIC
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q    = '0;
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q      = '0;
+
+    end else begin
+
+      //Shadow registers - SMILIC
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q         = '0;
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q        = '0;
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q   = '0;
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q   = '0;
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q    = '0;
+
+      //Shadow registers - BASIC
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q    = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.gen_hardened.shadow_q);
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.gen_hardened.shadow_q);
+
+      //CSR registers - SMCLIC
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q               = '0;
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q         = '0;
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q         = '0;
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q          = '0;
+
+      //CSR registers - BASIC
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q    = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.rdata_q);
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.rdata_q);
+
+    end
+  endgenerate
 
   bind cv32e40s_wrapper
-    uvmt_cv32e40s_xsecure_if  xsecure_if (
+    uvmt_cv32e40s_xsecure_if
+    #(.MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
+      .PMP_NUM_REGIONS   (PMP_NUM_REGIONS))
 
-	    // Core signals: cpuctrl rdata registeret cannot be read by rvfi, we must therefore use core signales instead
-      // Gated clock
-      .core_clk_gated                                     (core_i.clk),
+    xsecure_if (
+
+      // Core
+      .core_clk                                                                                                         (core_i.clk),
+      .clk_en                                                                                                           (core_i.sleep_unit_i.core_clock_gate_i.clk_en),
+
+      .core_rf_we_wb                                                                                                    (core_i.rf_we_wb),
+      .core_rf_waddr_wb                                                                                                 (core_i.rf_waddr_wb),
+      .core_rf_wdata_wb                                                                                                 (core_i.rf_wdata_wb),
+      .core_register_file_wrapper_register_file_mem                                                                     (core_i.register_file_wrapper_i.register_file_i.mem),
 
       // CSR
-      .core_alert_minor_o                                 (alert_minor_o),
+      .core_alert_minor_o                                                                                               (core_i.alert_minor_o),
+      .core_alert_major_o                                                                                               (core_i.alert_major_o),
 
-      .core_xsecure_ctrl_cpuctrl_dataindtiming	          (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
-      .core_xsecure_ctrl_cpuctrl_rnddummy		              (core_i.xsecure_ctrl.cpuctrl.rnddummy),
+      .core_xsecure_ctrl_cpuctrl_dataindtiming	                                                                        (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
+      .core_xsecure_ctrl_cpuctrl_rnddummy		                                                                            (core_i.xsecure_ctrl.cpuctrl.rnddummy),
 
-      .core_xsecure_ctrl_cpuctrl_rnddummyfreq             (core_i.xsecure_ctrl.cpuctrl[19:16]),
-      .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
+      .core_xsecure_ctrl_cpuctrl_rnddummyfreq                                                                           (core_i.xsecure_ctrl.cpuctrl[19:16]),
+      .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
 
-      .core_cs_registers_xsecure_lfsr_lockup              (core_i.cs_registers_i.xsecure.lfsr_lockup),
-      .core_controller_controller_fsm_debug_mode_q        (core_i.controller_i.controller_fsm_i.debug_mode_q),
+      .core_cs_registers_xsecure_lfsr_lockup                                                                            (core_i.cs_registers_i.xsecure.lfsr_lockup),
+      .core_controller_controller_fsm_debug_mode_q                                                                      (core_i.controller_i.controller_fsm_i.debug_mode_q),
 
-      .core_cs_registers_mhpmcounter_mcycle               (core_i.cs_registers_i.mcycle_o),
-      .core_cs_registers_mhpmcounter_minstret             (core_i.cs_registers_i.mhpmcounter_q[2]),
-      .core_cs_registers_mhpmcounter_31_to_3              (core_i.cs_registers_i.mhpmcounter_q[31:3]),
-      .core_cs_registers_mhpmevent_31_to_3                (core_i.cs_registers_i.mhpmevent_q[31:3]),
-      .core_cs_registers_mcountinhibit_q_mcycle_inhibit   (core_i.cs_registers_i.mcountinhibit_q[0]),
-      .core_cs_registers_mcountinhibit_q_minstret_inhibit (core_i.cs_registers_i.mcountinhibit_q[2]),
+      .core_cs_registers_mhpmcounter_mcycle                                                                             (core_i.cs_registers_i.mcycle_o),
+      .core_cs_registers_mhpmcounter_minstret                                                                           (core_i.cs_registers_i.mhpmcounter_q[2]),
+      .core_cs_registers_mhpmcounter_31_to_3                                                                            (core_i.cs_registers_i.mhpmcounter_q[31:3]),
+      .core_cs_registers_mhpmevent_31_to_3                                                                              (core_i.cs_registers_i.mhpmevent_q[31:3]),
+      .core_cs_registers_mcountinhibit_q_mcycle_inhibit                                                                 (core_i.cs_registers_i.mcountinhibit_q[0]),
+      .core_cs_registers_mcountinhibit_q_minstret_inhibit                                                               (core_i.cs_registers_i.mcountinhibit_q[2]),
 
-      .core_cs_registers_csr_en_gated                     (core_i.cs_registers_i.csr_en_gated),
-      .core_cs_registers_csr_waddr                        (core_i.cs_registers_i.csr_waddr),
+      .core_cs_registers_csr_en_gated                                                                                   (core_i.cs_registers_i.csr_en_gated),
+      .core_cs_registers_csr_waddr                                                                                      (core_i.cs_registers_i.csr_waddr),
 
-      .core_LFSR0_CFG_default_seed                        (core_i.LFSR0_CFG.default_seed),
-      .core_LFSR1_CFG_default_seed                        (core_i.LFSR1_CFG.default_seed),
-      .core_LFSR2_CFG_default_seed                        (core_i.LFSR2_CFG.default_seed),
+      .core_LFSR0_CFG_default_seed                                                                                      (core_i.LFSR0_CFG.default_seed),
+      .core_LFSR1_CFG_default_seed                                                                                      (core_i.LFSR1_CFG.default_seed),
+      .core_LFSR2_CFG_default_seed                                                                                      (core_i.LFSR2_CFG.default_seed),
 
-      .core_xsecure_ctrl_lfsr0                            (core_i.xsecure_ctrl.lfsr0),
-      .core_xsecure_ctrl_lfsr1                            (core_i.xsecure_ctrl.lfsr1),
-      .core_xsecure_ctrl_lfsr2                            (core_i.xsecure_ctrl.lfsr2),
+      .core_xsecure_ctrl_lfsr0                                                                                          (core_i.xsecure_ctrl.lfsr0),
+      .core_xsecure_ctrl_lfsr1                                                                                          (core_i.xsecure_ctrl.lfsr1),
+      .core_xsecure_ctrl_lfsr2                                                                                          (core_i.xsecure_ctrl.lfsr2),
 
-      .core_cs_registers_xsecure_lfsr0_seed_we            (core_i.cs_registers_i.xsecure.lfsr0_i.seed_we_i),
-      .core_cs_registers_xsecure_lfsr1_seed_we            (core_i.cs_registers_i.xsecure.lfsr1_i.seed_we_i),
-      .core_cs_registers_xsecure_lfsr2_seed_we            (core_i.cs_registers_i.xsecure.lfsr2_i.seed_we_i),
+      .core_cs_registers_xsecure_lfsr0_seed_we                                                                          (core_i.cs_registers_i.xsecure.lfsr0_i.seed_we_i),
+      .core_cs_registers_xsecure_lfsr1_seed_we                                                                          (core_i.cs_registers_i.xsecure.lfsr1_i.seed_we_i),
+      .core_cs_registers_xsecure_lfsr2_seed_we                                                                          (core_i.cs_registers_i.xsecure.lfsr2_i.seed_we_i),
+
+      // Hardend CSR registers
+      .core_i_cs_registers_i_jvt_csr_i_rdata_q                                                                          (core_i.cs_registers_i.jvt_csr_i.rdata_q),
+      .core_i_cs_registers_i_mstatus_csr_i_rdata_q                                                                      (core_i.cs_registers_i.mstatus_csr_i.rdata_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q                                    (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q),
+      .core_i_cs_registers_i_xsecure_cpuctrl_csr_i_rdata_q                                                              (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.rdata_q),
+      .core_i_cs_registers_i_dcsr_csr_i_rdata_q                                                                         (core_i.cs_registers_i.dcsr_csr_i.rdata_q),
+      .core_i_cs_registers_i_mepc_csr_i_rdata_q                                                                         (core_i.cs_registers_i.mepc_csr_i.rdata_q),
+      .core_i_cs_registers_i_mscratch_csr_i_rdata_q                                                                     (core_i.cs_registers_i.mscratch_csr_i.rdata_q),
+
+      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q         (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q),
+      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q        (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q),
+
+      // SMCLIC
+      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q                                 (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q),
+      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q                                (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q),
+      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q                           (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q),
+      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q                           (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q),
+
+
+      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q                            (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q),
+
+      // BASE
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q                                    (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q                                      (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q),
+
+      // Shadow registers
+      .core_cs_registers_jvt_csr_gen_hardened_shadow_q                                                                  (core_i.cs_registers_i.jvt_csr_i.gen_hardened.shadow_q),
+      .core_cs_registers_mstatus_csr_gen_hardened_shadow_q                                                              (core_i.cs_registers_i.mstatus_csr_i.gen_hardened.shadow_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q                        (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q),
+      .core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q                                                      (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.gen_hardened.shadow_q),
+      .core_cs_registers_dcsr_csr_gen_hardened_shadow_q                                                                 (core_i.cs_registers_i.dcsr_csr_i.gen_hardened.shadow_q),
+      .core_cs_registers_mepc_csr_gen_hardened_shadow_q                                                                 (core_i.cs_registers_i.mepc_csr_i.gen_hardened.shadow_q),
+      .core_cs_registers_mscratch_csr_gen_hardened_shadow_q                                                             (core_i.cs_registers_i.mscratch_csr_i.gen_hardened.shadow_q),
+
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q  (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q),
+
+      // SMILIC
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q                           (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q                          (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q                     (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q                     (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q),
+
+
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q                      (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q),
+
+      // BASIC
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q                      (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q                        (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q),
+
 
       // IF stage
-      .core_if_stage_if_valid_o                           (core_i.if_stage_i.if_valid_o),
-      .core_if_stage_id_ready_i                           (core_i.if_stage_i.id_ready_i),
+      .core_if_stage_if_valid_o                                                                                         (core_i.if_stage_i.if_valid_o),
+      .core_if_stage_id_ready_i                                                                                         (core_i.if_stage_i.id_ready_i),
 
-      .core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs1 (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.lfsr_rs1),
-      .core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs2 (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.lfsr_rs2),
+      .core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs1                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.lfsr_rs1),
+      .core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs2                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.lfsr_rs2),
 
-      .core_if_stage_instr_meta_n_dummy                   (core_i.if_stage_i.instr_meta_n.dummy),
+      .core_if_stage_instr_meta_n_dummy                                                                                 (core_i.if_stage_i.instr_meta_n.dummy),
+      .core_i_if_stage_i_instr_hint                                                                                     (core_i.if_stage_i.instr_hint),
 
       // IF ID pipe
-      .core_if_id_pipe_instr_meta_dummy                   (core_i.if_id_pipe.instr_meta.dummy),
-      .core_if_id_pipe_instr_bus_resp_rdata               (core_i.if_id_pipe.instr.bus_resp.rdata),
+      .core_if_id_pipe_instr_meta_dummy                                                                                 (core_i.if_id_pipe.instr_meta.dummy),
+      .core_if_id_pipe_instr_bus_resp_rdata                                                                             (core_i.if_id_pipe.instr.bus_resp.rdata),
 
       // ID stage
-      .core_id_stage_id_valid_o                           (core_i.id_stage_i.id_valid_o),
-      .core_id_stage_ex_ready_i                           (core_i.id_stage_i.ex_ready_i),
+      .core_id_stage_id_valid_o                                                                                         (core_i.id_stage_i.id_valid_o),
+      .core_id_stage_ex_ready_i                                                                                         (core_i.id_stage_i.ex_ready_i),
+      .core_id_stage_if_id_pipe_instr_meta_compressed                                                                   (core_i.id_stage_i.if_id_pipe_i.instr_meta.compressed),
+      .core_id_stage_if_id_pipe_compressed_instr                                                                        (core_i.id_stage_i.if_id_pipe_i.compressed_instr),
 
       // ID EX pipe
-      .core_id_ex_pipe_instr_meta_dummy                   (core_i.id_ex_pipe.instr_meta.dummy),
-      .core_id_ex_pipe_instr_bus_resp_rdata               (core_i.id_ex_pipe.instr.bus_resp.rdata),
+      .core_id_ex_pipe_instr_meta_dummy                                                                                 (core_i.id_ex_pipe.instr_meta.dummy),
+      .core_id_ex_pipe_instr_bus_resp_rdata                                                                             (core_i.id_ex_pipe.instr.bus_resp.rdata),
 
       // EX WB pipe
-      .core_wb_stage_ex_wb_pipe_instr_meta_dummy          (core_i.wb_stage_i.ex_wb_pipe_i.instr_meta.dummy),
+      .core_wb_stage_ex_wb_pipe_instr_meta_dummy                                                                        (core_i.wb_stage_i.ex_wb_pipe_i.instr_meta.dummy),
 
       // WB stage
-      .core_wb_stage_wb_valid_o                           (core_i.wb_stage_i.wb_valid_o),
-      .*
+      .core_wb_stage_wb_valid_o                                                                                         (core_i.wb_stage_i.wb_valid_o)
+
     );
 
-    // Xsecure assertions
+  // Xsecure assertions
+
 
  bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_assert #(
-	.SECURE	(cv32e40s_pkg::SECURE)
+	.SECURE	(cv32e40s_pkg::SECURE),
+  .SMCLIC (SMCLIC),
+  .PMP_NUM_REGIONS (PMP_NUM_REGIONS),
+  .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH)
+
     ) xsecure_assert_i 	(
     	.xsecure_if	(xsecure_if),
-	    .rvfi_if	  (rvfi_instr_if_0_i)
+	    .rvfi_if	  (rvfi_instr_if_0_i),
+      .clk_i      (clk_i),
+      .rst_ni     (rst_ni)
     );
 
   // Debug assertion and coverage interface

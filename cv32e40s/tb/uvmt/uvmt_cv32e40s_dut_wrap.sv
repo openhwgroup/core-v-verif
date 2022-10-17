@@ -148,39 +148,39 @@ module uvmt_cv32e40s_dut_wrap
     `endif
 
 
-//TODO: These are temporary hacks to get the very basics working wit integrity checks
-//      Needs to be reworked in to the obi memory agent
-logic [4:0]  instr_rchk;
-assign instr_rchk = {
-      ^{obi_instr_if_i.err, 1'b0},
-      ^{obi_instr_if_i.rdata[31:24]},
-      ^{obi_instr_if_i.rdata[23:16]},
-      ^{obi_instr_if_i.rdata[15:8]},
-      ^{obi_instr_if_i.rdata[7:0]}
-    };
-
-    logic [4:0]  rchk_lsu;
-assign rchk_lsu = {
-
-      ^{obi_data_if_i.err, 1'b0},
-      ^{obi_data_if_i.rdata[31:24]},
-      ^{obi_data_if_i.rdata[23:16]},
-      ^{obi_data_if_i.rdata[15:8]},
-      ^{obi_data_if_i.rdata[7:0]}
-    };
-
-
-  logic gntpar_int;
-  assign gntpar_int = !obi_instr_if_i.gnt;
-
-  logic rvalidpar_int;
-  assign rvalidpar_int = !obi_instr_if_i.rvalid;
-
-  logic gntpar_lsu;
-  assign gntpar_lsu = !obi_data_if_i.gnt;
-
-  logic rvalidpar_lsu;
-  assign rvalidpar_lsu = !obi_data_if_i.rvalid;
+    //TODO: These are temporary hacks to get the very basics working wit integrity checks
+    //      Needs to be reworked in to the obi memory agent
+    logic [4:0]  instr_rchk;
+    assign instr_rchk = {
+          ^{obi_instr_if_i.err, 1'b0},
+          ^{obi_instr_if_i.rdata[31:24]},
+          ^{obi_instr_if_i.rdata[23:16]},
+          ^{obi_instr_if_i.rdata[15:8]},
+          ^{obi_instr_if_i.rdata[7:0]}
+        };
+    
+        logic [4:0]  rchk_lsu;
+    assign rchk_lsu = {
+    
+          ^{obi_data_if_i.err, 1'b0},
+          ^{obi_data_if_i.rdata[31:24]},
+          ^{obi_data_if_i.rdata[23:16]},
+          ^{obi_data_if_i.rdata[15:8]},
+          ^{obi_data_if_i.rdata[7:0]}
+        };
+    
+    
+    logic gntpar_int;
+    assign gntpar_int = !obi_instr_if_i.gnt;
+    
+    logic rvalidpar_int;
+    assign rvalidpar_int = !obi_instr_if_i.rvalid;
+    
+    logic gntpar_lsu;
+    assign gntpar_lsu = !obi_data_if_i.gnt;
+    
+    logic rvalidpar_lsu;
+    assign rvalidpar_lsu = !obi_data_if_i.rvalid;
 
     // --------------------------------------------
     // instantiate the core
