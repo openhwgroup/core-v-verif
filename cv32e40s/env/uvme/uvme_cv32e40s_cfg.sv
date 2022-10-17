@@ -33,12 +33,15 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    bit                              obi_memory_instr_one_shot_err_enabled = 0;
    bit                              obi_memory_data_random_err_enabled    = 0;
    bit                              obi_memory_data_one_shot_err_enabled  = 0;
+   bit                              clic_interrupt_enable                 = 0;
+   bit                              basic_interrupt_enable                = 1;
    rand bit                         buserr_scoreboarding_enabled          = 1;
 
    // Agent cfg handles
    rand uvma_isacov_cfg_c           isacov_cfg;
    rand uvma_clknrst_cfg_c          clknrst_cfg;
    rand uvma_interrupt_cfg_c        interrupt_cfg;
+   rand uvma_clic_cfg_c             clic_cfg;
    rand uvma_debug_cfg_c            debug_cfg;
    rand uvma_obi_memory_cfg_c       obi_memory_instr_cfg;
    rand uvma_obi_memory_cfg_c       obi_memory_data_cfg;
@@ -63,6 +66,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_object(isacov_cfg           , UVM_DEFAULT)
       `uvm_field_object(clknrst_cfg          , UVM_DEFAULT)
       `uvm_field_object(interrupt_cfg        , UVM_DEFAULT)
+      `uvm_field_object(clic_cfg             , UVM_DEFAULT)
       `uvm_field_object(debug_cfg            , UVM_DEFAULT)
       `uvm_field_object(obi_memory_instr_cfg , UVM_DEFAULT)
       `uvm_field_object(obi_memory_data_cfg  , UVM_DEFAULT)
@@ -157,7 +161,8 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    constraint agent_cfg_cons {
       if (enabled) {
          clknrst_cfg.enabled           == 1;
-         interrupt_cfg.enabled         == 1;
+         interrupt_cfg.enabled         == basic_interrupt_enable;
+         clic_cfg.enabled              == clic_interrupt_enable;
          debug_cfg.enabled             == 1;
          rvfi_cfg.enabled              == 1;
          rvvi_cfg.enabled              == use_iss;
@@ -165,6 +170,13 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          obi_memory_data_cfg.enabled   == 1;
          fencei_cfg.enabled            == 1;
       }
+
+      clic_cfg.is_mmode_irq_only         == 1;
+
+      obi_memory_data_cfg.clic_interrupts_enabled   == clic_interrupt_enable;
+      obi_memory_instr_cfg.clic_interrupts_enabled  == clic_interrupt_enable;
+      obi_memory_data_cfg.basic_interrupts_enabled  == basic_interrupt_enable;
+      obi_memory_instr_cfg.basic_interrupts_enabled == basic_interrupt_enable;
 
       obi_memory_instr_cfg.version       == UVMA_OBI_MEMORY_VERSION_1P2;
       obi_memory_instr_cfg.drv_mode      == UVMA_OBI_MEMORY_MODE_SLV;
@@ -213,6 +225,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          isacov_cfg.is_active           == UVM_PASSIVE;
          clknrst_cfg.is_active          == UVM_ACTIVE;
          interrupt_cfg.is_active        == UVM_ACTIVE;
+         clic_cfg.is_active             == UVM_ACTIVE;
          debug_cfg.is_active            == UVM_ACTIVE;
          obi_memory_instr_cfg.is_active == UVM_ACTIVE;
          obi_memory_data_cfg.is_active  == UVM_ACTIVE;
@@ -226,6 +239,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          clknrst_cfg.trn_log_enabled           == 0;
          debug_cfg.trn_log_enabled             == 0;
          interrupt_cfg.trn_log_enabled         == 0;
+         clic_cfg.trn_log_enabled              == 0;
          isacov_cfg.trn_log_enabled            == 0;
          obi_memory_data_cfg.trn_log_enabled   == 1;
          obi_memory_instr_cfg.trn_log_enabled  == 1;
@@ -235,6 +249,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          clknrst_cfg.trn_log_enabled           == 0;
          debug_cfg.trn_log_enabled             == 0;
          interrupt_cfg.trn_log_enabled         == 0;
+         clic_cfg.trn_log_enabled              == 0;
          isacov_cfg.trn_log_enabled            == 0;
          obi_memory_data_cfg.trn_log_enabled   == 0;
          obi_memory_instr_cfg.trn_log_enabled  == 0;
@@ -343,16 +358,23 @@ function uvme_cv32e40s_cfg_c::new(string name="uvme_cv32e40s_cfg");
    if ($test$plusargs("obi_memory_data_one_shot_err"))
       obi_memory_data_one_shot_err_enabled = 1;
 
-   isacov_cfg = uvma_isacov_cfg_c::type_id::create("isacov_cfg");
-   clknrst_cfg  = uvma_clknrst_cfg_c::type_id::create("clknrst_cfg");
-   interrupt_cfg = uvma_interrupt_cfg_c::type_id::create("interrupt_cfg");
-   debug_cfg = uvma_debug_cfg_c    ::type_id::create("debug_cfg");
+   if ($test$plusargs("enable_clic")) begin
+     clic_interrupt_enable  = 1;
+     basic_interrupt_enable = 0;
+   end
+
+   isacov_cfg           = uvma_isacov_cfg_c::type_id::create("isacov_cfg");
+   clknrst_cfg          = uvma_clknrst_cfg_c::type_id::create("clknrst_cfg");
+   interrupt_cfg        = uvma_interrupt_cfg_c::type_id::create("interrupt_cfg");
+   clic_cfg             = uvma_clic_cfg_c::type_id::create("clic_cfg");
+   debug_cfg            = uvma_debug_cfg_c::type_id::create("debug_cfg");
    obi_memory_instr_cfg = uvma_obi_memory_cfg_c::type_id::create("obi_memory_instr_cfg");
    obi_memory_data_cfg  = uvma_obi_memory_cfg_c::type_id::create("obi_memory_data_cfg" );
-   rvfi_cfg = uvma_rvfi_cfg_c#(ILEN,XLEN)::type_id::create("rvfi_cfg");
-   rvvi_cfg = uvma_rvvi_ovpsim_cfg_c#(ILEN,XLEN)::type_id::create("rvvi_cfg");
-   fencei_cfg = uvma_fencei_cfg_c::type_id::create("fencei_cfg");
-   pma_cfg = uvma_pma_cfg_c#(ILEN,XLEN)::type_id::create("pma_cfg");
+   rvfi_cfg             = uvma_rvfi_cfg_c#(ILEN,XLEN)::type_id::create("rvfi_cfg");
+   rvvi_cfg             = uvma_rvvi_ovpsim_cfg_c#(ILEN,XLEN)::type_id::create("rvvi_cfg");
+   fencei_cfg           = uvma_fencei_cfg_c::type_id::create("fencei_cfg");
+   pma_cfg              = uvma_pma_cfg_c#(ILEN,XLEN)::type_id::create("pma_cfg");
+
 
    obi_memory_instr_cfg.mon_logger_name = "OBII";
    obi_memory_data_cfg.mon_logger_name  = "OBID";
