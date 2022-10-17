@@ -68,6 +68,7 @@
    rand bit                      ext_zbt_supported;
    rand bit                      ext_zifencei_supported;
    rand bit                      ext_zicsr_supported;
+   rand bit                      ext_nonstd_supported;
 
    rand bit                      mode_s_supported;
    rand bit                      mode_h_supported;
@@ -197,6 +198,7 @@
       soft cov_model_enabled      == 1;
       soft trn_log_enabled        == 1;
       soft mode_h_supported       == 0;
+      soft ext_nonstd_supported   == 0;
    }
 
    constraint riscv_cons_soft {
@@ -708,6 +710,7 @@ function bit[MAX_XLEN-1:0] uvma_core_cntrl_cfg_c::get_misa();
    if (ext_m_supported)      get_misa[12] = 1;
    if (mode_s_supported)     get_misa[18] = 1;
    if (mode_u_supported)     get_misa[20] = 1;
+   if (ext_nonstd_supported) get_misa[23] = 1;
 
 endfunction : get_misa
 
