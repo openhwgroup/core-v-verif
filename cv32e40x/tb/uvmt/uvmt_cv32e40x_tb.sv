@@ -706,7 +706,7 @@ module uvmt_cv32e40x_tb;
    // overcome race
    initial begin
       #0.9ns;
-     imperas_dv.ref_init();
+      imperas_dv.ref_init();
    end
 
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
