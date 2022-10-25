@@ -201,6 +201,10 @@ function uvmt_cv32e20_base_test_c::new(string name="uvmt_cv32e20_base_test", uvm
    // Terminate simulation after a "reasonable" number of errors
    uvm_report_server::set_server(rs);
    reset_vseq = uvme_cv32e20_reset_vseq_c::type_id::create("reset_vseq", vsequencer);
+
+   // Collection of random varibles for use by testcases as needed
+   test_randvars = uvmt_cv32e20_test_randvars_c::type_id::create("test_randvars");
+
 endfunction : new
 
 
