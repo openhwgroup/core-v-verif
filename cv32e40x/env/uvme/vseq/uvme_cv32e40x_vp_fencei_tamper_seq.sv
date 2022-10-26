@@ -118,7 +118,7 @@ function void uvme_cv32e40x_vp_fencei_tamper_seq_c::write_rtl_mem();
   cntxt.mem.write((addr + 3), data[31:24]);
 endfunction : write_rtl_mem
 
-import "DPI-C" function void rvviRefMemoryWrite(
+import "DPI-C" context function void rvviRefMemoryWrite(
     input int hartId,
     input longint address,
     input longint data,
