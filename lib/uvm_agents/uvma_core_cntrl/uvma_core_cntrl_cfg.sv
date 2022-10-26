@@ -41,6 +41,9 @@
    bit                           use_iss;
    string                        iss_control_file = "ovpsim.ic";
 
+   // Controls printing of CSR status
+   bit                           csr_print;
+
    // RISC-V ISA Configuration
    rand corev_mxl_t              xlen;
    rand int unsigned             ilen;
@@ -65,6 +68,7 @@
    rand bit                      ext_zbt_supported;
    rand bit                      ext_zifencei_supported;
    rand bit                      ext_zicsr_supported;
+   rand bit                      ext_nonstd_supported;
 
    rand bit                      mode_s_supported;
    rand bit                      mode_h_supported;
@@ -185,6 +189,7 @@
       `uvm_field_int(                          nmi_addr                       , UVM_DEFAULT          )
       `uvm_field_int(                          nmi_addr_valid                 , UVM_DEFAULT          )
       `uvm_field_int(                          nmi_addr_plusarg_valid         , UVM_DEFAULT          )
+      `uvm_field_int(                          csr_print                      , UVM_DEFAULT          )
    `uvm_field_utils_end
 
    constraint defaults_cons {
@@ -193,6 +198,7 @@
       soft cov_model_enabled      == 1;
       soft trn_log_enabled        == 1;
       soft mode_h_supported       == 0;
+      soft ext_nonstd_supported   == 0;
    }
 
    constraint riscv_cons_soft {
@@ -290,6 +296,11 @@ function uvma_core_cntrl_cfg_c::new(string name="uvme_cv_base_cfg");
    if ($test$plusargs("USE_ISS"))
       use_iss = 1;
 
+   if ($test$plusargs("no_csr_print"))
+      csr_print = 0;
+   else
+      csr_print = 1;
+
    // Read plusargs for defaults
    if (read_cfg_plusarg_xlen("mhartid", mhartid)) begin
       mhartid_plusarg_valid = 1;
@@ -366,25 +377,27 @@ function void uvma_core_cntrl_cfg_c::do_print(uvm_printer printer);
 
    super.do_print(printer);
 
-   // Print out CSRs that are supported
-   printer.print_string("-----------------------------", "--------------------------------------------------------------------");
-   begin
-      instr_csr_t csr;
+   if (csr_print) begin
+      // Print out CSRs that are supported
+      printer.print_string("-----------------------------", "--------------------------------------------------------------------");
+      begin
+         instr_csr_t csr;
 
-      csr = csr.first();
-      while (1) begin
-         if (unsupported_csr_mask[csr])
-            printer.print_string(csr.name(), "Unsupported");
-         else if (disable_all_csr_checks || disable_csr_check_mask[csr])
-            printer.print_string(csr.name(), "Supported but not checked in scoreboard");
-         else
-            printer.print_string(csr.name(), "Supported and checked in scoreboard");
+         csr = csr.first();
+         while (1) begin
+            if (unsupported_csr_mask[csr])
+               printer.print_string(csr.name(), "Unsupported");
+            else if (disable_all_csr_checks || disable_csr_check_mask[csr])
+               printer.print_string(csr.name(), "Supported but not checked in scoreboard");
+            else
+               printer.print_string(csr.name(), "Supported and checked in scoreboard");
 
-         if (csr == csr.last()) break;
-         csr = csr.next();
+            if (csr == csr.last()) break;
+            csr = csr.next();
+         end
       end
+      printer.print_string("-----------------------------", "--------------------------------------------------------------------");
    end
-   printer.print_string("-----------------------------", "--------------------------------------------------------------------");
 
 endfunction : do_print
 
@@ -697,6 +710,7 @@ function bit[MAX_XLEN-1:0] uvma_core_cntrl_cfg_c::get_misa();
    if (ext_m_supported)      get_misa[12] = 1;
    if (mode_s_supported)     get_misa[18] = 1;
    if (mode_u_supported)     get_misa[20] = 1;
+   if (ext_nonstd_supported) get_misa[23] = 1;
 
 endfunction : get_misa
 

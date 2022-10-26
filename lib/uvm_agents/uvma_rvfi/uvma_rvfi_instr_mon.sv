@@ -37,7 +37,8 @@ class uvma_rvfi_instr_mon_c#(int ILEN=DEFAULT_ILEN,
    uvm_analysis_port#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN))  ap;
 
    // State of monitor
-   bit                last_dcsr_nmip = 0;
+   bit            last_dcsr_nmip = 0;
+   bit [XLEN-1:0] dcsr_ret_data;
 
    string log_tag = "RVFIMONLOG";
 
@@ -197,12 +198,12 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
             end
          end
 
-
+         dcsr_ret_data = mon_trn.csrs["dcsr"].get_csr_retirement_data();
          // In debug mode, detect NMIP event for a data bus error
          if (mon_trn.dbg_mode &&
              !last_dcsr_nmip &&
              mon_trn.nmip[0] &&
-             mon_trn.csrs["dcsr"].get_csr_retirement_data()[3])
+             dcsr_ret_data[3])
          begin
             `uvm_info("RVFIMON", $sformatf("Debug NMIP"), UVM_LOW)
 
@@ -223,6 +224,8 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
             `uvm_info("RVFIMON", $sformatf("Detected bus fault"), UVM_LOW)
          end
 
+         // Latch the last DCSR NMIP bit to detect positive assertion of dcsr.nmip
+         last_dcsr_nmip = dcsr_ret_data[3];
 
          `uvm_info(log_tag, $sformatf("%s", mon_trn.convert2string()), UVM_HIGH);
 

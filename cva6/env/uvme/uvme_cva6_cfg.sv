@@ -33,20 +33,25 @@ class uvme_cva6_cfg_c extends uvm_object;
    rand uvm_active_passive_enum  is_active;
 
    rand bit                      scoreboarding_enabled;
+   rand bit                      cov_model_enabled;
    rand bit                      trn_log_enabled;
    rand int unsigned             sys_clk_period;
 
    // Agent cfg handles
    rand uvma_clknrst_cfg_c    clknrst_cfg;
+   rand uvma_cvxif_cfg_c      cvxif_cfg;
 
    `uvm_object_utils_begin(uvme_cva6_cfg_c)
       `uvm_field_int (                         enabled                     , UVM_DEFAULT          )
       `uvm_field_enum(uvm_active_passive_enum, is_active                   , UVM_DEFAULT          )
       `uvm_field_int (                         scoreboarding_enabled       , UVM_DEFAULT          )
+      `uvm_field_int (                         cov_model_enabled           , UVM_DEFAULT          )
       `uvm_field_int (                         trn_log_enabled             , UVM_DEFAULT          )
       `uvm_field_int (                         sys_clk_period            , UVM_DEFAULT + UVM_DEC)
 
       `uvm_field_object(clknrst_cfg, UVM_DEFAULT)
+
+      `uvm_field_object(cvxif_cfg, UVM_DEFAULT)
 
    `uvm_object_utils_end
 
@@ -55,6 +60,7 @@ class uvme_cva6_cfg_c extends uvm_object;
       soft enabled                == 0;
       soft is_active              == UVM_PASSIVE;
       soft scoreboarding_enabled  == 1;
+      soft cov_model_enabled      == 1;
       soft trn_log_enabled        == 1;
       soft sys_clk_period         == uvme_cva6_sys_default_clk_period; // see uvme_cva6_constants.sv
    }
@@ -69,6 +75,10 @@ class uvme_cva6_cfg_c extends uvm_object;
 
       if (trn_log_enabled) {
          clknrst_cfg.trn_log_enabled   == 1;
+      }
+
+      if (cov_model_enabled) {
+         cvxif_cfg.cov_model_enabled == 1;
       }
 
    }
@@ -86,6 +96,7 @@ function uvme_cva6_cfg_c::new(string name="uvme_cva6_cfg");
    super.new(name);
 
    clknrst_cfg  = uvma_clknrst_cfg_c::type_id::create("clknrst_cfg");
+   cvxif_cfg    = uvma_cvxif_cfg_c::type_id::create("cvxif_cfg");
 
 endfunction : new
 

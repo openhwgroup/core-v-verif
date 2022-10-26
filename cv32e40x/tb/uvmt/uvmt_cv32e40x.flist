@@ -42,10 +42,10 @@
 
 // CV32E40X test bench Directories
 +incdir+${DV_UVMT_PATH}
-+incdir+${DV_UVMT_PATH}/../../tests/uvmt
-+incdir+${DV_UVMT_PATH}/../../tests/uvmt/base-tests
-+incdir+${DV_UVMT_PATH}/../../tests/uvmt/compliance-tests
-+incdir+${DV_UVMT_PATH}/../../tests/uvmt/vseq
++incdir+${DV_UVM_TESTCASE_PATH}
++incdir+${DV_UVM_TESTCASE_PATH}/base-tests
++incdir+${DV_UVM_TESTCASE_PATH}/compliance-tests
++incdir+${DV_UVM_TESTCASE_PATH}/vseq
 
 // CV32E40X tests (includes constants/macros/types meant for test bench)
 +incdir+${TBSRC_HOME}
@@ -54,16 +54,15 @@ ${DV_UVMT_PATH}/uvmt_cv32e40x_pkg.sv
 // CV32E40X test bench files
 ${DV_UVMT_PATH}/uvmt_cv32e40x_dut_wrap.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40x_tb.sv
-${TBSRC_HOME}/core/tb_riscv/include/perturbation_defines.sv
 ${TBSRC_HOME}/uvmt/uvmt_cv32e40x_tb.sv
 ${TBSRC_HOME}/uvmt/uvmt_cv32e40x_dut_wrap.sv
-${TBSRC_HOME}/core/mm_ram.sv
-${TBSRC_HOME}/core/dp_ram.sv
-${TBSRC_HOME}/core/tb_riscv/riscv_gnt_stall.sv
-${TBSRC_HOME}/core/tb_riscv/riscv_rvalid_stall.sv
-${TBSRC_HOME}/core/tb_riscv/riscv_random_interrupt_generator.sv
 
 ${DV_UVMT_PATH}/uvmt_cv32e40x_interrupt_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40x_debug_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40x_fencei_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40x_integration_assert.sv
+
+// Imperas ISS (planned for deprecation)
+-f ${TBSRC_HOME}/uvmt/imperas_iss.flist
+// ImperasDV
+-f ${TBSRC_HOME}/uvmt/imperas_dv.flist

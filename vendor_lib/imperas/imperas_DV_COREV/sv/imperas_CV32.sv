@@ -19,6 +19,9 @@
 //`define DEBUG
 //`define UVM
 
+`ifndef __IMPERAS_CV32__
+`define __IMPERAS_CV32__
+
 `include "typedefs.sv"
 
 typedef struct {
@@ -758,3 +761,5 @@ module CPU #(
 `endif
  
 endmodule
+
+`endif // __IMPERAS_CV32__

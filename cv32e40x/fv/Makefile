@@ -16,12 +16,31 @@
 # SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
 
-# TODO:silabs-robin  Move parts to `core-v-verif/mk/`, generalize for re-use.
+# Defines and includes
+
+CORE_V_VERIF ?= $(realpath ../..)
+
+CV_CORE ?= cv32e40x
+
+CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40x
+CV_CORE_BRANCH ?= master
+CV_CORE_TAG    ?= none
+CV_CORE_HASH   ?= head
+
+RISCVDV_REPO        ?= TODO_dontwanttodefinethis
+EMBENCH_REPO        ?= TODO_dontwanttodefinethis
+COMPLIANCE_REPO     ?= TODO_dontwanttodefinethis
+DPI_DASM_SPIKE_REPO ?= TODO_dontwanttodefinethis
+
+include  $(CORE_V_VERIF)/mk/fv/fv.mk
 
 
-# TODO:silabs-robin  No hardcoded paths.
-export DESIGN_RTL_DIR = ../../core-v-cores/cv32e40x/rtl/
+# Make target
 
+ifndef  CV_SIM_PREFIX
+  $(warning  CV_SIM_PREFIX undefined)
+endif
 
-fv:
-	$(CV_SIM_PREFIX)  jaspergold  fv.tcl
+fv:  $(CV_CORE_PKG)
+	$(CV_SIM_PREFIX)  jaspergold  jg.tcl
+	# TODO:robin-silabs  Move to "mk/fv/jg.mk"?
