@@ -667,10 +667,7 @@ module uvmt_cv32e40s_xsecure_assert
 
         //MINTTHRESH
         and xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q & CSR_MINTTHRESH_MASK)
-/*
-        //MCLICBASE
-        and xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q & cv32e40s_pkg::CSR_MCLICBASE_MASK)
-*/
+
       ) else `uvm_error(info_tag, "One or several of the CSR registers mtvt, mtvec, mintthresh are not shadowed.\n");
 
     end else begin
@@ -832,15 +829,7 @@ module uvmt_cv32e40s_xsecure_assert
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q,
         CSR_MINTTHRESH_MASK)
     ) else `uvm_error(info_tag, "mintthresh cs and shadow register missmatch does not result in major alert.\n");
-/*
-    //MCLICBASE:
-    a_xsecure_hardened_CSRs_missmatch_mclicbase: assert property (
-      p_xsecure_hardned_csr_missmatch_sets_alert_major(
-        xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q,
-        xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q,
-        cv32e40s_pkg::CSR_MCLICBASE_MASK)
-    ) else `uvm_error(info_tag, "mclicbase cs and shadow register missmatch does not result in major alert.\n");
-*/
+
   end else begin
 
     //MTVEC:
