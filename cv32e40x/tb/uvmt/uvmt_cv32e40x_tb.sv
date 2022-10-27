@@ -37,6 +37,7 @@ module uvmt_cv32e40x_tb;
    import cv32e40x_pkg::*;
    import uvmt_cv32e40x_pkg::*;
    import uvme_cv32e40x_pkg::*;
+   import rvviApi::*;
 
    // CORE parameters
 `ifdef SET_NUM_MHPMCOUNTERS

@@ -198,9 +198,13 @@
 `define USE_IMPERASDV
 `ifdef USE_IMPERASDV
 
+`include "rvvi/imperasDV.svh" // located in $IMPERAS_HOME/ImpProprietary/include/host
+`include "rvvi/rvvi-api.svh"  // located in $IMPERAS_HOME/ImpPublic/include/host
+
 module uvmt_cv32e40x_imperas_dv_wrap
   import uvm_pkg::*;
   import uvme_cv32e40x_pkg::*;
+  import rvviApi::*;
   #(
    )
 
@@ -208,16 +212,16 @@ module uvmt_cv32e40x_imperas_dv_wrap
            rvviTrace  rvvi // RVVI SystemVerilog Interface
    );
 
-   trace2api       #(.CMP_PC      (1),
+   trace2api     #(.CMP_PC      (1),
                    .CMP_INS     (1),
                    .CMP_GPR     (1),
                    .CMP_FPR     (0),
                    .CMP_VR      (0),
                    .CMP_CSR     (1)
-                   )
-                   trace2api(rvvi);
+                  )
+                 trace2api(rvvi);
 
-   trace2log       trace2log(rvvi);
+   trace2log     trace2log(rvvi);
 
    string info_tag = "ImperasDV_wrap";
 
@@ -469,6 +473,11 @@ module uvmt_cv32e40x_imperas_dv_wrap
   task ref_init;
     string test_program_elf;
     reg [31:0] hart_id;
+
+    // Worst case propagation of events 4 retirements (actually 3 observed)
+    void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 4));
+    // Redirect stdout to parent systemverilog simulator
+    void'(rvviRefConfigSetInt(IDV_CONFIG_REDIRECT_STDOUT, `RVVI_TRUE));
 
     // Initialize REF and load the test-program into it's memory (do this before initializing the DUT).
     // TODO: is this the best place for this?
