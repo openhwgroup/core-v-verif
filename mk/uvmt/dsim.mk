@@ -252,7 +252,7 @@ asm: comp $(ASM_DIR)/$(ASM_PROG).hex $(ASM_DIR)/$(ASM_PROG).elf
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
 		-sv_lib $(OVP_MODEL_DPI) \
-	  -sv_lib $(IMPERAS_DV_MODEL) \
+		-sv_lib $(IMPERAS_DV_MODEL) \
 		+UVM_TESTNAME=$(UVM_TESTNAME) \
 		+firmware=$(ASM_DIR)/$(ASM_PROG).hex \
 		+elf_file=$(ASM_DIR)/$(ASM_PROG).elf
@@ -287,7 +287,7 @@ compliance: comp build_compliance
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
 		-sv_lib $(OVP_MODEL_DPI) \
-	  -sv_lib $(IMPERAS_DV_MODEL) \
+		-sv_lib $(IMPERAS_DV_MODEL) \
 		+UVM_TESTNAME=$(UVM_TESTNAME) \
 		+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).hex \
 		+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).elf
@@ -306,7 +306,7 @@ no-test-program: comp
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
 		-sv_lib $(OVP_MODEL_DPI) \
-	  -sv_lib $(IMPERAS_DV_MODEL) \
+		-sv_lib $(IMPERAS_DV_MODEL) \
 		+UVM_TESTNAME=$(UVM_TESTNAME)
 
 ################################################################################
@@ -321,7 +321,7 @@ dsim-firmware-unit-test: comp
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
 		-sv_lib $(OVP_MODEL_DPI) \
-	  -sv_lib $(IMPERAS_DV_MODEL) \
+		-sv_lib $(IMPERAS_DV_MODEL) \
 		+UVM_TESTNAME=uvmt_$(CV_CORE_LC)_firmware_test_c \
 		+firmware=$(FIRMWARE)/firmware_unit_test.hex \
 		+elf_file=$(FIRMWARE)/firmware_unit_test.elf
