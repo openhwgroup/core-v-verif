@@ -57,12 +57,24 @@
 ////////////////////////////////////////////////////////////////////////////
 // CSR definitions
 ////////////////////////////////////////////////////////////////////////////
+`define CSR_JVT_ADDR           32'h017
 `define CSR_MSTATUS_ADDR       32'h300
 `define CSR_MISA_ADDR          32'h301
 `define CSR_MIE_ADDR           32'h304
 `define CSR_MTVEC_ADDR         32'h305
+`define CSR_MCOUNTEREN_ADDR    32'h306
+`define CSR_MENVCFG_ADDR       32'h30A
+`define CSR_MSTATEEN0_ADDR     32'h30C
+`define CSR_MSTATEEN1_ADDR     32'h30D
+`define CSR_MSTATEEN2_ADDR     32'h30E
+`define CSR_MSTATEEN3_ADDR     32'h30F
 `define CSR_MTVT_ADDR          32'h307 // only available when SMCLIC=1
 `define CSR_MSTATUSH_ADDR      32'h310
+`define CSR_MENVCFGH_ADDR      32'h31A
+`define CSR_MSTATEEN0H_ADDR    32'h31C
+`define CSR_MSTATEEN1H_ADDR    32'h31D
+`define CSR_MSTATEEN2H_ADDR    32'h31E
+`define CSR_MSTATEEN3H_ADDR    32'h31F
 `define CSR_MCOUNTINHIBIT_ADDR 32'h320
 `define CSR_MSCRATCH_ADDR      32'h340
 `define CSR_MEPC_ADDR          32'h341
@@ -73,7 +85,9 @@
 `define CSR_MINTSTATUS_ADDR    32'h346 // only available when SMCLIC=1
 `define CSR_MINTTHRESH_ADDR    32'h347 // only available when SMCLIC=1
 `define CSR_MSCRATCHCSW_ADDR   32'h348 // only available when SMCLIC=1
-`define CSR_MSCRATCHCSW1_ADDR  32'h349 // only available when SMCLIC=1
+`define CSR_MCLICBASE_ADDR     32'h34A // only available when SMCLIC=1
+`define CSR_MSECCFG            32'h747
+`define CSR_MSECCFGH           32'h757
 `define CSR_TSELECT_ADDR       32'h7A0 // only when DBG_NUM_TRIGGERS > 0
 `define CSR_TDATA1_ADDR        32'h7A1 // only when DBG_NUM_TRIGGERS > 0
 `define CSR_TDATA2_ADDR        32'h7A2 // only when DBG_NUM_TRIGGERS > 0
@@ -150,47 +164,135 @@
 `define CSR_MHPMCOUNTER30H_ADDR 32'hB9E
 `define CSR_MHPMCOUNTER31H_ADDR 32'hB9F
 
-`define CSR_MHPMEVENT3_ADDR  32'h323
-`define CSR_MHPMEVENT4_ADDR  32'h324
-`define CSR_MHPMEVENT5_ADDR  32'h325
-`define CSR_MHPMEVENT6_ADDR  32'h326
-`define CSR_MHPMEVENT7_ADDR  32'h327
-`define CSR_MHPMEVENT8_ADDR  32'h328
-`define CSR_MHPMEVENT9_ADDR  32'h329
-`define CSR_MHPMEVENT10_ADDR 32'h32A
-`define CSR_MHPMEVENT11_ADDR 32'h32B
-`define CSR_MHPMEVENT12_ADDR 32'h32C
-`define CSR_MHPMEVENT13_ADDR 32'h32D
-`define CSR_MHPMEVENT14_ADDR 32'h32E
-`define CSR_MHPMEVENT15_ADDR 32'h32F
-`define CSR_MHPMEVENT16_ADDR 32'h330
-`define CSR_MHPMEVENT17_ADDR 32'h331
-`define CSR_MHPMEVENT18_ADDR 32'h332
-`define CSR_MHPMEVENT19_ADDR 32'h333
-`define CSR_MHPMEVENT20_ADDR 32'h334
-`define CSR_MHPMEVENT21_ADDR 32'h335
-`define CSR_MHPMEVENT22_ADDR 32'h336
-`define CSR_MHPMEVENT23_ADDR 32'h337
-`define CSR_MHPMEVENT24_ADDR 32'h338
-`define CSR_MHPMEVENT25_ADDR 32'h339
-`define CSR_MHPMEVENT26_ADDR 32'h33A
-`define CSR_MHPMEVENT27_ADDR 32'h33B
-`define CSR_MHPMEVENT28_ADDR 32'h33C
-`define CSR_MHPMEVENT29_ADDR 32'h33D
-`define CSR_MHPMEVENT30_ADDR 32'h33E
-`define CSR_MHPMEVENT31_ADDR 32'h33F
+`define CSR_MHPMEVENT3_ADDR     32'h323
+`define CSR_MHPMEVENT4_ADDR     32'h324
+`define CSR_MHPMEVENT5_ADDR     32'h325
+`define CSR_MHPMEVENT6_ADDR     32'h326
+`define CSR_MHPMEVENT7_ADDR     32'h327
+`define CSR_MHPMEVENT8_ADDR     32'h328
+`define CSR_MHPMEVENT9_ADDR     32'h329
+`define CSR_MHPMEVENT10_ADDR    32'h32A
+`define CSR_MHPMEVENT11_ADDR    32'h32B
+`define CSR_MHPMEVENT12_ADDR    32'h32C
+`define CSR_MHPMEVENT13_ADDR    32'h32D
+`define CSR_MHPMEVENT14_ADDR    32'h32E
+`define CSR_MHPMEVENT15_ADDR    32'h32F
+`define CSR_MHPMEVENT16_ADDR    32'h330
+`define CSR_MHPMEVENT17_ADDR    32'h331
+`define CSR_MHPMEVENT18_ADDR    32'h332
+`define CSR_MHPMEVENT19_ADDR    32'h333
+`define CSR_MHPMEVENT20_ADDR    32'h334
+`define CSR_MHPMEVENT21_ADDR    32'h335
+`define CSR_MHPMEVENT22_ADDR    32'h336
+`define CSR_MHPMEVENT23_ADDR    32'h337
+`define CSR_MHPMEVENT24_ADDR    32'h338
+`define CSR_MHPMEVENT25_ADDR    32'h339
+`define CSR_MHPMEVENT26_ADDR    32'h33A
+`define CSR_MHPMEVENT27_ADDR    32'h33B
+`define CSR_MHPMEVENT28_ADDR    32'h33C
+`define CSR_MHPMEVENT29_ADDR    32'h33D
+`define CSR_MHPMEVENT30_ADDR    32'h33E
+`define CSR_MHPMEVENT31_ADDR    32'h33F
 
-`define CSR_MCYCLEH_ADDR       32'hB80
-`define CSR_MINSTRETH_ADDR     32'hB82
-`define CSR_MVENDORID_ADDR     32'hF11
-`define CSR_MARCHID_ADDR       32'hF12
-`define CSR_MIMPID_ADDR        32'hF13
-`define CSR_MHARTID_ADDR       32'hF14
-`define CSR_MCONFIGPTR_ADDR    32'hF15
-`define CSR_CYCLE_ADDR         32'hC00
-`define CSR_INSTRET_ADDR       32'hC02
-`define CSR_CYCLEH_ADDR        32'hC80
-`define CSR_INSTRETH_ADDR      32'hC82
+`define CSR_PMPCFG0_ADDR        32'h3A0
+`define CSR_PMPCFG1_ADDR        32'h3A1
+`define CSR_PMPCFG2_ADDR        32'h3A2
+`define CSR_PMPCFG3_ADDR        32'h3A3
+`define CSR_PMPCFG4_ADDR        32'h3A4
+`define CSR_PMPCFG5_ADDR        32'h3A5
+`define CSR_PMPCFG6_ADDR        32'h3A6
+`define CSR_PMPCFG7_ADDR        32'h3A7
+`define CSR_PMPCFG8_ADDR        32'h3A8
+`define CSR_PMPCFG9_ADDR        32'h3A9
+`define CSR_PMPCFG10_ADDR       32'h3AA
+`define CSR_PMPCFG11_ADDR       32'h3AB
+`define CSR_PMPCFG12_ADDR       32'h3AC
+`define CSR_PMPCFG13_ADDR       32'h3AD
+`define CSR_PMPCFG14_ADDR       32'h3AE
+`define CSR_PMPCFG15_ADDR       32'h3AF
+
+`define CSR_PMPADDR0_ADDR       32'h3B0
+`define CSR_PMPADDR1_ADDR       32'h3B1
+`define CSR_PMPADDR2_ADDR       32'h3B2
+`define CSR_PMPADDR3_ADDR       32'h3B3
+`define CSR_PMPADDR4_ADDR       32'h3B4
+`define CSR_PMPADDR5_ADDR       32'h3B5
+`define CSR_PMPADDR6_ADDR       32'h3B6
+`define CSR_PMPADDR7_ADDR       32'h3B7
+`define CSR_PMPADDR8_ADDR       32'h3B8
+`define CSR_PMPADDR9_ADDR       32'h3B9
+`define CSR_PMPADDR10_ADDR      32'h3BA
+`define CSR_PMPADDR11_ADDR      32'h3BB
+`define CSR_PMPADDR12_ADDR      32'h3BC
+`define CSR_PMPADDR13_ADDR      32'h3BD
+`define CSR_PMPADDR14_ADDR      32'h3BE
+`define CSR_PMPADDR15_ADDR      32'h3BF
+`define CSR_PMPADDR16_ADDR      32'h3C0
+`define CSR_PMPADDR17_ADDR      32'h3C1
+`define CSR_PMPADDR18_ADDR      32'h3C2
+`define CSR_PMPADDR19_ADDR      32'h3C3
+`define CSR_PMPADDR20_ADDR      32'h3C4
+`define CSR_PMPADDR21_ADDR      32'h3C5
+`define CSR_PMPADDR22_ADDR      32'h3C6
+`define CSR_PMPADDR23_ADDR      32'h3C7
+`define CSR_PMPADDR24_ADDR      32'h3C8
+`define CSR_PMPADDR25_ADDR      32'h3C9
+`define CSR_PMPADDR26_ADDR      32'h3CA
+`define CSR_PMPADDR27_ADDR      32'h3CB
+`define CSR_PMPADDR28_ADDR      32'h3CC
+`define CSR_PMPADDR29_ADDR      32'h3CD
+`define CSR_PMPADDR30_ADDR      32'h3CE
+`define CSR_PMPADDR31_ADDR      32'h3CF
+`define CSR_PMPADDR32_ADDR      32'h3D0
+`define CSR_PMPADDR33_ADDR      32'h3D1
+`define CSR_PMPADDR34_ADDR      32'h3D2
+`define CSR_PMPADDR35_ADDR      32'h3D3
+`define CSR_PMPADDR36_ADDR      32'h3D4
+`define CSR_PMPADDR37_ADDR      32'h3D5
+`define CSR_PMPADDR38_ADDR      32'h3D6
+`define CSR_PMPADDR39_ADDR      32'h3D7
+`define CSR_PMPADDR40_ADDR      32'h3D8
+`define CSR_PMPADDR41_ADDR      32'h3D9
+`define CSR_PMPADDR42_ADDR      32'h3DA
+`define CSR_PMPADDR43_ADDR      32'h3DB
+`define CSR_PMPADDR44_ADDR      32'h3DC
+`define CSR_PMPADDR45_ADDR      32'h3DD
+`define CSR_PMPADDR46_ADDR      32'h3DE
+`define CSR_PMPADDR47_ADDR      32'h3DF
+`define CSR_PMPADDR48_ADDR      32'h3E0
+`define CSR_PMPADDR49_ADDR      32'h3E1
+`define CSR_PMPADDR50_ADDR      32'h3E2
+`define CSR_PMPADDR51_ADDR      32'h3E3
+`define CSR_PMPADDR52_ADDR      32'h3E4
+`define CSR_PMPADDR53_ADDR      32'h3E5
+`define CSR_PMPADDR54_ADDR      32'h3E6
+`define CSR_PMPADDR55_ADDR      32'h3E7
+`define CSR_PMPADDR56_ADDR      32'h3E8
+`define CSR_PMPADDR57_ADDR      32'h3E9
+`define CSR_PMPADDR58_ADDR      32'h3EA
+`define CSR_PMPADDR59_ADDR      32'h3EB
+`define CSR_PMPADDR60_ADDR      32'h3EC
+`define CSR_PMPADDR61_ADDR      32'h3ED
+`define CSR_PMPADDR62_ADDR      32'h3EE
+`define CSR_PMPADDR63_ADDR      32'h3EF
+
+`define CSR_MCYCLEH_ADDR        32'hB80
+`define CSR_MINSTRETH_ADDR      32'hB82
+
+`define CSR_CPUCTRL_ADDR        32'hBF0
+`define CSR_SECURESEED0_ADDR    32'hBF9
+`define CSR_SECURESEED1_ADDR    32'hBFA
+`define CSR_SECURESEED2_ADDR    32'hBFC
+
+`define CSR_MVENDORID_ADDR      32'hF11
+`define CSR_MARCHID_ADDR        32'hF12
+`define CSR_MIMPID_ADDR         32'hF13
+`define CSR_MHARTID_ADDR        32'hF14
+`define CSR_MCONFIGPTR_ADDR     32'hF15
+`define CSR_CYCLE_ADDR          32'hC00
+`define CSR_INSTRET_ADDR        32'hC02
+`define CSR_CYCLEH_ADDR         32'hC80
+`define CSR_INSTRETH_ADDR       32'hC82
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module wrapper for Imperas DV.
