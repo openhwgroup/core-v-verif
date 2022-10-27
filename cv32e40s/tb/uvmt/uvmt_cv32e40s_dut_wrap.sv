@@ -93,11 +93,30 @@ module uvmt_cv32e40s_dut_wrap
     assign debug_if.clk      = clknrst_if.clk;
     assign debug_if.reset_n  = clknrst_if.reset_n;
 
-
+    // --------------------------------------------
     // OBI Instruction agent v1.2 signal tie-offs
-    assign obi_instr_if_i.we = 'd 0;
-    assign obi_instr_if_i.be = 'h F;  // Assume 32-bit full bus reads
+    assign obi_instr_if_i.we        = 'b0;
+    assign obi_instr_if_i.be        = 'hf; // Always assumes 32-bit full bus reads on instruction OBI
+    assign obi_instr_if_i.auser     = 'b0;
+    assign obi_instr_if_i.wuser     = 'b0;
+    assign obi_instr_if_i.aid       = 'b0;
+    assign obi_instr_if_i.wdata     = 'b0;
+    assign obi_instr_if_i.reqpar    = ~obi_instr_if_i.req;
+    assign obi_instr_if_i.achk      = 'b0;
+    assign obi_instr_if_i.rchk      = 'b0;
+    assign obi_instr_if_i.rready    = 1'b1;
+    assign obi_instr_if_i.rreadypar = 1'b0;
 
+    // --------------------------------------------
+    // OBI Data agent v1.2 signal tie-offs
+    assign obi_data_if_i.auser      = 'b0;
+    assign obi_data_if_i.wuser      = 'b0;
+    assign obi_data_if_i.aid        = 'b0;
+    assign obi_data_if_i.reqpar     = ~obi_data_if_i.req;
+    assign obi_data_if_i.achk       = 'b0;
+    assign obi_data_if_i.rchk       = 'b0;
+    assign obi_data_if_i.rready     = 1'b1;
+    assign obi_data_if_i.rreadypar  = 1'b0;
 
     // --------------------------------------------
     // Connect to uvma_interrupt_if
@@ -139,27 +158,27 @@ module uvmt_cv32e40s_dut_wrap
           ^{obi_instr_if_i.rdata[15:8]},
           ^{obi_instr_if_i.rdata[7:0]}
         };
-    
+
         logic [4:0]  rchk_lsu;
     assign rchk_lsu = {
-    
+
           ^{obi_data_if_i.err, 1'b0},
           ^{obi_data_if_i.rdata[31:24]},
           ^{obi_data_if_i.rdata[23:16]},
           ^{obi_data_if_i.rdata[15:8]},
           ^{obi_data_if_i.rdata[7:0]}
         };
-    
-    
+
+
     logic gntpar_int;
     assign gntpar_int = !obi_instr_if_i.gnt;
-    
+
     logic rvalidpar_int;
     assign rvalidpar_int = !obi_instr_if_i.rvalid;
-    
+
     logic gntpar_lsu;
     assign gntpar_lsu = !obi_data_if_i.gnt;
-    
+
     logic rvalidpar_lsu;
     assign rvalidpar_lsu = !obi_data_if_i.rvalid;
 

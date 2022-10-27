@@ -66,6 +66,7 @@ XRUN_ELAB_COVFILE = -covfile $(abspath $(MAKE_PATH)/../tools/xrun/covfile.tcl)
 XRUN_RUN_COV      = -covscope uvmt_$(CV_CORE_LC)_tb \
 					-nowarn CGDEFN
 XRUN_RUN_BASE_FLAGS += -sv_lib $(DPI_DASM_LIB)
+XRUN_RUN_BASE_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
 XRUN_RUN_BASE_FLAGS += -sv_lib $(abspath $(SVLIB_LIB))
 
 XRUN_UVM_VERBOSITY ?= UVM_MEDIUM
@@ -348,6 +349,12 @@ gen_ovpsim_ic:
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
 		echo "$(CFG_OVPSIM)" > $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic; \
 	fi
+	# add glossing of registers
+	@echo "--override cpu/wfi_is_nop=T" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+	#@echo "--trace --tracechange --traceshowicount --monitornetschange --tracemode --tracemem XSA" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+	#@echo "--extlib refRoot/cpu/cat=imperas.com/intercept/cpuContextAwareTracer/1.0"  >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+	#@echo "--override refRoot/cpu/cat/show_changes=T" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+	#@echo "--override refRoot/cpu/cat/definitions_file=${IMPERAS_HOME}/lib/$(IMPERAS_ARCH)/ImperasLib/riscv.ovpworld.org/processor/riscv/1.0/csr_context_info.lis" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
 export IMPERAS_TOOLS=ovpsim.ic
 
 ################################################################################

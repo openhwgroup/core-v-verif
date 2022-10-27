@@ -22,6 +22,8 @@
 `ifndef __UVMT_CV32E40S_TB_SV__
 `define __UVMT_CV32E40S_TB_SV__
 
+// Import the Imperas-DV RVVI API
+`include "rvvi/rvvi-api.svh"
 
 /**
  * Module encapsulating the CV32E40S DUT wrapper, and associated SV interfaces.
@@ -34,6 +36,7 @@ module uvmt_cv32e40s_tb;
    import cv32e40s_pkg::*;
    import uvmt_cv32e40s_pkg::*;
    import uvme_cv32e40s_pkg::*;
+   import rvviApi::*;
 
    // ENV (testbench) parameters
    parameter int ENV_PARAM_INSTR_ADDR_WIDTH  = 32;
@@ -85,6 +88,9 @@ module uvmt_cv32e40s_tb;
    uvme_cv32e40s_core_cntrl_if      core_cntrl_if();
    uvmt_cv32e40s_core_status_if     core_status_if(.core_busy(),
                                                    .sec_lvl());     // Core status outputs
+
+   // RVVI SystemVerilog Interface
+   rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
 
   /**
    * DUT WRAPPER instance:
@@ -1083,22 +1089,22 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
 
     //uvmt_cv32e40s_rvvi_handcar u_rvvi_handcar();
-    /**
-    * ISS WRAPPER instance:
-    */
-    `ifndef FORMAL
-      uvmt_cv32e40s_iss_wrap  #(
-                                .ID (0),
-                                .ROM_START_ADDR('h0),
-                                .ROM_BYTE_SIZE('h0),
-                                .RAM_BYTE_SIZE('h1_0000_0000)
-                               )
-                               iss_wrap ( .clk_period(clknrst_if.clk_period),
-                                          .clknrst_if(clknrst_if_iss)
-                                 );
 
-      assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
-    `endif
+    // IMPERAS DV
+    uvmt_cv32e40s_imperas_dv_wrap imperas_dv (rvvi_if);
+
+    // IMPERAS OVPsim ISS (planned for deprecation)
+    uvmt_cv32e40s_iss_wrap  #(
+                              .ID (0),
+                              .ROM_START_ADDR('h0),
+                              .ROM_BYTE_SIZE('h0),
+                              .RAM_BYTE_SIZE('h1_0000_0000)
+                             )
+                             iss_wrap ( .clk_period(clknrst_if.clk_period),
+                                        .clknrst_if(clknrst_if_iss)
+                             );
+
+    assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
 
    /**
     * Test bench entry point.
@@ -1331,6 +1337,10 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmcounter31h)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mconfigptr)
 
+     // IMPERAS_DV interface
+     uvm_config_db#(virtual rvviTrace)::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("rvvi_vif"), .value(rvvi_if));
+
+     // IMPERAS OVPsim ISS interfaces (planned for deprecation)
      uvm_config_db#(virtual RVVI_state#(.ILEN(uvme_cv32e40s_pkg::ILEN),
                                         .XLEN(uvme_cv32e40s_pkg::XLEN)
                                         ))::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("state_vif"), .value(iss_wrap.cpu.state));
@@ -1338,6 +1348,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
      uvm_config_db#(virtual RVVI_bus                    )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_bus_vif"), .value(iss_wrap.bus));
      uvm_config_db#(virtual RVVI_io                     )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_io_vif"), .value(iss_wrap.io));
      uvm_config_db#(virtual RVVI_memory                 )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_mem_vif"), .value(iss_wrap.ram.memory));
+
+     // Virtual Peripheral Status interface
      uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if      )::set(.cntxt(null), .inst_name("*"), .field_name("vp_status_vif"),       .value(vp_status_if)      );
      uvm_config_db#(virtual uvme_cv32e40s_core_cntrl_if     )::set(.cntxt(null), .inst_name("*"), .field_name("core_cntrl_vif"),      .value(core_cntrl_if)     );
      uvm_config_db#(virtual uvmt_cv32e40s_core_status_if    )::set(.cntxt(null), .inst_name("*"), .field_name("core_status_vif"),     .value(core_status_if)    );
@@ -1350,7 +1362,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
      uvm_config_db#(bit      )::set(.cntxt(null), .inst_name("*"), .field_name("evalid"), .value(1'b0)        );
      uvm_config_db#(bit[31:0])::set(.cntxt(null), .inst_name("*"), .field_name("evalue"), .value(32'h00000000));
 
-	 // DUT and ENV parameters
+	   // DUT and ENV parameters
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_ADDR_WIDTH"),  .value(ENV_PARAM_INSTR_ADDR_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_DATA_WIDTH"),  .value(ENV_PARAM_INSTR_DATA_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_RAM_ADDR_WIDTH"),    .value(ENV_PARAM_RAM_ADDR_WIDTH)   );
@@ -1372,6 +1384,13 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
    longint start_ovpsim_init_time;
    longint end_ovpsim_init_time;
    `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
+
+   // overcome race
+   initial begin
+      #0.9ns;
+     imperas_dv.ref_init();
+   end
+
    initial begin
       if (!$test$plusargs("DISABLE_OVPSIM")) begin
         #0.9ns;
@@ -1444,7 +1463,16 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
 
-      $display("\n%m: *** Test Summary ***\n");
+      // FIXME
+      // Shutdown the Reference Model
+      if (0/*uvm_test_top.env.rvvi_ovpsim_agent.cfg.core_cfg.use_iss*/) begin
+         // Exit handler for OVPsim
+      end
+      else begin
+         void'(rvviRefShutdown());
+      end
+
+      `uvm_info("DV_WRAP", $sformatf("\n%m: *** Test Summary ***\n"), UVM_DEBUG);
 
       if (sim_finished && (err_count == 0) && (fatal_count == 0)) begin
          $display("    PPPPPPP    AAAAAA    SSSSSS    SSSSSS   EEEEEEEE  DDDDDDD     ");
