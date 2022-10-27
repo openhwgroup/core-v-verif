@@ -858,7 +858,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 	.SECURE	(cv32e40s_pkg::SECURE),
   .SMCLIC (SMCLIC),
   .PMP_NUM_REGIONS (PMP_NUM_REGIONS),
-  .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH)
+  .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
+  .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK)
 
     ) xsecure_assert_i 	(
     	.xsecure_if	(xsecure_if),
