@@ -23,38 +23,9 @@
 *******************************************************************************
 */
 
+//TODO: not use this yet
 
 #ifndef __XSECURE_TEST_H__
 #define __XSECURE_TEST_H__
-
-#include <stdint.h>
-#include <stdbool.h>
-#include "corev_uvmt.h"
-// Enable debug messages, note that this will change test timing
-//#define DEBUG_MSG
-
-#define TIMER_REG_ADDR       ((volatile uint32_t *) (CV_VP_INTR_TIMER_BASE))
-#define TIMER_VAL_ADDR       ((volatile uint32_t *) (CV_VP_INTR_TIMER_BASE + 4))
-
-
-
-//       Global Variables                 //
-volatile uint32_t failureCount;
-
-
-//       Functions from Assebly file      //
-
-// Assembly function to enable interrupts
-extern volatile void  enable_all_irq();
-
-
-//       Function Headers                 //
-void vp_assert_irq(uint32_t mask, uint32_t cycle_delay);
-uint32_t vp_random_num(uint32_t upper_bound, uint32_t lower_bound);
-
-
-//           Interrupt Handlers           //
-__attribute__((interrupt ("machine"))) void m_external_irq_handler(void);
-
 
 #endif

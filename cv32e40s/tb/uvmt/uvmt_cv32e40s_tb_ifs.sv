@@ -130,6 +130,7 @@ interface uvmt_cv32e40s_xsecure_if
 
     input logic core_xsecure_ctrl_cpuctrl_dataindtiming,
     input logic core_xsecure_ctrl_cpuctrl_rnddummy,
+    input logic core_xsecure_ctrl_cpuctrl_pc_hardening,
 
     input logic [3:0] core_xsecure_ctrl_cpuctrl_rnddummyfreq,
     input logic core_if_stage_gen_dummy_instr_dummy_instr_dummy_en,
@@ -203,6 +204,10 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q,
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q,
 
+    // Prefetcher
+    input logic core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_fetch_ready_i,
+    input logic core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_fetch_valid_o,
+
     // IF stage
     input logic core_if_stage_if_valid_o,
     input logic core_if_stage_id_ready_i,
@@ -213,26 +218,44 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_if_stage_instr_meta_n_dummy,
     input logic core_i_if_stage_i_instr_hint,
 
+    input logic [31:0] core_i_if_stage_i_pc_if_o,
+
+    input logic core_i_if_stage_i_ctrl_fsm_i_halt_if,
+
     // IF ID pipe
     input logic core_if_id_pipe_instr_meta_dummy,
     input logic [31:0] core_if_id_pipe_instr_bus_resp_rdata,
+
+    input logic [31:0] core_i_id_stage_i_if_id_pipe_i_pc,
 
     // ID stage
     input logic core_id_stage_id_valid_o,
     input logic core_id_stage_ex_ready_i,
     input logic core_id_stage_if_id_pipe_instr_meta_compressed,
     input logic [15:0] core_id_stage_if_id_pipe_compressed_instr,
+    input logic core_i_id_stage_i_decoder_i_i_decoder_i_ctrl_fsm_i_kill_id,
 
     // ID EX pipe
     input logic core_id_ex_pipe_instr_meta_dummy,
     input logic [31:0] core_id_ex_pipe_instr_bus_resp_rdata,
 
+    input logic [31:0] core_i_ex_stage_i_id_ex_pipe_i_pc,
+
+    //EX stage
+    input logic core_i_ex_stage_i_ex_valid_o,
+
     // EX WB pipe
     input logic core_wb_stage_ex_wb_pipe_instr_meta_dummy,
+    input logic [31:0] core_ex_wb_pipe_instr_bus_resp_rdata,
+    input logic [31:0] core_i_wb_stage_i_ex_wb_pipe_i_pc,
 
     // WB stage
-    input logic core_wb_stage_wb_valid_o
+    input logic core_i_ex_stage_i_wb_ready_i,
+    input logic core_wb_stage_wb_valid_o,
 
+    // CTRL
+    input logic [2:0] core_i_controller_i_controller_fsm_i_ctrl_fsm_cs,
+    input logic core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set
 );
 
 

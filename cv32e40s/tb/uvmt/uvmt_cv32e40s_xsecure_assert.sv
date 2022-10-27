@@ -16,6 +16,7 @@ module uvmt_cv32e40s_xsecure_assert
   );
 
   //TODO: change rvfi_trap from using bit position to struct fields when the rvfi interface is updated
+  //TODO: make sure this code is compatable with the latest hash (or the latest used hash?): check the MASK signals
 
   // Local parameters:
   localparam NO_LOCKUP_ERRORS = 3'b000;
@@ -1077,5 +1078,245 @@ module uvmt_cv32e40s_xsecure_assert
     ) else `uvm_error(info_tag, $sformatf("1 or 2 bit error when reading compressed rs2 (address %0d) does not set alert major.\n", gpr_addr));
 
   end endgenerate
+
+  ///////////////////////////////////////////////////////////////
+  ///////////////////////// HARDENED PC /////////////////////////
+  ///////////////////////////////////////////////////////////////
+
+sequence seq_dummy_if_id;
+xsecure_if.core_if_stage_instr_meta_n_dummy ##1 (xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc)[*1:$];
+endsequence
+
+sequence seq_pc_set_stable;
+xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set ##2 $stable(xsecure_if.core_i_if_stage_i_pc_if_o)[*1:$];
+endsequence
+
+sequence seq_reset_stable;
+$rose(rst_ni) ##1 $stable(xsecure_if.core_i_if_stage_i_pc_if_o)[*1:$];
+endsequence
+
+
+  a_xsecure_hardened_pc_secuential_normal_behaviour: assert property (
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure we look at valid cycles
+    core_clock_cycles
+
+    //Make sure the PC hardening setting is on
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+
+    //Checkout the abnormal behaviour
+    && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + 4
+    && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + 2
+
+    |->
+    //An abnormal behaviour can owe:
+
+    //Initalization after reset
+    xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0
+
+    //Insertion of dummy instruction
+    or seq_dummy_if_id.triggered
+
+    //PC jumping
+    or seq_pc_set_stable.triggered
+
+    //PC jumping
+    or $past(xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set)
+
+    //An situation triggering core alert minor
+    or xsecure_if.core_alert_minor_o
+
+  ) else `uvm_error(info_tag, "PC fault for sequential non-compressed instructions does not set alert major.\n");
+
+
+  logic core_clock_cycles;
+
+  always @(posedge clk_i) begin
+    if(!rst_ni) begin
+      core_clock_cycles <= 0;
+    end else begin
+      core_clock_cycles <= xsecure_if.clk_en;
+    end
+  end
+
+
+  a_xsecure_hardened_pc_secuential_alert_major: assert property (
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure we look at valid cycles
+    core_clock_cycles
+
+    //Make sure the PC hardening setting is on
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+
+    //Checkout the abnormal behaviour
+    && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + 4
+    && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + 2
+
+    //Make sure we look at a valid instruction
+    && $past(xsecure_if.core_if_stage_if_valid_o)
+    && $past(xsecure_if.core_if_stage_id_ready_i)
+
+    //Make sure the abnormal behaviour is not caused by any of the following reasons:
+
+    //Initalization after reset
+    and !(xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0)
+
+    //Insertion of dummy instruction
+    and !(seq_dummy_if_id.triggered)
+
+    //PC jumping
+    and !(seq_pc_set_stable.triggered)
+
+    //PC jumping
+    and !($past(xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set))
+
+    //An situation triggering core alert minor
+    and !(xsecure_if.core_alert_minor_o)
+
+    |=>
+    //Make sure the alert major is set
+    xsecure_if.core_alert_major_o
+
+  ) else `uvm_error(info_tag, "PC fault for sequential non-compressed instructions does not set alert major.\n");
+
+//TODO: recheck this assertion when the rtl code related to pc_hadening=0 is implemented
+a_xsecure_hardened_pc_off_secuential_alert_major: assert property (
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure we look at valid cycles
+    core_clock_cycles
+
+    //Make sure the PC hardening setting is off
+    && !xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+
+    //Checkout the abnormal behaviour
+    && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + 4
+    && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + 2
+
+    //Make sure we look at a valid instruction
+    && $past(xsecure_if.core_if_stage_if_valid_o)
+    && $past(xsecure_if.core_if_stage_id_ready_i)
+
+    //Make sure the abnormal behaviour is not caused by any of the following reasons:
+
+    //Initalization after reset
+    and !(xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0)
+
+    //Insertion of dummy instruction
+    and !(seq_dummy_if_id.triggered)
+
+    //PC jumping
+    and !(seq_pc_set_stable.triggered)
+
+    //PC jumping
+    and !($past(xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set))
+
+    //An situation triggering core alert minor
+    and !(xsecure_if.core_alert_minor_o)
+
+    |=>
+    //Make sure the alert major is not set
+    !xsecure_if.core_alert_major_o
+
+  ) else `uvm_error(info_tag, "PC fault for sequential non-compressed instructions does not set alert major.\n");
+
+
+
+/////////////////////////// Non sequential ///////////////////////////
+//TODO: mret
+
+  a_xsecure_hardened_pc_non_sequential_rvfi_normal_behaviour: assert property (
+    //Make sure we have executed an instruction that can insert a PC jump
+    (rvfi_if.rvfi_insn[6:0] == cv32e40s_pkg::OPCODE_BRANCH
+    || rvfi_if.rvfi_insn[6:0] == cv32e40s_pkg::OPCODE_JALR
+    || rvfi_if.rvfi_insn[6:0] == cv32e40s_pkg::OPCODE_JAL
+    //TODO: || mret
+    )
+
+    //Make sure the instruction is valid and without traps or exceptions
+    && rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_trap.trap
+    && !rvfi_if.rvfi_trap.exception
+
+    |->
+    //Make sure the instruction propergation is as stated below:
+    $past(xsecure_if.core_i_wb_stage_i_ex_wb_pipe_i_pc,1) != rvfi_if.rvfi_pc_rdata
+    && $past(xsecure_if.core_i_wb_stage_i_ex_wb_pipe_i_pc,2) != rvfi_if.rvfi_pc_rdata
+
+    && $past(xsecure_if.core_i_ex_stage_i_id_ex_pipe_i_pc,2) == rvfi_if.rvfi_pc_rdata
+    && $past(xsecure_if.core_i_ex_stage_i_id_ex_pipe_i_pc,3) == rvfi_if.rvfi_pc_rdata
+
+    && $past(xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc,3) == rvfi_if.rvfi_pc_rdata
+    && $past(xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc,4) == rvfi_if.rvfi_pc_rdata
+  ) else `uvm_error(info_tag, "if PC fault sets alert major.\n");
+
+
+  a_xsecure_hardened_pc_non_sequential_rvfi_set_major_alert: assert property (
+    (rvfi_if.rvfi_insn[6:0] == cv32e40s_pkg::OPCODE_BRANCH
+    || rvfi_if.rvfi_insn[6:0] == cv32e40s_pkg::OPCODE_JALR
+    || rvfi_if.rvfi_insn[6:0] == cv32e40s_pkg::OPCODE_JAL)
+    && rvfi_if.rvfi_valid
+    //&& !rvfi_if.rvfi_trap.trap
+    //&& !rvfi_if.rvfi_trap.exception
+
+    && $past(xsecure_if.core_i_wb_stage_i_ex_wb_pipe_i_pc,2) != rvfi_if.rvfi_pc_rdata
+
+/*
+    || $past(xsecure_if.core_i_ex_stage_i_id_ex_pipe_i_pc,2) != rvfi_if.rvfi_pc_rdata
+    || $past(xsecure_if.core_i_ex_stage_i_id_ex_pipe_i_pc,3) != rvfi_if.rvfi_pc_rdata
+
+    || $past(xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc,3) != rvfi_if.rvfi_pc_rdata
+    || $past(xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc,4) != rvfi_if.rvfi_pc_rdata)
+*/
+    |->
+
+    xsecure_if.core_alert_major_o
+/*
+    || $past(xsecure_if.core_alert_major_o,1)
+    || $past(xsecure_if.core_alert_major_o,2)
+    || $past(xsecure_if.core_alert_major_o,3)
+*/
+
+  ) else `uvm_error(info_tag, "if PC fault sets alert major.\n");
+
+  a_xsecure_hardened_pc_non_sequential_rvfi_set_major_alert_id_stage: assert property (
+    @(posedge xsecure_if.core_clk)
+    xsecure_if.core_i_controller_i_controller_fsm_i_ctrl_fsm_cs == 3'b010
+
+    throughout
+
+    core_clock_cycles
+
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+
+    && $past(xsecure_if.core_id_stage_id_valid_o)
+    && $past(xsecure_if.core_id_stage_ex_ready_i)
+
+    && $changed(xsecure_if.core_i_ex_stage_i_id_ex_pipe_i_pc)
+
+    && xsecure_if.core_id_ex_pipe_instr_bus_resp_rdata[6:0] == cv32e40s_pkg::OPCODE_BRANCH
+
+    ##1 1 ##1 1 ##1 1 ##1 1 ##1 1 ##1 1
+
+    |=>
+
+    $past(xsecure_if.core_id_stage_id_valid_o)
+    && $past(xsecure_if.core_id_stage_ex_ready_i)
+
+    && xsecure_if.core_i_ex_stage_i_id_ex_pipe_i_pc == $past(xsecure_if.core_i_ex_stage_i_id_ex_pipe_i_pc)
+
+  ) else `uvm_error(info_tag, "if PC fault sets alert major.\n");
+
+
+  a_xsecure_hardened_pc_test: cover property (
+    xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+
+    && rvfi_if.rvfi_valid
+    && xsecure_if.core_alert_major_o
+
+  );
+
 
 endmodule : uvmt_cv32e40s_xsecure_assert

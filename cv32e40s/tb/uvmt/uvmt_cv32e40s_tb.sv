@@ -646,6 +646,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       .core_xsecure_ctrl_cpuctrl_dataindtiming	                                                                        (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
       .core_xsecure_ctrl_cpuctrl_rnddummy		                                                                            (core_i.xsecure_ctrl.cpuctrl.rnddummy),
+      .core_xsecure_ctrl_cpuctrl_pc_hardening (core_i.xsecure_ctrl.cpuctrl.pc_hardening),
+      //.core_i_cs_registers_i_cpuctrl_n_pc_hardening (core_i.cs_registers_i.cpuctrl_n.pc_hardening),
 
       .core_xsecure_ctrl_cpuctrl_rnddummyfreq                                                                           (core_i.xsecure_ctrl.cpuctrl[19:16]),
       .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
@@ -725,6 +727,10 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q                      (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q),
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q                        (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q),
 
+//TODO: allign:
+      // Prefetcher
+      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_fetch_ready_i (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.fetch_ready_i),
+      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_fetch_valid_o (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.fetch_valid_o),
 
       // IF stage
       .core_if_stage_if_valid_o                                                                                         (core_i.if_stage_i.if_valid_o),
@@ -736,25 +742,43 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_if_stage_instr_meta_n_dummy                                                                                 (core_i.if_stage_i.instr_meta_n.dummy),
       .core_i_if_stage_i_instr_hint                                                                                     (core_i.if_stage_i.instr_hint),
 
+      .core_i_if_stage_i_pc_if_o (core_i.if_stage_i.pc_if_o),
+      .core_i_if_stage_i_ctrl_fsm_i_halt_if (core_i.if_stage_i.ctrl_fsm_i.halt_if),
+
       // IF ID pipe
       .core_if_id_pipe_instr_meta_dummy                                                                                 (core_i.if_id_pipe.instr_meta.dummy),
       .core_if_id_pipe_instr_bus_resp_rdata                                                                             (core_i.if_id_pipe.instr.bus_resp.rdata),
+
+      .core_i_id_stage_i_if_id_pipe_i_pc  (core_i.id_stage_i.if_id_pipe_i.pc),
 
       // ID stage
       .core_id_stage_id_valid_o                                                                                         (core_i.id_stage_i.id_valid_o),
       .core_id_stage_ex_ready_i                                                                                         (core_i.id_stage_i.ex_ready_i),
       .core_id_stage_if_id_pipe_instr_meta_compressed                                                                   (core_i.id_stage_i.if_id_pipe_i.instr_meta.compressed),
       .core_id_stage_if_id_pipe_compressed_instr                                                                        (core_i.id_stage_i.if_id_pipe_i.compressed_instr),
+      .core_i_id_stage_i_decoder_i_i_decoder_i_ctrl_fsm_i_kill_id (core_i.id_stage_i.decoder_i.i_decoder_i.ctrl_fsm_i.kill_id),
 
       // ID EX pipe
       .core_id_ex_pipe_instr_meta_dummy                                                                                 (core_i.id_ex_pipe.instr_meta.dummy),
       .core_id_ex_pipe_instr_bus_resp_rdata                                                                             (core_i.id_ex_pipe.instr.bus_resp.rdata),
 
+      .core_i_ex_stage_i_id_ex_pipe_i_pc  (core_i.ex_stage_i.id_ex_pipe_i.pc),
+
+      // EX stage
+      .core_i_ex_stage_i_ex_valid_o (core_i.ex_stage_i.ex_valid_o),
+
       // EX WB pipe
       .core_wb_stage_ex_wb_pipe_instr_meta_dummy                                                                        (core_i.wb_stage_i.ex_wb_pipe_i.instr_meta.dummy),
+      .core_ex_wb_pipe_instr_bus_resp_rdata (core_i.ex_wb_pipe.instr.bus_resp.rdata),
+      .core_i_wb_stage_i_ex_wb_pipe_i_pc (core_i.wb_stage_i.ex_wb_pipe_i.pc),
 
       // WB stage
-      .core_wb_stage_wb_valid_o                                                                                         (core_i.wb_stage_i.wb_valid_o)
+      .core_i_ex_stage_i_wb_ready_i (core_i.ex_stage_i.wb_ready_i),
+      .core_wb_stage_wb_valid_o                                                                                         (core_i.wb_stage_i.wb_valid_o),
+
+      // CTRL
+      .core_i_controller_i_controller_fsm_i_ctrl_fsm_cs (core_i.controller_i.controller_fsm_i.ctrl_fsm_cs),
+      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.ctrl_fsm_i.pc_set)
 
     );
 
