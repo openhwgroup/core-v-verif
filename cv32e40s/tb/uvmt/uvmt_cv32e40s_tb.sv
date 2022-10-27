@@ -52,6 +52,7 @@ module uvmt_cv32e40s_tb;
    uvma_clknrst_if              clknrst_if_iss();
    uvma_debug_if                debug_if();
    uvma_interrupt_if            interrupt_if();
+   uvma_clic_if                 clic_if();
    uvma_obi_memory_if           obi_instr_if_i(
      .clk(clknrst_if.clk),
      .reset_n(clknrst_if.reset_n)
@@ -88,7 +89,7 @@ module uvmt_cv32e40s_tb;
                              .INSTR_ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
                              .INSTR_RDATA_WIDTH (ENV_PARAM_INSTR_DATA_WIDTH),
                              .RAM_ADDR_WIDTH    (ENV_PARAM_RAM_ADDR_WIDTH),
-                             .SMCLIC            (SMCLIC)
+                             .SMCLIC            (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC)
                             )
                             dut_wrap (
                               .clknrst_if(clknrst_if),
@@ -99,6 +100,7 @@ module uvmt_cv32e40s_tb;
                               .obi_instr_if_i(obi_instr_if_i),
                               .obi_data_if_i(obi_data_if_i),
                               .fencei_if_i(fencei_if_i),
+                              .clic_if(clic_if),
                               .*);
 
   bind cv32e40s_wrapper
@@ -109,7 +111,7 @@ module uvmt_cv32e40s_tb;
                                                                    .rvfi_valid(rvfi_i.rvfi_valid[0]),
                                                                    .rvfi_order(rvfi_i.rvfi_order[uvma_rvfi_pkg::ORDER_WL*0+:uvma_rvfi_pkg::ORDER_WL]),
                                                                    .rvfi_insn(rvfi_i.rvfi_insn[uvme_cv32e40s_pkg::ILEN*0+:uvme_cv32e40s_pkg::ILEN]),
-                                                                   .rvfi_trap(rvfi_i.rvfi_trap[11:0]),
+                                                                   .rvfi_trap(rvfi_i.rvfi_trap),
                                                                    .rvfi_halt(rvfi_i.rvfi_halt[0]),
                                                                    .rvfi_intr(rvfi_i.rvfi_intr),
                                                                    .rvfi_dbg(rvfi_i.rvfi_dbg),
@@ -421,6 +423,7 @@ module uvmt_cv32e40s_tb;
     ) obi_data_memory_assert_i(.obi(obi_data_if_i));
 
   // Bind in verification modules to the design
+  `ifndef SMCLIC_EN
   bind cv32e40s_core
     uvmt_cv32e40s_interrupt_assert interrupt_assert_i(
       .mcause_n     ({cs_registers_i.mcause_n.irq, cs_registers_i.mcause_n.exception_code[4:0]}),
@@ -450,6 +453,97 @@ module uvmt_cv32e40s_tb;
 
       .*
     );
+  `endif
+
+  `ifdef SMCLIC_EN
+  // CLIC assertions
+  bind cv32e40s_core
+    uvmt_cv32e40s_clic_interrupt_assert#(
+      .SMCLIC(uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC)
+    ) clic_assert_i(
+      .dpc                 (cs_registers_i.dpc_rdata),
+      .mintstatus          (cs_registers_i.mintstatus_rdata),
+      .mintthresh          (cs_registers_i.mintthresh_rdata),
+      .mcause              (cs_registers_i.mcause_rdata),
+      .mtvec               (cs_registers_i.mtvec_rdata),
+      .mtvt                (cs_registers_i.mtvt_rdata),
+      .mclicbase           (cs_registers_i.mclicbase_rdata),
+      .mepc                (cs_registers_i.mepc_rdata),
+      .mip                 (cs_registers_i.mip_rdata),
+      .mie                 (cs_registers_i.mie_rdata),
+      .mnxti               (cs_registers_i.mnxti_rdata),
+      .mscratch            (cs_registers_i.mscratch_rdata),
+      .mscratchcsw         (cs_registers_i.mscratchcsw_rdata),
+      .mscratchcswl        (cs_registers_i.mscratchcswl_rdata),
+      .dcsr                (cs_registers_i.dcsr_rdata),
+
+      .rvfi_mepc_wdata     (rvfi_i.rvfi_csr_mepc_wdata),
+      .rvfi_mepc_wmask     (rvfi_i.rvfi_csr_mepc_wmask),
+      .rvfi_mepc_rdata     (rvfi_i.rvfi_csr_mepc_rdata),
+      .rvfi_mepc_rmask     (rvfi_i.rvfi_csr_mepc_rmask),
+      .rvfi_dpc_rdata      (rvfi_i.rvfi_csr_dpc_rdata),
+      .rvfi_dpc_rmask      (rvfi_i.rvfi_csr_dpc_rmask),
+      .rvfi_mscratch_rdata (rvfi_i.rvfi_csr_mscratch_rdata),
+      .rvfi_mscratch_rmask (rvfi_i.rvfi_csr_mscratch_rmask),
+      .rvfi_mscratch_wdata (rvfi_i.rvfi_csr_mscratch_wdata),
+      .rvfi_mscratch_wmask (rvfi_i.rvfi_csr_mscratch_wmask),
+
+      .irq_i               (core_i.irq_i),
+      .irq_ack             (core_i.irq_ack),
+      .fetch_enable        (core_i.fetch_enable),
+      .current_priv_mode   (core_i.priv_lvl),
+      .mtvec_addr_i        (core_i.mtvec_addr_i),
+      // External inputs
+      .clic_if             (dut_wrap.clic_if),
+      // Internal sampled   variants
+      .irq_id              (core_i.irq_id[SMCLIC_ID_WIDTH-1:0]),
+      .irq_level           (core_i.irq_level),
+      .irq_priv            (core_i.irq_priv),
+      .irq_shv             (core_i.irq_shv),
+
+      .obi_instr_req       (core_i.instr_req_o),
+      .obi_instr_gnt       (core_i.instr_gnt_i),
+      .obi_instr_rvalid    (core_i.instr_rvalid_i),
+      .obi_instr_addr      (core_i.instr_addr_o),
+      .obi_instr_rdata     (core_i.instr_rdata_i),
+      .obi_instr_rready    (1'b1),
+      .obi_instr_err       (core_i.instr_err_i),
+
+      .obi_data_addr       (core_i.data_addr_o),
+      .obi_data_wdata      (core_i.data_wdata_o),
+      .obi_data_we         (core_i.data_we_o),
+      .obi_data_be         (core_i.data_be_o),
+      .obi_data_req        (core_i.data_req_o),
+      .obi_data_gnt        (core_i.data_gnt_i),
+      .obi_data_rvalid     (core_i.data_rvalid_i),
+      .obi_data_rready     (1'b1),
+      .obi_data_err        (core_i.data_err_i),
+
+      .debug_mode          (controller_i.controller_fsm_i.debug_mode_q),
+      .debug_req           (core_i.debug_req_i),
+      .debug_havereset     (core_i.debug_havereset_o),
+      .debug_running       (core_i.debug_running_o),
+      .debug_halt_addr     (dut_wrap.cv32e40s_wrapper_i.dm_halt_addr_i),
+      .debug_exc_addr      (dut_wrap.cv32e40s_wrapper_i.dm_exception_addr_i),
+
+      .rvfi_mode           (rvfi_i.rvfi_mode),
+      .rvfi_insn           (rvfi_i.rvfi_insn),
+      .rvfi_intr           (rvfi_i.rvfi_intr),
+      .rvfi_rs1_rdata      (rvfi_i.rvfi_rs1_rdata),
+      .rvfi_rs2_rdata      (rvfi_i.rvfi_rs2_rdata),
+      .rvfi_rd_wdata       (rvfi_i.rvfi_rd_wdata),
+      .rvfi_valid          (rvfi_i.rvfi_valid),
+      .rvfi_pc_rdata       (rvfi_i.rvfi_pc_rdata),
+      .rvfi_pc_wdata       (rvfi_i.rvfi_pc_wdata),
+      .rvfi_trap           (rvfi_i.rvfi_trap),
+      .rvfi_dbg_mode       (rvfi_i.rvfi_dbg_mode),
+      .rvfi_dbg            (rvfi_i.rvfi_dbg),
+
+      .wu_wfe              (dut_wrap.cv32e40s_wrapper_i.wu_wfe_i),
+      .core_sleep_o        (core_i.core_sleep_o),
+      .*
+    );
+  `endif
 
   // User-mode assertions
 
@@ -507,8 +601,6 @@ module uvmt_cv32e40s_tb;
 
       .*
     );
-
-
 
 
   // Core integration assertions
@@ -790,7 +882,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 	.SECURE	(cv32e40s_pkg::SECURE),
   .SMCLIC (SMCLIC),
   .PMP_NUM_REGIONS (PMP_NUM_REGIONS),
-  .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH)
+  .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
+  .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK)
 
     ) xsecure_assert_i 	(
     	.xsecure_if	(xsecure_if),
@@ -900,15 +993,16 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .*
     );
 
-  bind cv32e40s_wrapper
-    uvmt_cv32e40s_support_logic_if support_logic_if (
 
-      .ctrl_fsm_o_i(core_i.controller_i.controller_fsm_i.ctrl_fsm_o),
-      .data_bus_req_i(obi_data_if_i.req),
-      .data_bus_gnt_i(obi_data_if_i.gnt),
+    bind cv32e40s_wrapper
+      uvmt_cv32e40s_support_logic_if support_logic_if ();
 
-      .*
-    );
+    // TODO find a better way
+    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.ctrl_fsm_o_i   = dut_wrap.cv32e40s_wrapper_i.core_i.controller_i.controller_fsm_i.ctrl_fsm_o;
+    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_req_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_req.req;
+    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_gnt_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_gnt.gnt;
+    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.clk_i          = dut_wrap.cv32e40s_wrapper_i.core_i.clk_i;
+    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.rst_ni         = dut_wrap.cv32e40s_wrapper_i.core_i.rst_ni;
 
 
     bind cv32e40s_pmp :
@@ -955,13 +1049,13 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if_0_i),
-                                                                      .support_if(support_logic_if.write)
+                                                                      .support_if(support_logic_if)
                                                                       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
 
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
-                                                              .support_if(support_logic_if.read)
+                                                              .support_if(support_logic_if)
                                                               );
 
 
@@ -993,19 +1087,21 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
      $timeformat(-9, 3, " ns", 8);
 
      // Add interfaces handles to uvm_config_db
-     uvm_config_db#(virtual uvma_isacov_if              )::set(.cntxt(null), .inst_name("*.env.isacov_agent"), .field_name("vif"), .value(isacov_if));
-     uvm_config_db#(virtual uvma_debug_if               )::set(.cntxt(null), .inst_name("*.env.debug_agent"), .field_name("vif"), .value(debug_if));
-     uvm_config_db#(virtual uvma_clknrst_if             )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"), .field_name("vif"),        .value(clknrst_if));
-     uvm_config_db#(virtual uvma_interrupt_if           )::set(.cntxt(null), .inst_name("*.env.interrupt_agent"), .field_name("vif"),      .value(interrupt_if));
-     uvm_config_db#(virtual uvma_obi_memory_if          )::set(.cntxt(null), .inst_name("*.env.obi_memory_instr_agent"), .field_name("vif"), .value(obi_instr_if_i) );
-     uvm_config_db#(virtual uvma_obi_memory_if          )::set(.cntxt(null), .inst_name("*.env.obi_memory_data_agent"),  .field_name("vif"), .value(obi_data_if_i) );
-     uvm_config_db#(virtual uvma_fencei_if              )::set(.cntxt(null), .inst_name("*.env.fencei"),     .field_name("vif"), .value(fencei_if_i));
-     uvm_config_db#(virtual uvma_rvfi_instr_if          )::set(.cntxt(null), .inst_name("*.env.rvfi_agent"), .field_name("instr_vif0"),.value(dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i));
-     uvm_config_db#(virtual uvma_fencei_if              )::set(.cntxt(null), .inst_name("*.env.fencei_agent"), .field_name("fencei_vif"),     .value(fencei_if_i)  );
-     uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if  )::set(.cntxt(null), .inst_name("*"),                .field_name("vp_status_vif"),    .value(vp_status_if) );
-     uvm_config_db#(virtual uvma_interrupt_if           )::set(.cntxt(null), .inst_name("*.env"),            .field_name("intr_vif"),         .value(interrupt_if) );
-     uvm_config_db#(virtual uvma_debug_if               )::set(.cntxt(null), .inst_name("*.env"),            .field_name("debug_vif"),        .value(debug_if)     );
-//     uvm_config_db#(virtual uvmt_cv32e40s_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"),       .field_name("debug_cov_vif"),    .value(debug_cov_assert_if));
+     uvm_config_db#(virtual uvma_isacov_if              )::set(.cntxt(null), .inst_name("*.env.isacov_agent"),           .field_name("vif"),           .value(isacov_if));
+     uvm_config_db#(virtual uvma_debug_if               )::set(.cntxt(null), .inst_name("*.env.debug_agent"),            .field_name("vif"),           .value(debug_if));
+     uvm_config_db#(virtual uvma_clknrst_if             )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"),          .field_name("vif"),           .value(clknrst_if));
+     uvm_config_db#(virtual uvma_interrupt_if           )::set(.cntxt(null), .inst_name("*.env.interrupt_agent"),        .field_name("vif"),           .value(interrupt_if));
+     uvm_config_db#(virtual uvma_clic_if                )::set(.cntxt(null), .inst_name("*.env.clic_agent"),             .field_name("vif"),           .value(clic_if));
+     uvm_config_db#(virtual uvma_obi_memory_if          )::set(.cntxt(null), .inst_name("*.env.obi_memory_instr_agent"), .field_name("vif"),           .value(obi_instr_if_i) );
+     uvm_config_db#(virtual uvma_obi_memory_if          )::set(.cntxt(null), .inst_name("*.env.obi_memory_data_agent"),  .field_name("vif"),           .value(obi_data_if_i) );
+     uvm_config_db#(virtual uvma_fencei_if              )::set(.cntxt(null), .inst_name("*.env.fencei"),                 .field_name("vif"),           .value(fencei_if_i));
+     uvm_config_db#(virtual uvma_rvfi_instr_if          )::set(.cntxt(null), .inst_name("*.env.rvfi_agent"),             .field_name("instr_vif0"),    .value(dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i));
+     uvm_config_db#(virtual uvma_fencei_if              )::set(.cntxt(null), .inst_name("*.env.fencei_agent"),           .field_name("fencei_vif"),    .value(fencei_if_i)  );
+     uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if  )::set(.cntxt(null), .inst_name("*"),                            .field_name("vp_status_vif"), .value(vp_status_if) );
+     uvm_config_db#(virtual uvma_interrupt_if           )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("intr_vif"),      .value(interrupt_if) );
+     uvm_config_db#(virtual uvma_clic_if                )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("clic_vif"),      .value(clic_if) );
+     uvm_config_db#(virtual uvma_debug_if               )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_vif"),     .value(debug_if)     );
+//     uvm_config_db#(virtual uvmt_cv32e40s_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"),                 .field_name("debug_cov_vif"),    .value(debug_cov_assert_if));
      `RVFI_CSR_UVM_CONFIG_DB_SET(marchid)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mcountinhibit)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mstatus)

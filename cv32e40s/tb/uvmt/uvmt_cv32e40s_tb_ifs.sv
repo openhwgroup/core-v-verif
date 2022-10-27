@@ -421,19 +421,16 @@ interface uvmt_cv32e40s_debug_cov_assert_if
 
 endinterface : uvmt_cv32e40s_debug_cov_assert_if
 
-interface uvmt_cv32e40s_support_logic_if
+interface uvmt_cv32e40s_support_logic_if;
    import cv32e40s_pkg::*;
    import uvma_rvfi_pkg::*;
-   (
-      input    clk_i,
-      input    rst_ni,
+   logic clk_i;
+   logic rst_ni;
 
-      // core signals
-      input ctrl_fsm_t  ctrl_fsm_o_i,
-      input             data_bus_req_i,
-      input             data_bus_gnt_i
-
-   );
+   // core signals
+   ctrl_fsm_t  ctrl_fsm_o_i;
+   logic       data_bus_req_i;
+   logic       data_bus_gnt_i;
 
    //results for modport
    logic req_after_exception_o;
@@ -442,30 +439,40 @@ interface uvmt_cv32e40s_support_logic_if
       input #1step
 
       ctrl_fsm_o_i,
-      data_bus_req_i,
+      data_bus_req_i;
 
-      req_after_exception_o;
+      output #0 req_after_exception_o;
 
    endclocking : mon_cb
 
-   modport write (
-      input clk_i,
+   modport master (
+     input  clk_i,
             rst_ni,
 
             ctrl_fsm_o_i,
             data_bus_req_i,
             data_bus_gnt_i,
 
-      output req_after_exception_o
-
+     output req_after_exception_o
    );
 
-   modport read (
-      input clk_i,
+   modport slave (
+     input  clk_i,
             rst_ni,
 
-            req_after_exception_o
+            req_after_exception_o,
+     output ctrl_fsm_o_i,
+            data_bus_req_i
    );
+
+   modport monitor (
+     input  clk_i,
+            rst_ni,
+            req_after_exception_o,
+            ctrl_fsm_o_i,
+            data_bus_req_i
+   );
+
 
 
 endinterface : uvmt_cv32e40s_support_logic_if

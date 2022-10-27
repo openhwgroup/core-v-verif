@@ -42,6 +42,7 @@ package uvme_cv32e40s_pkg;
    import uvma_core_cntrl_pkg::*;
    import uvma_isacov_pkg::*;
    import uvma_clknrst_pkg::*;
+   import uvma_clic_pkg::*;
    import uvma_interrupt_pkg::*;
    import uvma_debug_pkg::*;
    import uvma_obi_memory_pkg::*;
@@ -75,6 +76,7 @@ package uvme_cv32e40s_pkg;
    `include "uvme_cv32e40s_vp_status_flags_seq.sv"
    `include "uvme_cv32e40s_vp_fencei_tamper_seq.sv"
    `include "uvme_cv32e40s_interrupt_noise_vseq.sv"
+   `include "uvme_cv32e40s_clic_noise_vseq.sv"
    `include "uvme_cv32e40s_vseq_lib.sv"
    `include "uvme_cv32e40s_core_cntrl_base_seq.sv"
    `include "uvme_cv32e40s_core_cntrl_fetch_toggle_seq.sv"
