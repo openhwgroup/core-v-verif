@@ -29,12 +29,14 @@ class uvme_cv32e40s_cntxt_c extends uvm_object;
    virtual uvmt_cv32e40s_debug_cov_assert_if debug_cov_vif;
    virtual uvmt_cv32e40s_vp_status_if        vp_status_vif; ///< Virtual interface for Virtual Peripherals
    virtual uvma_interrupt_if                 intr_vif     ; ///< Virtual interface for interrupts
+   virtual uvma_clic_if                      clic_vif     ; ///< Virtual interface for clic interrupts
    virtual uvma_debug_if                     debug_vif    ; ///< Virtual interface for debug
 
    // Agent context handles
    uvma_cv32e40s_core_cntrl_cntxt_c  core_cntrl_cntxt;
    uvma_clknrst_cntxt_c              clknrst_cntxt;
    uvma_interrupt_cntxt_c            interrupt_cntxt;
+   uvma_clic_cntxt_c                 clic_cntxt;
    uvma_debug_cntxt_c                debug_cntxt;
    uvma_obi_memory_cntxt_c           obi_memory_instr_cntxt;
    uvma_obi_memory_cntxt_c           obi_memory_data_cntxt;
@@ -53,6 +55,7 @@ class uvme_cv32e40s_cntxt_c extends uvm_object;
       `uvm_field_object(core_cntrl_cntxt,       UVM_DEFAULT)
       `uvm_field_object(clknrst_cntxt,          UVM_DEFAULT)
       `uvm_field_object(interrupt_cntxt,        UVM_DEFAULT)
+      `uvm_field_object(clic_cntxt,             UVM_DEFAULT)
       `uvm_field_object(debug_cntxt  ,          UVM_DEFAULT)
       `uvm_field_object(obi_memory_instr_cntxt, UVM_DEFAULT)
       `uvm_field_object(obi_memory_data_cntxt , UVM_DEFAULT)
@@ -85,6 +88,7 @@ function uvme_cv32e40s_cntxt_c::new(string name="uvme_cv32e40s_cntxt");
    debug_cntxt      = uvma_debug_cntxt_c::type_id::create("debug_cntxt");
    fencei_cntxt     = uvma_fencei_cntxt_c::type_id::create("fencei_cntxt");
    interrupt_cntxt  = uvma_interrupt_cntxt_c::type_id::create("interrupt_cntxt");
+   clic_cntxt       = uvma_clic_cntxt_c::type_id::create("clic_cntxt");
    obi_memory_data_cntxt  = uvma_obi_memory_cntxt_c::type_id::create("obi_memory_data_cntxt" );
    obi_memory_instr_cntxt = uvma_obi_memory_cntxt_c::type_id::create("obi_memory_instr_cntxt");
    rvfi_cntxt       = uvma_rvfi_cntxt_c#(ILEN,XLEN)::type_id::create("rvfi_cntxt");

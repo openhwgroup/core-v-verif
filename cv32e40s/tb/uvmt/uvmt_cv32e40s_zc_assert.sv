@@ -21,7 +21,7 @@ module uvmt_cv32e40s_zc_assert
   import cv32e40s_pkg::*;
   (
       uvma_rvfi_instr_if rvfi,
-      uvmt_cv32e40s_support_logic_if.read support_if
+      uvmt_cv32e40s_support_logic_if.monitor support_if
 
   );
 

@@ -33,6 +33,7 @@
 -f ${DV_UVMA_PMA_PATH}/src/uvma_pma_pkg.flist
 -f ${DV_UVMA_CLKNRST_PATH}/uvma_clknrst_pkg.flist
 -f ${DV_UVMA_INTERRUPT_PATH}/uvma_interrupt_pkg.flist
+-f ${DV_UVMA_CLIC_PATH}/uvma_clic_pkg.flist
 -f ${DV_UVMA_DEBUG_PATH}/uvma_debug_pkg.flist
 -f ${DV_UVMA_RVVI_OVPSIM_PATH}/uvma_rvvi_ovpsim_pkg.flist
 -f ${DV_UVMA_FENCEI_PATH}/uvma_fencei_pkg.flist
@@ -67,6 +68,7 @@ ${DV_UVMT_PATH}/uvmt_cv32e40s_debug_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_fencei_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_integration_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_interrupt_assert.sv
+${DV_UVMT_PATH}/uvmt_cv32e40s_clic_interrupt_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_pmp_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_pmprvfi_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_umode_assert.sv

@@ -41,13 +41,14 @@
  */
 module uvmt_cv32e40s_dut_wrap
   import cv32e40s_pkg::*;
-
-  #(// DUT (riscv_core) parameters.
+#(// DUT (riscv_core) parameters.
     parameter cv32e40s_pkg::b_ext_e B_EXT  = cv32e40s_pkg::B_NONE,
     parameter int          PMA_NUM_REGIONS =  0,
     parameter pma_cfg_t    PMA_CFG[PMA_NUM_REGIONS-1 : 0] = '{default:PMA_R_DEFAULT},
     parameter int          PMP_NUM_REGIONS = 0,
     parameter int          PMP_GRANULARITY = 0,
+    parameter logic        SMCLIC = 0,
+    parameter int          SMCLIC_ID_WIDTH = 5,
     // Remaining parameters are used by TB components only
               INSTR_ADDR_WIDTH    =  32,
               INSTR_RDATA_WIDTH   =  32,
@@ -56,6 +57,7 @@ module uvmt_cv32e40s_dut_wrap
   (
     uvma_clknrst_if              clknrst_if,
     uvma_interrupt_if            interrupt_if,
+    uvma_clic_if                 clic_if,
     uvmt_cv32e40s_vp_status_if   vp_status_if,
     uvme_cv32e40s_core_cntrl_if  core_cntrl_if,
     uvmt_cv32e40s_core_status_if core_status_if,
@@ -99,10 +101,15 @@ module uvmt_cv32e40s_dut_wrap
 
     // --------------------------------------------
     // Connect to uvma_interrupt_if
-    assign interrupt_if.clk                     = clknrst_if.clk;
-    assign interrupt_if.reset_n                 = clknrst_if.reset_n;
-    assign interrupt_if.irq_id                  = cv32e40s_wrapper_i.core_i.irq_id;
-    assign interrupt_if.irq_ack                 = cv32e40s_wrapper_i.core_i.irq_ack;
+    assign interrupt_if.clk         = clknrst_if.clk;
+    assign interrupt_if.reset_n     = clknrst_if.reset_n;
+    assign interrupt_if.irq_id      = cv32e40s_wrapper_i.core_i.irq_id;
+    assign interrupt_if.irq_ack     = cv32e40s_wrapper_i.core_i.irq_ack;
+
+    // --------------------------------------------
+    assign clic_if.clk              = clknrst_if.clk;
+    assign clic_if.reset_n          = clknrst_if.reset_n;
+    assign clic_if.irq_ack          = cv32e40s_wrapper_i.core_i.irq_ack;
 
     // --------------------------------------------
     // Connect to core_cntrl_if
@@ -122,39 +129,39 @@ module uvmt_cv32e40s_dut_wrap
     `endif
 
 
-//TODO: These are temporary hacks to get the very basics working wit integrity checks
-//      Needs to be reworked in to the obi memory agent
-logic [4:0]  instr_rchk;
-assign instr_rchk = {
-      ^{obi_instr_if_i.err, 1'b0},
-      ^{obi_instr_if_i.rdata[31:24]},
-      ^{obi_instr_if_i.rdata[23:16]},
-      ^{obi_instr_if_i.rdata[15:8]},
-      ^{obi_instr_if_i.rdata[7:0]}
-    };
-
-    logic [4:0]  rchk_lsu;
-assign rchk_lsu = {
-
-      ^{obi_data_if_i.err, 1'b0},
-      ^{obi_data_if_i.rdata[31:24]},
-      ^{obi_data_if_i.rdata[23:16]},
-      ^{obi_data_if_i.rdata[15:8]},
-      ^{obi_data_if_i.rdata[7:0]}
-    };
-
-
-  logic gntpar_int;
-  assign gntpar_int = !obi_instr_if_i.gnt;
-
-  logic rvalidpar_int;
-  assign rvalidpar_int = !obi_instr_if_i.rvalid;
-
-  logic gntpar_lsu;
-  assign gntpar_lsu = !obi_data_if_i.gnt;
-
-  logic rvalidpar_lsu;
-  assign rvalidpar_lsu = !obi_data_if_i.rvalid;
+    //TODO: These are temporary hacks to get the very basics working wit integrity checks
+    //      Needs to be reworked in to the obi memory agent
+    logic [4:0]  instr_rchk;
+    assign instr_rchk = {
+          ^{obi_instr_if_i.err, 1'b0},
+          ^{obi_instr_if_i.rdata[31:24]},
+          ^{obi_instr_if_i.rdata[23:16]},
+          ^{obi_instr_if_i.rdata[15:8]},
+          ^{obi_instr_if_i.rdata[7:0]}
+        };
+    
+        logic [4:0]  rchk_lsu;
+    assign rchk_lsu = {
+    
+          ^{obi_data_if_i.err, 1'b0},
+          ^{obi_data_if_i.rdata[31:24]},
+          ^{obi_data_if_i.rdata[23:16]},
+          ^{obi_data_if_i.rdata[15:8]},
+          ^{obi_data_if_i.rdata[7:0]}
+        };
+    
+    
+    logic gntpar_int;
+    assign gntpar_int = !obi_instr_if_i.gnt;
+    
+    logic rvalidpar_int;
+    assign rvalidpar_int = !obi_instr_if_i.rvalid;
+    
+    logic gntpar_lsu;
+    assign gntpar_lsu = !obi_data_if_i.gnt;
+    
+    logic rvalidpar_lsu;
+    assign rvalidpar_lsu = !obi_data_if_i.rvalid;
 
     // --------------------------------------------
     // instantiate the core
@@ -163,7 +170,8 @@ assign rchk_lsu = {
                       .PMA_NUM_REGIONS  (PMA_NUM_REGIONS),
                       .PMA_CFG          (PMA_CFG),
                       .PMP_GRANULARITY  (PMP_GRANULARITY),
-                      .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
+                      .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
+                      .SMCLIC           (SMCLIC)
                       )
     cv32e40s_wrapper_i
         (
@@ -216,11 +224,11 @@ assign rchk_lsu = {
 
          .irq_i                  ( interrupt_if.irq               ),
          .wu_wfe_i               ( 1'b0                           ), // todo: hook up
-         .clic_irq_i             ( '0   /*todo: connect */        ),
-         .clic_irq_id_i          ( '0   /*todo: connect */        ),
-         .clic_irq_level_i       ( '0   /*todo: connect */        ),
-         .clic_irq_priv_i        ( '0   /*todo: connect */        ),
-         .clic_irq_shv_i         ( '0   /*todo: connect */        ),
+         .clic_irq_i             ( clic_if.clic_irq               ),
+         .clic_irq_id_i          ( clic_if.clic_irq_id            ),
+         .clic_irq_level_i       ( clic_if.clic_irq_level         ),
+         .clic_irq_priv_i        ( clic_if.clic_irq_priv          ),
+         .clic_irq_shv_i         ( clic_if.clic_irq_shv           ),
 
 
          .fencei_flush_req_o     ( fencei_if_i.flush_req          ),

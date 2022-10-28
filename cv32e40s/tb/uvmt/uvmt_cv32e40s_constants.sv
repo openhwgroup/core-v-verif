@@ -18,12 +18,25 @@
 `ifndef __UVMT_CV32E40S_CONSTANTS_SV__
 `define __UVMT_CV32E40S_CONSTANTS_SV__
 
+   `ifdef SMCLIC_EN
+      parameter int CORE_PARAM_SMCLIC = 1;
+   `else
+      parameter int CORE_PARAM_SMCLIC = 0;
+   `endif
+   // Add various clic configurations
+
    `ifdef ZBA_ZBB_ZBS
       parameter cv32e40s_pkg::b_ext_e B_EXT = cv32e40s_pkg::ZBA_ZBB_ZBS;
    `elsif ZBA_ZBB_ZBC_ZBS
       parameter cv32e40s_pkg::b_ext_e B_EXT = cv32e40s_pkg::ZBA_ZBB_ZBC_ZBS;
    `else
       parameter cv32e40s_pkg::b_ext_e B_EXT = cv32e40s_pkg::B_NONE;
+   `endif
+
+   `ifdef SMCLIC_EN
+         parameter logic SMCLIC = 1'b1;
+   `else
+         parameter logic SMCLIC = 1'b0;
    `endif
 
    `ifdef PMP_ENABLE_2
