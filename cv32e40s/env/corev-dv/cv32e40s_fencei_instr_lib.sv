@@ -303,10 +303,11 @@ class corev_vp_fencei_exec_instr_stream extends riscv_load_store_rand_instr_stre
     instr_list.insert(idx_fencei, instr);
     // Add norvc/rvc guards around the instr after fencei
     directive = corev_directive_instr::type_id::create("corev_directive_instr");
+    directive.directive = ".option push";
     directive.directive = ".option norvc";
     instr_list.insert(idx_fencei + 1, directive);
     directive = corev_directive_instr::type_id::create("corev_directive_instr");
-    directive.directive = ".option rvc";
+    directive.directive = ".option pop";
     instr_list.insert(idx_fencei + 3, directive);
 
     // Add a dummy instr at the top
@@ -324,16 +325,17 @@ class corev_vp_fencei_exec_instr_stream extends riscv_load_store_rand_instr_stre
     )
     instr.comment = "vp_fencei_exec: dummy";
     instr.label = label_dummy;
-    // Add rvc  (nb, reverse order, 3/3)
-    directive = corev_directive_instr::type_id::create("corev_directive_instr");
-    directive.directive = ".option rvc";
-    instr_list.push_front(directive);
+    // Add rvc  (nb, reverse order, 3/3)  (on by default if supported, this will otherwise fail if c is not supported)
+    //directive = corev_directive_instr::type_id::create("corev_directive_instr");
+    //directive.directive = ".option push";
+    //directive.directive = ".option rvc";
+    //instr_list.push_front(directive);
     // Add instr  (nb, reverse order, 2/3)
     instr_list.push_front(instr);
     // Add norvc  (nb, reverse order, 1/3)
     directive = corev_directive_instr::type_id::create("corev_directive_instr");
-    directive.directive = ".option norvc";
-    instr_list.push_front(directive);
+    //directive.directive = ".option norvc";
+    //instr_list.push_front(directive);
 
 
     // Configure the vp addr register

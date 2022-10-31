@@ -101,7 +101,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       ext_d_supported         == 0;
       ext_zca_supported       == 1;
       ext_zcb_supported       == 1;
-      ext_zcmb_supported      == 1; // FIXME: Should be deconfigured when support is removed in design
+      ext_zcmb_supported      == 0;
       ext_zcmp_supported      == 1;
       ext_zcmt_supported      == 1;
 
