@@ -21,8 +21,11 @@
 
 
 module  uvmt_cv32e40s_umode_cov
-  import cv32e40s_rvfi_pkg::*;
-(
+  import uvma_rvfi_pkg::*;
+#(
+  int ILEN = DEFAULT_ILEN,
+  int XLEN = DEFAULT_XLEN
+)(
   input wire  clk_i,
   input wire  rst_ni,
 
@@ -36,8 +39,8 @@ module  uvmt_cv32e40s_umode_cov
   input wire [ 4:0]       rvfi_rd_addr,
   input wire              rvfi_dbg_mode,
   input wire [63:0]       rvfi_order,
-  input wire [ 3:0]       rvfi_mem_rmask,
-  input wire [ 3:0]       rvfi_mem_wmask,
+  input wire [(NMEM*XLEN/8)-1:0] rvfi_mem_rmask,
+  input wire [(NMEM*XLEN/8)-1:0] rvfi_mem_wmask,
 
   input wire [31:0]  rvfi_csr_mstatus_rdata,
   input wire [31:0]  rvfi_csr_mstatus_rmask,
@@ -88,70 +91,85 @@ module  uvmt_cv32e40s_umode_cov
 
   // Helper Signals
 
-  wire  is_rvfi_instrrevoked =
+  logic  is_rvfi_instrrevoked;
+  assign is_rvfi_instrrevoked =
     rvfi_trap.exception  &&
     (rvfi_trap.exception_cause inside {EXC_ACCESFAULT, EXC_BUSFAULT});
 
-  wire  is_rvfi_valid_norevoke =
+  logic  is_rvfi_valid_norevoke;
+  assign is_rvfi_valid_norevoke =
     rvfi_valid  &&
     !is_rvfi_instrrevoked;
 
-  wire  is_rvfi_csr_instr =
+  logic  is_rvfi_csr_instr;
+  assign is_rvfi_csr_instr =
     is_rvfi_valid_norevoke                        &&
     (rvfi_insn[ 6: 0] == 7'b 1110011)             &&
     (rvfi_insn[14:12] inside {1, 2, 3, 5, 6, 7})  ;
 
-  wire  is_rvfi_csr_instr_read =
+  logic  is_rvfi_csr_instr_read;
+  assign is_rvfi_csr_instr_read =
     is_rvfi_csr_instr  &&
     (
       rvfi_rd_addr  ||                   // "rd != x0"
       !(rvfi_insn[14:12] inside {1, 5})  // ...or not "csrrw[i]"
     );
 
-  wire  is_rvfi_csr_instr_write =
+  logic  is_rvfi_csr_instr_write;
+  assign is_rvfi_csr_instr_write =
     is_rvfi_csr_instr  &&
     (
       rvfi_insn[19:15]  ||              // "rs1 != x0/0"
       (rvfi_insn[14:12] inside {1, 5})  // ...or "csrrw[i]"
     );
 
-  wire  is_rvfi_notrap_csrrw =
+  logic  is_rvfi_notrap_csrrw;
+  assign is_rvfi_notrap_csrrw =
     rvfi_valid                         &&
     !rvfi_trap                         &&
     (rvfi_insn[ 6: 0] == 7'b 1110011)  &&  // op
     (rvfi_insn[14:12] == 1'd 1)        ;   // funct3
 
-  wire  is_rvfi_notrap_csrrw_mstatus =
+  logic  is_rvfi_notrap_csrrw_mstatus;
+  assign is_rvfi_notrap_csrrw_mstatus =
     is_rvfi_notrap_csrrw           &&
     (rvfi_insn[31:20] == 12'h 300) ;   // csr
 
-  wire  is_rvfi_notrap_csrrw_dcsr =
+  logic  is_rvfi_notrap_csrrw_dcsr;
+  assign is_rvfi_notrap_csrrw_dcsr =
     is_rvfi_notrap_csrrw           &&
     (rvfi_insn[31:20] == 12'h 7B0) ;   // csr
 
-  wire mstatus_t  have_rvfi_csrrw_wdata_mstatus =
+  mstatus_t  have_rvfi_csrrw_wdata_mstatus;
+  assign     have_rvfi_csrrw_wdata_mstatus =
     rvfi_rs1_rdata;
 
-  wire dcsr_t  have_rvfi_csrrw_wdata_dcsr =
+  dcsr_t  have_rvfi_csrrw_wdata_dcsr;
+  assign  have_rvfi_csrrw_wdata_dcsr =
     rvfi_rs1_rdata;
 
-  wire mstatus_t  have_rvfi_mstatus_rdata =
+  mstatus_t  have_rvfi_mstatus_rdata;
+  assign     have_rvfi_mstatus_rdata =
     (rvfi_csr_mstatus_rdata & rvfi_csr_mstatus_rmask);
 
-  wire dcsr_t  have_rvfi_dcsr_rdata =
+  dcsr_t  have_rvfi_dcsr_rdata;
+  assign  have_rvfi_dcsr_rdata =
     (rvfi_csr_dcsr_rdata & rvfi_csr_dcsr_rmask);
 
-  wire  is_rvfi_notrap_mret =
+  logic  is_rvfi_notrap_mret;
+  assign is_rvfi_notrap_mret =
     rvfi_valid  &&
     !rvfi_trap  &&
     (rvfi_insn == 32'b 0011000_00010_00000_000_00000_1110011);
 
-  wire  is_rvfi_notrap_dret =
+  logic  is_rvfi_notrap_dret;
+  assign is_rvfi_notrap_dret =
     rvfi_valid  &&
     !rvfi_trap  &&
     (rvfi_insn == 32'h 7b20_0073);
 
-  wire  is_obi_iside_aphase =
+  logic  is_obi_iside_aphase;
+  assign is_obi_iside_aphase =
     obi_iside_req  &&
     obi_iside_gnt  ;
 
