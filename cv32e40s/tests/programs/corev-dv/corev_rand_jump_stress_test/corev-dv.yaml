@@ -4,8 +4,12 @@ name: corev_rand_jump_stress_test
 uvm_test: $(CV_CORE_LC)_instr_base_test
 description: >
     RISCV-DV generated jump stress test
+cflags: >
+    -mno-relax
 plusargs: >
     +instr_cnt=5000
     +num_of_sub_program=5
     +directed_instr_1=riscv_jal_instr,20
+    +directed_instr_2=corev_zcmp_pushpop_base_stream,20
+    +directed_instr_3=corev_zcmt_base_stream,20
 

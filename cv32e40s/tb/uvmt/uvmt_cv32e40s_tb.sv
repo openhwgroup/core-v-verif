@@ -182,6 +182,8 @@ module uvmt_cv32e40s_tb;
   `RVFI_CSR_BIND(mtval)
   `RVFI_CSR_BIND(mtvec)
   `RVFI_CSR_BIND(mvendorid)
+  `RVFI_CSR_BIND(mseccfg)
+  `RVFI_CSR_BIND(mseccfgh)
 
   `RVFI_CSR_BIND(dcsr)
   `RVFI_CSR_BIND(dpc)
@@ -1188,6 +1190,8 @@ module uvmt_cv32e40s_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(mtval)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mtvec)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mvendorid)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mseccfg)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mseccfgh)
 
      `RVFI_CSR_UVM_CONFIG_DB_SET(dcsr)
      `RVFI_CSR_UVM_CONFIG_DB_SET(dpc)

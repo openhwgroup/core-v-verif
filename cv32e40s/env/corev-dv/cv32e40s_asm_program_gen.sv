@@ -111,11 +111,11 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
     string load_instr = (XLEN == 32) ? "lw" : "ld";
     gen_signature_handshake(instr, CORE_STATUS, INSTR_FAULT_EXCEPTION);
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
-    //if (cfg.pmp_cfg.enable_pmp_exception_handler) begin
-    //  cfg.pmp_cfg.gen_pmp_exception_routine({cfg.gpr, cfg.scratch_reg, cfg.pmp_reg},
-    //                                        INSTRUCTION_ACCESS_FAULT,
-    //                                        instr);
-    //end
+    if (cfg.pmp_cfg.enable_pmp_exception_handler) begin
+      cfg.pmp_cfg.gen_pmp_exception_routine({cfg.gpr, cfg.scratch_reg, cfg.pmp_reg},
+                                            INSTRUCTION_ACCESS_FAULT,
+                                            instr);
+    end
     instr = {instr,
             // Get the stack pointer from the scratch register
             $sformatf("csrrw x%0d, 0x%0x, x%0d", cfg.sp, MSCRATCH, cfg.sp),
@@ -150,11 +150,11 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
     string instr[$];
     gen_signature_handshake(instr, CORE_STATUS, LOAD_FAULT_EXCEPTION);
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
-    //if (cfg.pmp_cfg.enable_pmp_exception_handler) begin
-    //  cfg.pmp_cfg.gen_pmp_exception_routine({cfg.gpr, cfg.scratch_reg, cfg.pmp_reg},
-    //                                        LOAD_ACCESS_FAULT,
-    //                                        instr);
-    //end
+    if (cfg.pmp_cfg.enable_pmp_exception_handler) begin
+      cfg.pmp_cfg.gen_pmp_exception_routine({cfg.gpr, cfg.scratch_reg, cfg.pmp_reg},
+                                            LOAD_ACCESS_FAULT,
+                                            instr);
+    end
     // Increase mepc by 4
     instr = { instr,
               $sformatf("csrrw x%0d, 0x%0x, x%0d", cfg.gpr[0], MEPC, cfg.gpr[0]),
@@ -171,11 +171,11 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
     string instr[$];
     gen_signature_handshake(instr, CORE_STATUS, STORE_FAULT_EXCEPTION);
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
-    //if (cfg.pmp_cfg.enable_pmp_exception_handler) begin
-    //  cfg.pmp_cfg.gen_pmp_exception_routine({cfg.gpr, cfg.scratch_reg, cfg.pmp_reg},
-    //                                        STORE_AMO_ACCESS_FAULT,
-    //                                        instr);
-    //end
+    if (cfg.pmp_cfg.enable_pmp_exception_handler) begin
+      cfg.pmp_cfg.gen_pmp_exception_routine({cfg.gpr, cfg.scratch_reg, cfg.pmp_reg},
+                                            STORE_AMO_ACCESS_FAULT,
+                                            instr);
+    end
     instr = { instr,
               $sformatf("csrrw x%0d, 0x%0x, x%0d", cfg.gpr[0], MEPC, cfg.gpr[0]),
               $sformatf("addi x%0d, x%0d, %0d", cfg.gpr[0], cfg.gpr[0], (XLEN/8)),
@@ -202,18 +202,21 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
     cv32e40s_instr_gen_config corev_cfg;
     `DV_CHECK_FATAL($cast(corev_cfg, cfg), "Could not cast cfg into corev_cfg")
 
-    instr = {instr, ".option norvc;",
+    instr = {instr, ".option push",
+                    ".option norvc",
                     $sformatf("j %0s%0smode_exception_handler", hart_prefix(hart), mode)};
     // Redirect the interrupt to the corresponding interrupt handler
     for (int i = 1; i < max_interrupt_vector_num; i++) begin
       if (i == 15) begin
-        instr.push_back($sformatf("j nmi_handler"));
+        instr.push_back($sformatf("jal x0, nmi_handler"));
       end else begin
-        instr.push_back($sformatf("j %0s%0smode_intr_vector_%0d", hart_prefix(hart), mode, i));
+        instr.push_back($sformatf("jal x0,  %0s%0smode_intr_vector_%0d", hart_prefix(hart), mode, i));
       end
     end
     if (!cfg.disable_compressed_instr) begin
-      instr = {instr, ".option rvc;"};
+      instr = {instr, ".option pop"};
+    end else begin
+      instr = {instr, ".option pop", ".option norvc"};
     end
     for (int i = 1; i < max_interrupt_vector_num; i++) begin
       string intr_handler[$];

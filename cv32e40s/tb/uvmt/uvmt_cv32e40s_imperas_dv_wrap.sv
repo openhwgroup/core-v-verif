@@ -86,8 +86,8 @@
 `define CSR_MINTTHRESH_ADDR    32'h347 // only available when SMCLIC=1
 `define CSR_MSCRATCHCSW_ADDR   32'h348 // only available when SMCLIC=1
 `define CSR_MCLICBASE_ADDR     32'h34A // only available when SMCLIC=1
-`define CSR_MSECCFG            32'h747
-`define CSR_MSECCFGH           32'h757
+`define CSR_MSECCFG_ADDR       32'h747
+`define CSR_MSECCFGH_ADDR      32'h757
 
 `define CSR_TSELECT_ADDR       32'h7A0 // only when DBG_NUM_TRIGGERS > 0
 `define CSR_TDATA1_ADDR        32'h7A1 // only when DBG_NUM_TRIGGERS > 0
@@ -381,6 +381,11 @@ module uvmt_cv32e40s_imperas_dv_wrap
    `RVVI_SET_CSR( `CSR_MTVAL_ADDR,         mtval         )
    `RVVI_SET_CSR( `CSR_MTVEC_ADDR,         mtvec         )
    `RVVI_SET_CSR( `CSR_MVENDORID_ADDR,     mvendorid     )
+   `RVVI_SET_CSR( `CSR_MARCHID_ADDR,       marchid       )
+   `RVVI_SET_CSR( `CSR_MIMPID_ADDR,        mimpid        )
+   `RVVI_SET_CSR( `CSR_MHARTID_ADDR,       mhartid       )
+   `RVVI_SET_CSR( `CSR_MSECCFG_ADDR,       mseccfg       )
+   `RVVI_SET_CSR( `CSR_MSECCFGH_ADDR,      mseccfgh      )
 
    `RVVI_SET_CSR( `CSR_TSELECT_ADDR,       tselect       )
    `RVVI_SET_CSR( `CSR_DCSR_ADDR,          dcsr          )
@@ -390,6 +395,86 @@ module uvmt_cv32e40s_imperas_dv_wrap
    `RVVI_SET_CSR( `CSR_TDATA1_ADDR,        tdata1        )
    `RVVI_SET_CSR( `CSR_TDATA2_ADDR,        tdata2        )
    `RVVI_SET_CSR( `CSR_TINFO_ADDR,         tinfo         )
+   `RVVI_SET_CSR( `CSR_PMPCFG0_ADDR,       pmpcfg0       )
+   `RVVI_SET_CSR( `CSR_PMPCFG1_ADDR,       pmpcfg1       )
+   `RVVI_SET_CSR( `CSR_PMPCFG2_ADDR,       pmpcfg2       )
+   `RVVI_SET_CSR( `CSR_PMPCFG3_ADDR,       pmpcfg3       )
+   `RVVI_SET_CSR( `CSR_PMPCFG4_ADDR,       pmpcfg4       )
+   `RVVI_SET_CSR( `CSR_PMPCFG5_ADDR,       pmpcfg5       )
+   `RVVI_SET_CSR( `CSR_PMPCFG6_ADDR,       pmpcfg6       )
+   `RVVI_SET_CSR( `CSR_PMPCFG7_ADDR,       pmpcfg7       )
+   `RVVI_SET_CSR( `CSR_PMPCFG8_ADDR,       pmpcfg8       )
+   `RVVI_SET_CSR( `CSR_PMPCFG9_ADDR,       pmpcfg9       )
+   `RVVI_SET_CSR( `CSR_PMPCFG10_ADDR,      pmpcfg10      )
+   `RVVI_SET_CSR( `CSR_PMPCFG11_ADDR,      pmpcfg11      )
+   `RVVI_SET_CSR( `CSR_PMPCFG12_ADDR,      pmpcfg12      )
+   `RVVI_SET_CSR( `CSR_PMPCFG13_ADDR,      pmpcfg13      )
+   `RVVI_SET_CSR( `CSR_PMPCFG14_ADDR,      pmpcfg14      )
+   `RVVI_SET_CSR( `CSR_PMPCFG15_ADDR,      pmpcfg15      )
+   `RVVI_SET_CSR( `CSR_PMPADDR0_ADDR,      pmpaddr0      )
+   `RVVI_SET_CSR( `CSR_PMPADDR1_ADDR,      pmpaddr1      )
+   `RVVI_SET_CSR( `CSR_PMPADDR2_ADDR,      pmpaddr2      )
+   `RVVI_SET_CSR( `CSR_PMPADDR3_ADDR,      pmpaddr3      )
+   `RVVI_SET_CSR( `CSR_PMPADDR4_ADDR,      pmpaddr4      )
+   `RVVI_SET_CSR( `CSR_PMPADDR5_ADDR,      pmpaddr5      )
+   `RVVI_SET_CSR( `CSR_PMPADDR6_ADDR,      pmpaddr6      )
+   `RVVI_SET_CSR( `CSR_PMPADDR7_ADDR,      pmpaddr7      )
+   `RVVI_SET_CSR( `CSR_PMPADDR8_ADDR,      pmpaddr8      )
+   `RVVI_SET_CSR( `CSR_PMPADDR9_ADDR,      pmpaddr9      )
+   `RVVI_SET_CSR( `CSR_PMPADDR10_ADDR,     pmpaddr10     )
+   `RVVI_SET_CSR( `CSR_PMPADDR11_ADDR,     pmpaddr11     )
+   `RVVI_SET_CSR( `CSR_PMPADDR12_ADDR,     pmpaddr12     )
+   `RVVI_SET_CSR( `CSR_PMPADDR13_ADDR,     pmpaddr13     )
+   `RVVI_SET_CSR( `CSR_PMPADDR14_ADDR,     pmpaddr14     )
+   `RVVI_SET_CSR( `CSR_PMPADDR15_ADDR,     pmpaddr15     )
+   `RVVI_SET_CSR( `CSR_PMPADDR16_ADDR,     pmpaddr16     )
+   `RVVI_SET_CSR( `CSR_PMPADDR17_ADDR,     pmpaddr17     )
+   `RVVI_SET_CSR( `CSR_PMPADDR18_ADDR,     pmpaddr18     )
+   `RVVI_SET_CSR( `CSR_PMPADDR19_ADDR,     pmpaddr19     )
+   `RVVI_SET_CSR( `CSR_PMPADDR20_ADDR,     pmpaddr20     )
+   `RVVI_SET_CSR( `CSR_PMPADDR21_ADDR,     pmpaddr21     )
+   `RVVI_SET_CSR( `CSR_PMPADDR22_ADDR,     pmpaddr22     )
+   `RVVI_SET_CSR( `CSR_PMPADDR23_ADDR,     pmpaddr23     )
+   `RVVI_SET_CSR( `CSR_PMPADDR24_ADDR,     pmpaddr24     )
+   `RVVI_SET_CSR( `CSR_PMPADDR25_ADDR,     pmpaddr25     )
+   `RVVI_SET_CSR( `CSR_PMPADDR26_ADDR,     pmpaddr26     )
+   `RVVI_SET_CSR( `CSR_PMPADDR27_ADDR,     pmpaddr27     )
+   `RVVI_SET_CSR( `CSR_PMPADDR28_ADDR,     pmpaddr28     )
+   `RVVI_SET_CSR( `CSR_PMPADDR29_ADDR,     pmpaddr29     )
+   `RVVI_SET_CSR( `CSR_PMPADDR30_ADDR,     pmpaddr30     )
+   `RVVI_SET_CSR( `CSR_PMPADDR31_ADDR,     pmpaddr31     )
+   `RVVI_SET_CSR( `CSR_PMPADDR32_ADDR,     pmpaddr32     )
+   `RVVI_SET_CSR( `CSR_PMPADDR33_ADDR,     pmpaddr33     )
+   `RVVI_SET_CSR( `CSR_PMPADDR34_ADDR,     pmpaddr34     )
+   `RVVI_SET_CSR( `CSR_PMPADDR35_ADDR,     pmpaddr35     )
+   `RVVI_SET_CSR( `CSR_PMPADDR36_ADDR,     pmpaddr36     )
+   `RVVI_SET_CSR( `CSR_PMPADDR37_ADDR,     pmpaddr37     )
+   `RVVI_SET_CSR( `CSR_PMPADDR38_ADDR,     pmpaddr38     )
+   `RVVI_SET_CSR( `CSR_PMPADDR39_ADDR,     pmpaddr39     )
+   `RVVI_SET_CSR( `CSR_PMPADDR40_ADDR,     pmpaddr40     )
+   `RVVI_SET_CSR( `CSR_PMPADDR41_ADDR,     pmpaddr41     )
+   `RVVI_SET_CSR( `CSR_PMPADDR42_ADDR,     pmpaddr42     )
+   `RVVI_SET_CSR( `CSR_PMPADDR43_ADDR,     pmpaddr43     )
+   `RVVI_SET_CSR( `CSR_PMPADDR44_ADDR,     pmpaddr44     )
+   `RVVI_SET_CSR( `CSR_PMPADDR45_ADDR,     pmpaddr45     )
+   `RVVI_SET_CSR( `CSR_PMPADDR46_ADDR,     pmpaddr46     )
+   `RVVI_SET_CSR( `CSR_PMPADDR47_ADDR,     pmpaddr47     )
+   `RVVI_SET_CSR( `CSR_PMPADDR48_ADDR,     pmpaddr48     )
+   `RVVI_SET_CSR( `CSR_PMPADDR49_ADDR,     pmpaddr49     )
+   `RVVI_SET_CSR( `CSR_PMPADDR50_ADDR,     pmpaddr50     )
+   `RVVI_SET_CSR( `CSR_PMPADDR51_ADDR,     pmpaddr51     )
+   `RVVI_SET_CSR( `CSR_PMPADDR52_ADDR,     pmpaddr52     )
+   `RVVI_SET_CSR( `CSR_PMPADDR53_ADDR,     pmpaddr53     )
+   `RVVI_SET_CSR( `CSR_PMPADDR54_ADDR,     pmpaddr54     )
+   `RVVI_SET_CSR( `CSR_PMPADDR55_ADDR,     pmpaddr55     )
+   `RVVI_SET_CSR( `CSR_PMPADDR56_ADDR,     pmpaddr56     )
+   `RVVI_SET_CSR( `CSR_PMPADDR57_ADDR,     pmpaddr57     )
+   `RVVI_SET_CSR( `CSR_PMPADDR58_ADDR,     pmpaddr58     )
+   `RVVI_SET_CSR( `CSR_PMPADDR59_ADDR,     pmpaddr59     )
+   `RVVI_SET_CSR( `CSR_PMPADDR60_ADDR,     pmpaddr60     )
+   `RVVI_SET_CSR( `CSR_PMPADDR61_ADDR,     pmpaddr61     )
+   `RVVI_SET_CSR( `CSR_PMPADDR62_ADDR,     pmpaddr62     )
+   `RVVI_SET_CSR( `CSR_PMPADDR63_ADDR,     pmpaddr63     )
 
    ////////////////////////////////////////////////////////////////////////////
    // Assign the RVVI GPR registers
@@ -401,16 +486,18 @@ module uvmt_cv32e40s_imperas_dv_wrap
            assign rvvi.x_wdata[0][0][gi] = XREG[gi];
    endgenerate
 
-   always @(*) begin
-       int i;
+   always_comb begin
+     int i;
+     if (|`RVFI_IF.rvfi_gpr_wmask[31:1] && `RVFI_IF.rvfi_valid) begin
        for (i=1; i<32; i++) begin
-           if ( `RVFI_IF.rvfi_gpr_wmask[i] == 1) begin
-               XREG[i] =  `RVFI_IF.rvfi_gpr_wdata[i*XLEN +:XLEN];
-           end
-           else begin
-               XREG[i] = 32'b0;
-           end
+         if (`RVFI_IF.rvfi_gpr_wmask[i]) begin
+           XREG[i] = `RVFI_IF.rvfi_gpr_wdata[i*XLEN+:XLEN];
+         end
+         else begin
+           XREG[i] = 32'h0;
+         end
        end
+     end
    end
 
    assign rvvi.x_wb[0][0] = `RVFI_IF.rvfi_gpr_wmask;

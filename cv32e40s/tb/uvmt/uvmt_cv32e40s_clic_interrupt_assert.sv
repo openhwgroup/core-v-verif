@@ -947,7 +947,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
         || $changed(mintthresh_fields.th, @(posedge clk_i))
         || $changed(mintstatus_fields.mil, @(posedge clk_i))
                 )
-      seq_irq_pend(1'b1)
+      //1 ##2 // Need to assume stability prior to actual start of assertion
+      always seq_irq_pend(1'b1)
       implies
         s_eventually irq_ack;
 
@@ -1653,16 +1654,19 @@ module uvmt_cv32e40s_clic_interrupt_assert
              && sampled_clic.level > mcause_fields.mpil
              && sampled_clic.level > mintthresh_fields.th
              && !sampled_clic.shv
+             && sampled_clic.irq
              && csr_instr.rd
       or
         // Return 0 if not higher level, or shv, or previous mnxti updated the context such that the previous
         // levels are no longer valid
                 rvfi_rd_wdata == 0
-             && !(sampled_clic.priv == M_MODE
-             && sampled_clic.level > mcause_fields.mpil
-             && sampled_clic.level > mintthresh_fields.th
-             && !sampled_clic.shv
-             && csr_instr.rd)
+             && (!(sampled_clic.priv == M_MODE
+              && sampled_clic.level > mcause_fields.mpil
+              && sampled_clic.level > mintthresh_fields.th
+              && !sampled_clic.shv
+              && sampled_clic.irq
+              && csr_instr.rd)
+             || !sampled_clic.irq)
       or
                 rvfi_trap.debug
       or
