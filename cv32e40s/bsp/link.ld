@@ -113,6 +113,9 @@ SECTIONS
   .iplt           : { *(.iplt) }
   .text           :
   {
+    /* FIXME: the naming for text.tbljal will most likely change and move out of .text */
+    . = ALIGN(1024);
+    *(.text.tbljal)
     *(.text.unlikely .text.*_unlikely .text.unlikely.*)
     *(.text.exit .text.exit.*)
     *(.text.startup .text.startup.*)

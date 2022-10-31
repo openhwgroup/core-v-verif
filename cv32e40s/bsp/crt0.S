@@ -1,5 +1,6 @@
 /* Copyright (c) 2017  SiFive Inc. All rights reserved.
  * Copyright (c) 2019  ETH Zürich and University of Bologna
+ * Copyright (c) 2022  Silicon Laboratories Inc.
  * This copyrighted material is made available to anyone wishing to use,
  * modify, copy, or redistribute it subject to the terms and conditions
  * of the FreeBSD License.   This program is distributed in the hope that
@@ -23,8 +24,13 @@ _start:
 /* initialize global pointer */
 .option push
 .option norelax
-1:	auipc gp, %pcrel_hi(__global_pointer$)
+1:auipc gp, %pcrel_hi(__global_pointer$)
 	addi  gp, gp, %pcrel_lo(1b)
+
+/* initialize vector table pointer */
+1:auipc a0, %pcrel_hi(__jvt_base$)
+  addi  a0, a0, %pcrel_lo(1b)
+  csrw  jvt, a0
 .option pop
 
 /* initialize stack pointer */
@@ -61,6 +67,7 @@ _start:
 	tail exit
 
 .size  _start, .-_start
+
 
 .global _init
 .type   _init, @function

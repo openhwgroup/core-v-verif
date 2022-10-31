@@ -31,6 +31,7 @@ package cv32e40s_instr_test_pkg;
   // Instruction streams specific to CV32E40S
 
   // RISCV-DV class override definitions
+  `include "cv32e40s_instr_sequence.sv"
   `include "cv32e40s_pma_cfg.sv"
   `include "cv32e40s_compressed_instr.sv"
   `include "cv32e40s_privil_reg.sv"
@@ -41,6 +42,8 @@ package cv32e40s_instr_test_pkg;
   `include "cv32e40s_instr_base_test.sv"
   `include "cv32e40s_pma_instr_lib.sv"
   `include "cv32e40s_fencei_instr_lib.sv"
+  `include "cv32e40s_zcmp_instr_lib.sv"
+  `include "cv32e40s_zcmt_instr_lib.sv"
 
   // Push general purpose register to the debugger stack
   function automatic void push_gpr_to_debugger_stack(cv32e40s_instr_gen_config cfg_corev,
