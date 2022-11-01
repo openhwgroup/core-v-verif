@@ -501,10 +501,6 @@ _debugger_csr:
 	bne  x0,t2,_debugger_fail
 	csrr t2,tdata3
 	bne  x0,t2,_debugger_fail
-	csrr t2,0x7a8 //mcontext
-	bne  x0,t2,_debugger_fail
-	csrr t2,0x7aa //scontext
-	bne  x0,t2,_debugger_fail
 
 	j _debugger_end
 

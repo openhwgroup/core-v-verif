@@ -126,20 +126,14 @@ function void uvme_cv32e40x_buserr_sb_c::write_rvfi(uvma_rvfi_instr_seq_item_c#(
   if (should_instr_err(trn)) begin
     cnt_rvfi_errmatch++;
 
-    //TODO:mateilga remove this separate counter when RVFI is updated with an intr cause field
-    if (trn.dbg_mode) begin
-      cnt_rvfi_errmatch_debug++;
-    end
-
-    assert (trn.trap)
+    assert (trn.trap.trap)
       else `uvm_error(info_tag, $sformatf("retire at 0x%08x (expected 'err') lacks 'rvfi_trap'", trn.pc_rdata));
-    assert ((cnt_rvfi_errmatch - cnt_rvfi_errmatch_debug) - cnt_rvfi_ifaulthandl <= 1)
+    assert (cnt_rvfi_errmatch - cnt_rvfi_ifaulthandl <= 1)
       else `uvm_error(info_tag, "too many err retires without ifault handling");
   end
 
   // D-side NMI handler
-  //TODO:mateilga update this to check the new intr cause field when RVFI is updated
-  if (trn.intr && mcause[31] && (mcause[30:0] inside {128, 129})) begin
+  if (trn.intr.intr && (trn.intr.cause inside {1024, 1025})) begin
     cnt_rvfi_nmihandl++;
 
     assert (pending_nmi)
@@ -151,11 +145,10 @@ function void uvme_cv32e40x_buserr_sb_c::write_rvfi(uvma_rvfi_instr_seq_item_c#(
   end
 
   // I-side exception handler
-  //TODO:mateilga update this to check the new intr cause field when RVFI is updated. This will allow for counting handler entries during debug
-  if (trn.intr && !mcause[31] && (mcause[31:0] == 48)) begin
+  if (trn.intr.exception && (trn.intr.cause == 48)) begin
     cnt_rvfi_ifaulthandl++;
 
-    assert ((cnt_rvfi_errmatch - cnt_rvfi_errmatch_debug) == cnt_rvfi_ifaulthandl)
+    assert (cnt_rvfi_errmatch == cnt_rvfi_ifaulthandl)
       else `uvm_error(info_tag, "ifault handler entered without matching an ifault retirement");
   end
 

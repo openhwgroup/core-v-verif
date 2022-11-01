@@ -16,10 +16,10 @@ interface uvme_cv32e40x_core_cntrl_if
     logic [31:0] dm_exception_addr;
     logic [31:0] nmi_addr;
     logic [31:0] mhartid;
-    logic [31:0] mimpid;
+    logic [3:0]  mimpid_patch;
 
     logic [31:0] num_mhpmcounters;
-    pma_region_t pma_cfg[];
+    pma_cfg_t pma_cfg[];
     cv32e40x_pkg::b_ext_e b_ext;
 
     // Testcase asserts this to load memory (not really a core control signal)

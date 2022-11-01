@@ -87,8 +87,6 @@ interface uvmt_cv32e40s_vp_status_if (
   import uvm_pkg::*;
 
   // TODO: X/Z checks
-  initial begin
-  end
 
 endinterface : uvmt_cv32e40s_vp_status_if
 
@@ -106,9 +104,145 @@ interface uvmt_cv32e40s_core_status_if (
 
 endinterface : uvmt_cv32e40s_core_status_if
 
+
+
+// Interface to xsecure assertions and covergroups
+interface uvmt_cv32e40s_xsecure_if
+    import cv32e40s_pkg::*;
+    import cv32e40s_rvfi_pkg::*;
+    #(parameter int     MTVT_ADDR_WIDTH = 5,
+    parameter int       PMP_NUM_REGIONS = 2)
+
+    (
+
+    // CORE
+    input logic core_clk,
+    input logic clk_en,
+
+    input logic core_rf_we_wb,
+    input logic [4:0] core_rf_waddr_wb,
+    input logic [31:0] core_rf_wdata_wb,
+    input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [REGFILE_NUM_WORDS],
+
+    // CSR
+    input logic core_alert_minor_o,
+    input logic core_alert_major_o,
+
+    input logic core_xsecure_ctrl_cpuctrl_dataindtiming,
+    input logic core_xsecure_ctrl_cpuctrl_rnddummy,
+
+    input logic [3:0] core_xsecure_ctrl_cpuctrl_rnddummyfreq,
+    input logic core_if_stage_gen_dummy_instr_dummy_instr_dummy_en,
+    input logic [2:0] core_cs_registers_xsecure_lfsr_lockup,
+    input logic core_controller_controller_fsm_debug_mode_q,
+
+    input logic [63:0] core_cs_registers_mhpmcounter_mcycle,
+    input logic [63:0] core_cs_registers_mhpmcounter_minstret,
+    input logic [31:3] [63:0] core_cs_registers_mhpmcounter_31_to_3,
+    input logic [31:3] [31:0] core_cs_registers_mhpmevent_31_to_3,
+    input logic core_cs_registers_mcountinhibit_q_mcycle_inhibit,
+    input logic core_cs_registers_mcountinhibit_q_minstret_inhibit,
+    input logic core_cs_registers_csr_en_gated,
+    input logic [11:0] core_cs_registers_csr_waddr,
+
+    input logic [31:0] core_LFSR0_CFG_default_seed,
+    input logic [31:0] core_LFSR1_CFG_default_seed,
+    input logic [31:0] core_LFSR2_CFG_default_seed,
+
+    input logic [31:0] core_xsecure_ctrl_lfsr0,
+    input logic [31:0] core_xsecure_ctrl_lfsr1,
+    input logic [31:0] core_xsecure_ctrl_lfsr2,
+
+    input logic core_cs_registers_xsecure_lfsr0_seed_we,
+    input logic core_cs_registers_xsecure_lfsr1_seed_we,
+    input logic core_cs_registers_xsecure_lfsr2_seed_we,
+
+    // Hardened CSR registers
+    input logic [31:0] core_i_cs_registers_i_jvt_csr_i_rdata_q,
+    input logic [31:0] core_i_cs_registers_i_mstatus_csr_i_rdata_q,
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q,
+    input logic [31:0] core_i_cs_registers_i_xsecure_cpuctrl_csr_i_rdata_q,
+    input logic [31:0] core_i_cs_registers_i_dcsr_csr_i_rdata_q,
+    input logic [31:0] core_i_cs_registers_i_mepc_csr_i_rdata_q,
+    input logic [31:0] core_i_cs_registers_i_mscratch_csr_i_rdata_q,
+
+    input logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q,
+    input logic [PMP_MAX_REGIONS-1:0][31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q,
+
+    // SMCLIC
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q,
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q,
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q,
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q,
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q,
+
+    // BASE
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q,
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q,
+
+    // Shadow registers
+    input logic [31:0] core_cs_registers_jvt_csr_gen_hardened_shadow_q,
+    input logic [31:0] core_cs_registers_mstatus_csr_gen_hardened_shadow_q,
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q,
+    input logic [31:0] core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q,
+    input logic [31:0] core_cs_registers_dcsr_csr_gen_hardened_shadow_q,
+    input logic [31:0] core_cs_registers_mepc_csr_gen_hardened_shadow_q,
+    input logic [31:0] core_cs_registers_mscratch_csr_gen_hardened_shadow_q,
+
+    input logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q,
+    input logic [PMP_MAX_REGIONS-1:0][31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q,
+
+    // SMILIC
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q,
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q,
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q,
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q,
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q,
+
+    // BASIC
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q,
+    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q,
+
+    // IF stage
+    input logic core_if_stage_if_valid_o,
+    input logic core_if_stage_id_ready_i,
+
+    input logic [4:0] core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs1,
+    input logic [4:0] core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs2,
+
+    input logic core_if_stage_instr_meta_n_dummy,
+    input logic core_i_if_stage_i_instr_hint,
+
+    // IF ID pipe
+    input logic core_if_id_pipe_instr_meta_dummy,
+    input logic [31:0] core_if_id_pipe_instr_bus_resp_rdata,
+
+    // ID stage
+    input logic core_id_stage_id_valid_o,
+    input logic core_id_stage_ex_ready_i,
+    input logic core_id_stage_if_id_pipe_instr_meta_compressed,
+    input logic [15:0] core_id_stage_if_id_pipe_compressed_instr,
+
+    // ID EX pipe
+    input logic core_id_ex_pipe_instr_meta_dummy,
+    input logic [31:0] core_id_ex_pipe_instr_bus_resp_rdata,
+
+    // EX WB pipe
+    input logic core_wb_stage_ex_wb_pipe_instr_meta_dummy,
+
+    // WB stage
+    input logic core_wb_stage_wb_valid_o
+
+);
+
+
+endinterface : uvmt_cv32e40s_xsecure_if
+
+
 // Interface to debug assertions and covergroups
 interface uvmt_cv32e40s_debug_cov_assert_if
     import cv32e40s_pkg::*;
+    import cv32e40s_rvfi_pkg::*;
     (
     input  clk_i,
     input  rst_ni,
@@ -142,16 +276,17 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     input  [31:0] boot_addr_i,
     input         fetch_enable_i,
 
-    input         rvfi_valid,
-    input  [31:0] rvfi_insn,
-    input         rvfi_intr,
-    input  [2:0]  rvfi_dbg,
-    input         rvfi_dbg_mode,
-    input  [31:0] rvfi_pc_wdata,
-    input  [31:0] rvfi_pc_rdata,
-    input  [31:0] rvfi_csr_dpc_rdata,
-    input  [31:0] rvfi_csr_mepc_wdata,
-    input  [31:0] rvfi_csr_mepc_wmask,
+    input              rvfi_valid,
+    input  [31:0]      rvfi_insn,
+    input  rvfi_intr_t rvfi_intr,
+    input  [2:0]       rvfi_dbg,
+    input              rvfi_dbg_mode,
+    input  [31:0]      rvfi_pc_wdata,
+    input  [31:0]      rvfi_pc_rdata,
+    input  [31:0]      rvfi_csr_dpc_rdata,
+    input  [31:0]      rvfi_csr_mepc_rdata,
+    input  [31:0]      rvfi_csr_mepc_wdata,
+    input  [31:0]      rvfi_csr_mepc_wmask,
 
     // Debug signals
     input         debug_req_i, // From controller
@@ -262,5 +397,61 @@ interface uvmt_cv32e40s_debug_cov_assert_if
   endclocking : mon_cb
 
 endinterface : uvmt_cv32e40s_debug_cov_assert_if
+
+interface uvmt_cv32e40s_support_logic_if;
+   import cv32e40s_pkg::*;
+   import uvma_rvfi_pkg::*;
+   logic clk_i;
+   logic rst_ni;
+
+   // core signals
+   ctrl_fsm_t  ctrl_fsm_o_i;
+   logic       data_bus_req_i;
+   logic       data_bus_gnt_i;
+
+   //results for modport
+   logic req_after_exception_o;
+
+   clocking mon_cb @(posedge clk_i);
+      input #1step
+
+      ctrl_fsm_o_i,
+      data_bus_req_i;
+
+      output #0 req_after_exception_o;
+
+   endclocking : mon_cb
+
+   modport master (
+     input  clk_i,
+            rst_ni,
+
+            ctrl_fsm_o_i,
+            data_bus_req_i,
+            data_bus_gnt_i,
+
+     output req_after_exception_o
+   );
+
+   modport slave (
+     input  clk_i,
+            rst_ni,
+
+            req_after_exception_o,
+     output ctrl_fsm_o_i,
+            data_bus_req_i
+   );
+
+   modport monitor (
+     input  clk_i,
+            rst_ni,
+            req_after_exception_o,
+            ctrl_fsm_o_i,
+            data_bus_req_i
+   );
+
+
+
+endinterface : uvmt_cv32e40s_support_logic_if
 
 `endif // __UVMT_CV32E40S_TB_IFS_SV__

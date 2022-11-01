@@ -49,7 +49,16 @@ endfunction : new
 
 task uvme_cv32e40s_vp_interrupt_timer_seq_c::set_interrupt();
 
-   cv32e40s_cntxt.interrupt_cntxt.vif.drv_cb.irq_drv <= interrupt_value;
+   if (cfg.clic_interrupts_enabled) begin
+     cv32e40s_cntxt.clic_cntxt.vif.drv_cb.clic_irq_drv       <= clic_value.irq;
+     cv32e40s_cntxt.clic_cntxt.vif.drv_cb.clic_irq_id_drv    <= clic_value.id;
+     cv32e40s_cntxt.clic_cntxt.vif.drv_cb.clic_irq_level_drv <= clic_value.level;
+     cv32e40s_cntxt.clic_cntxt.vif.drv_cb.clic_irq_priv_drv  <= clic_value.priv;
+     cv32e40s_cntxt.clic_cntxt.vif.drv_cb.clic_irq_shv_drv   <= clic_value.shv;
+   end
+   else if (cfg.basic_interrupts_enabled) begin
+     cv32e40s_cntxt.interrupt_cntxt.vif.drv_cb.irq_drv <= interrupt_value;
+   end
 
 endtask : set_interrupt
 

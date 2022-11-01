@@ -228,7 +228,7 @@ endif
 ###############################################################################
 # cfg
 CFGYAML2MAKE = $(CORE_V_VERIF)/bin/cfgyaml2make
-CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp
+CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp compliance
 ifneq ($(filter $(CFG_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
 ifneq ($(CFG),)
 CFG_FLAGS_MAKE := $(shell $(CFGYAML2MAKE) --yaml=$(CFG).yaml $(YAML2MAKE_DEBUG) --prefix=CFG --core=$(CV_CORE))
@@ -399,11 +399,12 @@ sanity: hello-world
 
 ###############################################################################
 # Code generators
+# New agent is pulled from moore.io temp site
 new-agent:
 	mkdir -p $(CORE_V_VERIF)/temp
 	wget --no-check-certificate -q https://mooreio.com/packages/uvm_gen.tgz -P $(CORE_V_VERIF)/temp
 	tar xzf $(CORE_V_VERIF)/temp/uvm_gen.tgz -C $(CORE_V_VERIF)/temp
-	cd $(CORE_V_VERIF)/temp && ./src/new_agent_simplex_no_layers.py $(CORE_V_VERIF)/lib/uvm_agents "OpenHW Group"
+	cd $(CORE_V_VERIF)/temp && ./src/new_agent_basic.py $(CORE_V_VERIF)/lib/uvm_agents "OpenHW Group"
 	rm -rf $(CORE_V_VERIF)/temp
 
 

@@ -39,6 +39,8 @@ class uvma_obi_memory_cfg_c extends uvm_object;
 
    string                        mon_logger_name = "OBI";
 
+   rand bit clic_interrupts_enabled;
+   rand bit basic_interrupts_enabled;
    // Protocol parameters
    rand uvma_obi_memory_version_enum    version;
    rand bit                             ignore_rready;
@@ -101,6 +103,9 @@ class uvma_obi_memory_cfg_c extends uvm_object;
       `uvm_field_int (                         stall_disable            , UVM_DEFAULT)
       `uvm_field_int (                         rvalid_singles_stall     , UVM_DEFAULT)
 
+      `uvm_field_int (                       clic_interrupts_enabled     , UVM_DEFAULT)
+      `uvm_field_int (                       basic_interrupts_enabled    , UVM_DEFAULT)
+
       `uvm_field_enum(uvma_obi_memory_version_enum, version, UVM_DEFAULT)
       `uvm_field_int (                        auser_width  , UVM_DEFAULT | UVM_DEC)
       `uvm_field_int (                        wuser_width  , UVM_DEFAULT | UVM_DEC)
@@ -147,6 +152,8 @@ class uvma_obi_memory_cfg_c extends uvm_object;
       soft cov_model_enabled    == 0;
       soft trn_log_enabled      == 1;
 
+      soft clic_interrupts_enabled        == 0;
+      soft basic_interrupts_enabled       == 1;
       soft version                        == UVMA_OBI_MEMORY_VERSION_1P1;
       /*soft*/ ignore_rready              == 1;
       soft auser_width                    == uvma_obi_memory_default_auser_width;

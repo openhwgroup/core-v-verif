@@ -18,6 +18,13 @@
 `ifndef __UVMT_CV32E40S_CONSTANTS_SV__
 `define __UVMT_CV32E40S_CONSTANTS_SV__
 
+   `ifdef SMCLIC_EN
+      parameter int CORE_PARAM_SMCLIC = 1;
+   `else
+      parameter int CORE_PARAM_SMCLIC = 0;
+   `endif
+   // Add various clic configurations
+
    `ifdef ZBA_ZBB_ZBS
       parameter cv32e40s_pkg::b_ext_e B_EXT = cv32e40s_pkg::ZBA_ZBB_ZBS;
    `elsif ZBA_ZBB_ZBC_ZBS
@@ -26,13 +33,41 @@
       parameter cv32e40s_pkg::b_ext_e B_EXT = cv32e40s_pkg::B_NONE;
    `endif
 
+   `ifdef SMCLIC_EN
+         parameter logic SMCLIC = 1'b1;
+   `else
+         parameter logic SMCLIC = 1'b0;
+   `endif
+
    `ifdef PMP_ENABLE_2
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
      parameter int CORE_PARAM_PMP_NUM_REGIONS = 2;
    `elsif PMP_ENABLE_64
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 64;
+   `elsif PMP_G0R0
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 0;
+   `elsif PMP_G0R16
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 16;
+   `elsif PMP_G1R5
+     parameter int CORE_PARAM_PMP_GRANULARITY = 1;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 5;
+   `elsif PMP_G2R6
+     parameter int CORE_PARAM_PMP_GRANULARITY = 2;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 6;
+   `elsif PMP_G3R3
+     parameter int CORE_PARAM_PMP_GRANULARITY = 3;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 3;
+   `elsif PMP_G27R64
+     parameter int CORE_PARAM_PMP_GRANULARITY = 27;
      parameter int CORE_PARAM_PMP_NUM_REGIONS = 64;
    `else
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
      parameter int CORE_PARAM_PMP_NUM_REGIONS = 0;
    `endif
+
 
    `ifdef PMA_CUSTOM_CFG
       const string pma_cfg_name = "pma_custom_cfg";

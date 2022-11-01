@@ -1,0 +1,16 @@
+name: pmp_g3r3
+description: pmp config with GRANULARITY=3 and NUM_REGIONS=3
+compile_flags:
+    +define+PMP_G3R3
+    +define+ZBA_ZBB_ZBC_ZBS
+ovpsim: >
+    --override root/cpu/PMP_grain=3
+    --override root/cpu/PMP_registers=3
+    #--showoverrides
+cflags: >
+plusargs: >
+    +enable_zba_extension=1
+    +enable_zbb_extension=1
+    +enable_zbc_extension=1
+    +enable_zbs_extension=1
+cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zicsr_zca_zifencei
