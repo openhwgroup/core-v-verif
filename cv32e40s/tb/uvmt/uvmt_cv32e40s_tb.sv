@@ -53,9 +53,20 @@ module uvmt_cv32e40s_tb;
    uvma_debug_if                debug_if();
    uvma_interrupt_if            interrupt_if();
    uvma_clic_if                 clic_if();
-   uvma_obi_memory_if           obi_instr_if_i(
-     .clk(clknrst_if.clk),
-     .reset_n(clknrst_if.reset_n)
+   uvma_obi_memory_if #(
+    /* TODO:silabs-robin  Correct widths sat via named definitions, everywhere!!! Important!
+     .AUSER_WIDTH (32),
+     .WUSER_WIDTH (32),
+     .RUSER_WIDTH (32),
+     .ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
+     .DATA_WIDTH  (32),
+     .ID_WIDTH    (32),
+     .ACHK_WIDTH  (ENV_PARAM_ACHK_WIDTH),
+     .RCHK_WIDTH  (ENV_PARAM_RCHK_WIDTH)
+    */
+   ) obi_instr_if_i (
+     .clk     (clknrst_if.clk),
+     .reset_n (clknrst_if.reset_n)
    );
    uvma_obi_memory_if           obi_data_if_i(
      .clk(clknrst_if.clk),
@@ -405,7 +416,7 @@ module uvmt_cv32e40s_tb;
       .RUSER_WIDTH(0),
       .ID_WIDTH(0),
       .ACHK_WIDTH(0),
-      .RCHK_WIDTH(0),
+      .RCHK_WIDTH(0),  // TODO:silabs-robin  These (and similars) must be specified
       .IS_1P2(1)
     ) obi_instr_memory_assert_i(.obi(obi_instr_if_i));
 
@@ -545,6 +556,7 @@ module uvmt_cv32e40s_tb;
     );
   `endif
 
+
   // User-mode assertions
 
   bind  cv32e40s_wrapper
@@ -574,11 +586,46 @@ module uvmt_cv32e40s_tb;
       .rvfi_csr_mstatus_wmask    (rvfi_i.rvfi_csr_mstatus_wmask),
       .rvfi_csr_mstateen0_rdata  (rvfi_i.rvfi_csr_mstateen0_rdata),
 
-      .impu_valid (core_i.if_stage_i.mpu_i.core_trans_valid_i),
-      .impu_addr  (core_i.if_stage_i.mpu_i.core_trans_i.addr),
+      .mpu_iside_valid (core_i.if_stage_i.mpu_i.core_trans_valid_i),
+      .mpu_iside_addr  (core_i.if_stage_i.mpu_i.core_trans_i.addr),
+
+      .obi_iside_prot (core_i.instr_prot_o),
+      .obi_dside_prot (core_i.data_prot_o),
 
       .*
     );
+
+
+  // User-mode Coverage
+
+  bind  cv32e40s_wrapper
+    uvmt_cv32e40s_umode_cov  umode_cov_i (
+      .rvfi_valid     (rvfi_i.rvfi_valid),
+      .rvfi_trap      (rvfi_i.rvfi_trap),
+      .rvfi_intr      (rvfi_i.rvfi_intr),
+      .rvfi_insn      (rvfi_i.rvfi_insn),
+      .rvfi_rs1_rdata (rvfi_i.rvfi_rs1_rdata),
+      .rvfi_pc_rdata  (rvfi_i.rvfi_pc_rdata),
+      .rvfi_mode      (rvfi_i.rvfi_mode),
+      .rvfi_rd_addr   (rvfi_i.rvfi_rd_addr),
+      .rvfi_dbg_mode  (rvfi_i.rvfi_dbg_mode),
+      .rvfi_order     (rvfi_i.rvfi_order),
+      .rvfi_mem_rmask (rvfi_i.rvfi_mem_rmask),
+      .rvfi_mem_wmask (rvfi_i.rvfi_mem_wmask),
+
+      .rvfi_csr_mstatus_rdata (rvfi_i.rvfi_csr_mstatus_rdata),
+      .rvfi_csr_mstatus_rmask (rvfi_i.rvfi_csr_mstatus_rmask),
+      .rvfi_csr_dcsr_rdata    (rvfi_i.rvfi_csr_dcsr_rdata),
+      .rvfi_csr_dcsr_rmask    (rvfi_i.rvfi_csr_dcsr_rmask),
+
+      .obi_iside_req  (core_i.instr_req_o),
+      .obi_iside_gnt  (core_i.instr_gnt_i),
+      .obi_iside_addr (core_i.instr_addr_o),
+      .obi_iside_prot (core_i.instr_prot_o),
+
+      .*
+    );
+
 
   // Fence.i assertions
 
