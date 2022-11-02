@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define CPUADDR_CPUCTRL     0xBF0
 #define CPUADDR_SECURESEED0 0xBF9

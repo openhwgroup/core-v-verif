@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <strings.h>
 
 //#include "../../../core/custom/startup/support.h"
