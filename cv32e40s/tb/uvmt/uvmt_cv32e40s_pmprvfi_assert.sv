@@ -226,7 +226,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     .match_status_o (match_status_upperdata)
   );
 
-  var [63:0]  clk_cnt;
+  var [31:0]  clk_cnt;
   always @(posedge clk_i, negedge rst_ni) begin
     if (rst_ni == 0) begin
       clk_cnt <= 64'd 1;
@@ -429,9 +429,12 @@ module uvmt_cv32e40s_pmprvfi_assert
     );
   end
 
+
   // Written cfg is written as expected
+
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_cfg_expected
     wire pmpncfg_t  cfg_expected = rectify_cfg_write(pmp_csr_rvfi_rdata.cfg[i], rvfi_rs1_rdata[8*(i%4) +: 8]);
+
     property  p_cfg_expected;
       (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw"
       (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + i/4))          &&  // ...to cfg's csr
@@ -442,28 +445,36 @@ module uvmt_cv32e40s_pmprvfi_assert
       // Note, this doesn't check csrr(s/c)[i]
       ;
     endproperty : p_cfg_expected
+
     a_cfg_expected: assert property (
       p_cfg_expected
     );
+
     a_not_ignore_writes_cfg_unlocked: assert property (
       // Locked entries, ignore pmpicfg writes
       if (!pmp_csr_rvfi_rdata.cfg[i].lock)
         p_cfg_expected
       // This is redundant, but explicitly checks non-locked regions
     );
+
     a_cfg_expected_updates: assert property (
       if (pmp_csr_rvfi_wdata.cfg[i] != pmp_csr_rvfi_rdata.cfg[i]) (
         p_cfg_expected
       )
     );
+
     cov_cfg_expected_ones: cover property (
       p_cfg_expected  and
       (rvfi_rs1_rdata[8*(i%4) +: 8] == '1)
     );
   end
+
+
   // Written cfg is legal  (vplan "ExecIgnored", ...)
+
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_cfgwdata_legal
     wire [7:0] rectified_cfg = rectify_cfg_write(pmp_csr_rvfi_rdata.cfg[i], pmp_csr_rvfi_wdata.cfg[i]);
+
     a_cfgwdata_legal: assert property (
       rvfi_valid  &&
       pmp_csr_rvfi_wmask.cfg[i]
@@ -471,7 +482,10 @@ module uvmt_cv32e40s_pmprvfi_assert
       (pmp_csr_rvfi_wdata.cfg[i] == rectified_cfg)
     );
   end
+
+
   // Read cfg is as expected
+
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_cfgrdata_expected
     property p_cfgrdata_expected;
       pmpncfg_t  cfg_prev;
@@ -483,6 +497,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       (pmp_csr_rvfi_rdata.cfg[i] == rectify_cfg_write(cfg_prev, pmp_csr_rvfi_rdata.cfg[i]))
       ;
     endproperty : p_cfgrdata_expected
+
     a_cfgrdata_expected: assert property (
       p_cfgrdata_expected
     );
@@ -498,7 +513,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     ;
   endsequence : seq_csrrw_pmpaddri
 
-  function automatic logic  is_beneath_locktor (logic cfg_idx);
+  function automatic logic  is_beneath_locktor (int cfg_idx);
     if (cfg_idx < (PMP_NUM_REGIONS - 1)) begin
       return (
         (pmp_csr_rvfi_rdata.cfg[cfg_idx + 1].mode == PMP_MODE_TOR)  &&
@@ -694,6 +709,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
 
   // Translate write-attempts to legal values
+
   function automatic pmpncfg_t  rectify_cfg_write (pmpncfg_t cfg_pre, pmpncfg_t cfg_attempt);
     pmpncfg_t  cfg_rfied;
 

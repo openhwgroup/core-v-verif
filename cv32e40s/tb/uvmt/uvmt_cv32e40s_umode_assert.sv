@@ -601,7 +601,6 @@ module  uvmt_cv32e40s_umode_assert
   );
 
 
-/* TODO:silabs-robin  Comment in when RTL bug is fixed
   // ResumeMprv
 
   a_dret_mprv_umode: assert property (
@@ -632,7 +631,6 @@ module  uvmt_cv32e40s_umode_assert
     |->
     (rvfi_csr_mstatus_rdata[MPRV_POS+:MPRV_LEN] == 1'b 0)
   ) else `uvm_error(info_tag, "umode should have no way of running with modified privilege");
-*/
 
 
   // UserExtensions
