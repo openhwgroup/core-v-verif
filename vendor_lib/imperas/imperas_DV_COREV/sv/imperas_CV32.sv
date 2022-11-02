@@ -165,26 +165,27 @@ interface RVVI_control;
 endinterface
 
 interface RVVI_io;
-    bit         reset;
-    bit  [31:0] reset_addr;
-    bit         nmi;
-    bit  [31:0] nmi_cause;
-    bit  [31:0] nmi_addr;
+    bit            reset;
+    bit  [31:0]    reset_addr;
+    bit            nmi;
+    bit  [31:0]    nmi_cause;
+    bit  [31:0]    nmi_addr;
 
-    bit  [31:0] irq_i;     // Active high level sensitive interrupt inputs
-    bit         irq_ack_o; // Interrupt acknowledge
-    bit  [4:0]  irq_id_o;  // Interrupt index for taken interrupt - only valid on irq_ack_o = 1
-    bit         deferint;  // Artifact signal to gate the last stage of interrupt/debug
-    bit         intr;      // artifact to indicate taking a double exception, delay the debugreq
+    bit  [31:0]    irq_i;     // Active high level sensitive interrupt inputs
+    bit            irq_ack_o; // Interrupt acknowledge
+    bit  [10:0]    irq_id_o;  // Interrupt index for taken interrupt - only valid on irq_ack_o = 1
 
-    bit         haltreq;
-    bit         resethaltreq;
-    bit         DM;
+    bit            deferint;  // Artifact signal to gate the last stage of interrupt/debug
+    bit            intr;      // artifact to indicate taking a double exception, delay the debugreq
 
-    bit         IllegalInstruction;
-    bit         InstructionBusFault; // signal memory interface error (E40X)
+    bit            haltreq;
+    bit            resethaltreq;
+    bit            DM;
 
-    bit         Shutdown;
+    bit            IllegalInstruction;
+    bit            InstructionBusFault; // signal memory interface error (E40X)
+
+    bit            Shutdown;
 endinterface
 
 interface RVVI_bus;

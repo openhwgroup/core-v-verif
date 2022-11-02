@@ -88,6 +88,7 @@
 `define CSR_MCLICBASE_ADDR     32'h34A // only available when SMCLIC=1
 `define CSR_MSECCFG            32'h747
 `define CSR_MSECCFGH           32'h757
+
 `define CSR_TSELECT_ADDR       32'h7A0 // only when DBG_NUM_TRIGGERS > 0
 `define CSR_TDATA1_ADDR        32'h7A1 // only when DBG_NUM_TRIGGERS > 0
 `define CSR_TDATA2_ADDR        32'h7A2 // only when DBG_NUM_TRIGGERS > 0
@@ -289,10 +290,6 @@
 `define CSR_MIMPID_ADDR         32'hF13
 `define CSR_MHARTID_ADDR        32'hF14
 `define CSR_MCONFIGPTR_ADDR     32'hF15
-`define CSR_CYCLE_ADDR          32'hC00
-`define CSR_INSTRET_ADDR        32'hC02
-`define CSR_CYCLEH_ADDR         32'hC80
-`define CSR_INSTRETH_ADDR       32'hC82
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module wrapper for Imperas DV.
@@ -444,6 +441,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
    // assert when MIP or cause bit
    // negate when posedge clk && valid=1 && debug=0
    ////////////////////////////////////////////////////////////////////////////
+  `ifndef SMCLIC_EN
   `RVVI_WRITE_IRQ(MSWInterrupt,        3)
   `RVVI_WRITE_IRQ(MTimerInterrupt,     7)
   `RVVI_WRITE_IRQ(MExternalInterrupt, 11)
@@ -463,6 +461,26 @@ module uvmt_cv32e40s_imperas_dv_wrap
   `RVVI_WRITE_IRQ(LocalInterrupt13,   29)
   `RVVI_WRITE_IRQ(LocalInterrupt14,   30)
   `RVVI_WRITE_IRQ(LocalInterrupt15,   31)
+  `else
+    logic clic_irq;
+    logic [10:0] clic_irq_id;
+    logic [7:0]  clic_irq_level;
+    logic [1:0]  clic_irq_priv;
+    logic        clic_irq_shv;
+
+    assign clic_irq       = `DUT_PATH.clic_irq_i;
+    assign clic_irq_id    = `DUT_PATH.clic_irq_id_i;
+    assign clic_irq_level = `DUT_PATH.clic_irq_level_i;
+    assign clic_irq_priv  = `DUT_PATH.clic_irq_priv_i;
+    assign clic_irq_shv   = `DUT_PATH.clic_irq_shv_i;
+    always @(clic_irq, clic_irq_id, clic_irq_level, clic_irq_priv, clic_irq_shv) begin
+      void'(rvvi.net_push("irq_i",       clic_irq));
+      void'(rvvi.net_push("irq_id_i",    clic_irq_id));
+      void'(rvvi.net_push("irq_lev_i",   clic_irq_level));
+      void'(rvvi.net_push("irq_sec_i",   clic_irq_priv));
+      void'(rvvi.net_push("irq_shv_i",   clic_irq_shv));
+    end
+  `endif
 
    ////////////////////////////////////////////////////////////////////////////
    // RVFI Monitor: pass NMI Load/Store and Fetch to the ref
@@ -584,7 +602,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
     // Test-program must have been compiled before we got here...
     if ($value$plusargs("elf_file=%s", test_program_elf)) begin
       `uvm_info(info_tag, $sformatf("ImperasDV loading test_program %0s", test_program_elf), UVM_LOW)
-      if (!rvviRefInit(test_program_elf, "openhwgroup.ovpworld.org", "CV32E40S", 0)) begin
+      if (!rvviRefInit(test_program_elf, "openhwgroup.ovpworld.org", "CV32E40S_DEV", 0)) begin
         `uvm_fatal(info_tag, "rvviRefInit failed")
       end
       else begin
@@ -597,10 +615,6 @@ module uvmt_cv32e40s_imperas_dv_wrap
 
     hart_id = 32'h0000_0000;
 
-    void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLE_ADDR        ));
-    void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLEH_ADDR       ));
-    void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRET_ADDR      ));
-    void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRETH_ADDR     ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLE_ADDR       ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLEH_ADDR      ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MINSTRET_ADDR     ));
@@ -706,27 +720,42 @@ module uvmt_cv32e40s_imperas_dv_wrap
     //rvviRefCsrCompareMask(hart_id,   `CSR_DCSR_ADDR, ~('h8));
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
 
+    // TODO silabs-hfegran: temp fix to work around issues
+    rvviRefCsrCompareEnable(hart_id, `CSR_MCOUNTINHIBIT_ADDR, `RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_MCYCLE_ADDR, `RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_TDATA1_ADDR, `RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR, `RVVI_FALSE);
+    // end TODO
+
     // define asynchronous grouping
     // Interrupts
-    rvviRefNetGroupSet(rvviRefNetIndexGet("MSWInterrupt"),        1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("MTimerInterrupt"),     1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("MExternalInterrupt"),  1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt0"),     1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt1"),     1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt2"),     1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt3"),     1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt4"),     1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt5"),     1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt6"),     1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt7"),     1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt8"),     1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt9"),     1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt10"),    1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt11"),    1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt12"),    1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt13"),    1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt14"),    1);
-    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt15"),    1);
+    `ifndef SMCLIC_EN
+      rvviRefNetGroupSet(rvviRefNetIndexGet("MSWInterrupt"),        1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("MTimerInterrupt"),     1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("MExternalInterrupt"),  1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt0"),     1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt1"),     1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt2"),     1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt3"),     1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt4"),     1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt5"),     1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt6"),     1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt7"),     1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt8"),     1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt9"),     1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt10"),    1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt11"),    1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt12"),    1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt13"),    1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt14"),    1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt15"),    1);
+    `else
+      rvviRefNetGroupSet(rvviRefNetIndexGet("irq_i"),               1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("irq_id_i"),            1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("irq_lev_i"),           1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("irq_sec_i"),           1);
+      rvviRefNetGroupSet(rvviRefNetIndexGet("irq_shv_i"),           1);
+    `endif
 
     rvviRefNetGroupSet(rvviRefNetIndexGet("InstructionBusFault"), 2);
 

@@ -49,6 +49,7 @@ module uvmt_cv32e40s_dut_wrap
     parameter int          PMP_GRANULARITY = 0,
     parameter logic        SMCLIC = 0,
     parameter int          SMCLIC_ID_WIDTH = 5,
+    parameter int          DBG_NUM_TRIGGERS = 1,
     // Remaining parameters are used by TB components only
               INSTR_ADDR_WIDTH    =  32,
               INSTR_RDATA_WIDTH   =  32,
@@ -190,7 +191,8 @@ module uvmt_cv32e40s_dut_wrap
                       .PMA_CFG          (PMA_CFG),
                       .PMP_GRANULARITY  (PMP_GRANULARITY),
                       .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
-                      .SMCLIC           (SMCLIC)
+                      .SMCLIC           (SMCLIC),
+                      .DBG_NUM_TRIGGERS (DBG_NUM_TRIGGERS)
                       )
     cv32e40s_wrapper_i
         (

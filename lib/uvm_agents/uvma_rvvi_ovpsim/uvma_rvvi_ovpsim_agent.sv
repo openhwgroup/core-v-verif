@@ -118,7 +118,7 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    // -------------------------------------------------------------------------------------
    // ISA Extension support
    // -------------------------------------------------------------------------------------
-   $fwrite(fh, $sformatf("--override root/cpu/misa_Extensions=0x%06x\n", cfg.core_cfg.get_misa()));
+   $fwrite(fh, $sformatf("--override %s/misa_Extensions=0x%06x\n", refpath, cfg.core_cfg.get_misa()));
 
    // TODO silabs-hfegran: cv32e40x: Remove when correct setting is applied to ovpsim,
    // settings that need to remain should be moved to core-specific config, this file needs
