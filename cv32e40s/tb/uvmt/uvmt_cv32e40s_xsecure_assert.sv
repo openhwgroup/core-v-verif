@@ -38,8 +38,11 @@ module uvmt_cv32e40s_xsecure_assert
 
   localparam FUNC3_BLTU_INSTRUCTION = 3'b110;
 
-  localparam OPCODE_BIT_15_TO_13_COMPR_BRANCH = 3'b11x;
-  localparam OPCODE_BIT_1_TO_0_COMPR_BRANCH = 2'b01;
+  localparam FUNC7_MRET_INSTRUCTION = 7'b0011000;
+  localparam FUNC3_MRET_INSTRUCTION = 3'b000;
+
+  localparam OPCODE_BIT_15_TO_13_COMPR_BRANCH = 3'b11x; //Todo: vet ikke om dette er nødvendig
+  localparam OPCODE_BIT_1_TO_0_COMPR_BRANCH = 2'b01; //TODO: vet ikke om cmpr spesifikasjon er nødvendig
 
   localparam REGISTER_MHPMCOUNTER_MCYCLE_FULL = 64'hFFFFFFFFFFFFFFFF;
 
@@ -1073,7 +1076,7 @@ module uvmt_cv32e40s_xsecure_assert
   ///////////////////////////////////////////////////////////////
   ///////////////////////// HARDENED PC /////////////////////////
   ///////////////////////////////////////////////////////////////
-
+/*
 sequence seq_dummy_if_id;
 xsecure_if.core_if_stage_instr_meta_n_dummy ##1 (xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc)[*1:$];
 endsequence
@@ -1171,8 +1174,9 @@ endsequence
     xsecure_if.core_alert_major_o
 
   ) else `uvm_error(info_tag, "PC fault for sequential non-compressed instructions does not set alert major.\n");
-
+*/
 //TODO: recheck this assertion when the rtl code related to pc_hadening=0 is implemented
+/*
 a_xsecure_hardened_pc_off_secuential_alert_major: assert property (
     @(posedge xsecure_if.core_clk)
 
@@ -1212,12 +1216,12 @@ a_xsecure_hardened_pc_off_secuential_alert_major: assert property (
     !xsecure_if.core_alert_major_o
 
   ) else `uvm_error(info_tag, "PC fault for sequential non-compressed instructions does not set alert major.\n");
-
+*/
 
 
 /////////////////////////// Non sequential ///////////////////////////
 //TODO: mret
-
+/*
   a_xsecure_hardened_pc_non_sequential_rvfi_normal_behaviour: assert property (
     //Make sure we have executed an instruction that can insert a PC jump
     (rvfi_if.rvfi_insn[6:0] == cv32e40s_pkg::OPCODE_BRANCH
@@ -1244,70 +1248,70 @@ a_xsecure_hardened_pc_off_secuential_alert_major: assert property (
   ) else `uvm_error(info_tag, "if PC fault sets alert major.\n");
 
 
-  a_xsecure_hardened_pc_non_sequential_rvfi_set_major_alert: assert property (
-    (rvfi_if.rvfi_insn[6:0] == cv32e40s_pkg::OPCODE_BRANCH
-    || rvfi_if.rvfi_insn[6:0] == cv32e40s_pkg::OPCODE_JALR
-    || rvfi_if.rvfi_insn[6:0] == cv32e40s_pkg::OPCODE_JAL)
-    && rvfi_if.rvfi_valid
-    //&& !rvfi_if.rvfi_trap.trap
-    //&& !rvfi_if.rvfi_trap.exception
-
-    && $past(xsecure_if.core_i_wb_stage_i_ex_wb_pipe_i_pc,2) != rvfi_if.rvfi_pc_rdata
-
-/*
-    || $past(xsecure_if.core_i_ex_stage_i_id_ex_pipe_i_pc,2) != rvfi_if.rvfi_pc_rdata
-    || $past(xsecure_if.core_i_ex_stage_i_id_ex_pipe_i_pc,3) != rvfi_if.rvfi_pc_rdata
-
-    || $past(xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc,3) != rvfi_if.rvfi_pc_rdata
-    || $past(xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc,4) != rvfi_if.rvfi_pc_rdata)
-*/
-    |->
-
-    xsecure_if.core_alert_major_o
-/*
-    || $past(xsecure_if.core_alert_major_o,1)
-    || $past(xsecure_if.core_alert_major_o,2)
-    || $past(xsecure_if.core_alert_major_o,3)
-*/
-
-  ) else `uvm_error(info_tag, "if PC fault sets alert major.\n");
-
-  a_xsecure_hardened_pc_non_sequential_rvfi_set_major_alert_id_stage: assert property (
-    @(posedge xsecure_if.core_clk)
-    xsecure_if.core_i_controller_i_controller_fsm_i_ctrl_fsm_cs == 3'b010
-
-    throughout
-
-    core_clock_cycles
-
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
-
-    && $past(xsecure_if.core_id_stage_id_valid_o)
-    && $past(xsecure_if.core_id_stage_ex_ready_i)
-
-    && $changed(xsecure_if.core_i_ex_stage_i_id_ex_pipe_i_pc)
-
-    && xsecure_if.core_id_ex_pipe_instr_bus_resp_rdata[6:0] == cv32e40s_pkg::OPCODE_BRANCH
-
-    ##1 1 ##1 1 ##1 1 ##1 1 ##1 1 ##1 1
-
-    |=>
-
-    $past(xsecure_if.core_id_stage_id_valid_o)
-    && $past(xsecure_if.core_id_stage_ex_ready_i)
-
-    && xsecure_if.core_i_ex_stage_i_id_ex_pipe_i_pc == $past(xsecure_if.core_i_ex_stage_i_id_ex_pipe_i_pc)
-
-  ) else `uvm_error(info_tag, "if PC fault sets alert major.\n");
-
-
-  a_xsecure_hardened_pc_test: cover property (
+  //jumps:
+  property p_xsecure_hardened_pc_non_sequential_set_major_alert(fsm_behaviour, calculated_signal);
     xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+    && xsecure_if.core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux == fsm_behaviour
+    ##1 xsecure_if.core_i_if_stage_i_pc_check_i_pc_set_q
+    && calculated_signal != $past(calculated_signal)
+    |=>
+    xsecure_if.core_alert_major_o;
+  endproperty
 
-    && rvfi_if.rvfi_valid
-    && xsecure_if.core_alert_major_o
-
+  a_xsecure_pc_hardening_branch: assert property(
+    p_xsecure_hardened_pc_non_sequential_set_major_alert(4'b0101, xsecure_if.core_i_ex_stage_i_branch_target_o)
   );
 
+  a_xsecure_pc_hardening_jump: assert property(
+    p_xsecure_hardened_pc_non_sequential_set_major_alert(4'b0100, xsecure_if.core_i_jump_target_id)
+  );
+
+  a_xsecure_pc_hardening_mret: assert property(
+    p_xsecure_hardened_pc_non_sequential_set_major_alert(4'b0001, xsecure_if.core_i_cs_registers_i_mepc_o)
+  );
+
+  a_xsecure_pc_hardening_branch_decision: assert property(
+    xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+    && xsecure_if.core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux == 4'b0101
+    ##1 xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o != $past(xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o)
+    && !xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming
+    |=>
+    xsecure_if.core_alert_major_o
+    || $past(xsecure_if.core_alert_major_o)
+  );
+*/
+  //TODO: check property when rtl for PC_hardnine == 0 is imoplemented
+  /*property p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(fsm_behaviour, calculated_signal);
+    !xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+    && xsecure_if.core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux == fsm_behaviour
+    ##1 xsecure_if.core_i_if_stage_i_pc_check_i_pc_set_q
+    && calculated_signal != $past(calculated_signal)
+    |=>
+    !xsecure_if.core_alert_major_o;
+  endproperty
+
+  a_xsecure_pc_hardening_branch: assert property(
+    p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(4'b0101, xsecure_if.core_i_ex_stage_i_branch_target_o)
+  );
+
+  a_xsecure_pc_hardening_jump: assert property(
+    p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(4'b0100, xsecure_if.core_i_jump_target_id)
+  );
+
+  a_xsecure_pc_hardening_mret: assert property(
+    p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(4'b0001, xsecure_if.core_i_cs_registers_i_mepc_o)
+  );
+
+  a_xsecure_pc_hardening_branch_decision: assert property(
+    !xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+    && xsecure_if.core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux == 4'b0101
+    ##1 xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o != $past(xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o)
+    && !xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming
+    |=>
+    !xsecure_if.core_alert_major_o
+    && !$past(xsecure_if.core_alert_major_o)
+  );
+
+  */
 
 endmodule : uvmt_cv32e40s_xsecure_assert

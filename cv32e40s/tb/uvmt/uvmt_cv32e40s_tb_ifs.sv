@@ -123,6 +123,7 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [4:0] core_rf_waddr_wb,
     input logic [31:0] core_rf_wdata_wb,
     input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [REGFILE_NUM_WORDS],
+    input logic [31:0] core_i_jump_target_id,
 
     // CSR
     input logic core_alert_minor_o,
@@ -157,6 +158,8 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_cs_registers_xsecure_lfsr0_seed_we,
     input logic core_cs_registers_xsecure_lfsr1_seed_we,
     input logic core_cs_registers_xsecure_lfsr2_seed_we,
+
+    input logic [31:0] core_i_cs_registers_i_mepc_o,
 
     // Hardened CSR registers
     input logic [31:0] core_i_cs_registers_i_jvt_csr_i_rdata_q,
@@ -222,6 +225,14 @@ interface uvmt_cv32e40s_xsecure_if
 
     input logic core_i_if_stage_i_ctrl_fsm_i_halt_if,
 
+    input logic [3:0] core_i_if_stage_i_pc_check_i_pc_mux_q,
+
+    input logic core_i_if_stage_i_if_id_pipe_o_last_op,
+
+    input logic core_i_if_stage_i_pc_check_i_pc_set_q,
+
+
+
     // IF ID pipe
     input logic core_if_id_pipe_instr_meta_dummy,
     input logic [31:0] core_if_id_pipe_instr_bus_resp_rdata,
@@ -234,15 +245,20 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_id_stage_if_id_pipe_instr_meta_compressed,
     input logic [15:0] core_id_stage_if_id_pipe_compressed_instr,
     input logic core_i_id_stage_i_decoder_i_i_decoder_i_ctrl_fsm_i_kill_id,
+    input logic core_i_id_stage_i_last_sec_op,
 
     // ID EX pipe
     input logic core_id_ex_pipe_instr_meta_dummy,
     input logic [31:0] core_id_ex_pipe_instr_bus_resp_rdata,
+    input logic core_i_id_stage_i_id_ex_pipe_o_last_op,
 
     input logic [31:0] core_i_ex_stage_i_id_ex_pipe_i_pc,
 
     //EX stage
     input logic core_i_ex_stage_i_ex_valid_o,
+    input logic [31:0] core_i_ex_stage_i_branch_target_o,
+    input logic core_i_ex_stage_i_branch_decision_o,
+    input logic core_i_ex_stage_i_alu_i_cmp_result_o,
 
     // EX WB pipe
     input logic core_wb_stage_ex_wb_pipe_instr_meta_dummy,
@@ -255,7 +271,13 @@ interface uvmt_cv32e40s_xsecure_if
 
     // CTRL
     input logic [2:0] core_i_controller_i_controller_fsm_i_ctrl_fsm_cs,
-    input logic core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set
+    input logic core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set,
+    input logic [3:0] core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux,
+    input logic core_i_controller_i_controller_fsm_i_branch_in_ex,
+
+    input logic core_i_id_stage_i_decoder_i_ctrl_fsm_i_kill_if,
+    input logic core_i_id_stage_i_decoder_i_ctrl_fsm_i_kill_id,
+    input logic core_i_id_stage_i_decoder_i_ctrl_fsm_i_kill_ex
 );
 
 

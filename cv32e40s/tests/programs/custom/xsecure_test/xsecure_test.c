@@ -1,7 +1,10 @@
+#ifndef __XSECURE_TEST_H__
+#define __XSECURE_TEST_H__
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "xsecure_test.h"
+#include <stdint.h>
+//#include "xsecure_test.h"
 
 #define CPUADDR_CPUCTRL     0xBF0
 #define CPUADDR_SECURESEED0 0xBF9
@@ -56,6 +59,12 @@ unsigned int get_field(unsigned int x, int bit_indx_low, int bit_indx_high){
 /* Assembly function to set privilege-mode to user-mode */
 void set_u_mode() {
   uint32_t u_mode_setting = 0x1800;
+  printf("KD: 2.1.1\n");
+  __asm__ volatile( "csrrc  x0, mstatus,  %0;" : : "r"(u_mode_setting));
+  printf("KD: 2.1.2\n");
+  __asm__ volatile( "csrrw  x0, mepc,     ra;");
+  printf("KD: 2.1.3\n");
+
   __asm__ volatile( "csrrc  x0, mstatus,  %0;"
                     "csrrw  x0, mepc,     ra;" //denne er litt feil kanskje TODO
                     "mret;"
@@ -114,20 +123,20 @@ void test_read_ctrlcpu_and_secureseeds_in_machine_mode(void){
   uint32_t csr_read;
   trap_handler_beh = TRAP_INCR_BEH; // setting the trap handler behaviour
   NUM_TRAP_EXECUTIONS = 0; // resetting the trap handler count
-
+  printf("KD: 1.1\n");
   //Enter machine mode:
   set_m_mode();
-
+  printf("KD: 1.2\n");
   //Read secureseed:
   __asm__ volatile("csrrw %0, " STR(CPUADDR_SECURESEED0) ", x0" : "=r"(csr_read));
   assert_or_die(csr_read, 0, "error: secureseed0 is not read as zero\n");
-
+  printf("KD: 1.3\n");
   __asm__ volatile("csrrw %0, " STR(CPUADDR_SECURESEED1) ", x0" : "=r"(csr_read));
   assert_or_die(csr_read, 0, "error: secureseed1 is not read as zero\n");
-
+  printf("KD: 1.4\n");
   __asm__ volatile("csrrw %0, " STR(CPUADDR_SECURESEED2) ", x0" : "=r"(csr_read));
   assert_or_die(csr_read, 0, "error: secureseed2 is not read as zero\n");
-
+  printf("KD: 1.5\n");
 }
 
 
@@ -135,38 +144,44 @@ void test_read_ctrlcpu_and_secureseeds_in_user_mode(void){
   uint32_t csr_read;
   trap_handler_beh = TRAP_INCR_BEH; // setting the trap handler behaviour
   NUM_TRAP_EXECUTIONS = 0; // resetting the trap handler count
-
+  printf("KD: 2.1\n");
   //Enter usermode:
   set_u_mode();
-
+  printf("KD: 2.2\n");
   //Try to read ctrlcpu and secureseed:
   __asm__ volatile("csrrw %0, " STR(CPUADDR_CPUCTRL) ", x0" : "=r"(csr_read));
+  printf("KD: 2.3\n");
   __asm__ volatile("csrrs %0, " STR(CPUADDR_CPUCTRL) ", x0" : "=r"(csr_read));
   __asm__ volatile("csrrc %0, " STR(CPUADDR_CPUCTRL) ", x0" : "=r"(csr_read));
-
+  printf("KD: 2.4\n");
   __asm__ volatile("csrrw %0, " STR(CPUADDR_SECURESEED0) ", x0" : "=r"(csr_read));
   __asm__ volatile("csrrs %0, " STR(CPUADDR_SECURESEED0) ", x0" : "=r"(csr_read));
   __asm__ volatile("csrrc %0, " STR(CPUADDR_SECURESEED0) ", x0" : "=r"(csr_read));
-
+  printf("KD: 2.5\n");
   __asm__ volatile("csrrw %0, " STR(CPUADDR_SECURESEED1) ", x0" : "=r"(csr_read));
   __asm__ volatile("csrrs %0, " STR(CPUADDR_SECURESEED1) ", x0" : "=r"(csr_read));
   __asm__ volatile("csrrc %0, " STR(CPUADDR_SECURESEED1) ", x0" : "=r"(csr_read));
-
+  printf("KD: 2.6\n");
   __asm__ volatile("csrrw %0, " STR(CPUADDR_SECURESEED2) ", x0" : "=r"(csr_read));
   __asm__ volatile("csrrs %0, " STR(CPUADDR_SECURESEED2) ", x0" : "=r"(csr_read));
   __asm__ volatile("csrrc %0, " STR(CPUADDR_SECURESEED2) ", x0" : "=r"(csr_read));
-
+  printf("KD: 2.7\n");
   //Number of exceptions should equal number of acesses
   assert_or_die(NUM_TRAP_EXECUTIONS, 4*3, "error: accessing cpuctrl or secureseed_ in usermode does not cause a trap\n");
-
+  printf("KD: 2.8\n");
 }
 
 
 int main(void){
-
+  printf("KD: Read secure seeds in machine mode.\n");;
+  printf("KD: 1\n");
   test_read_ctrlcpu_and_secureseeds_in_machine_mode();
-
+  printf("KD: 2\n");
+  printf("KD: Go in traps when reading secure seeds in user mode.\n");;
   test_read_ctrlcpu_and_secureseeds_in_user_mode();
+  printf("KD: 3\n");
 
   return EXIT_SUCCESS;
 }
+
+#endif
