@@ -25,6 +25,7 @@
 */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #define EXP_MISA 0x40901104
