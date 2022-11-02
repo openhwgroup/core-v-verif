@@ -1,13 +1,13 @@
 // Copyright 2020 OpenHW Group
 // Copyright 2020 Datum Technology Corporation
 // Copyright 2020 Silicon Labs, Inc.
-// 
+//
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //     https://solderpad.org/licenses/
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,15 +31,20 @@ typedef enum int unsigned {
    UVMA_RVVI_HALT  = 2
 } uvma_rvvi_rm_action;
 
+typedef enum int unsigned {
+   UVMA_RVVI_V1 = 0,
+   UVMA_RVVI_V2 = 1
+} uvma_rvvi_version_enum;
+
 function string get_mode_str(uvma_rvvi_mode mode);
    case (mode)
       UVMA_RVVI_U_MODE: return "U";
       UVMA_RVVI_M_MODE: return "M";
-      UVMA_RVVI_S_MODE: return "S";      
+      UVMA_RVVI_S_MODE: return "S";
    endcase
 
    return "?";
-   
+
 endfunction : get_mode_str
 
 `endif // __UVMA_RVVI_TDEFS_SV__

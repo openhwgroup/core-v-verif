@@ -18,6 +18,15 @@
 `ifndef __UVMT_CV32E40S_CONSTANTS_SV__
 `define __UVMT_CV32E40S_CONSTANTS_SV__
 
+   // TODO: Expand as needed
+   `ifdef DBG_NUM_TRIG_0
+      parameter CORE_PARAM_NUM_TRIGGERS = 0;
+   `elsif DBG_NUM_TRIG_1
+      parameter CORE_PARAM_NUM_TRIGGERS = 1;
+   `else
+      parameter CORE_PARAM_NUM_TRIGGERS = 1;
+   `endif
+
    `ifdef SMCLIC_EN
       parameter int CORE_PARAM_SMCLIC = 1;
    `else

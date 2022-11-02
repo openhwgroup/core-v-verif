@@ -41,6 +41,9 @@
    bit                           use_iss;
    string                        iss_control_file = "ovpsim.ic";
 
+   // Controls printing of CSR status
+   bit                           csr_print;
+
    // RISC-V ISA Configuration
    rand corev_mxl_t              xlen;
    rand int unsigned             ilen;
@@ -186,6 +189,7 @@
       `uvm_field_int(                          nmi_addr                       , UVM_DEFAULT          )
       `uvm_field_int(                          nmi_addr_valid                 , UVM_DEFAULT          )
       `uvm_field_int(                          nmi_addr_plusarg_valid         , UVM_DEFAULT          )
+      `uvm_field_int(                          csr_print                      , UVM_DEFAULT          )
    `uvm_field_utils_end
 
    constraint defaults_cons {
@@ -293,6 +297,12 @@ function uvma_core_cntrl_cfg_c::new(string name="uvme_cv_base_cfg");
    if ($test$plusargs("USE_ISS"))
       use_iss = 1;
 
+   if ($test$plusargs("no_csr_print")) begin
+      csr_print = 0;
+   end else begin
+      csr_print = 1;
+   end
+
    // Read plusargs for defaults
    if (read_cfg_plusarg_xlen("mhartid", mhartid)) begin
       mhartid_plusarg_valid = 1;
@@ -369,26 +379,27 @@ function void uvma_core_cntrl_cfg_c::do_print(uvm_printer printer);
 
    super.do_print(printer);
 
-   // Print out CSRs that are supported
-   printer.print_string("-----------------------------", "--------------------------------------------------------------------");
-   begin
-      instr_csr_t csr;
+   if (csr_print) begin
+      // Print out CSRs that are supported
+      printer.print_string("-----------------------------", "--------------------------------------------------------------------");
+      begin
+         instr_csr_t csr;
 
-      csr = csr.first();
-      while (1) begin
-         if (unsupported_csr_mask[csr])
-            printer.print_string(csr.name(), "Unsupported");
-         else if (disable_all_csr_checks || disable_csr_check_mask[csr])
-            printer.print_string(csr.name(), "Supported but not checked in scoreboard");
-         else
-            printer.print_string(csr.name(), "Supported and checked in scoreboard");
+         csr = csr.first();
+         while (1) begin
+            if (unsupported_csr_mask[csr])
+               printer.print_string(csr.name(), "Unsupported");
+            else if (disable_all_csr_checks || disable_csr_check_mask[csr])
+               printer.print_string(csr.name(), "Supported but not checked in scoreboard");
+            else
+               printer.print_string(csr.name(), "Supported and checked in scoreboard");
 
-         if (csr == csr.last()) break;
-         csr = csr.next();
+            if (csr == csr.last()) break;
+            csr = csr.next();
+         end
       end
+      printer.print_string("-----------------------------", "--------------------------------------------------------------------");
    end
-   printer.print_string("-----------------------------", "--------------------------------------------------------------------");
-
 endfunction : do_print
 
 function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();

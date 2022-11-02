@@ -324,7 +324,7 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     input  sys_fence_insn_i,
 
     input  csr_access,
-    input  [1:0] csr_op,
+    input  cv32e40s_pkg::csr_opcode_e csr_op,
     input  [11:0] csr_addr,
     input  csr_we_int,
 
