@@ -1,5 +1,5 @@
-// Copyright 2022 OpenHW Group
 // Copyright 2022 Silicon Labs, Inc.
+// Copyright 2022 OpenHW Group
 //
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,12 +32,27 @@ module uvmt_cv32e40s_rvfi_assert
   input [ 2:0]      rvfi_dbg,
   input [31:0]      rvfi_csr_dcsr_rdata,
   input rvfi_trap_t rvfi_trap,
-  input rvfi_intr_t rvfi_intr
+  input rvfi_intr_t rvfi_intr,
+  input [31:0]      rvfi_csr_mcause_wdata,
+  input [31:0]      rvfi_csr_mcause_wmask,
+  input             rvfi_dbg_mode
 );
 
   default clocking @(posedge clk_i); endclocking
   default disable iff !rst_ni;
   string info_tag = "CV32E40S_RVFI_ASSERT";
+
+
+  // Helper signals
+
+  logic  was_rvfi_dbg_mode;
+  always @(posedge clk_i, negedge rst_ni) begin
+    if (rst_ni == 0) begin
+      was_rvfi_dbg_mode <= 0;
+    end else if (rvfi_valid) begin
+      was_rvfi_dbg_mode <= rvfi_dbg_mode;
+    end
+  end
 
 
   // rs1/rs2 reset values
@@ -63,10 +78,23 @@ module uvmt_cv32e40s_rvfi_assert
 
   a_dbg_cause: assert property (
     rvfi_valid  &&
-    rvfi_dbg
+    rvfi_dbg    &&
+    !was_rvfi_dbg_mode
     |->
     (rvfi_dbg == rvfi_csr_dcsr_rdata[8:6])
   ) else `uvm_error(info_tag, "'rvfi_dbg' did not match 'dcsr.cause'");
+
+
+  // RVFI exception cause matches "mcause"
+
+  a_exc_cause: assert property (
+    rvfi_valid           &&
+    rvfi_trap.exception  &&
+    !rvfi_dbg_mode
+    |->
+    (rvfi_trap.exception_cause
+      == (rvfi_csr_mcause_wdata & rvfi_csr_mcause_wmask))
+  );
 
 
   // Exceptions/Interrupts/Debugs have a cause
