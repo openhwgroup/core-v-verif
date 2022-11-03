@@ -339,7 +339,9 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   // TODO:silabs-robin "uvm_error" on all assertions?
 
+
   // Software-view can read the granularity level
+
   a_granularity_determination: assert property (
     (is_rvfi_csr_instr && (rvfi_insn[14:12] == 3'b 001)) &&  // CSRRW instr,
     (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + 0))    &&  // to a "pmpaddr" CSR,
@@ -349,13 +351,14 @@ module uvmt_cv32e40s_pmprvfi_assert
     !rvfi_trap                                               // (Trap doesn't meddle.)
     |=>
     (rvfi_valid [->1])  ##0
-    (rvfi_csr_pmpaddr_rdata[0][31:PMP_GRANULARITY] == '1)  &&
+    (rvfi_csr_pmpaddr_rdata[0][`max(PMP_GRANULARITY-1, 0) : 0] == '0)  &&
     (
-      (rvfi_csr_pmpaddr_rdata[0][`max(PMP_GRANULARITY-1, 0) : 0] == '0)  ^
+      (rvfi_csr_pmpaddr_rdata[0][31:PMP_GRANULARITY] == '1)  ^
       (PMP_GRANULARITY == 0)
     )
     // Note: _Can_ be generalized for all i
   );
+
 
   // Locking is forever
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_until_reset
