@@ -57,6 +57,18 @@ class uvma_cv32e40s_core_cntrl_agent_c extends uvma_core_cntrl_agent_c;
     */
    extern virtual task start_fetch_toggle_seq();
 
+   /**
+    * End of elaboration phase
+    * Emit ovpsim.ic control file
+    */
+   extern function void end_of_elaboration_phase(uvm_phase phase);
+
+   /**
+    * Configure core specific ISS overrides
+    */
+   extern function void configure_iss();
+
+
 endclass : uvma_cv32e40s_core_cntrl_agent_c
 
 function uvma_cv32e40s_core_cntrl_agent_c::new(string name="uvma_cv32e40s_core_cntrl_agent", uvm_component parent=null);
@@ -113,5 +125,118 @@ task uvma_cv32e40s_core_cntrl_agent_c::start_fetch_toggle_seq();
   fetch_toggle_seq.start(this.sequencer);
 
 endtask : start_fetch_toggle_seq
+
+function void uvma_cv32e40s_core_cntrl_agent_c::end_of_elaboration_phase(uvm_phase phase);
+  super.end_of_elaboration_phase(phase);
+
+  if (cfg.use_iss) begin
+     configure_iss();
+  end
+
+endfunction : end_of_elaboration_phase
+
+function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
+  int    fh;                // file handle ISS control file (typically ovpsim.ic).
+  string refpath = "cpu" ;  // root of config path in ISS control file.
+
+  fh = $fopen(cfg.iss_control_file, "a");
+
+  // -------------------------------------------------------------------------------------
+  // Parameters
+  // -------------------------------------------------------------------------------------
+
+  $fwrite(fh, $sformatf("--override %s/misa_Extensions=0x%06x\n", refpath, cfg.get_misa()));
+  $fwrite(fh, $sformatf("--override %s/tcontrol_undefined=0\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/mtvec_mask=0xffffff81\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/instret_undefined=0\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/mcontext_undefined=T\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/mscontext_undefined=T\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/scontext_undefined=T\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/ecode_mask=2047\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/Zcb=0\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/Smstateen=T\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/scontext_undefined=1\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/ecode_mask=0x7ff\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/mtvec_mask=0xffffff81\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/Zca=1\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/Zcb=0\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/Zcmp=0\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/Zcmb=0\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/Zcmt=0\n", refpath));
+  $fwrite(fh, $sformatf("--override %s/noinhibit_mask=0x%08x\n", refpath, cfg.get_noinhibit_mask()));
+
+  // -------------------------------------------------------------------------------------
+  // Boot strap pins
+  // -------------------------------------------------------------------------------------
+  $fwrite(fh, $sformatf("--override %s/mhartid=%0d\n", refpath, cfg.mhartid));
+  $fwrite(fh, $sformatf("--override %s/mimpid=%0d\n", refpath, cfg.mimpid));
+  $fwrite(fh, $sformatf("--override %s/startaddress=0x%08x\n", refpath, cfg.boot_addr));
+  // Specification forces mtvec[0] high at reset regardless of bootstrap pin state of mtvec_addr_i]0]
+  $fwrite(fh, $sformatf("--override %s/mtvec=0x%08x\n", refpath, cfg.mtvec_addr | 32'b1));
+  $fwrite(fh, $sformatf("--override %s/nmi_address=0x%08x\n", refpath, cfg.nmi_addr));
+  $fwrite(fh, $sformatf("--override %s/debug_address=0x%08x\n", refpath, cfg.dm_halt_addr));
+  $fwrite(fh, $sformatf("--override %s/dexc_address=0x%08x\n", refpath, cfg.dm_exception_addr));
+
+  if (cfg.is_ext_b_supported()) begin
+     // Bitmanip version
+     case (cfg.bitmanip_version)
+        BITMANIP_VERSION_0P90:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.90\n", refpath));
+        BITMANIP_VERSION_0P91:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.91\n", refpath));
+        BITMANIP_VERSION_0P92:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.92\n", refpath));
+        BITMANIP_VERSION_0P93:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.93\n", refpath));
+        BITMANIP_VERSION_0P93_DRAFT: $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.93-draft\n", refpath));
+        BITMANIP_VERSION_0P94:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.94\n", refpath));
+        BITMANIP_VERSION_1P00:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=1.0.0\n", refpath));
+     endcase
+
+     // Bitmanip extensions
+     $fwrite(fh, $sformatf("--override %s/Zba=%0d\n", refpath, cfg.ext_zba_supported));
+     $fwrite(fh, $sformatf("--override %s/Zbb=%0d\n", refpath, cfg.ext_zbb_supported));
+     $fwrite(fh, $sformatf("--override %s/Zbc=%0d\n", refpath, cfg.ext_zbc_supported));
+     $fwrite(fh, $sformatf("--override %s/Zbe=%0d\n", refpath, cfg.ext_zbe_supported));
+     $fwrite(fh, $sformatf("--override %s/Zbf=%0d\n", refpath, cfg.ext_zbf_supported));
+     $fwrite(fh, $sformatf("--override %s/Zbm=%0d\n", refpath, cfg.ext_zbm_supported));
+     $fwrite(fh, $sformatf("--override %s/Zbp=%0d\n", refpath, cfg.ext_zbp_supported));
+     $fwrite(fh, $sformatf("--override %s/Zbr=%0d\n", refpath, cfg.ext_zbr_supported));
+     $fwrite(fh, $sformatf("--override %s/Zbs=%0d\n", refpath, cfg.ext_zbs_supported));
+     $fwrite(fh, $sformatf("--override %s/Zbt=%0d\n", refpath, cfg.ext_zbt_supported));
+  end
+
+   case(cfg.debug_spec_version)
+     DEBUG_VERSION_0_13_2: $fwrite(fh, $sformatf("--override %s/debug_version=0.13.2-DRAFT\n", refpath));
+     DEBUG_VERSION_0_14_0: $fwrite(fh, $sformatf("--override %s/debug_version=0.14.0-DRAFT\n", refpath));
+     DEBUG_VERSION_1_0_0: $fwrite(fh, $sformatf("--override %s/debug_version=1.0.0-STABLE\n", refpath));
+   endcase
+
+   case(cfg.priv_spec_version)
+     PRIV_VERSION_MASTER:   $fwrite(fh, $sformatf("--override %s/priv_version=master\n", refpath));
+     PRIV_VERSION_1_10:     $fwrite(fh, $sformatf("--override %s/priv_version=1.10\n", refpath));
+     PRIV_VERSION_1_11:     $fwrite(fh, $sformatf("--override %s/priv_version=1.11\n", refpath));
+     PRIV_VERSION_1_12:     $fwrite(fh, $sformatf("--override %s/priv_version=1.12\n", refpath));
+     PRIV_VERSION_20190405: $fwrite(fh, $sformatf("--override %s/priv_version=20190405\n", refpath));
+   endcase
+
+   if (cfg.priv_spec_version == PRIV_VERSION_1_12) begin
+     case(cfg.endianness)
+       ENDIAN_LITTLE, ENDIAN_BIG: $fwrite(fh, $sformatf("--override %s/endianFixed=1\n", refpath));
+       ENDIAN_MIXED:              $fwrite(fh, $sformatf("--override %s/endianFixed=0\n", refpath));
+     endcase
+   end
+
+   // PMA Regions
+   $fwrite(fh, $sformatf("--override %s/extension/PMA_NUM_REGIONS=%0d\n", refpath, cfg.pma_regions.size()));
+   foreach (cfg.pma_regions[i]) begin
+      $fwrite(fh, $sformatf("--override %s/extension/word_addr_low%0d=0x%08x\n", refpath, i, cfg.pma_regions[i].word_addr_low));
+      $fwrite(fh, $sformatf("--override %s/extension/word_addr_high%0d=0x%08x\n", refpath, i, cfg.pma_regions[i].word_addr_high));
+      $fwrite(fh, $sformatf("--override %s/extension/main%0d=%0d\n", refpath, i, cfg.pma_regions[i].main));
+      $fwrite(fh, $sformatf("--override %s/extension/bufferable%0d=%0d\n", refpath, i, cfg.pma_regions[i].bufferable));
+      $fwrite(fh, $sformatf("--override %s/extension/cacheable%0d=%0d\n", refpath, i, cfg.pma_regions[i].cacheable));
+      $fwrite(fh, $sformatf("--override %s/extension/atomic%0d=%0d\n", refpath, i, cfg.pma_regions[i].atomic));
+   end
+
+   // Enable use of hw reg names instead of abi
+   $fwrite(fh, $sformatf("--override %s/use_hw_reg_names=T\n", refpath));
+   $fclose(fh);
+endfunction : configure_iss
 
 `endif // __UVMA_CV32E40S_CORE_CNTRL_AGENT_SV__
