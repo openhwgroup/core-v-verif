@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "corev_uvmt.h"
 
 
@@ -25,14 +26,14 @@
 
 // Written by assembly debug code to signal .c code that debug is exiting.
 volatile uint8_t glb_debug_status               = 0;
-// Written by main code to set test case in assembly debug code 
+// Written by main code to set test case in assembly debug code
 volatile uint8_t glb_expect_ebreaku_exc         = 0;
-// Written by main code to set test case in assembly debug code 
-volatile uint8_t glb_setmprv_test               = 0; 
 // Written by main code to set test case in assembly debug code
-volatile uint8_t glb_check_prv_test             = 0; 
+volatile uint8_t glb_setmprv_test               = 0;
 // Written by main code to set test case in assembly debug code
-volatile uint8_t glb_check_prv_test_2           = 0; 
+volatile uint8_t glb_check_prv_test             = 0;
+// Written by main code to set test case in assembly debug code
+volatile uint8_t glb_check_prv_test_2           = 0;
 // Written by main code to set test case in assembly debug code
 volatile uint8_t glb_unsupported_mode_test      = 0;
 // Written by main code to set test case in assembly debug code
@@ -41,7 +42,7 @@ volatile uint8_t glb_ebreaku_one_test           = 0;
 volatile uint8_t glb_check_previous_prv_test    = 0;
 // Written by assembly debug code. Asserts test case failure
 volatile uint8_t glb_unsupported_check_failed   = 0;
-// Written by assembly debug code. Asserts test case failure 
+// Written by assembly debug code. Asserts test case failure
 volatile uint8_t glb_ebreaku_one_check          = 0;
 // Written by assembly debug code. Contains dcsr register value
 volatile uint32_t glb_check_prv_test_val        = 0;
@@ -54,16 +55,16 @@ volatile uint32_t wmcause, wmstatus;
 #define MSTATUS_STD_VAL 0x1800
 // mstatus.MPRV bit
 #define MPRV_BIT 17
-// Debug define 
+// Debug define
 #define DEBUG_REQ_CONTROL_REG *((volatile uint32_t *) (CV_VP_DEBUG_CONTROL_BASE))
 // external assembly symbol which defines a generous region for user mode execution
 extern volatile void setup_pmp();
 // external assembly symbol which sets core into user mode.
 extern volatile void set_u_mode();
 // mstatus.MPP bit-field
-int MPP_FIELD [2] = {11, 12}; 
+int MPP_FIELD [2] = {11, 12};
 // dcsr.prv bit-field
-int PRV_FIELD [2] = {0, 1}; 
+int PRV_FIELD [2] = {0, 1};
 
 // declaration of the assert function
 static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
@@ -74,7 +75,7 @@ static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
   }
 }
 
-/* 
+/*
 Retuns specific bit-field from [bit_indx_low : bit_indx_high] in register x
 */
 unsigned int get_field(unsigned int x, int bit_indx_low, int bit_indx_high){
@@ -85,7 +86,7 @@ unsigned int get_field(unsigned int x, int bit_indx_low, int bit_indx_high){
 
 
 /*
-Checks the mepc for compressed instructions and increments appropriately 
+Checks the mepc for compressed instructions and increments appropriately
 */
 void increment_mepc(void){
   volatile unsigned int insn, mepc;
@@ -97,7 +98,7 @@ void increment_mepc(void){
     } else {
       mepc += 2;
     }
-    __asm__ volatile("csrrw x0, mepc, %0" :: "r"(mepc)); // write to the mepc 
+    __asm__ volatile("csrrw x0, mepc, %0" :: "r"(mepc)); // write to the mepc
 }
 
 
@@ -107,11 +108,11 @@ void u_sw_irq_handler(void) {
 
     __asm__ volatile("csrrs %0, mcause, x0" : "=r"(wmcause));
     __asm__ volatile("csrrs %0, mstatus, x0" : "=r"(wmstatus));
-    __asm__ volatile("csrrw x0, mstatus, %0" :: "r"(MSTATUS_STD_VAL)); // set machine mode 
+    __asm__ volatile("csrrw x0, mstatus, %0" :: "r"(MSTATUS_STD_VAL)); // set machine mode
     increment_mepc();
 }
 
-// Declaration of the debug struct 
+// Declaration of the debug struct
 typedef union {
   struct {
     unsigned int start_delay      : 15; // 14: 0
@@ -128,7 +129,7 @@ typedef union {
 When called it starts debug_mode
 */
 void run_debug_mode(void) {
-  // debug control struct 
+  // debug control struct
   debug_req_control_t debug_req_control;
   debug_req_control = (debug_req_control_t) {
     .fields.value            = 1,
@@ -139,8 +140,8 @@ void run_debug_mode(void) {
     .fields.start_delay      = 200
   };
 
-  // this will initiate debug mode 
-  DEBUG_REQ_CONTROL_REG = debug_req_control.bits; 
+  // this will initiate debug mode
+  DEBUG_REQ_CONTROL_REG = debug_req_control.bits;
   // waits for debug to finish
   while(glb_debug_status != 1){
       ;
@@ -167,14 +168,14 @@ int main(void){// TODO: test will failed until issue #278 in core-v-verif/cv32e4
 
 
 
-  // TEST WILL FAIL UNTIL ISSUE #277 (openHW/cv32e40s) IS RESOLVED 
+  // TEST WILL FAIL UNTIL ISSUE #277 (openHW/cv32e40s) IS RESOLVED
   // TODO: comment the test back in when #277 has been resolved
   // Test start:
   /*
   Transition out of D-mode (dret) into U-mode, while mstatus.mprv=1, ensure that when execution continues outside D-mode that mstatus.mprv=0.
   */
 
-  /* 
+  /*
   glb_setmprv_test = 1; // flag the MRPRV-test for the debug module.
   run_debug_mode();
   asm volatile("ecall");
@@ -187,7 +188,7 @@ int main(void){// TODO: test will failed until issue #278 in core-v-verif/cv32e4
 
 
   // Test start:
-  /* 
+  /*
   Transition out of D-mode, ensure that executions starts in the same privilege mode as was indicated in dcsr.prv (dcsr.prv=M and dcsr.prv=U).
   */
   // First check machine mode.
@@ -195,7 +196,7 @@ int main(void){// TODO: test will failed until issue #278 in core-v-verif/cv32e4
   run_debug_mode();
   asm volatile("ecall");
   uint32_t check_MPP_bit = get_field(wmstatus, MPP_FIELD[0], MPP_FIELD[1]);
-  assert_or_die(check_MPP_bit, 0x3, "Error: previous privilege mode did not match the one set in dcsr.prv before exiting debug mode!\n");  
+  assert_or_die(check_MPP_bit, 0x3, "Error: previous privilege mode did not match the one set in dcsr.prv before exiting debug mode!\n");
   uint32_t check_prv_bit = get_field(glb_check_prv_test_val, PRV_FIELD[0], PRV_FIELD[1]);
   assert_or_die(check_MPP_bit, check_prv_bit, "Error: previous privilege mode did not match the one set in dcsr.prv before exiting debug mode!\n");
   glb_check_prv_test = 0;
@@ -205,7 +206,7 @@ int main(void){// TODO: test will failed until issue #278 in core-v-verif/cv32e4
   run_debug_mode();
   asm volatile("ecall");
   check_MPP_bit = get_field(wmstatus, MPP_FIELD[0], MPP_FIELD[1]);
-  assert_or_die(check_MPP_bit, 0x0, "Error: previous privilege mode did not match the one set in dcsr.prv before exiting debug mode!\n");  
+  assert_or_die(check_MPP_bit, 0x0, "Error: previous privilege mode did not match the one set in dcsr.prv before exiting debug mode!\n");
   check_prv_bit = get_field(glb_check_prv_test_val, PRV_FIELD[0], PRV_FIELD[1]);
   assert_or_die(check_MPP_bit, check_prv_bit, "Error: previous privilege mode did not match the one set in dcsr.prv before exiting debug mode!\n");
   glb_check_prv_test_2 = 0;
@@ -224,13 +225,13 @@ int main(void){// TODO: test will failed until issue #278 in core-v-verif/cv32e4
 
 
 
-  // TEST WILL FAIL UNTIL dcsr.ebreaku BIT IS IMPLEMENTED! 
-  // TODO: comment the test back in when the above is resolved. 
+  // TEST WILL FAIL UNTIL dcsr.ebreaku BIT IS IMPLEMENTED!
+  // TODO: comment the test back in when the above is resolved.
   // Test start:
   /*
   Have dcsr.ebreaku=1, be in U-mode, execute ebreak, ensure debug entry happens instead of "normal" ebreak behavior.
   */
-  /* 
+  /*
   glb_ebreaku_one_test = 1; // make debug mode set dcsr.ebreaku = 0
   run_debug_mode();
   glb_ebreaku_one_test = 0; // shut off flag
@@ -245,14 +246,14 @@ int main(void){// TODO: test will failed until issue #278 in core-v-verif/cv32e4
   /*
   Transition into D-mode from M-mode and U-mode, ensure dcsr.prv contains the privilege mode that was running before D-mode.
   */
-  // First check machine mode 
+  // First check machine mode
   asm volatile("ecall"); // trap handler will force machine mode
   glb_check_previous_prv_test = 1;
   run_debug_mode();
   int privilege_mode = get_field(glb_dcsr_register, PRV_FIELD[0], PRV_FIELD[1]);
   assert_or_die(privilege_mode, 0x3, "Error: dcsr.prv does not match previous privilege mode after entering debug mode!\n");
 
-  // Now check user mode 
+  // Now check user mode
   set_u_mode();
   run_debug_mode();
   privilege_mode = get_field(glb_dcsr_register, PRV_FIELD[0], PRV_FIELD[1]);

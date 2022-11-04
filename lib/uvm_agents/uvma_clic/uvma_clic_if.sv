@@ -67,11 +67,11 @@ interface uvma_clic_if#(SMCLIC_ID_WIDTH = 5)();
     //always_comb begin
     //  clic_irq = is_active ? clic_irq_drv : 1'b0;
     //end
-    assign clic_irq       = is_active ? clic_irq_drv          : 1'b0;
-    assign clic_irq_id    = is_active ? clic_irq_id_drv       : 1'b0;
-    assign clic_irq_level = is_active ? clic_irq_level_drv    : 1'b0;
-    assign clic_irq_priv  = is_active ? clic_irq_priv_masked  : 1'b0;
-    assign clic_irq_shv   = is_active ? clic_irq_shv_drv      : 1'b0;
+    assign clic_irq       = is_active ? clic_irq_drv          : 'b0;
+    assign clic_irq_id    = is_active ? clic_irq_id_drv       : 'b0;
+    assign clic_irq_level = is_active ? clic_irq_level_drv    : 'b0;
+    assign clic_irq_priv  = is_active ? clic_irq_priv_masked  : 'b11;
+    assign clic_irq_shv   = is_active ? clic_irq_shv_drv      : 'b0;
 
     assign clic_irq_priv_masked = is_mmode_irq_only ? 2'b11 : clic_irq_priv_drv;
 
