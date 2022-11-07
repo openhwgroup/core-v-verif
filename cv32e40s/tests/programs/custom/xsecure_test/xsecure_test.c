@@ -39,7 +39,8 @@ typedef enum {
 // trap handler behavior definitions
 volatile trap_behavior_t trap_handler_beh;
 
-volatile uint32_t NUM_TRAP_EXECUTIONS;
+volatile uint32_t num_trao_executions;
+volatile uint32_t unexpected_irq_beh;
 
 
 /* Declaration of assert */
@@ -49,13 +50,6 @@ static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
     printf("expected = 0x%lx (%ld), got = 0x%lx (%ld)\n", expect, (int32_t)expect, actual, (int32_t)actual);
     exit(EXIT_FAILURE);
   }
-}
-
-/* Retuns specific bit-field from [bit_indx_low : bit_indx_high] in register x */
-unsigned int get_field(unsigned int x, int bit_indx_low, int bit_indx_high){
-    int field = ( 1 << ( (bit_indx_high - bit_indx_low) + 1) )  - 1;
-    x = (x & (field << bit_indx_low) ) >> bit_indx_low;
-    return x;
 }
 
 
@@ -70,21 +64,21 @@ void set_m_mode(void) {
 void increment_mepc(void){
   volatile unsigned int insn, mepc;
 
-    // read the mepc
-    __asm__ volatile("csrrs %0, mepc, x0" : "=r"(mepc));
+  // read the mepc
+  __asm__ volatile("csrrs %0, mepc, x0" : "=r"(mepc));
 
-    // read the contents of the mepc pc.
-    __asm__ volatile("lw %0, 0(%1)" : "=r"(insn) : "r"(mepc));
+  // read the contents of the mepc pc.
+  __asm__ volatile("lw %0, 0(%1)" : "=r"(insn) : "r"(mepc));
 
-    // check for compressed instruction before increment.
-    if ((insn & 0x3) == 0x3) {
-      mepc += 4;
-    } else {
-      mepc += 2;
-    }
+  // check for compressed instruction before increment.
+  if ((insn & 0x3) == 0x3) {
+    mepc += 4;
+  } else {
+    mepc += 2;
+  }
 
-    // write to the mepc
-    __asm__ volatile("csrrw x0, mepc, %0" :: "r"(mepc));
+  // write to the mepc
+  __asm__ volatile("csrrw x0, mepc, %0" :: "r"(mepc));
 }
 
 /* Rewritten interrupt handler */
@@ -101,9 +95,13 @@ void u_sw_irq_handler(void) {
 
     // csr_privilege_loop behavior
     case TRAP_INCR_BEH :
-      NUM_TRAP_EXECUTIONS += 1;
+      num_trao_executions += 1;
       increment_mepc();
       break;
+
+    // unexpected handler irq
+    default:
+      unexpected_irq_beh = 1;
   }
 
 }
@@ -118,10 +116,7 @@ void test_read_ctrlcpu_and_secureseeds_in_machine_mode(void){
   uint32_t csr_read;
 
   // setting the trap handler behaviour
-  trap_handler_beh = TRAP_INCR_BEH;
-
-  // resetting the trap handler count
-  NUM_TRAP_EXECUTIONS = 0;
+  trap_handler_beh = M_MODE_BEH;
 
   // enter machine mode:
   set_m_mode();
@@ -144,7 +139,7 @@ void test_read_ctrlcpu_and_secureseeds_in_user_mode(void){
   trap_handler_beh = TRAP_INCR_BEH;
 
   // resetting the trap handler count
-  NUM_TRAP_EXECUTIONS = 0;
+  num_trao_executions = 0;
 
   // enter usermode:
   set_u_mode();
@@ -167,17 +162,22 @@ void test_read_ctrlcpu_and_secureseeds_in_user_mode(void){
   __asm__ volatile("csrrc %0, " STR(CPUADDR_SECURESEED2) ", x0" : "=r"(csr_read));
 
   // number of exceptions should equal number of acesses
-  assert_or_die(NUM_TRAP_EXECUTIONS, 4*3, "error: accessing cpuctrl or secureseed_ in usermode does not cause a trap\n");
+  assert_or_die(num_trao_executions, 4*3, "error: accessing cpuctrl or secureseed_ in usermode does not cause a trap\n");
 
 }
 
 
 int main(void){
 
+  unexpected_error_beh = 0
+
   setup_pmp();
 
   test_read_ctrlcpu_and_secureseeds_in_machine_mode();
   test_read_ctrlcpu_and_secureseeds_in_user_mode();
+
+  // check if there was an unexpected irq handler req
+  assert_or_die(num_trao_executions, 4*3, "error: accessing cpuctrl or secureseed_ in usermode does not cause a trap\n");
 
   return EXIT_SUCCESS;
 }

@@ -2,9 +2,6 @@
 .section .text
 
 
-// imported variable
-.global reg_input
-
 // Functions
 .global setup_pmp
 .global set_u_mode
