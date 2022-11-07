@@ -1121,7 +1121,7 @@ module uvmt_cv32e40s_xsecure_assert
     //Generate a dummy instruction
     xsecure_if.core_if_stage_instr_meta_n_dummy
 
-    //Make sure the PC in the ID stage is equal to the PC in the IF stage as long as there is a dummy instruction present
+    //Make sure the PC of ID and IF stage is equal when there is a dummy instruction in the ID stage
     ##1 (xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc)[*1:$];
   endsequence
 
@@ -1131,11 +1131,12 @@ module uvmt_cv32e40s_xsecure_assert
     xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set
 
     //Make sure the PC in if stage remains the same untill it is forwarded to the id stage (and then either incremented or set of a new valid PC jump)
+    //(Uses ##2 because: On the first ##1 the FSM signal has "reached" IF, and on the next one its stability can be checked)
     ##2 $stable(xsecure_if.core_i_if_stage_i_pc_if_o)[*1:$];
   endsequence
 
 
-  a_xsecure_pc_hardening_secuential_normal_behaviour: assert property (
+  a_xsecure_pc_hardening_sequential_no_glitch_behaviour: assert property (
     @(posedge xsecure_if.core_clk)
 
     //Make sure we look at valid cycles
@@ -1144,12 +1145,12 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure the PC hardening setting is on
     && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
 
-    //Checkout the abnormal behaviour
+    //Checkout the non-incremental behaviour
     && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + 4
     && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + 2
 
     |->
-    //Abnormal behaviours are due to:
+    //Non-incremental behaviours schould be due to:
 
     //Initalization after reset
     xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0
@@ -1168,7 +1169,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// PC HARDENING ON SEQUENTIAL INSTRUCTION: SET MAJOR ALERT //////////
 
-  a_xsecure_pc_hardening_secuential_alert_major: assert property (
+  a_xsecure_pc_hardening_sequential_alert_major: assert property (
     @(posedge xsecure_if.core_clk)
 
     //Make sure we look at valid cycles
@@ -1177,7 +1178,7 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure the PC hardening setting is on
     && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
 
-    //Checkout the abnormal behaviour
+    //Checkout the non-incremental
     && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + 4
     && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + 2
 
@@ -1185,7 +1186,7 @@ module uvmt_cv32e40s_xsecure_assert
     && $past(xsecure_if.core_if_stage_if_valid_o)
     && $past(xsecure_if.core_if_stage_id_ready_i)
 
-    //Make sure the abnormal behaviour is not caused by any of the following reasons:
+    //Make sure the non-incremental is not caused by any of the following reasons:
 
     //Initalization after reset
     and !(xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0)
@@ -1210,7 +1211,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   //TODO: recheck this assertion when the rtl code related to pc_hadening=0 is implemented
 
-  a_xsecure_pc_hardening_off_secuential_alert_major: assert property (
+  a_xsecure_pc_hardening_off_sequential_alert_major: assert property (
     @(posedge xsecure_if.core_clk)
 
     //Make sure we look at valid cycles
@@ -1219,7 +1220,7 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure the PC hardening setting is off
     && !xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
 
-    //Checkout the abnormal behaviour
+    //Checkout the non-incremental
     && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + 4
     && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + 2
 
@@ -1227,7 +1228,7 @@ module uvmt_cv32e40s_xsecure_assert
     && $past(xsecure_if.core_if_stage_if_valid_o)
     && $past(xsecure_if.core_if_stage_id_ready_i)
 
-    //Make sure the abnormal behaviour is not caused by any of the following reasons:
+    //Make sure the non-incremental is not caused by any of the following reasons:
 
     //Initalization after reset
     and !(xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0)
@@ -1301,7 +1302,7 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure the branch decision differs in the hardened cycles
     ##1 xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o != $past(xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o)
 
-    //Make sure the branch decision is to always take the branch
+    //Make sure the branch decision is not automatically set to taken
     && !xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming;
 
   endsequence
@@ -1328,7 +1329,7 @@ module uvmt_cv32e40s_xsecure_assert
     seq_pc_hardening_non_sequential_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal)
 
     |=>
-    //Make sure alert major is set
+    //Make sure alert major is not set
     !xsecure_if.core_alert_major_o;
   endproperty
 

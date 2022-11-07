@@ -7,10 +7,10 @@
 
 //TODO: functions are fetched from the privilege test code. If these functions end up in a common function file, we should adopt this file to use the common functions.
 
-#define CPUADDR_CPUCTRL     0xBF0
-#define CPUADDR_SECURESEED0 0xBF9
-#define CPUADDR_SECURESEED1 0xBFA
-#define CPUADDR_SECURESEED2 0xBFC
+#define CSRADDR_CPUCTRL     0xBF0
+#define CSRADDR_SECURESEED0 0xBF9
+#define CSRADDR_SECURESEED1 0xBFA
+#define CSRADDR_SECURESEED2 0xBFC
 
 // macros for using defines in inline asm
 #define S(x) #x
@@ -33,14 +33,15 @@ extern volatile void set_u_mode();
 
 typedef enum {
   M_MODE_BEH,
-  TRAP_INCR_BEH
+  TRAP_INCR_BEH,
+  UNEXPECTED_ERROR_BEH
 } trap_behavior_t;
 
 // trap handler behavior definitions
-volatile trap_behavior_t trap_handler_beh;
+volatile trap_behavior_t trap_handler_beh = UNEXPECTED_ERROR_BEH;
 
 volatile uint32_t num_trao_executions;
-volatile uint32_t unexpected_irq_beh;
+volatile uint32_t unexpected_irq_beh = 0;
 
 
 /* Declaration of assert */
@@ -99,7 +100,7 @@ void u_sw_irq_handler(void) {
       increment_mepc();
       break;
 
-    // unexpected handler irq
+    // unexpected handler irq (UNEXPECTED_ERROR_BEH and more)
     default:
       unexpected_irq_beh = 1;
   }
@@ -122,12 +123,15 @@ void test_read_ctrlcpu_and_secureseeds_in_machine_mode(void){
   set_m_mode();
 
   // read secureseed:
-  __asm__ volatile("csrrw %0, " STR(CPUADDR_SECURESEED0) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", x0" : "=r"(csr_read));
   assert_or_die(csr_read, 0, "error: secureseed0 is not read as zero\n");
-  __asm__ volatile("csrrw %0, " STR(CPUADDR_SECURESEED1) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED1) ", x0" : "=r"(csr_read));
   assert_or_die(csr_read, 0, "error: secureseed1 is not read as zero\n");
-  __asm__ volatile("csrrw %0, " STR(CPUADDR_SECURESEED2) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED2) ", x0" : "=r"(csr_read));
   assert_or_die(csr_read, 0, "error: secureseed2 is not read as zero\n");
+
+  // set the trap handler to go into default mode
+  trap_handler_beh = UNEXPECTED_ERROR_BEH;
 
 }
 
@@ -145,24 +149,27 @@ void test_read_ctrlcpu_and_secureseeds_in_user_mode(void){
   set_u_mode();
 
   // try to read ctrlcpu and secureseed:
-  __asm__ volatile("csrrw %0, " STR(CPUADDR_CPUCTRL) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrs %0, " STR(CPUADDR_CPUCTRL) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrc %0, " STR(CPUADDR_CPUCTRL) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrs %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrc %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(csr_read));
 
-  __asm__ volatile("csrrw %0, " STR(CPUADDR_SECURESEED0) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrs %0, " STR(CPUADDR_SECURESEED0) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrc %0, " STR(CPUADDR_SECURESEED0) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrs %0, " STR(CSRADDR_SECURESEED0) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrc %0, " STR(CSRADDR_SECURESEED0) ", x0" : "=r"(csr_read));
 
-  __asm__ volatile("csrrw %0, " STR(CPUADDR_SECURESEED1) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrs %0, " STR(CPUADDR_SECURESEED1) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrc %0, " STR(CPUADDR_SECURESEED1) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED1) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrs %0, " STR(CSRADDR_SECURESEED1) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrc %0, " STR(CSRADDR_SECURESEED1) ", x0" : "=r"(csr_read));
 
-  __asm__ volatile("csrrw %0, " STR(CPUADDR_SECURESEED2) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrs %0, " STR(CPUADDR_SECURESEED2) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrc %0, " STR(CPUADDR_SECURESEED2) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED2) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrs %0, " STR(CSRADDR_SECURESEED2) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrc %0, " STR(CSRADDR_SECURESEED2) ", x0" : "=r"(csr_read));
 
   // number of exceptions should equal number of acesses
   assert_or_die(num_trao_executions, 4*3, "error: accessing cpuctrl or secureseed_ in usermode does not cause a trap\n");
+
+  // set the trap handler to go into default mode
+  trap_handler_beh = UNEXPECTED_ERROR_BEH;
 
 }
 
