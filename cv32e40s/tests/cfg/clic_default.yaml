@@ -4,6 +4,17 @@ compile_flags:
     +define+ZBA_ZBB_ZBC_ZBS
     +define+SMCLIC_EN
 ovpsim: >
+    --override cpu/CLICLEVELS=256
+    --override cpu/CLICXCSW=T
+    --override cpu/CLICXNXTI=T
+    --override cpu/CLIC_version=master
+    --override cpu/externalCLIC=T
+    --override cpu/Zcmb=f
+    --override cpu/Zicsr=T
+    --override cpu/noinhibit_mask=0xfffffffa
+    --override cpu/trigger_num=0
+    --override cpu/extension/mcountinhibit_reset=0x5
+    --override cpu/mtvec_mask=0xffffff80
     --override cpu/PMP_registers=64
     --override cpu/PMP_undefined=T
     --override cpu/PMP_initialparams=T
