@@ -593,6 +593,11 @@ module uvmt_cv32e40s_imperas_dv_wrap
     string test_program_elf;
     reg [31:0] hart_id;
 
+    // Worst case propagation of events 4 retirements (actually 3 observed)
+    void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 4));
+    // Redirect stdout to parent systemverilog simulator
+    void'(rvviRefConfigSetInt(IDV_CONFIG_REDIRECT_STDOUT, `RVVI_TRUE));
+
     // Initialize REF and load the test-program into it's memory (do this before initializing the DUT).
     // TODO: is this the best place for this?
     if (!rvviVersionCheck(`RVVI_API_VERSION)) begin
