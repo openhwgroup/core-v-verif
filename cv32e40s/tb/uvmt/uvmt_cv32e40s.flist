@@ -60,6 +60,7 @@ ${TBSRC_HOME}/uvmt/uvmt_cv32e40s_dut_wrap.sv
 
 ${DV_UVMT_PATH}/uvmt_cv32e40s_debug_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_fencei_assert.sv
+${DV_UVMT_PATH}/uvmt_cv32e40s_rvfi_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_integration_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_interrupt_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_clic_interrupt_assert.sv

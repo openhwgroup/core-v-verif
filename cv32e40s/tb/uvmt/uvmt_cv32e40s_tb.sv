@@ -663,6 +663,14 @@ module uvmt_cv32e40s_tb;
     );
 
 
+  // RVFI assertions
+
+  bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i
+    uvmt_cv32e40s_rvfi_assert  rvfi_assert_i (
+      .*
+    );
+
+
   // Core integration assertions
 
   bind cv32e40s_wrapper
