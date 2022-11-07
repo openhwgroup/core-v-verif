@@ -178,7 +178,6 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q,
     input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q,
     input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q,
 
     // BASE
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q,
@@ -201,7 +200,6 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q,
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q,
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q,
 
     // BASIC
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q,

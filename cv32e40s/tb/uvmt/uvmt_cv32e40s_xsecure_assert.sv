@@ -928,6 +928,27 @@ module uvmt_cv32e40s_xsecure_assert
   end endgenerate
 
 
+  ////////// GENERAL PURPOSE REGISTERS AND ECC ATTACHEMENT ARE NEVER ALL ZEROS OR ONES //////////
+
+  //Make assertions for each gpr:
+  generate for (genvar gpr_addr = 0; gpr_addr < 32; gpr_addr++) begin
+
+  a_xsecure_register_file_ecc_gprecc_never_all_zeros: assert property (
+
+    //Verify that register and ecc score never is all zeros
+    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] != 38'h00_0000_0000
+
+  ) else `uvm_error(info_tag, $sformatf("General purpose register %0d with attached ecc score is all zeros.\n", gpr_addr));
+
+  a_xsecure_register_file_ecc_gprecc_never_all_ones: assert property (
+
+    //Verify that register and ecc score never is all ones
+    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] != 38'hFF_FFFF_FFFF
+
+  ) else `uvm_error(info_tag, $sformatf("General purpose register %0d with attached ecc score is all ones.\n", gpr_addr));
+
+  end endgenerate
+
   ////////// ECC DECODING MISSMATCH ON EVERY READ SETS MAJOR ALERT //////////
 
   /****************************************
@@ -1076,6 +1097,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   end endgenerate
 
+
   ///////////////////////////////////////////////////////////////
   ///////////////////////// HARDENED PC /////////////////////////
   ///////////////////////////////////////////////////////////////
@@ -1141,7 +1163,7 @@ module uvmt_cv32e40s_xsecure_assert
     //PC jumping
     or $past(xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set)
 
-  ) else `uvm_error(info_tag, "PC fault for sequential non-compressed instructions does not set alert major.\n");
+  ) else `uvm_error(info_tag, "There is a PC fault in IF stage.\n");
 
 
   ////////// PC HARDENING ON SEQUENTIAL INSTRUCTION: SET MAJOR ALERT //////////
@@ -1181,7 +1203,7 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure the alert major is set
     xsecure_if.core_alert_major_o
 
-  ) else `uvm_error(info_tag, "PC fault for sequential non-compressed instructions does not set alert major.\n");
+  ) else `uvm_error(info_tag, "A PC fault in IF stage does not set major alert when PC hardening is on.\n");
 
 
   ////////// PC HARDENING OFF SEQUENTIAL INSTRUCTION: DONT SET MAJOR ALERT //////////
@@ -1223,7 +1245,7 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure the alert major is not set
     !xsecure_if.core_alert_major_o
 
-  ) else `uvm_error(info_tag, "PC fault for sequential non-compressed instructions does not set alert major.\n");
+  ) else `uvm_error(info_tag, "A PC fault in IF stage set major alert when PC hardening is off.\n");
 
 
   ////////// PC HARDENING ON NON-SEQUENTIAL INSTRUCTION: SET MAJOR ALERT IF GLITCH IN PC TARGET //////////
@@ -1255,15 +1277,15 @@ module uvmt_cv32e40s_xsecure_assert
 
   a_xsecure_pc_hardening_branch_set_alert_major: assert property(
     p_xsecure_hardened_pc_non_sequential_set_major_alert(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, BRANCH_STATE, xsecure_if.core_i_ex_stage_i_branch_target_o)
-  );
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch instruction does not set alert major.\n");
 
   a_xsecure_pc_hardening_jump_set_alert_major: assert property(
     p_xsecure_hardened_pc_non_sequential_set_major_alert(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, JUMP_STATE, xsecure_if.core_i_jump_target_id)
-  );
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed jump instruction does not set alert major.\n");
 
   a_xsecure_pc_hardening_mret_set_alert_major: assert property(
     p_xsecure_hardened_pc_non_sequential_set_major_alert(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, MRET_STATE, xsecure_if.core_i_cs_registers_i_mepc_o)
-  );
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction does not set alert major.\n");
 
 
   ////////// PC HARDENING ON NON-SEQUENTIAL INSTRUCTION: SET MAJOR ALERT IF GLITCH IN BRANCH DECISION //////////
@@ -1294,12 +1316,13 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure alert major was/is set
     xsecure_if.core_alert_major_o
     || $past(xsecure_if.core_alert_major_o)
-  );
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch decision does not set alert major.\n");
 
 
   ////////// PC HARDENING OFF NON-SEQUENTIAL INSTRUCTION: DONT SET MAJOR ALERT IF GLITCH IN PC TARGET //////////
 
   //TODO: recheck property when rtl for PC_hardnine == 0 is imoplemented
+
   property p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(pc_hardening, fsm_state, calculated_signal);
 
     seq_pc_hardening_non_sequential_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal)
@@ -1311,15 +1334,15 @@ module uvmt_cv32e40s_xsecure_assert
 
   a_xsecure_pc_hardening_off_branch_set_alert_major: assert property(
     p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, BRANCH_STATE, xsecure_if.core_i_ex_stage_i_branch_target_o)
-  );
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction set alert major even though PC hardening is off.\n");
 
   a_xsecure_pc_hardening_off_jump_set_alert_major: assert property(
     p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, JUMP_STATE, xsecure_if.core_i_jump_target_id)
-  );
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction set alert major even though PC hardening is off.\n");
 
   a_xsecure_pc_hardening_off_mret_set_alert_major: assert property(
     p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, MRET_STATE, xsecure_if.core_i_cs_registers_i_mepc_o)
-  );
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction set alert major even though PC hardening is off.\n");
 
 
   ////////// PC HARDENING OFF NON-SEQUENTIAL INSTRUCTION: DONT SET MAJOR ALERT IF GLITCH IN BRANCH DECISION //////////
@@ -1332,8 +1355,6 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure alert major was/is not set
     !xsecure_if.core_alert_major_o
     && !$past(xsecure_if.core_alert_major_o)
-  );
-
-
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch decision set alert major even though PC hardening is off.\n");
 
 endmodule : uvmt_cv32e40s_xsecure_assert
