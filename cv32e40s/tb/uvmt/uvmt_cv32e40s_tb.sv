@@ -23,7 +23,9 @@
 `define __UVMT_CV32E40S_TB_SV__
 
 // Import the Imperas-DV RVVI API
-`include "rvvi/rvvi-api.svh"
+`ifndef FORMAL
+  `include "rvvi/rvvi-api.svh"
+`endif
 
 /**
  * Module encapsulating the CV32E40S DUT wrapper, and associated SV interfaces.
@@ -36,7 +38,9 @@ module uvmt_cv32e40s_tb;
    import cv32e40s_pkg::*;
    import uvmt_cv32e40s_pkg::*;
    import uvme_cv32e40s_pkg::*;
-   import rvviApi::*;
+  `ifndef FORMAL
+     import rvviApi::*;
+  `endif
 
    // ENV (testbench) parameters
    parameter int ENV_PARAM_INSTR_ADDR_WIDTH  = 32;
@@ -90,7 +94,9 @@ module uvmt_cv32e40s_tb;
                                                    .sec_lvl());     // Core status outputs
 
    // RVVI SystemVerilog Interface
-   rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+   `ifndef FORMAL
+     rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+   `endif
 
   /**
    * DUT WRAPPER instance:
@@ -1096,7 +1102,9 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
     //uvmt_cv32e40s_rvvi_handcar u_rvvi_handcar();
 
     // IMPERAS DV
-    uvmt_cv32e40s_imperas_dv_wrap imperas_dv (rvvi_if);
+    `ifndef FORMAL
+      uvmt_cv32e40s_imperas_dv_wrap imperas_dv (rvvi_if);
+    `endif
 
     // IMPERAS OVPsim ISS (planned for deprecation)
     uvmt_cv32e40s_iss_wrap  #(
