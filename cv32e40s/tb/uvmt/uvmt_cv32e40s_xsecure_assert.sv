@@ -50,6 +50,11 @@ module uvmt_cv32e40s_xsecure_assert
   localparam FREQ_SETTING_32 = 4'b01xx;
   localparam FREQ_SETTING_64 = 4'b1xxx;
 
+  localparam INSTRUCTIONS_RS1_MSB = 19;
+  localparam INSTRUCTIONS_RS1_LSB = 15;
+  localparam INSTRUCTIONS_RS2_MSB = 24;
+  localparam INSTRUCTIONS_RS2_LSB = 20;
+
 
   // Default settings:
   default clocking @(posedge clk_i); endclocking
@@ -976,12 +981,12 @@ module uvmt_cv32e40s_xsecure_assert
 
 
   a_xsecure_register_file_ecc_gprecc_set_major_alert_if_rs1_is_all_zeros_or_ones: assert property (
-    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(19, 15, gpr_addr)
+    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(INSTRUCTIONS_RS1_MSB, INSTRUCTIONS_RS1_LSB, gpr_addr)
   ) else `uvm_error(info_tag, $sformatf("General purpose register %0d with attached ecc score is all ones or zeros but dont set major alert.\n", gpr_addr));
 
 
   a_xsecure_register_file_ecc_gprecc_set_major_alert_if_rs2_is_all_zeros_or_ones: assert property (
-    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(24, 20, gpr_addr)
+    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(INSTRUCTIONS_RS2_MSB, INSTRUCTIONS_RS2_LSB, gpr_addr)
   ) else `uvm_error(info_tag, $sformatf("General purpose register %0d with attached ecc score is all ones or zeros but dont set major alert.\n", gpr_addr));
 
 
