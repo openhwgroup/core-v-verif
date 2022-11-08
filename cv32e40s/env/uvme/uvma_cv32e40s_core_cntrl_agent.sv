@@ -152,7 +152,6 @@ function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
   // -------------------------------------------------------------------------------------
   // Boot strap pins
   // -------------------------------------------------------------------------------------
-  $fwrite(fh, "--showoverrides\n");
   $fwrite(fh, $sformatf("--override %s/mhartid=%0d\n", refpath, cfg.mhartid));
   $fwrite(fh, $sformatf("--override %s/mimpid=%0d\n", refpath, cfg.mimpid));
   $fwrite(fh, $sformatf("--override %s/startaddress=0x%08x\n", refpath, cfg.boot_addr));
