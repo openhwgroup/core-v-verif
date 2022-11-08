@@ -1108,19 +1108,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       uvmt_cv32e40s_imperas_dv_wrap imperas_dv (rvvi_if);
     `endif
 
-    // IMPERAS OVPsim ISS (planned for deprecation)
-    uvmt_cv32e40s_iss_wrap  #(
-                              .ID (0),
-                              .ROM_START_ADDR('h0),
-                              .ROM_BYTE_SIZE('h0),
-                              .RAM_BYTE_SIZE('h1_0000_0000)
-                             )
-                             iss_wrap ( .clk_period(clknrst_if.clk_period),
-                                        .clknrst_if(clknrst_if_iss)
-                             );
-
-    assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
-
    /**
     * Test bench entry point.
     */
@@ -1355,15 +1342,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
      // IMPERAS_DV interface
      uvm_config_db#(virtual rvviTrace)::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("rvvi_vif"), .value(rvvi_if));
 
-     // IMPERAS OVPsim ISS interfaces (planned for deprecation)
-     uvm_config_db#(virtual RVVI_state#(.ILEN(uvme_cv32e40s_pkg::ILEN),
-                                        .XLEN(uvme_cv32e40s_pkg::XLEN)
-                                        ))::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("state_vif"), .value(iss_wrap.cpu.state));
-     uvm_config_db#(virtual RVVI_control                )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("control_vif"), .value(iss_wrap.cpu.control));
-     uvm_config_db#(virtual RVVI_bus                    )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_bus_vif"), .value(iss_wrap.bus));
-     uvm_config_db#(virtual RVVI_io                     )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_io_vif"), .value(iss_wrap.io));
-     uvm_config_db#(virtual RVVI_memory                 )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_mem_vif"), .value(iss_wrap.ram.memory));
-
      // Virtual Peripheral Status interface
      uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if      )::set(.cntxt(null), .inst_name("*"), .field_name("vp_status_vif"),       .value(vp_status_if)      );
      uvm_config_db#(virtual uvme_cv32e40s_core_cntrl_if     )::set(.cntxt(null), .inst_name("*"), .field_name("core_cntrl_vif"),      .value(core_cntrl_if)     );
@@ -1390,32 +1368,17 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
    `endif
 
    assign core_cntrl_if.clk = clknrst_if.clk;
-  `ifndef  FORMAL
-     assign iss_wrap.cpu.io.nmi_addr = ({dut_wrap.cv32e40s_wrapper_i.rvfi_csr_mtvec_if_0_i.rvfi_csr_rdata[31:2], 2'b00}) + 32'h3c;
-  `endif
 
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
-   longint start_ovpsim_init_time;
-   longint end_ovpsim_init_time;
    `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
-
    // overcome race
    initial begin
-      #0.9ns;
-     imperas_dv.ref_init();
+     if ($test$plusargs("USE_ISS")) begin
+       #0.9ns;
+       imperas_dv.ref_init();
+     end
    end
-
-   initial begin
-      if (!$test$plusargs("DISABLE_OVPSIM")) begin
-        #0.9ns;
-        `uvm_info("OVPSIM", $sformatf("Start benchmarking OVPSIM initialization"), UVM_LOW)
-        start_ovpsim_init_time = svlib_pkg::sys_dayTime();
-        #1.1ns;
-        end_ovpsim_init_time = svlib_pkg::sys_dayTime();
-        `uvm_info("OVPSIM", $sformatf("Initialization time: %0d seconds", end_ovpsim_init_time - start_ovpsim_init_time), UVM_LOW)
-      end
-    end
    `endif
 
    //TODO verify these are correct with regards to isacov function
@@ -1478,12 +1441,9 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
 
-      // FIXME
       // Shutdown the Reference Model
-      if (0/*uvm_test_top.env.rvvi_ovpsim_agent.cfg.core_cfg.use_iss*/) begin
-         // Exit handler for OVPsim
-      end
-      else begin
+      if ($test$plusargs("USE_ISS")) begin
+         // Exit handler for ImperasDV
          void'(rvviRefShutdown());
       end
 

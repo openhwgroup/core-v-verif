@@ -108,8 +108,6 @@ export DV_UVML_HRTBT_PATH       = $(CORE_V_VERIF)/lib/uvm_libs/uvml_hrtbt
 export DV_UVMA_CORE_CNTRL_PATH  = $(CORE_V_VERIF)/lib/uvm_agents/uvma_core_cntrl
 export DV_UVMA_ISACOV_PATH      = $(CORE_V_VERIF)/lib/uvm_agents/uvma_isacov
 export DV_UVMA_RVFI_PATH        = $(CORE_V_VERIF)/lib/uvm_agents/uvma_rvfi
-export DV_UVMA_RVVI_PATH        = $(CORE_V_VERIF)/lib/uvm_agents/uvma_rvvi
-export DV_UVMA_RVVI_OVPSIM_PATH = $(CORE_V_VERIF)/lib/uvm_agents/uvma_rvvi_ovpsim
 export DV_UVMA_CLKNRST_PATH     = $(CORE_V_VERIF)/lib/uvm_agents/uvma_clknrst
 export DV_UVMA_INTERRUPT_PATH   = $(CORE_V_VERIF)/lib/uvm_agents/uvma_interrupt
 export DV_UVMA_CLIC_PATH        = $(CORE_V_VERIF)/lib/uvm_agents/uvma_clic
@@ -122,11 +120,6 @@ export DV_UVML_LOGS_PATH        = $(CORE_V_VERIF)/lib/uvm_libs/uvml_logs
 export DV_UVML_SB_PATH          = $(CORE_V_VERIF)/lib/uvm_libs/uvml_sb
 export DV_UVML_MEM_PATH         = $(CORE_V_VERIF)/lib/uvm_libs/uvml_mem
 
-# Imperas OVPsim (note: planned for deprecation)
-export DV_OVPM_HOME             = $(CORE_V_VERIF)/vendor_lib/imperas
-export DV_OVPM_MODEL            = $(DV_OVPM_HOME)/imperas_DV_COREV
-
-export DV_OVPM_DESIGN           = $(DV_OVPM_HOME)/design
 # ImperasDV
 export IMPERAS_DV_HOME          = $(CORE_V_VERIF)/vendor_lib/ImperasDV
 # Verilab SVlib
