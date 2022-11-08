@@ -148,7 +148,6 @@ function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
   $fwrite(fh, $sformatf("--override %s/misa_Extensions=0x%06x\n", refpath, cfg.get_misa()));
   $fwrite(fh, $sformatf("--override %s/tcontrol_undefined=0\n", refpath));
   $fwrite(fh, $sformatf("--override %s/mtvec_mask=0xffffff81\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/instret_undefined=0\n", refpath));
   $fwrite(fh, $sformatf("--override %s/mcontext_undefined=T\n", refpath));
   $fwrite(fh, $sformatf("--override %s/mscontext_undefined=T\n", refpath));
   $fwrite(fh, $sformatf("--override %s/scontext_undefined=T\n", refpath));
