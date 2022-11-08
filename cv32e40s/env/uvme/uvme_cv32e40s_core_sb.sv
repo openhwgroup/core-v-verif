@@ -187,9 +187,19 @@ function void uvme_cv32e40s_core_sb_c::pre_abort();
 endfunction : pre_abort
 
 function void uvme_cv32e40s_core_sb_c::print_instr_checked_stats();
-   `uvm_info("CORESB", $sformatf("checked %0d instruction retirements", pc_checked_cnt), UVM_NONE);
-   `uvm_info("CORESB", $sformatf("checked %0d GPR updates", gpr_checked_cnt), UVM_NONE);
-   `uvm_info("CORESB", $sformatf("checked %0d CSRs", csr_checked_cnt), UVM_NONE);
+   if ($test$plusargs("USE_ISS")) begin
+     if ((pc_checked_cnt > 0) && cfg.scoreboarding_enabled) begin
+        `uvm_info("CORESB", $sformatf("checked %0d instruction retirements", pc_checked_cnt), UVM_NONE)
+        `uvm_info("CORESB", $sformatf("checked %0d GPR updates", gpr_checked_cnt), UVM_NONE)
+        `uvm_info("CORESB", $sformatf("checked %0d CSRs", csr_checked_cnt), UVM_NONE)
+     end
+     else begin
+        `uvm_error("CORESB", "No Instructions checked!")
+     end
+  end
+  else begin
+      `uvm_info("CORESB", "ISS scoreboard disabled for this test.", UVM_NONE)
+  end
 endfunction : print_instr_checked_stats
 
 function void uvme_cv32e40s_core_sb_c::write_core_sb_rvfi_instr(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) rvfi_instr);

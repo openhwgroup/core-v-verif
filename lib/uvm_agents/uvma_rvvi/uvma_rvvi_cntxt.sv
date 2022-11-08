@@ -32,6 +32,8 @@ class uvma_rvvi_cntxt_c#(int ILEN=DEFAULT_ILEN,
    // Control RVVI interface
    virtual RVVI_control            control_vif;
 
+   virtual rvviTrace               rvvi_vif;
+
    // Events
    uvm_event  sample_cfg_e;
    uvm_event  sample_cntxt_e;
@@ -54,9 +56,6 @@ class uvma_rvvi_cntxt_c#(int ILEN=DEFAULT_ILEN,
 endclass : uvma_rvvi_cntxt_c
 
 
-`pragma protect begin
-
-
 function uvma_rvvi_cntxt_c::new(string name="uvma_rvvi_cntxt");
 
    super.new(name);
@@ -69,9 +68,6 @@ endfunction : new
 function void uvma_rvvi_cntxt_c::reset();
 
 endfunction : reset
-
-
-`pragma protect end
 
 
 `endif // __UVMA_RVVI_CNTXT_SV__

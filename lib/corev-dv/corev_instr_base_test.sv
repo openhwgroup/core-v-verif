@@ -44,7 +44,7 @@ class corev_instr_base_test extends riscv_instr_base_test;
 
   virtual function void build_phase(uvm_phase phase);
     super.build_phase(phase);
-  endfunction  
+  endfunction
 
   task run_phase(uvm_phase phase);
     int fd;
@@ -52,6 +52,7 @@ class corev_instr_base_test extends riscv_instr_base_test;
       string test_name;
       randomize_cfg();
       riscv_instr::create_instr_list(cfg);
+      riscv_csr_instr::create_csr_filter(cfg);
       asm_gen = corev_asm_program_gen::type_id::create("asm_gen", , `gfn);
       asm_gen.cfg = cfg;
       asm_gen.get_directed_instr_stream();

@@ -22,6 +22,10 @@
 `ifndef __UVMT_CV32E40S_TB_SV__
 `define __UVMT_CV32E40S_TB_SV__
 
+// Import the Imperas-DV RVVI API
+`ifndef FORMAL
+  `include "rvvi/rvvi-api.svh"
+`endif
 
 /**
  * Module encapsulating the CV32E40S DUT wrapper, and associated SV interfaces.
@@ -34,6 +38,9 @@ module uvmt_cv32e40s_tb;
    import cv32e40s_pkg::*;
    import uvmt_cv32e40s_pkg::*;
    import uvme_cv32e40s_pkg::*;
+  `ifndef FORMAL
+     import rvviApi::*;
+  `endif
 
    // ENV (testbench) parameters
    parameter int ENV_PARAM_INSTR_ADDR_WIDTH  = 32;
@@ -53,9 +60,20 @@ module uvmt_cv32e40s_tb;
    uvma_debug_if                debug_if();
    uvma_interrupt_if            interrupt_if();
    uvma_clic_if                 clic_if();
-   uvma_obi_memory_if           obi_instr_if_i(
-     .clk(clknrst_if.clk),
-     .reset_n(clknrst_if.reset_n)
+   uvma_obi_memory_if #(
+    /* TODO:silabs-robin  Correct widths sat via named definitions, everywhere!!! Important!
+     .AUSER_WIDTH (32),
+     .WUSER_WIDTH (32),
+     .RUSER_WIDTH (32),
+     .ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
+     .DATA_WIDTH  (32),
+     .ID_WIDTH    (32),
+     .ACHK_WIDTH  (ENV_PARAM_ACHK_WIDTH),
+     .RCHK_WIDTH  (ENV_PARAM_RCHK_WIDTH)
+    */
+   ) obi_instr_if_i (
+     .clk     (clknrst_if.clk),
+     .reset_n (clknrst_if.reset_n)
    );
    uvma_obi_memory_if           obi_data_if_i(
      .clk(clknrst_if.clk),
@@ -75,6 +93,11 @@ module uvmt_cv32e40s_tb;
    uvmt_cv32e40s_core_status_if     core_status_if(.core_busy(),
                                                    .sec_lvl());     // Core status outputs
 
+   // RVVI SystemVerilog Interface
+   `ifndef FORMAL
+     rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+   `endif
+
   /**
    * DUT WRAPPER instance:
    * This is an update of the riscv_wrapper.sv from PULP-Platform RI5CY project with
@@ -89,7 +112,8 @@ module uvmt_cv32e40s_tb;
                              .INSTR_ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
                              .INSTR_RDATA_WIDTH (ENV_PARAM_INSTR_DATA_WIDTH),
                              .RAM_ADDR_WIDTH    (ENV_PARAM_RAM_ADDR_WIDTH),
-                             .SMCLIC            (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC)
+                             .SMCLIC            (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC),
+                             .DBG_NUM_TRIGGERS  (uvmt_cv32e40s_pkg::CORE_PARAM_NUM_TRIGGERS)
                             )
                             dut_wrap (
                               .clknrst_if(clknrst_if),
@@ -405,7 +429,7 @@ module uvmt_cv32e40s_tb;
       .RUSER_WIDTH(0),
       .ID_WIDTH(0),
       .ACHK_WIDTH(0),
-      .RCHK_WIDTH(0),
+      .RCHK_WIDTH(0),  // TODO:silabs-robin  These (and similars) must be specified
       .IS_1P2(1)
     ) obi_instr_memory_assert_i(.obi(obi_instr_if_i));
 
@@ -545,6 +569,7 @@ module uvmt_cv32e40s_tb;
     );
   `endif
 
+
   // User-mode assertions
 
   bind  cv32e40s_wrapper
@@ -574,11 +599,46 @@ module uvmt_cv32e40s_tb;
       .rvfi_csr_mstatus_wmask    (rvfi_i.rvfi_csr_mstatus_wmask),
       .rvfi_csr_mstateen0_rdata  (rvfi_i.rvfi_csr_mstateen0_rdata),
 
-      .impu_valid (core_i.if_stage_i.mpu_i.core_trans_valid_i),
-      .impu_addr  (core_i.if_stage_i.mpu_i.core_trans_i.addr),
+      .mpu_iside_valid (core_i.if_stage_i.mpu_i.core_trans_valid_i),
+      .mpu_iside_addr  (core_i.if_stage_i.mpu_i.core_trans_i.addr),
+
+      .obi_iside_prot (core_i.instr_prot_o),
+      .obi_dside_prot (core_i.data_prot_o),
 
       .*
     );
+
+
+  // User-mode Coverage
+
+  bind  cv32e40s_wrapper
+    uvmt_cv32e40s_umode_cov  umode_cov_i (
+      .rvfi_valid     (rvfi_i.rvfi_valid),
+      .rvfi_trap      (rvfi_i.rvfi_trap),
+      .rvfi_intr      (rvfi_i.rvfi_intr),
+      .rvfi_insn      (rvfi_i.rvfi_insn),
+      .rvfi_rs1_rdata (rvfi_i.rvfi_rs1_rdata),
+      .rvfi_pc_rdata  (rvfi_i.rvfi_pc_rdata),
+      .rvfi_mode      (rvfi_i.rvfi_mode),
+      .rvfi_rd_addr   (rvfi_i.rvfi_rd_addr),
+      .rvfi_dbg_mode  (rvfi_i.rvfi_dbg_mode),
+      .rvfi_order     (rvfi_i.rvfi_order),
+      .rvfi_mem_rmask (rvfi_i.rvfi_mem_rmask),
+      .rvfi_mem_wmask (rvfi_i.rvfi_mem_wmask),
+
+      .rvfi_csr_mstatus_rdata (rvfi_i.rvfi_csr_mstatus_rdata),
+      .rvfi_csr_mstatus_rmask (rvfi_i.rvfi_csr_mstatus_rmask),
+      .rvfi_csr_dcsr_rdata    (rvfi_i.rvfi_csr_dcsr_rdata),
+      .rvfi_csr_dcsr_rmask    (rvfi_i.rvfi_csr_dcsr_rmask),
+
+      .obi_iside_req  (core_i.instr_req_o),
+      .obi_iside_gnt  (core_i.instr_gnt_i),
+      .obi_iside_addr (core_i.instr_addr_o),
+      .obi_iside_prot (core_i.instr_prot_o),
+
+      .*
+    );
+
 
   // Fence.i assertions
 
@@ -599,6 +659,14 @@ module uvmt_cv32e40s_tb;
       .rvfi_intr          (rvfi_i.rvfi_intr.intr),
       .rvfi_dbg_mode      (rvfi_i.rvfi_dbg_mode),
 
+      .*
+    );
+
+
+  // RVFI assertions
+
+  bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i
+    uvmt_cv32e40s_rvfi_assert  rvfi_assert_i (
       .*
     );
 
@@ -673,7 +741,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q        = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvec_csr_i.gen_hardened.shadow_q);
       assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q   = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintstatus_csr_i.gen_hardened.shadow_q);
       assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q   = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintthresh_csr_i.gen_hardened.shadow_q);
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q    = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mclicbase_csr_i.gen_hardened.shadow_q);
 
       //Shadow registers - BASIC
       assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q    = '0;
@@ -684,7 +751,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q                     = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvec_csr_i.rdata_q);
       assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q                = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintstatus_csr_i.rdata_q);
       assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q                = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintthresh_csr_i.rdata_q);
-      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q                 = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mclicbase_csr_i.rdata_q);
 
       //CSR registers - BASIC
       assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q    = '0;
@@ -1036,22 +1102,24 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
 
     //uvmt_cv32e40s_rvvi_handcar u_rvvi_handcar();
-    /**
-    * ISS WRAPPER instance:
-    */
-    `ifndef FORMAL
-      uvmt_cv32e40s_iss_wrap  #(
-                                .ID (0),
-                                .ROM_START_ADDR('h0),
-                                .ROM_BYTE_SIZE('h0),
-                                .RAM_BYTE_SIZE('h1_0000_0000)
-                               )
-                               iss_wrap ( .clk_period(clknrst_if.clk_period),
-                                          .clknrst_if(clknrst_if_iss)
-                                 );
 
-      assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
+    // IMPERAS DV
+    `ifndef FORMAL
+      uvmt_cv32e40s_imperas_dv_wrap imperas_dv (rvvi_if);
     `endif
+
+    // IMPERAS OVPsim ISS (planned for deprecation)
+    uvmt_cv32e40s_iss_wrap  #(
+                              .ID (0),
+                              .ROM_START_ADDR('h0),
+                              .ROM_BYTE_SIZE('h0),
+                              .RAM_BYTE_SIZE('h1_0000_0000)
+                             )
+                             iss_wrap ( .clk_period(clknrst_if.clk_period),
+                                        .clknrst_if(clknrst_if_iss)
+                             );
+
+    assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
 
    /**
     * Test bench entry point.
@@ -1284,6 +1352,10 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmcounter31h)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mconfigptr)
 
+     // IMPERAS_DV interface
+     uvm_config_db#(virtual rvviTrace)::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("rvvi_vif"), .value(rvvi_if));
+
+     // IMPERAS OVPsim ISS interfaces (planned for deprecation)
      uvm_config_db#(virtual RVVI_state#(.ILEN(uvme_cv32e40s_pkg::ILEN),
                                         .XLEN(uvme_cv32e40s_pkg::XLEN)
                                         ))::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("state_vif"), .value(iss_wrap.cpu.state));
@@ -1291,6 +1363,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
      uvm_config_db#(virtual RVVI_bus                    )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_bus_vif"), .value(iss_wrap.bus));
      uvm_config_db#(virtual RVVI_io                     )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_io_vif"), .value(iss_wrap.io));
      uvm_config_db#(virtual RVVI_memory                 )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_mem_vif"), .value(iss_wrap.ram.memory));
+
+     // Virtual Peripheral Status interface
      uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if      )::set(.cntxt(null), .inst_name("*"), .field_name("vp_status_vif"),       .value(vp_status_if)      );
      uvm_config_db#(virtual uvme_cv32e40s_core_cntrl_if     )::set(.cntxt(null), .inst_name("*"), .field_name("core_cntrl_vif"),      .value(core_cntrl_if)     );
      uvm_config_db#(virtual uvmt_cv32e40s_core_status_if    )::set(.cntxt(null), .inst_name("*"), .field_name("core_status_vif"),     .value(core_status_if)    );
@@ -1303,7 +1377,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
      uvm_config_db#(bit      )::set(.cntxt(null), .inst_name("*"), .field_name("evalid"), .value(1'b0)        );
      uvm_config_db#(bit[31:0])::set(.cntxt(null), .inst_name("*"), .field_name("evalue"), .value(32'h00000000));
 
-	 // DUT and ENV parameters
+	   // DUT and ENV parameters
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_ADDR_WIDTH"),  .value(ENV_PARAM_INSTR_ADDR_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_DATA_WIDTH"),  .value(ENV_PARAM_INSTR_DATA_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_RAM_ADDR_WIDTH"),    .value(ENV_PARAM_RAM_ADDR_WIDTH)   );
@@ -1325,6 +1399,13 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
    longint start_ovpsim_init_time;
    longint end_ovpsim_init_time;
    `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
+
+   // overcome race
+   initial begin
+      #0.9ns;
+     imperas_dv.ref_init();
+   end
+
    initial begin
       if (!$test$plusargs("DISABLE_OVPSIM")) begin
         #0.9ns;
@@ -1397,7 +1478,16 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
 
-      $display("\n%m: *** Test Summary ***\n");
+      // FIXME
+      // Shutdown the Reference Model
+      if (0/*uvm_test_top.env.rvvi_ovpsim_agent.cfg.core_cfg.use_iss*/) begin
+         // Exit handler for OVPsim
+      end
+      else begin
+         void'(rvviRefShutdown());
+      end
+
+      `uvm_info("DV_WRAP", $sformatf("\n%m: *** Test Summary ***\n"), UVM_DEBUG);
 
       if (sim_finished && (err_count == 0) && (fatal_count == 0)) begin
          $display("    PPPPPPP    AAAAAA    SSSSSS    SSSSSS   EEEEEEEE  DDDDDDD     ");

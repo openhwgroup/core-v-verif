@@ -49,8 +49,11 @@ module  uvmt_cv32e40s_umode_assert
   input wire [31:0]  rvfi_csr_mstatus_wmask,
   input wire [31:0]  rvfi_csr_mstateen0_rdata,
 
-  input wire         impu_valid,
-  input wire [31:0]  impu_addr
+  input wire         mpu_iside_valid,
+  input wire [31:0]  mpu_iside_addr,
+
+  input wire [ 2:0]  obi_iside_prot,
+  input wire [ 2:0]  obi_dside_prot
 );
 
   default clocking @(posedge clk_i); endclocking
@@ -314,7 +317,7 @@ module  uvmt_cv32e40s_umode_assert
     (1, was_mode = rvfi_mode)           ##0
     (1, was_dbg  = rvfi_dbg_mode)
     |=>
-    (rvfi_valid [->1])  ##0
+    (rvfi_valid [->1])     ##0
     (rvfi_mode == MODE_M)  &&
     (
       (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == was_mode)  ||
@@ -326,7 +329,6 @@ module  uvmt_cv32e40s_umode_assert
 
   a_trap_mpp_exception: assert property (
     p_trap_mpp_exception
-    // TODO:silabs-robin  Cov cross U/X and Exc/Int
   ) else `uvm_error(info_tag, "when exceptions from mode y are handled, mpp must become y");
 
   a_trap_mpp_general: assert property (
@@ -364,7 +366,6 @@ module  uvmt_cv32e40s_umode_assert
     |=>
     (rvfi_valid [->1])  ##0
     (rvfi_mode == MODE_M)
-    // TODO:silabs-robin  Cov cross Exc/Int etc
   ) else `uvm_error(info_tag, "all traps handling shall happen in mmode");
 
   a_interrupt_mmode: assert property (
@@ -610,7 +611,6 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_mode == MODE_U)
     |->
     (rvfi_csr_mstatus_rdata[MPRV_POS+:MPRV_LEN] == 1'b 0)
-    // TODO:silabs-robin  Cover mprv 0->0 and 1->0
   ) else `uvm_error(info_tag, "exiting dmode into umode should clear mprv");
 
   a_dret_mprv_prv: assert property (
@@ -845,9 +845,9 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "medeleg and mideleg registers should not exist");
 
 
-/* TODO:silabs-robin  Enable (and tweak) when rvfi implementation has the new signals
   // InstrProt & DataProt & DbgProt
 
+/* TODO:silabs-robin  Enable (and tweak) when rvfi implementation has the new signals
   a_prot_fetch: assert property (
     rvfi_valid
     |->
@@ -873,6 +873,14 @@ module  uvmt_cv32e40s_umode_assert
     ?
   ) else `uvm_error(info_tag, "TODO");
 */
+
+  a_prot_iside_legal: assert property (
+    obi_iside_prot  inside  {3'b 000, 3'b 110}
+  ) else `uvm_error(info_tag, "the prot on fetch must be legal");
+
+  a_prot_dside_legal: assert property (
+    obi_dside_prot  inside  {3'b 001, 3'b 111}
+  ) else `uvm_error(info_tag, "the prot on loadstore must be legal");
 
 
   // ExecuteMmode

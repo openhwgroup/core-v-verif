@@ -49,6 +49,7 @@ module uvmt_cv32e40s_dut_wrap
     parameter int          PMP_GRANULARITY = 0,
     parameter logic        SMCLIC = 0,
     parameter int          SMCLIC_ID_WIDTH = 5,
+    parameter int          DBG_NUM_TRIGGERS = 1,
     // Remaining parameters are used by TB components only
               INSTR_ADDR_WIDTH    =  32,
               INSTR_RDATA_WIDTH   =  32,
@@ -108,7 +109,7 @@ module uvmt_cv32e40s_dut_wrap
     assign obi_instr_if_i.rreadypar = 1'b0;
 
     // --------------------------------------------
-    // OBI Data agent v12.2 signal tie-offs
+    // OBI Data agent v1.2 signal tie-offs
     assign obi_data_if_i.auser      = 'b0;
     assign obi_data_if_i.wuser      = 'b0;
     assign obi_data_if_i.aid        = 'b0;
@@ -158,27 +159,27 @@ module uvmt_cv32e40s_dut_wrap
           ^{obi_instr_if_i.rdata[15:8]},
           ^{obi_instr_if_i.rdata[7:0]}
         };
-    
+
         logic [4:0]  rchk_lsu;
     assign rchk_lsu = {
-    
+
           ^{obi_data_if_i.err, 1'b0},
           ^{obi_data_if_i.rdata[31:24]},
           ^{obi_data_if_i.rdata[23:16]},
           ^{obi_data_if_i.rdata[15:8]},
           ^{obi_data_if_i.rdata[7:0]}
         };
-    
-    
+
+
     logic gntpar_int;
     assign gntpar_int = !obi_instr_if_i.gnt;
-    
+
     logic rvalidpar_int;
     assign rvalidpar_int = !obi_instr_if_i.rvalid;
-    
+
     logic gntpar_lsu;
     assign gntpar_lsu = !obi_data_if_i.gnt;
-    
+
     logic rvalidpar_lsu;
     assign rvalidpar_lsu = !obi_data_if_i.rvalid;
 
@@ -190,7 +191,8 @@ module uvmt_cv32e40s_dut_wrap
                       .PMA_CFG          (PMA_CFG),
                       .PMP_GRANULARITY  (PMP_GRANULARITY),
                       .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
-                      .SMCLIC           (SMCLIC)
+                      .SMCLIC           (SMCLIC),
+                      .DBG_NUM_TRIGGERS (DBG_NUM_TRIGGERS)
                       )
     cv32e40s_wrapper_i
         (
