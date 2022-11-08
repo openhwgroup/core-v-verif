@@ -58,6 +58,9 @@ module uvmt_cv32e40s_xsecure_assert
   localparam JUMP_STATE = 4'b0100;
   localparam MRET_STATE = 4'b0001;
 
+  localparam NON_CMPR_INSTRUCTION_INCREMENT = 4;
+  localparam CMPR_INSTRUCTION_INCREMENT = 2;
+
   // Default settings:
   default clocking @(posedge clk_i); endclocking
   default disable iff (!(rst_ni) | !(SECURE));
@@ -1149,11 +1152,11 @@ module uvmt_cv32e40s_xsecure_assert
 
 
   a_xsecure_pc_hardening_sequential_no_glitch_behaviour_non_cmpr_instruction: assert property (
-    p_xsecure_pc_hardening_sequential_no_glitch_behaviour(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, 4)
+    p_xsecure_pc_hardening_sequential_no_glitch_behaviour(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, NON_CMPR_INSTRUCTION_INCREMENT)
   ) else `uvm_error(info_tag, "There is a PC fault in IF stage for a non-compressed instruction.\n");
 
   a_xsecure_pc_hardening_sequential_no_glitch_behaviour_cmpr_instruction: assert property (
-    p_xsecure_pc_hardening_sequential_no_glitch_behaviour(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, 2)
+    p_xsecure_pc_hardening_sequential_no_glitch_behaviour(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, CMPR_INSTRUCTION_INCREMENT)
   ) else `uvm_error(info_tag, "There is a PC fault in IF stage for a compressed instruction.\n");
 
 
@@ -1198,7 +1201,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   a_xsecure_pc_hardening_sequential_non_compressed_instruction_sets_alert_major: assert property (
 
-    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, 4)
+    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, NON_CMPR_INSTRUCTION_INCREMENT)
 
     |=>
     //Make sure the alert major is set
@@ -1209,7 +1212,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   a_xsecure_pc_hardening_sequential_compressed_instruction_sets_alert_major: assert property (
 
-    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, 2)
+    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, CMPR_INSTRUCTION_INCREMENT)
 
     |=>
     //Make sure the alert major is set
@@ -1224,7 +1227,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   a_xsecure_pc_hardening_off_non_compressed_sequential_instruction_alert_major: assert property (
 
-    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, 4)
+    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, NON_CMPR_INSTRUCTION_INCREMENT)
 
     |=>
     //Make sure the alert major is not set
@@ -1235,7 +1238,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   a_xsecure_pc_hardening_off_compressed_sequential_instruction_alert_major: assert property (
 
-    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, 2)
+    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, CMPR_INSTRUCTION_INCREMENT)
 
     |=>
     //Make sure the alert major is not set
