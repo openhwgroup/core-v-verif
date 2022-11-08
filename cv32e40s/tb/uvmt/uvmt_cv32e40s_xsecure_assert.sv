@@ -7,7 +7,8 @@ module uvmt_cv32e40s_xsecure_assert
     parameter logic     SMCLIC = 0,
     parameter int       PMP_NUM_REGIONS = 2,
     parameter int       MTVT_ADDR_WIDTH = 5,
-    parameter int CSR_MINTTHRESH_MASK = 32
+    parameter int CSR_MINTTHRESH_MASK = 32,
+    parameter int PMP_ADDR_WIDTH = 6
   )
   (
    uvmt_cv32e40s_xsecure_if xsecure_if,
@@ -650,7 +651,7 @@ module uvmt_cv32e40s_xsecure_assert
       xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q[n] == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q[n] & cv32e40s_pkg::CSR_PMPNCFG_MASK)
 
       //PMPADDR
-      and xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n] == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n] & cv32e40s_pkg::CSR_PMPADDR_MASK)
+      and xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n] == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n] & cv32e40s_pkg::CSR_PMPADDR_MASK[PMP_ADDR_WIDTH-1:0])
 
     ) else `uvm_error(info_tag, $sformatf("One or several of the CSR registers pmp%0dcfg or pmpaddr[%0d] are not shadowed.\n", n, n));
 
@@ -795,7 +796,7 @@ module uvmt_cv32e40s_xsecure_assert
       p_xsecure_hardned_csr_missmatch_sets_alert_major(
         xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n],
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n],
-        cv32e40s_pkg::CSR_PMPADDR_MASK)
+        cv32e40s_pkg::CSR_PMPADDR_MASK[PMP_ADDR_WIDTH-1:0])
     ) else `uvm_error(info_tag, $sformatf("pmpaddr[%0d] cs and shadow register missmatch does not result in major alert.\n",n));
 
   end endgenerate
@@ -1139,5 +1140,6 @@ module uvmt_cv32e40s_xsecure_assert
     ) else `uvm_error(info_tag, $sformatf("1 or 2 bit error when reading compressed rs2 (address %0d) does not set alert major.\n", gpr_addr));
 
   end endgenerate
+
 
 endmodule : uvmt_cv32e40s_xsecure_assert

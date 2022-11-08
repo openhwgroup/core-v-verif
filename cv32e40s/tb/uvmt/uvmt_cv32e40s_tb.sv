@@ -670,10 +670,10 @@ module uvmt_cv32e40s_tb;
 
 
   logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q;
-  logic [PMP_MAX_REGIONS-1:0][31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q;
+  logic [PMP_MAX_REGIONS-1:0][dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q;
 
   logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q;
-  logic [PMP_MAX_REGIONS-1:0][31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q;
+  logic [PMP_MAX_REGIONS-1:0][dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q;
 
   logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q;
   logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q;
@@ -777,7 +777,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_if
     #(.MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
-      .PMP_NUM_REGIONS   (PMP_NUM_REGIONS))
+      .PMP_NUM_REGIONS   (PMP_NUM_REGIONS),
+      .PMP_ADDR_WIDTH    (core_i.cs_registers_i.PMP_ADDR_WIDTH))
 
     xsecure_if (
 
@@ -917,7 +918,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
   .SMCLIC (SMCLIC),
   .PMP_NUM_REGIONS (PMP_NUM_REGIONS),
   .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
-  .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK)
+  .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
+  .PMP_ADDR_WIDTH (core_i.cs_registers_i.PMP_ADDR_WIDTH)
 
     ) xsecure_assert_i 	(
     	.xsecure_if	(xsecure_if),
