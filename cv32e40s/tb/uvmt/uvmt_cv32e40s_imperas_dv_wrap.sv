@@ -291,9 +291,6 @@
 `define CSR_MHARTID_ADDR        32'hF14
 `define CSR_MCONFIGPTR_ADDR     32'hF15
 
-`define CSR_INSTRET_ADDR        32'hC02
-`define CSR_INSTRETH_ADDR       32'hC82
-
 ///////////////////////////////////////////////////////////////////////////////
 // Module wrapper for Imperas DV.
 ////////////////////////////////////////////////////////////////////////////
@@ -726,8 +723,6 @@ module uvmt_cv32e40s_imperas_dv_wrap
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
 
     // TODO silabs-hfegran: temp fix to work around issues
-    rvviRefCsrCompareEnable(hart_id, `CSR_INSTRET_ADDR, RVVI_FALSE);		// INSTRET incorrectly enabled in tools file
-    rvviRefCsrCompareEnable(hart_id, `CSR_INSTRETH_ADDR, RVVI_FALSE);		// INSTRET incorrectly enabled in tools file
     rvviRefCsrCompareEnable(hart_id, `CSR_TDATA1_ADDR, RVVI_FALSE);
     rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR, RVVI_FALSE);
     rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR, RVVI_FALSE);
