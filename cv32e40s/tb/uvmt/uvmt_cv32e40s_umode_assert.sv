@@ -95,6 +95,7 @@ module  uvmt_cv32e40s_umode_assert
   localparam int MRET_IDATA    = 32'b 0011000_00010_00000_000_00000_1110011;
   localparam int DRET_IDATA    = 32'h 7b200073;
   localparam int WFI_IDATA     = 32'b 0001000_00101_00000_000_00000_1110011;
+  localparam int WFE_IDATA     = 32'h 8C00_0073;
   localparam int CUSTOM0_IDATA = 32'b 100011_00000000000_000_00000_1110011;
   localparam int CUSTOM0_IMASK = 32'b 111111_00000000000_111_00000_1111111;
   localparam int CUSTOM1_IDATA = 32'b 110011_00000000000_000_00000_1110011;
@@ -155,12 +156,16 @@ module  uvmt_cv32e40s_umode_assert
     is_rvfi_valid_norevoke_notrigger  &&
     (rvfi_insn == WFI_IDATA)
   );
-  wire  is_rvfi_custominstr = (
+  wire  is_rvfi_customumodeinstr = (
     is_rvfi_valid_norevoke_notrigger  &&
     (
       ((rvfi_insn & CUSTOM0_IMASK) == CUSTOM0_IDATA)  ||
       ((rvfi_insn & CUSTOM1_IMASK) == CUSTOM1_IDATA)
     )
+  );
+  wire  is_rvfi_wfe = (
+    is_rvfi_valid_norevoke_notrigger  &&
+    (rvfi_insn == WFE_IDATA)
   );
   wire  is_rvfi_uret = (
     is_rvfi_valid_norevoke_notrigger  &&
@@ -450,7 +455,8 @@ module  uvmt_cv32e40s_umode_assert
   // CustomInstr & Uret
 
   a_custom_instr: assert property (
-    is_rvfi_custominstr
+    is_rvfi_customumodeinstr  &&
+    !is_rvfi_wfe
     |->
     is_rvfi_illegalinsn  ^
     (rvfi_trap.exception_cause inside {1, 24, 25})  // Higher priority exceptions

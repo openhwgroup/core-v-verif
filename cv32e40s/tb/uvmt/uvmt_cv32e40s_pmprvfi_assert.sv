@@ -342,22 +342,24 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   // Software-view can read the granularity level
 
-  a_granularity_determination: assert property (
-    (is_rvfi_csr_instr && (rvfi_insn[14:12] == 3'b 001)) &&  // CSRRW instr,
-    (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + 0))    &&  // to a "pmpaddr" CSR,
-    ((rvfi_rs1_rdata == '1) && rvfi_rs1_addr)            &&  // writing all ones.
-    (pmp_csr_rvfi_rdata.cfg[0] == '0)                    &&  // Related cfg is 0,
-    (pmp_csr_rvfi_rdata.cfg[0+1] == '0)                  &&  // above cfg is 0.
-    !rvfi_trap                                               // (Trap doesn't meddle.)
-    |=>
-    (rvfi_valid [->1])  ##0
-    (rvfi_csr_pmpaddr_rdata[0][`max(PMP_GRANULARITY-1, 0) : 0] == '0)  &&
-    (
-      (rvfi_csr_pmpaddr_rdata[0][31:PMP_GRANULARITY] == '1)  ^
-      (PMP_GRANULARITY == 0)
-    )
-    // Note: _Can_ be generalized for all i
-  );
+  if (PMP_NUM_REGIONS) begin: gen_granularity_determination
+    a_granularity_determination: assert property (
+      (is_rvfi_csr_instr && (rvfi_insn[14:12] == 3'b 001)) &&  // CSRRW instr,
+      (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + 0))    &&  // to a "pmpaddr" CSR,
+      ((rvfi_rs1_rdata == '1) && rvfi_rs1_addr)            &&  // writing all ones.
+      (pmp_csr_rvfi_rdata.cfg[0] == '0)                    &&  // Related cfg is 0,
+      (pmp_csr_rvfi_rdata.cfg[0+1] == '0)                  &&  // above cfg is 0.
+      !rvfi_trap                                               // (Trap doesn't meddle.)
+      |=>
+      (rvfi_valid [->1])  ##0
+      (rvfi_csr_pmpaddr_rdata[0][31:PMP_GRANULARITY] == '1)  &&
+      (
+        (rvfi_csr_pmpaddr_rdata[0][`max(PMP_GRANULARITY-1, 0) : 0] == '0)  ^
+        (PMP_GRANULARITY == 0)
+      )
+      // Note: _Can_ be generalized for all i
+    );
+  end
 
 
   // Locking is forever
@@ -544,13 +546,15 @@ module uvmt_cv32e40s_pmprvfi_assert
   end
 
   for (genvar i = 1; i < PMP_NUM_REGIONS; i++) begin: gen_addr_tor
+    // (Special case of "a_addr_nonlocked")
     a_addr_nonlocked_tor: assert property (
       seq_csrrw_pmpaddri(i - 1)                         and
       (pmp_csr_rvfi_rdata.cfg[i].mode == PMP_MODE_TOR)  and
       !pmp_csr_rvfi_rdata.cfg[i  ].lock                 and
       !pmp_csr_rvfi_rdata.cfg[i-1].lock
       |->
-      (pmp_csr_rvfi_wdata.addr[i-1][33:2] == rvfi_rs1_rdata)
+      (pmp_csr_rvfi_wdata.addr[i-1][33:2+PMP_GRANULARITY]
+        == rvfi_rs1_rdata[31:PMP_GRANULARITY])
     );
   end
 
