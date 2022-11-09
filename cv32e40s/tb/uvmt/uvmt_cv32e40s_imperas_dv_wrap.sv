@@ -294,16 +294,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Module wrapper for Imperas DV.
 ////////////////////////////////////////////////////////////////////////////
-`define USE_IMPERASDV
 `ifdef USE_IMPERASDV
 
 `include "rvvi/imperasDV.svh" // located in $IMPERAS_HOME/ImpProprietary/include/host
-`include "rvvi/rvvi-api.svh"  // located in $IMPERAS_HOME/ImpPublic/include/host
 
 module uvmt_cv32e40s_imperas_dv_wrap
   import uvm_pkg::*;
   import uvme_cv32e40s_pkg::*;
-  import rvviApi::*;
+  import rvviApiPkg::*;
   #(
    )
 
@@ -594,10 +592,15 @@ module uvmt_cv32e40s_imperas_dv_wrap
     string test_program_elf;
     reg [31:0] hart_id;
 
+    // Worst case propagation of events 4 retirements (actually 3 observed)
+    void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 4));
+    // Redirect stdout to parent systemverilog simulator
+    void'(rvviRefConfigSetInt(IDV_CONFIG_REDIRECT_STDOUT, RVVI_TRUE));
+
     // Initialize REF and load the test-program into it's memory (do this before initializing the DUT).
     // TODO: is this the best place for this?
-    if (!rvviVersionCheck(`RVVI_API_VERSION)) begin
-      `uvm_fatal(info_tag, $sformatf("Expecting RVVI API version %0d.", `RVVI_API_VERSION))
+    if (!rvviVersionCheck(RVVI_API_VERSION)) begin
+      `uvm_fatal(info_tag, $sformatf("Expecting RVVI API version %0d.", RVVI_API_VERSION))
     end
     // Test-program must have been compiled before we got here...
     if ($value$plusargs("elf_file=%s", test_program_elf)) begin
@@ -716,15 +719,13 @@ module uvmt_cv32e40s_imperas_dv_wrap
     // Mask out pending bits, due to interrupts showing as pending
     // and enabled but not taken immediately due to instructions
     // in-flight, eg Load/Store
-    rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR, `RVVI_FALSE);
-    //rvviRefCsrCompareMask(hart_id,   `CSR_DCSR_ADDR, ~('h8));
+    rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR, RVVI_FALSE);
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
 
     // TODO silabs-hfegran: temp fix to work around issues
-    rvviRefCsrCompareEnable(hart_id, `CSR_MCOUNTINHIBIT_ADDR, `RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_MCYCLE_ADDR, `RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_TDATA1_ADDR, `RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR, `RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_TDATA1_ADDR, RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR, RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR, RVVI_FALSE);
     // end TODO
 
     // define asynchronous grouping

@@ -22,7 +22,6 @@
 class uvme_cv32e40s_vp_fencei_tamper_seq_c extends uvma_obi_memory_vp_base_seq_c;
 
   uvme_cv32e40s_cntxt_c    cv32e40s_cntxt;
-  uvma_rvvi_ovpsim_cntxt_c rvvi_ovpsim_cntxt;
 
   bit        enabled = 0;
   bit [31:0] addr;
@@ -88,12 +87,6 @@ task uvme_cv32e40s_vp_fencei_tamper_seq_c::body();
   if (cv32e40s_cntxt.fencei_cntxt.fencei_vif == null) begin
     `uvm_fatal("E40SVPSTATUS", "Must initialize fencei_vif in virtual peripheral");
   end
-  if (cv32e40s_cntxt.rvvi_cntxt == null) begin
-    `uvm_fatal("E40SVPSTATUS", "Must initialize rvvi_cntxt in virtual peripheral");
-  end
-  if (!$cast(rvvi_ovpsim_cntxt, cv32e40s_cntxt.rvvi_cntxt)) begin
-    `uvm_fatal("E40SVPSTATUS", "Could not cast rvvi_cntxt to rvvi_ovpsim_cntxt");
-  end
 
   fork
     while (1) begin
@@ -126,43 +119,6 @@ import "DPI-C" context function void rvviRefMemoryWrite(
     input int size);
 
 function void uvme_cv32e40s_vp_fencei_tamper_seq_c::write_iss_mem();
-
-  logic [31:0] addr_lo;
-  logic [31:0] addr_hi;
-  int          shamt_lo;
-  int          shamt_hi;
-  logic [31:0] shdata_lo;
-  logic [31:0] shdata_hi;
-  logic [31:0] issmask_lo;
-  logic [31:0] issmask_hi;
-  logic [31:0] issdata_lo;
-  logic [31:0] issdata_hi;
-  logic [31:0] data_lo;
-  logic [31:0] data_hi;
-
-  // Calculate iss ram addresses
-  addr_lo = addr >> 2;
-  addr_hi = (addr + 4) >> 2;
-
-  // Shift the data to be written
-  shamt_lo = addr[1:0] * 8;
-  shamt_hi = (4 * 8) - shamt_lo;
-  shdata_lo = data << shamt_lo;
-  shdata_hi = data >> shamt_hi;
-
-  // Mask the existing data
-  issmask_lo = 32'h FFFF_FFFF >> shamt_hi;
-  issmask_hi = 32'h FFFF_FFFF << shamt_lo;
-  issdata_lo = rvvi_ovpsim_cntxt.ovpsim_mem_vif.mem[addr_lo] & issmask_lo;
-  issdata_hi = rvvi_ovpsim_cntxt.ovpsim_mem_vif.mem[addr_hi] & issmask_hi;
-
-  // Calculate iss ram data
-  data_lo = shdata_lo | issdata_lo;
-  data_hi = shdata_hi | issdata_hi;
-
-  // Write to iss ram
-  rvvi_ovpsim_cntxt.ovpsim_mem_vif.mem[addr_lo] = data_lo;
-  rvvi_ovpsim_cntxt.ovpsim_mem_vif.mem[addr_hi] = data_hi;
 
   rvviRefMemoryWrite(0, addr, data, 4);
 
