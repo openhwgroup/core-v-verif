@@ -146,24 +146,8 @@ function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
   // -------------------------------------------------------------------------------------
 
   $fwrite(fh, $sformatf("--override %s/misa_Extensions=0x%06x\n", refpath, cfg.get_misa()));
-  $fwrite(fh, $sformatf("--override %s/tcontrol_undefined=0\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/mtvec_mask=0xffffff81\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/instret_undefined=0\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/mcontext_undefined=T\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/mscontext_undefined=T\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/scontext_undefined=T\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/ecode_mask=2047\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/Zcb=0\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/Smstateen=T\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/scontext_undefined=1\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/ecode_mask=0x7ff\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/mtvec_mask=0xffffff81\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/Zca=1\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/Zcb=0\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/Zcmp=0\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/Zcmb=0\n", refpath));
-  $fwrite(fh, $sformatf("--override %s/Zcmt=0\n", refpath));
   $fwrite(fh, $sformatf("--override %s/noinhibit_mask=0x%08x\n", refpath, cfg.get_noinhibit_mask()));
+  $fwrite(fh, $sformatf("--override %s/Smstateen=T\n", refpath));
 
   // -------------------------------------------------------------------------------------
   // Boot strap pins
@@ -172,10 +156,42 @@ function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
   $fwrite(fh, $sformatf("--override %s/mimpid=%0d\n", refpath, cfg.mimpid));
   $fwrite(fh, $sformatf("--override %s/startaddress=0x%08x\n", refpath, cfg.boot_addr));
   // Specification forces mtvec[0] high at reset regardless of bootstrap pin state of mtvec_addr_i]0]
-  $fwrite(fh, $sformatf("--override %s/mtvec=0x%08x\n", refpath, cfg.mtvec_addr | 32'b1));
+  $fwrite(fh, $sformatf("--override %s/mtvec_mask=0xffffff8%1d\n", refpath, (cfg.clic_interrupt_enable ? 0 : 1)));
+  $fwrite(fh, $sformatf("--override %s/mtvec=0x%08x\n", refpath, cfg.mtvec_addr | (cfg.clic_interrupt_enable ? 32'b11 : 32'b1)));
   $fwrite(fh, $sformatf("--override %s/nmi_address=0x%08x\n", refpath, cfg.nmi_addr));
   $fwrite(fh, $sformatf("--override %s/debug_address=0x%08x\n", refpath, cfg.dm_halt_addr));
   $fwrite(fh, $sformatf("--override %s/dexc_address=0x%08x\n", refpath, cfg.dm_exception_addr));
+
+  if (cfg.ext_zca_supported) begin
+    $fwrite(fh, $sformatf("--override %s/Zca=1\n", refpath));
+  end else begin
+    $fwrite(fh, $sformatf("--override %s/Zca=0\n", refpath));
+  end
+
+  if (cfg.ext_zcb_supported) begin
+    $fwrite(fh, $sformatf("--override %s/Zcb=1\n", refpath));
+  end else begin
+    $fwrite(fh, $sformatf("--override %s/Zcb=0\n", refpath));
+  end
+
+  if (cfg.ext_zcmp_supported) begin
+    $fwrite(fh, $sformatf("--override %s/Zcmp=1\n", refpath));
+  end else begin
+    $fwrite(fh, $sformatf("--override %s/Zcmp=0\n", refpath));
+  end
+
+  if (cfg.ext_zcmt_supported) begin
+    $fwrite(fh, $sformatf("--override %s/Zcmt=1\n", refpath));
+  end else begin
+    $fwrite(fh, $sformatf("--override %s/Zcmt=0\n", refpath));
+  end
+
+  if (cfg.ext_zcmb_supported) begin
+    $fwrite(fh, $sformatf("--override %s/Zcmb=1\n", refpath));
+  end else begin
+    $fwrite(fh, $sformatf("--override %s/Zcmb=0\n", refpath));
+  end
+
 
   if (cfg.is_ext_b_supported()) begin
      // Bitmanip version

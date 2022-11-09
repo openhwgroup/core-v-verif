@@ -33,8 +33,6 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    bit                              obi_memory_instr_one_shot_err_enabled = 0;
    bit                              obi_memory_data_random_err_enabled    = 0;
    bit                              obi_memory_data_one_shot_err_enabled  = 0;
-   bit                              clic_interrupt_enable                 = 0;
-   bit                              basic_interrupt_enable                = 1;
    rand bit                         buserr_scoreboarding_enabled          = 1;
 
    // Agent cfg handles
@@ -89,16 +87,21 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       xlen == uvma_core_cntrl_pkg::MXL_32;
       ilen == 32;
 
-      ext_i_supported        == 1;
-      ext_c_supported        == 1;
-      ext_m_supported        == 1;
-      ext_zifencei_supported == 1;
-      ext_zicsr_supported    == 1;
-      ext_a_supported        == 0;
-      ext_p_supported        == 0;
-      ext_v_supported        == 0;
-      ext_f_supported        == 0;
-      ext_d_supported        == 0;
+      ext_i_supported         == 1;
+      ext_c_supported         == 1;
+      ext_m_supported         == 1;
+      ext_zifencei_supported  == 1;
+      ext_zicsr_supported     == 1;
+      ext_a_supported         == 0;
+      ext_p_supported         == 0;
+      ext_v_supported         == 0;
+      ext_f_supported         == 0;
+      ext_d_supported         == 0;
+      ext_zca_supported       == 1;
+      ext_zcb_supported       == 0;
+      ext_zcmb_supported      == 0;
+      ext_zcmp_supported      == 0;
+      ext_zcmt_supported      == 0;
 
       if (b_ext == cv32e40s_pkg::B_NONE) {
          ext_zba_supported == 0;

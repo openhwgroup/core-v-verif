@@ -38,9 +38,9 @@ module uvmt_cv32e40s_tb;
    import cv32e40s_pkg::*;
    import uvmt_cv32e40s_pkg::*;
    import uvme_cv32e40s_pkg::*;
-  `ifndef FORMAL
-     import rvviApi::*;
-  `endif
+   `ifndef FORMAL
+   import rvviApiPkg::*;
+   `endif
 
    // ENV (testbench) parameters
    parameter int ENV_PARAM_INSTR_ADDR_WIDTH  = 32;
@@ -95,7 +95,7 @@ module uvmt_cv32e40s_tb;
 
    // RVVI SystemVerilog Interface
    `ifndef FORMAL
-     rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+      rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
    `endif
 
   /**
