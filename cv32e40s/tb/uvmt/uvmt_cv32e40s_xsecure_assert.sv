@@ -929,41 +929,8 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// GENERAL PURPOSE REGISTERS AND ECC ATTACHEMENT ARE NEVER ALL ZEROS OR ONES //////////
 
-  property p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(instr_start_of_reg_bits, instr_end_of_reg_bits, gpr_addr);
-
-    //Specify rs1 adress
-    $changed(xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[instr_start_of_reg_bits:instr_end_of_reg_bits])
-
-    && xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[instr_start_of_reg_bits:instr_end_of_reg_bits] == gpr_addr
-
-    && (xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'h00_0000_0000
-    || xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'hFF_FFFF_FFFF)
-
-    |=>
-
-    xsecure_if.core_alert_major_o;
-
-  endproperty
-
-
   //Make assertions for each gpr:
-  a_xsecure_register_file_ecc_gprecc_never_all_zeros: assert property (
-
-    //Verify that register and ecc score never is all zeros
-    xsecure_if.core_register_file_wrapper_register_file_mem[0] != 38'h00_0000_0000
-
-  ) else `uvm_error(info_tag, $sformatf("General purpose register %0d with attached ecc score is all zeros.\n", 0));
-
-
-  a_xsecure_register_file_ecc_gprecc_never_all_ones: assert property (
-
-    //Verify that register and ecc score never is all ones
-    xsecure_if.core_register_file_wrapper_register_file_mem[0] != 38'hFF_FFFF_FFFF
-
-  ) else `uvm_error(info_tag, $sformatf("General purpose register %0d with attached ecc score is all ones.\n", 0));
-
-
-  generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
+  generate for (genvar gpr_addr = 0; gpr_addr < 32; gpr_addr++) begin
 
   a_xsecure_register_file_ecc_gprecc_never_all_zeros: assert property (
 
@@ -980,18 +947,42 @@ module uvmt_cv32e40s_xsecure_assert
 
   ) else `uvm_error(info_tag, $sformatf("General purpose register %0d with attached ecc score is all ones.\n", gpr_addr));
 
+  end endgenerate
+
+
+  ////////// IF GENERAL PURPOSE REGISTERS AND ECC ATTACHEMENT ARE ALL ZEROS OR ONES MAJOR ALERT MUST BE SET //////////
+
+  property p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(instr_start_of_reg_bits, instr_end_of_reg_bits);
+    logic [4:0] gpr_addr = 0;
+
+    @(posedge xsecure_if.core_clk)
+
+    //Store the source register address in gpr address variable
+    (1, gpr_addr = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[instr_start_of_reg_bits:instr_end_of_reg_bits])
+
+    //Make sure the source register is not x0 (because x0 behave different then the other source registers)
+    ##0 xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[instr_start_of_reg_bits:instr_end_of_reg_bits] != 0
+
+    //Make sure the source registers data and ecc score are all ones or zeros
+    ##0 (xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'h00_0000_0000
+    || xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'hFF_FFFF_FFFF)
+
+    |=>
+    //Verify that major alert is set
+    xsecure_if.core_alert_major_o;
+
+  endproperty
+
 
   a_xsecure_register_file_ecc_gprecc_set_major_alert_if_rs1_is_all_zeros_or_ones: assert property (
-    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(INSTRUCTIONS_RS1_MSB, INSTRUCTIONS_RS1_LSB, gpr_addr)
-  ) else `uvm_error(info_tag, $sformatf("General purpose register %0d with attached ecc score is all ones or zeros but dont set major alert.\n", gpr_addr));
+    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(INSTRUCTIONS_RS1_MSB, INSTRUCTIONS_RS1_LSB)
+  ) else `uvm_error(info_tag, "The data of rs1 (and the attached ecc score) is all ones or zeros but dont set major alert.\n");
 
 
   a_xsecure_register_file_ecc_gprecc_set_major_alert_if_rs2_is_all_zeros_or_ones: assert property (
-    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(INSTRUCTIONS_RS2_MSB, INSTRUCTIONS_RS2_LSB, gpr_addr)
-  ) else `uvm_error(info_tag, $sformatf("General purpose register %0d with attached ecc score is all ones or zeros but dont set major alert.\n", gpr_addr));
+    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(INSTRUCTIONS_RS2_MSB, INSTRUCTIONS_RS2_LSB)
+  ) else `uvm_error(info_tag, "The data of rs2 (and the attached ecc score) is all ones or zeros but dont set major alert.\n");
 
-
-  end endgenerate
 
   ////////// ECC DECODING MISSMATCH ON EVERY READ SETS MAJOR ALERT //////////
 
