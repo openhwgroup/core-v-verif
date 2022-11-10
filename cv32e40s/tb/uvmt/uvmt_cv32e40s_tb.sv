@@ -676,12 +676,13 @@ module uvmt_cv32e40s_tb;
   bind cv32e40s_wrapper
     uvmt_cv32e40s_integration_assert  integration_assert_i (.*);
 
+  localparam PMP_ADDR_WIDTH = (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY > 0) ? 33 - uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY : 32;
 
   logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q;
-  logic [PMP_MAX_REGIONS-1:0][dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q;
+  logic [PMP_MAX_REGIONS-1:0][PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q;
 
   logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q;
-  logic [PMP_MAX_REGIONS-1:0][dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q;
+  logic [PMP_MAX_REGIONS-1:0][PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q;
 
   logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q;
   logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q;
