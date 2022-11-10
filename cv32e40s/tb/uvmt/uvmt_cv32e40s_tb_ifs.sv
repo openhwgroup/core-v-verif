@@ -124,6 +124,15 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] core_rf_wdata_wb,
     input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [REGFILE_NUM_WORDS],
 
+    // OBI:
+    input logic core_i_m_c_obi_instr_if_s_req_req,
+    input logic core_i_m_c_obi_instr_if_s_gnt_gnt,
+    input logic core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+
+    input logic core_i_m_c_obi_data_if_s_req_req,
+    input logic core_i_m_c_obi_data_if_s_gnt_gnt,
+    input logic core_i_m_c_obi_data_if_s_rvalid_rvalid,
+
     // CSR
     input logic core_alert_minor_o,
     input logic core_alert_major_o,

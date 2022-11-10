@@ -790,6 +790,15 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_rf_wdata_wb                                                                                                 (core_i.rf_wdata_wb),
       .core_register_file_wrapper_register_file_mem                                                                     (core_i.register_file_wrapper_i.register_file_i.mem),
 
+      // OBI
+      .core_i_m_c_obi_instr_if_s_req_req (core_i.m_c_obi_instr_if.s_req.req),
+      .core_i_m_c_obi_instr_if_s_gnt_gnt (core_i.m_c_obi_instr_if.s_gnt.gnt),
+      .core_i_m_c_obi_instr_if_s_rvalid_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+
+      .core_i_m_c_obi_data_if_s_req_req (core_i.m_c_obi_data_if.s_req.req),
+      .core_i_m_c_obi_data_if_s_gnt_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
+      .core_i_m_c_obi_data_if_s_rvalid_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+
       // CSR
       .core_alert_minor_o                                                                                               (core_i.alert_minor_o),
       .core_alert_major_o                                                                                               (core_i.alert_major_o),
