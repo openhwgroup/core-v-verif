@@ -42,18 +42,6 @@ module uvmt_cv32e40s_tb;
    import rvviApiPkg::*;
    `endif
 
-   // ENV (testbench) parameters
-   /*
-   parameter int ENV_PARAM_INSTR_ADDR_WIDTH  = 32;
-   parameter int ENV_PARAM_INSTR_DATA_WIDTH  = 32;
-   parameter int ENV_PARAM_INSTR_ACHK_WIDTH  = 12;
-   parameter int ENV_PARAM_INSTR_RCHK_WIDTH  = 5;
-   parameter int ENV_PARAM_DATA_ADDR_WIDTH   = 32;
-   parameter int ENV_PARAM_DATA_DATA_WIDTH   = 32;
-   parameter int ENV_PARAM_DATA_ACHK_WIDTH   = 12;
-   parameter int ENV_PARAM_DATA_RCHK_WIDTH   = 5;
-   parameter int ENV_PARAM_RAM_ADDR_WIDTH    = 22;
-  */
    // Capture regs for test status from Virtual Peripheral in dut_wrap.mem_i
    bit        tp;
    bit        tf;
@@ -1130,8 +1118,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
      uvm_config_db#(virtual uvma_clknrst_if             )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"),          .field_name("vif"),           .value(clknrst_if));
      uvm_config_db#(virtual uvma_interrupt_if           )::set(.cntxt(null), .inst_name("*.env.interrupt_agent"),        .field_name("vif"),           .value(interrupt_if));
      uvm_config_db#(virtual uvma_clic_if                )::set(.cntxt(null), .inst_name("*.env.clic_agent"),             .field_name("vif"),           .value(clic_if));
-     //uvm_config_db#(virtual uvma_obi_memory_if          )::set(.cntxt(null), .inst_name("*.env.obi_memory_instr_agent"), .field_name("vif"),           .value(obi_instr_if_i) );
-     //uvm_config_db#(virtual uvma_obi_memory_if          )::set(.cntxt(null), .inst_name("*.env.obi_memory_data_agent"),  .field_name("vif"),           .value(obi_data_if_i) );
 
      uvm_config_db#(virtual uvma_obi_memory_if#(
        .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),

@@ -41,7 +41,6 @@ class uvma_obi_memory_cntxt_c#(
 ) extends uvm_object;
 
    // Handle to agent interface
-   //virtual uvma_obi_memory_if#(.ACHK_WIDTH(12), .RCHK_WIDTH(5))  vif;
    virtual uvma_obi_memory_if#(
        .AUSER_WIDTH(AUSER_WIDTH),
        .WUSER_WIDTH(WUSER_WIDTH),

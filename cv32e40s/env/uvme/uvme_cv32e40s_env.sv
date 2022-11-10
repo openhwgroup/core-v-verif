@@ -43,8 +43,6 @@ class uvme_cv32e40s_env_c extends uvm_env;
    uvma_interrupt_agent_c           interrupt_agent;
    uvma_clic_agent_c                clic_agent;
    uvma_debug_agent_c               debug_agent;
-   //uvma_obi_memory_agent_c#(.ACHK_WIDTH(12), .RCHK_WIDTH(5))  obi_memory_instr_agent;
-   //uvma_obi_memory_agent_c#(.ACHK_WIDTH(12), .RCHK_WIDTH(5))    obi_memory_data_agent;
    uvma_obi_memory_agent_c#(
      .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
      .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
@@ -65,8 +63,6 @@ class uvme_cv32e40s_env_c extends uvm_env;
      .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
      .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
    ) obi_memory_data_agent;
-   //uvma_obi_memory_agent_c#(12,5)  obi_memory_instr_agent;
-   //uvma_obi_memory_agent_c#(12,5)  obi_memory_data_agent;
    uvma_rvfi_agent_c#(ILEN,XLEN)    rvfi_agent;
    uvma_fencei_agent_c              fencei_agent;
    uvma_pma_agent_c#(ILEN,XLEN)     pma_agent;
@@ -440,8 +436,6 @@ function void uvme_cv32e40s_env_c::create_agents();
    interrupt_agent        = uvma_interrupt_agent_c::type_id::create("interrupt_agent", this);
    clic_agent             = uvma_clic_agent_c::type_id::create("clic_agent", this);
    debug_agent            = uvma_debug_agent_c::type_id::create("debug_agent", this);
-   //obi_memory_instr_agent = uvma_obi_memory_agent_c#(.ACHK_WIDTH(12), .RCHK_WIDTH(5))::type_id::create("obi_memory_instr_agent", this);
-   //obi_memory_data_agent  = uvma_obi_memory_agent_c#(.ACHK_WIDTH(12), .RCHK_WIDTH(5))::type_id::create("obi_memory_data_agent",  this);
    obi_memory_instr_agent = uvma_obi_memory_agent_c#(
      .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
      .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),

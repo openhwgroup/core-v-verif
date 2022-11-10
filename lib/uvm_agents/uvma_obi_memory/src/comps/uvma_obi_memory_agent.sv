@@ -305,7 +305,6 @@ function void uvma_obi_memory_agent_c::retrieve_vif();
      .ACHK_WIDTH(ACHK_WIDTH),
      .RCHK_WIDTH(RCHK_WIDTH))
    )::get(this, "", "vif", cntxt.vif)) begin
-   //if (!uvm_config_db#(virtual uvma_obi_memory_if)::get(this, "", "vif", cntxt.vif)) begin
       `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s in uvm_config_db", $typename(cntxt.vif)))
    end
    else begin
