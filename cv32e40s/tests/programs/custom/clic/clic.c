@@ -28,31 +28,59 @@
 #define NUM_TESTS 9
 #define ABORT_ON_ERROR_IMMEDIATE 0
 #define SMCLIC_ID_WIDTH 5
+#define MTVEC_ALIGN_BITS 7
+#define VERBOSE 0
+
+#define SET_FUNC_INFO \
+  _Pragma("GCC diagnostic push") \
+  _Pragma("GCC diagnostic ignored \"-Wpedantic\"") \
+  const char * name = __FUNCTION__; \
+  _Pragma("GCC diagnostic pop")
 
 // ---------------------------------------------------------------
-// Test prototypes - should match uint32_t <name>(uint32_t index)
+// Test prototypes - should match
+// uint32_t <name>(uint32_t index, uint8_t report_name)
 // ---------------------------------------------------------------
-uint32_t mcause_mstatus_mirror_init(uint32_t index);
-uint32_t w_mcause_mpp_r_mstatus_mpp(uint32_t index);
-uint32_t w_mstatus_mpp_r_mcause_mpp(uint32_t index);
-uint32_t w_mcause_mpie_r_mstatus_mpie(uint32_t index);
-uint32_t w_mstatus_mpie_r_mcause_mpie(uint32_t index);
-uint32_t w_mie_notrap_r_zero(uint32_t index);
-uint32_t w_mip_notrap_r_zero(uint32_t index);
-uint32_t w_mtvt_rd_alignment(uint32_t index);
-uint32_t w_mtvec_rd_alignment(uint32_t index);
+uint32_t mcause_mstatus_mirror_init(uint32_t index, uint8_t report_name);
+uint32_t w_mcause_mpp_r_mstatus_mpp(uint32_t index, uint8_t report_name);
+uint32_t w_mstatus_mpp_r_mcause_mpp(uint32_t index, uint8_t report_name);
+uint32_t w_mcause_mpie_r_mstatus_mpie(uint32_t index, uint8_t report_name);
+uint32_t w_mstatus_mpie_r_mcause_mpie(uint32_t index, uint8_t report_name);
+uint32_t w_mie_notrap_r_zero(uint32_t index, uint8_t report_name);
+uint32_t w_mip_notrap_r_zero(uint32_t index, uint8_t report_name);
+uint32_t w_mtvt_rd_alignment(uint32_t index, uint8_t report_name);
+uint32_t w_mtvec_rd_alignment(uint32_t index, uint8_t report_name);
 
 // Helper functions
+/*
+ * set_test_status
+ *
+ * Sets the pass/fail criteria for a given tests and updates
+ * the 32bit test status variable
+ */
 uint32_t set_test_status(uint32_t test_no, uint32_t val_prev);
-uint32_t run_test(uint32_t (*ptr)(), uint32_t index);
-int get_result(uint32_t res);
+
+/*
+ * get_result
+ *
+ * Reports result of self checking tests
+ */
+int get_result(uint32_t res, uint32_t (*ptr[])(uint32_t, uint8_t));
+
+/*
+ * max
+ *
+ * returns maxval of a and b
+ */
 uint32_t max(uint32_t a, uint32_t b);
 
+// Bitfield offsets
 const uint32_t MSTATUS_MPP_OFFSET  = 11;
 const uint32_t MSTATUS_MPIE_OFFSET = 7;
 const uint32_t MCAUSE_MPP_OFFSET   = 28;
 const uint32_t MCAUSE_MPIE_OFFSET  = 27;
 
+// Bitfield masks
 const uint32_t MSTATUS_MPP_MASK  = 0x3 << MSTATUS_MPP_OFFSET;
 const uint32_t MSTATUS_MPIE_MASK = 0x1 << MSTATUS_MPIE_OFFSET;
 const uint32_t MCAUSE_MPP_MASK   = 0x3 << MCAUSE_MPP_OFFSET;
@@ -63,7 +91,7 @@ const uint32_t MCAUSE_MPIE_MASK  = 0x1 << MCAUSE_MPIE_OFFSET;
 // ---------------------------------------------------------------
 int main(int argc, char **argv){
 
-  uint32_t (*tests[NUM_TESTS])();
+  uint32_t (*tests[NUM_TESTS])(uint32_t, uint8_t);
   uint32_t test_res = 0x1;
   int      retval   = 0;
 
@@ -81,11 +109,11 @@ int main(int argc, char **argv){
   // Run all tests in list above
   printf("\nCLIC Test start\n\n");
   for (int i = 0; i < NUM_TESTS; i++) {
-    test_res = set_test_status( run_test( (uint32_t (*)())(*tests[i]), i) , test_res);
+    test_res = set_test_status(tests[i](i, 0), test_res);
   }
 
   // Report failures
-  retval = get_result(test_res);
+  retval = get_result(test_res, tests);
   return retval; // Nonzero for failing tests
 }
 
@@ -95,17 +123,51 @@ uint32_t set_test_status(uint32_t test_no, uint32_t val_prev){
   return res;
 }
 
-uint32_t run_test(uint32_t (*ptr)(), uint32_t index) {
-  return (*ptr)(index);
+uint32_t max(uint32_t a, uint32_t b) {
+  return a > b ? a : b;
 }
 
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
+int get_result(uint32_t res, uint32_t (*ptr[])(uint32_t, uint8_t)){
+  if (res == 1) {
+    printf("=========================\n");
+    printf("=        SUMMARY        =\n");
+    printf("=========================\n");
+    for (int i = 0; i < NUM_TESTS; i++){
+      if ((res >> (i+1)) & 0x1) {
+        printf ("Test %0d FAIL: ", i);
+        (void)ptr[i](i, 1);
+        printf ("\n");
+      } else {
+        printf ("Test %0d PASS: ", i);
+        (void)ptr[i](i, 1);
+        printf ("\n");
+      }
+    }
+    if (res == 1) {
+      printf("\n\tALL SELF CHECKS PASS!\n\n");
+      return 0;
+    } else {
+      printf("\n\tSELF CHECK FAILURES OCCURRED!\n\n");
+      return res;
+    }
+  }
+  return res;
+}
 
-uint32_t mcause_mstatus_mirror_init(uint32_t index){
+_Pragma("GCC push_options")
+_Pragma("GCC optimize (\"O0\")")
+
+uint32_t mcause_mstatus_mirror_init(uint32_t index, uint8_t report_name){
   volatile uint8_t test_fail = 0;
   volatile uint32_t readback_val_mcause = 0x0;
   volatile uint32_t readback_val_mstatus = 0x0;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    printf("\"%s\"", name);
+    return 0;
+  }
 
   printf("\nTesting mirroring of mcause.mpp/mpie and mstatus.mpp/mpie without write\n");
   __asm__ volatile ( R"(
@@ -116,25 +178,35 @@ uint32_t mcause_mstatus_mirror_init(uint32_t index){
       :
       :
       );
-  test_fail += (((readback_val_mcause & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET) != ((readback_val_mstatus & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET));
+  test_fail += (  ((readback_val_mcause & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET)
+               != ((readback_val_mstatus & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET));
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
 
-  test_fail += (((readback_val_mcause & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET) != ((readback_val_mstatus & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET));
+  test_fail += (  ((readback_val_mcause & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET)
+               != ((readback_val_mstatus & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET));
+
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
 
   if (test_fail) {
-    printf("\nTest: \"%s\" FAIL!\n", __FUNCTION__);
+    printf("\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  printf("\nTest: \"%s\" OK!\n", __FUNCTION__);
+  printf("\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
-uint32_t w_mcause_mpp_r_mstatus_mpp(uint32_t index){
+uint32_t w_mcause_mpp_r_mstatus_mpp(uint32_t index, uint8_t report_name){
 
   volatile uint8_t  test_fail = 0;
   volatile uint32_t readback_val = 0x0;
   volatile uint32_t mcause_initial_val = 0x0;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    printf("\"%s\"", name);
+    return 0;
+  }
 
   printf("\nTesting write to mcause.mpp, read from mstatus.mpp\n");
   // Backup mcause
@@ -145,7 +217,9 @@ uint32_t w_mcause_mpp_r_mstatus_mpp(uint32_t index){
       :
       :
       );
-  printf("Initial value mcause.mpp: %0lx\n", ((mcause_initial_val & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET));
+  if (VERBOSE) {
+    printf("Initial value mcause.mpp: %0lx\n", ((mcause_initial_val & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET));
+  }
 
   // Bit set and read back
   __asm__ volatile ( R"(
@@ -159,7 +233,9 @@ uint32_t w_mcause_mpp_r_mstatus_mpp(uint32_t index){
 
   test_fail += (((readback_val & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET) != 0x3);
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
-  printf("Read back mstatus.mpp after setting bits: %0lx\n", ((readback_val & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET));
+  if (VERBOSE) {
+    printf("Read back mstatus.mpp after setting bits: %0lx\n", ((readback_val & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET));
+  }
 
   // Bit clear and read back
   __asm__ volatile ( R"(
@@ -173,7 +249,9 @@ uint32_t w_mcause_mpp_r_mstatus_mpp(uint32_t index){
 
   test_fail += (((readback_val & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET) != 0x0);
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
-  printf("Read back mstatus.mpp after clearing bits: %0lx\n", ((readback_val & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET));
+  if (VERBOSE) {
+    printf("Read back mstatus.mpp after clearing bits: %0lx\n", ((readback_val & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET));
+  }
 
   // Restore value and read back
   __asm__ volatile ( R"(
@@ -185,25 +263,35 @@ uint32_t w_mcause_mpp_r_mstatus_mpp(uint32_t index){
       :
       );
 
-  test_fail += (((readback_val & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET) != ((mcause_initial_val & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET));
+  test_fail += (  ((readback_val & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET)
+               != ((mcause_initial_val & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET));
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
-  printf("Read back mstatus.mpp after restore: %0lx\n", ((readback_val & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET));
+  if (VERBOSE) {
+    printf("Read back mstatus.mpp after restore: %0lx\n", ((readback_val & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET));
+  }
 
   if (test_fail) {
-    printf("\nTest: \"%s\" FAIL!\n", __FUNCTION__);
+    printf("\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  printf("\nTest: \"%s\" OK!\n", __FUNCTION__);
+  printf("\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
 // -----------------------------------------------------------------------------
 
-uint32_t w_mstatus_mpp_r_mcause_mpp(uint32_t index){
+uint32_t w_mstatus_mpp_r_mcause_mpp(uint32_t index, uint8_t report_name){
 
   volatile uint8_t  test_fail = 0;
   volatile uint32_t readback_val = 0x0;
   volatile uint32_t mstatus_initial_val = 0x0;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    printf("\"%s\"", name);
+    return 0;
+  }
 
   printf("\nTesting write to mstatus.mpp, read from mcause.mpp\n");
 
@@ -216,7 +304,9 @@ uint32_t w_mstatus_mpp_r_mcause_mpp(uint32_t index){
       :
       );
 
-  printf("Initial value mstatus.mpp: %0lx\n", ((mstatus_initial_val & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET));
+  if (VERBOSE) {
+    printf("Initial value mstatus.mpp: %0lx\n", ((mstatus_initial_val & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET));
+  }
 
   // Bit set and read back
   __asm__ volatile ( R"(
@@ -230,7 +320,9 @@ uint32_t w_mstatus_mpp_r_mcause_mpp(uint32_t index){
 
   test_fail += (((readback_val & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET) != 0x3);
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
-  printf("Read back mcause.mpp after setting bits: %0lx\n", ((readback_val & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET));
+  if (VERBOSE) {
+    printf("Read back mcause.mpp after setting bits: %0lx\n", ((readback_val & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET));
+  }
 
   // Bit clear and read back
   __asm__ volatile ( R"(
@@ -244,7 +336,9 @@ uint32_t w_mstatus_mpp_r_mcause_mpp(uint32_t index){
 
   test_fail += (((readback_val & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET) != 0x0);
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
-  printf("Read back mcause.mpp after clearing bits: %0lx\n", ((readback_val & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET));
+  if (VERBOSE) {
+    printf("Read back mcause.mpp after clearing bits: %0lx\n", ((readback_val & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET));
+  }
 
   // Restore value and read back
   __asm__ volatile ( R"(
@@ -256,24 +350,34 @@ uint32_t w_mstatus_mpp_r_mcause_mpp(uint32_t index){
       :
       );
 
-  test_fail += (((readback_val & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET) != ((mstatus_initial_val & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET));
+  test_fail += (  ((readback_val & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET)
+               != ((mstatus_initial_val & MSTATUS_MPP_MASK) >> MSTATUS_MPP_OFFSET));
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
-  printf("Read back mcause.mpp after restore: %0lx\n", ((readback_val & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET));
+  if (VERBOSE) {
+    printf("Read back mcause.mpp after restore: %0lx\n", ((readback_val & MCAUSE_MPP_MASK) >> MCAUSE_MPP_OFFSET));
+  }
 
   if (test_fail) {
-    printf("\nTest: \"%s\" FAIL!\n", __FUNCTION__);
+    printf("\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  printf("\nTest: \"%s\" OK!\n", __FUNCTION__);
+  printf("\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
 
-uint32_t w_mcause_mpie_r_mstatus_mpie(uint32_t index){
+uint32_t w_mcause_mpie_r_mstatus_mpie(uint32_t index, uint8_t report_name){
 
   volatile uint8_t  test_fail = 0;
   volatile uint32_t readback_val = 0x0;
   volatile uint32_t mcause_initial_val = 0x0;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    printf("\"%s\"", name);
+    return 0;
+  }
 
   printf("\nTesting write to mcause.mpie, read from mstatus.mpie\n");
   // Backup mcause
@@ -285,7 +389,9 @@ uint32_t w_mcause_mpie_r_mstatus_mpie(uint32_t index){
       :
       );
 
-  printf("Initial value mcause.mpie: %0lx\n", ((mcause_initial_val & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET));
+  if (VERBOSE) {
+    printf("Initial value mcause.mpie: %0lx\n", ((mcause_initial_val & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET));
+  }
 
   // Bit set and read back
   __asm__ volatile ( R"(
@@ -299,7 +405,9 @@ uint32_t w_mcause_mpie_r_mstatus_mpie(uint32_t index){
 
   test_fail += (((readback_val & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET) != 0x1);
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
-  printf("Read back mstatus.mpie after setting bits: %0lx\n", ((readback_val & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET));
+  if (VERBOSE) {
+    printf("Read back mstatus.mpie after setting bits: %0lx\n", ((readback_val & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET));
+  }
 
   // Bit clear and read back
   __asm__ volatile ( R"(
@@ -313,7 +421,9 @@ uint32_t w_mcause_mpie_r_mstatus_mpie(uint32_t index){
 
   test_fail += (((readback_val & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET) != 0x0);
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
-  printf("Read back mstatus.mpie after clearing bits: %0lx\n", ((readback_val & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET));
+  if (VERBOSE) {
+    printf("Read back mstatus.mpie after clearing bits: %0lx\n", ((readback_val & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET));
+  }
   // Restore value and read back
   __asm__ volatile ( R"(
       csrrw x0, mcause, %0
@@ -324,23 +434,33 @@ uint32_t w_mcause_mpie_r_mstatus_mpie(uint32_t index){
       :
       );
 
-  test_fail += (((readback_val & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET) != ((mcause_initial_val & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET));
+  test_fail += (  ((readback_val & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET)
+               != ((mcause_initial_val & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET));
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
-  printf("Read back mcause.mpie after restore: %0lx\n", ((readback_val & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET));
+  if (VERBOSE) {
+    printf("Read back mcause.mpie after restore: %0lx\n", ((readback_val & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET));
+  }
 
   if (test_fail) {
-    printf("\nTest: \"%s\" FAIL!\n", __FUNCTION__);
+    printf("\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  printf("\nTest: \"%s\" OK!\n", __FUNCTION__);
+  printf("\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
-uint32_t w_mstatus_mpie_r_mcause_mpie(uint32_t index){
+uint32_t w_mstatus_mpie_r_mcause_mpie(uint32_t index, uint8_t report_name){
 
   volatile uint8_t  test_fail = 0;
   volatile uint32_t readback_val = 0x0;
   volatile uint32_t mstatus_initial_val = 0x0;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    printf("\"%s\"", name);
+    return 0;
+  }
 
   printf("\nTesting write to mstatus.mpie, read from mcause.mpie\n");
 
@@ -353,7 +473,9 @@ uint32_t w_mstatus_mpie_r_mcause_mpie(uint32_t index){
       :
       );
 
-  printf("Initial value mstatus.mpie: %0lx\n", ((mstatus_initial_val & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET));
+  if (VERBOSE) {
+    printf("Initial value mstatus.mpie: %0lx\n", ((mstatus_initial_val & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET));
+  }
 
   // Bit set and read back
   __asm__ volatile ( R"(
@@ -367,7 +489,9 @@ uint32_t w_mstatus_mpie_r_mcause_mpie(uint32_t index){
 
   test_fail += (((readback_val & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET) != 0x1);
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
-  printf("Read back mcause.mpie after setting bits: %0lx\n", ((readback_val & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET));
+  if (VERBOSE) {
+    printf("Read back mcause.mpie after setting bits: %0lx\n", ((readback_val & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET));
+  }
 
   // Bit clear and read back
   __asm__ volatile ( R"(
@@ -381,7 +505,9 @@ uint32_t w_mstatus_mpie_r_mcause_mpie(uint32_t index){
 
   test_fail += (((readback_val & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET) != 0x0);
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
-  printf("Read back mcause.mpie after clearing bits: %0lx\n", ((readback_val & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET));
+  if (VERBOSE) {
+    printf("Read back mcause.mpie after clearing bits: %0lx\n", ((readback_val & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET));
+  }
 
   // Restore value and read back
   __asm__ volatile ( R"(
@@ -393,24 +519,35 @@ uint32_t w_mstatus_mpie_r_mcause_mpie(uint32_t index){
       :
       );
 
-  test_fail += (((readback_val & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET) != ((mstatus_initial_val & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET));
+  test_fail += (  ((readback_val & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET)
+               != ((mstatus_initial_val & MSTATUS_MPIE_MASK) >> MSTATUS_MPIE_OFFSET));
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
-  printf("Read back mcause.mpie after restore: %0lx\n", ((readback_val & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET));
+  if (VERBOSE) {
+    printf("Read back mcause.mpie after restore: %0lx\n", ((readback_val & MCAUSE_MPIE_MASK) >> MCAUSE_MPIE_OFFSET));
+  }
 
   if (test_fail) {
-    printf("\nTest: \"%s\" FAIL!\n", __FUNCTION__);
+    printf("\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  printf("\nTest: \"%s\" OK!\n", __FUNCTION__);
+  printf("\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
-#pragma GCC pop_options
+_Pragma("GCC pop_options")
 
-uint32_t w_mie_notrap_r_zero(uint32_t index){
+uint32_t w_mie_notrap_r_zero(uint32_t index, uint8_t report_name){
   uint8_t test_fail = 0;
   volatile uint32_t readback_val_mepc = 0x0;
   volatile uint32_t readback_val_mie = 0x0;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    printf("\"%s\"", name);
+    return 0;
+  }
+
   printf("\nTesting write to mie, should not trap and readback 0\n");
   __asm__ volatile ( R"(
       addi t0, x0, -1
@@ -428,19 +565,27 @@ uint32_t w_mie_notrap_r_zero(uint32_t index){
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
 
   if (test_fail) {
-    printf("\nTest: \"%s\" FAIL!\n", __FUNCTION__);
+    printf("\nTest: \"%s\" FAIL!un", name);
     printf("\nMIE: 0x%08lx, MEPC: 0x%08lx\n", readback_val_mie, readback_val_mepc);
     return index + 1;
   }
-  printf("\nTest: \"%s\" OK!\n", __FUNCTION__);
+  printf("\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
 
-uint32_t w_mip_notrap_r_zero(uint32_t index){
+uint32_t w_mip_notrap_r_zero(uint32_t index, uint8_t report_name){
   uint8_t test_fail = 0;
   volatile uint32_t readback_val_mepc = 0x0;
   volatile uint32_t readback_val_mip = 0x0;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    printf("\"%s\"", name);
+    return 0;
+  }
+
   printf("\nTesting write to mip, should not trap and readback 0\n");
   __asm__ volatile ( R"(
       addi t0, x0, -1
@@ -458,18 +603,25 @@ uint32_t w_mip_notrap_r_zero(uint32_t index){
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
 
   if (test_fail) {
-    printf("\nTest: \"%s\" FAIL!\n", __FUNCTION__);
+    printf("\nTest: \"%s\" FAIL!\n", name);
     printf("\nMIP: 0x%08lx, MEPC: 0x%08lx\n", readback_val_mip, readback_val_mepc);
     return index + 1;
   }
-  printf("\nTest: \"%s\" OK!\n", __FUNCTION__);
+  printf("\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
-uint32_t w_mtvt_rd_alignment(uint32_t index){
+uint32_t w_mtvt_rd_alignment(uint32_t index, uint8_t report_name){
   uint8_t test_fail = 0;
   volatile uint32_t mtvt_initial_val = 0x0;
   volatile uint32_t readback_val_mtvt = 0x0;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    printf("\"%s\"", name);
+    return 0;
+  }
 
   // Clear mtvt
   __asm__ volatile ( R"(
@@ -498,20 +650,29 @@ uint32_t w_mtvt_rd_alignment(uint32_t index){
   // Check for correct alignment
   test_fail += ~(readback_val_mtvt >> max(SMCLIC_ID_WIDTH+2, 6));
   if (ABORT_ON_ERROR_IMMEDIATE) assert (test_fail == 0);
-  printf("\nmtvt readback after 0xffff_ffff write: 0x%08lx\n", readback_val_mtvt);
+  if (VERBOSE) {
+    printf("\nmtvt readback after 0xffff_ffff write: 0x%08lx\n", readback_val_mtvt);
+  }
 
   if (test_fail) {
-    printf("\nTest: \"%s\" FAIL!\n", __FUNCTION__);
+    printf("\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  printf("\nTest: \"%s\" OK!\n", __FUNCTION__);
+  printf("\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
-uint32_t w_mtvec_rd_alignment(uint32_t index){
+uint32_t w_mtvec_rd_alignment(uint32_t index, uint8_t report_name){
   uint8_t test_fail = 0;
   volatile uint32_t mtvec_initial_val = 0x0;
   volatile uint32_t readback_val_mtvec = 0x0;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    printf("\"%s\"", name);
+    return 0;
+  }
 
   // Clear mtvec
   __asm__ volatile ( R"(
@@ -538,36 +699,22 @@ uint32_t w_mtvec_rd_alignment(uint32_t index){
       );
 
   // upper bits all writeable
-  test_fail += ~(readback_val_mtvec >> 7);
+  test_fail += ~(readback_val_mtvec >> MTVEC_ALIGN_BITS);
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
-  // lower [6:2] bits not updated
-  test_fail += ((readback_val_mtvec << 25) >> 2);
+  // lower [MTVEC_ALIGN_BITS-1:2] bits not updated
+  test_fail += ((readback_val_mtvec << (32 - MTVEC_ALIGN_BITS)) >> 2);
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
 
-  printf("\nmtvec readback after 0xffff_ffff write: 0x%08lx\n", readback_val_mtvec);
+  if (VERBOSE) {
+    printf("\nmtvec readback after 0xffff_ffff write: 0x%08lx\n", readback_val_mtvec);
+  }
 
   if (test_fail) {
-    printf("\nTest: \"%s\" FAIL!\n", __FUNCTION__);
+    printf("\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  printf("\nTest: \"%s\" OK!\n", __FUNCTION__);
+  printf("\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
-int get_result(uint32_t res){
-  if (res == 1) {
-    printf("ALL PASS\n\n");
-    return 0;
-  }
-  printf("\nResult: 0x%0lx\n", res);
-  for (int i = 1; i <= NUM_TESTS; i++){
-    if ((res >> i) & 0x1) {
-      printf ("Test %0d failed\n", i-1);
-    }
-  }
-  return res;
-}
 
-uint32_t max(uint32_t a, uint32_t b) {
-  return a > b ? a : b;
-}
