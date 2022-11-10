@@ -24,12 +24,39 @@
 /**
  * TODO Describe uvma_obi_memory_slv_base_seq_c
  */
-class uvma_obi_memory_slv_base_seq_c extends uvma_obi_memory_base_seq_c;
+class uvma_obi_memory_slv_base_seq_c#(
+   parameter AUSER_WIDTH = `UVMA_OBI_MEMORY_AUSER_DEFAULT_WIDTH, ///< Width of the auser signal. RI5CY, Ibex, CV32E40* do not have the auser signal.
+   parameter WUSER_WIDTH = `UVMA_OBI_MEMORY_WUSER_DEFAULT_WIDTH, ///< Width of the wuser signal. RI5CY, Ibex, CV32E40* do not have the wuser signal.
+   parameter RUSER_WIDTH = `UVMA_OBI_MEMORY_RUSER_DEFAULT_WIDTH, ///< Width of the ruser signal. RI5CY, Ibex, CV32E40* do not have the ruser signal.
+   parameter ADDR_WIDTH  = `UVMA_OBI_MEMORY_ADDR_DEFAULT_WIDTH , ///< Width of the addr signal.
+   parameter DATA_WIDTH  = `UVMA_OBI_MEMORY_DATA_DEFAULT_WIDTH , ///< Width of the rdata and wdata signals. be width is DATA_WIDTH / 8. Valid DATA_WIDTH settings are 32 and 64.
+   parameter ID_WIDTH    = `UVMA_OBI_MEMORY_ID_DEFAULT_WIDTH   , ///< Width of the aid and rid signals.
+   parameter ACHK_WIDTH  = `UVMA_OBI_MEMORY_ACHK_DEFAULT_WIDTH , ///< Width of the achk signal.
+   parameter RCHK_WIDTH  = `UVMA_OBI_MEMORY_RCHK_DEFAULT_WIDTH   ///< Width of the rchk signal.
+) extends uvma_obi_memory_base_seq_c#(
+   .AUSER_WIDTH(AUSER_WIDTH),
+   .WUSER_WIDTH(WUSER_WIDTH),
+   .RUSER_WIDTH(RUSER_WIDTH),
+   .ADDR_WIDTH(ADDR_WIDTH),
+   .DATA_WIDTH(DATA_WIDTH),
+   .ID_WIDTH(ID_WIDTH),
+   .ACHK_WIDTH(ACHK_WIDTH),
+   .RCHK_WIDTH(RCHK_WIDTH)
+);
 
    // Fields
 
 
-   `uvm_object_utils_begin(uvma_obi_memory_slv_base_seq_c)
+   `uvm_object_utils_begin(uvma_obi_memory_slv_base_seq_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ))
 
    `uvm_object_utils_end
 
@@ -157,8 +184,18 @@ endfunction : add_ruser
 
 function void uvma_obi_memory_slv_base_seq_c::add_rchk(uvma_obi_memory_slv_seq_item_c slv_rsp);
 
-   // FIXME:need to implement this
-   // slv_rsp.rchk = '0;
+   if(cfg.chk_scheme == UVMA_OBI_MEMORY_CHK_TIED) begin
+      slv_rsp.rchk = '0;
+   end
+   // Checksum scheme for CV32E40S. If other schemes are required, they need to be added here,
+   // in addition to adding the option to enable them
+   else if(cfg.chk_scheme == UVMA_OBI_MEMORY_CHK_CV32E40S) begin
+      slv_rsp.rchk[0]    = ~^slv_rsp.rdata[0];
+      slv_rsp.rchk[1]    = ~^slv_rsp.rdata[1];
+      slv_rsp.rchk[2]    = ~^slv_rsp.rdata[2];
+      slv_rsp.rchk[3]    = ~^slv_rsp.rdata[3];
+      slv_rsp.rchk[4]    = ~^{slv_rsp.err, slv_rsp.exokay};
+   end
 
 endfunction : add_rchk
 

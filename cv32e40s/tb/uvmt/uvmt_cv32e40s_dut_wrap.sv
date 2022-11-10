@@ -151,6 +151,7 @@ module uvmt_cv32e40s_dut_wrap
 
     //TODO: These are temporary hacks to get the very basics working wit integrity checks
     //      Needs to be reworked in to the obi memory agent
+    /*
     logic [4:0]  instr_rchk;
     assign instr_rchk = {
           ^{obi_instr_if_i.err, 1'b0},
@@ -182,6 +183,7 @@ module uvmt_cv32e40s_dut_wrap
 
     logic rvalidpar_lsu;
     assign rvalidpar_lsu = !obi_data_if_i.rvalid;
+  */
 
     // --------------------------------------------
     // instantiate the core
@@ -209,36 +211,36 @@ module uvmt_cv32e40s_dut_wrap
          .dm_exception_addr_i    ( core_cntrl_if.dm_exception_addr),
 
          .instr_req_o            ( obi_instr_if_i.req             ),
-         .instr_reqpar_o         (      /* todo: connect */       ),
+         .instr_reqpar_o         ( obi_instr_if_i.reqpar          ),
          .instr_gnt_i            ( obi_instr_if_i.gnt             ),
-         .instr_gntpar_i         ( gntpar_int),//!obi_instr_if_i.gnt /* todo: connect */       ),
+         .instr_gntpar_i         ( obi_instr_if_i.gntpar          ),
          .instr_addr_o           ( obi_instr_if_i.addr            ),
-         .instr_achk_o           (      /* todo: connect */       ),
+         .instr_achk_o           ( obi_instr_if_i.achk            ),
          .instr_prot_o           ( obi_instr_if_i.prot            ),
-         .instr_dbg_o            ( /* obi_instr_if_i.dbg */       ), // todo: Support OBI 1.3
+         .instr_dbg_o            ( obi_instr_if_i.dbg             ),
          .instr_memtype_o        ( obi_instr_if_i.memtype         ),
          .instr_rdata_i          ( obi_instr_if_i.rdata           ),
-         .instr_rchk_i           ( instr_rchk        ),
+         .instr_rchk_i           ( obi_instr_if_i.rchk            ),
          .instr_rvalid_i         ( obi_instr_if_i.rvalid          ),
-         .instr_rvalidpar_i      ( rvalidpar_int /* todo: connect */       ),
+         .instr_rvalidpar_i      ( obi_instr_if_i.rvalidpar       ),
          .instr_err_i            ( obi_instr_if_i.err             ),
 
          .data_req_o             ( obi_data_if_i.req              ),
-         .data_reqpar_o          (      /* todo: connect */       ),
+         .data_reqpar_o          ( obi_data_if_i.reqpar           ),
          .data_gnt_i             ( obi_data_if_i.gnt              ),
-         .data_gntpar_i          ( gntpar_lsu /* todo: connect */       ),
+         .data_gntpar_i          ( obi_data_if_i.gntpar           ),
          .data_rvalid_i          ( obi_data_if_i.rvalid           ),
-         .data_rvalidpar_i       ( rvalidpar_lsu /* todo: connect */       ),
+         .data_rvalidpar_i       ( obi_data_if_i.rvalidpar        ),
          .data_we_o              ( obi_data_if_i.we               ),
          .data_be_o              ( obi_data_if_i.be               ),
          .data_addr_o            ( obi_data_if_i.addr             ),
-         .data_achk_o            (      /* todo: connect */       ),
+         .data_achk_o            ( obi_data_if_i.achk             ),
          .data_wdata_o           ( obi_data_if_i.wdata            ),
          .data_prot_o            ( obi_data_if_i.prot             ),
-         .data_dbg_o             ( /* obi_data_if_i.dbg */        ), // todo: Support OBI 1.3
+         .data_dbg_o             ( obi_data_if_i.dbg              ),
          .data_memtype_o         ( obi_data_if_i.memtype          ),
          .data_rdata_i           ( obi_data_if_i.rdata            ),
-         .data_rchk_i            ( rchk_lsu  /* todo: connect */       ),
+         .data_rchk_i            ( obi_data_if_i.rchk             ),
          .data_err_i             ( obi_data_if_i.err              ),
 
          .mcycle_o               ( /*todo: connect */             ),
