@@ -1152,7 +1152,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   //TODO: comment
 
-  //Signal determing if the core clock is active or not.
+  //Signal determining if the core clock is active or not.
   logic core_clock_cycles;
 
   always @(posedge clk_i) begin
@@ -1205,25 +1205,20 @@ module uvmt_cv32e40s_xsecure_assert
 
   );
 
-  // Assume/assert slave ports does not initate response phase until the
-  // corresponding address phase is completed
-  // req and gnt must have been sampled high before rvalid = 1
-  // requirement: R-5
-
   property p_resp_after_addr_no_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
     @(posedge xsecure_if.core_clk)
 
     //Make sure the core is in operative state
     core_clock_cycles
 
-    //Make sure there is a respons phase transfere
+    //Make sure there is a respons phase transfer
     && obi_rvalid
 
-    //Make sure the respons phase transpher is finished
+    //Make sure the respons phase transfer is finished
     && !resp_ph_cont
 
     |->
-    //Check that the repsons phase transfer is indeed a respons to an address transfer (that there at least exist one active address thransfer)
+    //Check that the repsons phase transfer is indeed a respons to an address transfer (that there at least exist one active address transfer)
     v_addr_ph_cnt > 0;
 
   endproperty;
@@ -1243,13 +1238,13 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure the core is in operative state
     core_clock_cycles
 
-    //Make sure there is a respons phase transfere
+    //Make sure there is a respons phase transfer
     && obi_rvalid
 
-    //Make sure the respons phase transpher is finished
+    //Make sure the respons phase transfer is finished
     && !resp_ph_cont
 
-    //Make sure there are no active address transferes the respons tranfere could be correlated with
+    //Make sure there are no active address transfers the respons tranfere could be correlated with
     && v_addr_ph_cnt == 0
 
     |=>
