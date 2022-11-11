@@ -211,7 +211,7 @@ module  uvmt_cv32e40s_umode_cov
   endsequence : seq_write_dcsr_prv
 
 
-  // Cover: "SupportedLevels" & "MppValues"
+  // Cover - vplan:SupportedLevels & vplan:MppValues
 
   for (genvar mode = 0; mode <= 3; mode++) begin : gen_try_goto_mode
     cov_try_goto_mode: cover property (
@@ -230,7 +230,7 @@ module  uvmt_cv32e40s_umode_cov
   end : gen_try_goto_mode
 
 
-  // Cover: "PrvSupported"
+  // Cover - vplan:PrvSupported
 
   for (genvar mode = 0; mode <= 3; mode++) begin : gen_try_set_prv
     cov_try_set_prv: cover property (
@@ -239,7 +239,7 @@ module  uvmt_cv32e40s_umode_cov
   end : gen_try_set_prv
 
 
-  // Cover: "Refetch"
+  // Cover - vplan:Refetch
 
   sequence  seq_refetch_as (logic [1:0]  mode);
     logic [31:0]  addr;
@@ -274,7 +274,7 @@ module  uvmt_cv32e40s_umode_cov
   );
 
 
-  // Cover: "TrapsMmode"  (Helper Covers)
+  // Cover - vplan:TrapsMmode  (Helper Covers)
 
   cov_umode_intr: cover property (
     rvfi_valid                 &&
@@ -309,7 +309,7 @@ module  uvmt_cv32e40s_umode_cov
   `endif
 
 
-  // Cover: "ResumeMprv"  (Helper Covers)
+  // Cover - vplan:ResumeMprv  (Helper Covers)
 
   cov_umode_mprv: cover property (
     rvfi_valid                            &&
@@ -333,11 +333,11 @@ module  uvmt_cv32e40s_umode_cov
       bins  umode = {MODE_U};
     }
 
-    /* Enable for extra pedantic checking
+    `ifndef FORMAL
     cp_csraddr: coverpoint  rvfi_insn[31:20]  iff (is_rvfi_csr_instr) {
       bins  addr[4096] = {[0:$]};
     }
-    */
+    `endif
 
     cp_csrreadwrite: coverpoint
       {is_rvfi_csr_instr_read, is_rvfi_csr_instr_write}
@@ -405,24 +405,25 @@ module  uvmt_cv32e40s_umode_cov
 
     // Crosses
 
-    /* Enable for extra pedantic checking
+    // vplan:AccessLevel & vplan:IllegalAccess
+    `ifndef FORMAL
     x_mode_csraddr: cross cp_mode, cp_csraddr;
-    */
+    `endif
 
-    // "MisaU" & "MisaN", "MscratchReliable"
+    // vlpan:MisaU & vplan:MisaN & vplan:MscratchReliable & vplan:MedelegMideleg
     x_csrreadwrite_mode_umodecsrs:
       cross cp_csrreadwrite, cp_mode, cp_umodecsrs;
 
-    // "TrapMpp"
+    // vplan:TrapMpp
     x_mpp_excint: cross cp_mpp, cp_excint  iff (!rvfi_dbg_mode);
 
-    // "TrapsMmode"
+    // vplan:TrapsMmode
     x_prevmode_excint: cross cp_prevmode, cp_excint;
 
-    // "ExcecuteMmode" (in dmode)
+    // vplan:ExcecuteMmode  (in dmode)
     x_dmode_csrreadwrite: cross cp_dmode, cp_csrreadwrite;
 
-    // "ExcecuteMmode" & "ExcecuteMprven"
+    // vplan:ExcecuteMmode & vplan:ExcecuteMprven
     x_dmode_loadstore: cross cp_dmode, cp_loadstore;
     x_dmode_mprv:      cross cp_dmode, cp_mprv;
     x_dmode_mpp:       cross cp_dmode, cp_mpp;
@@ -430,7 +431,7 @@ module  uvmt_cv32e40s_umode_cov
       cross cp_dmode, cp_loadstore, cp_mprv, cp_mpp
       iff (!rvfi_trap);
 
-    // "ResumeMprv"
+    // vplan:ResumeMprv
     x_dret_mprv_prv: cross cp_dret, cp_mprv, cp_prv;
   endgroup
 

@@ -39,15 +39,17 @@ module  uvmt_cv32e40s_umode_assert
   input wire [31:0]  rvfi_csr_mcause_wdata,
   input wire [31:0]  rvfi_csr_mcause_wmask,
   input wire [31:0]  rvfi_csr_mcounteren_rdata,
+  input wire [31:0]  rvfi_csr_mie_rdata,
+  input wire [31:0]  rvfi_csr_mip_rdata,
   input wire [31:0]  rvfi_csr_misa_rdata,
   input wire [31:0]  rvfi_csr_mscratch_rdata,
   input wire [31:0]  rvfi_csr_mscratch_rmask,
   input wire [31:0]  rvfi_csr_mscratch_wdata,
   input wire [31:0]  rvfi_csr_mscratch_wmask,
+  input wire [31:0]  rvfi_csr_mstateen0_rdata,
   input wire [31:0]  rvfi_csr_mstatus_rdata,
   input wire [31:0]  rvfi_csr_mstatus_wdata,
   input wire [31:0]  rvfi_csr_mstatus_wmask,
-  input wire [31:0]  rvfi_csr_mstateen0_rdata,
 
   input wire         mpu_iside_valid,
   input wire [31:0]  mpu_iside_addr,
@@ -227,7 +229,7 @@ module  uvmt_cv32e40s_umode_assert
   end
 
 
-  // MisaU & MisaN
+  // vplan:MisaU & vplan:MisaN
 
   a_misa_bits: assert property (
     rvfi_valid
@@ -238,7 +240,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "misa has wrong extension bits");
 
 
-  // SupportedLevels
+  // vplan:SupportedLevels
 
   a_no_unsupported_modes: assert property (
     rvfi_valid
@@ -255,7 +257,7 @@ module  uvmt_cv32e40s_umode_assert
   );
 
 
-  // ResetMode
+  // vplan:ResetMode
 
   a_initial_mode: assert property (
     $past(rst_ni == 0)  ##0
@@ -266,7 +268,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "priv mode out of reset should be machine-mode");
 
 
-  // MscratchReliable
+  // vplan:MscratchReliable
 
   a_mscratch_reliable: assert property (
     rvfi_valid && (rvfi_mode == MODE_U)
@@ -280,7 +282,7 @@ module  uvmt_cv32e40s_umode_assert
   );
 
 
-  // MppValues
+  // vplan:MppValues
 
   a_mpp_mode: assert property (
     rvfi_valid
@@ -299,7 +301,7 @@ module  uvmt_cv32e40s_umode_assert
   );
 
 
-  // SppValues
+  // vplan:SppValues
 
   a_spp_zero: assert property (
     rvfi_valid
@@ -308,7 +310,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "spp must be zero because supervisor-mode is not implemented");
 
 
-  // TrapMpp
+  // vplan:TrapMpp
 
   property p_trap_mpp_exception;
     int  was_mode;
@@ -358,7 +360,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "when trapping inside dmode mpp must be M-mode");
 
 
-  // TrapsMmode
+  // vplan:TrapsMmode & vplan:ToMmode
 
   a_traps_mmode: assert property (
     rvfi_valid  &&
@@ -376,7 +378,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "all traps shall be handled in mmode");
 
 
-  // MretLeastPrivileged
+  // vplan:MretLeastPrivileged
 
   a_mret_to_mpp: assert property (
     is_rvfi_mret  &&
@@ -386,7 +388,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "mret should set mpp to umode");
 
 
-  // MretMprv
+  // vplan:MretMprv
 
   sequence  seq_mret_notrap_toumode;
     is_rvfi_mret  &&
@@ -427,7 +429,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "mstatus writes are reflected in the post state");
 
 
-  // WfiExecute & WfiIllegal
+  // vplan:WfiExecute & vplan:WfiIllegal
 
   a_wfi_illegal: assert property (
     is_rvfi_wfi            &&
@@ -447,7 +449,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "wfi in umode w/ tw==0 is not illegal");
 
 
-  // CustomInstr & Uret
+  // vplan:CustomInstr & vplan:Uret
 
   a_custom_instr: assert property (
     is_rvfi_custominstr
@@ -465,7 +467,7 @@ module  uvmt_cv32e40s_umode_assert
 
 
 /* TODO:silabs-robin  Comment in when RTL has comleted "ebreaku" implementation
-  // EbreakuOn
+  // vplan:EbreakuOn
 
   a_ebreaku_on: assert property (
     is_rvfi_ebreak         &&
@@ -481,7 +483,7 @@ module  uvmt_cv32e40s_umode_assert
   );
 
 
-  // EbreakuOff
+  // vplan:EbreakuOff
 
   sequence  seq_ebreak_umode_noebreaku;
     is_rvfi_ebreak         &&
@@ -523,7 +525,7 @@ module  uvmt_cv32e40s_umode_assert
 */
 
 
-  // Ecall Umode
+  // vplan:Ecall  (in umode)
 
   a_ecall_umode_trap: assert property (
     (is_rvfi_ecall && (rvfi_mode == MODE_U))
@@ -550,7 +552,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "umode ecall causes umode ecall exception");
 
 
-  // ExecuteMmode (in debug)
+  // vplan:ExecuteMmode (in debug)
 
   a_dmode_mmode: assert property (
     rvfi_valid  &&
@@ -560,7 +562,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "dmode must execute in mmode");
 
 
-  // ResumePriv
+  // vplan:ResumePriv
 
   property p_dret_prv;
     int prv;
@@ -603,7 +605,7 @@ module  uvmt_cv32e40s_umode_assert
 
 
 /* TODO:silabs-robin  Comment in when RTL bug is fixed
-  // ResumeMprv
+  // vplan:ResumeMprv
 
   a_dret_mprv_umode: assert property (
     ( rvfi_valid &&          rvfi_dbg_mode)
@@ -624,7 +626,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "exiting dmode towards umode should clear mprv");
 
 
-  // UmodeUnmodified (wrt MPRV)
+  // vplan:UmodeUnmodified (wrt MPRV)
 
   a_umode_unmodified: assert property (
     rvfi_valid  &&
@@ -635,7 +637,7 @@ module  uvmt_cv32e40s_umode_assert
 */
 
 
-  // UserExtensions
+  // vplan:UserExtensions
 
   a_umode_extensions: assert property (
     rvfi_valid
@@ -646,7 +648,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "none of the mstatus umode extension bits shall be used");
 
 
-  // IllegalAccess
+  // vplan:IllegalAccess
 
   a_illegal_csr_access: assert property (
     is_rvfi_csrinstr       &&
@@ -658,7 +660,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "access to higher lvl csrs is illegal");
 
 
-  // MretMpp
+  // vplan:MretMpp
 
   property p_mret_from_mpp (int mode);
     is_rvfi_mret  &&
@@ -683,7 +685,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "mret should result in privmode from mstatus.mpp (mmode)");
 
 
-  // MretInLvl
+  // vplan:Mret  (in umode)
 
   a_mret_umode_exception: assert property (
     (is_rvfi_mret && (rvfi_mode == MODE_U))
@@ -717,7 +719,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "mret in umode clear mprv");
 
 
-  // McounterenClear & McounterenSet & Mcounteren
+  // vplan:McounterenClear & vplan:McounterenSet & vplan:Mcounteren
 
   for (genvar i = 0; i < 31; i++) begin : gen_mcounteren_clear
     a_check: assert property (
@@ -747,7 +749,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "mcounteren must be implemented");
 
 
-  // Jvt
+  // vplan:Jvt
 
   a_jvt_access: assert property (
     is_rvfi_csrinstr  &&
@@ -758,7 +760,38 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "jvt csr should be rw in both modes");
 
 
-  // NExt
+  // vplan:SoftwareInterrupts
+
+  property p_softwareinterrupts_zeros(logic [31:0] csr);
+    rvfi_valid
+    |->
+      //[31:16]
+    !csr[15:12]  &&
+      //[11:11]
+    !csr[10: 8]  &&
+      //[ 7: 7]
+    !csr[ 6: 4]  &&
+      //[ 3: 3]
+    !csr[ 2: 0]
+    ;
+  endproperty : p_softwareinterrupts_zeros
+
+  a_softwareinterrupts_zeromie: assert property (
+    p_softwareinterrupts_zeros(rvfi_csr_mie_rdata)
+  ) else `uvm_error(info_tag, "certain bits in 'mie' must be zero");
+
+  a_softwareinterrupts_zeromip: assert property (
+    p_softwareinterrupts_zeros(rvfi_csr_mip_rdata)
+  ) else `uvm_error(info_tag, "certain bits in 'mip' must be zero");
+
+  a_softwareinterrupts_mcausemode: assert property (
+    rvfi_intr.interrupt
+    |->
+    !(rvfi_intr.cause inside {[0:2], [4:6], [8:10], [12:15]})
+  ) else `uvm_error(info_tag, "unexpected interrupt cause");
+
+
+  // vplan:NExt
 
   a_next_csrs: assert property (
     is_rvfi_csrinstr  &&
@@ -774,7 +807,7 @@ module  uvmt_cv32e40s_umode_assert
 
 
 /* TODO:silabs-robin  Uncomment when RTL gets up to date on debug specs
-  // ExecuteMprven (in debug)
+  // vplan:ExecuteMprven  (in debug)
 
   a_mprven_tied: assert property (
     rvfi_valid
@@ -784,7 +817,7 @@ module  uvmt_cv32e40s_umode_assert
 */
 
 
-  // PrvEntry
+  // vplan:PrvEntry
 
   property  p_prv_entry;
     (rvfi_valid && !rvfi_dbg_mode)
@@ -817,7 +850,7 @@ module  uvmt_cv32e40s_umode_assert
   );
 
 
-  // PrvSupported
+  // vplan:PrvSupported
 
   a_prv_supported: assert property (
     rvfi_valid
@@ -836,7 +869,7 @@ module  uvmt_cv32e40s_umode_assert
   );
 
 
-  // MedelegMideleg
+  // vplan:MedelegMideleg
 
   a_medeleg_mideleg: assert property (
     is_rvfi_csrinstr  &&
@@ -847,7 +880,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "medeleg and mideleg registers should not exist");
 
 
-  // InstrProt & DataProt & DbgProt
+  // vplan:InstrProt & vplan:DataProt & vplan:DbgProt
 
 /* TODO:silabs-robin  Enable (and tweak) when rvfi implementation has the new signals
   a_prot_fetch: assert property (
@@ -883,15 +916,5 @@ module  uvmt_cv32e40s_umode_assert
   a_prot_dside_legal: assert property (
     obi_dside_prot  inside  {3'b 001, 3'b 111}
   ) else `uvm_error(info_tag, "the prot on loadstore must be legal");
-
-
-  // ExecuteMmode
-
-  a_dbgpriv: assert property (
-    rvfi_valid  &&
-    rvfi_dbg_mode
-    |->
-    (rvfi_mode == MODE_M)
-  );
 
 endmodule : uvmt_cv32e40s_umode_assert

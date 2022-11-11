@@ -172,7 +172,10 @@ void set_m_mode(void) {
 
 
 
-/* Loops through the different spec modes (00, 01, 10, 11) and asserts that only the implemented modes User (00) and Machine (11) are entered. */
+/*
+ * Loops through the different spec modes (00, 01, 10, 11) and asserts that only the implemented modes User (00) and Machine (11) are entered.
+ * vplan:SupportedLevels
+ */
 void privilege_test(void){
   int input_mode = 0;
   trap_handler_beh = PRIVILEGE_TEST_BEH;
@@ -190,10 +193,12 @@ void privilege_test(void){
   };
 
 }
+
 /*
-To satisfy the testing criteria this test must run first
-this is to ensure 'Ensure that M-mode is the first mode entered after reset.
-*/
+ * To satisfy the testing criteria this test must run first
+ * this is to ensure 'Ensure that M-mode is the first mode entered after reset.
+ * vplan:ResetMode
+ */
 void reset_mode(void){
   __asm__ volatile("csrrs %0, mstatus, x0" : "=r"(mstatus)); // read the mstatus register
   assert_or_die(mstatus, MSTATUS_STD_VAL, "error: core did not enter M-mode after reset\n");
@@ -201,9 +206,10 @@ void reset_mode(void){
 
 
 /*
-Try all kinds of access to all implemented U- and M-mode CSR registers while in U- and M-mode (cross), ensure appropriate access grant/deny. (Caveat) There is only one register, JVT.
+ * Try all kinds of access to all implemented U- and M-mode CSR registers while in U- and M-mode (cross), ensure appropriate access grant/deny. (Caveat) There is only one register, JVT.
+ * vplan:???
  */
-void JVT_cross_privilege(void) { // TODO: Change name to JVT-something test, more appropriate
+void JVT_cross_privilege(void) {
 
   NUM_TRAP_EXECUTIONS = 0;
   trap_handler_beh = TRAP_INCR_BEH;
@@ -219,9 +225,11 @@ void JVT_cross_privilege(void) { // TODO: Change name to JVT-something test, mor
 }
 
 
- /*
-Read misa and assert that "U" bit-field is high and "N" bit-field is low.
-*/
+/*
+ * Read misa and assert that "U" bit-field is high and "N" bit-field is low.
+ * vplan:MisaU
+ * vplan:MisaN
+ */
 void misa_check(void) {
 
   set_m_mode();
@@ -236,8 +244,9 @@ void misa_check(void) {
 
 
 /*
-F-extension, S-mode are not supported on the platform, FS and XS should therefore be 0, and if both of those are 0 then the SD field should also be 0.
-*/
+ * F-extension, S-mode are not supported on the platform, FS and XS should therefore be 0, and if both of those are 0 then the SD field should also be 0.
+ * vplan:UserExtensions
+ */
 void mstatus_implement_check(void){
 
   unsigned int mstatus, XS, FS, SD;
@@ -252,9 +261,10 @@ void mstatus_implement_check(void){
 
 
 /*
-Check that mscratch never changes in U-mode.
-change to u-mode, attempt to write to mscratch, trap and assert that mscratch is the same.
-*/
+ * Check that mscratch never changes in U-mode.
+ * change to u-mode, attempt to write to mscratch, trap and assert that mscratch is the same.
+ * vplan:MscratchReliable
+ */
 void mscratch_reliable_check(void){
 
   trap_handler_beh = MSCRATCH_TEST_BEH; // set the exception handler behavior.
@@ -270,8 +280,11 @@ void mscratch_reliable_check(void){
 }
 
 /*
-Catch all funciton for registers which should not exist according to the intern v-plan (Summer 2022) for the cv32e40s core.
-*/
+ * Catch-all function for registers which should not exist according to the intern v-plan (Summer 2022) for the cv32e40s core.
+ * vplan:NExt
+ * vplan:Mcounteren
+ * vplan:MedelegMideleg
+ */
 void csr_should_not_exist_check(void) {
 
   uint32_t csr_acc, s_mode_bit, misa;
@@ -358,10 +371,11 @@ void csr_should_not_exist_check(void) {
   assert_or_die(NUM_TRAP_EXECUTIONS, 40, "error: some of the unimplemented registers did not trap on instrs attempt\n");
 }
 
+/*
+ * U-mode interrupts are not supported. The 'zero-bits' in the 'mip' and 'mie' should remain zero.
+ * vplan:SoftwareInterrupts
+ */
 void no_u_traps(void) {
-  /*
-  U-mode interrupts are not supported. The 'zero-bits' in the 'mip' and 'mie' should remain zero.
-  */
   unsigned int mask, garb, mipr, mier;
   mip = 1; // dummy values for the mip and mie
   mie = 1; // these are both read by the trap handler
@@ -381,8 +395,9 @@ void no_u_traps(void) {
 
 
 /*
-Assert that U-mode is set in the MPP after returning from a M-mode.
-*/
+ * Assert that U-mode is set in the MPP after returning from M-mode.
+ * vplan:MretLeastPrivileged
+ */
 void proper_ret_priv(void) {
 
   uint32_t MPP, MPRV;
@@ -398,8 +413,9 @@ void proper_ret_priv(void) {
 
 
 /*
-When in U-mode and TW=1 in mstatus, executing a WFI should trap to an illegal exception.
-*/
+ * When in U-mode and TW=1 in mstatus, executing a WFI should trap to an illegal exception.
+ * vplan:WfiIllegal
+ */
 void check_wfi_trap(void) {
 
   trap_handler_beh = PRIVILEGE_TEST_BEH;
@@ -424,8 +440,9 @@ void check_wfi_trap(void) {
 
 
 /*
-Be in U-mode, execute ecall, ensure that an exception is taken and mcause is set correctly.
-*/
+ * Be in U-mode, execute ecall, ensure that an exception is taken and mcause is set correctly.
+ * vplan:Ecall
+ */
 void correct_ecall(void) {
 
   trap_handler_beh = PRIVILEGE_TEST_BEH;
@@ -440,8 +457,9 @@ void correct_ecall(void) {
 
 
 /*
-Be in U-mode, execute MRET, ensure that it does not execute like it does in M-mode: Raise illegal exception, priv mode goes to M and not MPP, MPP becomes U, MPRV is unchanged.
-*/
+ * Be in U-mode, execute MRET, ensure that it does not execute like it does in M-mode: Raise illegal exception, priv mode goes to M and not MPP, MPP becomes U, MPRV is unchanged.
+ * vplan:Mret
+ */
 void correct_xret(void) {
 
   trap_handler_beh = PRIVILEGE_TEST_BEH;
@@ -469,7 +487,10 @@ void correct_xret(void) {
 
 }
 
-/* Executing uret should give an illegal instruction exception. */
+/*
+ * Executing uret should give an illegal instruction exception.
+ * vplan:Uret
+ */
 void check_uret(){
   trap_handler_beh = PRIVILEGE_TEST_BEH;
   uint32_t mcode;
@@ -479,8 +500,11 @@ void check_uret(){
 }
 
 
+/*
+ * Access to all trigger registers should be illegal while the core is in usermode.
+ * vplan:TriggersAccess
+ */
 void access_trigger(){
-/* Access to all trigger registers should be illegal while the core is in usermode*/
   trap_handler_beh = TRAP_INCR_BEH;
   NUM_TRAP_EXECUTIONS = 0;
   uint32_t csr_acc; // dummy value holder
