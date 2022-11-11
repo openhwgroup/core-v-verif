@@ -92,9 +92,14 @@ module uvmt_cv32e40s_obi_phases_monitor
     input logic obi_gnt,
     input logic obi_rvalid,
 
+
+    // continued address and respons phase indicators, indicates address and respons phases
+    // of more than one cycle
     output logic addr_ph_cont,
     output logic resp_ph_cont,
-    output logic v_addr_ph_cnt
+
+    // address phase counter, used to verify no response phase preceedes an address phase
+    output integer v_addr_ph_cnt
   );
 
   logic addr_ph_valid;
@@ -106,9 +111,6 @@ module uvmt_cv32e40s_obi_phases_monitor
   assign addr_ph_valid = obi_req == 1'b1 && obi_gnt == 1'b1;
   assign rsp_ph_valid = obi_rready == 1'b1 && obi_rvalid == 1'b1;
 
-  // continued address phase indicator, indicates an address phase
-  // of more than one cycle
-  logic addr_ph_cont;
 
   always @(posedge clk_i, negedge rst_ni) begin
     if (!rst_ni) begin
@@ -124,10 +126,6 @@ module uvmt_cv32e40s_obi_phases_monitor
     end
   end
 
-  // continued response phase indicator, indicates a response phase
-  // of more than one cycle
-  logic resp_ph_cont;
-
   always @(posedge clk_i, negedge rst_ni) begin
     if (!rst_ni) begin
       resp_ph_cont <= 1'b0;
@@ -141,9 +139,6 @@ module uvmt_cv32e40s_obi_phases_monitor
       end
     end
   end
-
-  // address phase counter, used to verify no response phase preceedes an address phase
-  int v_addr_ph_cnt;
 
   always @(posedge clk_i, negedge rst_ni) begin
     if (!rst_ni) begin

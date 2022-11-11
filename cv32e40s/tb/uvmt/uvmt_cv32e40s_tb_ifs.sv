@@ -111,7 +111,9 @@ interface uvmt_cv32e40s_xsecure_if
     import cv32e40s_pkg::*;
     import cv32e40s_rvfi_pkg::*;
     #(parameter int     MTVT_ADDR_WIDTH = 5,
-    parameter int       PMP_NUM_REGIONS = 2)
+    parameter int       PMP_NUM_REGIONS = 2,
+    parameter int       PMP_ADDR_WIDTH =6
+    )
 
     (
 
@@ -176,7 +178,7 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] core_i_cs_registers_i_mscratch_csr_i_rdata_q,
 
     input logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q,
-    input logic [PMP_MAX_REGIONS-1:0][31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q,
+    input logic [PMP_MAX_REGIONS-1:0][PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q,
 
     // SMCLIC
     input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q,
@@ -199,7 +201,7 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] core_cs_registers_mscratch_csr_gen_hardened_shadow_q,
 
     input logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q,
-    input logic [PMP_MAX_REGIONS-1:0][31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q,
+    input logic [PMP_MAX_REGIONS-1:0][PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q,
 
     // SMILIC
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q,

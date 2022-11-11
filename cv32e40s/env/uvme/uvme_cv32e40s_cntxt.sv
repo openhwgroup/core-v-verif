@@ -41,7 +41,6 @@ class uvme_cv32e40s_cntxt_c extends uvm_object;
    uvma_obi_memory_cntxt_c           obi_memory_instr_cntxt;
    uvma_obi_memory_cntxt_c           obi_memory_data_cntxt;
    uvma_rvfi_cntxt_c#(ILEN,XLEN)     rvfi_cntxt;
-   uvma_rvvi_cntxt_c#(ILEN,XLEN)     rvvi_cntxt;
    uvma_fencei_cntxt_c               fencei_cntxt;
 
    // Memory modelling
@@ -60,7 +59,6 @@ class uvme_cv32e40s_cntxt_c extends uvm_object;
       `uvm_field_object(obi_memory_instr_cntxt, UVM_DEFAULT)
       `uvm_field_object(obi_memory_data_cntxt , UVM_DEFAULT)
       `uvm_field_object(rvfi_cntxt,             UVM_DEFAULT)
-      `uvm_field_object(rvvi_cntxt,             UVM_DEFAULT)
       `uvm_field_object(mem,                    UVM_DEFAULT)
 
       `uvm_field_event(sample_cfg_e  , UVM_DEFAULT)
@@ -92,7 +90,6 @@ function uvme_cv32e40s_cntxt_c::new(string name="uvme_cv32e40s_cntxt");
    obi_memory_data_cntxt  = uvma_obi_memory_cntxt_c::type_id::create("obi_memory_data_cntxt" );
    obi_memory_instr_cntxt = uvma_obi_memory_cntxt_c::type_id::create("obi_memory_instr_cntxt");
    rvfi_cntxt       = uvma_rvfi_cntxt_c#(ILEN,XLEN)::type_id::create("rvfi_cntxt");
-   rvvi_cntxt       = uvma_rvvi_ovpsim_cntxt_c#(ILEN,XLEN)::type_id::create("rvvi_cntxt");
 
    mem = uvml_mem_c#(XLEN)::type_id::create("mem");
 

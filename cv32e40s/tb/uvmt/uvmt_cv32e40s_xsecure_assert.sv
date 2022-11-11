@@ -7,7 +7,8 @@ module uvmt_cv32e40s_xsecure_assert
     parameter logic     SMCLIC = 0,
     parameter int       PMP_NUM_REGIONS = 2,
     parameter int       MTVT_ADDR_WIDTH = 5,
-    parameter int CSR_MINTTHRESH_MASK = 32
+    parameter int CSR_MINTTHRESH_MASK = 32,
+    parameter int PMP_ADDR_WIDTH = 6
   )
   (
    uvmt_cv32e40s_xsecure_if xsecure_if,
@@ -50,8 +51,16 @@ module uvmt_cv32e40s_xsecure_assert
   localparam FREQ_SETTING_32 = 4'b01xx;
   localparam FREQ_SETTING_64 = 4'b1xxx;
 
+  localparam INSTRUCTIONS_RS1_MSB = 19;
+  localparam INSTRUCTIONS_RS1_LSB = 15;
+  localparam INSTRUCTIONS_RS2_MSB = 24;
+  localparam INSTRUCTIONS_RS2_LSB = 20;
+
+  //Sticky bit that indicates if major alert has been set.
   logic alert_major_was_set;
 
+  //Support logic that set alert_major_was_set high if major alert ever is high.
+  //When major alert has been set, the only way to recover is by resetting.
   always @(posedge clk_i) begin
     if(!rst_ni) begin
       alert_major_was_set <= 0;
@@ -60,9 +69,10 @@ module uvmt_cv32e40s_xsecure_assert
     end
   end
 
-
   // Default settings:
   default clocking @(posedge clk_i); endclocking
+
+  //If major alert has been set high we allow weird unspeced behavior
   default disable iff (!(rst_ni) | !(SECURE) | alert_major_was_set);
   string info_tag = "CV32E40S_XSECURE_ASSERT";
 
@@ -655,7 +665,7 @@ module uvmt_cv32e40s_xsecure_assert
       xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q[n] == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q[n] & cv32e40s_pkg::CSR_PMPNCFG_MASK)
 
       //PMPADDR
-      and xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n] == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n] & cv32e40s_pkg::CSR_PMPADDR_MASK)
+      and xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n] == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n] & cv32e40s_pkg::CSR_PMPADDR_MASK[PMP_ADDR_WIDTH-1:0])
 
     ) else `uvm_error(info_tag, $sformatf("One or several of the CSR registers pmp%0dcfg or pmpaddr[%0d] are not shadowed.\n", n, n));
 
@@ -800,7 +810,7 @@ module uvmt_cv32e40s_xsecure_assert
       p_xsecure_hardned_csr_missmatch_sets_alert_major(
         xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n],
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n],
-        cv32e40s_pkg::CSR_PMPADDR_MASK)
+        cv32e40s_pkg::CSR_PMPADDR_MASK[PMP_ADDR_WIDTH-1:0])
     ) else `uvm_error(info_tag, $sformatf("pmpaddr[%0d] cs and shadow register missmatch does not result in major alert.\n",n));
 
   end endgenerate
@@ -929,6 +939,63 @@ module uvmt_cv32e40s_xsecure_assert
     ) else `uvm_error(info_tag, $sformatf("General purpose register %0d is not set to 0 when exiting reset stage, because rs2 is not 0.\n", gpr_addr));
 
   end endgenerate
+
+
+  ////////// GENERAL PURPOSE REGISTERS AND ECC ATTACHEMENT ARE NEVER ALL ZEROS OR ONES //////////
+
+  //Make assertions for each gpr:
+  generate for (genvar gpr_addr = 0; gpr_addr < 32; gpr_addr++) begin
+
+  a_xsecure_register_file_ecc_gprecc_never_all_zeros: assert property (
+
+    //Verify that register and ecc score never is all zeros
+    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] != 38'h00_0000_0000
+
+  ) else `uvm_error(info_tag, $sformatf("General purpose register %0d with attached ecc score is all zeros.\n", gpr_addr));
+
+
+  a_xsecure_register_file_ecc_gprecc_never_all_ones: assert property (
+
+    //Verify that register and ecc score never is all ones
+    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] != 38'hFF_FFFF_FFFF
+
+  ) else `uvm_error(info_tag, $sformatf("General purpose register %0d with attached ecc score is all ones.\n", gpr_addr));
+
+  end endgenerate
+
+
+  ////////// IF GENERAL PURPOSE REGISTERS AND ECC ATTACHEMENT ARE ALL ZEROS OR ONES MAJOR ALERT MUST BE SET //////////
+
+  property p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(instr_start_of_reg_bits, instr_end_of_reg_bits);
+    logic [4:0] gpr_addr = 0;
+
+    @(posedge xsecure_if.core_clk)
+
+    //Store the source register address in gpr address variable
+    (1, gpr_addr = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[instr_start_of_reg_bits:instr_end_of_reg_bits])
+
+    //Make sure the source register is not x0 (because x0 behave different then the other source registers)
+    ##0 xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[instr_start_of_reg_bits:instr_end_of_reg_bits] != 0
+
+    //Make sure the source registers data and ecc score are all ones or zeros
+    ##0 (xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'h00_0000_0000
+    || xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'hFF_FFFF_FFFF)
+
+    |=>
+    //Verify that major alert is set
+    xsecure_if.core_alert_major_o;
+
+  endproperty
+
+
+  a_xsecure_register_file_ecc_gprecc_set_major_alert_if_rs1_is_all_zeros_or_ones: assert property (
+    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(INSTRUCTIONS_RS1_MSB, INSTRUCTIONS_RS1_LSB)
+  ) else `uvm_error(info_tag, "The data of rs1 (and the attached ecc score) is all ones or zeros but dont set major alert.\n");
+
+
+  a_xsecure_register_file_ecc_gprecc_set_major_alert_if_rs2_is_all_zeros_or_ones: assert property (
+    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(INSTRUCTIONS_RS2_MSB, INSTRUCTIONS_RS2_LSB)
+  ) else `uvm_error(info_tag, "The data of rs2 (and the attached ecc score) is all ones or zeros but dont set major alert.\n");
 
 
   ////////// ECC DECODING MISSMATCH ON EVERY READ SETS MAJOR ALERT //////////
@@ -1096,10 +1163,10 @@ module uvmt_cv32e40s_xsecure_assert
     end
   end
 
-
+  //Support logic that keeps track of the addres and respons phases to the instruction memory
   logic addr_ph_cont_instr;
   logic resp_ph_cont_instr;
-  logic v_addr_ph_cnt_instr;
+  integer v_addr_ph_cnt_instr;
 
   //This module is defined in uvmt_cv32e40s_support_logic.sv
   uvmt_cv32e40s_obi_phases_monitor obi_phases_monitor_instr
@@ -1117,10 +1184,10 @@ module uvmt_cv32e40s_xsecure_assert
 
   );
 
-
+  //Support logic that keeps track of the addres and respons phases to the data memory
   logic addr_ph_cont_data;
   logic resp_ph_cont_data;
-  logic v_addr_ph_cnt_data;
+  integer v_addr_ph_cnt_data;
 
   //This module is defined in uvmt_cv32e40s_support_logic.sv
   uvmt_cv32e40s_obi_phases_monitor obi_phases_monitor_data
@@ -1145,11 +1212,20 @@ module uvmt_cv32e40s_xsecure_assert
 
   property p_resp_after_addr_no_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
     @(posedge xsecure_if.core_clk)
+
+    //Make sure the core is in operative state
     core_clock_cycles
+
+    //Make sure there is a respons phase transfere
     && obi_rvalid
+
+    //Make sure the respons phase transpher is finished
     && !resp_ph_cont
+
     |->
-    v_addr_ph_cnt > 0
+    //Check that the repsons phase transfer is indeed a respons to an address transfer (that there at least exist one active address thransfer)
+    v_addr_ph_cnt > 0;
+
   endproperty;
 
   a_resp_after_addr_no_glitch_instr: assert property (
@@ -1163,12 +1239,22 @@ module uvmt_cv32e40s_xsecure_assert
 
   property p_resp_after_addr_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
     @(posedge xsecure_if.core_clk)
+
+    //Make sure the core is in operative state
     core_clock_cycles
+
+    //Make sure there is a respons phase transfere
     && obi_rvalid
+
+    //Make sure the respons phase transpher is finished
     && !resp_ph_cont
-    && v_addr_ph_cnt <= 0
+
+    //Make sure there are no active address transferes the respons tranfere could be correlated with
+    && v_addr_ph_cnt == 0
+
     |=>
-    xsecure_if.core_alert_major_o
+    //Check that major alert is set
+    xsecure_if.core_alert_major_o;
   endproperty;
 
   a_resp_after_addr_glitch_instr: assert property (

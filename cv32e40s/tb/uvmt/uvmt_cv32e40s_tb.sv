@@ -38,9 +38,9 @@ module uvmt_cv32e40s_tb;
    import cv32e40s_pkg::*;
    import uvmt_cv32e40s_pkg::*;
    import uvme_cv32e40s_pkg::*;
-  `ifndef FORMAL
-     import rvviApi::*;
-  `endif
+   `ifndef FORMAL
+   import rvviApiPkg::*;
+   `endif
 
    // ENV (testbench) parameters
    parameter int ENV_PARAM_INSTR_ADDR_WIDTH  = 32;
@@ -95,7 +95,7 @@ module uvmt_cv32e40s_tb;
 
    // RVVI SystemVerilog Interface
    `ifndef FORMAL
-     rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+      rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
    `endif
 
   /**
@@ -663,17 +663,26 @@ module uvmt_cv32e40s_tb;
     );
 
 
+  // RVFI assertions
+
+  bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i
+    uvmt_cv32e40s_rvfi_assert  rvfi_assert_i (
+      .*
+    );
+
+
   // Core integration assertions
 
   bind cv32e40s_wrapper
     uvmt_cv32e40s_integration_assert  integration_assert_i (.*);
 
+  localparam PMP_ADDR_WIDTH = (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY > 0) ? 33 - uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY : 32;
 
   logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q;
-  logic [PMP_MAX_REGIONS-1:0][31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q;
+  logic [PMP_MAX_REGIONS-1:0][PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q;
 
   logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q;
-  logic [PMP_MAX_REGIONS-1:0][31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q;
+  logic [PMP_MAX_REGIONS-1:0][PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q;
 
   logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q;
   logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q;
@@ -683,13 +692,11 @@ module uvmt_cv32e40s_tb;
   logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q;
   logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q;
   logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q;
-  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q;
 
   logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q;
   logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q;
   logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q;
   logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q;
-  logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q;
 
 
   // BASE
@@ -755,7 +762,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q        = '0;
       assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q   = '0;
       assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q   = '0;
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q    = '0;
 
       //Shadow registers - BASIC
       assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q    = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.gen_hardened.shadow_q);
@@ -765,7 +771,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q               = '0;
       assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q         = '0;
       assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q         = '0;
-      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q          = '0;
 
       //CSR registers - BASIC
       assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q    = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.rdata_q);
@@ -777,7 +782,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_if
     #(.MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
-      .PMP_NUM_REGIONS   (PMP_NUM_REGIONS))
+      .PMP_NUM_REGIONS   (PMP_NUM_REGIONS),
+      .PMP_ADDR_WIDTH    (core_i.cs_registers_i.PMP_ADDR_WIDTH))
 
     xsecure_if (
 
@@ -791,13 +797,13 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_register_file_wrapper_register_file_mem                                                                     (core_i.register_file_wrapper_i.register_file_i.mem),
 
       // OBI
-      .core_i_m_c_obi_instr_if_s_req_req (core_i.m_c_obi_instr_if.s_req.req),
-      .core_i_m_c_obi_instr_if_s_gnt_gnt (core_i.m_c_obi_instr_if.s_gnt.gnt),
-      .core_i_m_c_obi_instr_if_s_rvalid_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+      .core_i_m_c_obi_instr_if_s_req_req                                                                                (core_i.m_c_obi_instr_if.s_req.req),
+      .core_i_m_c_obi_instr_if_s_gnt_gnt                                                                                (core_i.m_c_obi_instr_if.s_gnt.gnt),
+      .core_i_m_c_obi_instr_if_s_rvalid_rvalid                                                                          (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
 
-      .core_i_m_c_obi_data_if_s_req_req (core_i.m_c_obi_data_if.s_req.req),
-      .core_i_m_c_obi_data_if_s_gnt_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
-      .core_i_m_c_obi_data_if_s_rvalid_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+      .core_i_m_c_obi_data_if_s_req_req                                                                                 (core_i.m_c_obi_data_if.s_req.req),
+      .core_i_m_c_obi_data_if_s_gnt_gnt                                                                                 (core_i.m_c_obi_data_if.s_gnt.gnt),
+      .core_i_m_c_obi_data_if_s_rvalid_rvalid                                                                           (core_i.m_c_obi_data_if.s_rvalid.rvalid),
 
       // CSR
       .core_alert_minor_o                                                                                               (core_i.alert_minor_o),
@@ -853,8 +859,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q                           (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q),
 
 
-      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q                            (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q),
-
       // BASE
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q                                    (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q),
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q                                      (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q),
@@ -877,8 +881,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q                     (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q),
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q                     (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q),
 
-
-      .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q                      (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q),
 
       // BASIC
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q                      (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q),
@@ -926,7 +928,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
   .SMCLIC (SMCLIC),
   .PMP_NUM_REGIONS (PMP_NUM_REGIONS),
   .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
-  .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK)
+  .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
+  .PMP_ADDR_WIDTH (core_i.cs_registers_i.PMP_ADDR_WIDTH)
 
     ) xsecure_assert_i 	(
     	.xsecure_if	(xsecure_if),
@@ -1108,19 +1111,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
     `ifndef FORMAL
       uvmt_cv32e40s_imperas_dv_wrap imperas_dv (rvvi_if);
     `endif
-
-    // IMPERAS OVPsim ISS (planned for deprecation)
-    uvmt_cv32e40s_iss_wrap  #(
-                              .ID (0),
-                              .ROM_START_ADDR('h0),
-                              .ROM_BYTE_SIZE('h0),
-                              .RAM_BYTE_SIZE('h1_0000_0000)
-                             )
-                             iss_wrap ( .clk_period(clknrst_if.clk_period),
-                                        .clknrst_if(clknrst_if_iss)
-                             );
-
-    assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
 
    /**
     * Test bench entry point.
@@ -1356,15 +1346,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
      // IMPERAS_DV interface
      uvm_config_db#(virtual rvviTrace)::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("rvvi_vif"), .value(rvvi_if));
 
-     // IMPERAS OVPsim ISS interfaces (planned for deprecation)
-     uvm_config_db#(virtual RVVI_state#(.ILEN(uvme_cv32e40s_pkg::ILEN),
-                                        .XLEN(uvme_cv32e40s_pkg::XLEN)
-                                        ))::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("state_vif"), .value(iss_wrap.cpu.state));
-     uvm_config_db#(virtual RVVI_control                )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("control_vif"), .value(iss_wrap.cpu.control));
-     uvm_config_db#(virtual RVVI_bus                    )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_bus_vif"), .value(iss_wrap.bus));
-     uvm_config_db#(virtual RVVI_io                     )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_io_vif"), .value(iss_wrap.io));
-     uvm_config_db#(virtual RVVI_memory                 )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_mem_vif"), .value(iss_wrap.ram.memory));
-
      // Virtual Peripheral Status interface
      uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if      )::set(.cntxt(null), .inst_name("*"), .field_name("vp_status_vif"),       .value(vp_status_if)      );
      uvm_config_db#(virtual uvme_cv32e40s_core_cntrl_if     )::set(.cntxt(null), .inst_name("*"), .field_name("core_cntrl_vif"),      .value(core_cntrl_if)     );
@@ -1391,32 +1372,17 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
    `endif
 
    assign core_cntrl_if.clk = clknrst_if.clk;
-  `ifndef  FORMAL
-     assign iss_wrap.cpu.io.nmi_addr = ({dut_wrap.cv32e40s_wrapper_i.rvfi_csr_mtvec_if_0_i.rvfi_csr_rdata[31:2], 2'b00}) + 32'h3c;
-  `endif
 
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
-   longint start_ovpsim_init_time;
-   longint end_ovpsim_init_time;
    `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
-
    // overcome race
    initial begin
-      #0.9ns;
-     imperas_dv.ref_init();
+     if ($test$plusargs("USE_ISS")) begin
+       #0.9ns;
+       imperas_dv.ref_init();
+     end
    end
-
-   initial begin
-      if (!$test$plusargs("DISABLE_OVPSIM")) begin
-        #0.9ns;
-        `uvm_info("OVPSIM", $sformatf("Start benchmarking OVPSIM initialization"), UVM_LOW)
-        start_ovpsim_init_time = svlib_pkg::sys_dayTime();
-        #1.1ns;
-        end_ovpsim_init_time = svlib_pkg::sys_dayTime();
-        `uvm_info("OVPSIM", $sformatf("Initialization time: %0d seconds", end_ovpsim_init_time - start_ovpsim_init_time), UVM_LOW)
-      end
-    end
    `endif
 
    //TODO verify these are correct with regards to isacov function
@@ -1479,12 +1445,9 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
 
-      // FIXME
       // Shutdown the Reference Model
-      if (0/*uvm_test_top.env.rvvi_ovpsim_agent.cfg.core_cfg.use_iss*/) begin
-         // Exit handler for OVPsim
-      end
-      else begin
+      if ($test$plusargs("USE_ISS")) begin
+         // Exit handler for ImperasDV
          void'(rvviRefShutdown());
       end
 

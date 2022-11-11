@@ -66,6 +66,11 @@
    rand bit                      ext_zbr_supported;
    rand bit                      ext_zbs_supported;
    rand bit                      ext_zbt_supported;
+   rand bit                      ext_zca_supported;
+   rand bit                      ext_zcb_supported;
+   rand bit                      ext_zcmb_supported;
+   rand bit                      ext_zcmp_supported;
+   rand bit                      ext_zcmt_supported;
    rand bit                      ext_zifencei_supported;
    rand bit                      ext_zicsr_supported;
    rand bit                      ext_nonstd_supported;
@@ -84,6 +89,8 @@
    rand endianness_t             endianness;
 
    rand int unsigned             clic_levels;
+   bit                           clic_interrupt_enable  = 0;
+   bit                           basic_interrupt_enable = 1;
 
    rand bit                      unaligned_access_supported;
    rand bit                      unaligned_access_amo_supported;
@@ -157,6 +164,11 @@
       `uvm_field_int(                          ext_zbr_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zbs_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zbt_supported              , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zca_supported              , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zcb_supported              , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zcmb_supported             , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zcmp_supported             , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zcmt_supported             , UVM_DEFAULT          )
       `uvm_field_int(                          mode_s_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          mode_h_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          mode_u_supported               , UVM_DEFAULT          )
@@ -193,20 +205,35 @@
    `uvm_field_utils_end
 
    constraint defaults_cons {
-      soft enabled                == 0;
-      soft is_active              == UVM_PASSIVE;
-      soft cov_model_enabled      == 1;
-      soft trn_log_enabled        == 1;
-      soft mode_h_supported       == 0;
+      soft enabled              == 0;
+      soft is_active            == UVM_PASSIVE;
+      soft cov_model_enabled    == 1;
+      soft trn_log_enabled      == 1;
    }
 
    constraint riscv_cons_soft {
-     soft priv_spec_version    == PRIV_VERSION_1_11;
-     soft debug_spec_version   == DEBUG_VERSION_0_13_2;
-     soft endianness           == ENDIAN_LITTLE;
-     soft mode_h_supported     == 0;
-     soft ext_nonstd_supported == 0;
-     soft clic_levels        == 0;
+     soft priv_spec_version      == PRIV_VERSION_1_11;
+     soft debug_spec_version     == DEBUG_VERSION_0_13_2;
+     soft endianness             == ENDIAN_LITTLE;
+     soft mode_h_supported       == 0;
+     soft ext_nonstd_supported   == 0;
+     soft mode_h_supported       == 0;
+     soft clic_levels            == 0;
+     soft ext_zba_supported      == 0;
+     soft ext_zbb_supported      == 0;
+     soft ext_zbc_supported      == 0;
+     soft ext_zbs_supported      == 0;
+     soft ext_zbe_supported      == 0;
+     soft ext_zbf_supported      == 0;
+     soft ext_zbm_supported      == 0;
+     soft ext_zbp_supported      == 0;
+     soft ext_zbr_supported      == 0;
+     soft ext_zbt_supported      == 0;
+     soft ext_zca_supported      == 0;
+     soft ext_zcb_supported      == 0;
+     soft ext_zcmb_supported     == 0;
+     soft ext_zcmp_supported     == 0;
+     soft ext_zcmt_supported     == 0;
    }
 
    constraint addr_xlen_align_cons {
