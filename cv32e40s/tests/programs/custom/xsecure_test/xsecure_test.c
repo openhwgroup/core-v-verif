@@ -34,11 +34,11 @@ extern volatile void set_u_mode();
 typedef enum {
   M_MODE_BEH,
   TRAP_INCR_BEH,
-  UNEXPECTED_ERROR_BEH
+  UNEXPECTED_IRQ_BEH
 } trap_behavior_t;
 
 // trap handler behavior definitions
-volatile trap_behavior_t trap_handler_beh = UNEXPECTED_ERROR_BEH;
+volatile trap_behavior_t trap_handler_beh = UNEXPECTED_IRQ_BEH;
 
 volatile uint32_t num_trao_executions;
 volatile uint32_t unexpected_irq_beh = 0;
@@ -100,7 +100,7 @@ void u_sw_irq_handler(void) {
       increment_mepc();
       break;
 
-    // unexpected handler irq (UNEXPECTED_ERROR_BEH and more)
+    // unexpected handler irq (UNEXPECTED_IRQ_BEH and more)
     default:
       unexpected_irq_beh = 1;
   }
@@ -131,7 +131,7 @@ void test_read_ctrlcpu_and_secureseeds_in_machine_mode(void){
   assert_or_die(csr_read, 0, "error: secureseed2 is not read as zero\n");
 
   // set the trap handler to go into default mode
-  trap_handler_beh = UNEXPECTED_ERROR_BEH;
+  trap_handler_beh = UNEXPECTED_IRQ_BEH;
 
 }
 
@@ -169,14 +169,14 @@ void test_read_ctrlcpu_and_secureseeds_in_user_mode(void){
   assert_or_die(num_trao_executions, 4*3, "error: accessing cpuctrl or secureseed_ in usermode does not cause a trap\n");
 
   // set the trap handler to go into default mode
-  trap_handler_beh = UNEXPECTED_ERROR_BEH;
+  trap_handler_beh = UNEXPECTED_IRQ_BEH;
 
 }
 
 
 int main(void){
 
-  unexpected_error_beh = 0
+  unexpected_irq_beh = 0;
 
   setup_pmp();
 
