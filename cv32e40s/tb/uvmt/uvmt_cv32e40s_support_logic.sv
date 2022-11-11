@@ -158,4 +158,4 @@ module uvmt_cv32e40s_obi_phases_monitor
       end
     end
   end
-endmodule : uvmt_cv32e40s_support_logic_obi_phases_monitor
+endmodule : uvmt_cv32e40s_obi_phases_monitor

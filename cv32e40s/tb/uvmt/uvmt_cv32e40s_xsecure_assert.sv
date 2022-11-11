@@ -50,10 +50,20 @@ module uvmt_cv32e40s_xsecure_assert
   localparam FREQ_SETTING_32 = 4'b01xx;
   localparam FREQ_SETTING_64 = 4'b1xxx;
 
+  logic alert_major_was_set;
+
+  always @(posedge clk_i) begin
+    if(!rst_ni) begin
+      alert_major_was_set <= 0;
+    end else if (xsecure_if.core_alert_major_o) begin
+      alert_major_was_set <= xsecure_if.core_alert_major_o;
+    end
+  end
+
 
   // Default settings:
   default clocking @(posedge clk_i); endclocking
-  default disable iff (!(rst_ni) | !(SECURE));
+  default disable iff (!(rst_ni) | !(SECURE) | alert_major_was_set);
   string info_tag = "CV32E40S_XSECURE_ASSERT";
 
 
