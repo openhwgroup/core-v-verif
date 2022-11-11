@@ -47,7 +47,7 @@ class uvma_obi_memory_slv_base_seq_c#(
    // Fields
 
 
-   `uvm_object_utils_begin(uvma_obi_memory_slv_base_seq_c#(
+   `uvm_object_param_utils_begin(uvma_obi_memory_slv_base_seq_c#(
      .AUSER_WIDTH(AUSER_WIDTH),
      .WUSER_WIDTH(WUSER_WIDTH),
      .RUSER_WIDTH(RUSER_WIDTH),

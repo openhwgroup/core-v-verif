@@ -1100,7 +1100,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
     // IMPERAS DV
     `ifndef FORMAL
-      //uvmt_cv32e40s_imperas_dv_wrap imperas_dv (rvvi_if);
+      uvmt_cv32e40s_imperas_dv_wrap imperas_dv (rvvi_if);
     `endif
 
    /**

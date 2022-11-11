@@ -56,7 +56,7 @@ class uvma_obi_memory_sqr_c#(
    uvm_tlm_analysis_fifo #(uvma_obi_memory_mon_trn_c)  mon_trn_fifo;
 
 
-   `uvm_component_utils_begin(uvma_obi_memory_sqr_c#(
+   `uvm_component_param_utils_begin(uvma_obi_memory_sqr_c#(
      .AUSER_WIDTH(AUSER_WIDTH),
      .WUSER_WIDTH(WUSER_WIDTH),
      .RUSER_WIDTH(RUSER_WIDTH),

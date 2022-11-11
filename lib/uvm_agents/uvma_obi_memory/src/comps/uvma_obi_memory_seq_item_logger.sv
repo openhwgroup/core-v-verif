@@ -48,7 +48,7 @@ class uvma_obi_memory_seq_item_logger_c#(
    ))
 );
 
-   `uvm_component_utils(uvma_obi_memory_seq_item_logger_c#(
+   `uvm_component_param_utils(uvma_obi_memory_seq_item_logger_c#(
      .AUSER_WIDTH(AUSER_WIDTH),
      .WUSER_WIDTH(WUSER_WIDTH),
      .RUSER_WIDTH(RUSER_WIDTH),
@@ -209,7 +209,7 @@ endclass : uvma_obi_memory_seq_item_logger_c
  */
 class uvma_obi_memory_seq_item_logger_json_c extends uvma_obi_memory_seq_item_logger_c;
 
-   `uvm_component_utils(uvma_obi_memory_seq_item_logger_json_c)
+   `uvm_component_param_utils(uvma_obi_memory_seq_item_logger_json_c)
 
 
    /**

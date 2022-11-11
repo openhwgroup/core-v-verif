@@ -519,6 +519,7 @@ task uvma_obi_memory_drv_c::drv_slv_read_req(ref uvma_obi_memory_slv_seq_item_c 
       slv_mp.drv_slv_cb.rid       <= req.rid;
       slv_mp.drv_slv_cb.err       <= req.err;
       slv_mp.drv_slv_cb.exokay    <= req.exokay;
+      slv_mp.drv_slv_cb.rchk      <= req.rchk;
    end
    for (int unsigned ii=0; ii<cfg.data_width; ii++) begin
       slv_mp.drv_slv_cb.rdata[ii] <= req.rdata[ii];
@@ -543,6 +544,7 @@ task uvma_obi_memory_drv_c::drv_slv_write_req(ref uvma_obi_memory_slv_seq_item_c
       slv_mp.drv_slv_cb.rid       <= req.rid;
       slv_mp.drv_slv_cb.err       <= req.err;
       slv_mp.drv_slv_cb.exokay    <= req.exokay;
+      slv_mp.drv_slv_cb.rchk      <= req.rchk;
    end
    @(slv_mp.drv_slv_cb);
    `uvm_info("OBI_MEMORY_DRV", "drv_slv_write_req FIN", UVM_HIGH)

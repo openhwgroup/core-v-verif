@@ -71,7 +71,7 @@ class uvma_obi_memory_cntxt_c#(
    uvm_event  sample_cntxt_e;
 
 
-   `uvm_object_utils_begin(uvma_obi_memory_cntxt_c#(
+   `uvm_object_param_utils_begin(uvma_obi_memory_cntxt_c#(
      .AUSER_WIDTH(AUSER_WIDTH),
      .WUSER_WIDTH(WUSER_WIDTH),
      .RUSER_WIDTH(RUSER_WIDTH),

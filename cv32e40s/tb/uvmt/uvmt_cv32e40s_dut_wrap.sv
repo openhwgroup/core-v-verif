@@ -68,7 +68,7 @@ module uvmt_cv32e40s_dut_wrap
   );
 
     import uvm_pkg::*; // needed for the UVM messaging service (`uvm_info(), etc.)
-
+    /*
     // signals connecting core to memory
     logic                         instr_req;
     logic                         instr_gnt;
@@ -86,7 +86,7 @@ module uvmt_cv32e40s_dut_wrap
     logic [31:0]                  data_wdata;
 
     logic [31:0]                  irq;
-
+  */
     logic                         debug_havereset;
     logic                         debug_running;
     logic                         debug_halted;
@@ -103,8 +103,6 @@ module uvmt_cv32e40s_dut_wrap
     assign obi_instr_if_i.aid       = 'b0;
     assign obi_instr_if_i.wdata     = 'b0;
     assign obi_instr_if_i.reqpar    = ~obi_instr_if_i.req;
-    assign obi_instr_if_i.achk      = 'b0;
-    assign obi_instr_if_i.rchk      = 'b0;
     assign obi_instr_if_i.rready    = 1'b1;
     assign obi_instr_if_i.rreadypar = 1'b0;
 
@@ -114,8 +112,6 @@ module uvmt_cv32e40s_dut_wrap
     assign obi_data_if_i.wuser      = 'b0;
     assign obi_data_if_i.aid        = 'b0;
     assign obi_data_if_i.reqpar     = ~obi_data_if_i.req;
-    assign obi_data_if_i.achk       = 'b0;
-    assign obi_data_if_i.rchk       = 'b0;
     assign obi_data_if_i.rready     = 1'b1;
     assign obi_data_if_i.rreadypar  = 1'b0;
 

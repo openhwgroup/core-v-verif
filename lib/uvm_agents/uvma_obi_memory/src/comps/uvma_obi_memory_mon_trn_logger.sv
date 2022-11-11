@@ -49,7 +49,7 @@ class uvma_obi_memory_mon_trn_logger_c#(
 );
 
 
-   `uvm_component_utils(uvma_obi_memory_mon_trn_logger_c#(
+   `uvm_component_param_utils(uvma_obi_memory_mon_trn_logger_c#(
      .AUSER_WIDTH(AUSER_WIDTH),
      .WUSER_WIDTH(WUSER_WIDTH),
      .RUSER_WIDTH(RUSER_WIDTH),

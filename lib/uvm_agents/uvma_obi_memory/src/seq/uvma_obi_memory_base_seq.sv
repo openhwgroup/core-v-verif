@@ -53,7 +53,7 @@ class uvma_obi_memory_base_seq_c#(
    ) cntxt;
 
 
-   `uvm_object_utils(uvma_obi_memory_base_seq_c#(
+   `uvm_object_param_utils(uvma_obi_memory_base_seq_c#(
      .AUSER_WIDTH(AUSER_WIDTH),
      .WUSER_WIDTH(WUSER_WIDTH),
      .RUSER_WIDTH(RUSER_WIDTH),
