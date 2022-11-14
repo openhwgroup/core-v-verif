@@ -479,7 +479,6 @@ interface uvmt_cv32e40s_support_logic_if (
             data_bus_req_i
    );
 
-   //todo: kd added:
 	modport obi_data_Slave  (
          input clk_i2,
          input rst_ni2,

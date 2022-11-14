@@ -912,15 +912,14 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
   // Xsecure assertions
 
-
- bind cv32e40s_wrapper
+  bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_assert #(
 	.SECURE	(cv32e40s_pkg::SECURE),
   .SMCLIC (SMCLIC),
   .PMP_NUM_REGIONS (PMP_NUM_REGIONS),
-  .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH), //todo: må endres!
-  .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK), //todo: må endres!
-  .PMP_ADDR_WIDTH (core_i.cs_registers_i.PMP_ADDR_WIDTH) //todo: må endres!
+  .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
+  .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
+  .PMP_ADDR_WIDTH (core_i.cs_registers_i.PMP_ADDR_WIDTH)
 
     ) xsecure_assert_i 	(
     	.xsecure_if	(xsecure_if),
@@ -1032,7 +1031,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .*
     );
 
-    //TODO: kd added:
+
     bind cv32e40s_wrapper
       uvmt_cv32e40s_support_logic_if support_logic_if (
         .clk_i2     (clknrst_if.clk),
@@ -1047,11 +1046,12 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
         .req_instr (core_i.m_c_obi_instr_if.s_gnt.gnt)
     );
 
-    // TODO find a better way (todo: kd: might have deleted somehint here)
+    // TODO find a better way
     assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.ctrl_fsm_o_i   = dut_wrap.cv32e40s_wrapper_i.core_i.controller_i.controller_fsm_i.ctrl_fsm_o;
+    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_req_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_req.req;
+    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_gnt_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_gnt.gnt;
     assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.clk_i          = dut_wrap.cv32e40s_wrapper_i.core_i.clk_i;
     assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.rst_ni         = dut_wrap.cv32e40s_wrapper_i.core_i.rst_ni;
-
 
     bind cv32e40s_pmp :
       uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i
