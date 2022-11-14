@@ -1,9 +1,4 @@
-  /*
-  .PMP_NUM_REGIONS (PMP_NUM_REGIONS),
-  .MTVT_ADDR_WIDTH   (MTVT_ADDR_WIDTH), //(core_i.MTVT_ADDR_WIDTH),
-  .CSR_MINTTHRESH_MASK (CSR_MINTTHRESH_MASK), //(core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
-  .PMP_ADDR_WIDTH (PMP_ADDR_WIDTH)
-  */
+
 module uvmt_cv32e40s_xsecure_assert
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
