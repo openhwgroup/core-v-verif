@@ -126,15 +126,6 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] core_rf_wdata_wb,
     input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [REGFILE_NUM_WORDS],
 
-    // OBI:
-    input logic core_i_m_c_obi_instr_if_s_req_req,
-    input logic core_i_m_c_obi_instr_if_s_gnt_gnt,
-    input logic core_i_m_c_obi_instr_if_s_rvalid_rvalid,
-
-    input logic core_i_m_c_obi_data_if_s_req_req,
-    input logic core_i_m_c_obi_data_if_s_gnt_gnt,
-    input logic core_i_m_c_obi_data_if_s_rvalid_rvalid,
-
     // CSR
     input logic core_alert_minor_o,
     input logic core_alert_major_o,
@@ -409,7 +400,20 @@ interface uvmt_cv32e40s_debug_cov_assert_if
 
 endinterface : uvmt_cv32e40s_debug_cov_assert_if
 
-interface uvmt_cv32e40s_support_logic_if;
+interface uvmt_cv32e40s_support_logic_if (
+   //Obi signals:
+   input clk_i2,
+   input rst_ni2,
+
+   input rvalid_data,
+   input gnt_data,
+   input req_data,
+
+   input rvalid_instr,
+   input gnt_instr,
+   input req_instr
+);
+
    import cv32e40s_pkg::*;
    import uvma_rvfi_pkg::*;
    logic clk_i;
@@ -422,6 +426,20 @@ interface uvmt_cv32e40s_support_logic_if;
 
    //results for modport
    logic req_after_exception_o;
+
+   // obi signals:
+
+   // continued address and respons phase indicators, indicates address and respons phases
+   // of more than one cycle
+   logic addr_ph_cont_data;
+   logic resp_ph_cont_data;
+
+   logic addr_ph_cont_instr;
+   logic resp_ph_cont_instr;
+
+   // address phase counter, used to verify no response phase preceedes an address phase
+   integer v_addr_ph_cnt_data;
+   integer v_addr_ph_cnt_instr;
 
    clocking mon_cb @(posedge clk_i);
       input #1step
@@ -461,8 +479,43 @@ interface uvmt_cv32e40s_support_logic_if;
             data_bus_req_i
    );
 
+   //todo: kd added:
+	modport obi_data_Slave  (
+         input clk_i2,
+         input rst_ni2,
+
+         input rvalid_data,
+			input gnt_data,
+			input req_data,
+
+			output addr_ph_cont_data,
+			output resp_ph_cont_data,
+			output v_addr_ph_cnt_data);
+
+	modport obi_data_Reader (
+         input rvalid_data,
+			input resp_ph_cont_data,
+			input v_addr_ph_cnt_data);
+
+	modport obi_instr_Slave  (
+         input clk_i2,
+         input rst_ni2,
+
+         input rvalid_instr,
+			input gnt_instr,
+			input req_instr,
+
+			output addr_ph_cont_instr,
+			output resp_ph_cont_instr,
+			output v_addr_ph_cnt_instr);
+
+	modport obi_instr_Reader (
+         input rvalid_instr,
+			input resp_ph_cont_instr,
+			input v_addr_ph_cnt_instr);
 
 
 endinterface : uvmt_cv32e40s_support_logic_if
+
 
 `endif // __UVMT_CV32E40S_TB_IFS_SV__

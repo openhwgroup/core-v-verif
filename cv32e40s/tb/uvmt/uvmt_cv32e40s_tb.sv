@@ -796,15 +796,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_rf_wdata_wb                                                                                                 (core_i.rf_wdata_wb),
       .core_register_file_wrapper_register_file_mem                                                                     (core_i.register_file_wrapper_i.register_file_i.mem),
 
-      // OBI
-      .core_i_m_c_obi_instr_if_s_req_req                                                                                (core_i.m_c_obi_instr_if.s_req.req),
-      .core_i_m_c_obi_instr_if_s_gnt_gnt                                                                                (core_i.m_c_obi_instr_if.s_gnt.gnt),
-      .core_i_m_c_obi_instr_if_s_rvalid_rvalid                                                                          (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
-
-      .core_i_m_c_obi_data_if_s_req_req                                                                                 (core_i.m_c_obi_data_if.s_req.req),
-      .core_i_m_c_obi_data_if_s_gnt_gnt                                                                                 (core_i.m_c_obi_data_if.s_gnt.gnt),
-      .core_i_m_c_obi_data_if_s_rvalid_rvalid                                                                           (core_i.m_c_obi_data_if.s_rvalid.rvalid),
-
       // CSR
       .core_alert_minor_o                                                                                               (core_i.alert_minor_o),
       .core_alert_major_o                                                                                               (core_i.alert_major_o),
@@ -927,13 +918,15 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 	.SECURE	(cv32e40s_pkg::SECURE),
   .SMCLIC (SMCLIC),
   .PMP_NUM_REGIONS (PMP_NUM_REGIONS),
-  .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
-  .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
-  .PMP_ADDR_WIDTH (core_i.cs_registers_i.PMP_ADDR_WIDTH)
+  .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH), //todo: må endres!
+  .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK), //todo: må endres!
+  .PMP_ADDR_WIDTH (core_i.cs_registers_i.PMP_ADDR_WIDTH) //todo: må endres!
 
     ) xsecure_assert_i 	(
     	.xsecure_if	(xsecure_if),
 	    .rvfi_if	  (rvfi_instr_if_0_i),
+      .obi_data_support_if (support_logic_if.obi_data_Reader),
+      .obi_instr_support_if (support_logic_if.obi_instr_Reader),
       .clk_i      (clk_i),
       .rst_ni     (rst_ni)
     );
@@ -1039,14 +1032,23 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .*
     );
 
-
+    //TODO: kd added:
     bind cv32e40s_wrapper
-      uvmt_cv32e40s_support_logic_if support_logic_if ();
+      uvmt_cv32e40s_support_logic_if support_logic_if (
+        .clk_i2     (clknrst_if.clk),
+        .rst_ni2 (clknrst_if.reset_n),
 
-    // TODO find a better way
+        .rvalid_data (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+        .gnt_data (core_i.m_c_obi_data_if.s_req.req),
+        .req_data (core_i.m_c_obi_data_if.s_gnt.gnt),
+
+        .rvalid_instr (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+        .gnt_instr (core_i.m_c_obi_instr_if.s_req.req),
+        .req_instr (core_i.m_c_obi_instr_if.s_gnt.gnt)
+    );
+
+    // TODO find a better way (todo: kd: might have deleted somehint here)
     assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.ctrl_fsm_o_i   = dut_wrap.cv32e40s_wrapper_i.core_i.controller_i.controller_fsm_i.ctrl_fsm_o;
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_req_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_req.req;
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_gnt_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_gnt.gnt;
     assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.clk_i          = dut_wrap.cv32e40s_wrapper_i.core_i.clk_i;
     assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.rst_ni         = dut_wrap.cv32e40s_wrapper_i.core_i.rst_ni;
 
@@ -1095,7 +1097,9 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if_0_i),
-                                                                      .support_if(support_logic_if)
+                                                                      .support_if(support_logic_if),
+                                                                      .obi_data_support_if(support_logic_if.obi_data_Slave),
+                                                                      .obi_instr_support_if(support_logic_if.obi_instr_Slave)
                                                                       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));

@@ -21,66 +21,92 @@ module uvmt_cv32e40s_support_logic
   import cv32e40s_pkg::*;
   (
     uvma_rvfi_instr_if rvfi,
-    uvmt_cv32e40s_support_logic_if.master support_if
+    uvmt_cv32e40s_support_logic_if.master support_if,
+    uvmt_cv32e40s_support_logic_if.obi_data_Slave obi_data_support_if,
+    uvmt_cv32e40s_support_logic_if.obi_instr_Slave obi_instr_support_if
   );
 
-    // ---------------------------------------------------------------------------
-    // Local parameters
-    // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // Local parameters
+  // ---------------------------------------------------------------------------
 
 
 
-    // ---------------------------------------------------------------------------
-    // Local variables
-    // ---------------------------------------------------------------------------
-    // Signal indicates an exception is active for a multiop instruction,
-    // in other words a subop has triggered an exception. WB stage timing.
-    logic exception_active;
+  // ---------------------------------------------------------------------------
+  // Local variables
+  // ---------------------------------------------------------------------------
+  // Signal indicates an exception is active for a multiop instruction,
+  // in other words a subop has triggered an exception. WB stage timing.
+  logic exception_active;
 
-    // Signal indicates data bus address phase completed last cycle
-    logic data_bus_gnt_q;
-
-
-    // ---------------------------------------------------------------------------
-    // Support logic blocks
-    // ---------------------------------------------------------------------------
+  // Signal indicates data bus address phase completed last cycle
+  logic data_bus_gnt_q;
 
 
-    // Check if a new obi data req arrives after an exception is triggered.
-    // Used to verify exception timing with multiop instruction
-    always @(posedge support_if.clk_i or negedge support_if.rst_ni) begin
-      if (!support_if.rst_ni) begin
-        support_if.req_after_exception_o <= 0;
-        exception_active <= 0;
-        data_bus_gnt_q <= 0;
-      end else  begin
-        // set prev bus gnt
-        data_bus_gnt_q <= support_if.data_bus_gnt_i;
+  // ---------------------------------------------------------------------------
+  // Support logic blocks
+  // ---------------------------------------------------------------------------
 
-        // is a trap taken in WB?
-        if (support_if.ctrl_fsm_o_i.pc_set && (support_if.ctrl_fsm_o_i.pc_mux == PC_TRAP_DBE || support_if.ctrl_fsm_o_i.pc_mux == PC_TRAP_EXC)) begin
-          if (support_if.data_bus_req_i && data_bus_gnt_q) begin
-            support_if.req_after_exception_o <= 1;
-          end
-          exception_active <= 1;
-        end else if (rvfi.rvfi_valid) begin
-          exception_active <= 0;
-          support_if.req_after_exception_o <= 0;
 
-        end else if (exception_active && data_bus_gnt_q && support_if.data_bus_req_i) begin
+  // Check if a new obi data req arrives after an exception is triggered.
+  // Used to verify exception timing with multiop instruction
+  always @(posedge support_if.clk_i or negedge support_if.rst_ni) begin
+    if (!support_if.rst_ni) begin
+      support_if.req_after_exception_o <= 0;
+      exception_active <= 0;
+      data_bus_gnt_q <= 0;
+    end else  begin
+      // set prev bus gnt
+      data_bus_gnt_q <= support_if.data_bus_gnt_i;
+
+      // is a trap taken in WB?
+      if (support_if.ctrl_fsm_o_i.pc_set && (support_if.ctrl_fsm_o_i.pc_mux == PC_TRAP_DBE || support_if.ctrl_fsm_o_i.pc_mux == PC_TRAP_EXC)) begin
+        if (support_if.data_bus_req_i && data_bus_gnt_q) begin
           support_if.req_after_exception_o <= 1;
         end
+        exception_active <= 1;
+      end else if (rvfi.rvfi_valid) begin
+        exception_active <= 0;
+        support_if.req_after_exception_o <= 0;
 
-
-
+      end else if (exception_active && data_bus_gnt_q && support_if.data_bus_req_i) begin
+        support_if.req_after_exception_o <= 1;
       end
 
-    end //always
 
+
+    end
+
+  end //always
+
+  //obi data:
+  uvmt_cv32e40s_obi_phases_monitor obi_phases_data_monitor (
+    .clk_i (obi_data_support_if.clk_i2),
+    .rst_ni (obi_data_support_if.rst_ni2),
+
+    .obi_req (obi_data_support_if.req_data),
+    .obi_gnt (obi_data_support_if.gnt_data),
+    .obi_rvalid (obi_data_support_if.rvalid_data),
+    .addr_ph_cont (obi_data_support_if.addr_ph_cont_data),
+    .resp_ph_cont (obi_data_support_if.resp_ph_cont_data),
+    .v_addr_ph_cnt (obi_data_support_if.v_addr_ph_cnt_data)
+  );
+
+  //obi instr:
+  uvmt_cv32e40s_obi_phases_monitor obi_phases_instr_monitor (
+    .clk_i (obi_instr_support_if.clk_i2),
+    .rst_ni (obi_instr_support_if.rst_ni2),
+
+    .obi_req (obi_instr_support_if.req_instr),
+    .obi_gnt (obi_instr_support_if.gnt_instr),
+    .obi_rvalid (obi_instr_support_if.rvalid_instr),
+    .addr_ph_cont (obi_instr_support_if.addr_ph_cont_instr),
+    .resp_ph_cont (obi_instr_support_if.resp_ph_cont_instr),
+    .v_addr_ph_cnt (obi_instr_support_if.v_addr_ph_cnt_instr)
+  );
 
 
 endmodule : uvmt_cv32e40s_support_logic
-
 
 module uvmt_cv32e40s_obi_phases_monitor
   import uvm_pkg::*;

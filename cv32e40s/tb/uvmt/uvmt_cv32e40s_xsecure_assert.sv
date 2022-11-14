@@ -13,6 +13,8 @@ module uvmt_cv32e40s_xsecure_assert
   (
    uvmt_cv32e40s_xsecure_if xsecure_if,
    uvma_rvfi_instr_if rvfi_if,
+   uvmt_cv32e40s_support_logic_if.obi_data_Reader obi_data_support_if,
+   uvmt_cv32e40s_support_logic_if.obi_instr_Reader obi_instr_support_if,
    input rst_ni,
    input clk_i
   );
@@ -1146,11 +1148,10 @@ module uvmt_cv32e40s_xsecure_assert
 
   end endgenerate
 
+
   //////////////////////////////////////////////////////////////////////////
   ///////////////////////// BUS PROTOCOL HARDENING /////////////////////////
   //////////////////////////////////////////////////////////////////////////
-
-  //TODO: comment
 
   //Signal determining if the core clock is active or not.
   logic core_clock_cycles;
@@ -1163,47 +1164,6 @@ module uvmt_cv32e40s_xsecure_assert
     end
   end
 
-  //Support logic that keeps track of the addres and respons phases to the instruction memory
-  logic addr_ph_cont_instr;
-  logic resp_ph_cont_instr;
-  integer v_addr_ph_cnt_instr;
-
-  //This module is defined in uvmt_cv32e40s_support_logic.sv
-  uvmt_cv32e40s_obi_phases_monitor obi_phases_monitor_instr
-  (
-    .clk_i (clk_i),
-    .rst_ni (rst_ni),
-
-    .obi_req (xsecure_if.core_i_m_c_obi_instr_if_s_req_req),
-    .obi_gnt (xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt),
-    .obi_rvalid (xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid),
-
-    .addr_ph_cont (addr_ph_cont_instr),
-    .resp_ph_cont (resp_ph_cont_instr),
-    .v_addr_ph_cnt (v_addr_ph_cnt_instr)
-
-  );
-
-  //Support logic that keeps track of the addres and respons phases to the data memory
-  logic addr_ph_cont_data;
-  logic resp_ph_cont_data;
-  integer v_addr_ph_cnt_data;
-
-  //This module is defined in uvmt_cv32e40s_support_logic.sv
-  uvmt_cv32e40s_obi_phases_monitor obi_phases_monitor_data
-  (
-    .clk_i (clk_i),
-    .rst_ni (rst_ni),
-
-    .obi_req (xsecure_if.core_i_m_c_obi_data_if_s_req_req),
-    .obi_gnt (xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt),
-    .obi_rvalid (xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid),
-
-    .addr_ph_cont (addr_ph_cont_data),
-    .resp_ph_cont (resp_ph_cont_data),
-    .v_addr_ph_cnt (v_addr_ph_cnt_data)
-
-  );
 
   property p_resp_after_addr_no_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
     @(posedge xsecure_if.core_clk)
@@ -1223,13 +1183,13 @@ module uvmt_cv32e40s_xsecure_assert
 
   endproperty;
 
-  a_resp_after_addr_no_glitch_instr: assert property (
-    p_resp_after_addr_no_glitch(xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid, resp_ph_cont_instr, v_addr_ph_cnt_instr)
-  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches (instructions).\n");
-
   a_resp_after_addr_no_glitch_data: assert property (
-    p_resp_after_addr_no_glitch(xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid, resp_ph_cont_data, v_addr_ph_cnt_data)
+    p_resp_after_addr_no_glitch(obi_data_support_if.rvalid_data, obi_data_support_if.resp_ph_cont_data, obi_data_support_if.v_addr_ph_cnt_data)
   ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches (data).\n");
+
+  a_resp_after_addr_no_glitch_instr: assert property (
+    p_resp_after_addr_no_glitch(obi_instr_support_if.rvalid_instr, obi_instr_support_if.resp_ph_cont_instr, obi_instr_support_if.v_addr_ph_cnt_instr)
+  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches (instructions).\n");
 
 
   property p_resp_after_addr_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
@@ -1252,13 +1212,13 @@ module uvmt_cv32e40s_xsecure_assert
     xsecure_if.core_alert_major_o;
   endproperty;
 
-  a_resp_after_addr_glitch_instr: assert property (
-    p_resp_after_addr_glitch(xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid, resp_ph_cont_instr, v_addr_ph_cnt_instr)
-  ) else `uvm_error(info_tag, "A respons phase before address phase does not set major alert (instructions).\n");
-
   a_resp_after_addr_glitch_data: assert property (
-    p_resp_after_addr_glitch(xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid, resp_ph_cont_data, v_addr_ph_cnt_data)
+    p_resp_after_addr_glitch(obi_data_support_if.rvalid_data, obi_data_support_if.resp_ph_cont_data, obi_data_support_if.v_addr_ph_cnt_data)
   ) else `uvm_error(info_tag, "A respons phase before address phase does not set major alert (data).\n");
+
+  a_resp_after_addr_glitch_instr: assert property (
+    p_resp_after_addr_glitch(obi_instr_support_if.rvalid_instr, obi_instr_support_if.resp_ph_cont_instr, obi_instr_support_if.v_addr_ph_cnt_instr)
+  ) else `uvm_error(info_tag, "A respons phase before address phase does not set major alert (instructions).\n");
 
 
 endmodule : uvmt_cv32e40s_xsecure_assert
