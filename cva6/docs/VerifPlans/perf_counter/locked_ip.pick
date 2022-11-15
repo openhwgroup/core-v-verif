@@ -1,0 +1,38 @@
+(dp0
+VReading mhpmcounter[8:3]CSR
+p1
+Vthales
+p2
+sVReading mhpmevent[8:3] CSR
+p3
+Vthales
+p4
+sVwriting into mhpmcounter[8:3]h CSR
+p5
+Vthales
+p6
+sVwriting into mhpmevent[8:3] 
+p7
+Vthales
+p8
+sVWriting into mhpmevent[8:3] CSR
+p9
+Vthales
+p10
+sVwriting into mhpmcounter[8:3] CSR
+p11
+Vthales
+p12
+sVReading mhpmcounter[8:3] CSR
+p13
+Vthales
+p14
+sVReading mhpmcounter[8:3]h CSR
+p15
+Vthales
+p16
+sVReading mhpmevent[8:3]
+p17
+Vthales
+p18
+s.
