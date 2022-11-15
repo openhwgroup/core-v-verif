@@ -1059,16 +1059,16 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
         .lsumlsu_bus_gnt_i (core_i.load_store_unit_i.trans_valid),
 
         //TODO: not sure if this is the correct signals:
-        //obi protocol between /////////LSU (lsu) mpu (m) and LSU (lsu) is refered to as lsumlsu
-        .lsumlsu_bus_rvalid_i (core_i.load_store_unit_i.resp_valid),
-        .lsumlsu_bus_req_i (core_i.load_store_unit_i.trans_ready),
-        .lsumlsu_bus_gnt_i (core_i.load_store_unit_i.trans_valid),
-
-        //TODO: not sure if this is the correct signals:
         //obi protocol between LSU (lsu) respons (r) filter (f) and write (w) buffer (b) is refered to as lsurfwb
         .lsurfwb_bus_rvalid_i (core_i.load_store_unit_i.bus_resp_valid),
         .lsurfwb_bus_req_i (core_i.load_store_unit_i.buffer_trans_ready),
         .lsurfwb_bus_gnt_i (core_i.load_store_unit_i.buffer_trans_valid),
+
+        //TODO: not sure if this is the correct signals:
+        //obi protocol between /////////LSU (lsu) mpu (m) and LSU (lsu) is refered to as lsumlsu
+        .lsumlsu_bus_rvalid_i (core_i.load_store_unit_i.resp_valid),
+        .lsumlsu_bus_req_i (core_i.load_store_unit_i.buffer_trans_ready),
+        .lsumlsu_bus_gnt_i (core_i.load_store_unit_i.buffer_trans_valid),
 
     );
 
