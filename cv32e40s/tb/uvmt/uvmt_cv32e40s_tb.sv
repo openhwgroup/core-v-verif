@@ -22,11 +22,6 @@
 `ifndef __UVMT_CV32E40S_TB_SV__
 `define __UVMT_CV32E40S_TB_SV__
 
-// Import the Imperas-DV RVVI API
-`ifndef FORMAL
-  `include "rvvi/rvvi-api.svh"
-`endif
-
 /**
  * Module encapsulating the CV32E40S DUT wrapper, and associated SV interfaces.
  * Also provide UVM environment entry and exit points.
