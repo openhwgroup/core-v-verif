@@ -227,10 +227,10 @@ task uvma_clic_drv_c::irq_ack_clear();
          if (assert_until_ack_sem[irq_id].try_get(1)) begin
             `uvm_info("IRQDRV", $sformatf("irq_ack_clear: Clearing IRQ: %0d", irq_id), UVM_DEBUG);
             cntxt.vif.drv_cb.clic_irq_drv       <= 1'b0;
-            cntxt.vif.drv_cb.clic_irq_id_drv    <= req.index;
-            cntxt.vif.drv_cb.clic_irq_shv_drv   <= req.sel_hardware_vectoring;
-            cntxt.vif.drv_cb.clic_irq_priv_drv  <= req.privilege_mode;
-            cntxt.vif.drv_cb.clic_irq_level_drv <= req.level;
+            cntxt.vif.drv_cb.clic_irq_id_drv    <= 11'b0;
+            cntxt.vif.drv_cb.clic_irq_shv_drv   <= 1'b0;
+            cntxt.vif.drv_cb.clic_irq_priv_drv  <= 2'b00;
+            cntxt.vif.drv_cb.clic_irq_level_drv <= 8'b0;
             assert_until_ack_sem[irq_id].put(1);
          end
       end
