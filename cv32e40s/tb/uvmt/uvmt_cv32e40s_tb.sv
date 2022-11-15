@@ -924,8 +924,9 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
     ) xsecure_assert_i 	(
     	.xsecure_if	(xsecure_if),
 	    .rvfi_if	  (rvfi_instr_if_0_i),
-      .obi_data_support_if (support_logic_if.obi_data_Reader),
-      .obi_instr_support_if (support_logic_if.obi_instr_Reader),
+      .data_bus_support_if (support_logic_if.data_bus_Reader),
+      .instr_bus_support_if (support_logic_if.instr_bus_Reader),
+      .abiim_bus_support_if (support_logic_if.abiim_bus_Reader),
       .clk_i      (clk_i),
       .rst_ni     (rst_ni)
     );
@@ -1034,24 +1035,43 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
     bind cv32e40s_wrapper
       uvmt_cv32e40s_support_logic_if support_logic_if (
-        .clk_i2     (clknrst_if.clk),
-        .rst_ni2 (clknrst_if.reset_n),
+        .clk_i     (core_i.clk_i),
+        .rst_ni (core_i.rst_ni),
 
-        .rvalid_data (core_i.m_c_obi_data_if.s_rvalid.rvalid),
-        .gnt_data (core_i.m_c_obi_data_if.s_req.req),
-        .req_data (core_i.m_c_obi_data_if.s_gnt.gnt),
+        .ctrl_fsm_o_i (core_i.controller_i.controller_fsm_i.ctrl_fsm_o),
 
-        .rvalid_instr (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
-        .gnt_instr (core_i.m_c_obi_instr_if.s_req.req),
-        .req_instr (core_i.m_c_obi_instr_if.s_gnt.gnt)
+        .data_bus_rvalid_i (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+        .data_bus_req_i (core_i.m_c_obi_data_if.s_req.req),
+        .data_bus_gnt_i (core_i.m_c_obi_data_if.s_gnt.gnt),
+
+        .instr_bus_rvalid_i (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+        .instr_bus_req_i (core_i.m_c_obi_instr_if.s_req.req),
+        .instr_bus_gnt_i (core_i.m_c_obi_instr_if.s_gnt.gnt),
+
+        //obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) is refered to as abiim
+        .abiim_bus_rvalid_i (core_i.if_stage_i.prefetch_resp_valid),
+        .abiim_bus_req_i (core_i.if_stage_i.prefetch_trans_ready),
+        .abiim_bus_gnt_i (core_i.if_stage_i.prefetch_trans_valid),
+
+        //obi protocol between LSU (lsu) mpu (m) and LSU (lsu) is refered to as lsumlsu
+        .lsumlsu_bus_rvalid_i (core_i.load_store_unit_i.resp_valid),
+        .lsumlsu_bus_req_i (core_i.load_store_unit_i.trans_ready),
+        .lsumlsu_bus_gnt_i (core_i.load_store_unit_i.trans_valid),
+
+        //TODO: not sure if this is the correct signals:
+        //obi protocol between /////////LSU (lsu) mpu (m) and LSU (lsu) is refered to as lsumlsu
+        .lsumlsu_bus_rvalid_i (core_i.load_store_unit_i.resp_valid),
+        .lsumlsu_bus_req_i (core_i.load_store_unit_i.trans_ready),
+        .lsumlsu_bus_gnt_i (core_i.load_store_unit_i.trans_valid),
+
+        //TODO: not sure if this is the correct signals:
+        //obi protocol between LSU (lsu) respons (r) filter (f) and write (w) buffer (b) is refered to as lsurfwb
+        .lsurfwb_bus_rvalid_i (core_i.load_store_unit_i.bus_resp_valid),
+        .lsurfwb_bus_req_i (core_i.load_store_unit_i.buffer_trans_ready),
+        .lsurfwb_bus_gnt_i (core_i.load_store_unit_i.buffer_trans_valid),
+
     );
 
-    // TODO find a better way
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.ctrl_fsm_o_i   = dut_wrap.cv32e40s_wrapper_i.core_i.controller_i.controller_fsm_i.ctrl_fsm_o;
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_req_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_req.req;
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_gnt_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_gnt.gnt;
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.clk_i          = dut_wrap.cv32e40s_wrapper_i.core_i.clk_i;
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.rst_ni         = dut_wrap.cv32e40s_wrapper_i.core_i.rst_ni;
 
     bind cv32e40s_pmp :
       uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i
@@ -1097,15 +1117,13 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if_0_i),
-                                                                      .support_if(support_logic_if),
-                                                                      .obi_data_support_if(support_logic_if.obi_data_Slave),
-                                                                      .obi_instr_support_if(support_logic_if.obi_instr_Slave)
+                                                                      .support_if(support_logic_if.Driver)
                                                                       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
 
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
-                                                              .support_if(support_logic_if)
+                                                              .support_if(support_logic_if.zc_Reader)
                                                               );
 
 

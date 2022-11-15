@@ -400,18 +400,27 @@ interface uvmt_cv32e40s_debug_cov_assert_if
 
 endinterface : uvmt_cv32e40s_debug_cov_assert_if
 
-interface uvmt_cv32e40s_support_logic_if (
+interface uvmt_cv32e40s_support_logic_if
+   import cv32e40s_pkg::*;
+   import cv32e40s_rvfi_pkg::*;
+   (
    //Obi signals:
-   input clk_i2,
-   input rst_ni2,
+   input logic clk_i,
+   input logic rst_ni,
 
-   input rvalid_data,
-   input gnt_data,
-   input req_data,
+   input ctrl_fsm_t ctrl_fsm_o_i,
 
-   input rvalid_instr,
-   input gnt_instr,
-   input req_instr
+   input logic data_bus_rvalid_i,
+   input logic data_bus_gnt_i,
+   input logic data_bus_req_i,
+
+   input logic instr_bus_rvalid_i,
+   input logic instr_bus_gnt_i,
+   input logic instr_bus_req_i,
+
+   input logic abiim_bus_rvalid_i,
+   input logic abiim_bus_gnt_i,
+   input logic abiim_bus_req_i
 );
 
    import cv32e40s_pkg::*;
@@ -420,26 +429,27 @@ interface uvmt_cv32e40s_support_logic_if (
    logic rst_ni;
 
    // core signals
-   ctrl_fsm_t  ctrl_fsm_o_i;
-   logic       data_bus_req_i;
-   logic       data_bus_gnt_i;
+   logic req_after_exception; //Todo: marton describe the signal
 
-   //results for modport
-   logic req_after_exception_o;
 
-   // obi signals:
+   // obi bus protocol signals:
+   //obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) is refered to as abiim
 
    // continued address and respons phase indicators, indicates address and respons phases
    // of more than one cycle
-   logic addr_ph_cont_data;
-   logic resp_ph_cont_data;
+   logic data_bus_addr_ph_cont;
+   logic data_bus_resp_ph_cont;
 
-   logic addr_ph_cont_instr;
-   logic resp_ph_cont_instr;
+   logic instr_bus_addr_ph_cont;
+   logic instr_bus_resp_ph_cont;
+
+   logic abiim_bus_addr_ph_cont;
+   logic abiim_bus_resp_ph_cont;
 
    // address phase counter, used to verify no response phase preceedes an address phase
-   integer v_addr_ph_cnt_data;
-   integer v_addr_ph_cnt_instr;
+   integer data_bus_v_addr_ph_cnt;
+   integer instr_bus_v_addr_ph_cnt;
+   integer abiim_bus_v_addr_ph_cnt;
 
    clocking mon_cb @(posedge clk_i);
       input #1step
@@ -447,72 +457,79 @@ interface uvmt_cv32e40s_support_logic_if (
       ctrl_fsm_o_i,
       data_bus_req_i;
 
-      output #0 req_after_exception_o;
+      output #0 req_after_exception;
 
    endclocking : mon_cb
 
-   modport master (
+   modport Driver (
      input  clk_i,
             rst_ni,
 
+            //zc (Todo: marton: describe the signal?):
             ctrl_fsm_o_i,
-            data_bus_req_i,
+
+            //Data bus inputs to support logic module:
+            data_bus_rvalid_i,
             data_bus_gnt_i,
+            data_bus_req_i,
 
-     output req_after_exception_o
+            //Instr bus inputs to support logic module:
+            instr_bus_rvalid_i,
+            instr_bus_gnt_i,
+            instr_bus_req_i,
+
+            //Abiim bus inputs to support logic module:
+            abiim_bus_rvalid_i,
+            abiim_bus_gnt_i,
+            abiim_bus_req_i,
+
+     output req_after_exception, //Todo: marton: describe
+
+            //Data bus outputs of the support logic module:
+            data_bus_addr_ph_cont,
+            data_bus_resp_ph_cont,
+            data_bus_v_addr_ph_cnt,
+
+            //Instr bus outputs of the support logic module:
+            instr_bus_addr_ph_cont,
+            instr_bus_resp_ph_cont,
+            instr_bus_v_addr_ph_cnt,
+
+            //Abiim bus outputs of the support logic module:
+            abiim_bus_addr_ph_cont,
+            abiim_bus_resp_ph_cont,
+            abiim_bus_v_addr_ph_cnt
+
    );
 
-   modport slave (
+   modport zc_Reader ( //Todo: marton: chose a more descriptiv name
      input  clk_i,
             rst_ni,
-
-            req_after_exception_o,
-     output ctrl_fsm_o_i,
-            data_bus_req_i
-   );
-
-   modport monitor (
-     input  clk_i,
-            rst_ni,
-            req_after_exception_o,
+            req_after_exception,
             ctrl_fsm_o_i,
             data_bus_req_i
    );
 
-	modport obi_data_Slave  (
-         input clk_i2,
-         input rst_ni2,
+	modport data_bus_Reader (
+      input clk_i,
+            rst_ni,
+            data_bus_rvalid_i,
+			   data_bus_resp_ph_cont,
+			   data_bus_v_addr_ph_cnt);
 
-         input rvalid_data,
-			input gnt_data,
-			input req_data,
+	modport instr_bus_Reader (
+      input clk_i,
+            rst_ni,
+            instr_bus_rvalid_i,
+			   instr_bus_resp_ph_cont,
+			   instr_bus_v_addr_ph_cnt);
 
-			output addr_ph_cont_data,
-			output resp_ph_cont_data,
-			output v_addr_ph_cnt_data);
-
-	modport obi_data_Reader (
-         input rvalid_data,
-			input resp_ph_cont_data,
-			input v_addr_ph_cnt_data);
-
-	modport obi_instr_Slave  (
-         input clk_i2,
-         input rst_ni2,
-
-         input rvalid_instr,
-			input gnt_instr,
-			input req_instr,
-
-			output addr_ph_cont_instr,
-			output resp_ph_cont_instr,
-			output v_addr_ph_cnt_instr);
-
-	modport obi_instr_Reader (
-         input rvalid_instr,
-			input resp_ph_cont_instr,
-			input v_addr_ph_cnt_instr);
-
+	modport abiim_bus_Reader (
+      input clk_i,
+            rst_ni,
+            abiim_bus_rvalid_i,
+			   abiim_bus_resp_ph_cont,
+			   abiim_bus_v_addr_ph_cnt);
 
 endinterface : uvmt_cv32e40s_support_logic_if
 

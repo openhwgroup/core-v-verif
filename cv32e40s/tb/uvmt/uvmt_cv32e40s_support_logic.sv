@@ -21,9 +21,7 @@ module uvmt_cv32e40s_support_logic
   import cv32e40s_pkg::*;
   (
     uvma_rvfi_instr_if rvfi,
-    uvmt_cv32e40s_support_logic_if.master support_if,
-    uvmt_cv32e40s_support_logic_if.obi_data_Slave obi_data_support_if,
-    uvmt_cv32e40s_support_logic_if.obi_instr_Slave obi_instr_support_if
+    uvmt_cv32e40s_support_logic_if.Driver support_if
   );
 
   // ---------------------------------------------------------------------------
@@ -52,7 +50,7 @@ module uvmt_cv32e40s_support_logic
   // Used to verify exception timing with multiop instruction
   always @(posedge support_if.clk_i or negedge support_if.rst_ni) begin
     if (!support_if.rst_ni) begin
-      support_if.req_after_exception_o <= 0;
+      support_if.req_after_exception <= 0;
       exception_active <= 0;
       data_bus_gnt_q <= 0;
     end else  begin
@@ -62,15 +60,15 @@ module uvmt_cv32e40s_support_logic
       // is a trap taken in WB?
       if (support_if.ctrl_fsm_o_i.pc_set && (support_if.ctrl_fsm_o_i.pc_mux == PC_TRAP_DBE || support_if.ctrl_fsm_o_i.pc_mux == PC_TRAP_EXC)) begin
         if (support_if.data_bus_req_i && data_bus_gnt_q) begin
-          support_if.req_after_exception_o <= 1;
+          support_if.req_after_exception <= 1;
         end
         exception_active <= 1;
       end else if (rvfi.rvfi_valid) begin
         exception_active <= 0;
-        support_if.req_after_exception_o <= 0;
+        support_if.req_after_exception <= 0;
 
       end else if (exception_active && data_bus_gnt_q && support_if.data_bus_req_i) begin
-        support_if.req_after_exception_o <= 1;
+        support_if.req_after_exception <= 1;
       end
 
 
@@ -79,31 +77,46 @@ module uvmt_cv32e40s_support_logic
 
   end //always
 
-  //obi data:
-  uvmt_cv32e40s_obi_phases_monitor obi_phases_data_monitor (
-    .clk_i (obi_data_support_if.clk_i2),
-    .rst_ni (obi_data_support_if.rst_ni2),
+  //obi data bus:
+  uvmt_cv32e40s_obi_phases_monitor data_bus_obi_phases_monitor (
+    .clk_i (support_if.clk_i),
+    .rst_ni (support_if.rst_ni),
 
-    .obi_req (obi_data_support_if.req_data),
-    .obi_gnt (obi_data_support_if.gnt_data),
-    .obi_rvalid (obi_data_support_if.rvalid_data),
-    .addr_ph_cont (obi_data_support_if.addr_ph_cont_data),
-    .resp_ph_cont (obi_data_support_if.resp_ph_cont_data),
-    .v_addr_ph_cnt (obi_data_support_if.v_addr_ph_cnt_data)
+    .obi_req (support_if.data_bus_req_i),
+    .obi_gnt (support_if.data_bus_gnt_i),
+    .obi_rvalid (support_if.data_bus_rvalid_i),
+    .addr_ph_cont (support_if.data_bus_addr_ph_cont),
+    .resp_ph_cont (support_if.data_bus_resp_ph_cont),
+    .v_addr_ph_cnt (support_if.data_bus_v_addr_ph_cnt)
   );
 
-  //obi instr:
-  uvmt_cv32e40s_obi_phases_monitor obi_phases_instr_monitor (
-    .clk_i (obi_instr_support_if.clk_i2),
-    .rst_ni (obi_instr_support_if.rst_ni2),
+  //obi instr bus:
+  uvmt_cv32e40s_obi_phases_monitor instr_bus_obi_phases_monitor (
+    .clk_i (support_if.clk_i),
+    .rst_ni (support_if.rst_ni),
 
-    .obi_req (obi_instr_support_if.req_instr),
-    .obi_gnt (obi_instr_support_if.gnt_instr),
-    .obi_rvalid (obi_instr_support_if.rvalid_instr),
-    .addr_ph_cont (obi_instr_support_if.addr_ph_cont_instr),
-    .resp_ph_cont (obi_instr_support_if.resp_ph_cont_instr),
-    .v_addr_ph_cnt (obi_instr_support_if.v_addr_ph_cnt_instr)
+    .obi_req (support_if.instr_bus_req_i),
+    .obi_gnt (support_if.instr_bus_gnt_i),
+    .obi_rvalid (support_if.instr_bus_rvalid_i),
+    .addr_ph_cont (support_if.instr_bus_addr_ph_cont),
+    .resp_ph_cont (support_if.instr_bus_resp_ph_cont),
+    .v_addr_ph_cnt (support_if.instr_bus_v_addr_ph_cnt)
   );
+
+  //obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) (=> abiim)
+  uvmt_cv32e40s_obi_phases_monitor abiim_bus_obi_phases_monitor (
+    .clk_i (support_if.clk_i),
+    .rst_ni (support_if.rst_ni),
+
+    .obi_req (support_if.abiim_bus_req_i),
+    .obi_gnt (support_if.abiim_bus_gnt_i),
+    .obi_rvalid (support_if.abiim_bus_rvalid_i),
+    .addr_ph_cont (support_if.abiim_bus_addr_ph_cont),
+    .resp_ph_cont (support_if.abiim_bus_resp_ph_cont),
+    .v_addr_ph_cnt (support_if.abiim_bus_v_addr_ph_cnt)
+  );
+
+
 
 
 endmodule : uvmt_cv32e40s_support_logic

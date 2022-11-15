@@ -13,8 +13,9 @@ module uvmt_cv32e40s_xsecure_assert
   (
    uvmt_cv32e40s_xsecure_if xsecure_if,
    uvma_rvfi_instr_if rvfi_if,
-   uvmt_cv32e40s_support_logic_if.obi_data_Reader obi_data_support_if,
-   uvmt_cv32e40s_support_logic_if.obi_instr_Reader obi_instr_support_if,
+   uvmt_cv32e40s_support_logic_if.data_bus_Reader data_bus_support_if,
+   uvmt_cv32e40s_support_logic_if.instr_bus_Reader instr_bus_support_if,
+   uvmt_cv32e40s_support_logic_if.abiim_bus_Reader abiim_bus_support_if,
    input rst_ni,
    input clk_i
   );
@@ -1183,13 +1184,18 @@ module uvmt_cv32e40s_xsecure_assert
 
   endproperty;
 
+
   a_resp_after_addr_no_glitch_data: assert property (
-    p_resp_after_addr_no_glitch(obi_data_support_if.rvalid_data, obi_data_support_if.resp_ph_cont_data, obi_data_support_if.v_addr_ph_cnt_data)
-  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches (data).\n");
+    p_resp_after_addr_no_glitch(data_bus_support_if.data_bus_rvalid_i, data_bus_support_if.data_bus_resp_ph_cont, data_bus_support_if.data_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches (data obi bus).\n");
 
   a_resp_after_addr_no_glitch_instr: assert property (
-    p_resp_after_addr_no_glitch(obi_instr_support_if.rvalid_instr, obi_instr_support_if.resp_ph_cont_instr, obi_instr_support_if.v_addr_ph_cnt_instr)
-  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches (instructions).\n");
+    p_resp_after_addr_no_glitch(instr_bus_support_if.instr_bus_rvalid_i, instr_bus_support_if.instr_bus_resp_ph_cont, instr_bus_support_if.instr_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches (instructions obi bus).\n");
+
+  a_resp_after_addr_no_glitch_abiim: assert property (
+    p_resp_after_addr_no_glitch(abiim_bus_support_if.abiim_bus_rvalid_i, abiim_bus_support_if.abiim_bus_resp_ph_cont, abiim_bus_support_if.abiim_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches (obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m).\n");
 
 
   property p_resp_after_addr_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
@@ -1213,12 +1219,16 @@ module uvmt_cv32e40s_xsecure_assert
   endproperty;
 
   a_resp_after_addr_glitch_data: assert property (
-    p_resp_after_addr_glitch(obi_data_support_if.rvalid_data, obi_data_support_if.resp_ph_cont_data, obi_data_support_if.v_addr_ph_cnt_data)
+    p_resp_after_addr_glitch(data_bus_support_if.data_bus_rvalid_i, data_bus_support_if.data_bus_resp_ph_cont, data_bus_support_if.data_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "A respons phase before address phase does not set major alert (data).\n");
 
   a_resp_after_addr_glitch_instr: assert property (
-    p_resp_after_addr_glitch(obi_instr_support_if.rvalid_instr, obi_instr_support_if.resp_ph_cont_instr, obi_instr_support_if.v_addr_ph_cnt_instr)
+    p_resp_after_addr_glitch(instr_bus_support_if.instr_bus_rvalid_i, instr_bus_support_if.instr_bus_resp_ph_cont, instr_bus_support_if.instr_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "A respons phase before address phase does not set major alert (instructions).\n");
+
+  a_resp_after_addr_glitch_abiim: assert property (
+    p_resp_after_addr_glitch(abiim_bus_support_if.abiim_bus_rvalid_i, abiim_bus_support_if.abiim_bus_resp_ph_cont, abiim_bus_support_if.abiim_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "A respons phase before address phase does not set major alert (abiimuctions).\n");
 
 
 endmodule : uvmt_cv32e40s_xsecure_assert
