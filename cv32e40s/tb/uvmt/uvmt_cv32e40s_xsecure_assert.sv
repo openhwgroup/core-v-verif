@@ -1132,5 +1132,37 @@ module uvmt_cv32e40s_xsecure_assert
 
   end endgenerate
 
+  ///////////////////////////////////////////////////////////////////////
+  ///////////////////////// INTERFACE INTEGRETY /////////////////////////
+  ///////////////////////////////////////////////////////////////////////
+
+  a_xsecure_interface_integrety_default_on: assert property (
+    p_xsecure_setting_default_on(
+        xsecure_if.core_xsecure_ctrl_cpuctrl_integrity)
+  ) else `uvm_error(info_tag, "Data independent timing is not on when exiting reset.\n");
+
+  property p_parity_signal_is_invers_of_signal(signal, parity_signal);
+    @(posedge xsecure_if.clk)
+
+    //Make sure parity signal is always enabled (inverse of the signal)
+    parity_signal == ~signal;
+
+  endproperty
+
+  a_xsecure_interface_integrety_default_on: assert property (
+    p_parity_signal_is_invers_of_signal(
+        xsecure_if.core_xsecure_ctrl_cpuctrl_integrity)
+  ) else `uvm_error(info_tag, "Parity signal is not invers of signal.\n");
+
+  a_xsecure_interface_integrety_default_on: assert property (
+    p_parity_signal_is_invers_of_signal(
+        xsecure_if.core_xsecure_ctrl_cpuctrl_integrity)
+  ) else `uvm_error(info_tag, "Parity signal is not invers of signal.\n");
+
+  a_xsecure_interface_integrety_default_on: assert property (
+    p_parity_signal_is_invers_of_signal(
+        xsecure_if.core_xsecure_ctrl_cpuctrl_integrity)
+  ) else `uvm_error(info_tag, "Parity signal is not invers of signal.\n");
+
 
 endmodule : uvmt_cv32e40s_xsecure_assert

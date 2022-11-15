@@ -802,6 +802,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       .core_xsecure_ctrl_cpuctrl_dataindtiming	                                                                        (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
       .core_xsecure_ctrl_cpuctrl_rnddummy		                                                                            (core_i.xsecure_ctrl.cpuctrl.rnddummy),
+      .core_xsecure_ctrl_cpuctrl_integrity (core_i.xsecure_ctrl.cpuctrl.integrity),
 
       .core_xsecure_ctrl_cpuctrl_rnddummyfreq                                                                           (core_i.xsecure_ctrl.cpuctrl[19:16]),
       .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
