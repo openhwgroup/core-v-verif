@@ -419,12 +419,12 @@ module uvmt_cv32e40s_tb;
     uvma_obi_memory_assert_if_wrp#(
       .ADDR_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_ADDR_WIDTH),
       .DATA_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_DATA_WIDTH),
-      .AUSER_WIDTH(0),
-      .WUSER_WIDTH(0),
-      .RUSER_WIDTH(0),
-      .ID_WIDTH(0),
+      .AUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_AUSER_WIDTH),
+      .WUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_WUSER_WIDTH),
+      .RUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_RUSER_WIDTH),
+      .ID_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_ID_WIDTH),
       .ACHK_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_ACHK_WIDTH),
-      .RCHK_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_RCHK_WIDTH),  // TODO:silabs-robin  These (and similars) must be specified
+      .RCHK_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_RCHK_WIDTH),
       .IS_1P2(1)
     ) obi_instr_memory_assert_i(.obi(obi_instr_if_i));
 
@@ -432,10 +432,10 @@ module uvmt_cv32e40s_tb;
     uvma_obi_memory_assert_if_wrp#(
       .ADDR_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_ADDR_WIDTH),
       .DATA_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_DATA_WIDTH),
-      .AUSER_WIDTH(0),
-      .WUSER_WIDTH(0),
-      .RUSER_WIDTH(0),
-      .ID_WIDTH(0),
+      .AUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_AUSER_WIDTH),
+      .WUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_WUSER_WIDTH),
+      .RUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_RUSER_WIDTH),
+      .ID_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_ID_WIDTH),
       .ACHK_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_ACHK_WIDTH),
       .RCHK_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_RCHK_WIDTH),
       .IS_1P2(1)
