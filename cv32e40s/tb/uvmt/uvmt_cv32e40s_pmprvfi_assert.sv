@@ -226,6 +226,15 @@ module uvmt_cv32e40s_pmprvfi_assert
     .match_status_o (match_status_upperdata)
   );
 
+  var [31:0]  clk_cnt;
+  always @(posedge clk_i, negedge rst_ni) begin
+    if (rst_ni == 0) begin
+      clk_cnt <= 64'd 1;
+    end else if (clk_cnt != '1) begin
+      clk_cnt <= clk_cnt + 64'd 1;
+    end
+  end
+
 
   // Assertions
 
@@ -330,23 +339,28 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   // TODO:silabs-robin "uvm_error" on all assertions?
 
+
   // Software-view can read the granularity level
-  a_granularity_determination: assert property (
-    (is_rvfi_csr_instr && (rvfi_insn[14:12] == 3'b 001)) &&  // CSRRW instr,
-    (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + 0))    &&  // to a "pmpaddr" CSR,
-    ((rvfi_rs1_rdata == '1) && rvfi_rs1_addr)            &&  // writing all ones.
-    (pmp_csr_rvfi_rdata.cfg[0] == '0)                    &&  // Related cfg is 0,
-    (pmp_csr_rvfi_rdata.cfg[0+1] == '0)                  &&  // above cfg is 0.
-    !rvfi_trap                                               // (Trap doesn't meddle.)
-    |=>
-    (rvfi_valid [->1])  ##0
-    (rvfi_csr_pmpaddr_rdata[0][31:PMP_GRANULARITY] == '1)  &&
-    (
-      (rvfi_csr_pmpaddr_rdata[0][`max(PMP_GRANULARITY-1, 0) : 0] == '0)  ^
-      (PMP_GRANULARITY == 0)
-    )
-    // Note: _Can_ be generalized for all i
-  );
+
+  if (PMP_NUM_REGIONS) begin: gen_granularity_determination
+    a_granularity_determination: assert property (
+      (is_rvfi_csr_instr && (rvfi_insn[14:12] == 3'b 001)) &&  // CSRRW instr,
+      (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + 0))    &&  // to a "pmpaddr" CSR,
+      ((rvfi_rs1_rdata == '1) && rvfi_rs1_addr)            &&  // writing all ones.
+      (pmp_csr_rvfi_rdata.cfg[0] == '0)                    &&  // Related cfg is 0,
+      (pmp_csr_rvfi_rdata.cfg[0+1] == '0)                  &&  // above cfg is 0.
+      !rvfi_trap                                               // (Trap doesn't meddle.)
+      |=>
+      (rvfi_valid [->1])  ##0
+      (rvfi_csr_pmpaddr_rdata[0][31:PMP_GRANULARITY] == '1)  &&
+      (
+        (rvfi_csr_pmpaddr_rdata[0][`max(PMP_GRANULARITY-1, 0) : 0] == '0)  ^
+        (PMP_GRANULARITY == 0)
+      )
+      // Note: _Can_ be generalized for all i
+    );
+  end
+
 
   // Locking is forever
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_until_reset
@@ -420,9 +434,12 @@ module uvmt_cv32e40s_pmprvfi_assert
     );
   end
 
+
   // Written cfg is written as expected
+
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_cfg_expected
     wire pmpncfg_t  cfg_expected = rectify_cfg_write(pmp_csr_rvfi_rdata.cfg[i], rvfi_rs1_rdata[8*(i%4) +: 8]);
+
     property  p_cfg_expected;
       (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw"
       (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + i/4))          &&  // ...to cfg's csr
@@ -433,28 +450,36 @@ module uvmt_cv32e40s_pmprvfi_assert
       // Note, this doesn't check csrr(s/c)[i]
       ;
     endproperty : p_cfg_expected
+
     a_cfg_expected: assert property (
       p_cfg_expected
     );
+
     a_not_ignore_writes_cfg_unlocked: assert property (
       // Locked entries, ignore pmpicfg writes
-      p_cfg_expected  and
-      !pmp_csr_rvfi_rdata.cfg[i].lock
-      // This is redundant, but explicitly covers non-locked regions
+      if (!pmp_csr_rvfi_rdata.cfg[i].lock)
+        p_cfg_expected
+      // This is redundant, but explicitly checks non-locked regions
     );
-    cov_cfg_expected_updates: cover property (
+
+    a_cfg_expected_updates: assert property (
       if (pmp_csr_rvfi_wdata.cfg[i] != pmp_csr_rvfi_rdata.cfg[i]) (
         p_cfg_expected
       )
     );
+
     cov_cfg_expected_ones: cover property (
       p_cfg_expected  and
       (rvfi_rs1_rdata[8*(i%4) +: 8] == '1)
     );
   end
+
+
   // Written cfg is legal  (vplan "ExecIgnored", ...)
+
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_cfgwdata_legal
     wire [7:0] rectified_cfg = rectify_cfg_write(pmp_csr_rvfi_rdata.cfg[i], pmp_csr_rvfi_wdata.cfg[i]);
+
     a_cfgwdata_legal: assert property (
       rvfi_valid  &&
       pmp_csr_rvfi_wmask.cfg[i]
@@ -462,7 +487,10 @@ module uvmt_cv32e40s_pmprvfi_assert
       (pmp_csr_rvfi_wdata.cfg[i] == rectified_cfg)
     );
   end
+
+
   // Read cfg is as expected
+
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_cfgrdata_expected
     property p_cfgrdata_expected;
       pmpncfg_t  cfg_prev;
@@ -474,18 +502,33 @@ module uvmt_cv32e40s_pmprvfi_assert
       (pmp_csr_rvfi_rdata.cfg[i] == rectify_cfg_write(cfg_prev, pmp_csr_rvfi_rdata.cfg[i]))
       ;
     endproperty : p_cfgrdata_expected
+
     a_cfgrdata_expected: assert property (
       p_cfgrdata_expected
     );
   end
 
+
   // addr/addr-1  unlocked->unstable
-  sequence  seq_csrrw_pmpaddri(i);
+
+  sequence  seq_csrrw_pmpaddri (i);
     (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw"
     (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + i))           &&  // ...to addr csr
     (!rvfi_trap)
     ;
   endsequence : seq_csrrw_pmpaddri
+
+  function automatic logic  is_beneath_locktor (int cfg_idx);
+    if (cfg_idx < (PMP_NUM_REGIONS - 1)) begin
+      return (
+        (pmp_csr_rvfi_rdata.cfg[cfg_idx + 1].mode == PMP_MODE_TOR)  &&
+        (pmp_csr_rvfi_rdata.cfg[cfg_idx + 1].lock)
+      );
+    end else begin
+      return 0;
+    end
+  endfunction : is_beneath_locktor
+
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_addr_writes
     a_addr_writeattempt: assert property (
       seq_csrrw_pmpaddri(i)
@@ -493,23 +536,28 @@ module uvmt_cv32e40s_pmprvfi_assert
       (pmp_csr_rvfi_wmask.addr[i][33:2] == 32'h FFFF_FFFF)
     );
     a_addr_nonlocked: assert property (
-      seq_csrrw_pmpaddri(i)  and
-      !pmp_csr_rvfi_rdata.cfg[i].lock
+      seq_csrrw_pmpaddri(i)            and
+      !pmp_csr_rvfi_rdata.cfg[i].lock  and
+      !is_beneath_locktor(i)
       |->
-      (pmp_csr_rvfi_wdata.addr[i][33:2+PMP_GRANULARITY] == rvfi_rs1_rdata[31:PMP_GRANULARITY])
+      (pmp_csr_rvfi_wdata.addr[i][33:2+PMP_GRANULARITY]
+        == rvfi_rs1_rdata[31:PMP_GRANULARITY])
     );
   end
+
   for (genvar i = 1; i < PMP_NUM_REGIONS; i++) begin: gen_addr_tor
+    // (Special case of "a_addr_nonlocked")
     a_addr_nonlocked_tor: assert property (
       seq_csrrw_pmpaddri(i - 1)                         and
       (pmp_csr_rvfi_rdata.cfg[i].mode == PMP_MODE_TOR)  and
       !pmp_csr_rvfi_rdata.cfg[i  ].lock                 and
       !pmp_csr_rvfi_rdata.cfg[i-1].lock
       |->
-      (pmp_csr_rvfi_wdata.addr[i-1] == rvfi_rs1_rdata)
-      // TODO:silabs-robin  This might not be complete. Waiting for RTL/RVFI fix first.
+      (pmp_csr_rvfi_wdata.addr[i-1][33:2+PMP_GRANULARITY]
+        == rvfi_rs1_rdata[31:PMP_GRANULARITY])
     );
   end
+
 
   // RVFI: Reported CSR writes take effect
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_rvfi_csr_writes
@@ -627,24 +675,39 @@ module uvmt_cv32e40s_pmprvfi_assert
     );
   end
 
+
   // RLB lifts restrictions
+
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_rlblifts_lockedexec
     wire pmpncfg_t  cfg_attempt = rvfi_rs1_rdata[8*(i%4) +: 8];
-    a_rlblifts_lockedexec: assert property (
+
+    sequence seq_rlblifts_lockedexec_ante;
       pmp_csr_rvfi_rdata.mseccfg.rlb  &&
       pmp_csr_rvfi_rdata.mseccfg.mml
       ##0
-      (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw" instr
-      (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + i/4))          &&  // ...to cfg's csr
+      (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw"
+      (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + i/4))          &&  // cfg csr
       !rvfi_trap
       ##0
       ({cfg_attempt.lock, cfg_attempt.read, cfg_attempt.write, cfg_attempt.exec}
         inside {4'b 1001, 4'b 1010, 4'b 1011, 4'b 1101})
+      ;
+    endsequence : seq_rlblifts_lockedexec_ante
+
+    a_rlblifts_lockedexec: assert property (
+      seq_rlblifts_lockedexec_ante
       |->
-      (pmp_csr_rvfi_wdata.cfg[i] == cfg_attempt)
+      (pmp_csr_rvfi_wdata.cfg[i] == (cfg_attempt & 8'h 9F))
     );
     // Note, "lockedexec" is just one case of a restriction that RLB lifts.
+
+    a_rlblifts_lockedexec_helper: assert property (
+      (clk_cnt < 29)
+      |->
+      not seq_rlblifts_lockedexec_ante
+    );
   end
+
   cov_rlb_mml: cover property (
     rvfi_valid  &&
     pmp_csr_rvfi_rdata.mseccfg.rlb  &&
@@ -653,6 +716,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
 
   // Translate write-attempts to legal values
+
   function automatic pmpncfg_t  rectify_cfg_write (pmpncfg_t cfg_pre, pmpncfg_t cfg_attempt);
     pmpncfg_t  cfg_rfied;
 
