@@ -126,7 +126,6 @@ const uint32_t MCAUSE_MPIE_MASK  = 0x1 << MCAUSE_MPIE_OFFSET;
 // peripheral setting to be controlled from UVM.
 const verbosity_t global_verbosity = V_LOW;
 
-//volatile uint32_t (*mtvt_table_ptr);
 extern volatile uint32_t mtvt_table;
 extern volatile uint32_t recovery_pt;
 // ---------------------------------------------------------------
@@ -369,7 +368,6 @@ void set_mseccfg(mseccfg_t mseccfg){
       : [cfg_vec] "r"(mseccfg_vector)
       :);
 
-  //__asm__ volatile ( R"(fence.i)":::);
   cvprintf(V_DEBUG, "Wrote mseccfg: 0x%08lx\n", mseccfg_vector);
 }
 
@@ -565,7 +563,6 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
   }
 
   __asm__ volatile ( R"( csrrs %[pmpvec], pmpcfg0, x0)" : [pmpvec] "+r"(pmpcfg_vector): :);
-  //__asm__ volatile ( R"(fence.i)":::);
   cvprintf(V_DEBUG, "Wrote pmpcfg_vector: 0x%08lx\n", pmpcfg_vector);
   return;
 }
@@ -997,6 +994,8 @@ uint32_t w_mip_notrap_r_zero(uint32_t index, uint8_t report_name){
       : "t0"
       );
 
+  // Expect all bits of mepc to remain as written (sans the last bit that is cleared by hw)
+  // mip should read all zeroes after writing all f's
   test_fail = (readback_val_mepc != 0xfffffffe) || ( readback_val_mip != 0);
   if (ABORT_ON_ERROR_IMMEDIATE) assert(test_fail == 0);
 
@@ -1134,6 +1133,7 @@ uint32_t invalid_mtvt_ptr_exec(uint32_t index, uint8_t report_name) {
   volatile uint8_t never = 0;
   volatile uint32_t no_timeout_threshold = 1000;
   volatile uint32_t mepc_triggered = 0x0;
+  volatile uint32_t addr = 0x0;
   uint32_t clic_vector = 0x0;
 
   SET_FUNC_INFO
@@ -1142,8 +1142,13 @@ uint32_t invalid_mtvt_ptr_exec(uint32_t index, uint8_t report_name) {
     return 0;
   }
 
-  // Normal code flow should never reach this code
-  // But we have to use a volatile condition parameter
+  // The following if-block implements a 1024-entry mtvt table
+  // note that only certain pointers are actually implemented,
+  // and they all point to the code following the table. The
+  // non-implemented entries point to 0x0 (mtvec)
+  //
+  // Normal code flow should never reach this code,
+  // thus we have to use a volatile condition parameter
   // to avoid compiler optimizing the table away
   if (never) {
     // Create mtvt table, add empty space to be able to use
@@ -1171,10 +1176,14 @@ uint32_t invalid_mtvt_ptr_exec(uint32_t index, uint8_t report_name) {
        : "memory"
        );
 
+    // Initially there was a split here to ensure that the above
+    // variables were properly updated before proceeding to mret
+    // as the compiler will need to insert some housekeeping code
+    // to keep things in check. This is now kept to make a convenient
+    // debug print statement available.
+
     cvprintf(V_DEBUG, "mepc: 0x%08lx\n", mepc_triggered);
-    // If this j is included above, the compiler
-    // will insert memory stores of the io-variables
-    // _AFTER_ the jump, and thus they will have no effect
+
     __asm__ volatile ( R"(
       csrrw x0, mepc, %[mepc]
       addi t0, x0, 0
@@ -1184,6 +1193,11 @@ uint32_t invalid_mtvt_ptr_exec(uint32_t index, uint8_t report_name) {
        : [mepc] "r"(mepc_triggered)
        :);
 
+    // Check that we actually ended up at the correct place after
+    // clic ptr fetch failed, and get the code back to the intended
+    // execution flow to complete the test properly.
+    // If code does not reach this part, then test_fail will be non-
+    // zero upon completion.
     if (mepc_triggered == (uint32_t)&mtvt_table + 4096) {
       test_fail = 0;
       cvprintf(V_LOW, "(Intentional) Unrecoverable pointer fetch exception occurred,\njumping to safe recovery point for test termination\n");
@@ -1201,6 +1215,8 @@ uint32_t invalid_mtvt_ptr_exec(uint32_t index, uint8_t report_name) {
     // Fallback fail check
     test_fail++;
     cvprintf(V_LOW, "Triggered unreachable code, this should not happen!\n");
+    // At this point, there is no knowning what the state of the cpu is,
+    // abort and fail test here to avoid spurious results
     assert(0);
   }
 
@@ -1226,11 +1242,12 @@ uint32_t invalid_mtvt_ptr_exec(uint32_t index, uint8_t report_name) {
                                     .shv   = 0x1
                                     });
 
-  // Wait for interrupt
   no_timeout_threshold = 1000;
   mepc_triggered = 0;
+  // Instruct clic_interrupt_vp to assert interrupt declared above
   vp_assert_irq(clic_vector, 10);
 
+  // Wait for interrupt
   while (no_timeout_threshold) {
     no_timeout_threshold--;
   }
@@ -1247,17 +1264,16 @@ uint32_t invalid_mtvt_ptr_exec(uint32_t index, uint8_t report_name) {
 
   no_timeout_threshold = 1000;
   mepc_triggered = 0;
+  // Instruct clic_interrupt_vp to assert interrupt declared above
   vp_assert_irq(clic_vector, 10);
 
+  // Wait for interrupt
   while (no_timeout_threshold) {
     no_timeout_threshold--;
   }
   cvprintf(V_MEDIUM, "Expect non-zero mepc, MEPC = 0x%08lx\n", mepc_triggered);
   if (ABORT_ON_ERROR_IMMEDIATE) assert(mepc_triggered != 0);
 
-  //max(SMCLIC_ID_WIDTH+2, 6)
-
-  volatile uint32_t addr = 0x0;
   // Set PMP configuration
   __asm__ volatile ( R"(
     la %[addr], mtvt_table;
@@ -1315,11 +1331,12 @@ uint32_t invalid_mtvt_ptr_exec(uint32_t index, uint8_t report_name) {
                                     .shv   = 0x1
                                     });
 
-  // Wait for interrupt
   no_timeout_threshold = 1000;
   mepc_triggered = 0;
+  // Instruct clic_interrupt_vp to assert interrupt declared above
   vp_assert_irq(clic_vector, 10);
 
+  // Wait for interrupt
   while (no_timeout_threshold) {
     no_timeout_threshold--;
   }
@@ -1339,6 +1356,8 @@ uint32_t invalid_mtvt_ptr_exec(uint32_t index, uint8_t report_name) {
 }
 
 // -----------------------------------------------------------------------------
+// Note that the following interrupt/exception handler is not generic and specific
+// to this test.
 
 __attribute__((interrupt("machine"))) void u_sw_irq_handler(void) {
   volatile uint32_t mepc;
@@ -1355,10 +1374,6 @@ __attribute__((interrupt("machine"))) void u_sw_irq_handler(void) {
      :
      :
      );
-  //__asm__ volatile (R"(
-  //  fence.i
-  //  )":::);
-
 
   cvprintf(V_DEBUG, "In handler, mepc: 0x%08lx, mcause: 0x%08lx\n", mepc, mcause);
 
