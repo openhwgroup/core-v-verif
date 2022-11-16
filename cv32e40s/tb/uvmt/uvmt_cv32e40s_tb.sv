@@ -873,11 +873,24 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q                     (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q),
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q                     (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q),
 
-
       // BASIC
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q                      (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q),
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q                        (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q),
 
+      // OBI interface
+      .core_i_m_c_obi_data_if_s_req_req (core_i.m_c_obi_data_if.s_req.req),
+      .core_i_m_c_obi_data_if_s_req_reqpar (core_i.m_c_obi_data_if.s_req.reqpar),
+      .core_i_m_c_obi_data_if_s_gnt_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
+      .core_i_m_c_obi_data_if_s_gnt_gntpar (core_i.m_c_obi_data_if.s_gnt.gntpar),
+      .core_i_m_c_obi_data_if_s_rvalid_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+      .core_i_m_c_obi_data_if_s_rvalid_rvalidpar (core_i.m_c_obi_data_if.s_rvalid.rvalidpar),
+
+      .core_i_m_c_obi_instr_if_s_req_req (core_i.m_c_obi_instr_if.s_req.req),
+      .core_i_m_c_obi_instr_if_s_req_reqpar (core_i.m_c_obi_instr_if.s_req.reqpar),
+      .core_i_m_c_obi_instr_if_s_gnt_gnt (core_i.m_c_obi_instr_if.s_gnt.gnt),
+      .core_i_m_c_obi_instr_if_s_gnt_gntpar (core_i.m_c_obi_instr_if.s_gnt.gntpar),
+      .core_i_m_c_obi_instr_if_s_rvalid_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+      .core_i_m_c_obi_instr_if_s_rvalid_rvalidpar (core_i.m_c_obi_instr_if.s_rvalid.rvalidpar),
 
       // IF stage
       .core_if_stage_if_valid_o                                                                                         (core_i.if_stage_i.if_valid_o),

@@ -1142,27 +1142,87 @@ module uvmt_cv32e40s_xsecure_assert
   ) else `uvm_error(info_tag, "Data independent timing is not on when exiting reset.\n");
 
   property p_parity_signal_is_invers_of_signal(signal, parity_signal);
-    @(posedge xsecure_if.clk)
+    @(posedge clk_i)
 
-    //Make sure parity signal is always enabled (inverse of the signal)
+    //Make sure parity signal is always inverse of the signal
     parity_signal == ~signal;
 
   endproperty
 
-  a_xsecure_interface_integrety_default_on: assert property (
+  a_xsecure_interface_integrety_obi_data_req_parity: assert property (
     p_parity_signal_is_invers_of_signal(
-        xsecure_if.core_xsecure_ctrl_cpuctrl_integrity)
-  ) else `uvm_error(info_tag, "Parity signal is not invers of signal.\n");
+      xsecure_if.core_i_m_c_obi_data_if_s_req_req,
+      xsecure_if.core_i_m_c_obi_data_if_s_req_reqpar)
+  ) else `uvm_error(info_tag, "Parity signal reqpar to the data obi bus is not invers of transaction grant (req) signal.\n");
 
-  a_xsecure_interface_integrety_default_on: assert property (
+  a_xsecure_interface_integrety_obi_data_gnt_parity: assert property (
     p_parity_signal_is_invers_of_signal(
-        xsecure_if.core_xsecure_ctrl_cpuctrl_integrity)
-  ) else `uvm_error(info_tag, "Parity signal is not invers of signal.\n");
+      xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt,
+      xsecure_if.core_i_m_c_obi_data_if_s_gnt_gntpar)
+  ) else `uvm_error(info_tag, "Parity signal gntpar to the data obi bus is not invers of transaction grant (gnt) signal.\n");
 
-  a_xsecure_interface_integrety_default_on: assert property (
+  a_xsecure_interface_integrety_obi_data_rvalid_parity: assert property (
     p_parity_signal_is_invers_of_signal(
-        xsecure_if.core_xsecure_ctrl_cpuctrl_integrity)
-  ) else `uvm_error(info_tag, "Parity signal is not invers of signal.\n");
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar)
+  ) else `uvm_error(info_tag, "Parity signal rvalidpar to the data obi bus is not invers of respons valid signal.\n");
 
+  a_xsecure_interface_integrety_obi_instr_req_parity: assert property (
+    p_parity_signal_is_invers_of_signal(
+      xsecure_if.core_i_m_c_obi_instr_if_s_req_req,
+      xsecure_if.core_i_m_c_obi_instr_if_s_req_reqpar)
+  ) else `uvm_error(info_tag, "Parity signal reqpar to the instruction obi bus is not invers of transaction grant (req) signal.\n");
+
+  a_xsecure_interface_integrety_obi_instr_gnt_parity: assert property (
+    p_parity_signal_is_invers_of_signal(
+      xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt,
+      xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar)
+  ) else `uvm_error(info_tag, "Parity signal gntpar to the instruction obi bus is not invers of transaction grant (gnt) signal.\n");
+
+  a_xsecure_interface_integrety_obi_instr_rvalid_parity: assert property (
+    p_parity_signal_is_invers_of_signal(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar)
+  ) else `uvm_error(info_tag, "Parity signal rvalidpar to the instruction obi bus is not invers of respons valid signal.\n");
+
+
+property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_signal);
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure parity signal is not inverse of the signal
+    parity_signal != ~signal
+
+    |=>
+    //Verify that Major alert is set
+    xsecure_if.core_alert_major_o;
+
+  endproperty
+
+  a_xsecure_interface_integrety_obi_data_gnt_parity_error_set_major_alert: assert property (
+    p_parity_signal_is_not_invers_of_signal_set_major_alert(
+      xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt,
+      xsecure_if.core_i_m_c_obi_data_if_s_gnt_gntpar)
+  ) else `uvm_error(info_tag, "Obi data bus grant signal and parity signal mismatch dont set major alert.\n");
+
+  a_xsecure_interface_integrety_obi_data_rvalid_parity_error_set_major_alert: assert property (
+    p_parity_signal_is_not_invers_of_signal_set_major_alert(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar)
+  ) else `uvm_error(info_tag, "Obi data bus rvalid signal and parity signal mismatch dont set major alert.\n");
+
+  a_xsecure_interface_integrety_obi_instr_gnt_parity_error_set_major_alert: assert property (
+    p_parity_signal_is_not_invers_of_signal_set_major_alert(
+      xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt,
+      xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar)
+  ) else `uvm_error(info_tag, "Obi instruction bus grant signal and parity signal mismatch dont set major alert.\n");
+
+  a_xsecure_interface_integrety_obi_instr_rvalid_parity_error_set_major_alert: assert property (
+    p_parity_signal_is_not_invers_of_signal_set_major_alert(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar)
+  ) else `uvm_error(info_tag, "Obi instruction bus rvalid signal and parity signal mismatch dont set major alert.\n");
+
+
+  //TODO: interface assertions
 
 endmodule : uvmt_cv32e40s_xsecure_assert
