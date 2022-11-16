@@ -1,20 +1,20 @@
-// 
+//
 // Copyright 2021 OpenHW Group
 // Copyright 2021 Datum Technology Corporation
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-// 
+//
 // Licensed under the Solderpad Hardware License v 2.1 (the "License"); you may
 // not use this file except in compliance with the License, or, at your option,
 // the Apache License version 2.0. You may obtain a copy of the License at
-// 
+//
 //     https://solderpad.org/licenses/SHL-2.1/
-// 
+//
 // Unless required by applicable law or agreed to in writing, any work
 // distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 // WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 // License for the specific language governing permissions and limitations
 // under the License.
-// 
+//
 
 
 `ifndef __UVMA_OBI_MEMORY_TDEFS_SV__
@@ -34,6 +34,7 @@ typedef logic                                              uvma_obi_memory_exoka
 typedef logic [5:0]                                        uvma_obi_memory_atop_l_t   ;
 typedef logic [1:0]                                        uvma_obi_memory_memtype_l_t;
 typedef logic [2:0]                                        uvma_obi_memory_prot_l_t   ;
+typedef logic                                              uvma_obi_memory_dbg_l_t    ;
 typedef logic [(`UVMA_OBI_MEMORY_ACHK_MAX_WIDTH    -1):0]  uvma_obi_memory_achk_l_t   ;
 typedef logic [(`UVMA_OBI_MEMORY_RCHK_MAX_WIDTH    -1):0]  uvma_obi_memory_rchk_l_t   ;
 
@@ -50,13 +51,17 @@ typedef bit                                              uvma_obi_memory_exokay_
 typedef bit [5:0]                                        uvma_obi_memory_atop_b_t   ;
 typedef bit [1:0]                                        uvma_obi_memory_memtype_b_t;
 typedef bit [2:0]                                        uvma_obi_memory_prot_b_t   ;
+typedef bit                                              uvma_obi_memory_dbg_b_t    ;
 typedef bit [(`UVMA_OBI_MEMORY_ACHK_MAX_WIDTH    -1):0]  uvma_obi_memory_achk_b_t   ;
 typedef bit [(`UVMA_OBI_MEMORY_RCHK_MAX_WIDTH    -1):0]  uvma_obi_memory_rchk_b_t   ;
 
 
 typedef enum {
    UVMA_OBI_MEMORY_VERSION_1P1,
-   UVMA_OBI_MEMORY_VERSION_1P2
+   UVMA_OBI_MEMORY_VERSION_1P2,
+   UVMA_OBI_MEMORY_VERSION_1P3,
+   UVMA_OBI_MEMORY_VERSION_1P4,
+   UVMA_OBI_MEMORY_VERSION_1P5
 } uvma_obi_memory_version_enum;
 
 typedef enum {
@@ -110,5 +115,11 @@ typedef enum {
    UVMA_OBI_MEMORY_DRV_SLV_EXOKAY_MODE_SUCCESS,
    UVMA_OBI_MEMORY_DRV_SLV_EXOKAY_MODE_RANDOM
 } uvma_obi_memory_drv_slv_exokay_mode_enum;
+
+typedef enum {
+   UVMA_OBI_MEMORY_CHK_TIED,
+   UVMA_OBI_MEMORY_CHK_CV32E40S
+} uvma_obi_memory_checksum_scheme;
+
 
 `endif // __UVMA_OBI_MEMORY_TDEFS_SV__
