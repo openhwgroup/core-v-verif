@@ -28,8 +28,10 @@ package cvverif_pkg;
 endpackage
 
 
+`include "uvma_obi_memory_macros.sv"
+
+
 package uvmt_cv32e40s_pkg;
-  `include "uvme_cv32e40s_constants.sv"
   `include "uvmt_cv32e40s_constants.sv"
   `include "uvmt_cv32e40s_tdefs.sv"
 
@@ -38,8 +40,7 @@ endpackage
 
 
 package uvme_cv32e40s_pkg;
-  parameter ILEN = 32;
-  parameter XLEN = 32;
+  `include "uvme_cv32e40s_constants.sv"
 endpackage
 
 
@@ -162,99 +163,8 @@ interface uvme_cv32e40s_core_cntrl_if;
 endinterface
 
 
-`define UVMA_OBI_MEMORY_ADDR_DEFAULT_WIDTH   32
-`define UVMA_OBI_MEMORY_DATA_DEFAULT_WIDTH   32
-`define UVMA_OBI_MEMORY_AUSER_DEFAULT_WIDTH   1
-`define UVMA_OBI_MEMORY_WUSER_DEFAULT_WIDTH   1
-`define UVMA_OBI_MEMORY_RUSER_DEFAULT_WIDTH   1
-`define UVMA_OBI_MEMORY_ID_DEFAULT_WIDTH      1
-`define UVMA_OBI_MEMORY_ACHK_DEFAULT_WIDTH    1
-`define UVMA_OBI_MEMORY_RCHK_DEFAULT_WIDTH    1
-interface uvma_obi_memory_if #(
-   parameter AUSER_WIDTH = `UVMA_OBI_MEMORY_AUSER_DEFAULT_WIDTH,
-   parameter WUSER_WIDTH = `UVMA_OBI_MEMORY_WUSER_DEFAULT_WIDTH,
-   parameter RUSER_WIDTH = `UVMA_OBI_MEMORY_RUSER_DEFAULT_WIDTH,
-   parameter ADDR_WIDTH  = `UVMA_OBI_MEMORY_ADDR_DEFAULT_WIDTH ,
-   parameter DATA_WIDTH  = `UVMA_OBI_MEMORY_DATA_DEFAULT_WIDTH ,
-   parameter ID_WIDTH    = `UVMA_OBI_MEMORY_ID_DEFAULT_WIDTH   ,
-   parameter ACHK_WIDTH  = `UVMA_OBI_MEMORY_ACHK_DEFAULT_WIDTH ,
-   parameter RCHK_WIDTH  = `UVMA_OBI_MEMORY_RCHK_DEFAULT_WIDTH
-  )(
-    input logic clk,
-    input logic reset_n
-  );
-   wire                         req;
-   wire                         gnt;
-   wire [(ADDR_WIDTH-1):0]      addr;
-   wire                         we;
-   wire [((DATA_WIDTH/8)-1):0]  be;
-   wire [(DATA_WIDTH-1):0]      wdata;
-   wire [(AUSER_WIDTH-1):0]     auser;
-   wire [(WUSER_WIDTH-1):0]     wuser;
-   wire [(ID_WIDTH-1):0]        aid;
-   wire [5:0]                   atop;
-   wire [1:0]                   memtype;
-   wire [2:0]                   prot;
-   wire                         reqpar;
-   wire                         gntpar;
-   wire [(ACHK_WIDTH-1):0]      achk;
-
-   wire                      rvalid;
-   wire                      rready;
-   wire [(DATA_WIDTH-1):0]   rdata;
-   wire                      err;
-   wire [(RUSER_WIDTH-1):0]  ruser;
-   wire [(ID_WIDTH-1):0]     rid;
-   wire                      exokay;
-   wire                      rvalidpar;
-   wire                      rreadypar;
-   wire [(RCHK_WIDTH-1):0]   rchk;
-endinterface
-
-
-module mm_ram
- #(
-     parameter RAM_ADDR_WIDTH    =  16,
-               INSTR_RDATA_WIDTH = 128, // width of read_data on instruction bus
-               DATA_RDATA_WIDTH  =  32, // width of read_data on data bus
-               DBG_ADDR_WIDTH    =  14, // POT ammount of memory allocated for debugger
-                                        // physically located at end of memory
-               IRQ_WIDTH         =  32  // IRQ vector width
-  )
-  (
-     input logic                          clk_i,
-     input logic                          rst_ni,
-     input logic [31:0]                   dm_halt_addr_i,
-
-     input logic                          instr_req_i,
-     input logic [31:0]                   instr_addr_i,
-     output logic [INSTR_RDATA_WIDTH-1:0] instr_rdata_o,
-     output logic                         instr_rvalid_o,
-     output logic                         instr_gnt_o,
-
-     input logic                          data_req_i,
-     input logic [31:0]                   data_addr_i,
-     input logic                          data_we_i,
-     input logic [3:0]                    data_be_i,
-     input logic [31:0]                   data_wdata_i,
-     output logic [31:0]                  data_rdata_o,
-     output logic                         data_rvalid_o,
-     output logic                         data_gnt_o,
-
-     input logic [4:0]                    irq_id_i,
-     input logic                          irq_ack_i,
-     output logic [IRQ_WIDTH-1:0]         irq_o,
-
-     input logic [31:0]                   pc_core_id_i,
-
-     output logic                         debug_req_o,
-
-     output logic                         tests_passed_o,
-     output logic                         tests_failed_o,
-     output logic                         exit_valid_o,
-     output logic [31:0]                  exit_value_o
-);
-endmodule
+`include "uvma_obi_memory_if.sv"
+`include "uvma_clic_if.sv"
 
 
 module uvmt_cv32e40s_iss_wrap
