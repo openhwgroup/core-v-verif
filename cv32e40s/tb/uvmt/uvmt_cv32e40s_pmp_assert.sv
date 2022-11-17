@@ -61,6 +61,8 @@ module uvmt_cv32e40s_pmp_assert
   generate
     if (IS_INSTR_SIDE === 1'b1 && PMP_NUM_REGIONS > 0) begin : gen_cp_instr_side
       covergroup cg_internals_instr_side @(posedge clk);
+        option.per_instance = 1;
+
         // Machine mode execute accesses
         cp_x_mmode_x                : coverpoint match_status.val_access_allowed_reason.x_mmode_x                { bins low  = {1'b0}; bins high = {1'b1}; }
         cp_x_mmode_lx               : coverpoint match_status.val_access_allowed_reason.x_mmode_lx               { bins low  = {1'b0}; bins high = {1'b1}; }
@@ -107,11 +109,14 @@ module uvmt_cv32e40s_pmp_assert
         cp_r_umode_mml_rw           : coverpoint match_status.val_access_allowed_reason.r_umode_mml_rw           { bins low  = {1'b0}; ignore_bins high = {1'b1}; }
         cp_r_umode_mml_rwx          : coverpoint match_status.val_access_allowed_reason.r_umode_mml_rwx          { bins low  = {1'b0}; ignore_bins high = {1'b1}; }
         cp_r_umode_mml_lrwx         : coverpoint match_status.val_access_allowed_reason.r_umode_mml_lrwx         { bins low  = {1'b0}; ignore_bins high = {1'b1}; }
+        // TODO:silabs-robin  Try swapping all "ignore_bins" with "illegal_bins" in fv
       endgroup : cg_internals_instr_side
       cg_internals_instr_side cg_instr = new();
     end
     else if (IS_INSTR_SIDE === 1'b0 && PMP_NUM_REGIONS > 0) begin : gen_cp_data_side
       covergroup cg_internals_data_side @(posedge clk);
+        option.per_instance = 1;
+
         // Ignore bins for unreachable execute accesses on lsu if
         // Machine mode execute accesses
         cp_x_mmode_x                : coverpoint match_status.val_access_allowed_reason.x_mmode_x                { bins low  = {1'b0}; ignore_bins high = {1'b1}; }
@@ -159,13 +164,15 @@ module uvmt_cv32e40s_pmp_assert
         cp_r_umode_mml_rwx          : coverpoint match_status.val_access_allowed_reason.r_umode_mml_rwx          { bins low  = {1'b0}; bins high = {1'b1}; }
         cp_r_umode_mml_lrwx         : coverpoint match_status.val_access_allowed_reason.r_umode_mml_lrwx         { bins low  = {1'b0}; bins high = {1'b1}; }
       endgroup : cg_internals_data_side
-      cg_internals_data_side cg_instr = new();
+      cg_internals_data_side cg_data = new();
     end
   endgenerate
 
   generate
     if (PMP_NUM_REGIONS > 0) begin : gen_cg_common
       covergroup cg_internals_common @(posedge clk);
+        option.per_instance = 1;
+
         cp_ismatch_tor:   coverpoint model_i.is_match_tor(match_status.val_index) iff (match_status.is_matched);
 
         cp_napot_min_8byte: coverpoint { pmp_req_addr_i[2], csr_pmp_i.addr[match_status.val_index][2] }

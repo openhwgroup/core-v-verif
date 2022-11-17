@@ -254,14 +254,14 @@ module uvmt_cv32e40s_pmprvfi_assert
   // PMP CSRs only accessible from M-mode  (vplan:Csrs:MmodeOnly)
 
   property p_csrs_mmode_only;
-    is_rvfi_csr_instr  &&
+    is_rvfi_csr_instr      &&
     (rvfi_mode == MODE_U)  &&
     (rvfi_insn[31:20] inside {['h3A0 : 'h3EF], 'h747, 'h757})
     |->
-    is_rvfi_exc_ill_instr  ^
-    is_rvfi_exc_instr_acc_fault  ^
-    is_rvfi_dbg_trigger ^
-    is_rvfi_exc_instr_bus_fault  ^
+    is_rvfi_exc_ill_instr           ^
+    is_rvfi_exc_instr_acc_fault     ^
+    is_rvfi_dbg_trigger             ^
+    is_rvfi_exc_instr_bus_fault     ^
     is_rvfi_exc_instr_chksum_fault;
   endproperty : p_csrs_mmode_only
 
@@ -269,7 +269,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     p_csrs_mmode_only
   );
 
-  cov_csrs_mmod_only: cover property (
+  cov_csrs_mmode_only: cover property (
     p_csrs_mmode_only  and  is_rvfi_exc_ill_instr
   );
 
@@ -419,6 +419,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     p_until_reset_notbefore
   );
 
+/* TODO:silabs-robin  Write so the intention becomes legal SV
   cov_until_reset_notbefore_on: cover property (
     p_until_reset_notbefore #-#  pmp_csr_rvfi_wmask.mseccfg.rlb
   );
@@ -426,6 +427,7 @@ module uvmt_cv32e40s_pmprvfi_assert
   cov_until_reset_notbefore_off: cover property (
     p_until_reset_notbefore #-# !pmp_csr_rvfi_wmask.mseccfg.rlb
   );
+*/
 
 
   // Locked entries  (vplan:IgnoreWrites, vplan:IgnoreTor)
@@ -462,15 +464,17 @@ module uvmt_cv32e40s_pmprvfi_assert
     // We can see change even if "above config" is locked TOR
     property p_not_ignore_writes_torcfg;
       logic [7:0] cfg;
+
       rvfi_valid  &&
       pmp_csr_rvfi_rdata.cfg[i+1].lock  &&
       (pmp_csr_rvfi_rdata.cfg[i+1].mode == PMP_MODE_TOR)  ##0
       (1, cfg = pmp_csr_rvfi_rdata.cfg[i])
+
       ##1
+
       (rvfi_valid [->1])  ##0
       (pmp_csr_rvfi_rdata.cfg[i] != cfg)
       ;
-      // TODO:ropeders  Is named wrong? "not"?
     endproperty : p_not_ignore_writes_torcfg
 
     cov_not_ignore_writes_torcfg: cover property (
