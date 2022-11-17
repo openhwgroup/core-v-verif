@@ -155,7 +155,6 @@ int main(void){// TODO: test will failed until issue #278 in core-v-verif/cv32e4
 
 
 
-
   // Test start:
   /*
   Have dcsr.ebreaku=0, be in U-mode, execute ebreak, ensure "normal" ebreak behavior and no debug entry.
@@ -168,22 +167,16 @@ int main(void){// TODO: test will failed until issue #278 in core-v-verif/cv32e4
 
 
 
-  // TEST WILL FAIL UNTIL ISSUE #277 (openHW/cv32e40s) IS RESOLVED
-  // TODO: comment the test back in when #277 has been resolved
   // Test start:
   /*
   Transition out of D-mode (dret) into U-mode, while mstatus.mprv=1, ensure that when execution continues outside D-mode that mstatus.mprv=0.
   */
-
-  /*
   glb_setmprv_test = 1; // flag the MRPRV-test for the debug module.
   run_debug_mode();
   asm volatile("ecall");
   int mprvfield = get_field(wmstatus, MPRV_BIT, MPRV_BIT);
   assert_or_die(mprvfield, 0x0, "Error: MPRV did not change to 0 after Debug --> User mode change! "); // check that MPRV = 0 after debug exit.
   glb_setmprv_test = 0;
- */
-
 
 
 

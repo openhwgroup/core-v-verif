@@ -205,12 +205,12 @@ module uvmt_cv32e40s_pmp_assert
       (PMP_GRANULARITY === 1'b 0)
     );
 
-    a_na4_not_when_g: assert property (
-      // "Redundant" assert for (antecedent) coverage
-      (PMP_GRANULARITY !== 1'b 0)
-      |->
-      (csr_pmp_i.cfg[region].mode !== PMP_MODE_NA4)
-    );
+    if (PMP_GRANULARITY !== 1'b 0) begin: gen_na4onlyg0_reverse
+      a_na4_not_when_g: assert property (
+        // "Redundant" assert for coverage
+        (csr_pmp_i.cfg[region].mode !== PMP_MODE_NA4)
+      );
+    end
   end endgenerate
 
   // NA4 has 4-byte granularity

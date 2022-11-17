@@ -25,6 +25,7 @@ module uvmt_cv32e40s_xsecure_assert
   //TODO: update hardened CSR documentation as these CSRs are no longer hardened mclicbase, mscratchcsw, mscratchcswl
   //TODO: change rvfi_trap from using bit position to struct fields when the rvfi interface is updated
 
+
   // Local parameters:
   localparam NO_LOCKUP_ERRORS = 3'b000;
   localparam LOCKUP_ERROR = 1'b1;
@@ -43,6 +44,9 @@ module uvmt_cv32e40s_xsecure_assert
 
   localparam FUNC3_BLTU_INSTRUCTION = 3'b110;
 
+  localparam FUNC7_MRET_INSTRUCTION = 7'b0011000;
+  localparam FUNC3_MRET_INSTRUCTION = 3'b000;
+
   localparam OPCODE_BIT_15_TO_13_COMPR_BRANCH = 3'b11x;
   localparam OPCODE_BIT_1_TO_0_COMPR_BRANCH = 2'b01;
 
@@ -56,6 +60,12 @@ module uvmt_cv32e40s_xsecure_assert
   localparam FREQ_SETTING_32 = 4'b01xx;
   localparam FREQ_SETTING_64 = 4'b1xxx;
 
+  localparam BRANCH_STATE = 4'b0101;
+  localparam JUMP_STATE = 4'b0100;
+  localparam MRET_STATE = 4'b0001;
+
+  localparam NON_CMPR_INSTRUCTION_INCREMENT = 4;
+  localparam CMPR_INSTRUCTION_INCREMENT = 2;
   localparam INSTRUCTIONS_RS1_MSB = 19;
   localparam INSTRUCTIONS_RS1_LSB = 15;
   localparam INSTRUCTIONS_RS2_MSB = 24;
@@ -1152,11 +1162,11 @@ module uvmt_cv32e40s_xsecure_assert
   end endgenerate
 
 
-  //////////////////////////////////////////////////////////////////////////
-  ///////////////////////// BUS PROTOCOL HARDENING /////////////////////////
-  //////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////
+  ///////////////////////// HARDENED PC /////////////////////////
+  ///////////////////////////////////////////////////////////////
 
-  //Signal determining if the core clock is active or not.
+  //Signal determing if the core clock is active or not.
   logic core_clock_cycles;
 
   always @(posedge clk_i) begin
@@ -1167,6 +1177,277 @@ module uvmt_cv32e40s_xsecure_assert
     end
   end
 
+
+  ////////// PC HARDENING SEQUENTIAL INSTRUCTION: NORMAL BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
+
+  sequence seq_dummy_if_id;
+
+    //Generate a dummy instruction
+    xsecure_if.core_if_stage_instr_meta_n_dummy
+
+    //Make sure the PC of ID and IF stage is equal when there is a dummy instruction in the ID stage
+    ##1 (xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc)[*1:$];
+  endsequence
+
+  sequence seq_pc_set_stable;
+
+    //Set the PC value to a given address
+    xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set
+
+    //Make sure the PC in if stage remains the same untill it is forwarded to the id stage (and then either incremented or set of a new valid PC jump)
+    //(Uses ##2 because: On the first ##1 the FSM signal has "reached" IF, and on the next one its stability can be checked)
+    ##2 $stable(xsecure_if.core_i_if_stage_i_pc_if_o)[*1:$];
+  endsequence
+
+
+  property p_xsecure_pc_hardening_sequential_no_glitch_behaviour(cmpr_instruction_in_id_stage, increment);
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure we look at valid cycles
+    core_clock_cycles
+
+    //Make sure the PC hardening setting is on
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+
+    //Check if it is a compressed instructions
+    && cmpr_instruction_in_id_stage
+
+    |->
+    //Correct behaviour requires that one of the following behaviours are true:
+
+    //Icremental behaviour
+    xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + increment
+
+    //Initalization after reset
+    or xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0
+
+    //Insertion of dummy instruction
+    or seq_dummy_if_id.triggered
+
+    //PC jumping
+    or seq_pc_set_stable.triggered
+
+    //PC jumping
+    or $past(xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set);
+
+  endproperty
+
+
+  a_xsecure_pc_hardening_sequential_no_glitch_behaviour_non_cmpr_instruction: assert property (
+    p_xsecure_pc_hardening_sequential_no_glitch_behaviour(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, NON_CMPR_INSTRUCTION_INCREMENT)
+  ) else `uvm_error(info_tag, "There is a PC fault in IF stage for a non-compressed instruction.\n");
+
+  a_xsecure_pc_hardening_sequential_no_glitch_behaviour_cmpr_instruction: assert property (
+    p_xsecure_pc_hardening_sequential_no_glitch_behaviour(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, CMPR_INSTRUCTION_INCREMENT)
+  ) else `uvm_error(info_tag, "There is a PC fault in IF stage for a compressed instruction.\n");
+
+
+  ////////// PC HARDENING ON SEQUENTIAL INSTRUCTION: SET MAJOR ALERT //////////
+
+  sequence seq_xsecure_pc_hardening_sequential_instructions_with_glitch(cmpr_instruction_in_id_stage, increment);
+
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure we look at valid cycles
+    core_clock_cycles
+
+    //Make sure the PC hardening setting is on
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+
+    //Check if it is a compressed instructions
+    && cmpr_instruction_in_id_stage
+
+    //Checkout the non-incremental
+    && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + increment
+
+    //Make sure we look at a valid instruction
+    && $past(xsecure_if.core_if_stage_if_valid_o)
+    && $past(xsecure_if.core_if_stage_id_ready_i)
+
+    //Make sure the non-incremental is not caused by any of the following reasons:
+
+    //Initalization after reset
+    and !(xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0)
+
+    //Insertion of dummy instruction
+    and !(seq_dummy_if_id.triggered)
+
+    //PC jumping
+    and !(seq_pc_set_stable.triggered)
+
+    //PC jumping
+    and !($past(xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set));
+
+  endsequence
+
+
+  a_xsecure_pc_hardening_sequential_non_compressed_instruction_sets_alert_major: assert property (
+
+    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, NON_CMPR_INSTRUCTION_INCREMENT)
+
+    |=>
+    //Make sure the alert major is set
+    xsecure_if.core_alert_major_o
+
+  ) else `uvm_error(info_tag, "A PC fault in IF stage, for a non-compressed instruction, does not set major alert when PC hardening is on.\n");
+
+
+  a_xsecure_pc_hardening_sequential_compressed_instruction_sets_alert_major: assert property (
+
+    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, CMPR_INSTRUCTION_INCREMENT)
+
+    |=>
+    //Make sure the alert major is set
+    xsecure_if.core_alert_major_o
+
+  ) else `uvm_error(info_tag, "A PC fault in IF stage, for a compressed instruction, does not set major alert when PC hardening is on.\n");
+
+
+  ////////// PC HARDENING OFF SEQUENTIAL INSTRUCTION: DONT SET MAJOR ALERT //////////
+
+  //TODO: recheck this assertion when the rtl code related to pc_hadening=0 is implemented
+
+  a_xsecure_pc_hardening_off_non_compressed_sequential_instruction_alert_major: assert property (
+
+    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, NON_CMPR_INSTRUCTION_INCREMENT)
+
+    |=>
+    //Make sure the alert major is not set
+    !xsecure_if.core_alert_major_o
+
+  ) else `uvm_error(info_tag, "A PC fault in IF stage, for a non-compressed instruction, set major alert when PC hardening is off.\n");
+
+
+  a_xsecure_pc_hardening_off_compressed_sequential_instruction_alert_major: assert property (
+
+    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, CMPR_INSTRUCTION_INCREMENT)
+
+    |=>
+    //Make sure the alert major is not set
+    !xsecure_if.core_alert_major_o
+
+  ) else `uvm_error(info_tag, "A PC fault in IF stage, for a compressed instruction, set major alert when PC hardening is off.\n");
+
+
+  ////////// PC HARDENING ON NON-SEQUENTIAL INSTRUCTION: SET MAJOR ALERT IF GLITCH IN PC TARGET //////////
+
+  sequence seq_pc_hardening_non_sequential_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal);
+
+    //Make sure pc hardening setting is set
+    pc_hardening
+
+    //Make sure the fsm is in a given state
+    && xsecure_if.core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux == fsm_state
+
+    //Make sure PC is set
+    ##1 xsecure_if.core_i_if_stage_i_pc_check_i_pc_set_q
+
+    //Make sure the calculated signal differs in the hardened cycles
+    && calculated_signal != $past(calculated_signal);
+
+  endsequence
+
+  property p_xsecure_hardened_pc_non_sequential_set_major_alert(pc_hardening, fsm_state, calculated_signal);
+
+    seq_pc_hardening_non_sequential_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal)
+
+    |=>
+    //Make sure alert major is set
+    xsecure_if.core_alert_major_o;
+
+  endproperty
+
+  a_xsecure_pc_hardening_branch_set_alert_major: assert property(
+    p_xsecure_hardened_pc_non_sequential_set_major_alert(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, BRANCH_STATE, xsecure_if.core_i_ex_stage_i_branch_target_o)
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch instruction does not set alert major.\n");
+
+  a_xsecure_pc_hardening_jump_set_alert_major: assert property(
+    p_xsecure_hardened_pc_non_sequential_set_major_alert(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, JUMP_STATE, xsecure_if.core_i_jump_target_id)
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed jump instruction does not set alert major.\n");
+
+  a_xsecure_pc_hardening_mret_set_alert_major: assert property(
+    p_xsecure_hardened_pc_non_sequential_set_major_alert(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, MRET_STATE, xsecure_if.core_i_cs_registers_i_mepc_o)
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction does not set alert major.\n");
+
+
+  ////////// PC HARDENING ON NON-SEQUENTIAL INSTRUCTION: SET MAJOR ALERT IF GLITCH IN BRANCH DECISION //////////
+
+  sequence seq_pc_hardening_branch_decision_glitch(pc_hardening);
+
+    //Make sure pc hardening setting is set
+    xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+
+    //Make sure the fsm is in branching state
+    && xsecure_if.core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux == BRANCH_STATE
+
+    //Make sure the branch decision differs in the hardened cycles
+    ##1 xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o != $past(xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o)
+
+    //Make sure the branch decision is not automatically set to taken
+    && !xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming;
+
+  endsequence
+
+
+  a_xsecure_pc_hardening_branch_decision_set_alert_major: assert property(
+
+    seq_pc_hardening_branch_decision_glitch(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening)
+
+    |=>
+
+    //Make sure alert major was/is set
+    xsecure_if.core_alert_major_o
+    || $past(xsecure_if.core_alert_major_o)
+
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch decision does not set alert major.\n");
+
+
+  ////////// PC HARDENING OFF NON-SEQUENTIAL INSTRUCTION: DONT SET MAJOR ALERT IF GLITCH IN PC TARGET //////////
+
+  //TODO: recheck property when rtl for PC_hardnine == 0 is imoplemented
+
+  property p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(pc_hardening, fsm_state, calculated_signal);
+
+    seq_pc_hardening_non_sequential_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal)
+
+    |=>
+    //Make sure alert major is not set
+    !xsecure_if.core_alert_major_o;
+
+  endproperty
+
+  a_xsecure_pc_hardening_off_branch_set_alert_major: assert property(
+    p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, BRANCH_STATE, xsecure_if.core_i_ex_stage_i_branch_target_o)
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction set alert major even though PC hardening is off.\n");
+
+  a_xsecure_pc_hardening_off_jump_set_alert_major: assert property(
+    p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, JUMP_STATE, xsecure_if.core_i_jump_target_id)
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction set alert major even though PC hardening is off.\n");
+
+  a_xsecure_pc_hardening_off_mret_set_alert_major: assert property(
+    p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, MRET_STATE, xsecure_if.core_i_cs_registers_i_mepc_o)
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction set alert major even though PC hardening is off.\n");
+
+
+  ////////// PC HARDENING OFF NON-SEQUENTIAL INSTRUCTION: DONT SET MAJOR ALERT IF GLITCH IN BRANCH DECISION //////////
+
+  a_xsecure_pc_hardening_off_branch_decision_set_alert_major: assert property(
+
+    seq_pc_hardening_branch_decision_glitch(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening)
+
+    |=>
+    //Make sure alert major was/is not set
+    !xsecure_if.core_alert_major_o
+    && !$past(xsecure_if.core_alert_major_o)
+
+  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch decision set alert major even though PC hardening is off.\n");
+
+
+  //////////////////////////////////////////////////////////////////////////
+  ///////////////////////// BUS PROTOCOL HARDENING /////////////////////////
+  //////////////////////////////////////////////////////////////////////////
+
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCH //////////
 
   property p_resp_after_addr_no_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
     @(posedge xsecure_if.core_clk)
@@ -1206,6 +1487,8 @@ module uvmt_cv32e40s_xsecure_assert
     p_resp_after_addr_no_glitch(lrfodi_bus_support_if.lrfodi_bus_rvalid_i, lrfodi_bus_support_if.lrfodi_bus_resp_ph_cont, lrfodi_bus_support_if.lrfodi_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handsake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i).\n");
 
+
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE GLITCHES //////////
 
   property p_resp_after_addr_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
     @(posedge xsecure_if.core_clk)
