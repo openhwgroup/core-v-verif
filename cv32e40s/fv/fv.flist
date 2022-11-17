@@ -28,6 +28,7 @@
 +incdir+${CV_UVME_PATH}
 +incdir+${CV_UVMA_PATH}/uvma_rvfi
 +incdir+${CV_UVMA_PATH}/uvma_fencei
++incdir+${CV_UVMA_PATH}/uvma_obi_memory/src
 
 ./dummy_pkg.sv
 

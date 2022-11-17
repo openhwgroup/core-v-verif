@@ -28,8 +28,10 @@ package cvverif_pkg;
 endpackage
 
 
+`include "uvma_obi_memory_macros.sv"
+
+
 package uvmt_cv32e40s_pkg;
-  `include "uvme_cv32e40s_constants.sv"
   `include "uvmt_cv32e40s_constants.sv"
   `include "uvmt_cv32e40s_tdefs.sv"
 
@@ -38,8 +40,7 @@ endpackage
 
 
 package uvme_cv32e40s_pkg;
-  parameter ILEN = 32;
-  parameter XLEN = 32;
+  `include "uvme_cv32e40s_constants.sv"
 endpackage
 
 
