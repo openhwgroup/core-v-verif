@@ -48,6 +48,14 @@
          parameter logic SMCLIC = 1'b0;
    `endif
 
+   `ifdef RV32E
+     parameter cv32e40s_pkg::rv32_e RV32 = cv32e40s_pkg::RV32E;
+     parameter CORE_PARAM_REGFILE_NUM_WORDS = 16;
+   `else
+     parameter cv32e40s_pkg::rv32_e RV32 = cv32e40s_pkg::RV32I;
+     parameter CORE_PARAM_REGFILE_NUM_WORDS = 32;
+   `endif
+
    `ifdef PMP_ENABLE_2
      parameter int CORE_PARAM_PMP_GRANULARITY = 0;
      parameter int CORE_PARAM_PMP_NUM_REGIONS = 2;

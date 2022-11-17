@@ -953,7 +953,7 @@ module uvmt_cv32e40s_xsecure_assert
   a_xsecure_register_file_ecc_gprecc_never_all_ones: assert property (
 
     //Verify that register and ecc score never is all ones
-    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] != 38'hFF_FFFF_FFFF
+    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] != 38'h3F_FFFF_FFFF
 
   ) else `uvm_error(info_tag, $sformatf("General purpose register %0d with attached ecc score is all ones.\n", gpr_addr));
 
@@ -975,7 +975,7 @@ module uvmt_cv32e40s_xsecure_assert
 
     //Make sure the source registers data and ecc score are all ones or zeros
     ##0 (xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'h00_0000_0000
-    || xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'hFF_FFFF_FFFF)
+    || xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'h3F_FFFF_FFFF)
 
     |=>
     //Verify that major alert is set
