@@ -110,9 +110,11 @@ endinterface : uvmt_cv32e40s_core_status_if
 interface uvmt_cv32e40s_xsecure_if
     import cv32e40s_pkg::*;
     import cv32e40s_rvfi_pkg::*;
-    #(parameter int     MTVT_ADDR_WIDTH = 5,
-    parameter int       PMP_NUM_REGIONS = 2,
-    parameter int       PMP_ADDR_WIDTH =6
+    import uvmt_cv32e40s_pkg::*;
+    #(
+      parameter int     MTVT_ADDR_WIDTH = 5,
+      parameter int     PMP_NUM_REGIONS = 2,
+      parameter int     PMP_ADDR_WIDTH  = 6
     )
 
     (
@@ -124,7 +126,7 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_rf_we_wb,
     input logic [4:0] core_rf_waddr_wb,
     input logic [31:0] core_rf_wdata_wb,
-    input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [REGFILE_NUM_WORDS],
+    input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [CORE_PARAM_REGFILE_NUM_WORDS],
     input logic [31:0] core_i_jump_target_id,
 
     // CSR
