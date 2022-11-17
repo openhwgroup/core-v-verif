@@ -57,6 +57,7 @@ class uvma_obi_memory_cfg_c extends uvm_object;
 
    rand uvma_obi_memory_mode_enum       drv_mode   ;
    rand uvma_obi_memory_drv_idle_enum   drv_idle   ;
+   rand uvma_obi_memory_checksum_scheme chk_scheme ;
 
    rand bit                                       drv_slv_gnt;
    rand uvma_obi_memory_drv_slv_gnt_mode_enum     drv_slv_gnt_mode;
@@ -119,6 +120,7 @@ class uvma_obi_memory_cfg_c extends uvm_object;
       `uvm_field_int (                        write_enabled, UVM_DEFAULT | UVM_DEC)
       `uvm_field_enum(uvma_obi_memory_mode_enum               , drv_mode                      , UVM_DEFAULT)
       `uvm_field_enum(uvma_obi_memory_drv_idle_enum           , drv_idle                      , UVM_DEFAULT)
+      `uvm_field_enum(uvma_obi_memory_checksum_scheme         , chk_scheme                    , UVM_DEFAULT)
       `uvm_field_int (                                          drv_slv_gnt                   , UVM_DEFAULT)
       `uvm_field_enum(uvma_obi_memory_drv_slv_gnt_mode_enum   , drv_slv_gnt_mode              , UVM_DEFAULT)
       `uvm_field_int (                                          drv_slv_gnt_fixed_latency     , UVM_DEFAULT)
@@ -168,6 +170,7 @@ class uvma_obi_memory_cfg_c extends uvm_object;
       soft read_enabled                   == 1;
       soft drv_mode                       == UVMA_OBI_MEMORY_MODE_MSTR;
       soft drv_idle                       == UVMA_OBI_MEMORY_DRV_IDLE_ZEROS;
+      soft chk_scheme                     == UVMA_OBI_MEMORY_CHK_TIED;
       soft drv_slv_gnt                    == 1;
       soft drv_slv_gnt_fixed_latency      == uvma_obi_memory_default_drv_slv_gnt_fixed_latency;
       soft drv_slv_gnt_random_latency_min == uvma_obi_memory_default_drv_slv_gnt_random_latency_min;
@@ -248,6 +251,11 @@ class uvma_obi_memory_cfg_c extends uvm_object;
     * Returns 1 if this OBI agent supports version 1.2 or higher
     */
    extern function bit is_1p2_or_higher();
+
+   /**
+    * Returns 1 if this OBI agent supports version 1.3 or higher
+    */
+   extern function bit is_1p3_or_higher();
 
 endclass : uvma_obi_memory_cfg_c
 
@@ -375,6 +383,12 @@ function bit uvma_obi_memory_cfg_c::is_1p2_or_higher();
    return (version >= UVMA_OBI_MEMORY_VERSION_1P2) ? 1 : 0;
 
 endfunction : is_1p2_or_higher
+
+function bit uvma_obi_memory_cfg_c::is_1p3_or_higher();
+
+   return (version >= UVMA_OBI_MEMORY_VERSION_1P3) ? 1 : 0;
+
+endfunction : is_1p3_or_higher
 
 `endif // __UVMA_OBI_MEMORY_CFG_SV__
 

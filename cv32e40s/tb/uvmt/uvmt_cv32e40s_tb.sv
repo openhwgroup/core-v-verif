@@ -22,11 +22,6 @@
 `ifndef __UVMT_CV32E40S_TB_SV__
 `define __UVMT_CV32E40S_TB_SV__
 
-// Import the Imperas-DV RVVI API
-`ifndef FORMAL
-  `include "rvvi/rvvi-api.svh"
-`endif
-
 /**
  * Module encapsulating the CV32E40S DUT wrapper, and associated SV interfaces.
  * Also provide UVM environment entry and exit points.
@@ -42,11 +37,6 @@ module uvmt_cv32e40s_tb;
    import rvviApiPkg::*;
    `endif
 
-   // ENV (testbench) parameters
-   parameter int ENV_PARAM_INSTR_ADDR_WIDTH  = 32;
-   parameter int ENV_PARAM_INSTR_DATA_WIDTH  = 32;
-   parameter int ENV_PARAM_RAM_ADDR_WIDTH    = 22;
-
    // Capture regs for test status from Virtual Peripheral in dut_wrap.mem_i
    bit        tp;
    bit        tf;
@@ -61,21 +51,21 @@ module uvmt_cv32e40s_tb;
    uvma_interrupt_if            interrupt_if();
    uvma_clic_if                 clic_if();
    uvma_obi_memory_if #(
-    /* TODO:silabs-robin  Correct widths sat via named definitions, everywhere!!! Important!
-     .AUSER_WIDTH (32),
-     .WUSER_WIDTH (32),
-     .RUSER_WIDTH (32),
      .ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
-     .DATA_WIDTH  (32),
-     .ID_WIDTH    (32),
-     .ACHK_WIDTH  (ENV_PARAM_ACHK_WIDTH),
-     .RCHK_WIDTH  (ENV_PARAM_RCHK_WIDTH)
-    */
+     .DATA_WIDTH  (ENV_PARAM_INSTR_DATA_WIDTH),
+     .ACHK_WIDTH  (ENV_PARAM_INSTR_ACHK_WIDTH),
+     .RCHK_WIDTH  (ENV_PARAM_INSTR_RCHK_WIDTH)
    ) obi_instr_if_i (
      .clk     (clknrst_if.clk),
      .reset_n (clknrst_if.reset_n)
    );
-   uvma_obi_memory_if           obi_data_if_i(
+
+   uvma_obi_memory_if #(
+     .ADDR_WIDTH  (ENV_PARAM_DATA_ADDR_WIDTH),
+     .DATA_WIDTH  (ENV_PARAM_DATA_DATA_WIDTH),
+     .ACHK_WIDTH  (ENV_PARAM_DATA_ACHK_WIDTH),
+     .RCHK_WIDTH  (ENV_PARAM_DATA_RCHK_WIDTH)
+   ) obi_data_if_i(
      .clk(clknrst_if.clk),
      .reset_n(clknrst_if.reset_n)
    );
@@ -422,27 +412,27 @@ module uvmt_cv32e40s_tb;
 
   bind uvmt_cv32e40s_dut_wrap
     uvma_obi_memory_assert_if_wrp#(
-      .ADDR_WIDTH(32),
-      .DATA_WIDTH(32),
-      .AUSER_WIDTH(0),
-      .WUSER_WIDTH(0),
-      .RUSER_WIDTH(0),
-      .ID_WIDTH(0),
-      .ACHK_WIDTH(0),
-      .RCHK_WIDTH(0),  // TODO:silabs-robin  These (and similars) must be specified
+      .ADDR_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_ADDR_WIDTH),
+      .DATA_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_DATA_WIDTH),
+      .AUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_AUSER_WIDTH),
+      .WUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_WUSER_WIDTH),
+      .RUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_RUSER_WIDTH),
+      .ID_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_ID_WIDTH),
+      .ACHK_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_ACHK_WIDTH),
+      .RCHK_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_RCHK_WIDTH),
       .IS_1P2(1)
     ) obi_instr_memory_assert_i(.obi(obi_instr_if_i));
 
   bind uvmt_cv32e40s_dut_wrap
     uvma_obi_memory_assert_if_wrp#(
-      .ADDR_WIDTH(32),
-      .DATA_WIDTH(32),
-      .AUSER_WIDTH(0),
-      .WUSER_WIDTH(0),
-      .RUSER_WIDTH(0),
-      .ID_WIDTH(0),
-      .ACHK_WIDTH(0),
-      .RCHK_WIDTH(0),
+      .ADDR_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_ADDR_WIDTH),
+      .DATA_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_DATA_WIDTH),
+      .AUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_AUSER_WIDTH),
+      .WUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_WUSER_WIDTH),
+      .RUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_RUSER_WIDTH),
+      .ID_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_ID_WIDTH),
+      .ACHK_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_ACHK_WIDTH),
+      .RCHK_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_RCHK_WIDTH),
       .IS_1P2(1)
     ) obi_data_memory_assert_i(.obi(obi_data_if_i));
 
@@ -795,6 +785,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_rf_waddr_wb                                                                                                 (core_i.rf_waddr_wb),
       .core_rf_wdata_wb                                                                                                 (core_i.rf_wdata_wb),
       .core_register_file_wrapper_register_file_mem                                                                     (core_i.register_file_wrapper_i.register_file_i.mem),
+      .core_i_jump_target_id                                                                                            (core_i.jump_target_id),
 
       // CSR
       .core_alert_minor_o                                                                                               (core_i.alert_minor_o),
@@ -802,6 +793,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       .core_xsecure_ctrl_cpuctrl_dataindtiming	                                                                        (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
       .core_xsecure_ctrl_cpuctrl_rnddummy		                                                                            (core_i.xsecure_ctrl.cpuctrl.rnddummy),
+      .core_xsecure_ctrl_cpuctrl_pc_hardening                                                                           (core_i.xsecure_ctrl.cpuctrl.pc_hardening),
 
       .core_xsecure_ctrl_cpuctrl_rnddummyfreq                                                                           (core_i.xsecure_ctrl.cpuctrl[19:16]),
       .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
@@ -831,6 +823,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_cs_registers_xsecure_lfsr1_seed_we                                                                          (core_i.cs_registers_i.xsecure.lfsr1_i.seed_we_i),
       .core_cs_registers_xsecure_lfsr2_seed_we                                                                          (core_i.cs_registers_i.xsecure.lfsr2_i.seed_we_i),
 
+      .core_i_cs_registers_i_mepc_o                                                                                     (core_i.cs_registers_i.mepc_o),
+
       // Hardend CSR registers
       .core_i_cs_registers_i_jvt_csr_i_rdata_q                                                                          (core_i.cs_registers_i.jvt_csr_i.rdata_q),
       .core_i_cs_registers_i_mstatus_csr_i_rdata_q                                                                      (core_i.cs_registers_i.mstatus_csr_i.rdata_q),
@@ -848,7 +842,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q                                (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q),
       .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q                           (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q),
       .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q                           (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q),
-
 
       // BASE
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q                                    (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q),
@@ -872,11 +865,9 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q                     (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q),
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q                     (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q),
 
-
       // BASIC
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q                      (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q),
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q                        (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q),
-
 
       // IF stage
       .core_if_stage_if_valid_o                                                                                         (core_i.if_stage_i.if_valid_o),
@@ -888,9 +879,14 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_if_stage_instr_meta_n_dummy                                                                                 (core_i.if_stage_i.instr_meta_n.dummy),
       .core_i_if_stage_i_instr_hint                                                                                     (core_i.if_stage_i.instr_hint),
 
+      .core_i_if_stage_i_pc_if_o                                                                                        (core_i.if_stage_i.pc_if_o),
+      .core_i_if_stage_i_pc_check_i_pc_set_q                                                                            (core_i.if_stage_i.pc_check_i.pc_set_q),
+
+
       // IF ID pipe
       .core_if_id_pipe_instr_meta_dummy                                                                                 (core_i.if_id_pipe.instr_meta.dummy),
       .core_if_id_pipe_instr_bus_resp_rdata                                                                             (core_i.if_id_pipe.instr.bus_resp.rdata),
+      .core_i_id_stage_i_if_id_pipe_i_pc                                                                                (core_i.id_stage_i.if_id_pipe_i.pc),
 
       // ID stage
       .core_id_stage_id_valid_o                                                                                         (core_i.id_stage_i.id_valid_o),
@@ -902,14 +898,22 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_id_ex_pipe_instr_meta_dummy                                                                                 (core_i.id_ex_pipe.instr_meta.dummy),
       .core_id_ex_pipe_instr_bus_resp_rdata                                                                             (core_i.id_ex_pipe.instr.bus_resp.rdata),
 
+      // EX stage
+      .core_i_ex_stage_i_branch_target_o                                                                                (core_i.ex_stage_i.branch_target_o),
+      .core_i_ex_stage_i_alu_i_cmp_result_o                                                                             (core_i.ex_stage_i.alu_i.cmp_result_o),
+
       // EX WB pipe
       .core_wb_stage_ex_wb_pipe_instr_meta_dummy                                                                        (core_i.wb_stage_i.ex_wb_pipe_i.instr_meta.dummy),
 
       // WB stage
-      .core_wb_stage_wb_valid_o                                                                                         (core_i.wb_stage_i.wb_valid_o)
+      .core_wb_stage_wb_valid_o                                                                                         (core_i.wb_stage_i.wb_valid_o),
+
+      // CTRL
+
+      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set                                           (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.ctrl_fsm_i.pc_set),
+      .core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux                                                                   (core_i.if_stage_i.pc_check_i.ctrl_fsm_i.pc_mux)
 
     );
-
   // Xsecure assertions
 
 
@@ -1118,8 +1122,27 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
      uvm_config_db#(virtual uvma_clknrst_if             )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"),          .field_name("vif"),           .value(clknrst_if));
      uvm_config_db#(virtual uvma_interrupt_if           )::set(.cntxt(null), .inst_name("*.env.interrupt_agent"),        .field_name("vif"),           .value(interrupt_if));
      uvm_config_db#(virtual uvma_clic_if                )::set(.cntxt(null), .inst_name("*.env.clic_agent"),             .field_name("vif"),           .value(clic_if));
-     uvm_config_db#(virtual uvma_obi_memory_if          )::set(.cntxt(null), .inst_name("*.env.obi_memory_instr_agent"), .field_name("vif"),           .value(obi_instr_if_i) );
-     uvm_config_db#(virtual uvma_obi_memory_if          )::set(.cntxt(null), .inst_name("*.env.obi_memory_data_agent"),  .field_name("vif"),           .value(obi_data_if_i) );
+
+     uvm_config_db#(virtual uvma_obi_memory_if#(
+       .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
+       .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
+       .RUSER_WIDTH(ENV_PARAM_INSTR_RUSER_WIDTH),
+       .ADDR_WIDTH(ENV_PARAM_INSTR_ADDR_WIDTH),
+       .DATA_WIDTH(ENV_PARAM_INSTR_DATA_WIDTH),
+       .ID_WIDTH(ENV_PARAM_INSTR_ID_WIDTH),
+       .ACHK_WIDTH(ENV_PARAM_INSTR_ACHK_WIDTH),
+       .RCHK_WIDTH(ENV_PARAM_INSTR_RCHK_WIDTH)
+     ))::set(.cntxt(null), .inst_name("*.env.obi_memory_instr_agent"), .field_name("vif"), .value(obi_instr_if_i) );
+     uvm_config_db#(virtual uvma_obi_memory_if#(
+       .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+       .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+       .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+       .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+       .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+       .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+       .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+       .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+     ))::set(.cntxt(null), .inst_name("*.env.obi_memory_data_agent"),  .field_name("vif"), .value(obi_data_if_i) );
      uvm_config_db#(virtual uvma_fencei_if              )::set(.cntxt(null), .inst_name("*.env.fencei"),                 .field_name("vif"),           .value(fencei_if_i));
      uvm_config_db#(virtual uvma_rvfi_instr_if          )::set(.cntxt(null), .inst_name("*.env.rvfi_agent"),             .field_name("instr_vif0"),    .value(dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i));
      uvm_config_db#(virtual uvma_fencei_if              )::set(.cntxt(null), .inst_name("*.env.fencei_agent"),           .field_name("fencei_vif"),    .value(fencei_if_i)  );
