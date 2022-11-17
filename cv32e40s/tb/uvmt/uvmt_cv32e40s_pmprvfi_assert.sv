@@ -1,5 +1,6 @@
 `default_nettype none
 
+
 module uvmt_cv32e40s_pmprvfi_assert
   import cv32e40s_pkg::*;
   import cv32e40s_rvfi_pkg::*;
@@ -84,38 +85,48 @@ module uvmt_cv32e40s_pmprvfi_assert
     rvfi_valid  &&
     (rvfi_insn[6:0] == 7'b 1110011)  &&
     (rvfi_insn[14:12] inside {1, 2, 3, 5, 6, 7});
+
   wire  is_rvfi_exception =
     rvfi_valid  &&
     rvfi_trap.trap  &&
     rvfi_trap.exception;
+
   wire  is_rvfi_exc_ill_instr =
     is_rvfi_exception  &&
     (rvfi_trap.exception_cause == EXC_ILL_INSTR);
+
   wire  is_rvfi_exc_instr_acc_fault =
     is_rvfi_exception  &&
     (rvfi_trap.exception_cause == EXC_INSTR_ACC_FAULT);
+
   wire  is_rvfi_exc_instr_bus_fault=
     is_rvfi_exception  &&
     (rvfi_trap.exception_cause == EXC_INSTR_BUS_FAULT);
+
   wire  is_rvfi_exc_instr_chksum_fault=
     is_rvfi_exception  &&
     (rvfi_trap.exception_cause == EXC_INSTR_CHKSUM_FAULT);
+
   wire  is_rvfi_dbg_trigger =
     rvfi_valid  &&
     rvfi_trap.debug  &&
     (rvfi_trap.debug_cause == DBG_TRIGGER);
+
   wire  is_rvfi_csr_read_instr =
     is_rvfi_csr_instr  &&
     rvfi_rd_addr;
     // TODO:silabs-robin double check correctness
+
   wire  is_rvfi_csr_write_instr =
     is_rvfi_csr_instr  &&
     !((rvfi_insn[13:12] inside {2'b 10, 2'b 11}) && !rvfi_rs1_addr);  // CSRRS/C[I] w/ rs1=x0/0
     // TODO:silabs-robin double check correctness
+
   wire [1:0]  rvfi_effective_mode =
     rvfi_csr_mstatus_rdata[17]      ?  // "mstatus.MPRV", modify privilege?
       rvfi_csr_mstatus_rdata[12:11] :  // "mstatus.MPP", loadstores act as if "mode==MPP"
       rvfi_mode;                       // Else, act as actual mode
+
   wire [31:0]  rvfi_mem_upperaddr =
     (rvfi_mem_rmask[3] || rvfi_mem_wmask[3]) ? (
       rvfi_mem_addr + 3
@@ -130,14 +141,17 @@ module uvmt_cv32e40s_pmprvfi_assert
         )
       )
     );
+
   wire [31:0]  rvfi_pc_upperrdata =
     (rvfi_insn[1:0] == 2'b 11) ? (
       rvfi_pc_rdata + 3
     ) : (
       rvfi_pc_rdata + 1
     );
+
   wire  is_split_datatrans =
     (rvfi_mem_upperaddr[31:2] != rvfi_mem_addr[31:2]);
+
   wire  is_split_instrtrans =
     (rvfi_pc_upperrdata[31:2] != rvfi_pc_rdata[31:2]);
 
@@ -161,10 +175,14 @@ module uvmt_cv32e40s_pmprvfi_assert
   assign  pmp_csr_rvfi_wdata.mseccfg = rvfi_csr_mseccfg_wdata;
   assign  pmp_csr_rvfi_wmask.mseccfg = rvfi_csr_mseccfg_wmask;
 
+
+  // Helper models
+
   match_status_t  match_status_instr;
   match_status_t  match_status_data;
   match_status_t  match_status_upperinstr;
   match_status_t  match_status_upperdata;
+
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
     .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
@@ -180,6 +198,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
     .match_status_o (match_status_instr)
   );
+
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
     .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
@@ -195,6 +214,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
     .match_status_o (match_status_data)
   );
+
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
     .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
@@ -210,6 +230,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
     .match_status_o (match_status_upperinstr)
   );
+
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
     .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
@@ -236,28 +257,34 @@ module uvmt_cv32e40s_pmprvfi_assert
   end
 
 
-  // Assertions
+  // Assertions:
 
-  // PMP CSRs only accessible from M-mode
+
+  // PMP CSRs only accessible from M-mode  (vplan:Csrs:MmodeOnly)
+
   property p_csrs_mmode_only;
-    is_rvfi_csr_instr  &&
+    is_rvfi_csr_instr      &&
     (rvfi_mode == MODE_U)  &&
     (rvfi_insn[31:20] inside {['h3A0 : 'h3EF], 'h747, 'h757})
     |->
-    is_rvfi_exc_ill_instr  ^
-    is_rvfi_exc_instr_acc_fault  ^
-    is_rvfi_dbg_trigger ^
-    is_rvfi_exc_instr_bus_fault  ^
+    is_rvfi_exc_ill_instr           ^
+    is_rvfi_exc_instr_acc_fault     ^
+    is_rvfi_dbg_trigger             ^
+    is_rvfi_exc_instr_bus_fault     ^
     is_rvfi_exc_instr_chksum_fault;
   endproperty : p_csrs_mmode_only
+
   a_csrs_mmode_only: assert property (
     p_csrs_mmode_only
   );
-  cov_csrs_mmod_only: cover property (
+
+  cov_csrs_mmode_only: cover property (
     p_csrs_mmode_only  and  is_rvfi_exc_ill_instr
   );
 
-  // NAPOT, some bits read as ones, depending on G
+
+  // NAPOT, some bits read as ones, depending on G  (vplan:NapotOnes)
+
   if (PMP_GRANULARITY >= 2) begin: gen_napot_ones_g2
     //TODO:silabs-robin no magic numbers
     for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_napot_ones_i
@@ -267,6 +294,7 @@ module uvmt_cv32e40s_pmprvfi_assert
         |->
         (pmp_csr_rvfi_rdata.addr[i][PMP_GRANULARITY:2] == '1)
       );
+
       cov_napot_ones: cover property (
         // The ones doesn't have to extend past the required part
         rvfi_valid  &&
@@ -277,7 +305,9 @@ module uvmt_cv32e40s_pmprvfi_assert
     end
   end
 
-  // OFF/TOR, some bits read as zeros, depending on G
+
+  // OFF/TOR, some bits read as zeros, depending on G  (vplan:AllZeros)
+
   if (PMP_GRANULARITY >= 1) begin: gen_all_zeros_g1
     for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_all_zeros_i
       a_all_zeros: assert property (
@@ -289,7 +319,9 @@ module uvmt_cv32e40s_pmprvfi_assert
     end
   end
 
-  // Software-view on PMP CSRs matches RVFI-view
+
+  // Software-view on PMP CSRs matches RVFI-view  (Not a vplan item)
+
   for (genvar i = 0; i < NUM_CFG_REGS; i++) begin: gen_swview_cfg
     a_pmpcfg_swview: assert property (
       // TODO:silabs-robin no magic numbers
@@ -299,6 +331,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       (rvfi_rd_wdata == rvfi_csr_pmpcfg_rdata[i])
     );
   end
+
   for (genvar i = 0; i < NUM_ADDR_REGS; i++) begin: gen_swview_addr
     a_pmpaddr_swview: assert property (
       // TODO:silabs-robin no magic numbers
@@ -309,7 +342,9 @@ module uvmt_cv32e40s_pmprvfi_assert
     );
   end
 
-  // Software views does not change underlying register value
+
+  // Software views do not change underlying register value  (vplan:StorageUnaffected)
+
   property p_storage_unaffected(i);
     logic [33:0] pmpaddr;
     accept_on (
@@ -331,6 +366,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     (pmp_csr_rvfi_rdata.addr[i] == pmpaddr);  // (Unchanged pmpaddr?)
     // Note, this _can_ be generalized more, but at a complexity/readability cost
   endproperty : p_storage_unaffected
+
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_storage_unaffected
     a_storage_unaffected: assert property (
       p_storage_unaffected(i)
@@ -340,7 +376,7 @@ module uvmt_cv32e40s_pmprvfi_assert
   // TODO:silabs-robin "uvm_error" on all assertions?
 
 
-  // Software-view can read the granularity level
+  // Software-view can read the granularity level  (vplan:GranularityDetermination)
 
   if (PMP_NUM_REGIONS) begin: gen_granularity_determination
     a_granularity_determination: assert property (
@@ -362,7 +398,8 @@ module uvmt_cv32e40s_pmprvfi_assert
   end
 
 
-  // Locking is forever
+  // Locking is forever  (vplan:LockingAndPrivmode:UntilReset)
+
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_until_reset
     a_until_reset: assert property (
       pmp_csr_rvfi_rdata.cfg[i].lock  &&
@@ -371,7 +408,10 @@ module uvmt_cv32e40s_pmprvfi_assert
       always pmp_csr_rvfi_rdata.cfg[i].lock
     );
   end
-  // Stickiness isn't effectuated before triggered  (vplan "UntilReset")
+
+
+  // Stickiness isn't effectuated before triggered  (vplan:LockingBypass:UntilReset)
+
   property  p_until_reset_notbefore;
     logic  rlb;
     $rose(rst_ni)                                               ##0
@@ -385,9 +425,23 @@ module uvmt_cv32e40s_pmprvfi_assert
     (pmp_csr_rvfi_wdata.mseccfg.rlb == rlb)     // Must succeed
     ;
   endproperty : p_until_reset_notbefore
+
   a_until_reset_notbefore: assert property (
     p_until_reset_notbefore
   );
+
+/* TODO:silabs-robin  Write so the intention becomes legal SV
+  cov_until_reset_notbefore_on: cover property (
+    p_until_reset_notbefore #-#  pmp_csr_rvfi_wmask.mseccfg.rlb
+  );
+
+  cov_until_reset_notbefore_off: cover property (
+    p_until_reset_notbefore #-# !pmp_csr_rvfi_wmask.mseccfg.rlb
+  );
+*/
+
+
+  // Locked entries  (vplan:IgnoreWrites, vplan:IgnoreTor)
 
   // Locked entries, ignore pmpicfg/pmpaddri writes
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_ignore_writes_notrap
@@ -421,22 +475,29 @@ module uvmt_cv32e40s_pmprvfi_assert
     // We can see change even if "above config" is locked TOR
     property p_not_ignore_writes_torcfg;
       logic [7:0] cfg;
+
       rvfi_valid  &&
       pmp_csr_rvfi_rdata.cfg[i+1].lock  &&
       (pmp_csr_rvfi_rdata.cfg[i+1].mode == PMP_MODE_TOR)  ##0
       (1, cfg = pmp_csr_rvfi_rdata.cfg[i])
+
       ##1
+
       (rvfi_valid [->1])  ##0
-      (pmp_csr_rvfi_rdata.cfg[i] != cfg);
+      (pmp_csr_rvfi_rdata.cfg[i] != cfg)
+      ;
     endproperty : p_not_ignore_writes_torcfg
+
     cov_not_ignore_writes_torcfg: cover property (
       p_not_ignore_writes_torcfg
     );
   end
 
 
-  // Written cfg is written as expected
+  // Written cfgs are legal
+  // (vplan:LegalRwx, vplan:Na4Unselectable, vplan:IgnoreWrites, vplan:ExecIgnored, vplan:ExecRlb, vplan:Warl)
 
+  // Written cfg is written as expected
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_cfg_expected
     wire pmpncfg_t  cfg_expected = rectify_cfg_write(pmp_csr_rvfi_rdata.cfg[i], rvfi_rs1_rdata[8*(i%4) +: 8]);
 
@@ -509,7 +570,7 @@ module uvmt_cv32e40s_pmprvfi_assert
   end
 
 
-  // addr/addr-1  unlocked->unstable
+  // addr/addr-1  unlocked->unstable  (vplan:NotIgnore)
 
   sequence  seq_csrrw_pmpaddri (i);
     (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw"
@@ -535,6 +596,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       |->
       (pmp_csr_rvfi_wmask.addr[i][33:2] == 32'h FFFF_FFFF)
     );
+
     a_addr_nonlocked: assert property (
       seq_csrrw_pmpaddri(i)            and
       !pmp_csr_rvfi_rdata.cfg[i].lock  and
@@ -559,7 +621,8 @@ module uvmt_cv32e40s_pmprvfi_assert
   end
 
 
-  // RVFI: Reported CSR writes take effect
+  // RVFI: Reported CSR writes take effect  (vplan:AffectSuccessors)
+
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_rvfi_csr_writes
     // cfg:
     property  p_rvfi_cfg_writes;
@@ -576,6 +639,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     a_rvfi_cfg_writes: assert property (
       p_rvfi_cfg_writes
     );
+
     // addr:
     property  p_rvfi_addr_writes;
       logic [31:0]  addr, addr_r, addr_w;
@@ -593,7 +657,9 @@ module uvmt_cv32e40s_pmprvfi_assert
     );
   end
 
-  // Locked TOR, ignore i-1 addr writes
+
+  // Locked TOR, ignore i-1 addr writes  (vplan:IgnoreTor)
+
   for (genvar i = 1; i < PMP_NUM_REGIONS; i++) begin: gen_ignore_tor
     a_ignore_tor_stable: assert property (
       rvfi_valid &&
@@ -602,6 +668,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       |=>
       always $stable(pmp_csr_rvfi_rdata.addr[i-1][31+2:PMP_GRANULARITY+2])
     );
+
     a_ignore_tor_wdata: assert property (
       rvfi_valid &&
       (pmp_csr_rvfi_rdata.cfg[i].lock && !pmp_csr_rvfi_rdata.mseccfg.rlb)  &&
@@ -612,7 +679,9 @@ module uvmt_cv32e40s_pmprvfi_assert
     );
   end
 
-  // Expected response on missing execute permission (vplan "WaitUpdate"/"AffectSuccessors")
+
+  // Expected response on missing execute permission (vplan:WaitUpdate, vplan:AffectSuccessors, myriad vplan items)
+
   a_noexec_musttrap: assert property (
     rvfi_valid  &&
     !match_status_instr.is_access_allowed
@@ -620,6 +689,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     rvfi_trap
     // TODO:silabs-robin  Can assert the opposite too?
   );
+
   a_noexec_cause: assert property (
     rvfi_valid  &&
     !match_status_instr.is_access_allowed  &&
@@ -628,6 +698,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     (rvfi_trap.exception_cause == EXC_INSTR_ACC_FAULT)
     // Note, if we implement etrigger etc then priority will change
   );
+
   a_noexec_splittrap: assert property (
     rvfi_valid  &&
     is_split_instrtrans  &&
@@ -636,7 +707,9 @@ module uvmt_cv32e40s_pmprvfi_assert
     rvfi_trap
   );
 
-  // Expected response on missing loadstore permission (vplan "WaitUpdate"/"AffectSuccessors")
+
+  // Expected response on missing loadstore permission (vplan:WaitUpdate, vplan:AffectSuccessors)
+
   a_noloadstore_musttrap: assert property (
     rvfi_valid  &&
     (rvfi_mem_rmask || rvfi_mem_wmask)  &&
@@ -644,6 +717,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     |->
     rvfi_trap
   );
+
   a_noloadstore_cause_load: assert property (
     (rvfi_valid && rvfi_mem_rmask)  &&
     !match_status_data.is_access_allowed  &&
@@ -651,6 +725,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     |->
     (rvfi_trap.exception_cause == EXC_LOAD_ACC_FAULT)
   );
+
   a_noloadstore_cause_store: assert property (
     (rvfi_valid && rvfi_mem_wmask)  &&
     !match_status_data.is_access_allowed  &&
@@ -658,6 +733,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     |->
     (rvfi_trap.exception_cause == EXC_STORE_ACC_FAULT)
   );
+
   a_noloadstore_splittrap: assert property (
     rvfi_valid  &&
     is_split_datatrans  &&
@@ -666,7 +742,9 @@ module uvmt_cv32e40s_pmprvfi_assert
     rvfi_trap
   );
 
-  // RWX has reservations
+
+  // RWX has reservations  (vplan:RwReserved)
+
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_rwx_mml
     a_rwx_mml: assert property (
       !pmp_csr_rvfi_rdata.mseccfg.mml
@@ -676,7 +754,7 @@ module uvmt_cv32e40s_pmprvfi_assert
   end
 
 
-  // RLB lifts restrictions
+  // RLB lifts restrictions  (vplan:ExecRlb)
 
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_rlblifts_lockedexec
     wire pmpncfg_t  cfg_attempt = rvfi_rs1_rdata[8*(i%4) +: 8];
@@ -725,22 +803,22 @@ module uvmt_cv32e40s_pmprvfi_assert
 
     // Pick "pre-state" where required
     begin
-      // RWX collective WARL
+      // RWX collective WARL  (vplan:LegalRwx)
       if ((cfg_attempt[2:0] inside {2, 6}) && !pmp_csr_rvfi_rdata.mseccfg.mml) begin
         cfg_rfied[2:0] = cfg_pre[2:0];
       end
 
-      // NA4, G=0
+      // NA4, G=0  (vplan:Na4Unselectable)
       if ((PMP_GRANULARITY >= 1) && (cfg_attempt.mode == PMP_MODE_NA4)) begin
         cfg_rfied.mode = cfg_pre.mode;
       end
 
-      // Locked config can't change
+      // Locked config can't change  (vplan:IgnoreWrites)
       if (cfg_pre.lock && !pmp_csr_rvfi_rdata.mseccfg.rlb) begin
         cfg_rfied = cfg_pre;
       end
 
-      // MML, no locked-executable
+      // MML, no locked-executable  (vplan:ExecIgnored, vplan:ExecRlb)
       if (
         (pmp_csr_rvfi_rdata.mseccfg.mml && !pmp_csr_rvfi_rdata.mseccfg.rlb)  &&
         ({cfg_attempt.lock, cfg_attempt.read, cfg_attempt.write, cfg_attempt.exec}
@@ -752,12 +830,14 @@ module uvmt_cv32e40s_pmprvfi_assert
       end
     end
 
-    // Tied zero
+    // Tied zero  (vplan:Warl)
     cfg_rfied.zero0 = '0;
 
     return  cfg_rfied;
   endfunction : rectify_cfg_write
 
+
 endmodule : uvmt_cv32e40s_pmprvfi_assert
+
 
 `default_nettype wire
