@@ -21,7 +21,7 @@ module uvmt_cv32e40s_zc_assert
   import cv32e40s_pkg::*;
   (
       uvma_rvfi_instr_if rvfi,
-      uvmt_cv32e40s_support_logic_if.monitor support_if
+      uvmt_cv32e40s_support_logic_if.zc_Reader support_if
 
   );
 
@@ -83,7 +83,7 @@ module uvmt_cv32e40s_zc_assert
   property p_multiop_exception_stop_dbus(logic[31:0] ins_mask, logic[31:0] ins_ref);
     (rvfi.rvfi_valid && rvfi.rvfi_trap[0] && rvfi.match_instr(ins_ref, ins_mask))
     |->
-    support_if.req_after_exception_o == 0;
+    support_if.req_after_exception == 0;
 
   endproperty
 

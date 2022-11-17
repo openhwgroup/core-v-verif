@@ -914,10 +914,9 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux                                                                   (core_i.if_stage_i.pc_check_i.ctrl_fsm_i.pc_mux)
 
     );
-  // Xsecure assertions
+   // Xsecure assertions
 
-
- bind cv32e40s_wrapper
+  bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_assert #(
 	.SECURE	(cv32e40s_pkg::SECURE),
   .SMCLIC (SMCLIC),
@@ -929,6 +928,11 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
     ) xsecure_assert_i 	(
     	.xsecure_if	(xsecure_if),
 	    .rvfi_if	  (rvfi_instr_if_0_i),
+      .data_bus_support_if (support_logic_if.data_bus_Reader),
+      .instr_bus_support_if (support_logic_if.instr_bus_Reader),
+      .abiim_bus_support_if (support_logic_if.abiim_bus_Reader),
+      .lml_bus_support_if (support_logic_if.lml_bus_Reader),
+      .lrfodi_bus_support_if (support_logic_if.lrfodi_bus_Reader),
       .clk_i      (clk_i),
       .rst_ni     (rst_ni)
     );
@@ -1036,14 +1040,36 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
 
     bind cv32e40s_wrapper
-      uvmt_cv32e40s_support_logic_if support_logic_if ();
+      uvmt_cv32e40s_support_logic_if support_logic_if (
+        .clk_i     (core_i.clk),
+        .rst_ni (core_i.rst_ni),
 
-    // TODO find a better way
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.ctrl_fsm_o_i   = dut_wrap.cv32e40s_wrapper_i.core_i.controller_i.controller_fsm_i.ctrl_fsm_o;
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_req_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_req.req;
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_gnt_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_gnt.gnt;
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.clk_i          = dut_wrap.cv32e40s_wrapper_i.core_i.clk_i;
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.rst_ni         = dut_wrap.cv32e40s_wrapper_i.core_i.rst_ni;
+        .ctrl_fsm_o_i (core_i.controller_i.controller_fsm_i.ctrl_fsm_o),
+
+        .data_bus_rvalid_i (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+        .data_bus_req_i (core_i.m_c_obi_data_if.s_req.req),
+        .data_bus_gnt_i (core_i.m_c_obi_data_if.s_gnt.gnt),
+
+        .instr_bus_rvalid_i (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+        .instr_bus_req_i (core_i.m_c_obi_instr_if.s_req.req),
+        .instr_bus_gnt_i (core_i.m_c_obi_instr_if.s_gnt.gnt),
+
+        //obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) is refered to as abiim
+        .abiim_bus_rvalid_i (core_i.if_stage_i.prefetch_resp_valid),
+        .abiim_bus_req_i (core_i.if_stage_i.prefetch_trans_ready),
+        .abiim_bus_gnt_i (core_i.if_stage_i.prefetch_trans_valid),
+
+        //obi protocol between LSU (l) mpu (m) and LSU (l) is refered to as lml
+        .lml_bus_rvalid_i (core_i.load_store_unit_i.resp_valid),
+        .lml_bus_req_i (core_i.load_store_unit_i.trans_ready),
+        .lml_bus_gnt_i (core_i.load_store_unit_i.trans_valid),
+
+        //obi protocol between LSU (l) respons (r) filter (f) and OBI (o) data (d) interface (i) is refered to as lrfodi
+        .lrfodi_bus_rvalid_i (core_i.load_store_unit_i.bus_resp_valid),
+        .lrfodi_bus_req_i (core_i.load_store_unit_i.buffer_trans_valid),
+        .lrfodi_bus_gnt_i (core_i.load_store_unit_i.buffer_trans_ready)
+
+    );
 
 
     bind cv32e40s_pmp :
@@ -1096,7 +1122,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
 
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
-                                                              .support_if(support_logic_if)
+                                                              .support_if(support_logic_if.zc_Reader)
                                                               );
 
 
