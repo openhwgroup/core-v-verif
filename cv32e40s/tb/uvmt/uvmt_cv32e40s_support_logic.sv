@@ -116,6 +116,32 @@ module uvmt_cv32e40s_support_logic
     .v_addr_ph_cnt (support_if.abiim_bus_v_addr_ph_cnt)
   );
 
+  //obi protocol between LSU (l) MPU (m) and LSU (l) (=> lml)
+  uvmt_cv32e40s_obi_phases_monitor lml_bus_obi_phases_monitor (
+    .clk_i (support_if.clk_i),
+    .rst_ni (support_if.rst_ni),
+
+    .obi_req (support_if.lml_bus_req_i),
+    .obi_gnt (support_if.lml_bus_gnt_i),
+    .obi_rvalid (support_if.lml_bus_rvalid_i),
+    .addr_ph_cont (support_if.lml_bus_addr_ph_cont),
+    .resp_ph_cont (support_if.lml_bus_resp_ph_cont),
+    .v_addr_ph_cnt (support_if.lml_bus_v_addr_ph_cnt)
+  );
+
+  //obi protocol between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i) (=> lrfodi)
+  uvmt_cv32e40s_obi_phases_monitor lrfodi_bus_obi_phases_monitor (
+    .clk_i (support_if.clk_i),
+    .rst_ni (support_if.rst_ni),
+
+    .obi_req (support_if.lrfodi_bus_req_i),
+    .obi_gnt (support_if.lrfodi_bus_gnt_i),
+    .obi_rvalid (support_if.lrfodi_bus_rvalid_i),
+    .addr_ph_cont (support_if.lrfodi_bus_addr_ph_cont),
+    .resp_ph_cont (support_if.lrfodi_bus_resp_ph_cont),
+    .v_addr_ph_cnt (support_if.lrfodi_bus_v_addr_ph_cnt)
+  );
+
 
 
 

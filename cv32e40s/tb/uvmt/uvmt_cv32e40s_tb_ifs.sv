@@ -420,7 +420,16 @@ interface uvmt_cv32e40s_support_logic_if
 
    input logic abiim_bus_rvalid_i,
    input logic abiim_bus_gnt_i,
-   input logic abiim_bus_req_i
+   input logic abiim_bus_req_i,
+
+   input logic lml_bus_rvalid_i,
+   input logic lml_bus_gnt_i,
+   input logic lml_bus_req_i,
+
+   input logic lrfodi_bus_rvalid_i,
+   input logic lrfodi_bus_gnt_i,
+   input logic lrfodi_bus_req_i
+
 );
 
    import cv32e40s_pkg::*;
@@ -446,10 +455,18 @@ interface uvmt_cv32e40s_support_logic_if
    logic abiim_bus_addr_ph_cont;
    logic abiim_bus_resp_ph_cont;
 
+   logic lml_bus_addr_ph_cont;
+   logic lml_bus_resp_ph_cont;
+
+   logic lrfodi_bus_addr_ph_cont;
+   logic lrfodi_bus_resp_ph_cont;
+
    // address phase counter, used to verify no response phase preceedes an address phase
    integer data_bus_v_addr_ph_cnt;
    integer instr_bus_v_addr_ph_cnt;
    integer abiim_bus_v_addr_ph_cnt;
+   integer lml_bus_v_addr_ph_cnt;
+   integer lrfodi_bus_v_addr_ph_cnt;
 
    clocking mon_cb @(posedge clk_i);
       input #1step
@@ -483,6 +500,16 @@ interface uvmt_cv32e40s_support_logic_if
             abiim_bus_gnt_i,
             abiim_bus_req_i,
 
+            //lml bus inputs to support logic module:
+            lml_bus_rvalid_i,
+            lml_bus_gnt_i,
+            lml_bus_req_i,
+
+            //Instr bus inputs to support logic module:
+            lrfodi_bus_rvalid_i,
+            lrfodi_bus_gnt_i,
+            lrfodi_bus_req_i,
+
      output req_after_exception, //Todo: marton: describe
 
             //Data bus outputs of the support logic module:
@@ -490,7 +517,7 @@ interface uvmt_cv32e40s_support_logic_if
             data_bus_resp_ph_cont,
             data_bus_v_addr_ph_cnt,
 
-            //Instr bus outputs of the support logic module:
+            //Instruction bus outputs of the support logic module:
             instr_bus_addr_ph_cont,
             instr_bus_resp_ph_cont,
             instr_bus_v_addr_ph_cnt,
@@ -498,7 +525,17 @@ interface uvmt_cv32e40s_support_logic_if
             //Abiim bus outputs of the support logic module:
             abiim_bus_addr_ph_cont,
             abiim_bus_resp_ph_cont,
-            abiim_bus_v_addr_ph_cnt
+            abiim_bus_v_addr_ph_cnt,
+
+            //Instr bus outputs of the support logic module:
+            lml_bus_addr_ph_cont,
+            lml_bus_resp_ph_cont,
+            lml_bus_v_addr_ph_cnt,
+
+            //Instr bus outputs of the support logic module:
+            lrfodi_bus_addr_ph_cont,
+            lrfodi_bus_resp_ph_cont,
+            lrfodi_bus_v_addr_ph_cnt
 
    );
 
@@ -530,6 +567,20 @@ interface uvmt_cv32e40s_support_logic_if
             abiim_bus_rvalid_i,
 			   abiim_bus_resp_ph_cont,
 			   abiim_bus_v_addr_ph_cnt);
+
+   modport lml_bus_Reader (
+      input clk_i,
+            rst_ni,
+            lml_bus_rvalid_i,
+			   lml_bus_resp_ph_cont,
+			   lml_bus_v_addr_ph_cnt);
+
+   modport lrfodi_bus_Reader (
+      input clk_i,
+            rst_ni,
+            lrfodi_bus_rvalid_i,
+			   lrfodi_bus_resp_ph_cont,
+			   lrfodi_bus_v_addr_ph_cnt);
 
 endinterface : uvmt_cv32e40s_support_logic_if
 
