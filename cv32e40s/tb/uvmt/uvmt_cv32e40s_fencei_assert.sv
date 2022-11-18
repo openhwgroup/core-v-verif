@@ -16,6 +16,9 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
 
+`default_nettype  none
+
+
 module uvmt_cv32e40s_fencei_assert
   import cv32e40s_pkg::*;
   import uvm_pkg::*;
@@ -50,12 +53,17 @@ module uvmt_cv32e40s_fencei_assert
   input rvfi_dbg_mode
 );
 
-  localparam int CYCLE_COUNT = 6;
   default clocking @(posedge clk_i); endclocking
   default disable iff !rst_ni;
+
+  localparam int CYCLE_COUNT = 6;
+
   string info_tag = "CV32E40S_FENCEI_ASSERT";
 
-  logic is_fencei_in_wb;
+
+  // Helper Signals/Functions
+
+  logic  is_fencei_in_wb;
   assign is_fencei_in_wb = wb_sys_fencei_insn && wb_sys_en && wb_instr_valid;
 
   int obi_outstanding;
@@ -78,17 +86,26 @@ module uvmt_cv32e40s_fencei_assert
     end
   endfunction
 
+
+  // vplan:ReqLow
+
   a_req_stay_high: assert property (
     fencei_flush_req_o && !fencei_flush_ack_i
     |=>
     fencei_flush_req_o
   ) else `uvm_error(info_tag, "req must not drop before ack");
 
+
+  // vplan:ReqLow
+
   a_req_drop_lo: assert property (
     fencei_flush_req_o && fencei_flush_ack_i
     |=>
     !fencei_flush_req_o
   ) else `uvm_error(info_tag, "req must drop after ack");
+
+
+  // vplan:ReqHigh
 
   a_req_rise_before_retire: assert property (
     $rose(is_fencei_in_wb)
@@ -100,11 +117,17 @@ module uvmt_cv32e40s_fencei_assert
     )
   ) else `uvm_error(info_tag, "fencei shall not retire without seeing a rising flush req");
 
+
+  // vplan:ShadowingBranch
+
   a_req_must_retire: assert property (
     fencei_flush_req_o
     |->
-    is_fencei_in_wb until_with wb_valid
+    is_fencei_in_wb  until_with  wb_valid
   ) else `uvm_error(info_tag, "if there is no retire then there can't be a req");
+
+
+  // vplan:Fetching
 
   property p_fetch_after_retire;
     int pc_next;
@@ -120,9 +143,13 @@ module uvmt_cv32e40s_fencei_assert
       ##0 (rvfi_intr || rvfi_dbg_mode)
     );
   endproperty
+
   a_fetch_after_retire: assert property (
     p_fetch_after_retire
   ) else `uvm_error(info_tag, "after fencei, the next-pc fetching cannot be forgone");
+
+
+  // vplan:AckWithold
 
   a_stall_until_ack: assert property (
     fencei_flush_req_o && !fencei_flush_ack_i
@@ -130,8 +157,12 @@ module uvmt_cv32e40s_fencei_assert
     !$changed(wb_pc)
   ) else `uvm_error(info_tag, "WB stage must remain unchanged until the flush req is acked");
 
+
+  // vplan:BranchInitiated
+
   property p_branch_after_retire;
     int pc_next;
+
     (fencei_flush_req_o, pc_next=wb_pc+4)
     ##1 !fencei_flush_req_o
     |=>
@@ -143,9 +174,13 @@ module uvmt_cv32e40s_fencei_assert
       ##0 (rvfi_intr || rvfi_dbg_mode)
     );
   endproperty
+
   a_branch_after_retire: assert property (
     p_branch_after_retire
   ) else `uvm_error(info_tag, "the pc following fencei did not enter WB");
+
+
+  // vplan:Flush
 
   a_supress_datareq: assert property (
     fencei_flush_req_o
@@ -153,33 +188,43 @@ module uvmt_cv32e40s_fencei_assert
     !data_req_o
   ) else `uvm_error(info_tag, "obi data req shall not happen while fencei is flushing");
 
+
+  // vplan:MultiCycle
+
   property p_fencei_quick_retire;
     $rose(is_fencei_in_wb)
     ##1 (fencei_flush_req_o && fencei_flush_ack_i);
   endproperty
+
   a_cycle_count_minimum: assert property (
     p_fencei_quick_retire
     implies
     (##1 !$rose(wb_instr_valid) [*CYCLE_COUNT-1])
-  ) else `uvm_error(info_tag, "fencei shan't finish before the expected number of cycles");
-  c_cycle_count_minimum: cover property (
+  ) else `uvm_error(info_tag, "fencei shall not finish before the expected number of cycles");
+
+  cov_cycle_count_minimum: cover property (
     p_fencei_quick_retire
     and
     (s_nexttime [CYCLE_COUNT] $rose(wb_instr_valid))
   );
 
+
+  // vplan:ReqWaitLsu
+
   property p_req_wait_bus;
     fencei_flush_req_o
     |->
-    !data_rvalid_i throughout (
+    !data_rvalid_i  throughout (
       $fell(wb_valid) [->1]
       ##1 (data_req_o && data_gnt_i) [->1]
     );
   endproperty
+
   a_req_wait_bus: assert property (p_req_wait_bus)
     else `uvm_error(info_tag, "flush req shall not come if rvalid is awaited");
+
   if (bufferable_in_config()) begin : gen_c_req_wait_bus
-    c_req_wait_bus: cover property (
+    cov_req_wait_bus: cover property (
       $rose(is_fencei_in_wb)
       ##1 (
         is_fencei_in_wb throughout (
@@ -190,18 +235,25 @@ module uvmt_cv32e40s_fencei_assert
     );
   end
 
+
+  // vplan:ReqWaitObi
+
   property p_req_wait_outstanding;
     fencei_flush_req_o |-> (obi_outstanding == 0);
   endproperty
+
   a_req_wait_outstanding: assert property (p_req_wait_outstanding)
     else `uvm_error(info_tag, "flush req shall not come if obi has outstanding transactions");
+
   if (bufferable_in_config()) begin : gen_c_req_wait_outstanding_1
-    c_req_wait_outstanding_1: cover property (
+    cov_req_wait_outstanding_1: cover property (
       is_fencei_in_wb throughout ((obi_outstanding >= 1) ##0 (fencei_flush_req_o [->1]))
     );
   end
 
-  
+
+  // vplan:ReqWaitWritebuffer
+
   property p_req_wait_buffer;
     is_fencei_in_wb && (wb_buffer_state == WBUF_FULL) |->
       !fencei_flush_req_o throughout(
@@ -209,21 +261,23 @@ module uvmt_cv32e40s_fencei_assert
       );
   endproperty
 
-  a_req_wait_buffer: assert property(p_req_wait_buffer) 
+  a_req_wait_buffer: assert property(p_req_wait_buffer)
     else `uvm_error(info_tag, "fencei_flush_req_o should be held low until write buffer is empty");
-
-
-  // TODO:ropeders assert fencei flush req explicitly vs X interface queue (not just vs rvalid)
 
 
   for (genvar i = 1; i <= 5; i++) begin: gen_ack_delayed
     // "5" is an appropriate arbitrary upper limit
-    c_ack_delayed: cover property (
+    cov_ack_delayed: cover property (
       $rose(fencei_flush_req_o)
       ##0 (!fencei_flush_ack_i) [*i]
       ##1 fencei_flush_ack_i
     );
   end
+
+  cov_no_retire: cover property (
+    $rose(is_fencei_in_wb)
+    ##0 (!wb_valid throughout ($fell(is_fencei_in_wb) [->1]))
+  );
 
   covergroup cg_reqack(string name) @(posedge clk_i);
     option.per_instance = 1;
@@ -247,11 +301,6 @@ module uvmt_cv32e40s_fencei_assert
   endgroup
   cg_reqack reqack_cg = new("reqack");
 
-  c_no_retire: cover property (
-    $rose(is_fencei_in_wb)
-    ##0 (!wb_valid throughout ($fell(is_fencei_in_wb) [->1]))
-  );
-
   covergroup cg_reserved(string name) @(posedge clk_i);
     option.per_instance = 1;
     option.name = name;
@@ -269,4 +318,8 @@ module uvmt_cv32e40s_fencei_assert
   endgroup
   cg_reserved reserved_cg = new("reserved");
 
+
 endmodule : uvmt_cv32e40s_fencei_assert
+
+
+`default_nettype  wire
