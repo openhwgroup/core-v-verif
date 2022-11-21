@@ -23,34 +23,34 @@ module uvmt_cv32e40s_fencei_assert
   import cv32e40s_pkg::*;
   import uvm_pkg::*;
 #(
-  parameter int          PMA_NUM_REGIONS              = 0,
-  parameter pma_cfg_t    PMA_CFG[PMA_NUM_REGIONS-1:0] = '{default:'Z}
+  parameter int        PMA_NUM_REGIONS              = 0,
+  parameter pma_cfg_t  PMA_CFG[PMA_NUM_REGIONS-1:0] = '{default:'Z}
 )(
-  input clk_i,
-  input rst_ni,
+  input wire  clk_i,
+  input wire  rst_ni,
 
-  input fencei_flush_req_o,
-  input fencei_flush_ack_i,
+  input wire  fencei_flush_req_o,
+  input wire  fencei_flush_ack_i,
 
-  input        wb_valid,
-  input        wb_instr_valid,
-  input        wb_sys_en,
-  input        wb_sys_fencei_insn,
-  input [31:0] wb_pc,
-  input [31:0] wb_rdata,
-  input        wb_buffer_state,
+  input wire         wb_valid,
+  input wire         wb_instr_valid,
+  input wire         wb_sys_en,
+  input wire         wb_sys_fencei_insn,
+  input wire [31:0]  wb_pc,
+  input wire [31:0]  wb_rdata,
+  input wire         wb_buffer_state,
 
-  input        instr_req_o,
-  input [31:0] instr_addr_o,
-  input        instr_gnt_i,
+  input wire         instr_req_o,
+  input wire [31:0]  instr_addr_o,
+  input wire         instr_gnt_i,
 
-  input        data_req_o,
-  input        data_gnt_i,
-  input        data_rvalid_i,
+  input wire         data_req_o,
+  input wire         data_gnt_i,
+  input wire         data_rvalid_i,
 
-  input rvfi_valid,
-  input rvfi_intr,
-  input rvfi_dbg_mode
+  input wire  rvfi_valid,
+  input wire  rvfi_intr,
+  input wire  rvfi_dbg_mode
 );
 
   default clocking @(posedge clk_i); endclocking
@@ -126,6 +126,21 @@ module uvmt_cv32e40s_fencei_assert
     is_fencei_in_wb  until_with  wb_valid
   ) else `uvm_error(info_tag, "if there is no retire then there can't be a req");
 
+  cov_retire_without_req: cover property (
+    $rose(is_fencei_in_wb)
+    ##0
+    (
+      !fencei_flush_req_o
+      throughout
+      ($fell(is_fencei_in_wb) [->1])
+    )
+  );
+
+  cov_no_retire: cover property (
+    $rose(is_fencei_in_wb)
+    ##0 (!wb_valid throughout ($fell(is_fencei_in_wb) [->1]))
+  );
+
 
   // vplan:Fetching
 
@@ -157,6 +172,15 @@ module uvmt_cv32e40s_fencei_assert
     !$changed(wb_pc)
   ) else `uvm_error(info_tag, "WB stage must remain unchanged until the flush req is acked");
 
+  for (genvar i = 1; i <= 5; i++) begin: gen_ack_delayed
+    // "5" is an appropriate arbitrary upper limit
+    cov_ack_delayed: cover property (
+      $rose(fencei_flush_req_o)
+      ##0 (!fencei_flush_ack_i) [*i]
+      ##1 fencei_flush_ack_i
+    );
+  end
+
 
   // vplan:BranchInitiated
 
@@ -178,6 +202,12 @@ module uvmt_cv32e40s_fencei_assert
   a_branch_after_retire: assert property (
     p_branch_after_retire
   ) else `uvm_error(info_tag, "the pc following fencei did not enter WB");
+
+  cov_branch_after_retire: cover property (
+    reject_on
+      (rvfi_intr || rvfi_dbg_mode)
+      p_branch_after_retire
+  );
 
 
   // vplan:Flush
@@ -255,29 +285,19 @@ module uvmt_cv32e40s_fencei_assert
   // vplan:ReqWaitWritebuffer
 
   property p_req_wait_buffer;
-    is_fencei_in_wb && (wb_buffer_state == WBUF_FULL) |->
-      !fencei_flush_req_o throughout(
-        (data_rvalid_i && (wb_buffer_state == WBUF_EMPTY)) [->1]
-      );
+    is_fencei_in_wb && (wb_buffer_state == WBUF_FULL)
+    |->
+    !fencei_flush_req_o  throughout (
+      (data_rvalid_i && (wb_buffer_state == WBUF_EMPTY)) [->1]
+    );
   endproperty
 
-  a_req_wait_buffer: assert property(p_req_wait_buffer)
-    else `uvm_error(info_tag, "fencei_flush_req_o should be held low until write buffer is empty");
+  a_req_wait_buffer: assert property(
+    p_req_wait_buffer
+  ) else `uvm_error(info_tag, "fencei_flush_req_o should be held low until write buffer is empty");
 
 
-  for (genvar i = 1; i <= 5; i++) begin: gen_ack_delayed
-    // "5" is an appropriate arbitrary upper limit
-    cov_ack_delayed: cover property (
-      $rose(fencei_flush_req_o)
-      ##0 (!fencei_flush_ack_i) [*i]
-      ##1 fencei_flush_ack_i
-    );
-  end
-
-  cov_no_retire: cover property (
-    $rose(is_fencei_in_wb)
-    ##0 (!wb_valid throughout ($fell(is_fencei_in_wb) [->1]))
-  );
+  // vplan:AckChange
 
   covergroup cg_reqack(string name) @(posedge clk_i);
     option.per_instance = 1;
@@ -299,13 +319,17 @@ module uvmt_cv32e40s_fencei_assert
       illegal_bins il = binsof(cp_req.fell) && binsof(cp_ack.rose);
     }
   endgroup
-  cg_reqack reqack_cg = new("reqack");
+
+  cg_reqack reqack_cg = new("reqack_cg");
+
+
+  // vplan:UnusedFields
 
   covergroup cg_reserved(string name) @(posedge clk_i);
     option.per_instance = 1;
     option.name = name;
 
-    // Just a handfull of different values for reserved to-be-ignored fields
+    // A handfull of different values for (ignored) reserved fields
     cp_imm: coverpoint wb_rdata[31:20] iff (is_fencei_in_wb && wb_valid) {
       bins b[4] = {[0:$]};
     }
@@ -316,7 +340,8 @@ module uvmt_cv32e40s_fencei_assert
       bins b[4] = {[0:$]};
     }
   endgroup
-  cg_reserved reserved_cg = new("reserved");
+
+  cg_reserved reserved_cg = new("reserved_cg");
 
 
 endmodule : uvmt_cv32e40s_fencei_assert
