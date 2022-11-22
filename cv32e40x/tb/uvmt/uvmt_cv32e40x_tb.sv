@@ -22,22 +22,23 @@
 `ifndef __UVMT_CV32E40X_TB_SV__
 `define __UVMT_CV32E40X_TB_SV__
 
-// Import the Imperas-DV RVVI API
-`include "rvvi/rvvi-api.svh" // located in $IMPERAS_HOME/ImpPublic/include/host
-//`include "rvvi_macros.svh"   // located in ./examples/openhwgroup_cv32e40x/systemverilog
+
+`default_nettype none
+
 
 /**
  * Module encapsulating the CV32E40X DUT wrapper, and associated SV interfaces.
  * Also provide UVM environment entry and exit points.
  */
-`default_nettype none
 module uvmt_cv32e40x_tb;
 
    import uvm_pkg::*;
    import cv32e40x_pkg::*;
    import uvmt_cv32e40x_pkg::*;
    import uvme_cv32e40x_pkg::*;
-   import rvviApi::*;
+   `ifndef FORMAL
+   import rvviApiPkg::*;
+   `endif
 
    // CORE parameters
 `ifdef SET_NUM_MHPMCOUNTERS
@@ -62,6 +63,7 @@ module uvmt_cv32e40x_tb;
    uvma_clknrst_if              clknrst_if_iss();
    uvma_debug_if                debug_if();
    uvma_interrupt_if            interrupt_if();
+   // TODO:silabs-robin  Parameterize OBI interfaces
    uvma_obi_memory_if           obi_instr_if_i( .clk     (clknrst_if.clk),
                                                 .reset_n (clknrst_if.reset_n));
    uvma_obi_memory_if           obi_data_if_i ( .clk     (clknrst_if.clk),
@@ -79,7 +81,9 @@ module uvmt_cv32e40x_tb;
                                                    .sec_lvl    ());     // Core status outputs
 
    // RVVI SystemVerilog Interface
-   rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+   `ifndef FORMAL
+      rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+   `endif
 
   /**
    * DUT WRAPPER instance:
@@ -692,9 +696,6 @@ module uvmt_cv32e40x_tb;
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_DATA_WIDTH"),  .value(ENV_PARAM_INSTR_DATA_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_RAM_ADDR_WIDTH"),    .value(ENV_PARAM_RAM_ADDR_WIDTH)   );
 
-     // Start up ImperasDV
-     //imperas_dv.ref_init();
-
      // Run test
      uvm_top.enable_print_topology = 0; // ENV coders enable this as a debug aid
      uvm_top.finish_on_completion  = 1;
@@ -704,27 +705,17 @@ module uvmt_cv32e40x_tb;
 
    assign core_cntrl_if.clk = clknrst_if.clk;
 
-   // overcome race
-   initial begin
-      #0.9ns;
-      imperas_dv.ref_init();
-   end
 
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
-   longint start_ovpsim_init_time;
-   longint end_ovpsim_init_time;
 
    `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
+   // overcome race
    initial begin
-      if (!$test$plusargs("DISABLE_OVPSIM")) begin
-        #0.9ns;
-        `uvm_info("OVPSIM", $sformatf("Start benchmarking OVPSIM initialization"), UVM_LOW)
-        start_ovpsim_init_time = svlib_pkg::sys_dayTime();
-        #1.1ns;
-        end_ovpsim_init_time = svlib_pkg::sys_dayTime();
-        `uvm_info("OVPSIM", $sformatf("Initialization time: %0d seconds", end_ovpsim_init_time - start_ovpsim_init_time), UVM_LOW)
-      end
+     if ($test$plusargs("USE_ISS")) begin
+       #0.9ns;
+       imperas_dv.ref_init();
+     end
    end
    `endif
 
@@ -788,12 +779,8 @@ module uvmt_cv32e40x_tb;
 
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
 
-      // FIXME
-      // Shutdown the Reference Model
-      if (0/*uvm_test_top.env.rvvi_ovpsim_agent.cfg.core_cfg.use_iss*/) begin
-         // Exit handler for OVPsim
-      end
-      else begin
+      if ($test$plusargs("USE_ISS")) begin
+         // Exit handler for ImperasDV
          void'(rvviRefShutdown());
       end
 
