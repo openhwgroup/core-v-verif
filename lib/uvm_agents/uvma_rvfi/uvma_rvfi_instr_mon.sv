@@ -168,6 +168,11 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
          mon_trn.mem_wdata = cntxt.instr_vif[nret_id].mon_cb.rvfi_mem_wdata;
          mon_trn.mem_wmask = cntxt.instr_vif[nret_id].mon_cb.rvfi_mem_wmask;
 
+         mon_trn.gpr_rdata = cntxt.instr_vif[nret_id].mon_cb.rvfi_gpr_rdata;
+         mon_trn.gpr_rmask = cntxt.instr_vif[nret_id].mon_cb.rvfi_gpr_rmask;
+         mon_trn.gpr_wdata = cntxt.instr_vif[nret_id].mon_cb.rvfi_gpr_wdata;
+         mon_trn.gpr_wmask = cntxt.instr_vif[nret_id].mon_cb.rvfi_gpr_wmask;
+
          // Get the CSRs
          foreach (cntxt.csr_vif[csr]) begin
             uvma_rvfi_csr_seq_item_c csr_trn = uvma_rvfi_csr_seq_item_c#(XLEN)::type_id::create({csr, "_trn"});
@@ -236,4 +241,5 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
 endtask : monitor_rvfi_instr
 
 `endif // __UVMA_RVFI_INSTR_MON_SV__
+
 

@@ -30,7 +30,7 @@ module uvmt_cv32e40s_interrupt_assert
     // External interrupt interface
     input [31:0] irq_i,
     input        irq_ack_o,
-    input [4:0]  irq_id_o,
+    input [9:0]  irq_id_o,
 
     // External debug req (for WFI modeling)
     input        debug_req_i,
@@ -40,19 +40,20 @@ module uvmt_cv32e40s_interrupt_assert
     input [5:0]  mcause_n, // mcause_n[5]: interrupt, mcause_n[4]: vector
     input [31:0] mip,     // machine interrupt pending
     input [31:0] mie_q,   // machine interrupt enable
-    input        mstatus_mie, // machine mode interrupt enable
+    input        mstatus_mie,  // machine mode interrupt enable
+    input        mstatus_tw,   // "timeout wait"
     input [1:0]  mtvec_mode_q, // machine mode interrupt vector mode
 
-    // Instruction fetch stage
+    // IF stage
     input        if_stage_instr_req_o,
     input        if_stage_instr_rvalid_i, // Instruction word is valid
     input [31:0] if_stage_instr_rdata_i, // Instruction word data
     input [ 1:0] alignbuf_outstanding, // Alignment buffer's number of outstanding transactions
 
-    // Instruction EX stage
+    // EX stage
     input        ex_stage_instr_valid, // EX pipeline stage has valid input
 
-    // Instruction WB stage (determines executed instructions)
+    // WB stage (determines executed instructions)
     input              wb_stage_instr_valid_i,    // instruction word is valid
     input [31:0]       wb_stage_instr_rdata_i,    // Instruction word data
     input              wb_stage_instr_err_i,      // OBI "err"
@@ -60,6 +61,9 @@ module uvmt_cv32e40s_interrupt_assert
 
     // Load-store unit status
     input              lsu_busy,
+
+    // Privilege
+    input privlvl_t    priv_lvl,
 
     // Determine whether to cancel instruction if branch taken
     input branch_taken_ex,
@@ -75,6 +79,7 @@ module uvmt_cv32e40s_interrupt_assert
   localparam VALID_IRQ_MASK = 32'hffff_0888; // Valid external interrupt signals
 
   localparam WFI_INSTR_DATA = 32'h10500073;
+  localparam WFE_INSTR_DATA = 32'h8C000073;
 
   localparam WFI_TO_CORE_SLEEP_LATENCY = 2;
   localparam WFI_WAKEUP_LATENCY = 40;
@@ -87,7 +92,7 @@ module uvmt_cv32e40s_interrupt_assert
   wire [31:0] pending_enabled_irq;
   wire [31:0] pending_enabled_irq_q;
 
-  reg  in_wfi; // Local model of WFI state of core
+  reg  in_wfi_wfe; // Local model of WFI state of core
 
   reg[31:0] irq_q;
 
@@ -100,6 +105,8 @@ module uvmt_cv32e40s_interrupt_assert
 
   reg[31:0] expected_irq;
   logic     expected_irq_ack;
+  wire      is_mmode_mstatusmie = (priv_lvl == PRIV_LVL_M) && mstatus_mie;
+  wire      is_umode_miemip     = (priv_lvl == PRIV_LVL_U) && (mie_q & mip);
 
   reg[31:0] last_instr_rdata;
 
@@ -148,14 +155,15 @@ module uvmt_cv32e40s_interrupt_assert
       `uvm_error(info_tag,
                  $sformatf("irq_id_o output is 0x%0x which is disabled in MIE: 0x%08x", irq_id_o, mie_q));
 
-  // irq_ack_o cannot be asserted if mstatus_mie is deasserted
-  property p_irq_id_o_mstatus_mie_enabled;
-    irq_ack_o |-> mstatus_mie;
-  endproperty
-  a_irq_id_o_mstatus_mie_enabled: assert property(p_irq_id_o_mstatus_mie_enabled)
-    else
-      `uvm_error(info_tag,
-                 $sformatf("int_id_o output is 0x%0x but MSTATUS.MIE is disabled", irq_id_o));
+  // irq_ack_o cannot be asserted without mstatus_mie or U-mode
+  a_irq_id_o_mstatus_mie_enabled: assert property (
+    irq_ack_o
+    |->
+    is_mmode_mstatusmie ^ is_umode_miemip
+  ) else `uvm_error(info_tag, $sformatf("interrupt handler taken but unexpected mie"));
+  cov_irq_id_o_mstatus_mstatusmie: cover property (irq_ack_o #-# is_mmode_mstatusmie);
+  cov_irq_id_o_mstatus_miemip:     cover property (irq_ack_o #-# is_umode_miemip);
+
 
   // ---------------------------------------------------------------------------
   // Interrupt CSR checks
@@ -264,7 +272,7 @@ module uvmt_cv32e40s_interrupt_assert
       expected_irq <= next_irq_q;
   end
 
-  assign expected_irq_ack = next_irq_valid & mstatus_mie;
+  assign expected_irq_ack = next_irq_valid && (is_mmode_mstatusmie || is_umode_miemip);
 
   // Check expected interrupt wins
   property p_irq_arb;
@@ -280,9 +288,7 @@ module uvmt_cv32e40s_interrupt_assert
     irq_ack_o |-> expected_irq_ack;
   endproperty
   a_irq_expected: assert property(p_irq_expected)
-    else
-      `uvm_error(info_tag,
-                 $sformatf("Did not expect interrupt ack: %0d", irq_id_o))
+    else `uvm_error(info_tag, $sformatf("Did not expect interrupt ack: %0d", irq_id_o))
 
   // ---------------------------------------------------------------------------
   // The infamous "first" flag (kludge for $past() handling of t=0 values)
@@ -335,16 +341,23 @@ module uvmt_cv32e40s_interrupt_assert
                   (wb_stage_instr_rdata_i == WFI_INSTR_DATA) &&
                   !branch_taken_ex                           &&
                   !wb_stage_instr_err_i                      &&
+                  !((priv_lvl == PRIV_LVL_U) && mstatus_tw)  &&
+                  (wb_stage_instr_mpu_status == MPU_OK);
+    assign is_wfe = wb_stage_instr_valid_i                   &&
+                  (wb_stage_instr_rdata_i == WFE_INSTR_DATA) &&
+                  !branch_taken_ex                           &&
+                  !((priv_lvl == PRIV_LVL_U) && mstatus_tw)  &&
+                  !wb_stage_instr_err_i                      &&
                   (wb_stage_instr_mpu_status == MPU_OK);
   always @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      in_wfi <= 1'b0;
+      in_wfi_wfe <= 1'b0;
     end
     else begin
-      if (is_wfi)
-        in_wfi <= 1'b1;
+      if ((is_wfi || is_wfe) && !in_wfi_wfe) //
+        in_wfi_wfe <= 1'b1;
       else if (|pending_enabled_irq || debug_req_i)
-        in_wfi <= 1'b0;
+        in_wfi_wfe <= 1'b0;
     end
   end
 
@@ -352,10 +365,10 @@ module uvmt_cv32e40s_interrupt_assert
 
   // WFI assertion will assert core_sleep_o (in WFI_TO_CORE_SLEEP_LATENCY cycles after wb, given ideal conditions)
   property p_wfi_assert_core_sleep_o;
-    !in_wfi
-    ##1 (in_wfi && !pending_enabled_irq && !debug_mode_q && !debug_req_i)[*(WFI_TO_CORE_SLEEP_LATENCY-1)]
+    !in_wfi_wfe
+    ##1 (in_wfi_wfe && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i)[*(WFI_TO_CORE_SLEEP_LATENCY-1)]
     ##1 (
-      (in_wfi && !pending_enabled_irq && !debug_mode_q && !debug_req_i)
+      (in_wfi_wfe && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i)
         throughout $past(pipeline_ready_for_wfi)[->1]
       )
     |->
@@ -369,9 +382,9 @@ module uvmt_cv32e40s_interrupt_assert
 
   // WFI assertion will assert core_sleep_o (after required conditions are met)
   property p_wfi_assert_core_sleep_o_cond;
-    !in_wfi
+    !in_wfi_wfe
     ##1 (
-      (in_wfi && !pending_enabled_irq && !debug_mode_q && !debug_req_i)
+      (in_wfi_wfe && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i)
       throughout (##1 ($past(pipeline_ready_for_wfi)[->1]) )
       )
     |->
@@ -385,7 +398,7 @@ module uvmt_cv32e40s_interrupt_assert
 
   // core_sleep_o deassertion in wfi should be followed by WFI deassertion
   property p_core_sleep_deassert;
-    $fell(core_sleep_o) ##0 in_wfi |-> ##1 !in_wfi;
+    $fell(core_sleep_o) ##0 in_wfi_wfe |-> ##1 !in_wfi_wfe;
   endproperty
   a_core_sleep_deassert: assert property(p_core_sleep_deassert)
     else
@@ -394,7 +407,7 @@ module uvmt_cv32e40s_interrupt_assert
 
   // When WFI deasserts the core should be awake
   property p_wfi_deassert_core_sleep_o;
-    core_sleep_o ##1 pending_enabled_irq |-> !core_sleep_o;
+    core_sleep_o ##1 |pending_enabled_irq |-> !core_sleep_o;
   endproperty
   a_wfi_deassert_core_sleep_o: assert property(p_wfi_deassert_core_sleep_o)
     else
@@ -403,15 +416,15 @@ module uvmt_cv32e40s_interrupt_assert
 
   // Outside of WFI, the core should not sleep
   a_wfi_deny_core_sleep_o: assert property (
-    !in_wfi |-> !core_sleep_o
+    !in_wfi_wfe |-> !core_sleep_o
   ) else
     `uvm_error(info_tag, "Only WFI should trigger core sleep");
 
   // WFI wakeup to next instruction fetch/execution
   property p_wfi_wake_to_instr_fetch;
     disable iff (!rst_ni || !fetch_enable_i || debug_mode_q)
-    core_sleep_o && in_wfi
-    ##1 !in_wfi[->1]
+    core_sleep_o && in_wfi_wfe
+    ##1 !in_wfi_wfe[->1]
     |->
     ##[0:WFI_WAKEUP_LATENCY]
       ($rose(if_stage_instr_req_o)  // IF starts fetching again
@@ -424,7 +437,7 @@ module uvmt_cv32e40s_interrupt_assert
 
   // Cover property, detect sleep deassertion due to asserted and non-asserted interrupts
   property p_wfi_wake_mstatus_mie(irq, mie);
-    $fell(in_wfi) ##0 irq_i[irq] ##0 mie_q[irq] ##0 mstatus_mie == mie;
+    $fell(in_wfi_wfe) ##0 irq_i[irq] ##0 mie_q[irq] ##0 mstatus_mie == mie;
   endproperty
 
   generate for(genvar gv_i = 0; gv_i < 32; gv_i++) begin : gen_wfi_cov

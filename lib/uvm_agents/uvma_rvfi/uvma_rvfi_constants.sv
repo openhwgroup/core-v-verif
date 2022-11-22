@@ -27,6 +27,7 @@ localparam GPR_ADDR_WL      = 5;
 localparam RVFI_DBG_WL      = 3;
 localparam RVFI_NMIP_WL     = 2;
 localparam CYCLE_CNT_WL     = 32;
+localparam NMEM             = 128;
 
 // Fields within TRAP
 localparam TRAP_EXCP_LSB         = 0;
@@ -43,6 +44,5 @@ localparam TRAP_DBG_CAUSE_WL     = 3;
 localparam DEFAULT_ILEN     = 32;
 localparam DEFAULT_XLEN     = 32;
 localparam DEFAULT_NRET     = 1;
-
 
 `endif // __UVMA_RVFI_CONSTANTS_SV__

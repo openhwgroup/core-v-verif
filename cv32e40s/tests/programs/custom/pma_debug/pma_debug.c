@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define  DEBUG_REQ_CONTROL_REG  *(volatile int *) CV_VP_DEBUG_CONTROL_BASE)
 

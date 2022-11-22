@@ -160,7 +160,7 @@ class pma_adapted_memory_regions_c;
   /*
   * Function: add_region
   *
-  * Inputs: pma_cfg_t       pma_region - Region to compute real bounds and insert into modified pma config stack
+  * Inputs: pma_cfg_t    pma_region - Region to compute real bounds and insert into modified pma config stack
   *         int             pma_prio   - Priority of sampled PMA region (index in original array)
   *         region_status_e stack_flag - Region status flag
   *

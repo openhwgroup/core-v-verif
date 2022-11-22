@@ -58,7 +58,7 @@ XRUN_LDGEN_COMP_FLAGS ?= -64bit -disable_sem2009 -access +rwc \
 												 $(TIMESCALE) $(SV_CMP_FLAGS)
 
 XRUN_RUN_BASE_FLAGS ?= -64bit $(XRUN_GUI) -licqueue +UVM_VERBOSITY=$(XRUN_UVM_VERBOSITY) \
-                       $(XRUN_PLUSARGS) -svseed $(RNDSEED) -sv_lib $(OVP_MODEL_DPI)
+                       $(XRUN_PLUSARGS) -svseed $(RNDSEED)
 XRUN_GUI         ?=
 XRUN_SINGLE_STEP ?=
 XRUN_ELAB_COV     = -covdut uvmt_$(CV_CORE_LC)_tb -coverage b:e:f:u
@@ -171,13 +171,11 @@ endif
 XRUN_UVM_MACROS_INC_FILE = $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC)_uvm_macros_inc.sv
 
 XRUN_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-XRUN_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 XRUN_USER_COMPILE_ARGS += +define+UVM
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 	XRUN_PLUSARGS += +USE_ISS
-else
-    XRUN_PLUSARGS += +DISABLE_OVPSIM
+	XRUN_USER_COMPILE_ARGS += +define+USE_IMPERASDV
 endif
 ifeq ($(call IS_YES,$(USE_RVVI)),YES)
     XRUN_PLUSARGS +="+USE_RVVI"

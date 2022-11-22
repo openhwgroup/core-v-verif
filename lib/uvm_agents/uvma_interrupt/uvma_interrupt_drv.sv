@@ -120,7 +120,7 @@ task uvma_interrupt_drv_c::run_phase(uvm_phase phase);
    super.run_phase(phase);
 
    // Enable the driver in the interface
-   cntxt.vif.is_active = 1;
+   cntxt.vif.is_active = cfg.enabled;
 
    // Fork thread to deassert randomly asserted interrupts when acknowledged
    fork
@@ -219,7 +219,7 @@ endtask : deassert_irq
 task uvma_interrupt_drv_c::irq_ack_clear();
    while(1) begin
       @(cntxt.vif.mon_cb);
-      if (cntxt.vif.mon_cb.irq_ack) begin
+      if (cntxt.vif.mon_cb.irq_ack && cfg.enabled) begin
          // Try to get the semaphore for the irq_id,
          // If we can't get it, then this irq is managed by assert_irq_until_ack and we will ignore this ack
          // Otherwise deassert the interrupt

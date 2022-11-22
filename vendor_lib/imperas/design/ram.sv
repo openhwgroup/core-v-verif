@@ -15,10 +15,11 @@
  * for the location of the open source models.
  *
  */
-`ifndef __IMPERAS_RVVI_MEMORY__
-`define __IMPERAS_RVVI_MEMORY__
 
- `include "typedefs.sv"
+`ifndef __IMPERAS_RAM_SV__
+`define __IMPERAS_RAM_SV__
+
+`include "typedefs.sv"
 
 interface RVVI_memory;
 
@@ -119,4 +120,4 @@ module RAM
     end
 endmodule
 
-`endif // __IMPERAS_RVVI_MEMORY__
+`endif // __IMPERAS_RAM_SV__
