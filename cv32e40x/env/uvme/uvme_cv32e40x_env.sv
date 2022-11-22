@@ -197,6 +197,7 @@ function void uvme_cv32e40x_env_c::connect_phase(uvm_phase phase);
    super.connect_phase(phase);
 
    if (cfg.enabled) begin
+
       if (cfg.scoreboarding_enabled) begin
          connect_predictor ();
          connect_scoreboard();

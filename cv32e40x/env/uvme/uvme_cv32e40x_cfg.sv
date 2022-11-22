@@ -33,6 +33,7 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
    bit                              obi_memory_instr_one_shot_err_enabled = 0;
    bit                              obi_memory_data_random_err_enabled    = 0;
    bit                              obi_memory_data_one_shot_err_enabled  = 0;
+   bit                              iss_suppress_invalid_msg              = 0;
    rand bit                         buserr_scoreboarding_enabled          = 1;
 
    // Agent cfg handles
@@ -58,6 +59,7 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_int (                         obi_memory_instr_one_shot_err_enabled, UVM_DEFAULT  )
       `uvm_field_int (                         obi_memory_data_random_err_enabled,    UVM_DEFAULT  )
       `uvm_field_int (                         obi_memory_data_one_shot_err_enabled,  UVM_DEFAULT  )
+      `uvm_field_int (                         iss_suppress_invalid_msg,              UVM_DEFAULT  )
 
       `uvm_field_object(isacov_cfg           , UVM_DEFAULT)
       `uvm_field_object(clknrst_cfg          , UVM_DEFAULT)
@@ -344,9 +346,10 @@ function uvme_cv32e40x_cfg_c::new(string name="uvme_cv32e40x_cfg");
    debug_cfg = uvma_debug_cfg_c::type_id::create("debug_cfg");
    obi_memory_instr_cfg = uvma_obi_memory_cfg_c::type_id::create("obi_memory_instr_cfg");
    obi_memory_data_cfg  = uvma_obi_memory_cfg_c::type_id::create("obi_memory_data_cfg" );
-   rvfi_cfg = uvma_rvfi_cfg_c#(ILEN,XLEN)::type_id::create("rvfi_cfg");
-   fencei_cfg = uvma_fencei_cfg_c::type_id::create("fencei_cfg");
-   pma_cfg = uvma_pma_cfg_c#(ILEN,XLEN)::type_id::create("pma_cfg");
+   rvfi_cfg             = uvma_rvfi_cfg_c#(ILEN,XLEN)::type_id::create("rvfi_cfg");
+   fencei_cfg           = uvma_fencei_cfg_c::type_id::create("fencei_cfg");
+   pma_cfg              = uvma_pma_cfg_c#(ILEN,XLEN)::type_id::create("pma_cfg");
+
 
    obi_memory_instr_cfg.mon_logger_name = "OBII";
    obi_memory_data_cfg.mon_logger_name  = "OBID";
@@ -414,6 +417,9 @@ function bit uvme_cv32e40x_cfg_c::is_csr_check_disabled(string name);
 endfunction : is_csr_check_disabled
 
 function void uvme_cv32e40x_cfg_c::configure_disable_csr_checks();
+
+   // TODO: remove when fixed in ISS
+   disable_csr_check("misa");
 
    // Not possible to test on a cycle-by-cycle basis
    disable_csr_check("mip");

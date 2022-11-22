@@ -19,9 +19,6 @@
 `define __UVME_CV32E40X_VP_FENCEI_TAMPER_SEQ_SV__
 
 
-// TODO:silabs-robin  Double check that the IDV porting from 40s went well in this file
-
-
 class uvme_cv32e40x_vp_fencei_tamper_seq_c extends uvma_obi_memory_vp_base_seq_c;
 
   uvme_cv32e40x_cntxt_c    cv32e40x_cntxt;
@@ -112,6 +109,7 @@ function void uvme_cv32e40x_vp_fencei_tamper_seq_c::write_rtl_mem();
   cntxt.mem.write((addr + 1), data[15: 8]);
   cntxt.mem.write((addr + 2), data[23:16]);
   cntxt.mem.write((addr + 3), data[31:24]);
+
 endfunction : write_rtl_mem
 
 import "DPI-C" context function void rvviRefMemoryWrite(
