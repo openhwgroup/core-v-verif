@@ -620,8 +620,9 @@ module uvmt_cv32e40x_imperas_dv_wrap
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
 
     // TODO silabs-hfegran: temp fix to work around issues
-    rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR, RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR, RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR,   RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_TDATA1_ADDR, RVVI_FALSE);
+    rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR,  RVVI_FALSE);
     // end TODO
 
     // define asynchronous grouping

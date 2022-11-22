@@ -418,6 +418,8 @@ endfunction : is_csr_check_disabled
 
 function void uvme_cv32e40x_cfg_c::configure_disable_csr_checks();
 
+   // TODO:silabs-robin  Are these deprecated with the new iss infrastructure?
+
    // TODO: remove when fixed in ISS
    disable_csr_check("misa");
 
