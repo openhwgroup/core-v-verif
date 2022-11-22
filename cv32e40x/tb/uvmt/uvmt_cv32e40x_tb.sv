@@ -507,17 +507,6 @@ module uvmt_cv32e40x_tb;
     // IMPERAS DV
     uvmt_cv32e40x_imperas_dv_wrap imperas_dv (rvvi_if);
 
-    // IMPERAS OVPsim ISS (planned for deprecation)
-    uvmt_cv32e40x_iss_wrap  #(
-                              .ID (0),
-                              .ROM_START_ADDR('h0),
-                              .ROM_BYTE_SIZE('h0),
-                              .RAM_BYTE_SIZE('h1_0000_0000)
-                             )
-                             iss_wrap ( .clk_period(clknrst_if.clk_period),
-                                        .clknrst_if(clknrst_if_iss)
-                             );
-
     assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
 
    /**
@@ -667,15 +656,6 @@ module uvmt_cv32e40x_tb;
 
      // IMPERAS_DV interface
      uvm_config_db#(virtual rvviTrace)::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("rvvi_vif"), .value(rvvi_if));
-
-     // IMPERAS OVPsim ISS interfaces (planned for deprecation)
-     uvm_config_db#(virtual RVVI_state#(.ILEN(uvme_cv32e40x_pkg::ILEN),
-                                        .XLEN(uvme_cv32e40x_pkg::XLEN)
-                                        ))::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("state_vif"), .value(iss_wrap.cpu.state));
-     uvm_config_db#(virtual RVVI_control                )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("control_vif"), .value(iss_wrap.cpu.control));
-     uvm_config_db#(virtual RVVI_bus                    )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_bus_vif"), .value(iss_wrap.bus));
-     uvm_config_db#(virtual RVVI_io                     )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_io_vif"), .value(iss_wrap.io));
-     uvm_config_db#(virtual RVVI_memory                 )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_mem_vif"), .value(iss_wrap.ram.memory));
 
      // Virtual Peripheral Status interface
      uvm_config_db#(virtual uvmt_cv32e40x_vp_status_if      )::set(.cntxt(null), .inst_name("*"), .field_name("vp_status_vif"),       .value(vp_status_if)      );

@@ -46,8 +46,6 @@ package uvme_cv32e40x_pkg;
    import uvma_debug_pkg::*;
    import uvma_obi_memory_pkg::*;
    import uvma_rvfi_pkg::*;
-   import uvma_rvvi_pkg::*;
-   import uvma_rvvi_ovpsim_pkg::*;
    import uvma_fencei_pkg::*;
    import uvma_pma_pkg::*;
 
@@ -91,7 +89,6 @@ package uvme_cv32e40x_pkg;
    `include "uvme_counters_covg.sv"
    `include "uvme_cv32e40x_cov_model.sv"
    `include "uvme_cv32e40x_sb.sv"
-   `include "uvme_cv32e40x_core_sb.sv"
    `include "uvme_cv32e40x_buserr_sb.sv"
    `include "uvme_cv32e40x_vsqr.sv"
    `include "uvme_cv32e40x_env.sv"
