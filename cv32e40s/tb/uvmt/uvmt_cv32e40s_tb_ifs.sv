@@ -126,6 +126,34 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] core_rf_wdata_wb,
     input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [REGFILE_NUM_WORDS],
 
+    // OBI interface
+    input logic core_i_if_stage_i_instruction_obi_i_integrity_fifo_i_rchk_i_resp_i_integrity,
+    input logic core_i_if_stage_i_bus_resp_integrity,
+    input obi_data_resp_t core_i_if_stage_i_bus_resp,
+    input logic core_i_load_store_unit_i_bus_resp_integrity,
+    input obi_data_resp_t core_i_load_store_unit_i_bus_resp,
+    input logic core_i_load_store_unit_i_bus_trans_we,
+    input logic core_i_load_store_unit_i_data_obi_i_integrity_fifo_i_resp_is_store,
+
+    input obi_data_req_t core_i_m_c_obi_data_if_req_payload,
+    input obi_data_resp_t core_i_m_c_obi_data_if_resp_payload,
+    input obi_inst_req_t core_i_m_c_obi_instr_if_req_payload,
+    input obi_inst_resp_t core_i_m_c_obi_instr_if_resp_payload,
+
+    input logic core_i_m_c_obi_data_if_s_req_req,
+    input logic core_i_m_c_obi_data_if_s_req_reqpar,
+    input logic core_i_m_c_obi_data_if_s_gnt_gnt,
+    input logic core_i_m_c_obi_data_if_s_gnt_gntpar,
+    input logic core_i_m_c_obi_data_if_s_rvalid_rvalid,
+    input logic core_i_m_c_obi_data_if_s_rvalid_rvalidpar,
+
+    input logic core_i_m_c_obi_instr_if_s_req_req,
+    input logic core_i_m_c_obi_instr_if_s_req_reqpar,
+    input logic core_i_m_c_obi_instr_if_s_gnt_gnt,
+    input logic core_i_m_c_obi_instr_if_s_gnt_gntpar,
+    input logic core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+    input logic core_i_m_c_obi_instr_if_s_rvalid_rvalidpar,
+
     // CSR
     input logic core_alert_minor_o,
     input logic core_alert_major_o,
@@ -205,21 +233,6 @@ interface uvmt_cv32e40s_xsecure_if
     // BASIC
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q,
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q,
-
-    // OBI interface
-    input logic core_i_m_c_obi_data_if_s_req_req,
-    input logic core_i_m_c_obi_data_if_s_req_reqpar,
-    input logic core_i_m_c_obi_data_if_s_gnt_gnt,
-    input logic core_i_m_c_obi_data_if_s_gnt_gntpar,
-    input logic core_i_m_c_obi_data_if_s_rvalid_rvalid,
-    input logic core_i_m_c_obi_data_if_s_rvalid_rvalidpar,
-
-    input logic core_i_m_c_obi_instr_if_s_req_req,
-    input logic core_i_m_c_obi_instr_if_s_req_reqpar,
-    input logic core_i_m_c_obi_instr_if_s_gnt_gnt,
-    input logic core_i_m_c_obi_instr_if_s_gnt_gntpar,
-    input logic core_i_m_c_obi_instr_if_s_rvalid_rvalid,
-    input logic core_i_m_c_obi_instr_if_s_rvalid_rvalidpar,
 
     // IF stage
     input logic core_if_stage_if_valid_o,

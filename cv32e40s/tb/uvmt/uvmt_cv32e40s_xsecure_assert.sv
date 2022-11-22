@@ -1165,7 +1165,7 @@ module uvmt_cv32e40s_xsecure_assert
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar)
-  ) else `uvm_error(info_tag, "Parity signal rvalidpar to the data obi bus is not invers of respons valid signal.\n");
+  ) else `uvm_error(info_tag, "Parity signal rvalidpar to the data obi bus is not invers of response valid signal.\n");
 
   a_xsecure_interface_integrety_obi_instr_req_parity: assert property (
     p_parity_signal_is_invers_of_signal(
@@ -1183,7 +1183,7 @@ module uvmt_cv32e40s_xsecure_assert
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar)
-  ) else `uvm_error(info_tag, "Parity signal rvalidpar to the instruction obi bus is not invers of respons valid signal.\n");
+  ) else `uvm_error(info_tag, "Parity signal rvalidpar to the instruction obi bus is not invers of response valid signal.\n");
 
 
 property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_signal);
@@ -1223,6 +1223,304 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ) else `uvm_error(info_tag, "Obi instruction bus rvalid signal and parity signal mismatch dont set major alert.\n");
 
 
-  //TODO: interface assertions
+  // Response phase signal checksums (achk for data and instructions) //
+
+  sequence seq_response_phase_checksum(is_write_transaction, rchk, rdata, err, exokay);
+    (is_write_transaction
+    && rchk[4] == ^{err, exokay})
+
+    || (!is_write_transaction
+    && rchk[0] == ^rdata[7:0]
+    && rchk[1] == ^rdata[15:8]
+    && rchk[2] == ^rdata[23:16]
+    && rchk[3] == ^rdata[31:24]
+    && rchk[4] == ^{err, exokay});
+
+  endsequence
+
+
+  logic exokay_tie_off_value;
+  assign exokay_tie_off_value = 1'b0;
+
+  localparam NO_WRITE_TRANSACTION = 1'b0;
+
+  a_xsecure_interface_integrety_rchk_instr_no_glitch: assert property (
+    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    && xsecure_if.core_i_if_stage_i_bus_resp.integrity
+
+    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
+
+    |->
+    seq_response_phase_checksum(
+      NO_WRITE_TRANSACTION,
+      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
+      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rdata,
+      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.err,
+      exokay_tie_off_value
+    )
+
+  ) else `uvm_error(info_tag, "The response phase checksum for instructions is generated wrongly.\n");
+
+
+  a_xsecure_interface_integrety_rchk_data_no_glitch: assert property (
+    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    && xsecure_if.core_i_load_store_unit_i_bus_resp.integrity
+
+    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+
+    |->
+    seq_response_phase_checksum(
+      xsecure_if.core_i_load_store_unit_i_data_obi_i_integrity_fifo_i_resp_is_store,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
+      exokay_tie_off_value
+    )
+  ) else `uvm_error(info_tag, "The response phase checksum for data is generated wrongly.\n");
+
+
+  sequence seq_response_phase_checksum_error(is_write_transaction, rchk, rdata, err, exokay);
+    (is_write_transaction
+    && rchk[4] != ^{err, exokay})
+
+    || (!is_write_transaction
+    && (rchk[0] != ^rdata[7:0]
+    || rchk[1] != ^rdata[15:8]
+    || rchk[2] != ^rdata[23:16]
+    || rchk[3] != ^rdata[31:24]
+    || rchk[4] != ^{err, exokay}));
+
+  endsequence
+
+
+  a_xsecure_interface_integrety_rchk_instr_glitch: assert property (
+    @(posedge xsecure_if.core_clk)
+    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    && xsecure_if.core_i_if_stage_i_bus_resp.integrity
+
+    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
+
+    ##0 seq_response_phase_checksum_error(
+      NO_WRITE_TRANSACTION,
+      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
+      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rdata,
+      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.err,
+      exokay_tie_off_value)
+
+    |=>
+    xsecure_if.core_alert_major_o
+
+  ) else `uvm_error(info_tag, "The response phase checksum for instructions is generated wrongly.\n");
+
+  // todo: consider to make support logic for retriving the is_store signal and the resp_integrity signal.
+  // todo: even Vs. odd parity?
+  a_xsecure_interface_integrety_rchk_data_glitch: assert property (
+    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    && xsecure_if.core_i_load_store_unit_i_bus_resp.integrity
+
+    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+
+    ##0 seq_response_phase_checksum_error(
+      xsecure_if.core_i_load_store_unit_i_data_obi_i_integrity_fifo_i_resp_is_store,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
+      exokay_tie_off_value)
+
+    |=>
+    xsecure_if.core_alert_major_o
+
+  ) else `uvm_error(info_tag, "The response phase checksum for data is generated wrongly.\n");
+
+  // off //
+  a_xsecure_interface_integrety_rchk_instr_glitch_off: assert property (
+    @(posedge xsecure_if.core_clk)
+    !xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    && xsecure_if.core_i_if_stage_i_bus_resp.integrity
+
+    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
+
+    ##0 seq_response_phase_checksum_error(
+      NO_WRITE_TRANSACTION,
+      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
+      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rdata,
+      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.err,
+      exokay_tie_off_value)
+
+    |=>
+    !xsecure_if.core_alert_major_o
+
+  ) else `uvm_error(info_tag, "The response phase checksum for instructions is generated wrongly.\n");
+
+  a_xsecure_interface_integrety_rchk_data_glitch_off: assert property (
+    !xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    && xsecure_if.core_i_load_store_unit_i_bus_resp.integrity
+
+    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+
+    ##0 seq_response_phase_checksum_error(
+      xsecure_if.core_i_load_store_unit_i_data_obi_i_integrity_fifo_i_resp_is_store,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
+      exokay_tie_off_value)
+
+    |=>
+    !xsecure_if.core_alert_major_o
+
+  ) else `uvm_error(info_tag, "The response phase checksum for data is generated wrongly.\n");
+
+
+ // Adresse phase checksums //
+
+  sequence seq_address_phase_checksum(achk, addr, prot, memtype, be, we, dbg, atop, wdata);
+  //16 00010110
+    achk[0] == ^addr[7:0]
+    && achk[1] == ^addr[15:8]
+    && achk[2] == ^addr[23:16]
+    && achk[3] == ^addr[31:24]
+    && achk[4] == ~^{prot[2:0], memtype[1:0]}
+    && achk[5] == ~^{be[3:0], we}
+    && achk[6] == ~^dbg
+    && achk[7] == ^atop[5:0]
+    && achk[8] == ^wdata[7:0]
+    && achk[9] == ^wdata[15:8]
+    && achk[10] == ^wdata[23:16]
+    && achk[11] == ^wdata[31:24];
+
+  endsequence
+
+  localparam assumed_value_be = 4'b1111;
+  localparam assumed_value_we = 1'b0;
+  localparam assumed_value_atop = 6'b00_0000;
+  localparam assumed_value_wdata = 32'h0000_0000;
+
+  a_xsecure_interface_integrety_achk_instr_no_glitch: assert property (
+    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    && xsecure_if.core_i_if_stage_i_bus_resp.integrity //?
+
+    && xsecure_if.core_i_m_c_obi_instr_if_s_req_req
+
+    |->
+    seq_address_phase_checksum(
+      xsecure_if.core_i_m_c_obi_instr_if_req_payload.achk,
+      xsecure_if.core_i_m_c_obi_instr_if_req_payload.addr,
+      xsecure_if.core_i_m_c_obi_instr_if_req_payload.prot,
+      xsecure_if.core_i_m_c_obi_instr_if_req_payload.memtype,
+      assumed_value_be,
+      assumed_value_we,
+      xsecure_if.core_i_m_c_obi_instr_if_req_payload.dbg,
+      assumed_value_atop,
+      assumed_value_wdata)
+
+  ) else `uvm_error(info_tag, "The response phase checksum for instructions is generated wrongly.\n");
+
+  a_xsecure_interface_integrety_achk_data_no_glitch: assert property (
+    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    && xsecure_if.core_i_load_store_unit_i_bus_resp.integrity
+
+    && xsecure_if.core_i_m_c_obi_data_if_s_req_req
+
+    |->
+    seq_address_phase_checksum(
+      xsecure_if.core_i_m_c_obi_data_if_req_payload.achk,
+      xsecure_if.core_i_m_c_obi_data_if_req_payload.addr,
+      xsecure_if.core_i_m_c_obi_data_if_req_payload.prot,
+      xsecure_if.core_i_m_c_obi_data_if_req_payload.memtype,
+      xsecure_if.core_i_m_c_obi_data_if_req_payload.be,
+      xsecure_if.core_i_m_c_obi_data_if_req_payload.we,
+      xsecure_if.core_i_m_c_obi_data_if_req_payload.dbg,
+      assumed_value_atop,
+      xsecure_if.core_i_m_c_obi_data_if_req_payload.wdata)
+
+  ) else `uvm_error(info_tag, "The response phase checksum for datauctions is generated wrongly.\n");
+
+  //Videre:
+  /*
+  R-123.3:
+  An instruction shall have an associated integrity error if any of its related (32-bit) instr_rdata_i
+  fetches and/or alignment buffer entries indicate an integrity error or alignment buffer based checksum error.
+
+  If checksum dont match or parity dont match |=> integrety error should be set.
+  Med en gang instruksjonen sendes inn:
+  checksum for en instruksjon
+  parity for en instruksjon
+  dersom noen av de er "feil" sjekk om integrity_error bittet er satt.
+
+  todo: spør noen om den ekstra informasjonssetningen til R-123.3
+  */
+    //Signal determing if the core clock is active or not.
+  logic core_clock_cycles;
+
+  always @(posedge clk_i) begin
+    if(!rst_ni) begin
+      core_clock_cycles <= 0;
+    end else begin
+      core_clock_cycles <= xsecure_if.clk_en;
+    end
+  end
+
+  a_xsecure_interface_integrety_instr_error_set_if_parity_or_checksum_error: assert property (
+    @(posedge xsecure_if.core_clk)
+
+    ((xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar == xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt
+
+    || xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar == xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid)
+
+    or (seq_response_phase_checksum_error(
+      NO_WRITE_TRANSACTION,
+      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
+      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rdata,
+      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.err,
+      exokay_tie_off_value)))
+
+    and (core_clock_cycles == 1
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    && xsecure_if.core_i_if_stage_i_bus_resp.integrity
+
+    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
+    )
+
+    |-> xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
+
+  ) else `uvm_error(info_tag, "The response phase checksum for datauctions is generated wrongly.\n");
+
+
+
+  a_xsecure_interface_integrety_data_error_set_if_parity_or_checksum_error: assert property (
+    @(posedge xsecure_if.core_clk)
+
+    ((xsecure_if.core_i_m_c_obi_data_if_s_gnt_gntpar == xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt
+
+    || xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar == xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid)
+
+    or seq_response_phase_checksum_error(
+      xsecure_if.core_i_load_store_unit_i_data_obi_i_integrity_fifo_i_resp_is_store,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
+      exokay_tie_off_value))
+
+    and (core_clock_cycles == 1
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    && xsecure_if.core_i_load_store_unit_i_bus_resp.integrity
+
+    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+    )
+
+    |->
+    xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err
+    ) else `uvm_error(info_tag, "The response phase checksum for datauctions is generated wrongly.\n");
+
 
 endmodule : uvmt_cv32e40s_xsecure_assert
