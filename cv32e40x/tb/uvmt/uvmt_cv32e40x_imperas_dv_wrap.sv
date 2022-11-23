@@ -105,6 +105,11 @@
 `define CSR_MCYCLE_ADDR        32'hB00
 `define CSR_MINSTRET_ADDR      32'hB02
 
+`define CSR_CYCLE_ADDR         32'hC00
+`define CSR_INSTRET_ADDR       32'hC02
+`define CSR_CYCLEH_ADDR        32'hC80
+`define CSR_INSTRETH_ADDR      32'hC82
+
 `define CSR_MHPMCOUNTER3_ADDR  32'hB03
 `define CSR_MHPMCOUNTER4_ADDR  32'hB04
 `define CSR_MHPMCOUNTER5_ADDR  32'hB05
@@ -515,6 +520,10 @@ module uvmt_cv32e40x_imperas_dv_wrap
 
     hart_id = 32'h0000_0000;
 
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLE_ADDR        ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLEH_ADDR       ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRET_ADDR      ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRETH_ADDR     ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLE_ADDR       ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLEH_ADDR      ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MINSTRET_ADDR     ));
