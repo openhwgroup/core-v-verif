@@ -110,9 +110,11 @@ endinterface : uvmt_cv32e40s_core_status_if
 interface uvmt_cv32e40s_xsecure_if
     import cv32e40s_pkg::*;
     import cv32e40s_rvfi_pkg::*;
-    #(parameter int     MTVT_ADDR_WIDTH = 5,
-    parameter int       PMP_NUM_REGIONS = 2,
-    parameter int       PMP_ADDR_WIDTH =6
+    import uvmt_cv32e40s_pkg::*;
+    #(
+      parameter int     MTVT_ADDR_WIDTH = 5,
+      parameter int     PMP_NUM_REGIONS = 2,
+      parameter int     PMP_ADDR_WIDTH  = 6
     )
 
     (
@@ -124,7 +126,8 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_rf_we_wb,
     input logic [4:0] core_rf_waddr_wb,
     input logic [31:0] core_rf_wdata_wb,
-    input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [REGFILE_NUM_WORDS],
+    input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [CORE_PARAM_REGFILE_NUM_WORDS],
+    input logic [31:0] core_i_jump_target_id,
 
     // OBI interface
     input logic core_i_if_stage_i_instruction_obi_i_integrity_fifo_i_rchk_i_resp_i_integrity,
@@ -161,6 +164,7 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_xsecure_ctrl_cpuctrl_dataindtiming,
     input logic core_xsecure_ctrl_cpuctrl_rnddummy,
     input logic core_xsecure_ctrl_cpuctrl_integrity,
+    input logic core_xsecure_ctrl_cpuctrl_pc_hardening,
 
     input logic [3:0] core_xsecure_ctrl_cpuctrl_rnddummyfreq,
     input logic core_if_stage_gen_dummy_instr_dummy_instr_dummy_en,
@@ -188,6 +192,8 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_cs_registers_xsecure_lfsr1_seed_we,
     input logic core_cs_registers_xsecure_lfsr2_seed_we,
 
+    input logic [31:0] core_i_cs_registers_i_mepc_o,
+
     // Hardened CSR registers
     input logic [31:0] core_i_cs_registers_i_jvt_csr_i_rdata_q,
     input logic [31:0] core_i_cs_registers_i_mstatus_csr_i_rdata_q,
@@ -205,7 +211,6 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q,
     input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q,
     input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mclicbase_csr_i_rdata_q,
 
     // BASE
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q,
@@ -228,7 +233,6 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q,
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q,
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mclicbase_csr_gen_hardened_shadow_q,
 
     // BASIC
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q,
@@ -244,9 +248,17 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_if_stage_instr_meta_n_dummy,
     input logic core_i_if_stage_i_instr_hint,
 
+    input logic [31:0] core_i_if_stage_i_pc_if_o,
+    input logic core_i_if_stage_i_pc_check_i_pc_set_q,
+
+
+
     // IF ID pipe
     input logic core_if_id_pipe_instr_meta_dummy,
     input logic [31:0] core_if_id_pipe_instr_bus_resp_rdata,
+    input logic [31:0] core_i_id_stage_i_if_id_pipe_i_pc,
+    input logic core_i_if_stage_i_pc_check_i_if_id_pipe_i_instr_meta_tbljmp,
+    input logic core_i_if_stage_i_pc_check_i_if_id_pipe_i_last_op,
 
     // ID stage
     input logic core_id_stage_id_valid_o,
@@ -258,12 +270,19 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_id_ex_pipe_instr_meta_dummy,
     input logic [31:0] core_id_ex_pipe_instr_bus_resp_rdata,
 
+    //EX stage
+    input logic [31:0] core_i_ex_stage_i_branch_target_o,
+    input logic core_i_ex_stage_i_alu_i_cmp_result_o,
+
     // EX WB pipe
     input logic core_wb_stage_ex_wb_pipe_instr_meta_dummy,
 
     // WB stage
-    input logic core_wb_stage_wb_valid_o
+    input logic core_wb_stage_wb_valid_o,
 
+    // CTRL
+    input logic core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set,
+    input logic [3:0] core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux
 );
 
 

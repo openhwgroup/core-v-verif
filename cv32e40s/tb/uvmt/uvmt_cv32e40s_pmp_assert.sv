@@ -61,6 +61,8 @@ module uvmt_cv32e40s_pmp_assert
   generate
     if (IS_INSTR_SIDE === 1'b1 && PMP_NUM_REGIONS > 0) begin : gen_cp_instr_side
       covergroup cg_internals_instr_side @(posedge clk);
+        option.per_instance = 1;
+
         // Machine mode execute accesses
         cp_x_mmode_x                : coverpoint match_status.val_access_allowed_reason.x_mmode_x                { bins low  = {1'b0}; bins high = {1'b1}; }
         cp_x_mmode_lx               : coverpoint match_status.val_access_allowed_reason.x_mmode_lx               { bins low  = {1'b0}; bins high = {1'b1}; }
@@ -107,11 +109,14 @@ module uvmt_cv32e40s_pmp_assert
         cp_r_umode_mml_rw           : coverpoint match_status.val_access_allowed_reason.r_umode_mml_rw           { bins low  = {1'b0}; ignore_bins high = {1'b1}; }
         cp_r_umode_mml_rwx          : coverpoint match_status.val_access_allowed_reason.r_umode_mml_rwx          { bins low  = {1'b0}; ignore_bins high = {1'b1}; }
         cp_r_umode_mml_lrwx         : coverpoint match_status.val_access_allowed_reason.r_umode_mml_lrwx         { bins low  = {1'b0}; ignore_bins high = {1'b1}; }
+        // TODO:silabs-robin  Try swapping all "ignore_bins" with "illegal_bins" in fv
       endgroup : cg_internals_instr_side
       cg_internals_instr_side cg_instr = new();
     end
     else if (IS_INSTR_SIDE === 1'b0 && PMP_NUM_REGIONS > 0) begin : gen_cp_data_side
       covergroup cg_internals_data_side @(posedge clk);
+        option.per_instance = 1;
+
         // Ignore bins for unreachable execute accesses on lsu if
         // Machine mode execute accesses
         cp_x_mmode_x                : coverpoint match_status.val_access_allowed_reason.x_mmode_x                { bins low  = {1'b0}; ignore_bins high = {1'b1}; }
@@ -159,13 +164,15 @@ module uvmt_cv32e40s_pmp_assert
         cp_r_umode_mml_rwx          : coverpoint match_status.val_access_allowed_reason.r_umode_mml_rwx          { bins low  = {1'b0}; bins high = {1'b1}; }
         cp_r_umode_mml_lrwx         : coverpoint match_status.val_access_allowed_reason.r_umode_mml_lrwx         { bins low  = {1'b0}; bins high = {1'b1}; }
       endgroup : cg_internals_data_side
-      cg_internals_data_side cg_instr = new();
+      cg_internals_data_side cg_data = new();
     end
   endgenerate
 
   generate
     if (PMP_NUM_REGIONS > 0) begin : gen_cg_common
       covergroup cg_internals_common @(posedge clk);
+        option.per_instance = 1;
+
         cp_ismatch_tor:   coverpoint model_i.is_match_tor(match_status.val_index) iff (match_status.is_matched);
 
         cp_napot_min_8byte: coverpoint { pmp_req_addr_i[2], csr_pmp_i.addr[match_status.val_index][2] }
@@ -197,7 +204,7 @@ module uvmt_cv32e40s_pmp_assert
     end
   endgenerate
 
-  // NA4 only available in G=1
+  // NA4 only available in G=0  (vplan:Na4Unselectable)
   generate for (genvar region = 0; region < PMP_NUM_REGIONS; region++) begin: gen_na4onlyg0
     a_na4_only_g0: assert property (
       (csr_pmp_i.cfg[region].mode == PMP_MODE_NA4)
@@ -205,15 +212,15 @@ module uvmt_cv32e40s_pmp_assert
       (PMP_GRANULARITY === 1'b 0)
     );
 
-    a_na4_not_when_g: assert property (
-      // "Redundant" assert for (antecedent) coverage
-      (PMP_GRANULARITY !== 1'b 0)
-      |->
-      (csr_pmp_i.cfg[region].mode !== PMP_MODE_NA4)
-    );
+    if (PMP_GRANULARITY !== 1'b 0) begin: gen_na4onlyg0_reverse
+      a_na4_not_when_g: assert property (
+        // "Redundant" assert for coverage
+        (csr_pmp_i.cfg[region].mode !== PMP_MODE_NA4)
+      );
+    end
   end endgenerate
 
-  // NA4 has 4-byte granularity
+  // NA4 has 4-byte granularity  (vplan:NapotMatching)
   generate if (PMP_GRANULARITY == 0 && PMP_NUM_REGIONS > 0) begin: gen_na4is4byte
     a_na4_is_4byte: assert property (
         csr_pmp_i.cfg[match_status.val_index].mode == PMP_MODE_NA4 &&
@@ -224,6 +231,7 @@ module uvmt_cv32e40s_pmp_assert
   end endgenerate
 
   // Spec: "The combination R=0 and W=1 is reserved for future use" - Exception: mml set
+  // (vplan:RwReserved)
   generate for (genvar region = 0; region < PMP_NUM_REGIONS; region++) begin: gen_rwfuture
     a_rw_futureuse: assert property  (
       csr_pmp_i.mseccfg.mml === 1'b0 |->
@@ -232,6 +240,7 @@ module uvmt_cv32e40s_pmp_assert
   end endgenerate
 
   // mseccfg.RLB = 1 LOCKED rules may be modified/removed, LOCKED entries may be modified -> test inverse
+  // (vplan:IgnoreWrites)
   generate for (genvar region = 0; region < PMP_NUM_REGIONS; region++) begin: gen_rlb_locked
     a_norlb_locked_rules_cannot_modify : assert property (
       csr_pmp_i.mseccfg.rlb === 1'b0 && csr_pmp_i.cfg[region].lock === 1'b1 |=>
@@ -280,6 +289,7 @@ module uvmt_cv32e40s_pmp_assert
     // Adding an M-mode-only or a locked Shared-Region rule with executable privileges is not possible and
     // such pmpcfg writes are ignored, leaving pmpcfg unchanged. This restriction can be temporarily lifted
     // e.g. during the boot process, by setting mseccfg.RLB.
+    // (vplan:ExecIgnored)
     a_mmode_only_or_shared_executable_ignore: assert property (
       csr_pmp_i.mseccfg.mml === 1'b1 && csr_pmp_i.mseccfg.rlb === 1'b0 |=>
         $stable(csr_pmp_i.cfg[region])
@@ -300,7 +310,7 @@ module uvmt_cv32e40s_pmp_assert
     );
   end endgenerate
 
-  // Validate PMP mode settings
+  // Validate PMP mode settings  (Not a vplan item)
   generate for (genvar region = 0; region < PMP_NUM_REGIONS; region++) begin: gen_matchmode
     a_matchmode: assert property (
       csr_pmp_i.cfg[region].mode inside {
@@ -313,21 +323,20 @@ module uvmt_cv32e40s_pmp_assert
   end endgenerate
 
   generate if (PMP_NUM_REGIONS > 0) begin : gen_pmp_assert
-    // Check output vs model
+    // Check output vs model  (Myriad vplan items)
     a_accept_only_legal : assert property (
       (pmp_req_err_o === 1'b0) |-> match_status.is_access_allowed
     );
-
     a_deny_only_illegal : assert property (
       pmp_req_err_o |-> (match_status.is_access_allowed === 1'b0)
     );
 
-    // Assert that only one (or none) valid access reason can exist for any given access
+    // Assert that only one (or none) valid access reason can exist for any given access  (Not a vplan item)
     a_unique_access_allowed_reason: assert property (
       $countones(match_status.val_access_allowed_reason) <= 1
     );
 
-    // Validate privilege level
+    // Validate privilege level  (Not a vplan item)
     a_privmode: assert property (
       priv_lvl_i inside {
         PRIV_LVL_M,
@@ -335,7 +344,7 @@ module uvmt_cv32e40s_pmp_assert
       }
     );
 
-    // Validate access type
+    // Validate access type  (Not a vplan item)
     a_req_type: assert property (
       pmp_req_type_i inside {
         PMP_ACC_READ,
@@ -343,11 +352,13 @@ module uvmt_cv32e40s_pmp_assert
         PMP_ACC_EXEC
       }
     );
+
     // SMEPMP 2b: When mseccfg.RLB is 0 and pmpcfg.L is 1 in any rule or entry (including disabled entries), then
     // mseccfg.RLB remains 0 and any further modifications to mseccfg.RLB are ignored until a PMP reset.
     //
     // In other words: mseccfg.RLB = 0 and pmpcfg.L = 1 in any rule or entry (including disabled),
-    // mseccfg.RLB remains 0 and does not change until PMP reset
+    // mseccfg.RLB remains 0 and does not change until PMP reset.
+    // (vplan:RemainZero)
     a_rlb_never_fall_while_locked: assert property (
       csr_pmp_i.mseccfg.rlb === 1'b0 && match_status.is_any_locked |=>
         $stable(csr_pmp_i.mseccfg.rlb)
@@ -355,6 +366,7 @@ module uvmt_cv32e40s_pmp_assert
 
     // SMEPMP 3: On mseccfg we introduce a field in bit 1 called Machine Mode Whitelist Policy (mseccfg.MMWP).
     // This is a sticky bit, meaning that once set it cannot be unset until a PMP reset.
+    // (vplan:WhiteList:StickyUntilReset)
     a_mmwp_never_fall_until_reset: assert property (
       csr_pmp_i.mseccfg.mmwp === 1'b1 |=>
         $stable(csr_pmp_i.mseccfg.mmwp)
@@ -362,18 +374,19 @@ module uvmt_cv32e40s_pmp_assert
 
     // SMEPMP 4: On mseccfg we introduce a field in bit 0 called Machine Mode Lockdown (mseccfg.MML). This is a
     // sticky bit, meaning that once set it cannot be unset until a PMP reset.
+    // (vplan:LockdownGeneral:StickyUntilReset)
     a_mml_never_fall_until_reset: assert property (
       csr_pmp_i.mseccfg.mml === 1'b1 |=>
         $stable(csr_pmp_i.mseccfg.mml)
     );
 
-    // U-mode fails if no match
+    // U-mode fails if no match  (vplan:UmodeNomatch)
     a_nomatch_umode_fails: assert property (
       priv_lvl_i == PRIV_LVL_U && match_status.is_matched == 1'b0 |->
         pmp_req_err_o
     );
 
-    // M-mode fails if: no match, and "mseccfg.MMWP"
+    // M-mode fails if: no match, and "mseccfg.MMWP"  (vplan:WhiteList:Denied)
     a_nomatch_mmode_mmwp_fails: assert property (
       (priv_lvl_i == PRIV_LVL_M)  &&
       !match_status.is_matched  &&
@@ -382,13 +395,14 @@ module uvmt_cv32e40s_pmp_assert
       pmp_req_err_o
     );
 
-    // U-mode or L=1 succeed only if RWX
+    // U-mode or L=1 succeed only if RWX  (vplan:RwxUmode)
     a_uorl_onlyif_rwx: assert property (
+      //TODO:silabs-robin  Why, 'L=1' in comment, 'is_matched' in code?
       ( priv_lvl_i == PRIV_LVL_U || match_status.is_matched == 1'b1 ) && !pmp_req_err_o |->
         match_status.is_rwx_ok
     );
 
-    // After a match, LRWX determines access
+    // After a match, LRWX determines access  (vplan:LrwxDetermines)
     a_lrwx_aftermatch: assert property (
       match_status.is_matched == 1'b1 && !pmp_req_err_o |->
         match_status.is_rwx_ok
@@ -396,12 +410,15 @@ module uvmt_cv32e40s_pmp_assert
 
     // SMEPMP 1: The reset value of mseccfg is implementation-specific, otherwise if backwards
     // compatibility is a requirement it should reset to zero on hard reset.
+    // (vplan:MsecCfg:ResetValue)
     a_mseccfg_reset_val: assert property (
       $rose(rst_n) |-> csr_pmp_i.mseccfg === MSECCFG_RESET_VAL
     );
   end endgenerate
 
-  // Denied accesses don't reach the bus, or don't retire (instr-side)
+
+  // Denied accesses don't reach the bus, or don't retire (instr-side)  (vplan:SuppressReq)
+
   if (IS_INSTR_SIDE) begin: gen_supress_req_instr
     property p_suppress_req_instr;
       logic [31:0]  addr = 0;
@@ -433,12 +450,15 @@ module uvmt_cv32e40s_pmp_assert
       )
       ;
     endproperty : p_suppress_req_instr
+
     a_suppress_req_instr: assert property (
       p_suppress_req_instr
     );
   end
 
-  // Denied accesses don't reach the bus (data-side)
+
+  // Denied accesses don't reach the bus (data-side)  (vplan:SuppressReq)
+
   if (!IS_INSTR_SIDE) begin: gen_supress_req_data
     property p_suppress_req_data;
       logic [31:0]  addr;
@@ -463,12 +483,15 @@ module uvmt_cv32e40s_pmp_assert
       )
       ;
     endproperty : p_suppress_req_data
+
     a_suppress_req_data: assert property (
       p_suppress_req_data
     );
     // TODO:silabs-robin  Add covers, or get reviews, and become convinced this is "bullet proof".
   end
 
+
 endmodule : uvmt_cv32e40s_pmp_assert
+
 
 `default_nettype wire

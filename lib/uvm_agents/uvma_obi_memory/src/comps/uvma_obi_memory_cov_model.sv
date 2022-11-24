@@ -1,20 +1,20 @@
-// 
+//
 // Copyright 2021 OpenHW Group
 // Copyright 2021 Datum Technology Corporation
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-// 
+//
 // Licensed under the Solderpad Hardware License v 2.1 (the "License"); you may
 // not use this file except in compliance with the License, or, at your option,
 // the Apache License version 2.0. You may obtain a copy of the License at
-// 
+//
 //     https://solderpad.org/licenses/SHL-2.1/
-// 
+//
 // Unless required by applicable law or agreed to in writing, any work
 // distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 // WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 // License for the specific language governing permissions and limitations
 // under the License.
-// 
+//
 
 
 `ifndef __UVMA_OBI_MEMORY_COV_MODEL_SV__
@@ -73,75 +73,102 @@ endgroup : cg_obi
 /**
  * Component encapsulating Open Bus Interface functional coverage model.
  */
-class uvma_obi_memory_cov_model_c extends uvm_component;
-   
+class uvma_obi_memory_cov_model_c#(
+   parameter AUSER_WIDTH = `UVMA_OBI_MEMORY_AUSER_DEFAULT_WIDTH, ///< Width of the auser signal. RI5CY, Ibex, CV32E40* do not have the auser signal.
+   parameter WUSER_WIDTH = `UVMA_OBI_MEMORY_WUSER_DEFAULT_WIDTH, ///< Width of the wuser signal. RI5CY, Ibex, CV32E40* do not have the wuser signal.
+   parameter RUSER_WIDTH = `UVMA_OBI_MEMORY_RUSER_DEFAULT_WIDTH, ///< Width of the ruser signal. RI5CY, Ibex, CV32E40* do not have the ruser signal.
+   parameter ADDR_WIDTH  = `UVMA_OBI_MEMORY_ADDR_DEFAULT_WIDTH , ///< Width of the addr signal.
+   parameter DATA_WIDTH  = `UVMA_OBI_MEMORY_DATA_DEFAULT_WIDTH , ///< Width of the rdata and wdata signals. be width is DATA_WIDTH / 8. Valid DATA_WIDTH settings are 32 and 64.
+   parameter ID_WIDTH    = `UVMA_OBI_MEMORY_ID_DEFAULT_WIDTH   , ///< Width of the aid and rid signals.
+   parameter ACHK_WIDTH  = `UVMA_OBI_MEMORY_ACHK_DEFAULT_WIDTH , ///< Width of the achk signal.
+   parameter RCHK_WIDTH  = `UVMA_OBI_MEMORY_RCHK_DEFAULT_WIDTH   ///< Width of the rchk signal.
+) extends uvm_component;
+
    // Objects
    uvma_obi_memory_cfg_c            cfg;
-   uvma_obi_memory_cntxt_c          cntxt;
-   
+   uvma_obi_memory_cntxt_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ) cntxt;
+
    // TLM
    uvm_tlm_analysis_fifo#(uvma_obi_memory_mon_trn_c      )  mon_trn_fifo      ;
    uvm_tlm_analysis_fifo#(uvma_obi_memory_mstr_seq_item_c)  mstr_seq_item_fifo;
    uvm_tlm_analysis_fifo#(uvma_obi_memory_slv_seq_item_c )  slv_seq_item_fifo ;
 
-   // Covergroup instances   
+   // Covergroup instances
    cg_obi       obi_cg;
    cg_obi_delay wr_delay_cg;
    cg_obi_delay rd_delay_cg;
 
-   `uvm_component_utils_begin(uvma_obi_memory_cov_model_c)
+   `uvm_component_utils_begin(uvma_obi_memory_cov_model_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ))
       `uvm_field_object(cfg  , UVM_DEFAULT)
       `uvm_field_object(cntxt, UVM_DEFAULT)
    `uvm_component_utils_end
-      
+
    /**
     * Default constructor.
     */
    extern function new(string name="uvma_obi_memory_cov_model", uvm_component parent=null);
-   
+
    /**
     * 1. Ensures cfg & cntxt handles are not null.
     * 2. Builds fifos.
     */
    extern virtual function void build_phase(uvm_phase phase);
-   
+
    /**
     * Forks all sampling loops
     */
    extern virtual task run_phase(uvm_phase phase);
-   
+
    /**
     * TODO Describe uvma_obi_memory_cov_model_c::sample_cfg()
     */
    extern function void sample_cfg();
-   
+
    /**
     * TODO Describe uvma_obi_memory_cov_model_c::sample_cntxt()
     */
    extern function void sample_cntxt();
-   
+
    /**
     * Sample covergroups for monitored OBI transactions
     */
    extern function void sample_mon_trn(uvma_obi_memory_mon_trn_c trn);
-   
+
    /**
     * TODO Describe uvma_obi_memory_cov_model_c::sample_mstr_seq_item()
     */
    extern function void sample_mstr_seq_item();
-   
+
    /**
     * TODO Describe uvma_obi_memory_cov_model_c::sample_slv_seq_item()
     */
    extern function void sample_slv_seq_item();
-   
+
 endclass : uvma_obi_memory_cov_model_c
 
 
 function uvma_obi_memory_cov_model_c::new(string name="uvma_obi_memory_cov_model", uvm_component parent=null);
-   
+
    super.new(name, parent);
-   
+
 endfunction : new
 
 
@@ -151,26 +178,35 @@ endfunction : new
 //
 //@DVT_LINTER_WAIVER_START "MT20210901_1" disable SVTB.33.1.0, SVTB.33.2.0
 function void uvma_obi_memory_cov_model_c::build_phase(uvm_phase phase);
-   
+
    super.build_phase(phase);
-   
+
    void'(uvm_config_db#(uvma_obi_memory_cfg_c)::get(this, "", "cfg", cfg));
    if (cfg == null) begin
       `uvm_fatal("CFG", "Configuration handle is null")
    end
-   
-   void'(uvm_config_db#(uvma_obi_memory_cntxt_c)::get(this, "", "cntxt", cntxt));
+
+   void'(uvm_config_db#(uvma_obi_memory_cntxt_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ))::get(this, "", "cntxt", cntxt));
    if (cntxt == null) begin
       `uvm_fatal("CNTXT", "Context handle is null")
    end
-   
+
    mon_trn_fifo       = new("mon_trn_fifo"      , this);
    mstr_seq_item_fifo = new("mstr_seq_item_fifo", this);
    slv_seq_item_fifo  = new("slv_seq_item_fifo" , this);
-   
+
    if (cfg.enabled && cfg.cov_model_enabled) begin
-      obi_cg = new("obi_cg", 
-                   .read_enabled(cfg.read_enabled), 
+      obi_cg = new("obi_cg",
+                   .read_enabled(cfg.read_enabled),
                    .write_enabled(cfg.write_enabled),
                    .is_1p2(cfg.version >= UVMA_OBI_MEMORY_VERSION_1P2));
       if (cfg.read_enabled)  rd_delay_cg = new("rd_delay_cg");
@@ -181,23 +217,23 @@ endfunction : build_phase
 //@DVT_LINTER_WAIVER_END "MT20210901_1"
 
 task uvma_obi_memory_cov_model_c::run_phase(uvm_phase phase);
-   
+
    super.run_phase(phase);
-   
-   if (cfg.enabled && cfg.cov_model_enabled) begin      
+
+   if (cfg.enabled && cfg.cov_model_enabled) begin
       fork
          // Configuration
          forever begin
             cntxt.sample_cfg_e.wait_trigger();
             sample_cfg();
          end
-         
+
          // Context
          forever begin
             cntxt.sample_cntxt_e.wait_trigger();
             sample_cntxt();
          end
-         
+
          // Monitor transactions
          forever begin
             uvma_obi_memory_mon_trn_c mon_trn;
@@ -205,7 +241,7 @@ task uvma_obi_memory_cov_model_c::run_phase(uvm_phase phase);
             mon_trn_fifo.get(mon_trn);
             sample_mon_trn(mon_trn);
          end
-         
+
          // 'mstr' sequence items
          forever begin
             uvma_obi_memory_mstr_seq_item_c mstr_seq_item;
@@ -213,7 +249,7 @@ task uvma_obi_memory_cov_model_c::run_phase(uvm_phase phase);
             mstr_seq_item_fifo.get(mstr_seq_item);
             sample_mstr_seq_item();
          end
-         
+
          // 'slv' sequence items
          forever begin
             uvma_obi_memory_slv_seq_item_c slv_seq_item;
@@ -223,44 +259,44 @@ task uvma_obi_memory_cov_model_c::run_phase(uvm_phase phase);
          end
       join_none
    end
-   
+
 endtask : run_phase
 
 
 function void uvma_obi_memory_cov_model_c::sample_cfg();
-   
+
    // TODO Implement uvma_obi_memory_cov_model_c::sample_cfg();
-   
+
 endfunction : sample_cfg
 
 
 function void uvma_obi_memory_cov_model_c::sample_cntxt();
-   
+
    // TODO Implement uvma_obi_memory_cov_model_c::sample_cntxt();
-   
+
 endfunction : sample_cntxt
 
 
 function void uvma_obi_memory_cov_model_c::sample_mon_trn(uvma_obi_memory_mon_trn_c trn);
-   
+
    obi_cg.sample(trn);
-   if (cfg.write_enabled) wr_delay_cg.sample(trn);   
-   if (cfg.read_enabled)  rd_delay_cg.sample(trn);   
-   
+   if (cfg.write_enabled) wr_delay_cg.sample(trn);
+   if (cfg.read_enabled)  rd_delay_cg.sample(trn);
+
 endfunction : sample_mon_trn
 
 
 function void uvma_obi_memory_cov_model_c::sample_mstr_seq_item();
-   
+
    // TODO Implement uvma_obi_memory_cov_model_c::sample_mstr_seq_item();
-   
+
 endfunction : sample_mstr_seq_item
 
 
 function void uvma_obi_memory_cov_model_c::sample_slv_seq_item();
-   
+
    // TODO Implement uvma_obi_memory_cov_model_c::sample_slv_seq_item();
-   
+
 endfunction : sample_slv_seq_item
 
 

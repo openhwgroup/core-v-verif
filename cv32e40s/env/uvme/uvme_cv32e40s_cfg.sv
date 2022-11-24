@@ -33,6 +33,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    bit                              obi_memory_instr_one_shot_err_enabled = 0;
    bit                              obi_memory_data_random_err_enabled    = 0;
    bit                              obi_memory_data_one_shot_err_enabled  = 0;
+   bit                              iss_suppress_invalid_msg              = 0;
    rand bit                         buserr_scoreboarding_enabled          = 1;
 
    // Agent cfg handles
@@ -59,6 +60,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_int (                         obi_memory_instr_one_shot_err_enabled, UVM_DEFAULT  )
       `uvm_field_int (                         obi_memory_data_random_err_enabled,    UVM_DEFAULT  )
       `uvm_field_int (                         obi_memory_data_one_shot_err_enabled,  UVM_DEFAULT  )
+      `uvm_field_int (                         iss_suppress_invalid_msg,              UVM_DEFAULT  )
 
       `uvm_field_object(isacov_cfg           , UVM_DEFAULT)
       `uvm_field_object(clknrst_cfg          , UVM_DEFAULT)
@@ -180,12 +182,15 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
 
       obi_memory_instr_cfg.version       == UVMA_OBI_MEMORY_VERSION_1P2;
       obi_memory_instr_cfg.drv_mode      == UVMA_OBI_MEMORY_MODE_SLV;
+      obi_memory_instr_cfg.chk_scheme    == UVMA_OBI_MEMORY_CHK_CV32E40S;
       obi_memory_instr_cfg.write_enabled == 0;
       obi_memory_instr_cfg.addr_width    == XLEN;
       obi_memory_instr_cfg.data_width    == XLEN;
       obi_memory_instr_cfg.id_width      == 0;
-      obi_memory_instr_cfg.achk_width    == 0;
-      obi_memory_instr_cfg.rchk_width    == 0;
+      obi_memory_instr_cfg.achk_width    == 12;
+      obi_memory_instr_cfg.rchk_width    == 5;
+      //obi_memory_instr_cfg.achk_width    == ENV_PARAM_INSTR_ACHK_WIDTH;
+      //obi_memory_instr_cfg.rchk_width    == ENV_PARAM_INSTR_RCHK_WIDTH;
       obi_memory_instr_cfg.auser_width   == 0;
       obi_memory_instr_cfg.ruser_width   == 0;
       obi_memory_instr_cfg.wuser_width   == 0;
@@ -194,11 +199,14 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
 
       obi_memory_data_cfg.version        == UVMA_OBI_MEMORY_VERSION_1P2;
       obi_memory_data_cfg.drv_mode       == UVMA_OBI_MEMORY_MODE_SLV;
+      obi_memory_data_cfg.chk_scheme     == UVMA_OBI_MEMORY_CHK_CV32E40S;
       obi_memory_data_cfg.addr_width     == XLEN;
       obi_memory_data_cfg.data_width     == XLEN;
       obi_memory_data_cfg.id_width       == 0;
-      obi_memory_data_cfg.achk_width     == 0;
-      obi_memory_data_cfg.rchk_width     == 0;
+      obi_memory_data_cfg.achk_width     == 12;
+      obi_memory_data_cfg.rchk_width     == 5;
+      //obi_memory_data_cfg.achk_width     == ENV_PARAM_DATA_ACHK_WIDTH;
+      //obi_memory_data_cfg.rchk_width     == ENV_PARAM_DATA_ACHK_WIDTH;
       obi_memory_data_cfg.auser_width    == 0;
       obi_memory_data_cfg.ruser_width    == 0;
       obi_memory_data_cfg.wuser_width    == 0;
