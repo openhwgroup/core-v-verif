@@ -1478,19 +1478,60 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     end
   end
 
-  a_xsecure_interface_integrety_instr_error_set_if_parity_or_checksum_error: assert property (
+  //Support logic that can be moved into support logic module:
+  logic [2:0] gnt_parity_error_on_req_nr;
+  logic active_address_phase;
+  logic gnt_parity_error_in_active_address_phase;
+  integer number_active_reqests_up_one;
+  integer number_active_reqests_q;
+  logic gntpar_error_on_resp;
+
+
+  always @(posedge clk_i) begin
+    if(!rst_ni) begin
+      gnt_parity_error_on_req_nr  <= 0;
+      active_address_phase        <= 0;
+      gnt_parity_error_in_active_address_phase <= 0;
+      number_active_reqests_up_one     <= 1;
+      number_active_reqests_q          <= 0;
+    end else begin
+
+      if ((gnt == gntpar) && active_address_phase) begin
+        gnt_parity_error_in_active_address_phase <= 1'b1;
+      end else if (obi_req && obi_gnt) begin
+        gnt_parity_error_in_active_address_phase <= 1'b0;
+      end
+
+      //Turn on and of active adress phase-ish and set error bit: TODO: litt usikker på dette.
+      if (obi_req) begin
+        if (!obi_gnt) begin
+          active_address_phase <= 1'b1;
+        end else begin
+          active_address_phase <= 1'b0;
+          gnt_parity_error_on_req_nr[number_active_reqests_up_one] <= 1;
+          number_active_reqests_up_one <= number_active_reqests_up_one + 1;
+          number_active_reqests_q <= number_active_reqests_up_one;
+        end
+      end
+
+      //Check if there is a gntpar error when encountering a respons
+      if (obi_rvalid) begin
+        number_active_request_next <= number_active_reqests_up_one - 1;
+        number_active_reqests_q <= number_active_reqests_q - 1;
+        gntpar_error_on_resp = gnt_parity_error_on_req_nr[number_active_reqests_q];
+      end
+    end
+  end
+
+  a_xsecure_interface_integrety_instr_error_set_if_checksum_error: assert property (
     @(posedge xsecure_if.core_clk)
 
-    ((xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar == xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt
-
-    || xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar == xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid)
-
-    or (seq_response_phase_checksum_error(
+    seq_response_phase_checksum_error(
       NO_WRITE_TRANSACTION,
       xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
       xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rdata,
       xsecure_if.core_i_m_c_obi_instr_if_resp_payload.err,
-      exokay_tie_off_value)))
+      exokay_tie_off_value)
 
     and (core_clock_cycles == 1
     && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
@@ -1504,6 +1545,29 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   ) else `uvm_error(info_tag, "The response phase checksum for datauctions is generated wrongly.\n");
 
+
+  a_xsecure_interface_integrety_instr_error_set_if_parity_error: assert property (
+    @(posedge xsecure_if.core_clk)
+
+    (xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar == xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt
+
+    && xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt
+
+    || xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar == xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid)
+
+
+    && (core_clock_cycles
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    && xsecure_if.core_i_if_stage_i_bus_resp.integrity
+
+    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
+    && xsecure_if.core_i_m_c_obi_data_if_s_req_req
+    )
+
+    |=> xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
+
+  ) else `uvm_error(info_tag, "The response phase checksum for datauctions is generated wrongly.\n");
 
 
   a_xsecure_interface_integrety_data_error_set_if_parity_or_checksum_error: assert property (

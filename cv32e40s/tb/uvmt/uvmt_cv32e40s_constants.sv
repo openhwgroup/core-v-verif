@@ -140,7 +140,7 @@
       const string pma_cfg_name = "pma_test_cfg_1";
       parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 1;
       parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[0:CORE_PARAM_PMA_NUM_REGIONS-1] = '{
-        '{word_addr_low : 32'h0000_0000>>2, word_addr_high : 32'h7FFF_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b1, integrity : 1'b0}
+        '{word_addr_low : 32'h0000_0000>>2, word_addr_high : 32'h7FFF_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b1, integrity : 1'b1}
       };
 
    `elsif PMA_TEST_CFG_2
