@@ -13,11 +13,7 @@ module uvmt_cv32e40s_xsecure_assert
   (
    uvmt_cv32e40s_xsecure_if xsecure_if,
    uvma_rvfi_instr_if rvfi_if,
-   uvmt_cv32e40s_support_logic_if.data_bus_Reader data_bus_support_if,
-   uvmt_cv32e40s_support_logic_if.instr_bus_Reader instr_bus_support_if,
-   uvmt_cv32e40s_support_logic_if.abiim_bus_Reader abiim_bus_support_if,
-   uvmt_cv32e40s_support_logic_if.lml_bus_Reader lml_bus_support_if,
-   uvmt_cv32e40s_support_logic_if.lrfodi_bus_Reader lrfodi_bus_support_if,
+   uvmt_cv32e40s_support_logic_for_assert_coverage_modules_input_if.Slave support_if,
    input rst_ni,
    input clk_i
   );
@@ -1467,24 +1463,25 @@ module uvmt_cv32e40s_xsecure_assert
 
   endproperty;
 
+
   a_resp_after_addr_no_glitch_data: assert property (
-    p_resp_after_addr_no_glitch(data_bus_support_if.data_bus_rvalid_i, data_bus_support_if.data_bus_resp_ph_cont, data_bus_support_if.data_bus_v_addr_ph_cnt)
+    p_resp_after_addr_no_glitch(xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid, support_if.data_bus_resp_ph_cont, support_if.data_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the data bus leading into the core.\n");
 
   a_resp_after_addr_no_glitch_instr: assert property (
-    p_resp_after_addr_no_glitch(instr_bus_support_if.instr_bus_rvalid_i, instr_bus_support_if.instr_bus_resp_ph_cont, instr_bus_support_if.instr_bus_v_addr_ph_cnt)
+    p_resp_after_addr_no_glitch(xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid, support_if.instr_bus_resp_ph_cont, support_if.instr_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the instructions bus leading into the core.\n");
 
   a_resp_after_addr_no_glitch_abiim: assert property (
-    p_resp_after_addr_no_glitch(abiim_bus_support_if.abiim_bus_rvalid_i, abiim_bus_support_if.abiim_bus_resp_ph_cont, abiim_bus_support_if.abiim_bus_v_addr_ph_cnt)
+    p_resp_after_addr_no_glitch(xsecure_if.core_i_if_stage_i_prefetch_resp_valid, support_if.abiim_bus_resp_ph_cont, support_if.abiim_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m).\n");
 
   a_resp_after_addr_no_glitch_lml: assert property (
-    p_resp_after_addr_no_glitch(lml_bus_support_if.lml_bus_rvalid_i, lml_bus_support_if.lml_bus_resp_ph_cont, lml_bus_support_if.lml_bus_v_addr_ph_cnt)
+    p_resp_after_addr_no_glitch(xsecure_if.core_i_load_store_unit_i_resp_valid, support_if.lml_bus_resp_ph_cont, support_if.lml_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handsake between LSU (l) MPU (m) and LSU (l).\n");
 
   a_resp_after_addr_no_glitch_lrfodi: assert property (
-    p_resp_after_addr_no_glitch(lrfodi_bus_support_if.lrfodi_bus_rvalid_i, lrfodi_bus_support_if.lrfodi_bus_resp_ph_cont, lrfodi_bus_support_if.lrfodi_bus_v_addr_ph_cnt)
+    p_resp_after_addr_no_glitch(xsecure_if.core_i_load_store_unit_i_bus_resp_valid, support_if.lrfodi_bus_resp_ph_cont, support_if.lrfodi_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handsake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i).\n");
 
 
@@ -1511,23 +1508,23 @@ module uvmt_cv32e40s_xsecure_assert
   endproperty;
 
   a_resp_after_addr_glitch_data: assert property (
-    p_resp_after_addr_glitch(data_bus_support_if.data_bus_rvalid_i, data_bus_support_if.data_bus_resp_ph_cont, data_bus_support_if.data_bus_v_addr_ph_cnt)
+    p_resp_after_addr_glitch(xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid, support_if.data_bus_resp_ph_cont, support_if.data_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "A respons phase before address phase in the data bus leading into the core does not set major alert.\n");
 
   a_resp_after_addr_glitch_instr: assert property (
-    p_resp_after_addr_glitch(instr_bus_support_if.instr_bus_rvalid_i, instr_bus_support_if.instr_bus_resp_ph_cont, instr_bus_support_if.instr_bus_v_addr_ph_cnt)
+    p_resp_after_addr_glitch(xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid, support_if.instr_bus_resp_ph_cont, support_if.instr_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "A respons phase before address phase in the instruction bus leading into the core does not set major alert (instructions).\n");
 
   a_resp_after_addr_glitch_abiim: assert property (
-    p_resp_after_addr_glitch(abiim_bus_support_if.abiim_bus_rvalid_i, abiim_bus_support_if.abiim_bus_resp_ph_cont, abiim_bus_support_if.abiim_bus_v_addr_ph_cnt)
+    p_resp_after_addr_glitch(xsecure_if.core_i_if_stage_i_prefetch_resp_valid, support_if.abiim_bus_resp_ph_cont, support_if.abiim_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) does not set major alert.\n");
 
   a_resp_after_addr_glitch_lml: assert property (
-    p_resp_after_addr_glitch(lml_bus_support_if.lml_bus_rvalid_i, lml_bus_support_if.lml_bus_resp_ph_cont, lml_bus_support_if.lml_bus_v_addr_ph_cnt)
+    p_resp_after_addr_glitch(xsecure_if.core_i_load_store_unit_i_resp_valid, support_if.lml_bus_resp_ph_cont, support_if.lml_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between LSU (l) MPU (m) and LSU (l) does not set major alert.\n");
 
   a_resp_after_addr_glitch_lrfodi: assert property (
-    p_resp_after_addr_glitch(lrfodi_bus_support_if.lrfodi_bus_rvalid_i, lrfodi_bus_support_if.lrfodi_bus_resp_ph_cont, lrfodi_bus_support_if.lrfodi_bus_v_addr_ph_cnt)
+    p_resp_after_addr_glitch(xsecure_if.core_i_load_store_unit_i_bus_resp_valid, support_if.lrfodi_bus_resp_ph_cont, support_if.lrfodi_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i) does not set major alert.\n");
 
 
