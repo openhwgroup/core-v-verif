@@ -579,15 +579,17 @@ module uvmt_cv32e40s_tb;
       .rvfi_csr_mcause_wdata     (rvfi_i.rvfi_csr_mcause_wdata),
       .rvfi_csr_mcause_wmask     (rvfi_i.rvfi_csr_mcause_wmask),
       .rvfi_csr_mcounteren_rdata (rvfi_i.rvfi_csr_mcounteren_rdata),
+      .rvfi_csr_mie_rdata        (rvfi_i.rvfi_csr_mie_rdata),
+      .rvfi_csr_mip_rdata        (rvfi_i.rvfi_csr_mip_rdata),
       .rvfi_csr_misa_rdata       (rvfi_i.rvfi_csr_misa_rdata),
       .rvfi_csr_mscratch_rdata   (rvfi_i.rvfi_csr_mscratch_rdata),
       .rvfi_csr_mscratch_rmask   (rvfi_i.rvfi_csr_mscratch_rmask),
       .rvfi_csr_mscratch_wdata   (rvfi_i.rvfi_csr_mscratch_wdata),
       .rvfi_csr_mscratch_wmask   (rvfi_i.rvfi_csr_mscratch_wmask),
+      .rvfi_csr_mstateen0_rdata  (rvfi_i.rvfi_csr_mstateen0_rdata),
       .rvfi_csr_mstatus_rdata    (rvfi_i.rvfi_csr_mstatus_rdata),
       .rvfi_csr_mstatus_wdata    (rvfi_i.rvfi_csr_mstatus_wdata),
       .rvfi_csr_mstatus_wmask    (rvfi_i.rvfi_csr_mstatus_wmask),
-      .rvfi_csr_mstateen0_rdata  (rvfi_i.rvfi_csr_mstateen0_rdata),
 
       .mpu_iside_valid (core_i.if_stage_i.mpu_i.core_trans_valid_i),
       .mpu_iside_addr  (core_i.if_stage_i.mpu_i.core_trans_i.addr),
@@ -986,8 +988,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .mcause_q               (core_i.cs_registers_i.mcause_q),
       .mtvec                  (core_i.cs_registers_i.mtvec_q),
       .mepc_q                 (core_i.cs_registers_i.mepc_q),
-      .tdata1                 (core_i.cs_registers_i.tdata1_q),
-      .tdata2                 (core_i.cs_registers_i.tdata2_q),
+      .tdata1                 (core_i.cs_registers_i.tdata1_rdata),
+      .tdata2                 (core_i.cs_registers_i.tdata2_rdata),
       .mcountinhibit_q        (core_i.cs_registers_i.mcountinhibit_q),
       .mcycle                 (core_i.cs_registers_i.mhpmcounter_q[0]),
       .minstret               (core_i.cs_registers_i.mhpmcounter_q[2]),
@@ -1121,8 +1123,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if_0_i),
-                                                                      .support_if_i (input_to_support_logic_module_if.Master),
-                                                                      .support_if_o (support_logic_for_assert_coverage_modules_input_if.Slave)
+                                                                      .support_if_i (input_to_support_logic_module_if.Driver),
+                                                                      .support_if_o (support_logic_for_assert_coverage_modules_input_if.Master)
                                                                       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));

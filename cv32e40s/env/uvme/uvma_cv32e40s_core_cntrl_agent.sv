@@ -25,7 +25,6 @@
  */
 class uvma_cv32e40s_core_cntrl_agent_c extends uvma_core_cntrl_agent_c;
 
-
    string log_tag = "CV32E40SCORECTRLAGT";
 
    `uvm_component_utils_begin(uvma_cv32e40s_core_cntrl_agent_c)
@@ -144,6 +143,15 @@ function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
   // -------------------------------------------------------------------------------------
   // Parameters
   // -------------------------------------------------------------------------------------
+
+  // Suppress unwanted log messages
+  if (cfg.iss_suppress_invalid_msg) begin
+    $fwrite(fh, $sformatf("--excludem RISCV_CSR_UNIMP\n"));
+    $fwrite(fh, $sformatf("--excludem RISCV_UDEC\n"));
+    $fwrite(fh, $sformatf("--excludem RISCV_NFP128\n"));
+    $fwrite(fh, $sformatf("--excludem RISCV_NFP16\n"));
+    $fwrite(fh, $sformatf("--excludem RISCV_ILL\n"));
+  end
 
   $fwrite(fh, $sformatf("--override %s/misa_Extensions=0x%06x\n", refpath, cfg.get_misa()));
   $fwrite(fh, $sformatf("--override %s/noinhibit_mask=0x%08x\n", refpath, cfg.get_noinhibit_mask()));

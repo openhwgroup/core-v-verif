@@ -39,6 +39,7 @@
 
    // ISS configuration
    bit                           use_iss;
+   int                           iss_suppress_invalid_msg = 0;
    string                        iss_control_file = "ovpsim.ic";
 
    // Controls printing of CSR status
@@ -328,6 +329,10 @@ function uvma_core_cntrl_cfg_c::new(string name="uvme_cv_base_cfg");
       csr_print = 0;
    end else begin
       csr_print = 1;
+   end
+
+   if ($test$plusargs("iss_suppress_invalid_msg")) begin
+     iss_suppress_invalid_msg = 1;
    end
 
    // Read plusargs for defaults

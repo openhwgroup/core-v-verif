@@ -33,6 +33,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    bit                              obi_memory_instr_one_shot_err_enabled = 0;
    bit                              obi_memory_data_random_err_enabled    = 0;
    bit                              obi_memory_data_one_shot_err_enabled  = 0;
+   bit                              iss_suppress_invalid_msg              = 0;
    rand bit                         buserr_scoreboarding_enabled          = 1;
 
    // Agent cfg handles
@@ -59,6 +60,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_int (                         obi_memory_instr_one_shot_err_enabled, UVM_DEFAULT  )
       `uvm_field_int (                         obi_memory_data_random_err_enabled,    UVM_DEFAULT  )
       `uvm_field_int (                         obi_memory_data_one_shot_err_enabled,  UVM_DEFAULT  )
+      `uvm_field_int (                         iss_suppress_invalid_msg,              UVM_DEFAULT  )
 
       `uvm_field_object(isacov_cfg           , UVM_DEFAULT)
       `uvm_field_object(clknrst_cfg          , UVM_DEFAULT)

@@ -21,8 +21,8 @@ module uvmt_cv32e40s_support_logic
   import cv32e40s_pkg::*;
   (
     uvma_rvfi_instr_if rvfi,
-    uvmt_cv32e40s_input_to_support_logic_module_if.Master support_if_i,
-    uvmt_cv32e40s_support_logic_for_assert_coverage_modules_input_if.Slave support_if_o
+    uvmt_cv32e40s_input_to_support_logic_module_if.Driver support_if_i,
+    uvmt_cv32e40s_support_logic_for_assert_coverage_modules_input_if.Master support_if_o
   );
 
   // ---------------------------------------------------------------------------

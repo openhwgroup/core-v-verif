@@ -110,10 +110,11 @@ endinterface : uvmt_cv32e40s_core_status_if
 interface uvmt_cv32e40s_xsecure_if
     import cv32e40s_pkg::*;
     import cv32e40s_rvfi_pkg::*;
-    import cv32e40s_pkg::*;
-    #(parameter int     MTVT_ADDR_WIDTH = 5,
-    parameter int       PMP_NUM_REGIONS = 2,
-    parameter int       PMP_ADDR_WIDTH =6
+    import uvmt_cv32e40s_pkg::*;
+    #(
+      parameter int     MTVT_ADDR_WIDTH = 5,
+      parameter int     PMP_NUM_REGIONS = 2,
+      parameter int     PMP_ADDR_WIDTH  = 6
     )
 
     (
@@ -132,9 +133,7 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_rf_we_wb,
     input logic [4:0] core_rf_waddr_wb,
     input logic [31:0] core_rf_wdata_wb,
-    //TODO: make generic version work
-    input logic [38-1:0] core_register_file_wrapper_register_file_mem [32],
-    //input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [CORE_PARAM_REGFILE_NUM_WORDS-1],
+    input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [CORE_PARAM_REGFILE_NUM_WORDS],
     input logic [31:0] core_i_jump_target_id,
 
     // CSR
@@ -472,7 +471,7 @@ interface uvmt_cv32e40s_input_to_support_logic_module_if
    input logic lrfodi_bus_req
    );
 
-   modport Master (
+   modport Driver (
      input  clk,
       rst_n,
 
@@ -535,6 +534,28 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_input_if;
    integer lml_bus_v_addr_ph_cnt;
    integer lrfodi_bus_v_addr_ph_cnt;
 
+   modport Master (
+      output req_after_exception,
+         data_bus_addr_ph_cont,
+	      data_bus_resp_ph_cont,
+	      data_bus_v_addr_ph_cnt,
+
+         instr_bus_addr_ph_cont,
+	      instr_bus_resp_ph_cont,
+	      instr_bus_v_addr_ph_cnt,
+
+         abiim_bus_addr_ph_cont,
+	      abiim_bus_resp_ph_cont,
+	      abiim_bus_v_addr_ph_cnt,
+
+         lml_bus_addr_ph_cont,
+	      lml_bus_resp_ph_cont,
+	      lml_bus_v_addr_ph_cnt,
+
+         lrfodi_bus_addr_ph_cont,
+	      lrfodi_bus_resp_ph_cont,
+	      lrfodi_bus_v_addr_ph_cnt
+   );
 
    modport Slave (
       input req_after_exception,
