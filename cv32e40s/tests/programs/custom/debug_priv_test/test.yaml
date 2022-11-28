@@ -1,0 +1,8 @@
+# Test definition YAML for test
+
+# Debug directed test
+name: debug_priv_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+program: debug_priv_tests
+description: >
+    privilege modes and debug access / behaviour

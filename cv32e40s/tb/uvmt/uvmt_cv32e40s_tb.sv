@@ -22,7 +22,6 @@
 `ifndef __UVMT_CV32E40S_TB_SV__
 `define __UVMT_CV32E40S_TB_SV__
 
-
 /**
  * Module encapsulating the CV32E40S DUT wrapper, and associated SV interfaces.
  * Also provide UVM environment entry and exit points.
@@ -34,11 +33,9 @@ module uvmt_cv32e40s_tb;
    import cv32e40s_pkg::*;
    import uvmt_cv32e40s_pkg::*;
    import uvme_cv32e40s_pkg::*;
-
-   // ENV (testbench) parameters
-   parameter int ENV_PARAM_INSTR_ADDR_WIDTH  = 32;
-   parameter int ENV_PARAM_INSTR_DATA_WIDTH  = 32;
-   parameter int ENV_PARAM_RAM_ADDR_WIDTH    = 22;
+   `ifndef FORMAL
+   import rvviApiPkg::*;
+   `endif
 
    // Capture regs for test status from Virtual Peripheral in dut_wrap.mem_i
    bit        tp;
@@ -52,11 +49,23 @@ module uvmt_cv32e40s_tb;
    uvma_clknrst_if              clknrst_if_iss();
    uvma_debug_if                debug_if();
    uvma_interrupt_if            interrupt_if();
-   uvma_obi_memory_if           obi_instr_if_i(
-     .clk(clknrst_if.clk),
-     .reset_n(clknrst_if.reset_n)
+   uvma_clic_if                 clic_if();
+   uvma_obi_memory_if #(
+     .ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
+     .DATA_WIDTH  (ENV_PARAM_INSTR_DATA_WIDTH),
+     .ACHK_WIDTH  (ENV_PARAM_INSTR_ACHK_WIDTH),
+     .RCHK_WIDTH  (ENV_PARAM_INSTR_RCHK_WIDTH)
+   ) obi_instr_if_i (
+     .clk     (clknrst_if.clk),
+     .reset_n (clknrst_if.reset_n)
    );
-   uvma_obi_memory_if           obi_data_if_i(
+
+   uvma_obi_memory_if #(
+     .ADDR_WIDTH  (ENV_PARAM_DATA_ADDR_WIDTH),
+     .DATA_WIDTH  (ENV_PARAM_DATA_DATA_WIDTH),
+     .ACHK_WIDTH  (ENV_PARAM_DATA_ACHK_WIDTH),
+     .RCHK_WIDTH  (ENV_PARAM_DATA_RCHK_WIDTH)
+   ) obi_data_if_i(
      .clk(clknrst_if.clk),
      .reset_n(clknrst_if.reset_n)
    );
@@ -74,6 +83,11 @@ module uvmt_cv32e40s_tb;
    uvmt_cv32e40s_core_status_if     core_status_if(.core_busy(),
                                                    .sec_lvl());     // Core status outputs
 
+   // RVVI SystemVerilog Interface
+   `ifndef FORMAL
+      rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+   `endif
+
   /**
    * DUT WRAPPER instance:
    * This is an update of the riscv_wrapper.sv from PULP-Platform RI5CY project with
@@ -83,10 +97,13 @@ module uvmt_cv32e40s_tb;
                              .B_EXT             (uvmt_cv32e40s_pkg::B_EXT),
                              .PMA_NUM_REGIONS   (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
                              .PMA_CFG           (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG),
-                             .PMP_NUM_REGIONS   (CORE_PARAM_PMP_NUM_REGIONS),
+                             .PMP_GRANULARITY   (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY),
+                             .PMP_NUM_REGIONS   (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS),
                              .INSTR_ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
                              .INSTR_RDATA_WIDTH (ENV_PARAM_INSTR_DATA_WIDTH),
-                             .RAM_ADDR_WIDTH    (ENV_PARAM_RAM_ADDR_WIDTH)
+                             .RAM_ADDR_WIDTH    (ENV_PARAM_RAM_ADDR_WIDTH),
+                             .SMCLIC            (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC),
+                             .DBG_NUM_TRIGGERS  (uvmt_cv32e40s_pkg::CORE_PARAM_NUM_TRIGGERS)
                             )
                             dut_wrap (
                               .clknrst_if(clknrst_if),
@@ -97,6 +114,7 @@ module uvmt_cv32e40s_tb;
                               .obi_instr_if_i(obi_instr_if_i),
                               .obi_data_if_i(obi_data_if_i),
                               .fencei_if_i(fencei_if_i),
+                              .clic_if(clic_if),
                               .*);
 
   bind cv32e40s_wrapper
@@ -107,9 +125,9 @@ module uvmt_cv32e40s_tb;
                                                                    .rvfi_valid(rvfi_i.rvfi_valid[0]),
                                                                    .rvfi_order(rvfi_i.rvfi_order[uvma_rvfi_pkg::ORDER_WL*0+:uvma_rvfi_pkg::ORDER_WL]),
                                                                    .rvfi_insn(rvfi_i.rvfi_insn[uvme_cv32e40s_pkg::ILEN*0+:uvme_cv32e40s_pkg::ILEN]),
-                                                                   .rvfi_trap(rvfi_i.rvfi_trap[11:0]),
+                                                                   .rvfi_trap(rvfi_i.rvfi_trap),
                                                                    .rvfi_halt(rvfi_i.rvfi_halt[0]),
-                                                                   .rvfi_intr(rvfi_i.rvfi_intr[0]),
+                                                                   .rvfi_intr(rvfi_i.rvfi_intr),
                                                                    .rvfi_dbg(rvfi_i.rvfi_dbg),
                                                                    .rvfi_dbg_mode(rvfi_i.rvfi_dbg_mode),
                                                                    .rvfi_nmip(rvfi_i.rvfi_nmip),
@@ -127,11 +145,15 @@ module uvmt_cv32e40s_tb;
                                                                    .rvfi_rd1_wdata(rvfi_i.rvfi_rd_wdata[uvme_cv32e40s_pkg::XLEN*0+:uvme_cv32e40s_pkg::XLEN]),
                                                                    .rvfi_rd2_addr('0),
                                                                    .rvfi_rd2_wdata('0),
-                                                                   .rvfi_mem_addr(rvfi_i.rvfi_mem_addr[uvme_cv32e40s_pkg::XLEN*0+:uvme_cv32e40s_pkg::XLEN]),
-                                                                   .rvfi_mem_rdata(rvfi_i.rvfi_mem_rdata[uvme_cv32e40s_pkg::XLEN*0+:uvme_cv32e40s_pkg::XLEN]),
-                                                                   .rvfi_mem_rmask(rvfi_i.rvfi_mem_rmask[uvme_cv32e40s_pkg::XLEN/8*0+:uvme_cv32e40s_pkg::XLEN/8]),
-                                                                   .rvfi_mem_wdata(rvfi_i.rvfi_mem_wdata[uvme_cv32e40s_pkg::XLEN*0+:uvme_cv32e40s_pkg::XLEN]),
-                                                                   .rvfi_mem_wmask(rvfi_i.rvfi_mem_wmask[uvme_cv32e40s_pkg::XLEN/8*0+:uvme_cv32e40s_pkg::XLEN/8])
+                                                                   .rvfi_gpr_rdata(rvfi_i.rvfi_gpr_rdata[32*uvme_cv32e40s_pkg::XLEN*0  +:32*uvme_cv32e40s_pkg::XLEN]),
+                                                                   .rvfi_gpr_rmask(rvfi_i.rvfi_gpr_rmask[32*0  +:32]),
+                                                                   .rvfi_gpr_wdata(rvfi_i.rvfi_gpr_wdata[32*uvme_cv32e40s_pkg::XLEN*0  +:32*uvme_cv32e40s_pkg::XLEN]),
+                                                                   .rvfi_gpr_wmask(rvfi_i.rvfi_gpr_wmask[32*0  +:32]),
+                                                                   .rvfi_mem_addr(rvfi_i.rvfi_mem_addr[  uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN]),
+                                                                   .rvfi_mem_rdata(rvfi_i.rvfi_mem_rdata[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN]),
+                                                                   .rvfi_mem_rmask(rvfi_i.rvfi_mem_rmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8]),
+                                                                   .rvfi_mem_wdata(rvfi_i.rvfi_mem_wdata[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN]),
+                                                                   .rvfi_mem_wmask(rvfi_i.rvfi_mem_wmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8])
                                                                    );
 
   // RVFI CSR binds
@@ -139,6 +161,9 @@ module uvmt_cv32e40s_tb;
   `RVFI_CSR_BIND(mcountinhibit)
   `RVFI_CSR_BIND(mstatus)
   `RVFI_CSR_BIND(mstatush)
+  `RVFI_CSR_BIND(mcounteren)
+  `RVFI_CSR_BIND(menvcfg)
+  `RVFI_CSR_BIND(menvcfgh)
   `RVFI_CSR_BIND(mvendorid)
   `RVFI_CSR_BIND(misa)
   `RVFI_CSR_BIND(mtvec)
@@ -149,8 +174,6 @@ module uvmt_cv32e40s_tb;
   `RVFI_CSR_BIND(mip)
   `RVFI_CSR_BIND(mie)
   `RVFI_CSR_BIND(mhartid)
-  `RVFI_CSR_BIND(mcontext)
-  `RVFI_CSR_BIND(scontext)
   `RVFI_CSR_BIND(mimpid)
   `RVFI_CSR_BIND(minstret)
   `RVFI_CSR_BIND(minstreth)
@@ -191,6 +214,88 @@ module uvmt_cv32e40s_tb;
   `RVFI_CSR_IDX_BIND(mhpmcounter,,29)
   `RVFI_CSR_IDX_BIND(mhpmcounter,,30)
   `RVFI_CSR_IDX_BIND(mhpmcounter,,31)
+
+  `RVFI_CSR_IDX_BIND(pmpcfg,,0)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,1)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,2)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,3)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,4)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,5)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,6)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,7)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,8)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,9)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,10)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,11)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,12)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,13)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,14)
+  `RVFI_CSR_IDX_BIND(pmpcfg,,15)
+
+  `RVFI_CSR_IDX_BIND(pmpaddr,,0)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,1)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,2)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,3)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,4)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,5)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,6)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,7)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,8)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,9)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,10)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,11)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,12)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,13)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,14)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,15)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,16)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,17)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,18)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,19)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,20)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,21)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,22)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,23)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,24)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,25)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,26)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,27)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,28)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,29)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,30)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,31)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,32)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,33)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,34)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,35)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,36)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,37)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,38)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,39)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,40)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,41)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,42)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,43)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,44)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,45)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,46)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,47)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,48)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,49)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,50)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,51)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,52)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,53)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,54)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,55)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,56)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,57)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,58)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,59)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,60)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,61)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,62)
+  `RVFI_CSR_IDX_BIND(pmpaddr,,63)
 
   `RVFI_CSR_IDX_BIND(mhpmevent,,3)
   `RVFI_CSR_IDX_BIND(mhpmevent,,4)
@@ -307,37 +412,39 @@ module uvmt_cv32e40s_tb;
 
   bind uvmt_cv32e40s_dut_wrap
     uvma_obi_memory_assert_if_wrp#(
-      .ADDR_WIDTH(32),
-      .DATA_WIDTH(32),
-      .AUSER_WIDTH(0),
-      .WUSER_WIDTH(0),
-      .RUSER_WIDTH(0),
-      .ID_WIDTH(0),
-      .ACHK_WIDTH(0),
-      .RCHK_WIDTH(0),
+      .ADDR_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_ADDR_WIDTH),
+      .DATA_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_DATA_WIDTH),
+      .AUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_AUSER_WIDTH),
+      .WUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_WUSER_WIDTH),
+      .RUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_RUSER_WIDTH),
+      .ID_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_ID_WIDTH),
+      .ACHK_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_ACHK_WIDTH),
+      .RCHK_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_RCHK_WIDTH),
       .IS_1P2(1)
     ) obi_instr_memory_assert_i(.obi(obi_instr_if_i));
 
   bind uvmt_cv32e40s_dut_wrap
     uvma_obi_memory_assert_if_wrp#(
-      .ADDR_WIDTH(32),
-      .DATA_WIDTH(32),
-      .AUSER_WIDTH(0),
-      .WUSER_WIDTH(0),
-      .RUSER_WIDTH(0),
-      .ID_WIDTH(0),
-      .ACHK_WIDTH(0),
-      .RCHK_WIDTH(0),
+      .ADDR_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_ADDR_WIDTH),
+      .DATA_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_DATA_WIDTH),
+      .AUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_AUSER_WIDTH),
+      .WUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_WUSER_WIDTH),
+      .RUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_RUSER_WIDTH),
+      .ID_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_ID_WIDTH),
+      .ACHK_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_ACHK_WIDTH),
+      .RCHK_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_RCHK_WIDTH),
       .IS_1P2(1)
     ) obi_data_memory_assert_i(.obi(obi_data_if_i));
 
   // Bind in verification modules to the design
+  `ifndef SMCLIC_EN
   bind cv32e40s_core
     uvmt_cv32e40s_interrupt_assert interrupt_assert_i(
       .mcause_n     ({cs_registers_i.mcause_n.irq, cs_registers_i.mcause_n.exception_code[4:0]}),
-      .mip          (cs_registers_i.mip),
+      .mip          (cs_registers_i.mip_rdata),
       .mie_q        (cs_registers_i.mie_q),
       .mstatus_mie  (cs_registers_i.mstatus_q.mie),
+      .mstatus_tw   (cs_registers_i.mstatus_q.tw),
       .mtvec_mode_q (cs_registers_i.mtvec_q.mode),
 
       .if_stage_instr_req_o    (if_stage_i.m_c_obi_instr_if.s_req.req),
@@ -347,7 +454,7 @@ module uvmt_cv32e40s_tb;
 
       .ex_stage_instr_valid (ex_stage_i.id_ex_pipe_i.instr_valid),
 
-      .wb_stage_instr_valid_i    (wb_stage_i.instr_valid),
+      .wb_stage_instr_valid_i    (wb_stage_i.ex_wb_pipe_i.instr_valid),
       .wb_stage_instr_rdata_i    (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
       .wb_stage_instr_err_i      (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.err),
       .wb_stage_instr_mpu_status (wb_stage_i.ex_wb_pipe_i.instr.mpu_status),
@@ -360,6 +467,170 @@ module uvmt_cv32e40s_tb;
 
       .*
     );
+  `endif
+
+  `ifdef SMCLIC_EN
+  // CLIC assertions
+  bind cv32e40s_core
+    uvmt_cv32e40s_clic_interrupt_assert#(
+      .SMCLIC(uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC)
+    ) clic_assert_i(
+      .dpc                 (cs_registers_i.dpc_rdata),
+      .mintstatus          (cs_registers_i.mintstatus_rdata),
+      .mintthresh          (cs_registers_i.mintthresh_rdata),
+      .mcause              (cs_registers_i.mcause_rdata),
+      .mtvec               (cs_registers_i.mtvec_rdata),
+      .mtvt                (cs_registers_i.mtvt_rdata),
+      .mclicbase           (cs_registers_i.mclicbase_rdata),
+      .mepc                (cs_registers_i.mepc_rdata),
+      .mip                 (cs_registers_i.mip_rdata),
+      .mie                 (cs_registers_i.mie_rdata),
+      .mnxti               (cs_registers_i.mnxti_rdata),
+      .mscratch            (cs_registers_i.mscratch_rdata),
+      .mscratchcsw         (cs_registers_i.mscratchcsw_rdata),
+      .mscratchcswl        (cs_registers_i.mscratchcswl_rdata),
+      .dcsr                (cs_registers_i.dcsr_rdata),
+
+      .rvfi_mepc_wdata     (rvfi_i.rvfi_csr_mepc_wdata),
+      .rvfi_mepc_wmask     (rvfi_i.rvfi_csr_mepc_wmask),
+      .rvfi_mepc_rdata     (rvfi_i.rvfi_csr_mepc_rdata),
+      .rvfi_mepc_rmask     (rvfi_i.rvfi_csr_mepc_rmask),
+      .rvfi_dpc_rdata      (rvfi_i.rvfi_csr_dpc_rdata),
+      .rvfi_dpc_rmask      (rvfi_i.rvfi_csr_dpc_rmask),
+      .rvfi_mscratch_rdata (rvfi_i.rvfi_csr_mscratch_rdata),
+      .rvfi_mscratch_rmask (rvfi_i.rvfi_csr_mscratch_rmask),
+      .rvfi_mscratch_wdata (rvfi_i.rvfi_csr_mscratch_wdata),
+      .rvfi_mscratch_wmask (rvfi_i.rvfi_csr_mscratch_wmask),
+
+      .irq_i               (core_i.irq_i),
+      .irq_ack             (core_i.irq_ack),
+      .fetch_enable        (core_i.fetch_enable),
+      .current_priv_mode   (core_i.priv_lvl),
+      .mtvec_addr_i        (core_i.mtvec_addr_i),
+      // External inputs
+      .clic_if             (dut_wrap.clic_if),
+      // Internal sampled   variants
+      .irq_id              (core_i.irq_id[SMCLIC_ID_WIDTH-1:0]),
+      .irq_level           (core_i.irq_level),
+      .irq_priv            (core_i.irq_priv),
+      .irq_shv             (core_i.irq_shv),
+
+      .obi_instr_req       (core_i.instr_req_o),
+      .obi_instr_gnt       (core_i.instr_gnt_i),
+      .obi_instr_rvalid    (core_i.instr_rvalid_i),
+      .obi_instr_addr      (core_i.instr_addr_o),
+      .obi_instr_rdata     (core_i.instr_rdata_i),
+      .obi_instr_rready    (1'b1),
+      .obi_instr_err       (core_i.instr_err_i),
+
+      .obi_data_addr       (core_i.data_addr_o),
+      .obi_data_wdata      (core_i.data_wdata_o),
+      .obi_data_we         (core_i.data_we_o),
+      .obi_data_be         (core_i.data_be_o),
+      .obi_data_req        (core_i.data_req_o),
+      .obi_data_gnt        (core_i.data_gnt_i),
+      .obi_data_rvalid     (core_i.data_rvalid_i),
+      .obi_data_rready     (1'b1),
+      .obi_data_err        (core_i.data_err_i),
+
+      .debug_mode          (controller_i.controller_fsm_i.debug_mode_q),
+      .debug_req           (core_i.debug_req_i),
+      .debug_havereset     (core_i.debug_havereset_o),
+      .debug_running       (core_i.debug_running_o),
+      .debug_halt_addr     (dut_wrap.cv32e40s_wrapper_i.dm_halt_addr_i),
+      .debug_exc_addr      (dut_wrap.cv32e40s_wrapper_i.dm_exception_addr_i),
+
+      .rvfi_mode           (rvfi_i.rvfi_mode),
+      .rvfi_insn           (rvfi_i.rvfi_insn),
+      .rvfi_intr           (rvfi_i.rvfi_intr),
+      .rvfi_rs1_rdata      (rvfi_i.rvfi_rs1_rdata),
+      .rvfi_rs2_rdata      (rvfi_i.rvfi_rs2_rdata),
+      .rvfi_rd_wdata       (rvfi_i.rvfi_rd_wdata),
+      .rvfi_valid          (rvfi_i.rvfi_valid),
+      .rvfi_pc_rdata       (rvfi_i.rvfi_pc_rdata),
+      .rvfi_pc_wdata       (rvfi_i.rvfi_pc_wdata),
+      .rvfi_trap           (rvfi_i.rvfi_trap),
+      .rvfi_dbg_mode       (rvfi_i.rvfi_dbg_mode),
+      .rvfi_dbg            (rvfi_i.rvfi_dbg),
+
+      .wu_wfe              (dut_wrap.cv32e40s_wrapper_i.wu_wfe_i),
+      .core_sleep_o        (core_i.core_sleep_o),
+      .*
+    );
+  `endif
+
+
+  // User-mode assertions
+
+  bind  cv32e40s_wrapper
+    uvmt_cv32e40s_umode_assert  umode_assert_i (
+      .rvfi_valid    (rvfi_i.rvfi_valid),
+      .rvfi_mode     (rvfi_i.rvfi_mode),
+      .rvfi_order    (rvfi_i.rvfi_order),
+      .rvfi_trap     (rvfi_i.rvfi_trap),
+      .rvfi_intr     (rvfi_i.rvfi_intr),
+      .rvfi_insn     (rvfi_i.rvfi_insn),
+      .rvfi_dbg_mode (rvfi_i.rvfi_dbg_mode),
+      .rvfi_dbg      (rvfi_i.rvfi_dbg),
+      .rvfi_pc_rdata (rvfi_i.rvfi_pc_rdata),
+
+      .rvfi_csr_dcsr_rdata       (rvfi_i.rvfi_csr_dcsr_rdata),
+      .rvfi_csr_mcause_rdata     (rvfi_i.rvfi_csr_mcause_rdata),
+      .rvfi_csr_mcause_wdata     (rvfi_i.rvfi_csr_mcause_wdata),
+      .rvfi_csr_mcause_wmask     (rvfi_i.rvfi_csr_mcause_wmask),
+      .rvfi_csr_mcounteren_rdata (rvfi_i.rvfi_csr_mcounteren_rdata),
+      .rvfi_csr_mie_rdata        (rvfi_i.rvfi_csr_mie_rdata),
+      .rvfi_csr_mip_rdata        (rvfi_i.rvfi_csr_mip_rdata),
+      .rvfi_csr_misa_rdata       (rvfi_i.rvfi_csr_misa_rdata),
+      .rvfi_csr_mscratch_rdata   (rvfi_i.rvfi_csr_mscratch_rdata),
+      .rvfi_csr_mscratch_rmask   (rvfi_i.rvfi_csr_mscratch_rmask),
+      .rvfi_csr_mscratch_wdata   (rvfi_i.rvfi_csr_mscratch_wdata),
+      .rvfi_csr_mscratch_wmask   (rvfi_i.rvfi_csr_mscratch_wmask),
+      .rvfi_csr_mstateen0_rdata  (rvfi_i.rvfi_csr_mstateen0_rdata),
+      .rvfi_csr_mstatus_rdata    (rvfi_i.rvfi_csr_mstatus_rdata),
+      .rvfi_csr_mstatus_wdata    (rvfi_i.rvfi_csr_mstatus_wdata),
+      .rvfi_csr_mstatus_wmask    (rvfi_i.rvfi_csr_mstatus_wmask),
+
+      .mpu_iside_valid (core_i.if_stage_i.mpu_i.core_trans_valid_i),
+      .mpu_iside_addr  (core_i.if_stage_i.mpu_i.core_trans_i.addr),
+
+      .obi_iside_prot (core_i.instr_prot_o),
+      .obi_dside_prot (core_i.data_prot_o),
+
+      .*
+    );
+
+
+  // User-mode Coverage
+
+  bind  cv32e40s_wrapper
+    uvmt_cv32e40s_umode_cov  umode_cov_i (
+      .rvfi_valid     (rvfi_i.rvfi_valid),
+      .rvfi_trap      (rvfi_i.rvfi_trap),
+      .rvfi_intr      (rvfi_i.rvfi_intr),
+      .rvfi_insn      (rvfi_i.rvfi_insn),
+      .rvfi_rs1_rdata (rvfi_i.rvfi_rs1_rdata),
+      .rvfi_pc_rdata  (rvfi_i.rvfi_pc_rdata),
+      .rvfi_mode      (rvfi_i.rvfi_mode),
+      .rvfi_rd_addr   (rvfi_i.rvfi_rd_addr),
+      .rvfi_dbg_mode  (rvfi_i.rvfi_dbg_mode),
+      .rvfi_order     (rvfi_i.rvfi_order),
+      .rvfi_mem_rmask (rvfi_i.rvfi_mem_rmask),
+      .rvfi_mem_wmask (rvfi_i.rvfi_mem_wmask),
+
+      .rvfi_csr_mstatus_rdata (rvfi_i.rvfi_csr_mstatus_rdata),
+      .rvfi_csr_mstatus_rmask (rvfi_i.rvfi_csr_mstatus_rmask),
+      .rvfi_csr_dcsr_rdata    (rvfi_i.rvfi_csr_dcsr_rdata),
+      .rvfi_csr_dcsr_rmask    (rvfi_i.rvfi_csr_dcsr_rmask),
+
+      .obi_iside_req  (core_i.instr_req_o),
+      .obi_iside_gnt  (core_i.instr_gnt_i),
+      .obi_iside_addr (core_i.instr_addr_o),
+      .obi_iside_prot (core_i.instr_prot_o),
+
+      .*
+    );
+
 
   // Fence.i assertions
 
@@ -377,9 +648,17 @@ module uvmt_cv32e40s_tb;
       .wb_buffer_state    (core_i.load_store_unit_i.write_buffer_i.state),
 
       .rvfi_valid         (rvfi_i.rvfi_valid),
-      .rvfi_intr          (rvfi_i.rvfi_intr),
+      .rvfi_intr          (rvfi_i.rvfi_intr.intr),
       .rvfi_dbg_mode      (rvfi_i.rvfi_dbg_mode),
 
+      .*
+    );
+
+
+  // RVFI assertions
+
+  bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i
+    uvmt_cv32e40s_rvfi_assert  rvfi_assert_i (
       .*
     );
 
@@ -389,6 +668,272 @@ module uvmt_cv32e40s_tb;
   bind cv32e40s_wrapper
     uvmt_cv32e40s_integration_assert  integration_assert_i (.*);
 
+  localparam PMP_ADDR_WIDTH = (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY > 0) ? 33 - uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY : 32;
+
+  logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q;
+  logic [PMP_MAX_REGIONS-1:0][PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q;
+
+  logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q;
+  logic [PMP_MAX_REGIONS-1:0][PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q;
+
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q;
+
+  // SMCLIC
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q;
+
+  logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q;
+
+
+  // BASE
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q;
+
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q;
+  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q;
+
+
+  // PMP register
+  generate
+    if (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS > 0) begin
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q     = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.gen_hardened.shadow_q);
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q                 = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.rdata_q);
+
+    end else begin
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q     = '0;
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q                 = '0;
+
+    end
+  endgenerate
+
+generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n++) begin
+    // Shadow:
+    assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.gen_hardened.shadow_q;
+    assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.gen_hardened.shadow_q;
+
+    // CSR:
+    assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q[n]  = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.rdata_q;
+    assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.rdata_q;
+
+  end endgenerate
+
+
+  generate
+    if (SMCLIC==1) begin
+
+      //Shadow registers - SMILIC
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q         = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvt_csr_i.gen_hardened.shadow_q);
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q        = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvec_csr_i.gen_hardened.shadow_q);
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q   = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintstatus_csr_i.gen_hardened.shadow_q);
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q   = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintthresh_csr_i.gen_hardened.shadow_q);
+
+      //Shadow registers - BASIC
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q    = '0;
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q      = '0;
+
+      //CSR registers - SMCLIC
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q                      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvt_csr_i.rdata_q);
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q                     = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvec_csr_i.rdata_q);
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q                = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintstatus_csr_i.rdata_q);
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q                = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintthresh_csr_i.rdata_q);
+
+      //CSR registers - BASIC
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q    = '0;
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q      = '0;
+
+    end else begin
+
+      //Shadow registers - SMILIC
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q         = '0;
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q        = '0;
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q   = '0;
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q   = '0;
+
+      //Shadow registers - BASIC
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q    = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.gen_hardened.shadow_q);
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.gen_hardened.shadow_q);
+
+      //CSR registers - SMCLIC
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q               = '0;
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q         = '0;
+      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q         = '0;
+
+      //CSR registers - BASIC
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q    = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.rdata_q);
+      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.rdata_q);
+
+    end
+  endgenerate
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_if
+    #(.MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
+      .PMP_NUM_REGIONS   (PMP_NUM_REGIONS),
+      .PMP_ADDR_WIDTH    (core_i.cs_registers_i.PMP_ADDR_WIDTH))
+
+    xsecure_if (
+
+      // Core
+      .core_clk                                                                                                         (core_i.clk),
+      .clk_en                                                                                                           (core_i.sleep_unit_i.core_clock_gate_i.clk_en),
+
+      .core_rf_we_wb                                                                                                    (core_i.rf_we_wb),
+      .core_rf_waddr_wb                                                                                                 (core_i.rf_waddr_wb),
+      .core_rf_wdata_wb                                                                                                 (core_i.rf_wdata_wb),
+      .core_register_file_wrapper_register_file_mem                                                                     (core_i.register_file_wrapper_i.register_file_i.mem),
+      .core_i_jump_target_id                                                                                            (core_i.jump_target_id),
+
+      // CSR
+      .core_alert_minor_o                                                                                               (core_i.alert_minor_o),
+      .core_alert_major_o                                                                                               (core_i.alert_major_o),
+
+      .core_xsecure_ctrl_cpuctrl_dataindtiming	                                                                        (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
+      .core_xsecure_ctrl_cpuctrl_rnddummy		                                                                            (core_i.xsecure_ctrl.cpuctrl.rnddummy),
+      .core_xsecure_ctrl_cpuctrl_pc_hardening                                                                           (core_i.xsecure_ctrl.cpuctrl.pc_hardening),
+
+      .core_xsecure_ctrl_cpuctrl_rnddummyfreq                                                                           (core_i.xsecure_ctrl.cpuctrl[19:16]),
+      .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
+
+      .core_cs_registers_xsecure_lfsr_lockup                                                                            (core_i.cs_registers_i.xsecure.lfsr_lockup),
+      .core_controller_controller_fsm_debug_mode_q                                                                      (core_i.controller_i.controller_fsm_i.debug_mode_q),
+
+      .core_cs_registers_mhpmcounter_mcycle                                                                             (core_i.cs_registers_i.mcycle_o),
+      .core_cs_registers_mhpmcounter_minstret                                                                           (core_i.cs_registers_i.mhpmcounter_q[2]),
+      .core_cs_registers_mhpmcounter_31_to_3                                                                            (core_i.cs_registers_i.mhpmcounter_q[31:3]),
+      .core_cs_registers_mhpmevent_31_to_3                                                                              (core_i.cs_registers_i.mhpmevent_q[31:3]),
+      .core_cs_registers_mcountinhibit_q_mcycle_inhibit                                                                 (core_i.cs_registers_i.mcountinhibit_q[0]),
+      .core_cs_registers_mcountinhibit_q_minstret_inhibit                                                               (core_i.cs_registers_i.mcountinhibit_q[2]),
+
+      .core_cs_registers_csr_en_gated                                                                                   (core_i.cs_registers_i.csr_en_gated),
+      .core_cs_registers_csr_waddr                                                                                      (core_i.cs_registers_i.csr_waddr),
+
+      .core_LFSR0_CFG_default_seed                                                                                      (core_i.LFSR0_CFG.default_seed),
+      .core_LFSR1_CFG_default_seed                                                                                      (core_i.LFSR1_CFG.default_seed),
+      .core_LFSR2_CFG_default_seed                                                                                      (core_i.LFSR2_CFG.default_seed),
+
+      .core_xsecure_ctrl_lfsr0                                                                                          (core_i.xsecure_ctrl.lfsr0),
+      .core_xsecure_ctrl_lfsr1                                                                                          (core_i.xsecure_ctrl.lfsr1),
+      .core_xsecure_ctrl_lfsr2                                                                                          (core_i.xsecure_ctrl.lfsr2),
+
+      .core_cs_registers_xsecure_lfsr0_seed_we                                                                          (core_i.cs_registers_i.xsecure.lfsr0_i.seed_we_i),
+      .core_cs_registers_xsecure_lfsr1_seed_we                                                                          (core_i.cs_registers_i.xsecure.lfsr1_i.seed_we_i),
+      .core_cs_registers_xsecure_lfsr2_seed_we                                                                          (core_i.cs_registers_i.xsecure.lfsr2_i.seed_we_i),
+
+      .core_i_cs_registers_i_mepc_o                                                                                     (core_i.cs_registers_i.mepc_o),
+
+      // Hardend CSR registers
+      .core_i_cs_registers_i_jvt_csr_i_rdata_q                                                                          (core_i.cs_registers_i.jvt_csr_i.rdata_q),
+      .core_i_cs_registers_i_mstatus_csr_i_rdata_q                                                                      (core_i.cs_registers_i.mstatus_csr_i.rdata_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q                                    (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q),
+      .core_i_cs_registers_i_xsecure_cpuctrl_csr_i_rdata_q                                                              (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.rdata_q),
+      .core_i_cs_registers_i_dcsr_csr_i_rdata_q                                                                         (core_i.cs_registers_i.dcsr_csr_i.rdata_q),
+      .core_i_cs_registers_i_mepc_csr_i_rdata_q                                                                         (core_i.cs_registers_i.mepc_csr_i.rdata_q),
+      .core_i_cs_registers_i_mscratch_csr_i_rdata_q                                                                     (core_i.cs_registers_i.mscratch_csr_i.rdata_q),
+
+      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q         (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q),
+      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q        (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q),
+
+      // SMCLIC
+      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q                                 (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q),
+      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q                                (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q),
+      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q                           (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q),
+      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q                           (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q),
+
+      // BASE
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q                                    (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q                                      (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q),
+
+      // Shadow registers
+      .core_cs_registers_jvt_csr_gen_hardened_shadow_q                                                                  (core_i.cs_registers_i.jvt_csr_i.gen_hardened.shadow_q),
+      .core_cs_registers_mstatus_csr_gen_hardened_shadow_q                                                              (core_i.cs_registers_i.mstatus_csr_i.gen_hardened.shadow_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q                        (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q),
+      .core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q                                                      (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.gen_hardened.shadow_q),
+      .core_cs_registers_dcsr_csr_gen_hardened_shadow_q                                                                 (core_i.cs_registers_i.dcsr_csr_i.gen_hardened.shadow_q),
+      .core_cs_registers_mepc_csr_gen_hardened_shadow_q                                                                 (core_i.cs_registers_i.mepc_csr_i.gen_hardened.shadow_q),
+      .core_cs_registers_mscratch_csr_gen_hardened_shadow_q                                                             (core_i.cs_registers_i.mscratch_csr_i.gen_hardened.shadow_q),
+
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q  (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q),
+
+      // SMILIC
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q                           (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q                          (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q                     (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q                     (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q),
+
+      // BASIC
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q                      (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q),
+      .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q                        (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q),
+
+      // IF stage
+      .core_if_stage_if_valid_o                                                                                         (core_i.if_stage_i.if_valid_o),
+      .core_if_stage_id_ready_i                                                                                         (core_i.if_stage_i.id_ready_i),
+
+      .core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs1                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.lfsr_rs1),
+      .core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs2                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.lfsr_rs2),
+
+      .core_if_stage_instr_meta_n_dummy                                                                                 (core_i.if_stage_i.instr_meta_n.dummy),
+      .core_i_if_stage_i_instr_hint                                                                                     (core_i.if_stage_i.instr_hint),
+
+      .core_i_if_stage_i_pc_if_o                                                                                        (core_i.if_stage_i.pc_if_o),
+      .core_i_if_stage_i_pc_check_i_pc_set_q                                                                            (core_i.if_stage_i.pc_check_i.pc_set_q),
+
+
+      // IF ID pipe
+      .core_if_id_pipe_instr_meta_dummy                                                                                 (core_i.if_id_pipe.instr_meta.dummy),
+      .core_if_id_pipe_instr_bus_resp_rdata                                                                             (core_i.if_id_pipe.instr.bus_resp.rdata),
+      .core_i_id_stage_i_if_id_pipe_i_pc                                                                                (core_i.id_stage_i.if_id_pipe_i.pc),
+
+      // ID stage
+      .core_id_stage_id_valid_o                                                                                         (core_i.id_stage_i.id_valid_o),
+      .core_id_stage_ex_ready_i                                                                                         (core_i.id_stage_i.ex_ready_i),
+      .core_id_stage_if_id_pipe_instr_meta_compressed                                                                   (core_i.id_stage_i.if_id_pipe_i.instr_meta.compressed),
+      .core_id_stage_if_id_pipe_compressed_instr                                                                        (core_i.id_stage_i.if_id_pipe_i.compressed_instr),
+
+      // ID EX pipe
+      .core_id_ex_pipe_instr_meta_dummy                                                                                 (core_i.id_ex_pipe.instr_meta.dummy),
+      .core_id_ex_pipe_instr_bus_resp_rdata                                                                             (core_i.id_ex_pipe.instr.bus_resp.rdata),
+
+      // EX stage
+      .core_i_ex_stage_i_branch_target_o                                                                                (core_i.ex_stage_i.branch_target_o),
+      .core_i_ex_stage_i_alu_i_cmp_result_o                                                                             (core_i.ex_stage_i.alu_i.cmp_result_o),
+
+      // EX WB pipe
+      .core_wb_stage_ex_wb_pipe_instr_meta_dummy                                                                        (core_i.wb_stage_i.ex_wb_pipe_i.instr_meta.dummy),
+
+      // WB stage
+      .core_wb_stage_wb_valid_o                                                                                         (core_i.wb_stage_i.wb_valid_o),
+
+      // CTRL
+
+      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set                                           (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.ctrl_fsm_i.pc_set),
+      .core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux                                                                   (core_i.if_stage_i.pc_check_i.ctrl_fsm_i.pc_mux)
+
+    );
+  // Xsecure assertions
+
+
+ bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_assert #(
+	.SECURE	(cv32e40s_pkg::SECURE),
+  .SMCLIC (SMCLIC),
+  .PMP_NUM_REGIONS (PMP_NUM_REGIONS),
+  .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
+  .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
+  .PMP_ADDR_WIDTH (core_i.cs_registers_i.PMP_ADDR_WIDTH)
+
+    ) xsecure_assert_i 	(
+    	.xsecure_if	(xsecure_if),
+	    .rvfi_if	  (rvfi_instr_if_0_i),
+      .clk_i      (clk_i),
+      .rst_ni     (rst_ni)
+    );
 
   // Debug assertion and coverage interface
 
@@ -436,8 +981,8 @@ module uvmt_cv32e40s_tb;
       .mcause_q               (core_i.cs_registers_i.mcause_q),
       .mtvec                  (core_i.cs_registers_i.mtvec_q),
       .mepc_q                 (core_i.cs_registers_i.mepc_q),
-      .tdata1                 (core_i.cs_registers_i.tmatch_control_q),
-      .tdata2                 (core_i.cs_registers_i.tmatch_value_q),
+      .tdata1                 (core_i.cs_registers_i.tdata1_rdata),
+      .tdata2                 (core_i.cs_registers_i.tdata2_rdata),
       .mcountinhibit_q        (core_i.cs_registers_i.mcountinhibit_q),
       .mcycle                 (core_i.cs_registers_i.mhpmcounter_q[0]),
       .minstret               (core_i.cs_registers_i.mhpmcounter_q[2]),
@@ -459,7 +1004,6 @@ module uvmt_cv32e40s_tb;
       .irq_id_o               (core_i.irq_id),
       .dm_halt_addr_i         (core_i.dm_halt_addr_i),
       .dm_exception_addr_i    (core_i.dm_exception_addr_i),
-      .nmi_addr_i             (core_i.nmi_addr_i),
       .core_sleep_o           (core_i.core_sleep_o),
       .irq_i                  (core_i.irq_i),
       .pc_set                 (core_i.ctrl_fsm.pc_set),
@@ -475,6 +1019,9 @@ module uvmt_cv32e40s_tb;
       .rvfi_csr_dpc_rdata     (rvfi_i.rvfi_csr_dpc_rdata),
       .rvfi_csr_mepc_wdata    (rvfi_i.rvfi_csr_mepc_wdata),
       .rvfi_csr_mepc_wmask    (rvfi_i.rvfi_csr_mepc_wmask),
+      .rvfi_csr_mepc_rdata    (rvfi_i.rvfi_csr_mepc_rdata),
+
+
 
       .is_wfi                 (),
       .in_wfi                 (),
@@ -489,50 +1036,130 @@ module uvmt_cv32e40s_tb;
       .*
     );
 
+
+    bind cv32e40s_wrapper
+      uvmt_cv32e40s_support_logic_if support_logic_if ();
+
+    // TODO find a better way
+    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.ctrl_fsm_o_i   = dut_wrap.cv32e40s_wrapper_i.core_i.controller_i.controller_fsm_i.ctrl_fsm_o;
+    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_req_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_req.req;
+    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_gnt_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_gnt.gnt;
+    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.clk_i          = dut_wrap.cv32e40s_wrapper_i.core_i.clk_i;
+    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.rst_ni         = dut_wrap.cv32e40s_wrapper_i.core_i.rst_ni;
+
+
+    bind cv32e40s_pmp :
+      uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i
+      uvmt_cv32e40s_pmp_assert#(
+        .PMP_GRANULARITY(PMP_GRANULARITY),
+        .PMP_NUM_REGIONS(PMP_NUM_REGIONS),
+        .IS_INSTR_SIDE(1'b1),
+        .MSECCFG_RESET_VAL(cv32e40s_pkg::MSECCFG_DEFAULT)
+      )
+      u_pmp_assert_if_stage(.rst_n (clknrst_if.reset_n),
+                            .obi_req (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.instr_req_o),
+                            .obi_addr (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.instr_addr_o),
+                            .obi_gnt (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.instr_gnt_i),
+                            .rvfi_valid (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_valid),
+                            .rvfi_pc_rdata (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_pc_rdata),
+                            .*);
+
+    bind  cv32e40s_pmp :
+      uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i
+      uvmt_cv32e40s_pmp_assert#(
+        .PMP_GRANULARITY(PMP_GRANULARITY),
+        .PMP_NUM_REGIONS(PMP_NUM_REGIONS),
+        .IS_INSTR_SIDE(1'b0),
+        .MSECCFG_RESET_VAL(cv32e40s_pkg::MSECCFG_DEFAULT)
+      )
+      u_pmp_assert_lsu(.rst_n (clknrst_if.reset_n),
+                       .obi_req (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.data_req_o),
+                       .obi_addr (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.data_addr_o),
+                       .obi_gnt (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.data_gnt_i),
+                       .rvfi_valid (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_valid),
+                       .rvfi_pc_rdata (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_pc_rdata),
+                       .*);
+
+    bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i
+      uvmt_cv32e40s_pmprvfi_assert #(
+        .PMP_GRANULARITY (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY),
+        .PMP_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS)
+      ) pmprvfi_assert_i (
+        .rvfi_mem_addr  (rvfi_mem_addr [31:0]),
+        .rvfi_mem_wmask (rvfi_mem_wmask[ 3:0]),
+        .rvfi_mem_rmask (rvfi_mem_rmask[ 3:0]),
+        .*
+      );
+
+    bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if_0_i),
+                                                                      .support_if(support_logic_if)
+                                                                      );
+
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
 
-    //uvmt_cv32e40s_rvvi_handcar u_rvvi_handcar();
-    /**
-    * ISS WRAPPER instance:
-    */
-      uvmt_cv32e40s_iss_wrap  #(
-                                .ID (0),
-                                .ROM_START_ADDR('h0),
-                                .ROM_BYTE_SIZE('h0),
-                                .RAM_BYTE_SIZE('h1_0000_0000)
-                               )
-                               iss_wrap ( .clk_period(clknrst_if.clk_period),
-                                          .clknrst_if(clknrst_if_iss)
-                                 );
+    bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
+                                                              .support_if(support_logic_if)
+                                                              );
 
-      assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
+
+    //uvmt_cv32e40s_rvvi_handcar u_rvvi_handcar();
+
+    // IMPERAS DV
+    `ifndef FORMAL
+      uvmt_cv32e40s_imperas_dv_wrap imperas_dv (rvvi_if);
+    `endif
 
    /**
     * Test bench entry point.
     */
+   `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
    initial begin : test_bench_entry_point
 
      // Specify time format for simulation (units_number, precision_number, suffix_string, minimum_field_width)
      $timeformat(-9, 3, " ns", 8);
 
      // Add interfaces handles to uvm_config_db
-     uvm_config_db#(virtual uvma_isacov_if              )::set(.cntxt(null), .inst_name("*.env.isacov_agent"), .field_name("vif"), .value(isacov_if));
-     uvm_config_db#(virtual uvma_debug_if               )::set(.cntxt(null), .inst_name("*.env.debug_agent"), .field_name("vif"), .value(debug_if));
-     uvm_config_db#(virtual uvma_clknrst_if             )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"), .field_name("vif"),        .value(clknrst_if));
-     uvm_config_db#(virtual uvma_interrupt_if           )::set(.cntxt(null), .inst_name("*.env.interrupt_agent"), .field_name("vif"),      .value(interrupt_if));
-     uvm_config_db#(virtual uvma_obi_memory_if          )::set(.cntxt(null), .inst_name("*.env.obi_memory_instr_agent"), .field_name("vif"), .value(obi_instr_if_i) );
-     uvm_config_db#(virtual uvma_obi_memory_if          )::set(.cntxt(null), .inst_name("*.env.obi_memory_data_agent"),  .field_name("vif"), .value(obi_data_if_i) );
-     uvm_config_db#(virtual uvma_fencei_if              )::set(.cntxt(null), .inst_name("*.env.fencei"),     .field_name("vif"), .value(fencei_if_i));
-     uvm_config_db#(virtual uvma_rvfi_instr_if          )::set(.cntxt(null), .inst_name("*.env.rvfi_agent"), .field_name("instr_vif0"),.value(dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i));
-     uvm_config_db#(virtual uvma_fencei_if              )::set(.cntxt(null), .inst_name("*.env.fencei_agent"), .field_name("fencei_vif"),     .value(fencei_if_i)  );
-     uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if  )::set(.cntxt(null), .inst_name("*"),                .field_name("vp_status_vif"),    .value(vp_status_if) );
-     uvm_config_db#(virtual uvma_interrupt_if           )::set(.cntxt(null), .inst_name("*.env"),            .field_name("intr_vif"),         .value(interrupt_if) );
-     uvm_config_db#(virtual uvma_debug_if               )::set(.cntxt(null), .inst_name("*.env"),            .field_name("debug_vif"),        .value(debug_if)     );
-//     uvm_config_db#(virtual uvmt_cv32e40s_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"),       .field_name("debug_cov_vif"),    .value(debug_cov_assert_if));
+     uvm_config_db#(virtual uvma_isacov_if              )::set(.cntxt(null), .inst_name("*.env.isacov_agent"),           .field_name("vif"),           .value(isacov_if));
+     uvm_config_db#(virtual uvma_debug_if               )::set(.cntxt(null), .inst_name("*.env.debug_agent"),            .field_name("vif"),           .value(debug_if));
+     uvm_config_db#(virtual uvma_clknrst_if             )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"),          .field_name("vif"),           .value(clknrst_if));
+     uvm_config_db#(virtual uvma_interrupt_if           )::set(.cntxt(null), .inst_name("*.env.interrupt_agent"),        .field_name("vif"),           .value(interrupt_if));
+     uvm_config_db#(virtual uvma_clic_if                )::set(.cntxt(null), .inst_name("*.env.clic_agent"),             .field_name("vif"),           .value(clic_if));
+
+     uvm_config_db#(virtual uvma_obi_memory_if#(
+       .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
+       .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
+       .RUSER_WIDTH(ENV_PARAM_INSTR_RUSER_WIDTH),
+       .ADDR_WIDTH(ENV_PARAM_INSTR_ADDR_WIDTH),
+       .DATA_WIDTH(ENV_PARAM_INSTR_DATA_WIDTH),
+       .ID_WIDTH(ENV_PARAM_INSTR_ID_WIDTH),
+       .ACHK_WIDTH(ENV_PARAM_INSTR_ACHK_WIDTH),
+       .RCHK_WIDTH(ENV_PARAM_INSTR_RCHK_WIDTH)
+     ))::set(.cntxt(null), .inst_name("*.env.obi_memory_instr_agent"), .field_name("vif"), .value(obi_instr_if_i) );
+     uvm_config_db#(virtual uvma_obi_memory_if#(
+       .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+       .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+       .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+       .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+       .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+       .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+       .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+       .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+     ))::set(.cntxt(null), .inst_name("*.env.obi_memory_data_agent"),  .field_name("vif"), .value(obi_data_if_i) );
+     uvm_config_db#(virtual uvma_fencei_if              )::set(.cntxt(null), .inst_name("*.env.fencei"),                 .field_name("vif"),           .value(fencei_if_i));
+     uvm_config_db#(virtual uvma_rvfi_instr_if          )::set(.cntxt(null), .inst_name("*.env.rvfi_agent"),             .field_name("instr_vif0"),    .value(dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i));
+     uvm_config_db#(virtual uvma_fencei_if              )::set(.cntxt(null), .inst_name("*.env.fencei_agent"),           .field_name("fencei_vif"),    .value(fencei_if_i)  );
+     uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if  )::set(.cntxt(null), .inst_name("*"),                            .field_name("vp_status_vif"), .value(vp_status_if) );
+     uvm_config_db#(virtual uvma_interrupt_if           )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("intr_vif"),      .value(interrupt_if) );
+     uvm_config_db#(virtual uvma_clic_if                )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("clic_vif"),      .value(clic_if) );
+     uvm_config_db#(virtual uvma_debug_if               )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_vif"),     .value(debug_if)     );
+//     uvm_config_db#(virtual uvmt_cv32e40s_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"),                 .field_name("debug_cov_vif"),    .value(debug_cov_assert_if));
      `RVFI_CSR_UVM_CONFIG_DB_SET(marchid)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mcountinhibit)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mstatus)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mstatush)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mcounteren)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(menvcfg)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(menvcfgh)
      `RVFI_CSR_UVM_CONFIG_DB_SET(misa)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mtvec)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mtval)
@@ -546,7 +1173,6 @@ module uvmt_cv32e40s_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(mimpid)
      `RVFI_CSR_UVM_CONFIG_DB_SET(minstret)
      `RVFI_CSR_UVM_CONFIG_DB_SET(minstreth)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mcontext)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mcycle)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mcycleh)
 
@@ -554,12 +1180,93 @@ module uvmt_cv32e40s_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(dpc)
      `RVFI_CSR_UVM_CONFIG_DB_SET(dscratch0)
      `RVFI_CSR_UVM_CONFIG_DB_SET(dscratch1)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(scontext)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tselect)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tdata1)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tdata2)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tdata3)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tinfo)
+
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg0)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg1)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg2)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg3)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg4)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg5)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg6)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg7)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg8)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg9)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg10)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg11)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg12)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg13)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg14)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg15)
+
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr0)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr1)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr2)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr3)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr4)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr5)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr6)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr7)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr8)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr9)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr10)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr11)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr12)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr13)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr14)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr15)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr16)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr17)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr18)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr19)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr20)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr21)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr22)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr23)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr24)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr25)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr26)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr27)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr28)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr29)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr30)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr31)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr32)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr33)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr34)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr35)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr36)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr37)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr38)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr39)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr40)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr41)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr42)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr43)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr44)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr45)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr46)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr47)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr48)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr49)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr50)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr51)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr52)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr53)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr54)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr55)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr56)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr57)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr58)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr59)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr60)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr61)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr62)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(pmpaddr63)
 
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmevent3)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmevent4)
@@ -652,17 +1359,15 @@ module uvmt_cv32e40s_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmcounter31h)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mconfigptr)
 
-     uvm_config_db#(virtual RVVI_state#(.ILEN(uvme_cv32e40s_pkg::ILEN),
-                                        .XLEN(uvme_cv32e40s_pkg::XLEN)
-                                        ))::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("state_vif"), .value(iss_wrap.cpu.state));
-     uvm_config_db#(virtual RVVI_control                )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("control_vif"), .value(iss_wrap.cpu.control));
-     uvm_config_db#(virtual RVVI_bus                    )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_bus_vif"), .value(iss_wrap.bus));
-     uvm_config_db#(virtual RVVI_io                     )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_io_vif"), .value(iss_wrap.io));
-     uvm_config_db#(virtual RVVI_memory                 )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_mem_vif"), .value(iss_wrap.ram.memory));
+     // IMPERAS_DV interface
+     uvm_config_db#(virtual rvviTrace)::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("rvvi_vif"), .value(rvvi_if));
+
+     // Virtual Peripheral Status interface
      uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if      )::set(.cntxt(null), .inst_name("*"), .field_name("vp_status_vif"),       .value(vp_status_if)      );
      uvm_config_db#(virtual uvme_cv32e40s_core_cntrl_if     )::set(.cntxt(null), .inst_name("*"), .field_name("core_cntrl_vif"),      .value(core_cntrl_if)     );
      uvm_config_db#(virtual uvmt_cv32e40s_core_status_if    )::set(.cntxt(null), .inst_name("*"), .field_name("core_status_vif"),     .value(core_status_if)    );
      uvm_config_db#(virtual uvmt_cv32e40s_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"), .field_name("debug_cov_vif"),.value(dut_wrap.cv32e40s_wrapper_i.debug_cov_assert_if));
+     uvm_config_db#(virtual uvmt_cv32e40s_support_logic_if)::set(.cntxt(null), .inst_name("*.env"), .field_name("support_logic_vif"),.value(dut_wrap.cv32e40s_wrapper_i.support_logic_if));
 
      // Make the DUT Wrapper Virtual Peripheral's status outputs available to the base_test
      uvm_config_db#(bit      )::set(.cntxt(null), .inst_name("*"), .field_name("tp"),     .value(1'b0)        );
@@ -670,7 +1375,7 @@ module uvmt_cv32e40s_tb;
      uvm_config_db#(bit      )::set(.cntxt(null), .inst_name("*"), .field_name("evalid"), .value(1'b0)        );
      uvm_config_db#(bit[31:0])::set(.cntxt(null), .inst_name("*"), .field_name("evalue"), .value(32'h00000000));
 
-	 // DUT and ENV parameters
+	   // DUT and ENV parameters
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_ADDR_WIDTH"),  .value(ENV_PARAM_INSTR_ADDR_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_DATA_WIDTH"),  .value(ENV_PARAM_INSTR_DATA_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_RAM_ADDR_WIDTH"),    .value(ENV_PARAM_RAM_ADDR_WIDTH)   );
@@ -680,26 +1385,26 @@ module uvmt_cv32e40s_tb;
      uvm_top.finish_on_completion  = 1;
      uvm_top.run_test();
    end : test_bench_entry_point
+   `endif
 
    assign core_cntrl_if.clk = clknrst_if.clk;
 
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
-   longint start_ovpsim_init_time;
-   longint end_ovpsim_init_time;
+   `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
+   // overcome race
    initial begin
-      if (!$test$plusargs("DISABLE_OVPSIM")) begin
-        #0.9ns;
-        `uvm_info("OVPSIM", $sformatf("Start benchmarking OVPSIM initialization"), UVM_LOW)
-        start_ovpsim_init_time = svlib_pkg::sys_dayTime();
-        #1.1ns;
-        end_ovpsim_init_time = svlib_pkg::sys_dayTime();
-        `uvm_info("OVPSIM", $sformatf("Initialization time: %0d seconds", end_ovpsim_init_time - start_ovpsim_init_time), UVM_LOW)
-      end
-    end
+     if ($test$plusargs("USE_ISS")) begin
+       #0.9ns;
+       imperas_dv.ref_init();
+     end
+   end
+   `endif
 
    //TODO verify these are correct with regards to isacov function
+   `ifndef FORMAL // events ignored for formal - this avoids unnecessary warning
    always @(dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i.rvfi_valid) -> isacov_if.retire;
+   `endif
    assign isacov_if.instr = dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i.rvfi_insn;
    //assign isacov_if.is_compressed = dut_wrap.cv32e40s_wrapper_i.tracer_i.insn_compressed;
 
@@ -736,6 +1441,7 @@ module uvmt_cv32e40s_tb;
    /**
     * End-of-test summary printout.
     */
+   `ifndef FORMAL // Formal ignores final blocks, this avoids unnecessary warning
    final begin: end_of_test
       string             summary_string;
       uvm_report_server  rs;
@@ -755,7 +1461,13 @@ module uvmt_cv32e40s_tb;
 
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
 
-      $display("\n%m: *** Test Summary ***\n");
+      // Shutdown the Reference Model
+      if ($test$plusargs("USE_ISS")) begin
+         // Exit handler for ImperasDV
+         void'(rvviRefShutdown());
+      end
+
+      `uvm_info("DV_WRAP", $sformatf("\n%m: *** Test Summary ***\n"), UVM_DEBUG);
 
       if (sim_finished && (err_count == 0) && (fatal_count == 0)) begin
          $display("    PPPPPPP    AAAAAA    SSSSSS    SSSSSS   EEEEEEEE  DDDDDDD     ");
@@ -795,6 +1507,7 @@ module uvmt_cv32e40s_tb;
          end
       end
    end
+   `endif
 
 endmodule : uvmt_cv32e40s_tb
 `default_nettype wire

@@ -660,6 +660,7 @@ typedef enum {
 
 typedef enum {
   DEBUG_VERSION_1_0_0,
+  DEBUG_VERSION_0_14_0,
   DEBUG_VERSION_0_13_2,
   DEBUG_VERSION_UNDEFINED
 } debug_spec_version_t;

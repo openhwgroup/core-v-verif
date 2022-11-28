@@ -33,6 +33,7 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
    bit                              obi_memory_instr_one_shot_err_enabled = 0;
    bit                              obi_memory_data_random_err_enabled    = 0;
    bit                              obi_memory_data_one_shot_err_enabled  = 0;
+   bit                              iss_suppress_invalid_msg              = 0;
    rand bit                         buserr_scoreboarding_enabled          = 1;
 
    // Agent cfg handles
@@ -44,7 +45,6 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
    rand uvma_obi_memory_cfg_c       obi_memory_data_cfg;
    rand uvma_fencei_cfg_c           fencei_cfg;
    rand uvma_rvfi_cfg_c#(ILEN,XLEN) rvfi_cfg;
-   rand uvma_rvvi_cfg_c#(ILEN,XLEN) rvvi_cfg;
    rand uvma_pma_cfg_c#(ILEN,XLEN)  pma_cfg;
 
    `uvm_object_utils_begin(uvme_cv32e40x_cfg_c)
@@ -59,6 +59,7 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_int (                         obi_memory_instr_one_shot_err_enabled, UVM_DEFAULT  )
       `uvm_field_int (                         obi_memory_data_random_err_enabled,    UVM_DEFAULT  )
       `uvm_field_int (                         obi_memory_data_one_shot_err_enabled,  UVM_DEFAULT  )
+      `uvm_field_int (                         iss_suppress_invalid_msg,              UVM_DEFAULT  )
 
       `uvm_field_object(isacov_cfg           , UVM_DEFAULT)
       `uvm_field_object(clknrst_cfg          , UVM_DEFAULT)
@@ -67,7 +68,6 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_object(obi_memory_instr_cfg , UVM_DEFAULT)
       `uvm_field_object(obi_memory_data_cfg  , UVM_DEFAULT)
       `uvm_field_object(rvfi_cfg             , UVM_DEFAULT)
-      `uvm_field_object(rvvi_cfg             , UVM_DEFAULT)
       `uvm_field_object(fencei_cfg           , UVM_DEFAULT)
       `uvm_field_object(pma_cfg              , UVM_DEFAULT)
    `uvm_object_utils_end
@@ -143,14 +143,14 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
    }
 
    constraint default_cv32e40x_boot_cons {
-      (!mhartid_plusarg_valid)                  -> (mhartid           == 'h0000_0000);
+      (!mhartid_plusarg_valid)           -> (mhartid           == 'h0000_0000);
       (!mimpid_patch_plusarg_valid)             -> (mimpid_patch      == 'h0        );
       (!mimpid_plusarg_valid)                   -> (mimpid            == {12'b0, MIMPID_MAJOR, 4'b0, MIMPID_MINOR, 4'b0, mimpid_patch[3:0]});
-      (!boot_addr_plusarg_valid)                -> (boot_addr         == 'h0000_0080);
-      (!mtvec_addr_plusarg_valid)               -> (mtvec_addr        == 'h0000_0000);
+      (!boot_addr_plusarg_valid)         -> (boot_addr         == 'h0000_0080);
+      (!mtvec_addr_plusarg_valid)        -> (mtvec_addr        == 'h0000_0000);
       (!nmi_addr_plusarg_valid)                 -> (nmi_addr          == mtvec_addr + 'h3C /* 4*15 */ );
-      (!dm_halt_addr_plusarg_valid)             -> (dm_halt_addr      == 'h1a11_0800);
-      (!dm_exception_addr_plusarg_valid)        -> (dm_exception_addr == 'h1a11_1000);
+      (!dm_halt_addr_plusarg_valid)      -> (dm_halt_addr      == 'h1a11_0800);
+      (!dm_exception_addr_plusarg_valid) -> (dm_exception_addr == 'h1a11_1000);
       solve mtvec_addr before nmi_addr;
       solve mimpid_patch before mimpid;
    }
@@ -161,7 +161,6 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
          interrupt_cfg.enabled         == 1;
          debug_cfg.enabled             == 1;
          rvfi_cfg.enabled              == 1;
-         rvvi_cfg.enabled              == use_iss;
          obi_memory_instr_cfg.enabled  == 1;
          obi_memory_data_cfg.enabled   == 1;
          fencei_cfg.enabled            == 1;
@@ -218,7 +217,6 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
          obi_memory_instr_cfg.is_active == UVM_ACTIVE;
          obi_memory_data_cfg.is_active  == UVM_ACTIVE;
          rvfi_cfg.is_active             == UVM_PASSIVE;
-         rvvi_cfg.is_active             == UVM_ACTIVE;
          fencei_cfg.is_active           == UVM_ACTIVE;
       }
 
@@ -231,7 +229,6 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
          obi_memory_data_cfg.trn_log_enabled   == 1;
          obi_memory_instr_cfg.trn_log_enabled  == 1;
          rvfi_cfg.trn_log_enabled              == 1;
-         rvvi_cfg.trn_log_enabled              == 1;
       } else {
          clknrst_cfg.trn_log_enabled           == 0;
          debug_cfg.trn_log_enabled             == 0;
@@ -240,7 +237,6 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
          obi_memory_data_cfg.trn_log_enabled   == 0;
          obi_memory_instr_cfg.trn_log_enabled  == 0;
          rvfi_cfg.trn_log_enabled              == 0;
-         rvvi_cfg.trn_log_enabled              == 0;
       }
 
       if (cov_model_enabled) {
@@ -350,17 +346,16 @@ function uvme_cv32e40x_cfg_c::new(string name="uvme_cv32e40x_cfg");
    debug_cfg = uvma_debug_cfg_c::type_id::create("debug_cfg");
    obi_memory_instr_cfg = uvma_obi_memory_cfg_c::type_id::create("obi_memory_instr_cfg");
    obi_memory_data_cfg  = uvma_obi_memory_cfg_c::type_id::create("obi_memory_data_cfg" );
-   rvfi_cfg = uvma_rvfi_cfg_c#(ILEN,XLEN)::type_id::create("rvfi_cfg");
-   rvvi_cfg = uvma_rvvi_ovpsim_cfg_c#(ILEN,XLEN)::type_id::create("rvvi_cfg");
-   fencei_cfg = uvma_fencei_cfg_c::type_id::create("fencei_cfg");
-   pma_cfg = uvma_pma_cfg_c#(ILEN,XLEN)::type_id::create("pma_cfg");
+   rvfi_cfg             = uvma_rvfi_cfg_c#(ILEN,XLEN)::type_id::create("rvfi_cfg");
+   fencei_cfg           = uvma_fencei_cfg_c::type_id::create("fencei_cfg");
+   pma_cfg              = uvma_pma_cfg_c#(ILEN,XLEN)::type_id::create("pma_cfg");
+
 
    obi_memory_instr_cfg.mon_logger_name = "OBII";
    obi_memory_data_cfg.mon_logger_name  = "OBID";
 
    isacov_cfg.core_cfg = this;
    rvfi_cfg.core_cfg = this;
-   rvvi_cfg.core_cfg = this;
 
 endfunction : new
 
@@ -375,9 +370,6 @@ function void uvme_cv32e40x_cfg_c::post_randomize();
    super.post_randomize();
 
    rvfi_cfg.instr_name[0] = "INSTR";
-
-   // Set volatile locations for virtual peripherals
-   rvvi_cfg.add_volatile_mem_addr_range(CV_VP_REGISTER_BASE, CV_VP_REGISTER_BASE + CV_VP_REGISTER_SIZE - 1);
 
    // Disable some CSR checks from all tests
    configure_disable_csr_checks();
@@ -425,6 +417,11 @@ function bit uvme_cv32e40x_cfg_c::is_csr_check_disabled(string name);
 endfunction : is_csr_check_disabled
 
 function void uvme_cv32e40x_cfg_c::configure_disable_csr_checks();
+
+   // TODO:silabs-robin  Are these deprecated with the new iss infrastructure?
+
+   // TODO: remove when fixed in ISS
+   disable_csr_check("misa");
 
    // Not possible to test on a cycle-by-cycle basis
    disable_csr_check("mip");

@@ -11961,7 +11961,7 @@ mmode_intr_vector_15:
                   j mmode_intr_handler
                   1: j test_done
 
-.align 2
+.align 7
 mtvec_handler:
                   .option norvc;
                   j mmode_exception_handler

@@ -17,7 +17,7 @@
 //
 
 class cv32e40s_pma_cfg extends uvm_object;
-  pma_region_t regions[$];
+  pma_cfg_t regions[$];
 
   constraint attr_comb_c {
     foreach (regions[i]) {

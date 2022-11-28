@@ -33,7 +33,6 @@ class uvme_cv32e40s_env_c extends uvm_env;
    uvme_cv32e40s_cov_model_c  cov_model;
    uvme_cv32e40s_prd_c        predictor;
    uvme_cv32e40s_sb_c         sb;
-   uvme_cv32e40s_core_sb_c    core_sb;
    uvme_cv32e40s_buserr_sb_c  buserr_sb;
    uvme_cv32e40s_vsqr_c       vsequencer;
 
@@ -42,11 +41,29 @@ class uvme_cv32e40s_env_c extends uvm_env;
    uvma_isacov_agent_c#(ILEN,XLEN)  isacov_agent;
    uvma_clknrst_agent_c             clknrst_agent;
    uvma_interrupt_agent_c           interrupt_agent;
+   uvma_clic_agent_c                clic_agent;
    uvma_debug_agent_c               debug_agent;
-   uvma_obi_memory_agent_c          obi_memory_instr_agent;
-   uvma_obi_memory_agent_c          obi_memory_data_agent ;
+   uvma_obi_memory_agent_c#(
+     .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_INSTR_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_INSTR_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_INSTR_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_INSTR_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_INSTR_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_INSTR_RCHK_WIDTH)
+   ) obi_memory_instr_agent;
+   uvma_obi_memory_agent_c#(
+     .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+   ) obi_memory_data_agent;
    uvma_rvfi_agent_c#(ILEN,XLEN)    rvfi_agent;
-   uvma_rvvi_agent_c#(ILEN,XLEN)    rvvi_agent;
    uvma_fencei_agent_c              fencei_agent;
    uvma_pma_agent_c#(ILEN,XLEN)     pma_agent;
 
@@ -126,11 +143,6 @@ class uvme_cv32e40s_env_c extends uvm_env;
    extern virtual function void connect_predictor();
 
    /**
-    * Connects the RVFI to the RVVI for step and compare feedback
-    */
-   extern virtual function void connect_rvfi_rvvi();
-
-   /**
     * Connects scoreboards components to agents/predictor.
     */
    extern virtual function void connect_scoreboard();
@@ -148,7 +160,16 @@ class uvme_cv32e40s_env_c extends uvm_env;
    /**
     * Install virtual peripheral sequences to the OBI data slave sequence
     */
-   extern virtual function void install_vp_register_seqs(uvma_obi_memory_slv_seq_c data_slv_seq);
+   extern virtual function void install_vp_register_seqs(uvma_obi_memory_slv_seq_c#(
+       .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+       .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+       .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+       .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+       .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+       .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+       .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+       .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+   )data_slv_seq);
 
 endclass : uvme_cv32e40s_env_c
 
@@ -204,15 +225,6 @@ function void uvme_cv32e40s_env_c::connect_phase(uvm_phase phase);
    super.connect_phase(phase);
 
    if (cfg.enabled) begin
-      if (cfg.rvvi_cfg.is_active == UVM_ACTIVE) begin
-         uvma_rvvi_ovpsim_agent_c rvvi_ovpsim_agent;
-
-         connect_rvfi_rvvi();
-         if (!$cast(rvvi_ovpsim_agent, rvvi_agent)) begin
-            `uvm_fatal("UVMECV32E40SENV", "Could not cast agent to rvvi_ovpsim_agent");
-         end
-         rvvi_ovpsim_agent.set_clknrst_sequencer(clknrst_agent.sequencer);
-      end
 
       if (cfg.scoreboarding_enabled) begin
          connect_predictor ();
@@ -239,26 +251,80 @@ endfunction : end_of_elaboration_phase
 
 task uvme_cv32e40s_env_c::run_phase(uvm_phase phase);
 
-   uvma_obi_memory_fw_preload_seq_c fw_preload_seq;
-   uvma_obi_memory_slv_seq_c        instr_slv_seq;
-   uvma_obi_memory_slv_seq_c        data_slv_seq;
+   uvma_obi_memory_fw_preload_seq_c#(
+     .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_INSTR_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_INSTR_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_INSTR_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_INSTR_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_INSTR_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_INSTR_RCHK_WIDTH)
+   ) fw_preload_seq;
+   uvma_obi_memory_slv_seq_c#(
+     .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_INSTR_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_INSTR_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_INSTR_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_INSTR_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_INSTR_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_INSTR_RCHK_WIDTH)
+   ) instr_slv_seq;
+   uvma_obi_memory_slv_seq_c#(
+     .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+   ) data_slv_seq;
 
    if (cfg.is_active) begin
       fork
          begin : spawn_obi_instr_fw_preload_thread
-            fw_preload_seq = uvma_obi_memory_fw_preload_seq_c::type_id::create("fw_preload_seq");
+            fw_preload_seq = uvma_obi_memory_fw_preload_seq_c#(
+              .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
+              .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
+              .RUSER_WIDTH(ENV_PARAM_INSTR_RUSER_WIDTH),
+              .ADDR_WIDTH(ENV_PARAM_INSTR_ADDR_WIDTH),
+              .DATA_WIDTH(ENV_PARAM_INSTR_DATA_WIDTH),
+              .ID_WIDTH(ENV_PARAM_INSTR_ID_WIDTH),
+              .ACHK_WIDTH(ENV_PARAM_INSTR_ACHK_WIDTH),
+              .RCHK_WIDTH(ENV_PARAM_INSTR_RCHK_WIDTH)
+            )::type_id::create("fw_preload_seq");
             void'(fw_preload_seq.randomize());
             fw_preload_seq.start(obi_memory_instr_agent.sequencer);
          end
 
          begin : obi_instr_slv_thread
-            instr_slv_seq = uvma_obi_memory_slv_seq_c::type_id::create("instr_slv_seq");
+            instr_slv_seq = uvma_obi_memory_slv_seq_c#(
+              .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
+              .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
+              .RUSER_WIDTH(ENV_PARAM_INSTR_RUSER_WIDTH),
+              .ADDR_WIDTH(ENV_PARAM_INSTR_ADDR_WIDTH),
+              .DATA_WIDTH(ENV_PARAM_INSTR_DATA_WIDTH),
+              .ID_WIDTH(ENV_PARAM_INSTR_ID_WIDTH),
+              .ACHK_WIDTH(ENV_PARAM_INSTR_ACHK_WIDTH),
+              .RCHK_WIDTH(ENV_PARAM_INSTR_RCHK_WIDTH)
+            )::type_id::create("instr_slv_seq");
             void'(instr_slv_seq.randomize());
             instr_slv_seq.start(obi_memory_instr_agent.sequencer);
          end
 
          begin : obi_data_slv_thread
-            data_slv_seq = uvma_obi_memory_slv_seq_c::type_id::create("data_slv_seq");
+            data_slv_seq = uvma_obi_memory_slv_seq_c#(
+              .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+              .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+              .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+              .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+              .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+              .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+              .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+              .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+            )::type_id::create("data_slv_seq");
 
             install_vp_register_seqs(data_slv_seq);
 
@@ -287,6 +353,13 @@ function void uvme_cv32e40s_env_c::retrieve_vifs();
       `uvm_info("VIF", $sformatf("Found intr_vif handle of type %s in uvm_config_db", $typename(cntxt.intr_vif)), UVM_DEBUG)
    end
 
+   if (!uvm_config_db#(virtual uvma_clic_if)::get(this, "", "clic_vif", cntxt.clic_vif)) begin
+      `uvm_fatal("VIF", $sformatf("Could not find clic_vif handle of type %s in uvm_config_db", $typename(cntxt.clic_vif)))
+   end
+   else begin
+      `uvm_info("VIF", $sformatf("Found clic_vif handle of type %s in uvm_config_db", $typename(cntxt.clic_vif)), UVM_DEBUG)
+   end
+
    if (!uvm_config_db#(virtual uvma_debug_if)::get(this, "", "debug_vif", cntxt.debug_vif)) begin
       `uvm_fatal("VIF", $sformatf("Could not find debug_vif handle of type %s in uvm_config_db", $typename(cntxt.debug_vif)))
    end
@@ -310,12 +383,12 @@ function void uvme_cv32e40s_env_c::assign_cfg();
    uvm_config_db#(uvma_debug_cfg_c)::set(this, "debug_agent", "cfg", cfg.debug_cfg);
    uvm_config_db#(uvma_fencei_cfg_c)::set(this, "fencei_agent", "cfg", cfg.fencei_cfg);
    uvm_config_db#(uvma_interrupt_cfg_c)::set(this, "*interrupt_agent", "cfg", cfg.interrupt_cfg);
+   uvm_config_db#(uvma_clic_cfg_c)::set(this, "*clic_agent", "cfg", cfg.clic_cfg);
    uvm_config_db#(uvma_isacov_cfg_c)::set(this, "*isacov_agent", "cfg", cfg.isacov_cfg);
    uvm_config_db#(uvma_obi_memory_cfg_c)::set(this, "obi_memory_data_agent",  "cfg", cfg.obi_memory_data_cfg);
    uvm_config_db#(uvma_obi_memory_cfg_c)::set(this, "obi_memory_instr_agent", "cfg", cfg.obi_memory_instr_cfg);
    uvm_config_db#(uvma_pma_cfg_c)::set(this, "pma_agent", "cfg", cfg.pma_cfg);
    uvm_config_db#(uvma_rvfi_cfg_c#(ILEN,XLEN))::set(this, "rvfi_agent", "cfg", cfg.rvfi_cfg);
-   uvm_config_db#(uvma_rvvi_cfg_c#(ILEN,XLEN))::set(this, "rvvi_agent", "cfg", cfg.rvvi_cfg);
 
 endfunction: assign_cfg
 
@@ -329,27 +402,63 @@ function void uvme_cv32e40s_env_c::assign_cntxt();
    uvm_config_db#(uvma_debug_cntxt_c)::set(this, "debug_agent", "cntxt", cntxt.debug_cntxt);
    uvm_config_db#(uvma_fencei_cntxt_c)::set(this, "fencei_agent", "cntxt", cntxt.fencei_cntxt);
    uvm_config_db#(uvma_interrupt_cntxt_c)::set(this, "interrupt_agent", "cntxt", cntxt.interrupt_cntxt);
-   uvm_config_db#(uvma_obi_memory_cntxt_c)::set(this, "obi_memory_data_agent",  "cntxt", cntxt.obi_memory_data_cntxt);
-   uvm_config_db#(uvma_obi_memory_cntxt_c)::set(this, "obi_memory_instr_agent", "cntxt", cntxt.obi_memory_instr_cntxt);
+   uvm_config_db#(uvma_clic_cntxt_c)::set(this, "clic_agent", "cntxt", cntxt.clic_cntxt);
+   uvm_config_db#(uvma_obi_memory_cntxt_c#(
+     .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+   ))::set(this, "obi_memory_data_agent",  "cntxt", cntxt.obi_memory_data_cntxt);
+   uvm_config_db#(uvma_obi_memory_cntxt_c#(
+     .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_INSTR_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_INSTR_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_INSTR_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_INSTR_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_INSTR_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_INSTR_RCHK_WIDTH)
+   ))::set(this, "obi_memory_instr_agent", "cntxt", cntxt.obi_memory_instr_cntxt);
    uvm_config_db#(uvma_rvfi_cntxt_c#(ILEN,XLEN))::set(this, "rvfi_agent", "cntxt", cntxt.rvfi_cntxt);
-   uvm_config_db#(uvma_rvvi_cntxt_c#(ILEN,XLEN))::set(this, "rvvi_agent", "cntxt", cntxt.rvvi_cntxt);
 
 endfunction: assign_cntxt
 
 
 function void uvme_cv32e40s_env_c::create_agents();
 
-   core_cntrl_agent = uvma_cv32e40s_core_cntrl_agent_c::type_id::create("core_cntrl_agent", this);
-   isacov_agent = uvma_isacov_agent_c#(ILEN,XLEN)::type_id::create("isacov_agent", this);
-   clknrst_agent = uvma_clknrst_agent_c::type_id::create("clknrst_agent", this);
-   interrupt_agent = uvma_interrupt_agent_c::type_id::create("interrupt_agent", this);
-   debug_agent = uvma_debug_agent_c::type_id::create("debug_agent", this);
-   obi_memory_instr_agent = uvma_obi_memory_agent_c::type_id::create("obi_memory_instr_agent", this);
-   obi_memory_data_agent  = uvma_obi_memory_agent_c::type_id::create("obi_memory_data_agent",  this);
-   rvfi_agent = uvma_rvfi_agent_c#(ILEN,XLEN)::type_id::create("rvfi_agent", this);
-   rvvi_agent = uvma_rvvi_ovpsim_agent_c#(ILEN,XLEN)::type_id::create("rvvi_agent", this);
-   fencei_agent = uvma_fencei_agent_c::type_id::create("fencei_agent", this);
-   pma_agent = uvma_pma_agent_c#(ILEN,XLEN)::type_id::create("pma_agent", this);
+   core_cntrl_agent       = uvma_cv32e40s_core_cntrl_agent_c::type_id::create("core_cntrl_agent", this);
+   isacov_agent           = uvma_isacov_agent_c#(ILEN,XLEN)::type_id::create("isacov_agent", this);
+   clknrst_agent          = uvma_clknrst_agent_c::type_id::create("clknrst_agent", this);
+   interrupt_agent        = uvma_interrupt_agent_c::type_id::create("interrupt_agent", this);
+   clic_agent             = uvma_clic_agent_c::type_id::create("clic_agent", this);
+   debug_agent            = uvma_debug_agent_c::type_id::create("debug_agent", this);
+   obi_memory_instr_agent = uvma_obi_memory_agent_c#(
+     .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_INSTR_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_INSTR_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_INSTR_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_INSTR_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_INSTR_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_INSTR_RCHK_WIDTH)
+   )::type_id::create("obi_memory_instr_agent", this);
+   obi_memory_data_agent  = uvma_obi_memory_agent_c#(
+     .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+   )::type_id::create("obi_memory_data_agent",  this);
+   rvfi_agent             = uvma_rvfi_agent_c#(ILEN,XLEN)::type_id::create("rvfi_agent", this);
+   fencei_agent           = uvma_fencei_agent_c::type_id::create("fencei_agent", this);
+   pma_agent              = uvma_pma_agent_c#(ILEN,XLEN)::type_id::create("pma_agent", this);
 
 endfunction: create_agents
 
@@ -359,7 +468,6 @@ function void uvme_cv32e40s_env_c::create_env_components();
    if (cfg.scoreboarding_enabled) begin
       predictor = uvme_cv32e40s_prd_c::type_id::create("predictor", this);
       sb        = uvme_cv32e40s_sb_c::type_id::create("sb"       , this);
-      core_sb   = uvme_cv32e40s_core_sb_c::type_id::create("core_sb", this);
    end
 
    if (cfg.buserr_scoreboarding_enabled) begin
@@ -386,23 +494,7 @@ function void uvme_cv32e40s_env_c::connect_predictor();
 
 endfunction: connect_predictor
 
-function void uvme_cv32e40s_env_c::connect_rvfi_rvvi();
-
-   foreach (rvfi_agent.instr_mon_ap[i]) begin
-      rvfi_agent.instr_mon_ap[i].connect(rvvi_agent.sequencer.rvfi_instr_export);
-   end
-
-endfunction : connect_rvfi_rvvi
-
 function void uvme_cv32e40s_env_c::connect_scoreboard();
-
-   // Connect the CORE Scoreboard (but only if the ISS is running)
-   if (cfg.use_iss) begin
-      rvvi_agent.state_mon_ap.connect(core_sb.rvvi_state_export);
-      foreach (rvfi_agent.instr_mon_ap[i]) begin
-         rvfi_agent.instr_mon_ap[i].connect(core_sb.rvfi_instr_export);
-      end
-   end
 
    // Connect the bus error scoreboard
    if (cfg.buserr_scoreboarding_enabled) begin
@@ -432,6 +524,7 @@ function void uvme_cv32e40s_env_c::connect_coverage_model();
    foreach (rvfi_agent.instr_mon_ap[i]) begin
       rvfi_agent.instr_mon_ap[i].connect(isacov_agent.monitor.rvfi_instr_export);
       rvfi_agent.instr_mon_ap[i].connect(cov_model.interrupt_covg.interrupt_mon_export);
+      //rvfi_agent.instr_mon_ap[i].connect(cov_model.clic_covg.clic_mon_export); // TODO: silabs-hfegran
       rvfi_agent.instr_mon_ap[i].connect(pma_agent.monitor.rvfi_instr_export);
    end
 
@@ -440,26 +533,83 @@ endfunction: connect_coverage_model
 
 function void uvme_cv32e40s_env_c::assemble_vsequencer();
 
-   vsequencer.clknrst_sequencer   = clknrst_agent.sequencer;
-   vsequencer.interrupt_sequencer = interrupt_agent.sequencer;
-   vsequencer.debug_sequencer     = debug_agent.sequencer;
+   vsequencer.clknrst_sequencer          = clknrst_agent.sequencer;
+   vsequencer.interrupt_sequencer        = interrupt_agent.sequencer;
+   vsequencer.clic_sequencer             = clic_agent.sequencer;
+   vsequencer.debug_sequencer            = debug_agent.sequencer;
    vsequencer.obi_memory_instr_sequencer = obi_memory_instr_agent.sequencer;
-   vsequencer.obi_memory_data_sequencer  = obi_memory_data_agent .sequencer;
+   vsequencer.obi_memory_data_sequencer  = obi_memory_data_agent.sequencer;
 
 endfunction: assemble_vsequencer
 
 
-function void uvme_cv32e40s_env_c::install_vp_register_seqs(uvma_obi_memory_slv_seq_c data_slv_seq);
+function void uvme_cv32e40s_env_c::install_vp_register_seqs(uvma_obi_memory_slv_seq_c#(
+  .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+  .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+  .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+  .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+  .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+  .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+  .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+  .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+) data_slv_seq);
 
-   void'(data_slv_seq.register_vp_vseq("vp_virtual_printer", CV_VP_VIRTUAL_PRINTER_BASE, uvma_obi_memory_vp_virtual_printer_seq_c::get_type()));
+   void'(data_slv_seq.register_vp_vseq("vp_virtual_printer", CV_VP_VIRTUAL_PRINTER_BASE, uvma_obi_memory_vp_virtual_printer_seq_c#(
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+   )::get_type()));
 
-   void'(data_slv_seq.register_vp_vseq("vp_rand_num", CV_VP_RANDOM_NUM_BASE,  uvma_obi_memory_vp_rand_num_seq_c::get_type()));
+   void'(data_slv_seq.register_vp_vseq("vp_rand_num", CV_VP_RANDOM_NUM_BASE,  uvma_obi_memory_vp_rand_num_seq_c#(
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+   ) ::get_type()));
 
-   void'(data_slv_seq.register_vp_vseq("vp_cycle_counter", CV_VP_CYCLE_COUNTER_BASE, uvma_obi_memory_vp_cycle_counter_seq_c::get_type()));
+   void'(data_slv_seq.register_vp_vseq("vp_cycle_counter", CV_VP_CYCLE_COUNTER_BASE, uvma_obi_memory_vp_cycle_counter_seq_c#(
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+   ) ::get_type()));
 
    begin
-      uvma_obi_memory_vp_directed_slv_resp_seq_c#(2) vp_seq;
-      if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_directed_slv_resp", CV_VP_OBI_SLV_RESP_BASE, uvma_obi_memory_vp_directed_slv_resp_seq_c#(2)::get_type()))) begin
+      uvma_obi_memory_vp_directed_slv_resp_seq_c#(
+        .OBI_PERIPHS(2),
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+      ) vp_seq;
+      if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_directed_slv_resp", CV_VP_OBI_SLV_RESP_BASE, uvma_obi_memory_vp_directed_slv_resp_seq_c#(
+        .OBI_PERIPHS(2),
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+      )::get_type()))) begin
          `uvm_fatal("CV32E40SVPSEQ", $sformatf("Could not cast vp_directed_slv_resp correctly"));
       end
       vp_seq.obi_cfg[0] = cfg.obi_memory_instr_cfg;
@@ -467,40 +617,130 @@ function void uvme_cv32e40s_env_c::install_vp_register_seqs(uvma_obi_memory_slv_
    end
 
    begin
-      uvme_cv32e40s_vp_sig_writer_seq_c vp_seq;
-      if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_sig_writer", CV_VP_SIG_WRITER_BASE, uvme_cv32e40s_vp_sig_writer_seq_c::get_type()))) begin
+      uvme_cv32e40s_vp_sig_writer_seq_c#(
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+      ) vp_seq;
+      if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_sig_writer", CV_VP_SIG_WRITER_BASE, uvme_cv32e40s_vp_sig_writer_seq_c#(
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+      )::get_type()))) begin
          `uvm_fatal("CV32E40SVPSEQ", $sformatf("Could not cast vp_sig_writes correctly"));
       end
       vp_seq.cv32e40s_cntxt = cntxt;
    end
 
    begin
-      uvme_cv32e40s_vp_status_flags_seq_c vp_seq;
-      if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_status_flags", CV_VP_STATUS_FLAGS_BASE, uvme_cv32e40s_vp_status_flags_seq_c::get_type()))) begin
+      uvme_cv32e40s_vp_status_flags_seq_c#(
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+      ) vp_seq;
+      if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_status_flags", CV_VP_STATUS_FLAGS_BASE, uvme_cv32e40s_vp_status_flags_seq_c#(
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+      )::get_type()))) begin
          `uvm_fatal("CV32E40SVPSEQ", $sformatf("Could not cast vp_status_flags correctly"));
       end
       vp_seq.cv32e40s_cntxt = cntxt;
    end
 
    begin
-      uvme_cv32e40s_vp_interrupt_timer_seq_c vp_seq;
-      if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_interrupt_timer", CV_VP_INTR_TIMER_BASE, uvme_cv32e40s_vp_interrupt_timer_seq_c::get_type()))) begin
+      uvme_cv32e40s_vp_interrupt_timer_seq_c#(
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+      )vp_seq;
+      if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_interrupt_timer", CV_VP_INTR_TIMER_BASE, uvme_cv32e40s_vp_interrupt_timer_seq_c#(
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+      )::get_type()))) begin
          `uvm_fatal("CV32E40SVPSEQ", $sformatf("Could not cast vp_interrupt_timer correctly"));
       end
       vp_seq.cv32e40s_cntxt = cntxt;
    end
 
    begin
-      uvme_cv32e40s_vp_debug_control_seq_c vp_seq;
-      if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_debug_control", CV_VP_DEBUG_CONTROL_BASE, uvme_cv32e40s_vp_debug_control_seq_c::get_type()))) begin
+      uvme_cv32e40s_vp_debug_control_seq_c#(
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+      )vp_seq;
+      if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_debug_control", CV_VP_DEBUG_CONTROL_BASE, uvme_cv32e40s_vp_debug_control_seq_c#(
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+      )::get_type()))) begin
          `uvm_fatal("CV32E40SVPSEQ", $sformatf("Could not cast vp_debug_control correctly"));
       end
       vp_seq.cv32e40s_cntxt = cntxt;
    end
 
    begin
-      uvme_cv32e40s_vp_fencei_tamper_seq_c vp_seq;
-      if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_fencei_tamper", CV_VP_FENCEI_TAMPER_BASE, uvme_cv32e40s_vp_fencei_tamper_seq_c::get_type()))) begin
+      uvme_cv32e40s_vp_fencei_tamper_seq_c#(
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+      ) vp_seq;
+      if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_fencei_tamper", CV_VP_FENCEI_TAMPER_BASE, uvme_cv32e40s_vp_fencei_tamper_seq_c#(
+        .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+        .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+        .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+        .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+        .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+        .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+        .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+        .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+      )::get_type()))) begin
          `uvm_fatal("CV32E40SVPSEQ", $sformatf("Could not cast vp_fencei_tamper correctly"));
       end
       vp_seq.cv32e40s_cntxt = cntxt;

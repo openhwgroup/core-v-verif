@@ -22,22 +22,23 @@
 `ifndef __UVMT_CV32E40X_TB_SV__
 `define __UVMT_CV32E40X_TB_SV__
 
-// Import the Imperas-DV RVVI API
-`include "rvvi/rvvi-api.svh" // located in $IMPERAS_HOME/ImpPublic/include/host
-//`include "rvvi_macros.svh"   // located in ./examples/openhwgroup_cv32e40x/systemverilog
+
+`default_nettype none
+
 
 /**
  * Module encapsulating the CV32E40X DUT wrapper, and associated SV interfaces.
  * Also provide UVM environment entry and exit points.
  */
-`default_nettype none
 module uvmt_cv32e40x_tb;
 
    import uvm_pkg::*;
    import cv32e40x_pkg::*;
    import uvmt_cv32e40x_pkg::*;
    import uvme_cv32e40x_pkg::*;
-   import rvviApi::*;
+   `ifndef FORMAL
+   import rvviApiPkg::*;
+   `endif
 
    // CORE parameters
 `ifdef SET_NUM_MHPMCOUNTERS
@@ -62,6 +63,7 @@ module uvmt_cv32e40x_tb;
    uvma_clknrst_if              clknrst_if_iss();
    uvma_debug_if                debug_if();
    uvma_interrupt_if            interrupt_if();
+   // TODO:silabs-robin  Parameterize OBI interfaces
    uvma_obi_memory_if           obi_instr_if_i( .clk     (clknrst_if.clk),
                                                 .reset_n (clknrst_if.reset_n));
    uvma_obi_memory_if           obi_data_if_i ( .clk     (clknrst_if.clk),
@@ -79,7 +81,9 @@ module uvmt_cv32e40x_tb;
                                                    .sec_lvl    ());     // Core status outputs
 
    // RVVI SystemVerilog Interface
-   rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+   `ifndef FORMAL
+      rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+   `endif
 
   /**
    * DUT WRAPPER instance:
@@ -135,11 +139,15 @@ module uvmt_cv32e40x_tb;
                                                                    .rvfi_rd1_wdata(rvfi_i.rvfi_rd_wdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]),
                                                                    .rvfi_rd2_addr('0),
                                                                    .rvfi_rd2_wdata('0),
-                                                                   .rvfi_mem_addr(rvfi_i.rvfi_mem_addr[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]),
-                                                                   .rvfi_mem_rdata(rvfi_i.rvfi_mem_rdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]),
-                                                                   .rvfi_mem_rmask(rvfi_i.rvfi_mem_rmask[uvme_cv32e40x_pkg::XLEN/8*0+:uvme_cv32e40x_pkg::XLEN/8]),
-                                                                   .rvfi_mem_wdata(rvfi_i.rvfi_mem_wdata[uvme_cv32e40x_pkg::XLEN*0+:uvme_cv32e40x_pkg::XLEN]),
-                                                                   .rvfi_mem_wmask(rvfi_i.rvfi_mem_wmask[uvme_cv32e40x_pkg::XLEN/8*0+:uvme_cv32e40x_pkg::XLEN/8])
+                                                                   .rvfi_gpr_rdata(rvfi_i.rvfi_gpr_rdata[32*uvme_cv32e40x_pkg::XLEN*0  +:32*uvme_cv32e40x_pkg::XLEN]),
+                                                                   .rvfi_gpr_rmask(rvfi_i.rvfi_gpr_rmask[32*0  +:32]),
+                                                                   .rvfi_gpr_wdata(rvfi_i.rvfi_gpr_wdata[32*uvme_cv32e40x_pkg::XLEN*0  +:32*uvme_cv32e40x_pkg::XLEN]),
+                                                                   .rvfi_gpr_wmask(rvfi_i.rvfi_gpr_wmask[32*0  +:32]),
+                                                                   .rvfi_mem_addr(rvfi_i.rvfi_mem_addr[  uvma_rvfi_pkg::NMEM*uvme_cv32e40x_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40x_pkg::XLEN]),
+                                                                   .rvfi_mem_rdata(rvfi_i.rvfi_mem_rdata[uvma_rvfi_pkg::NMEM*uvme_cv32e40x_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40x_pkg::XLEN]),
+                                                                   .rvfi_mem_rmask(rvfi_i.rvfi_mem_rmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40x_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40x_pkg::XLEN/8]),
+                                                                   .rvfi_mem_wdata(rvfi_i.rvfi_mem_wdata[uvma_rvfi_pkg::NMEM*uvme_cv32e40x_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40x_pkg::XLEN]),
+                                                                   .rvfi_mem_wmask(rvfi_i.rvfi_mem_wmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40x_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40x_pkg::XLEN/8])
                                                                    );
 
   // RVFI CSR binds
@@ -443,8 +451,8 @@ module uvmt_cv32e40x_tb;
       .mcause_q               (core_i.cs_registers_i.mcause_q),
       .mtvec                  (core_i.cs_registers_i.mtvec_q),
       .mepc_q                 (core_i.cs_registers_i.mepc_q),
-      .tdata1                 (core_i.cs_registers_i.tdata1_q),
-      .tdata2                 (core_i.cs_registers_i.tdata2_q),
+      .tdata1                 (core_i.cs_registers_i.tdata1_rdata),
+      .tdata2                 (core_i.cs_registers_i.tdata2_rdata),
       .mcountinhibit_q        (core_i.cs_registers_i.mcountinhibit_q),
       .mcycle                 (core_i.cs_registers_i.mhpmcounter_q[0]),
       .minstret               (core_i.cs_registers_i.mhpmcounter_q[2]),
@@ -473,15 +481,17 @@ module uvmt_cv32e40x_tb;
 
       .rvfi_valid             (rvfi_i.rvfi_valid),
       .rvfi_insn              (rvfi_i.rvfi_insn),
-      .rvfi_intr              (rvfi_i.rvfi_intr.intr),
+      .rvfi_intr              (rvfi_i.rvfi_intr),
       .rvfi_dbg               (rvfi_i.rvfi_dbg),
       .rvfi_dbg_mode          (rvfi_i.rvfi_dbg_mode),
       .rvfi_pc_wdata          (rvfi_i.rvfi_pc_wdata),
       .rvfi_pc_rdata          (rvfi_i.rvfi_pc_rdata),
       .rvfi_csr_dpc_rdata     (rvfi_i.rvfi_csr_dpc_rdata),
-      .rvfi_csr_mepc_rdata    (rvfi_i.rvfi_csr_mepc_rdata),
       .rvfi_csr_mepc_wdata    (rvfi_i.rvfi_csr_mepc_wdata),
       .rvfi_csr_mepc_wmask    (rvfi_i.rvfi_csr_mepc_wmask),
+      .rvfi_csr_mepc_rdata    (rvfi_i.rvfi_csr_mepc_rdata),
+
+
 
       .is_wfi                 (),
       .in_wfi                 (),
@@ -501,20 +511,9 @@ module uvmt_cv32e40x_tb;
     //uvmt_cv32e40x_rvvi_handcar u_rvvi_handcar();
 
     // IMPERAS DV
-    uvmt_cv32e40x_imperas_dv_wrap imperas_dv (rvvi_if);
-
-    // IMPERAS OVPsim ISS (planned for deprecation)
-    uvmt_cv32e40x_iss_wrap  #(
-                              .ID (0),
-                              .ROM_START_ADDR('h0),
-                              .ROM_BYTE_SIZE('h0),
-                              .RAM_BYTE_SIZE('h1_0000_0000)
-                             )
-                             iss_wrap ( .clk_period(clknrst_if.clk_period),
-                                        .clknrst_if(clknrst_if_iss)
-                             );
-
-    assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
+    `ifndef FORMAL
+      uvmt_cv32e40x_imperas_dv_wrap imperas_dv (rvvi_if);
+    `endif
 
    /**
     * Test bench entry point.
@@ -664,18 +663,8 @@ module uvmt_cv32e40x_tb;
      // IMPERAS_DV interface
      uvm_config_db#(virtual rvviTrace)::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("rvvi_vif"), .value(rvvi_if));
 
-     // IMPERAS OVPsim ISS interfaces (planned for deprecation)
-     uvm_config_db#(virtual RVVI_state#(.ILEN(uvme_cv32e40x_pkg::ILEN),
-                                        .XLEN(uvme_cv32e40x_pkg::XLEN)
-                                        ))::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("state_vif"), .value(iss_wrap.cpu.state));
-     uvm_config_db#(virtual RVVI_control                )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("control_vif"), .value(iss_wrap.cpu.control));
-     uvm_config_db#(virtual RVVI_bus                    )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_bus_vif"), .value(iss_wrap.bus));
-     uvm_config_db#(virtual RVVI_io                     )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_io_vif"), .value(iss_wrap.io));
-     uvm_config_db#(virtual RVVI_memory                 )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_mem_vif"), .value(iss_wrap.ram.memory));
-
      // Virtual Peripheral Status interface
      uvm_config_db#(virtual uvmt_cv32e40x_vp_status_if      )::set(.cntxt(null), .inst_name("*"), .field_name("vp_status_vif"),       .value(vp_status_if)      );
-
      uvm_config_db#(virtual uvme_cv32e40x_core_cntrl_if     )::set(.cntxt(null), .inst_name("*"), .field_name("core_cntrl_vif"),      .value(core_cntrl_if)     );
      uvm_config_db#(virtual uvmt_cv32e40x_core_status_if    )::set(.cntxt(null), .inst_name("*"), .field_name("core_status_vif"),     .value(core_status_if)    );
      uvm_config_db#(virtual uvmt_cv32e40x_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"), .field_name("debug_cov_vif"),.value(dut_wrap.cv32e40x_wrapper_i.debug_cov_assert_if));
@@ -692,9 +681,6 @@ module uvmt_cv32e40x_tb;
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_DATA_WIDTH"),  .value(ENV_PARAM_INSTR_DATA_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_RAM_ADDR_WIDTH"),    .value(ENV_PARAM_RAM_ADDR_WIDTH)   );
 
-     // Start up ImperasDV
-     //imperas_dv.ref_init();
-
      // Run test
      uvm_top.enable_print_topology = 0; // ENV coders enable this as a debug aid
      uvm_top.finish_on_completion  = 1;
@@ -704,27 +690,17 @@ module uvmt_cv32e40x_tb;
 
    assign core_cntrl_if.clk = clknrst_if.clk;
 
-   // overcome race
-   initial begin
-      #0.9ns;
-      imperas_dv.ref_init();
-   end
 
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
-   longint start_ovpsim_init_time;
-   longint end_ovpsim_init_time;
 
    `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
+   // overcome race
    initial begin
-      if (!$test$plusargs("DISABLE_OVPSIM")) begin
-        #0.9ns;
-        `uvm_info("OVPSIM", $sformatf("Start benchmarking OVPSIM initialization"), UVM_LOW)
-        start_ovpsim_init_time = svlib_pkg::sys_dayTime();
-        #1.1ns;
-        end_ovpsim_init_time = svlib_pkg::sys_dayTime();
-        `uvm_info("OVPSIM", $sformatf("Initialization time: %0d seconds", end_ovpsim_init_time - start_ovpsim_init_time), UVM_LOW)
-      end
+     if ($test$plusargs("USE_ISS")) begin
+       #0.9ns;
+       imperas_dv.ref_init();
+     end
    end
    `endif
 
@@ -788,12 +764,9 @@ module uvmt_cv32e40x_tb;
 
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
 
-      // FIXME
       // Shutdown the Reference Model
-      if (0/*uvm_test_top.env.rvvi_ovpsim_agent.cfg.core_cfg.use_iss*/) begin
-         // Exit handler for OVPsim
-      end
-      else begin
+      if ($test$plusargs("USE_ISS")) begin
+         // Exit handler for ImperasDV
          void'(rvviRefShutdown());
       end
 

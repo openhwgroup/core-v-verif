@@ -49,7 +49,7 @@ class uvma_rvvi_cfg_c#(int ILEN=DEFAULT_ILEN,
    `uvm_object_utils_begin(uvma_rvvi_cfg_c)
       `uvm_field_int (                         enabled                    , UVM_DEFAULT)
       `uvm_field_enum(uvm_active_passive_enum, is_active                  , UVM_DEFAULT)
-      `uvm_field_enum(uvma_rvvi_version_enum,  rvvi_version                  , UVM_DEFAULT)
+      `uvm_field_enum(uvma_rvvi_version_enum,  rvvi_version               , UVM_DEFAULT)
       `uvm_field_int (                         cov_model_enabled          , UVM_DEFAULT)
       `uvm_field_int (                         trn_log_enabled            , UVM_DEFAULT)
    `uvm_object_utils_end

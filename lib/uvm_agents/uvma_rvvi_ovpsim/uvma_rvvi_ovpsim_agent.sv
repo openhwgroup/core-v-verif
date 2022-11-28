@@ -97,42 +97,75 @@ endfunction : end_of_elaboration_phase
 
 function void uvma_rvvi_ovpsim_agent_c::configure_iss();
 
-  // Append options from the core configuration into the ovpsim.ic file to ensure the Imperas ISS
-  // is configured as the core this RVVI is attached to
-  // File is opened in append mode because the Makefile creates an ovpsim.ic file before test execution
-  // and populates any configuration YAML defined options
-  // Note that such use shoulbe be for testing only and nearly all ovpsim.ic switches should be integrated to this method
+   // Append options from the core configuration into the ovpsim.ic file to ensure the Imperas ISS
+   // is configured as the core this RVVI is attached to
+   // File is opened in append mode because the Makefile creates an ovpsim.ic file before test execution
+   // and populates any configuration YAML defined options
+   // Note that such use shoulbe be for testing only and nearly all ovpsim.ic switches should be integrated to this method
 
-  int    fh;       // file handle ISS control file (typically ovpsim.ic).
-  string refpath;  // root of config path in ISS control file.
+   int    fh;       // file handle ISS control file (typically ovpsim.ic).
+   string refpath;  // root of config path in ISS control file.
 
-  if (cfg.core_cfg.use_iss) begin
-     refpath = "root/cpu"; // path for OVPsim
-  end
-  else begin
-     refpath = "cpu";      // path for ImperasDV
-  end
+   if (cfg.core_cfg.use_iss) begin
+      refpath = "root/cpu"; // path for OVPsim
+   end
+   else begin
+      refpath = "cpu";      // path for ImperasDV
+   end
 
-  fh = $fopen(cfg.core_cfg.iss_control_file, "a");
+   fh = $fopen(cfg.core_cfg.iss_control_file, "a");
 
-  // -------------------------------------------------------------------------------------
-  // ISA Extension support
-  // -------------------------------------------------------------------------------------
-  $fwrite(fh, $sformatf("--override %s/misa_Extensions=0x%06x\n", refpath, cfg.core_cfg.get_misa()));
-  // TODO: cv32e40x: Remove when correct setting is applied to ovpsim
-  if (cfg.core_cfg.core_name == "CV32E40X") begin
-      $fwrite(fh, $sformatf("--override %s/tcontrol_undefined=0\n", refpath));
-  end
+   // -------------------------------------------------------------------------------------
+   // ISA Extension support
+   // -------------------------------------------------------------------------------------
+   $fwrite(fh, $sformatf("--override %s/misa_Extensions=0x%06x\n", refpath, cfg.core_cfg.get_misa()));
+
+   // TODO silabs-hfegran: cv32e40x: Remove when correct setting is applied to ovpsim,
+   // settings that need to remain should be moved to core-specific config, this file needs
+   // to stay generic
+   if (cfg.core_cfg.core_name == "CV32E40X" || cfg.core_cfg.core_name == "CV32E40S") begin
+       $fwrite(fh, $sformatf("--override %s/tcontrol_undefined=0\n", refpath));
+       $fwrite(fh, $sformatf("--override %s/mtvec_mask=0xffffff81\n", refpath));
+       $fwrite(fh, $sformatf("--override %s/instret_undefined=0\n", refpath));
+       $fwrite(fh, $sformatf("--override %s/mcontext_undefined=T\n", refpath));
+       $fwrite(fh, $sformatf("--override %s/mscontext_undefined=T\n", refpath));
+       $fwrite(fh, $sformatf("--override %s/scontext_undefined=T\n", refpath));
+       $fwrite(fh, $sformatf("--override %s/ecode_mask=2047\n", refpath));
+   end
+
+   // TODO:silabs-robin remove after rtl/iss has synched up at a stable versioning scheme
+   if (cfg.core_cfg.core_name == "CV32E40S") begin
+       $fwrite(fh, $sformatf("--override %s/Zcb=0\n", refpath));
+   end
+
+   // TODO silabs-hfegran: Check that this is on by default in 40S model when ISS v0.4.0 is implemented
+   // Already in rtl, so to match, it will be enabled now
+   if (cfg.core_cfg.core_name == "CV32E40S") begin
+     $fwrite(fh, $sformatf("--override %s/Smstateen=T\n", refpath));
+   end
+
+   // TODO hf: Find a better way to put this in the 40x/40s-structure
+   if (cfg.core_cfg.core_name == "CV32E40X" || cfg.core_cfg.core_name == "CV32E40S") begin
+     $fwrite(fh, $sformatf("--override %s/scontext_undefined=1\n", refpath));
+     $fwrite(fh, $sformatf("--override %s/ecode_mask=0x7ff\n", refpath));
+     $fwrite(fh, $sformatf("--override %s/mtvec_mask=0xffffff81\n", refpath));
+     $fwrite(fh, $sformatf("--override %s/Zca=1\n", refpath));
+     $fwrite(fh, $sformatf("--override %s/Zcb=0\n", refpath));
+     $fwrite(fh, $sformatf("--override %s/Zcmp=0\n", refpath));
+     $fwrite(fh, $sformatf("--override %s/Zcmb=0\n", refpath));
+     $fwrite(fh, $sformatf("--override %s/Zcmt=0\n", refpath));
+
+   end
 
    if (cfg.core_cfg.is_ext_b_supported()) begin
       // Bitmanip version
       case (cfg.core_cfg.bitmanip_version)
-         BITMANIP_VERSION_0P90:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.90\n",  refpath));
-         BITMANIP_VERSION_0P91:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.91\n",  refpath));
-         BITMANIP_VERSION_0P92:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.92\n",  refpath));
-         BITMANIP_VERSION_0P93:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.93\n",  refpath));
+         BITMANIP_VERSION_0P90:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.90\n", refpath));
+         BITMANIP_VERSION_0P91:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.91\n", refpath));
+         BITMANIP_VERSION_0P92:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.92\n", refpath));
+         BITMANIP_VERSION_0P93:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.93\n", refpath));
          BITMANIP_VERSION_0P93_DRAFT: $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.93-draft\n", refpath));
-         BITMANIP_VERSION_0P94:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.94\n",  refpath));
+         BITMANIP_VERSION_0P94:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=0.94\n", refpath));
          BITMANIP_VERSION_1P00:       $fwrite(fh, $sformatf("--override %s/bitmanip_version=1.0.0\n", refpath));
       endcase
 
@@ -149,10 +182,17 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
       $fwrite(fh, $sformatf("--override %s/Zbt=%0d\n", refpath, cfg.core_cfg.ext_zbt_supported));
    end
 
+   case(cfg.core_cfg.debug_spec_version)
+     DEBUG_VERSION_0_13_2: $fwrite(fh, $sformatf("--override %s/debug_version=0.13.2-DRAFT\n", refpath));
+     DEBUG_VERSION_0_14_0: $fwrite(fh, $sformatf("--override %s/debug_version=0.14.0-DRAFT\n", refpath));
+     DEBUG_VERSION_1_0_0: $fwrite(fh, $sformatf("--override %s/debug_version=1.0.0-STABLE\n", refpath));
+   endcase
+
    case(cfg.core_cfg.priv_spec_version)
-     PRIV_VERSION_MASTER:   $fwrite(fh, $sformatf("--override %s/priv_version=master\n",   refpath));
-     PRIV_VERSION_1_10:     $fwrite(fh, $sformatf("--override %s/priv_version=1.10\n",     refpath));
-     PRIV_VERSION_1_11:     $fwrite(fh, $sformatf("--override %s/priv_version=1.11\n",     refpath));
+     PRIV_VERSION_MASTER:   $fwrite(fh, $sformatf("--override %s/priv_version=master\n", refpath));
+     PRIV_VERSION_1_10:     $fwrite(fh, $sformatf("--override %s/priv_version=1.10\n",   refpath));
+     PRIV_VERSION_1_11:     $fwrite(fh, $sformatf("--override %s/priv_version=1.11\n",   refpath));
+     PRIV_VERSION_1_12:     $fwrite(fh, $sformatf("--override %s/priv_version=1.12\n",   refpath));
      PRIV_VERSION_20190405: $fwrite(fh, $sformatf("--override %s/priv_version=20190405\n", refpath));
    endcase
 
@@ -171,7 +211,8 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    $fwrite(fh, $sformatf("--override %s/mimpid=%0d\n",           refpath, cfg.core_cfg.mimpid));
    $fwrite(fh, $sformatf("--override %s/startaddress=0x%08x\n",  refpath, cfg.core_cfg.boot_addr));
    // Specification forces mtvec[0] high at reset regardless of bootstrap pin state of mtvec_addr_i]0]
-   $fwrite(fh, $sformatf("--override %s/mtvec=0x%08x\n",         refpath, cfg.core_cfg.mtvec_addr| 32'h1));
+   $fwrite(fh, $sformatf("--override %s/mtvec=0x%08x\n",         refpath, cfg.core_cfg.mtvec_addr | 32'b1));
+   $fwrite(fh, $sformatf("--override %s/nmi_address=0x%08x\n",   refpath, cfg.core_cfg.nmi_addr));
    $fwrite(fh, $sformatf("--override %s/debug_address=0x%08x\n", refpath, cfg.core_cfg.dm_halt_addr));
    $fwrite(fh, $sformatf("--override %s/dexc_address=0x%08x\n",  refpath, cfg.core_cfg.dm_exception_addr));
 
@@ -180,11 +221,10 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    // -------------------------------------------------------------------------------------
 
    // NUM_MHPMCOUNTERS - Set zero in the noinhibit_mask to enable a counter, starting from index 3
-   //$fwrite(fh, $sformatf("--override %s/noinhibit_mask=0x%08x\n",                 refpath, cfg.core_cfg.get_noinhibit_mask()));
-   $fwrite(fh, $sformatf("--override %s/extension/mcountinhibit_reset=0x%08x\n",  refpath, ~(cfg.core_cfg.get_noinhibit_mask())));
+   $fwrite(fh, $sformatf("--override %s/noinhibit_mask=0x%08x\n", refpath, cfg.core_cfg.get_noinhibit_mask()));
 
    // PMA Regions
-   $fwrite(fh, $sformatf("--override %s/extension/PMA_NUM_REGIONS=%0d\n",         refpath, cfg.core_cfg.pma_regions.size()));
+   $fwrite(fh, $sformatf("--override %s/extension/PMA_NUM_REGIONS=%0d\n", refpath, cfg.core_cfg.pma_regions.size()));
    foreach (cfg.core_cfg.pma_regions[i]) begin
       $fwrite(fh, $sformatf("--override %s/extension/word_addr_low%0d=0x%08x\n",  refpath, i, cfg.core_cfg.pma_regions[i].word_addr_low));
       $fwrite(fh, $sformatf("--override %s/extension/word_addr_high%0d=0x%08x\n", refpath, i, cfg.core_cfg.pma_regions[i].word_addr_high));

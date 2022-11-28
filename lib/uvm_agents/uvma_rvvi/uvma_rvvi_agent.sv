@@ -24,7 +24,7 @@
  * Top-level component that encapsulates, builds and connects all others.
  * Capable of driving/monitoring Clock & Reset interface.
  */
-class uvma_rvvi_agent_c#(int ILEN=DEFAULT_ILEN, 
+class uvma_rvvi_agent_c#(int ILEN=DEFAULT_ILEN,
                          int XLEN=DEFAULT_XLEN) extends uvm_agent;
 
    // Objects
@@ -45,7 +45,7 @@ class uvma_rvvi_agent_c#(int ILEN=DEFAULT_ILEN,
    `uvm_component_param_utils_begin(uvma_rvvi_agent_c#(ILEN,XLEN))
       `uvm_field_object(cfg  , UVM_DEFAULT)
       `uvm_field_object(cntxt, UVM_DEFAULT)
-   `uvm_component_utils_end  
+   `uvm_component_utils_end
 
    /**
     * Default constructor.
@@ -183,34 +183,34 @@ endfunction : get_and_set_cntxt
 function void uvma_rvvi_agent_c::retrieve_vif();
 
    case (cfg.rvvi_version)
-      UVMA_RVVI_V1: begin
-         // State monitor
-         if (!uvm_config_db#(virtual RVVI_state#(ILEN,XLEN))::get(this, "", $sformatf("state_vif"), cntxt.state_vif)) begin
-            `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s in uvm_config_db", 
-                                          $typename(cntxt.state_vif)))
-         end
-         else begin
-            `uvm_info("VIF", $sformatf("Found vif handle of type %s in uvm_config_db", 
-                                       $typename(cntxt.state_vif)), UVM_DEBUG)
-         end
+     UVMA_RVVI_V1: begin
+       // State monitor
+       if (!uvm_config_db#(virtual RVVI_state#(ILEN,XLEN))::get(this, "", $sformatf("state_vif"), cntxt.state_vif)) begin
+          `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s in uvm_config_db",
+                                        $typename(cntxt.state_vif)))
+       end
+       else begin
+          `uvm_info("VIF", $sformatf("Found vif handle of type %s in uvm_config_db",
+                                     $typename(cntxt.state_vif)), UVM_DEBUG)
+       end
 
-         // Control interface
-         if (!uvm_config_db#(virtual RVVI_control)::get(this, "", $sformatf("control_vif"), cntxt.control_vif)) begin
-            `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s in uvm_config_db", 
-                                          $typename(cntxt.control_vif)))
-         end
-         else begin
-            `uvm_info("VIF", $sformatf("Found vif handle of type %s in uvm_config_db", 
-                                       $typename(cntxt.control_vif)), UVM_DEBUG)
-         end
-      end
-      UVMA_RVVI_V2: begin
+       // Control interface
+       if (!uvm_config_db#(virtual RVVI_control)::get(this, "", $sformatf("control_vif"), cntxt.control_vif)) begin
+          `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s in uvm_config_db",
+                                        $typename(cntxt.control_vif)))
+       end
+       else begin
+          `uvm_info("VIF", $sformatf("Found vif handle of type %s in uvm_config_db",
+                                     $typename(cntxt.control_vif)), UVM_DEBUG)
+       end
+     end
+     UVMA_RVVI_V2: begin
          `uvm_fatal("VIF", "RVVI_V2 not yet supported")
-      end
-      default: begin
-         `uvm_fatal("VIF", $sformatf("Unknown RVVI_VERSION %s in uvm_config_db", cfg.rvvi_version))
-      end
-  endcase
+     end
+     default: begin
+        `uvm_fatal("VIF", $sformatf("Unknown RVVI_VERSION %s in uvm_config_db", cfg.rvvi_version))
+     end
+   endcase
 
 endfunction : retrieve_vif
 
@@ -228,7 +228,7 @@ endfunction : create_components
 
 function void uvma_rvvi_agent_c::connect_sequencer_and_driver();
    if (cfg.is_active == UVM_ACTIVE) begin
-      driver.seq_item_port.connect(sequencer.seq_item_export);      
+      driver.seq_item_port.connect(sequencer.seq_item_export);
    end
 endfunction : connect_sequencer_and_driver
 
@@ -242,7 +242,7 @@ endfunction : connect_analysis_ports
 
 function void uvma_rvvi_agent_c::connect_cov_model();
 
-   //mon_ap.connect(cov_model.mon_trn_fifo.analysis_export);   
+   //mon_ap.connect(cov_model.mon_trn_fifo.analysis_export);
 
 endfunction : connect_cov_model
 

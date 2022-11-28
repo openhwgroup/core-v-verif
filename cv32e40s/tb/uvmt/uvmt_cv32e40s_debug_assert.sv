@@ -47,6 +47,7 @@ module uvmt_cv32e40s_debug_assert
   logic [31:0] boot_addr_at_entry;
   logic [31:0] mtvec_addr;
   logic        is_trigger_match;
+  logic        is_rvfi_nmi_handler;
 
   // Locally track pc in ID stage to detect first instruction of debug code
   logic first_debug_ins_flag;
@@ -82,6 +83,10 @@ module uvmt_cv32e40s_debug_assert
   assign is_trigger_match = cov_assert_if.trigger_match_in_wb && cov_assert_if.wb_valid;
 
   assign mtvec_addr = {cov_assert_if.mtvec[31:2], 2'b00};
+
+  assign is_rvfi_nmi_handler =
+    cov_assert_if.rvfi_valid && (cov_assert_if.rvfi_intr.cause & 11'h 400);
+    // Note: 0x400 currently uniquely identifies NMIs, though this may (but is not expected to) change.
 
     // ---------------------------------------
     // Assertions
@@ -395,45 +400,73 @@ module uvmt_cv32e40s_debug_assert
     // dret in D-mode will restore pc (if no re-entry or interrupt intervenes)
 
     property p_dmode_dret_pc;
-        int dpc; (1, dpc =cov_assert_if.rvfi_csr_dpc_rdata)
-        ##0(cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE)
-
-        ##1 cov_assert_if.rvfi_valid[->1] 
+        int dpc;
+        (cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE,
+         dpc = cov_assert_if.rvfi_csr_dpc_rdata)
+        ##1
+        cov_assert_if.rvfi_valid[->1]
         ##0 (!cov_assert_if.rvfi_intr && !cov_assert_if.rvfi_dbg_mode)
         |->
-
         cov_assert_if.rvfi_pc_rdata == dpc;
     endproperty
 
     a_dmode_dret_pc : assert property(p_dmode_dret_pc)
         else `uvm_error(info_tag, "Dret did not cause correct return from debug mode");
 
-    // dret in D-mode will place dpc in mepc if re-entry is interrupted
 
-    /*
-    //TODO:mateilga reinstate this when the "kill" signal sensitivity in RVFI has been added
+    // dret in D-mode will place dpc in mepc if re-entry is interrupted (excluding nmi)
+
     property p_dmode_dret_pc_int;
-        int dpc; (1, dpc =cov_assert_if.rvfi_csr_dpc_rdata)
-        ##0(cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE)
-
-        ##1 cov_assert_if.rvfi_valid[->1] 
-        ##0 (cov_assert_if.rvfi_intr && !cov_assert_if.rvfi_dbg_mode)
+        int dpc;
+        (cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE,
+         dpc = cov_assert_if.rvfi_csr_dpc_rdata)
+        ##1
+        cov_assert_if.rvfi_valid[->1]
+        ##0 (cov_assert_if.rvfi_intr && !cov_assert_if.rvfi_dbg_mode && !is_rvfi_nmi_handler)
         |->
-
-        (cov_assert_if.rvfi_csr_mepc_wdata & cov_assert_if.rvfi_csr_mepc_wmask) == dpc;
-
+        cov_assert_if.rvfi_csr_mepc_rdata == dpc;
     endproperty
 
     a_dmode_dret_pc_int : assert property(p_dmode_dret_pc_int)
         else `uvm_error(info_tag, "Dret did not save dpc to mepc when return from debug mode was interrupted");
 
-    */
+
+    // dret in D-mode can be followed by nmi where "mepc=dpc"
+
+    property p_dmode_dret_pc_nmi_eq;
+        int dpc;
+        (cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE,
+         dpc = cov_assert_if.rvfi_csr_dpc_rdata)
+        ##1
+        cov_assert_if.rvfi_valid[->1]
+        ##0 (!cov_assert_if.rvfi_dbg_mode && is_rvfi_nmi_handler)
+        ##0 (cov_assert_if.rvfi_csr_mepc_rdata == dpc);
+    endproperty
+
+    cov_dmode_dret_pc_nmi_eq : cover property(p_dmode_dret_pc_nmi_eq);
+
+
+    // dret in D-mode can be followed by nmi where "mepc!=dpc"
+
+    property p_dmode_dret_pc_nmi_neq;
+        int dpc;
+        (cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE,
+         dpc = cov_assert_if.rvfi_csr_dpc_rdata)
+        ##1
+        cov_assert_if.rvfi_valid[->1]
+        ##0 (!cov_assert_if.rvfi_dbg_mode && is_rvfi_nmi_handler)
+        ##0 (cov_assert_if.rvfi_csr_mepc_rdata != dpc);
+    endproperty
+
+    cov_dmode_dret_pc_nmi_neq : cover property(p_dmode_dret_pc_nmi_neq);
+
 
     // dret in D-mode will exit D-mode
 
     property p_dmode_dret_exit;
         cov_assert_if.debug_mode_q && cov_assert_if.is_dret
-        |=> !cov_assert_if.debug_mode_q;
+        |=>
+        !cov_assert_if.debug_mode_q;
         // TODO:ropeders also assert, stays in mmode until wb_valid if no debug_request
     endproperty
 
@@ -553,8 +586,8 @@ module uvmt_cv32e40s_debug_assert
     // comes while flushing due to an illegal insn, causing
     // dpc to be set to the exception handler entry addr
 
-    // TODO We have excluded the case where an nmi is taken in the second stage of the antecedent. 
-    //      Make sure this is covered in a debug vs nmi assertion when it is written 
+    // TODO We have excluded the case where an nmi is taken in the second stage of the antecedent.
+    //      Make sure this is covered in a debug vs nmi assertion when it is written
     sequence s_illegal_insn_debug_req_ante;  // Antecedent
         cov_assert_if.wb_illegal && cov_assert_if.wb_valid && !cov_assert_if.debug_mode_q
         ##1 cov_assert_if.debug_req_i && !cov_assert_if.debug_mode_q && !cov_assert_if.pending_nmi;
@@ -610,7 +643,7 @@ module uvmt_cv32e40s_debug_assert
                 //TODO:ropeders shouldn't "nmi_allowed" be trustable without "ctrl_fsm_cs"?
                 //TODO:ropeders shouldn't "dcsr.nmip" be usable as a "dpc" pedictor?
                 //TODO:ropeders shouldn't there be an assert for "dpc" not only on first instr in dmode?
-                pc_at_dbg_req <= cov_assert_if.nmi_addr_i;
+              pc_at_dbg_req <= mtvec_addr + 'h3C; // mtvec_addr + 'h3c = nmi_addr
             end
             if(cov_assert_if.debug_mode_q && started_decoding_in_debug) begin
                 pc_at_dbg_req <= pc_at_dbg_req;
