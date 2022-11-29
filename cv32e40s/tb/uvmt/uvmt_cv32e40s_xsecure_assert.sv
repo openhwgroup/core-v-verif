@@ -1411,10 +1411,11 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   localparam assumed_value_atop = 6'b00_0000;
   localparam assumed_value_wdata = 32'h0000_0000;
 
+  //TODO: this one fails due to something in the rtl that needs to be changed.
   a_xsecure_interface_integrety_achk_instr_no_glitch: assert property (
     xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
 
-    && xsecure_if.core_i_if_stage_i_bus_resp.integrity //?
+    && xsecure_if.core_i_if_stage_i_bus_resp.integrity
 
     && xsecure_if.core_i_m_c_obi_instr_if_s_req_req
 
@@ -1479,49 +1480,155 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   end
 
   //Support logic that can be moved into support logic module:
-  logic [2:0] gnt_parity_error_on_req_nr;
-  logic active_address_phase;
-  logic gnt_parity_error_in_active_address_phase;
-  integer number_active_reqests_up_one;
-  integer number_active_reqests_q;
-  logic gntpar_error_on_resp;
 
+  /*
+  logic [2:0] xyz_gnt_parity_error_on_req_nr;
+  logic xyz_active_address_phase;
+  logic xyz_gnt_parity_error_in_active_adress_phase;
+  integer xyz_number_active_reqests_up_one;
+  integer xyz_number_active_reqests_q;
+  logic xyz_gntpar_error_on_resp;
+
+  logic xyz_gnt;
+  logic xyz_gntpar;
+  logic xyz_req;
+  logic xyz_rvalid;
+
+  assign xyz_gnt = xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt;
+  assign xyz_gntpar = xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar;
+  assign xyz_req = xsecure_if.core_i_m_c_obi_instr_if_s_req_req;
+  assign xyz_rvalid = xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid;
 
   always @(posedge clk_i) begin
     if(!rst_ni) begin
-      gnt_parity_error_on_req_nr  <= 0;
-      active_address_phase        <= 0;
-      gnt_parity_error_in_active_address_phase <= 0;
-      number_active_reqests_up_one     <= 1;
-      number_active_reqests_q          <= 0;
+      xyz_gnt_parity_error_on_req_nr  <= 0;
+      xyz_active_address_phase        <= 0;
+      xyz_gnt_parity_error_in_active_adress_phase <= 0;
+      xyz_number_active_reqests_up_one     <= 1;
+      xyz_number_active_reqests_q          <= 0;
+      xyz_gntpar_error_on_resp             <= 0;
     end else begin
 
-      if ((gnt == gntpar) && active_address_phase) begin
-        gnt_parity_error_in_active_address_phase <= 1'b1;
-      end else if (obi_req && obi_gnt) begin
-        gnt_parity_error_in_active_address_phase <= 1'b0;
+      if ((xyz_gnt == xyz_gntpar) && xyz_active_address_phase) begin
+        xyz_gnt_parity_error_in_active_adress_phase <= 1'b1;
+      end else if (xyz_req && xyz_gnt) begin
+        xyz_gnt_parity_error_in_active_adress_phase <= 1'b0;
       end
 
-      //Turn on and of active adress phase-ish and set error bit: TODO: litt usikker på dette.
-      if (obi_req) begin
-        if (!obi_gnt) begin
-          active_address_phase <= 1'b1;
-        end else begin
-          active_address_phase <= 1'b0;
-          gnt_parity_error_on_req_nr[number_active_reqests_up_one] <= 1;
-          number_active_reqests_up_one <= number_active_reqests_up_one + 1;
-          number_active_reqests_q <= number_active_reqests_up_one;
+
+      if (xyz_req) begin
+        if (!xyz_gnt) begin
+          xyz_active_address_phase <= 1'b1;
+        end else if (xyz_gnt && !xyz_rvalid) begin
+          xyz_active_address_phase <= 1'b0;
+          xyz_gnt_parity_error_on_req_nr[xyz_number_active_reqests_up_one] <= xyz_gnt_parity_error_in_active_adress_phase;
+          xyz_number_active_reqests_up_one <= xyz_number_active_reqests_up_one + 1;
+          xyz_number_active_reqests_q <= xyz_number_active_reqests_up_one;
         end
       end
 
-      //Check if there is a gntpar error when encountering a respons
-      if (obi_rvalid) begin
-        number_active_request_next <= number_active_reqests_up_one - 1;
-        number_active_reqests_q <= number_active_reqests_q - 1;
-        gntpar_error_on_resp = gnt_parity_error_on_req_nr[number_active_reqests_q];
+
+      if (xyz_rvalid) begin
+        xyz_gnt_parity_error_on_req_nr[xyz_number_active_reqests_q] <= xyz_gnt_parity_error_in_active_adress_phase;
+
+        if (xyz_req && xyz_gnt) begin
+        xyz_number_active_reqests_up_one <= xyz_number_active_reqests_up_one;
+        xyz_number_active_reqests_q <= xyz_number_active_reqests_q;
+
+        end else begin
+          xyz_number_active_reqests_up_one <= xyz_number_active_reqests_up_one - 1;
+        xyz_number_active_reqests_q <= xyz_number_active_reqests_q - 1;
+        end
       end
     end
   end
+*/
+
+  logic xyz_gnt;
+  logic xyz_gntpar;
+  logic xyz_req;
+  logic xyz_rvalid;
+
+  assign xyz_gnt = xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt;
+  assign xyz_gntpar = xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar;
+  assign xyz_req = xsecure_if.core_i_m_c_obi_instr_if_s_req_req;
+  assign xyz_rvalid = xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid;
+
+  logic [2:0] xyz_fifo_req_errors;
+  logic xyz_req_error;
+  logic xyz_gnt_error_in_respons;
+  integer req_error_pointer;
+  logic xyz_req_error_prev;
+
+  assign xyz_gnt_error_in_respons = xyz_rvalid && xyz_fifo_req_errors[2];
+  assign xyz_req_error = ((xyz_gnt == xyz_gntpar || xyz_req_error_prev) && xyz_req) && rst_ni;
+
+  always @(posedge clk_i) begin
+    if(!rst_ni) begin
+      xyz_fifo_req_errors <= 3'b0;
+      req_error_pointer = 2;
+      xyz_req_error_prev <= 1'b0;
+    end else begin
+
+      if ((xyz_req && xyz_gnt) && !xyz_rvalid) begin
+        xyz_fifo_req_errors[req_error_pointer] <= xyz_req_error;
+        req_error_pointer <= req_error_pointer - 1;
+
+      end else if (!(xyz_req && xyz_gnt) && xyz_rvalid) begin
+        req_error_pointer <= req_error_pointer + 1;
+        xyz_fifo_req_errors <= {xyz_fifo_req_errors[1:0], 1'b0};
+
+      end else if ((xyz_req && xyz_gnt) && xyz_rvalid) begin
+        xyz_fifo_req_errors[req_error_pointer] <= xyz_req_error;
+        xyz_fifo_req_errors <= {xyz_fifo_req_errors[1:0], 1'b0};
+
+      end
+
+      if ((xyz_req && !xyz_gnt)) begin
+        xyz_req_error_prev <= xyz_req_error;
+      end else begin
+        xyz_req_error_prev <= 1'b0;
+      end
+    end
+  end
+
+
+  a_xsecure_interface_integrety_instr_error_set_if_gnt_error: assert property (
+    @(posedge xsecure_if.core_clk)
+
+    core_clock_cycles
+
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    && xsecure_if.core_i_if_stage_i_bus_resp.integrity //todo: kanskje denne også må lagres i variabel og sjekkes? - jepp! bruk forenklet signal først!
+
+    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
+
+    && xyz_gnt_error_in_respons
+
+    |-> xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
+
+  ) else `uvm_error(info_tag, "The response phase checksum for datauctions is generated wrongly.\n");
+
+
+  a_xsecure_interface_integrety_instr_error_set_if_rvalid_error: assert property (
+    @(posedge xsecure_if.core_clk)
+
+    core_clock_cycles
+
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    && xsecure_if.core_i_if_stage_i_bus_resp.integrity //todo: kanskje denne også må lagres i variabel og sjekkes? - jepp! bruk forenklet signal først!
+
+    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
+
+    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid == xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar
+
+    |-> xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
+
+  ) else `uvm_error(info_tag, "The response phase checksum for datauctions is generated wrongly.\n");
+
+
 
   a_xsecure_interface_integrety_instr_error_set_if_checksum_error: assert property (
     @(posedge xsecure_if.core_clk)
@@ -1542,30 +1649,6 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     )
 
     |-> xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
-
-  ) else `uvm_error(info_tag, "The response phase checksum for datauctions is generated wrongly.\n");
-
-
-  a_xsecure_interface_integrety_instr_error_set_if_parity_error: assert property (
-    @(posedge xsecure_if.core_clk)
-
-    (xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar == xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt
-
-    && xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt
-
-    || xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar == xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid)
-
-
-    && (core_clock_cycles
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
-
-    && xsecure_if.core_i_if_stage_i_bus_resp.integrity
-
-    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
-    && xsecure_if.core_i_m_c_obi_data_if_s_req_req
-    )
-
-    |=> xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
 
   ) else `uvm_error(info_tag, "The response phase checksum for datauctions is generated wrongly.\n");
 
