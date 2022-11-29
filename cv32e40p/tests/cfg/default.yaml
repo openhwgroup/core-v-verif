@@ -9,3 +9,4 @@ ovpsim: >
 #    --trace --tracechange --traceshowicount --monitornets
 cflags: >
     -DNO_PULP
+cv_sw_march: rv32imc_zicsr

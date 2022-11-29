@@ -8,3 +8,4 @@ ovpsim: >
     --override root/cpu/noinhibit_mask=0000000000
 cflags: >
     -DNO_PULP
+cv_sw_march: rv32imc_zicsr

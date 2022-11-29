@@ -52,5 +52,18 @@ DPI_DASM_SPIKE_REPO  ?= https://github.com/riscv/riscv-isa-sim.git
 CV_SW_TOOLCHAIN      ?= /opt/riscv
 CV_SW_PREFIX         ?= " "
 
+YOUR_GCC_VERSION     := $(shell $(CV_SW_TOOLCHAIN)/bin/$(CV_SW_PREFIX)gcc -dumpversion)
+REQD_GCC_VERSION     := 13.0.0
+
+ifeq ($(REQD_GCC_VERSION), $(YOUR_GCC_VERSION))
+$(warning 'Required GCC version: $(REQD_GCC_VERSION) == your GCC version: $(YOUR_GCC_VERSION)... OK')
+else
+ifeq ($(REQD_GCC_VERSION),$(firstword $(sort $(YOUR_GCC_VERSION) $(REQD_GCC_VERSION))))
+$(warning 'Required GCC version: $(REQD_GCC_VERSION) < your GCC version: $(YOUR_GCC_VERSION)... OK')
+else
+$(error 'ERROR!!! Required GCC version: $(REQD_GCC_VERSION) > your GCC version: $(YOUR_GCC_VERSION)')
+endif
+endif
+
 include ../ExternalRepos.mk
 include $(CORE_V_VERIF)/mk/uvmt/uvmt.mk
