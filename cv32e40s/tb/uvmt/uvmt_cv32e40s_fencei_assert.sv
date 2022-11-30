@@ -48,23 +48,37 @@ module uvmt_cv32e40s_fencei_assert
   input wire         data_gnt_i,
   input wire         data_rvalid_i,
 
-  input wire  rvfi_valid,
-  input wire  rvfi_intr,
-  input wire  rvfi_dbg_mode
+  input wire         rvfi_valid,
+  input wire         rvfi_intr,
+  input wire         rvfi_dbg_mode,
+  input wire [31:0]  rvfi_insn
 );
 
   default clocking @(posedge clk_i); endclocking
   default disable iff !rst_ni;
 
-  localparam int CYCLE_COUNT = 6;
-
   string info_tag = "CV32E40S_FENCEI_ASSERT";
 
+  localparam int CYCLE_COUNT  = 6;
+  localparam int FENCEI_IDATA = 32'b 000000000000_00000_001_00000_0001111;
+  localparam int FENCEI_IMASK = 32'b 000000000000_00000_111_00000_1111111;
+  localparam int FENCE_IDATA  = 32'b 000000000000_00000_000_00000_0001111;
+  localparam int FENCE_IMASK  = 32'b 000000000000_00000_111_00000_1111111;
 
   // Helper Signals/Functions
 
   logic  is_fencei_in_wb;
   assign is_fencei_in_wb = wb_sys_fencei_insn && wb_sys_en && wb_instr_valid;
+
+  logic  is_rvfiinstr_fencei;
+  assign is_rvfiinstr_fencei = (
+    ((rvfi_insn & FENCEI_IMASK) == FENCEI_IDATA)
+  );
+
+  logic  is_rvfiinstr_fence;
+  assign is_rvfiinstr_fence = (
+    ((rvfi_insn & FENCE_IMASK) == FENCE_IDATA)
+  );
 
   int obi_outstanding;
   always @(posedge clk_i, negedge rst_ni) begin
@@ -140,6 +154,16 @@ module uvmt_cv32e40s_fencei_assert
     $rose(is_fencei_in_wb)
     ##0 (!wb_valid throughout ($fell(is_fencei_in_wb) [->1]))
   );
+
+
+  // vplan:ShadowingBranch  (TODO:silabs-robin  New vplan item instead)
+
+  a_req_must_rvfi_fencei: assert property (
+    fencei_flush_req_o
+    |=>
+    (rvfi_valid [->1])   ##0
+    is_rvfiinstr_fencei
+  ) else `uvm_error(info_tag, "TODO");
 
 
   // vplan:Fetching
