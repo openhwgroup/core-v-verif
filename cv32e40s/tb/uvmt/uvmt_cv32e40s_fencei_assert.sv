@@ -165,6 +165,14 @@ module uvmt_cv32e40s_fencei_assert
     is_rvfiinstr_fencei
   ) else `uvm_error(info_tag, "A handshake must results in fencei retire");
 
+  // (Just a helper/sanity assert complementing the above)
+  a_req_mustnt_rvfi_fence: assert property (
+    fencei_flush_req_o
+    |=>
+    (rvfi_valid [->1])   ##0
+    !is_rvfiinstr_fence
+  ) else `uvm_error(info_tag, "A handshake must not results in a fence retire");
+
 
   // vplan:Fetching
 
