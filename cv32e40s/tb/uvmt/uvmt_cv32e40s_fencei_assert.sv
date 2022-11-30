@@ -163,7 +163,7 @@ module uvmt_cv32e40s_fencei_assert
     |=>
     (rvfi_valid [->1])   ##0
     is_rvfiinstr_fencei
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "A handshake must results in fencei retire");
 
 
   // vplan:Fetching
