@@ -19,8 +19,6 @@
 // SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
 
-//`define  RVFI_CSR_BIND(csr_name)
-
 // Create bind for RVFI CSR interface
 `define RVFI_CSR_BIND(csr_name) \
   bind cv32e40s_wrapper \

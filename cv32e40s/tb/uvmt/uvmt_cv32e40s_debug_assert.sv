@@ -37,8 +37,9 @@ module uvmt_cv32e40s_debug_assert
   localparam CEBREAK_INSTR_OPCODE = 32'h 0000_9002;
   localparam DRET_INSTR_OPCODE    = 32'h 7B20_0073;
   localparam int MSTATUS_TW_POS = 21;
-  localparam int DCSR_NMIP_POS = 3;
   localparam int DCSR_STEP_POS = 2;
+  localparam int DCSR_NMIP_POS = 3;
+  localparam int DCSR_STEPIE_POS = 11;
 
   // ---------------------------------------------------------------------------
   // Local variables
@@ -592,18 +593,18 @@ module uvmt_cv32e40s_debug_assert
 
     // step vs nmi
     // check that single stepping disables nmi
-    property p_step_irq_dis;
-        rvfi.is_dret && (csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS])
+    property p_stepie_irq_dis;
+        rvfi.is_dret && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && !csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
         |=>
         rvfi.rvfi_valid[->1]
         ##0 !(rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt);
     endproperty
 
-    a_step_irq_dis : assert property(p_step_irq_dis)
-        else `uvm_error(info_tag, "Single stepping should ignore all interrupts");
+    a_stepie_irq_dis : assert property(p_stepie_irq_dis)
+        else `uvm_error(info_tag, "Single stepping should ignore all interrupts if stepie is set");
 
-    cov_step_nmi : cover property (
-        rvfi.is_dret && (csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]) && (csr_dcsr.rvfi_csr_rdata[DCSR_NMIP_POS])
+    cov_step_stepie_nmi : cover property (
+        rvfi.is_dret && (csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]) && (!csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]) && (csr_dcsr.rvfi_csr_rdata[DCSR_NMIP_POS])
     );
 
 
