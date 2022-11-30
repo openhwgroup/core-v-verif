@@ -74,6 +74,18 @@ interface uvma_rvfi_instr_if
   );
 
   // -------------------------------------------------------------------
+  // Local param
+  // -------------------------------------------------------------------
+  localparam INSTR_MASK_FULL        = 32'h FFFF_FFFF;
+  localparam DRET_INSTR_OPCODE      = 32'h 7B20_0073;
+  localparam MRET_INSTR_OPCODE      = 32'h 3020_0073;
+  localparam URET_INSTR_OPCODE      = 32'h 0020_0073;
+  localparam WFI_INSTR_OPCODE       = 32'h 1050_0073;
+  localparam WFE_INSTR_OPCODE       = 32'h 8C00_0073;
+  localparam EBREAK_INSTR_OPCODE    = 32'h 0010_0073;
+  localparam ECALL_INSTR_OPCODE     = 32'h 0000_0073;
+
+  // -------------------------------------------------------------------
   // Local variables
   // -------------------------------------------------------------------
   bit [CYCLE_CNT_WL-1:0] cycle_cnt = 0;
@@ -148,7 +160,7 @@ interface uvma_rvfi_instr_if
                               bit [ DEFAULT_XLEN-1:0] ref_mask
                               );
 
-  return ((rvfi_insn & ref_mask) == ref_instr);
+  return rvfi_valid && ((rvfi_insn & ref_mask) == ref_instr);
 
   endfunction : match_instr
 
@@ -219,6 +231,37 @@ function bit [1:0] check_mem_act(  int txn);
   return {read,write};
 
 endfunction : check_mem_act
+
+
+// Short functions for recognising special functions
+
+function logic is_dret();
+  return match_instr(DRET_INSTR_OPCODE, INSTR_MASK_FULL);
+endfunction : is_dret
+
+function logic is_mret();
+  return match_instr(MRET_INSTR_OPCODE, INSTR_MASK_FULL);
+endfunction : is_mret
+
+function logic is_uret();
+  return match_instr(URET_INSTR_OPCODE, INSTR_MASK_FULL);
+endfunction : is_uret
+
+function logic is_wfi();
+  return match_instr(WFI_INSTR_OPCODE, INSTR_MASK_FULL);
+endfunction : is_wfi
+
+function logic is_wfe();
+  return match_instr(WFE_INSTR_OPCODE, INSTR_MASK_FULL);
+endfunction : is_wfe
+
+function logic is_ebreak();
+  return match_instr(EBREAK_INSTR_OPCODE, INSTR_MASK_FULL);
+endfunction : is_ebreak
+
+function logic is_ecall();
+  return match_instr(ECALL_INSTR_OPCODE, INSTR_MASK_FULL);
+endfunction : is_ecall
 
 endinterface : uvma_rvfi_instr_if
 

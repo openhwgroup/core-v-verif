@@ -293,18 +293,6 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     input  [31:0] boot_addr_i,
     input         fetch_enable_i,
 
-    input              rvfi_valid,
-    input  [31:0]      rvfi_insn,
-    input  rvfi_intr_t rvfi_intr,
-    input  [2:0]       rvfi_dbg,
-    input              rvfi_dbg_mode,
-    input  [31:0]      rvfi_pc_wdata,
-    input  [31:0]      rvfi_pc_rdata,
-    input  [31:0]      rvfi_csr_dpc_rdata,
-    input  [31:0]      rvfi_csr_mepc_rdata,
-    input  [31:0]      rvfi_csr_mepc_wdata,
-    input  [31:0]      rvfi_csr_mepc_wmask,
-
     // Debug signals
     input         debug_req_i, // From controller
     input         debug_req_q, // From controller
@@ -317,8 +305,8 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     input         nmi_allowed, // From controller
     input         debug_mode_q, // From controller
     input  [31:0] dcsr_q, // From controller
-    input  [31:0] depc_q, // From cs regs  //TODO:ropeders rename "dpc_q"
-    input  [31:0] depc_n,
+    input  [31:0] dpc_q, // From cs regs
+    input  [31:0] dpc_n,
     input  [31:0] dm_halt_addr_i,
     input  [31:0] dm_exception_addr_i,
 
@@ -346,7 +334,6 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     input  csr_we_int,
 
     output logic is_wfi,
-    output logic in_wfi,
     output logic dpc_will_hit,
     output logic addr_match,
     output logic is_ebreak,
@@ -375,13 +362,11 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     sys_en_i,
     sys_ecall_insn_i,
     boot_addr_i,
-    rvfi_pc_wdata,
-    rvfi_pc_rdata,
     debug_req_i,
     debug_mode_q,
     dcsr_q,
-    depc_q,
-    depc_n,
+    dpc_q,
+    dpc_n,
     dm_halt_addr_i,
     dm_exception_addr_i,
     mcause_q,
@@ -401,7 +386,6 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     csr_op,
     csr_addr,
     is_wfi,
-    in_wfi,
     dpc_will_hit,
     addr_match,
     is_ebreak,

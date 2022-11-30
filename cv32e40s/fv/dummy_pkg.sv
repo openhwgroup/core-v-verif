@@ -19,7 +19,20 @@
 // SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
 
-`define  RVFI_CSR_BIND(csr_name)
+//`define  RVFI_CSR_BIND(csr_name)
+
+// Create bind for RVFI CSR interface
+`define RVFI_CSR_BIND(csr_name) \
+  bind cv32e40s_wrapper \
+    uvma_rvfi_csr_if#(uvme_cv32e40s_pkg::XLEN) rvfi_csr_``csr_name``_if_0_i(.clk(clk_i), \
+                                                                            .reset_n(rst_ni), \
+                                                                            .rvfi_csr_rmask(rvfi_i.rvfi_csr_``csr_name``_rmask), \
+                                                                            .rvfi_csr_wmask(rvfi_i.rvfi_csr_``csr_name``_wmask), \
+                                                                            .rvfi_csr_rdata(rvfi_i.rvfi_csr_``csr_name``_rdata), \
+                                                                            .rvfi_csr_wdata(rvfi_i.rvfi_csr_``csr_name``_wdata) \
+    );
+
+
 `define  RVFI_CSR_IDX_BIND(csr_name,csr_suffix,idx)
 `define  RVFI_CSR_UVM_CONFIG_DB_SET(csr_name)
 
