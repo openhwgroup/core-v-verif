@@ -77,13 +77,13 @@ interface uvma_rvfi_instr_if
   // Local param
   // -------------------------------------------------------------------
   localparam INSTR_MASK_FULL        = 32'h FFFF_FFFF;
-  localparam DRET_INSTR_OPCODE      = 32'h 7B20_0073;
-  localparam MRET_INSTR_OPCODE      = 32'h 3020_0073;
-  localparam URET_INSTR_OPCODE      = 32'h 0020_0073;
-  localparam WFI_INSTR_OPCODE       = 32'h 1050_0073;
-  localparam WFE_INSTR_OPCODE       = 32'h 8C00_0073;
-  localparam EBREAK_INSTR_OPCODE    = 32'h 0010_0073;
-  localparam ECALL_INSTR_OPCODE     = 32'h 0000_0073;
+  localparam INSTR_OPCODE_DRET      = 32'h 7B20_0073;
+  localparam INSTR_OPCODE_MRET      = 32'h 3020_0073;
+  localparam INSTR_OPCODE_URET      = 32'h 0020_0073;
+  localparam INSTR_OPCODE_WFI       = 32'h 1050_0073;
+  localparam INSTR_OPCODE_WFE       = 32'h 8C00_0073;
+  localparam INSTR_OPCODE_EBREAK    = 32'h 0010_0073;
+  localparam INSTR_OPCODE_ECALL     = 32'h 0000_0073;
 
   // -------------------------------------------------------------------
   // Local variables
@@ -236,31 +236,31 @@ endfunction : check_mem_act
 // Short functions for recognising special functions
 
 function logic is_dret();
-  return match_instr(DRET_INSTR_OPCODE, INSTR_MASK_FULL);
+  return match_instr(INSTR_OPCODE_DRET, INSTR_MASK_FULL);
 endfunction : is_dret
 
 function logic is_mret();
-  return match_instr(MRET_INSTR_OPCODE, INSTR_MASK_FULL);
+  return match_instr(INSTR_OPCODE_MRET, INSTR_MASK_FULL);
 endfunction : is_mret
 
 function logic is_uret();
-  return match_instr(URET_INSTR_OPCODE, INSTR_MASK_FULL);
+  return match_instr(INSTR_OPCODE_URET, INSTR_MASK_FULL);
 endfunction : is_uret
 
 function logic is_wfi();
-  return match_instr(WFI_INSTR_OPCODE, INSTR_MASK_FULL);
+  return match_instr(INSTR_OPCODE_WFI, INSTR_MASK_FULL);
 endfunction : is_wfi
 
 function logic is_wfe();
-  return match_instr(WFE_INSTR_OPCODE, INSTR_MASK_FULL);
+  return match_instr(INSTR_OPCODE_WFE, INSTR_MASK_FULL);
 endfunction : is_wfe
 
 function logic is_ebreak();
-  return match_instr(EBREAK_INSTR_OPCODE, INSTR_MASK_FULL);
+  return match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL);
 endfunction : is_ebreak
 
 function logic is_ecall();
-  return match_instr(ECALL_INSTR_OPCODE, INSTR_MASK_FULL);
+  return match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);
 endfunction : is_ecall
 
 endinterface : uvma_rvfi_instr_if

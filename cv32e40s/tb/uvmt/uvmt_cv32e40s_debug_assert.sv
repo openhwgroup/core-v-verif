@@ -604,7 +604,10 @@ module uvmt_cv32e40s_debug_assert
         else `uvm_error(info_tag, "Single stepping should ignore all interrupts if stepie is set");
 
     cov_step_stepie_nmi : cover property (
-        rvfi.is_dret && (csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]) && (!csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]) && (csr_dcsr.rvfi_csr_rdata[DCSR_NMIP_POS])
+        rvfi.is_dret
+        && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]
+        && !csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
+        && csr_dcsr.rvfi_csr_rdata[DCSR_NMIP_POS]
     );
 
 
