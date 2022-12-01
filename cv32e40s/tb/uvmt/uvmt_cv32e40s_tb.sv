@@ -779,13 +779,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
     xsecure_if (
 
-      // OBI signals
-      .core_i_m_c_obi_data_if_s_rvalid_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
-      .core_i_m_c_obi_instr_if_s_rvalid_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
-      .core_i_if_stage_i_prefetch_resp_valid (core_i.if_stage_i.prefetch_resp_valid),
-      .core_i_load_store_unit_i_resp_valid (core_i.load_store_unit_i.resp_valid),
-      .core_i_load_store_unit_i_bus_resp_valid (core_i.load_store_unit_i.bus_resp_valid),
-
       // Core
       .core_clk                                                                                                         (core_i.clk),
       .clk_en                                                                                                           (core_i.sleep_unit_i.core_clock_gate_i.clk_en),
@@ -795,6 +788,15 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_rf_wdata_wb                                                                                                 (core_i.rf_wdata_wb),
       .core_register_file_wrapper_register_file_mem                                                                     (core_i.register_file_wrapper_i.register_file_i.mem),
       .core_i_jump_target_id                                                                                            (core_i.jump_target_id),
+
+      // OBI signals
+      .core_i_m_c_obi_data_if_s_rvalid_rvalid                                                                           (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+      .core_i_m_c_obi_instr_if_s_rvalid_rvalid                                                                          (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+      .core_i_if_stage_i_prefetch_resp_valid                                                                            (core_i.if_stage_i.prefetch_resp_valid),
+      .core_i_load_store_unit_i_resp_valid                                                                              (core_i.load_store_unit_i.resp_valid),
+      .core_i_load_store_unit_i_bus_resp_valid                                                                          (core_i.load_store_unit_i.bus_resp_valid),
+
+      .core_i_load_store_unit_i_response_filter_i_core_cnt_q                                                            (core_i.load_store_unit_i.response_filter_i.core_cnt_q),
 
       // CSR
       .core_alert_minor_o                                                                                               (core_i.alert_minor_o),

@@ -1463,26 +1463,57 @@ module uvmt_cv32e40s_xsecure_assert
 
   endproperty;
 
-
-  a_resp_after_addr_no_glitch_data: assert property (
-    p_resp_after_addr_no_glitch(xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid, support_if.data_bus_resp_ph_cont, support_if.data_bus_v_addr_ph_cnt)
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_data: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      support_if.data_bus_resp_ph_cont,
+      support_if.data_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the data bus leading into the core.\n");
 
-  a_resp_after_addr_no_glitch_instr: assert property (
-    p_resp_after_addr_no_glitch(xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid, support_if.instr_bus_resp_ph_cont, support_if.instr_bus_v_addr_ph_cnt)
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_instr: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      support_if.instr_bus_resp_ph_cont,
+      support_if.instr_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the instructions bus leading into the core.\n");
 
-  a_resp_after_addr_no_glitch_abiim: assert property (
-    p_resp_after_addr_no_glitch(xsecure_if.core_i_if_stage_i_prefetch_resp_valid, support_if.abiim_bus_resp_ph_cont, support_if.abiim_bus_v_addr_ph_cnt)
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_abiim: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
+      support_if.abiim_bus_resp_ph_cont,
+      support_if.abiim_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m).\n");
 
-  a_resp_after_addr_no_glitch_lml: assert property (
-    p_resp_after_addr_no_glitch(xsecure_if.core_i_load_store_unit_i_resp_valid, support_if.lml_bus_resp_ph_cont, support_if.lml_bus_v_addr_ph_cnt)
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_lml: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_load_store_unit_i_resp_valid,
+      support_if.lml_bus_resp_ph_cont,
+      support_if.lml_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handsake between LSU (l) MPU (m) and LSU (l).\n");
 
-  a_resp_after_addr_no_glitch_lrfodi: assert property (
-    p_resp_after_addr_no_glitch(xsecure_if.core_i_load_store_unit_i_bus_resp_valid, support_if.lrfodi_bus_resp_ph_cont, support_if.lrfodi_bus_v_addr_ph_cnt)
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_lrfodi: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_load_store_unit_i_bus_resp_valid,
+      support_if.lrfodi_bus_resp_ph_cont,
+      support_if.lrfodi_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handsake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i).\n");
+
+
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER DONT UNDERFLOW //////////
+
+  a_xsecure_bus_hardening_counter_dont_underflow: assert property (
+
+    //Make sure the counter is in a position where it can underflow
+    xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0
+
+    |=>
+    //Make sure the counter eithr stay 0
+    xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0
+
+    //Or count upwards
+    || xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 1
+
+  ) else `uvm_error(info_tag, "The counter underflows.\n");
 
 
   ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE GLITCHES //////////
@@ -1507,25 +1538,61 @@ module uvmt_cv32e40s_xsecure_assert
     xsecure_if.core_alert_major_o;
   endproperty;
 
-  a_resp_after_addr_glitch_data: assert property (
-    p_resp_after_addr_glitch(xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid, support_if.data_bus_resp_ph_cont, support_if.data_bus_v_addr_ph_cnt)
+  a_xsecure_bus_hardening_resp_after_addr_glitch_data: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      support_if.data_bus_resp_ph_cont,
+      support_if.data_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "A respons phase before address phase in the data bus leading into the core does not set major alert.\n");
 
-  a_resp_after_addr_glitch_instr: assert property (
-    p_resp_after_addr_glitch(xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid, support_if.instr_bus_resp_ph_cont, support_if.instr_bus_v_addr_ph_cnt)
+  a_xsecure_bus_hardening_resp_after_addr_glitch_instr: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      support_if.instr_bus_resp_ph_cont,
+      support_if.instr_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "A respons phase before address phase in the instruction bus leading into the core does not set major alert (instructions).\n");
 
-  a_resp_after_addr_glitch_abiim: assert property (
-    p_resp_after_addr_glitch(xsecure_if.core_i_if_stage_i_prefetch_resp_valid, support_if.abiim_bus_resp_ph_cont, support_if.abiim_bus_v_addr_ph_cnt)
+  a_xsecure_bus_hardening_resp_after_addr_glitch_abiim: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
+      support_if.abiim_bus_resp_ph_cont,
+      support_if.abiim_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) does not set major alert.\n");
 
-  a_resp_after_addr_glitch_lml: assert property (
-    p_resp_after_addr_glitch(xsecure_if.core_i_load_store_unit_i_resp_valid, support_if.lml_bus_resp_ph_cont, support_if.lml_bus_v_addr_ph_cnt)
+  a_xsecure_bus_hardening_resp_after_addr_glitch_lml: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_load_store_unit_i_resp_valid,
+      support_if.lml_bus_resp_ph_cont,
+      support_if.lml_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between LSU (l) MPU (m) and LSU (l) does not set major alert.\n");
 
-  a_resp_after_addr_glitch_lrfodi: assert property (
-    p_resp_after_addr_glitch(xsecure_if.core_i_load_store_unit_i_bus_resp_valid, support_if.lrfodi_bus_resp_ph_cont, support_if.lrfodi_bus_v_addr_ph_cnt)
+  a_xsecure_bus_hardening_resp_after_addr_glitch_lrfodi: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_load_store_unit_i_bus_resp_valid,
+      support_if.lrfodi_bus_resp_ph_cont,
+      support_if.lrfodi_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i) does not set major alert.\n");
+
+
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER UNDERFLOW SET MAJOR ALERT //////////
+
+  a_xsecure_bus_hardening_counter_overflow_set_major_alert: assert property (
+
+    //Make sure the core is in operative state
+    core_clock_cycles
+
+    //Make sure the counter is in a position where it can underflow
+    && (xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0)
+
+    //Make sure the counter underflows
+    ##1 xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q != 0
+    && xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q != 1
+
+    |->
+    //Verify that alert major is set
+    xsecure_if.core_alert_major_o
+  ) else `uvm_error(info_tag, "The counter underflows but dont set major alert.\n");
+
 
 
 endmodule : uvmt_cv32e40s_xsecure_assert

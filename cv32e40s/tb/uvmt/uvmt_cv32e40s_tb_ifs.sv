@@ -119,13 +119,6 @@ interface uvmt_cv32e40s_xsecure_if
 
     (
 
-    // OBI signals:
-    input logic core_i_m_c_obi_data_if_s_rvalid_rvalid,
-    input logic core_i_m_c_obi_instr_if_s_rvalid_rvalid,
-    input logic core_i_if_stage_i_prefetch_resp_valid,
-    input logic core_i_load_store_unit_i_resp_valid,
-    input logic core_i_load_store_unit_i_bus_resp_valid,
-
     // CORE
     input logic core_clk,
     input logic clk_en,
@@ -135,6 +128,15 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] core_rf_wdata_wb,
     input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [CORE_PARAM_REGFILE_NUM_WORDS],
     input logic [31:0] core_i_jump_target_id,
+
+    // OBI signals:
+    input logic core_i_m_c_obi_data_if_s_rvalid_rvalid,
+    input logic core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+    input logic core_i_if_stage_i_prefetch_resp_valid,
+    input logic core_i_load_store_unit_i_resp_valid,
+    input logic core_i_load_store_unit_i_bus_resp_valid,
+
+    input logic [1:0] core_i_load_store_unit_i_response_filter_i_core_cnt_q,
 
     // CSR
     input logic core_alert_minor_o,
@@ -432,7 +434,6 @@ interface uvmt_cv32e40s_input_to_support_logic_module_if
    /* obi bus protocol signal information:
    ---------------------------------------
    - The obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) is refered to as abiim
-   - The obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) is refered to as abiim
    - The obi protocol between LSU (l) mpu (m) and LSU (l) is refered to as lml
    - The obi protocol between LSU (l) respons (r) filter (f) and OBI (o) data (d) interface (i) is refered to as lrfodi
    */
@@ -471,7 +472,7 @@ interface uvmt_cv32e40s_input_to_support_logic_module_if
    input logic lrfodi_bus_req
    );
 
-   modport Driver (
+   modport driver (
      input  clk,
       rst_n,
 
@@ -534,7 +535,7 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_input_if;
    integer lml_bus_v_addr_ph_cnt;
    integer lrfodi_bus_v_addr_ph_cnt;
 
-   modport Master (
+   modport master (
       output req_after_exception,
          data_bus_addr_ph_cont,
 	      data_bus_resp_ph_cont,
@@ -557,7 +558,7 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_input_if;
 	      lrfodi_bus_v_addr_ph_cnt
    );
 
-   modport Slave (
+   modport slave (
       input req_after_exception,
          data_bus_addr_ph_cont,
 	      data_bus_resp_ph_cont,
