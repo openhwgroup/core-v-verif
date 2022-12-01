@@ -1520,7 +1520,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   endsequence
 
 /*
-  //TODO: this one fails due to rtl bug
+  // TODO: this one fails due to rtl bug
   a_xsecure_interface_integrety_achk_instr_no_glitch: assert property (
 
     //Make sure interface integrity checking setting is on
