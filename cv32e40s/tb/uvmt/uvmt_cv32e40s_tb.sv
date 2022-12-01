@@ -939,7 +939,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
     ) xsecure_assert_i 	(
     	.xsecure_if	(xsecure_if),
 	    .rvfi_if	  (rvfi_instr_if_0_i),
-      .support_if (support_logic_for_assert_coverage_modules_input_if.Slave),
+      .support_if (support_logic_for_assert_coverage_modules_input_if.slave),
       .clk_i      (clk_i),
       .rst_ni     (rst_ni)
     );
@@ -1110,8 +1110,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if_0_i),
-                                                                      .support_if_i (input_to_support_logic_module_if.Driver),
-                                                                      .support_if_o (support_logic_for_assert_coverage_modules_input_if.Master)
+                                                                      .support_if_i (input_to_support_logic_module_if.driver),
+                                                                      .support_if_o (support_logic_for_assert_coverage_modules_input_if.master)
                                                                       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.rvfi(rvfi_instr_if_0_i),
@@ -1122,7 +1122,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
                                                                     .cov_assert_if(debug_cov_assert_if));
 
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
-                                                              .support_if(support_logic_for_assert_coverage_modules_input_if.Slave)
+                                                              .support_if(support_logic_for_assert_coverage_modules_input_if.slave)
                                                               );
 
 
