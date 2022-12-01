@@ -53,6 +53,8 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   `define  max(a,b)  ((a) > (b) ? (a) : (b))
 
+  string info_tag = "CV32E40S_PMPRVFI_ASSERT";
+
   localparam logic [1:0] MODE_U = 2'b 00;
   localparam logic [1:0] MODE_M = 2'b 11;
 

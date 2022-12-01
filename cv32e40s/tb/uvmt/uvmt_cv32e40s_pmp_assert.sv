@@ -37,6 +37,9 @@ module uvmt_cv32e40s_pmp_assert
   );
 
 
+  string info_tag = "CV32E40S_PMP_ASSERT";
+
+
   // Defaults
 
   default clocking @(posedge clk); endclocking
