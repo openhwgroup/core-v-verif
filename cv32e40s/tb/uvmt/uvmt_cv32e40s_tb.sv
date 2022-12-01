@@ -976,8 +976,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       .mie_q                  (core_i.cs_registers_i.mie_q),
       .dcsr_q                 (core_i.cs_registers_i.dcsr_q),
-      .depc_q                 (core_i.cs_registers_i.dpc_q),
-      .depc_n                 (core_i.cs_registers_i.dpc_n),
+      .dpc_q                 (core_i.cs_registers_i.dpc_q),
+      .dpc_n                 (core_i.cs_registers_i.dpc_n),
       .mcause_q               (core_i.cs_registers_i.mcause_q),
       .mtvec                  (core_i.cs_registers_i.mtvec_q),
       .mepc_q                 (core_i.cs_registers_i.mepc_q),
@@ -1009,22 +1009,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .pc_set                 (core_i.ctrl_fsm.pc_set),
       .boot_addr_i            (core_i.boot_addr_i),
 
-      .rvfi_valid             (rvfi_i.rvfi_valid),
-      .rvfi_insn              (rvfi_i.rvfi_insn),
-      .rvfi_intr              (rvfi_i.rvfi_intr),
-      .rvfi_dbg               (rvfi_i.rvfi_dbg),
-      .rvfi_dbg_mode          (rvfi_i.rvfi_dbg_mode),
-      .rvfi_pc_wdata          (rvfi_i.rvfi_pc_wdata),
-      .rvfi_pc_rdata          (rvfi_i.rvfi_pc_rdata),
-      .rvfi_csr_dpc_rdata     (rvfi_i.rvfi_csr_dpc_rdata),
-      .rvfi_csr_mepc_wdata    (rvfi_i.rvfi_csr_mepc_wdata),
-      .rvfi_csr_mepc_wmask    (rvfi_i.rvfi_csr_mepc_wmask),
-      .rvfi_csr_mepc_rdata    (rvfi_i.rvfi_csr_mepc_rdata),
-
-
-
       .is_wfi                 (),
-      .in_wfi                 (),
       .dpc_will_hit           (),
       .addr_match             (),
       .is_ebreak              (),
@@ -1095,7 +1080,12 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
                                                                       .support_if(support_logic_if)
                                                                       );
 
-    bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
+    bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.rvfi(rvfi_instr_if_0_i),
+                                                                    .csr_dcsr(rvfi_csr_dcsr_if_0_i),
+                                                                    .csr_dpc(rvfi_csr_dpc_if_0_i),
+                                                                    .csr_mepc(rvfi_csr_mepc_if_0_i),
+                                                                    .csr_mstatus(rvfi_csr_mstatus_if_0_i),
+                                                                    .cov_assert_if(debug_cov_assert_if));
 
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
                                                               .support_if(support_logic_if)
