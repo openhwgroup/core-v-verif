@@ -31,15 +31,15 @@ module uvmt_cv32e40s_debug_assert
   // ---------------------------------------------------------------------------
   // Local parameters
   // ---------------------------------------------------------------------------
-  localparam WFI_INSTR_MASK     = 32'h ffff_ffff;
+  localparam WFI_INSTR_MASK       = 32'h ffff_ffff;
   localparam WFI_INSTR_OPCODE     = 32'h 1050_0073;
   localparam EBREAK_INSTR_OPCODE  = 32'h 0010_0073;
   localparam CEBREAK_INSTR_OPCODE = 32'h 0000_9002;
   localparam DRET_INSTR_OPCODE    = 32'h 7B20_0073;
-  localparam int MSTATUS_TW_POS = 21;
-  localparam int DCSR_STEP_POS = 2;
-  localparam int DCSR_NMIP_POS = 3;
-  localparam int DCSR_STEPIE_POS = 11;
+  localparam int MSTATUS_TW_POS   = 21;
+  localparam int DCSR_STEP_POS    = 2;
+  localparam int DCSR_NMIP_POS    = 3;
+  localparam int DCSR_STEPIE_POS  = 11;
 
   // ---------------------------------------------------------------------------
   // Local variables
@@ -609,6 +609,34 @@ module uvmt_cv32e40s_debug_assert
         && !csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
         && csr_dcsr.rvfi_csr_rdata[DCSR_NMIP_POS]
     );
+
+    // step trap handler entry, no retire
+
+    // if the next instruction after a single step dret is in debug mode,
+    // a trap entry has to be the cause.
+    property p_step_trap_handler_entry;
+        (rvfi.is_dret &&
+        csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] &&
+        csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS])
+        ##1 rvfi.rvfi_valid[->1]
+        ##0 rvfi.rvfi_dbg_mode && (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP)
+        |->
+        rvfi.rvfi_intr.intr;
+    endproperty
+
+    a_step_trap_handler_entry : assert property(p_step_trap_handler_entry)
+        else `uvm_error(info_tag, "single stepping remained in debug mode illegally");
+
+    property p_step_no_trap;
+        rvfi.is_dret && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
+        ##1 rvfi.rvfi_valid[->1]
+        ##0 !rvfi.rvfi_dbg_mode
+        |->
+        !rvfi.rvfi_intr.intr;
+    endproperty
+
+    a_step_no_trap : assert property(p_step_no_trap)
+        else `uvm_error(info_tag, "single stepping should not retire a trap handler entry");
 
 
     // Check that we cover the case where a debug_req_i
