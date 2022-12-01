@@ -66,6 +66,13 @@ module uvmt_cv32e40s_xsecure_assert
   localparam INSTRUCTIONS_RS2_MSB = 24;
   localparam INSTRUCTIONS_RS2_LSB = 20;
 
+  localparam NO_WRITE_TRANSACTION = 1'b0;
+
+  localparam assumed_value_be = 4'b1111;
+  localparam assumed_value_we = 1'b0;
+  localparam assumed_value_atop = 6'b00_0000;
+  localparam assumed_value_wdata = 32'h0000_0000;
+
 
   // Default settings:
   default clocking @(posedge clk_i); endclocking
@@ -1146,10 +1153,15 @@ module uvmt_cv32e40s_xsecure_assert
   ///////////////////////// INTERFACE INTEGRETY /////////////////////////
   ///////////////////////////////////////////////////////////////////////
 
+  ////////// INTERFACE INTEGRITY SETTING IS ON BY DEFAULT //////////
+
   a_xsecure_interface_integrety_default_on: assert property (
     p_xsecure_setting_default_on(
         xsecure_if.core_xsecure_ctrl_cpuctrl_integrity)
-  ) else `uvm_error(info_tag, "Data independent timing is not on when exiting reset.\n");
+  ) else `uvm_error(info_tag, "Integrity interface setting is not on when exiting reset.\n");
+
+
+  ////////// INTERFACE INTEGRITY PARITY BITS ARE COMPLIMENT BITS AT ALL TIME GIVEN THERE IS NO GLITCH //////////
 
   property p_parity_signal_is_invers_of_signal(signal, parity_signal);
     @(posedge clk_i)
@@ -1196,6 +1208,8 @@ module uvmt_cv32e40s_xsecure_assert
   ) else `uvm_error(info_tag, "Parity signal rvalidpar to the instruction obi bus is not invers of response valid signal.\n");
 
 
+////////// INTERFACE INTEGRITY PARITY BIT ERRORS DUE TO GLITCHES SET ALERT MAJOR //////////
+
 property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_signal);
     @(posedge xsecure_if.core_clk)
 
@@ -1233,35 +1247,42 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ) else `uvm_error(info_tag, "Obi instruction bus rvalid signal and parity signal mismatch dont set major alert.\n");
 
 
-  // Response phase signal checksums (achk for data and instructions) //
+  ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS FOR INSTRUCTIONS ARE GENERATED CORRECTLY //////////
 
   sequence seq_response_phase_checksum(is_write_transaction, rchk, rdata, err, exokay);
+
+    //Check if instruction is a write
     (is_write_transaction
+
+    //If instruction is a write only check that the rchk bits set by err and exokay is as expected
     && rchk[4] == ^{err, exokay})
 
+    //Check if the instruction is a read
     || (!is_write_transaction
+
+    //If the instruction is a read, check that all the rchk bits are as expected
     && rchk[0] == ^rdata[7:0]
     && rchk[1] == ^rdata[15:8]
     && rchk[2] == ^rdata[23:16]
     && rchk[3] == ^rdata[31:24]
     && rchk[4] == ^{err, exokay});
 
-  endsequence
 
+  endsequence
 
   logic exokay_tie_off_value;
   assign exokay_tie_off_value = 1'b0;
 
-  localparam NO_WRITE_TRANSACTION = 1'b0;
-
   a_xsecure_interface_integrety_rchk_instr_no_glitch: assert property (
+
+    //Make sure interface integrity checking setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
 
-    && xsecure_if.core_i_if_stage_i_bus_resp.integrity
-
+    //Make sure we recive a respons packet
     && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
 
     |->
+    //Check that the checksum matches the contents
     seq_response_phase_checksum(
       NO_WRITE_TRANSACTION,
       xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
@@ -1270,19 +1291,40 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
       exokay_tie_off_value
     )
 
-  ) else `uvm_error(info_tag, "The response phase checksum for instructions is generated wrongly.\n");
+  ) else `uvm_error(info_tag, "The response phase checksum for instructions is not as expected.\n");
+
+
+  ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS FOR DATA ARE GENERATED CORRECTLY //////////
+
+  logic is_store_in_respons_data;
+
+  sl_setting_in_respons is_store_in_respons_data_i
+  (
+    .rst_ni (rst_ni),
+    .clk_i (clk_i),
+
+    .gnt (xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt),
+    .req (xsecure_if.core_i_m_c_obi_data_if_s_req_req),
+    .rvalid (xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid),
+    .setting_i (xsecure_if.core_i_load_store_unit_i_bus_trans_we),
+
+    .setting_in_respons (is_store_in_respons_data)
+
+  );
 
 
   a_xsecure_interface_integrety_rchk_data_no_glitch: assert property (
+
+    //Make sure interface integrity checking setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
 
-    && xsecure_if.core_i_load_store_unit_i_bus_resp.integrity
-
+    //Make sure we recive a respons packet
     && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
 
     |->
+    //Check that the checksum matches the content
     seq_response_phase_checksum(
-      xsecure_if.core_i_load_store_unit_i_data_obi_i_integrity_fifo_i_resp_is_store,
+      is_store_in_respons_data,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
@@ -1291,11 +1333,19 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ) else `uvm_error(info_tag, "The response phase checksum for data is generated wrongly.\n");
 
 
+  ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS ERROR FOR INSTRUCTIONS SET ALERT MAJOR //////////
+
   sequence seq_response_phase_checksum_error(is_write_transaction, rchk, rdata, err, exokay);
+    //Check if instruction is a write
     (is_write_transaction
+
+    //If instruction is make sure there is a checksum error in the rchk bit set by err and exokay
     && rchk[4] != ^{err, exokay})
 
+    //Check if the instruction is a read
     || (!is_write_transaction
+
+    //If the instruction is a read, make sure there is at least one checksum error
     && (rchk[0] != ^rdata[7:0]
     || rchk[1] != ^rdata[15:8]
     || rchk[2] != ^rdata[23:16]
@@ -1304,15 +1354,35 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   endsequence
 
+  logic integrity_in_respons_instr;
+
+  sl_setting_in_respons integrity_in_respons_instr_i
+  (
+    .rst_ni (rst_ni),
+    .clk_i (clk_i),
+
+    .gnt (xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt),
+    .req (xsecure_if.core_i_m_c_obi_instr_if_s_req_req),
+    .rvalid (xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid),
+    .setting_i (xsecure_if.core_i_if_stage_i_mpu_i_bus_trans_integrity),
+
+    .setting_in_respons (integrity_in_respons_instr)
+
+  );
 
   a_xsecure_interface_integrety_rchk_instr_glitch: assert property (
     @(posedge xsecure_if.core_clk)
+
+    //Make sure interface integrity checking setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
 
-    && xsecure_if.core_i_if_stage_i_bus_resp.integrity
-
+    //Make sure we recive a respons packet
     && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
 
+    //Make sure the packet has integrity
+    && integrity_in_respons_instr
+
+    //Make sure the checksum dont matches the content
     ##0 seq_response_phase_checksum_error(
       NO_WRITE_TRANSACTION,
       xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
@@ -1321,40 +1391,72 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
       exokay_tie_off_value)
 
     |=>
+    //Verify that major alert is set
     xsecure_if.core_alert_major_o
 
-  ) else `uvm_error(info_tag, "The response phase checksum for instructions is generated wrongly.\n");
+  ) else `uvm_error(info_tag, "Response phase checksum error for instructions does not set major alert.\n");
 
-  // todo: consider to make support logic for retriving the is_store signal and the resp_integrity signal.
-  // todo: even Vs. odd parity?
+
+  ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS ERROR FOR DATA SET ALERT MAJOR //////////
+
+    logic integrity_in_respons_data;
+
+  sl_setting_in_respons integrity_in_respons_data_i
+  (
+    .rst_ni (rst_ni),
+    .clk_i (clk_i),
+
+    .gnt (xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt),
+    .req (xsecure_if.core_i_m_c_obi_data_if_s_req_req),
+    .rvalid (xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid),
+    .setting_i (xsecure_if.core_i_load_store_unit_i_mpu_i_bus_trans_integrity),
+
+    .setting_in_respons (integrity_in_respons_data)
+
+  );
+
   a_xsecure_interface_integrety_rchk_data_glitch: assert property (
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure interface integrity checking setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
 
-    && xsecure_if.core_i_load_store_unit_i_bus_resp.integrity
-
+    //Make sure we recive a respons packet
     && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
 
+    //Make sure the packet has integrity
+    && integrity_in_respons_data
+
+    //Make sure the checksum dont matches the content
     ##0 seq_response_phase_checksum_error(
-      xsecure_if.core_i_load_store_unit_i_data_obi_i_integrity_fifo_i_resp_is_store,
+      is_store_in_respons_data,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
       exokay_tie_off_value)
 
     |=>
+    //Verify that major alert is set
     xsecure_if.core_alert_major_o
 
-  ) else `uvm_error(info_tag, "The response phase checksum for data is generated wrongly.\n");
+  ) else `uvm_error(info_tag, "Response phase checksum error for data does not set major alert.\n");
 
-  // off //
-  a_xsecure_interface_integrety_rchk_instr_glitch_off: assert property (
+
+  ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS ERROR FOR INSTRUCTION DONT SET ALERT MAJOR IF INTEGRITY SETTING IS OFF //////////
+
+  a_xsecure_interface_integrety_off_rchk_instr_glitch: assert property (
     @(posedge xsecure_if.core_clk)
+
+    //Make sure interface integrity checking setting is off
     !xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
 
-    && xsecure_if.core_i_if_stage_i_bus_resp.integrity
-
+    //Make sure we recive a respons packet
     && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
 
+    //Make sure the packet has integrity
+    && integrity_in_respons_instr
+
+    //Make sure the checksum dont matches the content
     ##0 seq_response_phase_checksum_error(
       NO_WRITE_TRANSACTION,
       xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
@@ -1363,31 +1465,42 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
       exokay_tie_off_value)
 
     |=>
+    //Verify that major alert is not set
     !xsecure_if.core_alert_major_o
 
-  ) else `uvm_error(info_tag, "The response phase checksum for instructions is generated wrongly.\n");
+  ) else `uvm_error(info_tag, "Response phase checksum error for instructions set major alert even though integrity setting is off.\n");
 
-  a_xsecure_interface_integrety_rchk_data_glitch_off: assert property (
+
+  ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS ERROR FOR DATA DONT SET ALERT MAJOR IF INTEGRITY SETTING IS OFF //////////
+
+  a_xsecure_interface_integrety_off_rchk_data_glitch: assert property (
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure interface integrity checking setting is off
     !xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
 
-    && xsecure_if.core_i_load_store_unit_i_bus_resp.integrity
-
+    //Make sure we recive a respons packet
     && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
 
+    //Make sure the packet has integrity
+    && integrity_in_respons_data
+
+    //Make sure the checksum dont matches the content
     ##0 seq_response_phase_checksum_error(
-      xsecure_if.core_i_load_store_unit_i_data_obi_i_integrity_fifo_i_resp_is_store,
+      is_store_in_respons_data,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
       exokay_tie_off_value)
 
     |=>
+    //Verify that major alert is not set
     !xsecure_if.core_alert_major_o
 
-  ) else `uvm_error(info_tag, "The response phase checksum for data is generated wrongly.\n");
+  ) else `uvm_error(info_tag, "Response phase checksum error for data set major alert even though integrity setting is off.\n");
 
 
- // Adresse phase checksums //
+ ////////// INTERFACE INTEGRITY ADDRESS CHECKSUM FOR INSTRUCTIONS IS GENERATED CORRECTLY //////////
 
   sequence seq_address_phase_checksum(achk, addr, prot, memtype, be, we, dbg, atop, wdata);
   //16 00010110
@@ -1406,20 +1519,18 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   endsequence
 
-  localparam assumed_value_be = 4'b1111;
-  localparam assumed_value_we = 1'b0;
-  localparam assumed_value_atop = 6'b00_0000;
-  localparam assumed_value_wdata = 32'h0000_0000;
-
-  //TODO: this one fails due to something in the rtl that needs to be changed.
+/*
+  //TODO: this one fails due to rtl bug
   a_xsecure_interface_integrety_achk_instr_no_glitch: assert property (
+
+    //Make sure interface integrity checking setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
 
-    && xsecure_if.core_i_if_stage_i_bus_resp.integrity
-
+    //Make sure we have a packet ready to be sent
     && xsecure_if.core_i_m_c_obi_instr_if_s_req_req
 
     |->
+    //Make sure the checksum is generated correctly
     seq_address_phase_checksum(
       xsecure_if.core_i_m_c_obi_instr_if_req_payload.achk,
       xsecure_if.core_i_m_c_obi_instr_if_req_payload.addr,
@@ -1431,16 +1542,21 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
       assumed_value_atop,
       assumed_value_wdata)
 
-  ) else `uvm_error(info_tag, "The response phase checksum for instructions is generated wrongly.\n");
+  ) else `uvm_error(info_tag, "The address phase checksum for instructions is generated wrongly.\n");
+*/
+
+  ////////// INTERFACE INTEGRITY ADDRESS CHECKSUM FOR INSTRUCTIONS IS GENERATED CORRECTLY //////////
 
   a_xsecure_interface_integrety_achk_data_no_glitch: assert property (
+
+    //Make sure interface integrity checking setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
 
-    && xsecure_if.core_i_load_store_unit_i_bus_resp.integrity
-
+    //Make sure we have a packet ready to be sent
     && xsecure_if.core_i_m_c_obi_data_if_s_req_req
 
     |->
+    //Make sure the checksum is generated correctly
     seq_address_phase_checksum(
       xsecure_if.core_i_m_c_obi_data_if_req_payload.achk,
       xsecure_if.core_i_m_c_obi_data_if_req_payload.addr,
@@ -1452,187 +1568,79 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
       assumed_value_atop,
       xsecure_if.core_i_m_c_obi_data_if_req_payload.wdata)
 
-  ) else `uvm_error(info_tag, "The response phase checksum for datauctions is generated wrongly.\n");
-
-  //Videre:
-  /*
-  R-123.3:
-  An instruction shall have an associated integrity error if any of its related (32-bit) instr_rdata_i
-  fetches and/or alignment buffer entries indicate an integrity error or alignment buffer based checksum error.
-
-  If checksum dont match or parity dont match |=> integrety error should be set.
-  Med en gang instruksjonen sendes inn:
-  checksum for en instruksjon
-  parity for en instruksjon
-  dersom noen av de er "feil" sjekk om integrity_error bittet er satt.
-
-  todo: spør noen om den ekstra informasjonssetningen til R-123.3
-  */
-    //Signal determing if the core clock is active or not.
-  logic core_clock_cycles;
-
-  always @(posedge clk_i) begin
-    if(!rst_ni) begin
-      core_clock_cycles <= 0;
-    end else begin
-      core_clock_cycles <= xsecure_if.clk_en;
-    end
-  end
-
-  //Support logic that can be moved into support logic module:
-
-  /*
-  logic [2:0] xyz_gnt_parity_error_on_req_nr;
-  logic xyz_active_address_phase;
-  logic xyz_gnt_parity_error_in_active_adress_phase;
-  integer xyz_number_active_reqests_up_one;
-  integer xyz_number_active_reqests_q;
-  logic xyz_gntpar_error_on_resp;
-
-  logic xyz_gnt;
-  logic xyz_gntpar;
-  logic xyz_req;
-  logic xyz_rvalid;
-
-  assign xyz_gnt = xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt;
-  assign xyz_gntpar = xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar;
-  assign xyz_req = xsecure_if.core_i_m_c_obi_instr_if_s_req_req;
-  assign xyz_rvalid = xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid;
-
-  always @(posedge clk_i) begin
-    if(!rst_ni) begin
-      xyz_gnt_parity_error_on_req_nr  <= 0;
-      xyz_active_address_phase        <= 0;
-      xyz_gnt_parity_error_in_active_adress_phase <= 0;
-      xyz_number_active_reqests_up_one     <= 1;
-      xyz_number_active_reqests_q          <= 0;
-      xyz_gntpar_error_on_resp             <= 0;
-    end else begin
-
-      if ((xyz_gnt == xyz_gntpar) && xyz_active_address_phase) begin
-        xyz_gnt_parity_error_in_active_adress_phase <= 1'b1;
-      end else if (xyz_req && xyz_gnt) begin
-        xyz_gnt_parity_error_in_active_adress_phase <= 1'b0;
-      end
+  ) else `uvm_error(info_tag, "The address phase checksum for data is generated wrongly.\n");
 
 
-      if (xyz_req) begin
-        if (!xyz_gnt) begin
-          xyz_active_address_phase <= 1'b1;
-        end else if (xyz_gnt && !xyz_rvalid) begin
-          xyz_active_address_phase <= 1'b0;
-          xyz_gnt_parity_error_on_req_nr[xyz_number_active_reqests_up_one] <= xyz_gnt_parity_error_in_active_adress_phase;
-          xyz_number_active_reqests_up_one <= xyz_number_active_reqests_up_one + 1;
-          xyz_number_active_reqests_q <= xyz_number_active_reqests_up_one;
-        end
-      end
+  ////////// INTERFACE INTEGRITY INSTRUCTION GNT PARITY ERROR SETS INTEGRITY ERROR BIT //////////
 
+  logic gnt_error_in_respons_instr;
 
-      if (xyz_rvalid) begin
-        xyz_gnt_parity_error_on_req_nr[xyz_number_active_reqests_q] <= xyz_gnt_parity_error_in_active_adress_phase;
+  sl_gnt_error_in_respons sl_gnt_error_in_respons_instr_i
+  (
+    .rst_ni (rst_ni),
+    .clk_i (clk_i),
 
-        if (xyz_req && xyz_gnt) begin
-        xyz_number_active_reqests_up_one <= xyz_number_active_reqests_up_one;
-        xyz_number_active_reqests_q <= xyz_number_active_reqests_q;
+    .gnt (xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt),
+    .gntpar (xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar),
+    .req (xsecure_if.core_i_m_c_obi_instr_if_s_req_req),
+    .rvalid (xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid),
 
-        end else begin
-          xyz_number_active_reqests_up_one <= xyz_number_active_reqests_up_one - 1;
-        xyz_number_active_reqests_q <= xyz_number_active_reqests_q - 1;
-        end
-      end
-    end
-  end
-*/
-
-  logic xyz_gnt;
-  logic xyz_gntpar;
-  logic xyz_req;
-  logic xyz_rvalid;
-
-  assign xyz_gnt = xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt;
-  assign xyz_gntpar = xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar;
-  assign xyz_req = xsecure_if.core_i_m_c_obi_instr_if_s_req_req;
-  assign xyz_rvalid = xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid;
-
-  logic [2:0] xyz_fifo_req_errors;
-  logic xyz_req_error;
-  logic xyz_gnt_error_in_respons;
-  integer req_error_pointer;
-  logic xyz_req_error_prev;
-
-  assign xyz_gnt_error_in_respons = xyz_rvalid && xyz_fifo_req_errors[2];
-  assign xyz_req_error = ((xyz_gnt == xyz_gntpar || xyz_req_error_prev) && xyz_req) && rst_ni;
-
-  always @(posedge clk_i) begin
-    if(!rst_ni) begin
-      xyz_fifo_req_errors <= 3'b0;
-      req_error_pointer = 2;
-      xyz_req_error_prev <= 1'b0;
-    end else begin
-
-      if ((xyz_req && xyz_gnt) && !xyz_rvalid) begin
-        xyz_fifo_req_errors[req_error_pointer] <= xyz_req_error;
-        req_error_pointer <= req_error_pointer - 1;
-
-      end else if (!(xyz_req && xyz_gnt) && xyz_rvalid) begin
-        req_error_pointer <= req_error_pointer + 1;
-        xyz_fifo_req_errors <= {xyz_fifo_req_errors[1:0], 1'b0};
-
-      end else if ((xyz_req && xyz_gnt) && xyz_rvalid) begin
-        xyz_fifo_req_errors[req_error_pointer] <= xyz_req_error;
-        xyz_fifo_req_errors <= {xyz_fifo_req_errors[1:0], 1'b0};
-
-      end
-
-      if ((xyz_req && !xyz_gnt)) begin
-        xyz_req_error_prev <= xyz_req_error;
-      end else begin
-        xyz_req_error_prev <= 1'b0;
-      end
-    end
-  end
+    .gnt_error_in_respons (gnt_error_in_respons_instr)
+  );
 
 
   a_xsecure_interface_integrety_instr_error_set_if_gnt_error: assert property (
     @(posedge xsecure_if.core_clk)
 
+    //Make sure the core is in operative mode
     core_clock_cycles
 
+    //Make sure interface integrity checking setting is on
     && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
 
-    && xsecure_if.core_i_if_stage_i_bus_resp.integrity //todo: kanskje denne også må lagres i variabel og sjekkes? - jepp! bruk forenklet signal først!
-
+    //Make sure we recive a valid packet
     && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
 
-    && xyz_gnt_error_in_respons
+    //Make sure there where a gnt parity error when making the core was making the request
+    && gnt_error_in_respons_instr
 
-    |-> xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
+    |->
+    //Verify that the instruction packet's integrety error is set
+    xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
 
-  ) else `uvm_error(info_tag, "The response phase checksum for datauctions is generated wrongly.\n");
+  ) else `uvm_error(info_tag, "The instruction response phase packet's integrety error bit is not set.\n");
 
+
+  ////////// INTERFACE INTEGRITY INSTRUCTION RVALID PARITY ERROR SETS INTEGRITY ERROR BIT //////////
 
   a_xsecure_interface_integrety_instr_error_set_if_rvalid_error: assert property (
     @(posedge xsecure_if.core_clk)
 
+    //Make sure the core is in operative mode
     core_clock_cycles
 
+    //Make sure interface integrity checking setting is on
     && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
 
-    && xsecure_if.core_i_if_stage_i_bus_resp.integrity //todo: kanskje denne også må lagres i variabel og sjekkes? - jepp! bruk forenklet signal først!
-
+    //Make sure we recive a valid packet
     && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
 
+    //Make sure there is a rvalid parity error
     && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid == xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar
 
-    |-> xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
+    |->
+    //Verify that the instruction packet's integrety error is set
+    xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
 
-  ) else `uvm_error(info_tag, "The response phase checksum for datauctions is generated wrongly.\n");
+  ) else `uvm_error(info_tag, "The data response phase packet's integrety error bit is not set.\n");
 
 
+  ////////// INTERFACE INTEGRITY INSTRUCTION CHECKSUM ERROR SETS INTEGRITY ERROR BIT //////////
 
   a_xsecure_interface_integrety_instr_error_set_if_checksum_error: assert property (
     @(posedge xsecure_if.core_clk)
 
+    //Make sure there are a checksum error
     seq_response_phase_checksum_error(
       NO_WRITE_TRANSACTION,
       xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
@@ -1640,44 +1648,117 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
       xsecure_if.core_i_m_c_obi_instr_if_resp_payload.err,
       exokay_tie_off_value)
 
-    and (core_clock_cycles == 1
+    //Make sure the core is in operative mode
+    and (core_clock_cycles
+
+    //Make sure interface integrity checking setting is on
     && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
 
-    && xsecure_if.core_i_if_stage_i_bus_resp.integrity
-
+    //Make sure we recive a valid packet
     && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
-    )
 
-    |-> xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
-
-  ) else `uvm_error(info_tag, "The response phase checksum for datauctions is generated wrongly.\n");
-
-
-  a_xsecure_interface_integrety_data_error_set_if_parity_or_checksum_error: assert property (
-    @(posedge xsecure_if.core_clk)
-
-    ((xsecure_if.core_i_m_c_obi_data_if_s_gnt_gntpar == xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt
-
-    || xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar == xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid)
-
-    or seq_response_phase_checksum_error(
-      xsecure_if.core_i_load_store_unit_i_data_obi_i_integrity_fifo_i_resp_is_store,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
-      exokay_tie_off_value))
-
-    and (core_clock_cycles == 1
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
-
-    && xsecure_if.core_i_load_store_unit_i_bus_resp.integrity
-
-    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+    //Make sure the packet has integrity
+    && integrity_in_respons_instr
     )
 
     |->
+    //Verify that the instruction packet's integrety error is set
+    xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
+
+  ) else `uvm_error(info_tag, "The response phase checksum for instruction is generated wrongly.\n");
+
+
+  ////////// INTERFACE INTEGRITY DATA GNT PARITY ERROR SETS INTEGRITY ERROR BIT //////////
+
+  logic gnt_error_in_respons_data;
+
+  sl_gnt_error_in_respons sl_gnt_error_in_respons_data_i
+  (
+    .rst_ni (rst_ni),
+    .clk_i (clk_i),
+
+    .gnt (xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt),
+    .gntpar (xsecure_if.core_i_m_c_obi_data_if_s_gnt_gntpar),
+    .req (xsecure_if.core_i_m_c_obi_data_if_s_req_req),
+    .rvalid (xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid),
+
+    .gnt_error_in_respons (gnt_error_in_respons_data)
+  );
+
+  a_xsecure_interface_integrety_data_error_set_if_gnt_error: assert property (
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure the core is in operative mode
+    core_clock_cycles
+
+    //Make sure interface integrity checking setting is on
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    //Make sure we recive a valid packet
+    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+
+    //Make sure there where a gnt parity error when making the core was making the request
+    && gnt_error_in_respons_data
+
+    |->
+    //Verify that the data packet's integrety error is set
     xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err
-    ) else `uvm_error(info_tag, "The response phase checksum for datauctions is generated wrongly.\n");
+
+  ) else `uvm_error(info_tag, "The data response phase packet's integrety error bit is not set.\n");
+
+
+  a_xsecure_interface_integrety_data_error_set_if_rvalid_error: assert property (
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure the core is in operative mode
+    core_clock_cycles
+
+    //Make sure interface integrity checking setting is on
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    //Make sure we recive a valid packet
+    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+
+    //Make sure there is a rvalid parity error
+    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid == xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar
+
+    |->
+    //Verify that the data packet's integrety error is set
+    xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err
+
+  ) else `uvm_error(info_tag, "The data response phase packet's integrety error bit is not set.\n");
+
+
+
+  a_xsecure_interface_integrety_data_error_set_if_checksum_error: assert property (
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure there are a checksum error
+    seq_response_phase_checksum_error(
+      is_store_in_respons_data,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
+      xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
+      exokay_tie_off_value)
+
+    //Make sure the core is in operative mode
+    and (core_clock_cycles
+
+    //Make sure interface integrity checking setting is on
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    //Make sure we recive a valid packet
+    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+
+    //Make sure the packet has integrity
+    && integrity_in_respons_data
+    )
+
+    |->
+    //Verify that the data packet's integrety error is set
+    xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err
+
+  ) else `uvm_error(info_tag, "The response phase checksum for data is generated wrongly.\n");
 
 
   ///////////////////////////////////////////////////////////////
@@ -2000,3 +2081,106 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch decision set alert major even though PC hardening is off.\n");
 
 endmodule : uvmt_cv32e40s_xsecure_assert
+
+
+module sl_gnt_error_in_respons
+  import uvm_pkg::*;
+  import cv32e40s_pkg::*;
+  (
+    input logic rst_ni,
+    input logic clk_i,
+
+    input logic gnt,
+    input logic gntpar,
+    input logic req,
+    input logic rvalid,
+
+    output logic gnt_error_in_respons
+  );
+
+
+  logic [2:0] fifo_req_errors;
+  logic req_error;
+  logic [1:0] req_error_pointer;
+  logic req_error_prev;
+
+  assign gnt_error_in_respons = rvalid && fifo_req_errors[2];
+  assign req_error = ((gnt == gntpar || req_error_prev) && req) && rst_ni;
+
+  always @(posedge clk_i) begin
+    if(!rst_ni) begin
+      fifo_req_errors <= 3'b000;
+      req_error_pointer = 2;
+      req_error_prev <= 1'b0;
+    end else begin
+
+      if ((req && gnt) && !rvalid) begin
+        fifo_req_errors[req_error_pointer] <= req_error;
+        req_error_pointer <= req_error_pointer - 1;
+
+      end else if (!(req && gnt) && rvalid) begin
+        req_error_pointer <= req_error_pointer + 1;
+        fifo_req_errors <= {fifo_req_errors[1:0], 1'b0};
+
+      end else if ((req && gnt) && rvalid) begin
+        fifo_req_errors[req_error_pointer] <= req_error;
+        fifo_req_errors <= {fifo_req_errors[1:0], 1'b0};
+
+      end
+
+      if ((req && !gnt)) begin
+        req_error_prev <= req_error;
+      end else begin
+        req_error_prev <= 1'b0;
+      end
+    end
+  end
+
+endmodule : sl_gnt_error_in_respons
+
+module sl_setting_in_respons
+  import uvm_pkg::*;
+  import cv32e40s_pkg::*;
+  (
+    input logic rst_ni,
+    input logic clk_i,
+
+    input logic gnt,
+    input logic req,
+    input logic rvalid,
+    input logic setting_i,
+
+    output logic setting_in_respons
+  );
+
+
+  logic [2:0] fifo_req_settings;
+  logic req_setting;
+  logic [1:0] req_setting_pointer;
+
+  assign setting_in_respons = rvalid && fifo_req_settings[2];
+  assign req_setting = setting_i && rst_ni;
+
+  always @(posedge clk_i,negedge rst_ni) begin
+    if(!rst_ni) begin
+      fifo_req_settings <= 3'b000;
+      req_setting_pointer = 2;
+    end else begin
+
+      if ((gnt && req) && !rvalid) begin
+        fifo_req_settings[req_setting_pointer] <= req_setting;
+        req_setting_pointer <= req_setting_pointer - 1;
+
+      end else if (!(gnt && req) && rvalid) begin
+        req_setting_pointer <= req_setting_pointer + 1;
+        fifo_req_settings <= {fifo_req_settings[1:0], 1'b0};
+
+      end else if ((gnt && req) && rvalid) begin
+        fifo_req_settings[req_setting_pointer] <= req_setting;
+        fifo_req_settings <= {fifo_req_settings[1:0], 1'b0};
+
+      end
+    end
+  end
+
+endmodule : sl_setting_in_respons

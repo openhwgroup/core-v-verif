@@ -790,35 +790,31 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_i_jump_target_id                                                                                            (core_i.jump_target_id),
 
       // OBI interface
-      .core_i_if_stage_i_instruction_obi_i_integrity_fifo_i_rchk_i_resp_i_integrity (core_i.if_stage_i.instruction_obi_i.integrity_fifo_i.rchk_i.resp_i.integrity),
+      .core_i_if_stage_i_bus_resp                                                                                       (core_i.if_stage_i.bus_resp),
+      .core_i_load_store_unit_i_bus_resp                                                                                (core_i.load_store_unit_i.bus_resp),
 
-      .core_i_if_stage_i_bus_resp_integrity (core_i.if_stage_i.bus_resp.integrity),
-      .core_i_if_stage_i_bus_resp (core_i.if_stage_i.bus_resp),
+      .core_i_if_stage_i_mpu_i_bus_trans_integrity                                                                      (core_i.if_stage_i.mpu_i.bus_trans_integrity),
+      .core_i_load_store_unit_i_mpu_i_bus_trans_integrity                                                               (core_i.load_store_unit_i.mpu_i.bus_trans_integrity),
+      .core_i_load_store_unit_i_bus_trans_we                                                                            (core_i.load_store_unit_i.bus_trans.we),
 
-      .core_i_load_store_unit_i_bus_resp_integrity (core_i.load_store_unit_i.bus_resp.integrity),
-      .core_i_load_store_unit_i_bus_resp (core_i.load_store_unit_i.bus_resp),
+      .core_i_m_c_obi_data_if_req_payload                                                                               (core_i.m_c_obi_data_if.req_payload),
+      .core_i_m_c_obi_data_if_resp_payload                                                                              (core_i.m_c_obi_data_if.resp_payload),
+      .core_i_m_c_obi_instr_if_req_payload                                                                              (core_i.m_c_obi_instr_if.req_payload),
+      .core_i_m_c_obi_instr_if_resp_payload                                                                             (core_i.m_c_obi_instr_if.resp_payload),
 
-      .core_i_load_store_unit_i_bus_trans_we (core_i.load_store_unit_i.bus_trans.we),
-      .core_i_load_store_unit_i_data_obi_i_integrity_fifo_i_resp_is_store (core_i.load_store_unit_i.data_obi_i.integrity_fifo_i.resp_is_store),
+      .core_i_m_c_obi_data_if_s_req_req                                                                                 (core_i.m_c_obi_data_if.s_req.req),
+      .core_i_m_c_obi_data_if_s_req_reqpar                                                                              (core_i.m_c_obi_data_if.s_req.reqpar),
+      .core_i_m_c_obi_data_if_s_gnt_gnt                                                                                 (core_i.m_c_obi_data_if.s_gnt.gnt),
+      .core_i_m_c_obi_data_if_s_gnt_gntpar                                                                              (core_i.m_c_obi_data_if.s_gnt.gntpar),
+      .core_i_m_c_obi_data_if_s_rvalid_rvalid                                                                           (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+      .core_i_m_c_obi_data_if_s_rvalid_rvalidpar                                                                        (core_i.m_c_obi_data_if.s_rvalid.rvalidpar),
 
-      .core_i_m_c_obi_data_if_req_payload (core_i.m_c_obi_data_if.req_payload),
-      .core_i_m_c_obi_data_if_resp_payload (core_i.m_c_obi_data_if.resp_payload),
-      .core_i_m_c_obi_instr_if_req_payload (core_i.m_c_obi_instr_if.req_payload),
-      .core_i_m_c_obi_instr_if_resp_payload (core_i.m_c_obi_instr_if.resp_payload),
-
-      .core_i_m_c_obi_data_if_s_req_req (core_i.m_c_obi_data_if.s_req.req),
-      .core_i_m_c_obi_data_if_s_req_reqpar (core_i.m_c_obi_data_if.s_req.reqpar),
-      .core_i_m_c_obi_data_if_s_gnt_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
-      .core_i_m_c_obi_data_if_s_gnt_gntpar (core_i.m_c_obi_data_if.s_gnt.gntpar),
-      .core_i_m_c_obi_data_if_s_rvalid_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
-      .core_i_m_c_obi_data_if_s_rvalid_rvalidpar (core_i.m_c_obi_data_if.s_rvalid.rvalidpar),
-
-      .core_i_m_c_obi_instr_if_s_req_req (core_i.m_c_obi_instr_if.s_req.req),
-      .core_i_m_c_obi_instr_if_s_req_reqpar (core_i.m_c_obi_instr_if.s_req.reqpar),
-      .core_i_m_c_obi_instr_if_s_gnt_gnt (core_i.m_c_obi_instr_if.s_gnt.gnt),
-      .core_i_m_c_obi_instr_if_s_gnt_gntpar (core_i.m_c_obi_instr_if.s_gnt.gntpar),
-      .core_i_m_c_obi_instr_if_s_rvalid_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
-      .core_i_m_c_obi_instr_if_s_rvalid_rvalidpar (core_i.m_c_obi_instr_if.s_rvalid.rvalidpar),
+      .core_i_m_c_obi_instr_if_s_req_req                                                                                (core_i.m_c_obi_instr_if.s_req.req),
+      .core_i_m_c_obi_instr_if_s_req_reqpar                                                                             (core_i.m_c_obi_instr_if.s_req.reqpar),
+      .core_i_m_c_obi_instr_if_s_gnt_gnt                                                                                (core_i.m_c_obi_instr_if.s_gnt.gnt),
+      .core_i_m_c_obi_instr_if_s_gnt_gntpar                                                                             (core_i.m_c_obi_instr_if.s_gnt.gntpar),
+      .core_i_m_c_obi_instr_if_s_rvalid_rvalid                                                                          (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+      .core_i_m_c_obi_instr_if_s_rvalid_rvalidpar                                                                       (core_i.m_c_obi_instr_if.s_rvalid.rvalidpar),
 
       // CSR
       .core_alert_minor_o                                                                                               (core_i.alert_minor_o),
@@ -967,8 +963,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
     ) xsecure_assert_i 	(
     	.xsecure_if	(xsecure_if),
 	    .rvfi_if	  (rvfi_instr_if_0_i),
-      .clk_i      (clk_i),
-      .rst_ni     (rst_ni)
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n)
     );
 
   // Debug assertion and coverage interface
