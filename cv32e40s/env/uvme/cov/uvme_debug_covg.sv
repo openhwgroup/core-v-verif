@@ -205,8 +205,8 @@ class uvme_debug_covg extends uvm_component;
     // Cover that we get a debug_req while in wfi
     covergroup cg_wfi_debug_req;
         `per_instance_fcov
-        inwfi : coverpoint cntxt.debug_cov_vif.mon_cb.in_wfi {
-                bins hit  = {1};
+        inwfi : coverpoint cntxt.debug_cov_vif.mon_cb.ctrl_fsm_cs {
+                bins hit  = {SLEEP};
         }
         dreq: coverpoint cntxt.debug_cov_vif.mon_cb.debug_req_i {
             bins hit = {1};
