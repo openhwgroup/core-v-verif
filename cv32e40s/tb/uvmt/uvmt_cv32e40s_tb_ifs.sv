@@ -486,7 +486,7 @@ interface uvmt_cv32e40s_input_to_support_logic_module_if
 endinterface : uvmt_cv32e40s_input_to_support_logic_module_if
 
 
-interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_input_if;
+interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
    import cv32e40s_pkg::*;
    import cv32e40s_rvfi_pkg::*;
 
@@ -565,7 +565,7 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_input_if;
 	      lrfodi_bus_v_addr_ph_cnt
    );
 
-endinterface : uvmt_cv32e40s_support_logic_for_assert_coverage_modules_input_if
+endinterface : uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if
 
 
 

@@ -13,7 +13,7 @@ module uvmt_cv32e40s_xsecure_assert
   (
    uvmt_cv32e40s_xsecure_if xsecure_if,
    uvma_rvfi_instr_if rvfi_if,
-   uvmt_cv32e40s_support_logic_for_assert_coverage_modules_input_if.Slave support_if,
+   uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave support_if,
    input rst_ni,
    input clk_i
   );
