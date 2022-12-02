@@ -1,3 +1,6 @@
+// Copyright 2022 Dolphin Design
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
+
 /**
  * Quasi-static core control signals.
  */
@@ -14,9 +17,7 @@ interface uvme_cv32e40p_core_cntrl_if
     logic [31:0] mtvec_addr;
     logic [31:0] dm_halt_addr;
     logic [31:0] dm_exception_addr;
-    logic [31:0] nmi_addr;
     logic [31:0] mhartid;
-    logic [3:0]  mimpid_patch;
 
     logic [31:0] num_mhpmcounters;
     // pma_cfg_t pma_cfg[]; TODO

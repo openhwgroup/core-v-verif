@@ -49,12 +49,10 @@ task uvma_cv32e40p_core_cntrl_drv_c::drive_bootstrap();
    $cast(e40p_cntxt, cntxt);
 
    e40p_cntxt.core_cntrl_vif.boot_addr         = cfg.boot_addr;
-   e40p_cntxt.core_cntrl_vif.nmi_addr          = cfg.nmi_addr;
    e40p_cntxt.core_cntrl_vif.mtvec_addr        = cfg.mtvec_addr;
    e40p_cntxt.core_cntrl_vif.dm_halt_addr      = cfg.dm_halt_addr;
    e40p_cntxt.core_cntrl_vif.dm_exception_addr = cfg.dm_exception_addr;
    e40p_cntxt.core_cntrl_vif.mhartid           = cfg.mhartid;
-   //e40p_cntxt.core_cntrl_vif.mimpid_patch      = cfg.mimpid_patch;
    e40p_cntxt.core_cntrl_vif.fetch_en          = 1'b0;
    e40p_cntxt.core_cntrl_vif.scan_cg_en        = 1'b0;
 
