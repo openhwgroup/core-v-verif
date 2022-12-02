@@ -211,7 +211,7 @@ module uvmt_cv32e40s_xsecure_assert
   );
 
 
-  ////////// DATA INDEPENDENT TIMING DEFAULT OFF //////////
+  ////////// DATA INDEPENDENT TIMING DEFAULT ON //////////
 
   a_xsecure_dataindtiming_default_on: assert property (
 	  p_xsecure_setting_default_on(
@@ -1422,5 +1422,62 @@ module uvmt_cv32e40s_xsecure_assert
     && !$past(xsecure_if.core_alert_major_o)
 
   ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch decision set alert major even though PC hardening is off.\n");
+
+
+  /////////////////////////////////////////////////////////////////////
+  ///////////////////////// HINT INSTRUCTIONS /////////////////////////
+  /////////////////////////////////////////////////////////////////////
+
+  ////////// HINT INSTRUCTIONS ARE DEFAULT OFF //////////
+
+  a_xsecure_dataindtiming_default_off: assert property (
+	  p_xsecure_setting_default_off(
+	  xsecure_if.core_xsecure_ctrl_cpuctrl_rndhint)
+  ) else `uvm_error(info_tag, "Hint instructions setting is not off when exiting reset.\n");
+
+
+  ////////// HINT INSTRUCTION UPDATES MINSTRET //////////
+
+  a_xsecure_hint_instructions_updates_minstret: assert property (
+    //Make sure the gated clock is active
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure that minstret is on (not inhibit)
+    !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
+
+    //Hint instruction retires
+    && rvfi_if.rvfi_valid
+    && rvfi_if.insn[12] == 1'b1 //custom instructions for hint
+    && rvfi_if.insn[11:7] == x0 //rd==x0 for hints
+    && rvfi_if.insn[15:13] == 3'b000 //func3 for c.slli
+
+    //Make sure the minstret counter is updated
+    |=>
+    xsecure_if.core_cs_registers_mhpmcounter_minstret == $past(xsecure_if.core_cs_registers_mhpmcounter_minstret) + 1
+
+  ) else `uvm_error(info_tag, "Hint instructions did not update the minstret register.\n");
+
+
+  ////////// HINT INSTRUCTION APPEARS AS SLT ON RVFI //////////
+
+  a_xsecure_hint_instructions_updates_minstret: assert property (
+    //Make sure the gated clock is active
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure we have an dummy instruction
+    && xsecure_if.core_wb_stage_ex_wb_pipe_instr_meta_hint
+
+    //Make sure the dummy instruction is ready to retire
+    && xsecure_if.core_wb_stage_wb_valid_o
+
+    |=>
+    //Verify that the hint instruction appears as c.slli instruction with rd=x0 and shamt != 0
+    && rvfi_if.rvfi_valid
+    && rvfi_if.insn[12] == 1'b1 //custom instructions for hint
+    && rvfi_if.insn[11:7] == x0 //rd==x0 for hints
+    && rvfi_if.insn[15:13] == 3'b000 //func3 for c.sll
+
+  ) else `uvm_error(info_tag, "Hint instructions did not update the minstret register.\n");
+
 
 endmodule : uvmt_cv32e40s_xsecure_assert

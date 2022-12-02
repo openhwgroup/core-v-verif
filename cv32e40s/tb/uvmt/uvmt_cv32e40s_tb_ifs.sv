@@ -136,6 +136,7 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_xsecure_ctrl_cpuctrl_dataindtiming,
     input logic core_xsecure_ctrl_cpuctrl_rnddummy,
     input logic core_xsecure_ctrl_cpuctrl_pc_hardening,
+    input logic core_xsecure_ctrl_cpuctrl_rndhint,
 
     input logic [3:0] core_xsecure_ctrl_cpuctrl_rnddummyfreq,
     input logic core_if_stage_gen_dummy_instr_dummy_instr_dummy_en,
@@ -245,6 +246,7 @@ interface uvmt_cv32e40s_xsecure_if
 
     // EX WB pipe
     input logic core_wb_stage_ex_wb_pipe_instr_meta_dummy,
+    input logic core_wb_stage_ex_wb_pipe_instr_meta_hint,
 
     // WB stage
     input logic core_wb_stage_wb_valid_o,

@@ -796,6 +796,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_xsecure_ctrl_cpuctrl_dataindtiming	                                                                        (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
       .core_xsecure_ctrl_cpuctrl_rnddummy		                                                                            (core_i.xsecure_ctrl.cpuctrl.rnddummy),
       .core_xsecure_ctrl_cpuctrl_pc_hardening                                                                           (core_i.xsecure_ctrl.cpuctrl.pc_hardening),
+      .core_xsecure_ctrl_cpuctrl_rndhint (core_i.xsecure_ctrl.cpuctrl.rndhint),
 
       .core_xsecure_ctrl_cpuctrl_rnddummyfreq                                                                           (core_i.xsecure_ctrl.cpuctrl[19:16]),
       .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
@@ -906,6 +907,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       // EX WB pipe
       .core_wb_stage_ex_wb_pipe_instr_meta_dummy                                                                        (core_i.wb_stage_i.ex_wb_pipe_i.instr_meta.dummy),
+      .core_wb_stage_ex_wb_pipe_instr_meta_hint (core_i.wb_stage_i.ex_wb_pipe_i.instr_meta.hint),
 
       // WB stage
       .core_wb_stage_wb_valid_o                                                                                         (core_i.wb_stage_i.wb_valid_o),
