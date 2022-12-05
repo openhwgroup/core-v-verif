@@ -129,6 +129,15 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [CORE_PARAM_REGFILE_NUM_WORDS],
     input logic [31:0] core_i_jump_target_id,
 
+    // OBI signals:
+    input logic core_i_m_c_obi_data_if_s_rvalid_rvalid,
+    input logic core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+    input logic core_i_if_stage_i_prefetch_resp_valid,
+    input logic core_i_load_store_unit_i_resp_valid,
+    input logic core_i_load_store_unit_i_bus_resp_valid,
+
+    input logic [1:0] core_i_load_store_unit_i_response_filter_i_core_cnt_q,
+
     // CSR
     input logic core_alert_minor_o,
     input logic core_alert_major_o,
@@ -401,60 +410,163 @@ interface uvmt_cv32e40s_debug_cov_assert_if
 
 endinterface : uvmt_cv32e40s_debug_cov_assert_if
 
-interface uvmt_cv32e40s_support_logic_if;
+interface uvmt_cv32e40s_input_to_support_logic_module_if
    import cv32e40s_pkg::*;
-   import uvma_rvfi_pkg::*;
-   logic clk_i;
-   logic rst_ni;
+   import cv32e40s_rvfi_pkg::*;
+   (
 
-   // core signals
-   ctrl_fsm_t  ctrl_fsm_o_i;
-   logic       data_bus_req_i;
-   logic       data_bus_gnt_i;
+   /* obi bus protocol signal information:
+   ---------------------------------------
+   - The obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) is refered to as abiim
+   - The obi protocol between LSU (l) mpu (m) and LSU (l) is refered to as lml
+   - The obi protocol between LSU (l) respons (r) filter (f) and OBI (o) data (d) interface (i) is refered to as lrfodi
+   */
 
-   //results for modport
-   logic req_after_exception_o;
+   input logic clk,
+   input logic rst_n,
 
-   clocking mon_cb @(posedge clk_i);
-      input #1step
+   //TODO: Copy pass - dont know what this does: Marton describes
+   input ctrl_fsm_t ctrl_fsm_o,
 
-      ctrl_fsm_o_i,
-      data_bus_req_i;
+   //Obi signals:
 
-      output #0 req_after_exception_o;
+   //Data bus inputs to support logic module:
+   input logic data_bus_rvalid,
+   input logic data_bus_gnt,
+   input logic data_bus_req,
 
-   endclocking : mon_cb
+   //Instr bus inputs to support logic module:
+   input logic instr_bus_rvalid,
+   input logic instr_bus_gnt,
+   input logic instr_bus_req,
+
+   //Abiim bus inputs to support logic module:
+   input logic abiim_bus_rvalid,
+   input logic abiim_bus_gnt,
+   input logic abiim_bus_req,
+
+   //lml bus inputs to support logic module:
+   input logic lml_bus_rvalid,
+   input logic lml_bus_gnt,
+   input logic lml_bus_req,
+
+   //Instr bus inputs to support logic module:
+   input logic lrfodi_bus_rvalid,
+   input logic lrfodi_bus_gnt,
+   input logic lrfodi_bus_req
+   );
+
+   modport driver (
+     input  clk,
+      rst_n,
+
+      ctrl_fsm_o,
+
+      data_bus_rvalid,
+      data_bus_gnt,
+      data_bus_req,
+
+      instr_bus_rvalid,
+      instr_bus_gnt,
+      instr_bus_req,
+
+      abiim_bus_rvalid,
+      abiim_bus_gnt,
+      abiim_bus_req,
+
+      lml_bus_rvalid,
+      lml_bus_gnt,
+      lml_bus_req,
+
+      lrfodi_bus_rvalid,
+      lrfodi_bus_gnt,
+      lrfodi_bus_req
+   );
+
+endinterface : uvmt_cv32e40s_input_to_support_logic_module_if
+
+
+interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
+   import cv32e40s_pkg::*;
+   import cv32e40s_rvfi_pkg::*;
+
+   //TODO: Copy pass - dont know what this does: Marton describes
+   logic req_after_exception;
+
+   // support logic signals for the obi bus protocol:
+
+   // continued address and respons phase indicators, indicates address and respons phases
+   // of more than one cycle
+   logic data_bus_addr_ph_cont;
+   logic data_bus_resp_ph_cont;
+
+   logic instr_bus_addr_ph_cont;
+   logic instr_bus_resp_ph_cont;
+
+   logic abiim_bus_addr_ph_cont;
+   logic abiim_bus_resp_ph_cont;
+
+   logic lml_bus_addr_ph_cont;
+   logic lml_bus_resp_ph_cont;
+
+   logic lrfodi_bus_addr_ph_cont;
+   logic lrfodi_bus_resp_ph_cont;
+
+   // address phase counter, used to verify no response phase preceedes an address phase
+   integer data_bus_v_addr_ph_cnt;
+   integer instr_bus_v_addr_ph_cnt;
+   integer abiim_bus_v_addr_ph_cnt;
+   integer lml_bus_v_addr_ph_cnt;
+   integer lrfodi_bus_v_addr_ph_cnt;
 
    modport master (
-     input  clk_i,
-            rst_ni,
+      output req_after_exception,
+         data_bus_addr_ph_cont,
+	      data_bus_resp_ph_cont,
+	      data_bus_v_addr_ph_cnt,
 
-            ctrl_fsm_o_i,
-            data_bus_req_i,
-            data_bus_gnt_i,
+         instr_bus_addr_ph_cont,
+	      instr_bus_resp_ph_cont,
+	      instr_bus_v_addr_ph_cnt,
 
-     output req_after_exception_o
+         abiim_bus_addr_ph_cont,
+	      abiim_bus_resp_ph_cont,
+	      abiim_bus_v_addr_ph_cnt,
+
+         lml_bus_addr_ph_cont,
+	      lml_bus_resp_ph_cont,
+	      lml_bus_v_addr_ph_cnt,
+
+         lrfodi_bus_addr_ph_cont,
+	      lrfodi_bus_resp_ph_cont,
+	      lrfodi_bus_v_addr_ph_cnt
    );
 
    modport slave (
-     input  clk_i,
-            rst_ni,
+      input req_after_exception,
+         data_bus_addr_ph_cont,
+	      data_bus_resp_ph_cont,
+	      data_bus_v_addr_ph_cnt,
 
-            req_after_exception_o,
-     output ctrl_fsm_o_i,
-            data_bus_req_i
+         instr_bus_addr_ph_cont,
+	      instr_bus_resp_ph_cont,
+	      instr_bus_v_addr_ph_cnt,
+
+         abiim_bus_addr_ph_cont,
+	      abiim_bus_resp_ph_cont,
+	      abiim_bus_v_addr_ph_cnt,
+
+         lml_bus_addr_ph_cont,
+	      lml_bus_resp_ph_cont,
+	      lml_bus_v_addr_ph_cnt,
+
+         lrfodi_bus_addr_ph_cont,
+	      lrfodi_bus_resp_ph_cont,
+	      lrfodi_bus_v_addr_ph_cnt
    );
 
-   modport monitor (
-     input  clk_i,
-            rst_ni,
-            req_after_exception_o,
-            ctrl_fsm_o_i,
-            data_bus_req_i
-   );
+endinterface : uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if
 
 
-
-endinterface : uvmt_cv32e40s_support_logic_if
 
 `endif // __UVMT_CV32E40S_TB_IFS_SV__
