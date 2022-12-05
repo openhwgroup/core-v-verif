@@ -793,10 +793,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_i_if_stage_i_bus_resp                                                                                       (core_i.if_stage_i.bus_resp),
       .core_i_load_store_unit_i_bus_resp                                                                                (core_i.load_store_unit_i.bus_resp),
 
-      //.core_i_if_stage_i_mpu_i_bus_trans_integrity                                                                      (core_i.if_stage_i.mpu_i.bus_trans_integrity),
-      //.core_i_load_store_unit_i_mpu_i_bus_trans_integrity                                                               (core_i.load_store_unit_i.mpu_i.bus_trans_integrity),
-      //.core_i_load_store_unit_i_bus_trans_we                                                                            (core_i.load_store_unit_i.bus_trans.we),
-
       .core_i_m_c_obi_data_if_req_payload                                                                               (core_i.m_c_obi_data_if.req_payload),
       .core_i_m_c_obi_data_if_resp_payload                                                                              (core_i.m_c_obi_data_if.resp_payload),
       .core_i_m_c_obi_instr_if_req_payload                                                                              (core_i.m_c_obi_instr_if.req_payload),

@@ -1165,12 +1165,12 @@ module uvmt_cv32e40s_xsecure_assert
   end endgenerate
 
   ///////////////////////////////////////////////////////////////////////
-  ///////////////////////// INTERFACE INTEGRETY /////////////////////////
+  ///////////////////////// INTERFACE INTEGRITY /////////////////////////
   ///////////////////////////////////////////////////////////////////////
 
   ////////// INTERFACE INTEGRITY SETTING IS ON BY DEFAULT //////////
 
-  a_xsecure_interface_integrety_default_on: assert property (
+  a_xsecure_interface_integrity_default_on: assert property (
     p_xsecure_setting_default_on(
         xsecure_if.core_xsecure_ctrl_cpuctrl_integrity)
   ) else `uvm_error(info_tag, "Integrity interface setting is not on when exiting reset.\n");
@@ -1186,37 +1186,37 @@ module uvmt_cv32e40s_xsecure_assert
 
   endproperty
 
-  a_xsecure_interface_integrety_obi_data_req_parity: assert property (
+  a_xsecure_interface_integrity_obi_data_req_parity: assert property (
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_m_c_obi_data_if_s_req_req,
       xsecure_if.core_i_m_c_obi_data_if_s_req_reqpar)
   ) else `uvm_error(info_tag, "Parity signal reqpar to the data obi bus is not invers of transaction grant (req) signal.\n");
 
-  a_xsecure_interface_integrety_obi_data_gnt_parity: assert property (
+  a_xsecure_interface_integrity_obi_data_gnt_parity: assert property (
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt,
       xsecure_if.core_i_m_c_obi_data_if_s_gnt_gntpar)
   ) else `uvm_error(info_tag, "Parity signal gntpar to the data obi bus is not invers of transaction grant (gnt) signal.\n");
 
-  a_xsecure_interface_integrety_obi_data_rvalid_parity: assert property (
+  a_xsecure_interface_integrity_obi_data_rvalid_parity: assert property (
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar)
   ) else `uvm_error(info_tag, "Parity signal rvalidpar to the data obi bus is not invers of response valid signal.\n");
 
-  a_xsecure_interface_integrety_obi_instr_req_parity: assert property (
+  a_xsecure_interface_integrity_obi_instr_req_parity: assert property (
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_m_c_obi_instr_if_s_req_req,
       xsecure_if.core_i_m_c_obi_instr_if_s_req_reqpar)
   ) else `uvm_error(info_tag, "Parity signal reqpar to the instruction obi bus is not invers of transaction grant (req) signal.\n");
 
-  a_xsecure_interface_integrety_obi_instr_gnt_parity: assert property (
+  a_xsecure_interface_integrity_obi_instr_gnt_parity: assert property (
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt,
       xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar)
   ) else `uvm_error(info_tag, "Parity signal gntpar to the instruction obi bus is not invers of transaction grant (gnt) signal.\n");
 
-  a_xsecure_interface_integrety_obi_instr_rvalid_parity: assert property (
+  a_xsecure_interface_integrity_obi_instr_rvalid_parity: assert property (
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar)
@@ -1237,25 +1237,25 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   endproperty
 
-  a_xsecure_interface_integrety_obi_data_gnt_parity_error_set_major_alert: assert property (
+  a_xsecure_interface_integrity_obi_data_gnt_parity_error_set_major_alert: assert property (
     p_parity_signal_is_not_invers_of_signal_set_major_alert(
       xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt,
       xsecure_if.core_i_m_c_obi_data_if_s_gnt_gntpar)
   ) else `uvm_error(info_tag, "Obi data bus grant signal and parity signal mismatch dont set major alert.\n");
 
-  a_xsecure_interface_integrety_obi_data_rvalid_parity_error_set_major_alert: assert property (
+  a_xsecure_interface_integrity_obi_data_rvalid_parity_error_set_major_alert: assert property (
     p_parity_signal_is_not_invers_of_signal_set_major_alert(
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar)
   ) else `uvm_error(info_tag, "Obi data bus rvalid signal and parity signal mismatch dont set major alert.\n");
 
-  a_xsecure_interface_integrety_obi_instr_gnt_parity_error_set_major_alert: assert property (
+  a_xsecure_interface_integrity_obi_instr_gnt_parity_error_set_major_alert: assert property (
     p_parity_signal_is_not_invers_of_signal_set_major_alert(
       xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt,
       xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar)
   ) else `uvm_error(info_tag, "Obi instruction bus grant signal and parity signal mismatch dont set major alert.\n");
 
-  a_xsecure_interface_integrety_obi_instr_rvalid_parity_error_set_major_alert: assert property (
+  a_xsecure_interface_integrity_obi_instr_rvalid_parity_error_set_major_alert: assert property (
     p_parity_signal_is_not_invers_of_signal_set_major_alert(
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar)
@@ -1288,7 +1288,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   logic exokay_tie_off_value;
   assign exokay_tie_off_value = 1'b0;
 
-  a_xsecure_interface_integrety_rchk_instr_no_glitch: assert property (
+  a_xsecure_interface_integrity_rchk_instr_no_glitch: assert property (
 
     //Make sure interface integrity checking setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
@@ -1311,7 +1311,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS FOR DATA ARE GENERATED CORRECTLY //////////
 
-  a_xsecure_interface_integrety_rchk_data_no_glitch: assert property (
+  a_xsecure_interface_integrity_rchk_data_no_glitch: assert property (
 
     //Make sure interface integrity checking setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
@@ -1352,7 +1352,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   endsequence
 
-  a_xsecure_interface_integrety_rchk_instr_glitch: assert property (
+  a_xsecure_interface_integrity_rchk_instr_glitch: assert property (
     @(posedge xsecure_if.core_clk)
 
     //Make sure interface integrity checking setting is on
@@ -1381,7 +1381,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS ERROR FOR DATA SET ALERT MAJOR //////////
 
-  a_xsecure_interface_integrety_rchk_data_glitch: assert property (
+  a_xsecure_interface_integrity_rchk_data_glitch: assert property (
     @(posedge clk_i) //todo: var xsecure_if.core_clk
 
     //Make sure interface integrity checking setting is on
@@ -1410,11 +1410,14 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS ERROR FOR INSTRUCTION DONT SET ALERT MAJOR IF INTEGRITY SETTING IS OFF //////////
 
-  a_xsecure_interface_integrety_off_rchk_instr_glitch: assert property (
+  a_xsecure_interface_integrity_off_rchk_instr_glitch: assert property (
     @(posedge xsecure_if.core_clk)
 
     //Make sure interface integrity checking setting is off
     !xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    //Make sure major alert is not or has not been set
+    && !alert_major_was_set && !xsecure_if.core_alert_major_o
 
     //Make sure we recive a respons packet
     && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
@@ -1439,11 +1442,14 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS ERROR FOR DATA DONT SET ALERT MAJOR IF INTEGRITY SETTING IS OFF //////////
 
-  a_xsecure_interface_integrety_off_rchk_data_glitch: assert property (
+  a_xsecure_interface_integrity_off_rchk_data_glitch: assert property (
     @(posedge xsecure_if.core_clk)
 
     //Make sure interface integrity checking setting is off
     !xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    //Make sure major alert is not or has not been set
+    && !alert_major_was_set && !xsecure_if.core_alert_major_o
 
     //Make sure we recive a respons packet
     && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
@@ -1487,7 +1493,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
 /*
   // TODO: this one fails due to rtl bug
-  a_xsecure_interface_integrety_achk_instr_no_glitch: assert property (
+  a_xsecure_interface_integrity_achk_instr_no_glitch: assert property (
 
     //Make sure interface integrity checking setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
@@ -1513,7 +1519,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   ////////// INTERFACE INTEGRITY ADDRESS CHECKSUM FOR INSTRUCTIONS IS GENERATED CORRECTLY //////////
 
-  a_xsecure_interface_integrety_achk_data_no_glitch: assert property (
+  a_xsecure_interface_integrity_achk_data_no_glitch: assert property (
 
     //Make sure interface integrity checking setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
@@ -1539,7 +1545,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   ////////// INTERFACE INTEGRITY INSTRUCTION GNT PARITY ERROR SETS INTEGRITY ERROR BIT //////////
 
-  a_xsecure_interface_integrety_instr_error_set_if_gnt_error: assert property (
+  a_xsecure_interface_integrity_instr_error_set_if_gnt_error: assert property (
     @(posedge xsecure_if.core_clk)
 
     //Make sure the core is in operative mode
@@ -1555,15 +1561,15 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && support_if.gnt_error_in_respons_instr
 
     |->
-    //Verify that the instruction packet's integrety error is set
+    //Verify that the instruction packet's integrity error is set
     xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
 
-  ) else `uvm_error(info_tag, "The instruction response phase packet's integrety error bit is not set.\n");
+  ) else `uvm_error(info_tag, "The instruction response phase packet's integrity error bit is not set.\n");
 
 
   ////////// INTERFACE INTEGRITY INSTRUCTION RVALID PARITY ERROR SETS INTEGRITY ERROR BIT //////////
 
-  a_xsecure_interface_integrety_instr_error_set_if_rvalid_error: assert property (
+  a_xsecure_interface_integrity_instr_error_set_if_rvalid_error: assert property (
     @(posedge xsecure_if.core_clk)
 
     //Make sure the core is in operative mode
@@ -1579,15 +1585,15 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid == xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar
 
     |->
-    //Verify that the instruction packet's integrety error is set
+    //Verify that the instruction packet's integrity error is set
     xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
 
-  ) else `uvm_error(info_tag, "The data response phase packet's integrety error bit is not set.\n");
+  ) else `uvm_error(info_tag, "The data response phase packet's integrity error bit is not set.\n");
 
 
   ////////// INTERFACE INTEGRITY INSTRUCTION CHECKSUM ERROR SETS INTEGRITY ERROR BIT //////////
 
-  a_xsecure_interface_integrety_instr_error_set_if_checksum_error: assert property (
+  a_xsecure_interface_integrity_instr_error_set_if_checksum_error: assert property (
     @(posedge xsecure_if.core_clk)
 
     //Make sure there are a checksum error
@@ -1612,7 +1618,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     )
 
     |->
-    //Verify that the instruction packet's integrety error is set
+    //Verify that the instruction packet's integrity error is set
     xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
 
   ) else `uvm_error(info_tag, "The response phase checksum for instruction is generated wrongly.\n");
@@ -1620,7 +1626,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   ////////// INTERFACE INTEGRITY DATA GNT PARITY ERROR SETS INTEGRITY ERROR BIT //////////
 
-  a_xsecure_interface_integrety_data_error_set_if_gnt_error: assert property (
+  a_xsecure_interface_integrity_data_error_set_if_gnt_error: assert property (
     @(posedge xsecure_if.core_clk)
 
     //Make sure the core is in operative mode
@@ -1636,13 +1642,13 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && support_if.gnt_error_in_respons_data
 
     |->
-    //Verify that the data packet's integrety error is set
+    //Verify that the data packet's integrity error is set
     xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err
 
-  ) else `uvm_error(info_tag, "The data response phase packet's integrety error bit is not set.\n");
+  ) else `uvm_error(info_tag, "The data response phase packet's integrity error bit is not set.\n");
 
 
-  a_xsecure_interface_integrety_data_error_set_if_rvalid_error: assert property (
+  a_xsecure_interface_integrity_data_error_set_if_rvalid_error: assert property (
     @(posedge xsecure_if.core_clk)
 
     //Make sure the core is in operative mode
@@ -1658,14 +1664,14 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid == xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar
 
     |->
-    //Verify that the data packet's integrety error is set
+    //Verify that the data packet's integrity error is set
     xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err
 
-  ) else `uvm_error(info_tag, "The data response phase packet's integrety error bit is not set.\n");
+  ) else `uvm_error(info_tag, "The data response phase packet's integrity error bit is not set.\n");
 
 
 
-  a_xsecure_interface_integrety_data_error_set_if_checksum_error: assert property (
+  a_xsecure_interface_integrity_data_error_set_if_checksum_error: assert property (
     @(posedge xsecure_if.core_clk)
 
     //Make sure there are a checksum error
@@ -1690,7 +1696,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     )
 
     |->
-    //Verify that the data packet's integrety error is set
+    //Verify that the data packet's integrity error is set
     xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err
 
   ) else `uvm_error(info_tag, "The response phase checksum for data is generated wrongly.\n");

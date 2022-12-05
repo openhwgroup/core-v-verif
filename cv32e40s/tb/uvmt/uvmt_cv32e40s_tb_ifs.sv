@@ -133,10 +133,6 @@ interface uvmt_cv32e40s_xsecure_if
     input obi_data_resp_t core_i_if_stage_i_bus_resp,
     input obi_data_resp_t core_i_load_store_unit_i_bus_resp,
 
-    input logic core_i_if_stage_i_mpu_i_bus_trans_integrity,
-    input logic core_i_load_store_unit_i_mpu_i_bus_trans_integrity,
-    input logic core_i_load_store_unit_i_bus_trans_we,
-
     input obi_data_req_t core_i_m_c_obi_data_if_req_payload,
     input obi_data_resp_t core_i_m_c_obi_data_if_resp_payload,
     input obi_inst_req_t core_i_m_c_obi_instr_if_req_payload,
