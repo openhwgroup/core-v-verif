@@ -84,7 +84,7 @@ module uvmt_cv32e40s_xsecure_assert
   default clocking @(posedge clk_i); endclocking
 
   //If major alert has been set high we allow weird unspeced behavior
-  default disable iff (!(rst_ni) | !(SECURE) | alert_major_was_set);
+  default disable iff (!(rst_ni) | !(SECURE));
   string info_tag = "CV32E40S_XSECURE_ASSERT";
 
 
@@ -1523,6 +1523,9 @@ module uvmt_cv32e40s_xsecure_assert
 
     //Make sure the core is in operative state
     core_clock_cycles
+
+    //Make sure major alert is not or has not been set
+    && !alert_major_was_set && !xsecure_if.core_alert_major_o
 
     //Make sure there is a respons phase transfer
     && obi_rvalid
