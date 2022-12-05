@@ -13,6 +13,7 @@ module uvmt_cv32e40s_xsecure_assert
   (
    uvmt_cv32e40s_xsecure_if xsecure_if,
    uvma_rvfi_instr_if rvfi_if,
+   uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave support_if,
    input rst_ni,
    input clk_i
   );
@@ -73,9 +74,23 @@ module uvmt_cv32e40s_xsecure_assert
   localparam assumed_value_atop = 6'b00_0000;
   localparam assumed_value_wdata = 32'h0000_0000;
 
+  //Sticky bit that indicates if major alert has been set.
+  logic alert_major_was_set;
+
+  //Support logic that set alert_major_was_set high if major alert ever is high.
+  //When major alert has been set, the only way to recover is by resetting.
+  always @(posedge clk_i) begin
+    if(!rst_ni) begin
+      alert_major_was_set <= 0;
+    end else if (xsecure_if.core_alert_major_o) begin
+      alert_major_was_set <= xsecure_if.core_alert_major_o;
+    end
+  end
 
   // Default settings:
   default clocking @(posedge clk_i); endclocking
+
+  //If major alert has been set high we allow weird unspeced behavior
   default disable iff (!(rst_ni) | !(SECURE));
   string info_tag = "CV32E40S_XSECURE_ASSERT";
 
@@ -1296,23 +1311,6 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS FOR DATA ARE GENERATED CORRECTLY //////////
 
-  logic is_store_in_respons_data;
-
-  sl_setting_in_respons is_store_in_respons_data_i
-  (
-    .rst_ni (rst_ni),
-    .clk_i (clk_i),
-
-    .gnt (xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt),
-    .req (xsecure_if.core_i_m_c_obi_data_if_s_req_req),
-    .rvalid (xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid),
-    .setting_i (xsecure_if.core_i_load_store_unit_i_bus_trans_we),
-
-    .setting_in_respons (is_store_in_respons_data)
-
-  );
-
-
   a_xsecure_interface_integrety_rchk_data_no_glitch: assert property (
 
     //Make sure interface integrity checking setting is on
@@ -1324,7 +1322,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     |->
     //Check that the checksum matches the content
     seq_response_phase_checksum(
-      is_store_in_respons_data,
+      support_if.is_store_in_respons_data,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
@@ -1354,22 +1352,6 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   endsequence
 
-  logic integrity_in_respons_instr;
-
-  sl_setting_in_respons integrity_in_respons_instr_i
-  (
-    .rst_ni (rst_ni),
-    .clk_i (clk_i),
-
-    .gnt (xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt),
-    .req (xsecure_if.core_i_m_c_obi_instr_if_s_req_req),
-    .rvalid (xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid),
-    .setting_i (xsecure_if.core_i_if_stage_i_mpu_i_bus_trans_integrity),
-
-    .setting_in_respons (integrity_in_respons_instr)
-
-  );
-
   a_xsecure_interface_integrety_rchk_instr_glitch: assert property (
     @(posedge xsecure_if.core_clk)
 
@@ -1380,7 +1362,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
 
     //Make sure the packet has integrity
-    && integrity_in_respons_instr
+    && support_if.integrity_in_respons_instr
 
     //Make sure the checksum dont matches the content
     ##0 seq_response_phase_checksum_error(
@@ -1399,24 +1381,8 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS ERROR FOR DATA SET ALERT MAJOR //////////
 
-    logic integrity_in_respons_data;
-
-  sl_setting_in_respons integrity_in_respons_data_i
-  (
-    .rst_ni (rst_ni),
-    .clk_i (clk_i),
-
-    .gnt (xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt),
-    .req (xsecure_if.core_i_m_c_obi_data_if_s_req_req),
-    .rvalid (xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid),
-    .setting_i (xsecure_if.core_i_load_store_unit_i_mpu_i_bus_trans_integrity),
-
-    .setting_in_respons (integrity_in_respons_data)
-
-  );
-
   a_xsecure_interface_integrety_rchk_data_glitch: assert property (
-    @(posedge xsecure_if.core_clk)
+    @(posedge clk_i) //todo: var xsecure_if.core_clk
 
     //Make sure interface integrity checking setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
@@ -1425,11 +1391,11 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
 
     //Make sure the packet has integrity
-    && integrity_in_respons_data
+    && support_if.integrity_in_respons_data
 
     //Make sure the checksum dont matches the content
     ##0 seq_response_phase_checksum_error(
-      is_store_in_respons_data,
+      support_if.is_store_in_respons_data,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
@@ -1454,7 +1420,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
 
     //Make sure the packet has integrity
-    && integrity_in_respons_instr
+    && support_if.integrity_in_respons_instr
 
     //Make sure the checksum dont matches the content
     ##0 seq_response_phase_checksum_error(
@@ -1483,11 +1449,11 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
 
     //Make sure the packet has integrity
-    && integrity_in_respons_data
+    && support_if.integrity_in_respons_data
 
     //Make sure the checksum dont matches the content
     ##0 seq_response_phase_checksum_error(
-      is_store_in_respons_data,
+      support_if.is_store_in_respons_data,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
@@ -1573,22 +1539,6 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   ////////// INTERFACE INTEGRITY INSTRUCTION GNT PARITY ERROR SETS INTEGRITY ERROR BIT //////////
 
-  logic gnt_error_in_respons_instr;
-
-  sl_gnt_error_in_respons sl_gnt_error_in_respons_instr_i
-  (
-    .rst_ni (rst_ni),
-    .clk_i (clk_i),
-
-    .gnt (xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt),
-    .gntpar (xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar),
-    .req (xsecure_if.core_i_m_c_obi_instr_if_s_req_req),
-    .rvalid (xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid),
-
-    .gnt_error_in_respons (gnt_error_in_respons_instr)
-  );
-
-
   a_xsecure_interface_integrety_instr_error_set_if_gnt_error: assert property (
     @(posedge xsecure_if.core_clk)
 
@@ -1602,7 +1552,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
 
     //Make sure there where a gnt parity error when making the core was making the request
-    && gnt_error_in_respons_instr
+    && support_if.gnt_error_in_respons_instr
 
     |->
     //Verify that the instruction packet's integrety error is set
@@ -1658,7 +1608,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
 
     //Make sure the packet has integrity
-    && integrity_in_respons_instr
+    && support_if.integrity_in_respons_instr
     )
 
     |->
@@ -1669,21 +1619,6 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
 
   ////////// INTERFACE INTEGRITY DATA GNT PARITY ERROR SETS INTEGRITY ERROR BIT //////////
-
-  logic gnt_error_in_respons_data;
-
-  sl_gnt_error_in_respons sl_gnt_error_in_respons_data_i
-  (
-    .rst_ni (rst_ni),
-    .clk_i (clk_i),
-
-    .gnt (xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt),
-    .gntpar (xsecure_if.core_i_m_c_obi_data_if_s_gnt_gntpar),
-    .req (xsecure_if.core_i_m_c_obi_data_if_s_req_req),
-    .rvalid (xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid),
-
-    .gnt_error_in_respons (gnt_error_in_respons_data)
-  );
 
   a_xsecure_interface_integrety_data_error_set_if_gnt_error: assert property (
     @(posedge xsecure_if.core_clk)
@@ -1698,7 +1633,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
 
     //Make sure there where a gnt parity error when making the core was making the request
-    && gnt_error_in_respons_data
+    && support_if.gnt_error_in_respons_data
 
     |->
     //Verify that the data packet's integrety error is set
@@ -1735,7 +1670,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
     //Make sure there are a checksum error
     seq_response_phase_checksum_error(
-      is_store_in_respons_data,
+      support_if.is_store_in_respons_data,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
       xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
@@ -1751,7 +1686,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
 
     //Make sure the packet has integrity
-    && integrity_in_respons_data
+    && support_if.integrity_in_respons_data
     )
 
     |->
@@ -2080,107 +2015,164 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch decision set alert major even though PC hardening is off.\n");
 
+
+  //////////////////////////////////////////////////////////////////////////
+  ///////////////////////// BUS PROTOCOL HARDENING /////////////////////////
+  //////////////////////////////////////////////////////////////////////////
+
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCH //////////
+
+  property p_resp_after_addr_no_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure the core is in operative state
+    core_clock_cycles
+
+    //Make sure there is a respons phase transfer
+    && obi_rvalid
+
+    //Make sure the respons phase transfer is finished
+    && !resp_ph_cont
+
+    |->
+    //Check that the repsons phase transfer is indeed a respons to an address transfer (that there at least exist one active address transfer)
+    v_addr_ph_cnt > 0;
+
+  endproperty;
+
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_data: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      support_if.data_bus_resp_ph_cont,
+      support_if.data_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the data bus leading into the core.\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_instr: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      support_if.instr_bus_resp_ph_cont,
+      support_if.instr_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the instructions bus leading into the core.\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_abiim: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
+      support_if.abiim_bus_resp_ph_cont,
+      support_if.abiim_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m).\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_lml: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_load_store_unit_i_resp_valid,
+      support_if.lml_bus_resp_ph_cont,
+      support_if.lml_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handsake between LSU (l) MPU (m) and LSU (l).\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_lrfodi: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_load_store_unit_i_bus_resp_valid,
+      support_if.lrfodi_bus_resp_ph_cont,
+      support_if.lrfodi_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handsake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i).\n");
+
+
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER DONT UNDERFLOW //////////
+
+  a_xsecure_bus_hardening_counter_dont_underflow: assert property (
+
+    //Make sure the counter is in a position where it can underflow
+    xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0
+
+    |=>
+    //Make sure the counter eithr stay 0
+    xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0
+
+    //Or count upwards
+    || xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 1
+
+  ) else `uvm_error(info_tag, "The counter underflows.\n");
+
+
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE GLITCHES //////////
+
+  property p_resp_after_addr_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure the core is in operative state
+    core_clock_cycles
+
+    //Make sure major alert is not or has not been set
+    && !alert_major_was_set && !xsecure_if.core_alert_major_o
+
+    //Make sure there is a respons phase transfer
+    && obi_rvalid
+
+    //Make sure the respons phase transfer is finished
+    && !resp_ph_cont
+
+    //Make sure there are no active address transfers the respons tranfere could be correlated with
+    && v_addr_ph_cnt == 0
+
+    |=>
+    //Check that major alert is set
+    xsecure_if.core_alert_major_o;
+  endproperty;
+
+  a_xsecure_bus_hardening_resp_after_addr_glitch_data: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      support_if.data_bus_resp_ph_cont,
+      support_if.data_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "A respons phase before address phase in the data bus leading into the core does not set major alert.\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_glitch_instr: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      support_if.instr_bus_resp_ph_cont,
+      support_if.instr_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "A respons phase before address phase in the instruction bus leading into the core does not set major alert (instructions).\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_glitch_abiim: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
+      support_if.abiim_bus_resp_ph_cont,
+      support_if.abiim_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) does not set major alert.\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_glitch_lml: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_load_store_unit_i_resp_valid,
+      support_if.lml_bus_resp_ph_cont,
+      support_if.lml_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between LSU (l) MPU (m) and LSU (l) does not set major alert.\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_glitch_lrfodi: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_load_store_unit_i_bus_resp_valid,
+      support_if.lrfodi_bus_resp_ph_cont,
+      support_if.lrfodi_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i) does not set major alert.\n");
+
+
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER UNDERFLOW SET MAJOR ALERT //////////
+
+  a_xsecure_bus_hardening_counter_overflow_set_major_alert: assert property (
+
+    //Make sure the core is in operative state
+    core_clock_cycles
+
+    //Make sure the counter is in a position where it can underflow
+    && (xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0)
+
+    //Make sure the counter underflows
+    ##1 xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q != 0
+    && xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q != 1
+
+    |->
+    //Verify that alert major is set
+    xsecure_if.core_alert_major_o
+  ) else `uvm_error(info_tag, "The counter underflows but dont set major alert.\n");
+
+
+
 endmodule : uvmt_cv32e40s_xsecure_assert
-
-
-module sl_gnt_error_in_respons
-  import uvm_pkg::*;
-  import cv32e40s_pkg::*;
-  (
-    input logic rst_ni,
-    input logic clk_i,
-
-    input logic gnt,
-    input logic gntpar,
-    input logic req,
-    input logic rvalid,
-
-    output logic gnt_error_in_respons
-  );
-
-
-  logic [2:0] fifo_req_errors;
-  logic req_error;
-  logic [1:0] req_error_pointer;
-  logic req_error_prev;
-
-  assign gnt_error_in_respons = rvalid && fifo_req_errors[2];
-  assign req_error = ((gnt == gntpar || req_error_prev) && req) && rst_ni;
-
-  always @(posedge clk_i) begin
-    if(!rst_ni) begin
-      fifo_req_errors <= 3'b000;
-      req_error_pointer = 2;
-      req_error_prev <= 1'b0;
-    end else begin
-
-      if ((req && gnt) && !rvalid) begin
-        fifo_req_errors[req_error_pointer] <= req_error;
-        req_error_pointer <= req_error_pointer - 1;
-
-      end else if (!(req && gnt) && rvalid) begin
-        req_error_pointer <= req_error_pointer + 1;
-        fifo_req_errors <= {fifo_req_errors[1:0], 1'b0};
-
-      end else if ((req && gnt) && rvalid) begin
-        fifo_req_errors[req_error_pointer] <= req_error;
-        fifo_req_errors <= {fifo_req_errors[1:0], 1'b0};
-
-      end
-
-      if ((req && !gnt)) begin
-        req_error_prev <= req_error;
-      end else begin
-        req_error_prev <= 1'b0;
-      end
-    end
-  end
-
-endmodule : sl_gnt_error_in_respons
-
-module sl_setting_in_respons
-  import uvm_pkg::*;
-  import cv32e40s_pkg::*;
-  (
-    input logic rst_ni,
-    input logic clk_i,
-
-    input logic gnt,
-    input logic req,
-    input logic rvalid,
-    input logic setting_i,
-
-    output logic setting_in_respons
-  );
-
-
-  logic [2:0] fifo_req_settings;
-  logic req_setting;
-  logic [1:0] req_setting_pointer;
-
-  assign setting_in_respons = rvalid && fifo_req_settings[2];
-  assign req_setting = setting_i && rst_ni;
-
-  always @(posedge clk_i,negedge rst_ni) begin
-    if(!rst_ni) begin
-      fifo_req_settings <= 3'b000;
-      req_setting_pointer = 2;
-    end else begin
-
-      if ((gnt && req) && !rvalid) begin
-        fifo_req_settings[req_setting_pointer] <= req_setting;
-        req_setting_pointer <= req_setting_pointer - 1;
-
-      end else if (!(gnt && req) && rvalid) begin
-        req_setting_pointer <= req_setting_pointer + 1;
-        fifo_req_settings <= {fifo_req_settings[1:0], 1'b0};
-
-      end else if ((gnt && req) && rvalid) begin
-        fifo_req_settings[req_setting_pointer] <= req_setting;
-        fifo_req_settings <= {fifo_req_settings[1:0], 1'b0};
-
-      end
-    end
-  end
-
-endmodule : sl_setting_in_respons

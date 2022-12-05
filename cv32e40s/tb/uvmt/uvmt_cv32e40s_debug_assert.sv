@@ -17,19 +17,29 @@
 
 module uvmt_cv32e40s_debug_assert
   import uvm_pkg::*;
+  import uvma_rvfi_pkg::*;
   import cv32e40s_pkg::*;
   (
+      uvma_rvfi_instr_if rvfi,
+      uvma_rvfi_csr_if csr_dcsr,
+      uvma_rvfi_csr_if csr_dpc,
+      uvma_rvfi_csr_if csr_mepc,
+      uvma_rvfi_csr_if csr_mstatus,
       uvmt_cv32e40s_debug_cov_assert_if cov_assert_if
   );
 
   // ---------------------------------------------------------------------------
   // Local parameters
   // ---------------------------------------------------------------------------
-  localparam WFI_INSTR_MASK     = 32'h ffff_ffff;
+  localparam WFI_INSTR_MASK       = 32'h ffff_ffff;
   localparam WFI_INSTR_OPCODE     = 32'h 1050_0073;
   localparam EBREAK_INSTR_OPCODE  = 32'h 0010_0073;
   localparam CEBREAK_INSTR_OPCODE = 32'h 0000_9002;
   localparam DRET_INSTR_OPCODE    = 32'h 7B20_0073;
+  localparam int MSTATUS_TW_POS   = 21;
+  localparam int DCSR_STEP_POS    = 2;
+  localparam int DCSR_NMIP_POS    = 3;
+  localparam int DCSR_STEPIE_POS  = 11;
 
   // ---------------------------------------------------------------------------
   // Local variables
@@ -85,7 +95,7 @@ module uvmt_cv32e40s_debug_assert
   assign mtvec_addr = {cov_assert_if.mtvec[31:2], 2'b00};
 
   assign is_rvfi_nmi_handler =
-    cov_assert_if.rvfi_valid && (cov_assert_if.rvfi_intr.cause & 11'h 400);
+    rvfi.rvfi_valid && (rvfi.rvfi_intr.cause & 11'h 400);
     // Note: 0x400 currently uniquely identifies NMIs, though this may (but is not expected to) change.
 
     // ---------------------------------------
@@ -130,8 +140,8 @@ module uvmt_cv32e40s_debug_assert
     a_debug_mode_pc_dpc: assert property(
         $rose(first_debug_ins)
         |->
-        cov_assert_if.depc_q == pc_at_dbg_req
-        ) else `uvm_error(info_tag, $sformatf("Debug mode entered with wrong dpc. dpc==%08x", cov_assert_if.depc_q));
+        cov_assert_if.dpc_q == pc_at_dbg_req
+        ) else `uvm_error(info_tag, $sformatf("Debug mode entered with wrong dpc. dpc==%08x", cov_assert_if.dpc_q));
 
     a_debug_mode_pc_dmode: assert property(
         $rose(first_debug_ins)
@@ -235,13 +245,13 @@ module uvmt_cv32e40s_debug_assert
         |->
         s_conse_next_retire
         ##0 cov_assert_if.debug_mode_q && (cov_assert_if.dcsr_q[8:6] === cv32e40s_pkg::DBG_CAUSE_TRIGGER)
-            && (cov_assert_if.depc_q == tdata2_at_entry) && (cov_assert_if.wb_stage_pc == halt_addr_at_entry);
+            && (cov_assert_if.dpc_q == tdata2_at_entry) && (cov_assert_if.wb_stage_pc == halt_addr_at_entry);
     endproperty
 
     a_trigger_match: assert property(p_trigger_match)
         else `uvm_error(info_tag,
-            $sformatf("Debug mode not correctly entered after trigger match depc=%08x, tdata2=%08x",
-                cov_assert_if.depc_q, tdata2_at_entry));
+            $sformatf("Debug mode not correctly entered after trigger match dpc=%08x, tdata2=%08x",
+                cov_assert_if.dpc_q, tdata2_at_entry));
 
     // Address match without trigger enabled should NOT result in debug mode
 
@@ -305,7 +315,7 @@ module uvmt_cv32e40s_debug_assert
     // Debug request while sleeping makes core wake up and enter debug mode with cause=haltreq
 
     property p_sleep_debug_req;
-        cov_assert_if.in_wfi && cov_assert_if.debug_req_i
+        (cov_assert_if.ctrl_fsm_cs == SLEEP) && cov_assert_if.debug_req_i
         |=>
         !cov_assert_if.core_sleep_o
         ##0 s_conse_next_retire
@@ -339,7 +349,7 @@ module uvmt_cv32e40s_debug_assert
     property p_single_step_exception;
         !cov_assert_if.debug_mode_q && cov_assert_if.dcsr_q[2]
         && cov_assert_if.illegal_insn_i && cov_assert_if.wb_valid && !is_trigger_match
-        |-> ##[1:20] cov_assert_if.debug_mode_q && (cov_assert_if.depc_q == mtvec_addr);
+        |-> ##[1:20] cov_assert_if.debug_mode_q && (cov_assert_if.dpc_q == mtvec_addr);
     endproperty
 
     a_single_step_exception : assert property(p_single_step_exception)
@@ -351,12 +361,12 @@ module uvmt_cv32e40s_debug_assert
         !cov_assert_if.debug_mode_q && cov_assert_if.dcsr_q[2]
         && cov_assert_if.addr_match && cov_assert_if.wb_valid && cov_assert_if.tdata1[2]
         |-> ##[1:20] cov_assert_if.debug_mode_q && (cov_assert_if.dcsr_q[8:6] == cv32e40s_pkg::DBG_CAUSE_TRIGGER)
-        && (cov_assert_if.depc_q == pc_at_dbg_req);
+        && (cov_assert_if.dpc_q == pc_at_dbg_req);
     endproperty
 
     a_single_step_trigger : assert property (p_single_step_trigger)
         else `uvm_error(info_tag,
-        $sformatf("Single step and trigger error: depc = %08x, cause = %d",cov_assert_if.depc_q, cov_assert_if.dcsr_q[8:6]));
+        $sformatf("Single step and trigger error: dpc = %08x, cause = %d",cov_assert_if.dpc_q, cov_assert_if.dcsr_q[8:6]));
 
 
     // Single step WFI must not result in sleeping
@@ -401,13 +411,13 @@ module uvmt_cv32e40s_debug_assert
 
     property p_dmode_dret_pc;
         int dpc;
-        (cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE,
-         dpc = cov_assert_if.rvfi_csr_dpc_rdata)
+        (rvfi.rvfi_valid && rvfi.rvfi_dbg_mode && rvfi.rvfi_insn == DRET_INSTR_OPCODE,
+         dpc = csr_dpc.rvfi_csr_rdata)
         ##1
-        cov_assert_if.rvfi_valid[->1]
-        ##0 (!cov_assert_if.rvfi_intr && !cov_assert_if.rvfi_dbg_mode)
+        rvfi.rvfi_valid[->1]
+        ##0 (!rvfi.rvfi_intr && !rvfi.rvfi_dbg_mode)
         |->
-        cov_assert_if.rvfi_pc_rdata == dpc;
+        rvfi.rvfi_pc_rdata == dpc;
     endproperty
 
     a_dmode_dret_pc : assert property(p_dmode_dret_pc)
@@ -418,13 +428,13 @@ module uvmt_cv32e40s_debug_assert
 
     property p_dmode_dret_pc_int;
         int dpc;
-        (cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE,
-         dpc = cov_assert_if.rvfi_csr_dpc_rdata)
+        (rvfi.rvfi_valid && rvfi.rvfi_dbg_mode && rvfi.rvfi_insn == DRET_INSTR_OPCODE,
+         dpc = csr_dpc.rvfi_csr_rdata)
         ##1
-        cov_assert_if.rvfi_valid[->1]
-        ##0 (cov_assert_if.rvfi_intr && !cov_assert_if.rvfi_dbg_mode && !is_rvfi_nmi_handler)
+        rvfi.rvfi_valid[->1]
+        ##0 (rvfi.rvfi_intr && !rvfi.rvfi_dbg_mode && !is_rvfi_nmi_handler)
         |->
-        cov_assert_if.rvfi_csr_mepc_rdata == dpc;
+        csr_mepc.rvfi_csr_rdata == dpc;
     endproperty
 
     a_dmode_dret_pc_int : assert property(p_dmode_dret_pc_int)
@@ -435,12 +445,12 @@ module uvmt_cv32e40s_debug_assert
 
     property p_dmode_dret_pc_nmi_eq;
         int dpc;
-        (cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE,
-         dpc = cov_assert_if.rvfi_csr_dpc_rdata)
+        (rvfi.rvfi_valid && rvfi.rvfi_dbg_mode && rvfi.rvfi_insn == DRET_INSTR_OPCODE,
+         dpc = csr_dpc.rvfi_csr_rdata)
         ##1
-        cov_assert_if.rvfi_valid[->1]
-        ##0 (!cov_assert_if.rvfi_dbg_mode && is_rvfi_nmi_handler)
-        ##0 (cov_assert_if.rvfi_csr_mepc_rdata == dpc);
+        rvfi.rvfi_valid[->1]
+        ##0 (!rvfi.rvfi_dbg_mode && is_rvfi_nmi_handler)
+        ##0 (csr_mepc.rvfi_csr_rdata == dpc);
     endproperty
 
     cov_dmode_dret_pc_nmi_eq : cover property(p_dmode_dret_pc_nmi_eq);
@@ -450,12 +460,12 @@ module uvmt_cv32e40s_debug_assert
 
     property p_dmode_dret_pc_nmi_neq;
         int dpc;
-        (cov_assert_if.rvfi_valid && cov_assert_if.rvfi_dbg_mode && cov_assert_if.rvfi_insn == DRET_INSTR_OPCODE,
-         dpc = cov_assert_if.rvfi_csr_dpc_rdata)
+        (rvfi.rvfi_valid && rvfi.rvfi_dbg_mode && rvfi.rvfi_insn == DRET_INSTR_OPCODE,
+         dpc = csr_dpc.rvfi_csr_rdata)
         ##1
-        cov_assert_if.rvfi_valid[->1]
-        ##0 (!cov_assert_if.rvfi_dbg_mode && is_rvfi_nmi_handler)
-        ##0 (cov_assert_if.rvfi_csr_mepc_rdata != dpc);
+        rvfi.rvfi_valid[->1]
+        ##0 (!rvfi.rvfi_dbg_mode && is_rvfi_nmi_handler)
+        ##0 (csr_mepc.rvfi_csr_rdata != dpc);
     endproperty
 
     cov_dmode_dret_pc_nmi_neq : cover property(p_dmode_dret_pc_nmi_neq);
@@ -548,7 +558,7 @@ module uvmt_cv32e40s_debug_assert
         (cov_assert_if.ctrl_fsm_cs == cv32e40s_pkg::RESET) && cov_assert_if.debug_req_i
         |->
         s_conse_next_retire
-        ##0 cov_assert_if.debug_mode_q && (cov_assert_if.depc_q == boot_addr_at_entry);
+        ##0 cov_assert_if.debug_mode_q && (cov_assert_if.dpc_q == boot_addr_at_entry);
     endproperty
 
     a_debug_at_reset : assert property(p_debug_at_reset)
@@ -581,6 +591,53 @@ module uvmt_cv32e40s_debug_assert
       && (cov_assert_if.debug_halted  == 1)
       );
 
+    // step vs nmi
+    // check that single stepping disables nmi
+    property p_stepie_irq_dis;
+        rvfi.is_dret() && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && !csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
+        |=>
+        rvfi.rvfi_valid[->1]
+        ##0 !(rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt);
+    endproperty
+
+    a_stepie_irq_dis : assert property(p_stepie_irq_dis)
+        else `uvm_error(info_tag, "Single stepping should ignore all interrupts if stepie is set");
+
+    cov_step_stepie_nmi : cover property (
+        rvfi.is_dret()
+        && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]
+        && !csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
+        && csr_dcsr.rvfi_csr_rdata[DCSR_NMIP_POS]
+    );
+
+    // step trap handler entry, no retire
+
+    // if the next instruction after a single step dret is in debug mode,
+    // a trap entry has to be the cause.
+    property p_step_trap_handler_entry;
+        (rvfi.is_dret() &&
+        csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] &&
+        csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS])
+        ##1 rvfi.rvfi_valid[->1]
+        ##0 rvfi.rvfi_dbg_mode && (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP)
+        |->
+        rvfi.rvfi_intr.intr;
+    endproperty
+
+    a_step_trap_handler_entry : assert property(p_step_trap_handler_entry)
+        else `uvm_error(info_tag, "single stepping remained in debug mode illegally");
+
+    property p_step_no_trap;
+        rvfi.is_dret() && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
+        ##1 rvfi.rvfi_valid[->1]
+        ##0 !rvfi.rvfi_dbg_mode
+        |->
+        !rvfi.rvfi_intr.intr;
+    endproperty
+
+    a_step_no_trap : assert property(p_step_no_trap)
+        else `uvm_error(info_tag, "single stepping should not retire a trap handler entry");
+
 
     // Check that we cover the case where a debug_req_i
     // comes while flushing due to an illegal insn, causing
@@ -595,12 +652,12 @@ module uvmt_cv32e40s_debug_assert
 
     sequence s_illegal_insn_debug_req_conse;  // Consequent
         s_conse_next_retire
-        ##0 cov_assert_if.debug_mode_q && (cov_assert_if.depc_q == mtvec_addr);
+        ##0 cov_assert_if.debug_mode_q && (cov_assert_if.dpc_q == mtvec_addr);
     endsequence
 
     // Need to confirm that the assertion can be reached for non-trivial cases
     cov_illegal_insn_debug_req_nonzero : cover property(
-        s_illegal_insn_debug_req_ante |-> s_illegal_insn_debug_req_conse ##0 (cov_assert_if.depc_q != 0));
+        s_illegal_insn_debug_req_ante |-> s_illegal_insn_debug_req_conse ##0 (cov_assert_if.dpc_q != 0));
 
     a_illegal_insn_debug_req : assert property(s_illegal_insn_debug_req_ante |-> s_illegal_insn_debug_req_conse)
         else `uvm_error(info_tag, "Debug mode not entered correctly while handling illegal instruction!");
@@ -619,13 +676,13 @@ module uvmt_cv32e40s_debug_assert
             if (cov_assert_if.ctrl_fsm_cs == cv32e40s_pkg::BOOT_SET) begin
                 pc_at_dbg_req <= {cov_assert_if.boot_addr_i[31:2], 2'b00};
             end
-            if (cov_assert_if.rvfi_valid) begin
-                pc_at_dbg_req <= cov_assert_if.rvfi_pc_wdata;
+            if (rvfi.rvfi_valid) begin
+                pc_at_dbg_req <= rvfi.rvfi_pc_wdata;
                 if ((debug_cause_pri == 2) && !started_decoding_in_debug) begin  // trigger
-                    pc_at_dbg_req <= cov_assert_if.rvfi_pc_rdata;
+                    pc_at_dbg_req <= rvfi.rvfi_pc_rdata;
                 end
                 if ((debug_cause_pri == 1) && !started_decoding_in_debug) begin  // ebreak
-                    pc_at_dbg_req <= cov_assert_if.rvfi_pc_rdata;
+                    pc_at_dbg_req <= rvfi.rvfi_pc_rdata;
                 end
             end
             if (cov_assert_if.addr_match && !cov_assert_if.tdata1[18] && cov_assert_if.wb_valid) begin  // trigger
@@ -656,21 +713,6 @@ module uvmt_cv32e40s_debug_assert
        end
     end
 
-
-  // Keep track of wfi state
-
-  always @(posedge cov_assert_if.clk_i or negedge cov_assert_if.rst_ni) begin
-    if (!cov_assert_if.rst_ni) begin
-      cov_assert_if.in_wfi <= 1'b0;
-    end else begin
-      // Enter wfi if we have a valid instruction, and conditions allow it (e.g. no single-step etc)
-      if (cov_assert_if.is_wfi && cov_assert_if.wb_valid
-          && !cov_assert_if.pending_debug && !cov_assert_if.debug_mode_q && !cov_assert_if.dcsr_q[2])
-        cov_assert_if.in_wfi <= 1'b1;
-      if (cov_assert_if.pending_enabled_irq || cov_assert_if.debug_req_i)
-        cov_assert_if.in_wfi <= 1'b0;
-    end
-  end
 
 
   // Capture dm_halt_addr_i value
@@ -709,11 +751,12 @@ module uvmt_cv32e40s_debug_assert
   end
 
     assign cov_assert_if.addr_match   = (cov_assert_if.wb_stage_pc == cov_assert_if.tdata2);
-    assign cov_assert_if.dpc_will_hit = (cov_assert_if.depc_n == cov_assert_if.tdata2);
+    assign cov_assert_if.dpc_will_hit = (cov_assert_if.dpc_n == cov_assert_if.tdata2);
     assign cov_assert_if.pending_enabled_irq = |(cov_assert_if.irq_i & cov_assert_if.mie_q);
     assign cov_assert_if.is_wfi =
         cov_assert_if.wb_valid
         && ((cov_assert_if.wb_stage_instr_rdata_i & WFI_INSTR_MASK) == WFI_INSTR_OPCODE)
+        && ((rvfi.rvfi_mode == UVMA_RVFI_M_MODE) || (csr_mstatus.rvfi_csr_rdata[MSTATUS_TW_POS] == 1)) //not legal if in user mode with tw == 0
         && !cov_assert_if.wb_err
         && (cov_assert_if.wb_mpu_status == MPU_OK);
     assign cov_assert_if.is_dret =
