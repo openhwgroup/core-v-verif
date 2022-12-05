@@ -1430,7 +1430,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// HINT INSTRUCTIONS ARE DEFAULT OFF //////////
 
-  a_xsecure_dataindtiming_default_off: assert property (
+  a_xsecure_hint_default_off: assert property (
 	  p_xsecure_setting_default_off(
 	  xsecure_if.core_xsecure_ctrl_cpuctrl_rndhint)
   ) else `uvm_error(info_tag, "Hint instructions setting is not off when exiting reset.\n");
@@ -1447,12 +1447,12 @@ module uvmt_cv32e40s_xsecure_assert
 
     //Hint instruction retires
     && rvfi_if.rvfi_valid
-    && rvfi_if.insn[12] == 1'b1 //custom instructions for hint
-    && rvfi_if.insn[11:7] == x0 //rd==x0 for hints
-    && rvfi_if.insn[15:13] == 3'b000 //func3 for c.slli
+    && rvfi_if.rvfi_insn[12] == 1'b1 //custom instructions for hint
+    && rvfi_if.rvfi_insn[11:7] == REGISTER_x0 //rd==x0 for hints
+    && rvfi_if.rvfi_insn[15:13] == 3'b000 //func3 for c.slli
 
     //Make sure the minstret counter is updated
-    |=>
+    |->
     xsecure_if.core_cs_registers_mhpmcounter_minstret == $past(xsecure_if.core_cs_registers_mhpmcounter_minstret) + 1
 
   ) else `uvm_error(info_tag, "Hint instructions did not update the minstret register.\n");
@@ -1460,24 +1460,78 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// HINT INSTRUCTION APPEARS AS SLT ON RVFI //////////
 
-  a_xsecure_hint_instructions_updates_minstret: assert property (
+  a_xsecure_hint_instructions_reports_on_rvfi_as_slli: assert property (
     //Make sure the gated clock is active
     @(posedge xsecure_if.core_clk)
 
-    //Make sure we have an dummy instruction
-    && xsecure_if.core_wb_stage_ex_wb_pipe_instr_meta_hint
+    //Make sure we have an hint instruction
+    xsecure_if.core_wb_stage_ex_wb_pipe_instr_meta_hint
 
-    //Make sure the dummy instruction is ready to retire
+    //Make sure the hint instruction is ready to retire
     && xsecure_if.core_wb_stage_wb_valid_o
 
     |=>
     //Verify that the hint instruction appears as c.slli instruction with rd=x0 and shamt != 0
-    && rvfi_if.rvfi_valid
-    && rvfi_if.insn[12] == 1'b1 //custom instructions for hint
-    && rvfi_if.insn[11:7] == x0 //rd==x0 for hints
-    && rvfi_if.insn[15:13] == 3'b000 //func3 for c.sll
+    rvfi_if.rvfi_valid
+    && rvfi_if.rvfi_insn[12] == 1'b1 //custom instructions for hint
+    && rvfi_if.rvfi_insn[11:7] == REGISTER_x0 //rd==x0 for hints
+    && rvfi_if.rvfi_insn[15:13] == 3'b000 //func3 for c.sll
 
   ) else `uvm_error(info_tag, "Hint instructions did not update the minstret register.\n");
+
+  a_xsecure_hint_instructions_test: assert property (
+    //Make sure the gated clock is active
+    @(posedge xsecure_if.core_clk)
+
+    rvfi_if.rvfi_valid
+
+    |->
+    !$past(xsecure_if.core_wb_stage_ex_wb_pipe_instr_meta_hint)
+
+  ) else `uvm_error(info_tag, "Hint instructions did not update the minstret register.\n");
+
+  a_xsecure_hint_instructions_test_rdata_dummy: assert property (
+    //Make sure the gated clock is active
+    @(posedge xsecure_if.core_clk)
+
+
+    (xsecure_if.core_wb_stage_ex_wb_pipe_instr_meta_dummy)
+    && xsecure_if.core_wb_stage_wb_valid_o
+    && !(xsecure_if.core_i_wb_stage_i_ex_wb_pipe_i_instr_meta_compressed)
+
+    |->
+    xsecure_if.core_i_wb_stage_i_ex_wb_pipe_i_instr_bus_resp_rdata[6:0] == 7'b001_0011
+    || xsecure_if.core_i_wb_stage_i_ex_wb_pipe_i_instr_bus_resp_rdata[6:0] == 7'b011_0011
+    || xsecure_if.core_i_wb_stage_i_ex_wb_pipe_i_instr_bus_resp_rdata[6:0] == 7'b001_1011
+    || xsecure_if.core_i_wb_stage_i_ex_wb_pipe_i_instr_bus_resp_rdata[6:0] == 7'b011_1011
+
+    || xsecure_if.core_i_wb_stage_i_ex_wb_pipe_i_instr_bus_resp_rdata[6:0] == 7'b011_0011
+    || xsecure_if.core_i_wb_stage_i_ex_wb_pipe_i_instr_bus_resp_rdata[6:0] == 7'b011_1011
+
+    || xsecure_if.core_i_wb_stage_i_ex_wb_pipe_i_instr_bus_resp_rdata[6:0] == cv32e40s_pkg::OPCODE_BRANCH
+
+  ) else `uvm_error(info_tag, "Hint instructions did not update the minstret register.\n");
+
+
+  a_xsecure_hint_instructions_test_rvfi_hint: assert property (
+    //Make sure the gated clock is active
+    @(posedge xsecure_if.core_clk)
+
+
+    (xsecure_if.core_wb_stage_ex_wb_pipe_instr_meta_hint)
+    && xsecure_if.core_wb_stage_wb_valid_o
+    ##1 rvfi_if.rvfi_valid
+
+    |->
+
+    $past(xsecure_if.core_i_wb_stage_i_ex_wb_pipe_i_instr_bus_resp_rdata) == rvfi_if.rvfi_insn
+
+    && rvfi_if.rvfi_insn[15:13] == 3'b000
+    && rvfi_if.rvfi_insn[12] == 1'b0
+
+
+  ) else `uvm_error(info_tag, "Hint instructions did not update the minstret register.\n");
+
 
 
 endmodule : uvmt_cv32e40s_xsecure_assert

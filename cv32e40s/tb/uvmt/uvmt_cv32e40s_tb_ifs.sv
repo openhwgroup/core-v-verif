@@ -250,6 +250,8 @@ interface uvmt_cv32e40s_xsecure_if
 
     // WB stage
     input logic core_wb_stage_wb_valid_o,
+    input logic core_i_wb_stage_i_ex_wb_pipe_i_instr_meta_compressed,
+    input logic [31:0] core_i_wb_stage_i_ex_wb_pipe_i_instr_bus_resp_rdata,
 
     // CTRL
     input logic core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set,

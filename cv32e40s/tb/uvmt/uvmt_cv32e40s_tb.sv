@@ -911,6 +911,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       // WB stage
       .core_wb_stage_wb_valid_o                                                                                         (core_i.wb_stage_i.wb_valid_o),
+      .core_i_wb_stage_i_ex_wb_pipe_i_instr_meta_compressed (core_i.wb_stage_i.ex_wb_pipe_i.instr_meta.compressed),
+      .core_i_wb_stage_i_ex_wb_pipe_i_instr_bus_resp_rdata (core_i.wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
 
       // CTRL
 
