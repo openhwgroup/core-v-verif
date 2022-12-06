@@ -117,4 +117,10 @@ typedef struct {
 
 typedef logic [7:0]  mem_arr[2**22];
 
+typedef enum {
+    FETCH_CONSTANT,
+    FETCH_INITIAL_DELAY_CONSTANT,
+    FETCH_RANDOM_TOGGLE
+} fetch_toggle_t;
+
 `endif // __UVME_CV32E40P_TDEFS_SV__

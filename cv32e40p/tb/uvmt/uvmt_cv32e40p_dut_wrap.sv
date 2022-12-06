@@ -39,7 +39,8 @@
 /**
  * Module wrapper for CV32E40P RTL DUT.
  */
-module uvmt_cv32e40p_dut_wrap #(
+module uvmt_cv32e40p_dut_wrap 
+  #(
                             // CV32E40P parameters.  See User Manual.
                             parameter PULP_XPULP          =  0,
                                       PULP_CLUSTER        =  0,
@@ -50,18 +51,17 @@ module uvmt_cv32e40p_dut_wrap #(
                                       INSTR_ADDR_WIDTH    =  32,
                                       INSTR_RDATA_WIDTH   =  32,
                                       RAM_ADDR_WIDTH      =  22
-                           )
-
-                           (
-                            uvma_clknrst_if              clknrst_if,
-                            uvma_interrupt_if            interrupt_if,
-                            // vp_status_if is driven by ENV and used in TB
-                            uvma_interrupt_if            vp_interrupt_if,
-                            uvmt_cv32e40p_core_cntrl_if  core_cntrl_if,
-                            uvmt_cv32e40p_core_status_if core_status_if,
-                            uvma_obi_memory_if           obi_memory_instr_if,
-                            uvma_obi_memory_if           obi_memory_data_if
-                           );
+   )
+  (
+    uvma_clknrst_if              clknrst_if,
+    uvma_interrupt_if            interrupt_if,    // Interrupts sourced by both UVM Agent and Virtual Peripherals
+    //uvma_interrupt_if            agt_interrupt_if,    // Interrupts sourced by UVM Agent
+    //uvma_interrupt_if            vp_interrupt_if,     // Interrupts sourced by Virtual Peripherals
+    uvme_cv32e40p_core_cntrl_if  core_cntrl_if,
+    uvmt_cv32e40p_core_status_if core_status_if,
+    uvma_obi_memory_if           obi_memory_instr_if, // Instruction fetch bus
+    uvma_obi_memory_if           obi_memory_data_if   // Load/Store bus
+  );
 
     import uvm_pkg::*; // needed for the UVM messaging service (`uvm_info(), etc.)
 
@@ -82,7 +82,7 @@ module uvmt_cv32e40p_dut_wrap #(
     logic [31:0]                  data_wdata;
 
     logic [31:0]                  irq_vp;
-    logic [31:0]                  irq_uvma;
+    logic [31:0]                  irq_agt;
     logic [31:0]                  irq;
     logic                         irq_ack;
     logic [ 4:0]                  irq_id;
@@ -109,17 +109,27 @@ module uvmt_cv32e40p_dut_wrap #(
     // Data bus is read/write, OBI v1.0
 
     // --------------------------------------------
-    // Connect to uvma_interrupt_if
-    assign interrupt_if.clk                     = clknrst_if.clk;
-    assign interrupt_if.reset_n                 = clknrst_if.reset_n;
-    assign irq_uvma                             = interrupt_if.irq;
-    assign vp_interrupt_if.clk                  = clknrst_if.clk;
-    assign vp_interrupt_if.reset_n              = clknrst_if.reset_n;
-    assign irq_vp                               = vp_interrupt_if.irq;
-    assign interrupt_if.irq_id                  = irq_id;
-    assign interrupt_if.irq_ack                 = irq_ack;
+    // Connect to interrupt interfaces
+    assign interrupt_if.clk     = clknrst_if.clk;
+    assign interrupt_if.reset_n = clknrst_if.reset_n;
+    assign interrupt_if.irq_id  = irq_id;
+    assign interrupt_if.irq_ack = irq_ack;
+    //assign agt_interrupt_if.clk     = clknrst_if.clk;
+    //assign agt_interrupt_if.reset_n = clknrst_if.reset_n;
+    //assign agt_interrupt_if.irq_id  = irq_id;
+    //assign agt_interrupt_if.irq_ack = irq_ack;
+    //assign vp_interrupt_if.clk      = clknrst_if.clk;
+    //assign vp_interrupt_if.reset_n  = clknrst_if.reset_n;
+    //assign vp_interrupt_if.irq_id   = irq_id;
+    //assign vp_interrupt_if.irq_ack  = irq_ack;
 
-    assign irq = irq_uvma | irq_vp;
+    //assign irq_vp  = vp_interrupt_if.irq;
+    //assign irq_agt = agt_interrupt_if.irq;
+    //always @(irq_vp)  $display("%m: @%0t; irq_vp  = %8x", $time, irq_vp);
+    //always @(irq_agt) $display("%m: @%0t; irq_agt = %8x", $time, irq_agt);
+
+    assign irq = interrupt_if.irq_drv;
+    always @(irq) $display("%m: @%0t; irq = %8x", $time, irq);
 
     // -------------------------------------------------------------
     // Instantiate the Core and optional FPU plus logger and tracers
@@ -135,13 +145,13 @@ module uvmt_cv32e40p_dut_wrap #(
          .clk_i                  ( clknrst_if.clk                 ),
          .rst_ni                 ( clknrst_if.reset_n             ),
 
-         .pulp_clock_en_i        ( core_cntrl_if.pulp_clock_en    ),
+         .pulp_clock_en_i        ( '0),//core_cntrl_if.pulp_clock_en    ),
          .scan_cg_en_i           ( core_cntrl_if.scan_cg_en       ),
 
          .boot_addr_i            ( core_cntrl_if.boot_addr        ),
          .mtvec_addr_i           ( core_cntrl_if.mtvec_addr       ),
          .dm_halt_addr_i         ( core_cntrl_if.dm_halt_addr     ),
-         .hart_id_i              ( core_cntrl_if.hart_id          ),
+         .hart_id_i              ( core_cntrl_if.mhartid          ),
          .dm_exception_addr_i    ( core_cntrl_if.dm_exception_addr),
 
          .instr_req_o            ( obi_memory_instr_if.req        ), // core to agent
@@ -159,7 +169,7 @@ module uvmt_cv32e40p_dut_wrap #(
          .data_wdata_o           ( obi_memory_data_if.wdata       ),
          .data_rdata_i           ( obi_memory_data_if.rdata       ),
 
-         .irq_i                  ( irq_uvma                       ),
+         .irq_i                  ( irq                            ),
          .irq_ack_o              ( irq_ack                        ),
          .irq_id_o               ( irq_id                         ),
 
