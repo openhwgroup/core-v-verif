@@ -252,7 +252,7 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] core_i_if_stage_i_pc_if_o,
     input logic core_i_if_stage_i_pc_check_i_pc_set_q,
 
-
+    input logic core_i_if_stage_i_if_id_pipe_o_abort_op,
 
     // IF ID pipe
     input logic core_if_id_pipe_instr_meta_dummy,
@@ -487,7 +487,7 @@ interface uvmt_cv32e40s_input_to_support_logic_module_if
 
    );
 
-   modport driver (
+   modport driver_mp (
      input  clk,
       rst_n,
 
@@ -571,7 +571,7 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
    //Signal deterimends if the data respons is related to a data request with grant parity error
    logic gnt_error_in_respons_data;
 
-   modport master (
+   modport master_mp (
       output req_after_exception,
          data_bus_addr_ph_cont,
 	      data_bus_resp_ph_cont,
@@ -600,7 +600,7 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
          gnt_error_in_respons_data
    );
 
-   modport slave (
+   modport slave_mp (
       input req_after_exception,
          data_bus_addr_ph_cont,
 	      data_bus_resp_ph_cont,
