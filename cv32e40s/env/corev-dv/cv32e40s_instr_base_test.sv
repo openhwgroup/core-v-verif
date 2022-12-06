@@ -23,7 +23,11 @@
 
 class cv32e40s_instr_base_test extends corev_instr_base_test;
 
+  cv32e40s_pma_cfg pma_cfg;
+  bit enable_pma;
+
   `uvm_component_utils(cv32e40s_instr_base_test)
+
 
   function new(string name="", uvm_component parent=null);
     super.new(name, parent);
@@ -35,7 +39,7 @@ class cv32e40s_instr_base_test extends corev_instr_base_test;
     override_gen_config();
     override_compressed_instr();
     override_privil_reg();
-    override_privil_seq();
+    override_privil_common_seq();
     override_debug_rom_gen();
     super.build_phase(phase);
     linker_generator = new();
@@ -62,7 +66,7 @@ class cv32e40s_instr_base_test extends corev_instr_base_test;
                                                  cv32e40s_privil_reg::get_type());
   endfunction
 
-  virtual function void override_privil_seq();
+  virtual function void override_privil_common_seq();
     uvm_factory::get().set_type_override_by_type(riscv_privileged_common_seq::get_type(),
                                                  cv32e40s_privileged_common_seq::get_type());
   endfunction

@@ -43,6 +43,7 @@ class uvma_rvfi_cfg_c#(int ILEN=DEFAULT_ILEN,
    rand int unsigned             nret;
 
    // Configuration of NMI handler (if present)
+   // Configuration of NMI faults
    rand bit                      nmi_load_fault_enabled;
    rand int unsigned             nmi_load_fault_cause;
    rand bit                      nmi_store_fault_enabled;
@@ -110,4 +111,5 @@ function uvma_rvfi_cfg_c::new(string name="uvma_rvfi_cfg");
 endfunction : new
 
 `endif // __UVMA_RVFI_CFG_SV__
+
 

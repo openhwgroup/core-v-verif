@@ -19,10 +19,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 ###############################################################################
-# MHPMCOUNTERS29: access testcase for mhpmcounter3..31 CSRs in cv32e40x.
+# MHPMCOUNTERS29: access testcase for mhpmcounter3..31 CSRs in cv32e40s.
 #     Notes:
 #       1. This test requires NUM_MHPMCOUNTERS set to 29.
 #       2. Does not test function - just access.
+#       3. FIXME: ISS currently does not set mcountinhibit correctly on reset
+#          for non-default number of registers, RVVI and RVFI will mismatch if
+#          sb checking is enabled.
 ###############################################################################
 #include "corev_uvmt.h"
 

@@ -18,8 +18,7 @@
 #
 ###############################################################################
 #
-# Common code for simulation Makefiles.  Intended to be included by the
-# Makefiles in the "core" and "uvmt_cv32" dirs.
+# Common code for simulation Makefiles.
 #
 ###############################################################################
 #
@@ -183,7 +182,16 @@ endif
 # SVLIB repo var end
 
 ###############################################################################
-# Read YAML test specifications
+# Imperas Instruction Set Simulator
+
+DV_OVPM_HOME    = $(CORE_V_VERIF)/vendor_lib/imperas
+DV_OVPM_MODEL   = $(DV_OVPM_HOME)/imperas_DV_COREV
+DV_OVPM_DESIGN  = $(DV_OVPM_HOME)/design
+OVP_MODEL_DPI   = $(DV_OVPM_MODEL)/bin/Linux64/imperas_CV32.dpi.so
+#OVP_CTRL_FILE   = $(DV_OVPM_DESIGN)/riscv_CV32E40P.ic
+
+###############################################################################
+# Run the yaml2make scripts
 
 ifeq ($(VERBOSE),1)
 YAML2MAKE_DEBUG = --debug
@@ -191,7 +199,7 @@ else
 YAML2MAKE_DEBUG =
 endif
 
-# If the gen_corev-dv target is defined then read in a test specification file
+# If the gen_corev-dv target is defined then read in a test defintions file
 YAML2MAKE = $(CORE_V_VERIF)/bin/yaml2make
 ifneq ($(filter gen_corev-dv,$(MAKECMDGOALS)),)
 ifeq ($(TEST),)
@@ -204,7 +212,7 @@ endif
 include $(GEN_FLAGS_MAKE)
 endif
 
-# If the test target is defined then read in a test specification file
+# If the test target is defined then read in a test defintions file
 TEST_YAML_PARSE_TARGETS=test waves cov hex clean_hex veri-test dsim-test xrun-test bsp
 ifneq ($(filter $(TEST_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
 ifeq ($(TEST),)
@@ -217,8 +225,8 @@ endif
 include $(TEST_FLAGS_MAKE)
 endif
 
-# If a test target is defined and a CFG is defined that read in build configuration file
-# CFG is optional
+###############################################################################
+# cfg
 CFGYAML2MAKE = $(CORE_V_VERIF)/bin/cfgyaml2make
 CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp
 ifneq ($(filter $(CFG_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
@@ -232,7 +240,8 @@ endif
 endif
 
 ###############################################################################
-# Imperas Instruction Set Simulator
+# Determine the values of the CV_SW_ variables.
+# The priority order is ENV > TEST > CFG.
 
 DV_OVPM_HOME    = $(CORE_V_VERIF)/vendor_lib/imperas
 DV_OVPM_MODEL   = $(DV_OVPM_HOME)/imperas_DV_COREV
@@ -291,24 +300,59 @@ ifeq ($(shell $(CORE_V_VERIF)/mk/toolchain_check.sh $(GNU_YES) $(PULP_YES) $(COR
 $(error Multiple toolchains are enabled: GNU=${GNU_YES} PULP=${PULP_YES} COREV=${COREV_YES} LLVM=${LLVM_YES})
 endif
 
-RISCV             = $(CV_SW_TOOLCHAIN)
-RISCV_PREFIX      = riscv32-$(CV_SW_VENDOR)-elf-
-RISCV_EXE_PREFIX  = $(RISCV)/bin/$(RISCV_PREFIX)
-RISCV_CC          = gcc
-RISCV_MARCH       = $(call RESOLVE_FLAG2,$(TEST_RISCV_MARCH),$(CV_SW_MARCH))
-RISCV_CFLAGS      = $(TEST_RISCV_CFLAGS)
+ifndef CV_SW_PREFIX
+ifdef  TEST_CV_SW_PREFIX
+CV_SW_PREFIX = $(TEST_CV_SW_PREFIX)
+else
+ifdef  CFG_CV_SW_PREFIX
+CV_SW_PREFIX = $(CFG_CV_SW_PREFIX)
+else
+$(error CV_SW_PREFIX not defined in either the shell environment, test.yaml or cfg.yaml)
+endif
+endif
+endif
 
-ifeq ($(GNU_YES),YES)
-ifeq ($(call IS_YES,$(TEST_GNU_NOT_SUPPORTED)),YES)
-$(error test [$(TEST)] does not support the GNU toolchain)
+ifndef CV_SW_MARCH
+ifdef  TEST_CV_SW_MARCH
+CV_SW_MARCH = $(TEST_CV_SW_MARCH)
+else
+ifdef  CFG_CV_SW_MARCH
+CV_SW_MARCH = $(CFG_CV_SW_MARCH)
+else
+CV_SW_MARCH = rv32imc
+$(warning CV_SW_MARCH not defined in either the shell environment, test.yaml or cfg.yaml)
 endif
-RISCV            = $(GNU_SW_TOOLCHAIN)
-RISCV_PREFIX     = riscv32-$(GNU_VENDOR)-elf-
+endif
+endif
+
+ifndef CV_SW_CC
+ifdef  TEST_CV_SW_CC
+CV_SW_CC = $(TEST_CV_SW_CC)
+else
+ifdef  CFG_CV_SW_CC
+CV_SW_CC = $(CFG_CV_SW_CC)
+else
+CV_SW_CC = gcc
+$(warning CV_SW_CC not defined in either the shell environment, test.yaml or cfg.yaml)
+endif
+endif
+endif
+
+ifndef CV_SW_CFLAGS
+ifdef  TEST_CV_SW_CFLAGS
+CV_SW_CFLAGS = $(TEST_CV_SW_CFLAGS)
+else
+ifdef  CFG_CV_SW_CFLAGS
+CV_SW_CFLAGS = $(CFG_CV_SW_CFLAGS)
+else
+$(warning CV_SW_CFLAGS not defined in either the shell environment, test.yaml or cfg.yaml)
+endif
+endif
+endif
+
+RISCV            = $(CV_SW_TOOLCHAIN)
+RISCV_PREFIX     = $(CV_SW_PREFIX)
 RISCV_EXE_PREFIX = $(RISCV)/bin/$(RISCV_PREFIX)
-RISCV_CC         = $(GNU_CC)
-RISCV_MARCH      = $(call RESOLVE_FLAG2,$(TEST_GNU_MARCH),$(GNU_MARCH))
-RISCV_CFLAGS     = $(call RESOLVE_FLAG2,$(TEST_GNU_CFLAGS),$(GNU_CFLAGS))
-endif
 
 ifeq ($(COREV_YES),YES)
 ifeq ($(call IS_YES,$(TEST_COREV_NOT_SUPPORTED)),YES)
@@ -322,41 +366,26 @@ RISCV_MARCH      = $(call RESOLVE_FLAG2,$(TEST_COREV_MARCH),$(COREV_MARCH))
 RISCV_CFLAGS     = $(call RESOLVE_FLAG2,$(TEST_COREV_CFLAGS),$(COREV_CFLAGS))
 endif
 
-ifeq ($(PULP_YES),YES)
-ifeq ($(call IS_YES,$(TEST_PULP_NOT_SUPPORTED)),YES)
-$(error test [$(TEST)] does not support the PULP toolchain)
-endif
-RISCV            = $(PULP_SW_TOOLCHAIN)
-RISCV_PREFIX     = riscv32-$(PULP_VENDOR)-elf-
-RISCV_EXE_PREFIX = $(RISCV)/bin/$(RISCV_PREFIX)
-RISCV_CC         = $(PULP_CC)
-RISCV_MARCH      = $(call RESOLVE_FLAG2,$(TEST_PULP_MARCH),$(PULP_MARCH))
-RISCV_CFLAGS     = $(call RESOLVE_FLAG2,$(TEST_PULP_CFLAGS),$(PULP_CFLAGS))
-endif
+CFLAGS ?= -Os -g -static -mabi=ilp32 -march=$(RISCV_MARCH) -Wall -pedantic $(RISCV_CFLAGS)
 
-ifeq ($(LLVM_YES),YES)
-ifeq ($(call IS_YES,$(TEST_LLVM_NOT_SUPPORTED)),YES)
-$(error test [$(TEST)] does not support the LLVM toolchain)
-endif
-RISCV            = $(LLVM_SW_TOOLCHAIN)
-RISCV_PREFIX     = riscv32-$(LLVM_VENDOR)-elf-
-RISCV_EXE_PREFIX = $(RISCV)/bin/$(RISCV_PREFIX)
-RISCV_CC         = $(LLVM_CC)
-RISCV_MARCH      = $(call RESOLVE_FLAG2,$(TEST_LLVM_MARCH),$(LLVM_MARCH))
-RISCV_CFLAGS     = $(call RESOLVE_FLAG2,$(TEST_LLVM_CFLAGS),$(LLVM_CFLAGS))
-endif
+$(warning RISCV set to $(RISCV))
+$(warning RISCV_PREFIX set to $(RISCV_PREFIX))
+$(warning RISCV_EXE_PREFIX set to $(RISCV_EXE_PREFIX))
+$(warning RISCV_MARCH set to $(RISCV_MARCH))
+$(warning RISCV_CC set to $(RISCV_CC))
+$(warning RISCV_CFLAGS set to $(RISCV_CFLAGS))
+#$(error STOP IT!)
 
-CFLAGS ?= -Os -g -static -mabi=ilp32 -march=$(RISCV_MARCH) -Wall -pedantic
-
-ifeq ($(firstword $(subst _, ,$(TEST))),pulp)
-  CFLAGS = -Os -g -D__riscv__=1 -D__LITTLE_ENDIAN__=1 -march=rv32imcxpulpv2 -Wa,-march=rv32imcxpulpv2 -fdata-sections -ffunction-sections -fdiagnostics-color=always
-endif
+# Keeping this around just in case it is needed again
+#ifeq ($(firstword $(subst _, ,$(TEST))),pulp)
+#  CFLAGS = -Os -g -D__riscv__=1 -D__LITTLE_ENDIAN__=1 -march=rv32imcxpulpv2 -Wa,-march=rv32imcxpulpv2 -fdata-sections -ffunction-sections -fdiagnostics-color=always
+#endif
 
 ASM       ?= ../../tests/asm
 ASM_DIR   ?= $(ASM)
 
-# CORE FIRMWARE vars. All of the C and assembler programs under CORE_TEST_DIR
-# are collectively known as "Core Firmware".
+# CORE FIRMWARE vars. The C and assembler test-programs
+# were once collectively known as "Core Firmware".
 #
 # Note that the DSIM targets allow for writing the log-files to arbitrary
 # locations, so all of these paths are absolute, except those used by Verilator.
@@ -423,11 +452,12 @@ sanity: hello-world
 
 ###############################################################################
 # Code generators
+# New agent is pulled from moore.io temp site
 new-agent:
 	mkdir -p $(CORE_V_VERIF)/temp
-	wget -q https://github.com/Datum-Technology-Corporation/mio_ip_core/archive/refs/tags/gen_uvm_v1p0.tar.gz -P $(CORE_V_VERIF)/temp
-	tar xzf $(CORE_V_VERIF)/temp/gen_uvm_v1p0.tar.gz -C $(CORE_V_VERIF)/temp
-	cd $(CORE_V_VERIF)/temp/mio_ip_core-gen_uvm_v1p0/tools/gen_uvm/bin && ./new_agent_simplex_no_layers.py $(CORE_V_VERIF)/lib/uvm_agents "OpenHW Group"
+	wget --no-check-certificate -q https://mooreio.com/packages/uvm_gen.tgz -P $(CORE_V_VERIF)/temp
+	tar xzf $(CORE_V_VERIF)/temp/uvm_gen.tgz -C $(CORE_V_VERIF)/temp
+	cd $(CORE_V_VERIF)/temp && ./src/new_agent_basic.py $(CORE_V_VERIF)/lib/uvm_agents "OpenHW Group"
 	rm -rf $(CORE_V_VERIF)/temp
 
 
@@ -508,7 +538,7 @@ else
 	mkdir -p $(SIM_TEST_PROGRAM_RESULTS)
 	make bsp
 	@echo "$(BANNER)"
-	@echo "* Compiling test-program $(@)"
+	@echo "* Compiling test-program $@"
 	@echo "$(BANNER)"
 	$(RISCV_EXE_PREFIX)$(RISCV_CC) \
 		$(CFG_CFLAGS) \
@@ -532,7 +562,7 @@ hex: $(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex
 
 bsp:
 	@echo "$(BANNER)"
-	@echo "* Compiling BSP"
+	@echo "* Compiling the BSP"
 	@echo "$(BANNER)"
 	mkdir -p $(SIM_BSP_RESULTS)
 	cp $(BSP)/Makefile $(SIM_BSP_RESULTS)
@@ -689,20 +719,6 @@ vcs-unit-test:  firmware-unit-test-clean
 vcs-unit-test:  $(FIRMWARE)/firmware_unit_test.hex
 vcs-unit-test:  vcsify $(FIRMWARE)/firmware_unit_test.hex
 vcs-unit-test:  vcs-run
-
-################################################################################
-# Open a DVT Eclipse IDE instance with the project imported automatically
-ifeq ($(MAKECMDGOALS), open_in_dvt_ide)
-include $(CORE_V_VERIF)/mk/uvmt/dvt.mk
-else
-ifeq ($(MAKECMDGOALS), create_dvt_build_file)
-include $(CORE_V_VERIF)/mk/uvmt/dvt.mk
-else
-ifeq ($(MAKECMDGOALS), dvt_dump_env_vars)
-include $(CORE_V_VERIF)/mk/uvmt/dvt.mk
-endif
-endif
-endif
 
 ###############################################################################
 # Build disassembler
