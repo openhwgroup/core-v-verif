@@ -344,14 +344,16 @@ module uvmt_cv32e40s_interrupt_assert
                   !wb_stage_instr_err_i                      &&
                   !((priv_lvl == PRIV_LVL_U) && mstatus_tw)  &&
                   (wb_stage_instr_mpu_status == MPU_OK)      &&
-                  !wb_kill;
+                  !wb_kill                                   &&
+                  !debug_mode_q;
     assign is_wfe = wb_stage_instr_valid_i                   &&
                   (wb_stage_instr_rdata_i == WFE_INSTR_DATA) &&
                   !branch_taken_ex                           &&
                   !((priv_lvl == PRIV_LVL_U) && mstatus_tw)  &&
                   !wb_stage_instr_err_i                      &&
                   (wb_stage_instr_mpu_status == MPU_OK)      &&
-                  !wb_kill;
+                  !wb_kill                                   &&
+                  !debug_mode_q;
   always @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       in_wfi_wfe <= 1'b0;
