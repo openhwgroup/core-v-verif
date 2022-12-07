@@ -190,7 +190,8 @@ module uvmt_cv32e40s_debug_assert
         && !cov_assert_if.dcsr_q[2]
         && !cov_assert_if.dcsr_q[15]
         ##0 (
-          (!cov_assert_if.pending_debug && !cov_assert_if.irq_ack_o && !cov_assert_if.pending_nmi)
+          (!(cov_assert_if.pending_sync_debug || cov_assert_if.pending_async_debug) &&
+           !cov_assert_if.irq_ack_o && !cov_assert_if.pending_nmi)
           throughout (##1 cov_assert_if.wb_valid [->1])
           )
         |->
@@ -399,7 +400,8 @@ module uvmt_cv32e40s_debug_assert
     // dret in M-mode will cause illegal instruction
     // If pending debug req, illegal insn will not assert until resume
     property p_mmode_dret;
-        !cov_assert_if.debug_mode_q && cov_assert_if.is_dret && !cov_assert_if.pending_debug
+        !cov_assert_if.debug_mode_q && cov_assert_if.is_dret &&
+        !(cov_assert_if.pending_sync_debug || cov_assert_if.pending_async_debug)
         |-> cov_assert_if.illegal_insn_i;
     endproperty
 
