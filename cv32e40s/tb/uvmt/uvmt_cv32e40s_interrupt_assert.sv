@@ -58,6 +58,7 @@ module uvmt_cv32e40s_interrupt_assert
     input [31:0]       wb_stage_instr_rdata_i,    // Instruction word data
     input              wb_stage_instr_err_i,      // OBI "err"
     input mpu_status_e wb_stage_instr_mpu_status, // MPU read/write errors
+    input              wb_kill,
 
     // Load-store unit status
     input              lsu_busy,
@@ -342,13 +343,15 @@ module uvmt_cv32e40s_interrupt_assert
                   !branch_taken_ex                           &&
                   !wb_stage_instr_err_i                      &&
                   !((priv_lvl == PRIV_LVL_U) && mstatus_tw)  &&
-                  (wb_stage_instr_mpu_status == MPU_OK);
+                  (wb_stage_instr_mpu_status == MPU_OK)      &&
+                  !wb_kill;
     assign is_wfe = wb_stage_instr_valid_i                   &&
                   (wb_stage_instr_rdata_i == WFE_INSTR_DATA) &&
                   !branch_taken_ex                           &&
                   !((priv_lvl == PRIV_LVL_U) && mstatus_tw)  &&
                   !wb_stage_instr_err_i                      &&
-                  (wb_stage_instr_mpu_status == MPU_OK);
+                  (wb_stage_instr_mpu_status == MPU_OK)      &&
+                  !wb_kill;
   always @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       in_wfi_wfe <= 1'b0;

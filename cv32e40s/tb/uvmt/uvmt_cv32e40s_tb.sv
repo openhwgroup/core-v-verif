@@ -458,6 +458,7 @@ module uvmt_cv32e40s_tb;
       .wb_stage_instr_rdata_i    (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
       .wb_stage_instr_err_i      (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.err),
       .wb_stage_instr_mpu_status (wb_stage_i.ex_wb_pipe_i.instr.mpu_status),
+      .wb_kill                   (ctrl_fsm.kill_wb),
 
       .branch_taken_ex (controller_i.controller_fsm_i.branch_taken_ex),
       .debug_mode_q    (controller_i.controller_fsm_i.debug_mode_q),
