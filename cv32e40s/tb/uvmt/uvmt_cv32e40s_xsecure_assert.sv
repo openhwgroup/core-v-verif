@@ -1364,7 +1364,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     //Make sure the packet has integrity
     && support_if.integrity_in_respons_instr
 
-    //Make sure the checksum dont matches the content
+    //Make sure there is a checksum error
     ##0 seq_response_phase_checksum_error(
       NO_WRITE_TRANSACTION,
       xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
@@ -1474,8 +1474,29 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
  ////////// INTERFACE INTEGRITY ADDRESS CHECKSUM FOR INSTRUCTIONS IS GENERATED CORRECTLY //////////
 
-  sequence seq_address_phase_checksum(achk, addr, prot, memtype, be, we, dbg, atop, wdata);
-  //16 00010110
+  logic achk;
+  logic addr;
+  logic prot;
+  logic memtype;
+  logic be;
+  logic we;
+  logic dbg;
+  logic atop;
+  logic wdata;
+  logic achk_error;
+
+  assign achk = xsecure_if.core_i_m_c_obi_data_if_req_payload.achk;
+  assign addr = xsecure_if.core_i_m_c_obi_data_if_req_payload.addr;
+  assign prot = xsecure_if.core_i_m_c_obi_data_if_req_payload.prot;
+  assign memtype = xsecure_if.core_i_m_c_obi_data_if_req_payload.memtype;
+  assign be = xsecure_if.core_i_m_c_obi_data_if_req_payload.be;
+  assign we = xsecure_if.core_i_m_c_obi_data_if_req_payload.we;
+  assign dbg = xsecure_if.core_i_m_c_obi_data_if_req_payload.dbg;
+  assign atop = assumed_value_atop;
+  assign wdata = xsecure_if.core_i_m_c_obi_data_if_req_payload.wdata;
+
+
+  assign achk_error = !(
     achk[0] == ^addr[7:0]
     && achk[1] == ^addr[15:8]
     && achk[2] == ^addr[23:16]
@@ -1487,9 +1508,8 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && achk[8] == ^wdata[7:0]
     && achk[9] == ^wdata[15:8]
     && achk[10] == ^wdata[23:16]
-    && achk[11] == ^wdata[31:24];
+    && achk[11] == ^wdata[31:24]);
 
-  endsequence
 
 /*
   // TODO: this one fails due to rtl bug
@@ -1503,16 +1523,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
     |->
     //Make sure the checksum is generated correctly
-    seq_address_phase_checksum(
-      xsecure_if.core_i_m_c_obi_instr_if_req_payload.achk,
-      xsecure_if.core_i_m_c_obi_instr_if_req_payload.addr,
-      xsecure_if.core_i_m_c_obi_instr_if_req_payload.prot,
-      xsecure_if.core_i_m_c_obi_instr_if_req_payload.memtype,
-      assumed_value_be,
-      assumed_value_we,
-      xsecure_if.core_i_m_c_obi_instr_if_req_payload.dbg,
-      assumed_value_atop,
-      assumed_value_wdata)
+    !achk_error
 
   ) else `uvm_error(info_tag, "The address phase checksum for instructions is generated wrongly.\n");
 */
@@ -1529,16 +1540,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
     |->
     //Make sure the checksum is generated correctly
-    seq_address_phase_checksum(
-      xsecure_if.core_i_m_c_obi_data_if_req_payload.achk,
-      xsecure_if.core_i_m_c_obi_data_if_req_payload.addr,
-      xsecure_if.core_i_m_c_obi_data_if_req_payload.prot,
-      xsecure_if.core_i_m_c_obi_data_if_req_payload.memtype,
-      xsecure_if.core_i_m_c_obi_data_if_req_payload.be,
-      xsecure_if.core_i_m_c_obi_data_if_req_payload.we,
-      xsecure_if.core_i_m_c_obi_data_if_req_payload.dbg,
-      assumed_value_atop,
-      xsecure_if.core_i_m_c_obi_data_if_req_payload.wdata)
+    !achk_error
 
   ) else `uvm_error(info_tag, "The address phase checksum for data is generated wrongly.\n");
 
