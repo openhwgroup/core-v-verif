@@ -368,6 +368,44 @@ module uvmt_cv32e40s_interrupt_assert
 
   assign pipeline_ready_for_wfi = (alignbuf_outstanding == 0) && !lsu_busy;
 
+  logic  is_wfi_wfe_in_wb;
+  assign is_wfi_wfe_in_wb = (
+    (wb_stage_instr_rdata_i  inside  {WFI_INSTR_DATA, WFE_INSTR_DATA})
+    //!wb_stage_instr_err_i                                              &&
+    //(wb_stage_instr_mpu_status == MPU_OK)                              &&
+    //!wb_kill
+  );
+
+  logic is_wfi_wfe_in_wb_d1;
+  logic is_wfi_wfe_in_wb_d2;
+  always @(posedge clk_i) begin
+    is_wfi_wfe_in_wb_d1 <= is_wfi_wfe_in_wb;
+    is_wfi_wfe_in_wb_d2 <= is_wfi_wfe_in_wb1;
+  end
+
+  logic  is_wfi_wfe_blocked = 0;
+  logic  is_wfi_wfe_wake    = 0;
+
+  logic  model_sleepmode;
+  always_latch begin
+    if (!rst_ni) begin
+      model_sleepmode <= 1'b 0;
+    end
+
+    if (is_wfi_wfe_in_wb_d2) begin
+      model_sleepmode <= 1'b 1;
+    end
+
+    if (is_wfi_wfe_blocked) begin
+      //
+    end
+
+    if (is_wfi_wfe_wake) begin
+      //
+    end
+  end
+
+
   // WFI assertion will assert core_sleep_o (in WFI_TO_CORE_SLEEP_LATENCY cycles after wb, given ideal conditions)
   property p_wfi_assert_core_sleep_o;
     !in_wfi_wfe
@@ -384,6 +422,41 @@ module uvmt_cv32e40s_interrupt_assert
       `uvm_error(info_tag,
                  $sformatf("Assertion of core_sleep_o did not occur within %0d clocks", WFI_TO_CORE_SLEEP_LATENCY))
   c_wfi_assert_core_sleep_o: cover property(p_wfi_assert_core_sleep_o);
+
+
+  // TODO
+
+/* TODO
+  a_wfi_assert_haltreq_kills_wfiwfe: assert property (
+    wb_stage_instr_valid_i &&
+    (wb_stage_instr_rdata_i == WFE_INSTR_DATA) &&
+*/
+
+  a_wfi_assert_sleepmode_expected: assert property (
+    model_sleepmode == core_sleep_o
+  ) else `uvm_error(info_tag, "TODO");
+
+
+  // Confirm the uarch sleep delay is as expected (2 cycles)
+
+  a_wfi_assert_sleepmode_nodly0: assert property (
+    $rose(is_wfi_wfe_in_wb)
+    |->
+    !core_sleep_o
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_wfi_assert_sleepmode_nodly1: assert property (
+    $rose( $past(is_wfi_wfe_in_wb, 1) )
+    |->
+    !core_sleep_o
+  ) else `uvm_error(info_tag, "TODO");
+
+  cov_wfi_assert_sleepmode_nodly2: cover property (
+    $rose( $past(is_wfi_wfe_in_wb, 2) )
+    |->
+    core_sleep_o
+  );
+
 
   // WFI assertion will assert core_sleep_o (after required conditions are met)
   property p_wfi_assert_core_sleep_o_cond;
