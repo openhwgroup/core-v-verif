@@ -123,6 +123,9 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_clk,
     input logic clk_en,
 
+    input logic core_i_wb_stage_i_last_op_o,
+    input logic core_i_id_stage_i_if_id_pipe_i_instr_meta_hint,
+
     input logic core_rf_we_wb,
     input logic [4:0] core_rf_waddr_wb,
     input logic [31:0] core_rf_wdata_wb,

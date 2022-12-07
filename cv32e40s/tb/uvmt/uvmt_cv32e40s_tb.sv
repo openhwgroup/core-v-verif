@@ -783,6 +783,9 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_clk                                                                                                         (core_i.clk),
       .clk_en                                                                                                           (core_i.sleep_unit_i.core_clock_gate_i.clk_en),
 
+      .core_i_wb_stage_i_last_op_o (core_i.wb_stage_i.last_op_o),
+      .core_i_id_stage_i_if_id_pipe_i_instr_meta_hint (core_i.id_stage_i.if_id_pipe_i.instr_meta.hint),
+
       .core_rf_we_wb                                                                                                    (core_i.rf_we_wb),
       .core_rf_waddr_wb                                                                                                 (core_i.rf_waddr_wb),
       .core_rf_wdata_wb                                                                                                 (core_i.rf_wdata_wb),
