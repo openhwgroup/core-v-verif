@@ -59,6 +59,7 @@ module uvmt_cv32e40s_interrupt_assert
     input              wb_stage_instr_err_i,      // OBI "err"
     input mpu_status_e wb_stage_instr_mpu_status, // MPU read/write errors
     input              wb_kill,
+    input              wb_valid,
 
     // Load-store unit status
     input              lsu_busy,
@@ -70,7 +71,18 @@ module uvmt_cv32e40s_interrupt_assert
     input branch_taken_ex,
 
     // WFI Interface
-    input core_sleep_o
+    input core_sleep_o,
+
+    // OBI
+    input mpu_iside_req,
+    input mpu_iside_gnt,
+    input mpu_iside_rvalid,
+    input obi_dside_req,
+    input obi_dside_gnt,
+    input obi_dside_rvalid,
+
+    // Writebuffer
+    write_buffer_state_e  writebufstate
   );
 
   // ---------------------------------------------------------------------------
@@ -368,23 +380,100 @@ module uvmt_cv32e40s_interrupt_assert
 
   assign pipeline_ready_for_wfi = (alignbuf_outstanding == 0) && !lsu_busy;
 
+  logic  wb_wfi_wfe_invalidated;
+  assign wb_wfi_wfe_invalidated = (
+    (wb_stage_instr_mpu_status != MPU_OK)  ||
+    wb_stage_instr_err_i                   ||
+    wb_kill                                ||
+    debug_mode_q                           ||
+    !wb_stage_instr_valid_i
+  );
+
   logic  is_wfi_wfe_in_wb;
   assign is_wfi_wfe_in_wb = (
-    (wb_stage_instr_rdata_i  inside  {WFI_INSTR_DATA, WFE_INSTR_DATA})
-    //!wb_stage_instr_err_i                                              &&
-    //(wb_stage_instr_mpu_status == MPU_OK)                              &&
-    //!wb_kill
+    (wb_stage_instr_rdata_i  inside  {WFI_INSTR_DATA, WFE_INSTR_DATA})  &&
+    !wb_wfi_wfe_invalidated
   );
 
   logic is_wfi_wfe_in_wb_d1;
   logic is_wfi_wfe_in_wb_d2;
   always @(posedge clk_i) begin
     is_wfi_wfe_in_wb_d1 <= is_wfi_wfe_in_wb;
-    is_wfi_wfe_in_wb_d2 <= is_wfi_wfe_in_wb1;
+    is_wfi_wfe_in_wb_d2 <= is_wfi_wfe_in_wb_d1;
   end
 
-  logic  is_wfi_wfe_blocked = 0;
-  logic  is_wfi_wfe_wake    = 0;
+  logic  is_wfi_wfe_blocked;
+  assign is_wfi_wfe_blocked = (
+    |obi_iside_outstanding     ||
+    |obi_iside_outstanding_d1  ||  // Arbitrary uarch decision
+    |obi_dside_outstanding     ||
+    |obi_dside_outstanding_d1  ||  // Arbitrary uarch decision
+    (writebufstate != WBUF_EMPTY)
+    // TODO:silabs-robin  And writebuffer
+  );
+
+  logic  is_wfi_wfe_wake;
+  assign is_wfi_wfe_wake = (
+    (|pending_enabled_irq)  ||
+    debug_req_i
+    // TODO nmi
+    // TODO we_wfe_i
+  );
+
+  logic         mpu_iside_req_d1;
+  logic         mpu_iside_gnt_d1;
+  logic         obi_dside_req_d1;
+  logic         obi_dside_gnt_d1;
+  logic [31:0]  obi_iside_outstanding_d1;
+  logic [31:0]  obi_dside_outstanding_d1;
+  always @(posedge clk) begin
+    mpu_iside_req_d1         <= mpu_iside_req;
+    mpu_iside_gnt_d1         <= mpu_iside_gnt;
+    obi_dside_req_d1         <= obi_dside_req;
+    obi_dside_gnt_d1         <= obi_dside_gnt;
+    obi_iside_outstanding_d1 <= obi_iside_outstanding;
+    obi_dside_outstanding_d1 <= obi_dside_outstanding;
+  end
+
+  logic  obi_iside_initiating;
+  assign obi_iside_initiating = (
+    mpu_iside_req  &&
+    //( !mpu_iside_req_d1 || mpu_iside_gnt_d1)
+    mpu_iside_gnt
+  );
+  logic  obi_dside_initiating;
+  assign obi_dside_initiating = (
+    obi_dside_req  &&
+    ( !obi_dside_req_d1 || obi_dside_gnt_d1)
+    //obi_dside_gnt
+  );
+  logic  obi_iside_receiving = mpu_iside_rvalid;
+  logic  obi_dside_receiving = obi_dside_rvalid;
+
+  logic [31:0]  obi_iside_outstanding;
+  logic [31:0]  obi_dside_outstanding;
+  always @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      obi_iside_outstanding <= 1'b 0;
+      obi_dside_outstanding <= 1'b 0;
+    end else begin
+      if ( obi_iside_initiating && !obi_iside_receiving) begin
+        obi_iside_outstanding <= obi_iside_outstanding + 1;
+      end
+
+      if (!obi_iside_initiating &&  obi_iside_receiving) begin
+        obi_iside_outstanding <= obi_iside_outstanding - 1;
+      end
+
+      if ( obi_dside_initiating && !obi_dside_receiving) begin
+        obi_dside_outstanding <= obi_dside_outstanding + 1;
+      end
+
+      if (!obi_dside_initiating &&  obi_dside_receiving) begin
+        obi_dside_outstanding <= obi_dside_outstanding - 1;
+      end
+    end
+  end
 
   logic  model_sleepmode;
   always_latch begin
@@ -392,16 +481,19 @@ module uvmt_cv32e40s_interrupt_assert
       model_sleepmode <= 1'b 0;
     end
 
-    if (is_wfi_wfe_in_wb_d2) begin
+    if (
+      is_wfi_wfe_in_wb  &&
+      is_wfi_wfe_in_wb_d2)  // Arbitrary uarch decision (2 cycles)
+    begin
       model_sleepmode <= 1'b 1;
     end
 
     if (is_wfi_wfe_blocked) begin
-      //
+      model_sleepmode <= 1'b 0;
     end
 
     if (is_wfi_wfe_wake) begin
-      //
+      model_sleepmode <= 1'b 0;
     end
   end
 
@@ -433,8 +525,41 @@ module uvmt_cv32e40s_interrupt_assert
 */
 
   a_wfi_assert_sleepmode_expected: assert property (
+    !$rose(is_wfi_wfe_in_wb_d2)  // Only consequent, no antecedent
+    |->
     model_sleepmode == core_sleep_o
   ) else `uvm_error(info_tag, "TODO");
+
+  a_wfi_assert_sleepmode_fellreason: assert property (
+    $fell(is_wfi_wfe_in_wb)
+    |->
+    $past(wb_valid || wb_kill)
+  ) else `uvm_error(info_tag, "TODO");
+
+
+  // TODO
+
+  a_wfi_assert_sleepmode_retire0: assert property (
+    $rose(is_wfi_wfe_in_wb)  &&
+    is_wfi_wfe_wake
+    |=>
+    wb_kill  // TODO  Because it "has not yet started" and must yield
+  );
+
+  a_wfi_assert_sleepmode_retire1: assert property (
+    $rose(is_wfi_wfe_in_wb_d1)  &&  //TODO not "rose", just plain
+    is_wfi_wfe_in_wb            &&
+    is_wfi_wfe_wake
+    |->
+    wb_valid
+  );
+
+  a_wfi_assert_sleepmode_retire2: assert property (
+    $rose(is_wfi_wfe_in_wb_d2)  &&
+    is_wfi_wfe_wake
+    |->
+    !wb_valid
+  );
 
 
   // Confirm the uarch sleep delay is as expected (2 cycles)

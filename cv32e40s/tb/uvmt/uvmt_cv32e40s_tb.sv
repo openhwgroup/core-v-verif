@@ -459,12 +459,22 @@ module uvmt_cv32e40s_tb;
       .wb_stage_instr_err_i      (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.err),
       .wb_stage_instr_mpu_status (wb_stage_i.ex_wb_pipe_i.instr.mpu_status),
       .wb_kill                   (ctrl_fsm.kill_wb),
+      .wb_valid                  (wb_stage_i.wb_valid),
 
       .branch_taken_ex (controller_i.controller_fsm_i.branch_taken_ex),
       .debug_mode_q    (controller_i.controller_fsm_i.debug_mode_q),
 
       .irq_ack_o (core_i.irq_ack),
       .irq_id_o  (core_i.irq_id),
+
+      .mpu_iside_req    (if_stage_i.mpu_i.core_trans_valid_i),
+      .mpu_iside_gnt    (if_stage_i.mpu_i.core_trans_ready_o),
+      .mpu_iside_rvalid (if_stage_i.mpu_i.core_resp_valid_o),
+      .obi_dside_req    (data_req_o),
+      .obi_dside_gnt    (data_gnt_i),
+      .obi_dside_rvalid (data_rvalid_i),
+
+      .writebufstate (load_store_unit_i.write_buffer_i.state),
 
       .*
     );
