@@ -362,11 +362,11 @@ module uvmt_cv32e40s_interrupt_assert
 
   logic debug_req_stickied;
   always_comb begin
-    if (!rst_ni) begin
+    if ( !rst_ni ) begin
       debug_req_stickied <= 1'b 0;
-    end else if (debug_mode_q && !debug_mode_q_d1) begin
+    end else if ( debug_mode_q ) begin
       debug_req_stickied <= 1'b 0;
-    end else if (debug_req_i) begin
+    end else if ( debug_req_i ) begin
       debug_req_stickied <= 1'b 1;
     end
   end
@@ -599,13 +599,11 @@ module uvmt_cv32e40s_interrupt_assert
     is_wfi_wfe_blocked  &&
     !is_wfi_wfe_wake
     |=>
-    is_wfi_wfe_in_wb  ||
-    (
-      $past(debug_req_stickied && !debug_req_i)  &&
-      //(debug_req_stickied && !debug_req_i)
-      (debug_req_stickied)
-      // TODO:silabs-robin  Halt req should be unsticky in future RTL
-    )
+    is_wfi_wfe_in_wb
+    or
+    $past(debug_req_stickied && !debug_req_i) // TODO:silabs-robin  Halt req should be unsticky in future RTL
+    or
+    ((rvfi.rvfi_valid [->1]) ##0 (rvfi.rvfi_dbg == DBG_CAUSE_TRIGGER))
   ) else `uvm_error(info_tag, "TODO");
 
 
@@ -614,28 +612,17 @@ module uvmt_cv32e40s_interrupt_assert
   a_wfi_assert_sleepmode_retire0: assert property (
     $rose(is_wfi_wfe_in_wb)  //TODO not "rose", just plain
     |->
-    //!wb_valid
-    //(wb_valid == dcsr_step)  // TODO  Why is step different?  Arbitrary uarch decision?
-    //(wb_valid == (dcsr_step && !is_wfi_wfe_wake))  // TODO  Why is step different?  Arbitrary uarch decision?
     (wb_valid == (dcsr_step && !debug_req_i))  // TODO  Why is step/haltreq different?  Arbitrary uarch decision?
   ) else `uvm_error(info_tag, "TODO");
 
   a_wfi_assert_sleepmode_retire1: assert property (
-    //$rose(is_wfi_wfe_in_wb_d1)  &&  //TODO not "rose", just plain
-    is_wfi_wfe_in_wb_d1  &&
+    $rose(is_wfi_wfe_in_wb_d1)  &&
     is_wfi_wfe_in_wb
     |->
-    (wb_valid == is_wfi_wfe_wake)  ||
-    (
-      (debug_req_stickied && !debug_req_i)         &&
-      $past(debug_req_stickied && !debug_req_i)    &&
-      $past(debug_req_stickied && !debug_req_i, 2)
-      // TODO:silabs-robin  Halt req should be unsticky in future RTL
-    )
+    (wb_valid == ( is_wfi_wfe_wake || $past(debug_req_stickied) ))
   ) else `uvm_error(info_tag, "TODO");
 
   a_wfi_assert_sleepmode_retire2: assert property (
-    //$rose(is_wfi_wfe_in_wb_d2)  &&
     is_wfi_wfe_in_wb_d2  &&
     is_wfi_wfe_in_wb_d1  &&
     is_wfi_wfe_in_wb
