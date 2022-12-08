@@ -446,6 +446,7 @@ module uvmt_cv32e40s_tb;
       .mstatus_mie  (cs_registers_i.mstatus_q.mie),
       .mstatus_tw   (cs_registers_i.mstatus_q.tw),
       .mtvec_mode_q (cs_registers_i.mtvec_q.mode),
+      .dcsr_step    (cs_registers_i.dcsr_q.step),
 
       .if_stage_instr_req_o    (if_stage_i.m_c_obi_instr_if.s_req.req),
       .if_stage_instr_rvalid_i (if_stage_i.m_c_obi_instr_if.s_rvalid.rvalid),
@@ -475,6 +476,8 @@ module uvmt_cv32e40s_tb;
       .obi_dside_rvalid (data_rvalid_i),
 
       .writebufstate (load_store_unit_i.write_buffer_i.state),
+
+      .rvfi (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
 
       .*
     );

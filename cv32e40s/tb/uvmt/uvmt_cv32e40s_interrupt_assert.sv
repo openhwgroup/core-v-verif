@@ -43,6 +43,7 @@ module uvmt_cv32e40s_interrupt_assert
     input        mstatus_mie,  // machine mode interrupt enable
     input        mstatus_tw,   // "timeout wait"
     input [1:0]  mtvec_mode_q, // machine mode interrupt vector mode
+    input        dcsr_step,
 
     // IF stage
     input        if_stage_instr_req_o,
@@ -82,7 +83,10 @@ module uvmt_cv32e40s_interrupt_assert
     input obi_dside_rvalid,
 
     // Writebuffer
-    write_buffer_state_e  writebufstate
+    write_buffer_state_e  writebufstate,
+
+    // RVFI
+    uvma_rvfi_instr_if  rvfi
   );
 
   // ---------------------------------------------------------------------------
@@ -352,7 +356,7 @@ module uvmt_cv32e40s_interrupt_assert
   // ---------------------------------------------------------------------------
   assign is_wfi = wb_stage_instr_valid_i                     &&
                   (wb_stage_instr_rdata_i == WFI_INSTR_DATA) &&
-                  !branch_taken_ex                           &&
+                  !branch_taken_ex                           &&  // TODO remove
                   !wb_stage_instr_err_i                      &&
                   !((priv_lvl == PRIV_LVL_U) && mstatus_tw)  &&
                   (wb_stage_instr_mpu_status == MPU_OK)      &&
@@ -360,7 +364,7 @@ module uvmt_cv32e40s_interrupt_assert
                   !debug_mode_q;
     assign is_wfe = wb_stage_instr_valid_i                   &&
                   (wb_stage_instr_rdata_i == WFE_INSTR_DATA) &&
-                  !branch_taken_ex                           &&
+                  !branch_taken_ex                           &&  // TODO remove
                   !((priv_lvl == PRIV_LVL_U) && mstatus_tw)  &&
                   !wb_stage_instr_err_i                      &&
                   (wb_stage_instr_mpu_status == MPU_OK)      &&
@@ -387,6 +391,7 @@ module uvmt_cv32e40s_interrupt_assert
     wb_kill                                ||
     debug_mode_q                           ||
     !wb_stage_instr_valid_i
+    // TODO  !((priv_lvl == PRIV_LVL_U) && mstatus_tw)
   );
 
   logic  is_wfi_wfe_in_wb;
@@ -404,12 +409,11 @@ module uvmt_cv32e40s_interrupt_assert
 
   logic  is_wfi_wfe_blocked;
   assign is_wfi_wfe_blocked = (
-    |obi_iside_outstanding     ||
-    |obi_iside_outstanding_d1  ||  // Arbitrary uarch decision
-    |obi_dside_outstanding     ||
-    |obi_dside_outstanding_d1  ||  // Arbitrary uarch decision
+    |obi_iside_outstanding        ||
+    |obi_iside_outstanding_d1     ||  // Arbitrary uarch decision
+    |obi_dside_outstanding        ||
+    |obi_dside_outstanding_d1     ||  // Arbitrary uarch decision
     (writebufstate != WBUF_EMPTY)
-    // TODO:silabs-robin  And writebuffer
   );
 
   logic  is_wfi_wfe_wake;
@@ -418,6 +422,7 @@ module uvmt_cv32e40s_interrupt_assert
     debug_req_i
     // TODO nmi
     // TODO we_wfe_i
+    // TODO single-step
   );
 
   logic         mpu_iside_req_d1;
@@ -525,41 +530,90 @@ module uvmt_cv32e40s_interrupt_assert
 */
 
   a_wfi_assert_sleepmode_expected: assert property (
-    !$rose(is_wfi_wfe_in_wb_d2)  // Only consequent, no antecedent
+    !$rose(is_wfi_wfe_in_wb_d2)  // Only consequent, no antecedent (Arbitrary uarch decision)
+    |->
+    model_sleepmode == core_sleep_o
+  ) else `uvm_error(info_tag, "TODO");
+  a_wfi_assert_sleepmode_expected_d2: assert property (
+    $rose(is_wfi_wfe_in_wb_d2)
     |->
     model_sleepmode == core_sleep_o
   ) else `uvm_error(info_tag, "TODO");
 
+  a_wfi_assert_sleepmode_nodbg: assert property (
+    debug_mode_q
+    |->
+    !model_sleepmode
+  ) else `uvm_error(info_tag, "TODO");
+
+/* TODO
+  a_wfi_assert_sleepmode_nodbg_oldmodel: assert property (
+    debug_mode_q
+    |->
+    !in_wfi_wfe
+    // TODO:silabs-robin  Delete assert. We know the old model is suboptimal.
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_wfi_assert_sleepmode_oldmodel: assert property (
+    in_wfi_wfe
+    |->
+    $past(model_sleepmode)  // (old model is clocked)
+    // TODO:silabs-robin  Delete assert. We know the old model is suboptimal.
+  ) else `uvm_error(info_tag, "TODO");
+*/
+
   a_wfi_assert_sleepmode_fellreason: assert property (
     $fell(is_wfi_wfe_in_wb)
     |->
-    $past(wb_valid || wb_kill)
+    $past(wb_valid)  ||
+    wb_kill
+    // TODO:silabs-robin  Is this assert worth?
+    // TODO:silabs-robin  Cover prop of both cases?
+  ) else `uvm_error(info_tag, "TODO");
+
+
+  // TODO
+
+  a_wfi_assert_sleepmode_wait: assert property (
+    //$rose(is_wfi_wfe_in_wb)  &&
+    is_wfi_wfe_in_wb    &&
+    is_wfi_wfe_blocked  &&
+    !is_wfi_wfe_wake
+    |=>
+    is_wfi_wfe_in_wb
+    or
+    ((rvfi.rvfi_valid [->1:2]) ##0 rvfi.rvfi_dbg_mode)
+    // TODO:silabs-robin  Why isn't this dmode handled by other modelling?
   ) else `uvm_error(info_tag, "TODO");
 
 
   // TODO
 
   a_wfi_assert_sleepmode_retire0: assert property (
-    $rose(is_wfi_wfe_in_wb)  &&
-    is_wfi_wfe_wake
-    |=>
-    wb_kill  // TODO  Because it "has not yet started" and must yield
-  );
+    $rose(is_wfi_wfe_in_wb)  //TODO not "rose", just plain
+    |->
+    //!wb_valid
+    //(wb_valid == dcsr_step)  // TODO  Why is step different?  Arbitrary uarch decision?
+    //(wb_valid == (dcsr_step && !is_wfi_wfe_wake))  // TODO  Why is step different?  Arbitrary uarch decision?
+    (wb_valid == (dcsr_step && !debug_req_i))  // TODO  Why is step/haltreq different?  Arbitrary uarch decision?
+  ) else `uvm_error(info_tag, "TODO");
 
   a_wfi_assert_sleepmode_retire1: assert property (
-    $rose(is_wfi_wfe_in_wb_d1)  &&  //TODO not "rose", just plain
-    is_wfi_wfe_in_wb            &&
-    is_wfi_wfe_wake
+    //$rose(is_wfi_wfe_in_wb_d1)  &&  //TODO not "rose", just plain
+    is_wfi_wfe_in_wb_d1  &&
+    is_wfi_wfe_in_wb
     |->
-    wb_valid
-  );
+    (wb_valid == is_wfi_wfe_wake)
+  ) else `uvm_error(info_tag, "TODO");
 
   a_wfi_assert_sleepmode_retire2: assert property (
-    $rose(is_wfi_wfe_in_wb_d2)  &&
-    is_wfi_wfe_wake
+    //$rose(is_wfi_wfe_in_wb_d2)  &&
+    is_wfi_wfe_in_wb_d2  &&
+    is_wfi_wfe_in_wb_d1  &&
+    is_wfi_wfe_in_wb
     |->
-    !wb_valid
-  );
+    (wb_valid == is_wfi_wfe_wake)
+  ) else `uvm_error(info_tag, "TODO");
 
 
   // Confirm the uarch sleep delay is as expected (2 cycles)
@@ -576,11 +630,15 @@ module uvmt_cv32e40s_interrupt_assert
     !core_sleep_o
   ) else `uvm_error(info_tag, "TODO");
 
-  cov_wfi_assert_sleepmode_nodly2: cover property (
-    $rose( $past(is_wfi_wfe_in_wb, 2) )
-    |->
-    core_sleep_o
-  );
+  for (genvar i = 2; i < 8; i++) begin: gen_wfi_assert_sleepmode_nodlyn_outer
+    for (genvar onoff = 0; onoff < 2; onoff++) begin: gen_wfi_assert_sleepmode_nodlyn_inner
+      cov_wfi_assert_sleepmode_nodlyn: cover property (
+        $rose( $past(is_wfi_wfe_in_wb, i) )
+        |->
+        (core_sleep_o == onoff)
+      );
+    end
+  end
 
 
   // WFI assertion will assert core_sleep_o (after required conditions are met)
