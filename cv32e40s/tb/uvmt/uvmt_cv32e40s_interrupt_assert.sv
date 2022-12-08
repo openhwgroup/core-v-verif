@@ -352,6 +352,26 @@ module uvmt_cv32e40s_interrupt_assert
   end
 
   // ---------------------------------------------------------------------------
+  // Debug Modeling
+  // ---------------------------------------------------------------------------
+
+  logic debug_mode_q_d1;
+  always @(posedge clk_i) begin
+    debug_mode_q_d1 <= debug_mode_q;
+  end
+
+  logic debug_req_stickied;
+  always_comb begin
+    if (!rst_ni) begin
+      debug_req_stickied <= 1'b 0;
+    end else if (debug_mode_q && !debug_mode_q_d1) begin
+      debug_req_stickied <= 1'b 0;
+    end else if (debug_req_i) begin
+      debug_req_stickied <= 1'b 1;
+    end
+  end
+
+  // ---------------------------------------------------------------------------
   // WFI Checks
   // ---------------------------------------------------------------------------
   assign is_wfi = wb_stage_instr_valid_i                     &&
@@ -377,7 +397,7 @@ module uvmt_cv32e40s_interrupt_assert
     else begin
       if ((is_wfi || is_wfe) && !in_wfi_wfe) //
         in_wfi_wfe <= 1'b1;
-      else if (|pending_enabled_irq || debug_req_i)
+      else if (|pending_enabled_irq || debug_req_i || debug_mode_q)
         in_wfi_wfe <= 1'b0;
     end
   end
@@ -386,12 +406,13 @@ module uvmt_cv32e40s_interrupt_assert
 
   logic  wb_wfi_wfe_invalidated;
   assign wb_wfi_wfe_invalidated = (
-    (wb_stage_instr_mpu_status != MPU_OK)  ||
-    wb_stage_instr_err_i                   ||
-    wb_kill                                ||
-    debug_mode_q                           ||
-    !wb_stage_instr_valid_i
-    // TODO  !((priv_lvl == PRIV_LVL_U) && mstatus_tw)
+    !wb_stage_instr_valid_i                  ||
+    (wb_stage_instr_mpu_status != MPU_OK)    ||
+    wb_stage_instr_err_i                     ||
+    wb_kill                                  ||  // TODO:silabs-robin  Remove? Have more isa-specific reason?
+    debug_mode_q                             ||
+    ((priv_lvl == PRIV_LVL_U) && mstatus_tw) ||
+    dcsr_step  // Arbitrary uarch decision
   );
 
   logic  is_wfi_wfe_in_wb;
@@ -422,7 +443,6 @@ module uvmt_cv32e40s_interrupt_assert
     debug_req_i
     // TODO nmi
     // TODO we_wfe_i
-    // TODO single-step
   );
 
   logic         mpu_iside_req_d1;
@@ -575,15 +595,17 @@ module uvmt_cv32e40s_interrupt_assert
   // TODO
 
   a_wfi_assert_sleepmode_wait: assert property (
-    //$rose(is_wfi_wfe_in_wb)  &&
     is_wfi_wfe_in_wb    &&
     is_wfi_wfe_blocked  &&
     !is_wfi_wfe_wake
     |=>
-    is_wfi_wfe_in_wb
-    or
-    ((rvfi.rvfi_valid [->1:2]) ##0 rvfi.rvfi_dbg_mode)
-    // TODO:silabs-robin  Why isn't this dmode handled by other modelling?
+    is_wfi_wfe_in_wb  ||
+    (
+      $past(debug_req_stickied && !debug_req_i)  &&
+      //(debug_req_stickied && !debug_req_i)
+      (debug_req_stickied)
+      // TODO:silabs-robin  Halt req should be unsticky in future RTL
+    )
   ) else `uvm_error(info_tag, "TODO");
 
 
@@ -603,7 +625,13 @@ module uvmt_cv32e40s_interrupt_assert
     is_wfi_wfe_in_wb_d1  &&
     is_wfi_wfe_in_wb
     |->
-    (wb_valid == is_wfi_wfe_wake)
+    (wb_valid == is_wfi_wfe_wake)  ||
+    (
+      (debug_req_stickied && !debug_req_i)         &&
+      $past(debug_req_stickied && !debug_req_i)    &&
+      $past(debug_req_stickied && !debug_req_i, 2)
+      // TODO:silabs-robin  Halt req should be unsticky in future RTL
+    )
   ) else `uvm_error(info_tag, "TODO");
 
   a_wfi_assert_sleepmode_retire2: assert property (
