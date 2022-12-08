@@ -480,6 +480,8 @@ module uvmt_cv32e40s_tb;
 
       .rvfi (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
 
+      .pending_nmi (controller_i.controller_fsm_i.pending_nmi),
+
       .*
     );
   `endif

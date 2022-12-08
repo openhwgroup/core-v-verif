@@ -87,7 +87,13 @@ module uvmt_cv32e40s_interrupt_assert
     write_buffer_state_e  writebufstate,
 
     // RVFI
-    uvma_rvfi_instr_if  rvfi
+    uvma_rvfi_instr_if  rvfi,
+
+    // NMI
+    input  pending_nmi,
+
+    // WFE
+    input  wu_wfe_i
   );
 
   // ---------------------------------------------------------------------------
@@ -377,7 +383,6 @@ module uvmt_cv32e40s_interrupt_assert
   // ---------------------------------------------------------------------------
   assign is_wfi = wb_stage_instr_valid_i                     &&
                   (wb_stage_instr_rdata_i == WFI_INSTR_DATA) &&
-                  !branch_taken_ex                           &&  // TODO remove
                   !wb_stage_instr_err_i                      &&
                   !((priv_lvl == PRIV_LVL_U) && mstatus_tw)  &&
                   (wb_stage_instr_mpu_status == MPU_OK)      &&
@@ -385,7 +390,6 @@ module uvmt_cv32e40s_interrupt_assert
                   !debug_mode_q;
     assign is_wfe = wb_stage_instr_valid_i                   &&
                   (wb_stage_instr_rdata_i == WFE_INSTR_DATA) &&
-                  !branch_taken_ex                           &&  // TODO remove
                   !((priv_lvl == PRIV_LVL_U) && mstatus_tw)  &&
                   !wb_stage_instr_err_i                      &&
                   (wb_stage_instr_mpu_status == MPU_OK)      &&
@@ -441,9 +445,9 @@ module uvmt_cv32e40s_interrupt_assert
   logic  is_wfi_wfe_wake;
   assign is_wfi_wfe_wake = (
     (|pending_enabled_irq)  ||
-    debug_req_i
-    // TODO nmi
-    // TODO we_wfe_i
+    debug_req_i             ||
+    pending_nmi             ||
+    (wu_wfe_i && is_wfe)
   );
 
   logic         mpu_iside_req_d1;
@@ -528,9 +532,9 @@ module uvmt_cv32e40s_interrupt_assert
 
   property p_wfi_assert_core_sleep_o;
     !in_wfi_wfe
-    ##1 (in_wfi_wfe && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i)[*(WFI_TO_CORE_SLEEP_LATENCY-1)]
+    ##1 (in_wfi_wfe && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i && !pending_nmi)[*(WFI_TO_CORE_SLEEP_LATENCY-1)]
     ##1 (
-      (in_wfi_wfe && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i)
+      (in_wfi_wfe && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i && !pending_nmi)
         throughout $past(pipeline_ready_for_wfi)[->1]
       )
     |->
@@ -596,7 +600,7 @@ module uvmt_cv32e40s_interrupt_assert
   );
 
 
-  // TODO
+  // Blocked wfi/wfe stay in wb (unless excused)
 
   a_wfi_assert_sleepmode_wait: assert property (
     is_wfi_wfe_in_wb    &&
@@ -637,14 +641,15 @@ module uvmt_cv32e40s_interrupt_assert
   a_wfi_assert_sleepmode_retire0: assert property (
     $rose(is_wfi_wfe_in_wb)
     |->
-    (wb_valid == (dcsr_step && !debug_req_i))  // TODO  Why is step/haltreq different?  Arbitrary uarch decision?
+    (wb_valid == (dcsr_step && !debug_req_i))  // TODO:silabs-robin  Why is step/haltreq different?  Arbitrary uarch decision?
   ) else `uvm_error(info_tag, "1st cycle retire only on step");
 
   a_wfi_assert_sleepmode_retire1: assert property (
     $rose(is_wfi_wfe_in_wb_d1)  &&
     is_wfi_wfe_in_wb
     |->
-    (wb_valid == ( is_wfi_wfe_wake || $past(debug_req_stickied) ))  // TODO:silabs-robin  See if can remove stickied
+    //(wb_valid == ( is_wfi_wfe_wake || $past(debug_req_stickied) ))  // TODO:silabs-robin  See if can remove stickied
+    (wb_valid == is_wfi_wfe_wake)
   ) else `uvm_error(info_tag, "2nd cycle can retire on 'premature' 'wakeup'");
 
   a_wfi_assert_sleepmode_retire2: assert property (
@@ -687,7 +692,7 @@ module uvmt_cv32e40s_interrupt_assert
   property p_wfi_assert_core_sleep_o_cond;
     !in_wfi_wfe
     ##1 (
-      (in_wfi_wfe && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i)
+      (in_wfi_wfe && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i && !pending_nmi)
       throughout (##1 ($past(pipeline_ready_for_wfi)[->1]) )
       )
     |->
@@ -710,7 +715,6 @@ module uvmt_cv32e40s_interrupt_assert
 
   a_wfi_assert_no_entry: assert property (
     (|alignbuf_outstanding || |lsu_busy)
-    // TODO:silabs-robin  Use own non-probed signals
     |=>
     !core_sleep_o
   ) else `uvm_error(info_tag, "no sleep before no outstanding");
