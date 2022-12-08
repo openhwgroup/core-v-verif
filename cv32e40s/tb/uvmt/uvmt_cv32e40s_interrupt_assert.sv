@@ -556,48 +556,44 @@ module uvmt_cv32e40s_interrupt_assert
   );
 
 
-  // TODO
-
-/* TODO
-  a_wfi_assert_haltreq_kills_wfiwfe: assert property (
-    wb_stage_instr_valid_i &&
-    (wb_stage_instr_rdata_i == WFE_INSTR_DATA) &&
-*/
+  // Check expectations for sleep mode
 
   a_wfi_assert_sleepmode_expected: assert property (
     model_sleepmode == core_sleep_o
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "core_sleep_o must matchexpectations");
 
   a_wfi_assert_sleepmode_nodbg: assert property (
     debug_mode_q
     |->
     !model_sleepmode
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "there is no sleeping in debug");
 
-/* TODO
   a_wfi_assert_sleepmode_nodbg_oldmodel: assert property (
     debug_mode_q
-    |->
+    |=>
     !in_wfi_wfe
-    // TODO:silabs-robin  Delete assert. We know the old model is suboptimal.
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "there is no sleeping in debug");
 
   a_wfi_assert_sleepmode_oldmodel: assert property (
-    in_wfi_wfe
-    |->
-    $past(model_sleepmode)  // (old model is clocked)
-    // TODO:silabs-robin  Delete assert. We know the old model is suboptimal.
-  ) else `uvm_error(info_tag, "TODO");
-*/
+    model_sleepmode
+    |=>
+    in_wfi_wfe  // (old model is clocked)
+  ) else `uvm_error(info_tag, "both models must match");
 
   a_wfi_assert_sleepmode_fellreason: assert property (
     $fell(is_wfi_wfe_in_wb)
     |->
     $past(wb_valid)  ||
-    wb_kill
-    // TODO:silabs-robin  Is this assert worth?
-    // TODO:silabs-robin  Cover prop of both cases?
-  ) else `uvm_error(info_tag, "TODO");
+    wb_kill  // TODO:silabs-robin  Don't use "wb_kill" anywhere
+  ) else `uvm_error(info_tag, "wfe mustn't leave wb unexpectedly");
+
+  cov_wfi_assert_sleepmode_fellreason_valid: cover property (
+    $fell(is_wfi_wfe_in_wb) && $past(wb_valid)
+  );
+
+  cov_wfi_assert_sleepmode_fellreason_killed: cover property (
+    $fell(is_wfi_wfe_in_wb) && wb_kill
+  );
 
 
   // TODO
@@ -612,41 +608,44 @@ module uvmt_cv32e40s_interrupt_assert
     $past(debug_req_stickied && !debug_req_i) // TODO:silabs-robin  Halt req should be unsticky in future RTL
     or
     ((rvfi.rvfi_valid [->1]) ##0 (rvfi.rvfi_dbg == DBG_CAUSE_TRIGGER))
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "blocked wfi/wfe must remain in wb unless special conditions");
+
+
+  // Sanity check that sleep mode wasn't prematurely entered
 
   a_wfi_assert_sleepmode_no_ivalid: assert property (
     core_sleep_o
     |->
     !obi_iside_rvalid
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "shouldn't enter sleep if outstanding iside");
 
   a_wfi_assert_sleepmode_no_dvalid: assert property (
     core_sleep_o
     |->
     !obi_dside_rvalid
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "shouldn't enter sleep if outstanding dside");
 
   a_wfi_assert_sleepmode_no_wbuf: assert property (
     core_sleep_o
     |->
     (writebufstate == WBUF_EMPTY)
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "shouldn't enter sleep if wbuf non-empty");
 
 
-  // TODO
+  // Check wfi/wfe retirement conditions
 
   a_wfi_assert_sleepmode_retire0: assert property (
-    $rose(is_wfi_wfe_in_wb)  //TODO not "rose", just plain
+    $rose(is_wfi_wfe_in_wb)
     |->
     (wb_valid == (dcsr_step && !debug_req_i))  // TODO  Why is step/haltreq different?  Arbitrary uarch decision?
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "1st cycle retire only on step");
 
   a_wfi_assert_sleepmode_retire1: assert property (
     $rose(is_wfi_wfe_in_wb_d1)  &&
     is_wfi_wfe_in_wb
     |->
-    (wb_valid == ( is_wfi_wfe_wake || $past(debug_req_stickied) ))
-  ) else `uvm_error(info_tag, "TODO");
+    (wb_valid == ( is_wfi_wfe_wake || $past(debug_req_stickied) ))  // TODO:silabs-robin  See if can remove stickied
+  ) else `uvm_error(info_tag, "2nd cycle can retire on 'premature' 'wakeup'");
 
   a_wfi_assert_sleepmode_retire2: assert property (
     is_wfi_wfe_in_wb_d2  &&
@@ -655,7 +654,7 @@ module uvmt_cv32e40s_interrupt_assert
     |->
     (wb_valid == is_wfi_wfe_wake)
     // TODO:silabs-robin  Not checked is that non-killed early "resumes" work as expected
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, ">2nd cycle retire only on wake");
 
 
   // Confirm the uarch sleep delay is as expected (2 cycles)
@@ -664,13 +663,13 @@ module uvmt_cv32e40s_interrupt_assert
     $rose(is_wfi_wfe_in_wb)
     |->
     !core_sleep_o
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "1st cycle in wb is too early to sleep");
 
   a_wfi_assert_sleepmode_nodly1: assert property (
     $rose( $past(is_wfi_wfe_in_wb, 1) )
     |->
     !core_sleep_o
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "2nd cycle in wb is too early to sleep");
 
   for (genvar i = 2; i < 8; i++) begin: gen_wfi_assert_sleepmode_nodlyn_outer
     for (genvar onoff = 0; onoff < 2; onoff++) begin: gen_wfi_assert_sleepmode_nodlyn_inner
@@ -684,6 +683,7 @@ module uvmt_cv32e40s_interrupt_assert
 
 
   // WFI assertion will assert core_sleep_o (after required conditions are met)
+
   property p_wfi_assert_core_sleep_o_cond;
     !in_wfi_wfe
     ##1 (
@@ -693,37 +693,39 @@ module uvmt_cv32e40s_interrupt_assert
     |->
     core_sleep_o;
   endproperty
+
   a_wfi_assert_core_sleep_o_cond: assert property(p_wfi_assert_core_sleep_o_cond)
     else
       `uvm_error(info_tag,
                  "Assertion of core_sleep_o did not occur upon its prerequisite conditions")
+
   c_wfi_assert_core_sleep_o_cond: cover property(p_wfi_assert_core_sleep_o_cond);
 
 
-  // TODO:silabs-robin
+  // Check conditions denying sleep
 
   a_wfi_assert_core_not_ready: assert property (
     !pipeline_ready_for_wfi |-> !core_sleep_o
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "no sleep before pipeline ready");
 
   a_wfi_assert_no_entry: assert property (
     (|alignbuf_outstanding || |lsu_busy)
     // TODO:silabs-robin  Use own non-probed signals
     |=>
     !core_sleep_o
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "no sleep before no outstanding");
 
   a_wfi_assert_irq_exit: assert property (
     pending_enabled_irq
     |->
     !core_sleep_o
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "no sleep when pending irqs");
 
   a_wfi_assert_debug_exit: assert property (
     debug_req_i
     |->
     !core_sleep_o
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "no sleep when pending debug");
 
 
   // core_sleep_o leads to rvfi_valid
@@ -738,7 +740,7 @@ module uvmt_cv32e40s_interrupt_assert
   endproperty : p_wfi_assert_to_rvfi
 
   a_wfi_assert_to_rvfi: assert property (p_wfi_assert_to_rvfi)
-    else `uvm_error(info_tag, "TODO");
+    else `uvm_error(info_tag, "sleeping wfi/wfe must retire to rvfi");
 
 
   // core_sleep_o must come, or WFI/WFE must finish
@@ -757,8 +759,9 @@ module uvmt_cv32e40s_interrupt_assert
     // TODO:silabs-robin  Idea: packed struct (like pmp reasons), cover several onehots
   endproperty : p_wfi_assert_come_coresleepo
 
-  a_wfi_assert_come_coresleepo: assert property (p_wfi_assert_come_coresleepo)
-    else `uvm_error(info_tag, "TODO");
+  a_wfi_assert_come_coresleepo: assert property (
+    p_wfi_assert_come_coresleepo
+  ) else `uvm_error(info_tag, "no retire until sleep or giveup");
 
 
   // core_sleep_o deassertion in wfi should be followed by WFI deassertion
