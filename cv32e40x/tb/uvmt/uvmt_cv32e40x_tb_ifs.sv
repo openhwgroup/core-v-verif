@@ -159,7 +159,8 @@ interface uvmt_cv32e40x_debug_cov_assert_if
     input         debug_running,
     input         debug_halted,
 
-    input         pending_debug, // From controller
+    input         pending_sync_debug, // From controller
+    input         pending_async_debug, // From controller
     input         pending_nmi, // From controller
     input         nmi_allowed, // From controller
     input         debug_mode_q, // From controller
@@ -236,6 +237,7 @@ interface uvmt_cv32e40x_debug_cov_assert_if
     mepc_q,
     tdata1,
     tdata2,
+    pending_sync_debug,
     trigger_match_in_wb,
     sys_fence_insn_i,
     mcountinhibit_q,

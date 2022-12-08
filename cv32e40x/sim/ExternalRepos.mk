@@ -15,7 +15,7 @@ export SHELL = /bin/bash
 
 CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40x
 CV_CORE_BRANCH ?= master
-CV_CORE_HASH   ?= 5da9bc517d7b7fbcd8f62b04c798280a3dc2be46
+CV_CORE_HASH   ?= fd367dbf2d42976e147be62a7613bff0b26ad3fb
 
 CV_CORE_TAG    ?= none
 
