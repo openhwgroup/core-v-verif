@@ -175,7 +175,8 @@ module uvmt_cv32e40x_debug_assert
         && !cov_assert_if.dcsr_q[2]
         && !cov_assert_if.dcsr_q[15]
         ##0 (
-          (!cov_assert_if.pending_debug && !cov_assert_if.irq_ack_o && !cov_assert_if.pending_nmi)
+          (!(cov_assert_if.pending_sync_debug || cov_assert_if.pending_async_debug) &&
+           !cov_assert_if.irq_ack_o && !cov_assert_if.pending_nmi)
           throughout (##1 cov_assert_if.wb_valid [->1])
           )
         |->
@@ -384,7 +385,8 @@ module uvmt_cv32e40x_debug_assert
     // dret in M-mode will cause illegal instruction
     // If pending debug req, illegal insn will not assert until resume
     property p_mmode_dret;
-        !cov_assert_if.debug_mode_q && cov_assert_if.is_dret && !cov_assert_if.pending_debug
+        !cov_assert_if.debug_mode_q && cov_assert_if.is_dret &&
+        !(cov_assert_if.pending_sync_debug || cov_assert_if.pending_async_debug)
         |-> cov_assert_if.illegal_insn_i;
     endproperty
 
@@ -628,7 +630,7 @@ module uvmt_cv32e40x_debug_assert
     end else begin
       // Enter wfi if we have a valid instruction, and conditions allow it (e.g. no single-step etc)
       if (cov_assert_if.is_wfi && cov_assert_if.wb_valid
-          && !cov_assert_if.pending_debug && !cov_assert_if.debug_mode_q && !cov_assert_if.dcsr_q[2])
+          && !(cov_assert_if.pending_sync_debug || cov_assert_if.pending_async_debug) && !cov_assert_if.debug_mode_q && !cov_assert_if.dcsr_q[2])
         cov_assert_if.in_wfi <= 1'b1;
       if (cov_assert_if.pending_enabled_irq || cov_assert_if.debug_req_i)
         cov_assert_if.in_wfi <= 1'b0;
