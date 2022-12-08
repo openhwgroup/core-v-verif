@@ -550,13 +550,6 @@ module uvmt_cv32e40s_interrupt_assert
 */
 
   a_wfi_assert_sleepmode_expected: assert property (
-    !$rose(is_wfi_wfe_in_wb_d2)  // Only consequent, no antecedent (Arbitrary uarch decision)
-    |->
-    model_sleepmode == core_sleep_o
-  ) else `uvm_error(info_tag, "TODO");
-  a_wfi_assert_sleepmode_expected_d2: assert property (
-    $rose(is_wfi_wfe_in_wb_d2)
-    |->
     model_sleepmode == core_sleep_o
   ) else `uvm_error(info_tag, "TODO");
 
@@ -628,6 +621,7 @@ module uvmt_cv32e40s_interrupt_assert
     is_wfi_wfe_in_wb
     |->
     (wb_valid == is_wfi_wfe_wake)
+    // TODO:silabs-robin  Not checked is that non-killed early "resumes" work as expected
   ) else `uvm_error(info_tag, "TODO");
 
 
@@ -671,6 +665,27 @@ module uvmt_cv32e40s_interrupt_assert
       `uvm_error(info_tag,
                  "Assertion of core_sleep_o did not occur upon its prerequisite conditions")
   c_wfi_assert_core_sleep_o_cond: cover property(p_wfi_assert_core_sleep_o_cond);
+
+
+  // core_sleep_o must come, or WFI/WFE must finish
+
+  property  p_wfi_assert_come_coresleepo;
+    ((is_wfi_wfe_in_wb && !is_wfi_wfe_wake) [*WFI_TO_CORE_SLEEP_LATENCY:$])
+
+    implies
+
+    !wb_valid  until (
+      $rose(core_sleep_o)  // core_sleep_o must come...
+      ||
+      (is_wfi_wfe_in_wb && is_wfi_wfe_wake)
+    )
+    ;
+    // TODO:silabs-robin  Idea: packed struct (like pmp reasons), cover several onehots
+  endproperty : p_wfi_assert_come_coresleepo
+
+  a_wfi_assert_come_coresleepo: assert property (p_wfi_assert_come_coresleepo)
+    else `uvm_error(info_tag, "TODO");
+
 
   // core_sleep_o deassertion in wfi should be followed by WFI deassertion
   property p_core_sleep_deassert;
