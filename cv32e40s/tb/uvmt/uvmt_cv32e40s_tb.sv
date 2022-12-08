@@ -125,6 +125,10 @@ module uvmt_cv32e40s_tb;
                                                                    .rvfi_valid(rvfi_i.rvfi_valid[0]),
                                                                    .rvfi_order(rvfi_i.rvfi_order[uvma_rvfi_pkg::ORDER_WL*0+:uvma_rvfi_pkg::ORDER_WL]),
                                                                    .rvfi_insn(rvfi_i.rvfi_insn[uvme_cv32e40s_pkg::ILEN*0+:uvme_cv32e40s_pkg::ILEN]),
+                                                                   .rvfi_insn_opcode(rvfi_i.insn_opcode),
+                                                                   .rvfi_insn_cmpr_opcode(rvfi_i.insn_opcode[1:0]),
+                                                                   .rvfi_insn_funct3(rvfi_i.insn_funct3),
+                                                                   .rvfi_insn_funct7(rvfi_i.insn_funct7),
                                                                    .rvfi_trap(rvfi_i.rvfi_trap),
                                                                    .rvfi_halt(rvfi_i.rvfi_halt[0]),
                                                                    .rvfi_intr(rvfi_i.rvfi_intr),
@@ -783,9 +787,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_clk                                                                                                         (core_i.clk),
       .clk_en                                                                                                           (core_i.sleep_unit_i.core_clock_gate_i.clk_en),
 
-      .core_i_wb_stage_i_last_op_o (core_i.wb_stage_i.last_op_o),
-      .core_i_id_stage_i_if_id_pipe_i_instr_meta_hint (core_i.id_stage_i.if_id_pipe_i.instr_meta.hint),
-
       .core_rf_we_wb                                                                                                    (core_i.rf_we_wb),
       .core_rf_waddr_wb                                                                                                 (core_i.rf_waddr_wb),
       .core_rf_wdata_wb                                                                                                 (core_i.rf_wdata_wb),
@@ -799,7 +800,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_xsecure_ctrl_cpuctrl_dataindtiming	                                                                        (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
       .core_xsecure_ctrl_cpuctrl_rnddummy		                                                                            (core_i.xsecure_ctrl.cpuctrl.rnddummy),
       .core_xsecure_ctrl_cpuctrl_pc_hardening                                                                           (core_i.xsecure_ctrl.cpuctrl.pc_hardening),
-      .core_xsecure_ctrl_cpuctrl_rndhint (core_i.xsecure_ctrl.cpuctrl.rndhint),
+      .core_xsecure_ctrl_cpuctrl_rndhint                                                                                (core_i.xsecure_ctrl.cpuctrl.rndhint),
 
       .core_xsecure_ctrl_cpuctrl_rnddummyfreq                                                                           (core_i.xsecure_ctrl.cpuctrl[19:16]),
       .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
@@ -883,8 +884,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs2                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.lfsr_rs2),
 
       .core_if_stage_instr_meta_n_dummy                                                                                 (core_i.if_stage_i.instr_meta_n.dummy),
-      .core_i_if_stage_i_instr_hint (core_i.if_stage_i.instr_hint),
-      .core_i_if_stage_i_dummy_insert (core_i.if_stage_i.dummy_insert),
+      .core_i_if_stage_i_instr_hint                                                                                     (core_i.if_stage_i.instr_hint),
+      .core_i_if_stage_i_dummy_insert                                                                                   (core_i.if_stage_i.dummy_insert),
 
       .core_i_if_stage_i_pc_if_o                                                                                        (core_i.if_stage_i.pc_if_o),
       .core_i_if_stage_i_pc_check_i_pc_set_q                                                                            (core_i.if_stage_i.pc_check_i.pc_set_q),
@@ -892,7 +893,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       // IF ID pipe
       .core_if_id_pipe_instr_meta_dummy                                                                                 (core_i.if_id_pipe.instr_meta.dummy),
-      .core_if_id_pipe_instr_meta_hint (core_i.if_id_pipe.instr_meta.hint),
+      .core_if_id_pipe_instr_meta_hint                                                                                  (core_i.if_id_pipe.instr_meta.hint),
       .core_if_id_pipe_instr_bus_resp_rdata                                                                             (core_i.if_id_pipe.instr.bus_resp.rdata),
       .core_i_id_stage_i_if_id_pipe_i_pc                                                                                (core_i.id_stage_i.if_id_pipe_i.pc),
 
@@ -904,20 +905,17 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       // ID EX pipe
       .core_id_ex_pipe_instr_meta_dummy                                                                                 (core_i.id_ex_pipe.instr_meta.dummy),
-      .core_id_ex_pipe_instr_bus_resp_rdata                                                                             (core_i.id_ex_pipe.instr.bus_resp.rdata),
 
       // EX stage
       .core_i_ex_stage_i_branch_target_o                                                                                (core_i.ex_stage_i.branch_target_o),
       .core_i_ex_stage_i_alu_i_cmp_result_o                                                                             (core_i.ex_stage_i.alu_i.cmp_result_o),
 
       // EX WB pipe
-      .core_wb_stage_ex_wb_pipe_instr_meta_dummy                                                                        (core_i.wb_stage_i.ex_wb_pipe_i.instr_meta.dummy),
-      .core_wb_stage_ex_wb_pipe_instr_meta_hint (core_i.wb_stage_i.ex_wb_pipe_i.instr_meta.hint),
+      .core_ex_wb_pipe_instr_meta_dummy                                                                                 (core_i.ex_wb_pipe.instr_meta.dummy),
+      .core_ex_wb_pipe_instr_meta_hint                                                                                  (core_i.ex_wb_pipe.instr_meta.hint),
 
       // WB stage
       .core_wb_stage_wb_valid_o                                                                                         (core_i.wb_stage_i.wb_valid_o),
-      .core_i_wb_stage_i_ex_wb_pipe_i_instr_meta_compressed (core_i.wb_stage_i.ex_wb_pipe_i.instr_meta.compressed),
-      .core_i_wb_stage_i_ex_wb_pipe_i_instr_bus_resp_rdata (core_i.wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
 
       // CTRL
 
