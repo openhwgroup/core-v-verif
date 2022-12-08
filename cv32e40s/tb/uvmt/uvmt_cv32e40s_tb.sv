@@ -471,6 +471,7 @@ module uvmt_cv32e40s_tb;
       .mpu_iside_req    (if_stage_i.mpu_i.core_trans_valid_i),
       .mpu_iside_gnt    (if_stage_i.mpu_i.core_trans_ready_o),
       .mpu_iside_rvalid (if_stage_i.mpu_i.core_resp_valid_o),
+      .obi_iside_rvalid (instr_rvalid_i),
       .obi_dside_req    (data_req_o),
       .obi_dside_gnt    (data_gnt_i),
       .obi_dside_rvalid (data_rvalid_i),

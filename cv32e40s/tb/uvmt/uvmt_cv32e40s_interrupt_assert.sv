@@ -78,6 +78,7 @@ module uvmt_cv32e40s_interrupt_assert
     input mpu_iside_req,
     input mpu_iside_gnt,
     input mpu_iside_rvalid,
+    input obi_iside_rvalid,
     input obi_dside_req,
     input obi_dside_gnt,
     input obi_dside_rvalid,
@@ -611,6 +612,24 @@ module uvmt_cv32e40s_interrupt_assert
     $past(debug_req_stickied && !debug_req_i) // TODO:silabs-robin  Halt req should be unsticky in future RTL
     or
     ((rvfi.rvfi_valid [->1]) ##0 (rvfi.rvfi_dbg == DBG_CAUSE_TRIGGER))
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_wfi_assert_sleepmode_no_ivalid: assert property (
+    core_sleep_o
+    |->
+    !obi_iside_rvalid
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_wfi_assert_sleepmode_no_dvalid: assert property (
+    core_sleep_o
+    |->
+    !obi_dside_rvalid
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_wfi_assert_sleepmode_no_wbuf: assert property (
+    core_sleep_o
+    |->
+    (writebufstate == WBUF_EMPTY)
   ) else `uvm_error(info_tag, "TODO");
 
 
