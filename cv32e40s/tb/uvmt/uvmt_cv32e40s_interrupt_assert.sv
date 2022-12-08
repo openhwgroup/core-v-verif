@@ -524,6 +524,7 @@ module uvmt_cv32e40s_interrupt_assert
 
 
   // WFI assertion will assert core_sleep_o (in WFI_TO_CORE_SLEEP_LATENCY cycles after wb, given ideal conditions)
+
   property p_wfi_assert_core_sleep_o;
     !in_wfi_wfe
     ##1 (in_wfi_wfe && !(|pending_enabled_irq) && !debug_mode_q && !debug_req_i)[*(WFI_TO_CORE_SLEEP_LATENCY-1)]
@@ -534,11 +535,24 @@ module uvmt_cv32e40s_interrupt_assert
     |->
     core_sleep_o;
   endproperty
+
   a_wfi_assert_core_sleep_o: assert property(p_wfi_assert_core_sleep_o)
     else
       `uvm_error(info_tag,
                  $sformatf("Assertion of core_sleep_o did not occur within %0d clocks", WFI_TO_CORE_SLEEP_LATENCY))
+
   c_wfi_assert_core_sleep_o: cover property(p_wfi_assert_core_sleep_o);
+
+  c_wfi_assert_core_sleep_long: cover property(
+    (
+      p_wfi_assert_core_sleep_o
+    ) and (
+      //((is_wfi_wfe_in_wb == 0) && (!is_wfi_wfe_blocked == 0) && (core_sleep_o == 0)) [*1:$]  ##1
+      ((is_wfi_wfe_in_wb == 1) && (!is_wfi_wfe_blocked == 0) && (core_sleep_o == 0)) [*1:$]  ##1
+      ((is_wfi_wfe_in_wb == 1) && (!is_wfi_wfe_blocked == 1) && (core_sleep_o == 0)) [*1:$]  ##1
+      ((is_wfi_wfe_in_wb == 1) && (!is_wfi_wfe_blocked == 1) && (core_sleep_o == 1)) [*1:$]
+    )
+  );
 
 
   // TODO
@@ -665,6 +679,47 @@ module uvmt_cv32e40s_interrupt_assert
       `uvm_error(info_tag,
                  "Assertion of core_sleep_o did not occur upon its prerequisite conditions")
   c_wfi_assert_core_sleep_o_cond: cover property(p_wfi_assert_core_sleep_o_cond);
+
+
+  // TODO:silabs-robin
+
+  a_wfi_assert_core_not_ready: assert property (
+    !pipeline_ready_for_wfi |-> !core_sleep_o
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_wfi_assert_no_entry: assert property (
+    (|alignbuf_outstanding || |lsu_busy)
+    // TODO:silabs-robin  Use own non-probed signals
+    |=>
+    !core_sleep_o
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_wfi_assert_irq_exit: assert property (
+    pending_enabled_irq
+    |->
+    !core_sleep_o
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_wfi_assert_debug_exit: assert property (
+    debug_req_i
+    |->
+    !core_sleep_o
+  ) else `uvm_error(info_tag, "TODO");
+
+
+  // core_sleep_o leads to rvfi_valid
+
+  property  p_wfi_assert_to_rvfi;
+    core_sleep_o
+    |=>
+    (rvfi.rvfi_valid [->1])  ##0
+    (rvfi.rvfi_insn  inside  {WFI_INSTR_DATA, WFE_INSTR_DATA})
+    ;
+    // TODO:silabs-robin  Check the inverse?
+  endproperty : p_wfi_assert_to_rvfi
+
+  a_wfi_assert_to_rvfi: assert property (p_wfi_assert_to_rvfi)
+    else `uvm_error(info_tag, "TODO");
 
 
   // core_sleep_o must come, or WFI/WFE must finish
