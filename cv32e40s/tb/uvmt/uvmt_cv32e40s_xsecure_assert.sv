@@ -1212,8 +1212,8 @@ module uvmt_cv32e40s_xsecure_assert
     //In case of mulit cycled instructions, make sure the instruction is the last operation
     && xsecure_if.core_i_if_id_pipe_last_op
 
-    //Make sure the instruction is not a pointer (TODO: this is making the error)
-    //&& !xsecure_if.core_i_if_stage_i_ptr_in_if_o
+    //Make sure the instruction is not a pointer (as pointers inserts a non-incremental PC)
+    && !xsecure_if.core_i_if_stage_i_ptr_in_if_o
 
     |->
     //Correct behaviour requires that one of the following behaviours are true:
@@ -1245,9 +1245,6 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure we look at valid cycles
     core_clock_cycles
 
-    //Make sure the PC hardening setting is on
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
-
     //Make sure the inspected instruction is valid
     && $past(xsecure_if.core_if_stage_if_valid_o)
     && $past(xsecure_if.core_if_stage_id_ready_i)
@@ -1255,8 +1252,8 @@ module uvmt_cv32e40s_xsecure_assert
     //In case of mulit cycled instructions, make sure the instruction is the last operation
     && xsecure_if.core_i_if_id_pipe_last_op
 
-    //Make sure the instruction is not a pointer (TODO: this is making the error)
-    //& !xsecure_if.core_i_if_stage_i_ptr_in_if_o
+    //Make sure the instruction is not a pointer
+    && !xsecure_if.core_i_if_stage_i_ptr_in_if_o
 
     //Make sure it is not icremental behaviour
     and !(xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + CMPR_INSTRUCTION_INCREMENT && $past(xsecure_if.core_i_if_stage_i_compressed_decoder_i_is_compressed_o))
@@ -1279,32 +1276,39 @@ module uvmt_cv32e40s_xsecure_assert
 
   endsequence
 
-
+  //TODO: look into this assertion after potential rtl fix
+  /*
   a_xsecure_pc_hardening_sets_alert_major: assert property (
 
-    seq_xsecure_pc_hardening_with_glitch
+    //Make sure the PC hardening setting is on
+    xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+
+    ##0 seq_xsecure_pc_hardening_with_glitch
 
     |=>
     //Make sure the alert major is set
     xsecure_if.core_alert_major_o
 
   ) else `uvm_error(info_tag, "A PC fault in IF stage does not set major alert when PC hardening is on.\n");
-
+  */
 
   ////////// PC HARDENING OFF: DONT SET MAJOR ALERT IF GLITCH //////////
 
   //TODO: recheck this assertion when the rtl code related to pc_hadening=0 is implemented
-
+  /*
   a_xsecure_pc_hardening_off_dont_set_alert_major: assert property (
 
-    seq_xsecure_pc_hardening_with_glitch
+    //Make sure the PC hardening setting is off
+    !xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+
+    ##0 seq_xsecure_pc_hardening_with_glitch
 
     |=>
     //Make sure the alert major is not set
     !xsecure_if.core_alert_major_o
 
   ) else `uvm_error(info_tag, "A PC fault in IF stage does set major alert when PC hardening is off.\n");
-
+  */
 
   ////////// PC HARDENING ON: SET MAJOR ALERT IF GLITCH IN PC TARGET //////////
 
