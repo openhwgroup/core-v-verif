@@ -402,7 +402,7 @@ module uvmt_cv32e40s_interrupt_assert
     else begin
       if ((is_wfi || is_wfe) && !in_wfi_wfe) //
         in_wfi_wfe <= 1'b1;
-      else if (|pending_enabled_irq || debug_req_i || debug_mode_q)
+      else if (|pending_enabled_irq || debug_req_i || pending_nmi || debug_mode_q)
         in_wfi_wfe <= 1'b0;
     end
   end
@@ -612,6 +612,7 @@ module uvmt_cv32e40s_interrupt_assert
     $past(debug_req_stickied && !debug_req_i) // TODO:silabs-robin  Halt req should be unsticky in future RTL
     or
     ((rvfi.rvfi_valid [->1]) ##0 (rvfi.rvfi_dbg == DBG_CAUSE_TRIGGER))
+    // TODO:silabs-robin  Haven't checked which cycles kill is allowed
   ) else `uvm_error(info_tag, "blocked wfi/wfe must remain in wb unless special conditions");
 
 
@@ -642,6 +643,7 @@ module uvmt_cv32e40s_interrupt_assert
     $rose(is_wfi_wfe_in_wb)
     |->
     (wb_valid == (dcsr_step && !debug_req_i))  // TODO:silabs-robin  Why is step/haltreq different?  Arbitrary uarch decision?
+    // TODO:silabs-robin  If step&&haltreq, assert should/shouldn't retire.
   ) else `uvm_error(info_tag, "1st cycle retire only on step");
 
   a_wfi_assert_sleepmode_retire1: assert property (
