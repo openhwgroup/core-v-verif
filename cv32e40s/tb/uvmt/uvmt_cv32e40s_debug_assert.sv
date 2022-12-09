@@ -190,7 +190,8 @@ module uvmt_cv32e40s_debug_assert
         && !cov_assert_if.dcsr_q[2]
         && !cov_assert_if.dcsr_q[15]
         ##0 (
-          (!cov_assert_if.pending_debug && !cov_assert_if.irq_ack_o && !cov_assert_if.pending_nmi)
+          (!(cov_assert_if.pending_sync_debug || cov_assert_if.pending_async_debug) &&
+           !cov_assert_if.irq_ack_o && !cov_assert_if.pending_nmi)
           throughout (##1 cov_assert_if.wb_valid [->1])
           )
         |->
@@ -399,7 +400,8 @@ module uvmt_cv32e40s_debug_assert
     // dret in M-mode will cause illegal instruction
     // If pending debug req, illegal insn will not assert until resume
     property p_mmode_dret;
-        !cov_assert_if.debug_mode_q && cov_assert_if.is_dret && !cov_assert_if.pending_debug
+        !cov_assert_if.debug_mode_q && cov_assert_if.is_dret &&
+        !(cov_assert_if.pending_sync_debug || cov_assert_if.pending_async_debug)
         |-> cov_assert_if.illegal_insn_i;
     endproperty
 
@@ -594,7 +596,7 @@ module uvmt_cv32e40s_debug_assert
     // step vs nmi
     // check that single stepping disables nmi
     property p_stepie_irq_dis;
-        rvfi.is_dret && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && !csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
+        rvfi.is_dret() && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && !csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
         |=>
         rvfi.rvfi_valid[->1]
         ##0 !(rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt);
@@ -604,7 +606,7 @@ module uvmt_cv32e40s_debug_assert
         else `uvm_error(info_tag, "Single stepping should ignore all interrupts if stepie is set");
 
     cov_step_stepie_nmi : cover property (
-        rvfi.is_dret
+        rvfi.is_dret()
         && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]
         && !csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
         && csr_dcsr.rvfi_csr_rdata[DCSR_NMIP_POS]
@@ -615,7 +617,7 @@ module uvmt_cv32e40s_debug_assert
     // if the next instruction after a single step dret is in debug mode,
     // a trap entry has to be the cause.
     property p_step_trap_handler_entry;
-        (rvfi.is_dret &&
+        (rvfi.is_dret() &&
         csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] &&
         csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS])
         ##1 rvfi.rvfi_valid[->1]
@@ -628,7 +630,7 @@ module uvmt_cv32e40s_debug_assert
         else `uvm_error(info_tag, "single stepping remained in debug mode illegally");
 
     property p_step_no_trap;
-        rvfi.is_dret && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
+        rvfi.is_dret() && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
         ##1 rvfi.rvfi_valid[->1]
         ##0 !rvfi.rvfi_dbg_mode
         |->

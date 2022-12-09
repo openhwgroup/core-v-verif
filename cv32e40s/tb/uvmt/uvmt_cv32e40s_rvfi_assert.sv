@@ -94,7 +94,7 @@ module uvmt_cv32e40s_rvfi_assert
     |->
     (rvfi_trap.exception_cause
       == (rvfi_csr_mcause_wdata & rvfi_csr_mcause_wmask))
-  );
+  ) else `uvm_error(info_tag, "'exception_cause' must match 'mcause'");
 
 
   // Exceptions/Interrupts/Debugs have a cause

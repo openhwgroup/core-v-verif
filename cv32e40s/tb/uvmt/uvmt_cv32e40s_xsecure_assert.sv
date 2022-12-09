@@ -14,11 +14,13 @@ module uvmt_cv32e40s_xsecure_assert
   (
    uvmt_cv32e40s_xsecure_if xsecure_if,
    uvma_rvfi_instr_if rvfi_if,
+   uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave support_if,
    input rst_ni,
    input clk_i
   );
 
   //TODO: update hardened CSR documentation as these CSRs are no longer hardened mclicbase, mscratchcsw, mscratchcswl
+  //TODO: correct english
 
   // Local parameters:
   localparam NO_LOCKUP_ERRORS = 3'b000;
@@ -30,21 +32,16 @@ module uvmt_cv32e40s_xsecure_assert
   localparam ERROR_CODE_STORE_AMO_ACCESS_FAULT = 6'd7;
   localparam ERROR_CODE_INSTRUCTION_BUS_FAULT = 6'd24;
 
-  localparam FUNC7_BRANCH_INSTRUCTION = 7'bxxxxxxx;
-  localparam FUNC3_BRANCH_INSTRUCTION = 3'bxxx;
+  localparam FUNCT7_BRANCH_INSTRUCTION = 7'bxxxxxxx;
+  localparam FUNCT3_BRANCH_INSTRUCTION = 3'bxxx;
 
-  localparam FUNC7_DIV_REM_INSTRUCTION = 7'b0000001;
-  localparam FUNC3_DIV_REM_INSTRUCTION = 3'b1xx; //TODO: can be problematic with x
+  localparam FUNCT7_DIV_REM_INSTRUCTION = 7'b0000001;
+  localparam FUNCT3_DIV_REM_INSTRUCTION = 3'b1xx; //TODO: can be problematic with x
 
-  localparam FUNC3_BLTU_INSTRUCTION = 3'b110;
-
-  localparam FUNC7_MRET_INSTRUCTION = 7'b0011000;
-  localparam FUNC3_MRET_INSTRUCTION = 3'b000;
-
-  localparam FUNC3_COMPR_BRANCH = 3'b11x;
+  localparam FUNCT3_COMPR_BRANCH = 3'b11x;
   localparam OPCODE_COMPR_BRANCH = 2'b01;
 
-  localparam FUNC3_COMPR_SLLI = 3'b000;
+  localparam FUNCT3_COMPR_SLLI = 3'b000;
   localparam OPCODE_COMPR_SLLI = 2'b10;
 
   localparam REGISTER_MHPMCOUNTER_MCYCLE_FULL = 64'hFFFFFFFFFFFFFFFF;
@@ -64,9 +61,22 @@ module uvmt_cv32e40s_xsecure_assert
   localparam NON_CMPR_INSTRUCTION_INCREMENT = 4;
   localparam CMPR_INSTRUCTION_INCREMENT = 2;
 
-
   localparam DUMMY_INCREMENT = 0;
   localparam HINT_INCREMENT = 2;
+
+  //Sticky bit that indicates if major alert has been set.
+  logic alert_major_was_set;
+
+  //Support logic that set alert_major_was_set high if major alert ever is high.
+  //When major alert has been set, the only way to recover is by resetting.
+  always @(posedge clk_i) begin
+    if(!rst_ni) begin
+      alert_major_was_set <= 0;
+    end else if (xsecure_if.core_alert_major_o) begin
+      alert_major_was_set <= xsecure_if.core_alert_major_o;
+    end
+  end
+
 
   logic [5:0] rvfi_c_slli_shamt;
   assign rvfi_c_slli_shamt = {rvfi_if.rvfi_insn[12], rvfi_if.rvfi_insn[6:2]};
@@ -190,11 +200,11 @@ module uvmt_cv32e40s_xsecure_assert
 
     //Make sure the instruction is a branch instruction (both non-compressed and compressed)
     (rvfi_if.rvfi_insn_opcode == OPCODE_BRANCH
-    && rvfi_if.rvfi_insn_funct3 == FUNC3_BRANCH_INSTRUCTION
-    && rvfi_if.rvfi_insn_funct7 == FUNC7_BRANCH_INSTRUCTION)
+    && rvfi_if.rvfi_insn_funct3 == FUNCT3_BRANCH_INSTRUCTION
+    && rvfi_if.rvfi_insn_funct7 == FUNCT7_BRANCH_INSTRUCTION)
 
     || (rvfi_if.rvfi_insn_opcode == OPCODE_COMPR_BRANCH
-    && rvfi_if.rvfi_insn_funct3 == FUNC3_COMPR_BRANCH)
+    && rvfi_if.rvfi_insn_funct3 == FUNCT3_COMPR_BRANCH)
 
     //Make sure the instruction is valid and has been executed without traps
     && rvfi_if.rvfi_valid
@@ -212,8 +222,8 @@ module uvmt_cv32e40s_xsecure_assert
 
     //Make sure we detect an DIV or REM instruction in rvfi
     (rvfi_if.rvfi_insn_opcode == OPCODE_OP
-    && rvfi_if.rvfi_insn_funct3 == FUNC3_DIV_REM_INSTRUCTION
-    && rvfi_if.rvfi_insn_funct7 == FUNC7_DIV_REM_INSTRUCTION)
+    && rvfi_if.rvfi_insn_funct3 == FUNCT3_DIV_REM_INSTRUCTION
+    && rvfi_if.rvfi_insn_funct7 == FUNCT7_DIV_REM_INSTRUCTION)
 
     //Make sure the instruction is valid and has been executed without traps
     && rvfi_if.rvfi_valid
@@ -238,22 +248,22 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// BRANCH TIMING //////////
 
-  a_xsecure_branch_timing: assert property (
+  a_xsecure_dataindtiming_branch_timing: assert property (
 
     //Make sure the instruction is a branch instruction (both non-compressed and compressed)
     (rvfi_if.rvfi_insn_opcode == OPCODE_BRANCH
-    && rvfi_if.rvfi_insn_funct3 == FUNC3_BRANCH_INSTRUCTION
-    && rvfi_if.rvfi_insn_funct7 == FUNC7_BRANCH_INSTRUCTION)
+    && rvfi_if.rvfi_insn_funct3 == FUNCT3_BRANCH_INSTRUCTION
+    && rvfi_if.rvfi_insn_funct7 == FUNCT7_BRANCH_INSTRUCTION)
 
     || (rvfi_if.rvfi_insn_opcode == OPCODE_COMPR_BRANCH
-    && rvfi_if.rvfi_insn_funct3 == FUNC3_COMPR_BRANCH)
+    && rvfi_if.rvfi_insn_funct3 == FUNCT3_COMPR_BRANCH)
 
     //Make sure the instruction is valid and has been executed without traps
     && rvfi_if.rvfi_valid
     && !rvfi_if.rvfi_trap.trap
 
     //Make sure the data independent timing was on when executing the branch (ex stage):
-    and $past(xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
+    && $past(xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
 
     //Make sure that the instruction before the branch instruction was not a load or a store (rvfi stage):
     //We use past 2 because branching needs two cycles to complete execution due to PC harning safety.
@@ -296,12 +306,12 @@ module uvmt_cv32e40s_xsecure_assert
   endsequence
 
 
-  a_xsecure_core_div_rem_timing: assert property (
+  a_xsecure_dataindtiming_div_rem_timing: assert property (
 
     //Make sure the instruction is a DIV or REM instruction
     (rvfi_if.rvfi_insn_opcode == OPCODE_OP
-    && rvfi_if.rvfi_insn_funct3 == FUNC3_DIV_REM_INSTRUCTION
-    && rvfi_if.rvfi_insn_funct7 == FUNC7_DIV_REM_INSTRUCTION)
+    && rvfi_if.rvfi_insn_funct3 == FUNCT3_DIV_REM_INSTRUCTION
+    && rvfi_if.rvfi_insn_funct7 == FUNCT7_DIV_REM_INSTRUCTION)
 
     //Make sure the instruction is valid and has been executed without traps
     && rvfi_if.rvfi_valid
@@ -1389,7 +1399,7 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure a valid hint instruction retires
     ##1 rvfi_if.rvfi_valid
     && !rvfi_if.rvfi_trap.trap
-    && rvfi_if.rvfi_insn_funct3 == FUNC3_COMPR_SLLI
+    && rvfi_if.rvfi_insn_funct3 == FUNCT3_COMPR_SLLI
     && rvfi_if.rvfi_insn_cmpr_opcode == OPCODE_COMPR_SLLI
     && rvfi_if.rvfi_rd1_addr == REGISTER_x0
     && rvfi_c_slli_shamt != '0
@@ -1536,12 +1546,172 @@ module uvmt_cv32e40s_xsecure_assert
 
     |->
     //Verify that the hint instruction appears as c.slli instruction with rd=x0 and shamt != 0
-    rvfi_if.rvfi_insn_funct3 == FUNC3_COMPR_SLLI
+    rvfi_if.rvfi_insn_funct3 == FUNCT3_COMPR_SLLI
     && rvfi_if.rvfi_insn_cmpr_opcode == OPCODE_COMPR_SLLI
     && rvfi_if.rvfi_rd1_addr == REGISTER_x0
     && rvfi_c_slli_shamt != '0
 
   ) else `uvm_error(info_tag, "Hint instruction dont appears as c.slli instruction with rd=x0 and shamt != 0 on RVFI.\n");
+
+
+
+  //////////////////////////////////////////////////////////////////////////
+  ///////////////////////// BUS PROTOCOL HARDENING /////////////////////////
+  //////////////////////////////////////////////////////////////////////////
+
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCH //////////
+
+  property p_resp_after_addr_no_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure the core is in operative state
+    core_clock_cycles
+
+    //Make sure there is a respons phase transfer
+    && obi_rvalid
+
+    //Make sure the respons phase transfer is finished
+    && !resp_ph_cont
+
+    |->
+    //Check that the repsons phase transfer is indeed a respons to an address transfer (that there at least exist one active address transfer)
+    v_addr_ph_cnt > 0;
+
+  endproperty;
+
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_data: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      support_if.data_bus_resp_ph_cont,
+      support_if.data_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the data bus leading into the core.\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_instr: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      support_if.instr_bus_resp_ph_cont,
+      support_if.instr_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the instructions bus leading into the core.\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_abiim: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
+      support_if.abiim_bus_resp_ph_cont,
+      support_if.abiim_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m).\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_lml: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_load_store_unit_i_resp_valid,
+      support_if.lml_bus_resp_ph_cont,
+      support_if.lml_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handsake between LSU (l) MPU (m) and LSU (l).\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_no_glitch_lrfodi: assert property (
+    p_resp_after_addr_no_glitch(
+      xsecure_if.core_i_load_store_unit_i_bus_resp_valid,
+      support_if.lrfodi_bus_resp_ph_cont,
+      support_if.lrfodi_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handsake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i).\n");
+
+
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER DONT UNDERFLOW //////////
+
+  a_xsecure_bus_hardening_counter_dont_underflow: assert property (
+
+    //Make sure the counter is in a position where it can underflow
+    xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0
+
+    |=>
+    //Make sure the counter eithr stay 0
+    xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0
+
+    //Or count upwards
+    || xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 1
+
+  ) else `uvm_error(info_tag, "The counter underflows.\n");
+
+
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE GLITCHES //////////
+
+  property p_resp_after_addr_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure the core is in operative state
+    core_clock_cycles
+
+    //Make sure major alert is not or has not been set
+    && !alert_major_was_set && !xsecure_if.core_alert_major_o
+
+    //Make sure there is a respons phase transfer
+    && obi_rvalid
+
+    //Make sure the respons phase transfer is finished
+    && !resp_ph_cont
+
+    //Make sure there are no active address transfers the respons tranfere could be correlated with
+    && v_addr_ph_cnt == 0
+
+    |=>
+    //Check that major alert is set
+    xsecure_if.core_alert_major_o;
+  endproperty;
+
+  a_xsecure_bus_hardening_resp_after_addr_glitch_data: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      support_if.data_bus_resp_ph_cont,
+      support_if.data_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "A respons phase before address phase in the data bus leading into the core does not set major alert.\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_glitch_instr: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      support_if.instr_bus_resp_ph_cont,
+      support_if.instr_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "A respons phase before address phase in the instruction bus leading into the core does not set major alert (instructions).\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_glitch_abiim: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
+      support_if.abiim_bus_resp_ph_cont,
+      support_if.abiim_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) does not set major alert.\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_glitch_lml: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_load_store_unit_i_resp_valid,
+      support_if.lml_bus_resp_ph_cont,
+      support_if.lml_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between LSU (l) MPU (m) and LSU (l) does not set major alert.\n");
+
+  a_xsecure_bus_hardening_resp_after_addr_glitch_lrfodi: assert property (
+    p_resp_after_addr_glitch(
+      xsecure_if.core_i_load_store_unit_i_bus_resp_valid,
+      support_if.lrfodi_bus_resp_ph_cont,
+      support_if.lrfodi_bus_v_addr_ph_cnt)
+  ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i) does not set major alert.\n");
+
+
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER UNDERFLOW SET MAJOR ALERT //////////
+
+  a_xsecure_bus_hardening_counter_overflow_set_major_alert: assert property (
+
+    //Make sure the core is in operative state
+    core_clock_cycles
+
+    //Make sure the counter is in a position where it can underflow
+    && (xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0)
+
+    //Make sure the counter underflows
+    ##1 xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q != 0
+    && xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q != 1
+
+    |->
+    //Verify that alert major is set
+    xsecure_if.core_alert_major_o
+  ) else `uvm_error(info_tag, "The counter underflows but dont set major alert.\n");
+
 
 
 endmodule : uvmt_cv32e40s_xsecure_assert

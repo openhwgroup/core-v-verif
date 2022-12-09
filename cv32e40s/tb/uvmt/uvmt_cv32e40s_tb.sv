@@ -793,6 +793,15 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_register_file_wrapper_register_file_mem                                                                     (core_i.register_file_wrapper_i.register_file_i.mem),
       .core_i_jump_target_id                                                                                            (core_i.jump_target_id),
 
+      // OBI signals
+      .core_i_m_c_obi_data_if_s_rvalid_rvalid                                                                           (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+      .core_i_m_c_obi_instr_if_s_rvalid_rvalid                                                                          (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+      .core_i_if_stage_i_prefetch_resp_valid                                                                            (core_i.if_stage_i.prefetch_resp_valid),
+      .core_i_load_store_unit_i_resp_valid                                                                              (core_i.load_store_unit_i.resp_valid),
+      .core_i_load_store_unit_i_bus_resp_valid                                                                          (core_i.load_store_unit_i.bus_resp_valid),
+
+      .core_i_load_store_unit_i_response_filter_i_core_cnt_q                                                            (core_i.load_store_unit_i.response_filter_i.core_cnt_q),
+
       // CSR
       .core_alert_minor_o                                                                                               (core_i.alert_minor_o),
       .core_alert_major_o                                                                                               (core_i.alert_major_o),
@@ -923,10 +932,9 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux                                                                   (core_i.if_stage_i.pc_check_i.ctrl_fsm_i.pc_mux)
 
     );
-  // Xsecure assertions
+   // Xsecure assertions
 
-
- bind cv32e40s_wrapper
+  bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_assert #(
 	.SECURE	(cv32e40s_pkg::SECURE),
   .SMCLIC (SMCLIC),
@@ -938,6 +946,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
     ) xsecure_assert_i 	(
     	.xsecure_if	(xsecure_if),
 	    .rvfi_if	  (rvfi_instr_if_0_i),
+      .support_if (support_logic_for_assert_coverage_modules_if.slave),
       .clk_i      (clk_i),
       .rst_ni     (rst_ni)
     );
@@ -974,7 +983,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .debug_halted           (core_i.debug_halted_o),
 
       .debug_req_q            (core_i.controller_i.controller_fsm_i.debug_req_q),
-      .pending_debug          (core_i.controller_i.controller_fsm_i.pending_debug),
+      .pending_sync_debug     (core_i.controller_i.controller_fsm_i.pending_sync_debug),
+      .pending_async_debug    (core_i.controller_i.controller_fsm_i.pending_async_debug),
       .pending_nmi            (core_i.controller_i.controller_fsm_i.pending_nmi),
       .nmi_allowed            (core_i.controller_i.controller_fsm_i.nmi_allowed),
       .debug_mode_q           (core_i.controller_i.controller_fsm_i.debug_mode_q),
@@ -1030,15 +1040,39 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
 
     bind cv32e40s_wrapper
-      uvmt_cv32e40s_support_logic_if support_logic_if ();
+      uvmt_cv32e40s_input_to_support_logic_module_if input_to_support_logic_module_if (
+        .clk     (core_i.clk),
+        .rst_n (core_i.rst_ni),
 
-    // TODO find a better way
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.ctrl_fsm_o_i   = dut_wrap.cv32e40s_wrapper_i.core_i.controller_i.controller_fsm_i.ctrl_fsm_o;
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_req_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_req.req;
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.data_bus_gnt_i = dut_wrap.cv32e40s_wrapper_i.core_i.m_c_obi_data_if.s_gnt.gnt;
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.clk_i          = dut_wrap.cv32e40s_wrapper_i.core_i.clk_i;
-    assign dut_wrap.cv32e40s_wrapper_i.support_logic_if.rst_ni         = dut_wrap.cv32e40s_wrapper_i.core_i.rst_ni;
+        .ctrl_fsm_o (core_i.controller_i.controller_fsm_i.ctrl_fsm_o),
 
+        .data_bus_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+        .data_bus_req (core_i.m_c_obi_data_if.s_req.req),
+        .data_bus_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
+
+        .instr_bus_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+        .instr_bus_req (core_i.m_c_obi_instr_if.s_req.req),
+        .instr_bus_gnt (core_i.m_c_obi_instr_if.s_gnt.gnt),
+
+        //obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) is refered to as abiim
+        .abiim_bus_rvalid (core_i.if_stage_i.prefetch_resp_valid),
+        .abiim_bus_req (core_i.if_stage_i.prefetch_trans_ready),
+        .abiim_bus_gnt (core_i.if_stage_i.prefetch_trans_valid),
+
+        //obi protocol between LSU (l) mpu (m) and LSU (l) is refered to as lml
+        .lml_bus_rvalid (core_i.load_store_unit_i.resp_valid),
+        .lml_bus_req (core_i.load_store_unit_i.trans_ready),
+        .lml_bus_gnt (core_i.load_store_unit_i.trans_valid),
+
+        //obi protocol between LSU (l) respons (r) filter (f) and OBI (o) data (d) interface (i) is refered to as lrfodi
+        .lrfodi_bus_rvalid (core_i.load_store_unit_i.bus_resp_valid),
+        .lrfodi_bus_req (core_i.load_store_unit_i.buffer_trans_valid),
+        .lrfodi_bus_gnt (core_i.load_store_unit_i.buffer_trans_ready)
+
+    );
+
+    bind cv32e40s_wrapper
+      uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if support_logic_for_assert_coverage_modules_if();
 
     bind cv32e40s_pmp :
       uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i
@@ -1084,7 +1118,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if_0_i),
-                                                                      .support_if(support_logic_if)
+                                                                      .support_if_i (input_to_support_logic_module_if.driver),
+                                                                      .support_if_o (support_logic_for_assert_coverage_modules_if.master)
                                                                       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.rvfi(rvfi_instr_if_0_i),
@@ -1095,7 +1130,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
                                                                     .cov_assert_if(debug_cov_assert_if));
 
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
-                                                              .support_if(support_logic_if)
+                                                              .support_if(support_logic_for_assert_coverage_modules_if.slave)
                                                               );
 
 
@@ -1364,7 +1399,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
      uvm_config_db#(virtual uvme_cv32e40s_core_cntrl_if     )::set(.cntxt(null), .inst_name("*"), .field_name("core_cntrl_vif"),      .value(core_cntrl_if)     );
      uvm_config_db#(virtual uvmt_cv32e40s_core_status_if    )::set(.cntxt(null), .inst_name("*"), .field_name("core_status_vif"),     .value(core_status_if)    );
      uvm_config_db#(virtual uvmt_cv32e40s_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"), .field_name("debug_cov_vif"),.value(dut_wrap.cv32e40s_wrapper_i.debug_cov_assert_if));
-     uvm_config_db#(virtual uvmt_cv32e40s_support_logic_if)::set(.cntxt(null), .inst_name("*.env"), .field_name("support_logic_vif"),.value(dut_wrap.cv32e40s_wrapper_i.support_logic_if));
+     uvm_config_db#(virtual uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if)::set(.cntxt(null), .inst_name("*.env"), .field_name("support_logic_vif"),.value(dut_wrap.cv32e40s_wrapper_i.support_logic_for_assert_coverage_modules_if));
 
      // Make the DUT Wrapper Virtual Peripheral's status outputs available to the base_test
      uvm_config_db#(bit      )::set(.cntxt(null), .inst_name("*"), .field_name("tp"),     .value(1'b0)        );
