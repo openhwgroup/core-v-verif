@@ -97,6 +97,18 @@ module uvmt_cv32e40s_xsecure_assert
     xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[11:8],
     1'b0};
 
+  logic [2:0] rvfi_insn_funct3;
+  logic [2:0] rvfi_insn_cmpr_funct3;
+  logic [6:0] rvfi_insn_funct7;
+  logic [6:0] rvfi_insn_opcode;
+  logic [1:0] rvfi_insn_cmpr_opcode;
+
+  assign rvfi_insn_funct3 = rvfi_if.rvfi_insn[14:12];
+  assign rvfi_insn_cmpr_funct3 = rvfi_if.rvfi_insn[15:13];
+  assign rvfi_insn_funct7 = rvfi_if.rvfi_insn[31:25];
+  assign rvfi_insn_opcode = rvfi_if.rvfi_insn[6:0];
+  assign rvfi_insn_cmpr_opcode = rvfi_if.rvfi_insn[1:0];
+
   //Signal determing if the core clock is active or not.
   logic core_clock_cycles;
 
@@ -199,12 +211,12 @@ module uvmt_cv32e40s_xsecure_assert
   c_xsecure_branch_timing_off: cover property ( //todo: not sure if denne fungerer
 
     //Make sure the instruction is a branch instruction (both non-compressed and compressed)
-    (rvfi_if.rvfi_insn_opcode == OPCODE_BRANCH
-    && rvfi_if.rvfi_insn_funct3 == FUNCT3_BRANCH_INSTRUCTION
-    && rvfi_if.rvfi_insn_funct7 == FUNCT7_BRANCH_INSTRUCTION)
+    (rvfi_insn_opcode == OPCODE_BRANCH
+    && rvfi_insn_funct3 == FUNCT3_BRANCH_INSTRUCTION
+    && rvfi_insn_funct7 == FUNCT7_BRANCH_INSTRUCTION)
 
-    || (rvfi_if.rvfi_insn_opcode == OPCODE_COMPR_BRANCH
-    && rvfi_if.rvfi_insn_funct3 == FUNCT3_COMPR_BRANCH)
+    || (rvfi_insn_cmpr_opcode == OPCODE_COMPR_BRANCH
+    && rvfi_insn_cmpr_funct3 == FUNCT3_COMPR_BRANCH)
 
     //Make sure the instruction is valid and has been executed without traps
     && rvfi_if.rvfi_valid
@@ -221,9 +233,9 @@ module uvmt_cv32e40s_xsecure_assert
   c_xsecure_core_div_rem_timing: cover property (
 
     //Make sure we detect an DIV or REM instruction in rvfi
-    (rvfi_if.rvfi_insn_opcode == OPCODE_OP
-    && rvfi_if.rvfi_insn_funct3 == FUNCT3_DIV_REM_INSTRUCTION
-    && rvfi_if.rvfi_insn_funct7 == FUNCT7_DIV_REM_INSTRUCTION)
+    (rvfi_insn_opcode == OPCODE_OP
+    && rvfi_insn_funct3 == FUNCT3_DIV_REM_INSTRUCTION
+    && rvfi_insn_funct7 == FUNCT7_DIV_REM_INSTRUCTION)
 
     //Make sure the instruction is valid and has been executed without traps
     && rvfi_if.rvfi_valid
@@ -251,12 +263,12 @@ module uvmt_cv32e40s_xsecure_assert
   a_xsecure_dataindtiming_branch_timing: assert property (
 
     //Make sure the instruction is a branch instruction (both non-compressed and compressed)
-    (rvfi_if.rvfi_insn_opcode == OPCODE_BRANCH
-    && rvfi_if.rvfi_insn_funct3 == FUNCT3_BRANCH_INSTRUCTION
-    && rvfi_if.rvfi_insn_funct7 == FUNCT7_BRANCH_INSTRUCTION)
+    ((rvfi_insn_opcode == OPCODE_BRANCH
+    && rvfi_insn_funct3 == FUNCT3_BRANCH_INSTRUCTION
+    && rvfi_insn_funct7 == FUNCT7_BRANCH_INSTRUCTION)
 
-    || (rvfi_if.rvfi_insn_opcode == OPCODE_COMPR_BRANCH
-    && rvfi_if.rvfi_insn_funct3 == FUNCT3_COMPR_BRANCH)
+    || (rvfi_insn_cmpr_opcode == OPCODE_COMPR_BRANCH
+    && rvfi_insn_cmpr_funct3 == FUNCT3_COMPR_BRANCH))
 
     //Make sure the instruction is valid and has been executed without traps
     && rvfi_if.rvfi_valid
@@ -309,9 +321,9 @@ module uvmt_cv32e40s_xsecure_assert
   a_xsecure_dataindtiming_div_rem_timing: assert property (
 
     //Make sure the instruction is a DIV or REM instruction
-    (rvfi_if.rvfi_insn_opcode == OPCODE_OP
-    && rvfi_if.rvfi_insn_funct3 == FUNCT3_DIV_REM_INSTRUCTION
-    && rvfi_if.rvfi_insn_funct7 == FUNCT7_DIV_REM_INSTRUCTION)
+    (rvfi_insn_opcode == OPCODE_OP
+    && rvfi_insn_funct3 == FUNCT3_DIV_REM_INSTRUCTION
+    && rvfi_insn_funct7 == FUNCT7_DIV_REM_INSTRUCTION)
 
     //Make sure the instruction is valid and has been executed without traps
     && rvfi_if.rvfi_valid
@@ -1399,8 +1411,8 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure a valid hint instruction retires
     ##1 rvfi_if.rvfi_valid
     && !rvfi_if.rvfi_trap.trap
-    && rvfi_if.rvfi_insn_funct3 == FUNCT3_COMPR_SLLI
-    && rvfi_if.rvfi_insn_cmpr_opcode == OPCODE_COMPR_SLLI
+    && rvfi_insn_cmpr_funct3 == FUNCT3_COMPR_SLLI
+    && rvfi_insn_cmpr_opcode == OPCODE_COMPR_SLLI
     && rvfi_if.rvfi_rd1_addr == REGISTER_x0
     && rvfi_c_slli_shamt != '0
 
@@ -1546,8 +1558,8 @@ module uvmt_cv32e40s_xsecure_assert
 
     |->
     //Verify that the hint instruction appears as c.slli instruction with rd=x0 and shamt != 0
-    rvfi_if.rvfi_insn_funct3 == FUNCT3_COMPR_SLLI
-    && rvfi_if.rvfi_insn_cmpr_opcode == OPCODE_COMPR_SLLI
+    rvfi_insn_cmpr_funct3 == FUNCT3_COMPR_SLLI
+    && rvfi_insn_cmpr_opcode == OPCODE_COMPR_SLLI
     && rvfi_if.rvfi_rd1_addr == REGISTER_x0
     && rvfi_c_slli_shamt != '0
 
