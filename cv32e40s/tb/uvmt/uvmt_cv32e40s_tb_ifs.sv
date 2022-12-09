@@ -231,12 +231,14 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] core_i_if_stage_i_pc_if_o,
     input logic core_i_if_stage_i_pc_check_i_pc_set_q,
 
-
+    input logic core_i_if_stage_i_ptr_in_if_o,
+    input logic core_i_if_stage_i_compressed_decoder_i_is_compressed_o,
 
     // IF ID pipe
     input logic core_if_id_pipe_instr_meta_dummy,
     input logic [31:0] core_if_id_pipe_instr_bus_resp_rdata,
     input logic [31:0] core_i_id_stage_i_if_id_pipe_i_pc,
+    input logic core_i_if_id_pipe_last_op,
 
     // ID stage
     input logic core_id_stage_id_valid_o,
