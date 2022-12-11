@@ -243,61 +243,16 @@ endif
 # Determine the values of the CV_SW_ variables.
 # The priority order is ENV > TEST > CFG.
 
-DV_OVPM_HOME    = $(CORE_V_VERIF)/vendor_lib/imperas
-DV_OVPM_MODEL   = $(DV_OVPM_HOME)/imperas_DV_COREV
-DV_OVPM_DESIGN  = $(DV_OVPM_HOME)/design
-OVP_MODEL_DPI   = $(DV_OVPM_MODEL)/bin/Linux64/imperas_CV32.dpi.so
-#OVP_CTRL_FILE   = $(DV_OVPM_DESIGN)/riscv_CV32E40P.ic
-
-###############################################################################
-# "Toolchain" to compile 'test-programs' (either C or RISC-V Assember) for the
-# CV_CORE being tested.   This toolchain is used by both the core testbench and UVM
-# environment.  The assumption here is that you have installed at least one of
-# the following toolchains:
-#     1. GNU:   https://github.com/riscv/riscv-gnu-toolchain
-#               Assumed to be installed at /opt/gnu.
-#
-#     2. COREV: https://www.embecosm.com/resources/tool-chain-downloads/#corev
-#               Assumed to be installed at /opt/corev.
-#
-#     3. PULP:  https://github.com/pulp-platform/pulp-riscv-gnu-toolchain
-#               Assumed to be installed at /opt/pulp.
-#
-# If you do not select one of the above options, compilation will be attempted
-# using whatever is found at /opt/riscv using arch=unknown.
-#
-GNU_SW_TOOLCHAIN    ?= /opt/gnu
-GNU_VENDOR          ?= unknown
-GNU_MARCH           ?= rv32imc
-GNU_CC              ?= gcc
-COREV_SW_TOOLCHAIN  ?= /opt/corev
-COREV_VENDOR        ?= corev
-COREV_MARCH         ?= rv32imc
-COREV_CC            ?= gcc
-PULP_SW_TOOLCHAIN   ?= /opt/pulp
-PULP_VENDOR         ?= unknown
-PULP_MARCH          ?= rv32imcxpulpv2
-PULP_CC             ?= gcc
-LLVM_SW_TOOLCHAIN   ?= /opt/clang
-LLVM_VENDOR         ?= unknown
-LLVM_MARCH          ?= rv32imc
-LLVM_CC             ?= cc
-
-CV_SW_TOOLCHAIN  ?= /opt/riscv
-CV_SW_VENDOR     ?= unknown
-CV_SW_MARCH      ?= rv32imc
-
-GNU_YES          = $(call IS_YES,$(GNU))
-PULP_YES         = $(call IS_YES,$(PULP))
-COREV_YES        = $(call IS_YES,$(COREV))
-LLVM_YES         = $(call IS_YES,$(LLVM))
-
-ifeq ($(call IS_YES,$(FPU)),YES)
-COREV_MARCH = rv32imafc
+ifndef CV_SW_TOOLCHAIN
+ifdef  TEST_CV_SW_TOOLCHAIN
+CV_SW_TOOLCHAIN = $(TEST_CV_SW_TOOLCHAIN)
+else
+ifdef  CFG_CV_SW_TOOLCHAIN
+CV_SW_TOOLCHAIN = $(CFG_CV_SW_TOOLCHAIN)
+else
+$(error CV_SW_TOOLCHAIN not defined in either the shell environment, test.yaml or cfg.yaml)
 endif
-
-ifeq ($(shell $(CORE_V_VERIF)/mk/toolchain_check.sh $(GNU_YES) $(PULP_YES) $(COREV_YES) $(LLVM_YES)),1)
-$(error Multiple toolchains are enabled: GNU=${GNU_YES} PULP=${PULP_YES} COREV=${COREV_YES} LLVM=${LLVM_YES})
+endif
 endif
 
 ifndef CV_SW_PREFIX
@@ -354,17 +309,9 @@ RISCV            = $(CV_SW_TOOLCHAIN)
 RISCV_PREFIX     = $(CV_SW_PREFIX)
 RISCV_EXE_PREFIX = $(RISCV)/bin/$(RISCV_PREFIX)
 
-ifeq ($(COREV_YES),YES)
-ifeq ($(call IS_YES,$(TEST_COREV_NOT_SUPPORTED)),YES)
-$(error test [$(TEST)] does not support the COREV toolchain)
-endif
-RISCV            = $(COREV_SW_TOOLCHAIN)
-RISCV_PREFIX     = riscv32-$(COREV_VENDOR)-elf-
-RISCV_EXE_PREFIX = $(RISCV)/bin/$(RISCV_PREFIX)
-RISCV_CC         = $(COREV_CC)
-RISCV_MARCH      = $(call RESOLVE_FLAG2,$(TEST_COREV_MARCH),$(COREV_MARCH))
-RISCV_CFLAGS     = $(call RESOLVE_FLAG2,$(TEST_COREV_CFLAGS),$(COREV_CFLAGS))
-endif
+RISCV_MARCH      = $(CV_SW_MARCH)
+RISCV_CC         = $(CV_SW_CC)
+RISCV_CFLAGS     = $(CV_SW_CFLAGS)
 
 CFLAGS ?= -Os -g -static -mabi=ilp32 -march=$(RISCV_MARCH) -Wall -pedantic $(RISCV_CFLAGS)
 
@@ -550,7 +497,6 @@ else
 		-nostartfiles \
 		$(TEST_FILES) \
 		-T $(LD_FILE) \
-		-Xlinker -Map=$*.map \
 		$(LD_LIBRARY) \
 		-lcv-verif
 endif
