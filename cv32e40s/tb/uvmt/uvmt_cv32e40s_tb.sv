@@ -650,6 +650,7 @@ module uvmt_cv32e40s_tb;
       .rvfi_valid         (rvfi_i.rvfi_valid),
       .rvfi_intr          (rvfi_i.rvfi_intr.intr),
       .rvfi_dbg_mode      (rvfi_i.rvfi_dbg_mode),
+      .rvfi_insn          (rvfi_i.rvfi_insn),
 
       .*
     );
@@ -914,16 +915,14 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_i_if_stage_i_pc_if_o                                                                                        (core_i.if_stage_i.pc_if_o),
       .core_i_if_stage_i_pc_check_i_pc_set_q                                                                            (core_i.if_stage_i.pc_check_i.pc_set_q),
 
-      .core_i_if_stage_i_if_id_pipe_o_abort_op (core_i.if_stage_i.if_id_pipe_o.abort_op),
+      .core_i_if_stage_i_ptr_in_if_o                                                                                    (core_i.if_stage_i.ptr_in_if_o),
+      .core_i_if_stage_i_compressed_decoder_i_is_compressed_o                                                           (core_i.if_stage_i.compressed_decoder_i.is_compressed_o),
 
       // IF ID pipe
       .core_if_id_pipe_instr_meta_dummy                                                                                 (core_i.if_id_pipe.instr_meta.dummy),
       .core_if_id_pipe_instr_bus_resp_rdata                                                                             (core_i.if_id_pipe.instr.bus_resp.rdata),
       .core_i_id_stage_i_if_id_pipe_i_pc                                                                                (core_i.id_stage_i.if_id_pipe_i.pc),
-
-      .core_i_if_stage_i_pc_check_i_if_id_pipe_i_instr_meta_tbljmp (core_i.if_stage_i.pc_check_i.if_id_pipe_i.instr_meta.tbljmp),
-      .core_i_if_stage_i_pc_check_i_if_id_pipe_i_last_op (core_i.if_stage_i.pc_check_i.if_id_pipe_i.last_op),
-
+      .core_i_if_id_pipe_last_op                                                                                        (core_i.if_id_pipe.last_op),
 
       // ID stage
       .core_id_stage_id_valid_o                                                                                         (core_i.id_stage_i.id_valid_o),
@@ -946,7 +945,6 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_wb_stage_wb_valid_o                                                                                         (core_i.wb_stage_i.wb_valid_o),
 
       // CTRL
-
       .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set                                           (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.ctrl_fsm_i.pc_set),
       .core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux                                                                   (core_i.if_stage_i.pc_check_i.ctrl_fsm_i.pc_mux)
 
@@ -1003,7 +1001,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .debug_halted           (core_i.debug_halted_o),
 
       .debug_req_q            (core_i.controller_i.controller_fsm_i.debug_req_q),
-      .pending_debug          (core_i.controller_i.controller_fsm_i.pending_debug),
+      .pending_sync_debug     (core_i.controller_i.controller_fsm_i.pending_sync_debug),
+      .pending_async_debug    (core_i.controller_i.controller_fsm_i.pending_async_debug),
       .pending_nmi            (core_i.controller_i.controller_fsm_i.pending_nmi),
       .nmi_allowed            (core_i.controller_i.controller_fsm_i.nmi_allowed),
       .debug_mode_q           (core_i.controller_i.controller_fsm_i.debug_mode_q),

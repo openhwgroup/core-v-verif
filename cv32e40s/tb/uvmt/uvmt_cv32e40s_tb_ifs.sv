@@ -252,14 +252,14 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] core_i_if_stage_i_pc_if_o,
     input logic core_i_if_stage_i_pc_check_i_pc_set_q,
 
-    input logic core_i_if_stage_i_if_id_pipe_o_abort_op,
+    input logic core_i_if_stage_i_ptr_in_if_o,
+    input logic core_i_if_stage_i_compressed_decoder_i_is_compressed_o,
 
     // IF ID pipe
     input logic core_if_id_pipe_instr_meta_dummy,
     input logic [31:0] core_if_id_pipe_instr_bus_resp_rdata,
     input logic [31:0] core_i_id_stage_i_if_id_pipe_i_pc,
-    input logic core_i_if_stage_i_pc_check_i_if_id_pipe_i_instr_meta_tbljmp,
-    input logic core_i_if_stage_i_pc_check_i_if_id_pipe_i_last_op,
+    input logic core_i_if_id_pipe_last_op,
 
     // ID stage
     input logic core_id_stage_id_valid_o,
@@ -334,7 +334,8 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     input         debug_running,
     input         debug_halted,
 
-    input         pending_debug, // From controller
+    input         pending_sync_debug, // From controller
+    input         pending_async_debug, // From controller
     input         pending_nmi, // From controller
     input         nmi_allowed, // From controller
     input         debug_mode_q, // From controller
@@ -408,6 +409,7 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     mepc_q,
     tdata1,
     tdata2,
+    pending_sync_debug,
     trigger_match_in_wb,
     sys_fence_insn_i,
     mcountinhibit_q,

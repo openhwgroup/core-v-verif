@@ -1720,7 +1720,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   end
 
 
-  ////////// PC HARDENING SEQUENTIAL INSTRUCTION: NORMAL BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
+  ////////// PC HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
 
   sequence seq_dummy_if_id;
 
@@ -1742,7 +1742,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   endsequence
 
 
-  property p_xsecure_pc_hardening_sequential_no_glitch_behaviour(cmpr_instruction_in_id_stage, increment);
+  a_xsecure_pc_hardening_no_glitch: assert property (
     @(posedge xsecure_if.core_clk)
 
     //Make sure we look at valid cycles
@@ -1751,14 +1751,22 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     //Make sure the PC hardening setting is on
     && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
 
-    //Check if it is a compressed instructions
-    && cmpr_instruction_in_id_stage
+    //Make sure the inspected instruction is valid
+    && $past(xsecure_if.core_if_stage_if_valid_o)
+    && $past(xsecure_if.core_if_stage_id_ready_i)
+
+    //In case of mulit cycled instructions, make sure the instruction is the last operation
+    && xsecure_if.core_i_if_id_pipe_last_op
+
+    //Make sure the instruction is not a pointer (as pointers inserts a non-incremental PC)
+    && !xsecure_if.core_i_if_stage_i_ptr_in_if_o
 
     |->
     //Correct behaviour requires that one of the following behaviours are true:
 
-    //Icremental behaviour
-    xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + increment
+    //Icremental behaviour as compressed or non-compressed instruction
+    xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + CMPR_INSTRUCTION_INCREMENT && $past(xsecure_if.core_i_if_stage_i_compressed_decoder_i_is_compressed_o)
+    or xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + NON_CMPR_INSTRUCTION_INCREMENT && $past(!xsecure_if.core_i_if_stage_i_compressed_decoder_i_is_compressed_o)
 
     //Initalization after reset
     or xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0
@@ -1770,47 +1778,34 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     or seq_pc_set_stable.triggered
 
     //PC jumping
-    or $past(xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set);
+    or $past(xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set)
 
-  endproperty
-
-
-  a_xsecure_pc_hardening_sequential_no_glitch_behaviour_non_cmpr_instruction: assert property (
-    p_xsecure_pc_hardening_sequential_no_glitch_behaviour(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, NON_CMPR_INSTRUCTION_INCREMENT)
-  ) else `uvm_error(info_tag, "There is a PC fault in IF stage for a non-compressed instruction.\n");
-
-  a_xsecure_pc_hardening_sequential_no_glitch_behaviour_cmpr_instruction: assert property (
-    p_xsecure_pc_hardening_sequential_no_glitch_behaviour(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, CMPR_INSTRUCTION_INCREMENT)
-  ) else `uvm_error(info_tag, "There is a PC fault in IF stage for a compressed instruction.\n");
+  ) else `uvm_error(info_tag, "There is a PC fault in IF stage.\n");
 
 
-  ////////// PC HARDENING ON SEQUENTIAL INSTRUCTION: SET MAJOR ALERT //////////
+  ////////// PC HARDENING SET MAJOR ALERT IF GLITCH //////////
 
-  sequence seq_xsecure_pc_hardening_sequential_instructions_with_glitch(cmpr_instruction_in_id_stage, increment);
-
+  sequence seq_xsecure_pc_hardening_with_glitch;
     @(posedge xsecure_if.core_clk)
 
     //Make sure we look at valid cycles
     core_clock_cycles
 
-    //Make sure the PC hardening setting is on
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
-
-    //Check if it is a compressed instructions
-    && cmpr_instruction_in_id_stage
-
-    //Checkout the non-incremental
-    && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + increment
-
-    //Make sure we look at a valid instruction
+    //Make sure the inspected instruction is valid
     && $past(xsecure_if.core_if_stage_if_valid_o)
     && $past(xsecure_if.core_if_stage_id_ready_i)
 
-    //Last op
-    //&& xsecure_if.core_i_if_stage_i_pc_check_i_if_id_pipe_i_instr_meta_tbljmp
-    && xsecure_if.core_i_if_stage_i_pc_check_i_if_id_pipe_i_last_op
+    //In case of mulit cycled instructions, make sure the instruction is the last operation
+    && xsecure_if.core_i_if_id_pipe_last_op
 
-    //Make sure the non-incremental is not caused by any of the following reasons:
+    //Make sure the instruction is not a pointer
+    && !xsecure_if.core_i_if_stage_i_ptr_in_if_o
+
+    //Make sure it is not icremental behaviour
+    and !(xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + CMPR_INSTRUCTION_INCREMENT && $past(xsecure_if.core_i_if_stage_i_compressed_decoder_i_is_compressed_o))
+    and !(xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + NON_CMPR_INSTRUCTION_INCREMENT && $past(!xsecure_if.core_i_if_stage_i_compressed_decoder_i_is_compressed_o))
+
+    //Make sure the non-incremental pc is not caused by any of the following reasons:
 
     //Initalization after reset
     and !(xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0)
@@ -1826,93 +1821,43 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   endsequence
 
-
-  a_xsecure_pc_hardening_sequential_non_compressed_instruction_sets_alert_major: assert property (
-
-    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, NON_CMPR_INSTRUCTION_INCREMENT)
-
-    |=>
-    //Make sure the alert major is set
-    xsecure_if.core_alert_major_o
-
-  ) else `uvm_error(info_tag, "A PC fault in IF stage, for a non-compressed instruction, does not set major alert when PC hardening is on.\n");
-
-
-  a_xsecure_pc_hardening_sequential_compressed_instruction_sets_alert_major: assert property (
-
-    //seq_xsecure_pc_hardening_sequential_instructions_with_glitch(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, CMPR_INSTRUCTION_INCREMENT)
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure we look at valid cycles
-    (core_clock_cycles
+  //TODO: look into this assertion after potential rtl fix
+  /*
+  a_xsecure_pc_hardening_sets_alert_major: assert property (
 
     //Make sure the PC hardening setting is on
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+    xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
 
-    //Check if it is a compressed instructions
-    && xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed
-
-    //Checkout the non-incremental
-    && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + CMPR_INSTRUCTION_INCREMENT
-
-    //Make sure we look at a valid instruction
-    && $past(xsecure_if.core_if_stage_if_valid_o)
-    && $past(xsecure_if.core_if_stage_id_ready_i)
-
-    //Last op
-    //&& xsecure_if.core_i_if_stage_i_pc_check_i_if_id_pipe_i_instr_meta_tbljmp
-    && xsecure_if.core_i_if_stage_i_pc_check_i_if_id_pipe_i_last_op)
-
-    //Make sure the non-incremental is not caused by any of the following reasons:
-
-    //Initalization after reset
-    and !(xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0)
-
-    //Insertion of dummy instruction
-    and !(seq_dummy_if_id.triggered)
-
-    //PC jumping
-    and !(seq_pc_set_stable.triggered)
-
-    //PC jumping
-    and !($past(xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set))
+    ##0 seq_xsecure_pc_hardening_with_glitch
 
     |=>
     //Make sure the alert major is set
     xsecure_if.core_alert_major_o
 
-  ) else `uvm_error(info_tag, "A PC fault in IF stage, for a compressed instruction, does not set major alert when PC hardening is on.\n");
+  ) else `uvm_error(info_tag, "A PC fault in IF stage does not set major alert when PC hardening is on.\n");
+  */
 
-
-  ////////// PC HARDENING OFF SEQUENTIAL INSTRUCTION: DONT SET MAJOR ALERT //////////
+  ////////// PC HARDENING OFF: DONT SET MAJOR ALERT IF GLITCH //////////
 
   //TODO: recheck this assertion when the rtl code related to pc_hadening=0 is implemented
+  /*
+  a_xsecure_pc_hardening_off_dont_set_alert_major: assert property (
 
-  a_xsecure_pc_hardening_off_non_compressed_sequential_instruction_alert_major: assert property (
+    //Make sure the PC hardening setting is off
+    !xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
 
-    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, NON_CMPR_INSTRUCTION_INCREMENT)
-
-    |=>
-    //Make sure the alert major is not set
-    !xsecure_if.core_alert_major_o
-
-  ) else `uvm_error(info_tag, "A PC fault in IF stage, for a non-compressed instruction, set major alert when PC hardening is off.\n");
-
-
-  a_xsecure_pc_hardening_off_compressed_sequential_instruction_alert_major: assert property (
-
-    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, CMPR_INSTRUCTION_INCREMENT)
+    ##0 seq_xsecure_pc_hardening_with_glitch
 
     |=>
     //Make sure the alert major is not set
     !xsecure_if.core_alert_major_o
 
-  ) else `uvm_error(info_tag, "A PC fault in IF stage, for a compressed instruction, set major alert when PC hardening is off.\n");
+  ) else `uvm_error(info_tag, "A PC fault in IF stage does set major alert when PC hardening is off.\n");
+  */
 
+  ////////// PC HARDENING ON: SET MAJOR ALERT IF GLITCH IN PC TARGET //////////
 
-  ////////// PC HARDENING ON NON-SEQUENTIAL INSTRUCTION: SET MAJOR ALERT IF GLITCH IN PC TARGET //////////
-
-  sequence seq_pc_hardening_non_sequential_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal);
+  sequence seq_pc_hardening_jump_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal);
 
     //Make sure pc hardening setting is set
     pc_hardening
@@ -1928,34 +1873,31 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   endsequence
 
-  property p_xsecure_hardened_pc_non_sequential_set_major_alert(pc_hardening, fsm_state, calculated_signal);
-
-    seq_pc_hardening_non_sequential_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal)
-
-    |=>
-    //Make sure alert major is set
-    xsecure_if.core_alert_major_o;
-
-  endproperty
 
   a_xsecure_pc_hardening_branch_set_alert_major: assert property(
-    p_xsecure_hardened_pc_non_sequential_set_major_alert(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, BRANCH_STATE, xsecure_if.core_i_ex_stage_i_branch_target_o)
+    seq_pc_hardening_jump_instruction_with_glitch(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, BRANCH_STATE, xsecure_if.core_i_ex_stage_i_branch_target_o)
+    |->
+    xsecure_if.core_alert_major_o
   ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch instruction does not set alert major.\n");
 
   a_xsecure_pc_hardening_jump_set_alert_major: assert property(
-    p_xsecure_hardened_pc_non_sequential_set_major_alert(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, JUMP_STATE, xsecure_if.core_i_jump_target_id)
+    seq_pc_hardening_jump_instruction_with_glitch(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, JUMP_STATE, xsecure_if.core_i_jump_target_id)
+    |->
+    xsecure_if.core_alert_major_o
   ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed jump instruction does not set alert major.\n");
 
   a_xsecure_pc_hardening_mret_set_alert_major: assert property(
-    p_xsecure_hardened_pc_non_sequential_set_major_alert(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, MRET_STATE, xsecure_if.core_i_cs_registers_i_mepc_o)
+    seq_pc_hardening_jump_instruction_with_glitch(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, MRET_STATE, xsecure_if.core_i_cs_registers_i_mepc_o)
+    |->
+    xsecure_if.core_alert_major_o
   ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction does not set alert major.\n");
 
 
-  ////////// PC HARDENING ON NON-SEQUENTIAL INSTRUCTION: SET MAJOR ALERT IF GLITCH IN BRANCH DECISION //////////
+  ////////// PC HARDENING ON: SET MAJOR ALERT IF GLITCH IN BRANCH DECISION //////////
 
   sequence seq_pc_hardening_branch_decision_glitch(pc_hardening);
 
-    //Make sure pc hardening setting is set
+    //Make sure pc hardening setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
 
     //Make sure the fsm is in branching state
@@ -1983,13 +1925,13 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch decision does not set alert major.\n");
 
 
-  ////////// PC HARDENING OFF NON-SEQUENTIAL INSTRUCTION: DONT SET MAJOR ALERT IF GLITCH IN PC TARGET //////////
+  ////////// PC HARDENING OFF: DONT SET MAJOR ALERT IF GLITCH IN PC TARGET //////////
 
   //TODO: recheck property when rtl for PC_hardnine == 0 is imoplemented
 
   property p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(pc_hardening, fsm_state, calculated_signal);
 
-    seq_pc_hardening_non_sequential_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal)
+    seq_pc_hardening_jump_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal)
 
     |=>
     //Make sure alert major is not set
@@ -2010,7 +1952,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction set alert major even though PC hardening is off.\n");
 
 
-  ////////// PC HARDENING OFF NON-SEQUENTIAL INSTRUCTION: DONT SET MAJOR ALERT IF GLITCH IN BRANCH DECISION //////////
+  ////////// PC HARDENING OFF: DONT SET MAJOR ALERT IF GLITCH IN BRANCH DECISION //////////
 
   a_xsecure_pc_hardening_off_branch_decision_set_alert_major: assert property(
 
