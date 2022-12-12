@@ -126,7 +126,8 @@ module uvmt_cv32e40s_xsecure_assert
   // Default settings:
   default clocking @(posedge clk_i); endclocking
   default disable iff (!(rst_ni) | !(SECURE));
-  string info_tag = "CV32E40S_XSECURE_ASSERT";
+  string info_tag = "CV32E40S_XSECURE_ASSERT_COVERPOINTS";
+  string info_tag_glitch = "CV32E40S_XSECURE_ASSERT_COVERPOINTS (GLITCH BEHAVIOR)";
 
 
   //////////////////////////////////////////////////////////////////////
@@ -487,7 +488,7 @@ module uvmt_cv32e40s_xsecure_assert
       xsecure_if.core_i_cs_registers_i_jvt_csr_i_rdata_q,
       xsecure_if.core_cs_registers_jvt_csr_gen_hardened_shadow_q,
       cv32e40s_pkg::CSR_JVT_MASK)
-  ) else `uvm_error(info_tag, "A mismatch between the JVT CSR and its shadow register does not result in the major alert being set.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the JVT CSR and its shadow register does not result in the major alert being set.\n");
 
   //MSTATUS:
   a_xsecure_hardened_CSRs_missmatch_mstatus: assert property (
@@ -495,7 +496,7 @@ module uvmt_cv32e40s_xsecure_assert
       xsecure_if.core_i_cs_registers_i_mstatus_csr_i_rdata_q,
       xsecure_if.core_cs_registers_mstatus_csr_gen_hardened_shadow_q,
       cv32e40s_pkg::CSR_MSTATUS_MASK)
-  ) else `uvm_error(info_tag, "A mismatch between the MSTATUS CSR and its shadow register does not result in the major alert being set.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the MSTATUS CSR and its shadow register does not result in the major alert being set.\n");
 
   //CPUCTRL:
   a_xsecure_hardened_CSRs_missmatch_cpuctrl: assert property (
@@ -503,7 +504,7 @@ module uvmt_cv32e40s_xsecure_assert
       xsecure_if.core_i_cs_registers_i_xsecure_cpuctrl_csr_i_rdata_q,
       xsecure_if.core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q,
       cv32e40s_pkg::CSR_CPUCTRL_MASK)
-  ) else `uvm_error(info_tag, "A mismatch between the CPUCTRL CSR and its shadow register does not result in the major alert being set.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CPUCTRL CSR and its shadow register does not result in the major alert being set.\n");
 
   //DCSR:
   a_xsecure_hardened_CSRs_missmatch_dcsr: assert property (
@@ -511,7 +512,7 @@ module uvmt_cv32e40s_xsecure_assert
       xsecure_if.core_i_cs_registers_i_dcsr_csr_i_rdata_q,
       xsecure_if.core_cs_registers_dcsr_csr_gen_hardened_shadow_q,
       cv32e40s_pkg::CSR_DCSR_MASK)
-  ) else `uvm_error(info_tag, "A mismatch between the DCSR CSR and its shadow register does not result in the major alert being set.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the DCSR CSR and its shadow register does not result in the major alert being set.\n");
 
   //MEPC:
   a_xsecure_hardened_CSRs_missmatch_mepc: assert property (
@@ -519,7 +520,7 @@ module uvmt_cv32e40s_xsecure_assert
       xsecure_if.core_i_cs_registers_i_mepc_csr_i_rdata_q,
       xsecure_if.core_cs_registers_mepc_csr_gen_hardened_shadow_q,
       cv32e40s_pkg::CSR_MEPC_MASK)
-  ) else `uvm_error(info_tag, "A mismatch between the MEPC CSR and its shadow register does not result in the major alert being set.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the MEPC CSR and its shadow register does not result in the major alert being set.\n");
 
   //MSCRATCH:
   a_xsecure_hardened_CSRs_missmatch_mscratch: assert property (
@@ -527,7 +528,7 @@ module uvmt_cv32e40s_xsecure_assert
       xsecure_if.core_i_cs_registers_i_mscratch_csr_i_rdata_q,
       xsecure_if.core_cs_registers_mscratch_csr_gen_hardened_shadow_q,
       cv32e40s_pkg::CSR_MSCRATCH_MASK)
-  ) else `uvm_error(info_tag, "A mismatch between the MSCRATCH CSR and its shadow register does not result in the major alert being set.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the MSCRATCH CSR and its shadow register does not result in the major alert being set.\n");
 
   generate
     if(PMP_NUM_REGIONS > 0) begin
@@ -538,7 +539,7 @@ module uvmt_cv32e40s_xsecure_assert
           xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q,
           xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q,
           cv32e40s_pkg::CSR_MSECCFG_MASK)
-      ) else `uvm_error(info_tag, "A mismatch between the MSECCFG CSR and its shadow register does not result in the major alert being set.\n");
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the MSECCFG CSR and its shadow register does not result in the major alert being set.\n");
 
     end
   endgenerate
@@ -551,7 +552,7 @@ module uvmt_cv32e40s_xsecure_assert
         xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q[n],
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q[n],
         cv32e40s_pkg::CSR_PMPNCFG_MASK)
-    ) else `uvm_error(info_tag, $sformatf("The mismatch between the PMP%0dCFG CSR and its shadow register does not result in the major alert being set.\n", n));
+    ) else `uvm_error(info_tag_glitch, $sformatf("The mismatch between the PMP%0dCFG CSR and its shadow register does not result in the major alert being set.\n", n));
 
     //PMPADDR:
     a_xsecure_hardened_CSRs_missmatch_pmpaddr: assert property (
@@ -559,7 +560,7 @@ module uvmt_cv32e40s_xsecure_assert
         xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n],
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n],
         cv32e40s_pkg::CSR_PMPADDR_MASK[PMP_ADDR_WIDTH-1:0])
-    ) else `uvm_error(info_tag, $sformatf("The mismatch between the PMPADDR[%0d] CSR and its shadow register does not result in the major alert being set.\n", n));
+    ) else `uvm_error(info_tag_glitch, $sformatf("The mismatch between the PMPADDR[%0d] CSR and its shadow register does not result in the major alert being set.\n", n));
 
   end endgenerate
 
@@ -571,7 +572,7 @@ module uvmt_cv32e40s_xsecure_assert
         xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q,
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q,
         cv32e40s_pkg::CSR_MTVT_MASK)
-    ) else `uvm_error(info_tag, "A mismatch between the MTVT CSR and its shadow register does not result in the major alert being set.\n");
+    ) else `uvm_error(info_tag_glitch, "A mismatch between the MTVT CSR and its shadow register does not result in the major alert being set.\n");
 
     //MTVEC:
     a_xsecure_hardened_CSRs_missmatch_mtvec: assert property (
@@ -579,7 +580,7 @@ module uvmt_cv32e40s_xsecure_assert
         xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q,
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q,
         cv32e40s_pkg::CSR_MTVEC_CLIC_MASK)
-    ) else `uvm_error(info_tag, "A mismatch between the MTVEC CSR and its shadow register does not result in the major alert being set.\n");
+    ) else `uvm_error(info_tag_glitch, "A mismatch between the MTVEC CSR and its shadow register does not result in the major alert being set.\n");
 
     //MINTSTATUS:
     a_xsecure_hardened_CSRs_missmatch_mintstatus: assert property (
@@ -587,7 +588,7 @@ module uvmt_cv32e40s_xsecure_assert
         xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q,
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q,
         cv32e40s_pkg::CSR_MINTSTATUS_MASK)
-    ) else `uvm_error(info_tag, "A mismatch between the MINTSTATUS CSR and its shadow register does not result in the major alert being set.\n");
+    ) else `uvm_error(info_tag_glitch, "A mismatch between the MINTSTATUS CSR and its shadow register does not result in the major alert being set.\n");
 
     //MINTTHRESH:
     a_xsecure_hardened_CSRs_missmatch_mintthresh: assert property (
@@ -595,7 +596,7 @@ module uvmt_cv32e40s_xsecure_assert
         xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q,
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q,
         CSR_MINTTHRESH_MASK)
-    ) else `uvm_error(info_tag, "A mismatch between the MINTTHRESH CSR and its shadow register does not result in the major alert being set.\n");
+    ) else `uvm_error(info_tag_glitch, "A mismatch between the MINTTHRESH CSR and its shadow register does not result in the major alert being set.\n");
 
   end else begin
 
@@ -605,7 +606,7 @@ module uvmt_cv32e40s_xsecure_assert
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q,
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q,
         cv32e40s_pkg::CSR_MTVEC_BASIC_MASK)
-    ) else `uvm_error(info_tag, "A mismatch between the MTVEC CSR and its shadow register does not result in the major alert being set.\n");
+    ) else `uvm_error(info_tag_glitch, "A mismatch between the MTVEC CSR and its shadow register does not result in the major alert being set.\n");
 
     //MIE:
     a_xsecure_hardened_CSRs_missmatch_mie: assert property (
@@ -613,7 +614,7 @@ module uvmt_cv32e40s_xsecure_assert
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q,
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q,
         cv32e40s_pkg::IRQ_MASK)
-    ) else `uvm_error(info_tag, "A mismatch between the MIE CSR and its shadow register does not result in the major alert being set.\n");
+    ) else `uvm_error(info_tag_glitch, "A mismatch between the MIE CSR and its shadow register does not result in the major alert being set.\n");
 
   end
 
@@ -679,11 +680,11 @@ module uvmt_cv32e40s_xsecure_assert
 
     a_xsecure_register_file_ecc_gpr_reset_value_rvfi_rs1: assert property (
       p_xsecure_gpr_reset_rvfi_rs1(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage because RS1 is not 0.\n", gpr_addr));
+    ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage (as RS1 is not 0).\n", gpr_addr));
 
     a_xsecure_register_file_ecc_gpr_reset_value_rvfi_rs2: assert property (
       p_xsecure_gpr_reset_rvfi_rs2(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage because RS2 is not 0.\n", gpr_addr));
+    ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage (as RS2 is not 0).\n", gpr_addr));
 
   end endgenerate
 
@@ -737,12 +738,12 @@ module uvmt_cv32e40s_xsecure_assert
 
   a_xsecure_register_file_ecc_gprecc_set_major_alert_if_rs1_is_all_zeros_or_ones: assert property (
     p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(if_id_pipe_instr_rs1)
-  ) else `uvm_error(info_tag, "The data of RS1 (and the attached ECC score) is all ones or zeros but does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "The data of RS1 (and the attached ECC score) is all ones or zeros but does not set the major alert.\n");
 
 
   a_xsecure_register_file_ecc_gprecc_set_major_alert_if_rs2_is_all_zeros_or_ones: assert property (
     p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(if_id_pipe_instr_rs2)
-  ) else `uvm_error(info_tag, "The data of RS2 (and the attached ECC score) is all ones or zeros but does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "The data of RS2 (and the attached ECC score) is all ones or zeros but does not set the major alert.\n");
 
 
   ////////// ECC DECODING MISMATCH ON EVERY READ SETS MAJOR ALERT //////////
@@ -799,9 +800,6 @@ module uvmt_cv32e40s_xsecure_assert
   property p_xsecure_register_file_ecc_no_supression_reading_rs1(rs1_addr);
     @(posedge xsecure_if.core_clk)
 
-    //Make sure there is a noncompressed instruction
-    !xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed
-
     //Specify the RS1 address
     && if_id_pipe_instr_rs1 == rs1_addr
 
@@ -812,49 +810,9 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure the alert major is set
     xsecure_if.core_alert_major_o;
   endproperty
-
 
   property p_xsecure_register_file_ecc_no_supression_reading_rs2(rs2_addr);
     @(posedge xsecure_if.core_clk)
-
-    //Make sure there is a noncompressed instruction
-    !xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed
-
-    //Specify the RS2 address
-    && if_id_pipe_instr_rs2 == rs2_addr
-
-    //Make sure the GPR memory and the local memory differ in one or two bits
-    && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs2_addr][31:0] ^ gpr_shadow[rs2_addr], '1) inside {1,2})
-
-    |=>
-    //Make sure the alert major is set
-    xsecure_if.core_alert_major_o;
-  endproperty
-
-
-  property p_xsecure_register_file_ecc_no_supression_reading_rs1_cmpr(rs1_addr);
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure there is a noncompressed instruction
-    xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed
-
-    //Specify the RS1 address
-    && if_id_pipe_instr_rs1 == rs1_addr
-
-    //Make sure the GPR memory and the local memory differ in one or two bits
-    && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs1_addr][31:0] ^ gpr_shadow[rs1_addr], '1) inside {1,2})
-
-    |=>
-    //Make sure the alert major is set
-    xsecure_if.core_alert_major_o;
-  endproperty
-
-
-  property p_xsecure_register_file_ecc_no_supression_reading_rs2_cmpr(rs2_addr);
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure there is a noncompressed instruction
-    xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed
 
     //Specify the RS2 address
     && if_id_pipe_instr_rs2 == rs2_addr
@@ -871,19 +829,11 @@ module uvmt_cv32e40s_xsecure_assert
 
     a_xsecure_register_file_ecc_no_supression_reading_rs1: assert property (
       p_xsecure_register_file_ecc_no_supression_reading_rs1(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("1 or 2 bit errors when reading noncompressed RS1 (address %0d) do not set the alert major.\n", gpr_addr));
+    ) else `uvm_error(info_tag_glitch, $sformatf("1 or 2 bit errors when reading RS1 (address %0d) do not set the alert major.\n", gpr_addr));
 
     a_xsecure_register_file_ecc_no_supression_reading_rs2: assert property (
       p_xsecure_register_file_ecc_no_supression_reading_rs2(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("1 or 2 bit errors when reading noncompressed RS2 (address %0d) do not set the alert major.\n", gpr_addr));
-
-    a_xsecure_register_file_ecc_no_supression_reading_rs1_cmpr: assert property (
-      p_xsecure_register_file_ecc_no_supression_reading_rs1_cmpr(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("1 or 2 bit errors when reading compressed RS1 (address %0d) do not set the alert major.\n", gpr_addr));
-
-    a_xsecure_register_file_ecc_no_supression_reading_rs2_cmpr: assert property (
-      p_xsecure_register_file_ecc_no_supression_reading_rs2_cmpr(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("1 or 2 bit errors when reading compressed RS2 (address %0d) do not set the alert major.\n", gpr_addr));
+    ) else `uvm_error(info_tag_glitch, $sformatf("1 or 2 bit errors when reading RS2 (address %0d) do not set the alert major.\n", gpr_addr));
 
   end endgenerate
 
@@ -912,7 +862,6 @@ module uvmt_cv32e40s_xsecure_assert
     //(Uses ##2 because: In the first clock cycle the FSM signal has "reached" IF, while in the second clock cycle its stability can be checked)
     ##2 $stable(xsecure_if.core_i_if_stage_i_pc_if_o)[*1:$];
   endsequence
-
 
   a_xsecure_pc_hardening_no_glitch: assert property (
     @(posedge xsecure_if.core_clk)
@@ -1003,7 +952,7 @@ module uvmt_cv32e40s_xsecure_assert
     |=>
     //Make sure the alert major is set
     xsecure_if.core_alert_major_o
-  ) else `uvm_error(info_tag, "A PC fault in the IF stage does not set the major alert when PC hardening is on.\n");
+  ) else `uvm_error(info_tag_glitch, "A PC fault in the IF stage does not set the major alert when PC hardening is on.\n");
   */
 
   ////////// PC HARDENING OFF: DO NOT SET THE MAJOR ALERT IF GLITCH //////////
@@ -1017,7 +966,7 @@ module uvmt_cv32e40s_xsecure_assert
     |=>
     //Make sure the alert major is not set
     !xsecure_if.core_alert_major_o
-  ) else `uvm_error(info_tag, "A PC fault in the IF stage does set the major alert when PC hardening is off.\n");
+  ) else `uvm_error(info_tag_glitch, "A PC fault in the IF stage does set the major alert when PC hardening is off.\n");
   */
 
   ////////// PC HARDENING ON: SET THE MAJOR ALERT IF GLITCH IN PC TARGET //////////
@@ -1043,19 +992,19 @@ module uvmt_cv32e40s_xsecure_assert
     seq_pc_hardening_jump_instruction_with_glitch(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, BRANCH_STATE, xsecure_if.core_i_ex_stage_i_branch_target_o)
     |->
     xsecure_if.core_alert_major_o
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch instruction does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed branch instruction does not set the major alert.\n");
 
   a_xsecure_pc_hardening_jump_set_alert_major: assert property(
     seq_pc_hardening_jump_instruction_with_glitch(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, JUMP_STATE, xsecure_if.core_i_jump_target_id)
     |->
     xsecure_if.core_alert_major_o
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed jump instruction does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed jump instruction does not set the major alert.\n");
 
   a_xsecure_pc_hardening_mret_set_alert_major: assert property(
     seq_pc_hardening_jump_instruction_with_glitch(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, MRET_STATE, xsecure_if.core_i_cs_registers_i_mepc_o)
     |->
     xsecure_if.core_alert_major_o
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed mret instruction does not set the major alert.\n");
 
 
   ////////// PC HARDENING ON: SET THE MAJOR ALERT IF GLITCH IN BRANCH DECISION //////////
@@ -1087,7 +1036,7 @@ module uvmt_cv32e40s_xsecure_assert
     xsecure_if.core_alert_major_o
     || $past(xsecure_if.core_alert_major_o)
 
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch decision does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed branch decision does not set the major alert.\n");
 
 
   ////////// PC HARDENING OFF: DO NOT SET THE MAJOR ALERT IF GLITCH IN PC TARGET //////////
@@ -1106,15 +1055,15 @@ module uvmt_cv32e40s_xsecure_assert
 
   a_xsecure_pc_hardening_off_branch_set_alert_major: assert property(
     p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, BRANCH_STATE, xsecure_if.core_i_ex_stage_i_branch_target_o)
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch instruction (jump location) sets the major alert even though PC hardening is off.\n");
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed branch instruction (jump location) sets the major alert even though PC hardening is off.\n");
 
   a_xsecure_pc_hardening_off_jump_set_alert_major: assert property(
     p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, JUMP_STATE, xsecure_if.core_i_jump_target_id)
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed jump instruction sets the major alert even though PC hardening is off.\n");
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed jump instruction sets the major alert even though PC hardening is off.\n");
 
   a_xsecure_pc_hardening_off_mret_set_alert_major: assert property(
     p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, MRET_STATE, xsecure_if.core_i_cs_registers_i_mepc_o)
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction sets the major alert even though PC hardening is off.\n");
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed mret instruction sets the major alert even though PC hardening is off.\n");
 
 
   ////////// PC HARDENING OFF: DO NOT SET THE ALERT MAJOR IF GLITCH IN THE BRANCH DECISION //////////
@@ -1128,7 +1077,7 @@ module uvmt_cv32e40s_xsecure_assert
     !xsecure_if.core_alert_major_o
     && !$past(xsecure_if.core_alert_major_o)
 
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch instruction (decision calculation) sets the major alert even though PC hardening is off.\n");
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed branch instruction (decision calculation) sets the major alert even though PC hardening is off.\n");
 
 
   //////////////////////////////////////////////////////////////////////////////
@@ -1626,35 +1575,35 @@ module uvmt_cv32e40s_xsecure_assert
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
       support_if.data_bus_resp_ph_cont,
       support_if.data_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A response before a request in the OBI data bus handshake does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A response before a request in the OBI data bus handshake does not set the major alert.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_glitch_instr: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
       support_if.instr_bus_resp_ph_cont,
       support_if.instr_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A response before a request in the OBI instruction bus handshake does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A response before a request in the OBI instruction bus handshake does not set the major alert.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_glitch_abiim: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
       support_if.abiim_bus_resp_ph_cont,
       support_if.abiim_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A response before a request in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A response before a request in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) does not set the major alert.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_glitch_lml: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_load_store_unit_i_resp_valid,
       support_if.lml_bus_resp_ph_cont,
       support_if.lml_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A response before a request in the handshake between LSU (l) MPU (m) and LSU (l) does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A response before a request in the handshake between LSU (l) MPU (m) and LSU (l) does not set the major alert.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_glitch_lrfodi: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_load_store_unit_i_bus_resp_valid,
       support_if.lrfodi_bus_resp_ph_cont,
       support_if.lrfodi_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A response before a request in the handshake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i) does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A response before a request in the handshake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i) does not set the major alert.\n");
 
 
   ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER UNDERFLOW SET THE MAJOR ALERT //////////
@@ -1674,7 +1623,7 @@ module uvmt_cv32e40s_xsecure_assert
     |->
     //Verify that alert major is set
     xsecure_if.core_alert_major_o
-  ) else `uvm_error(info_tag, "The counter underflows but does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "The counter underflows but does not set the major alert.\n");
 
 
 
