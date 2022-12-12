@@ -18,12 +18,6 @@ builds:
 
 # List of tests
 tests:
-  perf_counters_instructions:
-    build: uvmt_cv32e40s
-    description: Performance counter test
-    dir: cv32e40s/sim/uvmt
-    cmd: make test COREV=YES TEST=perf_counters_instructions
-    num: 40
 
   hpmcounter_basic_test:
     build: uvmt_cv32e40s

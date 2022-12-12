@@ -131,12 +131,6 @@ tests:
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=csr_instr_asm
 
-  perf_counters_instructions:
-    description: Performance counter test
-    builds: [ uvmt_cv32e40s, uvmt_cv32e40s_no_bitmanip]
-    dir: cv32e40s/sim/uvmt
-    cmd: make test TEST=perf_counters_instructions
-
   hpmcounter_basic_test:
     description: Hardware performance counter basic test
     builds: [ uvmt_cv32e40s, uvmt_cv32e40s_no_bitmanip]
