@@ -650,6 +650,7 @@ module uvmt_cv32e40s_tb;
       .rvfi_valid         (rvfi_i.rvfi_valid),
       .rvfi_intr          (rvfi_i.rvfi_intr.intr),
       .rvfi_dbg_mode      (rvfi_i.rvfi_dbg_mode),
+      .rvfi_insn          (rvfi_i.rvfi_insn),
 
       .*
     );
