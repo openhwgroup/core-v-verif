@@ -47,16 +47,12 @@ module uvmt_cv32e40s_xsecure_assert
 
   localparam FREQ_SETTING_64_MIN = 4'b1000;
   localparam FREQ_SETTING_64_MAX = 4'b1111;
-
   localparam FREQ_SETTING_32_MIN = 4'b0100;
   localparam FREQ_SETTING_32_MAX = FREQ_SETTING_64_MIN -1;
-
   localparam FREQ_SETTING_16_MIN = 4'b0010;
   localparam FREQ_SETTING_16_MAX = FREQ_SETTING_32_MIN -1;
-
   localparam FREQ_SETTING_8_MIN = 4'b0001;
   localparam FREQ_SETTING_8_MAX = FREQ_SETTING_16_MIN -1;
-
   localparam FREQ_SETTING_4_MIN = 4'b0000;
   localparam FREQ_SETTING_4_MAX = FREQ_SETTING_8_MIN -1;
 
