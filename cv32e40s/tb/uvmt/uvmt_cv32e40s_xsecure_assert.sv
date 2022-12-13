@@ -48,7 +48,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   localparam REGISTER_MHPMCOUNTER_MCYCLE_FULL = 64'hFFFFFFFFFFFFFFFF;
 
-  localparam REGISTER_x0 = 5'b00000;
+  localparam REGISTER_x0 = 5'b00000; //TODO: x to X
 
   localparam FREQ_SETTING_4 = 4'b0000;
   localparam FREQ_SETTING_8 = 4'b0001;
@@ -93,6 +93,73 @@ module uvmt_cv32e40s_xsecure_assert
   //If major alert has been set high we allow weird unspeced behavior
   default disable iff (!(rst_ni) | !(SECURE));
   string info_tag = "CV32E40S_XSECURE_ASSERT";
+
+  // Functions:
+  function logic f_achk_error (achk, addr, prot, memtype, be, we, dbg, atop, wdata);
+    f_achk_error = !(
+      achk[0] == ^addr[7:0]
+      && achk[1] == ^addr[15:8]
+      && achk[2] == ^addr[23:16]
+      && achk[3] == ^addr[31:24]
+      && achk[4] == ~^{prot[2:0], memtype[1:0]}
+      && achk[5] == ~^{be[3:0], we}
+      && achk[6] == ~^dbg
+      && achk[7] == ^atop[5:0]
+      && achk[8] == ^wdata[7:0]
+      && achk[9] == ^wdata[15:8]
+      && achk[10] == ^wdata[23:16]
+      && achk[11] == ^wdata[31:24]);
+  endfunction
+
+  function logic f_rchk_error (rchk, err, exokay, rdata);
+    f_rchk_error = !(
+      rchk[0] == ^rdata[7:0]
+      && rchk[1] == ^rdata[15:8]
+      && rchk[2] == ^rdata[23:16]
+      && rchk[3] == ^rdata[31:24]
+      && rchk[4] == ^{err, exokay});
+  endfunction
+
+  logic achk_error_data;
+  assign achk_error_data = f_achk_error(
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.achk,
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.addr,
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.prot,
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.memtype,
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.be,
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.we,
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.dbg,
+    ASSUMED_VALUE_ATOP,
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.wdata);
+
+  logic achk_error_instr;
+  assign achk_error_instr = f_achk_error(
+    xsecure_if.core_i_m_c_obi_instr_if_req_payload.achk,
+    xsecure_if.core_i_m_c_obi_instr_if_req_payload.addr,
+    xsecure_if.core_i_m_c_obi_instr_if_req_payload.prot,
+    xsecure_if.core_i_m_c_obi_instr_if_req_payload.memtype,
+    ASSUMED_VALUE_BE,
+    ASSUMED_VALUE_WE,
+    xsecure_if.core_i_m_c_obi_instr_if_req_payload.dbg,
+    ASSUMED_VALUE_ATOP,
+    ASSUMED_VALUE_WDATA);
+
+  logic rchk_error_instr_read;
+  assign rchk_error_instr_read = f_rchk_error(
+    xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
+    xsecure_if.core_i_m_c_obi_instr_if_resp_payload.err,
+    EXOKAY_TIE_OFF_VALUE,
+    xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rdata);
+
+  logic rchk_error_data_read;
+  assign rchk_error_data_read = f_rchk_error(
+    xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
+    xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
+    EXOKAY_TIE_OFF_VALUE,
+    xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata);
+
+  logic rchk_error_data_write;
+  assign rchk_error_data_write = (xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk[4] == ^{xsecure_if.core_i_m_c_obi_data_if_resp_payload.err, EXOKAY_TIE_OFF_VALUE});
 
 
   /////////////////////////////////////////////////////////////////////
@@ -1164,6 +1231,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   end endgenerate
 
+
   ///////////////////////////////////////////////////////////////////////
   ///////////////////////// INTERFACE INTEGRITY /////////////////////////
   ///////////////////////////////////////////////////////////////////////
@@ -1264,30 +1332,6 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS FOR INSTRUCTIONS ARE GENERATED CORRECTLY //////////
 
-  sequence seq_response_phase_checksum(is_write_transaction, rchk, rdata, err, exokay);
-
-    //Check if instruction is a write
-    (is_write_transaction
-
-    //If instruction is a write only check that the rchk bits set by err and exokay is as expected
-    && rchk[4] == ^{err, exokay})
-
-    //Check if the instruction is a read
-    || (!is_write_transaction
-
-    //If the instruction is a read, check that all the rchk bits are as expected
-    && rchk[0] == ^rdata[7:0]
-    && rchk[1] == ^rdata[15:8]
-    && rchk[2] == ^rdata[23:16]
-    && rchk[3] == ^rdata[31:24]
-    && rchk[4] == ^{err, exokay});
-
-
-  endsequence
-
-  logic exokay_tie_off_value;
-  assign exokay_tie_off_value = 1'b0;
-
   a_xsecure_interface_integrity_rchk_instr_no_glitch: assert property (
 
     //Make sure interface integrity checking setting is on
@@ -1297,14 +1341,8 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
 
     |->
-    //Check that the checksum matches the contents
-    seq_response_phase_checksum(
-      NO_WRITE_TRANSACTION,
-      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
-      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rdata,
-      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.err,
-      exokay_tie_off_value
-    )
+    //Check that the checksum is generated correctly
+    !rchk_error_instr_read
 
   ) else `uvm_error(info_tag, "The response phase checksum for instructions is not as expected.\n");
 
@@ -1320,37 +1358,14 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
 
     |->
-    //Check that the checksum matches the content
-    seq_response_phase_checksum(
-      support_if.is_store_in_respons_data,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
-      exokay_tie_off_value
-    )
+    //Check that the checksum is generated correctly
+    ((support_if.is_store_in_respons_data && !rchk_error_data_write)
+    || (!support_if.is_store_in_respons_data && !rchk_error_data_read))
+
   ) else `uvm_error(info_tag, "The response phase checksum for data is generated wrongly.\n");
 
 
   ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS ERROR FOR INSTRUCTIONS SET ALERT MAJOR //////////
-
-  sequence seq_response_phase_checksum_error(is_write_transaction, rchk, rdata, err, exokay);
-    //Check if instruction is a write
-    (is_write_transaction
-
-    //If instruction is make sure there is a checksum error in the rchk bit set by err and exokay
-    && rchk[4] != ^{err, exokay})
-
-    //Check if the instruction is a read
-    || (!is_write_transaction
-
-    //If the instruction is a read, make sure there is at least one checksum error
-    && (rchk[0] != ^rdata[7:0]
-    || rchk[1] != ^rdata[15:8]
-    || rchk[2] != ^rdata[23:16]
-    || rchk[3] != ^rdata[31:24]
-    || rchk[4] != ^{err, exokay}));
-
-  endsequence
 
   a_xsecure_interface_integrity_rchk_instr_glitch: assert property (
     @(posedge xsecure_if.core_clk)
@@ -1365,12 +1380,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     && support_if.integrity_in_respons_instr
 
     //Make sure there is a checksum error
-    ##0 seq_response_phase_checksum_error(
-      NO_WRITE_TRANSACTION,
-      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
-      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rdata,
-      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.err,
-      exokay_tie_off_value)
+    && rchk_error_instr_read
 
     |=>
     //Verify that major alert is set
@@ -1393,13 +1403,9 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     //Make sure the packet has integrity
     && support_if.integrity_in_respons_data
 
-    //Make sure the checksum dont matches the content
-    ##0 seq_response_phase_checksum_error(
-      support_if.is_store_in_respons_data,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
-      exokay_tie_off_value)
+    //Make sure there is a checksum error
+    ((support_if.is_store_in_respons_data && rchk_error_data_write)
+    || (!support_if.is_store_in_respons_data && rchk_error_data_read))
 
     |=>
     //Verify that major alert is set
@@ -1425,13 +1431,8 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     //Make sure the packet has integrity
     && support_if.integrity_in_respons_instr
 
-    //Make sure the checksum dont matches the content
-    ##0 seq_response_phase_checksum_error(
-      NO_WRITE_TRANSACTION,
-      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
-      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rdata,
-      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.err,
-      exokay_tie_off_value)
+    //Make sure there is a checksum error
+    rchk_error_instr_read
 
     |=>
     //Verify that major alert is not set
@@ -1457,13 +1458,9 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     //Make sure the packet has integrity
     && support_if.integrity_in_respons_data
 
-    //Make sure the checksum dont matches the content
-    ##0 seq_response_phase_checksum_error(
-      support_if.is_store_in_respons_data,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
-      exokay_tie_off_value)
+    //Make sure there is a checksum error
+    ((support_if.is_store_in_respons_data && rchk_error_data_write)
+    || (!support_if.is_store_in_respons_data && rchk_error_data_read))
 
     |=>
     //Verify that major alert is not set
@@ -1473,42 +1470,6 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
 
  ////////// INTERFACE INTEGRITY ADDRESS CHECKSUM FOR INSTRUCTIONS IS GENERATED CORRECTLY //////////
-
-  logic achk;
-  logic addr;
-  logic prot;
-  logic memtype;
-  logic be;
-  logic we;
-  logic dbg;
-  logic atop;
-  logic wdata;
-  logic achk_error;
-
-  assign achk = xsecure_if.core_i_m_c_obi_data_if_req_payload.achk;
-  assign addr = xsecure_if.core_i_m_c_obi_data_if_req_payload.addr;
-  assign prot = xsecure_if.core_i_m_c_obi_data_if_req_payload.prot;
-  assign memtype = xsecure_if.core_i_m_c_obi_data_if_req_payload.memtype;
-  assign be = xsecure_if.core_i_m_c_obi_data_if_req_payload.be;
-  assign we = xsecure_if.core_i_m_c_obi_data_if_req_payload.we;
-  assign dbg = xsecure_if.core_i_m_c_obi_data_if_req_payload.dbg;
-  assign atop = assumed_value_atop;
-  assign wdata = xsecure_if.core_i_m_c_obi_data_if_req_payload.wdata;
-
-
-  assign achk_error = !(
-    achk[0] == ^addr[7:0]
-    && achk[1] == ^addr[15:8]
-    && achk[2] == ^addr[23:16]
-    && achk[3] == ^addr[31:24]
-    && achk[4] == ~^{prot[2:0], memtype[1:0]}
-    && achk[5] == ~^{be[3:0], we}
-    && achk[6] == ~^dbg
-    && achk[7] == ^atop[5:0]
-    && achk[8] == ^wdata[7:0]
-    && achk[9] == ^wdata[15:8]
-    && achk[10] == ^wdata[23:16]
-    && achk[11] == ^wdata[31:24]);
 
 
 /*
@@ -1523,7 +1484,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
     |->
     //Make sure the checksum is generated correctly
-    !achk_error
+    !achk_error_instr
 
   ) else `uvm_error(info_tag, "The address phase checksum for instructions is generated wrongly.\n");
 */
@@ -1540,7 +1501,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
     |->
     //Make sure the checksum is generated correctly
-    !achk_error
+    !achk_error_data
 
   ) else `uvm_error(info_tag, "The address phase checksum for data is generated wrongly.\n");
 
@@ -1598,16 +1559,11 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   a_xsecure_interface_integrity_instr_error_set_if_checksum_error: assert property (
     @(posedge xsecure_if.core_clk)
 
-    //Make sure there are a checksum error
-    seq_response_phase_checksum_error(
-      NO_WRITE_TRANSACTION,
-      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
-      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rdata,
-      xsecure_if.core_i_m_c_obi_instr_if_resp_payload.err,
-      exokay_tie_off_value)
+    //Make sure there is a checksum error
+    rchk_error_instr_read
 
     //Make sure the core is in operative mode
-    and (core_clock_cycles
+    && core_clock_cycles
 
     //Make sure interface integrity checking setting is on
     && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
@@ -1617,7 +1573,6 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
     //Make sure the packet has integrity
     && support_if.integrity_in_respons_instr
-    )
 
     |->
     //Verify that the instruction packet's integrity error is set
@@ -1676,16 +1631,12 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   a_xsecure_interface_integrity_data_error_set_if_checksum_error: assert property (
     @(posedge xsecure_if.core_clk)
 
-    //Make sure there are a checksum error
-    seq_response_phase_checksum_error(
-      support_if.is_store_in_respons_data,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata,
-      xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
-      exokay_tie_off_value)
+    //Make sure there is a checksum error
+    ((support_if.is_store_in_respons_data && rchk_error_data_write)
+    || (!support_if.is_store_in_respons_data && rchk_error_data_read))
 
     //Make sure the core is in operative mode
-    and (core_clock_cycles
+    && core_clock_cycles
 
     //Make sure interface integrity checking setting is on
     && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
@@ -1695,7 +1646,6 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
     //Make sure the packet has integrity
     && support_if.integrity_in_respons_data
-    )
 
     |->
     //Verify that the data packet's integrity error is set
