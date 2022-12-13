@@ -32,6 +32,15 @@ typedef struct packed {
   logic        intr;
 } rvfi_intr_t;
 
+typedef struct packed {
+  logic [1:0]  cause_type;
+  logic [2:0]  debug_cause;
+  logic [5:0]  exception_cause;
+  logic        debug;
+  logic        exception;
+  logic        trap;
+} rvfi_trap_t;
+
 function string get_mode_str(uvma_rvfi_mode mode);
    case (mode)
       UVMA_RVFI_U_MODE: return "U";

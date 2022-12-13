@@ -36,9 +36,11 @@ class uvme_cva6_env_c extends uvm_env;
    uvme_cva6_prd_c        predictor;
    uvme_cva6_sb_c         sb;
    uvme_cva6_vsqr_c       vsequencer;
+   uvme_cva6_cov_model_c  cov_model;
 
    // Agents
    uvma_clknrst_agent_c   clknrst_agent;
+   uvma_cvxif_agent_c     cvxif_agent;
 
 
 
@@ -71,6 +73,11 @@ class uvme_cva6_env_c extends uvm_env;
     * Print out final elaboration
     */
    extern virtual function void end_of_elaboration_phase(uvm_phase phase);
+
+   /**
+    * Creates and starts the instruction and virtual peripheral sequences in active mode.
+    */
+   extern virtual task run_phase(uvm_phase phase);
 
    /**
     * Assigns configuration handles to components using UVM Configuration Database.
@@ -106,6 +113,11 @@ class uvme_cva6_env_c extends uvm_env;
     * Connects scoreboards components to agents/predictor.
     */
    extern virtual function void connect_scoreboard();
+
+   /**
+    * Connects environment coverage model to agents/scoreboards/predictor.
+    */
+   extern virtual function void connect_coverage_model();
 
    /**
     * Assembles virtual sequencer from agent sequencers.
@@ -167,6 +179,9 @@ function void uvme_cva6_env_c::connect_phase(uvm_phase phase);
       if (cfg.is_active) begin
          assemble_vsequencer();
       end
+     if (cfg.cov_model_enabled) begin
+         connect_coverage_model();
+      end
    end
 
 endfunction: connect_phase
@@ -185,6 +200,8 @@ function void uvme_cva6_env_c::assign_cfg();
 
    uvm_config_db#(uvma_clknrst_cfg_c)::set(this, "*clknrst_agent", "cfg", cfg.clknrst_cfg);
 
+   uvm_config_db#(uvma_cvxif_cfg_c)::set(this, "*cvxif_agent", "cfg", cfg.cvxif_cfg);
+
 endfunction: assign_cfg
 
 
@@ -199,6 +216,7 @@ endfunction: assign_cntxt
 function void uvme_cva6_env_c::create_agents();
 
    clknrst_agent = uvma_clknrst_agent_c::type_id::create("clknrst_agent", this);
+   cvxif_agent   = uvma_cvxif_agent_c::type_id::create("cvxif_agent", this);
 
 endfunction: create_agents
 
@@ -208,6 +226,10 @@ function void uvme_cva6_env_c::create_env_components();
    if (cfg.scoreboarding_enabled) begin
       predictor = uvme_cva6_prd_c::type_id::create("predictor", this);
       sb        = uvme_cva6_sb_c ::type_id::create("sb"       , this);
+   end
+
+   if (cfg.cov_model_enabled) begin
+      cov_model = uvme_cva6_cov_model_c::type_id::create("cov_model", this);
    end
 
 endfunction: create_env_components
@@ -243,8 +265,23 @@ endfunction: connect_scoreboard
 function void uvme_cva6_env_c::assemble_vsequencer();
 
    vsequencer.clknrst_sequencer   = clknrst_agent.sequencer;
+   vsequencer.cvxif_sequencer     = cvxif_agent.sequencer;
 
 endfunction: assemble_vsequencer
 
+
+task uvme_cva6_env_c::run_phase(uvm_phase phase);
+
+            uvma_cvxif_seq_c        cvxif_seq;
+            cvxif_seq = uvma_cvxif_seq_c::type_id::create("cvxif_seq");
+            cvxif_seq.start(cvxif_agent.sequencer);
+
+endtask
+
+function void uvme_cva6_env_c::connect_coverage_model();
+
+   cvxif_agent.monitor.req_ap.connect(cov_model.cvxif_covg.req_item_fifo.analysis_export);
+
+endfunction: connect_coverage_model
 
 `endif // __UVME_CVA6_ENV_SV__

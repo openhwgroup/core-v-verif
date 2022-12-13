@@ -15,12 +15,12 @@ export SHELL = /bin/bash
 
 CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40s
 CV_CORE_BRANCH ?= master
-CV_CORE_HASH   ?= ed92096c08e6dbebfbf1e4295f7583f365519648
+CV_CORE_HASH   ?= dce36a268b5a564d8a4e9fe10bfb996d65e5595a
 CV_CORE_TAG    ?= none
 
 RISCVDV_REPO    ?= https://github.com/google/riscv-dv
 RISCVDV_BRANCH  ?= master
-RISCVDV_HASH    ?= 808fb162d66de5dd0dd2b45fd0b8d1fb1bf170f6
+RISCVDV_HASH    ?= 797aa0762de8e2c8d427b978483b47dd7649954a
 
 EMBENCH_REPO    ?= https://github.com/embench/embench-iot.git
 EMBENCH_BRANCH  ?= master

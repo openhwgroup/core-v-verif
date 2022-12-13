@@ -41,12 +41,15 @@
  */
 module uvmt_cv32e40s_dut_wrap
   import cv32e40s_pkg::*;
-
-  #(// DUT (riscv_core) parameters.
+#(// DUT (riscv_core) parameters.
     parameter cv32e40s_pkg::b_ext_e B_EXT  = cv32e40s_pkg::B_NONE,
     parameter int          PMA_NUM_REGIONS =  0,
     parameter pma_cfg_t    PMA_CFG[PMA_NUM_REGIONS-1 : 0] = '{default:PMA_R_DEFAULT},
     parameter int          PMP_NUM_REGIONS = 0,
+    parameter int          PMP_GRANULARITY = 0,
+    parameter logic        SMCLIC = 0,
+    parameter int          SMCLIC_ID_WIDTH = 5,
+    parameter int          DBG_NUM_TRIGGERS = 1,
     // Remaining parameters are used by TB components only
               INSTR_ADDR_WIDTH    =  32,
               INSTR_RDATA_WIDTH   =  32,
@@ -55,6 +58,7 @@ module uvmt_cv32e40s_dut_wrap
   (
     uvma_clknrst_if              clknrst_if,
     uvma_interrupt_if            interrupt_if,
+    uvma_clic_if                 clic_if,
     uvmt_cv32e40s_vp_status_if   vp_status_if,
     uvme_cv32e40s_core_cntrl_if  core_cntrl_if,
     uvmt_cv32e40s_core_status_if core_status_if,
@@ -64,7 +68,7 @@ module uvmt_cv32e40s_dut_wrap
   );
 
     import uvm_pkg::*; // needed for the UVM messaging service (`uvm_info(), etc.)
-
+    /*
     // signals connecting core to memory
     logic                         instr_req;
     logic                         instr_gnt;
@@ -82,7 +86,7 @@ module uvmt_cv32e40s_dut_wrap
     logic [31:0]                  data_wdata;
 
     logic [31:0]                  irq;
-
+  */
     logic                         debug_havereset;
     logic                         debug_running;
     logic                         debug_halted;
@@ -99,32 +103,34 @@ module uvmt_cv32e40s_dut_wrap
     assign obi_instr_if_i.aid       = 'b0;
     assign obi_instr_if_i.wdata     = 'b0;
     assign obi_instr_if_i.reqpar    = ~obi_instr_if_i.req;
-    assign obi_instr_if_i.achk      = 'b0;
-    assign obi_instr_if_i.rchk      = 'b0;
     assign obi_instr_if_i.rready    = 1'b1;
     assign obi_instr_if_i.rreadypar = 1'b0;
 
     // --------------------------------------------
-    // OBI Data agent v12.2 signal tie-offs
+    // OBI Data agent v1.2 signal tie-offs
     assign obi_data_if_i.auser      = 'b0;
     assign obi_data_if_i.wuser      = 'b0;
     assign obi_data_if_i.aid        = 'b0;
     assign obi_data_if_i.reqpar     = ~obi_data_if_i.req;
-    assign obi_data_if_i.achk       = 'b0;
-    assign obi_data_if_i.rchk       = 'b0;
     assign obi_data_if_i.rready     = 1'b1;
     assign obi_data_if_i.rreadypar  = 1'b0;
 
     // --------------------------------------------
     // Connect to uvma_interrupt_if
-    assign interrupt_if.clk                     = clknrst_if.clk;
-    assign interrupt_if.reset_n                 = clknrst_if.reset_n;
-    assign interrupt_if.irq_id                  = cv32e40s_wrapper_i.core_i.irq_id;
-    assign interrupt_if.irq_ack                 = cv32e40s_wrapper_i.core_i.irq_ack;
+    assign interrupt_if.clk         = clknrst_if.clk;
+    assign interrupt_if.reset_n     = clknrst_if.reset_n;
+    assign interrupt_if.irq_id      = cv32e40s_wrapper_i.core_i.irq_id;
+    assign interrupt_if.irq_ack     = cv32e40s_wrapper_i.core_i.irq_ack;
+
+    // --------------------------------------------
+    assign clic_if.clk              = clknrst_if.clk;
+    assign clic_if.reset_n          = clknrst_if.reset_n;
+    assign clic_if.irq_ack          = cv32e40s_wrapper_i.core_i.irq_ack;
 
     // --------------------------------------------
     // Connect to core_cntrl_if
     assign core_cntrl_if.b_ext = B_EXT;
+    `ifndef FORMAL
     initial begin
       core_cntrl_if.pma_cfg = new[PMA_NUM_REGIONS];
       foreach (core_cntrl_if.pma_cfg[i]) begin
@@ -136,6 +142,9 @@ module uvmt_cv32e40s_dut_wrap
         core_cntrl_if.pma_cfg[i].integrity      = PMA_CFG[i].integrity;
       end
     end
+    `endif
+
+
 
     // --------------------------------------------
     // instantiate the core
@@ -143,7 +152,10 @@ module uvmt_cv32e40s_dut_wrap
                       .B_EXT            (B_EXT),
                       .PMA_NUM_REGIONS  (PMA_NUM_REGIONS),
                       .PMA_CFG          (PMA_CFG),
-                      .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
+                      .PMP_GRANULARITY  (PMP_GRANULARITY),
+                      .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
+                      .SMCLIC           (SMCLIC),
+                      .DBG_NUM_TRIGGERS (DBG_NUM_TRIGGERS)
                       )
     cv32e40s_wrapper_i
         (
@@ -160,47 +172,48 @@ module uvmt_cv32e40s_dut_wrap
          .dm_exception_addr_i    ( core_cntrl_if.dm_exception_addr),
 
          .instr_req_o            ( obi_instr_if_i.req             ),
-         .instr_reqpar_o         (      /* todo: connect */       ),
+         .instr_reqpar_o         ( obi_instr_if_i.reqpar          ),
          .instr_gnt_i            ( obi_instr_if_i.gnt             ),
-         .instr_gntpar_i         ( 1'b0 /* todo: connect */       ),
+         .instr_gntpar_i         ( obi_instr_if_i.gntpar          ),
          .instr_addr_o           ( obi_instr_if_i.addr            ),
-         .instr_achk_o           (      /* todo: connect */       ),
+         .instr_achk_o           ( obi_instr_if_i.achk            ),
          .instr_prot_o           ( obi_instr_if_i.prot            ),
-         .instr_dbg_o            ( /* obi_instr_if_i.dbg */       ), // todo: Support OBI 1.3
+         .instr_dbg_o            ( obi_instr_if_i.dbg             ),
          .instr_memtype_o        ( obi_instr_if_i.memtype         ),
          .instr_rdata_i          ( obi_instr_if_i.rdata           ),
-         .instr_rchk_i           ( '0   /* todo: connect */       ),
+         .instr_rchk_i           ( obi_instr_if_i.rchk            ),
          .instr_rvalid_i         ( obi_instr_if_i.rvalid          ),
-         .instr_rvalidpar_i      ( 1'b0 /* todo: connect */       ),
+         .instr_rvalidpar_i      ( obi_instr_if_i.rvalidpar       ),
          .instr_err_i            ( obi_instr_if_i.err             ),
 
          .data_req_o             ( obi_data_if_i.req              ),
-         .data_reqpar_o          (      /* todo: connect */       ),
+         .data_reqpar_o          ( obi_data_if_i.reqpar           ),
          .data_gnt_i             ( obi_data_if_i.gnt              ),
-         .data_gntpar_i          ( 1'b0 /* todo: connect */       ),
+         .data_gntpar_i          ( obi_data_if_i.gntpar           ),
          .data_rvalid_i          ( obi_data_if_i.rvalid           ),
-         .data_rvalidpar_i       ( 1'b0 /* todo: connect */       ),
+         .data_rvalidpar_i       ( obi_data_if_i.rvalidpar        ),
          .data_we_o              ( obi_data_if_i.we               ),
          .data_be_o              ( obi_data_if_i.be               ),
          .data_addr_o            ( obi_data_if_i.addr             ),
-         .data_achk_o            (      /* todo: connect */       ),
+         .data_achk_o            ( obi_data_if_i.achk             ),
          .data_wdata_o           ( obi_data_if_i.wdata            ),
          .data_prot_o            ( obi_data_if_i.prot             ),
-         .data_dbg_o             ( /* obi_data_if_i.dbg */        ), // todo: Support OBI 1.3
+         .data_dbg_o             ( obi_data_if_i.dbg              ),
          .data_memtype_o         ( obi_data_if_i.memtype          ),
          .data_rdata_i           ( obi_data_if_i.rdata            ),
-         .data_rchk_i            ( '0   /* todo: connect */       ),
+         .data_rchk_i            ( obi_data_if_i.rchk             ),
          .data_err_i             ( obi_data_if_i.err              ),
 
          .mcycle_o               ( /*todo: connect */             ),
 
          .irq_i                  ( interrupt_if.irq               ),
+         .wu_wfe_i               ( 1'b0                           ), // todo: hook up
+         .clic_irq_i             ( clic_if.clic_irq               ),
+         .clic_irq_id_i          ( clic_if.clic_irq_id            ),
+         .clic_irq_level_i       ( clic_if.clic_irq_level         ),
+         .clic_irq_priv_i        ( clic_if.clic_irq_priv          ),
+         .clic_irq_shv_i         ( clic_if.clic_irq_shv           ),
 
-         .clic_irq_i             ( '0   /*todo: connect */        ),
-         .clic_irq_id_i          ( '0   /*todo: connect */        ),
-         .clic_irq_level_i       ( '0   /*todo: connect */        ),
-         .clic_irq_priv_i        ( '0   /*todo: connect */        ),
-         .clic_irq_shv_i         ( '0   /*todo: connect */        ),
 
          .fencei_flush_req_o     ( fencei_if_i.flush_req          ),
          .fencei_flush_ack_i     ( fencei_if_i.flush_ack          ),

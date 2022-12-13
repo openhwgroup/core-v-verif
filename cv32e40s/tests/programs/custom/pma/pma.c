@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define  EXCEPTION_INSN_ACCESS_FAULT  1
 #define  EXCEPTION_LOAD_ACCESS_FAULT  5
@@ -79,7 +80,7 @@ void provoke(void (*f)(void)) {
 static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
   if (actual != expect) {
     printf(msg);
-    printf("expected = 0x%lx (%ld), got = 0x%lx (%ld)\n", expect, (int32_t)expect, actual, (int32_t)actual);
+    printf("pma: expected = 0x%lx (%ld), got = 0x%lx (%ld)\n", expect, (int32_t)expect, actual, (int32_t)actual);
     exit(EXIT_FAILURE);
   }
 }
@@ -91,7 +92,7 @@ void u_sw_irq_handler(void) {  // overrides a "weak" symbol in the bsp
   __asm__ volatile("csrr %0, mtval" : "=r"(mtval));
 
   __asm__ volatile("csrw mepc, %0" : : "r"(retpc));
-  printf("exec in u_sw_irq_handler, mcause=%lx, mepc=%lx, retpc=%lx\n", mcause, mepc, retpc);
+  printf("(exec in u_sw_irq_handler: mcause=%lx, mepc=%lx, retpc=%lx)\n", mcause, mepc, retpc);
 
   // provoke() did prolog, handler does epilog
   __asm__ volatile("lw ra, 0(sp)");
@@ -267,7 +268,7 @@ int main(void) {
   // TODO "mtval" should in the future not be read-only read-zero.
 
 
-  // Exec should only work for "main memory" regions
+  printf("pma: Exec should only work for 'main memory' regions\n");
 
   reset_volatiles();
   provoke(instr_access_fault);
@@ -276,9 +277,9 @@ int main(void) {
   assert_or_die(mtval, MTVAL_READ, "error: expected different mtval\n");
 
 
-  // Non-naturally aligned stores to I/O regions
+  printf("pma: Non-naturally aligned stores to I/O regions\n");
 
-  // sanity check that aligned stores are ok
+  printf("pma: sanity check that aligned stores are ok\n");
   reset_volatiles();
   tmp = 0xAAAAAAAA;
   __asm__ volatile("sw %0, 0(%1)" : "=r"(tmp) : "r"(IO_ADDR));
@@ -286,14 +287,14 @@ int main(void) {
   assert_or_die(mepc, -1, "error: aligned store should not change mepc\n");
   assert_or_die(mtval, -1, "error: aligned store should not change mtval\n");
 
-  // check that misaligned stores except
+  printf("pma: check that misaligned stores except\n");
   reset_volatiles();
   provoke(misaligned_store);
   assert_or_die(mcause, EXCEPTION_STOREAMO_ACCESS_FAULT, "error: misaligned store unexpected mcause\n");
   //TODO:ropeders fix: assert_or_die(mepc, (IO_ADDR + 1), "error: misaligned store unexpected mepc\n");
   assert_or_die(mtval, MTVAL_READ, "error: misaligned store unexpected mtval\n");
 
-  // check that misaligned store to MEM is alright
+  printf("pma: check that misaligned store to MEM is alright\n");
   reset_volatiles();
   tmp = 0xCCCCCCCC;
   __asm__ volatile("sw %0, -9(%1)" : "=r"(tmp) : "r"(IO_ADDR));
@@ -302,9 +303,9 @@ int main(void) {
   assert_or_die(mtval, -1, "error: misaligned store to main affected mtval\n");
 
 
-  // Non-naturally aligned loads within I/O regions
+  printf("pma: Non-naturally aligned loads within I/O regions\n");
 
-  // sanity check that aligned load is no problem
+  printf("pma: sanity check that aligned load is no problem\n");
   reset_volatiles();
   tmp = 0;
   __asm__ volatile("lw %0, 0(%1)" : "=r"(tmp) : "r"(IO_ADDR));  // Depends on "store" test filling memory first
@@ -313,17 +314,17 @@ int main(void) {
   assert_or_die(mepc, -1, "error: natty access should not change mepc\n");
   assert_or_die(mtval, -1, "error: natty access should not change mtval\n");
 
-  // check that misaligned load will except
-  /* TODO enable when RTL is implemented
+  printf("pma: check that misaligned load will except\n");
+ /* TODO:silabs-robin  Uncomment
   reset_volatiles();
   __asm__ volatile("lw %0, 5(%1)" : "=r"(tmp) : "r"(IO_ADDR));
   assert_or_die(mcause, EXCEPTION_LOAD_ACCESS_FAULT, "error: misaligned IO load should except\n");
   assert_or_die(mepc, (IO_ADDR + 5), "error: misaligned IO load unexpected mepc\n");
   assert_or_die(mtval, MTVAL_READ, "error: misaligned IO load unexpected mtval\n");
-  */
   // TODO more kinds of |addr[0:1]? Try LH too?
+ */
 
-  // check that misaligned to MEM does not fail
+  printf("pma: check that misaligned to MEM does not fail\n");
   reset_volatiles();
   tmp = 0;
   __asm__ volatile("lw %0, 0(%1)" : "=r"(tmp) : "r"(0x80));
@@ -333,7 +334,7 @@ int main(void) {
   assert_or_die(mtval, -1, "error: main access should not change mtval\n");
 
 
-  // Misaligned load fault shouldn't touch regfile
+  printf("pma: Misaligned load fault shouldn't touch regfile\n");
 
   // check that various split load access fault leaves regfile untouched
   check_load_vs_regfile();

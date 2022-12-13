@@ -17,6 +17,7 @@
  */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 static int fib(int i) {

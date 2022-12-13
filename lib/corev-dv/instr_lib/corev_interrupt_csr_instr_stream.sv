@@ -26,7 +26,7 @@
 
 class corev_interrupt_csr_instr_stream extends riscv_load_store_rand_instr_stream;
 
-  typedef enum { 
+  typedef enum {
     RANDOM_MIE,
     RANDOM_MSTATUS_MIE
   } interrupt_csr_action_enum;
@@ -53,7 +53,7 @@ class corev_interrupt_csr_instr_stream extends riscv_load_store_rand_instr_strea
 `ifndef _VCP
   constraint default_wgt_c {
     soft wgt_random_mie == 1;
-    soft wgt_random_mstatus_mie == 3; 
+    soft wgt_random_mstatus_mie == 3;
   }
 `endif
 
@@ -79,10 +79,10 @@ class corev_interrupt_csr_instr_stream extends riscv_load_store_rand_instr_strea
     riscv_instr        inserted_instr_list[$];
 
     riscv_pseudo_instr li_instr;
-    riscv_instr        csr_instr;
+    riscv_csr_instr    csr_instr;
 
     // Instruction 0: Generate a li with a randomized mask
-    li_instr = riscv_pseudo_instr::type_id::create("LI");  
+    li_instr = riscv_pseudo_instr::type_id::create("LI");
     `DV_CHECK_RANDOMIZE_WITH_FATAL(li_instr,
       pseudo_instr_name == LI;
       !(rd inside {reserved_rd, cfg.reserved_regs});
@@ -93,12 +93,12 @@ class corev_interrupt_csr_instr_stream extends riscv_load_store_rand_instr_strea
     li_instr.comment = $sformatf("corev-dv: Set MIE to 0x%08x", rand_mie_setting);
     li_instr.update_imm_str();
     inserted_instr_list.push_back(li_instr);
-    
+
     // Instruction 1: Generate a write, set or clear to MIE
-    csr_instr = riscv_instr::get_rand_instr(.include_instr(allowed_mie_instr));
-    csr_instr.csr_c.constraint_mode(0);
+    csr_instr = riscv_csr_instr'(riscv_instr::get_rand_instr(.include_instr(allowed_mie_instr)));
+    csr_instr.csr_addr_c.constraint_mode(0);
     `DV_CHECK_RANDOMIZE_WITH_FATAL(csr_instr,
-      csr == MIE;    
+      csr == MIE;
       !(rd inside {reserved_rd, cfg.reserved_regs});
       rs1 == li_instr.rd;
       , "Cannot randomize MIE CSR instruction"
@@ -110,11 +110,11 @@ class corev_interrupt_csr_instr_stream extends riscv_load_store_rand_instr_strea
   endfunction : generate_mie_write
 
   function void generate_mstatus_mie_write();
-    riscv_instr csr_instr;
+    riscv_csr_instr csr_instr;
 
-    // Randomly set or clear bit 3 (MIE) in MSTATUS        
-    csr_instr = riscv_instr::get_rand_instr(.include_instr({CSRRSI, CSRRCI}));
-    csr_instr.csr_c.constraint_mode(0);
+    // Randomly set or clear bit 3 (MIE) in MSTATUS
+    csr_instr = riscv_csr_instr'(riscv_instr::get_rand_instr(.include_instr({CSRRSI, CSRRCI})));
+    csr_instr.csr_addr_c.constraint_mode(0);
     `DV_CHECK_RANDOMIZE_WITH_FATAL(csr_instr,
       csr == MSTATUS;
       !(rd inside {reserved_rd, cfg.reserved_regs});
@@ -127,4 +127,4 @@ class corev_interrupt_csr_instr_stream extends riscv_load_store_rand_instr_strea
 
 endclass : corev_interrupt_csr_instr_stream
 
- 
+

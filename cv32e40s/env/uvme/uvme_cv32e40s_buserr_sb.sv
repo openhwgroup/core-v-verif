@@ -126,7 +126,7 @@ function void uvme_cv32e40s_buserr_sb_c::write_rvfi(uvma_rvfi_instr_seq_item_c#(
   if (should_instr_err(trn)) begin
     cnt_rvfi_errmatch++;
 
-    assert (trn.trap)
+    assert (trn.trap.trap)
       else `uvm_error(info_tag, $sformatf("retire at 0x%08x (expected 'err') lacks 'rvfi_trap'", trn.pc_rdata));
     assert (cnt_rvfi_errmatch - cnt_rvfi_ifaulthandl <= 1)
       else `uvm_error(info_tag, "too many err retires without ifault handling");

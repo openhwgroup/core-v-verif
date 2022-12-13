@@ -34,7 +34,7 @@ interface uvma_rvfi_instr_if
     input logic                      rvfi_valid,
     input logic [ORDER_WL-1:0]       rvfi_order,
     input logic [ILEN-1:0]           rvfi_insn,
-    input logic [TRAP_WL-1:0]        rvfi_trap,
+    input rvfi_trap_t                rvfi_trap,
     input logic                      rvfi_halt,
     input logic [RVFI_DBG_WL-1:0]    rvfi_dbg,
     input logic                      rvfi_dbg_mode,
@@ -72,6 +72,18 @@ interface uvma_rvfi_instr_if
     input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask
 
   );
+
+  // -------------------------------------------------------------------
+  // Local param
+  // -------------------------------------------------------------------
+  localparam INSTR_MASK_FULL        = 32'h FFFF_FFFF;
+  localparam INSTR_OPCODE_DRET      = 32'h 7B20_0073;
+  localparam INSTR_OPCODE_MRET      = 32'h 3020_0073;
+  localparam INSTR_OPCODE_URET      = 32'h 0020_0073;
+  localparam INSTR_OPCODE_WFI       = 32'h 1050_0073;
+  localparam INSTR_OPCODE_WFE       = 32'h 8C00_0073;
+  localparam INSTR_OPCODE_EBREAK    = 32'h 0010_0073;
+  localparam INSTR_OPCODE_ECALL     = 32'h 0000_0073;
 
   // -------------------------------------------------------------------
   // Local variables
@@ -133,6 +145,123 @@ interface uvma_rvfi_instr_if
   endclocking : mon_cb
 
   modport passive_mp    (clocking mon_cb);
+
+  // -------------------------------------------------------------------
+  // Functions
+  // -------------------------------------------------------------------
+
+  // NOTE: All of these functions are only valid when the RVFI bus holds
+  //       valid values, indicated by rvfi_valid == 1
+
+  // Check if instruction is of a certain type
+  // Usage: ref_mask sets the parts of the instruction you want to compare,
+  //        ref_instr is the reference to match
+  function logic match_instr( bit [ DEFAULT_XLEN-1:0] ref_instr,
+                              bit [ DEFAULT_XLEN-1:0] ref_mask
+                              );
+
+  return rvfi_valid && ((rvfi_insn & ref_mask) == ref_instr);
+
+  endfunction : match_instr
+
+// Return wdata of register "gpr"
+function bit [ DEFAULT_XLEN-1:0] get_gpr_wdata( int gpr);
+  return rvfi_gpr_wdata[gpr* DEFAULT_XLEN +: DEFAULT_XLEN];
+endfunction : get_gpr_wdata
+
+// Return rdata of register "gpr"
+function bit [ DEFAULT_XLEN-1:0] get_gpr_rdata( int gpr);
+  return rvfi_gpr_rdata[gpr* DEFAULT_XLEN +: DEFAULT_XLEN];
+endfunction : get_gpr_rdata
+
+// Return valid data of memory transaction "txn"
+function bit [ DEFAULT_XLEN-1:0] get_mem_data_word( int txn);
+  bit [ DEFAULT_XLEN-1:0] ret;
+
+  for (int i = 0; i <  DEFAULT_XLEN/8; i++) begin
+    if (rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) + i]) begin
+      ret[i*8 +:8] = rvfi_mem_wdata[((txn* DEFAULT_XLEN) + (i*8)) +:8];
+    end else begin
+      ret[i*8 +:8] = rvfi_mem_rdata[((txn* DEFAULT_XLEN) + (i*8)) +:8];
+    end
+  end
+
+  return ret;
+
+endfunction : get_mem_data_word
+
+//Return addr of memory transaction "txn"
+function bit [ DEFAULT_XLEN-1:0] get_mem_addr(int txn);
+
+  return rvfi_mem_addr[txn* DEFAULT_XLEN +: DEFAULT_XLEN];
+
+endfunction : get_mem_addr
+
+//Return rmask of memory transaction "txn"
+function bit [( DEFAULT_XLEN/8)-1:0] get_mem_rmask( int txn);
+
+  return rvfi_mem_rmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)];
+
+endfunction : get_mem_rmask
+
+//Return wmask of memory transaction "txn"
+function bit [( DEFAULT_XLEN/8)-1:0] get_mem_wmask( int txn);
+
+  return rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)];
+
+endfunction : get_mem_wmask
+
+
+//Check memory transaction activity
+
+//Checks if a position in the rvfi memory transaction list
+//indicates any activity.
+//return {read, write}
+function bit [1:0] check_mem_act(  int txn);
+  static bit read = 0;
+  static bit write = 0;
+
+  if (rvfi_mem_rmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)]) begin
+    read = 1;
+  end
+  if (rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)]) begin
+    write = 1;
+  end
+
+  return {read,write};
+
+endfunction : check_mem_act
+
+
+// Short functions for recognising special functions
+
+function logic is_dret();
+  return match_instr(INSTR_OPCODE_DRET, INSTR_MASK_FULL);
+endfunction : is_dret
+
+function logic is_mret();
+  return match_instr(INSTR_OPCODE_MRET, INSTR_MASK_FULL);
+endfunction : is_mret
+
+function logic is_uret();
+  return match_instr(INSTR_OPCODE_URET, INSTR_MASK_FULL);
+endfunction : is_uret
+
+function logic is_wfi();
+  return match_instr(INSTR_OPCODE_WFI, INSTR_MASK_FULL);
+endfunction : is_wfi
+
+function logic is_wfe();
+  return match_instr(INSTR_OPCODE_WFE, INSTR_MASK_FULL);
+endfunction : is_wfe
+
+function logic is_ebreak();
+  return match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL);
+endfunction : is_ebreak
+
+function logic is_ecall();
+  return match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);
+endfunction : is_ecall
 
 endinterface : uvma_rvfi_instr_if
 
