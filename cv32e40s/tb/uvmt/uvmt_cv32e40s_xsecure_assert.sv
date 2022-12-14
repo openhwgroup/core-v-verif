@@ -1280,10 +1280,6 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ///////////////////////// HARDENED PC /////////////////////////
   ///////////////////////////////////////////////////////////////
 
-<<<<<<< HEAD
-
-=======
->>>>>>> c84e0bc763464044ba32e2fb0cd8efd50e8517b7
   ////////// PC HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
 
   sequence seq_dummy_if_id;
