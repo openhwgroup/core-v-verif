@@ -494,6 +494,7 @@ module uvmt_cv32e40x_debug_assert
     // Check debug_req_i and irq on same cycle.
     // Should result in debug mode with regular pc in dpc, not pc from interrupt handler.
     // PC is checked in another assertion
+    /* TODO:MT commented out due to the removal of dbeug_req_q from RTL. Fix will be implemented in 40s first
     property p_debug_req_and_irq;
         ((cov_assert_if.debug_req_i || cov_assert_if.debug_req_q) && !cov_assert_if.debug_mode_q)
         && (cov_assert_if.pending_enabled_irq != 0)
@@ -503,9 +504,10 @@ module uvmt_cv32e40x_debug_assert
         // TODO:ropeders should dpc be checked here?
     endproperty
 
+
     a_debug_req_and_irq : assert property(p_debug_req_and_irq)
         else `uvm_error(info_tag, "Debug mode not entered after debug_req_i and irq on same cycle");
-
+    */
 
     // debug_req at reset should result in debug mode and no instructions executed
 
@@ -698,9 +700,9 @@ module uvmt_cv32e40x_debug_assert
                 debug_cause_pri <= 3'b010;  // Trigger match
             end else if(cov_assert_if.dcsr_q[15] && (cov_assert_if.is_ebreak || cov_assert_if.is_cebreak)) begin
                 debug_cause_pri <= 3'b001;  // Ebreak
-            end else if((cov_assert_if.debug_req_i || cov_assert_if.debug_req_q)
-                        && (cov_assert_if.ctrl_fsm_cs == cv32e40x_pkg::FUNCTIONAL)) begin
-                debug_cause_pri <= 3'b011;  // Haltreq
+            //TODO:MT temp disable for removal of debug_req_q, proper fix will be made in 40s first
+            //end else if((cov_assert_if.debug_req_i || cov_assert_if.debug_req_q)
+            //    debug_cause_pri <= 3'b011;  // Haltreq
             end else if((cov_assert_if.dcsr_q[2]) && (debug_cause_pri inside {3'b100, 0})) begin  // "step"
                 debug_cause_pri <= 3'b100;  // Single step
             end else if(cov_assert_if.ctrl_fsm_cs == cv32e40x_pkg::FUNCTIONAL) begin
