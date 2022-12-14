@@ -309,7 +309,7 @@ interface uvmt_cv32e40s_debug_cov_assert_if
 
     // Debug signals
     input         debug_req_i, // From controller
-    input         ctrl_fsm_async_debug_allowed,
+    input         debug_req_q, // From controller
     input         debug_havereset,
     input         debug_running,
     input         debug_halted,
