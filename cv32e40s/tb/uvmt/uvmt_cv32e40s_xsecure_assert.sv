@@ -20,6 +20,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   //TODO: update hardened CSR documentation as these CSRs are no longer hardened mclicbase, mscratchcsw, mscratchcswl
   //TODO: change rvfi_trap from using bit position to struct fields when the rvfi interface is updated
+  //TODO: make the assertion names sensible
 
 
   // Local parameters:
@@ -69,10 +70,12 @@ module uvmt_cv32e40s_xsecure_assert
 
   localparam NO_WRITE_TRANSACTION = 1'b0;
 
-  localparam assumed_value_be = 4'b1111;
-  localparam assumed_value_we = 1'b0;
-  localparam assumed_value_atop = 6'b00_0000;
-  localparam assumed_value_wdata = 32'h0000_0000;
+  localparam ASSUMED_VALUE_BE = 4'b1111;
+  localparam ASSUMED_VALUE_WE = 1'b0;
+  localparam ASSUMED_VALUE_ATOP = 6'b00_0000;
+  localparam ASSUMED_VALUE_WDATA = 32'h0000_0000;
+
+  localparam EXOKAY_TIE_OFF_VALUE = 1'b0;
 
   //Sticky bit that indicates if major alert has been set.
   logic alert_major_was_set;
@@ -87,6 +90,17 @@ module uvmt_cv32e40s_xsecure_assert
     end
   end
 
+  //Signal determing if the core clock is active or not.
+  logic core_clock_cycles;
+
+  always @(posedge clk_i) begin
+    if(!rst_ni) begin
+      core_clock_cycles <= 0;
+    end else begin
+      core_clock_cycles <= xsecure_if.clk_en;
+    end
+  end
+
   // Default settings:
   default clocking @(posedge clk_i); endclocking
 
@@ -95,7 +109,7 @@ module uvmt_cv32e40s_xsecure_assert
   string info_tag = "CV32E40S_XSECURE_ASSERT";
 
   // Functions:
-  function logic f_achk_error (achk, addr, prot, memtype, be, we, dbg, atop, wdata);
+  function logic f_achk_error (logic [11:0] achk, logic [31:0] addr, logic [2:0] prot, logic [1:0] memtype, logic [3:0] be, logic we, logic dbg, logic [5:0] atop, logic [31:0] wdata);
     f_achk_error = !(
       achk[0] == ^addr[7:0]
       && achk[1] == ^addr[15:8]
@@ -111,7 +125,7 @@ module uvmt_cv32e40s_xsecure_assert
       && achk[11] == ^wdata[31:24]);
   endfunction
 
-  function logic f_rchk_error (rchk, err, exokay, rdata);
+  function logic f_rchk_error (logic [4:0] rchk, logic err, logic exokay, logic [31:0] rdata);
     f_rchk_error = !(
       rchk[0] == ^rdata[7:0]
       && rchk[1] == ^rdata[15:8]
@@ -159,8 +173,13 @@ module uvmt_cv32e40s_xsecure_assert
     xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata);
 
   logic rchk_error_data_write;
-  assign rchk_error_data_write = (xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk[4] == ^{xsecure_if.core_i_m_c_obi_data_if_resp_payload.err, EXOKAY_TIE_OFF_VALUE});
+  assign rchk_error_data_write = (xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk[4] != ^{xsecure_if.core_i_m_c_obi_data_if_resp_payload.err, EXOKAY_TIE_OFF_VALUE});
 
+  logic rchk_error_instr;
+  logic rchk_error_data;
+
+  assign rchk_error_instr = rchk_error_instr_read;
+  assign rchk_error_data = ((support_if.req_was_store && rchk_error_data_write) || (!support_if.req_was_store && rchk_error_data_read));
 
   /////////////////////////////////////////////////////////////////////
   ///////////////////////// GENERAL SEQUENCES /////////////////////////
@@ -1236,20 +1255,21 @@ module uvmt_cv32e40s_xsecure_assert
   ///////////////////////// INTERFACE INTEGRITY /////////////////////////
   ///////////////////////////////////////////////////////////////////////
 
-  ////////// INTERFACE INTEGRITY SETTING IS ON BY DEFAULT //////////
+
+  ////////// INTERFACE INTEGRITY CHECKING IS ENABLED BY DEFAULT //////////
 
   a_xsecure_interface_integrity_default_on: assert property (
     p_xsecure_setting_default_on(
         xsecure_if.core_xsecure_ctrl_cpuctrl_integrity)
-  ) else `uvm_error(info_tag, "Integrity interface setting is not on when exiting reset.\n");
+  ) else `uvm_error(info_tag, "Interface integrity checking is not enabled when exiting reset.\n");
 
 
-  ////////// INTERFACE INTEGRITY PARITY BITS ARE COMPLIMENT BITS AT ALL TIME GIVEN THERE IS NO GLITCH //////////
+  ////////// INTERFACE INTEGRITY PARITY BITS ARE COMPLIMENT BITS AT ALL TIMES GIVEN THERE IS NO GLITCH //////////
 
   property p_parity_signal_is_invers_of_signal(signal, parity_signal);
     @(posedge clk_i)
 
-    //Make sure parity signal is always inverse of the signal
+    //Make sure the parity bit is always the complement of the non-parity bit
     parity_signal == ~signal;
 
   endproperty
@@ -1258,37 +1278,37 @@ module uvmt_cv32e40s_xsecure_assert
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_m_c_obi_data_if_s_req_req,
       xsecure_if.core_i_m_c_obi_data_if_s_req_reqpar)
-  ) else `uvm_error(info_tag, "Parity signal reqpar to the data obi bus is not invers of transaction grant (req) signal.\n");
+  ) else `uvm_error(info_tag, "The OBI data bus request parity bit is not inverse of the request bit.\n");
 
   a_xsecure_interface_integrity_obi_data_gnt_parity: assert property (
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt,
       xsecure_if.core_i_m_c_obi_data_if_s_gnt_gntpar)
-  ) else `uvm_error(info_tag, "Parity signal gntpar to the data obi bus is not invers of transaction grant (gnt) signal.\n");
+  ) else `uvm_error(info_tag, "The OBI data bus grant parity bit is not inverse of the grant bit.\n");
 
   a_xsecure_interface_integrity_obi_data_rvalid_parity: assert property (
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar)
-  ) else `uvm_error(info_tag, "Parity signal rvalidpar to the data obi bus is not invers of response valid signal.\n");
+  ) else `uvm_error(info_tag, "The OBI data bus rvalid parity bit is not inverse of the rvalid bit.\n");
 
   a_xsecure_interface_integrity_obi_instr_req_parity: assert property (
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_m_c_obi_instr_if_s_req_req,
       xsecure_if.core_i_m_c_obi_instr_if_s_req_reqpar)
-  ) else `uvm_error(info_tag, "Parity signal reqpar to the instruction obi bus is not invers of transaction grant (req) signal.\n");
+  ) else `uvm_error(info_tag, "The OBI instruction bus request parity bit is not inverse of the request bit.\n");
 
   a_xsecure_interface_integrity_obi_instr_gnt_parity: assert property (
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt,
       xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar)
-  ) else `uvm_error(info_tag, "Parity signal gntpar to the instruction obi bus is not invers of transaction grant (gnt) signal.\n");
+  ) else `uvm_error(info_tag, "The OBI instruction bus grant parity bit is not inverse of the grant bit.\n");
 
   a_xsecure_interface_integrity_obi_instr_rvalid_parity: assert property (
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar)
-  ) else `uvm_error(info_tag, "Parity signal rvalidpar to the instruction obi bus is not invers of response valid signal.\n");
+  ) else `uvm_error(info_tag, "The OBI instruction bus rvalid parity bit is not inverse of the rvalid bit.\n");
 
 
 ////////// INTERFACE INTEGRITY PARITY BIT ERRORS DUE TO GLITCHES SET ALERT MAJOR //////////
@@ -1296,11 +1316,11 @@ module uvmt_cv32e40s_xsecure_assert
 property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_signal);
     @(posedge xsecure_if.core_clk)
 
-    //Make sure parity signal is not inverse of the signal
+    //Make sure the parity bit is not the complement of the non-parity bit
     parity_signal != ~signal
 
     |=>
-    //Verify that Major alert is set
+    //Verify that the major alert is set
     xsecure_if.core_alert_major_o;
 
   endproperty
@@ -1309,365 +1329,284 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     p_parity_signal_is_not_invers_of_signal_set_major_alert(
       xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt,
       xsecure_if.core_i_m_c_obi_data_if_s_gnt_gntpar)
-  ) else `uvm_error(info_tag, "Obi data bus grant signal and parity signal mismatch dont set major alert.\n");
+  ) else `uvm_error(info_tag, "A OBI data bus grant parity error does not set the major alert.\n");
 
   a_xsecure_interface_integrity_obi_data_rvalid_parity_error_set_major_alert: assert property (
     p_parity_signal_is_not_invers_of_signal_set_major_alert(
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar)
-  ) else `uvm_error(info_tag, "Obi data bus rvalid signal and parity signal mismatch dont set major alert.\n");
+  ) else `uvm_error(info_tag, "A OBI data bus rvalid parity error does not set the major alert.\n");
 
   a_xsecure_interface_integrity_obi_instr_gnt_parity_error_set_major_alert: assert property (
     p_parity_signal_is_not_invers_of_signal_set_major_alert(
       xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt,
       xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar)
-  ) else `uvm_error(info_tag, "Obi instruction bus grant signal and parity signal mismatch dont set major alert.\n");
+  ) else `uvm_error(info_tag, "A OBI instruction bus grant parity error does not set the major alert.\n");
 
   a_xsecure_interface_integrity_obi_instr_rvalid_parity_error_set_major_alert: assert property (
     p_parity_signal_is_not_invers_of_signal_set_major_alert(
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar)
-  ) else `uvm_error(info_tag, "Obi instruction bus rvalid signal and parity signal mismatch dont set major alert.\n");
+  ) else `uvm_error(info_tag, "A OBI instruction bus rvalid parity error does not set the major alert.\n");
 
 
-  ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS FOR INSTRUCTIONS ARE GENERATED CORRECTLY //////////
+  ////////// INTERFACE INTEGRITY RESPONSE CHECKSUMS FOR INSTRUCTIONS ARE GENERATED CORRECTLY //////////
+
+  property p_check_that_response_checksum_is_generated_correctly(rvalid, is_checksum_error);
+
+    //Make sure the interface integrity checking is enabled
+    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    //Make sure we receive a response packet
+    && rvalid
+
+    |->
+    //Check that there is no checksum errors
+    !is_checksum_error;
+
+  endproperty
 
   a_xsecure_interface_integrity_rchk_instr_no_glitch: assert property (
-
-    //Make sure interface integrity checking setting is on
-    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
-
-    //Make sure we recive a respons packet
-    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
-
-    |->
-    //Check that the checksum is generated correctly
-    !rchk_error_instr_read
-
-  ) else `uvm_error(info_tag, "The response phase checksum for instructions is not as expected.\n");
+    p_check_that_response_checksum_is_generated_correctly(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      rchk_error_instr)
+  ) else `uvm_error(info_tag, "The OBI instruction response packet's checksum is not as expected.\n");
 
 
-  ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS FOR DATA ARE GENERATED CORRECTLY //////////
+  ////////// INTERFACE INTEGRITY RESPONSE CHECKSUMS FOR DATA ARE GENERATED CORRECTLY //////////
 
   a_xsecure_interface_integrity_rchk_data_no_glitch: assert property (
-
-    //Make sure interface integrity checking setting is on
-    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
-
-    //Make sure we recive a respons packet
-    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
-
-    |->
-    //Check that the checksum is generated correctly
-    ((support_if.is_store_in_respons_data && !rchk_error_data_write)
-    || (!support_if.is_store_in_respons_data && !rchk_error_data_read))
-
-  ) else `uvm_error(info_tag, "The response phase checksum for data is generated wrongly.\n");
+    p_check_that_response_checksum_is_generated_correctly(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      rchk_error_data)
+  ) else `uvm_error(info_tag, "The OBI data response packet's checksum is not as expected.\n");
 
 
-  ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS ERROR FOR INSTRUCTIONS SET ALERT MAJOR //////////
+  ////////// INTERFACE INTEGRITY RESPONSE CHECKSUM ERRORS FOR INSTRUCTIONS SET ALERT MAJOR //////////
+
+  property p_will_checksum_error_set_major_alert(is_integrity_checking_enabled, rvalid, req_had_integrity, is_checksum_error, is_major_alert_set);
+    @(posedge xsecure_if.core_clk)
+
+    //If integrity checking is enabled the major alert should be set if there is a checksum error
+    //However, if integrity checking is disabled the major alert should not be set even though there is a checksum error
+    is_integrity_checking_enabled
+
+    //Make sure we receive a response packet
+    && rvalid
+
+    //Make sure the response's request had integrity
+    && req_had_integrity
+
+    //Make sure there is a checksum error
+    && is_checksum_error
+
+    //Make sure major alert is not, and has not, been set
+    && !alert_major_was_set && !xsecure_if.core_alert_major_o
+
+    |=>
+    //If the integrity checkup is enabled, verify that the major alert is set
+    //but is the integrity checkup is disabled, verify that the major alert is not set
+    is_major_alert_set;
+
+  endproperty
 
   a_xsecure_interface_integrity_rchk_instr_glitch: assert property (
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure interface integrity checking setting is on
-    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
-
-    //Make sure we recive a respons packet
-    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
-
-    //Make sure the packet has integrity
-    && support_if.integrity_in_respons_instr
-
-    //Make sure there is a checksum error
-    && rchk_error_instr_read
-
-    |=>
-    //Verify that major alert is set
-    xsecure_if.core_alert_major_o
-
-  ) else `uvm_error(info_tag, "Response phase checksum error for instructions does not set major alert.\n");
+    p_will_checksum_error_set_major_alert(
+      xsecure_if.core_xsecure_ctrl_cpuctrl_integrity,
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      support_if.instr_req_had_integrity,
+      rchk_error_instr,
+      xsecure_if.core_alert_major_o)
+  ) else `uvm_error(info_tag, "An error in the OBI instruction bus's response packet's checksum does not set the major alert.\n");
 
 
-  ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS ERROR FOR DATA SET ALERT MAJOR //////////
+  ////////// INTERFACE INTEGRITY RESPONSE CHECKSUM ERRORS FOR DATA SET ALERT MAJOR //////////
 
   a_xsecure_interface_integrity_rchk_data_glitch: assert property (
-    @(posedge clk_i) //todo: var xsecure_if.core_clk
-
-    //Make sure interface integrity checking setting is on
-    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
-
-    //Make sure we recive a respons packet
-    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
-
-    //Make sure the packet has integrity
-    && support_if.integrity_in_respons_data
-
-    //Make sure there is a checksum error
-    ((support_if.is_store_in_respons_data && rchk_error_data_write)
-    || (!support_if.is_store_in_respons_data && rchk_error_data_read))
-
-    |=>
-    //Verify that major alert is set
-    xsecure_if.core_alert_major_o
-
-  ) else `uvm_error(info_tag, "Response phase checksum error for data does not set major alert.\n");
+    p_will_checksum_error_set_major_alert(
+      xsecure_if.core_xsecure_ctrl_cpuctrl_integrity,
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      support_if.data_req_had_integrity,
+      rchk_error_data,
+      xsecure_if.core_alert_major_o)
+  ) else `uvm_error(info_tag, "An error in the OBI data bus's response packet's checksum does not set the major alert.\n");
 
 
-  ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS ERROR FOR INSTRUCTION DONT SET ALERT MAJOR IF INTEGRITY SETTING IS OFF //////////
+  ////////// INTERFACE INTEGRITY RESPONSE CHECKSUM ERRORS FOR INSTRUCTION DO NOT SET ALERT MAJOR IF THE INTEGRITY CHECKING IS DISABLED //////////
 
   a_xsecure_interface_integrity_off_rchk_instr_glitch: assert property (
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure interface integrity checking setting is off
-    !xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
-
-    //Make sure major alert is not or has not been set
-    && !alert_major_was_set && !xsecure_if.core_alert_major_o
-
-    //Make sure we recive a respons packet
-    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
-
-    //Make sure the packet has integrity
-    && support_if.integrity_in_respons_instr
-
-    //Make sure there is a checksum error
-    rchk_error_instr_read
-
-    |=>
-    //Verify that major alert is not set
-    !xsecure_if.core_alert_major_o
-
-  ) else `uvm_error(info_tag, "Response phase checksum error for instructions set major alert even though integrity setting is off.\n");
+    p_will_checksum_error_set_major_alert(
+      !xsecure_if.core_xsecure_ctrl_cpuctrl_integrity,
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      support_if.instr_req_had_integrity,
+      rchk_error_instr,
+      !xsecure_if.core_alert_major_o)
+  ) else `uvm_error(info_tag, "An error in the OBI instruction bus's response packet's checksum sets the major alert even though interface integrity checking is disabled.\n");
 
 
-  ////////// INTERFACE INTEGRITY RESPONS CHECKSUMS ERROR FOR DATA DONT SET ALERT MAJOR IF INTEGRITY SETTING IS OFF //////////
+  ////////// INTERFACE INTEGRITY RESPONSE CHECKSUM ERRORS FOR DATA DO NOT SET ALERT MAJOR IF THE INTEGRITY CHECKING IS DISABLED //////////
 
   a_xsecure_interface_integrity_off_rchk_data_glitch: assert property (
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure interface integrity checking setting is off
-    !xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
-
-    //Make sure major alert is not or has not been set
-    && !alert_major_was_set && !xsecure_if.core_alert_major_o
-
-    //Make sure we recive a respons packet
-    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
-
-    //Make sure the packet has integrity
-    && support_if.integrity_in_respons_data
-
-    //Make sure there is a checksum error
-    ((support_if.is_store_in_respons_data && rchk_error_data_write)
-    || (!support_if.is_store_in_respons_data && rchk_error_data_read))
-
-    |=>
-    //Verify that major alert is not set
-    !xsecure_if.core_alert_major_o
-
-  ) else `uvm_error(info_tag, "Response phase checksum error for data set major alert even though integrity setting is off.\n");
+    p_will_checksum_error_set_major_alert(
+      !xsecure_if.core_xsecure_ctrl_cpuctrl_integrity,
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      support_if.data_req_had_integrity,
+      rchk_error_data,
+      !xsecure_if.core_alert_major_o)
+  ) else `uvm_error(info_tag, "An error in the OBI data bus's response packet's checksum sets the major alert even though interface integrity checking is disabled.\n");
 
 
  ////////// INTERFACE INTEGRITY ADDRESS CHECKSUM FOR INSTRUCTIONS IS GENERATED CORRECTLY //////////
 
+  property p_check_that_request_checsum_does_not_contain_erros(req, is_checksum_error);
+
+    //Make sure the interface integrity checking is enabled
+    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    //Make sure there is a packet ready to be sent
+    && req
+
+    |->
+    //Make sure the checksum is generated correctly
+    !is_checksum_error;
+
+  endproperty
 
 /*
   // TODO: this one fails due to rtl bug
   a_xsecure_interface_integrity_achk_instr_no_glitch: assert property (
-
-    //Make sure interface integrity checking setting is on
-    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
-
-    //Make sure we have a packet ready to be sent
-    && xsecure_if.core_i_m_c_obi_instr_if_s_req_req
-
-    |->
-    //Make sure the checksum is generated correctly
-    !achk_error_instr
-
-  ) else `uvm_error(info_tag, "The address phase checksum for instructions is generated wrongly.\n");
+    p_check_that_request_checsum_does_not_contain_erros(
+      xsecure_if.core_i_m_c_obi_instr_if_s_req_req,
+      achk_error_instr)
+  ) else `uvm_error(info_tag, "The request checksum for the OBI instructions bus is not as expected.\n");
 */
 
-  ////////// INTERFACE INTEGRITY ADDRESS CHECKSUM FOR INSTRUCTIONS IS GENERATED CORRECTLY //////////
+  ////////// INTERFACE INTEGRITY ADDRESS CHECKSUM FOR DATA IS GENERATED CORRECTLY //////////
 
   a_xsecure_interface_integrity_achk_data_no_glitch: assert property (
-
-    //Make sure interface integrity checking setting is on
-    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
-
-    //Make sure we have a packet ready to be sent
-    && xsecure_if.core_i_m_c_obi_data_if_s_req_req
-
-    |->
-    //Make sure the checksum is generated correctly
-    !achk_error_data
-
-  ) else `uvm_error(info_tag, "The address phase checksum for data is generated wrongly.\n");
+    p_check_that_request_checsum_does_not_contain_erros(
+      xsecure_if.core_i_m_c_obi_data_if_s_req_req,
+      achk_error_data)
+  ) else `uvm_error(info_tag, "The request checksum for the OBI data bus is not as expected.\n");
 
 
   ////////// INTERFACE INTEGRITY INSTRUCTION GNT PARITY ERROR SETS INTEGRITY ERROR BIT //////////
 
+  property p_check_integrity_error_bit(rvalid, error, resp_integrity_error_bit);
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure the core is in operative mode
+    core_clock_cycles
+
+    //Make sure the interface integrity checking is enabled
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    //Make sure we receive a valid packet
+    && rvalid
+
+    //Make sure there was an error that should set the response packet's integrity error bit high
+    && error
+
+    |->
+    //Verify that the instruction packet's integrity error bit is set
+    resp_integrity_error_bit;
+
+  endproperty
+
   a_xsecure_interface_integrity_instr_error_set_if_gnt_error: assert property (
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure the core is in operative mode
-    core_clock_cycles
-
-    //Make sure interface integrity checking setting is on
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
-
-    //Make sure we recive a valid packet
-    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
-
-    //Make sure there where a gnt parity error when making the core was making the request
-    && support_if.gnt_error_in_respons_instr
-
-    |->
-    //Verify that the instruction packet's integrity error is set
-    xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
-
-  ) else `uvm_error(info_tag, "The instruction response phase packet's integrity error bit is not set.\n");
-
-
-  ////////// INTERFACE INTEGRITY INSTRUCTION RVALID PARITY ERROR SETS INTEGRITY ERROR BIT //////////
-
-  a_xsecure_interface_integrity_instr_error_set_if_rvalid_error: assert property (
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure the core is in operative mode
-    core_clock_cycles
-
-    //Make sure interface integrity checking setting is on
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
-
-    //Make sure we recive a valid packet
-    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
-
-    //Make sure there is a rvalid parity error
-    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid == xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar
-
-    |->
-    //Verify that the instruction packet's integrity error is set
-    xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
-
-  ) else `uvm_error(info_tag, "The data response phase packet's integrity error bit is not set.\n");
-
-
-  ////////// INTERFACE INTEGRITY INSTRUCTION CHECKSUM ERROR SETS INTEGRITY ERROR BIT //////////
-
-  a_xsecure_interface_integrity_instr_error_set_if_checksum_error: assert property (
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure there is a checksum error
-    rchk_error_instr_read
-
-    //Make sure the core is in operative mode
-    && core_clock_cycles
-
-    //Make sure interface integrity checking setting is on
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
-
-    //Make sure we recive a valid packet
-    && xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid
-
-    //Make sure the packet has integrity
-    && support_if.integrity_in_respons_instr
-
-    |->
-    //Verify that the instruction packet's integrity error is set
-    xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
-
-  ) else `uvm_error(info_tag, "The response phase checksum for instruction is generated wrongly.\n");
+    p_check_integrity_error_bit(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      support_if.gntpar_error_in_response_instr,
+      xsecure_if.core_i_if_stage_i_bus_resp.integrity_err)
+  ) else `uvm_error(info_tag, "The integrity error bit is not set in the OBI instruction bus's response packet, even though there was grant parity error when generating the request packet.\n");
 
 
   ////////// INTERFACE INTEGRITY DATA GNT PARITY ERROR SETS INTEGRITY ERROR BIT //////////
 
   a_xsecure_interface_integrity_data_error_set_if_gnt_error: assert property (
-    @(posedge xsecure_if.core_clk)
+    p_check_integrity_error_bit(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      support_if.gntpar_error_in_response_data,
+      xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err)
+  ) else `uvm_error(info_tag, "The integrity error bit is not set in the OBI data bus's response packet, even though there was grant parity error when generating the request packet.\n");
 
-    //Make sure the core is in operative mode
-    core_clock_cycles
 
-    //Make sure interface integrity checking setting is on
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+  ////////// INTERFACE INTEGRITY INSTRUCTION RVALID PARITY ERROR SETS INTEGRITY ERROR BIT //////////
 
-    //Make sure we recive a valid packet
-    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+  logic instr_rvalid_parity_error;
+  assign instr_rvalid_parity_error = xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid == xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar;
 
-    //Make sure there where a gnt parity error when making the core was making the request
-    && support_if.gnt_error_in_respons_data
+  a_xsecure_interface_integrity_instr_error_set_if_rvalid_error: assert property (
+    p_check_integrity_error_bit(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      instr_rvalid_parity_error,
+      xsecure_if.core_i_if_stage_i_bus_resp.integrity_err)
+  ) else `uvm_error(info_tag, "The integrity error bit is not set in the OBI instruction bus's response packet, even though there was a rvalid parity error.\n");
 
-    |->
-    //Verify that the data packet's integrity error is set
-    xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err
 
-  ) else `uvm_error(info_tag, "The data response phase packet's integrity error bit is not set.\n");
+  ////////// INTERFACE INTEGRITY DATA RVALID PARITY ERROR SETS INTEGRITY ERROR BIT //////////
 
+  logic data_rvalid_parity_error;
+  assign data_rvalid_parity_error = xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid == xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar;
 
   a_xsecure_interface_integrity_data_error_set_if_rvalid_error: assert property (
+    p_check_integrity_error_bit(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      data_rvalid_parity_error,
+      xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err)
+  ) else `uvm_error(info_tag, "The integrity error bit is not set in the OBI data bus's response packet, even though there was a rvalid parity error.\n");
+
+
+  ////////// INTERFACE INTEGRITY INSTRUCTION CHECKSUM ERROR SETS INTEGRITY ERROR BIT //////////
+
+  property p_check_integrity_error_bit_when_checksum_error(rvalid, error, req_had_integrity, resp_integrity_error_bit);
     @(posedge xsecure_if.core_clk)
 
     //Make sure the core is in operative mode
     core_clock_cycles
 
-    //Make sure interface integrity checking setting is on
+    //Make sure the interface integrity checking is enabled
     && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
 
-    //Make sure we recive a valid packet
-    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+    //Make sure we receive a valid packet
+    && rvalid
 
-    //Make sure there is a rvalid parity error
-    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid == xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar
+    //Make sure there was an error that should set the response packet's integrity error bit high
+    && error
+
+    //Make sure the response's request had integrity
+    && req_had_integrity
 
     |->
-    //Verify that the data packet's integrity error is set
-    xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err
+    //Verify that the instruction packet's integrity error bit is set
+    resp_integrity_error_bit;
 
-  ) else `uvm_error(info_tag, "The data response phase packet's integrity error bit is not set.\n");
+  endproperty
 
 
+  a_xsecure_interface_integrity_instr_error_set_if_checksum_error: assert property (
+    p_check_integrity_error_bit_when_checksum_error(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      rchk_error_instr,
+      support_if.instr_req_had_integrity,
+      xsecure_if.core_i_if_stage_i_bus_resp.integrity_err)
+  ) else `uvm_error(info_tag, "The integrity error bit is not set in the OBI instruction bus's response packet, even though there was a checksum error.\n");
+
+
+  ////////// INTERFACE INTEGRITY DATA CHECKSUM ERROR SETS INTEGRITY ERROR BIT //////////
 
   a_xsecure_interface_integrity_data_error_set_if_checksum_error: assert property (
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure there is a checksum error
-    ((support_if.is_store_in_respons_data && rchk_error_data_write)
-    || (!support_if.is_store_in_respons_data && rchk_error_data_read))
-
-    //Make sure the core is in operative mode
-    && core_clock_cycles
-
-    //Make sure interface integrity checking setting is on
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
-
-    //Make sure we recive a valid packet
-    && xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
-
-    //Make sure the packet has integrity
-    && support_if.integrity_in_respons_data
-
-    |->
-    //Verify that the data packet's integrity error is set
-    xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err
-
-  ) else `uvm_error(info_tag, "The response phase checksum for data is generated wrongly.\n");
+    p_check_integrity_error_bit_when_checksum_error(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      rchk_error_data,
+      support_if.data_req_had_integrity,
+      xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err)
+  ) else `uvm_error(info_tag, "The integrity error bit is not set in the OBI data bus's response packet, even though there was a checksum error.\n");
 
 
   ///////////////////////////////////////////////////////////////
   ///////////////////////// HARDENED PC /////////////////////////
   ///////////////////////////////////////////////////////////////
-
-  //Signal determing if the core clock is active or not.
-  logic core_clock_cycles;
-
-  always @(posedge clk_i) begin
-    if(!rst_ni) begin
-      core_clock_cycles <= 0;
-    end else begin
-      core_clock_cycles <= xsecure_if.clk_en;
-    end
-  end
 
 
   ////////// PC HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
@@ -1928,14 +1867,14 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     //Make sure the core is in operative state
     core_clock_cycles
 
-    //Make sure there is a respons phase transfer
+    //Make sure there is a response phase transfer
     && obi_rvalid
 
-    //Make sure the respons phase transfer is finished
+    //Make sure the response phase transfer is finished
     && !resp_ph_cont
 
     |->
-    //Check that the repsons phase transfer is indeed a respons to an address transfer (that there at least exist one active address transfer)
+    //Check that the repsons phase transfer is indeed a response to an address transfer (that there at least exist one active address transfer)
     v_addr_ph_cnt > 0;
 
   endproperty;
@@ -1945,35 +1884,35 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
       support_if.data_bus_resp_ph_cont,
       support_if.data_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the data bus leading into the core.\n");
+  ) else `uvm_error(info_tag, "There is a response phase before address phase even though there are no glitches in the data bus leading into the core.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_instr: assert property (
     p_resp_after_addr_no_glitch(
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
       support_if.instr_bus_resp_ph_cont,
       support_if.instr_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the instructions bus leading into the core.\n");
+  ) else `uvm_error(info_tag, "There is a response phase before address phase even though there are no glitches in the instructions bus leading into the core.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_abiim: assert property (
     p_resp_after_addr_no_glitch(
       xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
       support_if.abiim_bus_resp_ph_cont,
       support_if.abiim_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m).\n");
+  ) else `uvm_error(info_tag, "There is a response phase before address phase even though there are no glitches in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m).\n");
 
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_lml: assert property (
     p_resp_after_addr_no_glitch(
       xsecure_if.core_i_load_store_unit_i_resp_valid,
       support_if.lml_bus_resp_ph_cont,
       support_if.lml_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handsake between LSU (l) MPU (m) and LSU (l).\n");
+  ) else `uvm_error(info_tag, "There is a response phase before address phase even though there are no glitches in the handsake between LSU (l) MPU (m) and LSU (l).\n");
 
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_lrfodi: assert property (
     p_resp_after_addr_no_glitch(
       xsecure_if.core_i_load_store_unit_i_bus_resp_valid,
       support_if.lrfodi_bus_resp_ph_cont,
       support_if.lrfodi_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handsake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i).\n");
+  ) else `uvm_error(info_tag, "There is a response phase before address phase even though there are no glitches in the handsake between LSU (l) response (r) filter (f) and the OBI (o) data (d) interface (i).\n");
 
 
   ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER DONT UNDERFLOW //////////
@@ -2004,13 +1943,13 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     //Make sure major alert is not or has not been set
     && !alert_major_was_set && !xsecure_if.core_alert_major_o
 
-    //Make sure there is a respons phase transfer
+    //Make sure there is a response phase transfer
     && obi_rvalid
 
-    //Make sure the respons phase transfer is finished
+    //Make sure the response phase transfer is finished
     && !resp_ph_cont
 
-    //Make sure there are no active address transfers the respons tranfere could be correlated with
+    //Make sure there are no active address transfers the response tranfere could be correlated with
     && v_addr_ph_cnt == 0
 
     |=>
@@ -2023,35 +1962,35 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
       support_if.data_bus_resp_ph_cont,
       support_if.data_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A respons phase before address phase in the data bus leading into the core does not set major alert.\n");
+  ) else `uvm_error(info_tag, "A response phase before address phase in the data bus leading into the core does not set major alert.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_glitch_instr: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
       support_if.instr_bus_resp_ph_cont,
       support_if.instr_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A respons phase before address phase in the instruction bus leading into the core does not set major alert (instructions).\n");
+  ) else `uvm_error(info_tag, "A response phase before address phase in the instruction bus leading into the core does not set major alert (instructions).\n");
 
   a_xsecure_bus_hardening_resp_after_addr_glitch_abiim: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
       support_if.abiim_bus_resp_ph_cont,
       support_if.abiim_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) does not set major alert.\n");
+  ) else `uvm_error(info_tag, "A response phase before address phase in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) does not set major alert.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_glitch_lml: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_load_store_unit_i_resp_valid,
       support_if.lml_bus_resp_ph_cont,
       support_if.lml_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between LSU (l) MPU (m) and LSU (l) does not set major alert.\n");
+  ) else `uvm_error(info_tag, "A response phase before address phase in the handshake between LSU (l) MPU (m) and LSU (l) does not set major alert.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_glitch_lrfodi: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_load_store_unit_i_bus_resp_valid,
       support_if.lrfodi_bus_resp_ph_cont,
       support_if.lrfodi_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i) does not set major alert.\n");
+  ) else `uvm_error(info_tag, "A response phase before address phase in the handshake between LSU (l) response (r) filter (f) and the OBI (o) data (d) interface (i) does not set major alert.\n");
 
 
   ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER UNDERFLOW SET MAJOR ALERT //////////

@@ -558,20 +558,12 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
    integer lml_bus_v_addr_ph_cnt;
    integer lrfodi_bus_v_addr_ph_cnt;
 
-   //Signal deterimends if the respons is related to a store request
-   logic is_store_in_respons_data;
-
-   //Signal deterimends if the instruction respons is related to an instruction request with integrity
-   logic integrity_in_respons_instr;
-
-   //Signal deterimends if the data respons is related to a data request with integrity
-   logic integrity_in_respons_data;
-
-   //Signal deterimends if the instruction respons is related to a instruction request with grant parity error
-   logic gnt_error_in_respons_instr;
-
-   //Signal deterimends if the data respons is related to a data request with grant parity error
-   logic gnt_error_in_respons_data;
+   //Signals stating whether the request for the current response had the attribute value or not
+   logic req_was_store;
+   logic instr_req_had_integrity;
+   logic data_req_had_integrity;
+   logic gntpar_error_in_response_instr;
+   logic gntpar_error_in_response_data;
 
    modport master_mp (
       output req_after_exception,
@@ -595,11 +587,11 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
 	      lrfodi_bus_resp_ph_cont,
 	      lrfodi_bus_v_addr_ph_cnt,
 
-         is_store_in_respons_data,
-         integrity_in_respons_instr,
-         integrity_in_respons_data,
-         gnt_error_in_respons_instr,
-         gnt_error_in_respons_data
+         req_was_store,
+         instr_req_had_integrity,
+         data_req_had_integrity,
+         gntpar_error_in_response_instr,
+         gntpar_error_in_response_data
    );
 
    modport slave_mp (
@@ -624,11 +616,11 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
 	      lrfodi_bus_resp_ph_cont,
 	      lrfodi_bus_v_addr_ph_cnt,
 
-         is_store_in_respons_data,
-         integrity_in_respons_instr,
-         integrity_in_respons_data,
-         gnt_error_in_respons_instr,
-         gnt_error_in_respons_data
+         req_was_store,
+         instr_req_had_integrity,
+         data_req_had_integrity,
+         gntpar_error_in_response_instr,
+         gntpar_error_in_response_data
    );
 
 endinterface : uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if
