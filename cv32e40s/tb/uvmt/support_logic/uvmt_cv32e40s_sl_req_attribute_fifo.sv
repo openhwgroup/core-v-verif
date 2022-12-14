@@ -1,19 +1,17 @@
 
-//TODO: correct English
-
 /*
 
-This support logic submodule monitor the OBI handshake, which consist of a request and a response.
-The request can contain attributes that affects the response.
-This module aims to monitor an attribute of the request, and when reciving the corresponfing response, output the response's request's attribute value.
+This support logic submodule monitors the OBI handshake, which consists of a request and a response.
+The request can contain attributes that affect the response.
+This module aims to monitor an attribute of the request, and when receiving the corresponding response, output the response's request's attribute value.
 
 What complicates the described task is that a request is not always directly followed by a response.
-In other words, we need to keep track on which request belongs to which response.
+In other words, we need to keep track of which request belongs to which response.
 
 The module uses a FIFO to keep track of the requests and the responses.
-The FIFO can only hold 2 request at once.
-The figure shows how the fifo behavies when requests are generated ((gnt && reg)==1) and responses are recived (rvalid==1).
-In the figure, the FIFO is the container, the pointer is illustrated as a ^, and rN is request number N's attribute value.
+The FIFO can only hold 2 requests at once.
+The figure shows how the FIFO behaves when requests are generated ((gnt && reg)==1) and responses are received (rvalid==1).
+In the figure, the FIFO is the container, the pointer is illustrated as a ^, and rN is the request number N's attribute value.
 The attribute value in FIFO[2] is read whenever rvalid==1.
 
 
@@ -57,7 +55,7 @@ module uvmt_cv32e40s_sl_req_attribute_fifo
     input logic req,
     input logic rvalid,
 
-    //Attribute in current request
+    //Attribute in the current request
     input logic req_attribute_i,
 
     //Indicates if the response's request contained the attribute or not

@@ -148,7 +148,7 @@ module uvmt_cv32e40s_support_logic
     .v_addr_ph_cnt (out_support_if.lrfodi_bus_v_addr_ph_cnt)
   );
 
-  //The submodule under will tell if the
+  //The submodule instance under will tell if the
   //the response's request required a store operation.
 
   uvmt_cv32e40s_sl_req_attribute_fifo req_was_store_i
@@ -164,7 +164,7 @@ module uvmt_cv32e40s_support_logic
     .is_req_attribute_in_response_o (out_support_if.req_was_store)
   );
 
-  //The submodule under will tell if the
+  //The submodule instance under will tell if the
   //the response's request had integrity
   //in the transfere of instructions on the OBI instruction bus.
 
@@ -181,7 +181,7 @@ module uvmt_cv32e40s_support_logic
     .is_req_attribute_in_response_o (out_support_if.instr_req_had_integrity)
   );
 
-  //The submodule under will tell if the
+  //The submodule instance under will tell if the
   //the response's request had integrity
   //in the transfere of data on the OBI data bus.
 
@@ -198,42 +198,36 @@ module uvmt_cv32e40s_support_logic
     .is_req_attribute_in_response_o (out_support_if.data_req_had_integrity)
   );
 
-  //The submodule under will tell if the
+  //The submodule instance under will tell if the
   //the response's request had a gntpar error
   //in the transfere of instructions on the OBI instruction bus.
 
-  logic instr_gntpar_error; //TODO: make a function so we dont duplicate logic!
+  logic instr_gntpar_error;
   logic instr_prev_gntpar_error;
+  logic data_gntpar_error;
+  logic data_prev_gntpar_error;
 
-  assign instr_gntpar_error = ((in_support_if.instr_bus_gnt == in_support_if.instr_bus_gntpar || instr_prev_gntpar_error) && in_support_if.instr_bus_req) && in_support_if.rst_n; //TODO: kan ta vekk req og rst_ni?
+  assign instr_gntpar_error = ((in_support_if.instr_bus_gnt == in_support_if.instr_bus_gntpar || instr_prev_gntpar_error) && in_support_if.instr_bus_req) && in_support_if.rst_n;
+  assign data_gntpar_error = ((in_support_if.data_bus_gnt == in_support_if.data_bus_gntpar || data_prev_gntpar_error) && in_support_if.data_bus_req) && in_support_if.rst_n;
 
   always @(posedge in_support_if.clk, negedge in_support_if.rst_n) begin
     if(!in_support_if.rst_n) begin
       instr_prev_gntpar_error <= 1'b0;
+      data_prev_gntpar_error <= 1'b0;
     end else begin
+
       if (in_support_if.instr_bus_req && !in_support_if.instr_bus_gnt) begin
         instr_prev_gntpar_error <= instr_gntpar_error;
       end else begin
         instr_prev_gntpar_error <= 1'b0;
       end
-    end
-  end
 
-
-  logic data_gntpar_error;
-  logic data_prev_gntpar_error;
-
-  assign data_gntpar_error = ((in_support_if.data_bus_gnt == in_support_if.data_bus_gntpar || data_prev_gntpar_error) && in_support_if.data_bus_req) && in_support_if.rst_n; //TODO: kan ta vekk req og rst_ni?
-
-  always @(posedge in_support_if.clk, negedge in_support_if.rst_n) begin
-    if(!in_support_if.rst_n) begin
-      data_prev_gntpar_error <= 1'b0;
-    end else begin
       if (in_support_if.data_bus_req && !in_support_if.data_bus_gnt) begin
         data_prev_gntpar_error <= data_gntpar_error;
       end else begin
         data_prev_gntpar_error <= 1'b0;
       end
+
     end
   end
 
@@ -250,7 +244,7 @@ module uvmt_cv32e40s_support_logic
     .is_req_attribute_in_response_o (out_support_if.gntpar_error_in_response_instr)
   );
 
-  //The submodule under will tell if the
+  //The submodule instance under will tell if the
   //the response's request had a gntpar error
   //in the transfere of data on the OBI data bus.
 
