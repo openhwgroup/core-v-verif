@@ -154,7 +154,6 @@ interface uvmt_cv32e40x_debug_cov_assert_if
 
     // Debug signals
     input         debug_req_i, // From controller
-    input         debug_req_q, // From controller
     input         debug_havereset,
     input         debug_running,
     input         debug_halted,
