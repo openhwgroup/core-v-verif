@@ -62,8 +62,8 @@ module uvmt_cv32e40s_pmprvfi_assert
   localparam logic [5:0] EXC_ILL_INSTR          = 6'd 2;
   localparam logic [5:0] EXC_LOAD_ACC_FAULT     = 6'd 5;
   localparam logic [5:0] EXC_STORE_ACC_FAULT    = 6'd 7;
-  localparam logic [5:0] EXC_INSTR_BUS_FAULT    = 6'd 48;
-  localparam logic [5:0] EXC_INSTR_CHKSUM_FAULT = 6'd 49;
+  localparam logic [5:0] EXC_INSTR_BUS_FAULT    = 6'd 24;
+  localparam logic [5:0] EXC_INSTR_CHKSUM_FAULT = 6'd 25;
 
   localparam logic [2:0] DBG_TRIGGER = 3'd 2;
 
@@ -267,20 +267,28 @@ module uvmt_cv32e40s_pmprvfi_assert
   property p_csrs_mmode_only;
     is_rvfi_csr_instr      &&
     (rvfi_mode == MODE_U)  &&
-    (rvfi_insn[31:20] inside {['h3A0 : 'h3EF], 'h747, 'h757})
+    (rvfi_insn[31:20] inside {['h3A0 : 'h3EF], 'h747, 'h757})  //PMP regs
     |->
     is_rvfi_exc_ill_instr           ^
-    is_rvfi_exc_instr_acc_fault     ^
-    is_rvfi_dbg_trigger             ^
     is_rvfi_exc_instr_bus_fault     ^
-    is_rvfi_exc_instr_chksum_fault;
+    is_rvfi_exc_instr_chksum_fault  ^
+    is_rvfi_exc_instr_acc_fault     ^
+    is_rvfi_dbg_trigger             ;
   endproperty : p_csrs_mmode_only
 
   a_csrs_mmode_only: assert property (
     p_csrs_mmode_only
   ) else `uvm_error(info_tag, "PMP CSRs are illegal to access from umode");
 
+  a_csrs_mmode_only_25: assert property (
+    // For ease of reproducing a known CEX (could help in case-splitting too)
+    if (clk_cnt < 25) (
+      p_csrs_mmode_only
+    )
+  ) else `uvm_error(info_tag, "PMP CSRs are illegal to access from umode");
+
   cov_csrs_mmode_only: cover property (
+    // Want to see "the real cause" finishing this property
     p_csrs_mmode_only  and  is_rvfi_exc_ill_instr
   );
 

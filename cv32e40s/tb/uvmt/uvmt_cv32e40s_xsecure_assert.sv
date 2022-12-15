@@ -1,3 +1,4 @@
+//TODO: make header
 
 module uvmt_cv32e40s_xsecure_assert
   import uvm_pkg::*;
@@ -13,13 +14,13 @@ module uvmt_cv32e40s_xsecure_assert
   (
    uvmt_cv32e40s_xsecure_if xsecure_if,
    uvma_rvfi_instr_if rvfi_if,
-   uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave support_if,
+   uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp support_if,
    input rst_ni,
    input clk_i
   );
 
   //TODO: update hardened CSR documentation as these CSRs are no longer hardened mclicbase, mscratchcsw, mscratchcswl
-  //TODO: change rvfi_trap from using bit position to struct fields when the rvfi interface is updated
+  //TODO: make the assertion names sensible
 
 
   // Local parameters:
@@ -32,29 +33,31 @@ module uvmt_cv32e40s_xsecure_assert
   localparam ERROR_CODE_STORE_AMO_ACCESS_FAULT = 6'd7;
   localparam ERROR_CODE_INSTRUCTION_BUS_FAULT = 6'd24;
 
-  localparam FUNC7_BRANCH_INSTRUCTION = 7'bxxxxxxx;
-  localparam FUNC3_BRANCH_INSTRUCTION = 3'bxxx;
+  localparam FUNCT7_DIV_REM_INSTRUCTION = 7'b0000001;
+  localparam FUNCT3_DIV_REM_INSTRUCTION_MSB = 1'b1;
 
-  localparam FUNC7_DIV_REM_INSTRUCTION = 7'b0000001;
-  localparam FUNC3_DIV_REM_INSTRUCTION = 3'b1xx; //TODO: can be problematic with x
+  localparam FUNCT3_COMPR_BRANCH_2_MSBS = 2'b11;
+  localparam OPCODE_COMPR_BRANCH = 2'b01;
 
-  localparam FUNC3_BLTU_INSTRUCTION = 3'b110;
-
-  localparam FUNC7_MRET_INSTRUCTION = 7'b0011000;
-  localparam FUNC3_MRET_INSTRUCTION = 3'b000;
-
-  localparam OPCODE_BIT_15_TO_13_COMPR_BRANCH = 3'b11x;
-  localparam OPCODE_BIT_1_TO_0_COMPR_BRANCH = 2'b01;
+  localparam FUNCT3_COMPR_SLLI = 3'b000;
+  localparam OPCODE_COMPR_SLLI = 2'b10;
 
   localparam REGISTER_MHPMCOUNTER_MCYCLE_FULL = 64'hFFFFFFFFFFFFFFFF;
 
-  localparam REGISTER_x0 = 5'b00000;
+  localparam REGISTER_x0 = 5'b00000; //TODO: x to X
 
-  localparam FREQ_SETTING_4 = 4'b0000;
-  localparam FREQ_SETTING_8 = 4'b0001;
-  localparam FREQ_SETTING_16 = 4'b001x;
-  localparam FREQ_SETTING_32 = 4'b01xx;
-  localparam FREQ_SETTING_64 = 4'b1xxx;
+
+  localparam FREQ_SETTING_64_MIN = 4'b1000;
+  localparam FREQ_SETTING_64_MAX = 4'b1111;
+  localparam FREQ_SETTING_32_MIN = 4'b0100;
+  localparam FREQ_SETTING_32_MAX = FREQ_SETTING_64_MIN -1;
+  localparam FREQ_SETTING_16_MIN = 4'b0010;
+  localparam FREQ_SETTING_16_MAX = FREQ_SETTING_32_MIN -1;
+  localparam FREQ_SETTING_8_MIN = 4'b0001;
+  localparam FREQ_SETTING_8_MAX = FREQ_SETTING_16_MIN -1;
+  localparam FREQ_SETTING_4_MIN = 4'b0000;
+  localparam FREQ_SETTING_4_MAX = FREQ_SETTING_8_MIN -1;
+
 
   localparam BRANCH_STATE = 4'b0101;
   localparam JUMP_STATE = 4'b0100;
@@ -62,16 +65,23 @@ module uvmt_cv32e40s_xsecure_assert
 
   localparam NON_CMPR_INSTRUCTION_INCREMENT = 4;
   localparam CMPR_INSTRUCTION_INCREMENT = 2;
-  localparam INSTRUCTIONS_RS1_MSB = 19;
-  localparam INSTRUCTIONS_RS1_LSB = 15;
-  localparam INSTRUCTIONS_RS2_MSB = 24;
-  localparam INSTRUCTIONS_RS2_LSB = 20;
 
-  //Sticky bit that indicates if major alert has been set.
+  localparam NO_WRITE_TRANSACTION = 1'b0;
+
+  localparam ASSUMED_VALUE_BE = 4'b1111;
+  localparam ASSUMED_VALUE_WE = 1'b0;
+  localparam ASSUMED_VALUE_ATOP = 6'b00_0000;
+  localparam ASSUMED_VALUE_WDATA = 32'h0000_0000;
+
+  localparam EXOKAY_TIE_OFF_VALUE = 1'b0;
+
+  localparam DUMMY_INCREMENT = 0;
+  localparam HINT_INCREMENT = 2;
+
+  //Sticky bit that indicates if the major alert has been set.
   logic alert_major_was_set;
 
-  //Support logic that set alert_major_was_set high if major alert ever is high.
-  //When major alert has been set, the only way to recover is by resetting.
+  //Sticky bit that indicates if major alert has been set.
   always @(posedge clk_i) begin
     if(!rst_ni) begin
       alert_major_was_set <= 0;
@@ -80,44 +90,134 @@ module uvmt_cv32e40s_xsecure_assert
     end
   end
 
+
+  //Descriptive signal names
+  logic [5:0] rvfi_c_slli_shamt;
+  assign rvfi_c_slli_shamt = {rvfi_if.rvfi_insn[12], rvfi_if.rvfi_insn[6:2]};
+
+  logic [4:0] if_id_pipe_instr_rs1;
+  logic [4:0] if_id_pipe_instr_rs2;
+  logic [6:0] if_id_pipe_instr_opcode;
+  logic [12:0] if_id_pipe_bltu_incrementation;
+
+  assign if_id_pipe_instr_rs1 = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[19:15];
+  assign if_id_pipe_instr_rs2 = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[24:20];
+  assign if_id_pipe_instr_rd = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[11:7];
+  assign if_id_pipe_instr_opcode = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[6:0];
+
+  assign if_id_pipe_bltu_incrementation = {xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[31],
+    xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[7],
+    xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[30:25],
+    xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[11:8],
+    1'b0};
+
+  logic [2:0] rvfi_insn_funct3;
+  logic [2:0] rvfi_insn_cmpr_funct3;
+  logic [6:0] rvfi_insn_funct7;
+  logic [6:0] rvfi_insn_opcode;
+  logic [1:0] rvfi_insn_cmpr_opcode;
+
+  assign rvfi_insn_funct3 = rvfi_if.rvfi_insn[14:12];
+  assign rvfi_insn_cmpr_funct3 = rvfi_if.rvfi_insn[15:13];
+  assign rvfi_insn_funct7 = rvfi_if.rvfi_insn[31:25];
+  assign rvfi_insn_opcode = rvfi_if.rvfi_insn[6:0];
+  assign rvfi_insn_cmpr_opcode = rvfi_if.rvfi_insn[1:0];
+
+  //Signal used to check if the core clock is active or not.
+  logic core_clock_cycles;
+
+  always @(posedge clk_i) begin
+    if(!rst_ni) begin
+      core_clock_cycles <= 0;
+    end else begin
+      core_clock_cycles <= xsecure_if.clk_en;
+    end
+  end
+
   // Default settings:
   default clocking @(posedge clk_i); endclocking
-
-  //If major alert has been set high we allow weird unspeced behavior
   default disable iff (!(rst_ni) | !(SECURE));
-  string info_tag = "CV32E40S_XSECURE_ASSERT";
+  string info_tag = "CV32E40S_XSECURE_ASSERT_COVERPOINTS";
+  string info_tag_glitch = "CV32E40S_XSECURE_ASSERT_COVERPOINTS (GLITCH BEHAVIOR)";
 
 
-  /////////////////////////////////////////////////////////////////////
-  ///////////////////////// GENERAL SEQUENCES /////////////////////////
-  /////////////////////////////////////////////////////////////////////
+  // Functions:
+  function logic f_achk_error (logic [11:0] achk, logic [31:0] addr, logic [2:0] prot, logic [1:0] memtype, logic [3:0] be, logic we, logic dbg, logic [5:0] atop, logic [31:0] wdata);
+    f_achk_error = !(
+      achk[0] == ^addr[7:0]
+      && achk[1] == ^addr[15:8]
+      && achk[2] == ^addr[23:16]
+      && achk[3] == ^addr[31:24]
+      && achk[4] == ~^{prot[2:0], memtype[1:0]}
+      && achk[5] == ~^{be[3:0], we}
+      && achk[6] == ~^dbg
+      && achk[7] == ^atop[5:0]
+      && achk[8] == ^wdata[7:0]
+      && achk[9] == ^wdata[15:8]
+      && achk[10] == ^wdata[23:16]
+      && achk[11] == ^wdata[31:24]);
+  endfunction
+
+  function logic f_rchk_error (logic [4:0] rchk, logic err, logic exokay, logic [31:0] rdata);
+    f_rchk_error = !(
+      rchk[0] == ^rdata[7:0]
+      && rchk[1] == ^rdata[15:8]
+      && rchk[2] == ^rdata[23:16]
+      && rchk[3] == ^rdata[31:24]
+      && rchk[4] == ^{err, exokay});
+  endfunction
+
+  logic achk_error_data;
+  assign achk_error_data = f_achk_error(
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.achk,
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.addr,
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.prot,
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.memtype,
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.be,
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.we,
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.dbg,
+    ASSUMED_VALUE_ATOP,
+    xsecure_if.core_i_m_c_obi_data_if_req_payload.wdata);
+
+  logic achk_error_instr;
+  assign achk_error_instr = f_achk_error(
+    xsecure_if.core_i_m_c_obi_instr_if_req_payload.achk,
+    xsecure_if.core_i_m_c_obi_instr_if_req_payload.addr,
+    xsecure_if.core_i_m_c_obi_instr_if_req_payload.prot,
+    xsecure_if.core_i_m_c_obi_instr_if_req_payload.memtype,
+    ASSUMED_VALUE_BE,
+    ASSUMED_VALUE_WE,
+    xsecure_if.core_i_m_c_obi_instr_if_req_payload.dbg,
+    ASSUMED_VALUE_ATOP,
+    ASSUMED_VALUE_WDATA);
+
+  logic rchk_error_instr_read;
+  assign rchk_error_instr_read = f_rchk_error(
+    xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rchk,
+    xsecure_if.core_i_m_c_obi_instr_if_resp_payload.err,
+    EXOKAY_TIE_OFF_VALUE,
+    xsecure_if.core_i_m_c_obi_instr_if_resp_payload.rdata);
+
+  logic rchk_error_data_read;
+  assign rchk_error_data_read = f_rchk_error(
+    xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk,
+    xsecure_if.core_i_m_c_obi_data_if_resp_payload.err,
+    EXOKAY_TIE_OFF_VALUE,
+    xsecure_if.core_i_m_c_obi_data_if_resp_payload.rdata);
+
+  logic rchk_error_data_write;
+  assign rchk_error_data_write = (xsecure_if.core_i_m_c_obi_data_if_resp_payload.rchk[4] != ^{xsecure_if.core_i_m_c_obi_data_if_resp_payload.err, EXOKAY_TIE_OFF_VALUE});
+
+  logic rchk_error_instr;
+  logic rchk_error_data;
+
+  assign rchk_error_instr = rchk_error_instr_read;
+  assign rchk_error_data = ((support_if.req_was_store && rchk_error_data_write) || (!support_if.req_was_store && rchk_error_data_read));
 
 
-  sequence seq_rvfi_normal_instruction (logic [6:0] func7, logic [2:0] func3, logic [6:0] opcode);
-
-    //Make sure there is no traped instruction
-    !rvfi_if.rvfi_trap[0]
-
-    //Make sure the instruction is valid
-    && rvfi_if.rvfi_valid
-
-    //Explicitly state what instruction we work with by using the opcode, func3 and func7
-    && rvfi_if.rvfi_insn[6:0] == opcode
-    && rvfi_if.rvfi_insn[14:12] == func3
-    && rvfi_if.rvfi_insn[31:25] == func7;
-  endsequence
-
-  sequence seq_rvfi_normal_compressed_instruction (logic [15:13] opcode_bit_15_to_13, logic [1:0] opcode_bit_1_to_0);
-    //Make sure there is no traped instruction
-    !rvfi_if.rvfi_trap[0]
-
-    //Make sure the instruction is valid
-    && rvfi_if.rvfi_valid
-
-    //Explicitly state what instruction we work with
-    && rvfi_if.rvfi_insn[15:13] == opcode_bit_15_to_13
-    && rvfi_if.rvfi_insn[1:0] == opcode_bit_1_to_0;
-  endsequence
+  //////////////////////////////////////////////////////////////////////
+  ///////////////////////// GENERAL PROPERTIES /////////////////////////
+  //////////////////////////////////////////////////////////////////////
 
   property p_xsecure_setting_default_off(logic xsecure_setting);
 
@@ -135,7 +235,6 @@ module uvmt_cv32e40s_xsecure_assert
     xsecure_setting;
   endproperty
 
-
   ///////////////////////////////////////////////////////////////////
   ///////////////////////// SECURITY ALERTS /////////////////////////
   ///////////////////////////////////////////////////////////////////
@@ -147,11 +246,11 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure we detect a lockup error
     xsecure_if.core_cs_registers_xsecure_lfsr_lockup != NO_LOCKUP_ERRORS
 
-    //Make sure alert minor is set
+    //Make sure the alert minor is set
     |=>
     xsecure_if.core_alert_minor_o
 
-  ) else `uvm_error(info_tag, "Lookup errors do not set minor alert.\n");
+  ) else `uvm_error(info_tag, "Lookup errors do not set the minor alert.\n");
 
 
   a_xsecure_security_alert_minor_2_to_6: assert property (
@@ -160,29 +259,29 @@ module uvmt_cv32e40s_xsecure_assert
     rvfi_if.rvfi_valid
 
     //Make sure the instruction is associated with a trap and an exception error
-    && rvfi_if.rvfi_trap[0]
-    && rvfi_if.rvfi_trap[1]
+    && rvfi_if.rvfi_trap.trap
+    && rvfi_if.rvfi_trap.exception
 
     //Instruction access fault
-    && (rvfi_if.rvfi_trap[8:3] == ERROR_CODE_INSTRUCTION_ACCESS_FAULT
+    && (rvfi_if.rvfi_trap.exception_cause == ERROR_CODE_INSTRUCTION_ACCESS_FAULT
 
     //Illegal instruction fault
-    || rvfi_if.rvfi_trap[8:3] == ERROR_CODE_ILLEGAL_INSTRUCTION_FAULT
+    || rvfi_if.rvfi_trap.exception_cause == ERROR_CODE_ILLEGAL_INSTRUCTION_FAULT
 
     //Load access fault
-    || rvfi_if.rvfi_trap[8:3] == ERROR_CODE_LOAD_ACCESS_FAULT
+    || rvfi_if.rvfi_trap.exception_cause == ERROR_CODE_LOAD_ACCESS_FAULT
 
     //Store/AMO access fault
-    || rvfi_if.rvfi_trap[8:3] == ERROR_CODE_STORE_AMO_ACCESS_FAULT
+    || rvfi_if.rvfi_trap.exception_cause == ERROR_CODE_STORE_AMO_ACCESS_FAULT
 
     //Instruction bus fault
-    || rvfi_if.rvfi_trap[8:3] == ERROR_CODE_INSTRUCTION_BUS_FAULT)
+    || rvfi_if.rvfi_trap.exception_cause == ERROR_CODE_INSTRUCTION_BUS_FAULT)
 
-    //TODO: The error is handled in WB stage and notify the alert minor signal in the next stage (the current/rvfi stage)
+    ///TODO: The error is handled in the WB stage and notifies the alert minor signal in the next stage (the current/rvfi stage)
     |->
     xsecure_if.core_alert_minor_o
 
-  ) else `uvm_error(info_tag, "Exception errors do not set minor alert.\n");
+  ) else `uvm_error(info_tag, "Exception errors do not set the minor alert.\n");
 
 
   ///////////////////////////////////////////////////////////////////////////
@@ -200,14 +299,19 @@ module uvmt_cv32e40s_xsecure_assert
 
   c_xsecure_branch_timing_off: cover property (
 
-    //Make sure a branch instruction is executed (rvfi stage):
-    (seq_rvfi_normal_instruction(FUNC7_BRANCH_INSTRUCTION, FUNC3_BRANCH_INSTRUCTION, cv32e40s_pkg::OPCODE_BRANCH)
-    or seq_rvfi_normal_compressed_instruction(OPCODE_BIT_15_TO_13_COMPR_BRANCH, OPCODE_BIT_1_TO_0_COMPR_BRANCH))
+    //Make sure the instruction is a branch instruction (both non-compressed and compressed)
+    ((rvfi_insn_opcode == OPCODE_BRANCH)
+    || (rvfi_insn_cmpr_opcode == OPCODE_COMPR_BRANCH
+    && rvfi_insn_cmpr_funct3[2:1] == FUNCT3_COMPR_BRANCH_2_MSBS))
+
+    //Make sure the instruction is valid and has been executed without traps
+    && rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_trap.trap
 
     //Make sure the data independent timing was off when executing the branch (ex stage):
-    and $past(!xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
+    && $past(!xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
 
-    //Make sure it is possible that the branch instruction is directly followed by another instruction (as the branch is not taken)
+    //Make sure the branch instruction can be directly followed by another instruction (as the branch is not taken)
     ##1 rvfi_if.rvfi_valid
   );
 
@@ -215,44 +319,55 @@ module uvmt_cv32e40s_xsecure_assert
   c_xsecure_core_div_rem_timing: cover property (
 
     //Make sure we detect an DIV or REM instruction in rvfi
-    seq_rvfi_normal_instruction(FUNC7_DIV_REM_INSTRUCTION, FUNC3_DIV_REM_INSTRUCTION, cv32e40s_pkg::OPCODE_OP)
+    (rvfi_insn_opcode == OPCODE_OP
+    && rvfi_insn_funct3[2] == FUNCT3_DIV_REM_INSTRUCTION_MSB
+    && rvfi_insn_funct7 == FUNCT7_DIV_REM_INSTRUCTION)
+
+    //Make sure the instruction is valid and has been executed without traps
+    && rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_trap.trap
 
     //Make sure data independent timing was off when the DIV/REM instruction was in EX stage
     and $past(!xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
 
-    //Make sure that it is possible that the instruction was directly followed by another instruction
+    //Make sure the branch instruction can be directly followed by another instruction
     && $past(rvfi_if.rvfi_valid)
 
   );
 
 
-  ////////// DATA INDEPENDENT TIMING DEFAULT OFF //////////
+  ////////// DATA INDEPENDENT TIMING DEFAULT ENABLED //////////
 
   a_xsecure_dataindtiming_default_on: assert property (
 	  p_xsecure_setting_default_on(
-	  xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming)
-  ) else `uvm_error(info_tag, "Data independent timing is not on when exiting reset.\n");
+	    xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming)
+  ) else `uvm_error(info_tag, "Data independent timing is disabled when exiting reset.\n");
 
 
   ////////// BRANCH TIMING //////////
 
-  a_xsecure_branch_timing: assert property (
+  a_xsecure_dataindtiming_branch_timing: assert property (
 
-    //Make sure a branch instruction is executed:
-    (seq_rvfi_normal_instruction(FUNC7_BRANCH_INSTRUCTION, FUNC3_BRANCH_INSTRUCTION, cv32e40s_pkg::OPCODE_BRANCH)
-    or seq_rvfi_normal_compressed_instruction(OPCODE_BIT_15_TO_13_COMPR_BRANCH, OPCODE_BIT_1_TO_0_COMPR_BRANCH))
+    //Make sure the instruction is a branch instruction (both non-compressed and compressed)
+    ((rvfi_insn_opcode == OPCODE_BRANCH)
+    || (rvfi_insn_cmpr_opcode == OPCODE_COMPR_BRANCH
+    && rvfi_insn_cmpr_funct3[2:1] == FUNCT3_COMPR_BRANCH_2_MSBS))
+
+    //Make sure the instruction is valid and has been executed without traps
+    && rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_trap.trap
 
     //Make sure the data independent timing was on when executing the branch (ex stage):
-    and $past(xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
+    && $past(xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
 
     //Make sure that the instruction before the branch instruction was not a load or a store (rvfi stage):
-    //We use past 2 because branching needs two cycles to complete execution due to PC harning safety.
+    //We use past 2 because branching needs two cycles to complete execution due to PC hardening safety.
     && $past(!(|rvfi_if.rvfi_mem_rmask),2)
     && $past(!(|rvfi_if.rvfi_mem_wmask),2)
 
-    //Make sure there are at least one instruction stall after every branch, because a branch is allways taken.
-    //We would expect 2 instruction stalls, but since the branch instruction is recalculated in id stage we have only one stall, instead of two.
     |=>
+    //Make sure there is at least one instruction stall after every branch because a branch is always taken.
+    //We would expect 2 instruction stalls, but since the branch instruction is recalculated in the ID stage there is only one stall, not two.
     !rvfi_if.rvfi_valid
   ) else `uvm_error(info_tag, "Branch timing does not stall the pipeline (given no load/store instruction before the branch instruction).\n");
 
@@ -268,7 +383,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   sequence seq_set_rvfi_valid_once_as_memory_instruction_during_the_past_34_cycles;
 
-    //Make sure a memory instruction is retired in a 34 cycle interval.
+    //Make sure a memory instruction is retired in an interval of 34 cycles
 
     //Make sure rvfi_valid is low an unknown number of cycles
     !rvfi_if.rvfi_valid[*0:33]
@@ -280,19 +395,25 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure rvfi_valid is off in an unknown number of cycles
     ##1 !rvfi_if.rvfi_valid[*0:33]
 
-    //Make sure the sequence only look previouse clock cycles when triggered
+    //Make sure the sequence only looks at previous clock cycles when triggered
     ##1 1;
 
   endsequence
 
 
-  a_xsecure_core_div_rem_timing: assert property (
+  a_xsecure_dataindtiming_div_rem_timing: assert property (
 
-    //Make sure we detect an DIV or REM instruction in rvfi
-    seq_rvfi_normal_instruction(FUNC7_DIV_REM_INSTRUCTION, FUNC3_DIV_REM_INSTRUCTION, cv32e40s_pkg::OPCODE_OP)
+    //Make sure the instruction is a DIV or REM instruction
+    (rvfi_insn_opcode == OPCODE_OP
+    && rvfi_insn_funct3[2] == FUNCT3_DIV_REM_INSTRUCTION_MSB
+    && rvfi_insn_funct7 == FUNCT7_DIV_REM_INSTRUCTION)
 
-    //Make sure data independent timing was on when the DIV/REM instruction was in EX stage
-    //(Checks only the last cycle the branch instruction is in EX stage because if data independent timing is on, in the last cycle DIV/REM is in EX, it must also been on in he previouse cycles)
+    //Make sure the instruction is valid and has been executed without traps
+    && rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_trap.trap
+
+    //Make sure data independent timing was on when the DIV/REM instruction was in the EX stage
+    //(If data independent timing is on when the instruction is in the WB stage, it was on during the whole execution as well)
     and $past(xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
     |->
     //Make sure that there are at least 34 cycles from the last retired instruction
@@ -304,296 +425,6 @@ module uvmt_cv32e40s_xsecure_assert
   ) else `uvm_error(info_tag, "DIV/REM operations do not use 35 cycles to execute\n");
 
 
-  /////////////////////////////////////////////////////////////////////
-  ///////////////////////// DUMMY INSTRUCTION /////////////////////////
-  /////////////////////////////////////////////////////////////////////
-
-
-  ////////// DUMMY INSTRUCTIONS ARE CONFIGURABLE /////////
-
-  // Check that we generate dummy instructions when dummy bit is on:
-  // a_xsecure_dummy_instruction_frequency
-
-  // Check that we do not generate dummy instructions when the dummy bit is off:
-
-  a_xsecure_dummy_instruction_not_generated_when_dummybit_is_off: assert property(
-
-    //Make sure the dummy instruction settings is off
-    !xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy
-
-    //Make sure we look at an valid instruction
-    && xsecure_if.core_if_stage_if_valid_o
-    && xsecure_if.core_if_stage_id_ready_i
-
-    //Make sure we dont generate dummy instructions
-    |=>
-    !xsecure_if.core_if_id_pipe_instr_meta_dummy
-
-  ) else `uvm_error(info_tag, "We generate dummy instructions even though the dummy setting is off.\n");
-
-
-  ////////// DUMMY INSTRUCTION INSTERTED IN IF /////////
-
-  a_xsecure_dummy_instruction_in_if: assert property(
-
-    //Make sure we detect an new instruction in the id ex pipe
-    $past(xsecure_if.core_id_stage_id_valid_o)
-    && $past(xsecure_if.core_id_stage_ex_ready_i)
-
-    //Make sure the dummy instruction settings is on when fetching the instruction
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy
-
-    //Make sure the detected instruction is an dummy instruction
-    && xsecure_if.core_id_ex_pipe_instr_meta_dummy
-
-    //Make sure the dummy instruction originate from if stage
-    |->
-    $past(xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy)
-    && $past(xsecure_if.core_if_id_pipe_instr_meta_dummy)
-  ) else `uvm_error(info_tag, "Dummy instructions are not inserted in if stage.\n");
-
-
-  ////////// DUMMY INSTRUCTION BLTU JUMPS TO NEXT NON-DUMMY INSTRUCTION //////////
-
-  a_xsecure_dummy_instruction_bltu_jumping: assert property(
-
-    //Make sure we detect an new instruction in the id ex pipe
-    $past(xsecure_if.core_id_stage_id_valid_o)
-    && $past(xsecure_if.core_id_stage_ex_ready_i)
-
-    //Make sure the detected instruction is an dummy instruction
-    && xsecure_if.core_id_ex_pipe_instr_meta_dummy
-
-    //Make sure we have BLTU dummy instruction
-    && xsecure_if.core_id_ex_pipe_instr_bus_resp_rdata[6:0] == cv32e40s_pkg::OPCODE_BRANCH
-    && xsecure_if.core_id_ex_pipe_instr_bus_resp_rdata[14:12] == FUNC3_BLTU_INSTRUCTION
-
-    //Make sure we jump to next instruction
-    //(PC change to next instruction before inserting an dummy instruction, the jump should therefore be 0)
-    |->
-    xsecure_if.core_id_ex_pipe_instr_bus_resp_rdata[31:25] == '0
-    && xsecure_if.core_id_ex_pipe_instr_bus_resp_rdata[11:7] == '0
-  ) else `uvm_error(info_tag, "Dummy branch instructions do not jump to the next non-dummy instructions.\n");
-
-
-  ////////// DUMMY INSTRUCTION OPERAND SOURCES //////////
-
-  a_xsecure_dummy_instruction_operands_from_LFSR1_and_LFSR2: assert property (
-
-    //Make sure we detect an new instruction in the if id pipe
-    $past(xsecure_if.core_if_stage_if_valid_o)
-    && $past(xsecure_if.core_if_stage_id_ready_i)
-
-    //Make sure the dummy instruction settings is on when fetching the instruction
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy
-
-    //Make sure the detected instruction is an dummy instruction
-    && xsecure_if.core_if_id_pipe_instr_meta_dummy
-
-    |->
-    //Check that the sr1 part of the instruction originates from the LFSR1 register
-    xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[19:15] == $past(xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs1)
-
-    //Check that the sr2 part of the instruction originates from the LFSR2 register
-    && xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[24:20] == $past(xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs2)
-
-  ) else `uvm_error(info_tag, "Dummy instructions do not fetch data from LFSR1 and LFSR2.\n");
-
-
-  ////////// DUMMY INSTRUCTION DESTINATION //////////
-
-  a_xsecure_dummy_instruction_destination_is_x0: assert property (
-
-    //Make sure we detect an new instruction in the if id pipe
-    $past(xsecure_if.core_if_stage_if_valid_o)
-    && $past(xsecure_if.core_if_stage_id_ready_i)
-
-    //Make sure the dummy instruction settings is on when fetching the instruction
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy
-
-    //Make sure the detected instruction is an dummy instruction
-    && xsecure_if.core_if_id_pipe_instr_meta_dummy
-
-    |->
-    //Check that the destination register is x0
-    xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[11:7] == REGISTER_x0
-
-  ) else `uvm_error(info_tag, "The results of the dummy instructions are not stored in the x0 register.\n");
-
-
-  ////////// DUMMY INSTRUCTION UPDATES MCYCLE //////////
-
-  a_xsecure_dummy_instruction_updates_mcycle: assert property (
-    //Make sure the gated clock is active
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure that mcycle is on (not inhibit)
-    !xsecure_if.core_cs_registers_mcountinhibit_q_mcycle_inhibit
-
-    //Make sure we do not write to the mcycle csr register
-    and !($past(xsecure_if.core_cs_registers_csr_en_gated)
-    && ($past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLE)) || $past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLEH))
-
-    |->
-    //Make sure the mcycle counts every cycle (including the clock cycles dummy instruction occurs)
-    xsecure_if.core_cs_registers_mhpmcounter_mcycle == ($past(xsecure_if.core_cs_registers_mhpmcounter_mcycle) + 1)
-
-    //But make sure it resets in case of overflow
-    or xsecure_if.core_cs_registers_mhpmcounter_mcycle == '0 && $past(xsecure_if.core_cs_registers_mhpmcounter_mcycle) == REGISTER_MHPMCOUNTER_MCYCLE_FULL
-
-    //And allow the first mcycle count to not increment
-    or xsecure_if.core_cs_registers_mhpmcounter_mcycle == $past(xsecure_if.core_cs_registers_mhpmcounter_mcycle) && $past(xsecure_if.core_cs_registers_mcountinhibit_q_mcycle_inhibit)
-
-  ) else `uvm_error(info_tag, "Dummy instructions do not update the mcycle register.\n");
-
-
-  ////////// DUMMY INSTRUCTION DO NOT UPDATE MINSTRET //////////
-
-  a_xsecure_dummy_instruction_do_not_update_minstret: assert property (
-    //Make sure the gated clock is active
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure that minstret is on (not inhibit)
-    !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
-
-    //Make sure we have an dummy instruction
-    && xsecure_if.core_wb_stage_ex_wb_pipe_instr_meta_dummy
-
-    //Make sure the dummy instruction is ready to retire
-    && xsecure_if.core_wb_stage_wb_valid_o
-
-    //Make sure the minstret counter ignore the retired dummy instruction
-    |=>
-    xsecure_if.core_cs_registers_mhpmcounter_minstret == $past(xsecure_if.core_cs_registers_mhpmcounter_minstret)
-
-  ) else `uvm_error(info_tag, "Dummy instructions updates the minstret register.\n");
-
-
-  ////////// DUMMY INSTRUCTION FREQUENCY //////////
-
-
-  sequence seq_dummy_instruction_within_normal_valid_instructions (num_normal_valid_instructions);
-    //Make sure we detect a dummy instruction
-    xsecure_if.core_if_stage_instr_meta_n_dummy
-    && xsecure_if.core_if_stage_if_valid_o
-    && xsecure_if.core_if_stage_id_ready_i
-
-    //Make sure we detect 0 to x number of normal valid instruction in the if stage
-    ##1 (xsecure_if.core_if_stage_if_valid_o
-    && xsecure_if.core_if_stage_id_ready_i)[->0:(num_normal_valid_instructions)];
-  endsequence
-
-
-  property p_xsecure_dummy_instruction_frequency(num_normal_valid_instructions_per_dummy_instruction, logic [3:0] rnddummyfreq_value);
-
-    //Make sure the dummy setting is on
-    (xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy
-
-    //Make sure the frequency of dummy instructions is set to correct value
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummyfreq == rnddummyfreq_value
-
-    //Make sure the controller is not in debug mode
-    && !xsecure_if.core_controller_controller_fsm_debug_mode_q
-
-    && !xsecure_if.core_i_if_stage_i_instr_hint
-
-    //Make sure the dummy instructions are allways enabled
-    && xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_dummy_en
-    )
-    //Make sure we detect new instructions in the if id pipe
-    throughout (xsecure_if.core_if_stage_if_valid_o
-    && xsecure_if.core_if_stage_id_ready_i)[->(num_normal_valid_instructions_per_dummy_instruction)+1]
-
-    //Make sure that we detect one valid dummy instruction inbetween the number of normal valid instructions
-    |->
-    seq_dummy_instruction_within_normal_valid_instructions(num_normal_valid_instructions_per_dummy_instruction).triggered;
-
-  endproperty
-
-
-  //FREQ = 4
-  a_xsecure_dummy_instruction_frequency_4: assert property (
-	  p_xsecure_dummy_instruction_frequency(
-      4,
-      FREQ_SETTING_4)
-  ) else `uvm_error(info_tag, "Frequency of dummy instructions are not 1-4.\n");
-
-  //FREQ = 8
-  a_xsecure_dummy_instruction_frequency_8: assert property (
-	  p_xsecure_dummy_instruction_frequency(
-      8,
-      FREQ_SETTING_8)
-  ) else `uvm_error(info_tag, "Frequency of dummy instructions are not 1-8 or higher.\n");
-
-  //FREQ = 16
-  a_xsecure_dummy_instruction_frequency_16: assert property (
-	  p_xsecure_dummy_instruction_frequency(
-      16,
-      FREQ_SETTING_16)
-  ) else `uvm_error(info_tag, "Frequency of dummy instructions are not 1-16 or higher.\n");
-
-  //FREQ = 32
-  a_xsecure_dummy_instruction_frequency_32: assert property (
-	  p_xsecure_dummy_instruction_frequency(
-      32,
-      FREQ_SETTING_32)
-  ) else `uvm_error(info_tag, "Frequency of dummy instructions are not 1-32 or higher.\n");
-
-  //FREQ = 64
-  a_xsecure_dummy_instruction_frequency_64: assert property (
-	  p_xsecure_dummy_instruction_frequency(
-      64,
-      FREQ_SETTING_64)
-  ) else `uvm_error(info_tag, "Frequency of dummy instructions are not 1-64 or higher.\n");
-
-
-  ////////// DUMMY INSTRUCTION RESET SEED AT LOCKUP ERRORS //////////
-
-  property p_xsecure_dummy_instruction_LFSRx_lockup_reset(integer x, logic core_cs_registers_xsecure_lfsrx_seed_we, logic [31:0] core_xsecure_ctrl_lfsrx, logic [31:0] core_LFSRx_CFG_default_seed);
-
-    //Make sure the dummy setting is on
-    xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy
-
-    //Make sure there is a lockup error on register x
-    && xsecure_if.core_cs_registers_xsecure_lfsr_lockup[x] == LOCKUP_ERROR
-
-    //Make sure we check the case where we do not specificly write a new value to the register at this moment (because writing new value has higher priority than setting default seed)
-    && !core_cs_registers_xsecure_lfsrx_seed_we
-
-    //Make sure the LFSR registers reseeds to default value
-    |->
-    ##1 core_xsecure_ctrl_lfsrx == core_LFSRx_CFG_default_seed;
-
-  endproperty
-
-  //LFSR0
-  a_xsecure_dummy_instruction_LFSR0_lockup_reset: assert property (
-	  p_xsecure_dummy_instruction_LFSRx_lockup_reset(
-      0,
-      xsecure_if.core_cs_registers_xsecure_lfsr0_seed_we,
-	    xsecure_if.core_xsecure_ctrl_lfsr0,
-      xsecure_if.core_LFSR0_CFG_default_seed)
-  ) else `uvm_error(info_tag, "LFSR0 does not reset to default value when when there is a lookup error (given that we do not write to the register).\n");
-
-  //LFSR1
-  a_xsecure_dummy_instruction_LFSR1_lockup_reset: assert property (
-	  p_xsecure_dummy_instruction_LFSRx_lockup_reset(
-      1,
-      xsecure_if.core_cs_registers_xsecure_lfsr1_seed_we,
-	    xsecure_if.core_xsecure_ctrl_lfsr1,
-      xsecure_if.core_LFSR1_CFG_default_seed)
-  ) else `uvm_error(info_tag, "LFSR1 does not reset to default value when when there is a lookup error (given that we do not write to the register).\n");
-
-  //LFSR2
-  a_xsecure_dummy_instruction_LFSR2_lockup_reset: assert property (
-	  p_xsecure_dummy_instruction_LFSRx_lockup_reset(
-      2,
-      xsecure_if.core_cs_registers_xsecure_lfsr2_seed_we,
-	    xsecure_if.core_xsecure_ctrl_lfsr2,
-      xsecure_if.core_LFSR2_CFG_default_seed)
-  ) else `uvm_error(info_tag, "LFSR2 does not reset to default value when when there is a lookup error (given that we do not write to the register).\n");
-
-
   /////////////////////////////////////////////////////////////////////////////////////////
   ///////////////////////// REDUCTION OF PROFILING INFRASTRUCTURE /////////////////////////
   /////////////////////////////////////////////////////////////////////////////////////////
@@ -601,19 +432,19 @@ module uvmt_cv32e40s_xsecure_assert
 
   a_xsecure_reduction_of_profiling_infrastructure_mhpmevent_31_to_3_are_zero: assert property (
 
-    //Make sure the mhpmevent 3 to 31 are hardwired to zero
+    //Make sure the MHPMEVENT 3 to 31 are hardwired to zero
     |xsecure_if.core_cs_registers_mhpmevent_31_to_3 == 1'b0
 
-  ) else `uvm_error(info_tag, "The mhpmevent registers 31 to 3 is not hardwired to zero.\n");
+  ) else `uvm_error(info_tag, "The MHPMEVENT registers 31 to 3 are not hardwired to zero.\n");
 
 
   a_xsecure_reduction_of_profiling_infrastructure_mhpmcounter_31_to_3_are_zero: assert property (
 
-    //Make sure the mhpmcounter 3 to 31 are hardwired to zero
-    //(we include mhpmcounterh in the mhpmcounter signal)
+    //Make sure the MHPMCOUNTER 3 to 31 are hardwired to zero
+    //(we include MHPMCOUNTERH in the MHPMCOUNTER signal)
     |xsecure_if.core_cs_registers_mhpmcounter_31_to_3 == 1'b0
 
-  ) else `uvm_error(info_tag, "The mhpmcounter registers 31 to 3 is not hardwired to zero.\n");
+  ) else `uvm_error(info_tag, "The MHPMCOUNTER registers 31 to 3 are not hardwired to zero.\n");
 
 
   ////////////////////////////////////////////////////////////////
@@ -621,18 +452,15 @@ module uvmt_cv32e40s_xsecure_assert
   ////////////////////////////////////////////////////////////////
 
 
-  ////////// SOME CSR REGISTER ARE SHADOWED //////////
+  ////////// SOME CSRS ARE SHADOWED //////////
 
   /****************************************
-
-  The following 4 assertions make sure that the CSR registers that are shadowed, are shadowed at all times:
-  The shadow registers are the compliments of the CSR registers
-
+  The following 4 assertions make sure the CSRs are shadowed at all times:
+  The shadow registers are the compliments of the CSRs
   ****************************************/
 
-
-  a_xsecure_hardened_CSRs_no_missmatch_static_registers: assert property (
-    //Make sure the following csr registers are shadowed at all times:
+  a_xsecure_hardened_CSRs_no_mismatch_static_registers: assert property (
+    //Make sure the following CSRs are shadowed at all times:
 
     //JVT
     xsecure_if.core_cs_registers_jvt_csr_gen_hardened_shadow_q == ~(xsecure_if.core_i_cs_registers_i_jvt_csr_i_rdata_q & cv32e40s_pkg::CSR_JVT_MASK)
@@ -652,25 +480,25 @@ module uvmt_cv32e40s_xsecure_assert
     //MSCRATCH
     and xsecure_if.core_cs_registers_mscratch_csr_gen_hardened_shadow_q == ~(xsecure_if.core_i_cs_registers_i_mscratch_csr_i_rdata_q & cv32e40s_pkg::CSR_MSCRATCH_MASK)
 
-  ) else `uvm_error(info_tag, "One or several of the CSR registers jvt, mstatus, cpuctrl, dcsr, mepc, mscratch are not shadowed.\n");
+  ) else `uvm_error(info_tag, "One or several of the CSRs JVT, MSTATUS, CPUCTRL, DCSR, MEPC, MSCRATCH are not shadowed.\n");
 
   generate
     if(PMP_NUM_REGIONS > 0) begin
-      a_xsecure_hardened_CSRs_no_missmatch_pmp_register: assert property (
-      //Make sure the mseccfg csr register is shadowed at all times (given that we use pmp regions)
+      a_xsecure_hardened_CSRs_no_mismatch_pmp_register: assert property (
+      //Make sure the MSECCFG CSR is shadowed at all times (given that we use PMP regions)
 
       //MSECCFG
       xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q & cv32e40s_pkg::CSR_MSECCFG_MASK)
 
-      ) else `uvm_error(info_tag, "The CSR register mseccfg is not shadowed.\n");
+      ) else `uvm_error(info_tag, "The CSR MSECCFG is not shadowed.\n");
 
     end
   endgenerate
 
   generate for (genvar n = 0; n < PMP_NUM_REGIONS; n++) begin
 
-    a_xsecure_hardened_CSRs_no_missmatch_pmp_region_registers: assert property (
-      //Make sure the exsisting pmp csr registers are shadowed at all times
+    a_xsecure_hardened_CSRs_no_mismatch_pmp_region_registers: assert property (
+      //Make sure the existing PMP CSRs are shadowed at all times
 
       //PMPNCFG
       xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q[n] == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q[n] & cv32e40s_pkg::CSR_PMPNCFG_MASK)
@@ -678,14 +506,14 @@ module uvmt_cv32e40s_xsecure_assert
       //PMPADDR
       and xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n] == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n] & cv32e40s_pkg::CSR_PMPADDR_MASK[PMP_ADDR_WIDTH-1:0])
 
-    ) else `uvm_error(info_tag, $sformatf("One or several of the CSR registers pmp%0dcfg or pmpaddr[%0d] are not shadowed.\n", n, n));
+    ) else `uvm_error(info_tag, $sformatf("One or several of the CSRs PMP%0dCFG or PMPADDR[%0d] are not shadowed.\n", n, n));
 
   end endgenerate
 
   generate
     if(SMCLIC) begin
-      a_xsecure_hardened_CSRs_no_missmatch_smclic_registers: assert property (
-        //Make sure the smclic csr registers are shadowed at all times if smclic is enabled
+      a_xsecure_hardened_CSRs_no_mismatch_smclic_registers: assert property (
+        //Make sure the smclic CSRs are shadowed at all times if smclic is enabled
 
         //MTVT
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q & cv32e40s_pkg::CSR_MTVT_MASK)
@@ -699,12 +527,12 @@ module uvmt_cv32e40s_xsecure_assert
         //MINTTHRESH
         and xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q & CSR_MINTTHRESH_MASK)
 
-      ) else `uvm_error(info_tag, "One or several of the CSR registers mtvt, mtvec, mintthresh are not shadowed.\n");
+      ) else `uvm_error(info_tag, "One or several of the CSRs MTVT, MTVEC, MINTSTATUS or MINTTHRESH are not shadowed.\n");
 
     end else begin
 
-      a_xsecure_hardened_CSRs_no_missmatch_basic_mode_registers: assert property (
-        //Make sure the csr registers used when smclic is disabled are shadowed at all times
+      a_xsecure_hardened_CSRs_no_mismatch_basic_mode_registers: assert property (
+        //Make sure the CSRs used when smclic is disabled are shadowed at all times
 
         //MTVEC
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q & cv32e40s_pkg::CSR_MTVEC_BASIC_MASK)
@@ -712,96 +540,91 @@ module uvmt_cv32e40s_xsecure_assert
         //MIE
         and xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q & cv32e40s_pkg::IRQ_MASK)
 
-      ) else `uvm_error(info_tag, "The CSR registers mtvec or mie are not shadowed.\n");
+      ) else `uvm_error(info_tag, "The CSRs MTVEC or MIE are not shadowed.\n");
 
     end
   endgenerate
 
 
-  ////////// SET ALERT MAJOR IF A CSR REGISTER IS NOT SHADOWED //////////
+  ////////// SET THE MAJOR ALERT IF A CSR IS NOT SHADOWED //////////
 
-  property p_xsecure_hardned_csr_missmatch_sets_alert_major(csr, shadow, MASK);
-
-    //Make sure we only set major alert if we are in operating mode (use the gated clock)
+  property p_xsecure_hardned_csr_mismatch_sets_alert_major(csr, shadow, MASK);
+    //Make sure we only set the major alert if we are in the operating mode (use the gated clock)
     @(posedge xsecure_if.core_clk)
 
     //csr & mask: make sure the bits we are not interested in are set to 0s, which is determined by the mask
-    //shadow | ~MASK: make sure we set the bits we are not interested in to 1s, which is also deterimend by the mask
-    //~(shadow | ~MASK) != (csr & MASK): make sure that all the shadow register bits we are interestead in are compliments of each other, and that the bits that we are not interestead in are turned into compliments of eachother
+    //(shadow | ~MASK): this operation turns the unmasked bits of the shadow register to 1s (so they will become compliments of the unmasked bits of the CSR (which are all 0s))
+    //~(shadow | ~MASK) != (CSR & MASK): this operation checks if the shadow register (and its unmasked bits) are compliments of the CSR (and its unmasked bits)
     ~(shadow | ~MASK) != (csr & MASK)
 
-    //Make sure alert major is set if there is a missmatch of the CSR and shadow register
+    //Make sure the alert major is set if there is a mismatch of the CSR and shadow register
     |=>
     xsecure_if.core_alert_major_o;
 
   endproperty
 
-
   /****************************************
-  The following assertions checks if a missmatch in specific shadow and cs registers results in a major alert.
-
-  Method for inserting errors:
-  - Add cutpoints
-
+  The following assertions check whether a mismatch between a CSR and its corresponding shadow register results in the major alert being set.
   ****************************************/
+
   //JVT:
-  a_xsecure_hardened_CSRs_missmatch_jvt: assert property (
-    p_xsecure_hardned_csr_missmatch_sets_alert_major(
+  a_xsecure_hardened_CSRs_mismatch_jvt: assert property (
+    p_xsecure_hardned_csr_mismatch_sets_alert_major(
       xsecure_if.core_i_cs_registers_i_jvt_csr_i_rdata_q,
       xsecure_if.core_cs_registers_jvt_csr_gen_hardened_shadow_q,
       cv32e40s_pkg::CSR_JVT_MASK)
-  ) else `uvm_error(info_tag, "jvt cs and shadow register missmatch does not result in major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the JVT CSR and its shadow register does not result in the major alert being set.\n");
 
   //MSTATUS:
-  a_xsecure_hardened_CSRs_missmatch_mstatus: assert property (
-    p_xsecure_hardned_csr_missmatch_sets_alert_major(
+  a_xsecure_hardened_CSRs_mismatch_mstatus: assert property (
+    p_xsecure_hardned_csr_mismatch_sets_alert_major(
       xsecure_if.core_i_cs_registers_i_mstatus_csr_i_rdata_q,
       xsecure_if.core_cs_registers_mstatus_csr_gen_hardened_shadow_q,
       cv32e40s_pkg::CSR_MSTATUS_MASK)
-  ) else `uvm_error(info_tag, "mstatus cs and shadow register missmatch does not result in major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the MSTATUS CSR and its shadow register does not result in the major alert being set.\n");
 
   //CPUCTRL:
-  a_xsecure_hardened_CSRs_missmatch_cpuctrl: assert property (
-    p_xsecure_hardned_csr_missmatch_sets_alert_major(
+  a_xsecure_hardened_CSRs_mismatch_cpuctrl: assert property (
+    p_xsecure_hardned_csr_mismatch_sets_alert_major(
       xsecure_if.core_i_cs_registers_i_xsecure_cpuctrl_csr_i_rdata_q,
       xsecure_if.core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q,
       cv32e40s_pkg::CSR_CPUCTRL_MASK)
-  ) else `uvm_error(info_tag, "cpuctrl cs and shadow register missmatch does not result in major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CPUCTRL CSR and its shadow register does not result in the major alert being set.\n");
 
   //DCSR:
-  a_xsecure_hardened_CSRs_missmatch_dcsr: assert property (
-    p_xsecure_hardned_csr_missmatch_sets_alert_major(
+  a_xsecure_hardened_CSRs_mismatch_dcsr: assert property (
+    p_xsecure_hardned_csr_mismatch_sets_alert_major(
       xsecure_if.core_i_cs_registers_i_dcsr_csr_i_rdata_q,
       xsecure_if.core_cs_registers_dcsr_csr_gen_hardened_shadow_q,
       cv32e40s_pkg::CSR_DCSR_MASK)
-  ) else `uvm_error(info_tag, "dcsr cs and shadow register missmatch does not result in major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the DCSR CSR and its shadow register does not result in the major alert being set.\n");
 
   //MEPC:
-  a_xsecure_hardened_CSRs_missmatch_mepc: assert property (
-    p_xsecure_hardned_csr_missmatch_sets_alert_major(
+  a_xsecure_hardened_CSRs_mismatch_mepc: assert property (
+    p_xsecure_hardned_csr_mismatch_sets_alert_major(
       xsecure_if.core_i_cs_registers_i_mepc_csr_i_rdata_q,
       xsecure_if.core_cs_registers_mepc_csr_gen_hardened_shadow_q,
       cv32e40s_pkg::CSR_MEPC_MASK)
-  ) else `uvm_error(info_tag, "mepc cs and shadow register missmatch does not result in major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the MEPC CSR and its shadow register does not result in the major alert being set.\n");
 
   //MSCRATCH:
-  a_xsecure_hardened_CSRs_missmatch_mscratch: assert property (
-    p_xsecure_hardned_csr_missmatch_sets_alert_major(
+  a_xsecure_hardened_CSRs_mismatch_mscratch: assert property (
+    p_xsecure_hardned_csr_mismatch_sets_alert_major(
       xsecure_if.core_i_cs_registers_i_mscratch_csr_i_rdata_q,
       xsecure_if.core_cs_registers_mscratch_csr_gen_hardened_shadow_q,
       cv32e40s_pkg::CSR_MSCRATCH_MASK)
-  ) else `uvm_error(info_tag, "mscratch cs and shadow register missmatch does not result in major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the MSCRATCH CSR and its shadow register does not result in the major alert being set.\n");
 
   generate
     if(PMP_NUM_REGIONS > 0) begin
 
       //MSECCFG:
-      a_xsecure_hardened_CSRs_missmatch_mseccfg: assert property (
-        p_xsecure_hardned_csr_missmatch_sets_alert_major(
+      a_xsecure_hardened_CSRs_mismatch_mseccfg: assert property (
+        p_xsecure_hardned_csr_mismatch_sets_alert_major(
           xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q,
           xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q,
           cv32e40s_pkg::CSR_MSECCFG_MASK)
-      ) else `uvm_error(info_tag, "mseccfg cs and shadow register missmatch does not result in major alert.\n");
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the MSECCFG CSR and its shadow register does not result in the major alert being set.\n");
 
     end
   endgenerate
@@ -809,75 +632,74 @@ module uvmt_cv32e40s_xsecure_assert
 
   generate for (genvar n = 0; n < PMP_NUM_REGIONS; n++) begin
     //PMPNCFG:
-    a_xsecure_hardened_CSRs_missmatch_pmpncfg: assert property (
-      p_xsecure_hardned_csr_missmatch_sets_alert_major(
+    a_xsecure_hardened_CSRs_mismatch_pmpncfg: assert property (
+      p_xsecure_hardned_csr_mismatch_sets_alert_major(
         xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q[n],
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q[n],
         cv32e40s_pkg::CSR_PMPNCFG_MASK)
-    ) else `uvm_error(info_tag, $sformatf("pmp%0dcfg cs and shadow register missmatch does not result in major alert.\n", n));
+    ) else `uvm_error(info_tag_glitch, $sformatf("The mismatch between the PMP%0dCFG CSR and its shadow register does not result in the major alert being set.\n", n));
 
     //PMPADDR:
-    a_xsecure_hardened_CSRs_missmatch_pmpaddr: assert property (
-      p_xsecure_hardned_csr_missmatch_sets_alert_major(
+    a_xsecure_hardened_CSRs_mismatch_pmpaddr: assert property (
+      p_xsecure_hardned_csr_mismatch_sets_alert_major(
         xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n],
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n],
         cv32e40s_pkg::CSR_PMPADDR_MASK[PMP_ADDR_WIDTH-1:0])
-    ) else `uvm_error(info_tag, $sformatf("pmpaddr[%0d] cs and shadow register missmatch does not result in major alert.\n",n));
+    ) else `uvm_error(info_tag_glitch, $sformatf("The mismatch between the PMPADDR[%0d] CSR and its shadow register does not result in the major alert being set.\n", n));
 
   end endgenerate
 
 
   if(SMCLIC) begin
     //MTVT:
-    a_xsecure_hardened_CSRs_missmatch_mtvt: assert property (
-      p_xsecure_hardned_csr_missmatch_sets_alert_major(
-        //Make sure it is possible to vary the lenght of the mtvt_addr signal
+    a_xsecure_hardened_CSRs_mismatch_mtvt: assert property (
+      p_xsecure_hardned_csr_mismatch_sets_alert_major(
         xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q,
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q,
         cv32e40s_pkg::CSR_MTVT_MASK)
-    ) else `uvm_error(info_tag, "mtvt cs and shadow register missmatch does not result in major alert.\n");
+    ) else `uvm_error(info_tag_glitch, "A mismatch between the MTVT CSR and its shadow register does not result in the major alert being set.\n");
 
     //MTVEC:
-    a_xsecure_hardened_CSRs_missmatch_mtvec: assert property (
-      p_xsecure_hardned_csr_missmatch_sets_alert_major(
+    a_xsecure_hardened_CSRs_mismatch_mtvec: assert property (
+      p_xsecure_hardned_csr_mismatch_sets_alert_major(
         xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q,
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q,
         cv32e40s_pkg::CSR_MTVEC_CLIC_MASK)
-    ) else `uvm_error(info_tag, "mtvec cs and shadow register missmatch does not result in major alert.\n");
+    ) else `uvm_error(info_tag_glitch, "A mismatch between the MTVEC CSR and its shadow register does not result in the major alert being set.\n");
 
     //MINTSTATUS:
-    a_xsecure_hardened_CSRs_missmatch_mintstatus: assert property (
-      p_xsecure_hardned_csr_missmatch_sets_alert_major(
+    a_xsecure_hardened_CSRs_mismatch_mintstatus: assert property (
+      p_xsecure_hardned_csr_mismatch_sets_alert_major(
         xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q,
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q,
         cv32e40s_pkg::CSR_MINTSTATUS_MASK)
-    ) else `uvm_error(info_tag, "mintstatus cs and shadow register missmatch does not result in major alert.\n");
+    ) else `uvm_error(info_tag_glitch, "A mismatch between the MINTSTATUS CSR and its shadow register does not result in the major alert being set.\n");
 
     //MINTTHRESH:
-    a_xsecure_hardened_CSRs_missmatch_mintthresh: assert property (
-      p_xsecure_hardned_csr_missmatch_sets_alert_major(
+    a_xsecure_hardened_CSRs_mismatch_mintthresh: assert property (
+      p_xsecure_hardned_csr_mismatch_sets_alert_major(
         xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q,
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q,
         CSR_MINTTHRESH_MASK)
-    ) else `uvm_error(info_tag, "mintthresh cs and shadow register missmatch does not result in major alert.\n");
+    ) else `uvm_error(info_tag_glitch, "A mismatch between the MINTTHRESH CSR and its shadow register does not result in the major alert being set.\n");
 
   end else begin
 
     //MTVEC:
-    a_xsecure_hardened_CSRs_missmatch_mtvec: assert property (
-      p_xsecure_hardned_csr_missmatch_sets_alert_major(
+    a_xsecure_hardened_CSRs_mismatch_mtvec: assert property (
+      p_xsecure_hardned_csr_mismatch_sets_alert_major(
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q,
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q,
         cv32e40s_pkg::CSR_MTVEC_BASIC_MASK)
-    ) else `uvm_error(info_tag, "mtvec cs and shadow register missmatch does not result in major alert.\n");
+    ) else `uvm_error(info_tag_glitch, "A mismatch between the MTVEC CSR and its shadow register does not result in the major alert being set.\n");
 
     //MIE:
-    a_xsecure_hardened_CSRs_missmatch_mie: assert property (
-      p_xsecure_hardned_csr_missmatch_sets_alert_major(
+    a_xsecure_hardened_CSRs_mismatch_mie: assert property (
+      p_xsecure_hardned_csr_mismatch_sets_alert_major(
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q,
         xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q,
         cv32e40s_pkg::IRQ_MASK)
-    ) else `uvm_error(info_tag, "mie cs and shadow register missmatch does not result in major alert.\n");
+    ) else `uvm_error(info_tag_glitch, "A mismatch between the MIE CSR and its shadow register does not result in the major alert being set.\n");
 
   end
 
@@ -887,173 +709,167 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// GENERAL PURPOSE REGISTERS ARE ZERO WHEN EXITING RESET //////////
 
-  //Check that the gpr is reset to 0 when exiting reset stage:
+  //Check that the GPR is reset to 0 when exiting the reset stage:
   property p_xsecure_gpr_reset(integer register_addr);
     //Make sure we are going out of reset
     $rose(rst_ni)
 
-    //Make sure the general purpose register of addres "register_addr" is reset to zero
+    //Make sure the general purpose register of address <register_addr> is reset to zero
     |->
     xsecure_if.core_register_file_wrapper_register_file_mem[register_addr][31:0] == 32'h0000_0000
 
-    //Make sure the ecc score of the general purpose register of address "register_addr" is the ecc encoding of the value zero
+    //Make sure the ECC score of the general purpose register of address "register_addr" is the ECC encoding of the value zero
     && xsecure_if.core_register_file_wrapper_register_file_mem[register_addr][37:32] == 6'h2a;
 
   endproperty
 
 
-  //Use RVFI to check that rs1 has value 0 when exiting reset stage:
+  //Use RVFI to check that RS1 has a value of 0 when exiting the reset stage:
   property p_xsecure_gpr_reset_rvfi_rs1(integer register_addr);
 
-    //Make sure we checkout the first instruction after reset stage
+    //Make sure we check out the first instruction after the reset stage
     $rose(rst_ni) ##0 rvfi_if.rvfi_valid[->1]
 
-    //Make sure the instruction reads the rs1 value
+    //Make sure the instruction reads the RS1 value
     ##0 rvfi_if.rvfi_rs1_addr == register_addr
 
-    //Make sure the rs1 value is 0
+    //Make sure the RS1 value is 0
     |->
     rvfi_if.rvfi_rs1_rdata == 32'h0000_0000;
 
   endproperty
 
 
-//Use RVFI to check that rs2 has value 0 when exiting reset stage:
+  //Use RVFI to check that RS2 has a value of 0 when exiting the reset stage:
   property p_xsecure_gpr_reset_rvfi_rs2(integer register_addr);
 
-    //Make sure we checkout the first instruction after reset stage
+    //Make sure we check out the first instruction after the reset stage
     $rose(rst_ni) ##0 rvfi_if.rvfi_valid[->1]
 
-    //Make sure the instruction reads the rs1 value
+    //Make sure the instruction reads the RS1 value
     ##0 rvfi_if.rvfi_rs2_addr == register_addr
 
-    //Make sure the rs2 value is 0
+    //Make sure the RS2 value is 0
     |->
     rvfi_if.rvfi_rs2_rdata == 32'h0000_0000;
 
   endproperty
 
 
-  //Make reset assertions for each gpr:
+  //Make reset assertions for each GPR:
   generate for (genvar gpr_addr = 0; gpr_addr < 32; gpr_addr++) begin
 
     a_xsecure_register_file_ecc_gpr_reset_value: assert property (
       p_xsecure_gpr_reset(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("General purpose register %0d is not set to 0 when exiting reset stage.\n", gpr_addr));
+    ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage.\n", gpr_addr));
 
     a_xsecure_register_file_ecc_gpr_reset_value_rvfi_rs1: assert property (
       p_xsecure_gpr_reset_rvfi_rs1(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("General purpose register %0d is not set to 0 when exiting reset stage, because rs2 is not 0.\n", gpr_addr));
+    ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage (as RS1 is not 0).\n", gpr_addr));
 
     a_xsecure_register_file_ecc_gpr_reset_value_rvfi_rs2: assert property (
       p_xsecure_gpr_reset_rvfi_rs2(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("General purpose register %0d is not set to 0 when exiting reset stage, because rs2 is not 0.\n", gpr_addr));
+    ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage (as RS2 is not 0).\n", gpr_addr));
 
   end endgenerate
 
 
-  ////////// GENERAL PURPOSE REGISTERS AND ECC ATTACHEMENT ARE NEVER ALL ZEROS OR ONES //////////
+  ////////// GENERAL PURPOSE REGISTERS AND ECC ATTACHMENTS ARE NEVER ALL ZEROS OR ONES //////////
 
-  //Make assertions for each gpr:
+  //Make assertions for each GPR:
   generate for (genvar gpr_addr = 0; gpr_addr < 32; gpr_addr++) begin
 
   a_xsecure_register_file_ecc_gprecc_never_all_zeros: assert property (
 
-    //Verify that register and ecc score never is all zeros
+    //Verify that register and ECC score never is all zeros
     xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] != 38'h00_0000_0000
 
-  ) else `uvm_error(info_tag, $sformatf("General purpose register %0d with attached ecc score is all zeros.\n", gpr_addr));
+  ) else `uvm_error(info_tag, $sformatf("GPR %0d with attached ECC score is all zeros.\n", gpr_addr));
 
 
   a_xsecure_register_file_ecc_gprecc_never_all_ones: assert property (
 
-    //Verify that register and ecc score never is all ones
+    //Verify that register and ECC score never is all ones
     xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] != 38'h3F_FFFF_FFFF
 
-  ) else `uvm_error(info_tag, $sformatf("General purpose register %0d with attached ecc score is all ones.\n", gpr_addr));
+  ) else `uvm_error(info_tag, $sformatf("GPR %0d with attached ECC score is all ones.\n", gpr_addr));
 
   end endgenerate
 
 
-  ////////// IF GENERAL PURPOSE REGISTERS AND ECC ATTACHEMENT ARE ALL ZEROS OR ONES MAJOR ALERT MUST BE SET //////////
+  ////////// IF GENERAL PURPOSE REGISTERS AND ECC ATTACHMENTS ARE ALL ZEROS OR ONES MAJOR ALERT MUST BE SET //////////
 
-  property p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(instr_start_of_reg_bits, instr_end_of_reg_bits);
+  property p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(if_id_pipe_rs_addr);
     logic [4:0] gpr_addr = 0;
 
     @(posedge xsecure_if.core_clk)
 
-    //Store the source register address in gpr address variable
-    (1, gpr_addr = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[instr_start_of_reg_bits:instr_end_of_reg_bits])
+    //Store the source register address in a GPR address variable
+    (1, gpr_addr = if_id_pipe_rs_addr)
 
-    //Make sure the source register is not x0 (because x0 behave different then the other source registers)
-    ##0 xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[instr_start_of_reg_bits:instr_end_of_reg_bits] != 0
+    //Make sure the source register is not x0 (because GPR x0 behaves different than the other source registers)
+    ##0 if_id_pipe_rs_addr != 0
 
-    //Make sure the source registers data and ecc score are all ones or zeros
+    //Make sure the source registers data and ECC score are all ones or zeros
     ##0 (xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'h00_0000_0000
     || xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'h3F_FFFF_FFFF)
 
     |=>
-    //Verify that major alert is set
+    //Verify that the major alert is set
     xsecure_if.core_alert_major_o;
 
   endproperty
 
 
   a_xsecure_register_file_ecc_gprecc_set_major_alert_if_rs1_is_all_zeros_or_ones: assert property (
-    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(INSTRUCTIONS_RS1_MSB, INSTRUCTIONS_RS1_LSB)
-  ) else `uvm_error(info_tag, "The data of rs1 (and the attached ecc score) is all ones or zeros but dont set major alert.\n");
+    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(if_id_pipe_instr_rs1)
+  ) else `uvm_error(info_tag_glitch, "The data of RS1 (and the attached ECC score) is all ones or zeros but does not set the major alert.\n");
 
 
   a_xsecure_register_file_ecc_gprecc_set_major_alert_if_rs2_is_all_zeros_or_ones: assert property (
-    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(INSTRUCTIONS_RS2_MSB, INSTRUCTIONS_RS2_LSB)
-  ) else `uvm_error(info_tag, "The data of rs2 (and the attached ecc score) is all ones or zeros but dont set major alert.\n");
+    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(if_id_pipe_instr_rs2)
+  ) else `uvm_error(info_tag_glitch, "The data of RS2 (and the attached ECC score) is all ones or zeros but does not set the major alert.\n");
 
 
-  ////////// ECC DECODING MISSMATCH ON EVERY READ SETS MAJOR ALERT //////////
+  ////////// ECC DECODING MISMATCH ON EVERY READ SETS MAJOR ALERT //////////
 
   /****************************************
   Support logic:
-
-  The support logic creates a local gpr memory
-  In this local gpr memory we insert data in the same manner as for the actuall gpr memory
-  We detect bit flip in the gp registers by comparing the gpr with the local memory
-
-
-  Method for inserting errors:
-  - Add cutpoints
-
+  The support logic creates a local memory that shadowes the GPR
+  In the local memory, we insert data in the same manner as for the GPRs.
+  We detect bit flip in the GPRs by comparing them with the local memory
   ****************************************/
 
   //Local memory for the support logic
-  logic [31:0][31:0] gpr_memory_region_shadow = '0;
+  logic [31:0][31:0] gpr_shadow = '0;
 
-  //Make sure the local memory is updated whenever the gpr memory is updated
+  //Make sure the local memory is updated whenever the GPR memory is updated
   always @(posedge clk_i) begin
     if(!rst_ni) begin
-      gpr_memory_region_shadow = '0;
+      gpr_shadow = '0;
     end else if (xsecure_if.core_rf_we_wb && xsecure_if.core_rf_waddr_wb != 5'b00000) begin
-      gpr_memory_region_shadow[xsecure_if.core_rf_waddr_wb] = xsecure_if.core_rf_wdata_wb;
+      gpr_shadow[xsecure_if.core_rf_waddr_wb] = xsecure_if.core_rf_wdata_wb;
     end
   end
 
 
-  //Make sure the support logic works as excpected when updating the memory
+  //Make sure the support logic works as expected when updating the memory
   a_xsecure_register_file_ecc_no_supression_by_comparing_ecc_scores_support_logic: assert property (
 
-    //Make sure we update the gpr memory
+    //Make sure we update the GPR memory
     xsecure_if.core_rf_we_wb
 
-    //Make sure the adress is not x0
+    //Make sure the address is not x0
     && xsecure_if.core_rf_waddr_wb != 5'b00000
 
-    //Make sure the local memory is updated in the same manner as the gpr memory
     |=>
-    gpr_memory_region_shadow[$past(xsecure_if.core_rf_waddr_wb)] == $past(xsecure_if.core_rf_wdata_wb)
+    //Make sure the local memory is updated in the same manner as the gpr memory
+    gpr_shadow[$past(xsecure_if.core_rf_waddr_wb)] == $past(xsecure_if.core_rf_wdata_wb)
 
-  ) else `uvm_error(info_tag, "The support logic does not update the local memory in the same manner as the gpr memory.\n");
+  ) else `uvm_error(info_tag, "The support logic does not update the local memory in the same manner as the GPRs.\n");
 
 
-  //Make sure the support logic works as excpected when exiting reset mode
+  //Make sure the support logic works as expected when exiting reset mode
   a_xsecure_register_file_ecc_no_supression_by_comparing_ecc_scores_support_logic_start_at_zero: assert property (
 
     //Exit reset mode
@@ -1061,7 +877,7 @@ module uvmt_cv32e40s_xsecure_assert
 
     //Check that the local memory is set to 0s
     |->
-    gpr_memory_region_shadow == '0
+    gpr_shadow == '0
 
   ) else `uvm_error(info_tag, "The local support memory is not set to 0s when exiting reset.\n");
 
@@ -1069,71 +885,28 @@ module uvmt_cv32e40s_xsecure_assert
   property p_xsecure_register_file_ecc_no_supression_reading_rs1(rs1_addr);
     @(posedge xsecure_if.core_clk)
 
-    //Make sure there is a non compressed instructions
-    !xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed
+    //Specify the RS1 address
+    if_id_pipe_instr_rs1 == rs1_addr
 
-    //Specify rs1 adress
-    && xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[19:15] == rs1_addr
+    //Make sure the GPR memory and the local memory differ in one or two bits
+    && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs1_addr][31:0] ^ gpr_shadow[rs1_addr], '1) inside {1,2})
 
-    //Make sure the gpr memory and the local memory differs in one or two bits
-    && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs1_addr][31:0] ^ gpr_memory_region_shadow[rs1_addr], '1) inside {1,2})
-
-    //Make sure the alert major signal is set
     |=>
+    //Make sure the alert major is set
     xsecure_if.core_alert_major_o;
   endproperty
-
 
   property p_xsecure_register_file_ecc_no_supression_reading_rs2(rs2_addr);
     @(posedge xsecure_if.core_clk)
 
-    //Make sure there is a non compressed instructions
-    !xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed
+    //Specify the RS2 address
+    if_id_pipe_instr_rs2 == rs2_addr
 
-    //Specify rs2 adress
-    && xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[24:20] == rs2_addr
+    //Make sure the GPR memory and the local memory differ in one or two bits
+    && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs2_addr][31:0] ^ gpr_shadow[rs2_addr], '1) inside {1,2})
 
-    //Make sure the gpr memory and the local memory differs in one or two bits
-    && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs2_addr][31:0] ^ gpr_memory_region_shadow[rs2_addr], '1) inside {1,2})
-
-    //Make sure the alert major signal is set
     |=>
-    xsecure_if.core_alert_major_o;
-  endproperty
-
-
-  property p_xsecure_register_file_ecc_no_supression_reading_rs1_cmpr(rs1_addr);
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure there is a non compressed instructions
-    xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed
-
-    //Specify rs1 adress
-    && xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[19:15] == rs1_addr
-
-    //Make sure the gpr memory and the local memory differs in one or two bits
-    && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs1_addr][31:0] ^ gpr_memory_region_shadow[rs1_addr], '1) inside {1,2})
-
-    //Make sure the alert major signal is set
-    |=>
-    xsecure_if.core_alert_major_o;
-  endproperty
-
-
-  property p_xsecure_register_file_ecc_no_supression_reading_rs2_cmpr(rs2_addr);
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure there is a non compressed instructions
-    xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed
-
-    //Specify rs2 adress
-    && xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[24:20] == rs2_addr
-
-    //Make sure the gpr memory and the local memory differs in one or two bits
-    && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs2_addr][31:0] ^ gpr_memory_region_shadow[rs2_addr], '1) inside {1,2})
-
-    //Make sure the alert major signal is set
-    |=>
+    //Make sure the alert major is set
     xsecure_if.core_alert_major_o;
   endproperty
 
@@ -1141,40 +914,373 @@ module uvmt_cv32e40s_xsecure_assert
 
     a_xsecure_register_file_ecc_no_supression_reading_rs1: assert property (
       p_xsecure_register_file_ecc_no_supression_reading_rs1(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("1 or 2 bit error when reading noncompressed rs1 (address %0d) does not set alert major.\n", gpr_addr));
+    ) else `uvm_error(info_tag_glitch, $sformatf("1 or 2 bit errors when reading RS1 (address %0d) do not set the alert major.\n", gpr_addr));
 
     a_xsecure_register_file_ecc_no_supression_reading_rs2: assert property (
       p_xsecure_register_file_ecc_no_supression_reading_rs2(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("1 or 2 bit error when reading noncompressed rs2 (address %0d) does not set alert major.\n", gpr_addr));
-
-    a_xsecure_register_file_ecc_no_supression_reading_rs1_cmpr: assert property (
-      p_xsecure_register_file_ecc_no_supression_reading_rs1_cmpr(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("1 or 2 bit error when reading compressed rs1 (address %0d) does not set alert major.\n", gpr_addr));
-
-    a_xsecure_register_file_ecc_no_supression_reading_rs2_cmpr: assert property (
-      p_xsecure_register_file_ecc_no_supression_reading_rs2_cmpr(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("1 or 2 bit error when reading compressed rs2 (address %0d) does not set alert major.\n", gpr_addr));
+    ) else `uvm_error(info_tag_glitch, $sformatf("1 or 2 bit errors when reading RS2 (address %0d) do not set the alert major.\n", gpr_addr));
 
   end endgenerate
+
+
+  ///////////////////////////////////////////////////////////////////////
+  ///////////////////////// INTERFACE INTEGRITY /////////////////////////
+  ///////////////////////////////////////////////////////////////////////
+
+
+  ////////// INTERFACE INTEGRITY CHECKING IS ENABLED BY DEFAULT //////////
+
+  a_xsecure_interface_integrity_default_on: assert property (
+    p_xsecure_setting_default_on(
+        xsecure_if.core_xsecure_ctrl_cpuctrl_integrity)
+  ) else `uvm_error(info_tag, "Interface integrity checking is not enabled when exiting reset.\n");
+
+
+  ////////// INTERFACE INTEGRITY PARITY BITS ARE COMPLIMENT BITS AT ALL TIMES GIVEN THERE IS NO GLITCH //////////
+
+  property p_parity_signal_is_invers_of_signal(signal, parity_signal);
+    @(posedge clk_i)
+
+    //Make sure the parity bit is always the complement of the non-parity bit
+    parity_signal == ~signal;
+
+  endproperty
+
+  a_xsecure_interface_integrity_obi_data_req_parity: assert property (
+    p_parity_signal_is_invers_of_signal(
+      xsecure_if.core_i_m_c_obi_data_if_s_req_req,
+      xsecure_if.core_i_m_c_obi_data_if_s_req_reqpar)
+  ) else `uvm_error(info_tag, "The OBI data bus request parity bit is not inverse of the request bit.\n");
+
+  a_xsecure_interface_integrity_obi_data_gnt_parity: assert property (
+    p_parity_signal_is_invers_of_signal(
+      xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt,
+      xsecure_if.core_i_m_c_obi_data_if_s_gnt_gntpar)
+  ) else `uvm_error(info_tag, "The OBI data bus grant parity bit is not inverse of the grant bit.\n");
+
+  a_xsecure_interface_integrity_obi_data_rvalid_parity: assert property (
+    p_parity_signal_is_invers_of_signal(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar)
+  ) else `uvm_error(info_tag, "The OBI data bus rvalid parity bit is not inverse of the rvalid bit.\n");
+
+  a_xsecure_interface_integrity_obi_instr_req_parity: assert property (
+    p_parity_signal_is_invers_of_signal(
+      xsecure_if.core_i_m_c_obi_instr_if_s_req_req,
+      xsecure_if.core_i_m_c_obi_instr_if_s_req_reqpar)
+  ) else `uvm_error(info_tag, "The OBI instruction bus request parity bit is not inverse of the request bit.\n");
+
+  a_xsecure_interface_integrity_obi_instr_gnt_parity: assert property (
+    p_parity_signal_is_invers_of_signal(
+      xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt,
+      xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar)
+  ) else `uvm_error(info_tag, "The OBI instruction bus grant parity bit is not inverse of the grant bit.\n");
+
+  a_xsecure_interface_integrity_obi_instr_rvalid_parity: assert property (
+    p_parity_signal_is_invers_of_signal(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar)
+  ) else `uvm_error(info_tag, "The OBI instruction bus rvalid parity bit is not inverse of the rvalid bit.\n");
+
+
+////////// INTERFACE INTEGRITY PARITY BIT ERRORS DUE TO GLITCHES SET ALERT MAJOR //////////
+
+property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_signal);
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure the parity bit is not the complement of the non-parity bit
+    parity_signal != ~signal
+
+    |=>
+    //Verify that the major alert is set
+    xsecure_if.core_alert_major_o;
+
+  endproperty
+
+  a_xsecure_interface_integrity_obi_data_gnt_parity_error_set_major_alert: assert property (
+    p_parity_signal_is_not_invers_of_signal_set_major_alert(
+      xsecure_if.core_i_m_c_obi_data_if_s_gnt_gnt,
+      xsecure_if.core_i_m_c_obi_data_if_s_gnt_gntpar)
+  ) else `uvm_error(info_tag, "A OBI data bus grant parity error does not set the major alert.\n");
+
+  a_xsecure_interface_integrity_obi_data_rvalid_parity_error_set_major_alert: assert property (
+    p_parity_signal_is_not_invers_of_signal_set_major_alert(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar)
+  ) else `uvm_error(info_tag, "A OBI data bus rvalid parity error does not set the major alert.\n");
+
+  a_xsecure_interface_integrity_obi_instr_gnt_parity_error_set_major_alert: assert property (
+    p_parity_signal_is_not_invers_of_signal_set_major_alert(
+      xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gnt,
+      xsecure_if.core_i_m_c_obi_instr_if_s_gnt_gntpar)
+  ) else `uvm_error(info_tag, "A OBI instruction bus grant parity error does not set the major alert.\n");
+
+  a_xsecure_interface_integrity_obi_instr_rvalid_parity_error_set_major_alert: assert property (
+    p_parity_signal_is_not_invers_of_signal_set_major_alert(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar)
+  ) else `uvm_error(info_tag, "A OBI instruction bus rvalid parity error does not set the major alert.\n");
+
+
+  ////////// INTERFACE INTEGRITY RESPONSE CHECKSUMS FOR INSTRUCTIONS ARE GENERATED CORRECTLY //////////
+
+  property p_check_that_response_checksum_is_generated_correctly(rvalid, is_checksum_error);
+
+    //Make sure the interface integrity checking is enabled
+    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    //Make sure we receive a response packet
+    && rvalid
+
+    |->
+    //Check that there is no checksum errors
+    !is_checksum_error;
+
+  endproperty
+
+  a_xsecure_interface_integrity_rchk_instr_no_glitch: assert property (
+    p_check_that_response_checksum_is_generated_correctly(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      rchk_error_instr)
+  ) else `uvm_error(info_tag, "The OBI instruction response packet's checksum is not as expected.\n");
+
+
+  ////////// INTERFACE INTEGRITY RESPONSE CHECKSUMS FOR DATA ARE GENERATED CORRECTLY //////////
+
+  a_xsecure_interface_integrity_rchk_data_no_glitch: assert property (
+    p_check_that_response_checksum_is_generated_correctly(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      rchk_error_data)
+  ) else `uvm_error(info_tag, "The OBI data response packet's checksum is not as expected.\n");
+
+
+  ////////// INTERFACE INTEGRITY RESPONSE CHECKSUM ERRORS FOR INSTRUCTIONS SET ALERT MAJOR //////////
+
+  property p_will_checksum_error_set_major_alert(is_integrity_checking_enabled, rvalid, req_had_integrity, is_checksum_error, is_major_alert_set);
+    @(posedge xsecure_if.core_clk)
+
+    //If integrity checking is enabled the major alert should be set if there is a checksum error
+    //However, if integrity checking is disabled the major alert should not be set even though there is a checksum error
+    is_integrity_checking_enabled
+
+    //Make sure we receive a response packet
+    && rvalid
+
+    //Make sure the response's request had integrity
+    && req_had_integrity
+
+    //Make sure there is a checksum error
+    && is_checksum_error
+
+    //Make sure major alert is not, and has not, been set
+    && !alert_major_was_set && !xsecure_if.core_alert_major_o
+
+    |=>
+    //If the integrity checkup is enabled, verify that the major alert is set
+    //but is the integrity checkup is disabled, verify that the major alert is not set
+    is_major_alert_set;
+
+  endproperty
+
+  a_xsecure_interface_integrity_rchk_instr_glitch: assert property (
+    p_will_checksum_error_set_major_alert(
+      xsecure_if.core_xsecure_ctrl_cpuctrl_integrity,
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      support_if.instr_req_had_integrity,
+      rchk_error_instr,
+      xsecure_if.core_alert_major_o)
+  ) else `uvm_error(info_tag, "An error in the OBI instruction bus's response packet's checksum does not set the major alert.\n");
+
+
+  ////////// INTERFACE INTEGRITY RESPONSE CHECKSUM ERRORS FOR DATA SET ALERT MAJOR //////////
+
+  a_xsecure_interface_integrity_rchk_data_glitch: assert property (
+    p_will_checksum_error_set_major_alert(
+      xsecure_if.core_xsecure_ctrl_cpuctrl_integrity,
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      support_if.data_req_had_integrity,
+      rchk_error_data,
+      xsecure_if.core_alert_major_o)
+  ) else `uvm_error(info_tag, "An error in the OBI data bus's response packet's checksum does not set the major alert.\n");
+
+
+  ////////// INTERFACE INTEGRITY RESPONSE CHECKSUM ERRORS FOR INSTRUCTION DO NOT SET ALERT MAJOR IF THE INTEGRITY CHECKING IS DISABLED //////////
+
+  a_xsecure_interface_integrity_off_rchk_instr_glitch: assert property (
+    p_will_checksum_error_set_major_alert(
+      !xsecure_if.core_xsecure_ctrl_cpuctrl_integrity,
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      support_if.instr_req_had_integrity,
+      rchk_error_instr,
+      !xsecure_if.core_alert_major_o)
+  ) else `uvm_error(info_tag, "An error in the OBI instruction bus's response packet's checksum sets the major alert even though interface integrity checking is disabled.\n");
+
+
+  ////////// INTERFACE INTEGRITY RESPONSE CHECKSUM ERRORS FOR DATA DO NOT SET ALERT MAJOR IF THE INTEGRITY CHECKING IS DISABLED //////////
+
+  a_xsecure_interface_integrity_off_rchk_data_glitch: assert property (
+    p_will_checksum_error_set_major_alert(
+      !xsecure_if.core_xsecure_ctrl_cpuctrl_integrity,
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      support_if.data_req_had_integrity,
+      rchk_error_data,
+      !xsecure_if.core_alert_major_o)
+  ) else `uvm_error(info_tag, "An error in the OBI data bus's response packet's checksum sets the major alert even though interface integrity checking is disabled.\n");
+
+
+ ////////// INTERFACE INTEGRITY ADDRESS CHECKSUM FOR INSTRUCTIONS IS GENERATED CORRECTLY //////////
+
+  property p_check_that_request_checsum_does_not_contain_erros(req, is_checksum_error);
+
+    //Make sure the interface integrity checking is enabled
+    xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    //Make sure there is a packet ready to be sent
+    && req
+
+    |->
+    //Make sure the checksum is generated correctly
+    !is_checksum_error;
+
+  endproperty
+
+/*
+  // TODO: this one fails due to rtl bug
+  a_xsecure_interface_integrity_achk_instr_no_glitch: assert property (
+    p_check_that_request_checsum_does_not_contain_erros(
+      xsecure_if.core_i_m_c_obi_instr_if_s_req_req,
+      achk_error_instr)
+  ) else `uvm_error(info_tag, "The request checksum for the OBI instructions bus is not as expected.\n");
+*/
+
+  ////////// INTERFACE INTEGRITY ADDRESS CHECKSUM FOR DATA IS GENERATED CORRECTLY //////////
+
+  a_xsecure_interface_integrity_achk_data_no_glitch: assert property (
+    p_check_that_request_checsum_does_not_contain_erros(
+      xsecure_if.core_i_m_c_obi_data_if_s_req_req,
+      achk_error_data)
+  ) else `uvm_error(info_tag, "The request checksum for the OBI data bus is not as expected.\n");
+
+
+  ////////// INTERFACE INTEGRITY INSTRUCTION GNT PARITY ERROR SETS INTEGRITY ERROR BIT //////////
+
+  property p_check_integrity_error_bit(rvalid, error, resp_integrity_error_bit);
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure the core is in operative mode
+    core_clock_cycles
+
+    //Make sure the interface integrity checking is enabled
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    //Make sure we receive a valid packet
+    && rvalid
+
+    //Make sure there was an error that should set the response packet's integrity error bit high
+    && error
+
+    |->
+    //Verify that the instruction packet's integrity error bit is set
+    resp_integrity_error_bit;
+
+  endproperty
+
+  a_xsecure_interface_integrity_instr_error_set_if_gnt_error: assert property (
+    p_check_integrity_error_bit(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      support_if.gntpar_error_in_response_instr,
+      xsecure_if.core_i_if_stage_i_bus_resp.integrity_err)
+  ) else `uvm_error(info_tag, "The integrity error bit is not set in the OBI instruction bus's response packet, even though there was grant parity error when generating the request packet.\n");
+
+
+  ////////// INTERFACE INTEGRITY DATA GNT PARITY ERROR SETS INTEGRITY ERROR BIT //////////
+
+  a_xsecure_interface_integrity_data_error_set_if_gnt_error: assert property (
+    p_check_integrity_error_bit(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      support_if.gntpar_error_in_response_data,
+      xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err)
+  ) else `uvm_error(info_tag, "The integrity error bit is not set in the OBI data bus's response packet, even though there was grant parity error when generating the request packet.\n");
+
+
+  ////////// INTERFACE INTEGRITY INSTRUCTION RVALID PARITY ERROR SETS INTEGRITY ERROR BIT //////////
+
+  logic instr_rvalid_parity_error;
+  assign instr_rvalid_parity_error = xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid == xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalidpar;
+
+  a_xsecure_interface_integrity_instr_error_set_if_rvalid_error: assert property (
+    p_check_integrity_error_bit(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      instr_rvalid_parity_error,
+      xsecure_if.core_i_if_stage_i_bus_resp.integrity_err)
+  ) else `uvm_error(info_tag, "The integrity error bit is not set in the OBI instruction bus's response packet, even though there was a rvalid parity error.\n");
+
+
+  ////////// INTERFACE INTEGRITY DATA RVALID PARITY ERROR SETS INTEGRITY ERROR BIT //////////
+
+  logic data_rvalid_parity_error;
+  assign data_rvalid_parity_error = xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid == xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalidpar;
+
+  a_xsecure_interface_integrity_data_error_set_if_rvalid_error: assert property (
+    p_check_integrity_error_bit(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      data_rvalid_parity_error,
+      xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err)
+  ) else `uvm_error(info_tag, "The integrity error bit is not set in the OBI data bus's response packet, even though there was a rvalid parity error.\n");
+
+
+  ////////// INTERFACE INTEGRITY INSTRUCTION CHECKSUM ERROR SETS INTEGRITY ERROR BIT //////////
+
+  property p_check_integrity_error_bit_when_checksum_error(rvalid, error, req_had_integrity, resp_integrity_error_bit);
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure the core is in operative mode
+    core_clock_cycles
+
+    //Make sure the interface integrity checking is enabled
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
+
+    //Make sure we receive a valid packet
+    && rvalid
+
+    //Make sure there was an error that should set the response packet's integrity error bit high
+    && error
+
+    //Make sure the response's request had integrity
+    && req_had_integrity
+
+    |->
+    //Verify that the instruction packet's integrity error bit is set
+    resp_integrity_error_bit;
+
+  endproperty
+
+
+  a_xsecure_interface_integrity_instr_error_set_if_checksum_error: assert property (
+    p_check_integrity_error_bit_when_checksum_error(
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      rchk_error_instr,
+      support_if.instr_req_had_integrity,
+      xsecure_if.core_i_if_stage_i_bus_resp.integrity_err)
+  ) else `uvm_error(info_tag, "The integrity error bit is not set in the OBI instruction bus's response packet, even though there was a checksum error.\n");
+
+
+  ////////// INTERFACE INTEGRITY DATA CHECKSUM ERROR SETS INTEGRITY ERROR BIT //////////
+
+  a_xsecure_interface_integrity_data_error_set_if_checksum_error: assert property (
+    p_check_integrity_error_bit_when_checksum_error(
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      rchk_error_data,
+      support_if.data_req_had_integrity,
+      xsecure_if.core_i_load_store_unit_i_bus_resp.integrity_err)
+  ) else `uvm_error(info_tag, "The integrity error bit is not set in the OBI data bus's response packet, even though there was a checksum error.\n");
 
 
   ///////////////////////////////////////////////////////////////
   ///////////////////////// HARDENED PC /////////////////////////
   ///////////////////////////////////////////////////////////////
 
-  //Signal determing if the core clock is active or not.
-  logic core_clock_cycles;
-
-  always @(posedge clk_i) begin
-    if(!rst_ni) begin
-      core_clock_cycles <= 0;
-    end else begin
-      core_clock_cycles <= xsecure_if.clk_en;
-    end
-  end
-
-
-  ////////// PC HARDENING SEQUENTIAL INSTRUCTION: NORMAL BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
+  ////////// PC HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
 
   sequence seq_dummy_if_id;
 
@@ -1190,13 +1296,12 @@ module uvmt_cv32e40s_xsecure_assert
     //Set the PC value to a given address
     xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set
 
-    //Make sure the PC in if stage remains the same untill it is forwarded to the id stage (and then either incremented or set of a new valid PC jump)
-    //(Uses ##2 because: On the first ##1 the FSM signal has "reached" IF, and on the next one its stability can be checked)
+    //Make sure the PC in the IF stage remains the same until it is forwarded to the id stage (and then either incremented or set of a new valid PC jump)
+    //(Uses ##2 because: In the first clock cycle the FSM signal has "reached" IF, while in the second clock cycle its stability can be checked)
     ##2 $stable(xsecure_if.core_i_if_stage_i_pc_if_o)[*1:$];
   endsequence
 
-
-  property p_xsecure_pc_hardening_sequential_no_glitch_behaviour(cmpr_instruction_in_id_stage, increment);
+  a_xsecure_pc_hardening_no_glitch: assert property (
     @(posedge xsecure_if.core_clk)
 
     //Make sure we look at valid cycles
@@ -1205,67 +1310,66 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure the PC hardening setting is on
     && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
 
-    //Check if it is a compressed instructions
-    && cmpr_instruction_in_id_stage
+    //Make sure the inspected instruction is valid
+    && $past(xsecure_if.core_if_stage_if_valid_o)
+    && $past(xsecure_if.core_if_stage_id_ready_i)
+
+    //In case of multi cycled instructions, make sure the instruction is the last operation
+    && xsecure_if.core_i_if_id_pipe_last_op
+
+    //Make sure the instruction is not a pointer (as pointers insert a non-incremental PC)
+    && !xsecure_if.core_i_if_stage_i_ptr_in_if_o
 
     |->
-    //Correct behaviour requires that one of the following behaviours are true:
+    //Correct behavior requires that one of the following behaviors are true:
 
-    //Icremental behaviour
-    xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + increment
+    //Incremental behavior as compressed or non-compressed instruction
+    xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + CMPR_INSTRUCTION_INCREMENT && $past(xsecure_if.core_i_if_stage_i_compressed_decoder_i_is_compressed_o)
+    or xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + NON_CMPR_INSTRUCTION_INCREMENT && $past(!xsecure_if.core_i_if_stage_i_compressed_decoder_i_is_compressed_o)
 
-    //Initalization after reset
+    //Initialization after reset
     or xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0
 
-    //Insertion of dummy instruction
+    //Insertion of a dummy instruction
     or seq_dummy_if_id.triggered
 
     //PC jumping
     or seq_pc_set_stable.triggered
 
     //PC jumping
-    or $past(xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set);
+    or $past(xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set)
 
-  endproperty
-
-
-  a_xsecure_pc_hardening_sequential_no_glitch_behaviour_non_cmpr_instruction: assert property (
-    p_xsecure_pc_hardening_sequential_no_glitch_behaviour(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, NON_CMPR_INSTRUCTION_INCREMENT)
-  ) else `uvm_error(info_tag, "There is a PC fault in IF stage for a non-compressed instruction.\n");
-
-  a_xsecure_pc_hardening_sequential_no_glitch_behaviour_cmpr_instruction: assert property (
-    p_xsecure_pc_hardening_sequential_no_glitch_behaviour(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, CMPR_INSTRUCTION_INCREMENT)
-  ) else `uvm_error(info_tag, "There is a PC fault in IF stage for a compressed instruction.\n");
+  ) else `uvm_error(info_tag, "There is a PC fault in the IF stage.\n");
 
 
-  ////////// PC HARDENING ON SEQUENTIAL INSTRUCTION: SET MAJOR ALERT //////////
+  ////////// PC HARDENING SET THE MAJOR ALERT IF GLITCH //////////
 
-  sequence seq_xsecure_pc_hardening_sequential_instructions_with_glitch(cmpr_instruction_in_id_stage, increment);
-
+  sequence seq_xsecure_pc_hardening_with_glitch;
     @(posedge xsecure_if.core_clk)
 
     //Make sure we look at valid cycles
     core_clock_cycles
 
-    //Make sure the PC hardening setting is on
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
-
-    //Check if it is a compressed instructions
-    && cmpr_instruction_in_id_stage
-
-    //Checkout the non-incremental
-    && xsecure_if.core_i_if_stage_i_pc_if_o != xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + increment
-
-    //Make sure we look at a valid instruction
+    //Make sure the inspected instruction is valid
     && $past(xsecure_if.core_if_stage_if_valid_o)
     && $past(xsecure_if.core_if_stage_id_ready_i)
 
-    //Make sure the non-incremental is not caused by any of the following reasons:
+    //In case of multi cycled instructions, make sure the instruction is the last operation
+    && xsecure_if.core_i_if_id_pipe_last_op
 
-    //Initalization after reset
+    //Make sure the instruction is not a pointer
+    && !xsecure_if.core_i_if_stage_i_ptr_in_if_o
+
+    //Make sure it is not icremental behaviour
+    and !(xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + CMPR_INSTRUCTION_INCREMENT && $past(xsecure_if.core_i_if_stage_i_compressed_decoder_i_is_compressed_o))
+    and !(xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc + NON_CMPR_INSTRUCTION_INCREMENT && $past(!xsecure_if.core_i_if_stage_i_compressed_decoder_i_is_compressed_o))
+
+    //Make sure the non-incremental pc is not caused by any of the following reasons:
+
+    //Initialization after reset
     and !(xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0)
 
-    //Insertion of dummy instruction
+    //Insertion of a dummy instruction
     and !(seq_dummy_if_id.triggered)
 
     //PC jumping
@@ -1276,66 +1380,43 @@ module uvmt_cv32e40s_xsecure_assert
 
   endsequence
 
-
-  a_xsecure_pc_hardening_sequential_non_compressed_instruction_sets_alert_major: assert property (
-
-    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, NON_CMPR_INSTRUCTION_INCREMENT)
-
+  //TODO: look into this assertion after a potential RTL fix
+  /*
+  a_xsecure_pc_hardening_sets_alert_major: assert property (
+    //Make sure the PC hardening setting is on
+    xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+    ##0 seq_xsecure_pc_hardening_with_glitch
     |=>
     //Make sure the alert major is set
     xsecure_if.core_alert_major_o
+  ) else `uvm_error(info_tag_glitch, "A PC fault in the IF stage does not set the major alert when PC hardening is on.\n");
+  */
 
-  ) else `uvm_error(info_tag, "A PC fault in IF stage, for a non-compressed instruction, does not set major alert when PC hardening is on.\n");
+  ////////// PC HARDENING OFF: DO NOT SET THE MAJOR ALERT IF GLITCH //////////
 
-
-  a_xsecure_pc_hardening_sequential_compressed_instruction_sets_alert_major: assert property (
-
-    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, CMPR_INSTRUCTION_INCREMENT)
-
-    |=>
-    //Make sure the alert major is set
-    xsecure_if.core_alert_major_o
-
-  ) else `uvm_error(info_tag, "A PC fault in IF stage, for a compressed instruction, does not set major alert when PC hardening is on.\n");
-
-
-  ////////// PC HARDENING OFF SEQUENTIAL INSTRUCTION: DONT SET MAJOR ALERT //////////
-
-  //TODO: recheck this assertion when the rtl code related to pc_hadening=0 is implemented
-
-  a_xsecure_pc_hardening_off_non_compressed_sequential_instruction_alert_major: assert property (
-
-    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(!xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, NON_CMPR_INSTRUCTION_INCREMENT)
-
+  //TODO: recheck this assertion when the RTL code related to pc_hadening=0 is implemented
+  /*
+  a_xsecure_pc_hardening_off_dont_set_alert_major: assert property (
+    //Make sure the PC hardening setting is off
+    !xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+    ##0 seq_xsecure_pc_hardening_with_glitch
     |=>
     //Make sure the alert major is not set
     !xsecure_if.core_alert_major_o
+  ) else `uvm_error(info_tag_glitch, "A PC fault in the IF stage does set the major alert when PC hardening is off.\n");
+  */
 
-  ) else `uvm_error(info_tag, "A PC fault in IF stage, for a non-compressed instruction, set major alert when PC hardening is off.\n");
+  ////////// PC HARDENING ON: SET THE MAJOR ALERT IF GLITCH IN PC TARGET //////////
 
-
-  a_xsecure_pc_hardening_off_compressed_sequential_instruction_alert_major: assert property (
-
-    seq_xsecure_pc_hardening_sequential_instructions_with_glitch(xsecure_if.core_id_stage_if_id_pipe_instr_meta_compressed, CMPR_INSTRUCTION_INCREMENT)
-
-    |=>
-    //Make sure the alert major is not set
-    !xsecure_if.core_alert_major_o
-
-  ) else `uvm_error(info_tag, "A PC fault in IF stage, for a compressed instruction, set major alert when PC hardening is off.\n");
-
-
-  ////////// PC HARDENING ON NON-SEQUENTIAL INSTRUCTION: SET MAJOR ALERT IF GLITCH IN PC TARGET //////////
-
-  sequence seq_pc_hardening_non_sequential_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal);
+  sequence seq_pc_hardening_jump_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal);
 
     //Make sure pc hardening setting is set
     pc_hardening
 
-    //Make sure the fsm is in a given state
+    //Make sure the FSM is in a given state
     && xsecure_if.core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux == fsm_state
 
-    //Make sure PC is set
+    //Make sure the PC is set
     ##1 xsecure_if.core_i_if_stage_i_pc_check_i_pc_set_q
 
     //Make sure the calculated signal differs in the hardened cycles
@@ -1343,43 +1424,40 @@ module uvmt_cv32e40s_xsecure_assert
 
   endsequence
 
-  property p_xsecure_hardened_pc_non_sequential_set_major_alert(pc_hardening, fsm_state, calculated_signal);
-
-    seq_pc_hardening_non_sequential_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal)
-
-    |=>
-    //Make sure alert major is set
-    xsecure_if.core_alert_major_o;
-
-  endproperty
 
   a_xsecure_pc_hardening_branch_set_alert_major: assert property(
-    p_xsecure_hardened_pc_non_sequential_set_major_alert(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, BRANCH_STATE, xsecure_if.core_i_ex_stage_i_branch_target_o)
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch instruction does not set alert major.\n");
+    seq_pc_hardening_jump_instruction_with_glitch(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, BRANCH_STATE, xsecure_if.core_i_ex_stage_i_branch_target_o)
+    |->
+    xsecure_if.core_alert_major_o
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed branch instruction does not set the major alert.\n");
 
   a_xsecure_pc_hardening_jump_set_alert_major: assert property(
-    p_xsecure_hardened_pc_non_sequential_set_major_alert(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, JUMP_STATE, xsecure_if.core_i_jump_target_id)
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed jump instruction does not set alert major.\n");
+    seq_pc_hardening_jump_instruction_with_glitch(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, JUMP_STATE, xsecure_if.core_i_jump_target_id)
+    |->
+    xsecure_if.core_alert_major_o
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed jump instruction does not set the major alert.\n");
 
   a_xsecure_pc_hardening_mret_set_alert_major: assert property(
-    p_xsecure_hardened_pc_non_sequential_set_major_alert(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, MRET_STATE, xsecure_if.core_i_cs_registers_i_mepc_o)
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction does not set alert major.\n");
+    seq_pc_hardening_jump_instruction_with_glitch(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, MRET_STATE, xsecure_if.core_i_cs_registers_i_mepc_o)
+    |->
+    xsecure_if.core_alert_major_o
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed mret instruction does not set the major alert.\n");
 
 
-  ////////// PC HARDENING ON NON-SEQUENTIAL INSTRUCTION: SET MAJOR ALERT IF GLITCH IN BRANCH DECISION //////////
+  ////////// PC HARDENING ON: SET THE MAJOR ALERT IF GLITCH IN BRANCH DECISION //////////
 
   sequence seq_pc_hardening_branch_decision_glitch(pc_hardening);
 
-    //Make sure pc hardening setting is set
+    //Make sure pc hardening setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
 
-    //Make sure the fsm is in branching state
+    //Make sure the FSM is doing a branching operation
     && xsecure_if.core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux == BRANCH_STATE
 
     //Make sure the branch decision differs in the hardened cycles
     ##1 xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o != $past(xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o)
 
-    //Make sure the branch decision is not automatically set to taken
+    //Make sure the branch decision is not always taken
     && !xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming;
 
   endsequence
@@ -1391,74 +1469,462 @@ module uvmt_cv32e40s_xsecure_assert
 
     |=>
 
-    //Make sure alert major was/is set
+    //Make sure the alert major was/is set
     xsecure_if.core_alert_major_o
     || $past(xsecure_if.core_alert_major_o)
 
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch decision does not set alert major.\n");
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed branch decision does not set the major alert.\n");
 
 
-  ////////// PC HARDENING OFF NON-SEQUENTIAL INSTRUCTION: DONT SET MAJOR ALERT IF GLITCH IN PC TARGET //////////
+  ////////// PC HARDENING OFF: DO NOT SET THE MAJOR ALERT IF GLITCH IN PC TARGET //////////
 
-  //TODO: recheck property when rtl for PC_hardnine == 0 is imoplemented
+  //TODO: recheck property when RTL for PC_hardnine == 0 is implemented
 
   property p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(pc_hardening, fsm_state, calculated_signal);
 
-    seq_pc_hardening_non_sequential_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal)
+    seq_pc_hardening_jump_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal)
 
     |=>
-    //Make sure alert major is not set
+    //Make sure the alert major is not set
     !xsecure_if.core_alert_major_o;
 
   endproperty
 
   a_xsecure_pc_hardening_off_branch_set_alert_major: assert property(
     p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, BRANCH_STATE, xsecure_if.core_i_ex_stage_i_branch_target_o)
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction set alert major even though PC hardening is off.\n");
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed branch instruction (jump location) sets the major alert even though PC hardening is off.\n");
 
   a_xsecure_pc_hardening_off_jump_set_alert_major: assert property(
     p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, JUMP_STATE, xsecure_if.core_i_jump_target_id)
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction set alert major even though PC hardening is off.\n");
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed jump instruction sets the major alert even though PC hardening is off.\n");
 
   a_xsecure_pc_hardening_off_mret_set_alert_major: assert property(
     p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, MRET_STATE, xsecure_if.core_i_cs_registers_i_mepc_o)
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed mret instruction set alert major even though PC hardening is off.\n");
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed mret instruction sets the major alert even though PC hardening is off.\n");
 
 
-  ////////// PC HARDENING OFF NON-SEQUENTIAL INSTRUCTION: DONT SET MAJOR ALERT IF GLITCH IN BRANCH DECISION //////////
+  ////////// PC HARDENING OFF: DO NOT SET THE ALERT MAJOR IF GLITCH IN THE BRANCH DECISION //////////
 
   a_xsecure_pc_hardening_off_branch_decision_set_alert_major: assert property(
 
     seq_pc_hardening_branch_decision_glitch(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening)
 
     |=>
-    //Make sure alert major was/is not set
+    //Make sure the alert major was/is not set
     !xsecure_if.core_alert_major_o
     && !$past(xsecure_if.core_alert_major_o)
 
-  ) else `uvm_error(info_tag, "Mismatch between the computed and the recomputed branch decision set alert major even though PC hardening is off.\n");
+  ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed branch instruction (decision calculation) sets the major alert even though PC hardening is off.\n");
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  ///////////////////////// DUMMY AND HINT INSTRUCTION /////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
+
+  ////////// DUMMY AND HINT INSTRUCTIONS ARE DEFAULT DISABLED //////////
+
+  a_xsecure_dummy_default_off: assert property (
+	  p_xsecure_setting_default_off(
+	    xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy)
+  ) else `uvm_error(info_tag, "Dummy instruction setting is on when exiting reset.\n");
+
+  a_xsecure_hint_default_off: assert property (
+	  p_xsecure_setting_default_off(
+	    xsecure_if.core_xsecure_ctrl_cpuctrl_rndhint)
+  ) else `uvm_error(info_tag, "Hint instruction setting is on when exiting reset.\n");
+
+
+  ////////// DUMMY AND HINT INSTRUCTIONS ARE CONFIGURABLE /////////
+
+  // Check that we do not generate dummy/hint instructions when dummy/hint is disabled:
+
+  property p_dont_generate_dummy_hint_instruction_if_setting_is_off(hint_or_dummy_setting, hint_or_dummy_instruction);
+    //Make sure the dummy/hint instruction setting is off
+    !hint_or_dummy_setting
+
+    //Make sure we look at a valid instruction
+    && xsecure_if.core_if_stage_if_valid_o
+    && xsecure_if.core_if_stage_id_ready_i
+
+    //Make sure we do not generate a dummy/hint instruction
+    |=>
+    !hint_or_dummy_instruction;
+  endproperty
+
+  a_xsecure_dummy_instruction_dont_generated_dummy_instruction_if_dummy_setting_is_off: assert property(
+    p_dont_generate_dummy_hint_instruction_if_setting_is_off(
+      xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy,
+      xsecure_if.core_if_id_pipe_instr_meta_dummy)
+  ) else `uvm_error(info_tag, "We generated a dummy instruction even though the dummy setting was off.\n");
+
+  a_xsecure_hint_instruction_dont_generated_hint_instruction_if_hint_setting_is_off: assert property(
+    p_dont_generate_dummy_hint_instruction_if_setting_is_off(
+      xsecure_if.core_xsecure_ctrl_cpuctrl_rndhint,
+      xsecure_if.core_if_id_pipe_instr_meta_hint)
+  ) else `uvm_error(info_tag, "We generated a hint instruction even though the hint setting was off.\n");
+
+
+  ////////// DUMMY AND HINT INSTRUCTION INSERTED IN IF /////////
+
+  property p_dummy_hint_instruction_is_inserted_in_if_stage(dummy_hint_in_id_stage, dummy_hint_in_if_stage);
+    //Make sure the instruction in the ID stage is a dummy/hint instruction
+    dummy_hint_in_id_stage
+
+    //Make sure the instruction in the ID stage is valid
+    && $past(xsecure_if.core_if_stage_if_valid_o)
+    && $past(xsecure_if.core_if_stage_id_ready_i)
+
+    |->
+    //Make sure the dummy/hint instruction originated from the IF stage
+    $past(dummy_hint_in_if_stage);
+  endproperty
+
+  a_xsecure_dummy_instruction_is_inserted_in_if_stage: assert property(
+    p_dummy_hint_instruction_is_inserted_in_if_stage(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy,
+      xsecure_if.core_i_if_stage_i_dummy_insert)
+  ) else `uvm_error(info_tag, "The dummy instruction is not inserted in the IF stage.\n");
+
+  a_xsecure_hint_instruction_is_inserted_in_if_stage: assert property(
+    p_dummy_hint_instruction_is_inserted_in_if_stage(
+      xsecure_if.core_if_id_pipe_instr_meta_hint,
+      xsecure_if.core_i_if_stage_i_instr_hint)
+  ) else `uvm_error(info_tag, "The hint instruction is not inserted in the IF stage.\n");
+
+
+  ////////// BLTU DUMMY AND HINT INSTRUCTIONS JUMP TO THE SUBSEQUENT INSTRUCTION //////////
+
+  property p_bltu_dummy_hint_instruction_jumps_to_the_subsequent_instruction(dummy_hint_in_id_stage, dummy_hint_increment);
+    //Make sure we detect a new instruction in the IF ID pipe
+    $past(xsecure_if.core_if_stage_if_valid_o)
+    && $past(xsecure_if.core_if_stage_id_ready_i)
+
+    //Make sure the instruction is a dummy/hint
+    && dummy_hint_in_id_stage
+
+    //Make sure the dummy/hint is a branch instruction
+    && if_id_pipe_instr_opcode == cv32e40s_pkg::OPCODE_BRANCH
+
+    |->
+    //Make sure we jump to next instruction (dummy: PC + 0)(hint: PC + 2)
+    if_id_pipe_bltu_incrementation == dummy_hint_increment;
+  endproperty
+
+  a_xsecure_dummy_instruction_bltu_jumping: assert property(
+    p_bltu_dummy_hint_instruction_jumps_to_the_subsequent_instruction(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy,
+      DUMMY_INCREMENT)
+  ) else `uvm_error(info_tag, "A dummy branch instruction does not jump to the next non-dummy instruction.\n");
+
+  a_xsecure_hint_instruction_bltu_jumping: assert property(
+    p_bltu_dummy_hint_instruction_jumps_to_the_subsequent_instruction(
+      xsecure_if.core_if_id_pipe_instr_meta_hint,
+      HINT_INCREMENT)
+  ) else `uvm_error(info_tag, "A hint branch instruction does not jump to the next non-hint instruction.\n");
+
+
+  ////////// DUMMY AND HINT INSTRUCTION OPERAND SOURCES //////////
+
+  property p_dummy_hint_instruction_operands_originate_from_LFSR1_and_LFSR2(dummy_hint_in_id_stage);
+
+    //Make sure we detect a new instruction in the IF ID pipe
+    $past(xsecure_if.core_if_stage_if_valid_o)
+    && $past(xsecure_if.core_if_stage_id_ready_i)
+
+    //Make sure the detected instruction is a dummy/hint instruction
+    && dummy_hint_in_id_stage
+
+    |->
+    //Check that the sr1 part of the instruction originates from the LFSR1 register
+    if_id_pipe_instr_rs1 == $past(xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs1)
+
+    //Check that the sr2 part of the instruction originates from the LFSR2 register
+    && if_id_pipe_instr_rs2 == $past(xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs2);
+
+  endproperty
+
+  a_xsecure_dummy_instruction_operands_from_LFSR1_and_LFSR2: assert property (
+    p_dummy_hint_instruction_operands_originate_from_LFSR1_and_LFSR2(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy)
+  ) else `uvm_error(info_tag, "Dummy instruction does not fetch data from LFSR1 and LFSR2.\n");
+
+  a_xsecure_hint_instruction_operands_from_LFSR1_and_LFSR2: assert property (
+    p_dummy_hint_instruction_operands_originate_from_LFSR1_and_LFSR2(
+      xsecure_if.core_if_id_pipe_instr_meta_hint)
+  ) else `uvm_error(info_tag, "Hint instruction does not fetch data from LFSR1 and LFSR2.\n");
+
+
+  ////////// DUMMY AND HINT INSTRUCTION DESTINATION //////////
+
+  property p_dummy_hint_destination_is_x0(dummy_hint_in_id_stage);
+
+    //Make sure we detect a new instruction in the IF ID pipe
+    $past(xsecure_if.core_if_stage_if_valid_o)
+    && $past(xsecure_if.core_if_stage_id_ready_i)
+
+    //Make sure the detected instruction is a dummy/hint instruction
+    && dummy_hint_in_id_stage
+
+    //Make sure the instruction is not a branch (as they do not use a destination register)
+    && if_id_pipe_instr_opcode != OPCODE_BRANCH
+
+    |->
+    //Check that the destination register is x0
+    if_id_pipe_instr_rd == REGISTER_x0;
+  endproperty
+
+  a_xsecure_dummy_instruction_destination_is_x0: assert property (
+    p_dummy_hint_destination_is_x0(xsecure_if.core_if_id_pipe_instr_meta_dummy)
+  ) else `uvm_error(info_tag, "The result of a dummy instruction is not stored in the x0 GPR.\n");
+
+  a_xsecure_hint_instruction_destination_is_x0: assert property (
+    p_dummy_hint_destination_is_x0(xsecure_if.core_if_id_pipe_instr_meta_hint)
+  ) else `uvm_error(info_tag, "The result of a hint instruction is not stored in the x0 GPR.\n");
+
+
+  ////////// DUMMY AND HINT INSTRUCTION UPDATES MCYCLE //////////
+
+  a_xsecure_dummy_instruction_updates_mcycle: assert property (
+    //Make sure the gated clock is active
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure that mcycle is operative (not inhibited)
+    !xsecure_if.core_cs_registers_mcountinhibit_q_mcycle_inhibit
+
+    //Make sure we do not write to mcycle
+    && !($past(xsecure_if.core_cs_registers_csr_en_gated)
+    && ($past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLE)) || $past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLEH))
+
+    |->
+    //Make sure the mcycle counts every cycle (including the clock cycles used by dummy and hint instructions)
+    xsecure_if.core_cs_registers_mhpmcounter_mcycle == ($past(xsecure_if.core_cs_registers_mhpmcounter_mcycle) + 1)
+
+    //But make sure it resets in case of overflow
+    or xsecure_if.core_cs_registers_mhpmcounter_mcycle == '0 && $past(xsecure_if.core_cs_registers_mhpmcounter_mcycle) == REGISTER_MHPMCOUNTER_MCYCLE_FULL
+
+    //And allow the first mcycle count to not increment
+    or xsecure_if.core_cs_registers_mhpmcounter_mcycle == $past(xsecure_if.core_cs_registers_mhpmcounter_mcycle) && $past(xsecure_if.core_cs_registers_mcountinhibit_q_mcycle_inhibit)
+
+  ) else `uvm_error(info_tag, "Dummy and hint instructions do not update the MCYCLE register.\n");
+
+
+  ////////// DUMMY INSTRUCTIONS DO NOT UPDATE MINSTRET //////////
+
+  a_xsecure_dummy_instruction_do_not_update_minstret: assert property (
+    //Make sure the gated clock is active
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure minstret is operative (not inhibited)
+    !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
+
+    //Make sure there is a dummy instruction
+    && xsecure_if.core_ex_wb_pipe_instr_meta_dummy
+
+    //Make sure the dummy instruction is ready to retire
+    && xsecure_if.core_wb_stage_wb_valid_o
+
+    //Make sure the minstret counter ignores the retired dummy instruction
+    |=>
+    xsecure_if.core_cs_registers_mhpmcounter_minstret == $past(xsecure_if.core_cs_registers_mhpmcounter_minstret)
+
+  ) else `uvm_error(info_tag, "Dummy instruction updated the minstret register.\n");
+
+
+  ////////// HINT INSTRUCTIONS UPDATE MINSTRET //////////
+
+  a_xsecure_hint_instructions_updates_minstret: assert property (
+    //Make sure the gated clock is active
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure that minstret is operative (not inhibited)
+    !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
+
+    //Make sure there is a hint instruction in the WB stage
+    && xsecure_if.core_ex_wb_pipe_instr_meta_hint
+
+    //Make sure a valid hint instruction retires
+    ##1 rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_trap.trap
+    && rvfi_insn_cmpr_funct3 == FUNCT3_COMPR_SLLI
+    && rvfi_insn_cmpr_opcode == OPCODE_COMPR_SLLI
+    && rvfi_if.rvfi_rd1_addr == REGISTER_x0
+    && rvfi_c_slli_shamt != '0
+
+    |->
+    //Make sure the minstret counter is updated
+    xsecure_if.core_cs_registers_mhpmcounter_minstret == $past(xsecure_if.core_cs_registers_mhpmcounter_minstret) + 1
+
+  ) else `uvm_error(info_tag, "Hint instruction did not update the minstret register.\n");
+
+
+  ////////// DUMMY INSTRUCTION FREQUENCY //////////
+
+  sequence seq_dummy_instruction_within_normal_valid_instructions (num_normal_valid_instructions);
+    //Make sure we detect a dummy instruction
+    xsecure_if.core_i_if_stage_i_dummy_insert
+    && xsecure_if.core_if_stage_if_valid_o
+    && xsecure_if.core_if_stage_id_ready_i
+
+    //Make sure we detect up to <num_normal_valid_instructions> non-dummy instructions
+    ##1 (xsecure_if.core_if_stage_if_valid_o
+    && xsecure_if.core_if_stage_id_ready_i)[->0:(num_normal_valid_instructions)];
+  endsequence
+
+
+  property p_xsecure_dummy_instruction_frequency(num_normal_valid_instructions_per_dummy_instruction, logic [3:0] rnddummyfreq_reg_value_min, logic [3:0] rnddummyfreq_reg_value_max);
+
+    //Make sure the dummy setting is on
+    (xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy
+
+    //Make sure the frequency of the dummy instructions is in between the specified range
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummyfreq >= rnddummyfreq_reg_value_min
+    && xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummyfreq <= rnddummyfreq_reg_value_max
+
+    //Make sure the controller is not in debug mode
+    && !xsecure_if.core_controller_controller_fsm_debug_mode_q
+
+    //Make sure the dummy instructions are always enabled
+    && xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_dummy_en)
+
+    //Make sure we detect new instructions in the if id pipe
+    throughout (xsecure_if.core_if_stage_if_valid_o
+    && xsecure_if.core_if_stage_id_ready_i)[->(num_normal_valid_instructions_per_dummy_instruction)+1]
+
+    |->
+    //Make sure that we detect one valid dummy instruction in between the number of normal valid instructions
+    seq_dummy_instruction_within_normal_valid_instructions(num_normal_valid_instructions_per_dummy_instruction).triggered;
+
+  endproperty
+
+
+  //FREQ = 4
+  a_xsecure_dummy_instruction_frequency_4: assert property (
+	  p_xsecure_dummy_instruction_frequency(
+      4,
+      FREQ_SETTING_4_MIN,
+      FREQ_SETTING_4_MAX)
+  ) else `uvm_error(info_tag, "There is not 1 dummy instruction per 1-4 instructions.\n");
+
+  //FREQ = 8
+  a_xsecure_dummy_instruction_frequency_8: assert property (
+	  p_xsecure_dummy_instruction_frequency(
+      8,
+      FREQ_SETTING_8_MIN,
+      FREQ_SETTING_8_MAX)
+  ) else `uvm_error(info_tag, "There is not 1 dummy instruction per 1-8 instructions.\n");
+
+  //FREQ = 16
+  a_xsecure_dummy_instruction_frequency_16: assert property (
+	  p_xsecure_dummy_instruction_frequency(
+      16,
+      FREQ_SETTING_16_MIN,
+      FREQ_SETTING_16_MAX)
+  ) else `uvm_error(info_tag, "There is not 1 dummy instruction per 1-16 instructions.\n");
+
+  //FREQ = 32
+  a_xsecure_dummy_instruction_frequency_32: assert property (
+	  p_xsecure_dummy_instruction_frequency(
+      32,
+      FREQ_SETTING_32_MIN,
+      FREQ_SETTING_32_MAX)
+  ) else `uvm_error(info_tag, "There is not 1 dummy instruction per 1-32 instructions.\n");
+
+  //FREQ = 64
+  a_xsecure_dummy_instruction_frequency_64: assert property (
+	  p_xsecure_dummy_instruction_frequency(
+      64,
+      FREQ_SETTING_64_MIN,
+      FREQ_SETTING_64_MAX)
+  ) else `uvm_error(info_tag, "There is not 1 dummy instruction per 1-64 instructions.\n");
+
+
+  ////////// RESET SEED WHENEVER THERE IS A LOCKUP ERROR //////////
+
+  property p_xsecure_dummy_instruction_LFSRx_lockup_reset(integer x, logic core_cs_registers_xsecure_lfsrx_seed_we, logic [31:0] core_xsecure_ctrl_lfsrx, logic [31:0] core_LFSRx_CFG_default_seed);
+
+    //Make sure there is a lockup error on register x
+    xsecure_if.core_cs_registers_xsecure_lfsr_lockup[x] == LOCKUP_ERROR
+
+    //Make sure we check the case where we do not specificly write a new value to the register at this moment (because writing new value has higher priority than setting default seed)
+    && !core_cs_registers_xsecure_lfsrx_seed_we
+
+    //Make sure the LFSR registers reseeds to default value
+    |->
+    ##1 core_xsecure_ctrl_lfsrx == core_LFSRx_CFG_default_seed;
+
+  endproperty
+
+  //LFSR0
+  a_xsecure_dummy_instruction_LFSR0_lockup_reset: assert property (
+	  p_xsecure_dummy_instruction_LFSRx_lockup_reset(
+      0,
+      xsecure_if.core_cs_registers_xsecure_lfsr0_seed_we,
+	    xsecure_if.core_xsecure_ctrl_lfsr0,
+      xsecure_if.core_LFSR0_CFG_default_seed)
+  ) else `uvm_error(info_tag, "LFSR0 does not reset to the default value when there is a lookup error (given that we do not write to the LFSR register).\n");
+
+  //LFSR1
+  a_xsecure_dummy_instruction_LFSR1_lockup_reset: assert property (
+	  p_xsecure_dummy_instruction_LFSRx_lockup_reset(
+      1,
+      xsecure_if.core_cs_registers_xsecure_lfsr1_seed_we,
+	    xsecure_if.core_xsecure_ctrl_lfsr1,
+      xsecure_if.core_LFSR1_CFG_default_seed)
+  ) else `uvm_error(info_tag, "LFSR0 does not reset to the default value when there is a lookup error (given that we do not write to the LFSR register).\n");
+
+  //LFSR2
+  a_xsecure_dummy_instruction_LFSR2_lockup_reset: assert property (
+	  p_xsecure_dummy_instruction_LFSRx_lockup_reset(
+      2,
+      xsecure_if.core_cs_registers_xsecure_lfsr2_seed_we,
+	    xsecure_if.core_xsecure_ctrl_lfsr2,
+      xsecure_if.core_LFSR2_CFG_default_seed)
+  ) else `uvm_error(info_tag, "LFSR0 does not reset to the default value when there is a lookup error (given that we do not write to the LFSR register).\n");
+
+
+  ////////// HINT INSTRUCTION APPEARS AS SLT ON RVFI //////////
+
+  a_xsecure_hint_instructions_reports_on_rvfi_as_slli: assert property (
+    //Make sure the gated clock is active
+    @(posedge xsecure_if.core_clk)
+
+    //Make sure there is a hint instruction in the WB stage
+    xsecure_if.core_ex_wb_pipe_instr_meta_hint
+
+    //Make sure we retire the hint instruction in the next cycle
+    ##1 rvfi_if.rvfi_valid
+
+    |->
+    //Verify that the hint instruction appears as c.slli instruction with rd=x0 and shamt != 0
+    rvfi_insn_cmpr_funct3 == FUNCT3_COMPR_SLLI
+    && rvfi_insn_cmpr_opcode == OPCODE_COMPR_SLLI
+    && rvfi_if.rvfi_rd1_addr == REGISTER_x0
+    && rvfi_c_slli_shamt != '0
+
+  ) else `uvm_error(info_tag, "Hint instruction do not appears as a c.slli instruction with rd=x0 and shamt != 0 on RVFI.\n");
+
 
 
   //////////////////////////////////////////////////////////////////////////
   ///////////////////////// BUS PROTOCOL HARDENING /////////////////////////
   //////////////////////////////////////////////////////////////////////////
 
-  ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCH //////////
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
 
   property p_resp_after_addr_no_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
     @(posedge xsecure_if.core_clk)
 
-    //Make sure the core is in operative state
+    //Make sure the core is in an operative state
     core_clock_cycles
 
-    //Make sure there is a respons phase transfer
+    //Make sure there is a response phase transfer
     && obi_rvalid
 
-    //Make sure the respons phase transfer is finished
+    //Make sure the response phase transfer is finished
     && !resp_ph_cont
 
     |->
-    //Check that the repsons phase transfer is indeed a respons to an address transfer (that there at least exist one active address transfer)
+    //Check that the response phase transfer is indeed a response to an address transfer (in other words, that there at least exists one active address transfer)
     v_addr_ph_cnt > 0;
 
   endproperty;
@@ -1468,38 +1934,38 @@ module uvmt_cv32e40s_xsecure_assert
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
       support_if.data_bus_resp_ph_cont,
       support_if.data_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the data bus leading into the core.\n");
+  ) else `uvm_error(info_tag, "There is a response before a request in the OBI data bus handshake.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_instr: assert property (
     p_resp_after_addr_no_glitch(
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
       support_if.instr_bus_resp_ph_cont,
       support_if.instr_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the instructions bus leading into the core.\n");
+  ) else `uvm_error(info_tag, "There is a response before a request in the OBI instruction bus handshake.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_abiim: assert property (
     p_resp_after_addr_no_glitch(
       xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
       support_if.abiim_bus_resp_ph_cont,
       support_if.abiim_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m).\n");
+  ) else `uvm_error(info_tag, "There is a response before a request in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m).\n");
 
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_lml: assert property (
     p_resp_after_addr_no_glitch(
       xsecure_if.core_i_load_store_unit_i_resp_valid,
       support_if.lml_bus_resp_ph_cont,
       support_if.lml_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handsake between LSU (l) MPU (m) and LSU (l).\n");
+  ) else `uvm_error(info_tag, "There is a response before a request in the handshake between LSU (l) MPU (m) and LSU (l).\n");
 
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_lrfodi: assert property (
     p_resp_after_addr_no_glitch(
       xsecure_if.core_i_load_store_unit_i_bus_resp_valid,
       support_if.lrfodi_bus_resp_ph_cont,
       support_if.lrfodi_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "There is a respons phase before address phase even though there are no glitches in the handsake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i).\n");
+  ) else `uvm_error(info_tag, "There is a response before a request in the handshake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i).\n");
 
 
-  ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER DONT UNDERFLOW //////////
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER DO NOT UNDERFLOW //////////
 
   a_xsecure_bus_hardening_counter_dont_underflow: assert property (
 
@@ -1507,7 +1973,7 @@ module uvmt_cv32e40s_xsecure_assert
     xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0
 
     |=>
-    //Make sure the counter eithr stay 0
+    //Make sure the counter either stays 0
     xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0
 
     //Or count upwards
@@ -1521,23 +1987,23 @@ module uvmt_cv32e40s_xsecure_assert
   property p_resp_after_addr_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
     @(posedge xsecure_if.core_clk)
 
-    //Make sure the core is in operative state
+    //Make sure the core is in an operative state
     core_clock_cycles
 
     //Make sure major alert is not or has not been set
     && !alert_major_was_set && !xsecure_if.core_alert_major_o
 
-    //Make sure there is a respons phase transfer
+    //Make sure there is a response phase transfer
     && obi_rvalid
 
-    //Make sure the respons phase transfer is finished
+    //Make sure the response phase transfer is finished
     && !resp_ph_cont
 
-    //Make sure there are no active address transfers the respons tranfere could be correlated with
+    //Make sure there are no active address transfers the response transfer could be correlated with
     && v_addr_ph_cnt == 0
 
     |=>
-    //Check that major alert is set
+    //Check the major alert is set
     xsecure_if.core_alert_major_o;
   endproperty;
 
@@ -1546,42 +2012,42 @@ module uvmt_cv32e40s_xsecure_assert
       xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
       support_if.data_bus_resp_ph_cont,
       support_if.data_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A respons phase before address phase in the data bus leading into the core does not set major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A response before a request in the OBI data bus handshake does not set the major alert.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_glitch_instr: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
       support_if.instr_bus_resp_ph_cont,
       support_if.instr_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A respons phase before address phase in the instruction bus leading into the core does not set major alert (instructions).\n");
+  ) else `uvm_error(info_tag_glitch, "A response before a request in the OBI instruction bus handshake does not set the major alert.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_glitch_abiim: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
       support_if.abiim_bus_resp_ph_cont,
       support_if.abiim_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) does not set major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A response before a request in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) does not set the major alert.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_glitch_lml: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_load_store_unit_i_resp_valid,
       support_if.lml_bus_resp_ph_cont,
       support_if.lml_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between LSU (l) MPU (m) and LSU (l) does not set major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A response before a request in the handshake between LSU (l) MPU (m) and LSU (l) does not set the major alert.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_glitch_lrfodi: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_load_store_unit_i_bus_resp_valid,
       support_if.lrfodi_bus_resp_ph_cont,
       support_if.lrfodi_bus_v_addr_ph_cnt)
-  ) else `uvm_error(info_tag, "A respons phase before address phase in the handshake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i) does not set major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A response before a request in the handshake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i) does not set the major alert.\n");
 
 
-  ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER UNDERFLOW SET MAJOR ALERT //////////
+  ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER UNDERFLOW SET THE MAJOR ALERT //////////
 
   a_xsecure_bus_hardening_counter_overflow_set_major_alert: assert property (
 
-    //Make sure the core is in operative state
+    //Make sure the core is in an operative state
     core_clock_cycles
 
     //Make sure the counter is in a position where it can underflow
@@ -1594,7 +2060,7 @@ module uvmt_cv32e40s_xsecure_assert
     |->
     //Verify that alert major is set
     xsecure_if.core_alert_major_o
-  ) else `uvm_error(info_tag, "The counter underflows but dont set major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "The counter underflows but does not set the major alert.\n");
 
 
 
