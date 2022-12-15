@@ -119,6 +119,14 @@ interface uvmt_cv32e40s_xsecure_if
 
     (
 
+    // Core input
+    input logic core_i_instr_err_i,
+    input logic core_i_data_err_i,
+
+input logic core_i_controller_i_controller_fsm_i_nmi_allowed,
+input logic core_i_controller_i_controller_fsm_i_pending_nmi,
+input logic core_i_controller_i_controller_fsm_i_dcsr_i_step,
+
     // CORE
     input logic core_clk,
     input logic clk_en,

@@ -780,6 +780,14 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
     xsecure_if (
 
+      // Core input
+      .core_i_instr_err_i (core_i.instr_err_i),
+      .core_i_data_err_i (core_i.data_err_i),
+
+.core_i_controller_i_controller_fsm_i_nmi_allowed (core_i.controller_i.controller_fsm_i.nmi_allowed),
+.core_i_controller_i_controller_fsm_i_pending_nmi (core_i.controller_i.controller_fsm_i.pending_nmi),
+.core_i_controller_i_controller_fsm_i_dcsr_i_step (core_i.controller_i.controller_fsm_i.dcsr_i.step),
+
       // Core
       .core_clk                                                                                                         (core_i.clk),
       .clk_en                                                                                                           (core_i.sleep_unit_i.core_clock_gate_i.clk_en),

@@ -235,25 +235,28 @@ module uvmt_cv32e40s_xsecure_assert
     xsecure_setting;
   endproperty
 
-  ///////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////
   ///////////////////////// SECURITY ALERTS /////////////////////////
   ///////////////////////////////////////////////////////////////////
 
 
-  ////////// SECURITY ALERTS MINOR //////////
-  a_xsecure_security_alert_minor_1: assert property (
+  ////////// SECURITY ALERTS MINOR DUE TO LFSR LOCKUPS //////////
 
-    //Make sure we detect a lockup error
+  a_xsecure_security_alert_minor_LFSR_lockups: assert property (
+
+    //Make sure we detect LFSR lockup
     xsecure_if.core_cs_registers_xsecure_lfsr_lockup != NO_LOCKUP_ERRORS
 
     //Make sure the alert minor is set
     |=>
     xsecure_if.core_alert_minor_o
 
-  ) else `uvm_error(info_tag, "Lookup errors do not set the minor alert.\n");
+  ) else `uvm_error(info_tag, "TODO: Lookup errors do not set minor alert.\n");
 
 
-  a_xsecure_security_alert_minor_2_to_6: assert property (
+  ////////// SECURITY ALERTS MINOR DUE TO NMI FAULTS //////////
+
+  a_xsecure_security_alert_minor_access_bus_and_illegal_instruction_faults: assert property (
 
     //Make sure we look at a valid instruction
     rvfi_if.rvfi_valid
@@ -281,7 +284,48 @@ module uvmt_cv32e40s_xsecure_assert
     |->
     xsecure_if.core_alert_minor_o
 
-  ) else `uvm_error(info_tag, "Exception errors do not set the minor alert.\n");
+  ) else `uvm_error(info_tag, "TODO: Exception errors do not set minor alert.\n");
+
+
+  ////////// SECURITY ALERTS MINOR DUE TO NMI FAULTS //////////
+
+  a_xsecure_security_alert_minor_nmi_fault: assert property (
+
+    //Make sure we receive a valid instruction packet on the OBI instruction bus
+    xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+
+    //Make sure there the OBI instruction bus indicates that there is an error related to the received packet
+    && xsecure_if.core_i_data_err_i
+
+    //Make sure the received packet does not have integrity
+    && !support_if.data_req_had_integrity
+
+    |=>
+    xsecure_if.core_i_controller_i_controller_fsm_i_pending_nmi
+    //Make sure alert minor is set
+    || xsecure_if.core_alert_minor_o
+
+  ) else `uvm_error(info_tag, "TODO: NMI bus errors do not set minor alert.\n");
+
+  a_xsecure_security_alert_minor_nmi_fault_2: assert property (
+
+    //Make sure we receive a valid instruction packet on the OBI instruction bus
+    xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+
+    //Make sure there the OBI instruction bus indicates that there is an error related to the received packet
+    && xsecure_if.core_i_data_err_i
+
+    //Make sure the received packet does not have integrity
+    && !support_if.data_req_had_integrity
+
+    ##1 xsecure_if.core_i_controller_i_controller_fsm_i_pending_nmi
+
+    |=>
+    (!xsecure_if.core_controller_controller_fsm_debug_mode_q && !xsecure_if.core_i_controller_i_controller_fsm_i_dcsr_i_step && rvfi_if.rvfi_valid)[->0:2]
+    ##1 !(!xsecure_if.core_controller_controller_fsm_debug_mode_q && !xsecure_if.core_i_controller_i_controller_fsm_i_dcsr_i_step && rvfi_if.rvfi_valid)[*]
+    ##0 xsecure_if.core_alert_minor_o
+
+  ) else `uvm_error(info_tag, "TODO: NMI bus errors do not set minor alert.\n");
 
 
   ///////////////////////////////////////////////////////////////////////////
