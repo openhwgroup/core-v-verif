@@ -235,7 +235,8 @@ module uvmt_cv32e40s_xsecure_assert
     xsecure_setting;
   endproperty
 
-    ///////////////////////////////////////////////////////////////////
+
+  ///////////////////////////////////////////////////////////////////
   ///////////////////////// SECURITY ALERTS /////////////////////////
   ///////////////////////////////////////////////////////////////////
 
@@ -247,11 +248,11 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure we detect LFSR lockup
     xsecure_if.core_cs_registers_xsecure_lfsr_lockup != NO_LOCKUP_ERRORS
 
-    //Make sure the alert minor is set
     |=>
+    //Make sure the alert minor is set
     xsecure_if.core_alert_minor_o
 
-  ) else `uvm_error(info_tag, "TODO: Lookup errors do not set minor alert.\n");
+  ) else `uvm_error(info_tag, "Lookup errors do not set the minor alert.\n");
 
 
   ////////// SECURITY ALERTS MINOR DUE TO NMI FAULTS //////////
@@ -280,14 +281,39 @@ module uvmt_cv32e40s_xsecure_assert
     //Instruction bus fault
     || rvfi_if.rvfi_trap.exception_cause == ERROR_CODE_INSTRUCTION_BUS_FAULT)
 
-    ///TODO: The error is handled in the WB stage and notifies the alert minor signal in the next stage (the current/rvfi stage)
     |->
+    //The error is handled in the WB stage and notifies the alert minor signal in the next stage (which is the current/rvfi stage)
     xsecure_if.core_alert_minor_o
 
-  ) else `uvm_error(info_tag, "TODO: Exception errors do not set minor alert.\n");
+  ) else `uvm_error(info_tag, "Exception errors do not set the minor alert.\n");
 
 
   ////////// SECURITY ALERTS MINOR DUE TO NMI FAULTS //////////
+
+  //This assertion proves that the pending NMI signal is set whenever there is a bus fault on the OBI data bus
+  //Or that alert minor is already set due to a previous bus fault on the OBI data bus
+  a_xsecure_security_alert_minor_nmi_fault_helper_assertion: assert property (
+
+    //Make sure we receive a valid instruction packet on the OBI instruction bus
+    xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+
+    //Make sure there the OBI instruction bus indicates that there is an error related to the received packet
+    && xsecure_if.core_i_data_err_i
+
+    //Make sure the received packet does not have integrity
+    && !support_if.data_req_had_integrity
+
+    |=>
+    //Verify that the pending NMI signal is set
+    xsecure_if.core_i_controller_i_controller_fsm_i_pending_nmi
+
+    //Or that the minor alert is set due to a previous bus fault
+    || ($past(xsecure_if.core_i_controller_i_controller_fsm_i_pending_nmi) && xsecure_if.core_alert_minor_o)
+
+  ) else `uvm_error(info_tag, "A bus fault on the data OBI bus does not set the pending NMI signal high (in the case where the minor alert is not already high due to a previous bus error).\n");
+
+
+  //TODO: maybe include the mode where we do single stepping but allow interrupts
 
   a_xsecure_security_alert_minor_nmi_fault: assert property (
 
@@ -300,32 +326,20 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure the received packet does not have integrity
     && !support_if.data_req_had_integrity
 
-    |=>
-    xsecure_if.core_i_controller_i_controller_fsm_i_pending_nmi
-    //Make sure alert minor is set
-    || xsecure_if.core_alert_minor_o
-
-  ) else `uvm_error(info_tag, "TODO: NMI bus errors do not set minor alert.\n");
-
-  a_xsecure_security_alert_minor_nmi_fault_2: assert property (
-
-    //Make sure we receive a valid instruction packet on the OBI instruction bus
-    xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
-
-    //Make sure there the OBI instruction bus indicates that there is an error related to the received packet
-    && xsecure_if.core_i_data_err_i
-
-    //Make sure the received packet does not have integrity
-    && !support_if.data_req_had_integrity
-
+    //Make sure we investigate a scene where the core is not already handling a previous bus fault (see the helper assertion above)
     ##1 xsecure_if.core_i_controller_i_controller_fsm_i_pending_nmi
 
     |=>
+    //Verify that the minor alert allows a maximum of two instructions to retire in operating normal mode (not debug or single stepping mode), before being set:
+
+    //Allow a maximum of two instructions to retire in normal operating mode
     (!xsecure_if.core_controller_controller_fsm_debug_mode_q && !xsecure_if.core_i_controller_i_controller_fsm_i_dcsr_i_step && rvfi_if.rvfi_valid)[->0:2]
-    ##1 !(!xsecure_if.core_controller_controller_fsm_debug_mode_q && !xsecure_if.core_i_controller_i_controller_fsm_i_dcsr_i_step && rvfi_if.rvfi_valid)[*]
+
+    //Verify that there are no more instructions that retire in normal operating mode before the minor alert is set
+    ##1 !(!xsecure_if.core_controller_controller_fsm_debug_mode_q && !xsecure_if.core_i_controller_i_controller_fsm_i_dcsr_i_step && rvfi_if.rvfi_valid)[*0:$]
     ##0 xsecure_if.core_alert_minor_o
 
-  ) else `uvm_error(info_tag, "TODO: NMI bus errors do not set minor alert.\n");
+  ) else `uvm_error(info_tag, "A bus fault on the OBI data bus does not set the minor alert in non-debug and non-single-stepping mode.\n");
 
 
   ///////////////////////////////////////////////////////////////////////////
