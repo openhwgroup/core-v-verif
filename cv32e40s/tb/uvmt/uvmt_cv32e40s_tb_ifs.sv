@@ -119,18 +119,11 @@ interface uvmt_cv32e40s_xsecure_if
 
     (
 
-    // Core input
-    input logic core_i_instr_err_i,
-    input logic core_i_data_err_i,
-
-input logic core_i_controller_i_controller_fsm_i_nmi_allowed,
-input logic core_i_controller_i_controller_fsm_i_pending_nmi,
-input logic core_i_controller_i_controller_fsm_i_dcsr_i_step,
-
-    // CORE
+    // Core
     input logic core_clk,
     input logic clk_en,
 
+    input logic core_i_data_err_i,
     input logic core_rf_we_wb,
     input logic [4:0] core_rf_waddr_wb,
     input logic [31:0] core_rf_wdata_wb,
@@ -179,7 +172,6 @@ input logic core_i_controller_i_controller_fsm_i_dcsr_i_step,
     input logic [3:0] core_xsecure_ctrl_cpuctrl_rnddummyfreq,
     input logic core_if_stage_gen_dummy_instr_dummy_instr_dummy_en,
     input logic [2:0] core_cs_registers_xsecure_lfsr_lockup,
-    input logic core_controller_controller_fsm_debug_mode_q,
 
     input logic [63:0] core_cs_registers_mhpmcounter_mcycle,
     input logic [63:0] core_cs_registers_mhpmcounter_minstret,
@@ -225,6 +217,7 @@ input logic core_i_controller_i_controller_fsm_i_dcsr_i_step,
     // BASE
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q,
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q,
+    input logic core_controller_controller_fsm_debug_mode_q,
 
     // Shadow registers
     input logic [31:0] core_cs_registers_jvt_csr_gen_hardened_shadow_q,
@@ -247,6 +240,10 @@ input logic core_i_controller_i_controller_fsm_i_dcsr_i_step,
     // BASIC
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q,
     input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q,
+
+    // Controller
+    input logic core_i_controller_i_controller_fsm_i_pending_nmi,
+    input logic core_i_controller_i_controller_fsm_i_dcsr_i_step,
 
     // IF stage
     input logic core_if_stage_if_valid_o,

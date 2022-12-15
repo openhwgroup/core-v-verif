@@ -780,18 +780,11 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
     xsecure_if (
 
-      // Core input
-      .core_i_instr_err_i (core_i.instr_err_i),
-      .core_i_data_err_i (core_i.data_err_i),
-
-.core_i_controller_i_controller_fsm_i_nmi_allowed (core_i.controller_i.controller_fsm_i.nmi_allowed),
-.core_i_controller_i_controller_fsm_i_pending_nmi (core_i.controller_i.controller_fsm_i.pending_nmi),
-.core_i_controller_i_controller_fsm_i_dcsr_i_step (core_i.controller_i.controller_fsm_i.dcsr_i.step),
-
       // Core
       .core_clk                                                                                                         (core_i.clk),
       .clk_en                                                                                                           (core_i.sleep_unit_i.core_clock_gate_i.clk_en),
 
+      .core_i_data_err_i                                                                                                (core_i.data_err_i),
       .core_rf_we_wb                                                                                                    (core_i.rf_we_wb),
       .core_rf_waddr_wb                                                                                                 (core_i.rf_waddr_wb),
       .core_rf_wdata_wb                                                                                                 (core_i.rf_wdata_wb),
@@ -839,9 +832,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       .core_xsecure_ctrl_cpuctrl_rnddummyfreq                                                                           (core_i.xsecure_ctrl.cpuctrl[19:16]),
       .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
-
       .core_cs_registers_xsecure_lfsr_lockup                                                                            (core_i.cs_registers_i.xsecure.lfsr_lockup),
-      .core_controller_controller_fsm_debug_mode_q                                                                      (core_i.controller_i.controller_fsm_i.debug_mode_q),
 
       .core_cs_registers_mhpmcounter_mcycle                                                                             (core_i.cs_registers_i.mcycle_o),
       .core_cs_registers_mhpmcounter_minstret                                                                           (core_i.cs_registers_i.mhpmcounter_q[2]),
@@ -910,6 +901,11 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       // BASIC
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q                      (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q),
       .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q                        (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q),
+
+      // Controller
+      .core_i_controller_i_controller_fsm_i_pending_nmi                                                                 (core_i.controller_i.controller_fsm_i.pending_nmi),
+      .core_i_controller_i_controller_fsm_i_dcsr_i_step                                                                 (core_i.controller_i.controller_fsm_i.dcsr_i.step),
+      .core_controller_controller_fsm_debug_mode_q                                                                      (core_i.controller_i.controller_fsm_i.debug_mode_q),
 
       // IF stage
       .core_if_stage_if_valid_o                                                                                         (core_i.if_stage_i.if_valid_o),
