@@ -465,22 +465,22 @@ module uvmt_cv32e40s_xsecure_assert
     //Make sure the following CSRs are shadowed at all times:
 
     //JVT
-    ~xsecure_if.core_i_cs_registers_i_jvt_csr_i_rdata_q == (~cv32e40s_pkg::CSR_JVT_MASK & ~RESET_VALUE_0) | (cv32e40s_pkg::CSR_JVT_MASK & xsecure_if.core_cs_registers_jvt_csr_gen_hardened_shadow_q)
+    ~xsecure_if.core_i_cs_registers_i_jvt_csr_i_rdata_q == ((~cv32e40s_pkg::CSR_JVT_MASK & ~RESET_VALUE_0) | (cv32e40s_pkg::CSR_JVT_MASK & xsecure_if.core_cs_registers_jvt_csr_gen_hardened_shadow_q))
 
     //MSTATUS
-    and ~xsecure_if.core_i_cs_registers_i_mstatus_csr_i_rdata_q == (~cv32e40s_pkg::CSR_MSTATUS_MASK & ~cv32e40s_pkg::MSTATUS_RESET_VAL) | (cv32e40s_pkg::CSR_MSTATUS_MASK & xsecure_if.core_cs_registers_mstatus_csr_gen_hardened_shadow_q)
+    and ~xsecure_if.core_i_cs_registers_i_mstatus_csr_i_rdata_q == ((~cv32e40s_pkg::CSR_MSTATUS_MASK & ~cv32e40s_pkg::MSTATUS_RESET_VAL) | (cv32e40s_pkg::CSR_MSTATUS_MASK & xsecure_if.core_cs_registers_mstatus_csr_gen_hardened_shadow_q))
 
     //CPUCTRL
-    and ~xsecure_if.core_i_cs_registers_i_xsecure_cpuctrl_csr_i_rdata_q == (~cv32e40s_pkg::CSR_CPUCTRL_MASK & ~cv32e40s_pkg::CPUCTRL_RESET_VAL) | (cv32e40s_pkg::CSR_CPUCTRL_MASK & xsecure_if.core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q)
+    and ~xsecure_if.core_i_cs_registers_i_xsecure_cpuctrl_csr_i_rdata_q == ((~cv32e40s_pkg::CSR_CPUCTRL_MASK & ~cv32e40s_pkg::CPUCTRL_RESET_VAL) | (cv32e40s_pkg::CSR_CPUCTRL_MASK & xsecure_if.core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q))
 
     //DCSR
-    and ~xsecure_if.core_i_cs_registers_i_dcsr_csr_i_rdata_q == (~cv32e40s_pkg::CSR_DCSR_MASK & ~cv32e40s_pkg::DCSR_RESET_VAL) | (cv32e40s_pkg::CSR_DCSR_MASK & xsecure_if.core_cs_registers_dcsr_csr_gen_hardened_shadow_q)
+    and ~xsecure_if.core_i_cs_registers_i_dcsr_csr_i_rdata_q == ((~cv32e40s_pkg::CSR_DCSR_MASK & ~cv32e40s_pkg::DCSR_RESET_VAL) | (cv32e40s_pkg::CSR_DCSR_MASK & xsecure_if.core_cs_registers_dcsr_csr_gen_hardened_shadow_q))
 
     //MEPC
-    and ~xsecure_if.core_i_cs_registers_i_mepc_csr_i_rdata_q == (~cv32e40s_pkg::CSR_MEPC_MASK & ~RESET_VALUE_0) | (cv32e40s_pkg::CSR_MEPC_MASK & xsecure_if.core_cs_registers_mepc_csr_gen_hardened_shadow_q)
+    and ~xsecure_if.core_i_cs_registers_i_mepc_csr_i_rdata_q == ((~cv32e40s_pkg::CSR_MEPC_MASK & ~RESET_VALUE_0) | (cv32e40s_pkg::CSR_MEPC_MASK & xsecure_if.core_cs_registers_mepc_csr_gen_hardened_shadow_q))
 
     //MSCRATCH
-    and ~xsecure_if.core_i_cs_registers_i_mscratch_csr_i_rdata_q == (~cv32e40s_pkg::CSR_MSCRATCH_MASK & ~RESET_VALUE_0) | (cv32e40s_pkg::CSR_MSCRATCH_MASK & xsecure_if.core_cs_registers_mscratch_csr_gen_hardened_shadow_q)
+    and ~xsecure_if.core_i_cs_registers_i_mscratch_csr_i_rdata_q == ((~cv32e40s_pkg::CSR_MSCRATCH_MASK & ~RESET_VALUE_0) | (cv32e40s_pkg::CSR_MSCRATCH_MASK & xsecure_if.core_cs_registers_mscratch_csr_gen_hardened_shadow_q))
 
   ) else `uvm_error(info_tag, "One or several of the CSRs JVT, MSTATUS, CPUCTRL, DCSR, MEPC, MSCRATCH are not shadowed.\n");
 
@@ -490,7 +490,7 @@ module uvmt_cv32e40s_xsecure_assert
       //Make sure the MSECCFG CSR is shadowed at all times (given that we use PMP regions)
 
       //MSECCFG
-      ~xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q == (~cv32e40s_pkg::CSR_MSECCFG_MASK & ~cv32e40s_pkg::MSECCFG_DEFAULT) | (cv32e40s_pkg::CSR_MSECCFG_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q)
+      ~xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q == ((~cv32e40s_pkg::CSR_MSECCFG_MASK & ~cv32e40s_pkg::MSECCFG_DEFAULT) | (cv32e40s_pkg::CSR_MSECCFG_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q))
 
       ) else `uvm_error(info_tag, "The CSR MSECCFG is not shadowed.\n");
 
@@ -503,10 +503,10 @@ module uvmt_cv32e40s_xsecure_assert
       //Make sure the existing PMP CSRs are shadowed at all times
 
       //PMPNCFG
-      ~xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q[n] == (~cv32e40s_pkg::CSR_PMPNCFG_MASK & ~cv32e40s_pkg::PMPNCFG_DEFAULT) | (cv32e40s_pkg::CSR_PMPNCFG_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q[n])
+      ~xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q[n] == ((~cv32e40s_pkg::CSR_PMPNCFG_MASK & ~cv32e40s_pkg::PMPNCFG_DEFAULT) | (cv32e40s_pkg::CSR_PMPNCFG_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q[n]))
 
       //PMPADDR
-      and ~xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n] == (~cv32e40s_pkg::CSR_PMPADDR_MASK[PMP_ADDR_WIDTH-1:0] & ~RESET_VALUE_0[PMP_ADDR_WIDTH-1:0] ) | (cv32e40s_pkg::CSR_PMPADDR_MASK[PMP_ADDR_WIDTH-1:0] & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n])
+      and ~xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n] == ((~cv32e40s_pkg::CSR_PMPADDR_MASK[PMP_ADDR_WIDTH-1:0] & ~RESET_VALUE_0[PMP_ADDR_WIDTH-1:0] ) | (cv32e40s_pkg::CSR_PMPADDR_MASK[PMP_ADDR_WIDTH-1:0] & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n]))
 
     ) else `uvm_error(info_tag, $sformatf("One or several of the CSRs PMP%0dCFG or PMPADDR[%0d] are not shadowed.\n", n, n));
 
@@ -519,16 +519,16 @@ module uvmt_cv32e40s_xsecure_assert
         //Make sure the smclic CSRs are shadowed at all times if smclic is enabled
 
         //MTVT
-        ~xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q == (~cv32e40s_pkg::CSR_MTVT_MASK & ~cv32e40s_pkg::MTVT_RESET_VAL) | (cv32e40s_pkg::CSR_MTVT_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q)
+        ~xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q == ((~cv32e40s_pkg::CSR_MTVT_MASK & ~cv32e40s_pkg::MTVT_RESET_VAL) | (cv32e40s_pkg::CSR_MTVT_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q))
 
         //MTVEC
-        and ~xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q == (~cv32e40s_pkg::CSR_MTVEC_CLIC_MASK & ~cv32e40s_pkg::MTVEC_CLIC_RESET_VAL) | (cv32e40s_pkg::CSR_MTVEC_CLIC_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q)
+        and ~xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q == ((~cv32e40s_pkg::CSR_MTVEC_CLIC_MASK & ~cv32e40s_pkg::MTVEC_CLIC_RESET_VAL) | (cv32e40s_pkg::CSR_MTVEC_CLIC_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q))
 
         //MINTSTATUS
-        and ~xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q == (~cv32e40s_pkg::CSR_MINTSTATUS_MASK & ~cv32e40s_pkg::MINTSTATUS_RESET_VAL) | (cv32e40s_pkg::CSR_MINTSTATUS_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q)
+        and ~xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q == ((~cv32e40s_pkg::CSR_MINTSTATUS_MASK & ~cv32e40s_pkg::MINTSTATUS_RESET_VAL) | (cv32e40s_pkg::CSR_MINTSTATUS_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q))
 
         //MINTTHRESH
-        and ~xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q == (~CSR_MINTTHRESH_MASK & ~RESET_VALUE_0) | (CSR_MINTTHRESH_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q)
+        and ~xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q == ((~CSR_MINTTHRESH_MASK & ~RESET_VALUE_0) | (CSR_MINTTHRESH_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q))
 
       ) else `uvm_error(info_tag, "One or several of the CSRs MTVT, MTVEC, MINTSTATUS or MINTTHRESH are not shadowed.\n");
 
@@ -538,10 +538,10 @@ module uvmt_cv32e40s_xsecure_assert
         //Make sure the CSRs used when smclic is disabled are shadowed at all times
 
         //MTVEC
-        ~xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q == (~cv32e40s_pkg::CSR_MTVEC_BASIC_MASK & ~cv32e40s_pkg::MTVEC_BASIC_RESET_VAL) | (cv32e40s_pkg::CSR_MTVEC_BASIC_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q)
+        ~xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q == ((~cv32e40s_pkg::CSR_MTVEC_BASIC_MASK & ~cv32e40s_pkg::MTVEC_BASIC_RESET_VAL) | (cv32e40s_pkg::CSR_MTVEC_BASIC_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q))
 
         //MIE
-        and ~xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q == (~cv32e40s_pkg::IRQ_MASK & ~RESET_VALUE_0) | (cv32e40s_pkg::IRQ_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q)
+        and ~xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q == ((~cv32e40s_pkg::IRQ_MASK & ~RESET_VALUE_0) | (cv32e40s_pkg::IRQ_MASK & xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q))
 
       ) else `uvm_error(info_tag, "The CSRs MTVEC or MIE are not shadowed.\n");
 
