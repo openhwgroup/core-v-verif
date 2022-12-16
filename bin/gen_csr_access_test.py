@@ -65,7 +65,17 @@ def preprocess_yaml():
     w_enable = True
     w_enable_n = w_enable
     str_args = ""
-    enabled_features = {"clic": False, "clint": False, "zc": False, "pmp": 0, "mhpmcounters": 0}
+    enabled_features = {
+      "clic":         False,
+      "clint":        False,
+      "debug":        False,
+      "readonly":     False,
+      "trigger":      False,
+      "xsecure":      False,
+      "zc":           False,
+      "mhpmcounters": 0,
+      "pmp":          0,
+      }
 
     if (args.clic_enable):
         str_args = str_args + "_clic"
