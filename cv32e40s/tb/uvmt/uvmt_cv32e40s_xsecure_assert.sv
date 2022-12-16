@@ -313,7 +313,10 @@ module uvmt_cv32e40s_xsecure_assert
   ) else `uvm_error(info_tag, "A bus fault on the data OBI bus does not set the pending NMI signal high (in the case where the minor alert is not already high due to a previous bus error).\n");
 
 
-  //TODO: maybe include the mode where we do single stepping but allow interrupts
+  //Helper signal that specifies that the core is in a state where interrupts are enabled
+  //In other words, making sure the core is not in debug mode or single stepping mode where interrupts are disabled
+  logic core_state_with_interrupts_enabled;
+  assign core_state_with_interrupts_enabled = !xsecure_if.core_controller_controller_fsm_debug_mode_q && ((!xsecure_if.core_i_controller_i_controller_fsm_i_dcsr_i_step) || (xsecure_if.core_i_controller_i_controller_fsm_i_dcsr_i_step && xsecure_if.core_i_controller_i_controller_fsm_i_dcsr_i_stepie));
 
   a_xsecure_security_alert_minor_nmi_fault: assert property (
 
@@ -330,14 +333,14 @@ module uvmt_cv32e40s_xsecure_assert
     ##1 xsecure_if.core_i_controller_i_controller_fsm_i_pending_nmi
 
     |=>
-    //Verify that the minor alert allows a maximum of two instructions to retire in operating normal mode (not debug or single stepping mode), before being set:
+    //Verify that the minor alert is set after a maximum of two instructions have retired in an interruptable operating mode (not debug mode or single stepping mode without interrupts)
 
-    //Allow a maximum of two instructions to retire in normal operating mode
-    (!xsecure_if.core_controller_controller_fsm_debug_mode_q && !xsecure_if.core_i_controller_i_controller_fsm_i_dcsr_i_step && rvfi_if.rvfi_valid)[->0:2]
+    //Allow a maximum of two instructions to retire when the core is in an interruptable operating state
+    (core_state_with_interrupts_enabled && rvfi_if.rvfi_valid)[->0:2]
 
-    //Verify that there are no more instructions that retire in normal operating mode before the minor alert is set
-    ##1 !(!xsecure_if.core_controller_controller_fsm_debug_mode_q && !xsecure_if.core_i_controller_i_controller_fsm_i_dcsr_i_step && rvfi_if.rvfi_valid)[*0:$]
-    ##0 xsecure_if.core_alert_minor_o
+    //Verify that there are no more instructions that retire when the core is in in interruptable operating state before the minor alert is set
+    ##1 !(core_state_with_interrupts_enabled && rvfi_if.rvfi_valid)[*0:$]
+    ##1 xsecure_if.core_alert_minor_o
 
   ) else `uvm_error(info_tag, "A bus fault on the OBI data bus does not set the minor alert in non-debug and non-single-stepping mode.\n");
 

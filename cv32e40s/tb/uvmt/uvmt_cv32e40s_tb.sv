@@ -905,6 +905,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       // Controller
       .core_i_controller_i_controller_fsm_i_pending_nmi                                                                 (core_i.controller_i.controller_fsm_i.pending_nmi),
       .core_i_controller_i_controller_fsm_i_dcsr_i_step                                                                 (core_i.controller_i.controller_fsm_i.dcsr_i.step),
+      .core_i_controller_i_controller_fsm_i_dcsr_i_stepie                                                                 (core_i.controller_i.controller_fsm_i.dcsr_i.stepie),
       .core_controller_controller_fsm_debug_mode_q                                                                      (core_i.controller_i.controller_fsm_i.debug_mode_q),
 
       // IF stage
