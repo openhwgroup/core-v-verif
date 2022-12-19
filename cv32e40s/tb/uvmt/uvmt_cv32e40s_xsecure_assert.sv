@@ -50,13 +50,13 @@ module uvmt_cv32e40s_xsecure_assert
   localparam FREQ_SETTING_64_MIN = 4'b1000;
   localparam FREQ_SETTING_64_MAX = 4'b1111;
   localparam FREQ_SETTING_32_MIN = 4'b0100;
-  localparam FREQ_SETTING_32_MAX = FREQ_SETTING_64_MIN -1;
+  localparam logic [3:0] FREQ_SETTING_32_MAX = FREQ_SETTING_64_MIN -1;
   localparam FREQ_SETTING_16_MIN = 4'b0010;
-  localparam FREQ_SETTING_16_MAX = FREQ_SETTING_32_MIN -1;
+  localparam logic [3:0] FREQ_SETTING_16_MAX = FREQ_SETTING_32_MIN -1;
   localparam FREQ_SETTING_8_MIN = 4'b0001;
-  localparam FREQ_SETTING_8_MAX = FREQ_SETTING_16_MIN -1;
+  localparam logic [3:0] FREQ_SETTING_8_MAX = FREQ_SETTING_16_MIN -1;
   localparam FREQ_SETTING_4_MIN = 4'b0000;
-  localparam FREQ_SETTING_4_MAX = FREQ_SETTING_8_MIN -1;
+  localparam logic [3:0] FREQ_SETTING_4_MAX = FREQ_SETTING_8_MIN -1;
 
 
   localparam BRANCH_STATE = 4'b0101;
@@ -97,6 +97,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   logic [4:0] if_id_pipe_instr_rs1;
   logic [4:0] if_id_pipe_instr_rs2;
+  logic [4:0] if_id_pipe_instr_rd;
   logic [6:0] if_id_pipe_instr_opcode;
   logic [12:0] if_id_pipe_bltu_incrementation;
 
@@ -104,7 +105,6 @@ module uvmt_cv32e40s_xsecure_assert
   assign if_id_pipe_instr_rs2 = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[24:20];
   assign if_id_pipe_instr_rd = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[11:7];
   assign if_id_pipe_instr_opcode = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[6:0];
-
   assign if_id_pipe_bltu_incrementation = {xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[31],
     xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[7],
     xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[30:25],
@@ -622,56 +622,56 @@ module uvmt_cv32e40s_xsecure_assert
     p_hardened_csr_mismatch_sets_major_aler(
       xsecure_if.core_i_cs_registers_i_mstateen0_q,
       xsecure_if.core_cs_registers_mstateen0_csr_gen_hardened_shadow_q)
-  ) else `uvm_error(info_tag, "A mismatch between the CSR MSTATEEN0 and its shadow does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MSTATEEN0 and its shadow does not set the major alert.\n");
 
   //PRIVILEGE LEVEL
   a_xsecure_hardened_csr_mismatch_privlvl: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
       xsecure_if.core_i_cs_registers_i_priv_lvl_q_int,
       xsecure_if.core_cs_registers_priv_lvl_gen_hardened_shadow_q)
-  ) else `uvm_error(info_tag, "A mismatch between the priviliged level and its shadow does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the priviliged level and its shadow does not set the major alert.\n");
 
   //JVT
   a_xsecure_hardened_csr_mismatch_jvt: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
       xsecure_if.core_i_cs_registers_i_jvt_q,
       xsecure_if.core_cs_registers_jvt_csr_gen_hardened_shadow_q)
-  ) else `uvm_error(info_tag, "A mismatch between the CSR JVT and its shadow does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR JVT and its shadow does not set the major alert.\n");
 
   //MSTATUS
   a_xsecure_hardened_csr_mismatch_mstatus: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
       xsecure_if.core_i_cs_registers_i_mstatus_q,
       xsecure_if.core_cs_registers_mstatus_csr_gen_hardened_shadow_q)
-  ) else `uvm_error(info_tag, "A mismatch between the CSR MSTATUS and its shadow does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MSTATUS and its shadow does not set the major alert.\n");
 
   //CPUCTRL
   a_xsecure_hardened_csr_mismatch_cpuctrl: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
       xsecure_if.core_i_cs_registers_i_cpuctrl_q,
       xsecure_if.core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q)
-  ) else `uvm_error(info_tag, "A mismatch between the CSR CPUCTRL and its shadow does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR CPUCTRL and its shadow does not set the major alert.\n");
 
   //DCSR
   a_xsecure_hardened_csr_mismatch_dcsr: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
       xsecure_if.core_i_cs_registers_i_dcsr_q,
       xsecure_if.core_cs_registers_dcsr_csr_gen_hardened_shadow_q)
-  ) else `uvm_error(info_tag, "A mismatch between the CSR DCSR and its shadow does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR DCSR and its shadow does not set the major alert.\n");
 
   //MEPC
   a_xsecure_hardened_csr_mismatch_mepc: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
       xsecure_if.core_i_cs_registers_i_mepc_q,
       xsecure_if.core_cs_registers_mepc_csr_gen_hardened_shadow_q)
-  ) else `uvm_error(info_tag, "A mismatch between the CSR MEPC and its shadow does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MEPC and its shadow does not set the major alert.\n");
 
   //MSCRATCH
   a_xsecure_hardened_csr_mismatch_mscratch: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
       xsecure_if.core_i_cs_registers_i_mscratch_q,
       xsecure_if.core_cs_registers_mscratch_csr_gen_hardened_shadow_q)
-  ) else `uvm_error(info_tag, "A mismatch between the CSR MSCRATCH and its shadow does not set the major alert.\n");
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MSCRATCH and its shadow does not set the major alert.\n");
 
 
 
@@ -683,7 +683,7 @@ module uvmt_cv32e40s_xsecure_assert
         p_hardened_csr_mismatch_sets_major_aler(
           xsecure_if.core_i_cs_registers_i_pmp_mseccfg_q,
           xsecure_if.uvmt_cv32e40s_tb_pmp_mseccfg_q_shadow_q)
-      ) else `uvm_error(info_tag, "A mismatch between the CSR MSECCFG and its shadow does not set the major alert.\n");
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MSECCFG and its shadow does not set the major alert.\n");
 
     end
   endgenerate
@@ -696,14 +696,14 @@ module uvmt_cv32e40s_xsecure_assert
         p_hardened_csr_mismatch_sets_major_aler(
           xsecure_if.core_i_cs_registers_i_pmpncfg_q[n],
           xsecure_if.uvmt_cv32e40s_tb_pmpncfg_q_shadow_q[n])
-      ) else `uvm_error(info_tag, $sformatf("A mismatch between the CSR PMP%0dCFG and its shadow does not set the major alert.\n", n));
+      ) else `uvm_error(info_tag_glitch, $sformatf("A mismatch between the CSR PMP%0dCFG and its shadow does not set the major alert.\n", n));
 
       //PMPADDR
       a_xsecure_hardened_csr_mismatch_pmpaddr: assert property (
         p_hardened_csr_mismatch_sets_major_aler(
           xsecure_if.core_i_cs_registers_i_pmp_addr_q[n],
           xsecure_if.uvmt_cv32e40s_tb_pmp_addr_q_shadow_q[n])
-      ) else `uvm_error(info_tag, $sformatf("A mismatch between the CSR PMPADDR[%0d] and its shadow does not set the major alert.\n", n));
+      ) else `uvm_error(info_tag_glitch, $sformatf("A mismatch between the CSR PMPADDR[%0d] and its shadow does not set the major alert.\n", n));
 
     end
   endgenerate
@@ -716,28 +716,28 @@ module uvmt_cv32e40s_xsecure_assert
         p_hardened_csr_mismatch_sets_major_aler(
           xsecure_if.core_i_cs_registers_i_mtvt_q,
           xsecure_if.uvmt_cv32e40s_tb_mtvt_q_shadow_q)
-      ) else `uvm_error(info_tag, "A mismatch between the CSR MTVT and its shadow does not set the major alert.\n");
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MTVT and its shadow does not set the major alert.\n");
 
       //MTVEC
       a_xsecure_hardened_csr_mismatch_mtvec: assert property (
         p_hardened_csr_mismatch_sets_major_aler(
           xsecure_if.core_i_cs_registers_i_mtvec_q,
           xsecure_if.uvmt_cv32e40s_tb_mtvec_q_shadow_q)
-      ) else `uvm_error(info_tag, "A mismatch between the CSR MTVEC and its shadow does not set the major alert.\n");
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MTVEC and its shadow does not set the major alert.\n");
 
       //MINTSTATUS
       a_xsecure_hardened_csr_mismatch_mintstatus: assert property (
         p_hardened_csr_mismatch_sets_major_aler(
           xsecure_if.core_i_cs_registers_i_mintstatus_q,
           xsecure_if.uvmt_cv32e40s_tb_mintstatus_q_shadow_q)
-      ) else `uvm_error(info_tag, "A mismatch between the CSR MINTSTATUS and its shadow does not set the major alert.\n");
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MINTSTATUS and its shadow does not set the major alert.\n");
 
       //MINTTHRESH
       a_xsecure_hardened_csr_mismatch_mintthresh: assert property (
         p_hardened_csr_mismatch_sets_major_aler(
           xsecure_if.core_i_cs_registers_i_mintthresh_q,
           xsecure_if.uvmt_cv32e40s_tb_mintthresh_q_shadow_q)
-      ) else `uvm_error(info_tag, "A mismatch between the CSR MINTTHRESH and its shadow does not set the major alert.\n");
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MINTTHRESH and its shadow does not set the major alert.\n");
 
     end else begin
 
@@ -746,14 +746,14 @@ module uvmt_cv32e40s_xsecure_assert
         p_hardened_csr_mismatch_sets_major_aler(
           xsecure_if.core_i_cs_registers_i_mtvec_q,
           xsecure_if.uvmt_cv32e40s_tb_mtvec_q_shadow_q)
-      ) else `uvm_error(info_tag, "A mismatch between the CSR MTVEC and its shadow does not set the major alert.\n");
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MTVEC and its shadow does not set the major alert.\n");
 
       //MIE
       a_xsecure_hardened_csr_mismatch_mie: assert property (
         p_hardened_csr_mismatch_sets_major_aler(
           xsecure_if.core_i_cs_registers_i_mie_q,
           xsecure_if.uvmt_cv32e40s_tb_mie_q_hardened_shadow_q)
-      ) else `uvm_error(info_tag, "A mismatch between the CSR MIE and its shadow does not set the major alert.\n");
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MIE and its shadow does not set the major alert.\n");
 
     end
   endgenerate
@@ -2117,7 +2117,6 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     //Verify that alert major is set
     xsecure_if.core_alert_major_o
   ) else `uvm_error(info_tag_glitch, "The counter underflows but does not set the major alert.\n");
-
 
 
 endmodule : uvmt_cv32e40s_xsecure_assert

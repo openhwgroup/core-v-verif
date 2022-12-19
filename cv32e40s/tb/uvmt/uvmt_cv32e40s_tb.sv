@@ -826,8 +826,8 @@ module uvmt_cv32e40s_tb;
       .core_i_cs_registers_i_mie_q                                                                                      (core_i.cs_registers_i.mie_q),
 
       // Shadow registers
-      .core_cs_registers_mstateen0_csr_gen_hardened_shadow_q (core_i.cs_registers_i.mstateen0_csr_i.gen_hardened.shadow_q),
-      .core_cs_registers_priv_lvl_gen_hardened_shadow_q (core_i.cs_registers_i.priv_lvl_i.gen_hardened.shadow_q),
+      .core_cs_registers_mstateen0_csr_gen_hardened_shadow_q                                                            (core_i.cs_registers_i.mstateen0_csr_i.gen_hardened.shadow_q),
+      .core_cs_registers_priv_lvl_gen_hardened_shadow_q                                                                 (core_i.cs_registers_i.priv_lvl_i.gen_hardened.shadow_q),
       .core_cs_registers_jvt_csr_gen_hardened_shadow_q                                                                  (core_i.cs_registers_i.jvt_csr_i.gen_hardened.shadow_q),
       .core_cs_registers_mstatus_csr_gen_hardened_shadow_q                                                              (core_i.cs_registers_i.mstatus_csr_i.gen_hardened.shadow_q),
       .core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q                                                      (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.gen_hardened.shadow_q),
