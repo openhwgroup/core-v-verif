@@ -417,7 +417,7 @@ module uvmt_cv32e40s_interrupt_assert
     wb_kill                                  ||  // TODO:silabs-robin  Remove? Have more isa-specific reason?
     debug_mode_q                             ||
     ((priv_lvl == PRIV_LVL_U) && mstatus_tw) ||
-    dcsr_step  // Arbitrary uarch decision
+    dcsr_step
   );
 
   logic  is_wfi_wfe_in_wb;
