@@ -99,7 +99,7 @@ pygments_style = None
 # a list of builtin themes.
 #
 #html_theme = 'alabaster'
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -115,14 +115,14 @@ html_logo = '../images/openhw-landscape.svg'
 #
 # Set html_static_path to null on the advice of RTDs:
 #https://github.com/readthedocs/readthedocs.org/issues/1776
-#html_static_path = []
-html_static_path = ['_static']
-
-html_context = {
-    'css_files' : [
-        '_static/theme_overrides.css', # Fix wide tables in RTD theme
-        ],
-    }
+html_static_path = []
+# This theme overrides fixes the table with and breaks other formatting.
+#html_static_path = ['_static']
+#html_context = {
+#    'css_files' : [
+#        '_static/theme_overrides.css', # Fix wide tables in RTD theme
+#        ],
+#    }
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.

@@ -111,6 +111,10 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    // ISA Extension support
    // -------------------------------------------------------------------------------------
    $fwrite(fh, $sformatf("--override root/cpu/misa_Extensions=0x%06x\n", cfg.core_cfg.get_misa()));
+  // TODO: cv32e40x: Remove when correct setting is applied to ovpsim
+  if (cfg.core_cfg.core_name == "CV32E40X") begin
+      $fwrite(fh, $sformatf("--override root/cpu/tcontrol_undefined=0\n"));
+  end
 
    if (cfg.core_cfg.is_ext_b_supported()) begin
       // Bitmanip version
@@ -135,6 +139,20 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
       $fwrite(fh, $sformatf("--override root/cpu/Zbr=%0d\n", cfg.core_cfg.ext_zbr_supported));
       $fwrite(fh, $sformatf("--override root/cpu/Zbs=%0d\n", cfg.core_cfg.ext_zbs_supported));
       $fwrite(fh, $sformatf("--override root/cpu/Zbt=%0d\n", cfg.core_cfg.ext_zbt_supported));
+   end
+
+   case(cfg.core_cfg.priv_spec_version)
+     PRIV_VERSION_MASTER:   $fwrite(fh, $sformatf("--override root/cpu/priv_version=master\n"));
+     PRIV_VERSION_1_10:     $fwrite(fh, $sformatf("--override root/cpu/priv_version=1.10\n"));
+     PRIV_VERSION_1_11:     $fwrite(fh, $sformatf("--override root/cpu/priv_version=1.11\n"));
+     PRIV_VERSION_20190405: $fwrite(fh, $sformatf("--override root/cpu/priv_version=20190405\n"));
+   endcase
+
+   if (cfg.core_cfg.priv_spec_version == PRIV_VERSION_MASTER) begin
+     case(cfg.core_cfg.endianness)
+       ENDIAN_LITTLE, ENDIAN_BIG: $fwrite(fh, $sformatf("--override root/cpu/endianFixed=1\n"));
+       ENDIAN_MIXED:              $fwrite(fh, $sformatf("--override root/cpu/endianFixed=0\n"));
+     endcase
    end
 
 

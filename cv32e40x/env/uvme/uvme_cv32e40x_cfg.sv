@@ -32,6 +32,7 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
    bit                              obi_memory_instr_one_shot_err_enabled = 0;
    bit                              obi_memory_data_random_err_enabled    = 0;
    bit                              obi_memory_data_one_shot_err_enabled  = 0;
+   rand bit                         buserr_scoreboarding_enabled          = 1;
 
    // Agent cfg handles
    rand uvma_isacov_cfg_c           isacov_cfg;
@@ -50,6 +51,7 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_enum(uvm_active_passive_enum, is_active                   , UVM_DEFAULT          )
       `uvm_field_int (                         cov_model_enabled           , UVM_DEFAULT          )
       `uvm_field_int (                         trn_log_enabled             , UVM_DEFAULT          )
+      `uvm_field_int (                         buserr_scoreboarding_enabled, UVM_DEFAULT          )
       `uvm_field_int (                         sys_clk_period              , UVM_DEFAULT | UVM_DEC)
       `uvm_field_enum (cv32e40x_pkg::b_ext_e,  b_ext                       , UVM_DEFAULT          )
       `uvm_field_int (                         obi_memory_instr_random_err_enabled,   UVM_DEFAULT  )
@@ -69,13 +71,15 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_object(pma_cfg              , UVM_DEFAULT)
    `uvm_object_utils_end
 
+
    constraint defaults_cons {
-      soft enabled                == 0;
-      soft is_active              == UVM_PASSIVE;
-      soft scoreboarding_enabled  == 1;
-      soft cov_model_enabled      == 1;
-      soft trn_log_enabled        == 1;
-      soft sys_clk_period         == uvme_cv32e40x_sys_default_clk_period; // see uvme_cv32e40x_constants.sv
+      soft enabled                      == 0;
+      soft is_active                    == UVM_PASSIVE;
+      soft scoreboarding_enabled        == 1;
+      soft cov_model_enabled            == 1;
+      soft trn_log_enabled              == 1;
+      soft sys_clk_period               == uvme_cv32e40x_sys_default_clk_period; // see uvme_cv32e40x_constants.sv
+      soft buserr_scoreboarding_enabled == 1;
    }
 
    constraint cv32e40x_riscv_cons {
@@ -93,7 +97,7 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
       ext_f_supported        == 0;
       ext_d_supported        == 0;
 
-      if (b_ext == cv32e40x_pkg::NONE) {
+      if (b_ext == cv32e40x_pkg::B_NONE) {
          ext_zba_supported == 0;
          ext_zbb_supported == 0;
          ext_zbc_supported == 0;
@@ -125,6 +129,8 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
       unaligned_access_amo_supported == 1;
 
       bitmanip_version        == BITMANIP_VERSION_1P00;
+      priv_spec_version       == PRIV_VERSION_MASTER;
+      endianness              == ENDIAN_LITTLE;
 
       boot_addr_valid         == 1;
       mtvec_addr_valid        == 1;
@@ -134,7 +140,8 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
    }
 
    constraint default_cv32e40x_boot_cons {
-      (!hart_id_plusarg_valid)           -> (hart_id           == 'h0000_0000);
+      (!mhartid_plusarg_valid)           -> (mhartid           == 'h0000_0000);
+      (!mimpid_plusarg_valid)            -> (mimpid            == 'h0000_0000);
       (!boot_addr_plusarg_valid)         -> (boot_addr         == 'h0000_0080);
       (!mtvec_addr_plusarg_valid)        -> (mtvec_addr        == 'h0000_0000);
       (!nmi_addr_plusarg_valid)          -> (nmi_addr          == 'h0010_0000);
@@ -190,14 +197,12 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
       isacov_cfg.reg_hazards_enabled        == 1;
 
       rvfi_cfg.nret == uvme_cv32e40x_pkg::RVFI_NRET;
-      rvfi_cfg.nmi_handler_enabled         == 1;
+      rvfi_cfg.nmi_load_fault_enabled      == 1;
+      rvfi_cfg.nmi_load_fault_cause        == cv32e40x_pkg::INT_CAUSE_LSU_LOAD_FAULT;
+      rvfi_cfg.nmi_store_fault_enabled     == 1;
+      rvfi_cfg.nmi_store_fault_cause       == cv32e40x_pkg::INT_CAUSE_LSU_STORE_FAULT;
       rvfi_cfg.insn_bus_fault_enabled      == 1;
       rvfi_cfg.insn_bus_fault_cause        == cv32e40x_pkg::EXC_CAUSE_INSTR_BUS_FAULT;
-
-      rvvi_cfg.store_fault_nmi_cause       == cv32e40x_pkg::INT_CAUSE_LSU_STORE_FAULT;
-      rvvi_cfg.store_fault_nmi_cause_valid == 1;
-      rvvi_cfg.load_fault_nmi_cause        == cv32e40x_pkg::INT_CAUSE_LSU_LOAD_FAULT;
-      rvvi_cfg.load_fault_nmi_cause_valid  == 1;
 
       if (is_active == UVM_ACTIVE) {
          isacov_cfg.is_active           == UVM_PASSIVE;
@@ -214,23 +219,22 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
       if (trn_log_enabled) {
          // Setting a reasonable set of logs
          clknrst_cfg.trn_log_enabled           == 0;
-         interrupt_cfg.trn_log_enabled         == 0;
          debug_cfg.trn_log_enabled             == 0;
-         obi_memory_instr_cfg.trn_log_enabled  == 1;
+         interrupt_cfg.trn_log_enabled         == 0;
+         isacov_cfg.trn_log_enabled            == 0;
          obi_memory_data_cfg.trn_log_enabled   == 1;
+         obi_memory_instr_cfg.trn_log_enabled  == 1;
          rvfi_cfg.trn_log_enabled              == 1;
          rvvi_cfg.trn_log_enabled              == 1;
-         isacov_cfg.trn_log_enabled            == 0;
       } else {
-         isacov_cfg.trn_log_enabled            == 0;
          clknrst_cfg.trn_log_enabled           == 0;
-         interrupt_cfg.trn_log_enabled         == 0;
          debug_cfg.trn_log_enabled             == 0;
-         obi_memory_instr_cfg.trn_log_enabled  == 0;
+         interrupt_cfg.trn_log_enabled         == 0;
+         isacov_cfg.trn_log_enabled            == 0;
          obi_memory_data_cfg.trn_log_enabled   == 0;
+         obi_memory_instr_cfg.trn_log_enabled  == 0;
          rvfi_cfg.trn_log_enabled              == 0;
          rvvi_cfg.trn_log_enabled              == 0;
-         isacov_cfg.trn_log_enabled            == 0;
       }
 
       if (cov_model_enabled) {
@@ -242,7 +246,8 @@ class uvme_cv32e40x_cfg_c extends uvma_core_cntrl_cfg_c;
       }
 
       if (!scoreboarding_enabled) {
-         pma_cfg.scoreboard_enabled == 0;
+         buserr_scoreboarding_enabled == 0;
+         pma_cfg.scoreboard_enabled   == 0;
       }
    }
 
@@ -306,12 +311,19 @@ function uvme_cv32e40x_cfg_c::new(string name="uvme_cv32e40x_cfg");
 
    super.new(name);
 
+   core_name = "CV32E40X";
+
    if ($test$plusargs("USE_ISS"))
       use_iss = 1;
    if ($test$plusargs("trn_log_disabled")) begin
       trn_log_enabled = 0;
       trn_log_enabled.rand_mode(0);
    end
+   if ($test$plusargs("buserr_sb_disabled")) begin
+      buserr_scoreboarding_enabled = 0;
+      buserr_scoreboarding_enabled.rand_mode(0);
+   end
+
    if ($test$plusargs("obi_memory_instr_random_err"))
       obi_memory_instr_random_err_enabled = 1;
    if ($test$plusargs("obi_memory_instr_one_shot_err"))
@@ -403,9 +415,6 @@ endfunction : is_csr_check_disabled
 
 function void uvme_cv32e40x_cfg_c::configure_disable_csr_checks();
 
-   // Need to check
-   disable_csr_check("mcountinhibit");
-
    // Not possible to test on a cycle-by-cycle basis
    disable_csr_check("mip");
 
@@ -423,4 +432,5 @@ endfunction : configure_disable_csr_checks
 
 
 `endif // __UVME_CV32E40X_CFG_SV__
+
 
