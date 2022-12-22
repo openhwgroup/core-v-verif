@@ -22,13 +22,16 @@ parser.add_argument("--dry_run",                help="Prints generated yaml to s
 parser.add_argument("--core",                   help="Set the core to generate test for", choices=supported_cores)
 parser.add_argument("--pmp_num_regions",        help="Set number of Pmp regions",         type=str, default="0")
 parser.add_argument("--mhpmcounter_num",        help="Set number of mhpmcounters",        type=str, default="3")
+parser.add_argument("--num_triggers",           help="Set number of trigger registers",   type=str, default="1")
 parser.add_argument("--clic_enable",            help="Enable clic support",               action="store_true", default=False)
 parser.add_argument("--zc_enable",              help="Enable Zc support",                 action="store_true", default=False)
 parser.add_argument("--clint_enable",           help="Enable Basic Interrupts",           action="store_true", default=False)
+parser.add_argument("--debug_enable",           help="Enable Debug Registers",            action="store_true", default=False)
 parser.add_argument("--m_ext_enable",           help="Enable M extension",                action="store_true", default=False)
 parser.add_argument("--m_none_enable",          help="Disable M extension",               action="store_true", default=False)
 parser.add_argument("--i_ext_enable",           help="Enable I extension",                action="store_true", default=False)
 parser.add_argument("--e_ext_enable",           help="Enable E extension",                action="store_true", default=False)
+parser.add_argument("--xsecure_enable",         help="Enable Xsecure Registers",            action="store_true", default=False)
 parser.add_argument("--output",                 help="Output path",                       type=str)
 parser.add_argument("--iterations",             help="Number of generated tests",         type=str, default="1")
 
@@ -78,11 +81,11 @@ def preprocess_yaml():
       "m_ext":        False,
       "m_none":       False,
       "readonly":     False,
-      "trigger":      False,
       "xsecure":      False,
       "zc":           False,
       "mhpmcounters": 0,
       "pmp":          0,
+      "trigger":      0,
       }
 
     # CLIC
@@ -93,6 +96,10 @@ def preprocess_yaml():
     if (args.clint_enable or not args.clic_enable):
         str_args = str_args + "_clint"
         enabled_features["clint"] = True if not enabled_features["clic"] else False
+    # DEBUG
+    if (args.debug_enable):
+        str_args = str_args + "_debug"
+        enabled_features["debug"] = True
     # I/E
     if (args.i_ext_enable):
         str_args = str_args + "_i"
@@ -113,6 +120,10 @@ def preprocess_yaml():
     else:
         print("error: must have 'm_ext' or 'm_none'", file=sys.stderr)
         exit(1)
+    # XSECURE
+    if (args.xsecure_enable):
+        str_args = str_args + "_xsecure"
+        enabled_features["xsecure"] = True
     # ZC
     if (args.zc_enable):
         str_args = str_args + "_zc"
@@ -125,7 +136,13 @@ def preprocess_yaml():
     if (int(args.pmp_num_regions) > 0):
         str_args = str_args + "_pmp" + args.pmp_num_regions
         enabled_features["pmp"] = int(args.pmp_num_regions)
-    # TODO:silabs-robin "debug" and any other "enabled_features"?
+    # TRIGGERS
+    if (int(args.num_triggers) > 0):
+        str_args = str_args + "_triggers" + args.num_triggers
+        enabled_features["trigger"] = int(args.num_triggers)
+    # TODO:silabs-robin Any other "enabled_features"?
+
+    print("enabled_features: {}".format(enabled_features))
 
     output_script_path = os.path.join(args.output) + "{}_csr_template.yaml".format(args.core.lower() + str_args)
     if not args.dry_run:
