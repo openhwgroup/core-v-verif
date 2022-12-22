@@ -945,12 +945,14 @@ module uvmt_cv32e40s_tb;
       .debug_running          (core_i.debug_running_o),
       .debug_halted           (core_i.debug_halted_o),
 
+      .ctrl_fsm_async_debug_allowed  (core_i.controller_i.controller_fsm_i.async_debug_allowed),
       .pending_sync_debug     (core_i.controller_i.controller_fsm_i.pending_sync_debug),
       .pending_async_debug    (core_i.controller_i.controller_fsm_i.pending_async_debug),
       .pending_nmi            (core_i.controller_i.controller_fsm_i.pending_nmi),
       .nmi_allowed            (core_i.controller_i.controller_fsm_i.nmi_allowed),
       .debug_mode_q           (core_i.controller_i.controller_fsm_i.debug_mode_q),
       .trigger_match_in_wb    (core_i.controller_i.controller_fsm_i.trigger_match_in_wb),
+      .etrigger_in_wb         (core_i.controller_i.controller_fsm_i.etrigger_in_wb),
       .branch_in_ex           (core_i.controller_i.controller_fsm_i.branch_in_ex),
 
       .mie_q                  (core_i.cs_registers_i.mie_q),

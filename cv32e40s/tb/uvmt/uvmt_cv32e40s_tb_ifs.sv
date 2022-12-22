@@ -330,6 +330,7 @@ interface uvmt_cv32e40s_debug_cov_assert_if
 
     // Debug signals
     input         debug_req_i, // From controller
+    input         ctrl_fsm_async_debug_allowed,
     input         debug_havereset,
     input         debug_running,
     input         debug_halted,
@@ -351,6 +352,7 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     input  [31:0] tdata1,
     input  [31:0] tdata2,
     input  trigger_match_in_wb,
+    input  etrigger_in_wb,
 
     // Counter related input from cs_registers
     input  [31:0] mcountinhibit_q,
@@ -411,6 +413,7 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     tdata2,
     pending_sync_debug,
     trigger_match_in_wb,
+    etrigger_in_wb,
     sys_fence_insn_i,
     mcountinhibit_q,
     mcycle,
