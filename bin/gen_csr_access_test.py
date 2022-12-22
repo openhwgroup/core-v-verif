@@ -25,6 +25,8 @@ parser.add_argument("--mhpmcounter_num",        help="Set number of mhpmcounters
 parser.add_argument("--clic_enable",            help="Enable clic support",               action="store_true", default=False)
 parser.add_argument("--zc_enable",              help="Enable Zc support",                 action="store_true", default=False)
 parser.add_argument("--clint_enable",           help="Enable Basic Interrupts",           action="store_true", default=False)
+parser.add_argument("--m_ext_enable",           help="Enable M extension",                action="store_true", default=False)
+parser.add_argument("--m_none_enable",          help="Disable M extension",               action="store_true", default=False)
 parser.add_argument("--output",                 help="Output path",                       type=str)
 parser.add_argument("--iterations",             help="Number of generated tests",         type=str, default="1")
 
@@ -69,6 +71,8 @@ def preprocess_yaml():
       "clic":         False,
       "clint":        False,
       "debug":        False,
+      "m_ext":        False,
+      "m_none":       False,
       "readonly":     False,
       "trigger":      False,
       "xsecure":      False,
@@ -77,21 +81,37 @@ def preprocess_yaml():
       "pmp":          0,
       }
 
+    # CLIC
     if (args.clic_enable):
         str_args = str_args + "_clic"
         enabled_features["clic"] = True
+    # CLINT
     if (args.clint_enable or not args.clic_enable):
         str_args = str_args + "_clint"
         enabled_features["clint"] = True if not enabled_features["clic"] else False
+    # DEBUG
+    if (args.m_ext_enable):
+        str_args = str_args + "_m"
+        enabled_features["m_ext"] = True
+    elif (args.m_none_enable):
+        str_args = str_args + "_mnone"
+        enabled_features["m_none"] = True
+    else:
+        print("error: must have 'm_ext' or 'm_none'", file=sys.stderr)
+        exit(1)
+    # ZC
     if (args.zc_enable):
         str_args = str_args + "_zc"
         enabled_features["zc"] = True
-    if (int(args.pmp_num_regions) > 0):
-        str_args = str_args + "_pmp" + args.pmp_num_regions
-        enabled_features["pmp"] = int(args.pmp_num_regions)
+    # MHPMCOUNTERS
     if (int(args.mhpmcounter_num) > 0):
         str_args = str_args + "_mhpmctr" + args.mhpmcounter_num
         enabled_features["mhpmcounters"] = int(args.mhpmcounter_num)
+    # PMP
+    if (int(args.pmp_num_regions) > 0):
+        str_args = str_args + "_pmp" + args.pmp_num_regions
+        enabled_features["pmp"] = int(args.pmp_num_regions)
+    # TODO:silabs-robin Any other "enabled_features"?
 
     output_script_path = os.path.join(args.output) + "{}_csr_template.yaml".format(args.core.lower() + str_args)
     if not args.dry_run:
