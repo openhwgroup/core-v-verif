@@ -64,6 +64,9 @@ module uvmt_cv32e40s_debug_assert
   logic first_debug_ins;
   logic started_decoding_in_debug;
 
+  logic first_fetch;
+  logic fetch_enable_i_q;
+
   // ---------------------------------------------------------------------------
   // Clocking blocks
   // ---------------------------------------------------------------------------
@@ -71,6 +74,7 @@ module uvmt_cv32e40s_debug_assert
   // Single clock, single reset design, use default clocking
   default clocking @(posedge cov_assert_if.clk_i); endclocking
   default disable iff !(cov_assert_if.rst_ni);
+
 
   assign cov_assert_if.is_ebreak =
     cov_assert_if.wb_valid
@@ -90,7 +94,7 @@ module uvmt_cv32e40s_debug_assert
     && (cov_assert_if.wb_stage_instr_rdata_i[14:12] == 3'b010)
     && (cov_assert_if.wb_stage_instr_rdata_i[6:0]   == 7'h33);
 
-  assign is_trigger_match = cov_assert_if.trigger_match_in_wb && cov_assert_if.wb_valid;
+  assign is_trigger_match = (cov_assert_if.trigger_match_in_wb || cov_assert_if.etrigger_in_wb) && cov_assert_if.wb_valid;
 
   assign mtvec_addr = {cov_assert_if.mtvec[31:2], 2'b00};
 
@@ -190,7 +194,7 @@ module uvmt_cv32e40s_debug_assert
         && !cov_assert_if.dcsr_q[2]
         && !cov_assert_if.dcsr_q[15]
         ##0 (
-          (!(cov_assert_if.pending_sync_debug || cov_assert_if.pending_async_debug) &&
+          (!(cov_assert_if.pending_sync_debug || cov_assert_if.pending_async_debug || is_trigger_match) &&
            !cov_assert_if.irq_ack_o && !cov_assert_if.pending_nmi)
           throughout (##1 cov_assert_if.wb_valid [->1])
           )
@@ -678,7 +682,7 @@ module uvmt_cv32e40s_debug_assert
             pc_at_ebreak <= 32'h0;
         end else begin
             // Capture debug pc
-            if (cov_assert_if.ctrl_fsm_cs == cv32e40s_pkg::BOOT_SET) begin
+            if (first_fetch) begin
                 pc_at_dbg_req <= {cov_assert_if.boot_addr_i[31:2], 2'b00};
             end
             if (rvfi.rvfi_valid) begin
@@ -743,7 +747,7 @@ module uvmt_cv32e40s_debug_assert
           end
 
           // Capture boot addr
-          if(cov_assert_if.ctrl_fsm_cs == cv32e40s_pkg::BOOT_SET)
+          if(first_fetch)
               boot_addr_at_entry <= {cov_assert_if.boot_addr_i[31:2], 2'b00};
       end
   end
@@ -777,14 +781,19 @@ module uvmt_cv32e40s_debug_assert
         if( !cov_assert_if.rst_ni) begin
             debug_cause_pri <= 3'b000;
         end else if(!cov_assert_if.debug_mode_q) begin
-            if (is_trigger_match) begin
+            //TODO:MT for haltreq: Changes will happen.
+            // a flopped debug_req will be required to wake from wfi, and will have to be added
+            // At the moment ctrl_fsm_cs == FUNCTIONAL, this will change
+            if(cov_assert_if.debug_req_i && cov_assert_if.ctrl_fsm_async_debug_allowed && cov_assert_if.ctrl_fsm_cs == cv32e40s_pkg::FUNCTIONAL) begin
+                debug_cause_pri <= 3'b011;  // Haltreq
+            //end else if((cov_assert_if.debug_req_i || cov_assert_if.debug_req_q)
+            //            && (cov_assert_if.ctrl_fsm_cs == cv32e40s_pkg::FUNCTIONAL)) begin
+
+
+            end else if (is_trigger_match) begin
                 debug_cause_pri <= 3'b010;  // Trigger match
             end else if(cov_assert_if.dcsr_q[15] && (cov_assert_if.is_ebreak || cov_assert_if.is_cebreak)) begin
                 debug_cause_pri <= 3'b001;  // Ebreak
-            //TODO:MT temp disable for removal of debug_req_q
-            //end else if((cov_assert_if.debug_req_i || cov_assert_if.debug_req_q)
-            //            && (cov_assert_if.ctrl_fsm_cs == cv32e40s_pkg::FUNCTIONAL)) begin
-            //    debug_cause_pri <= 3'b011;  // Haltreq
             end else if((cov_assert_if.dcsr_q[2]) && (debug_cause_pri inside {3'b100, 0})) begin  // "step"
                 debug_cause_pri <= 3'b100;  // Single step
             end else if(cov_assert_if.ctrl_fsm_cs == cv32e40s_pkg::FUNCTIONAL) begin
@@ -819,5 +828,17 @@ module uvmt_cv32e40s_debug_assert
             end
         end
     end
+
+    //detect core startup
+    assign first_fetch = cov_assert_if.fetch_enable_i && !fetch_enable_i_q;
+
+    always@ (posedge cov_assert_if.clk_i or negedge cov_assert_if.rst_ni) begin
+        if( !cov_assert_if.rst_ni || !cov_assert_if.fetch_enable_i) begin
+            fetch_enable_i_q <= 0;
+        end else begin
+            fetch_enable_i_q <= 1;
+        end
+    end
+
 
 endmodule : uvmt_cv32e40s_debug_assert
