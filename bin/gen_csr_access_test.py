@@ -27,6 +27,8 @@ parser.add_argument("--zc_enable",              help="Enable Zc support",       
 parser.add_argument("--clint_enable",           help="Enable Basic Interrupts",           action="store_true", default=False)
 parser.add_argument("--m_ext_enable",           help="Enable M extension",                action="store_true", default=False)
 parser.add_argument("--m_none_enable",          help="Disable M extension",               action="store_true", default=False)
+parser.add_argument("--i_ext_enable",           help="Enable I extension",                action="store_true", default=False)
+parser.add_argument("--e_ext_enable",           help="Enable E extension",                action="store_true", default=False)
 parser.add_argument("--output",                 help="Output path",                       type=str)
 parser.add_argument("--iterations",             help="Number of generated tests",         type=str, default="1")
 
@@ -71,6 +73,8 @@ def preprocess_yaml():
       "clic":         False,
       "clint":        False,
       "debug":        False,
+      "e_ext":        False,
+      "i_ext":        False,
       "m_ext":        False,
       "m_none":       False,
       "readonly":     False,
@@ -89,7 +93,17 @@ def preprocess_yaml():
     if (args.clint_enable or not args.clic_enable):
         str_args = str_args + "_clint"
         enabled_features["clint"] = True if not enabled_features["clic"] else False
-    # DEBUG
+    # I/E
+    if (args.i_ext_enable):
+        str_args = str_args + "_i"
+        enabled_features["i_ext"] = True
+    elif (args.e_ext_enable):
+        str_args = str_args + "_e"
+        enabled_features["e_ext"] = True
+    else:
+        print("error: must have 'i_ext' or 'e_ext'", file=sys.stderr)
+        exit(1)
+    # M
     if (args.m_ext_enable):
         str_args = str_args + "_m"
         enabled_features["m_ext"] = True
@@ -111,7 +125,7 @@ def preprocess_yaml():
     if (int(args.pmp_num_regions) > 0):
         str_args = str_args + "_pmp" + args.pmp_num_regions
         enabled_features["pmp"] = int(args.pmp_num_regions)
-    # TODO:silabs-robin Any other "enabled_features"?
+    # TODO:silabs-robin "debug" and any other "enabled_features"?
 
     output_script_path = os.path.join(args.output) + "{}_csr_template.yaml".format(args.core.lower() + str_args)
     if not args.dry_run:
