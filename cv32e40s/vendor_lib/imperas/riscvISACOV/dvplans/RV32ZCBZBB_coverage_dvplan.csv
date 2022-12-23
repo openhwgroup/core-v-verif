@@ -1,0 +1,19 @@
+RV32ZCBZBB,Zcb Code Size Reduction extension and Zbb Bitmanip,1.0.0
+xlen,32
+""
+Extension,Subset,Instruction,Description,Covergroup,Coverpoint,Coverpoint Description,Coverage Level,Pass/Fail Criteria,Test Type,Coverage Method
+RV32ZCBZBB,ZcbZbb,c.sext.b,"Sign extend byte, 16-bit encoding",c_sext_b_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp,RD (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_toggle,RDP Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+RV32ZCBZBB,ZcbZbb,c.zext.h,"Zero extend halfword, 16-bit encoding",c_zext_h_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp,RD (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_toggle,RDP Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+RV32ZCBZBB,ZcbZbb,c.sext.h,"Sign extend halfword, 16-bit encoding",c_sext_h_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp,RD (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_toggle,RDP Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage

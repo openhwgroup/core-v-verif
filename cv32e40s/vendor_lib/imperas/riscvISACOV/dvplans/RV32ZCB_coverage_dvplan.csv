@@ -1,0 +1,54 @@
+RV32ZCB,Zcb Code Size Reduction extension for simple code-size saving instructions,1.0.0
+xlen,32
+""
+Extension,Subset,Instruction,Description,Covergroup,Coverpoint,Coverpoint Description,Coverage Level,Pass/Fail Criteria,Test Type,Coverage Method
+RV32ZCB,Zcb,c.lbu,"load unsigned byte, 16-bit encoding",c_lbu_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp,RD (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p,RS1 (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_toggle,RDP Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p_toggle,RS1P Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+RV32ZCB,Zcb,c.lhu,"load unsigned halfword, 16-bit encoding",c_lhu_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp,RD (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p,RS1 (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_toggle,RDP Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p_toggle,RS1P Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+RV32ZCB,Zcb,c.lh,"load signed halfword, 16-bit encoding",c_lh_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp,RD (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p,RS1 (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_toggle,RDP Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p_toggle,RS1P Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+RV32ZCB,Zcb,c.sb,"store byte, 16-bit encoding",c_sb_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p,RS1 (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs2p,RS2 (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p_toggle,RS1P Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs2p_toggle,RS2P Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs2p_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+RV32ZCB,Zcb,c.sh,"store halfword, 16-bit encoding",c_sh_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p,RS1 (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs2p,RS2 (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p_toggle,RS1P Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs1p_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs2p_toggle,RS2P Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs2p_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+RV32ZCB,Zcb,c.zext.b,"Zero extend byte, 16-bit encoding",c_zext_b_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp,RD (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_toggle,RDP Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+RV32ZCB,Zcb,c.not,"Bitwise not, 16-bit encoding",c_not_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp,RD (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_toggle,RDP Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage

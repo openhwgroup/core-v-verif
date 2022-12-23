@@ -1,0 +1,40 @@
+RV32ZCMP,Zcmp Code Size Reduction extension for stack register operations,1.0.0
+xlen,32
+""
+Extension,Subset,Instruction,Description,Covergroup,Coverpoint,Coverpoint Description,Coverage Level,Pass/Fail Criteria,Test Type,Coverage Method
+RV32ZCMP,Zcmp,cm.push,Create Stack Frame,cm_push_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg_list,Stack register List,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_stack_adj,Stack adjust value,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cr_sreg_list_stack_adjust,Cross coverage of sreg list and stack adjust,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+RV32ZCMP,Zcmp,cm.pop,Destroy Stack Frame,cm_pop_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg_list,Stack register List,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_stack_adj,Stack adjust value,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cr_sreg_list_stack_adjust,Cross coverage of sreg list and stack adjust,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+RV32ZCMP,Zcmp,cm.popretz,"Destroy Stack Frame, move zero into a0, return to ra",cm_popretz_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg_list,Stack register List,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_stack_adj,Stack adjust value,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cr_sreg_list_stack_adjust,Cross coverage of sreg list and stack adjust,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+RV32ZCMP,Zcmp,cm.popret,"Destroy Stack Frame, return to ra",cm_popret_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg_list,Stack register List,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_stack_adj,Stack adjust value,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cr_sreg_list_stack_adjust,Cross coverage of sreg list and stack adjust,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+RV32ZCMP,Zcmp,cm.mvsa01,Move a0-a1 into two registers of s0-s7,cm_mvsa01_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg1,Sreg register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg2,Sreg register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg1_toggle,Sreg1 Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg1_maxvals,Sreg1 Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg2_toggle,Sreg2 Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg2_maxvals,Sreg2 Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+RV32ZCMP,Zcmp,cm.mva01s,Move two s0-s7 registers into a0-a1,cm_mva01s_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg1,Sreg register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg2,Sreg register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg1_toggle,Sreg1 Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg1_maxvals,Sreg1 Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg2_toggle,Sreg2 Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_sreg2_maxvals,Sreg2 Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage

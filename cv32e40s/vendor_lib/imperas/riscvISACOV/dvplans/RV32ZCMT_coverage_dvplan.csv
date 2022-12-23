@@ -1,0 +1,10 @@
+RV32ZCMT,Zcmt Code Size Reduction extension with table jump operations,1.0.0
+xlen,32
+""
+Extension,Subset,Instruction,Description,Covergroup,Coverpoint,Coverpoint Description,Coverage Level,Pass/Fail Criteria,Test Type,Coverage Method
+RV32ZCMT,Zcmt,cm.jt,Jump via table,cm_jt_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_imm_index,JVT index,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+RV32ZCMT,Zcmt,cm.jalt,jump via table with optional link,cm_jalt_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_imm_index,JVT index,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage

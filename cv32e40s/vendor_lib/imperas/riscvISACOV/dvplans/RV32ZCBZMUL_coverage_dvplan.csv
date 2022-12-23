@@ -1,0 +1,12 @@
+RV32ZCBZMUL,Zcb Code Size Reduction extension and M or Zmmul,1.0.0
+xlen,32
+""
+Extension,Subset,Instruction,Description,Covergroup,Coverpoint,Coverpoint Description,Coverage Level,Pass/Fail Criteria,Test Type,Coverage Method
+RV32ZCBZMUL,ZcbZmul,c.mul,"Multiply, 16-bit encoding",c_mul_cg,,,,,,
+,,,,,cp_asm_count,Number of times instruction is executed,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp,RD (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs2p,RS2 (GPR) register assignment,Compliance Basic,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_toggle,RDP Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rdp_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs2p_toggle,RS2P Toggle bits,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage
+,,,,,cp_rs2p_maxvals,RDP Max values,Compliance Extended,Check against Reference Model,Constrained-Random,Functional Coverage

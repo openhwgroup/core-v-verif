@@ -320,6 +320,10 @@ module uvmt_cv32e40s_imperas_dv_wrap
 
    trace2log       trace2log(rvvi);
 
+//`ifdef RVVI_COVERAGE
+   trace2cov       riscvISACOV(rvvi);
+//`endif
+
    string info_tag = "ImperasDV_wrap";
 
    // Make the UVM environment configuration available to the Reference Model as needed.

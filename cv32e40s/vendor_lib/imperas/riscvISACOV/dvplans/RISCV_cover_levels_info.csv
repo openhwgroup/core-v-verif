@@ -1,0 +1,168 @@
+Coverage levels and the cover types that are included in them.
+,
+Coverage Level,Coverpoint Description
+Compliance Basic,
+,RD (GPR) register assignment
+,RS1 (GPR) register assignment
+,RS2 (GPR) register assignment
+,Branch offset
+,CSR source
+,CSR destination
+,Immediate value sign
+,jmp value
+,Cross coverage of RD sign and RS1 sign
+,Cross coverage of RS1 sign and RS2 sign
+,Cross coverage of RS1 sign and Imm sign
+,VSEW value (vectors)
+,VMUL value (vectors)
+,VTA value (vectors)
+,VMA value (vectors)
+,VD (VR) register assignment
+,VM value (vectors)
+,VS3 (VR) register assignment
+,VS2 (VR) register assignment
+,VS1 (VR) register assignment
+,V0 value (vectors)
+,Immediate value (vectors)
+,WD value (vectors)
+,NF value (vectors)
+,RS3 (GPR) register assignment
+,BS value
+,RCON value
+,FD (FPR) register assignment
+,FS1 (FPR) register assignment
+,FS2 (FPR) register assignment
+,FS3 (FPR) register assignment
+,Floating Point FRM (Rounding mode) given as an operand
+,"Value of fcsr CSR, frm field"
+,"Value of fcsr CSR, fflags field"
+,"Value of frm CSR, frm field"
+,"Value of frm CSR, fflags field"
+,Immediate value (basic)
+,Stack register List
+,Stack adjust value
+,Sreg register assignment
+,JVT index
+,
+Compliance Extended,
+,Compare RD and RS1 register assignment
+,Compare RD and RS2 register assignment
+,Compare RS1 and RS2 register assignment
+,RD Toggle bits
+,RDP Toggle bits
+,RS1 Toggle bits
+,RS1P Toggle bits
+,RS2 Toggle bits
+,RS2P Toggle bits
+,RD Max values
+,RDP Max values
+,FD FRM (ins rounding mode) Cross
+,FS1 FRM (ins rounding mode) Cross
+,FS2 FRM (ins rounding mode) Cross
+,FS3 FRM (ins rounding mode) Cross
+,FD FS1 Cross
+,FD FS2 Cross
+,FD FS3 Cross
+,FS1 FS2 Cross
+,FS1 FS2 FS3 Cross
+,FD RS1 Cross
+,FS2 RS1 Cross
+,RD FS1 Cross
+,FD CSR.FRM (ins rounding mode) Cross
+,Sreg1 Toggle bits
+,Sreg1 Max values
+,Sreg2 Toggle bits
+,Sreg2 Max values
+,Cross coverage of sreg list and stack adjust
+,
+DV Un-privileged Basic,
+,FD FPU Special values
+,FS1 FPU Special values
+,FS2 FPU Special values
+,FS3 FPU Special values
+,FD FPU values Cross
+,FS1 FPU values Cross
+,FS2 FPU values Cross
+,FS3 FPU values Cross
+,
+DV Un-privileged Extended,
+,
+DV Privileged Basic,
+,mseccfg (CSR) field rlb
+,mseccfg (CSR) field mmwp
+,mseccfg (CSR) field mml
+,pmpcfg0 (CSR) field pmp0 xwr
+,pmpcfg0 (CSR) field pmp0 a
+,pmpcfg0 (CSR) field pmp0 l
+,pmpcfg0 (CSR) field pmp1 xwr
+,pmpcfg0 (CSR) field pmp1 a
+,pmpcfg0 (CSR) field pmp1 l
+,pmpcfg0 (CSR) field pmp2 xwr
+,pmpcfg0 (CSR) field pmp2 a
+,pmpcfg0 (CSR) field pmp2 l
+,pmpcfg0 (CSR) field pmp3 xwr
+,pmpcfg0 (CSR) field pmp3 a
+,pmpcfg0 (CSR) field pmp3 l
+,pmpcfg1 (CSR) field pmp4 xwr
+,pmpcfg1 (CSR) field pmp4 a
+,pmpcfg1 (CSR) field pmp4 l
+,pmpcfg1 (CSR) field pmp5 xwr
+,pmpcfg1 (CSR) field pmp5 a
+,pmpcfg1 (CSR) field pmp5 l
+,pmpcfg1 (CSR) field pmp6 xwr
+,pmpcfg1 (CSR) field pmp6 a
+,pmpcfg1 (CSR) field pmp6 l
+,pmpcfg1 (CSR) field pmp7 xwr
+,pmpcfg1 (CSR) field pmp7 a
+,pmpcfg1 (CSR) field pmp7 l
+,pmpcfg0 (CSR) field pmp4 xwr
+,pmpcfg0 (CSR) field pmp4 a
+,pmpcfg0 (CSR) field pmp4 l
+,pmpcfg0 (CSR) field pmp5 xwr
+,pmpcfg0 (CSR) field pmp5 a
+,pmpcfg0 (CSR) field pmp5 l
+,pmpcfg0 (CSR) field pmp6 xwr
+,pmpcfg0 (CSR) field pmp6 a
+,pmpcfg0 (CSR) field pmp6 l
+,pmpcfg0 (CSR) field pmp7 xwr
+,pmpcfg0 (CSR) field pmp7 a
+,pmpcfg0 (CSR) field pmp7 l
+,pmpcfg2 (CSR) field pmp8 xwr
+,pmpcfg2 (CSR) field pmp8 a
+,pmpcfg2 (CSR) field pmp8 l
+,pmpcfg2 (CSR) field pmp9 xwr
+,pmpcfg2 (CSR) field pmp9 a
+,pmpcfg2 (CSR) field pmp9 l
+,pmpcfg2 (CSR) field pmp10 xwr
+,pmpcfg2 (CSR) field pmp10 a
+,pmpcfg2 (CSR) field pmp10 l
+,pmpcfg2 (CSR) field pmp11 xwr
+,pmpcfg2 (CSR) field pmp11 a
+,pmpcfg2 (CSR) field pmp11 l
+,pmpcfg3 (CSR) field pmp12 xwr
+,pmpcfg3 (CSR) field pmp12 a
+,pmpcfg3 (CSR) field pmp12 l
+,pmpcfg3 (CSR) field pmp13 xwr
+,pmpcfg3 (CSR) field pmp13 a
+,pmpcfg3 (CSR) field pmp13 l
+,pmpcfg3 (CSR) field pmp14 xwr
+,pmpcfg3 (CSR) field pmp14 a
+,pmpcfg3 (CSR) field pmp14 l
+,pmpcfg3 (CSR) field pmp15 xwr
+,pmpcfg3 (CSR) field pmp15 a
+,pmpcfg3 (CSR) field pmp15 l
+,pmpcfg2 (CSR) field pmp12 xwr
+,pmpcfg2 (CSR) field pmp12 a
+,pmpcfg2 (CSR) field pmp12 l
+,pmpcfg2 (CSR) field pmp13 xwr
+,pmpcfg2 (CSR) field pmp13 a
+,pmpcfg2 (CSR) field pmp13 l
+,pmpcfg2 (CSR) field pmp14 xwr
+,pmpcfg2 (CSR) field pmp14 a
+,pmpcfg2 (CSR) field pmp14 l
+,pmpcfg2 (CSR) field pmp15 xwr
+,pmpcfg2 (CSR) field pmp15 a
+,pmpcfg2 (CSR) field pmp15 l
+,
+DV Privileged Extended,
+,
