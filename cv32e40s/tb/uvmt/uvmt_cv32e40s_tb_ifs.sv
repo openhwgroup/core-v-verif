@@ -242,6 +242,7 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_i_controller_i_controller_fsm_i_pending_nmi,
     input logic core_i_controller_i_controller_fsm_i_dcsr_i_step,
     input logic core_i_controller_i_controller_fsm_i_dcsr_i_stepie,
+    input logic core_controller_controller_fsm_debug_mode_q,
 
     // IF stage
     input logic core_if_stage_if_valid_o,
