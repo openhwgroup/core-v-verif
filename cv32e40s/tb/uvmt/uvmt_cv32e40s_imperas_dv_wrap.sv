@@ -360,6 +360,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
    assign rvvi.pc_rdata[0][0] = `RVFI_IF.rvfi_pc_rdata;
    assign rvvi.pc_wdata[0][0] = `RVFI_IF.rvfi_pc_wdata;
 
+   `RVVI_SET_CSR( `CSR_JVT_ADDR,           jvt           )
    `RVVI_SET_CSR( `CSR_MSTATUS_ADDR,       mstatus       )
    `RVVI_SET_CSR( `CSR_MISA_ADDR,          misa          )
    `RVVI_SET_CSR( `CSR_MIE_ADDR,           mie           )

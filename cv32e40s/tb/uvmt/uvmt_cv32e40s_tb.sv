@@ -157,6 +157,7 @@ module uvmt_cv32e40s_tb;
                                                                    );
 
   // RVFI CSR binds
+  `RVFI_CSR_BIND(jvt)
   `RVFI_CSR_BIND(marchid)
   `RVFI_CSR_BIND(mcountinhibit)
   `RVFI_CSR_BIND(mstatus)
@@ -1155,6 +1156,7 @@ module uvmt_cv32e40s_tb;
      uvm_config_db#(virtual uvma_clic_if                )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("clic_vif"),      .value(clic_if) );
      uvm_config_db#(virtual uvma_debug_if               )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_vif"),     .value(debug_if)     );
 //     uvm_config_db#(virtual uvmt_cv32e40s_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"),                 .field_name("debug_cov_vif"),    .value(debug_cov_assert_if));
+     `RVFI_CSR_UVM_CONFIG_DB_SET(jvt)
      `RVFI_CSR_UVM_CONFIG_DB_SET(marchid)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mcountinhibit)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mstatus)
