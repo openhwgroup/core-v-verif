@@ -1,0 +1,20 @@
+CSR access test for (a practical subset of) implemented CSRs (i.e. not for the _whole_ 4096 range).
+
+Generated from "riscv-dv"'s `scripts/gen_csr_test.py`, via core-v-verif's
+`bin/gen_csr_access_test.py`, using the csr yaml definition in the core's repo.
+
+From top-level:
+```
+python3 ./bin/gen_csr_access_test.py  \
+  --core=cv32e40s     \
+  --clint_enable      \
+  --i_ext_enable      \
+  --m_ext_enable      \
+  --xsecure_enable    \
+  --zc_enable         \
+  --num_triggers    1 \
+  --mhpmcounter_num 0 \
+  --pmp_num_regions 0 \
+  --output=./cv32e40s/tests/programs/custom/cv32e40s_csr_access_test/
+```
+(The above options were the most applicable at the time of writing and are subject to change.)
