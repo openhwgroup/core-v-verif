@@ -19,6 +19,10 @@
 
 proc cvfv_rerun {} {
   vlog  -mfcu  -f fv.flist
+  #netlist  create  -d uvmt_cv32e40s_tb  -work work  -tool formal
+  formal  compile  -d uvmt_cv32e40s_tb  -work work
+  #formal  verify
+  #qverify ./propcheck.db
 }
 
 cvfv_rerun
