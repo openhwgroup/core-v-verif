@@ -10,7 +10,6 @@ python3 ./bin/gen_csr_access_test.py  \
   --clint_enable      \
   --i_ext_enable      \
   --m_ext_enable      \
-  --xsecure_enable    \
   --zc_enable         \
   --num_triggers    1 \
   --mhpmcounter_num 0 \
@@ -18,3 +17,5 @@ python3 ./bin/gen_csr_access_test.py  \
   --output=./cv32e40s/tests/programs/custom/cv32e40s_csr_access_test/
 ```
 (The above options were the most applicable at the time of writing and are subject to change.)
+
+[comment]: # (TODO:silabs-robin Regen with "--xsecure_enable" etc after iss bugfix and rtl progression)
