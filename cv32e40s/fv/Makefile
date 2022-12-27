@@ -51,8 +51,7 @@ jg:  $(CV_CORE_PKG)
 
 ## Questa
 q:  $(CV_CORE_PKG)
-	$(CV_SIM_PREFIX)  qverify  -c  -do "vlog  -mfcu  -f fv.flist"
-	$(CV_SIM_PREFIX)  qverify  -c  -do "formal  compile  -d uvmt_cv32e40s_tb  -work work"
+	$(CV_SIM_PREFIX)  qverify  -c  -do q.tcl
 	# Note: Run the compilation in gui to see compilation warnings!
 	$(CV_SIM_PREFIX)  qverify  ./propcheck.db/
 	# TODO:robin-silabs  Move to "mk/fv/jg.mk"?
