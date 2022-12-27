@@ -16,7 +16,7 @@
 # SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
 
-# Defines and includes
+# Defines and Includes
 
 CORE_V_VERIF ?= $(realpath ../..)
 
@@ -35,19 +35,24 @@ DPI_DASM_SPIKE_REPO ?= TODO_dontwanttodefinethis
 include  $(CORE_V_VERIF)/mk/fv/fv.mk
 
 
-# Make target
+# Safety Check
 
 ifndef  CV_SIM_PREFIX
   $(warning  CV_SIM_PREFIX undefined)
 endif
 
-default:
-	@echo which target?
 
+# Make Targets
+
+## JasperGold
 jg:  $(CV_CORE_PKG)
 	$(CV_SIM_PREFIX)  jaspergold  jg.tcl
 	# TODO:robin-silabs  Move to "mk/fv/jg.mk"?
 
+## Questa
 q:  $(CV_CORE_PKG)
-	$(CV_SIM_PREFIX)  qverify  -do q.tcl
-	#$(CV_SIM_PREFIX)  vlog  -msglimitcount 1 -msglimit error  -f fv.flist
+	$(CV_SIM_PREFIX)  qverify  -c  -do "vlog  -mfcu  -f fv.flist"
+	$(CV_SIM_PREFIX)  qverify  -c  -do "formal  compile  -d uvmt_cv32e40s_tb  -work work"
+	# Note: Run the compilation in gui to see compilation warnings!
+	$(CV_SIM_PREFIX)  qverify  ./propcheck.db/
+	# TODO:robin-silabs  Move to "mk/fv/jg.mk"?
