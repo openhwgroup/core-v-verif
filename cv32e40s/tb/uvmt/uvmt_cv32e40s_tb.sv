@@ -671,103 +671,49 @@ module uvmt_cv32e40s_tb;
 
   localparam PMP_ADDR_WIDTH = (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY > 0) ? 33 - uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY : 32;
 
-  logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q;
-  logic [PMP_MAX_REGIONS-1:0][PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q;
+  // Shadow:
+  mseccfg_t pmp_mseccfg_q_shadow_q;
+  pmpncfg_t pmpncfg_q_shadow_q[PMP_MAX_REGIONS];
+  logic [PMP_ADDR_WIDTH-1:0] pmp_addr_q_shadow_q[PMP_MAX_REGIONS];
 
-  logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q;
-  logic [PMP_MAX_REGIONS-1:0][PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q;
-
-  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q;
-  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q;
-
-  // SMCLIC
-  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q;
-  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q;
-  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q;
-  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q;
-
-  logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q;
-  logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q;
-  logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q;
-  logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q;
-
-
-  // BASE
-  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q;
-  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q;
-
-  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q;
-  logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q;
-
+  mtvt_t mtvt_q_shadow_q;
+  mtvec_t mtvec_q_shadow_q;
+  mintstatus_t mintstatus_q_shadow_q;
+  logic [31:0] mintthresh_q_shadow_q;
+  logic [31:0] mie_q_hardened_shadow_q;
 
   // PMP register
   generate
     if (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS > 0) begin
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q     = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.gen_hardened.shadow_q);
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q                 = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.rdata_q);
-
+      assign pmp_mseccfg_q_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.gen_hardened.shadow_q);
     end else begin
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q     = '0;
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q                 = '0;
-
+      assign pmp_mseccfg_q_shadow_q = '0;
     end
   endgenerate
 
-generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n++) begin
-    // Shadow:
-    assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.gen_hardened.shadow_q;
-    assign dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.gen_hardened.shadow_q;
-
-    // CSR:
-    assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q[n]  = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.rdata_q;
-    assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.rdata_q;
-
+  generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n++) begin
+    assign pmpncfg_q_shadow_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.gen_hardened.shadow_q;
+    assign pmp_addr_q_shadow_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.gen_hardened.shadow_q;
   end endgenerate
-
 
   generate
     if (SMCLIC==1) begin
 
-      //Shadow registers - SMILIC
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q         = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvt_csr_i.gen_hardened.shadow_q);
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q        = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvec_csr_i.gen_hardened.shadow_q);
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q   = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintstatus_csr_i.gen_hardened.shadow_q);
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q   = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintthresh_csr_i.gen_hardened.shadow_q);
+      assign mtvt_q_shadow_q       = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvt_csr_i.gen_hardened.shadow_q);
+      assign mtvec_q_shadow_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvec_csr_i.gen_hardened.shadow_q);
+      assign mintstatus_q_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintstatus_csr_i.gen_hardened.shadow_q);
+      assign mintthresh_q_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintthresh_csr_i.gen_hardened.shadow_q);
 
-      //Shadow registers - BASIC
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q    = '0;
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q      = '0;
-
-      //CSR registers - SMCLIC
-      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q                      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvt_csr_i.rdata_q);
-      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q                     = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvec_csr_i.rdata_q);
-      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q                = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintstatus_csr_i.rdata_q);
-      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q                = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintthresh_csr_i.rdata_q);
-
-      //CSR registers - BASIC
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q    = '0;
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q      = '0;
+      assign mie_q_hardened_shadow_q = '0;
 
     end else begin
 
-      //Shadow registers - SMILIC
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q         = '0;
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q        = '0;
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q   = '0;
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q   = '0;
+      assign mtvt_q_shadow_q       = '0;
+      assign mtvec_q_shadow_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.gen_hardened.shadow_q);
+      assign mintstatus_q_shadow_q = '0;
+      assign mintthresh_q_shadow_q = '0;
 
-      //Shadow registers - BASIC
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q    = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.gen_hardened.shadow_q);
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.gen_hardened.shadow_q);
-
-      //CSR registers - SMCLIC
-      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q               = '0;
-      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q         = '0;
-      assign dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q         = '0;
-
-      //CSR registers - BASIC
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q    = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.rdata_q);
-      assign dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.rdata_q);
+      assign mie_q_hardened_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.gen_hardened.shadow_q);
 
     end
   endgenerate
@@ -790,9 +736,29 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_register_file_wrapper_register_file_mem                                                                     (core_i.register_file_wrapper_i.register_file_i.mem),
       .core_i_jump_target_id                                                                                            (core_i.jump_target_id),
 
-      // OBI signals
+      // OBI interface
+      .core_i_if_stage_i_bus_resp                                                                                       (core_i.if_stage_i.bus_resp),
+      .core_i_load_store_unit_i_bus_resp                                                                                (core_i.load_store_unit_i.bus_resp),
+
+      .core_i_m_c_obi_data_if_req_payload                                                                               (core_i.m_c_obi_data_if.req_payload),
+      .core_i_m_c_obi_data_if_resp_payload                                                                              (core_i.m_c_obi_data_if.resp_payload),
+      .core_i_m_c_obi_instr_if_req_payload                                                                              (core_i.m_c_obi_instr_if.req_payload),
+      .core_i_m_c_obi_instr_if_resp_payload                                                                             (core_i.m_c_obi_instr_if.resp_payload),
+
+      .core_i_m_c_obi_data_if_s_req_req                                                                                 (core_i.m_c_obi_data_if.s_req.req),
+      .core_i_m_c_obi_data_if_s_req_reqpar                                                                              (core_i.m_c_obi_data_if.s_req.reqpar),
+      .core_i_m_c_obi_data_if_s_gnt_gnt                                                                                 (core_i.m_c_obi_data_if.s_gnt.gnt),
+      .core_i_m_c_obi_data_if_s_gnt_gntpar                                                                              (core_i.m_c_obi_data_if.s_gnt.gntpar),
       .core_i_m_c_obi_data_if_s_rvalid_rvalid                                                                           (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+      .core_i_m_c_obi_data_if_s_rvalid_rvalidpar                                                                        (core_i.m_c_obi_data_if.s_rvalid.rvalidpar),
+
+      .core_i_m_c_obi_instr_if_s_req_req                                                                                (core_i.m_c_obi_instr_if.s_req.req),
+      .core_i_m_c_obi_instr_if_s_req_reqpar                                                                             (core_i.m_c_obi_instr_if.s_req.reqpar),
+      .core_i_m_c_obi_instr_if_s_gnt_gnt                                                                                (core_i.m_c_obi_instr_if.s_gnt.gnt),
+      .core_i_m_c_obi_instr_if_s_gnt_gntpar                                                                             (core_i.m_c_obi_instr_if.s_gnt.gntpar),
       .core_i_m_c_obi_instr_if_s_rvalid_rvalid                                                                          (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+      .core_i_m_c_obi_instr_if_s_rvalid_rvalidpar                                                                       (core_i.m_c_obi_instr_if.s_rvalid.rvalidpar),
+
       .core_i_if_stage_i_prefetch_resp_valid                                                                            (core_i.if_stage_i.prefetch_resp_valid),
       .core_i_load_store_unit_i_resp_valid                                                                              (core_i.load_store_unit_i.resp_valid),
       .core_i_load_store_unit_i_bus_resp_valid                                                                          (core_i.load_store_unit_i.bus_resp_valid),
@@ -805,7 +771,9 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       .core_xsecure_ctrl_cpuctrl_dataindtiming	                                                                        (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
       .core_xsecure_ctrl_cpuctrl_rnddummy		                                                                            (core_i.xsecure_ctrl.cpuctrl.rnddummy),
+      .core_xsecure_ctrl_cpuctrl_integrity                                                                              (core_i.xsecure_ctrl.cpuctrl.integrity),
       .core_xsecure_ctrl_cpuctrl_pc_hardening                                                                           (core_i.xsecure_ctrl.cpuctrl.pc_hardening),
+      .core_xsecure_ctrl_cpuctrl_rndhint                                                                                (core_i.xsecure_ctrl.cpuctrl.rndhint),
 
       .core_xsecure_ctrl_cpuctrl_rnddummyfreq                                                                           (core_i.xsecure_ctrl.cpuctrl[19:16]),
       .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
@@ -838,48 +806,44 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .core_i_cs_registers_i_mepc_o                                                                                     (core_i.cs_registers_i.mepc_o),
 
       // Hardend CSR registers
-      .core_i_cs_registers_i_jvt_csr_i_rdata_q                                                                          (core_i.cs_registers_i.jvt_csr_i.rdata_q),
-      .core_i_cs_registers_i_mstatus_csr_i_rdata_q                                                                      (core_i.cs_registers_i.mstatus_csr_i.rdata_q),
-      .dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q                                    (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q),
-      .core_i_cs_registers_i_xsecure_cpuctrl_csr_i_rdata_q                                                              (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.rdata_q),
-      .core_i_cs_registers_i_dcsr_csr_i_rdata_q                                                                         (core_i.cs_registers_i.dcsr_csr_i.rdata_q),
-      .core_i_cs_registers_i_mepc_csr_i_rdata_q                                                                         (core_i.cs_registers_i.mepc_csr_i.rdata_q),
-      .core_i_cs_registers_i_mscratch_csr_i_rdata_q                                                                     (core_i.cs_registers_i.mscratch_csr_i.rdata_q),
+      .core_i_cs_registers_i_mstateen0_q                                                                                (core_i.cs_registers_i.mstateen0_q),
+      .core_i_cs_registers_i_priv_lvl_q_int                                                                             (core_i.cs_registers_i.priv_lvl_q_int),
+      .core_i_cs_registers_i_jvt_q                                                                                      (core_i.cs_registers_i.jvt_q),
+      .core_i_cs_registers_i_mstatus_q                                                                                  (core_i.cs_registers_i.mstatus_q),
+      .core_i_cs_registers_i_cpuctrl_q                                                                                  (core_i.cs_registers_i.cpuctrl_q),
+      .core_i_cs_registers_i_dcsr_q                                                                                     (core_i.cs_registers_i.dcsr_q),
+      .core_i_cs_registers_i_mepc_q                                                                                     (core_i.cs_registers_i.mepc_q),
+      .core_i_cs_registers_i_mscratch_q                                                                                 (core_i.cs_registers_i.mscratch_q),
 
-      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q         (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q),
-      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q        (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q),
+      .core_i_cs_registers_i_pmp_mseccfg_q                                                                              (core_i.cs_registers_i.pmp_mseccfg_q),
+      .core_i_cs_registers_i_pmpncfg_q                                                                                  (core_i.cs_registers_i.pmpncfg_q),
+      .core_i_cs_registers_i_pmp_addr_q                                                                                 (core_i.cs_registers_i.pmp_addr_q),
 
-      // SMCLIC
-      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q                                 (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q),
-      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q                                (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q),
-      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q                           (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q),
-      .dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q                           (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q),
-
-      // BASE
-      .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q                                    (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q),
-      .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q                                      (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q),
+      .core_i_cs_registers_i_mtvt_q                                                                                     (core_i.cs_registers_i.mtvt_q),
+      .core_i_cs_registers_i_mtvec_q                                                                                    (core_i.cs_registers_i.mtvec_q),
+      .core_i_cs_registers_i_mintstatus_q                                                                               (core_i.cs_registers_i.mintstatus_q),
+      .core_i_cs_registers_i_mintthresh_q                                                                               (core_i.cs_registers_i.mintthresh_q),
+      .core_i_cs_registers_i_mie_q                                                                                      (core_i.cs_registers_i.mie_q),
 
       // Shadow registers
+      .core_cs_registers_mstateen0_csr_gen_hardened_shadow_q                                                            (core_i.cs_registers_i.mstateen0_csr_i.gen_hardened.shadow_q),
+      .core_cs_registers_priv_lvl_gen_hardened_shadow_q                                                                 (core_i.cs_registers_i.priv_lvl_i.gen_hardened.shadow_q),
       .core_cs_registers_jvt_csr_gen_hardened_shadow_q                                                                  (core_i.cs_registers_i.jvt_csr_i.gen_hardened.shadow_q),
       .core_cs_registers_mstatus_csr_gen_hardened_shadow_q                                                              (core_i.cs_registers_i.mstatus_csr_i.gen_hardened.shadow_q),
-      .dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q                        (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q),
       .core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q                                                      (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.gen_hardened.shadow_q),
       .core_cs_registers_dcsr_csr_gen_hardened_shadow_q                                                                 (core_i.cs_registers_i.dcsr_csr_i.gen_hardened.shadow_q),
       .core_cs_registers_mepc_csr_gen_hardened_shadow_q                                                                 (core_i.cs_registers_i.mepc_csr_i.gen_hardened.shadow_q),
       .core_cs_registers_mscratch_csr_gen_hardened_shadow_q                                                             (core_i.cs_registers_i.mscratch_csr_i.gen_hardened.shadow_q),
 
-      .dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q),
-      .dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q  (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q),
+      .uvmt_cv32e40s_tb_pmp_mseccfg_q_shadow_q                                                                          (uvmt_cv32e40s_tb.pmp_mseccfg_q_shadow_q),
+      .uvmt_cv32e40s_tb_pmpncfg_q_shadow_q                                                                              (uvmt_cv32e40s_tb.pmpncfg_q_shadow_q),
+      .uvmt_cv32e40s_tb_pmp_addr_q_shadow_q                                                                             (uvmt_cv32e40s_tb.pmp_addr_q_shadow_q),
 
-      // SMILIC
-      .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q                           (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q),
-      .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q                          (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q),
-      .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q                     (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q),
-      .dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q                     (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q),
-
-      // BASIC
-      .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q                      (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q),
-      .dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q                        (uvmt_cv32e40s_tb.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q),
+      .uvmt_cv32e40s_tb_mtvt_q_shadow_q                                                                                 (uvmt_cv32e40s_tb.mtvt_q_shadow_q),
+      .uvmt_cv32e40s_tb_mtvec_q_shadow_q                                                                                (uvmt_cv32e40s_tb.mtvec_q_shadow_q),
+      .uvmt_cv32e40s_tb_mintstatus_q_shadow_q                                                                           (uvmt_cv32e40s_tb.mintstatus_q_shadow_q),
+      .uvmt_cv32e40s_tb_mintthresh_q_shadow_q                                                                           (uvmt_cv32e40s_tb.mintthresh_q_shadow_q),
+      .uvmt_cv32e40s_tb_mie_q_hardened_shadow_q                                                                         (uvmt_cv32e40s_tb.mie_q_hardened_shadow_q),
 
       // IF stage
       .core_if_stage_if_valid_o                                                                                         (core_i.if_stage_i.if_valid_o),
@@ -890,6 +854,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       .core_if_stage_instr_meta_n_dummy                                                                                 (core_i.if_stage_i.instr_meta_n.dummy),
       .core_i_if_stage_i_instr_hint                                                                                     (core_i.if_stage_i.instr_hint),
+      .core_i_if_stage_i_dummy_insert                                                                                   (core_i.if_stage_i.dummy_insert),
 
       .core_i_if_stage_i_pc_if_o                                                                                        (core_i.if_stage_i.pc_if_o),
       .core_i_if_stage_i_pc_check_i_pc_set_q                                                                            (core_i.if_stage_i.pc_check_i.pc_set_q),
@@ -899,6 +864,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       // IF ID pipe
       .core_if_id_pipe_instr_meta_dummy                                                                                 (core_i.if_id_pipe.instr_meta.dummy),
+      .core_if_id_pipe_instr_meta_hint                                                                                  (core_i.if_id_pipe.instr_meta.hint),
       .core_if_id_pipe_instr_bus_resp_rdata                                                                             (core_i.if_id_pipe.instr.bus_resp.rdata),
       .core_i_id_stage_i_if_id_pipe_i_pc                                                                                (core_i.id_stage_i.if_id_pipe_i.pc),
       .core_i_if_id_pipe_last_op                                                                                        (core_i.if_id_pipe.last_op),
@@ -911,20 +877,19 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
 
       // ID EX pipe
       .core_id_ex_pipe_instr_meta_dummy                                                                                 (core_i.id_ex_pipe.instr_meta.dummy),
-      .core_id_ex_pipe_instr_bus_resp_rdata                                                                             (core_i.id_ex_pipe.instr.bus_resp.rdata),
 
       // EX stage
       .core_i_ex_stage_i_branch_target_o                                                                                (core_i.ex_stage_i.branch_target_o),
       .core_i_ex_stage_i_alu_i_cmp_result_o                                                                             (core_i.ex_stage_i.alu_i.cmp_result_o),
 
       // EX WB pipe
-      .core_wb_stage_ex_wb_pipe_instr_meta_dummy                                                                        (core_i.wb_stage_i.ex_wb_pipe_i.instr_meta.dummy),
+      .core_ex_wb_pipe_instr_meta_dummy                                                                                 (core_i.ex_wb_pipe.instr_meta.dummy),
+      .core_ex_wb_pipe_instr_meta_hint                                                                                  (core_i.ex_wb_pipe.instr_meta.hint),
 
       // WB stage
       .core_wb_stage_wb_valid_o                                                                                         (core_i.wb_stage_i.wb_valid_o),
 
       // CTRL
-
       .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set                                           (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.ctrl_fsm_i.pc_set),
       .core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux                                                                   (core_i.if_stage_i.pc_check_i.ctrl_fsm_i.pc_mux)
 
@@ -941,11 +906,12 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
   .PMP_ADDR_WIDTH (core_i.cs_registers_i.PMP_ADDR_WIDTH)
 
     ) xsecure_assert_i 	(
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
     	.xsecure_if	(xsecure_if),
 	    .rvfi_if	  (rvfi_instr_if_0_i),
-      .support_if (support_logic_for_assert_coverage_modules_if.slave),
-      .clk_i      (clk_i),
-      .rst_ni     (rst_ni)
+      .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
     );
 
   // Debug assertion and coverage interface
@@ -979,13 +945,14 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       .debug_running          (core_i.debug_running_o),
       .debug_halted           (core_i.debug_halted_o),
 
-      .debug_req_q            (core_i.controller_i.controller_fsm_i.debug_req_q),
+      .ctrl_fsm_async_debug_allowed  (core_i.controller_i.controller_fsm_i.async_debug_allowed),
       .pending_sync_debug     (core_i.controller_i.controller_fsm_i.pending_sync_debug),
       .pending_async_debug    (core_i.controller_i.controller_fsm_i.pending_async_debug),
       .pending_nmi            (core_i.controller_i.controller_fsm_i.pending_nmi),
       .nmi_allowed            (core_i.controller_i.controller_fsm_i.nmi_allowed),
       .debug_mode_q           (core_i.controller_i.controller_fsm_i.debug_mode_q),
       .trigger_match_in_wb    (core_i.controller_i.controller_fsm_i.trigger_match_in_wb),
+      .etrigger_in_wb         (core_i.controller_i.controller_fsm_i.etrigger_in_wb),
       .branch_in_ex           (core_i.controller_i.controller_fsm_i.branch_in_ex),
 
       .mie_q                  (core_i.cs_registers_i.mie_q),
@@ -1039,17 +1006,19 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
     bind cv32e40s_wrapper
       uvmt_cv32e40s_input_to_support_logic_module_if input_to_support_logic_module_if (
         .clk     (core_i.clk),
-        .rst_n (core_i.rst_ni),
+        .rst_n (rst_ni),
 
         .ctrl_fsm_o (core_i.controller_i.controller_fsm_i.ctrl_fsm_o),
 
         .data_bus_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
         .data_bus_req (core_i.m_c_obi_data_if.s_req.req),
         .data_bus_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
+        .data_bus_gntpar (core_i.m_c_obi_data_if.s_gnt.gntpar),
 
         .instr_bus_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
         .instr_bus_req (core_i.m_c_obi_instr_if.s_req.req),
         .instr_bus_gnt (core_i.m_c_obi_instr_if.s_gnt.gnt),
+        .instr_bus_gntpar (core_i.m_c_obi_instr_if.s_gnt.gntpar),
 
         //obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) is refered to as abiim
         .abiim_bus_rvalid (core_i.if_stage_i.prefetch_resp_valid),
@@ -1064,7 +1033,11 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
         //obi protocol between LSU (l) respons (r) filter (f) and OBI (o) data (d) interface (i) is refered to as lrfodi
         .lrfodi_bus_rvalid (core_i.load_store_unit_i.bus_resp_valid),
         .lrfodi_bus_req (core_i.load_store_unit_i.buffer_trans_valid),
-        .lrfodi_bus_gnt (core_i.load_store_unit_i.buffer_trans_ready)
+        .lrfodi_bus_gnt (core_i.load_store_unit_i.buffer_trans_ready),
+
+        .req_is_store (core_i.load_store_unit_i.bus_trans.we),
+        .req_instr_integrity (core_i.if_stage_i.mpu_i.bus_trans_integrity),
+        .req_data_integrity (core_i.load_store_unit_i.mpu_i.bus_trans_integrity)
 
     );
 
@@ -1115,8 +1088,8 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if_0_i),
-                                                                      .support_if_i (input_to_support_logic_module_if.driver),
-                                                                      .support_if_o (support_logic_for_assert_coverage_modules_if.master)
+                                                                      .in_support_if (input_to_support_logic_module_if.driver_mp),
+                                                                      .out_support_if (support_logic_for_assert_coverage_modules_if.master_mp)
                                                                       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.rvfi(rvfi_instr_if_0_i),
@@ -1127,7 +1100,7 @@ generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n
                                                                     .cov_assert_if(debug_cov_assert_if));
 
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
-                                                              .support_if(support_logic_for_assert_coverage_modules_if.slave)
+                                                              .support_if(support_logic_for_assert_coverage_modules_if.slave_mp)
                                                               );
 
 
