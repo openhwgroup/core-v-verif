@@ -49,5 +49,5 @@ jg:  $(CV_CORE_PKG)
 	# TODO:robin-silabs  Move to "mk/fv/jg.mk"?
 
 q:  $(CV_CORE_PKG)
-	$(CV_SIM_PREFIX)  qverify
+	$(CV_SIM_PREFIX)  qverify  -do q.tcl
 	#$(CV_SIM_PREFIX)  vlog  -msglimitcount 1 -msglimit error  -f fv.flist
