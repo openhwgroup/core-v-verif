@@ -20,13 +20,21 @@
 proc cvfv_rerun {} {
   onerror  {exit 1}
 
+  # TODO:silabs-robin  Bring up the formal view before executing the rest
+
+  puts "cvfv: compiling verilog"
   vlog  -mfcu  -f fv.flist
 
-  formal init -inferred
+  puts "cvfv: initializing clock/reset"
   netlist clock "clknrst_if.clk"
   netlist reset "clknrst_if.reset_n" -active_low -async
+  formal init -inferred
+  formal init {clknrst_if.reset_n = 1; ##1 clknrst_if.reset_n = 0; ##2}
 
+  puts "cvfv: compiling formal model"
   formal  compile  -d uvmt_cv32e40s_tb  -work work
+
+  puts "cvfv: see the visualizer log for compilation warnings"
 }
 
 cvfv_rerun
