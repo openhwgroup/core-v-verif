@@ -1,5 +1,6 @@
 jgproject/
-*qverify*
+.qverify/
+qverify_ui*
 .visualizer/
 ZinUIStateFile
 formal_*.rpt

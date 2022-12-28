@@ -44,12 +44,14 @@ endif
 
 # Make Targets
 
-## JasperGold
+jaspergold: jg
+jasper: jg
 jg:  $(CV_CORE_PKG)
-	$(CV_SIM_PREFIX)  jaspergold  jg.tcl
-	# TODO:robin-silabs  Move to "mk/fv/jg.mk"?
+	$(CV_SIM_PREFIX)  jaspergold  jaspergold.tcl
+	# TODO:silabs-robin  Move to "mk/fv/jg.mk"?
 
-## Questa
+qverify: q
+questa: q
 q:  $(CV_CORE_PKG)
-	$(CV_SIM_PREFIX)  qverify  -do q.tcl
-	# TODO:robin-silabs  Move to "mk/fv/jg.mk"?
+	$(CV_SIM_PREFIX)  qverify  -do qverify.tcl
+	# TODO:silabs-robin  Move to "mk/fv/jg.mk"?
