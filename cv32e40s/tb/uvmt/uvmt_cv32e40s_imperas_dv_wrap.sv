@@ -591,6 +591,8 @@ module uvmt_cv32e40s_imperas_dv_wrap
     string test_program_elf;
     reg [31:0] hart_id;
 
+    // Select processor name
+    rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME, "CV32E40S");
     // Worst case propagation of events 4 retirements (actually 3 observed)
     void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 4));
     // Redirect stdout to parent systemverilog simulator
