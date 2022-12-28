@@ -1357,7 +1357,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// PC HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
 
   sequence seq_dummy_if_id;
-    @(posedge clk_i)
+    @(posedge xsecure_if.core_clk)
 
     //Generate a dummy instruction
     xsecure_if.core_if_stage_instr_meta_n_dummy
@@ -1367,7 +1367,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   endsequence
 
   sequence seq_pc_set_stable;
-    @(posedge clk_i)
+    @(posedge xsecure_if.core_clk)
 
     //Set the PC value to a given address
     xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set
