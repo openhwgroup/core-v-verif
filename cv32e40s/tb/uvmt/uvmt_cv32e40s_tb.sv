@@ -780,6 +780,7 @@ module uvmt_cv32e40s_tb;
 
       .core_cs_registers_xsecure_lfsr_lockup                                                                            (core_i.cs_registers_i.xsecure.lfsr_lockup),
       .core_controller_controller_fsm_debug_mode_q                                                                      (core_i.controller_i.controller_fsm_i.debug_mode_q),
+      .core_i_cs_registers_i_debug_stopcount (core_i.cs_registers_i.debug_stopcount),
 
       .core_cs_registers_mhpmcounter_mcycle                                                                             (core_i.cs_registers_i.mcycle_o),
       .core_cs_registers_mhpmcounter_minstret                                                                           (core_i.cs_registers_i.mhpmcounter_q[2]),

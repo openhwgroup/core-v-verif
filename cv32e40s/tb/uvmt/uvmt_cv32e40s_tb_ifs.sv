@@ -172,6 +172,7 @@ interface uvmt_cv32e40s_xsecure_if
     input logic core_if_stage_gen_dummy_instr_dummy_instr_dummy_en,
     input logic [2:0] core_cs_registers_xsecure_lfsr_lockup,
     input logic core_controller_controller_fsm_debug_mode_q,
+    input logic core_i_cs_registers_i_debug_stopcount,
 
     input logic [63:0] core_cs_registers_mhpmcounter_mcycle,
     input logic [63:0] core_cs_registers_mhpmcounter_minstret,

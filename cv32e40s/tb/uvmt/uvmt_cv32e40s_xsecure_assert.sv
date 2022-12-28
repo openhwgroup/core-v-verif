@@ -1763,6 +1763,9 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     //Make sure that mcycle is operative (not inhibited)
     !xsecure_if.core_cs_registers_mcountinhibit_q_mcycle_inhibit
 
+    //Make sure the counters are not stopped
+    && !$past(xsecure_if.core_i_cs_registers_i_debug_stopcount)
+
     //Make sure we do not write to mcycle
     && !($past(xsecure_if.core_cs_registers_csr_en_gated)
     && ($past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLE)) || $past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLEH))
@@ -1810,6 +1813,9 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
     //Make sure that minstret is operative (not inhibited)
     !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
+
+    //Make sure the counters are not stopped
+    && !xsecure_if.core_i_cs_registers_i_debug_stopcount
 
     //Make sure there is a hint instruction in the WB stage
     && xsecure_if.core_ex_wb_pipe_instr_meta_hint
