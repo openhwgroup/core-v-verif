@@ -405,17 +405,16 @@ module uvmt_cv32e40s_imperas_dv_wrap
    always @(*) begin
        int i;
        for (i=1; i<32; i++) begin
-           XREG[i] = 32'b0;
-           // TODO: This current RVFI implementation will only allow a single destination
-           //       register to be written. For some instructions this is not sufficient
-           //       This code will need enhancing once the RVFI has the ability to describe
-           //       multiple target register writes, for a single instruction
-           if (`RVFI_IF.rvfi_rd1_addr==5'(i))
-               XREG[i] = `RVFI_IF.rvfi_rd1_wdata;
+           if ( `RVFI_IF.rvfi_gpr_wmask[i] == 1) begin
+               XREG[i] =  `RVFI_IF.rvfi_gpr_wdata[i*XLEN +:XLEN];
+           end
+           else begin
+               XREG[i] = 32'b0;
+           end
        end
    end
 
-   assign rvvi.x_wb[0][0] = 1 << `RVFI_IF.rvfi_rd1_addr; // TODO: originally rvfi_rd_addr
+   assign rvvi.x_wb[0][0] = `RVFI_IF.rvfi_gpr_wmask;
 
    ////////////////////////////////////////////////////////////////////////////
    // DEBUG REQUESTS,

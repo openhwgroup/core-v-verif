@@ -41,7 +41,7 @@ int main(void) {
   __asm__ volatile("sw %0, 9(%1)" : "=r"(tmp) : "r"(ADDR));
 
 
-  // Atomics should pass
+  // Atomics should pass  //TODO:silabs-robin Should _fail_?
 
   // Load-reserved should pass
   /* TODO enable when RTL is implemented

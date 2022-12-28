@@ -53,6 +53,8 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   `define  max(a,b)  ((a) > (b) ? (a) : (b))
 
+  string info_tag = "CV32E40S_PMPRVFI_ASSERT";
+
   localparam logic [1:0] MODE_U = 2'b 00;
   localparam logic [1:0] MODE_M = 2'b 11;
 
@@ -60,8 +62,8 @@ module uvmt_cv32e40s_pmprvfi_assert
   localparam logic [5:0] EXC_ILL_INSTR          = 6'd 2;
   localparam logic [5:0] EXC_LOAD_ACC_FAULT     = 6'd 5;
   localparam logic [5:0] EXC_STORE_ACC_FAULT    = 6'd 7;
-  localparam logic [5:0] EXC_INSTR_BUS_FAULT    = 6'd 48;
-  localparam logic [5:0] EXC_INSTR_CHKSUM_FAULT = 6'd 49;
+  localparam logic [5:0] EXC_INSTR_BUS_FAULT    = 6'd 24;
+  localparam logic [5:0] EXC_INSTR_CHKSUM_FAULT = 6'd 25;
 
   localparam logic [2:0] DBG_TRIGGER = 3'd 2;
 
@@ -265,20 +267,28 @@ module uvmt_cv32e40s_pmprvfi_assert
   property p_csrs_mmode_only;
     is_rvfi_csr_instr      &&
     (rvfi_mode == MODE_U)  &&
-    (rvfi_insn[31:20] inside {['h3A0 : 'h3EF], 'h747, 'h757})
+    (rvfi_insn[31:20] inside {['h3A0 : 'h3EF], 'h747, 'h757})  //PMP regs
     |->
     is_rvfi_exc_ill_instr           ^
-    is_rvfi_exc_instr_acc_fault     ^
-    is_rvfi_dbg_trigger             ^
     is_rvfi_exc_instr_bus_fault     ^
-    is_rvfi_exc_instr_chksum_fault;
+    is_rvfi_exc_instr_chksum_fault  ^
+    is_rvfi_exc_instr_acc_fault     ^
+    is_rvfi_dbg_trigger             ;
   endproperty : p_csrs_mmode_only
 
   a_csrs_mmode_only: assert property (
     p_csrs_mmode_only
-  );
+  ) else `uvm_error(info_tag, "PMP CSRs are illegal to access from umode");
+
+  a_csrs_mmode_only_25: assert property (
+    // For ease of reproducing a known CEX (could help in case-splitting too)
+    if (clk_cnt < 25) (
+      p_csrs_mmode_only
+    )
+  ) else `uvm_error(info_tag, "PMP CSRs are illegal to access from umode");
 
   cov_csrs_mmode_only: cover property (
+    // Want to see "the real cause" finishing this property
     p_csrs_mmode_only  and  is_rvfi_exc_ill_instr
   );
 
@@ -293,7 +303,7 @@ module uvmt_cv32e40s_pmprvfi_assert
         pmp_csr_rvfi_rdata.cfg[i].mode[1]
         |->
         (pmp_csr_rvfi_rdata.addr[i][PMP_GRANULARITY:2] == '1)
-      );
+      ) else `uvm_error(info_tag, "NAPOT LSBs should read as all 1s");
 
       cov_napot_ones: cover property (
         // The ones doesn't have to extend past the required part
@@ -315,7 +325,7 @@ module uvmt_cv32e40s_pmprvfi_assert
         (pmp_csr_rvfi_rdata.cfg[i].mode[1] === 1'b 0)
         |->
         (pmp_csr_rvfi_rdata.addr[i][PMP_GRANULARITY-1:0] == '0)
-      );
+      ) else `uvm_error(info_tag, "TOR/OFF LSBs should read as all 0s");
     end
   end
 
@@ -329,7 +339,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + i))
       |->
       (rvfi_rd_wdata == rvfi_csr_pmpcfg_rdata[i])
-    );
+    ) else `uvm_error(info_tag, "RVFI data should be 'observable via the ISA'");
   end
 
   for (genvar i = 0; i < NUM_ADDR_REGS; i++) begin: gen_swview_addr
@@ -339,7 +349,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + i))
       |->
       (rvfi_rd_wdata == rvfi_csr_pmpaddr_rdata[i])
-    );
+    ) else `uvm_error(info_tag, "RVFI data should be 'observable via the ISA'");
   end
 
 
@@ -370,10 +380,8 @@ module uvmt_cv32e40s_pmprvfi_assert
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_storage_unaffected
     a_storage_unaffected: assert property (
       p_storage_unaffected(i)
-    );
+    ) else `uvm_error(info_tag, "PMP mode change shouldn't change addresses");
   end
-
-  // TODO:silabs-robin "uvm_error" on all assertions?
 
 
   // Software-view can read the granularity level  (vplan:GranularityDetermination)
@@ -394,7 +402,7 @@ module uvmt_cv32e40s_pmprvfi_assert
         (PMP_GRANULARITY == 0)
       )
       // Note: _Can_ be generalized for all i
-    );
+    ) else `uvm_error(info_tag, "SW-visible granularity must match G");
   end
 
 
@@ -406,7 +414,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       !pmp_csr_rvfi_rdata.mseccfg.rlb
       |->
       always pmp_csr_rvfi_rdata.cfg[i].lock
-    );
+    ) else `uvm_error(info_tag, "locked configs must remain locked");
   end
 
 
@@ -428,7 +436,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   a_until_reset_notbefore: assert property (
     p_until_reset_notbefore
-  );
+  ) else `uvm_error(info_tag, "RLB must be changeable after reset");
 
 /* TODO:silabs-robin  Write so the intention becomes legal SV
   cov_until_reset_notbefore_on: cover property (
@@ -453,7 +461,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       (rvfi_mode == MODE_M)
       |->
       (rvfi_trap.exception_cause != EXC_ILL_INSTR)
-    );
+    ) else `uvm_error(info_tag, "writing to locked entries shouldn't except");
   end
 
   // Locked entries, ignore pmpicfg/pmpaddri writes
@@ -467,7 +475,7 @@ module uvmt_cv32e40s_pmprvfi_assert
         $stable(pmp_csr_rvfi_rdata.cfg[i])  &&
         $stable(pmp_csr_rvfi_rdata.addr[i])
       )
-    );
+    ) else `uvm_error(info_tag, "locked entries must never change");
   end
 
   // Locked entries, ignore pmpicfg/pmpaddri writes
@@ -514,20 +522,20 @@ module uvmt_cv32e40s_pmprvfi_assert
 
     a_cfg_expected: assert property (
       p_cfg_expected
-    );
+    ) else `uvm_error(info_tag, "updating cfgs must use legal values");
 
     a_not_ignore_writes_cfg_unlocked: assert property (
       // Locked entries, ignore pmpicfg writes
       if (!pmp_csr_rvfi_rdata.cfg[i].lock)
         p_cfg_expected
       // This is redundant, but explicitly checks non-locked regions
-    );
+    ) else `uvm_error(info_tag, "updating locked cfgs must use legal values");
 
     a_cfg_expected_updates: assert property (
       if (pmp_csr_rvfi_wdata.cfg[i] != pmp_csr_rvfi_rdata.cfg[i]) (
         p_cfg_expected
       )
-    );
+    ) else `uvm_error(info_tag, "updating cfgs must attempt legal new values");
 
     cov_cfg_expected_ones: cover property (
       p_cfg_expected  and
@@ -546,7 +554,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       pmp_csr_rvfi_wmask.cfg[i]
       |->
       (pmp_csr_rvfi_wdata.cfg[i] == rectified_cfg)
-    );
+    ) else `uvm_error(info_tag, "updating cfgs must use legal values");
   end
 
 
@@ -566,7 +574,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
     a_cfgrdata_expected: assert property (
       p_cfgrdata_expected
-    );
+    ) else `uvm_error(info_tag, "read cfgs have legal values");
   end
 
 
@@ -595,7 +603,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       seq_csrrw_pmpaddri(i)
       |->
       (pmp_csr_rvfi_wmask.addr[i][33:2] == 32'h FFFF_FFFF)
-    );
+    ) else `uvm_error(info_tag, "writing addr must attempt word write");
 
     a_addr_nonlocked: assert property (
       seq_csrrw_pmpaddri(i)            and
@@ -604,7 +612,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       |->
       (pmp_csr_rvfi_wdata.addr[i][33:2+PMP_GRANULARITY]
         == rvfi_rs1_rdata[31:PMP_GRANULARITY])
-    );
+    ) else `uvm_error(info_tag, "unlocked write must update as attempted");
   end
 
   for (genvar i = 1; i < PMP_NUM_REGIONS; i++) begin: gen_addr_tor
@@ -617,7 +625,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       |->
       (pmp_csr_rvfi_wdata.addr[i-1][33:2+PMP_GRANULARITY]
         == rvfi_rs1_rdata[31:PMP_GRANULARITY])
-    );
+    ) else `uvm_error(info_tag, "unlocked write must update beneath tor too");
   end
 
 
@@ -638,7 +646,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     endproperty : p_rvfi_cfg_writes
     a_rvfi_cfg_writes: assert property (
       p_rvfi_cfg_writes
-    );
+    ) else `uvm_error(info_tag, "cfg updates must be present on next retire");
 
     // addr:
     property  p_rvfi_addr_writes;
@@ -654,7 +662,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     endproperty : p_rvfi_addr_writes;
     a_rvfi_addr_writes: assert property (
       p_rvfi_addr_writes
-    );
+    ) else `uvm_error(info_tag, "addr updates must be present on next retire");
   end
 
 
@@ -667,7 +675,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       (pmp_csr_rvfi_rdata.cfg[i].mode == PMP_MODE_TOR)
       |=>
       always $stable(pmp_csr_rvfi_rdata.addr[i-1][31+2:PMP_GRANULARITY+2])
-    );
+    ) else `uvm_error(info_tag, "TOR-locking must lock the subordinate addr");
 
     a_ignore_tor_wdata: assert property (
       rvfi_valid &&
@@ -676,7 +684,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       |->
       (pmp_csr_rvfi_wmask.addr[i-1] == 0)  ||
       (pmp_csr_rvfi_wdata.addr[i-1] == pmp_csr_rvfi_rdata.addr[i-1])
-    );
+    ) else `uvm_error(info_tag, "TOR-locking forbids writing subordinate addr");
   end
 
 
@@ -688,7 +696,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     |->
     rvfi_trap
     // TODO:silabs-robin  Can assert the opposite too?
-  );
+  ) else `uvm_error(info_tag, "on access denied we must trap");
 
   a_noexec_cause: assert property (
     rvfi_valid  &&
@@ -697,7 +705,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     |->
     (rvfi_trap.exception_cause == EXC_INSTR_ACC_FAULT)
     // Note, if we implement etrigger etc then priority will change
-  );
+  ) else `uvm_error(info_tag, "on access denied the cause must match");
 
   a_noexec_splittrap: assert property (
     rvfi_valid  &&
@@ -705,7 +713,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     !match_status_upperinstr.is_access_allowed
     |->
     rvfi_trap
-  );
+  ) else `uvm_error(info_tag, "on split-access denied we must trap");
 
 
   // Expected response on missing loadstore permission (vplan:WaitUpdate, vplan:AffectSuccessors)
@@ -716,7 +724,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     !match_status_data.is_access_allowed
     |->
     rvfi_trap
-  );
+  ) else `uvm_error(info_tag, "on access denied we must trap");
 
   a_noloadstore_cause_load: assert property (
     (rvfi_valid && rvfi_mem_rmask)  &&
@@ -724,7 +732,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     rvfi_trap.exception
     |->
     (rvfi_trap.exception_cause == EXC_LOAD_ACC_FAULT)
-  );
+  ) else `uvm_error(info_tag, "on load denied the cause must match");
 
   a_noloadstore_cause_store: assert property (
     (rvfi_valid && rvfi_mem_wmask)  &&
@@ -732,7 +740,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     rvfi_trap.exception
     |->
     (rvfi_trap.exception_cause == EXC_STORE_ACC_FAULT)
-  );
+  ) else `uvm_error(info_tag, "on store denied the cause must match");
 
   a_noloadstore_splittrap: assert property (
     rvfi_valid  &&
@@ -740,7 +748,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     !match_status_upperdata.is_access_allowed
     |->
     rvfi_trap
-  );
+  ) else `uvm_error(info_tag, "on split-access denied we must trap");
 
 
   // RWX has reservations  (vplan:RwReserved)
@@ -750,7 +758,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       !pmp_csr_rvfi_rdata.mseccfg.mml
       |->
       (pmp_csr_rvfi_rdata.cfg[i][1:0] != 2'b 10)
-    );
+    ) else `uvm_error(info_tag, "'RW' cannot be 01");
   end
 
 
@@ -776,14 +784,14 @@ module uvmt_cv32e40s_pmprvfi_assert
       seq_rlblifts_lockedexec_ante
       |->
       (pmp_csr_rvfi_wdata.cfg[i] == (cfg_attempt & 8'h 9F))
-    );
+    ) else `uvm_error(info_tag, "with rlb, some illegal cfgs must be writable");
     // Note, "lockedexec" is just one case of a restriction that RLB lifts.
 
     a_rlblifts_lockedexec_helper: assert property (
       (clk_cnt < 29)
       |->
       not seq_rlblifts_lockedexec_ante
-    );
+    ) else `uvm_error(info_tag, "with rlb, some illegal cfgs must be writable");
   end
 
   cov_rlb_mml: cover property (

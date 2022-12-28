@@ -1582,8 +1582,12 @@ module uvmt_cv32e40s_clic_interrupt_assert
       mstatus_fields.mpie == mcause_fields.mpie;
     endproperty : p_mstatus_mpie_neq_mcause_mpie
 
-    p_mpp: assert property (p_mstatus_mpp_neq_mcause_mpp);
-    p_mpie: assert property (p_mstatus_mpie_neq_mcause_mpie);
+    a_mpp: assert property (p_mstatus_mpp_neq_mcause_mpp)
+    else
+      `uvm_error(info_tag, "'mstatus.mpp' must match 'mcause.mpp'");
+    a_mpie: assert property (p_mstatus_mpie_neq_mcause_mpie)
+    else
+      `uvm_error(info_tag, "'mstatus.mpie' must match 'mcause.mpie'");
 
     property p_mcause_mpp_reflects_previous_privilege_mode;
       bit [1:0] mode_prev = 2'b11;

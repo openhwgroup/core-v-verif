@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
     glb_irq_delay = vp_random_num(i-2, 1);
-    printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
+    printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
 
     exp_irq += 2;
     interrupt_push_pop(i);
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
     glb_irq_delay = vp_random_num(i-2, 1);
-    printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
+    printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
 
     exp_irq += 1;
     interrupt_popret(i);
@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
     glb_irq_delay = vp_random_num(i-2, 1);
-    printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
+    printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
 
     exp_irq += 1;
     interrupt_popretz(i);
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
     glb_irq_delay = 3;
-    printf("\n\ntesting mvsa case %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
+    printf("\n\ntesting mvsa case %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
 
     exp_irq += 1;
     iteratorVault = i;
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
     glb_irq_delay = 3;
-    printf("\n\ntesting mvsa case %d, with a delay of %u cycles \n", i, (uint)glb_irq_delay);
+    printf("\n\ntesting mvsa case %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
 
     exp_irq += 1;
     iteratorVault = i;
@@ -201,15 +201,15 @@ int main(int argc, char *argv[])
 
 
   if(exp_irq != ex_traps_entered) {
-    printf("\tERROR: %u interrupts taken, expected %u", (uint)ex_traps_entered, (uint)exp_irq);
+    printf("\tERROR: %u interrupts taken, expected %u", (unsigned int)ex_traps_entered, (unsigned int)exp_irq);
     failureCount += 1;
   }
   else {
-    printf("%0u interrupts taken \n", (uint)ex_traps_entered);
+    printf("%0u interrupts taken \n", (unsigned int)ex_traps_entered);
   }
 
   if (failureCount) {
-    printf("\tERROR: %0u failures detected!\n\n", (uint)failureCount);
+    printf("\tERROR: %0u failures detected!\n\n", (unsigned int)failureCount);
     return EXIT_FAILURE;
   }
   else {
