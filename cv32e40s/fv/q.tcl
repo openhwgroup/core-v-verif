@@ -17,8 +17,16 @@
 # limitations under the License.
 
 
-onerror  {exit 1}
+proc cvfv_rerun {} {
+  onerror  {exit 1}
 
-vlog  -mfcu  -f fv.flist
+  vlog  -mfcu  -f fv.flist
 
-formal  compile  -d uvmt_cv32e40s_tb  -work work
+  formal init -inferred
+  netlist clock "clknrst_if.clk"
+  netlist reset "clknrst_if.reset_n" -active_low -async
+
+  formal  compile  -d uvmt_cv32e40s_tb  -work work
+}
+
+cvfv_rerun

@@ -51,7 +51,5 @@ jg:  $(CV_CORE_PKG)
 
 ## Questa
 q:  $(CV_CORE_PKG)
-	$(CV_SIM_PREFIX)  qverify  -c  -do q.tcl
-	# Note: Run the compilation in gui to see compilation warnings!
-	$(CV_SIM_PREFIX)  qverify  ./propcheck.db/
+	$(CV_SIM_PREFIX)  qverify  -do q.tcl
 	# TODO:robin-silabs  Move to "mk/fv/jg.mk"?
