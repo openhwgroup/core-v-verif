@@ -139,14 +139,14 @@ module uvmt_cv32e40s_xsecure_assert
   assign rvfi_insn_opcode = rvfi_if.rvfi_insn[6:0];
   assign rvfi_insn_cmpr_opcode = rvfi_if.rvfi_insn[1:0];
 
-  //Signal used to check if the core clock is active or not.
-  logic core_clock_cycles;
+  //The alert signals used the gated clock, so we must therefore make sure the gated clock is enabled.
+  logic core_i_sleep_unit_i_core_clock_gate_i_clk_en_n;
 
   always @(posedge clk_i) begin
     if(!rst_ni) begin
-      core_clock_cycles <= 0;
+      core_i_sleep_unit_i_core_clock_gate_i_clk_en_n <= 0;
     end else begin
-      core_clock_cycles <= xsecure_if.clk_en;
+      core_i_sleep_unit_i_core_clock_gate_i_clk_en_n <= xsecure_if.core_i_sleep_unit_i_core_clock_gate_i_clk_en;
     end
   end
 
@@ -684,10 +684,11 @@ module uvmt_cv32e40s_xsecure_assert
   //The following assertions check if mismatches between the CSRs and their corresponding shadow registers result in the major alert being set
 
   property p_hardened_csr_mismatch_sets_major_aler(csr, shadow);
-    @(posedge xsecure_if.core_clk)
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure the shadow is not the complement of the CSR
-    shadow != ~csr
+    && shadow != ~csr
 
     |=>
     //Verify that the major alert is set
@@ -935,13 +936,15 @@ module uvmt_cv32e40s_xsecure_assert
   property p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(if_id_pipe_rs_addr);
     logic [4:0] gpr_addr = 0;
 
-    @(posedge xsecure_if.core_clk)
-
     //Store the source register address in a GPR address variable
     (1, gpr_addr = if_id_pipe_rs_addr)
 
     //Make sure the source register is not x0 (because GPR x0 behaves different than the other source registers)
     ##0 if_id_pipe_rs_addr != 0
+
+    //Make sure the gated clock is enabled
+    && core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
+
 
     //Make sure the source registers data and ECC score are all ones or zeros
     ##0 (xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'h00_0000_0000
@@ -1016,10 +1019,12 @@ module uvmt_cv32e40s_xsecure_assert
 
 
   property p_xsecure_register_file_ecc_no_supression_reading_rs1(rs1_addr);
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Specify the RS1 address
-    if_id_pipe_instr_rs1 == rs1_addr
+    && if_id_pipe_instr_rs1 == rs1_addr
 
     //Make sure the GPR memory and the local memory differ in one or two bits
     && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs1_addr][31:0] ^ gpr_shadow[rs1_addr], '1) inside {1,2})
@@ -1030,10 +1035,12 @@ module uvmt_cv32e40s_xsecure_assert
   endproperty
 
   property p_xsecure_register_file_ecc_no_supression_reading_rs2(rs2_addr);
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Specify the RS2 address
-    if_id_pipe_instr_rs2 == rs2_addr
+    && if_id_pipe_instr_rs2 == rs2_addr
 
     //Make sure the GPR memory and the local memory differ in one or two bits
     && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs2_addr][31:0] ^ gpr_shadow[rs2_addr], '1) inside {1,2})
@@ -1119,10 +1126,12 @@ module uvmt_cv32e40s_xsecure_assert
 ////////// INTERFACE INTEGRITY PARITY BIT ERRORS DUE TO GLITCHES SET ALERT MAJOR //////////
 
 property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_signal);
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure the parity bit is not the complement of the non-parity bit
-    parity_signal != ~signal
+    && parity_signal != ~signal
 
     |=>
     //Verify that the major alert is set
@@ -1190,11 +1199,13 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// INTERFACE INTEGRITY RESPONSE CHECKSUM ERRORS FOR INSTRUCTIONS SET ALERT MAJOR //////////
 
   property p_will_checksum_error_set_major_alert(is_integrity_checking_enabled, rvalid, req_had_integrity, is_checksum_error, is_major_alert_set);
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //If integrity checking is enabled the major alert should be set if there is a checksum error
     //However, if integrity checking is disabled the major alert should not be set even though there is a checksum error
-    is_integrity_checking_enabled
+    && is_integrity_checking_enabled
 
     //Make sure we receive a response packet
     && rvalid
@@ -1298,10 +1309,9 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// INTERFACE INTEGRITY INSTRUCTION GNT PARITY ERROR SETS INTEGRITY ERROR BIT //////////
 
   property p_check_integrity_error_bit(rvalid, error, resp_integrity_error_bit);
-    @(posedge xsecure_if.core_clk)
 
     //Make sure the core is in operative mode
-    core_clock_cycles
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure the interface integrity checking is enabled
     && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
@@ -1365,10 +1375,11 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// INTERFACE INTEGRITY INSTRUCTION CHECKSUM ERROR SETS INTEGRITY ERROR BIT //////////
 
   property p_check_integrity_error_bit_when_checksum_error(rvalid, error, req_had_integrity, resp_integrity_error_bit);
-    @(posedge xsecure_if.core_clk)
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure the core is in operative mode
-    core_clock_cycles
+    && core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure the interface integrity checking is enabled
     && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
@@ -1435,10 +1446,8 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   endsequence
 
   a_xsecure_pc_hardening_no_glitch: assert property (
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure we look at valid cycles
-    core_clock_cycles
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure the PC hardening setting is on
     && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
@@ -1478,10 +1487,9 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// PC HARDENING SET THE MAJOR ALERT IF GLITCH //////////
 
   sequence seq_xsecure_pc_hardening_with_glitch;
-    @(posedge xsecure_if.core_clk)
 
-    //Make sure we look at valid cycles
-    core_clock_cycles
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure the inspected instruction is valid
     && $past(xsecure_if.core_if_stage_if_valid_o)
@@ -1818,11 +1826,12 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// DUMMY AND HINT INSTRUCTION UPDATES MCYCLE //////////
 
   a_xsecure_dummy_instruction_updates_mcycle: assert property (
-    //Make sure the gated clock is active
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure that mcycle is operative (not inhibited)
-    !xsecure_if.core_cs_registers_mcountinhibit_q_mcycle_inhibit
+    && !xsecure_if.core_cs_registers_mcountinhibit_q_mcycle_inhibit
 
     //Make sure we do not write to mcycle
     && !($past(xsecure_if.core_cs_registers_csr_en_gated)
@@ -1844,11 +1853,12 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// DUMMY INSTRUCTIONS DO NOT UPDATE MINSTRET //////////
 
   a_xsecure_dummy_instruction_do_not_update_minstret: assert property (
-    //Make sure the gated clock is active
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure minstret is operative (not inhibited)
-    !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
+    && !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
 
     //Make sure there is a dummy instruction
     && xsecure_if.core_ex_wb_pipe_instr_meta_dummy
@@ -1866,11 +1876,12 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// HINT INSTRUCTIONS UPDATE MINSTRET //////////
 
   a_xsecure_hint_instructions_updates_minstret: assert property (
-    //Make sure the gated clock is active
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure that minstret is operative (not inhibited)
-    !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
+    && !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
 
     //Make sure there is a hint instruction in the WB stage
     && xsecure_if.core_ex_wb_pipe_instr_meta_hint
@@ -2018,11 +2029,12 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// HINT INSTRUCTION APPEARS AS SLT ON RVFI //////////
 
   a_xsecure_hint_instructions_reports_on_rvfi_as_slli: assert property (
-    //Make sure the gated clock is active
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure there is a hint instruction in the WB stage
-    xsecure_if.core_ex_wb_pipe_instr_meta_hint
+    && xsecure_if.core_ex_wb_pipe_instr_meta_hint
 
     //Make sure we retire the hint instruction in the next cycle
     ##1 rvfi_if.rvfi_valid
@@ -2045,10 +2057,9 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
 
   property p_resp_after_addr_no_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
-    @(posedge xsecure_if.core_clk)
 
-    //Make sure the core is in an operative state
-    core_clock_cycles
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure there is a response phase transfer
     && obi_rvalid
@@ -2118,10 +2129,9 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE GLITCHES //////////
 
   property p_resp_after_addr_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
-    @(posedge xsecure_if.core_clk)
 
-    //Make sure the core is in an operative state
-    core_clock_cycles
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure major alert is not or has not been set
     && !alert_major_was_set && !xsecure_if.core_alert_major_o
@@ -2180,8 +2190,8 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   a_xsecure_bus_hardening_counter_overflow_set_major_alert: assert property (
 
-    //Make sure the core is in an operative state
-    core_clock_cycles
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure the counter is in a position where it can underflow
     && (xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0)
