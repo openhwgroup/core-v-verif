@@ -452,6 +452,7 @@ module uvmt_cv32e40s_xsecure_assert
 ////////// DIV/REM TIMING //////////
 
   sequence seq_rvfi_not_valid_for_34_cycles;
+    @(posedge clk_i)
 
     //Make sure rvfi_valid is off for 34 cycles
     !rvfi_if.rvfi_valid[*34] ##1 1;
@@ -459,6 +460,7 @@ module uvmt_cv32e40s_xsecure_assert
   endsequence
 
   sequence seq_set_rvfi_valid_once_as_memory_instruction_during_the_past_34_cycles;
+    @(posedge clk_i)
 
     //Make sure a memory instruction is retired in an interval of 34 cycles
 
@@ -1427,6 +1429,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// PC HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
 
   sequence seq_dummy_if_id;
+    @(posedge clk_i)
 
     //Generate a dummy instruction
     xsecure_if.core_if_stage_instr_meta_n_dummy
@@ -1436,6 +1439,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   endsequence
 
   sequence seq_pc_set_stable;
+    @(posedge clk_i)
 
     //Set the PC value to a given address
     xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set
@@ -1446,11 +1450,9 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   endsequence
 
   a_xsecure_pc_hardening_no_glitch: assert property (
-    //Make sure the gated clock is enabled
-    core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
 
     //Make sure the PC hardening setting is on
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+    xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
 
     //Make sure the inspected instruction is valid
     && $past(xsecure_if.core_if_stage_if_valid_o)
@@ -1487,6 +1489,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// PC HARDENING SET THE MAJOR ALERT IF GLITCH //////////
 
   sequence seq_xsecure_pc_hardening_with_glitch;
+    @(posedge clk_i)
 
     //Make sure the gated clock is enabled
     core_i_sleep_unit_i_core_clock_gate_i_clk_en_n
@@ -1550,6 +1553,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// PC HARDENING ON: SET THE MAJOR ALERT IF GLITCH IN PC TARGET //////////
 
   sequence seq_pc_hardening_jump_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal);
+    @(posedge clk_i)
 
     //Make sure pc hardening setting is set
     pc_hardening
@@ -1588,6 +1592,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// PC HARDENING ON: SET THE MAJOR ALERT IF GLITCH IN BRANCH DECISION //////////
 
   sequence seq_pc_hardening_branch_decision_glitch(pc_hardening);
+    @(posedge clk_i)
 
     //Make sure pc hardening setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
@@ -1904,6 +1909,8 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// DUMMY INSTRUCTION FREQUENCY //////////
 
   sequence seq_dummy_instruction_within_normal_valid_instructions (num_normal_valid_instructions);
+    @(posedge clk_i)
+
     //Make sure we detect a dummy instruction
     xsecure_if.core_i_if_stage_i_dummy_insert
     && xsecure_if.core_if_stage_if_valid_o
