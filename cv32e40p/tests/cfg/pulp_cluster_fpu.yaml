@@ -10,5 +10,6 @@ ovpsim: >
 # Debug options (add to ovpsim section as needed)
 #--trace --tracechange --traceshowicount --tracemode --monitornets
 #--showoverrides
+cv_sw_march: rv32imfc_zicsr_zifencei
 cflags: >
     -DPULP -DCLUSTER -DFPU

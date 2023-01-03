@@ -126,6 +126,7 @@ VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_RVFI"
+VLOG_FLAGS += "+define+$(CV_CORE_UC)_CORE_LOG"
 VLOG_FLAGS += "+define+UVM"
 
 ###############################################################################
