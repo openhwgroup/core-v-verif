@@ -30,6 +30,7 @@ cd $CORE_V_VERIF
 
 ```bash
 source /eda/common/scripts/synopsys.sh
+cd $CORE_V_VERIF/cv32e40p/sim/core
 make sanity CUSTOM=. CV_SIMULATOR=vcs
 make vcs-run-gui CUSTOM=. CUSTOM_PROG=hello-world CV_SIMULATOR=vcs
 ```
