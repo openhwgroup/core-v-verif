@@ -29,9 +29,11 @@ parser.add_argument("--clint_enable",           help="Enable Basic Interrupts", 
 parser.add_argument("--debug_enable",           help="Enable Debug Registers",            action="store_true", default=False)
 parser.add_argument("--m_ext_enable",           help="Enable M extension",                action="store_true", default=False)
 parser.add_argument("--m_none_enable",          help="Disable M extension",               action="store_true", default=False)
-parser.add_argument("--i_ext_enable",           help="Enable I extension",                action="store_true", default=False)
-parser.add_argument("--e_ext_enable",           help="Enable E extension",                action="store_true", default=False)
-parser.add_argument("--xsecure_enable",         help="Enable Xsecure Registers",            action="store_true", default=False)
+parser.add_argument("--i_ext_enable",           help="Enable I base",                     action="store_true", default=False)
+parser.add_argument("--i_base_enable",          help="Enable I base",                     action="store_true", default=False)
+parser.add_argument("--e_ext_enable",           help="Enable E base",                     action="store_true", default=False)
+parser.add_argument("--e_base_enable",          help="Enable E base",                     action="store_true", default=False)
+parser.add_argument("--xsecure_enable",         help="Enable Xsecure Registers",          action="store_true", default=False)
 parser.add_argument("--output",                 help="Output path",                       type=str)
 parser.add_argument("--iterations",             help="Number of generated tests",         type=str, default="1")
 
@@ -76,8 +78,8 @@ def preprocess_yaml():
       "clic":         False,
       "clint":        False,
       "debug":        False,
-      "e_ext":        False,
-      "i_ext":        False,
+      "e_base":       False,
+      "i_base":       False,
       "m_ext":        False,
       "m_none":       False,
       "readonly":     False,
@@ -101,15 +103,17 @@ def preprocess_yaml():
         str_args = str_args + "_debug"
         enabled_features["debug"] = True
     # I/E
-    if (args.i_ext_enable):
+    if (args.i_base_enable or args.i_ext_enable):
         str_args = str_args + "_i"
-        enabled_features["i_ext"] = True
-    elif (args.e_ext_enable):
+        enabled_features["i_base"] = True
+    elif (args.e_base_enable or args.e_ext_enable):
         str_args = str_args + "_e"
-        enabled_features["e_ext"] = True
+        enabled_features["e_base"] = True
     else:
         print("error: must have 'i_ext' or 'e_ext'", file=sys.stderr)
         exit(1)
+    if (args.i_ext_enable or args.e_ext_enable):
+        print("warning: i and e are 'base' modules, not extensions", file=sys.stderr)
     # M
     if (args.m_ext_enable):
         str_args = str_args + "_m"
