@@ -14,3 +14,22 @@ There are README files in each directory with additional information.
 
 ## Getting Started
 Check out the Quick Start Guide in the [CORE-V-VERIF Verification Strategy](https://core-v-docs-verif-strat.readthedocs.io/en/latest/).
+
+## Setup
+
+```bash
+export CV_SW_PREFIX=riscv32-unknown-elf-
+export CV_SW_TOOLCHAIN=/eda/riscv/riscv-gnu-toolchain-rv32g
+export CORE_V_VERIF=`realpath .`/core-v-verif
+
+git clone -b cv32e40p/release https://github.com/yongatek/core-v-verif $CORE_V_VERIF
+cd $CORE_V_VERIF
+```
+
+## Run sanity check in VCS 
+
+```bash
+source /eda/common/scripts/synopsys.sh
+make sanity CUSTOM=. CV_SIMULATOR=vcs
+make vcs-run-gui CUSTOM=. CUSTOM_PROG=hello-world CV_SIMULATOR=vcs
+```
