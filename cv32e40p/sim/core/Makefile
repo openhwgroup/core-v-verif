@@ -121,8 +121,8 @@ VSIM_SCRIPT_DIR	  = ../tools/vsim
 VSIM_SCRIPT       = $(VSIM_SCRIPT_DIR)/vsim.tcl
 
 # vcs configuration (hopelessly out of date)
-VCS_VERSION             = Q-2020.03-SP2
-VCS_HOME                = /eda/synopsys/vcs/$(VCS_VERSION)
+VCS_VERSION            ?= Q-2020.03-SP2
+VCS_HOME               ?= /eda/synopsys/vcs/$(VCS_VERSION)
 VCS                     = vcs
 VCS_FLAGS              ?= -ntb_opts uvm-1.1
 ALL_VCS_FLAGS           = $(VCS_FLAGS)
