@@ -1821,7 +1821,7 @@ covergroup c_lw_cg with function sample(ins_rv32zca_t ins);
     cp_rdp : coverpoint get_gpr_c_reg(ins.ops[0].key)  iff (ins.trap == 0) {
         option.comment = "RD (GPR) register assignment";
     }
-    cp_rs1p : coverpoint get_gpr_c_reg(ins.ops[1].key)  iff (ins.trap == 0) {
+    cp_rs1p : coverpoint get_gpr_c_reg(ins.ops[2].key)  iff (ins.trap == 0) {
         option.comment = "RS1 (GPR) register assignment";
     }
 
@@ -1893,7 +1893,7 @@ covergroup c_lw_cg with function sample(ins_rv32zca_t ins);
         wildcard bins bit_30_1  = {32'b?1??????????????????????????????};
         wildcard bins bit_31_1  = {32'b1???????????????????????????????};
     }
-    cp_rs1p_toggle : coverpoint unsigned'(int'(ins.ops[1].val))  iff (ins.trap == 0) {
+    cp_rs1p_toggle : coverpoint unsigned'(int'(ins.ops[2].val))  iff (ins.trap == 0) {
         option.comment = "RS1P Toggle bits";
         wildcard bins bit_0_0  = {32'b???????????????????????????????0};
         wildcard bins bit_1_0  = {32'b??????????????????????????????0?};
@@ -1967,7 +1967,7 @@ covergroup c_lw_cg with function sample(ins_rv32zca_t ins);
         bins max  = {32'b0111111111111111111111111111111};
         bins ones  = {32'b1111111111111111111111111111111};
     }
-    cp_rs1p_maxvals : coverpoint unsigned'(int'(ins.ops[1].val))  iff (ins.trap == 0) {
+    cp_rs1p_maxvals : coverpoint unsigned'(int'(ins.ops[2].val))  iff (ins.trap == 0) {
         option.comment = "RDP Max values";
         bins zeros  = {0};
         bins min  = {32'b1000000000000000000000000000000};
@@ -2635,7 +2635,6 @@ function ins_rv32zca_t get_rv32zca_inst(bit trap, int hart, int issue, string di
 endfunction
 
 function void rv32zca_sample(string inst_name, bit trap, int hart, int issue, string disass);
-$display("%m inst_name='%s' disass='%s'", inst_name, disass);
     case (inst_name)
         "c.add"     : begin ins_rv32zca_t ins = get_rv32zca_inst(trap, hart, issue, disass); c_add_cg.sample(ins); end
         "c.mv"     : begin ins_rv32zca_t ins = get_rv32zca_inst(trap, hart, issue, disass); c_mv_cg.sample(ins); end
