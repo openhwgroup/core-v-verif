@@ -121,10 +121,10 @@ VSIM_SCRIPT_DIR	  = ../tools/vsim
 VSIM_SCRIPT       = $(VSIM_SCRIPT_DIR)/vsim.tcl
 
 # vcs configuration (hopelessly out of date)
-VCS_VERSION             = O-2018.09-SP1-1
-VCS_HOME                = /opt/synopsys/vcs-mx/$(VCS_VERSION)
+VCS_VERSION            ?= Q-2020.03-SP2
+VCS_HOME               ?= /eda/synopsys/vcs/$(VCS_VERSION)
 VCS                     = vcs
-VCS_FLAGS              ?= # user defined
+VCS_FLAGS              ?= -ntb_opts uvm-1.1
 ALL_VCS_FLAGS           = $(VCS_FLAGS)
 VCS_SCRIPT_DIR          = ../tools/vcs
 VCS_SCRIPT              = $(VCS_SCRIPT_DIR)/vcs_batch.tcl
@@ -358,7 +358,7 @@ vsim-all:  .opt-rtl
 .PHONY: vsim-run
 vsim-run: ALL_VSIM_FLAGS += -c
 vsim-run: vsim-all
-	$(VSIM) -work $(VWORK) $(DPILIB_VSIM_OPT) $(ALL_VSIM_FLAGS) \
+	$(VSIM) -work $(VWORK) $(DPILIB_VSIM_OPT) $(ALL_VSIM_FLAGS)\
 	$(RTLSRC_VOPT_TB_TOP) -do 'source $(VSIM_SCRIPT); exit -f'
 
 
@@ -529,9 +529,11 @@ verilate-clean: tc-clean
 vcsify: CV_CORE_pkg tbsrc_pkg tbsrc
 	$(VCS) +vc -sverilog -race=all -ignore unique_checks -full64 \
 		-timescale=1ns/1ps \
+		-debug_access+all \
+		-cm line+tgl+branch+assert \
 		-assert svaext \
 		-CC "-I$(VCS_HOME)/include -O3 -march=native" $(VCS_FLAGS) \
-		-f $(MAKE_DIR)/$(CV_CORE_MANIFEST) \
+		-f $(CV_CORE_MANIFEST) \
 		$(TBSRC_PKG) $(TBSRC)
 
 RTLSRC_TB_TOP	:= $(basename $(notdir $(TBSRC_TOP)))
@@ -540,7 +542,9 @@ vcs-run: vcsify
 	$(SIMV) $(ALL_VCS_FLAGS) -ucli -do $(VCS_SCRIPT)
 
 vcs-run-gui: vcsify
-	$(SIMV) $(ALL_VCS_FLAGS) -gui -do $(VCS_SCRIPT_GUI)
+	$(SIMV) $(ALL_VCS_FLAGS) +firmware=$(CUSTOM)/$(CUSTOM_PROG).hex -cm line+tgl+branch+assert -gui -do $(VCS_SCRIPT_GUI)
+	vpd2vcd inter.vpd inter.vcd
+	urg -dir $(SIMV).vdb/ -grade cost simtime index testfile -show tests
 
 .PHONY: vcs-hello-world
 vcs-hello-world: vcsify $(CUSTOM)/hello-world.hex
