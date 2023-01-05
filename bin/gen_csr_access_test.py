@@ -23,6 +23,7 @@ parser.add_argument("--core",                   help="Set the core to generate t
 parser.add_argument("--pmp_num_regions",        help="Set number of Pmp regions",         type=str, default="0")
 parser.add_argument("--mhpmcounter_num",        help="Set number of mhpmcounters",        type=str, default="3")
 parser.add_argument("--num_triggers",           help="Set number of trigger registers",   type=str, default="1")
+parser.add_argument("--marchid",                help="Set number for marchid",            type=str, default="0")
 parser.add_argument("--clic_enable",            help="Enable clic support",               action="store_true", default=False)
 parser.add_argument("--zc_enable",              help="Enable Zc support",                 action="store_true", default=False)
 parser.add_argument("--zicntr_enable",          help="Enable Zicntr",                     action="store_true", default=False)
@@ -30,6 +31,11 @@ parser.add_argument("--clint_enable",           help="Enable Basic Interrupts", 
 parser.add_argument("--debug_enable",           help="Enable Debug Registers",            action="store_true", default=False)
 parser.add_argument("--m_ext_enable",           help="Enable M extension",                action="store_true", default=False)
 parser.add_argument("--m_none_enable",          help="Disable M extension",               action="store_true", default=False)
+parser.add_argument("--x_ext_enable",           help="Enable X extension",                action="store_true", default=False)
+parser.add_argument("--v_ext_enable",           help="Enable V extension",                action="store_true", default=False)
+parser.add_argument("--p_ext_enable",           help="Enable P extension",                action="store_true", default=False)
+parser.add_argument("--f_ext_enable",           help="Enable F extension",                action="store_true", default=False)
+parser.add_argument("--a_ext_enable",           help="Enable A extension",                action="store_true", default=False)
 parser.add_argument("--i_ext_enable",           help="Enable I base",                     action="store_true", default=False)
 parser.add_argument("--i_base_enable",          help="Enable I base",                     action="store_true", default=False)
 parser.add_argument("--e_ext_enable",           help="Enable E base",                     action="store_true", default=False)
@@ -69,6 +75,7 @@ def run_riscv_dv_gen_csr_script(output_yaml_path):
                         "iterations" : ' --iterations ' + args.iterations}
         subprocess.call(shlex.split("python3 " + script_path + script_args["csr_file"] + script_args["xlen"] + script_args["out"] + script_args["iterations"]))
     except Exception as e:
+        print("error: exception in 'run_riscv_dv_gen_csr_script'")
         print(e)
 
 def preprocess_yaml():
@@ -85,10 +92,16 @@ def preprocess_yaml():
       "m_ext":        False,
       "m_none":       False,
       "readonly":     False,
-      "xsecure":      False,
       "umode":        False,
+      "a_ext":        False,
+      "f_ext":        False,
+      "p_ext":        False,
+      "v_ext":        False,
+      "x_ext":        False,
+      "xsecure":      False,
       "zc":           False,
       "zicntr":       False,
+      "marchid":      0,
       "mhpmcounters": 0,
       "pmp":          0,
       "trigger":      0,
@@ -128,6 +141,26 @@ def preprocess_yaml():
     else:
         print("error: must have 'm_ext' or 'm_none'", file=sys.stderr)
         exit(1)
+    # A_EXT
+    if (args.a_ext_enable):
+        str_args = str_args + "_a"
+        enabled_features["a_ext"] = True
+    # F_EXT
+    if (args.f_ext_enable):
+        str_args = str_args + "_f"
+        enabled_features["f_ext"] = True
+    # P_EXT
+    if (args.p_ext_enable):
+        str_args = str_args + "_p"
+        enabled_features["p_ext"] = True
+    # V_EXT
+    if (args.v_ext_enable):
+        str_args = str_args + "_v"
+        enabled_features["v_ext"] = True
+    # X_EXT
+    if (args.x_ext_enable):
+        str_args = str_args + "_x"
+        enabled_features["x_ext"] = True
     # XSECURE
     if (args.xsecure_enable):
         str_args = str_args + "_xsecure"
@@ -144,6 +177,10 @@ def preprocess_yaml():
     if (args.zicntr_enable):
         str_args = str_args + "_zicntr"
         enabled_features["zicntr"] = True
+    # MARCHID
+    if (int(args.marchid) > 0):
+        str_args = str_args + "_marchid" + args.marchid
+        enabled_features["marchid"] = int(args.marchid)
     # MHPMCOUNTERS
     if (int(args.mhpmcounter_num) > 0):
         str_args = str_args + "_mhpmctr" + args.mhpmcounter_num
@@ -231,6 +268,7 @@ def gen_riscv_dv_gen_csr_file(iteration = 1):
         file_handle.close()
         template_handle.close()
     except Exception as e:
+        print("error: exception in 'gen_riscv_dv_gen_csr_file'")
         print(e)
 
 if args.dry_run:
