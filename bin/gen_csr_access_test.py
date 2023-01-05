@@ -25,6 +25,7 @@ parser.add_argument("--mhpmcounter_num",        help="Set number of mhpmcounters
 parser.add_argument("--num_triggers",           help="Set number of trigger registers",   type=str, default="1")
 parser.add_argument("--clic_enable",            help="Enable clic support",               action="store_true", default=False)
 parser.add_argument("--zc_enable",              help="Enable Zc support",                 action="store_true", default=False)
+parser.add_argument("--zicntr_enable",          help="Enable Zicntr",                     action="store_true", default=False)
 parser.add_argument("--clint_enable",           help="Enable Basic Interrupts",           action="store_true", default=False)
 parser.add_argument("--debug_enable",           help="Enable Debug Registers",            action="store_true", default=False)
 parser.add_argument("--m_ext_enable",           help="Enable M extension",                action="store_true", default=False)
@@ -34,6 +35,7 @@ parser.add_argument("--i_base_enable",          help="Enable I base",           
 parser.add_argument("--e_ext_enable",           help="Enable E base",                     action="store_true", default=False)
 parser.add_argument("--e_base_enable",          help="Enable E base",                     action="store_true", default=False)
 parser.add_argument("--xsecure_enable",         help="Enable Xsecure Registers",          action="store_true", default=False)
+parser.add_argument("--umode_enable",           help="Enable Certain U-mode fields",      action="store_true", default=False)
 parser.add_argument("--output",                 help="Output path",                       type=str)
 parser.add_argument("--iterations",             help="Number of generated tests",         type=str, default="1")
 
@@ -84,7 +86,9 @@ def preprocess_yaml():
       "m_none":       False,
       "readonly":     False,
       "xsecure":      False,
+      "umode":        False,
       "zc":           False,
+      "zicntr":       False,
       "mhpmcounters": 0,
       "pmp":          0,
       "trigger":      0,
@@ -128,10 +132,18 @@ def preprocess_yaml():
     if (args.xsecure_enable):
         str_args = str_args + "_xsecure"
         enabled_features["xsecure"] = True
+    # UMODE
+    if (args.umode_enable):
+        str_args = str_args + "_umode"
+        enabled_features["umode"] = True
     # ZC
     if (args.zc_enable):
         str_args = str_args + "_zc"
         enabled_features["zc"] = True
+    # ZICNTR
+    if (args.zicntr_enable):
+        str_args = str_args + "_zicntr"
+        enabled_features["zicntr"] = True
     # MHPMCOUNTERS
     if (int(args.mhpmcounter_num) > 0):
         str_args = str_args + "_mhpmctr" + args.mhpmcounter_num
