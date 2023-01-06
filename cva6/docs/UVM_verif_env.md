@@ -33,7 +33,7 @@ Conversion notes:
 This document describes the uvm verification environment of the cv6 core. This environment is intended to be able to verify the cv6 core and run different test cases by the minimal modification to the environment itself.  The environment is shown below:
 
 
-![alt_text](../xe-lpt-48/Desktop/1.png "image_tooltip")
+![alt_text](../1.png "image_tooltip")
 
 ***
 
