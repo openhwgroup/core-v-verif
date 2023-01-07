@@ -48,13 +48,15 @@ parser.add_argument("--iterations",             help="Number of generated tests"
 args = parser.parse_args()
 
 if (args.core == None or args.core not in supported_cores):
-    print("Error: No core supported core specified")
+    parser.print_help()
+    print("Error: No supported '--core' specified")
     exit(1)
 if (args.output == None):
-    print("Error: no output path")
+    parser.print_help()
+    print("Error: no '--output' path specified")
     exit(1)
 if int(args.pmp_num_regions) not in range(65):
-    print("Error: unsupported number of regions setting")
+    print("Error: unsupported number of pmp regions")
     exit(1)
 
 if args.dry_run:
@@ -127,7 +129,7 @@ def preprocess_yaml():
         str_args = str_args + "_e"
         enabled_features["e_base"] = True
     else:
-        print("error: must have 'i_ext' or 'e_ext'", file=sys.stderr)
+        print("error: need '--i_base_enable' or 'e_base_enable'", file=sys.stderr)
         exit(1)
     if (args.i_ext_enable or args.e_ext_enable):
         print("warning: i and e are 'base' modules, not extensions", file=sys.stderr)
@@ -139,7 +141,7 @@ def preprocess_yaml():
         str_args = str_args + "_mnone"
         enabled_features["m_none"] = True
     else:
-        print("error: must have 'm_ext' or 'm_none'", file=sys.stderr)
+        print("error: need '--m_ext_enable' or '--m_none_enable'", file=sys.stderr)
         exit(1)
     # A_EXT
     if (args.a_ext_enable):
