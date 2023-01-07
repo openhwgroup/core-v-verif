@@ -5,8 +5,8 @@ import subprocess
 import yaml
 import shlex
 
-if (sys.version_info < (3,0,0)):
-    print ('Requires python 3')
+if (sys.version_info < (3,5,0)):
+    print ('Requires python 3.5')
     exit(1)
 
 supported_cores = ["cv32e40s", "cv32e40x"]
@@ -79,7 +79,14 @@ output_yaml_path = ""
 def run_riscv_dv_gen_csr_script(output_yaml_path):
     try:
         print("riscv-dv script path: {}".format(script_path))
+        if (not os.path.isfile(script_path)):
+            print("error: script_path, no such file", file=sys.stderr)
+            exit(1)
+
         print("csr description used: {}".format(output_yaml_path))
+        if (not os.path.isfile(output_yaml_path)):
+            print("error: csr description output_yaml_path doesn't exist", file=sys.stderr)
+            exit(1)
 
         script_args = { "csr_file"   : ' --csr_file {}'.format(output_yaml_path),
                         "xlen"       : ' --xlen 32',
@@ -139,7 +146,7 @@ def preprocess_yaml():
         str_args = str_args + "_e"
         enabled_features["e_base"] = True
     else:
-        print("error: need '--i_base_enable' or 'e_base_enable'", file=sys.stderr)
+        print("error: need '--i_base_enable' or '--e_base_enable'", file=sys.stderr)
         exit(1)
     if (args.i_ext_enable or args.e_ext_enable):
         print("warning: i and e are 'base' modules, not extensions", file=sys.stderr)
@@ -210,14 +217,13 @@ def preprocess_yaml():
     print("enabled_features: {}".format(enabled_features))
 
     output_script_path = os.path.join(args.output) + "{}_csr_template.yaml".format(args.core.lower() + str_args)
+    if not args.dry_run:
+        output_script_handle = open(output_script_path, "w")
 
     # "m4" - Optionally used for all preprocessing
     if (args.m4):
-        # TODO implement
+        preprocess_yaml_m4(input_script_path, output_script_handle)
         return output_script_path
-
-    if not args.dry_run:
-        output_script_handle = open(output_script_path, "w")
 
     input_script_handle = open(input_script_path, "r")
     input_script_lines = input_script_handle.readlines()
@@ -288,6 +294,10 @@ def gen_riscv_dv_gen_csr_file(iteration = 1):
     except Exception as e:
         print("error: exception in 'gen_riscv_dv_gen_csr_file'")
         print(e)
+
+def preprocess_yaml_m4(input_script_path, output_script_handle):
+    subprocess.run(['m4', '-G', input_script_path], stdout=output_script_handle)
+    # TODO:silabs-robin  -D MYDEF
 
 if args.dry_run:
     preprocess_yaml()
