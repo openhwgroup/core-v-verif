@@ -17,33 +17,42 @@ except KeyError:
     default_core = 'None'
 
 topdir = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
+
+
+# Parser arguments
+
 parser = argparse.ArgumentParser()
+
 parser.add_argument("--dry_run",                help="Prints generated yaml to stdout",   action="store_true")
 parser.add_argument("--core",                   help="Set the core to generate test for", choices=supported_cores)
+parser.add_argument("--output",                 help="Output path",                       type=str)
+parser.add_argument("--iterations",             help="Number of generated tests",         type=str, default="1")
+parser.add_argument("--m4",                     help="Use 'm4' for all preprocessing",    action="store_true", default=False)
+
 parser.add_argument("--pmp_num_regions",        help="Set number of Pmp regions",         type=str, default="0")
 parser.add_argument("--mhpmcounter_num",        help="Set number of mhpmcounters",        type=str, default="3")
 parser.add_argument("--num_triggers",           help="Set number of trigger registers",   type=str, default="1")
 parser.add_argument("--marchid",                help="Set number for marchid",            type=str, default="0")
+
 parser.add_argument("--clic_enable",            help="Enable clic support",               action="store_true", default=False)
-parser.add_argument("--zc_enable",              help="Enable Zc support",                 action="store_true", default=False)
-parser.add_argument("--zicntr_enable",          help="Enable Zicntr",                     action="store_true", default=False)
 parser.add_argument("--clint_enable",           help="Enable Basic Interrupts",           action="store_true", default=False)
 parser.add_argument("--debug_enable",           help="Enable Debug Registers",            action="store_true", default=False)
+parser.add_argument("--umode_enable",           help="Enable Certain U-mode fields",      action="store_true", default=False)
+parser.add_argument("--xsecure_enable",         help="Enable Xsecure Registers",          action="store_true", default=False)
+parser.add_argument("--zc_enable",              help="Enable Zc support",                 action="store_true", default=False)
+parser.add_argument("--zicntr_enable",          help="Enable Zicntr",                     action="store_true", default=False)
+
+parser.add_argument("--a_ext_enable",           help="Enable A extension",                action="store_true", default=False)
+parser.add_argument("--e_base_enable",          help="Enable E base",                     action="store_true", default=False)
+parser.add_argument("--e_ext_enable",           help="Enable E base",                     action="store_true", default=False)
+parser.add_argument("--f_ext_enable",           help="Enable F extension",                action="store_true", default=False)
+parser.add_argument("--i_base_enable",          help="Enable I base",                     action="store_true", default=False)
+parser.add_argument("--i_ext_enable",           help="Enable I base",                     action="store_true", default=False)
 parser.add_argument("--m_ext_enable",           help="Enable M extension",                action="store_true", default=False)
 parser.add_argument("--m_none_enable",          help="Disable M extension",               action="store_true", default=False)
-parser.add_argument("--x_ext_enable",           help="Enable X extension",                action="store_true", default=False)
-parser.add_argument("--v_ext_enable",           help="Enable V extension",                action="store_true", default=False)
 parser.add_argument("--p_ext_enable",           help="Enable P extension",                action="store_true", default=False)
-parser.add_argument("--f_ext_enable",           help="Enable F extension",                action="store_true", default=False)
-parser.add_argument("--a_ext_enable",           help="Enable A extension",                action="store_true", default=False)
-parser.add_argument("--i_ext_enable",           help="Enable I base",                     action="store_true", default=False)
-parser.add_argument("--i_base_enable",          help="Enable I base",                     action="store_true", default=False)
-parser.add_argument("--e_ext_enable",           help="Enable E base",                     action="store_true", default=False)
-parser.add_argument("--e_base_enable",          help="Enable E base",                     action="store_true", default=False)
-parser.add_argument("--xsecure_enable",         help="Enable Xsecure Registers",          action="store_true", default=False)
-parser.add_argument("--umode_enable",           help="Enable Certain U-mode fields",      action="store_true", default=False)
-parser.add_argument("--output",                 help="Output path",                       type=str)
-parser.add_argument("--iterations",             help="Number of generated tests",         type=str, default="1")
+parser.add_argument("--v_ext_enable",           help="Enable V extension",                action="store_true", default=False)
+parser.add_argument("--x_ext_enable",           help="Enable X extension",                action="store_true", default=False)
 
 args = parser.parse_args()
 
@@ -71,6 +80,7 @@ def run_riscv_dv_gen_csr_script(output_yaml_path):
     try:
         print("riscv-dv script path: {}".format(script_path))
         print("csr description used: {}".format(output_yaml_path))
+
         script_args = { "csr_file"   : ' --csr_file {}'.format(output_yaml_path),
                         "xlen"       : ' --xlen 32',
                         "out"        : ' --out ' + args.output,
@@ -200,6 +210,12 @@ def preprocess_yaml():
     print("enabled_features: {}".format(enabled_features))
 
     output_script_path = os.path.join(args.output) + "{}_csr_template.yaml".format(args.core.lower() + str_args)
+
+    # "m4" - Optionally used for all preprocessing
+    if (args.m4):
+        # TODO implement
+        return output_script_path
+
     if not args.dry_run:
         output_script_handle = open(output_script_path, "w")
 
