@@ -222,7 +222,7 @@ def preprocess_yaml():
 
     # "m4" - Optionally used for all preprocessing
     if (args.m4):
-        preprocess_yaml_m4(input_script_path, output_script_handle)
+        preprocess_yaml_m4(enabled_features, input_script_path, output_script_handle)
         return output_script_path
 
     input_script_handle = open(input_script_path, "r")
@@ -295,9 +295,25 @@ def gen_riscv_dv_gen_csr_file(iteration = 1):
         print("error: exception in 'gen_riscv_dv_gen_csr_file'")
         print(e)
 
-def preprocess_yaml_m4(input_script_path, output_script_handle):
-    subprocess.run(['m4', '-G', input_script_path], stdout=output_script_handle)
-    # TODO:silabs-robin  -D MYDEF
+def preprocess_yaml_m4(enabled_features, input_script_path, output_script_handle):
+    args_pre  = ['m4', '-G']
+    args_post = [input_script_path]
+    args_mid  = []
+
+    for key, val in enabled_features.items():
+        name = str(key).upper()
+        if isinstance(val, bool):
+            if val == True:
+                args_mid.append('-D')
+                args_mid.append(name)
+        elif isinstance(val, int):
+            args_mid.append('-D')
+            args_mid.append(name + '=' + str(val))
+
+    args = args_pre + args_mid + args_post
+    print('running m4 as: ' + str(args))  # TODO:silabs-robin  "if '--verbose'"
+
+    subprocess.run(args, stdout=output_script_handle)
 
 if args.dry_run:
     preprocess_yaml()
