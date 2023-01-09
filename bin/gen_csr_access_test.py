@@ -103,27 +103,27 @@ def preprocess_yaml():
     w_enable_n = w_enable
     str_args = ""
     enabled_features = {
-      "clic":         False,
-      "clint":        False,
-      "debug":        False,
-      "e_base":       False,
-      "i_base":       False,
-      "m_ext":        False,
-      "m_none":       False,
-      "readonly":     False,
-      "umode":        False,
-      "a_ext":        False,
-      "f_ext":        False,
-      "p_ext":        False,
-      "v_ext":        False,
-      "x_ext":        False,
-      "xsecure":      False,
-      "zc":           False,
-      "zicntr":       False,
-      "marchid":      0,
-      "mhpmcounters": 0,
-      "pmp":          0,
-      "trigger":      0,
+      "clic":             False,
+      "clint":            False,
+      "debug":            False,
+      "e_base":           False,
+      "i_base":           False,
+      "m_ext":            False,
+      "m_none":           False,
+      "readonly":         False,
+      "umode":            False,
+      "a_ext":            False,
+      "f_ext":            False,
+      "p_ext":            False,
+      "v_ext":            False,
+      "x_ext":            False,
+      "xsecure":          False,
+      "zc":               False,
+      "zicntr":           False,
+      "marchid":          0,
+      "num_mhpmcounters": 0,
+      "pmp_num_regions":  0,
+      "dbg_num_triggers": 0,
       }
 
     # CLIC
@@ -203,15 +203,15 @@ def preprocess_yaml():
     # MHPMCOUNTERS
     if (int(args.mhpmcounter_num) > 0):
         str_args = str_args + "_mhpmctr" + args.mhpmcounter_num
-        enabled_features["mhpmcounters"] = int(args.mhpmcounter_num)
+        enabled_features["num_mhpmcounters"] = int(args.mhpmcounter_num)
     # PMP
     if (int(args.pmp_num_regions) > 0):
         str_args = str_args + "_pmp" + args.pmp_num_regions
-        enabled_features["pmp"] = int(args.pmp_num_regions)
+        enabled_features["pmp_num_regions"] = int(args.pmp_num_regions)
     # TRIGGERS
     if (int(args.num_triggers) > 0):
         str_args = str_args + "_triggers" + args.num_triggers
-        enabled_features["trigger"] = int(args.num_triggers)
+        enabled_features["dbg_num_triggers"] = int(args.num_triggers)
     # TODO:silabs-robin Any other "enabled_features"?
 
     print("enabled_features: {}".format(enabled_features))
