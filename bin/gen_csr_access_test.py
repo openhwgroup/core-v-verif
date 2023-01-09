@@ -302,14 +302,10 @@ def preprocess_yaml_m4(enabled_features, input_script_path, output_script_handle
 
     # Set defines for the preprocessing
     for key, val in enabled_features.items():
-        name = str(key).upper()
-        if isinstance(val, bool):
-            if val == True:
-                args_mid.append('-D')
-                args_mid.append(name)
-        elif isinstance(val, int):
-            args_mid.append('-D')
-            args_mid.append(name + '=' + str(val))
+        dname = str(key).upper()
+        dval  = str(int(val))
+        args_mid.append('-D')
+        args_mid.append(dname + '=' + dval)
 
     # Run the preprocessing
     args = args_pre + args_mid + args_post
