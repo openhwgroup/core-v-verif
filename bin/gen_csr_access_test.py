@@ -296,10 +296,11 @@ def gen_riscv_dv_gen_csr_file(iteration = 1):
         print(e)
 
 def preprocess_yaml_m4(enabled_features, input_script_path, output_script_handle):
-    args_pre  = ['m4', '-G']
+    args_pre  = ['m4', '-G', '-E']  # Turn off GNU extensions, promote warnings to errors
     args_post = [input_script_path]
     args_mid  = []
 
+    # Set defines for the preprocessing
     for key, val in enabled_features.items():
         name = str(key).upper()
         if isinstance(val, bool):
@@ -310,10 +311,14 @@ def preprocess_yaml_m4(enabled_features, input_script_path, output_script_handle
             args_mid.append('-D')
             args_mid.append(name + '=' + str(val))
 
+    # Run the preprocessing
     args = args_pre + args_mid + args_post
     print('running m4 as: ' + str(args))  # TODO:silabs-robin  "if '--verbose'"
+    proc_results = subprocess.run(args, stdout=output_script_handle)
 
-    subprocess.run(args, stdout=output_script_handle)
+    if proc_results.returncode != 0:
+        print("error: m4 preproc returned error status", file=sys.stderr)
+        exit(1)
 
 if args.dry_run:
     preprocess_yaml()
