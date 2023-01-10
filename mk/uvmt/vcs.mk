@@ -29,8 +29,8 @@ ifeq ($(OS_IS_UBUNTU),Ubuntu)
 endif
 
 # Executables
-VCS              = $(CV_SIM_PREFIX) vcs
-SIMV             = $(CV_TOOL_PREFIX) simv -licwait 20
+VCS              = $(CV_SIM_PREFIX) vcs -full64 -cpp g++-4.8 -cc gcc-4.8 -LDFLAGS -Wl,--no-as-needed
+SIMV             = $(CV_TOOL_PREFIX)simv -licwait 20
 DVE              = $(CV_TOOL_PREFIX) dve
 #VERDI            = $(CV_TOOL_PREFIX)verdi
 URG               = $(CV_SIM_PREFIX) urg
@@ -146,8 +146,8 @@ endif
 VCS_RUN_BASE_FLAGS   ?= $(VCS_GUI) \
                         $(VCS_PLUSARGS) +ntb_random_seed=$(RNDSEED) \
 						-sv_lib $(VCS_OVP_MODEL_DPI) \
-						-sv_lib $(DPI_DASM_LIB) \
-						-sv_lib $(abspath $(SVLIB_LIB))
+						-sv_lib $(DPI_DASM_LIB:.so=) \
+						-sv_lib $(abspath $(SVLIB_LIB:.so=))
 
 # Simulate using latest elab
 VCS_RUN_FLAGS        ?=
@@ -190,7 +190,7 @@ comp: mk_vcs_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI)
 	@echo "* $(SIMULATOR) compile complete"
 	@echo "* Log: $(SIM_CFG_RESULTS)/vcs.log"
 	@echo "$(BANNER)"
-	cd $(SIM_CFG_RESULTS)/$(CFG) && $(VCS) $(VCS_COMP) -top uvmt_$(CV_CORE_LC)_tb
+	cd $(SIM_CFG_RESULTS) && $(VCS) $(VCS_COMP) -top uvmt_$(CV_CORE_LC)_tb
 
 ifneq ($(call IS_NO,$(COMP)),NO)
 VCS_SIM_PREREQ = comp
@@ -219,7 +219,7 @@ test: $(VCS_SIM_PREREQ) hex gen_ovpsim_ic
 	mkdir -p $(SIM_RUN_RESULTS)
 	cd $(SIM_RUN_RESULTS) && \
 	export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic && \
-		$(VCS_RESULTS)/$(CFG)/$(SIMV) \
+		$(SIM_RESULTS)/$(CFG)/$(SIMV) \
 			-l vcs-$(TEST_NAME).log \
 			-cm_name $(TEST_NAME) $(VCS_RUN_FLAGS) \
 			$(CFG_PLUSARGS) \
