@@ -119,15 +119,45 @@ interface uvmt_cv32e40s_xsecure_if
 
     (
 
-    // CORE
+    // Core
     input logic core_clk,
     input logic clk_en,
 
+    input logic core_i_data_err_i,
     input logic core_rf_we_wb,
     input logic [4:0] core_rf_waddr_wb,
     input logic [31:0] core_rf_wdata_wb,
     input logic [REGFILE_WORD_WIDTH-1:0] core_register_file_wrapper_register_file_mem [CORE_PARAM_REGFILE_NUM_WORDS],
     input logic [31:0] core_i_jump_target_id,
+
+    // OBI interface
+    input obi_data_resp_t core_i_if_stage_i_bus_resp,
+    input obi_data_resp_t core_i_load_store_unit_i_bus_resp,
+
+    input obi_data_req_t core_i_m_c_obi_data_if_req_payload,
+    input obi_data_resp_t core_i_m_c_obi_data_if_resp_payload,
+    input obi_inst_req_t core_i_m_c_obi_instr_if_req_payload,
+    input obi_inst_resp_t core_i_m_c_obi_instr_if_resp_payload,
+
+    input logic core_i_m_c_obi_data_if_s_req_req,
+    input logic core_i_m_c_obi_data_if_s_req_reqpar,
+    input logic core_i_m_c_obi_data_if_s_gnt_gnt,
+    input logic core_i_m_c_obi_data_if_s_gnt_gntpar,
+    input logic core_i_m_c_obi_data_if_s_rvalid_rvalid,
+    input logic core_i_m_c_obi_data_if_s_rvalid_rvalidpar,
+
+    input logic core_i_m_c_obi_instr_if_s_req_req,
+    input logic core_i_m_c_obi_instr_if_s_req_reqpar,
+    input logic core_i_m_c_obi_instr_if_s_gnt_gnt,
+    input logic core_i_m_c_obi_instr_if_s_gnt_gntpar,
+    input logic core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+    input logic core_i_m_c_obi_instr_if_s_rvalid_rvalidpar,
+
+    input logic core_i_if_stage_i_prefetch_resp_valid,
+    input logic core_i_load_store_unit_i_resp_valid,
+    input logic core_i_load_store_unit_i_bus_resp_valid,
+
+    input logic [1:0] core_i_load_store_unit_i_response_filter_i_core_cnt_q,
 
     // CSR
     input logic core_alert_minor_o,
@@ -135,12 +165,13 @@ interface uvmt_cv32e40s_xsecure_if
 
     input logic core_xsecure_ctrl_cpuctrl_dataindtiming,
     input logic core_xsecure_ctrl_cpuctrl_rnddummy,
+    input logic core_xsecure_ctrl_cpuctrl_integrity,
     input logic core_xsecure_ctrl_cpuctrl_pc_hardening,
+    input logic core_xsecure_ctrl_cpuctrl_rndhint,
 
     input logic [3:0] core_xsecure_ctrl_cpuctrl_rnddummyfreq,
     input logic core_if_stage_gen_dummy_instr_dummy_instr_dummy_en,
     input logic [2:0] core_cs_registers_xsecure_lfsr_lockup,
-    input logic core_controller_controller_fsm_debug_mode_q,
 
     input logic [63:0] core_cs_registers_mhpmcounter_mcycle,
     input logic [63:0] core_cs_registers_mhpmcounter_minstret,
@@ -166,48 +197,52 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] core_i_cs_registers_i_mepc_o,
 
     // Hardened CSR registers
-    input logic [31:0] core_i_cs_registers_i_jvt_csr_i_rdata_q,
-    input logic [31:0] core_i_cs_registers_i_mstatus_csr_i_rdata_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q,
-    input logic [31:0] core_i_cs_registers_i_xsecure_cpuctrl_csr_i_rdata_q,
-    input logic [31:0] core_i_cs_registers_i_dcsr_csr_i_rdata_q,
-    input logic [31:0] core_i_cs_registers_i_mepc_csr_i_rdata_q,
-    input logic [31:0] core_i_cs_registers_i_mscratch_csr_i_rdata_q,
+    input logic [31:0] core_i_cs_registers_i_mstateen0_q,
+    input logic [1:0] core_i_cs_registers_i_priv_lvl_q_int,
 
-    input logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q,
-    input logic [PMP_MAX_REGIONS-1:0][PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q,
+    input logic [31:0] core_i_cs_registers_i_jvt_q,
+    input logic [31:0] core_i_cs_registers_i_mstatus_q,
+    input logic [31:0] core_i_cs_registers_i_cpuctrl_q,
+    input logic [31:0] core_i_cs_registers_i_dcsr_q,
+    input logic [31:0] core_i_cs_registers_i_mepc_q,
+    input logic [31:0] core_i_cs_registers_i_mscratch_q,
 
-    // SMCLIC
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q,
+    input mseccfg_t core_i_cs_registers_i_pmp_mseccfg_q,
+    input pmpncfg_t core_i_cs_registers_i_pmpncfg_q[PMP_MAX_REGIONS],
+    input logic [PMP_ADDR_WIDTH-1:0] core_i_cs_registers_i_pmp_addr_q[PMP_MAX_REGIONS],
 
-    // BASE
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q,
+    input mtvt_t core_i_cs_registers_i_mtvt_q,
+    input mtvec_t core_i_cs_registers_i_mtvec_q,
+    input mintstatus_t core_i_cs_registers_i_mintstatus_q,
+    input logic [31:0] core_i_cs_registers_i_mintthresh_q,
+    input logic [31:0] core_i_cs_registers_i_mie_q,
 
     // Shadow registers
+    input logic [31:0] core_cs_registers_mstateen0_csr_gen_hardened_shadow_q,
+    input logic [1:0] core_cs_registers_priv_lvl_gen_hardened_shadow_q,
+
     input logic [31:0] core_cs_registers_jvt_csr_gen_hardened_shadow_q,
     input logic [31:0] core_cs_registers_mstatus_csr_gen_hardened_shadow_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q,
     input logic [31:0] core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q,
     input logic [31:0] core_cs_registers_dcsr_csr_gen_hardened_shadow_q,
     input logic [31:0] core_cs_registers_mepc_csr_gen_hardened_shadow_q,
     input logic [31:0] core_cs_registers_mscratch_csr_gen_hardened_shadow_q,
 
-    input logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q,
-    input logic [PMP_MAX_REGIONS-1:0][PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q,
+    input mseccfg_t uvmt_cv32e40s_tb_pmp_mseccfg_q_shadow_q,
+    input pmpncfg_t uvmt_cv32e40s_tb_pmpncfg_q_shadow_q[PMP_MAX_REGIONS],
+    input logic [PMP_ADDR_WIDTH-1:0] uvmt_cv32e40s_tb_pmp_addr_q_shadow_q[PMP_MAX_REGIONS],
 
-    // SMILIC
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q,
+    input mtvt_t uvmt_cv32e40s_tb_mtvt_q_shadow_q,
+    input mtvec_t uvmt_cv32e40s_tb_mtvec_q_shadow_q,
+    input mintstatus_t uvmt_cv32e40s_tb_mintstatus_q_shadow_q,
+    input logic [31:0] uvmt_cv32e40s_tb_mintthresh_q_shadow_q,
+    input logic [31:0] uvmt_cv32e40s_tb_mie_q_hardened_shadow_q,
 
-    // BASIC
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q,
+    // Controller
+    input logic core_i_controller_i_controller_fsm_i_pending_nmi,
+    input logic core_i_controller_i_controller_fsm_i_dcsr_i_step,
+    input logic core_i_controller_i_controller_fsm_i_dcsr_i_stepie,
+    input logic core_controller_controller_fsm_debug_mode_q,
 
     // IF stage
     input logic core_if_stage_if_valid_o,
@@ -218,16 +253,20 @@ interface uvmt_cv32e40s_xsecure_if
 
     input logic core_if_stage_instr_meta_n_dummy,
     input logic core_i_if_stage_i_instr_hint,
+    input logic core_i_if_stage_i_dummy_insert,
 
     input logic [31:0] core_i_if_stage_i_pc_if_o,
     input logic core_i_if_stage_i_pc_check_i_pc_set_q,
 
-
+    input logic core_i_if_stage_i_ptr_in_if_o,
+    input logic core_i_if_stage_i_compressed_decoder_i_is_compressed_o,
 
     // IF ID pipe
     input logic core_if_id_pipe_instr_meta_dummy,
+    input logic core_if_id_pipe_instr_meta_hint,
     input logic [31:0] core_if_id_pipe_instr_bus_resp_rdata,
     input logic [31:0] core_i_id_stage_i_if_id_pipe_i_pc,
+    input logic core_i_if_id_pipe_last_op,
 
     // ID stage
     input logic core_id_stage_id_valid_o,
@@ -237,14 +276,14 @@ interface uvmt_cv32e40s_xsecure_if
 
     // ID EX pipe
     input logic core_id_ex_pipe_instr_meta_dummy,
-    input logic [31:0] core_id_ex_pipe_instr_bus_resp_rdata,
 
     //EX stage
     input logic [31:0] core_i_ex_stage_i_branch_target_o,
     input logic core_i_ex_stage_i_alu_i_cmp_result_o,
 
     // EX WB pipe
-    input logic core_wb_stage_ex_wb_pipe_instr_meta_dummy,
+    input logic core_ex_wb_pipe_instr_meta_dummy,
+    input logic core_ex_wb_pipe_instr_meta_hint,
 
     // WB stage
     input logic core_wb_stage_wb_valid_o,
@@ -297,12 +336,13 @@ interface uvmt_cv32e40s_debug_cov_assert_if
 
     // Debug signals
     input         debug_req_i, // From controller
-    input         debug_req_q, // From controller
+    input         ctrl_fsm_async_debug_allowed,
     input         debug_havereset,
     input         debug_running,
     input         debug_halted,
 
-    input         pending_debug, // From controller
+    input         pending_sync_debug, // From controller
+    input         pending_async_debug, // From controller
     input         pending_nmi, // From controller
     input         nmi_allowed, // From controller
     input         debug_mode_q, // From controller
@@ -318,6 +358,7 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     input  [31:0] tdata1,
     input  [31:0] tdata2,
     input  trigger_match_in_wb,
+    input  etrigger_in_wb,
 
     // Counter related input from cs_registers
     input  [31:0] mcountinhibit_q,
@@ -376,7 +417,9 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     mepc_q,
     tdata1,
     tdata2,
+    pending_sync_debug,
     trigger_match_in_wb,
+    etrigger_in_wb,
     sys_fence_insn_i,
     mcountinhibit_q,
     mcycle,
@@ -401,60 +444,196 @@ interface uvmt_cv32e40s_debug_cov_assert_if
 
 endinterface : uvmt_cv32e40s_debug_cov_assert_if
 
-interface uvmt_cv32e40s_support_logic_if;
+interface uvmt_cv32e40s_input_to_support_logic_module_if
    import cv32e40s_pkg::*;
-   import uvma_rvfi_pkg::*;
-   logic clk_i;
-   logic rst_ni;
+   import cv32e40s_rvfi_pkg::*;
+   (
 
-   // core signals
-   ctrl_fsm_t  ctrl_fsm_o_i;
-   logic       data_bus_req_i;
-   logic       data_bus_gnt_i;
+   /* obi bus protocol signal information:
+   ---------------------------------------
+   - The obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) is refered to as abiim
+   - The obi protocol between LSU (l) mpu (m) and LSU (l) is refered to as lml
+   - The obi protocol between LSU (l) respons (r) filter (f) and OBI (o) data (d) interface (i) is refered to as lrfodi
+   */
 
-   //results for modport
-   logic req_after_exception_o;
+   input logic clk,
+   input logic rst_n,
 
-   clocking mon_cb @(posedge clk_i);
-      input #1step
+   //TODO: Copy pass - dont know what this does: Marton describes
+   input ctrl_fsm_t ctrl_fsm_o,
 
-      ctrl_fsm_o_i,
-      data_bus_req_i;
+   //Obi signals:
 
-      output #0 req_after_exception_o;
+   //Data bus inputs
+   input logic data_bus_rvalid,
+   input logic data_bus_gnt,
+   input logic data_bus_gntpar,
+   input logic data_bus_req,
 
-   endclocking : mon_cb
+   //Instr bus inputs
+   input logic instr_bus_rvalid,
+   input logic instr_bus_gnt,
+   input logic instr_bus_gntpar,
+   input logic instr_bus_req,
 
-   modport master (
-     input  clk_i,
-            rst_ni,
+   //Abiim bus inputs
+   input logic abiim_bus_rvalid,
+   input logic abiim_bus_gnt,
+   input logic abiim_bus_req,
 
-            ctrl_fsm_o_i,
-            data_bus_req_i,
-            data_bus_gnt_i,
+   //Lml bus inputs
+   input logic lml_bus_rvalid,
+   input logic lml_bus_gnt,
+   input logic lml_bus_req,
 
-     output req_after_exception_o
+   //Instr bus inputs
+   input logic lrfodi_bus_rvalid,
+   input logic lrfodi_bus_gnt,
+   input logic lrfodi_bus_req,
+
+   //Obi request information
+   input logic req_is_store,
+   input logic req_instr_integrity,
+   input logic req_data_integrity
+
    );
 
-   modport slave (
-     input  clk_i,
-            rst_ni,
+   modport driver_mp (
+     input  clk,
+      rst_n,
 
-            req_after_exception_o,
-     output ctrl_fsm_o_i,
-            data_bus_req_i
+      ctrl_fsm_o,
+
+      data_bus_rvalid,
+      data_bus_gnt,
+      data_bus_gntpar,
+      data_bus_req,
+
+      instr_bus_rvalid,
+      instr_bus_gnt,
+      instr_bus_gntpar,
+      instr_bus_req,
+
+      abiim_bus_rvalid,
+      abiim_bus_gnt,
+      abiim_bus_req,
+
+      lml_bus_rvalid,
+      lml_bus_gnt,
+      lml_bus_req,
+
+      lrfodi_bus_rvalid,
+      lrfodi_bus_gnt,
+      lrfodi_bus_req,
+
+      req_is_store,
+      req_instr_integrity,
+      req_data_integrity
    );
 
-   modport monitor (
-     input  clk_i,
-            rst_ni,
-            req_after_exception_o,
-            ctrl_fsm_o_i,
-            data_bus_req_i
+endinterface : uvmt_cv32e40s_input_to_support_logic_module_if
+
+
+interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
+   import cv32e40s_pkg::*;
+   import cv32e40s_rvfi_pkg::*;
+
+   //TODO: Copy pass - dont know what this does: Marton describes
+   logic req_after_exception;
+
+   // support logic signals for the obi bus protocol:
+
+   // continued address and respons phase indicators, indicates address and respons phases
+   // of more than one cycle
+   logic data_bus_addr_ph_cont;
+   logic data_bus_resp_ph_cont;
+
+   logic instr_bus_addr_ph_cont;
+   logic instr_bus_resp_ph_cont;
+
+   logic abiim_bus_addr_ph_cont;
+   logic abiim_bus_resp_ph_cont;
+
+   logic lml_bus_addr_ph_cont;
+   logic lml_bus_resp_ph_cont;
+
+   logic lrfodi_bus_addr_ph_cont;
+   logic lrfodi_bus_resp_ph_cont;
+
+   // address phase counter, used to verify no response phase preceedes an address phase
+   integer data_bus_v_addr_ph_cnt;
+   integer instr_bus_v_addr_ph_cnt;
+   integer abiim_bus_v_addr_ph_cnt;
+   integer lml_bus_v_addr_ph_cnt;
+   integer lrfodi_bus_v_addr_ph_cnt;
+
+   //Signals stating whether the request for the current response had the attribute value or not
+   logic req_was_store;
+   logic instr_req_had_integrity;
+   logic data_req_had_integrity;
+   logic gntpar_error_in_response_instr;
+   logic gntpar_error_in_response_data;
+
+   modport master_mp (
+      output req_after_exception,
+         data_bus_addr_ph_cont,
+	      data_bus_resp_ph_cont,
+	      data_bus_v_addr_ph_cnt,
+
+         instr_bus_addr_ph_cont,
+	      instr_bus_resp_ph_cont,
+	      instr_bus_v_addr_ph_cnt,
+
+         abiim_bus_addr_ph_cont,
+	      abiim_bus_resp_ph_cont,
+	      abiim_bus_v_addr_ph_cnt,
+
+         lml_bus_addr_ph_cont,
+	      lml_bus_resp_ph_cont,
+	      lml_bus_v_addr_ph_cnt,
+
+         lrfodi_bus_addr_ph_cont,
+	      lrfodi_bus_resp_ph_cont,
+	      lrfodi_bus_v_addr_ph_cnt,
+
+         req_was_store,
+         instr_req_had_integrity,
+         data_req_had_integrity,
+         gntpar_error_in_response_instr,
+         gntpar_error_in_response_data
    );
 
+   modport slave_mp (
+      input req_after_exception,
+         data_bus_addr_ph_cont,
+	      data_bus_resp_ph_cont,
+	      data_bus_v_addr_ph_cnt,
+
+         instr_bus_addr_ph_cont,
+	      instr_bus_resp_ph_cont,
+	      instr_bus_v_addr_ph_cnt,
+
+         abiim_bus_addr_ph_cont,
+	      abiim_bus_resp_ph_cont,
+	      abiim_bus_v_addr_ph_cnt,
+
+         lml_bus_addr_ph_cont,
+	      lml_bus_resp_ph_cont,
+	      lml_bus_v_addr_ph_cnt,
+
+         lrfodi_bus_addr_ph_cont,
+	      lrfodi_bus_resp_ph_cont,
+	      lrfodi_bus_v_addr_ph_cnt,
+
+         req_was_store,
+         instr_req_had_integrity,
+         data_req_had_integrity,
+         gntpar_error_in_response_instr,
+         gntpar_error_in_response_data
+   );
+
+endinterface : uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if
 
 
-endinterface : uvmt_cv32e40s_support_logic_if
 
 `endif // __UVMT_CV32E40S_TB_IFS_SV__

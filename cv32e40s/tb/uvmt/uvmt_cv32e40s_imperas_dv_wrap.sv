@@ -360,24 +360,27 @@ module uvmt_cv32e40s_imperas_dv_wrap
    assign rvvi.pc_rdata[0][0] = `RVFI_IF.rvfi_pc_rdata;
    assign rvvi.pc_wdata[0][0] = `RVFI_IF.rvfi_pc_wdata;
 
-   `RVVI_SET_CSR( `CSR_MSTATUS_ADDR,       mstatus       )
-   `RVVI_SET_CSR( `CSR_MISA_ADDR,          misa          )
-   `RVVI_SET_CSR( `CSR_MIE_ADDR,           mie           )
-   `RVVI_SET_CSR( `CSR_MTVEC_ADDR,         mtvec         )
-   `RVVI_SET_CSR( `CSR_MCOUNTINHIBIT_ADDR, mcountinhibit )
-   `RVVI_SET_CSR( `CSR_MSCRATCH_ADDR,      mscratch      )
-   `RVVI_SET_CSR( `CSR_MEPC_ADDR,          mepc          )
-   `RVVI_SET_CSR( `CSR_MCAUSE_ADDR,        mcause        )
-   `RVVI_SET_CSR( `CSR_MTVAL_ADDR,         mtval         )
-   `RVVI_SET_CSR( `CSR_MIP_ADDR,           mip           )
-   `RVVI_SET_CSR( `CSR_MCYCLE_ADDR,        mcycle        )
-   `RVVI_SET_CSR( `CSR_MINSTRET_ADDR,      minstret      )
-   `RVVI_SET_CSR( `CSR_MCYCLEH_ADDR,       mcycleh       )
-   `RVVI_SET_CSR( `CSR_MINSTRETH_ADDR,     minstreth     )
-   `RVVI_SET_CSR( `CSR_MVENDORID_ADDR,     mvendorid     )
+   `RVVI_SET_CSR( `CSR_CPUCTRL_ADDR,       cpuctrl       )
+   `RVVI_SET_CSR( `CSR_JVT_ADDR,           jvt           )
    `RVVI_SET_CSR( `CSR_MARCHID_ADDR,       marchid       )
-   `RVVI_SET_CSR( `CSR_MIMPID_ADDR,        mimpid        )
+   `RVVI_SET_CSR( `CSR_MCAUSE_ADDR,        mcause        )
+   `RVVI_SET_CSR( `CSR_MCOUNTINHIBIT_ADDR, mcountinhibit )
+   `RVVI_SET_CSR( `CSR_MCYCLEH_ADDR,       mcycleh       )
+   `RVVI_SET_CSR( `CSR_MCYCLE_ADDR,        mcycle        )
+   `RVVI_SET_CSR( `CSR_MEPC_ADDR,          mepc          )
    `RVVI_SET_CSR( `CSR_MHARTID_ADDR,       mhartid       )
+   `RVVI_SET_CSR( `CSR_MIE_ADDR,           mie           )
+   `RVVI_SET_CSR( `CSR_MIMPID_ADDR,        mimpid        )
+   `RVVI_SET_CSR( `CSR_MINSTRETH_ADDR,     minstreth     )
+   `RVVI_SET_CSR( `CSR_MINSTRET_ADDR,      minstret      )
+   `RVVI_SET_CSR( `CSR_MIP_ADDR,           mip           )
+   `RVVI_SET_CSR( `CSR_MISA_ADDR,          misa          )
+   `RVVI_SET_CSR( `CSR_MSCRATCH_ADDR,      mscratch      )
+   `RVVI_SET_CSR( `CSR_MSTATEEN0_ADDR,     mstateen0     )
+   `RVVI_SET_CSR( `CSR_MSTATUS_ADDR,       mstatus       )
+   `RVVI_SET_CSR( `CSR_MTVAL_ADDR,         mtval         )
+   `RVVI_SET_CSR( `CSR_MTVEC_ADDR,         mtvec         )
+   `RVVI_SET_CSR( `CSR_MVENDORID_ADDR,     mvendorid     )
 
    `RVVI_SET_CSR( `CSR_TSELECT_ADDR,       tselect       )
    `RVVI_SET_CSR( `CSR_DCSR_ADDR,          dcsr          )
@@ -401,17 +404,16 @@ module uvmt_cv32e40s_imperas_dv_wrap
    always @(*) begin
        int i;
        for (i=1; i<32; i++) begin
-           XREG[i] = 32'b0;
-           // TODO: This current RVFI implementation will only allow a single destination
-           //       register to be written. For some instructions this is not sufficient
-           //       This code will need enhancing once the RVFI has the ability to describe
-           //       multiple target register writes, for a single instruction
-           if (`RVFI_IF.rvfi_rd1_addr==5'(i))
-               XREG[i] = `RVFI_IF.rvfi_rd1_wdata;
+           if ( `RVFI_IF.rvfi_gpr_wmask[i] == 1) begin
+               XREG[i] =  `RVFI_IF.rvfi_gpr_wdata[i*XLEN +:XLEN];
+           end
+           else begin
+               XREG[i] = 32'b0;
+           end
        end
    end
 
-   assign rvvi.x_wb[0][0] = 1 << `RVFI_IF.rvfi_rd1_addr; // TODO: originally rvfi_rd_addr
+   assign rvvi.x_wb[0][0] = `RVFI_IF.rvfi_gpr_wmask;
 
    ////////////////////////////////////////////////////////////////////////////
    // DEBUG REQUESTS,

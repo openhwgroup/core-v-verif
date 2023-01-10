@@ -190,11 +190,11 @@ function void uvma_obi_memory_slv_base_seq_c::add_rchk(uvma_obi_memory_slv_seq_i
    // Checksum scheme for CV32E40S. If other schemes are required, they need to be added here,
    // in addition to adding the option to enable them
    else if(cfg.chk_scheme == UVMA_OBI_MEMORY_CHK_CV32E40S) begin
-      slv_rsp.rchk[0]    = ~^slv_rsp.rdata[0];
-      slv_rsp.rchk[1]    = ~^slv_rsp.rdata[1];
-      slv_rsp.rchk[2]    = ~^slv_rsp.rdata[2];
-      slv_rsp.rchk[3]    = ~^slv_rsp.rdata[3];
-      slv_rsp.rchk[4]    = ~^{slv_rsp.err, slv_rsp.exokay};
+      slv_rsp.rchk[0]    = ^slv_rsp.rdata[7:0];
+      slv_rsp.rchk[1]    = ^slv_rsp.rdata[15:8];
+      slv_rsp.rchk[2]    = ^slv_rsp.rdata[23:16];
+      slv_rsp.rchk[3]    = ^slv_rsp.rdata[31:24];
+      slv_rsp.rchk[4]    = ^{slv_rsp.err, 1'b0}; // exokay signal is an optional signal that is only included for CPUs supporting the Atomic (A) extension.
    end
 
 endfunction : add_rchk
