@@ -1,3 +1,7 @@
+# Copyright (c) 2021 OpenHW Group
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+
 .include "user_define.h"
 
 .section .text.start
