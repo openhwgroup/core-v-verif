@@ -1,3 +1,6 @@
+// Copyright (c) 2021 OpenHW Group
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 /* An extremely minimalist syscalls.c for newlib
  * Based on riscv newlib libgloss/riscv/sys_*.c
  *
