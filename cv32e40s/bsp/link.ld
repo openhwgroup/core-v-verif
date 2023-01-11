@@ -47,6 +47,7 @@ SECTIONS
   } >dbg
 
 
+
   /* NMI interrupt handler fixed entry point */
   PROVIDE(__nmi_address = 0x100000);
 
