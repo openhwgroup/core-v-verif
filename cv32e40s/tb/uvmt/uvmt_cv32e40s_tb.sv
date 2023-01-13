@@ -157,28 +157,31 @@ module uvmt_cv32e40s_tb;
                                                                    );
 
   // RVFI CSR binds
+  `RVFI_CSR_BIND(cpuctrl)
+  `RVFI_CSR_BIND(jvt)
   `RVFI_CSR_BIND(marchid)
-  `RVFI_CSR_BIND(mcountinhibit)
-  `RVFI_CSR_BIND(mstatus)
-  `RVFI_CSR_BIND(mstatush)
+  `RVFI_CSR_BIND(mcause)
   `RVFI_CSR_BIND(mcounteren)
+  `RVFI_CSR_BIND(mcountinhibit)
+  `RVFI_CSR_BIND(mcycle)
+  `RVFI_CSR_BIND(mcycleh)
   `RVFI_CSR_BIND(menvcfg)
   `RVFI_CSR_BIND(menvcfgh)
-  `RVFI_CSR_BIND(mvendorid)
-  `RVFI_CSR_BIND(misa)
-  `RVFI_CSR_BIND(mtvec)
-  `RVFI_CSR_BIND(mtval)
-  `RVFI_CSR_BIND(mscratch)
   `RVFI_CSR_BIND(mepc)
-  `RVFI_CSR_BIND(mcause)
-  `RVFI_CSR_BIND(mip)
-  `RVFI_CSR_BIND(mie)
   `RVFI_CSR_BIND(mhartid)
+  `RVFI_CSR_BIND(mie)
   `RVFI_CSR_BIND(mimpid)
   `RVFI_CSR_BIND(minstret)
   `RVFI_CSR_BIND(minstreth)
-  `RVFI_CSR_BIND(mcycle)
-  `RVFI_CSR_BIND(mcycleh)
+  `RVFI_CSR_BIND(mip)
+  `RVFI_CSR_BIND(misa)
+  `RVFI_CSR_BIND(mscratch)
+  `RVFI_CSR_BIND(mstateen0)
+  `RVFI_CSR_BIND(mstatus)
+  `RVFI_CSR_BIND(mstatush)
+  `RVFI_CSR_BIND(mtval)
+  `RVFI_CSR_BIND(mtvec)
+  `RVFI_CSR_BIND(mvendorid)
 
   `RVFI_CSR_BIND(dcsr)
   `RVFI_CSR_BIND(dpc)
@@ -726,10 +729,9 @@ module uvmt_cv32e40s_tb;
 
     xsecure_if (
 
-      // Core
-      .core_clk                                                                                                         (core_i.clk),
-      .clk_en                                                                                                           (core_i.sleep_unit_i.core_clock_gate_i.clk_en),
+      .core_i_sleep_unit_i_core_clock_gate_i_clk_en                                                                     (core_i.sleep_unit_i.core_clock_gate_i.clk_en),
 
+      .core_i_data_err_i                                                                                                (core_i.data_err_i),
       .core_rf_we_wb                                                                                                    (core_i.rf_we_wb),
       .core_rf_waddr_wb                                                                                                 (core_i.rf_waddr_wb),
       .core_rf_wdata_wb                                                                                                 (core_i.rf_wdata_wb),
@@ -777,9 +779,7 @@ module uvmt_cv32e40s_tb;
 
       .core_xsecure_ctrl_cpuctrl_rnddummyfreq                                                                           (core_i.xsecure_ctrl.cpuctrl[19:16]),
       .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
-
       .core_cs_registers_xsecure_lfsr_lockup                                                                            (core_i.cs_registers_i.xsecure.lfsr_lockup),
-      .core_controller_controller_fsm_debug_mode_q                                                                      (core_i.controller_i.controller_fsm_i.debug_mode_q),
 
       .core_cs_registers_mhpmcounter_mcycle                                                                             (core_i.cs_registers_i.mcycle_o),
       .core_cs_registers_mhpmcounter_minstret                                                                           (core_i.cs_registers_i.mhpmcounter_q[2]),
@@ -844,6 +844,12 @@ module uvmt_cv32e40s_tb;
       .uvmt_cv32e40s_tb_mintstatus_q_shadow_q                                                                           (uvmt_cv32e40s_tb.mintstatus_q_shadow_q),
       .uvmt_cv32e40s_tb_mintthresh_q_shadow_q                                                                           (uvmt_cv32e40s_tb.mintthresh_q_shadow_q),
       .uvmt_cv32e40s_tb_mie_q_hardened_shadow_q                                                                         (uvmt_cv32e40s_tb.mie_q_hardened_shadow_q),
+
+      // Controller
+      .core_i_controller_i_controller_fsm_i_pending_nmi                                                                 (core_i.controller_i.controller_fsm_i.pending_nmi),
+      .core_i_controller_i_controller_fsm_i_dcsr_i_step                                                                 (core_i.controller_i.controller_fsm_i.dcsr_i.step),
+      .core_i_controller_i_controller_fsm_i_dcsr_i_stepie                                                                 (core_i.controller_i.controller_fsm_i.dcsr_i.stepie),
+      .core_controller_controller_fsm_debug_mode_q                                                                      (core_i.controller_i.controller_fsm_i.debug_mode_q),
 
       // IF stage
       .core_if_stage_if_valid_o                                                                                         (core_i.if_stage_i.if_valid_o),
@@ -1155,28 +1161,31 @@ module uvmt_cv32e40s_tb;
      uvm_config_db#(virtual uvma_clic_if                )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("clic_vif"),      .value(clic_if) );
      uvm_config_db#(virtual uvma_debug_if               )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_vif"),     .value(debug_if)     );
 //     uvm_config_db#(virtual uvmt_cv32e40s_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"),                 .field_name("debug_cov_vif"),    .value(debug_cov_assert_if));
+     `RVFI_CSR_UVM_CONFIG_DB_SET(cpuctrl)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(jvt)
      `RVFI_CSR_UVM_CONFIG_DB_SET(marchid)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mcountinhibit)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mstatus)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mstatush)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mcause)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mcounteren)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mcountinhibit)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mcycle)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mcycleh)
      `RVFI_CSR_UVM_CONFIG_DB_SET(menvcfg)
      `RVFI_CSR_UVM_CONFIG_DB_SET(menvcfgh)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(misa)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mtvec)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mtval)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mvendorid)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mscratch)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mepc)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mcause)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mip)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mie)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhartid)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mie)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mimpid)
      `RVFI_CSR_UVM_CONFIG_DB_SET(minstret)
      `RVFI_CSR_UVM_CONFIG_DB_SET(minstreth)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mcycle)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(mcycleh)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mip)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(misa)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mscratch)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mstateen0)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mstatus)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mstatush)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mtval)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mtvec)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mvendorid)
 
      `RVFI_CSR_UVM_CONFIG_DB_SET(dcsr)
      `RVFI_CSR_UVM_CONFIG_DB_SET(dpc)
