@@ -592,7 +592,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
     reg [31:0] hart_id;
 
     // Select processor name
-    rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME, "CV32E40S");
+    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME, "CV32E40S"));
     // Worst case propagation of events 4 retirements (actually 3 observed)
     void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 4));
     // Redirect stdout to parent systemverilog simulator
@@ -606,7 +606,9 @@ module uvmt_cv32e40s_imperas_dv_wrap
     // Test-program must have been compiled before we got here...
     if ($value$plusargs("elf_file=%s", test_program_elf)) begin
       `uvm_info(info_tag, $sformatf("ImperasDV loading test_program %0s", test_program_elf), UVM_LOW)
-      if (!rvviRefInit(test_program_elf, "openhwgroup.ovpworld.org", "CV32E40S_DEV", 0)) begin
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,  "openhwgroup.ovpworld.org"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT, "CV32E40S_DEV"));
+      if (!rvviRefInit(test_program_elf)) begin
         `uvm_fatal(info_tag, "rvviRefInit failed")
       end
       else begin
