@@ -729,9 +729,7 @@ module uvmt_cv32e40s_tb;
 
     xsecure_if (
 
-      // Core
-      .core_clk                                                                                                         (core_i.clk),
-      .clk_en                                                                                                           (core_i.sleep_unit_i.core_clock_gate_i.clk_en),
+      .core_i_sleep_unit_i_core_clock_gate_i_clk_en                                                                     (core_i.sleep_unit_i.core_clock_gate_i.clk_en),
 
       .core_i_data_err_i                                                                                                (core_i.data_err_i),
       .core_rf_we_wb                                                                                                    (core_i.rf_we_wb),
