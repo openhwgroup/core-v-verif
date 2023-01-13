@@ -436,8 +436,8 @@ module uvmt_cv32e40x_tb;
       .debug_running          (core_i.debug_running_o),
       .debug_halted           (core_i.debug_halted_o),
 
-      .debug_req_q            (core_i.controller_i.controller_fsm_i.debug_req_q),
-      .pending_debug          (core_i.controller_i.controller_fsm_i.pending_debug),
+      .pending_sync_debug     (core_i.controller_i.controller_fsm_i.pending_sync_debug),
+      .pending_async_debug    (core_i.controller_i.controller_fsm_i.pending_async_debug),
       .pending_nmi            (core_i.controller_i.controller_fsm_i.pending_nmi),
       .nmi_allowed            (core_i.controller_i.controller_fsm_i.nmi_allowed),
       .debug_mode_q           (core_i.controller_i.controller_fsm_i.debug_mode_q),
