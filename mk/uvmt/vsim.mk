@@ -120,7 +120,7 @@ VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 
 # Add the ISS to compilation
-VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
+VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_dv.flist
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+UVM"
 
@@ -150,9 +150,9 @@ VSIM_SCRIPT_DIR	   = $(abspath $(MAKE_PATH)/../tools/vsim)
 
 VSIM_UVM_ARGS      = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 
-VSIM_FLAGS += -sv_lib $(basename $(OVP_MODEL_DPI))
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 VSIM_FLAGS += +USE_ISS
+VLOG_FLAGS += "+define+USE_IMPERASDV"
 else
 VSIM_FLAGS += +DISABLE_OVPSIM
 endif
@@ -164,6 +164,7 @@ VSIM_FLAGS += +DISABLE_CSR_CHECK=$(TEST_DISABLE_CSR_CHECK)
 endif
 
 VSIM_FLAGS += -sv_lib $(basename $(DPI_DASM_LIB))
+VSIM_FLAGS += -sv_lib $(basename $(abspath $(IMPERAS_DV_MODEL)))
 VSIM_FLAGS += -sv_lib $(basename $(abspath $(SVLIB_LIB)))
 
 # Skip compile if requested (COMP=NO)
