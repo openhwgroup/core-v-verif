@@ -48,10 +48,10 @@ VCS_UVM_VERBOSITY ?= UVM_MEDIUM
 # Flags
 #VCS_UVMHOME_ARG ?= /opt/uvm/1800.2-2017-0.9/
 VCS_UVMHOME_ARG ?= /opt/synopsys/vcs-mx/O-2018.09-SP1-1/etc/uvm
-VCS_UVM_ARGS          ?= +incdir+$(VCS_UVMHOME_ARG)/src $(VCS_UVMHOME_ARG)/src/uvm_pkg.sv +UVM_VERBOSITY=$(VCS_UVM_VERBOSITY) -ntb_opts uvm-1.2
+VCS_UVM_ARGS          ?= +incdir+$(VCS_UVMHOME_ARG)/src $(VCS_UVMHOME_ARG)/src/uvm_pkg.sv -ntb_opts uvm-1.2
 
 VCS_COMP_FLAGS  ?= -lca -sverilog \
-										$(SV_CMP_FLAGS) $(VCS_UVM_ARGS) $(VCS_TIMESCALE) \
+										$(SV_CMP_FLAGS) $(VCS_TIMESCALE) \
 										-assert svaext -race=all -ignore unique_checks -full64
 VCS_GUI         ?=
 VCS_RUN_COV      = -cm line+cond+tgl+fsm+branch+assert -cm_dir $(MAKECMDGOALS).vdb
@@ -190,7 +190,7 @@ comp: mk_vcs_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI)
 	@echo "* $(SIMULATOR) compile complete"
 	@echo "* Log: $(SIM_CFG_RESULTS)/vcs.log"
 	@echo "$(BANNER)"
-	cd $(SIM_CFG_RESULTS) && $(VCS) $(VCS_COMP) -top uvmt_$(CV_CORE_LC)_tb
+	cd $(SIM_CFG_RESULTS) && $(VCS) $(VCS_COMP) -top uvmt_$(CV_CORE_LC)_tb -debug_access+all -kdb -l vcs.log
 
 ifneq ($(call IS_NO,$(COMP)),NO)
 VCS_SIM_PREREQ = comp

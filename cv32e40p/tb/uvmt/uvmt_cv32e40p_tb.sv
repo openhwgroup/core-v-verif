@@ -507,6 +507,12 @@ module uvmt_cv32e40p_tb;
     */
    initial begin : test_bench_entry_point
 
+     //Generate FSDB wave file
+     $fsdbDumpfile("wave.fsdb");  
+     $fsdbDumpvars("+all");       
+     $fsdbDumpSVA();              
+     $fsdbDumpMDA();              
+
      `ifdef PULP
        `ifdef NO_PULP
          `uvm_fatal("CV32E40P TB", "PULP and NO_PULP macros are mutually exclusive.")
