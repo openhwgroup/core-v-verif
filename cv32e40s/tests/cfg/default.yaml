@@ -5,7 +5,6 @@ compile_flags:
     +define+PMP_ENABLE_64
 ovpsim: >
     --override cpu/envcfg_mask=0x0
-    --override root/cpu/envcfg_mask=0x0
     --override cpu/Zca=T
     --override cpu/Zcb=T
     --override cpu/Zcmp=T
