@@ -752,7 +752,9 @@ module CPU #(
     
 `ifndef UVM
     final begin
-        svimp_exit();
+        if (!$test$plusargs("DISABLE_OVPSIM")) begin
+            svimp_exit();
+        end
     end
 `endif
  
