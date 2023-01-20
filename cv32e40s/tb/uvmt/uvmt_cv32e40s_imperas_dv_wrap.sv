@@ -360,24 +360,27 @@ module uvmt_cv32e40s_imperas_dv_wrap
    assign rvvi.pc_rdata[0][0] = `RVFI_IF.rvfi_pc_rdata;
    assign rvvi.pc_wdata[0][0] = `RVFI_IF.rvfi_pc_wdata;
 
-   `RVVI_SET_CSR( `CSR_MSTATUS_ADDR,       mstatus       )
-   `RVVI_SET_CSR( `CSR_MISA_ADDR,          misa          )
-   `RVVI_SET_CSR( `CSR_MIE_ADDR,           mie           )
-   `RVVI_SET_CSR( `CSR_MTVEC_ADDR,         mtvec         )
-   `RVVI_SET_CSR( `CSR_MCOUNTINHIBIT_ADDR, mcountinhibit )
-   `RVVI_SET_CSR( `CSR_MSCRATCH_ADDR,      mscratch      )
-   `RVVI_SET_CSR( `CSR_MEPC_ADDR,          mepc          )
-   `RVVI_SET_CSR( `CSR_MCAUSE_ADDR,        mcause        )
-   `RVVI_SET_CSR( `CSR_MTVAL_ADDR,         mtval         )
-   `RVVI_SET_CSR( `CSR_MIP_ADDR,           mip           )
-   `RVVI_SET_CSR( `CSR_MCYCLE_ADDR,        mcycle        )
-   `RVVI_SET_CSR( `CSR_MINSTRET_ADDR,      minstret      )
-   `RVVI_SET_CSR( `CSR_MCYCLEH_ADDR,       mcycleh       )
-   `RVVI_SET_CSR( `CSR_MINSTRETH_ADDR,     minstreth     )
-   `RVVI_SET_CSR( `CSR_MVENDORID_ADDR,     mvendorid     )
+   `RVVI_SET_CSR( `CSR_CPUCTRL_ADDR,       cpuctrl       )
+   `RVVI_SET_CSR( `CSR_JVT_ADDR,           jvt           )
    `RVVI_SET_CSR( `CSR_MARCHID_ADDR,       marchid       )
-   `RVVI_SET_CSR( `CSR_MIMPID_ADDR,        mimpid        )
+   `RVVI_SET_CSR( `CSR_MCAUSE_ADDR,        mcause        )
+   `RVVI_SET_CSR( `CSR_MCOUNTINHIBIT_ADDR, mcountinhibit )
+   `RVVI_SET_CSR( `CSR_MCYCLEH_ADDR,       mcycleh       )
+   `RVVI_SET_CSR( `CSR_MCYCLE_ADDR,        mcycle        )
+   `RVVI_SET_CSR( `CSR_MEPC_ADDR,          mepc          )
    `RVVI_SET_CSR( `CSR_MHARTID_ADDR,       mhartid       )
+   `RVVI_SET_CSR( `CSR_MIE_ADDR,           mie           )
+   `RVVI_SET_CSR( `CSR_MIMPID_ADDR,        mimpid        )
+   `RVVI_SET_CSR( `CSR_MINSTRETH_ADDR,     minstreth     )
+   `RVVI_SET_CSR( `CSR_MINSTRET_ADDR,      minstret      )
+   `RVVI_SET_CSR( `CSR_MIP_ADDR,           mip           )
+   `RVVI_SET_CSR( `CSR_MISA_ADDR,          misa          )
+   `RVVI_SET_CSR( `CSR_MSCRATCH_ADDR,      mscratch      )
+   `RVVI_SET_CSR( `CSR_MSTATEEN0_ADDR,     mstateen0     )
+   `RVVI_SET_CSR( `CSR_MSTATUS_ADDR,       mstatus       )
+   `RVVI_SET_CSR( `CSR_MTVAL_ADDR,         mtval         )
+   `RVVI_SET_CSR( `CSR_MTVEC_ADDR,         mtvec         )
+   `RVVI_SET_CSR( `CSR_MVENDORID_ADDR,     mvendorid     )
 
    `RVVI_SET_CSR( `CSR_TSELECT_ADDR,       tselect       )
    `RVVI_SET_CSR( `CSR_DCSR_ADDR,          dcsr          )
@@ -591,6 +594,8 @@ module uvmt_cv32e40s_imperas_dv_wrap
     string test_program_elf;
     reg [31:0] hart_id;
 
+    // Select processor name
+    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME, "CV32E40S"));
     // Worst case propagation of events 4 retirements (actually 3 observed)
     void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 4));
     // Redirect stdout to parent systemverilog simulator
@@ -604,7 +609,9 @@ module uvmt_cv32e40s_imperas_dv_wrap
     // Test-program must have been compiled before we got here...
     if ($value$plusargs("elf_file=%s", test_program_elf)) begin
       `uvm_info(info_tag, $sformatf("ImperasDV loading test_program %0s", test_program_elf), UVM_LOW)
-      if (!rvviRefInit(test_program_elf, "openhwgroup.ovpworld.org", "CV32E40S_DEV", 0)) begin
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,  "openhwgroup.ovpworld.org"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT, "CV32E40S_DEV"));
+      if (!rvviRefInit(test_program_elf)) begin
         `uvm_fatal(info_tag, "rvviRefInit failed")
       end
       else begin

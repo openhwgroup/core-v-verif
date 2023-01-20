@@ -119,10 +119,9 @@ interface uvmt_cv32e40s_xsecure_if
 
     (
 
-    // CORE
-    input logic core_clk,
-    input logic clk_en,
+    input logic core_i_sleep_unit_i_core_clock_gate_i_clk_en,
 
+    input logic core_i_data_err_i,
     input logic core_rf_we_wb,
     input logic [4:0] core_rf_waddr_wb,
     input logic [31:0] core_rf_wdata_wb,
@@ -238,6 +237,12 @@ interface uvmt_cv32e40s_xsecure_if
     input mintstatus_t uvmt_cv32e40s_tb_mintstatus_q_shadow_q,
     input logic [31:0] uvmt_cv32e40s_tb_mintthresh_q_shadow_q,
     input logic [31:0] uvmt_cv32e40s_tb_mie_q_hardened_shadow_q,
+
+    // Controller
+    input logic core_i_controller_i_controller_fsm_i_pending_nmi,
+    input logic core_i_controller_i_controller_fsm_i_dcsr_i_step,
+    input logic core_i_controller_i_controller_fsm_i_dcsr_i_stepie,
+    input logic core_controller_controller_fsm_debug_mode_q,
 
     // IF stage
     input logic core_if_stage_if_valid_o,
