@@ -154,7 +154,7 @@ latex_elements = {
 
     # Additional stuff for the LaTeX preamble.
     #
-    # 'preamble': '',
+    'preamble': r'\DeclareUnicodeCharacter{2260}{$\neq$}',
 
     # Latex figure (float) alignment
     #
