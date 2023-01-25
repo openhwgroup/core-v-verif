@@ -167,7 +167,7 @@ pub_smoke:
       artifacts: true
   parallel:
     matrix:
-      - DV_SIMULATORS: ["veri-testharness,spike","vcs-testharness,spike","vcs-uvm,spike" ]
+      - DV_SIMULATORS: ["veri-testharness,spike","vcs-testharness,spike","vcs-uvm,spike","questa-testharness,spike" ]
   variables:
     DASHBOARD_JOB_TITLE: "Smoke test $DV_SIMULATORS"
     DASHBOARD_JOB_DESCRIPTION: "Short tests to challenge most architectures with most testbenchs configurations"
