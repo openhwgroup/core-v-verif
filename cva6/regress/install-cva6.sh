@@ -17,6 +17,9 @@ if ! [ -n "$RISCV" ]; then
   return
 fi
 
+# Install/update VPTOOL dependencies.
+cva6/regress/install-vptool-deps.sh
+
 # install Verilator
 if ! [ -n "$VERILATOR_ROOT" ]; then
   export VERILATOR_ROOT=$TOP/verilator-4.110/
@@ -58,6 +61,3 @@ if ! [ -n "$SPIKE_ROOT" ]; then
   export SPIKE_ROOT=$TOP/spike/
 fi
 cva6/regress/install-spike.sh
-
-# Install/update VPTOOL dependencies.
-cva6/regress/install-vptool-deps.sh
