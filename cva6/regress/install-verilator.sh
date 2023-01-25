@@ -23,7 +23,8 @@ if [ ! -f "$VERILATOR_ROOT/bin/verilator" ]; then
     rm -f v4.*.tar.gz
     cd verilator-4.110
     mkdir -p $VERILATOR_ROOT
-    # copy scripts
+    # Do not build debug version of verilator (UGLY HACK!)
+    sed -i -e '198d' Makefile.in
     autoconf && ./configure --prefix="$VERILATOR_ROOT" && make -j${NUM_JOBS}
     cp -r * $VERILATOR_ROOT/
     make test

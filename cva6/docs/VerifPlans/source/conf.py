@@ -33,7 +33,7 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-
+import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
 
@@ -62,6 +62,7 @@ extensions = [
     'recommonmark',
     'sphinxcontrib.inkscapeconverter',
     'sphinx_github_changelog',
+    'sphinx_rtd_theme',
 #    'sphinxcontrib.wavedrom',
 ]
 #wavedrom_html_jsinline = False
@@ -110,7 +111,10 @@ html_theme = 'sphinx_rtd_theme'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_theme_options = {'style_nav_header_background': '#DDDDDD'}
+html_theme_options = {
+    'style_nav_header_background': '#DDDDDD',
+    'collapse_navigation': False,
+}
 html_logo = '../images/openhw-landscape.svg'
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -150,7 +154,7 @@ latex_elements = {
 
     # Additional stuff for the LaTeX preamble.
     #
-    # 'preamble': '',
+    'preamble': r'\DeclareUnicodeCharacter{2260}{$\neq$}',
 
     # Latex figure (float) alignment
     #
