@@ -353,7 +353,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
    assign rvvi.valid[0][0]    = `RVFI_IF.rvfi_valid;
    assign rvvi.order[0][0]    = `RVFI_IF.rvfi_order;
    assign rvvi.insn[0][0]     = `RVFI_IF.rvfi_insn;
-   assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap.trap & (`RVFI_IF.rvfi_trap.exception_cause==48); // externally generated TRAP event
+   assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap.trap;
    assign rvvi.intr[0][0]     = `RVFI_IF.rvfi_intr;
    assign rvvi.mode[0][0]     = `RVFI_IF.rvfi_mode;
    assign rvvi.ixl[0][0]      = `RVFI_IF.rvfi_ixl;
@@ -417,50 +417,36 @@ module uvmt_cv32e40s_imperas_dv_wrap
 
    ////////////////////////////////////////////////////////////////////////////
    // DEBUG REQUESTS,
-   // assert when 0->1
-   // negate when posedge clk && valid=1 && debug=0
    ////////////////////////////////////////////////////////////////////////////
-   bit DREQ, DREQ_NEXT;
-   always @(*) begin: Set_DebugReq
-       // this requires a sync on DCAUSE
-       DREQ_NEXT = (`RVFI_IF.rvfi_dbg==3 && `RVFI_IF.rvfi_dbg_mode);
-       if (DREQ==0 && DREQ_NEXT==1) begin
-           void'(rvvi.net_push("haltreq", 1));
-           DREQ = 1;
-       end
-   end: Set_DebugReq
-   always @(posedge `RVFI_IF.clk) begin: Clr_DebugReq
-       if (`RVFI_IF.rvfi_valid && DREQ==1 && DREQ_NEXT==0) begin
-           void'(rvvi.net_push("haltreq", 0));
-           DREQ = 0;
-       end
-   end: Clr_DebugReq
+   logic debug_req_i;
+   assign debug_req_i = `DUT_PATH.debug_req_i;
+   always @(debug_req_i) begin
+       void'(rvvi.net_push("haltreq", debug_req_i));
+   end
 
    ////////////////////////////////////////////////////////////////////////////
    // INTERRUPTS
-   // assert when MIP or cause bit
-   // negate when posedge clk && valid=1 && debug=0
    ////////////////////////////////////////////////////////////////////////////
   `ifndef SMCLIC_EN
-  `RVVI_WRITE_IRQ(MSWInterrupt,        3)
-  `RVVI_WRITE_IRQ(MTimerInterrupt,     7)
-  `RVVI_WRITE_IRQ(MExternalInterrupt, 11)
-  `RVVI_WRITE_IRQ(LocalInterrupt0,    16)
-  `RVVI_WRITE_IRQ(LocalInterrupt1,    17)
-  `RVVI_WRITE_IRQ(LocalInterrupt2,    18)
-  `RVVI_WRITE_IRQ(LocalInterrupt3,    19)
-  `RVVI_WRITE_IRQ(LocalInterrupt4,    20)
-  `RVVI_WRITE_IRQ(LocalInterrupt5,    21)
-  `RVVI_WRITE_IRQ(LocalInterrupt6,    22)
-  `RVVI_WRITE_IRQ(LocalInterrupt7,    23)
-  `RVVI_WRITE_IRQ(LocalInterrupt8,    24)
-  `RVVI_WRITE_IRQ(LocalInterrupt9,    25)
-  `RVVI_WRITE_IRQ(LocalInterrupt10,   26)
-  `RVVI_WRITE_IRQ(LocalInterrupt11,   27)
-  `RVVI_WRITE_IRQ(LocalInterrupt12,   28)
-  `RVVI_WRITE_IRQ(LocalInterrupt13,   29)
-  `RVVI_WRITE_IRQ(LocalInterrupt14,   30)
-  `RVVI_WRITE_IRQ(LocalInterrupt15,   31)
+    `RVVI_WRITE_IRQ(MSWInterrupt,        3)
+    `RVVI_WRITE_IRQ(MTimerInterrupt,     7)
+    `RVVI_WRITE_IRQ(MExternalInterrupt, 11)
+    `RVVI_WRITE_IRQ(LocalInterrupt0,    16)
+    `RVVI_WRITE_IRQ(LocalInterrupt1,    17)
+    `RVVI_WRITE_IRQ(LocalInterrupt2,    18)
+    `RVVI_WRITE_IRQ(LocalInterrupt3,    19)
+    `RVVI_WRITE_IRQ(LocalInterrupt4,    20)
+    `RVVI_WRITE_IRQ(LocalInterrupt5,    21)
+    `RVVI_WRITE_IRQ(LocalInterrupt6,    22)
+    `RVVI_WRITE_IRQ(LocalInterrupt7,    23)
+    `RVVI_WRITE_IRQ(LocalInterrupt8,    24)
+    `RVVI_WRITE_IRQ(LocalInterrupt9,    25)
+    `RVVI_WRITE_IRQ(LocalInterrupt10,   26)
+    `RVVI_WRITE_IRQ(LocalInterrupt11,   27)
+    `RVVI_WRITE_IRQ(LocalInterrupt12,   28)
+    `RVVI_WRITE_IRQ(LocalInterrupt13,   29)
+    `RVVI_WRITE_IRQ(LocalInterrupt14,   30)
+    `RVVI_WRITE_IRQ(LocalInterrupt15,   31)
   `else
     logic clic_irq;
     logic [10:0] clic_irq_id;
@@ -572,7 +558,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
            //
            //  Fetch - Exception on TRAP
            //
-           if (trap_trap && trap_exception && trap_exception_cause==48) begin
+           if (trap_trap && trap_exception && trap_exception_cause==24) begin
                if (!InstructionBusFault) begin
                    void'(rvvi.net_push("InstructionBusFault", 1));
                end
@@ -730,7 +716,6 @@ module uvmt_cv32e40s_imperas_dv_wrap
 
     // TODO silabs-hfegran: temp fix to work around issues
     rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR, RVVI_FALSE);
-    rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR, RVVI_FALSE);
     // end TODO
 
     // define asynchronous grouping
