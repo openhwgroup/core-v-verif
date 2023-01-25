@@ -276,7 +276,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
    assign rvvi.valid[0][0]    = `RVFI_IF.rvfi_valid;
    assign rvvi.order[0][0]    = `RVFI_IF.rvfi_order;
    assign rvvi.insn[0][0]     = `RVFI_IF.rvfi_insn;
-   assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap.trap & (`RVFI_IF.rvfi_trap.exception_cause==48); // externally generated TRAP event
+   assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap.trap;
    assign rvvi.intr[0][0]     = `RVFI_IF.rvfi_intr;
    assign rvvi.mode[0][0]     = `RVFI_IF.rvfi_mode;
    assign rvvi.ixl[0][0]      = `RVFI_IF.rvfi_ixl;
@@ -338,24 +338,12 @@ module uvmt_cv32e40x_imperas_dv_wrap
 
    ////////////////////////////////////////////////////////////////////////////
    // DEBUG REQUESTS,
-   // assert when 0->1
-   // negate when posedge clk && valid=1 && debug=0
    ////////////////////////////////////////////////////////////////////////////
-   bit DREQ, DREQ_NEXT;
-   always @(*) begin: Set_DebugReq
-       // this requires a sync on DCAUSE
-       DREQ_NEXT = (`RVFI_IF.rvfi_dbg==3 && `RVFI_IF.rvfi_dbg_mode);
-       if (DREQ==0 && DREQ_NEXT==1) begin
-           void'(rvvi.net_push("haltreq", 1));
-           DREQ = 1;
-       end
-   end: Set_DebugReq
-   always @(posedge `RVFI_IF.clk) begin: Clr_DebugReq
-       if (`RVFI_IF.rvfi_valid && DREQ==1 && DREQ_NEXT==0) begin
-           void'(rvvi.net_push("haltreq", 0));
-           DREQ = 0;
-       end
-   end: Clr_DebugReq
+   logic debug_req_i;
+   assign debug_req_i = `DUT_PATH.debug_req_i;
+   always @(debug_req_i) begin
+       void'(rvvi.net_push("haltreq", debug_req_i));
+   end
 
    ////////////////////////////////////////////////////////////////////////////
    // INTERRUPTS
@@ -389,7 +377,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
    bit DataBusFault;
    int DataBusFaultCause;
    int order;
-
+   
    always_comb begin: Monitor_RVFI
        bit        trap_trap;
        bit        trap_exception;
@@ -409,6 +397,18 @@ module uvmt_cv32e40x_imperas_dv_wrap
        bit        nmi_c1, nmi_c2;
 
        bit        ifault;
+       
+       if (`RVFI_IF.rvfi_valid) begin
+           if (`RVFI_IF.rvfi_trap.trap) begin
+               $display("TRAP: order=%d exc=%0d dbg=%0d exc_cause=%d dbg_cause=%d cause_type=%0d", 
+                   `RVFI_IF.rvfi_order,
+                   `RVFI_IF.rvfi_trap.exception, `RVFI_IF.rvfi_trap.debug,
+                   `RVFI_IF.rvfi_trap.exception_cause, `RVFI_IF.rvfi_trap.debug_cause,
+                   `RVFI_IF.rvfi_trap.cause_type);
+           end else begin
+               $display("RETIRE:");
+           end
+       end
 
        if (`RVFI_IF.rvfi_valid && (order != `RVFI_IF.rvfi_order)) begin
            order                = `RVFI_IF.rvfi_order;
@@ -472,7 +472,7 @@ module uvmt_cv32e40x_imperas_dv_wrap
            //
            //  Fetch - Exception on TRAP
            //
-           if (trap_trap && trap_exception && trap_exception_cause==48) begin
+           if (trap_trap && trap_exception && trap_exception_cause==24) begin
                if (!InstructionBusFault) begin
                    void'(rvvi.net_push("InstructionBusFault", 1));
                end
