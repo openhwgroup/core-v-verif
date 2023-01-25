@@ -8,4 +8,9 @@
 # Original Author: Zbigniew CHAMSKI (zbigniew.chamski@thalesgroup.fr)
 
 pip3 install --upgrade pyyaml ttkthemes pillow
+pip3 install --upgrade commonmark recommonmark
+pip3 install --upgrade sphinxcontrib_applehelp sphinxcontrib_devhelp \
+     sphinxcontrib_htmlhelp sphinxcontrib_jsmath sphinxcontrib_qthelp \
+     sphinxcontrib_serializinghtml sphinxcontrib_svg2pdfconverter \
+     sphinx_rtd_theme sphinx_github_changelog
 
