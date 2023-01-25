@@ -49,6 +49,7 @@
 .global m_fast13_irq_handler
 .global m_fast14_irq_handler
 .global m_fast15_irq_handler
+.global end_handler_incr_mepc
 .global end_handler_ret
 
 .weak __no_irq_handler
@@ -73,6 +74,7 @@
 .weak m_fast14_irq_handler
 .weak m_fast15_irq_handler
 
+.weak handle_illegal_insn
 .weak handle_insn_access_fault
 .weak handle_insn_bus_fault
 
