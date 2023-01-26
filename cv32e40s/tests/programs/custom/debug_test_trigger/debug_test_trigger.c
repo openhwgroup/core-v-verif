@@ -62,6 +62,7 @@ volatile int      trigger_store;
 volatile int      trigger_execute;
 
 volatile uint32_t num_triggers;
+volatile uint32_t trigger_sel;
 
 volatile int debug_sel;
 volatile int debug_break_loop;
@@ -285,17 +286,10 @@ int test_load_trigger () {
   return retval;
 }
 
-int main(int argc, char *argv[])
-{
-  int status = 0;
-
-  num_triggers = 0;
-
-  debug_break_loop   = 1;
-  debug_increment_dpc = 1;
+uint32_t get_num_triggers() {
 
   __asm__ volatile (R"(
-    # Check whether there are 0 or 1 triggers
+    # Check whether there are 0 triggers
     la   s3, illegal_insn_status
     li   s2, 0
     sw   s2, 0(s3)
@@ -321,12 +315,31 @@ int main(int argc, char *argv[])
 
   printf ("NUM_TRIGGERS = %ld\n", num_triggers);
 
+  return num_triggers;
+}
+
+int main(int argc, char *argv[])
+{
+  int status = 0;
+
+  num_triggers = get_num_triggers();
+
   if (num_triggers > 0) {
-    status = test_execute_trigger();
-    //status +=  test_load_trigger ();
-    if (status != 0) {
-      printf("Test 0 failed with status: %d\n", status);
-      return status;
+    for (int i = 0; i < num_triggers; i++) {
+      debug_break_loop   = 1;
+      debug_increment_dpc = 1;
+
+      trigger_sel = i;
+      printf ("csr_write: tselect = %ld", trigger_sel);
+      __asm__ volatile (R"(lw        s2, trigger_sel
+                           csrw tselect, s2         )" ::: "s2");
+
+      status = test_execute_trigger();
+      //status +=  test_load_trigger ();
+      if (status != 0) {
+        printf("Test 0 failed with status: %d\n", status);
+        return status;
+      }
     }
   }
 
