@@ -120,7 +120,9 @@ import "DPI-C" context function void rvviRefMemoryWrite(
 
 function void uvme_cv32e40x_vp_fencei_tamper_seq_c::write_iss_mem();
 
-  rvviRefMemoryWrite(0, addr, data, 4);
+  if ($test$plusargs("USE_ISS")) begin
+    rvviRefMemoryWrite(0, addr, data, 4);
+  end
 
 endfunction : write_iss_mem
 
