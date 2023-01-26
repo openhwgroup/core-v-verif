@@ -66,12 +66,6 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
 
   ////////// DATA INDEPENDENT TIMING IS CONFIGURABLE //////////
 
-  // Check that we have data independent timing when configured to be on:
-  // a_xsecure_dataindtiming_default_off
-  // a_xsecure_core_div_rem_timing_clk
-
-  // Check that we do not have data independent timing when configured to be off:
-
   c_xsecure_branch_timing_off: cover property (
 
     //Make sure the instruction is a branch instruction (both non-compressed and compressed)
@@ -91,7 +85,7 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
   );
 
 
-  c_xsecure_core_div_rem_timing: cover property (
+  c_xsecure_core_div_rem_timing_off: cover property (
 
     //Make sure we detect an DIV or REM instruction in rvfi
     (rvfi_insn_opcode == OPCODE_OP
@@ -103,12 +97,12 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
     && !rvfi_if.rvfi_trap.trap
 
     //Make sure data independent timing was off when the DIV/REM instruction was in EX stage
-    and $past(!xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
+    && $past(!xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
 
-    //Make sure the branch instruction can be directly followed by another instruction
+    //Make sure the DIV or REM can be calculated in one cycle only (indicating that data independent timing is off)
     && $past(rvfi_if.rvfi_valid)
-
   );
+
 
 
   ////////// DATA INDEPENDENT TIMING DEFAULT ENABLED //////////
@@ -121,10 +115,13 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
 
   ////////// BRANCH TIMING //////////
 
-  a_xsecure_dataindtiming_branch_timing: assert property (
+  sequence seq_dataindtiming_branch_timing_antecedent(is_pchardening);
+
+    //Check whether the pc hardening setting is on or not
+    is_pchardening
 
     //Make sure the instruction is a branch instruction (both non-compressed and compressed)
-    ((rvfi_insn_opcode == OPCODE_BRANCH)
+    && ((rvfi_insn_opcode == OPCODE_BRANCH)
     || (rvfi_insn_cmpr_opcode == OPCODE_COMPR_BRANCH
     && rvfi_insn_cmpr_funct3[2:1] == FUNCT3_COMPR_BRANCH_2_MSBS))
 
@@ -132,54 +129,85 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
     && rvfi_if.rvfi_valid
     && !rvfi_if.rvfi_trap.trap
 
-    //Make sure the data independent timing was on when executing the branch (ex stage):
-    && $past(xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
+    //Make sure the data independent timing was on/off when executing the branch:
+    //(If data independent timing is on when the instruction is in the WB stage, it was on during the whole execution as well)
+    && $past(xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming);
 
-    //Make sure that the instruction before the branch instruction was not a load or a store (rvfi stage):
-    //We use past 2 because branching needs two cycles to complete execution due to PC hardening safety.
-    && $past(!(|rvfi_if.rvfi_mem_rmask),2)
-    && $past(!(|rvfi_if.rvfi_mem_wmask),2)
+    //Make sure that the instruction previous to the branch instruction was not a load or a store:
+    //If PC hardening is on the branch instruction is a two cycled operation
+    //If PC hardening is off the branch instruction is an one cycled operation
+    //&& $past(!(|rvfi_if.rvfi_mem_rmask), is_pc_hardening_on + 1)
+    //&& $past(!(|rvfi_if.rvfi_mem_wmask), is_pc_hardening_on + 1);
+
+  endsequence
+
+
+  sequence seq_no_memory_operation_for_x_cycles(x);
+    !((|rvfi_if.rvfi_mem_rmask) || (|rvfi_if.rvfi_mem_wmask))[*x];
+  endsequence
+
+  a_xsecure_dataindtiming_branch_timing_pc_hardening_enabled: assert property (
+
+    //Make sure a branch instruction has retired, that the previouse instruction was not a memory operation, and that PC hardening is enabled
+    seq_dataindtiming_branch_timing_antecedent(
+      xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening)
+
+    ##0 seq_no_memory_operation_for_x_cycles(3).triggered
 
     |=>
     //Make sure there is at least one instruction stall after every branch because a branch is always taken.
-    //We would expect 2 instruction stalls, but since the branch instruction is recalculated in the ID stage there is only one stall, not two.
+    //We expect 2 instruction stalls, but since the branch instruction is recalculated in the ID stage there is only one stall.
     !rvfi_if.rvfi_valid
-  ) else `uvm_error(info_tag, "Branch timing does not stall the pipeline (given no load/store instruction before the branch instruction).\n");
+  ) else `uvm_error(info_tag, "Branch instruction is not taken even though independent data timing is enabled (PC hardening enabled).\n");
 
 
-////////// DIV/REM TIMING //////////
+  a_xsecure_dataindtiming_branch_timing_pc_hardening_disabled: assert property (
+
+    (xsecure_if.core_i_controller_i_controller_fsm_i_ctrl_fsm_cs == FUNCTIONAL)
+    throughout
+
+    (if_id_pipe_instr_opcode == OPCODE_BRANCH
+    ##[2:$]
+    //Make sure a branch instruction has retired, that the previouse instruction was not a memory operation, and that PC hardening is disabled
+    seq_dataindtiming_branch_timing_antecedent(
+      !xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening)
+
+    ##0 seq_no_memory_operation_for_x_cycles(2).triggered)
+
+    |=>
+    //Make sure there is at least one instruction stall after every branch because a branch is always taken.
+    //We expect 2 instruction stalls, because the branch instruction kills the IF and ID stages
+    !rvfi_if.rvfi_valid[*2]
+  ) else `uvm_error(info_tag, "Branch instruction is not taken even though independent data timing is enabled (PC hardening disabled).\n");
+
+
+  ////////// DIV/REM TIMING //////////
 
   sequence seq_rvfi_not_valid_for_34_cycles;
     @(posedge clk_i)
 
-    //Make sure rvfi_valid is off for 34 cycles
-    !rvfi_if.rvfi_valid[*34] ##1 1;
+    //Make sure there is no memory operations retiring during the execution of the DIV/REM operation, and that data independent timing is enabled during the whole operation
+    (!(rvfi_if.rvfi_valid && (rvfi_if.rvfi_mem_rmask || rvfi_if.rvfi_mem_wmask)) && xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming) throughout
 
-  endsequence
-
-  sequence seq_set_rvfi_valid_once_as_memory_instruction_during_the_past_34_cycles;
-    @(posedge clk_i)
-
-    //Make sure a memory instruction is retired in an interval of 34 cycles
-
-    //Make sure rvfi_valid is low an unknown number of cycles
-    !rvfi_if.rvfi_valid[*0:33]
-
-    //Make sure that once the rvfi_valid is high we retire a memory instruction
-    ##1 (rvfi_if.rvfi_valid
-    && (rvfi_if.rvfi_mem_rmask || rvfi_if.rvfi_mem_wmask))
-
-    //Make sure rvfi_valid is off in an unknown number of cycles
-    ##1 !rvfi_if.rvfi_valid[*0:33]
-
-    //Make sure the sequence only looks at previous clock cycles when triggered
-    ##1 1;
+    //Make sure rvfi_valid is off for 35 cycles (34 unretired cycles + 1 retired cycle)
+    (!rvfi_if.rvfi_valid[*34] ##1 rvfi_if.rvfi_valid);
 
   endsequence
 
 
-  a_xsecure_dataindtiming_div_rem_timing: assert property (
+  sequence seq_data_independent_timing_enabled_for_35_cycles;
+    //Make sure the data independent timing feature is enabled for 35 cycles
+    xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming[*35];
+  endsequence
 
+
+  sequence seq_no_memory_operation_during_35_cycles;
+    //Make sure no memory operation retires for 35 cycles
+    (!(rvfi_if.rvfi_valid && (rvfi_if.rvfi_mem_rmask || rvfi_if.rvfi_mem_wmask)))[*35];
+  endsequence
+
+
+  a_xsecure_dataindtiming_div_rem_timing2: assert property (
     //Make sure the instruction is a DIV or REM instruction
     (rvfi_insn_opcode == OPCODE_OP
     && rvfi_insn_funct3[2] == FUNCT3_DIV_REM_INSTRUCTION_MSB
@@ -191,15 +219,19 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
 
     //Make sure data independent timing was on when the DIV/REM instruction was in the EX stage
     //(If data independent timing is on when the instruction is in the WB stage, it was on during the whole execution as well)
-    and $past(xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming,2)
+    && $past(xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming)
+
     |->
-    //Make sure that there are at least 34 cycles from the last retired instruction
+    //Verify that the RVFI valid signal has been low during 34 cycles due to the data independent timing duration of the DIV/REM instruction
     seq_rvfi_not_valid_for_34_cycles.triggered
 
-    //or the retired instructions are loads or stores
-    or seq_set_rvfi_valid_once_as_memory_instruction_during_the_past_34_cycles.triggered
+    //Or that the data independent timing has not been enabled during the execution of the DIV/REM instruction
+    or not seq_data_independent_timing_enabled_for_35_cycles.triggered
 
-  ) else `uvm_error(info_tag, "DIV/REM operations do not use 35 cycles to execute\n");
+    //Or that a memory operation has retired during the execution of the DIV/REM instruction
+    or not seq_no_memory_operation_during_35_cycles.triggered
+
+  ) else `uvm_error(info_tag, "DIV/REM operations do not use 35 cycles to execute when data independent timing is enabled\n");
 
 
   endmodule : uvmt_cv32e40s_xsecure_data_independent_timing_assert

@@ -749,20 +749,83 @@ module uvmt_cv32e40s_tb;
     uvmt_cv32e40s_xsecure_if
     #(.MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
       .PMP_NUM_REGIONS   (PMP_NUM_REGIONS),
-      .PMP_ADDR_WIDTH    (core_i.cs_registers_i.PMP_ADDR_WIDTH))
+      .PMP_ADDR_WIDTH    (core_i.cs_registers_i.PMP_ADDR_WIDTH),
+      .ALBUF_CNT_WIDTH   (core_i.if_stage_i.prefetch_unit_i.ALBUF_CNT_WIDTH),
+      .ALBUF_DEPTH       (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.ALBUF_DEPTH))
 
     xsecure_if (
 
-      .core_i_sleep_unit_i_core_clock_gate_i_clk_en                                                                     (core_i.sleep_unit_i.core_clock_gate_i.clk_en),
+      .core_i_cs_registers_i_dcsr_rdata (core_i.cs_registers_i.dcsr_rdata),
+      .core_i_id_stage_i_operand_a (core_i.id_stage_i.operand_a),
+      .core_i_id_stage_i_operand_b (core_i.id_stage_i.operand_b),
 
-      .core_i_data_err_i                                                                                                (core_i.data_err_i),
+      .core_i_id_stage_i_last_op (core_i.id_stage_i.last_op),
+
+      .core_i_cs_registers_i_mcause_q (core_i.cs_registers_i.mcause_q),
+      .core_i_wb_stage_i_ctrl_fsm_i_kill_if (core_i.wb_stage_i.ctrl_fsm_i.kill_if),
+      .core_i_wb_stage_i_ctrl_fsm_i_kill_id (core_i.wb_stage_i.ctrl_fsm_i.kill_id),
+      .core_i_wb_stage_i_ctrl_fsm_i_kill_ex (core_i.wb_stage_i.ctrl_fsm_i.kill_ex),
+      .core_i_wb_stage_i_ctrl_fsm_i_kill_wb (core_i.wb_stage_i.ctrl_fsm_i.kill_wb),
+      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_n_flush_q (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.n_flush_q),
+      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_rptr (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.rptr),
+
+      .core_i_ex_wb_pipe_instr_bus_resp_rdata (core_i.ex_wb_pipe.instr.bus_resp.rdata),
+
+      .core_i_cs_registers_i_xsecure_lfsr0_i_clock_en (core_i.cs_registers_i.xsecure.lfsr0_i.clock_en),
+      .core_i_cs_registers_i_xsecure_lfsr1_i_clock_en (core_i.cs_registers_i.xsecure.lfsr1_i.clock_en),
+      .core_i_cs_registers_i_xsecure_lfsr2_i_clock_en (core_i.cs_registers_i.xsecure.lfsr2_i.clock_en),
+      .core_i_cs_registers_i_xsecure_lfsr0_i_seed_we_i (core_i.cs_registers_i.xsecure.lfsr0_i.seed_we_i),
+      .core_i_cs_registers_i_xsecure_lfsr1_i_seed_we_i (core_i.cs_registers_i.xsecure.lfsr1_i.seed_we_i),
+      .core_i_cs_registers_i_xsecure_lfsr2_i_seed_we_i (core_i.cs_registers_i.xsecure.lfsr2_i.seed_we_i),
+      .core_i_cs_registers_i_xsecure_lfsr0_i_lfsr_n (core_i.cs_registers_i.xsecure.lfsr0_i.lfsr_n),
+      .core_i_cs_registers_i_xsecure_lfsr1_i_lfsr_n (core_i.cs_registers_i.xsecure.lfsr1_i.lfsr_n),
+      .core_i_cs_registers_i_xsecure_lfsr2_i_lfsr_n (core_i.cs_registers_i.xsecure.lfsr2_i.lfsr_n),
+      .core_i_cs_registers_i_xsecure_lfsr0_i_seed_i (core_i.cs_registers_i.xsecure.lfsr0_i.seed_i),
+      .core_i_cs_registers_i_xsecure_lfsr1_i_seed_i (core_i.cs_registers_i.xsecure.lfsr1_i.seed_i),
+      .core_i_cs_registers_i_xsecure_lfsr2_i_seed_i (core_i.cs_registers_i.xsecure.lfsr2_i.seed_i),
+
+      .core_i_controller_i_controller_fsm_i_ctrl_fsm_cs (core_i.controller_i.controller_fsm_i.ctrl_fsm_cs),
+
       .core_rf_we_wb                                                                                                    (core_i.rf_we_wb),
       .core_rf_waddr_wb                                                                                                 (core_i.rf_waddr_wb),
       .core_rf_wdata_wb                                                                                                 (core_i.rf_wdata_wb),
       .core_register_file_wrapper_register_file_mem                                                                     (core_i.register_file_wrapper_i.register_file_i.mem),
       .core_i_jump_target_id                                                                                            (core_i.jump_target_id),
 
-      // OBI interface
+      // OBI interfaces
+      // OBI instruction interface //TODO: kan man bruke ordet interface, siden det kan jo bety flere ting?
+      .core_i_instr_req_o (core_i.instr_req_o),
+      .core_i_instr_gnt_i (core_i.instr_gnt_i),
+      .core_i_instr_rvalid_i (core_i.instr_rvalid_i),
+      .core_i_instr_reqpar_o (core_i.instr_reqpar_o),
+      .core_i_instr_gntpar_i (core_i.instr_gntpar_i),
+      .core_i_instr_rvalidpar_i (core_i.instr_rvalidpar_i),
+      .core_i_instr_achk_o (core_i.instr_achk_o),
+      .core_i_instr_rchk_i (core_i.instr_rchk_i),
+
+      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.resp_q),
+      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_valid_q (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.valid_q),
+      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_instr_addr_o (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.instr_addr_o),
+      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_unaligned_is_compressed (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.unaligned_is_compressed),
+
+      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_wptr (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.wptr),
+
+      .core_i_ex_wb_pipe_instr_bus_resp_integrity_err (core_i.ex_wb_pipe.instr.bus_resp.integrity_err),
+
+      // OBI data interface //TODO: kan man bruke ordet interface, siden det kan jo bety flere ting?
+      .core_i_data_req_o (core_i.data_req_o),
+      .core_i_data_gnt_i (core_i.data_gnt_i),
+      .core_i_data_rvalid_i (core_i.data_rvalid_i),
+      .core_i_data_reqpar_o (core_i.data_reqpar_o),
+      .core_i_data_gntpar_i (core_i.data_gntpar_i),
+      .core_i_data_rvalidpar_i (core_i.data_rvalidpar_i),
+      .core_i_data_achk_o (core_i.data_achk_o),
+      .core_i_data_rchk_i (core_i.data_rchk_i),
+
+      .core_i_data_err_i (core_i.data_err_i),
+
+
+      // OBI interface //TODO: old, should be removed!
       .core_i_if_stage_i_bus_resp                                                                                       (core_i.if_stage_i.bus_resp),
       .core_i_load_store_unit_i_bus_resp                                                                                (core_i.load_store_unit_i.bus_resp),
 
@@ -770,20 +833,6 @@ module uvmt_cv32e40s_tb;
       .core_i_m_c_obi_data_if_resp_payload                                                                              (core_i.m_c_obi_data_if.resp_payload),
       .core_i_m_c_obi_instr_if_req_payload                                                                              (core_i.m_c_obi_instr_if.req_payload),
       .core_i_m_c_obi_instr_if_resp_payload                                                                             (core_i.m_c_obi_instr_if.resp_payload),
-
-      .core_i_m_c_obi_data_if_s_req_req                                                                                 (core_i.m_c_obi_data_if.s_req.req),
-      .core_i_m_c_obi_data_if_s_req_reqpar                                                                              (core_i.m_c_obi_data_if.s_req.reqpar),
-      .core_i_m_c_obi_data_if_s_gnt_gnt                                                                                 (core_i.m_c_obi_data_if.s_gnt.gnt),
-      .core_i_m_c_obi_data_if_s_gnt_gntpar                                                                              (core_i.m_c_obi_data_if.s_gnt.gntpar),
-      .core_i_m_c_obi_data_if_s_rvalid_rvalid                                                                           (core_i.m_c_obi_data_if.s_rvalid.rvalid),
-      .core_i_m_c_obi_data_if_s_rvalid_rvalidpar                                                                        (core_i.m_c_obi_data_if.s_rvalid.rvalidpar),
-
-      .core_i_m_c_obi_instr_if_s_req_req                                                                                (core_i.m_c_obi_instr_if.s_req.req),
-      .core_i_m_c_obi_instr_if_s_req_reqpar                                                                             (core_i.m_c_obi_instr_if.s_req.reqpar),
-      .core_i_m_c_obi_instr_if_s_gnt_gnt                                                                                (core_i.m_c_obi_instr_if.s_gnt.gnt),
-      .core_i_m_c_obi_instr_if_s_gnt_gntpar                                                                             (core_i.m_c_obi_instr_if.s_gnt.gntpar),
-      .core_i_m_c_obi_instr_if_s_rvalid_rvalid                                                                          (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
-      .core_i_m_c_obi_instr_if_s_rvalid_rvalidpar                                                                       (core_i.m_c_obi_instr_if.s_rvalid.rvalidpar),
 
       .core_i_if_stage_i_prefetch_resp_valid                                                                            (core_i.if_stage_i.prefetch_resp_valid),
       .core_i_load_store_unit_i_resp_valid                                                                              (core_i.load_store_unit_i.resp_valid),
@@ -803,21 +852,17 @@ module uvmt_cv32e40s_tb;
 
       .core_xsecure_ctrl_cpuctrl_rnddummyfreq                                                                           (core_i.xsecure_ctrl.cpuctrl[19:16]),
       .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
-      .core_cs_registers_xsecure_lfsr_lockup                                                                            (core_i.cs_registers_i.xsecure.lfsr_lockup),
 
       .core_cs_registers_mhpmcounter_mcycle                                                                             (core_i.cs_registers_i.mcycle_o),
       .core_cs_registers_mhpmcounter_minstret                                                                           (core_i.cs_registers_i.mhpmcounter_q[2]),
-      .core_cs_registers_mhpmcounter_31_to_3                                                                            (core_i.cs_registers_i.mhpmcounter_q[31:3]),
-      .core_cs_registers_mhpmevent_31_to_3                                                                              (core_i.cs_registers_i.mhpmevent_q[31:3]),
-      .core_cs_registers_mcountinhibit_q_mcycle_inhibit                                                                 (core_i.cs_registers_i.mcountinhibit_q[0]),
-      .core_cs_registers_mcountinhibit_q_minstret_inhibit                                                               (core_i.cs_registers_i.mcountinhibit_q[2]),
+      .core_cs_registers_mhpmcounter_rdata_31_to_3                                                                            (core_i.cs_registers_i.mhpmcounter_rdata[31:3]),
+      .core_cs_registers_mhpmevent_rdata_31_to_3                                                                              (core_i.cs_registers_i.mhpmevent_rdata[31:3]),
+      .core_cs_registers_mcountinhibit_rdata                                                                            (core_i.cs_registers_i.mcountinhibit_rdata),
+      .core_cs_registers_mcountinhibit_rdata_mcycle                                                                     (core_i.cs_registers_i.mcountinhibit_rdata[0]),
+      .core_cs_registers_mcountinhibit_rdata_minstret                                                                   (core_i.cs_registers_i.mcountinhibit_rdata[2]),
 
-      .core_cs_registers_csr_en_gated                                                                                   (core_i.cs_registers_i.csr_en_gated),
+      .core_i_cs_registers_i_csr_en_gated                                                                               (core_i.cs_registers_i.csr_en_gated),
       .core_cs_registers_csr_waddr                                                                                      (core_i.cs_registers_i.csr_waddr),
-
-      .core_LFSR0_CFG_default_seed                                                                                      (core_i.LFSR0_CFG.default_seed),
-      .core_LFSR1_CFG_default_seed                                                                                      (core_i.LFSR1_CFG.default_seed),
-      .core_LFSR2_CFG_default_seed                                                                                      (core_i.LFSR2_CFG.default_seed),
 
       .core_xsecure_ctrl_lfsr0                                                                                          (core_i.xsecure_ctrl.lfsr0),
       .core_xsecure_ctrl_lfsr1                                                                                          (core_i.xsecure_ctrl.lfsr1),
@@ -831,7 +876,7 @@ module uvmt_cv32e40s_tb;
 
       // Hardend CSR registers
       .core_i_cs_registers_i_mstateen0_q                                                                                (core_i.cs_registers_i.mstateen0_q),
-      .core_i_cs_registers_i_priv_lvl_q_int                                                                             (core_i.cs_registers_i.priv_lvl_q_int),
+      .core_i_cs_registers_i_priv_lvl_q                                                                                 (core_i.cs_registers_i.priv_lvl_q),
       .core_i_cs_registers_i_jvt_q                                                                                      (core_i.cs_registers_i.jvt_q),
       .core_i_cs_registers_i_mstatus_q                                                                                  (core_i.cs_registers_i.mstatus_q),
       .core_i_cs_registers_i_cpuctrl_q                                                                                  (core_i.cs_registers_i.cpuctrl_q),
@@ -870,17 +915,14 @@ module uvmt_cv32e40s_tb;
       .uvmt_cv32e40s_tb_mie_q_hardened_shadow_q                                                                         (uvmt_cv32e40s_tb.mie_q_hardened_shadow_q),
 
       // Controller
-      .core_i_controller_i_controller_fsm_i_pending_nmi                                                                 (core_i.controller_i.controller_fsm_i.pending_nmi),
       .core_i_controller_i_controller_fsm_i_dcsr_i_step                                                                 (core_i.controller_i.controller_fsm_i.dcsr_i.step),
-      .core_i_controller_i_controller_fsm_i_dcsr_i_stepie                                                                 (core_i.controller_i.controller_fsm_i.dcsr_i.stepie),
+      .core_i_controller_i_controller_fsm_i_dcsr_i_stepie                                                               (core_i.controller_i.controller_fsm_i.dcsr_i.stepie),
       .core_controller_controller_fsm_debug_mode_q                                                                      (core_i.controller_i.controller_fsm_i.debug_mode_q),
+      .core_i_cs_registers_i_debug_stopcount                                                                            (core_i.cs_registers_i.debug_stopcount),
 
       // IF stage
       .core_if_stage_if_valid_o                                                                                         (core_i.if_stage_i.if_valid_o),
       .core_if_stage_id_ready_i                                                                                         (core_i.if_stage_i.id_ready_i),
-
-      .core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs1                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.lfsr_rs1),
-      .core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs2                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.lfsr_rs2),
 
       .core_if_stage_instr_meta_n_dummy                                                                                 (core_i.if_stage_i.instr_meta_n.dummy),
       .core_i_if_stage_i_instr_hint                                                                                     (core_i.if_stage_i.instr_hint),
@@ -893,6 +935,7 @@ module uvmt_cv32e40s_tb;
       .core_i_if_stage_i_compressed_decoder_i_is_compressed_o                                                           (core_i.if_stage_i.compressed_decoder_i.is_compressed_o),
 
       // IF ID pipe
+      .core_if_id_pipe_instr (core_i.if_id_pipe.instr),
       .core_if_id_pipe_instr_meta_dummy                                                                                 (core_i.if_id_pipe.instr_meta.dummy),
       .core_if_id_pipe_instr_meta_hint                                                                                  (core_i.if_id_pipe.instr_meta.hint),
       .core_if_id_pipe_instr_bus_resp_rdata                                                                             (core_i.if_id_pipe.instr.bus_resp.rdata),
@@ -902,11 +945,6 @@ module uvmt_cv32e40s_tb;
       // ID stage
       .core_id_stage_id_valid_o                                                                                         (core_i.id_stage_i.id_valid_o),
       .core_id_stage_ex_ready_i                                                                                         (core_i.id_stage_i.ex_ready_i),
-      .core_id_stage_if_id_pipe_instr_meta_compressed                                                                   (core_i.id_stage_i.if_id_pipe_i.instr_meta.compressed),
-      .core_id_stage_if_id_pipe_compressed_instr                                                                        (core_i.id_stage_i.if_id_pipe_i.compressed_instr),
-
-      // ID EX pipe
-      .core_id_ex_pipe_instr_meta_dummy                                                                                 (core_i.id_ex_pipe.instr_meta.dummy),
 
       // EX stage
       .core_i_ex_stage_i_branch_target_o                                                                                (core_i.ex_stage_i.branch_target_o),

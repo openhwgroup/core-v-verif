@@ -43,6 +43,13 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
   localparam CMPR_INSTRUCTION_INCREMENT = 2;
 
 
+  ////////// PC HARDENING IS ENABLED BY DEFAULT //////////
+
+  a_xsecure_pc_hardening_default_on: assert property (
+    p_xsecure_setting_default_on(
+        xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening)
+  ) else `uvm_error(info_tag, "PC hardening is not enabled when exiting reset.\n");
+
   ////////// PC HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
 
   sequence seq_dummy_if_id;
@@ -66,7 +73,7 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
     ##2 $stable(xsecure_if.core_i_if_stage_i_pc_if_o)[*1:$];
   endsequence
 
-  a_xsecure_pc_hardening_no_glitch: assert property (
+  a_xsecure_pc_hardening: assert property (
 
     //Make sure the PC hardening setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
@@ -74,9 +81,6 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
     //Make sure the inspected instruction is valid
     && $past(xsecure_if.core_if_stage_if_valid_o)
     && $past(xsecure_if.core_if_stage_id_ready_i)
-
-    //In case of multi cycled instructions, make sure the instruction is the last operation
-    && xsecure_if.core_i_if_id_pipe_last_op
 
     //Make sure the instruction is not a pointer (as pointers insert a non-incremental PC)
     && !xsecure_if.core_i_if_stage_i_ptr_in_if_o
@@ -90,6 +94,9 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
 
     //Initialization after reset
     or xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0
+
+    //Multi cycles instruction
+    or xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_if_stage_i_pc_if_o && !xsecure_if.core_i_if_id_pipe_last_op
 
     //Insertion of a dummy instruction
     or seq_dummy_if_id.triggered
@@ -108,15 +115,9 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
   sequence seq_xsecure_pc_hardening_with_glitch;
     @(posedge clk_i)
 
-    //Make sure the gated clock is enabled
-    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
-
     //Make sure the inspected instruction is valid
-    && $past(xsecure_if.core_if_stage_if_valid_o)
+    $past(xsecure_if.core_if_stage_if_valid_o)
     && $past(xsecure_if.core_if_stage_id_ready_i)
-
-    //In case of multi cycled instructions, make sure the instruction is the last operation
-    && xsecure_if.core_i_if_id_pipe_last_op
 
     //Make sure the instruction is not a pointer
     && !xsecure_if.core_i_if_stage_i_ptr_in_if_o
@@ -130,6 +131,9 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
     //Initialization after reset
     and !(xsecure_if.core_i_if_stage_i_pc_if_o == 0 && xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc == 0)
 
+    //Multi cycles instruction
+    and !(xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_if_stage_i_pc_if_o && !xsecure_if.core_i_if_id_pipe_last_op)
+
     //Insertion of a dummy instruction
     and !(seq_dummy_if_id.triggered)
 
@@ -141,31 +145,36 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
 
   endsequence
 
-  //TODO: look into this assertion after a potential RTL fix
-  /*
-  a_xsecure_pc_hardening_sets_alert_major: assert property (
+
+  a_glitch_xsecure_pc_hardening_sequential_instruction_sets_alert_major: assert property (
+
     //Make sure the PC hardening setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+
     ##0 seq_xsecure_pc_hardening_with_glitch
+
     |=>
     //Make sure the alert major is set
     xsecure_if.core_alert_major_o
+
   ) else `uvm_error(info_tag_glitch, "A PC fault in the IF stage does not set the major alert when PC hardening is on.\n");
-  */
+
 
   ////////// PC HARDENING OFF: DO NOT SET THE MAJOR ALERT IF GLITCH //////////
 
-  //TODO: recheck this assertion when the RTL code related to pc_hadening=0 is implemented
-  /*
-  a_xsecure_pc_hardening_off_dont_set_alert_major: assert property (
+  a_glitch_xsecure_pc_hardening_off_sequential_instruction_dont_set_alert_major: assert property (
+
     //Make sure the PC hardening setting is off
     !xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+
     ##0 seq_xsecure_pc_hardening_with_glitch
+
     |=>
     //Make sure the alert major is not set
     !xsecure_if.core_alert_major_o
+
   ) else `uvm_error(info_tag_glitch, "A PC fault in the IF stage does set the major alert when PC hardening is off.\n");
-  */
+
 
   ////////// PC HARDENING ON: SET THE MAJOR ALERT IF GLITCH IN PC TARGET //////////
 
@@ -187,21 +196,30 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
   endsequence
 
 
-  a_xsecure_pc_hardening_branch_set_alert_major: assert property(
-    seq_pc_hardening_jump_instruction_with_glitch(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, BRANCH_STATE, xsecure_if.core_i_ex_stage_i_branch_target_o)
-    |->
+  a_glitch_xsecure_pc_hardening_branch_set_alert_major: assert property(
+    seq_pc_hardening_jump_instruction_with_glitch(
+      xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening,
+      BRANCH_STATE,
+      xsecure_if.core_i_ex_stage_i_branch_target_o)
+    |=>
     xsecure_if.core_alert_major_o
   ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed branch instruction does not set the major alert.\n");
 
-  a_xsecure_pc_hardening_jump_set_alert_major: assert property(
-    seq_pc_hardening_jump_instruction_with_glitch(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, JUMP_STATE, xsecure_if.core_i_jump_target_id)
-    |->
+  a_glitch_xsecure_pc_hardening_jump_set_alert_major: assert property(
+    seq_pc_hardening_jump_instruction_with_glitch(
+      xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening,
+      JUMP_STATE,
+      xsecure_if.core_i_jump_target_id)
+    |=>
     xsecure_if.core_alert_major_o
   ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed jump instruction does not set the major alert.\n");
 
-  a_xsecure_pc_hardening_mret_set_alert_major: assert property(
-    seq_pc_hardening_jump_instruction_with_glitch(xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, MRET_STATE, xsecure_if.core_i_cs_registers_i_mepc_o)
-    |->
+  a_glitch_xsecure_pc_hardening_mret_set_alert_major: assert property(
+    seq_pc_hardening_jump_instruction_with_glitch(
+      xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening,
+      MRET_STATE,
+      xsecure_if.core_i_cs_registers_i_mepc_o)
+    |=>
     xsecure_if.core_alert_major_o
   ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed mret instruction does not set the major alert.\n");
 
@@ -214,16 +232,17 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
     //Make sure pc hardening setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
 
+    //Make sure the branch decision is not always taken
+    && !xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming
+
     //Make sure the FSM is doing a branching operation
     && xsecure_if.core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux == BRANCH_STATE
 
     //Make sure the branch decision differs in the hardened cycles
-    ##1 xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o != $past(xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o)
-
-    //Make sure the branch decision is not always taken
-    && !xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming;
+    ##1 xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o != $past(xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o);
 
   endsequence
+
 
 
   a_xsecure_pc_hardening_branch_decision_set_alert_major: assert property(
@@ -241,8 +260,6 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
 
   ////////// PC HARDENING OFF: DO NOT SET THE MAJOR ALERT IF GLITCH IN PC TARGET //////////
 
-  //TODO: recheck property when RTL for PC_hardnine == 0 is implemented
-
   property p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(pc_hardening, fsm_state, calculated_signal);
 
     seq_pc_hardening_jump_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal)
@@ -253,22 +270,31 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
 
   endproperty
 
-  a_xsecure_pc_hardening_off_branch_set_alert_major: assert property(
-    p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, BRANCH_STATE, xsecure_if.core_i_ex_stage_i_branch_target_o)
+  a_glitch_xsecure_pc_hardening_off_branch_set_alert_major: assert property(
+    p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!
+    xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening,
+    BRANCH_STATE,
+    xsecure_if.core_i_ex_stage_i_branch_target_o)
   ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed branch instruction (jump location) sets the major alert even though PC hardening is off.\n");
 
-  a_xsecure_pc_hardening_off_jump_set_alert_major: assert property(
-    p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, JUMP_STATE, xsecure_if.core_i_jump_target_id)
+  a_glitch_xsecure_pc_hardening_off_jump_set_alert_major: assert property(
+    p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!
+    xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening,
+    JUMP_STATE,
+    xsecure_if.core_i_jump_target_id)
   ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed jump instruction sets the major alert even though PC hardening is off.\n");
 
-  a_xsecure_pc_hardening_off_mret_set_alert_major: assert property(
-    p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening, MRET_STATE, xsecure_if.core_i_cs_registers_i_mepc_o)
+  a_glitch_xsecure_pc_hardening_off_mret_set_alert_major: assert property(
+    p_xsecure_hardened_pc_non_sequential_dont_set_major_alert(!
+    xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening,
+    MRET_STATE,
+    xsecure_if.core_i_cs_registers_i_mepc_o)
   ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed mret instruction sets the major alert even though PC hardening is off.\n");
 
 
   ////////// PC HARDENING OFF: DO NOT SET THE ALERT MAJOR IF GLITCH IN THE BRANCH DECISION //////////
 
-  a_xsecure_pc_hardening_off_branch_decision_set_alert_major: assert property(
+  a_glitch_xsecure_pc_hardening_off_branch_decision_set_alert_major: assert property(
 
     seq_pc_hardening_branch_decision_glitch(!xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening)
 

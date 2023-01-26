@@ -155,6 +155,32 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
       xsecure_if.core_if_id_pipe_instr_meta_hint)
   ) else `uvm_error(info_tag, "We generated a hint instruction even though the hint setting was off.\n");
 
+  // Verify that we do generate dummy/hint instructions when dummy/hint is enabled:
+
+  property p_generate_dummy_hint_instruction_if_setting_is_on(hint_or_dummy_setting, hint_or_dummy_instruction);
+    //Make sure the dummy/hint instruction setting is off
+    hint_or_dummy_setting
+
+    //Make sure we look at a valid instruction
+    && xsecure_if.core_if_stage_if_valid_o
+    && xsecure_if.core_if_stage_id_ready_i
+
+    //Make sure we do not generate a dummy/hint instruction
+    ##1
+    hint_or_dummy_instruction;
+  endproperty
+
+  c_xsecure_dummy_instruction_generated_dummy_instruction_if_dummy_setting_is_on: cover property(
+    p_generate_dummy_hint_instruction_if_setting_is_on(
+      xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy,
+      xsecure_if.core_if_id_pipe_instr_meta_dummy)
+  );
+
+  c_xsecure_hint_instruction_generated_hint_instruction_if_hint_setting_is_on: cover property(
+    p_generate_dummy_hint_instruction_if_setting_is_on(
+      xsecure_if.core_xsecure_ctrl_cpuctrl_rndhint,
+      xsecure_if.core_if_id_pipe_instr_meta_hint)
+  );
 
   ////////// DUMMY AND HINT INSTRUCTION INSERTED IN IF /////////
 
@@ -182,6 +208,141 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
       xsecure_if.core_if_id_pipe_instr_meta_hint,
       xsecure_if.core_i_if_stage_i_instr_hint)
   ) else `uvm_error(info_tag, "The hint instruction is not inserted in the IF stage.\n");
+
+  ////////// BLTU DUMMY AND HINT INSTRUCTIONS ARE EITHER AN ADD, AND, MUL OR BTLU INSTRUCTION //////////
+
+  property p_dummy_hint_instruction_opcode_is_either_add_and_mul_or_bltu(dummy_hint_in_id_stage);
+
+    //Make sure the instruction insterted into the ID stage is valid
+    xsecure_if.core_if_stage_if_valid_o
+    && xsecure_if.core_if_stage_id_ready_i
+
+    //Make sure the instruction in ID stage is a dummy/hint instruction
+    ##1 dummy_hint_in_id_stage
+
+    |->
+    //Make sure the instruction is either an ADD, ADD, MUL or BTLU instruction
+    (if_id_pipe_instr_opcode == OPCODE_OP
+    && if_id_pipe_instr_funct3 == FUNCT3_ADD
+    && if_id_pipe_instr_funct7 == FUNCT7_ADD)
+
+    || (if_id_pipe_instr_opcode == OPCODE_OP
+    && if_id_pipe_instr_funct3 == FUNCT3_AND
+    && if_id_pipe_instr_funct7 == FUNCT7_AND)
+
+    || (if_id_pipe_instr_opcode == OPCODE_OP
+    && if_id_pipe_instr_funct3 == FUNCT3_MUL
+    && if_id_pipe_instr_funct7 == FUNCT7_MUL)
+
+    || (if_id_pipe_instr_opcode == OPCODE_BRANCH
+    && if_id_pipe_instr_funct3 == FUNCT3_BLTU);
+
+  endproperty
+
+  a_xsecure_dummy_instruction_is_add_mul_or_btlu: assert property(
+    p_dummy_hint_instruction_opcode_is_either_add_and_mul_or_bltu(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy)
+  ) else `uvm_error(info_tag, "The dummy instruction is neither an ADD, MUL nor a BTLU instruction.\n");
+
+  a_xsecure_hint_instruction_is_add_mul_or_btlu: assert property(
+    p_dummy_hint_instruction_opcode_is_either_add_and_mul_or_bltu(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy)
+  ) else `uvm_error(info_tag, "The hint instruction is neither an ADD, MUL nor a BTLU instruction.\n");
+
+
+  property p_dummy_hint_instruction_add_and_mul(dummy_hint_in_id_stage, opcode, funct3, funct7);
+
+    //Make sure the instruction insterted into the ID stage is valid
+    xsecure_if.core_if_stage_if_valid_o
+    && xsecure_if.core_if_stage_id_ready_i
+
+    //Make sure the instruction in ID stage is a dummy/hint instruction
+    ##1 dummy_hint_in_id_stage
+
+    //Make sure the instruction is either an ADD or MUL instruction
+    && if_id_pipe_instr_opcode == opcode
+    && if_id_pipe_instr_funct3 == funct3
+    && if_id_pipe_instr_funct7 == funct7;
+
+  endproperty
+
+  c_xsecure_dummy_instruction_is_add: cover property(
+    p_dummy_hint_instruction_add_and_mul(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy,
+      OPCODE_OP,
+      FUNCT3_ADD,
+      FUNCT7_ADD)
+  );
+
+  c_xsecure_hint_instruction_is_add: cover property(
+    p_dummy_hint_instruction_add_and_mul(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy,
+      OPCODE_OP,
+      FUNCT3_ADD,
+      FUNCT7_ADD)
+  );
+
+  c_xsecure_dummy_instruction_is_and: cover property(
+    p_dummy_hint_instruction_add_and_mul(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy,
+      OPCODE_OP,
+      FUNCT3_AND,
+      FUNCT7_AND)
+  );
+
+  c_xsecure_hint_instruction_is_and: cover property(
+    p_dummy_hint_instruction_add_and_mul(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy,
+      OPCODE_OP,
+      FUNCT3_AND,
+      FUNCT7_AND)
+  );
+
+  c_xsecure_dummy_instruction_is_mul: cover property(
+    p_dummy_hint_instruction_add_and_mul(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy,
+      OPCODE_OP,
+      FUNCT3_MUL,
+      FUNCT7_MUL)
+  );
+
+  c_xsecure_hint_instruction_is_mul: cover property(
+    p_dummy_hint_instruction_add_and_mul(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy,
+      OPCODE_OP,
+      FUNCT3_MUL,
+      FUNCT7_MUL)
+  );
+
+
+  property p_dummy_hint_instruction_bltu(dummy_hint_in_id_stage, opcode, funct3);
+
+    //Make sure the instruction insterted into the ID stage is valid
+    xsecure_if.core_if_stage_if_valid_o
+    && xsecure_if.core_if_stage_id_ready_i
+
+    //Make sure the instruction in ID stage is a dummy/hint instruction
+    ##1 dummy_hint_in_id_stage
+
+    //Make sure the instruction is a BTLU instruction
+    && if_id_pipe_instr_opcode == opcode
+    && if_id_pipe_instr_funct3 == funct3;
+
+  endproperty
+
+  c_xsecure_dummy_instruction_is_bltu: cover property(
+    p_dummy_hint_instruction_bltu(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy,
+      OPCODE_BRANCH,
+      FUNCT3_BLTU)
+  );
+
+  c_xsecure_hint_instruction_is_btlu: cover property(
+    p_dummy_hint_instruction_bltu(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy,
+      OPCODE_BRANCH,
+      FUNCT3_BLTU)
+  );
 
 
   ////////// BLTU DUMMY AND HINT INSTRUCTIONS JUMP TO THE SUBSEQUENT INSTRUCTION //////////
@@ -224,14 +385,17 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     && $past(xsecure_if.core_if_stage_id_ready_i)
 
     //Make sure the detected instruction is a dummy/hint instruction
-    && dummy_hint_in_id_stage
+    && //dummy_hint_in_id_stage
+    xsecure_if.core_if_id_pipe_instr_meta_dummy
 
     |->
-    //Check that the sr1 part of the instruction originates from the LFSR1 register
-    if_id_pipe_instr_rs1 == $past(xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs1)
+    //Check that the sr1 part of the instruction originates from the LFSR1 register, or is zero if RS1 = x0
+    ((xsecure_if.core_i_id_stage_i_operand_a == (xsecure_if.core_xsecure_ctrl_lfsr1))
+    || if_id_pipe_instr_rs1 == REGISTER_X0)
 
     //Check that the sr2 part of the instruction originates from the LFSR2 register
-    && if_id_pipe_instr_rs2 == $past(xsecure_if.core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs2);
+    && ((xsecure_if.core_i_id_stage_i_operand_b == (xsecure_if.core_xsecure_ctrl_lfsr2))
+    || if_id_pipe_instr_rs2 == REGISTER_X0);
 
   endproperty
 
@@ -262,7 +426,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     |->
     //Check that the destination register is x0
-    if_id_pipe_instr_rd == REGISTER_x0;
+    if_id_pipe_instr_rd == REGISTER_X0;
   endproperty
 
   a_xsecure_dummy_instruction_destination_is_x0: assert property (
@@ -273,20 +437,153 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     p_dummy_hint_destination_is_x0(xsecure_if.core_if_id_pipe_instr_meta_hint)
   ) else `uvm_error(info_tag, "The result of a hint instruction is not stored in the x0 GPR.\n");
 
+    ////////// DUMMY AND HINT INSTRUCTION UPDATE LFSR REGISTERS /////////
+
+  property p_dummy_hint_update_lfsr0(dummy_hint_in_if_stage, lfsr_reg, write_lfsr, write_lfsr_value);
+
+    //Make sure we detect a dummy instruction
+    dummy_hint_in_if_stage
+    && xsecure_if.core_if_stage_if_valid_o
+    && xsecure_if.core_if_stage_id_ready_i
+
+    |=>
+
+    lfsr_reg != $past(lfsr_reg)
+    || ($past(write_lfsr) && write_lfsr_value == $past(lfsr_reg));
+
+  endproperty
+
+
+  a_xsecure_dummy_updates_lfsr0: assert property (
+    p_dummy_hint_update_lfsr0(
+      xsecure_if.core_i_if_stage_i_dummy_insert,
+      xsecure_if.core_xsecure_ctrl_lfsr0,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_seed_we_i,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_seed_i)
+  ) else `uvm_error(info_tag, "A dummy instruction does not update the LFSR0 register.\n");
+
+  a_xsecure_hint_updates_lfsr0: assert property (
+    p_dummy_hint_update_lfsr0(
+      xsecure_if.core_i_if_stage_i_instr_hint,
+      xsecure_if.core_xsecure_ctrl_lfsr0,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_seed_we_i,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_seed_i)
+  ) else `uvm_error(info_tag, "A hint instruction does not update the LFSR0 register.\n");
+
+
+  property p_dummy_hint_update_lfsr1_lfsr2(dummy_hint_in_if_stage, lfsr_reg, write_lfsr, write_lfsr_value);
+
+    //Make sure we detect a dummy instruction
+    dummy_hint_in_if_stage
+    && xsecure_if.core_id_stage_id_valid_o
+    && xsecure_if.core_id_stage_ex_ready_i
+    && xsecure_if.core_i_id_stage_i_last_op
+
+    |=>
+
+    lfsr_reg != $past(lfsr_reg)
+    || ($past(write_lfsr) && write_lfsr_value == $past(lfsr_reg));
+  endproperty
+
+
+  a_xsecure_dummy_updates_lfsr1: assert property (
+    p_dummy_hint_update_lfsr1_lfsr2(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy,
+      xsecure_if.core_xsecure_ctrl_lfsr1,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_seed_we_i,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_seed_i)
+  ) else `uvm_error(info_tag, "A dummy instruction does not update the LFSR1 register.\n");
+
+  a_xsecure_dummy_updates_lfsr2: assert property (
+    p_dummy_hint_update_lfsr1_lfsr2(
+      xsecure_if.core_if_id_pipe_instr_meta_dummy,
+      xsecure_if.core_xsecure_ctrl_lfsr2,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_seed_we_i,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_seed_i)
+  ) else `uvm_error(info_tag, "A dummy instruction does not update the LFSR2 register.\n");
+
+  a_xsecure_hint_updates_lfsr1: assert property (
+    p_dummy_hint_update_lfsr1_lfsr2(
+      xsecure_if.core_if_id_pipe_instr_meta_hint,
+      xsecure_if.core_xsecure_ctrl_lfsr1,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_seed_we_i,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_seed_i)
+  ) else `uvm_error(info_tag, "A hint instruction does not update the LFSR1 register.\n");
+
+  a_xsecure_hint_updates_lfsr2: assert property (
+    p_dummy_hint_update_lfsr1_lfsr2(
+      xsecure_if.core_if_id_pipe_instr_meta_hint,
+      xsecure_if.core_xsecure_ctrl_lfsr2,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_seed_we_i,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_seed_i)
+  ) else `uvm_error(info_tag, "A hint instruction does not update the LFSR2 register.\n");
+
+
+  ////////// DUMMY AND HINT INSTRUCTIONS STALL IN THE ID STAGE IF THEY ARE SUCCESSOR OF A LOAD INSTRUCTION //////////
+
+  a_xsecure_dummy_instruction_load_dummy_stall: assert property (
+    //Random gyldig instruksjon
+    rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_trap
+    && rvfi_if.rvfi_insn[6:0] == OPCODE_LOAD
+    && rvfi_if.rvfi_rd1_addr != '0
+
+    //Dummy instruksjon i wb
+    && xsecure_if.core_ex_wb_pipe_instr_meta_dummy //Must be so we know it is not a compressed instruction
+    && xsecure_if.core_wb_stage_wb_valid_o
+
+    |->
+    //dummy rs1 og rs2 != random instruksjon rd
+    xsecure_if.core_i_ex_wb_pipe_instr_bus_resp_rdata[24:20] != rvfi_if.rvfi_rd1_addr
+    && xsecure_if.core_i_ex_wb_pipe_instr_bus_resp_rdata[19:15] != rvfi_if.rvfi_rd1_addr
+  ) else `uvm_error(info_tag, "A dummy instruction does not stall in ID stage even though the value of a source register is not fetched from memory yet.\n");
+
+
+  property load_then_hint_instruction_hazard;
+    logic [4:0] id_hint_rs1;
+    logic [4:0] id_hint_rs2;
+
+    (!xsecure_if.core_i_wb_stage_i_ctrl_fsm_i_kill_if
+    & !xsecure_if.core_i_wb_stage_i_ctrl_fsm_i_kill_id
+    & !xsecure_if.core_i_wb_stage_i_ctrl_fsm_i_kill_ex
+    & !xsecure_if.core_i_wb_stage_i_ctrl_fsm_i_kill_wb
+    ) throughout (
+      (xsecure_if.core_if_id_pipe_instr_meta_hint && xsecure_if.core_id_stage_id_valid_o && xsecure_if.core_id_stage_ex_ready_i,
+      id_hint_rs1 = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[19:15],
+      id_hint_rs2 = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[24:20])
+
+      ##0 first_match(##[2:$]
+      xsecure_if.core_ex_wb_pipe_instr_meta_hint
+      && xsecure_if.core_wb_stage_wb_valid_o)
+
+      ##0 rvfi_if.rvfi_valid
+      && !rvfi_if.rvfi_trap
+      && rvfi_if.rvfi_insn[6:0] == OPCODE_LOAD
+      && rvfi_if.rvfi_rd1_addr != '0
+    )
+
+    |->
+    id_hint_rs1 != rvfi_if.rvfi_rd1_addr
+    && id_hint_rs2 != rvfi_if.rvfi_rd1_addr;
+  endproperty
+
+  a_xsecure_hint_instruction_load_hint_stall: assert property (
+    load_then_hint_instruction_hazard
+  ) else `uvm_error(info_tag, "A hint instruction does not stall in ID stage even though the value of a source register is not fetched from memory yet.\n");
 
   ////////// DUMMY AND HINT INSTRUCTION UPDATES MCYCLE //////////
 
   a_xsecure_dummy_instruction_updates_mcycle: assert property (
 
-    //Make sure the gated clock is enabled
-    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
-
     //Make sure that mcycle is operative (not inhibited)
-    && !xsecure_if.core_cs_registers_mcountinhibit_q_mcycle_inhibit
+    !xsecure_if.core_cs_registers_mcountinhibit_rdata_mcycle
+
+    //Make sure the counters are not stopped//Make sure that minstret is operative (not inhibited)
+    && !$past(xsecure_if.core_i_cs_registers_i_debug_stopcount)
 
     //Make sure we do not write to mcycle
-    && !($past(xsecure_if.core_cs_registers_csr_en_gated)
-    && ($past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLE)) || $past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLEH))
+    && !($past(xsecure_if.core_i_cs_registers_i_csr_en_gated)
+    && ($past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLE) || $past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLEH)))
 
     |->
     //Make sure the mcycle counts every cycle (including the clock cycles used by dummy and hint instructions)
@@ -296,20 +593,18 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     or xsecure_if.core_cs_registers_mhpmcounter_mcycle == '0 && $past(xsecure_if.core_cs_registers_mhpmcounter_mcycle) == REGISTER_MHPMCOUNTER_MCYCLE_FULL
 
     //And allow the first mcycle count to not increment
-    or xsecure_if.core_cs_registers_mhpmcounter_mcycle == $past(xsecure_if.core_cs_registers_mhpmcounter_mcycle) && $past(xsecure_if.core_cs_registers_mcountinhibit_q_mcycle_inhibit)
+    or xsecure_if.core_cs_registers_mhpmcounter_mcycle == $past(xsecure_if.core_cs_registers_mhpmcounter_mcycle) && $past(xsecure_if.core_cs_registers_mcountinhibit_rdata_mcycle)
 
   ) else `uvm_error(info_tag, "Dummy and hint instructions do not update the MCYCLE register.\n");
+
 
 
   ////////// DUMMY INSTRUCTIONS DO NOT UPDATE MINSTRET //////////
 
   a_xsecure_dummy_instruction_do_not_update_minstret: assert property (
 
-    //Make sure the gated clock is enabled
-    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
-
     //Make sure minstret is operative (not inhibited)
-    && !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
+    !xsecure_if.core_cs_registers_mcountinhibit_rdata_minstret
 
     //Make sure there is a dummy instruction
     && xsecure_if.core_ex_wb_pipe_instr_meta_dummy
@@ -324,15 +619,16 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   ) else `uvm_error(info_tag, "Dummy instruction updated the minstret register.\n");
 
 
+
   ////////// HINT INSTRUCTIONS UPDATE MINSTRET //////////
 
   a_xsecure_hint_instructions_updates_minstret: assert property (
 
-    //Make sure the gated clock is enabled
-    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
-
     //Make sure that minstret is operative (not inhibited)
-    && !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
+    !xsecure_if.core_cs_registers_mcountinhibit_rdata_minstret
+
+    //Make sure the counters are not stopped
+    && !xsecure_if.core_i_cs_registers_i_debug_stopcount
 
     //Make sure there is a hint instruction in the WB stage
     && xsecure_if.core_ex_wb_pipe_instr_meta_hint
@@ -342,7 +638,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     && !rvfi_if.rvfi_trap.trap
     && rvfi_insn_cmpr_funct3 == FUNCT3_COMPR_SLLI
     && rvfi_insn_cmpr_opcode == OPCODE_COMPR_SLLI
-    && rvfi_if.rvfi_rd1_addr == REGISTER_x0
+    && rvfi_if.rvfi_rd1_addr == REGISTER_X0
     && rvfi_c_slli_shamt != '0
 
     |->
@@ -435,59 +731,107 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   ) else `uvm_error(info_tag, "There is not 1 dummy instruction per 1-64 instructions.\n");
 
 
-  ////////// RESET SEED WHENEVER THERE IS A LOCKUP ERROR //////////
+  ////////// RESET SEED WHENEVER THERE A LOCKUP IS DETECTED //////////
 
-  property p_xsecure_dummy_instruction_LFSRx_lockup_reset(integer x, logic core_cs_registers_xsecure_lfsrx_seed_we, logic [31:0] core_xsecure_ctrl_lfsrx, logic [31:0] core_LFSRx_CFG_default_seed);
+  sequence p_xsecure_dummy_hint_instruction_LFSRx_lockup_detection(logic get_new_lfsr_value, logic seed_we, logic [31:0] seed_value, logic [31:0] lfsrx_n);
 
-    //Make sure there is a lockup error on register x
-    xsecure_if.core_cs_registers_xsecure_lfsr_lockup[x] == LOCKUP_ERROR
-
-    //Make sure we check the case where we do not specificly write a new value to the register at this moment (because writing new value has higher priority than setting default seed)
-    && !core_cs_registers_xsecure_lfsrx_seed_we
-
-    //Make sure the LFSR registers reseeds to default value
-    |->
-    ##1 core_xsecure_ctrl_lfsrx == core_LFSRx_CFG_default_seed;
-
-  endproperty
+    (xsecure_if.core_xsecure_ctrl_cpuctrl_rnddummy || xsecure_if.core_xsecure_ctrl_cpuctrl_rndhint)
+    throughout
+    (get_new_lfsr_value
+    && ((!seed_we && lfsrx_n == '0)
+    || (seed_we && seed_value == '0)));
+  endsequence
 
   //LFSR0
-  a_xsecure_dummy_instruction_LFSR0_lockup_reset: assert property (
-	  p_xsecure_dummy_instruction_LFSRx_lockup_reset(
-      0,
+  a_xsecure_dummy_hint_instruction_LFSR0_lockup_reset: assert property (
+	  p_xsecure_dummy_hint_instruction_LFSRx_lockup_detection(
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_clock_en,
       xsecure_if.core_cs_registers_xsecure_lfsr0_seed_we,
-	    xsecure_if.core_xsecure_ctrl_lfsr0,
-      xsecure_if.core_LFSR0_CFG_default_seed)
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_seed_i,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_lfsr_n)
+
+    |=>
+	  //Make sure the LFSR registers reseeds to default value
+    xsecure_if.core_xsecure_ctrl_lfsr0 == LFSR_CFG_DEFAULT.default_seed
+
   ) else `uvm_error(info_tag, "LFSR0 does not reset to the default value when there is a lookup error (given that we do not write to the LFSR register).\n");
 
   //LFSR1
-  a_xsecure_dummy_instruction_LFSR1_lockup_reset: assert property (
-	  p_xsecure_dummy_instruction_LFSRx_lockup_reset(
-      1,
+  a_xsecure_dummy_hint_instruction_LFSR1_lockup_reset: assert property (
+	  p_xsecure_dummy_hint_instruction_LFSRx_lockup_detection(
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_clock_en,
       xsecure_if.core_cs_registers_xsecure_lfsr1_seed_we,
-	    xsecure_if.core_xsecure_ctrl_lfsr1,
-      xsecure_if.core_LFSR1_CFG_default_seed)
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_seed_i,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_lfsr_n)
+
+    |=>
+	  //Make sure the LFSR registers reseeds to default value
+    xsecure_if.core_xsecure_ctrl_lfsr1 == LFSR_CFG_DEFAULT.default_seed
+
   ) else `uvm_error(info_tag, "LFSR0 does not reset to the default value when there is a lookup error (given that we do not write to the LFSR register).\n");
 
   //LFSR2
-  a_xsecure_dummy_instruction_LFSR2_lockup_reset: assert property (
-	  p_xsecure_dummy_instruction_LFSRx_lockup_reset(
-      2,
+  a_xsecure_dummy_hint_instruction_LFSR2_lockup_reset: assert property (
+	  p_xsecure_dummy_hint_instruction_LFSRx_lockup_detection(
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_clock_en,
       xsecure_if.core_cs_registers_xsecure_lfsr2_seed_we,
-	    xsecure_if.core_xsecure_ctrl_lfsr2,
-      xsecure_if.core_LFSR2_CFG_default_seed)
-  ) else `uvm_error(info_tag, "LFSR0 does not reset to the default value when there is a lookup error (given that we do not write to the LFSR register).\n");
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_seed_i,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_lfsr_n)
+
+    |=>
+	  //Make sure the LFSR registers reseeds to default value
+    xsecure_if.core_xsecure_ctrl_lfsr2 == LFSR_CFG_DEFAULT.default_seed
+
+
+  ////////// WRITES TO THE LFSRS SEED THE SECURESEED REGISTERS //////////
+
+
+  property p_xsecure_LFSRx_write_secureseedx_reg(csr_addr_secureseedx, lfsrx);
+
+    //Make sure we retire a write CSR instruction that wirtes the value of a GPR to the CSR SECURESEEDX
+    rvfi_insn_opcode == OPCODE_SYSTEM
+    && rvfi_insn_funct3 == FUNCT3_CSRRW_REG
+    && rvfi_insn_csr == csr_addr_secureseedx
+
+    //MAke sure the value of the GPR is not zero
+    && rvfi_if.rvfi_rs1_rdata != 5'b0000_0
+
+    //Make sure the instruction is retired without traps
+    && rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_trap
+
+    |->
+
+    //Verify that the LFSRx register is written by writing to the CSR SECURESEEDX
+    lfsrx == rvfi_if.rvfi_rs1_rdata;
+  endproperty
+
+
+  a_xsecure_dummy_hint_instruction_LFSRx_write_secureseed0_reg: assert property (
+    p_xsecure_LFSRx_write_secureseedx_reg(
+      CSR_SECURESEED0,
+      xsecure_if.core_xsecure_ctrl_lfsr0)
+  ) else `uvm_error(info_tag, "The LFSR0 register is not written to, even though the secureseed CSR is written to (CSR register instruction).\n");
+
+  a_xsecure_dummy_hint_instruction_LFSRx_write_secureseed1_reg: assert property (
+    p_xsecure_LFSRx_write_secureseedx_reg(
+      CSR_SECURESEED1,
+      xsecure_if.core_xsecure_ctrl_lfsr1)
+  ) else `uvm_error(info_tag, "The LFSR1 register is not written to, even though the secureseed CSR is written to (CSR register instruction).\n");
+
+  a_xsecure_dummy_hint_instruction_LFSRx_write_secureseed2_reg: assert property (
+    p_xsecure_LFSRx_write_secureseedx_reg(
+      CSR_SECURESEED2,
+      xsecure_if.core_xsecure_ctrl_lfsr2)
+  ) else `uvm_error(info_tag, "The LFSR2 register is not written to, even though the secureseed CSR is written to (CSR register instruction).\n");
 
 
   ////////// HINT INSTRUCTION APPEARS AS SLT ON RVFI //////////
 
   a_xsecure_hint_instructions_reports_on_rvfi_as_slli: assert property (
 
-    //Make sure the gated clock is enabled
-    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
-
     //Make sure there is a hint instruction in the WB stage
-    && xsecure_if.core_ex_wb_pipe_instr_meta_hint
+    xsecure_if.core_ex_wb_pipe_instr_meta_hint
 
     //Make sure we retire the hint instruction in the next cycle
     ##1 rvfi_if.rvfi_valid
@@ -496,7 +840,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     //Verify that the hint instruction appears as c.slli instruction with rd=x0 and shamt != 0
     rvfi_insn_cmpr_funct3 == FUNCT3_COMPR_SLLI
     && rvfi_insn_cmpr_opcode == OPCODE_COMPR_SLLI
-    && rvfi_if.rvfi_rd1_addr == REGISTER_x0
+    && rvfi_if.rvfi_rd1_addr == REGISTER_X0
     && rvfi_c_slli_shamt != '0
 
   ) else `uvm_error(info_tag, "Hint instruction do not appears as a c.slli instruction with rd=x0 and shamt != 0 on RVFI.\n");

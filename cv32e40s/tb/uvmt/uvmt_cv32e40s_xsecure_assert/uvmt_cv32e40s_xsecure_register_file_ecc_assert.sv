@@ -61,32 +61,32 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
 
 
   //Use RVFI to check that RS1 has a value of 0 when exiting the reset stage:
-  property p_xsecure_gpr_reset_rvfi_rs1(integer register_addr);
+  property p_xsecure_gpr_reset_rvfi_rs1(integer gpr_addr);
 
     //Make sure we check out the first instruction after the reset stage
     $rose(rst_ni) ##0 rvfi_if.rvfi_valid[->1]
 
     //Make sure the instruction reads the RS1 value
-    ##0 rvfi_if.rvfi_rs1_addr == register_addr
+    ##0 rvfi_if.rvfi_rs1_addr == gpr_addr
 
-    //Make sure the RS1 value is 0
     |->
+    //Make sure the RS1 value is 0
     rvfi_if.rvfi_rs1_rdata == 32'h0000_0000;
 
   endproperty
 
 
   //Use RVFI to check that RS2 has a value of 0 when exiting the reset stage:
-  property p_xsecure_gpr_reset_rvfi_rs2(integer register_addr);
+  property p_xsecure_gpr_reset_rvfi_rs2(integer gpr_addr);
 
     //Make sure we check out the first instruction after the reset stage
     $rose(rst_ni) ##0 rvfi_if.rvfi_valid[->1]
 
     //Make sure the instruction reads the RS1 value
-    ##0 rvfi_if.rvfi_rs2_addr == register_addr
+    ##0 rvfi_if.rvfi_rs2_addr == gpr_addr
 
-    //Make sure the RS2 value is 0
     |->
+    //Make sure the RS2 value is 0
     rvfi_if.rvfi_rs2_rdata == 32'h0000_0000;
 
   endproperty
@@ -97,7 +97,7 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
 
     a_xsecure_register_file_ecc_gpr_reset_value: assert property (
       p_xsecure_gpr_reset(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage.\n", gpr_addr));
+    ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage, or the syndrome is not 0x2a.\n", gpr_addr));
 
     a_xsecure_register_file_ecc_gpr_reset_value_rvfi_rs1: assert property (
       p_xsecure_gpr_reset_rvfi_rs1(gpr_addr)
@@ -112,28 +112,42 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
 
   ////////// GENERAL PURPOSE REGISTERS AND ECC ATTACHMENTS ARE NEVER ALL ZEROS OR ONES //////////
 
+  property p_gpr_x_syndrom_not_x(gpr_addr, x);
+    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr][31:0] == {32{x}}
+    |->
+    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr][37:32] != {6{x}};
+  endproperty
+
+  property p_syndrom_x_gpr_not_x(gpr_addr, x);
+    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr][37:32] == {6{x}}
+    |->
+    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr][31:0] != {32{x}};
+  endproperty
+
+
   //Make assertions for each GPR:
-  generate for (genvar gpr_addr = 0; gpr_addr < 32; gpr_addr++) begin
+  generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
 
-  a_xsecure_register_file_ecc_gprecc_never_all_zeros: assert property (
+  a_xsecure_register_file_ecc_gprecc_never_all_zeros_part_1: assert property (
+    p_syndrom_x_gpr_not_x(gpr_addr, 1'b0)
+  ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s.\n", gpr_addr));
 
-    //Verify that register and ECC score never is all zeros
-    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] != 38'h00_0000_0000
+  a_xsecure_register_file_ecc_gprecc_never_all_zeros_part_2: assert property (
+    p_syndrom_x_gpr_not_x(gpr_addr, 1'b0)
+  ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s.\n", gpr_addr));
 
-  ) else `uvm_error(info_tag, $sformatf("GPR %0d with attached ECC score is all zeros.\n", gpr_addr));
+  a_xsecure_register_file_ecc_gprecc_never_all_ones_part_1: assert property (
+    p_gpr_x_syndrom_not_x(gpr_addr, 1'b1)
+  ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 1s.\n", gpr_addr));
 
-
-  a_xsecure_register_file_ecc_gprecc_never_all_ones: assert property (
-
-    //Verify that register and ECC score never is all ones
-    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] != 38'h3F_FFFF_FFFF
-
-  ) else `uvm_error(info_tag, $sformatf("GPR %0d with attached ECC score is all ones.\n", gpr_addr));
+  a_xsecure_register_file_ecc_gprecc_never_all_ones_part_2: assert property (
+    p_syndrom_x_gpr_not_x(gpr_addr, 1'b1)
+  ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 1s.\n", gpr_addr));
 
   end endgenerate
 
 
-  ////////// IF GENERAL PURPOSE REGISTERS AND ECC ATTACHMENTS ARE ALL ZEROS OR ONES MAJOR ALERT MUST BE SET //////////
+  ////////// IF GENERAL PURPOSE REGISTERS AND ECC ATTACHMENTS ARE ALL ZEROS OR ONES MAJOR ALERT MUST BE SET ////////// //TODO: fix
 
   property p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(if_id_pipe_rs_addr);
     logic [4:0] gpr_addr = 0;
@@ -244,11 +258,11 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
 
   generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
 
-    a_xsecure_register_file_ecc_no_supression_reading_rs1: assert property (
+    a_glitch_xsecure_register_file_ecc_no_supression_reading_rs1: assert property (
       p_xsecure_register_file_ecc_no_supression_reading_rs1(gpr_addr)
     ) else `uvm_error(info_tag_glitch, $sformatf("1 or 2 bit errors when reading RS1 (address %0d) do not set the alert major.\n", gpr_addr));
 
-    a_xsecure_register_file_ecc_no_supression_reading_rs2: assert property (
+    a_glitch_xsecure_register_file_ecc_no_supression_reading_rs2: assert property (
       p_xsecure_register_file_ecc_no_supression_reading_rs2(gpr_addr)
     ) else `uvm_error(info_tag_glitch, $sformatf("1 or 2 bit errors when reading RS2 (address %0d) do not set the alert major.\n", gpr_addr));
 
