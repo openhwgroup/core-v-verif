@@ -398,18 +398,6 @@ module uvmt_cv32e40x_imperas_dv_wrap
 
        bit        ifault;
        
-       if (`RVFI_IF.rvfi_valid) begin
-           if (`RVFI_IF.rvfi_trap.trap) begin
-               $display("TRAP: order=%d exc=%0d dbg=%0d exc_cause=%d dbg_cause=%d cause_type=%0d", 
-                   `RVFI_IF.rvfi_order,
-                   `RVFI_IF.rvfi_trap.exception, `RVFI_IF.rvfi_trap.debug,
-                   `RVFI_IF.rvfi_trap.exception_cause, `RVFI_IF.rvfi_trap.debug_cause,
-                   `RVFI_IF.rvfi_trap.cause_type);
-           end else begin
-               $display("RETIRE:");
-           end
-       end
-
        if (`RVFI_IF.rvfi_valid && (order != `RVFI_IF.rvfi_order)) begin
            order                = `RVFI_IF.rvfi_order;
 
