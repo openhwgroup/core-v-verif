@@ -924,23 +924,149 @@ module uvmt_cv32e40s_tb;
       .core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux                                                                   (core_i.if_stage_i.pc_check_i.ctrl_fsm_i.pc_mux)
 
     );
-   // Xsecure assertions
+
+  // Xsecure assertions:
 
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_assert #(
-	.SECURE	(cv32e40s_pkg::SECURE),
-  .SMCLIC (SMCLIC),
-  .PMP_NUM_REGIONS (PMP_NUM_REGIONS),
-  .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
-  .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
-  .PMP_ADDR_WIDTH (core_i.cs_registers_i.PMP_ADDR_WIDTH)
-
+	    .SECURE	(SECURE),
+      .SMCLIC (SMCLIC),
+      .PMP_NUM_REGIONS (PMP_NUM_REGIONS),
+      .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
+      .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
+      .PMP_ADDR_WIDTH (core_i.cs_registers_i.PMP_ADDR_WIDTH)
     ) xsecure_assert_i 	(
       .clk_i      (clknrst_if.clk),
       .rst_ni     (clknrst_if.reset_n),
 
     	.xsecure_if	(xsecure_if),
 	    .rvfi_if	  (rvfi_instr_if_0_i),
+      .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
+    );
+
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_bus_protocol_hardening_assert_i 	(
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Interfaces:
+    	.xsecure_if	(xsecure_if),
+      .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
+    );
+
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_data_independent_timing_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_data_independent_timing_assert_i 	(
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Interfaces:
+    	.xsecure_if	(xsecure_if),
+      .rvfi_if	  (rvfi_instr_if_0_i)
+    );
+
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_dummy_and_hint_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_dummy_and_hint_assert_i 	(
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Interfaces:
+    	.xsecure_if	(xsecure_if),
+      .rvfi_if	  (rvfi_instr_if_0_i)
+    );
+
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_hardened_csrs_assert #(
+	    .SECURE	(SECURE),
+      .SMCLIC (SMCLIC),
+      .PMP_NUM_REGIONS (PMP_NUM_REGIONS)
+    ) xsecure_hardened_csrs_assert_i 	(
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Interfaces:
+    	.xsecure_if	(xsecure_if)
+    );
+
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_hardened_pc_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_hardened_pc_assert_i 	(
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Interfaces:
+    	.xsecure_if	(xsecure_if)
+    );
+
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_interface_integrity_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_interface_integrity_assert_i 	(
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Interfaces:
+    	.xsecure_if	(xsecure_if),
+      .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
+    );
+
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_reduced_profiling_infrastructure_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_reduced_profiling_infrastructure_assert_i 	(
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Interfaces:
+    	.xsecure_if	(xsecure_if)
+    );
+
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_register_file_ecc_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_register_file_ecc_assert_i 	(
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Interfaces:
+    	.xsecure_if	(xsecure_if),
+      .rvfi_if	  (rvfi_instr_if_0_i)
+    );
+
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_security_alerts_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_security_alerts_assert_i 	(
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Interfaces:
+    	.xsecure_if	(xsecure_if),
+      .rvfi_if	  (rvfi_instr_if_0_i),
       .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
     );
 
