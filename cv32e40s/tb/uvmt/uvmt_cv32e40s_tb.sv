@@ -177,16 +177,26 @@ module uvmt_cv32e40s_tb;
   `RVFI_CSR_BIND(misa)
   `RVFI_CSR_BIND(mscratch)
   `RVFI_CSR_BIND(mstateen0)
+  `RVFI_CSR_BIND(mstateen1)
+  `RVFI_CSR_BIND(mstateen2)
+  `RVFI_CSR_BIND(mstateen3)
+  `RVFI_CSR_BIND(mstateen0h)
+  `RVFI_CSR_BIND(mstateen1h)
+  `RVFI_CSR_BIND(mstateen2h)
+  `RVFI_CSR_BIND(mstateen3h)
   `RVFI_CSR_BIND(mstatus)
   `RVFI_CSR_BIND(mstatush)
   `RVFI_CSR_BIND(mtval)
   `RVFI_CSR_BIND(mtvec)
   `RVFI_CSR_BIND(mvendorid)
+  `RVFI_CSR_BIND(mseccfg)
+  `RVFI_CSR_BIND(mseccfgh)
 
   `RVFI_CSR_BIND(dcsr)
   `RVFI_CSR_BIND(dpc)
   `RVFI_CSR_BIND(tselect)
   `RVFI_CSR_BIND(tinfo)
+  `RVFI_CSR_BIND(tcontrol)
 
   `RVFI_CSR_IDX_BIND(mhpmcounter,,3)
   `RVFI_CSR_IDX_BIND(mhpmcounter,,4)
@@ -361,7 +371,19 @@ module uvmt_cv32e40s_tb;
   `RVFI_CSR_IDX_BIND(mhpmcounter,h,31)
 
   `RVFI_CSR_BIND(mconfigptr)
+  `RVFI_CSR_BIND(secureseed0)
+  `RVFI_CSR_BIND(secureseed1)
+  `RVFI_CSR_BIND(secureseed2)
 
+  `ifdef SMCLIC_EN
+    `RVFI_CSR_BIND(mintstatus)
+    `RVFI_CSR_BIND(mintthresh)
+    `RVFI_CSR_BIND(mnxti)
+    `RVFI_CSR_BIND(mscratchcsw)
+    `RVFI_CSR_BIND(mscratchcswl)
+    `RVFI_CSR_BIND(mtvt)
+    `RVFI_CSR_BIND(mclicbase)
+  `endif
 
   // dscratch0
   bind cv32e40s_wrapper
@@ -504,6 +526,8 @@ module uvmt_cv32e40s_tb;
       .rvfi_mscratch_rmask (rvfi_i.rvfi_csr_mscratch_rmask),
       .rvfi_mscratch_wdata (rvfi_i.rvfi_csr_mscratch_wdata),
       .rvfi_mscratch_wmask (rvfi_i.rvfi_csr_mscratch_wmask),
+      .rvfi_mcause_wdata   (rvfi_i.rvfi_csr_mcause_wdata),
+      .rvfi_mcause_wmask   (rvfi_i.rvfi_csr_mcause_wmask),
 
       .irq_i               (core_i.irq_i),
       .irq_ack             (core_i.irq_ack),
@@ -1181,11 +1205,20 @@ module uvmt_cv32e40s_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(misa)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mscratch)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mstateen0)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mstateen1)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mstateen2)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mstateen3)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mstateen0h)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mstateen1h)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mstateen2h)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mstateen3h)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mstatus)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mstatush)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mtval)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mtvec)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mvendorid)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mseccfg)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(mseccfgh)
 
      `RVFI_CSR_UVM_CONFIG_DB_SET(dcsr)
      `RVFI_CSR_UVM_CONFIG_DB_SET(dpc)
@@ -1196,6 +1229,7 @@ module uvmt_cv32e40s_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(tdata2)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tdata3)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tinfo)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(tcontrol)
 
      `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg0)
      `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg1)
@@ -1369,6 +1403,20 @@ module uvmt_cv32e40s_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmcounter30h)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmcounter31h)
      `RVFI_CSR_UVM_CONFIG_DB_SET(mconfigptr)
+
+     `RVFI_CSR_UVM_CONFIG_DB_SET(secureseed0)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(secureseed1)
+     `RVFI_CSR_UVM_CONFIG_DB_SET(secureseed2)
+
+     `ifdef SMCLIC_EN
+       `RVFI_CSR_UVM_CONFIG_DB_SET(mintstatus)
+       `RVFI_CSR_UVM_CONFIG_DB_SET(mintthresh)
+       `RVFI_CSR_UVM_CONFIG_DB_SET(mnxti)
+       `RVFI_CSR_UVM_CONFIG_DB_SET(mscratchcsw)
+       `RVFI_CSR_UVM_CONFIG_DB_SET(mscratchcswl)
+       `RVFI_CSR_UVM_CONFIG_DB_SET(mtvt)
+       `RVFI_CSR_UVM_CONFIG_DB_SET(mclicbase)
+     `endif
 
      // IMPERAS_DV interface
      uvm_config_db#(virtual rvviTrace)::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("rvvi_vif"), .value(rvvi_if));
