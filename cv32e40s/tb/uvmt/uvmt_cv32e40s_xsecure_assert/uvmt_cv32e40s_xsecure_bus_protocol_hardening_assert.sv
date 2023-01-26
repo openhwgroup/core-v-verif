@@ -60,16 +60,10 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
 
   ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
 
-  property p_resp_after_addr_no_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
-
-    //Make sure the gated clock is enabled
-    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
+  property p_resp_after_addr_no_glitch(obi_rvalid, v_addr_ph_cnt);
 
     //Make sure there is a response phase transfer
-    && obi_rvalid
-
-    //Make sure the response phase transfer is finished
-    && !resp_ph_cont
+    obi_rvalid
 
     |->
     //Check that the response phase transfer is indeed a response to an address transfer (in other words, that there at least exists one active address transfer)
@@ -79,43 +73,38 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
 
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_data: assert property (
     p_resp_after_addr_no_glitch(
-      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
-      support_if.data_bus_resp_ph_cont,
+      xsecure_if.core_i_data_rvalid_i,
       support_if.data_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a response before a request in the OBI data bus handshake.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_instr: assert property (
     p_resp_after_addr_no_glitch(
-      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
-      support_if.instr_bus_resp_ph_cont,
+      xsecure_if.core_i_instr_rvalid_i,
       support_if.instr_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a response before a request in the OBI instruction bus handshake.\n");
 
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_abiim: assert property (
     p_resp_after_addr_no_glitch(
       xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
-      support_if.abiim_bus_resp_ph_cont,
       support_if.abiim_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a response before a request in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m).\n");
 
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_lml: assert property (
     p_resp_after_addr_no_glitch(
       xsecure_if.core_i_load_store_unit_i_resp_valid,
-      support_if.lml_bus_resp_ph_cont,
       support_if.lml_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a response before a request in the handshake between LSU (l) MPU (m) and LSU (l).\n");
 
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_lrfodi: assert property (
     p_resp_after_addr_no_glitch(
       xsecure_if.core_i_load_store_unit_i_bus_resp_valid,
-      support_if.lrfodi_bus_resp_ph_cont,
       support_if.lrfodi_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a response before a request in the handshake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i).\n");
 
 
   ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER DO NOT UNDERFLOW //////////
 
-  a_xsecure_bus_hardening_counter_dont_underflow: assert property (
+   a_xsecure_bus_hardening_counter_dont_underflow: assert property (
 
     //Make sure the counter is in a position where it can underflow
     xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0
@@ -134,11 +123,8 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
 
   property p_resp_after_addr_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
 
-    //Make sure the gated clock is enabled
-    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
-
     //Make sure major alert is not or has not been set
-    && !alert_major_was_set && !xsecure_if.core_alert_major_o
+    !alert_major_was_set && !xsecure_if.core_alert_major_o
 
     //Make sure there is a response phase transfer
     && obi_rvalid
@@ -154,35 +140,35 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
     xsecure_if.core_alert_major_o;
   endproperty;
 
-  a_xsecure_bus_hardening_resp_after_addr_glitch_data: assert property (
+  a_glitch_xsecure_bus_hardening_resp_after_addr_glitch_data: assert property (
     p_resp_after_addr_glitch(
-      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
+      xsecure_if.core_i_data_rvalid_i,
       support_if.data_bus_resp_ph_cont,
       support_if.data_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag_glitch, "A response before a request in the OBI data bus handshake does not set the major alert.\n");
 
-  a_xsecure_bus_hardening_resp_after_addr_glitch_instr: assert property (
+  a_glitch_xsecure_bus_hardening_resp_after_addr_glitch_instr: assert property (
     p_resp_after_addr_glitch(
-      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+      xsecure_if.core_i_instr_rvalid_i,
       support_if.instr_bus_resp_ph_cont,
       support_if.instr_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag_glitch, "A response before a request in the OBI instruction bus handshake does not set the major alert.\n");
 
-  a_xsecure_bus_hardening_resp_after_addr_glitch_abiim: assert property (
+  a_glitch_xsecure_bus_hardening_resp_after_addr_glitch_abiim: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
       support_if.abiim_bus_resp_ph_cont,
       support_if.abiim_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag_glitch, "A response before a request in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) does not set the major alert.\n");
 
-  a_xsecure_bus_hardening_resp_after_addr_glitch_lml: assert property (
+  a_glitch_xsecure_bus_hardening_resp_after_addr_glitch_lml: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_load_store_unit_i_resp_valid,
       support_if.lml_bus_resp_ph_cont,
       support_if.lml_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag_glitch, "A response before a request in the handshake between LSU (l) MPU (m) and LSU (l) does not set the major alert.\n");
 
-  a_xsecure_bus_hardening_resp_after_addr_glitch_lrfodi: assert property (
+  a_glitch_xsecure_bus_hardening_resp_after_addr_glitch_lrfodi: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_load_store_unit_i_bus_resp_valid,
       support_if.lrfodi_bus_resp_ph_cont,
@@ -190,15 +176,13 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
   ) else `uvm_error(info_tag_glitch, "A response before a request in the handshake between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i) does not set the major alert.\n");
 
 
+
   ////////// BUS PROTOCOL HARDENING BEHAVIOUR COUNTER UNDERFLOW SET THE MAJOR ALERT //////////
 
-  a_xsecure_bus_hardening_counter_overflow_set_major_alert: assert property (
-
-    //Make sure the gated clock is enabled
-    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
+  a_glitch_xsecure_bus_hardening_counter_overflow_set_major_alert: assert property (
 
     //Make sure the counter is in a position where it can underflow
-    && (xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0)
+    (xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0)
 
     //Make sure the counter underflows
     ##1 xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q != 0
