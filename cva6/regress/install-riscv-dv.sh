@@ -10,10 +10,10 @@
 # riscv-dv env variables
 export RISCV_TOOLCHAIN=$RISCV
 if ! [ -n "$RISCV_GCC" ]; then
-  export RISCV_GCC="$RISCV_TOOLCHAIN/bin/riscv-none-elf-gcc"
+  export RISCV_GCC="${RISCV_PREFIX}gcc"
 fi
 if ! [ -n "$RISCV_OBJCOPY" ]; then
-  export RISCV_OBJCOPY="$RISCV_TOOLCHAIN/bin/riscv-none-elf-objcopy"
+  export RISCV_OBJCOPY="${RISCV_PREFIX}objcopy"
 fi
 export SPIKE_PATH=$SPIKE_ROOT/bin
 export RTL_PATH=$ROOT_PROJECT/core-v-cores/cva6
