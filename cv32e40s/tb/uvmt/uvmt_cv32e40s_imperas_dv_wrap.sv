@@ -36,7 +36,9 @@
     assign rvvi.csr[0][0][``CSR_ADDR]    = csr_``CSR_NAME``_w | csr_``CSR_NAME``_r; \
     assign rvvi.csr_wb[0][0][``CSR_ADDR] = csr_``CSR_NAME``_wb; \
     always @(rvvi.csr[0][0][``CSR_ADDR]) begin \
+      if (`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rmask || `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask ) begin \
         csr_``CSR_NAME``_wb = 1; \
+      end \
     end \
     always @(posedge rvvi.clk) begin \
         if (`RVFI_IF.rvfi_valid && csr_``CSR_NAME``_wb) begin \
@@ -113,9 +115,10 @@
 `define CSR_MTVAL_ADDR          32'h343
 `define CSR_MIP_ADDR            32'h344
 `define CSR_MNXTI_ADDR          32'h345 // only available when SMCLIC=1
-`define CSR_MINTSTATUS_ADDR     32'h346 // only available when SMCLIC=1
+`define CSR_MINTSTATUS_ADDR     32'hF46 // only available when SMCLIC=1
 `define CSR_MINTTHRESH_ADDR     32'h347 // only available when SMCLIC=1
 `define CSR_MSCRATCHCSW_ADDR    32'h348 // only available when SMCLIC=1
+`define CSR_MSCRATCHCSWL_ADDR   32'h349 // only available when SMCLIC=1
 `define CSR_MCLICBASE_ADDR      32'h34A // only available when SMCLIC=1
 
 `define CSR_PMPCFG0_ADDR        32'h3A0
@@ -597,6 +600,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
      `RVVI_SET_CSR( `CSR_MINTSTATUS_ADDR,  mintstatus    )
      `RVVI_SET_CSR( `CSR_MINTTHRESH_ADDR,  mintthresh    )
      `RVVI_SET_CSR( `CSR_MSCRATCHCSW_ADDR, mscratchcsw   )
+     `RVVI_SET_CSR( `CSR_MSCRATCHCSWL_ADDR,mscratchcswl  )
      `RVVI_SET_CSR( `CSR_MCLICBASE_ADDR,   mclicbase     )
    `endif
 
