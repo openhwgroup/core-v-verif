@@ -177,8 +177,6 @@ interface uvmt_cv32e40s_xsecure_if
    input logic [31:0] core_i_jump_target_id,
 
 
-   // OBI interfaces
-   // OBI instruction interface //TODO: kan man bruke ordet interface, siden det kan jo bety flere ting?
    input logic core_i_instr_req_o,
    input logic core_i_instr_gnt_i,
    input logic core_i_instr_rvalid_i,
@@ -188,7 +186,6 @@ interface uvmt_cv32e40s_xsecure_if
    input logic [11:0] core_i_instr_achk_o,
    input logic [4:0] core_i_instr_rchk_i,
 
-   // OBI data interface //TODO: kan man bruke ordet interface, siden det kan jo bety flere ting?
    input logic core_i_data_req_o,
    input logic core_i_data_gnt_i,
    input logic core_i_data_rvalid_i,
@@ -200,8 +197,6 @@ interface uvmt_cv32e40s_xsecure_if
 
    input logic core_i_data_err_i,
 
-
-    // OBI interface
    input obi_data_resp_t core_i_if_stage_i_bus_resp,
    input obi_data_resp_t core_i_load_store_unit_i_bus_resp,
 
@@ -210,10 +205,10 @@ interface uvmt_cv32e40s_xsecure_if
    input obi_inst_req_t core_i_m_c_obi_instr_if_req_payload,
    input obi_inst_resp_t core_i_m_c_obi_instr_if_resp_payload,
 
-//TODO: added:
-input logic core_i_m_c_obi_data_if_s_rvalid_rvalid,
-input logic core_i_m_c_obi_instr_if_s_rvalid_rvalid,
-input logic core_i_alert_i_itf_prot_err_i,
+
+   input logic core_i_m_c_obi_data_if_s_rvalid_rvalid,
+   input logic core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+   input logic core_i_alert_i_itf_prot_err_i,
 
 
    input logic core_i_if_stage_i_prefetch_resp_valid,

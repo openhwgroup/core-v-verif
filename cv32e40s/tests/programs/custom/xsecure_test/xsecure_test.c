@@ -87,8 +87,8 @@ X("0xC9F")
 // global values to hold registers for tests
 volatile uint32_t cpuctrl, secureseed0, secureseed1, secureseed2;
 
-int read_ctrlcpu_and_secureseeds_in_user_mode(void);
-int read_ctrlcpu_and_secureseeds_in_machine_mode(void);
+void test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only(void);
+void test_secureseeds_shows_zero_at_reads(void);
 void csr_should_be_present(void);
 void csr_should_not_be_present(void);
 
@@ -112,8 +112,9 @@ volatile trap_behavior_t trap_handler_beh = UNEXPECTED_IRQ_BEH;
 volatile uint32_t num_trap_executions;
 volatile uint32_t unexpected_irq_beh = 0;
 
+// Utility functions:
 
-/* Declaration of assert */
+// Declaration of assert
 static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
   if (actual != expect) {
     printf(msg);
@@ -123,14 +124,14 @@ static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
 }
 
 
-/* Changes the handler functionality, and then calls an exception to change into m-mode. */
+// Changes the handler functionality, and then calls an exception to change into m-mode.
 void set_m_mode(void) {
   trap_handler_beh = M_MODE_BEH;
   __asm__ volatile("ecall");
 }
 
 
-/* Checks the mepc for compressed instructions and increments appropriately */
+// Checks the mepc for compressed instructions and increments appropriately
 void increment_mepc(void){
   volatile unsigned int insn, mepc;
 
@@ -151,7 +152,7 @@ void increment_mepc(void){
   __asm__ volatile("csrrw x0, mepc, %0" :: "r"(mepc));
 }
 
-/* Rewritten interrupt handler */
+// Rewritten interrupt handler
 __attribute__ ((interrupt ("machine")))
 void u_sw_irq_handler(void) {
 
@@ -171,16 +172,12 @@ void u_sw_irq_handler(void) {
 
     // unexpected handler irq (UNEXPECTED_IRQ_BEH and more)
     default:
-      unexpected_irq_beh = 1;
+      unexpected_irq_beh += 1;
   }
 
 }
 
-
-/////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////
-
+// Test functions:
 
 void csr_should_be_present(void){
 
@@ -277,6 +274,9 @@ void test_secureseeds_shows_zero_at_reads(void){
   // setting the trap handler behaviour
   trap_handler_beh = M_MODE_BEH;
 
+  // resetting the trap handler count
+  num_trap_executions = 0;
+
   // enter machine mode:
   set_m_mode();
 
@@ -372,7 +372,7 @@ int main(void){
   test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only();
 
   // check if there was an unexpected irq handler req
-  assert_or_die(num_trap_executions, 0, "ASSERT ERROR: unexpected irq handler\n");
+  assert_or_die(unexpected_irq_beh, 0, "ASSERT ERROR: unexpected irq handler\n");
 
   return EXIT_SUCCESS;
 }
