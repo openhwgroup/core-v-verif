@@ -169,7 +169,7 @@ function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
   $fwrite(fh, $sformatf("--override %s/nmi_address=0x%08x\n", refpath, cfg.nmi_addr));
   $fwrite(fh, $sformatf("--override %s/debug_address=0x%08x\n", refpath, cfg.dm_halt_addr));
   $fwrite(fh, $sformatf("--override %s/dexc_address=0x%08x\n", refpath, cfg.dm_exception_addr));
-  $fwrite(fh, $sformatf("--override %s/extension_CV32E40S/tdata1_reset=0x%08x\n", refpath, 'h28001000));
+  $fwrite(fh, $sformatf("--override %s/extension_*/tdata1_reset=0x%08x\n", refpath, 'h28001000));
 
   if (cfg.ext_zca_supported) begin
     $fwrite(fh, $sformatf("--override %s/Zca=1\n", refpath));
