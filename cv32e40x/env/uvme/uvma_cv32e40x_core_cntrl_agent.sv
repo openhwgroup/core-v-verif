@@ -248,14 +248,14 @@ function void uvma_cv32e40x_core_cntrl_agent_c::configure_iss();
    end
 
    // PMA Regions
-   $fwrite(fh, $sformatf("--override %s/extension/PMA_NUM_REGIONS=%0d\n", refpath, cfg.pma_regions.size()));
+   $fwrite(fh, $sformatf("--override %s/extension_*/PMA_NUM_REGIONS=%0d\n", refpath, cfg.pma_regions.size()));
    foreach (cfg.pma_regions[i]) begin
-      $fwrite(fh, $sformatf("--override %s/extension/word_addr_low%0d=0x%08x\n", refpath, i, cfg.pma_regions[i].word_addr_low));
-      $fwrite(fh, $sformatf("--override %s/extension/word_addr_high%0d=0x%08x\n", refpath, i, cfg.pma_regions[i].word_addr_high));
-      $fwrite(fh, $sformatf("--override %s/extension/main%0d=%0d\n", refpath, i, cfg.pma_regions[i].main));
-      $fwrite(fh, $sformatf("--override %s/extension/bufferable%0d=%0d\n", refpath, i, cfg.pma_regions[i].bufferable));
-      $fwrite(fh, $sformatf("--override %s/extension/cacheable%0d=%0d\n", refpath, i, cfg.pma_regions[i].cacheable));
-      $fwrite(fh, $sformatf("--override %s/extension/atomic%0d=%0d\n", refpath, i, cfg.pma_regions[i].atomic));
+      $fwrite(fh, $sformatf("--override %s/extension_*/word_addr_low%0d=0x%08x\n", refpath, i, cfg.pma_regions[i].word_addr_low));
+      $fwrite(fh, $sformatf("--override %s/extension_*/word_addr_high%0d=0x%08x\n", refpath, i, cfg.pma_regions[i].word_addr_high));
+      $fwrite(fh, $sformatf("--override %s/extension_*/main%0d=%0d\n", refpath, i, cfg.pma_regions[i].main));
+      $fwrite(fh, $sformatf("--override %s/extension_*/bufferable%0d=%0d\n", refpath, i, cfg.pma_regions[i].bufferable));
+      $fwrite(fh, $sformatf("--override %s/extension_*/cacheable%0d=%0d\n", refpath, i, cfg.pma_regions[i].cacheable));
+      $fwrite(fh, $sformatf("--override %s/extension_*/atomic%0d=%0d\n", refpath, i, cfg.pma_regions[i].atomic));
    end
 
    // Enable use of hw reg names instead of abi
