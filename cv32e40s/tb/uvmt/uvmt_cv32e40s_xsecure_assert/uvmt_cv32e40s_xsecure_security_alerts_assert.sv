@@ -34,6 +34,7 @@ module uvmt_cv32e40s_xsecure_security_alerts_assert
   default clocking @(posedge clk_i); endclocking
   default disable iff (!(rst_ni) | !(SECURE));
   string info_tag = "CV32E40S_XSECURE_ASSERT_COVERPOINTS";
+  string info_tag_glitch = "CV32E40S_XSECURE_ASSERT_COVERPOINTS (GLITCH BEHAVIOR)";
 
     // Local parameters:
   localparam NO_LOCKUP_ERRORS = 3'b000;
@@ -238,8 +239,8 @@ module uvmt_cv32e40s_xsecure_security_alerts_assert
 
   ////////// THE SECURITY ALERT MAJOR IS CLEARD IF THERE ARE NO GLITCHES //////////
 
-  a_glitch_xsecure_security_alert_major_is_off_when_no_glitches: assert property (
+  a_xsecure_security_alert_major_is_off_when_no_glitches: assert property (
     !xsecure_if.core_alert_major_o
-  ) else `uvm_error(info_tag_glitch, "MThe mjor alert is set even though there should be no glitches.\n");
+  ) else `uvm_error(info_tag, "MThe mjor alert is set even though there should be no glitches.\n");
 
   endmodule : uvmt_cv32e40s_xsecure_security_alerts_assert

@@ -35,13 +35,6 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   string info_tag = "CV32E40S_XSECURE_ASSERT_COVERPOINTS";
   string info_tag_glitch = "CV32E40S_XSECURE_ASSERT_COVERPOINTS (GLITCH BEHAVIOR)";
 
-  //Descriptive signal names:
-  logic [4:0] if_id_pipe_instr_rs1;
-  logic [4:0] if_id_pipe_instr_rs2;
-
-  assign if_id_pipe_instr_rs1 = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[19:15];
-  assign if_id_pipe_instr_rs2 = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[24:20];
-
 
   ////////// GENERAL PURPOSE REGISTERS ARE ZERO WHEN EXITING RESET //////////
 
@@ -128,55 +121,64 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   //Make assertions for each GPR:
   generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
 
-  a_xsecure_register_file_ecc_gprecc_never_all_zeros_part_1: assert property (
-    p_syndrom_x_gpr_not_x(gpr_addr, 1'b0)
-  ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s.\n", gpr_addr));
+    a_xsecure_register_file_ecc_gprecc_never_all_zeros_part_1: assert property (
+      p_gpr_x_syndrom_not_x(
+        gpr_addr,
+        1'b0)
+    ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s.\n", gpr_addr));
 
-  a_xsecure_register_file_ecc_gprecc_never_all_zeros_part_2: assert property (
-    p_syndrom_x_gpr_not_x(gpr_addr, 1'b0)
-  ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s.\n", gpr_addr));
+    a_xsecure_register_file_ecc_gprecc_never_all_zeros_part_2: assert property (
+      p_syndrom_x_gpr_not_x(
+        gpr_addr,
+        1'b0)
+    ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s.\n", gpr_addr));
 
-  a_xsecure_register_file_ecc_gprecc_never_all_ones_part_1: assert property (
-    p_gpr_x_syndrom_not_x(gpr_addr, 1'b1)
-  ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 1s.\n", gpr_addr));
+    a_xsecure_register_file_ecc_gprecc_never_all_ones_part_1: assert property (
+      p_gpr_x_syndrom_not_x(
+        gpr_addr,
+        1'b1)
+    ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 1s.\n", gpr_addr));
 
-  a_xsecure_register_file_ecc_gprecc_never_all_ones_part_2: assert property (
-    p_syndrom_x_gpr_not_x(gpr_addr, 1'b1)
-  ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 1s.\n", gpr_addr));
+    a_xsecure_register_file_ecc_gprecc_never_all_ones_part_2: assert property (
+      p_syndrom_x_gpr_not_x(
+        gpr_addr,
+        1'b1)
+    ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 1s.\n", gpr_addr));
 
   end endgenerate
 
 
   ////////// IF GENERAL PURPOSE REGISTERS AND ECC ATTACHMENTS ARE ALL ZEROS OR ONES MAJOR ALERT MUST BE SET ////////// //TODO: fix
 
-  property p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(if_id_pipe_rs_addr);
-    logic [4:0] gpr_addr = 0;
+  property p_gpr_and_syndrom_x_set_major_alert(gpr_addr, x);
+    //Make sure we are in a state where we read the gpr word
+    (xsecure_if.if_id_pipe_rs1 == gpr_addr
+    || xsecure_if.if_id_pipe_rs2 == gpr_addr)
 
-    //Store the source register address in a GPR address variable
-    (1, gpr_addr = if_id_pipe_rs_addr)
-
-    //Make sure the source register is not x0 (because GPR x0 behaves different than the other source registers)
-    ##0 if_id_pipe_rs_addr != 0
-
-    //Make sure the source registers data and ECC score are all ones or zeros
-    ##0 (xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'h00_0000_0000
-    || xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'h3F_FFFF_FFFF)
+    //Make sure the bits in the register word and the syndrom are all x.
+    && xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr][37:0] == {32{x}}
 
     |=>
-    //Verify that the major alert is set
+    //Verify that the alert major is set
     xsecure_if.core_alert_major_o;
-
   endproperty
 
+  //Make assertions for each GPR:
+  generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
 
-  a_xsecure_register_file_ecc_gprecc_set_major_alert_if_rs1_is_all_zeros_or_ones: assert property (
-    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(if_id_pipe_instr_rs1)
-  ) else `uvm_error(info_tag_glitch, "The data of RS1 (and the attached ECC score) is all ones or zeros but does not set the major alert.\n");
+    a_glitch_xsecure_register_file_ecc_gpr_and_syndrome_all_zeros_set_major_alert: assert property (
+      p_gpr_and_syndrom_x_set_major_alert(
+        gpr_addr,
+        1'b0)
+    ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s, but the alert major is not set.\n", gpr_addr));
 
+    a_glitch_xsecure_register_file_ecc_gpr_and_syndrome_all_ones_set_major_alert: assert property (
+      p_gpr_and_syndrom_x_set_major_alert(
+        gpr_addr,
+        1'b1)
+    ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 1s, but the alert major is not set.\n", gpr_addr));
 
-  a_xsecure_register_file_ecc_gprecc_set_major_alert_if_rs2_is_all_zeros_or_ones: assert property (
-    p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(if_id_pipe_instr_rs2)
-  ) else `uvm_error(info_tag_glitch, "The data of RS2 (and the attached ECC score) is all ones or zeros but does not set the major alert.\n");
+  end endgenerate
 
 
   ////////// ECC DECODING MISMATCH ON EVERY READ SETS MAJOR ALERT //////////
@@ -233,7 +235,7 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   property p_xsecure_register_file_ecc_no_supression_reading_rs1(rs1_addr);
 
     //Specify the RS1 address
-    if_id_pipe_instr_rs1 == rs1_addr
+    xsecure_if.if_id_pipe_rs1 == rs1_addr
 
     //Make sure the GPR memory and the local memory differ in one or two bits
     && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs1_addr][31:0] ^ gpr_shadow[rs1_addr], '1) inside {1,2})
@@ -246,7 +248,7 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   property p_xsecure_register_file_ecc_no_supression_reading_rs2(rs2_addr);
 
     //Specify the RS2 address
-    if_id_pipe_instr_rs2 == rs2_addr
+    xsecure_if.if_id_pipe_rs2 == rs2_addr
 
     //Make sure the GPR memory and the local memory differ in one or two bits
     && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs2_addr][31:0] ^ gpr_shadow[rs2_addr], '1) inside {1,2})
@@ -259,11 +261,13 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
 
     a_glitch_xsecure_register_file_ecc_no_supression_reading_rs1: assert property (
-      p_xsecure_register_file_ecc_no_supression_reading_rs1(gpr_addr)
+      p_xsecure_register_file_ecc_no_supression_reading_rs1(
+        gpr_addr)
     ) else `uvm_error(info_tag_glitch, $sformatf("1 or 2 bit errors when reading RS1 (address %0d) do not set the alert major.\n", gpr_addr));
 
     a_glitch_xsecure_register_file_ecc_no_supression_reading_rs2: assert property (
-      p_xsecure_register_file_ecc_no_supression_reading_rs2(gpr_addr)
+      p_xsecure_register_file_ecc_no_supression_reading_rs2(
+        gpr_addr)
     ) else `uvm_error(info_tag_glitch, $sformatf("1 or 2 bit errors when reading RS2 (address %0d) do not set the alert major.\n", gpr_addr));
 
   end endgenerate

@@ -24,6 +24,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   )
   (
    uvmt_cv32e40s_xsecure_if xsecure_if,
+   uvma_rvfi_instr_if rvfi_if,
    uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp support_if,
    input rst_ni,
    input clk_i
@@ -149,6 +150,12 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       xsecure_if.core_i_data_reqpar_o)
   ) else `uvm_error(info_tag, "The OBI data bus request parity bit is not inverse of the request bit.\n");
 
+    a_xsecure_interface_integrity_obi_instr_req_parity: assert property (
+    p_parity_signal_is_invers_of_signal(
+      xsecure_if.core_i_instr_req_o,
+      xsecure_if.core_i_instr_reqpar_o)
+  ) else `uvm_error(info_tag, "The OBI instruction bus request parity bit is not inverse of the request bit.\n");
+
   a_xsecure_interface_integrity_obi_data_gnt_parity: assert property (
     p_parity_signal_is_invers_of_signal(
       xsecure_if.core_i_data_gnt_i,
@@ -160,12 +167,6 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       xsecure_if.core_i_data_rvalid_i,
       xsecure_if.core_i_data_rvalidpar_i)
   ) else `uvm_error(info_tag, "The OBI data bus rvalid parity bit is not inverse of the rvalid bit.\n");
-
-  a_xsecure_interface_integrity_obi_instr_req_parity: assert property (
-    p_parity_signal_is_invers_of_signal(
-      xsecure_if.core_i_instr_req_o,
-      xsecure_if.core_i_instr_reqpar_o)
-  ) else `uvm_error(info_tag, "The OBI instruction bus request parity bit is not inverse of the request bit.\n");
 
   a_xsecure_interface_integrity_obi_instr_gnt_parity: assert property (
     p_parity_signal_is_invers_of_signal(
@@ -298,7 +299,6 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
 
 
   ////////// INTERFACE INTEGRITY RESPONSE CHECKSUM ERRORS FOR INSTRUCTIONS AND DATA SET ALERT MAJOR //////////
-
 
   property p_will_checksum_error_set_major_alert(is_integrity_checking_enabled, rvalid, req_had_integrity, rchk_calculated, rchk_recived, is_major_alert_set);
 
@@ -818,7 +818,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     ##1 $rose(xsecure_if.core_i_cs_registers_i_dcsr_rdata.nmip)
 
     //Make sure there is a load instruction
-    && rvfi_insn_opcode == OPCODE_LOAD
+    && xsecure_if.rvfi_opcode == OPCODE_LOAD
 
   );
 
@@ -835,7 +835,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     ##1 $rose(xsecure_if.core_i_cs_registers_i_dcsr_rdata.nmip)
 
     //Make sure there is a store instruction
-    && rvfi_insn_opcode == OPCODE_STORE
+    && xsecure_if.rvfi_opcode == OPCODE_STORE
 
   );
 

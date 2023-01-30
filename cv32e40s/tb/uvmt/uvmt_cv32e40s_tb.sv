@@ -755,6 +755,7 @@ module uvmt_cv32e40s_tb;
 
     xsecure_if (
 
+
       .core_i_cs_registers_i_dcsr_rdata (core_i.cs_registers_i.dcsr_rdata),
       .core_i_id_stage_i_operand_a (core_i.id_stage_i.operand_a),
       .core_i_id_stage_i_operand_b (core_i.id_stage_i.operand_b),
@@ -785,6 +786,8 @@ module uvmt_cv32e40s_tb;
       .core_i_cs_registers_i_xsecure_lfsr2_i_seed_i (core_i.cs_registers_i.xsecure.lfsr2_i.seed_i),
 
       .core_i_controller_i_controller_fsm_i_ctrl_fsm_cs (core_i.controller_i.controller_fsm_i.ctrl_fsm_cs),
+
+      .core_i_sleep_unit_i_core_clock_gate_i_clk_en (core_i.sleep_unit_i.core_clock_gate_i.clk_en),
 
       .core_rf_we_wb                                                                                                    (core_i.rf_we_wb),
       .core_rf_waddr_wb                                                                                                 (core_i.rf_waddr_wb),
@@ -839,6 +842,11 @@ module uvmt_cv32e40s_tb;
       .core_i_load_store_unit_i_bus_resp_valid                                                                          (core_i.load_store_unit_i.bus_resp_valid),
 
       .core_i_load_store_unit_i_response_filter_i_core_cnt_q                                                            (core_i.load_store_unit_i.response_filter_i.core_cnt_q),
+
+//TODO: added:
+.core_i_m_c_obi_data_if_s_rvalid_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+.core_i_m_c_obi_instr_if_s_rvalid_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+.core_i_alert_i_itf_prot_err_i (core_i.alert_i.itf_prot_err_i),
 
       // CSR
       .core_alert_minor_o                                                                                               (core_i.alert_minor_o),
@@ -935,10 +943,10 @@ module uvmt_cv32e40s_tb;
       .core_i_if_stage_i_compressed_decoder_i_is_compressed_o                                                           (core_i.if_stage_i.compressed_decoder_i.is_compressed_o),
 
       // IF ID pipe
-      .core_if_id_pipe_instr (core_i.if_id_pipe.instr),
+      .core_if_id_pipe_instr                                                                                            (core_i.if_id_pipe.instr),
       .core_if_id_pipe_instr_meta_dummy                                                                                 (core_i.if_id_pipe.instr_meta.dummy),
       .core_if_id_pipe_instr_meta_hint                                                                                  (core_i.if_id_pipe.instr_meta.hint),
-      .core_if_id_pipe_instr_bus_resp_rdata                                                                             (core_i.if_id_pipe.instr.bus_resp.rdata),
+
       .core_i_id_stage_i_if_id_pipe_i_pc                                                                                (core_i.id_stage_i.if_id_pipe_i.pc),
       .core_i_if_id_pipe_last_op                                                                                        (core_i.if_id_pipe.last_op),
 
@@ -959,29 +967,30 @@ module uvmt_cv32e40s_tb;
 
       // CTRL
       .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set                                           (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.ctrl_fsm_i.pc_set),
-      .core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux                                                                   (core_i.if_stage_i.pc_check_i.ctrl_fsm_i.pc_mux)
+      .core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux                                                                   (core_i.if_stage_i.pc_check_i.ctrl_fsm_i.pc_mux),
+
+      // Descriptive signal names:
+      // IF ID pipe:
+      .if_id_pipe_rs1 (core_i.if_id_pipe.instr.bus_resp.rdata[19:15]),
+      .if_id_pipe_rs2 (core_i.if_id_pipe.instr.bus_resp.rdata[24:20]),
+      .if_id_pipe_rd (core_i.if_id_pipe.instr.bus_resp.rdata[11:7]),
+      .if_id_pipe_opcode (core_i.if_id_pipe.instr.bus_resp.rdata[6:0]),
+      .if_id_pipe_funct3 (core_i.if_id_pipe.instr.bus_resp.rdata[14:12]),
+      .if_id_pipe_funct7 (core_i.if_id_pipe.instr.bus_resp.rdata[31:25]),
+      .if_id_pipe_bltu_incrementation ({core_i.if_id_pipe.instr.bus_resp.rdata[31], core_i.if_id_pipe.instr.bus_resp.rdata[7], core_i.if_id_pipe.instr.bus_resp.rdata[30:25], core_i.if_id_pipe.instr.bus_resp.rdata[11:8], 1'b0}),
+
+      // RVFI:
+      .rvfi_funct3 (rvfi_i.rvfi_insn[14:12]),
+      .rvfi_cmpr_funct3 (rvfi_i.rvfi_insn[15:13]),
+      .rvfi_funct7 (rvfi_i.rvfi_insn[31:25]),
+      .rvfi_opcode (rvfi_i.rvfi_insn[6:0]),
+      .rvfi_cmpr_opcode (rvfi_i.rvfi_insn[1:0]),
+      .rvfi_csr (rvfi_i.rvfi_insn[31:20]),
+      .rvfi_c_slli_shamt ({rvfi_i.rvfi_insn[12], rvfi_i.rvfi_insn[6:2]})
 
     );
 
   // Xsecure assertions:
-
-  bind cv32e40s_wrapper
-    uvmt_cv32e40s_xsecure_assert #(
-	    .SECURE	(SECURE),
-      .SMCLIC (SMCLIC),
-      .PMP_NUM_REGIONS (PMP_NUM_REGIONS),
-      .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
-      .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
-      .PMP_ADDR_WIDTH (core_i.cs_registers_i.PMP_ADDR_WIDTH)
-    ) xsecure_assert_i 	(
-      .clk_i      (clknrst_if.clk),
-      .rst_ni     (clknrst_if.reset_n),
-
-    	.xsecure_if	(xsecure_if),
-	    .rvfi_if	  (rvfi_instr_if_0_i),
-      .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
-    );
-
 
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert #(
@@ -1063,6 +1072,7 @@ module uvmt_cv32e40s_tb;
 
       //Interfaces:
     	.xsecure_if	(xsecure_if),
+      .rvfi_if	  (rvfi_instr_if_0_i),
       .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
     );
 

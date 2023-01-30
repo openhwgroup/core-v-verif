@@ -36,14 +36,14 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
   string info_tag_glitch = "CV32E40S_XSECURE_ASSERT_COVERPOINTS (GLITCH BEHAVIOR)";
 
   //Sticky bit that indicates if the major alert has been set.
-  logic alert_major_was_set;
+  logic core_i_alert_i_itf_prot_err_i_sticky;
 
-  //Sticky bit that indicates if major alert has been set.
+  //Sticky bit that indicates if major alert has been set due to a protocol error.
   always @(posedge clk_i) begin
     if(!rst_ni) begin
-      alert_major_was_set <= 0;
-    end else if (xsecure_if.core_alert_major_o) begin
-      alert_major_was_set <= xsecure_if.core_alert_major_o;
+      core_i_alert_i_itf_prot_err_i_sticky = 0;
+    end else if (xsecure_if.core_i_alert_i_itf_prot_err_i) begin
+      core_i_alert_i_itf_prot_err_i_sticky = xsecure_if.core_i_alert_i_itf_prot_err_i;
     end
   end
 
@@ -123,8 +123,8 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
 
   property p_resp_after_addr_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
 
-    //Make sure major alert is not or has not been set
-    !alert_major_was_set && !xsecure_if.core_alert_major_o
+    //Make sure major alert has not been set due to protpcol error
+    !core_i_alert_i_itf_prot_err_i_sticky
 
     //Make sure there is a response phase transfer
     && obi_rvalid
@@ -142,14 +142,14 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
 
   a_glitch_xsecure_bus_hardening_resp_after_addr_glitch_data: assert property (
     p_resp_after_addr_glitch(
-      xsecure_if.core_i_data_rvalid_i,
+      xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid,
       support_if.data_bus_resp_ph_cont,
       support_if.data_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag_glitch, "A response before a request in the OBI data bus handshake does not set the major alert.\n");
 
   a_glitch_xsecure_bus_hardening_resp_after_addr_glitch_instr: assert property (
     p_resp_after_addr_glitch(
-      xsecure_if.core_i_instr_rvalid_i,
+      xsecure_if.core_i_m_c_obi_instr_if_s_rvalid_rvalid,
       support_if.instr_bus_resp_ph_cont,
       support_if.instr_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag_glitch, "A response before a request in the OBI instruction bus handshake does not set the major alert.\n");

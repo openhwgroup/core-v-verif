@@ -51,27 +51,14 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
   localparam OPCODE_COMPR_BRANCH = 2'b01;
 
 
-    //Descriptive signal names
-  logic [2:0] rvfi_insn_funct3;
-  logic [2:0] rvfi_insn_cmpr_funct3;
-  logic [6:0] rvfi_insn_funct7;
-  logic [6:0] rvfi_insn_opcode;
-  logic [1:0] rvfi_insn_cmpr_opcode;
-
-  assign rvfi_insn_funct3 = rvfi_if.rvfi_insn[14:12];
-  assign rvfi_insn_cmpr_funct3 = rvfi_if.rvfi_insn[15:13];
-  assign rvfi_insn_funct7 = rvfi_if.rvfi_insn[31:25];
-  assign rvfi_insn_opcode = rvfi_if.rvfi_insn[6:0];
-  assign rvfi_insn_cmpr_opcode = rvfi_if.rvfi_insn[1:0];
-
   ////////// DATA INDEPENDENT TIMING IS CONFIGURABLE //////////
 
   c_xsecure_branch_timing_off: cover property (
 
     //Make sure the instruction is a branch instruction (both non-compressed and compressed)
-    ((rvfi_insn_opcode == OPCODE_BRANCH)
-    || (rvfi_insn_cmpr_opcode == OPCODE_COMPR_BRANCH
-    && rvfi_insn_cmpr_funct3[2:1] == FUNCT3_COMPR_BRANCH_2_MSBS))
+    ((xsecure_if.rvfi_opcode == OPCODE_BRANCH)
+    || (xsecure_if.rvfi_cmpr_opcode == OPCODE_COMPR_BRANCH
+    && xsecure_if.rvfi_cmpr_funct3[2:1] == FUNCT3_COMPR_BRANCH_2_MSBS))
 
     //Make sure the instruction is valid and has been executed without traps
     && rvfi_if.rvfi_valid
@@ -88,9 +75,9 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
   c_xsecure_core_div_rem_timing_off: cover property (
 
     //Make sure we detect an DIV or REM instruction in rvfi
-    (rvfi_insn_opcode == OPCODE_OP
-    && rvfi_insn_funct3[2] == FUNCT3_DIV_REM_INSTRUCTION_MSB
-    && rvfi_insn_funct7 == FUNCT7_DIV_REM_INSTRUCTION)
+    (xsecure_if.rvfi_opcode == OPCODE_OP
+    && xsecure_if.rvfi_funct3[2] == FUNCT3_DIV_REM_INSTRUCTION_MSB
+    && xsecure_if.rvfi_funct7 == FUNCT7_DIV_REM_INSTRUCTION)
 
     //Make sure the instruction is valid and has been executed without traps
     && rvfi_if.rvfi_valid
@@ -121,9 +108,9 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
     is_pchardening
 
     //Make sure the instruction is a branch instruction (both non-compressed and compressed)
-    && ((rvfi_insn_opcode == OPCODE_BRANCH)
-    || (rvfi_insn_cmpr_opcode == OPCODE_COMPR_BRANCH
-    && rvfi_insn_cmpr_funct3[2:1] == FUNCT3_COMPR_BRANCH_2_MSBS))
+    && ((xsecure_if.rvfi_opcode == OPCODE_BRANCH)
+    || (xsecure_if.rvfi_cmpr_opcode == OPCODE_COMPR_BRANCH
+    && xsecure_if.rvfi_cmpr_funct3[2:1] == FUNCT3_COMPR_BRANCH_2_MSBS))
 
     //Make sure the instruction is valid and has been executed without traps
     && rvfi_if.rvfi_valid
@@ -166,7 +153,7 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
     (xsecure_if.core_i_controller_i_controller_fsm_i_ctrl_fsm_cs == FUNCTIONAL)
     throughout
 
-    (if_id_pipe_instr_opcode == OPCODE_BRANCH
+    (xsecure_if.if_id_pipe_opcode == OPCODE_BRANCH
     ##[2:$]
     //Make sure a branch instruction has retired, that the previouse instruction was not a memory operation, and that PC hardening is disabled
     seq_dataindtiming_branch_timing_antecedent(
@@ -207,11 +194,11 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
   endsequence
 
 
-  a_xsecure_dataindtiming_div_rem_timing2: assert property (
+  a_xsecure_dataindtiming_div_rem_timing: assert property (
     //Make sure the instruction is a DIV or REM instruction
-    (rvfi_insn_opcode == OPCODE_OP
-    && rvfi_insn_funct3[2] == FUNCT3_DIV_REM_INSTRUCTION_MSB
-    && rvfi_insn_funct7 == FUNCT7_DIV_REM_INSTRUCTION)
+    (xsecure_if.rvfi_opcode == OPCODE_OP
+    && xsecure_if.rvfi_funct3[2] == FUNCT3_DIV_REM_INSTRUCTION_MSB
+    && xsecure_if.rvfi_funct7 == FUNCT7_DIV_REM_INSTRUCTION)
 
     //Make sure the instruction is valid and has been executed without traps
     && rvfi_if.rvfi_valid

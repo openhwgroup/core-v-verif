@@ -47,19 +47,24 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     // Local parameters:
   localparam LOCKUP_ERROR = 1'b1;
 
-  localparam FUNCT7_DIV_REM_INSTRUCTION = 7'b0000001;
-  localparam FUNCT3_DIV_REM_INSTRUCTION_MSB = 1'b1;
+  localparam FUNCT3_ADD = 3'b000;
+  localparam FUNCT3_AND = 3'b111;
+  localparam FUNCT3_MUL = 3'b000;
+  localparam FUNCT3_BLTU = 3'b110;
 
-  localparam FUNCT3_COMPR_BRANCH_2_MSBS = 2'b11;
-  localparam OPCODE_COMPR_BRANCH = 2'b01;
+  localparam FUNCT7_ADD = 7'b0000000;
+  localparam FUNCT7_AND = 7'b0000000;
+  localparam FUNCT7_MUL = 7'b0000001;
+
+  localparam FUNCT3_CSRRW_IMM = 3'b101;
+  localparam FUNCT3_CSRRW_REG = 3'b001;
 
   localparam FUNCT3_COMPR_SLLI = 3'b000;
   localparam OPCODE_COMPR_SLLI = 2'b10;
 
   localparam REGISTER_MHPMCOUNTER_MCYCLE_FULL = 64'hFFFFFFFFFFFFFFFF;
 
-  localparam REGISTER_x0 = 5'b00000; //TODO: x to X
-
+  localparam REGISTER_X0 = 5'b00000;
 
   localparam FREQ_SETTING_64_MIN = 4'b1000;
   localparam FREQ_SETTING_64_MAX = 4'b1111;
@@ -75,34 +80,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   localparam DUMMY_INCREMENT = 0;
   localparam HINT_INCREMENT = 2;
 
-  //Descriptive signal names
-  logic [5:0] rvfi_c_slli_shamt;
-  assign rvfi_c_slli_shamt = {rvfi_if.rvfi_insn[12], rvfi_if.rvfi_insn[6:2]};
-
-  logic [4:0] if_id_pipe_instr_rs1;
-  logic [4:0] if_id_pipe_instr_rs2;
-  logic [4:0] if_id_pipe_instr_rd;
-  logic [6:0] if_id_pipe_instr_opcode;
-  logic [12:0] if_id_pipe_bltu_incrementation;
-
-  assign if_id_pipe_instr_rs1 = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[19:15];
-  assign if_id_pipe_instr_rs2 = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[24:20];
-  assign if_id_pipe_instr_rd = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[11:7];
-  assign if_id_pipe_instr_opcode = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[6:0];
-  assign if_id_pipe_bltu_incrementation = {xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[31],
-    xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[7],
-    xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[30:25],
-    xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[11:8],
-    1'b0};
-
-
-  logic [2:0] rvfi_insn_cmpr_funct3;
-  logic [1:0] rvfi_insn_cmpr_opcode;
-
-  assign rvfi_insn_cmpr_funct3 = rvfi_if.rvfi_insn[15:13];
-  assign rvfi_insn_cmpr_opcode = rvfi_if.rvfi_insn[1:0];
-
-  //The alert signals used the gated clock, so we must therefore make sure the gated clock is enabled.
+  //The alert signals used the gated clock, so we must therefore make sure the gated clock is enabled. TODO: update text
   logic core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1;
 
   always @(posedge clk_i) begin
@@ -182,7 +160,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
       xsecure_if.core_if_id_pipe_instr_meta_hint)
   );
 
-  ////////// DUMMY AND HINT INSTRUCTION INSERTED IN IF /////////
+  ////////// DUMMY INSTRUCTION INSERTED IN IF /////////
 
   property p_dummy_hint_instruction_is_inserted_in_if_stage(dummy_hint_in_id_stage, dummy_hint_in_if_stage);
     //Make sure the instruction in the ID stage is a dummy/hint instruction
@@ -203,11 +181,6 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
       xsecure_if.core_i_if_stage_i_dummy_insert)
   ) else `uvm_error(info_tag, "The dummy instruction is not inserted in the IF stage.\n");
 
-  a_xsecure_hint_instruction_is_inserted_in_if_stage: assert property(
-    p_dummy_hint_instruction_is_inserted_in_if_stage(
-      xsecure_if.core_if_id_pipe_instr_meta_hint,
-      xsecure_if.core_i_if_stage_i_instr_hint)
-  ) else `uvm_error(info_tag, "The hint instruction is not inserted in the IF stage.\n");
 
   ////////// BLTU DUMMY AND HINT INSTRUCTIONS ARE EITHER AN ADD, AND, MUL OR BTLU INSTRUCTION //////////
 
@@ -222,20 +195,20 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     |->
     //Make sure the instruction is either an ADD, ADD, MUL or BTLU instruction
-    (if_id_pipe_instr_opcode == OPCODE_OP
-    && if_id_pipe_instr_funct3 == FUNCT3_ADD
-    && if_id_pipe_instr_funct7 == FUNCT7_ADD)
+    (xsecure_if.if_id_pipe_opcode == OPCODE_OP
+    && xsecure_if.if_id_pipe_funct3 == FUNCT3_ADD
+    && xsecure_if.if_id_pipe_funct7 == FUNCT7_ADD)
 
-    || (if_id_pipe_instr_opcode == OPCODE_OP
-    && if_id_pipe_instr_funct3 == FUNCT3_AND
-    && if_id_pipe_instr_funct7 == FUNCT7_AND)
+    || (xsecure_if.if_id_pipe_opcode == OPCODE_OP
+    && xsecure_if.if_id_pipe_funct3 == FUNCT3_AND
+    && xsecure_if.if_id_pipe_funct7 == FUNCT7_AND)
 
-    || (if_id_pipe_instr_opcode == OPCODE_OP
-    && if_id_pipe_instr_funct3 == FUNCT3_MUL
-    && if_id_pipe_instr_funct7 == FUNCT7_MUL)
+    || (xsecure_if.if_id_pipe_opcode == OPCODE_OP
+    && xsecure_if.if_id_pipe_funct3 == FUNCT3_MUL
+    && xsecure_if.if_id_pipe_funct7 == FUNCT7_MUL)
 
-    || (if_id_pipe_instr_opcode == OPCODE_BRANCH
-    && if_id_pipe_instr_funct3 == FUNCT3_BLTU);
+    || (xsecure_if.if_id_pipe_opcode == OPCODE_BRANCH
+    && xsecure_if.if_id_pipe_funct3 == FUNCT3_BLTU);
 
   endproperty
 
@@ -260,9 +233,9 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     ##1 dummy_hint_in_id_stage
 
     //Make sure the instruction is either an ADD or MUL instruction
-    && if_id_pipe_instr_opcode == opcode
-    && if_id_pipe_instr_funct3 == funct3
-    && if_id_pipe_instr_funct7 == funct7;
+    && xsecure_if.if_id_pipe_opcode == opcode
+    && xsecure_if.if_id_pipe_funct3 == funct3
+    && xsecure_if.if_id_pipe_funct7 == funct7;
 
   endproperty
 
@@ -325,8 +298,8 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     ##1 dummy_hint_in_id_stage
 
     //Make sure the instruction is a BTLU instruction
-    && if_id_pipe_instr_opcode == opcode
-    && if_id_pipe_instr_funct3 == funct3;
+    && xsecure_if.if_id_pipe_opcode == opcode
+    && xsecure_if.if_id_pipe_funct3 == funct3;
 
   endproperty
 
@@ -356,11 +329,11 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     && dummy_hint_in_id_stage
 
     //Make sure the dummy/hint is a branch instruction
-    && if_id_pipe_instr_opcode == cv32e40s_pkg::OPCODE_BRANCH
+    && xsecure_if.if_id_pipe_opcode == cv32e40s_pkg::OPCODE_BRANCH
 
     |->
     //Make sure we jump to next instruction (dummy: PC + 0)(hint: PC + 2)
-    if_id_pipe_bltu_incrementation == dummy_hint_increment;
+    xsecure_if.if_id_pipe_bltu_incrementation == dummy_hint_increment;
   endproperty
 
   a_xsecure_dummy_instruction_bltu_jumping: assert property(
@@ -385,17 +358,16 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     && $past(xsecure_if.core_if_stage_id_ready_i)
 
     //Make sure the detected instruction is a dummy/hint instruction
-    && //dummy_hint_in_id_stage
-    xsecure_if.core_if_id_pipe_instr_meta_dummy
+    && dummy_hint_in_id_stage
 
     |->
     //Check that the sr1 part of the instruction originates from the LFSR1 register, or is zero if RS1 = x0
     ((xsecure_if.core_i_id_stage_i_operand_a == (xsecure_if.core_xsecure_ctrl_lfsr1))
-    || if_id_pipe_instr_rs1 == REGISTER_X0)
+    || xsecure_if.if_id_pipe_rs1 == REGISTER_X0)
 
     //Check that the sr2 part of the instruction originates from the LFSR2 register
     && ((xsecure_if.core_i_id_stage_i_operand_b == (xsecure_if.core_xsecure_ctrl_lfsr2))
-    || if_id_pipe_instr_rs2 == REGISTER_X0);
+    || xsecure_if.if_id_pipe_rs2 == REGISTER_X0);
 
   endproperty
 
@@ -422,11 +394,11 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     && dummy_hint_in_id_stage
 
     //Make sure the instruction is not a branch (as they do not use a destination register)
-    && if_id_pipe_instr_opcode != OPCODE_BRANCH
+    && xsecure_if.if_id_pipe_opcode != OPCODE_BRANCH
 
     |->
     //Check that the destination register is x0
-    if_id_pipe_instr_rd == REGISTER_X0;
+    xsecure_if.if_id_pipe_rd == REGISTER_X0;
   endproperty
 
   a_xsecure_dummy_instruction_destination_is_x0: assert property (
@@ -549,8 +521,8 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     & !xsecure_if.core_i_wb_stage_i_ctrl_fsm_i_kill_wb
     ) throughout (
       (xsecure_if.core_if_id_pipe_instr_meta_hint && xsecure_if.core_id_stage_id_valid_o && xsecure_if.core_id_stage_ex_ready_i,
-      id_hint_rs1 = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[19:15],
-      id_hint_rs2 = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[24:20])
+      id_hint_rs1 = xsecure_if.if_id_pipe_rs1,
+      id_hint_rs2 = xsecure_if.if_id_pipe_rs2)
 
       ##0 first_match(##[2:$]
       xsecure_if.core_ex_wb_pipe_instr_meta_hint
@@ -578,10 +550,13 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     //Make sure that mcycle is operative (not inhibited)
     !xsecure_if.core_cs_registers_mcountinhibit_rdata_mcycle
 
-    //Make sure the counters are not stopped//Make sure that minstret is operative (not inhibited)
+    //Make sure we count according to the gated clock
+    && core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
+
+    //Make sure the counters are not stopped
     && !$past(xsecure_if.core_i_cs_registers_i_debug_stopcount)
 
-    //Make sure we do not write to mcycle
+    //Make sure we do not write to mcycle //todo: sjekk om dette kan endres
     && !($past(xsecure_if.core_i_cs_registers_i_csr_en_gated)
     && ($past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLE) || $past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLEH)))
 
@@ -636,10 +611,10 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     //Make sure a valid hint instruction retires
     ##1 rvfi_if.rvfi_valid
     && !rvfi_if.rvfi_trap.trap
-    && rvfi_insn_cmpr_funct3 == FUNCT3_COMPR_SLLI
-    && rvfi_insn_cmpr_opcode == OPCODE_COMPR_SLLI
+    && xsecure_if.rvfi_cmpr_funct3 == FUNCT3_COMPR_SLLI
+    && xsecure_if.rvfi_cmpr_opcode == OPCODE_COMPR_SLLI
     && rvfi_if.rvfi_rd1_addr == REGISTER_X0
-    && rvfi_c_slli_shamt != '0
+    && xsecure_if.rvfi_c_slli_shamt != '0
 
     |->
     //Make sure the minstret counter is updated
@@ -781,6 +756,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     |=>
 	  //Make sure the LFSR registers reseeds to default value
     xsecure_if.core_xsecure_ctrl_lfsr2 == LFSR_CFG_DEFAULT.default_seed
+  ) else `uvm_error(info_tag, "LFSR2 does not reset to the default value when there is a lookup error (given that we do not write to the LFSR register).\n");
 
 
   ////////// WRITES TO THE LFSRS SEED THE SECURESEED REGISTERS //////////
@@ -789,9 +765,9 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   property p_xsecure_LFSRx_write_secureseedx_reg(csr_addr_secureseedx, lfsrx);
 
     //Make sure we retire a write CSR instruction that wirtes the value of a GPR to the CSR SECURESEEDX
-    rvfi_insn_opcode == OPCODE_SYSTEM
-    && rvfi_insn_funct3 == FUNCT3_CSRRW_REG
-    && rvfi_insn_csr == csr_addr_secureseedx
+    xsecure_if.rvfi_opcode == OPCODE_SYSTEM
+    && xsecure_if.rvfi_funct3 == FUNCT3_CSRRW_REG
+    && xsecure_if.rvfi_csr == csr_addr_secureseedx
 
     //MAke sure the value of the GPR is not zero
     && rvfi_if.rvfi_rs1_rdata != 5'b0000_0
@@ -807,19 +783,19 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   endproperty
 
 
-  a_xsecure_dummy_hint_instruction_LFSRx_write_secureseed0_reg: assert property (
+  a_xsecure_dummy_hint_instruction_LFSR0_write_secureseed0_reg: assert property (
     p_xsecure_LFSRx_write_secureseedx_reg(
       CSR_SECURESEED0,
       xsecure_if.core_xsecure_ctrl_lfsr0)
   ) else `uvm_error(info_tag, "The LFSR0 register is not written to, even though the secureseed CSR is written to (CSR register instruction).\n");
 
-  a_xsecure_dummy_hint_instruction_LFSRx_write_secureseed1_reg: assert property (
+  a_xsecure_dummy_hint_instruction_LFSR1_write_secureseed1_reg: assert property (
     p_xsecure_LFSRx_write_secureseedx_reg(
       CSR_SECURESEED1,
       xsecure_if.core_xsecure_ctrl_lfsr1)
   ) else `uvm_error(info_tag, "The LFSR1 register is not written to, even though the secureseed CSR is written to (CSR register instruction).\n");
 
-  a_xsecure_dummy_hint_instruction_LFSRx_write_secureseed2_reg: assert property (
+  a_xsecure_dummy_hint_instruction_LFSR2_write_secureseed2_reg: assert property (
     p_xsecure_LFSRx_write_secureseedx_reg(
       CSR_SECURESEED2,
       xsecure_if.core_xsecure_ctrl_lfsr2)
@@ -838,10 +814,10 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     |->
     //Verify that the hint instruction appears as c.slli instruction with rd=x0 and shamt != 0
-    rvfi_insn_cmpr_funct3 == FUNCT3_COMPR_SLLI
-    && rvfi_insn_cmpr_opcode == OPCODE_COMPR_SLLI
+    xsecure_if.rvfi_cmpr_funct3 == FUNCT3_COMPR_SLLI
+    && xsecure_if.rvfi_cmpr_opcode == OPCODE_COMPR_SLLI
     && rvfi_if.rvfi_rd1_addr == REGISTER_X0
-    && rvfi_c_slli_shamt != '0
+    && xsecure_if.rvfi_c_slli_shamt != '0
 
   ) else `uvm_error(info_tag, "Hint instruction do not appears as a c.slli instruction with rd=x0 and shamt != 0 on RVFI.\n");
 

@@ -168,6 +168,7 @@ interface uvmt_cv32e40s_xsecure_if
    input logic [1:0] core_i_controller_i_controller_fsm_i_ctrl_fsm_cs,
 
     // CORE
+   input logic core_i_sleep_unit_i_core_clock_gate_i_clk_en,
 
    input logic core_rf_we_wb,
    input logic [4:0] core_rf_waddr_wb,
@@ -208,6 +209,11 @@ interface uvmt_cv32e40s_xsecure_if
    input obi_data_resp_t core_i_m_c_obi_data_if_resp_payload,
    input obi_inst_req_t core_i_m_c_obi_instr_if_req_payload,
    input obi_inst_resp_t core_i_m_c_obi_instr_if_resp_payload,
+
+//TODO: added:
+input logic core_i_m_c_obi_data_if_s_rvalid_rvalid,
+input logic core_i_m_c_obi_instr_if_s_rvalid_rvalid,
+input logic core_i_alert_i_itf_prot_err_i,
 
 
    input logic core_i_if_stage_i_prefetch_resp_valid,
@@ -317,7 +323,6 @@ interface uvmt_cv32e40s_xsecure_if
    input inst_resp_t core_if_id_pipe_instr,
    input logic core_if_id_pipe_instr_meta_dummy,
    input logic core_if_id_pipe_instr_meta_hint,
-   input logic [31:0] core_if_id_pipe_instr_bus_resp_rdata,
    input logic [31:0] core_i_id_stage_i_if_id_pipe_i_pc,
    input logic core_i_if_id_pipe_last_op,
 
@@ -340,7 +345,27 @@ interface uvmt_cv32e40s_xsecure_if
 
     // CTRL
    input logic core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set,
-   input logic [3:0] core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux
+   input logic [3:0] core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux,
+
+   // Descriptive signal names:
+   // IF ID pipe:
+   input logic [4:0] if_id_pipe_rs1,
+   input logic [4:0] if_id_pipe_rs2,
+   input logic [4:0] if_id_pipe_rd,
+   input logic [6:0] if_id_pipe_opcode,
+   input logic [2:0] if_id_pipe_funct3,
+   input logic [6:0] if_id_pipe_funct7,
+   input logic [12:0] if_id_pipe_bltu_incrementation,
+
+   // RVFI:
+   input logic [2:0] rvfi_funct3,
+   input logic [2:0] rvfi_cmpr_funct3,
+   input logic [6:0] rvfi_funct7,
+   input logic [6:0] rvfi_opcode,
+   input logic [1:0] rvfi_cmpr_opcode,
+   input logic [11:0] rvfi_csr,
+   input logic [5:0] rvfi_c_slli_shamt
+
 );
 
 endinterface : uvmt_cv32e40s_xsecure_if

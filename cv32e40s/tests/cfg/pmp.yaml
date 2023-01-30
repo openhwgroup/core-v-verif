@@ -4,6 +4,7 @@ compile_flags: >
     +define+PMP_ENABLE_64
     +define+ZBA_ZBB_ZBC_ZBS
 ovpsim: >
+    --override cpu/hpmcounter_undefined=T
     --override cpu/PMP_registers=64
     --override cpu/PMP_undefined=T
     --override cpu/PMP_initialparams=T
@@ -169,6 +170,7 @@ ovpsim: >
     --override cpu/mask_pmpcfg14=0xFFFFFFFF
     --override cpu/mask_pmpcfg15=0xFFFFFFFF
     # --showoverrides
+    --trace
 cflags: >
 plusargs: >
     +enable_zba_extension=1
