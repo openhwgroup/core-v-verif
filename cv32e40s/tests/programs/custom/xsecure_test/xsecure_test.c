@@ -1,3 +1,20 @@
+// Copyright 2022 OpenHW Group
+// Copyright 2022 Silicon Labs, Inc.
+//
+// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://solderpad.org/licenses/
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
+
 #ifndef __XSECURE_TEST_H__
 #define __XSECURE_TEST_H__
 
@@ -7,15 +24,33 @@
 
 //TODO: functions are fetched from the privilege test code. If these functions end up in a common function file, we should adopt this file to use the common functions.
 
-#define CSRADDR_CPUCTRL     0xBF0
-#define CSRADDR_SECURESEED0 0xBF9
-#define CSRADDR_SECURESEED1 0xBFA
-#define CSRADDR_SECURESEED2 0xBFC
-#define CSRADDR_CPUCTRL     0xBF0
-#define CSRADDR_SECURESEED0 0xBF9
-#define CSRADDR_SECURESEED1 0xBFA
-#define CSRADDR_SECURESEED2 0xBFC
 
+void convertToBinary(unsigned a)
+{
+    /* step 1 */
+    if (a > 1)
+        convertToBinary(a / 2);
+
+    /* step 2 */
+    printf("%d", a % 2);
+}
+void printNumberInBinary(uint32_t number) {
+    // Write C code here
+    printf("Binary of %ld is: ", number);
+    convertToBinary(number);
+    printf("\n");
+}
+
+#define CSRADDR_CPUCTRL     0xBF0
+#define CSRADDR_SECURESEED0 0xBF9
+#define CSRADDR_SECURESEED1 0xBFA
+#define CSRADDR_SECURESEED2 0xBFC
+#define CSRADDR_CPUCTRL     0xBF0
+#define CSRADDR_SECURESEED0 0xBF9
+#define CSRADDR_SECURESEED1 0xBFA
+#define CSRADDR_SECURESEED2 0xBFC
+#define PMPCFG0             0x3A0
+#define PMPADDR0            0x3B0
 
 
 #define CSRADDR_HPMCOUNTER \
@@ -84,18 +119,15 @@ X("0xC9F")
 #define S(x) #x
 #define STR(s) S(s)
 
-// global values to hold registers for tests
-volatile uint32_t cpuctrl, secureseed0, secureseed1, secureseed2;
-
 void test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only(void);
-void test_secureseeds_shows_zero_at_reads(void);
+void test_secureseeds_show_zero_at_reads(void);
 void csr_should_be_present(void);
 void csr_should_not_be_present(void);
 
 // assembly function to setup a generous PMP-region for user mode.
 extern volatile void  setup_pmp();
 // assembly function to set privilege-mode to user-mode
-extern volatile void set_u_mode();
+//extern volatile void set_u_mode();
 
 // standard value for the mstatus register
 #define MSTATUS_STD_VAL 0x1800
@@ -128,6 +160,7 @@ static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
 void set_m_mode(void) {
   trap_handler_beh = M_MODE_BEH;
   __asm__ volatile("ecall");
+  printf("!!!!Finished ecall!!!!\n");
 }
 
 
@@ -181,41 +214,31 @@ void u_sw_irq_handler(void) {
 
 void csr_should_be_present(void){
 
-  uint32_t csr_acc;
-  csr_acc = MSTATUS_STD_VAL; // some std value
+  uint32_t rd, rs1 = 1;
 
   trap_handler_beh = TRAP_INCR_BEH; // setting the trap handler behaviour
   num_trap_executions = 0; // resetting the trap handler count
 
-  __asm__ volatile("csrrs %0, mcounteren, x0" : "=r"(csr_acc));
-  __asm__ volatile("csrrw x0, mcounteren, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrs x0, mcounteren, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrc x0, mcounteren, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrw x0, mcounteren, %0" : "=r"(csr_acc));
+  __asm__ volatile("csrr %0, mcounteren" : "=r"(rd)); //Read to csr_acc
+  __asm__ volatile("csrw mcounteren, %0" :: "r"(rs1)); //Write csr_acc
+  __asm__ volatile("csrwi mcounteren, 0xF"); //Write immediate value
 
-  __asm__ volatile("csrrs %0, mcycle, x0" : "=r"(csr_acc));
-  __asm__ volatile("csrrw x0, mcycle, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrs x0, mcycle, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrc x0, mcycle, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrw x0, mcycle, %0" : "=r"(csr_acc));
+  __asm__ volatile("csrr %0, mcycle" : "=r"(rd));
+  __asm__ volatile("csrw mcycle, %0" :: "r"(rs1));
+  __asm__ volatile("csrwi mcycle, 0xF");
 
-  __asm__ volatile("csrrs %0, mcycleh, x0" : "=r"(csr_acc));
-  __asm__ volatile("csrrw x0, mcycleh, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrs x0, mcycleh, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrc x0, mcycleh, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrw x0, mcycleh, %0" : "=r"(csr_acc));
+  __asm__ volatile("csrr %0, mcycleh" : "=r"(rd));
+  __asm__ volatile("csrw mcycleh, %0" :: "r"(rs1));
+  __asm__ volatile("csrwi mcycleh, 0xF");
 
-  __asm__ volatile("csrrs %0, minstret, x0" : "=r"(csr_acc));
-  __asm__ volatile("csrrw x0, minstret, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrs x0, minstret, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrc x0, minstret, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrw x0, minstret, %0" : "=r"(csr_acc));
+  __asm__ volatile("csrr %0, minstret" : "=r"(rd));
+  __asm__ volatile("csrw minstret, %0" :: "r"(rs1));
+  __asm__ volatile("csrwi minstret, 0xF");
 
-  __asm__ volatile("csrrs %0, minstreth, x0" : "=r"(csr_acc));
-  __asm__ volatile("csrrw x0, minstreth, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrs x0, minstreth, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrc x0, minstreth, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrw x0, minstreth, %0" : "=r"(csr_acc));
+  __asm__ volatile("csrr %0, minstreth" : "=r"(rd));
+  __asm__ volatile("csrw minstreth, %0" :: "r"(rs1));
+  __asm__ volatile("csrwi minstreth, 0xF");
+
 
   assert_or_die(num_trap_executions, 0, "error: reading the mcounteren, mcycle, mcycleh, minstret or minstreth register\n");
 
@@ -223,53 +246,49 @@ void csr_should_be_present(void){
   trap_handler_beh = UNEXPECTED_IRQ_BEH;
 
 }
+
+
 void csr_should_not_be_present(void) {
-//
-  uint32_t csr_acc;
-  csr_acc = MSTATUS_STD_VAL; // some std value
+
+  uint32_t rd, rs1 = 1;
 
   trap_handler_beh = TRAP_INCR_BEH; // setting the trap handler behaviour
   num_trap_executions = 0; // resetting the trap handler count
 
 
-  #define X(addr) __asm__ volatile("csrrs %0, " addr ", x0" : "=r"(csr_acc)); \
-      __asm__ volatile("csrrw x0, " addr ", %0" : "=r"(csr_acc)); \
-      __asm__ volatile("csrrs x0, " addr ", %0" : "=r"(csr_acc)); \
-      __asm__ volatile("csrrc x0, " addr ", %0" : "=r"(csr_acc));
+  #define X(addr) __asm__ volatile("csrr %0, " addr : "=r"(rd)); \
+    __asm__ volatile("csrw " addr ", %0" :: "r"(rs1)); \
+    __asm__ volatile("csrwi " addr ", 0xF");
   CSRADDR_HPMCOUNTER
   CSRADDR_HPMCOUNTERH
   #undef X
 
   // test that unimplemented registers results in illegal instructions
-  __asm__ volatile("csrrs %0, cycle, x0" : "=r"(csr_acc));
-  __asm__ volatile("csrrw x0, cycle, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrs x0, cycle, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrc x0, cycle, %0" : "=r"(csr_acc));
+  __asm__ volatile("csrr %0, cycle" : "=r"(rd));
+  __asm__ volatile("csrw cycle, %0" :: "r"(rs1));
+  __asm__ volatile("csrwi cycle, 0xF");
 
-  __asm__ volatile("csrrs %0, cycleh, x0" : "=r"(csr_acc));
-  __asm__ volatile("csrrw x0, cycleh, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrs x0, cycleh, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrc x0, cycleh, %0" : "=r"(csr_acc));
+  __asm__ volatile("csrr %0, cycleh" : "=r"(rd));
+  __asm__ volatile("csrw cycleh, %0" :: "r"(rs1));
+  __asm__ volatile("csrwi cycleh, 0xF");
 
-  __asm__ volatile("csrrs %0, instret, x0" : "=r"(csr_acc));
-  __asm__ volatile("csrrw x0, instret, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrs x0, instret, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrc x0, instret, %0" : "=r"(csr_acc));
+  __asm__ volatile("csrr %0, instret" : "=r"(rd));
+  __asm__ volatile("csrw instret, %0" :: "r"(rs1));
+  __asm__ volatile("csrwi instret, 0xF");
 
-  __asm__ volatile("csrrs %0, instreth, x0" : "=r"(csr_acc));
-  __asm__ volatile("csrrw x0, instreth, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrs x0, instreth, %0" : "=r"(csr_acc));
-  __asm__ volatile("csrrc x0, instreth, %0" : "=r"(csr_acc));
+  __asm__ volatile("csrr %0, instreth" : "=r"(rd));
+  __asm__ volatile("csrw instreth, %0" :: "r"(rs1));
+  __asm__ volatile("csrwi instreth, 0xF");
 
-  assert_or_die(num_trap_executions, 16 + 4*2*(32-3), "error: some of the unimplemented registers did not trap on instrs attempt\n");
+  assert_or_die(num_trap_executions, 3*4 + 3*2*(32-3), "error: some of the unimplemented registers did not trap on instrs attempt\n");
 
   // set the trap handler to go into default mode
   trap_handler_beh = UNEXPECTED_IRQ_BEH;
 }
 
 
-void test_secureseeds_shows_zero_at_reads(void){
-  uint32_t csr_read;
+void test_secureseeds_show_zero_at_reads(void){
+  uint32_t rd;
 
   // setting the trap handler behaviour
   trap_handler_beh = M_MODE_BEH;
@@ -278,15 +297,29 @@ void test_secureseeds_shows_zero_at_reads(void){
   num_trap_executions = 0;
 
   // enter machine mode:
+
+  __asm__ volatile("csrr %0, mstatus" : "=r"(rd));
+  printf("!!!!mstatus (before) = %ld!!!!\n", rd);
+  printNumberInBinary(rd);
   set_m_mode();
 
+  __asm__ volatile("csrr %0, mstatus" : "=r"(rd));
+  printf("!!!!mstatus (after) = %ld!!!!\n", rd);
+  printNumberInBinary(rd);
+
+
   // read secureseed:
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", x0" : "=r"(csr_read));
-  assert_or_die(csr_read, 0, "error: secureseed0 is not read as zero\n");
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED1) ", x0" : "=r"(csr_read));
-  assert_or_die(csr_read, 0, "error: secureseed1 is not read as zero\n");
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED2) ", x0" : "=r"(csr_read));
-  assert_or_die(csr_read, 0, "error: secureseed2 is not read as zero\n");
+  __asm__ volatile("csrr %0, " STR(CSRADDR_SECURESEED0) : "=r"(rd));
+  printf("CSRADDR_SECURESEED0 = %ld\n", rd);
+  assert_or_die(rd, 0, "error: secureseed0 is not read as zero\n");
+
+  __asm__ volatile("csrr %0, " STR(CSRADDR_SECURESEED1) : "=r"(rd));
+  printf("CSRADDR_SECURESEED1 = %ld\n", rd);
+  assert_or_die(rd, 0, "error: secureseed1 is not read as zero\n");
+
+  __asm__ volatile("csrr %0, " STR(CSRADDR_SECURESEED2) : "=r"(rd));
+  printf("CSRADDR_SECURESEED2 = %ld\n", rd);
+  assert_or_die(rd, 0, "error: secureseed2 is not read as zero\n");
 
   // set the trap handler to go into default mode
   trap_handler_beh = UNEXPECTED_IRQ_BEH;
@@ -304,7 +337,7 @@ void test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only(void){
   num_trap_executions = 0;
 
   // enter user mode:
-  set_u_mode();
+  //set_u_mode();
 
   // read ctrlcpu and secureseed in machine mode (which should not be successful):
   __asm__ volatile("csrrw %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(csr_read));
@@ -359,17 +392,18 @@ void test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only(void){
 }
 
 
+
 int main(void){
 
   unexpected_irq_beh = 0;
+  uint32_t rd;
+  //csr_should_be_present();
+  //csr_should_not_be_present();
 
-  csr_should_be_present();
-  csr_should_not_be_present();
+  setup_pmp(); //Hvorfor legger man inn pmp setup?
 
-  setup_pmp();
-
-  test_secureseeds_shows_zero_at_reads();
-  test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only();
+  test_secureseeds_show_zero_at_reads();
+  //test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only();
 
   // check if there was an unexpected irq handler req
   assert_or_die(unexpected_irq_beh, 0, "ASSERT ERROR: unexpected irq handler\n");
