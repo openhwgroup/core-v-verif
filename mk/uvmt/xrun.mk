@@ -173,6 +173,7 @@ XRUN_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 XRUN_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_RVFI
+XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_CORE_LOG
 XRUN_USER_COMPILE_ARGS += +define+UVM
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 	XRUN_PLUSARGS += +USE_ISS
@@ -441,7 +442,7 @@ corev-dv: clean_riscv-dv \
 # Copy (with cleanout) out final assembler files to test directory
 # This includes the generated linker script files if they are present in the
 # generated tests folder
-gen_corev-dv:
+gen_corev-dv: comp_corev-dv
 	mkdir -p $(SIM_COREVDV_RESULTS)/$(TEST)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		mkdir -p $(SIM_TEST_RESULTS)/$$idx/test_program; \
