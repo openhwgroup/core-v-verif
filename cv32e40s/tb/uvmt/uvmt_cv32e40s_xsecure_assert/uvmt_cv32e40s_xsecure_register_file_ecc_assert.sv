@@ -148,7 +148,7 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   end endgenerate
 
 
-  ////////// IF GENERAL PURPOSE REGISTERS AND ECC ATTACHMENTS ARE ALL ZEROS OR ONES MAJOR ALERT MUST BE SET ////////// //TODO: fix
+  ////////// IF GENERAL PURPOSE REGISTERS AND ECC ATTACHMENTS ARE ALL ZEROS OR ONES MAJOR ALERT MUST BE SET //////////
 
   property p_gpr_and_syndrom_x_set_major_alert(gpr_addr, x);
     //Make sure we are in a state where we read the gpr word
