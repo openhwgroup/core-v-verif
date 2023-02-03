@@ -127,7 +127,7 @@ void csr_should_not_be_present(void);
 // assembly function to setup a generous PMP-region for user mode.
 extern volatile void  setup_pmp();
 // assembly function to set privilege-mode to user-mode
-//extern volatile void set_u_mode();
+extern volatile void set_u_mode();
 
 // standard value for the mstatus register
 #define MSTATUS_STD_VAL 0x1800
@@ -160,7 +160,6 @@ static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
 void set_m_mode(void) {
   trap_handler_beh = M_MODE_BEH;
   __asm__ volatile("ecall");
-  printf("!!!!Finished ecall!!!!\n");
 }
 
 
@@ -214,29 +213,29 @@ void u_sw_irq_handler(void) {
 
 void csr_should_be_present(void){
 
-  uint32_t rd, rs1 = 1;
+  uint32_t rd;
 
   trap_handler_beh = TRAP_INCR_BEH; // setting the trap handler behaviour
   num_trap_executions = 0; // resetting the trap handler count
 
   __asm__ volatile("csrr %0, mcounteren" : "=r"(rd)); //Read to csr_acc
-  __asm__ volatile("csrw mcounteren, %0" :: "r"(rs1)); //Write csr_acc
+  __asm__ volatile("csrw mcounteren, %0" :: "r"(rand())); //Write csr_acc
   __asm__ volatile("csrwi mcounteren, 0xF"); //Write immediate value
 
   __asm__ volatile("csrr %0, mcycle" : "=r"(rd));
-  __asm__ volatile("csrw mcycle, %0" :: "r"(rs1));
+  __asm__ volatile("csrw mcycle, %0" :: "r"(rand()));
   __asm__ volatile("csrwi mcycle, 0xF");
 
   __asm__ volatile("csrr %0, mcycleh" : "=r"(rd));
-  __asm__ volatile("csrw mcycleh, %0" :: "r"(rs1));
+  __asm__ volatile("csrw mcycleh, %0" :: "r"(rand()));
   __asm__ volatile("csrwi mcycleh, 0xF");
 
   __asm__ volatile("csrr %0, minstret" : "=r"(rd));
-  __asm__ volatile("csrw minstret, %0" :: "r"(rs1));
+  __asm__ volatile("csrw minstret, %0" :: "r"(rand()));
   __asm__ volatile("csrwi minstret, 0xF");
 
   __asm__ volatile("csrr %0, minstreth" : "=r"(rd));
-  __asm__ volatile("csrw minstreth, %0" :: "r"(rs1));
+  __asm__ volatile("csrw minstreth, %0" :: "r"(rand()));
   __asm__ volatile("csrwi minstreth, 0xF");
 
 
@@ -250,14 +249,14 @@ void csr_should_be_present(void){
 
 void csr_should_not_be_present(void) {
 
-  uint32_t rd, rs1 = 1;
+  uint32_t rd;
 
   trap_handler_beh = TRAP_INCR_BEH; // setting the trap handler behaviour
   num_trap_executions = 0; // resetting the trap handler count
 
 
   #define X(addr) __asm__ volatile("csrr %0, " addr : "=r"(rd)); \
-    __asm__ volatile("csrw " addr ", %0" :: "r"(rs1)); \
+    __asm__ volatile("csrw " addr ", %0" :: "r"(rand())); \
     __asm__ volatile("csrwi " addr ", 0xF");
   CSRADDR_HPMCOUNTER
   CSRADDR_HPMCOUNTERH
@@ -265,19 +264,19 @@ void csr_should_not_be_present(void) {
 
   // test that unimplemented registers results in illegal instructions
   __asm__ volatile("csrr %0, cycle" : "=r"(rd));
-  __asm__ volatile("csrw cycle, %0" :: "r"(rs1));
+  __asm__ volatile("csrw cycle, %0" :: "r"(rand()));
   __asm__ volatile("csrwi cycle, 0xF");
 
   __asm__ volatile("csrr %0, cycleh" : "=r"(rd));
-  __asm__ volatile("csrw cycleh, %0" :: "r"(rs1));
+  __asm__ volatile("csrw cycleh, %0" :: "r"(rand()));
   __asm__ volatile("csrwi cycleh, 0xF");
 
   __asm__ volatile("csrr %0, instret" : "=r"(rd));
-  __asm__ volatile("csrw instret, %0" :: "r"(rs1));
+  __asm__ volatile("csrw instret, %0" :: "r"(rand()));
   __asm__ volatile("csrwi instret, 0xF");
 
   __asm__ volatile("csrr %0, instreth" : "=r"(rd));
-  __asm__ volatile("csrw instreth, %0" :: "r"(rs1));
+  __asm__ volatile("csrw instreth, %0" :: "r"(rand()));
   __asm__ volatile("csrwi instreth, 0xF");
 
   assert_or_die(num_trap_executions, 3*4 + 3*2*(32-3), "error: some of the unimplemented registers did not trap on instrs attempt\n");
@@ -297,28 +296,17 @@ void test_secureseeds_show_zero_at_reads(void){
   num_trap_executions = 0;
 
   // enter machine mode:
-
-  __asm__ volatile("csrr %0, mstatus" : "=r"(rd));
-  printf("!!!!mstatus (before) = %ld!!!!\n", rd);
-  printNumberInBinary(rd);
   set_m_mode();
-
-  __asm__ volatile("csrr %0, mstatus" : "=r"(rd));
-  printf("!!!!mstatus (after) = %ld!!!!\n", rd);
-  printNumberInBinary(rd);
 
 
   // read secureseed:
-  __asm__ volatile("csrr %0, " STR(CSRADDR_SECURESEED0) : "=r"(rd));
-  printf("CSRADDR_SECURESEED0 = %ld\n", rd);
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(rand()));
   assert_or_die(rd, 0, "error: secureseed0 is not read as zero\n");
 
-  __asm__ volatile("csrr %0, " STR(CSRADDR_SECURESEED1) : "=r"(rd));
-  printf("CSRADDR_SECURESEED1 = %ld\n", rd);
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED1) ", %1" : "=r"(rd) : "r"(rand()));
   assert_or_die(rd, 0, "error: secureseed1 is not read as zero\n");
 
-  __asm__ volatile("csrr %0, " STR(CSRADDR_SECURESEED2) : "=r"(rd));
-  printf("CSRADDR_SECURESEED2 = %ld\n", rd);
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED2) ", %1" : "=r"(rd) : "r"(rand()));
   assert_or_die(rd, 0, "error: secureseed2 is not read as zero\n");
 
   // set the trap handler to go into default mode
@@ -328,7 +316,7 @@ void test_secureseeds_show_zero_at_reads(void){
 
 
 void test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only(void){
-  uint32_t csr_read;
+  uint32_t rd;
 
   // setting the trap handler behaviour
   trap_handler_beh = TRAP_INCR_BEH;
@@ -337,27 +325,19 @@ void test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only(void){
   num_trap_executions = 0;
 
   // enter user mode:
-  //set_u_mode();
+  set_u_mode();
 
-  // read ctrlcpu and secureseed in machine mode (which should not be successful):
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrs %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrc %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(csr_read));
+  // read ctrlcpu and secureseed in user mode (which should not be successful):
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(rd));
+  __asm__ volatile("csrrs %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(rd));
+  __asm__ volatile("csrrc %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(rd));
 
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrs %0, " STR(CSRADDR_SECURESEED0) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrc %0, " STR(CSRADDR_SECURESEED0) ", x0" : "=r"(csr_read));
-
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED1) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrs %0, " STR(CSRADDR_SECURESEED1) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrc %0, " STR(CSRADDR_SECURESEED1) ", x0" : "=r"(csr_read));
-
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED2) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrs %0, " STR(CSRADDR_SECURESEED2) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrc %0, " STR(CSRADDR_SECURESEED2) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(rand()));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(rand()));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(rand()));
 
   // number of exceptions should equal number of acesses
-  assert_or_die(num_trap_executions, 4*3, "error: accessing cpuctrl or secureseed_ in usermode does not cause a trap\n");
+  assert_or_die(num_trap_executions, 3+3, "error: accessing cpuctrl or secureseed_ in usermode does not cause a trap\n");
 
   // resetting the trap handler count
   num_trap_executions = 0;
@@ -367,21 +347,15 @@ void test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only(void){
 
   // read ctrlcpu and secureseed in machine mode (which should be successful):
 
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrs %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrc %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(rd));
+  __asm__ volatile("csrrs %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(rd));
+  __asm__ volatile("csrrc %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(rd));
 
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrs %0, " STR(CSRADDR_SECURESEED0) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrc %0, " STR(CSRADDR_SECURESEED0) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(rand()));
 
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED1) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrs %0, " STR(CSRADDR_SECURESEED1) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrc %0, " STR(CSRADDR_SECURESEED1) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(rand()));
 
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED2) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrs %0, " STR(CSRADDR_SECURESEED2) ", x0" : "=r"(csr_read));
-  __asm__ volatile("csrrc %0, " STR(CSRADDR_SECURESEED2) ", x0" : "=r"(csr_read));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(rand()));
 
   // number of exceptions should equal number of acesses
   assert_or_die(num_trap_executions, 0, "error: accessing cpuctrl or secureseed_ in machine mode cause a trap\n");
@@ -396,14 +370,17 @@ void test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only(void){
 int main(void){
 
   unexpected_irq_beh = 0;
-  uint32_t rd;
-  //csr_should_be_present();
-  //csr_should_not_be_present();
 
-  setup_pmp(); //Hvorfor legger man inn pmp setup?
+  // seed the rand() function, which is used in some of the test functions
+  srand(1);
+
+  csr_should_be_present();
+  csr_should_not_be_present();
+
+  setup_pmp();
 
   test_secureseeds_show_zero_at_reads();
-  //test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only();
+  test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only();
 
   // check if there was an unexpected irq handler req
   assert_or_die(unexpected_irq_beh, 0, "ASSERT ERROR: unexpected irq handler\n");

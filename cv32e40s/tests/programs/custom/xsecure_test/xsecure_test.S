@@ -36,9 +36,9 @@ setup_pmp:
 	jalr	x0, 0(ra)
 
 
-//set_u_mode: // puts the core in usermode.
-//	// Zero "mstatus" to set MPP=umode
-//	li	t0, 0x1800
-//	csrrc   x0, mstatus, t0 // clear the mstatus (mpp -> User mode).
-//	csrrw 	x0, mepc, ra
-//	mret
+set_u_mode: // puts the core in usermode.
+	// Zero "mstatus" to set MPP=umode
+	li	t0, 0x1800
+	csrrc   x0, mstatus, t0 // clear the mstatus (mpp -> User mode).
+	csrrw 	x0, mepc, ra
+	mret

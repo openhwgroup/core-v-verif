@@ -81,13 +81,13 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   localparam HINT_INCREMENT = 2;
 
   //The alert signals used the gated clock, so we must therefore make sure the gated clock is enabled. TODO: update text
-  logic core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1;
+  logic core_i_sleep_unit_i_clock_en_q1;
 
   always @(posedge clk_i) begin
     if(!rst_ni) begin
-      core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1 <= 0;
+      core_i_sleep_unit_i_clock_en_q1 <= 0;
     end else begin
-      core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1 <= xsecure_if.core_i_sleep_unit_i_core_clock_gate_i_clk_en;
+      core_i_sleep_unit_i_clock_en_q1 <= xsecure_if.core_i_sleep_unit_i_clock_en;
     end
   end
 
@@ -411,7 +411,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     ////////// DUMMY AND HINT INSTRUCTION UPDATE LFSR REGISTERS /////////
 
-  property p_dummy_hint_update_lfsr0(dummy_hint_in_if_stage, lfsr_reg, write_lfsr, write_lfsr_value);
+  property p_dummy_hint_update_lfsr0(dummy_hint_in_if_stage, lfsr_reg, lfsr_n_reg, write_lfsr, write_lfsr_value);
 
     //Make sure we detect a dummy instruction
     dummy_hint_in_if_stage
@@ -420,7 +420,8 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     |=>
 
-    lfsr_reg != $past(lfsr_reg)
+    (lfsr_reg == $past(lfsr_n_reg))
+    || (lfsr_reg == LFSR_CFG_DEFAULT.default_seed)
     || ($past(write_lfsr) && write_lfsr_value == $past(lfsr_reg));
 
   endproperty
@@ -430,6 +431,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     p_dummy_hint_update_lfsr0(
       xsecure_if.core_i_if_stage_i_dummy_insert,
       xsecure_if.core_xsecure_ctrl_lfsr0,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_lfsr_n,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_seed_we_i,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_seed_i)
   ) else `uvm_error(info_tag, "A dummy instruction does not update the LFSR0 register.\n");
@@ -438,12 +440,13 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     p_dummy_hint_update_lfsr0(
       xsecure_if.core_i_if_stage_i_instr_hint,
       xsecure_if.core_xsecure_ctrl_lfsr0,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_lfsr_n,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_seed_we_i,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr0_i_seed_i)
   ) else `uvm_error(info_tag, "A hint instruction does not update the LFSR0 register.\n");
 
 
-  property p_dummy_hint_update_lfsr1_lfsr2(dummy_hint_in_if_stage, lfsr_reg, write_lfsr, write_lfsr_value);
+  property p_dummy_hint_update_lfsr1_lfsr2(dummy_hint_in_if_stage, lfsr_reg, lfsr_n_reg, write_lfsr, write_lfsr_value);
 
     //Make sure we detect a dummy instruction
     dummy_hint_in_if_stage
@@ -453,7 +456,8 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     |=>
 
-    lfsr_reg != $past(lfsr_reg)
+    (lfsr_reg == $past(lfsr_n_reg))
+    || (lfsr_reg == LFSR_CFG_DEFAULT.default_seed)
     || ($past(write_lfsr) && write_lfsr_value == $past(lfsr_reg));
   endproperty
 
@@ -462,6 +466,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     p_dummy_hint_update_lfsr1_lfsr2(
       xsecure_if.core_if_id_pipe_instr_meta_dummy,
       xsecure_if.core_xsecure_ctrl_lfsr1,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_lfsr_n,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_seed_we_i,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_seed_i)
   ) else `uvm_error(info_tag, "A dummy instruction does not update the LFSR1 register.\n");
@@ -470,6 +475,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     p_dummy_hint_update_lfsr1_lfsr2(
       xsecure_if.core_if_id_pipe_instr_meta_dummy,
       xsecure_if.core_xsecure_ctrl_lfsr2,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_lfsr_n,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_seed_we_i,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_seed_i)
   ) else `uvm_error(info_tag, "A dummy instruction does not update the LFSR2 register.\n");
@@ -478,6 +484,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     p_dummy_hint_update_lfsr1_lfsr2(
       xsecure_if.core_if_id_pipe_instr_meta_hint,
       xsecure_if.core_xsecure_ctrl_lfsr1,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_lfsr_n,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_seed_we_i,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_seed_i)
   ) else `uvm_error(info_tag, "A hint instruction does not update the LFSR1 register.\n");
@@ -486,6 +493,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     p_dummy_hint_update_lfsr1_lfsr2(
       xsecure_if.core_if_id_pipe_instr_meta_hint,
       xsecure_if.core_xsecure_ctrl_lfsr2,
+      xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_lfsr_n,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_seed_we_i,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_seed_i)
   ) else `uvm_error(info_tag, "A hint instruction does not update the LFSR2 register.\n");
@@ -515,19 +523,26 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     logic [4:0] id_hint_rs1;
     logic [4:0] id_hint_rs2;
 
+    //Make sure the instruction propegates through the pipeline
     (!xsecure_if.core_i_wb_stage_i_ctrl_fsm_i_kill_if
     & !xsecure_if.core_i_wb_stage_i_ctrl_fsm_i_kill_id
     & !xsecure_if.core_i_wb_stage_i_ctrl_fsm_i_kill_ex
     & !xsecure_if.core_i_wb_stage_i_ctrl_fsm_i_kill_wb
     ) throughout (
+
+      //Make sure there is detected a hint instruction that propegates from id to ex stage
       (xsecure_if.core_if_id_pipe_instr_meta_hint && xsecure_if.core_id_stage_id_valid_o && xsecure_if.core_id_stage_ex_ready_i,
+
+      //Make sure we store the hint instructions source register addresses
       id_hint_rs1 = xsecure_if.if_id_pipe_rs1,
       id_hint_rs2 = xsecure_if.if_id_pipe_rs2)
 
+      //Make sure we detect the same hint instruction as above in the WB stage
       ##0 first_match(##[2:$]
       xsecure_if.core_ex_wb_pipe_instr_meta_hint
       && xsecure_if.core_wb_stage_wb_valid_o)
 
+      //Make sure the instruction currently reported on the RVFI is a load instruction
       ##0 rvfi_if.rvfi_valid
       && !rvfi_if.rvfi_trap
       && rvfi_if.rvfi_insn[6:0] == OPCODE_LOAD
@@ -535,6 +550,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     )
 
     |->
+    //Verify that the source register of the hint register is not the same register as the load instruction stores its result in, to make sure pipeline stalls occurs as they are supposed to
     id_hint_rs1 != rvfi_if.rvfi_rd1_addr
     && id_hint_rs2 != rvfi_if.rvfi_rd1_addr;
   endproperty
@@ -542,6 +558,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   a_xsecure_hint_instruction_load_hint_stall: assert property (
     load_then_hint_instruction_hazard
   ) else `uvm_error(info_tag, "A hint instruction does not stall in ID stage even though the value of a source register is not fetched from memory yet.\n");
+
 
   ////////// DUMMY AND HINT INSTRUCTION UPDATES MCYCLE //////////
 
@@ -551,14 +568,13 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     !xsecure_if.core_cs_registers_mcountinhibit_rdata_mcycle
 
     //Make sure we count according to the gated clock
-    && core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
+    && core_i_sleep_unit_i_clock_en_q1
 
     //Make sure the counters are not stopped
     && !$past(xsecure_if.core_i_cs_registers_i_debug_stopcount)
 
-    //Make sure we do not write to mcycle //todo: sjekk om dette kan endres
-    && !($past(xsecure_if.core_i_cs_registers_i_csr_en_gated)
-    && ($past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLE) || $past(xsecure_if.core_cs_registers_csr_waddr == cv32e40s_pkg::CSR_MCYCLEH)))
+    //Make sure we do not write to the mcycle or mcycleh CSRs
+    && !($past(xsecure_if.core_cs_registers_csr_waddr) == cv32e40s_pkg::CSR_MCYCLE || $past(xsecure_if.core_cs_registers_csr_waddr) == cv32e40s_pkg::CSR_MCYCLEH)
 
     |->
     //Make sure the mcycle counts every cycle (including the clock cycles used by dummy and hint instructions)
@@ -571,7 +587,6 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     or xsecure_if.core_cs_registers_mhpmcounter_mcycle == $past(xsecure_if.core_cs_registers_mhpmcounter_mcycle) && $past(xsecure_if.core_cs_registers_mcountinhibit_rdata_mcycle)
 
   ) else `uvm_error(info_tag, "Dummy and hint instructions do not update the MCYCLE register.\n");
-
 
 
   ////////// DUMMY INSTRUCTIONS DO NOT UPDATE MINSTRET //////////

@@ -787,7 +787,7 @@ module uvmt_cv32e40s_tb;
 
       .core_i_controller_i_controller_fsm_i_ctrl_fsm_cs                             (core_i.controller_i.controller_fsm_i.ctrl_fsm_cs),
 
-      .core_i_sleep_unit_i_core_clock_gate_i_clk_en                                 (core_i.sleep_unit_i.core_clock_gate_i.clk_en),
+      .core_i_sleep_unit_i_clock_en                                                 (core_i.sleep_unit_i.clock_en),
 
       .core_rf_we_wb                                                                (core_i.rf_we_wb),
       .core_rf_waddr_wb                                                             (core_i.rf_waddr_wb),

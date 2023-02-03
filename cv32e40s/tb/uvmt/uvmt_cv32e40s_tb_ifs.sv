@@ -168,7 +168,7 @@ interface uvmt_cv32e40s_xsecure_if
    input logic [1:0] core_i_controller_i_controller_fsm_i_ctrl_fsm_cs,
 
     // CORE
-   input logic core_i_sleep_unit_i_core_clock_gate_i_clk_en,
+   input logic core_i_sleep_unit_i_clock_en,
 
    input logic core_rf_we_wb,
    input logic [4:0] core_rf_waddr_wb,
