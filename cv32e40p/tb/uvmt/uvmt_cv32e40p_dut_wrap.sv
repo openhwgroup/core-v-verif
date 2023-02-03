@@ -45,6 +45,8 @@ module uvmt_cv32e40p_dut_wrap
                             parameter PULP_XPULP          =  0,
                                       PULP_CLUSTER        =  0,
                                       FPU                 =  0,
+                                      FPU_ADDMUL_LAT      =  0,
+                                      FPU_OTHERS_LAT      =  0,
                                       PULP_ZFINX          =  0,
                                       NUM_MHPMCOUNTERS    =  1,
                             // Remaining parameters are used by TB components only
@@ -137,6 +139,8 @@ module uvmt_cv32e40p_dut_wrap
                  .PULP_XPULP       (PULP_XPULP),
                  .PULP_CLUSTER     (PULP_CLUSTER),
                  .FPU              (FPU),
+                 .FPU_ADDMUL_LAT   (FPU_ADDMUL_LAT),
+                 .FPU_OTHERS_LAT   (FPU_OTHERS_LAT),
                  .PULP_ZFINX       (PULP_ZFINX),
                  .NUM_MHPMCOUNTERS (NUM_MHPMCOUNTERS)
                 )
