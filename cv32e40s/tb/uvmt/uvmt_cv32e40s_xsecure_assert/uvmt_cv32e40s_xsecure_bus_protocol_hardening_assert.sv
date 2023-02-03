@@ -47,16 +47,6 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
     end
   end
 
-  //The alert signals used the gated clock, so we must therefore make sure the gated clock is enabled.
-  logic core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1;
-
-  always @(posedge clk_i) begin
-    if(!rst_ni) begin
-      core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1 <= 0;
-    end else begin
-      core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1 <= xsecure_if.core_i_sleep_unit_i_core_clock_gate_i_clk_en;
-    end
-  end
 
   ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
 
