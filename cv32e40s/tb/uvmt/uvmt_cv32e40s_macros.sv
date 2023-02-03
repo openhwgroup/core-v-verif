@@ -33,7 +33,7 @@
 
 `define RVFI_CSR_IDX_BIND(csr_name,csr_suffix,idx) \
   bind cv32e40s_wrapper \
-    uvma_rvfi_csr_if#(uvme_cv32e40s_pkg::XLEN) rvfi_csr_``csr_name````idx````csr_suffix``_if_0_i( \
+    uvma_rvfi_csr_if#(uvme_cv32e40s_pkg::XLEN) rvfi_csr_``csr_name````idx````csr_suffix``_if( \
                                                                            .clk(clk_i), \
                                                                            .reset_n(rst_ni), \
                                                                            .rvfi_csr_rmask(rvfi_i.rvfi_csr_``csr_name````csr_suffix``_rmask[``idx``]), \
