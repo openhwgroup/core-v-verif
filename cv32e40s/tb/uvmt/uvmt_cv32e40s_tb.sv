@@ -94,16 +94,28 @@ module uvmt_cv32e40s_tb;
    * a few mods to bring unused ports from the CORE to this level using SV interfaces.
    */
    uvmt_cv32e40s_dut_wrap  #(
-                             .B_EXT             (uvmt_cv32e40s_pkg::B_EXT),
-                             .PMA_NUM_REGIONS   (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
-                             .PMA_CFG           (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG),
-                             .PMP_GRANULARITY   (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY),
-                             .PMP_NUM_REGIONS   (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS),
-                             .INSTR_ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
-                             .INSTR_RDATA_WIDTH (ENV_PARAM_INSTR_DATA_WIDTH),
-                             .RAM_ADDR_WIDTH    (ENV_PARAM_RAM_ADDR_WIDTH),
-                             .SMCLIC            (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC),
-                             .DBG_NUM_TRIGGERS  (uvmt_cv32e40s_pkg::CORE_PARAM_NUM_TRIGGERS)
+                             .B_EXT                (uvmt_cv32e40s_pkg::CORE_PARAM_B_EXT),
+                             .DBG_NUM_TRIGGERS     (uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS),
+                             .DM_REGION_END        (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
+                             .DM_REGION_START      (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+                             .LFSR0_CFG            (uvmt_cv32e40s_pkg::CORE_PARAM_LFSR0_CFG),
+                             .LFSR1_CFG            (uvmt_cv32e40s_pkg::CORE_PARAM_LFSR1_CFG),
+                             .LFSR2_CFG            (uvmt_cv32e40s_pkg::CORE_PARAM_LFSR2_CFG),
+                             .M_EXT                (uvmt_cv32e40s_pkg::CORE_PARAM_M_EXT),
+                             .PMA_CFG              (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG),
+                             .PMA_NUM_REGIONS      (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+                             .PMP_GRANULARITY      (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY),
+                             .PMP_MSECCFG_RV       (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_MSECCFG_RV),
+                             .PMP_NUM_REGIONS      (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS),
+                             .PMP_PMPADDR_RV       (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_PMPADDR_RV),
+                             .PMP_PMPNCFG_RV       (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_PMPNCFG_RV),
+                             .RV32                 (uvmt_cv32e40s_pkg::CORE_PARAM_RV32),
+                             .SMCLIC               (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC),
+                             .SMCLIC_ID_WIDTH      (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC_ID_WIDTH),
+                             .SMCLIC_INTTHRESHBITS (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC_INTTHRESHBITS),
+                             .INSTR_ADDR_WIDTH     (ENV_PARAM_INSTR_ADDR_WIDTH),
+                             .INSTR_RDATA_WIDTH    (ENV_PARAM_INSTR_DATA_WIDTH),
+                             .RAM_ADDR_WIDTH       (ENV_PARAM_RAM_ADDR_WIDTH)
                             )
                             dut_wrap (
                               .clknrst_if(clknrst_if),
@@ -375,7 +387,7 @@ module uvmt_cv32e40s_tb;
   `RVFI_CSR_BIND(secureseed1)
   `RVFI_CSR_BIND(secureseed2)
 
-  `ifdef SMCLIC_EN
+  if (CORE_PARAM_SMCLIC == 1) begin: gen_clic_rvfi_bind
     `RVFI_CSR_BIND(mintstatus)
     `RVFI_CSR_BIND(mintthresh)
     `RVFI_CSR_BIND(mnxti)
@@ -383,7 +395,7 @@ module uvmt_cv32e40s_tb;
     `RVFI_CSR_BIND(mscratchcswl)
     `RVFI_CSR_BIND(mtvt)
     `RVFI_CSR_BIND(mclicbase)
-  `endif
+  end : gen_clic_rvfi_bind
 
   // dscratch0
   bind cv32e40s_wrapper
@@ -461,130 +473,132 @@ module uvmt_cv32e40s_tb;
       .IS_1P2(1)
     ) obi_data_memory_assert_i(.obi(obi_data_if_i));
 
+
   // Bind in verification modules to the design
-  `ifndef SMCLIC_EN
-  bind cv32e40s_core
-    uvmt_cv32e40s_interrupt_assert interrupt_assert_i(
-      .mcause_n     ({cs_registers_i.mcause_n.irq, cs_registers_i.mcause_n.exception_code[4:0]}),
-      .mip          (cs_registers_i.mip_rdata),
-      .mie_q        (cs_registers_i.mie_q),
-      .mstatus_mie  (cs_registers_i.mstatus_q.mie),
-      .mstatus_tw   (cs_registers_i.mstatus_q.tw),
-      .mtvec_mode_q (cs_registers_i.mtvec_q.mode),
 
-      .if_stage_instr_req_o    (if_stage_i.m_c_obi_instr_if.s_req.req),
-      .if_stage_instr_rvalid_i (if_stage_i.m_c_obi_instr_if.s_rvalid.rvalid),
-      .if_stage_instr_rdata_i  (if_stage_i.m_c_obi_instr_if.resp_payload.rdata),
-      .alignbuf_outstanding    (if_stage_i.prefetch_unit_i.alignment_buffer_i.outstanding_cnt_q),
+  if (CORE_PARAM_SMCLIC == 0) begin: gen_interrupt_assert
+    bind cv32e40s_core
+      uvmt_cv32e40s_interrupt_assert  interrupt_assert_i (
+        .mcause_n     ({cs_registers_i.mcause_n.irq, cs_registers_i.mcause_n.exception_code[4:0]}),
+        .mip          (cs_registers_i.mip_rdata),
+        .mie_q        (cs_registers_i.mie_q),
+        .mstatus_mie  (cs_registers_i.mstatus_q.mie),
+        .mstatus_tw   (cs_registers_i.mstatus_q.tw),
+        .mtvec_mode_q (cs_registers_i.mtvec_q.mode),
 
-      .ex_stage_instr_valid (ex_stage_i.id_ex_pipe_i.instr_valid),
+        .if_stage_instr_req_o    (if_stage_i.m_c_obi_instr_if.s_req.req),
+        .if_stage_instr_rvalid_i (if_stage_i.m_c_obi_instr_if.s_rvalid.rvalid),
+        .if_stage_instr_rdata_i  (if_stage_i.m_c_obi_instr_if.resp_payload.rdata),
+        .alignbuf_outstanding    (if_stage_i.prefetch_unit_i.alignment_buffer_i.outstanding_cnt_q),
 
-      .wb_stage_instr_valid_i    (wb_stage_i.ex_wb_pipe_i.instr_valid),
-      .wb_stage_instr_rdata_i    (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
-      .wb_stage_instr_err_i      (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.err),
-      .wb_stage_instr_mpu_status (wb_stage_i.ex_wb_pipe_i.instr.mpu_status),
+        .ex_stage_instr_valid (ex_stage_i.id_ex_pipe_i.instr_valid),
 
-      .branch_taken_ex (controller_i.controller_fsm_i.branch_taken_ex),
-      .debug_mode_q    (controller_i.controller_fsm_i.debug_mode_q),
+        .wb_stage_instr_valid_i    (wb_stage_i.ex_wb_pipe_i.instr_valid),
+        .wb_stage_instr_rdata_i    (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
+        .wb_stage_instr_err_i      (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.err),
+        .wb_stage_instr_mpu_status (wb_stage_i.ex_wb_pipe_i.instr.mpu_status),
 
-      .irq_ack_o (core_i.irq_ack),
-      .irq_id_o  (core_i.irq_id),
+        .branch_taken_ex (controller_i.controller_fsm_i.branch_taken_ex),
+        .debug_mode_q    (controller_i.controller_fsm_i.debug_mode_q),
 
-      .*
-    );
-  `endif
+        .irq_ack_o (core_i.irq_ack),
+        .irq_id_o  (core_i.irq_id),
 
-  `ifdef SMCLIC_EN
-  // CLIC assertions
-  bind cv32e40s_core
-    uvmt_cv32e40s_clic_interrupt_assert#(
-      .SMCLIC(uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC)
-    ) clic_assert_i(
-      .dpc                 (cs_registers_i.dpc_rdata),
-      .mintstatus          (cs_registers_i.mintstatus_rdata),
-      .mintthresh          (cs_registers_i.mintthresh_rdata),
-      .mcause              (cs_registers_i.mcause_rdata),
-      .mtvec               (cs_registers_i.mtvec_rdata),
-      .mtvt                (cs_registers_i.mtvt_rdata),
-      .mclicbase           (cs_registers_i.mclicbase_rdata),
-      .mepc                (cs_registers_i.mepc_rdata),
-      .mip                 (cs_registers_i.mip_rdata),
-      .mie                 (cs_registers_i.mie_rdata),
-      .mnxti               (cs_registers_i.mnxti_rdata),
-      .mscratch            (cs_registers_i.mscratch_rdata),
-      .mscratchcsw         (cs_registers_i.mscratchcsw_rdata),
-      .mscratchcswl        (cs_registers_i.mscratchcswl_rdata),
-      .dcsr                (cs_registers_i.dcsr_rdata),
+        .*
+      );
+  end : gen_interrupt_assert
 
-      .rvfi_mepc_wdata     (rvfi_i.rvfi_csr_mepc_wdata),
-      .rvfi_mepc_wmask     (rvfi_i.rvfi_csr_mepc_wmask),
-      .rvfi_mepc_rdata     (rvfi_i.rvfi_csr_mepc_rdata),
-      .rvfi_mepc_rmask     (rvfi_i.rvfi_csr_mepc_rmask),
-      .rvfi_dpc_rdata      (rvfi_i.rvfi_csr_dpc_rdata),
-      .rvfi_dpc_rmask      (rvfi_i.rvfi_csr_dpc_rmask),
-      .rvfi_mscratch_rdata (rvfi_i.rvfi_csr_mscratch_rdata),
-      .rvfi_mscratch_rmask (rvfi_i.rvfi_csr_mscratch_rmask),
-      .rvfi_mscratch_wdata (rvfi_i.rvfi_csr_mscratch_wdata),
-      .rvfi_mscratch_wmask (rvfi_i.rvfi_csr_mscratch_wmask),
-      .rvfi_mcause_wdata   (rvfi_i.rvfi_csr_mcause_wdata),
-      .rvfi_mcause_wmask   (rvfi_i.rvfi_csr_mcause_wmask),
+  if (CORE_PARAM_SMCLIC == 1) begin: gen_clic_assert
+    // CLIC assertions
+    bind cv32e40s_core
+      uvmt_cv32e40s_clic_interrupt_assert#(
+        .SMCLIC (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC)
+      ) clic_assert_i(
+        .dpc                 (cs_registers_i.dpc_rdata),
+        .mintstatus          (cs_registers_i.mintstatus_rdata),
+        .mintthresh          (cs_registers_i.mintthresh_rdata),
+        .mcause              (cs_registers_i.mcause_rdata),
+        .mtvec               (cs_registers_i.mtvec_rdata),
+        .mtvt                (cs_registers_i.mtvt_rdata),
+        .mclicbase           (cs_registers_i.mclicbase_rdata),
+        .mepc                (cs_registers_i.mepc_rdata),
+        .mip                 (cs_registers_i.mip_rdata),
+        .mie                 (cs_registers_i.mie_rdata),
+        .mnxti               (cs_registers_i.mnxti_rdata),
+        .mscratch            (cs_registers_i.mscratch_rdata),
+        .mscratchcsw         (cs_registers_i.mscratchcsw_rdata),
+        .mscratchcswl        (cs_registers_i.mscratchcswl_rdata),
+        .dcsr                (cs_registers_i.dcsr_rdata),
 
-      .irq_i               (core_i.irq_i),
-      .irq_ack             (core_i.irq_ack),
-      .fetch_enable        (core_i.fetch_enable),
-      .current_priv_mode   (core_i.priv_lvl),
-      .mtvec_addr_i        (core_i.mtvec_addr_i),
-      // External inputs
-      .clic_if             (dut_wrap.clic_if),
-      // Internal sampled   variants
-      .irq_id              (core_i.irq_id[SMCLIC_ID_WIDTH-1:0]),
-      .irq_level           (core_i.irq_level),
-      .irq_priv            (core_i.irq_priv),
-      .irq_shv             (core_i.irq_shv),
+        .rvfi_mepc_wdata     (rvfi_i.rvfi_csr_mepc_wdata),
+        .rvfi_mepc_wmask     (rvfi_i.rvfi_csr_mepc_wmask),
+        .rvfi_mepc_rdata     (rvfi_i.rvfi_csr_mepc_rdata),
+        .rvfi_mepc_rmask     (rvfi_i.rvfi_csr_mepc_rmask),
+        .rvfi_dpc_rdata      (rvfi_i.rvfi_csr_dpc_rdata),
+        .rvfi_dpc_rmask      (rvfi_i.rvfi_csr_dpc_rmask),
+        .rvfi_mscratch_rdata (rvfi_i.rvfi_csr_mscratch_rdata),
+        .rvfi_mscratch_rmask (rvfi_i.rvfi_csr_mscratch_rmask),
+        .rvfi_mscratch_wdata (rvfi_i.rvfi_csr_mscratch_wdata),
+        .rvfi_mscratch_wmask (rvfi_i.rvfi_csr_mscratch_wmask),
+        .rvfi_mcause_wdata   (rvfi_i.rvfi_csr_mcause_wdata),
+        .rvfi_mcause_wmask   (rvfi_i.rvfi_csr_mcause_wmask),
 
-      .obi_instr_req       (core_i.instr_req_o),
-      .obi_instr_gnt       (core_i.instr_gnt_i),
-      .obi_instr_rvalid    (core_i.instr_rvalid_i),
-      .obi_instr_addr      (core_i.instr_addr_o),
-      .obi_instr_rdata     (core_i.instr_rdata_i),
-      .obi_instr_rready    (1'b1),
-      .obi_instr_err       (core_i.instr_err_i),
+        .irq_i               (core_i.irq_i),
+        .irq_ack             (core_i.irq_ack),
+        .fetch_enable        (core_i.fetch_enable),
+        .current_priv_mode   (core_i.priv_lvl),
+        .mtvec_addr_i        (core_i.mtvec_addr_i),
+        // External inputs
+        .clic_if             (dut_wrap.clic_if),
+        // Internal sampled   variants
+        .irq_id              (core_i.irq_id[SMCLIC_ID_WIDTH-1:0]),
+        .irq_level           (core_i.irq_level),
+        .irq_priv            (core_i.irq_priv),
+        .irq_shv             (core_i.irq_shv),
 
-      .obi_data_addr       (core_i.data_addr_o),
-      .obi_data_wdata      (core_i.data_wdata_o),
-      .obi_data_we         (core_i.data_we_o),
-      .obi_data_be         (core_i.data_be_o),
-      .obi_data_req        (core_i.data_req_o),
-      .obi_data_gnt        (core_i.data_gnt_i),
-      .obi_data_rvalid     (core_i.data_rvalid_i),
-      .obi_data_rready     (1'b1),
-      .obi_data_err        (core_i.data_err_i),
+        .obi_instr_req       (core_i.instr_req_o),
+        .obi_instr_gnt       (core_i.instr_gnt_i),
+        .obi_instr_rvalid    (core_i.instr_rvalid_i),
+        .obi_instr_addr      (core_i.instr_addr_o),
+        .obi_instr_rdata     (core_i.instr_rdata_i),
+        .obi_instr_rready    (1'b1),
+        .obi_instr_err       (core_i.instr_err_i),
 
-      .debug_mode          (controller_i.controller_fsm_i.debug_mode_q),
-      .debug_req           (core_i.debug_req_i),
-      .debug_havereset     (core_i.debug_havereset_o),
-      .debug_running       (core_i.debug_running_o),
-      .debug_halt_addr     (dut_wrap.cv32e40s_wrapper_i.dm_halt_addr_i),
-      .debug_exc_addr      (dut_wrap.cv32e40s_wrapper_i.dm_exception_addr_i),
+        .obi_data_addr       (core_i.data_addr_o),
+        .obi_data_wdata      (core_i.data_wdata_o),
+        .obi_data_we         (core_i.data_we_o),
+        .obi_data_be         (core_i.data_be_o),
+        .obi_data_req        (core_i.data_req_o),
+        .obi_data_gnt        (core_i.data_gnt_i),
+        .obi_data_rvalid     (core_i.data_rvalid_i),
+        .obi_data_rready     (1'b1),
+        .obi_data_err        (core_i.data_err_i),
 
-      .rvfi_mode           (rvfi_i.rvfi_mode),
-      .rvfi_insn           (rvfi_i.rvfi_insn),
-      .rvfi_intr           (rvfi_i.rvfi_intr),
-      .rvfi_rs1_rdata      (rvfi_i.rvfi_rs1_rdata),
-      .rvfi_rs2_rdata      (rvfi_i.rvfi_rs2_rdata),
-      .rvfi_rd_wdata       (rvfi_i.rvfi_rd_wdata),
-      .rvfi_valid          (rvfi_i.rvfi_valid),
-      .rvfi_pc_rdata       (rvfi_i.rvfi_pc_rdata),
-      .rvfi_pc_wdata       (rvfi_i.rvfi_pc_wdata),
-      .rvfi_trap           (rvfi_i.rvfi_trap),
-      .rvfi_dbg_mode       (rvfi_i.rvfi_dbg_mode),
-      .rvfi_dbg            (rvfi_i.rvfi_dbg),
+        .debug_mode          (controller_i.controller_fsm_i.debug_mode_q),
+        .debug_req           (core_i.debug_req_i),
+        .debug_havereset     (core_i.debug_havereset_o),
+        .debug_running       (core_i.debug_running_o),
+        .debug_halt_addr     (dut_wrap.cv32e40s_wrapper_i.dm_halt_addr_i),
+        .debug_exc_addr      (dut_wrap.cv32e40s_wrapper_i.dm_exception_addr_i),
 
-      .wu_wfe              (dut_wrap.cv32e40s_wrapper_i.wu_wfe_i),
-      .core_sleep_o        (core_i.core_sleep_o),
-      .*
-    );
-  `endif
+        .rvfi_mode           (rvfi_i.rvfi_mode),
+        .rvfi_insn           (rvfi_i.rvfi_insn),
+        .rvfi_intr           (rvfi_i.rvfi_intr),
+        .rvfi_rs1_rdata      (rvfi_i.rvfi_rs1_rdata),
+        .rvfi_rs2_rdata      (rvfi_i.rvfi_rs2_rdata),
+        .rvfi_rd_wdata       (rvfi_i.rvfi_rd_wdata),
+        .rvfi_valid          (rvfi_i.rvfi_valid),
+        .rvfi_pc_rdata       (rvfi_i.rvfi_pc_rdata),
+        .rvfi_pc_wdata       (rvfi_i.rvfi_pc_wdata),
+        .rvfi_trap           (rvfi_i.rvfi_trap),
+        .rvfi_dbg_mode       (rvfi_i.rvfi_dbg_mode),
+        .rvfi_dbg            (rvfi_i.rvfi_dbg),
+
+        .wu_wfe              (dut_wrap.cv32e40s_wrapper_i.wu_wfe_i),
+        .core_sleep_o        (core_i.core_sleep_o),
+        .*
+      );
+  end : gen_clic_assert
 
 
   // User-mode assertions
@@ -928,19 +942,17 @@ module uvmt_cv32e40s_tb;
 
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_assert #(
-	.SECURE	(cv32e40s_pkg::SECURE),
-  .SMCLIC (SMCLIC),
-  .PMP_NUM_REGIONS (PMP_NUM_REGIONS),
-  .MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
-  .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
-  .PMP_ADDR_WIDTH (core_i.cs_registers_i.PMP_ADDR_WIDTH)
-
-    ) xsecure_assert_i 	(
+      .SECURE              (cv32e40s_pkg::SECURE),
+      .SMCLIC              (SMCLIC),
+      .PMP_NUM_REGIONS     (PMP_NUM_REGIONS),
+      .MTVT_ADDR_WIDTH     (core_i.MTVT_ADDR_WIDTH),
+      .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
+      .PMP_ADDR_WIDTH      (core_i.cs_registers_i.PMP_ADDR_WIDTH)
+    ) xsecure_assert_i (
       .clk_i      (clknrst_if.clk),
       .rst_ni     (clknrst_if.reset_n),
-
-    	.xsecure_if	(xsecure_if),
-	    .rvfi_if	  (rvfi_instr_if_0_i),
+      .xsecure_if (xsecure_if),
+      .rvfi_if    (rvfi_instr_if_0_i),
       .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
     );
 
@@ -1409,6 +1421,7 @@ module uvmt_cv32e40s_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(secureseed2)
 
      `ifdef SMCLIC_EN
+       // TODO:silabs-robin  What about when using "PARAM_SET_0"?
        `RVFI_CSR_UVM_CONFIG_DB_SET(mintstatus)
        `RVFI_CSR_UVM_CONFIG_DB_SET(mintthresh)
        `RVFI_CSR_UVM_CONFIG_DB_SET(mnxti)
