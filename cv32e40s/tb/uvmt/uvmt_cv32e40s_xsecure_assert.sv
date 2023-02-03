@@ -1,4 +1,20 @@
-//TODO: make header
+// Copyright 2022 OpenHW Group
+// Copyright 2022 Silicon Labs, Inc.
+//
+// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://solderpad.org/licenses/
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
+
 
 module uvmt_cv32e40s_xsecure_assert
   import uvm_pkg::*;
@@ -50,13 +66,13 @@ module uvmt_cv32e40s_xsecure_assert
   localparam FREQ_SETTING_64_MIN = 4'b1000;
   localparam FREQ_SETTING_64_MAX = 4'b1111;
   localparam FREQ_SETTING_32_MIN = 4'b0100;
-  localparam FREQ_SETTING_32_MAX = FREQ_SETTING_64_MIN -1;
+  localparam logic [3:0] FREQ_SETTING_32_MAX = FREQ_SETTING_64_MIN -1;
   localparam FREQ_SETTING_16_MIN = 4'b0010;
-  localparam FREQ_SETTING_16_MAX = FREQ_SETTING_32_MIN -1;
+  localparam logic [3:0] FREQ_SETTING_16_MAX = FREQ_SETTING_32_MIN -1;
   localparam FREQ_SETTING_8_MIN = 4'b0001;
-  localparam FREQ_SETTING_8_MAX = FREQ_SETTING_16_MIN -1;
+  localparam logic [3:0] FREQ_SETTING_8_MAX = FREQ_SETTING_16_MIN -1;
   localparam FREQ_SETTING_4_MIN = 4'b0000;
-  localparam FREQ_SETTING_4_MAX = FREQ_SETTING_8_MIN -1;
+  localparam logic [3:0] FREQ_SETTING_4_MAX = FREQ_SETTING_8_MIN -1;
 
 
   localparam BRANCH_STATE = 4'b0101;
@@ -97,6 +113,7 @@ module uvmt_cv32e40s_xsecure_assert
 
   logic [4:0] if_id_pipe_instr_rs1;
   logic [4:0] if_id_pipe_instr_rs2;
+  logic [4:0] if_id_pipe_instr_rd;
   logic [6:0] if_id_pipe_instr_opcode;
   logic [12:0] if_id_pipe_bltu_incrementation;
 
@@ -104,7 +121,6 @@ module uvmt_cv32e40s_xsecure_assert
   assign if_id_pipe_instr_rs2 = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[24:20];
   assign if_id_pipe_instr_rd = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[11:7];
   assign if_id_pipe_instr_opcode = xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[6:0];
-
   assign if_id_pipe_bltu_incrementation = {xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[31],
     xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[7],
     xsecure_if.core_if_id_pipe_instr_bus_resp_rdata[30:25],
@@ -123,14 +139,14 @@ module uvmt_cv32e40s_xsecure_assert
   assign rvfi_insn_opcode = rvfi_if.rvfi_insn[6:0];
   assign rvfi_insn_cmpr_opcode = rvfi_if.rvfi_insn[1:0];
 
-  //Signal used to check if the core clock is active or not.
-  logic core_clock_cycles;
+  //The alert signals used the gated clock, so we must therefore make sure the gated clock is enabled.
+  logic core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1;
 
   always @(posedge clk_i) begin
     if(!rst_ni) begin
-      core_clock_cycles <= 0;
+      core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1 <= 0;
     end else begin
-      core_clock_cycles <= xsecure_if.clk_en;
+      core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1 <= xsecure_if.core_i_sleep_unit_i_core_clock_gate_i_clk_en;
     end
   end
 
@@ -235,25 +251,29 @@ module uvmt_cv32e40s_xsecure_assert
     xsecure_setting;
   endproperty
 
+
   ///////////////////////////////////////////////////////////////////
   ///////////////////////// SECURITY ALERTS /////////////////////////
   ///////////////////////////////////////////////////////////////////
 
 
-  ////////// SECURITY ALERTS MINOR //////////
-  a_xsecure_security_alert_minor_1: assert property (
+  ////////// SECURITY ALERTS MINOR DUE TO LFSR LOCKUPS //////////
 
-    //Make sure we detect a lockup error
+  a_xsecure_security_alert_minor_LFSR_lockups: assert property (
+
+    //Make sure we detect LFSR lockup
     xsecure_if.core_cs_registers_xsecure_lfsr_lockup != NO_LOCKUP_ERRORS
 
-    //Make sure the alert minor is set
     |=>
+    //Make sure the alert minor is set
     xsecure_if.core_alert_minor_o
 
   ) else `uvm_error(info_tag, "Lookup errors do not set the minor alert.\n");
 
 
-  a_xsecure_security_alert_minor_2_to_6: assert property (
+  ////////// SECURITY ALERTS MINOR DUE TO NMI FAULTS //////////
+
+  a_xsecure_security_alert_minor_access_bus_and_illegal_instruction_faults: assert property (
 
     //Make sure we look at a valid instruction
     rvfi_if.rvfi_valid
@@ -277,11 +297,68 @@ module uvmt_cv32e40s_xsecure_assert
     //Instruction bus fault
     || rvfi_if.rvfi_trap.exception_cause == ERROR_CODE_INSTRUCTION_BUS_FAULT)
 
-    ///TODO: The error is handled in the WB stage and notifies the alert minor signal in the next stage (the current/rvfi stage)
     |->
+    //The error is handled in the WB stage and notifies the alert minor signal in the next stage (which is the current/rvfi stage)
     xsecure_if.core_alert_minor_o
 
   ) else `uvm_error(info_tag, "Exception errors do not set the minor alert.\n");
+
+
+  ////////// SECURITY ALERTS MINOR DUE TO NMI FAULTS //////////
+
+  //This assertion proves that the pending NMI signal is set whenever there is a bus fault on the OBI data bus
+  //Or that alert minor is already set due to a previous bus fault on the OBI data bus
+  a_xsecure_security_alert_minor_nmi_fault_helper_assertion: assert property (
+
+    //Make sure we receive a valid instruction packet on the OBI instruction bus
+    xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+
+    //Make sure there the OBI instruction bus indicates that there is an error related to the received packet
+    && xsecure_if.core_i_data_err_i
+
+    //Make sure the received packet does not have integrity
+    && !support_if.data_req_had_integrity
+
+    |=>
+    //Verify that the pending NMI signal is set
+    xsecure_if.core_i_controller_i_controller_fsm_i_pending_nmi
+
+    //Or that the minor alert is set due to a previous bus fault
+    || ($past(xsecure_if.core_i_controller_i_controller_fsm_i_pending_nmi) && xsecure_if.core_alert_minor_o)
+
+  ) else `uvm_error(info_tag, "A bus fault on the data OBI bus does not set the pending NMI signal high (in the case where the minor alert is not already high due to a previous bus error).\n");
+
+
+  //Helper signal that specifies that the core is in a state where interrupts are enabled
+  //In other words, making sure the core is not in debug mode or single stepping mode where interrupts are disabled
+  logic core_state_with_interrupts_enabled;
+  assign core_state_with_interrupts_enabled = !xsecure_if.core_controller_controller_fsm_debug_mode_q && ((!xsecure_if.core_i_controller_i_controller_fsm_i_dcsr_i_step) || (xsecure_if.core_i_controller_i_controller_fsm_i_dcsr_i_step && xsecure_if.core_i_controller_i_controller_fsm_i_dcsr_i_stepie));
+
+  a_xsecure_security_alert_minor_nmi_fault: assert property (
+
+    //Make sure we receive a valid instruction packet on the OBI instruction bus
+    xsecure_if.core_i_m_c_obi_data_if_s_rvalid_rvalid
+
+    //Make sure there the OBI instruction bus indicates that there is an error related to the received packet
+    && xsecure_if.core_i_data_err_i
+
+    //Make sure the received packet does not have integrity
+    && !support_if.data_req_had_integrity
+
+    //Make sure we investigate a scene where the core is not already handling a previous bus fault (see the helper assertion above)
+    ##1 xsecure_if.core_i_controller_i_controller_fsm_i_pending_nmi
+
+    |=>
+    //Verify that the minor alert is set after a maximum of two instructions have retired in an interruptable operating mode (not debug mode or single stepping mode without interrupts)
+
+    //Allow a maximum of two instructions to retire when the core is in an interruptable operating state
+    (core_state_with_interrupts_enabled && rvfi_if.rvfi_valid)[->0:2]
+
+    //Verify that there are no more instructions that retire when the core is in in interruptable operating state before the minor alert is set
+    ##1 !(core_state_with_interrupts_enabled && rvfi_if.rvfi_valid)[*0:$]
+    ##1 xsecure_if.core_alert_minor_o
+
+  ) else `uvm_error(info_tag, "A bus fault on the OBI data bus does not set the minor alert in non-debug and non-single-stepping mode.\n");
 
 
   ///////////////////////////////////////////////////////////////////////////
@@ -375,6 +452,7 @@ module uvmt_cv32e40s_xsecure_assert
 ////////// DIV/REM TIMING //////////
 
   sequence seq_rvfi_not_valid_for_34_cycles;
+    @(posedge clk_i)
 
     //Make sure rvfi_valid is off for 34 cycles
     !rvfi_if.rvfi_valid[*34] ##1 1;
@@ -382,6 +460,7 @@ module uvmt_cv32e40s_xsecure_assert
   endsequence
 
   sequence seq_set_rvfi_valid_once_as_memory_instruction_during_the_past_34_cycles;
+    @(posedge clk_i)
 
     //Make sure a memory instruction is retired in an interval of 34 cycles
 
@@ -452,95 +531,151 @@ module uvmt_cv32e40s_xsecure_assert
   ////////////////////////////////////////////////////////////////
 
 
-  ////////// SOME CSRS ARE SHADOWED //////////
+  ////////// CSRS ARE SHADOWED //////////
 
-  /****************************************
-  The following 4 assertions make sure the CSRs are shadowed at all times:
-  The shadow registers are the compliments of the CSRs
-  ****************************************/
+  //The following assertions make sure the CSRs are shadowed at all times.
+  //The shadow registers are the complements of the CSRs
 
-  a_xsecure_hardened_CSRs_no_mismatch_static_registers: assert property (
-    //Make sure the following CSRs are shadowed at all times:
+  property p_hardened_csr(csr, shadow);
+    //Make sure the CSR is shadowed at all times, and that the shadow is equal to the complement of the CSR
+    csr == ~shadow;
+  endproperty
 
-    //JVT
-    xsecure_if.core_cs_registers_jvt_csr_gen_hardened_shadow_q == ~(xsecure_if.core_i_cs_registers_i_jvt_csr_i_rdata_q & cv32e40s_pkg::CSR_JVT_MASK)
+  //MSTATEEN0
+  a_xsecure_hardened_csr_mstateen0: assert property (
+    p_hardened_csr(
+      xsecure_if.core_i_cs_registers_i_mstateen0_q,
+      xsecure_if.core_cs_registers_mstateen0_csr_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag, "The CSR MSTATEEN0 is not shadowed.\n");
 
-    //MSTATUS
-    and xsecure_if.core_cs_registers_mstatus_csr_gen_hardened_shadow_q == ~(xsecure_if.core_i_cs_registers_i_mstatus_csr_i_rdata_q & cv32e40s_pkg::CSR_MSTATUS_MASK)
+  //PRIVILEGE LEVEL
+  a_xsecure_hardened_csr_privlvl: assert property (
+    p_hardened_csr(
+      xsecure_if.core_i_cs_registers_i_priv_lvl_q_int,
+      xsecure_if.core_cs_registers_priv_lvl_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag, "The priviliged level is not shadowed.\n");
 
-    //CPUCTRL
-    and xsecure_if.core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q == ~(xsecure_if.core_i_cs_registers_i_xsecure_cpuctrl_csr_i_rdata_q & cv32e40s_pkg::CSR_CPUCTRL_MASK)
+  //JVT
+  a_xsecure_hardened_csr_jvt: assert property (
+    p_hardened_csr(
+      xsecure_if.core_i_cs_registers_i_jvt_q,
+      xsecure_if.core_cs_registers_jvt_csr_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag, "The CSR JVT is not shadowed.\n");
 
-    //DCSR
-    and xsecure_if.core_cs_registers_dcsr_csr_gen_hardened_shadow_q == ~(xsecure_if.core_i_cs_registers_i_dcsr_csr_i_rdata_q & cv32e40s_pkg::CSR_DCSR_MASK)
+  //MSTATUS
+  a_xsecure_hardened_csr_mstatus: assert property (
+    p_hardened_csr(
+      xsecure_if.core_i_cs_registers_i_mstatus_q,
+      xsecure_if.core_cs_registers_mstatus_csr_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag, "The CSR MSTATUS is not shadowed.\n");
 
-    //MEPC
-    and xsecure_if.core_cs_registers_mepc_csr_gen_hardened_shadow_q == ~(xsecure_if.core_i_cs_registers_i_mepc_csr_i_rdata_q & cv32e40s_pkg::CSR_MEPC_MASK)
+  //CPUCTRL
+  a_xsecure_hardened_csr_cpuctrl: assert property (
+    p_hardened_csr(
+      xsecure_if.core_i_cs_registers_i_cpuctrl_q,
+      xsecure_if.core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag, "The CSR CPUCTRL is not shadowed.\n");
 
-    //MSCRATCH
-    and xsecure_if.core_cs_registers_mscratch_csr_gen_hardened_shadow_q == ~(xsecure_if.core_i_cs_registers_i_mscratch_csr_i_rdata_q & cv32e40s_pkg::CSR_MSCRATCH_MASK)
+  //DCSR
+  a_xsecure_hardened_csr_dcsr: assert property (
+    p_hardened_csr(
+      xsecure_if.core_i_cs_registers_i_dcsr_q,
+      xsecure_if.core_cs_registers_dcsr_csr_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag, "The CSR DCSR is not shadowed.\n");
 
-  ) else `uvm_error(info_tag, "One or several of the CSRs JVT, MSTATUS, CPUCTRL, DCSR, MEPC, MSCRATCH are not shadowed.\n");
+  //MEPC
+  a_xsecure_hardened_csr_mepc: assert property (
+    p_hardened_csr(
+      xsecure_if.core_i_cs_registers_i_mepc_q,
+      xsecure_if.core_cs_registers_mepc_csr_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag, "The CSR MEPC is not shadowed.\n");
+
+  //MSCRATCH (Therby also MSCRATCHCSW and MSCRATCHCSWL)
+  a_xsecure_hardened_csr_mscratch: assert property (
+    p_hardened_csr(
+      xsecure_if.core_i_cs_registers_i_mscratch_q,
+      xsecure_if.core_cs_registers_mscratch_csr_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag, "The CSR MSCRATCH is not shadowed.\n");
 
   generate
     if(PMP_NUM_REGIONS > 0) begin
-      a_xsecure_hardened_CSRs_no_mismatch_pmp_register: assert property (
-      //Make sure the MSECCFG CSR is shadowed at all times (given that we use PMP regions)
 
       //MSECCFG
-      xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q & cv32e40s_pkg::CSR_MSECCFG_MASK)
-
+      a_xsecure_hardened_csr_mseccfg: assert property (
+        p_hardened_csr(
+          xsecure_if.core_i_cs_registers_i_pmp_mseccfg_q,
+          xsecure_if.uvmt_cv32e40s_tb_pmp_mseccfg_q_shadow_q)
       ) else `uvm_error(info_tag, "The CSR MSECCFG is not shadowed.\n");
 
     end
   endgenerate
 
-  generate for (genvar n = 0; n < PMP_NUM_REGIONS; n++) begin
-
-    a_xsecure_hardened_CSRs_no_mismatch_pmp_region_registers: assert property (
-      //Make sure the existing PMP CSRs are shadowed at all times
+  generate
+    for (genvar n = 0; n < PMP_NUM_REGIONS; n++) begin
 
       //PMPNCFG
-      xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q[n] == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q[n] & cv32e40s_pkg::CSR_PMPNCFG_MASK)
+      a_xsecure_hardened_csr_pmpncfg: assert property (
+        p_hardened_csr(
+          xsecure_if.core_i_cs_registers_i_pmpncfg_q[n],
+          xsecure_if.uvmt_cv32e40s_tb_pmpncfg_q_shadow_q[n])
+      ) else `uvm_error(info_tag, $sformatf("The CSR PMP%0dCFG is not shadowed.\n", n));
 
       //PMPADDR
-      and xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n] == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n] & cv32e40s_pkg::CSR_PMPADDR_MASK[PMP_ADDR_WIDTH-1:0])
+      a_xsecure_hardened_csr_pmpaddr: assert property (
+        p_hardened_csr(
+          xsecure_if.core_i_cs_registers_i_pmp_addr_q[n],
+          xsecure_if.uvmt_cv32e40s_tb_pmp_addr_q_shadow_q[n])
+      ) else `uvm_error(info_tag, $sformatf("The CSR PMPADDR[%0d] is not shadowed.\n", n));
 
-    ) else `uvm_error(info_tag, $sformatf("One or several of the CSRs PMP%0dCFG or PMPADDR[%0d] are not shadowed.\n", n, n));
-
-  end endgenerate
+    end
+  endgenerate
 
   generate
     if(SMCLIC) begin
-      a_xsecure_hardened_CSRs_no_mismatch_smclic_registers: assert property (
-        //Make sure the smclic CSRs are shadowed at all times if smclic is enabled
 
-        //MTVT
-        xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q & cv32e40s_pkg::CSR_MTVT_MASK)
+      //MTVT
+      a_xsecure_hardened_csr_mtvt: assert property (
+        p_hardened_csr(
+          xsecure_if.core_i_cs_registers_i_mtvt_q,
+          xsecure_if.uvmt_cv32e40s_tb_mtvt_q_shadow_q)
+      ) else `uvm_error(info_tag, "The CSR MTVT is not shadowed.\n");
 
-        //MTVEC
-        and xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q & cv32e40s_pkg::CSR_MTVEC_CLIC_MASK)
+      //MTVEC
+      a_xsecure_hardened_csr_mtvec: assert property (
+        p_hardened_csr(
+          xsecure_if.core_i_cs_registers_i_mtvec_q,
+          xsecure_if.uvmt_cv32e40s_tb_mtvec_q_shadow_q)
+      ) else `uvm_error(info_tag, "The CSR MTVEC is not shadowed.\n");
 
-        //MINTSTATUS
-        and xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q & cv32e40s_pkg::CSR_MINTSTATUS_MASK)
+      //MINTSTATUS
+      a_xsecure_hardened_csr_mintstatus: assert property (
+        p_hardened_csr(
+          xsecure_if.core_i_cs_registers_i_mintstatus_q,
+          xsecure_if.uvmt_cv32e40s_tb_mintstatus_q_shadow_q)
+      ) else `uvm_error(info_tag, "The CSR MINTSTATUS is not shadowed.\n");
 
-        //MINTTHRESH
-        and xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q & CSR_MINTTHRESH_MASK)
-
-      ) else `uvm_error(info_tag, "One or several of the CSRs MTVT, MTVEC, MINTSTATUS or MINTTHRESH are not shadowed.\n");
+      //MINTTHRESH
+      a_xsecure_hardened_csr_mintthresh: assert property (
+        p_hardened_csr(
+          xsecure_if.core_i_cs_registers_i_mintthresh_q,
+          xsecure_if.uvmt_cv32e40s_tb_mintthresh_q_shadow_q)
+      ) else `uvm_error(info_tag, "The CSR MINTTHRESH is not shadowed.\n");
 
     end else begin
 
-      a_xsecure_hardened_CSRs_no_mismatch_basic_mode_registers: assert property (
-        //Make sure the CSRs used when smclic is disabled are shadowed at all times
+      //MTVEC
+      a_xsecure_hardened_csr_mtvec: assert property (
+        p_hardened_csr(
+          xsecure_if.core_i_cs_registers_i_mtvec_q,
+          xsecure_if.uvmt_cv32e40s_tb_mtvec_q_shadow_q)
+      ) else `uvm_error(info_tag, "The CSR MTVEC is not shadowed.\n");
 
-        //MTVEC
-        xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q & cv32e40s_pkg::CSR_MTVEC_BASIC_MASK)
-
-        //MIE
-        and xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q == ~(xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q & cv32e40s_pkg::IRQ_MASK)
-
-      ) else `uvm_error(info_tag, "The CSRs MTVEC or MIE are not shadowed.\n");
+      //MIE
+      a_xsecure_hardened_csr_mie: assert property (
+        p_hardened_csr(
+          xsecure_if.core_i_cs_registers_i_mie_q,
+          xsecure_if.uvmt_cv32e40s_tb_mie_q_hardened_shadow_q)
+      ) else `uvm_error(info_tag, "The CSR MIE is not shadowed.\n");
 
     end
   endgenerate
@@ -548,160 +683,161 @@ module uvmt_cv32e40s_xsecure_assert
 
   ////////// SET THE MAJOR ALERT IF A CSR IS NOT SHADOWED //////////
 
-  property p_xsecure_hardned_csr_mismatch_sets_alert_major(csr, shadow, MASK);
-    //Make sure we only set the major alert if we are in the operating mode (use the gated clock)
-    @(posedge xsecure_if.core_clk)
+  //The following assertions check if mismatches between the CSRs and their corresponding shadow registers result in the major alert being set
 
-    //csr & mask: make sure the bits we are not interested in are set to 0s, which is determined by the mask
-    //(shadow | ~MASK): this operation turns the unmasked bits of the shadow register to 1s (so they will become compliments of the unmasked bits of the CSR (which are all 0s))
-    //~(shadow | ~MASK) != (CSR & MASK): this operation checks if the shadow register (and its unmasked bits) are compliments of the CSR (and its unmasked bits)
-    ~(shadow | ~MASK) != (csr & MASK)
+  property p_hardened_csr_mismatch_sets_major_aler(csr, shadow);
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
-    //Make sure the alert major is set if there is a mismatch of the CSR and shadow register
+    //Make sure the shadow is not the complement of the CSR
+    && shadow != ~csr
+
     |=>
+    //Verify that the major alert is set
     xsecure_if.core_alert_major_o;
-
   endproperty
 
-  /****************************************
-  The following assertions check whether a mismatch between a CSR and its corresponding shadow register results in the major alert being set.
-  ****************************************/
+  //MSTATEEN0
+  a_xsecure_hardened_csr_mismatch_mstateen0: assert property (
+    p_hardened_csr_mismatch_sets_major_aler(
+      xsecure_if.core_i_cs_registers_i_mstateen0_q,
+      xsecure_if.core_cs_registers_mstateen0_csr_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MSTATEEN0 and its shadow does not set the major alert.\n");
 
-  //JVT:
-  a_xsecure_hardened_CSRs_mismatch_jvt: assert property (
-    p_xsecure_hardned_csr_mismatch_sets_alert_major(
-      xsecure_if.core_i_cs_registers_i_jvt_csr_i_rdata_q,
-      xsecure_if.core_cs_registers_jvt_csr_gen_hardened_shadow_q,
-      cv32e40s_pkg::CSR_JVT_MASK)
-  ) else `uvm_error(info_tag_glitch, "A mismatch between the JVT CSR and its shadow register does not result in the major alert being set.\n");
+  //PRIVILEGE LEVEL
+  a_xsecure_hardened_csr_mismatch_privlvl: assert property (
+    p_hardened_csr_mismatch_sets_major_aler(
+      xsecure_if.core_i_cs_registers_i_priv_lvl_q_int,
+      xsecure_if.core_cs_registers_priv_lvl_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the priviliged level and its shadow does not set the major alert.\n");
 
-  //MSTATUS:
-  a_xsecure_hardened_CSRs_mismatch_mstatus: assert property (
-    p_xsecure_hardned_csr_mismatch_sets_alert_major(
-      xsecure_if.core_i_cs_registers_i_mstatus_csr_i_rdata_q,
-      xsecure_if.core_cs_registers_mstatus_csr_gen_hardened_shadow_q,
-      cv32e40s_pkg::CSR_MSTATUS_MASK)
-  ) else `uvm_error(info_tag_glitch, "A mismatch between the MSTATUS CSR and its shadow register does not result in the major alert being set.\n");
+  //JVT
+  a_xsecure_hardened_csr_mismatch_jvt: assert property (
+    p_hardened_csr_mismatch_sets_major_aler(
+      xsecure_if.core_i_cs_registers_i_jvt_q,
+      xsecure_if.core_cs_registers_jvt_csr_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR JVT and its shadow does not set the major alert.\n");
 
-  //CPUCTRL:
-  a_xsecure_hardened_CSRs_mismatch_cpuctrl: assert property (
-    p_xsecure_hardned_csr_mismatch_sets_alert_major(
-      xsecure_if.core_i_cs_registers_i_xsecure_cpuctrl_csr_i_rdata_q,
-      xsecure_if.core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q,
-      cv32e40s_pkg::CSR_CPUCTRL_MASK)
-  ) else `uvm_error(info_tag_glitch, "A mismatch between the CPUCTRL CSR and its shadow register does not result in the major alert being set.\n");
+  //MSTATUS
+  a_xsecure_hardened_csr_mismatch_mstatus: assert property (
+    p_hardened_csr_mismatch_sets_major_aler(
+      xsecure_if.core_i_cs_registers_i_mstatus_q,
+      xsecure_if.core_cs_registers_mstatus_csr_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MSTATUS and its shadow does not set the major alert.\n");
 
-  //DCSR:
-  a_xsecure_hardened_CSRs_mismatch_dcsr: assert property (
-    p_xsecure_hardned_csr_mismatch_sets_alert_major(
-      xsecure_if.core_i_cs_registers_i_dcsr_csr_i_rdata_q,
-      xsecure_if.core_cs_registers_dcsr_csr_gen_hardened_shadow_q,
-      cv32e40s_pkg::CSR_DCSR_MASK)
-  ) else `uvm_error(info_tag_glitch, "A mismatch between the DCSR CSR and its shadow register does not result in the major alert being set.\n");
+  //CPUCTRL
+  a_xsecure_hardened_csr_mismatch_cpuctrl: assert property (
+    p_hardened_csr_mismatch_sets_major_aler(
+      xsecure_if.core_i_cs_registers_i_cpuctrl_q,
+      xsecure_if.core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR CPUCTRL and its shadow does not set the major alert.\n");
 
-  //MEPC:
-  a_xsecure_hardened_CSRs_mismatch_mepc: assert property (
-    p_xsecure_hardned_csr_mismatch_sets_alert_major(
-      xsecure_if.core_i_cs_registers_i_mepc_csr_i_rdata_q,
-      xsecure_if.core_cs_registers_mepc_csr_gen_hardened_shadow_q,
-      cv32e40s_pkg::CSR_MEPC_MASK)
-  ) else `uvm_error(info_tag_glitch, "A mismatch between the MEPC CSR and its shadow register does not result in the major alert being set.\n");
+  //DCSR
+  a_xsecure_hardened_csr_mismatch_dcsr: assert property (
+    p_hardened_csr_mismatch_sets_major_aler(
+      xsecure_if.core_i_cs_registers_i_dcsr_q,
+      xsecure_if.core_cs_registers_dcsr_csr_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR DCSR and its shadow does not set the major alert.\n");
 
-  //MSCRATCH:
-  a_xsecure_hardened_CSRs_mismatch_mscratch: assert property (
-    p_xsecure_hardned_csr_mismatch_sets_alert_major(
-      xsecure_if.core_i_cs_registers_i_mscratch_csr_i_rdata_q,
-      xsecure_if.core_cs_registers_mscratch_csr_gen_hardened_shadow_q,
-      cv32e40s_pkg::CSR_MSCRATCH_MASK)
-  ) else `uvm_error(info_tag_glitch, "A mismatch between the MSCRATCH CSR and its shadow register does not result in the major alert being set.\n");
+  //MEPC
+  a_xsecure_hardened_csr_mismatch_mepc: assert property (
+    p_hardened_csr_mismatch_sets_major_aler(
+      xsecure_if.core_i_cs_registers_i_mepc_q,
+      xsecure_if.core_cs_registers_mepc_csr_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MEPC and its shadow does not set the major alert.\n");
+
+  //MSCRATCH
+  a_xsecure_hardened_csr_mismatch_mscratch: assert property (
+    p_hardened_csr_mismatch_sets_major_aler(
+      xsecure_if.core_i_cs_registers_i_mscratch_q,
+      xsecure_if.core_cs_registers_mscratch_csr_gen_hardened_shadow_q)
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MSCRATCH and its shadow does not set the major alert.\n");
+
+
 
   generate
     if(PMP_NUM_REGIONS > 0) begin
 
-      //MSECCFG:
-      a_xsecure_hardened_CSRs_mismatch_mseccfg: assert property (
-        p_xsecure_hardned_csr_mismatch_sets_alert_major(
-          xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q,
-          xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q,
-          cv32e40s_pkg::CSR_MSECCFG_MASK)
-      ) else `uvm_error(info_tag_glitch, "A mismatch between the MSECCFG CSR and its shadow register does not result in the major alert being set.\n");
+      //MSECCFG
+      a_xsecure_hardened_csr_mismatch_mseccfg: assert property (
+        p_hardened_csr_mismatch_sets_major_aler(
+          xsecure_if.core_i_cs_registers_i_pmp_mseccfg_q,
+          xsecure_if.uvmt_cv32e40s_tb_pmp_mseccfg_q_shadow_q)
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MSECCFG and its shadow does not set the major alert.\n");
 
     end
   endgenerate
 
+  generate
+    for (genvar n = 0; n < PMP_NUM_REGIONS; n++) begin
 
-  generate for (genvar n = 0; n < PMP_NUM_REGIONS; n++) begin
-    //PMPNCFG:
-    a_xsecure_hardened_CSRs_mismatch_pmpncfg: assert property (
-      p_xsecure_hardned_csr_mismatch_sets_alert_major(
-        xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q[n],
-        xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q[n],
-        cv32e40s_pkg::CSR_PMPNCFG_MASK)
-    ) else `uvm_error(info_tag_glitch, $sformatf("The mismatch between the PMP%0dCFG CSR and its shadow register does not result in the major alert being set.\n", n));
+      //PMPNCFG
+      a_xsecure_hardened_csr_mismatch_pmpncfg: assert property (
+        p_hardened_csr_mismatch_sets_major_aler(
+          xsecure_if.core_i_cs_registers_i_pmpncfg_q[n],
+          xsecure_if.uvmt_cv32e40s_tb_pmpncfg_q_shadow_q[n])
+      ) else `uvm_error(info_tag_glitch, $sformatf("A mismatch between the CSR PMP%0dCFG and its shadow does not set the major alert.\n", n));
 
-    //PMPADDR:
-    a_xsecure_hardened_CSRs_mismatch_pmpaddr: assert property (
-      p_xsecure_hardned_csr_mismatch_sets_alert_major(
-        xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q[n],
-        xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q[n],
-        cv32e40s_pkg::CSR_PMPADDR_MASK[PMP_ADDR_WIDTH-1:0])
-    ) else `uvm_error(info_tag_glitch, $sformatf("The mismatch between the PMPADDR[%0d] CSR and its shadow register does not result in the major alert being set.\n", n));
+      //PMPADDR
+      a_xsecure_hardened_csr_mismatch_pmpaddr: assert property (
+        p_hardened_csr_mismatch_sets_major_aler(
+          xsecure_if.core_i_cs_registers_i_pmp_addr_q[n],
+          xsecure_if.uvmt_cv32e40s_tb_pmp_addr_q_shadow_q[n])
+      ) else `uvm_error(info_tag_glitch, $sformatf("A mismatch between the CSR PMPADDR[%0d] and its shadow does not set the major alert.\n", n));
 
-  end endgenerate
+    end
+  endgenerate
 
+  generate
+    if(SMCLIC) begin
 
-  if(SMCLIC) begin
-    //MTVT:
-    a_xsecure_hardened_CSRs_mismatch_mtvt: assert property (
-      p_xsecure_hardned_csr_mismatch_sets_alert_major(
-        xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q,
-        xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q,
-        cv32e40s_pkg::CSR_MTVT_MASK)
-    ) else `uvm_error(info_tag_glitch, "A mismatch between the MTVT CSR and its shadow register does not result in the major alert being set.\n");
+      //MTVT
+      a_xsecure_hardened_csr_mismatch_mtvt: assert property (
+        p_hardened_csr_mismatch_sets_major_aler(
+          xsecure_if.core_i_cs_registers_i_mtvt_q,
+          xsecure_if.uvmt_cv32e40s_tb_mtvt_q_shadow_q)
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MTVT and its shadow does not set the major alert.\n");
 
-    //MTVEC:
-    a_xsecure_hardened_CSRs_mismatch_mtvec: assert property (
-      p_xsecure_hardned_csr_mismatch_sets_alert_major(
-        xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q,
-        xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q,
-        cv32e40s_pkg::CSR_MTVEC_CLIC_MASK)
-    ) else `uvm_error(info_tag_glitch, "A mismatch between the MTVEC CSR and its shadow register does not result in the major alert being set.\n");
+      //MTVEC
+      a_xsecure_hardened_csr_mismatch_mtvec: assert property (
+        p_hardened_csr_mismatch_sets_major_aler(
+          xsecure_if.core_i_cs_registers_i_mtvec_q,
+          xsecure_if.uvmt_cv32e40s_tb_mtvec_q_shadow_q)
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MTVEC and its shadow does not set the major alert.\n");
 
-    //MINTSTATUS:
-    a_xsecure_hardened_CSRs_mismatch_mintstatus: assert property (
-      p_xsecure_hardned_csr_mismatch_sets_alert_major(
-        xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q,
-        xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q,
-        cv32e40s_pkg::CSR_MINTSTATUS_MASK)
-    ) else `uvm_error(info_tag_glitch, "A mismatch between the MINTSTATUS CSR and its shadow register does not result in the major alert being set.\n");
+      //MINTSTATUS
+      a_xsecure_hardened_csr_mismatch_mintstatus: assert property (
+        p_hardened_csr_mismatch_sets_major_aler(
+          xsecure_if.core_i_cs_registers_i_mintstatus_q,
+          xsecure_if.uvmt_cv32e40s_tb_mintstatus_q_shadow_q)
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MINTSTATUS and its shadow does not set the major alert.\n");
 
-    //MINTTHRESH:
-    a_xsecure_hardened_CSRs_mismatch_mintthresh: assert property (
-      p_xsecure_hardned_csr_mismatch_sets_alert_major(
-        xsecure_if.dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q,
-        xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q,
-        CSR_MINTTHRESH_MASK)
-    ) else `uvm_error(info_tag_glitch, "A mismatch between the MINTTHRESH CSR and its shadow register does not result in the major alert being set.\n");
+      //MINTTHRESH
+      a_xsecure_hardened_csr_mismatch_mintthresh: assert property (
+        p_hardened_csr_mismatch_sets_major_aler(
+          xsecure_if.core_i_cs_registers_i_mintthresh_q,
+          xsecure_if.uvmt_cv32e40s_tb_mintthresh_q_shadow_q)
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MINTTHRESH and its shadow does not set the major alert.\n");
 
-  end else begin
+    end else begin
 
-    //MTVEC:
-    a_xsecure_hardened_CSRs_mismatch_mtvec: assert property (
-      p_xsecure_hardned_csr_mismatch_sets_alert_major(
-        xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q,
-        xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q,
-        cv32e40s_pkg::CSR_MTVEC_BASIC_MASK)
-    ) else `uvm_error(info_tag_glitch, "A mismatch between the MTVEC CSR and its shadow register does not result in the major alert being set.\n");
+      //MTVEC
+      a_xsecure_hardened_csr_mismatch_mtvec: assert property (
+        p_hardened_csr_mismatch_sets_major_aler(
+          xsecure_if.core_i_cs_registers_i_mtvec_q,
+          xsecure_if.uvmt_cv32e40s_tb_mtvec_q_shadow_q)
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MTVEC and its shadow does not set the major alert.\n");
 
-    //MIE:
-    a_xsecure_hardened_CSRs_mismatch_mie: assert property (
-      p_xsecure_hardned_csr_mismatch_sets_alert_major(
-        xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q,
-        xsecure_if.dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q,
-        cv32e40s_pkg::IRQ_MASK)
-    ) else `uvm_error(info_tag_glitch, "A mismatch between the MIE CSR and its shadow register does not result in the major alert being set.\n");
+      //MIE
+      a_xsecure_hardened_csr_mismatch_mie: assert property (
+        p_hardened_csr_mismatch_sets_major_aler(
+          xsecure_if.core_i_cs_registers_i_mie_q,
+          xsecure_if.uvmt_cv32e40s_tb_mie_q_hardened_shadow_q)
+      ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MIE and its shadow does not set the major alert.\n");
 
-  end
+    end
+  endgenerate
+
 
   /////////////////////////////////////////////////////////////////////
   ///////////////////////// REGISTER FILE ECC /////////////////////////
@@ -802,13 +938,15 @@ module uvmt_cv32e40s_xsecure_assert
   property p_xsecure_register_file_ecc_gprecc_set_major_alert_if_reg_is_all_zeros_or_ones(if_id_pipe_rs_addr);
     logic [4:0] gpr_addr = 0;
 
-    @(posedge xsecure_if.core_clk)
-
     //Store the source register address in a GPR address variable
     (1, gpr_addr = if_id_pipe_rs_addr)
 
     //Make sure the source register is not x0 (because GPR x0 behaves different than the other source registers)
     ##0 if_id_pipe_rs_addr != 0
+
+    //Make sure the gated clock is enabled
+    && core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
+
 
     //Make sure the source registers data and ECC score are all ones or zeros
     ##0 (xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr] == 38'h00_0000_0000
@@ -883,10 +1021,12 @@ module uvmt_cv32e40s_xsecure_assert
 
 
   property p_xsecure_register_file_ecc_no_supression_reading_rs1(rs1_addr);
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //Specify the RS1 address
-    if_id_pipe_instr_rs1 == rs1_addr
+    && if_id_pipe_instr_rs1 == rs1_addr
 
     //Make sure the GPR memory and the local memory differ in one or two bits
     && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs1_addr][31:0] ^ gpr_shadow[rs1_addr], '1) inside {1,2})
@@ -897,10 +1037,12 @@ module uvmt_cv32e40s_xsecure_assert
   endproperty
 
   property p_xsecure_register_file_ecc_no_supression_reading_rs2(rs2_addr);
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //Specify the RS2 address
-    if_id_pipe_instr_rs2 == rs2_addr
+    && if_id_pipe_instr_rs2 == rs2_addr
 
     //Make sure the GPR memory and the local memory differ in one or two bits
     && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs2_addr][31:0] ^ gpr_shadow[rs2_addr], '1) inside {1,2})
@@ -936,7 +1078,7 @@ module uvmt_cv32e40s_xsecure_assert
   ) else `uvm_error(info_tag, "Interface integrity checking is not enabled when exiting reset.\n");
 
 
-  ////////// INTERFACE INTEGRITY PARITY BITS ARE COMPLIMENT BITS AT ALL TIMES GIVEN THERE IS NO GLITCH //////////
+  ////////// INTERFACE INTEGRITY PARITY BITS ARE COMPLEMENT BITS AT ALL TIMES GIVEN THERE IS NO GLITCH //////////
 
   property p_parity_signal_is_invers_of_signal(signal, parity_signal);
     @(posedge clk_i)
@@ -986,10 +1128,12 @@ module uvmt_cv32e40s_xsecure_assert
 ////////// INTERFACE INTEGRITY PARITY BIT ERRORS DUE TO GLITCHES SET ALERT MAJOR //////////
 
 property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_signal);
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //Make sure the parity bit is not the complement of the non-parity bit
-    parity_signal != ~signal
+    && parity_signal != ~signal
 
     |=>
     //Verify that the major alert is set
@@ -1057,11 +1201,13 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// INTERFACE INTEGRITY RESPONSE CHECKSUM ERRORS FOR INSTRUCTIONS SET ALERT MAJOR //////////
 
   property p_will_checksum_error_set_major_alert(is_integrity_checking_enabled, rvalid, req_had_integrity, is_checksum_error, is_major_alert_set);
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //If integrity checking is enabled the major alert should be set if there is a checksum error
     //However, if integrity checking is disabled the major alert should not be set even though there is a checksum error
-    is_integrity_checking_enabled
+    && is_integrity_checking_enabled
 
     //Make sure we receive a response packet
     && rvalid
@@ -1165,10 +1311,9 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// INTERFACE INTEGRITY INSTRUCTION GNT PARITY ERROR SETS INTEGRITY ERROR BIT //////////
 
   property p_check_integrity_error_bit(rvalid, error, resp_integrity_error_bit);
-    @(posedge xsecure_if.core_clk)
 
     //Make sure the core is in operative mode
-    core_clock_cycles
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //Make sure the interface integrity checking is enabled
     && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
@@ -1232,10 +1377,11 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// INTERFACE INTEGRITY INSTRUCTION CHECKSUM ERROR SETS INTEGRITY ERROR BIT //////////
 
   property p_check_integrity_error_bit_when_checksum_error(rvalid, error, req_had_integrity, resp_integrity_error_bit);
-    @(posedge xsecure_if.core_clk)
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //Make sure the core is in operative mode
-    core_clock_cycles
+    && core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //Make sure the interface integrity checking is enabled
     && xsecure_if.core_xsecure_ctrl_cpuctrl_integrity
@@ -1283,6 +1429,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// PC HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
 
   sequence seq_dummy_if_id;
+    @(posedge clk_i)
 
     //Generate a dummy instruction
     xsecure_if.core_if_stage_instr_meta_n_dummy
@@ -1292,6 +1439,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   endsequence
 
   sequence seq_pc_set_stable;
+    @(posedge clk_i)
 
     //Set the PC value to a given address
     xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set
@@ -1302,13 +1450,9 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   endsequence
 
   a_xsecure_pc_hardening_no_glitch: assert property (
-    @(posedge xsecure_if.core_clk)
-
-    //Make sure we look at valid cycles
-    core_clock_cycles
 
     //Make sure the PC hardening setting is on
-    && xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+    xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
 
     //Make sure the inspected instruction is valid
     && $past(xsecure_if.core_if_stage_if_valid_o)
@@ -1345,10 +1489,10 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// PC HARDENING SET THE MAJOR ALERT IF GLITCH //////////
 
   sequence seq_xsecure_pc_hardening_with_glitch;
-    @(posedge xsecure_if.core_clk)
+    @(posedge clk_i)
 
-    //Make sure we look at valid cycles
-    core_clock_cycles
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //Make sure the inspected instruction is valid
     && $past(xsecure_if.core_if_stage_if_valid_o)
@@ -1409,6 +1553,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// PC HARDENING ON: SET THE MAJOR ALERT IF GLITCH IN PC TARGET //////////
 
   sequence seq_pc_hardening_jump_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal);
+    @(posedge clk_i)
 
     //Make sure pc hardening setting is set
     pc_hardening
@@ -1447,6 +1592,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// PC HARDENING ON: SET THE MAJOR ALERT IF GLITCH IN BRANCH DECISION //////////
 
   sequence seq_pc_hardening_branch_decision_glitch(pc_hardening);
+    @(posedge clk_i)
 
     //Make sure pc hardening setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
@@ -1685,11 +1831,12 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// DUMMY AND HINT INSTRUCTION UPDATES MCYCLE //////////
 
   a_xsecure_dummy_instruction_updates_mcycle: assert property (
-    //Make sure the gated clock is active
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //Make sure that mcycle is operative (not inhibited)
-    !xsecure_if.core_cs_registers_mcountinhibit_q_mcycle_inhibit
+    && !xsecure_if.core_cs_registers_mcountinhibit_q_mcycle_inhibit
 
     //Make sure we do not write to mcycle
     && !($past(xsecure_if.core_cs_registers_csr_en_gated)
@@ -1711,11 +1858,12 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// DUMMY INSTRUCTIONS DO NOT UPDATE MINSTRET //////////
 
   a_xsecure_dummy_instruction_do_not_update_minstret: assert property (
-    //Make sure the gated clock is active
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //Make sure minstret is operative (not inhibited)
-    !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
+    && !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
 
     //Make sure there is a dummy instruction
     && xsecure_if.core_ex_wb_pipe_instr_meta_dummy
@@ -1733,11 +1881,12 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// HINT INSTRUCTIONS UPDATE MINSTRET //////////
 
   a_xsecure_hint_instructions_updates_minstret: assert property (
-    //Make sure the gated clock is active
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //Make sure that minstret is operative (not inhibited)
-    !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
+    && !xsecure_if.core_cs_registers_mcountinhibit_q_minstret_inhibit
 
     //Make sure there is a hint instruction in the WB stage
     && xsecure_if.core_ex_wb_pipe_instr_meta_hint
@@ -1760,6 +1909,8 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// DUMMY INSTRUCTION FREQUENCY //////////
 
   sequence seq_dummy_instruction_within_normal_valid_instructions (num_normal_valid_instructions);
+    @(posedge clk_i)
+
     //Make sure we detect a dummy instruction
     xsecure_if.core_i_if_stage_i_dummy_insert
     && xsecure_if.core_if_stage_if_valid_o
@@ -1885,11 +2036,12 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// HINT INSTRUCTION APPEARS AS SLT ON RVFI //////////
 
   a_xsecure_hint_instructions_reports_on_rvfi_as_slli: assert property (
-    //Make sure the gated clock is active
-    @(posedge xsecure_if.core_clk)
+
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //Make sure there is a hint instruction in the WB stage
-    xsecure_if.core_ex_wb_pipe_instr_meta_hint
+    && xsecure_if.core_ex_wb_pipe_instr_meta_hint
 
     //Make sure we retire the hint instruction in the next cycle
     ##1 rvfi_if.rvfi_valid
@@ -1912,10 +2064,9 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
 
   property p_resp_after_addr_no_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
-    @(posedge xsecure_if.core_clk)
 
-    //Make sure the core is in an operative state
-    core_clock_cycles
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //Make sure there is a response phase transfer
     && obi_rvalid
@@ -1985,10 +2136,9 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   ////////// BUS PROTOCOL HARDENING BEHAVIOUR WHEN THERE ARE GLITCHES //////////
 
   property p_resp_after_addr_glitch(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
-    @(posedge xsecure_if.core_clk)
 
-    //Make sure the core is in an operative state
-    core_clock_cycles
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //Make sure major alert is not or has not been set
     && !alert_major_was_set && !xsecure_if.core_alert_major_o
@@ -2047,8 +2197,8 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
 
   a_xsecure_bus_hardening_counter_overflow_set_major_alert: assert property (
 
-    //Make sure the core is in an operative state
-    core_clock_cycles
+    //Make sure the gated clock is enabled
+    core_i_sleep_unit_i_core_clock_gate_i_clk_en_q1
 
     //Make sure the counter is in a position where it can underflow
     && (xsecure_if.core_i_load_store_unit_i_response_filter_i_core_cnt_q == 0)
@@ -2061,7 +2211,6 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     //Verify that alert major is set
     xsecure_if.core_alert_major_o
   ) else `uvm_error(info_tag_glitch, "The counter underflows but does not set the major alert.\n");
-
 
 
 endmodule : uvmt_cv32e40s_xsecure_assert

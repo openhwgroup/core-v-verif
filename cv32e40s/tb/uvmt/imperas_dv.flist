@@ -22,7 +22,6 @@
 //
 
 +incdir+${IMPERAS_HOME}
-+incdir+${IMPERAS_HOME}/ImpPublic/include/host
 +incdir+${IMPERAS_HOME}/ImpProprietary/include/host
 ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/rvvi-api-pkg.sv
 ${IMPERAS_HOME}/ImpProprietary/source/host/rvvi/rvvi-pkg.sv

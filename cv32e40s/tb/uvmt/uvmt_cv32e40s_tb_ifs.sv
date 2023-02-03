@@ -119,10 +119,9 @@ interface uvmt_cv32e40s_xsecure_if
 
     (
 
-    // CORE
-    input logic core_clk,
-    input logic clk_en,
+    input logic core_i_sleep_unit_i_core_clock_gate_i_clk_en,
 
+    input logic core_i_data_err_i,
     input logic core_rf_we_wb,
     input logic [4:0] core_rf_waddr_wb,
     input logic [31:0] core_rf_wdata_wb,
@@ -171,7 +170,6 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [3:0] core_xsecure_ctrl_cpuctrl_rnddummyfreq,
     input logic core_if_stage_gen_dummy_instr_dummy_instr_dummy_en,
     input logic [2:0] core_cs_registers_xsecure_lfsr_lockup,
-    input logic core_controller_controller_fsm_debug_mode_q,
 
     input logic [63:0] core_cs_registers_mhpmcounter_mcycle,
     input logic [63:0] core_cs_registers_mhpmcounter_minstret,
@@ -197,48 +195,52 @@ interface uvmt_cv32e40s_xsecure_if
     input logic [31:0] core_i_cs_registers_i_mepc_o,
 
     // Hardened CSR registers
-    input logic [31:0] core_i_cs_registers_i_jvt_csr_i_rdata_q,
-    input logic [31:0] core_i_cs_registers_i_mstatus_csr_i_rdata_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_i_rdata_q,
-    input logic [31:0] core_i_cs_registers_i_xsecure_cpuctrl_csr_i_rdata_q,
-    input logic [31:0] core_i_cs_registers_i_dcsr_csr_i_rdata_q,
-    input logic [31:0] core_i_cs_registers_i_mepc_csr_i_rdata_q,
-    input logic [31:0] core_i_cs_registers_i_mscratch_csr_i_rdata_q,
+    input logic [31:0] core_i_cs_registers_i_mstateen0_q,
+    input logic [1:0] core_i_cs_registers_i_priv_lvl_q_int,
 
-    input logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_rdata_q,
-    input logic [PMP_MAX_REGIONS-1:0][PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_i_rdata_q,
+    input logic [31:0] core_i_cs_registers_i_jvt_q,
+    input logic [31:0] core_i_cs_registers_i_mstatus_q,
+    input logic [31:0] core_i_cs_registers_i_cpuctrl_q,
+    input logic [31:0] core_i_cs_registers_i_dcsr_q,
+    input logic [31:0] core_i_cs_registers_i_mepc_q,
+    input logic [31:0] core_i_cs_registers_i_mscratch_q,
 
-    // SMCLIC
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvt_csr_i_rdata_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mtvec_csr_i_rdata_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintstatus_csr_i_rdata_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_i_core_i_cs_registers_i_smclic_csrs_mintthresh_csr_i_rdata_q,
+    input mseccfg_t core_i_cs_registers_i_pmp_mseccfg_q,
+    input pmpncfg_t core_i_cs_registers_i_pmpncfg_q[PMP_MAX_REGIONS],
+    input logic [PMP_ADDR_WIDTH-1:0] core_i_cs_registers_i_pmp_addr_q[PMP_MAX_REGIONS],
 
-    // BASE
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_rdata_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_rdata_q,
+    input mtvt_t core_i_cs_registers_i_mtvt_q,
+    input mtvec_t core_i_cs_registers_i_mtvec_q,
+    input mintstatus_t core_i_cs_registers_i_mintstatus_q,
+    input logic [31:0] core_i_cs_registers_i_mintthresh_q,
+    input logic [31:0] core_i_cs_registers_i_mie_q,
 
     // Shadow registers
+    input logic [31:0] core_cs_registers_mstateen0_csr_gen_hardened_shadow_q,
+    input logic [1:0] core_cs_registers_priv_lvl_gen_hardened_shadow_q,
+
     input logic [31:0] core_cs_registers_jvt_csr_gen_hardened_shadow_q,
     input logic [31:0] core_cs_registers_mstatus_csr_gen_hardened_shadow_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_pmp_mseccfg_csr_gen_hardened_shadow_q,
     input logic [31:0] core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q,
     input logic [31:0] core_cs_registers_dcsr_csr_gen_hardened_shadow_q,
     input logic [31:0] core_cs_registers_mepc_csr_gen_hardened_shadow_q,
     input logic [31:0] core_cs_registers_mscratch_csr_gen_hardened_shadow_q,
 
-    input logic [PMP_MAX_REGIONS-1:0][7:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmpncfg_csr_i_gen_hardened_shadow_q,
-    input logic [PMP_MAX_REGIONS-1:0][PMP_ADDR_WIDTH-1:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_csr_pmp_gen_pmp_csr_n_pmp_region_pmp_addr_csr_gen_hardened_shadow_q,
+    input mseccfg_t uvmt_cv32e40s_tb_pmp_mseccfg_q_shadow_q,
+    input pmpncfg_t uvmt_cv32e40s_tb_pmpncfg_q_shadow_q[PMP_MAX_REGIONS],
+    input logic [PMP_ADDR_WIDTH-1:0] uvmt_cv32e40s_tb_pmp_addr_q_shadow_q[PMP_MAX_REGIONS],
 
-    // SMILIC
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvt_csr_gen_hardened_shadow_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mtvec_csr_gen_hardened_shadow_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintstatus_csr_gen_hardened_shadow_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_smclic_csrs_mintthresh_csr_gen_hardened_shadow_q,
+    input mtvt_t uvmt_cv32e40s_tb_mtvt_q_shadow_q,
+    input mtvec_t uvmt_cv32e40s_tb_mtvec_q_shadow_q,
+    input mintstatus_t uvmt_cv32e40s_tb_mintstatus_q_shadow_q,
+    input logic [31:0] uvmt_cv32e40s_tb_mintthresh_q_shadow_q,
+    input logic [31:0] uvmt_cv32e40s_tb_mie_q_hardened_shadow_q,
 
-    // BASIC
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mtvec_csr_gen_hardened_shadow_q,
-    input logic [31:0] dut_wrap_cv32e40s_wrapper_core_cs_registers_basic_mode_csrs_mie_csr_gen_hardened_shadow_q,
+    // Controller
+    input logic core_i_controller_i_controller_fsm_i_pending_nmi,
+    input logic core_i_controller_i_controller_fsm_i_dcsr_i_step,
+    input logic core_i_controller_i_controller_fsm_i_dcsr_i_stepie,
+    input logic core_controller_controller_fsm_debug_mode_q,
 
     // IF stage
     input logic core_if_stage_if_valid_o,
@@ -332,6 +334,7 @@ interface uvmt_cv32e40s_debug_cov_assert_if
 
     // Debug signals
     input         debug_req_i, // From controller
+    input         ctrl_fsm_async_debug_allowed,
     input         debug_havereset,
     input         debug_running,
     input         debug_halted,
@@ -353,6 +356,7 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     input  [31:0] tdata1,
     input  [31:0] tdata2,
     input  trigger_match_in_wb,
+    input  etrigger_in_wb,
 
     // Counter related input from cs_registers
     input  [31:0] mcountinhibit_q,
@@ -413,6 +417,7 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     tdata2,
     pending_sync_debug,
     trigger_match_in_wb,
+    etrigger_in_wb,
     sys_fence_insn_i,
     mcountinhibit_q,
     mcycle,
