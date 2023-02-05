@@ -20,16 +20,17 @@
 proc cvfv_rerun {} {
   onerror  {exit 1}
 
-  # TODO:silabs-robin  Bring up the formal view before executing the rest
-
   puts "cvfv: compiling verilog"
   vlog  -mfcu  -f fv.flist
 
+  puts "cvfv: setting cutpoints"
+  netlist cutpoint {uvmt_cv32e40s_tb.clknrst_if.reset_n} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.debug_if.debug_req} -module uvmt_cv32e40s_tb
+
   puts "cvfv: initializing clock/reset"
-  netlist clock "clknrst_if.clk"
-  netlist reset "clknrst_if.reset_n" -active_low -async
+  netlist clock {uvmt_cv32e40s_tb.clknrst_if.clk} -module uvmt_cv32e40s_tb
+  netlist reset {uvmt_cv32e40s_tb.clknrst_if.reset_n} -active_low -module uvmt_cv32e40s_tb
   formal init -inferred
-  formal init {clknrst_if.reset_n = 1; ##1 clknrst_if.reset_n = 0; ##2}
 
   puts "cvfv: compiling formal model"
   formal  compile  -d uvmt_cv32e40s_tb  -work work
