@@ -20,22 +20,51 @@
 proc cvfv_rerun {} {
   onerror  {exit 1}
 
-  puts "cvfv: compiling verilog"
+  puts  "cvfv: compiling verilog"
   vlog  -mfcu  -f fv.flist
 
-  puts "cvfv: setting cutpoints"
+  puts  "cvfv: cutpointing general 'control points'"
   netlist cutpoint {uvmt_cv32e40s_tb.clknrst_if.reset_n} -module uvmt_cv32e40s_tb
   netlist cutpoint {uvmt_cv32e40s_tb.debug_if.debug_req} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.interrupt_if.irq} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.core_cntrl_if.boot_addr} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.core_cntrl_if.mtvec_addr} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.core_cntrl_if.dm_halt_addr} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.core_cntrl_if.dm_exception_addr} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.core_cntrl_if.mhartid} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.core_cntrl_if.mimpid_patch} -module uvmt_cv32e40s_tb
+  #cutpoints needed to subdue "Design Checks" errors that lead to bonkers CEXes
 
-  puts "cvfv: initializing clock/reset"
+  puts  "cvfv: cutpointing obi 'control points'"
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if_i.err} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if_i.gntpar} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if_i.gnt} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if_i.rchk} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if_i.rdata} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if_i.rvalidpar} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if_i.rvalid} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if_i.err} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if_i.gntpar} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if_i.gnt} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if_i.rchk} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if_i.rdata} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if_i.rvalidpar} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if_i.rvalid} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.fencei_if_i.flush_ack} -module uvmt_cv32e40s_tb
+
+  puts  "cvfv: setting constants"
+  netlist constant {uvmt_cv32e40s_tb.core_cntrl_if.scan_cg_en} {0} -module uvmt_cv32e40s_tb
+  netlist constant {uvmt_cv32e40s_tb.core_cntrl_if.fetch_en} {1} -module uvmt_cv32e40s_tb
+
+  puts  "cvfv: initializing clock/reset"
   netlist clock {uvmt_cv32e40s_tb.clknrst_if.clk} -module uvmt_cv32e40s_tb
   netlist reset {uvmt_cv32e40s_tb.clknrst_if.reset_n} -active_low -module uvmt_cv32e40s_tb
   formal init -inferred
 
-  puts "cvfv: compiling formal model"
+  puts  "cvfv: compiling formal model"
   formal  compile  -d uvmt_cv32e40s_tb  -work work
 
-  puts "cvfv: see the visualizer log for compilation warnings"
+  puts  "cvfv: see the visualizer log for compilation warnings"
 }
 
 cvfv_rerun
