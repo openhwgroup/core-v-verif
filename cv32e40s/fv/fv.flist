@@ -24,37 +24,18 @@
 
 -f  ${CV_CORE_PKG}/cv32e40s_manifest.flist
 
-+incdir+${CV_UVMT_PATH}
-+incdir+${CV_UVME_PATH}
-+incdir+${CV_UVMA_PATH}/uvma_rvfi
-+incdir+${CV_UVMA_PATH}/uvma_fencei
-+incdir+${CV_UVMA_PATH}/uvma_clic
-+incdir+${CV_UVMA_PATH}/uvma_obi_memory/src
++incdir+${DV_UVMT_PATH}
++incdir+${DV_UVME_PATH}
++incdir+${DV_UVMA_PATH}/uvma_rvfi
++incdir+${DV_UVMA_PATH}/uvma_fencei
++incdir+${DV_UVMA_PATH}/uvma_clic
++incdir+${DV_UVMA_PATH}/uvma_obi_memory/src
 
 ./dummy_pkg.sv
 
-${CV_UVMA_PATH}/uvma_clic/uvma_clic_if.sv
-${CV_UVMA_PATH}/uvma_fencei/uvma_fencei_if.sv
-${CV_UVMA_PATH}/uvma_rvfi/uvma_rvfi_instr_if.sv
+${DV_UVMA_PATH}/uvma_clic/uvma_clic_if.sv
+${DV_UVMA_PATH}/uvma_fencei/uvma_fencei_if.sv
+${DV_UVMA_PATH}/uvma_rvfi/uvma_rvfi_instr_if.sv
+${DV_UVMT_PATH}/uvmt_cv32e40s_tb_ifs.sv
 
-${CV_UVMT_PATH}/uvmt_cv32e40s_dut_wrap.sv
-${CV_UVMT_PATH}/uvmt_cv32e40s_tb.sv
-${CV_UVMT_PATH}/uvmt_cv32e40s_tb_ifs.sv
-
-${CV_UVMT_PATH}/uvmt_cv32e40s_clic_interrupt_assert.sv
-${CV_UVMT_PATH}/uvmt_cv32e40s_debug_assert.sv
-${CV_UVMT_PATH}/uvmt_cv32e40s_fencei_assert.sv
-${CV_UVMT_PATH}/uvmt_cv32e40s_integration_assert.sv
-${CV_UVMT_PATH}/uvmt_cv32e40s_interrupt_assert.sv
-${CV_UVMT_PATH}/uvmt_cv32e40s_pmp_assert.sv
-${CV_UVMT_PATH}/uvmt_cv32e40s_pmprvfi_assert.sv
-${CV_UVMT_PATH}/uvmt_cv32e40s_rvfi_assert.sv
-${CV_UVMT_PATH}/uvmt_cv32e40s_umode_assert.sv
-${CV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert.sv
-${CV_UVMT_PATH}/uvmt_cv32e40s_zc_assert.sv
-
-${CV_UVMT_PATH}/support_logic/uvmt_cv32e40s_sl_obi_phases_monitor.sv
-${CV_UVMT_PATH}/support_logic/uvmt_cv32e40s_sl_req_attribute_fifo.sv
-${CV_UVMT_PATH}/support_logic/uvmt_cv32e40s_support_logic.sv
-${CV_UVMT_PATH}/uvmt_cv32e40s_pmp_model.sv
-${CV_UVMT_PATH}/uvmt_cv32e40s_umode_cov.sv
+-f  ${DV_UVMT_PATH}/uvmt_cv32e40s_tb_files.flist

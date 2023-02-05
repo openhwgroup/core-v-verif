@@ -57,6 +57,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
     input logic [31:0]                rvfi_mscratch_wmask,
     input logic [31:0]                rvfi_mscratch_rdata,
     input logic [31:0]                rvfi_mscratch_rmask,
+    input logic [31:0]                rvfi_mcause_wmask,
+    input logic [31:0]                rvfi_mcause_wdata,
 
 
     input logic [31:0]                mcause,
@@ -124,8 +126,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
   string info_tag = "CLIC_ASSERT";
 
-  // This needs changes for 0.5.0
-  localparam logic [31:0] NMI_OFFSET    = 15 * 4;
+  localparam logic [31:0] NMI_OFFSET    = 0;
 
   typedef struct packed {
     logic                       irq;
@@ -210,7 +211,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     STORE_ACCESS_FAULT  = 11'd7,
     ECALL_U_MODE        = 11'd8,
     ECALL_M_MODE        = 11'd11,
-    INSTR_BUS_FAULT     = 11'd48,
+    INSTR_BUS_FAULT     = 11'd24,
     INSTR_PARITY_FAULT  = 11'd25,
     NMI_LOAD            = 11'd1024,
     NMI_STORE           = 11'd1025,
@@ -796,7 +797,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
 
     property p_mintstatus_mil_reset_to_zero;
-      $rose(rst_ni) |-> mintstatus_fields.mil == '0; // TODO add bitwidth
+      $rose(rst_ni) |-> mintstatus_fields.mil == 8'h0;
     endproperty : p_mintstatus_mil_reset_to_zero
 
     a_mintstatus_mil_reset_to_zero: assert property (p_mintstatus_mil_reset_to_zero)
@@ -809,7 +810,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
 
     property p_mstatus_mie_reset_to_zero;
-      $rose(rst_ni) |-> mstatus_fields.mie == '0; // TODO add bitwidth
+      $rose(rst_ni) |-> mstatus_fields.mie == 1'b0;
     endproperty : p_mstatus_mie_reset_to_zero
 
     a_mstatus_mie_reset_to_zero: assert property (p_mstatus_mie_reset_to_zero)
@@ -851,8 +852,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // NMI address should be at the fifthteenth entry in the mtvec table
     // ------------------------------------------------------------------------
 
-    // FIXME update when spec 0.5.0 for different offset
-    property p_nmi_to_mtvec_fifthteenth_entry;
+    property p_nmi_to_mtvec_offset;
             is_cause_nmi
          && rvfi_valid
       |->
@@ -870,9 +870,9 @@ module uvmt_cv32e40s_clic_interrupt_assert
         ##0 rvfi_pc_rdata == debug_halt_addr
          && rvfi_dbg_mode
       ;
-    endproperty : p_nmi_to_mtvec_fifthteenth_entry
+    endproperty : p_nmi_to_mtvec_offset
 
-    a_nmi_to_mtvec_fifthteenth_entry: assert property (p_nmi_to_mtvec_fifthteenth_entry)
+    a_nmi_to_mtvec_offset: assert property (p_nmi_to_mtvec_offset)
     else
       `uvm_error(info_tag,
         $sformatf("Taken nmi address wrong"));
@@ -958,7 +958,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     a_always_taken: assert property(p_always_taken)
     else
       `uvm_error(info_tag,
-        $sformatf("TODO")); // TODO
+        $sformatf("Interrupt should have been taken"));
 
     // ------------------------------------------------------------------------
     // irq_ack is always single cycle pulse
@@ -1179,46 +1179,79 @@ module uvmt_cv32e40s_clic_interrupt_assert
     int   items_in_obi_data_wfifo;
     logic obi_instr_pop;
     logic obi_instr_push;
+    logic obi_instr_pending;
     logic obi_data_pop;
     logic obi_data_push;
     logic [0:8][31:0] obi_instr_addr_fifo;
     logic [0:8][31:0] obi_data_addr_fifo;
+    logic [31:0] obi_instr_resp;
+
+    logic [3:0] obi_instr_service;
+    logic [3:0] obi_instr_service_n;
+    logic [3:0] obi_instr_request;
+    logic [3:0] obi_instr_request_n;
+
+    always @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        obi_instr_service <= '0;
+        obi_instr_request <= '0;
+      end else begin
+        obi_instr_request <= obi_instr_request_n;
+        obi_instr_service <= obi_instr_service_n;
+      end
+    end
+
+    int obi_items_in_fifo;
+    logic obi_items_in_fifo_incr;
+    logic obi_items_in_fifo_decr;
+
+    assign obi_items_in_fifo = items_in_obi_instr_fifo + obi_items_in_fifo_incr - obi_items_in_fifo_decr;
+    assign obi_instr_request_n = obi_instr_request + obi_instr_push;
+    assign obi_instr_service_n = obi_instr_service + obi_instr_pop;
+
+    always_comb
+    begin
+      obi_items_in_fifo_incr = obi_instr_push && !obi_instr_pop ?  1 : 0;
+      obi_items_in_fifo_decr = !obi_instr_push && obi_instr_pop ?  1 : 0;
+    end
 
     // Keep track of addresses v. data for obi reads on instr_if
-    always @(posedge clk_i) begin
+    always @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         items_in_obi_instr_fifo <= 0;
-        obi_instr_addr_fifo      <= '0;
+        obi_instr_addr_fifo     <= '0;
       end else begin
         case (1)
-          obi_instr_pop && !obi_instr_push && items_in_obi_instr_fifo > 0: begin
+          (obi_instr_pop && !obi_instr_push && items_in_obi_instr_fifo > 0): begin
+            obi_instr_addr_fifo <= {obi_instr_addr_fifo[1:8], 32'h0};
             items_in_obi_instr_fifo <= items_in_obi_instr_fifo - 1;
-            obi_instr_addr_fifo[0:8] <= items_in_obi_instr_fifo ? { obi_instr_addr_fifo[1:8], 32'b0}: obi_instr_addr_fifo[0:8];
+            obi_instr_resp <= obi_instr_rdata;
           end
 
-          obi_instr_pop && obi_instr_push: begin
+          (obi_instr_pop && obi_instr_push): begin
+            obi_instr_resp <= obi_instr_rdata;
             case (items_in_obi_instr_fifo)
-              0: obi_instr_addr_fifo[0:8] <= {obi_instr_addr, obi_instr_addr_fifo[1:8]}; // ignore pop, no item in fifo
-              1: obi_instr_addr_fifo[0:8] <= {obi_instr_addr, obi_instr_addr_fifo[2:8], 32'h0};
-              2: obi_instr_addr_fifo[0:8] <= {obi_instr_addr_fifo[1:1], obi_instr_addr, obi_instr_addr_fifo[3:8], 32'h0};
-              3: obi_instr_addr_fifo[0:8] <= {obi_instr_addr_fifo[1:2], obi_instr_addr, obi_instr_addr_fifo[4:8], 32'h0};
-              4: obi_instr_addr_fifo[0:8] <= {obi_instr_addr_fifo[1:3], obi_instr_addr, obi_instr_addr_fifo[5:8], 32'h0};
-              5: obi_instr_addr_fifo[0:8] <= {obi_instr_addr_fifo[1:4], obi_instr_addr, obi_instr_addr_fifo[6:8], 32'h0};
-              6: obi_instr_addr_fifo[0:8] <= {obi_instr_addr_fifo[1:5], obi_instr_addr, obi_instr_addr_fifo[7:8], 32'h0};
-              7: obi_instr_addr_fifo[0:8] <= {obi_instr_addr_fifo[1:6], obi_instr_addr, obi_instr_addr_fifo[8:8], 32'h0};
+              0: obi_instr_addr_fifo <= { 32'h0, obi_instr_addr, 224'h0 };
+              1: obi_instr_addr_fifo <= { obi_instr_addr_fifo[1:1], obi_instr_addr, 224'h0 };
+              2: obi_instr_addr_fifo <= { obi_instr_addr_fifo[1:2], obi_instr_addr, 192'h0 };
+              3: obi_instr_addr_fifo <= { obi_instr_addr_fifo[1:3], obi_instr_addr, 160'h0 };
+              4: obi_instr_addr_fifo <= { obi_instr_addr_fifo[1:4], obi_instr_addr, 128'h0 };
+              5: obi_instr_addr_fifo <= { obi_instr_addr_fifo[1:5], obi_instr_addr, 96'h0 };
+              6: obi_instr_addr_fifo <= { obi_instr_addr_fifo[1:6], obi_instr_addr, 64'h0 };
+              7: obi_instr_addr_fifo <= { obi_instr_addr_fifo[1:7], obi_instr_addr, 32'h0 };
             endcase
           end
 
-          !obi_instr_pop && obi_instr_push && items_in_obi_instr_fifo < MAX_OBI_OUTSTANDING : begin
+          (!obi_instr_pop && obi_instr_push): begin
             case (items_in_obi_instr_fifo)
-              0: obi_instr_addr_fifo[0:8] <= {obi_instr_addr, obi_instr_addr_fifo[1:8]};
-              1: obi_instr_addr_fifo[0:8] <= {obi_instr_addr_fifo[0:0], obi_instr_addr, obi_instr_addr_fifo[2:8]};
-              2: obi_instr_addr_fifo[0:8] <= {obi_instr_addr_fifo[0:1], obi_instr_addr, obi_instr_addr_fifo[3:8]};
-              3: obi_instr_addr_fifo[0:8] <= {obi_instr_addr_fifo[0:2], obi_instr_addr, obi_instr_addr_fifo[4:8]};
-              4: obi_instr_addr_fifo[0:8] <= {obi_instr_addr_fifo[0:3], obi_instr_addr, obi_instr_addr_fifo[5:8]};
-              5: obi_instr_addr_fifo[0:8] <= {obi_instr_addr_fifo[0:4], obi_instr_addr, obi_instr_addr_fifo[6:8]};
-              6: obi_instr_addr_fifo[0:8] <= {obi_instr_addr_fifo[0:5], obi_instr_addr, obi_instr_addr_fifo[7:8]};
-              7: obi_instr_addr_fifo[0:8] <= {obi_instr_addr_fifo[0:6], obi_instr_addr, obi_instr_addr_fifo[8:8]};
+              0: obi_instr_addr_fifo <= { 32'h0, obi_instr_addr, 224'h0 };
+              1: obi_instr_addr_fifo <= { obi_instr_addr_fifo[0:1], obi_instr_addr, 192'h0 };
+              2: obi_instr_addr_fifo <= { obi_instr_addr_fifo[0:2], obi_instr_addr, 160'h0 };
+              3: obi_instr_addr_fifo <= { obi_instr_addr_fifo[0:3], obi_instr_addr, 128'h0 };
+              4: obi_instr_addr_fifo <= { obi_instr_addr_fifo[0:4], obi_instr_addr, 96'h0 };
+              5: obi_instr_addr_fifo <= { obi_instr_addr_fifo[0:5], obi_instr_addr, 64'h0 };
+              6: obi_instr_addr_fifo <= { obi_instr_addr_fifo[0:6], obi_instr_addr, 32'h0 };
+              7: obi_instr_addr_fifo <= { obi_instr_addr_fifo[0:7], obi_instr_addr };
             endcase
             items_in_obi_instr_fifo <= items_in_obi_instr_fifo + 1;
           end
@@ -1226,7 +1259,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
       end
     end
 
-    always @(posedge clk_i) begin
+    always @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         items_in_obi_data_wfifo <= 0;
         obi_data_addr_fifo      <= '0;
@@ -1273,6 +1306,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
     assign obi_instr_push = obi_instr_req && obi_instr_gnt;
     // New obi_instr read fulfillment
     assign obi_instr_pop  = obi_instr_rvalid && obi_instr_rready;
+
+    assign obi_instr_pending = obi_instr_req && !obi_instr_gnt;
 
     // New obi_data write request
     assign obi_data_push = obi_data_req && obi_data_gnt && obi_data_we;
@@ -1968,6 +2003,10 @@ module uvmt_cv32e40s_clic_interrupt_assert
           // vectored address failed
           rvfi_valid[->1]
       ##0 is_invalid_instr_word
+      or
+          // Access fault to destination
+          rvfi_valid[->1]
+      ##0 is_cause_instr_access_fault
       ;
     endproperty : p_mcause_minhv_cleared_at_hw_vectoring_end
 
@@ -2049,31 +2088,105 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // taking an shv interrupt
     // ------------------------------------------------------------------------
 
-    property p_pc_to_mtvt_for_taken_shv_interrupt;
+    sequence s_shv_irq_no_pending_obi;
+      1 ##1 !obi_instr_pending
+        && clic.irq
+        && clic.shv
+      ##1 irq_ack
+      ;
+    endsequence : s_shv_irq_no_pending_obi
+
+    sequence s_shv_irq_pending_obi;
+      1 ##1 obi_instr_pending
+        && clic.irq
+        && clic.shv
+      ##1 irq_ack
+      ;
+    endsequence : s_shv_irq_pending_obi
+
+    property p_pc_to_mtvt_for_taken_shv_interrupt_outstanding_obi;
       logic [31:0] pointer_value = '0;
       logic [31:0] pointer_addr = '0;
-      accept_on(
-           is_load_bus_fault
-        || is_store_bus_fault
-        || is_instr_access_fault
-        || (rvfi_trap.exception == 1)
-        || core_in_debug
-        || obi_instr_err
-      )
-      clic.irq && clic.shv
-      ##1 irq_ack
-      ##1 ((!mcause_fields.minhv)[->1],
-           pointer_value = $past(obi_instr_rdata, 2),
-           pointer_addr  = $past(obi_instr_addr,  1))
+      logic [3:0] pointer_req = '0;
+
+      s_shv_irq_pending_obi
+      // Need to finish outstanding obi txn first then get the correct address
+      ##0 (obi_instr_push[->2],
+           // Sample address for pointer fetch
+           pointer_addr = obi_instr_addr,
+           pointer_req  = obi_instr_request_n)
+           // Wait for rdata and sample expected pc
+      ##1 ((pointer_req == obi_instr_service_n)[->1])
+      ##0 (1, pointer_value = obi_instr_rdata)
+      ##0 mcause_fields.minhv
       |->
           rvfi_valid[->1]
-      ##0 rvfi_pc_rdata       == (pointer_value & ~1)
-       && rvfi_pc_rdata[31:2] == (pointer_addr[31:2])
+      ##0 rvfi_pc_rdata                   == (pointer_value & ~1)
+       // use past here as these may be updated by handler instruction or new interrupt
+       && $past(mtvt_fields) + ($past(clic_oic.id) * 4) == (pointer_addr)
+       // minhv should be cleared unless explicitly written to
+       && ((!mcause_fields.minhv && !(is_mcause_access_instr && is_csr_write && rvfi_mcause_wmask[30] && rvfi_mcause_wdata[30]))
+          || (mcause_fields.minhv && (is_mcause_access_instr && is_csr_write && rvfi_mcause_wmask[30] && rvfi_mcause_wdata[30])))
       or
           rvfi_valid[->1]
       ##0 is_cause_nmi // nmi-address verified in nmi-related assertions
       or
-      // TODO: This should catch traps from shv-failures, but does not atm. pending rtl updates
+          rvfi_valid[->1]
+      ##0 is_invalid_instr_word
+       && rvfi_pc_rdata       == { $past(mtvec[31:7]), 7'h0 }
+      or
+          rvfi_valid[->1]
+      ##0 is_cause_instr_access_fault || is_cause_instr_bus_fault || is_cause_instr_parity_fault
+      or
+          rvfi_valid[->1]
+      ##0 is_instr_access_fault
+      or
+          rvfi_valid[->1]
+      ##0 is_mstatus_access_instr && is_csr_write && mstatus_fields.mie
+       && irq_ack
+      or
+          rvfi_valid[->1]
+      ##0 is_mnxti_access_instr && is_csr_write && mstatus_fields.mie
+       && irq_ack
+      or
+          rvfi_valid[->1]
+      ##0 is_mret_instr && $past(mstatus_fields.mpie)
+       && irq_ack
+      or
+          rvfi_valid[->1]
+      ##0 rvfi_dbg_mode
+      ;
+    endproperty : p_pc_to_mtvt_for_taken_shv_interrupt_outstanding_obi
+
+    a_pc_to_mtvt_for_taken_shv_interrupt_outstanding_obi: assert property (p_pc_to_mtvt_for_taken_shv_interrupt_outstanding_obi)
+    else
+      `uvm_error(info_tag,
+        $sformatf("Pc should be at mtvt after taking an shv interrupt"));
+
+    property p_pc_to_mtvt_for_taken_shv_interrupt;
+      logic [31:0] pointer_value = '0;
+      logic [31:0] pointer_addr = '0;
+      logic [3:0] pointer_req = '0;
+      s_shv_irq_no_pending_obi
+      ##0 (obi_instr_push[->1],
+           // Sample address for pointer fetch
+           pointer_addr = obi_instr_addr,
+           pointer_req  = obi_instr_request_n)
+           // Wait for rdata and sample expected pc
+      ##1 ((pointer_req == obi_instr_service_n)[->1])
+      ##0 (1, pointer_value = obi_instr_rdata)
+      ##0 mcause_fields.minhv
+      |->
+          rvfi_valid[->1]
+      ##0 rvfi_pc_rdata                   == (pointer_value & ~1)
+       && $past(mtvt_fields) + ($past(clic_oic.id) * 4) == (pointer_addr)
+       // minhv should be cleared unless explicitly written to
+       && ((!mcause_fields.minhv && !(is_mcause_access_instr && is_csr_write && rvfi_mcause_wmask[30] && rvfi_mcause_wdata[30]))
+          || (mcause_fields.minhv && (is_mcause_access_instr && is_csr_write && rvfi_mcause_wmask[30] && rvfi_mcause_wdata[30])))
+      or
+          rvfi_valid[->1]
+      ##0 is_cause_nmi // nmi-address verified in nmi-related assertions
+      or
           rvfi_valid[->1]
       ##0 is_invalid_instr_word
        && rvfi_pc_rdata       == { $past(mtvec[31:7]), 7'h0 }
@@ -2081,6 +2194,27 @@ module uvmt_cv32e40s_clic_interrupt_assert
           rvfi_valid[->1]
       ##0 is_intr_exception
        && rvfi_intr.cause == INSTR_ACCESS_FAULT
+      or
+          rvfi_valid[->1]
+      ##0 is_cause_instr_access_fault || is_cause_instr_bus_fault || is_cause_instr_parity_fault
+      or
+          rvfi_valid[->1]
+      ##0 is_instr_access_fault
+      or
+          rvfi_valid[->1]
+      ##0 is_mstatus_access_instr && is_csr_write && mstatus_fields.mie
+       && irq_ack
+      or
+          rvfi_valid[->1]
+      ##0 is_mnxti_access_instr && is_csr_write && mstatus_fields.mie
+       && irq_ack
+      or
+          rvfi_valid[->1]
+      ##0 is_mret_instr && $past(mstatus_fields.mpie)
+       && irq_ack
+      or
+          rvfi_valid[->1]
+      ##0 rvfi_dbg_mode
       ;
 
     endproperty : p_pc_to_mtvt_for_taken_shv_interrupt
@@ -2103,7 +2237,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
             rvfi_valid[->1]
         ##0 rvfi_pc_rdata[31:7] == $past(mtvec[31:7])
       or
-            // Nmi, correct pc covered in a_nmi_to_mtvec_fifthteenth_entry
+            // Nmi, correct pc covered in a_nmi_to_mtvec_fifthteenth_offset
             rvfi_valid[->1]
         ##0 is_cause_nmi
       or

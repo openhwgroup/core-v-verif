@@ -1,5 +1,8 @@
 # Google UVM Generated Test
-# Extracted from riscv_compliance_tests/riscv_test.h
+# Extracted from riscv_compliance_tests/riscv_test.h, then modified
+
+#include "corev_uvmt.h"
+
 .set print_port,   0x00800000
 .set test_ret_val, 0x008000c0
 .section .data
