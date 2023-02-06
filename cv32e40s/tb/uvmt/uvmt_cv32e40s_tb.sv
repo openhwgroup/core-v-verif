@@ -1462,39 +1462,41 @@ module uvmt_cv32e40s_tb;
 
    //TODO verify these are correct with regards to isacov function
    `ifndef FORMAL // events ignored for formal - this avoids unnecessary warning
-   always @(dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i.rvfi_valid) -> isacov_if.retire;
+     always @(dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i.rvfi_valid) -> isacov_if.retire;
    `endif
    assign isacov_if.instr = dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i.rvfi_insn;
    //assign isacov_if.is_compressed = dut_wrap.cv32e40s_wrapper_i.tracer_i.insn_compressed;
 
    // Capture the test status and exit pulse flags
    // TODO: put this logic in the vp_status_if (makes it easier to pass to ENV)
-   always @(posedge clknrst_if.clk) begin
-     if (!clknrst_if.reset_n) begin
-       tp     <= 1'b0;
-       tf     <= 1'b0;
-       evalid <= 1'b0;
-       evalue <= 32'h00000000;
+   `ifndef FORMAL  // uvm db not used in formal
+     always @(posedge clknrst_if.clk) begin
+       if (!clknrst_if.reset_n) begin
+         tp     <= 1'b0;
+         tf     <= 1'b0;
+         evalid <= 1'b0;
+         evalue <= 32'h00000000;
+       end
+       else begin
+         if (vp_status_if.tests_passed) begin
+           tp <= 1'b1;
+           uvm_config_db#(bit)::set(.cntxt(null), .inst_name("*"), .field_name("tp"), .value(1'b1));
+         end
+         if (vp_status_if.tests_failed) begin
+           tf <= 1'b1;
+           uvm_config_db#(bit)::set(.cntxt(null), .inst_name("*"), .field_name("tf"), .value(1'b1));
+         end
+         if (vp_status_if.exit_valid) begin
+           evalid <= 1'b1;
+           uvm_config_db#(bit)::set(.cntxt(null), .inst_name("*"), .field_name("evalid"), .value(1'b1));
+         end
+         if (vp_status_if.exit_valid) begin
+           evalue <= vp_status_if.exit_value;
+           uvm_config_db#(bit[31:0])::set(.cntxt(null), .inst_name("*"), .field_name("evalue"), .value(vp_status_if.exit_value));
+         end
+       end
      end
-     else begin
-       if (vp_status_if.tests_passed) begin
-         tp <= 1'b1;
-         uvm_config_db#(bit)::set(.cntxt(null), .inst_name("*"), .field_name("tp"), .value(1'b1));
-       end
-       if (vp_status_if.tests_failed) begin
-         tf <= 1'b1;
-         uvm_config_db#(bit)::set(.cntxt(null), .inst_name("*"), .field_name("tf"), .value(1'b1));
-       end
-       if (vp_status_if.exit_valid) begin
-         evalid <= 1'b1;
-         uvm_config_db#(bit)::set(.cntxt(null), .inst_name("*"), .field_name("evalid"), .value(1'b1));
-       end
-       if (vp_status_if.exit_valid) begin
-         evalue <= vp_status_if.exit_value;
-         uvm_config_db#(bit[31:0])::set(.cntxt(null), .inst_name("*"), .field_name("evalue"), .value(vp_status_if.exit_value));
-       end
-     end
-   end
+   `endif  // FORMAL
 
 
    /**
