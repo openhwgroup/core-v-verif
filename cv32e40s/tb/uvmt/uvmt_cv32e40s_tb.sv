@@ -999,8 +999,8 @@ module uvmt_cv32e40s_tb;
 
       .mie_q                  (core_i.cs_registers_i.mie_q),
       .dcsr_q                 (core_i.cs_registers_i.dcsr_q),
-      .dpc_q                 (core_i.cs_registers_i.dpc_q),
-      .dpc_n                 (core_i.cs_registers_i.dpc_n),
+      .dpc_q                  (core_i.cs_registers_i.dpc_q),
+      .dpc_n                  (core_i.cs_registers_i.dpc_n),
       .mcause_q               (core_i.cs_registers_i.mcause_q),
       .mtvec                  (core_i.cs_registers_i.mtvec_q),
       .mepc_q                 (core_i.cs_registers_i.mepc_q),
@@ -1139,6 +1139,8 @@ module uvmt_cv32e40s_tb;
                                                                     .csr_dpc(rvfi_csr_dpc_if_0_i),
                                                                     .csr_mepc(rvfi_csr_mepc_if_0_i),
                                                                     .csr_mstatus(rvfi_csr_mstatus_if_0_i),
+                                                                    .csr_mtvec(rvfi_csr_mtvec_if_0_i),
+                                                                    .csr_tdata1(rvfi_csr_tdata1_if_0_i),
                                                                     .cov_assert_if(debug_cov_assert_if));
 
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
