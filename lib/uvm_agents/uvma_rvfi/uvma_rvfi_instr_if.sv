@@ -262,13 +262,13 @@ function logic is_ebreak();
   return match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL) || match_instr(INSTR_OPCODE_C_EBREAK, INSTR_MASK_FULL);
 endfunction : is_ebreak
 
-function logic is_cebreak();
+function logic is_ebreak_compr();
   return match_instr(INSTR_OPCODE_C_EBREAK, INSTR_MASK_FULL);
-endfunction : is_cebreak
+endfunction : is_ebreak_compr
 
-function logic is_ebreak_noncomp();
+function logic is_ebreak_noncompr();
   return match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL);
-endfunction : is_ebreak_noncomp
+endfunction : is_ebreak_noncompr
 
 
 function logic is_ecall();

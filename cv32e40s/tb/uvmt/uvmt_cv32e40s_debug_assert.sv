@@ -240,10 +240,10 @@ module uvmt_cv32e40s_debug_assert
         else `uvm_error(info_tag,$sformatf("Debug mode not restarted after ebreak"));
 
     cov_cebreak_dbg : cover property(
-        rvfi.is_cebreak() && rvfi.rvfi_dbg_mode
+        rvfi.is_ebreak_compr() && rvfi.rvfi_dbg_mode
     );
     cov_ebreak_dbg : cover property(
-        rvfi.is_ebreak_noncomp() && rvfi.rvfi_dbg_mode
+        rvfi.is_ebreak_noncompr() && rvfi.rvfi_dbg_mode
     );
 
     // Trigger match results in debug mode
