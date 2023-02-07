@@ -20,13 +20,17 @@
 
 
    `ifdef PARAM_SET_0
-      `include  "cvverif_40s_params.svh"
+      `include  "cvverif_param_set_0.svh"
+   `elsif PARAM_SET_1
+      `include  "cvverif_param_set_1.svh"
    `endif
 
 
    // Debug
 
    `ifdef PARAM_SET_0
+      // Sat from the include file
+   `elsif PARAM_SET_1
       // Sat from the include file
    `elsif DBG_NUM_TRIG_0
       parameter CORE_PARAM_DBG_NUM_TRIGGERS = 0;
@@ -38,6 +42,8 @@
 
    `ifdef PARAM_SET_0
       // Sat from the include file
+   `elsif PARAM_SET_1
+      // Sat from the include file
    `else
       parameter logic [31:0] CORE_PARAM_DM_REGION_START = 32'hF0000000;
       parameter logic [31:0] CORE_PARAM_DM_REGION_END   = 32'hF0003FFF;
@@ -48,6 +54,8 @@
 
    `ifdef PARAM_SET_0
       // Sat from the include file
+   `elsif PARAM_SET_1
+      // Sat from the include file
    `elsif SMCLIC_EN
       parameter int CORE_PARAM_SMCLIC = 1;
    `else
@@ -56,6 +64,8 @@
    parameter logic SMCLIC = CORE_PARAM_SMCLIC;
 
    `ifdef PARAM_SET_0
+      // Sat from the include file
+   `elsif PARAM_SET_1
       // Sat from the include file
    `else
       parameter int  CORE_PARAM_SMCLIC_INTTHRESHBITS = 8;
@@ -66,6 +76,8 @@
    // B-ext
 
    `ifdef PARAM_SET_0
+      // Sat from the include file
+   `elsif PARAM_SET_1
       // Sat from the include file
    `elsif ZBA_ZBB_ZBS
       parameter cv32e40s_pkg::b_ext_e CORE_PARAM_B_EXT = cv32e40s_pkg::ZBA_ZBB_ZBS;
@@ -80,6 +92,8 @@
 
    `ifdef PARAM_SET_0
       // Sat from the include file
+   `elsif PARAM_SET_1
+      // Sat from the include file
    `else
       parameter cv32e40s_pkg::m_ext_e CORE_PARAM_M_EXT = cv32e40s_pkg::M;
    `endif
@@ -88,6 +102,8 @@
    // I-base & E-base
 
    `ifdef PARAM_SET_0
+      // Sat from the include file
+   `elsif PARAM_SET_1
       // Sat from the include file
    `elsif RV32E
       parameter cv32e40s_pkg::rv32_e CORE_PARAM_RV32              = cv32e40s_pkg::RV32E;
@@ -102,6 +118,8 @@
 
    `ifdef PARAM_SET_0
       // Sat from the include file
+   `elsif PARAM_SET_1
+      // Sat from the include file
    `else
       parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR0_CFG = cv32e40s_pkg::LFSR_CFG_DEFAULT;
       parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR1_CFG = cv32e40s_pkg::LFSR_CFG_DEFAULT;
@@ -112,6 +130,8 @@
    // PMP
 
    `ifdef PARAM_SET_0
+      // Sat from the include file
+   `elsif PARAM_SET_1
       // Sat from the include file
    `elsif PMP_ENABLE_2
       parameter int CORE_PARAM_PMP_GRANULARITY = 0;
@@ -144,11 +164,15 @@
 
    `ifdef PARAM_SET_0
       // Sat from the include file
+   `elsif PARAM_SET_1
+      // Sat from the include file
    `else
       parameter cv32e40s_pkg::mseccfg_t CORE_PARAM_PMP_MSECCFG_RV = cv32e40s_pkg::MSECCFG_DEFAULT;
    `endif
 
    `ifdef PARAM_SET_0
+      // Sat from the include file
+   `elsif PARAM_SET_1
       // Sat from the include file
    `else
       parameter cv32e40s_pkg::pmpncfg_t  CORE_PARAM_PMP_PMPNCFG_RV [CORE_PARAM_PMP_NUM_REGIONS-1:0] = '{
@@ -157,6 +181,8 @@
    `endif
 
    `ifdef PARAM_SET_0
+      // Sat from the include file
+   `elsif PARAM_SET_1
       // Sat from the include file
    `else
       parameter logic [31:0] CORE_PARAM_PMP_PMPADDR_RV[CORE_PARAM_PMP_NUM_REGIONS-1:0] = '{
@@ -168,6 +194,8 @@
    // PMA
 
    `ifdef PARAM_SET_0
+      // Sat from the include file
+   `elsif PARAM_SET_1
       // Sat from the include file
    `elsif PMA_CUSTOM_CFG
       const string pma_cfg_name = "pma_custom_cfg";
