@@ -20,12 +20,12 @@ module uvmt_cv32e40s_debug_assert
   import uvma_rvfi_pkg::*;
   import cv32e40s_pkg::*;
   (
-      uvma_rvfi_instr_if rvfi,
-      uvma_rvfi_csr_if csr_dcsr,
-      uvma_rvfi_csr_if csr_dpc,
-      uvma_rvfi_csr_if csr_mepc,
-      uvma_rvfi_csr_if csr_mstatus,
-      uvmt_cv32e40s_debug_cov_assert_if cov_assert_if
+      uvma_rvfi_instr_if_t rvfi,
+      uvma_rvfi_csr_if_t csr_dcsr,
+      uvma_rvfi_csr_if_t csr_dpc,
+      uvma_rvfi_csr_if_t csr_mepc,
+      uvma_rvfi_csr_if_t csr_mstatus,
+      uvmt_cv32e40s_debug_cov_assert_if_t cov_assert_if
   );
 
   // ---------------------------------------------------------------------------

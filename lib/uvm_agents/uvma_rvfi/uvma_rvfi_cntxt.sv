@@ -27,7 +27,7 @@ class uvma_rvfi_cntxt_c#(int ILEN=DEFAULT_ILEN,
 
    // Handle to instruction retirement interface
    // The number of interfaces will be equal to the _nret_ value in the configuration object
-   virtual uvma_rvfi_instr_if#(ILEN,XLEN) instr_vif[];
+   virtual uvma_rvfi_instr_if_t#(ILEN,XLEN) instr_vif[];
 
    // Handle to CSR interfaces
    virtual uvma_rvfi_csr_if#(XLEN)        csr_vif[string][];

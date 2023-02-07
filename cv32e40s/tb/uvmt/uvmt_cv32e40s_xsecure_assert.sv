@@ -28,9 +28,9 @@ module uvmt_cv32e40s_xsecure_assert
     parameter int PMP_ADDR_WIDTH = 6
   )
   (
-   uvmt_cv32e40s_xsecure_if xsecure_if,
-   uvma_rvfi_instr_if rvfi_if,
-   uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp support_if,
+   uvmt_cv32e40s_xsecure_if_t xsecure_if,
+   uvma_rvfi_instr_if_t rvfi_if,
+   uvmt_cv32e40s_support_logic_module_o_if_t.slave_mp support_if,
    input rst_ni,
    input clk_i
   );

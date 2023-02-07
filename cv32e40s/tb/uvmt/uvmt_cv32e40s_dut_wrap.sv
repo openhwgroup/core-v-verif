@@ -41,30 +41,43 @@
  */
 module uvmt_cv32e40s_dut_wrap
   import cv32e40s_pkg::*;
-#(// DUT (riscv_core) parameters.
-    parameter cv32e40s_pkg::b_ext_e B_EXT  = cv32e40s_pkg::B_NONE,
-    parameter int          PMA_NUM_REGIONS =  0,
-    parameter pma_cfg_t    PMA_CFG[PMA_NUM_REGIONS-1 : 0] = '{default:PMA_R_DEFAULT},
-    parameter int          PMP_NUM_REGIONS = 0,
-    parameter int          PMP_GRANULARITY = 0,
-    parameter logic        SMCLIC = 0,
-    parameter int          SMCLIC_ID_WIDTH = 5,
-    parameter int          DBG_NUM_TRIGGERS = 1,
+#(
+    // DUT (riscv_core) parameters.
+    parameter logic [31:0]           DM_REGION_START                     = 32'hF0000000,
+    parameter logic [31:0]           DM_REGION_END                       = 32'hF0003FFF,
+    parameter lfsr_cfg_t             LFSR0_CFG                           = LFSR_CFG_DEFAULT,
+    parameter lfsr_cfg_t             LFSR1_CFG                           = LFSR_CFG_DEFAULT,
+    parameter lfsr_cfg_t             LFSR2_CFG                           = LFSR_CFG_DEFAULT,
+    parameter m_ext_e                M_EXT                               = M,
+    parameter mseccfg_t              PMP_MSECCFG_RV                      = MSECCFG_DEFAULT,
+    parameter cv32e40s_pkg::b_ext_e  B_EXT                               = cv32e40s_pkg::B_NONE,
+    parameter int                    PMA_NUM_REGIONS                     =  0,
+    parameter pma_cfg_t              PMA_CFG[PMA_NUM_REGIONS-1 : 0]      = '{default:PMA_R_DEFAULT},
+    parameter int                    PMP_NUM_REGIONS                     = 0,
+    parameter pmpncfg_t              PMP_PMPNCFG_RV[PMP_NUM_REGIONS-1:0] = '{default:PMPNCFG_DEFAULT},
+    parameter logic [31:0]           PMP_PMPADDR_RV[PMP_NUM_REGIONS-1:0] = '{default:32'h0},
+    parameter int                    PMP_GRANULARITY                     = 0,
+    parameter logic                  SMCLIC                              = 0,
+    parameter int                    SMCLIC_ID_WIDTH                     = 5,
+    parameter int                    SMCLIC_INTTHRESHBITS                = 8,
+    parameter int                    DBG_NUM_TRIGGERS                    = 1,
+    parameter rv32_e                 RV32                                = RV32I,
+
     // Remaining parameters are used by TB components only
-              INSTR_ADDR_WIDTH    =  32,
-              INSTR_RDATA_WIDTH   =  32,
-              RAM_ADDR_WIDTH      =  20
-   )
+    parameter INSTR_ADDR_WIDTH    =  32,
+    parameter INSTR_RDATA_WIDTH   =  32,
+    parameter RAM_ADDR_WIDTH      =  20
+  )
   (
-    uvma_clknrst_if              clknrst_if,
-    uvma_interrupt_if            interrupt_if,
-    uvma_clic_if                 clic_if,
-    uvmt_cv32e40s_vp_status_if   vp_status_if,
-    uvme_cv32e40s_core_cntrl_if  core_cntrl_if,
-    uvmt_cv32e40s_core_status_if core_status_if,
-    uvma_obi_memory_if           obi_instr_if,
-    uvma_obi_memory_if           obi_data_if,
-    uvma_fencei_if               fencei_if
+    uvma_clknrst_if                 clknrst_if,
+    uvma_interrupt_if               interrupt_if,
+    uvma_clic_if                    clic_if,
+    uvmt_cv32e40s_vp_status_if_t    vp_status_if,
+    uvme_cv32e40s_core_cntrl_if     core_cntrl_if,
+    uvmt_cv32e40s_core_status_if_t  core_status_if,
+    uvma_obi_memory_if              obi_instr_if,
+    uvma_obi_memory_if              obi_data_if,
+    uvma_fencei_if                  fencei_if
   );
 
     import uvm_pkg::*; // needed for the UVM messaging service (`uvm_info(), etc.)
@@ -149,13 +162,25 @@ module uvmt_cv32e40s_dut_wrap
     // --------------------------------------------
     // instantiate the core
     cv32e40s_wrapper #(
-                      .B_EXT            (B_EXT),
-                      .PMA_NUM_REGIONS  (PMA_NUM_REGIONS),
-                      .PMA_CFG          (PMA_CFG),
-                      .PMP_GRANULARITY  (PMP_GRANULARITY),
-                      .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
-                      .SMCLIC           (SMCLIC),
-                      .DBG_NUM_TRIGGERS (DBG_NUM_TRIGGERS)
+                      .B_EXT                (B_EXT),
+                      .DBG_NUM_TRIGGERS     (DBG_NUM_TRIGGERS),
+                      .DM_REGION_END        (DM_REGION_END),
+                      .DM_REGION_START      (DM_REGION_START),
+                      .LFSR0_CFG            (LFSR0_CFG),
+                      .LFSR1_CFG            (LFSR1_CFG),
+                      .LFSR2_CFG            (LFSR2_CFG),
+                      .M_EXT                (M_EXT),
+                      .PMA_CFG              (PMA_CFG),
+                      .PMA_NUM_REGIONS      (PMA_NUM_REGIONS),
+                      .PMP_GRANULARITY      (PMP_GRANULARITY),
+                      .PMP_MSECCFG_RV       (PMP_MSECCFG_RV),
+                      .PMP_NUM_REGIONS      (PMP_NUM_REGIONS),
+                      .PMP_PMPADDR_RV       (PMP_PMPADDR_RV),
+                      .PMP_PMPNCFG_RV       (PMP_PMPNCFG_RV),
+                      .RV32                 (RV32),
+                      .SMCLIC               (SMCLIC),
+                      .SMCLIC_ID_WIDTH      (SMCLIC_ID_WIDTH),
+                      .SMCLIC_INTTHRESHBITS (SMCLIC_INTTHRESHBITS)
                       )
     cv32e40s_wrapper_i
         (

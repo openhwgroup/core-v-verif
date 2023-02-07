@@ -22,7 +22,7 @@
  * Encapsulates all signals and clocking of RVFI Instruction interface. Used by
  * monitor,
  */
-interface uvma_rvfi_instr_if
+interface uvma_rvfi_instr_if_t
   import uvma_rvfi_pkg::*;
   #(int ILEN=DEFAULT_ILEN,
     int XLEN=DEFAULT_XLEN)
@@ -263,7 +263,7 @@ function logic is_ecall();
   return match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);
 endfunction : is_ecall
 
-endinterface : uvma_rvfi_instr_if
+endinterface : uvma_rvfi_instr_if_t
 
 
 `endif // __UVMA_RVFI_INSTR_IF_SV__
