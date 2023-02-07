@@ -29,7 +29,7 @@ ifeq ($(OS_IS_UBUNTU),Ubuntu)
 endif
 
 # Executables
-VCS              = $(CV_SIM_PREFIX) vcs -full64 -cpp g++-4.8 -cc gcc-4.8 -LDFLAGS -Wl,--no-as-needed
+VCS              = $(CV_SIM_PREFIX) vcs -full64
 SIMV             = $(CV_TOOL_PREFIX)simv -licwait 20
 DVE              = $(CV_TOOL_PREFIX) dve
 #VERDI            = $(CV_TOOL_PREFIX)verdi
@@ -47,12 +47,10 @@ VCS_UVM_VERBOSITY ?= UVM_MEDIUM
 
 # Flags
 #VCS_UVMHOME_ARG ?= /opt/uvm/1800.2-2017-0.9/
-VCS_UVMHOME_ARG ?= /opt/synopsys/vcs-mx/O-2018.09-SP1-1/etc/uvm
-VCS_UVM_ARGS          ?= +incdir+$(VCS_UVMHOME_ARG)/src $(VCS_UVMHOME_ARG)/src/uvm_pkg.sv +UVM_VERBOSITY=$(VCS_UVM_VERBOSITY) -ntb_opts uvm-1.2
+VCS_UVMHOME_ARG ?= /opt/synopsys/vcs-mx/O-2018.09-SP2-3/etc/uvm-1.2
+VCS_UVM_ARGS          ?= +incdir+$(VCS_UVMHOME_ARG)/src $(VCS_UVMHOME_ARG)/src/uvm_pkg.sv -ntb_opts uvm-1.2
 
-VCS_COMP_FLAGS  ?= -lca -sverilog \
-										$(SV_CMP_FLAGS) $(VCS_UVM_ARGS) $(VCS_TIMESCALE) \
-										-assert svaext -race=all -ignore unique_checks -full64
+VCS_COMP_FLAGS  ?= -lca -sverilog $(SV_CMP_FLAGS) $(VCS_UVM_ARGS) $(VCS_TIMESCALE) -assert svaext -race=all -ignore unique_checks
 VCS_GUI         ?=
 VCS_RUN_COV      = -cm line+cond+tgl+fsm+branch+assert -cm_dir $(MAKECMDGOALS).vdb
 
@@ -86,12 +84,17 @@ endif
 # Waveform generation
 # WAVES=YES enables waveform generation for entire testbench
 # ADV_DEBUG=YES currently not supported
+# FSDB=YES enables FSDB waveform file generation for entire testbench
 ifeq ($(call IS_YES,$(WAVES)),YES)
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
 $(error ADV_DEBUG not yet supported by VCS )
-VCS_USER_COMPILE_ARGS = +vcs+vcdpluson
+VCS_USER_COMPILE_ARGS += +vcs+vcdpluson
 else
-VCS_USER_COMPILE_ARGS = +vcs+vcdpluson
+ifeq ($(call IS_YES,$(FSDB)),YES)
+VCS_USER_COMPILE_ARGS += -debug_access+all +vcs+fsdbon -kdb
+else
+VCS_USER_COMPILE_ARGS += +vcs+vcdpluson
+endif
 endif
 endif
 
@@ -137,6 +140,7 @@ endif
 VCS_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 VCS_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
 VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
+VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_RVFI
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
     VCS_PLUSARGS += +USE_ISS
 else
@@ -177,7 +181,6 @@ hello-world:
 
 VCS_COMP = $(VCS_COMP_FLAGS) \
 		$(QUIET) \
-		$(VCS_UVM_ARGS) \
 		$(VCS_USER_COMPILE_ARGS) \
 		+incdir+$(DV_UVME_PATH) \
 		+incdir+$(DV_UVMT_PATH) \
@@ -225,6 +228,7 @@ test: $(VCS_SIM_PREREQ) hex gen_ovpsim_ic
 			$(CFG_PLUSARGS) \
 			$(TEST_PLUSARGS) \
 			+UVM_TESTNAME=$(TEST_UVM_TEST) \
+			+UVM_VERBOSITY=$(VCS_UVM_VERBOSITY) \
     		+elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
 			+firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
 			+itb_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).itb
