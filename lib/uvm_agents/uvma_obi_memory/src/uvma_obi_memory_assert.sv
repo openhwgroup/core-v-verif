@@ -185,7 +185,7 @@ module uvma_obi_memory_assert
     `uvm_error(info_tag, "be was zero during an address cycle")
 
   // R-7 All ones must be contiguous in writes
-  reg[3:0] contiguous_be[] = {
+  reg [9:0] [3:0] contiguous_be = '{
     4'b0001,
     4'b0011,
     4'b0111,
