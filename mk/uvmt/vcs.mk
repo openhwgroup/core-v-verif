@@ -92,6 +92,7 @@ VCS_USER_COMPILE_ARGS += +vcs+vcdpluson
 else
 ifeq ($(call IS_YES,$(FSDB)),YES)
 VCS_USER_COMPILE_ARGS += -debug_access+all +vcs+fsdbon -kdb
+VCS_RUN_WAVES_FLAGS  ?= -ucli -i $(abspath $(MAKE_PATH)/../tools/vcs/vcs_wave.tcl)
 else
 VCS_USER_COMPILE_ARGS += +vcs+vcdpluson
 endif
