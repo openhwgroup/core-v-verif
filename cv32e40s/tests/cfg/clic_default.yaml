@@ -184,7 +184,7 @@ ovpsim: >
     --override cpu/mask_pmpcfg13=0xFFFFFFFF
     --override cpu/mask_pmpcfg14=0xFFFFFFFF
     --override cpu/mask_pmpcfg15=0xFFFFFFFF
-    --showoverrides
+    #--showoverrides
     # --trace --tracechange --traceshowicount --monitornets
 cflags: >
 plusargs: >

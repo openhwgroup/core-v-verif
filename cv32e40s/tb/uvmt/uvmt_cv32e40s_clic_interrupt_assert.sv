@@ -62,7 +62,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
 
     input logic [31:0]                mcause,
-    input logic [31:0]                mclicbase,
 
     input logic [31:0]                mtvec_addr_i,
 
@@ -184,11 +183,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
     logic [6:2]  base_6_2;
     logic [1:0]  mode;
   } mtvec_clic_t;
-
-  typedef struct packed {
-    logic [31:12] mclicbase;
-    logic [11:0]  reserved;
-  } mclicbase_t;
 
   localparam N_MTVT = 2+SMCLIC_ID_WIDTH > 6 ? 2+SMCLIC_ID_WIDTH : 6;
 
@@ -509,7 +503,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
   mintstatus_t      mintstatus_fields;
   mstatus_t         mstatus_fields;
   mtvec_clic_t      mtvec_fields;
-  mclicbase_t       mclicbase_fields;
   mtvt_t            mtvt_fields;
   mepc_t            mepc_fields;
   mcause_t          mcause_fields;
@@ -600,7 +593,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
   assign mintthresh_fields = mintthresh_t'(mintthresh);
   assign mstatus_fields    = mstatus_t'(mstatus);
   assign mtvec_fields      = mtvec_clic_t'(mtvec);
-  assign mclicbase_fields  = mclicbase_t'(mclicbase);
   assign mtvt_fields       = mtvt_t'(mtvt);
   assign mepc_fields       = mepc_t'(mepc);
   assign mcause_fields     = mcause_t'(mcause);
@@ -1112,20 +1104,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
     else
       `uvm_error(info_tag,
         $sformatf("Every irq_ack should be followed by the corresponding rvfi_intr"));
-
-    // ------------------------------------------------------------------------
-    // mclicbase lower 12 bit should always be zero
-    // ------------------------------------------------------------------------
-
-    property p_mclicbase_lower_12_bits_zero;
-      mclicbase_fields.reserved == 12'h000;
-    endproperty : p_mclicbase_lower_12_bits_zero
-
-    a_mclicbase_lower_12_bits_zero: assert property (p_mclicbase_lower_12_bits_zero)
-    else
-      `uvm_error(info_tag,
-         $sformatf("mclicbase[11:0] should have been zero, is %012b",
-           mclicbase_fields.reserved));
 
     // ------------------------------------------------------------------------
     // mie is unused, and should be hard coded zero
