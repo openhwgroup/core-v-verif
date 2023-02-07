@@ -16,7 +16,7 @@
 # SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
 
-# Defines and includes
+# Defines and Includes
 
 CORE_V_VERIF ?= $(realpath ../..)
 
@@ -35,12 +35,23 @@ DPI_DASM_SPIKE_REPO ?= TODO_dontwanttodefinethis
 include  $(CORE_V_VERIF)/mk/fv/fv.mk
 
 
-# Make target
+# Safety Check
 
 ifndef  CV_SIM_PREFIX
   $(warning  CV_SIM_PREFIX undefined)
 endif
 
-fv:  $(CV_CORE_PKG)
-	$(CV_SIM_PREFIX)  jaspergold  jg.tcl
-	# TODO:robin-silabs  Move to "mk/fv/jg.mk"?
+
+# Make Targets
+
+jaspergold: jg
+jasper: jg
+jg:  $(CV_CORE_PKG)
+	$(CV_SIM_PREFIX)  jaspergold  jaspergold.tcl
+	# TODO:silabs-robin  Move to "mk/fv/jg.mk"?
+
+qverify: q
+questa: q
+q:  $(CV_CORE_PKG)
+	$(CV_SIM_PREFIX)  qverify  -do qverify.tcl
+	# TODO:silabs-robin  Move to "mk/fv/jg.mk"?

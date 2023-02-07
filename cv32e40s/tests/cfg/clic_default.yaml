@@ -17,7 +17,7 @@ ovpsim: >
     --override cpu/Zicsr=T
     --override cpu/noinhibit_mask=0xfffffffa
     --override cpu/trigger_num=0
-    --override cpu/extension/mcountinhibit_reset=0x5
+    --override cpu/extension_*/mcountinhibit_reset=0x5
     --override cpu/mtvec_mask=0xffffff80
     --override cpu/mtvt_mask=0xffffffffffffff80
     --override cpu/PMP_registers=64

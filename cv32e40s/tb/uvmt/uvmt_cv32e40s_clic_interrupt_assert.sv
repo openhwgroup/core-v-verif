@@ -954,6 +954,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // Deliberately written as a liveness property, might want to exclude or constrain
     // for sim to avoid the liveness issues.
     property p_always_taken;
+      @(posedge clk_i)
+
       sync_accept_on(
            core_in_debug
         || rvfi_intr.exception
@@ -1001,6 +1003,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
     end
 
     sequence seq_irq_pend(bit ok = 1'b1);
+      @(posedge clk_i)
+
       // valid pending
       ok ##0 (
             (mstatus_fields.mie
@@ -1328,6 +1332,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
     end
 
     sequence s_store_mtvt_value;
+      @(posedge clk_i)
+
       is_mtvt_store_event;
     endsequence : s_store_mtvt_value
 
@@ -1804,11 +1810,16 @@ module uvmt_cv32e40s_clic_interrupt_assert
     end
 
     sequence seq_irq_req_unchanged;
+      @(posedge clk_i)
+
       clic == clic_oic;
     endsequence : seq_irq_req_unchanged
 
     sequence seq_valid_irq_pending(s_clic);
       clic_irq_bundle_t sampled_clic = s_clic;
+
+      @(posedge clk_i)
+
          sampled_clic.priv == M_MODE
       && sampled_clic.level > mcause_fields.mpil
       && sampled_clic.level > mintthresh_fields.th
@@ -1862,6 +1873,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
 
     sequence seq_higher_lvl_nonshv_clic_taken;
+      @(posedge clk_i)
+
           clic.irq
        && clic.level > mcause_fields.mpil
        && clic.level > mintthresh_fields.th
@@ -1901,6 +1914,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
 
     sequence seq_lower_oic_no_longer_presesnt_lower_lvl_pending;
+      @(posedge clk_i)
+
           clic.irq
        && clic.level > mcause_fields.mpil
        && clic.level <= clic_oic.level
@@ -1953,6 +1968,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
 
     sequence seq_nonshv_lower_lvl_pending;
+      @(posedge clk_i)
+
            clic.irq
        && !clic.shv
        && (clic.level < mcause_fields.mpil);
@@ -1976,6 +1993,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
 
     sequence seq_higher_lvl_shv_irq_pending;
+      @(posedge clk_i)
+
           clic.irq
        && clic.shv
        && clic.level > mintthresh_fields.th
@@ -1999,6 +2018,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
 
     sequence seq_pending_nonshv_irq;
+      @(posedge clk_i)
+
           clic.irq
        && !clic.shv
        && clic.level > mintthresh_fields.th
