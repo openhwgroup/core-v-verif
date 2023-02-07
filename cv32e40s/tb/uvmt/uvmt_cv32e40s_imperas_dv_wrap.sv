@@ -16,6 +16,7 @@
 //
 //
 
+
 `ifndef __UVMT_CV32E40S_IMPERAS_DV_WRAP_SV__
 `define __UVMT_CV32E40S_IMPERAS_DV_WRAP_SV__
 
@@ -304,7 +305,9 @@
 
 module uvmt_cv32e40s_imperas_dv_wrap
   import uvm_pkg::*;
+  import cv32e40s_pkg::*;
   import uvme_cv32e40s_pkg::*;
+  import uvmt_cv32e40s_pkg::*;
   import rvviApiPkg::*;
   #(
    )
@@ -505,12 +508,14 @@ module uvmt_cv32e40s_imperas_dv_wrap
    `RVVI_SET_CSR( `CSR_MSECCFG_ADDR,       mseccfg       )
    `RVVI_SET_CSR( `CSR_MSECCFGH_ADDR,      mseccfgh      )
 
-   `RVVI_SET_CSR( `CSR_TSELECT_ADDR,       tselect       )
-   `RVVI_SET_CSR( `CSR_TDATA1_ADDR,        tdata1        )
-   `RVVI_SET_CSR( `CSR_TDATA2_ADDR,        tdata2        )
-   `RVVI_SET_CSR( `CSR_TDATA3_ADDR,        tdata3        )
-   `RVVI_SET_CSR( `CSR_TINFO_ADDR,         tinfo         )
-   `RVVI_SET_CSR( `CSR_TCONTROL_ADDR,      tcontrol      )
+   if (CORE_PARAM_NUM_TRIGGERS > 0) begin
+     `RVVI_SET_CSR( `CSR_TSELECT_ADDR,       tselect       )
+     `RVVI_SET_CSR( `CSR_TDATA1_ADDR,        tdata1        )
+     `RVVI_SET_CSR( `CSR_TDATA2_ADDR,        tdata2        )
+     `RVVI_SET_CSR( `CSR_TDATA3_ADDR,        tdata3        )
+     `RVVI_SET_CSR( `CSR_TINFO_ADDR,         tinfo         )
+     `RVVI_SET_CSR( `CSR_TCONTROL_ADDR,      tcontrol      )
+   end
 
    `RVVI_SET_CSR( `CSR_DCSR_ADDR,          dcsr          )
    `RVVI_SET_CSR( `CSR_DPC_ADDR,           dpc           )
@@ -594,7 +599,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
    `RVVI_SET_CSR( `CSR_MCYCLEH_ADDR,       mcycleh       )
    `RVVI_SET_CSR( `CSR_MINSTRETH_ADDR,     minstreth     )
 
-   `ifdef SMCLIC_EN
+   if (CORE_PARAM_SMCLIC == 1) begin
      `RVVI_SET_CSR( `CSR_MTVT_ADDR,        mtvt          )
      `RVVI_SET_CSR( `CSR_MNXTI_ADDR,       mnxti         )
      `RVVI_SET_CSR( `CSR_MINTSTATUS_ADDR,  mintstatus    )
@@ -602,7 +607,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
      `RVVI_SET_CSR( `CSR_MSCRATCHCSW_ADDR, mscratchcsw   )
      `RVVI_SET_CSR( `CSR_MSCRATCHCSWL_ADDR,mscratchcswl  )
      `RVVI_SET_CSR( `CSR_MCLICBASE_ADDR,   mclicbase     )
-   `endif
+   end
 
 
    ////////////////////////////////////////////////////////////////////////////
@@ -657,27 +662,27 @@ module uvmt_cv32e40s_imperas_dv_wrap
    // assert when MIP or cause bit
    // negate when posedge clk && valid=1 && debug=0
    ////////////////////////////////////////////////////////////////////////////
-  `ifndef SMCLIC_EN
-  `RVVI_WRITE_IRQ(MSWInterrupt,        3)
-  `RVVI_WRITE_IRQ(MTimerInterrupt,     7)
-  `RVVI_WRITE_IRQ(MExternalInterrupt, 11)
-  `RVVI_WRITE_IRQ(LocalInterrupt0,    16)
-  `RVVI_WRITE_IRQ(LocalInterrupt1,    17)
-  `RVVI_WRITE_IRQ(LocalInterrupt2,    18)
-  `RVVI_WRITE_IRQ(LocalInterrupt3,    19)
-  `RVVI_WRITE_IRQ(LocalInterrupt4,    20)
-  `RVVI_WRITE_IRQ(LocalInterrupt5,    21)
-  `RVVI_WRITE_IRQ(LocalInterrupt6,    22)
-  `RVVI_WRITE_IRQ(LocalInterrupt7,    23)
-  `RVVI_WRITE_IRQ(LocalInterrupt8,    24)
-  `RVVI_WRITE_IRQ(LocalInterrupt9,    25)
-  `RVVI_WRITE_IRQ(LocalInterrupt10,   26)
-  `RVVI_WRITE_IRQ(LocalInterrupt11,   27)
-  `RVVI_WRITE_IRQ(LocalInterrupt12,   28)
-  `RVVI_WRITE_IRQ(LocalInterrupt13,   29)
-  `RVVI_WRITE_IRQ(LocalInterrupt14,   30)
-  `RVVI_WRITE_IRQ(LocalInterrupt15,   31)
-  `else
+  if (CORE_PARAM_SMCLIC == 0) begin
+    `RVVI_WRITE_IRQ(MSWInterrupt,        3)
+    `RVVI_WRITE_IRQ(MTimerInterrupt,     7)
+    `RVVI_WRITE_IRQ(MExternalInterrupt, 11)
+    `RVVI_WRITE_IRQ(LocalInterrupt0,    16)
+    `RVVI_WRITE_IRQ(LocalInterrupt1,    17)
+    `RVVI_WRITE_IRQ(LocalInterrupt2,    18)
+    `RVVI_WRITE_IRQ(LocalInterrupt3,    19)
+    `RVVI_WRITE_IRQ(LocalInterrupt4,    20)
+    `RVVI_WRITE_IRQ(LocalInterrupt5,    21)
+    `RVVI_WRITE_IRQ(LocalInterrupt6,    22)
+    `RVVI_WRITE_IRQ(LocalInterrupt7,    23)
+    `RVVI_WRITE_IRQ(LocalInterrupt8,    24)
+    `RVVI_WRITE_IRQ(LocalInterrupt9,    25)
+    `RVVI_WRITE_IRQ(LocalInterrupt10,   26)
+    `RVVI_WRITE_IRQ(LocalInterrupt11,   27)
+    `RVVI_WRITE_IRQ(LocalInterrupt12,   28)
+    `RVVI_WRITE_IRQ(LocalInterrupt13,   29)
+    `RVVI_WRITE_IRQ(LocalInterrupt14,   30)
+    `RVVI_WRITE_IRQ(LocalInterrupt15,   31)
+  end else begin
     logic clic_irq;
     logic [10:0] clic_irq_id;
     logic [7:0]  clic_irq_level;
@@ -696,7 +701,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
       void'(rvvi.net_push("irq_sec_i",   clic_irq_priv));
       void'(rvvi.net_push("irq_shv_i",   clic_irq_shv));
     end
-  `endif
+  end
 
    ////////////////////////////////////////////////////////////////////////////
    // RVFI Monitor: pass NMI Load/Store and Fetch to the ref
@@ -945,13 +950,13 @@ module uvmt_cv32e40s_imperas_dv_wrap
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
 
     // TODO silabs-hfegran: temp fix to work around issues
-    rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR, RVVI_FALSE);
+    //rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR, RVVI_FALSE);
     rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR, RVVI_FALSE);
     // end TODO
 
     // define asynchronous grouping
     // Interrupts
-    `ifndef SMCLIC_EN
+    if (CORE_PARAM_SMCLIC == 0) begin
       rvviRefNetGroupSet(rvviRefNetIndexGet("MSWInterrupt"),        1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("MTimerInterrupt"),     1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("MExternalInterrupt"),  1);
@@ -971,13 +976,13 @@ module uvmt_cv32e40s_imperas_dv_wrap
       rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt13"),    1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt14"),    1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt15"),    1);
-    `else
+    end else begin
       rvviRefNetGroupSet(rvviRefNetIndexGet("irq_i"),               1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("irq_id_i"),            1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("irq_lev_i"),           1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("irq_sec_i"),           1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("irq_shv_i"),           1);
-    `endif
+    end
 
     rvviRefNetGroupSet(rvviRefNetIndexGet("InstructionBusFault"), 2);
 
