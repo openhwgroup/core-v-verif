@@ -508,7 +508,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
    `RVVI_SET_CSR( `CSR_MSECCFG_ADDR,       mseccfg       )
    `RVVI_SET_CSR( `CSR_MSECCFGH_ADDR,      mseccfgh      )
 
-   if (CORE_PARAM_NUM_TRIGGERS > 0) begin
+   if (CORE_PARAM_DBG_NUM_TRIGGERS > 0) begin
      `RVVI_SET_CSR( `CSR_TSELECT_ADDR,       tselect       )
      `RVVI_SET_CSR( `CSR_TDATA1_ADDR,        tdata1        )
      `RVVI_SET_CSR( `CSR_TDATA2_ADDR,        tdata2        )
@@ -606,7 +606,6 @@ module uvmt_cv32e40s_imperas_dv_wrap
      `RVVI_SET_CSR( `CSR_MINTTHRESH_ADDR,  mintthresh    )
      `RVVI_SET_CSR( `CSR_MSCRATCHCSW_ADDR, mscratchcsw   )
      `RVVI_SET_CSR( `CSR_MSCRATCHCSWL_ADDR,mscratchcswl  )
-     `RVVI_SET_CSR( `CSR_MCLICBASE_ADDR,   mclicbase     )
    end
 
 
@@ -934,6 +933,8 @@ module uvmt_cv32e40s_imperas_dv_wrap
     // in-flight, eg Load/Store
     rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR, RVVI_FALSE);
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
+
+    rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR, RVVI_FALSE);
 
     // define asynchronous grouping
     // Interrupts
