@@ -21,8 +21,6 @@
 //   that is external to this repo.
 //
 
-${TBSRC_HOME}/uvmt/uvmt_cv32e40s_pkg.sv
-
 +incdir+${IMPERAS_HOME}
 +incdir+${IMPERAS_HOME}/ImpProprietary/include/host
 ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/rvvi-api-pkg.sv
