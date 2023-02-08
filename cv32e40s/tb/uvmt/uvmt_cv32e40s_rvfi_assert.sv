@@ -20,7 +20,9 @@ module uvmt_cv32e40s_rvfi_assert
   import cv32e40s_pkg::*;
   import cv32e40s_rvfi_pkg::*;
   import uvm_pkg::*;
-(
+#(
+  parameter logic  SMCLIC
+)(
   input  clk_i,
   input  rst_ni,
 
@@ -133,12 +135,15 @@ module uvmt_cv32e40s_rvfi_assert
     rvfi_trap.exception_cause
   ) else `uvm_error(info_tag, "rvfi_trap exceptions must have a cause");
 
-  a_interrupts_cause: assert property (
-    rvfi_valid  &&
-    rvfi_intr
-    |->
-    rvfi_intr.cause
-  ) else `uvm_error(info_tag, "rvfi_intr interrupts must have a cause");
+  if (!SMCLIC) begin: gen_clint_cause
+    a_interrupts_cause: assert property (
+      rvfi_valid  &&
+      rvfi_intr
+      |->
+      rvfi_intr.cause
+    ) else `uvm_error(info_tag, "rvfi_intr interrupts must have a cause");
+    // TODO:silabs-robin  Could also assert "cause < 2^clicwidth"
+  end : gen_clint_cause
 
   a_debugs_cause: assert property (
     rvfi_valid  &&
