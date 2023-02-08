@@ -1143,6 +1143,23 @@ module uvmt_cv32e40s_tb;
                                                                     .csr_tdata1(rvfi_csr_tdata1_if_0_i),
                                                                     .cov_assert_if(debug_cov_assert_if));
 
+    bind cv32e40s_wrapper uvmt_cv32e40s_debug_trigger_assert u_debug_trigger_assert(
+                                                                    .rvfi_if (rvfi_instr_if_0_i), //TODO: sjekk om u_ prefix matcher coding guidelines
+                                                                    //.clknrst_if (clknrst_if),
+                                                                    .reset_n (clknrst_if.reset_n),
+                                                                    .clk (clknrst_if.clk),
+                                                                    //.csr_dcsr(rvfi_csr_dcsr_if_0_i),
+                                                                    //.csr_dpc(rvfi_csr_dpc_if_0_i),
+                                                                    //.csr_mepc(rvfi_csr_mepc_if_0_i),
+                                                                    //.csr_mstatus(rvfi_csr_mstatus_if_0_i),
+                                                                    //.csr_mtvec(rvfi_csr_mtvec_if_0_i),
+                                                                    .rvfi_tdata1_if(rvfi_csr_tdata1_if_0_i),
+                                                                    .rvfi_tdata2_if(rvfi_csr_tdata2_if_0_i));
+                                                                    //.cov_assert_if(debug_cov_assert_if));
+
+
+
+
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
                                                               .support_if(support_logic_for_assert_coverage_modules_if.slave_mp)
                                                               );
