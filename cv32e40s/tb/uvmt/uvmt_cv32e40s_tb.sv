@@ -394,7 +394,6 @@ module uvmt_cv32e40s_tb;
     `RVFI_CSR_BIND(mscratchcsw)
     `RVFI_CSR_BIND(mscratchcswl)
     `RVFI_CSR_BIND(mtvt)
-    `RVFI_CSR_BIND(mclicbase)
   end : gen_clic_rvfi_bind
 
   // dscratch0
@@ -520,7 +519,6 @@ module uvmt_cv32e40s_tb;
         .mcause              (cs_registers_i.mcause_rdata),
         .mtvec               (cs_registers_i.mtvec_rdata),
         .mtvt                (cs_registers_i.mtvt_rdata),
-        .mclicbase           (cs_registers_i.mclicbase_rdata),
         .mepc                (cs_registers_i.mepc_rdata),
         .mip                 (cs_registers_i.mip_rdata),
         .mie                 (cs_registers_i.mie_rdata),
@@ -1447,7 +1445,6 @@ module uvmt_cv32e40s_tb;
        `RVFI_CSR_UVM_CONFIG_DB_SET(mscratchcsw)
        `RVFI_CSR_UVM_CONFIG_DB_SET(mscratchcswl)
        `RVFI_CSR_UVM_CONFIG_DB_SET(mtvt)
-       `RVFI_CSR_UVM_CONFIG_DB_SET(mclicbase)
      `endif
 
      // IMPERAS_DV interface
