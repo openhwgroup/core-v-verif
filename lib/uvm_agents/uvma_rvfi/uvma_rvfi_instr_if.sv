@@ -83,7 +83,10 @@ interface uvma_rvfi_instr_if
   localparam INSTR_OPCODE_WFI       = 32'h 1050_0073;
   localparam INSTR_OPCODE_WFE       = 32'h 8C00_0073;
   localparam INSTR_OPCODE_EBREAK    = 32'h 0010_0073;
+  localparam INSTR_OPCODE_C_EBREAK  = 32'h 0000_9002;
   localparam INSTR_OPCODE_ECALL     = 32'h 0000_0073;
+
+  localparam INTR_CAUSE_NMI_MASK         = 11'h 400;
 
   // -------------------------------------------------------------------
   // Local variables
@@ -256,12 +259,46 @@ function logic is_wfe();
 endfunction : is_wfe
 
 function logic is_ebreak();
-  return match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL);
+  return match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL) || match_instr(INSTR_OPCODE_C_EBREAK, INSTR_MASK_FULL);
 endfunction : is_ebreak
+
+function logic is_ebreak_compr();
+  return match_instr(INSTR_OPCODE_C_EBREAK, INSTR_MASK_FULL);
+endfunction : is_ebreak_compr
+
+function logic is_ebreak_noncompr();
+  return match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL);
+endfunction : is_ebreak_noncompr
+
 
 function logic is_ecall();
   return match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);
 endfunction : is_ecall
+
+function logic is_nmi();
+  return rvfi_valid && rvfi_intr.intr && (rvfi_intr.cause & INTR_CAUSE_NMI_MASK);
+endfunction : is_nmi
+
+function logic is_compressed();
+  return  rvfi_valid && (rvfi_insn[1:0] != 2'b11);
+endfunction : is_compressed
+
+function logic is_dbg_trg();
+  return  rvfi_valid &&
+          rvfi_trap.trap &&
+          rvfi_trap.debug &&
+         (rvfi_trap.debug_cause == cv32e40s_pkg::DBG_CAUSE_TRIGGER);
+endfunction : is_dbg_trg
+
+function logic is_mmode();
+  return  rvfi_valid &&
+          (rvfi_mode == cv32e40s_pkg::PRIV_LVL_M);
+endfunction : is_mmode
+
+function logic is_umode();
+  return  rvfi_valid &&
+          (rvfi_mode == cv32e40s_pkg::PRIV_LVL_U);
+endfunction : is_umode
 
 endinterface : uvma_rvfi_instr_if
 
