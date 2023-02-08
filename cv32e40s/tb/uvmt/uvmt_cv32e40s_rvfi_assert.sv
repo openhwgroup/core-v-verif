@@ -87,13 +87,15 @@ module uvmt_cv32e40s_rvfi_assert
 
   // RVFI exception cause matches "mcause"
 
+  wire logic [10:0]  rvfi_mcause_exccode;
+  assign rvfi_mcause_exccode = (rvfi_csr_mcause_wdata & rvfi_csr_mcause_wmask);
+
   a_exc_cause: assert property (
     rvfi_valid           &&
     rvfi_trap.exception  &&
     !rvfi_dbg_mode
     |->
-    (rvfi_trap.exception_cause
-      == (rvfi_csr_mcause_wdata & rvfi_csr_mcause_wmask))
+    (rvfi_trap.exception_cause == rvfi_mcause_exccode)
   ) else `uvm_error(info_tag, "'exception_cause' must match 'mcause'");
 
 
