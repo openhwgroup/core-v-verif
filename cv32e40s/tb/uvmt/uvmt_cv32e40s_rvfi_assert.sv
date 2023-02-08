@@ -76,12 +76,37 @@ module uvmt_cv32e40s_rvfi_assert
 
   // RVFI debug cause matches dcsr debug cause
 
-  a_dbg_cause: assert property (
+  a_dbg_cause_general: assert property (
     rvfi_valid  &&
     rvfi_dbg    &&
     !was_rvfi_dbg_mode
     |->
     (rvfi_dbg == rvfi_csr_dcsr_rdata[8:6])
+  ) else `uvm_error(info_tag, "'rvfi_dbg' did not match 'dcsr.cause'");
+
+  property  p_dbg_cause_n (n);
+    rvfi_valid          &&
+    rvfi_dbg            &&
+    !was_rvfi_dbg_mode  &&
+    (rvfi_csr_dcsr_rdata[8:6] == n)
+    |->
+    (rvfi_dbg == n);
+  endproperty : p_dbg_cause_n
+
+  a_dbg_cause_ebreak: assert property (
+    p_dbg_cause_n(1)
+  ) else `uvm_error(info_tag, "'rvfi_dbg' did not match 'dcsr.cause'");
+
+  a_dbg_cause_trigger: assert property (
+    p_dbg_cause_n(2)
+  ) else `uvm_error(info_tag, "'rvfi_dbg' did not match 'dcsr.cause'");
+
+  a_dbg_cause_haltreq: assert property (
+    p_dbg_cause_n(3)
+  ) else `uvm_error(info_tag, "'rvfi_dbg' did not match 'dcsr.cause'");
+
+  a_dbg_cause_step: assert property (
+    p_dbg_cause_n(4)
   ) else `uvm_error(info_tag, "'rvfi_dbg' did not match 'dcsr.cause'");
 
 
