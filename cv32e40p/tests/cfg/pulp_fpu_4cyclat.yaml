@@ -1,7 +1,7 @@
 name: pulp_fpu_4cyclat
 description: Sets PULP instructions and FPU parameters to 1
 compile_flags: 
-    +define+PULP +define+FPU +define+FPU +define+FPU_ADDMUL_LAT=4 +define+FPU_OTHERS_LAT=4
+    +define+PULP +define+FPU +define+FPU_ADDMUL_LAT=4 +define+FPU_OTHERS_LAT=4
 ovpsim: >
     --override root/cpu/misa_Extensions=0x801124
     --override root/cpu/marchid=4
