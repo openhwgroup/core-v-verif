@@ -142,7 +142,7 @@ module uvmt_cv32e40s_rvfi_assert
   end : gen_legal_cause_clint
 
   if (SMCLIC) begin: gen_legal_cause_clic
-    localparam logic [31:0]  MAX_CLIC_ID = 2^SMCLIC_ID_WIDTH - 1;
+    localparam logic [31:0]  MAX_CLIC_ID = 2**SMCLIC_ID_WIDTH - 1;
 
     a_irq_cause_clic: assert property (
       rvfi_valid  &&
