@@ -36,6 +36,11 @@
 #define DEBUG_SEL_SETUP_TRIGGER 2
 #define DEBUG_SEL_CLEAR_TDATA2 3
 
+#define TRIGGER_NONE     0
+#define TRIGGER_BYTE     1
+#define TRIGGER_HALFWORD 2
+#define TRIGGER_WORD     3
+
                                // Place in debugger section
 void _debugger_start(void)     __attribute__((section(".debugger"))) __attribute__((naked));
 void _debugger(void)           __attribute__((section(".debugger")));
@@ -71,7 +76,9 @@ volatile int debug_entry_status;
 
 volatile uint32_t illegal_insn_status;
 
-volatile uint32_t some_data = 0xC0DECAFE;
+volatile uint8_t  some_data_bytes[4]     = {0xC0, 0xFF, 0xEB, 0xEE};
+volatile uint16_t some_data_halfwords[2] = {0xDEAD, 0xBEEF};
+volatile uint32_t some_data_word         = 0xC0DECAFE;
 
 void handle_illegal_insn (void) {
     printf("  Illegal insn\n");
@@ -217,7 +224,15 @@ int trigger_test (int expect_trigger_match, uint32_t trigger_addr) {
   debug_break_loop   = 1;
   debug_entry_status = 0;
   debug_sel = DEBUG_SEL_IDLE;
-  if (trigger_load) {
+  if (trigger_load == TRIGGER_BYTE) {
+    __asm__ volatile (R"(lw s4, trigger_address
+                         lb s3, 0(s4)          )");
+  }
+  if (trigger_load == TRIGGER_HALFWORD) {
+    __asm__ volatile (R"(lw s4, trigger_address
+                         lh s3, 0(s4)          )");
+  }
+  if (trigger_load == TRIGGER_WORD) {
     __asm__ volatile (R"(lw s4, trigger_address
                          lw s3, 0(s4)          )");
   }
@@ -231,7 +246,7 @@ int trigger_test (int expect_trigger_match, uint32_t trigger_addr) {
   }
 
 
-  printf ("\nTrigger_test() - Instruction address match debug entry: %d (expected: %d)\n",
+  printf ("\ntrigger_test() - Address match debug entry: %d (expected: %d)\n",
           debug_entry_status,   expect_trigger_match);
   return (debug_entry_status == expect_trigger_match) ? SUCCESS : FAIL;
 }
@@ -288,15 +303,25 @@ int test_load_trigger () {
                   1 << 6  | // M = Match in machine mode
                   1 << 0 ); // LOAD = Match on load from data address
 
-  trigger_load    = 1;
+  trigger_load    = TRIGGER_WORD;
   trigger_store   = 0;
   trigger_execute = 0;
 
   debug_increment_dpc = 0;
-  retval += trigger_test(1, (uint32_t) &some_data);
+  retval += trigger_test(1, (uint32_t) &some_data_word);
 
   debug_increment_dpc = 1;
-  retval += trigger_test(1, (uint32_t) &some_data);
+  retval += trigger_test(1, (uint32_t) &some_data_word);
+
+  trigger_load    = TRIGGER_HALFWORD;
+  retval += trigger_test(1, (uint32_t) &some_data_halfwords[0]);
+  retval += trigger_test(1, (uint32_t) &some_data_halfwords[1]);
+
+  trigger_load    = TRIGGER_BYTE;
+  retval += trigger_test(1, (uint32_t) &some_data_bytes[0]);
+  retval += trigger_test(1, (uint32_t) &some_data_bytes[1]);
+  retval += trigger_test(1, (uint32_t) &some_data_bytes[2]);
+  retval += trigger_test(1, (uint32_t) &some_data_bytes[3]);
 
   disable_trigger();
 
