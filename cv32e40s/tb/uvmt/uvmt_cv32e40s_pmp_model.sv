@@ -321,46 +321,47 @@ module uvmt_cv32e40s_pmp_model
           end // PMP_ACC_EXEC
         endcase // case(pmp_req_type_i)
 
-        end else begin // mmwp low
-          case ( priv_lvl_i )
-            PRIV_LVL_M:
-              case ( {pmp_req_type_i, match_status_o.is_locked} )
-                { PMP_ACC_READ,  1'b1 }: match_status_o.val_access_allowed_reason.r_mmode_lr = csr_pmp_i.cfg[match_status_o.val_index].read;
-                { PMP_ACC_READ,  1'b0 }: match_status_o.val_access_allowed_reason.r_mmode_r  = 1'b1;
-                { PMP_ACC_WRITE, 1'b1 }: match_status_o.val_access_allowed_reason.w_mmode_lw = csr_pmp_i.cfg[match_status_o.val_index].write;
-                { PMP_ACC_WRITE, 1'b0 }: match_status_o.val_access_allowed_reason.w_mmode_w  = 1'b1;
-                { PMP_ACC_EXEC,  1'b1 }: match_status_o.val_access_allowed_reason.x_mmode_lx = csr_pmp_i.cfg[match_status_o.val_index].exec;
-                { PMP_ACC_EXEC,  1'b0 }: match_status_o.val_access_allowed_reason.x_mmode_x  = 1'b1;
-              endcase
-            PRIV_LVL_U:
-              case ( pmp_req_type_i )
-                PMP_ACC_READ:  match_status_o.val_access_allowed_reason.r_umode_r = csr_pmp_i.cfg[match_status_o.val_index].read;
-                PMP_ACC_WRITE: match_status_o.val_access_allowed_reason.w_umode_w = csr_pmp_i.cfg[match_status_o.val_index].write;
-                PMP_ACC_EXEC:  match_status_o.val_access_allowed_reason.x_umode_x = csr_pmp_i.cfg[match_status_o.val_index].exec;
-              endcase
-          endcase // case (priv_lvl_i)
+      end else begin // mmwp low
+        case ( priv_lvl_i )
+          PRIV_LVL_M:
+            case ( {pmp_req_type_i, match_status_o.is_locked} )
+              { PMP_ACC_READ,  1'b1 }: match_status_o.val_access_allowed_reason.r_mmode_lr = csr_pmp_i.cfg[match_status_o.val_index].read;
+              { PMP_ACC_READ,  1'b0 }: match_status_o.val_access_allowed_reason.r_mmode_r  = 1'b1;
+              { PMP_ACC_WRITE, 1'b1 }: match_status_o.val_access_allowed_reason.w_mmode_lw = csr_pmp_i.cfg[match_status_o.val_index].write;
+              { PMP_ACC_WRITE, 1'b0 }: match_status_o.val_access_allowed_reason.w_mmode_w  = 1'b1;
+              { PMP_ACC_EXEC,  1'b1 }: match_status_o.val_access_allowed_reason.x_mmode_lx = csr_pmp_i.cfg[match_status_o.val_index].exec;
+              { PMP_ACC_EXEC,  1'b0 }: match_status_o.val_access_allowed_reason.x_mmode_x  = 1'b1;
+            endcase
+          PRIV_LVL_U:
+            case ( pmp_req_type_i )
+              PMP_ACC_READ:  match_status_o.val_access_allowed_reason.r_umode_r = csr_pmp_i.cfg[match_status_o.val_index].read;
+              PMP_ACC_WRITE: match_status_o.val_access_allowed_reason.w_umode_w = csr_pmp_i.cfg[match_status_o.val_index].write;
+              PMP_ACC_EXEC:  match_status_o.val_access_allowed_reason.x_umode_x = csr_pmp_i.cfg[match_status_o.val_index].exec;
+            endcase
+        endcase // case (priv_lvl_i)
 
-        end
-      match_status_o.is_rwx_ok = |match_status_o.val_access_allowed_reason;
-
-      end else begin
-        // ------------------------------------------------------------
-        // NO MATCH REGION
-        // ------------------------------------------------------------
-        // No matching region found, allow only M-access, and only if MMWP bit is not set
-        case ( {pmp_req_type_i, priv_lvl_i} )
-          { PMP_ACC_READ,  PRIV_LVL_M }:
-            match_status_o.val_access_allowed_reason.r_mmode_nomatch_nommwp_r = !csr_pmp_i.mseccfg.mmwp;
-          { PMP_ACC_WRITE, PRIV_LVL_M }:
-            match_status_o.val_access_allowed_reason.w_mmode_nomatch_nommwp_w = !csr_pmp_i.mseccfg.mmwp;
-          { PMP_ACC_EXEC,  PRIV_LVL_M }:
-            match_status_o.val_access_allowed_reason.x_mmode_nomatch_nommwp_x = !csr_pmp_i.mseccfg.mmwp && !csr_pmp_i.mseccfg.mml;
-        endcase
-        match_status_o.is_access_allowed_no_match = |match_status_o.val_access_allowed_reason;
       end
-      // Access is allowed if any one of the above conditions matches
-      match_status_o.is_access_allowed = |match_status_o.val_access_allowed_reason;
+
+      match_status_o.is_rwx_ok = |match_status_o.val_access_allowed_reason;
+    end else begin
+      // ------------------------------------------------------------
+      // NO MATCH REGION
+      // ------------------------------------------------------------
+      // No matching region found, allow only M-access, and only if MMWP bit is not set
+      case ( {pmp_req_type_i, priv_lvl_i} )
+        { PMP_ACC_READ,  PRIV_LVL_M }:
+          match_status_o.val_access_allowed_reason.r_mmode_nomatch_nommwp_r = !csr_pmp_i.mseccfg.mmwp;
+        { PMP_ACC_WRITE, PRIV_LVL_M }:
+          match_status_o.val_access_allowed_reason.w_mmode_nomatch_nommwp_w = !csr_pmp_i.mseccfg.mmwp;
+        { PMP_ACC_EXEC,  PRIV_LVL_M }:
+          match_status_o.val_access_allowed_reason.x_mmode_nomatch_nommwp_x = !csr_pmp_i.mseccfg.mmwp && !csr_pmp_i.mseccfg.mml;
+      endcase
+      match_status_o.is_access_allowed_no_match = |match_status_o.val_access_allowed_reason;
     end
+
+    // Access is allowed if any one of the above conditions matches
+    match_status_o.is_access_allowed = |match_status_o.val_access_allowed_reason;
+  end
 
 
 
