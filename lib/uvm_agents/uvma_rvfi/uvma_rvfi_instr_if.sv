@@ -300,6 +300,13 @@ function logic is_umode();
           (rvfi_mode == cv32e40s_pkg::PRIV_LVL_U);
 endfunction : is_umode
 
+function logic is_instr_bus_valid();
+  return !( (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT) ||
+            (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_INTEGRITY_FAULT) ||
+            (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_BUS_FAULT)
+    );
+endfunction : is_instr_bus_valid
+
 endinterface : uvma_rvfi_instr_if
 
 

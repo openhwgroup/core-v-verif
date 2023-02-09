@@ -1144,6 +1144,7 @@ module uvmt_cv32e40s_tb;
                                                                     .csr_mstatus(rvfi_csr_mstatus_if_0_i),
                                                                     .csr_mtvec(rvfi_csr_mtvec_if_0_i),
                                                                     .csr_tdata1(rvfi_csr_tdata1_if_0_i),
+                                                                    .csr_tdata2(rvfi_csr_tdata2_if_0_i),
                                                                     .cov_assert_if(debug_cov_assert_if));
 
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
