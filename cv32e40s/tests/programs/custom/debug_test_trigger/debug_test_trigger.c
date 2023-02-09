@@ -148,6 +148,21 @@ void _debugger (void) {
       debug_sel = DEBUG_SEL_CLEAR_TDATA2;
     }
   }
+  return;
+}
+
+void disable_trigger () {
+  debug_entry_status = 0;
+  // Disable trigger after use
+  debug_sel = DEBUG_SEL_DISABLE_TRIGGER;
+
+  // Assert debug req
+  DEBUG_REQ_CONTROL_REG = (CV_VP_DEBUG_CONTROL_DBG_REQ(0x1)        |
+                           CV_VP_DEBUG_CONTROL_REQ_MODE(0x1)       |
+                           CV_VP_DEBUG_CONTROL_PULSE_DURATION(0x8) |
+                           CV_VP_DEBUG_CONTROL_START_DELAY(0xc8));
+  // Wait for debug entry
+  while (debug_entry_status == 0);
 }
 
 
@@ -258,6 +273,8 @@ int test_execute_trigger () {
   retval += trigger_test(1, (uint32_t) &trigger_code_illegal_insn);
   retval += trigger_test(1, (uint32_t) &trigger_code_multicycle_insn);
 
+  disable_trigger();
+
   return retval;
 }
 
@@ -281,7 +298,7 @@ int test_load_trigger () {
   debug_increment_dpc = 1;
   retval += trigger_test(1, (uint32_t) &some_data);
 
-
+  disable_trigger();
 
   return retval;
 }
@@ -334,8 +351,8 @@ int main(int argc, char *argv[])
       __asm__ volatile (R"(lw        s2, trigger_sel
                            csrw tselect, s2         )" ::: "s2");
 
-      status = test_execute_trigger();
-      //status +=  test_load_trigger ();
+      status  = test_execute_trigger();
+      status += test_load_trigger ();
       if (status != 0) {
         printf("Test 0 failed with status: %d\n", status);
         return status;
