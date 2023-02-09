@@ -5,26 +5,31 @@ module uvmt_cv32e40s_pmp_model
   import uvm_pkg::*;
   import uvmt_cv32e40s_pkg::*;
   #(
-    parameter int       PMP_GRANULARITY   = 0,
-    parameter int       PMP_NUM_REGIONS   = 0
+    parameter int           PMP_GRANULARITY,
+    parameter int           PMP_NUM_REGIONS,
+    parameter logic [31:0]  DM_REGION_START,
+    parameter logic [31:0]  DM_REGION_END
   )
   (
    // Clock and Reset
    input wire  clk,
    input wire  rst_n,
 
-   // Interface to CSRs
+   // CSRs
    input wire pmp_csr_t  csr_pmp_i,
 
-   // Privilege mode
+   // Privilege Mode
    input wire privlvl_t  priv_lvl_i,
 
-   // Access checking
+   // Access Checking
    input wire [33:0]     pmp_req_addr_i,
    input wire pmp_req_e  pmp_req_type_i,
    input wire            pmp_req_err_o,
 
-   //
+   // Debug Mode
+   input wire  debug_mode,
+
+   // Match Status
    output match_status_t  match_status_o
   );
 
@@ -39,10 +44,12 @@ module uvmt_cv32e40s_pmp_model
   always_comb begin
     match_status_o = {<<{'0}};
 
+    // Lock Detection
     for (int region = 0; region < PMP_NUM_REGIONS; region++) begin
       match_status_o.is_any_locked = csr_pmp_i.cfg[region].lock ? 1'b1 : match_status_o.is_any_locked;
     end
 
+    // Match Detection
     for (int i = 0; i < PMP_NUM_REGIONS; i++) begin
       automatic logic [$clog2(PMP_MAX_REGIONS)-1:0]  region = i;
 
@@ -52,6 +59,10 @@ module uvmt_cv32e40s_pmp_model
         break;
       end
     end
+
+    // Debug Module Override
+    match_status_o.is_dm_override =
+      debug_mode && ((DM_REGION_START <= pmp_req_addr_i) && (pmp_req_addr_i <= DM_REGION_END));
 
     // Allowed access whitelist table
     if (match_status_o.is_matched) begin
@@ -359,13 +370,14 @@ module uvmt_cv32e40s_pmp_model
       match_status_o.is_access_allowed_no_match = |match_status_o.val_access_allowed_reason;
     end
 
-    // Access is allowed if any one of the above conditions matches
-    match_status_o.is_access_allowed = |match_status_o.val_access_allowed_reason;
+    // Access is allowed if any one of the above conditions matches (or DM override)
+    match_status_o.is_access_allowed =
+      |match_status_o.val_access_allowed_reason || match_status_o.is_dm_override;
   end
 
 
-
   // Helper functions
+
   function automatic int is_match_na4(input logic[$clog2(PMP_MAX_REGIONS)-1:0] region);
     is_match_na4 = (csr_pmp_i.cfg[region].mode   == PMP_MODE_NA4)  &&
                    (csr_pmp_i.addr[region][33:2] == pmp_req_addr_i[33:2]);
@@ -381,7 +393,6 @@ module uvmt_cv32e40s_pmp_model
     is_match_tor = (csr_pmp_i.cfg[region].mode == PMP_MODE_TOR) &&
                    (lo   <= req) &&
                    (req   < hi);
-
   endfunction : is_match_tor
 
   function automatic int is_match_napot(input logic[$clog2(PMP_MAX_REGIONS)-1:0] region);
@@ -391,7 +402,6 @@ module uvmt_cv32e40s_pmp_model
 
     is_match_napot = (csr_pmp_i.cfg[region].mode == PMP_MODE_NAPOT) &&
                      (csr_addr_masked == req_addr_masked);
-
   endfunction : is_match_napot
 
   function automatic logic[31:0] gen_mask(input logic[$clog2(PMP_MAX_REGIONS)-1:0] i);

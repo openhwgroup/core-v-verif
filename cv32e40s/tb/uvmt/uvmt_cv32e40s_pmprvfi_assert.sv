@@ -45,7 +45,10 @@ module uvmt_cv32e40s_pmprvfi_assert
   input wire [31:0]  rvfi_csr_mseccfgh_wdata,
   input wire [31:0]  rvfi_csr_mseccfgh_wmask,
   //(mstatus)
-  input wire [31:0]  rvfi_csr_mstatus_rdata
+  input wire [31:0]  rvfi_csr_mstatus_rdata,
+
+  // Debug
+  input wire  rvfi_dbg_mode
 );
 
 
@@ -187,66 +190,86 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
-    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
+    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
+    .DM_REGION_START  (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+    .DM_REGION_END    (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END)
   ) model_instr_i (
     .clk   (clk_i),
     .rst_n (rst_ni),
 
     .csr_pmp_i      (pmp_csr_rvfi_rdata),
-    .priv_lvl_i     (privlvl_t'(rvfi_mode)),
+    .debug_mode     (rvfi_dbg_mode),
     .pmp_req_addr_i ({2'b 00, rvfi_pc_rdata}),
-    .pmp_req_type_i (PMP_ACC_EXEC),
     .pmp_req_err_o  ('Z),
+    .pmp_req_type_i (PMP_ACC_EXEC),
+    .priv_lvl_i     (privlvl_t'(rvfi_mode)),
 
-    .match_status_o (match_status_instr)
+    .match_status_o (match_status_instr),
+
+    .*
   );
 
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
-    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
+    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
+    .DM_REGION_START  (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+    .DM_REGION_END    (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END)
   ) model_data_i (
     .clk   (clk_i),
     .rst_n (rst_ni),
 
     .csr_pmp_i      (pmp_csr_rvfi_rdata),
-    .priv_lvl_i     (privlvl_t'(rvfi_effective_mode)),
+    .debug_mode     (rvfi_dbg_mode),
     .pmp_req_addr_i ({2'b 00, rvfi_mem_addr}),  // TODO:silabs-robin  Multi-op instructions
-    .pmp_req_type_i (rvfi_mem_wmask ? PMP_ACC_WRITE : PMP_ACC_READ),  // TODO:silabs-robin  Not completely accurate...
     .pmp_req_err_o  ('Z),
+    .pmp_req_type_i (rvfi_mem_wmask ? PMP_ACC_WRITE : PMP_ACC_READ),  // TODO:silabs-robin  Not completely accurate...
+    .priv_lvl_i     (privlvl_t'(rvfi_effective_mode)),
 
-    .match_status_o (match_status_data)
+    .match_status_o (match_status_data),
+
+    .*
   );
 
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
-    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
+    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
+    .DM_REGION_START  (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+    .DM_REGION_END    (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END)
   ) model_upperinstr_i (
     .clk   (clk_i),
     .rst_n (rst_ni),
 
     .csr_pmp_i      (pmp_csr_rvfi_rdata),
-    .priv_lvl_i     (privlvl_t'(rvfi_mode)),
+    .debug_mode     (rvfi_dbg_mode),
     .pmp_req_addr_i ({2'b 00, rvfi_pc_upperrdata}),
-    .pmp_req_type_i (PMP_ACC_EXEC),
     .pmp_req_err_o  ('Z),
+    .pmp_req_type_i (PMP_ACC_EXEC),
+    .priv_lvl_i     (privlvl_t'(rvfi_mode)),
 
-    .match_status_o (match_status_upperinstr)
+    .match_status_o (match_status_upperinstr),
+
+    .*
   );
 
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
-    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
+    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
+    .DM_REGION_START  (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+    .DM_REGION_END    (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END)
   ) model_upperdata_i (
     .clk   (clk_i),
     .rst_n (rst_ni),
 
     .csr_pmp_i      (pmp_csr_rvfi_rdata),
-    .priv_lvl_i     (privlvl_t'(rvfi_effective_mode)),
+    .debug_mode     (rvfi_dbg_mode),
     .pmp_req_addr_i ({2'b 00, rvfi_mem_upperaddr}),  // TODO:silabs-robin  Multi-op instructions
-    .pmp_req_type_i (rvfi_mem_wmask ? PMP_ACC_WRITE : PMP_ACC_READ),  // TODO:silabs-robin  Not completely accurate...
     .pmp_req_err_o  ('Z),
+    .pmp_req_type_i (rvfi_mem_wmask ? PMP_ACC_WRITE : PMP_ACC_READ),  // TODO:silabs-robin  Not completely accurate...
+    .priv_lvl_i     (privlvl_t'(rvfi_effective_mode)),
 
-    .match_status_o (match_status_upperdata)
+    .match_status_o (match_status_upperdata),
+
+    .*
   );
 
   var [31:0]  clk_cnt;

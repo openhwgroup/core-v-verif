@@ -1,4 +1,24 @@
+// Copyright 2022 Silicon Labs, Inc.
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Licensed under the Solderpad Hardware License v 2.1 (the "License"); you may
+// not use this file except in compliance with the License, or, at your option,
+// the Apache License version 2.0.
+//
+// You may obtain a copy of the License at
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
 `default_nettype none
+
 
 module uvmt_cv32e40s_pmp_assert
   import uvm_pkg::*;
@@ -15,13 +35,14 @@ module uvmt_cv32e40s_pmp_assert
    input wire            clk,
    input wire            rst_n,
 
-   // Interface to CSRs
+   // CSRs
    input wire pmp_csr_t  csr_pmp_i,
 
-   // Privilege mode
+   // Mode Info
    input wire privlvl_t  priv_lvl_i,
+   input wire            bus_trans_dbg,
 
-   // Access checking
+   // Access Checking
    input wire [33:0]     pmp_req_addr_i,
    input wire pmp_req_e  pmp_req_type_i,
    input wire            pmp_req_err_o,
@@ -51,8 +72,11 @@ module uvmt_cv32e40s_pmp_assert
   match_status_t  match_status;
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
-    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
+    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
+    .DM_REGION_START  (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+    .DM_REGION_END    (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END)
   ) model_i (
+    .debug_mode     (bus_trans_dbg),
     .match_status_o (match_status),
     .*
   );
