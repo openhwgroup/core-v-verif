@@ -25,10 +25,10 @@ module uvmt_cv32e40s_pmp_assert
   import cv32e40s_pkg::*;
   import uvmt_cv32e40s_pkg::*;
   #(
-    parameter int       PMP_GRANULARITY   = 0,
-    parameter int       PMP_NUM_REGIONS   = 0,
-    parameter int       IS_INSTR_SIDE     = 0,
-    parameter mseccfg_t MSECCFG_RESET_VAL = MSECCFG_DEFAULT
+    parameter int        PMP_GRANULARITY,
+    parameter int        PMP_NUM_REGIONS,
+    parameter int        IS_INSTR_SIDE,
+    parameter mseccfg_t  PMP_MSECCFG_RV
   )
   (
    // Clock and Reset
@@ -411,7 +411,7 @@ module uvmt_cv32e40s_pmp_assert
     // U-mode fails if no match  (vplan:UmodeNomatch)
     a_nomatch_umode_fails: assert property (
       priv_lvl_i == PRIV_LVL_U && match_status.is_matched == 1'b0 |->
-        pmp_req_err_o
+        pmp_req_err_o ^ match_status.is_dm_override
     ) else `uvm_error(info_tag, "non-matched umode access must fail");
 
     // M-mode fails if: no match, and "mseccfg.MMWP"  (vplan:WhiteList:Denied)
@@ -420,28 +420,29 @@ module uvmt_cv32e40s_pmp_assert
       !match_status.is_matched  &&
       csr_pmp_i.mseccfg.mmwp
       |->
-      pmp_req_err_o
+      pmp_req_err_o ^ match_status.is_dm_override
     ) else `uvm_error(info_tag, "non-matched mmode access must fail when MMWP");
 
     // U-mode or L=1 succeed only if RWX  (vplan:RwxUmode)
     a_uorl_onlyif_rwx: assert property (
       //TODO:silabs-robin  Why, 'L=1' in comment, but 'is_matched' in code?
-      ( priv_lvl_i == PRIV_LVL_U || match_status.is_matched == 1'b1 ) && !pmp_req_err_o |->
-        match_status.is_rwx_ok
+      ( priv_lvl_i == PRIV_LVL_U || match_status.is_matched == 1'b1 ) && !pmp_req_err_o
+      |->
+        match_status.is_rwx_ok || match_status.is_dm_override
     ) else `uvm_error(info_tag, "RWX must agree for allowing umode and L");
 
     // After a match, LRWX determines access  (vplan:LrwxDetermines)
     a_lrwx_aftermatch: assert property (
       //TODO:silabs-robin  Why, "LRWX" in comment, but "rwx" in code?
       match_status.is_matched == 1'b1 && !pmp_req_err_o |->
-        match_status.is_rwx_ok
+        match_status.is_rwx_ok || match_status.is_dm_override
     ) else `uvm_error(info_tag, "LRWX must agree for allowing matched access");
 
     // SMEPMP 1: The reset value of mseccfg is implementation-specific, otherwise if backwards
     // compatibility is a requirement it should reset to zero on hard reset.
     // (vplan:MsecCfg:ResetValue)
     a_mseccfg_reset_val: assert property (
-      $rose(rst_n) |-> csr_pmp_i.mseccfg === MSECCFG_RESET_VAL
+      $rose(rst_n) |-> csr_pmp_i.mseccfg === PMP_MSECCFG_RV
     ) else `uvm_error(info_tag, "mseccfg must be reset correctly");
   end endgenerate
 
