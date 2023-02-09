@@ -16,28 +16,32 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
 
+`default_nettype  none
+
+
 module uvmt_cv32e40s_rvfi_assert
   import cv32e40s_pkg::*;
   import cv32e40s_rvfi_pkg::*;
   import uvm_pkg::*;
 #(
-  parameter logic  SMCLIC
+  parameter logic  SMCLIC,
+  parameter int    SMCLIC_ID_WIDTH
 )(
-  input  clk_i,
-  input  rst_ni,
+  input wire  clk_i,
+  input wire  rst_ni,
 
-  input             rvfi_valid,
-  input [ 4:0]      rvfi_rs1_addr,
-  input [ 4:0]      rvfi_rs2_addr,
-  input [31:0]      rvfi_rs1_rdata,
-  input [31:0]      rvfi_rs2_rdata,
-  input [ 2:0]      rvfi_dbg,
-  input [31:0]      rvfi_csr_dcsr_rdata,
-  input rvfi_trap_t rvfi_trap,
-  input rvfi_intr_t rvfi_intr,
-  input [31:0]      rvfi_csr_mcause_wdata,
-  input [31:0]      rvfi_csr_mcause_wmask,
-  input             rvfi_dbg_mode
+  input wire             rvfi_valid,
+  input wire [ 4:0]      rvfi_rs1_addr,
+  input wire [ 4:0]      rvfi_rs2_addr,
+  input wire [31:0]      rvfi_rs1_rdata,
+  input wire [31:0]      rvfi_rs2_rdata,
+  input wire [ 2:0]      rvfi_dbg,
+  input wire [31:0]      rvfi_csr_dcsr_rdata,
+  input wire rvfi_trap_t rvfi_trap,
+  input wire rvfi_intr_t rvfi_intr,
+  input wire [31:0]      rvfi_csr_mcause_wdata,
+  input wire [31:0]      rvfi_csr_mcause_wmask,
+  input wire             rvfi_dbg_mode
 );
 
   default clocking @(posedge clk_i); endclocking
@@ -126,6 +130,29 @@ module uvmt_cv32e40s_rvfi_assert
   ) else `uvm_error(info_tag, "'exception_cause' must match 'mcause'");
 
 
+  // RVFI interrupt cause matches legal causes
+
+  if (!SMCLIC) begin: gen_legal_cause_clint
+    a_irq_cause_clint: assert property (
+      rvfi_valid  &&
+      rvfi_intr.interrupt
+      |->
+      (rvfi_intr.cause inside {3, 7, 11, [16:31], [1024:1027]})
+    ) else `uvm_error(info_tag, "unexpected interrupt cause");
+  end : gen_legal_cause_clint
+
+  if (SMCLIC) begin: gen_legal_cause_clic
+    localparam logic [31:0]  MAX_CLIC_ID = 2^SMCLIC_ID_WIDTH - 1;
+
+    a_irq_cause_clic: assert property (
+      rvfi_valid  &&
+      rvfi_intr.interrupt
+      |->
+      (rvfi_intr.cause inside {[0:MAX_CLIC_ID], [1024:1027]})
+    ) else `uvm_error(info_tag, "unexpected interrupt cause");
+  end : gen_legal_cause_clic
+
+
   // Exceptions/Interrupts/Debugs have a cause
 
   a_exceptions_cause: assert property (
@@ -142,7 +169,6 @@ module uvmt_cv32e40s_rvfi_assert
       |->
       rvfi_intr.cause
     ) else `uvm_error(info_tag, "rvfi_intr interrupts must have a cause");
-    // TODO:silabs-robin  Could also assert "cause < 2^clicwidth"
   end : gen_clint_cause
 
   a_debugs_cause: assert property (
@@ -152,4 +178,8 @@ module uvmt_cv32e40s_rvfi_assert
     rvfi_trap.debug_cause
   ) else `uvm_error(info_tag, "rvfi_trap debugs must have a cause");
 
+
 endmodule : uvmt_cv32e40s_rvfi_assert
+
+
+`default_nettype  wire
