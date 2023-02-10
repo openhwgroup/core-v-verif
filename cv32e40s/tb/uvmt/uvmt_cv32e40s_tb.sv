@@ -446,6 +446,17 @@ module uvmt_cv32e40s_tb;
                                                                      .rvfi_csr_wdata(rvfi_i.rvfi_csr_tdata_wdata[3])
     );
 
+  // tinfo
+/*
+  bind cv32e40s_wrapper
+    uvma_rvfi_csr_if#(uvme_cv32e40s_pkg::XLEN) rvfi_csr_tinfo_if_0_i(.clk(clk_i),
+                                                                     .reset_n(rst_ni),
+                                                                     .rvfi_csr_rmask(rvfi_i.rvfi_csr_tinfo_rmask[0]),
+                                                                     .rvfi_csr_wmask(rvfi_i.rvfi_csr_tinfo_wmask[0]),
+                                                                     .rvfi_csr_rdata(rvfi_i.rvfi_csr_tinfo_rdata[0]),
+                                                                     .rvfi_csr_wdata(rvfi_i.rvfi_csr_tinfo_wdata[0])
+    );*/
+
   bind uvmt_cv32e40s_dut_wrap
     uvma_obi_memory_assert_if_wrp#(
       .ADDR_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_ADDR_WIDTH),
@@ -1151,8 +1162,11 @@ module uvmt_cv32e40s_tb;
                                                                     //.csr_mepc(rvfi_csr_mepc_if_0_i),
                                                                     //.csr_mstatus(rvfi_csr_mstatus_if_0_i),
                                                                     //.csr_mtvec(rvfi_csr_mtvec_if_0_i),
+                                                                    .debug_mode(core_i.controller_i.controller_fsm_i.debug_mode_q),
                                                                     .rvfi_tdata1_if(rvfi_csr_tdata1_if_0_i),
-                                                                    .rvfi_tdata2_if(rvfi_csr_tdata2_if_0_i));
+                                                                    .rvfi_tdata2_if(rvfi_csr_tdata2_if_0_i),
+                                                                    .rvfi_tinfo_if(rvfi_csr_tinfo_if_0_i),
+                                                                    .rvfi_tselect_if(rvfi_csr_tselect_if_0_i));
                                                                     //.cov_assert_if(debug_cov_assert_if));
 
 
