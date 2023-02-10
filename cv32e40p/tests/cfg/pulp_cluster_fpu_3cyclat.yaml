@@ -1,7 +1,7 @@
-name: pulp_cluster_fpu
+name: pulp_cluster_fpu_3cyclat
 description: Sets PULP and CLUSTER instructions and FPU parameters to 1
 compile_flags: 
-    +define+PULP +define+CLUSTER +define+FPU
+    +define+PULP +define+CLUSTER +define+FPU +define+FPU_ADDMUL_LAT=3 +define+FPU_OTHERS_LAT=3
 ovpsim: >
     --override root/cpu/misa_Extensions=0x801124
     --override root/cpu/marchid=4

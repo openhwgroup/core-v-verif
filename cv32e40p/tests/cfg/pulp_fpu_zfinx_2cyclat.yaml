@@ -1,7 +1,7 @@
-name: pulp_fpu_zfinx
+name: pulp_fpu_zfinx_2cyclat
 description: Sets PULP instructions and FPU and Zfinx parameters to 1
 compile_flags: 
-    +define+PULP +define+FPU +define+ZFINX
+    +define+PULP +define+FPU +define+ZFINX +define+FPU_ADDMUL_LAT=2 +define+FPU_OTHERS_LAT=2
 ovpsim: >
     --override root/cpu/misa_Extensions=0x801124
     --override root/cpu/marchid=4

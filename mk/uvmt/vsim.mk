@@ -354,13 +354,13 @@ vopt_corev-dv:
 			-o $(CV_CORE_LC)_instr_gen_tb_top_vopt \
 			-l vopt.log
 
-gen_corev-dv:
+gen_corev-dv: comp_corev-dv
 	mkdir -p $(SIM_COREVDV_RESULTS)/$(TEST)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		mkdir -p $(SIM_TEST_RESULTS)/$$idx/test_program; \
 	done
 	cd $(SIM_COREVDV_RESULTS)/$(TEST) && \
-		$(VMAP) work ../work
+		$(VMAP) work $(SIM_COREVDV_RESULTS)/work
 	cd  $(SIM_COREVDV_RESULTS)/$(TEST) && \
 		$(VSIM) \
 			$(VSIM_FLAGS) \
@@ -383,7 +383,11 @@ gen_corev-dv:
 		cp ${SIM_COREVDV_RESULTS}/${TEST}/${TEST}_$$idx.S ${SIM_TEST_RESULTS}/$$idx/test_program; \
 	done
 
-comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG) vlog_corev-dv vopt_corev-dv
+$(SIM_COREVDV_RESULTS)/vlog.log: vlog_corev-dv
+
+$(SIM_COREVDV_RESULTS)/vopt.log: vopt_corev-dv
+
+comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG) $(SIM_COREVDV_RESULTS)/vlog.log $(SIM_COREVDV_RESULTS)/vopt.log
 
 corev-dv: clean_riscv-dv clone_riscv-dv comp_corev-dv
 
