@@ -39,9 +39,6 @@
 // Environments
 -f ${DV_UVME_PATH}/uvme_cv32e40s_pkg.flist
 
-// ImperasDV
--f ${TBSRC_HOME}/uvmt/imperas_dv.flist
-
 // CV32E40S test bench Directories
 +incdir+${DV_UVMT_PATH}
 +incdir+${DV_UVM_TESTCASE_PATH}
@@ -52,6 +49,9 @@
 // CV32E40S tests (includes constants/macros/types meant for test bench)
 +incdir+${TBSRC_HOME}
 ${DV_UVMT_PATH}/uvmt_cv32e40s_pkg.sv
+
+// ImperasDV
+-f ${TBSRC_HOME}/uvmt/imperas_dv.flist
 
 // CV32E40S test bench files
 -f ${DV_UVMT_PATH}/uvmt_cv32e40s_tb_files.flist
