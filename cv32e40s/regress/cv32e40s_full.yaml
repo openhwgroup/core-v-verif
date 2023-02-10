@@ -3,7 +3,7 @@
 # This means you need to have a toolchain at COREV_SW_TOOLCHAIN (see Common.mk)
 ---
 # Header
-name: cv32_full_covg
+name: cv32e40s_full
 description: Full regression (all tests) for CV32E40S with step-and-compare against RM"
 
 # List of builds
