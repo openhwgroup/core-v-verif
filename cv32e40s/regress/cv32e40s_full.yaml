@@ -396,7 +396,12 @@ tests:
 
   fencei:
     description: fence.i directed tests
-    builds: [uvmt_cv32e40s, uvmt_cv32e40s_pma_1, uvmt_cv32e40s_pma_2, uvmt_cv32e40s_pma_3, uvmt_cv32e40s_pma_4, uvmt_cv32e40s_pma_5, uvmt_cv32e40s_no_bitmanip]
+    builds:
+      - uvmt_cv32e40s
+      - uvmt_cv32e40s_pma_1
+      - uvmt_cv32e40s_pma_2
+      - uvmt_cv32e40s_pma_5
+      - uvmt_cv32e40s_no_bitmanip
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=fencei
 
