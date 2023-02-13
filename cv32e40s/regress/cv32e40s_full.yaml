@@ -64,6 +64,11 @@ builds:
     cfg: pma_test_cfg_5
     dir: cv32e40s/sim/uvmt
 
+  uvmt_cv32e40s_pmp:
+    cmd: make comp_corev-dv comp
+    cfg: pmp
+    dir: cv32e40s/sim/uvmt
+
   uvmt_cv32e40s_no_bitmanip:
     cmd: make comp_corev-dv comp
     cfg: no_bitmanip
@@ -395,10 +400,16 @@ tests:
     cmd: make test TEST=load_store_rs1_zero
 
   pma:
-    description: ISA function coverage test
+    description: ISA function coverage test  TODO:silabs-robin
     builds: [ uvmt_cv32e40s_pma]
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=isa_fcov_holes
+
+  pmp:
+    description: PMP directed tests
+    builds: [uvmt_cv32e40s_pmp]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=pmp
 
   b_ext_test:
     description: Directed Zb extension test
