@@ -1153,16 +1153,29 @@ module uvmt_cv32e40s_tb;
                                                                     .cov_assert_if(debug_cov_assert_if));
 
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_trigger_assert u_debug_trigger_assert(
+                                                                    .dm_halt_addr_i (core_i.dm_halt_addr_i),
+
+                                                                    .support_debug_mode_q (core_i.controller_i.controller_fsm_i.debug_mode_q),
+
+                                                                    .support_if_instr_valid (core_i.if_valid),
+                                                                    .support_id_instr_valid (core_i.if_id_pipe.instr_valid),
+                                                                    .support_ex_instr_valid (core_i.id_ex_pipe.instr_valid),
+                                                                    .support_wb_instr_valid (core_i.ex_wb_pipe.instr_valid),
+
+                                                                    .support_pc_if (core_i.pc_if),
+                                                                    .support_pc_id (core_i.if_id_pipe.pc),
+                                                                    .support_pc_ex (core_i.id_ex_pipe.pc),
+                                                                    .support_pc_wb (core_i.ex_wb_pipe.pc),
+
                                                                     .rvfi_if (rvfi_instr_if_0_i), //TODO: sjekk om u_ prefix matcher coding guidelines
                                                                     //.clknrst_if (clknrst_if),
                                                                     .reset_n (clknrst_if.reset_n),
                                                                     .clk (clknrst_if.clk),
-                                                                    //.csr_dcsr(rvfi_csr_dcsr_if_0_i),
-                                                                    //.csr_dpc(rvfi_csr_dpc_if_0_i),
+                                                                    .rvfi_dcsr_if(rvfi_csr_dcsr_if_0_i),
+                                                                    .rvfi_dpc_if(rvfi_csr_dpc_if_0_i),
                                                                     //.csr_mepc(rvfi_csr_mepc_if_0_i),
                                                                     //.csr_mstatus(rvfi_csr_mstatus_if_0_i),
                                                                     //.csr_mtvec(rvfi_csr_mtvec_if_0_i),
-                                                                    .debug_mode(core_i.controller_i.controller_fsm_i.debug_mode_q),
                                                                     .rvfi_tdata1_if(rvfi_csr_tdata1_if_0_i),
                                                                     .rvfi_tdata2_if(rvfi_csr_tdata2_if_0_i),
                                                                     .rvfi_tinfo_if(rvfi_csr_tinfo_if_0_i),

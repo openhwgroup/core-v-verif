@@ -20,16 +20,29 @@ module uvmt_cv32e40s_debug_trigger_assert
   import uvma_rvfi_pkg::*;
   import cv32e40s_pkg::*;
   (
+    input logic [31:0] dm_halt_addr_i,
+
+    input logic support_debug_mode_q,
+
+    input logic support_if_instr_valid,
+    input logic support_id_instr_valid,
+    input logic support_ex_instr_valid,
+    input logic support_wb_instr_valid,
+
+    input logic [31:0] support_pc_if,
+    input logic [31:0] support_pc_id,
+    input logic [31:0] support_pc_ex,
+    input logic [31:0] support_pc_wb,
+
     uvma_rvfi_instr_if rvfi_if,
     //uvma_clknrst_if clknrst_if,
     input clk,
     input reset_n,
-    //uvma_rvfi_csr_if csr_dcsr,
-    //uvma_rvfi_csr_if csr_dpc,
+    uvma_rvfi_csr_if rvfi_dcsr_if,
+    uvma_rvfi_csr_if rvfi_dpc_if,
     //uvma_rvfi_csr_if csr_mepc,
     //uvma_rvfi_csr_if csr_mstatus,
     //uvma_rvfi_csr_if csr_mtvec,
-    input debug_mode,
     uvma_rvfi_csr_if rvfi_tdata1_if,
     uvma_rvfi_csr_if rvfi_tdata2_if,
     uvma_rvfi_csr_if rvfi_tinfo_if,
@@ -48,9 +61,18 @@ module uvmt_cv32e40s_debug_trigger_assert
   localparam MODE_M = 3;
   localparam MODE_U = 0;
 
+  //DCP:
+  logic [31:0] dpc;
+  assign dpc = (rvfi_dpc_if.rvfi_csr_rdata & rvfi_dpc_if.rvfi_csr_rmask);
+
+  //DCSR:
+  logic [31:0] dcsr;
+  assign dcsr = (rvfi_dcsr_if.rvfi_csr_rdata & rvfi_dcsr_if.rvfi_csr_rmask);
+
+
   //tdata1:
   logic [31:0] tdata1;
-  assign tdata1 = (rvfi_tdata1_if.rvfi_csr_rdata & rvfi_tdata1_if.rvfi_csr_rmask) | (rvfi_tdata1_if.rvfi_csr_wdata & rvfi_tdata1_if.rvfi_csr_wmask);
+  assign tdata1 = (rvfi_tdata1_if.rvfi_csr_rdata & rvfi_tdata1_if.rvfi_csr_rmask);
 
   logic tdata1_m26_execute;
   assign tdata1_m26_execute = tdata1[2];
@@ -79,15 +101,15 @@ module uvmt_cv32e40s_debug_trigger_assert
 
   //tdata2:
   logic [31:0] tdata2;
-  assign tdata2 = (rvfi_tdata2_if.rvfi_csr_rdata & rvfi_tdata2_if.rvfi_csr_rmask) | (rvfi_tdata2_if.rvfi_csr_wdata & rvfi_tdata2_if.rvfi_csr_wmask);
+  assign tdata2 = (rvfi_tdata2_if.rvfi_csr_rdata & rvfi_tdata2_if.rvfi_csr_rmask);
 
   //tinfo
   logic [31:0] tinfo;
-  assign tinfo = (rvfi_tinfo_if.rvfi_csr_rdata & rvfi_tinfo_if.rvfi_csr_rmask) | (rvfi_tinfo_if.rvfi_csr_wdata & rvfi_tinfo_if.rvfi_csr_wmask);
+  assign tinfo = (rvfi_tinfo_if.rvfi_csr_rdata & rvfi_tinfo_if.rvfi_csr_rmask);
 
   //tselect
   logic [31:0] tselect;
-  assign tselect = (rvfi_tselect_if.rvfi_csr_rdata & rvfi_tselect_if.rvfi_csr_rmask) | (rvfi_tselect_if.rvfi_csr_wdata & rvfi_tselect_if.rvfi_csr_wmask);
+  assign tselect = (rvfi_tselect_if.rvfi_csr_rdata & rvfi_tselect_if.rvfi_csr_rmask);
 
   //rvfi_mem_addr
   logic [31:0] mem_addr [128];
@@ -235,6 +257,8 @@ module uvmt_cv32e40s_debug_trigger_assert
   //-PC is updated to value on dm_haltaddr_i input (next instruction?)
   //-Core starts executing debug code (next instruction in debug)
 
+  //Verification plan point 1:
+
   property p_tinfo(trigger_type);
     rvfi_if.rvfi_valid
     && tdata1_type == trigger_type
@@ -252,11 +276,13 @@ module uvmt_cv32e40s_debug_trigger_assert
 
   a_load_store_op: cover property(
     rvfi_if.rvfi_valid
-    && rvfi_if.rvfi_insn[6:0] == 23
+    && rvfi_if.rvfi_insn[6:0] == 7'h23
     ##[1:$]
     rvfi_if.rvfi_valid
-    && rvfi_if.rvfi_insn[6:0] == 3
+    && rvfi_if.rvfi_insn[6:0] == 7'h3
   );
+
+  //EXECUTE:
 
   //TODO: add covers
   a_dt_enter_dbg_breakpoint_execute: assert property(
@@ -265,15 +291,13 @@ module uvmt_cv32e40s_debug_trigger_assert
     //TODO: ta hensyn til at man kan ha flere aksesseringer
     rvfi_if.rvfi_valid
     && !rvfi_if.rvfi_dbg_mode
-    && (tdata1_type == 2 || tdata1_type == 6)
+    && (tdata1_type == 4'h2 || tdata1_type == 4'h6)
 
     && tdata1_m26_execute
-    && tdata1_m26_action == 1
+    && tdata1_m26_action == 4'h1
     && ((tdata1_m26_mode_m_en && rvfi_if.rvfi_mode == MODE_M) || (tdata1_m26_mode_u_en && rvfi_if.rvfi_mode == MODE_U))
 
-    && ((tdata1_m26_match == 0 && rvfi_if.rvfi_pc_rdata == tdata2)
-    || (tdata1_m26_match == 2 && rvfi_if.rvfi_pc_rdata >= tdata2)
-    || (tdata1_m26_match == 3 && rvfi_if.rvfi_pc_rdata < tdata2))
+    && ((tdata1_m26_match == 4'h0 && rvfi_if.rvfi_pc_rdata == tdata2))
 
     ##1 rvfi_if.rvfi_valid[->1]
 
@@ -281,6 +305,50 @@ module uvmt_cv32e40s_debug_trigger_assert
     //Verify that we enter debug mode
     rvfi_if.rvfi_dbg_mode
   );
+
+  a_dt_enter_dbg_breakpoint_execute2: assert property(
+
+    //Execute instruction that enter debug mode:
+    //TODO: ta hensyn til at man kan ha flere aksesseringer
+    rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_dbg_mode
+    && (tdata1_type == 4'h2 || tdata1_type == 4'h6)
+
+    && tdata1_m26_execute
+    && tdata1_m26_action == 4'h1
+    && ((tdata1_m26_mode_m_en && rvfi_if.rvfi_mode == MODE_M) || (tdata1_m26_mode_u_en && rvfi_if.rvfi_mode == MODE_U))
+
+    && ((tdata1_m26_match == 4'h2 && rvfi_if.rvfi_pc_rdata >= tdata2))
+
+    ##1 rvfi_if.rvfi_valid[->1]
+
+    |->
+    //Verify that we enter debug mode
+    rvfi_if.rvfi_dbg_mode
+  );
+
+  a_dt_enter_dbg_breakpoint_execute3: assert property(
+
+    //Execute instruction that enter debug mode:
+    //TODO: ta hensyn til at man kan ha flere aksesseringer
+    rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_dbg_mode
+    && (tdata1_type == 4'h2 || tdata1_type == 4'h6)
+
+    && tdata1_m26_execute
+    && tdata1_m26_action == 4'h1
+    && ((tdata1_m26_mode_m_en && rvfi_if.rvfi_mode == MODE_M) || (tdata1_m26_mode_u_en && rvfi_if.rvfi_mode == MODE_U))
+
+    && ((tdata1_m26_match == 4'h3 && rvfi_if.rvfi_pc_rdata < tdata2))
+
+    ##1 rvfi_if.rvfi_valid[->1]
+
+    |->
+    //Verify that we enter debug mode
+    rvfi_if.rvfi_dbg_mode
+  );
+
+  //LOAD:
 
   //TODO: add covers
   a_dt_enter_dbg_breakpoint_load: assert property(
@@ -290,17 +358,15 @@ module uvmt_cv32e40s_debug_trigger_assert
     rvfi_if.rvfi_valid
     && !rvfi_if.rvfi_trap
     && !rvfi_if.rvfi_dbg_mode
-    && (tdata1_type == 2 || tdata1_type == 6)
+    && (tdata1_type == 4'h2 || tdata1_type == 4'h6)
 
     && tdata1_m26_load
-    && tdata1_m26_action == 1
+    && tdata1_m26_action == 4'h1
     && ((tdata1_m26_mode_m_en && rvfi_if.rvfi_mode == MODE_M) || (tdata1_m26_mode_u_en && rvfi_if.rvfi_mode == MODE_U))
 
-    && mem_addr[0] != 0
-    && rvfi_if.rvfi_insn[6:0] == 3
+    && mem_addr[0] != '0
+    && rvfi_if.rvfi_insn[6:0] == 7'h3
     && ((tdata1_m26_match == 0 && mem_addr[0] == tdata2))
-    //|| (tdata1_m26_match == 2 && mem_addr[0] >= tdata2)
-    //|| (tdata1_m26_match == 3 && mem_addr[0] < tdata2))
 
     ##1 rvfi_if.rvfi_valid[->1]
 
@@ -309,25 +375,112 @@ module uvmt_cv32e40s_debug_trigger_assert
     rvfi_if.rvfi_dbg_mode
   );
 
-  //TODO: add covers
-  a_dt_enter_dbg_breakpoint_store: assert property(
+  a_dt_enter_dbg_breakpoint_load2: assert property(
 
     //Execute instruction that enter debug mode:
     //TODO: ta hensyn til at man kan ha flere aksesseringer
     rvfi_if.rvfi_valid
     && !rvfi_if.rvfi_trap
     && !rvfi_if.rvfi_dbg_mode
-    && (tdata1_type == 2 || tdata1_type == 6)
+    && (tdata1_type == 4'h2 || tdata1_type == 4'h6)
 
-    && tdata1_m26_store
-    && tdata1_m26_action == 1
+    && tdata1_m26_load
+    && tdata1_m26_action == 4'h1
     && ((tdata1_m26_mode_m_en && rvfi_if.rvfi_mode == MODE_M) || (tdata1_m26_mode_u_en && rvfi_if.rvfi_mode == MODE_U))
 
-    && mem_addr[0] != 0
-    && rvfi_if.rvfi_insn[6:0] == 23
+    && mem_addr[0] != '0
+    && rvfi_if.rvfi_insn[6:0] == 7'h3
+    && ((tdata1_m26_match == 2 && mem_addr[0] >= tdata2))
+
+    ##1 rvfi_if.rvfi_valid[->1]
+
+    |->
+    //Verify that we enter debug mode
+    rvfi_if.rvfi_dbg_mode
+  );
+
+  a_dt_enter_dbg_breakpoint_load3: assert property(
+
+    //Execute instruction that enter debug mode:
+    //TODO: ta hensyn til at man kan ha flere aksesseringer
+    rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_trap
+    && !rvfi_if.rvfi_dbg_mode
+    && (tdata1_type == 4'h2 || tdata1_type == 4'h6)
+
+    && tdata1_m26_load
+    && tdata1_m26_action == 4'h1
+    && ((tdata1_m26_mode_m_en && rvfi_if.rvfi_mode == MODE_M) || (tdata1_m26_mode_u_en && rvfi_if.rvfi_mode == MODE_U))
+
+    && mem_addr[0] != '0
+    && rvfi_if.rvfi_insn[6:0] == 7'h3
+    && ((tdata1_m26_match == 3 && mem_addr[0] < tdata2))
+
+    ##1 rvfi_if.rvfi_valid[->1]
+
+    |->
+    //Verify that we enter debug mode
+    rvfi_if.rvfi_dbg_mode
+  );
+
+  //STORE:
+
+  //TODO: add covers
+  a_dt_enter_dbg_breakpoint_store: assert property(
+    rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_trap
+    && !rvfi_if.rvfi_dbg_mode
+    && (tdata1_type == 4'h2 || tdata1_type == 4'h6)
+
+    && tdata1_m26_store
+    && tdata1_m26_action == 4'h1
+    && ((tdata1_m26_mode_m_en && rvfi_if.rvfi_mode == MODE_M) || (tdata1_m26_mode_u_en && rvfi_if.rvfi_mode == MODE_U))
+
+    && mem_addr[0] != '0
+    && rvfi_if.rvfi_insn[6:0] == 7'h23
     && ((tdata1_m26_match == 0 && mem_addr[0] == tdata2))
-    //|| (tdata1_m26_match == 2 && mem_addr[0] >= tdata2)
-    //|| (tdata1_m26_match == 3 && mem_addr[0] < tdata2))
+
+    ##1 rvfi_if.rvfi_valid[->1]
+
+    |->
+    //Verify that we enter debug mode
+    rvfi_if.rvfi_dbg_mode
+  );
+
+  a_dt_enter_dbg_breakpoint_store2: assert property(
+    rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_trap
+    && !rvfi_if.rvfi_dbg_mode
+    && (tdata1_type == 4'h2 || tdata1_type == 4'h6)
+
+    && tdata1_m26_store
+    && tdata1_m26_action == 4'h1
+    && ((tdata1_m26_mode_m_en && rvfi_if.rvfi_mode == MODE_M) || (tdata1_m26_mode_u_en && rvfi_if.rvfi_mode == MODE_U))
+
+    && mem_addr[0] != '0
+    && rvfi_if.rvfi_insn[6:0] == 7'h23
+    && ((tdata1_m26_match == 2 && mem_addr[0] >= tdata2))
+
+    ##1 rvfi_if.rvfi_valid[->1]
+
+    |->
+    //Verify that we enter debug mode
+    rvfi_if.rvfi_dbg_mode
+  );
+
+  a_dt_enter_dbg_breakpoint_store3: assert property(
+    rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_trap
+    && !rvfi_if.rvfi_dbg_mode
+    && (tdata1_type == 4'h2 || tdata1_type == 4'h6)
+
+    && tdata1_m26_store
+    && tdata1_m26_action == 4'h1
+    && ((tdata1_m26_mode_m_en && rvfi_if.rvfi_mode == MODE_M) || (tdata1_m26_mode_u_en && rvfi_if.rvfi_mode == MODE_U))
+
+    && mem_addr[0] != '0
+    && rvfi_if.rvfi_insn[6:0] == 7'h23
+    && ((tdata1_m26_match == 3 && mem_addr[0] < tdata2))
 
     ##1 rvfi_if.rvfi_valid[->1]
 
@@ -338,48 +491,164 @@ module uvmt_cv32e40s_debug_trigger_assert
 
 
 
-/*
-Må være oppfylt:
-Enter debug mode by any of the above methods.
-Write (randomized) breakpoint addr to tdata2 and enable breakpoint in tdata1[2]
-Exit debug mode (dret instruction)
-Select mcontrol6 for a trigger and enable instruction matching (relatert til at cause er 2?)
-Write breakpoint addr to tdata2 register (when cause is 2?)
-Verify:
--Verify that core enters debug mode on breakpoint addr
--Current PC is saved to DPC
--Cause of debug must be saved to DCSR (cause=2)
--PC is updated to value on dm_haltaddr_i input
--Core starts executing debug code
-Gjenta:
-For alle antall triggere.
-Sjekk ut info:
-Enter debug
-tdata breakpoint/trigger address/cause (1,2,3)
-Gå ut av debug
-mcontrol og mcontrol6
-Sjekk ut assertions:
-A:  uvmt_cv32_tb.u_debug_assert.a_trigger_match
-A:  uvmt_cv32_tb.u_debug_assert.a_debug_mode_pc
-A:  uvmt_cv32_tb.u_debug_assert.a_enter_debug
-Enter debug mode:
-- haltreq eller resethaltreq er høy etter reset gjør at kjernen går direkte inn i debug mode
-- ebreak intruksjonen på forskjellige måter
-- cause:
-  1) ebreak
-  2) trigger
-  3) haltreq
-  4) step
-  5) resethaltreq
-  6) Group
-Enable breakpoints, tdata1 or tdata2
-- tdata1 er en felles betegnelse på CSRene mcontrol, mcontrol6, etrigger, disabled. Hvilken CSR tdata1 er er bestemt av type feltet i CSRene
-- tdata2 er tilsvarende, men typen er bestemt av feltene type og dmode i tdata2.
-dmode avgjør om registeret er tilgjengelig i debug eller machine mode.
-CSRen lagrer adressen man skal trigge på  (altså load/store/execute), utenom dersom det er exception trigger. Da lagrer den andre spesifikke bit felt.
-- tdata3 er ubrukt
-Når debuggeren skriver 1 til clrresethaltq vil signalet halt_on_reset_req (?) klareres.
-Signalet vil også cleares ved debug module reset
-*/
+
+  logic [31:0] support_pc_q1;
+  logic [31:0] enter_debug_PC;
+  logic pc_dm_addr_match_half_sticky;
+
+  always @(posedge clk) begin
+      if (support_wb_instr_valid) begin
+      support_pc_q1 <= support_pc_wb;
+
+      end else if(support_ex_instr_valid) begin
+      support_pc_q1 <= support_pc_ex;
+
+      end else if(support_id_instr_valid) begin
+      support_pc_q1 <= support_pc_id;
+
+      end else begin
+      support_pc_q1 <= support_pc_if;
+      end
+
+    if(support_pc_if == dm_halt_addr_i && $rose(support_debug_mode_q)) begin //Nå vet vi at vi har entered debug.
+      pc_dm_addr_match_half_sticky = 1;
+      enter_debug_PC = support_pc_q1;
+    end
+    if (rvfi_if.rvfi_valid) begin
+      pc_dm_addr_match_half_sticky <= 0;
+    end
+  end
+
+
+  a_dt_debug_state_initialization: assert property (
+    rvfi_if.rvfi_valid
+    && !rvfi_if.rvfi_trap
+    && $rose(rvfi_if.rvfi_dbg_mode)
+    |->
+    dcsr[8:6] == rvfi_if.rvfi_dbg
+    && rvfi_if.rvfi_pc_rdata == dm_halt_addr_i
+    && dpc == enter_debug_PC
+  );
+
+  //Verification plan point 2:
+
+  //Disable breakpoing addr to tdata1 - verify that core does not enter debug mode on breakpoint addr
+
+  //Machine mode, user mode
+
+  a_dt_debug_state_initialization_1: assert property (
+    rvfi_if.rvfi_valid
+    && rvfi_if.rvfi_mode == MODE_M
+    && !tdata1_m26_mode_m_en
+    && (tdata1_type == 4'h2 || tdata1_type == 4'h6)
+    ##1 rvfi_if.rvfi_valid[->1]
+    |->
+    rvfi_if.rvfi_dbg != 3'h2
+  );
+
+  a_dt_debug_state_initialization_2: assert property (
+    rvfi_if.rvfi_valid
+    && rvfi_if.rvfi_mode == MODE_U
+    && !tdata1_m26_mode_u_en
+    && (tdata1_type == 4'h2 || tdata1_type == 4'h6)
+    ##1 rvfi_if.rvfi_valid[->1]
+    |->
+    rvfi_if.rvfi_dbg != 3'h2
+  );
+
+  //Execute, load, store:
+
+  a_dt_debug_state_initialization_execute: assert property (
+    rvfi_if.rvfi_valid
+
+    && pc_dm_addr_match_half_sticky //Istedenfor sticky_bit: (<, =>, ==) avhengig av match verdi.
+    //Kan også bruke ikke-minneoperasjons sjekk. //TODO: dersom vi endrer denne, må vi endre den over også.
+
+    && !tdata1_m26_execute
+
+    && (tdata1_type == 4'h2 || tdata1_type == 4'h6)
+    ##1 rvfi_if.rvfi_valid[->1]
+    |->
+    rvfi_if.rvfi_dbg != 3'h2
+  );
+
+
+  a_dt_debug_state_initialization_load: assert property (
+    rvfi_if.rvfi_valid
+
+    && rvfi_if.rvfi_mem_rmask > '0
+
+    && (((rvfi_if.rvfi_mem_rdata & rvfi_if.rvfi_mem_rmask) == tdata2 && tdata1_m26_match == '0)
+    || ((rvfi_if.rvfi_mem_rdata & rvfi_if.rvfi_mem_rmask) >= tdata2 && tdata1_m26_match == 4'h2)
+    || ((rvfi_if.rvfi_mem_rdata & rvfi_if.rvfi_mem_rmask) < tdata2 && tdata1_m26_match == 4'h3))
+
+    && !tdata1_m26_load
+
+    && (tdata1_type == 4'h2 || tdata1_type == 4'h6)
+    ##1 rvfi_if.rvfi_valid[->1]
+    |->
+    rvfi_if.rvfi_dbg != 3'h2
+  );
+
+  a_dt_debug_state_initialization_store: assert property ( //TODO: add covers for all assertions!
+    rvfi_if.rvfi_valid
+
+    && rvfi_if.rvfi_mem_wmask > '0
+
+    && (((rvfi_if.rvfi_mem_wdata & rvfi_if.rvfi_mem_wmask) == tdata2 && tdata1_m26_match == '0)
+    || ((rvfi_if.rvfi_mem_wdata & rvfi_if.rvfi_mem_wmask) >= tdata2 && tdata1_m26_match == 4'h2)
+    || ((rvfi_if.rvfi_mem_wdata & rvfi_if.rvfi_mem_wmask) < tdata2 && tdata1_m26_match == 4'h3))
+
+    && !tdata1_m26_store
+
+    && (tdata1_type == 4'h2 || tdata1_type == 4'h6)
+    ##1 rvfi_if.rvfi_valid[->1]
+    |->
+    rvfi_if.rvfi_dbg != 3'h2
+  );
+
+  //Verification plan point 3:
+//Have 0 triggers, access any trigger register (tdata1, tdata2, tdata3)
+//and
+// 1) check that illegal instruction exception occurs. csr_wcs --> trap.
+//TODO: må teste dette!
+
+  a_dt_0_triggers_tdata1_access: assert property (
+    rvfi_if.rvfi_valid
+    && uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS == '0
+    && rvfi_if.rvfi_insn[6:0] == OPCODE_SYSTEM
+    && rvfi_if.rvfi_insn[14:12] != '0
+    && (rvfi_if.rvfi_insn[31:20] == 12'h7A0 //tselect ??
+    || rvfi_if.rvfi_insn[31:20] == 12'h7A1 //tdata1
+    || rvfi_if.rvfi_insn[31:20] == 12'h7A2 //tdata2
+    || rvfi_if.rvfi_insn[31:20] == 12'h7A3 //tdata3
+    || rvfi_if.rvfi_insn[31:20] == 12'h7A4 //tinfo ??
+    || rvfi_if.rvfi_insn[31:20] == 12'h7A4) //tcontrol ??
+    |->
+    rvfi_if.rvfi_trap.trap
+    && rvfi_if.rvfi_trap.exception
+    && rvfi_if.rvfi_trap.exception_cause == 6'h2
+  );
+
+// 2) Check that no triggers ever fire. rvfi_dbg != 2
+// 3) Check that "tselect" is 0. tselect == 0
+
+  a_dt_0_triggers_tselect_is_0_and_no_triggering: assert property (
+    rvfi_if.rvfi_valid
+    && uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS == '0
+    |->
+    tselect == '0
+    && rvfi_if.rvfi_dbg != 3'h2
+  );
+
+  //Verification plan point 4: //TODO: må enable flere triggere!
+//For all number of triggers, use tselect to exercise each trigger with each supported type.
+//(Also try writing to higher "tselect" than supported and check that a supported number is read back.)
+//Make the triggers fire and check that debug mode is entered.
+//Check also that the four context registers trap when accessed.
+
+
+
+
 
 endmodule : uvmt_cv32e40s_debug_trigger_assert
