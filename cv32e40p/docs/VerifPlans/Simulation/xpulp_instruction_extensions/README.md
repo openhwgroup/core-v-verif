@@ -1,4 +1,5 @@
 ## Verification (Test) Plans for the XPULP Instruction Extension
-At the time of this writting (2019-12-21), only the plan for Bit Manipulation Instructions has been published here.  The plan is in both Excel (xlsx) and Markdown (md) formats.  Also, the Excel format has multiple tabs to illustrate two different styles of recording features in a verificaiton plan.
 
-Send an email to mike@openhwgroup.org if you have a preference.  Otherwise he'll pick _his_ favorite.
+The simulation Verification Plan for CV32E40Pv2 in this directory have been written as completary plans of the Formal Verification. 
+Except the CV32E40P_xpulp-hwloop.xlsx file, all files in this folder are **NOT** stand-alone simulation verification plan. Please refer to plans located in the folder core-v-verif/cv32e40p/docs/VerifPlans/Formal to have a complete view of the verification planning for the CV32E40Pv2 core. 
+
