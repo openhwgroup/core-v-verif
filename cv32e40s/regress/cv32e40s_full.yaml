@@ -400,10 +400,10 @@ tests:
     cmd: make test TEST=load_store_rs1_zero
 
   pma:
-    description: ISA function coverage test  TODO:silabs-robin
-    builds: [ uvmt_cv32e40s_pma]
+    description: PMA directed tests
+    builds: [uvmt_cv32e40s_pma]
     dir: cv32e40s/sim/uvmt
-    cmd: make test TEST=isa_fcov_holes
+    cmd: make test TEST=pma
 
   pmp:
     description: PMP directed tests
