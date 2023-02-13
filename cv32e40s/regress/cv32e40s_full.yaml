@@ -415,8 +415,7 @@ tests:
 #TODO:MT Comment back in when Zc is enabled in the core
 #  zc_test:
 #    description: Zc directed test
-#    builds: [ uvmt_cv32e40s, uvmt_cv32e40s_pma_1]
+#    builds: [uvmt_cv32e40s, uvmt_cv32e40s_pma_1]
 #    dir: cv32e40s/sim/uvmt
-#    cmd: make test TEST=illegal
+#    cmd: make test TEST=zc_test
 #    num: 5
-#
