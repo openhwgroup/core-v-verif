@@ -40,6 +40,8 @@ module uvmt_cv32e40p_tb;
    parameter int CORE_PARAM_PULP_XPULP           = 0;
    parameter int CORE_PARAM_PULP_CLUSTER         = 0;
    parameter int CORE_PARAM_FPU                  = 0;
+   parameter int CORE_PARAM_FPU_ADDMUL_LAT       = 0;
+   parameter int CORE_PARAM_FPU_OTHERS_LAT       = 0;
    parameter int CORE_PARAM_PULP_ZFINX           = 0;
 `else
    `ifdef PULP
@@ -53,13 +55,25 @@ module uvmt_cv32e40p_tb;
 
       `ifdef FPU
          parameter int CORE_PARAM_FPU            = 1;
+         `ifdef FPU_ADDMUL_LAT
+            parameter int CORE_PARAM_FPU_ADDMUL_LAT = `FPU_ADDMUL_LAT;
+         `else
+            parameter int CORE_PARAM_FPU_ADDMUL_LAT = 0;
+         `endif
+         `ifdef FPU_OTHERS_LAT
+            parameter int CORE_PARAM_FPU_OTHERS_LAT = `FPU_OTHERS_LAT;
+         `else
+            parameter int CORE_PARAM_FPU_OTHERS_LAT = 0;
+         `endif
          `ifdef ZFINX
             parameter int CORE_PARAM_PULP_ZFINX  = 1;
          `else
             parameter int CORE_PARAM_PULP_ZFINX  = 0;
          `endif
-     `else
+      `else
          parameter int CORE_PARAM_FPU            = 0;
+         parameter int CORE_PARAM_FPU_ADDMUL_LAT = 0;
+         parameter int CORE_PARAM_FPU_OTHERS_LAT = 0;
          parameter int CORE_PARAM_PULP_ZFINX     = 0;
       `endif
 
@@ -68,6 +82,8 @@ module uvmt_cv32e40p_tb;
       parameter int CORE_PARAM_PULP_XPULP        = 0;
       parameter int CORE_PARAM_PULP_CLUSTER      = 0;
       parameter int CORE_PARAM_FPU               = 0;
+      parameter int CORE_PARAM_FPU_ADDMUL_LAT    = 0;
+      parameter int CORE_PARAM_FPU_OTHERS_LAT    = 0;
       parameter int CORE_PARAM_PULP_ZFINX        = 0;
    `endif
 `endif
@@ -124,6 +140,8 @@ module uvmt_cv32e40p_tb;
                              .PULP_XPULP        (CORE_PARAM_PULP_XPULP),
                              .PULP_CLUSTER      (CORE_PARAM_PULP_CLUSTER),
                              .FPU               (CORE_PARAM_FPU),
+                             .FPU_ADDMUL_LAT    (CORE_PARAM_FPU_ADDMUL_LAT),
+                             .FPU_OTHERS_LAT    (CORE_PARAM_FPU_OTHERS_LAT),
                              .PULP_ZFINX        (CORE_PARAM_PULP_ZFINX),
                              .NUM_MHPMCOUNTERS  (CORE_PARAM_NUM_MHPMCOUNTERS),
                              .INSTR_ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
@@ -699,6 +717,8 @@ module uvmt_cv32e40p_tb;
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_XPULP"),       .value(CORE_PARAM_PULP_XPULP)      );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_CLUSTER"),     .value(CORE_PARAM_PULP_CLUSTER)    );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_FPU"),              .value(CORE_PARAM_FPU)             );
+     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_FPU_ADDMUL_LAT"),   .value(CORE_PARAM_FPU_ADDMUL_LAT)  );
+     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_FPU_OTHERS_LAT"),   .value(CORE_PARAM_FPU_OTHERS_LAT)  );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_ZFINX"),       .value(CORE_PARAM_PULP_ZFINX)      );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_NUM_MHPMCOUNTERS"), .value(CORE_PARAM_NUM_MHPMCOUNTERS));
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_ADDR_WIDTH"),  .value(ENV_PARAM_INSTR_ADDR_WIDTH) );

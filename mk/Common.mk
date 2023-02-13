@@ -497,6 +497,7 @@ else
 		-nostartfiles \
 		$(TEST_FILES) \
 		-T $(LD_FILE) \
+		-Xlinker -Map=$*.map \
 		$(LD_LIBRARY) \
 		-lcv-verif
 endif
