@@ -34,7 +34,9 @@ module uvmt_cv32e40p_tb;
    import cv32e40p_pkg::*;
    import uvmt_cv32e40p_pkg::*;
    import uvme_cv32e40p_pkg::*;
-
+   `ifndef FORMAL
+   import rvviApiPkg::*;
+   `endif
    // DUT (core) parameters: refer to the CV32E40P User Manual.
 `ifdef NO_PULP
    parameter int CORE_PARAM_PULP_XPULP           = 0;
@@ -130,6 +132,11 @@ module uvmt_cv32e40p_tb;
 
    uvmt_cv32e40p_isa_covg_if     isa_covg_if();
 
+
+   // RVVI SystemVerilog Interface
+   `ifndef FORMAL
+      rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+   `endif
 
   /**
    * DUT WRAPPER instance:
@@ -485,41 +492,11 @@ module uvmt_cv32e40p_tb;
   // Instantiate debug assertions
   uvmt_cv32e40p_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
 
-  /**
-   * ISS WRAPPER instance:
-   */
-    uvmt_cv32e40p_iss_wrap  #(
-                              .ID (0)
-                              )
-                              iss_wrap (.clk_period(clknrst_if.clk_period),
-                                        .clknrst_if(clknrst_if_iss)//,
-                                        // .isa_covg_if(isa_covg_if)
-                                );
 
-    /**
-    * Step-and-Compare logic
-    */
-
-    // Count number of issued and retired instructions
-    // This makes synchronizing haltreq to RM easier
-    logic [31:0] count_issue;
-    logic [31:0] count_retire;
-
-    always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-      if (!clknrst_if.reset_n) begin
-          count_issue <= 32'h0;
-      end else begin
-          if ((dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.id_valid_o && dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.is_decoding_o &&
-              !dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_i) ||
-              (dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.is_decoding_o && dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ebrk_insn_i &&
-                !dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.trigger_match_i &&
-              (dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ebrk_force_debug_mode || dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.debug_mode_q))) begin
-              count_issue <= count_issue + 1;
-          end
-      end
-    end
-
-
+    // IMPERAS DV
+    `ifndef FORMAL
+      uvmt_cv32e40p_imperas_dv_wrap imperas_dv (rvvi_if);
+    `endif
    /**
     * Test bench entry point.
     */
@@ -571,7 +548,6 @@ module uvmt_cv32e40p_tb;
      uvm_config_db#(virtual uvmt_cv32e40p_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_cov_vif"),    .value(debug_cov_assert_if)                             );
      uvm_config_db#(virtual uvmt_cv32e40p_isa_covg_if        )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("isa_covg_vif"),     .value(isa_covg_if)                                     );
      uvm_config_db#(virtual uvma_debug_if                    )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_vif"),        .value(debug_if)                                        );
-     uvm_config_db#(virtual RVVI_memory                      )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("rvvi_memory_vif"),  .value(iss_wrap.ram.memory)                             );
 
      `RVFI_CSR_UVM_CONFIG_DB_SET(fflags)
      `RVFI_CSR_UVM_CONFIG_DB_SET(frm)
@@ -699,14 +675,6 @@ module uvmt_cv32e40p_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmcounter31h)
      //`RVFI_CSR_UVM_CONFIG_DB_SET(mconfigptr)
 
-     uvm_config_db#(virtual RVVI_state#(.ILEN(uvme_cv32e40p_pkg::ILEN),
-                                        .XLEN(uvme_cv32e40p_pkg::XLEN)
-                                        ))::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("state_vif"), .value(iss_wrap.cpu.state));
-     uvm_config_db#(virtual RVVI_control                )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("control_vif"), .value(iss_wrap.cpu.control));
-     uvm_config_db#(virtual RVVI_bus                    )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_bus_vif"), .value(iss_wrap.bus));
-     uvm_config_db#(virtual RVVI_io                     )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_io_vif"), .value(iss_wrap.io));
-     uvm_config_db#(virtual RVVI_memory                 )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_mem_vif"), .value(iss_wrap.ram.memory));
-
      // Make the DUT Wrapper Virtual Peripheral's status outputs available to the base_test
      uvm_config_db#(bit      )::set(.cntxt(null), .inst_name("*"), .field_name("tp"),     .value(1'b0)        );
      uvm_config_db#(bit      )::set(.cntxt(null), .inst_name("*"), .field_name("tf"),     .value(1'b0)        );
@@ -735,18 +703,15 @@ module uvmt_cv32e40p_tb;
 
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
-   longint start_ovpsim_init_time;
-   longint end_ovpsim_init_time;
+   `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
+   // overcome race
    initial begin
-      if (!$test$plusargs("DISABLE_OVPSIM")) begin
-        #0.9ns;
-        `uvm_info("OVPSIM", $sformatf("Start benchmarking OVPSIM initialization"), UVM_LOW)
-        start_ovpsim_init_time = svlib_pkg::sys_dayTime();
-        #1.1ns;
-        end_ovpsim_init_time = svlib_pkg::sys_dayTime();
-        `uvm_info("OVPSIM", $sformatf("Initialization time: %0d seconds", end_ovpsim_init_time - start_ovpsim_init_time), UVM_LOW)
-      end
-    end
+     if ($test$plusargs("USE_ISS")) begin
+       #0.9ns;
+       imperas_dv.ref_init();
+     end
+   end
+   `endif
 
    //TODO verify these are correct with regards to isacov function
    //always @(dut_wrap.cv32e40p_wrapper_i.rvfi_instr_if_0_i.rvfi_valid) -> isacov_if.retire;
@@ -804,6 +769,12 @@ module uvmt_cv32e40p_tb;
       fatal_count   = rs.get_severity_count(UVM_FATAL);
 
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
+
+      // Shutdown the Reference Model
+      if ($test$plusargs("USE_ISS")) begin
+         // Exit handler for ImperasDV
+         void'(rvviRefShutdown());
+      end
 
       // In most other contexts, calls to $display() in a UVM environment are
       // illegal. Here they are OK because the UVM environment has shut down
