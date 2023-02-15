@@ -23,8 +23,8 @@
 
 void default_full()
 {
-  printf("\n\t testing DefaultFull\n");
-  // initialize to 0
+  printf("\n\t--------\n\tDefaultFull test\n");
+
   volatile uint32_t temp[64] = {0};
 
   // get random address value
@@ -38,12 +38,11 @@ void default_full()
 
   if (temp[0] == 13)
   {
-    printf("\n\t DefaultFull test pass ");
-    printf("\n\t --------------------------------------------- \n");
+    printf("\tDefaultFull pass\n");
   }
   else
   {
-    printf("\n\t RAM values are not as expected ");
+    printf("\tRAM values are not as expected\n");
     exit(EXIT_FAILURE);
   }
 }

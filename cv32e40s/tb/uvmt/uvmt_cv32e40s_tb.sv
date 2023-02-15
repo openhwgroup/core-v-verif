@@ -698,7 +698,10 @@ module uvmt_cv32e40s_tb;
   // RVFI assertions
 
   bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i
-    uvmt_cv32e40s_rvfi_assert  rvfi_assert_i (
+    uvmt_cv32e40s_rvfi_assert #(
+      .SMCLIC          (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC),
+      .SMCLIC_ID_WIDTH (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC_ID_WIDTH)
+    ) rvfi_assert_i (
       .*
     );
 
@@ -1086,34 +1089,36 @@ module uvmt_cv32e40s_tb;
 
     bind cv32e40s_pmp :
       uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i
-      uvmt_cv32e40s_pmp_assert#(
-        .PMP_GRANULARITY(PMP_GRANULARITY),
-        .PMP_NUM_REGIONS(PMP_NUM_REGIONS),
-        .IS_INSTR_SIDE(1'b1),
-        .MSECCFG_RESET_VAL(cv32e40s_pkg::MSECCFG_DEFAULT)
+      uvmt_cv32e40s_pmp_assert #(
+        .PMP_GRANULARITY  (PMP_GRANULARITY),
+        .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
+        .IS_INSTR_SIDE    (1'b1),
+        .PMP_MSECCFG_RV   (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_MSECCFG_RV)
       )
-      u_pmp_assert_if_stage(.rst_n (clknrst_if.reset_n),
-                            .obi_req (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.instr_req_o),
-                            .obi_addr (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.instr_addr_o),
-                            .obi_gnt (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.instr_gnt_i),
-                            .rvfi_valid (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_valid),
-                            .rvfi_pc_rdata (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_pc_rdata),
+      u_pmp_assert_if_stage(.rst_n          (clknrst_if.reset_n),
+                            .bus_trans_dbg  (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.bus_trans_o.dbg),
+                            .obi_addr       (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.instr_addr_o),
+                            .obi_gnt        (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.instr_gnt_i),
+                            .obi_req        (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.instr_req_o),
+                            .rvfi_pc_rdata  (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_pc_rdata),
+                            .rvfi_valid     (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_valid),
                             .*);
 
     bind  cv32e40s_pmp :
       uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i
       uvmt_cv32e40s_pmp_assert#(
-        .PMP_GRANULARITY(PMP_GRANULARITY),
-        .PMP_NUM_REGIONS(PMP_NUM_REGIONS),
-        .IS_INSTR_SIDE(1'b0),
-        .MSECCFG_RESET_VAL(cv32e40s_pkg::MSECCFG_DEFAULT)
+        .PMP_GRANULARITY  (PMP_GRANULARITY),
+        .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
+        .IS_INSTR_SIDE    (1'b0),
+        .PMP_MSECCFG_RV   (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_MSECCFG_RV)
       )
-      u_pmp_assert_lsu(.rst_n (clknrst_if.reset_n),
-                       .obi_req (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.data_req_o),
-                       .obi_addr (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.data_addr_o),
-                       .obi_gnt (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.data_gnt_i),
-                       .rvfi_valid (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_valid),
-                       .rvfi_pc_rdata (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_pc_rdata),
+      u_pmp_assert_lsu(.rst_n          (clknrst_if.reset_n),
+                       .bus_trans_dbg  (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.bus_trans_o.dbg),
+                       .obi_addr       (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.data_addr_o),
+                       .obi_gnt        (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.data_gnt_i),
+                       .obi_req        (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.data_req_o),
+                       .rvfi_pc_rdata  (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_pc_rdata),
+                       .rvfi_valid     (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.rvfi_valid),
                        .*);
 
     bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i

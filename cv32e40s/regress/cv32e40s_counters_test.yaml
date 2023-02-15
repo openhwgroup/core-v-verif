@@ -3,7 +3,7 @@
 # This means you need to have a toolchain at COREV_SW_TOOLCHAIN (see Common.mk)
 ---
 # Header
-name: cv32_counters
+name: cv32e40s_counters_test
 description: Performance counters test
 
 # List of builds
