@@ -348,14 +348,26 @@ module uvmt_cv32e40s_pmp_assert
       }
     ) else `uvm_error(info_tag, "the privilege mode must be supported");
 
-    // Validate access type  (Not a vplan item)
-    a_req_type: assert property (
-      pmp_req_type_i inside {
-        PMP_ACC_READ,
-        PMP_ACC_WRITE,
-        PMP_ACC_EXEC
-      }
-    ) else `uvm_error(info_tag, "the access type must be supported");
+
+    // Validate access type  (TODO:silabs-robin make it a vplan item)
+
+    if (IS_INSTR_SIDE) begin: gen_req_type_instr
+      a_req_type_instr: assert property (
+        pmp_req_type_i inside {
+          PMP_ACC_EXEC
+        }
+      ) else `uvm_error(info_tag, "instr-side access must be execution");
+    end : gen_req_type_instr
+
+    if (!IS_INSTR_SIDE) begin: gen_req_type_data
+      a_req_type_data: assert property (
+        pmp_req_type_i inside {
+          PMP_ACC_READ,
+          PMP_ACC_WRITE
+        }
+      ) else `uvm_error(info_tag, "data-side access must be loadstore");
+    end : gen_req_type_data
+
 
     // SMEPMP 2b: When mseccfg.RLB is 0 and pmpcfg.L is 1 in any rule or entry (including disabled entries), then
     // mseccfg.RLB remains 0 and any further modifications to mseccfg.RLB are ignored until a PMP reset.

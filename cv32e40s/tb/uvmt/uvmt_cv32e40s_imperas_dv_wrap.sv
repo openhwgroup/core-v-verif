@@ -16,6 +16,7 @@
 //
 //
 
+
 `ifndef __UVMT_CV32E40S_IMPERAS_DV_WRAP_SV__
 `define __UVMT_CV32E40S_IMPERAS_DV_WRAP_SV__
 
@@ -36,7 +37,9 @@
     assign rvvi.csr[0][0][``CSR_ADDR]    = csr_``CSR_NAME``_w | csr_``CSR_NAME``_r; \
     assign rvvi.csr_wb[0][0][``CSR_ADDR] = csr_``CSR_NAME``_wb; \
     always @(rvvi.csr[0][0][``CSR_ADDR]) begin \
+      if (`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rmask || `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask ) begin \
         csr_``CSR_NAME``_wb = 1; \
+      end \
     end \
     always @(posedge rvvi.clk) begin \
         if (`RVFI_IF.rvfi_valid && csr_``CSR_NAME``_wb) begin \
@@ -57,113 +60,25 @@
 ////////////////////////////////////////////////////////////////////////////
 // CSR definitions
 ////////////////////////////////////////////////////////////////////////////
-`define CSR_JVT_ADDR           32'h017
-`define CSR_MSTATUS_ADDR       32'h300
-`define CSR_MISA_ADDR          32'h301
-`define CSR_MIE_ADDR           32'h304
-`define CSR_MTVEC_ADDR         32'h305
-`define CSR_MCOUNTEREN_ADDR    32'h306
-`define CSR_MENVCFG_ADDR       32'h30A
-`define CSR_MSTATEEN0_ADDR     32'h30C
-`define CSR_MSTATEEN1_ADDR     32'h30D
-`define CSR_MSTATEEN2_ADDR     32'h30E
-`define CSR_MSTATEEN3_ADDR     32'h30F
-`define CSR_MTVT_ADDR          32'h307 // only available when SMCLIC=1
-`define CSR_MSTATUSH_ADDR      32'h310
-`define CSR_MENVCFGH_ADDR      32'h31A
-`define CSR_MSTATEEN0H_ADDR    32'h31C
-`define CSR_MSTATEEN1H_ADDR    32'h31D
-`define CSR_MSTATEEN2H_ADDR    32'h31E
-`define CSR_MSTATEEN3H_ADDR    32'h31F
-`define CSR_MCOUNTINHIBIT_ADDR 32'h320
-`define CSR_MSCRATCH_ADDR      32'h340
-`define CSR_MEPC_ADDR          32'h341
-`define CSR_MCAUSE_ADDR        32'h342
-`define CSR_MTVAL_ADDR         32'h343
-`define CSR_MIP_ADDR           32'h344
-`define CSR_MNXTI_ADDR         32'h345 // only available when SMCLIC=1
-`define CSR_MINTSTATUS_ADDR    32'h346 // only available when SMCLIC=1
-`define CSR_MINTTHRESH_ADDR    32'h347 // only available when SMCLIC=1
-`define CSR_MSCRATCHCSW_ADDR   32'h348 // only available when SMCLIC=1
-`define CSR_MCLICBASE_ADDR     32'h34A // only available when SMCLIC=1
-`define CSR_MSECCFG            32'h747
-`define CSR_MSECCFGH           32'h757
-
-`define CSR_TSELECT_ADDR       32'h7A0 // only when DBG_NUM_TRIGGERS > 0
-`define CSR_TDATA1_ADDR        32'h7A1 // only when DBG_NUM_TRIGGERS > 0
-`define CSR_TDATA2_ADDR        32'h7A2 // only when DBG_NUM_TRIGGERS > 0
-`define CSR_TDATA3_ADDR        32'h7A3 // only when DBG_NUM_TRIGGERS > 0
-`define CSR_TINFO_ADDR         32'h7A4 // only when DBG_NUM_TRIGGERS > 0
-`define CSR_TCONTROL_ADDR      32'h7A5 // only when DBG_NUM_TRIGGERS > 0
-`define CSR_MCONTEXT_ADDR      32'h7A8
-`define CSR_MSCONTEXT_ADDR     32'h7A9 // ???
-`define CSR_SCONTEXT_ADDR      32'h7AA
-`define CSR_DCSR_ADDR          32'h7B0
-`define CSR_DPC_ADDR           32'h7B1
-`define CSR_DSCRATCH0_ADDR     32'h7B2
-`define CSR_DSCRATCH1_ADDR     32'h7B3
-`define CSR_MCYCLE_ADDR        32'hB00
-`define CSR_MINSTRET_ADDR      32'hB02
-
-`define CSR_MHPMCOUNTER3_ADDR  32'hB03
-`define CSR_MHPMCOUNTER4_ADDR  32'hB04
-`define CSR_MHPMCOUNTER5_ADDR  32'hB05
-`define CSR_MHPMCOUNTER6_ADDR  32'hB06
-`define CSR_MHPMCOUNTER7_ADDR  32'hB07
-`define CSR_MHPMCOUNTER8_ADDR  32'hB08
-`define CSR_MHPMCOUNTER9_ADDR  32'hB09
-`define CSR_MHPMCOUNTER10_ADDR 32'hB0A
-`define CSR_MHPMCOUNTER11_ADDR 32'hB0B
-`define CSR_MHPMCOUNTER12_ADDR 32'hB0C
-`define CSR_MHPMCOUNTER13_ADDR 32'hB0D
-`define CSR_MHPMCOUNTER14_ADDR 32'hB0E
-`define CSR_MHPMCOUNTER15_ADDR 32'hB0F
-`define CSR_MHPMCOUNTER16_ADDR 32'hB10
-`define CSR_MHPMCOUNTER17_ADDR 32'hB11
-`define CSR_MHPMCOUNTER18_ADDR 32'hB12
-`define CSR_MHPMCOUNTER19_ADDR 32'hB13
-`define CSR_MHPMCOUNTER20_ADDR 32'hB14
-`define CSR_MHPMCOUNTER21_ADDR 32'hB15
-`define CSR_MHPMCOUNTER22_ADDR 32'hB16
-`define CSR_MHPMCOUNTER23_ADDR 32'hB17
-`define CSR_MHPMCOUNTER24_ADDR 32'hB18
-`define CSR_MHPMCOUNTER25_ADDR 32'hB19
-`define CSR_MHPMCOUNTER26_ADDR 32'hB1A
-`define CSR_MHPMCOUNTER27_ADDR 32'hB1B
-`define CSR_MHPMCOUNTER28_ADDR 32'hB1C
-`define CSR_MHPMCOUNTER29_ADDR 32'hB1D
-`define CSR_MHPMCOUNTER30_ADDR 32'hB1E
-`define CSR_MHPMCOUNTER31_ADDR 32'hB1F
-
-`define CSR_MHPMCOUNTER3H_ADDR  32'hB83
-`define CSR_MHPMCOUNTER4H_ADDR  32'hB84
-`define CSR_MHPMCOUNTER5H_ADDR  32'hB85
-`define CSR_MHPMCOUNTER6H_ADDR  32'hB86
-`define CSR_MHPMCOUNTER7H_ADDR  32'hB87
-`define CSR_MHPMCOUNTER8H_ADDR  32'hB88
-`define CSR_MHPMCOUNTER9H_ADDR  32'hB89
-`define CSR_MHPMCOUNTER10H_ADDR 32'hB8A
-`define CSR_MHPMCOUNTER11H_ADDR 32'hB8B
-`define CSR_MHPMCOUNTER12H_ADDR 32'hB8C
-`define CSR_MHPMCOUNTER13H_ADDR 32'hB8D
-`define CSR_MHPMCOUNTER14H_ADDR 32'hB8E
-`define CSR_MHPMCOUNTER15H_ADDR 32'hB8F
-`define CSR_MHPMCOUNTER16H_ADDR 32'hB90
-`define CSR_MHPMCOUNTER17H_ADDR 32'hB91
-`define CSR_MHPMCOUNTER18H_ADDR 32'hB92
-`define CSR_MHPMCOUNTER19H_ADDR 32'hB93
-`define CSR_MHPMCOUNTER20H_ADDR 32'hB94
-`define CSR_MHPMCOUNTER21H_ADDR 32'hB95
-`define CSR_MHPMCOUNTER22H_ADDR 32'hB96
-`define CSR_MHPMCOUNTER23H_ADDR 32'hB97
-`define CSR_MHPMCOUNTER24H_ADDR 32'hB98
-`define CSR_MHPMCOUNTER25H_ADDR 32'hB99
-`define CSR_MHPMCOUNTER26H_ADDR 32'hB9A
-`define CSR_MHPMCOUNTER27H_ADDR 32'hB9B
-`define CSR_MHPMCOUNTER28H_ADDR 32'hB9C
-`define CSR_MHPMCOUNTER29H_ADDR 32'hB9D
-`define CSR_MHPMCOUNTER30H_ADDR 32'hB9E
-`define CSR_MHPMCOUNTER31H_ADDR 32'hB9F
+`define CSR_JVT_ADDR            32'h017
+`define CSR_MSTATUS_ADDR        32'h300
+`define CSR_MISA_ADDR           32'h301
+`define CSR_MIE_ADDR            32'h304
+`define CSR_MTVEC_ADDR          32'h305
+`define CSR_MCOUNTEREN_ADDR     32'h306
+`define CSR_MENVCFG_ADDR        32'h30A
+`define CSR_MSTATEEN0_ADDR      32'h30C
+`define CSR_MSTATEEN1_ADDR      32'h30D
+`define CSR_MSTATEEN2_ADDR      32'h30E
+`define CSR_MSTATEEN3_ADDR      32'h30F
+`define CSR_MTVT_ADDR           32'h307 // only available when SMCLIC=1
+`define CSR_MSTATUSH_ADDR       32'h310
+`define CSR_MENVCFGH_ADDR       32'h31A
+`define CSR_MSTATEEN0H_ADDR     32'h31C
+`define CSR_MSTATEEN1H_ADDR     32'h31D
+`define CSR_MSTATEEN2H_ADDR     32'h31E
+`define CSR_MSTATEEN3H_ADDR     32'h31F
+`define CSR_MCOUNTINHIBIT_ADDR  32'h320
 
 `define CSR_MHPMEVENT3_ADDR     32'h323
 `define CSR_MHPMEVENT4_ADDR     32'h324
@@ -194,6 +109,18 @@
 `define CSR_MHPMEVENT29_ADDR    32'h33D
 `define CSR_MHPMEVENT30_ADDR    32'h33E
 `define CSR_MHPMEVENT31_ADDR    32'h33F
+
+`define CSR_MSCRATCH_ADDR       32'h340
+`define CSR_MEPC_ADDR           32'h341
+`define CSR_MCAUSE_ADDR         32'h342
+`define CSR_MTVAL_ADDR          32'h343
+`define CSR_MIP_ADDR            32'h344
+`define CSR_MNXTI_ADDR          32'h345 // only available when SMCLIC=1
+`define CSR_MINTSTATUS_ADDR     32'hF46 // only available when SMCLIC=1
+`define CSR_MINTTHRESH_ADDR     32'h347 // only available when SMCLIC=1
+`define CSR_MSCRATCHCSW_ADDR    32'h348 // only available when SMCLIC=1
+`define CSR_MSCRATCHCSWL_ADDR   32'h349 // only available when SMCLIC=1
+`define CSR_MCLICBASE_ADDR      32'h34A // only available when SMCLIC=1
 
 `define CSR_PMPCFG0_ADDR        32'h3A0
 `define CSR_PMPCFG1_ADDR        32'h3A1
@@ -277,8 +204,86 @@
 `define CSR_PMPADDR62_ADDR      32'h3EE
 `define CSR_PMPADDR63_ADDR      32'h3EF
 
+`define CSR_MSECCFG_ADDR        32'h747
+`define CSR_MSECCFGH_ADDR       32'h757
+
+`define CSR_TSELECT_ADDR        32'h7A0 // only when DBG_NUM_TRIGGERS > 0
+`define CSR_TDATA1_ADDR         32'h7A1 // only when DBG_NUM_TRIGGERS > 0
+`define CSR_TDATA2_ADDR         32'h7A2 // only when DBG_NUM_TRIGGERS > 0
+`define CSR_TDATA3_ADDR         32'h7A3 // only when DBG_NUM_TRIGGERS > 0
+`define CSR_TINFO_ADDR          32'h7A4 // only when DBG_NUM_TRIGGERS > 0
+`define CSR_TCONTROL_ADDR       32'h7A5 // only when DBG_NUM_TRIGGERS > 0
+
+`define CSR_DCSR_ADDR           32'h7B0
+`define CSR_DPC_ADDR            32'h7B1
+`define CSR_DSCRATCH0_ADDR      32'h7B2
+`define CSR_DSCRATCH1_ADDR      32'h7B3
+
+`define CSR_MCYCLE_ADDR         32'hB00
+`define CSR_MINSTRET_ADDR       32'hB02
+
+`define CSR_MHPMCOUNTER3_ADDR   32'hB03
+`define CSR_MHPMCOUNTER4_ADDR   32'hB04
+`define CSR_MHPMCOUNTER5_ADDR   32'hB05
+`define CSR_MHPMCOUNTER6_ADDR   32'hB06
+`define CSR_MHPMCOUNTER7_ADDR   32'hB07
+`define CSR_MHPMCOUNTER8_ADDR   32'hB08
+`define CSR_MHPMCOUNTER9_ADDR   32'hB09
+`define CSR_MHPMCOUNTER10_ADDR  32'hB0A
+`define CSR_MHPMCOUNTER11_ADDR  32'hB0B
+`define CSR_MHPMCOUNTER12_ADDR  32'hB0C
+`define CSR_MHPMCOUNTER13_ADDR  32'hB0D
+`define CSR_MHPMCOUNTER14_ADDR  32'hB0E
+`define CSR_MHPMCOUNTER15_ADDR  32'hB0F
+`define CSR_MHPMCOUNTER16_ADDR  32'hB10
+`define CSR_MHPMCOUNTER17_ADDR  32'hB11
+`define CSR_MHPMCOUNTER18_ADDR  32'hB12
+`define CSR_MHPMCOUNTER19_ADDR  32'hB13
+`define CSR_MHPMCOUNTER20_ADDR  32'hB14
+`define CSR_MHPMCOUNTER21_ADDR  32'hB15
+`define CSR_MHPMCOUNTER22_ADDR  32'hB16
+`define CSR_MHPMCOUNTER23_ADDR  32'hB17
+`define CSR_MHPMCOUNTER24_ADDR  32'hB18
+`define CSR_MHPMCOUNTER25_ADDR  32'hB19
+`define CSR_MHPMCOUNTER26_ADDR  32'hB1A
+`define CSR_MHPMCOUNTER27_ADDR  32'hB1B
+`define CSR_MHPMCOUNTER28_ADDR  32'hB1C
+`define CSR_MHPMCOUNTER29_ADDR  32'hB1D
+`define CSR_MHPMCOUNTER30_ADDR  32'hB1E
+`define CSR_MHPMCOUNTER31_ADDR  32'hB1F
+
 `define CSR_MCYCLEH_ADDR        32'hB80
 `define CSR_MINSTRETH_ADDR      32'hB82
+
+`define CSR_MHPMCOUNTER3H_ADDR  32'hB83
+`define CSR_MHPMCOUNTER4H_ADDR  32'hB84
+`define CSR_MHPMCOUNTER5H_ADDR  32'hB85
+`define CSR_MHPMCOUNTER6H_ADDR  32'hB86
+`define CSR_MHPMCOUNTER7H_ADDR  32'hB87
+`define CSR_MHPMCOUNTER8H_ADDR  32'hB88
+`define CSR_MHPMCOUNTER9H_ADDR  32'hB89
+`define CSR_MHPMCOUNTER10H_ADDR 32'hB8A
+`define CSR_MHPMCOUNTER11H_ADDR 32'hB8B
+`define CSR_MHPMCOUNTER12H_ADDR 32'hB8C
+`define CSR_MHPMCOUNTER13H_ADDR 32'hB8D
+`define CSR_MHPMCOUNTER14H_ADDR 32'hB8E
+`define CSR_MHPMCOUNTER15H_ADDR 32'hB8F
+`define CSR_MHPMCOUNTER16H_ADDR 32'hB90
+`define CSR_MHPMCOUNTER17H_ADDR 32'hB91
+`define CSR_MHPMCOUNTER18H_ADDR 32'hB92
+`define CSR_MHPMCOUNTER19H_ADDR 32'hB93
+`define CSR_MHPMCOUNTER20H_ADDR 32'hB94
+`define CSR_MHPMCOUNTER21H_ADDR 32'hB95
+`define CSR_MHPMCOUNTER22H_ADDR 32'hB96
+`define CSR_MHPMCOUNTER23H_ADDR 32'hB97
+`define CSR_MHPMCOUNTER24H_ADDR 32'hB98
+`define CSR_MHPMCOUNTER25H_ADDR 32'hB99
+`define CSR_MHPMCOUNTER26H_ADDR 32'hB9A
+`define CSR_MHPMCOUNTER27H_ADDR 32'hB9B
+`define CSR_MHPMCOUNTER28H_ADDR 32'hB9C
+`define CSR_MHPMCOUNTER29H_ADDR 32'hB9D
+`define CSR_MHPMCOUNTER30H_ADDR 32'hB9E
+`define CSR_MHPMCOUNTER31H_ADDR 32'hB9F
 
 `define CSR_CPUCTRL_ADDR        32'hBF0
 `define CSR_SECURESEED0_ADDR    32'hBF9
@@ -300,7 +305,9 @@
 
 module uvmt_cv32e40s_imperas_dv_wrap
   import uvm_pkg::*;
+  import cv32e40s_pkg::*;
   import uvme_cv32e40s_pkg::*;
+  import uvmt_cv32e40s_pkg::*;
   import rvviApiPkg::*;
   #(
    )
@@ -353,43 +360,254 @@ module uvmt_cv32e40s_imperas_dv_wrap
    assign rvvi.valid[0][0]    = `RVFI_IF.rvfi_valid;
    assign rvvi.order[0][0]    = `RVFI_IF.rvfi_order;
    assign rvvi.insn[0][0]     = `RVFI_IF.rvfi_insn;
-   assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap.trap & (`RVFI_IF.rvfi_trap.exception_cause==48); // externally generated TRAP event
+   assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap.trap;
    assign rvvi.intr[0][0]     = `RVFI_IF.rvfi_intr;
    assign rvvi.mode[0][0]     = `RVFI_IF.rvfi_mode;
    assign rvvi.ixl[0][0]      = `RVFI_IF.rvfi_ixl;
    assign rvvi.pc_rdata[0][0] = `RVFI_IF.rvfi_pc_rdata;
    assign rvvi.pc_wdata[0][0] = `RVFI_IF.rvfi_pc_wdata;
 
-   `RVVI_SET_CSR( `CSR_CPUCTRL_ADDR,       cpuctrl       )
    `RVVI_SET_CSR( `CSR_JVT_ADDR,           jvt           )
-   `RVVI_SET_CSR( `CSR_MARCHID_ADDR,       marchid       )
-   `RVVI_SET_CSR( `CSR_MCAUSE_ADDR,        mcause        )
-   `RVVI_SET_CSR( `CSR_MCOUNTINHIBIT_ADDR, mcountinhibit )
-   `RVVI_SET_CSR( `CSR_MCYCLEH_ADDR,       mcycleh       )
-   `RVVI_SET_CSR( `CSR_MCYCLE_ADDR,        mcycle        )
-   `RVVI_SET_CSR( `CSR_MEPC_ADDR,          mepc          )
-   `RVVI_SET_CSR( `CSR_MHARTID_ADDR,       mhartid       )
-   `RVVI_SET_CSR( `CSR_MIE_ADDR,           mie           )
-   `RVVI_SET_CSR( `CSR_MIMPID_ADDR,        mimpid        )
-   `RVVI_SET_CSR( `CSR_MINSTRETH_ADDR,     minstreth     )
-   `RVVI_SET_CSR( `CSR_MINSTRET_ADDR,      minstret      )
-   `RVVI_SET_CSR( `CSR_MIP_ADDR,           mip           )
-   `RVVI_SET_CSR( `CSR_MISA_ADDR,          misa          )
-   `RVVI_SET_CSR( `CSR_MSCRATCH_ADDR,      mscratch      )
-   `RVVI_SET_CSR( `CSR_MSTATEEN0_ADDR,     mstateen0     )
    `RVVI_SET_CSR( `CSR_MSTATUS_ADDR,       mstatus       )
-   `RVVI_SET_CSR( `CSR_MTVAL_ADDR,         mtval         )
+   `RVVI_SET_CSR( `CSR_MISA_ADDR,          misa          )
+   `RVVI_SET_CSR( `CSR_MIE_ADDR,           mie           )
    `RVVI_SET_CSR( `CSR_MTVEC_ADDR,         mtvec         )
-   `RVVI_SET_CSR( `CSR_MVENDORID_ADDR,     mvendorid     )
+   `RVVI_SET_CSR( `CSR_MCOUNTEREN_ADDR,    mcounteren    )
+   `RVVI_SET_CSR( `CSR_MENVCFG_ADDR,       menvcfg       )
+   `RVVI_SET_CSR( `CSR_MSTATEEN0_ADDR,     mstateen0     )
+   `RVVI_SET_CSR( `CSR_MSTATEEN1_ADDR,     mstateen1     )
+   `RVVI_SET_CSR( `CSR_MSTATEEN2_ADDR,     mstateen2     )
+   `RVVI_SET_CSR( `CSR_MSTATEEN3_ADDR,     mstateen3     )
 
-   `RVVI_SET_CSR( `CSR_TSELECT_ADDR,       tselect       )
+   `RVVI_SET_CSR( `CSR_MSTATUSH_ADDR,      mstatush      )
+   `RVVI_SET_CSR( `CSR_MENVCFGH_ADDR,      menvcfgh      )
+   `RVVI_SET_CSR( `CSR_MSTATEEN0H_ADDR,    mstateen0h    )
+   `RVVI_SET_CSR( `CSR_MSTATEEN1H_ADDR,    mstateen1h    )
+   `RVVI_SET_CSR( `CSR_MSTATEEN2H_ADDR,    mstateen2h    )
+   `RVVI_SET_CSR( `CSR_MSTATEEN3H_ADDR,    mstateen3h    )
+   `RVVI_SET_CSR( `CSR_MCOUNTINHIBIT_ADDR, mcountinhibit )
+
+   `RVVI_SET_CSR( `CSR_MHPMEVENT3_ADDR,    mhpmevent3    )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT4_ADDR,    mhpmevent4    )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT5_ADDR,    mhpmevent5    )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT6_ADDR,    mhpmevent6    )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT7_ADDR,    mhpmevent7    )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT8_ADDR,    mhpmevent8    )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT9_ADDR,    mhpmevent9    )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT10_ADDR,   mhpmevent10   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT11_ADDR,   mhpmevent11   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT12_ADDR,   mhpmevent12   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT13_ADDR,   mhpmevent13   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT14_ADDR,   mhpmevent14   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT15_ADDR,   mhpmevent15   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT16_ADDR,   mhpmevent16   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT17_ADDR,   mhpmevent17   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT18_ADDR,   mhpmevent18   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT19_ADDR,   mhpmevent19   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT20_ADDR,   mhpmevent20   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT21_ADDR,   mhpmevent21   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT22_ADDR,   mhpmevent22   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT23_ADDR,   mhpmevent23   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT24_ADDR,   mhpmevent24   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT25_ADDR,   mhpmevent25   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT26_ADDR,   mhpmevent26   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT27_ADDR,   mhpmevent27   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT28_ADDR,   mhpmevent28   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT29_ADDR,   mhpmevent29   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT30_ADDR,   mhpmevent30   )
+   `RVVI_SET_CSR( `CSR_MHPMEVENT31_ADDR,   mhpmevent31   )
+
+   `RVVI_SET_CSR( `CSR_MSCRATCH_ADDR,      mscratch      )
+   `RVVI_SET_CSR( `CSR_MEPC_ADDR,          mepc          )
+   `RVVI_SET_CSR( `CSR_MCAUSE_ADDR,        mcause        )
+   `RVVI_SET_CSR( `CSR_MTVAL_ADDR,         mtval         )
+   `RVVI_SET_CSR( `CSR_MIP_ADDR,           mip           )
+
+   `RVVI_SET_CSR( `CSR_PMPCFG0_ADDR,       pmpcfg0       )
+   `RVVI_SET_CSR( `CSR_PMPCFG1_ADDR,       pmpcfg1       )
+   `RVVI_SET_CSR( `CSR_PMPCFG2_ADDR,       pmpcfg2       )
+   `RVVI_SET_CSR( `CSR_PMPCFG3_ADDR,       pmpcfg3       )
+   `RVVI_SET_CSR( `CSR_PMPCFG4_ADDR,       pmpcfg4       )
+   `RVVI_SET_CSR( `CSR_PMPCFG5_ADDR,       pmpcfg5       )
+   `RVVI_SET_CSR( `CSR_PMPCFG6_ADDR,       pmpcfg6       )
+   `RVVI_SET_CSR( `CSR_PMPCFG7_ADDR,       pmpcfg7       )
+   `RVVI_SET_CSR( `CSR_PMPCFG8_ADDR,       pmpcfg8       )
+   `RVVI_SET_CSR( `CSR_PMPCFG9_ADDR,       pmpcfg9       )
+   `RVVI_SET_CSR( `CSR_PMPCFG10_ADDR,      pmpcfg10      )
+   `RVVI_SET_CSR( `CSR_PMPCFG11_ADDR,      pmpcfg11      )
+   `RVVI_SET_CSR( `CSR_PMPCFG12_ADDR,      pmpcfg12      )
+   `RVVI_SET_CSR( `CSR_PMPCFG13_ADDR,      pmpcfg13      )
+   `RVVI_SET_CSR( `CSR_PMPCFG14_ADDR,      pmpcfg14      )
+   `RVVI_SET_CSR( `CSR_PMPCFG15_ADDR,      pmpcfg15      )
+
+   `RVVI_SET_CSR( `CSR_PMPADDR0_ADDR,      pmpaddr0      )
+   `RVVI_SET_CSR( `CSR_PMPADDR1_ADDR,      pmpaddr1      )
+   `RVVI_SET_CSR( `CSR_PMPADDR2_ADDR,      pmpaddr2      )
+   `RVVI_SET_CSR( `CSR_PMPADDR3_ADDR,      pmpaddr3      )
+   `RVVI_SET_CSR( `CSR_PMPADDR4_ADDR,      pmpaddr4      )
+   `RVVI_SET_CSR( `CSR_PMPADDR5_ADDR,      pmpaddr5      )
+   `RVVI_SET_CSR( `CSR_PMPADDR6_ADDR,      pmpaddr6      )
+   `RVVI_SET_CSR( `CSR_PMPADDR7_ADDR,      pmpaddr7      )
+   `RVVI_SET_CSR( `CSR_PMPADDR8_ADDR,      pmpaddr8      )
+   `RVVI_SET_CSR( `CSR_PMPADDR9_ADDR,      pmpaddr9      )
+   `RVVI_SET_CSR( `CSR_PMPADDR10_ADDR,     pmpaddr10     )
+   `RVVI_SET_CSR( `CSR_PMPADDR11_ADDR,     pmpaddr11     )
+   `RVVI_SET_CSR( `CSR_PMPADDR12_ADDR,     pmpaddr12     )
+   `RVVI_SET_CSR( `CSR_PMPADDR13_ADDR,     pmpaddr13     )
+   `RVVI_SET_CSR( `CSR_PMPADDR14_ADDR,     pmpaddr14     )
+   `RVVI_SET_CSR( `CSR_PMPADDR15_ADDR,     pmpaddr15     )
+   `RVVI_SET_CSR( `CSR_PMPADDR16_ADDR,     pmpaddr16     )
+   `RVVI_SET_CSR( `CSR_PMPADDR17_ADDR,     pmpaddr17     )
+   `RVVI_SET_CSR( `CSR_PMPADDR18_ADDR,     pmpaddr18     )
+   `RVVI_SET_CSR( `CSR_PMPADDR19_ADDR,     pmpaddr19     )
+   `RVVI_SET_CSR( `CSR_PMPADDR20_ADDR,     pmpaddr20     )
+   `RVVI_SET_CSR( `CSR_PMPADDR21_ADDR,     pmpaddr21     )
+   `RVVI_SET_CSR( `CSR_PMPADDR22_ADDR,     pmpaddr22     )
+   `RVVI_SET_CSR( `CSR_PMPADDR23_ADDR,     pmpaddr23     )
+   `RVVI_SET_CSR( `CSR_PMPADDR24_ADDR,     pmpaddr24     )
+   `RVVI_SET_CSR( `CSR_PMPADDR25_ADDR,     pmpaddr25     )
+   `RVVI_SET_CSR( `CSR_PMPADDR26_ADDR,     pmpaddr26     )
+   `RVVI_SET_CSR( `CSR_PMPADDR27_ADDR,     pmpaddr27     )
+   `RVVI_SET_CSR( `CSR_PMPADDR28_ADDR,     pmpaddr28     )
+   `RVVI_SET_CSR( `CSR_PMPADDR29_ADDR,     pmpaddr29     )
+   `RVVI_SET_CSR( `CSR_PMPADDR30_ADDR,     pmpaddr30     )
+   `RVVI_SET_CSR( `CSR_PMPADDR31_ADDR,     pmpaddr31     )
+   `RVVI_SET_CSR( `CSR_PMPADDR32_ADDR,     pmpaddr32     )
+   `RVVI_SET_CSR( `CSR_PMPADDR33_ADDR,     pmpaddr33     )
+   `RVVI_SET_CSR( `CSR_PMPADDR34_ADDR,     pmpaddr34     )
+   `RVVI_SET_CSR( `CSR_PMPADDR35_ADDR,     pmpaddr35     )
+   `RVVI_SET_CSR( `CSR_PMPADDR36_ADDR,     pmpaddr36     )
+   `RVVI_SET_CSR( `CSR_PMPADDR37_ADDR,     pmpaddr37     )
+   `RVVI_SET_CSR( `CSR_PMPADDR38_ADDR,     pmpaddr38     )
+   `RVVI_SET_CSR( `CSR_PMPADDR39_ADDR,     pmpaddr39     )
+   `RVVI_SET_CSR( `CSR_PMPADDR40_ADDR,     pmpaddr40     )
+   `RVVI_SET_CSR( `CSR_PMPADDR41_ADDR,     pmpaddr41     )
+   `RVVI_SET_CSR( `CSR_PMPADDR42_ADDR,     pmpaddr42     )
+   `RVVI_SET_CSR( `CSR_PMPADDR43_ADDR,     pmpaddr43     )
+   `RVVI_SET_CSR( `CSR_PMPADDR44_ADDR,     pmpaddr44     )
+   `RVVI_SET_CSR( `CSR_PMPADDR45_ADDR,     pmpaddr45     )
+   `RVVI_SET_CSR( `CSR_PMPADDR46_ADDR,     pmpaddr46     )
+   `RVVI_SET_CSR( `CSR_PMPADDR47_ADDR,     pmpaddr47     )
+   `RVVI_SET_CSR( `CSR_PMPADDR48_ADDR,     pmpaddr48     )
+   `RVVI_SET_CSR( `CSR_PMPADDR49_ADDR,     pmpaddr49     )
+   `RVVI_SET_CSR( `CSR_PMPADDR50_ADDR,     pmpaddr50     )
+   `RVVI_SET_CSR( `CSR_PMPADDR51_ADDR,     pmpaddr51     )
+   `RVVI_SET_CSR( `CSR_PMPADDR52_ADDR,     pmpaddr52     )
+   `RVVI_SET_CSR( `CSR_PMPADDR53_ADDR,     pmpaddr53     )
+   `RVVI_SET_CSR( `CSR_PMPADDR54_ADDR,     pmpaddr54     )
+   `RVVI_SET_CSR( `CSR_PMPADDR55_ADDR,     pmpaddr55     )
+   `RVVI_SET_CSR( `CSR_PMPADDR56_ADDR,     pmpaddr56     )
+   `RVVI_SET_CSR( `CSR_PMPADDR57_ADDR,     pmpaddr57     )
+   `RVVI_SET_CSR( `CSR_PMPADDR58_ADDR,     pmpaddr58     )
+   `RVVI_SET_CSR( `CSR_PMPADDR59_ADDR,     pmpaddr59     )
+   `RVVI_SET_CSR( `CSR_PMPADDR60_ADDR,     pmpaddr60     )
+   `RVVI_SET_CSR( `CSR_PMPADDR61_ADDR,     pmpaddr61     )
+   `RVVI_SET_CSR( `CSR_PMPADDR62_ADDR,     pmpaddr62     )
+   `RVVI_SET_CSR( `CSR_PMPADDR63_ADDR,     pmpaddr63     )
+
+   `RVVI_SET_CSR( `CSR_MSECCFG_ADDR,       mseccfg       )
+   `RVVI_SET_CSR( `CSR_MSECCFGH_ADDR,      mseccfgh      )
+
+   if (CORE_PARAM_DBG_NUM_TRIGGERS > 0) begin
+     `RVVI_SET_CSR( `CSR_TSELECT_ADDR,       tselect       )
+     `RVVI_SET_CSR( `CSR_TDATA1_ADDR,        tdata1        )
+     `RVVI_SET_CSR( `CSR_TDATA2_ADDR,        tdata2        )
+     `RVVI_SET_CSR( `CSR_TDATA3_ADDR,        tdata3        )
+     `RVVI_SET_CSR( `CSR_TINFO_ADDR,         tinfo         )
+     `RVVI_SET_CSR( `CSR_TCONTROL_ADDR,      tcontrol      )
+   end
+
    `RVVI_SET_CSR( `CSR_DCSR_ADDR,          dcsr          )
    `RVVI_SET_CSR( `CSR_DPC_ADDR,           dpc           )
    `RVVI_SET_CSR( `CSR_DSCRATCH0_ADDR,     dscratch0     )
    `RVVI_SET_CSR( `CSR_DSCRATCH1_ADDR,     dscratch1     )
-   `RVVI_SET_CSR( `CSR_TDATA1_ADDR,        tdata1        )
-   `RVVI_SET_CSR( `CSR_TDATA2_ADDR,        tdata2        )
-   `RVVI_SET_CSR( `CSR_TINFO_ADDR,         tinfo         )
+
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER3_ADDR, mhpmcounter3   )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER4_ADDR, mhpmcounter4   )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER5_ADDR, mhpmcounter5   )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER6_ADDR, mhpmcounter6   )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER7_ADDR, mhpmcounter7   )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER8_ADDR, mhpmcounter8   )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER9_ADDR, mhpmcounter9   )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER10_ADDR, mhpmcounter10 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER11_ADDR, mhpmcounter11 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER12_ADDR, mhpmcounter12 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER13_ADDR, mhpmcounter13 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER14_ADDR, mhpmcounter14 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER15_ADDR, mhpmcounter15 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER16_ADDR, mhpmcounter16 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER17_ADDR, mhpmcounter17 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER18_ADDR, mhpmcounter18 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER19_ADDR, mhpmcounter19 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER20_ADDR, mhpmcounter20 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER21_ADDR, mhpmcounter21 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER22_ADDR, mhpmcounter22 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER23_ADDR, mhpmcounter23 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER24_ADDR, mhpmcounter24 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER25_ADDR, mhpmcounter25 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER26_ADDR, mhpmcounter26 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER27_ADDR, mhpmcounter27 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER28_ADDR, mhpmcounter28 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER29_ADDR, mhpmcounter29 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER30_ADDR, mhpmcounter30 )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER31_ADDR, mhpmcounter31 )
+
+   `RVVI_SET_CSR( `CSR_MCYCLE_ADDR,        mcycle        )
+   `RVVI_SET_CSR( `CSR_MINSTRET_ADDR,      minstret      )
+
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER3H_ADDR, mhpmcounter3h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER4H_ADDR, mhpmcounter4h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER5H_ADDR, mhpmcounter5h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER6H_ADDR, mhpmcounter6h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER7H_ADDR, mhpmcounter7h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER8H_ADDR, mhpmcounter8h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER9H_ADDR, mhpmcounter9h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER10H_ADDR,mhpmcounter10h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER11H_ADDR,mhpmcounter11h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER12H_ADDR,mhpmcounter12h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER13H_ADDR,mhpmcounter13h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER14H_ADDR,mhpmcounter14h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER15H_ADDR,mhpmcounter15h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER16H_ADDR,mhpmcounter16h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER17H_ADDR,mhpmcounter17h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER18H_ADDR,mhpmcounter18h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER19H_ADDR,mhpmcounter19h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER20H_ADDR,mhpmcounter20h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER21H_ADDR,mhpmcounter21h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER22H_ADDR,mhpmcounter22h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER23H_ADDR,mhpmcounter23h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER24H_ADDR,mhpmcounter24h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER25H_ADDR,mhpmcounter25h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER26H_ADDR,mhpmcounter26h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER27H_ADDR,mhpmcounter27h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER28H_ADDR,mhpmcounter28h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER29H_ADDR,mhpmcounter29h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER30H_ADDR,mhpmcounter30h )
+   `RVVI_SET_CSR( `CSR_MHPMCOUNTER31H_ADDR,mhpmcounter31h )
+
+   `RVVI_SET_CSR( `CSR_CPUCTRL_ADDR,       cpuctrl       )
+   `RVVI_SET_CSR( `CSR_SECURESEED0_ADDR,   secureseed0   )
+   `RVVI_SET_CSR( `CSR_SECURESEED1_ADDR,   secureseed1   )
+   `RVVI_SET_CSR( `CSR_SECURESEED2_ADDR,   secureseed2   )
+
+   `RVVI_SET_CSR( `CSR_MVENDORID_ADDR,     mvendorid     )
+   `RVVI_SET_CSR( `CSR_MARCHID_ADDR,       marchid       )
+   `RVVI_SET_CSR( `CSR_MIMPID_ADDR,        mimpid        )
+   `RVVI_SET_CSR( `CSR_MHARTID_ADDR,       mhartid       )
+   `RVVI_SET_CSR( `CSR_MCONFIGPTR_ADDR,    mconfigptr    )
+
+   `RVVI_SET_CSR( `CSR_MCYCLEH_ADDR,       mcycleh       )
+   `RVVI_SET_CSR( `CSR_MINSTRETH_ADDR,     minstreth     )
+
+   if (CORE_PARAM_SMCLIC == 1) begin
+     `RVVI_SET_CSR( `CSR_MTVT_ADDR,        mtvt          )
+     `RVVI_SET_CSR( `CSR_MNXTI_ADDR,       mnxti         )
+     `RVVI_SET_CSR( `CSR_MINTSTATUS_ADDR,  mintstatus    )
+     `RVVI_SET_CSR( `CSR_MINTTHRESH_ADDR,  mintthresh    )
+     `RVVI_SET_CSR( `CSR_MSCRATCHCSW_ADDR, mscratchcsw   )
+     `RVVI_SET_CSR( `CSR_MSCRATCHCSWL_ADDR,mscratchcswl  )
+   end
+
 
    ////////////////////////////////////////////////////////////////////////////
    // Assign the RVVI GPR registers
@@ -401,67 +619,55 @@ module uvmt_cv32e40s_imperas_dv_wrap
            assign rvvi.x_wdata[0][0][gi] = XREG[gi];
    endgenerate
 
-   always @(*) begin
-       int i;
+   always_comb begin
+     int i;
+     if (|`RVFI_IF.rvfi_gpr_wmask[31:1] && `RVFI_IF.rvfi_valid) begin
        for (i=1; i<32; i++) begin
-           if ( `RVFI_IF.rvfi_gpr_wmask[i] == 1) begin
-               XREG[i] =  `RVFI_IF.rvfi_gpr_wdata[i*XLEN +:XLEN];
-           end
-           else begin
-               XREG[i] = 32'b0;
-           end
+         if (`RVFI_IF.rvfi_gpr_wmask[i]) begin
+           XREG[i] = `RVFI_IF.rvfi_gpr_wdata[i*XLEN+:XLEN];
+         end
+         else begin
+           XREG[i] = 32'h0;
+         end
        end
+     end
    end
 
    assign rvvi.x_wb[0][0] = `RVFI_IF.rvfi_gpr_wmask;
 
    ////////////////////////////////////////////////////////////////////////////
    // DEBUG REQUESTS,
-   // assert when 0->1
-   // negate when posedge clk && valid=1 && debug=0
    ////////////////////////////////////////////////////////////////////////////
-   bit DREQ, DREQ_NEXT;
-   always @(*) begin: Set_DebugReq
-       // this requires a sync on DCAUSE
-       DREQ_NEXT = (`RVFI_IF.rvfi_dbg==3 && `RVFI_IF.rvfi_dbg_mode);
-       if (DREQ==0 && DREQ_NEXT==1) begin
-           void'(rvvi.net_push("haltreq", 1));
-           DREQ = 1;
-       end
-   end: Set_DebugReq
-   always @(posedge `RVFI_IF.clk) begin: Clr_DebugReq
-       if (`RVFI_IF.rvfi_valid && DREQ==1 && DREQ_NEXT==0) begin
-           void'(rvvi.net_push("haltreq", 0));
-           DREQ = 0;
-       end
-   end: Clr_DebugReq
+   logic debug_req_i;
+   assign debug_req_i = `DUT_PATH.debug_req_i;
+   always @(debug_req_i) begin
+       void'(rvvi.net_push("haltreq", debug_req_i));
+   end
 
    ////////////////////////////////////////////////////////////////////////////
    // INTERRUPTS
-   // assert when MIP or cause bit
-   // negate when posedge clk && valid=1 && debug=0
    ////////////////////////////////////////////////////////////////////////////
-  `ifndef SMCLIC_EN
-  `RVVI_WRITE_IRQ(MSWInterrupt,        3)
-  `RVVI_WRITE_IRQ(MTimerInterrupt,     7)
-  `RVVI_WRITE_IRQ(MExternalInterrupt, 11)
-  `RVVI_WRITE_IRQ(LocalInterrupt0,    16)
-  `RVVI_WRITE_IRQ(LocalInterrupt1,    17)
-  `RVVI_WRITE_IRQ(LocalInterrupt2,    18)
-  `RVVI_WRITE_IRQ(LocalInterrupt3,    19)
-  `RVVI_WRITE_IRQ(LocalInterrupt4,    20)
-  `RVVI_WRITE_IRQ(LocalInterrupt5,    21)
-  `RVVI_WRITE_IRQ(LocalInterrupt6,    22)
-  `RVVI_WRITE_IRQ(LocalInterrupt7,    23)
-  `RVVI_WRITE_IRQ(LocalInterrupt8,    24)
-  `RVVI_WRITE_IRQ(LocalInterrupt9,    25)
-  `RVVI_WRITE_IRQ(LocalInterrupt10,   26)
-  `RVVI_WRITE_IRQ(LocalInterrupt11,   27)
-  `RVVI_WRITE_IRQ(LocalInterrupt12,   28)
-  `RVVI_WRITE_IRQ(LocalInterrupt13,   29)
-  `RVVI_WRITE_IRQ(LocalInterrupt14,   30)
-  `RVVI_WRITE_IRQ(LocalInterrupt15,   31)
-  `else
+  if (CORE_PARAM_SMCLIC == 0) begin
+    `RVVI_WRITE_IRQ(MSWInterrupt,        3)
+    `RVVI_WRITE_IRQ(MTimerInterrupt,     7)
+    `RVVI_WRITE_IRQ(MExternalInterrupt, 11)
+    `RVVI_WRITE_IRQ(LocalInterrupt0,    16)
+    `RVVI_WRITE_IRQ(LocalInterrupt1,    17)
+    `RVVI_WRITE_IRQ(LocalInterrupt2,    18)
+    `RVVI_WRITE_IRQ(LocalInterrupt3,    19)
+    `RVVI_WRITE_IRQ(LocalInterrupt4,    20)
+    `RVVI_WRITE_IRQ(LocalInterrupt5,    21)
+    `RVVI_WRITE_IRQ(LocalInterrupt6,    22)
+    `RVVI_WRITE_IRQ(LocalInterrupt7,    23)
+    `RVVI_WRITE_IRQ(LocalInterrupt8,    24)
+    `RVVI_WRITE_IRQ(LocalInterrupt9,    25)
+    `RVVI_WRITE_IRQ(LocalInterrupt10,   26)
+    `RVVI_WRITE_IRQ(LocalInterrupt11,   27)
+    `RVVI_WRITE_IRQ(LocalInterrupt12,   28)
+    `RVVI_WRITE_IRQ(LocalInterrupt13,   29)
+    `RVVI_WRITE_IRQ(LocalInterrupt14,   30)
+    `RVVI_WRITE_IRQ(LocalInterrupt15,   31)
+  end else begin
     logic clic_irq;
     logic [10:0] clic_irq_id;
     logic [7:0]  clic_irq_level;
@@ -480,7 +686,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
       void'(rvvi.net_push("irq_sec_i",   clic_irq_priv));
       void'(rvvi.net_push("irq_shv_i",   clic_irq_shv));
     end
-  `endif
+  end
 
    ////////////////////////////////////////////////////////////////////////////
    // RVFI Monitor: pass NMI Load/Store and Fetch to the ref
@@ -572,7 +778,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
            //
            //  Fetch - Exception on TRAP
            //
-           if (trap_trap && trap_exception && trap_exception_cause==48) begin
+           if (trap_trap && trap_exception && trap_exception_cause==24) begin
                if (!InstructionBusFault) begin
                    void'(rvvi.net_push("InstructionBusFault", 1));
                end
@@ -595,7 +801,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
     reg [31:0] hart_id;
 
     // Select processor name
-    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME, "CV32E40S"));
+    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME, "CVE4S"));
     // Worst case propagation of events 4 retirements (actually 3 observed)
     void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 4));
     // Redirect stdout to parent systemverilog simulator
@@ -728,14 +934,11 @@ module uvmt_cv32e40s_imperas_dv_wrap
     rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR, RVVI_FALSE);
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
 
-    // TODO silabs-hfegran: temp fix to work around issues
-    rvviRefCsrCompareEnable(hart_id, `CSR_TINFO_ADDR, RVVI_FALSE);
     rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR, RVVI_FALSE);
-    // end TODO
 
     // define asynchronous grouping
     // Interrupts
-    `ifndef SMCLIC_EN
+    if (CORE_PARAM_SMCLIC == 0) begin
       rvviRefNetGroupSet(rvviRefNetIndexGet("MSWInterrupt"),        1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("MTimerInterrupt"),     1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("MExternalInterrupt"),  1);
@@ -755,13 +958,13 @@ module uvmt_cv32e40s_imperas_dv_wrap
       rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt13"),    1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt14"),    1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt15"),    1);
-    `else
+    end else begin
       rvviRefNetGroupSet(rvviRefNetIndexGet("irq_i"),               1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("irq_id_i"),            1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("irq_lev_i"),           1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("irq_sec_i"),           1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("irq_shv_i"),           1);
-    `endif
+    end
 
     rvviRefNetGroupSet(rvviRefNetIndexGet("InstructionBusFault"), 2);
 

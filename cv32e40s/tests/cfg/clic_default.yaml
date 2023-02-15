@@ -4,18 +4,22 @@ compile_flags:
     +define+ZBA_ZBB_ZBC_ZBS
     +define+SMCLIC_EN
     +define+PMP_ENABLE_64
+    +define+DBG_NUM_TRIG_0
 ovpsim: >
     --override cpu/CLICLEVELS=256
     --override cpu/CLICXCSW=T
     --override cpu/CLICXNXTI=T
+    --override cpu/CLICSELHVEC=T
+    --override cpu/CLICINTCTLBITS=8
     --override cpu/CLIC_version=master
     --override cpu/externalCLIC=T
     --override cpu/Zcmb=f
     --override cpu/Zicsr=T
     --override cpu/noinhibit_mask=0xfffffffa
     --override cpu/trigger_num=0
-    --override cpu/extension/mcountinhibit_reset=0x5
+    --override cpu/extension_*/mcountinhibit_reset=0x5
     --override cpu/mtvec_mask=0xffffff80
+    --override cpu/mtvt_mask=0xffffffffffffff80
     --override cpu/PMP_registers=64
     --override cpu/PMP_undefined=T
     --override cpu/PMP_initialparams=T
@@ -164,23 +168,23 @@ ovpsim: >
     --override cpu/mask_pmpaddr61=0xFFFFFFFF
     --override cpu/mask_pmpaddr62=0xFFFFFFFF
     --override cpu/mask_pmpaddr63=0xFFFFFFFF
-    --override cpu/mask_pmpcfg0=0x00000000
-    --override cpu/mask_pmpcfg1=0x00000000
-    --override cpu/mask_pmpcfg2=0x00000000
-    --override cpu/mask_pmpcfg3=0x00000000
-    --override cpu/mask_pmpcfg4=0x00000000
-    --override cpu/mask_pmpcfg5=0x00000000
-    --override cpu/mask_pmpcfg6=0x00000000
-    --override cpu/mask_pmpcfg7=0x00000000
-    --override cpu/mask_pmpcfg8=0x00000000
-    --override cpu/mask_pmpcfg9=0x00000000
-    --override cpu/mask_pmpcfg10=0x00000000
-    --override cpu/mask_pmpcfg11=0x00000000
-    --override cpu/mask_pmpcfg12=0x00000000
-    --override cpu/mask_pmpcfg13=0x00000000
-    --override cpu/mask_pmpcfg14=0x00000000
-    --override cpu/mask_pmpcfg15=0x00000000
-    # --showoverrides
+    --override cpu/mask_pmpcfg0=0xFFFFFFFF
+    --override cpu/mask_pmpcfg1=0xFFFFFFFF
+    --override cpu/mask_pmpcfg2=0xFFFFFFFF
+    --override cpu/mask_pmpcfg3=0xFFFFFFFF
+    --override cpu/mask_pmpcfg4=0xFFFFFFFF
+    --override cpu/mask_pmpcfg5=0xFFFFFFFF
+    --override cpu/mask_pmpcfg6=0xFFFFFFFF
+    --override cpu/mask_pmpcfg7=0xFFFFFFFF
+    --override cpu/mask_pmpcfg8=0xFFFFFFFF
+    --override cpu/mask_pmpcfg9=0xFFFFFFFF
+    --override cpu/mask_pmpcfg10=0xFFFFFFFF
+    --override cpu/mask_pmpcfg11=0xFFFFFFFF
+    --override cpu/mask_pmpcfg12=0xFFFFFFFF
+    --override cpu/mask_pmpcfg13=0xFFFFFFFF
+    --override cpu/mask_pmpcfg14=0xFFFFFFFF
+    --override cpu/mask_pmpcfg15=0xFFFFFFFF
+    #--showoverrides
     # --trace --tracechange --traceshowicount --monitornets
 cflags: >
 plusargs: >
