@@ -64,6 +64,11 @@ builds:
     cfg: pma_test_cfg_5
     dir: cv32e40s/sim/uvmt
 
+  uvmt_cv32e40s_pmp:
+    cmd: make comp_corev-dv comp
+    cfg: pmp
+    dir: cv32e40s/sim/uvmt
+
   uvmt_cv32e40s_no_bitmanip:
     cmd: make comp_corev-dv comp
     cfg: no_bitmanip
