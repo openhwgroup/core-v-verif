@@ -698,7 +698,10 @@ module uvmt_cv32e40s_tb;
   // RVFI assertions
 
   bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i
-    uvmt_cv32e40s_rvfi_assert  rvfi_assert_i (
+    uvmt_cv32e40s_rvfi_assert #(
+      .SMCLIC          (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC),
+      .SMCLIC_ID_WIDTH (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC_ID_WIDTH)
+    ) rvfi_assert_i (
       .*
     );
 
