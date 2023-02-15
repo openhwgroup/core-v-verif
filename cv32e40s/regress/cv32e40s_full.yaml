@@ -417,6 +417,42 @@ tests:
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=b_ext_test
 
+  csr_priv_gen_test:
+    description: Generated U-mode CSR access tests
+    builds: [uvmt_cv32e40s_pmp]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=csr_priv_gen_test
+
+  custom_priv_gen_test:
+    description: Generated U-mode custom instr tests
+    builds: [uvmt_cv32e40s_pmp]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=custom_priv_gen_test
+
+  debug_priv_test:
+    description: D-mode vs U-mode tests
+    builds: [uvmt_cv32e40s_pmp]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=debug_priv_test
+
+  interrupt_priv_test:
+    description: Interrupts vs U-mode tests
+    builds: [uvmt_cv32e40s_pmp]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=interrupt_priv_test
+
+  mcounteren_priv_gen_test:
+    description: U-mode access and privilege instructions
+    builds: [uvmt_cv32e40s_pmp]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=mcounteren_priv_gen_test
+
+  privilege_test:
+    description: Privilege mode accesses and csr behavior
+    builds: [uvmt_cv32e40s_pmp]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=privilege_test
+
 #TODO:MT Comment back in when Zc is enabled in the core
 #  zc_test:
 #    description: Zc directed test
