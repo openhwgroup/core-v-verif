@@ -3,7 +3,7 @@
 # This means you need to have a toolchain at COREV_SW_TOOLCHAIN (see Common.mk)
 ---
 # Header
-name: cv32_full_covg
+name: cv32e40s_full
 description: Full regression (all tests) for CV32E40S with step-and-compare against RM"
 
 # List of builds
@@ -62,6 +62,11 @@ builds:
   uvmt_cv32e40s_pma_5:
     cmd: make comp_corev-dv comp
     cfg: pma_test_cfg_5
+    dir: cv32e40s/sim/uvmt
+
+  uvmt_cv32e40s_pmp:
+    cmd: make comp_corev-dv comp
+    cfg: pmp
     dir: cv32e40s/sim/uvmt
 
   uvmt_cv32e40s_no_bitmanip:
@@ -406,10 +411,16 @@ tests:
     cmd: make test TEST=fencei
 
   pma:
-    description: ISA function coverage test
-    builds: [ uvmt_cv32e40s_pma]
+    description: PMA directed tests
+    builds: [uvmt_cv32e40s_pma]
     dir: cv32e40s/sim/uvmt
-    cmd: make test TEST=isa_fcov_holes
+    cmd: make test TEST=pma
+
+  pmp:
+    description: PMP directed tests
+    builds: [uvmt_cv32e40s_pmp]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=pmp
 
   b_ext_test:
     description: Directed Zb extension test

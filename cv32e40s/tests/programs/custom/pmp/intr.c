@@ -24,53 +24,53 @@ volatile CSRS glb_csrs; // only used for exception check
 __attribute__((interrupt("machine"))) void u_sw_irq_handler(void)
 {
   uint32_t instr_word;
-  printf("\n\t u_sw_irq_handler ");
+  printf("\tu_sw_irq_handler\n");
   __asm__ volatile("csrrs %0, mcause, x0"
                    : "=r"(glb_csrs.mcause));
 
   if (glb_csrs.mcause == 0)
   {
-    printf("\n\t Instruction address misaligned ");
+    printf("\tInstruction address misaligned\n");
   }
   else if (glb_csrs.mcause == 1)
   {
-    printf("\n\t Instruction access fault ");
+    printf("\tInstruction access fault\n");
   }
   else if (glb_csrs.mcause == 2)
   {
-    printf("\n\t Illegal instruction ");
+    printf("\tIllegal instruction\n");
   }
   else if (glb_csrs.mcause == 3)
   {
-    printf("\n\t Breakpoint ");
+    printf("\tBreakpoint\n");
   }
   else if (glb_csrs.mcause == 4)
   {
-    printf("\n\t Load address misaligned ");
+    printf("\tLoad address misaligned\n");
   }
   else if (glb_csrs.mcause == 5)
   {
-    printf("\n\t Load access fault ");
+    printf("\tLoad access fault\n");
   }
   else if (glb_csrs.mcause == 6)
   {
-    printf("\n\t Store/AMO address misaligned ");
+    printf("\tStore/AMO address misaligned\n");
   }
   else if (glb_csrs.mcause == 7)
   {
-    printf("\n\t Store/AMO access fault ");
+    printf("\tStore/AMO access fault\n");
   }
   else if (glb_csrs.mcause == 8)
   {
-    printf("\n\t Environment call from U-Mode (ECALL)\n");
+    printf("\tEnvironment call from U-Mode (ECALL)\n");
   }
   else if (glb_csrs.mcause == 11)
   {
-    printf("\n\t Environment call from M-Mode (ECALL)\n");
+    printf("\tEnvironment call from M-Mode (ECALL)\n");
   }
   else
   {
-    printf("\n\t (some other mcause reason, %lu)", glb_csrs.mcause);
+    printf("\t(some other mcause reason, %lu)\n", glb_csrs.mcause);
   }
 
   // Increment "mepc"
