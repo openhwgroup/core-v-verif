@@ -360,7 +360,9 @@ module uvmt_cv32e40s_imperas_dv_wrap
    assign rvvi.valid[0][0]    = `RVFI_IF.rvfi_valid;
    assign rvvi.order[0][0]    = `RVFI_IF.rvfi_order;
    assign rvvi.insn[0][0]     = `RVFI_IF.rvfi_insn;
-   assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap.trap;
+   assign rvvi.trap[0][0]     =  (`RVFI_IF.rvfi_trap.trap && `RVFI_IF.rvfi_trap.exception == 1'b1)                                      || // Exceptions never retire
+                                 (`RVFI_IF.rvfi_trap.trap && `RVFI_IF.rvfi_trap.debug == 1'b1 && `RVFI_IF.rvfi_trap.debug_cause == 'h1) || // Ebreak never retires
+                                 (`RVFI_IF.rvfi_trap.trap && `RVFI_IF.rvfi_trap.debug == 1'b1 && `RVFI_IF.rvfi_trap.debug_cause == 'h2);   // Trigger match never retires
    assign rvvi.intr[0][0]     = `RVFI_IF.rvfi_intr;
    assign rvvi.mode[0][0]     = `RVFI_IF.rvfi_mode;
    assign rvvi.ixl[0][0]      = `RVFI_IF.rvfi_ixl;
