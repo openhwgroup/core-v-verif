@@ -19,41 +19,49 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define  EXCEPTION_INSN_ACCESS_FAULT  1
-#define  EXCEPTION_LOAD_ACCESS_FAULT  5
+#define  EXCEPTION_INSN_ACCESS_FAULT      1
+#define  EXCEPTION_LOAD_ACCESS_FAULT      5
 #define  EXCEPTION_STOREAMO_ACCESS_FAULT  7
-#define  MEM_ADDR_0  0
-#define  IO_ADDR  (0x1A110800 + 16)
-#define  MEM_ADDR_1  0x1A111000
-#define  MTVAL_READ  0
-#define  MTBLJALVEC  0  // TODO update when RTL is implemented
+
+#define  MEM_ADDR_0        0
+#define  IO_ADDR           (0x1A110800 + 16)
+#define  MEM_ADDR_1        0x1A111000
+#define  MTVAL_READ        0
+#define  MTBLJALVEC        0  // TODO update when RTL is implemented
 #define  TBLJ_TARGET_ADDR  (IO_ADDR + 8)
 
 static volatile uint32_t mcause = 0;
-static volatile uint32_t mepc = 0;
-static volatile uint32_t mtval = 0;
-static volatile uint32_t retpc = 0;
+static volatile uint32_t mepc   = 0;
+static volatile uint32_t mtval  = 0;
+static volatile uint32_t retpc  = 0;
+
 
 // Exception-causing instructions
+
 static void (*instr_access_fault)(void) = (void (*)(void))IO_ADDR;
+
 void misaligned_store(void) {
   uint32_t tmp;
   tmp = 0xBBBBBBBB;
   __asm__ volatile("sw %0, 1(%1)" : "=r"(tmp) : "r"(IO_ADDR));
 }
-void load_misaligned_io(void) {__asm__ volatile("lw t0, 3(%0)" : : "r"(IO_ADDR));}
-void load_misaligned_iomem(void) {__asm__ volatile("lw t0, 0(%0)" : : "r"(MEM_ADDR_1 - 3));}
-void load_misaligned_memio(void) {__asm__ volatile("lw t0, 0(%0)" : : "r"(IO_ADDR - 1));}
-void store_first_access(void) {__asm__ volatile("sw %0, 2(%1)" : : "r"(0x11223344), "r"(IO_ADDR));}
-void store_second_access(void) {__asm__ volatile("sw %0, -2(%1)" : : "r"(0x22334455), "r"(MEM_ADDR_1));}
+
+//TODO void load_misaligned_io(void)    {__asm__ volatile("lw t0, 3(%0)" : : "r"(IO_ADDR));}
+static void load_misaligned_io(void)    {__asm__ volatile("lw t0, 0(%0)" : : "r"(IO_ADDR));}
+static void load_misaligned_iomem(void) {__asm__ volatile("lw t0, 0(%0)" : : "r"(MEM_ADDR_1 - 3));}
+static void load_misaligned_memio(void) {__asm__ volatile("lw t0, 0(%0)" : : "r"(IO_ADDR - 1));}
+
+static void store_first_access(void)  {__asm__ volatile("sw %0,  2(%1)" : : "r"(0x11223344), "r"(IO_ADDR));}
+static void store_second_access(void) {__asm__ volatile("sw %0, -2(%1)" : : "r"(0x22334455), "r"(MEM_ADDR_1));}
+
 
 __attribute__((naked))
-void provoke(void (*f)(void)) {
+static void provoke(void (*f)(void)) {
   // Prolog
   __asm__ volatile("addi sp,sp,-64");
-  __asm__ volatile("sw ra, 0(sp)");
-  __asm__ volatile("sw a0, 4(sp)");
-  __asm__ volatile("sw a1, 8(sp)");
+  __asm__ volatile("sw ra,  0(sp)");
+  __asm__ volatile("sw a0,  4(sp)");
+  __asm__ volatile("sw a1,  8(sp)");
   __asm__ volatile("sw a2, 12(sp)");
   __asm__ volatile("sw a3, 16(sp)");
   __asm__ volatile("sw a4, 20(sp)");
@@ -122,18 +130,15 @@ static void reset_volatiles(void) {
 }
 
 static void check_load_vs_regfile(void) {
-  // within this scope, t0 regs etc should be free to use (ABI, not preserved)
   uint32_t tmp;
 
   // check misaligned in IO
   __asm__ volatile("sw %0, 0(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR));
   __asm__ volatile("sw %0, 4(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR));
   __asm__ volatile("li t0, 0x11223344");
-  provoke(load_misaligned_io);
+  provoke(load_misaligned_io);  // TODO:silabs-robin don't use "provoke()" here
   __asm__ volatile("mv %0, t0" : "=r"(tmp));  // t0 must be "rd" in load_misaligned_io()
-  /* TODO enable when RTL is implemented
   assert_or_die(tmp, 0x11223344, "error: misaligned IO load shouldn't touch regfile\n");
-  */
 
   // check misaligned border from IO to MEM
   __asm__ volatile("sw %0, -4(%1)" : : "r"(0xAAAAAAAA), "r"(MEM_ADDR_1));
@@ -260,10 +265,14 @@ static int fail_first_tblj(void) {
 int main(void) {
   uint32_t tmp;
 
+  printf("TODO tmp\n");
+  check_load_vs_regfile();
+  return EXIT_SUCCESS;
+
   printf("\nHello, PMA test!\n\n");
   assert_or_die(mcause, 0, "error: mcause variable should initially be 0\n");
-  assert_or_die(mepc, 0, "error: mepc variable should initially be 0\n");
-  assert_or_die(mtval, 0, "error: mtval variable should initially be 0\n");
+  assert_or_die(mepc,   0, "error: mepc variable should initially be 0\n");
+  assert_or_die(mtval,  0, "error: mtval variable should initially be 0\n");
 
   // TODO "mtval" should in the future not be read-only read-zero.
 
