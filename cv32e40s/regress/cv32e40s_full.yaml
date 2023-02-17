@@ -39,6 +39,11 @@ builds:
     cfg: pma
     dir: cv32e40s/sim/uvmt
 
+  uvmt_cv32e40s_pma_debug:
+    cmd: make comp_corev-dv comp
+    cfg: pma_debug
+    dir: cv32e40s/sim/uvmt
+
   uvmt_cv32e40s_pma_1:
     cmd: make comp_corev-dv comp
     cfg: pma_test_cfg_1
@@ -415,6 +420,18 @@ tests:
     builds: [uvmt_cv32e40s_pma]
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=pma
+
+  pma_0reg:
+    description: PMA directed tests with zero registers
+    builds: [uvmt_cv32e40s]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=pma_0reg
+
+  pma_debug:
+    description: PMA directed tests relating to debug
+    builds: [uvmt_cv32e40s_pma_debug]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=pma_debug
 
   pmp:
     description: PMP directed tests
