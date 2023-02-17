@@ -230,14 +230,14 @@ task uvma_obi_memory_slv_seq_c::do_mem_operation(ref uvma_obi_memory_mon_trn_c m
 endtask : do_mem_operation
 
 function uvma_obi_memory_vp_base_seq_c#(
-     .AUSER_WIDTH(AUSER_WIDTH),
-     .WUSER_WIDTH(WUSER_WIDTH),
-     .RUSER_WIDTH(RUSER_WIDTH),
-     .ADDR_WIDTH(ADDR_WIDTH),
-     .DATA_WIDTH(DATA_WIDTH),
-     .ID_WIDTH(ID_WIDTH),
-     .ACHK_WIDTH(ACHK_WIDTH),
-     .RCHK_WIDTH(RCHK_WIDTH)
+     .AUSER_WIDTH(uvma_obi_memory_slv_seq_c::AUSER_WIDTH),
+     .WUSER_WIDTH(uvma_obi_memory_slv_seq_c::WUSER_WIDTH),
+     .RUSER_WIDTH(uvma_obi_memory_slv_seq_c::RUSER_WIDTH),
+     .ADDR_WIDTH(uvma_obi_memory_slv_seq_c::ADDR_WIDTH),
+     .DATA_WIDTH(uvma_obi_memory_slv_seq_c::DATA_WIDTH),
+     .ID_WIDTH(uvma_obi_memory_slv_seq_c::ID_WIDTH),
+     .ACHK_WIDTH(uvma_obi_memory_slv_seq_c::ACHK_WIDTH),
+     .RCHK_WIDTH(uvma_obi_memory_slv_seq_c::RCHK_WIDTH)
 ) uvma_obi_memory_slv_seq_c::register_vp_vseq(string name,
                                               bit[31:0] start_address,
                                               uvm_object_wrapper seq_type);

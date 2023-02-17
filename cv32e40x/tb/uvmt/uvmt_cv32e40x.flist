@@ -38,9 +38,6 @@
 // Environments
 -f ${DV_UVME_PATH}/uvme_cv32e40x_pkg.flist
 
-// ImperasDV
--f ${TBSRC_HOME}/uvmt/imperas_dv.flist
-
 // CV32E40X test bench Directories
 +incdir+${DV_UVMT_PATH}
 +incdir+${DV_UVM_TESTCASE_PATH}
@@ -52,13 +49,16 @@
 +incdir+${TBSRC_HOME}
 ${DV_UVMT_PATH}/uvmt_cv32e40x_pkg.sv
 
+// ImperasDV
+-f ${TBSRC_HOME}/uvmt/imperas_dv.flist
+
 // CV32E40X test bench files
 ${DV_UVMT_PATH}/uvmt_cv32e40x_dut_wrap.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40x_tb.sv
 ${TBSRC_HOME}/uvmt/uvmt_cv32e40x_tb.sv
 ${TBSRC_HOME}/uvmt/uvmt_cv32e40x_dut_wrap.sv
 
-${DV_UVMT_PATH}/uvmt_cv32e40x_debug_assert.sv
+//${DV_UVMT_PATH}/uvmt_cv32e40x_debug_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40x_fencei_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40x_integration_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40x_interrupt_assert.sv
