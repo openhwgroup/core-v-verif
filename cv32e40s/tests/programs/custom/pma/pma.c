@@ -27,7 +27,7 @@
 #define  IO_ADDR           (0x1A110800 + 16)
 #define  MEM_ADDR_1        0x1A111000
 #define  MTVAL_READ        0
-#define  MTBLJALVEC        0  // TODO update when RTL is implemented
+#define  MTBLJALVEC        0  // TODO:silabs-robin  update when RTL is implemented
 #define  TBLJ_TARGET_ADDR  (IO_ADDR + 8)
 
 static volatile uint32_t  g_mcause = 0;
@@ -48,8 +48,11 @@ void misaligned_store(void) {
 
 static void load_misaligned_io(void)    {__asm__ volatile("lw t0, 3(%0)" : : "r"(IO_ADDR));}
 static void load_aligned_io(void)       {__asm__ volatile("lw t0, 0(%0)" : : "r"(IO_ADDR));}
+static void load_misaligned_io2(void)   {__asm__ volatile("lw t0, 5(%0)" : : "r"(IO_ADDR));}
+
 static void load_misaligned_iomem(void) {__asm__ volatile("lw t0, 0(%0)" : : "r"(MEM_ADDR_1 - 2));}
 static void load_aligned_iomem(void)    {__asm__ volatile("lh t0, 0(%0)" : : "r"(MEM_ADDR_1 - 2));}
+
 static void load_misaligned_memio(void) {__asm__ volatile("lw t0, 0(%0)" : : "r"(IO_ADDR - 1));}
 static void load_aligned_memio(void)    {__asm__ volatile("lb t0, 0(%0)" : : "r"(IO_ADDR - 1));}
 
@@ -151,7 +154,7 @@ static void check_load_vs_regfile(void) {
     assert_or_die(tmp, 0xFFFFFFAA, "error: aligned MEM/IO load should touch regfile\n");
   }
 
-  // TODO can one programmatically confirm that these addresses are indeed in such regions as intended?
+  // TODO:silabs-robin  can one programmatically confirm that these addresses are indeed in such regions as intended?
 }
 
 static void check_zce_push(void) {
@@ -172,15 +175,15 @@ static void check_zce_push(void) {
   __asm__ volatile("sw %0, -12(%1)" : : "r"(defaults[3]), "r"(MEM_ADDR_1));
 
   // Run the push stimuli
-  /* TODO enabled when RTL is implemented
-  __asm__ volatile(".word 0x000240AB");  // TODO "push {ra, s0-s1}, -16"
+  /* TODO:silabs-robin  enabled when RTL is implemented
+  __asm__ volatile(".word 0x000240AB");  // TODO:silabs-robin  "push {ra, s0-s1}, -16"
   */
 
   // Epilogue
   __asm__ volatile("mv sp, %0" : : "r"(sp));  // Better restore this quickly
 
   // Assert results
-  /* TODO enabled when RTL is implemented
+  /* TODO:silabs-robin  enabled when RTL is implemented
   assert_or_die(g_mcause, EXCEPTION_STOREAMO_ACCESS_FAULT, "error: bad push should except\n");
   assert_or_die(g_mepc, (MEM_ADDR_1 - 4), "error: bad push, unexpected mepc\n");
   assert_or_die(g_mtval, MTVAL_READ, "error: bad push, unexpected mtval\n");
@@ -215,7 +218,7 @@ static void check_zce_pop(void) {
   __asm__ volatile("mv %0, s1" : "=r"(s1));  // Will check against this later
 
   // Run the instruction
-  /* TODO enable when RTL is implemented
+  /* TODO:silabs-robin  enable when RTL is implemented
   __asm__ volatile("pop {ra, s0-s1}, 16");
   */
 
@@ -223,7 +226,7 @@ static void check_zce_pop(void) {
   __asm__ volatile("mv sp, %0" : : "r"(sp));
 
   // Assert results
-  /* TODO enable when RTL is implemented
+  /* TODO:silabs-robin  enable when RTL is implemented
   assert_or_die(mcause, EXCEPTION_LOAD_ACCESS_FAULT, "error: bad pop should except\n");
   assert_or_die(mepc, (MEM_ADDR_1 - 4), "error: bad pop, unexpected mepc\n");
   assert_or_die(mtval, MTVAL_READ, "error: bad pop, unexpected mtval\n");
@@ -234,7 +237,7 @@ static void check_zce_pop(void) {
   assert_or_die(tmp, s0, "error: POP from IO should not LW\n");
   __asm__ volatile("mv %0, s1" : "=r"(tmp));
   assert_or_die(tmp, s1, "error: POP from IO should not continue LWing\n");
-  //TODO are assertions good enough that C accidentally using the same registers will either be caught or not be a problem?
+  //TODO:silabs-robin  are assertions good enough that C accidentally using the same registers will either be caught or not be a problem?
 
   // Epilogue 2/2
   __asm__ volatile("mv ra, %0" : : "r"(ra));
@@ -243,8 +246,8 @@ static void check_zce_pop(void) {
 static int fail_first_tblj(void) {
   int mepc = -1;
 
-  /* TODO enable when RTL is implemented
-  // TODO make sure the target address is non-executable, so we can check if mtval matches first fetch
+  /* TODO:silabs-robin  enable when RTL is implemented
+  // TODO:silabs-robin  make sure the target address is non-executable, so we can check if mtval matches first fetch
   __asm__ volatile("c.tbljal 0");
   */
   __asm__ volatile("auipc %0, 0" : "=r"(mepc));
@@ -256,16 +259,12 @@ static int fail_first_tblj(void) {
 int main(void) {
   uint32_t tmp;
 
-  printf("TODO tmp\n");
-  check_load_vs_regfile();
-  return EXIT_SUCCESS;
-
   printf("\nHello, PMA test!\n\n");
   assert_or_die(g_mcause, 0, "error: mcause variable should initially be 0\n");
   assert_or_die(g_mepc,   0, "error: mepc variable should initially be 0\n");
   assert_or_die(g_mtval,  0, "error: mtval variable should initially be 0\n");
 
-  // TODO "mtval" should in the future not be read-only read-zero.
+  // TODO:silabs-robin  "mtval" should in the future not be read-only read-zero.
 
 
   printf("pma: Exec should only work for 'main memory' regions\n");
@@ -291,8 +290,7 @@ int main(void) {
   reset_volatiles();
   provoke(misaligned_store);
   assert_or_die(g_mcause, EXCEPTION_STOREAMO_ACCESS_FAULT, "error: misaligned store unexpected mcause\n");
-  //TODO:ropeders fix: assert_or_die(mepc, (IO_ADDR + 1), "error: misaligned store unexpected mepc\n");
-  assert_or_die(g_mtval, MTVAL_READ, "error: misaligned store unexpected mtval\n");
+  assert_or_die(g_mtval,  MTVAL_READ, "error: misaligned store unexpected mtval\n");
 
   printf("pma: check that misaligned store to MEM is alright\n");
   reset_volatiles();
@@ -309,20 +307,17 @@ int main(void) {
   reset_volatiles();
   tmp = 0;
   __asm__ volatile("lw %0, 0(%1)" : "=r"(tmp) : "r"(IO_ADDR));  // Depends on "store" test filling memory first
-  assert_or_die(!tmp, 0, "error: load should not yield zero\n");  // TODO ensure memory content matches
+  assert_or_die(!tmp, 0, "error: load should not yield zero\n");  // TODO:silabs-robin  ensure memory content matches
   assert_or_die(g_mcause, -1, "error: natty access should not change mcause\n");
   assert_or_die(g_mepc, -1, "error: natty access should not change mepc\n");
   assert_or_die(g_mtval, -1, "error: natty access should not change mtval\n");
 
   printf("pma: check that misaligned load will except\n");
- /* TODO:silabs-robin  Uncomment
   reset_volatiles();
-  __asm__ volatile("lw %0, 5(%1)" : "=r"(tmp) : "r"(IO_ADDR));
+  provoke(load_misaligned_io2);
   assert_or_die(g_mcause, EXCEPTION_LOAD_ACCESS_FAULT, "error: misaligned IO load should except\n");
-  assert_or_die(g_mepc, (IO_ADDR + 5), "error: misaligned IO load unexpected mepc\n");
   assert_or_die(g_mtval, MTVAL_READ, "error: misaligned IO load unexpected mtval\n");
-  // TODO more kinds of |addr[0:1]? Try LH too?
- */
+  // TODO:silabs-robin  more kinds of |addr[0:1]? Try LH too?
 
   printf("pma: check that misaligned to MEM does not fail\n");
   reset_volatiles();
@@ -336,42 +331,40 @@ int main(void) {
 
   printf("pma: Misaligned load fault shouldn't touch regfile\n");
 
-  // check that various split load access fault leaves regfile untouched
+  printf("pma: check that various split load access fault leaves regfile untouched\n");
   check_load_vs_regfile();
 
 
-  // Misaligned store fault shouldn't reach bus in second access
+  printf("pma: Misaligned store fault shouldn't reach bus in second access\n");
 
-  // check IO store failing in first access
+  printf("pma: check IO store failing in first access\n");
   __asm__ volatile("sw %0, 0(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR));
   __asm__ volatile("sw %0, 4(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR));
   provoke(store_first_access);
-  /* TODO enable when RTL is implemented
   __asm__ volatile("lw %0, 0(%1)" : "=r"(tmp) : "r"(IO_ADDR));
   assert_or_die(tmp, 0xAAAAAAAA, "error: misaligned first store entered bus\n");
   __asm__ volatile("lw %0, 4(%1)" : "=r"(tmp) : "r"(IO_ADDR));
   assert_or_die(tmp, 0xBBBBBBBB, "error: misaligned second store entered bus\n");
-  */
-  // TODO how to programmatically confirm that these region settings match as intended?
+  // TODO:silabs-robin  how to programmatically confirm that these region settings match as intended?
 
-  // check IO to MEM store failing in first access
+  printf("pma: check IO to MEM store failing in first access\n");
   __asm__ volatile("sw %0, -4(%1)" : : "r"(0xAAAAAAAA), "r"(MEM_ADDR_1));
   __asm__ volatile("sw %0, 0(%1)" : : "r"(0xBBBBBBBB), "r"(MEM_ADDR_1));
   provoke(store_second_access);
-  /* TODO enable when RTL is implemented
+  /* TODO:silabs-robin  enable when RTL is implemented
   __asm__ volatile("lw %0, -4(%1)" : "=r"(tmp) : "r"(MEM_ADDR_1));
   assert_or_die(tmp, 0xAAAAAAAA, "error: misaligned IO/MEM first store entered bus\n");
   __asm__ volatile("lw %0, 0(%1)" : "=r"(tmp) : "r"(MEM_ADDR_1));
   assert_or_die(tmp, 0xBBBBBBBB, "error: misaligned IO/MEM second store entered bus\n");
   */
-  // TODO how to programmatically confirm that these region settings match as intended?
+  // TODO:silabs-robin  how to programmatically confirm that these region settings match as intended?
 
 
-  // Atomics should work only where it is allowed
+  printf("pma: Atomics should work only where it is allowed\n");
 
-  // Sanity check that atomic ops (lr/sc) to allowed regions is ok
+  printf("pma: Sanity check that atomic ops (lr/sc) to allowed regions is ok\n");
   reset_volatiles();
-  /* TODO enable when RTL is implemented
+  /* TODO:silabs-robin  enable when RTL is implemented
   __asm__ volatile("lr.w %0, 0(%1)" : "=r"(tmp) : "r"(MEM_ADDR_1));
   __asm__ volatile("sc.w %0, %0, 0(%1)" : "=r"(tmp) : "r"(MEM_ADDR_1));
   */
@@ -379,18 +372,18 @@ int main(void) {
   assert_or_die(g_mepc, -1, "error: atomics to legal region unexpected mepc\n");
   assert_or_die(g_mtval, -1, "error: atomics to legal region unexpected mtval\n");
 
-  // Load-reserved to disallowed regions raises precise exception
+  printf("pma: Load-reserved to disallowed regions raises precise exception\n");
   reset_volatiles();
-  /* TODO enable when RTL is implemented
+  /* TODO:silabs-robin  enable when RTL is implemented
   __asm__ volatile("lr.w %0, 0(%1)" : "=r"(tmp) : "r"(IO_ADDR));
   assert_or_die(g_mcause, EXCEPTION_LOAD_ACCESS_FAULT, "error: load-reserved to non-atomic should except\n");
   assert_or_die(g_mepc, IO_ADDR, "error: load-reserved to non-atomic unexpected mepc\n");
   assert_or_die(g_mtval, MTVAL_READ, "error: load-reserved to non-atomic unexpected mtval\n");
   */
 
-  // Store-conditional to disallowed regions raises precise exception
+  printf("pma: Store-conditional to disallowed regions raises precise exception\n");
   reset_volatiles();
-  /* TODO enable when RTL is implemented
+  /* TODO:silabs-robin  enable when RTL is implemented
   __asm__ volatile("sc.w %0, %0, 0(%1)" : "=r"(tmp) : "r"(IO_ADDR));
   assert_or_die(g_mcause, EXCEPTION_STOREAMO_ACCESS_FAULT, "error: store-conditional to non-atomic should except\n");
   assert_or_die(g_mepc, IO_ADDR, "error: store-conditional to non-atomic unexpected mepc\n");
@@ -398,26 +391,26 @@ int main(void) {
   */
 
 
-  // Check Zce-related PMA features
+  printf("pma: Check Zce-related PMA features\n");
 
-  // Push instrs should fault to IO but pass for MEM
+  printf("pma: Push instrs should fault to IO but pass for MEM\n");
   check_zce_push();
 
-  // Pop instrs should fault to IO but pass for MEM
+  printf("pma: Pop instrs should fault to IO but pass for MEM\n");
   check_zce_pop();
 
-  // Table jump failing first fetch should be the fault of the table jump
+  printf("pma: Table jump failing first fetch should be the fault of the table jump\n");
   reset_volatiles();
   tmp = fail_first_tblj();
-  /* TODO enable when RTL is implemented
+  /* TODO:silabs-robin  enable when RTL is implemented
   assert_or_die(mcause, EXCEPTION_INSN_ACCESS_FAULT, "error: tblj failing first should instruction access fault\n");
   assert_or_die(mepc, tmp, "error: tblj first expected different mepc\n");
   assert_or_die(mtval, MTBLJALVEC, "error: tblj first expected different mtval\n");
   */
 
-  // Table jump failing second fetch should be the fault of the target
+  printf("pma: Table jump failing second fetch should be the fault of the target\n");
   reset_volatiles();
-  /* TODO enable when RTL is implemented
+  /* TODO:silabs-robin  enable when RTL is implemented
   make sure table is executable but target is not
   __asm__ volatile("c.tbljal 1");
   assert_or_die(mcause, EXCEPTION_INSN_ACCESS_FAULT, "error: tblj failing second should instruction access fault\n");
