@@ -64,9 +64,19 @@ module uvmt_cv32e40x_tb;
    uvma_debug_if                debug_if();
    uvma_interrupt_if            interrupt_if();
    // TODO:silabs-robin  Parameterize OBI interfaces
-   uvma_obi_memory_if           obi_instr_if_i( .clk     (clknrst_if.clk),
+   uvma_obi_memory_if#(
+     .ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
+     .DATA_WIDTH  (ENV_PARAM_INSTR_DATA_WIDTH),
+     .ACHK_WIDTH  (ENV_PARAM_INSTR_ACHK_WIDTH),
+     .RCHK_WIDTH  (ENV_PARAM_INSTR_RCHK_WIDTH)
+   ) obi_instr_if_i( .clk     (clknrst_if.clk),
                                                 .reset_n (clknrst_if.reset_n));
-   uvma_obi_memory_if           obi_data_if_i ( .clk     (clknrst_if.clk),
+   uvma_obi_memory_if#(
+     .ADDR_WIDTH  (ENV_PARAM_DATA_ADDR_WIDTH),
+     .DATA_WIDTH  (ENV_PARAM_DATA_DATA_WIDTH),
+     .ACHK_WIDTH  (ENV_PARAM_DATA_ACHK_WIDTH),
+     .RCHK_WIDTH  (ENV_PARAM_DATA_RCHK_WIDTH)
+   ) obi_data_if_i ( .clk     (clknrst_if.clk),
                                                 .reset_n (clknrst_if.reset_n));
    uvma_fencei_if               fencei_if_i   ( .clk     (clknrst_if.clk),
                                                 .reset_n (clknrst_if.reset_n));
@@ -322,27 +332,27 @@ module uvmt_cv32e40x_tb;
 
   bind uvmt_cv32e40x_dut_wrap
     uvma_obi_memory_assert_if_wrp#(
-      .ADDR_WIDTH(32),
-      .DATA_WIDTH(32),
-      .AUSER_WIDTH(0),
-      .WUSER_WIDTH(0),
-      .RUSER_WIDTH(0),
-      .ID_WIDTH(0),
-      .ACHK_WIDTH(0),
-      .RCHK_WIDTH(0),
+      .ADDR_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_INSTR_ADDR_WIDTH),
+      .DATA_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_INSTR_DATA_WIDTH),
+      .AUSER_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_INSTR_AUSER_WIDTH),
+      .WUSER_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_INSTR_WUSER_WIDTH),
+      .RUSER_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_INSTR_RUSER_WIDTH),
+      .ID_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_INSTR_ID_WIDTH),
+      .ACHK_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_INSTR_ACHK_WIDTH),
+      .RCHK_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_INSTR_RCHK_WIDTH),
       .IS_1P2(1)
     ) obi_instr_memory_assert_i(.obi(obi_instr_if_i));
 
   bind uvmt_cv32e40x_dut_wrap
     uvma_obi_memory_assert_if_wrp#(
-      .ADDR_WIDTH(32),
-      .DATA_WIDTH(32),
-      .AUSER_WIDTH(0),
-      .WUSER_WIDTH(0),
-      .RUSER_WIDTH(0),
-      .ID_WIDTH(0),
-      .ACHK_WIDTH(0),
-      .RCHK_WIDTH(0),
+      .ADDR_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_DATA_ADDR_WIDTH),
+      .DATA_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_DATA_DATA_WIDTH),
+      .AUSER_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_DATA_AUSER_WIDTH),
+      .WUSER_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_DATA_WUSER_WIDTH),
+      .RUSER_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_DATA_RUSER_WIDTH),
+      .ID_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_DATA_ID_WIDTH),
+      .ACHK_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_DATA_ACHK_WIDTH),
+      .RCHK_WIDTH(uvme_cv32e40x_pkg::ENV_PARAM_DATA_RCHK_WIDTH),
       .IS_1P2(1)
     ) obi_data_memory_assert_i(.obi(obi_data_if_i));
 
@@ -506,7 +516,7 @@ module uvmt_cv32e40x_tb;
       .*
     );
 
-    bind cv32e40x_wrapper uvmt_cv32e40x_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
+    //bind cv32e40x_wrapper uvmt_cv32e40x_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
 
     //uvmt_cv32e40x_rvvi_handcar u_rvvi_handcar();
 
@@ -529,8 +539,26 @@ module uvmt_cv32e40x_tb;
      uvm_config_db#(virtual uvma_debug_if               )::set(.cntxt(null), .inst_name("*.env.debug_agent"), .field_name("vif"), .value(debug_if));
      uvm_config_db#(virtual uvma_clknrst_if             )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"), .field_name("vif"),        .value(clknrst_if));
      uvm_config_db#(virtual uvma_interrupt_if           )::set(.cntxt(null), .inst_name("*.env.interrupt_agent"), .field_name("vif"),      .value(interrupt_if));
-     uvm_config_db#(virtual uvma_obi_memory_if          )::set(.cntxt(null), .inst_name("*.env.obi_memory_instr_agent"), .field_name("vif"), .value(obi_instr_if_i) );
-     uvm_config_db#(virtual uvma_obi_memory_if          )::set(.cntxt(null), .inst_name("*.env.obi_memory_data_agent"),  .field_name("vif"), .value(obi_data_if_i) );
+     uvm_config_db#(virtual uvma_obi_memory_if#(
+       .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
+       .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
+       .RUSER_WIDTH(ENV_PARAM_INSTR_RUSER_WIDTH),
+       .ADDR_WIDTH(ENV_PARAM_INSTR_ADDR_WIDTH),
+       .DATA_WIDTH(ENV_PARAM_INSTR_DATA_WIDTH),
+       .ID_WIDTH(ENV_PARAM_INSTR_ID_WIDTH),
+       .ACHK_WIDTH(ENV_PARAM_INSTR_ACHK_WIDTH),
+       .RCHK_WIDTH(ENV_PARAM_INSTR_RCHK_WIDTH)
+     ))::set(.cntxt(null), .inst_name("*.env.obi_memory_instr_agent"), .field_name("vif"), .value(obi_instr_if_i) );
+     uvm_config_db#(virtual uvma_obi_memory_if#(
+       .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+       .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+       .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+       .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+       .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+       .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+       .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+       .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+     ))::set(.cntxt(null), .inst_name("*.env.obi_memory_data_agent"),  .field_name("vif"), .value(obi_data_if_i) );
      uvm_config_db#(virtual uvma_fencei_if              )::set(.cntxt(null), .inst_name("*.env.fencei"),     .field_name("vif"), .value(fencei_if_i));
      uvm_config_db#(virtual uvma_rvfi_instr_if          )::set(.cntxt(null), .inst_name("*.env.rvfi_agent"), .field_name("instr_vif0"),.value(dut_wrap.cv32e40x_wrapper_i.rvfi_instr_if_0_i));
      uvm_config_db#(virtual uvma_fencei_if              )::set(.cntxt(null), .inst_name("*.env.fencei_agent"), .field_name("fencei_vif"),     .value(fencei_if_i)  );

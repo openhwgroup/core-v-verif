@@ -36,8 +36,26 @@ class uvme_cv32e40x_cntxt_c extends uvm_object;
    uvma_clknrst_cntxt_c              clknrst_cntxt;
    uvma_interrupt_cntxt_c            interrupt_cntxt;
    uvma_debug_cntxt_c                debug_cntxt;
-   uvma_obi_memory_cntxt_c           obi_memory_instr_cntxt;
-   uvma_obi_memory_cntxt_c           obi_memory_data_cntxt;
+   uvma_obi_memory_cntxt_c#(
+     .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_INSTR_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_INSTR_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_INSTR_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_INSTR_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_INSTR_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_INSTR_RCHK_WIDTH)
+   ) obi_memory_instr_cntxt;
+   uvma_obi_memory_cntxt_c#(
+     .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+   ) obi_memory_data_cntxt;
    uvma_rvfi_cntxt_c#(ILEN,XLEN)     rvfi_cntxt;
    uvma_fencei_cntxt_c               fencei_cntxt;
 
@@ -83,8 +101,26 @@ function uvme_cv32e40x_cntxt_c::new(string name="uvme_cv32e40x_cntxt");
    debug_cntxt      = uvma_debug_cntxt_c::type_id::create("debug_cntxt");
    fencei_cntxt     = uvma_fencei_cntxt_c::type_id::create("fencei_cntxt");
    interrupt_cntxt  = uvma_interrupt_cntxt_c::type_id::create("interrupt_cntxt");
-   obi_memory_data_cntxt  = uvma_obi_memory_cntxt_c::type_id::create("obi_memory_data_cntxt" );
-   obi_memory_instr_cntxt = uvma_obi_memory_cntxt_c::type_id::create("obi_memory_instr_cntxt");
+   obi_memory_data_cntxt  = uvma_obi_memory_cntxt_c#(
+     .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+   )::type_id::create("obi_memory_data_cntxt" );
+   obi_memory_instr_cntxt = uvma_obi_memory_cntxt_c#(
+     .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_INSTR_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_INSTR_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_INSTR_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_INSTR_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_INSTR_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_INSTR_RCHK_WIDTH)
+   )::type_id::create("obi_memory_instr_cntxt");
    rvfi_cntxt       = uvma_rvfi_cntxt_c#(ILEN,XLEN)::type_id::create("rvfi_cntxt");
 
    mem = uvml_mem_c#(XLEN)::type_id::create("mem");
