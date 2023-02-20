@@ -46,7 +46,6 @@
 static volatile uint32_t  g_mcause = 0;
 static volatile uint32_t  g_mepc   = 0;
 static volatile uint32_t  g_mtval  = 0;
-static volatile uint32_t  g_retpc  = 0;
 
 
 // Exception-causing Instructions
@@ -59,41 +58,42 @@ void misaligned_store(void) {
   __asm__ volatile("sw %0, 1(%1)" : "=r"(tmp) : "r"(IO_ADDR));
 }
 
-static void load_misaligned_io(void)    {__asm__ volatile("lw t0, 3(%0)" : : "r"(IO_ADDR));}
-static void load_aligned_io(void)       {__asm__ volatile("lw t0, 0(%0)" : : "r"(IO_ADDR));}
-static void load_misaligned_io2(void)   {__asm__ volatile("lw t0, 5(%0)" : : "r"(IO_ADDR));}
+void load_misaligned_io(void)     {__asm__ volatile("lw t0, 3(%0)" : : "r"(IO_ADDR));}
+static void load_aligned_io(void) {__asm__ volatile("lw t0, 0(%0)" : : "r"(IO_ADDR));}
+void load_misaligned_io2(void)    {__asm__ volatile("lw t0, 5(%0)" : : "r"(IO_ADDR));}
 
-static void load_misaligned_iomem(void) {__asm__ volatile("lw t0, 0(%0)" : : "r"(MEM_ADDR_1 - 2));}
-static void load_aligned_iomem(void)    {__asm__ volatile("lh t0, 0(%0)" : : "r"(MEM_ADDR_1 - 2));}
+void load_misaligned_iomem(void)     {__asm__ volatile("lw t0, 0(%0)" : : "r"(MEM_ADDR_1 - 2));}
+static void load_aligned_iomem(void) {__asm__ volatile("lh t0, 0(%0)" : : "r"(MEM_ADDR_1 - 2));}
 
-static void load_misaligned_memio(void) {__asm__ volatile("lw t0, 0(%0)" : : "r"(IO_ADDR - 1));}
-static void load_aligned_memio(void)    {__asm__ volatile("lb t0, 0(%0)" : : "r"(IO_ADDR - 1));}
+void load_misaligned_memio(void)     {__asm__ volatile("lw t0, 0(%0)" : : "r"(IO_ADDR - 1));}
+static void load_aligned_memio(void) {__asm__ volatile("lb t0, 0(%0)" : : "r"(IO_ADDR - 1));}
 
-static void store_first_access(void)  {__asm__ volatile("sw %0,  2(%1)" : : "r"(0x11223344), "r"(IO_ADDR));}
-static void store_second_access(void) {__asm__ volatile("sw %0, -2(%1)" : : "r"(0x22334455), "r"(MEM_ADDR_1));}
+void store_first_access(void)  {__asm__ volatile("sw %0,  2(%1)" : : "r"(0x11223344), "r"(IO_ADDR));}
+void store_second_access(void) {__asm__ volatile("sw %0, -2(%1)" : : "r"(0x22334455), "r"(MEM_ADDR_1));}
 
 
 // Utility Functions
 
 __attribute__ ((interrupt))
 void u_sw_irq_handler(void) {  // overrides a "weak" symbol in the bsp
-  __asm__ volatile("csrr %0, mcause" : "=r"(g_mcause));
-  __asm__ volatile("csrr %0, mepc"   : "=r"(g_mepc));
-  __asm__ volatile("csrr %0, mtval"  : "=r"(g_mtval));
+  uint32_t ra;
 
-  printf("(exec in u_sw_irq_handler: mcause=%lx, mepc=%lx, retpc=%lx)\n", g_mcause, g_mepc, g_retpc);
+  __asm__ volatile( R"(
+    addi %[ra],     ra, 0
+    csrr %[mcause], mcause
+    csrr %[mepc],   mepc
+    csrr %[mtval],  mtval
+    )"
+    : [ra]     "=r"(ra),
+      [mcause] "=r"(g_mcause),
+      [mepc]   "=r"(g_mepc),
+      [mtval]  "=r"(g_mtval)
+  );
 
-  __asm__ volatile("csrw mepc, %0" : : "r"(g_retpc));
+  printf("(exec in u_sw_irq_handler: mcause=%lx, mepc=%lx)\n", g_mcause, g_mepc);
+
+  __asm__ volatile("csrw mepc, %0" : : "r"(ra));
   return;
-}
-
-__attribute__((naked))
-static void provoke(void (*f)(void)) {
-  // Let handler return to provoker
-  __asm__ volatile("addi %0, ra, 0" : "=r"(g_retpc));
-
-  // Call the function that shall trap
-  __asm__ volatile("jalr x0, %0" : : "r"(f));
 }
 
 static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
@@ -114,21 +114,28 @@ static void reset_volatiles(void) {
 // Tests
 
 static void check_load_vs_regfile(void) {
-  uint32_t tmp;
+  uint32_t  tmp;
+  uint32_t  rd_pre;
+  uint32_t  rd_post;
 
   // check misaligned in IO
   __asm__ volatile("sw %0, 0(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR));
   __asm__ volatile("sw %0, 4(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR));
-  __asm__ volatile("li t0, 0x11223344");
   {
     // misaligned: regfile untouched
-    provoke(load_misaligned_io);
-    __asm__ volatile("mv %0, t0" : "=r"(tmp));  // t0 must be "rd" in load_misaligned_io()
-    assert_or_die(tmp, 0x11223344, "error: misaligned IO load shouldn't touch regfile\n");
+    __asm__ volatile( R"(
+      mv   %[rd_pre],   t0
+      jal  ra,          load_misaligned_io
+      mv   %[rd_post],  t0
+      )"
+      : [rd_pre]  "=r"(rd_pre),
+        [rd_post] "=r"(rd_post)
+    );  // t0 must be "rd" in load_misaligned_io()
+    assert_or_die(rd_post, rd_pre, "error: misaligned IO load shouldn't touch regfile\n");
   }
   {
     // aligned: regfile touched
-    provoke(load_aligned_io);
+    load_aligned_io();
     __asm__ volatile("mv %0, t0" : "=r"(tmp));
     assert_or_die(tmp, 0xAAAAAAAA, "error: aligned IO load should touch regfile\n");
   }
@@ -136,16 +143,21 @@ static void check_load_vs_regfile(void) {
   // check misaligned border from IO to MEM
   __asm__ volatile("sw %0, -4(%1)" : : "r"(0xAAAAAAAA), "r"(MEM_ADDR_1));
   __asm__ volatile("sw %0,  0(%1)" : : "r"(0xBBBBBBBB), "r"(MEM_ADDR_1));
-  __asm__ volatile("li t0, 0x22334455");
   {
     // misaligned: regfile untouched
-    provoke(load_misaligned_iomem);
-    __asm__ volatile("mv %0, t0" : "=r"(tmp));
-    assert_or_die(tmp, 0x22334455, "error: misaligned IO/MEM load shouldn't touch regfile\n");
+    __asm__ volatile( R"(
+      mv   %[rd_pre],   t0
+      jal  ra,          load_misaligned_iomem  # IO->MEM border
+      mv   %[rd_post],  t0
+      )"
+      : [rd_pre]  "=r"(rd_pre),
+        [rd_post] "=r"(rd_post)
+    );
+    assert_or_die(rd_post, rd_pre, "error: misaligned IO/MEM load shouldn't touch regfile\n");
   }
   {
     // aligned: regfile touched
-    provoke(load_aligned_iomem);
+    load_aligned_iomem();
     __asm__ volatile("mv %0, t0" : "=r"(tmp));
     assert_or_die(tmp, 0xFFFFAAAA, "error: aligned IO/MEM load should touch regfile\n");
   }
@@ -153,16 +165,21 @@ static void check_load_vs_regfile(void) {
   // check misaligned border from MEM to IO
   __asm__ volatile("sw %0, -4(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR));
   __asm__ volatile("sw %0, 0(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR));
-  __asm__ volatile("li t0, 0x33445566");
   {
     // misaligned: regfile untouched
-    provoke(load_misaligned_memio);
-    __asm__ volatile("mv %0, t0" : "=r"(tmp));
-    assert_or_die(tmp, 0x33445566, "error: misaligned MEM/IO load shouldn't touch regfile\n");
+    __asm__ volatile( R"(
+      mv   %[rd_pre],   t0
+      jal  ra,          load_misaligned_memio  # MEM->IO border
+      mv   %[rd_post],  t0
+      )"
+      : [rd_pre]  "=r"(rd_pre),
+        [rd_post] "=r"(rd_post)
+    );
+    assert_or_die(rd_post, rd_pre, "error: misaligned MEM/IO load shouldn't touch regfile\n");
   }
   {
     // aligned: regfile touched
-    provoke(load_aligned_memio);
+    load_aligned_memio();
     __asm__ volatile("mv %0, t0" : "=r"(tmp));
     assert_or_die(tmp, 0xFFFFFFAA, "error: aligned MEM/IO load should touch regfile\n");
   }
@@ -185,7 +202,7 @@ int main(void) {
   printf("pma: 1. Exec should only work for 'main memory' regions\n");
 
   reset_volatiles();
-  provoke(instr_access_fault);
+  instr_access_fault();
   assert_or_die(g_mcause, EXCEPTION_INSN_ACCESS_FAULT, "error: expected instruction access fault\n");
   assert_or_die(g_mepc, IO_ADDR, "error: expected different mepc\n");
   assert_or_die(g_mtval, MTVAL_READ, "error: expected different mtval\n");
@@ -203,7 +220,7 @@ int main(void) {
 
   printf("pma: check that misaligned stores except\n");
   reset_volatiles();
-  provoke(misaligned_store);
+  __asm__ volatile("jal ra, misaligned_store");
   assert_or_die(g_mcause, EXCEPTION_STOREAMO_ACCESS_FAULT, "error: misaligned store unexpected mcause\n");
   assert_or_die(g_mtval,  MTVAL_READ, "error: misaligned store unexpected mtval\n");
 
@@ -229,7 +246,7 @@ int main(void) {
 
   printf("pma: check that misaligned load will except\n");
   reset_volatiles();
-  provoke(load_misaligned_io2);
+  __asm__ volatile("jal ra, load_misaligned_io2");
   assert_or_die(g_mcause, EXCEPTION_LOAD_ACCESS_FAULT, "error: misaligned IO load should except\n");
   assert_or_die(g_mtval, MTVAL_READ, "error: misaligned IO load unexpected mtval\n");
   // TODO:INFO:silabs-robin  more kinds of |addr[0:1]? Try LH too?
@@ -255,7 +272,7 @@ int main(void) {
   printf("pma: check IO store failing in first access\n");
   __asm__ volatile("sw %0, 0(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR));
   __asm__ volatile("sw %0, 4(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR));
-  provoke(store_first_access);
+  __asm__ volatile("jal ra, store_first_access");
   __asm__ volatile("lw %0, 0(%1)" : "=r"(tmp) : "r"(IO_ADDR));
   assert_or_die(tmp, 0xAAAAAAAA, "error: misaligned first store entered bus\n");
   __asm__ volatile("lw %0, 4(%1)" : "=r"(tmp) : "r"(IO_ADDR));
@@ -265,7 +282,7 @@ int main(void) {
   printf("pma: check IO to MEM store failing in first access\n");
   __asm__ volatile("sw %0, -4(%1)" : : "r"(0xAAAAAAAA), "r"(MEM_ADDR_1));
   __asm__ volatile("sw %0, 0(%1)" : : "r"(0xBBBBBBBB), "r"(MEM_ADDR_1));
-  provoke(store_second_access);
+  __asm__ volatile("jal ra, store_second_access");
   __asm__ volatile("lw %0, -4(%1)" : "=r"(tmp) : "r"(MEM_ADDR_1));
   assert_or_die(tmp, 0xAAAAAAAA, "error: misaligned IO/MEM first store entered bus\n");
   __asm__ volatile("lw %0, 0(%1)" : "=r"(tmp) : "r"(MEM_ADDR_1));
