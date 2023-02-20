@@ -1,11 +1,11 @@
 name: pulp_cluster
 description: Sets PULP instructions and CLUSTER parameters to 1
-compile_flags: 
+compile_flags:
     +define+PULP +define+CLUSTER
 ovpsim: >
-    --override root/cpu/misa_Extensions=0x801104
-    --override root/cpu/marchid=4
-    --override root/cpu/noinhibit_mask=0xFFFFFFF0
+    --override cpu/misa_Extensions=0x801104
+    --override cpu/marchid=4
+    --override cpu/noinhibit_mask=0xFFFFFFF0
 # Debug options (add to ovpsim section as needed)
 #--trace --tracechange --traceshowicount --tracemode --monitornets
 #--showoverrides

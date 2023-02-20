@@ -1,11 +1,11 @@
 name: pulp_cluster_fpu_zfinx
 description: Sets PULP and CLUSTER instructions and FPU and Zfinx parameters to 1
-compile_flags: 
+compile_flags:
     +define+PULP +define+CLUSTER +define+FPU +define+ZFINX
 ovpsim: >
-    --override root/cpu/misa_Extensions=0x801124
-    --override root/cpu/marchid=4
-    --override root/cpu/noinhibit_mask=0xFFFFFFF0
+    --override cpu/misa_Extensions=0x801124
+    --override cpu/marchid=4
+    --override cpu/noinhibit_mask=0xFFFFFFF0
     --showoverrides
 # Debug options (add to ovpsim section as needed)
 #--trace --tracechange --traceshowicount --tracemode --monitornets
