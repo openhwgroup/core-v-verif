@@ -400,7 +400,7 @@
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/C/src/cbnez-01.S
   
 - test: rv64im-cebreak-01
-  iterations: 1
+  iterations: 0            # Disable: no exception handlers installed, infinite exception loop in Spike
   path_var: TESTS_PATH
   gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-isa-sim/arch_test_target/spike/"
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/C/src/cebreak-01.S
@@ -616,13 +616,13 @@
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/M/src/remw-01.S
 
 - test: rv64im-ebreak
-  iterations: 1
+  iterations: 0        # Disable: no exception handlers installed, infinite exception loop in Spike
   path_var: TESTS_PATH
   gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-isa-sim/arch_test_target/spike/"
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/ebreak.S
   
 - test: rv64im-ecall
-  iterations: 1
+  iterations: 0        # Disable: no exeption handlers installed, infinite exception loop in Spike
   path_var: TESTS_PATH
   gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-isa-sim/arch_test_target/spike/"
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/ecall.S
@@ -682,55 +682,55 @@
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-jal-01.S
   
 - test: rv64im-misalign-ld-01
-  iterations: 1
+  iterations: 0        # Disable: no exception handlers installed, infinite exception loop in Spike
   path_var: TESTS_PATH
   gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-isa-sim/arch_test_target/spike/"
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-ld-01.S
   
 - test: rv64im-misalign-lh-01
-  iterations: 1
+  iterations: 0        # Disable: no exception handlers installed, infinite exception loop in Spike
   path_var: TESTS_PATH
   gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-isa-sim/arch_test_target/spike/"
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-lh-01.S
   
 - test: rv64im-misalign-lhu-01
-  iterations: 1
+  iterations: 0        # Disable: no exception handlers installed, infinite exception loop in Spike
   path_var: TESTS_PATH
   gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-isa-sim/arch_test_target/spike/"
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-lhu-01.S
   
 - test: rv64im-misalign-lw-01
-  iterations: 1
+  iterations: 0        # Disable: no exception handlers installed, infinite exception loop in Spike
   path_var: TESTS_PATH
   gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-isa-sim/arch_test_target/spike/"
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-lw-01.S
   
 - test: rv64im-misalign-lwu-01
-  iterations: 1
+  iterations: 0        # Disable: no exception handlers installed, infinite exception loop in Spike
   path_var: TESTS_PATH
   gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-isa-sim/arch_test_target/spike/"
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-lwu-01.S
   
 - test: rv64im-misalign-sd-01
-  iterations: 1
+  iterations: 0        # Disable: no exception handlers installed, infinite exception loop in Spike
   path_var: TESTS_PATH
   gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-isa-sim/arch_test_target/spike/"
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-sd-01.S
   
 - test: rv64im-misalign-sh-01
-  iterations: 1
+  iterations: 0        # Disable: no exception handlers installed, infinite exception loop in Spike
   path_var: TESTS_PATH
   gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-isa-sim/arch_test_target/spike/"
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-sh-01.S
   
 - test: rv64im-misalign-sw-01
-  iterations: 1
+  iterations: 0        # Disable: no exception handlers installed, infinite exception loop in Spike
   path_var: TESTS_PATH
   gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-isa-sim/arch_test_target/spike/"
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-sw-01.S
 
 - test: rv64im-Fencei
-  iterations: 1
+  iterations: 0        # Disable: no exception handlers installed, infinite exception loop in Spike
   path_var: TESTS_PATH
   gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-isa-sim/arch_test_target/spike/"
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/Zifencei/src/Fencei.S
