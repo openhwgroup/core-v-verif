@@ -1152,7 +1152,7 @@ module uvmt_cv32e40s_tb;
                                                                     .csr_tdata1(rvfi_csr_tdata1_if_0_i),
                                                                     .cov_assert_if(debug_cov_assert_if));
 
-    bind cv32e40s_wrapper uvmt_cv32e40s_debug_trigger_assert u_debug_trigger_assert(
+    bind cv32e40s_wrapper uvmt_cv32e40s_debug_trigger_assert debug_trigger_assert_i(
                                                                     .dm_halt_addr_i (core_i.dm_halt_addr_i),
 
                                                                     .support_debug_mode_q (core_i.controller_i.controller_fsm_i.debug_mode_q),
@@ -1167,20 +1167,21 @@ module uvmt_cv32e40s_tb;
                                                                     .support_pc_ex (core_i.id_ex_pipe.pc),
                                                                     .support_pc_wb (core_i.ex_wb_pipe.pc),
 
-                                                                    .rvfi_if (rvfi_instr_if_0_i), //TODO: sjekk om u_ prefix matcher coding guidelines
+                                                                    .rvfi_if (rvfi_instr_if_0_i), //TODO: sjekk om u_ prefix eller _i postfix matcher coding guidelines
                                                                     //.clknrst_if (clknrst_if),
+
                                                                     .reset_n (clknrst_if.reset_n),
                                                                     .clk (clknrst_if.clk),
-                                                                    .rvfi_dcsr_if(rvfi_csr_dcsr_if_0_i),
-                                                                    .rvfi_dpc_if(rvfi_csr_dpc_if_0_i),
-                                                                    //.csr_mepc(rvfi_csr_mepc_if_0_i),
-                                                                    //.csr_mstatus(rvfi_csr_mstatus_if_0_i),
-                                                                    //.csr_mtvec(rvfi_csr_mtvec_if_0_i),
-                                                                    .rvfi_tdata1_if(rvfi_csr_tdata1_if_0_i),
-                                                                    .rvfi_tdata2_if(rvfi_csr_tdata2_if_0_i),
-                                                                    .rvfi_tinfo_if(rvfi_csr_tinfo_if_0_i),
-                                                                    .rvfi_tselect_if(rvfi_csr_tselect_if_0_i));
-                                                                    //.cov_assert_if(debug_cov_assert_if));
+
+                                                                    .dcsr (rvfi_csr_dcsr_if_0_i),
+                                                                    .dpc (rvfi_csr_dpc_if_0_i),
+                                                                    .tdata1 (rvfi_csr_tdata1_if_0_i),
+                                                                    .tdata2 (rvfi_csr_tdata2_if_0_i),
+                                                                    .tdata3 (rvfi_csr_tdata3_if_0_i),
+                                                                    .tinfo (rvfi_csr_tinfo_if_0_i),
+                                                                    .tselect (rvfi_csr_tselect_if_0_i),
+                                                                    .tcontrol (rvfi_csr_tcontrol_if_0_i)
+                                                                    );
 
 
 
