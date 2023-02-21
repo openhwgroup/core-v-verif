@@ -478,30 +478,46 @@ module uvmt_cv32e40s_tb;
   if (CORE_PARAM_SMCLIC == 0) begin: gen_interrupt_assert
     bind cv32e40s_core
       uvmt_cv32e40s_interrupt_assert  interrupt_assert_i (
+        .dcsr_step    (cs_registers_i.dcsr_q.step),
         .mcause_n     ({cs_registers_i.mcause_n.irq, cs_registers_i.mcause_n.exception_code[4:0]}),
-        .mip          (cs_registers_i.mip_rdata),
         .mie_q        (cs_registers_i.mie_q),
+        .mip          (cs_registers_i.mip_rdata),
         .mstatus_mie  (cs_registers_i.mstatus_q.mie),
         .mstatus_tw   (cs_registers_i.mstatus_q.tw),
         .mtvec_mode_q (cs_registers_i.mtvec_q.mode),
 
+        .if_stage_instr_rdata_i  (if_stage_i.m_c_obi_instr_if.resp_payload.rdata),
         .if_stage_instr_req_o    (if_stage_i.m_c_obi_instr_if.s_req.req),
         .if_stage_instr_rvalid_i (if_stage_i.m_c_obi_instr_if.s_rvalid.rvalid),
-        .if_stage_instr_rdata_i  (if_stage_i.m_c_obi_instr_if.resp_payload.rdata),
         .alignbuf_outstanding    (if_stage_i.prefetch_unit_i.alignment_buffer_i.outstanding_cnt_q),
 
         .ex_stage_instr_valid (ex_stage_i.id_ex_pipe_i.instr_valid),
 
-        .wb_stage_instr_valid_i    (wb_stage_i.ex_wb_pipe_i.instr_valid),
-        .wb_stage_instr_rdata_i    (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
+        .wb_kill                   (ctrl_fsm.kill_wb),
         .wb_stage_instr_err_i      (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.err),
         .wb_stage_instr_mpu_status (wb_stage_i.ex_wb_pipe_i.instr.mpu_status),
+        .wb_stage_instr_rdata_i    (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
+        .wb_stage_instr_valid_i    (wb_stage_i.ex_wb_pipe_i.instr_valid),
+        .wb_valid                  (wb_stage_i.wb_valid),
 
         .branch_taken_ex (controller_i.controller_fsm_i.branch_taken_ex),
         .debug_mode_q    (controller_i.controller_fsm_i.debug_mode_q),
+        .pending_nmi     (controller_i.controller_fsm_i.pending_nmi),
 
         .irq_ack_o (core_i.irq_ack),
         .irq_id_o  (core_i.irq_id),
+
+        .mpu_iside_gnt    (if_stage_i.mpu_i.core_trans_ready_o),
+        .mpu_iside_req    (if_stage_i.mpu_i.core_trans_valid_i),
+        .mpu_iside_rvalid (if_stage_i.mpu_i.core_resp_valid_o),
+        .obi_dside_gnt    (data_gnt_i),
+        .obi_dside_req    (data_req_o),
+        .obi_dside_rvalid (data_rvalid_i),
+        .obi_iside_rvalid (instr_rvalid_i),
+
+        .writebufstate (load_store_unit_i.write_buffer_i.state),
+
+        .rvfi (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
 
         .*
       );
