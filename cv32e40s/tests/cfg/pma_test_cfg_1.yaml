@@ -176,4 +176,4 @@ ovpsim: >
    --override cpu/mask_pmpcfg14=0x00000000
    --override cpu/mask_pmpcfg15=0x00000000
    #--trace --tracechange --traceshowicount --monitornetschange
-cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zicsr_zca_zifencei
+cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zicsr_zca_zcb_zcmp_zifencei

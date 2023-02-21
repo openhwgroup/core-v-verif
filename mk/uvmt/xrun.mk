@@ -37,25 +37,30 @@ SIMVISION         = $(CV_TOOL_PREFIX) simvision
 INDAGO            = $(CV_TOOL_PREFIX) indago
 IMC               = $(CV_SIM_PREFIX) imc
 
-XRUN_UVMHOME_ARG     ?= CDNS-1.2-ML
+XRUN_UVMHOME_ARG ?= CDNS-1.2-ML
 
 # Flags
-XRUN_COMP_FLAGS  ?= -64bit \
-					-disable_sem2009 \
-					-access +rwc \
-                    -nowarn UEXPSC \
-					-lwdgen \
-                    -sv \
-					-uvm \
-					-uvmhome $(XRUN_UVMHOME_ARG) \
-                    $(TIMESCALE) \
-					$(SV_CMP_FLAGS)
+XRUN_COMP_FLAGS  ?=               \
+    -64bit                        \
+    -disable_sem2009              \
+    -access +rwc                  \
+    -nowarn UEXPSC                \
+    -lwdgen                       \
+    -sv                           \
+    -uvm                          \
+    -uvmhome $(XRUN_UVMHOME_ARG)  \
+    $(TIMESCALE)                  \
+    $(SV_CMP_FLAGS)
 
-XRUN_LDGEN_COMP_FLAGS ?= -64bit -disable_sem2009 -access +rwc \
-												 -nowarn UEXPSC \
-												 -nowarn DLCPTH \
-												 -sv \
-												 $(TIMESCALE) $(SV_CMP_FLAGS)
+XRUN_LDGEN_COMP_FLAGS ?=  \
+    -64bit                \
+    -disable_sem2009      \
+    -access +rwc          \
+    -nowarn UEXPSC        \
+    -nowarn DLCPTH        \
+    -sv                   \
+    $(TIMESCALE)          \
+    $(SV_CMP_FLAGS)
 
 XRUN_RUN_BASE_FLAGS ?= -64bit $(XRUN_GUI) -licqueue +UVM_VERBOSITY=$(XRUN_UVM_VERBOSITY) \
                        $(XRUN_PLUSARGS) -svseed $(RNDSEED)
@@ -244,6 +249,9 @@ XRUN_COMP_FLAGS += -nowarn CGPIDF
 # deselect_coverage -all warnings
 XRUN_COMP_FLAGS += -nowarn CGNSWA
 
+# Value Parameters without default values
+XRUN_COMP_FLAGS += -setenv CADENCE_ENABLE_AVSREQ_44905_PHASE_1=1
+
 # deselect_coverage -all warnings
 XRUN_COMP_COREV_DV_FLAGS += -nowarn BNDWRN
 XRUN_COMP_COREV_DV_FLAGS += $(CFG_COMPILE_FLAGS)
@@ -259,6 +267,7 @@ XRUN_RUN_COV    += -nowarn WCROSS
 
 # Un-named covergroup instances
 XRUN_RUN_COV    += -nowarn CGDEFN
+
 
 ###############################################################################
 # Targets
@@ -349,7 +358,7 @@ gen_ovpsim_ic:
 	fi
 	# add glossing of registers
 	@echo "--override cpu/wfi_is_nop=T" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-	#@echo "--trace --tracechange --traceshowicount --monitornetschange --tracemode --tracemem XSA" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+	#@echo "--showoverrides --trace --tracechange --traceshowicount --monitornetschange --tracemode --tracemem XSA" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
 	#@echo "--extlib refRoot/cpu/cat=imperas.com/intercept/cpuContextAwareTracer/1.0"  >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
 	#@echo "--override refRoot/cpu/cat/show_changes=T" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
 	#@echo "--override refRoot/cpu/cat/definitions_file=${IMPERAS_HOME}/lib/$(IMPERAS_ARCH)/ImperasLib/riscv.ovpworld.org/processor/riscv/1.0/csr_context_info.lis" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic

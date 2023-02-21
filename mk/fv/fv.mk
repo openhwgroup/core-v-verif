@@ -19,7 +19,8 @@
 # limitations under the License.
 
 
-default_target:  fv
+default_target:
+	@echo error: specify a make target
 
 
 export CV_CORE_PKG  ?= $(CORE_V_VERIF)/core-v-cores/$(CV_CORE)

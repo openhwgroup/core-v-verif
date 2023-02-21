@@ -100,4 +100,4 @@ myret:
 
 .section .rodata
 umode_msg:
-  .string "\n\t Switching to U mode \n"
+  .string "\tU-mode\n"

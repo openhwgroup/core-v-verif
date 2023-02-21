@@ -170,5 +170,5 @@ ovpsim: >
 #    --showoverrides
 #    --trace --tracechange --traceshowicount --monitornets
 cflags: >
-cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zicsr_zca_zifencei
+cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zicsr_zca_zcb_zcmp_zifencei
 

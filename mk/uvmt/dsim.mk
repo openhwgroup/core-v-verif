@@ -168,30 +168,30 @@ export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic
 #	@rm -f $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
 #	@mkdir -p $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX);
 #	@touch -f $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/misa_Extensions=0x001106    "  > $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/tcontrol_undefined=0        " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/bitmanip_version=1.0.0      " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/Zba=1                       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/Zbb=1                       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/Zbc=1                       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/Zbe=0                       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/Zbf=0                       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/Zbm=0                       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/Zbp=0                       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/Zbr=0                       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/Zbs=1                       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/Zbt=0                       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/priv_version=master         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/endianFixed=1               " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/mhartid=0                   " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/mimpid=0                    " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/startaddress=0x00000080     " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/mtvec=0x00000001            " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/nmi_address=0x00100000      " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/debug_address=0x1a110800    " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/dexc_address=0x1a111000     " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/noinhibit_mask=0xfffffff0   " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-#	@echo "--override cpu/extension/PMA_NUM_REGIONS=0 " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/misa_Extensions=0x001106      "  > $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/tcontrol_undefined=0          " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/bitmanip_version=1.0.0        " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zba=1                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbb=1                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbc=1                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbe=0                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbf=0                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbm=0                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbp=0                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbr=0                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbs=1                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbt=0                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/priv_version=master           " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/endianFixed=1                 " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/mhartid=0                     " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/mimpid=0                      " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/startaddress=0x00000080       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/mtvec=0x00000001              " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/nmi_address=0x00100000        " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/debug_address=0x1a110800      " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/dexc_address=0x1a111000       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/noinhibit_mask=0xfffffff0     " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/extension_*/PMA_NUM_REGIONS=0 " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
 #	
 #	# required for basic arithmetic test
 #	#@echo "--override cpu/mtvec_mask=0xffffff01       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic

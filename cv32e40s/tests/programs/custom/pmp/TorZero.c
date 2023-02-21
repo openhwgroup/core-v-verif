@@ -32,7 +32,8 @@ void tor_zero()
   // int value = 4; // used to add to value for disdinguishing from 0
   uint32_t mcause = 1111;
   uint32_t mepc = 0;
-  printf("\n\t testing TorZero\n");
+
+  printf("\n\t--------\n\tTorZero test\n");
   // array split_addr is splitted into region0 and region1 at split_addr[30]
   uint32_t out_region0_addr = (uint32_t)(split_addr + 31);
 
@@ -45,15 +46,14 @@ void tor_zero()
   // Try exec outside of region0  (should NOT trap)
   // alternative: split_addr[31] = 0x ? ? ? ? ? ? ? ? ;
   umode_jmp(&split_addr[31]);
-  printf("\n\t back in M mode ");
+  printf("\tback in M mode\n");
   asm volatile("csrrw %0, mcause, x0"
                : "=r"(mcause));
   asm volatile("csrrw %0, mepc, x0"
                : "=r"(mepc));
   if ((mcause == 1) && (mepc != (uint32_t)&split_addr[31]))
   {
-    printf("\n\t outside region0 access permission test pass ");
-    printf("\n\t ----------------------- \n");
+    printf("\toutside region0 access permission test pass\n");
   }
   else
   {
@@ -64,19 +64,17 @@ void tor_zero()
   umode();
   asm volatile("nop");
 
-  printf("\n\t back in M mode ");
+  printf("\tback in M mode\n");
   asm volatile("csrrw %0, mcause, x0"
                : "=r"(mcause));
   if (mcause == 1)
   {
-    printf("\n\t inside region0 access permission test pass ");
-    printf("\n\t ----------------------- \n");
+    printf("\tinside region0 access permission test pass\n");
   }
   else
   {
     exit(EXIT_FAILURE);
   }
-  printf("\n\t ------------------------------------------------- \n");
 
   // TODO: try different pmpaddr0 sizes
 }

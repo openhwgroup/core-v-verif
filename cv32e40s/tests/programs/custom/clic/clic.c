@@ -309,30 +309,27 @@ uint32_t max(uint32_t a, uint32_t b) {
 // -----------------------------------------------------------------------------
 
 int get_result(uint32_t res, uint32_t (*ptr[])(uint32_t, uint8_t)){
-  if (res == 1) {
-    cvprintf(V_LOW, "=========================\n");
-    cvprintf(V_LOW, "=        SUMMARY        =\n");
-    cvprintf(V_LOW, "=========================\n");
-    for (int i = 0; i < NUM_TESTS; i++){
-      if ((res >> (i+1)) & 0x1) {
-        cvprintf (V_LOW, "Test %0d FAIL: ", i);
-        (void)ptr[i](i, 1);
-        cvprintf (V_LOW, "\n");
-      } else {
-        cvprintf (V_LOW, "Test %0d PASS: ", i);
-        (void)ptr[i](i, 1);
-        cvprintf (V_LOW, "\n");
-      }
-    }
-    if (res == 1) {
-      cvprintf(V_LOW, "\n\tALL SELF CHECKS PASS!\n\n");
-      return 0;
+  cvprintf(V_LOW, "=========================\n");
+  cvprintf(V_LOW, "=        SUMMARY        =\n");
+  cvprintf(V_LOW, "=========================\n");
+  for (int i = 0; i < NUM_TESTS; i++){
+    if ((res >> (i+1)) & 0x1) {
+      cvprintf (V_LOW, "Test %0d FAIL: ", i);
+      (void)ptr[i](i, 1);
+      cvprintf (V_LOW, "\n");
     } else {
-      cvprintf(V_LOW, "\n\tSELF CHECK FAILURES OCCURRED!\n\n");
-      return res;
+      cvprintf (V_LOW, "Test %0d PASS: ", i);
+      (void)ptr[i](i, 1);
+      cvprintf (V_LOW, "\n");
     }
   }
-  return res;
+  if (res == 1) {
+    cvprintf(V_LOW, "\n\tALL SELF CHECKS PASS!\n\n");
+    return 0;
+  } else {
+    cvprintf(V_LOW, "\n\tSELF CHECK FAILURES OCCURRED!\n\n");
+    return res;
+  }
 }
 
 // -----------------------------------------------------------------------------
