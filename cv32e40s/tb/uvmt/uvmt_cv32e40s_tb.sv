@@ -498,6 +498,7 @@ module uvmt_cv32e40s_tb;
         .wb_stage_instr_mpu_status (wb_stage_i.ex_wb_pipe_i.instr.mpu_status),
         .wb_stage_instr_rdata_i    (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
         .wb_stage_instr_valid_i    (wb_stage_i.ex_wb_pipe_i.instr_valid),
+        .wb_trigger                (controller_i.controller_fsm_i.trigger_match_in_wb),
         .wb_valid                  (wb_stage_i.wb_valid),
 
         .branch_taken_ex (controller_i.controller_fsm_i.branch_taken_ex),

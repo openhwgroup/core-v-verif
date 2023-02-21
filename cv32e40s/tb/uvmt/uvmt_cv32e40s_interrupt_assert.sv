@@ -55,11 +55,12 @@ module uvmt_cv32e40s_interrupt_assert
     input        ex_stage_instr_valid, // EX pipeline stage has valid input
 
     // WB stage (determines executed instructions)
+    input              wb_stage_instr_err_i,      // OBI "err"
     input              wb_stage_instr_valid_i,    // instruction word is valid
     input [31:0]       wb_stage_instr_rdata_i,    // Instruction word data
-    input              wb_stage_instr_err_i,      // OBI "err"
     input mpu_status_e wb_stage_instr_mpu_status, // MPU read/write errors
     input              wb_kill,
+    input              wb_trigger,
     input              wb_valid,
 
     // Load-store unit status
@@ -505,6 +506,7 @@ module uvmt_cv32e40s_interrupt_assert
     (|pending_enabled_irq)  ||
     debug_req_i             ||
     pending_nmi             ||
+    wb_trigger              ||
     (wu_wfe_i && is_wfe)
   );
 
@@ -613,10 +615,9 @@ module uvmt_cv32e40s_interrupt_assert
     |=>
     is_wfi_wfe_in_wb
     or
-    $past(debug_req_stickied && !debug_req_i) // TODO:silabs-robin  Halt req should be unsticky in future RTL
+    $past(debug_req_stickied && !debug_req_i)
     or
-    ((rvfi.rvfi_valid [->1]) ##0 (rvfi.rvfi_dbg == DBG_CAUSE_TRIGGER))
-    // TODO:silabs-robin  Haven't checked which cycles kill is allowed
+    ((rvfi.rvfi_valid [->1]) ##0 (rvfi.rvfi_trap.debug_cause == DBG_CAUSE_TRIGGER))
   ) else `uvm_error(info_tag, "blocked wfi/wfe must remain in wb unless special conditions");
 
 
@@ -654,8 +655,9 @@ module uvmt_cv32e40s_interrupt_assert
     $rose(is_wfi_wfe_in_wb_d1)  &&
     is_wfi_wfe_in_wb
     |->
-    //(wb_valid == ( is_wfi_wfe_wake || $past(debug_req_stickied) ))  // TODO:silabs-robin  See if can remove stickied
     (wb_valid == is_wfi_wfe_wake)
+    or
+    ((rvfi.rvfi_valid [->1]) ##0 (rvfi.rvfi_trap.debug_cause == DBG_CAUSE_TRIGGER))
   ) else `uvm_error(info_tag, "2nd cycle can retire on 'premature' 'wakeup'");
 
   a_wfi_assert_sleepmode_retire2: assert property (
@@ -664,7 +666,7 @@ module uvmt_cv32e40s_interrupt_assert
     is_wfi_wfe_in_wb
     |->
     (wb_valid == is_wfi_wfe_wake)
-    // TODO:silabs-robin  Not checked is that non-killed early "resumes" work as expected
+    //TODO:INFO silabs-robin  Not checked, non-killed early "resumes"
   ) else `uvm_error(info_tag, ">2nd cycle retire only on wake");
 
 
