@@ -443,42 +443,42 @@ test54:
 test55:
     li x17, 0xe9ee2e5f
     li x18, 0xad8637dc
-    .word(0xd12889d7)    #cv.pack x19, x17, x18
+    cv.pack x19, x17, x18
     li x20, 0x2e5f37dc
     beq x20, x19, test56
     c.addi x15, 0x1
 test56:
     li x17, 0xafcc2cde
     li x18, 0x7851d370
-    .word(0xd12889d7)    #cv.pack x19, x17, x18
+    cv.pack x19, x17, x18
     li x20, 0x2cded370
     beq x20, x19, test57
     c.addi x15, 0x1
 test57:
     li x17, 0xd7686bd6
     li x18, 0x06b0edf1
-    .word(0xd12889d7)    #cv.pack x19, x17, x18
+    cv.pack x19, x17, x18
     li x20, 0x6bd6edf1
     beq x20, x19, test58
     c.addi x15, 0x1
 test58:
     li x17, 0x5d71c849
     li x18, 0x0bad7dbc
-    .word(0xd12889d7)    #cv.pack x19, x17, x18
+    cv.pack x19, x17, x18
     li x20, 0xc8497dbc
     beq x20, x19, test59
     c.addi x15, 0x1
 test59:
     li x17, 0xc997af18
     li x18, 0x7a5eb90a
-    .word(0xd12889d7)    #cv.pack x19, x17, x18
+    cv.pack x19, x17, x18
     li x20, 0xaf18b90a
     beq x20, x19, test60
     c.addi x15, 0x1
 test60:
     li x17, 0x80689e7c
     li x18, 0x795874bc
-    .word(0xd12889d7)    #cv.pack x19, x17, x18
+    cv.pack x19, x17, x18
     li x20, 0x9e7c74bc
     beq x20, x19, test61
     c.addi x15, 0x1
@@ -487,42 +487,42 @@ test60:
 test61:
     li x17, 0xffc16020
     li x18, 0x35374e9a
-    .word(0xd32889d7)    #cv.pack.h x19, x17, x18
+    cv.pack.h x19, x17, x18
     li x20, 0xffc13537
     beq x20, x19, test62
     c.addi x15, 0x1
 test62:
     li x17, 0x932ecc38
     li x18, 0x1ae6c08b
-    .word(0xd32889d7)    #cv.pack.h x19, x17, x18
+    cv.pack.h x19, x17, x18
     li x20, 0x932e1ae6
     beq x20, x19, test63
     c.addi x15, 0x1
 test63:
     li x17, 0x14c1d05f
     li x18, 0x59a6e2e8
-    .word(0xd32889d7)    #cv.pack.h x19, x17, x18
+    cv.pack.h x19, x17, x18
     li x20, 0x14c159a6
     beq x20, x19, test64
     c.addi x15, 0x1
 test64:
     li x17, 0xceed5661
     li x18, 0xb66ae4c4
-    .word(0xd32889d7)    #cv.pack.h x19, x17, x18
+    cv.pack.h x19, x17, x18
     li x20, 0xceedb66a
     beq x20, x19, test65
     c.addi x15, 0x1
 test65:
     li x17, 0x8ddc12c1
     li x18, 0x7b15b740
-    .word(0xd32889d7)    #cv.pack.h x19, x17, x18
+    cv.pack.h x19, x17, x18
     li x20, 0x8ddc7b15
     beq x20, x19, test66
     c.addi x15, 0x1
 test66:
     li x17, 0x61c756e4
     li x18, 0x74e224e9
-    .word(0xd32889d7)    #cv.pack.h x19, x17, x18
+    cv.pack.h x19, x17, x18
     li x20, 0x61c774e2
     beq x20, x19, test67
     c.addi x15, 0x1

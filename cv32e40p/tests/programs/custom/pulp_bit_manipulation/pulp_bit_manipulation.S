@@ -718,38 +718,44 @@ test90:
 #assuming a FFT with input rs1 on 2^ls2 points in radix 2^ls3 where ls3 is 1, 2, or 3.
 test91:
     li x20, 0x32f0edf4
-    cv.bitrev x18, x20, 4, 2
+    cv.bitrev x18, x20, 2, 4
     li x19, 0x02edf199
     beq x18, x19, test92
     c.addi x15, 0x1
 test92:
     li x20, 0x44f4c26f
-    cv.bitrev x18, x20, 6, 1
+    cv.bitrev x18, x20, 1, 6
     li x19, 0x03e60c7c
     beq x18, x19, test93
     c.addi x15, 0x1
 test93:
     li x20, 0x7e6b77d4
-    cv.bitrev x18, x20, 7, 0
+    cv.bitrev x18, x20, 0, 7
     li x19, 0x0057ddac
     beq x18, x19, test94
     c.addi x15, 0x1
 test94:
     li x20, 0x44261e8e
-    cv.bitrev x18, x20, 3, 2
+    cv.bitrev x18, x20, 2, 3
     li x19, 0x23998681
     beq x18, x19, test95
     c.addi x15, 0x1
 test95:
     li x20, 0x015b4f09
-    cv.bitrev x18, x20, 0, 1
+    cv.bitrev x18, x20, 1, 0
     li x19, 0x60f1e540
     beq x18, x19, test96
     c.addi x15, 0x1
 test96:
     li x20, 0xf5f7164d
-    cv.bitrev x18, x20, 2, 0
+    cv.bitrev x18, x20, 0, 2
     li x19, 0x2c9a3beb
+    beq x18, x19, test97
+    c.addi x15, 0x1
+test97:
+    li x20, 0x7e6b77d4
+    cv.bitrev x18, x20, 3, 7
+    li x19, 0x0057ddac
     beq x18, x19, exit_check
     c.addi x15, 0x1
 exit_check:
