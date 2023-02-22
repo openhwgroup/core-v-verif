@@ -190,33 +190,48 @@ assign tcontrol_w = (tcontrol.rvfi_csr_wdata & tcontrol.rvfi_csr_wmask);
     end
   end
 
+  logic [159:0] test_sig1;
+  logic [159:0] test_sig2;
+  logic [159:0] test_sig3;
+  assign test_sig1 = (~(160'h0000_0000_0000_0000_0000_0000_0000_0000_FFFF_FFFF << 1*32) & tdata1_arry);
+  assign test_sig2 = ~(160'h0000_0000_0000_0000_0000_0000_0000_0000_FFFF_FFFF << 1*32);
+  assign test_sig3 = (160'hF800_0000_F800_0000_F800_0000_F800_0000_0000_0000);
 
-  sequence seq_trigger_hit_or_missmatch_execute(trigger_type, operation, mode_req, mode, match_type, match);
-
-    //Execute instruction that enter debug mode:
-    //TODO: ta hensyn til at man kan ha flere aksesseringer
+  // This sequence set settings and make sure we are looking at valid rvfi cycle and is not in debug mode
+  sequence seq_trigger_execute_settings(csr_trigger_type, csr_instruction_execution, csr_mode_req, csr_match_type, core_mode, core_match);
     rvfi_if.rvfi_valid
     && !rvfi_if.rvfi_dbg_mode
 
-    && (trigger_type == 4'h2 || trigger_type == 4'h6)
+    && csr_trigger_type
 
-    //trigger x:
-    //type
-    //&& tdata1_r[x]_m26_execute
-    && operation
+    && csr_instruction_execution
+    && csr_mode_req
+    && csr_match_type
 
-    //mode
-    //&& tdata1_m26_mode_m_en
-    //&& rvfi_if.rvfi_mode == MODE_M
-    && mode_req
-    && mode
+    && core_mode
+    && core_match;
+  endsequence
 
-    //match
-    && match_type
-    && match
-    //&& ((tdata1_m26_match == 4'h3 && rvfi_if.rvfi_pc_rdata < tdata2_r))
+  // This sequence excludes all ways to enter debug mode except from through instruction execution triggering from trigger number <i>
+  sequence seq_trigger_execute_no_hit(i);
 
-    ##1 rvfi_if.rvfi_valid[->1];
+    // Make sure there is no load/store trigger matches by excluding load/store instructions
+    !rvfi_if.rvfi_mem_rmask
+    && !rvfi_if.rvfi_mem_wmask
+
+    //TODO: omgjøre denne slik at man sjekker at PC != tdata2[0], [1], [2] of [3]
+    // Make sure there can not be a trigger match due to other triggers than trigger number <i>, by disable them
+    && ((((~(160'h0000_0000_0000_0000_0000_0000_0000_0000_FFFF_FFFF << i*32)) & tdata1_arry) == 160'hF800_0000_F800_0000_F800_0000_F800_0000_0000_0000)
+    || (((~(160'h0000_0000_0000_0000_0000_0000_0000_0000_FFFF_FFFF << i*32)) & tdata1_arry) == 160'hF800_0000_F800_0000_F800_0000_0000_0000_F800_0000)
+    || (((~(160'h0000_0000_0000_0000_0000_0000_0000_0000_FFFF_FFFF << i*32)) & tdata1_arry) == 160'hF800_0000_F800_0000_0000_0000_F800_0000_F800_0000)
+    || (((~(160'h0000_0000_0000_0000_0000_0000_0000_0000_FFFF_FFFF << i*32)) & tdata1_arry) == 160'hF800_0000_0000_0000_F800_0000_F800_0000_F800_0000))
+
+    ##1 rvfi_if.rvfi_valid[->1]
+
+    // Make sure we do not enter debug mode due to other reasons than trigger matching
+    ##0 rvfi_if.rvfi_dbg != 3'h1
+    && rvfi_if.rvfi_dbg != 3'h3
+    && rvfi_if.rvfi_dbg != 3'h4;
   endsequence
 
   sequence seq_trigger_hit_or_missmatch_load(trigger_type, operation, mode_req, mode, match_type, match, byte_fetch); //Tar ikke hensyn til push og pop
@@ -291,149 +306,524 @@ assign tcontrol_w = (tcontrol.rvfi_csr_wdata & tcontrol.rvfi_csr_wmask);
       //action: equal
       //mode: machine
       a_dt_hit_execute_eq_m: assert property(
-        seq_trigger_hit_or_missmatch_execute(
-          tdata1_arry[i][31:28], //trigger_type
-          tdata1_arry[i][2], //operation
-          tdata1_arry[i][6], //mode_req
-          rvfi_if.rvfi_mode == MODE_M, //mode
-          tdata1_arry[i][10:7] == 4'h0, //match_type
-          rvfi_if.rvfi_pc_rdata == tdata2_arry[i]) //match
+        seq_trigger_execute_settings(
+
+          //tdata csr settings:
+
+          //trigger type is set to 2 or 6
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+
+          //instruction execution triggering is enables
+          tdata1_arry[i][2],
+
+          //triggering in machine mode is enabled
+          tdata1_arry[i][6],
+
+          //There is only a trigger match if address is tdata2
+          tdata1_arry[i][10:7] == 4'h0,
+
+
+          //core conditions:
+
+          //the core is in machine mode
+          rvfi_if.rvfi_mode == MODE_M,
+
+          //Make sure there is a match as the address equals tdata2
+          rvfi_if.rvfi_pc_rdata == tdata2_arry[i])
+
+        //Check out the next valid instruction
+        ##1 rvfi_if.rvfi_valid[->1]
+
         |->
+        //Verify that next instruction is executed from the debug handler
         rvfi_if.rvfi_dbg_mode
       );
 
-      //dont go into debug mode:
-      a_dt_hit_execute_eq_m_not_operation: assert property(
-        seq_trigger_hit_or_missmatch_execute(
-          tdata1_arry[i][31:28], //trigger_type
-          !tdata1_arry[i][2], //operation - NOT
-          tdata1_arry[i][6], //mode_req
-          rvfi_if.rvfi_mode == MODE_M, //mode
-          tdata1_arry[i][10:7] == 4'h0, //match_type
-          rvfi_if.rvfi_pc_rdata == tdata2_arry[i]) //match
+      //The following assertions verifyes that debug mode is not entered when not supposed to:
+      //The assertions equals the above assertion, except that we have disabled one csr setting and the qualifying core conditions, one at a time
+      //we mark the setting that is disabled by marking it with a "//DISABLED" comment
+      //In addition we have added an extra sequence that make sure we do not enter debug due to other reasons (see sequence decleration for details)
+      //Note that the extra sequence looks for the next valid instruction
+
+      a_dt_hit_execute_eq_m_not_csr_trigger_execution: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          !tdata1_arry[i][2], //DISABLED
+          tdata1_arry[i][6],
+          tdata1_arry[i][10:7] == 4'h0,
+          rvfi_if.rvfi_mode == MODE_M,
+          rvfi_if.rvfi_pc_rdata == tdata2_arry[i])
+
+        ##0 seq_trigger_execute_no_hit(i)
+
         |->
-        rvfi_if.rvfi_dbg_mode
+        !rvfi_if.rvfi_dbg_mode
       );
-      a_dt_hit_execute_eq_m_not_mode_req: assert property(
-        seq_trigger_hit_or_missmatch_execute(
-          tdata1_arry[i][31:28], //trigger_type
-          tdata1_arry[i][2], //operation
-          !tdata1_arry[i][6], //mode_req - NOT
-          rvfi_if.rvfi_mode == MODE_M, //mode
-          tdata1_arry[i][10:7] == 4'h0, //match_type
-          rvfi_if.rvfi_pc_rdata == tdata2_arry[i]) //match
+
+      a_dt_hit_execute_eq_m_not_csr_mode_req: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          !tdata1_arry[i][6], //DISABLED
+          tdata1_arry[i][10:7] == 4'h0,
+          rvfi_if.rvfi_mode == MODE_M,
+          rvfi_if.rvfi_pc_rdata == tdata2_arry[i])
+
+        ##0 seq_trigger_execute_no_hit(i)
+
         |->
-        rvfi_if.rvfi_dbg_mode
+        !rvfi_if.rvfi_dbg_mode
       );
-      a_dt_hit_execute_eq_m_not_mode: assert property(
-        seq_trigger_hit_or_missmatch_execute(
-          tdata1_arry[i][31:28], //trigger_type
-          tdata1_arry[i][2], //operation
-          tdata1_arry[i][6], //mode_req
-          !(rvfi_if.rvfi_mode == MODE_M), //mode - NOT
-          tdata1_arry[i][10:7] == 4'h0, //match_type
-          rvfi_if.rvfi_pc_rdata == tdata2_arry[i]) //match
+
+      a_dt_hit_execute_eq_m_not_csr_match_type: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][6],
+          rvfi_if.rvfi_mode == MODE_M, //FEIL TODO
+          !((tdata1_arry[i][10:7] == 4'h0) || tdata1_arry[i][10:7] == 4'h2), //DISABLED
+          rvfi_if.rvfi_pc_rdata == tdata2_arry[i])
+
+          ##0 seq_trigger_execute_no_hit(i)
+
         |->
-        rvfi_if.rvfi_dbg_mode
+        !rvfi_if.rvfi_dbg_mode
       );
-      a_dt_hit_execute_eq_m_not_match_type: assert property(
-        seq_trigger_hit_or_missmatch_execute(
-          tdata1_arry[i][31:28], //trigger_type
-          tdata1_arry[i][2], //operation
-          tdata1_arry[i][6], //mode_req
-          !rvfi_if.rvfi_mode == MODE_M, //mode
-          //!((tdata1_arry[i][10:7] == 4'h0) || tdata1_arry[i][10:7] == 4'h2), //match_type - NOT
-          !(tdata1_arry[i][10:7] == 4'h3),
-          rvfi_if.rvfi_pc_rdata == tdata2_arry[i]) //match
+
+      a_dt_hit_execute_eq_m_not_core_match: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][6],
+          tdata1_arry[i][10:7] == 4'h0,
+          rvfi_if.rvfi_mode == MODE_M,
+          !(rvfi_if.rvfi_pc_rdata == tdata2_arry[i])) //DISABLED
+
+          ##0 seq_trigger_execute_no_hit(i)
+
         |->
-        rvfi_if.rvfi_dbg_mode
-      );
-      a_dt_hit_execute_eq_m_not_match: assert property(
-        seq_trigger_hit_or_missmatch_execute(
-          tdata1_arry[i][31:28], //trigger_type
-          tdata1_arry[i][2], //operation
-          tdata1_arry[i][6], //mode_req
-          rvfi_if.rvfi_mode == MODE_M, //mode
-          tdata1_arry[i][10:7] == 4'h0, //match_type
-          !(rvfi_if.rvfi_pc_rdata == tdata2_arry[i])) //match - NOT
-        |->
-        rvfi_if.rvfi_dbg_mode
+        !rvfi_if.rvfi_dbg_mode
       );
 
 
       //operation: execute
       //action: equal
       //mode: user
+
+      //The following checks do the same checks as above, but in user mode
+
       a_dt_hit_execute_eq_u: assert property(
-        seq_trigger_hit_or_missmatch_execute(
-          tdata1_arry[i][31:28], //trigger_type - constant
-          tdata1_arry[i][2], //operation - constant
-          tdata1_arry[i][3], //mode_req
-          rvfi_if.rvfi_mode == MODE_U, //mode
-          tdata1_arry[i][10:7] == 4'h0, //match_type
-          rvfi_if.rvfi_pc_rdata == tdata2_arry[i]) //match
+        seq_trigger_execute_settings(
+
+          //tdata csr settings:
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][3], //triggering in user mode is enabled (instead of machine mode)
+          tdata1_arry[i][10:7] == 4'h0,
+
+          //core conditions:
+          rvfi_if.rvfi_mode == MODE_U, //the core is in user mode (instead of machine mode)
+          rvfi_if.rvfi_pc_rdata == tdata2_arry[i])
+
+        ##1 rvfi_if.rvfi_valid[->1]
         |->
         rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_eq_u_not_csr_trigger_execution: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          !tdata1_arry[i][2], //DISABLED
+          tdata1_arry[i][3],
+          tdata1_arry[i][10:7] == 4'h0,
+          rvfi_if.rvfi_mode == MODE_U,
+          rvfi_if.rvfi_pc_rdata == tdata2_arry[i])
+
+        ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_eq_u_not_csr_mode_req: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          !tdata1_arry[i][3], //DISABLED
+          tdata1_arry[i][10:7] == 4'h0,
+          rvfi_if.rvfi_mode == MODE_U,
+          rvfi_if.rvfi_pc_rdata == tdata2_arry[i])
+
+        ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_eq_u_not_csr_match_type: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][3],
+          rvfi_if.rvfi_mode == MODE_U,
+          !((tdata1_arry[i][10:7] == 4'h0) || tdata1_arry[i][10:7] == 4'h2), //DISABLED
+          rvfi_if.rvfi_pc_rdata == tdata2_arry[i])
+
+          ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_eq_u_not_core_match: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][3],
+          tdata1_arry[i][10:7] == 4'h0,
+          rvfi_if.rvfi_mode == MODE_U,
+          !(rvfi_if.rvfi_pc_rdata == tdata2_arry[i])) //DISABLED
+
+          ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
       );
 
       //operation: execute
       //action: greater or equal
       //mode: machine
-      a_dt_hit_execute_greater_m: assert property(
-        seq_trigger_hit_or_missmatch_execute(
-          tdata1_arry[i][31:28], //trigger_type - constant
-          tdata1_arry[i][2], //operation - constant
-          tdata1_arry[i][6], //mode_req
-          rvfi_if.rvfi_mode == MODE_M, //mode
-          tdata1_arry[i][10:7] == 4'h2, //match_type
-          rvfi_if.rvfi_pc_rdata >= tdata2_arry[i]) //match
+
+      //The following assertions check instruction execution triggering when the address must be greater or equal to tdata2
+      //The following assertions are similar to those above, with a minor change
+      //The first part of assertions checks machine mode and the second part checks user mode
+
+      a_dt_hit_execute_greater_eq_m: assert property(
+        seq_trigger_execute_settings(
+
+          //tdata csr settings:
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][6], //triggering in machine mode is enabled
+          tdata1_arry[i][10:7] == 4'h2, //There is only a trigger match if address is greater or equal tdata2
+
+          //core conditions:
+          rvfi_if.rvfi_mode == MODE_M, //the core is in machine mode
+          rvfi_if.rvfi_pc_rdata >= tdata2_arry[i]) //Make sure there is a match as the address is greater or equal tdata2
+
+        ##1 rvfi_if.rvfi_valid[->1]
         |->
         rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_greater_eq_m_not_csr_trigger_execution: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          !tdata1_arry[i][2], //DISABLED
+          tdata1_arry[i][6],
+          tdata1_arry[i][10:7] == 4'h2,
+          rvfi_if.rvfi_mode == MODE_M,
+          rvfi_if.rvfi_pc_rdata >= tdata2_arry[i])
+
+        ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_greater_eq_m_not_csr_mode_req: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          !tdata1_arry[i][6], //DISABLED
+          tdata1_arry[i][10:7] == 4'h2,
+          rvfi_if.rvfi_mode == MODE_M,
+          rvfi_if.rvfi_pc_rdata >= tdata2_arry[i])
+
+        ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_greater_eq_m_not_csr_match_type: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][6],
+          rvfi_if.rvfi_mode == MODE_M,
+          !((tdata1_arry[i][10:7] == 4'h0) || tdata1_arry[i][10:7] == 4'h2), //DISABLED
+          rvfi_if.rvfi_pc_rdata >= tdata2_arry[i])
+
+          ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_greater_eq_m_not_core_match: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][6],
+          tdata1_arry[i][10:7] == 4'h2,
+          rvfi_if.rvfi_mode == MODE_M,
+          !(rvfi_if.rvfi_pc_rdata >= tdata2_arry[i])) //DISABLED
+
+          ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
       );
 
       //operation: execute
       //action: greater or equal
       //mode: user
-      a_dt_hit_execute_greater_u: assert property(
-        seq_trigger_hit_or_missmatch_execute(
-          tdata1_arry[i][31:28], //trigger_type - constant
-          tdata1_arry[i][2], //operation - constant
-          tdata1_arry[i][3], //mode_req
-          rvfi_if.rvfi_mode == MODE_U, //mode
-          tdata1_arry[i][10:7] == 4'h2, //match_type
-          rvfi_if.rvfi_pc_rdata >= tdata2_arry[i]) //match
+
+      a_dt_hit_execute_greater_eq_u: assert property(
+        seq_trigger_execute_settings(
+
+          //tdata csr settings:
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][3], //triggering in user mode is enabled
+          tdata1_arry[i][10:7] == 4'h2,
+
+          //core conditions:
+          rvfi_if.rvfi_mode == MODE_U, //the core is in user mode
+          rvfi_if.rvfi_pc_rdata >= tdata2_arry[i])
+
+        ##1 rvfi_if.rvfi_valid[->1]
         |->
         rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_greater_eq_u_not_csr_trigger_execution: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          !tdata1_arry[i][2], //DISABLED
+          tdata1_arry[i][3],
+          tdata1_arry[i][10:7] == 4'h2,
+          rvfi_if.rvfi_mode == MODE_U,
+          rvfi_if.rvfi_pc_rdata >= tdata2_arry[i])
+
+        ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_greater_eq_u_not_csr_mode_req: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          !tdata1_arry[i][3], //DISABLED
+          tdata1_arry[i][10:7] == 4'h2,
+          rvfi_if.rvfi_mode == MODE_U,
+          rvfi_if.rvfi_pc_rdata >= tdata2_arry[i])
+
+        ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_greater_eq_u_not_csr_match_type: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][3],
+          rvfi_if.rvfi_mode == MODE_U,
+          !((tdata1_arry[i][10:7] == 4'h0) || tdata1_arry[i][10:7] == 4'h2), //DISABLED
+          rvfi_if.rvfi_pc_rdata >= tdata2_arry[i])
+
+          ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_greater_eq_u_not_core_match: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][3],
+          tdata1_arry[i][10:7] == 4'h2,
+          rvfi_if.rvfi_mode == MODE_U,
+          !(rvfi_if.rvfi_pc_rdata >= tdata2_arry[i])) //DISABLED
+
+          ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
       );
 
       //operation: execute
       //action: lesser
       //mode: machine
+
+      //The following assertions check instruction execution triggering when the address must be lesser than tdata2
+      //The following assertions are similar to those above, with a minor change
+      //The first part of assertions checks machine mode and the second part checks user mode
+
       a_dt_hit_execute_lesser_m: assert property(
-        seq_trigger_hit_or_missmatch_execute(
-          tdata1_arry[i][31:28], //trigger_type - constant
-          tdata1_arry[i][2], //operation - constant
-          tdata1_arry[i][6], //mode_req
-          rvfi_if.rvfi_mode == MODE_M, //mode
-          tdata1_arry[i][10:7] == 4'h3, //match_type
-          rvfi_if.rvfi_pc_rdata < tdata2_arry[i]) //match
+        seq_trigger_execute_settings(
+
+          //tdata csr settings:
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][6], //triggering in machine mode is enabled
+          tdata1_arry[i][10:7] == 4'h3, //There is only a trigger match if address is lesser tdata2
+
+          //core conditions:
+          rvfi_if.rvfi_mode == MODE_M, //the core is in machine mode
+          rvfi_if.rvfi_pc_rdata < tdata2_arry[i]) //Make sure there is a match as the address is lesser tdata2
+
+        ##1 rvfi_if.rvfi_valid[->1]
         |->
         rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_lesser_m_not_csr_trigger_execution: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          !tdata1_arry[i][2], //DISABLED
+          tdata1_arry[i][6],
+          tdata1_arry[i][10:7] == 4'h3,
+          rvfi_if.rvfi_mode == MODE_M,
+          rvfi_if.rvfi_pc_rdata < tdata2_arry[i])
+
+        ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_lesser_m_not_csr_mode_req: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          !tdata1_arry[i][6], //DISABLED
+          tdata1_arry[i][10:7] == 4'h3,
+          rvfi_if.rvfi_mode == MODE_M,
+          rvfi_if.rvfi_pc_rdata < tdata2_arry[i])
+
+        ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_lesser_m_not_csr_match_type: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][6],
+          rvfi_if.rvfi_mode == MODE_M,
+          !(tdata1_arry[i][10:7] == 4'h3), //DISABLED
+          rvfi_if.rvfi_pc_rdata < tdata2_arry[i])
+
+          ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_lesser_m_not_core_match: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][6],
+          tdata1_arry[i][10:7] == 4'h3,
+          rvfi_if.rvfi_mode == MODE_M,
+          !(rvfi_if.rvfi_pc_rdata < tdata2_arry[i])) //DISABLED
+
+          ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
       );
 
       //operation: execute
       //action: lesser
       //mode: user
+
       a_dt_hit_execute_lesser_u: assert property(
-        seq_trigger_hit_or_missmatch_execute(
-          tdata1_arry[i][31:28], //trigger_type - constant
-          tdata1_arry[i][2], //operation - constant
-          tdata1_arry[i][3], //mode_req
-          rvfi_if.rvfi_mode == MODE_U, //mode
-          tdata1_arry[i][10:7] == 4'h3, //match_type
-          rvfi_if.rvfi_pc_rdata < tdata2_arry[i]) //match
+        seq_trigger_execute_settings(
+
+          //tdata csr settings:
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][3], //triggering in user mode is enabled
+          tdata1_arry[i][10:7] == 4'h3,
+
+          //core conditions:
+          rvfi_if.rvfi_mode == MODE_U, //the core is in user mode
+          rvfi_if.rvfi_pc_rdata < tdata2_arry[i])
+
+        ##1 rvfi_if.rvfi_valid[->1]
         |->
         rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_lesser_u_not_csr_trigger_execution: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          !tdata1_arry[i][2], //DISABLED
+          tdata1_arry[i][3],
+          tdata1_arry[i][10:7] == 4'h3,
+          rvfi_if.rvfi_mode == MODE_U,
+          rvfi_if.rvfi_pc_rdata < tdata2_arry[i])
+
+        ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_lesser_u_not_csr_mode_req: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          !tdata1_arry[i][3], //DISABLED
+          tdata1_arry[i][10:7] == 4'h3,
+          rvfi_if.rvfi_mode == MODE_U,
+          rvfi_if.rvfi_pc_rdata < tdata2_arry[i])
+
+        ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_lesser_u_not_csr_match_type: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][3],
+          rvfi_if.rvfi_mode == MODE_U,
+          !(tdata1_arry[i][10:7] == 4'h3), //DISABLED
+          rvfi_if.rvfi_pc_rdata < tdata2_arry[i])
+
+          ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
+      );
+
+      a_dt_hit_execute_lesser_u_not_core_match: assert property(
+        seq_trigger_execute_settings(
+          (tdata1_arry[i][31:28] == 4'h2 || tdata1_arry[i][31:28] == 4'h6),
+          tdata1_arry[i][2],
+          tdata1_arry[i][3],
+          tdata1_arry[i][10:7] == 4'h3,
+          rvfi_if.rvfi_mode == MODE_U,
+          !(rvfi_if.rvfi_pc_rdata < tdata2_arry[i])) //DISABLED
+
+          ##0 seq_trigger_execute_no_hit(i)
+
+        |->
+        !rvfi_if.rvfi_dbg_mode
       );
 
       //operation: load
