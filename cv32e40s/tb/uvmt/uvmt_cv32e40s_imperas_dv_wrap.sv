@@ -423,7 +423,6 @@ module uvmt_cv32e40s_imperas_dv_wrap
    `RVVI_SET_CSR( `CSR_MEPC_ADDR,          mepc          )
    `RVVI_SET_CSR( `CSR_MCAUSE_ADDR,        mcause        )
    `RVVI_SET_CSR( `CSR_MTVAL_ADDR,         mtval         )
-<<<<<<< HEAD
    `RVVI_SET_CSR( `CSR_MIP_ADDR,           mip           )
 
    `RVVI_SET_CSR( `CSR_PMPCFG0_ADDR,       pmpcfg0       )
