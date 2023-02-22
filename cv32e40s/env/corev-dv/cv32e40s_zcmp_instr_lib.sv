@@ -209,22 +209,37 @@ endfunction : generate_pushpopretz_instr
 
 function void corev_zcmp_pushpop_base_stream::generate_mvsa01_instr();
   riscv_compressed_instr instr;
+  riscv_reg_t saved_rs1;
+  riscv_reg_t saved_rs2;
 
-  instr = riscv_compressed_instr'(riscv_instr::get_rand_instr(.include_instr({CM_MVSA01})));
-  `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
-    instr_name == CM_MVSA01;
-    , "Failed randomizing CM.MVSA01"
-  )
-  instr.comment = $sformatf("start zcmp mvsa01/mva01s instr sequence");
-  insert_instr(instr, 0);
+  if (!(cfg.tp inside {A0, A1})) begin
+    instr = riscv_compressed_instr'(riscv_instr::get_rand_instr(.include_instr({CM_MVSA01})));
+    `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
+      instr_name == CM_MVSA01;
+      !(sreg1 inside {cfg.reserved_regs});
+      !(sreg2 inside {cfg.reserved_regs});
+      , "Failed randomizing CM.MVSA01"
+    )
+    instr.comment = $sformatf("start zcmp mvsa01/mva01s instr sequence");
+    saved_rs1 = instr.sreg1;
+    saved_rs2 = instr.sreg2;
 
-  instr = riscv_compressed_instr'(riscv_instr::get_rand_instr(.include_instr({CM_MVA01S})));
-  `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
-    instr_name == CM_MVA01S;
-    , "Failed randomizing CM.MVA01S"
-  )
-  instr.comment = $sformatf("end zcmp mvsa01/mva01s instr sequence");
-  insert_instr(instr, 1);
+    insert_instr(instr, 0);
+
+    instr = riscv_compressed_instr'(riscv_instr::get_rand_instr(.include_instr({CM_MVA01S})));
+    `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
+      instr_name == CM_MVA01S;
+      sreg1 == saved_rs1;
+      sreg2 == saved_rs2;
+      , "Failed randomizing CM.MVA01S"
+    )
+    instr.comment = $sformatf("end zcmp mvsa01/mva01s instr sequence");
+    insert_instr(instr, 1);
+  end else begin
+    instr = riscv_compressed_instr'(riscv_instr::get_rand_instr(.include_instr({C_NOP})));
+    instr.comment = $sformatf("Registers reserved, skipping mvsa01-mva01s sequence");
+    insert_instr(instr, 0);
+  end
 
 endfunction : generate_mvsa01_instr
 
@@ -232,22 +247,37 @@ endfunction : generate_mvsa01_instr
 
 function void corev_zcmp_pushpop_base_stream::generate_mva01s_instr();
   riscv_compressed_instr instr;
+  riscv_reg_t saved_rs1;
+  riscv_reg_t saved_rs2;
 
-  instr = riscv_compressed_instr'(riscv_instr::get_rand_instr(.include_instr({CM_MVA01S})));
-  `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
-    instr_name == CM_MVA01S;
-    , "Failed randomizing CM.MVA01S"
-  )
-  instr.comment = $sformatf("start zcmp mva01s/mvsa01 instr sequence");
+  if (!(cfg.tp inside {A0, A1})) begin
+    instr = riscv_compressed_instr'(riscv_instr::get_rand_instr(.include_instr({CM_MVA01S})));
+    `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
+      instr_name == CM_MVA01S;
+      !(sreg1 inside {cfg.reserved_regs});
+      !(sreg2 inside {cfg.reserved_regs});
+      , "Failed randomizing CM.MVA01S"
+    )
+    instr.comment = $sformatf("start zcmp mva01s/mvsa01 instr sequence");
+    saved_rs1 = instr.sreg1;
+    saved_rs2 = instr.sreg2;
 
-  insert_instr(instr, 0);
-  instr = riscv_compressed_instr'(riscv_instr::get_rand_instr(.include_instr({CM_MVSA01})));
-  `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
-    instr_name == CM_MVSA01;
-    , "Failed randomizing CM.MVSA01"
-  )
-  instr.comment = $sformatf("end zcmp mva01s/mvsa01 instr sequence");
-  insert_instr(instr, 1);
+    insert_instr(instr, 0);
+
+    instr = riscv_compressed_instr'(riscv_instr::get_rand_instr(.include_instr({CM_MVSA01})));
+    `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
+      instr_name == CM_MVSA01;
+      sreg1 == saved_rs1;
+      sreg2 == saved_rs2;
+      , "Failed randomizing CM.MVSA01"
+    )
+    instr.comment = $sformatf("end zcmp mva01s/mvsa01 instr sequence");
+    insert_instr(instr, 1);
+  end else begin
+    instr = riscv_compressed_instr'(riscv_instr::get_rand_instr(.include_instr({C_NOP})));
+    instr.comment = $sformatf("Registers reserved, skipping mva01s-mvsa01 sequence");
+    insert_instr(instr, 0);
+  end
 
 endfunction : generate_mva01s_instr
 
@@ -290,7 +320,7 @@ function void corev_zcmp_pushpop_base_stream::post_randomize();
   instr_list[0].comment   = $sformatf("Start %0s", get_name());
   instr_list[$].comment   = $sformatf("End %0s", get_name());
 
-  if(label!= "") begin
+  if(label != "") begin
     instr_list[0].label = label;
     instr_list[0].has_label = 1'b1;
   end
@@ -302,6 +332,12 @@ function void corev_zcmp_pushpop_base_stream::add_mixed_instr(int instr_cnt);
   for (int i = 0; i < instr_cnt; i++) begin
     instr = riscv_instr::type_id::create("instr");
     randomize_instr(instr);
+    // Don't want to tamper with RA/SP as that breaks the
+    // intended sequence flow as there are dependencies on theses
+    // TODO constrain somehow rather than rerandomize
+    while (instr.rd == RA || instr.rd == SP || instr.rd == cfg.tp) begin
+      randomize_instr(instr);
+    end
     insert_instr(instr);
   end
 endfunction : add_mixed_instr

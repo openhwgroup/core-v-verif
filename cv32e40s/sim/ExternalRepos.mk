@@ -23,7 +23,7 @@ RISCVDV_REPO    ?= https://github.com/silabs-hfegran/riscv-dv
 #RISCVDV_BRANCH  ?= master
 RISCVDV_BRANCH  ?= dev_hf_zc
 #RISCVDV_HASH    ?= 797aa0762de8e2c8d427b978483b47dd7649954a
-RISCVDV_HASH    ?= 7bf5f20c704df4a95e4d5af9deac10915113fea2
+RISCVDV_HASH    ?= dc1b43842b1054ea6b4b920519b0aba40cd07ad5
 
 EMBENCH_REPO    ?= https://github.com/embench/embench-iot.git
 EMBENCH_BRANCH  ?= master

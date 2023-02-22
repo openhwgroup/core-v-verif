@@ -1818,7 +1818,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
              && sampled_clic.level > mcause_fields.mpil
              && sampled_clic.level > mintthresh_fields.th
              && !sampled_clic.shv
-             && sampled_clic.irq
              && csr_instr.rd
       or
              // Return 0 if no irq, not higher level, or shv, or previous mnxti updated the context such that the previous

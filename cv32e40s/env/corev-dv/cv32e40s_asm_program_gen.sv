@@ -92,7 +92,14 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
 
             // original handler code start
             $sformatf("non_pma_handler_illegal_instr: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC),
-            $sformatf("addi  x%0d, x%0d, 4", cfg.gpr[0], cfg.gpr[0]),
+
+            $sformatf("lw  x%0d, 0(x%0d)", cfg.gpr[1], cfg.gpr[0]),
+            $sformatf("andi x%0d, x%0d, 0x3", cfg.gpr[1], cfg.gpr[1]),
+            $sformatf("addi x%0d, zero, 0x3", cfg.gpr[2]),
+            $sformatf("bne x%1d, x%0d, 1f", cfg.gpr[1], cfg.gpr[2]),
+            $sformatf("addi  x%0d, x%0d, 2", cfg.gpr[0], cfg.gpr[0]),
+            $sformatf("1: addi  x%0d, x%0d, 2", cfg.gpr[0], cfg.gpr[0]),
+
             $sformatf("csrw  0x%0x, x%0d", MEPC, cfg.gpr[0]),
             // original handler code end
 
@@ -132,7 +139,14 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
 
             // original handler code start
             $sformatf("non_pma_handler_instr_fault: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC),
-            $sformatf("addi  x%0d, x%0d, 4", cfg.gpr[0], cfg.gpr[0]),
+
+            $sformatf("lw  x%0d, 0(x%0d)", cfg.gpr[1], cfg.gpr[0]),
+            $sformatf("andi x%0d, x%0d, 0x3", cfg.gpr[1], cfg.gpr[1]),
+            $sformatf("addi x%0d, zero, 0x3", cfg.gpr[2]),
+            $sformatf("bne x%0d, x%0d, 1f", cfg.gpr[1], cfg.gpr[2]),
+            $sformatf("addi  x%0d, x%0d, 2", cfg.gpr[0], cfg.gpr[0]),
+            $sformatf("1: addi  x%0d, x%0d, 2", cfg.gpr[0], cfg.gpr[0]),
+
             $sformatf("csrw  0x%0x, x%0d", MEPC, cfg.gpr[0]),
             // original handler code end
 
@@ -282,7 +296,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
   virtual function void gen_interrupt_handler_section(privileged_mode_t mode, int hart);
     string mode_prefix;
     string ls_unit;
-    privileged_reg_t status, ip, ie, scratch;
+    privileged_reg_t cause, status, ip, ie, scratch;
     string interrupt_handler_instr[$];
 
     ls_unit = (XLEN == 32) ? "w" : "d";
@@ -292,6 +306,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
       MACHINE_MODE: begin
         mode_prefix = "m";
         status = MSTATUS;
+        cause = MCAUSE;
         ip = MIP;
         ie = MIE;
         scratch = MSCRATCH;
@@ -299,6 +314,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
       SUPERVISOR_MODE: begin
         mode_prefix = "s";
         status = SSTATUS;
+        cause = SCAUSE;
         ip = SIP;
         ie = SIE;
         scratch = SSCRATCH;
@@ -306,6 +322,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
       USER_MODE: begin
         mode_prefix = "u";
         status = USTATUS;
+        cause = UCAUSE;
         ip = UIP;
         ie = UIE;
         scratch = USCRATCH;
@@ -352,6 +369,17 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
 
     // Read back interrupt related privileged CSR
     // The value of these CSR are checked by comparing with spike simulation result.
+    if (cfg.mtvec_mode == DIRECT) begin
+      interrupt_handler_instr = {
+        interrupt_handler_instr,
+        $sformatf("csrr x%0d, 0x%0x # %0s", cfg.gpr[0], cause, cause.name()),
+        $sformatf("slli x%0d, x%0d, 1 # shift out interrupt bit", cfg.gpr[0], cfg.gpr[0]),
+        $sformatf("srli x%0d, x%0d, 3 # shift back down 3 bits to disregard lower two bits of the nmi cause", cfg.gpr[0], cfg.gpr[0]),
+        $sformatf("addi x%0d, zero, 0x100 # Add reference (all valid nmis, 1024,1025,1026,1027 >> 2)", cfg.gpr[1]),
+        $sformatf("beq x%0d, x%1d, nmi_handler", cfg.gpr[0], cfg.gpr[1])
+      };
+    end
+
     interrupt_handler_instr = {
            interrupt_handler_instr,
            $sformatf("csrr  x%0d, 0x%0x # %0s;", cfg.gpr[0], status, status.name()),

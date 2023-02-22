@@ -748,7 +748,7 @@ module uvmt_cv32e40s_tb;
   end endgenerate
 
   generate
-    if (CLIC==1) begin
+    if (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC==1) begin
 
       assign mtvt_q_shadow_q       = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mtvt_csr_i.gen_hardened.shadow_q);
       assign mtvec_q_shadow_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mtvec_csr_i.gen_hardened.shadow_q);
@@ -953,7 +953,7 @@ module uvmt_cv32e40s_tb;
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_assert #(
       .SECURE              (cv32e40s_pkg::SECURE),
-      .CLIC                (CLIC),
+      .CLIC                (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC),
       .PMP_NUM_REGIONS     (PMP_NUM_REGIONS),
       .MTVT_ADDR_WIDTH     (core_i.MTVT_ADDR_WIDTH),
       .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
