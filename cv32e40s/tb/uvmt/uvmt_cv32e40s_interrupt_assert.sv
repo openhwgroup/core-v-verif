@@ -376,6 +376,7 @@ module uvmt_cv32e40s_interrupt_assert
       debug_req_stickied <= 1'b 0;
     end else if ( debug_req_i ) begin
       debug_req_stickied <= 1'b 1;
+      //TODO:WARNING:silabs-robin could replace with the debug_assert stickiness logic
     end
   end
 
@@ -389,7 +390,7 @@ module uvmt_cv32e40s_interrupt_assert
                   (wb_stage_instr_mpu_status == MPU_OK)      &&
                   !wb_kill                                   &&
                   !debug_mode_q;
-    assign is_wfe = wb_stage_instr_valid_i                   &&
+  assign is_wfe = wb_stage_instr_valid_i                     &&
                   (wb_stage_instr_rdata_i == WFE_INSTR_DATA) &&
                   !((priv_lvl == PRIV_LVL_U) && mstatus_tw)  &&
                   !wb_stage_instr_err_i                      &&
@@ -415,7 +416,7 @@ module uvmt_cv32e40s_interrupt_assert
     !wb_stage_instr_valid_i                  ||
     (wb_stage_instr_mpu_status != MPU_OK)    ||
     wb_stage_instr_err_i                     ||
-    wb_kill                                  ||  // TODO:silabs-robin  Remove? Have more isa-specific reason?
+    wb_kill                                  ||
     debug_mode_q                             ||
     ((priv_lvl == PRIV_LVL_U) && mstatus_tw) ||
     dcsr_step
@@ -593,8 +594,9 @@ module uvmt_cv32e40s_interrupt_assert
     $past(is_wfi_wfe_in_wb)  &&
     !is_wfi_wfe_in_wb
     |->
-    $past(wb_valid)  ||
-    wb_kill  // TODO:silabs-robin  Don't use "wb_kill" anywhere
+    $past(wb_valid)
+    or
+    ((rvfi.rvfi_valid [->1]) ##0 (rvfi.rvfi_dbg == DBG_CAUSE_HALTREQ))
   ) else `uvm_error(info_tag, "wfe mustn't leave wb unexpectedly");
 
   cov_wfi_assert_sleepmode_fellreason_valid: cover property (
@@ -647,8 +649,7 @@ module uvmt_cv32e40s_interrupt_assert
   a_wfi_assert_sleepmode_retire0: assert property (
     $rose(is_wfi_wfe_in_wb)
     |->
-    (wb_valid == (dcsr_step && !debug_req_i))  // TODO:silabs-robin  Why is step/haltreq different?  Arbitrary uarch decision?
-    // TODO:silabs-robin  If step&&haltreq, assert should/shouldn't retire.
+    (wb_valid == (dcsr_step && !debug_req_i))
   ) else `uvm_error(info_tag, "1st cycle retire only on step");
 
   a_wfi_assert_sleepmode_retire1: assert property (
@@ -666,7 +667,6 @@ module uvmt_cv32e40s_interrupt_assert
     is_wfi_wfe_in_wb
     |->
     (wb_valid == is_wfi_wfe_wake)
-    //TODO:INFO silabs-robin  Not checked, non-killed early "resumes"
   ) else `uvm_error(info_tag, ">2nd cycle retire only on wake");
 
 
@@ -748,7 +748,7 @@ module uvmt_cv32e40s_interrupt_assert
     (rvfi.rvfi_valid [->1])  ##0
     (rvfi.rvfi_insn  inside  {WFI_INSTR_DATA, WFE_INSTR_DATA})
     ;
-    // TODO:silabs-robin  Check the inverse?
+    // TODO:INFO:silabs-robin  Checking the inverse case gets complicated by uarch
   endproperty : p_wfi_assert_to_rvfi
 
   a_wfi_assert_to_rvfi: assert property (p_wfi_assert_to_rvfi)
@@ -768,7 +768,7 @@ module uvmt_cv32e40s_interrupt_assert
       (is_wfi_wfe_in_wb && is_wfi_wfe_wake)
     )
     ;
-    // TODO:silabs-robin  Idea: packed struct (like pmp reasons), cover several onehots
+    // TODO:INFO:silabs-robin  Idea: packed struct (like pmp reasons), cover several onehots
   endproperty : p_wfi_assert_come_coresleepo
 
   a_wfi_assert_come_coresleepo: assert property (
