@@ -85,7 +85,7 @@ FPU_MANIFEST = _fpu
 else
 # Configuration without FPU
 FPU = NO
-FPU_MANIFEST = 
+FPU_MANIFEST =
 endif
 
 # Common Generation variables
@@ -147,11 +147,18 @@ UVM_TESTNAME ?= uvmt_$(CV_CORE_LC)_firmware_test_c
 
 # Google's random instruction generator
 RISCVDV_PKG         := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/google/riscv-dv
+RISCVDV_SRC         := $(RISCVDV_PKG)/src/
+
 COREVDV_PKG         := $(CORE_V_VERIF)/lib/corev-dv
 CV_CORE_COREVDV_PKG := $(CORE_V_VERIF)/$(CV_CORE_LC)/env/corev-dv
+CV_CORE_COREVDV_CUSTOM := $(CV_CORE_COREVDV_PKG)/custom
+
+COREDV_CUSTOM_INSTR_FILES := $(wildcard $(CV_CORE_COREVDV_CUSTOM)/*)
+
 export RISCV_DV_ROOT         = $(RISCVDV_PKG)
 export COREV_DV_ROOT         = $(COREVDV_PKG)
 export CV_CORE_COREV_DV_ROOT = $(CV_CORE_COREVDV_PKG)
+
 
 # RISC-V Foundation's RISC-V Compliance Test-suite
 COMPLIANCE_PKG   := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance
@@ -210,6 +217,13 @@ endif
 #    - Variables for RTL dependencies
 include $(CORE_V_VERIF)/mk/Common.mk
 ###############################################################################
+
+# adjust commands if needed
+ifneq ($(COREDV_CUSTOM_INSTR_FILES),)
+$(info Custom files for riscv-dv generator found here $(CV_CORE_COREVDV_CUSTOM). These files will be copied to $(RISCVDV_SRC) after cloning riscv-dv repo, and will override existing files)
+CLONE_RISCVDV_CMD := $(CLONE_RISCVDV_CMD) ; cp --verbose -rf $(CV_CORE_COREVDV_CUSTOM)/* $(RISCVDV_SRC)/.
+endif
+
 # Clone core RTL and DV dependencies
 clone_cv_core_rtl: $(CV_CORE_PKG)
 
