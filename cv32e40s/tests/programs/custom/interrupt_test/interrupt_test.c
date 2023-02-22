@@ -165,9 +165,10 @@ __attribute__((interrupt ("machine"))) void u_sw_direct_irq_handler(void)  {
 
     asm (
         ".global alt_vector_table\n"
-        ".option norvc\n"
         ".align 8\n"
         "alt_vector_table:\n"
+        ".option push\n"
+        ".option norvc\n"
 	    "j u_sw_irq_handler\n"
 	    "j __no_irq_handler\n"
 	    "j __no_irq_handler\n"
@@ -200,23 +201,28 @@ __attribute__((interrupt ("machine"))) void u_sw_direct_irq_handler(void)  {
 	    "j m_fast13_irq_handler\n"
 	    "j m_fast14_irq_handler\n"
 	    "j m_fast15_irq_handler\n"
+      ".option pop\n"
     );
 
     asm (
         ".global alt_direct_vector_table\n"
-        ".option norvc\n"
         ".align 8\n"
         "alt_direct_vector_table:\n"
+        ".option push\n"
+        ".option norvc\n"
 	    "j u_sw_direct_irq_handler\n"
+      ".option pop\n"
     );
 
     asm (
         ".global alt_direct_ecall_table\n"
-        ".option norvc\n"
         ".align 8\n"
         "alt_direct_ecall_table:\n"
+        ".option push\n"
+        ".option norvc\n"
         "wfi\n"
 	    "j u_sw_irq_handler\n"
+      ".option pop\n"
     );
 
 int main(int argc, char *argv[]) {
