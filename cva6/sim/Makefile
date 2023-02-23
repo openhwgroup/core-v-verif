@@ -101,7 +101,7 @@ endif
 # Spike specific commands, variables
 ###############################################################################
 spike:
-	$(tool_path)/spike --log-commits --isa=$(variant) -l $(elf)
+	$(tool_path)/spike --steps=2000000 --log-commits --isa=$(variant) -l $(elf)
 	cp $(log).iss $(log)
 
 ###############################################################################

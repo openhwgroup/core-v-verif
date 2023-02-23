@@ -1,0 +1,106 @@
+diff --git a/riscv/sim.cc b/riscv/sim.cc
+index 1ec6a9f7..f4b2e8ed 100644
+--- a/riscv/sim.cc
++++ b/riscv/sim.cc
+@@ -40,7 +40,8 @@ sim_t::sim_t(const char* isa, const char* priv, const char* varch,
+ #ifdef HAVE_BOOST_ASIO
+              boost::asio::io_service *io_service_ptr, boost::asio::ip::tcp::acceptor *acceptor_ptr, // option -s
+ #endif
+-             FILE *cmd_file) // needed for command line option --cmd
++             FILE *cmd_file, // needed for command line option --cmd
++             size_t max_steps)
+   : htif_t(args),
+     mems(mems),
+     plugin_devices(plugin_devices),
+@@ -59,6 +60,8 @@ sim_t::sim_t(const char* isa, const char* priv, const char* varch,
+ #endif
+     sout_(nullptr),
+     current_step(0),
++    total_steps(0),
++    max_steps(max_steps),
+     current_proc(0),
+     debug(false),
+     histogram_enabled(false),
+@@ -207,6 +210,21 @@ void sim_t::step(size_t n)
+     procs[current_proc]->step(steps);
+ 
+     current_step += steps;
++    total_steps += steps;
++
++    // max_steps must be non-zero to act as an execution limit.
++    if (max_steps && total_steps >= max_steps)
++    {
++      // "Stepout": max step count reached/exceeded.
++      std::cerr << "*** Maximum step count reached (total_steps = "
++                << std::dec << total_steps << ", max_steps = "
++                << max_steps << "), exiting!" << std::endl;
++      // TODO FIXME: Determine the best method of terminating.
++      // FORNOW: Exit successfully and let the caller of Spike
++      // decide how to proceed in view of simulation results.
++      exit(0);
++    }
++
+     if (current_step == INTERLEAVE)
+     {
+       current_step = 0;
+diff --git a/riscv/sim.h b/riscv/sim.h
+index a425da48..9b07c16a 100644
+--- a/riscv/sim.h
++++ b/riscv/sim.h
+@@ -42,7 +42,8 @@ public:
+ #ifdef HAVE_BOOST_ASIO
+         boost::asio::io_service *io_service_ptr_ctor, boost::asio::ip::tcp::acceptor *acceptor_ptr_ctor,  // option -s
+ #endif
+-        FILE *cmd_file); // needed for command line option --cmd
++        FILE *cmd_file, // needed for command line option --cmd
++        size_t max_steps);
+   ~sim_t();
+ 
+   // run the simulation to completion
+@@ -105,6 +106,8 @@ private:
+   static const size_t INSNS_PER_RTC_TICK = 100; // 10 MHz clock for 1 BIPS core
+   static const size_t CPU_HZ = 1000000000; // 1GHz CPU
+   size_t current_step;
++  size_t total_steps;
++  size_t max_steps;
+   size_t current_proc;
+   bool debug;
+   bool histogram_enabled; // provide a histogram of PCs
+diff --git a/spike_main/spike.cc b/spike_main/spike.cc
+index e2680cc9..f8ef5a8b 100644
+--- a/spike_main/spike.cc
++++ b/spike_main/spike.cc
+@@ -72,6 +72,8 @@ static void help(int exit_code = 1)
+   fprintf(stderr, "  --dm-no-abstract-csr  Debug module won't support abstract to authenticate\n");
+   fprintf(stderr, "  --dm-no-halt-groups   Debug module won't support halt groups\n");
+   fprintf(stderr, "  --dm-no-impebreak     Debug module won't support implicit ebreak in program buffer\n");
++  fprintf(stderr, "  --steps=<n>           Stop simulation after reaching specified number of steps "
++      "(default: unlimited)\n");
+ 
+   exit(exit_code);
+ }
+@@ -251,6 +253,7 @@ int main(int argc, char** argv)
+     .support_haltgroups = true,
+     .support_impebreak = true
+   };
++  size_t max_steps = 0;
+   std::vector<int> hartids;
+ 
+   auto const hartids_parser = [&](const char *s) {
+@@ -347,6 +350,7 @@ int main(int argc, char** argv)
+       exit(-1);
+     }
+   });
++  parser.option(0, "steps", 1, [&](const char* s){max_steps = strtoull(s, 0, 0);});
+   parser.option(0, "dm-progsize", 1,
+       [&](const char* s){dm_config.progbufsize = atoul_safe(s);});
+   parser.option(0, "dm-no-impebreak", 0,
+@@ -440,7 +444,7 @@ int main(int argc, char** argv)
+ #ifdef HAVE_BOOST_ASIO
+       io_service_ptr, acceptor_ptr,
+ #endif
+-      cmd_file);
++      cmd_file, max_steps);
+   std::unique_ptr<remote_bitbang_t> remote_bitbang((remote_bitbang_t *) NULL);
+   std::unique_ptr<jtag_dtm_t> jtag_dtm(
+       new jtag_dtm_t(&s.debug_module, dmi_rti));
