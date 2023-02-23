@@ -120,17 +120,12 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
     //(If data independent timing is on when the instruction is in the WB stage, it was on during the whole execution as well)
     && $past(xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming);
 
-    //Make sure that the instruction previous to the branch instruction was not a load or a store:
-    //If PC hardening is on the branch instruction is a two cycled operation
-    //If PC hardening is off the branch instruction is an one cycled operation
-    //&& $past(!(|rvfi_if.rvfi_mem_rmask), is_pc_hardening_on + 1)
-    //&& $past(!(|rvfi_if.rvfi_mem_wmask), is_pc_hardening_on + 1);
-
   endsequence
 
 
   sequence seq_no_memory_operation_for_x_cycles(x);
-    !((|rvfi_if.rvfi_mem_rmask) || (|rvfi_if.rvfi_mem_wmask))[*x];
+    //Make sure the x following instructions are not a valid memory instruction
+    (!(((|rvfi_if.rvfi_mem_rmask) || (|rvfi_if.rvfi_mem_wmask)) && rvfi_if.rvfi_valid))[*x];
   endsequence
 
   a_xsecure_dataindtiming_branch_timing_pc_hardening_enabled: assert property (

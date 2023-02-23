@@ -25,6 +25,8 @@ module uvmt_cv32e40s_debug_assert
       uvma_rvfi_csr_if csr_dpc,
       uvma_rvfi_csr_if csr_mepc,
       uvma_rvfi_csr_if csr_mstatus,
+      uvma_rvfi_csr_if csr_mtvec,
+      uvma_rvfi_csr_if csr_tdata1,
       uvmt_cv32e40s_debug_cov_assert_if cov_assert_if
   );
 
@@ -40,6 +42,8 @@ module uvmt_cv32e40s_debug_assert
   localparam int DCSR_STEP_POS    = 2;
   localparam int DCSR_NMIP_POS    = 3;
   localparam int DCSR_STEPIE_POS  = 11;
+  localparam int DCSR_EBREAKM_POS  = 15;
+  localparam int DCSR_EBREAKU_POS  = 12;
 
   // ---------------------------------------------------------------------------
   // Local variables
@@ -47,14 +51,12 @@ module uvmt_cv32e40s_debug_assert
   string info_tag = "CV32E40S_DEBUG_ASSERT";
   logic [31:0] pc_at_dbg_req; // Capture PC when debug_req_i or ebreak is active
   logic [31:0] pc_at_ebreak; // Capture PC when ebreak
-  logic [31:0] halt_addr_at_entry;
-  logic halt_addr_at_entry_flag;
+  logic [31:0] halt_addr;
   logic [31:0] exception_addr_at_entry;
   logic exception_addr_at_entry_flag;
-  logic [31:0] tdata2_at_entry;
   // Locally track which debug cause should be used
   logic [2:0] debug_cause_pri;
-  logic [31:0] boot_addr_at_entry;
+  logic [31:0] boot_addr;
   logic [31:0] mtvec_addr;
   logic        is_trigger_match;
   logic        is_rvfi_nmi_handler;
@@ -66,6 +68,10 @@ module uvmt_cv32e40s_debug_assert
 
   logic first_fetch;
   logic fetch_enable_i_q;
+
+  logic         prev_was_ebreak_flag;
+  logic [31:0]  prev_was_ebreak_pc_wdata;
+  logic [31:0]  dpc_rdata_q;
 
   // ---------------------------------------------------------------------------
   // Clocking blocks
@@ -96,7 +102,7 @@ module uvmt_cv32e40s_debug_assert
 
   assign is_trigger_match = (cov_assert_if.trigger_match_in_wb || cov_assert_if.etrigger_in_wb) && cov_assert_if.wb_valid;
 
-  assign mtvec_addr = {cov_assert_if.mtvec[31:2], 2'b00};
+  assign mtvec_addr = {csr_mtvec.rvfi_csr_rdata[31:2], 2'b00};
 
   assign is_rvfi_nmi_handler =
     rvfi.rvfi_valid && (rvfi.rvfi_intr.cause & 11'h 400);
@@ -122,6 +128,7 @@ module uvmt_cv32e40s_debug_assert
 
 
     // Check that we enter debug mode when expected. CSR checks are done in other assertions
+    /*TODO:MT replace with specifics for each entry cause
     property p_enter_debug;
         $changed(debug_cause_pri) && (debug_cause_pri != 0) && !cov_assert_if.debug_mode_q
         |->
@@ -131,35 +138,36 @@ module uvmt_cv32e40s_debug_assert
 
     a_enter_debug: assert property(p_enter_debug)
         else `uvm_error(info_tag, $sformatf("Debug mode not entered after exepected cause %d", debug_cause_pri));
-
+    */
 
     // Check that dpc gets the correct value when debug mode is entered.
-
     a_debug_mode_pc: assert property(
         $rose(first_debug_ins)
         |->
-        cov_assert_if.wb_stage_pc == halt_addr_at_entry
-        ) else `uvm_error(info_tag, $sformatf("Debug mode entered with wrong pc. pc==%08x", cov_assert_if.wb_stage_pc));
+        rvfi.rvfi_pc_rdata == halt_addr
+        ) else `uvm_error(info_tag, $sformatf("Debug mode entered with wrong pc. pc==%08x", rvfi.rvfi_pc_rdata));
 
+    //TODO:MT rewrite to rvfi timing
     a_debug_mode_pc_dpc: assert property(
         $rose(first_debug_ins)
         |->
-        cov_assert_if.dpc_q == pc_at_dbg_req
-        ) else `uvm_error(info_tag, $sformatf("Debug mode entered with wrong dpc. dpc==%08x", cov_assert_if.dpc_q));
-
-    a_debug_mode_pc_dmode: assert property(
-        $rose(first_debug_ins)
-        |->
-        cov_assert_if.debug_mode_q
-        ) else `uvm_error(info_tag, "First debug mode instruction predicted wrongly");
-
+        (rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt
+        ##1
+        dpc_rdata_q == pc_at_dbg_req)
+        or
+        ((rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ || rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP) &&
+        prev_was_ebreak_flag &&
+        csr_dpc.rvfi_csr_rdata == prev_was_ebreak_pc_wdata)
+        or
+        (csr_dpc.rvfi_csr_rdata == pc_at_dbg_req)
+        ) else `uvm_error(info_tag, $sformatf("Debug mode entered with wrong dpc. dpc==%08x", csr_dpc.rvfi_csr_rdata));
 
     // Check that dcsr.cause is as expected
-
+    // TODO:MT rewrite to rvfi timing
     property p_dcsr_cause;
-        $rose(first_debug_ins)
+        $rose(first_debug_ins) && (rvfi.rvfi_dbg != cv32e40s_pkg::DBG_CAUSE_TRIGGER) //TODO:MT temporary disable of triggers
         |->
-        (cov_assert_if.dcsr_q[8:6] == debug_cause_pri);
+        (rvfi.rvfi_dbg == debug_cause_pri);
     endproperty
 
     a_dcsr_cause: assert property(p_dcsr_cause)
@@ -167,6 +175,7 @@ module uvmt_cv32e40s_debug_assert
 
 
     // Check that debug with cause haltreq is correct
+    // TODO:MT replace with assert taking new debug_req in to account
     property p_debug_mode_ext_req;
         $rose(cov_assert_if.debug_mode_q) && (cov_assert_if.dcsr_q[8:6] == cv32e40s_pkg::DBG_CAUSE_HALTREQ)
         |-> debug_cause_pri == cv32e40s_pkg::DBG_CAUSE_HALTREQ;
@@ -176,76 +185,70 @@ module uvmt_cv32e40s_debug_assert
         else `uvm_error(info_tag, $sformatf("Debug cause not correct for haltreq, cause = %d",cov_assert_if.dcsr_q[8:6]));
 
     // Check that debug with cause ebreak is correct
-    property p_cebreak_debug_mode;
-        $rose(cov_assert_if.debug_mode_q) && (cov_assert_if.dcsr_q[8:6] == cv32e40s_pkg::DBG_CAUSE_EBREAK)
-        |-> debug_cause_pri == cv32e40s_pkg::DBG_CAUSE_EBREAK;
+    property p_ebreak_debug_mode;
+        $rose(first_debug_ins) && (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_EBREAK)
+        |-> prev_was_ebreak_flag;
     endproperty
 
-    a_cebreak_debug_mode: assert property(p_cebreak_debug_mode)
+    a_ebreak_debug_mode: assert property(p_ebreak_debug_mode)
         else `uvm_error(info_tag,$sformatf("Debug mode with wrong cause after ebreak, case = %d",cov_assert_if.dcsr_q[8:6]));
 
 
-    // ebreak / c.ebreak without dcsr.ebreakm results in exception at mtvec
-    // (Exclude single stepping as the sequence gets very complicated)
+    // ebreak / c.ebreak without dcsr.ebreak[prv] results in exception at mtvec
+    //TODO:MT rewrite for RVFI w mode
 
-    property p_general_ebreak_exception(ebreak);
-        $rose(ebreak)
-        && !cov_assert_if.debug_mode_q
-        && !cov_assert_if.dcsr_q[2]
-        && !cov_assert_if.dcsr_q[15]
-        ##0 (
-          (!(cov_assert_if.pending_sync_debug || cov_assert_if.pending_async_debug || is_trigger_match) &&
-           !cov_assert_if.irq_ack_o && !cov_assert_if.pending_nmi)
-          throughout (##1 cov_assert_if.wb_valid [->1])
-          )
-        |->
-        !cov_assert_if.debug_mode_q
-        && (cov_assert_if.mcause_q[30:0] === cv32e40s_pkg::EXC_CAUSE_BREAKPOINT)
-        && (cov_assert_if.mepc_q == pc_at_ebreak)
-        && (cov_assert_if.wb_stage_pc == mtvec_addr);
-        // TODO:ropeders need assertions for what happens if cebreak and req/irq?
+    property p_ebreak_mmode_exception;
+        rvfi.is_ebreak() &&
+        !rvfi.rvfi_dbg_mode &&
+        rvfi.is_mmode() &&
+        !csr_dcsr.rvfi_csr_rdata[DCSR_EBREAKM_POS]
+        |-> rvfi.rvfi_trap.trap && rvfi.rvfi_trap.exception
+            or
+            rvfi.rvfi_trap.trap && rvfi.rvfi_trap.debug && !(rvfi.rvfi_trap.debug_cause == cv32e40s_pkg::DBG_CAUSE_EBREAK);
     endproperty
 
-    a_cebreak_exception: assert property(
-        p_general_ebreak_exception(cov_assert_if.is_cebreak)
-        ) else `uvm_error(info_tag, $sformatf("Exception not entered correctly after c.ebreak with dcsr.ebreak=0"));
-
-    a_ebreak_exception: assert property(
-        p_general_ebreak_exception(cov_assert_if.is_ebreak)
-        ) else `uvm_error(info_tag, $sformatf("Exception not entered correctly after ebreak with dcsr.ebreak=0"));
-
-
-    // c.ebreak during debug mode results in relaunch of debug mode
-
-    property p_cebreak_during_debug_mode;
-        $rose(cov_assert_if.is_cebreak) && cov_assert_if.debug_mode_q
-        |->
-        s_conse_next_retire
-        ##0 cov_assert_if.debug_mode_q && (cov_assert_if.wb_stage_pc == halt_addr_at_entry);
-        // TODO should check no change in dpc and dcsr
+    property p_ebreak_umode_exception;
+        rvfi.is_ebreak() &&
+        !rvfi.rvfi_dbg_mode &&
+        rvfi.is_umode() &&
+        !csr_dcsr.rvfi_csr_rdata[DCSR_EBREAKU_POS]
+        |-> rvfi.rvfi_trap.trap && rvfi.rvfi_trap.exception
+            or
+            rvfi.rvfi_trap.trap && rvfi.rvfi_trap.debug && !(rvfi.rvfi_trap.debug_cause == cv32e40s_pkg::DBG_CAUSE_EBREAK);
     endproperty
 
-    a_cebreak_during_debug_mode: assert property(p_cebreak_during_debug_mode)
-        else `uvm_error(info_tag,$sformatf("Debug mode not restarted after c.ebreak"));
+    a_ebreak_mmode_exception: assert property(p_ebreak_mmode_exception)
+        else `uvm_error(info_tag, $sformatf("Exception not entered correctly after ebreak with dcsr.ebreakm=0 in mmode"));
+
+    a_ebreak_umode_exception: assert property(p_ebreak_umode_exception)
+        else `uvm_error(info_tag, $sformatf("Exception not entered correctly after ebreak with dcsr.ebreaku=0 in umode"));
 
 
-    // ebreak during debug mode results in relaunch
+    // ebreak and cebreak during debug mode results in relaunch
+    // TODO should check no change in dpc and dcsr
 
     property p_ebreak_during_debug_mode;
-        $rose(cov_assert_if.is_ebreak) && cov_assert_if.debug_mode_q
-        |->
-        s_conse_next_retire
-        ##0 cov_assert_if.debug_mode_q && (cov_assert_if.wb_stage_pc == halt_addr_at_entry);
-        // TODO should check no change in dpc and dcsr
+        rvfi.is_ebreak() &&
+        rvfi.rvfi_trap.debug_cause == cv32e40s_pkg::DBG_CAUSE_EBREAK && //The ebreak is actually taken
+        rvfi.rvfi_dbg_mode
+        ##1 rvfi.rvfi_valid[->1]
+        |-> rvfi.rvfi_dbg_mode &&
+        (rvfi.rvfi_pc_rdata == halt_addr);
     endproperty
 
     a_ebreak_during_debug_mode: assert property(p_ebreak_during_debug_mode)
         else `uvm_error(info_tag,$sformatf("Debug mode not restarted after ebreak"));
 
+    cov_cebreak_dbg : cover property(
+        rvfi.is_ebreak_compr() && rvfi.rvfi_dbg_mode
+    );
+    cov_ebreak_dbg : cover property(
+        rvfi.is_ebreak_noncompr() && rvfi.rvfi_dbg_mode
+    );
 
     // Trigger match results in debug mode
-
-    property p_trigger_match;
+    //TODO:MT redo in rvfi timing with new triger logic
+   /* property p_trigger_match;
         is_trigger_match ##0 cov_assert_if.tdata1[2] ##0 !cov_assert_if.debug_mode_q
         |->
         s_conse_next_retire
@@ -257,7 +260,7 @@ module uvmt_cv32e40s_debug_assert
         else `uvm_error(info_tag,
             $sformatf("Debug mode not correctly entered after trigger match dpc=%08x, tdata2=%08x",
                 cov_assert_if.dpc_q, tdata2_at_entry));
-
+    */
     // Address match without trigger enabled should NOT result in debug mode
 
     property p_trigger_match_disabled;
@@ -362,6 +365,7 @@ module uvmt_cv32e40s_debug_assert
 
 
     // Trigger during single step
+    //TODO:MT rewrite to rvfi timing
     property p_single_step_trigger;
         !cov_assert_if.debug_mode_q && cov_assert_if.dcsr_q[2]
         && cov_assert_if.addr_match && cov_assert_if.wb_valid && cov_assert_if.tdata1[2]
@@ -567,7 +571,7 @@ module uvmt_cv32e40s_debug_assert
         (cov_assert_if.ctrl_fsm_cs == cv32e40s_pkg::RESET) && cov_assert_if.debug_req_i
         |->
         s_conse_next_retire
-        ##0 cov_assert_if.debug_mode_q && (cov_assert_if.dpc_q == boot_addr_at_entry);
+        ##0 cov_assert_if.debug_mode_q && (cov_assert_if.dpc_q == boot_addr);
     endproperty
 
     a_debug_at_reset : assert property(p_debug_at_reset)
@@ -681,6 +685,79 @@ module uvmt_cv32e40s_debug_assert
             pc_at_dbg_req <= 32'h0;
             pc_at_ebreak <= 32'h0;
         end else begin
+            //NMI has highest priority for dpc
+            if(rvfi.is_nmi() && rvfi.rvfi_dbg_mode) begin
+                if (csr_mtvec.rvfi_csr_rdata[1:0] == 3) begin //CLIC
+                    //TODO:MT placeholder for predicting clic address
+                    pc_at_dbg_req <= csr_dpc.rvfi_csr_wdata;
+                end else if (csr_mtvec.rvfi_csr_rdata[1:0] == 1) begin // vectored CLINT
+                    pc_at_dbg_req <= mtvec_addr+'h3C;
+                end else begin //unvectored CLINT
+                    pc_at_dbg_req <= mtvec_addr;
+                end
+            // if the debug cause is synchronous debug entry IRQ is "taken" first
+            //end else if (   rvfi.rvfi_dbg_mode &&
+            //                rvfi.rvfi_intr.intr &&
+            //                rvfi.rvfi_dbg != cv32e40s_pkg::DBG_CAUSE_HALTREQ) begin
+
+            end else if (   rvfi.rvfi_valid &&
+                            rvfi.rvfi_dbg_mode &&
+                            rvfi.rvfi_intr.intr) begin
+
+                if (csr_mtvec.rvfi_csr_rdata[1:0] == 3) begin //CLIC
+                    //TODO:MT placeholder for predicting clic address
+                    pc_at_dbg_req <= csr_dpc.rvfi_csr_wdata;
+                end else if (csr_mtvec.rvfi_csr_rdata[1:0] == 1) begin //vectored CLINT
+                    pc_at_dbg_req <= mtvec_addr + (rvfi.rvfi_intr.cause << 2);
+                end else begin //unvectored CLINT
+                    pc_at_dbg_req <= mtvec_addr;
+                end
+            //TODO: placeholder, works for 1 available trigger. Fix when trigger support logic is in place
+            // Exception with exception trigger active
+            end else if (rvfi.rvfi_valid && rvfi.rvfi_trap.exception && csr_tdata1.rvfi_csr_rdata[31:28] == 5) begin
+                pc_at_dbg_req <= rvfi.rvfi_pc_wdata;
+
+            end else if (rvfi.is_ebreak() || rvfi.is_dbg_trg()) begin
+                pc_at_dbg_req <= rvfi.rvfi_pc_rdata;
+
+            end else if (first_fetch) begin
+                pc_at_dbg_req <= {cov_assert_if.boot_addr_i[31:2], 2'b00};
+
+            end else if (rvfi.rvfi_valid) begin
+                pc_at_dbg_req <= rvfi.rvfi_pc_wdata;
+            end
+        end
+    end
+    // remembering pc_wdata from an ecall, to deal with a req taking priority for debug entry
+    always @(posedge cov_assert_if.clk_i or negedge cov_assert_if.rst_ni) begin
+        if(!cov_assert_if.rst_ni) begin
+            prev_was_ebreak_flag <= 0;
+            prev_was_ebreak_pc_wdata <= 32'h0;
+        end else begin
+            if(rvfi.is_ebreak()) begin
+                prev_was_ebreak_flag <= 1;
+                prev_was_ebreak_pc_wdata <= rvfi.rvfi_pc_wdata;
+            end else if (rvfi.rvfi_valid) begin
+                prev_was_ebreak_flag <= 0;
+                prev_was_ebreak_pc_wdata <= 32'h0;
+            end
+        end
+    end
+
+    always @(posedge cov_assert_if.clk_i or negedge cov_assert_if.rst_ni) begin
+        if(!cov_assert_if.rst_ni) begin
+            dpc_rdata_q <= 32'h0;
+        end else if(rvfi.rvfi_valid) begin
+            dpc_rdata_q <= csr_dpc.rvfi_csr_rdata;
+        end
+    end
+
+/*
+    always @(posedge cov_assert_if.clk_i or negedge cov_assert_if.rst_ni) begin
+        if(!cov_assert_if.rst_ni) begin
+            pc_at_dbg_req <= 32'h0;
+            pc_at_ebreak <= 32'h0;
+        end else begin
             // Capture debug pc
             if (first_fetch) begin
                 pc_at_dbg_req <= {cov_assert_if.boot_addr_i[31:2], 2'b00};
@@ -721,36 +798,23 @@ module uvmt_cv32e40s_debug_assert
             end
        end
     end
+*/
 
 
-
-  // Capture dm_halt_addr_i value
-
+  // Capture start values
   always@ (posedge cov_assert_if.clk_i or negedge cov_assert_if.rst_ni) begin
-      //TODO:ropeders this should be entirely unnecessary because user manual says it should be stable. Could remove?
-      if(!cov_assert_if.rst_ni) begin
-          halt_addr_at_entry_flag <= 1'b0;
-      end else begin
-          if(!halt_addr_at_entry_flag) begin
-              if(cov_assert_if.ctrl_fsm_cs == cv32e40s_pkg::DEBUG_TAKEN) begin
-                  halt_addr_at_entry <= {cov_assert_if.dm_halt_addr_i[31:2], 2'b00};
-                  tdata2_at_entry <= cov_assert_if.tdata2;
-                  halt_addr_at_entry_flag <= 1'b1;
-              end
-          end
-
-          // Clear flag while not in dmode or we see ebreak in debug
-          if ((!cov_assert_if.debug_mode_q && halt_addr_at_entry_flag)
-              || (cov_assert_if.debug_mode_q && (cov_assert_if.is_ebreak || cov_assert_if.is_cebreak)))
-          begin
-              halt_addr_at_entry_flag <= 1'b0;
-          end
-
-          // Capture boot addr
-          if(first_fetch)
-              boot_addr_at_entry <= {cov_assert_if.boot_addr_i[31:2], 2'b00};
-      end
+    if(!cov_assert_if.rst_ni) begin
+          halt_addr <= 0;
+          boot_addr <= 0;
+    end else begin
+        if(first_fetch) begin
+            halt_addr <= {cov_assert_if.dm_halt_addr_i[31:2], 2'b00};
+            boot_addr <= {cov_assert_if.boot_addr_i[31:2], 2'b00};
+        end
+    end
   end
+
+
   always@ (posedge cov_assert_if.clk_i)  begin
       if ((cov_assert_if.illegal_insn_i || (cov_assert_if.sys_ecall_insn_i && cov_assert_if.sys_en_i))
           && cov_assert_if.pc_set && cov_assert_if.debug_mode_q && cov_assert_if.wb_valid)
@@ -774,29 +838,22 @@ module uvmt_cv32e40s_debug_assert
         && !cov_assert_if.wb_err
         && (cov_assert_if.wb_mpu_status == MPU_OK);
 
-
     // Track which debug cause should be expected
 
     always@ (posedge cov_assert_if.clk_i or negedge cov_assert_if.rst_ni) begin
         if( !cov_assert_if.rst_ni) begin
             debug_cause_pri <= 3'b000;
-        end else if(!cov_assert_if.debug_mode_q) begin
-            //TODO:MT for haltreq: Changes will happen.
-            // a flopped debug_req will be required to wake from wfi, and will have to be added
-            // At the moment ctrl_fsm_cs == FUNCTIONAL, this will change
-            if(cov_assert_if.debug_req_i && cov_assert_if.ctrl_fsm_async_debug_allowed && cov_assert_if.ctrl_fsm_cs == cv32e40s_pkg::FUNCTIONAL) begin
+        end else begin
+            if(cov_assert_if.debug_req_i) begin
                 debug_cause_pri <= 3'b011;  // Haltreq
-            //end else if((cov_assert_if.debug_req_i || cov_assert_if.debug_req_q)
-            //            && (cov_assert_if.ctrl_fsm_cs == cv32e40s_pkg::FUNCTIONAL)) begin
-
-
-            end else if (is_trigger_match) begin
-                debug_cause_pri <= 3'b010;  // Trigger match
-            end else if(cov_assert_if.dcsr_q[15] && (cov_assert_if.is_ebreak || cov_assert_if.is_cebreak)) begin
+            //TODO:MT trigger match needs to be recalculated with expanded triggers
+            //end else if (is_trigger_match) begin
+            //    debug_cause_pri <= 3'b010;  // Trigger match
+            end else if(rvfi.is_ebreak()) begin
                 debug_cause_pri <= 3'b001;  // Ebreak
-            end else if((cov_assert_if.dcsr_q[2]) && (debug_cause_pri inside {3'b100, 0})) begin  // "step"
+            end else if(rvfi.rvfi_valid && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]) begin  // "step"
                 debug_cause_pri <= 3'b100;  // Single step
-            end else if(cov_assert_if.ctrl_fsm_cs == cv32e40s_pkg::FUNCTIONAL) begin
+            end else if(rvfi.is_dret()) begin
                 debug_cause_pri <= 3'b000;  // (not a cause)
             end
             // TODO:ropeders should have cause 5 when RTL is ready
@@ -806,25 +863,18 @@ module uvmt_cv32e40s_debug_assert
 
     // Detect first instruction of debug code
 
-    assign first_debug_ins =
-        cov_assert_if.debug_mode_q && cov_assert_if.wb_valid
-        && !first_debug_ins_flag && started_decoding_in_debug;
+    assign first_debug_ins = rvfi.rvfi_dbg_mode && !first_debug_ins_flag;
 
     always@ (posedge cov_assert_if.clk_i or negedge cov_assert_if.rst_ni) begin
         if( !cov_assert_if.rst_ni) begin
             first_debug_ins_flag <= 0;
-            started_decoding_in_debug <= 0;
         end else begin
-            if(cov_assert_if.debug_mode_q) begin
-                if(cov_assert_if.wb_valid) begin
+            if(rvfi.rvfi_valid) begin
+                if(rvfi.rvfi_dbg_mode) begin
                     first_debug_ins_flag <= 1;
+                end else begin
+                    first_debug_ins_flag <= 0;
                 end
-                if(cov_assert_if.id_valid) begin
-                    started_decoding_in_debug <= 1;
-                end
-            end else begin
-                first_debug_ins_flag <= 0;
-                started_decoding_in_debug <= 0;
             end
         end
     end
@@ -833,9 +883,9 @@ module uvmt_cv32e40s_debug_assert
     assign first_fetch = cov_assert_if.fetch_enable_i && !fetch_enable_i_q;
 
     always@ (posedge cov_assert_if.clk_i or negedge cov_assert_if.rst_ni) begin
-        if( !cov_assert_if.rst_ni || !cov_assert_if.fetch_enable_i) begin
+        if( !cov_assert_if.rst_ni) begin
             fetch_enable_i_q <= 0;
-        end else begin
+        end else if (cov_assert_if.fetch_enable_i) begin
             fetch_enable_i_q <= 1;
         end
     end

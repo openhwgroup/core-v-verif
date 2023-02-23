@@ -1,27 +1,48 @@
+// Copyright 2022 Silicon Labs, Inc.
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Licensed under the Solderpad Hardware License v 2.1 (the "License"); you may
+// not use this file except in compliance with the License, or, at your option,
+// the Apache License version 2.0.
+//
+// You may obtain a copy of the License at
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
 `default_nettype none
+
 
 module uvmt_cv32e40s_pmp_assert
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
   import uvmt_cv32e40s_pkg::*;
   #(
-    parameter int       PMP_GRANULARITY   = 0,
-    parameter int       PMP_NUM_REGIONS   = 0,
-    parameter int       IS_INSTR_SIDE     = 0,
-    parameter mseccfg_t MSECCFG_RESET_VAL = MSECCFG_DEFAULT
+    parameter int        PMP_GRANULARITY,
+    parameter int        PMP_NUM_REGIONS,
+    parameter int        IS_INSTR_SIDE,
+    parameter mseccfg_t  PMP_MSECCFG_RV
   )
   (
    // Clock and Reset
    input wire            clk,
    input wire            rst_n,
 
-   // Interface to CSRs
+   // CSRs
    input wire pmp_csr_t  csr_pmp_i,
 
-   // Privilege mode
+   // Mode Info
    input wire privlvl_t  priv_lvl_i,
+   input wire            bus_trans_dbg,
 
-   // Access checking
+   // Access Checking
    input wire [33:0]     pmp_req_addr_i,
    input wire pmp_req_e  pmp_req_type_i,
    input wire            pmp_req_err_o,
@@ -51,8 +72,11 @@ module uvmt_cv32e40s_pmp_assert
   match_status_t  match_status;
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
-    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
+    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
+    .DM_REGION_START  (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+    .DM_REGION_END    (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END)
   ) model_i (
+    .debug_mode     (bus_trans_dbg),
     .match_status_o (match_status),
     .*
   );
@@ -348,14 +372,26 @@ module uvmt_cv32e40s_pmp_assert
       }
     ) else `uvm_error(info_tag, "the privilege mode must be supported");
 
-    // Validate access type  (Not a vplan item)
-    a_req_type: assert property (
-      pmp_req_type_i inside {
-        PMP_ACC_READ,
-        PMP_ACC_WRITE,
-        PMP_ACC_EXEC
-      }
-    ) else `uvm_error(info_tag, "the access type must be supported");
+
+    // Validate access type  (TODO:silabs-robin make it a vplan item)
+
+    if (IS_INSTR_SIDE) begin: gen_req_type_instr
+      a_req_type_instr: assert property (
+        pmp_req_type_i inside {
+          PMP_ACC_EXEC
+        }
+      ) else `uvm_error(info_tag, "instr-side access must be execution");
+    end : gen_req_type_instr
+
+    if (!IS_INSTR_SIDE) begin: gen_req_type_data
+      a_req_type_data: assert property (
+        pmp_req_type_i inside {
+          PMP_ACC_READ,
+          PMP_ACC_WRITE
+        }
+      ) else `uvm_error(info_tag, "data-side access must be loadstore");
+    end : gen_req_type_data
+
 
     // SMEPMP 2b: When mseccfg.RLB is 0 and pmpcfg.L is 1 in any rule or entry (including disabled entries), then
     // mseccfg.RLB remains 0 and any further modifications to mseccfg.RLB are ignored until a PMP reset.
@@ -387,7 +423,7 @@ module uvmt_cv32e40s_pmp_assert
     // U-mode fails if no match  (vplan:UmodeNomatch)
     a_nomatch_umode_fails: assert property (
       priv_lvl_i == PRIV_LVL_U && match_status.is_matched == 1'b0 |->
-        pmp_req_err_o
+        pmp_req_err_o ^ match_status.is_dm_override
     ) else `uvm_error(info_tag, "non-matched umode access must fail");
 
     // M-mode fails if: no match, and "mseccfg.MMWP"  (vplan:WhiteList:Denied)
@@ -396,28 +432,29 @@ module uvmt_cv32e40s_pmp_assert
       !match_status.is_matched  &&
       csr_pmp_i.mseccfg.mmwp
       |->
-      pmp_req_err_o
+      pmp_req_err_o ^ match_status.is_dm_override
     ) else `uvm_error(info_tag, "non-matched mmode access must fail when MMWP");
 
     // U-mode or L=1 succeed only if RWX  (vplan:RwxUmode)
     a_uorl_onlyif_rwx: assert property (
       //TODO:silabs-robin  Why, 'L=1' in comment, but 'is_matched' in code?
-      ( priv_lvl_i == PRIV_LVL_U || match_status.is_matched == 1'b1 ) && !pmp_req_err_o |->
-        match_status.is_rwx_ok
+      ( priv_lvl_i == PRIV_LVL_U || match_status.is_matched == 1'b1 ) && !pmp_req_err_o
+      |->
+        match_status.is_rwx_ok || match_status.is_dm_override
     ) else `uvm_error(info_tag, "RWX must agree for allowing umode and L");
 
     // After a match, LRWX determines access  (vplan:LrwxDetermines)
     a_lrwx_aftermatch: assert property (
       //TODO:silabs-robin  Why, "LRWX" in comment, but "rwx" in code?
       match_status.is_matched == 1'b1 && !pmp_req_err_o |->
-        match_status.is_rwx_ok
+        match_status.is_rwx_ok || match_status.is_dm_override
     ) else `uvm_error(info_tag, "LRWX must agree for allowing matched access");
 
     // SMEPMP 1: The reset value of mseccfg is implementation-specific, otherwise if backwards
     // compatibility is a requirement it should reset to zero on hard reset.
     // (vplan:MsecCfg:ResetValue)
     a_mseccfg_reset_val: assert property (
-      $rose(rst_n) |-> csr_pmp_i.mseccfg === MSECCFG_RESET_VAL
+      $rose(rst_n) |-> csr_pmp_i.mseccfg === PMP_MSECCFG_RV
     ) else `uvm_error(info_tag, "mseccfg must be reset correctly");
   end endgenerate
 

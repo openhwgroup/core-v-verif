@@ -25,6 +25,9 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   (
    uvmt_cv32e40s_xsecure_if xsecure_if,
    uvma_rvfi_instr_if rvfi_if,
+   uvma_rvfi_csr_if mcountinhibit_if,
+   uvma_rvfi_csr_if dcsr_if,
+
    input rst_ni,
    input clk_i
   );
@@ -80,7 +83,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   localparam DUMMY_INCREMENT = 0;
   localparam HINT_INCREMENT = 2;
 
-  //The alert signals used the gated clock, so we must therefore make sure the gated clock is enabled. TODO: update text
+  //Set signal high when gated clock is active
   logic core_i_sleep_unit_i_clock_en_q1;
 
   always @(posedge clk_i) begin
@@ -136,14 +139,14 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   // Verify that we do generate dummy/hint instructions when dummy/hint is enabled:
 
   property p_generate_dummy_hint_instruction_if_setting_is_on(hint_or_dummy_setting, hint_or_dummy_instruction);
-    //Make sure the dummy/hint instruction setting is off
+    //Make sure the dummy/hint instruction setting is on
     hint_or_dummy_setting
 
     //Make sure we look at a valid instruction
     && xsecure_if.core_if_stage_if_valid_o
     && xsecure_if.core_if_stage_id_ready_i
 
-    //Make sure we do not generate a dummy/hint instruction
+    //Make sure we generate a dummy/hint instruction
     ##1
     hint_or_dummy_instruction;
   endproperty
@@ -502,18 +505,18 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   ////////// DUMMY AND HINT INSTRUCTIONS STALL IN THE ID STAGE IF THEY ARE SUCCESSOR OF A LOAD INSTRUCTION //////////
 
   a_xsecure_dummy_instruction_load_dummy_stall: assert property (
-    //Random gyldig instruksjon
+    //Valid load instruction in the RVFI stage
     rvfi_if.rvfi_valid
     && !rvfi_if.rvfi_trap
     && rvfi_if.rvfi_insn[6:0] == OPCODE_LOAD
     && rvfi_if.rvfi_rd1_addr != '0
 
-    //Dummy instruksjon i wb
-    && xsecure_if.core_ex_wb_pipe_instr_meta_dummy //Must be so we know it is not a compressed instruction
+    //Dummy instruction in the WB stage
+    && xsecure_if.core_ex_wb_pipe_instr_meta_dummy
     && xsecure_if.core_wb_stage_wb_valid_o
 
     |->
-    //dummy rs1 og rs2 != random instruksjon rd
+    //Verify that the soruce registers of the dummy instruction in the WB stage, is not the same registers as where the load instruction store its results
     xsecure_if.core_i_ex_wb_pipe_instr_bus_resp_rdata[24:20] != rvfi_if.rvfi_rd1_addr
     && xsecure_if.core_i_ex_wb_pipe_instr_bus_resp_rdata[19:15] != rvfi_if.rvfi_rd1_addr
   ) else `uvm_error(info_tag, "A dummy instruction does not stall in ID stage even though the value of a source register is not fetched from memory yet.\n");
@@ -614,17 +617,16 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
   a_xsecure_hint_instructions_updates_minstret: assert property (
 
-    //Make sure that minstret is operative (not inhibited)
-    !xsecure_if.core_cs_registers_mcountinhibit_rdata_minstret
+    //Make sure minstret is operative (not inhibited)
+    mcountinhibit_if.rvfi_csr_rmask[2]
+    && !mcountinhibit_if.rvfi_csr_rdata[2]
 
     //Make sure the counters are not stopped
-    && !xsecure_if.core_i_cs_registers_i_debug_stopcount
-
-    //Make sure there is a hint instruction in the WB stage
-    && xsecure_if.core_ex_wb_pipe_instr_meta_hint
+    && dcsr_if.rvfi_csr_rmask
+    && (!dcsr_if.rvfi_csr_rdata[10] || !rvfi_if.rvfi_dbg_mode)
 
     //Make sure a valid hint instruction retires
-    ##1 rvfi_if.rvfi_valid
+    && rvfi_if.rvfi_valid
     && !rvfi_if.rvfi_trap.trap
     && xsecure_if.rvfi_cmpr_funct3 == FUNCT3_COMPR_SLLI
     && xsecure_if.rvfi_cmpr_opcode == OPCODE_COMPR_SLLI
@@ -648,7 +650,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     && xsecure_if.core_if_stage_if_valid_o
     && xsecure_if.core_if_stage_id_ready_i
 
-    //Make sure we detect up to <num_normal_valid_instructions> non-dummy instructions
+    //Make sure we detect maximum <num_normal_valid_instructions> instructions
     ##1 (xsecure_if.core_if_stage_if_valid_o
     && xsecure_if.core_if_stage_id_ready_i)[->0:(num_normal_valid_instructions)];
   endsequence

@@ -28,18 +28,16 @@ void pmpcfgxtest()
   uint32_t mcause = 11111; // set an arbitrary value other than mcause defaults
   volatile int illegal_count = 0;
 
-  printf("\n\t U mode pmpcfg test");
+  printf("\n\tU mode pmpcfg test\n");
 
   // load content from pmpcfgx and store in variable
   asm volatile("csrrs %0, 0x3A9, x0"
                : "=r"(pmpcfgx_before_test));
-  // printf("\n\t pmpcfgx_before_test = 0x%lx\n", pmpcfgx_before_test);
 
   // get random value to temp[63]
   __asm__ volatile("lw %0, 0(%1)"
                    : "=r"(temp[63])
                    : "r"(RANDOM_REG));
-  // printf("\n\t random reg = 0x%lx\n", temp[63]);
 
   // change to Umode and try to write to csr, should trap
   umode();
@@ -63,37 +61,32 @@ void pmpcfgxtest()
     illegal_count += 1;
   }
 
-  printf("\n\t Back in M mode ");
+  printf("\tBack in M mode\n");
   if (illegal_count != 2)
   {
-    printf("\n\t Expected trap count = 2, but read as %d \n", illegal_count);
+    printf("\tExpected trap count = 2, but read as %d\n", illegal_count);
     exit(EXIT_FAILURE);
   }
   if (mcause == 2)
   {
-    // printf("\n\t Illegal instruction exception triggered as expected ");
-    // printf("\n\t Comparing pmpcfg values M:U mode ");
-
     asm volatile("csrrs %0, 0x3A9, x0"
                  : "=r"(pmpcfgx_after_test));
-    // printf("\n\t pmpcfgx_after_test = 0x%lx\n", pmpcfgx_after_test);
 
     if (pmpcfgx_after_test != pmpcfgx_before_test)
     {
-      printf("\n\t pmpcfg value overwritten, test failed\n");
+      printf("\tpmpcfg value overwritten, test failed\n");
       exit(EXIT_FAILURE);
     }
     else
     {
-      printf("\n\t U mode pmpcfg test pass ");
-      printf("\n\t ------------------------ \n");
+      printf("\tU mode pmpcfg test pass\n");
     }
   }
   else
   {
     asm volatile("csrrw %0, mcause, x0"
                  : "=r"(mcause));
-    printf("\n\t mcause read as 0x%lx != 0x2\n", mcause);
+    printf("\tmcause read as 0x%lx != 0x2\n", mcause);
     exit(EXIT_FAILURE);
   }
 }
@@ -105,7 +98,7 @@ void pmpaddrxtest()
   uint32_t temp[64] = {0};
   uint32_t mcause = 11111; // set an arbitrary value
   volatile int illegal_count = 0;
-  printf("\n\t U mode pmpaddr test ");
+  printf("\tU mode pmpaddr test\n");
 
   asm volatile("csrrs %0, 0x3Ba, x0\n"
                : "=r"(pmpaddrx_before_test));
@@ -132,34 +125,31 @@ void pmpaddrxtest()
     illegal_count += 1;
   }
 
-  printf("\n\t Back in M mode ");
+  printf("\tM-mode\n");
   if (illegal_count != 2)
   {
-    printf("\n\t Expected trap count = 2, but read as %d \n", illegal_count);
+    printf("\tExpected trap count = 2, but read as %d\n", illegal_count);
     exit(EXIT_FAILURE);
   }
   if (mcause == 2)
   {
-    // printf("\n\t Illegal instruction exception triggered as expected ");
-    // printf("\n\t Comparing pmpaddr values M:U mode");
     asm volatile("csrrs %0, 0x3Ba, x0"
                  : "=r"(pmpaddrx_after_test));
     if (pmpaddrx_before_test != pmpaddrx_after_test)
     {
-      printf("\n\t pmpaddr value overwritten, test failed\n");
+      printf("\tpmpaddr value overwritten, test failed\n");
       exit(EXIT_FAILURE);
     }
     else
     {
-      printf("\n\t U mode pmpaddr test pass ");
-      printf("\n\t ------------------------ \n");
+      printf("\tU mode pmpaddr test pass\n");
     }
   }
   else
   {
     asm volatile("csrrw %0, mcause, x0"
                  : "=r"(mcause));
-    printf("\n\t mcause read as 0x%lx != 0x2\n", mcause);
+    printf("\tmcause read as 0x%lx != 0x2\n", mcause);
     exit(EXIT_FAILURE);
   }
 }
@@ -172,7 +162,7 @@ void mseccfgtest()
   uint32_t mcause = 11111; // set an arbitrary value
   volatile int illegal_count = 0;
   // read the mseccfg(0x747) value before test and then to compare
-  printf("\t U mode mseccfg check");
+  printf("\tU mode mseccfg check\n");
   asm volatile("csrrs %0, 0x747, x0"
                : "=r"(mseccfg_before_test));
 
@@ -198,41 +188,38 @@ void mseccfgtest()
     illegal_count += 1;
   }
 
-  printf("\n\t Back in M mode ");
+  printf("\tM-mode\n");
   if (illegal_count != 2)
   {
-    printf("\n\t Expected trap count = 2, but read as %d \n", illegal_count);
+    printf("\tExpected trap count = 2, but read as %d\n", illegal_count);
     exit(EXIT_FAILURE);
   }
   if (mcause == 2)
   {
-    // printf("\n\t Illegal instruction exception triggered as expected ");
-    // printf("\n\t Comparing mseccfg values M:U mode");
     asm volatile("csrrs %0, 0x747, x0"
                  : "=r"(mseccfg_after_test));
     if (mseccfg_after_test != mseccfg_before_test)
     {
-      printf("\n\t mseccfg values overwritten, test failed\n");
+      printf("\tmseccfg values overwritten, test failed\n");
       exit(EXIT_FAILURE);
     }
     else
     {
-      printf("\n\t U mode mseccfg test pass ");
-      printf("\n\t ------------------------ \n");
+      printf("\tU mode mseccfg test pass\n");
     }
   }
   else
   {
     asm volatile("csrrw %0, mcause, x0"
                  : "=r"(mcause));
-    printf("\n\t mcause read as 0x%lx != 0x2\n", mcause);
+    printf("\tmcause read as 0x%lx != 0x2\n", mcause);
     exit(EXIT_FAILURE);
   }
 }
 
 void mmode_only()
 {
-  printf("\n\t testing MmodeOnly ");
+  printf("\n\t--------\n\tMmodeOnly test\n");
   // set pmp addr to 0xffff-ffff
   asm volatile(
       "li t0, 0xFFFFFFFF\n"
@@ -243,6 +230,5 @@ void mmode_only()
   pmpcfgxtest();
   pmpaddrxtest();
   mseccfgtest();
-  printf("\n\t MmodeOnly test pass ");
-  printf("\n\t --------------------------------------------- \n");
+  printf("\tMmodeOnly test pass\n");
 }

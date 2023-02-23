@@ -4,6 +4,7 @@ compile_flags:
     +define+ZBA_ZBB_ZBC_ZBS
     +define+SMCLIC_EN
     +define+PMP_ENABLE_64
+    +define+DBG_NUM_TRIG_0
 ovpsim: >
     --override cpu/CLICLEVELS=256
     --override cpu/CLICXCSW=T
@@ -183,7 +184,7 @@ ovpsim: >
     --override cpu/mask_pmpcfg13=0xFFFFFFFF
     --override cpu/mask_pmpcfg14=0xFFFFFFFF
     --override cpu/mask_pmpcfg15=0xFFFFFFFF
-    --showoverrides
+    #--showoverrides
     # --trace --tracechange --traceshowicount --monitornets
 cflags: >
 plusargs: >
@@ -192,4 +193,4 @@ plusargs: >
     +enable_zbb_extension=1
     +enable_zbc_extension=1
     +enable_zbs_extension=1
-cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zca_zicsr_zifencei
+cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zca_zcb_zcmp_zicsr_zifencei
