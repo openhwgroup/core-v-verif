@@ -110,9 +110,9 @@ module uvmt_cv32e40s_tb;
                              .PMP_PMPADDR_RV       (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_PMPADDR_RV),
                              .PMP_PMPNCFG_RV       (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_PMPNCFG_RV),
                              .RV32                 (uvmt_cv32e40s_pkg::CORE_PARAM_RV32),
-                             .SMCLIC               (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC),
-                             .SMCLIC_ID_WIDTH      (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC_ID_WIDTH),
-                             .SMCLIC_INTTHRESHBITS (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC_INTTHRESHBITS),
+                             .CLIC                 (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC),
+                             .CLIC_ID_WIDTH        (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_ID_WIDTH),
+                             .CLIC_INTTHRESHBITS   (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_INTTHRESHBITS),
                              .INSTR_ADDR_WIDTH     (ENV_PARAM_INSTR_ADDR_WIDTH),
                              .INSTR_RDATA_WIDTH    (ENV_PARAM_INSTR_DATA_WIDTH),
                              .RAM_ADDR_WIDTH       (ENV_PARAM_RAM_ADDR_WIDTH)
@@ -387,7 +387,7 @@ module uvmt_cv32e40s_tb;
   `RVFI_CSR_BIND(secureseed1)
   `RVFI_CSR_BIND(secureseed2)
 
-  if (CORE_PARAM_SMCLIC == 1) begin: gen_clic_rvfi_bind
+  if (CORE_PARAM_CLIC == 1) begin: gen_clic_rvfi_bind
     `RVFI_CSR_BIND(mintstatus)
     `RVFI_CSR_BIND(mintthresh)
     `RVFI_CSR_BIND(mnxti)
@@ -475,7 +475,7 @@ module uvmt_cv32e40s_tb;
 
   // Bind in verification modules to the design
 
-  if (CORE_PARAM_SMCLIC == 0) begin: gen_interrupt_assert
+  if (CORE_PARAM_CLIC == 0) begin: gen_interrupt_assert
     bind cv32e40s_core
       uvmt_cv32e40s_interrupt_assert  interrupt_assert_i (
         .mcause_n     ({cs_registers_i.mcause_n.irq, cs_registers_i.mcause_n.exception_code[4:0]}),
@@ -507,11 +507,11 @@ module uvmt_cv32e40s_tb;
       );
   end : gen_interrupt_assert
 
-  if (CORE_PARAM_SMCLIC == 1) begin: gen_clic_assert
+  if (CORE_PARAM_CLIC == 1) begin: gen_clic_assert
     // CLIC assertions
     bind cv32e40s_core
       uvmt_cv32e40s_clic_interrupt_assert#(
-        .SMCLIC (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC)
+        .CLIC (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC)
       ) clic_assert_i(
         .dpc                 (cs_registers_i.dpc_rdata),
         .mintstatus          (cs_registers_i.mintstatus_rdata),
@@ -549,7 +549,7 @@ module uvmt_cv32e40s_tb;
         // External inputs
         .clic_if             (dut_wrap.clic_if),
         // Internal sampled   variants
-        .irq_id              (core_i.irq_id[SMCLIC_ID_WIDTH-1:0]),
+        .irq_id              (core_i.irq_id[CLIC_ID_WIDTH-1:0]),
         .irq_level           (core_i.irq_level),
         .irq_priv            (core_i.irq_priv),
         .irq_shv             (core_i.irq_shv),
@@ -699,8 +699,8 @@ module uvmt_cv32e40s_tb;
 
   bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i
     uvmt_cv32e40s_rvfi_assert #(
-      .SMCLIC          (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC),
-      .SMCLIC_ID_WIDTH (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC_ID_WIDTH)
+      .CLIC          (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC),
+      .CLIC_ID_WIDTH (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_ID_WIDTH)
     ) rvfi_assert_i (
       .*
     );
@@ -739,12 +739,12 @@ module uvmt_cv32e40s_tb;
   end endgenerate
 
   generate
-    if (SMCLIC==1) begin
+    if (CLIC==1) begin
 
-      assign mtvt_q_shadow_q       = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvt_csr_i.gen_hardened.shadow_q);
-      assign mtvec_q_shadow_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mtvec_csr_i.gen_hardened.shadow_q);
-      assign mintstatus_q_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintstatus_csr_i.gen_hardened.shadow_q);
-      assign mintthresh_q_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.smclic_csrs.mintthresh_csr_i.gen_hardened.shadow_q);
+      assign mtvt_q_shadow_q       = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mtvt_csr_i.gen_hardened.shadow_q);
+      assign mtvec_q_shadow_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mtvec_csr_i.gen_hardened.shadow_q);
+      assign mintstatus_q_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mintstatus_csr_i.gen_hardened.shadow_q);
+      assign mintthresh_q_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mintthresh_csr_i.gen_hardened.shadow_q);
 
       assign mie_q_hardened_shadow_q = '0;
 
@@ -870,7 +870,7 @@ module uvmt_cv32e40s_tb;
       .core_cs_registers_jvt_csr_gen_hardened_shadow_q                                                                  (core_i.cs_registers_i.jvt_csr_i.gen_hardened.shadow_q),
       .core_cs_registers_mstatus_csr_gen_hardened_shadow_q                                                              (core_i.cs_registers_i.mstatus_csr_i.gen_hardened.shadow_q),
       .core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q                                                      (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.gen_hardened.shadow_q),
-      .core_cs_registers_dcsr_csr_gen_hardened_shadow_q                                                                 (core_i.cs_registers_i.dcsr_csr_i.gen_hardened.shadow_q),
+      .core_cs_registers_dcsr_csr_gen_hardened_shadow_q                                                                 (core_i.cs_registers_i.gen_debug_csr.dcsr_csr_i.gen_hardened.shadow_q),
       .core_cs_registers_mepc_csr_gen_hardened_shadow_q                                                                 (core_i.cs_registers_i.mepc_csr_i.gen_hardened.shadow_q),
       .core_cs_registers_mscratch_csr_gen_hardened_shadow_q                                                             (core_i.cs_registers_i.mscratch_csr_i.gen_hardened.shadow_q),
 
@@ -944,7 +944,7 @@ module uvmt_cv32e40s_tb;
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_assert #(
       .SECURE              (cv32e40s_pkg::SECURE),
-      .SMCLIC              (SMCLIC),
+      .CLIC                (CLIC),
       .PMP_NUM_REGIONS     (PMP_NUM_REGIONS),
       .MTVT_ADDR_WIDTH     (core_i.MTVT_ADDR_WIDTH),
       .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
@@ -1425,7 +1425,7 @@ module uvmt_cv32e40s_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(secureseed1)
      `RVFI_CSR_UVM_CONFIG_DB_SET(secureseed2)
 
-     `ifdef SMCLIC_EN
+     `ifdef CLIC_EN
        // TODO:silabs-robin  What about when using "PARAM_SET_0"?
        `RVFI_CSR_UVM_CONFIG_DB_SET(mintstatus)
        `RVFI_CSR_UVM_CONFIG_DB_SET(mintthresh)

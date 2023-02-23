@@ -56,20 +56,20 @@
       // Sat from the include file
    `elsif PARAM_SET_1
       // Sat from the include file
-   `elsif SMCLIC_EN
-      parameter int CORE_PARAM_SMCLIC = 1;
+   `elsif CLIC_EN
+      parameter int CORE_PARAM_CLIC = 1;
    `else
-      parameter int CORE_PARAM_SMCLIC = 0;
+      parameter int CORE_PARAM_CLIC = 0;
    `endif
-   parameter logic SMCLIC = CORE_PARAM_SMCLIC;
+   parameter logic CLIC = CORE_PARAM_CLIC;
 
    `ifdef PARAM_SET_0
       // Sat from the include file
    `elsif PARAM_SET_1
       // Sat from the include file
    `else
-      parameter int  CORE_PARAM_SMCLIC_INTTHRESHBITS = 8;
-      parameter int  CORE_PARAM_SMCLIC_ID_WIDTH = 5;
+      parameter int  CORE_PARAM_CLIC_INTTHRESHBITS = 8;
+      parameter int  CORE_PARAM_CLIC_ID_WIDTH = 5;
    `endif
 
 
