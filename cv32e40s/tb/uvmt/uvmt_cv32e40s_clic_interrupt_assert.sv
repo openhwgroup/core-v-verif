@@ -20,8 +20,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
   import cv32e40s_pkg::*;
   import uvma_rvfi_pkg::*;
   #(
-    parameter int   CLIC          = 0,
-    parameter int   CLIC_ID_WIDTH = 5,
+    parameter int   CLIC            = 0,
+    parameter int   CLIC_ID_WIDTH   = 5,
     parameter int   NUM_IRQ         = 32
   )(
     // gated clock
@@ -71,7 +71,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
     uvma_clic_if                      clic_if,
 
-    input logic [CLIC_ID_WIDTH-1:0] irq_id,
+    input logic [CLIC_ID_WIDTH-1:0]   irq_id,
     input logic [7:0]                 irq_level,
     input logic [1:0]                 irq_priv,
     input logic                       irq_shv,
@@ -129,14 +129,14 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
   typedef struct packed {
     logic                       irq;
-    logic [CLIC_ID_WIDTH-1:0] id;
+    logic [CLIC_ID_WIDTH-1:0]   id;
     logic [7:0]                 level;
     logic [1:0]                 priv;
     logic                       shv;
   } clic_irq_bundle_t;
 
   typedef struct packed {
-    logic [CLIC_ID_WIDTH-1:0] id;
+    logic [CLIC_ID_WIDTH-1:0]   id;
     logic [7:0]                 level;
     logic [1:0]                 priv;
     logic                       shv;

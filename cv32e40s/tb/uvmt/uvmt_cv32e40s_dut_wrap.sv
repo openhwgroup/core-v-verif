@@ -57,9 +57,9 @@ module uvmt_cv32e40s_dut_wrap
     parameter pmpncfg_t              PMP_PMPNCFG_RV[PMP_NUM_REGIONS-1:0] = '{default:PMPNCFG_DEFAULT},
     parameter logic [31:0]           PMP_PMPADDR_RV[PMP_NUM_REGIONS-1:0] = '{default:32'h0},
     parameter int                    PMP_GRANULARITY                     = 0,
-    parameter logic                  CLIC                              = 0,
-    parameter int                    CLIC_ID_WIDTH                     = 5,
-    parameter int                    CLIC_INTTHRESHBITS                = 8,
+    parameter logic                  CLIC                                = 0,
+    parameter int                    CLIC_ID_WIDTH                       = 5,
+    parameter int                    CLIC_INTTHRESHBITS                  = 8,
     parameter int                    DBG_NUM_TRIGGERS                    = 1,
     parameter rv32_e                 RV32                                = RV32I,
 
@@ -178,9 +178,9 @@ module uvmt_cv32e40s_dut_wrap
                       .PMP_PMPADDR_RV       (PMP_PMPADDR_RV),
                       .PMP_PMPNCFG_RV       (PMP_PMPNCFG_RV),
                       .RV32                 (RV32),
-                      .CLIC               (CLIC),
-                      .CLIC_ID_WIDTH      (CLIC_ID_WIDTH),
-                      .CLIC_INTTHRESHBITS (CLIC_INTTHRESHBITS)
+                      .CLIC                 (CLIC),
+                      .CLIC_ID_WIDTH        (CLIC_ID_WIDTH),
+                      .CLIC_INTTHRESHBITS   (CLIC_INTTHRESHBITS)
                       )
     cv32e40s_wrapper_i
         (

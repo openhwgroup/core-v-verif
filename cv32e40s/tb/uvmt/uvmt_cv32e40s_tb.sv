@@ -110,9 +110,9 @@ module uvmt_cv32e40s_tb;
                              .PMP_PMPADDR_RV       (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_PMPADDR_RV),
                              .PMP_PMPNCFG_RV       (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_PMPNCFG_RV),
                              .RV32                 (uvmt_cv32e40s_pkg::CORE_PARAM_RV32),
-                             .CLIC               (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC),
-                             .CLIC_ID_WIDTH      (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_ID_WIDTH),
-                             .CLIC_INTTHRESHBITS (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_INTTHRESHBITS),
+                             .CLIC                 (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC),
+                             .CLIC_ID_WIDTH        (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_ID_WIDTH),
+                             .CLIC_INTTHRESHBITS   (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_INTTHRESHBITS),
                              .INSTR_ADDR_WIDTH     (ENV_PARAM_INSTR_ADDR_WIDTH),
                              .INSTR_RDATA_WIDTH    (ENV_PARAM_INSTR_DATA_WIDTH),
                              .RAM_ADDR_WIDTH       (ENV_PARAM_RAM_ADDR_WIDTH)
