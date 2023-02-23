@@ -35,7 +35,7 @@
 #define NUM_TESTS 10
 // Abort test at first self-check fail, useful for debugging.
 #define ABORT_ON_ERROR_IMMEDIATE 0
-#define SMCLIC_ID_WIDTH 5
+#define CLIC_ID_WIDTH 5
 #define MTVEC_ALIGN_BITS 7
 
 // Addresses of VP interrupt control registers
@@ -1046,7 +1046,7 @@ uint32_t w_mtvt_rd_alignment(uint32_t index, uint8_t report_name){
       );
 
   // Check for correct alignment
-  test_fail += ~(readback_val_mtvt >> max(SMCLIC_ID_WIDTH+2, 6));
+  test_fail += ~(readback_val_mtvt >> max(CLIC_ID_WIDTH+2, 6));
   if (ABORT_ON_ERROR_IMMEDIATE) assert (test_fail == 0);
   cvprintf(V_HIGH, "\nmtvt readback after 0xffff_ffff write: 0x%08lx\n", readback_val_mtvt);
 
@@ -1253,7 +1253,7 @@ uint32_t invalid_mtvt_ptr_exec(uint32_t index, uint8_t report_name) {
 
   clic_vector = set_clic_assert_val((clic_t){
                                     .irq = 0x1,
-                                    .id  = (0x1 << SMCLIC_ID_WIDTH)-1,
+                                    .id  = (0x1 << CLIC_ID_WIDTH)-1,
                                     .level = 0xFF,
                                     .priv  = 0x3,
                                     .shv   = 0x1
