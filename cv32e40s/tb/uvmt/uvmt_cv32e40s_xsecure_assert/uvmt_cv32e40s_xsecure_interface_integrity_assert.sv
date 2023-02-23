@@ -71,8 +71,6 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   endfunction
 
 
-  //Sticky bit that indicates if the major alert has been set.
-  logic alert_major_was_set;
 
   logic [11:0] achk_data;
   logic [11:0] achk_instr;
@@ -91,13 +89,6 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   logic unaligned_integrity_error_parity_rchk_alignmentbuffer;
   logic unaligned_integrity_error_parity_rchk_alignmentbuffer_obi_input;
 
-  always @(posedge clk_i) begin
-    if(!rst_ni) begin
-      alert_major_was_set <= 0;
-    end else if (xsecure_if.core_alert_major_o) begin
-      alert_major_was_set <= xsecure_if.core_alert_major_o;
-    end
-  end
 
   //Independent generation of the checksum based on the outputted data
 
