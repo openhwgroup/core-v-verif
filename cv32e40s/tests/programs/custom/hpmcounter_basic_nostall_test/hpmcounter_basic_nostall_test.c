@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 
   volatile unsigned int mcycle_count;
 
-  __asm__ volatile(".option rvc");
+  __asm__ volatile(".option rvc");  // TODO:ERROR:silabs-robin  Why? Should be in Yaml cfg.
 
   //////////////////////////////////////////////////////////////
   // Cycle count
