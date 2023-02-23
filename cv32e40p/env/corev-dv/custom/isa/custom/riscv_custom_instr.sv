@@ -230,7 +230,7 @@ class cv32e40p_instr extends riscv_instr;
       case(format)
         I_FORMAT: begin // instr rd,rs1,imm more or less
           if(category inside {POST_INC_LOAD, EVENT_LOAD})
-            asm_str_final = $sformatf("%0s %0s, %0s(%0s%0s)", asm_str, rd.name(), get_imm(), rs1.name(), get_post_incr());
+            asm_str_final = $sformatf("%0s %0s, %0s(%0s%0s)", asm_str, rd.name(), get_imm(), rs1.name(), get_post_incr_str());
           else if (category == BITMANIP)
             asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), get_imm());
           else if (category == HWLOOP) begin
@@ -247,11 +247,11 @@ class cv32e40p_instr extends riscv_instr;
         end
         R_FORMAT: begin
           if (category == POST_INC_LOAD)
-            asm_str_final = $sformatf("%0s %0s, %0s(%0s%0s)", asm_str, rd.name(), rs2.name(), rs1.name(), get_post_incr());
+            asm_str_final = $sformatf("%0s %0s, %0s(%0s%0s)", asm_str, rd.name(), rs2.name(), rs1.name(), get_post_incr_str());
 
           else if (category == POST_INC_STORE)
             // rd is used as offset (rs3 in mnemonic, no use to add another register in the sv class just for this)
-            asm_str_final = $sformatf("%0s %0s, %0s(%0s%0s)", asm_str, rs2.name(), rd.name(), rs1.name(), get_post_incr());
+            asm_str_final = $sformatf("%0s %0s, %0s(%0s%0s)", asm_str, rs2.name(), rd.name(), rs1.name(), get_post_incr_str());
 
           else if (category == BITMANIP && instr_name inside {CV_FF1, CV_FL1, CV_CLB, CV_CNT})
             asm_str_final = $sformatf("%0s %0s, %0s", asm_str, rd.name(), rs1.name());
@@ -510,6 +510,7 @@ class cv32e40p_instr extends riscv_instr;
 
   // Convert the instruction to assembly code
   virtual function string convert2bin(string prefix = "");
+    $warning("convert2bin has only been partially implemented for XPULP Instructions");
     string binary;
     case(format)
       I_FORMAT: begin
@@ -548,10 +549,6 @@ class cv32e40p_instr extends riscv_instr;
     return get_instr_name;
   endfunction
 
-  // Get RVC register name for CIW, CL, CS, CB format
-  function bit [2:0] get_c_gpr(riscv_reg_t gpr);
-    return gpr[2:0];
-  endfunction
 
   // Default return imm value directly, can be overriden to use labels and symbols
   // Example: %hi(symbol), %pc_rel(label) ...
@@ -593,9 +590,9 @@ class cv32e40p_instr extends riscv_instr;
     super.update_imm_str();
   endfunction
 
-  virtual function string get_post_incr();
+  virtual function string get_post_incr_str();
     return (is_post_incr) ? "!" : "";
-  endfunction : get_post_incr
+  endfunction : get_post_incr_str
 
   // `include "isa/riscv_instr_cov.svh"
 
