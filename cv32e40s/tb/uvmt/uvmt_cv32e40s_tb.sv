@@ -1133,12 +1133,40 @@ module uvmt_cv32e40s_tb;
       );
 
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i
-      uvmt_cv32e40s_pma_assert  pma_assert_instr_i (
+      uvmt_cv32e40s_pma_assert #(
+        .CORE_REQ_TYPE   (cv32e40s_pkg::obi_inst_req_t),
+        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .IS_INSTR_SIDE   (1),
+        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS)
+      ) pma_assert_instr_i (
+        .obi_addr         (dut_wrap.cv32e40s_wrapper_i.core_i.instr_addr_o),
+        .obi_req          (dut_wrap.cv32e40s_wrapper_i.core_i.instr_req_o),
+        .obi_rvalid       (dut_wrap.cv32e40s_wrapper_i.core_i.instr_rvalid_i),
+        .sup              (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.support_logic_for_assert_coverage_modules_if),
+        .writebuf_trans_i ('0),
+        .writebuf_trans_o ('0),
+        .writebuf_ready_o ('0),
         .*
       );
 
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i
-      uvmt_cv32e40s_pma_assert  pma_assert_data_i (
+      uvmt_cv32e40s_pma_assert #(
+        .CORE_REQ_TYPE   (cv32e40s_pkg::obi_data_req_t),
+        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .IS_INSTR_SIDE   (0),
+        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS)
+      ) pma_assert_data_i (
+        .obi_addr         (dut_wrap.cv32e40s_wrapper_i.core_i.data_addr_o),
+        .obi_req          (dut_wrap.cv32e40s_wrapper_i.core_i.data_req_o),
+        .obi_rvalid       (dut_wrap.cv32e40s_wrapper_i.core_i.data_rvalid_i),
+        .sup              (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.support_logic_for_assert_coverage_modules_if),
+        .writebuf_trans_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_i),
+        .writebuf_trans_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_o),
+        .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
         .*
       );
 
