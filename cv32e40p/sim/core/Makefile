@@ -121,14 +121,15 @@ VSIM_SCRIPT_DIR	  = ../tools/vsim
 VSIM_SCRIPT       = $(VSIM_SCRIPT_DIR)/vsim.tcl
 
 # vcs configuration (hopelessly out of date)
-VCS_VERSION             = O-2018.09-SP1-1
-VCS_HOME                = /opt/synopsys/vcs-mx/$(VCS_VERSION)
+VCS_VERSION            ?= O-2018.09-SP1-1
+VCS_HOME               ?= /opt/synopsys/vcs-mx/$(VCS_VERSION)
 VCS                     = vcs
 VCS_FLAGS              ?= # user defined
 ALL_VCS_FLAGS           = $(VCS_FLAGS)
-VCS_SCRIPT_DIR          = ../tools/vcs
-VCS_SCRIPT              = $(VCS_SCRIPT_DIR)/vcs_batch.tcl
-VCS_SCRIPT_GUI          = $(VCS_SCRIPT_DIR)/vcs.tcl
+# TODO: create example Tcl "do scripts" for VCS
+#VCS_SCRIPT_DIR          = ../tools/vcs
+#VCS_SCRIPT              = $(VCS_SCRIPT_DIR)/vcs_batch.tcl
+#VCS_SCRIPT_GUI          = $(VCS_SCRIPT_DIR)/vcs.tcl
 SIMV                    = ./simv
 
 # dsim is the Metrics Technologies SystemVerilog simulator  (https://metrics.ca/)
@@ -531,16 +532,18 @@ vcsify: CV_CORE_pkg tbsrc_pkg tbsrc
 		-timescale=1ns/1ps \
 		-assert svaext \
 		-CC "-I$(VCS_HOME)/include -O3 -march=native" $(VCS_FLAGS) \
-		-f $(MAKE_DIR)/$(CV_CORE_MANIFEST) \
+		-f $(CV_CORE_MANIFEST) \
 		$(TBSRC_PKG) $(TBSRC)
 
 RTLSRC_TB_TOP	:= $(basename $(notdir $(TBSRC_TOP)))
 
 vcs-run: vcsify
-	$(SIMV) $(ALL_VCS_FLAGS) -ucli -do $(VCS_SCRIPT)
+	$(SIMV) $(ALL_VCS_FLAGS)
+#	$(SIMV) $(ALL_VCS_FLAGS) -ucli -do $(VCS_SCRIPT)
 
 vcs-run-gui: vcsify
-	$(SIMV) $(ALL_VCS_FLAGS) -gui -do $(VCS_SCRIPT_GUI)
+	$(SIMV) $(ALL_VCS_FLAGS)
+#	$(SIMV) $(ALL_VCS_FLAGS) -gui -do $(VCS_SCRIPT_GUI)
 
 .PHONY: vcs-hello-world
 vcs-hello-world: vcsify $(CUSTOM)/hello-world.hex
