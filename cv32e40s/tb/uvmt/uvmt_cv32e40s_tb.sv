@@ -702,6 +702,9 @@ module uvmt_cv32e40s_tb;
       .SMCLIC          (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC),
       .SMCLIC_ID_WIDTH (uvmt_cv32e40s_pkg::CORE_PARAM_SMCLIC_ID_WIDTH)
     ) rvfi_assert_i (
+      .rvfi             (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+      .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
+      .writebuf_valid_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.valid_i),
       .*
     );
 
@@ -1144,10 +1147,11 @@ module uvmt_cv32e40s_tb;
         .obi_addr         (dut_wrap.cv32e40s_wrapper_i.core_i.instr_addr_o),
         .obi_req          (dut_wrap.cv32e40s_wrapper_i.core_i.instr_req_o),
         .obi_rvalid       (dut_wrap.cv32e40s_wrapper_i.core_i.instr_rvalid_i),
+        .rvfi             (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
         .sup              (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.support_logic_for_assert_coverage_modules_if),
+        .writebuf_ready_o ('0),
         .writebuf_trans_i ('0),
         .writebuf_trans_o ('0),
-        .writebuf_ready_o ('0),
         .*
       );
 
@@ -1163,10 +1167,11 @@ module uvmt_cv32e40s_tb;
         .obi_addr         (dut_wrap.cv32e40s_wrapper_i.core_i.data_addr_o),
         .obi_req          (dut_wrap.cv32e40s_wrapper_i.core_i.data_req_o),
         .obi_rvalid       (dut_wrap.cv32e40s_wrapper_i.core_i.data_rvalid_i),
+        .rvfi             (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
         .sup              (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.support_logic_for_assert_coverage_modules_if),
+        .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
         .writebuf_trans_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_i),
         .writebuf_trans_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_o),
-        .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
         .*
       );
 

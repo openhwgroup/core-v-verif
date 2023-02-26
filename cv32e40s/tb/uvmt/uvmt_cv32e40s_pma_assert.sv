@@ -63,8 +63,9 @@ module  uvmt_cv32e40s_pma_assert
   // PMA Verdict
   input wire  pma_err,
 
-  // Support Logic
-  uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp  sup
+  // Support Interfaces
+  uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp  sup,
+  uvma_rvfi_instr_if  rvfi
 );
 
 
@@ -142,6 +143,23 @@ module  uvmt_cv32e40s_pma_assert
       ) else `uvm_error(info_tag, "TODO");
     end : gen_noregions_nobuf
   end : gen_writebuf
+
+
+  // After PMA-deny, subsequent accesses are also suppressed
+
+  a_TODO: assert property (
+    rvfi.is_pma_fault
+    |->
+    (rvfi.rvfi_mem_wmask == '0)
+    //TODO:ERROR:silabs-robin Zcmp should be able to break this
+    //TODO:ERROR:silabs-robin Also reads
+  ) else `uvm_error(info_tag, "TODO");
+
+  cov_TODO: cover property (
+    rvfi.rvfi_valid  &&
+    rvfi.rvfi_trap   &&
+    rvfi.rvfi_mem_wmask
+  );
 
 
 /*  TODO:ERROR:silabs-robin  Check mpu->obi, or delete this

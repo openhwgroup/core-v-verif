@@ -300,6 +300,14 @@ function logic is_umode();
           (rvfi_mode == cv32e40s_pkg::PRIV_LVL_U);
 endfunction : is_umode
 
+function logic  is_pma_fault();
+  return  rvfi_valid  &&
+          rvfi_trap.trap  &&
+          rvfi_trap.exception  &&
+          (rvfi_trap.exception_cause == 'h 1)  &&
+          (rvfi_trap.cause_type == 'h 0);
+endfunction : is_pma_fault
+
 endinterface : uvma_rvfi_instr_if
 
 
