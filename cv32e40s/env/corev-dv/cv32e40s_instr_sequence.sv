@@ -85,12 +85,12 @@ class cv32e40s_instr_sequence extends riscv_instr_sequence;
         raw_instr.directive = $sformatf(".4byte 0x%s # %0s",
                        illegal_instr.get_bin_str(), illegal_instr.comment);
         raw_instr.has_label = 1'b0;
-        idx = $urandom_range(0, instr_stream.instr_list.size());
+        idx = $urandom_range(0, instr_stream.instr_list.size() - 1);
         // Inserting instructions within atomic sequences causes
         // issues with things such as jump tables etc. that depend
         // on absolute addressing.
         while (instr_stream.instr_list[idx].atomic) begin
-          idx = $urandom_range(0, instr_stream.instr_list.size());
+          idx = $urandom_range(0, instr_stream.instr_list.size() - 1);
         end
         //instr_stream.insert(idx, str);
         instr_stream.insert_instr(raw_instr, idx);
@@ -106,12 +106,12 @@ class cv32e40s_instr_sequence extends riscv_instr_sequence;
         raw_instr.directive = $sformatf(".2byte 0x%s # %0s",
                        illegal_instr.get_bin_str(), illegal_instr.comment);
         raw_instr.has_label = 1'b0;
-        idx = $urandom_range(0, instr_stream.instr_list.size());
+        idx = $urandom_range(0, instr_stream.instr_list.size() - 1);
         // Inserting instructions within atomic sequences causes
         // issues with things such as jump tables etc. that depend
         // on absolute addressing
         while (instr_stream.instr_list[idx].atomic) begin
-          idx = $urandom_range(0, instr_stream.instr_list.size());
+          idx = $urandom_range(0, instr_stream.instr_list.size() - 1);
         end
         instr_stream.insert_instr(raw_instr, idx);
       end

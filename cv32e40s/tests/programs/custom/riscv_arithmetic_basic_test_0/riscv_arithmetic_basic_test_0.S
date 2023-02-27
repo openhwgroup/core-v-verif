@@ -9,7 +9,6 @@
 .include "user_define.h"
 .section .text.start
 .globl _start
-.section .text
 .type _start, @function
 
 

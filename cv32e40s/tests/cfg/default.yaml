@@ -3,6 +3,7 @@ description: Default configuration for CV32E40S simulations
 compile_flags:
     +define+ZBA_ZBB_ZBC_ZBS
 ovpsim: >
+    --override cpu/envcfg_mask=0x0
     --override cpu/PMP_registers=64
     --override cpu/PMP_undefined=T
     --override cpu/PMP_initialparams=T
@@ -151,6 +152,24 @@ ovpsim: >
     --override cpu/mask_pmpaddr61=0x00000000
     --override cpu/mask_pmpaddr62=0x00000000
     --override cpu/mask_pmpaddr63=0x00000000
+    --override cpu/mask_pmpcfg0=0x00000000
+    --override cpu/mask_pmpcfg1=0x00000000
+    --override cpu/mask_pmpcfg2=0x00000000
+    --override cpu/mask_pmpcfg3=0x00000000
+    --override cpu/mask_pmpcfg4=0x00000000
+    --override cpu/mask_pmpcfg5=0x00000000
+    --override cpu/mask_pmpcfg6=0x00000000
+    --override cpu/mask_pmpcfg7=0x00000000
+    --override cpu/mask_pmpcfg8=0x00000000
+    --override cpu/mask_pmpcfg9=0x00000000
+    --override cpu/mask_pmpcfg10=0x00000000
+    --override cpu/mask_pmpcfg11=0x00000000
+    --override cpu/mask_pmpcfg12=0x00000000
+    --override cpu/mask_pmpcfg13=0x00000000
+    --override cpu/mask_pmpcfg14=0x00000000
+    --override cpu/mask_pmpcfg15=0x00000000
+    --trace
+    --tracechange
     #--showoverrides
     #--trace --tracechange --traceshowicount --monitornets
     #--override root/showload=T

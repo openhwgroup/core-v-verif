@@ -302,6 +302,12 @@ function void corev_zcmp_pushpop_base_stream::add_mixed_instr(int instr_cnt);
   for (int i = 0; i < instr_cnt; i++) begin
     instr = riscv_instr::type_id::create("instr");
     randomize_instr(instr);
+    // Don't want to tamper with RA as that breaks the
+    // intended sequence flow
+    // TODO constrain somehow rather than rerandomize
+    while (instr.rd == RA) begin
+      randomize_instr(instr);
+    end
     insert_instr(instr);
   end
 endfunction : add_mixed_instr
