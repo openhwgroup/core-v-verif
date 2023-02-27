@@ -344,6 +344,8 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     input         pending_nmi, // From controller
     input         nmi_allowed, // From controller
     input         debug_mode_q, // From controller
+    input         debug_mode_if, // From controller
+    input         ctrl_halt_ex, // From controller
     input  [31:0] dcsr_q, // From controller
     input  [31:0] dpc_q, // From cs regs
     input  [31:0] dpc_n,
