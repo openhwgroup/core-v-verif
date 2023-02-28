@@ -92,13 +92,14 @@ typedef struct packed {
  * PMP matching status
  */
 typedef struct {
-  logic        is_matched;
-  logic        is_locked;
-  logic        is_any_locked;
-  logic        is_rwx_ok;
-  logic        is_access_allowed;
-  logic        is_access_allowed_no_match;
-  access_rsn_t val_access_allowed_reason;
+  logic         is_access_allowed;
+  logic         is_access_allowed_no_match;
+  logic         is_any_locked;
+  logic         is_dm_override;
+  logic         is_locked;
+  logic         is_matched;
+  logic         is_rwx_ok;
+  access_rsn_t  val_access_allowed_reason;
   logic[$clog2(PMP_MAX_REGIONS)-1:0]  val_index;
 } match_status_t;
 

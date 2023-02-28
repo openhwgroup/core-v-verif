@@ -21,7 +21,7 @@ module uvmt_cv32e40s_xsecure_assert
   import cv32e40s_pkg::*;
   #(
     parameter int       SECURE   = 1,
-    parameter logic     SMCLIC = 0,
+    parameter logic     CLIC = 0,
     parameter int       PMP_NUM_REGIONS = 2,
     parameter int       MTVT_ADDR_WIDTH = 5,
     parameter int CSR_MINTTHRESH_MASK = 32,
@@ -631,7 +631,7 @@ module uvmt_cv32e40s_xsecure_assert
   endgenerate
 
   generate
-    if(SMCLIC) begin
+    if(CLIC) begin
 
       //MTVT
       a_xsecure_hardened_csr_mtvt: assert property (
@@ -789,7 +789,7 @@ module uvmt_cv32e40s_xsecure_assert
   endgenerate
 
   generate
-    if(SMCLIC) begin
+    if(CLIC) begin
 
       //MTVT
       a_xsecure_hardened_csr_mismatch_mtvt: assert property (

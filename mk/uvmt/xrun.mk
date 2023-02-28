@@ -37,25 +37,30 @@ SIMVISION         = $(CV_TOOL_PREFIX) simvision
 INDAGO            = $(CV_TOOL_PREFIX) indago
 IMC               = $(CV_SIM_PREFIX) imc
 
-XRUN_UVMHOME_ARG     ?= CDNS-1.2-ML
+XRUN_UVMHOME_ARG ?= CDNS-1.2-ML
 
 # Flags
-XRUN_COMP_FLAGS  ?= -64bit \
-					-disable_sem2009 \
-					-access +rwc \
-                    -nowarn UEXPSC \
-					-lwdgen \
-                    -sv \
-					-uvm \
-					-uvmhome $(XRUN_UVMHOME_ARG) \
-                    $(TIMESCALE) \
-					$(SV_CMP_FLAGS)
+XRUN_COMP_FLAGS  ?=               \
+    -64bit                        \
+    -disable_sem2009              \
+    -access +rwc                  \
+    -nowarn UEXPSC                \
+    -lwdgen                       \
+    -sv                           \
+    -uvm                          \
+    -uvmhome $(XRUN_UVMHOME_ARG)  \
+    $(TIMESCALE)                  \
+    $(SV_CMP_FLAGS)
 
-XRUN_LDGEN_COMP_FLAGS ?= -64bit -disable_sem2009 -access +rwc \
-												 -nowarn UEXPSC \
-												 -nowarn DLCPTH \
-												 -sv \
-												 $(TIMESCALE) $(SV_CMP_FLAGS)
+XRUN_LDGEN_COMP_FLAGS ?=  \
+    -64bit                \
+    -disable_sem2009      \
+    -access +rwc          \
+    -nowarn UEXPSC        \
+    -nowarn DLCPTH        \
+    -sv                   \
+    $(TIMESCALE)          \
+    $(SV_CMP_FLAGS)
 
 XRUN_RUN_BASE_FLAGS ?= -64bit $(XRUN_GUI) -licqueue +UVM_VERBOSITY=$(XRUN_UVM_VERBOSITY) \
                        $(XRUN_PLUSARGS) -svseed $(RNDSEED)
@@ -244,6 +249,9 @@ XRUN_COMP_FLAGS += -nowarn CGPIDF
 # deselect_coverage -all warnings
 XRUN_COMP_FLAGS += -nowarn CGNSWA
 
+# Value Parameters without default values
+XRUN_COMP_FLAGS += -setenv CADENCE_ENABLE_AVSREQ_44905_PHASE_1=1
+
 # deselect_coverage -all warnings
 XRUN_COMP_COREV_DV_FLAGS += -nowarn BNDWRN
 XRUN_COMP_COREV_DV_FLAGS += $(CFG_COMPILE_FLAGS)
@@ -259,6 +267,7 @@ XRUN_RUN_COV    += -nowarn WCROSS
 
 # Un-named covergroup instances
 XRUN_RUN_COV    += -nowarn CGDEFN
+
 
 ###############################################################################
 # Targets

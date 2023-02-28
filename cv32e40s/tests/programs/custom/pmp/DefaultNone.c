@@ -23,24 +23,24 @@
 void default_none()
 {
   uint32_t mcause = 11111; // set an arbitrary value
-  printf("\n\t testing DefaultNone\n");
+
+  printf("\n\t--------\n\tDefaultNone test\n");
 
   // execution permission test
   umode();
   // this line is supposed to trap
   asm volatile("addi t0, t1, 0x12"); // 0x12 as arbitary value
 
-  printf("\n\t Back in M mode ");
+  printf("\tM-mode\n");
   asm volatile("csrrw %0, mcause, x0"
                : "=r"(mcause));
   if (mcause == 1)
   {
-    printf("\n\t Execution permission test pass ");
-    printf("\n\t ------------------------------ \n");
+    printf("\tExecution permission pass\n");
   }
   else
   {
-    printf("\n\t Execution permission test failed \n");
+    printf("\tExecution permission fail\n");
     exit(EXIT_FAILURE);
   }
 
@@ -49,17 +49,16 @@ void default_none()
   // this line is supposed to trap
   asm volatile("sw t0, 0(t1)"); // to be  improve: using a random value to replace t1
 
-  printf("\n\t Back in M mode ");
+  printf("\tM-mode\n");
   asm volatile("csrrw %0, mcause, x0"
                : "=r"(mcause));
   if (mcause == 1)
   {
-    printf("\n\t Store permission test pass ");
-    printf("\n\t ------------------------------ \n");
+    printf("\tStore permission pass\n");
   }
   else
   {
-    printf("\n\t Store permission test failed \n");
+    printf("\tStore permission fail\n");
     exit(EXIT_FAILURE);
   }
 
@@ -67,21 +66,18 @@ void default_none()
   umode();
   // this line is supposed to trap
   asm volatile("lw t0, 0(t1)"); // to be  improve: using a random value to replace t1
-  printf("\n\t Back in M mode ");
+  printf("\tM-mode\n");
   asm volatile("csrrw %0, mcause, x0"
                : "=r"(mcause));
-  // printf("\n\t mcause = 0x%lx\n", mcause);
 
   if (mcause == 1)
   {
-    printf("\n\t Load permission test pass");
-    printf("\n\t ------------------------------ \n");
+    printf("\tLoad permission pass\n");
   }
   else
   {
-    printf("\n\t Load permission test failed \n");
+    printf("\tLoad permission fail\n");
     exit(EXIT_FAILURE);
   }
-  printf("\n\t DefaultNone test pass ");
-  printf("\n\t --------------------------------------------- \n");
+  printf("\tDefaultNone pass\n");
 }
