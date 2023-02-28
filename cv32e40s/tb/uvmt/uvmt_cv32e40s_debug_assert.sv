@@ -83,8 +83,6 @@ module uvmt_cv32e40s_debug_assert
   logic         ebreak_allowed;
   logic         exception_trigger_hit;
 
-  logic         recorded_req;
-  int           req_vs_valid_cnt;
   int           stable_req_vs_valid_cnt;
 
   logic [31:0]  dpc_rdata_q;
@@ -296,7 +294,7 @@ module uvmt_cv32e40s_debug_assert
         |->
         (rvfi.rvfi_dbg == debug_cause_pri)
         or
-        (recorded_req && (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ));
+        (support_if.recorded_dbg_req && (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ));
     endproperty
 
     a_dcsr_cause: assert property(p_dcsr_cause)
@@ -488,7 +486,7 @@ module uvmt_cv32e40s_debug_assert
         ##1 rvfi.rvfi_valid[->1]
         |->
         rvfi.rvfi_dbg_mode && ((rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_TRIGGER) ||
-        (recorded_req && (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ)));
+        (support_if.recorded_dbg_req && (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ)));
     endproperty
 
     a_single_step_trigger : assert property (p_single_step_trigger)
@@ -1014,29 +1012,6 @@ module uvmt_cv32e40s_debug_assert
                                     (rvfi.is_umode() && csr_tdata1.rvfi_csr_rdata[6]));
     assign ebreak_allowed = (rvfi.is_mmode() && csr_dcsr.rvfi_csr_rdata[DCSR_EBREAKM_POS]) || (rvfi.is_umode() && csr_dcsr.rvfi_csr_rdata[DCSR_EBREAKU_POS]);
 
-
-
-    //record a debug_req long enough that it could be taken
-    always@ (posedge cov_assert_if.clk_i or negedge cov_assert_if.rst_ni) begin
-        if( !cov_assert_if.rst_ni) begin
-            recorded_req <= 0;
-            req_vs_valid_cnt <= 4'h0;
-        end else begin
-            if(rvfi.rvfi_valid) begin
-                if(cov_assert_if.debug_req_i) begin
-                    recorded_req <= 1;
-                    req_vs_valid_cnt <= 4'h1;
-                end else if (req_vs_valid_cnt > 0) begin
-                    req_vs_valid_cnt <= req_vs_valid_cnt - 1;
-                end else begin
-                    recorded_req <= 0;
-                end
-            end else if (cov_assert_if.debug_req_i) begin
-                    recorded_req <= 1;
-                    req_vs_valid_cnt <= 4'h2;
-            end
-        end
-    end
 
     // count the number of rvalids while debug_req is stable
     always@ (posedge cov_assert_if.clk_i or negedge cov_assert_if.rst_ni) begin

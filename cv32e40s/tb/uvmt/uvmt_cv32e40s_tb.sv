@@ -1056,6 +1056,7 @@ module uvmt_cv32e40s_tb;
         .ctrl_fsm_o (core_i.controller_i.controller_fsm_i.ctrl_fsm_o),
 
         .fetch_enable        (core_i.fetch_enable),
+        .debug_req_i         (core_i.debug_req_i),
 
         .data_bus_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
         .data_bus_req (core_i.m_c_obi_data_if.s_req.req),

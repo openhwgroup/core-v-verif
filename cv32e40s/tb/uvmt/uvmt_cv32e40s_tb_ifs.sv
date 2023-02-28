@@ -462,6 +462,7 @@ interface uvmt_cv32e40s_input_to_support_logic_module_if
    input ctrl_fsm_t ctrl_fsm_o,
 
    input logic fetch_enable,
+   input logic debug_req_i,
 
    //Obi signals:
 
@@ -506,6 +507,7 @@ interface uvmt_cv32e40s_input_to_support_logic_module_if
       ctrl_fsm_o,
 
       fetch_enable,
+      debug_req_i,
 
       data_bus_rvalid,
       data_bus_gnt,
@@ -584,6 +586,10 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
    // this signal indicates core startup
    logic first_fetch;
 
+   // signal indicates that a debug_req has been observed whithin
+   // a timeframe where the core could oboserve it
+   logic recorded_dbg_req;
+
    modport master_mp (
       output req_after_exception,
          data_bus_addr_ph_cont,
@@ -612,7 +618,8 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
          gntpar_error_in_response_instr,
          gntpar_error_in_response_data,
          first_debug_ins,
-         first_fetch
+         first_fetch,
+         recorded_dbg_req
    );
 
    modport slave_mp (
@@ -643,7 +650,8 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
          gntpar_error_in_response_instr,
          gntpar_error_in_response_data,
          first_debug_ins,
-         first_fetch
+         first_fetch,
+         recorded_dbg_req
    );
 
 endinterface : uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if

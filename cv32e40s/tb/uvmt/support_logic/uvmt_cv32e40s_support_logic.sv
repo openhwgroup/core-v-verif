@@ -48,6 +48,8 @@ module uvmt_cv32e40s_support_logic
   logic ins_was_dret;
   // flopped value of core control signal fetch_enable
   logic fetch_enable_q;
+  // counter for keeping track of the number of rvfi_valids that have passed since the last observed debug_req
+  int   req_vs_valid_cnt;
 
 
   // ---------------------------------------------------------------------------
@@ -120,6 +122,29 @@ module uvmt_cv32e40s_support_logic
           fetch_enable_q <= 1;
       end
   end
+
+  //record a debug_req long enough that it could be taken
+  always@ (posedge in_support_if.clk or negedge in_support_if.rst_n) begin
+      if( !in_support_if.rst_n) begin
+          out_support_if.recorded_dbg_req <= 0;
+          req_vs_valid_cnt <= 4'h0;
+      end else begin
+          if(rvfi.rvfi_valid) begin
+              if(in_support_if.debug_req_i) begin
+                  out_support_if.recorded_dbg_req <= 1;
+                  req_vs_valid_cnt <= 4'h1;
+              end else if (req_vs_valid_cnt > 0) begin
+                  req_vs_valid_cnt <= req_vs_valid_cnt - 1;
+              end else begin
+                  out_support_if.recorded_dbg_req <= 0;
+              end
+          end else if (in_support_if.debug_req_i) begin
+                  out_support_if.recorded_dbg_req <= 1;
+                  req_vs_valid_cnt <= 4'h2;
+          end
+      end
+  end
+
 
 
   // ---------------------------------------------------------------------------
