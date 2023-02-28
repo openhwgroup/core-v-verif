@@ -50,6 +50,8 @@
 void _debugger_start(void)     __attribute__((section(".debugger"))) __attribute__((naked));
 void _debugger(void)           __attribute__((section(".debugger")));
 
+void _debugger_exception_start(void) __attribute__((section(".debugger_exception")));
+
 void handle_illegal_insn(void) __attribute__ ((naked));
 extern void end_handler_incr_mepc(void);
 
@@ -85,10 +87,16 @@ volatile uint8_t  some_data_bytes[4]     = {0xC0, 0xFF, 0xEB, 0xEE};
 volatile uint16_t some_data_halfwords[2] = {0xDEAD, 0xBEEF};
 volatile uint32_t some_data_word         = 0xC0DECAFE;
 
+void _debugger_exception_start(void) {
+  __asm__ volatile ("nop");
+}
+
 void handle_illegal_insn (void) {
-  //printf("  Illegal insn\n");
-    illegal_insn_status = 1;
-    end_handler_incr_mepc(); // Let BSP handle mepc inrements, stack restore and mret
+  __asm__ volatile (R"(
+    la   t0,     illegal_insn_status
+    lw   t1,     0(t0)
+    call end_handler_incr_mepc
+  )");
 }
 
 void _debugger_start(void) {
@@ -266,7 +274,15 @@ int trigger_test (int setup, int expect_trigger_match, uint32_t trigger_addr) {
     __asm__ volatile (R"(lw s4, trigger_address
                          lw s3, 0(s4)          )" ::: "s3", "s4");
   }
-  if (trigger_store) {
+  if (trigger_store == TRIGGER_BYTE) {
+    __asm__ volatile (R"(lw s4, trigger_address
+                         sb s3, 0(s4)          )" ::: "s3", "s4");
+  }
+  if (trigger_store == TRIGGER_HALFWORD) {
+    __asm__ volatile (R"(lw s4, trigger_address
+                         sh s3, 0(s4)          )" ::: "s3", "s4");
+  }
+  if (trigger_store == TRIGGER_WORD) {
     __asm__ volatile (R"(lw s4, trigger_address
                          sw s3, 0(s4)          )" ::: "s3", "s4");
   }
@@ -282,8 +298,9 @@ int trigger_test (int setup, int expect_trigger_match, uint32_t trigger_addr) {
 
 int test_execute_trigger () {
   int retval = 0;
+  trigger_address_offset = 0;
 
-  //printf("\n\n\n --- Testing execute triggers ---\n\n");
+  printf("\n\n\n --- Testing execute triggers ---\n\n");
 
   // Set up trigger
   mcontrol_val = (6 << 28 | // TYPE = 6
@@ -325,6 +342,7 @@ int test_execute_trigger () {
 
 int test_load_trigger () {
   int retval = 0;
+  trigger_address_offset = 0;
   printf("\n\n\n --- Testing load triggers ---\n\n");
   // Set up trigger
   mcontrol_val = (6 << 28 | // TYPE = 6
@@ -369,16 +387,74 @@ int test_load_trigger () {
   debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
   // Loading from start of debug memory to avoid triggering on loads from other variables
-  retval += trigger_test(1, 1, (uint32_t) &_debugger_start);
+  retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
   trigger_address_offset = -4;
-  retval += trigger_test(1, 1, (uint32_t) &_debugger_start);
+  retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
   trigger_address_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &_debugger_start);
+  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
 
   disable_trigger();
 
   return retval;
 }
+
+int test_store_trigger () {
+  int retval = 0;
+  trigger_address_offset = 0;
+  printf("\n\n\n --- Testing store triggers ---\n\n");
+  // Set up trigger
+  mcontrol_val = (6 << 28 | // TYPE = 6
+                  1 << 27 | // DMODE = 1
+                  1 << 12 | // ACTION = Enter debug mode
+                  0 << 7  | // MATCH = EQ
+                  1 << 6  | // M = Match in machine mode
+                  1 << 1 ); // STORE = Match on store to data address
+
+  trigger_load    = 0;
+  trigger_store   = TRIGGER_WORD;
+  trigger_execute = 0;
+
+  debug_break_loop   = DEBUG_LOOPBREAK_TDATA2;
+  retval += trigger_test(1, 1, (uint32_t) &some_data_word);
+
+  debug_break_loop   = DEBUG_LOOPBREAK_DPCINCR;
+  retval += trigger_test(1, 1, (uint32_t) &some_data_word);
+
+  trigger_address_offset = 4;
+  retval += trigger_test(1, 0, (uint32_t) &some_data_word);
+  trigger_address_offset = -4;
+  retval += trigger_test(1, 0, (uint32_t) &some_data_word);
+
+  trigger_address_offset = 0;
+
+  trigger_store    = TRIGGER_HALFWORD;
+  retval += trigger_test(1, 1, (uint32_t) &some_data_halfwords[0]);
+  retval += trigger_test(1, 1, (uint32_t) &some_data_halfwords[1]);
+
+  trigger_store    = TRIGGER_BYTE;
+  retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[0]);
+  retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[1]);
+  retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[2]);
+  retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[3]);
+
+  trigger_store    = TRIGGER_WORD;
+
+  mcontrol_val |= 2 << 7; // Set MATCH = 2 (GEQ)
+
+  debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+
+  // Storing to unsused debugger_exception section to ensure it is not triggered by variables at higher addresses
+  retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
+  trigger_address_offset = -4;
+  retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
+  trigger_address_offset = 4;
+  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+
+  disable_trigger();
+
+  return retval;
+}
+
 
 uint32_t get_num_triggers() {
 
@@ -430,9 +506,18 @@ int main(int argc, char *argv[])
                            csrw tselect, s2         )" ::: "s2");
 
       status  = test_execute_trigger();
-      status += test_load_trigger ();
       if (status != 0) {
         printf("Test 0 failed with status: %d\n", status);
+        return status;
+      }
+      status += test_load_trigger ();
+      if (status != 0) {
+        printf("Test 1 failed with status: %d\n", status);
+        return status;
+      }
+      status += test_store_trigger();
+      if (status != 0) {
+        printf("Test 2 failed with status: %d\n", status);
         return status;
       }
     }
