@@ -45,7 +45,7 @@ module uvmt_cv32e40s_rvfi_assert
   input wire             rvfi_dbg_mode,
   //TODO:INFO:silabs-robin should replace the above with the interface
 
-  uvma_rvfi_instr_if  rvfi,
+  uvma_rvfi_instr_if  rvfi_instr_if,
 
   input wire  writebuf_valid_i,
   input wire  writebuf_ready_o
@@ -222,8 +222,8 @@ module uvmt_cv32e40s_rvfi_assert
 
     rvfi_mem_new = 0;
     for (int i = 0; i < NMEM; i++) begin
-      rvfi_mem_new += |rvfi.rvfi_mem_wmask[i*XLEN/8+:XLEN/8] && rvfi.rvfi_valid;
-      rvfi_mem_new += |rvfi.rvfi_mem_rmask[i*XLEN/8+:XLEN/8] && rvfi.rvfi_valid;
+      rvfi_mem_new += |rvfi_instr_if.rvfi_mem_wmask[i*XLEN/8+:XLEN/8] && rvfi_instr_if.rvfi_valid;
+      rvfi_mem_new += |rvfi_instr_if.rvfi_mem_rmask[i*XLEN/8+:XLEN/8] && rvfi_instr_if.rvfi_valid;
     end
     rvfi_mem_count_n = rvfi_mem_count_c + rvfi_mem_new;
   end

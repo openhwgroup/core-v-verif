@@ -448,9 +448,8 @@ module uvmt_cv32e40s_tb;
 
   bind cv32e40s_wrapper
     uvmt_cv32e40s_assumes  assumes_i (
-      .obi  (dut_wrap.obi_instr_if_i),
-      .rvfi (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
-      .sup  (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.support_logic_for_assert_coverage_modules_if),
+      .obi_memory_if    (dut_wrap.obi_instr_if_i),
+      .support_logic_if (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.support_logic_for_assert_coverage_modules_if),
       .*
     );
 
@@ -710,7 +709,7 @@ module uvmt_cv32e40s_tb;
       .CLIC          (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC),
       .CLIC_ID_WIDTH (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_ID_WIDTH)
     ) rvfi_assert_i (
-      .rvfi             (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+      .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
       .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
       .writebuf_valid_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.valid_i),
       .*
@@ -1154,9 +1153,8 @@ module uvmt_cv32e40s_tb;
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
         .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
       ) pma_assert_instr_i (
-        .obi              (dut_wrap.obi_instr_if_i),
-        .rvfi             (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
-        .sup              (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.support_logic_for_assert_coverage_modules_if),
+        .obi_memory_if    (dut_wrap.obi_instr_if_i),
+        .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
         .writebuf_ready_o ('0),
         .writebuf_trans_i ('0),
         .writebuf_trans_o ('0),
@@ -1172,9 +1170,8 @@ module uvmt_cv32e40s_tb;
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
         .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
       ) pma_assert_data_i (
-        .obi              (dut_wrap.obi_data_if_i),
-        .rvfi             (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
-        .sup              (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.support_logic_for_assert_coverage_modules_if),
+        .obi_memory_if    (dut_wrap.obi_data_if_i),
+        .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
         .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
         .writebuf_trans_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_i),
         .writebuf_trans_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_o),

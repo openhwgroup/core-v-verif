@@ -59,9 +59,8 @@ module  uvmt_cv32e40s_pma_assert
   input wire  pma_err,
 
   // Support Interfaces
-  uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp  sup,
-  uvma_obi_memory_if  obi,
-  uvma_rvfi_instr_if  rvfi
+  uvma_obi_memory_if  obi_memory_if,
+  uvma_rvfi_instr_if  rvfi_instr_if
 );
 
 
@@ -144,20 +143,20 @@ module  uvmt_cv32e40s_pma_assert
   // After PMA-deny, subsequent accesses are also suppressed  (vplan:"Multi-memory operation instructions")
 
   a_failure_denies_subsequents: assert property (
-    rvfi.is_pma_fault()
+    rvfi_instr_if.is_pma_instr_fault()
     |->
-    (rvfi.rvfi_mem_wmask == '0)
+    (rvfi_instr_if.rvfi_mem_wmask == '0)
     //TODO:ERROR:silabs-robin Zcmp should be able to break this. RVFI bug.
     //TODO:ERROR:silabs-robin Also reads
   ) else `uvm_error(info_tag, "accesses aftmr pma fault should be suppressed");
 
   property p_partial_pma_allow (exc_cause);
-    rvfi.rvfi_valid                               &&
-    (rvfi.rvfi_mem_wmask || rvfi.rvfi_mem_rmask)  &&
-    rvfi.rvfi_trap                                &&
-    rvfi.rvfi_trap.exception                      &&
-    (rvfi.rvfi_trap.cause_type == 0)              &&  // PMA, not PMP
-    (rvfi.rvfi_trap.exception_cause == exc_cause)
+    rvfi_instr_if.rvfi_valid  &&
+    (rvfi_instr_if.rvfi_mem_wmask || rvfi_instr_if.rvfi_mem_rmask)  &&
+    rvfi_instr_if.rvfi_trap  &&
+    rvfi_instr_if.rvfi_trap.exception  &&
+    (rvfi_instr_if.rvfi_trap.cause_type == 0)  &&  // PMA, not PMP
+    (rvfi_instr_if.rvfi_trap.exception_cause == exc_cause)
     //TODO:WARNING:silabs-robin Review after above rvfi bug is fixed
     ;
   endproperty : p_partial_pma_allow
@@ -177,7 +176,7 @@ module  uvmt_cv32e40s_pma_assert
     logic [31:0]  addr;
     (bus_trans_valid_o && bus_trans_ready_i, addr = bus_trans_o.addr)
     |->
-    s_eventually (obi.req && (obi.addr[31:2] == addr[31:2]))
+    s_eventually (obi_memory_if.req && (obi_memory_if.addr[31:2] == addr[31:2]))
     //TODO:INFO:silabs-robin Could use transaction number ID instead of addr
     ;
   endproperty : p_eventually_mpu2obi
@@ -194,9 +193,9 @@ module  uvmt_cv32e40s_pma_assert
       bus_trans_valid_o  &&
       bus_trans_ready_i
       |->
-      (obi.memtype   == bus_trans_o.memtype)  &&
-      (obi.prot      == bus_trans_o.prot)     &&
-      (obi.dbg       == bus_trans_o.dbg)
+      (obi_memory_if.memtype   == bus_trans_o.memtype)  &&
+      (obi_memory_if.prot      == bus_trans_o.prot)     &&
+      (obi_memory_if.dbg       == bus_trans_o.dbg)
     ) else `uvm_error(info_tag, "obi attributes must mach mpu");
     //TODO:INFO:silabs-robin Data-side Could be checked by comparing with transaction number IDs
   end : gen_attr_instr

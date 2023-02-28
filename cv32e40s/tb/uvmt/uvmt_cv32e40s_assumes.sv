@@ -29,9 +29,8 @@ module  uvmt_cv32e40s_assumes (
   input wire  clk_i,
   input wire  rst_ni,
 
-  uvma_obi_memory_if  obi,
-  uvma_rvfi_instr_if  rvfi,
-  uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp  sup
+  uvma_obi_memory_if  obi_memory_if,
+  uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp  support_logic_if
 );
 
 
@@ -42,15 +41,15 @@ module  uvmt_cv32e40s_assumes (
   // OBI doesn't stall forever
 
   asu_eventually_rvalid: assume property (
-    (sup.instr_bus_v_addr_ph_cnt > 0)
+    (support_logic_if.instr_bus_v_addr_ph_cnt > 0)
     |->
-    s_eventually  obi.rvalid
+    s_eventually  obi_memory_if.rvalid
   );
 
   asu_eventually_gnt: assume property (
-    obi.req
+    obi_memory_if.req
     |->
-    s_eventually  obi.gnt
+    s_eventually  obi_memory_if.gnt
   );
 
 
