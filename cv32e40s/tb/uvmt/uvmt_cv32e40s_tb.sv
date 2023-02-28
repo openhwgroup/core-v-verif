@@ -1144,9 +1144,7 @@ module uvmt_cv32e40s_tb;
         .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG),
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS)
       ) pma_assert_instr_i (
-        .obi_addr         (dut_wrap.cv32e40s_wrapper_i.core_i.instr_addr_o),
-        .obi_req          (dut_wrap.cv32e40s_wrapper_i.core_i.instr_req_o),
-        .obi_rvalid       (dut_wrap.cv32e40s_wrapper_i.core_i.instr_rvalid_i),
+        .obi              (dut_wrap.obi_instr_if_i),
         .rvfi             (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
         .sup              (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.support_logic_for_assert_coverage_modules_if),
         .writebuf_ready_o ('0),
@@ -1164,9 +1162,7 @@ module uvmt_cv32e40s_tb;
         .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG),
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS)
       ) pma_assert_data_i (
-        .obi_addr         (dut_wrap.cv32e40s_wrapper_i.core_i.data_addr_o),
-        .obi_req          (dut_wrap.cv32e40s_wrapper_i.core_i.data_req_o),
-        .obi_rvalid       (dut_wrap.cv32e40s_wrapper_i.core_i.data_rvalid_i),
+        .obi              (dut_wrap.obi_data_if_i),
         .rvfi             (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
         .sup              (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.support_logic_for_assert_coverage_modules_if),
         .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),

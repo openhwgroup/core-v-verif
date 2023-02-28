@@ -44,16 +44,11 @@ module  uvmt_cv32e40s_pma_assert
   // Interface from Core
   input CORE_REQ_TYPE  core_trans_i,
 
-  // Interface to OBI
+  // Interface towards OBI
   input CORE_REQ_TYPE  bus_trans_o,
   input wire           bus_trans_bufferable,
   input wire           bus_trans_ready_i,
   input wire           bus_trans_valid_o,
-
-  // OBI Signals
-  input wire         obi_req,
-  input wire         obi_rvalid,
-  input wire [31:0]  obi_addr,
 
   // Writebuffer Signals
   input obi_data_req_t  writebuf_trans_i,
@@ -65,6 +60,7 @@ module  uvmt_cv32e40s_pma_assert
 
   // Support Interfaces
   uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp  sup,
+  uvma_obi_memory_if  obi,
   uvma_rvfi_instr_if  rvfi
 );
 
@@ -101,7 +97,7 @@ module  uvmt_cv32e40s_pma_assert
   ) else `uvm_error(info_tag, "TODO");
 
 
-  // memtype[0] matches bufferable flag  (vplan:InstructionFetches0, vplan:DataFetches:0)
+  // memtype[0] matches bufferable flag  (vplan:InstructionFetches:0, vplan:DataFetches:0)
 
   a_memtype_bufferable: assert property (
     bus_trans_o.memtype[0] == bus_trans_bufferable
@@ -145,9 +141,9 @@ module  uvmt_cv32e40s_pma_assert
   end : gen_writebuf
 
 
-  // After PMA-deny, subsequent accesses are also suppressed
+  // After PMA-deny, subsequent accesses are also suppressed  (vplan:TODO:ERROR)
 
-  a_TODO: assert property (
+  a_failure_denies_subsequents: assert property (
     rvfi.is_pma_fault
     |->
     (rvfi.rvfi_mem_wmask == '0)
@@ -155,39 +151,61 @@ module  uvmt_cv32e40s_pma_assert
     //TODO:ERROR:silabs-robin Also reads
   ) else `uvm_error(info_tag, "TODO");
 
-  cov_TODO: cover property (
+  cov_partial_pma_allow: cover property (
     rvfi.rvfi_valid  &&
     rvfi.rvfi_trap   &&
     rvfi.rvfi_mem_wmask
+    //TODO:ERROR:silabs-robin need to specify which traps
   );
 
 
-/*  TODO:ERROR:silabs-robin  Check mpu->obi, or delete this
-  // TODO
+  // MPU-accepted transactions must reach OBI  (vplan: not a vplan item)
 
-  property p_TODO;
+  property p_eventually_mpu2obi;
     logic [31:0]  addr;
     (bus_trans_valid_o && bus_trans_ready_i)  ##0
     (1, addr = bus_trans_o.addr)
     |->
-    //(obi_req && (obi_addr == addr) [->1])
-    s_eventually (obi_req && (obi_addr == addr))
+    s_eventually (obi.req && (obi.addr[31:2] == addr[31:2]))
+    //TODO:INFO:silabs-robin Could use transaction number ID instead of addr
     ;
-  endproperty : p_TODO
+  endproperty : p_eventually_mpu2obi
 
-  a_TODO: assert property (
-    p_TODO
+  a_eventually_mpu2obi: assert property (
+    p_eventually_mpu2obi
   ) else `uvm_error(info_tag, "TODO");
+
+
+  // MPU output reliably reaches OBI  (vplan: not a vplan item)
+
+  if (IS_INSTR_SIDE) begin: gen_TODO
+    a_attributes_to_obi: assert property (
+      bus_trans_valid_o  &&
+      bus_trans_ready_i
+      |->
+      (obi.memtype   == bus_trans_o.memtype)  &&
+      (obi.prot      == bus_trans_o.prot)     &&
+      (obi.dbg       == bus_trans_o.dbg)
+    ) else `uvm_error(info_tag, "TODO");
+    //TODO:INFO:silabs-robin Data-side could be checked by comparing with transaction number IDs
+  end : gen_TODO
 
 
   // TODO
 
-  asu_TODO: assume property (
+  asu_eventually_rvalid: assume property (
     (sup.instr_bus_v_addr_ph_cnt > 0)
     |->
-    s_eventually  obi_rvalid
+    s_eventually  obi.rvalid
+    //TODO:ERROR:silabs-robin move to dedicated assumes file (or obi asserts)
   );
-*/
+
+  asu_eventually_gnt: assume property (
+    obi.req
+    |->
+    s_eventually  obi.gnt
+    //TODO:ERROR:silabs-robin move to dedicated assumes file (or obi asserts)
+  );
 
 
 endmodule : uvmt_cv32e40s_pma_assert
