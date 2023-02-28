@@ -330,7 +330,6 @@ interface uvmt_cv32e40s_debug_cov_assert_if
 
     // Core signals
     input  [31:0] boot_addr_i,
-    input         fetch_enable_i,
 
     // Debug signals
     input         debug_req_i, // From controller
@@ -459,8 +458,10 @@ interface uvmt_cv32e40s_input_to_support_logic_module_if
    input logic clk,
    input logic rst_n,
 
-   //TODO: Copy pass - dont know what this does: Marton describes
+   //Controller fsm control signals output
    input ctrl_fsm_t ctrl_fsm_o,
+
+   input logic fetch_enable,
 
    //Obi signals:
 
@@ -504,6 +505,8 @@ interface uvmt_cv32e40s_input_to_support_logic_module_if
 
       ctrl_fsm_o,
 
+      fetch_enable,
+
       data_bus_rvalid,
       data_bus_gnt,
       data_bus_gntpar,
@@ -538,7 +541,8 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
    import cv32e40s_pkg::*;
    import cv32e40s_rvfi_pkg::*;
 
-   //TODO: Copy pass - dont know what this does: Marton describes
+   // Indicates that a new obi data req arrives after an exception is triggered.
+   // Used to verify exception timing with multiop instruction
    logic req_after_exception;
 
    // support logic signals for the obi bus protocol:
@@ -574,6 +578,12 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
    logic gntpar_error_in_response_instr;
    logic gntpar_error_in_response_data;
 
+   // indicates that the current rvfi_valid instruction is the first in a debug handler
+   logic first_debug_ins;
+
+   // this signal indicates core startup
+   logic first_fetch;
+
    modport master_mp (
       output req_after_exception,
          data_bus_addr_ph_cont,
@@ -600,7 +610,9 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
          instr_req_had_integrity,
          data_req_had_integrity,
          gntpar_error_in_response_instr,
-         gntpar_error_in_response_data
+         gntpar_error_in_response_data,
+         first_debug_ins,
+         first_fetch
    );
 
    modport slave_mp (
@@ -629,7 +641,9 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
          instr_req_had_integrity,
          data_req_had_integrity,
          gntpar_error_in_response_instr,
-         gntpar_error_in_response_data
+         gntpar_error_in_response_data,
+         first_debug_ins,
+         first_fetch
    );
 
 endinterface : uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if
