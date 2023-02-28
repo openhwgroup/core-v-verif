@@ -25,8 +25,8 @@ module uvmt_cv32e40s_rvfi_assert
   import uvma_rvfi_pkg::*;
   import uvme_cv32e40s_pkg::*;
 #(
-  parameter logic  SMCLIC,
-  parameter int    SMCLIC_ID_WIDTH
+  parameter logic  CLIC,
+  parameter int    CLIC_ID_WIDTH
 )(
   input wire  clk_i,
   input wire  rst_ni,
@@ -140,7 +140,7 @@ module uvmt_cv32e40s_rvfi_assert
 
   // RVFI interrupt cause matches legal causes
 
-  if (!SMCLIC) begin: gen_legal_cause_clint
+  if (!CLIC) begin: gen_legal_cause_clint
     a_irq_cause_clint: assert property (
       rvfi_valid  &&
       rvfi_intr.interrupt
@@ -149,8 +149,8 @@ module uvmt_cv32e40s_rvfi_assert
     ) else `uvm_error(info_tag, "unexpected interrupt cause");
   end : gen_legal_cause_clint
 
-  if (SMCLIC) begin: gen_legal_cause_clic
-    localparam logic [31:0]  MAX_CLIC_ID = 2**SMCLIC_ID_WIDTH - 1;
+  if (CLIC) begin: gen_legal_cause_clic
+    localparam logic [31:0]  MAX_CLIC_ID = 2**CLIC_ID_WIDTH - 1;
 
     a_irq_cause_clic: assert property (
       rvfi_valid  &&
@@ -170,7 +170,7 @@ module uvmt_cv32e40s_rvfi_assert
     rvfi_trap.exception_cause
   ) else `uvm_error(info_tag, "rvfi_trap exceptions must have a cause");
 
-  if (!SMCLIC) begin: gen_clint_cause
+  if (!CLIC) begin: gen_clint_cause
     a_interrupts_cause: assert property (
       rvfi_valid  &&
       rvfi_intr

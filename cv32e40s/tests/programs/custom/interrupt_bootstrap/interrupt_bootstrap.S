@@ -61,6 +61,7 @@ _fini:
 .section .vectors.alt, "ax"
 
 .global alt_vector_table
+.option push
 .option norvc
 .align 8
 
@@ -99,3 +100,4 @@ alt_vector_table:
 	j m_fast14_irq_handler
 	j m_fast15_irq_handler
 
+.option pop

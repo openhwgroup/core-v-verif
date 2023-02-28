@@ -20,8 +20,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
   import cv32e40s_pkg::*;
   import uvma_rvfi_pkg::*;
   #(
-    parameter int   SMCLIC          = 0,
-    parameter int   SMCLIC_ID_WIDTH = 5,
+    parameter int   CLIC            = 0,
+    parameter int   CLIC_ID_WIDTH   = 5,
     parameter int   NUM_IRQ         = 32
   )(
     // gated clock
@@ -71,7 +71,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
     uvma_clic_if                      clic_if,
 
-    input logic [SMCLIC_ID_WIDTH-1:0] irq_id,
+    input logic [CLIC_ID_WIDTH-1:0]   irq_id,
     input logic [7:0]                 irq_level,
     input logic [1:0]                 irq_priv,
     input logic                       irq_shv,
@@ -129,14 +129,14 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
   typedef struct packed {
     logic                       irq;
-    logic [SMCLIC_ID_WIDTH-1:0] id;
+    logic [CLIC_ID_WIDTH-1:0]   id;
     logic [7:0]                 level;
     logic [1:0]                 priv;
     logic                       shv;
   } clic_irq_bundle_t;
 
   typedef struct packed {
-    logic [SMCLIC_ID_WIDTH-1:0] id;
+    logic [CLIC_ID_WIDTH-1:0]   id;
     logic [7:0]                 level;
     logic [1:0]                 priv;
     logic                       shv;
@@ -184,7 +184,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     logic [1:0]  mode;
   } mtvec_clic_t;
 
-  localparam N_MTVT = 2+SMCLIC_ID_WIDTH > 6 ? 2+SMCLIC_ID_WIDTH : 6;
+  localparam N_MTVT = 2+CLIC_ID_WIDTH > 6 ? 2+CLIC_ID_WIDTH : 6;
 
   typedef struct packed {
     logic [31:N_MTVT]  base_31_n;
@@ -767,7 +767,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
       0: return 1'b0;
     endcase
     base = rvfi_rs1_rdata;
-    return base + offset inside { [mtvt : mtvt + ((2**SMCLIC_ID_WIDTH * 4))] } ? 1'b1 : 1'b0;
+    return base + offset inside { [mtvt : mtvt + ((2**CLIC_ID_WIDTH * 4))] } ? 1'b1 : 1'b0;
   endfunction : is_store_instr_addr_in_mtvt_region
 
   function logic is_load_instr_addr_in_mtvt_region(uncompressed_instr_t instr);
@@ -778,11 +778,11 @@ module uvmt_cv32e40s_clic_interrupt_assert
       0: return 1'b0;
     endcase
     base = rvfi_rs1_rdata;
-    return base + offset inside { [mtvt : mtvt + ((2**SMCLIC_ID_WIDTH * 4))] } ? 1'b1 : 1'b0;
+    return base + offset inside { [mtvt : mtvt + ((2**CLIC_ID_WIDTH * 4))] } ? 1'b1 : 1'b0;
   endfunction : is_load_instr_addr_in_mtvt_region
 
   generate
-  if (SMCLIC) begin : gen_clic_assertions
+  if (CLIC) begin : gen_clic_assertions
 
     // ------------------------------------------------------------------------
     // mintstatus.mil resets to 0
@@ -870,18 +870,18 @@ module uvmt_cv32e40s_clic_interrupt_assert
         $sformatf("Taken nmi address wrong"));
 
     // ------------------------------------------------------------------------
-    // SMCLIC_ID_WIDTH setting should be for 1-1024 interrupts
+    // CLIC_ID_WIDTH setting should be for 1-1024 interrupts
     // ------------------------------------------------------------------------
 
-    property p_smclic_valid_setting;
-      SMCLIC_ID_WIDTH inside {[1:10]};
-    endproperty : p_smclic_valid_setting
+    property p_clic_valid_setting;
+      CLIC_ID_WIDTH inside {[1:10]};
+    endproperty : p_clic_valid_setting
 
-    a_smclic_valid_setting: assert property (p_smclic_valid_setting)
+    a_clic_valid_setting: assert property (p_clic_valid_setting)
     else
       `uvm_error(info_tag,
-        $sformatf("SMCLIC_ID_WIDTH is invalid, is %0d, should be in range 1 .. 10",
-                  SMCLIC_ID_WIDTH));
+        $sformatf("CLIC_ID_WIDTH is invalid, is %0d, should be in range 1 .. 10",
+                  CLIC_ID_WIDTH));
 
     // ------------------------------------------------------------------------
     // irq_i[0:31] should be hardcoded zero
@@ -1167,7 +1167,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     localparam MAX_OBI_OUTSTANDING = 8;
     logic [31:0] mtvt_write_offset;
     logic [31:0] mtvt_read_offset;
-    logic [31:0] mtvt_table_value[0:(2**(SMCLIC_ID_WIDTH))-1];
+    logic [31:0] mtvt_table_value[0:(2**(CLIC_ID_WIDTH))-1];
     logic is_mtvt_store_event;
     logic no_mtvt_store_event_occurred;
     int   items_in_obi_instr_fifo;
@@ -1252,7 +1252,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     assign obi_data_pending = obi_data_req && !obi_data_gnt;
 
     logic is_read_mtvt_table_val_obi;
-    localparam logic [31:0] mtvt_max_offset = ((2**SMCLIC_ID_WIDTH)*4-1);
+    localparam logic [31:0] mtvt_max_offset = ((2**CLIC_ID_WIDTH)*4-1);
 
     always_comb begin
       if (!rst_ni) begin
@@ -1300,12 +1300,12 @@ module uvmt_cv32e40s_clic_interrupt_assert
       end
       if (is_mtvt_store_event) begin
         mtvt_write_offset                       <= rvfi_rs1_rdata + s_imm - mtvt;
-        mtvt_table_value[(SMCLIC_ID_WIDTH)'(mtvt_write_offset/'d4)] <= rvfi_rs2_rdata;
+        mtvt_table_value[(CLIC_ID_WIDTH)'(mtvt_write_offset/'d4)] <= rvfi_rs2_rdata;
         no_mtvt_store_event_occurred <= 0;
       end
       else if (no_mtvt_store_event_occurred && is_mtvt_load_event) begin
         mtvt_read_offset <= rvfi_rs1_rdata + i_imm - mtvt;
-        mtvt_table_value[(SMCLIC_ID_WIDTH)'(mtvt_read_offset/'d4)] <= rvfi_rd_wdata;
+        mtvt_table_value[(CLIC_ID_WIDTH)'(mtvt_read_offset/'d4)] <= rvfi_rd_wdata;
       end
     end
 
@@ -1334,8 +1334,8 @@ module uvmt_cv32e40s_clic_interrupt_assert
     logic [2:0]       obi_instr_tag_size;
     logic [2:0]       obi_instr_tag_size_n;
 
-    assign is_mtvt_table_access = obi_instr_addr inside { [mtvt : mtvt + ((2**SMCLIC_ID_WIDTH)*4)-1] } && obi_instr_push;
-    assign is_read_from_mtvt = obi_instr_fifo_tag_out.addr inside { [ mtvt : mtvt + ((2**SMCLIC_ID_WIDTH)*4)-1 ] } && obi_instr_pop;
+    assign is_mtvt_table_access = obi_instr_addr inside { [mtvt : mtvt + ((2**CLIC_ID_WIDTH)*4)-1] } && obi_instr_push;
+    assign is_read_from_mtvt = obi_instr_fifo_tag_out.addr inside { [ mtvt : mtvt + ((2**CLIC_ID_WIDTH)*4)-1 ] } && obi_instr_pop;
 
     typedef struct packed {
       logic [35:32] tag;
@@ -1495,7 +1495,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     property p_mtvt_table_read_equals_value_written;
       is_read_from_mtvt
       |->
-        obi_instr_rdata == mtvt_table_value[(SMCLIC_ID_WIDTH)'((obi_instr_fifo_tag_out.addr - mtvt)/4)];
+        obi_instr_rdata == mtvt_table_value[(CLIC_ID_WIDTH)'((obi_instr_fifo_tag_out.addr - mtvt)/4)];
 
     endproperty : p_mtvt_table_read_equals_value_written
 
@@ -1861,7 +1861,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     endsequence : seq_higher_lvl_nonshv_clic_taken
 
     property p_mnxti_case_2_replaced_by_higher_level_non_shv_irq;
-      logic [SMCLIC_ID_WIDTH-1:0] sampled_clic_id;
+      logic [CLIC_ID_WIDTH-1:0] sampled_clic_id;
             (seq_higher_lvl_nonshv_clic_taken.triggered, sampled_clic_id = clic.id)
         ##2
             is_valid_mnxti_read
@@ -1903,7 +1903,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     endsequence : seq_lower_oic_no_longer_presesnt_lower_lvl_pending
 
     property p_mnxti_case_4_replaced_by_lower_level_irq;
-      logic [SMCLIC_ID_WIDTH-1:0] sampled_clic_id;
+      logic [CLIC_ID_WIDTH-1:0] sampled_clic_id;
         seq_higher_lvl_nonshv_clic_taken.triggered
         ##2 is_valid_mnxti_write
         ##1 (seq_lower_oic_no_longer_presesnt_lower_lvl_pending.triggered[->1], sampled_clic_id = clic.id)

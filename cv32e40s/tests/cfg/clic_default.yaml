@@ -2,7 +2,7 @@ name: clic_default
 description: Default clic configuration for CV32E40S simulations
 compile_flags:
     +define+ZBA_ZBB_ZBC_ZBS
-    +define+SMCLIC_EN
+    +define+CLIC_EN
     +define+PMP_ENABLE_64
     +define+DBG_NUM_TRIG_0
 ovpsim: >

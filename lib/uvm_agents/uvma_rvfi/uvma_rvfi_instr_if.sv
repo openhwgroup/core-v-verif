@@ -76,7 +76,14 @@ interface uvma_rvfi_instr_if
   // -------------------------------------------------------------------
   // Local param
   // -------------------------------------------------------------------
+  //instruction (rvfi_instr) masks
   localparam INSTR_MASK_FULL        = 32'h FFFF_FFFF;
+  localparam INSTR_MASK_R_TYPE      = 32'h FE00_707F;
+  localparam INSTR_MASK_I_S_B_TYPE  = 32'h 0000_707F;
+  localparam INSTR_MASK_U_J_TYPE    = 32'h 0000_007F;
+  localparam INSTR_MASK_CSRADDR     = 32'h FFF0_0000;
+
+  //instruction (rvfi_instr) comparison values
   localparam INSTR_OPCODE_DRET      = 32'h 7B20_0073;
   localparam INSTR_OPCODE_MRET      = 32'h 3020_0073;
   localparam INSTR_OPCODE_URET      = 32'h 0020_0073;
@@ -86,7 +93,20 @@ interface uvma_rvfi_instr_if
   localparam INSTR_OPCODE_C_EBREAK  = 32'h 0000_9002;
   localparam INSTR_OPCODE_ECALL     = 32'h 0000_0073;
 
+  localparam INSTR_OPCODE_CSRRW     = 32'h 0000_1073;
+  localparam INSTR_OPCODE_CSRRS     = 32'h 0000_2073;
+  localparam INSTR_OPCODE_CSRRC     = 32'h 0000_3073;
+  localparam INSTR_OPCODE_CSRRWI    = 32'h 0000_5073;
+  localparam INSTR_OPCODE_CSRRSI    = 32'h 0000_6073;
+  localparam INSTR_OPCODE_CSRRCI    = 32'h 0000_7073;
+
+  //positions
+  localparam int INSTR_CSRADDR_POS  = 20;
+
+
   localparam INTR_CAUSE_NMI_MASK         = 11'h 400;
+
+
 
   // -------------------------------------------------------------------
   // Local variables
@@ -163,9 +183,92 @@ interface uvma_rvfi_instr_if
                               bit [ DEFAULT_XLEN-1:0] ref_mask
                               );
 
-  return rvfi_valid && ((rvfi_insn & ref_mask) == ref_instr);
+  return rvfi_valid && is_instr_bus_valid() && ((rvfi_insn & ref_mask) == ref_instr);
 
   endfunction : match_instr
+
+  // Check if instruction is of a certain type, without verifying the instr word is valid
+  // Usage: ref_mask sets the parts of the instruction you want to compare,
+  //        ref_instr is the reference to match
+  function logic match_instr_raw( bit [ DEFAULT_XLEN-1:0] ref_instr,
+                              bit [ DEFAULT_XLEN-1:0] ref_mask
+                              );
+
+  return rvfi_valid && ((rvfi_insn & ref_mask) == ref_instr);
+
+  endfunction : match_instr_raw
+
+// Match instr types
+function logic match_instr_r(bit [ DEFAULT_XLEN-1:0] ref_instr);
+  return match_instr(ref_instr, INSTR_MASK_R_TYPE);
+endfunction : match_instr_r
+
+function logic match_instr_isb(bit [ DEFAULT_XLEN-1:0] ref_instr);
+  return match_instr(ref_instr, INSTR_MASK_I_S_B_TYPE);
+endfunction : match_instr_isb
+
+function logic match_instr_uj(bit [ DEFAULT_XLEN-1:0] ref_instr);
+  return  match_instr(ref_instr, INSTR_MASK_U_J_TYPE);
+endfunction : match_instr_uj
+
+// Match CSR functions
+// These instruction are used to check for csr activity.
+// All instructions has the input csr_addr. Setting this limits the query to
+// that single address, leaving the input as 0 returns any csr activity.
+function logic is_csr_act(bit [11:0] csr_addr = 0);
+  if (csr_addr == 0) begin //not specified
+    return  match_instr_isb(INSTR_OPCODE_CSRRW)  ||
+            match_instr_isb(INSTR_OPCODE_CSRRS)  ||
+            match_instr_isb(INSTR_OPCODE_CSRRC)  ||
+            match_instr_isb(INSTR_OPCODE_CSRRWI) ||
+            match_instr_isb(INSTR_OPCODE_CSRRSI) ||
+            match_instr_isb(INSTR_OPCODE_CSRRCI);
+  end else begin
+    return  match_instr(32'h0 | (csr_addr << INSTR_CSRADDR_POS), INSTR_MASK_CSRADDR) &&
+            ( match_instr_isb(INSTR_OPCODE_CSRRW)  ||
+              match_instr_isb(INSTR_OPCODE_CSRRS)  ||
+              match_instr_isb(INSTR_OPCODE_CSRRC)  ||
+              match_instr_isb(INSTR_OPCODE_CSRRWI) ||
+              match_instr_isb(INSTR_OPCODE_CSRRSI) ||
+              match_instr_isb(INSTR_OPCODE_CSRRCI));
+  end
+endfunction : is_csr_act
+
+// NOTE!  This instruction differs from the strict definition of "reading a CSR"
+//        in the RISCV-spec, as it returns true only if the read value is actually
+//        stored somewhere. If you need the spec definition, please use the
+//        rvfi_csr_if-signals directly.
+function logic is_csr_read(bit [11:0] csr_addr = 0);
+  if (rvfi_rd1_addr != 0) begin
+    return is_csr_act(csr_addr);
+  end else begin // rd is X0, not a read instruction
+    return 0;
+  end
+endfunction
+
+// NOTE!  This instruction differs from the strict definition of "writing a CSR"
+//        in the RISCV-spec, as it returns true only if the csr is actually
+//        written. If you need the spec definition, please use the
+//        rvfi_csr_if-signals directly.
+function logic is_csr_write(bit [11:0] csr_addr = 0);
+  if (csr_addr == 0) begin //not specified
+    return  ( (rvfi_rs1_addr != 0) && match_instr_isb(INSTR_OPCODE_CSRRW))  ||
+            ( (rvfi_rs1_addr != 0) && match_instr_isb(INSTR_OPCODE_CSRRS))  ||
+            ( (rvfi_rs1_addr != 0) && match_instr_isb(INSTR_OPCODE_CSRRC))  ||
+            match_instr_isb(INSTR_OPCODE_CSRRWI) ||
+            //TODO:MT add set and clear with immediate nonzero
+            match_instr_isb(INSTR_OPCODE_CSRRSI) ||
+            match_instr_isb(INSTR_OPCODE_CSRRCI);
+  end else begin
+    return  match_instr(32'h0 | (csr_addr << INSTR_CSRADDR_POS), INSTR_MASK_CSRADDR) &&
+            ( ( (rvfi_rs1_addr != 0) && match_instr_isb(INSTR_OPCODE_CSRRW))  ||
+              ( (rvfi_rs1_addr != 0) && match_instr_isb(INSTR_OPCODE_CSRRS))  ||
+              ( (rvfi_rs1_addr != 0) && match_instr_isb(INSTR_OPCODE_CSRRC))  ||
+              match_instr_isb(INSTR_OPCODE_CSRRWI) ||
+              match_instr_isb(INSTR_OPCODE_CSRRSI) ||
+              match_instr_isb(INSTR_OPCODE_CSRRCI));
+  end
+endfunction
 
 // Return wdata of register "gpr"
 function bit [ DEFAULT_XLEN-1:0] get_gpr_wdata( int gpr);
@@ -300,13 +403,20 @@ function logic is_umode();
           (rvfi_mode == cv32e40s_pkg::PRIV_LVL_U);
 endfunction : is_umode
 
-function logic  is_pma_fault();
+function logic is_pma_fault();
   return  rvfi_valid  &&
           rvfi_trap.trap  &&
           rvfi_trap.exception  &&
           (rvfi_trap.exception_cause == 'h 1)  &&
           (rvfi_trap.cause_type == 'h 0);
 endfunction : is_pma_fault
+
+function logic is_instr_bus_valid();
+  return !( (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT) ||
+            (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_INTEGRITY_FAULT) ||
+            (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_BUS_FAULT)
+    );
+endfunction : is_instr_bus_valid
 
 endinterface : uvma_rvfi_instr_if
 

@@ -64,7 +64,6 @@ int main(int argc, char *argv[])
 
   volatile unsigned int mcycle_count;
 
-  __asm__ volatile(".option rvc");
 
   //////////////////////////////////////////////////////////////
   // Cycle count
