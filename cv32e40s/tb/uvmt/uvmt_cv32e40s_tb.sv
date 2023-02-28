@@ -1055,6 +1055,9 @@ module uvmt_cv32e40s_tb;
 
         .ctrl_fsm_o (core_i.controller_i.controller_fsm_i.ctrl_fsm_o),
 
+        .fetch_enable        (core_i.fetch_enable),
+        .debug_req_i         (core_i.debug_req_i),
+
         .data_bus_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
         .data_bus_req (core_i.m_c_obi_data_if.s_req.req),
         .data_bus_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
@@ -1151,7 +1154,9 @@ module uvmt_cv32e40s_tb;
                                                                     .csr_tdata2(rvfi_csr_tdata2_if_0_i),
                                                                     .instr_obi(obi_instr_if_i.passive_mp),
                                                                     .data_obi(obi_data_if_i.passive_mp),
-                                                                    .cov_assert_if(debug_cov_assert_if));
+                                                                    .cov_assert_if(debug_cov_assert_if),
+                                                                    .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
+                                                                    );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
                                                               .support_if(support_logic_for_assert_coverage_modules_if.slave_mp)
