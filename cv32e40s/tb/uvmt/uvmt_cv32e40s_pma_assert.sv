@@ -78,7 +78,7 @@ module  uvmt_cv32e40s_pma_assert
     foreach (PMA_CFG[i]) begin
       if (PMA_CFG[i].bufferable) begin
         is_bufferable_in_config = 1;
-        //Note: Incorrect if region is overshadowed
+        //TODO:WARNING:silabs-robin Incorrect if region is overshadowed
       end
     end
   endfunction : is_bufferable_in_config
@@ -91,10 +91,8 @@ module  uvmt_cv32e40s_pma_assert
     pma_err
     |->
     !bus_trans_valid_o
-    //TODO:WARNING:silabs-robin Have not checked that "mpu -> obi"
-    //TODO:WARNING:silabs-robin Have not checked that "rvfi -> mpu"
     //TODO:INFO:silas-robin Idea: rvfi-vs-obi sb refmodel prediction
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "pma must block obi reqs");
 
 
   // memtype[0] matches bufferable flag  (vplan:InstructionFetches:0, vplan:DataFetches:0)
@@ -102,7 +100,7 @@ module  uvmt_cv32e40s_pma_assert
   a_memtype_bufferable: assert property (
     bus_trans_o.memtype[0] == bus_trans_bufferable
     // Note: Depends on rest of checking to see that "bus_trans_bufferable is reliable
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "MPU bufferable flag must corespond to obi memtype[0]");
 
 
   // DM region overrules PMA configs  (vplan:DebugRange)
@@ -112,7 +110,7 @@ module  uvmt_cv32e40s_pma_assert
     (core_trans_i.addr inside {[DM_REGION_START:DM_REGION_END]})
     |->
     !pma_err
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "dmode in dregion is never blocked");
 
 
   // Writebuffer usage must be bufferable  (vplan:WriteBuffer)
@@ -123,8 +121,8 @@ module  uvmt_cv32e40s_pma_assert
       |->
       (writebuf_trans_i == writebuf_trans_o)  // Non-buffable must passthrough...
       ||
-      (!writebuf_ready_o)  // ...or we are waiting for a previous buffered.
-    ) else `uvm_error(info_tag, "TODO");
+      (!writebuf_ready_o)    // ...or we are waiting for a previous buffered.
+    ) else `uvm_error(info_tag, "Non-bufferable regions must pass straight through the writebuf");
 
     if (IS_BUFFERABLE_IN_CONFIG) begin: gen_buffering
       cov_writebuf_buffering: cover property (
@@ -136,26 +134,38 @@ module  uvmt_cv32e40s_pma_assert
       a_writebuf_noregions: assert property (
         !bus_trans_bufferable  &&
         (writebuf_trans_i == writebuf_trans_o)
-      ) else `uvm_error(info_tag, "TODO");
+      ) else `uvm_error(info_tag, "with zero regions, nothing is bufferable");
     end : gen_noregions_nobuf
   end : gen_writebuf
 
 
-  // After PMA-deny, subsequent accesses are also suppressed  (vplan:TODO:ERROR)
+  // After PMA-deny, subsequent accesses are also suppressed  (vplan:"Multi-memory operation instructions")
 
   a_failure_denies_subsequents: assert property (
     rvfi.is_pma_fault
     |->
     (rvfi.rvfi_mem_wmask == '0)
-    //TODO:ERROR:silabs-robin Zcmp should be able to break this
+    //TODO:ERROR:silabs-robin Zcmp should be able to break this. RVFI bug.
     //TODO:ERROR:silabs-robin Also reads
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "accesses aftmr pma fault should be suppressed");
 
-  cov_partial_pma_allow: cover property (
-    rvfi.rvfi_valid  &&
-    rvfi.rvfi_trap   &&
-    rvfi.rvfi_mem_wmask
-    //TODO:ERROR:silabs-robin need to specify which traps
+  property p_partial_pma_allow (exc_cause);
+    rvfi.rvfi_valid                               &&
+    (rvfi.rvfi_mem_wmask || rvfi.rvfi_mem_rmask)  &&
+    rvfi.rvfi_trap                                &&
+    rvfi.rvfi_trap.exception                      &&
+    (rvfi.rvfi_trap.cause_type == 0)              &&  // PMA, not PMP
+    (rvfi.rvfi_trap.exception_cause == exc_cause)
+    //TODO:WARNING:silabs-robin Review after above rvfi bug is fixed
+    ;
+  endproperty : p_partial_pma_allow
+
+  cov_partial_pma_allow_load: cover property (
+    p_partial_pma_allow (EXC_CAUSE_LOAD_FAULT)
+  );
+
+  cov_partial_pma_allow_store: cover property (
+    p_partial_pma_allow (EXC_CAUSE_STORE_FAULT)
   );
 
 
@@ -173,12 +183,12 @@ module  uvmt_cv32e40s_pma_assert
 
   a_eventually_mpu2obi: assert property (
     p_eventually_mpu2obi
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "mpu output must reach the bus");
 
 
   // MPU output reliably reaches OBI  (vplan: not a vplan item)
 
-  if (IS_INSTR_SIDE) begin: gen_TODO
+  if (IS_INSTR_SIDE) begin: gen_attr_instr
     a_attributes_to_obi: assert property (
       bus_trans_valid_o  &&
       bus_trans_ready_i
@@ -186,26 +196,9 @@ module  uvmt_cv32e40s_pma_assert
       (obi.memtype   == bus_trans_o.memtype)  &&
       (obi.prot      == bus_trans_o.prot)     &&
       (obi.dbg       == bus_trans_o.dbg)
-    ) else `uvm_error(info_tag, "TODO");
-    //TODO:INFO:silabs-robin Data-side could be checked by comparing with transaction number IDs
-  end : gen_TODO
-
-
-  // TODO
-
-  asu_eventually_rvalid: assume property (
-    (sup.instr_bus_v_addr_ph_cnt > 0)
-    |->
-    s_eventually  obi.rvalid
-    //TODO:ERROR:silabs-robin move to dedicated assumes file (or obi asserts)
-  );
-
-  asu_eventually_gnt: assume property (
-    obi.req
-    |->
-    s_eventually  obi.gnt
-    //TODO:ERROR:silabs-robin move to dedicated assumes file (or obi asserts)
-  );
+    ) else `uvm_error(info_tag, "obi attributes must mach mpu");
+    //TODO:INFO:silabs-robin Data-side Could be checked by comparing with transaction number IDs
+  end : gen_attr_instr
 
 
 endmodule : uvmt_cv32e40s_pma_assert

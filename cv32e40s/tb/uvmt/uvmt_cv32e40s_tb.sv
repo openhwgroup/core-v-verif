@@ -446,6 +446,14 @@ module uvmt_cv32e40s_tb;
                                                                      .rvfi_csr_wdata(rvfi_i.rvfi_csr_tdata_wdata[3])
     );
 
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_assumes  assumes_i (
+      .obi  (dut_wrap.obi_instr_if_i),
+      .rvfi (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+      .sup  (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.support_logic_for_assert_coverage_modules_if),
+      .*
+    );
+
   bind uvmt_cv32e40s_dut_wrap
     uvma_obi_memory_assert_if_wrp#(
       .ADDR_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_ADDR_WIDTH),
