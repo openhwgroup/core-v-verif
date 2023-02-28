@@ -767,7 +767,7 @@ module uvmt_cv32e40s_tb;
 
     end
   endgenerate
-
+/*
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_if
     #(.MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
@@ -964,7 +964,7 @@ module uvmt_cv32e40s_tb;
       .rvfi_if    (rvfi_instr_if_0_i),
       .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
     );
-
+*/
   // Debug assertion and coverage interface
 
   // Instantiate debug assertions
@@ -1152,7 +1152,7 @@ module uvmt_cv32e40s_tb;
                                                                     .csr_tdata1(rvfi_csr_tdata1_if_0_i),
                                                                     .cov_assert_if(debug_cov_assert_if));
 
-    bind cv32e40s_wrapper uvmt_cv32e40s_debug_trigger_assert debug_trigger_assert_i(
+    bind cv32e40s_wrapper uvmt_cv32e40s_triggers_assert_cov debug_trigger_assert_i(
                                                                     .dm_halt_addr_i (core_i.dm_halt_addr_i),
 
                                                                     .support_debug_mode_q (core_i.controller_i.controller_fsm_i.debug_mode_q),

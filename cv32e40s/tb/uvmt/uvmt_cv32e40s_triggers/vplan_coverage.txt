@@ -1,0 +1,141 @@
+
+The debug vplan is written for simulation verification, and it is therefor not always clear what to verify when using assertions.
+This file shows how we have interpreted the verification tasks to fit to verification by assertions.
+The following assertions are covered in uvmt_cv32e40s_triggers_assert_cov.sv.
+
+P12-P13:
+- Vplan:
+
+Verify that core enters debug mode when the trigger matches on instruction address. NB! According to spec, the tdataN registers can only be written from debug mode, as m-mode writes are ignored.
+
+Enter debug mode by any of the above methods.
+Write (randomized) breakpoint addr to tdata2 and enable breakpoint in tdata1[2]
+Exit debug mode (dret instruction)
+Verify that core enters debug mode on breakpoint addr
+Current PC is saved to DPC
+Cause of debug must be saved to DCSR (cause=2)
+PC is updated to value on dm_haltaddr_i input
+Core starts executing debug code
+
+- Assertion verifikasjon:
+1) Verify that core enters debug mode when the trigger matches on instruction address
+2) Verify that core enters debug mode on breakpoint addr - xxxx
+3) Current PC is saved to DPC
+4) Cause of debug must be saved to DCSR (cause=2)
+5) PC is updated to value on dm_haltaddr_i input
+6) Core starts executing debug code
+
+P14-P15:
+- Vplan:
+
+Enter debug mode by any of the above methods.
+Write (randomized) breakpoint addr to tdata2 and disable breakpoint in tdata1
+Exit debug mode (dret instruction)
+Verify that core does not enter debug mode on breakpoint addr
+
+- Assertion verifikasjon:
+1) disable breakpoint in tdata1, verify that core does not enter debug mode on breakpoint addr
+
+P16-P17:
+- Vplan:
+
+Have 0 triggers, access any trigger register and check that illegal instruction exception occurs.
+Check that no triggers ever fire. Check that "tselect" is 0.
+
+- Assertion verifikasjon:
+1) Have 0 triggers, access any trigger register and check that illegal instruction exception occurs
+2) Have 0 triggers, No trigger ever fires
+3) Have 0 triggers, tselect is 0
+
+P18-P19:
+- Vplan:
+For all number of triggers, use tselect to exercise each trigger with each supported type.
+(Also try writing to higher "tselect" than supported and check that a supported number is read back.)
+Make the triggers fire and check that debug mode is entered. Check also that the four context registers trap when accessed.
+
+- Assertion verifikasjon:
+1) For all number of triggers, use tselect to exercise each trigger with each supported type
+2) Make the triggers fire and check that debug mode is entered.
+3) Writing to higher "tselect" than supported, check that a supported number is read back
+4) Check also that the four context registers trap when accessed.
+
+P20-P21:
+- Vplan:
+Configure triggers for load/store/execute and combinations of them, configure tdata2,
+cause triggers to fire and check that debug mode is entered correctly.
+Also check that the tied fields are tied. All of these configurations must be crossed, also against match conditions.
+
+- Assertion verifikasjon:
+1) Hvis load er høy, sørg for at man trigger riktig dersom man har load operasjon
+2) Hvis store er høy, sørg for at man trigger riktig dersom man har store operasjon
+3) Hvis execute er høy, sørg for at man trigger riktig dersom man har execute operasjon
+4) check that the tied fields are tied
+
+P22-P23:
+- Vplan:
+Configure triggers using all three match conditions, exercise them within and outside of the conditions, check that debug mode is/isn't entered. Must also cross against the "match types" item above.
+
+- Assertion verifikasjon:
+1) Sjekk match conditions
+
+P24-P25:
+- Vplan:
+Exercise address match triggers for instr/load/store with different sizes (16/32 for instr, 8/16/32 for loadstore). Check that instr match only happens on the exact address. Check that loadstore addr matching triggers on any byte.
+
+- Assertion verifikasjon:
+1) Check that instr match only happens on the exact address.
+2) Check that loadstore addr matching triggers on any byte.
+
+P26-P27:
+- Vplan:
+Have triggers configured to be able to match, but enable/disable their corresponding mode bit, check that the trigger is either able to fire or is blocked from firing accordingly. Also check the tied values.
+
+- Assertion verifikasjon:
+1) but enable/disable their corresponding mode bit, check that the trigger is either able to fire or is blocked from firing accordingly, using different match configurations.
+2) Also check the tied values. (P20-P21: 4))
+
+P28:
+- Vplan:
+40X, this section must be filled out when the time comes for planning atomics verification.
+
+- Assertion verifikasjon:
+TODO!
+
+P29-P30:
+- Vplan:
+Check that these types can be selected, and check that no other types can be selected. (Functionality of these types should be handled by other items in this plan.) Check also that the default is "15".
+
+- Assertion verifikasjon:
+1) Sjekk at tdata1 type kun kan være 2, 6, 5 eller 15
+
+P31-P32:
+- Vplan:
+Try to write tdata registers outside of debug mode, check that it traps. Try changing "tdata1.dmode" and check that it is WARL (0x1). Cross the above checks with all supported types.
+
+- Assertion verifikasjon:
+1) write tdata registers outside of debug mode, check that it traps --> ENDRET: sjekk at den ikke oppdateres
+2) Try changing "tdata1.dmode" and check that it is WARL (0x1)
+
+P33-P34:
+- Vplan:
+When num triggers is 0, check that "tinfo" is 0.
+For any other num triggers, check that "tinfo.info" is "1" for the three supported types, and that the remaining bits are 0.
+
+- Assertion verifikasjon:
+1) When num triggers is 0, check that "tinfo" is 0.
+2) For any other num triggers, check that "tinfo.info" is "1" for the three supported types, and that the remaining bits are 0.
+
+P35-P36:
+- Vplan: Etrigger!!
+Configure "tdata1" and "tdata2" to fire on exceptions, try both individual and multiple exceptions in addition to supported and unsupported. Exercise scenarios that would trigger or not trigger according to the configuration and check that debug mode is either entered or not entered accordingly, and that the entry goes correctly (pc, dpc, cause, etc).
+
+- Assertion verifikasjon:
+TODO!
+
+P37-P38:
+- Vplan:
+Configure an exception trigger, use the privmode bits to disable/enable the trigger, exercise the trigger conditions, check that it fires/not accordingly. Also check the WARL fields.
+
+- Assertion verifikasjon:
+1) Configure an exception trigger, use the privmode bits to disable/enable the trigger, exercise the trigger conditions, check that it fires/not accordingly.
+2) Check the WARL fields
