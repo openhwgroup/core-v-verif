@@ -28,8 +28,8 @@
 
 
 module  uvmt_cv32e40s_pma_assert
-  import uvm_pkg::*;
   import cv32e40s_pkg::*;
+  import uvm_pkg::*;
 #(
   parameter type          CORE_REQ_TYPE,
   parameter logic [31:0]  DM_REGION_START,
@@ -70,6 +70,8 @@ module  uvmt_cv32e40s_pma_assert
 
   string info_tag = "CV32E40S_PMA_ASSERT";
 
+  enum {BIT_IDX_BUFFERABLE=0} memtype_bit_idx_e;
+
 
   // Helper logic
 
@@ -98,8 +100,8 @@ module  uvmt_cv32e40s_pma_assert
   // memtype[0] matches bufferable flag  (vplan:InstructionFetches:0, vplan:DataFetches:0)
 
   a_memtype_bufferable: assert property (
-    bus_trans_o.memtype[0] == bus_trans_bufferable
-    // Note: Depends on rest of checking to see that "bus_trans_bufferable is reliable
+    bus_trans_o.memtype[BIT_IDX_BUFFERABLE] == bus_trans_bufferable
+    // Note: Depends on rest of checking to see that "bus_trans_bufferable" is reliable
   ) else `uvm_error(info_tag, "MPU bufferable flag must corespond to obi memtype[0]");
 
 
@@ -173,8 +175,7 @@ module  uvmt_cv32e40s_pma_assert
 
   property p_eventually_mpu2obi;
     logic [31:0]  addr;
-    (bus_trans_valid_o && bus_trans_ready_i)  ##0
-    (1, addr = bus_trans_o.addr)
+    (bus_trans_valid_o && bus_trans_ready_i, addr = bus_trans_o.addr)
     |->
     s_eventually (obi.req && (obi.addr[31:2] == addr[31:2]))
     //TODO:INFO:silabs-robin Could use transaction number ID instead of addr

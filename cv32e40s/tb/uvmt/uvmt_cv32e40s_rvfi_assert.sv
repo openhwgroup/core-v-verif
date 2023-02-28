@@ -21,8 +21,9 @@
 
 module uvmt_cv32e40s_rvfi_assert
   import cv32e40s_pkg::*;
-  import cv32e40s_rvfi_pkg::*;
   import uvm_pkg::*;
+  import uvma_rvfi_pkg::*;
+  import uvme_cv32e40s_pkg::*;
 #(
   parameter logic  SMCLIC,
   parameter int    SMCLIC_ID_WIDTH
@@ -196,7 +197,7 @@ module uvmt_cv32e40s_rvfi_assert
 
   a_obi_vs_rvfi: assert property (
     writebuf_req_count_c >= rvfi_mem_count_c
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "rvfi should not report bus transactions that didn't happen");
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (rst_ni == 0) begin
@@ -220,9 +221,9 @@ module uvmt_cv32e40s_rvfi_assert
     end
 
     rvfi_mem_new = 0;
-    for (int i = 0; i < 16/*NMEM*/; i++) begin
-      rvfi_mem_new += |rvfi.rvfi_mem_wmask[i*32+:32] && rvfi.rvfi_valid;
-      rvfi_mem_new += |rvfi.rvfi_mem_rmask[i*32+:32] && rvfi.rvfi_valid;
+    for (int i = 0; i < NMEM; i++) begin
+      rvfi_mem_new += |rvfi.rvfi_mem_wmask[i*XLEN/8+:XLEN/8] && rvfi.rvfi_valid;
+      rvfi_mem_new += |rvfi.rvfi_mem_rmask[i*XLEN/8+:XLEN/8] && rvfi.rvfi_valid;
     end
     rvfi_mem_count_n = rvfi_mem_count_c + rvfi_mem_new;
   end
