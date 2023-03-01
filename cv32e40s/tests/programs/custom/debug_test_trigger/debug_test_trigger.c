@@ -103,6 +103,16 @@ void _debugger_start(void) {
   __asm__ volatile (R"(
     # Store return address and saved registers
 
+      sw a0, -4(sp)
+      sw a1, -8(sp)
+      sw a2, -12(sp)
+      sw a3, -16(sp)
+      sw a4, -20(sp)
+      sw a5, -24(sp)
+      sw a6, -28(sp)
+      sw a7, -32(sp)
+      addi sp, sp, -32
+
       cm.push {ra, s0-s11}, -64
 
     # Execute _debugger() function
@@ -110,6 +120,17 @@ void _debugger_start(void) {
 
     # Restore return address and saved registers
       cm.pop {ra, s0-s11}, 64
+
+      addi sp, sp, 32
+      lw a0, -4(sp)
+      lw a1, -8(sp)
+      lw a2, -12(sp)
+      lw a3, -16(sp)
+      lw a4, -20(sp)
+      lw a5, -24(sp)
+      lw a6, -28(sp)
+      lw a7, -32(sp)
+
 
     # Exit debug mode
       dret
@@ -243,7 +264,7 @@ volatile void trigger_code_multicycle_insn() {
 
 int trigger_test (int setup, int expect_trigger_match, uint32_t trigger_addr) {
 
-  //printf ("\ntrigger_test():\n");
+  printf ("\ntrigger_test():\n");
 
   debug_entry_status = 0;
   trigger_address = trigger_addr;
