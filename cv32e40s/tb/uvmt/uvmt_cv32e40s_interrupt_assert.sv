@@ -72,8 +72,9 @@ module uvmt_cv32e40s_interrupt_assert
     // Determine whether to cancel instruction if branch taken
     input branch_taken_ex,
 
-    // WFI Interface
+    // WFI/WFE Interface
     input core_sleep_o,
+    input  wu_wfe_i,
 
     // OBI
     input mpu_iside_req,
@@ -93,8 +94,8 @@ module uvmt_cv32e40s_interrupt_assert
     // NMI
     input  pending_nmi,
 
-    // WFE
-    input  wu_wfe_i
+    // Support Interface
+    uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp  support_if
   );
 
   // ---------------------------------------------------------------------------
@@ -359,26 +360,6 @@ module uvmt_cv32e40s_interrupt_assert
     end
   end
 
-  // ---------------------------------------------------------------------------
-  // Debug Modeling
-  // ---------------------------------------------------------------------------
-
-  logic debug_mode_q_d1;
-  always @(posedge clk_i) begin
-    debug_mode_q_d1 <= debug_mode_q;
-  end
-
-  logic debug_req_stickied;
-  always_comb begin
-    if ( !rst_ni ) begin
-      debug_req_stickied <= 1'b 0;
-    end else if ( debug_mode_q ) begin
-      debug_req_stickied <= 1'b 0;
-    end else if ( debug_req_i ) begin
-      debug_req_stickied <= 1'b 1;
-      //TODO:WARNING:silabs-robin could replace with the debug_assert stickiness logic
-    end
-  end
 
   // ---------------------------------------------------------------------------
   // WFI Checks
@@ -617,7 +598,7 @@ module uvmt_cv32e40s_interrupt_assert
     |=>
     is_wfi_wfe_in_wb
     or
-    $past(debug_req_stickied && !debug_req_i)
+    $past(support_if.recorded_dbg_req)
     or
     ((rvfi.rvfi_valid [->1]) ##0 (rvfi.rvfi_trap.debug_cause == DBG_CAUSE_TRIGGER))
   ) else `uvm_error(info_tag, "blocked wfi/wfe must remain in wb unless special conditions");

@@ -517,8 +517,8 @@ module uvmt_cv32e40s_tb;
         .obi_iside_rvalid (instr_rvalid_i),
 
         .writebufstate (load_store_unit_i.write_buffer_i.state),
-
-        .rvfi (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+        .rvfi          (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+        .support_if    (support_logic_for_assert_coverage_modules_if.slave_mp),
 
         .*
       );
