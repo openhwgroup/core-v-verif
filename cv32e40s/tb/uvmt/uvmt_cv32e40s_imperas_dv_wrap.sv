@@ -71,7 +71,7 @@
 `define CSR_MSTATEEN1_ADDR      32'h30D
 `define CSR_MSTATEEN2_ADDR      32'h30E
 `define CSR_MSTATEEN3_ADDR      32'h30F
-`define CSR_MTVT_ADDR           32'h307 // only available when SMCLIC=1
+`define CSR_MTVT_ADDR           32'h307 // only available when CLIC=1
 `define CSR_MSTATUSH_ADDR       32'h310
 `define CSR_MENVCFGH_ADDR       32'h31A
 `define CSR_MSTATEEN0H_ADDR     32'h31C
@@ -115,12 +115,12 @@
 `define CSR_MCAUSE_ADDR         32'h342
 `define CSR_MTVAL_ADDR          32'h343
 `define CSR_MIP_ADDR            32'h344
-`define CSR_MNXTI_ADDR          32'h345 // only available when SMCLIC=1
-`define CSR_MINTSTATUS_ADDR     32'hF46 // only available when SMCLIC=1
-`define CSR_MINTTHRESH_ADDR     32'h347 // only available when SMCLIC=1
-`define CSR_MSCRATCHCSW_ADDR    32'h348 // only available when SMCLIC=1
-`define CSR_MSCRATCHCSWL_ADDR   32'h349 // only available when SMCLIC=1
-`define CSR_MCLICBASE_ADDR      32'h34A // only available when SMCLIC=1
+`define CSR_MNXTI_ADDR          32'h345 // only available when CLIC=1
+`define CSR_MINTSTATUS_ADDR     32'hF46 // only available when CLIC=1
+`define CSR_MINTTHRESH_ADDR     32'h347 // only available when CLIC=1
+`define CSR_MSCRATCHCSW_ADDR    32'h348 // only available when CLIC=1
+`define CSR_MSCRATCHCSWL_ADDR   32'h349 // only available when CLIC=1
+`define CSR_MCLICBASE_ADDR      32'h34A // only available when CLIC=1
 
 `define CSR_PMPCFG0_ADDR        32'h3A0
 `define CSR_PMPCFG1_ADDR        32'h3A1
@@ -601,7 +601,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
    `RVVI_SET_CSR( `CSR_MCYCLEH_ADDR,       mcycleh       )
    `RVVI_SET_CSR( `CSR_MINSTRETH_ADDR,     minstreth     )
 
-   if (CORE_PARAM_SMCLIC == 1) begin
+   if (CORE_PARAM_CLIC == 1) begin
      `RVVI_SET_CSR( `CSR_MTVT_ADDR,        mtvt          )
      `RVVI_SET_CSR( `CSR_MNXTI_ADDR,       mnxti         )
      `RVVI_SET_CSR( `CSR_MINTSTATUS_ADDR,  mintstatus    )
@@ -649,7 +649,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
    ////////////////////////////////////////////////////////////////////////////
    // INTERRUPTS
    ////////////////////////////////////////////////////////////////////////////
-  if (CORE_PARAM_SMCLIC == 0) begin
+  if (CORE_PARAM_CLIC == 0) begin
     `RVVI_WRITE_IRQ(MSWInterrupt,        3)
     `RVVI_WRITE_IRQ(MTimerInterrupt,     7)
     `RVVI_WRITE_IRQ(MExternalInterrupt, 11)
@@ -940,7 +940,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
 
     // define asynchronous grouping
     // Interrupts
-    if (CORE_PARAM_SMCLIC == 0) begin
+    if (CORE_PARAM_CLIC == 0) begin
       rvviRefNetGroupSet(rvviRefNetIndexGet("MSWInterrupt"),        1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("MTimerInterrupt"),     1);
       rvviRefNetGroupSet(rvviRefNetIndexGet("MExternalInterrupt"),  1);

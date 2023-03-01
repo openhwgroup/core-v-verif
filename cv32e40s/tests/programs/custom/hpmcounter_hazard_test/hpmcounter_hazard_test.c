@@ -60,7 +60,6 @@ int main(int argc, char *argv[])
 
   volatile unsigned int minstret;
 
-  __asm__ volatile(".option rvc");
 
   //////////////////////////////////////////////////////////////
   // Count load use hazards
