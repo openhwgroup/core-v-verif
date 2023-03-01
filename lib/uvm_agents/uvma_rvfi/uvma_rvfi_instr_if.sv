@@ -69,7 +69,18 @@ interface uvma_rvfi_instr_if
     input logic [(NMEM*XLEN)-1:0]    rvfi_mem_rdata,
     input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_rmask,
     input logic [(NMEM*XLEN)-1:0]    rvfi_mem_wdata,
-    input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask
+    input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask,
+
+    output logic [(32)-1:0][XLEN-1:0]       visualized_gpr_rdata,
+    output logic [(32)-1:0]                 visualized_gpr_rmask,
+    output logic [(32)-1:0][XLEN-1:0]       visualized_gpr_wdata,
+    output logic [(32)-1:0]                 visualized_gpr_wmask,
+
+    output logic [NMEM-1:0][XLEN-1:0]       visualized_mem_addr,
+    output logic [NMEM-1:0][XLEN-1:0]       visualized_mem_rdata,
+    output logic [NMEM-1:0][(XLEN/8)-1:0]   visualized_mem_rmask,
+    output logic [NMEM-1:0][XLEN-1:0]       visualized_mem_wdata,
+    output logic [NMEM-1:0][(XLEN/8)-1:0]   visualized_mem_wmask
 
   );
 
@@ -108,6 +119,7 @@ interface uvma_rvfi_instr_if
 
 
 
+
   // -------------------------------------------------------------------
   // Local variables
   // -------------------------------------------------------------------
@@ -116,6 +128,21 @@ interface uvma_rvfi_instr_if
   // -------------------------------------------------------------------
   // Begin module code
   // -------------------------------------------------------------------
+
+  // these signals are added to make it easier to use the signal arrays,
+  // and to inspect them in the waveforms
+  // gpr masks are redundant, but added for ease of use
+  assign {>>{visualized_gpr_rdata}} = rvfi_gpr_rdata;
+  assign visualized_gpr_rmask       = rvfi_gpr_rmask;
+  assign {>>{visualized_gpr_wdata}} = rvfi_gpr_wdata;
+  assign visualized_gpr_wmask       = rvfi_gpr_wmask;
+
+
+  assign {>>{visualized_mem_addr}}  = rvfi_mem_addr;
+  assign {>>{visualized_mem_rdata}} = rvfi_mem_rdata;
+  assign {>>{visualized_mem_rmask}} = rvfi_mem_rmask;
+  assign {>>{visualized_mem_wdata}} = rvfi_mem_wdata;
+  assign {>>{visualized_mem_wmask}} = rvfi_mem_wmask;
 
   always @(posedge clk) begin
     cycle_cnt <= cycle_cnt + 1;
