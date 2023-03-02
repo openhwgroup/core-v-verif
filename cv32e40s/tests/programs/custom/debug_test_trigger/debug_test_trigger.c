@@ -75,12 +75,12 @@ int  test_load_trigger(void);
 
 volatile uint32_t tdata1_next;
 volatile uint32_t tdata2_next;
-volatile uint32_t trigger_address;
-volatile uint32_t trigger_address_offset;
-volatile int      trigger_type;
+volatile uint32_t tdata2_next_offset;
 
-volatile uint32_t num_triggers;
+volatile int      trigger_type;
+volatile uint32_t trigger_address;
 volatile uint32_t trigger_sel;
+volatile uint32_t num_triggers;
 
 volatile int debug_sel;
 volatile int debug_break_loop;
@@ -147,16 +147,12 @@ void _debugger_start(void) {
       lw a6, -28(sp)
       lw a7, -32(sp)
 
-
     # Exit debug mode
       dret
   )");
 }
 
 void _debugger (void) {
-  volatile uint32_t t0;
-  volatile uint32_t t1;
-  volatile uint32_t t2;
 
   printf("  Entered debug\n");
 
@@ -183,23 +179,18 @@ void _debugger (void) {
           printf("    Disabling trigger by clearing TDATA1->EXECUTE\n");
           break;
       }
-
     break;
 
     case DEBUG_SEL_SETUP_TRIGGER:
       // Load tdata config csrs
       printf("    Setting up triggers\n      csr_write: tdata1 = 0x%08lx\n      csr_write: tdata2 = 0x%08lx (0x%lx + 0x%lx)\n",
-             tdata1_next, (trigger_address + trigger_address_offset), trigger_address, trigger_address_offset);
-      __asm__ volatile (R"(la   %[temp0],     tdata1_next
-                           lw   %[temp1],     0(%[temp0])
-                           csrw tdata1, %[temp1]
-                           la   s2,     trigger_address
-                           lw   s0,     0(s2)
-                           la   s2,     trigger_address_offset
-                           lw   s1,     0(s2)
-                           add  s0, s0, s1
-                           csrw tdata2, s0)" : [temp0] "=r" (t0), [temp1] "=r" (t1), [temp2] "=r" (t2)  :: "s0", "s1", "s2");
-
+             tdata1_next, tdata2_next, trigger_address, tdata2_next_offset);
+      __asm__ volatile (R"(la   s1,     tdata1_next
+                           lw   s0,     0(s1)
+                           csrw tdata1, s0
+                           la   s1,     tdata2_next
+                           lw   s0,     0(s1)
+                           csrw tdata2, s0)" ::: "s0", "s1");
     break;
 
     case DEBUG_SEL_CLEAR_TDATA2:
@@ -284,12 +275,14 @@ volatile void trigger_code_multicycle_insn() {
                        ret)");
 }
 
-int trigger_test (int setup, int expect_trigger_match, uint32_t trigger_addr) {
+int trigger_test (int setup, int expect_trigger_match, uint32_t tdata2_arg) {
 
   printf ("\ntrigger_test():\n");
 
+  tdata2_next        = tdata2_arg + tdata2_next_offset;
+  trigger_address    = tdata2_arg;
   debug_entry_status = 0;
-  trigger_address = trigger_addr;
+
   if (setup) {
     debug_sel = DEBUG_SEL_SETUP_TRIGGER;
 
@@ -344,7 +337,7 @@ int trigger_test (int setup, int expect_trigger_match, uint32_t trigger_addr) {
 
 int test_execute_trigger () {
   int retval = 0;
-  trigger_address_offset = 0;
+  tdata2_next_offset = 0;
 
   printf("\n\n\n --- Testing execute triggers ---\n\n");
 
@@ -387,15 +380,15 @@ int test_execute_trigger () {
 
 int test_load_trigger () {
   int retval = 0;
-  trigger_address_offset = 0;
+  tdata2_next_offset = 0;
   printf("\n\n\n --- Testing load triggers ---\n\n");
   // Set up trigger
   tdata1_next = (6 << 28 | // TYPE = 6
-                  1 << 27 | // DMODE = 1
-                  1 << 12 | // ACTION = Enter debug mode
-                  0 << 7  | // MATCH = EQ
-                  1 << 6  | // M = Match in machine mode
-                  1 << 0 ); // LOAD = Match on load from data address
+                 1 << 27 | // DMODE = 1
+                 1 << 12 | // ACTION = Enter debug mode
+                 0 << 7  | // MATCH = EQ
+                 1 << 6  | // M = Match in machine mode
+                 1 << 0 ); // LOAD = Match on load from data address
 
   trigger_type    = TRIGGER_LOAD_WORD;
 
@@ -405,12 +398,12 @@ int test_load_trigger () {
   debug_break_loop   = DEBUG_LOOPBREAK_DPCINCR;
   retval += trigger_test(1, 1, (uint32_t) &some_data_word);
 
-  trigger_address_offset = 4;
+  tdata2_next_offset = 4;
   retval += trigger_test(1, 0, (uint32_t) &some_data_word);
-  trigger_address_offset = -4;
+  tdata2_next_offset = -4;
   retval += trigger_test(1, 0, (uint32_t) &some_data_word);
 
-  trigger_address_offset = 0;
+  tdata2_next_offset = 0;
 
   trigger_type    = TRIGGER_LOAD_HALFWORD;
   retval += trigger_test(1, 1, (uint32_t) &some_data_halfwords[0]);
@@ -431,9 +424,9 @@ int test_load_trigger () {
 
   // Loading from start of debug memory to avoid triggering on loads from other variables
   retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
-  trigger_address_offset = -4;
+  tdata2_next_offset = -4;
   retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
-  trigger_address_offset = 4;
+  tdata2_next_offset = 4;
   retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
 
   disable_trigger();
@@ -443,7 +436,7 @@ int test_load_trigger () {
 
 int test_store_trigger () {
   int retval = 0;
-  trigger_address_offset = 0;
+  tdata2_next_offset = 0;
   printf("\n\n\n --- Testing store triggers ---\n\n");
   // Set up trigger
   tdata1_next = (6 << 28 | // TYPE = 6
@@ -461,12 +454,12 @@ int test_store_trigger () {
   debug_break_loop   = DEBUG_LOOPBREAK_DPCINCR;
   retval += trigger_test(1, 1, (uint32_t) &some_data_word);
 
-  trigger_address_offset = 4;
+  tdata2_next_offset = 4;
   retval += trigger_test(1, 0, (uint32_t) &some_data_word);
-  trigger_address_offset = -4;
+  tdata2_next_offset = -4;
   retval += trigger_test(1, 0, (uint32_t) &some_data_word);
 
-  trigger_address_offset = 0;
+  tdata2_next_offset = 0;
 
   trigger_type    = TRIGGER_STORE_HALFWORD;
   retval += trigger_test(1, 1, (uint32_t) &some_data_halfwords[0]);
@@ -486,9 +479,9 @@ int test_store_trigger () {
 
   // Storing to unsused debugger_exception section to ensure it is not triggered by variables at higher addresses
   retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
-  trigger_address_offset = -4;
+  tdata2_next_offset = -4;
   retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
-  trigger_address_offset = 4;
+  tdata2_next_offset = 4;
   retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
 
   disable_trigger();
@@ -499,7 +492,7 @@ int test_store_trigger () {
 int test_exception_trigger () {
   int retval = 0;
 
-  trigger_address_offset = 0;
+  tdata2_next_offset = 0;
 
   printf("\n\n\n --- Testing execption triggers ---\n\n");
 
@@ -552,7 +545,7 @@ int main(int argc, char *argv[])
 {
   int status = 0;
 
-  trigger_address_offset = 0;
+  tdata2_next_offset = 0;
 
   num_triggers = get_num_triggers();
 
