@@ -132,17 +132,17 @@ interface uvma_rvfi_instr_if
   // these signals are added to make it easier to use the signal arrays,
   // and to inspect them in the waveforms
   // gpr masks are redundant, but added for ease of use
-  assign {>>{visualized_gpr_rdata}} = rvfi_gpr_rdata;
-  assign visualized_gpr_rmask       = rvfi_gpr_rmask;
-  assign {>>{visualized_gpr_wdata}} = rvfi_gpr_wdata;
-  assign visualized_gpr_wmask       = rvfi_gpr_wmask;
+  assign {>>{gpr_rdata_array}} = rvfi_gpr_rdata;
+  assign gpr_rmask_array       = rvfi_gpr_rmask;
+  assign {>>{gpr_wdata_array}} = rvfi_gpr_wdata;
+  assign gpr_wmask_array       = rvfi_gpr_wmask;
 
 
-  assign {>>{visualized_mem_addr}}  = rvfi_mem_addr;
-  assign {>>{visualized_mem_rdata}} = rvfi_mem_rdata;
-  assign {>>{visualized_mem_rmask}} = rvfi_mem_rmask;
-  assign {>>{visualized_mem_wdata}} = rvfi_mem_wdata;
-  assign {>>{visualized_mem_wmask}} = rvfi_mem_wmask;
+  assign {>>{mem_addr_array}}  = rvfi_mem_addr;
+  assign {>>{mem_rdata_array}} = rvfi_mem_rdata;
+  assign {>>{mem_rmask_array}} = rvfi_mem_rmask;
+  assign {>>{mem_wdata_array}} = rvfi_mem_wdata;
+  assign {>>{mem_wmask_array}} = rvfi_mem_wmask;
 
   always @(posedge clk) begin
     cycle_cnt <= cycle_cnt + 1;
