@@ -71,16 +71,16 @@ interface uvma_rvfi_instr_if
     input logic [(NMEM*XLEN)-1:0]    rvfi_mem_wdata,
     input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask,
 
-    output logic [(32)-1:0][XLEN-1:0]       visualized_gpr_rdata,
-    output logic [(32)-1:0]                 visualized_gpr_rmask,
-    output logic [(32)-1:0][XLEN-1:0]       visualized_gpr_wdata,
-    output logic [(32)-1:0]                 visualized_gpr_wmask,
+    output logic [(32)-1:0][XLEN-1:0]       gpr_rdata_array,
+    output logic [(32)-1:0]                 gpr_rmask_array,
+    output logic [(32)-1:0][XLEN-1:0]       gpr_wdata_array,
+    output logic [(32)-1:0]                 gpr_wmask_array,
 
-    output logic [NMEM-1:0][XLEN-1:0]       visualized_mem_addr,
-    output logic [NMEM-1:0][XLEN-1:0]       visualized_mem_rdata,
-    output logic [NMEM-1:0][(XLEN/8)-1:0]   visualized_mem_rmask,
-    output logic [NMEM-1:0][XLEN-1:0]       visualized_mem_wdata,
-    output logic [NMEM-1:0][(XLEN/8)-1:0]   visualized_mem_wmask
+    output logic [NMEM-1:0][XLEN-1:0]       mem_addr_array,
+    output logic [NMEM-1:0][XLEN-1:0]       mem_rdata_array,
+    output logic [NMEM-1:0][(XLEN/8)-1:0]   mem_rmask_array,
+    output logic [NMEM-1:0][XLEN-1:0]       mem_wdata_array,
+    output logic [NMEM-1:0][(XLEN/8)-1:0]   mem_wmask_array
 
   );
 
@@ -115,7 +115,7 @@ interface uvma_rvfi_instr_if
   localparam int INSTR_CSRADDR_POS  = 20;
 
 
-  localparam INTR_CAUSE_NMI_MASK         = 11'h 400;
+  localparam INTR_CAUSE_NMI_MASK    = 11'h 400;
 
 
 
