@@ -41,10 +41,15 @@
 #define DEBUG_LOOPBREAK_TDATA2  2
 #define DEBUG_LOOPBREAK_DPCINCR 3
 
-#define TRIGGER_NONE     0
-#define TRIGGER_BYTE     1
-#define TRIGGER_HALFWORD 2
-#define TRIGGER_WORD     3
+#define TRIGGER_NONE              0
+#define TRIGGER_LOAD_BYTE         1
+#define TRIGGER_LOAD_HALFWORD     2
+#define TRIGGER_LOAD_WORD         3
+#define TRIGGER_STORE_BYTE        4
+#define TRIGGER_STORE_HALFWORD    5
+#define TRIGGER_STORE_WORD        6
+#define TRIGGER_EXECUTE           7
+#define TRIGGER_EXCEPTION_ILLEGAL 8
 
                                // Place in debugger section
 void _debugger_start(void)     __attribute__((section(".debugger"))) __attribute__((naked));
@@ -52,6 +57,7 @@ void _debugger(void)           __attribute__((section(".debugger")));
 
 void _debugger_exception_start(void) __attribute__((section(".debugger_exception")));
 
+void handle_ebreak(void)       __attribute__ ((naked));
 void handle_illegal_insn(void) __attribute__ ((naked));
 extern void end_handler_incr_mepc(void);
 
@@ -67,12 +73,11 @@ volatile void trigger_code_multicycle_insn(void) __attribute__((optimize("O0")))
 int  test_execute_trigger(void);
 int  test_load_trigger(void);
 
-volatile uint32_t mcontrol_val;
+volatile uint32_t tdata1_next;
+volatile uint32_t tdata2_next;
 volatile uint32_t trigger_address;
 volatile uint32_t trigger_address_offset;
-volatile int      trigger_load;
-volatile int      trigger_store;
-volatile int      trigger_execute;
+volatile int      trigger_type;
 
 volatile uint32_t num_triggers;
 volatile uint32_t trigger_sel;
@@ -81,6 +86,7 @@ volatile int debug_sel;
 volatile int debug_break_loop;
 volatile int debug_entry_status;
 
+volatile uint32_t ebreak_status;
 volatile uint32_t illegal_insn_status;
 
 volatile uint8_t  some_data_bytes[4]     = {0xC0, 0xFF, 0xEB, 0xEE};
@@ -91,10 +97,20 @@ void _debugger_exception_start(void) {
   __asm__ volatile ("nop");
 }
 
+void handle_ebreak (void) {
+  __asm__ volatile (R"(
+    la   t0,     ebreak_status
+    li   t1,     1
+    sw   t1,     0(t0)
+    call end_handler_incr_mepc
+  )");
+}
+
 void handle_illegal_insn (void) {
   __asm__ volatile (R"(
     la   t0,     illegal_insn_status
-    lw   t1,     0(t0)
+    li   t1,     1
+    sw   t1,     0(t0)
     call end_handler_incr_mepc
   )");
 }
@@ -149,26 +165,32 @@ void _debugger (void) {
   switch (debug_sel) {
 
     case DEBUG_SEL_DISABLE_TRIGGER:
-      if (trigger_load != TRIGGER_NONE) {
-        __asm__ volatile ("csrci tdata1, (1 << 0)"); // Clear load bit
-        printf("    Disabling trigger by clearing TDATA1->LOAD\n");
-      }
-      if (trigger_store != TRIGGER_NONE) {
-        __asm__ volatile ("csrci tdata1, (1 << 1)"); // Clear store bit
-        printf("    Disabling trigger by clearing TDATA1->STORE\n");
-      }
-      if (trigger_execute != TRIGGER_NONE) {
-        __asm__ volatile ("csrci tdata1, (1 << 2)"); // Clear execute bit
-        printf("    Disabling trigger by clearing TDATA1->EXECUTE\n");
+      switch (trigger_type) {
+        case TRIGGER_LOAD_BYTE:
+        case TRIGGER_LOAD_HALFWORD:
+        case TRIGGER_LOAD_WORD:
+          __asm__ volatile ("csrci tdata1, (1 << 0)"); // Clear load bit
+          printf("    Disabling trigger by clearing TDATA1->LOAD\n");
+          break;
+        case TRIGGER_STORE_BYTE:
+        case TRIGGER_STORE_HALFWORD:
+        case TRIGGER_STORE_WORD:
+          __asm__ volatile ("csrci tdata1, (1 << 1)"); // Clear load bit
+          printf("    Disabling trigger by clearing TDATA1->STORE\n");
+          break;
+        case TRIGGER_EXECUTE:
+          __asm__ volatile ("csrci tdata1, (1 << 2)"); // Clear execute bit
+          printf("    Disabling trigger by clearing TDATA1->EXECUTE\n");
+          break;
       }
 
     break;
 
-    case DEBUG_SEL_SETUP_TRIGGER: // Set up trigger
+    case DEBUG_SEL_SETUP_TRIGGER:
       // Load tdata config csrs
       printf("    Setting up triggers\n      csr_write: tdata1 = 0x%08lx\n      csr_write: tdata2 = 0x%08lx (0x%lx + 0x%lx)\n",
-             mcontrol_val, (trigger_address + trigger_address_offset), trigger_address, trigger_address_offset);
-      __asm__ volatile (R"(la   %[temp0],     mcontrol_val
+             tdata1_next, (trigger_address + trigger_address_offset), trigger_address, trigger_address_offset);
+      __asm__ volatile (R"(la   %[temp0],     tdata1_next
                            lw   %[temp1],     0(%[temp0])
                            csrw tdata1, %[temp1]
                            la   s2,     trigger_address
@@ -283,33 +305,36 @@ int trigger_test (int setup, int expect_trigger_match, uint32_t trigger_addr) {
 
   debug_sel = DEBUG_SEL_IDLE;
 
-  if (trigger_load == TRIGGER_BYTE) {
+  if (trigger_type == TRIGGER_LOAD_BYTE) {
     __asm__ volatile (R"(lw s4, trigger_address
                          lb s3, 0(s4)          )" ::: "s3", "s4");
   }
-  if (trigger_load == TRIGGER_HALFWORD) {
+  if (trigger_type == TRIGGER_LOAD_HALFWORD) {
     __asm__ volatile (R"(lw s4, trigger_address
                          lh s3, 0(s4)          )" ::: "s3", "s4");
   }
-  if (trigger_load == TRIGGER_WORD) {
+  if (trigger_type == TRIGGER_LOAD_WORD) {
     __asm__ volatile (R"(lw s4, trigger_address
                          lw s3, 0(s4)          )" ::: "s3", "s4");
   }
-  if (trigger_store == TRIGGER_BYTE) {
+  if (trigger_type == TRIGGER_STORE_BYTE) {
     __asm__ volatile (R"(lw s4, trigger_address
                          sb s3, 0(s4)          )" ::: "s3", "s4");
   }
-  if (trigger_store == TRIGGER_HALFWORD) {
+  if (trigger_type == TRIGGER_STORE_HALFWORD) {
     __asm__ volatile (R"(lw s4, trigger_address
                          sh s3, 0(s4)          )" ::: "s3", "s4");
   }
-  if (trigger_store == TRIGGER_WORD) {
+  if (trigger_type == TRIGGER_STORE_WORD) {
     __asm__ volatile (R"(lw s4, trigger_address
                          sw s3, 0(s4)          )" ::: "s3", "s4");
   }
-  if (trigger_execute) {
+  if (trigger_type == TRIGGER_EXECUTE) {
     __asm__ volatile (R"(lw   s4, trigger_address
                          jalr ra, s4             )" ::: "ra", "s4"); // Jump to triggered address
+  }
+  if (trigger_type == TRIGGER_EXCEPTION_ILLEGAL) {
+    __asm__ volatile ("csrwi tselect, 0x4");
   }
 
   printf ("  Address match debug entry: %d (expected: %d)\n\n",
@@ -324,7 +349,7 @@ int test_execute_trigger () {
   printf("\n\n\n --- Testing execute triggers ---\n\n");
 
   // Set up trigger
-  mcontrol_val = (6 << 28 | // TYPE = 6
+  tdata1_next = (6 << 28 | // TYPE = 6
                   1 << 27 | // DMODE = 1
                   1 << 12 | // ACTION = Enter debug mode
                   0 << 7  | // MATCH = EQ
@@ -335,10 +360,9 @@ int test_execute_trigger () {
   __asm__ volatile ("csrci tdata1, (1 << 2)");
   __asm__ volatile ("csrwi tdata2, 0");
 
-  trigger_load    = 0;
-  trigger_store   = 0;
-  trigger_execute = 1;
+  trigger_type     = TRIGGER_EXECUTE;
   debug_break_loop = DEBUG_LOOPBREAK_TDATA2;
+
   // Check that executing trigger_code function does not trigger when it is not set up
   retval += trigger_test(0, 0, (uint32_t) &trigger_code_nop);
 
@@ -366,16 +390,14 @@ int test_load_trigger () {
   trigger_address_offset = 0;
   printf("\n\n\n --- Testing load triggers ---\n\n");
   // Set up trigger
-  mcontrol_val = (6 << 28 | // TYPE = 6
+  tdata1_next = (6 << 28 | // TYPE = 6
                   1 << 27 | // DMODE = 1
                   1 << 12 | // ACTION = Enter debug mode
                   0 << 7  | // MATCH = EQ
                   1 << 6  | // M = Match in machine mode
                   1 << 0 ); // LOAD = Match on load from data address
 
-  trigger_load    = TRIGGER_WORD;
-  trigger_store   = 0;
-  trigger_execute = 0;
+  trigger_type    = TRIGGER_LOAD_WORD;
 
   debug_break_loop   = DEBUG_LOOPBREAK_TDATA2;
   retval += trigger_test(1, 1, (uint32_t) &some_data_word);
@@ -390,20 +412,20 @@ int test_load_trigger () {
 
   trigger_address_offset = 0;
 
-  trigger_load    = TRIGGER_HALFWORD;
+  trigger_type    = TRIGGER_LOAD_HALFWORD;
   retval += trigger_test(1, 1, (uint32_t) &some_data_halfwords[0]);
   retval += trigger_test(1, 1, (uint32_t) &some_data_halfwords[1]);
 
-  trigger_load    = TRIGGER_BYTE;
+  trigger_type    = TRIGGER_LOAD_BYTE;
   retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[0]);
   retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[1]);
   retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[2]);
   retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[3]);
 
-  trigger_load    = TRIGGER_WORD;
+  trigger_type    = TRIGGER_LOAD_WORD;
 
 
-  mcontrol_val |= 2 << 7; // Set MATCH = 2 (GEQ)
+  tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
 
   debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
@@ -424,16 +446,14 @@ int test_store_trigger () {
   trigger_address_offset = 0;
   printf("\n\n\n --- Testing store triggers ---\n\n");
   // Set up trigger
-  mcontrol_val = (6 << 28 | // TYPE = 6
-                  1 << 27 | // DMODE = 1
-                  1 << 12 | // ACTION = Enter debug mode
-                  0 << 7  | // MATCH = EQ
-                  1 << 6  | // M = Match in machine mode
-                  1 << 1 ); // STORE = Match on store to data address
+  tdata1_next = (6 << 28 | // TYPE = 6
+                 1 << 27 | // DMODE = 1
+                 1 << 12 | // ACTION = Enter debug mode
+                 0 << 7  | // MATCH = EQ
+                 1 << 6  | // M = Match in machine mode
+                 1 << 1 ); // STORE = Match on store to data address
 
-  trigger_load    = 0;
-  trigger_store   = TRIGGER_WORD;
-  trigger_execute = 0;
+  trigger_type   = TRIGGER_STORE_WORD;
 
   debug_break_loop   = DEBUG_LOOPBREAK_TDATA2;
   retval += trigger_test(1, 1, (uint32_t) &some_data_word);
@@ -448,19 +468,19 @@ int test_store_trigger () {
 
   trigger_address_offset = 0;
 
-  trigger_store    = TRIGGER_HALFWORD;
+  trigger_type    = TRIGGER_STORE_HALFWORD;
   retval += trigger_test(1, 1, (uint32_t) &some_data_halfwords[0]);
   retval += trigger_test(1, 1, (uint32_t) &some_data_halfwords[1]);
 
-  trigger_store    = TRIGGER_BYTE;
+  trigger_type    = TRIGGER_STORE_BYTE;
   retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[0]);
   retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[1]);
   retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[2]);
   retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[3]);
 
-  trigger_store    = TRIGGER_WORD;
+  trigger_type    = TRIGGER_STORE_WORD;
 
-  mcontrol_val |= 2 << 7; // Set MATCH = 2 (GEQ)
+  tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
 
   debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
@@ -476,16 +496,35 @@ int test_store_trigger () {
   return retval;
 }
 
+int test_exception_trigger () {
+  int retval = 0;
+
+  trigger_address_offset = 0;
+
+  printf("\n\n\n --- Testing execption triggers ---\n\n");
+
+  // Set up trigger
+  tdata1_next = (5 << 28 | // TYPE = etrigger
+                 1 << 27 | // DMODE = 1
+                 1 << 9  | // M = Match in machine mode
+                 1 << 6  | // U = Match in user mode
+                 1 << 0 ); // ACTION = Breakpoint trigger
+
+  tdata2_next = 1 << 2; // Trigger on illegal instruction
+
+  ebreak_status = 0;
+
+  retval += trigger_test(1, 0, 0);
+  retval += trigger_test(1, 0, 1 << 2);
+
+
+  return retval;
+}
+
 
 uint32_t get_num_triggers() {
-
-  __asm__ volatile (R"(
-    # Check whether there are 0 triggers
-    la   s3, illegal_insn_status
-    li   s2, 0
-    sw   s2, 0(s3)
-    csrwi tselect, 0x0
-  )" ::: "s2", "s3");
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrwi tselect, 0x0");
 
   if (illegal_insn_status) {
     num_triggers = 0;
