@@ -1185,10 +1185,7 @@ module uvmt_cv32e40s_tb;
                                                                     .support_pc_wb (core_i.ex_wb_pipe.pc),
 
                                                                     .rvfi_if (rvfi_instr_if_0_i), //TODO: sjekk om u_ prefix eller _i postfix matcher coding guidelines
-                                                                    //.clknrst_if (clknrst_if),
-
-                                                                    .reset_n (clknrst_if.reset_n),
-                                                                    .clk (clknrst_if.clk),
+                                                                    .clknrst_if (dut_wrap.clknrst_if),
 
                                                                     .dcsr (rvfi_csr_dcsr_if_0_i),
                                                                     .dpc (rvfi_csr_dpc_if_0_i),
