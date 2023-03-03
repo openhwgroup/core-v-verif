@@ -73,18 +73,21 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
       support_if.instr_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a response before a request in the OBI instruction bus handshake.\n");
 
+  //obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) is refered to as abiim
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_abiim: assert property (
     p_resp_after_addr_no_glitch(
       xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
       support_if.abiim_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a response before a request in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m).\n");
 
+  //obi protocol between LSU (l) mpu (m) and LSU (l) is refered to as lml
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_lml: assert property (
     p_resp_after_addr_no_glitch(
       xsecure_if.core_i_load_store_unit_i_resp_valid,
       support_if.lml_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag, "There is a response before a request in the handshake between LSU (l) MPU (m) and LSU (l).\n");
 
+  //obi protocol between LSU (l) respons (r) filter (f) and OBI (o) data (d) interface (i) is refered to as lrfodi
   a_xsecure_bus_hardening_resp_after_addr_no_glitch_lrfodi: assert property (
     p_resp_after_addr_no_glitch(
       xsecure_if.core_i_load_store_unit_i_bus_resp_valid,
@@ -144,6 +147,7 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
       support_if.instr_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag_glitch, "A response before a request in the OBI instruction bus handshake does not set the major alert.\n");
 
+  //obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) is refered to as abiim
   a_glitch_xsecure_bus_hardening_resp_after_addr_glitch_abiim: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_if_stage_i_prefetch_resp_valid,
@@ -151,6 +155,7 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
       support_if.abiim_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag_glitch, "A response before a request in the handshake between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) does not set the major alert.\n");
 
+  //obi protocol between LSU (l) mpu (m) and LSU (l) is refered to as lml
   a_glitch_xsecure_bus_hardening_resp_after_addr_glitch_lml: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_load_store_unit_i_resp_valid,
@@ -158,6 +163,7 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
       support_if.lml_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag_glitch, "A response before a request in the handshake between LSU (l) MPU (m) and LSU (l) does not set the major alert.\n");
 
+  //obi protocol between LSU (l) respons (r) filter (f) and OBI (o) data (d) interface (i) is refered to as lrfodi
   a_glitch_xsecure_bus_hardening_resp_after_addr_glitch_lrfodi: assert property (
     p_resp_after_addr_glitch(
       xsecure_if.core_i_load_store_unit_i_bus_resp_valid,

@@ -21,7 +21,7 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_assert
   import cv32e40s_pkg::*;
   #(
     parameter int       SECURE   = 1,
-    parameter logic     SMCLIC = 0,
+    parameter logic     CLIC = 0,
     parameter int       PMP_NUM_REGIONS = 2
   )
   (
@@ -50,56 +50,56 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_assert
   //MSTATEEN0
   a_xsecure_hardened_csr_mstateen0: assert property (
     p_hardened_csr(
-      xsecure_if.core_i_cs_registers_i_mstateen0_q,
+      xsecure_if.core_i_cs_registers_i_mstateen0_csr_i_rdata_q,
       xsecure_if.core_cs_registers_mstateen0_csr_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag, "The CSR MSTATEEN0 is not shadowed.\n");
 
   //PRIVILEGE LEVEL
   a_xsecure_hardened_csr_privlvl: assert property (
     p_hardened_csr(
-      xsecure_if.core_i_cs_registers_i_priv_lvl_q,
+      xsecure_if.core_i_cs_registers_i_priv_lvl_csr_i_rdata_q,
       xsecure_if.core_cs_registers_priv_lvl_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag, "The priviliged level is not shadowed.\n");
 
   //JVT
   a_xsecure_hardened_csr_jvt: assert property (
     p_hardened_csr(
-      xsecure_if.core_i_cs_registers_i_jvt_q,
+      xsecure_if.core_i_cs_registers_i_jvt_csr_i_rdata_q,
       xsecure_if.core_cs_registers_jvt_csr_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag, "The CSR JVT is not shadowed.\n");
 
   //MSTATUS
   a_xsecure_hardened_csr_mstatus: assert property (
     p_hardened_csr(
-      xsecure_if.core_i_cs_registers_i_mstatus_q,
+      xsecure_if.core_i_cs_registers_i_mstatus_csr_i_rdata_q,
       xsecure_if.core_cs_registers_mstatus_csr_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag, "The CSR MSTATUS is not shadowed.\n");
 
   //CPUCTRL
   a_xsecure_hardened_csr_cpuctrl: assert property (
     p_hardened_csr(
-      xsecure_if.core_i_cs_registers_i_cpuctrl_q,
+      xsecure_if.core_i_cs_registers_i_cpuctrl_csr_i_rdata_q,
       xsecure_if.core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag, "The CSR CPUCTRL is not shadowed.\n");
 
   //DCSR
   a_xsecure_hardened_csr_dcsr: assert property (
     p_hardened_csr(
-      xsecure_if.core_i_cs_registers_i_dcsr_q,
-      xsecure_if.core_cs_registers_dcsr_csr_gen_hardened_shadow_q)
+      xsecure_if.core_i_cs_registers_i_dcsr_csr_i_rdata_q,
+      xsecure_if.core_i_cs_registers_i_gen_debug_csr_dcsr_csr_i_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag, "The CSR DCSR is not shadowed.\n");
 
   //MEPC
   a_xsecure_hardened_csr_mepc: assert property (
     p_hardened_csr(
-      xsecure_if.core_i_cs_registers_i_mepc_q,
+      xsecure_if.core_i_cs_registers_i_mepc_csr_i_rdata_q,
       xsecure_if.core_cs_registers_mepc_csr_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag, "The CSR MEPC is not shadowed.\n");
 
   //MSCRATCH (Therby also MSCRATCHCSW and MSCRATCHCSWL)
   a_xsecure_hardened_csr_mscratch: assert property (
     p_hardened_csr(
-      xsecure_if.core_i_cs_registers_i_mscratch_q,
+      xsecure_if.core_i_cs_registers_i_mscratch_csr_i_rdata_q,
       xsecure_if.core_cs_registers_mscratch_csr_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag, "The CSR MSCRATCH is not shadowed.\n");
 
@@ -137,7 +137,7 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_assert
   endgenerate
 
   generate
-    if(SMCLIC) begin
+    if(CLIC) begin
 
       //MTVT
       a_xsecure_hardened_csr_mtvt: assert property (
@@ -204,56 +204,56 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_assert
   //MSTATEEN0
   a_glitch_xsecure_hardened_csr_mismatch_mstateen0: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
-      xsecure_if.core_i_cs_registers_i_mstateen0_q,
+      xsecure_if.core_i_cs_registers_i_mstateen0_csr_i_rdata_q,
       xsecure_if.core_cs_registers_mstateen0_csr_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MSTATEEN0 and its shadow does not set the major alert.\n");
 
   //PRIVILEGE LEVEL
   a_glitch_xsecure_hardened_csr_mismatch_privlvl: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
-      xsecure_if.core_i_cs_registers_i_priv_lvl_q,
+      xsecure_if.core_i_cs_registers_i_priv_lvl_csr_i_rdata_q,
       xsecure_if.core_cs_registers_priv_lvl_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the priviliged level and its shadow does not set the major alert.\n");
 
   //JVT
   a_glitch_xsecure_hardened_csr_mismatch_jvt: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
-      xsecure_if.core_i_cs_registers_i_jvt_q,
+      xsecure_if.core_i_cs_registers_i_jvt_csr_i_rdata_q,
       xsecure_if.core_cs_registers_jvt_csr_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR JVT and its shadow does not set the major alert.\n");
 
   //MSTATUS
   a_glitch_xsecure_hardened_csr_mismatch_mstatus: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
-      xsecure_if.core_i_cs_registers_i_mstatus_q,
+      xsecure_if.core_i_cs_registers_i_mstatus_csr_i_rdata_q,
       xsecure_if.core_cs_registers_mstatus_csr_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MSTATUS and its shadow does not set the major alert.\n");
 
   //CPUCTRL
   a_glitch_xsecure_hardened_csr_mismatch_cpuctrl: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
-      xsecure_if.core_i_cs_registers_i_cpuctrl_q,
+      xsecure_if.core_i_cs_registers_i_cpuctrl_csr_i_rdata_q,
       xsecure_if.core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR CPUCTRL and its shadow does not set the major alert.\n");
 
   //DCSR
   a_glitch_xsecure_hardened_csr_mismatch_dcsr: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
-      xsecure_if.core_i_cs_registers_i_dcsr_q,
-      xsecure_if.core_cs_registers_dcsr_csr_gen_hardened_shadow_q)
+      xsecure_if.core_i_cs_registers_i_dcsr_csr_i_rdata_q,
+      xsecure_if.core_i_cs_registers_i_gen_debug_csr_dcsr_csr_i_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR DCSR and its shadow does not set the major alert.\n");
 
   //MEPC
   a_glitch_xsecure_hardened_csr_mismatch_mepc: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
-      xsecure_if.core_i_cs_registers_i_mepc_q,
+      xsecure_if.core_i_cs_registers_i_mepc_csr_i_rdata_q,
       xsecure_if.core_cs_registers_mepc_csr_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MEPC and its shadow does not set the major alert.\n");
 
   //MSCRATCH
   a_glitch_xsecure_hardened_csr_mismatch_mscratch: assert property (
     p_hardened_csr_mismatch_sets_major_aler(
-      xsecure_if.core_i_cs_registers_i_mscratch_q,
+      xsecure_if.core_i_cs_registers_i_mscratch_csr_i_rdata_q,
       xsecure_if.core_cs_registers_mscratch_csr_gen_hardened_shadow_q)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MSCRATCH and its shadow does not set the major alert.\n");
 
@@ -293,7 +293,7 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_assert
   endgenerate
 
   generate
-    if(SMCLIC) begin
+    if(CLIC) begin
 
       //MTVT
       a_glitch_xsecure_hardened_csr_mismatch_mtvt: assert property (

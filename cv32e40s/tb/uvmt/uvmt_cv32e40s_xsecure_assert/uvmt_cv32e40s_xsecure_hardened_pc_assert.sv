@@ -154,7 +154,7 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
   endsequence
 
 
-  a_glitch_xsecure_pc_hardening_sequential_instruction_sets_alert_major: assert property (
+  a_glitch_xsecure_pc_hardening_sequential_instruction_setting_on: assert property (
 
     //Make sure the PC hardening setting is on
     xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
@@ -170,7 +170,7 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
 
   ////////// PC HARDENING OFF: DO NOT SET THE MAJOR ALERT IF GLITCH //////////
 
-  a_glitch_xsecure_pc_hardening_off_sequential_instruction: assert property (
+  a_glitch_xsecure_pc_hardening_sequential_instruction_setting_off: assert property (
 
     //Make sure the PC hardening setting is off
     !xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening

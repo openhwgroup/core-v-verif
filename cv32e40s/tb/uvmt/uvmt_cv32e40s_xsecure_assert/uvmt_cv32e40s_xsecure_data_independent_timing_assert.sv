@@ -33,7 +33,6 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
   default clocking @(posedge clk_i); endclocking
   default disable iff (!(rst_ni) | !(SECURE));
   string info_tag = "CV32E40S_XSECURE_ASSERT_COVERPOINTS";
-  string info_tag_glitch = "CV32E40S_XSECURE_ASSERT_COVERPOINTS (GLITCH BEHAVIOR)";
 
   property p_xsecure_setting_default_on(logic xsecure_setting);
 
