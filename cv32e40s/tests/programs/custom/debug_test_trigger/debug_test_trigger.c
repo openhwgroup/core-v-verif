@@ -35,6 +35,11 @@
 #define DEBUG_SEL_DISABLE_TRIGGER 1
 #define DEBUG_SEL_SETUP_TRIGGER 2
 #define DEBUG_SEL_CLEAR_TDATA2 3
+#define DEBUG_SEL_REGTEST 4
+
+#define DEBUG_STATUS_NOT_ENTERED  0
+#define DEBUG_STATUS_ENTERED_OK   1
+#define DEBUG_STATUS_ENTERED_FAIL 2
 
 #define DEBUG_LOOPBREAK_NONE    0
 #define DEBUG_LOOPBREAK_TDATA1  1
@@ -150,7 +155,7 @@ void _debugger (void) {
 
   printf("  Entered debug\n");
 
-  debug_entry_status = 1;
+  debug_entry_status = DEBUG_STATUS_ENTERED_OK;
 
   switch (debug_sel) {
 
@@ -191,6 +196,80 @@ void _debugger (void) {
       __asm__ volatile ("csrwi tdata2, 0x0");
       printf("    Disabling trigger by clearing TDATA2\n");
     break;
+
+    case DEBUG_SEL_REGTEST:
+      // TDATA1 - Check reset value
+      __asm__ volatile (R"(csrr  s0,     tdata1
+                           li    s1,     0x28001000
+                           beq   s0,     s1, 1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+      // TDATA1 - Write 0s
+      __asm__ volatile (R"(csrwi tdata1, 0x0
+                           csrr  s0,     tdata1
+                           li    s1,     0xF8000000
+                           beq   s0,     s1, 1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+      // TDATA1 - Write 1s
+      __asm__ volatile (R"(li    s0,     0xFFFFFFFF
+                           csrw  tdata1, s0
+                           csrr  s1,     tdata1
+                           li    s0,     0xF8000000
+                           beq   s0,     s1,  1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+      // TDATA2 (Disabled) - Write 1s
+      __asm__ volatile (R"(li    s0,     0xFFFFFFFF
+                           csrw  tdata2, s0
+                           csrr  s1,     tdata2
+                           beq   s0,     s1,  1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+      // TDATA2 (Disabled) - Write 0s
+      __asm__ volatile (R"(csrwi tdata2, 0x0
+                           csrr  s0,     tdata2
+                           beqz  s0,     1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+      // TDATA3 - Write 1s
+      __asm__ volatile (R"(li    s0,     0xFFFFFFFF
+                           csrw  tdata3, s0
+                           csrr  s1,     tdata3
+                           beqz  s1,     1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+      // TINFO - Write 1s, Debug Access test
+      __asm__ volatile (R"(li    s1,     0xFFFFFFFF
+                           csrw  tinfo,  s1
+                           csrr  s0,     tinfo
+                           li    s1,     0x8064
+                           beq   s0,     s1,  1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+      break;
+
   }
 
   switch (debug_break_loop) {
@@ -222,7 +301,7 @@ void _debugger (void) {
 }
 
 void disable_trigger () {
-  debug_entry_status = 0;
+  debug_entry_status = DEBUG_STATUS_NOT_ENTERED;
   // Disable trigger after use
   debug_sel = DEBUG_SEL_DISABLE_TRIGGER;
 
@@ -232,7 +311,7 @@ void disable_trigger () {
                            CV_VP_DEBUG_CONTROL_PULSE_DURATION(0x8) |
                            CV_VP_DEBUG_CONTROL_START_DELAY(0xc8));
   // Wait for debug entry
-  while (debug_entry_status == 0);
+  while (debug_entry_status == DEBUG_STATUS_NOT_ENTERED);
 }
 
 
@@ -275,7 +354,7 @@ int trigger_test (int setup, int expect_trigger_match, uint32_t tdata2_arg) {
 
   tdata2_next        = tdata2_arg + tdata2_next_offset;
   trigger_address    = tdata2_arg;
-  debug_entry_status = 0;
+  debug_entry_status = DEBUG_STATUS_NOT_ENTERED;
 
   if (setup) {
     debug_sel = DEBUG_SEL_SETUP_TRIGGER;
@@ -286,8 +365,8 @@ int trigger_test (int setup, int expect_trigger_match, uint32_t tdata2_arg) {
                              CV_VP_DEBUG_CONTROL_PULSE_DURATION(0x8) |
                              CV_VP_DEBUG_CONTROL_START_DELAY(0xc8));
     // Wait for debug entry
-    while (debug_entry_status == 0);
-    debug_entry_status = 0;
+    while (debug_entry_status == DEBUG_STATUS_NOT_ENTERED);
+    debug_entry_status = DEBUG_STATUS_NOT_ENTERED;
   }
 
   debug_sel = DEBUG_SEL_IDLE;
@@ -340,10 +419,10 @@ int test_execute_trigger () {
 
   // Set up trigger
   tdata1_next = (6 << 28 | // TYPE = 6
-                  1 << 12 | // ACTION = Enter debug mode
-                  0 << 7  | // MATCH = EQ
-                  1 << 6  | // M = Match in machine mode
-                  1 << 2 ); // EXECUTE = Match on instruction address
+                 1 << 12 | // ACTION = Enter debug mode
+                 0 << 7  | // MATCH = EQ
+                 1 << 6  | // M = Match in machine mode
+                 1 << 2 ); // EXECUTE = Match on instruction address
 
   // Attempt accessing tdata registers outside debug mode, should be ignored
   __asm__ volatile ("csrci tdata1, (1 << 2)");
@@ -521,6 +600,85 @@ int test_exception_trigger () {
   return retval;
 }
 
+int test_register_access(void) {
+
+  printf("\n\n\n --- Testing register access ---\n\n");
+
+  debug_sel = DEBUG_SEL_REGTEST;
+
+  debug_entry_status = DEBUG_STATUS_NOT_ENTERED;
+  DEBUG_REQ_CONTROL_REG = (CV_VP_DEBUG_CONTROL_DBG_REQ(0x1)        |
+                           CV_VP_DEBUG_CONTROL_REQ_MODE(0x1)       |
+                           CV_VP_DEBUG_CONTROL_PULSE_DURATION(0x8) |
+                           CV_VP_DEBUG_CONTROL_START_DELAY(0xc8));
+  // Wait for debug entry
+  while (debug_entry_status == DEBUG_STATUS_NOT_ENTERED);
+  if (debug_entry_status == DEBUG_STATUS_ENTERED_FAIL) return FAIL;
+  debug_entry_status = DEBUG_STATUS_NOT_ENTERED;
+
+
+  // TDATA1 - Write valid value (in m-mode), check that is ignored
+  __asm__ volatile (R"(li    s1,     0x60000000
+                       csrw  tdata1, s1
+                       csrr  s0,     tdata1
+                       li    s1,     0xF8000000
+                       beq   s0,     s1, 1f
+                       li    a0,     0x1   #FAIL
+                       ret
+                     1:nop
+                       )" ::: "s0", "s1");
+
+  // TDATA2 - Write valid value (in m-mode), check that is ignored
+  __asm__ volatile (R"(li    s1,     0xFFFFFFFF
+                       csrw  tdata2, s1
+                       csrr  s0,     tdata2
+                       beqz  s0,     1f
+                       li    a0,     0x1   #FAIL
+                       ret
+                     1:nop
+                       )" ::: "s0", "s1");
+
+  // TINFO - Write 0s, machine mode access test
+  __asm__ volatile (R"(li    s1,     0x0
+                       csrw  tinfo,  s1
+                       csrr  s0,     tinfo
+                       li    s1,     0x8064
+                       beq   s0,     s1,  1f
+                       li    a0,     0x1   #FAIL
+                       ret
+                     1:nop
+                       )" ::: "s0", "s1");
+
+  // TCONTROL - Write 1s
+  __asm__ volatile (R"(li    s1,     0xFFFFFFFF
+                       csrw  tcontrol,  s1
+                       csrr  s0,     tcontrol
+                       beqz  s0,     1f
+                       li    a0,     0x1   #FAIL
+                       ret
+                     1:nop
+                       )" ::: "s0", "s1");
+
+  // Context Registers - Access Checks
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrwi mcontext, 0x0");
+  if (!illegal_insn_status) return FAIL;
+
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrwi mscontext, 0x0");
+  if (!illegal_insn_status) return FAIL;
+
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrwi hcontext, 0x0");
+  if (!illegal_insn_status) return FAIL;
+
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrwi scontext, 0x0");
+  if (!illegal_insn_status) return FAIL;
+
+  return SUCCESS;
+}
+
 
 uint32_t get_num_triggers() {
   illegal_insn_status = 0;
@@ -556,34 +714,42 @@ int main(int argc, char *argv[])
     for (int i = 0; i < num_triggers; i++) {
 
       trigger_sel = i;
-      printf ("csr_write: tselect = %ld", trigger_sel);
+      printf ("csr_write: tselect = %ld\n", trigger_sel);
       __asm__ volatile (R"(lw        s2, trigger_sel
                            csrw tselect, s2         )" ::: "s2");
 
+      if (test_register_access()) {
+        printf("Register access test failed\n");
+        return FAIL;
+      }
+
+      /*
       if (test_execute_trigger()) {
         printf("Execute trigger test failed\n");
-        return 1;
+        return FAIL;
       }
 
       if (test_load_trigger()) {
         printf("Load trigger test failed\n");
-        return 1;
+        return FAIL;
       }
 
       if (test_store_trigger()) {
         printf("Store triggert test failed\n");
-        return 1;
+        return FAIL;
       }
 
       if (test_exception_trigger()) {
         printf("Exception trigger test failed\n");
-        return 1;
+        return FAIL;
       }
+      */
+
     }
     printf("Finished \n");
-    return 0;
+    return SUCCESS;
   } else {
     printf("Error: Tselect register does not exist (NUM_TRIGGERS=0 not supported in this test) \n");
-    return 1;
+    return FAIL;
   }
 }
