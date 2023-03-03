@@ -50,6 +50,11 @@
 #define TRIGGER_STORE_WORD        6
 #define TRIGGER_EXECUTE           7
 #define TRIGGER_EXCEPTION_ILLEGAL 8
+#define TRIGGER_EXCEPTION_EBREAK  9
+
+#define EXCEPTION_CODE_ILLEGAL_INSTRUCTION 2
+#define EXCEPTION_CODE_BREAKPOINT          3
+#define EXCEPTION_CODE_RESERVED           10
 
                                // Place in debugger section
 void _debugger_start(void)     __attribute__((section(".debugger"))) __attribute__((naked));
@@ -57,7 +62,6 @@ void _debugger(void)           __attribute__((section(".debugger")));
 
 void _debugger_exception_start(void) __attribute__((section(".debugger_exception")));
 
-void handle_ebreak(void)       __attribute__ ((naked));
 void handle_illegal_insn(void) __attribute__ ((naked));
 extern void end_handler_incr_mepc(void);
 
@@ -86,7 +90,6 @@ volatile int debug_sel;
 volatile int debug_break_loop;
 volatile int debug_entry_status;
 
-volatile uint32_t ebreak_status;
 volatile uint32_t illegal_insn_status;
 
 volatile uint8_t  some_data_bytes[4]     = {0xC0, 0xFF, 0xEB, 0xEE};
@@ -95,15 +98,6 @@ volatile uint32_t some_data_word         = 0xC0DECAFE;
 
 void _debugger_exception_start(void) {
   __asm__ volatile ("nop");
-}
-
-void handle_ebreak (void) {
-  __asm__ volatile (R"(
-    la   t0,     ebreak_status
-    li   t1,     1
-    sw   t1,     0(t0)
-    call end_handler_incr_mepc
-  )");
 }
 
 void handle_illegal_insn (void) {
@@ -327,7 +321,10 @@ int trigger_test (int setup, int expect_trigger_match, uint32_t tdata2_arg) {
                          jalr ra, s4             )" ::: "ra", "s4"); // Jump to triggered address
   }
   if (trigger_type == TRIGGER_EXCEPTION_ILLEGAL) {
-    __asm__ volatile ("csrwi tselect, 0x4");
+    __asm__ volatile ("csrwi mcontext, 0x0");
+  }
+  if (trigger_type == TRIGGER_EXCEPTION_EBREAK) {
+    __asm__ volatile ("ebreak");
   }
 
   printf ("  Address match debug entry: %d (expected: %d)\n\n",
@@ -343,7 +340,6 @@ int test_execute_trigger () {
 
   // Set up trigger
   tdata1_next = (6 << 28 | // TYPE = 6
-                  1 << 27 | // DMODE = 1
                   1 << 12 | // ACTION = Enter debug mode
                   0 << 7  | // MATCH = EQ
                   1 << 6  | // M = Match in machine mode
@@ -384,7 +380,6 @@ int test_load_trigger () {
   printf("\n\n\n --- Testing load triggers ---\n\n");
   // Set up trigger
   tdata1_next = (6 << 28 | // TYPE = 6
-                 1 << 27 | // DMODE = 1
                  1 << 12 | // ACTION = Enter debug mode
                  0 << 7  | // MATCH = EQ
                  1 << 6  | // M = Match in machine mode
@@ -440,7 +435,6 @@ int test_store_trigger () {
   printf("\n\n\n --- Testing store triggers ---\n\n");
   // Set up trigger
   tdata1_next = (6 << 28 | // TYPE = 6
-                 1 << 27 | // DMODE = 1
                  1 << 12 | // ACTION = Enter debug mode
                  0 << 7  | // MATCH = EQ
                  1 << 6  | // M = Match in machine mode
@@ -491,25 +485,38 @@ int test_store_trigger () {
 
 int test_exception_trigger () {
   int retval = 0;
-
   tdata2_next_offset = 0;
 
   printf("\n\n\n --- Testing execption triggers ---\n\n");
 
   // Set up trigger
   tdata1_next = (5 << 28 | // TYPE = etrigger
-                 1 << 27 | // DMODE = 1
-                 1 << 9  | // M = Match in machine mode
-                 1 << 6  | // U = Match in user mode
-                 1 << 0 ); // ACTION = Breakpoint trigger
+                 1 <<  9 | // M = Match in machine mode
+                 0 <<  6); // U = Match in user mode
 
-  tdata2_next = 1 << 2; // Trigger on illegal instruction
-
-  ebreak_status = 0;
-
+  trigger_type = TRIGGER_EXCEPTION_ILLEGAL;
   retval += trigger_test(1, 0, 0);
-  retval += trigger_test(1, 0, 1 << 2);
+  /* TODO: Add when ISS tdata2 issue (#1695) is fixed
+  retval += trigger_test(1, 1, -1);
+  retval += trigger_test(1, 1,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
+                               (1 << EXCEPTION_CODE_BREAKPOINT) |
+                               (1 << EXCEPTION_CODE_RESERVED)));
+  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_RESERVED));
+  */
+  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_BREAKPOINT));
+  retval += trigger_test(1, 1, (1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION));
 
+  trigger_type = TRIGGER_EXCEPTION_EBREAK;
+  retval += trigger_test(1, 0, 0);
+  /* TODO: Add when ISS tdata2 issue (#1695) is fixed
+  retval += trigger_test(1, 1, -1);
+  retval += trigger_test(1, 0,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
+                               (1 << EXCEPTION_CODE_RESERVED)));
+  */
+  retval += trigger_test(1, 1, (1 << EXCEPTION_CODE_BREAKPOINT));
+  retval += trigger_test(1, 1,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
+                               (1 << EXCEPTION_CODE_BREAKPOINT)));
+  retval += trigger_test(1, 0, 0);
 
   return retval;
 }
@@ -543,39 +550,38 @@ uint32_t get_num_triggers() {
 
 int main(int argc, char *argv[])
 {
-  int status = 0;
-
-  tdata2_next_offset = 0;
-
   num_triggers = get_num_triggers();
 
   if (num_triggers > 0) {
     for (int i = 0; i < num_triggers; i++) {
 
-      //debug_break_loop   = DEBUG_LOOPBREAK_DPCINCR;
       trigger_sel = i;
       printf ("csr_write: tselect = %ld", trigger_sel);
       __asm__ volatile (R"(lw        s2, trigger_sel
                            csrw tselect, s2         )" ::: "s2");
 
-      status  = test_execute_trigger();
-      if (status != 0) {
-        printf("Test 0 failed with status: %d\n", status);
-        return status;
+      if (test_execute_trigger()) {
+        printf("Execute trigger test failed\n");
+        return 1;
       }
-      status += test_load_trigger ();
-      if (status != 0) {
-        printf("Test 1 failed with status: %d\n", status);
-        return status;
+
+      if (test_load_trigger()) {
+        printf("Load trigger test failed\n");
+        return 1;
       }
-      status += test_store_trigger();
-      if (status != 0) {
-        printf("Test 2 failed with status: %d\n", status);
-        return status;
+
+      if (test_store_trigger()) {
+        printf("Store triggert test failed\n");
+        return 1;
+      }
+
+      if (test_exception_trigger()) {
+        printf("Exception trigger test failed\n");
+        return 1;
       }
     }
     printf("Finished \n");
-    return status;
+    return 0;
   } else {
     printf("Error: Tselect register does not exist (NUM_TRIGGERS=0 not supported in this test) \n");
     return 1;
