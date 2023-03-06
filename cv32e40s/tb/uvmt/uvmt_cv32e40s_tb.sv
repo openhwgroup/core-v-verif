@@ -165,7 +165,16 @@ module uvmt_cv32e40s_tb;
                                                                    .rvfi_mem_rdata(rvfi_i.rvfi_mem_rdata[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN]),
                                                                    .rvfi_mem_rmask(rvfi_i.rvfi_mem_rmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8]),
                                                                    .rvfi_mem_wdata(rvfi_i.rvfi_mem_wdata[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN]),
-                                                                   .rvfi_mem_wmask(rvfi_i.rvfi_mem_wmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8])
+                                                                   .rvfi_mem_wmask(rvfi_i.rvfi_mem_wmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8]),
+                                                                   .gpr_rdata_array(),
+                                                                   .gpr_rmask_array(),
+                                                                   .gpr_wdata_array(),
+                                                                   .gpr_wmask_array(),
+                                                                   .mem_addr_array(),
+                                                                   .mem_rdata_array(),
+                                                                   .mem_rmask_array(),
+                                                                   .mem_wdata_array(),
+                                                                   .mem_wmask_array()
                                                                    );
 
   // RVFI CSR binds
@@ -1004,6 +1013,8 @@ module uvmt_cv32e40s_tb;
       .debug_havereset        (core_i.debug_havereset_o),
       .debug_running          (core_i.debug_running_o),
       .debug_halted           (core_i.debug_halted_o),
+      .debug_pc_o             (core_i.debug_pc_o),
+      .debug_pc_valid_o       (core_i.debug_pc_valid_o),
 
       .ctrl_fsm_async_debug_allowed  (core_i.controller_i.controller_fsm_i.async_debug_allowed),
       .pending_sync_debug     (core_i.controller_i.controller_fsm_i.pending_sync_debug),
@@ -1169,8 +1180,8 @@ module uvmt_cv32e40s_tb;
                                                                     .csr_mtvec(rvfi_csr_mtvec_if_0_i),
                                                                     .csr_tdata1(rvfi_csr_tdata1_if_0_i),
                                                                     .csr_tdata2(rvfi_csr_tdata2_if_0_i),
-                                                                    .instr_obi(obi_instr_if_i.passive_mp),
-                                                                    .data_obi(obi_data_if_i.passive_mp),
+                                                                    .instr_obi(dut_wrap.obi_instr_if_i),
+                                                                    .data_obi(dut_wrap.obi_data_if_i),
                                                                     .cov_assert_if(debug_cov_assert_if),
                                                                     .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
                                                                     );
