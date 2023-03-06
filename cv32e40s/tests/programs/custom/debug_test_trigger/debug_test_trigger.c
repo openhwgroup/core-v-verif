@@ -61,9 +61,10 @@
 #define EXCEPTION_CODE_BREAKPOINT          3
 #define EXCEPTION_CODE_RESERVED           10
 
-                               // Place in debugger section
-void _debugger_start(void)     __attribute__((section(".debugger"))) __attribute__((naked));
-void _debugger(void)           __attribute__((section(".debugger")));
+                                // Place in debugger section
+void _debugger_start(void)      __attribute__((section(".debugger"))) __attribute__((naked));
+void _debugger(void)            __attribute__((section(".debugger")));
+void _debug_register_test(void) __attribute__((section(".debugger")));
 
 void _debugger_exception_start(void) __attribute__((section(".debugger_exception")));
 
@@ -198,77 +199,8 @@ void _debugger (void) {
     break;
 
     case DEBUG_SEL_REGTEST:
-      // TDATA1 - Check reset value
-      __asm__ volatile (R"(csrr  s0,     tdata1
-                           li    s1,     0x28001000
-                           beq   s0,     s1, 1f
-                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
-                           sw    s1,     debug_entry_status, s2
-                         1:nop
-                           )" ::: "s0", "s1");
-
-      // TDATA1 - Write 0s
-      __asm__ volatile (R"(csrwi tdata1, 0x0
-                           csrr  s0,     tdata1
-                           li    s1,     0xF8000000
-                           beq   s0,     s1, 1f
-                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
-                           sw    s1,     debug_entry_status, s2
-                         1:nop
-                           )" ::: "s0", "s1");
-
-      // TDATA1 - Write 1s
-      __asm__ volatile (R"(li    s0,     0xFFFFFFFF
-                           csrw  tdata1, s0
-                           csrr  s1,     tdata1
-                           li    s0,     0xF8000000
-                           beq   s0,     s1,  1f
-                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
-                           sw    s1,     debug_entry_status, s2
-                         1:nop
-                           )" ::: "s0", "s1");
-
-      // TDATA2 (Disabled) - Write 1s
-      __asm__ volatile (R"(li    s0,     0xFFFFFFFF
-                           csrw  tdata2, s0
-                           csrr  s1,     tdata2
-                           beq   s0,     s1,  1f
-                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
-                           sw    s1,     debug_entry_status, s2
-                         1:nop
-                           )" ::: "s0", "s1");
-
-      // TDATA2 (Disabled) - Write 0s
-      __asm__ volatile (R"(csrwi tdata2, 0x0
-                           csrr  s0,     tdata2
-                           beqz  s0,     1f
-                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
-                           sw    s1,     debug_entry_status, s2
-                         1:nop
-                           )" ::: "s0", "s1");
-
-      // TDATA3 - Write 1s
-      __asm__ volatile (R"(li    s0,     0xFFFFFFFF
-                           csrw  tdata3, s0
-                           csrr  s1,     tdata3
-                           beqz  s1,     1f
-                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
-                           sw    s1,     debug_entry_status, s2
-                         1:nop
-                           )" ::: "s0", "s1");
-
-      // TINFO - Write 1s, Debug Access test
-      __asm__ volatile (R"(li    s1,     0xFFFFFFFF
-                           csrw  tinfo,  s1
-                           csrr  s0,     tinfo
-                           li    s1,     0x8064
-                           beq   s0,     s1,  1f
-                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
-                           sw    s1,     debug_entry_status, s2
-                         1:nop
-                           )" ::: "s0", "s1");
-
-      break;
+      _debug_register_test();
+    break;
 
   }
 
@@ -575,23 +507,23 @@ int test_exception_trigger () {
 
   trigger_type = TRIGGER_EXCEPTION_ILLEGAL;
   retval += trigger_test(1, 0, 0);
-  /* TODO: Add when ISS tdata2 issue (#1695) is fixed
+/* TODO: Add when ISS tdata2 issue (#1695) is fixed
   retval += trigger_test(1, 1, -1);
   retval += trigger_test(1, 1,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
                                (1 << EXCEPTION_CODE_BREAKPOINT) |
                                (1 << EXCEPTION_CODE_RESERVED)));
   retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_RESERVED));
-  */
+*/
   retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_BREAKPOINT));
   retval += trigger_test(1, 1, (1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION));
 
   trigger_type = TRIGGER_EXCEPTION_EBREAK;
   retval += trigger_test(1, 0, 0);
-  /* TODO: Add when ISS tdata2 issue (#1695) is fixed
+/* TODO: Add when ISS tdata2 issue (#1695) is fixed
   retval += trigger_test(1, 1, -1);
   retval += trigger_test(1, 0,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
                                (1 << EXCEPTION_CODE_RESERVED)));
-  */
+*/
   retval += trigger_test(1, 1, (1 << EXCEPTION_CODE_BREAKPOINT));
   retval += trigger_test(1, 1,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
                                (1 << EXCEPTION_CODE_BREAKPOINT)));
@@ -600,12 +532,246 @@ int test_exception_trigger () {
   return retval;
 }
 
+
+void _debug_register_test(void) {
+  printf("    _debug_register_test():\n");
+
+  // TDATA1 - Check reset value
+  __asm__ volatile (R"(csrr  s0,     tdata1
+                           li    s1,     0x28001000
+                           beq   s0,     s1, 1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+  // TDATA1 (Type==6) - Write 1s
+  tdata1_next = (6 << 28) | ~(0xF << 28); // TYPE = Address match
+  __asm__ volatile (R"(la   s1,     tdata1_next
+                           lw   s0,     0(s1)
+                           csrw tdata1, s0
+                           csrr s1,     tdata1
+                           li   s0,     0x6800104F
+                           beq  s0,     s1,  1f
+                           li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw   s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+  // TDATA1 (Type==6) - Write 0s
+  tdata1_next = (6 << 28); // TYPE = Address match
+  __asm__ volatile (R"(la   s1,     tdata1_next
+                           lw   s0,     0(s1)
+                           csrw tdata1, s0
+                           csrr s1,     tdata1
+                           li   s0,     0x68001000
+                           beq  s0,     s1,  1f
+                           li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw   s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+  // TDATA2 (Type==6) - Address match - Write 1s
+  __asm__ volatile (R"(li   s1,     0xFFFFFFFF
+                           csrw tdata2, s1
+                           csrr s0,     tdata2
+                           beq  s0,     s1,  1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+  // TDATA2 (Type==6) - Address match - Write 0s
+  __asm__ volatile (R"(csrwi tdata2, 0x0
+                           csrr  s0,     tdata2
+                           beqz  s0,     1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+
+  /* TODO: Add when ISS tdata issue (#1695) is fixed
+  // TDATA1 (Type==2) - Write 1s
+  tdata1_next = (2 << 28) | ~(0xF << 28); // TYPE = Address match
+  __asm__ volatile (R"(la   s1,     tdata1_next
+  lw   s0,     0(s1)
+  csrw tdata1, s0
+  csrr s1,     tdata1
+  li   s0,     0x2800104F
+  beq  s0,     s1,  1f
+  li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+  sw   s1,     debug_entry_status, s2
+  1:nop
+  )" ::: "s0", "s1");
+
+  // TDATA1 (Type==2) - Write 0s
+  tdata1_next = (2 << 28); // TYPE = Address match
+  __asm__ volatile (R"(la   s1,     tdata1_next
+  lw   s0,     0(s1)
+  csrw tdata1, s0
+  csrr s1,     tdata1
+  li   s0,     0x28001000
+  beq  s0,     s1,  1f
+  li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+  sw   s1,     debug_entry_status, s2
+  1:nop
+  )" ::: "s0", "s1");
+  */
+
+  /////////////// Todo: remove when ISS tdata2 issue (#1695) is fixed
+  tdata1_next = (2 << 28) | (1 << 12); // TYPE = Address match
+  __asm__ volatile (R"(la   s1,     tdata1_next
+                           lw   s0,     0(s1)
+                           csrw tdata1, s0
+                           )" ::: "s0", "s1");
+  //////////////
+
+  // TDATA2 (Type==2) - Legacy Address match - Write 1s
+  __asm__ volatile (R"(li   s1,     0xFFFFFFFF
+                           csrw tdata2, s1
+                           csrr s0,     tdata2
+                           beq  s0,     s1,  1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+  // TDATA2 (Type==2) - Legacy Address match - Write 0s
+  __asm__ volatile (R"(csrwi tdata2, 0x0
+                           csrr  s0,     tdata2
+                           beqz  s0,     1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+
+  /* TODO: Add when ISS tdata issue (#1695) is fixed
+  // TDATA1 (Type==5) - Exception Trigger - Write 1s
+  tdata1_next = (5 << 28) | ~(0xF << 28); // TYPE = Exception Trigger
+  __asm__ volatile (R"(la   s1,     tdata1_next
+  lw   s0,     0(s1)
+  csrw tdata1, s0
+  csrr s1,     tdata1
+  li   s0,     0x5800241
+  beq  s0,     s1,  1f
+  li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+  sw   s1,     debug_entry_status, s2
+  1:nop
+  )" ::: "s0", "s1");
+  */
+
+  // TDATA1 (Type==5) - Exception Trigger - Write 0s
+  tdata1_next = (5 << 28); // TYPE = Exception Trigger
+  __asm__ volatile (R"(la   s1,     tdata1_next
+                           lw   s0,     0(s1)
+                           csrw tdata1, s0
+                           csrr s1,     tdata1
+                           li   s0,     0x58000001
+                           beq  s0,     s1,  1f
+                           li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw   s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+  /* TODO: Add when ISS tdata issue (#1695) is fixed
+
+  // TDATA2 (Type==5) - Exception Trigger - Write 1s
+  __asm__ volatile (R"(li   s1,     0xFFFFFFFF
+  csrw tdata2, s1
+  csrr s0,     tdata2
+  li   s1,     0x030009AE
+  beq  s0,     s1,  1f
+  li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+  sw   s1,     debug_entry_status, s2
+  1:nop
+  )" ::: "s0", "s1");
+  */
+
+  // TDATA2 (Type==5) - Exception Trigger  - Write 0s
+  __asm__ volatile (R"(csrwi tdata2, 0x0
+                           csrr  s0,     tdata2
+                           beqz  s0,     2f
+                         1:li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         2:nop
+                           )" ::: "s0", "s1");
+
+  // TDATA1 - Write 0s
+  __asm__ volatile (R"(csrwi tdata1, 0x0
+                           csrr  s0,     tdata1
+                           li    s1,     0xF8000000
+                           beq   s0,     s1, 1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+  // TDATA1 - Write 1s
+  __asm__ volatile (R"(li    s0,     0xFFFFFFFF
+                           csrw  tdata1, s0
+                           csrr  s1,     tdata1
+                           li    s0,     0xF8000000
+                           beq   s0,     s1,  1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+
+  // TDATA2 (Disabled) - Write 1s
+  __asm__ volatile (R"(li    s0,     0xFFFFFFFF
+                           csrw  tdata2, s0
+                           csrr  s1,     tdata2
+                           beq   s0,     s1,  1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+  // TDATA2 (Disabled) - Write 0s
+  __asm__ volatile (R"(csrwi tdata2, 0x0
+                           csrr  s0,     tdata2
+                           beqz  s0,     1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+  // TDATA3 - Write 1s
+  __asm__ volatile (R"(li    s0,     0xFFFFFFFF
+                           csrw  tdata3, s0
+                           csrr  s1,     tdata3
+                           beqz  s1,     1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+  // TINFO - Write 1s, Debug Access test
+  __asm__ volatile (R"(li    s1,     0xFFFFFFFF
+                           csrw  tinfo,  s1
+                           csrr  s0,     tinfo
+                           li    s1,     0x8064
+                           beq   s0,     s1,  1f
+                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                           sw    s1,     debug_entry_status, s2
+                         1:nop
+                           )" ::: "s0", "s1");
+
+  if  (debug_entry_status == DEBUG_STATUS_ENTERED_FAIL) {
+    printf("Debug Mode Register test FAILED\n\n");
+  }
+  return;
+}
+
 int test_register_access(void) {
 
   printf("\n\n\n --- Testing register access ---\n\n");
 
+  printf("  Checking register access from debug mode\n");
   debug_sel = DEBUG_SEL_REGTEST;
-
   debug_entry_status = DEBUG_STATUS_NOT_ENTERED;
   DEBUG_REQ_CONTROL_REG = (CV_VP_DEBUG_CONTROL_DBG_REQ(0x1)        |
                            CV_VP_DEBUG_CONTROL_REQ_MODE(0x1)       |
@@ -616,6 +782,7 @@ int test_register_access(void) {
   if (debug_entry_status == DEBUG_STATUS_ENTERED_FAIL) return FAIL;
   debug_entry_status = DEBUG_STATUS_NOT_ENTERED;
 
+  printf("\n  Checking register access from Machine mode\n");
 
   // TDATA1 - Write valid value (in m-mode), check that is ignored
   __asm__ volatile (R"(li    s1,     0x60000000
@@ -722,7 +889,6 @@ int main(int argc, char *argv[])
         printf("Register access test failed\n");
         return FAIL;
       }
-
       /*
       if (test_execute_trigger()) {
         printf("Execute trigger test failed\n");
@@ -744,7 +910,6 @@ int main(int argc, char *argv[])
         return FAIL;
       }
       */
-
     }
     printf("Finished \n");
     return SUCCESS;
