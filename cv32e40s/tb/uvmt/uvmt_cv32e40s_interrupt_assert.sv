@@ -74,22 +74,16 @@ module uvmt_cv32e40s_interrupt_assert
     input wire privlvl_t    priv_lvl,
 
     // Determine whether to cancel instruction if branch taken
-    input wire branch_taken_ex,
+    input wire  branch_taken_ex,
 
     // WFI/WFE Interface
-    input wire core_sleep_o,
+    input wire  core_sleep_o,
     input wire  wu_wfe_i,
 
-    // OBI Instruction-Side
-    input wire mpu_iside_req,
-    input wire mpu_iside_gnt,
-    input wire mpu_iside_rvalid,
-    input wire obi_iside_rvalid,
-
-    // OBI Data-Side
-    input wire obi_dside_req,
-    input wire obi_dside_gnt,
-    input wire obi_dside_rvalid,
+    // OBI
+    input wire          mpu_instr_rvalid,
+    uvma_obi_memory_if  obi_instr_if,
+    uvma_obi_memory_if  obi_data_if,
 
     // Writebuffer
     input wire write_buffer_state_e  writebufstate,
@@ -425,68 +419,17 @@ module uvmt_cv32e40s_interrupt_assert
     is_wfi_wfe_in_wb_q2 <= is_wfi_wfe_in_wb_q1;
   end
 
-  logic         obi_iside_initiating;
-  logic         obi_dside_initiating;
-  logic         obi_iside_receiving;
-  logic         obi_dside_receiving;
-  logic [31:0]  obi_iside_outstanding;
-  logic [31:0]  obi_dside_outstanding;
-  logic         mpu_iside_req_q1;
-  logic         mpu_iside_gnt_q1;
-  logic         obi_dside_req_q1;
-  logic         obi_dside_gnt_q1;
-  logic [31:0]  obi_iside_outstanding_q1;
-  logic [31:0]  obi_dside_outstanding_q1;
-
-  assign obi_iside_initiating = (
-    mpu_iside_req  &&
-    mpu_iside_gnt
-  );
-  assign obi_dside_initiating = (
-    obi_dside_req  &&
-    ( !obi_dside_req_q1 || obi_dside_gnt_q1)
-  );
-  assign obi_iside_receiving = mpu_iside_rvalid;
-  assign obi_dside_receiving = obi_dside_rvalid;
-
-  always @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) begin
-      obi_iside_outstanding <= 1'b 0;
-      obi_dside_outstanding <= 1'b 0;
-    end else begin
-      if ( obi_iside_initiating && !obi_iside_receiving) begin
-        obi_iside_outstanding <= obi_iside_outstanding + 1;
-      end
-
-      if (!obi_iside_initiating &&  obi_iside_receiving) begin
-        obi_iside_outstanding <= obi_iside_outstanding - 1;
-      end
-
-      if ( obi_dside_initiating && !obi_dside_receiving) begin
-        obi_dside_outstanding <= obi_dside_outstanding + 1;
-      end
-
-      if (!obi_dside_initiating &&  obi_dside_receiving) begin
-        obi_dside_outstanding <= obi_dside_outstanding - 1;
-      end
-    end
-  end
-
-  always @(posedge clk) begin
-    mpu_iside_req_q1         <= mpu_iside_req;
-    mpu_iside_gnt_q1         <= mpu_iside_gnt;
-    obi_dside_req_q1         <= obi_dside_req;
-    obi_dside_gnt_q1         <= obi_dside_gnt;
-    obi_iside_outstanding_q1 <= obi_iside_outstanding;
-    obi_dside_outstanding_q1 <= obi_dside_outstanding;
-  end
+  logic [31:0]  bus_data_outstanding;
+  logic [31:0]  bus_instr_outstanding;
+  assign bus_instr_outstanding = support_if.abiim_bus_v_addr_ph_cnt;
+  assign bus_data_outstanding  = support_if.lrfodi_bus_v_addr_ph_cnt;
 
   logic  is_wfi_wfe_blocked;
   assign is_wfi_wfe_blocked = (
-    |obi_iside_outstanding        ||
-    |obi_iside_outstanding_q1     ||  // Arbitrary uarch decision
-    |obi_dside_outstanding        ||
-    |obi_dside_outstanding_q1     ||  // Arbitrary uarch decision
+    |bus_instr_outstanding        ||
+    |$past(bus_instr_outstanding) ||  // Arbitrary uarch decision
+    |bus_data_outstanding         ||
+    |$past(bus_data_outstanding)  ||  // Arbitrary uarch decision
     (writebufstate != WBUF_EMPTY)
   );
 
@@ -614,13 +557,13 @@ module uvmt_cv32e40s_interrupt_assert
   a_wfi_assert_sleepmode_no_ivalid: assert property (
     core_sleep_o
     |->
-    !obi_iside_rvalid
+    !mpu_instr_rvalid && !obi_instr_if.rvalid
   ) else `uvm_error(info_tag, "shouldn't enter sleep if outstanding iside");
 
   a_wfi_assert_sleepmode_no_dvalid: assert property (
     core_sleep_o
     |->
-    !obi_dside_rvalid
+    !obi_data_if.rvalid
   ) else `uvm_error(info_tag, "shouldn't enter sleep if outstanding dside");
 
   a_wfi_assert_sleepmode_no_wbuf: assert property (

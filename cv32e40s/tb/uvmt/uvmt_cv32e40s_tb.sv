@@ -517,13 +517,9 @@ module uvmt_cv32e40s_tb;
         .irq_ack_o (core_i.irq_ack),
         .irq_id_o  (core_i.irq_id),
 
-        .mpu_iside_gnt    (if_stage_i.mpu_i.core_trans_ready_o),
-        .mpu_iside_req    (if_stage_i.mpu_i.core_trans_valid_i),
-        .mpu_iside_rvalid (if_stage_i.mpu_i.core_resp_valid_o),
-        .obi_dside_gnt    (data_gnt_i),
-        .obi_dside_req    (data_req_o),
-        .obi_dside_rvalid (data_rvalid_i),
-        .obi_iside_rvalid (instr_rvalid_i),
+        .mpu_instr_rvalid (if_stage_i.mpu_i.core_resp_valid_o),
+        .obi_instr_if     (dut_wrap.obi_instr_if_i),
+        .obi_data_if      (dut_wrap.obi_data_if_i),
 
         .writebufstate (load_store_unit_i.write_buffer_i.state),
         .rvfi          (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
