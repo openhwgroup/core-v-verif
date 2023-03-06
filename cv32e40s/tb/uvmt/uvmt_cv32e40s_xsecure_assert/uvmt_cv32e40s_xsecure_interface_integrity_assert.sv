@@ -81,13 +81,13 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   logic data_rvalid_parity_error;
   logic compressed_aligned;
   logic [2:0][4:0] rchk_instr_alinmentbuffer;
-  logic integrity_err_parity_rchk_alignmentbuffer;
-  logic integrity_err_parity_rchk_obi_input;
+  logic [2:0] integrity_err_parity_rchk_alignmentbuffer;
+  logic [2:0] integrity_err_parity_rchk_obi_input;
   logic [1:0] rptr2;
-  logic unaligned_integrity_error_parity_alignmentbuffer;
-  logic unaligned_integrity_error_parity_alignmentbuffer_obi_input;
-  logic unaligned_integrity_error_parity_rchk_alignmentbuffer;
-  logic unaligned_integrity_error_parity_rchk_alignmentbuffer_obi_input;
+  logic [2:0] unaligned_integrity_error_parity_alignmentbuffer;
+  logic [2:0] unaligned_integrity_error_parity_alignmentbuffer_obi_input;
+  logic [2:0] unaligned_integrity_error_parity_rchk_alignmentbuffer;
+  logic [2:0] unaligned_integrity_error_parity_rchk_alignmentbuffer_obi_input;
 
 
   //Independent generation of the checksum based on the outputted data
@@ -637,7 +637,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
 
     //Integrity error (parity/rchk):
 
-    assign integrity_err_parity_rchk_alignmentbuffer = (xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr].bus_resp.integrity_err
+    assign integrity_err_parity_rchk_alignmentbuffer[rptr] = (xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr].bus_resp.integrity_err
     || (rchk_instr_alinmentbuffer[rptr] != xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr].bus_resp.rchk));
 
     a_glitch_xsecure_integrity_aligned_instruction_parity_rchk_err_inheritance_alignmentbuffer: assert property (
@@ -652,7 +652,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     ) else `uvm_error(info_tag, "Generated instruction does not inherit parity or rchk error from aligned instruction in the alignment buffer (integrity is on).\n");
 
 
-    assign integrity_err_parity_rchk_obi_input = (xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
+    assign integrity_err_parity_rchk_obi_input[rptr] = (xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
     || (rchk_instr != xsecure_if.core_i_if_stage_i_bus_resp.rchk));
 
     a_glitch_xsecure_integrity_aligned_instruction_parity_rchk_err_inheritance_obi_input: assert property (
@@ -677,7 +677,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     //Instruction generated from two unaligned instruction fetches:
     //Parity error:
 
-    assign unaligned_integrity_error_parity_alignmentbuffer = xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr].bus_resp.integrity_err
+    assign unaligned_integrity_error_parity_alignmentbuffer[rptr] = xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr].bus_resp.integrity_err
     || xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr2].bus_resp.integrity_err;
 
     a_glitch_xsecure_integrity_unaligned_instruction_parity_err_inheritance_alignmentbuffer: assert property (
@@ -692,7 +692,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
 
     ) else `uvm_error(info_tag, "Generated instruction does not inherit integrity error bit from unaligned instructions in the alignment buffer.\n");
 
-    assign unaligned_integrity_error_parity_alignmentbuffer_obi_input = xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr].bus_resp.integrity_err
+    assign unaligned_integrity_error_parity_alignmentbuffer_obi_input[rptr] = xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr].bus_resp.integrity_err
     || xsecure_if.core_i_if_stage_i_bus_resp.integrity_err;
 
     a_glitch_xsecure_integrity_unaligned_instruction_parity_err_inheritance_alignmentbuffer_obi_input: assert property (
@@ -711,7 +711,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     //Integrity error (parity/rchk):
 
 
-    assign unaligned_integrity_error_parity_rchk_alignmentbuffer = (xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr].bus_resp.integrity_err
+    assign unaligned_integrity_error_parity_rchk_alignmentbuffer[rptr] = (xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr].bus_resp.integrity_err
     || xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr2].bus_resp.integrity_err
     || (rchk_instr_alinmentbuffer[rptr] != xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr].bus_resp.rchk)
     || (rchk_instr_alinmentbuffer[rptr2] != xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr2].bus_resp.rchk));
@@ -729,7 +729,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     ) else `uvm_error(info_tag, "Generated instruction does not inherit integrity error bit from unaligned instructions in the alignment buffer.\n");
 
 
-    assign unaligned_integrity_error_parity_rchk_alignmentbuffer_obi_input = (xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr].bus_resp.integrity_err
+    assign unaligned_integrity_error_parity_rchk_alignmentbuffer_obi_input[rptr] = (xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr].bus_resp.integrity_err
     || xsecure_if.core_i_if_stage_i_bus_resp.integrity_err
     || (rchk_instr_alinmentbuffer[rptr] != xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q[rptr].bus_resp.rchk)
     || (rchk_instr != xsecure_if.core_i_if_stage_i_bus_resp.rchk));

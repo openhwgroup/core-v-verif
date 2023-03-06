@@ -88,15 +88,15 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   //Make reset assertions for each GPR:
   generate for (genvar gpr_addr = 0; gpr_addr < 32; gpr_addr++) begin
 
-    a_xsecure_register_file_ecc_gpr_reset_value: assert property (
+    a_xsecure_rf_ecc_gpr_reset_value: assert property (
       p_xsecure_gpr_reset(gpr_addr)
     ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage, or the syndrome is not 0x2a.\n", gpr_addr));
 
-    a_xsecure_register_file_ecc_gpr_reset_value_rvfi_rs1: assert property (
+    a_xsecure_rf_ecc_gpr_reset_value_rvfi_rs1: assert property (
       p_xsecure_gpr_reset_rvfi_rs1(gpr_addr)
     ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage (as RS1 is not 0).\n", gpr_addr));
 
-    a_xsecure_register_file_ecc_gpr_reset_value_rvfi_rs2: assert property (
+    a_xsecure_rf_ecc_gpr_reset_value_rvfi_rs2: assert property (
       p_xsecure_gpr_reset_rvfi_rs2(gpr_addr)
     ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage (as RS2 is not 0).\n", gpr_addr));
 
@@ -121,25 +121,25 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   //Make assertions for each GPR:
   generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
 
-    a_xsecure_register_file_ecc_gprecc_never_all_zeros_part_1: assert property (
+    a_xsecure_rf_ecc_gprecc_never_all_zeros_part_1: assert property (
       p_gpr_x_syndrom_not_x(
         gpr_addr,
         1'b0)
     ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s.\n", gpr_addr));
 
-    a_xsecure_register_file_ecc_gprecc_never_all_zeros_part_2: assert property (
+    a_xsecure_rf_ecc_gprecc_never_all_zeros_part_2: assert property (
       p_syndrom_x_gpr_not_x(
         gpr_addr,
         1'b0)
     ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s.\n", gpr_addr));
 
-    a_xsecure_register_file_ecc_gprecc_never_all_ones_part_1: assert property (
+    a_xsecure_rf_ecc_gprecc_never_all_ones_part_1: assert property (
       p_gpr_x_syndrom_not_x(
         gpr_addr,
         1'b1)
     ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 1s.\n", gpr_addr));
 
-    a_xsecure_register_file_ecc_gprecc_never_all_ones_part_2: assert property (
+    a_xsecure_rf_ecc_gprecc_never_all_ones_part_2: assert property (
       p_syndrom_x_gpr_not_x(
         gpr_addr,
         1'b1)
@@ -204,7 +204,7 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
 
 
   //Make sure the support logic works as expected when updating the memory
-  a_xsecure_register_file_ecc_no_supression_by_comparing_ecc_scores_support_logic: assert property (
+  a_xsecure_rf_ecc_no_supression_by_comparing_ecc_scores_support_logic: assert property (
 
     //Make sure we update the GPR memory
     xsecure_if.core_rf_we_wb
@@ -220,7 +220,7 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
 
 
   //Make sure the support logic works as expected when exiting reset mode
-  a_xsecure_register_file_ecc_no_supression_by_comparing_ecc_scores_support_logic_start_at_zero: assert property (
+  a_xsecure_rf_ecc_no_supression_by_comparing_ecc_scores_support_logic_start_at_zero: assert property (
 
     //Exit reset mode
     $rose(rst_ni)
