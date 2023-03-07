@@ -18,9 +18,12 @@ CV_CORE_BRANCH ?= master
 CV_CORE_HASH   ?= a9c6c716e4d1a219775b968bafec239f1190ac16
 CV_CORE_TAG    ?= none
 
-RISCVDV_REPO    ?= https://github.com/google/riscv-dv
-RISCVDV_BRANCH  ?= master
-RISCVDV_HASH    ?= 797aa0762de8e2c8d427b978483b47dd7649954a
+#RISCVDV_REPO    ?= https://github.com/google/riscv-dv
+RISCVDV_REPO    ?= https://github.com/silabs-hfegran/riscv-dv
+#RISCVDV_BRANCH  ?= master
+RISCVDV_BRANCH  ?= dev_hf_zc
+#RISCVDV_HASH    ?= 797aa0762de8e2c8d427b978483b47dd7649954a
+RISCVDV_HASH    ?= dc1b43842b1054ea6b4b920519b0aba40cd07ad5
 
 EMBENCH_REPO    ?= https://github.com/embench/embench-iot.git
 EMBENCH_BRANCH  ?= master
