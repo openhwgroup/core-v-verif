@@ -440,6 +440,14 @@ function logic is_not_umode();
           (rvfi_mode != cv32e40s_pkg::PRIV_LVL_U);
 endfunction : is_not_umode
 
+function logic is_pma_instr_fault();
+  return  rvfi_valid  &&
+          rvfi_trap.trap  &&
+          rvfi_trap.exception  &&
+          (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT)  &&
+          (rvfi_trap.cause_type == 'h 0);
+endfunction : is_pma_instr_fault
+
 function logic is_instr_bus_valid();
   return !( (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT) ||
             (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_INTEGRITY_FAULT) ||

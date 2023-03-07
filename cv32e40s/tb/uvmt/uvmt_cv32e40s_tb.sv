@@ -711,6 +711,9 @@ module uvmt_cv32e40s_tb;
       .CLIC          (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC),
       .CLIC_ID_WIDTH (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_ID_WIDTH)
     ) rvfi_assert_i (
+      .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+      .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
+      .writebuf_valid_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.valid_i),
       .*
     );
 
@@ -1145,6 +1148,40 @@ module uvmt_cv32e40s_tb;
         .rvfi_mem_addr  (rvfi_mem_addr [31:0]),
         .rvfi_mem_wmask (rvfi_mem_wmask[ 3:0]),
         .rvfi_mem_rmask (rvfi_mem_rmask[ 3:0]),
+        .*
+      );
+
+    bind  dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i
+      uvmt_cv32e40s_pma_assert #(
+        .CORE_REQ_TYPE   (cv32e40s_pkg::obi_inst_req_t),
+        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .IS_INSTR_SIDE   (1),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
+      ) pma_assert_instr_i (
+        .obi_memory_if    (dut_wrap.obi_instr_if_i),
+        .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+        .writebuf_ready_o ('0),
+        .writebuf_trans_i ('0),
+        .writebuf_trans_o ('0),
+        .*
+      );
+
+    bind  dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i
+      uvmt_cv32e40s_pma_assert #(
+        .CORE_REQ_TYPE   (cv32e40s_pkg::obi_data_req_t),
+        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .IS_INSTR_SIDE   (0),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
+      ) pma_assert_data_i (
+        .obi_memory_if    (dut_wrap.obi_data_if_i),
+        .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+        .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
+        .writebuf_trans_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_i),
+        .writebuf_trans_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_o),
         .*
       );
 
