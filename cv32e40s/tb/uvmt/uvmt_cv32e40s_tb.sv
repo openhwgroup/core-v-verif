@@ -165,7 +165,8 @@ module uvmt_cv32e40s_tb;
                                                                    .rvfi_mem_rdata(rvfi_i.rvfi_mem_rdata[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN]),
                                                                    .rvfi_mem_rmask(rvfi_i.rvfi_mem_rmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8]),
                                                                    .rvfi_mem_wdata(rvfi_i.rvfi_mem_wdata[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN]),
-                                                                   .rvfi_mem_wmask(rvfi_i.rvfi_mem_wmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8])
+                                                                   .rvfi_mem_wmask(rvfi_i.rvfi_mem_wmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8]),
+                                                                   .instr_prot(rvfi_i.rvfi_instr_prot)
                                                                    );
 
   // RVFI CSR binds
@@ -612,7 +613,7 @@ module uvmt_cv32e40s_tb;
       .rvfi_dbg_mode (rvfi_i.rvfi_dbg_mode),
       .rvfi_dbg      (rvfi_i.rvfi_dbg),
       .rvfi_pc_rdata (rvfi_i.rvfi_pc_rdata),
-      .rvfi_instr_if (rvfi_instr_if_0_i),
+      .rvfi_if       (rvfi_instr_if_0_i),
 
       .rvfi_csr_dcsr_rdata       (rvfi_i.rvfi_csr_dcsr_rdata),
       .rvfi_csr_mcause_rdata     (rvfi_i.rvfi_csr_mcause_rdata),

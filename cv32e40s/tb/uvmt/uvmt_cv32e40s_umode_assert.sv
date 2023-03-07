@@ -16,6 +16,10 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
 
+`default_nettype wire
+//TODO:ERROR and wire at bot
+
+
 module  uvmt_cv32e40s_umode_assert
   import cv32e40s_pkg::*;
   import cv32e40s_rvfi_pkg::*;
@@ -33,7 +37,7 @@ module  uvmt_cv32e40s_umode_assert
   input wire          rvfi_dbg_mode,
   input wire [ 2:0]   rvfi_dbg,
   input wire [31:0]   rvfi_pc_rdata,
-  uvma_rvfi_instr_if  rvfi_instr_if,
+  uvma_rvfi_instr_if  rvfi_if,
   //TODO:INFO:silabs-robin Should only use the interface
 
   input wire [31:0]  rvfi_csr_dcsr_rdata,
@@ -495,8 +499,8 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_mode == MODE_U)  &&
     rvfi_csr_dcsr_rdata[EBREAKU_POS+:EBREAKU_LEN]
     |->
-    rvfi_instr_if.rvfi_trap.trap  &&
-    rvfi_instr_if.rvfi_trap.debug
+    rvfi_if.rvfi_trap.trap  &&
+    rvfi_if.rvfi_trap.debug
   ) else `uvm_error(info_tag, "ebreaku must give debug trap");
 
   a_ebreaku_on_noexception: assert property (
@@ -505,8 +509,8 @@ module  uvmt_cv32e40s_umode_assert
     rvfi_csr_dcsr_rdata[EBREAKU_POS+:EBREAKU_LEN]
     |->
     !(
-      rvfi_instr_if.rvfi_trap.exception  &&
-      (rvfi_instr_if.rvfi_trap.exception_cause == EXC_CAUSE_BREAKPOINT)
+      rvfi_if.rvfi_trap.exception  &&
+      (rvfi_if.rvfi_trap.exception_cause == EXC_CAUSE_BREAKPOINT)
     )
   );
 
@@ -655,9 +659,9 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "exiting dmode towards umode should clear mprv");
 
   a_dret_mprv_csr: assert property (
-    rvfi_instr_if.is_dret()  &&
+    rvfi_if.is_dret()  &&
     (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == MODE_U)  &&
-    rvfi_instr_if.rvfi_dbg_mode
+    rvfi_if.rvfi_dbg_mode
     |->
     (rvfi_csr_mstatus_wmask[MPRV_POS+:MPRV_LEN] == 1'b 1)  &&
     (rvfi_csr_mstatus_wdata[MPRV_POS+:MPRV_LEN] == 1'b 0)
@@ -917,13 +921,14 @@ module  uvmt_cv32e40s_umode_assert
 
   // vplan:InstrProt & vplan:DataProt & vplan:DbgProt
 
-/* TODO:silabs-robin  Enable (and tweak) when rvfi implementation has the new signals
-  a_prot_fetch: assert property (
+  a_instr_prot: assert property (
     rvfi_valid
     |->
-    (rvfi_custom.instr_prot[2:1] == rvfi_mode)
+    (rvfi_if.instr_prot[2:1] == rvfi_if.rvfi_mode)
+    // TODO or instruction access fault
   ) else `uvm_error(info_tag, "the prot on fetch must match the mode on retirement");
 
+/* TODO:ERROR
   a_prot_loadstore: assert property (
     rvfi_valid  &&
     is_rvfi_loadstore

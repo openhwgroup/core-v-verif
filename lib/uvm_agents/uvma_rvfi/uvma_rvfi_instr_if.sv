@@ -69,8 +69,9 @@ interface uvma_rvfi_instr_if
     input logic [(NMEM*XLEN)-1:0]    rvfi_mem_rdata,
     input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_rmask,
     input logic [(NMEM*XLEN)-1:0]    rvfi_mem_wdata,
-    input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask
+    input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask,
 
+    input logic [2:0]                instr_prot
   );
 
   // -------------------------------------------------------------------
