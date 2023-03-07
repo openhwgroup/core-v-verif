@@ -23,15 +23,11 @@
 `define DUT_PATH dut_wrap.cv32e40p_tb_wrapper_i
 `define RVFI_IF  `DUT_PATH.rvfi_i
 
+`define STRINGIFY(x) `"x`"
+
 ////////////////////////////////////////////////////////////////////////////
 // Assign the rvvi CSR values from RVFI - CSR = (wdata & wmask) | (rdata & ~wmask)
 ////////////////////////////////////////////////////////////////////////////
-`define SET_RVFI_CSR_FROM_INSN(CSR_NAME) \
-    rvfi_csr_``CSR_NAME``_rdata  = new_rvfi_trace.m_csr.``CSR_NAME``_rdata; \
-    rvfi_csr_``CSR_NAME``_rmask  = new_rvfi_trace.m_csr.``CSR_NAME``_rmask; \
-    rvfi_csr_``CSR_NAME``_wdata  = new_rvfi_trace.m_csr.``CSR_NAME``_wdata; \
-    rvfi_csr_``CSR_NAME``_wmask  = new_rvfi_trace.m_csr.``CSR_NAME``_wmask;
-
 `define RVVI_SET_CSR(CSR_ADDR, CSR_NAME) \
     bit csr_``CSR_NAME``_wb; \
     wire [31:0] csr_``CSR_NAME``_w; \
@@ -66,7 +62,16 @@
         end \
     end
 
-module uvmt_cv32e40p_imperas_dv_wrap
+////////////////////////////////////////////////////////////////////////////
+// Assign the NET IRQ values from the core irq inputs
+////////////////////////////////////////////////////////////////////////////
+`define RVVI_WRITE_IRQ(IRQ_NAME, IRQ_IDX) \
+    wire   irq_``IRQ_NAME; \
+    assign irq_``IRQ_NAME = `DUT_PATH.irq_i[IRQ_IDX]; \
+    always @(irq_``IRQ_NAME) begin \
+        void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), irq_``IRQ_NAME)); \
+    end
+
 ////////////////////////////////////////////////////////////////////////////
 // CSR definitions
 ////////////////////////////////////////////////////////////////////////////
@@ -227,7 +232,14 @@ module uvmt_cv32e40p_imperas_dv_wrap
 `define CSR_MHARTID_ADDR        32'hF14
 `define CSR_MCONFIGPTR_ADDR     32'hF15
 
+///////////////////////////////////////////////////////////////////////////////
+// Module wrapper for Imperas DV.
+////////////////////////////////////////////////////////////////////////////
+`ifdef USE_IMPERASDV
+
 `include "rvvi/imperasDV.svh" // located in $IMPERAS_HOME/ImpProprietary/include/host
+
+module uvmt_cv32e40p_imperas_dv_wrap
   import uvm_pkg::*;
   import cv32e40p_pkg::*;
   import uvme_cv32e40p_pkg::*;
@@ -249,7 +261,7 @@ module uvmt_cv32e40p_imperas_dv_wrap
                    )
                    trace2api(rvvi);
 
-  trace2log trace2log_i (rvvi);
+   trace2log       trace2log(rvvi);
 
    string info_tag = "ImperasDV_wrap";
 
@@ -305,7 +317,6 @@ module uvmt_cv32e40p_imperas_dv_wrap
    `RVVI_SET_CSR_VEC(`CSR_TDATA2_ADDR, tdata, 2)
    `RVVI_SET_CSR( `CSR_TINFO_ADDR,         tinfo         )
 
-
    ////////////////////////////////////////////////////////////////////////////
    // Assign the RVVI GPR registers
    ////////////////////////////////////////////////////////////////////////////
@@ -330,6 +341,40 @@ module uvmt_cv32e40p_imperas_dv_wrap
    end
 
    assign rvvi.x_wb[0][0] = 1 << `RVFI_IF.rvfi_rd_addr; // TODO: originally rvfi_rd_addr
+
+   ////////////////////////////////////////////////////////////////////////////
+   // DEBUG REQUESTS,
+   ////////////////////////////////////////////////////////////////////////////
+   logic debug_req_i;
+   assign debug_req_i = `DUT_PATH.debug_req_i;
+   always @(debug_req_i) begin
+       void'(rvvi.net_push("haltreq", debug_req_i));
+   end
+
+   ////////////////////////////////////////////////////////////////////////////
+   // INTERRUPTS
+   // assert when MIP or cause bit
+   // negate when posedge clk && valid=1 && debug=0
+   ////////////////////////////////////////////////////////////////////////////
+  `RVVI_WRITE_IRQ(MSWInterrupt,        3)
+  `RVVI_WRITE_IRQ(MTimerInterrupt,     7)
+  `RVVI_WRITE_IRQ(MExternalInterrupt, 11)
+  `RVVI_WRITE_IRQ(LocalInterrupt0,    16)
+  `RVVI_WRITE_IRQ(LocalInterrupt1,    17)
+  `RVVI_WRITE_IRQ(LocalInterrupt2,    18)
+  `RVVI_WRITE_IRQ(LocalInterrupt3,    19)
+  `RVVI_WRITE_IRQ(LocalInterrupt4,    20)
+  `RVVI_WRITE_IRQ(LocalInterrupt5,    21)
+  `RVVI_WRITE_IRQ(LocalInterrupt6,    22)
+  `RVVI_WRITE_IRQ(LocalInterrupt7,    23)
+  `RVVI_WRITE_IRQ(LocalInterrupt8,    24)
+  `RVVI_WRITE_IRQ(LocalInterrupt9,    25)
+  `RVVI_WRITE_IRQ(LocalInterrupt10,   26)
+  `RVVI_WRITE_IRQ(LocalInterrupt11,   27)
+  `RVVI_WRITE_IRQ(LocalInterrupt12,   28)
+  `RVVI_WRITE_IRQ(LocalInterrupt13,   29)
+  `RVVI_WRITE_IRQ(LocalInterrupt14,   30)
+  `RVVI_WRITE_IRQ(LocalInterrupt15,   31)
 
   /////////////////////////////////////////////////////////////////////////////
   // REF control
@@ -369,6 +414,50 @@ module uvmt_cv32e40p_imperas_dv_wrap
 
     hart_id = 32'h0000_0000;
 
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLE_ADDR        ));
+
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRET_ADDR      ));
+
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLE_ADDR       ));
+
+    // cannot predict this register due to latency between
+    // pending and taken
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MIP_ADDR          ));
+    void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
+
+    // TODO silabs-hfegran: temp fix to work around issues
+    rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR,   RVVI_FALSE);
+    // end TODO
+    // define asynchronous grouping
+    // Interrupts
+    rvviRefNetGroupSet(rvviRefNetIndexGet("MSWInterrupt"),        1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("MTimerInterrupt"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("MExternalInterrupt"),  1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt0"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt1"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt2"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt3"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt4"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt5"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt6"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt7"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt8"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt9"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt10"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt11"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt12"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt13"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt14"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt15"),    1);
+
+    rvviRefNetGroupSet(rvviRefNetIndexGet("InstructionBusFault"), 2);
+
+    // Debug
+    rvviRefNetGroupSet(rvviRefNetIndexGet("haltreq"),             4);
+
+    void'(rvviRefMemorySetVolatile('h15001000, 'h15001007)); //TODO: deal with int return value
   endtask // ref_init
-endmodule : uvmt_cv32e40s_imperas_dv_wrap
+endmodule : uvmt_cv32e40p_imperas_dv_wrap
+`endif  // USE_IMPERASDV
+
 `endif // __UVMT_CV32E40P_IMPERAS_DV_WRAP_SV__
