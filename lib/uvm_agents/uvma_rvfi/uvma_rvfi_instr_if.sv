@@ -373,7 +373,6 @@ function logic is_ebreak_noncompr();
   return match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL);
 endfunction : is_ebreak_noncompr
 
-
 function logic is_ecall();
   return match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);
 endfunction : is_ecall

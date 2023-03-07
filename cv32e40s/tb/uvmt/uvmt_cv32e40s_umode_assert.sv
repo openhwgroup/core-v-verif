@@ -24,15 +24,17 @@ module  uvmt_cv32e40s_umode_assert
   input wire  clk_i,
   input wire  rst_ni,
 
-  input wire         rvfi_valid,
-  input wire [ 1:0]  rvfi_mode,
-  input wire [63:0]  rvfi_order,
-  input rvfi_trap_t  rvfi_trap,
-  input rvfi_intr_t  rvfi_intr,
-  input wire [31:0]  rvfi_insn,
-  input wire         rvfi_dbg_mode,
-  input wire [ 2:0]  rvfi_dbg,
-  input wire [31:0]  rvfi_pc_rdata,
+  input wire          rvfi_valid,
+  input wire [ 1:0]   rvfi_mode,
+  input wire [63:0]   rvfi_order,
+  input rvfi_trap_t   rvfi_trap,
+  input rvfi_intr_t   rvfi_intr,
+  input wire [31:0]   rvfi_insn,
+  input wire          rvfi_dbg_mode,
+  input wire [ 2:0]   rvfi_dbg,
+  input wire [31:0]   rvfi_pc_rdata,
+  uvma_rvfi_instr_if  rvfi_instr_if,
+  //TODO:INFO:silabs-robin Should only use the interface
 
   input wire [31:0]  rvfi_csr_dcsr_rdata,
   input wire [31:0]  rvfi_csr_mcause_rdata,
@@ -472,20 +474,40 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "the uret instruction is not supported");
 
 
-/* TODO:silabs-robin  Comment in when RTL has comleted "ebreaku" implementation
   // vplan:EbreakuOn
 
-  a_ebreaku_on: assert property (
+  a_ebreaku_on_rvfivalid: assert property (
     is_rvfi_ebreak         &&
     (rvfi_mode == MODE_U)  &&
     rvfi_csr_dcsr_rdata[EBREAKU_POS+:EBREAKU_LEN]
-    |=>
-    (rvfi_valid [->1])  ##0
+    ##1
+    (rvfi_valid [->1])
+    |->
     rvfi_dbg_mode
   ) else `uvm_error(info_tag, "umode ebreak with ebreaku should cause dmode");
 
   cov_ebreaku_bit: cover property (
     rvfi_csr_dcsr_rdata[EBREAKU_POS+:EBREAKU_LEN]
+  );
+
+  a_ebreaku_on_dbgtrap: assert property (
+    is_rvfi_ebreak         &&
+    (rvfi_mode == MODE_U)  &&
+    rvfi_csr_dcsr_rdata[EBREAKU_POS+:EBREAKU_LEN]
+    |->
+    rvfi_instr_if.rvfi_trap.trap  &&
+    rvfi_instr_if.rvfi_trap.debug
+  ) else `uvm_error(info_tag, "ebreaku must give debug trap");
+
+  a_ebreaku_on_noexception: assert property (
+    is_rvfi_ebreak         &&
+    (rvfi_mode == MODE_U)  &&
+    rvfi_csr_dcsr_rdata[EBREAKU_POS+:EBREAKU_LEN]
+    |->
+    !(
+      rvfi_instr_if.rvfi_trap.exception  &&
+      (rvfi_instr_if.rvfi_trap.exception_cause == EXC_CAUSE_BREAKPOINT)
+    )
   );
 
 
@@ -519,16 +541,17 @@ module  uvmt_cv32e40s_umode_assert
   a_ebreaku_off_nodebug: assert property (
     seq_ebreak_umode_noebreaku
     |->
-    !rvfi_trap.debug
+    !rvfi_trap.debug  ||
+    (rvfi_trap.debug_cause inside {DBG_CAUSE_STEP})
   ) else `uvm_error(info_tag, "umode ebreak wo/ ebreaku should not cause debug entry");
 
   a_ebreaku_off_nodebugcause: assert property (
     seq_ebreak_umode_noebreaku
-    |=>
-    (rvfi_valid [->1])  ##0
+    ##1
+    (rvfi_valid [->1])
+    |->
     (rvfi_dbg != DBG_CAUSE_EBREAK)
   ) else `uvm_error(info_tag, "umode ebreak wo/ ebreaku should not cause dmode");
-*/
 
 
   // vplan:Ecall  (in umode)
@@ -614,7 +637,7 @@ module  uvmt_cv32e40s_umode_assert
   // vplan:ResumeMprv
 
   a_dret_mprv_umode: assert property (
-    ( rvfi_valid &&          rvfi_dbg_mode)
+    (rvfi_valid && rvfi_dbg_mode)
     ##1
     ((rvfi_valid [->1]) ##0 !rvfi_dbg_mode)  ##0
     (rvfi_mode == MODE_U)
@@ -623,13 +646,22 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "exiting dmode into umode should clear mprv");
 
   a_dret_mprv_prv: assert property (
-    ( rvfi_valid &&          rvfi_dbg_mode)  ##0
+    (rvfi_valid && rvfi_dbg_mode)  ##0
     (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == MODE_U)
     ##1
     ((rvfi_valid [->1]) ##0 !rvfi_dbg_mode)
     |->
     (rvfi_csr_mstatus_rdata[MPRV_POS+:MPRV_LEN] == 1'b 0)
   ) else `uvm_error(info_tag, "exiting dmode towards umode should clear mprv");
+
+  a_dret_mprv_csr: assert property (
+    rvfi_instr_if.is_dret()  &&
+    (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == MODE_U)  &&
+    rvfi_instr_if.rvfi_dbg_mode
+    |->
+    (rvfi_csr_mstatus_wmask[MPRV_POS+:MPRV_LEN] == 1'b 1)  &&
+    (rvfi_csr_mstatus_wdata[MPRV_POS+:MPRV_LEN] == 1'b 0)
+  ) else `uvm_error(info_tag, "dret to umode clears mprv immediately");
 
 
   // vplan:UmodeUnmodified (wrt MPRV)
@@ -811,7 +843,6 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "none of the n ext csrs should be present");
 
 
-/* TODO:silabs-robin  Uncomment when RTL gets up to date on debug specs
   // vplan:ExecuteMprven  (in debug)
 
   a_mprven_tied: assert property (
@@ -819,7 +850,6 @@ module  uvmt_cv32e40s_umode_assert
     |->
     (rvfi_csr_dcsr_rdata[MPRVEN_POS+:MPRVEN_LEN] == 1'b 1)
   ) else `uvm_error(info_tag, "dcsr.mprven is not supported");
-*/
 
 
   // vplan:PrvEntry

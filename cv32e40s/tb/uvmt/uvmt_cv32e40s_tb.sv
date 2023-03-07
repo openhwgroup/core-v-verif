@@ -612,6 +612,7 @@ module uvmt_cv32e40s_tb;
       .rvfi_dbg_mode (rvfi_i.rvfi_dbg_mode),
       .rvfi_dbg      (rvfi_i.rvfi_dbg),
       .rvfi_pc_rdata (rvfi_i.rvfi_pc_rdata),
+      .rvfi_instr_if (rvfi_instr_if_0_i),
 
       .rvfi_csr_dcsr_rdata       (rvfi_i.rvfi_csr_dcsr_rdata),
       .rvfi_csr_mcause_rdata     (rvfi_i.rvfi_csr_mcause_rdata),
