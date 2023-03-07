@@ -337,6 +337,8 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     input         debug_havereset,
     input         debug_running,
     input         debug_halted,
+    input  [31:0] debug_pc_o,
+    input         debug_pc_valid_o,
 
     input         pending_sync_debug, // From controller
     input         pending_async_debug, // From controller

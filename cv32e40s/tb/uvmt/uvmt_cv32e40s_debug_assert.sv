@@ -87,6 +87,7 @@ module uvmt_cv32e40s_debug_assert
 
   logic [31:0]  dpc_rdata_q;
   logic [31:0]  dcsr_rdata_q;
+  logic [31:0]  debug_pc_o_q;
 
 
   // ---------------------------------------------------------------------------
@@ -302,7 +303,7 @@ module uvmt_cv32e40s_debug_assert
 
 
 
-    // check that a steble debug_req is actually taken within reasonable time
+    // check that a stable debug_req is actually taken within reasonable time
     a_debug_req_taken: assert property(stable_req_vs_valid_cnt <= 3)
         else `uvm_error(info_tag, "External debug request not taken in reasonable time");
 
@@ -753,7 +754,7 @@ module uvmt_cv32e40s_debug_assert
     // OBI dbg signal needs to correlate to debug mode
 
     property p_obi_dbg_instr;
-        (instr_obi.mon_cb.req && !support_if.instr_bus_addr_ph_cont && instr_obi.mon_cb.dbg)
+        (instr_obi.req && !support_if.instr_bus_addr_ph_cont && instr_obi.dbg)
         |->
         cov_assert_if.debug_mode_if;
     endproperty
@@ -762,7 +763,7 @@ module uvmt_cv32e40s_debug_assert
     else `uvm_error(info_tag, "OBI instruction bus dbg signal high for non-debug transaction");
 
     property p_obi_dbg_instr_inv;
-        (instr_obi.mon_cb.req && !support_if.instr_bus_addr_ph_cont && !instr_obi.mon_cb.dbg)
+        (instr_obi.req && !support_if.instr_bus_addr_ph_cont && !instr_obi.dbg)
         |->
         !cov_assert_if.debug_mode_if;
     endproperty
@@ -771,7 +772,7 @@ module uvmt_cv32e40s_debug_assert
     else `uvm_error(info_tag, "OBI instruction bus dbg signal low for debug transaction");
 
     property p_obi_dbg_data;
-        (data_obi.mon_cb.req && !support_if.data_bus_addr_ph_cont && data_obi.mon_cb.dbg)
+        (data_obi.req && !support_if.data_bus_addr_ph_cont && data_obi.dbg)
         |->
         cov_assert_if.debug_mode_q;
     endproperty
@@ -780,7 +781,7 @@ module uvmt_cv32e40s_debug_assert
     else `uvm_error(info_tag, "OBI data bus dbg signal high for non-debug transaction");
 
     property p_obi_dbg_data_inv;
-        (data_obi.mon_cb.req && !support_if.data_bus_addr_ph_cont && !data_obi.mon_cb.dbg)
+        (data_obi.req && !support_if.data_bus_addr_ph_cont && !data_obi.dbg)
         |->
         !cov_assert_if.debug_mode_q;
     endproperty
@@ -797,6 +798,27 @@ module uvmt_cv32e40s_debug_assert
 
     a_dcsr_nmip : assert property(p_dcsr_nmip)
     else `uvm_error(info_tag, "NMI pending not reflected in dcsr.nmip");
+
+    // debug_pc_o shall show PC of last retired instruction
+    property p_debug_pc_o;
+        (rvfi.rvfi_valid && !rvfi.rvfi_trap.trap)
+        |->
+        rvfi.rvfi_pc_rdata == debug_pc_o_q;
+    endproperty
+
+    a_debug_pc_o : assert property(p_debug_pc_o)
+    else `uvm_error(info_tag, "debug_pc_o is not driven correctly")
+
+    property p_debug_pc_o_inv;
+        int dbg_pc;
+        (cov_assert_if.debug_pc_valid_o, dbg_pc = cov_assert_if.debug_pc_o)
+        ##1 rvfi.rvfi_valid[->1]
+        |->
+        rvfi.rvfi_pc_rdata == dbg_pc;
+    endproperty
+
+    a_debug_pc_o_inv : assert property(p_debug_pc_o_inv)
+    else `uvm_error(info_tag, "debug_pc_o is not driven correctly")
 
 
     // -------------------------------------------
@@ -944,9 +966,15 @@ module uvmt_cv32e40s_debug_assert
         if(!cov_assert_if.rst_ni) begin
             dpc_rdata_q <= 32'h0;
             dcsr_rdata_q <= 32'h0;
-        end else if(rvfi.rvfi_valid) begin
-            dpc_rdata_q <= csr_dpc.rvfi_csr_rdata;
-            dcsr_rdata_q <= csr_dcsr.rvfi_csr_rdata;
+            debug_pc_o_q <= 32'h0;
+        end else begin
+            if(rvfi.rvfi_valid) begin
+                dpc_rdata_q <= csr_dpc.rvfi_csr_rdata;
+                dcsr_rdata_q <= csr_dcsr.rvfi_csr_rdata;
+            end
+            if(cov_assert_if.debug_pc_valid_o) begin
+                debug_pc_o_q <= cov_assert_if.debug_pc_o;
+            end
         end
     end
 

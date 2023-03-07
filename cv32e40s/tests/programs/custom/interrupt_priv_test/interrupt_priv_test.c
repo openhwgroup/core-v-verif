@@ -16,8 +16,6 @@
 */
 
 
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -32,6 +30,7 @@
 #define external_machine_interrupt  0x800
 // standard value for the mstatus register
 #define MSTATUS_STD_VAL 0x1800
+
 volatile uint32_t mmcause = 0;
 volatile uint32_t mmstatus = 0;
 volatile uint32_t mmie    = 0;
@@ -54,7 +53,7 @@ static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
 }
 
 /*
-Retuns specific bit-field from [bit_indx_low : bit_indx_high] in register x
+Returns specific bit-field from [bit_indx_low : bit_indx_high] in register x
 */
 unsigned int get_field(unsigned int x, int bit_indx_low, int bit_indx_high){
     int field = ( 1 << ( (bit_indx_high - bit_indx_low) + 1) )  - 1;
@@ -82,7 +81,6 @@ void mm_ram_assert_irq(uint32_t mask, uint32_t cycle_delay) {
     *TIMER_VAL_ADDR = 1 + cycle_delay;
 }
 
-
 void mstatus_mie_enable() {
     int mie_bit = 0x1 << MSTATUS_MIE_BIT;
     asm volatile("csrrs x0, mstatus, %0" : : "r" (mie_bit));
@@ -95,14 +93,12 @@ void mie_enable(uint32_t irq) {
 }
 
 typedef enum {
-
   GET_MSTATUS,
   EXCEPTION_MODE,
 } trap_behavior_t;
 
 // trap handler behavior definitions
 volatile trap_behavior_t trap_handler_beh;
-
 
 
 /*
@@ -197,5 +193,5 @@ int main(void) {
     assert_or_die(get_mpp, 0x3, "Error: Interrupt handler did not execute in machine mode!\n");
 
 
-exit(EXIT_SUCCESS);
+    exit(EXIT_SUCCESS);
 }
