@@ -303,7 +303,7 @@ module uvmt_cv32e40s_debug_assert
 
 
 
-    // check that a steble debug_req is actually taken within reasonable time
+    // check that a stable debug_req is actually taken within reasonable time
     a_debug_req_taken: assert property(stable_req_vs_valid_cnt <= 3)
         else `uvm_error(info_tag, "External debug request not taken in reasonable time");
 
