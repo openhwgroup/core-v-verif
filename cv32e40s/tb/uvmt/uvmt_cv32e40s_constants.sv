@@ -50,7 +50,7 @@
       // Sat from the include file
    `elsif PARAM_SET_1
       // Sat from the include file
-   `elsif
+   `else
       parameter logic [31:0] CORE_PARAM_DM_REGION_START = 32'hF0000000;
       parameter logic [31:0] CORE_PARAM_DM_REGION_END   = 32'hF0003FFF;
    `endif
