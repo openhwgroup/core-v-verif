@@ -587,7 +587,6 @@ void _debug_mode_register_test(void) {
                          1:nop
                            )" ::: "s0", "s1");
 
-/* TODO: Add when ISS tdata2 issue (#1695) is fixed
   // TDATA1 (Type==2) - Write 1s
   tdata1_next = (2 << 28) | ~(0xF << 28); // TYPE = Address match
   __asm__ volatile (R"(la   s1,     tdata1_next
@@ -614,22 +613,6 @@ void _debug_mode_register_test(void) {
                      1:nop
                        )" ::: "s0", "s1");
 
-*/
-  /////////////// Todo: remove when ISS tdata2 issue (#1695) is fixed
-  tdata1_next = (2 << 28) | (1 << 12); // TYPE = Address match
-  __asm__ volatile (R"(la   s1,     tdata1_next
-                           lw   s0,     0(s1)
-                           csrw tdata1, s0
-                           )" ::: "s0", "s1");
-  //////////////
-  // TDATA2 (Type==2) - Legacy Address match - Write 0s
-  __asm__ volatile (R"(csrwi tdata2, 0x0
-                       csrr  s0,     tdata2
-                       beqz  s0,     1f
-                       li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
-                       sw    s1,     debug_entry_status, s2
-                     1:nop
-                       )" ::: "s0", "s1");
 
   // TDATA2 (Type==2) - Legacy Address match - Write 1s
   __asm__ volatile (R"(li   s1,     0xFFFFFFFF
@@ -639,6 +622,31 @@ void _debug_mode_register_test(void) {
                        li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw   s1,     debug_entry_status, s2
                      1:nop
+                       )" ::: "s0", "s1");
+
+  // TDATA2 (Type==2) - Legacy Address match - Write 0s
+  __asm__ volatile (R"(csrwi tdata2, 0x0
+                       csrr  s0,     tdata2
+                       beqz  s0,     1f
+                       li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                       sw    s1,     debug_entry_status, s2
+                     1:nop
+                       )" ::: "s0", "s1");
+
+  // TDATA1 (Type==5) - Exception Trigger - Write when tdata2 is illegal
+  tdata1_next = (5 << 28) | ~(0xF << 28); // TYPE = Exception Trigger
+  __asm__ volatile (R"(csrwi tdata1, 0x0
+                       li   s1,     0xFFFFFFFF
+                       csrw tdata2, s1
+                       la   s1,     tdata1_next
+                       lw   s0,     0(s1)
+                       csrw tdata1, s0
+                       csrr s1,     tdata1
+                       li   s0,     0xF8000000
+                       beq  s0,     s1,  1f
+                       li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                       sw   s1,     debug_entry_status, s2
+                     1:csrwi tdata2, 0x0
                        )" ::: "s0", "s1");
 
   // TDATA1 (Type==5) - Exception Trigger - Write 1s
