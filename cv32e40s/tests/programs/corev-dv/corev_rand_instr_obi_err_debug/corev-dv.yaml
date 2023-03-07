@@ -26,4 +26,5 @@ plusargs: >
     +enable_debug_single_step=1
     +gen_debug_section=1
     +exit_on_debug_exception=1
+    # TODO enable when zcmt toolchain issues are resolved
     #+directed_instr_9=corev_zcmt_base_stream,4

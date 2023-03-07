@@ -24,7 +24,7 @@ parameter int XLEN = 32;
 parameter satp_mode_t SATP_MODE = BARE;
 
 // Supported Privileged mode
-privileged_mode_t supported_privileged_mode[] = {MACHINE_MODE/*, USER_MODE*/};
+privileged_mode_t supported_privileged_mode[] = {MACHINE_MODE/*, TODO: USER_MODE*/};
 
 // Unsupported instructions
 riscv_instr_name_t unsupported_instr[];

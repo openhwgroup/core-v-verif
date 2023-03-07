@@ -17,4 +17,5 @@ plusargs: >
     +directed_instr_7=corev_xori_not_instr,1
     +directed_instr_8=corev_zcmp_pushpop_base_stream,4
     +hint_instr_ratio=2
+    # TODO enable when zcmt toolchain issues are resolved
     #+directed_instr_9=corev_zcmt_base_stream,4

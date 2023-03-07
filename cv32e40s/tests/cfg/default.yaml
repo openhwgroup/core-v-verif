@@ -171,10 +171,10 @@ ovpsim: >
     #--trace
     #--tracechange
     #--showoverrides
-    #--trace --tracechange --traceshowicount --monitornets
+    #--traceshowicount
+    #--monitornets
     #--override root/showload=T
 cflags: >
-    #-Wl,--no-pie,--zcmt-force-table-jump
 plusargs: >
     +enable_zba_extension=1
     +enable_zbb_extension=1

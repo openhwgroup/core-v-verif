@@ -21,7 +21,7 @@
 //-----------------------------------------------------------------------------------------
 class corev_zcmt_base_stream extends riscv_directed_instr_stream;
 
-  const int unsigned JVT_ALIGNMENT_BITS_CONST = 10;
+  const int unsigned JVT_ALIGNMENT_BITS_CONST = 6;
 
   `uvm_object_utils(corev_zcmt_base_stream)
 

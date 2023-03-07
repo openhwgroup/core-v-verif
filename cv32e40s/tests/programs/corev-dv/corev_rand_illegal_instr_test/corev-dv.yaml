@@ -15,5 +15,6 @@ plusargs: >
     +directed_instr_7=corev_zcmp_pushpop_base_stream,4
     +illegal_instr_ratio=10
     +hint_instr_ratio=5
+    # TODO enable when zcmt toolchain issues are resolved
     #+directed_instr_8=corev_zcmt_base_stream,4
 

@@ -18,4 +18,5 @@ plusargs: >
     +randomize_csr=1
     +boot_mode=m
     +no_csr_instr=1
+    # TODO enable when zcmt toolchain issues are resolved
     #+directed_instr_7=corev_zcmt_base_stream,4

@@ -25,4 +25,5 @@ plusargs: >
     +set_dcsr_ebreak=0
     +enable_debug_single_step=0
     +gen_debug_section=1
+    # TODO enable when zcmt toolchain issues are resolved
     #+directed_instr_9=corev_zcmt_base_stream,4
