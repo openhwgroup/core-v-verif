@@ -42,6 +42,15 @@ module uvmt_cv32e40s_support_logic
   // Signal indicates data bus address phase completed last cycle
   logic data_bus_gnt_q;
 
+  // flag for signaling first debug instruction
+  logic first_debug_ins_flag;
+  // prev rvfi_valid was a dret
+  logic ins_was_dret;
+  // flopped value of core control signal fetch_enable
+  logic fetch_enable_q;
+  // counter for keeping track of the number of rvfi_valids that have passed since the last observed debug_req
+  int   req_vs_valid_cnt;
+
 
   // ---------------------------------------------------------------------------
   // Support logic blocks
@@ -75,6 +84,73 @@ module uvmt_cv32e40s_support_logic
     end
 
   end //always
+
+   // Detect first instruction of debug code
+  assign out_support_if.first_debug_ins = rvfi.rvfi_valid && rvfi.rvfi_dbg_mode && !first_debug_ins_flag;
+
+
+  always@ (posedge in_support_if.clk or negedge in_support_if.rst_n) begin
+      if( !in_support_if.rst_n) begin
+          first_debug_ins_flag <= 0;
+          ins_was_dret <= 0;
+      end else begin
+          if(rvfi.rvfi_valid) begin
+              if(rvfi.rvfi_dbg_mode) begin
+                  first_debug_ins_flag <= 1;
+              end else begin
+                  first_debug_ins_flag <= 0;
+              end
+              if(rvfi.is_dret() && !rvfi.rvfi_trap.trap) begin
+                  ins_was_dret <= 1;
+              end
+          end
+          if(ins_was_dret) begin
+              first_debug_ins_flag <= 0;
+              ins_was_dret <= 0;
+          end
+      end
+  end
+
+
+  //detect core startup
+  assign out_support_if.first_fetch = in_support_if.fetch_enable && !fetch_enable_q;
+
+  always@ (posedge in_support_if.clk or negedge in_support_if.rst_n) begin
+      if( !in_support_if.rst_n) begin
+          fetch_enable_q <= 0;
+      end else if (in_support_if.fetch_enable) begin
+          fetch_enable_q <= 1;
+      end
+  end
+
+  //record a debug_req long enough that it could be taken
+  always@ (posedge in_support_if.clk or negedge in_support_if.rst_n) begin
+      if( !in_support_if.rst_n) begin
+          out_support_if.recorded_dbg_req <= 0;
+          req_vs_valid_cnt <= 4'h0;
+      end else begin
+          if(rvfi.rvfi_valid) begin
+              if(in_support_if.debug_req_i) begin
+                  out_support_if.recorded_dbg_req <= 1;
+                  req_vs_valid_cnt <= 4'h1;
+              end else if (req_vs_valid_cnt > 0) begin
+                  req_vs_valid_cnt <= req_vs_valid_cnt - 1;
+              end else begin
+                  out_support_if.recorded_dbg_req <= 0;
+              end
+          end else if (in_support_if.debug_req_i) begin
+                  out_support_if.recorded_dbg_req <= 1;
+                  req_vs_valid_cnt <= 4'h2;
+          end
+      end
+  end
+
+
+
+  // ---------------------------------------------------------------------------
+  // Support logic submodules
+  // ---------------------------------------------------------------------------
+
 
   // Support logic for obi interfaces:
 

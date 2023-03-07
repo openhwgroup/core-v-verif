@@ -69,7 +69,18 @@ interface uvma_rvfi_instr_if
     input logic [(NMEM*XLEN)-1:0]    rvfi_mem_rdata,
     input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_rmask,
     input logic [(NMEM*XLEN)-1:0]    rvfi_mem_wdata,
-    input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask
+    input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask,
+
+    output logic [(32)-1:0][XLEN-1:0]       gpr_rdata_array,
+    output logic [(32)-1:0]                 gpr_rmask_array,
+    output logic [(32)-1:0][XLEN-1:0]       gpr_wdata_array,
+    output logic [(32)-1:0]                 gpr_wmask_array,
+
+    output logic [NMEM-1:0][XLEN-1:0]       mem_addr_array,
+    output logic [NMEM-1:0][XLEN-1:0]       mem_rdata_array,
+    output logic [NMEM-1:0][(XLEN/8)-1:0]   mem_rmask_array,
+    output logic [NMEM-1:0][XLEN-1:0]       mem_wdata_array,
+    output logic [NMEM-1:0][(XLEN/8)-1:0]   mem_wmask_array
 
   );
 
@@ -104,7 +115,8 @@ interface uvma_rvfi_instr_if
   localparam int INSTR_CSRADDR_POS  = 20;
 
 
-  localparam INTR_CAUSE_NMI_MASK         = 11'h 400;
+  localparam INTR_CAUSE_NMI_MASK    = 11'h 400;
+
 
 
 
@@ -116,6 +128,21 @@ interface uvma_rvfi_instr_if
   // -------------------------------------------------------------------
   // Begin module code
   // -------------------------------------------------------------------
+
+  // these signals are added to make it easier to use the signal arrays,
+  // and to inspect them in the waveforms
+  // gpr masks are redundant, but added for ease of use
+  assign {>>{gpr_rdata_array}} = rvfi_gpr_rdata;
+  assign gpr_rmask_array       = rvfi_gpr_rmask;
+  assign {>>{gpr_wdata_array}} = rvfi_gpr_wdata;
+  assign gpr_wmask_array       = rvfi_gpr_wmask;
+
+
+  assign {>>{mem_addr_array}}  = rvfi_mem_addr;
+  assign {>>{mem_rdata_array}} = rvfi_mem_rdata;
+  assign {>>{mem_rmask_array}} = rvfi_mem_rmask;
+  assign {>>{mem_wdata_array}} = rvfi_mem_wdata;
+  assign {>>{mem_wmask_array}} = rvfi_mem_wmask;
 
   always @(posedge clk) begin
     cycle_cnt <= cycle_cnt + 1;
@@ -398,10 +425,20 @@ function logic is_mmode();
           (rvfi_mode == cv32e40s_pkg::PRIV_LVL_M);
 endfunction : is_mmode
 
+function logic is_not_mmode();
+  return  rvfi_valid &&
+          (rvfi_mode != cv32e40s_pkg::PRIV_LVL_M);
+endfunction : is_not_mmode
+
 function logic is_umode();
   return  rvfi_valid &&
           (rvfi_mode == cv32e40s_pkg::PRIV_LVL_U);
 endfunction : is_umode
+
+function logic is_not_umode();
+  return  rvfi_valid &&
+          (rvfi_mode != cv32e40s_pkg::PRIV_LVL_U);
+endfunction : is_not_umode
 
 function logic is_pma_instr_fault();
   return  rvfi_valid  &&
