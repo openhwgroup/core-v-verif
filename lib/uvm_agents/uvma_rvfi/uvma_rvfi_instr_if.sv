@@ -425,10 +425,20 @@ function logic is_mmode();
           (rvfi_mode == cv32e40s_pkg::PRIV_LVL_M);
 endfunction : is_mmode
 
+function logic is_not_mmode();
+  return  rvfi_valid &&
+          (rvfi_mode != cv32e40s_pkg::PRIV_LVL_M);
+endfunction : is_not_mmode
+
 function logic is_umode();
   return  rvfi_valid &&
           (rvfi_mode == cv32e40s_pkg::PRIV_LVL_U);
 endfunction : is_umode
+
+function logic is_not_umode();
+  return  rvfi_valid &&
+          (rvfi_mode != cv32e40s_pkg::PRIV_LVL_U);
+endfunction : is_not_umode
 
 function logic is_instr_bus_valid();
   return !( (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT) ||
