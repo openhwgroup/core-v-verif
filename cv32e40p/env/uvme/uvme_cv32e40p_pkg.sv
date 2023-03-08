@@ -44,8 +44,6 @@ package uvme_cv32e40p_pkg;
    import uvma_debug_pkg      ::*;
    import uvma_obi_memory_pkg ::*;
    import uvma_rvfi_pkg       ::*;
-   import uvma_rvvi_pkg       ::*;
-   import uvma_rvvi_ovpsim_pkg::*;
    import uvml_mem_pkg        ::*;
 
    // Forward decls
@@ -88,7 +86,6 @@ package uvme_cv32e40p_pkg;
    `include "uvme_rv32isa_covg.sv"
    `include "uvme_cv32e40p_cov_model.sv"
    `include "uvme_cv32e40p_sb.sv"
-   `include "uvme_cv32e40p_core_sb.sv"
    `include "uvme_cv32e40p_vsqr.sv"
    `include "uvme_cv32e40p_env.sv"
 

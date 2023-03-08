@@ -191,6 +191,11 @@ OVP_MODEL_DPI   = $(DV_OVPM_MODEL)/bin/Linux64/imperas_CV32.dpi.so
 #OVP_CTRL_FILE   = $(DV_OVPM_DESIGN)/riscv_CV32E40P.ic
 
 ###############################################################################
+# Imperas OVPsim Instruction Set Simulator
+#IMPERAS_DV_MODEL = $(CORE_V_VERIF)/vendor_lib/ImperasDV/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model.so
+IMPERAS_DV_MODEL = $(IMPERAS_HOME)/lib/$(IMPERAS_ARCH)/ImperasLib/imperas.com/verification/riscv/1.0/model.so
+
+###############################################################################
 # Run the yaml2make scripts
 
 ifeq ($(VERBOSE),1)
@@ -702,5 +707,3 @@ firmware-unit-test-clean:
 		$(FIRMWARE_OBJS) $(FIRMWARE_UNIT_TEST_OBJS)
 
 #endend
-
-
