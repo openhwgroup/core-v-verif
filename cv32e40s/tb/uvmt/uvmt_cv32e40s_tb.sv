@@ -175,7 +175,8 @@ module uvmt_cv32e40s_tb;
                                                                    .mem_rmask_array(),
                                                                    .mem_wdata_array(),
                                                                    .mem_wmask_array(),
-                                                                   .instr_prot(rvfi_i.rvfi_instr_prot)
+                                                                   .instr_prot(rvfi_i.rvfi_instr_prot),
+                                                                   .mem_prot(rvfi_i.rvfi_mem_prot)
                                                                    );
 
   // RVFI CSR binds

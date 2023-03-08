@@ -202,11 +202,7 @@ module  uvmt_cv32e40s_umode_assert
 
   reg [1:0]  effective_rvfi_privmode;
   always @(*) begin
-    effective_rvfi_privmode = MODE_U;
-
-    if (rvfi_dbg_mode) begin
-      effective_rvfi_privmode = rvfi_mode;
-    end else if (rvfi_csr_mstatus_rdata[MPRV_POS+:MPRV_LEN]) begin
+    if (rvfi_csr_mstatus_rdata[MPRV_POS+:MPRV_LEN]) begin
       effective_rvfi_privmode = rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN];
     end else begin
       effective_rvfi_privmode = rvfi_mode;
@@ -919,42 +915,90 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "medeleg and mideleg registers should not exist");
 
 
-  // vplan:InstrProt & vplan:DataProt & vplan:DbgProt
+  // vplan:InstrProt
 
   a_instr_prot: assert property (
     rvfi_valid
     |->
-    (rvfi_if.instr_prot[2:1] == rvfi_if.rvfi_mode)
-    // TODO or instruction access fault
+    (rvfi_if.instr_prot[2:1] == rvfi_if.rvfi_mode)  ||
+    (rvfi_if.rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT)  ||
+    (rvfi_trap.debug_cause == DBG_CAUSE_TRIGGER)
+    //Note: Triggers can overshadow access faults
   ) else `uvm_error(info_tag, "the prot on fetch must match the mode on retirement");
 
-/* TODO:ERROR
-  a_prot_loadstore: assert property (
+  a_instr_prot_legal: assert property (
     rvfi_valid  &&
-    is_rvfi_loadstore
+    (rvfi_if.rvfi_trap.exception_cause != cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT)
     |->
-    (rvfi_custom.loadstore_prot[2:1] == effective_rvfi_privmode)
-  ) else `uvm_error(info_tag, "the prot on load/store must match the effective mode on retirement");
-
-  a_prot_dbg_iside: assert property (
-    ?
-    |->
-    ?
-  ) else `uvm_error(info_tag, "TODO");
-
-  a_prot_dbg_dside: assert property (
-    ?
-    |->
-    ?
-  ) else `uvm_error(info_tag, "TODO");
-*/
+    (rvfi_if.instr_prot[2:0] inside {3'b 000, 3'b 110})
+  ) else `uvm_error(info_tag, "instr_prot illegal value");
 
   a_prot_iside_legal: assert property (
     obi_iside_prot  inside  {3'b 000, 3'b 110}
   ) else `uvm_error(info_tag, "the prot on fetch must be legal");
 
+
+  // vplan:DataProt
+
+  a_data_prot: assert property (
+    rvfi_valid  &&
+    (|rvfi_if.rvfi_mem_rmask || |rvfi_if.rvfi_mem_wmask)
+    |->
+    (rvfi_if.mem_prot[2:1] == effective_rvfi_privmode)
+  ) else `uvm_error(info_tag, "the prot on load/store must match the effective mode on retirement");
+
+  a_data_prot_legal: assert property (
+    rvfi_valid  &&
+    (rvfi_if.rvfi_trap.exception_cause != cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT)
+    |->
+    (rvfi_if.mem_prot[2:0] inside {3'b 001, 3'b 111})
+  ) else `uvm_error(info_tag, "data_prot illegal value");
+
   a_prot_dside_legal: assert property (
     obi_dside_prot  inside  {3'b 001, 3'b 111}
   ) else `uvm_error(info_tag, "the prot on loadstore must be legal");
+
+  a_data_prot_equal: assert property (
+    rvfi_valid  &&
+    (|rvfi_if.rvfi_mem_rmask || |rvfi_if.rvfi_mem_wmask)
+    |->
+    is_data_prot_equal()
+  ) else `uvm_error(info_tag, "data prot should match accesses from same instr");
+
+  function automatic logic  is_data_prot_equal();
+    logic [2:0]  prot0 = rvfi_if.mem_prot[2:0];
+
+    is_data_prot_equal = 1;
+
+    for (int i = 1; i < NMEM; i++) begin
+      if (!rvfi_if.check_mem_act(i)) begin
+        continue;
+      end
+
+      if (rvfi_if.mem_prot[i*3+:3] != prot0) begin
+        is_data_prot_equal = 0;
+      end
+    end
+  endfunction : is_data_prot_equal
+
+
+  // vplan:DbgProt
+
+  a_dbg_prot_iside: assert property (
+    rvfi_if.rvfi_valid  &&
+    rvfi_if.rvfi_dbg_mode
+    |->
+    (rvfi_if.instr_prot[2:1] == MODE_M)  ||
+    (rvfi_if.rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT)
+  ) else `uvm_error(info_tag, "dmode should fetch as mmode");
+
+  a_dbg_prot_dside: assert property (
+    rvfi_if.rvfi_dbg_mode  &&
+    rvfi_valid  &&
+    (|rvfi_if.rvfi_mem_rmask || |rvfi_if.rvfi_mem_wmask)
+    |->
+    (rvfi_if.mem_prot[2:1] == effective_rvfi_privmode)
+  ) else `uvm_error(info_tag, "TODO");
+
 
 endmodule : uvmt_cv32e40s_umode_assert

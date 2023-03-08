@@ -82,7 +82,8 @@ interface uvma_rvfi_instr_if
     output logic [NMEM-1:0][XLEN-1:0]       mem_wdata_array,
     output logic [NMEM-1:0][(XLEN/8)-1:0]   mem_wmask_array,
 
-    input logic [2:0]                instr_prot
+    input logic [2:0]                instr_prot,
+    input logic [NMEM*3-1:0]         mem_prot
   );
 
   // -------------------------------------------------------------------
