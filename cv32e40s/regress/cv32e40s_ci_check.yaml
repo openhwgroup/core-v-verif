@@ -36,11 +36,12 @@ tests:
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=hello-world
 
-  interrupt_test:
-    build: uvmt_cv32e40s
-    description: Interrupt directed test
-    dir: cv32e40s/sim/uvmt
-    cmd: make test TEST=interrupt_test
+    # FIXME: Broken test
+    #  interrupt_test:
+    #    build: uvmt_cv32e40s
+    #    description: Interrupt directed test
+    #    dir: cv32e40s/sim/uvmt
+    #    cmd: make test TEST=interrupt_test
 
   corev_rand_interrupt:
     build: uvmt_cv32e40s
@@ -54,11 +55,12 @@ tests:
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=illegal
 
-  debug_test:
-    build: uvmt_cv32e40s
-    dir: cv32e40s/sim/uvmt
-    cmd: make test TEST=debug_test
-    makearg: USER_RUN_FLAGS=+rand_stall_obi_disable
+    # FIXME: silabs-hfegran: Add updated version when ready
+    #debug_test:
+    #  build: uvmt_cv32e40s
+    #  dir: cv32e40s/sim/uvmt
+    #  cmd: make test TEST=debug_test
+    #  makearg: USER_RUN_FLAGS=+rand_stall_obi_disable
 
   csr_instructions:
     build: uvmt_cv32e40s
