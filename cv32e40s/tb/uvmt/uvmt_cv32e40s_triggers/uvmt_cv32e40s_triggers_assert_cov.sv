@@ -39,6 +39,8 @@ module uvmt_cv32e40s_triggers_assert_cov
     input logic [31:0] support_pc_ex,
     input logic [31:0] support_pc_wb,
 
+    input logic support_rvfi_enter_dbg,
+
     uvma_rvfi_instr_if rvfi_if,
     uvma_clknrst_if clknrst_if,
 
@@ -273,45 +275,9 @@ module uvmt_cv32e40s_triggers_assert_cov
     end
   end
 
-  logic [31:0] support_pc_q1;
-  logic [31:0] enter_debug_PC;
-  logic pc_dm_addr_match_half_sticky;
 
-  always @(posedge clknrst_if.clk) begin
-      if (support_wb_instr_valid) begin
-      support_pc_q1 <= support_pc_wb;
-
-      end else if(support_ex_instr_valid) begin
-      support_pc_q1 <= support_pc_ex;
-
-      end else if(support_id_instr_valid) begin
-      support_pc_q1 <= support_pc_id;
-
-      end else begin
-      support_pc_q1 <= support_pc_if;
-      end
-
-    if(support_pc_if == dm_halt_addr_i && $rose(support_debug_mode_q)) begin //TODO! Nå vet vi at vi har entered debug.
-      pc_dm_addr_match_half_sticky = 1;
-      enter_debug_PC = support_pc_q1;
-    end
-    if (rvfi_if.rvfi_valid) begin
-      pc_dm_addr_match_half_sticky <= 0;
-    end
-  end
-
-  //P12-P13: 3) 4) 5) 6) TODO! Endre dennne!
-  a_dt_debug_state_initialization: assert property (
-    //Make sure we have entered debug mode
-    rvfi_if.rvfi_valid
-    && !rvfi_if.rvfi_trap
-    && $rose(rvfi_if.rvfi_dbg_mode)
-    |->
-    //Verify the correct consequence of entering debug mode
-    dcsr_r[MSB_CAUSE:LSB_CAUSE] == rvfi_if.rvfi_dbg
-    && rvfi_if.rvfi_pc_rdata == dm_halt_addr_i
-    && dpc_r == enter_debug_PC
-  ) else `uvm_error(info_tag, "TODO!\n");
+  //P12-P13: 3) 4) 5) 6)
+  //Debug assertions //TODO!
 
   //P16-P17: 1)
   a_dt_0_triggers_tdata1_access: assert property (
@@ -527,7 +493,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   a_dt_access_csr_not_dbg_mode: assert property (
     //Make sure we access tdata1, tdata2 or tdata3 in non-debug mode
     rvfi_if.rvfi_valid
-    && !rvfi_if.rvfi_dbg_mode
+    && !support_rvfi_enter_dbg
     && rvfi_if.rvfi_insn[MSB_OPCODE:LSB_OPCODE] == OPCODE_SYSTEM
     && rvfi_if.rvfi_insn[FUNCT3_13:LSB_FUNCT3] != NO_CSR_WSC
     && (rvfi_if.rvfi_insn[MSB_CSR:LSB_CSR] == ADDR_TDATA1
@@ -545,7 +511,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   a_dt_dmode: assert property (
     //Make sure we write to the dmode bit of tdata1
     rvfi_if.rvfi_valid
-    && rvfi_if.rvfi_dbg_mode
+    && support_rvfi_enter_dbg
     && !rvfi_if.rvfi_trap.trap
     && tdata1.rvfi_csr_wmask[DMODE]
 
@@ -892,14 +858,14 @@ module uvmt_cv32e40s_triggers_assert_cov
     //Enter debug mode due to situation <x>
     |x
     && rvfi_if.rvfi_valid
-    && !rvfi_if.rvfi_dbg_mode
+    && !support_rvfi_enter_dbg
 
     //Check out the next valid instruction
     ##1 rvfi_if.rvfi_valid[->1]
 
     |->
     //Verify that the next instruction is executed from the debug handler
-    rvfi_if.rvfi_dbg_mode;
+    support_rvfi_enter_dbg;
   endproperty
 
 
@@ -907,7 +873,7 @@ module uvmt_cv32e40s_triggers_assert_cov
     //Enter debug mode due to a load operation accessing a matching address in situation <x>
     |x
     && rvfi_if.rvfi_valid
-    && !rvfi_if.rvfi_dbg_mode
+    && !support_rvfi_enter_dbg
     && |rvfi_if.rvfi_mem_rmask
 
     //Make sure the exception does not affect the core's behavior
@@ -918,7 +884,7 @@ module uvmt_cv32e40s_triggers_assert_cov
 
     |->
     //Verify that the next instruction is executed from the debug handler
-    rvfi_if.rvfi_dbg_mode;
+    support_rvfi_enter_dbg;
   endproperty
 
 
@@ -926,7 +892,7 @@ module uvmt_cv32e40s_triggers_assert_cov
     //Enter debug mode due to a store operation accessing a matching address in situation <x>
     |x
     && rvfi_if.rvfi_valid
-    && !rvfi_if.rvfi_dbg_mode
+    && !support_rvfi_enter_dbg
     && |rvfi_if.rvfi_mem_wmask
 
     //Make sure the exception does not affect the core's behavior
@@ -937,7 +903,7 @@ module uvmt_cv32e40s_triggers_assert_cov
 
     |->
     //Verify that the next instruction is executed from the debug handler
-    rvfi_if.rvfi_dbg_mode;
+    support_rvfi_enter_dbg;
   endproperty
 
 

@@ -455,16 +455,6 @@ module uvmt_cv32e40s_tb;
                                                                      .rvfi_csr_wdata(rvfi_i.rvfi_csr_tdata_wdata[3])
     );
 
-  // tinfo
-/*
-  bind cv32e40s_wrapper
-    uvma_rvfi_csr_if#(uvme_cv32e40s_pkg::XLEN) rvfi_csr_tinfo_if_0_i(.clk(clk_i),
-                                                                     .reset_n(rst_ni),
-                                                                     .rvfi_csr_rmask(rvfi_i.rvfi_csr_tinfo_rmask[0]),
-                                                                     .rvfi_csr_wmask(rvfi_i.rvfi_csr_tinfo_wmask[0]),
-                                                                     .rvfi_csr_rdata(rvfi_i.rvfi_csr_tinfo_rdata[0]),
-                                                                     .rvfi_csr_wdata(rvfi_i.rvfi_csr_tinfo_wdata[0])
-    );*/
 
   bind uvmt_cv32e40s_dut_wrap
     uvma_obi_memory_assert_if_wrp#(
@@ -1194,6 +1184,8 @@ module uvmt_cv32e40s_tb;
                                                                     .support_pc_id (core_i.if_id_pipe.pc),
                                                                     .support_pc_ex (core_i.id_ex_pipe.pc),
                                                                     .support_pc_wb (core_i.ex_wb_pipe.pc),
+
+                                                                    .support_rvfi_enter_dbg (support_logic_for_assert_coverage_modules_if.first_debug_ins),
 
                                                                     .rvfi_if (rvfi_instr_if_0_i), //TODO: sjekk om u_ prefix eller _i postfix matcher coding guidelines
                                                                     .clknrst_if (dut_wrap.clknrst_if),
