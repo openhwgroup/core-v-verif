@@ -23,42 +23,49 @@ module uvmt_cv32e40s_xsecure_reduced_profiling_infrastructure_assert
     parameter int       SECURE   = 1
   )
   (
-   uvmt_cv32e40s_xsecure_if xsecure_if,
-   input rst_ni,
-   input clk_i
+    input rst_ni,
+    input clk_i,
+
+    //CSRs:
+    input logic [31:0] mhpmevent,
+    input logic [31:0][63:0] mhpmcounter,
+    input logic [31:0] mcountinhibit
+
   );
 
   // Default settings:
   default clocking @(posedge clk_i); endclocking
   default disable iff (!(rst_ni) | !(SECURE));
   string info_tag = "CV32E40S_XSECURE_ASSERT_COVERPOINTS";
-  string info_tag_glitch = "CV32E40S_XSECURE_ASSERT_COVERPOINTS (GLITCH BEHAVIOR)";
+
+  localparam ZERO = '0;
 
 
-  a_xsecure_reduction_of_profiling_infrastructure_mhpmevent_31_to_3_are_zero: assert property (
+  //Verify that the following bits in these CSRs are hardwired to 0:
+  //- mphmevent: 3 to 31
+  //- mphmcounter: 3 to 31
+  //- mhpmcounterh: 3 to 31
+  //- mcountinhibit: 1 and 3 to 31
 
-    //Make sure the MHPMEVENT 3 to 31 are hardwired to zero
-    |xsecure_if.core_cs_registers_mhpmevent_rdata_31_to_3 == 1'b0
+  a_xsecure_reduced_profiling_mhpmevent: assert property (
+
+    mhpmevent[31:3] == ZERO
 
   ) else `uvm_error(info_tag, "The MHPMEVENT registers 31 to 3 are not hardwired to zero.\n");
 
 
-  a_xsecure_reduction_of_profiling_infrastructure_mhpmcounter_31_to_3_are_zero: assert property (
+  a_xsecure_reduced_profiling_mhpmcounter: assert property (
 
-    //Make sure the MHPMCOUNTER 3 to 31 are hardwired to zero
-    //(we include MHPMCOUNTERH in the MHPMCOUNTER signal)
-    |xsecure_if.core_cs_registers_mhpmcounter_rdata_31_to_3 == 1'b0
+    //Note that the mhpmcounter signal contain both the mhpmcounter and mhpmcounterh bits
+    mhpmcounter[31:3] == ZERO
 
   ) else `uvm_error(info_tag, "The MHPMCOUNTER and MHPMCOUNTERH registers 31 to 3 are not hardwired to zero.\n");
 
 
-  a_xsecure_reduction_of_profiling_infrastructure_mcountinhibit_31_to_3_and_1_are_zero: assert property (
+  a_xsecure_reduced_profiling_mcountinhibit: assert property (
 
-    //Make sure the MCOUNTINHIBIT 1 is hardwired to zero
-    xsecure_if.core_cs_registers_mcountinhibit_rdata[1] == 1'b0
-
-    //Make sure the MCOUNTINHIBIT bit 3 to 31 are hardwired to zero
-    && xsecure_if.core_cs_registers_mcountinhibit_rdata[31:3] == '0
+    mcountinhibit[1] == ZERO
+    && mcountinhibit[31:3] == ZERO
 
   ) else `uvm_error(info_tag, "The MHPMCOUNTINHIBIT registers 1, and 3 to 31 are not hardwired to zero.\n");
 

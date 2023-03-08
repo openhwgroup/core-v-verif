@@ -713,53 +713,6 @@ module uvmt_cv32e40s_tb;
 
   localparam PMP_ADDR_WIDTH = (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY > 0) ? 33 - uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY : 32;
 
-  // Shadow:
-  mseccfg_t pmp_mseccfg_q_shadow_q;
-  pmpncfg_t pmpncfg_q_shadow_q[PMP_MAX_REGIONS];
-  logic [PMP_ADDR_WIDTH-1:0] pmp_addr_q_shadow_q[PMP_MAX_REGIONS];
-
-  mtvt_t mtvt_q_shadow_q;
-  mtvec_t mtvec_q_shadow_q;
-  mintstatus_t mintstatus_q_shadow_q;
-  logic [31:0] mintthresh_q_shadow_q;
-  logic [31:0] mie_q_hardened_shadow_q;
-
-  // PMP register
-  generate
-    if (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS > 0) begin
-      assign pmp_mseccfg_q_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.gen_hardened.shadow_q);
-    end else begin
-      assign pmp_mseccfg_q_shadow_q = '0;
-    end
-  endgenerate
-
-  generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n++) begin
-    assign pmpncfg_q_shadow_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.gen_hardened.shadow_q;
-    assign pmp_addr_q_shadow_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.gen_hardened.shadow_q;
-  end endgenerate
-
-  generate
-    if (CLIC==1) begin
-
-      assign mtvt_q_shadow_q       = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mtvt_csr_i.gen_hardened.shadow_q);
-      assign mtvec_q_shadow_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mtvec_csr_i.gen_hardened.shadow_q);
-      assign mintstatus_q_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mintstatus_csr_i.gen_hardened.shadow_q);
-      assign mintthresh_q_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mintthresh_csr_i.gen_hardened.shadow_q);
-
-      assign mie_q_hardened_shadow_q = '0;
-
-    end else begin
-
-      assign mtvt_q_shadow_q       = '0;
-      assign mtvec_q_shadow_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.gen_hardened.shadow_q);
-      assign mintstatus_q_shadow_q = '0;
-      assign mintthresh_q_shadow_q = '0;
-
-      assign mie_q_hardened_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.gen_hardened.shadow_q);
-
-    end
-  endgenerate
-
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_if
     #(.MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
@@ -893,46 +846,6 @@ module uvmt_cv32e40s_tb;
 
       .core_i_cs_registers_i_mepc_o                                                 (core_i.cs_registers_i.mepc_o),
 
-      // Hardend CSR registers
-      .core_i_cs_registers_i_mstateen0_csr_i_rdata_q                                (core_i.cs_registers_i.mstateen0_csr_i.rdata_q),
-      .core_i_cs_registers_i_priv_lvl_csr_i_rdata_q                                 (core_i.cs_registers_i.priv_lvl_i.rdata_q),
-      .core_i_cs_registers_i_jvt_csr_i_rdata_q                                      (core_i.cs_registers_i.jvt_csr_i.rdata_q),
-      .core_i_cs_registers_i_mstatus_csr_i_rdata_q                                  (core_i.cs_registers_i.mstatus_csr_i.rdata_q),
-      .core_i_cs_registers_i_cpuctrl_csr_i_rdata_q                                  (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.rdata_q),
-      .core_i_cs_registers_i_dcsr_csr_i_rdata_q                                     (core_i.cs_registers_i.gen_debug_csr.dcsr_csr_i.rdata_q),
-      .core_i_cs_registers_i_mepc_csr_i_rdata_q                                     (core_i.cs_registers_i.mepc_csr_i.rdata_q),
-      .core_i_cs_registers_i_mscratch_csr_i_rdata_q                                 (core_i.cs_registers_i.mscratch_csr_i.rdata_q),
-
-      .core_i_cs_registers_i_pmp_mseccfg_q                                          (core_i.cs_registers_i.pmp_mseccfg_q),
-      .core_i_cs_registers_i_pmpncfg_q                                              (core_i.cs_registers_i.pmpncfg_q),
-      .core_i_cs_registers_i_pmp_addr_q                                             (core_i.cs_registers_i.pmp_addr_q),
-
-      .core_i_cs_registers_i_mtvt_q                                                 (core_i.cs_registers_i.mtvt_q),
-      .core_i_cs_registers_i_mtvec_q                                                (core_i.cs_registers_i.mtvec_q),
-      .core_i_cs_registers_i_mintstatus_q                                           (core_i.cs_registers_i.mintstatus_q),
-      .core_i_cs_registers_i_mintthresh_q                                           (core_i.cs_registers_i.mintthresh_q),
-      .core_i_cs_registers_i_mie_q                                                  (core_i.cs_registers_i.mie_q),
-
-      // Shadow registers
-      .core_cs_registers_mstateen0_csr_gen_hardened_shadow_q                        (core_i.cs_registers_i.mstateen0_csr_i.gen_hardened.shadow_q),
-      .core_cs_registers_priv_lvl_gen_hardened_shadow_q                             (core_i.cs_registers_i.priv_lvl_i.gen_hardened.shadow_q),
-      .core_cs_registers_jvt_csr_gen_hardened_shadow_q                              (core_i.cs_registers_i.jvt_csr_i.gen_hardened.shadow_q),
-      .core_cs_registers_mstatus_csr_gen_hardened_shadow_q                          (core_i.cs_registers_i.mstatus_csr_i.gen_hardened.shadow_q),
-      .core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q                  (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.gen_hardened.shadow_q),
-      .core_i_cs_registers_i_gen_debug_csr_dcsr_csr_i_gen_hardened_shadow_q         (core_i.cs_registers_i.gen_debug_csr.dcsr_csr_i.gen_hardened.shadow_q),
-      .core_cs_registers_mepc_csr_gen_hardened_shadow_q                             (core_i.cs_registers_i.mepc_csr_i.gen_hardened.shadow_q),
-      .core_cs_registers_mscratch_csr_gen_hardened_shadow_q                         (core_i.cs_registers_i.mscratch_csr_i.gen_hardened.shadow_q),
-
-      .uvmt_cv32e40s_tb_pmp_mseccfg_q_shadow_q                                      (uvmt_cv32e40s_tb.pmp_mseccfg_q_shadow_q),
-      .uvmt_cv32e40s_tb_pmpncfg_q_shadow_q                                          (uvmt_cv32e40s_tb.pmpncfg_q_shadow_q),
-      .uvmt_cv32e40s_tb_pmp_addr_q_shadow_q                                         (uvmt_cv32e40s_tb.pmp_addr_q_shadow_q),
-
-      .uvmt_cv32e40s_tb_mtvt_q_shadow_q                                             (uvmt_cv32e40s_tb.mtvt_q_shadow_q),
-      .uvmt_cv32e40s_tb_mtvec_q_shadow_q                                            (uvmt_cv32e40s_tb.mtvec_q_shadow_q),
-      .uvmt_cv32e40s_tb_mintstatus_q_shadow_q                                       (uvmt_cv32e40s_tb.mintstatus_q_shadow_q),
-      .uvmt_cv32e40s_tb_mintthresh_q_shadow_q                                       (uvmt_cv32e40s_tb.mintthresh_q_shadow_q),
-      .uvmt_cv32e40s_tb_mie_q_hardened_shadow_q                                     (uvmt_cv32e40s_tb.mie_q_hardened_shadow_q),
-
       // Controller
       .core_i_controller_i_controller_fsm_i_dcsr_i_step                             (core_i.controller_i.controller_fsm_i.dcsr_i.step),
       .core_i_controller_i_controller_fsm_i_dcsr_i_stepie                           (core_i.controller_i.controller_fsm_i.dcsr_i.stepie),
@@ -1003,17 +916,35 @@ module uvmt_cv32e40s_tb;
 
   // Xsecure assertions:
 
+
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert #(
 	    .SECURE	(SECURE)
     ) xsecure_bus_protocol_hardening_assert_i 	(
+
+      //Interfaces:
+      .support_if (support_logic_for_assert_coverage_modules_if.slave_mp),
+
       //Signals:
       .clk_i      (clknrst_if.clk),
       .rst_ni     (clknrst_if.reset_n),
 
-      //Interfaces:
-    	.xsecure_if	(xsecure_if),
-      .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
+      //Alerts:
+      .alert_major (core_i.alert_major_o),
+      .bus_protocol_hardening_glitch (core_i.alert_i.itf_prot_err_i),
+
+      //OBI:
+      .obi_data_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+      .obi_instr_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+
+      //Resp valids:
+      .instr_if_mpu_resp (core_i.if_stage_i.prefetch_resp_valid),
+      .lsu_mpu_resp (core_i.load_store_unit_i.resp_valid),
+
+      //Counters:
+      .lsu_rf_core_side_cnt (core_i.load_store_unit_i.response_filter_i.core_cnt_q),
+      .lsu_rf_bus_side_cnt (core_i.load_store_unit_i.response_filter_i.bus_cnt_q)
+
     );
 
 
@@ -1047,18 +978,80 @@ module uvmt_cv32e40s_tb;
     );
 
 
+  pmpncfg_t pmpncfg[PMP_MAX_REGIONS];
+  logic [PMP_ADDR_WIDTH-1:0] pmp_addr[PMP_MAX_REGIONS];
+
+  logic [$bits(pmpncfg_t)-1:0] pmpncfg_shadow[PMP_MAX_REGIONS];
+  logic [PMP_ADDR_WIDTH-1:0] pmp_addr_shadow[PMP_MAX_REGIONS];
+
+  // PMP register
+
+  generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n++) begin
+    assign pmpncfg[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.rdata_q;
+    assign pmp_addr[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.rdata_q;
+
+    assign pmpncfg_shadow[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.gen_hardened.shadow_q;
+    assign pmp_addr_shadow[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.gen_hardened.shadow_q;
+  end endgenerate
+
+
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_hardened_csrs_assert #(
 	    .SECURE	(SECURE),
-      .CLIC (CLIC),
+      .PMP_ADDR_WIDTH    (core_i.cs_registers_i.PMP_ADDR_WIDTH),
       .PMP_NUM_REGIONS (PMP_NUM_REGIONS)
     ) xsecure_hardened_csrs_assert_i 	(
+
       //Signals:
       .clk_i      (clknrst_if.clk),
       .rst_ni     (clknrst_if.reset_n),
 
-      //Interfaces:
-    	.xsecure_if	(xsecure_if)
+      //Alert:
+      .alert_major (core_i.alert_major_o),
+
+      // CSRs and shadows
+      `ifdef PMP_ENABLE_2
+        .pmp_mseccfg        (core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.rdata_q),
+        .pmpncfg            (uvmt_cv32e40s_tb.pmpncfg),
+        .pmp_addr           (uvmt_cv32e40s_tb.pmp_addr),
+        .pmp_mseccfg_shadow (core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.gen_hardened.shadow_q),
+        .pmpncfg_shadow     (uvmt_cv32e40s_tb.pmpncfg_shadow),
+        .pmp_addr_shadow    (uvmt_cv32e40s_tb.pmp_addr_shadow),
+      `endif
+
+      `ifdef CLIC_EN
+        .mtvt               (core_i.cs_registers_i.clic_csrs.mtvt_csr_i.rdata_q),
+        .mtvec              (core_i.cs_registers_i.clic_csrs.mtvec_csr_i.rdata_q),
+        .mintstatus         (core_i.cs_registers_i.clic_csrs.mintstatus_csr_i.rdata_q),
+        .mintthresh         (core_i.cs_registers_i.clic_csrs.mintthresh_csr_i.rdata_q),
+        .mtvt_shadow        (core_i.cs_registers_i.clic_csrs.mtvt_csr_i.gen_hardened.shadow_q),
+        .mtvec_shadow       (core_i.cs_registers_i.clic_csrs.mtvec_csr_i.gen_hardened.shadow_q),
+        .mintstatus_shadow  (core_i.cs_registers_i.clic_csrs.mintstatus_csr_i.gen_hardened.shadow_q),
+        .mintthresh_shadow  (core_i.cs_registers_i.clic_csrs.mintthresh_csr_i.gen_hardened.shadow_q),
+      `elsif CLIC_DIS
+        .mtvec              (core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.rdata_q),
+        .mie                (core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.rdata_q),
+        .mtvec_shadow       (core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.gen_hardened.shadow_q),
+        .mie_shadow         (core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.gen_hardened.shadow_q),
+      `endif
+
+      .mstateen0            (core_i.cs_registers_i.mstateen0_csr_i.rdata_q),
+      .priv_lvl             (core_i.cs_registers_i.priv_lvl_i.rdata_q),
+      .jvt                  (core_i.cs_registers_i.jvt_csr_i.rdata_q),
+      .mstatus              (core_i.cs_registers_i.mstatus_csr_i.rdata_q),
+      .cpuctrl              (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.rdata_q),
+      .dcsr                 (core_i.cs_registers_i.gen_debug_csr.dcsr_csr_i.rdata_q),
+      .mepc                 (core_i.cs_registers_i.mepc_csr_i.rdata_q),
+      .mscratch             (core_i.cs_registers_i.mscratch_csr_i.rdata_q),
+      .mstateen0_shadow     (core_i.cs_registers_i.mstateen0_csr_i.gen_hardened.shadow_q),
+      .priv_lvl_shadow      (core_i.cs_registers_i.priv_lvl_i.gen_hardened.shadow_q),
+      .jvt_shadow           (core_i.cs_registers_i.jvt_csr_i.gen_hardened.shadow_q),
+      .mstatus_shadow       (core_i.cs_registers_i.mstatus_csr_i.gen_hardened.shadow_q),
+      .cpuctrl_shadow       (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.gen_hardened.shadow_q),
+      .dcsr_shadow          (core_i.cs_registers_i.gen_debug_csr.dcsr_csr_i.gen_hardened.shadow_q),
+      .mepc_shadow          (core_i.cs_registers_i.mepc_csr_i.gen_hardened.shadow_q),
+      .mscratch_shadow      (core_i.cs_registers_i.mscratch_csr_i.gen_hardened.shadow_q)
+
     );
 
 
@@ -1094,12 +1087,15 @@ module uvmt_cv32e40s_tb;
     uvmt_cv32e40s_xsecure_reduced_profiling_infrastructure_assert #(
 	    .SECURE	(SECURE)
     ) xsecure_reduced_profiling_infrastructure_assert_i 	(
+
       //Signals:
       .clk_i      (clknrst_if.clk),
       .rst_ni     (clknrst_if.reset_n),
 
-      //Interfaces:
-    	.xsecure_if	(xsecure_if)
+      //CSRs:
+      .mhpmevent (core_i.cs_registers_i.mhpmevent_rdata[31:0]),
+      .mhpmcounter (core_i.cs_registers_i.mhpmcounter_rdata),
+      .mcountinhibit (core_i.cs_registers_i.mcountinhibit_rdata)
     );
 
 
@@ -1107,13 +1103,29 @@ module uvmt_cv32e40s_tb;
     uvmt_cv32e40s_xsecure_register_file_ecc_assert #(
 	    .SECURE	(SECURE)
     ) xsecure_register_file_ecc_assert_i 	(
+
+      //Interfaces:
+      .rvfi_if	  (rvfi_instr_if_0_i),
+
       //Signals:
       .clk_i      (clknrst_if.clk),
       .rst_ni     (clknrst_if.reset_n),
 
-      //Interfaces:
-    	.xsecure_if	(xsecure_if),
-      .rvfi_if	  (rvfi_instr_if_0_i)
+      //Alert:
+      .alert_major (core_i.alert_major_o),
+
+      //Register file memory:
+      .gpr_mem (core_i.register_file_wrapper_i.register_file_i.mem_gated),
+
+      //Soruce registers:
+      .rs1 (core_i.if_id_pipe.instr.bus_resp.rdata[19:15]),
+      .rs2 (core_i.if_id_pipe.instr.bus_resp.rdata[24:20]),
+
+      //Writing of GPRs:
+      .gpr_we (core_i.rf_we_wb),
+      .gpr_waddr (core_i.rf_waddr_wb),
+      .gpr_wdata (core_i.rf_wdata_wb)
+
     );
 
 
@@ -1287,11 +1299,6 @@ module uvmt_cv32e40s_tb;
         .lml_bus_rvalid (core_i.load_store_unit_i.resp_valid),
         .lml_bus_req (core_i.load_store_unit_i.trans_ready),
         .lml_bus_gnt (core_i.load_store_unit_i.trans_valid),
-
-        //obi protocol between LSU (l) respons (r) filter (f) and OBI (o) data (d) interface (i) is refered to as lrfodi
-        .lrfodi_bus_rvalid (core_i.load_store_unit_i.bus_resp_valid),
-        .lrfodi_bus_req (core_i.load_store_unit_i.buffer_trans_valid),
-        .lrfodi_bus_gnt (core_i.load_store_unit_i.buffer_trans_ready),
 
         .req_is_store (core_i.load_store_unit_i.bus_trans.we),
         .req_instr_integrity (core_i.if_stage_i.mpu_i.bus_trans_integrity),

@@ -192,8 +192,8 @@ module uvmt_cv32e40s_support_logic
     .obi_rvalid (in_support_if.abiim_bus_rvalid),
 
     .addr_ph_cont (out_support_if.abiim_bus_addr_ph_cont),
-    .resp_ph_cont (out_support_if.abiim_bus_resp_ph_cont),
-    .v_addr_ph_cnt (out_support_if.abiim_bus_v_addr_ph_cnt)
+    .resp_ph_cont (out_support_if.alignment_buff_resp_ph_cont),
+    .v_addr_ph_cnt (out_support_if.alignment_buff_addr_ph_cnt)
   );
 
   //obi protocol between LSU (l) MPU (m) and LSU (l) (=> lml)
@@ -206,22 +206,8 @@ module uvmt_cv32e40s_support_logic
     .obi_rvalid (in_support_if.lml_bus_rvalid),
 
     .addr_ph_cont (out_support_if.lml_bus_addr_ph_cont),
-    .resp_ph_cont (out_support_if.lml_bus_resp_ph_cont),
-    .v_addr_ph_cnt (out_support_if.lml_bus_v_addr_ph_cnt)
-  );
-
-  //obi protocol between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i) (=> lrfodi)
-  uvmt_cv32e40s_sl_obi_phases_monitor lrfodi_bus_obi_phases_monitor (
-    .clk_i (in_support_if.clk),
-    .rst_ni (in_support_if.rst_n),
-
-    .obi_req (in_support_if.lrfodi_bus_req),
-    .obi_gnt (in_support_if.lrfodi_bus_gnt),
-    .obi_rvalid (in_support_if.lrfodi_bus_rvalid),
-
-    .addr_ph_cont (out_support_if.lrfodi_bus_addr_ph_cont),
-    .resp_ph_cont (out_support_if.lrfodi_bus_resp_ph_cont),
-    .v_addr_ph_cnt (out_support_if.lrfodi_bus_v_addr_ph_cnt)
+    .resp_ph_cont (out_support_if.lsu_resp_ph_cont),
+    .v_addr_ph_cnt (out_support_if.lsu_addr_ph_cnt)
   );
 
   //The submodule instance under will tell if the

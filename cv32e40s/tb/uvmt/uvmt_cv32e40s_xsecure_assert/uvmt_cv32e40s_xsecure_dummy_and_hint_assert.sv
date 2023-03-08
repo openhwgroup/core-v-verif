@@ -19,6 +19,7 @@
 module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
+  import uvmt_cv32e40s_pkg::*;
   #(
     parameter int       SECURE   = 1
   )
@@ -214,12 +215,12 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
   endproperty
 
-  a_xsecure_dummy_instruction_is_add_mul_or_btlu: assert property(
+  a_xsecure_dummy_instruction_is_add_and_mul_or_bltu: assert property(
     p_dummy_hint_instruction_opcode_is_either_add_and_mul_or_bltu(
       xsecure_if.core_if_id_pipe_instr_meta_dummy)
   ) else `uvm_error(info_tag, "The dummy instruction is neither an ADD, MUL nor a BTLU instruction.\n");
 
-  a_xsecure_hint_instruction_is_add_mul_or_btlu: assert property(
+  a_xsecure_hint_instruction_is_add_and_mul_or_bltu: assert property(
     p_dummy_hint_instruction_opcode_is_either_add_and_mul_or_bltu(
       xsecure_if.core_if_id_pipe_instr_meta_dummy)
   ) else `uvm_error(info_tag, "The hint instruction is neither an ADD, MUL nor a BTLU instruction.\n");
@@ -423,7 +424,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     |=>
 
     (lfsr_reg == $past(lfsr_n_reg))
-    || (lfsr_reg == LFSR_CFG_DEFAULT.default_seed)
+    || (lfsr_reg == CORE_PARAM_LFSR0_CFG)
     || ($past(write_lfsr) && write_lfsr_value == $past(lfsr_reg));
 
   endproperty
@@ -448,7 +449,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   ) else `uvm_error(info_tag, "A hint instruction does not update the LFSR0 register.\n");
 
 
-  property p_dummy_hint_update_lfsr1_lfsr2(dummy_hint_in_if_stage, lfsr_reg, lfsr_n_reg, write_lfsr, write_lfsr_value);
+  property p_dummy_hint_update_lfsr1_lfsr2(dummy_hint_in_if_stage, lfsr_reg, lfsr_n_reg, default_value, write_lfsr, write_lfsr_value);
 
     //Make sure we detect a dummy instruction
     dummy_hint_in_if_stage
@@ -459,7 +460,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     |=>
 
     (lfsr_reg == $past(lfsr_n_reg))
-    || (lfsr_reg == LFSR_CFG_DEFAULT.default_seed)
+    || (lfsr_reg == default_value)
     || ($past(write_lfsr) && write_lfsr_value == $past(lfsr_reg));
   endproperty
 
@@ -469,6 +470,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
       xsecure_if.core_if_id_pipe_instr_meta_dummy,
       xsecure_if.core_xsecure_ctrl_lfsr1,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_lfsr_n,
+      CORE_PARAM_LFSR1_CFG[31:0],
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_seed_we_i,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_seed_i)
   ) else `uvm_error(info_tag, "A dummy instruction does not update the LFSR1 register.\n");
@@ -478,6 +480,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
       xsecure_if.core_if_id_pipe_instr_meta_dummy,
       xsecure_if.core_xsecure_ctrl_lfsr2,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_lfsr_n,
+      CORE_PARAM_LFSR2_CFG[31:0],
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_seed_we_i,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_seed_i)
   ) else `uvm_error(info_tag, "A dummy instruction does not update the LFSR2 register.\n");
@@ -487,6 +490,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
       xsecure_if.core_if_id_pipe_instr_meta_hint,
       xsecure_if.core_xsecure_ctrl_lfsr1,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_lfsr_n,
+      CORE_PARAM_LFSR1_CFG[31:0],
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_seed_we_i,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr1_i_seed_i)
   ) else `uvm_error(info_tag, "A hint instruction does not update the LFSR1 register.\n");
@@ -496,6 +500,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
       xsecure_if.core_if_id_pipe_instr_meta_hint,
       xsecure_if.core_xsecure_ctrl_lfsr2,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_lfsr_n,
+      CORE_PARAM_LFSR2_CFG[31:0],
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_seed_we_i,
       xsecure_if.core_i_cs_registers_i_xsecure_lfsr2_i_seed_i)
   ) else `uvm_error(info_tag, "A hint instruction does not update the LFSR2 register.\n");
@@ -743,7 +748,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     |=>
 	  //Make sure the LFSR registers reseeds to default value
-    xsecure_if.core_xsecure_ctrl_lfsr0 == LFSR_CFG_DEFAULT.default_seed
+    xsecure_if.core_xsecure_ctrl_lfsr0 == CORE_PARAM_LFSR0_CFG[31:0]
 
   ) else `uvm_error(info_tag, "LFSR0 does not reset to the default value when there is a lookup error (given that we do not write to the LFSR register).\n");
 
@@ -757,7 +762,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     |=>
 	  //Make sure the LFSR registers reseeds to default value
-    xsecure_if.core_xsecure_ctrl_lfsr1 == LFSR_CFG_DEFAULT.default_seed
+    xsecure_if.core_xsecure_ctrl_lfsr1 == CORE_PARAM_LFSR1_CFG[31:0]
 
   ) else `uvm_error(info_tag, "LFSR0 does not reset to the default value when there is a lookup error (given that we do not write to the LFSR register).\n");
 
@@ -771,7 +776,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     |=>
 	  //Make sure the LFSR registers reseeds to default value
-    xsecure_if.core_xsecure_ctrl_lfsr2 == LFSR_CFG_DEFAULT.default_seed
+    xsecure_if.core_xsecure_ctrl_lfsr2 == CORE_PARAM_LFSR2_CFG[31:0]
   ) else `uvm_error(info_tag, "LFSR2 does not reset to the default value when there is a lookup error (given that we do not write to the LFSR register).\n");
 
 

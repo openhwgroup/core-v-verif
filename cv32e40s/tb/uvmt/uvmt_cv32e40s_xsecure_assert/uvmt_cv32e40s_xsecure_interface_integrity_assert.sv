@@ -552,6 +552,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     ) else `uvm_error(info_tag, $sformatf("The alignmentbuffer entry the wptr points to (entry nr. %0d) does not contain the instruction's integirty bit.\n", wptr_cnt));
   end endgenerate
 
+
   ////////// INTERFACE INTEGRITY INSTRUCTION SHOULD HAVE AN ASSOCIATED INTEGRITY ERROR IF ANY OF ITS RELATED INSTRUCTION FETCHES INDICATE AN INTEGRITY ERROR //////////
 
   //Aligned or compressed instructions:

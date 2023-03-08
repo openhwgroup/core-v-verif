@@ -19,14 +19,33 @@
 module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
+
+  //import cv32e40s_rvfi_pkg::*;
+  import uvmt_cv32e40s_pkg::*;
+
   #(
     parameter int       SECURE   = 1
   )
   (
-   uvmt_cv32e40s_xsecure_if xsecure_if,
-   uvma_rvfi_instr_if rvfi_if,
-   input rst_ni,
-   input clk_i
+    uvma_rvfi_instr_if rvfi_if,
+    input rst_ni,
+    input clk_i,
+
+    //alerts:
+    input logic alert_major,
+
+    //Register file memory:
+    input logic [REGFILE_WORD_WIDTH-1:0] gpr_mem [CORE_PARAM_REGFILE_NUM_WORDS],
+
+    //Soruce registers:
+    input logic [4:0] rs1,
+    input logic [4:0] rs2,
+
+    //Writing of GPRs:
+    input logic gpr_we,
+    input logic [4:0] gpr_waddr,
+    input logic [31:0] gpr_wdata
+
   );
 
   // Default settings:
@@ -35,111 +54,95 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   string info_tag = "CV32E40S_XSECURE_ASSERT_COVERPOINTS";
   string info_tag_glitch = "CV32E40S_XSECURE_ASSERT_COVERPOINTS (GLITCH BEHAVIOR)";
 
+  localparam REG_SIZE = 32;
+  localparam ECC_SIZE = 6;
+  localparam ZERO = '0;
+  localparam REG_DEFAULT = '0;
+  localparam ECC_DEFAULT = 6'h2A;
 
   ////////// GENERAL PURPOSE REGISTERS ARE ZERO WHEN EXITING RESET //////////
 
-  //Check that the GPR is reset to 0 when exiting the reset stage:
-  property p_xsecure_gpr_reset(integer register_addr);
-    //Make sure we are going out of reset
+  //Verify that the general purpose registers are zero when exiting reset, and that their ECC values are corresponding to value zero (6'h2A)
+
+  property p_gpr_ecc_reset(integer gpr_addr);
+
     $rose(rst_ni)
-
-    //Make sure the general purpose register of address <register_addr> is reset to zero
     |->
-    xsecure_if.core_register_file_wrapper_register_file_mem[register_addr][31:0] == 32'h0000_0000
-
-    //Make sure the ECC score of the general purpose register of address "register_addr" is the ECC encoding of the value zero
-    && xsecure_if.core_register_file_wrapper_register_file_mem[register_addr][37:32] == 6'h2a;
+    gpr_mem[gpr_addr][(REG_SIZE-1) -:REG_SIZE] == REG_DEFAULT
+    && gpr_mem[gpr_addr][(ECC_SIZE+REG_SIZE-1) -:ECC_SIZE] == ECC_DEFAULT; //TODO! Fiks dette på alt
 
   endproperty
 
 
-  //Use RVFI to check that RS1 has a value of 0 when exiting the reset stage:
-  property p_xsecure_gpr_reset_rvfi_rs1(integer gpr_addr);
+  //Check the default value of the instructions' register sources by using RVFI
+  property p_gpr_reset_rvfi(rs_addr, gpr_addr);
 
-    //Make sure we check out the first instruction after the reset stage
     $rose(rst_ni) ##0 rvfi_if.rvfi_valid[->1]
-
-    //Make sure the instruction reads the RS1 value
-    ##0 rvfi_if.rvfi_rs1_addr == gpr_addr
+    ##0 rs_addr == gpr_addr
 
     |->
-    //Make sure the RS1 value is 0
-    rvfi_if.rvfi_rs1_rdata == 32'h0000_0000;
-
+    rvfi_if.rvfi_rs1_rdata == REG_DEFAULT;
   endproperty
 
 
-  //Use RVFI to check that RS2 has a value of 0 when exiting the reset stage:
-  property p_xsecure_gpr_reset_rvfi_rs2(integer gpr_addr);
-
-    //Make sure we check out the first instruction after the reset stage
-    $rose(rst_ni) ##0 rvfi_if.rvfi_valid[->1]
-
-    //Make sure the instruction reads the RS1 value
-    ##0 rvfi_if.rvfi_rs2_addr == gpr_addr
-
-    |->
-    //Make sure the RS2 value is 0
-    rvfi_if.rvfi_rs2_rdata == 32'h0000_0000;
-
-  endproperty
-
-
-  //Make reset assertions for each GPR:
   generate for (genvar gpr_addr = 0; gpr_addr < 32; gpr_addr++) begin
 
     a_xsecure_rf_ecc_gpr_reset_value: assert property (
-      p_xsecure_gpr_reset(gpr_addr)
-    ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage, or the syndrome is not 0x2a.\n", gpr_addr));
+      p_gpr_ecc_reset(
+        gpr_addr)
+    ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage, or the syndrome is not set to 0x2A.\n", gpr_addr));
 
     a_xsecure_rf_ecc_gpr_reset_value_rvfi_rs1: assert property (
-      p_xsecure_gpr_reset_rvfi_rs1(gpr_addr)
+      p_gpr_reset_rvfi(
+        rvfi_if.rvfi_rs1_addr,
+        gpr_addr)
     ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage (as RS1 is not 0).\n", gpr_addr));
 
     a_xsecure_rf_ecc_gpr_reset_value_rvfi_rs2: assert property (
-      p_xsecure_gpr_reset_rvfi_rs2(gpr_addr)
+      p_gpr_reset_rvfi(
+        rvfi_if.rvfi_rs2_addr,
+        gpr_addr)
     ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage (as RS2 is not 0).\n", gpr_addr));
 
   end endgenerate
 
 
-  ////////// GENERAL PURPOSE REGISTERS AND ECC ATTACHMENTS ARE NEVER ALL ZEROS OR ONES //////////
+  //Verify that the GPRs and their ECC values have not all bits set to 0s or all bits set to 1s in the same clock cycle
 
   property p_gpr_x_syndrom_not_x(gpr_addr, x);
-    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr][31:0] == {32{x}}
+    gpr_mem[gpr_addr][(REG_SIZE-1) -:REG_SIZE] == {REG_SIZE{x}}
     |->
-    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr][37:32] != {6{x}};
+    gpr_mem[gpr_addr][(ECC_SIZE+REG_SIZE-1) -:ECC_SIZE] != {ECC_SIZE{x}};
   endproperty
 
   property p_syndrom_x_gpr_not_x(gpr_addr, x);
-    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr][37:32] == {6{x}}
+    gpr_mem[gpr_addr][(ECC_SIZE+REG_SIZE-1) -:ECC_SIZE] == {ECC_SIZE{x}}
     |->
-    xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr][31:0] != {32{x}};
+    gpr_mem[gpr_addr][(REG_SIZE-1) -:REG_SIZE] != {REG_SIZE{x}};
   endproperty
 
 
-  //Make assertions for each GPR:
   generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
 
-    a_xsecure_rf_ecc_gprecc_never_all_zeros_part_1: assert property (
+    a_xsecure_rf_ecc_gpr_0_syndrome_not_0: assert property (
       p_gpr_x_syndrom_not_x(
         gpr_addr,
         1'b0)
     ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s.\n", gpr_addr));
 
-    a_xsecure_rf_ecc_gprecc_never_all_zeros_part_2: assert property (
+    a_xsecure_rf_ecc_syndrome_0_gpr_not_0: assert property (
       p_syndrom_x_gpr_not_x(
         gpr_addr,
         1'b0)
     ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s.\n", gpr_addr));
 
-    a_xsecure_rf_ecc_gprecc_never_all_ones_part_1: assert property (
+    a_xsecure_rf_ecc_gpr_1_syndrome_not_1: assert property (
       p_gpr_x_syndrom_not_x(
         gpr_addr,
         1'b1)
     ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 1s.\n", gpr_addr));
 
-    a_xsecure_rf_ecc_gprecc_never_all_ones_part_2: assert property (
+    a_xsecure_rf_ecc_syndrome_1_gpr_not_1: assert property (
       p_syndrom_x_gpr_not_x(
         gpr_addr,
         1'b1)
@@ -148,32 +151,30 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   end endgenerate
 
 
-  ////////// IF GENERAL PURPOSE REGISTERS AND ECC ATTACHMENTS ARE ALL ZEROS OR ONES MAJOR ALERT MUST BE SET //////////
+  //Verify that we set major alert if the the register sources' values and corresponding ECC score have all bits set to 0s or 1s
 
-  property p_gpr_and_syndrom_x_set_major_alert(gpr_addr, x);
-    //Make sure we are in a state where we read the gpr word
-    (xsecure_if.if_id_pipe_rs1 == gpr_addr
-    || xsecure_if.if_id_pipe_rs2 == gpr_addr)
+  property p_gpr_x_syndrom_x(gpr_addr, x);
 
-    //Make sure the bits in the register word and the syndrom are all x.
-    && xsecure_if.core_register_file_wrapper_register_file_mem[gpr_addr][37:0] == {32{x}}
+    (rs1 == gpr_addr
+    || rs2 == gpr_addr)
 
+    && gpr_mem[gpr_addr][(REG_SIZE-1) -:REG_SIZE] == {REG_SIZE{x}}
+    && gpr_mem[gpr_addr][(ECC_SIZE+REG_SIZE-1) -:ECC_SIZE] == {ECC_SIZE{x}}
     |=>
-    //Verify that the alert major is set
-    xsecure_if.core_alert_major_o;
+    alert_major;
   endproperty
 
-  //Make assertions for each GPR:
+
   generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
 
-    a_glitch_xsecure_register_file_ecc_gpr_and_syndrome_all_zeros_set_major_alert: assert property (
-      p_gpr_and_syndrom_x_set_major_alert(
+    a_glitch_xsecure_rf_ecc_gpr_0_syndrom_0: assert property (
+      p_gpr_x_syndrom_x(
         gpr_addr,
         1'b0)
     ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s, but the alert major is not set.\n", gpr_addr));
 
-    a_glitch_xsecure_register_file_ecc_gpr_and_syndrome_all_ones_set_major_alert: assert property (
-      p_gpr_and_syndrom_x_set_major_alert(
+    a_glitch_xsecure_rf_ecc_gpr_1_syndrom_1: assert property (
+      p_gpr_x_syndrom_x(
         gpr_addr,
         1'b1)
     ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 1s, but the alert major is not set.\n", gpr_addr));
@@ -181,7 +182,7 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   end endgenerate
 
 
-  ////////// ECC DECODING MISMATCH ON EVERY READ SETS MAJOR ALERT //////////
+  //Verify that decoding missmatch of 1 og 2 bits sets major alert
 
   /****************************************
   Support logic:
@@ -190,87 +191,63 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   We detect bit flip in the GPRs by comparing them with the local memory
   ****************************************/
 
-  //Local memory for the support logic
-  logic [31:0][31:0] gpr_shadow = '0;
+  logic [31:0][31:0] gpr_mem_shadow = '0;
 
-  //Make sure the local memory is updated whenever the GPR memory is updated
   always @(posedge clk_i) begin
     if(!rst_ni) begin
-      gpr_shadow = '0;
-    end else if (xsecure_if.core_rf_we_wb && xsecure_if.core_rf_waddr_wb != 5'b00000) begin
-      gpr_shadow[xsecure_if.core_rf_waddr_wb] = xsecure_if.core_rf_wdata_wb;
+      gpr_mem_shadow = '0;
+    end else if (gpr_we && gpr_waddr != ZERO) begin
+      gpr_mem_shadow[gpr_waddr] = gpr_wdata;
     end
   end
 
+  //Verify that support logic work as expected:
 
-  //Make sure the support logic works as expected when updating the memory
-  a_xsecure_rf_ecc_no_supression_by_comparing_ecc_scores_support_logic: assert property (
+  a_xsecure_rf_ecc_reset_gpr_mem_shadow: assert property (
 
-    //Make sure we update the GPR memory
-    xsecure_if.core_rf_we_wb
-
-    //Make sure the address is not x0
-    && xsecure_if.core_rf_waddr_wb != 5'b00000
-
-    |=>
-    //Make sure the local memory is updated in the same manner as the gpr memory
-    gpr_shadow[$past(xsecure_if.core_rf_waddr_wb)] == $past(xsecure_if.core_rf_wdata_wb)
-
-  ) else `uvm_error(info_tag, "The support logic does not update the local memory in the same manner as the GPRs.\n");
-
-
-  //Make sure the support logic works as expected when exiting reset mode
-  a_xsecure_rf_ecc_no_supression_by_comparing_ecc_scores_support_logic_start_at_zero: assert property (
-
-    //Exit reset mode
     $rose(rst_ni)
-
-    //Check that the local memory is set to 0s
     |->
-    gpr_shadow == '0
+    gpr_mem_shadow == '0
 
   ) else `uvm_error(info_tag, "The local support memory is not set to 0s when exiting reset.\n");
 
 
-  property p_xsecure_register_file_ecc_no_supression_reading_rs1(rs1_addr);
+  a_xsecure_rf_ecc_update_gpr_mem_shadow: assert property (
 
-    //Specify the RS1 address
-    xsecure_if.if_id_pipe_rs1 == rs1_addr
-
-    //Make sure the GPR memory and the local memory differ in one or two bits
-    && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs1_addr][31:0] ^ gpr_shadow[rs1_addr], '1) inside {1,2})
-
+    gpr_we
+    && gpr_waddr != ZERO
     |=>
-    //Make sure the alert major is set
-    xsecure_if.core_alert_major_o;
+    gpr_mem_shadow[$past(gpr_waddr)] == $past(gpr_wdata)
+
+  ) else `uvm_error(info_tag, "The support logic does not update the local memory in the same manner as the GPRs.\n");
+
+
+  //Verify requirements:
+
+  property p_rs_bit_fault(rs_addr, gpr_addr);
+
+    rs_addr == gpr_addr
+    && ($countbits(gpr_mem[gpr_addr][(REG_SIZE-1) -:REG_SIZE] ^ gpr_mem_shadow[gpr_addr], '1) inside {1,2})
+    |=>
+    alert_major;
+
   endproperty
 
-  property p_xsecure_register_file_ecc_no_supression_reading_rs2(rs2_addr);
-
-    //Specify the RS2 address
-    xsecure_if.if_id_pipe_rs2 == rs2_addr
-
-    //Make sure the GPR memory and the local memory differ in one or two bits
-    && ($countbits(xsecure_if.core_register_file_wrapper_register_file_mem[rs2_addr][31:0] ^ gpr_shadow[rs2_addr], '1) inside {1,2})
-
-    |=>
-    //Make sure the alert major is set
-    xsecure_if.core_alert_major_o;
-  endproperty
 
   generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
 
-    a_glitch_xsecure_register_file_ecc_no_supression_reading_rs1: assert property (
-      p_xsecure_register_file_ecc_no_supression_reading_rs1(
+    a_glitch_xsecure_rf_ecc_rs1_bit_fault: assert property (
+      p_rs_bit_fault(
+        rs1,
         gpr_addr)
     ) else `uvm_error(info_tag_glitch, $sformatf("1 or 2 bit errors when reading RS1 (address %0d) do not set the alert major.\n", gpr_addr));
 
-    a_glitch_xsecure_register_file_ecc_no_supression_reading_rs2: assert property (
-      p_xsecure_register_file_ecc_no_supression_reading_rs2(
+    a_glitch_xsecure_rf_ecc_rs2_bit_fault: assert property (
+      p_rs_bit_fault(
+        rs2,
         gpr_addr)
     ) else `uvm_error(info_tag_glitch, $sformatf("1 or 2 bit errors when reading RS2 (address %0d) do not set the alert major.\n", gpr_addr));
 
   end endgenerate
-
 
   endmodule : uvmt_cv32e40s_xsecure_register_file_ecc_assert

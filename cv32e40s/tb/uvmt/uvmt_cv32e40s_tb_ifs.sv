@@ -215,7 +215,8 @@ interface uvmt_cv32e40s_xsecure_if
    input logic core_i_load_store_unit_i_resp_valid,
    input logic core_i_load_store_unit_i_bus_resp_valid,
 
-   input logic [1:0] core_i_load_store_unit_i_response_filter_i_core_cnt_q,
+
+   core_i_load_store_unit_i_response_filter_i_core_cnt_q,
 
     // CSR
    input logic core_alert_minor_o,
@@ -284,15 +285,15 @@ interface uvmt_cv32e40s_xsecure_if
    input logic [31:0] core_cs_registers_mepc_csr_gen_hardened_shadow_q,
    input logic [31:0] core_cs_registers_mscratch_csr_gen_hardened_shadow_q,
 
-   input mseccfg_t uvmt_cv32e40s_tb_pmp_mseccfg_q_shadow_q,
-   input pmpncfg_t uvmt_cv32e40s_tb_pmpncfg_q_shadow_q[PMP_MAX_REGIONS],
-   input logic [PMP_ADDR_WIDTH-1:0] uvmt_cv32e40s_tb_pmp_addr_q_shadow_q[PMP_MAX_REGIONS],
+   //input mseccfg_t uvmt_cv32e40s_tb_pmp_mseccfg_q_shadow_q,
+   //input pmpncfg_t uvmt_cv32e40s_tb_pmpncfg_q_shadow_q[PMP_MAX_REGIONS],
+   //input logic [PMP_ADDR_WIDTH-1:0] uvmt_cv32e40s_tb_pmp_addr_q_shadow_q[PMP_MAX_REGIONS],
 
-   input mtvt_t uvmt_cv32e40s_tb_mtvt_q_shadow_q,
-   input mtvec_t uvmt_cv32e40s_tb_mtvec_q_shadow_q,
-   input mintstatus_t uvmt_cv32e40s_tb_mintstatus_q_shadow_q,
-   input logic [31:0] uvmt_cv32e40s_tb_mintthresh_q_shadow_q,
-   input logic [31:0] uvmt_cv32e40s_tb_mie_q_hardened_shadow_q,
+   //input mtvt_t uvmt_cv32e40s_tb_mtvt_q_shadow_q,
+   //input mtvec_t uvmt_cv32e40s_tb_mtvec_q_shadow_q,
+   //input mintstatus_t uvmt_cv32e40s_tb_mintstatus_q_shadow_q,
+   //input logic [31:0] uvmt_cv32e40s_tb_mintthresh_q_shadow_q,
+   //input logic [31:0] uvmt_cv32e40s_tb_mie_q_hardened_shadow_q,
 
     // Controller
    input logic core_i_controller_i_controller_fsm_i_dcsr_i_step,
@@ -560,11 +561,6 @@ interface uvmt_cv32e40s_input_to_support_logic_module_if
    input logic lml_bus_gnt,
    input logic lml_bus_req,
 
-   //Instr bus inputs
-   input logic lrfodi_bus_rvalid,
-   input logic lrfodi_bus_gnt,
-   input logic lrfodi_bus_req,
-
    //Obi request information
    input logic req_is_store,
    input logic req_instr_integrity,
@@ -599,10 +595,6 @@ interface uvmt_cv32e40s_input_to_support_logic_module_if
       lml_bus_gnt,
       lml_bus_req,
 
-      lrfodi_bus_rvalid,
-      lrfodi_bus_gnt,
-      lrfodi_bus_req,
-
       req_is_store,
       req_instr_integrity,
       req_data_integrity
@@ -630,20 +622,16 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
    logic instr_bus_resp_ph_cont;
 
    logic abiim_bus_addr_ph_cont;
-   logic abiim_bus_resp_ph_cont;
+   logic alignment_buff_resp_ph_cont;
 
    logic lml_bus_addr_ph_cont;
-   logic lml_bus_resp_ph_cont;
-
-   logic lrfodi_bus_addr_ph_cont;
-   logic lrfodi_bus_resp_ph_cont;
+   logic lsu_resp_ph_cont;
 
    // address phase counter, used to verify no response phase preceedes an address phase
    integer data_bus_v_addr_ph_cnt;
    integer instr_bus_v_addr_ph_cnt;
-   integer abiim_bus_v_addr_ph_cnt;
-   integer lml_bus_v_addr_ph_cnt;
-   integer lrfodi_bus_v_addr_ph_cnt;
+   integer alignment_buff_addr_ph_cnt;
+   integer lsu_addr_ph_cnt;
 
    //Signals stating whether the request for the current response had the attribute value or not
    logic req_was_store;
@@ -673,16 +661,12 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
 	      instr_bus_v_addr_ph_cnt,
 
          abiim_bus_addr_ph_cont,
-	      abiim_bus_resp_ph_cont,
-	      abiim_bus_v_addr_ph_cnt,
+	      alignment_buff_resp_ph_cont,
+	      alignment_buff_addr_ph_cnt,
 
          lml_bus_addr_ph_cont,
-	      lml_bus_resp_ph_cont,
-	      lml_bus_v_addr_ph_cnt,
-
-         lrfodi_bus_addr_ph_cont,
-	      lrfodi_bus_resp_ph_cont,
-	      lrfodi_bus_v_addr_ph_cnt,
+	      lsu_resp_ph_cont,
+	      lsu_addr_ph_cnt,
 
          req_was_store,
          instr_req_had_integrity,
@@ -705,16 +689,12 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
          instr_bus_v_addr_ph_cnt,
 
          abiim_bus_addr_ph_cont,
-         abiim_bus_resp_ph_cont,
-         abiim_bus_v_addr_ph_cnt,
+         alignment_buff_resp_ph_cont,
+         alignment_buff_addr_ph_cnt,
 
          lml_bus_addr_ph_cont,
-         lml_bus_resp_ph_cont,
-         lml_bus_v_addr_ph_cnt,
-
-         lrfodi_bus_addr_ph_cont,
-         lrfodi_bus_resp_ph_cont,
-         lrfodi_bus_v_addr_ph_cnt,
+         lsu_resp_ph_cont,
+         lsu_addr_ph_cnt,
 
          req_was_store,
          instr_req_had_integrity,
