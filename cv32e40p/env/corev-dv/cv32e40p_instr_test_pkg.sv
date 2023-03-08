@@ -23,16 +23,20 @@ package cv32e40p_instr_test_pkg;
   import corev_instr_test_pkg::*;
 
   // Instruction streams specific to CV32E40P
-  
+  // `include "instr_lib/cv32e40p_load_store_instr_lib.sv"
+  `include "instr_lib/cv32e40p_simple_instr_lib.sv"
+  // `include "instr_lib/cv32e40p_load_store_incr_stream_test.sv"
+  `include "instr_lib/cv32e40p_xpulp_sanity_stream_test.sv"
+
   // RISCV-DV class override definitions
   `include "cv32e40p_compressed_instr.sv"
   `include "cv32e40p_illegal_instr.sv"
   `include "cv32e40p_privil_reg.sv"
   `include "cv32e40p_instr_gen_config.sv"
   `include "cv32e40p_debug_rom_gen.sv"
-  `include "cv32e40p_asm_program_gen.sv"  
+  `include "cv32e40p_asm_program_gen.sv"
   `include "cv32e40p_instr_base_test.sv"
-  
+
   // Push general purpose register to the debugger stack
   function automatic void push_gpr_to_debugger_stack(cv32e40p_instr_gen_config cfg_corev,
                                                      ref string instr[$]);
@@ -49,7 +53,7 @@ package cv32e40p_instr_test_pkg;
   endfunction : push_gpr_to_debugger_stack
 
     // Pop general purpose register from debugger stack
-  function automatic void pop_gpr_from_debugger_stack(cv32e40p_instr_gen_config cfg_corev,                                                      
+  function automatic void pop_gpr_from_debugger_stack(cv32e40p_instr_gen_config cfg_corev,
                                                       ref string instr[$]);
     string load_instr = (XLEN == 32) ? "lw" : "ld";
     // Pop user mode GPRs from kernel stack
