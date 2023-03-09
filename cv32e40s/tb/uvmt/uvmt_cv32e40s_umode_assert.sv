@@ -16,14 +16,16 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
 
-`default_nettype none
+`default_nettype  none
 
 
 module  uvmt_cv32e40s_umode_assert
   import cv32e40s_pkg::*;
   import cv32e40s_rvfi_pkg::*;
   import uvm_pkg::*;
-(
+#(
+  parameter bit  CLIC
+)(
   input wire  clk_i,
   input wire  rst_ni,
 
@@ -576,7 +578,7 @@ module  uvmt_cv32e40s_umode_assert
   a_ecall_umode_poststate: assert property (
     (is_rvfi_ecall && (rvfi_mode == MODE_U))
     |->
-    (mcause_poststate inside {EXC_CAUSE_ECALL_UMODE, 1, 2, 24, 25})  // ("It" or higher)
+    (mcause_poststate[11:0] inside {EXC_CAUSE_ECALL_UMODE, 1, 2, 24, 25})  // ("It" or higher)
   ) else `uvm_error(info_tag, "umode ecall causes umode ecall exception");
 
 
@@ -700,14 +702,14 @@ module  uvmt_cv32e40s_umode_assert
 
   property p_mret_from_mpp (int mode);
     is_rvfi_mret  &&
-    !rvfi_trap  &&
-    (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == mode)  &&
     (rvfi_mode == MODE_M)  &&
+    (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == mode)  &&
+    !rvfi_trap  &&
     !rvfi_dbg_mode
     ##1
     (rvfi_valid [->1])  ##0
-    !(rvfi_intr[0] && rvfi_intr.interrupt && rvfi_csr_mcause_rdata[31])  &&
-    !(rvfi_dbg_mode)
+    !rvfi_intr.interrupt  &&
+    !rvfi_dbg_mode
     |->
     (rvfi_mode == mode);
   endproperty : p_mret_from_mpp
@@ -820,11 +822,13 @@ module  uvmt_cv32e40s_umode_assert
     p_softwareinterrupts_zeros(rvfi_csr_mip_rdata)
   ) else `uvm_error(info_tag, "certain bits in 'mip' must be zero");
 
-  a_softwareinterrupts_mcausemode: assert property (
-    rvfi_intr.interrupt
-    |->
-    !(rvfi_intr.cause inside {[0:2], [4:6], [8:10], [12:15]})
-  ) else `uvm_error(info_tag, "unexpected interrupt cause");
+  if (!CLIC) begin: gen_softwareinterrupts_mcausemode
+    a_softwareinterrupts_mcausemode: assert property (
+      rvfi_intr.interrupt
+      |->
+      !(rvfi_intr.cause inside {[0:2], [4:6], [8:10], [12:15]})
+    ) else `uvm_error(info_tag, "unexpected interrupt cause");
+  end : gen_softwareinterrupts_mcausemode
 
 
   // vplan:NExt
@@ -1003,4 +1007,4 @@ module  uvmt_cv32e40s_umode_assert
 endmodule : uvmt_cv32e40s_umode_assert
 
 
-`default_nettype wire
+`default_nettype  wire

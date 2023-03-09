@@ -623,10 +623,12 @@ module uvmt_cv32e40s_tb;
   end : gen_clic_assert
 
 
-  // User-mode assertions
+  // User-Mode Assertions
 
   bind  cv32e40s_wrapper
-    uvmt_cv32e40s_umode_assert  umode_assert_i (
+    uvmt_cv32e40s_umode_assert #(
+      .CLIC (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC)
+    ) umode_assert_i (
       .rvfi_valid    (rvfi_i.rvfi_valid),
       .rvfi_mode     (rvfi_i.rvfi_mode),
       .rvfi_order    (rvfi_i.rvfi_order),
