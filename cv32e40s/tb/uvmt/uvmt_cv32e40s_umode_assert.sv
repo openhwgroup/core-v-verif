@@ -232,7 +232,7 @@ module  uvmt_cv32e40s_umode_assert
             )
           )
         );
-        // TODO:silabs-robin  Check "(rvfi_mode == ...wdata) || rvfi_intr"
+        // TODO:INFO:silabs-robin  Check "(rvfi_mode == ...wdata) || rvfi_intr"
     end
   end
 
@@ -326,8 +326,9 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_valid && rvfi_trap.exception) ##0
     (1, was_mode = rvfi_mode)           ##0
     (1, was_dbg  = rvfi_dbg_mode)
-    |=>
-    (rvfi_valid [->1])     ##0
+    ##1
+    (rvfi_valid [->1])
+    |->
     (rvfi_mode == MODE_M)  &&
     (
       (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == was_mode)  ||
@@ -350,7 +351,7 @@ module  uvmt_cv32e40s_umode_assert
         (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == was_rvfi_mode)
       ) else (
         (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == was_rvfi_mode_wdata)  ||
-        (rvfi_intr.cause inside {[1024:1027]})  // NMI  // TODO:silabs-robin  Preferably, exclude only "multi-lvl irq" specifically
+        (rvfi_intr.cause inside {[1024:1027]})  // NMI  // TODO:INFO:silabs-robin  Preferably, exclude only "multi-lvl irq" specifically
       )
     )
   ) else `uvm_error(info_tag, "when traps from mode y are handled, mpp must become y");
@@ -373,8 +374,9 @@ module  uvmt_cv32e40s_umode_assert
   a_traps_mmode: assert property (
     rvfi_valid  &&
     rvfi_trap
-    |=>
-    (rvfi_valid [->1])  ##0
+    ##1
+    (rvfi_valid [->1])
+    |->
     (rvfi_mode == MODE_M)
   ) else `uvm_error(info_tag, "all traps handling shall happen in mmode");
 
@@ -734,15 +736,17 @@ module  uvmt_cv32e40s_umode_assert
 
   a_mret_umode_nextmode: assert property (
     (is_rvfi_mret && (rvfi_mode == MODE_U))
-    |=>
-    (rvfi_valid [->1])  ##0
+    ##1
+    (rvfi_valid [->1])
+    |->
     (rvfi_mode == MODE_M)
   ) else `uvm_error(info_tag, "mret in umode traps to mmode");
 
   a_mret_umode_mpp: assert property (
     (is_rvfi_mret && (rvfi_mode == MODE_U))
-    |=>
-    (rvfi_valid [->1])  ##0
+    ##1
+    (rvfi_valid [->1])
+    |->
     (
       (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == MODE_U)  ||
       rvfi_intr.interrupt
@@ -751,8 +755,9 @@ module  uvmt_cv32e40s_umode_assert
 
   a_mret_umode_mprv: assert property (
     (is_rvfi_mret && (rvfi_mode == MODE_U))
-    |=>
-    (rvfi_valid [->1])  ##0
+    ##1
+    (rvfi_valid [->1])
+    |->
     (rvfi_csr_mstatus_rdata[MPRV_POS+:MPRV_LEN] == 1'b 0)
   ) else `uvm_error(info_tag, "mret in umode clear mprv");
 
@@ -965,24 +970,27 @@ module  uvmt_cv32e40s_umode_assert
     rvfi_valid  &&
     (|rvfi_if.rvfi_mem_rmask || |rvfi_if.rvfi_mem_wmask)
     |->
-    is_data_prot_equal()
+    ((data_prot_equals & mem_act) == mem_act)
   ) else `uvm_error(info_tag, "data prot should match accesses from same instr");
 
-  function automatic logic  is_data_prot_equal();
-    logic [2:0]  prot0 = rvfi_if.mem_prot[2:0];
+  wire logic [NMEM-1:0]  data_prot_equals;
+  wire logic [NMEM-1:0]  mem_act;
+  for (genvar i = 0; i < NMEM; i++) begin: gen_data_prot_equals
+    assign  data_prot_equals[i] = (rvfi_if.mem_prot[i*3+:3] == rvfi_if.mem_prot[2:0]);
+    assign  mem_act[i]          = |rvfi_if.check_mem_act(i);
+  end
 
-    is_data_prot_equal = 1;
+  cov_data_prot_equal_memact_load: cover property (
+    rvfi_valid  &&
+    ($countones(mem_act) > 1)  &&
+    (|rvfi_if.rvfi_mem_rmask)
+  );
 
-    for (int i = 1; i < NMEM; i++) begin
-      if (!rvfi_if.check_mem_act(i)) begin
-        continue;
-      end
-
-      if (rvfi_if.mem_prot[i*3+:3] != prot0) begin
-        is_data_prot_equal = 0;
-      end
-    end
-  endfunction : is_data_prot_equal
+  cov_data_prot_equal_memact_store: cover property (
+    rvfi_valid  &&
+    ($countones(mem_act) > 1)  &&
+    (|rvfi_if.rvfi_mem_wmask)
+  );
 
 
   // vplan:DbgProt
@@ -1001,7 +1009,7 @@ module  uvmt_cv32e40s_umode_assert
     (|rvfi_if.rvfi_mem_rmask || |rvfi_if.rvfi_mem_wmask)
     |->
     (rvfi_if.mem_prot[2:1] == effective_rvfi_privmode)
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "dmode should fetch as effective mode");
 
 
 endmodule : uvmt_cv32e40s_umode_assert
