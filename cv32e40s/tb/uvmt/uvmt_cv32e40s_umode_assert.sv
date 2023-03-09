@@ -16,8 +16,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
 
-`default_nettype wire
-//TODO:ERROR and wire at bot
+`default_nettype none
 
 
 module  uvmt_cv32e40s_umode_assert
@@ -28,16 +27,16 @@ module  uvmt_cv32e40s_umode_assert
   input wire  clk_i,
   input wire  rst_ni,
 
-  input wire          rvfi_valid,
-  input wire [ 1:0]   rvfi_mode,
-  input wire [63:0]   rvfi_order,
-  input rvfi_trap_t   rvfi_trap,
-  input rvfi_intr_t   rvfi_intr,
-  input wire [31:0]   rvfi_insn,
-  input wire          rvfi_dbg_mode,
-  input wire [ 2:0]   rvfi_dbg,
-  input wire [31:0]   rvfi_pc_rdata,
-  uvma_rvfi_instr_if  rvfi_if,
+  input wire               rvfi_valid,
+  input wire [ 1:0]        rvfi_mode,
+  input wire [63:0]        rvfi_order,
+  input wire rvfi_trap_t   rvfi_trap,
+  input wire rvfi_intr_t   rvfi_intr,
+  input wire [31:0]        rvfi_insn,
+  input wire               rvfi_dbg_mode,
+  input wire [ 2:0]        rvfi_dbg,
+  input wire [31:0]        rvfi_pc_rdata,
+  uvma_rvfi_instr_if       rvfi_if,
   //TODO:INFO:silabs-robin Should only use the interface
 
   input wire [31:0]  rvfi_csr_dcsr_rdata,
@@ -1002,3 +1001,6 @@ module  uvmt_cv32e40s_umode_assert
 
 
 endmodule : uvmt_cv32e40s_umode_assert
+
+
+`default_nettype wire
