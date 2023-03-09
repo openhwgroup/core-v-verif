@@ -10,7 +10,6 @@
 .include "user_define.h"
 .section .text.start
 .globl _start
-.section .text
 .type _start, @function
 
 _start:
@@ -12009,7 +12008,7 @@ mmode_intr_vector_15:
 
 .align 7
 mtvec_handler:
-                  .option push;
+                  .option push
                   .option norvc;
                   j mmode_exception_handler
                   j mmode_intr_vector_1
@@ -12027,7 +12026,7 @@ mtvec_handler:
                   j mmode_intr_vector_13
                   j mmode_intr_vector_14
                   j mmode_intr_vector_15
-                  .option pop;
+                  .option pop
 
 mmode_exception_handler:
                   csrrw x15, 0x340, x15

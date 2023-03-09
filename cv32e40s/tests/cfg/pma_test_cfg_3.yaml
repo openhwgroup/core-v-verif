@@ -1,13 +1,18 @@
 name: pma_test_cfg_3
 description: PMA configuration for the PMA_TEST_CFG_3 test case
-compile_flags:
+compile_flags: >
    +define+PMA_TEST_CFG_3
    +define+ZBA_ZBB_ZBC_ZBS
-plusargs:
+plusargs: >
    +enable_pma=1
    +boot_addr=0x48000080
    +mtvec_addr=0x48000000
    +enable_large_mem_support=0
+   +enable_zca_extension=1
+   +enable_zcb_extension=1
+   +enable_zcmt_extension=1
+   +enable_zcmp_extension=1
+   +fix_ra=1
    +fix_sp=1
    +enable_zba_extension=1
    +enable_zbb_extension=1

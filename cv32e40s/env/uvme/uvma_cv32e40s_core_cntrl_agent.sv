@@ -256,7 +256,7 @@ function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
       $fwrite(fh, $sformatf("--override %s/extension_*/main%0d=%0d\n", refpath, i, cfg.pma_regions[i].main));
       $fwrite(fh, $sformatf("--override %s/extension_*/bufferable%0d=%0d\n", refpath, i, cfg.pma_regions[i].bufferable));
       $fwrite(fh, $sformatf("--override %s/extension_*/cacheable%0d=%0d\n", refpath, i, cfg.pma_regions[i].cacheable));
-      $fwrite(fh, $sformatf("--override %s/extension_*/atomic%0d=%0d\n", refpath, i, cfg.pma_regions[i].atomic));
+      $fwrite(fh, $sformatf("--override %s/extension_*/atomic%0d=%0d\n", refpath, i, 1));
    end
 
    // Enable use of hw reg names instead of abi

@@ -25,7 +25,7 @@ Core starts executing debug code
 5) PC is updated to value on dm_haltaddr_i input
 6) Core starts executing debug code
 
-P14-P15:
+P14-P15: //KD!
 - Vplan:
 
 Enter debug mode by any of the above methods.

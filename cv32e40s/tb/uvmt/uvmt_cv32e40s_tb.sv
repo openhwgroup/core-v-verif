@@ -488,30 +488,43 @@ module uvmt_cv32e40s_tb;
   if (CORE_PARAM_CLIC == 0) begin: gen_interrupt_assert
     bind cv32e40s_core
       uvmt_cv32e40s_interrupt_assert  interrupt_assert_i (
+        .dcsr_step    (cs_registers_i.dcsr_q.step),
         .mcause_n     ({cs_registers_i.mcause_n.irq, cs_registers_i.mcause_n.exception_code[4:0]}),
-        .mip          (cs_registers_i.mip_rdata),
         .mie_q        (cs_registers_i.mie_q),
+        .mip          (cs_registers_i.mip_rdata),
         .mstatus_mie  (cs_registers_i.mstatus_q.mie),
         .mstatus_tw   (cs_registers_i.mstatus_q.tw),
         .mtvec_mode_q (cs_registers_i.mtvec_q.mode),
 
+        .if_stage_instr_rdata_i  (if_stage_i.m_c_obi_instr_if.resp_payload.rdata),
         .if_stage_instr_req_o    (if_stage_i.m_c_obi_instr_if.s_req.req),
         .if_stage_instr_rvalid_i (if_stage_i.m_c_obi_instr_if.s_rvalid.rvalid),
-        .if_stage_instr_rdata_i  (if_stage_i.m_c_obi_instr_if.resp_payload.rdata),
         .alignbuf_outstanding    (if_stage_i.prefetch_unit_i.alignment_buffer_i.outstanding_cnt_q),
 
         .ex_stage_instr_valid (ex_stage_i.id_ex_pipe_i.instr_valid),
 
-        .wb_stage_instr_valid_i    (wb_stage_i.ex_wb_pipe_i.instr_valid),
-        .wb_stage_instr_rdata_i    (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
+        .wb_kill                   (ctrl_fsm.kill_wb),
         .wb_stage_instr_err_i      (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.err),
         .wb_stage_instr_mpu_status (wb_stage_i.ex_wb_pipe_i.instr.mpu_status),
+        .wb_stage_instr_rdata_i    (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
+        .wb_stage_instr_valid_i    (wb_stage_i.ex_wb_pipe_i.instr_valid),
+        .wb_trigger                (controller_i.controller_fsm_i.trigger_match_in_wb),
+        .wb_valid                  (wb_stage_i.wb_valid),
 
         .branch_taken_ex (controller_i.controller_fsm_i.branch_taken_ex),
         .debug_mode_q    (controller_i.controller_fsm_i.debug_mode_q),
+        .pending_nmi     (controller_i.controller_fsm_i.pending_nmi),
 
         .irq_ack_o (core_i.irq_ack),
         .irq_id_o  (core_i.irq_id),
+
+        .mpu_instr_rvalid (if_stage_i.mpu_i.core_resp_valid_o),
+        .obi_instr_if     (dut_wrap.obi_instr_if_i),
+        .obi_data_if      (dut_wrap.obi_data_if_i),
+
+        .writebufstate (load_store_unit_i.write_buffer_i.state),
+        .rvfi          (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+        .support_if    (support_logic_for_assert_coverage_modules_if.slave_mp),
 
         .*
       );
@@ -712,6 +725,9 @@ module uvmt_cv32e40s_tb;
       .CLIC          (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC),
       .CLIC_ID_WIDTH (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_ID_WIDTH)
     ) rvfi_assert_i (
+      .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+      .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
+      .writebuf_valid_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.valid_i),
       .*
     );
 
@@ -749,7 +765,7 @@ module uvmt_cv32e40s_tb;
   end endgenerate
 
   generate
-    if (CLIC==1) begin
+    if (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC==1) begin
 
       assign mtvt_q_shadow_q       = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mtvt_csr_i.gen_hardened.shadow_q);
       assign mtvec_q_shadow_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mtvec_csr_i.gen_hardened.shadow_q);
@@ -954,7 +970,7 @@ module uvmt_cv32e40s_tb;
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_assert #(
       .SECURE              (cv32e40s_pkg::SECURE),
-      .CLIC                (CLIC),
+      .CLIC                (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC),
       .PMP_NUM_REGIONS     (PMP_NUM_REGIONS),
       .MTVT_ADDR_WIDTH     (core_i.MTVT_ADDR_WIDTH),
       .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
@@ -1146,6 +1162,40 @@ module uvmt_cv32e40s_tb;
         .rvfi_mem_addr  (rvfi_mem_addr [31:0]),
         .rvfi_mem_wmask (rvfi_mem_wmask[ 3:0]),
         .rvfi_mem_rmask (rvfi_mem_rmask[ 3:0]),
+        .*
+      );
+
+    bind  dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i
+      uvmt_cv32e40s_pma_assert #(
+        .CORE_REQ_TYPE   (cv32e40s_pkg::obi_inst_req_t),
+        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .IS_INSTR_SIDE   (1),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
+      ) pma_assert_instr_i (
+        .obi_memory_if    (dut_wrap.obi_instr_if_i),
+        .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+        .writebuf_ready_o ('0),
+        .writebuf_trans_i ('0),
+        .writebuf_trans_o ('0),
+        .*
+      );
+
+    bind  dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i
+      uvmt_cv32e40s_pma_assert #(
+        .CORE_REQ_TYPE   (cv32e40s_pkg::obi_data_req_t),
+        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .IS_INSTR_SIDE   (0),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
+      ) pma_assert_data_i (
+        .obi_memory_if    (dut_wrap.obi_data_if_i),
+        .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+        .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
+        .writebuf_trans_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_i),
+        .writebuf_trans_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_o),
         .*
       );
 

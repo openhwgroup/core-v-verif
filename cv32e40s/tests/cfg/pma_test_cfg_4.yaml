@@ -1,14 +1,19 @@
 name: pma_test_cfg_4
 description: PMA configuration for the PMA_TEST_CFG_4 test case
-compile_flags:
+compile_flags: >
    +define+PMA_TEST_CFG_4
    +define+ZBA_ZBB_ZBC_ZBS
-plusargs:
+plusargs: >
    +enable_pma=1
    +boot_addr=0x10080
    +mtvec_addr=0x10000
    +dm_halt_addr=0x32010000
    +dm_exception_addr=0x32010800
+   +enable_zca_extension=1
+   +enable_zcb_extension=1
+   +enable_zcmt_extension=1
+   +enable_zcmp_extension=1
+   +fix_ra=1
    +fix_sp=1
    +enable_zba_extension=1
    +enable_zbb_extension=1

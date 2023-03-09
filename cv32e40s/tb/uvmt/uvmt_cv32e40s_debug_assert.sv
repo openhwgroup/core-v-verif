@@ -303,7 +303,7 @@ module uvmt_cv32e40s_debug_assert
 
 
 
-    // check that a steble debug_req is actually taken within reasonable time
+    // check that a stable debug_req is actually taken within reasonable time
     a_debug_req_taken: assert property(stable_req_vs_valid_cnt <= 3)
         else `uvm_error(info_tag, "External debug request not taken in reasonable time");
 
@@ -438,7 +438,7 @@ module uvmt_cv32e40s_debug_assert
 
     // Accessing debug regs in m-mode is illegal
     property p_debug_regs_mumode(csr_addr, csr_wmask);
-        rvfi.is_csr_act(csr_addr) && !rvfi.rvfi_dbg_mode
+        rvfi.is_csr_instr(csr_addr) && !rvfi.rvfi_dbg_mode
         |->
         // instruction traps either as illegal or trigger
         rvfi.rvfi_trap.trap && (

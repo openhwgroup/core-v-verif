@@ -27,7 +27,6 @@
 .include "user_define.h"
 .section .text.start
 .globl _start
-.section .text
 #.include "user_init.s"
 .type _start, @function
 

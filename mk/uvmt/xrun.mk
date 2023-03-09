@@ -252,6 +252,9 @@ XRUN_COMP_FLAGS += -nowarn CGNSWA
 # Value Parameters without default values
 XRUN_COMP_FLAGS += -setenv CADENCE_ENABLE_AVSREQ_44905_PHASE_1=1
 
+# Type Parameters without default values
+XRUN_COMP_FLAGS += -setenv CADENCE_ENABLE_AVSREQ_63188_PHASE_1=1
+
 # deselect_coverage -all warnings
 XRUN_COMP_COREV_DV_FLAGS += -nowarn BNDWRN
 XRUN_COMP_COREV_DV_FLAGS += $(CFG_COMPILE_FLAGS)
