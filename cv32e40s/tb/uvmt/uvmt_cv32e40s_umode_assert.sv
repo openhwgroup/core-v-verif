@@ -236,6 +236,11 @@ module  uvmt_cv32e40s_umode_assert
     end
   end
 
+  wire logic [MPP_LEN-1:0]  mpp_rdata;
+  wire logic [MPP_LEN-1:0]  mpp_rdata_past;
+  assign  mpp_rdata      = rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN];
+  assign  mpp_rdata_past = $past(mpp_rdata, , ,@(posedge clk_rvfi));
+
 
   // vplan:MisaU & vplan:MisaN
 
@@ -344,28 +349,27 @@ module  uvmt_cv32e40s_umode_assert
 
   a_trap_mpp_general: assert property (
     rvfi_valid  &&
-    rvfi_intr
+    rvfi_intr  &&
+    !(was_rvfi_dbg_mode && rvfi_dbg_mode)
     |->
-    if ( !(was_rvfi_dbg_mode && rvfi_dbg_mode)) (
-      if (rvfi_intr.exception) (
-        (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == was_rvfi_mode)
-      ) else (
-        (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] == was_rvfi_mode_wdata)  ||
-        (rvfi_intr.cause inside {[1024:1027]})  // NMI  // TODO:INFO:silabs-robin  Preferably, exclude only "multi-lvl irq" specifically
-      )
+    if (rvfi_intr.exception) (
+      (mpp_rdata == was_rvfi_mode)
+    ) else (
+      (mpp_rdata == was_rvfi_mode_wdata)  ||
+      (rvfi_intr.cause inside {[1024:1027]})  // NMI
+      // TODO:INFO:silabs-robin  Preferably, exclude only "multi-lvl irq" specifically
     )
   ) else `uvm_error(info_tag, "when traps from mode y are handled, mpp must become y");
 
   a_trap_mpp_debug: assert property (
     @(posedge clk_rvfi)
-    rvfi_valid  &&
-    rvfi_intr
+    rvfi_valid         &&
+    rvfi_intr          &&
+    was_rvfi_dbg_mode  &&
+    rvfi_dbg_mode
     |->
-    if (was_rvfi_dbg_mode && rvfi_dbg_mode) (
-      (rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN] ==
-        $past(rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN], , ,@(posedge clk_rvfi)))  ||
-      (rvfi_dbg && rvfi_intr.interrupt)
-    )
+    (mpp_rdata == mpp_rdata_past)  ||
+    (rvfi_dbg && rvfi_intr.interrupt)
   ) else `uvm_error(info_tag, "when trapping inside dmode mpp must be M-mode");
 
 
@@ -966,19 +970,19 @@ module  uvmt_cv32e40s_umode_assert
     obi_dside_prot  inside  {3'b 001, 3'b 111}
   ) else `uvm_error(info_tag, "the prot on loadstore must be legal");
 
-  a_data_prot_equal: assert property (
-    rvfi_valid  &&
-    (|rvfi_if.rvfi_mem_rmask || |rvfi_if.rvfi_mem_wmask)
-    |->
-    ((data_prot_equals & mem_act) == mem_act)
-  ) else `uvm_error(info_tag, "data prot should match accesses from same instr");
-
   wire logic [NMEM-1:0]  data_prot_equals;
   wire logic [NMEM-1:0]  mem_act;
   for (genvar i = 0; i < NMEM; i++) begin: gen_data_prot_equals
     assign  data_prot_equals[i] = (rvfi_if.mem_prot[i*3+:3] == rvfi_if.mem_prot[2:0]);
     assign  mem_act[i]          = |rvfi_if.check_mem_act(i);
   end
+
+  a_data_prot_equal: assert property (
+    rvfi_valid  &&
+    (|rvfi_if.rvfi_mem_rmask || |rvfi_if.rvfi_mem_wmask)
+    |->
+    ((data_prot_equals & mem_act) == mem_act)
+  ) else `uvm_error(info_tag, "data prot should match accesses from same instr");
 
   cov_data_prot_equal_memact_load: cover property (
     rvfi_valid  &&
