@@ -887,88 +887,88 @@ Configure an exception trigger, use the privmode bits to disable/enable the trig
         assign load_b0_eq_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
         assign load_b0_eq_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
 
-        assign load_b0_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
-        assign load_b0_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
+        assign load_b0_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
+        assign load_b0_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
 
-        assign load_b0_l_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
-        assign load_b0_l_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
+        assign load_b0_l_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
+        assign load_b0_l_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
 
         //Byte +1:
         assign load_b1_eq_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
         assign load_b1_eq_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
 
-        assign load_b1_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
-        assign load_b1_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
+        assign load_b1_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
+        assign load_b1_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
 
-        assign load_b1_l_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
-        assign load_b1_l_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
+        assign load_b1_l_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
+        assign load_b1_l_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
 
         //Byte +2:
         assign load_b2_eq_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
         assign load_b2_eq_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
 
-        assign load_b2_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
-        assign load_b2_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
+        assign load_b2_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
+        assign load_b2_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
 
-        assign load_b2_l_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
-        assign load_b2_l_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
+        assign load_b2_l_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
+        assign load_b2_l_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
 
         //Byte +3:
         assign load_b3_eq_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
         assign load_b3_eq_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
 
-        assign load_b3_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
-        assign load_b3_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
+        assign load_b3_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
+        assign load_b3_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
 
-        assign load_b3_l_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
-        assign load_b3_l_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
+        assign load_b3_l_m_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
+        assign load_b3_l_u_hit[t][m] = set_tdata1_mctrl_state(t, LOAD, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
 
         //Store:
         //Byte 0:
         assign store_b0_eq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
         assign store_b0_eq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
 
-        assign store_b0_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
-        assign store_b0_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
+        assign store_b0_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
+        assign store_b0_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
 
-        assign store_b0_l_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
-        assign store_b0_l_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
+        assign store_b0_l_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
+        assign store_b0_l_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 0);
 
         //Byte +1:
         assign store_b1_eq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
         assign store_b1_eq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
 
-        assign store_b1_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
-        assign store_b1_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
+        assign store_b1_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
+        assign store_b1_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
 
-        assign store_b1_l_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
-        assign store_b1_l_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
+        assign store_b1_l_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
+        assign store_b1_l_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 1);
 
         //Byte +2:
         assign store_b2_eq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
         assign store_b2_eq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
 
-        assign store_b2_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
-        assign store_b2_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
+        assign store_b2_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
+        assign store_b2_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
 
-        assign store_b2_l_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
-        assign store_b2_l_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
+        assign store_b2_l_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
+        assign store_b2_l_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 2);
 
         //Byte +3:
         assign store_b3_eq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
         assign store_b3_eq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
 
-        assign store_b3_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
-        assign store_b3_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
+        assign store_b3_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
+        assign store_b3_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_GREATER_OR_EQUAL) && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
 
-        assign store_b3_l_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
-        assign store_b3_l_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
+        assign store_b3_l_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, M_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
+        assign store_b3_l_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, U_MODE, MATCH_WHEN_LESSER) && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr[m], t) && get_mem_rmask_byte(m, 3);
 
       end
     end
   endgenerate
 
-  property p_exe_enter_debug_due_to_x_hit(x);
+  property p_exe_enter_debug_due_to_x(x);
     //Enter debug mode due to situation <x>
     |x
     && rvfi_if.rvfi_valid
@@ -1026,17 +1026,38 @@ Configure an exception trigger, use the privmode bits to disable/enable the trig
 
       //Verify that we enter debug mode when <x> occurs, for both address and memory matching:
 
-      a_dt_enter_dbg_exe: assert property(
-
-        p_exe_enter_debug_due_to_x_hit(exe_eq_m_hit[t])
-        and p_exe_enter_debug_due_to_x_hit(exe_eq_u_hit[t])
-
-        and p_exe_enter_debug_due_to_x_hit(exe_geq_m_hit[t])
-        and p_exe_enter_debug_due_to_x_hit(exe_geq_u_hit[t])
-
-        and p_exe_enter_debug_due_to_x_hit(exe_l_m_hit[t])
-        and p_exe_enter_debug_due_to_x_hit(exe_l_u_hit[t])
+      a_dt_enter_dbg_exe1: assert property(
+        p_exe_enter_debug_due_to_x(exe_eq_m_hit[t])
       ) else `uvm_error(info_tag, "TODO!\n");
+
+      a_dt_enter_dbg_exe1: assert property(
+        p_exe_enter_debug_due_to_x(exe_eq_u_hit[t])
+      ) else `uvm_error(info_tag, "TODO!\n");
+
+      a_dt_enter_dbg_exe1: assert property(
+        p_exe_enter_debug_due_to_x(exe_geq_m_hit[t])
+      ) else `uvm_error(info_tag, "TODO!\n");
+
+      a_dt_enter_dbg_exe1: assert property(
+        p_exe_enter_debug_due_to_x(exe_geq_u_hit[t])
+      ) else `uvm_error(info_tag, "TODO!\n");
+
+      a_dt_enter_dbg_exe1: assert property(
+        p_exe_enter_debug_due_to_x(exe_l_m_hit[t])
+      ) else `uvm_error(info_tag, "TODO!\n");
+
+      a_dt_enter_dbg_exe1: assert property(
+        p_exe_enter_debug_due_to_x(exe_l_u_hit[t])
+      ) else `uvm_error(info_tag, "TODO!\n");
+
+//        and p_exe_enter_debug_due_to_x(exe_eq_u_hit[t])
+//
+//        and p_exe_enter_debug_due_to_x(exe_geq_m_hit[t])
+//        and p_exe_enter_debug_due_to_x(exe_geq_u_hit[t])
+//
+//        and p_exe_enter_debug_due_to_x(exe_l_m_hit[t])
+//        and p_exe_enter_debug_due_to_x(exe_l_u_hit[t])
+//      ) else `uvm_error(info_tag, "TODO!\n");
 
       a_dt_enter_dbg_load: assert property(
 
@@ -1134,7 +1155,7 @@ Configure an exception trigger, use the privmode bits to disable/enable the trig
     //Make sure we enter debug mode due to a trigger match
     rvfi_if.rvfi_valid
     && rvfi_if.rvfi_trap.debug
-    && rvfi_if.rvfi_trap.debug_cause == TRIGGER_MATCH
+    && rvfi_if.rvfi_trap.debug_cause == TRIGGER_MATCH //TODO: hva med reason 5?
 
     |->
     //Verify that we do not enter debug mode due to triggers unless either of these situations occurs:
