@@ -84,7 +84,7 @@ volatile void trigger_code_illegal_insn(void)    __attribute__((optimize("O0")))
 volatile void trigger_code_multicycle_insn(void) __attribute__((optimize("O0"))) __attribute__((naked));
 
 
-int  test_execute_trigger(void);
+int  test_execute_trigger(int);
 int  test_load_trigger(int);
 
 volatile uint32_t tdata1_next;
@@ -357,22 +357,26 @@ int trigger_test (int setup, int expect_trigger_match, uint32_t tdata2_arg) {
   return (debug_entry_status == expect_trigger_match) ? SUCCESS : FAIL;
 }
 
-int test_execute_trigger () {
+int test_execute_trigger (int priv_lvl) {
   int retval = 0;
   tdata2_next_offset = 0;
 
-  printf("\n\n\n --- Testing execute triggers ---\n\n");
+  if (priv_lvl == PRIV_LVL_USER_MODE) {
+    printf("\n\n\n --- Testing execute triggers (in user mode) ---\n\n");
+    execute_debug_command(DEBUG_SEL_ENTER_USERMODE);
+
+  } else if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
+    printf("\n\n\n --- Testing execute triggers (in machine mode) ---\n\n");
+    execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
+  }
 
   // Set up trigger
   tdata1_next = (6 << 28 | // TYPE = 6
                  1 << 12 | // ACTION = Enter debug mode
                  0 << 7  | // MATCH = EQ
                  1 << 6  | // M = Match in machine mode
+                 1 << 3  | // U = Match in user mode
                  1 << 2 ); // EXECUTE = Match on instruction address
-
-  // Attempt accessing tdata registers outside debug mode, should be ignored
-  __asm__ volatile ("csrci tdata1, (1 << 2)");
-  __asm__ volatile ("csrwi tdata2, 0");
 
   trigger_type     = TRIGGER_EXECUTE;
   debug_break_loop = DEBUG_LOOPBREAK_TDATA2;
@@ -396,19 +400,66 @@ int test_execute_trigger () {
   retval += trigger_test(1, 1, (uint32_t) &trigger_code_illegal_insn);
   retval += trigger_test(1, 1, (uint32_t) &trigger_code_multicycle_insn);
 
-  return retval;
-}
 
-int test_load_trigger (int priv_lvl) {
-  int retval = 0;
-  tdata2_next_offset = 0;
+
+  // Trigger on current privilege mode only //
+
+  // Set up trigger
+  tdata1_next = (6 << 28 | // TYPE = 6
+                 1 << 12 | // ACTION = Enter debug mode
+                 0 << 7  | // MATCH = EQ
+                 1 << 2 ); // EXECUTE = Match on instruction address
+
+  if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
+    tdata1_next |= (1 << 6); // M = Match in machine mode
+  } else if (priv_lvl == PRIV_LVL_USER_MODE){
+    tdata1_next |= (1 << 3); // M = Match in user mode
+  }
+  trigger_type     = TRIGGER_EXECUTE;
+  debug_break_loop = DEBUG_LOOPBREAK_TDATA2;
+
+  // Check that clearing tdata2 prevents re-triggering upon return
+  retval += trigger_test(1, 1, (uint32_t) &trigger_code_nop);
+
+  // Check that executing various instructions at the triggered address causes debug entry
+  // and make sure it is not executed before entering debug
+  debug_break_loop = DEBUG_LOOPBREAK_DPCINCR;
+  retval += trigger_test(1, 1, (uint32_t) &trigger_code_nop);
+  retval += trigger_test(1, 1, (uint32_t) &trigger_code_ebreak);
+  retval += trigger_test(1, 1, (uint32_t) &trigger_code_cebreak);
+  retval += trigger_test(1, 1, (uint32_t) &trigger_code_branch_insn);
+  retval += trigger_test(1, 1, (uint32_t) &trigger_code_illegal_insn);
+  retval += trigger_test(1, 1, (uint32_t) &trigger_code_multicycle_insn);
+
+
+  // Test with only oposite privilege mode enabled, expect no matches //
+
   // Set up trigger
   tdata1_next = (6 << 28 | // TYPE = 6
                  1 << 12 | // ACTION = Enter debug mode
                  0 << 7  | // MATCH = EQ
                  1 << 6  | // M = Match in machine mode
                  1 << 3  | // U = Match in user mode
-                 1 << 0 ); // LOAD = Match on load from data address
+                 1 << 2 ); // EXECUTE = Match on instruction address
+
+  if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
+    tdata1_next &= ~(1 << 6); // M = Don't match in machine mode
+  } else if (priv_lvl == PRIV_LVL_USER_MODE){
+    tdata1_next &= ~(1 << 3); // M = Don't match in user mode
+  }
+
+  // Check that executing trigger address does not triggerin wrong mode
+  debug_break_loop = DEBUG_LOOPBREAK_DPCINCR;
+  retval += trigger_test(1, 0, (uint32_t) &trigger_code_nop);
+
+  execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
+
+  return retval;
+}
+
+int test_load_trigger (int priv_lvl) {
+  int retval = 0;
+  tdata2_next_offset = 0;
 
   if (priv_lvl == PRIV_LVL_USER_MODE) {
     printf("\n\n\n --- Testing load triggers (in user mode) ---\n\n");
@@ -418,6 +469,14 @@ int test_load_trigger (int priv_lvl) {
     printf("\n\n\n --- Testing load triggers (in machine mode) ---\n\n");
     execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
   }
+
+  // Set up trigger
+  tdata1_next = (6 << 28 | // TYPE = 6
+                 1 << 12 | // ACTION = Enter debug mode
+                 0 << 7  | // MATCH = EQ
+                 1 << 6  | // M = Match in machine mode
+                 1 << 3  | // U = Match in user mode
+                 1 << 0 ); // LOAD = Match on load from data address
 
   // Check with both machine and user mode
 
@@ -461,7 +520,7 @@ int test_load_trigger (int priv_lvl) {
   retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
 
 
-  // Trigger on current privilege mode only
+  // Trigger on current privilege mode only //
 
   // Set up trigger
   tdata1_next = (6 << 28 | // TYPE = 6
@@ -1000,96 +1059,7 @@ int test_register_access(void) {
                      1:nop
                        )" ::: "s0", "s1");
 
-
-  execute_debug_command(DEBUG_SEL_ENTER_USERMODE);
-
-  // TDATA1 - Write valid value (in u-mode), check that is ignored
-  __asm__ volatile (R"(li    s1,     0x60000000
-                       csrw  tdata1, s1
-                       csrr  s0,     tdata1
-                       li    s1,     0xF8000000
-                       beq   s0,     s1, 1f
-                       li    a0,     0x1   #FAIL
-                       ret
-                     1:nop
-                       )" ::: "s0", "s1");
-
-  // TDATA2 - Write valid value (in u-mode), check that is ignored
-  __asm__ volatile (R"(li    s1,     0xFFFFFFFF
-                       csrw  tdata2, s1
-                       csrr  s0,     tdata2
-                       beqz  s0,     1f
-                       li    a0,     0x1   #FAIL
-                       ret
-                     1:nop
-                       )" ::: "s0", "s1");
-
-  // TINFO - Write 0s, user mode access test
-  __asm__ volatile (R"(li    s1,     0x0
-                       csrw  tinfo,  s1
-                       csrr  s0,     tinfo
-                       li    s1,     0x8064
-                       beq   s0,     s1,  1f
-                       li    a0,     0x1   #FAIL
-                       ret
-                     1:nop
-                       )" ::: "s0", "s1");
-
-  // TCONTROL - Write 1s, user mode access test
-  __asm__ volatile (R"(li    s1,     0xFFFFFFFF
-                       csrw  tcontrol,  s1
-                       csrr  s0,     tcontrol
-                       beqz  s0,     1f
-                       li    a0,     0x1   #FAIL
-                       ret
-                     1:nop
-                       )" ::: "s0", "s1");
-  // TDATA1 - Write valid value (in u-mode), check that is ignored
-  __asm__ volatile (R"(li    s1,     0x60000000
-                       csrw  tdata1, s1
-                       csrr  s0,     tdata1
-                       li    s1,     0xF8000000
-                       beq   s0,     s1, 1f
-                       li    a0,     0x1   #FAIL
-                       ret
-                     1:nop
-                       )" ::: "s0", "s1");
-
-  // TDATA2 - Write valid value (in u-mode), check that is ignored
-  __asm__ volatile (R"(li    s1,     0xFFFFFFFF
-                       csrw  tdata2, s1
-                       csrr  s0,     tdata2
-                       beqz  s0,     1f
-                       li    a0,     0x1   #FAIL
-                       ret
-                     1:nop
-                       )" ::: "s0", "s1");
-
-  // TINFO - Write 0s, user mode access test
-  __asm__ volatile (R"(li    s1,     0x0
-                       csrw  tinfo,  s1
-                       csrr  s0,     tinfo
-                       li    s1,     0x8064
-                       beq   s0,     s1,  1f
-                       li    a0,     0x1   #FAIL
-                       ret
-                     1:nop
-                       )" ::: "s0", "s1");
-
-  // TCONTROL - Write 1s, user mode access test
-  __asm__ volatile (R"(li    s1,     0xFFFFFFFF
-                       csrw  tcontrol,  s1
-                       csrr  s0,     tcontrol
-                       beqz  s0,     1f
-                       li    a0,     0x1   #FAIL
-                       ret
-                     1:nop
-                       )" ::: "s0", "s1");
-
-  execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
-
-
-  // Context Registers - Access Checks
+  // Context Registers - Access Checks (in machine mode)
   illegal_insn_status = 0;
   __asm__ volatile ("csrwi mcontext, 0x0");
   if (!illegal_insn_status) return FAIL;
@@ -1107,7 +1077,63 @@ int test_register_access(void) {
   if (!illegal_insn_status) return FAIL;
 
 
+  execute_debug_command(DEBUG_SEL_ENTER_USERMODE);
 
+  // TDATA1 - Read/write valid value (in u-mode), check that it traps
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrr  s0, tdata1" ::: "s0");
+  if (!illegal_insn_status) return FAIL;
+
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrwi tdata1, 0x0");
+  if (!illegal_insn_status) return FAIL;
+
+
+  // TDATA2 - Read/Write valid value (in u-mode), check that it traps
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrr  s0, tdata2" ::: "s0");
+  if (!illegal_insn_status) return FAIL;
+
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrwi tdata2, 0x0");
+  if (!illegal_insn_status) return FAIL;
+
+  // TINFO - Read/Write valid value (in u-mode), check that it traps
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrr  s0, tinfo" ::: "s0");
+  if (!illegal_insn_status) return FAIL;
+
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrwi tinfo, 0x0");
+  if (!illegal_insn_status) return FAIL;
+
+  // TCONTROL - Read/Write valid value (in u-mode), check that it traps
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrr  s0, tcontrol" ::: "s0");
+  if (!illegal_insn_status) return FAIL;
+
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrwi tcontrol, 0x0");
+  if (!illegal_insn_status) return FAIL;
+
+  // Context Registers - Access Checks (in user mode)
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrwi mcontext, 0x0");
+  if (!illegal_insn_status) return FAIL;
+
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrwi mscontext, 0x0");
+  if (!illegal_insn_status) return FAIL;
+
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrwi hcontext, 0x0");
+  if (!illegal_insn_status) return FAIL;
+
+  illegal_insn_status = 0;
+  __asm__ volatile ("csrwi scontext, 0x0");
+  if (!illegal_insn_status) return FAIL;
+
+  execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
 
   return SUCCESS;
 }
@@ -1165,12 +1191,14 @@ int main(int argc, char *argv[])
         printf("Register access test failed\n");
         return FAIL;
       }
-      /*
-      if (test_execute_trigger()) {
-        printf("Execute trigger test failed\n");
+      if (test_execute_trigger(PRIV_LVL_MACHINE_MODE)) {
+        printf("Execute trigger test (machine mode) failed\n");
         return FAIL;
       }
-      */
+      if (test_execute_trigger(PRIV_LVL_USER_MODE)) {
+        printf("Execute trigger test (user mode) failed\n");
+        return FAIL;
+      }
       if (test_load_trigger(PRIV_LVL_MACHINE_MODE)) {
         printf("Load trigger test (machine mode) failed\n");
         return FAIL;
@@ -1179,7 +1207,7 @@ int main(int argc, char *argv[])
         printf("Load trigger user mode test failed\n");
         return FAIL;
       }
-      /*
+
       if (test_store_trigger()) {
         printf("Store triggert test failed\n");
         return FAIL;
@@ -1189,7 +1217,6 @@ int main(int argc, char *argv[])
         printf("Exception trigger test failed\n");
         return FAIL;
       }
-      */
     }
     printf("Finished \n");
     return SUCCESS;
