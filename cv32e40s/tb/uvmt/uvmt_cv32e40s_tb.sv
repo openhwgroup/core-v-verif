@@ -1198,6 +1198,20 @@ module uvmt_cv32e40s_tb;
         .*
       );
 
+    bind  dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i
+      uvmt_cv32e40s_pma_cov #(
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS)
+      ) pma_cov_instr_i (
+        .*
+      );
+
+    bind  dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i
+      uvmt_cv32e40s_pma_cov #(
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS)
+      ) pma_cov_data_i (
+        .*
+      );
+
     bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if_0_i),
                                                                       .in_support_if (input_to_support_logic_module_if.driver_mp),
                                                                       .out_support_if (support_logic_for_assert_coverage_modules_if.master_mp)
