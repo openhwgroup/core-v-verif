@@ -84,9 +84,10 @@ volatile void trigger_code_illegal_insn(void)    __attribute__((optimize("O0")))
 volatile void trigger_code_multicycle_insn(void) __attribute__((optimize("O0"))) __attribute__((naked));
 
 
-int  test_execute_trigger(int);
-int  test_load_trigger(int);
-int  test_store_trigger(int);
+int test_execute_trigger(int);
+int test_load_trigger(int);
+int test_store_trigger(int);
+int test_exception_trigger(int);
 
 volatile uint32_t tdata1_next;
 volatile uint32_t tdata2_next;
@@ -446,7 +447,7 @@ int test_execute_trigger (int priv_lvl) {
   if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
     tdata1_next &= ~(1 << 6); // M = Don't match in machine mode
   } else if (priv_lvl == PRIV_LVL_USER_MODE){
-    tdata1_next &= ~(1 << 3); // M = Don't match in user mode
+    tdata1_next &= ~(1 << 3); // U = Don't match in user mode
   }
 
   // Check that executing trigger address does not triggerin wrong mode
@@ -460,7 +461,6 @@ int test_execute_trigger (int priv_lvl) {
 
 int test_load_trigger (int priv_lvl) {
   int retval = 0;
-  tdata2_next_offset = 0;
 
   if (priv_lvl == PRIV_LVL_USER_MODE) {
     printf("\n\n\n --- Testing load triggers (in user mode) ---\n\n");
@@ -482,6 +482,7 @@ int test_load_trigger (int priv_lvl) {
   // Check with both machine and user mode
 
   trigger_type    = TRIGGER_LOAD_WORD;
+  tdata2_next_offset = 0;
 
   debug_break_loop   = DEBUG_LOOPBREAK_TDATA2;
   retval += trigger_test(1, 1, (uint32_t) &some_data_word);
@@ -588,7 +589,7 @@ int test_load_trigger (int priv_lvl) {
   if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
     tdata1_next &= ~(1 << 6); // M = Don't match in machine mode
   } else if (priv_lvl == PRIV_LVL_USER_MODE){
-    tdata1_next &= ~(1 << 3); // M = Don't match in user mode
+    tdata1_next &= ~(1 << 3); // U = Don't match in user mode
   }
 
   trigger_type    = TRIGGER_LOAD_WORD;
@@ -762,7 +763,7 @@ int test_store_trigger (int priv_lvl) {
   if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
     tdata1_next &= ~(1 << 6); // M = Don't match in machine mode
   } else if (priv_lvl == PRIV_LVL_USER_MODE){
-    tdata1_next &= ~(1 << 3); // M = Don't match in user mode
+    tdata1_next &= ~(1 << 3); // U = Don't match in user mode
   }
 
   trigger_type   = TRIGGER_STORE_WORD;
@@ -810,17 +811,26 @@ int test_store_trigger (int priv_lvl) {
   return retval;
 }
 
-int test_exception_trigger () {
+int test_exception_trigger (int priv_lvl) {
   int retval = 0;
-  tdata2_next_offset = 0;
+
+  if (priv_lvl == PRIV_LVL_USER_MODE) {
+    printf("\n\n\n --- Testing load triggers (in user mode) ---\n\n");
+    execute_debug_command(DEBUG_SEL_ENTER_USERMODE);
+
+  } else if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
+    printf("\n\n\n --- Testing load triggers (in machine mode) ---\n\n");
+    execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
+  }
 
   printf("\n\n\n --- Testing execption triggers ---\n\n");
 
   // Set up trigger
   tdata1_next = (5 << 28 | // TYPE = etrigger
                  1 <<  9 | // M = Match in machine mode
-                 0 <<  6); // U = Match in user mode
+                 1 <<  6); // U = Match in user mode
 
+  tdata2_next_offset = 0;
   trigger_type = TRIGGER_EXCEPTION_ILLEGAL;
   retval += trigger_test(1, 0, 0);
   retval += trigger_test(1, 1, -1);
@@ -840,6 +850,70 @@ int test_exception_trigger () {
   retval += trigger_test(1, 1,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
                                (1 << EXCEPTION_CODE_BREAKPOINT)));
   retval += trigger_test(1, 0, 0);
+
+
+  // Set up trigger
+  tdata1_next = (5 << 28); // TYPE = etrigger
+
+  if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
+    tdata1_next |= (1 << 9); // M = Match in machine mode
+  } else if (priv_lvl == PRIV_LVL_USER_MODE){
+    tdata1_next |= (1 << 6); // M = Match in user mode
+  }
+
+  tdata2_next_offset = 0;
+  trigger_type = TRIGGER_EXCEPTION_ILLEGAL;
+  retval += trigger_test(1, 0, 0);
+  retval += trigger_test(1, 1, -1);
+  retval += trigger_test(1, 1,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
+                               (1 << EXCEPTION_CODE_BREAKPOINT) |
+                               (1 << EXCEPTION_CODE_RESERVED)));
+  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_RESERVED));
+  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_BREAKPOINT));
+  retval += trigger_test(1, 1, (1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION));
+
+  trigger_type = TRIGGER_EXCEPTION_EBREAK;
+  retval += trigger_test(1, 0, 0);
+  retval += trigger_test(1, 1, -1);
+  retval += trigger_test(1, 0,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
+                               (1 << EXCEPTION_CODE_RESERVED)));
+  retval += trigger_test(1, 1, (1 << EXCEPTION_CODE_BREAKPOINT));
+  retval += trigger_test(1, 1,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
+                               (1 << EXCEPTION_CODE_BREAKPOINT)));
+  retval += trigger_test(1, 0, 0);
+
+  // Set up trigger
+  tdata1_next = (5 << 28 | // TYPE = etrigger
+                 1 <<  9 | // M = Match in machine mode
+                 1 <<  6); // U = Match in user mode
+
+  if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
+    tdata1_next &= ~(1 << 9); // M = Don't match in machine mode
+  } else if (priv_lvl == PRIV_LVL_USER_MODE){
+    tdata1_next &= ~(1 << 6); // U = Don't match in user mode
+  }
+
+  tdata2_next_offset = 0;
+  trigger_type = TRIGGER_EXCEPTION_ILLEGAL;
+  retval += trigger_test(1, 0, 0);
+  retval += trigger_test(1, 0, -1);
+  retval += trigger_test(1, 0,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
+                               (1 << EXCEPTION_CODE_BREAKPOINT) |
+                               (1 << EXCEPTION_CODE_RESERVED)));
+  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_RESERVED));
+  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_BREAKPOINT));
+  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION));
+
+  trigger_type = TRIGGER_EXCEPTION_EBREAK;
+  retval += trigger_test(1, 0, 0);
+  retval += trigger_test(1, 0, -1);
+  retval += trigger_test(1, 0,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
+                               (1 << EXCEPTION_CODE_RESERVED)));
+  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_BREAKPOINT));
+  retval += trigger_test(1, 0,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
+                               (1 << EXCEPTION_CODE_BREAKPOINT)));
+  retval += trigger_test(1, 0, 0);
+
 
   return retval;
 }
@@ -1306,6 +1380,7 @@ int main(int argc, char *argv[])
       printf ("csr_write: tselect = %ld\n", trigger_sel);
       __asm__ volatile (R"(lw        s2, trigger_sel
                            csrw tselect, s2         )" ::: "s2");
+
       if (test_register_access()) {
         printf("Register access test failed\n");
         return FAIL;
@@ -1323,7 +1398,7 @@ int main(int argc, char *argv[])
         return FAIL;
       }
       if (test_load_trigger(PRIV_LVL_USER_MODE)) {
-        printf("Load trigger user mode test failed\n");
+        printf("Load trigger (user mode) test failed\n");
         return FAIL;
       }
       if (test_store_trigger(PRIV_LVL_MACHINE_MODE)) {
@@ -1331,14 +1406,18 @@ int main(int argc, char *argv[])
         return FAIL;
       }
       if (test_store_trigger(PRIV_LVL_USER_MODE)) {
-        printf("Store trigger user mode test failed\n");
+        printf("Store trigger (user mode) test failed\n");
+        return FAIL;
+      }
+      if (test_exception_trigger(PRIV_LVL_MACHINE_MODE)) {
+        printf("Exception trigger test (machine mode) failed\n");
+        return FAIL;
+      }
+      if (test_exception_trigger(PRIV_LVL_USER_MODE)) {
+        printf("Exception trigger (user mode) test failed\n");
         return FAIL;
       }
 
-      if (test_exception_trigger()) {
-        printf("Exception trigger test failed\n");
-        return FAIL;
-      }
     }
     printf("Finished \n");
     return SUCCESS;
