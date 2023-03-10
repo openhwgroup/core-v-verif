@@ -702,5 +702,3 @@ firmware-unit-test-clean:
 		$(FIRMWARE_OBJS) $(FIRMWARE_UNIT_TEST_OBJS)
 
 #endend
-
-
