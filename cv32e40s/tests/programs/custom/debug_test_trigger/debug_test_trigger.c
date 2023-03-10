@@ -86,6 +86,7 @@ volatile void trigger_code_multicycle_insn(void) __attribute__((optimize("O0")))
 
 int  test_execute_trigger(int);
 int  test_load_trigger(int);
+int  test_store_trigger(int);
 
 volatile uint32_t tdata1_next;
 volatile uint32_t tdata2_next;
@@ -636,18 +637,28 @@ int test_load_trigger (int priv_lvl) {
   return retval;
 }
 
-int test_store_trigger () {
+int test_store_trigger (int priv_lvl) {
   int retval = 0;
-  tdata2_next_offset = 0;
-  printf("\n\n\n --- Testing store triggers ---\n\n");
+
+  if (priv_lvl == PRIV_LVL_USER_MODE) {
+    printf("\n\n\n --- Testing store triggers (in user mode) ---\n\n");
+    execute_debug_command(DEBUG_SEL_ENTER_USERMODE);
+
+  } else if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
+    printf("\n\n\n --- Testing store triggers (in machine mode) ---\n\n");
+    execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
+  }
+
   // Set up trigger
   tdata1_next = (6 << 28 | // TYPE = 6
                  1 << 12 | // ACTION = Enter debug mode
                  0 << 7  | // MATCH = EQ
                  1 << 6  | // M = Match in machine mode
+                 1 << 3  | // U = Match in user mode
                  1 << 1 ); // STORE = Match on store to data address
 
   trigger_type   = TRIGGER_STORE_WORD;
+  tdata2_next_offset = 0;
 
   debug_break_loop   = DEBUG_LOOPBREAK_TDATA2;
   retval += trigger_test(1, 1, (uint32_t) &some_data_word);
@@ -685,7 +696,116 @@ int test_store_trigger () {
   tdata2_next_offset = 4;
   retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
 
+
+  // Trigger on current privilege mode only //
+
+  // Set up trigger
+  tdata1_next = (6 << 28 | // TYPE = 6
+                 1 << 12 | // ACTION = Enter debug mode
+                 0 << 7  | // MATCH = EQ
+                 1 << 1 ); // STORE = Match on store to data address
+
+  if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
+    tdata1_next |= (1 << 6); // M = Match in machine mode
+  } else if (priv_lvl == PRIV_LVL_USER_MODE){
+    tdata1_next |= (1 << 3); // M = Match in user mode
+  }
+
+  trigger_type   = TRIGGER_STORE_WORD;
+  tdata2_next_offset = 0;
+
+  debug_break_loop   = DEBUG_LOOPBREAK_TDATA2;
+  retval += trigger_test(1, 1, (uint32_t) &some_data_word);
+
+  debug_break_loop   = DEBUG_LOOPBREAK_DPCINCR;
+  retval += trigger_test(1, 1, (uint32_t) &some_data_word);
+
+  tdata2_next_offset = 4;
+  retval += trigger_test(1, 0, (uint32_t) &some_data_word);
+  tdata2_next_offset = -4;
+  retval += trigger_test(1, 0, (uint32_t) &some_data_word);
+
+  tdata2_next_offset = 0;
+
+  trigger_type    = TRIGGER_STORE_HALFWORD;
+  retval += trigger_test(1, 1, (uint32_t) &some_data_halfwords[0]);
+  retval += trigger_test(1, 1, (uint32_t) &some_data_halfwords[1]);
+
+  trigger_type    = TRIGGER_STORE_BYTE;
+  retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[0]);
+  retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[1]);
+  retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[2]);
+  retval += trigger_test(1, 1, (uint32_t) &some_data_bytes[3]);
+
+  trigger_type    = TRIGGER_STORE_WORD;
+
+  tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
+
+  debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+
+  // Storing to unsused debugger_exception section to ensure it is not triggered by variables at higher addresses
+  retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
+  tdata2_next_offset = -4;
+  retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
+  tdata2_next_offset = 4;
+  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+
+
+  // Test with only oposite privilege mode enabled, expect no matches
+  tdata1_next = (6 << 28 | // TYPE = 6
+                 1 << 12 | // ACTION = Enter debug mode
+                 0 << 7  | // MATCH = EQ
+                 1 << 6  | // M = Match in machine mode
+                 1 << 3  | // U = Match in user mode
+                 1 << 1 ); // STORE = Match on store to data address
+
+  if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
+    tdata1_next &= ~(1 << 6); // M = Don't match in machine mode
+  } else if (priv_lvl == PRIV_LVL_USER_MODE){
+    tdata1_next &= ~(1 << 3); // M = Don't match in user mode
+  }
+
+  trigger_type   = TRIGGER_STORE_WORD;
+  tdata2_next_offset = 0;
+
+  debug_break_loop   = DEBUG_LOOPBREAK_TDATA2;
+  retval += trigger_test(1, 0, (uint32_t) &some_data_word);
+
+  debug_break_loop   = DEBUG_LOOPBREAK_DPCINCR;
+  retval += trigger_test(1, 0, (uint32_t) &some_data_word);
+
+  tdata2_next_offset = 4;
+  retval += trigger_test(1, 0, (uint32_t) &some_data_word);
+  tdata2_next_offset = -4;
+  retval += trigger_test(1, 0, (uint32_t) &some_data_word);
+
+  tdata2_next_offset = 0;
+
+  trigger_type    = TRIGGER_STORE_HALFWORD;
+  retval += trigger_test(1, 0, (uint32_t) &some_data_halfwords[0]);
+  retval += trigger_test(1, 0, (uint32_t) &some_data_halfwords[1]);
+
+  trigger_type    = TRIGGER_STORE_BYTE;
+  retval += trigger_test(1, 0, (uint32_t) &some_data_bytes[0]);
+  retval += trigger_test(1, 0, (uint32_t) &some_data_bytes[1]);
+  retval += trigger_test(1, 0, (uint32_t) &some_data_bytes[2]);
+  retval += trigger_test(1, 0, (uint32_t) &some_data_bytes[3]);
+
+  trigger_type    = TRIGGER_STORE_WORD;
+
+  tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
+
+  debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+
+  // Storing to unsused debugger_exception section to ensure it is not triggered by variables at higher addresses
+  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+  tdata2_next_offset = -4;
+  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+  tdata2_next_offset = 4;
+  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+
   execute_debug_command(DEBUG_SEL_DISABLE_TRIGGER);
+  execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
 
   return retval;
 }
@@ -1186,7 +1306,6 @@ int main(int argc, char *argv[])
       printf ("csr_write: tselect = %ld\n", trigger_sel);
       __asm__ volatile (R"(lw        s2, trigger_sel
                            csrw tselect, s2         )" ::: "s2");
-
       if (test_register_access()) {
         printf("Register access test failed\n");
         return FAIL;
@@ -1207,9 +1326,12 @@ int main(int argc, char *argv[])
         printf("Load trigger user mode test failed\n");
         return FAIL;
       }
-
-      if (test_store_trigger()) {
-        printf("Store triggert test failed\n");
+      if (test_store_trigger(PRIV_LVL_MACHINE_MODE)) {
+        printf("Store trigger test (machine mode) failed\n");
+        return FAIL;
+      }
+      if (test_store_trigger(PRIV_LVL_USER_MODE)) {
+        printf("Store trigger user mode test failed\n");
         return FAIL;
       }
 
