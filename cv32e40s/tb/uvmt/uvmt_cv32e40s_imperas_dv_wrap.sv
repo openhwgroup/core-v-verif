@@ -1,6 +1,6 @@
 //
 // Copyright 2022 OpenHW Group
-// Copyright 2022 Imperas
+// Copyright 2023 Imperas
 //
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -323,9 +323,11 @@ module uvmt_cv32e40s_imperas_dv_wrap
                    .CMP_VR      (0),
                    .CMP_CSR     (1)
                    )
-                   trace2api(rvvi);
+                   idv_trace2api(rvvi);
 
-   trace2log       trace2log(rvvi);
+   trace2log       idv_trace2log(rvvi);
+
+   trace2cov       idv_trace2cov(rvvi);
 
    string info_tag = "ImperasDV_wrap";
 
