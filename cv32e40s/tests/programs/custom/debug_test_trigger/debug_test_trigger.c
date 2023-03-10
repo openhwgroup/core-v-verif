@@ -454,6 +454,7 @@ int test_execute_trigger (int priv_lvl) {
   debug_break_loop = DEBUG_LOOPBREAK_DPCINCR;
   retval += trigger_test(1, 0, (uint32_t) &trigger_code_nop);
 
+  execute_debug_command(DEBUG_SEL_DISABLE_TRIGGER);
   execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
 
   return retval;
@@ -914,6 +915,9 @@ int test_exception_trigger (int priv_lvl) {
                                (1 << EXCEPTION_CODE_BREAKPOINT)));
   retval += trigger_test(1, 0, 0);
 
+
+  execute_debug_command(DEBUG_SEL_DISABLE_TRIGGER);
+  execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
 
   return retval;
 }
