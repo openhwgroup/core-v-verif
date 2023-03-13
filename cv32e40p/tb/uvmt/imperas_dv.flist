@@ -23,14 +23,9 @@
 
 +incdir+${IMPERAS_HOME}
 +incdir+${IMPERAS_HOME}/ImpProprietary/include/host
-${IMPERAS_HOME}/ImpPublic/source/host/rvvi/rvvi-api-pkg.sv
-${IMPERAS_HOME}/ImpProprietary/source/host/rvvi/rvvi-pkg.sv
-${IMPERAS_HOME}/ImpProprietary/source/host/rvvi/imperasDV-api-pkg.sv
-${IMPERAS_HOME}/ImpProprietary/include/host/rvvi/imperasDV.svh
 
-${IMPERAS_HOME}/ImpPublic/source/host/rvvi/rvvi-trace.sv
-${IMPERAS_HOME}/ImpProprietary/source/host/rvvi/trace2api.sv
-${IMPERAS_HOME}/ImpProprietary/source/host/rvvi/trace2log.sv
+-f ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/rvvi.f
+-f ${IMPERAS_HOME}/ImpProprietary/source/host/rvvi/imperasDV.f
 
 // ImperasDV test bench wrapper
 ${TBSRC_HOME}/uvmt/uvmt_cv32e40p_imperas_dv_wrap.sv
