@@ -511,7 +511,7 @@ class cv32e40p_instr extends riscv_instr;
   // Convert the instruction to assembly code
   virtual function string convert2bin(string prefix = "");
     string binary;
-    $warning("convert2bin has only been partially implemented for XPULP Instructions");
+     `uvm_warning("COREV-DV", "convert2bin has only been partially implemented for XPULP Instructions")
     case(format)
       I_FORMAT: begin
         if(category == LOAD && is_post_incr == 1)
