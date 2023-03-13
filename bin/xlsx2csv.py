@@ -20,6 +20,21 @@
 # limitations under the License.
 
 
+"""
+Description:
+    Converts ".xlsx" to ".csv".
+
+Rationale:
+    We have vplans in ".xlsx" but that is a binary format where you can't see
+    diffs when committing changes.
+    Because of localization quirks (e.g. system-wide semicolon delimiter, etc),
+    a script is more reliable than conversion via gui.
+
+Usage:
+    Run it on an ".xlsx" vplan.
+"""
+
+
 import csv
 import os.path
 import sys
