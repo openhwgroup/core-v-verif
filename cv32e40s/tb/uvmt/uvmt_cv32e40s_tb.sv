@@ -1210,6 +1210,7 @@ module uvmt_cv32e40s_tb;
                                                                     .csr_dscratch1(rvfi_csr_dscratch1_if_0_i),
                                                                     .csr_mepc(rvfi_csr_mepc_if_0_i),
                                                                     .csr_mstatus(rvfi_csr_mstatus_if_0_i),
+                                                                    .csr_mcause(rvfi_csr_mcause_if_0_i),
                                                                     .csr_mtvec(rvfi_csr_mtvec_if_0_i),
                                                                     .csr_tdata1(rvfi_csr_tdata1_if_0_i),
                                                                     .csr_tdata2(rvfi_csr_tdata2_if_0_i),

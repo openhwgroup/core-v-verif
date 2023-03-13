@@ -28,6 +28,7 @@ module uvmt_cv32e40s_debug_assert
       uvma_rvfi_csr_if csr_mepc,
       uvma_rvfi_csr_if csr_mstatus,
       uvma_rvfi_csr_if csr_mtvec,
+      uvma_rvfi_csr_if csr_mcause,
       //TODO:MT tdatas should not be necessary when trigger logic is ready
       uvma_rvfi_csr_if csr_tdata1,
       uvma_rvfi_csr_if csr_tdata2,
@@ -46,6 +47,7 @@ module uvmt_cv32e40s_debug_assert
   localparam CEBREAK_INSTR_OPCODE = 32'h 0000_9002;
   localparam DRET_INSTR_OPCODE    = 32'h 7B20_0073;
   localparam int MSTATUS_TW_POS   = 21;
+  localparam int MCAUSE_MINHV_POS = 30;
   localparam int DCSR_STEP_POS    = 2;
   localparam int DCSR_NMIP_POS    = 3;
   localparam int DCSR_STEPIE_POS  = 11;
@@ -56,6 +58,7 @@ module uvmt_cv32e40s_debug_assert
   localparam CSR_ADDR_DPC         = 12'h7B1;
   localparam CSR_ADDR_DSCRATCH0   = 12'h7B2;
   localparam CSR_ADDR_DSCRATCH1   = 12'h7B3;
+  localparam CSR_ADDR_MCAUSE      = 12'h342;
 
   // ---------------------------------------------------------------------------
   // Local variables
@@ -158,7 +161,9 @@ module uvmt_cv32e40s_debug_assert
         ) else `uvm_error(info_tag, $sformatf("Debug mode entered with wrong pc. pc==%08x", rvfi.rvfi_pc_rdata));
 
     a_debug_mode_pc_dpc: assert property(
-        $rose(support_if.first_debug_ins)
+        $rose(support_if.first_debug_ins) &&
+        // ignore CLIC, checked in clic asserts
+        !(rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt && (csr_mtvec.rvfi_csr_rdata[1:0] == 3))
         |->
         (rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt
         ##1
@@ -180,7 +185,13 @@ module uvmt_cv32e40s_debug_assert
     property p_dpc_dbg_trigger;
         $rose(support_if.first_debug_ins) && rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_TRIGGER
         |->
-        csr_dpc.rvfi_csr_rdata == dpc_dbg_trg;
+        csr_dpc.rvfi_csr_rdata == dpc_dbg_trg
+        or
+        // clic can hit an exception in it's pointer fetch stage without reporting to rvfi.
+        (rvfi.rvfi_intr.exception &&
+        (csr_mtvec.rvfi_csr_rdata[1:0] == 3) &&
+        csr_mcause.rvfi_csr_rdata[MCAUSE_MINHV_POS] &&
+        csr_dpc.rvfi_csr_rdata == mtvec_addr);
     endproperty
 
     a_dpc_dbg_trigger: assert property(p_dpc_dbg_trigger)
@@ -188,7 +199,10 @@ module uvmt_cv32e40s_debug_assert
 
     //TODO:MT Fully covered by those below, remove?
      property p_dpc_dbg_step;
-        $rose(support_if.first_debug_ins) && rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP
+        $rose(support_if.first_debug_ins) &&
+        rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP &&
+        // ignore CLIC, checked in clic asserts
+        !(rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt && (csr_mtvec.rvfi_csr_rdata[1:0] == 3))
         |->
         (csr_dpc.rvfi_csr_rdata == dpc_dbg_step)
         or
@@ -215,7 +229,7 @@ module uvmt_cv32e40s_debug_assert
     property p_dpc_dbg_step_nmi;
         $rose(support_if.first_debug_ins) &&
         rvfi.is_nmi() &&
-        rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP
+        (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP)
         |=>
         dpc_rdata_q == dpc_dbg_step_nmi;
     endproperty
@@ -229,18 +243,24 @@ module uvmt_cv32e40s_debug_assert
         rvfi.rvfi_intr.intr &&
         rvfi.rvfi_intr.interrupt &&
         !rvfi.is_nmi() &&
-        rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP
+        (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP)
         |=>
         dpc_rdata_q == dpc_dbg_step_irq;
     endproperty
 
-    a_dpc_dbg_step_irq: assert property(p_dpc_dbg_step_irq)
-        else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a step, dpc==%08x", csr_dpc.rvfi_csr_rdata));
-
+    generate // ignore CLIC, checked in clic asserts
+        if (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC==0) begin
+            a_dpc_dbg_step_irq: assert property(p_dpc_dbg_step_irq)
+                else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a step, dpc==%08x", csr_dpc.rvfi_csr_rdata));
+        end
+    endgenerate
 
     //TODO:MT Fully covered by those below, remove?
     property p_dpc_dbg_haltreq;
-        $rose(support_if.first_debug_ins) && rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ
+        $rose(support_if.first_debug_ins) &&
+        (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ) &&
+        // ignore CLIC, checked in clic asserts
+        !(rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt && (csr_mtvec.rvfi_csr_rdata[1:0] == 3))
         |->
         (csr_dpc.rvfi_csr_rdata == dpc_dbg_haltreq)
         or
@@ -266,7 +286,7 @@ module uvmt_cv32e40s_debug_assert
     property p_dpc_dbg_haltreq_nmi;
         $rose(support_if.first_debug_ins) &&
         rvfi.is_nmi() &&
-        rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ
+        (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ)
         |=>
         dpc_rdata_q == dpc_dbg_haltreq_nmi;
     endproperty
@@ -280,14 +300,17 @@ module uvmt_cv32e40s_debug_assert
         rvfi.rvfi_intr.intr &&
         rvfi.rvfi_intr.interrupt &&
         !rvfi.is_nmi() &&
-        rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ
+        (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ)
         |=>
         dpc_rdata_q == dpc_dbg_haltreq_irq;
     endproperty
 
-    a_dpc_dbg_haltreq_irq: assert property(p_dpc_dbg_haltreq_irq)
-        else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a haltreq, dpc==%08x", csr_dpc.rvfi_csr_rdata));
-
+    generate // ignore CLIC, checked in clic asserts
+        if (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC==0) begin
+            a_dpc_dbg_haltreq_irq: assert property(p_dpc_dbg_haltreq_irq)
+                else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a haltreq, dpc==%08x", csr_dpc.rvfi_csr_rdata));
+        end
+    endgenerate
 
     // Check that dcsr.cause is as expected
     property p_dcsr_cause;
@@ -295,7 +318,14 @@ module uvmt_cv32e40s_debug_assert
         |->
         (rvfi.rvfi_dbg == debug_cause_pri)
         or
-        (support_if.recorded_dbg_req && (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ));
+        (support_if.recorded_dbg_req && (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ))
+        or
+        // clic can hit an exception in it's pointer fetch stage without reporting to rvfi.
+        ((rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_TRIGGER) &&
+        rvfi.rvfi_intr.exception &&
+        (csr_mtvec.rvfi_csr_rdata[1:0] == 3) &&
+        csr_mcause.rvfi_csr_rdata[MCAUSE_MINHV_POS] &&
+        csr_dpc.rvfi_csr_rdata == mtvec_addr);
     endproperty
 
     a_dcsr_cause: assert property(p_dcsr_cause)
@@ -523,12 +553,9 @@ module uvmt_cv32e40s_debug_assert
         else `uvm_error(info_tag, "Debug mode not entered for single step");
 
 
-    // dret in M-mode or U-Mode will cause illegal instruction
-    // If pending debug req, illegal insn will not assert until resume
     property p_mumode_dret;
-        !cov_assert_if.debug_mode_q && cov_assert_if.is_dret &&
-        !(cov_assert_if.pending_sync_debug || cov_assert_if.pending_async_debug)
-        |-> cov_assert_if.illegal_insn_i;
+        rvfi.is_dret() && !rvfi.rvfi_dbg_mode
+        |-> rvfi.rvfi_trap;
     endproperty
 
     a_mumode_dret : assert property(p_mumode_dret)
@@ -553,10 +580,10 @@ module uvmt_cv32e40s_debug_assert
 
 
     // dret in D-mode will place dpc in mepc if re-entry is interrupted (excluding nmi)
-
+    //TODO:MT fails due to irregular behaviour in RVFI. Await 40S bug issue 414 before changing
     property p_dmode_dret_pc_int;
         int dpc;
-        (rvfi.rvfi_valid && rvfi.rvfi_dbg_mode && rvfi.rvfi_insn == DRET_INSTR_OPCODE,
+        (rvfi.is_dret() && rvfi.rvfi_dbg_mode,
          dpc = csr_dpc.rvfi_csr_rdata)
         ##1
         rvfi.rvfi_valid[->1]
@@ -831,9 +858,7 @@ module uvmt_cv32e40s_debug_assert
         end else begin
             //NMI has highest priority for dpc
             if(rvfi.is_nmi() && rvfi.rvfi_dbg_mode) begin
-                if (csr_mtvec.rvfi_csr_rdata[1:0] == 3) begin //CLIC ignored here, is covered in CLIC asserts
-                    pc_at_dbg_req <= csr_dpc.rvfi_csr_wdata;
-                end else if (csr_mtvec.rvfi_csr_rdata[1:0] == 1) begin // vectored CLINT
+                if (csr_mtvec.rvfi_csr_rdata[1:0] == 1) begin // vectored CLINT
                     pc_at_dbg_req <= mtvec_addr+'h3C;
                 end else begin //unvectored CLINT
                     pc_at_dbg_req <= mtvec_addr;
@@ -843,9 +868,7 @@ module uvmt_cv32e40s_debug_assert
                             rvfi.rvfi_dbg_mode &&
                             rvfi.rvfi_intr.intr &&
                             rvfi.rvfi_intr.interrupt) begin
-                if (csr_mtvec.rvfi_csr_rdata[1:0] == 3) begin //CLIC ignored here, is covered in CLIC asserts
-                    pc_at_dbg_req <= csr_dpc.rvfi_csr_wdata;
-                end else if (csr_mtvec.rvfi_csr_rdata[1:0] == 1) begin //vectored CLINT
+                if (csr_mtvec.rvfi_csr_rdata[1:0] == 1) begin //vectored CLINT
                     pc_at_dbg_req <= mtvec_addr + (rvfi.rvfi_intr.cause << 2);
                 end else begin //unvectored CLINT
                     pc_at_dbg_req <= mtvec_addr;
@@ -903,12 +926,7 @@ module uvmt_cv32e40s_debug_assert
         end else begin
             //NMI has highest priority for dpc
             if(rvfi.is_nmi() && rvfi.rvfi_dbg_mode) begin
-                if (csr_mtvec.rvfi_csr_rdata[1:0] == 3) begin //CLIC ignored here, is covered in CLIC asserts
-                    dpc_dbg_step        <= csr_dpc.rvfi_csr_wdata;
-                    dpc_dbg_step_nmi    <= csr_dpc.rvfi_csr_wdata;
-                    dpc_dbg_haltreq     <= csr_dpc.rvfi_csr_wdata;
-                    dpc_dbg_haltreq_nmi <= csr_dpc.rvfi_csr_wdata;
-                end else if (csr_mtvec.rvfi_csr_rdata[1:0] == 1) begin // vectored CLINT
+                if (csr_mtvec.rvfi_csr_rdata[1:0] == 1) begin // vectored CLINT
                     dpc_dbg_step        <= mtvec_addr+'h3C;
                     dpc_dbg_step_nmi    <= mtvec_addr+'h3C;
                     dpc_dbg_haltreq     <= mtvec_addr+'h3C;
@@ -925,12 +943,7 @@ module uvmt_cv32e40s_debug_assert
                             rvfi.rvfi_dbg_mode &&
                             rvfi.rvfi_intr.intr &&
                             rvfi.rvfi_intr.interrupt) begin
-                if (csr_mtvec.rvfi_csr_rdata[1:0] == 3) begin //CLIC ignored here, is covered in CLIC asserts
-                    dpc_dbg_step        <= csr_dpc.rvfi_csr_wdata;
-                    dpc_dbg_step_irq    <= csr_dpc.rvfi_csr_wdata;
-                    dpc_dbg_haltreq     <= csr_dpc.rvfi_csr_wdata;
-                    dpc_dbg_haltreq_irq <= csr_dpc.rvfi_csr_wdata;
-                end else if (csr_mtvec.rvfi_csr_rdata[1:0] == 1) begin //vectored CLINT
+                if (csr_mtvec.rvfi_csr_rdata[1:0] == 1) begin //vectored CLINT
                     dpc_dbg_step        <= mtvec_addr + (rvfi.rvfi_intr.cause << 2);
                     dpc_dbg_step_irq    <= mtvec_addr + (rvfi.rvfi_intr.cause << 2);
                     dpc_dbg_haltreq     <= mtvec_addr + (rvfi.rvfi_intr.cause << 2);
