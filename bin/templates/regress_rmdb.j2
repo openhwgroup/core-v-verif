@@ -1,0 +1,97 @@
+// Copyright 2023 Dolphin Design
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+{% import 'regress_macros.j2' as regress_macros -%}
+
+
+<?xml version="1.0" ?>
+<rmdb>
+
+    <runnable name="{{project}}" type="group" sequential="yes">
+        <parameters>
+            <parameter name="results_sim_path">{{results_path}}/{{simulator}}_results</parameter>
+        </parameters>
+        <members>
+{% for r in regressions %}
+            <member>{{r.name}}</member>
+{% endfor %}
+{% if coverage != false %}
+            <member>cov_report</member>
+{% endif %}
+        </members>
+    </runnable>
+
+
+{% for r in regressions %}
+    <runnable name="{{r.name}}" type="group">
+        <members>
+{% for build in r.get_builds() %}
+            <member>config_{{build.cfg}}</member>
+{% endfor %}
+        </members>
+        <preScript launch="exec">
+{% for b in r.get_builds_with_no_tests() %}
+            <command> cd {{b.abs_dir}} &amp;&amp; {{b.cmd}} CV_CORE={{project}} CFG={{b.cfg}} CV_SIM_PREFIX= {{toolchain|upper}}=1 SIMULATOR={{b.simulator}} COV={{regress_macros.yesorno(b.cov)}} {{regress_macros.cv_results(results)}} {{makeargs}} </command>
+{% endfor %}
+        </preScript>
+    </runnable>
+
+
+{% for build in r.get_builds() %}
+        <runnable name="config_{{build.cfg}}" type="group">
+            <members>
+{% for t in r.get_tests_of_build(build.name) %}
+                <member>{{t.name}}</member>
+{% endfor %}
+            </members>
+            <preScript launch="exec">
+                <command> cd {{build.abs_dir}} &amp;&amp; {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} CV_SIM_PREFIX= {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results)}} {{makeargs}} </command>
+            </preScript>
+        </runnable>
+
+{% for t in r.get_tests_of_build(build.name) %}
+            <runnable name="{{t.name}}" type="task" repeat="{{t.num}}">
+                <parameters>
+                    <parameter name="ucdbfile" >{{t.abs_dir}}/vsim_results/{{build.cfg}}/{{t.testname}}/(%ITERATION%)/{{t.testname}}.ucdb</parameter>
+                </parameters>
+{% if lsf != None %}
+                <method name="grid" gridtype="lsf" action="execScript">
+                    <command> {{lsf}} -P {{project}} -J (%RUNNABLE%) (%WRAPPER%) </command>
+                </method>
+{% endif %}
+                <execScript launch="exec" usestderr="no">
+                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} {{toolchain|upper}}=1 CFG={{build.cfg}} SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
+                </execScript>
+            </runnable>
+{% endfor %}
+
+
+{% endfor %}
+
+{% endfor %}
+
+    <!-- =========== Reporting =========== -->
+    <runnable name="cov_report" type="group">
+        <parameters>
+            <parameter name="merged_file">(%results_sim_path%)/merged/merged.ucdb</parameter>
+            <!-- <parameter name="tplan_file">(%results_sim_path%)/merged.ucdb</parameter> -->
+        </parameters>
+        <preScript launch="exec">
+            <command> cd {{results_path}} &amp;&amp; make cov_merge </command>
+        </preScript>
+        <members>
+            <member>cov_html_report</member>
+        </members>
+        <postScript>
+
+        </postScript>
+    </runnable>
+
+        <runnable name="cov_html_report" type="task">
+            <execScript>
+                <command> if {[file exists (%merged_file%)]} {vcover report -annotate -testdetails -details -html (%merged_file%) -output [file join {{results_path}} cov_html_summary]} </command>
+                <!-- <command> if {[file exists (%merged_file%)]} {vcover report -plansection=/. -html (%mergefile%) -output [file join (%results_sim_path%) cov_html_summary_testplan]} </command> -->
+            </execScript>
+        </runnable>
+
+</rmdb>

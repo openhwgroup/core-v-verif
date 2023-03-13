@@ -32,7 +32,7 @@ VCOVER                  = vcover
 
 # Paths
 VWORK     				= work
-VSIM_COV_MERGE_DIR      = $(SIM_CFG_RESULTS)/$(CFG)/merged
+VSIM_COV_MERGE_DIR      = $(SIM_RESULTS)/merged
 UVM_HOME               ?= $(abspath $(shell which $(VLIB))/../../verilog_src/uvm-1.2/src)
 DPI_INCLUDE            ?= $(abspath $(shell which $(VLIB))/../../include)
 USES_DPI = 1
@@ -183,7 +183,7 @@ endif
 ifeq ($(call IS_YES,$(COV)),YES)
 VOPT_FLAGS  += $(VOPT_COV)
 VSIM_FLAGS  += $(VSIM_COV)
-VSIM_FLAGS  += -do 'set TEST ${VSIM_TEST}; source $(VSIM_SCRIPT_DIR)/cov.tcl'
+VSIM_FLAGS  += -do 'set TEST ${VSIM_TEST}; set TEST_CONFIG $(CFG); set TEST_SEED $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
 endif
 
 ################################################################################
@@ -219,8 +219,8 @@ endif
 COV_FLAGS =
 COV_REPORT = cov_report
 COV_MERGE_TARGET =
-COV_MERGE_FIND = find $(SIM_CFG_RESULTS) -type f -name "*.ucdb" | grep -v merged.ucdb
-COV_MERGE_FLAGS=merge -64 -out merged.ucdb -inputs ucdb.list
+COV_MERGE_FIND = find $(SIM_RESULTS) -type f -name "*.ucdb" | grep -v merged.ucdb
+COV_MERGE_FLAGS=merge -testassociated -verbose -64 -out merged.ucdb -inputs ucdb.list
 
 ifeq ($(call IS_YES,$(MERGE)),YES)
 COV_DIR=$(VSIM_COV_MERGE_DIR)

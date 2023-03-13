@@ -155,7 +155,7 @@ def read_file(args, file):
         # Determine if a test is valid, skip for compliance tests
         # Since it is not possible to determine apriori if a compliance test is valid
         if not 'compliance' in test.cmd:
-            check_valid_test(args.project, test.name)
+            check_valid_test(args.project, test.testname)
 
         # Determine if a test is indexed for setting test iterations
         if args.num:
@@ -200,6 +200,7 @@ parser.add_argument('--make', help='Substitute for make command (to use short-cu
 parser.add_argument('--makearg', action='append', help='Arguments to supply to each make command, can be specified multiple times')
 parser.add_argument('--sh', help='Select bash shell script output', action='store_true')
 parser.add_argument('--vsif', help='Select Vmanager VSIF output', action='store_true')
+parser.add_argument('--rmdb', help='Select Vrun RMDB output', action='store_true')
 parser.add_argument('--toolchain', help='Select toolchain to build with', choices=VALID_TOOLCHAINS, default=DEFAULT_TOOLCHAIN)
 args = parser.parse_args()
 
@@ -220,6 +221,8 @@ if not args.outfile:
         args.outfile = args.outfile + '.sh'
     elif args.vsif:
         args.outfile = args.outfile + '.vsif'
+    elif args.rmdb:
+        args.outfile = args.outfile + '.rmdb'
 
 regressions = []
 unique_builds = OrderedDict()
@@ -294,4 +297,27 @@ if args.vsif:
     logger.info('Rendering template: regress_sve.j2 into: {}'.format(sve))
     out_fh = open(sve, 'w')
     out_fh.write(template.render(env=os.environ))
+    out_fh.close()
+
+
+if args.rmdb:
+    # Generate a Vrun-compatible rmdb file (--rmdb)
+    template = env.get_template('regress_rmdb.j2')
+    if not args.cov:
+        logger.warning('Coverage option is not set, regression with Questa Vrun will not be able to detect any failing test')
+    logger.info('Rendering template: regress_rmdb.j2 into: {}'.format(args.outfile))
+    out_fh = open(args.outfile, 'w')
+    out_fh.write(template.render(session=os.path.splitext(os.path.basename(args.outfile))[0],
+                                 results_path=get_results_path(args.project),
+                                 project=args.project,
+                                 parallel=args.parallel,
+                                 regressions=regressions,
+                                 results=args.results,
+                                 makeargs=' '.join(args.makearg) if args.makearg else '',
+                                 lsf=args.lsf,
+                                 toolchain=args.toolchain,
+                                 simulator=args.simulator,
+                                 filter_dir=get_filter_dir(),
+                                 unique_builds=unique_builds,
+                                 coverage=args.cov))
     out_fh.close()

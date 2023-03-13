@@ -85,6 +85,9 @@ class Test:
         # Absolutize a directory if exists
         self.abs_dir = os.path.abspath(os.path.join(get_proj_root(), self.dir))
 
+        if not hasattr(self, 'testname'):
+            self.testname = self.name
+
         # Log equals the test name if does not exist
         if not hasattr(self, 'log'):
             self.log = self.name
