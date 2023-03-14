@@ -24,24 +24,51 @@ module  uvmt_cv32e40s_pma_cov #(
   parameter int  PMA_NUM_REGIONS
 )(
   input wire  clk,
-  input wire  rst_n
+  input wire  rst_n,
+
+  input wire  core_trans_ready_o,
+  input wire  core_trans_valid_i
 );
 
 
-  default clocking @(posedge clk); endclocking
-  default disable iff !rst_n;
+  // Helper Logic - Num Matches
 
+  localparam int  MAX_REGIONS = 16;
+
+let is_pma_match(i) = 1;//TODO:ERROR remove
+  wire logic [MAX_REGIONS-1:0]  pma_matches;
+  for (genvar i = 0; i < MAX_REGIONS; i++) begin: gen_pma_matches
+    assign pma_matches[i] = is_pma_match(i);
+  end
+
+  let  num_matches = $countones(pma_matches);
+
+
+  // Helper Logic - MPU Activation
+
+  wire logic  is_mpu_activated;
+  assign  is_mpu_activated = (core_trans_ready_o && core_trans_valid_i);
+
+
+  // Coverage Definitions
 
   covergroup cg @(posedge clk);
     option.per_instance = 1;
     option.detect_overlap = 1;
 
-    cp_TODO: coverpoint  PMA_NUM_REGIONS {
-      bins zero = {0};
-      bins mid  = {[1:15]};
-      bins max  = {16};
+    // vplan:"Valid number of regions"
+    cp_numregions: coverpoint  PMA_NUM_REGIONS {
+      bins zero = {0}      with (PMA_NUM_REGIONS == 0);
+      bins mid  = {[1:15]} with ((0 < PMA_NUM_REGIONS) && (PMA_NUM_REGIONS < 16));
+      bins max  = {16}     with (PMA_NUM_REGIONS == 16);
     }
 
+    // vplan:"Overlapping PMA Regions"
+    cp_multimatch: coverpoint  num_matches  iff (is_mpu_activated) {
+      bins zero = {0};
+      bins one  = {1}                   with (0 < PMA_NUM_REGIONS);
+      bins many = {[2:PMA_NUM_REGIONS]} with (1 < PMA_NUM_REGIONS);
+    }
   endgroup
 
   cg  cg_inst = new;
