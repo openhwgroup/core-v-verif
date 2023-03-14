@@ -43,6 +43,10 @@ class corev_asm_program_gen extends riscv_asm_program_gen;
       instr_stream.push_back(".section .nmi_bootstrap, \"ax\"");
       instr_stream.push_back(".globl _nmi_bootstrap");
       instr_stream.push_back("    j nmi_handler");
+    end else if (cfg.mtvec_mode == CLIC) begin
+      instr_stream.push_back(".section .mtvec_bootstrap, \"ax\"");
+      instr_stream.push_back(".globl _mtvec_bootstrap");
+      instr_stream.push_back("    j mtvec_handler");
     end else begin
       instr_stream.push_back(".globl vectored_mode");
       instr_stream.push_back(".section .mtvec_handler, \"ax\"");

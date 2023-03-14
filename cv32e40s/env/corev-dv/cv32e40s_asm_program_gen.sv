@@ -33,10 +33,14 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
   virtual function void trap_vector_init(int hart);
     string instr[];
     privileged_reg_t trap_vec_reg;
+    privileged_reg_t tvt_vec_reg;
     string tvec_name;
     foreach(riscv_instr_pkg::supported_privileged_mode[i]) begin
       case(riscv_instr_pkg::supported_privileged_mode[i])
-        MACHINE_MODE:    trap_vec_reg = MTVEC;
+        MACHINE_MODE:    begin
+          trap_vec_reg = MTVEC;
+          tvt_vec_reg  = MTVT;
+        end
         SUPERVISOR_MODE: trap_vec_reg = STVEC;
         USER_MODE:       trap_vec_reg = UTVEC;
         default: `uvm_info(`gfn, $sformatf("Unsupported privileged_mode %0s",
@@ -67,6 +71,15 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
       instr = {instr, $sformatf("ori x%0d, x%0d, %0d", cfg.gpr[0], cfg.gpr[0], cfg.mtvec_mode)};
       instr = {instr, $sformatf("csrw 0x%0x, x%0d # %0s",
                                  trap_vec_reg, cfg.gpr[0], trap_vec_reg.name())};
+
+      if (cfg.mtvec_mode == riscv_instr_pkg::CLIC) begin
+        instr = {instr,
+                 $sformatf(".global __mtvt_table"),
+                 $sformatf("la x%0d, __mtvt_table", cfg.gpr[0]),
+                 $sformatf("csrw 0x%0x, x%0d # %0s", tvt_vec_reg, cfg.gpr[0], tvt_vec_reg.name())
+        };
+
+      end
     end
     gen_section(get_label("trap_vec_init", hart), instr);
   endfunction : trap_vector_init
