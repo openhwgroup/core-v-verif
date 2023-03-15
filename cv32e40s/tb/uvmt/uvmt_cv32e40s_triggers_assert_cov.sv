@@ -66,19 +66,23 @@ module uvmt_cv32e40s_triggers_assert_cov
   logic [31:0] tselect_w;
   logic [31:0] tcontrol_w;
 
-  assign tdata1_r = tdata1.read();
-  assign tdata2_r = tdata2.read();
-  assign tdata3_r = tdata3.read();
-  assign tinfo_r = tinfo.read();
-  assign tselect_r = tselect.read();
-  assign tcontrol_r = tcontrol.read();
+  always_comb begin
+    tdata1_r = tdata1.read();
+    tdata2_r = tdata2.read();
+    tdata3_r = tdata3.read();
+    tinfo_r = tinfo.read();
+    tselect_r = tselect.read();
+    tcontrol_r = tcontrol.read();
+  end
 
-  assign tdata1_w = tdata1.write();
-  assign tdata2_w = tdata2.write();
-  assign tdata3_w = tdata3.write();
-  assign tinfo_w = tinfo.write();
-  assign tselect_w = tselect.write();
-  assign tcontrol_w = tcontrol.write();
+  always_comb begin
+    tdata1_w = tdata1.write();
+    tdata2_w = tdata2.write();
+    tdata3_w = tdata3.write();
+    tinfo_w = tinfo.write();
+    tselect_w = tselect.write();
+    tcontrol_w = tcontrol.write();
+  end
 
   //Local parameters:
 
@@ -190,8 +194,8 @@ module uvmt_cv32e40s_triggers_assert_cov
   localparam HW_ZERO_1 = 1;
   localparam HW_ZERO_0 = 0;
 
-  //tdata1 default value
   localparam TDATA1_DEFAULT = 32'hF800_0000;
+  localparam ONE = 4'b0001;
 
 
   logic [3:0][31:0] tdata1_arry;
@@ -964,11 +968,11 @@ module uvmt_cv32e40s_triggers_assert_cov
   endfunction
 
   function logic get_mem_rmask_byte(int mem_txn, int byte_pos);
-    get_mem_rmask_byte = (|((rvfi_if.get_mem_rmask(mem_txn)) & ({0001} << byte_pos)));
+    get_mem_rmask_byte = (|((rvfi_if.get_mem_rmask(mem_txn)) & (ONE << byte_pos)));
   endfunction
 
   function logic get_mem_wmask_byte(int mem_txn, int byte_pos);
-    get_mem_wmask_byte = (|((rvfi_if.get_mem_wmask(mem_txn)) & ({0001} << byte_pos)));
+    get_mem_wmask_byte = (|((rvfi_if.get_mem_wmask(mem_txn)) & (ONE << byte_pos)));
   endfunction
 
 
