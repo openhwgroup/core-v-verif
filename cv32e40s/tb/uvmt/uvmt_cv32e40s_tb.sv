@@ -1072,14 +1072,47 @@ module uvmt_cv32e40s_tb;
     uvmt_cv32e40s_xsecure_interface_integrity_assert #(
 	    .SECURE	(SECURE)
     ) xsecure_interface_integrity_assert_i 	(
-      //Signals:
-      .clk_i      (clknrst_if.clk),
-      .rst_ni     (clknrst_if.reset_n),
 
       //Interfaces:
     	.xsecure_if	(xsecure_if),
       .rvfi_if	  (rvfi_instr_if_0_i),
-      .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
+      .support_if (support_logic_for_assert_coverage_modules_if.slave_mp),
+
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Alert:
+      .alert_major (core_i.alert_major_o),
+
+      //CSRs:
+      .is_integrity_enabled (core_i.xsecure_ctrl.cpuctrl.integrity),
+
+      //OBI:
+      .obi_data_req_payload_if (core_i.m_c_obi_data_if.req_payload),
+      .obi_data_resp_payload_if (core_i.m_c_obi_data_if.resp_payload),
+      .obi_data_req (m_c_obi_data_if.s_req.req),
+      .obi_data_reqpar (m_c_obi_data_if.s_req.reqpar),
+      .obi_data_gnt (m_c_obi_data_if.s_resp.resp),
+      .obi_data_gntpar (m_c_obi_data_if.s_resp.resppar),
+      .obi_data_rvalid (m_c_obi_data_if.s_rvalid.rvalid),
+      .obi_data_rvalidpar (m_c_obi_data_if.s_rvalid.rvalidpar),
+
+      .obi_instr_req_payload_if (core_i.m_c_obi_instr_if.req_payload),
+      .obi_instr_resp_payload_if (core_i.m_c_obi_instr_if.resp_payload),
+      .obi_instr_req (m_c_obi_instr_if.s_req.req),
+      .obi_instr_reqpar (m_c_obi_instr_if.s_req.reqpar),
+      .obi_instr_gnt (m_c_obi_instr_if.s_resp.resp),
+      .obi_instr_gntpar (m_c_obi_instr_if.s_resp.resppar),
+      .obi_instr_rvalid (m_c_obi_instr_if.s_rvalid.rvalid),
+      .obi_instr_rvalidpar (m_c_obi_instr_if.s_rvalid.rvalidpar),
+
+      //Register file memory:
+      .gpr_mem (core_i.register_file_wrapper_i.register_file_i.mem_gated),
+      .rf_we (core_i.rf_we_wb),
+      .rf_waddr (core_i.rf_waddr_wb),
+      .rf_wdata (core_i.rf_wdata_wb),
+
     );
 
 
