@@ -495,7 +495,9 @@ module uvmt_cv32e40p_tb;
 
     // IMPERAS DV
     `ifndef FORMAL
+    `ifdef USE_ISS
       uvmt_cv32e40p_imperas_dv_wrap imperas_dv (rvvi_if);
+    `endif
     `endif
    /**
     * Test bench entry point.
@@ -705,12 +707,14 @@ module uvmt_cv32e40p_tb;
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
    `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
    // overcome race
+   `ifdef USE_ISS
    initial begin
      if ($test$plusargs("USE_ISS")) begin
        #0.9ns;
        imperas_dv.ref_init();
      end
    end
+   `endif
    `endif
 
    //TODO verify these are correct with regards to isacov function

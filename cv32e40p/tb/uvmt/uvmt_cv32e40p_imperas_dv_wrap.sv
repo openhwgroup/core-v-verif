@@ -235,7 +235,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Module wrapper for Imperas DV.
 ////////////////////////////////////////////////////////////////////////////
-`ifdef USE_IMPERASDV
+// `define USE_ISS
+`ifdef USE_ISS
 
 `include "rvvi/imperasDV.svh" // located in $IMPERAS_HOME/ImpProprietary/include/host
 
@@ -461,6 +462,6 @@ module uvmt_cv32e40p_imperas_dv_wrap
     void'(rvviRefMemorySetVolatile('h15001000, 'h15001007)); //TODO: deal with int return value
   endtask // ref_init
 endmodule : uvmt_cv32e40p_imperas_dv_wrap
-`endif  // USE_IMPERASDV
+`endif  // USE_ISS
 
 `endif // __UVMT_CV32E40P_IMPERAS_DV_WRAP_SV__
