@@ -60,18 +60,18 @@ The v1 _simulation_ verification plans can be found there: `core-v-verif/VerifPl
 
 | Features | Capture | Review | Comment |
 |---------|---------|--------|---------|
-| DIV and SQRT Instructions | Captured | Ready for Review | Not covered at all by formal verification |
-| FMUL/FDIV | Captured | Ready for Review | Formal coverage issue: some bits of operands have been tied low | 
-| FNMADD/FMADD | Captured | Ready for Review | Formal coverage issue: some bits of operands have been tied low | 
-| FNMSUB/FMSUB | Captured | Ready for Review | Formal coverage issue: some bits of operands have been tied low |
-| Other F instructions | Captured | Ready for Review | Formal pipeline issue: Add preceeding F multicycle instruction |
+| DIV and SQRT Instructions | Captured (**new**) | Ready for Review | Not covered at all by formal verification |
+| FMUL/FDIV | Captured (**new**) | Ready for Review | Formal coverage issue: some bits of operands have been tied low | 
+| FNMADD/FMADD | Captured (**new**) | Ready for Review | Formal coverage issue: some bits of operands have been tied low | 
+| FNMSUB/FMSUB | Captured (**new**) | Ready for Review | Formal coverage issue: some bits of operands have been tied low |
+| Other F instructions | Captured (**new**) | Ready for Review | Formal pipeline issue: Add preceeding F multicycle instruction |
 
 ### Xpulp instruction extensions
 **Note**: Xpulp instructions are "exercised, but not fully verified" in CV32E40P.
 
 | Feature | Capture | Review | Comment |
 |---------|---------|--------|---------|
-| Post-increment load/store | Captured (new method) | Waiting for Review | |
+| Post-increment load/store | Captured (**new method**) | Waiting for Review | |
 | Hardware Loop | Captured (**new**) | Ready for Review | |
 | Bit Manipulation | Captured (**new method**) | Waiting for Review | |
 | General ALU | Captured (**new method**) | Waiting for Review | |
