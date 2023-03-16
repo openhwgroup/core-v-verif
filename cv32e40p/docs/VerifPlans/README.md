@@ -12,7 +12,7 @@ The tables below capture the current status of the Verification Plan for the CV3
 * **Captured _(updated)_**: Vplan has been captured in v1, but contains modifications for v2
 
 Under the heading `Review` is one of following:
-* **Waiting for Review**: Vplan has been captured, but is not available for review yet
+* **Not Available for Review**: Vplan has been captured, but is not available for review yet
 * **Ready for Review**: Vplan has been captured and is awaiting review.
 * **Reviewed**: Vplan has been reviewed, and is waiting for updates to address review feedback.
 * **Waiting for Signoff**: Vplan has been reviewed and review comments addressed by the author.  Document is now waiting for reviewers to signoff on the post-review updates.
@@ -42,7 +42,7 @@ The v1 _simulation_ verification plans can be found there: `core-v-verif/VerifPl
 
 | Feature | Capture | Review | Comment |
 |---------|---------|--------|---------|
-| CSRs | Captured (**new method**) | Waiting for Review | Verified by formal |
+| CSRs | Captured (**new method**) | Not Available for Review | Verified by formal |
 | User mode | N/A| N/A | Not a CV32E40P Feature |
 | PMP | N/A | N/A | Not a CV32E40P Feature |
 
@@ -71,13 +71,13 @@ The v1 _simulation_ verification plans can be found there: `core-v-verif/VerifPl
 
 | Feature | Capture | Review | Comment |
 |---------|---------|--------|---------|
-| Post-increment load/store | Captured (**new method**) | Waiting for Review | |
+| Post-increment load/store | Captured (**new method**) | Not Available for Review | |
 | Hardware Loop | Captured (**new**) | Ready for Review | |
-| Bit Manipulation | Captured (**new method**) | Waiting for Review | |
-| General ALU | Captured (**new method**) | Waiting for Review | |
-| Immediate branching | Captured (**new method**) | Waiting for Review | |
-| SIMD | Captured (**new method**) | Waiting for Review | |
-| MAC | Captured (**new method**) | Waiting for Review | |
+| Bit Manipulation | Captured (**new method**) | Not Available for Review | |
+| General ALU | Captured (**new method**) | Not Available for Review | |
+| Immediate branching | Captured (**new method**) | Not Available for Review | |
+| SIMD | Captured (**new method**) | Not Available for Review | |
+| MAC | Captured (**new method**) | Not Available for Review | |
 
 ### Custom circuitry
 
