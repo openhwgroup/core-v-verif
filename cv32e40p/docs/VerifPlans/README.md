@@ -67,7 +67,7 @@ The v1 _simulation_ verification plans can be found there: `core-v-verif/VerifPl
 | Other F instructions | Captured (**new**) | Ready for Review | Formal pipeline issue: Add preceeding F multicycle instruction |
 
 ### Xpulp instruction extensions
-**Note**: Xpulp instructions are "exercised, but not fully verified" in CV32E40P.
+**Note**: Xpulp instructions, as other instructions, has been mainly verified by formal tools. Some aspects needed a complementary simulation verification
 
 | Feature | Capture | Review | Comment |
 |---------|---------|--------|---------|
