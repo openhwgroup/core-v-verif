@@ -51,9 +51,9 @@ The v1 _simulation_ verification plans can be found there: `core-v-verif/VerifPl
 | Feature | Capture | Review | Comment |
 |---------|---------|--------|---------|
 | OBI     | Captured (v1) | Reviewed | |
-| Sleep Unit | Capture (v1) | Reviewed | Updates pending based on review feedback |
-| Pipelines | Capture (v1) | Reviewed | Updates pending based on review feedback|
-| FPU File Register | Capture (**new**) | Ready for Review | |
+| Sleep Unit | Captured (v1) | Reviewed | Updates pending based on review feedback |
+| Pipelines | Captured (v1) | Reviewed | Updates pending based on review feedback|
+| FPU File Register | Captured (**new**) | Ready for Review | |
 
 ### F and Zfinx extensions
 **Note**: As verifying all floating points instructions using formal tools **only** is too complex and would have required too much processing power, the missing features of F/Zfinx extension have been verified by simulation. 
