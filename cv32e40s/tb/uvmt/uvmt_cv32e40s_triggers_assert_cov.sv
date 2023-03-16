@@ -597,7 +597,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] instr_integrity_fault_u_hit;
 
 
-  function logic set_tdatas_etrigger_state(int tdata_nr, int priv_lvl, logic [10:0] exception_cause); //TODO: funksjoner fungerer ikke...
+  function logic set_tdatas_etrigger_state(int tdata_nr, int priv_lvl, logic [10:0] exception_cause);
     set_tdatas_etrigger_state = (tdata1_arry[tdata_nr][MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER)
       && tdata1_arry[tdata_nr][priv_lvl]
       && tdata2_arry[tdata_nr][exception_cause];
