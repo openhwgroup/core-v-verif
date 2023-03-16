@@ -24,6 +24,11 @@ builds:
     cmd: make comp_corev-dv comp
     dir: cv32e40s/sim/uvmt
 
+  uvmt_cv32e40s_clic:
+    cmd: make comp_corev-dv comp
+    cfg: clic_default
+    dir: cv32e40s/sim/uvmt
+
   uvmt_cv32e40s_b_ext_abs:
     cmd: make comp_corev-dv comp
     cfg: b_ext_abs
@@ -343,11 +348,11 @@ tests:
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=dhrystone
 
-  debug_test:
-    description: Debug Test 1
-    builds: [ uvmt_cv32e40s, uvmt_cv32e40s_no_bitmanip]
+  debug_test2:
+    description: Debug Test 2
+    builds: [ uvmt_cv32e40s, uvmt_cv32e40s_no_bitmanip, uvmt_cv32e40s_clic]
     dir: cv32e40s/sim/uvmt
-    cmd: make test TEST=debug_test
+    cmd: make test TEST=debug_test2
 
   debug_test_reset:
     description: Debug reset test

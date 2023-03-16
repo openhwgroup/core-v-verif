@@ -311,7 +311,7 @@ int test1() {
 // To share implementation of basic interrupt test with vector relocation tests,
 // break out the test 1 implementation here
 int test1_impl(int direct_mode) {
-    for (uint32_t i = 0; i < 32; i++) {
+    for (volatile uint32_t i = 0; i < 32; i++) {
 #ifdef DEBUG_MSG
         printf("Test1 -> Testing interrupt %lu\n", i);
 #endif
@@ -348,7 +348,7 @@ int test1_impl(int direct_mode) {
                     }
                 } else {
                     // Unimplemented interrupts, or is a masked irq, delay a bit, waiting for any mmcause
-                    for (int j = 0; j < 20; j++) {
+                    for (volatile int j = 0; j < 20; j++) {
                         if (mmcause != 0) {
                             printf("MMCAUSE = 0x%08lx when unimplmented interrupt %lu first", mmcause, i);
                             return ERR_CODE_TEST_1;
