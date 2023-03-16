@@ -19,6 +19,11 @@ builds:
     cmd: make comp_corev-dv comp
     dir: cv32e40s/sim/uvmt
 
+  uvmt_cv32e40s_clic:
+    cmd: make comp_corev-dv comp
+    cfg: clic_default
+    dir: cv32e40s/sim/uvmt
+
   uvmt_cv32e40s_pma_1:
     cmd: make comp_corev-dv comp
     cfg: pma_test_cfg_1
@@ -54,10 +59,12 @@ tests:
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=illegal
 
-  debug_test:
-    build: uvmt_cv32e40s
+  debug_test2:
+    builds:
+      - uvmt_cv32e40s
+      - uvmt_cv32e40s_clic
     dir: cv32e40s/sim/uvmt
-    cmd: make test TEST=debug_test
+    cmd: make test TEST=debug_test2
     makearg: USER_RUN_FLAGS=+rand_stall_obi_disable
 
   csr_instructions:

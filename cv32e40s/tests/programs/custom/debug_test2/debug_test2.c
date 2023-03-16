@@ -19,6 +19,8 @@
 //
 // Debug directed tests
 //
+// Requires: number of triggers >= 1
+//
 /////////////////////////////////////////////////////////////////////////////////
 
 #include <stdio.h>
@@ -32,6 +34,7 @@
 // MUST be 31 or less (bit position-1 in result array determines test pass/fail
 // status, thus we are limited to 31 tests with this construct.
 #define NUM_TESTS 19
+// Start at 1 (ignore dummy test that is only used for env sanity checking during dev.)
 #define START_TEST_NUM 1
 // Abort test at first self-check fail, useful for debugging.
 #define ABORT_ON_ERROR_IMMEDIATE 0
@@ -87,34 +90,55 @@ typedef enum {
 } dcsr_cause_t;
 
 typedef enum {
-  OFF = 0,
-  TOR = 1,
-  NA4 = 2,
-  NAPOT = 3
+  MODE_USER        = 0,
+  MODE_SUPERVISOR  = 1,
+  MODE_RESERVED    = 2,
+  MODE_MACHINE     = 3
+} mode_t;
+
+typedef enum {
+  PMPMODE_OFF   = 0,
+  PMPMODE_TOR   = 1,
+  PMPMODE_NA4   = 2,
+  PMPMODE_NAPOT = 3
 } pmp_mode_t;
 
-typedef struct {
-  volatile uint8_t reg_no;
-  volatile uint8_t lock;
-  volatile pmp_mode_t mode;
-  volatile uint8_t execute;
-  volatile uint8_t write;
-  volatile uint8_t read;
-} pmpcfg_t;
+typedef union {
+  struct {
+    volatile uint32_t r            : 1;
+    volatile uint32_t w            : 1;
+    volatile uint32_t x            : 1;
+    volatile uint32_t a            : 1;
+    volatile uint32_t reserved_6_5 : 2;
+    volatile uint32_t l            : 1;
+  } __attribute__((packed)) volatile fields;
+  volatile uint32_t raw : 8;
+} __attribute__((packed)) pmpsubcfg_t;
 
-typedef struct {
-  volatile uint8_t rlb;
-  volatile uint8_t mmwp;
-  volatile uint8_t mml;
+typedef union {
+  struct {
+    volatile uint32_t cfg : 8;
+  } __attribute__((packed)) volatile reg_idx[4];
+  volatile uint32_t raw : 32;
+} __attribute__((packed)) pmpcfg_t;
+
+typedef union {
+  struct {
+    volatile uint32_t mml           : 1;
+    volatile uint32_t mmwp          : 1;
+    volatile uint32_t rlb           : 1;
+    volatile uint32_t reserved_31_3 : 29;
+  } __attribute__((packed)) volatile fields;
+  volatile uint32_t raw : 32;
 } mseccfg_t;
 
 typedef union {
   struct {
-    volatile uint32_t shv            : 1;  // 0
-    volatile uint32_t priv           : 2;  // 1
-    volatile uint32_t level          : 8;  // 11
-    volatile uint32_t id             : 11; // 22
-    volatile uint32_t irq            : 1;  //
+    volatile uint32_t shv            : 1;
+    volatile uint32_t priv           : 2;
+    volatile uint32_t level          : 8;
+    volatile uint32_t id             : 11;
+    volatile uint32_t irq            : 1;
     volatile uint32_t reserved_31_22 : 9;
   } __attribute__((packed)) volatile fields;
   volatile uint32_t  raw : 32;
@@ -122,10 +146,48 @@ typedef union {
 
 typedef union {
   struct {
+    volatile uint32_t irq_0  : 1;
+    volatile uint32_t irq_1  : 1;
+    volatile uint32_t irq_2  : 1;
+    volatile uint32_t irq_3  : 1;
+    volatile uint32_t irq_4  : 1;
+    volatile uint32_t irq_5  : 1;
+    volatile uint32_t irq_6  : 1;
+    volatile uint32_t irq_7  : 1;
+    volatile uint32_t irq_8  : 1;
+    volatile uint32_t irq_9  : 1;
+    volatile uint32_t irq_10 : 1;
+    volatile uint32_t irq_11 : 1;
+    volatile uint32_t irq_12 : 1;
+    volatile uint32_t irq_13 : 1;
+    volatile uint32_t irq_14 : 1;
+    volatile uint32_t irq_15 : 1;
+    volatile uint32_t irq_16 : 1;
+    volatile uint32_t irq_17 : 1;
+    volatile uint32_t irq_18 : 1;
+    volatile uint32_t irq_19 : 1;
+    volatile uint32_t irq_20 : 1;
+    volatile uint32_t irq_21 : 1;
+    volatile uint32_t irq_22 : 1;
+    volatile uint32_t irq_23 : 1;
+    volatile uint32_t irq_24 : 1;
+    volatile uint32_t irq_25 : 1;
+    volatile uint32_t irq_26 : 1;
+    volatile uint32_t irq_27 : 1;
+    volatile uint32_t irq_28 : 1;
+    volatile uint32_t irq_29 : 1;
+    volatile uint32_t irq_30 : 1;
+    volatile uint32_t irq_31 : 1;
+  } __attribute__((packed)) volatile fields;
+  volatile uint32_t raw : 32;
+} __attribute__((packed)) clint_t;
+
+typedef union {
+  struct {
     volatile uint32_t exccode   : 12;
     volatile uint32_t res_30_12 : 19;
     volatile uint32_t interrupt : 1;
-  } __attribute__((packed, aligned(4))) volatile clint;
+  } __attribute__((packed)) volatile clint;
   struct {
     volatile uint32_t exccode    : 12;
     volatile uint32_t res_15_12  : 4;
@@ -135,9 +197,9 @@ typedef union {
     volatile uint32_t mpp        : 2;
     volatile uint32_t minhv      : 1;
     volatile uint32_t interrupt  : 1;
-  } __attribute__((packed, aligned(4))) volatile clic;
+  } __attribute__((packed)) volatile clic;
   volatile uint32_t raw : 32;
-} __attribute__((packed, aligned(4), transparent_union)) mcause_t;
+} __attribute__((packed)) mcause_t;
 
 typedef union {
   struct {
@@ -224,17 +286,17 @@ typedef union {
 
 typedef union {
   struct {
-    volatile uint8_t uie   : 1;  //     0 // Implemented if USER mode enabled
+    volatile uint8_t uie   : 1;  //     0
     volatile uint8_t sie   : 1;  //     1
     volatile uint8_t wpri  : 1;  //     2
-    volatile uint8_t mie   : 1;  //     3 // Implemented
-    volatile uint8_t upie  : 1;  //     4 // Implemented if USER mode enabled
+    volatile uint8_t mie   : 1;  //     3
+    volatile uint8_t upie  : 1;  //     4
     volatile uint8_t spie  : 1;  //     5
     volatile uint8_t wpri0 : 1;  //     6
-    volatile uint8_t mpie  : 1;  //     7 // Implemented
+    volatile uint8_t mpie  : 1;  //     7
     volatile uint8_t spp   : 1;  //     8
     volatile uint8_t wpri1 : 2;  // 10: 9
-    volatile uint8_t mpp   : 2;  // 12:11 // Implemented
+    volatile uint8_t mpp   : 2;  // 12:11
     volatile uint8_t fs    : 2;  // 14:13
     volatile uint8_t xs    : 2;  // 16:15
     volatile uint8_t mprv  : 1;  //    17
@@ -290,7 +352,7 @@ typedef union {
 
 // Print verbosity, consider implementing this as a virtual
 // peripheral setting to be controlled from UVM.
-volatile verbosity_t global_verbosity = V_DEBUG;
+volatile verbosity_t global_verbosity = V_LOW;
 
 volatile uint32_t * volatile g_handler_triggered;
 volatile uint32_t * volatile g_illegal_fail;
@@ -342,7 +404,6 @@ void u_sw_irq_handler(void) __attribute__((naked));
 void check_irq_handler(void);
 void u_sw_irq_handler_default(void);
 void m_fast14_irq_handler(void) __attribute__((naked));
-void handle_ebreak(void) __attribute__((naked));
 // Mtvt table implementation
 void mtvt_code(void) __attribute__((naked));
 
@@ -370,7 +431,7 @@ void debug_exception_handler(void) __attribute__((section(".debugger_exception")
 //     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
 //     return index + 1;
 //   }
-//   cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+//   cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
 //   return 0;
 // }
 // ---------------------------------------------------------------
@@ -451,7 +512,7 @@ void increment_mepc(volatile uint32_t incr_val);
 void set_debug_status(volatile uint32_t status);
 void set_single_step_status(volatile uint32_t status);
 void set_mseccfg(mseccfg_t mseccfg);
-void set_pmpcfg(pmpcfg_t pmpcfg);
+void set_pmpcfg(pmpsubcfg_t pmpcfg, uint32_t reg_no);
 uint32_t set_val(uint32_t * ptr, uint32_t val);
 uint32_t incr_val(uint32_t * ptr);
 uint32_t has_pmp_configured(void);
@@ -502,13 +563,6 @@ uint32_t set_test_status(volatile uint32_t test_no, volatile uint32_t val_prev);
  *        run it.
  */
 int get_result(uint32_t res, uint32_t (* volatile ptr[])(uint32_t, uint8_t));
-
-/*
- * max
- *
- * returns maxval of a and b
- */
-uint32_t max(uint32_t a, uint32_t b);
 
 /*
  * cvprintf
@@ -636,12 +690,6 @@ uint32_t set_test_status(volatile uint32_t test_no, volatile uint32_t val_prev){
   volatile uint32_t res;
   res = val_prev | (1 << test_no);
   return res;
-}
-
-// -----------------------------------------------------------------------------
-
-uint32_t max(uint32_t a, uint32_t b) {
-  return a > b ? a : b;
 }
 
 // -----------------------------------------------------------------------------
@@ -784,7 +832,7 @@ uint32_t dummy(uint32_t index, uint8_t report_name) {
     return 0;
   }
 
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -832,6 +880,8 @@ uint32_t debug_csr_rw(uint32_t index, uint8_t report_name) {
   // ------------------------------------------------------------
   cvprintf(V_MEDIUM, "\nChecking read access in M-mode\n");
   // ------------------------------------------------------------
+
+  // DCSR
   *g_expect_illegal = 1;
   __asm__ volatile ( R"( csrrs %[temp], dcsr, zero)" : [temp] "=r" (temp) : :);
   test_fail += *g_illegal_fail;
@@ -860,7 +910,7 @@ uint32_t debug_csr_rw(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 
 }
@@ -881,9 +931,9 @@ uint32_t trigger_default_val(uint32_t index, uint8_t report_name) {
   };
 
   volatile tdata1_t tdata1_reset = {
-    .fields.type = 2,
+    .fields.type  = 2,
     .fields.dmode = 1,
-    .fields.data = 0x1000
+    .fields.data  = 0x1000
   };
 
   SET_FUNC_INFO
@@ -903,9 +953,7 @@ uint32_t trigger_default_val(uint32_t index, uint8_t report_name) {
 
   tdata1 = (tdata1_t *)&tdata1_bits;
 
-  test_fail += !(  (tdata1->fields.type  == tdata1_reset.fields.type)
-                && (tdata1->fields.dmode == tdata1_reset.fields.dmode)
-                && (tdata1->fields.data  == tdata1_reset.fields.data));
+  test_fail += !(tdata1->raw == tdata1_reset.raw);
 
   if (ABORT_ON_ERROR_IMMEDIATE) {
     assert(test_fail == 0);
@@ -948,7 +996,7 @@ uint32_t trigger_default_val(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 
 }
@@ -997,7 +1045,7 @@ uint32_t ebreak_behavior_m_mode(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -1036,7 +1084,7 @@ uint32_t request_hw_debugger(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -1070,7 +1118,7 @@ uint32_t request_ebreak_3x(uint32_t index, uint8_t report_name) {
     ;;
   }
   if (*g_debug_status != *g_debug_status_prev) {
-    cvprintf(V_LOW, "Debug status: %0ld\n", *g_debug_status);
+    cvprintf(V_MEDIUM, "Debug status: %0ld\n", *g_debug_status);
   }
   *g_debug_status_prev = *g_debug_status;
 
@@ -1081,7 +1129,7 @@ uint32_t request_ebreak_3x(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -1168,8 +1216,6 @@ __attribute__((naked)) void m_fast14_irq_handler(void) {
 __attribute__((naked)) void u_sw_irq_handler(void) {
 
   __asm__ volatile ( R"(
-    # addi sp, sp, -124
-
     # Push saved regs and allocate space for the remaining 16 regs
     cm.push {ra, s0-s11}, -112
     addi sp, sp, -12
@@ -1202,9 +1248,6 @@ __attribute__((naked)) void u_sw_irq_handler(void) {
     lw s1, g_debug_test_num
     lw s1, 0(s1)
 
-    #lw a0, entered_exc_handler_msg
-    #call printf
-
     # Jump to test specific code
     addi s0, zero, 8
     beq s0, s1, 8f
@@ -1230,7 +1273,6 @@ __attribute__((naked)) void u_sw_irq_handler(void) {
     call check_irq_handler
     beq zero, zero, 99f
 
-    # FIXME name?
     98:
     call u_sw_irq_handler_default
     beq zero, zero, 99f # Added to prevent omission if adding further cases
@@ -1239,28 +1281,19 @@ __attribute__((naked)) void u_sw_irq_handler(void) {
     # increment mepc by appropriate amount
     add a0, zero, zero
     call increment_mepc
-    # old code
-    # csrrw a0, mepc, zero
-    # add a1, a0, zero
-    # call mepc_get_increment
-    # add a0, a1, a0
-    # csrrw zero, mepc, a0
 
     # set g_handler_triggered
     lw s0, g_handler_triggered
-    lw s1, 0(s0)
     addi s1, zero, 1
     sw s1, 0(s0)
 
     # clear g_expect_ebreak
     lw s0, g_expect_ebreak
-    lw s1, 0(s0)
     addi s1, zero, 0
     sw s1, 0(s0)
 
     # clear g_expect_illegal
     lw s0, g_expect_illegal
-    lw s1, 0(s0)
     addi s1, zero, 0
     sw s1, 0(s0)
 
@@ -1291,7 +1324,6 @@ __attribute__((naked)) void u_sw_irq_handler(void) {
     addi sp, sp, 12
     cm.pop {ra, s0-s11}, 112
 
-# addi sp, sp, 124
     mret
 
     )");
@@ -1391,19 +1423,11 @@ void __attribute__((naked)) _debugger_start(void) {
 
     call disable_debug_req
 
-    # Display entered debug message
-    #lw a0, entered_dbg_msg
-    #addi a1, zero, 0
-    #call puts
-
     # Get current test number
     addi s1, zero, 0
     addi s0, zero, 0
     lw s1, g_debug_test_num
     lw s1, 0(s1)
-    add a1, s1, zero
-    lw a0, test_str
-    #call printf
 
     # Jump to correct test
     addi s0, zero, 1
@@ -1504,9 +1528,9 @@ void __attribute__((__noinline__)) request_hw_debugger_dbg(void) {
   volatile dcsr_t dcsr;
 
   __asm__ volatile ( R"( csrrs %[dcsr], dcsr, zero)" : [dcsr] "=r"(dcsr.raw) : : );
-  cvprintf(V_LOW, "dcsr cause: %0x\n", dcsr.fields.cause);
+  cvprintf(V_MEDIUM, "dcsr cause: %0x\n", dcsr.fields.cause);
 
-  if (dcsr.fields.cause != 0x3) {
+  if (dcsr.fields.cause != DCAUSE_HALTREQ) {
     *g_debug_status = 99;
   } else {
     *g_debug_status = 1;
@@ -1524,17 +1548,10 @@ void __attribute__((naked)) request_ebreak_3x_dbg(void) {
     addi s3, zero, 3
     bne s2, s3, 1f
 
-    #lw s6, g_debug_status
-    #lw a1, 0(s6)
-
     lw s4, g_debug_status
     add a0, s4, zero
     call incr_val
     sw a0, 0(s4)
-
-    #add a1, a0, zero
-    #lw a0, test_status_msg
-    #call printf
 
     beq zero, zero, 2f
 
@@ -1652,7 +1669,7 @@ uint32_t csr_access_default_val(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -1727,9 +1744,9 @@ void csr_access_default_val_dbg(void) {
   dcsr_default = (dcsr_t){
     .fields.xdebugver = 4,
     .fields.stopcount = 1,
-    .fields.cause     = 3,
+    .fields.cause     = DCAUSE_HALTREQ,
     .fields.mprven    = 1,
-    .fields.prv       = 3 };
+    .fields.prv       = MODE_MACHINE };
 
   if (dcsr.raw != dcsr_default.raw) {
     cvprintf(V_MEDIUM, "dcsr default value wrong, expected: 0x%08lx, got 0x%08lx\n", dcsr.raw, dcsr_default.raw);
@@ -1745,8 +1762,8 @@ void csr_access_default_val_dbg(void) {
 
   dcsr = (dcsr_t){
     .fields.xdebugver = 4,
-    .fields.cause     = 3,
-    .fields.prv       = 3,
+    .fields.cause     = DCAUSE_HALTREQ,
+    .fields.prv       = MODE_MACHINE,
     .fields.ebreakm   = 1
   };
 
@@ -1807,7 +1824,7 @@ uint32_t mmode_ebreakm_ebreak_executes_debug_code(uint32_t index, uint8_t report
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -1849,7 +1866,7 @@ uint32_t illegal_csr_in_dmode(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -1900,7 +1917,7 @@ uint32_t ecall_in_dmode(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -1951,7 +1968,7 @@ uint32_t mret_in_dmode(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -1995,7 +2012,7 @@ uint32_t exception_enters_debug_mode(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -2007,7 +2024,7 @@ void exception_enters_debug_mode_dbg(void) {
 
   *g_debug_status = 1;
   __asm__ volatile ( R"(
-    csrrs %[dpc], dpc, %[dpc]
+    csrrs %[dpc], dpc, zero
     addi %[dpc], %[dpc], 2
     csrrw zero, dpc, %[dpc]
   )": [dpc] "+r"(dpc));
@@ -2037,7 +2054,7 @@ uint32_t dret_in_mmode(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -2081,7 +2098,7 @@ uint32_t wfi_before_dmode(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -2149,7 +2166,7 @@ uint32_t check_irq(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -2228,7 +2245,7 @@ uint32_t check_stopcnt_bits(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -2298,7 +2315,7 @@ uint32_t single_step(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -2379,8 +2396,6 @@ void __attribute__((naked)) single_step_code(void) {
     # Trigger match setup
     addi a0, zero, 4
     call set_single_step_status
-    # nop
-    # nop
     addi s3, zero, 0
 
     .global trigger_loc
@@ -2554,6 +2569,7 @@ void __attribute__((naked)) single_step_code(void) {
 // Wrappers to support both clic/clint
 void assert_irq(void) {
   volatile clic_t clic_vector = { 0 };
+  volatile clint_t clint_vector = { 0 };
 
   // Use interrupt id 30 for simplicity
   if (*g_has_clic == 1) {
@@ -2561,14 +2577,15 @@ void assert_irq(void) {
     clic_vector = (clic_t){ .fields.irq   = 1,
                             .fields.id    = 30,
                             .fields.level = 81,
-                            .fields.priv  = 3,
+                            .fields.priv  = MODE_MACHINE,
                             .fields.shv   = 1
     };
     vp_assert_irq(clic_vector.raw, 2);
   }
   else {
     // clint
-    vp_assert_irq(0x40000000, 2);
+    clint_vector.fields.irq_30 = 1;
+    vp_assert_irq(clint_vector.raw, 2);
   }
 }
 
@@ -2806,7 +2823,7 @@ void exception_status_dbg(void) {
           csrrs %[mepc], mepc, zero
           csrrw zero, dpc, %[mepc]
         )" : [mepc] "+r"(mepc));
-        cvprintf(V_LOW, "Single step trap: mtvec: %08lx, dpc: %08lx, return addr: %08lx, mcause: %08lx, dcsr: %08lx\n", mtvec & ~0x3UL, dpc, mepc, mcause.raw, dcsr.raw);
+        cvprintf(V_MEDIUM, "Single step trap: mtvec: %08lx, dpc: %08lx, return addr: %08lx, mcause: %08lx, dcsr: %08lx\n", mtvec & ~0x3UL, dpc, mepc, mcause.raw, dcsr.raw);
         }
      }
   }
@@ -2815,7 +2832,7 @@ void exception_status_dbg(void) {
 // -----------------------------------------------------------------------------
 
 void single_step_trigger_setup_dbg(void) {
-  volatile mcontrol_t mcontrol = { 0 };
+  volatile mcontrol_t mcontrol     = { 0 };
   volatile mcontrol_t mcontrol_exp = { 0 };
 
   mcontrol_exp = (mcontrol_t) {
@@ -2827,8 +2844,6 @@ void single_step_trigger_setup_dbg(void) {
   };
 
   __asm__ volatile ( R"(
-    # 1: auipc %[trigger_loc], %%pcrel_hi(trigger_loc)
-    # addi  %[trigger_loc], %%pcrel_lo(1b)
     csrrw zero, tdata2, %[trigger_loc]
     csrrw zero, tdata1, %[mcontrol_exp]
     csrrs %[mcontrol], tdata1, zero
@@ -2978,7 +2993,7 @@ void set_dpc(volatile uint32_t dpc) {
   __asm__ volatile ( R"(
     csrrw zero, dpc, %[dpc]
   )" :: [dpc] "r"(dpc));
-  cvprintf(V_LOW, "Setting dpc to %08lx\n", dpc);
+  cvprintf(V_MEDIUM, "Setting dpc to %08lx\n", dpc);
 }
 
 // -----------------------------------------------------------------------------
@@ -3080,10 +3095,10 @@ void single_step_basic_dbg(void) {
       .fields.xdebugver = 4,
       .fields.ebreakm   = 1,
       .fields.stopcount = 1,
-      .fields.cause     = 4,
+      .fields.cause     = DCAUSE_STEP,
       .fields.mprven    = 1,
       .fields.step      = 1,
-      .fields.prv       = 3
+      .fields.prv       = MODE_MACHINE
     };
 
     if (dcsr.raw != dcsr_exp.raw) {
@@ -3142,19 +3157,18 @@ uint32_t mprv_dret_to_umode(uint32_t index, uint8_t report_name) {
 
   // Setup PMP access for u-mode (otherwise all deny)
   set_mseccfg((mseccfg_t){
-      .rlb  = 1,
-      .mmwp = 0,
-      .mml  = 0
+      .fields.mml           = 0,
+      .fields.mmwp          = 0,
+      .fields.rlb           = 1,
   });
 
-  set_pmpcfg((pmpcfg_t){
-      .reg_no  = 0,
-      .lock    = 0,
-      .mode    = TOR,
-      .execute = 1,
-      .write   = 1,
-      .read    = 1
-  });
+  set_pmpcfg((pmpsubcfg_t){
+      .fields.r = 1,
+      .fields.w = 1,
+      .fields.x = 1,
+      .fields.a = PMPMODE_TOR,
+      .fields.l = 0
+  }, 0);
 
   __asm__ volatile ( R"(
     csrrw zero, pmpaddr0, %[pmpaddr]
@@ -3203,7 +3217,7 @@ uint32_t mprv_dret_to_umode(uint32_t index, uint8_t report_name) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
   }
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
@@ -3214,7 +3228,7 @@ void mprv_dret_to_umode_dbg(void) {
   volatile dcsr_t dcsr_readback = { 0 };
   volatile mstatus_t mstatus = { 0 };
 
-  dcsr.fields.prv = 0x3;
+  dcsr.fields.prv = MODE_MACHINE;
 
   // Enter user mode first, set mstatus.mprv and expect it to be cleared
   if (*g_debug_status == 0) {
@@ -3226,7 +3240,7 @@ void mprv_dret_to_umode_dbg(void) {
        : [mstatus] "r"(mstatus.raw),
          [dcsr]    "r"(dcsr.raw));
     *g_debug_status += 1;
-    if (dcsr_readback.fields.prv != 0x3) {
+    if (dcsr_readback.fields.prv != MODE_MACHINE) {
       *g_debug_status = (*g_debug_status | 0x01000000);
     }
   }
@@ -3260,7 +3274,7 @@ void mprv_dret_to_umode_dbg(void) {
        :[mstatus] "r"(mstatus.raw),
         [dcsr] "r"(dcsr.raw));
     *g_debug_status += 1;
-    if (dcsr_readback.fields.prv != 0x3) {
+    if (dcsr_readback.fields.prv != MODE_MACHINE) {
       *g_debug_status = (*g_debug_status | 0x04000000);
     }
   }
@@ -3305,21 +3319,8 @@ uint32_t __attribute__((__noinline__)) set_val(uint32_t * ptr, uint32_t val) {
 uint32_t __attribute__((__noinline__)) get_dcsr_cause(void) {
   volatile dcsr_t dcsr;
   __asm__ volatile ( R"( csrrs %[dcsr], dcsr, zero )" : [dcsr] "=r"(dcsr.raw) : :);
-  cvprintf (V_LOW, "get_dcsr_cause: %0x\n", dcsr.fields.cause);
+  cvprintf (V_MEDIUM, "get_dcsr_cause: %0x\n", dcsr.fields.cause);
   return (uint32_t)dcsr.fields.cause;
-}
-
-// -----------------------------------------------------------------------------
-
-void __attribute__((naked)) handle_ebreak(void) {
-  __asm__ volatile ( R"(
-    nop
-    #cm.push {ra, s0}, -16
-    #lw a0, ebreak_msg
-    #addi a1, zero, 0
-    #call puts
-    #cm.pop {ra, s0}, 16
-  )" ::: "ra", "s0", "a1");
 }
 
 // -----------------------------------------------------------------------------
@@ -3329,7 +3330,6 @@ void __attribute__((naked)) _debugger_end(void) {
     lw a0, debug_exit_msg
     lw s1, g_debug_test_num
     lw a1, 0(s1)
-    #call printf
 
     call check_mcycle_minstret
 
@@ -3459,34 +3459,29 @@ void debug_exception_handler(void) {
       break;
   }
 
-  cvprintf(V_LOW, "dcsr cause: %0x\n", dcsr.fields.cause);
+  cvprintf(V_MEDIUM, "dcsr cause: %0x\n", dcsr.fields.cause);
   return;
 }
 
 // -----------------------------------------------------------------------------
 
-void set_pmpcfg(pmpcfg_t pmpcfg){
-  volatile uint32_t pmpcfg_vector = 0x0;
-  volatile uint32_t temp = 0;
+void set_pmpcfg(pmpsubcfg_t pmpsubcfg, uint32_t reg_no){
+  volatile pmpcfg_t temp   = { 0 };
+  volatile pmpcfg_t pmpcfg = { 0 };
 
-  pmpcfg_vector = (
-      ((pmpcfg.lock    << 7) & 0x80) |
-      ((pmpcfg.mode    << 3) & 0x18) |
-      ((pmpcfg.execute << 2) & 0x4 ) |
-      ((pmpcfg.write   << 1) & 0x2 ) |
-      ((pmpcfg.read    << 0) & 0x1 )) << ((pmpcfg.reg_no % 4)*8);
+  pmpcfg.reg_idx[reg_no % 4].cfg = pmpsubcfg.raw;
 
-  temp = 0xff << ((pmpcfg.reg_no % 4)*8);
+  temp.reg_idx[reg_no % 4].cfg = 0xff;
 
-  switch (pmpcfg.reg_no / 4) {
+  switch (reg_no / 4) {
     case 0:
       __asm__ volatile ( R"(
         add t0, x0, %[tmp]
         csrrc x0, pmpcfg0, t0
         csrrs zero, pmpcfg0, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
@@ -3496,8 +3491,8 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg1, t0
         csrrs zero, pmpcfg1, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
@@ -3507,8 +3502,8 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg2, t0
         csrrs zero, pmpcfg2, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
@@ -3518,8 +3513,8 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg3, t0
         csrrs zero, pmpcfg3, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
@@ -3529,8 +3524,8 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg4, t0
         csrrs zero, pmpcfg4, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     case 5:
@@ -3539,8 +3534,8 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg5, t0
         csrrs zero, pmpcfg5, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
@@ -3550,8 +3545,8 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg6, t0
         csrrs zero, pmpcfg6, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
@@ -3561,8 +3556,8 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg7, t0
         csrrs zero, pmpcfg7, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
@@ -3572,8 +3567,8 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg8, t0
         csrrs zero, pmpcfg8, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
@@ -3583,8 +3578,8 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg9, t0
         csrrs zero, pmpcfg9, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
@@ -3594,8 +3589,8 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg10, t0
         csrrs zero, pmpcfg10, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
@@ -3605,8 +3600,8 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg11, t0
         csrrs zero, pmpcfg11, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
@@ -3616,8 +3611,8 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg12, t0
         csrrs zero, pmpcfg12, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
@@ -3627,8 +3622,8 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg13, t0
         csrrs zero, pmpcfg13, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
@@ -3638,8 +3633,8 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg14, t0
         csrrs zero, pmpcfg14, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
@@ -3649,35 +3644,29 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
         csrrc x0, pmpcfg15, t0
         csrrs zero, pmpcfg15, %[cfg_vec]
         )"
-          : [cfg_vec] "+r"(pmpcfg_vector)
-          : [tmp] "r"(temp)
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
           : "t0"
           );
     break;
   }
 
-  cvprintf(V_DEBUG, "Set pmpcfg_vector: 0x%08lx\n", pmpcfg_vector);
+  cvprintf(V_DEBUG, "Set pmpcfg_vector: 0x%08lx\n", pmpcfg.raw);
   return;
 }
 
 // -----------------------------------------------------------------------------
 
 void set_mseccfg(mseccfg_t mseccfg){
-  volatile uint32_t mseccfg_vector = 0x0;
-
-  mseccfg_vector = (
-      ((mseccfg.rlb  << 2) & 0x4) |
-      ((mseccfg.mmwp << 1) & 0x2) |
-      ((mseccfg.mml  << 0) & 0x1));
 
   __asm__ volatile ( R"(
     csrrs x0, mseccfg, %[cfg_vec]
   )"
       :
-      : [cfg_vec] "r"(mseccfg_vector)
+      : [cfg_vec] "r"(mseccfg.raw)
       :);
 
-  cvprintf(V_DEBUG, "Wrote mseccfg: 0x%08lx\n", mseccfg_vector);
+  cvprintf(V_DEBUG, "Wrote mseccfg: 0x%08lx\n", mseccfg.raw);
 }
 
 // -----------------------------------------------------------------------------
@@ -3737,7 +3726,6 @@ uint32_t detect_irq_mode(void) {
 // test development that made the ISS and RTL deviate. After resolving issues,
 // leave this function in place to ensure that these issues do not return.
 uint32_t cover_known_iss_mismatches(uint32_t index, uint8_t report_name) {
-  volatile uint8_t test_fail = 0;
   volatile clic_t clic_vector = { 0 };
   volatile debug_req_control_t debug_req_ctrl;
 
@@ -3758,7 +3746,7 @@ uint32_t cover_known_iss_mismatches(uint32_t index, uint8_t report_name) {
       .fields.irq            = 0x0,
       .fields.id             = 0X7FF,
       .fields.level          = 0xFF,
-      .fields.priv           = 0x3,
+      .fields.priv           = MODE_MACHINE,
       .fields.shv            = 0x1,
     };
 
@@ -3790,9 +3778,8 @@ uint32_t cover_known_iss_mismatches(uint32_t index, uint8_t report_name) {
   }
 
   // Don't flag this test as pass fail, only needs ISS check
-  test_fail += 0;
 
-  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
   return 0;
 }
 
