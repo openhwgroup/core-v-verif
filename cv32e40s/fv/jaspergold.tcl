@@ -22,11 +22,21 @@
 proc cvfv_rerun {} {
   clear  -all
 
+  # Analyze & Elaborate
   analyze  -sv12  -f  fv.flist
   elaborate  -top  uvmt_cv32e40s_tb
 
+  # Clock & Reset
   clock  clknrst_if.clk
   reset  ~clknrst_if.reset_n
+
+  # Assumes
+  assume  -from_assert  {*_memory_assert_i.u_assert.a_r_after_a}
+  assume  -from_assert  {*a_xsecure_interface_integrity_obi_*_parity}
+  #TODO:ERROR:silabs-robin parity should be done by obi assertions
+  assume  -from_assert  {*integration_assert_i.a_stable_*}
+  assume  -from_assert  {*integration_assert_i.a_aligned_*}
+  assume  -from_assert  {*integration_assert_i.a_no_scan_cg}
 }
 
 cvfv_rerun
