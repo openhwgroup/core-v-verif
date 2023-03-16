@@ -385,6 +385,12 @@ tests:
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=interrupt_test
 
+  clic:
+    description: CLIC interrupt test
+    builds: [ uvmt_cv32e40s_clic]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=clic
+
   isa_fcov_holes:
     description: ISA function coverage test
     builds: [ uvmt_cv32e40s, uvmt_cv32e40s_no_bitmanip]

@@ -47,6 +47,12 @@ tests:
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=interrupt_test
 
+  clic:
+    build: uvmt_cv32e40s_clic
+    description: CLIC interrupt test
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=clic
+
   corev_rand_interrupt:
     build: uvmt_cv32e40s
     description: Interrupt random test
