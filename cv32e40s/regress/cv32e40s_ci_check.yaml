@@ -19,6 +19,11 @@ builds:
     cmd: make comp_corev-dv comp
     dir: cv32e40s/sim/uvmt
 
+  uvmt_cv32e40s_clic:
+    cmd: make comp_corev-dv comp
+    cfg: clic_default
+    dir: cv32e40s/sim/uvmt
+
   uvmt_cv32e40s_pma_1:
     cmd: make comp_corev-dv comp
     cfg: pma_test_cfg_1
@@ -41,6 +46,12 @@ tests:
     description: Interrupt directed test
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=interrupt_test
+
+  clic:
+    build: uvmt_cv32e40s_clic
+    description: CLIC interrupt test
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=clic
 
   corev_rand_interrupt:
     build: uvmt_cv32e40s
