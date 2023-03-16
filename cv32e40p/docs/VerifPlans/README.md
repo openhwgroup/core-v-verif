@@ -8,7 +8,7 @@ Use the provided CORE-V_Simulation VerifPlan_Template.xlsx spreadsheet as your t
 The tables below capture the current status of the Verification Plan for the CV32E40P by high-level feature, as long with status update with respect to CV32E40Pv1 verification plans.  Under the heading `Capture`, the test plan can be **Incomplete**, **draft**, or one of the following: 
 * **Captured _(v1)_**: Vplan has been captured during v1 verification and has no modifications since then. 
 * **Captured _(new)_**: Vplan captures either new features or features not tested in v1
-* **Captured _(new method)_**: Vplan captures a different methodology from v1
+* **Captured _(formal)_**: Vplan captures a different methodology from v1, using formal tool
 * **Captured _(updated)_**: Vplan has been captured in v1, but contains modifications for v2
 
 Under the heading `Review` is one of following:
@@ -42,7 +42,7 @@ The v1 _simulation_ verification plans can be found there: `core-v-verif/VerifPl
 
 | Feature | Capture | Review | Comment |
 |---------|---------|--------|---------|
-| CSRs | Captured (**new method**) | Not Available for Review | Verified by formal |
+| CSRs | Captured (**formal**) | Not Available for Review | Verified by formal |
 | User mode | N/A| N/A | Not a CV32E40P Feature |
 | PMP | N/A | N/A | Not a CV32E40P Feature |
 
@@ -71,13 +71,13 @@ The v1 _simulation_ verification plans can be found there: `core-v-verif/VerifPl
 
 | Feature | Capture | Review | Comment |
 |---------|---------|--------|---------|
-| Post-increment load/store | Captured (**new method**) | Not Available for Review | |
-| Hardware Loop | Captured (**new**) | Ready for Review | |
-| Bit Manipulation | Captured (**new method**) | Not Available for Review | |
-| General ALU | Captured (**new method**) | Not Available for Review | |
-| Immediate branching | Captured (**new method**) | Not Available for Review | |
-| SIMD | Captured (**new method**) | Not Available for Review | |
-| MAC | Captured (**new method**) | Not Available for Review | |
+| Post-increment load/store | Captured (**new+formal**) | Not Available for Review | Formal mainly, pipeline (preceeding F multicycle) with simulation |
+| Hardware Loop | Captured (**new**) | Ready for Review | Simulation only |
+| Bit Manipulation | Captured (**formal**) | Not Available for Review | |
+| General ALU | Captured (**formal**) | Not Available for Review | |
+| Immediate branching | Captured (**formal**) | Not Available for Review | |
+| SIMD | Captured (**new+formal**) | Not Available for Review | Formal coverage issue: some bits of operands have been tied low |
+| MAC | Captured (**new+formal**) | Not Available for Review | Formal coverage issue: some bits of operands have been tied low |
 
 ### Custom circuitry
 
