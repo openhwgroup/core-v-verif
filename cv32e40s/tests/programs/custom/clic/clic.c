@@ -560,7 +560,6 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
     break;
   }
 
-  //__asm__ volatile ( R"( csrrs %[pmpvec], pmpcfg0, x0)" : [pmpvec] "+r"(pmpcfg_vector): :);
   cvprintf(V_DEBUG, "Wrote pmpcfg_vector: 0x%08lx\n", pmpcfg_vector);
   return;
 }
