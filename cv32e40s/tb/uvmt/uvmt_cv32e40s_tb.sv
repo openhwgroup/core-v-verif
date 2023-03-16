@@ -1232,7 +1232,7 @@ module uvmt_cv32e40s_tb;
                                                                     .wb_exception (core_i.controller_i.controller_fsm_i.exception_in_wb),
 
 
-                                                                    .rvfi_if (rvfi_instr_if_0_i), //TODO: sjekk om u_ prefix eller _i postfix matcher coding guidelines
+                                                                    .rvfi_if (rvfi_instr_if_0_i),
                                                                     .clknrst_if (dut_wrap.clknrst_if),
 
                                                                     .tdata1 (rvfi_csr_tdata1_if_0_i),
