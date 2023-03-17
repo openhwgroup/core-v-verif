@@ -91,7 +91,7 @@ typedef struct packed {
 /**
  * PMP matching status
  */
-typedef struct {
+typedef struct packed {
   logic         is_access_allowed;
   logic         is_access_allowed_no_match;
   logic         is_any_locked;
@@ -107,8 +107,11 @@ typedef struct {
 /**
  * PMA Status
  */
-typedef struct {
+typedef struct packed {
   logic  allow;
+  logic  bufferable;
+  logic  cacheable;
+  logic  integrity;
 } pma_status_t;
 
 

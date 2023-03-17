@@ -47,17 +47,19 @@ module  uvmt_cv32e40s_pma_assert
 
   // Interface towards OBI
   input CORE_REQ_TYPE  bus_trans_o,
-  input wire           bus_trans_bufferable,
   input wire           bus_trans_ready_i,
   input wire           bus_trans_valid_o,
 
   // Writebuffer Signals
-  input obi_data_req_t  writebuf_trans_i,
-  input obi_data_req_t  writebuf_trans_o,
-  input wire            writebuf_ready_o,
+  input wire obi_data_req_t  writebuf_trans_i,
+  input wire obi_data_req_t  writebuf_trans_o,
+  input wire                 writebuf_ready_o,
 
   // PMA Verdict
   input wire  pma_err,
+  input wire  bus_trans_bufferable,
+  input wire  bus_trans_cacheable,
+  input wire  bus_trans_integrity,
 
   // Support Logic
   uvma_obi_memory_if       obi_memory_if,
@@ -208,6 +210,18 @@ module  uvmt_cv32e40s_pma_assert
   a_pma_err: assert property (
     pma_err == !pma_status_i.allow
   ) else `uvm_error(info_tag, "pma err unexpected value");
+
+  a_pma_bufferable: assert property (
+    bus_trans_bufferable == pma_status_i.bufferable
+  ) else `uvm_error(info_tag, "pma bufferable unexpected value");
+
+  a_pma_cacheable: assert property (
+    bus_trans_cacheable == pma_status_i.cacheable
+  ) else `uvm_error(info_tag, "pma cacheable unexpected value");
+
+  a_pma_integrity: assert property (
+    bus_trans_integrity == pma_status_i.integrity
+  ) else `uvm_error(info_tag, "pma integrity unexpected value");
 
 
 endmodule : uvmt_cv32e40s_pma_assert
