@@ -116,7 +116,7 @@
 `define CSR_MTVAL_ADDR          32'h343
 `define CSR_MIP_ADDR            32'h344
 `define CSR_MNXTI_ADDR          32'h345 // only available when CLIC=1
-`define CSR_MINTSTATUS_ADDR     32'hF46 // only available when CLIC=1
+`define CSR_MINTSTATUS_ADDR     32'hFB1 // only available when CLIC=1
 `define CSR_MINTTHRESH_ADDR     32'h347 // only available when CLIC=1
 `define CSR_MSCRATCHCSW_ADDR    32'h348 // only available when CLIC=1
 `define CSR_MSCRATCHCSWL_ADDR   32'h349 // only available when CLIC=1

@@ -1693,7 +1693,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     else
       `uvm_error(info_tag,
         $sformatf("mpil wrong, value: %0d",
-          mcause.mpil));
+          mcause_fields.mpil));
 
     // ------------------------------------------------------------------------
     // mcause.mpp should reflect the previous privilege mode after taking an
