@@ -35,6 +35,11 @@ DPI_DASM_SPIKE_REPO ?= TODO_dontwanttodefinethis
 include  $(CORE_V_VERIF)/mk/fv/fv.mk
 
 
+# Extras
+
+JG_OPTIONS = -bg dimgray -fg lightgray
+
+
 # Safety Check
 
 ifndef  CV_SIM_PREFIX
@@ -47,7 +52,7 @@ endif
 jaspergold: jg
 jasper: jg
 jg:  $(CV_CORE_PKG)
-	$(CV_SIM_PREFIX)  jaspergold  jaspergold.tcl
+	$(CV_SIM_PREFIX)  jaspergold  $(JG_OPTIONS)  jaspergold.tcl
 	# TODO:silabs-robin  Move to "mk/fv/jg.mk"?
 
 qverify: q

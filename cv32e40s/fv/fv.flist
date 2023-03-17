@@ -19,19 +19,19 @@
 # limitations under the License.
 
 
-./uvm_pkg.sv
-./defines.sv
-
--f  ${CV_CORE_PKG}/cv32e40s_manifest.flist
-${DV_UVMA_PATH}/uvma_obi_memory/src/uvma_obi_memory_assert.sv
-${DV_UVMA_PATH}/uvma_obi_memory/src/uvma_obi_memory_1p2_assert.sv
-
 +incdir+${DV_UVMT_PATH}
 +incdir+${DV_UVME_PATH}
 +incdir+${DV_UVMA_PATH}/uvma_rvfi
 +incdir+${DV_UVMA_PATH}/uvma_fencei
 +incdir+${DV_UVMA_PATH}/uvma_clic
 +incdir+${DV_UVMA_PATH}/uvma_obi_memory/src
+
+./uvm_pkg.sv
+./defines.sv
+
+-f  ${CV_CORE_PKG}/cv32e40s_manifest.flist
+${DV_UVMA_PATH}/uvma_obi_memory/src/uvma_obi_memory_assert.sv
+${DV_UVMA_PATH}/uvma_obi_memory/src/uvma_obi_memory_1p2_assert.sv
 
 ./dummy_pkg.sv
 
