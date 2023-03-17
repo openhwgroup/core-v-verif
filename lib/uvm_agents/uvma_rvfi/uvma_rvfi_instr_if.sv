@@ -244,7 +244,7 @@ endfunction : match_instr_uj
 // These instruction are used to check for csr activity.
 // All instructions has the input csr_addr. Setting this limits the query to
 // that single address, leaving the input as 0 returns any csr activity.
-function logic is_csr_act(bit [11:0] csr_addr = 0);
+function logic is_csr_instr(bit [11:0] csr_addr = 0);
   if (csr_addr == 0) begin //not specified
     return  match_instr_isb(INSTR_OPCODE_CSRRW)  ||
             match_instr_isb(INSTR_OPCODE_CSRRS)  ||
@@ -261,7 +261,7 @@ function logic is_csr_act(bit [11:0] csr_addr = 0);
               match_instr_isb(INSTR_OPCODE_CSRRSI) ||
               match_instr_isb(INSTR_OPCODE_CSRRCI));
   end
-endfunction : is_csr_act
+endfunction : is_csr_instr
 
 // NOTE!  This instruction differs from the strict definition of "reading a CSR"
 //        in the RISCV-spec, as it returns true only if the read value is actually
@@ -269,7 +269,7 @@ endfunction : is_csr_act
 //        rvfi_csr_if-signals directly.
 function logic is_csr_read(bit [11:0] csr_addr = 0);
   if (rvfi_rd1_addr != 0) begin
-    return is_csr_act(csr_addr);
+    return is_csr_instr(csr_addr);
   end else begin // rd is X0, not a read instruction
     return 0;
   end

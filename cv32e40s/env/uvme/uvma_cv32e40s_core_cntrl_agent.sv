@@ -195,13 +195,6 @@ function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
     $fwrite(fh, $sformatf("--override %s/Zcmt=0\n", refpath));
   end
 
-  if (cfg.ext_zcmb_supported) begin
-    $fwrite(fh, $sformatf("--override %s/Zcmb=1\n", refpath));
-  end else begin
-    $fwrite(fh, $sformatf("--override %s/Zcmb=0\n", refpath));
-  end
-
-
   if (cfg.is_ext_b_supported()) begin
      // Bitmanip version
      case (cfg.bitmanip_version)
