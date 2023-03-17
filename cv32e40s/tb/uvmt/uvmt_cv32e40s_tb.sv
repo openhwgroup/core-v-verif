@@ -455,6 +455,7 @@ module uvmt_cv32e40s_tb;
                                                                      .rvfi_csr_wdata(rvfi_i.rvfi_csr_tdata_wdata[3])
     );
 
+
   bind uvmt_cv32e40s_dut_wrap
     uvma_obi_memory_assert_if_wrp#(
       .ADDR_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_ADDR_WIDTH),
@@ -784,7 +785,7 @@ module uvmt_cv32e40s_tb;
 
     end
   endgenerate
-
+/*
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_if
     #(.MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
@@ -981,7 +982,7 @@ module uvmt_cv32e40s_tb;
       .rvfi_if    (rvfi_instr_if_0_i),
       .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
     );
-
+*/
   // Debug assertion and coverage interface
 
   // Instantiate debug assertions
@@ -1219,6 +1220,32 @@ module uvmt_cv32e40s_tb;
                                                                     .cov_assert_if(debug_cov_assert_if),
                                                                     .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
                                                                     );
+
+    bind cv32e40s_wrapper uvmt_cv32e40s_triggers_assert_cov debug_trigger_assert_i(
+                                                                    .wb_valid (core_i.wb_stage_i.wb_valid_o),
+                                                                    .wb_exception_code (core_i.controller_i.controller_fsm_i.exception_cause_wb),
+                                                                    .wb_tdata1 (core_i.cs_registers_i.tdata1_rdata),
+                                                                    .wb_tdata2 (core_i.cs_registers_i.tdata2_rdata),
+                                                                    .priv_lvl (core_i.priv_lvl),
+                                                                    .wb_dbg_mode (rvfi_i.debug_mode[3]),
+                                                                    .wb_last_op (rvfi_i.last_op_wb_i),
+                                                                    .wb_tselect (rvfi_i.rvfi_csr_rdata_d.tselect),
+                                                                    .wb_exception (core_i.controller_i.controller_fsm_i.exception_in_wb),
+
+
+                                                                    .rvfi_if (rvfi_instr_if_0_i),
+                                                                    .clknrst_if (dut_wrap.clknrst_if),
+
+                                                                    .tdata1 (rvfi_csr_tdata1_if_0_i),
+                                                                    .tdata2 (rvfi_csr_tdata2_if_0_i),
+                                                                    .tdata3 (rvfi_csr_tdata3_if_0_i),
+                                                                    .tinfo (rvfi_csr_tinfo_if_0_i),
+                                                                    .tselect (rvfi_csr_tselect_if_0_i),
+                                                                    .tcontrol (rvfi_csr_tcontrol_if_0_i)
+                                                                    );
+
+
+
 
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
                                                               .support_if(support_logic_for_assert_coverage_modules_if.slave_mp)
