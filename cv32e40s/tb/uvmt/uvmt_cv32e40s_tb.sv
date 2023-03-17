@@ -1164,6 +1164,26 @@ module uvmt_cv32e40s_tb;
         .*
       );
 
+
+    // PMA Asserts & Covers
+
+    wire pma_status_t  pma_status_instr;
+    wire pma_status_t  pma_status_data;
+
+    bind  dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i
+      uvmt_cv32e40s_pma_model #(
+      ) pma_model_instr_i (
+        .pma_status_o (uvmt_cv32e40s_tb.pma_status_instr),
+        .*
+      );
+
+    bind  dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i
+      uvmt_cv32e40s_pma_model #(
+      ) pma_model_data_i (
+        .pma_status_o (uvmt_cv32e40s_tb.pma_status_data),
+        .*
+      );
+
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i
       uvmt_cv32e40s_pma_assert #(
         .CORE_REQ_TYPE   (cv32e40s_pkg::obi_inst_req_t),
@@ -1178,6 +1198,7 @@ module uvmt_cv32e40s_tb;
         .writebuf_ready_o ('0),
         .writebuf_trans_i ('0),
         .writebuf_trans_o ('0),
+        .pma_status_i     (uvmt_cv32e40s_tb.pma_status_instr),
         .*
       );
 
@@ -1195,6 +1216,7 @@ module uvmt_cv32e40s_tb;
         .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
         .writebuf_trans_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_i),
         .writebuf_trans_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_o),
+        .pma_status_i     (uvmt_cv32e40s_tb.pma_status_data),
         .*
       );
 
@@ -1211,6 +1233,9 @@ module uvmt_cv32e40s_tb;
       ) pma_cov_data_i (
         .*
       );
+
+
+    // Support Logic
 
     bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if_0_i),
                                                                       .in_support_if (input_to_support_logic_module_if.driver_mp),

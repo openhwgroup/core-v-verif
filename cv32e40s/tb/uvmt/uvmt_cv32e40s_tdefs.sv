@@ -104,4 +104,12 @@ typedef struct {
 } match_status_t;
 
 
+/**
+ * PMA Status
+ */
+typedef struct {
+  logic  allow;
+} pma_status_t;
+
+
 `endif // __UVMT_CV32E40S_TDEFS_SV__
