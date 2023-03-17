@@ -13,6 +13,7 @@ ovpsim: >
     --override cpu/CLIC_version=master
     --override cpu/externalCLIC=T
     --override cpu/PMP_registers=64
+    --override cpu/mtvt_mask=0xffffffffffffff80
     #--trace
     #--tracechange
     #--showoverrides
