@@ -23,6 +23,7 @@ ${DV_UVMT_PATH}/uvmt_cv32e40s_debug_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_fencei_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_integration_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_interrupt_assert.sv
+${DV_UVMT_PATH}/uvmt_cv32e40s_pma_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_pmp_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_pmprvfi_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_rvfi_assert.sv

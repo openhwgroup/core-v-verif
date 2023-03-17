@@ -78,7 +78,6 @@ int main(int argc, char *argv[])
 
   volatile unsigned int mcycle_count;
 
-
   //////////////////////////////////////////////////////////////
   // Cycle count
   printf("\nCycle count");

@@ -410,6 +410,8 @@ interface uvmt_cv32e40s_debug_cov_assert_if
     input         debug_havereset,
     input         debug_running,
     input         debug_halted,
+    input  [31:0] debug_pc_o,
+    input         debug_pc_valid_o,
 
     input         pending_sync_debug, // From controller
     input         pending_async_debug, // From controller
@@ -564,8 +566,9 @@ interface uvmt_cv32e40s_input_to_support_logic_module_if
    //Obi request information
    input logic req_is_store,
    input logic req_instr_integrity,
-   input logic req_data_integrity
+   input logic req_data_integrity,
 
+   input logic [31:0] instr_req_pc
    );
 
    modport driver_mp (
@@ -597,7 +600,9 @@ interface uvmt_cv32e40s_input_to_support_logic_module_if
 
       req_is_store,
       req_instr_integrity,
-      req_data_integrity
+      req_data_integrity,
+
+      instr_req_pc
    );
 
 endinterface : uvmt_cv32e40s_input_to_support_logic_module_if
@@ -650,6 +655,8 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
    // a timeframe where the core could oboserve it
    logic recorded_dbg_req;
 
+   logic [31:0] instr_resp_pc;
+
    modport master_mp (
       output req_after_exception,
          data_bus_addr_ph_cont,
@@ -675,14 +682,16 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
          gntpar_error_in_response_data,
          first_debug_ins,
          first_fetch,
-         recorded_dbg_req
+         recorded_dbg_req,
+
+         instr_resp_pc
    );
 
    modport slave_mp (
       input req_after_exception,
          data_bus_addr_ph_cont,
          data_bus_resp_ph_cont,
-	 data_bus_v_addr_ph_cnt,
+	      data_bus_v_addr_ph_cnt,
 
          instr_bus_addr_ph_cont,
          instr_bus_resp_ph_cont,
@@ -703,7 +712,9 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
          gntpar_error_in_response_data,
          first_debug_ins,
          first_fetch,
-         recorded_dbg_req
+         recorded_dbg_req,
+
+         instr_resp_pc
    );
 
 endinterface : uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if

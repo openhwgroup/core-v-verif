@@ -165,7 +165,16 @@ module uvmt_cv32e40s_tb;
                                                                    .rvfi_mem_rdata(rvfi_i.rvfi_mem_rdata[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN]),
                                                                    .rvfi_mem_rmask(rvfi_i.rvfi_mem_rmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8]),
                                                                    .rvfi_mem_wdata(rvfi_i.rvfi_mem_wdata[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN]),
-                                                                   .rvfi_mem_wmask(rvfi_i.rvfi_mem_wmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8])
+                                                                   .rvfi_mem_wmask(rvfi_i.rvfi_mem_wmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8]),
+                                                                   .gpr_rdata_array(),
+                                                                   .gpr_rmask_array(),
+                                                                   .gpr_wdata_array(),
+                                                                   .gpr_wmask_array(),
+                                                                   .mem_addr_array(),
+                                                                   .mem_rdata_array(),
+                                                                   .mem_rmask_array(),
+                                                                   .mem_wdata_array(),
+                                                                   .mem_wmask_array()
                                                                    );
 
   // RVFI CSR binds
@@ -478,30 +487,43 @@ module uvmt_cv32e40s_tb;
   if (CORE_PARAM_CLIC == 0) begin: gen_interrupt_assert
     bind cv32e40s_core
       uvmt_cv32e40s_interrupt_assert  interrupt_assert_i (
+        .dcsr_step    (cs_registers_i.dcsr_q.step),
         .mcause_n     ({cs_registers_i.mcause_n.irq, cs_registers_i.mcause_n.exception_code[4:0]}),
-        .mip          (cs_registers_i.mip_rdata),
         .mie_q        (cs_registers_i.mie_q),
+        .mip          (cs_registers_i.mip_rdata),
         .mstatus_mie  (cs_registers_i.mstatus_q.mie),
         .mstatus_tw   (cs_registers_i.mstatus_q.tw),
         .mtvec_mode_q (cs_registers_i.mtvec_q.mode),
 
+        .if_stage_instr_rdata_i  (if_stage_i.m_c_obi_instr_if.resp_payload.rdata),
         .if_stage_instr_req_o    (if_stage_i.m_c_obi_instr_if.s_req.req),
         .if_stage_instr_rvalid_i (if_stage_i.m_c_obi_instr_if.s_rvalid.rvalid),
-        .if_stage_instr_rdata_i  (if_stage_i.m_c_obi_instr_if.resp_payload.rdata),
         .alignbuf_outstanding    (if_stage_i.prefetch_unit_i.alignment_buffer_i.outstanding_cnt_q),
 
         .ex_stage_instr_valid (ex_stage_i.id_ex_pipe_i.instr_valid),
 
-        .wb_stage_instr_valid_i    (wb_stage_i.ex_wb_pipe_i.instr_valid),
-        .wb_stage_instr_rdata_i    (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
+        .wb_kill                   (ctrl_fsm.kill_wb),
         .wb_stage_instr_err_i      (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.err),
         .wb_stage_instr_mpu_status (wb_stage_i.ex_wb_pipe_i.instr.mpu_status),
+        .wb_stage_instr_rdata_i    (wb_stage_i.ex_wb_pipe_i.instr.bus_resp.rdata),
+        .wb_stage_instr_valid_i    (wb_stage_i.ex_wb_pipe_i.instr_valid),
+        .wb_trigger                (controller_i.controller_fsm_i.trigger_match_in_wb),
+        .wb_valid                  (wb_stage_i.wb_valid),
 
         .branch_taken_ex (controller_i.controller_fsm_i.branch_taken_ex),
         .debug_mode_q    (controller_i.controller_fsm_i.debug_mode_q),
+        .pending_nmi     (controller_i.controller_fsm_i.pending_nmi),
 
         .irq_ack_o (core_i.irq_ack),
         .irq_id_o  (core_i.irq_id),
+
+        .mpu_instr_rvalid (if_stage_i.mpu_i.core_resp_valid_o),
+        .obi_instr_if     (dut_wrap.obi_instr_if_i),
+        .obi_data_if      (dut_wrap.obi_data_if_i),
+
+        .writebufstate (load_store_unit_i.write_buffer_i.state),
+        .rvfi          (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+        .support_if    (support_logic_for_assert_coverage_modules_if.slave_mp),
 
         .*
       );
@@ -702,6 +724,9 @@ module uvmt_cv32e40s_tb;
       .CLIC          (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC),
       .CLIC_ID_WIDTH (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_ID_WIDTH)
     ) rvfi_assert_i (
+      .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+      .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
+      .writebuf_valid_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.valid_i),
       .*
     );
 
@@ -1086,26 +1111,26 @@ module uvmt_cv32e40s_tb;
       .alert_major (core_i.alert_major_o),
 
       //CSRs:
-      .is_integrity_enabled (core_i.xsecure_ctrl.cpuctrl.integrity),
+      .integrity_enabled (core_i.xsecure_ctrl.cpuctrl.integrity),
 
       //OBI:
-      .obi_data_req_payload_if (core_i.m_c_obi_data_if.req_payload),
-      .obi_data_resp_payload_if (core_i.m_c_obi_data_if.resp_payload),
-      .obi_data_req (m_c_obi_data_if.s_req.req),
-      .obi_data_reqpar (m_c_obi_data_if.s_req.reqpar),
-      .obi_data_gnt (m_c_obi_data_if.s_resp.resp),
-      .obi_data_gntpar (m_c_obi_data_if.s_resp.resppar),
-      .obi_data_rvalid (m_c_obi_data_if.s_rvalid.rvalid),
-      .obi_data_rvalidpar (m_c_obi_data_if.s_rvalid.rvalidpar),
+      .obi_data_req_packet (core_i.m_c_obi_data_if.req_payload),
+      .obi_data_resp_packet (core_i.m_c_obi_data_if.resp_payload),
+      .obi_data_req (core_i.m_c_obi_data_if.s_req.req),
+      .obi_data_reqpar (core_i.m_c_obi_data_if.s_req.reqpar),
+      .obi_data_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
+      .obi_data_gntpar (core_i.m_c_obi_data_if.s_gnt.gntpar),
+      .obi_data_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+      .obi_data_rvalidpar (core_i.m_c_obi_data_if.s_rvalid.rvalidpar),
 
-      .obi_instr_req_payload_if (core_i.m_c_obi_instr_if.req_payload),
-      .obi_instr_resp_payload_if (core_i.m_c_obi_instr_if.resp_payload),
-      .obi_instr_req (m_c_obi_instr_if.s_req.req),
-      .obi_instr_reqpar (m_c_obi_instr_if.s_req.reqpar),
-      .obi_instr_gnt (m_c_obi_instr_if.s_resp.resp),
-      .obi_instr_gntpar (m_c_obi_instr_if.s_resp.resppar),
-      .obi_instr_rvalid (m_c_obi_instr_if.s_rvalid.rvalid),
-      .obi_instr_rvalidpar (m_c_obi_instr_if.s_rvalid.rvalidpar),
+      .obi_instr_req_packet (core_i.m_c_obi_instr_if.req_payload),
+      .obi_instr_resp_packet (core_i.m_c_obi_instr_if.resp_payload),
+      .obi_instr_req (core_i.m_c_obi_instr_if.s_req.req),
+      .obi_instr_reqpar (core_i.m_c_obi_instr_if.s_req.reqpar),
+      .obi_instr_gnt (core_i.m_c_obi_instr_if.s_gnt.gnt),
+      .obi_instr_gntpar (core_i.m_c_obi_instr_if.s_gnt.gntpar),
+      .obi_instr_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+      .obi_instr_rvalidpar (core_i.m_c_obi_instr_if.s_rvalid.rvalidpar),
 
       //Register file memory:
       .gpr_mem (core_i.register_file_wrapper_i.register_file_i.mem_gated),
@@ -1113,6 +1138,31 @@ module uvmt_cv32e40s_tb;
       .rf_waddr (core_i.rf_waddr_wb),
       .rf_wdata (core_i.rf_wdata_wb),
 
+      .wb_valid (core_i.wb_valid),
+      .if_valid (core_i.if_valid),
+      .id_ready (core_i.id_ready),
+      .wb_integrity_err (core_i.ex_wb_pipe.instr.bus_resp.integrity_err),
+      .data_integrity_err (core_i.load_store_unit_i.bus_resp.integrity_err),
+      .instr_integrity_err (core_i.if_stage_i.bus_resp.integrity_err),
+
+      .if_instr_pc (core_i.if_stage_i.pc_if_o),
+      .if_instr_cmpr (core_i.if_id_pipe.instr_meta.compressed),
+      .if_instr_integrity_err (core_i.if_id_pipe.instr.bus_resp.integrity_err),
+
+      .nmip (core_i.cs_registers_i.dcsr_rdata.nmip),
+      .mcause_exception_code (core_i.cs_registers_i.mcause_rdata.exception_code),
+      .wb_instr_opcode (core_i.ex_wb_pipe.instr.bus_resp.rdata[6:0]),
+      .ctrl_fsm_cs (core_i.controller_i.controller_fsm_i.ctrl_fsm_cs),
+
+      .wb_exception (core_i.controller_i.controller_fsm_i.exception_in_wb),
+      .wb_exception_code (core_i.controller_i.controller_fsm_i.exception_cause_wb),
+      .pc_mux (dut_wrap.cv32e40s_wrapper_i.core_i.ctrl_fsm.pc_mux),
+      .mpu_err (core_i.if_stage_i.mpu_i.mpu_err),
+      .id_abort_op (dut_wrap.cv32e40s_wrapper_i.core_i.if_id_pipe.abort_op),
+      .pc_set (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.ctrl_fsm_i.pc_set),
+      .dummy_insert (dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.dummy_insert)
+
+//xsecure_if.core_i_if_stage_i_dummy_insert
     );
 
 
@@ -1130,6 +1180,7 @@ module uvmt_cv32e40s_tb;
       .mhpmcounter (core_i.cs_registers_i.mhpmcounter_rdata),
       .mcountinhibit (core_i.cs_registers_i.mcountinhibit_rdata)
     );
+
 
 
   bind cv32e40s_wrapper
@@ -1242,6 +1293,8 @@ module uvmt_cv32e40s_tb;
       .debug_havereset        (core_i.debug_havereset_o),
       .debug_running          (core_i.debug_running_o),
       .debug_halted           (core_i.debug_halted_o),
+      .debug_pc_o             (core_i.debug_pc_o),
+      .debug_pc_valid_o       (core_i.debug_pc_valid_o),
 
       .ctrl_fsm_async_debug_allowed  (core_i.controller_i.controller_fsm_i.async_debug_allowed),
       .pending_sync_debug     (core_i.controller_i.controller_fsm_i.pending_sync_debug),
@@ -1312,6 +1365,7 @@ module uvmt_cv32e40s_tb;
 
         .fetch_enable        (core_i.fetch_enable),
         .debug_req_i         (core_i.debug_req_i),
+        .instr_req_pc        ({core_i.m_c_obi_instr_if.req_payload.addr[31:2], 2'b0}),
 
         .data_bus_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
         .data_bus_req (core_i.m_c_obi_data_if.s_req.req),
@@ -1387,6 +1441,40 @@ module uvmt_cv32e40s_tb;
         .*
       );
 
+    bind  dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i
+      uvmt_cv32e40s_pma_assert #(
+        .CORE_REQ_TYPE   (cv32e40s_pkg::obi_inst_req_t),
+        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .IS_INSTR_SIDE   (1),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
+      ) pma_assert_instr_i (
+        .obi_memory_if    (dut_wrap.obi_instr_if_i),
+        .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+        .writebuf_ready_o ('0),
+        .writebuf_trans_i ('0),
+        .writebuf_trans_o ('0),
+        .*
+      );
+
+    bind  dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i
+      uvmt_cv32e40s_pma_assert #(
+        .CORE_REQ_TYPE   (cv32e40s_pkg::obi_data_req_t),
+        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .IS_INSTR_SIDE   (0),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
+      ) pma_assert_data_i (
+        .obi_memory_if    (dut_wrap.obi_data_if_i),
+        .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+        .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
+        .writebuf_trans_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_i),
+        .writebuf_trans_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_o),
+        .*
+      );
+
     bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if_0_i),
                                                                       .in_support_if (input_to_support_logic_module_if.driver_mp),
                                                                       .out_support_if (support_logic_for_assert_coverage_modules_if.master_mp)
@@ -1402,8 +1490,8 @@ module uvmt_cv32e40s_tb;
                                                                     .csr_mtvec(rvfi_csr_mtvec_if_0_i),
                                                                     .csr_tdata1(rvfi_csr_tdata1_if_0_i),
                                                                     .csr_tdata2(rvfi_csr_tdata2_if_0_i),
-                                                                    .instr_obi(obi_instr_if_i.passive_mp),
-                                                                    .data_obi(obi_data_if_i.passive_mp),
+                                                                    .instr_obi(dut_wrap.obi_instr_if_i),
+                                                                    .data_obi(dut_wrap.obi_data_if_i),
                                                                     .cov_assert_if(debug_cov_assert_if),
                                                                     .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
                                                                     );
