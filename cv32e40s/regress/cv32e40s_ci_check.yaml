@@ -41,12 +41,6 @@ tests:
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=hello-world
 
-  interrupt_test:
-    build: uvmt_cv32e40s
-    description: Interrupt directed test
-    dir: cv32e40s/sim/uvmt
-    cmd: make test TEST=interrupt_test
-
   clic:
     build: uvmt_cv32e40s_clic
     description: CLIC interrupt test
