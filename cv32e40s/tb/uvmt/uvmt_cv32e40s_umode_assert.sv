@@ -954,7 +954,7 @@ module  uvmt_cv32e40s_umode_assert
 
   a_data_prot: assert property (
     rvfi_valid  &&
-    (|rvfi_if.rvfi_mem_rmask || |rvfi_if.rvfi_mem_wmask)
+    (rvfi_if.rvfi_mem_rmask || rvfi_if.rvfi_mem_wmask)
     |->
     (rvfi_if.mem_prot[2:1] == effective_rvfi_privmode)
   ) else `uvm_error(info_tag, "the prot on load/store must match the effective mode on retirement");

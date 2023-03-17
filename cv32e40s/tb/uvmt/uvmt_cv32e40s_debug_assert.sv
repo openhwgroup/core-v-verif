@@ -27,6 +27,7 @@ module uvmt_cv32e40s_debug_assert
       uvma_rvfi_csr_if csr_dscratch1,
       uvma_rvfi_csr_if csr_mepc,
       uvma_rvfi_csr_if csr_mstatus,
+      uvma_rvfi_csr_if csr_mcause,
       uvma_rvfi_csr_if csr_mtvec,
       //TODO:MT tdatas should not be necessary when trigger logic is ready
       uvma_rvfi_csr_if csr_tdata1,
@@ -819,6 +820,29 @@ module uvmt_cv32e40s_debug_assert
 
     a_debug_pc_o_inv : assert property(p_debug_pc_o_inv)
     else `uvm_error(info_tag, "debug_pc_o is not driven correctly")
+
+
+    // Exceptions don't update "mcause"
+
+    a_dbg_mcause: assert property (
+      rvfi.rvfi_valid  &&
+      rvfi.rvfi_dbg_mode  &&
+      rvfi.rvfi_trap
+      |->
+      !csr_mstatus.rvfi_csr_wmask
+    ) else `uvm_error(info_tag, "dmode exceptions shouldn't update mcause")
+
+
+    // "mret" causes exceptions
+
+    a_dbg_mret: assert property (
+      rvfi.is_mret()  &&
+      rvfi.rvfi_dbg_mode
+      |->
+      rvfi.rvfi_valid  &&
+      rvfi.rvfi_trap.trap  &&
+      rvfi.rvfi_trap.exception
+    ) else `uvm_error(info_tag, "dmode mret should except")
 
 
     // -------------------------------------------

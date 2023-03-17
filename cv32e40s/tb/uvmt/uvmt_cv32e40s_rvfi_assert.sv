@@ -137,6 +137,9 @@ module uvmt_cv32e40s_rvfi_assert
     (rvfi_trap.exception_cause == rvfi_mcause_exccode)
   ) else `uvm_error(info_tag, "'exception_cause' must match 'mcause'");
 
+
+  // RVFI exception clears 'mcause.interrupt'
+
   a_exc_mcause: assert property (
     rvfi_valid  &&
     rvfi_trap.exception  &&
