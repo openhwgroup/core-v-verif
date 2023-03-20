@@ -23,11 +23,10 @@
 #include <stdint.h>
 #include "corev_uvmt.h"
 
-// MUST be 31 or less (bit position-1 in result array determines test pass/fail
-// status, thus we are limited to 31 tests with this construct.
-#define NUM_TESTS 10
 #define FAIL    1
 #define SUCCESS 0
+
+//#define DEBUG_PRINT 1
 
 #define DEBUG_REQ_CONTROL_REG *(volatile int *) CV_VP_DEBUG_CONTROL_BASE
 
@@ -66,23 +65,25 @@
 #define EXCEPTION_CODE_BREAKPOINT          3
 #define EXCEPTION_CODE_RESERVED           10
 
-                                // Place in debugger section
-void _debugger_start(void)      __attribute__((section(".debugger"))) __attribute__((naked));
-void _debugger(void)            __attribute__((section(".debugger")));
-void _debug_mode_register_test(void) __attribute__((section(".debugger")));
 
-void _debugger_exception_start(void) __attribute__((section(".debugger_exception")));
-
-void handle_illegal_insn(void) __attribute__ ((naked));
 extern void end_handler_incr_mepc(void);
-                                                 // Ensure function call is executed, and that fist instruction is the one we expect
+
+void _debugger_start(void)           __attribute__((section(".debugger"))) __attribute__((naked));
+void _debug_handler(void)            __attribute__((section(".debugger")));
+void _debug_mode_register_test(void) __attribute__((section(".debugger")));
+void execute_test_high_addr(void)    __attribute__((section(".debugger_exception")))__attribute__ ((noinline));
+void load_store_test_high_addr(void) __attribute__((section(".debugger_exception")))__attribute__ ((noinline));
+void handle_illegal_insn(void)       __attribute__ ((naked));
+
+void execute_test_constructor(void)    __attribute__ ((constructor)) __attribute__ ((noinline));
+void load_store_test_constructor(void) __attribute__ ((constructor)) __attribute__ ((noinline));
+
 volatile void trigger_code_nop(void)             __attribute__((optimize("O0"))) __attribute__((naked));
 volatile void trigger_code_ebreak(void)          __attribute__((optimize("O0"))) __attribute__((naked));
 volatile void trigger_code_cebreak(void)         __attribute__((optimize("O0"))) __attribute__((naked));
 volatile void trigger_code_branch_insn(void)     __attribute__((optimize("O0"))) __attribute__((naked));
 volatile void trigger_code_illegal_insn(void)    __attribute__((optimize("O0"))) __attribute__((naked));
 volatile void trigger_code_multicycle_insn(void) __attribute__((optimize("O0"))) __attribute__((naked));
-
 
 int test_execute_trigger(int);
 int test_load_trigger(int);
@@ -108,10 +109,64 @@ volatile uint8_t  some_data_bytes[4]     = {0xC0, 0xFF, 0xEB, 0xEE};
 volatile uint16_t some_data_halfwords[2] = {0xDEAD, 0xBEEF};
 volatile uint32_t some_data_word         = 0xC0DECAFE;
 
-void _debugger_exception_start(void) {
+/*
+ * execute_test_constructor
+ *
+ * Executes nop.
+ *
+ * Defined as constructor to be placed before main in memory
+ * used for its low address in execute LESS comparisons
+ */
+void execute_test_constructor(void) {
   __asm__ volatile ("nop");
 }
 
+/*
+ * execute_test_high_addr
+ *
+ * Executes nop.
+ *
+ * Placed in debugger_exception section and used for
+ * its high address in execute test GEQ comparisons
+ *
+ */
+void execute_test_high_addr(void) {
+  __asm__ volatile ("nop");
+}
+
+/*
+ * load_store_test_constructor
+ *
+ * Uncompressed nop, to be used as variable after construction phase.
+ *
+ * Defined as constructor to be placed before main in memory
+ * used for its low address in load/store LESS comparisons
+ */
+void load_store_test_constructor(void) {
+  __asm__ volatile (R"(.option push
+                       .option norvc
+                       nop
+                       .option pop)");
+}
+/*
+ * load_store_test_high_addr
+ *
+ * To be used as variable.
+ *
+ * Placed in debugger_exception section and used for
+ * its high address in load/store test GEQ comparisons
+ */
+void load_store_test_high_addr(void) {
+  __asm__ volatile (".word(0xDEADBEEF)");
+}
+
+/*
+ * handle_illegal_insn
+ *
+ * Sets illegal_insn_status.
+ *
+ * Simple handler used to check illegal intructuction trap
+ */
 void handle_illegal_insn (void) {
   __asm__ volatile (R"(
     la   t0,     illegal_insn_status
@@ -121,6 +176,15 @@ void handle_illegal_insn (void) {
   )");
 }
 
+
+/*
+ * debugger_start
+ *
+ * Debug handler wrapper
+ *
+ * Saves registers, calls debug handler and then restores the registers again.
+ *
+ */
 void _debugger_start(void) {
   __asm__ volatile (R"(
     # Store return address and saved registers
@@ -137,8 +201,8 @@ void _debugger_start(void) {
 
       cm.push {ra, s0-s11}, -64
 
-    # Execute _debugger() function
-      call ra, _debugger
+    # Execute _debug_handler() function
+      call ra, _debug_handler
 
     # Restore return address and saved registers
       cm.pop {ra, s0-s11}, 64
@@ -158,9 +222,19 @@ void _debugger_start(void) {
   )");
 }
 
-void _debugger (void) {
+/*
+ * _debug_handler
+ *
+ * Debug Handler
+ *
+ * Handles all actions needed in debug mode.
+ *
+ */
+void _debug_handler (void) {
 
+#ifdef DEBUG_PRINT
   printf("  Entered debug\n");
+#endif
 
   debug_entry_status = DEBUG_STATUS_ENTERED_OK;
 
@@ -172,25 +246,33 @@ void _debugger (void) {
         case TRIGGER_LOAD_HALFWORD:
         case TRIGGER_LOAD_WORD:
           __asm__ volatile ("csrci tdata1, (1 << 0)"); // Clear load bit
+#ifdef DEBUG_PRINT
           printf("    Disabling trigger by clearing TDATA1->LOAD\n");
+#endif
           break;
         case TRIGGER_STORE_BYTE:
         case TRIGGER_STORE_HALFWORD:
         case TRIGGER_STORE_WORD:
           __asm__ volatile ("csrci tdata1, (1 << 1)"); // Clear load bit
+#ifdef DEBUG_PRINT
           printf("    Disabling trigger by clearing TDATA1->STORE\n");
+#endif
           break;
         case TRIGGER_EXECUTE:
           __asm__ volatile ("csrci tdata1, (1 << 2)"); // Clear execute bit
+#ifdef DEBUG_PRINT
           printf("    Disabling trigger by clearing TDATA1->EXECUTE\n");
+#endif
           break;
       }
     break;
 
     case DEBUG_SEL_SETUP_TRIGGER:
       // Load tdata config csrs
+#ifdef DEBUG_PRINT
       printf("    Setting up triggers\n      csr_write: tdata1 = 0x%08lx\n      csr_write: tdata2 = 0x%08lx (0x%lx + 0x%lx)\n",
              tdata1_next, tdata2_next, trigger_address, tdata2_next_offset);
+#endif
       __asm__ volatile (R"(la   s1,     tdata1_next
                            lw   s0,     0(s1)
                            csrw tdata1, s0
@@ -201,7 +283,9 @@ void _debugger (void) {
 
     case DEBUG_SEL_CLEAR_TDATA2:
       __asm__ volatile ("csrwi tdata2, 0x0");
+#ifdef DEBUG_PRINT
       printf("    Disabling trigger by clearing TDATA2\n");
+#endif
     break;
 
     case DEBUG_SEL_REGTEST:
@@ -209,12 +293,16 @@ void _debugger (void) {
     break;
 
     case DEBUG_SEL_ENTER_USERMODE:
+#ifdef DEBUG_PRINT
       printf("-- User Mode --\n");
+#endif
       __asm__ volatile ("csrci dcsr, 0x3");
       break;
 
     case DEBUG_SEL_ENTER_MACHINEMODE:
+#ifdef DEBUG_PRINT
       printf("-- Machine Mode --\n");
+#endif
       __asm__ volatile ("csrsi dcsr, 0x3");
       break;
 
@@ -242,12 +330,22 @@ void _debugger (void) {
          1:addi s0, s0, 0x2
            csrw dpc, s0
       )" ::: "s0", "s1", "s2");
+#ifdef DEBUG_PRINT
       printf("    Incrementing dpc\n");
+#endif
       break;
   }
   return;
 }
 
+/*
+ * execute_debug_command
+ *
+ * Sends commands debug handler
+ *
+ * Needed to execute commands that require to run with debug privelege
+ *
+ */
 void execute_debug_command (uint32_t dbg_cmd) {
   // Disable trigger after use
   debug_sel = dbg_cmd;
@@ -262,14 +360,29 @@ void execute_debug_command (uint32_t dbg_cmd) {
   while (debug_entry_status == DEBUG_STATUS_NOT_ENTERED);
 }
 
-
-// The trigger code functions need at least 2 instructions as the first is skipped (dpc inrement)
-// to ensure it is not executed before debug entry
+/*
+ * trigger_code_nop
+ *
+ * Function for testing execute triggers.
+ *
+ * These functions need at least two intructions as the first can be skipped with a dpc inrement
+ *
+ */
 volatile void trigger_code_nop() {
   __asm__ volatile (R"(nop
                        nop
                        ret)");
 }
+
+/*
+ * trigger_code_*
+ *
+ * Functions with different first instructions for testing execte triggers.
+ *
+ * These functions are used to check that different types of instructions are preempted
+ * correctly with "before"-timing during trigger match
+ *
+ */
 volatile void trigger_code_ebreak() {
   __asm__ volatile (R"(.4byte 0x00100073 # ebreak
                        nop
@@ -296,9 +409,20 @@ volatile void trigger_code_multicycle_insn() {
                        ret)");
 }
 
+/*
+ * trigger_test
+ *
+ * Test function that configures and tests triggers
+ *
+ * Configures triggers based on input and global variables,
+ * runs test and checks if the result is expected.
+ *
+ */
 int trigger_test (int setup, int expect_trigger_match, uint32_t tdata2_arg) {
 
+#ifdef DEBUG_PRINT
   printf ("\ntrigger_test():\n");
+#endif
 
   tdata2_next        = tdata2_arg + tdata2_next_offset;
   trigger_address    = tdata2_arg;
@@ -354,11 +478,27 @@ int trigger_test (int setup, int expect_trigger_match, uint32_t tdata2_arg) {
     __asm__ volatile ("ebreak");
   }
 
-  printf ("  Address match debug entry: %d (expected: %d)\n\n",
-          debug_entry_status,   expect_trigger_match);
-  return (debug_entry_status == expect_trigger_match) ? SUCCESS : FAIL;
+  if (debug_entry_status == expect_trigger_match) {
+#ifdef DEBUG_PRINT
+    printf ("  Debug entry status: %d (expected: %d)\n\n",
+            debug_entry_status,   expect_trigger_match);
+#endif
+    return SUCCESS;
+  } else {
+    printf ("  FAIL: Debug entry did not match expectation: %d (expected: %d)\n\n",
+            debug_entry_status,   expect_trigger_match);
+    return FAIL;
+  }
 }
 
+/*
+ * test_execute_trigger
+ *
+ * Execute trigger test
+ *
+ * Tests execute triggers with a range of configurations.
+ *
+ */
 int test_execute_trigger (int priv_lvl) {
   int retval = 0;
   tdata2_next_offset = 0;
@@ -433,6 +573,26 @@ int test_execute_trigger (int priv_lvl) {
   retval += trigger_test(1, 1, (uint32_t) &trigger_code_illegal_insn);
   retval += trigger_test(1, 1, (uint32_t) &trigger_code_multicycle_insn);
 
+  tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
+  debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+
+  // Executing from start of debug memory to avoid triggering on instructions executed in the the test flow (like debug handler)
+  retval += trigger_test(1, 1, (uint32_t) &execute_test_high_addr);
+  tdata2_next_offset = -4;
+  retval += trigger_test(1, 1, (uint32_t) &execute_test_high_addr);
+  tdata2_next_offset = 4;
+  retval += trigger_test(1, 0, (uint32_t) &execute_test_high_addr);
+
+  tdata1_next |=  3 << 7; // Set MATCH = 3 (LESS)
+  debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+
+  // Executing from constructor as it is known to have a lower address than other functions
+  tdata2_next_offset = 0;
+  retval += trigger_test(1, 0, (uint32_t) &execute_test_constructor);
+  tdata2_next_offset = -4;
+  retval += trigger_test(1, 0, (uint32_t) &execute_test_constructor);
+  tdata2_next_offset = 4;
+  retval += trigger_test(1, 1, (uint32_t) &execute_test_constructor);
 
   // Test with only oposite privilege mode enabled, expect no matches //
 
@@ -450,9 +610,20 @@ int test_execute_trigger (int priv_lvl) {
     tdata1_next &= ~(1 << 3); // U = Don't match in user mode
   }
 
-  // Check that executing trigger address does not triggerin wrong mode
+  // Check that executing trigger address does not trigger in wrong mode
   debug_break_loop = DEBUG_LOOPBREAK_DPCINCR;
   retval += trigger_test(1, 0, (uint32_t) &trigger_code_nop);
+
+  tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
+  debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+
+  // Executing from start of debug memory to avoid triggering on instructions executed in the the test flow (like debug handler)
+  tdata2_next_offset = 0;
+  retval += trigger_test(1, 0, (uint32_t) &execute_test_high_addr);
+  tdata2_next_offset = -4;
+  retval += trigger_test(1, 0, (uint32_t) &execute_test_high_addr);
+  tdata2_next_offset = 4;
+  retval += trigger_test(1, 0, (uint32_t) &execute_test_high_addr);
 
   execute_debug_command(DEBUG_SEL_DISABLE_TRIGGER);
   execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
@@ -460,6 +631,15 @@ int test_execute_trigger (int priv_lvl) {
   return retval;
 }
 
+
+/*
+ * test_load_trigger
+ *
+ * Load trigger test
+ *
+ * Tests Load triggers with a range of configurations.
+ *
+ */
 int test_load_trigger (int priv_lvl) {
   int retval = 0;
 
@@ -512,15 +692,26 @@ int test_load_trigger (int priv_lvl) {
 
 
   tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
-
   debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
   // Loading from start of debug memory to avoid triggering on loads from other variables
-  retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
+  tdata2_next_offset = 0;
+  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
   tdata2_next_offset = -4;
-  retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
+  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
   tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+
+  tdata1_next |=  3 << 7; // Set MATCH = 3 (LESS)
+  debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+
+  // Loading from constructor function as it is known to have a lower address than other variables loaded in test code
+  tdata2_next_offset = 0;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  tdata2_next_offset = -4;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  tdata2_next_offset = 4;
+  retval += trigger_test(1, 1, (uint32_t) &load_store_test_constructor);
 
 
   // Trigger on current privilege mode only //
@@ -571,11 +762,23 @@ int test_load_trigger (int priv_lvl) {
   debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
   // Loading from start of debug memory to avoid triggering on loads from other variables
-  retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
+  tdata2_next_offset = 0;
+  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
   tdata2_next_offset = -4;
-  retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
+  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
   tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+
+  tdata1_next |=  3 << 7; // Set MATCH = 3 (LESS)
+  debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+
+  // Loading from constructor function as it is known to have a lower address than other functions
+  tdata2_next_offset = 0;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  tdata2_next_offset = -4;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  tdata2_next_offset = 4;
+  retval += trigger_test(1, 1, (uint32_t) &load_store_test_constructor);
 
 
   // Test with only oposite privilege mode enabled, expect no matches
@@ -623,15 +826,27 @@ int test_load_trigger (int priv_lvl) {
 
 
   tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
-
   debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
   // Loading from start of debug memory to avoid triggering on loads from other variables
-  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+  tdata2_next_offset = 0;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
   tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
   tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+
+  tdata1_next |=  3 << 7; // Set MATCH = 3 (LESS)
+  debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+
+  // Loading from constructor function as it is known to have a lower address than other functions
+  tdata2_next_offset = 0;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  tdata2_next_offset = -4;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  tdata2_next_offset = 4;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+
 
   execute_debug_command(DEBUG_SEL_DISABLE_TRIGGER);
   execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
@@ -639,6 +854,15 @@ int test_load_trigger (int priv_lvl) {
   return retval;
 }
 
+
+/*
+ * test_store_trigger
+ *
+ * Store trigger test
+ *
+ * Tests store triggers for a range of configurations.
+ *
+ */
 int test_store_trigger (int priv_lvl) {
   int retval = 0;
 
@@ -692,11 +916,22 @@ int test_store_trigger (int priv_lvl) {
   debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
   // Storing to unsused debugger_exception section to ensure it is not triggered by variables at higher addresses
-  retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
+  tdata2_next_offset = 0;
+  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
   tdata2_next_offset = -4;
-  retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
+  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
   tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+
+  tdata1_next |=  3 << 7; // Set MATCH = 3 (LESS)
+  debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+
+  tdata2_next_offset = 0;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  tdata2_next_offset = -4;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  tdata2_next_offset = 4;
+  retval += trigger_test(1, 1, (uint32_t) &load_store_test_constructor);
 
 
   // Trigger on current privilege mode only //
@@ -746,11 +981,22 @@ int test_store_trigger (int priv_lvl) {
   debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
   // Storing to unsused debugger_exception section to ensure it is not triggered by variables at higher addresses
-  retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
+  tdata2_next_offset = 0;
+  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
   tdata2_next_offset = -4;
-  retval += trigger_test(1, 1, (uint32_t) &_debugger_exception_start);
+  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
   tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+
+  tdata1_next |=  3 << 7; // Set MATCH = 3 (LESS)
+  debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+
+  tdata2_next_offset = 0;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  tdata2_next_offset = -4;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  tdata2_next_offset = 4;
+  retval += trigger_test(1, 1, (uint32_t) &load_store_test_constructor);
 
 
   // Test with only oposite privilege mode enabled, expect no matches
@@ -800,11 +1046,22 @@ int test_store_trigger (int priv_lvl) {
   debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
   // Storing to unsused debugger_exception section to ensure it is not triggered by variables at higher addresses
-  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+  tdata2_next_offset = 0;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
   tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
   tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &_debugger_exception_start);
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+
+  tdata1_next |=  3 << 7; // Set MATCH = 3 (LESS)
+  debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+
+  tdata2_next_offset = 0;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  tdata2_next_offset = -4;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  tdata2_next_offset = 4;
+  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
 
   execute_debug_command(DEBUG_SEL_DISABLE_TRIGGER);
   execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
@@ -812,19 +1069,25 @@ int test_store_trigger (int priv_lvl) {
   return retval;
 }
 
+/*
+ * test_exception_trigger
+ *
+ * Exception trigger test
+ *
+ * Tests Exception triggers with a range of configurations
+ *
+ */
 int test_exception_trigger (int priv_lvl) {
   int retval = 0;
 
   if (priv_lvl == PRIV_LVL_USER_MODE) {
-    printf("\n\n\n --- Testing load triggers (in user mode) ---\n\n");
+    printf("\n\n\n --- Testing Exception triggers (in user mode) ---\n\n");
     execute_debug_command(DEBUG_SEL_ENTER_USERMODE);
 
   } else if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
-    printf("\n\n\n --- Testing load triggers (in machine mode) ---\n\n");
+    printf("\n\n\n --- Testing Exception triggers (in machine mode) ---\n\n");
     execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
   }
-
-  printf("\n\n\n --- Testing execption triggers ---\n\n");
 
   // Set up trigger
   tdata1_next = (5 << 28 | // TYPE = etrigger
@@ -922,7 +1185,14 @@ int test_exception_trigger (int priv_lvl) {
   return retval;
 }
 
-
+/*
+ * _debug_mode_register_test
+ *
+ * Debug mode register access test
+ *
+ * Checks that registers are implemented according to spec for debug mode
+ *
+ */
 void _debug_mode_register_test(void) {
   printf("    _debug_mode_register_test():\n");
 
@@ -1156,11 +1426,21 @@ void _debug_mode_register_test(void) {
   return;
 }
 
+/*
+ * test_register_access
+ *
+ * Register access test
+ *
+ * Checks that registers are implemented according to spec for machine mode and user mode
+ *
+ */
 int test_register_access(void) {
 
   printf("\n\n\n --- Testing register access ---\n\n");
 
+#ifdef DEBUG_PRINT
   printf("  Checking register access from debug mode\n");
+#endif
   debug_sel = DEBUG_SEL_REGTEST;
   debug_entry_status = DEBUG_STATUS_NOT_ENTERED;
   DEBUG_REQ_CONTROL_REG = (CV_VP_DEBUG_CONTROL_DBG_REQ(0x1)        |
@@ -1172,7 +1452,9 @@ int test_register_access(void) {
   if (debug_entry_status == DEBUG_STATUS_ENTERED_FAIL) return FAIL;
   debug_entry_status = DEBUG_STATUS_NOT_ENTERED;
 
+#ifdef DEBUG_PRINT
   printf("\n  Checking register access from Machine mode\n");
+#endif
 
   // TDATA1 - Write valid value (in m-mode), check that is ignored
   __asm__ volatile (R"(li    s1,     0x60000000
@@ -1336,6 +1618,13 @@ int test_register_access(void) {
   return SUCCESS;
 }
 
+/*
+ * pmp_setup
+ *
+ * PMP setup function
+ *
+ * Allows access to full memory map from user mode
+ */
 void pmp_setup(void) {
   // Allow user mode access to full memory map
   __asm__ volatile (R"(li    t0, 0xFFFFFFFF
@@ -1344,7 +1633,14 @@ void pmp_setup(void) {
                        )" ::: "t0");
 }
 
-
+/*
+ * get_num_triggers
+ *
+ * Get number of triggers
+ *
+ * Determine number of triggers implemented by probing tselect
+ *
+ */
 uint32_t get_num_triggers() {
   illegal_insn_status = 0;
   __asm__ volatile ("csrwi tselect, 0x0");
@@ -1371,7 +1667,12 @@ uint32_t get_num_triggers() {
   return num_triggers;
 }
 
-
+/*
+ * main
+ *
+ * Test Entry point
+ *
+ */
 int main(int argc, char *argv[])
 {
   pmp_setup();
@@ -1421,7 +1722,6 @@ int main(int argc, char *argv[])
         printf("Exception trigger (user mode) test failed\n");
         return FAIL;
       }
-
     }
     printf("Finished \n");
     return SUCCESS;
