@@ -112,7 +112,9 @@ typedef struct packed {
   logic                        bufferable;
   logic                        cacheable;
   logic                        integrity;
-  logic [PMA_MAX_REGIONS-1:0]  matchlist;
+  logic [PMA_MAX_REGIONS-1:0]  match_list;
+  logic [31:0]                 match_idx;
+  logic                        have_match;
 } pma_status_t;
 
 

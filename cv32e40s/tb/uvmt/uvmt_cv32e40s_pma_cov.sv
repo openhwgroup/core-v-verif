@@ -35,10 +35,13 @@ module  uvmt_cv32e40s_pma_cov
 );
 
 
-  // Helper Logic - Num Matches
+  // Helper Logic - Match Info
 
   wire logic [31:0]  num_matches;
-  assign  num_matches = $countones(pma_status_i.matchlist);
+  assign  num_matches = $countones(pma_status_i.match_list);
+
+  let  have_match = pma_status_i.have_match;
+  let  match_idx  = pma_status_i.match_idx;
 
 
   // Helper Logic - MPU Activation
@@ -65,6 +68,12 @@ module  uvmt_cv32e40s_pma_cov
       bins zero = {0};
       bins one  = {1}                   with (0 < PMA_NUM_REGIONS);
       bins many = {[2:PMA_NUM_REGIONS]} with (1 < PMA_NUM_REGIONS);
+    }
+
+    // vplan:TODO
+    cp_matchindex: coverpoint   match_idx  iff (is_mpu_activated) {
+      bins           regions[] = {[0:PMA_NUM_REGIONS-1]}  iff (have_match == 1);
+      wildcard bins  nomatch   = {'X}                     iff (have_match == 0);
     }
   endgroup
 

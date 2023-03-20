@@ -61,26 +61,28 @@ module  uvmt_cv32e40s_pma_model
     logic [33:0]  high = {PMA_CFG[i].word_addr_high, 2'b 00};
     return ((low <= addr_i) && (addr_i < high));
   endfunction
-  for (genvar i = 0; i < MAX_REGIONS; i++) begin: gen_matchlist
-    assign  pma_status_o.matchlist[i] = (i < PMA_NUM_REGIONS) && is_match_on(i);
+  for (genvar i = 0; i < MAX_REGIONS; i++) begin: gen_match_list
+    assign  pma_status_o.match_list[i] = (i < PMA_NUM_REGIONS) && is_match_on(i);
   end
 
-  var logic      have_region_match;
-  var pma_cfg_t  matched_region;
-  var int        matched_index;
+  var pma_cfg_t    cfg_matched;
+  var logic        have_match;
+  var logic[31:0]  match_idx;
   always_comb  begin
-    have_region_match = '0;
-    matched_region    = 'X;
-    matched_index     = 'X;
+    have_match   = '0;
+    cfg_matched  = 'X;
+    match_idx    = 'X;
     for (int i = 0; i < PMA_NUM_REGIONS; i++) begin
-      if (pma_status_o.matchlist[i]) begin
-        have_region_match = 1;
-        matched_region    = PMA_CFG[i];
-        matched_index     = i;
+      if (pma_status_o.match_list[i]) begin
+        have_match   = 1;
+        cfg_matched  = PMA_CFG[i];
+        match_idx    = i;
         break;
       end
     end
   end
+  assign pma_status_o.have_match = have_match;
+  assign pma_status_o.match_idx  = match_idx;
 
   wire logic  override_dm;
   assign  override_dm =
@@ -92,7 +94,7 @@ module  uvmt_cv32e40s_pma_model
     cfg_effective =
       override_dm
         ? CFG_DEBUG
-        : (have_region_match ? matched_region : CFG_DEFAULT);
+        : (pma_status_o.have_match ? cfg_matched : CFG_DEFAULT);
 
     cfg_effective.bufferable =
       cfg_effective.bufferable && !IS_INSTR_SIDE && !load_access;

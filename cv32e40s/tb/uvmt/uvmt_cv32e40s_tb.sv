@@ -1179,7 +1179,7 @@ module uvmt_cv32e40s_tb;
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
         .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
       ) pma_model_instr_i (
-        .addr_i (pma_i.trans_addr_i),
+        .addr_i       (pma_i.trans_addr_i),
         .pma_status_o (uvmt_cv32e40s_tb.pma_status_instr),
         .*
       );
@@ -1193,7 +1193,7 @@ module uvmt_cv32e40s_tb;
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
         .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
       ) pma_model_data_i (
-        .addr_i (pma_i.trans_addr_i),
+        .addr_i       (pma_i.trans_addr_i),
         .pma_status_o (uvmt_cv32e40s_tb.pma_status_data),
         .*
       );
