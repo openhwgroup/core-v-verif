@@ -108,10 +108,11 @@ typedef struct packed {
  * PMA Status
  */
 typedef struct packed {
-  logic  allow;
-  logic  bufferable;
-  logic  cacheable;
-  logic  integrity;
+  logic                        allow;
+  logic                        bufferable;
+  logic                        cacheable;
+  logic                        integrity;
+  logic [PMA_MAX_REGIONS-1:0]  matchlist;
 } pma_status_t;
 
 

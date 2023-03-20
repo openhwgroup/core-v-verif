@@ -1238,6 +1238,7 @@ module uvmt_cv32e40s_tb;
       uvmt_cv32e40s_pma_cov #(
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS)
       ) pma_cov_instr_i (
+        .pma_status_i (uvmt_cv32e40s_tb.pma_status_instr),
         .*
       );
 
@@ -1245,6 +1246,7 @@ module uvmt_cv32e40s_tb;
       uvmt_cv32e40s_pma_cov #(
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS)
       ) pma_cov_data_i (
+        .pma_status_i (uvmt_cv32e40s_tb.pma_status_data),
         .*
       );
 

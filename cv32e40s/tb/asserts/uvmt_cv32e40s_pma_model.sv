@@ -56,14 +56,13 @@ module  uvmt_cv32e40s_pma_model
     main    : 1'b 1
   };
 
-  wire logic [MAX_REGIONS-1:0]  matching_states;
   function automatic logic  is_match_on(int i);
     logic [33:0]  low  = {PMA_CFG[i].word_addr_low,  2'b 00};
     logic [33:0]  high = {PMA_CFG[i].word_addr_high, 2'b 00};
     return ((low <= addr_i) && (addr_i < high));
   endfunction
-  for (genvar i = 0; i < MAX_REGIONS; i++) begin: gen_matching_states
-    assign  matching_states[i] = (i < PMA_NUM_REGIONS) && is_match_on(i);
+  for (genvar i = 0; i < MAX_REGIONS; i++) begin: gen_matchlist
+    assign  pma_status_o.matchlist[i] = (i < PMA_NUM_REGIONS) && is_match_on(i);
   end
 
   var logic      have_region_match;
@@ -74,7 +73,7 @@ module  uvmt_cv32e40s_pma_model
     matched_region    = 'X;
     matched_index     = 'X;
     for (int i = 0; i < PMA_NUM_REGIONS; i++) begin
-      if (matching_states[i]) begin
+      if (pma_status_o.matchlist[i]) begin
         have_region_match = 1;
         matched_region    = PMA_CFG[i];
         matched_index     = i;

@@ -193,6 +193,8 @@
 
    // PMA
 
+   parameter int  PMA_MAX_REGIONS = 16;
+
    `ifdef PARAM_SET_0
       // Sat from the include file
    `elsif PARAM_SET_1

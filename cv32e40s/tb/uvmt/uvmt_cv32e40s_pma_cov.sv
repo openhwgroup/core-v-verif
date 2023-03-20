@@ -20,28 +20,25 @@
 `default_nettype none
 
 
-module  uvmt_cv32e40s_pma_cov #(
+module  uvmt_cv32e40s_pma_cov
+  import uvmt_cv32e40s_pkg::*;
+#(
   parameter int  PMA_NUM_REGIONS
 )(
   input wire  clk,
   input wire  rst_n,
 
   input wire  core_trans_ready_o,
-  input wire  core_trans_valid_i
+  input wire  core_trans_valid_i,
+
+  input wire pma_status_t  pma_status_i
 );
 
 
   // Helper Logic - Num Matches
 
-  localparam int  MAX_REGIONS = 16;
-
-let is_pma_match(i) = 1;//TODO:ERROR remove
-  wire logic [MAX_REGIONS-1:0]  pma_matches;
-  for (genvar i = 0; i < MAX_REGIONS; i++) begin: gen_pma_matches
-    assign pma_matches[i] = is_pma_match(i);
-  end
-
-  let  num_matches = $countones(pma_matches);
+  wire logic [31:0]  num_matches;
+  assign  num_matches = $countones(pma_status_i.matchlist);
 
 
   // Helper Logic - MPU Activation
