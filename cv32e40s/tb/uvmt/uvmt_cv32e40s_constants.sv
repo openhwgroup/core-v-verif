@@ -113,10 +113,10 @@
       // Sat from the include file
    `elsif RV32E
       parameter cv32e40s_pkg::rv32_e CORE_PARAM_RV32              = cv32e40s_pkg::RV32E;
-     parameter CORE_PARAM_REGFILE_NUM_WORDS = 16;
+      parameter                      CORE_PARAM_REGFILE_NUM_WORDS = 16;
    `else
       parameter cv32e40s_pkg::rv32_e CORE_PARAM_RV32              = cv32e40s_pkg::RV32I;
-     parameter CORE_PARAM_REGFILE_NUM_WORDS = 32;
+      parameter                      CORE_PARAM_REGFILE_NUM_WORDS = 32;
    `endif
 
 
@@ -205,7 +205,7 @@
       // Sat from the include file
    `elsif PMA_CUSTOM_CFG
       const string pma_cfg_name = "pma_custom_cfg";
-      parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 3;
+      parameter int unsigned            CORE_PARAM_PMA_NUM_REGIONS = 3;
       parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
          // Overlap "shadow" of main code (.text), for testing overlap priority
          cv32e40s_pkg::pma_cfg_t'{
@@ -346,7 +346,7 @@
         };
    `else
       const string pma_cfg_name = "pma_noregion";
-      parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 0;
+      parameter int unsigned            CORE_PARAM_PMA_NUM_REGIONS = 0;
       parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[-1:0] = '{default:cv32e40s_pkg::PMA_R_DEFAULT};
    `endif
 

@@ -11,7 +11,7 @@
 */
 
 OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv",
-          "elf32-littleriscv")
+              "elf32-littleriscv")
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
 
@@ -45,7 +45,6 @@ SECTIONS
   {
    PROVIDE(__debugger_stack_start = ALIGN(ORIGIN(dbg) + LENGTH(dbg) - 15, 16));
   } >dbg
-
 
 
   /* NMI interrupt handler fixed entry point */
