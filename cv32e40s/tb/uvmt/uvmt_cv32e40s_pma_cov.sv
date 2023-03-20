@@ -23,13 +23,16 @@
 module  uvmt_cv32e40s_pma_cov
   import uvmt_cv32e40s_pkg::*;
 #(
-  parameter int  PMA_NUM_REGIONS
+  parameter int  PMA_NUM_REGIONS,
+  parameter bit  IS_INSTR_SIDE
 )(
   input wire  clk,
   input wire  rst_n,
 
   input wire  core_trans_ready_o,
   input wire  core_trans_valid_i,
+  input wire  misaligned_access_i,
+  input wire  load_access,
 
   input wire pma_status_t  pma_status_i
 );
@@ -71,10 +74,35 @@ module  uvmt_cv32e40s_pma_cov
     }
 
     // vplan:TODO
-    cp_matchindex: coverpoint   match_idx  iff (is_mpu_activated) {
+    cp_matchregion: coverpoint  match_idx  iff (is_mpu_activated) {
       bins           regions[] = {[0:PMA_NUM_REGIONS-1]}  iff (have_match == 1);
       wildcard bins  nomatch   = {'X}                     iff (have_match == 0);
     }
+
+    // vplan:TODO
+    cp_aligned: coverpoint  misaligned_access_i  iff (is_mpu_activated) {
+      bins          misaligned = {1} with (!IS_INSTR_SIDE);
+      illegal_bins  illegal    = {1} with ( IS_INSTR_SIDE);
+      bins          aligned    = {0};
+    }
+
+    // vplan:TODO
+    cp_loadstoreexec: coverpoint  load_access  iff (is_mpu_activated) {
+      bins           load  = {1}  with (!IS_INSTR_SIDE);
+      bins           store = {0}  with (!IS_INSTR_SIDE);
+      wildcard bins  exec  = {'X} with ( IS_INSTR_SIDE);
+    }
+
+    // vplan:TODO
+    cp_main:        coverpoint  pma_status_i.main         iff (is_mpu_activated);
+    cp_bufferable:  coverpoint  pma_status_i.bufferable   iff (is_mpu_activated) {
+      bins          bufferable    = {1} with (!IS_INSTR_SIDE);
+      illegal_bins  illegal       = {1} with ( IS_INSTR_SIDE);
+      bins          nonbufferable = {0};
+    }
+    cp_cacheable:   coverpoint  pma_status_i.cacheable    iff (is_mpu_activated);
+    cp_integrity:   coverpoint  pma_status_i.integrity    iff (is_mpu_activated);
+    cp_override_dm: coverpoint  pma_status_i.override_dm  iff (is_mpu_activated);
   endgroup
 
   cg  cg_inst = new;

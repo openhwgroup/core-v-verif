@@ -259,7 +259,7 @@
       const string pma_cfg_name = "pma_test_cfg_2";
       parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 7;
       parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
-        '{word_addr_low : 32'hE010_0000>>2, word_addr_high : 32'hFFFF_FFFF>>2, main : 1'b0, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b0},
+        '{word_addr_low : 32'hE010_0000>>2, word_addr_high : 32'hFFFF_FFFF>>2, main : 1'b0, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b1},
         '{word_addr_low : 32'hE000_0000>>2, word_addr_high : 32'hE00F_FFFF>>2, main : 1'b0, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b0},
         '{word_addr_low : 32'hA000_0000>>2, word_addr_high : 32'hDFFF_FFFF>>2, main : 1'b0, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b0},
         '{word_addr_low : 32'h6000_0000>>2, word_addr_high : 32'h9FFF_FFFF>>2, main : 1'b1, bufferable : 1'b0, cacheable : 1'b1, integrity : 1'b0},
@@ -271,7 +271,7 @@
       const string pma_cfg_name = "pma_test_cfg_3";
       parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 16;
       parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
-        '{word_addr_low : 32'h0000_A000>>2, word_addr_high : 32'hFFFE_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b1, integrity : 1'b0},
+        '{word_addr_low : 32'h0000_A000>>2, word_addr_high : 32'hFFFE_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b1, integrity : 1'b1},
         '{word_addr_low : 32'h0200_0000>>2, word_addr_high : 32'hEFFF_FFFF>>2, main : 1'b1, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b0},
         '{word_addr_low : 32'h0500_0000>>2, word_addr_high : 32'h8459_FFFF>>2, main : 1'b0, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b0},
         '{word_addr_low : 32'h1000_00F1>>2, word_addr_high : 32'h82FF_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b0},
@@ -292,7 +292,7 @@
       const string pma_cfg_name = "pma_test_cfg_4";
       parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 16;
       parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
-        '{word_addr_low : 32'hE700_EF00>>2, word_addr_high : 32'hE9FF_FFFF>>2, main : 1'b0, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b0},
+        '{word_addr_low : 32'hE700_EF00>>2, word_addr_high : 32'hE9FF_FFFF>>2, main : 1'b0, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b1},
         '{word_addr_low : 32'hC000_0000>>2, word_addr_high : 32'hDFFF_FFFF>>2, main : 1'b0, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b0},
         '{word_addr_low : 32'hBC00_0000>>2, word_addr_high : 32'hBCFF_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b0},
         '{word_addr_low : 32'hA000_0000>>2, word_addr_high : 32'hAFFF_FFFF>>2, main : 1'b1, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b0},
@@ -313,7 +313,7 @@
       const string pma_cfg_name = "pma_test_cfg_5";
       parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 16;
       parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
-        '{word_addr_low : 32'h0000_0000>>2, word_addr_high : 32'hFFFF_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b1, integrity : 1'b0},
+        '{word_addr_low : 32'h0000_0000>>2, word_addr_high : 32'hFFFF_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b1, integrity : 1'b1},
         '{word_addr_low : 32'h1249_2492>>2, word_addr_high : 32'h1249_2492>>2, main : 1'b0, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b0},
         '{word_addr_low : 32'h0000_0000>>2, word_addr_high : 32'h0000_0000>>2, main : 1'b0, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b0},
         '{word_addr_low : 32'hDB6D_B6DB>>2, word_addr_high : 32'hDB6D_B6DB>>2, main : 1'b0, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b0},

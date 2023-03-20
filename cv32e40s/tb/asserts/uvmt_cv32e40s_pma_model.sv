@@ -94,7 +94,7 @@ module  uvmt_cv32e40s_pma_model
     cfg_effective =
       override_dm
         ? CFG_DEBUG
-        : (pma_status_o.have_match ? cfg_matched : CFG_DEFAULT);
+        : (have_match ? cfg_matched : CFG_DEFAULT);
 
     cfg_effective.bufferable =
       cfg_effective.bufferable && !IS_INSTR_SIDE && !load_access;
@@ -111,9 +111,11 @@ module  uvmt_cv32e40s_pma_model
   assign  pma_status_o.allow =
     override_dm  ||
     (IS_INSTR_SIDE ? allow_instr : allow_data);
-  assign  pma_status_o.bufferable = cfg_effective.bufferable;
-  assign  pma_status_o.cacheable  = cfg_effective.cacheable;
-  assign  pma_status_o.integrity  = cfg_effective.integrity;
+  assign  pma_status_o.main        = cfg_effective.main;
+  assign  pma_status_o.bufferable  = cfg_effective.bufferable;
+  assign  pma_status_o.cacheable   = cfg_effective.cacheable;
+  assign  pma_status_o.integrity   = cfg_effective.integrity;
+  assign  pma_status_o.override_dm = override_dm;
 
 
 endmodule : uvmt_cv32e40s_pma_model
