@@ -33,6 +33,7 @@ module  uvmt_cv32e40s_pma_cov
   input wire  core_trans_valid_i,
   input wire  misaligned_access_i,
   input wire  load_access,
+  input wire  core_trans_pushpop_i,
 
   input wire pma_status_t  pma_status_i
 );
@@ -94,15 +95,72 @@ module  uvmt_cv32e40s_pma_cov
     }
 
     // vplan:TODO
-    cp_main:        coverpoint  pma_status_i.main         iff (is_mpu_activated);
-    cp_bufferable:  coverpoint  pma_status_i.bufferable   iff (is_mpu_activated) {
+    cp_allow:       coverpoint  pma_status_i.allow       iff (is_mpu_activated) {
+      bins allow    = {1};
+      bins disallow = {0};
+    }
+    cp_main:        coverpoint  pma_status_i.main        iff (is_mpu_activated);
+    cp_bufferable:  coverpoint  pma_status_i.bufferable  iff (is_mpu_activated) {
       bins          bufferable    = {1} with (!IS_INSTR_SIDE);
       illegal_bins  illegal       = {1} with ( IS_INSTR_SIDE);
       bins          nonbufferable = {0};
     }
-    cp_cacheable:   coverpoint  pma_status_i.cacheable    iff (is_mpu_activated);
-    cp_integrity:   coverpoint  pma_status_i.integrity    iff (is_mpu_activated);
-    cp_override_dm: coverpoint  pma_status_i.override_dm  iff (is_mpu_activated);
+    cp_cacheable:  coverpoint  pma_status_i.cacheable    iff (is_mpu_activated);
+    cp_integrity:  coverpoint  pma_status_i.integrity    iff (is_mpu_activated);
+    cp_overridedm: coverpoint  pma_status_i.override_dm  iff (is_mpu_activated);
+
+    // vplan:TODO
+    cp_pushpop: coverpoint  core_trans_pushpop_i  iff (is_mpu_activated) {
+      bins          pushpop = {1} with (!IS_INSTR_SIDE);
+      illegal_bins  illegal = {1} with ( IS_INSTR_SIDE);
+      bins          no      = {0};
+    }
+
+    // vplan:DebugRange
+    cp_dmregion: coverpoint  pma_status_i.accesses_dmregion  iff (is_mpu_activated) {
+      bins in  = {1};
+      bins out = {0};
+    }
+    cp_dmode: coverpoint  core_trans_i.dbg  iff (is_mpu_activated) {
+      bins dmode = {1};
+      bins no    = {0};
+    }
+
+    x_multimatch_aligned_loadstoreexec: cross  cp_multimatch, cp_aligned, cp_loadstoreexec;
+    x_multimatch_allow_loadstoreexec:   cross  cp_multimatch, cp_allow, cp_loadstoreexec {
+      illegal_bins illegal =
+        binsof(cp_multimatch.zero) && binsof(cp_allow.allow) && binsof(cp_loadstoreexec.exec);
+      //TODO:ERROR:silabs-robin how to solve this?
+    }
+    x_multimatch_main:                  cross  cp_multimatch, cp_main;
+    x_multimatch_bufferable:            cross  cp_multimatch, cp_bufferable;
+    x_multimatch_cacheable:             cross  cp_multimatch, cp_cacheable;
+    x_multimatch_integrity:             cross  cp_multimatch, cp_integrity;
+    x_multimatch_overridedm:            cross  cp_multimatch, cp_overridedm;
+
+    x_aligned_allow:              cross  cp_aligned, cp_allow;
+    x_aligned_main_loadstoreexec: cross  cp_aligned, cp_main, cp_loadstoreexec;
+    x_aligned_bufferable:         cross  cp_aligned, cp_bufferable;
+    x_aligned_cacheable:          cross  cp_aligned, cp_cacheable;
+    x_aligned_integrity:          cross  cp_aligned, cp_integrity;
+    x_aligned_overridedm:         cross  cp_aligned, cp_overridedm;
+
+    x_loadstoreexec_allow:        cross  cp_loadstoreexec, cp_allow;
+    x_loadstoreexec_main_pushpop: cross  cp_loadstoreexec, cp_main, cp_pushpop;
+    x_loadstoreexec_bufferable:   cross  cp_loadstoreexec, cp_bufferable;
+    x_loadstoreexec_cacheable:    cross  cp_loadstoreexec, cp_cacheable;
+    x_loadstoreexec_integrity:    cross  cp_loadstoreexec, cp_integrity;
+    x_loadstoreexec_overridedm:   cross  cp_loadstoreexec, cp_overridedm;
+
+    x_allow_main:       cross  cp_allow, cp_main;
+    x_allow_bufferable: cross  cp_allow, cp_bufferable;
+    x_allow_cacheable:  cross  cp_allow, cp_cacheable;
+    x_allow_integrity:  cross  cp_allow, cp_integrity;
+    x_allow_overridedm: cross  cp_allow, cp_overridedm;
+
+    x_dmregion_dmode: cross  cp_dmregion, cp_dmode;
+
+    //TODO:INFO:silabs-robin more crosses are possible, but bordering on impractical/infeasible
   endgroup
 
   cg  cg_inst = new;

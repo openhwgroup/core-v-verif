@@ -84,10 +84,13 @@ module  uvmt_cv32e40s_pma_model
   assign pma_status_o.have_match = have_match;
   assign pma_status_o.match_idx  = match_idx;
 
-  wire logic  override_dm;
-  assign  override_dm =
-    core_trans_i.dbg  &&
+
+  wire logic  accesses_dmregion;
+  assign  accesses_dmregion =
     ((DM_REGION_START <= addr_i) && (addr_i <= DM_REGION_END));
+
+  wire logic  override_dm;
+  assign  override_dm = core_trans_i.dbg && accesses_dmregion;
 
   var pma_cfg_t  cfg_effective;
   always_comb  begin
@@ -111,11 +114,12 @@ module  uvmt_cv32e40s_pma_model
   assign  pma_status_o.allow =
     override_dm  ||
     (IS_INSTR_SIDE ? allow_instr : allow_data);
-  assign  pma_status_o.main        = cfg_effective.main;
-  assign  pma_status_o.bufferable  = cfg_effective.bufferable;
-  assign  pma_status_o.cacheable   = cfg_effective.cacheable;
-  assign  pma_status_o.integrity   = cfg_effective.integrity;
-  assign  pma_status_o.override_dm = override_dm;
+  assign  pma_status_o.main              = cfg_effective.main;
+  assign  pma_status_o.bufferable        = cfg_effective.bufferable;
+  assign  pma_status_o.cacheable         = cfg_effective.cacheable;
+  assign  pma_status_o.integrity         = cfg_effective.integrity;
+  assign  pma_status_o.override_dm       = override_dm;
+  assign  pma_status_o.accesses_dmregion = accesses_dmregion;
 
 
 endmodule : uvmt_cv32e40s_pma_model
