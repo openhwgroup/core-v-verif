@@ -110,6 +110,7 @@ volatile int g_debug_break_loop;
 volatile int g_debug_entry_status;
 
 volatile uint32_t g_illegal_insn_status;
+volatile uint32_t g_register_access_status;
 
 volatile uint8_t  g_some_data_bytes[4]     = {0xC0, 0xFF, 0xEB, 0xEE};
 volatile uint16_t g_some_data_halfwords[2] = {0xDEAD, 0xBEEF};
@@ -1208,7 +1209,7 @@ void _debug_mode_register_test(void) {
                            li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                            sw    s1,     g_debug_entry_status, s2
                          1:nop
-                           )" ::: "s0", "s1");
+                           )" ::: "s0", "s1", "s2");
 
   // TDATA1 (Type==6) - Write 1s
   g_tdata1_next = (6 << 28) | ~(0xF << 28); // TYPE = Address match
@@ -1221,7 +1222,7 @@ void _debug_mode_register_test(void) {
                            li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                            sw   s1,     g_debug_entry_status, s2
                          1:nop
-                           )" ::: "s0", "s1");
+                           )" ::: "s0", "s1", "s2");
 
   // TDATA1 (Type==6) - Write 0s
   g_tdata1_next = (6 << 28); // TYPE = Address match
@@ -1234,7 +1235,7 @@ void _debug_mode_register_test(void) {
                            li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                            sw   s1,     g_debug_entry_status, s2
                          1:nop
-                           )" ::: "s0", "s1");
+                           )" ::: "s0", "s1", "s2");
 
   // TDATA2 (Type==6) - Address match - Write 1s
   __asm__ volatile (R"(li   s1,     0xFFFFFFFF
@@ -1244,7 +1245,7 @@ void _debug_mode_register_test(void) {
                            li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                            sw    s1,     g_debug_entry_status, s2
                          1:nop
-                           )" ::: "s0", "s1");
+                           )" ::: "s0", "s1", "s2");
 
   // TDATA2 (Type==6) - Address match - Write 0s
   __asm__ volatile (R"(csrwi tdata2, 0x0
@@ -1253,7 +1254,7 @@ void _debug_mode_register_test(void) {
                            li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                            sw    s1,     g_debug_entry_status, s2
                          1:nop
-                           )" ::: "s0", "s1");
+                           )" ::: "s0", "s1", "s2");
 
   // TDATA1 (Type==2) - Write 1s
   g_tdata1_next = (2 << 28) | ~(0xF << 28); // TYPE = Address match
@@ -1266,7 +1267,7 @@ void _debug_mode_register_test(void) {
                        li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw   s1,     g_debug_entry_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
 
   // TDATA1 (Type==2) - Write 0s
   g_tdata1_next = (2 << 28); // TYPE = Address match
@@ -1279,7 +1280,7 @@ void _debug_mode_register_test(void) {
                        li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw   s1,     g_debug_entry_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
 
 
   // TDATA2 (Type==2) - Legacy Address match - Write 1s
@@ -1290,7 +1291,7 @@ void _debug_mode_register_test(void) {
                        li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw   s1,     g_debug_entry_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
 
   // TDATA2 (Type==2) - Legacy Address match - Write 0s
   __asm__ volatile (R"(csrwi tdata2, 0x0
@@ -1299,7 +1300,7 @@ void _debug_mode_register_test(void) {
                        li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw    s1,     g_debug_entry_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
 
   // TDATA1 (Type==5) - Exception Trigger - Write when tdata2 is illegal
   g_tdata1_next = (5 << 28) | ~(0xF << 28); // TYPE = Exception Trigger
@@ -1315,7 +1316,7 @@ void _debug_mode_register_test(void) {
                        li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw   s1,     g_debug_entry_status, s2
                      1:csrwi tdata2, 0x0
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
 
   // TDATA1 (Type==5) - Exception Trigger - Write 1s
   g_tdata1_next = (5 << 28) | ~(0xF << 28); // TYPE = Exception Trigger
@@ -1328,7 +1329,7 @@ void _debug_mode_register_test(void) {
                        li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw   s1,     g_debug_entry_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
 
   // TDATA1 (Type==5) - Exception Trigger - Write 0s
   g_tdata1_next = (5 << 28); // TYPE = Exception Trigger
@@ -1341,7 +1342,7 @@ void _debug_mode_register_test(void) {
                        li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw   s1,     g_debug_entry_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
 
 
   // TDATA2 (Type==5) - Exception Trigger - Write 1s
@@ -1353,7 +1354,7 @@ void _debug_mode_register_test(void) {
                        li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw   s1,     g_debug_entry_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
 
   // TDATA2 (Type==5) - Exception Trigger  - Write 0s
   __asm__ volatile (R"(csrwi tdata2, 0x0
@@ -1362,7 +1363,7 @@ void _debug_mode_register_test(void) {
                      1:li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw    s1,     g_debug_entry_status, s2
                      2:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
   // TDATA1 - Write 0s
   __asm__ volatile (R"(csrwi tdata1, 0x0
                        csrr  s0,     tdata1
@@ -1371,7 +1372,7 @@ void _debug_mode_register_test(void) {
                        li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw    s1,     g_debug_entry_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
 
   // TDATA1 - Write 1s
   __asm__ volatile (R"(li    s0,     0xFFFFFFFF
@@ -1382,7 +1383,7 @@ void _debug_mode_register_test(void) {
                        li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw    s1,     g_debug_entry_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
 
 
   // TDATA2 (Disabled) - Write 1s
@@ -1393,7 +1394,7 @@ void _debug_mode_register_test(void) {
                        li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw    s1,     g_debug_entry_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
 
   // TDATA2 (Disabled) - Write 0s
   __asm__ volatile (R"(csrwi tdata2, 0x0
@@ -1402,7 +1403,7 @@ void _debug_mode_register_test(void) {
                        li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw    s1,     g_debug_entry_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
 
   // TDATA3 - Write 1s
   __asm__ volatile (R"(li    s0,     0xFFFFFFFF
@@ -1412,7 +1413,7 @@ void _debug_mode_register_test(void) {
                        li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw    s1,     g_debug_entry_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
 
   // TINFO - Write 1s, Debug Access test
   __asm__ volatile (R"(li    s1,     0xFFFFFFFF
@@ -1423,7 +1424,7 @@ void _debug_mode_register_test(void) {
                        li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw    s1,     g_debug_entry_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
 
   if  (g_debug_entry_status == DEBUG_STATUS_ENTERED_FAIL) {
     printf("Debug Mode Register test FAILED\n\n");
@@ -1459,87 +1460,105 @@ int test_register_access(void) {
   if (DEBUG_PRINT) printf("\n  Checking register access from Machine mode\n");
 
   // TDATA1 - Write valid value (in m-mode), check that is ignored
+  g_register_access_status = FAIL;
   __asm__ volatile (R"(li    s1,     0x60000000
                        csrw  tdata1, s1
                        csrr  s0,     tdata1
                        li    s1,     0xF8000000
-                       beq   s0,     s1, 1f
-                       li    a0,     0x1   #FAIL
-                       ret
+                       bne   s0,     s1, 1f
+                       li    s1,     0x0   #SUCCESS
+                       sw    s1,     g_register_access_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
+  if (g_register_access_status != SUCCESS) return FAIL;
 
   // TDATA2 - Write valid value (in m-mode), check that is ignored
+  g_register_access_status = FAIL;
   __asm__ volatile (R"(li    s1,     0xFFFFFFFF
                        csrw  tdata2, s1
                        csrr  s0,     tdata2
-                       beqz  s0,     1f
-                       li    a0,     0x1   #FAIL
-                       ret
+                       bnez  s0,     1f
+                       li    s1,     0x0   #SUCCESS
+                       sw    s1,     g_register_access_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
+  if (g_register_access_status != SUCCESS) return FAIL;
 
   // TINFO - Write 0s, machine mode access test
+  g_register_access_status = FAIL;
   __asm__ volatile (R"(li    s1,     0x0
                        csrw  tinfo,  s1
                        csrr  s0,     tinfo
                        li    s1,     0x8064
-                       beq   s0,     s1,  1f
-                       li    a0,     0x1   #FAIL
-                       ret
+                       bne   s0,     s1,  1f
+                       li    s1,     0x0   #SUCCESS
+                       sw    s1,     g_register_access_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
+  if (g_register_access_status != SUCCESS) return FAIL;
 
   // TCONTROL - Write 1s
+  g_register_access_status = FAIL;
   __asm__ volatile (R"(li    s1,     0xFFFFFFFF
                        csrw  tcontrol,  s1
                        csrr  s0,     tcontrol
-                       beqz  s0,     1f
-                       li    a0,     0x1   #FAIL
-                       ret
+                       bnez  s0,     1f
+                       li    s1,     0x0   #SUCCESS
+                       sw    s1,     g_register_access_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
+  if (g_register_access_status != SUCCESS) return FAIL;
+
+
   // TDATA1 - Write valid value (in m-mode), check that is ignored
+  g_register_access_status = FAIL;
   __asm__ volatile (R"(li    s1,     0x60000000
                        csrw  tdata1, s1
                        csrr  s0,     tdata1
                        li    s1,     0xF8000000
-                       beq   s0,     s1, 1f
-                       li    a0,     0x1   #FAIL
-                       ret
+                       bne   s0,     s1, 1f
+                       li    s1,     0x0   #SUCCESS
+                       sw    s1,     g_register_access_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
+  if (g_register_access_status != SUCCESS) return FAIL;
 
   // TDATA2 - Write valid value (in m-mode), check that is ignored
+  g_register_access_status = FAIL;
   __asm__ volatile (R"(li    s1,     0xFFFFFFFF
                        csrw  tdata2, s1
                        csrr  s0,     tdata2
-                       beqz  s0,     1f
-                       li    a0,     0x1   #FAIL
-                       ret
+                       bnez  s0,     1f
+                       li    s1,     0x0   #SUCCESS
+                       sw    s1,     g_register_access_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
+  if (g_register_access_status != SUCCESS) return FAIL;
 
   // TINFO - Write 0s, machine mode access test
+  g_register_access_status = FAIL;
   __asm__ volatile (R"(li    s1,     0x0
                        csrw  tinfo,  s1
                        csrr  s0,     tinfo
                        li    s1,     0x8064
-                       beq   s0,     s1,  1f
-                       li    a0,     0x1   #FAIL
-                       ret
+                       bne   s0,     s1, 1f
+                       li    s1,     0x0   #SUCCESS
+                       sw    s1,     g_register_access_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
+  if (g_register_access_status != SUCCESS) return FAIL;
 
   // TCONTROL - Write 1s
+  g_register_access_status = FAIL;
   __asm__ volatile (R"(li    s1,     0xFFFFFFFF
                        csrw  tcontrol,  s1
                        csrr  s0,     tcontrol
-                       beqz  s0,     1f
-                       li    a0,     0x1   #FAIL
-                       ret
+                       bnez  s0,     1f
+                       li    s1,     0x0   #SUCCESS
+                       sw    s1,     g_register_access_status, s2
                      1:nop
-                       )" ::: "s0", "s1");
+                       )" ::: "s0", "s1", "s2");
+  if (g_register_access_status != SUCCESS) return FAIL;
 
   // Context Registers - Access Checks (in machine mode)
   g_illegal_insn_status = 0;
