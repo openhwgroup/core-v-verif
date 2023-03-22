@@ -365,6 +365,10 @@ function bit [1:0] check_mem_act(  int txn);
 
 endfunction : check_mem_act
 
+function automatic logic is_mem_act();
+  return  rvfi_valid && (|rvfi_mem_rmask || |rvfi_mem_wmask);
+endfunction : is_mem_act
+
 
 // Short functions for recognising special functions
 
@@ -454,6 +458,27 @@ function logic is_instr_bus_valid();
             (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_BUS_FAULT)
     );
 endfunction : is_instr_bus_valid
+
+function automatic logic [31:0] rvfi_mem_addr_word0_highbyte();
+  let addr = rvfi_mem_addr[31:0];
+  case (1)
+    (rvfi_mem_rmask[3] || rvfi_mem_wmask[3]):
+      return  addr + 3;
+    (rvfi_mem_rmask[2] || rvfi_mem_wmask[2]):
+      return  addr + 2;
+    (rvfi_mem_rmask[1] || rvfi_mem_wmask[1]):
+      return  addr + 1;
+    default:
+      return  addr;
+  endcase
+endfunction : rvfi_mem_addr_word0_highbyte
+
+function automatic logic is_split_datatrans();
+  logic [31:0]  low_addr  = rvfi_mem_addr;
+  logic [31:0]  high_addr = rvfi_mem_addr_word0_highbyte();
+  return  is_mem_act() && (low_addr[31:2] != high_addr[31:2]);
+endfunction : is_split_datatrans
+
 
 endinterface : uvma_rvfi_instr_if
 

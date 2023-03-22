@@ -717,7 +717,7 @@ module uvmt_cv32e40s_tb;
     );
 
 
-  // RVFI assertions
+  // RVFI Asserts & Covers
 
   bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i
     uvmt_cv32e40s_rvfi_assert #(
@@ -727,6 +727,12 @@ module uvmt_cv32e40s_tb;
       .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
       .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
       .writebuf_valid_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.valid_i),
+      .*
+    );
+
+  bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i
+    uvmt_cv32e40s_rvfi_cov  rvfi_cov_i (
+      .rvfi_if (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
       .*
     );
 
