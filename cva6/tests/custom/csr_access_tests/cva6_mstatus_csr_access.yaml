@@ -1,0 +1,154 @@
+- csr: CSR_MSTATUS
+  description: >
+    Machine Status Register
+  address: 0x300
+  privilege_mode: M
+  rv32:
+    - field_name: SD
+      description: >
+       SD 
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 31
+    - field_name: WPRI
+      description: >
+       reserved for future use 
+      type: R
+      reset_val: 0
+      msb: 30
+      lsb: 23
+    - field_name: TSR
+      description: >
+       Trap SRET: supports intercepting the supervisor exception return instruction
+      type: RW
+      reset_val: 0
+      msb: 22
+      lsb: 22
+    - field_name: TW
+      description: >
+       Timeout Wait: supports intercepting the WFI instruction 
+      type: RW
+      reset_val: 0
+      msb: 21
+      lsb: 21
+    - field_name: TVM
+      description: >
+        Trap Virtual Memory,supports intercepting supervisor virtual-memory management operations.
+      type: RW
+      reset_val: 0
+      msb: 20
+      lsb: 20
+    - field_name: MXR
+      description: >
+        Make eXecutable Readable: modifies the privilege with which loads access virtual memory.        
+      type: RW
+      reset_val: 0
+      msb: 19
+      lsb: 19
+    - field_name: SUM
+      description: >
+        permit Supervisor User Memory access
+      type: RW
+      reset_val: 0
+      msb: 18
+      lsb: 18
+    - field_name: MPRV
+      description: >
+       Modify PRiVilege 
+      type: RW
+      reset_val: 0
+      msb: 17
+      lsb: 17
+    - field_name: XS
+      description: >
+        use to reduce the cost of context save and restore by setting and tracking the current state
+      type: R
+      reset_val: 0
+      msb: 16
+      lsb: 15
+    - field_name: FS
+      description: >
+       use to reduce the cost of context save and restore by setting and tracking the current state 
+      type: RW
+      reset_val: 0
+      msb: 14
+      lsb: 13
+    - field_name: MPP
+      description: >
+        xPP fields can only hold privilege modes up to x, so MPP is two bits wide, SPP is one bit wide, and UPP is implicitly zero 
+      type: RW
+      reset_val: 0
+      msb: 12
+      lsb: 11
+    - field_name: VS
+      description: >
+       reserved for future use 
+      type: R
+      reset_val: 0
+      msb: 10
+      lsb: 9
+    - field_name: SPP
+      description: >
+       xPP fields can only hold privilege modes up to x, so MPP is two bits wide, SPP is one bit wide, and UPP is implicitly zero  
+      type: RW
+      reset_val: 0
+      msb: 8
+      lsb: 8
+    - field_name: MPIE
+      description: >
+        MPIE       
+      type: RW
+      reset_val: 0
+      msb: 7
+      lsb: 7
+    - field_name: WPRI
+      description: >
+       reserved for future use 
+      type: R
+      reset_val: 0
+      msb: 6
+      lsb: 6
+    - field_name: SPIE
+      description: >
+        indicates whether supervisor interrupts were enabled prior to trapping into supervisor mode        
+      type: RW
+      reset_val: 0
+      msb: 5
+      lsb: 5
+    - field_name: UPIE
+      description: >
+        indicates whether user-level interrupts were enabled prior to taking a user-level trap
+      type: R
+      reset_val: 0
+      msb: 4
+      lsb: 4
+    - field_name: MIE
+      description: >
+       Global interrupt-enable bits 
+      type: RW
+      reset_val: 0
+      msb: 3
+      lsb: 3
+    - field_name: WPRI
+      description: >
+       reserved for future use 
+      type: R
+      reset_val: 0
+      msb: 2
+      lsb: 2
+    - field_name: SIE
+      description: >
+       Global interrupt-enable bits 
+      type: RW
+      reset_val: 0
+      msb: 1
+      lsb: 1
+    - field_name: UIE
+      description: >
+       Global interrupt-enable bits 
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0
+
