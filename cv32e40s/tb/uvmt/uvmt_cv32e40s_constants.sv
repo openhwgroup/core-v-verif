@@ -330,6 +330,27 @@
         '{word_addr_low : 32'h5555_5555>>2, word_addr_high : 32'h5555_5555>>2, main : 1'b0, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b0},
         '{word_addr_low : 32'h0000_0000>>2, word_addr_high : 32'h0000_0000>>2, main : 1'b0, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b0}
         };
+   `elsif PMA_TEST_CFG_6
+      const string pma_cfg_name = "pma_test_cfg_6";
+      parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 16;
+      parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
+        '{word_addr_low : 32'h0000_A000>>2, word_addr_high : 32'hFFFE_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b1, integrity : 1'b1},
+        '{word_addr_low : 32'h0200_0000>>2, word_addr_high : 32'hEFFF_FFFF>>2, main : 1'b1, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b1},
+        '{word_addr_low : 32'h0500_0000>>2, word_addr_high : 32'h8459_FFFF>>2, main : 1'b0, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b1},
+        '{word_addr_low : 32'h1000_00F1>>2, word_addr_high : 32'h82FF_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b1},
+        '{word_addr_low : 32'h13AC_AA55>>2, word_addr_high : 32'h7FFF_FFFF>>2, main : 1'b1, bufferable : 1'b0, cacheable : 1'b1, integrity : 1'b1},
+        '{word_addr_low : 32'h2000_0000>>2, word_addr_high : 32'h63FF_FFFF>>2, main : 1'b0, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b1},
+        '{word_addr_low : 32'h2340_000A>>2, word_addr_high : 32'h600F_FFFF>>2, main : 1'b1, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b1},
+        '{word_addr_low : 32'h2A00_0000>>2, word_addr_high : 32'h56FF_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b1, integrity : 1'b1},
+        '{word_addr_low : 32'h2C5A_3200>>2, word_addr_high : 32'h52FF_FFFF>>2, main : 1'b0, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b1},
+        '{word_addr_low : 32'h3000_1353>>2, word_addr_high : 32'h5140_FFFF>>2, main : 1'b0, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b1},
+        '{word_addr_low : 32'h3100_FCAB>>2, word_addr_high : 32'h5000_BCCA>>2, main : 1'b1, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b1},
+        '{word_addr_low : 32'h3420_C854>>2, word_addr_high : 32'h5000_ABFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b1},
+        '{word_addr_low : 32'h3600_A000>>2, word_addr_high : 32'h4F99_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b1, integrity : 1'b1},
+        '{word_addr_low : 32'h3ACE_0000>>2, word_addr_high : 32'h4ABC_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b1},
+        '{word_addr_low : 32'h4400_0000>>2, word_addr_high : 32'h4BFF_FFFF>>2, main : 1'b0, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b1},
+        '{word_addr_low : 32'h4800_0000>>2, word_addr_high : 32'h49FF_FFFF>>2, main : 1'b1, bufferable : 1'b0, cacheable : 1'b1, integrity : 1'b1}
+        };
    `elsif PMA_TEST_CFG_X1 // Used for memory layout generator debug
       const string pma_cfg_name = "pma_test_cfg_x1";
       parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 5;

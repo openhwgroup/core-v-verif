@@ -32,17 +32,18 @@ SECTIONS
      DM_HaltAddress parameter in the RTL */
   .debugger (ORIGIN(dbg)):
   {
+    PROVIDE(_debugger_start = .);
     KEEP(*(.debugger));
   } >dbg
   .debugger_exception (0x1A111000):
   {
+    PROVIDE(_debugger_exception = .);
     KEEP(*(.debugger_exception));
   } >dbg
   /* Debugger Stack*/
   .debugger_stack         : ALIGN(16)
   {
-   PROVIDE(__debugger_stack_start = .);
-   . = 0x80;
+   PROVIDE(__debugger_stack_start = ALIGN(ORIGIN(dbg) + LENGTH(dbg) - 15, 16));
   } >dbg
 
 

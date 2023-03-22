@@ -455,6 +455,7 @@ module uvmt_cv32e40s_tb;
                                                                      .rvfi_csr_wdata(rvfi_i.rvfi_csr_tdata_wdata[3])
     );
 
+
   bind uvmt_cv32e40s_dut_wrap
     uvma_obi_memory_assert_if_wrp#(
       .ADDR_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_ADDR_WIDTH),
@@ -749,141 +750,141 @@ module uvmt_cv32e40s_tb;
     xsecure_if (
 
 
-      .core_i_cs_registers_i_dcsr_rdata                                             (core_i.cs_registers_i.dcsr_rdata),
-      .core_i_id_stage_i_operand_a                                                  (core_i.id_stage_i.operand_a),
-      .core_i_id_stage_i_operand_b                                                  (core_i.id_stage_i.operand_b),
+      //.core_i_cs_registers_i_dcsr_rdata                                             (core_i.cs_registers_i.dcsr_rdata),
+      //.core_i_id_stage_i_operand_a                                                  (core_i.id_stage_i.operand_a),
+      //.core_i_id_stage_i_operand_b                                                  (core_i.id_stage_i.operand_b),
 
-      .core_i_id_stage_i_last_op                                                    (core_i.id_stage_i.last_op),
+      //.core_i_id_stage_i_last_op                                                    (core_i.id_stage_i.last_op),
 
-      .core_i_cs_registers_i_mcause_q                                               (core_i.cs_registers_i.mcause_q),
-      .core_i_wb_stage_i_ctrl_fsm_i_kill_if                                         (core_i.wb_stage_i.ctrl_fsm_i.kill_if),
-      .core_i_wb_stage_i_ctrl_fsm_i_kill_id                                         (core_i.wb_stage_i.ctrl_fsm_i.kill_id),
-      .core_i_wb_stage_i_ctrl_fsm_i_kill_ex                                         (core_i.wb_stage_i.ctrl_fsm_i.kill_ex),
-      .core_i_wb_stage_i_ctrl_fsm_i_kill_wb                                         (core_i.wb_stage_i.ctrl_fsm_i.kill_wb),
-      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_n_flush_q               (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.n_flush_q),
-      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_rptr                    (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.rptr),
+      //.core_i_cs_registers_i_mcause_q                                               (core_i.cs_registers_i.mcause_q),
+      //.core_i_wb_stage_i_ctrl_fsm_i_kill_if                                         (core_i.wb_stage_i.ctrl_fsm_i.kill_if),
+      //.core_i_wb_stage_i_ctrl_fsm_i_kill_id                                         (core_i.wb_stage_i.ctrl_fsm_i.kill_id),
+      //.core_i_wb_stage_i_ctrl_fsm_i_kill_ex                                         (core_i.wb_stage_i.ctrl_fsm_i.kill_ex),
+      //.core_i_wb_stage_i_ctrl_fsm_i_kill_wb                                         (core_i.wb_stage_i.ctrl_fsm_i.kill_wb),
+      //.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_n_flush_q               (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.n_flush_q),
+      //.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_rptr                    (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.rptr),
 
-      .core_i_ex_wb_pipe_instr_bus_resp_rdata                                       (core_i.ex_wb_pipe.instr.bus_resp.rdata),
+      //.core_i_ex_wb_pipe_instr_bus_resp_rdata                                       (core_i.ex_wb_pipe.instr.bus_resp.rdata),
 
-      .core_i_cs_registers_i_xsecure_lfsr0_i_clock_en                               (core_i.cs_registers_i.xsecure.lfsr0_i.clock_en),
-      .core_i_cs_registers_i_xsecure_lfsr1_i_clock_en                               (core_i.cs_registers_i.xsecure.lfsr1_i.clock_en),
-      .core_i_cs_registers_i_xsecure_lfsr2_i_clock_en                               (core_i.cs_registers_i.xsecure.lfsr2_i.clock_en),
-      .core_i_cs_registers_i_xsecure_lfsr0_i_seed_we_i                              (core_i.cs_registers_i.xsecure.lfsr0_i.seed_we_i),
-      .core_i_cs_registers_i_xsecure_lfsr1_i_seed_we_i                              (core_i.cs_registers_i.xsecure.lfsr1_i.seed_we_i),
-      .core_i_cs_registers_i_xsecure_lfsr2_i_seed_we_i                              (core_i.cs_registers_i.xsecure.lfsr2_i.seed_we_i),
-      .core_i_cs_registers_i_xsecure_lfsr0_i_lfsr_n                                 (core_i.cs_registers_i.xsecure.lfsr0_i.lfsr_n),
-      .core_i_cs_registers_i_xsecure_lfsr1_i_lfsr_n                                 (core_i.cs_registers_i.xsecure.lfsr1_i.lfsr_n),
-      .core_i_cs_registers_i_xsecure_lfsr2_i_lfsr_n                                 (core_i.cs_registers_i.xsecure.lfsr2_i.lfsr_n),
-      .core_i_cs_registers_i_xsecure_lfsr0_i_seed_i                                 (core_i.cs_registers_i.xsecure.lfsr0_i.seed_i),
-      .core_i_cs_registers_i_xsecure_lfsr1_i_seed_i                                 (core_i.cs_registers_i.xsecure.lfsr1_i.seed_i),
-      .core_i_cs_registers_i_xsecure_lfsr2_i_seed_i                                 (core_i.cs_registers_i.xsecure.lfsr2_i.seed_i),
+      //.core_i_cs_registers_i_xsecure_lfsr0_i_clock_en                               (core_i.cs_registers_i.xsecure.lfsr0_i.clock_en),
+      //.core_i_cs_registers_i_xsecure_lfsr1_i_clock_en                               (core_i.cs_registers_i.xsecure.lfsr1_i.clock_en),
+      //.core_i_cs_registers_i_xsecure_lfsr2_i_clock_en                               (core_i.cs_registers_i.xsecure.lfsr2_i.clock_en),
+      //.core_i_cs_registers_i_xsecure_lfsr0_i_seed_we_i                              (core_i.cs_registers_i.xsecure.lfsr0_i.seed_we_i),
+      //.core_i_cs_registers_i_xsecure_lfsr1_i_seed_we_i                              (core_i.cs_registers_i.xsecure.lfsr1_i.seed_we_i),
+      //.core_i_cs_registers_i_xsecure_lfsr2_i_seed_we_i                              (core_i.cs_registers_i.xsecure.lfsr2_i.seed_we_i),
+      //.core_i_cs_registers_i_xsecure_lfsr0_i_lfsr_n                                 (core_i.cs_registers_i.xsecure.lfsr0_i.lfsr_n),
+      //.core_i_cs_registers_i_xsecure_lfsr1_i_lfsr_n                                 (core_i.cs_registers_i.xsecure.lfsr1_i.lfsr_n),
+      //.core_i_cs_registers_i_xsecure_lfsr2_i_lfsr_n                                 (core_i.cs_registers_i.xsecure.lfsr2_i.lfsr_n),
+      //.core_i_cs_registers_i_xsecure_lfsr0_i_seed_i                                 (core_i.cs_registers_i.xsecure.lfsr0_i.seed_i),
+      //.core_i_cs_registers_i_xsecure_lfsr1_i_seed_i                                 (core_i.cs_registers_i.xsecure.lfsr1_i.seed_i),
+      //.core_i_cs_registers_i_xsecure_lfsr2_i_seed_i                                 (core_i.cs_registers_i.xsecure.lfsr2_i.seed_i),
 
-      .core_i_controller_i_controller_fsm_i_ctrl_fsm_cs                             (core_i.controller_i.controller_fsm_i.ctrl_fsm_cs),
+      //.core_i_controller_i_controller_fsm_i_ctrl_fsm_cs                             (core_i.controller_i.controller_fsm_i.ctrl_fsm_cs),
 
-      .core_i_sleep_unit_i_clock_en                                                 (core_i.sleep_unit_i.clock_en),
+      //.core_i_sleep_unit_i_clock_en                                                 (core_i.sleep_unit_i.clock_en),
 
-      .core_rf_we_wb                                                                (core_i.rf_we_wb),
-      .core_rf_waddr_wb                                                             (core_i.rf_waddr_wb),
-      .core_rf_wdata_wb                                                             (core_i.rf_wdata_wb),
-      .core_register_file_wrapper_register_file_mem                                 (core_i.register_file_wrapper_i.register_file_i.mem),
+      //.core_rf_we_wb                                                                (core_i.rf_we_wb),
+      //.core_rf_waddr_wb                                                             (core_i.rf_waddr_wb),
+      //.core_rf_wdata_wb                                                             (core_i.rf_wdata_wb),
+      //.core_register_file_wrapper_register_file_mem                                 (core_i.register_file_wrapper_i.register_file_i.mem),
       .core_i_jump_target_id                                                        (core_i.jump_target_id),
 
       // OBI interfaces
       // OBI instruction interface //TODO: kan man bruke ordet interface, siden det kan jo bety flere ting?
-      .core_i_instr_req_o                                                           (core_i.instr_req_o),
-      .core_i_instr_gnt_i                                                           (core_i.instr_gnt_i),
-      .core_i_instr_rvalid_i                                                        (core_i.instr_rvalid_i),
-      .core_i_instr_reqpar_o                                                        (core_i.instr_reqpar_o),
-      .core_i_instr_gntpar_i                                                        (core_i.instr_gntpar_i),
-      .core_i_instr_rvalidpar_i                                                     (core_i.instr_rvalidpar_i),
-      .core_i_instr_achk_o                                                          (core_i.instr_achk_o),
-      .core_i_instr_rchk_i                                                          (core_i.instr_rchk_i),
+      //.core_i_instr_req_o                                                           (core_i.instr_req_o),
+      //.core_i_instr_gnt_i                                                           (core_i.instr_gnt_i),
+      //.core_i_instr_rvalid_i                                                        (core_i.instr_rvalid_i),
+      //.core_i_instr_reqpar_o                                                        (core_i.instr_reqpar_o),
+      //.core_i_instr_gntpar_i                                                        (core_i.instr_gntpar_i),
+      //.core_i_instr_rvalidpar_i                                                     (core_i.instr_rvalidpar_i),
+      //.core_i_instr_achk_o                                                          (core_i.instr_achk_o),
+      //.core_i_instr_rchk_i                                                          (core_i.instr_rchk_i),
 
-      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q                  (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.resp_q),
-      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_valid_q                 (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.valid_q),
-      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_instr_addr_o            (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.instr_addr_o),
-      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_unaligned_is_compressed (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.unaligned_is_compressed),
+      //.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_resp_q                  (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.resp_q),
+      //.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_valid_q                 (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.valid_q),
+      //.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_instr_addr_o            (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.instr_addr_o),
+      //.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_unaligned_is_compressed (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.unaligned_is_compressed),
 
-      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_wptr                    (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.wptr),
+      //.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_wptr                    (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.wptr),
 
-      .core_i_ex_wb_pipe_instr_bus_resp_integrity_err                               (core_i.ex_wb_pipe.instr.bus_resp.integrity_err),
+      //.core_i_ex_wb_pipe_instr_bus_resp_integrity_err                               (core_i.ex_wb_pipe.instr.bus_resp.integrity_err),
 
-      .core_i_data_req_o                                                            (core_i.data_req_o),
-      .core_i_data_gnt_i                                                            (core_i.data_gnt_i),
-      .core_i_data_rvalid_i                                                         (core_i.data_rvalid_i),
-      .core_i_data_reqpar_o                                                         (core_i.data_reqpar_o),
-      .core_i_data_gntpar_i                                                         (core_i.data_gntpar_i),
-      .core_i_data_rvalidpar_i                                                      (core_i.data_rvalidpar_i),
-      .core_i_data_achk_o                                                           (core_i.data_achk_o),
-      .core_i_data_rchk_i                                                           (core_i.data_rchk_i),
+      //.core_i_data_req_o                                                            (core_i.data_req_o),
+      //.core_i_data_gnt_i                                                            (core_i.data_gnt_i),
+      //.core_i_data_rvalid_i                                                         (core_i.data_rvalid_i),
+      //.core_i_data_reqpar_o                                                         (core_i.data_reqpar_o),
+      //.core_i_data_gntpar_i                                                         (core_i.data_gntpar_i),
+      //.core_i_data_rvalidpar_i                                                      (core_i.data_rvalidpar_i),
+      //.core_i_data_achk_o                                                           (core_i.data_achk_o),
+      //.core_i_data_rchk_i                                                           (core_i.data_rchk_i),
 
-      .core_i_data_err_i                                                            (core_i.data_err_i),
+      //.core_i_data_err_i                                                            (core_i.data_err_i),
 
-      .core_i_if_stage_i_bus_resp                                                   (core_i.if_stage_i.bus_resp),
-      .core_i_load_store_unit_i_bus_resp                                            (core_i.load_store_unit_i.bus_resp),
+      //.core_i_if_stage_i_bus_resp                                                   (core_i.if_stage_i.bus_resp),
+      //.core_i_load_store_unit_i_bus_resp                                            (core_i.load_store_unit_i.bus_resp),
 
-      .core_i_m_c_obi_data_if_req_payload                                           (core_i.m_c_obi_data_if.req_payload),
-      .core_i_m_c_obi_data_if_resp_payload                                          (core_i.m_c_obi_data_if.resp_payload),
-      .core_i_m_c_obi_instr_if_req_payload                                          (core_i.m_c_obi_instr_if.req_payload),
-      .core_i_m_c_obi_instr_if_resp_payload                                         (core_i.m_c_obi_instr_if.resp_payload),
+      //.core_i_m_c_obi_data_if_req_payload                                           (core_i.m_c_obi_data_if.req_payload),
+      //.core_i_m_c_obi_data_if_resp_payload                                          (core_i.m_c_obi_data_if.resp_payload),
+      //.core_i_m_c_obi_instr_if_req_payload                                          (core_i.m_c_obi_instr_if.req_payload),
+      //.core_i_m_c_obi_instr_if_resp_payload                                         (core_i.m_c_obi_instr_if.resp_payload),
 
-      .core_i_if_stage_i_prefetch_resp_valid                                        (core_i.if_stage_i.prefetch_resp_valid),
-      .core_i_load_store_unit_i_resp_valid                                          (core_i.load_store_unit_i.resp_valid),
-      .core_i_load_store_unit_i_bus_resp_valid                                      (core_i.load_store_unit_i.bus_resp_valid),
+      //.core_i_if_stage_i_prefetch_resp_valid                                        (core_i.if_stage_i.prefetch_resp_valid),
+      //.core_i_load_store_unit_i_resp_valid                                          (core_i.load_store_unit_i.resp_valid),
+      //.core_i_load_store_unit_i_bus_resp_valid                                      (core_i.load_store_unit_i.bus_resp_valid),
 
-      .core_i_load_store_unit_i_response_filter_i_core_cnt_q                        (core_i.load_store_unit_i.response_filter_i.core_cnt_q),
+      //.core_i_load_store_unit_i_response_filter_i_core_cnt_q                        (core_i.load_store_unit_i.response_filter_i.core_cnt_q),
 
-      .core_i_m_c_obi_data_if_s_rvalid_rvalid                                       (core_i.m_c_obi_data_if.s_rvalid.rvalid),
-      .core_i_m_c_obi_instr_if_s_rvalid_rvalid                                      (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
-      .core_i_alert_i_itf_prot_err_i                                                (core_i.alert_i.itf_prot_err_i),
+      //.core_i_m_c_obi_data_if_s_rvalid_rvalid                                       (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+      //.core_i_m_c_obi_instr_if_s_rvalid_rvalid                                      (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+      //.core_i_alert_i_itf_prot_err_i                                                (core_i.alert_i.itf_prot_err_i),
 
       // CSR
-      .core_alert_minor_o                                                           (core_i.alert_minor_o),
+      //.core_alert_minor_o                                                           (core_i.alert_minor_o),
       .core_alert_major_o                                                           (core_i.alert_major_o),
 
-      .core_xsecure_ctrl_cpuctrl_dataindtiming	                                    (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
-      .core_xsecure_ctrl_cpuctrl_rnddummy		                                        (core_i.xsecure_ctrl.cpuctrl.rnddummy),
-      .core_xsecure_ctrl_cpuctrl_integrity                                          (core_i.xsecure_ctrl.cpuctrl.integrity),
+      //.core_xsecure_ctrl_cpuctrl_dataindtiming	                                    (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
+      //.core_xsecure_ctrl_cpuctrl_rnddummy		                                        (core_i.xsecure_ctrl.cpuctrl.rnddummy),
+      //.core_xsecure_ctrl_cpuctrl_integrity                                          (core_i.xsecure_ctrl.cpuctrl.integrity),
       .core_xsecure_ctrl_cpuctrl_pc_hardening                                       (core_i.xsecure_ctrl.cpuctrl.pc_hardening),
-      .core_xsecure_ctrl_cpuctrl_rndhint                                            (core_i.xsecure_ctrl.cpuctrl.rndhint),
+      //.core_xsecure_ctrl_cpuctrl_rndhint                                            (core_i.xsecure_ctrl.cpuctrl.rndhint),
 
-      .core_xsecure_ctrl_cpuctrl_rnddummyfreq                                       (core_i.xsecure_ctrl.cpuctrl[19:16]),
-      .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en                           (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
+      //.core_xsecure_ctrl_cpuctrl_rnddummyfreq                                       (core_i.xsecure_ctrl.cpuctrl[19:16]),
+      //.core_if_stage_gen_dummy_instr_dummy_instr_dummy_en                           (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
 
-      .core_cs_registers_mhpmcounter_mcycle                                         (core_i.cs_registers_i.mcycle_o),
-      .core_cs_registers_mhpmcounter_minstret                                       (core_i.cs_registers_i.mhpmcounter_q[2]),
-      .core_cs_registers_mhpmcounter_rdata_31_to_3                                  (core_i.cs_registers_i.mhpmcounter_rdata[31:3]),
-      .core_cs_registers_mhpmevent_rdata_31_to_3                                    (core_i.cs_registers_i.mhpmevent_rdata[31:3]),
-      .core_cs_registers_mcountinhibit_rdata                                        (core_i.cs_registers_i.mcountinhibit_rdata),
-      .core_cs_registers_mcountinhibit_rdata_mcycle                                 (core_i.cs_registers_i.mcountinhibit_rdata[0]),
-      .core_cs_registers_mcountinhibit_rdata_minstret                               (core_i.cs_registers_i.mcountinhibit_rdata[2]),
+      //.core_cs_registers_mhpmcounter_mcycle                                         (core_i.cs_registers_i.mcycle_o),
+      //.core_cs_registers_mhpmcounter_minstret                                       (core_i.cs_registers_i.mhpmcounter_q[2]),
+      //.core_cs_registers_mhpmcounter_rdata_31_to_3                                  (core_i.cs_registers_i.mhpmcounter_rdata[31:3]),
+      //.core_cs_registers_mhpmevent_rdata_31_to_3                                    (core_i.cs_registers_i.mhpmevent_rdata[31:3]),
+      //.core_cs_registers_mcountinhibit_rdata                                        (core_i.cs_registers_i.mcountinhibit_rdata),
+      //.core_cs_registers_mcountinhibit_rdata_mcycle                                 (core_i.cs_registers_i.mcountinhibit_rdata[0]),
+      //.core_cs_registers_mcountinhibit_rdata_minstret                               (core_i.cs_registers_i.mcountinhibit_rdata[2]),
 
-      .core_i_cs_registers_i_csr_en_gated                                           (core_i.cs_registers_i.csr_en_gated),
-      .core_cs_registers_csr_waddr                                                  (core_i.cs_registers_i.csr_waddr),
+      //.core_i_cs_registers_i_csr_en_gated                                           (core_i.cs_registers_i.csr_en_gated),
+      //.core_cs_registers_csr_waddr                                                  (core_i.cs_registers_i.csr_waddr),
 
-      .core_xsecure_ctrl_lfsr0                                                      (core_i.xsecure_ctrl.lfsr0),
-      .core_xsecure_ctrl_lfsr1                                                      (core_i.xsecure_ctrl.lfsr1),
-      .core_xsecure_ctrl_lfsr2                                                      (core_i.xsecure_ctrl.lfsr2),
+      //.core_xsecure_ctrl_lfsr0                                                      (core_i.xsecure_ctrl.lfsr0),
+      //.core_xsecure_ctrl_lfsr1                                                      (core_i.xsecure_ctrl.lfsr1),
+      //.core_xsecure_ctrl_lfsr2                                                      (core_i.xsecure_ctrl.lfsr2),
 
-      .core_cs_registers_xsecure_lfsr0_seed_we                                      (core_i.cs_registers_i.xsecure.lfsr0_i.seed_we_i),
-      .core_cs_registers_xsecure_lfsr1_seed_we                                      (core_i.cs_registers_i.xsecure.lfsr1_i.seed_we_i),
-      .core_cs_registers_xsecure_lfsr2_seed_we                                      (core_i.cs_registers_i.xsecure.lfsr2_i.seed_we_i),
+      //.core_cs_registers_xsecure_lfsr0_seed_we                                      (core_i.cs_registers_i.xsecure.lfsr0_i.seed_we_i),
+      //.core_cs_registers_xsecure_lfsr1_seed_we                                      (core_i.cs_registers_i.xsecure.lfsr1_i.seed_we_i),
+      //.core_cs_registers_xsecure_lfsr2_seed_we                                      (core_i.cs_registers_i.xsecure.lfsr2_i.seed_we_i),
 
       .core_i_cs_registers_i_mepc_o                                                 (core_i.cs_registers_i.mepc_o),
 
       // Controller
-      .core_i_controller_i_controller_fsm_i_dcsr_i_step                             (core_i.controller_i.controller_fsm_i.dcsr_i.step),
-      .core_i_controller_i_controller_fsm_i_dcsr_i_stepie                           (core_i.controller_i.controller_fsm_i.dcsr_i.stepie),
-      .core_controller_controller_fsm_debug_mode_q                                  (core_i.controller_i.controller_fsm_i.debug_mode_q),
-      .core_i_cs_registers_i_debug_stopcount                                        (core_i.cs_registers_i.debug_stopcount),
+      //.core_i_controller_i_controller_fsm_i_dcsr_i_step                             (core_i.controller_i.controller_fsm_i.dcsr_i.step),
+      //.core_i_controller_i_controller_fsm_i_dcsr_i_stepie                           (core_i.controller_i.controller_fsm_i.dcsr_i.stepie),
+      //.core_controller_controller_fsm_debug_mode_q                                  (core_i.controller_i.controller_fsm_i.debug_mode_q),
+      //.core_i_cs_registers_i_debug_stopcount                                        (core_i.cs_registers_i.debug_stopcount),
 
       // IF stage
       .core_if_stage_if_valid_o                                                     (core_i.if_stage_i.if_valid_o),
       .core_if_stage_id_ready_i                                                     (core_i.if_stage_i.id_ready_i),
 
       .core_if_stage_instr_meta_n_dummy                                             (core_i.if_stage_i.instr_meta_n.dummy),
-      .core_i_if_stage_i_instr_hint                                                 (core_i.if_stage_i.instr_hint),
-      .core_i_if_stage_i_dummy_insert                                               (core_i.if_stage_i.dummy_insert),
+      //.core_i_if_stage_i_instr_hint                                                 (core_i.if_stage_i.instr_hint),
+      //.core_i_if_stage_i_dummy_insert                                               (core_i.if_stage_i.dummy_insert),
 
       .core_i_if_stage_i_pc_if_o                                                    (core_i.if_stage_i.pc_if_o),
       .core_i_if_stage_i_pc_check_i_pc_set_q                                        (core_i.if_stage_i.pc_check_i.pc_set_q),
@@ -892,55 +893,54 @@ module uvmt_cv32e40s_tb;
       .core_i_if_stage_i_compressed_decoder_i_is_compressed_o                       (core_i.if_stage_i.compressed_decoder_i.is_compressed_o),
 
       // IF ID pipe
-      .core_if_id_pipe_instr                                                        (core_i.if_id_pipe.instr),
-      .core_if_id_pipe_instr_meta_dummy                                             (core_i.if_id_pipe.instr_meta.dummy),
-      .core_if_id_pipe_instr_meta_hint                                              (core_i.if_id_pipe.instr_meta.hint),
+      //.core_if_id_pipe_instr                                                        (core_i.if_id_pipe.instr),
+      //.core_if_id_pipe_instr_meta_dummy                                             (core_i.if_id_pipe.instr_meta.dummy),
+      //.core_if_id_pipe_instr_meta_hint                                              (core_i.if_id_pipe.instr_meta.hint),
 
       .core_i_id_stage_i_if_id_pipe_i_pc                                            (core_i.id_stage_i.if_id_pipe_i.pc),
       .core_i_if_id_pipe_last_op                                                    (core_i.if_id_pipe.last_op),
 
       // ID stage
-      .core_id_stage_id_valid_o                                                     (core_i.id_stage_i.id_valid_o),
-      .core_id_stage_ex_ready_i                                                     (core_i.id_stage_i.ex_ready_i),
+      //.core_id_stage_id_valid_o                                                     (core_i.id_stage_i.id_valid_o),
+      //.core_id_stage_ex_ready_i                                                     (core_i.id_stage_i.ex_ready_i),
 
       // EX stage
       .core_i_ex_stage_i_branch_target_o                                            (core_i.ex_stage_i.branch_target_o),
       .core_i_ex_stage_i_alu_i_cmp_result_o                                         (core_i.ex_stage_i.alu_i.cmp_result_o),
 
       // EX WB pipe
-      .core_ex_wb_pipe_instr_meta_dummy                                             (core_i.ex_wb_pipe.instr_meta.dummy),
-      .core_ex_wb_pipe_instr_meta_hint                                              (core_i.ex_wb_pipe.instr_meta.hint),
+      //.core_ex_wb_pipe_instr_meta_dummy                                             (core_i.ex_wb_pipe.instr_meta.dummy),
+      //.core_ex_wb_pipe_instr_meta_hint                                              (core_i.ex_wb_pipe.instr_meta.hint),
 
       // WB stage
-      .core_wb_stage_wb_valid_o                                                     (core_i.wb_stage_i.wb_valid_o),
+      //.core_wb_stage_wb_valid_o                                                     (core_i.wb_stage_i.wb_valid_o),
 
       // CTRL
       .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set       (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.ctrl_fsm_i.pc_set),
-      .core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux                               (core_i.if_stage_i.pc_check_i.ctrl_fsm_i.pc_mux),
+      .core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux                               (core_i.if_stage_i.pc_check_i.ctrl_fsm_i.pc_mux)
 
       // Descriptive signal names:
       // IF ID pipe:
-      .if_id_pipe_rs1                                                               (core_i.if_id_pipe.instr.bus_resp.rdata[19:15]),
-      .if_id_pipe_rs2                                                               (core_i.if_id_pipe.instr.bus_resp.rdata[24:20]),
-      .if_id_pipe_rd                                                                (core_i.if_id_pipe.instr.bus_resp.rdata[11:7]),
-      .if_id_pipe_opcode                                                            (core_i.if_id_pipe.instr.bus_resp.rdata[6:0]),
-      .if_id_pipe_funct3                                                            (core_i.if_id_pipe.instr.bus_resp.rdata[14:12]),
-      .if_id_pipe_funct7                                                            (core_i.if_id_pipe.instr.bus_resp.rdata[31:25]),
-      .if_id_pipe_bltu_incrementation                                               ({core_i.if_id_pipe.instr.bus_resp.rdata[31], core_i.if_id_pipe.instr.bus_resp.rdata[7], core_i.if_id_pipe.instr.bus_resp.rdata[30:25], core_i.if_id_pipe.instr.bus_resp.rdata[11:8], 1'b0}),
+      //.if_id_pipe_rs1                                                               (core_i.if_id_pipe.instr.bus_resp.rdata[19:15]),
+      //.if_id_pipe_rs2                                                               (core_i.if_id_pipe.instr.bus_resp.rdata[24:20]),
+      //.if_id_pipe_rd                                                                (core_i.if_id_pipe.instr.bus_resp.rdata[11:7]),
+      //.if_id_pipe_opcode                                                            (core_i.if_id_pipe.instr.bus_resp.rdata[6:0]),
+      //.if_id_pipe_funct3                                                            (core_i.if_id_pipe.instr.bus_resp.rdata[14:12]),
+      //.if_id_pipe_funct7                                                            (core_i.if_id_pipe.instr.bus_resp.rdata[31:25]),
+      //.if_id_pipe_bltu_incrementation                                               ({core_i.if_id_pipe.instr.bus_resp.rdata[31], core_i.if_id_pipe.instr.bus_resp.rdata[7], core_i.if_id_pipe.instr.bus_resp.rdata[30:25], core_i.if_id_pipe.instr.bus_resp.rdata[11:8], 1'b0}),
 
       // RVFI:
-      .rvfi_funct3                                                                  (rvfi_i.rvfi_insn[14:12]),
-      .rvfi_cmpr_funct3                                                             (rvfi_i.rvfi_insn[15:13]),
-      .rvfi_funct7                                                                  (rvfi_i.rvfi_insn[31:25]),
-      .rvfi_opcode                                                                  (rvfi_i.rvfi_insn[6:0]),
-      .rvfi_cmpr_opcode                                                             (rvfi_i.rvfi_insn[1:0]),
-      .rvfi_csr                                                                     (rvfi_i.rvfi_insn[31:20]),
-      .rvfi_c_slli_shamt                                                            ({rvfi_i.rvfi_insn[12], rvfi_i.rvfi_insn[6:2]})
+      //.rvfi_funct3                                 (rvfi_i.rvfi_insn[14:12]),
+      //.rvfi_cmpr_funct3                                                             (rvfi_i.rvfi_insn[15:13]),
+      //.rvfi_funct7                             (rvfi_i.rvfi_insn[31:25]),
+      //.rvfi_opcode                                                                  (rvfi_i.rvfi_insn[6:0]),
+      //.rvfi_cmpr_opcode                                                             (rvfi_i.rvfi_insn[1:0]),
+      //.rvfi_csr                                                                     (rvfi_i.rvfi_insn[31:20]),
+      //.rvfi_c_slli_shamt                                                            ({rvfi_i.rvfi_insn[12], rvfi_i.rvfi_insn[6:2]})
 
     );
 
   // Xsecure assertions:
-
 
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert #(
@@ -983,7 +983,11 @@ module uvmt_cv32e40s_tb;
 
       //Interfaces:
     	.xsecure_if	(xsecure_if),
-      .rvfi_if	  (rvfi_instr_if_0_i)
+      .rvfi_if	  (rvfi_instr_if_0_i),
+      .rvfi_cpuctrl (rvfi_csr_cpuctrl_if_0_i),
+
+      //CSRs:
+      .dataindtiming_enabled (core_i.xsecure_ctrl.cpuctrl.dataindtiming)
     );
 
 
@@ -1089,18 +1093,21 @@ module uvmt_cv32e40s_tb;
       .rst_ni     (clknrst_if.reset_n),
 
       //Interfaces:
-    	.xsecure_if	(xsecure_if)
+    	.xsecure_if	(xsecure_if),
+      .pc_hardening_enabled (core_i.xsecure_ctrl.cpuctrl.pc_hardening)
+
+
     );
 
 
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_interface_integrity_assert #(
-	    .SECURE	(SECURE)
+	    .SECURE	(SECURE),
+      .ALBUF_DEPTH (core_i.if_stage_i.ALBUF_DEPTH),
+      .ALBUF_CNT_WIDTH (core_i.if_stage_i.ALBUF_CNT_WIDTH)
     ) xsecure_interface_integrity_assert_i 	(
 
       //Interfaces:
-    	.xsecure_if	(xsecure_if),
-      .rvfi_if	  (rvfi_instr_if_0_i),
       .support_if (support_logic_for_assert_coverage_modules_if.slave_mp),
 
       //Signals:
@@ -1109,11 +1116,14 @@ module uvmt_cv32e40s_tb;
 
       //Alert:
       .alert_major (core_i.alert_major_o),
+      .alert_major_due_to_integrity_err (core_i.alert_i.itf_int_err_i),
 
       //CSRs:
       .integrity_enabled (core_i.xsecure_ctrl.cpuctrl.integrity),
+      .nmip (core_i.cs_registers_i.dcsr_rdata.nmip),
+      .mcause_exception_code (core_i.cs_registers_i.mcause_rdata.exception_code),
 
-      //OBI:
+      //OBI data:
       .obi_data_req_packet (core_i.m_c_obi_data_if.req_payload),
       .obi_data_resp_packet (core_i.m_c_obi_data_if.resp_payload),
       .obi_data_req (core_i.m_c_obi_data_if.s_req.req),
@@ -1123,6 +1133,7 @@ module uvmt_cv32e40s_tb;
       .obi_data_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
       .obi_data_rvalidpar (core_i.m_c_obi_data_if.s_rvalid.rvalidpar),
 
+      //OBI instr:
       .obi_instr_req_packet (core_i.m_c_obi_instr_if.req_payload),
       .obi_instr_resp_packet (core_i.m_c_obi_instr_if.resp_payload),
       .obi_instr_req (core_i.m_c_obi_instr_if.s_req.req),
@@ -1138,29 +1149,45 @@ module uvmt_cv32e40s_tb;
       .rf_waddr (core_i.rf_waddr_wb),
       .rf_wdata (core_i.rf_wdata_wb),
 
-      .wb_valid (core_i.wb_valid),
+      //Alignment buffer:
+      .alb_resp_i (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.resp_i),
+      .alb_resp_q (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.resp_q),
+      .alb_valid (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.valid_q),
+      .alb_wptr (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.wptr),
+      .alb_rptr1 (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.rptr),
+      .alb_rptr2 (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.rptr2),
+
+      //If:
       .if_valid (core_i.if_valid),
-      .id_ready (core_i.id_ready),
-      .wb_integrity_err (core_i.ex_wb_pipe.instr.bus_resp.integrity_err),
-      .data_integrity_err (core_i.load_store_unit_i.bus_resp.integrity_err),
-      .instr_integrity_err (core_i.if_stage_i.bus_resp.integrity_err),
-
+      .if_instr_integrity_err (core_i.if_stage_i.bus_resp.integrity_err),
+      .if_instr_cmpr (core_i.if_stage_i.compressed_decoder_i.is_compressed_o),
       .if_instr_pc (core_i.if_stage_i.pc_if_o),
-      .if_instr_cmpr (core_i.if_id_pipe.instr_meta.compressed),
-      .if_instr_integrity_err (core_i.if_id_pipe.instr.bus_resp.integrity_err),
+      .dummy_insert (dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.dummy_insert),
 
-      .nmip (core_i.cs_registers_i.dcsr_rdata.nmip),
-      .mcause_exception_code (core_i.cs_registers_i.mcause_rdata.exception_code),
+      //Id:
+      .id_ready (core_i.id_ready),
+      .id_instr_integrity_err (core_i.if_id_pipe.instr.bus_resp.integrity_err),
+      .id_abort_op (dut_wrap.cv32e40s_wrapper_i.core_i.if_id_pipe.abort_op),
+      .id_illegal_insn (dut_wrap.cv32e40s_wrapper_i.core_i.if_id_pipe.illegal_c_insn),
+
+      //Wb:
+      .wb_valid (core_i.wb_valid),
+      .wb_integrity_err (core_i.ex_wb_pipe.instr.bus_resp.integrity_err),
       .wb_instr_opcode (core_i.ex_wb_pipe.instr.bus_resp.rdata[6:0]),
-      .ctrl_fsm_cs (core_i.controller_i.controller_fsm_i.ctrl_fsm_cs),
-
       .wb_exception (core_i.controller_i.controller_fsm_i.exception_in_wb),
       .wb_exception_code (core_i.controller_i.controller_fsm_i.exception_cause_wb),
+      .data_integrity_err (core_i.load_store_unit_i.bus_resp.integrity_err),
+
+      //MISC:
+      .ctrl_fsm_cs (core_i.controller_i.controller_fsm_i.ctrl_fsm_cs),
       .pc_mux (dut_wrap.cv32e40s_wrapper_i.core_i.ctrl_fsm.pc_mux),
-      .mpu_err (core_i.if_stage_i.mpu_i.mpu_err),
-      .id_abort_op (dut_wrap.cv32e40s_wrapper_i.core_i.if_id_pipe.abort_op),
       .pc_set (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.ctrl_fsm_i.pc_set),
-      .dummy_insert (dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.dummy_insert)
+      .seq_valid (core_i.if_stage_i.seq_valid),
+      .kill_if (core_i.ctrl_fsm.kill_if),
+      .n_flush_q (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.n_flush_q),
+      .rchk_err_instr (core_i.if_stage_i.instruction_obi_i.rchk_err_resp),
+      .rchk_err_data (core_i.load_store_unit_i.data_obi_i.rchk_err_resp)
+
 
 //xsecure_if.core_i_if_stage_i_dummy_insert
     );
@@ -1487,6 +1514,7 @@ module uvmt_cv32e40s_tb;
                                                                     .csr_dscratch1(rvfi_csr_dscratch1_if_0_i),
                                                                     .csr_mepc(rvfi_csr_mepc_if_0_i),
                                                                     .csr_mstatus(rvfi_csr_mstatus_if_0_i),
+                                                                    .csr_mcause(rvfi_csr_mcause_if_0_i),
                                                                     .csr_mtvec(rvfi_csr_mtvec_if_0_i),
                                                                     .csr_tdata1(rvfi_csr_tdata1_if_0_i),
                                                                     .csr_tdata2(rvfi_csr_tdata2_if_0_i),
@@ -1495,6 +1523,32 @@ module uvmt_cv32e40s_tb;
                                                                     .cov_assert_if(debug_cov_assert_if),
                                                                     .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
                                                                     );
+
+    bind cv32e40s_wrapper uvmt_cv32e40s_triggers_assert_cov debug_trigger_assert_i(
+                                                                    .wb_valid (core_i.wb_stage_i.wb_valid_o),
+                                                                    .wb_exception_code (core_i.controller_i.controller_fsm_i.exception_cause_wb),
+                                                                    .wb_tdata1 (core_i.cs_registers_i.tdata1_rdata),
+                                                                    .wb_tdata2 (core_i.cs_registers_i.tdata2_rdata),
+                                                                    .priv_lvl (core_i.priv_lvl),
+                                                                    .wb_dbg_mode (rvfi_i.debug_mode[3]),
+                                                                    .wb_last_op (rvfi_i.last_op_wb_i),
+                                                                    .wb_tselect (rvfi_i.rvfi_csr_rdata_d.tselect),
+                                                                    .wb_exception (core_i.controller_i.controller_fsm_i.exception_in_wb),
+
+
+                                                                    .rvfi_if (rvfi_instr_if_0_i),
+                                                                    .clknrst_if (dut_wrap.clknrst_if),
+
+                                                                    .tdata1 (rvfi_csr_tdata1_if_0_i),
+                                                                    .tdata2 (rvfi_csr_tdata2_if_0_i),
+                                                                    .tdata3 (rvfi_csr_tdata3_if_0_i),
+                                                                    .tinfo (rvfi_csr_tinfo_if_0_i),
+                                                                    .tselect (rvfi_csr_tselect_if_0_i),
+                                                                    .tcontrol (rvfi_csr_tcontrol_if_0_i)
+                                                                    );
+
+
+
 
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if_0_i),
                                                               .support_if(support_logic_for_assert_coverage_modules_if.slave_mp)

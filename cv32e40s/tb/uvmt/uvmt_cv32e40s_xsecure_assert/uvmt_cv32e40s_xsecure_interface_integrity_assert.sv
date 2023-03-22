@@ -21,19 +21,27 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   import cv32e40s_pkg::*;
   import uvmt_cv32e40s_pkg::*;
   #(
-    parameter int       SECURE   = 1
+    parameter int       SECURE   = 1,
+    parameter int       ALBUF_DEPTH = 3,
+    parameter int       ALBUF_CNT_WIDTH = 2
   )
   (
-    uvmt_cv32e40s_xsecure_if xsecure_if,
-    uvma_rvfi_instr_if rvfi_if,
+    //Interfaces:
     uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp support_if,
+
+    //Signals:
     input rst_ni,
     input clk_i,
 
     //Alert:
     input logic alert_major,
+    input logic alert_major_due_to_integrity_err,
 
+    //CSR:
     input logic integrity_enabled,
+    input logic nmip,
+    input logic [10:0] mcause_exception_code,
+
 
     //OBI data:
     input obi_data_req_t obi_data_req_packet,
@@ -61,27 +69,44 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     input logic [4:0] rf_waddr,
     input logic [31:0] rf_wdata,
 
-    input logic wb_valid,
+    //Alignment buffer:
+    input inst_resp_t alb_resp_i,
+    input inst_resp_t [0:ALBUF_DEPTH-1] alb_resp_q,
+    input logic [0:ALBUF_DEPTH-1] alb_valid,
+    input logic [ALBUF_CNT_WIDTH-1:0] alb_wptr,
+    input logic [ALBUF_CNT_WIDTH-1:0] alb_rptr1,
+    input logic [ALBUF_CNT_WIDTH-1:0] alb_rptr2,
+
+    //If:
     input logic if_valid,
-    input logic id_ready,
-    input logic wb_integrity_err,
-    input logic data_integrity_err,
-    input logic instr_integrity_err,
-    input logic [31:0] if_instr_pc,
-    input logic if_instr_cmpr,
     input logic if_instr_integrity_err,
-    input logic nmip,
-    input logic [10:0] mcause_exception_code,
+    input logic if_instr_cmpr,
+    input logic [31:0] if_instr_pc,
+    input logic dummy_insert,
+
+    //Id:
+    input logic id_ready,
+    input logic id_instr_integrity_err,
+    input logic id_abort_op,
+    input logic id_illegal_insn,
+
+    //Wb:
+    input logic wb_valid,
+    input logic wb_integrity_err,
     input logic [6:0] wb_instr_opcode,
-    input logic [$bits(ctrl_state_e)-1:0] ctrl_fsm_cs,
     input logic wb_exception,
     input logic [10:0] wb_exception_code,
-    input logic [$bits(pc_mux_e)-1:0] pc_mux,
-    input logic mpu_err,
-    input logic id_abort_op,
-    input logic pc_set,
-    input logic dummy_insert
+    input logic data_integrity_err,
 
+    //MISC:
+    input logic [$bits(ctrl_state_e)-1:0] ctrl_fsm_cs,
+    input logic [$bits(pc_mux_e)-1:0] pc_mux,
+    input logic pc_set,
+    input logic seq_valid,
+    input logic kill_if,
+    input logic [1:0] n_flush_q,
+    input logic rchk_err_instr,
+    input logic rchk_err_data
   );
 
 
@@ -99,6 +124,12 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   localparam EXOKAY_TIE_OFF_VALUE = 1'b0;
   localparam REQ_WAS_READ = 1'b1;
   localparam DEBUG_TAKEN = 2'b11;
+
+  localparam RCHK_STORE = 4;
+  localparam ZERO = '0;
+
+  localparam LSU_LOAD_INTEGRITY_FAULT = 11'h402;
+  localparam LSU_STORE_INTEGRITY_FAULT = 11'h403;
 
   function logic [11:0] f_achk (logic [31:0] addr, logic [2:0] prot, logic [1:0] memtype, logic [3:0] be, logic we, logic dbg, logic [5:0] atop, logic [31:0] wdata);
     f_achk = {
@@ -260,8 +291,8 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     p_checksum_data_rchk(
       support_if.req_was_store,
       obi_data_rvalid,
-      obi_data_resp_packet.rchk[4],
-      rchk_data_calculated[4])
+      obi_data_resp_packet.rchk[RCHK_STORE],
+      rchk_data_calculated[RCHK_STORE])
   );
 
   a_xsecure_integrity_load_data_rchk: assert property (
@@ -281,8 +312,8 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     && ctrl_fsm_cs != DEBUG_TAKEN //When entering debug we dont trigger any exceptions
     |->
     wb_exception
-    && (wb_exception_code == 5'h19
-    || wb_exception_code == 5'h1) //Instruction fault exception have higher priority than integrity fault
+    && (wb_exception_code == EXC_CAUSE_INSTR_INTEGRITY_FAULT
+    || wb_exception_code == EXC_CAUSE_INSTR_FAULT) //Instruction fault exception have higher priority than integrity fault
 
     ##1 alert_major
   ) else `uvm_error(info_tag_glitch, "Attempted execution of an instruction with integrity error does set the major alert or correct exception code.\n");
@@ -330,8 +361,8 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     && req_had_integrity
     && memory_op
     && rchk_input != rchk_calculated;
-
   endsequence
+
 
   a_glitch_xsecure_integrity_rchk_instr_read: assert property (
     integrity_enabled
@@ -343,8 +374,8 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       obi_instr_resp_packet.rchk,
       rchk_instr_calculated)
 
-    |=>
-    alert_major
+    |->
+    alert_major_due_to_integrity_err
   ) else `uvm_error(info_tag_glitch, "An error in the OBI instruction bus's response packet's checksum does not set the major alert.\n");
 
   a_glitch_xsecure_integrity_rchk_data_store: assert property (
@@ -354,11 +385,11 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       obi_data_rvalid,
       support_if.data_req_had_integrity,
       support_if.req_was_store,
-      obi_data_resp_packet.rchk[4],
-      rchk_data_calculated[4])
+      obi_data_resp_packet.rchk[RCHK_STORE],
+      rchk_data_calculated[RCHK_STORE])
 
-    |=>
-    alert_major
+    |->
+    alert_major_due_to_integrity_err
   ) else `uvm_error(info_tag_glitch, "An error in the OBI data bus's response packet's checksum does not set the major alert.\n");
 
   a_glitch_xsecure_integrity_rchk_data_read: assert property (
@@ -371,12 +402,12 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       obi_data_resp_packet.rchk,
       rchk_data_calculated)
 
-    |=>
-    alert_major
+    |->
+    alert_major_due_to_integrity_err
   ) else `uvm_error(info_tag_glitch, "An error in the OBI data bus's response packet's checksum does not set the major alert.\n");
 
 
-  ////////// INTERFACE INTEGRITY RESPONSE CHECKSUM ERRORS FOR INSTRUCTION AND DATA DO NOT SET ALERT MAJOR IF THE INTEGRITY CHECKING IS DISABLED //////////
+  //Verify that checksum errors for instructions and data do not set alert major if the integrity checking is disabled
 
   a_glitch_xsecure_integrity_rchk_instr_read_integrity_disabled: assert property (
     !integrity_enabled
@@ -388,8 +419,9 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       obi_instr_resp_packet.rchk,
       rchk_instr_calculated)
 
-    |=>
-    !alert_major
+    |->
+    !alert_major_due_to_integrity_err
+    || (alert_major_due_to_integrity_err && !rchk_err_instr)
   ) else `uvm_error(info_tag_glitch, "An error in the OBI instruction bus's response packet's checksum sets the major alert even though interface integrity checking is disabled.\n");
 
   a_glitch_xsecure_integrity_rchk_data_store_integrity_disabled: assert property (
@@ -399,11 +431,12 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       obi_data_rvalid,
       support_if.data_req_had_integrity,
       support_if.req_was_store,
-      obi_data_resp_packet.rchk[4],
-      rchk_data_calculated[4])
+      obi_data_resp_packet.rchk[RCHK_STORE],
+      rchk_data_calculated[RCHK_STORE])
 
-    |=>
-    !alert_major
+    |->
+    !alert_major_due_to_integrity_err
+    || (alert_major_due_to_integrity_err && !rchk_err_data)
   ) else `uvm_error(info_tag_glitch, "An error in the OBI data bus's response packet's checksum sets the major alert even though interface integrity checking is disabled.\n");
 
   a_glitch_xsecure_integrity_rchk_data_read_integrity_disabled: assert property (
@@ -416,8 +449,9 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       obi_data_resp_packet.rchk,
       rchk_data_calculated)
 
-    |=>
-    !alert_major
+    |->
+    !alert_major_due_to_integrity_err
+    || (alert_major_due_to_integrity_err && !rchk_err_data)
   ) else `uvm_error(info_tag_glitch, "An error in the OBI data bus's response packet's checksum sets the major alert even though interface integrity checking is disabled.\n");
 
 
@@ -425,7 +459,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
 
   a_xsecure_integrity_update_register_parity_checksum_error: assert property (
     rf_we
-    && rf_waddr != 5'b00000
+    && rf_waddr != ZERO
     |=>
     gpr_mem[$past(rf_waddr)][31:0] == $past(rf_wdata)
   ) else `uvm_error(info_tag_glitch, "The register file is not updated.\n");
@@ -433,7 +467,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   //Check that it is possible to write to the register file when there is an integrity error
   c_glitch_xsecure_integrity_update_register_parity_checksum_error: cover property (
     rf_we
-    && rf_waddr != 5'b00000
+    && rf_waddr != ZERO
     && obi_data_rvalid
     && data_integrity_err
   );
@@ -442,8 +476,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   //Verify that the integrity bits to the the data and instructions fetched from the OBI bus are set if there are parity or checksum faults
 
   property p_parity_fault_integrity_err_gnt(rvalid, gnt_parity_err, integrity_err);
-    integrity_enabled //TODO: må vi ha med denne? //Er integrity_enabled knyttet til integrity_err eller checksum?
-    && rvalid
+    rvalid
     && gnt_parity_err
     |->
     integrity_err;
@@ -453,7 +486,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     p_parity_fault_integrity_err_gnt(
       obi_instr_rvalid,
       support_if.gntpar_error_in_response_instr,
-      instr_integrity_err)
+      if_instr_integrity_err)
   ) else `uvm_error(info_tag_glitch, "The integrity error bit is not set in the OBI instruction bus's response packet, even though there was grant parity error when generating the request packet.\n");
 
   a_glitch_xsecure_integrity_data_gntparity_fault_integrity_err: assert property (
@@ -465,8 +498,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
 
 
   property p_parity_fault_integrity_err_rvalid(rvalid, parity_rvalid, integrity_err);
-    integrity_enabled //TODO: må vi ha med denne?
-    && rvalid
+    rvalid
     && parity_rvalid != ~rvalid
     |->
     integrity_err;
@@ -476,7 +508,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     p_parity_fault_integrity_err_rvalid(
       obi_instr_rvalid,
       obi_instr_rvalidpar,
-      instr_integrity_err)
+      if_instr_integrity_err)
   ) else `uvm_error(info_tag_glitch, "The integrity error bit is not set in the OBI instruction bus's response packet, even though there was a rvalid parity error.\n");
 
   a_glitch_xsecure_integrity_data_rvalidparity_fault_integrity_err: assert property (
@@ -487,9 +519,10 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   ) else `uvm_error(info_tag_glitch, "The integrity error bit is not set in the OBI data bus's response packet, even though there was a rvalid parity error.\n");
 
 
-  property p_rchk_fault_integrity_err(req_had_integrity, rvalid, rchk_input, rchk_calculated, integrity_err);
-    integrity_enabled //TODO: må denne være med?
-    && req_had_integrity //TODO: må denne være med? Antagligvis ja, siden den over må det! Hva er forskjellen på parity og checksum?
+  property p_rchk_fault_integrity_err(req_had_integrity, load_from_memory, rvalid, rchk_input, rchk_calculated, integrity_err);
+    integrity_enabled
+    && req_had_integrity
+    && load_from_memory
     && rvalid
     && rchk_input != rchk_calculated
     |->
@@ -499,64 +532,63 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   a_glitch_xsecure_integrity_instr_rchk_fault_integrity_err: assert property (
     p_rchk_fault_integrity_err(
       support_if.instr_req_had_integrity,
+      REQ_WAS_READ,
       obi_instr_rvalid,
       obi_instr_resp_packet.rchk,
       rchk_instr_calculated,
-      instr_integrity_err)
+      if_instr_integrity_err)
   ) else `uvm_error(info_tag_glitch, "The integrity error bit is not set in the OBI instruction bus's response packet, even though there was a checksum error.\n");
 
-  a_glitch_xsecure_integrity_data_rchk_fault_integrity_err: assert property (
+  a_glitch_xsecure_integrity_data_rchk_fault_integrity_err_store: assert property (
     p_rchk_fault_integrity_err(
       support_if.data_req_had_integrity,
+      support_if.req_was_store,
+      obi_data_rvalid,
+      obi_data_resp_packet.rchk[RCHK_STORE],
+      rchk_data_calculated[RCHK_STORE],
+      data_integrity_err)
+  ) else `uvm_error(info_tag_glitch, "The integrity error bit is not set in the OBI data bus's response packet, even though there was a checksum error in the store operation.\n");
+
+  a_glitch_xsecure_integrity_data_rchk_fault_integrity_err_load: assert property (
+    p_rchk_fault_integrity_err(
+      support_if.data_req_had_integrity,
+      !support_if.req_was_store,
       obi_data_rvalid,
       obi_data_resp_packet.rchk,
       rchk_data_calculated,
       data_integrity_err)
-  ) else `uvm_error(info_tag_glitch, "The integrity error bit is not set in the OBI data bus's response packet, even though there was a checksum error.\n");
+  ) else `uvm_error(info_tag_glitch, "The integrity error bit is not set in the OBI data bus's response packet, even though there was a checksum error in the load operation.\n");
 
 
-  ////////// VERIFY THAT INTEGRITY ERROR BIT AND RCHK BITS PASSE TOGETHER WITH THE INSTRUCTION TO THE ALIGNMENT BUFFERR //////////
-  //Verify that
+  //Verify that the integrity error bit and the checksum bits is forwarded into the alignement buffer together with the instruction
 
-  typedef struct packed {
-    //TODO: rchk
-    logic [31:0]  pc;
-    logic         integrity_err;
-    logic [4:0]   rchk;
-  } instr_integrity;
+  property p_instr_to_alignment_buffer(wptr_position);
+    obi_instr_rvalid
+    && alb_wptr == wptr_position
+    && !kill_if
+    && n_flush_q == 0 //There is no outstanding request that needs to be disregarded (due to unpredicted PC jump)
+    |=>
+    alb_resp_q[wptr_position].bus_resp.rchk == $past(obi_instr_resp_packet.rchk)
+    && alb_resp_q[wptr_position].bus_resp.integrity_err == $past(if_instr_integrity_err)
+    && alb_resp_q[wptr_position].bus_resp.integrity == $past(support_if.instr_req_had_integrity);
+  endproperty
 
-  instr_integrity [3:0] buffer;
-  logic [1:0] wptr;
+  generate
+    for (genvar wptr = 0; wptr < ALBUF_DEPTH; wptr++) begin
 
+      a_xsecure_integrity_instr_to_alignment_buffer: assert property (
+        p_instr_to_alignment_buffer(wptr)
+      ) else `uvm_error(info_tag, "The integrity error bit and/or the checksum bits from a response packet is not forwarded into the alignment buffer\n");
 
-  always @(posedge clknrst_if.clk, negedge clknrst_if.reset_n) begin
-    if(!clknrst_if.reset_n) begin
-      wptr = '0;
-
-    end else if (obi_instr_rvalid) begin
-
-      if (wptr < 2'b10) begin
-        wptr <= wptr + 1;
-      end else begin
-        wptr <= 2'b00;
-      end
+      a_glitch_xsecure_integrity_instr_to_alignment_buffer: assert property (
+        p_instr_to_alignment_buffer(wptr)
+      ) else `uvm_error(info_tag_glitch, "The integrity error bit and/or the checksum bits from a response packet is not forwarded into the alignment buffer\n");
 
     end
-  end
+  endgenerate
 
-  always_latch begin
-    if(!clknrst_if.reset_n) begin
-      buffer = '0;
 
-    end else if (obi_instr_rvalid) begin
-
-      buffer[wptr].pc = support_if.instr_resp_pc;
-      buffer[wptr].integrity_err = instr_integrity_err;
-      buffer[wptr].rchk = obi_instr_resp_packet.rchk;
-
-      buffer[3] = buffer[0];
-    end
-  end
+  //Verify that the instruction propegated to the id stage have an integrity error if any of its related instruction fetches have integrity errors or alignment buffer based checksum errors.
 
   logic is_obi_addr;
 
@@ -587,67 +619,50 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       && pc_mux != PC_TBLJUMP)
     );
 
-  property p_if_instr_integrty_cmpr;
+  logic [4:0] alb_input_rchk_calculated;
+  logic [4:0] alb_rptr1_rchk_calculated;
+  logic [4:0] alb_rptr2_rchk_calculated;
+
+  assign alb_input_rchk_calculated = f_rchk(alb_resp_i.bus_resp.err, EXOKAY_TIE_OFF_VALUE, alb_resp_i.bus_resp.rdata);
+  assign alb_rptr1_rchk_calculated = f_rchk(alb_resp_q[alb_rptr1].bus_resp.err, EXOKAY_TIE_OFF_VALUE, alb_resp_q[alb_rptr1].bus_resp.rdata);
+  assign alb_rptr2_rchk_calculated = f_rchk(alb_resp_q[alb_rptr2].bus_resp.err, EXOKAY_TIE_OFF_VALUE, alb_resp_q[alb_rptr2].bus_resp.rdata);
+
+  logic alb_input_integrity_err;
+  logic alb_rptr1_integrity_err;
+  logic alb_rptr2_integrity_err;
+
+  assign alb_input_integrity_err = ((alb_resp_i.bus_resp.rchk != alb_input_rchk_calculated) && (obi_instr_rvalid && support_if.instr_req_had_integrity)) || alb_resp_i.bus_resp.integrity_err;
+  assign alb_rptr1_integrity_err = ((alb_resp_q[alb_rptr1].bus_resp.rchk != alb_rptr1_rchk_calculated) && (alb_resp_q[alb_rptr1].mpu_status == MPU_OK) && alb_resp_q[alb_rptr1].bus_resp.integrity) || alb_resp_q[alb_rptr1].bus_resp.integrity_err;
+  assign alb_rptr2_integrity_err = ((alb_resp_q[alb_rptr2].bus_resp.rchk != alb_rptr2_rchk_calculated) && (alb_resp_q[alb_rptr2].mpu_status == MPU_OK) && alb_resp_q[alb_rptr2].bus_resp.integrity) || alb_resp_q[alb_rptr2].bus_resp.integrity_err;
+
+  logic if_instr_aligned = if_instr_pc[1:0] == '0;
+  logic if_integrity_err_calculated;
+
+  always_comb begin
+    if(!alb_valid[alb_rptr1]) begin
+      if_integrity_err_calculated = alb_input_integrity_err;
+    end else if (alb_valid[alb_rptr1] && alb_valid[alb_rptr2]) begin
+      if_integrity_err_calculated = (if_instr_aligned || if_instr_cmpr) ? alb_rptr1_integrity_err : alb_rptr1_integrity_err || alb_rptr2_integrity_err;
+    end else if (alb_valid[alb_rptr1] && !alb_valid[alb_rptr2]) begin
+      if_integrity_err_calculated = (if_instr_aligned || if_instr_cmpr) ? alb_rptr1_integrity_err : alb_rptr1_integrity_err || alb_input_integrity_err;
+    end
+  end
+
+  a_glitch_xsecure_integrity_test: assert property (
     if_valid
     && id_ready
+    && integrity_enabled
     && is_obi_addr
     && !dummy_insert
+    && !seq_valid
+
+    //Assume no error:
     ##1 !id_abort_op
+    && !id_illegal_insn
     |->
-    ($past((if_instr_pc[31:2] == buffer[0].pc[31:2]))
-    || $past((if_instr_pc[31:2] == buffer[1].pc[31:2]))
-    || $past((if_instr_pc[31:2] == buffer[2].pc[31:2])))
+    id_instr_integrity_err == $past(if_integrity_err_calculated)
+  );
 
-    && ($past((if_instr_pc[31:2] == buffer[0].pc[31:2]))
-    || $past((if_instr_pc[31:2] == buffer[1].pc[31:2]))
-    || $past((if_instr_pc[31:2] == buffer[2].pc[31:2])))
-
-    && ($past((if_instr_pc[31:2] == buffer[0].pc[31:2]))
-    || $past((if_instr_pc[31:2] == buffer[1].pc[31:2]))
-    || $past((if_instr_pc[31:2] == buffer[2].pc[31:2])));
-  endproperty
-
-
-  a_glitch_xsecure_integrity_test0: assert property (
-    p_if_instr_integrty_cmpr
-  ); //TODO! fix error comment and name
-/*
-  sequence seq_alignment_or_cmpr(x);
-    if_valid && id_ready && is_obi_addr
-    && (if_instr_pc[31:2] == buffer[x].pc[31:2])
-    && (if_instr_pc[1:0] == '0 || if_instr_cmpr);
-  endsequence
-
-  a_glitch_xsecure_integrity_test1: assert property (
-    seq_alignment_or_cmpr(0)
-    || seq_alignment_or_cmpr(1)
-    || seq_alignment_or_cmpr(2)
-    |->
-    if_instr_integrity_err == buffer[x].integrity_err
-  ); //TODO! fix error comment and name
-
-  sequence seq_unalignment(x);
-    if_valid && id_ready && is_obi_addr
-    && (if_instr_pc[31:2] == buffer[x].pc[31:2])
-    && !(if_instr_pc[1:0] == '0 || if_instr_cmpr);
-  endsequence
-
-  a_glitch_xsecure_integrity_test2: assert property (
-    seq_unalignment(0)
-    || seq_unalignment(1)
-    || seq_unalignment(2)
-    |->
-    if_instr_integrity_err == (buffer[x].integrity_err || buffer[x+1].integrity_err)
-  ); //TODO! fix error comment and name
-
-*/
-/*
-    //TODO: rchk
-    assign rchk_instr_calculated = f_rchk(
-    obi_instr_resp_packet.err,
-    EXOKAY_TIE_OFF_VALUE,
-    obi_instr_resp_packet.rdata);
-*/
 
   //Verify that integrity errors on the OBI data bus set mcause exception code to 1026 or 1027, and set alert major
 
@@ -670,7 +685,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     |=>
     nmip[*0:$]
     ##1 !nmip
-    && (mcause_exception_code == 1026 || mcause_exception_code == 1027)
+    && (mcause_exception_code == LSU_LOAD_INTEGRITY_FAULT || mcause_exception_code == LSU_STORE_INTEGRITY_FAULT)
     && alert_major
 
   ) else `uvm_error(info_tag_glitch, "The NMI caused by an associated parity/checksum error does not have exception code 1027 or 1026.\n");

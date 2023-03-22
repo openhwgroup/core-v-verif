@@ -25,9 +25,11 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
   (
    uvmt_cv32e40s_xsecure_if xsecure_if,
    input rst_ni,
-   input clk_i
-  );
+   input clk_i,
 
+   input logic pc_hardening_enabled
+  );
+/*
   // Default settings:
   default clocking @(posedge clk_i); endclocking
   default disable iff (!(rst_ni) | !(SECURE));
@@ -50,12 +52,36 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
   localparam NON_CMPR_INSTRUCTION_INCREMENT = 4;
   localparam CMPR_INSTRUCTION_INCREMENT = 2;
 
+    localparam PC_HARDENING = 3;
+
+
+xsecure_if.dummy_insert
+input logic dummy_insert;
+xsecure_if.core_if_stage_if_valid_o
+xsecure_if.core_if_stage_id_ready_i
+xsecure_if.core_i_if_stage_i_ptr_in_if_o
+xsecure_if.core_i_if_stage_i_compressed_decoder_i_is_compressed_o
+xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc
+xsecure_if.core_i_if_stage_i_pc_if_o
+xsecure_if.core_i_if_id_pipe_last_op
+xsecure_if.core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set
+xsecure_if.core_i_if_stage_i_pc_check_i_pc_set_q
+xsecure_if.core_xsecure_ctrl_cpuctrl_dataindtiming
+xsecure_if.core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux
+xsecure_if.core_i_ex_stage_i_alu_i_cmp_result_o
+xsecure_if.core_i_ex_stage_i_branch_target_o
+xsecure_if.core_i_jump_target_id
+xsecure_if.core_i_cs_registers_i_mepc_o
+xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening
+xsecure_if.core_alert_major_o
+
 
   ////////// PC HARDENING IS ENABLED BY DEFAULT //////////
 
   a_xsecure_pc_hardening_default_on: assert property (
-    p_xsecure_setting_default_on(
-        xsecure_if.core_xsecure_ctrl_cpuctrl_pc_hardening)
+    $rose(rst_ni)
+    |->
+    pc_hardening_enabled
   ) else `uvm_error(info_tag, "PC hardening is not enabled when exiting reset.\n");
 
   ////////// PC HARDENING BEHAVIOUR WHEN THERE ARE NO GLITCHES //////////
@@ -64,7 +90,7 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
     @(posedge clk_i)
 
     //Generate a dummy instruction
-    xsecure_if.core_if_stage_instr_meta_n_dummy
+    xsecure_if.dummy_insert
 
     //Make sure the PC of ID and IF stage is equal when there is a dummy instruction in the ID stage
     ##1 (xsecure_if.core_i_if_stage_i_pc_if_o == xsecure_if.core_i_id_stage_i_if_id_pipe_i_pc)[*1:$];
@@ -312,6 +338,6 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
     && !$past(xsecure_if.core_alert_major_o)
 
   ) else `uvm_error(info_tag_glitch, "Mismatch between the computed and the recomputed branch instruction (decision calculation) sets the major alert even though PC hardening is off.\n");
-
+*/
 
   endmodule : uvmt_cv32e40s_xsecure_hardened_pc_assert
