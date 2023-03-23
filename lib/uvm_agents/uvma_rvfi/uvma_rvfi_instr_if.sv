@@ -111,6 +111,12 @@ interface uvma_rvfi_instr_if
   localparam INSTR_OPCODE_CSRRSI    = 32'h 0000_6073;
   localparam INSTR_OPCODE_CSRRCI    = 32'h 0000_7073;
 
+  localparam INSTR_MASK_PUSHPOP   = 32'b 11111111_11111111_111_11111_0000_00_11;
+  localparam INSTR_OPCODE_PUSH    = 32'b 00000000_00000000_101_11000_0000_00_10;
+  localparam INSTR_OPCODE_POP     = 32'b 00000000_00000000_101_11010_0000_00_10;
+  localparam INSTR_OPCODE_POPRET  = 32'b 00000000_00000000_101_11110_0000_00_10;
+  localparam INSTR_OPCODE_POPRETZ = 32'b 00000000_00000000_101_11100_0000_00_10;
+
   //positions
   localparam int INSTR_CSRADDR_POS  = 20;
 
@@ -204,38 +210,38 @@ interface uvma_rvfi_instr_if
   //       valid values, indicated by rvfi_valid == 1
 
   // Check if instruction is of a certain type
-  // Usage: ref_mask sets the parts of the instruction you want to compare,
-  //        ref_instr is the reference to match
-  function logic match_instr( bit [ DEFAULT_XLEN-1:0] ref_instr,
-                              bit [ DEFAULT_XLEN-1:0] ref_mask
+  // Usage: instr_mask sets the parts of the instruction you want to compare,
+  //        instr_ref is the reference to match
+  function logic match_instr( bit [ DEFAULT_XLEN-1:0] instr_ref,
+                              bit [ DEFAULT_XLEN-1:0] instr_mask
                               );
 
-  return rvfi_valid && is_instr_bus_valid() && ((rvfi_insn & ref_mask) == ref_instr);
+  return rvfi_valid && is_instr_bus_valid() && ((rvfi_insn & instr_mask) == instr_ref);
 
   endfunction : match_instr
 
   // Check if instruction is of a certain type, without verifying the instr word is valid
-  // Usage: ref_mask sets the parts of the instruction you want to compare,
-  //        ref_instr is the reference to match
-  function logic match_instr_raw( bit [ DEFAULT_XLEN-1:0] ref_instr,
-                              bit [ DEFAULT_XLEN-1:0] ref_mask
+  // Usage: instr_mask sets the parts of the instruction you want to compare,
+  //        instr_ref is the reference to match
+  function logic match_instr_raw( bit [ DEFAULT_XLEN-1:0] instr_ref,
+                              bit [ DEFAULT_XLEN-1:0] instr_mask
                               );
 
-  return rvfi_valid && ((rvfi_insn & ref_mask) == ref_instr);
+  return rvfi_valid && ((rvfi_insn & instr_mask) == instr_ref);
 
   endfunction : match_instr_raw
 
 // Match instr types
-function logic match_instr_r(bit [ DEFAULT_XLEN-1:0] ref_instr);
-  return match_instr(ref_instr, INSTR_MASK_R_TYPE);
+function logic match_instr_r(bit [ DEFAULT_XLEN-1:0] instr_ref);
+  return match_instr(instr_ref, INSTR_MASK_R_TYPE);
 endfunction : match_instr_r
 
-function logic match_instr_isb(bit [ DEFAULT_XLEN-1:0] ref_instr);
-  return match_instr(ref_instr, INSTR_MASK_I_S_B_TYPE);
+function logic match_instr_isb(bit [ DEFAULT_XLEN-1:0] instr_ref);
+  return match_instr(instr_ref, INSTR_MASK_I_S_B_TYPE);
 endfunction : match_instr_isb
 
-function logic match_instr_uj(bit [ DEFAULT_XLEN-1:0] ref_instr);
-  return  match_instr(ref_instr, INSTR_MASK_U_J_TYPE);
+function logic match_instr_uj(bit [ DEFAULT_XLEN-1:0] instr_ref);
+  return  match_instr(instr_ref, INSTR_MASK_U_J_TYPE);
 endfunction : match_instr_uj
 
 // Match CSR functions
@@ -404,10 +410,16 @@ function logic is_ebreak_noncompr();
   return match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL);
 endfunction : is_ebreak_noncompr
 
-
 function logic is_ecall();
   return match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);
 endfunction : is_ecall
+
+function automatic logic is_pushpop();
+  return  match_instr(INSTR_OPCODE_PUSH,    INSTR_MASK_PUSHPOP)  ||
+          match_instr(INSTR_OPCODE_POP,     INSTR_MASK_PUSHPOP)  ||
+          match_instr(INSTR_OPCODE_POPRET,  INSTR_MASK_PUSHPOP)  ||
+          match_instr(INSTR_OPCODE_POPRETZ, INSTR_MASK_PUSHPOP);
+endfunction : is_pushpop
 
 function logic is_nmi();
   return rvfi_valid && rvfi_intr.intr && (rvfi_intr.cause & INTR_CAUSE_NMI_MASK);

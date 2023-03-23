@@ -41,11 +41,26 @@ module  uvmt_cv32e40s_rvfi_cov (
   default disable iff !rst_ni;
 
 
-  // Cover mem access split in two OBI transactions
+  // Aliases
+
+  let  mem_rmask = rvfi_if.rvfi_mem_rmask;
+  let  mem_wmask = rvfi_if.rvfi_mem_wmask;
+
+
+  // Mem access split in two OBI transactions
 
   cov_split_data: cover property (
     rvfi_if.is_split_datatrans()  &&
     !rvfi_if.rvfi_trap
+  );
+
+
+  // Pushpop instrs
+
+  cov_pushpop: cover property (
+    rvfi_if.is_pushpop()  &&
+    !rvfi_if.rvfi_trap  &&
+    ((mem_rmask | mem_wmask) > 'h FF)
   );
 
 
