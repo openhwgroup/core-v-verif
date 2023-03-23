@@ -31,6 +31,12 @@
 #define FAIL    1
 #define SUCCESS 0
 
+#define SETUP_NO  0
+#define SETUP_YES 1
+
+#define EXPECT_TRIGGER_NO  0
+#define EXPECT_TRIGGER_YES 1
+
 #define DEBUG_PRINT 0
 
 #define DEBUG_REQ_CONTROL_REG *(volatile int *) CV_VP_DEBUG_CONTROL_BASE
@@ -65,10 +71,6 @@
 #define TRIGGER_EXECUTE           7
 #define TRIGGER_EXCEPTION_ILLEGAL 8
 #define TRIGGER_EXCEPTION_EBREAK  9
-
-#define EXCEPTION_CODE_ILLEGAL_INSTRUCTION 2
-#define EXCEPTION_CODE_BREAKPOINT          3
-#define EXCEPTION_CODE_RESERVED           10
 
 // ---------------------------------------------------------------
 // Type definitions
@@ -127,10 +129,39 @@ typedef union {
     volatile uint32_t dmode          :  1;
     volatile uint32_t type           :  4; // Always 5
   } __attribute__((packed)) volatile etrigger;
-
   volatile uint32_t raw : 32;
 } __attribute__((packed)) tdata1_t;
 
+
+typedef union {
+  struct {
+    volatile uint32_t data : 32;
+  } __attribute__((packed)) volatile disabled;
+  struct {
+    volatile uint32_t data : 32;
+  } __attribute__((packed)) volatile mcontrol;
+  struct {
+    volatile uint32_t data : 32;
+  } __attribute__((packed)) volatile mcontrol6;
+  struct {
+    volatile uint32_t reserved_0                  :  1;
+    volatile uint32_t instruction_access_fault    :  1;
+    volatile uint32_t illegal_instruction         :  1;
+    volatile uint32_t breakpoint                  :  1;
+    volatile uint32_t reserved_4                  :  1;
+    volatile uint32_t load_access_fault           :  1;
+    volatile uint32_t reserved_6                  :  1;
+    volatile uint32_t store_access_fault          :  1;
+    volatile uint32_t ecall_user_mode             :  1;
+    volatile uint32_t reserved_9_10               :  2;
+    volatile uint32_t ecall_macine_mode           :  1;
+    volatile uint32_t reserved_12_23              : 12;
+    volatile uint32_t instruction_bus_fault       :  1;
+    volatile uint32_t instruction_integrity_fault :  1;
+    volatile uint32_t reserved_26_31              :  6;
+  } __attribute__((packed)) volatile etrigger;
+  volatile uint32_t raw : 32;
+} __attribute__((packed)) tdata2_t;
 
 extern void end_handler_incr_mepc(void);
 
@@ -158,7 +189,7 @@ int test_store_trigger(int);
 int test_exception_trigger(int);
 
 volatile tdata1_t g_tdata1_next;
-volatile uint32_t g_tdata2_next;
+volatile tdata2_t g_tdata2_next;
 volatile uint32_t g_tdata2_next_offset;
 
 volatile int      g_trigger_type;
@@ -345,7 +376,7 @@ void _debug_handler(void) {
       // Load tdata config csrs
       if (DEBUG_PRINT) {
         printf("    Setting up triggers\n      csr_write: tdata1 = 0x%08lx\n      csr_write: tdata2 = 0x%08lx (0x%lx + 0x%lx)\n",
-               g_tdata1_next.raw, g_tdata2_next, g_trigger_address, g_tdata2_next_offset);
+               g_tdata1_next.raw, g_tdata2_next.raw, g_trigger_address, g_tdata2_next_offset);
       }
       __asm__ volatile (R"(csrwi tdata2, 0x0
                            la   s1,     g_tdata1_next
@@ -488,11 +519,11 @@ volatile void trigger_code_multicycle_insn() {
  * runs test and checks if the result is expected.
  *
  */
-int trigger_test(int setup, int expect_trigger_match, uint32_t tdata2_arg) {
+ int trigger_test( int setup, int expect_trigger_match, uint32_t tdata2_arg) {
 
   if (DEBUG_PRINT) printf ("\ntrigger_test():\n");
 
-  g_tdata2_next        = tdata2_arg + g_tdata2_next_offset;
+  g_tdata2_next.raw    = tdata2_arg + g_tdata2_next_offset;
   g_trigger_address    = tdata2_arg;
   g_debug_entry_status = DEBUG_STATUS_NOT_ENTERED;
 
@@ -591,23 +622,23 @@ int test_execute_trigger(int priv_lvl) {
   g_debug_break_loop = DEBUG_LOOPBREAK_TDATA2;
 
   // Check that executing trigger_code function does not trigger when it is not set up
-  retval += trigger_test(0, 0, (uint32_t) &trigger_code_nop);
+  retval += trigger_test(SETUP_NO, EXPECT_TRIGGER_NO,   (uint32_t) &trigger_code_nop);
 
   // Check that clearing tdata2 prevents re-triggering upon return
-  retval += trigger_test(1, 1, (uint32_t) &trigger_code_nop);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &trigger_code_nop);
 
   // Check that executing trigger_code function does not trigger when it is disabled in tdata1
-  retval += trigger_test(0, 0, (uint32_t) &trigger_code_nop);
+  retval += trigger_test(SETUP_NO, EXPECT_TRIGGER_NO,   (uint32_t) &trigger_code_nop);
 
   // Check that executing various instructions at the triggered address causes debug entry
   // and make sure it is not executed before entering debug
   g_debug_break_loop = DEBUG_LOOPBREAK_DPCINCR;
-  retval += trigger_test(1, 1, (uint32_t) &trigger_code_nop);
-  retval += trigger_test(1, 1, (uint32_t) &trigger_code_ebreak);
-  retval += trigger_test(1, 1, (uint32_t) &trigger_code_cebreak);
-  retval += trigger_test(1, 1, (uint32_t) &trigger_code_branch_insn);
-  retval += trigger_test(1, 1, (uint32_t) &trigger_code_illegal_insn);
-  retval += trigger_test(1, 1, (uint32_t) &trigger_code_multicycle_insn);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &trigger_code_nop);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &trigger_code_ebreak);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &trigger_code_cebreak);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &trigger_code_branch_insn);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &trigger_code_illegal_insn);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &trigger_code_multicycle_insn);
 
 
 
@@ -627,38 +658,38 @@ int test_execute_trigger(int priv_lvl) {
   g_debug_break_loop = DEBUG_LOOPBREAK_TDATA2;
 
   // Check that clearing tdata2 prevents re-triggering upon return
-  retval += trigger_test(1, 1, (uint32_t) &trigger_code_nop);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &trigger_code_nop);
 
   // Check that executing various instructions at the triggered address causes debug entry
   // and make sure it is not executed before entering debug
   g_debug_break_loop = DEBUG_LOOPBREAK_DPCINCR;
-  retval += trigger_test(1, 1, (uint32_t) &trigger_code_nop);
-  retval += trigger_test(1, 1, (uint32_t) &trigger_code_ebreak);
-  retval += trigger_test(1, 1, (uint32_t) &trigger_code_cebreak);
-  retval += trigger_test(1, 1, (uint32_t) &trigger_code_branch_insn);
-  retval += trigger_test(1, 1, (uint32_t) &trigger_code_illegal_insn);
-  retval += trigger_test(1, 1, (uint32_t) &trigger_code_multicycle_insn);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &trigger_code_nop);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &trigger_code_ebreak);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &trigger_code_cebreak);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &trigger_code_branch_insn);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &trigger_code_illegal_insn);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &trigger_code_multicycle_insn);
 
   g_tdata1_next.mcontrol6.match = MATCH_GEQ;
   g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   // Executing from start of debug memory to avoid triggering on instructions executed in the the test flow (like debug handler)
-  retval += trigger_test(1, 1, (uint32_t) &execute_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &execute_test_high_addr);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 1, (uint32_t) &execute_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &execute_test_high_addr);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &execute_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &execute_test_high_addr);
 
   g_tdata1_next.mcontrol6.match = MATCH_LESS;
   g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   // Executing from constructor as it is known to have a lower address than other functions
   g_tdata2_next_offset = 0;
-  retval += trigger_test(1, 0, (uint32_t) &execute_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &execute_test_constructor);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &execute_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &execute_test_constructor);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 1, (uint32_t) &execute_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &execute_test_constructor);
 
   // Test with only oposite privilege mode enabled, expect no matches //
 
@@ -675,18 +706,18 @@ int test_execute_trigger(int priv_lvl) {
 
   // Check that executing trigger address does not trigger in wrong mode
   g_debug_break_loop = DEBUG_LOOPBREAK_DPCINCR;
-  retval += trigger_test(1, 0, (uint32_t) &trigger_code_nop);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &trigger_code_nop);
 
   g_tdata1_next.mcontrol6.match = MATCH_GEQ;
   g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   // Executing from start of debug memory to avoid triggering on instructions executed in the the test flow (like debug handler)
   g_tdata2_next_offset = 0;
-  retval += trigger_test(1, 0, (uint32_t) &execute_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &execute_test_high_addr);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &execute_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &execute_test_high_addr);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &execute_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &execute_test_high_addr);
 
   execute_debug_command(DEBUG_SEL_DISABLE_TRIGGER);
   execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
@@ -728,27 +759,27 @@ int test_load_trigger (int priv_lvl) {
   g_tdata2_next_offset = 0;
 
   g_debug_break_loop   = DEBUG_LOOPBREAK_TDATA2;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_word);
 
   g_debug_break_loop   = DEBUG_LOOPBREAK_DPCINCR;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_word);
 
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_word);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_word);
 
   g_tdata2_next_offset = 0;
 
   g_trigger_type    = TRIGGER_LOAD_HALFWORD;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_halfwords[0]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_halfwords[1]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_halfwords[0]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_halfwords[1]);
 
   g_trigger_type    = TRIGGER_LOAD_BYTE;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[0]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[1]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[2]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[3]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[0]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[1]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[2]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[3]);
 
   g_trigger_type    = TRIGGER_LOAD_WORD;
 
@@ -758,22 +789,22 @@ int test_load_trigger (int priv_lvl) {
 
   // Loading from start of debug memory to avoid triggering on loads from other variables
   g_tdata2_next_offset = 0;
-  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &load_store_test_high_addr);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &load_store_test_high_addr);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_high_addr);
 
   g_tdata1_next.mcontrol6.match = MATCH_LESS;
   g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   // Loading from constructor function as it is known to have a lower address than other variables loaded in test code
   g_tdata2_next_offset = 0;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_constructor);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_constructor);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 1, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &load_store_test_constructor);
 
 
   // Trigger on current privilege mode only //
@@ -793,27 +824,27 @@ int test_load_trigger (int priv_lvl) {
   g_tdata2_next_offset = 0;
 
   g_debug_break_loop   = DEBUG_LOOPBREAK_TDATA2;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_word);
 
   g_debug_break_loop   = DEBUG_LOOPBREAK_DPCINCR;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_word);
 
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_word);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_word);
 
   g_tdata2_next_offset = 0;
 
   g_trigger_type    = TRIGGER_LOAD_HALFWORD;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_halfwords[0]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_halfwords[1]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_halfwords[0]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_halfwords[1]);
 
   g_trigger_type    = TRIGGER_LOAD_BYTE;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[0]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[1]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[2]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[3]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[0]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[1]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[2]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[3]);
 
   g_trigger_type    = TRIGGER_LOAD_WORD;
 
@@ -824,22 +855,22 @@ int test_load_trigger (int priv_lvl) {
 
   // Loading from start of debug memory to avoid triggering on loads from other variables
   g_tdata2_next_offset = 0;
-  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &load_store_test_high_addr);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &load_store_test_high_addr);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_high_addr);
 
   g_tdata1_next.mcontrol6.match = MATCH_LESS;
   g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   // Loading from constructor function as it is known to have a lower address than other functions
   g_tdata2_next_offset = 0;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_constructor);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_constructor);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 1, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &load_store_test_constructor);
 
 
   // Test with only oposite privilege mode enabled, expect no matches
@@ -857,27 +888,27 @@ int test_load_trigger (int priv_lvl) {
   g_tdata2_next_offset = 0;
 
   g_debug_break_loop   = DEBUG_LOOPBREAK_TDATA2;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_word);
 
   g_debug_break_loop   = DEBUG_LOOPBREAK_DPCINCR;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_word);
 
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_word);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_word);
 
   g_tdata2_next_offset = 0;
 
   g_trigger_type    = TRIGGER_LOAD_HALFWORD;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_halfwords[0]);
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_halfwords[1]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_halfwords[0]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_halfwords[1]);
 
   g_trigger_type    = TRIGGER_LOAD_BYTE;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_bytes[0]);
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_bytes[1]);
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_bytes[2]);
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_bytes[3]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_bytes[0]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_bytes[1]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_bytes[2]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_bytes[3]);
 
   g_trigger_type    = TRIGGER_LOAD_WORD;
 
@@ -887,22 +918,22 @@ int test_load_trigger (int priv_lvl) {
 
   // Loading from start of debug memory to avoid triggering on loads from other variables
   g_tdata2_next_offset = 0;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_high_addr);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_high_addr);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_high_addr);
 
   g_tdata1_next.mcontrol6.match = MATCH_LESS;
   g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
   // Loading from constructor function as it is known to have a lower address than other functions
   g_tdata2_next_offset = 0;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_constructor);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_constructor);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_constructor);
 
 
   execute_debug_command(DEBUG_SEL_DISABLE_TRIGGER);
@@ -943,27 +974,27 @@ int test_store_trigger(int priv_lvl) {
   g_tdata2_next_offset = 0;
 
   g_debug_break_loop   = DEBUG_LOOPBREAK_TDATA2;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_word);
 
   g_debug_break_loop   = DEBUG_LOOPBREAK_DPCINCR;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_word);
 
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_word);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_word);
 
   g_tdata2_next_offset = 0;
 
   g_trigger_type    = TRIGGER_STORE_HALFWORD;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_halfwords[0]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_halfwords[1]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_halfwords[0]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_halfwords[1]);
 
   g_trigger_type    = TRIGGER_STORE_BYTE;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[0]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[1]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[2]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[3]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[0]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[1]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[2]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[3]);
 
   g_trigger_type    = TRIGGER_STORE_WORD;
 
@@ -972,21 +1003,21 @@ int test_store_trigger(int priv_lvl) {
 
   // Storing to unsused debugger_exception section to ensure it is not triggered by variables at higher addresses
   g_tdata2_next_offset = 0;
-  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &load_store_test_high_addr);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &load_store_test_high_addr);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_high_addr);
 
   g_tdata1_next.mcontrol6.match = MATCH_LESS;
   g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
   g_tdata2_next_offset = 0;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_constructor);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_constructor);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 1, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &load_store_test_constructor);
 
 
   // Trigger on current privilege mode only //
@@ -1006,27 +1037,27 @@ int test_store_trigger(int priv_lvl) {
   g_tdata2_next_offset = 0;
 
   g_debug_break_loop   = DEBUG_LOOPBREAK_TDATA2;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_word);
 
   g_debug_break_loop   = DEBUG_LOOPBREAK_DPCINCR;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_word);
 
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_word);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &g_some_data_word);
 
   g_tdata2_next_offset = 0;
 
   g_trigger_type    = TRIGGER_STORE_HALFWORD;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_halfwords[0]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_halfwords[1]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_halfwords[0]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_halfwords[1]);
 
   g_trigger_type    = TRIGGER_STORE_BYTE;
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[0]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[1]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[2]);
-  retval += trigger_test(1, 1, (uint32_t) &g_some_data_bytes[3]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[0]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[1]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[2]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &g_some_data_bytes[3]);
 
   g_trigger_type    = TRIGGER_STORE_WORD;
 
@@ -1036,21 +1067,21 @@ int test_store_trigger(int priv_lvl) {
 
   // Storing to unsused debugger_exception section to ensure it is not triggered by variables at higher addresses
   g_tdata2_next_offset = 0;
-  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &load_store_test_high_addr);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 1, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &load_store_test_high_addr);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_high_addr);
 
   g_tdata1_next.mcontrol6.match = MATCH_LESS;
   g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
   g_tdata2_next_offset = 0;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_constructor);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  (uint32_t) &load_store_test_constructor);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 1, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, (uint32_t) &load_store_test_constructor);
 
 
   // Test with only oposite privilege mode enabled, expect no matches
@@ -1069,27 +1100,27 @@ int test_store_trigger(int priv_lvl) {
   g_tdata2_next_offset = 0;
 
   g_debug_break_loop   = DEBUG_LOOPBREAK_TDATA2;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &g_some_data_word);
 
   g_debug_break_loop   = DEBUG_LOOPBREAK_DPCINCR;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &g_some_data_word);
 
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &g_some_data_word);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_word);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &g_some_data_word);
 
   g_tdata2_next_offset = 0;
 
   g_trigger_type    = TRIGGER_STORE_HALFWORD;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_halfwords[0]);
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_halfwords[1]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &g_some_data_halfwords[0]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &g_some_data_halfwords[1]);
 
   g_trigger_type    = TRIGGER_STORE_BYTE;
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_bytes[0]);
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_bytes[1]);
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_bytes[2]);
-  retval += trigger_test(1, 0, (uint32_t) &g_some_data_bytes[3]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &g_some_data_bytes[0]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &g_some_data_bytes[1]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &g_some_data_bytes[2]);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &g_some_data_bytes[3]);
 
   g_trigger_type    = TRIGGER_STORE_WORD;
 
@@ -1098,21 +1129,21 @@ int test_store_trigger(int priv_lvl) {
 
   // Storing to unsused debugger_exception section to ensure it is not triggered by variables at higher addresses
   g_tdata2_next_offset = 0;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &load_store_test_high_addr);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &load_store_test_high_addr);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &load_store_test_high_addr);
 
   g_tdata1_next.mcontrol6.match = MATCH_LESS;
   g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   g_tdata2_next_offset = 0;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &load_store_test_constructor);
   g_tdata2_next_offset = -4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &load_store_test_constructor);
   g_tdata2_next_offset = 4;
-  retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, (uint32_t) &load_store_test_constructor);
 
   execute_debug_command(DEBUG_SEL_DISABLE_TRIGGER);
   execute_debug_command(DEBUG_SEL_ENTER_MACHINEMODE);
@@ -1147,24 +1178,29 @@ int test_exception_trigger(int priv_lvl) {
 
   g_tdata2_next_offset = 0;
   g_trigger_type = TRIGGER_EXCEPTION_ILLEGAL;
-  retval += trigger_test(1, 0, 0);
-  retval += trigger_test(1, 1, -1);
-  retval += trigger_test(1, 1,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
-                               (1 << EXCEPTION_CODE_BREAKPOINT) |
-                               (1 << EXCEPTION_CODE_RESERVED)));
-  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_RESERVED));
-  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_BREAKPOINT));
-  retval += trigger_test(1, 1, (1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION));
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  0);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, -1);
+
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, ((tdata2_t){.etrigger.illegal_instruction = 1,
+                                                                    .etrigger.breakpoint          = 1,
+                                                                    .etrigger.reserved_6          = 1}).raw);
+
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  ((tdata2_t){.etrigger.reserved_6 = 1,
+                                                                    .etrigger.reserved_4 = 1}).raw);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  ((tdata2_t){.etrigger.breakpoint = 1}).raw);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, ((tdata2_t){.etrigger.illegal_instruction = 1}).raw);
 
   g_trigger_type = TRIGGER_EXCEPTION_EBREAK;
-  retval += trigger_test(1, 0, 0);
-  retval += trigger_test(1, 1, -1);
-  retval += trigger_test(1, 0,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
-                               (1 << EXCEPTION_CODE_RESERVED)));
-  retval += trigger_test(1, 1, (1 << EXCEPTION_CODE_BREAKPOINT));
-  retval += trigger_test(1, 1,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
-                               (1 << EXCEPTION_CODE_BREAKPOINT)));
-  retval += trigger_test(1, 0, 0);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  0);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, -1);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  ((tdata2_t){.etrigger.illegal_instruction = 1,
+                                                                    .etrigger.reserved_6          = 1}).raw);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, ((tdata2_t){.etrigger.breakpoint = 1}).raw);
+
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, ((tdata2_t){.etrigger.illegal_instruction = 1,
+                                                                    .etrigger.breakpoint          = 1,
+                                                                    .etrigger.reserved_6          = 1}).raw);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  0);
 
 
   // Set up trigger
@@ -1178,24 +1214,27 @@ int test_exception_trigger(int priv_lvl) {
 
   g_tdata2_next_offset = 0;
   g_trigger_type = TRIGGER_EXCEPTION_ILLEGAL;
-  retval += trigger_test(1, 0, 0);
-  retval += trigger_test(1, 1, -1);
-  retval += trigger_test(1, 1,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
-                               (1 << EXCEPTION_CODE_BREAKPOINT) |
-                               (1 << EXCEPTION_CODE_RESERVED)));
-  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_RESERVED));
-  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_BREAKPOINT));
-  retval += trigger_test(1, 1, (1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION));
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  0);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, -1);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, ((tdata2_t){.etrigger.illegal_instruction = 1,
+                                                                    .etrigger.breakpoint          = 1,
+                                                                    .etrigger.reserved_6          = 1}).raw);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  ((tdata2_t){.etrigger.reserved_6 = 1,
+                                                                   .etrigger.reserved_4 = 1}).raw);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  ((tdata2_t){.etrigger.breakpoint = 1}).raw);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, ((tdata2_t){.etrigger.illegal_instruction = 1}).raw);
 
   g_trigger_type = TRIGGER_EXCEPTION_EBREAK;
-  retval += trigger_test(1, 0, 0);
-  retval += trigger_test(1, 1, -1);
-  retval += trigger_test(1, 0,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
-                               (1 << EXCEPTION_CODE_RESERVED)));
-  retval += trigger_test(1, 1, (1 << EXCEPTION_CODE_BREAKPOINT));
-  retval += trigger_test(1, 1,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
-                               (1 << EXCEPTION_CODE_BREAKPOINT)));
-  retval += trigger_test(1, 0, 0);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  0);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, -1);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  ((tdata2_t){.etrigger.illegal_instruction = 1,
+                                                                    .etrigger.reserved_6          = 1}).raw);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, ((tdata2_t){.etrigger.breakpoint = 1}).raw);
+
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_YES, ((tdata2_t){.etrigger.illegal_instruction = 1,
+                                                                    .etrigger.breakpoint          = 1,
+                                                                    .etrigger.reserved_6          = 1}).raw);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO,  0);
 
   // Set up trigger
   g_tdata1_next = (tdata1_t){.etrigger.type = 5}; // Set to etrigger type
@@ -1208,24 +1247,27 @@ int test_exception_trigger(int priv_lvl) {
 
   g_tdata2_next_offset = 0;
   g_trigger_type = TRIGGER_EXCEPTION_ILLEGAL;
-  retval += trigger_test(1, 0, 0);
-  retval += trigger_test(1, 0, -1);
-  retval += trigger_test(1, 0,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
-                               (1 << EXCEPTION_CODE_BREAKPOINT) |
-                               (1 << EXCEPTION_CODE_RESERVED)));
-  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_RESERVED));
-  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_BREAKPOINT));
-  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION));
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, 0);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, -1);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, ((tdata2_t){.etrigger.illegal_instruction = 1,
+                                                                   .etrigger.breakpoint          = 1,
+                                                                   .etrigger.reserved_6          = 1}).raw);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, ((tdata2_t){.etrigger.reserved_6          = 1,
+                                                                   .etrigger.reserved_4 = 1}).raw);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, ((tdata2_t){.etrigger.breakpoint = 1}).raw);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, ((tdata2_t){.etrigger.illegal_instruction = 1}).raw);
 
   g_trigger_type = TRIGGER_EXCEPTION_EBREAK;
-  retval += trigger_test(1, 0, 0);
-  retval += trigger_test(1, 0, -1);
-  retval += trigger_test(1, 0,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
-                               (1 << EXCEPTION_CODE_RESERVED)));
-  retval += trigger_test(1, 0, (1 << EXCEPTION_CODE_BREAKPOINT));
-  retval += trigger_test(1, 0,((1 << EXCEPTION_CODE_ILLEGAL_INSTRUCTION) |
-                               (1 << EXCEPTION_CODE_BREAKPOINT)));
-  retval += trigger_test(1, 0, 0);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, 0);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, -1);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, ((tdata2_t){.etrigger.illegal_instruction = 1,
+                                                                   .etrigger.reserved_6          = 1}).raw);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, ((tdata2_t){.etrigger.breakpoint = 1}).raw);
+
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, ((tdata2_t){.etrigger.illegal_instruction = 1,
+                                                                   .etrigger.breakpoint          = 1,
+                                                                   .etrigger.reserved_6          = 1}).raw);
+  retval += trigger_test(SETUP_YES, EXPECT_TRIGGER_NO, 0);
 
 
   execute_debug_command(DEBUG_SEL_DISABLE_TRIGGER);
