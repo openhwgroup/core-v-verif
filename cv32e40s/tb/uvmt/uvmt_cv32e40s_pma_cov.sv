@@ -35,7 +35,9 @@ module  uvmt_cv32e40s_pma_cov
   input wire  load_access,
   input wire  core_trans_pushpop_i,
 
-  input wire pma_status_t  pma_status_i
+  input wire pma_status_t  pma_status_i,
+
+  uvma_rvfi_instr_if  rvfi_if
 );
 
 
@@ -54,9 +56,9 @@ module  uvmt_cv32e40s_pma_cov
   assign  is_mpu_activated = (core_trans_ready_o && core_trans_valid_i);
 
 
-  // Coverage Definitions
+  // MPU Coverage Definition
 
-  covergroup cg @(posedge clk);
+  covergroup cg_mpu @(posedge clk);
     option.per_instance = 1;
     option.detect_overlap = 1;
 
@@ -145,7 +147,7 @@ module  uvmt_cv32e40s_pma_cov
     x_aligned_integrity:          cross  cp_aligned, cp_integrity;
     x_aligned_overridedm:         cross  cp_aligned, cp_overridedm;
 
-    x_loadstoreexec_allow:        cross  cp_loadstoreexec, cp_allow;
+    x_loadstoreexec_allow_main:   cross  cp_loadstoreexec, cp_allow, cp_main;
     x_loadstoreexec_main_pushpop: cross  cp_loadstoreexec, cp_main, cp_pushpop;
     x_loadstoreexec_bufferable:   cross  cp_loadstoreexec, cp_bufferable;
     x_loadstoreexec_cacheable:    cross  cp_loadstoreexec, cp_cacheable;
@@ -163,7 +165,35 @@ module  uvmt_cv32e40s_pma_cov
     //TODO:INFO:silabs-robin more crosses are possible, but bordering on impractical/infeasible
   endgroup
 
-  cg  cg_inst = new;
+  cg_mpu  mpu_cg = new;
+
+
+  // RVFI Coverage Definition
+
+  covergroup cg_rvfi @(posedge clk);
+    option.per_instance = 1;
+    option.detect_overlap = 1;
+
+    cp_aligned: coverpoint  rvfi_if.is_split_datatrans()  iff (rvfi_if.rvfi_valid) {
+      bins  misaligned = {1};
+      bins  aligned    = {0};
+    }
+
+    cp_pmafault: coverpoint  rvfi_if.is_pma_fault()  iff (rvfi_if.rvfi_valid) {
+      bins  fault = {1};
+      bins  no    = {0};
+    }
+
+    cp_loadstore: coverpoint  rvfi_if.rvfi_mem_wmask  iff (rvfi_if.is_mem_act()) {
+      bins  load  = {0};
+      bins  store = rvfi_if.rvfi_mem_wmask with (item != 0);
+    }
+  endgroup
+
+  if (!IS_INSTR_SIDE) begin: gen_rvfi_cg
+    cg_rvfi  rvfi_cg = new;
+    // RVFI is 1 interface, so we don't need an exact duplicate at both MPUs.
+  end
 
 
 endmodule : uvmt_cv32e40s_pma_cov

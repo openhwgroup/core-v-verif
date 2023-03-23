@@ -452,6 +452,18 @@ function logic is_pma_instr_fault();
           (rvfi_trap.cause_type == 'h 0);
 endfunction : is_pma_instr_fault
 
+function automatic logic is_pma_fault();
+  return  rvfi_valid  &&
+          rvfi_trap.trap  &&
+          rvfi_trap.exception  &&
+          (rvfi_trap.exception_cause  inside {
+            cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT,
+            cv32e40s_pkg::EXC_CAUSE_LOAD_FAULT,
+            cv32e40s_pkg::EXC_CAUSE_STORE_FAULT
+          })  &&
+          (rvfi_trap.cause_type == 'h 0);
+endfunction : is_pma_fault
+
 function logic is_instr_bus_valid();
   return !( (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT) ||
             (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_INTEGRITY_FAULT) ||
@@ -484,4 +496,3 @@ endinterface : uvma_rvfi_instr_if
 
 
 `endif // __UVMA_RVFI_INSTR_IF_SV__
-

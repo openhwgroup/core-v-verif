@@ -1246,6 +1246,7 @@ module uvmt_cv32e40s_tb;
         .IS_INSTR_SIDE   (1'b 1)
       ) pma_cov_instr_i (
         .pma_status_i (uvmt_cv32e40s_tb.pma_status_instr),
+        .rvfi_if      (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
         .*
       );
 
@@ -1255,6 +1256,7 @@ module uvmt_cv32e40s_tb;
         .IS_INSTR_SIDE   (1'b 0)
       ) pma_cov_data_i (
         .pma_status_i (uvmt_cv32e40s_tb.pma_status_data),
+        .rvfi_if      (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
         .*
       );
 
