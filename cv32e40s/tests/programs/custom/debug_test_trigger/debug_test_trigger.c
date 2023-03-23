@@ -70,6 +70,67 @@
 #define EXCEPTION_CODE_BREAKPOINT          3
 #define EXCEPTION_CODE_RESERVED           10
 
+// ---------------------------------------------------------------
+// Type definitions
+// ---------------------------------------------------------------
+
+typedef enum {
+  MATCH_EQ   = 0,
+  MATCH_GEQ  = 2,
+  MATCH_LESS = 3
+} tdata1_match_t;
+
+typedef union {
+
+  struct {
+    volatile uint32_t data   : 27;
+    volatile uint32_t dmode  :  1;
+    volatile uint32_t type   :  4; // Always F
+  } __attribute__((packed)) volatile disabled;
+
+  struct {
+    volatile uint32_t load           :  1;
+    volatile uint32_t store          :  1;
+    volatile uint32_t execute        :  1;
+    volatile uint32_t u              :  1;
+    volatile uint32_t reserved_4_5   :  2;
+    volatile uint32_t m              :  1;
+    volatile uint32_t match          :  4;
+    volatile uint32_t reserved_11    :  1;
+    volatile uint32_t action         :  4;
+    volatile uint32_t reserved_16_26 : 11;
+    volatile uint32_t dmode          :  1;
+    volatile uint32_t type           :  4; // Always 2
+  } __attribute__((packed)) volatile mcontrol;
+
+  struct {
+    volatile uint32_t load           :  1;
+    volatile uint32_t store          :  1;
+    volatile uint32_t execute        :  1;
+    volatile uint32_t u              :  1;
+    volatile uint32_t reserved_4_5   :  2;
+    volatile uint32_t m              :  1;
+    volatile uint32_t match          :  4;
+    volatile uint32_t reserved_11    :  1;
+    volatile uint32_t action         :  4;
+    volatile uint32_t reserved_16_26 : 11;
+    volatile uint32_t dmode          :  1;
+    volatile uint32_t type           :  4; // Always 6
+  } __attribute__((packed)) volatile mcontrol6;
+
+  struct {
+    volatile uint32_t action         :  6;
+    volatile uint32_t u              :  1;
+    volatile uint32_t reserved_7_8   :  2;
+    volatile uint32_t m              :  1;
+    volatile uint32_t reserved_10_26 : 17;
+    volatile uint32_t dmode          :  1;
+    volatile uint32_t type           :  4; // Always 5
+  } __attribute__((packed)) volatile etrigger;
+
+  volatile uint32_t raw : 32;
+} __attribute__((packed)) tdata1_t;
+
 
 extern void end_handler_incr_mepc(void);
 
@@ -96,7 +157,7 @@ int test_load_trigger(int);
 int test_store_trigger(int);
 int test_exception_trigger(int);
 
-volatile uint32_t g_tdata1_next;
+volatile tdata1_t g_tdata1_next;
 volatile uint32_t g_tdata2_next;
 volatile uint32_t g_tdata2_next_offset;
 
@@ -284,14 +345,15 @@ void _debug_handler(void) {
       // Load tdata config csrs
       if (DEBUG_PRINT) {
         printf("    Setting up triggers\n      csr_write: tdata1 = 0x%08lx\n      csr_write: tdata2 = 0x%08lx (0x%lx + 0x%lx)\n",
-             g_tdata1_next, g_tdata2_next, g_trigger_address, g_tdata2_next_offset);
+               g_tdata1_next.raw, g_tdata2_next, g_trigger_address, g_tdata2_next_offset);
       }
-      __asm__ volatile (R"(la   s1,     g_tdata1_next
+      __asm__ volatile (R"(csrwi tdata2, 0x0
+                           la   s1,     g_tdata1_next
                            lw   s0,     0(s1)
                            csrw tdata1, s0
                            la   s1,     g_tdata2_next
                            lw   s0,     0(s1)
-                           csrw tdata2, s0)" ::: "s0", "s1");
+                           csrw tdata2, s0)" ::: "s0", "s1", "memory");
     break;
 
     case DEBUG_SEL_CLEAR_TDATA2:
@@ -519,12 +581,11 @@ int test_execute_trigger(int priv_lvl) {
   }
 
   // Set up trigger
-  g_tdata1_next = (6 << 28 | // TYPE = 6
-                 1 << 12 | // ACTION = Enter debug mode
-                 0 << 7  | // MATCH = EQ
-                 1 << 6  | // M = Match in machine mode
-                 1 << 3  | // U = Match in user mode
-                 1 << 2 ); // EXECUTE = Match on instruction address
+  g_tdata1_next = (tdata1_t){.mcontrol6.type    = 6, // Set to mcontrol6 type
+                             .mcontrol6.match   = MATCH_EQ,
+                             .mcontrol6.m       = 1,  // Match in machine mode
+                             .mcontrol6.u       = 1,  // Match in user mode
+                             .mcontrol6.execute = 1}; // Match on instruction address
 
   g_trigger_type     = TRIGGER_EXECUTE;
   g_debug_break_loop = DEBUG_LOOPBREAK_TDATA2;
@@ -553,15 +614,14 @@ int test_execute_trigger(int priv_lvl) {
   // Trigger on current privilege mode only //
 
   // Set up trigger
-  g_tdata1_next = (6 << 28 | // TYPE = 6
-                 1 << 12 | // ACTION = Enter debug mode
-                 0 << 7  | // MATCH = EQ
-                 1 << 2 ); // EXECUTE = Match on instruction address
+  g_tdata1_next = (tdata1_t){.mcontrol6.type    = 6, // Set to mcontrol6 type
+                             .mcontrol6.match   = MATCH_EQ,
+                             .mcontrol6.execute = 1}; // Match on instruction address
 
   if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
-    g_tdata1_next |= (1 << 6); // M = Match in machine mode
+    g_tdata1_next.mcontrol6.m = 1; // Match in machine mode
   } else if (priv_lvl == PRIV_LVL_USER_MODE){
-    g_tdata1_next |= (1 << 3); // M = Match in user mode
+    g_tdata1_next.mcontrol6.u = 1; // Match in user mode
   }
   g_trigger_type     = TRIGGER_EXECUTE;
   g_debug_break_loop = DEBUG_LOOPBREAK_TDATA2;
@@ -579,8 +639,8 @@ int test_execute_trigger(int priv_lvl) {
   retval += trigger_test(1, 1, (uint32_t) &trigger_code_illegal_insn);
   retval += trigger_test(1, 1, (uint32_t) &trigger_code_multicycle_insn);
 
-  g_tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
-  g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+  g_tdata1_next.mcontrol6.match = MATCH_GEQ;
+  g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   // Executing from start of debug memory to avoid triggering on instructions executed in the the test flow (like debug handler)
   retval += trigger_test(1, 1, (uint32_t) &execute_test_high_addr);
@@ -589,8 +649,8 @@ int test_execute_trigger(int priv_lvl) {
   g_tdata2_next_offset = 4;
   retval += trigger_test(1, 0, (uint32_t) &execute_test_high_addr);
 
-  g_tdata1_next |=  3 << 7; // Set MATCH = 3 (LESS)
-  g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+  g_tdata1_next.mcontrol6.match = MATCH_LESS;
+  g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   // Executing from constructor as it is known to have a lower address than other functions
   g_tdata2_next_offset = 0;
@@ -603,25 +663,22 @@ int test_execute_trigger(int priv_lvl) {
   // Test with only oposite privilege mode enabled, expect no matches //
 
   // Set up trigger
-  g_tdata1_next = (6 << 28 | // TYPE = 6
-                 1 << 12 | // ACTION = Enter debug mode
-                 0 << 7  | // MATCH = EQ
-                 1 << 6  | // M = Match in machine mode
-                 1 << 3  | // U = Match in user mode
-                 1 << 2 ); // EXECUTE = Match on instruction address
+  g_tdata1_next = (tdata1_t){.mcontrol6.type    = 6, // Set to mcontrol6 type
+                             .mcontrol6.match   = MATCH_EQ,
+                             .mcontrol6.execute = 1}; // Match on instruction address
 
   if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
-    g_tdata1_next &= ~(1 << 6); // M = Don't match in machine mode
+    g_tdata1_next.mcontrol6.u = 1; // Match in user mode only
   } else if (priv_lvl == PRIV_LVL_USER_MODE){
-    g_tdata1_next &= ~(1 << 3); // U = Don't match in user mode
+    g_tdata1_next.mcontrol6.m = 1; // Match in machine mode only
   }
 
   // Check that executing trigger address does not trigger in wrong mode
   g_debug_break_loop = DEBUG_LOOPBREAK_DPCINCR;
   retval += trigger_test(1, 0, (uint32_t) &trigger_code_nop);
 
-  g_tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
-  g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+  g_tdata1_next.mcontrol6.match = MATCH_GEQ;
+  g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   // Executing from start of debug memory to avoid triggering on instructions executed in the the test flow (like debug handler)
   g_tdata2_next_offset = 0;
@@ -659,12 +716,11 @@ int test_load_trigger (int priv_lvl) {
   }
 
   // Set up trigger
-  g_tdata1_next = (6 << 28 | // TYPE = 6
-                 1 << 12 | // ACTION = Enter debug mode
-                 0 << 7  | // MATCH = EQ
-                 1 << 6  | // M = Match in machine mode
-                 1 << 3  | // U = Match in user mode
-                 1 << 0 ); // LOAD = Match on load from data address
+  g_tdata1_next = (tdata1_t){.mcontrol6.type  = 6, // Set to mcontrol6 type
+                             .mcontrol6.match = MATCH_EQ,
+                             .mcontrol6.m     = 1,  // Match in machine mode
+                             .mcontrol6.u     = 1,  // Match in user mode
+                             .mcontrol6.load  = 1}; // Match on load address
 
   // Check with both machine and user mode
 
@@ -697,8 +753,8 @@ int test_load_trigger (int priv_lvl) {
   g_trigger_type    = TRIGGER_LOAD_WORD;
 
 
-  g_tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
-  g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+  g_tdata1_next.mcontrol6.match = MATCH_GEQ;
+  g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   // Loading from start of debug memory to avoid triggering on loads from other variables
   g_tdata2_next_offset = 0;
@@ -708,8 +764,8 @@ int test_load_trigger (int priv_lvl) {
   g_tdata2_next_offset = 4;
   retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
 
-  g_tdata1_next |=  3 << 7; // Set MATCH = 3 (LESS)
-  g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+  g_tdata1_next.mcontrol6.match = MATCH_LESS;
+  g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   // Loading from constructor function as it is known to have a lower address than other variables loaded in test code
   g_tdata2_next_offset = 0;
@@ -723,15 +779,14 @@ int test_load_trigger (int priv_lvl) {
   // Trigger on current privilege mode only //
 
   // Set up trigger
-  g_tdata1_next = (6 << 28 | // TYPE = 6
-                 1 << 12 | // ACTION = Enter debug mode
-                 0 << 7  | // MATCH = EQ
-                 1 << 0 ); // LOAD = Match on load from data address
+  g_tdata1_next = (tdata1_t){.mcontrol6.type  = 6, // Set to mcontrol6 type
+                             .mcontrol6.match = MATCH_EQ,
+                             .mcontrol6.load  = 1}; // Match on load address
 
   if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
-    g_tdata1_next |= (1 << 6); // M = Match in machine mode
+    g_tdata1_next.mcontrol6.m = 1; // Match in machine mode
   } else if (priv_lvl == PRIV_LVL_USER_MODE){
-    g_tdata1_next |= (1 << 3); // M = Match in user mode
+    g_tdata1_next.mcontrol6.u = 1; // Match in user mode
   }
 
   g_trigger_type    = TRIGGER_LOAD_WORD;
@@ -763,7 +818,7 @@ int test_load_trigger (int priv_lvl) {
   g_trigger_type    = TRIGGER_LOAD_WORD;
 
 
-  g_tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
+  g_tdata1_next.mcontrol6.match = MATCH_GEQ;
 
   g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
@@ -775,8 +830,8 @@ int test_load_trigger (int priv_lvl) {
   g_tdata2_next_offset = 4;
   retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
 
-  g_tdata1_next |=  3 << 7; // Set MATCH = 3 (LESS)
-  g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+  g_tdata1_next.mcontrol6.match = MATCH_LESS;
+  g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   // Loading from constructor function as it is known to have a lower address than other functions
   g_tdata2_next_offset = 0;
@@ -788,18 +843,14 @@ int test_load_trigger (int priv_lvl) {
 
 
   // Test with only oposite privilege mode enabled, expect no matches
-  g_tdata1_next = (6 << 28 | // TYPE = 6
-                 1 << 12 | // ACTION = Enter debug mode
-                 0 << 7  | // MATCH = EQ
-                 1 << 6  | // M = Match in machine mode
-                 1 << 3  | // U = Match in user mode
-                 1 << 0 ); // LOAD = Match on load from data address
-
+  g_tdata1_next = (tdata1_t){.mcontrol6.type  = 6, // Set to mcontrol6 type
+                             .mcontrol6.match = MATCH_EQ,
+                             .mcontrol6.load  = 1}; // Match on load address
 
   if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
-    g_tdata1_next &= ~(1 << 6); // M = Don't match in machine mode
+    g_tdata1_next.mcontrol6.u = 1; // Match in user mode only
   } else if (priv_lvl == PRIV_LVL_USER_MODE){
-    g_tdata1_next &= ~(1 << 3); // U = Don't match in user mode
+    g_tdata1_next.mcontrol6.m = 1; // Match in machine mode only
   }
 
   g_trigger_type    = TRIGGER_LOAD_WORD;
@@ -831,8 +882,8 @@ int test_load_trigger (int priv_lvl) {
   g_trigger_type    = TRIGGER_LOAD_WORD;
 
 
-  g_tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
-  g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+  g_tdata1_next.mcontrol6.match = MATCH_GEQ;
+  g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   // Loading from start of debug memory to avoid triggering on loads from other variables
   g_tdata2_next_offset = 0;
@@ -842,7 +893,7 @@ int test_load_trigger (int priv_lvl) {
   g_tdata2_next_offset = 4;
   retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
 
-  g_tdata1_next |=  3 << 7; // Set MATCH = 3 (LESS)
+  g_tdata1_next.mcontrol6.match = MATCH_LESS;
   g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
   // Loading from constructor function as it is known to have a lower address than other functions
@@ -882,12 +933,11 @@ int test_store_trigger(int priv_lvl) {
   }
 
   // Set up trigger
-  g_tdata1_next = (6 << 28 | // TYPE = 6
-                 1 << 12 | // ACTION = Enter debug mode
-                 0 << 7  | // MATCH = EQ
-                 1 << 6  | // M = Match in machine mode
-                 1 << 3  | // U = Match in user mode
-                 1 << 1 ); // STORE = Match on store to data address
+  g_tdata1_next = (tdata1_t){.mcontrol6.type  = 6, // Set to mcontrol6 type
+                             .mcontrol6.match = MATCH_EQ,
+                             .mcontrol6.m     = 1,  // Match in machine mode
+                             .mcontrol6.u     = 1,  // Match in user mode
+                             .mcontrol6.store = 1}; // Match on load address
 
   g_trigger_type   = TRIGGER_STORE_WORD;
   g_tdata2_next_offset = 0;
@@ -917,9 +967,8 @@ int test_store_trigger(int priv_lvl) {
 
   g_trigger_type    = TRIGGER_STORE_WORD;
 
-  g_tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
-
-  g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+  g_tdata1_next.mcontrol6.match = MATCH_GEQ;
+  g_debug_break_loop =  DEBUG_LOOPBREAK_TDATA1;
 
   // Storing to unsused debugger_exception section to ensure it is not triggered by variables at higher addresses
   g_tdata2_next_offset = 0;
@@ -929,7 +978,7 @@ int test_store_trigger(int priv_lvl) {
   g_tdata2_next_offset = 4;
   retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
 
-  g_tdata1_next |=  3 << 7; // Set MATCH = 3 (LESS)
+  g_tdata1_next.mcontrol6.match = MATCH_LESS;
   g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
   g_tdata2_next_offset = 0;
@@ -943,15 +992,14 @@ int test_store_trigger(int priv_lvl) {
   // Trigger on current privilege mode only //
 
   // Set up trigger
-  g_tdata1_next = (6 << 28 | // TYPE = 6
-                 1 << 12 | // ACTION = Enter debug mode
-                 0 << 7  | // MATCH = EQ
-                 1 << 1 ); // STORE = Match on store to data address
+  g_tdata1_next = (tdata1_t){.mcontrol6.type  = 6, // Set to mcontrol6 type
+                             .mcontrol6.match = MATCH_EQ,
+                             .mcontrol6.store = 1}; // Match on load address
 
   if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
-    g_tdata1_next |= (1 << 6); // M = Match in machine mode
+    g_tdata1_next.mcontrol6.m = 1; // Match in machine mode
   } else if (priv_lvl == PRIV_LVL_USER_MODE){
-    g_tdata1_next |= (1 << 3); // M = Match in user mode
+    g_tdata1_next.mcontrol6.u = 1; // Match in user mode
   }
 
   g_trigger_type   = TRIGGER_STORE_WORD;
@@ -982,7 +1030,7 @@ int test_store_trigger(int priv_lvl) {
 
   g_trigger_type    = TRIGGER_STORE_WORD;
 
-  g_tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
+  g_tdata1_next.mcontrol6.match = MATCH_GEQ;
 
   g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
@@ -994,7 +1042,7 @@ int test_store_trigger(int priv_lvl) {
   g_tdata2_next_offset = 4;
   retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
 
-  g_tdata1_next |=  3 << 7; // Set MATCH = 3 (LESS)
+  g_tdata1_next.mcontrol6.match = MATCH_LESS;
   g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
 
   g_tdata2_next_offset = 0;
@@ -1006,17 +1054,15 @@ int test_store_trigger(int priv_lvl) {
 
 
   // Test with only oposite privilege mode enabled, expect no matches
-  g_tdata1_next = (6 << 28 | // TYPE = 6
-                 1 << 12 | // ACTION = Enter debug mode
-                 0 << 7  | // MATCH = EQ
-                 1 << 6  | // M = Match in machine mode
-                 1 << 3  | // U = Match in user mode
-                 1 << 1 ); // STORE = Match on store to data address
+  g_tdata1_next = (tdata1_t){.mcontrol6.type  = 6, // Set to mcontrol6 type
+                             .mcontrol6.match = MATCH_EQ,
+                             .mcontrol6.store = 1}; // Match on load address
+
 
   if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
-    g_tdata1_next &= ~(1 << 6); // M = Don't match in machine mode
+    g_tdata1_next.mcontrol6.u = 1; // Match in user mode only
   } else if (priv_lvl == PRIV_LVL_USER_MODE){
-    g_tdata1_next &= ~(1 << 3); // U = Don't match in user mode
+    g_tdata1_next.mcontrol6.m = 1; // Match in machine mode only
   }
 
   g_trigger_type   = TRIGGER_STORE_WORD;
@@ -1047,9 +1093,8 @@ int test_store_trigger(int priv_lvl) {
 
   g_trigger_type    = TRIGGER_STORE_WORD;
 
-  g_tdata1_next |= 2 << 7; // Set MATCH = 2 (GEQ)
-
-  g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+  g_tdata1_next.mcontrol6.match = MATCH_GEQ;
+  g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   // Storing to unsused debugger_exception section to ensure it is not triggered by variables at higher addresses
   g_tdata2_next_offset = 0;
@@ -1059,8 +1104,8 @@ int test_store_trigger(int priv_lvl) {
   g_tdata2_next_offset = 4;
   retval += trigger_test(1, 0, (uint32_t) &load_store_test_high_addr);
 
-  g_tdata1_next |=  3 << 7; // Set MATCH = 3 (LESS)
-  g_debug_break_loop =   DEBUG_LOOPBREAK_TDATA1;
+  g_tdata1_next.mcontrol6.match = MATCH_LESS;
+  g_debug_break_loop = DEBUG_LOOPBREAK_TDATA1;
 
   g_tdata2_next_offset = 0;
   retval += trigger_test(1, 0, (uint32_t) &load_store_test_constructor);
@@ -1096,9 +1141,9 @@ int test_exception_trigger(int priv_lvl) {
   }
 
   // Set up trigger
-  g_tdata1_next = (5 << 28 | // TYPE = etrigger
-                 1 <<  9 | // M = Match in machine mode
-                 1 <<  6); // U = Match in user mode
+  g_tdata1_next = (tdata1_t){.etrigger.type = 5, // Set to etrigger type
+                             .etrigger.u    = 1, // Match in user mode
+                             .etrigger.m    = 1}; // Match in machine mode
 
   g_tdata2_next_offset = 0;
   g_trigger_type = TRIGGER_EXCEPTION_ILLEGAL;
@@ -1123,12 +1168,12 @@ int test_exception_trigger(int priv_lvl) {
 
 
   // Set up trigger
-  g_tdata1_next = (5 << 28); // TYPE = etrigger
+  g_tdata1_next = (tdata1_t){.etrigger.type = 5}; // Set to etrigger type
 
   if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
-    g_tdata1_next |= (1 << 9); // M = Match in machine mode
+    g_tdata1_next.etrigger.m = 1; // Match in machine mode
   } else if (priv_lvl == PRIV_LVL_USER_MODE){
-    g_tdata1_next |= (1 << 6); // M = Match in user mode
+    g_tdata1_next.etrigger.u = 1; // Match in user mode
   }
 
   g_tdata2_next_offset = 0;
@@ -1153,14 +1198,12 @@ int test_exception_trigger(int priv_lvl) {
   retval += trigger_test(1, 0, 0);
 
   // Set up trigger
-  g_tdata1_next = (5 << 28 | // TYPE = etrigger
-                 1 <<  9 | // M = Match in machine mode
-                 1 <<  6); // U = Match in user mode
+  g_tdata1_next = (tdata1_t){.etrigger.type = 5}; // Set to etrigger type
 
   if (priv_lvl == PRIV_LVL_MACHINE_MODE) {
-    g_tdata1_next &= ~(1 << 9); // M = Don't match in machine mode
+    g_tdata1_next.etrigger.u = 1; // Match in user mode only
   } else if (priv_lvl == PRIV_LVL_USER_MODE){
-    g_tdata1_next &= ~(1 << 6); // U = Don't match in user mode
+    g_tdata1_next.etrigger.m = 1; // Match in machine mode only
   }
 
   g_tdata2_next_offset = 0;
@@ -1212,54 +1255,48 @@ void _debug_mode_register_test(void) {
                            )" ::: "s0", "s1", "s2", "memory");
 
   // TDATA1 (Type==6) - Write 1s
-  g_tdata1_next = (6 << 28) | ~(0xF << 28); // TYPE = Address match
-  __asm__ volatile (R"(la   s1,     g_tdata1_next
-                           lw   s0,     0(s1)
-                           csrw tdata1, s0
-                           csrr s1,     tdata1
-                           li   s0,     0x6800104F
-                           beq  s0,     s1,  1f
-                           li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
-                           sw   s1,     g_debug_entry_status, s2
-                         1:nop
-                           )" ::: "s0", "s1", "s2", "memory");
+  __asm__ volatile (R"(li   s0,     0x6FFFFFFF
+                       csrw tdata1, s0
+                       csrr s1,     tdata1
+                       li   s0,     0x6800104F
+                       beq  s0,     s1,  1f
+                       li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                       sw   s1,     g_debug_entry_status, s2
+                     1:nop
+                       )" ::: "s0", "s1", "s2", "memory");
 
   // TDATA1 (Type==6) - Write 0s
-  g_tdata1_next = (6 << 28); // TYPE = Address match
-  __asm__ volatile (R"(la   s1,     g_tdata1_next
-                           lw   s0,     0(s1)
-                           csrw tdata1, s0
-                           csrr s1,     tdata1
-                           li   s0,     0x68001000
-                           beq  s0,     s1,  1f
-                           li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
-                           sw   s1,     g_debug_entry_status, s2
-                         1:nop
-                           )" ::: "s0", "s1", "s2");
+  __asm__ volatile (R"(li   s0,     0x60000000
+                       csrw tdata1, s0
+                       csrr s1,     tdata1
+                       li   s0,     0x68001000
+                       beq  s0,     s1,  1f
+                       li   s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                       sw   s1,     g_debug_entry_status, s2
+                     1:nop
+                       )" ::: "s0", "s1", "s2");
 
   // TDATA2 (Type==6) - Address match - Write 1s
   __asm__ volatile (R"(li   s1,     0xFFFFFFFF
-                           csrw tdata2, s1
-                           csrr s0,     tdata2
-                           beq  s0,     s1,  1f
-                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
-                           sw    s1,     g_debug_entry_status, s2
-                         1:nop
-                           )" ::: "s0", "s1", "s2", "memory");
+                       csrw tdata2, s1
+                       csrr s0,     tdata2
+                       beq  s0,     s1,  1f
+                       li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                       sw    s1,     g_debug_entry_status, s2
+                     1:nop
+                       )" ::: "s0", "s1", "s2", "memory");
 
   // TDATA2 (Type==6) - Address match - Write 0s
   __asm__ volatile (R"(csrwi tdata2, 0x0
-                           csrr  s0,     tdata2
-                           beqz  s0,     1f
-                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
-                           sw    s1,     g_debug_entry_status, s2
-                         1:nop
-                           )" ::: "s0", "s1", "s2", "memory");
+                       csrr  s0,     tdata2
+                       beqz  s0,     1f
+                       li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                       sw    s1,     g_debug_entry_status, s2
+                     1:nop
+                       )" ::: "s0", "s1", "s2", "memory");
 
   // TDATA1 (Type==2) - Write 1s
-  g_tdata1_next = (2 << 28) | ~(0xF << 28); // TYPE = Address match
-  __asm__ volatile (R"(la   s1,     g_tdata1_next
-                       lw   s0,     0(s1)
+  __asm__ volatile (R"(li   s0,     0x2FFFFFFF
                        csrw tdata1, s0
                        csrr s1,     tdata1
                        li   s0,     0x2800104F
@@ -1270,9 +1307,7 @@ void _debug_mode_register_test(void) {
                        )" ::: "s0", "s1", "s2", "memory");
 
   // TDATA1 (Type==2) - Write 0s
-  g_tdata1_next = (2 << 28); // TYPE = Address match
-  __asm__ volatile (R"(la   s1,     g_tdata1_next
-                       lw   s0,     0(s1)
+  __asm__ volatile (R"(li   s0,     0x20000000
                        csrw tdata1, s0
                        csrr s1,     tdata1
                        li   s0,     0x28001000
@@ -1303,12 +1338,10 @@ void _debug_mode_register_test(void) {
                        )" ::: "s0", "s1", "s2", "memory");
 
   // TDATA1 (Type==5) - Exception Trigger - Write when tdata2 is illegal
-  g_tdata1_next = (5 << 28) | ~(0xF << 28); // TYPE = Exception Trigger
   __asm__ volatile (R"(csrwi tdata1, 0x0
                        li   s1,     0xFFFFFFFF
                        csrw tdata2, s1
-                       la   s1,     g_tdata1_next
-                       lw   s0,     0(s1)
+                       li   s0,     0x5FFFFFFF
                        csrw tdata1, s0
                        csrr s1,     tdata1
                        li   s0,     0xF8000000
@@ -1319,9 +1352,7 @@ void _debug_mode_register_test(void) {
                        )" ::: "s0", "s1", "s2", "memory");
 
   // TDATA1 (Type==5) - Exception Trigger - Write 1s
-  g_tdata1_next = (5 << 28) | ~(0xF << 28); // TYPE = Exception Trigger
-  __asm__ volatile (R"(la   s1,     g_tdata1_next
-                       lw   s0,     0(s1)
+  __asm__ volatile (R"(li   s0,     0x5FFFFFFF
                        csrw tdata1, s0
                        csrr s1,     tdata1
                        li   s0,     0x58000241
@@ -1332,9 +1363,7 @@ void _debug_mode_register_test(void) {
                        )" ::: "s0", "s1", "s2", "memory");
 
   // TDATA1 (Type==5) - Exception Trigger - Write 0s
-  g_tdata1_next = (5 << 28); // TYPE = Exception Trigger
-  __asm__ volatile (R"(la   s1,     g_tdata1_next
-                       lw   s0,     0(s1)
+  __asm__ volatile (R"(li   s0,     0x50000000
                        csrw tdata1, s0
                        csrr s1,     tdata1
                        li   s0,     0x58000001
