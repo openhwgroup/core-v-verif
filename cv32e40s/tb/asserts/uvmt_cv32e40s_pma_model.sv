@@ -24,7 +24,6 @@ module  uvmt_cv32e40s_pma_model
   import cv32e40s_pkg::*;
   import uvmt_cv32e40s_pkg::*;
 #(
-  parameter type          CORE_REQ_TYPE,
   parameter logic [31:0]  DM_REGION_START,
   parameter logic [31:0]  DM_REGION_END,
   parameter bit           IS_INSTR_SIDE,
@@ -34,11 +33,11 @@ module  uvmt_cv32e40s_pma_model
   input wire  clk,
   input wire  rst_n,
 
-  input CORE_REQ_TYPE  core_trans_i,
-  input wire [31:0]    addr_i,
-  input wire           misaligned_access_i,
-  input wire           core_trans_pushpop_i,
-  input wire           load_access,
+  input wire         core_trans_pushpop_i,
+  input wire         dbg,
+  input wire         load_access,
+  input wire         misaligned_access_i,
+  input wire [31:0]  addr_i,
 
   output wire pma_status_t  pma_status_o
 );
@@ -90,7 +89,7 @@ module  uvmt_cv32e40s_pma_model
     ((DM_REGION_START <= addr_i) && (addr_i <= DM_REGION_END));
 
   wire logic  override_dm;
-  assign  override_dm = core_trans_i.dbg && accesses_dmregion;
+  assign  override_dm = dbg && accesses_dmregion;
 
   var pma_cfg_t  cfg_effective;
   always_comb  begin

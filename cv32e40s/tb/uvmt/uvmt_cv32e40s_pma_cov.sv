@@ -29,15 +29,17 @@ module  uvmt_cv32e40s_pma_cov
   input wire  clk,
   input wire  rst_n,
 
+  // MPU Signals
   input wire  core_trans_ready_o,
   input wire  core_trans_valid_i,
   input wire  misaligned_access_i,
   input wire  load_access,
   input wire  core_trans_pushpop_i,
 
+  // Helper Logic
   input wire pma_status_t  pma_status_i,
-
-  uvma_rvfi_instr_if  rvfi_if
+  input wire pma_status_t  pma_status_rvfidata_word0_i,
+  uvma_rvfi_instr_if       rvfi_if
 );
 
 
@@ -54,6 +56,15 @@ module  uvmt_cv32e40s_pma_cov
 
   wire logic  is_mpu_activated;
   assign  is_mpu_activated = (core_trans_ready_o && core_trans_valid_i);
+
+
+  // Helper Logic - Function Waveform Visibility
+
+  wire logic  rvfi_if__is_pma_fault;
+  wire logic  rvfi_if__is_split_datatrans;
+  assign  rvfi_if__is_pma_fault       = rvfi_if.is_pma_fault();
+  assign  rvfi_if__is_split_datatrans = rvfi_if.is_split_datatrans();
+  //TODO:INFO:silabs-robin Remove if rvfi interface is changed to provide signals.
 
 
   // MPU Coverage Definition
@@ -91,9 +102,9 @@ module  uvmt_cv32e40s_pma_cov
 
     // vplan:TODO
     cp_loadstoreexec: coverpoint  load_access  iff (is_mpu_activated) {
-      bins           load  = {1}  with (!IS_INSTR_SIDE);
-      bins           store = {0}  with (!IS_INSTR_SIDE);
-      wildcard bins  exec  = {'X} with ( IS_INSTR_SIDE);
+      bins  load  = {1}              with (!IS_INSTR_SIDE);
+      bins  store = {0}              with (!IS_INSTR_SIDE);
+      bins  exec  = cp_loadstoreexec with ( IS_INSTR_SIDE);
     }
 
     // vplan:TODO
@@ -174,25 +185,34 @@ module  uvmt_cv32e40s_pma_cov
     option.per_instance = 1;
     option.detect_overlap = 1;
 
-    cp_aligned: coverpoint  rvfi_if.is_split_datatrans()  iff (rvfi_if.rvfi_valid) {
+    cp_aligned: coverpoint  rvfi_if__is_split_datatrans  iff (rvfi_if.rvfi_valid) {
       bins  misaligned = {1};
       bins  aligned    = {0};
     }
 
-    cp_pmafault: coverpoint  rvfi_if.is_pma_fault()  iff (rvfi_if.rvfi_valid) {
+    cp_pmafault: coverpoint  rvfi_if__is_pma_fault  iff (rvfi_if.rvfi_valid) {
       bins  fault = {1};
       bins  no    = {0};
     }
 
     cp_loadstore: coverpoint  rvfi_if.rvfi_mem_wmask  iff (rvfi_if.is_mem_act()) {
       bins  load  = {0};
-      bins  store = rvfi_if.rvfi_mem_wmask with (item != 0);
+      bins  store = {[1:$]};
+      illegal_bins  undefined = default;  // Should be empty
     }
+
+    cp_firstfail: coverpoint  pma_status_rvfidata_word0_i.allow  iff (rvfi_if.rvfi_valid) {
+      bins  yes = {0};
+      bins  no  = {1};
+    }
+
+    x_aligned_pmafault_loadstore_firstfail:
+      cross  cp_aligned, cp_pmafault, cp_loadstore, cp_firstfail;
   endgroup
 
   if (!IS_INSTR_SIDE) begin: gen_rvfi_cg
     cg_rvfi  rvfi_cg = new;
-    // RVFI is 1 interface, so we don't need an exact duplicate at both MPUs.
+    // RVFI is 1 interface, so we don't need an exact duplicate at each MPU.
   end
 
 
