@@ -749,7 +749,7 @@ module uvmt_cv32e40s_debug_assert
         ##1 rvfi.rvfi_valid[->1]
         ##0 !rvfi.rvfi_dbg_mode
         |->
-        !rvfi.rvfi_intr.intr;
+        !rvfi.rvfi_intr.intr || (rvfi.rvfi_intr.intr && rvfi.rvfi_trap.clicptr);
     endproperty
 
     a_step_no_trap : assert property(p_step_no_trap)

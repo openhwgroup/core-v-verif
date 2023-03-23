@@ -272,13 +272,25 @@ function logic match_instr_r(bit [ DEFAULT_XLEN-1:0] ref_instr);
   return match_instr(ref_instr, INSTR_MASK_R_TYPE);
 endfunction : match_instr_r
 
+function logic match_instr_r_var(bit [6:0] funct7, bit [2:0] funct3, bit [6:0] opcode);
+  return match_instr_r({funct7, 10'b0, funct3, 5'b0, opcode}, INSTR_MASK_R_TYPE);
+endfunction : match_instr_r_var
+
 function logic match_instr_isb(bit [ DEFAULT_XLEN-1:0] ref_instr);
   return match_instr(ref_instr, INSTR_MASK_I_S_B_TYPE);
 endfunction : match_instr_isb
 
+function logic match_instr_isb_var ( bit [2:0] funct3, bit [6:0] opcode);
+  return match_instr_isb({17'b0, funct3, 5'b0, opcode}, INSTR_MASK_I_S_B_TYPE);
+endfunction : match_instr_isb_var
+
 function logic match_instr_uj(bit [ DEFAULT_XLEN-1:0] ref_instr);
   return  match_instr(ref_instr, INSTR_MASK_U_J_TYPE);
 endfunction : match_instr_uj
+
+function logic match_instr_uj_var(bit [6:0] opcode);
+  return  match_instr_uj({25'b0, opcode} , INSTR_MASK_U_J_TYPE);
+endfunction : match_instr_uj_var
 
 // Match CSR functions
 // These instruction are used to check for csr activity.
