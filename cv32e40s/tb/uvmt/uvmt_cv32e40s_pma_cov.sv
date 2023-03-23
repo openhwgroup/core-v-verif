@@ -38,7 +38,8 @@ module  uvmt_cv32e40s_pma_cov
 
   // Helper Logic
   input wire pma_status_t  pma_status_i,
-  input wire pma_status_t  pma_status_rvfidata_word0_i,
+  input wire pma_status_t  pma_status_rvfidata_word0lowbyte_i,
+  input wire pma_status_t  pma_status_rvfidata_word0highbyte_i,
   uvma_rvfi_instr_if       rvfi_if
 );
 
@@ -64,7 +65,14 @@ module  uvmt_cv32e40s_pma_cov
   wire logic  rvfi_if__is_split_datatrans;
   assign  rvfi_if__is_pma_fault       = rvfi_if.is_pma_fault();
   assign  rvfi_if__is_split_datatrans = rvfi_if.is_split_datatrans();
-  //TODO:INFO:silabs-robin Remove if rvfi interface is changed to provide signals.
+  //TODO:ERROR:silabs-robin Remove if rvfi interface is changed to provide signals.
+
+
+  // Helper Logic - Split Transactions Main vs I/O
+
+  wire logic [1:0]  rvfi_pmamain_lowhigh;
+  assign  rvfi_pmamain_lowhigh[1]  = pma_status_rvfidata_word0lowbyte_i.main;
+  assign  rvfi_pmamain_lowhigh[0]  = pma_status_rvfidata_word0highbyte_i.main;
 
 
   // MPU Coverage Definition
@@ -130,7 +138,9 @@ module  uvmt_cv32e40s_pma_cov
     }
 
     // vplan:DebugRange
-    cp_dmregion: coverpoint  pma_status_i.accesses_dmregion  iff (is_mpu_activated) {
+    cp_dmregion: coverpoint  pma_status_i.accesses_dmregion
+      iff (is_mpu_activated)
+    {
       bins in  = {1};
       bins out = {0};
     }
@@ -185,7 +195,9 @@ module  uvmt_cv32e40s_pma_cov
     option.per_instance = 1;
     option.detect_overlap = 1;
 
-    cp_aligned: coverpoint  rvfi_if__is_split_datatrans  iff (rvfi_if.rvfi_valid) {
+    cp_aligned: coverpoint  rvfi_if__is_split_datatrans
+      iff (rvfi_if.rvfi_valid)
+    {
       bins  misaligned = {1};
       bins  aligned    = {0};
     }
@@ -195,19 +207,34 @@ module  uvmt_cv32e40s_pma_cov
       bins  no    = {0};
     }
 
-    cp_loadstore: coverpoint  rvfi_if.rvfi_mem_wmask  iff (rvfi_if.is_mem_act()) {
+    cp_loadstore: coverpoint  rvfi_if.rvfi_mem_wmask
+      iff (rvfi_if.is_mem_act())
+    {
       bins  load  = {0};
       bins  store = {[1:$]};
       illegal_bins  undefined = default;  // Should be empty
     }
 
-    cp_firstfail: coverpoint  pma_status_rvfidata_word0_i.allow  iff (rvfi_if.rvfi_valid) {
+    cp_firstfail: coverpoint  pma_status_rvfidata_word0lowbyte_i.allow
+      iff (rvfi_if.is_mem_act())
+    {
       bins  yes = {0};
       bins  no  = {1};
     }
 
+    cp_boundary: coverpoint  rvfi_pmamain_lowhigh  iff (rvfi_if.is_mem_act()) {
+      bins  main2main = {2'b 11};
+      bins  main2io   = {2'b 10};
+      bins  io2main   = {2'b 01};
+      bins  io2io     = {2'b 00};
+    }
+
     x_aligned_pmafault_loadstore_firstfail:
       cross  cp_aligned, cp_pmafault, cp_loadstore, cp_firstfail;
+
+    x_aligned_loadstore_boundary: cross  cp_aligned, cp_loadstore, cp_boundary {
+      ignore_bins ignore = binsof(cp_aligned) intersect {0};
+    }
   endgroup
 
   if (!IS_INSTR_SIDE) begin: gen_rvfi_cg

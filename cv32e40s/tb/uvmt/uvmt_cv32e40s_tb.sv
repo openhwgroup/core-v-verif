@@ -1175,7 +1175,8 @@ module uvmt_cv32e40s_tb;
 
     wire pma_status_t  pma_status_instr;
     wire pma_status_t  pma_status_data;
-    wire pma_status_t  pma_status_rvfidata_word0;
+    wire pma_status_t  pma_status_rvfidata_word0lowbyte;
+    wire pma_status_t  pma_status_rvfidata_word0highbyte;
 
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i
       uvmt_cv32e40s_pma_model #(
@@ -1212,7 +1213,7 @@ module uvmt_cv32e40s_tb;
         .IS_INSTR_SIDE   (1'b 0),
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
         .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
-      ) pma_model_rvfidata_i (
+      ) pma_model_rvfidata_low_i (
         .clk                  (clknrst_if.clk),
         .rst_n                (clknrst_if.reset_n),
         .addr_i               (rvfi_instr_if_0_i.rvfi_mem_addr[31:0]),
@@ -1220,7 +1221,25 @@ module uvmt_cv32e40s_tb;
         .dbg                  (rvfi_instr_if_0_i.rvfi_dbg_mode),
         .load_access          (rvfi_instr_if_0_i.rvfi_mem_rmask),
         .misaligned_access_i  (rvfi_instr_if_0_i.is_split_datatrans()),
-        .pma_status_o         (uvmt_cv32e40s_tb.pma_status_rvfidata_word0)
+        .pma_status_o         (uvmt_cv32e40s_tb.pma_status_rvfidata_word0lowbyte)
+      );
+
+    bind  dut_wrap.cv32e40s_wrapper_i
+      uvmt_cv32e40s_pma_model #(
+        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .IS_INSTR_SIDE   (1'b 0),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
+      ) pma_model_rvfidata_high_i (
+        .clk                  (clknrst_if.clk),
+        .rst_n                (clknrst_if.reset_n),
+        .addr_i               (rvfi_instr_if_0_i.rvfi_mem_addr_word0highbyte()),
+        .core_trans_pushpop_i (rvfi_instr_if_0_i.is_pushpop()),
+        .dbg                  (rvfi_instr_if_0_i.rvfi_dbg_mode),
+        .load_access          (rvfi_instr_if_0_i.rvfi_mem_rmask),
+        .misaligned_access_i  (rvfi_instr_if_0_i.is_split_datatrans()),
+        .pma_status_o         (uvmt_cv32e40s_tb.pma_status_rvfidata_word0highbyte)
       );
 
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i
@@ -1264,9 +1283,10 @@ module uvmt_cv32e40s_tb;
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
         .IS_INSTR_SIDE   (1'b 1)
       ) pma_cov_instr_i (
-        .pma_status_i                (uvmt_cv32e40s_tb.pma_status_instr),
-        .pma_status_rvfidata_word0_i (uvmt_cv32e40s_tb.pma_status_rvfidata_word0),
-        .rvfi_if                     (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+        .pma_status_i                        (uvmt_cv32e40s_tb.pma_status_instr),
+        .pma_status_rvfidata_word0lowbyte_i  (uvmt_cv32e40s_tb.pma_status_rvfidata_word0lowbyte),
+        .pma_status_rvfidata_word0highbyte_i (uvmt_cv32e40s_tb.pma_status_rvfidata_word0highbyte),
+        .rvfi_if                             (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
         .*
       );
 
@@ -1275,9 +1295,10 @@ module uvmt_cv32e40s_tb;
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
         .IS_INSTR_SIDE   (1'b 0)
       ) pma_cov_data_i (
-        .pma_status_i                (uvmt_cv32e40s_tb.pma_status_data),
-        .pma_status_rvfidata_word0_i (uvmt_cv32e40s_tb.pma_status_rvfidata_word0),
-        .rvfi_if                     (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
+        .pma_status_i                        (uvmt_cv32e40s_tb.pma_status_data),
+        .pma_status_rvfidata_word0lowbyte_i  (uvmt_cv32e40s_tb.pma_status_rvfidata_word0lowbyte),
+        .pma_status_rvfidata_word0highbyte_i (uvmt_cv32e40s_tb.pma_status_rvfidata_word0highbyte),
+        .rvfi_if                             (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if_0_i),
         .*
       );
 

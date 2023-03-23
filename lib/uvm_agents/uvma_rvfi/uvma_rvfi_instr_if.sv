@@ -483,7 +483,7 @@ function logic is_instr_bus_valid();
     );
 endfunction : is_instr_bus_valid
 
-function automatic logic [31:0] rvfi_mem_addr_word0_highbyte();
+function automatic logic [31:0] rvfi_mem_addr_word0highbyte();
   let addr = rvfi_mem_addr[31:0];
   case (1)
     (rvfi_mem_rmask[3] || rvfi_mem_wmask[3]):
@@ -495,11 +495,11 @@ function automatic logic [31:0] rvfi_mem_addr_word0_highbyte();
     default:
       return  addr;
   endcase
-endfunction : rvfi_mem_addr_word0_highbyte
+endfunction : rvfi_mem_addr_word0highbyte
 
 function automatic logic is_split_datatrans();
   logic [31:0]  low_addr  = rvfi_mem_addr;
-  logic [31:0]  high_addr = rvfi_mem_addr_word0_highbyte();
+  logic [31:0]  high_addr = rvfi_mem_addr_word0highbyte();
   return  is_mem_act() && (low_addr[31:2] != high_addr[31:2]);
 endfunction : is_split_datatrans
 
