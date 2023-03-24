@@ -84,6 +84,11 @@ builds:
     cfg: no_bitmanip
     dir: cv32e40s/sim/uvmt
 
+  uvmt_cv32e40s_debug_trigger_cfg0:
+    cmd: make comp_corev-dv comp
+    cfg: debug_trigger_cfg0
+    dir: cv32e40s/sim/uvmt
+
   uvmt_cv32e40s_debug_trigger_cfg1:
     cmd: make comp_corev-dv comp
     cfg: debug_trigger_cfg1
@@ -529,4 +534,10 @@ tests:
              uvmt_cv32e40s_debug_trigger_cfg4]
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=debug_test_trigger
+
+  debug_test_0_triggers:
+    description: Test of debug triggers
+    builds: [uvmt_cv32e40s_debug_trigger_cfg0]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=debug_test_0_triggers
 
