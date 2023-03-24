@@ -11,18 +11,18 @@
 */
 
 OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv",
-	      "elf32-littleriscv")
+              "elf32-littleriscv")
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
 
 /* CORE-V */
 MEMORY
 {
-	/* Our testbench is a bit weird in that we initialize the RAM (thus
-	   allowing initialized sections to be placed there). Infact we dump all
-	   sections to ram. */
+    /* Our testbench is a bit weird in that we initialize the RAM (thus
+       allowing initialized sections to be placed there). Infact we dump all
+       sections to ram. */
 
-	ram (rwxai) : ORIGIN = 0x00000000, LENGTH = 0x400000
+  ram (rwxai) : ORIGIN = 0x00000000, LENGTH = 0x400000
   dbg (rwxai) : ORIGIN = 0x1A110800, LENGTH = 0x1000
 }
 
@@ -32,17 +32,18 @@ SECTIONS
      DM_HaltAddress parameter in the RTL */
   .debugger (ORIGIN(dbg)):
   {
+    PROVIDE(_debugger_start = .);
     KEEP(*(.debugger));
   } >dbg
   .debugger_exception (0x1A111000):
   {
+    PROVIDE(_debugger_exception = .);
     KEEP(*(.debugger_exception));
   } >dbg
   /* Debugger Stack*/
   .debugger_stack         : ALIGN(16)
   {
-   PROVIDE(__debugger_stack_start = .);
-   . = 0x80;
+   PROVIDE(__debugger_stack_start = ALIGN(ORIGIN(dbg) + LENGTH(dbg) - 15, 16));
   } >dbg
 
 
@@ -154,12 +155,12 @@ SECTIONS
   .gcc_except_table   : ONLY_IF_RW { *(.gcc_except_table .gcc_except_table.*) } >ram
   .exception_ranges   : ONLY_IF_RW { *(.exception_ranges*) } >ram
   /* Thread Local Storage sections  */
-  .tdata	  :
+  .tdata      :
    {
      PROVIDE_HIDDEN (__tdata_start = .);
      *(.tdata .tdata.* .gnu.linkonce.td.*)
    } >ram
-  .tbss		  : { *(.tbss .tbss.* .gnu.linkonce.tb.*) *(.tcommon) } >ram
+  .tbss          : { *(.tbss .tbss.* .gnu.linkonce.tb.*) *(.tcommon) } >ram
   .preinit_array    :
   {
     PROVIDE_HIDDEN (__preinit_array_start = .);
@@ -255,8 +256,8 @@ SECTIONS
   . = SEGMENT_START("ldata-segment", .);
   . = ALIGN(32 / 8);
   __bss_end = .;
-    __global_pointer$ = MIN(__SDATA_BEGIN__ + 0x800,
-		            MAX(__DATA_BEGIN__ + 0x800, __bss_end - 0x800));
+  __global_pointer$ = MIN(__SDATA_BEGIN__ + 0x800,
+                      MAX(__DATA_BEGIN__ + 0x800, __bss_end - 0x800));
   _end = .; PROVIDE (end = .);
   . = DATA_SEGMENT_END (.);
 

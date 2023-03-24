@@ -36,6 +36,12 @@
       parameter CORE_PARAM_DBG_NUM_TRIGGERS = 0;
    `elsif DBG_NUM_TRIG_1
       parameter CORE_PARAM_DBG_NUM_TRIGGERS = 1;
+   `elsif DBG_NUM_TRIG_2
+      parameter CORE_PARAM_DBG_NUM_TRIGGERS = 2;
+   `elsif DBG_NUM_TRIG_3
+      parameter CORE_PARAM_DBG_NUM_TRIGGERS = 3;
+   `elsif DBG_NUM_TRIG_4
+      parameter CORE_PARAM_DBG_NUM_TRIGGERS = 4;
    `else
       parameter CORE_PARAM_DBG_NUM_TRIGGERS = 1;
    `endif
@@ -134,32 +140,32 @@
    `elsif PARAM_SET_1
       // Sat from the include file
    `elsif PMP_ENABLE_2
-      parameter int CORE_PARAM_PMP_GRANULARITY = 0;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 2;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 2;
    `elsif PMP_ENABLE_64
-      parameter int CORE_PARAM_PMP_GRANULARITY = 0;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 64;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 64;
    `elsif PMP_G0R0
-      parameter int CORE_PARAM_PMP_GRANULARITY = 0;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 0;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 0;
    `elsif PMP_G0R16
-      parameter int CORE_PARAM_PMP_GRANULARITY = 0;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 16;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 16;
    `elsif PMP_G1R5
-      parameter int CORE_PARAM_PMP_GRANULARITY = 1;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 5;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 1;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 5;
    `elsif PMP_G2R6
-      parameter int CORE_PARAM_PMP_GRANULARITY = 2;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 6;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 2;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 6;
    `elsif PMP_G3R3
-      parameter int CORE_PARAM_PMP_GRANULARITY = 3;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 3;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 3;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 3;
    `elsif PMP_G27R64
-      parameter int CORE_PARAM_PMP_GRANULARITY = 27;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 64;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 27;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 64;
    `else
-      parameter int CORE_PARAM_PMP_GRANULARITY = 0;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 0;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 0;
    `endif
 
    `ifdef PARAM_SET_0
@@ -201,7 +207,7 @@
       // Sat from the include file
    `elsif PMA_CUSTOM_CFG
       const string pma_cfg_name = "pma_custom_cfg";
-      parameter int unsigned  CORE_PARAM_PMA_NUM_REGIONS = 3;
+      parameter int unsigned            CORE_PARAM_PMA_NUM_REGIONS = 3;
       parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
          // Overlap "shadow" of main code (.text), for testing overlap priority
          cv32e40s_pkg::pma_cfg_t'{
