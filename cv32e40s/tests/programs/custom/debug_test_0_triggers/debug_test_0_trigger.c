@@ -42,13 +42,13 @@
 #define PRIV_LVL_MACHINE_MODE 1
 
                                 // Place in debugger section
-void _debugger_start(void)           __attribute__((section(".debugger"))) __attribute__((naked));
+void _debugger_start(void)           __attribute__((section(".debugger"), naked));
 void _debug_handler(void)            __attribute__((section(".debugger")));
 int  _debug_mode_register_test(void) __attribute__((section(".debugger")));
 
-void _debugger_exception_start(void) __attribute__ ((naked)) __attribute__((section(".debugger_exception")));
+void _debugger_exception_start(void) __attribute__((section(".debugger_exception"), naked));
 
-void handle_illegal_insn(void)       __attribute__ ((naked));
+void handle_illegal_insn(void)       __attribute__((naked));
 extern void end_handler_incr_mepc(void);
 
 volatile uint32_t num_triggers;
@@ -74,7 +74,7 @@ void handle_illegal_insn (void) {
     li   t1,     1
     sw   t1,     0(t0)
     call end_handler_incr_mepc
-  )");
+  )" ::: "t0", "t1", "memory");
 }
 
 
@@ -96,9 +96,9 @@ void _debugger_exception_start(void) {
            sw   s0,     0(s1)
 
            cm.pop {ra, s0-s2}, 16
-           csrr s0, dscratch
-           jr s0
-      )");
+           csrr t6, dscratch
+           jr t6
+      )" ::: "t6");
 }
 
 /*
@@ -121,7 +121,14 @@ void _debugger_start(void) {
       sw a5, -24(sp)
       sw a6, -28(sp)
       sw a7, -32(sp)
-      addi sp, sp, -32
+      sw t0, -36(sp)
+      sw t1, -40(sp)
+      sw t2, -44(sp)
+      sw t3, -48(sp)
+      sw t4, -52(sp)
+      sw t5, -56(sp)
+      sw t6, -60(sp)
+      addi sp, sp, -64
 
       cm.push {ra, s0-s11}, -64
 
@@ -131,7 +138,7 @@ void _debugger_start(void) {
     # Restore return address and saved registers
       cm.pop {ra, s0-s11}, 64
 
-      addi sp, sp, 32
+      addi sp, sp, 64
       lw a0, -4(sp)
       lw a1, -8(sp)
       lw a2, -12(sp)
@@ -140,6 +147,13 @@ void _debugger_start(void) {
       lw a5, -24(sp)
       lw a6, -28(sp)
       lw a7, -32(sp)
+      lw t0, -36(sp)
+      lw t1, -40(sp)
+      lw t2, -44(sp)
+      lw t3, -48(sp)
+      lw t4, -52(sp)
+      lw t5, -56(sp)
+      lw t6, -60(sp)
 
     # Exit debug mode
       dret
