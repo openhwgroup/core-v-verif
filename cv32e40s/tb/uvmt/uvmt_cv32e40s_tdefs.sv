@@ -118,6 +118,7 @@ typedef struct packed {
   logic [31:0]                 match_idx;
   logic                        have_match;
   logic                        accesses_dmregion;
+  logic                        accesses_jvt;
 } pma_status_t;
 
 

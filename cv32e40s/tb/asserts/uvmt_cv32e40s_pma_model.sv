@@ -38,6 +38,7 @@ module  uvmt_cv32e40s_pma_model
   input wire         load_access,
   input wire         misaligned_access_i,
   input wire [31:0]  addr_i,
+  input wire jvt_t   jvt_q,
 
   output wire pma_status_t  pma_status_o
 );
@@ -110,6 +111,11 @@ module  uvmt_cv32e40s_pma_model
     cfg_effective.main  ||
     (!misaligned_access_i && !core_trans_pushpop_i);
 
+  wire logic  accesses_jvt;
+  assign  accesses_jvt =
+    (jvt_q <= addr_i)  &&
+    (addr_i <= (jvt_q + (4 * 8'b 1111_1111)));
+
   assign  pma_status_o.allow =
     override_dm  ||
     (IS_INSTR_SIDE ? allow_instr : allow_data);
@@ -119,6 +125,7 @@ module  uvmt_cv32e40s_pma_model
   assign  pma_status_o.integrity         = cfg_effective.integrity;
   assign  pma_status_o.override_dm       = override_dm;
   assign  pma_status_o.accesses_dmregion = accesses_dmregion;
+  assign  pma_status_o.accesses_jvt      = accesses_jvt;
 
 
 endmodule : uvmt_cv32e40s_pma_model

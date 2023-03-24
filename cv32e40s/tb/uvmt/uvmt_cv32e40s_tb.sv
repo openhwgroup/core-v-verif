@@ -1188,6 +1188,7 @@ module uvmt_cv32e40s_tb;
       ) pma_model_instr_i (
         .addr_i       (pma_i.trans_addr_i),
         .dbg          (core_trans_i.dbg),
+        .jvt_q        (core_i.cs_registers_i.jvt_q),
         .pma_status_o (uvmt_cv32e40s_tb.pma_status_instr),
         .*
       );
@@ -1202,6 +1203,7 @@ module uvmt_cv32e40s_tb;
       ) pma_model_data_i (
         .addr_i       (pma_i.trans_addr_i),
         .dbg          (core_trans_i.dbg),
+        .jvt_q        (core_i.cs_registers_i.jvt_q),
         .pma_status_o (uvmt_cv32e40s_tb.pma_status_data),
         .*
       );
@@ -1219,6 +1221,7 @@ module uvmt_cv32e40s_tb;
         .addr_i               (rvfi_instr_if_0_i.rvfi_mem_addr[31:0]),
         .core_trans_pushpop_i (rvfi_instr_if_0_i.is_pushpop()),
         .dbg                  (rvfi_instr_if_0_i.rvfi_dbg_mode),
+        .jvt_q                (rvfi_csr_jvt_if_0_i.rvfi_csr_rdata),
         .load_access          (rvfi_instr_if_0_i.rvfi_mem_rmask),
         .misaligned_access_i  (rvfi_instr_if_0_i.is_split_datatrans()),
         .pma_status_o         (uvmt_cv32e40s_tb.pma_status_rvfidata_word0lowbyte)
@@ -1237,6 +1240,7 @@ module uvmt_cv32e40s_tb;
         .addr_i               (rvfi_instr_if_0_i.rvfi_mem_addr_word0highbyte()),
         .core_trans_pushpop_i (rvfi_instr_if_0_i.is_pushpop()),
         .dbg                  (rvfi_instr_if_0_i.rvfi_dbg_mode),
+        .jvt_q                (rvfi_csr_jvt_if_0_i.rvfi_csr_rdata),
         .load_access          (rvfi_instr_if_0_i.rvfi_mem_rmask),
         .misaligned_access_i  (rvfi_instr_if_0_i.is_split_datatrans()),
         .pma_status_o         (uvmt_cv32e40s_tb.pma_status_rvfidata_word0highbyte)

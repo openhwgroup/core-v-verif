@@ -61,10 +61,12 @@ module  uvmt_cv32e40s_pma_cov
 
   // Helper Logic - Function Waveform Visibility
 
-  wire logic  rvfi_if__is_pma_fault;
-  wire logic  rvfi_if__is_split_datatrans;
-  assign  rvfi_if__is_pma_fault       = rvfi_if.is_pma_fault();
-  assign  rvfi_if__is_split_datatrans = rvfi_if.is_split_datatrans();
+  var logic  rvfi_if__is_pma_fault;
+  var logic  rvfi_if__is_split_datatrans;
+  var logic  rvfi_if__is_tablejump;
+  always_comb  rvfi_if__is_pma_fault       = rvfi_if.is_pma_fault();
+  always_comb  rvfi_if__is_split_datatrans = rvfi_if.is_split_datatrans();
+  always_comb  rvfi_if__is_tablejump       = rvfi_if.is_tablejump();
   //TODO:ERROR:silabs-robin Remove if rvfi interface is changed to provide signals.
 
 
@@ -110,9 +112,9 @@ module  uvmt_cv32e40s_pma_cov
 
     // vplan:TODO
     cp_loadstoreexec: coverpoint  load_access  iff (is_mpu_activated) {
-      bins  load  = {1}              with (!IS_INSTR_SIDE);
-      bins  store = {0}              with (!IS_INSTR_SIDE);
-      bins  exec  = cp_loadstoreexec with ( IS_INSTR_SIDE);
+      bins  load  = {1}    with (!IS_INSTR_SIDE);
+      bins  store = {0}    with (!IS_INSTR_SIDE);
+      bins  exec  = {0, 1} with ( IS_INSTR_SIDE);
     }
 
     // vplan:TODO
@@ -149,11 +151,16 @@ module  uvmt_cv32e40s_pma_cov
       bins no    = {0};
     }
 
-    x_multimatch_aligned_loadstoreexec: cross  cp_multimatch, cp_aligned, cp_loadstoreexec;
-    x_multimatch_allow_loadstoreexec:   cross  cp_multimatch, cp_allow, cp_loadstoreexec {
-      illegal_bins illegal =
-        binsof(cp_multimatch.zero) && binsof(cp_allow.allow) && binsof(cp_loadstoreexec.exec);
-      //TODO:ERROR:silabs-robin how to solve this?
+    // TODO
+    cp_jvt: coverpoint  pma_status_i.accesses_jvt  iff (is_mpu_activated) {
+      bins accesses = {1} with (IS_INSTR_SIDE);
+      bins no       = {0} with (IS_INSTR_SIDE);
+    }
+
+    x_multimatch_aligned_loadstoreexec_allow:
+      cross  cp_multimatch, cp_aligned, cp_loadstoreexec, cp_allow
+    {
+      //TODO:ERROR need filters
     }
     x_multimatch_main:                  cross  cp_multimatch, cp_main;
     x_multimatch_bufferable:            cross  cp_multimatch, cp_bufferable;
@@ -180,6 +187,7 @@ module  uvmt_cv32e40s_pma_cov
     x_allow_cacheable:  cross  cp_allow, cp_cacheable;
     x_allow_integrity:  cross  cp_allow, cp_integrity;
     x_allow_overridedm: cross  cp_allow, cp_overridedm;
+    x_allow_jvt:        cross  cp_allow, cp_jvt;
 
     x_dmregion_dmode: cross  cp_dmregion, cp_dmode;
 
@@ -229,12 +237,29 @@ module  uvmt_cv32e40s_pma_cov
       bins  io2io     = {2'b 00};
     }
 
+    cp_tablejump: coverpoint  rvfi_if__is_tablejump  iff (rvfi_if.rvfi_valid) {
+      bins jump = {1};
+      bins no   = {0};
+    }
+
     x_aligned_pmafault_loadstore_firstfail:
       cross  cp_aligned, cp_pmafault, cp_loadstore, cp_firstfail;
 
     x_aligned_loadstore_boundary: cross  cp_aligned, cp_loadstore, cp_boundary {
       ignore_bins ignore = binsof(cp_aligned) intersect {0};
     }
+
+
+    // Table Jump Crosses
+
+    x_aligned_pmafault_firstfail_tablejump:
+      cross  cp_aligned, cp_pmafault, cp_firstfail, cp_tablejump
+    {
+      ignore_bins  ignore =
+        binsof(cp_firstfail.yes) && binsof(cp_tablejump.jump);
+    }
+
+    x_pmafault_tablejump: cross  cp_pmafault, cp_tablejump;
   endgroup
 
   if (!IS_INSTR_SIDE) begin: gen_rvfi_cg

@@ -29,7 +29,9 @@
 `default_nettype none
 
 
-module  uvmt_cv32e40s_rvfi_cov (
+module  uvmt_cv32e40s_rvfi_cov
+  import cv32e40s_pkg::*;
+(
   input wire  clk_i,
   input wire  rst_ni,
 
@@ -61,6 +63,23 @@ module  uvmt_cv32e40s_rvfi_cov (
     rvfi_if.is_pushpop()  &&
     !rvfi_if.rvfi_trap  &&
     ((mem_rmask | mem_wmask) > 'h FF)
+  );
+
+
+  // Table Jump
+
+  var logic rvfi_if__is_tablejump;
+  always_comb rvfi_if__is_tablejump <= rvfi_if.is_tablejump();
+  //TODO:ERROR remove when rvfi_if provides signals
+
+  cov_tablejump_notrap: cover property (
+    rvfi_if__is_tablejump  &&
+    !rvfi_if.rvfi_trap
+  );
+
+  cov_tablejump_exception: cover property (
+    rvfi_if__is_tablejump  &&
+    rvfi_if.rvfi_trap.exception
   );
 
 

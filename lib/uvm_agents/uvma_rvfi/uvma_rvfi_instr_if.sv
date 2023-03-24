@@ -117,6 +117,9 @@ interface uvma_rvfi_instr_if
   localparam INSTR_OPCODE_POPRET  = 32'b 00000000_00000000_101_11110_0000_00_10;
   localparam INSTR_OPCODE_POPRETZ = 32'b 00000000_00000000_101_11100_0000_00_10;
 
+  localparam INSTR_MASK_TABLEJUMP   = 32'b 11111111_11111111_111_111_00000000_11;
+  localparam INSTR_OPCODE_TABLEJUMP = 32'b 00000000_00000000_101_000_00000000_10;
+
   //positions
   localparam int INSTR_CSRADDR_POS  = 20;
 
@@ -420,6 +423,10 @@ function automatic logic is_pushpop();
           match_instr(INSTR_OPCODE_POPRET,  INSTR_MASK_PUSHPOP)  ||
           match_instr(INSTR_OPCODE_POPRETZ, INSTR_MASK_PUSHPOP);
 endfunction : is_pushpop
+
+function automatic logic is_tablejump();
+  return  match_instr_raw(INSTR_OPCODE_TABLEJUMP, INSTR_MASK_TABLEJUMP);
+endfunction : is_tablejump
 
 function logic is_nmi();
   return rvfi_valid && rvfi_intr.intr && (rvfi_intr.cause & INTR_CAUSE_NMI_MASK);
