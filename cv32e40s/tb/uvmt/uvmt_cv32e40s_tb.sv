@@ -1288,6 +1288,7 @@ module uvmt_cv32e40s_tb;
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
         .IS_INSTR_SIDE   (1'b 1)
       ) pma_cov_instr_i (
+        .clk_ungated                         (clknrst_if.clk),
         .pma_status_i                        (uvmt_cv32e40s_tb.pma_status_instr),
         .pma_status_rvfidata_word0lowbyte_i  (uvmt_cv32e40s_tb.pma_status_rvfidata_word0lowbyte),
         .pma_status_rvfidata_word0highbyte_i (uvmt_cv32e40s_tb.pma_status_rvfidata_word0highbyte),
@@ -1300,6 +1301,7 @@ module uvmt_cv32e40s_tb;
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
         .IS_INSTR_SIDE   (1'b 0)
       ) pma_cov_data_i (
+        .clk_ungated                         (clknrst_if.clk),
         .pma_status_i                        (uvmt_cv32e40s_tb.pma_status_data),
         .pma_status_rvfidata_word0lowbyte_i  (uvmt_cv32e40s_tb.pma_status_rvfidata_word0lowbyte),
         .pma_status_rvfidata_word0highbyte_i (uvmt_cv32e40s_tb.pma_status_rvfidata_word0highbyte),

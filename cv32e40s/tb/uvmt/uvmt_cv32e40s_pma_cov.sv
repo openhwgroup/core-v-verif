@@ -27,6 +27,7 @@ module  uvmt_cv32e40s_pma_cov
   parameter bit  IS_INSTR_SIDE
 )(
   input wire  clk,
+  input wire  clk_ungated,
   input wire  rst_n,
 
   // MPU Signals
@@ -59,14 +60,35 @@ module  uvmt_cv32e40s_pma_cov
   assign  is_mpu_activated = (core_trans_ready_o && core_trans_valid_i);
 
 
+  // Helper Logic - RVFI Clock & Valid
+
+  var logic   was_rvfi_valid;
+  wire logic  clk_rvfi;
+  always_ff @(posedge clk_ungated) was_rvfi_valid <= rvfi_if.rvfi_valid;
+  assign  clk_rvfi = clk & was_rvfi_valid;
+  //TODO:INFO:silabs-robin Could move to "rvfi_if"?
+
+  var logic  occured_rvfi_valid;
+  always_ff @(posedge clk_ungated or negedge rst_n) begin
+    if (rst_n == 0) begin
+      occured_rvfi_valid <= 0;
+    end else if (rvfi_if.rvfi_valid) begin
+      occured_rvfi_valid <= 1;
+    end
+  end
+  //TODO:INFO:silabs-robin Could move to "rvfi_if"?
+
+
   // Helper Logic - Function Waveform Visibility
 
   var logic  rvfi_if__is_pma_fault;
   var logic  rvfi_if__is_split_datatrans;
   var logic  rvfi_if__is_tablejump;
+  var logic  rvfi_if__is_fencefencei;
   always_comb  rvfi_if__is_pma_fault       = rvfi_if.is_pma_fault();
   always_comb  rvfi_if__is_split_datatrans = rvfi_if.is_split_datatrans();
   always_comb  rvfi_if__is_tablejump       = rvfi_if.is_tablejump();
+  always_comb  rvfi_if__is_fencefencei     = rvfi_if.is_fencefencei();
   //TODO:ERROR:silabs-robin Remove if rvfi interface is changed to provide signals.
 
 
@@ -75,6 +97,27 @@ module  uvmt_cv32e40s_pma_cov
   wire logic [1:0]  rvfi_pmamain_lowhigh;
   assign  rvfi_pmamain_lowhigh[1]  = pma_status_rvfidata_word0lowbyte_i.main;
   assign  rvfi_pmamain_lowhigh[0]  = pma_status_rvfidata_word0highbyte_i.main;
+
+
+  // Helper Logic - "Past" Values
+
+  var logic  was_pma_fault;
+  var logic  was_rvfi_mem_wmask;
+  var logic  was_mem_act;
+  var logic  was_rvfi_pmamain_low;
+  always_comb  was_pma_fault =
+    occured_rvfi_valid  &&
+    $past(rvfi_if__is_pma_fault,   , ,@(posedge clk_rvfi));
+  always_comb  was_rvfi_mem_wmask =
+    occured_rvfi_valid  &&
+    $past(|rvfi_if.rvfi_mem_wmask, , ,@(posedge clk_rvfi));
+  always_comb  was_mem_act =
+    occured_rvfi_valid  &&
+    $past(rvfi_if.is_mem_act(),    , ,@(posedge clk_rvfi));
+  always_comb  was_rvfi_pmamain_low =
+    occured_rvfi_valid  &&
+    $past(rvfi_pmamain_lowhigh[1], , ,@(posedge clk_rvfi));
+  //TODO rename "was_pma_fault" -> "was_rvfi_pma_fault" etc
 
 
   // MPU Coverage Definition
@@ -215,8 +258,21 @@ module  uvmt_cv32e40s_pma_cov
       bins  no    = {0};
     }
 
+    cp_waspmafault: coverpoint  was_pma_fault  iff (occured_rvfi_valid) {
+      bins  fault = {1};
+      bins  no    = {0};
+    }
+
     cp_loadstore: coverpoint  rvfi_if.rvfi_mem_wmask
       iff (rvfi_if.is_mem_act())
+    {
+      bins  load  = {0};
+      bins  store = {[1:$]};
+      illegal_bins  undefined = default;  // Should be empty
+    }
+
+    cp_wasloadstore: coverpoint  was_rvfi_mem_wmask
+      iff (was_mem_act && occured_rvfi_valid)
     {
       bins  load  = {0};
       bins  store = {[1:$]};
@@ -237,10 +293,25 @@ module  uvmt_cv32e40s_pma_cov
       bins  io2io     = {2'b 00};
     }
 
+    cp_wasmain: coverpoint  was_rvfi_pmamain_low
+      iff (was_mem_act && occured_rvfi_valid)
+    {
+      bins  main = {1};
+      bins  io   = {0};
+    }
+
     cp_tablejump: coverpoint  rvfi_if__is_tablejump  iff (rvfi_if.rvfi_valid) {
       bins jump = {1};
       bins no   = {0};
     }
+
+    cp_fence: coverpoint  rvfi_if__is_fencefencei  iff (rvfi_if.rvfi_valid) {
+      bins fencefencei = {1};
+      bins no          = {0};
+    }
+
+
+    // General Crosses
 
     x_aligned_pmafault_loadstore_firstfail:
       cross  cp_aligned, cp_pmafault, cp_loadstore, cp_firstfail;
@@ -260,6 +331,12 @@ module  uvmt_cv32e40s_pma_cov
     }
 
     x_pmafault_tablejump: cross  cp_pmafault, cp_tablejump;
+
+
+    // Fence Crosses
+
+    x_waspmafault_wasmain_wasloadstore_fence:
+      cross  cp_waspmafault, cp_wasmain, cp_wasloadstore, cp_fence;
   endgroup
 
   if (!IS_INSTR_SIDE) begin: gen_rvfi_cg

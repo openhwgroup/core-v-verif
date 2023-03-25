@@ -120,6 +120,11 @@ interface uvma_rvfi_instr_if
   localparam INSTR_MASK_TABLEJUMP   = 32'b 11111111_11111111_111_111_00000000_11;
   localparam INSTR_OPCODE_TABLEJUMP = 32'b 00000000_00000000_101_000_00000000_10;
 
+  localparam INSTR_MASK_FENCE    = 32'b 00000000000000000_111_00000_1111111;
+  localparam INSTR_OPCODE_FENCE  = 32'b 00000000000000000_000_00000_0001111;
+  localparam INSTR_MASK_FENCEI   = 32'b 00000000000000000_111_00000_1111111;
+  localparam INSTR_OPCODE_FENCEI = 32'b 00000000000000000_001_00000_0001111;
+
   //positions
   localparam int INSTR_CSRADDR_POS  = 20;
 
@@ -427,6 +432,11 @@ endfunction : is_pushpop
 function automatic logic is_tablejump();
   return  match_instr_raw(INSTR_OPCODE_TABLEJUMP, INSTR_MASK_TABLEJUMP);
 endfunction : is_tablejump
+
+function automatic logic is_fencefencei();
+  return  match_instr(INSTR_OPCODE_FENCE,  INSTR_MASK_FENCE)  ||
+          match_instr(INSTR_OPCODE_FENCEI, INSTR_MASK_FENCEI);
+endfunction : is_fencefencei
 
 function logic is_nmi();
   return rvfi_valid && rvfi_intr.intr && (rvfi_intr.cause & INTR_CAUSE_NMI_MASK);
