@@ -95,8 +95,8 @@ module  uvmt_cv32e40s_pma_cov
   // Helper Logic - Split Transactions Main vs I/O
 
   wire logic [1:0]  rvfi_pmamain_lowhigh;
-  assign  rvfi_pmamain_lowhigh[1]  = pma_status_rvfidata_word0lowbyte_i.main;
-  assign  rvfi_pmamain_lowhigh[0]  = pma_status_rvfidata_word0highbyte_i.main;
+  assign  rvfi_pmamain_lowhigh[1] = pma_status_rvfidata_word0lowbyte_i.main;
+  assign  rvfi_pmamain_lowhigh[0] = pma_status_rvfidata_word0highbyte_i.main;
 
 
   // Helper Logic - "Past" Values

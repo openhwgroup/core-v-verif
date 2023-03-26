@@ -501,7 +501,7 @@ function logic is_instr_bus_valid();
 endfunction : is_instr_bus_valid
 
 function automatic logic [31:0] rvfi_mem_addr_word0highbyte();
-  let addr = rvfi_mem_addr[31:0];
+  logic [31:0] addr = rvfi_mem_addr[31:0];
   case (1)
     (rvfi_mem_rmask[3] || rvfi_mem_wmask[3]):
       return  addr + 3;
