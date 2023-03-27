@@ -119,8 +119,8 @@ static void check_load_vs_regfile(void) {
   volatile uint32_t  rd_post;
 
   // check misaligned in IO
-  __asm__ volatile("sw %0, 0(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR):: "memory");
-  __asm__ volatile("sw %0, 4(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR):: "memory");
+  __asm__ volatile("sw %0, 0(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR) : "memory");
+  __asm__ volatile("sw %0, 4(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR) : "memory");
   {
     // misaligned: regfile untouched
     __asm__ volatile( R"(
@@ -143,8 +143,8 @@ static void check_load_vs_regfile(void) {
   }
 
   // check misaligned border from IO to MEM
-  __asm__ volatile("sw %0, -4(%1)" : : "r"(0xAAAAAAAA), "r"(MEM_ADDR_1):: "memory");
-  __asm__ volatile("sw %0,  0(%1)" : : "r"(0xBBBBBBBB), "r"(MEM_ADDR_1):: "memory");
+  __asm__ volatile("sw %0, -4(%1)" : : "r"(0xAAAAAAAA), "r"(MEM_ADDR_1) : "memory");
+  __asm__ volatile("sw %0,  0(%1)" : : "r"(0xBBBBBBBB), "r"(MEM_ADDR_1) : "memory");
   {
     // misaligned: regfile untouched
     __asm__ volatile( R"(
@@ -167,8 +167,8 @@ static void check_load_vs_regfile(void) {
   }
 
   // check misaligned border from MEM to IO
-  __asm__ volatile("sw %0, -4(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR):: "memory");
-  __asm__ volatile("sw %0, 0(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR):: "memory");
+  __asm__ volatile("sw %0, -4(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR) : "memory");
+  __asm__ volatile("sw %0, 0(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR) : "memory");
   {
     // misaligned: regfile untouched
     __asm__ volatile( R"(

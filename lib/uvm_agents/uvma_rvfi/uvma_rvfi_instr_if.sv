@@ -71,17 +71,6 @@ interface uvma_rvfi_instr_if
     input logic [(NMEM*XLEN)-1:0]    rvfi_mem_wdata,
     input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask,
 
-    output logic [(32)-1:0][XLEN-1:0]       gpr_rdata_array,
-    output logic [(32)-1:0]                 gpr_rmask_array,
-    output logic [(32)-1:0][XLEN-1:0]       gpr_wdata_array,
-    output logic [(32)-1:0]                 gpr_wmask_array,
-
-    output logic [NMEM-1:0][XLEN-1:0]       mem_addr_array,
-    output logic [NMEM-1:0][XLEN-1:0]       mem_rdata_array,
-    output logic [NMEM-1:0][(XLEN/8)-1:0]   mem_rmask_array,
-    output logic [NMEM-1:0][XLEN-1:0]       mem_wdata_array,
-    output logic [NMEM-1:0][(XLEN/8)-1:0]   mem_wmask_array,
-
     input logic [2:0]                instr_prot,
     input logic [NMEM*3-1:0]         mem_prot
   );
@@ -125,7 +114,36 @@ interface uvma_rvfi_instr_if
   // -------------------------------------------------------------------
   // Local variables
   // -------------------------------------------------------------------
-  bit [CYCLE_CNT_WL-1:0] cycle_cnt = 0;
+  bit   [CYCLE_CNT_WL-1:0]          cycle_cnt = 0;
+
+  logic [(32)-1:0][XLEN-1:0]        gpr_rdata_array;
+  logic [(32)-1:0]                  gpr_rmask_array;
+  logic [(32)-1:0][XLEN-1:0]        gpr_wdata_array;
+  logic [(32)-1:0]                  gpr_wmask_array;
+  logic [NMEM-1:0][XLEN-1:0]        mem_addr_array;
+  logic [NMEM-1:0][XLEN-1:0]        mem_rdata_array;
+  logic [NMEM-1:0][(XLEN/8)-1:0]    mem_rmask_array;
+  logic [NMEM-1:0][XLEN-1:0]        mem_wdata_array;
+  logic [NMEM-1:0][(XLEN/8)-1:0]    mem_wmask_array;
+
+  logic                             is_dret;
+  logic                             is_mret;
+  logic                             is_uret;
+  logic                             is_wfi;
+  logic                             is_wfe;
+  logic                             is_ebreak;
+  logic                             is_ebreak_compr;
+  logic                             is_ebreak_noncompr;
+  logic                             is_ecall;
+  logic                             is_nmi;
+  logic                             is_compressed;
+  logic                             is_dbg_trg;
+  logic                             is_mmode;
+  logic                             is_not_mmode;
+  logic                             is_umode;
+  logic                             is_not_umode;
+  logic                             is_pma_instr_fault;
+  logic                             is_instr_bus_valid;
 
   // -------------------------------------------------------------------
   // Begin module code
@@ -148,6 +166,28 @@ interface uvma_rvfi_instr_if
 
   always @(posedge clk) begin
     cycle_cnt <= cycle_cnt + 1;
+  end
+
+  // assigning signal aliases to helper functions
+  always_comb begin
+    is_dret             <= is_dret_f();
+    is_mret             <= is_mret_f();
+    is_uret             <= is_uret_f();
+    is_wfi              <= is_wfi_f();
+    is_wfe              <= is_wfe_f();
+    is_ebreak           <= is_ebreak_f();
+    is_ebreak_compr     <= is_ebreak_compr_f();
+    is_ebreak_noncompr  <= is_ebreak_noncompr_f();
+    is_ecall            <= is_ecall_f();
+    is_nmi              <= is_nmi_f();
+    is_compressed       <= is_compressed_f();
+    is_dbg_trg          <= is_dbg_trg_f();
+    is_mmode            <= is_mmode_f();
+    is_not_mmode        <= is_not_mmode_f();
+    is_umode            <= is_umode_f();
+    is_not_umode        <= is_not_umode_f();
+    is_pma_instr_fault  <= is_pma_instr_fault_f();
+    is_instr_bus_valid  <= is_instr_bus_valid_f();
   end
 
   /**
@@ -212,7 +252,7 @@ interface uvma_rvfi_instr_if
                               bit [ DEFAULT_XLEN-1:0] ref_mask
                               );
 
-  return rvfi_valid && is_instr_bus_valid() && ((rvfi_insn & ref_mask) == ref_instr);
+  return rvfi_valid && is_instr_bus_valid && ((rvfi_insn & ref_mask) == ref_instr);
 
   endfunction : match_instr
 
@@ -370,91 +410,91 @@ endfunction : check_mem_act
 
 // Short functions for recognising special functions
 
-function logic is_dret();
+function logic is_dret_f();
   return match_instr(INSTR_OPCODE_DRET, INSTR_MASK_FULL);
-endfunction : is_dret
+endfunction : is_dret_f
 
-function logic is_mret();
+function logic is_mret_f();
   return match_instr(INSTR_OPCODE_MRET, INSTR_MASK_FULL);
-endfunction : is_mret
+endfunction : is_mret_f
 
-function logic is_uret();
+function logic is_uret_f();
   return match_instr(INSTR_OPCODE_URET, INSTR_MASK_FULL);
-endfunction : is_uret
+endfunction : is_uret_f
 
-function logic is_wfi();
+function logic is_wfi_f();
   return match_instr(INSTR_OPCODE_WFI, INSTR_MASK_FULL);
-endfunction : is_wfi
+endfunction : is_wfi_f
 
-function logic is_wfe();
+function logic is_wfe_f();
   return match_instr(INSTR_OPCODE_WFE, INSTR_MASK_FULL);
-endfunction : is_wfe
+endfunction : is_wfe_f
 
-function logic is_ebreak();
+function logic is_ebreak_f();
   return match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL) || match_instr(INSTR_OPCODE_C_EBREAK, INSTR_MASK_FULL);
-endfunction : is_ebreak
+endfunction : is_ebreak_f
 
-function logic is_ebreak_compr();
+function logic is_ebreak_compr_f();
   return match_instr(INSTR_OPCODE_C_EBREAK, INSTR_MASK_FULL);
-endfunction : is_ebreak_compr
+endfunction : is_ebreak_compr_f
 
-function logic is_ebreak_noncompr();
+function logic is_ebreak_noncompr_f();
   return match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL);
-endfunction : is_ebreak_noncompr
+endfunction : is_ebreak_noncompr_f
 
-function logic is_ecall();
+function logic is_ecall_f();
   return match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);
-endfunction : is_ecall
+endfunction : is_ecall_f
 
-function logic is_nmi();
+function logic is_nmi_f();
   return rvfi_valid && rvfi_intr.intr && (rvfi_intr.cause & INTR_CAUSE_NMI_MASK);
-endfunction : is_nmi
+endfunction : is_nmi_f
 
-function logic is_compressed();
+function logic is_compressed_f();
   return  rvfi_valid && (rvfi_insn[1:0] != 2'b11);
-endfunction : is_compressed
+endfunction : is_compressed_f
 
-function logic is_dbg_trg();
+function logic is_dbg_trg_f();
   return  rvfi_valid &&
           rvfi_trap.trap &&
           rvfi_trap.debug &&
          (rvfi_trap.debug_cause == cv32e40s_pkg::DBG_CAUSE_TRIGGER);
-endfunction : is_dbg_trg
+endfunction : is_dbg_trg_f
 
-function logic is_mmode();
+function logic is_mmode_f();
   return  rvfi_valid &&
           (rvfi_mode == cv32e40s_pkg::PRIV_LVL_M);
-endfunction : is_mmode
+endfunction : is_mmode_f
 
-function logic is_not_mmode();
+function logic is_not_mmode_f();
   return  rvfi_valid &&
           (rvfi_mode != cv32e40s_pkg::PRIV_LVL_M);
-endfunction : is_not_mmode
+endfunction : is_not_mmode_f
 
-function logic is_umode();
+function logic is_umode_f();
   return  rvfi_valid &&
           (rvfi_mode == cv32e40s_pkg::PRIV_LVL_U);
-endfunction : is_umode
+endfunction : is_umode_f
 
-function logic is_not_umode();
+function logic is_not_umode_f();
   return  rvfi_valid &&
           (rvfi_mode != cv32e40s_pkg::PRIV_LVL_U);
-endfunction : is_not_umode
+endfunction : is_not_umode_f
 
-function logic is_pma_instr_fault();
+function logic is_pma_instr_fault_f();
   return  rvfi_valid  &&
           rvfi_trap.trap  &&
           rvfi_trap.exception  &&
           (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT)  &&
           (rvfi_trap.cause_type == 'h 0);
-endfunction : is_pma_instr_fault
+endfunction : is_pma_instr_fault_f
 
-function logic is_instr_bus_valid();
+function logic is_instr_bus_valid_f();
   return !( (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT) ||
             (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_INTEGRITY_FAULT) ||
             (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_BUS_FAULT)
     );
-endfunction : is_instr_bus_valid
+endfunction : is_instr_bus_valid_f
 
 endinterface : uvma_rvfi_instr_if
 

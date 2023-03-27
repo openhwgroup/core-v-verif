@@ -143,7 +143,7 @@ module  uvmt_cv32e40s_pma_assert
   // After PMA-deny, subsequent accesses are also suppressed  (vplan:"Multi-memory operation instructions")
 
   a_failure_denies_subsequents: assert property (
-    rvfi_instr_if.is_pma_instr_fault()
+    rvfi_instr_if.is_pma_instr_fault
     |->
     (rvfi_instr_if.rvfi_mem_wmask == '0)
     //TODO:ERROR:silabs-robin Zcmp should be able to break this. RVFI bug.

@@ -229,7 +229,7 @@ module uvmt_cv32e40s_debug_assert
 
     property p_dpc_dbg_step_nmi;
         $rose(support_if.first_debug_ins) &&
-        rvfi.is_nmi() &&
+        rvfi.is_nmi &&
         (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP)
         |=>
         dpc_rdata_q == dpc_dbg_step_nmi;
@@ -243,7 +243,7 @@ module uvmt_cv32e40s_debug_assert
         $rose(support_if.first_debug_ins) &&
         rvfi.rvfi_intr.intr &&
         rvfi.rvfi_intr.interrupt &&
-        !rvfi.is_nmi() &&
+        !rvfi.is_nmi &&
         (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP)
         |=>
         dpc_rdata_q == dpc_dbg_step_irq;
@@ -286,7 +286,7 @@ module uvmt_cv32e40s_debug_assert
 
     property p_dpc_dbg_haltreq_nmi;
         $rose(support_if.first_debug_ins) &&
-        rvfi.is_nmi() &&
+        rvfi.is_nmi &&
         (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ)
         |=>
         dpc_rdata_q == dpc_dbg_haltreq_nmi;
@@ -300,7 +300,7 @@ module uvmt_cv32e40s_debug_assert
         $rose(support_if.first_debug_ins) &&
         rvfi.rvfi_intr.intr &&
         rvfi.rvfi_intr.interrupt &&
-        !rvfi.is_nmi() &&
+        !rvfi.is_nmi &&
         (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ)
         |=>
         dpc_rdata_q == dpc_dbg_haltreq_irq;
@@ -341,9 +341,9 @@ module uvmt_cv32e40s_debug_assert
 
     // ebreak / c.ebreak without dcsr.ebreak[prv] results in exception at mtvec
     property p_ebreak_mmode_exception;
-        rvfi.is_ebreak() &&
+        rvfi.is_ebreak &&
         !rvfi.rvfi_dbg_mode &&
-        rvfi.is_mmode() &&
+        rvfi.is_mmode &&
         !csr_dcsr.rvfi_csr_rdata[DCSR_EBREAKM_POS]
         |-> rvfi.rvfi_trap.trap && rvfi.rvfi_trap.exception
             or
@@ -351,9 +351,9 @@ module uvmt_cv32e40s_debug_assert
     endproperty
 
     property p_ebreak_umode_exception;
-        rvfi.is_ebreak() &&
+        rvfi.is_ebreak &&
         !rvfi.rvfi_dbg_mode &&
-        rvfi.is_umode() &&
+        rvfi.is_umode &&
         !csr_dcsr.rvfi_csr_rdata[DCSR_EBREAKU_POS]
         |-> rvfi.rvfi_trap.trap && rvfi.rvfi_trap.exception
             or
@@ -369,7 +369,7 @@ module uvmt_cv32e40s_debug_assert
 
     // ebreak and cebreak during debug mode results in relaunch
     property p_ebreak_during_debug_mode;
-        rvfi.is_ebreak() &&
+        rvfi.is_ebreak &&
         rvfi.rvfi_trap.debug_cause == cv32e40s_pkg::DBG_CAUSE_EBREAK && //The ebreak is actually taken
         rvfi.rvfi_dbg_mode
         ##1 rvfi.rvfi_valid[->1]
@@ -384,10 +384,10 @@ module uvmt_cv32e40s_debug_assert
         else `uvm_error(info_tag,$sformatf("Debug mode not restarted after ebreak"));
 
     cov_cebreak_dbg : cover property(
-        rvfi.is_ebreak_compr() && rvfi.rvfi_dbg_mode
+        rvfi.is_ebreak_compr && rvfi.rvfi_dbg_mode
     );
     cov_ebreak_dbg : cover property(
-        rvfi.is_ebreak_noncompr() && rvfi.rvfi_dbg_mode
+        rvfi.is_ebreak_noncompr && rvfi.rvfi_dbg_mode
     );
 
 
@@ -497,7 +497,7 @@ module uvmt_cv32e40s_debug_assert
         rvfi.rvfi_valid && //valid
         !rvfi.rvfi_dbg_mode && //not in dbg
         csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && // step set
-        !(rvfi.is_dbg_trg() || exception_trigger_hit) && // not trigger
+        !(rvfi.is_dbg_trg || exception_trigger_hit) && // not trigger
         rvfi.rvfi_trap.exception // exception
         ##1 rvfi.rvfi_valid[->1]
         |->
@@ -512,7 +512,7 @@ module uvmt_cv32e40s_debug_assert
 
     // Trigger during single step
     property p_single_step_trigger;
-        (rvfi.is_dbg_trg() || exception_trigger_hit) &&
+        (rvfi.is_dbg_trg || exception_trigger_hit) &&
         !rvfi.rvfi_dbg_mode &&
         csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]
         ##1 rvfi.rvfi_valid[->1]
@@ -555,7 +555,7 @@ module uvmt_cv32e40s_debug_assert
 
 
     property p_mumode_dret;
-        rvfi.is_dret() && !rvfi.rvfi_dbg_mode
+        rvfi.is_dret && !rvfi.rvfi_dbg_mode
         |-> rvfi.rvfi_trap;
     endproperty
 
@@ -567,7 +567,7 @@ module uvmt_cv32e40s_debug_assert
 
     property p_dmode_dret_pc;
         int dpc;
-        (rvfi.is_dret() && rvfi.rvfi_dbg_mode,
+        (rvfi.is_dret && rvfi.rvfi_dbg_mode,
          dpc = csr_dpc.rvfi_csr_rdata)
         ##1
         rvfi.rvfi_valid[->1]
@@ -584,11 +584,11 @@ module uvmt_cv32e40s_debug_assert
     //TODO:MT fails due to irregular behaviour in RVFI. Await 40S bug issue 414 before changing
     property p_dmode_dret_pc_int;
         int dpc;
-        (rvfi.is_dret() && rvfi.rvfi_dbg_mode,
+        (rvfi.is_dret && rvfi.rvfi_dbg_mode,
          dpc = csr_dpc.rvfi_csr_rdata)
         ##1
         rvfi.rvfi_valid[->1]
-        ##0 (rvfi.rvfi_intr && !rvfi.rvfi_dbg_mode && !rvfi.is_nmi())
+        ##0 (rvfi.rvfi_intr && !rvfi.rvfi_dbg_mode && !rvfi.is_nmi)
         |->
         csr_mepc.rvfi_csr_rdata == dpc;
     endproperty
@@ -605,7 +605,7 @@ module uvmt_cv32e40s_debug_assert
          dpc = csr_dpc.rvfi_csr_rdata)
         ##1
         rvfi.rvfi_valid[->1]
-        ##0 (!rvfi.rvfi_dbg_mode && rvfi.is_nmi())
+        ##0 (!rvfi.rvfi_dbg_mode && rvfi.is_nmi)
         ##0 (csr_mepc.rvfi_csr_rdata == dpc);
     endproperty
 
@@ -620,7 +620,7 @@ module uvmt_cv32e40s_debug_assert
          dpc = csr_dpc.rvfi_csr_rdata)
         ##1
         rvfi.rvfi_valid[->1]
-        ##0 (!rvfi.rvfi_dbg_mode && rvfi.is_nmi())
+        ##0 (!rvfi.rvfi_dbg_mode && rvfi.is_nmi)
         ##0 (csr_mepc.rvfi_csr_rdata != dpc);
     endproperty
 
@@ -712,7 +712,7 @@ module uvmt_cv32e40s_debug_assert
     // step vs nmi
     // check that stepie disables nmi
     property p_stepie_irq_dis;
-        rvfi.is_dret() && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && !csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
+        rvfi.is_dret && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && !csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
         ##1 rvfi.rvfi_valid[->1]
         |->
         !(rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt);
@@ -722,7 +722,7 @@ module uvmt_cv32e40s_debug_assert
         else `uvm_error(info_tag, "Single stepping should ignore all interrupts if stepie is set");
 
     cov_step_stepie_nmi : cover property (
-        rvfi.is_dret()
+        rvfi.is_dret
         && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]
         && !csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
         && csr_dcsr.rvfi_csr_rdata[DCSR_NMIP_POS]
@@ -733,7 +733,7 @@ module uvmt_cv32e40s_debug_assert
     // if the next instruction after a single step dret is in debug mode,
     // a trap entry has to be the cause.
     property p_step_trap_handler_entry;
-        (rvfi.is_dret() &&
+        (rvfi.is_dret &&
         csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] &&
         csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS])
         ##1 rvfi.rvfi_valid[->1]
@@ -746,7 +746,7 @@ module uvmt_cv32e40s_debug_assert
         else `uvm_error(info_tag, "single stepping remained in debug mode illegally");
 
     property p_step_no_trap;
-        rvfi.is_dret() && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
+        rvfi.is_dret && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
         ##1 rvfi.rvfi_valid[->1]
         ##0 !rvfi.rvfi_dbg_mode
         |->
@@ -881,7 +881,7 @@ module uvmt_cv32e40s_debug_assert
             pc_at_dbg_req <= 32'h0;
         end else begin
             //NMI has highest priority for dpc
-            if(rvfi.is_nmi() && rvfi.rvfi_dbg_mode) begin
+            if(rvfi.is_nmi && rvfi.rvfi_dbg_mode) begin
                 if (csr_mtvec.rvfi_csr_rdata[1:0] == 1) begin // vectored CLINT
                     pc_at_dbg_req <= mtvec_addr+'h3C;
                 end else begin //unvectored CLINT
@@ -902,7 +902,7 @@ module uvmt_cv32e40s_debug_assert
             end else if (exception_trigger_hit) begin
                 pc_at_dbg_req <= rvfi.rvfi_pc_wdata;
 
-            end else if ((rvfi.is_ebreak() && ebreak_allowed)|| rvfi.is_dbg_trg()) begin
+            end else if ((rvfi.is_ebreak && ebreak_allowed)|| rvfi.is_dbg_trg) begin
                 pc_at_dbg_req <= rvfi.rvfi_pc_rdata;
 
             end else if (support_if.first_fetch) begin
@@ -919,7 +919,7 @@ module uvmt_cv32e40s_debug_assert
         if(!cov_assert_if.rst_ni) begin
             dpc_dbg_ebreak <= 32'h0;
         end else begin
-            if (rvfi.is_ebreak()) begin
+            if (rvfi.is_ebreak) begin
                 dpc_dbg_ebreak <=  rvfi.rvfi_pc_rdata;
             end
         end
@@ -929,7 +929,7 @@ module uvmt_cv32e40s_debug_assert
         if(!cov_assert_if.rst_ni) begin
             dpc_dbg_trg <= 32'h0;
         end else begin
-            if (rvfi.is_dbg_trg()) begin
+            if (rvfi.is_dbg_trg) begin
                 dpc_dbg_trg <=  rvfi.rvfi_pc_rdata;
             end else if (exception_trigger_hit) begin
                 dpc_dbg_trg <=  rvfi.rvfi_pc_wdata;
@@ -949,7 +949,7 @@ module uvmt_cv32e40s_debug_assert
             dpc_dbg_haltreq_nmi     <= 32'h0;
         end else begin
             //NMI has highest priority for dpc
-            if(rvfi.is_nmi() && rvfi.rvfi_dbg_mode) begin
+            if(rvfi.is_nmi && rvfi.rvfi_dbg_mode) begin
                 if (csr_mtvec.rvfi_csr_rdata[1:0] == 1) begin // vectored CLINT
                     dpc_dbg_step        <= mtvec_addr+'h3C;
                     dpc_dbg_step_nmi    <= mtvec_addr+'h3C;
@@ -1058,13 +1058,13 @@ module uvmt_cv32e40s_debug_assert
         if( !cov_assert_if.rst_ni) begin
             debug_cause_pri <= 3'b000;
         end else begin  //TODO:MT placeholder for new trigger support logic, this only works with 1 trigger.
-            if (rvfi.is_dbg_trg() || exception_trigger_hit) begin
+            if (rvfi.is_dbg_trg || exception_trigger_hit) begin
                 debug_cause_pri <= cv32e40s_pkg::DBG_CAUSE_TRIGGER;
-            end else if(rvfi.is_ebreak() && ebreak_allowed) begin
+            end else if(rvfi.is_ebreak && ebreak_allowed) begin
                 debug_cause_pri <= cv32e40s_pkg::DBG_CAUSE_EBREAK;
             end else if(rvfi.rvfi_valid && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]) begin  // "step"
                 debug_cause_pri <= cv32e40s_pkg::DBG_CAUSE_STEP;
-            end else if(rvfi.is_dret() && !csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]) begin
+            end else if(rvfi.is_dret && !csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]) begin
                 debug_cause_pri <= 3'b000;  // (not a cause)
             end
         end
@@ -1073,9 +1073,9 @@ module uvmt_cv32e40s_debug_assert
     ////TODO:MT placeholder for new trigger support logic, this only works with 1 trigger.
     assign exception_trigger_hit =  (rvfi.rvfi_valid && rvfi.rvfi_trap.exception && csr_tdata1.rvfi_csr_rdata[31:28] == 5) &&
                                     (csr_tdata2.rvfi_csr_rdata[rvfi.rvfi_trap.exception_cause] == 1) &&
-                                    ((rvfi.is_mmode() && csr_tdata1.rvfi_csr_rdata[9]) ||
-                                    (rvfi.is_umode() && csr_tdata1.rvfi_csr_rdata[6]));
-    assign ebreak_allowed = (rvfi.is_mmode() && csr_dcsr.rvfi_csr_rdata[DCSR_EBREAKM_POS]) || (rvfi.is_umode() && csr_dcsr.rvfi_csr_rdata[DCSR_EBREAKU_POS]);
+                                    ((rvfi.is_mmode && csr_tdata1.rvfi_csr_rdata[9]) ||
+                                    (rvfi.is_umode && csr_tdata1.rvfi_csr_rdata[6]));
+    assign ebreak_allowed = (rvfi.is_mmode && csr_dcsr.rvfi_csr_rdata[DCSR_EBREAKM_POS]) || (rvfi.is_umode && csr_dcsr.rvfi_csr_rdata[DCSR_EBREAKU_POS]);
 
 
     // count the number of rvalids while debug_req is stable
