@@ -45,6 +45,15 @@ module  uvmt_cv32e40s_pma_cov
 );
 
 
+  // Exclude Known Unreachables
+
+  `ifdef FORMAL
+    localparam bit  SIMPLIFY_FV = 1;
+  `else
+    localparam bit  SIMPLIFY_FV = 0;
+  `endif
+
+
   // Helper Logic - Match Info
 
   wire logic [31:0]  num_matches;
@@ -135,47 +144,67 @@ module  uvmt_cv32e40s_pma_cov
 
     // vplan:"Overlapping PMA Regions"
     cp_multimatch: coverpoint  num_matches  iff (is_mpu_activated) {
-      bins zero = {0};
-      bins one  = {1}                   with (0 < PMA_NUM_REGIONS);
-      bins many = {[2:PMA_NUM_REGIONS]} with (1 < PMA_NUM_REGIONS);
+      bins zero = {0}
+        with (!SIMPLIFY_FV);
+      bins one  = {1}
+        with (0 < PMA_NUM_REGIONS);
+      bins many = {[2:PMA_NUM_REGIONS]}
+        with ((1 < PMA_NUM_REGIONS) && (!SIMPLIFY_FV));
     }
 
-    // vplan:TODO
     cp_matchregion: coverpoint  match_idx  iff (is_mpu_activated) {
-      bins           regions[] = {[0:PMA_NUM_REGIONS-1]}  iff (have_match == 1);
-      wildcard bins  nomatch   = {'X}                     iff (have_match == 0);
+      bins  regions[] = {[0:PMA_NUM_REGIONS-1]}
+        with (!SIMPLIFY_FV)
+        iff (have_match == 1);
+      bins  nomatch   = {[0:PMA_NUM_REGIONS-1]}
+        with (!SIMPLIFY_FV)
+        iff (have_match == 0);
     }
 
-    // vplan:TODO
     cp_aligned: coverpoint  misaligned_access_i  iff (is_mpu_activated) {
       bins          misaligned = {1} with (!IS_INSTR_SIDE);
       illegal_bins  illegal    = {1} with ( IS_INSTR_SIDE);
       bins          aligned    = {0};
     }
 
-    // vplan:TODO
     cp_loadstoreexec: coverpoint  load_access  iff (is_mpu_activated) {
       bins  load  = {1}    with (!IS_INSTR_SIDE);
       bins  store = {0}    with (!IS_INSTR_SIDE);
       bins  exec  = {0, 1} with ( IS_INSTR_SIDE);
     }
 
-    // vplan:TODO
-    cp_allow:       coverpoint  pma_status_i.allow       iff (is_mpu_activated) {
+    cp_allow: coverpoint  pma_status_i.allow  iff (is_mpu_activated) {
       bins allow    = {1};
       bins disallow = {0};
     }
-    cp_main:        coverpoint  pma_status_i.main        iff (is_mpu_activated);
-    cp_bufferable:  coverpoint  pma_status_i.bufferable  iff (is_mpu_activated) {
+
+    cp_main: coverpoint  pma_status_i.main  iff (is_mpu_activated) {
+      bins main = {1};
+      bins io   = {0};
+    }
+
+    cp_bufferable: coverpoint  pma_status_i.bufferable  iff (is_mpu_activated) {
       bins          bufferable    = {1} with (!IS_INSTR_SIDE);
       illegal_bins  illegal       = {1} with ( IS_INSTR_SIDE);
       bins          nonbufferable = {0};
     }
-    cp_cacheable:  coverpoint  pma_status_i.cacheable    iff (is_mpu_activated);
-    cp_integrity:  coverpoint  pma_status_i.integrity    iff (is_mpu_activated);
-    cp_overridedm: coverpoint  pma_status_i.override_dm  iff (is_mpu_activated);
 
-    // vplan:TODO
+    cp_cacheable: coverpoint  pma_status_i.cacheable  iff (is_mpu_activated) {
+      bins cacheable = {1};
+      bins no        = {0};
+    }
+
+    cp_integrity: coverpoint  pma_status_i.integrity  iff (is_mpu_activated) {
+      bins integrity = {1} with (!SIMPLIFY_FV);
+      bins no        = {0};
+    }
+
+    cp_overridedm: coverpoint  pma_status_i.override_dm  iff (is_mpu_activated)
+    {
+      bins override = {1};
+      bins no       = {0};
+    }
+
     cp_pushpop: coverpoint  core_trans_pushpop_i  iff (is_mpu_activated) {
       bins          pushpop = {1} with (!IS_INSTR_SIDE);
       illegal_bins  illegal = {1} with ( IS_INSTR_SIDE);
@@ -194,22 +223,33 @@ module  uvmt_cv32e40s_pma_cov
       bins no    = {0};
     }
 
-    // TODO
     cp_jvt: coverpoint  pma_status_i.accesses_jvt  iff (is_mpu_activated) {
       bins accesses = {1} with (IS_INSTR_SIDE);
       bins no       = {0} with (IS_INSTR_SIDE);
     }
 
     x_multimatch_aligned_loadstoreexec_allow:
-      cross  cp_multimatch, cp_aligned, cp_loadstoreexec, cp_allow
-    {
-      //TODO:ERROR need filters
+      cross  cp_multimatch, cp_aligned, cp_loadstoreexec, cp_allow {
+        ignore_bins  one_disallow =
+          (binsof(cp_multimatch.one) && binsof(cp_allow.disallow))
+          iff (SIMPLIFY_FV);
+      }
+    x_multimatch_main: cross  cp_multimatch, cp_main {
+      ignore_bins  one_io =
+        (binsof(cp_multimatch.one) && binsof(cp_main.io)) iff (SIMPLIFY_FV);
     }
-    x_multimatch_main:                  cross  cp_multimatch, cp_main;
-    x_multimatch_bufferable:            cross  cp_multimatch, cp_bufferable;
-    x_multimatch_cacheable:             cross  cp_multimatch, cp_cacheable;
-    x_multimatch_integrity:             cross  cp_multimatch, cp_integrity;
-    x_multimatch_overridedm:            cross  cp_multimatch, cp_overridedm;
+    x_multimatch_bufferable: cross  cp_multimatch, cp_bufferable;
+    x_multimatch_cacheable: cross  cp_multimatch, cp_cacheable {
+      ignore_bins  one_no =
+        (binsof(cp_multimatch.one) && binsof(cp_cacheable.no))
+        iff (SIMPLIFY_FV);
+    }
+    x_multimatch_integrity: cross  cp_multimatch, cp_integrity;
+    x_multimatch_overridedm: cross  cp_multimatch, cp_overridedm {
+      ignore_bins  one_override =
+        (binsof(cp_multimatch.one) && binsof(cp_overridedm.override))
+        iff (SIMPLIFY_FV);
+    }
 
     x_aligned_allow:              cross  cp_aligned, cp_allow;
     x_aligned_main_loadstoreexec: cross  cp_aligned, cp_main, cp_loadstoreexec;
@@ -218,18 +258,39 @@ module  uvmt_cv32e40s_pma_cov
     x_aligned_integrity:          cross  cp_aligned, cp_integrity;
     x_aligned_overridedm:         cross  cp_aligned, cp_overridedm;
 
-    x_loadstoreexec_allow_main:   cross  cp_loadstoreexec, cp_allow, cp_main;
+    x_loadstoreexec_allow_main:   cross  cp_loadstoreexec, cp_allow, cp_main {
+      ignore_bins  ignore =
+        binsof(cp_allow.allow)  &&
+        binsof(cp_main.io);
+        //Note: Should be specific "illegal_bins"
+        //Because of tool support, the covers are artificially limited.
+      illegal_bins  disallow_main =
+        binsof(cp_allow.disallow)  &&
+        binsof(cp_main.main);
+    }
     x_loadstoreexec_main_pushpop: cross  cp_loadstoreexec, cp_main, cp_pushpop;
-    x_loadstoreexec_bufferable:   cross  cp_loadstoreexec, cp_bufferable;
+    //x_loadstoreexec_bufferable:   cross  cp_loadstoreexec, cp_bufferable;
+      //Note: Filtering of this cross seems impossible.
+      //Each tool supports each their own disparate subset of the language, so
+      //you can seemingly make it work in one or the other but not both at once.
     x_loadstoreexec_cacheable:    cross  cp_loadstoreexec, cp_cacheable;
     x_loadstoreexec_integrity:    cross  cp_loadstoreexec, cp_integrity;
     x_loadstoreexec_overridedm:   cross  cp_loadstoreexec, cp_overridedm;
 
-    x_allow_main:       cross  cp_allow, cp_main;
-    x_allow_bufferable: cross  cp_allow, cp_bufferable;
-    x_allow_cacheable:  cross  cp_allow, cp_cacheable;
-    x_allow_integrity:  cross  cp_allow, cp_integrity;
-    x_allow_overridedm: cross  cp_allow, cp_overridedm;
+    x_allow_bufferable: cross  cp_allow, cp_bufferable {
+      ignore_bins  disallow_bufferable =
+        (binsof(cp_allow.disallow) && binsof(cp_bufferable.bufferable))
+        iff (SIMPLIFY_FV);
+    }
+    x_allow_cacheable:  cross  cp_allow, cp_cacheable {
+      illegal_bins  disallow_cacheable =
+        binsof(cp_allow.disallow) && binsof(cp_cacheable.cacheable);
+    }
+    x_allow_integrity:  cross  cp_allow, cp_integrity {
+      //TODO:ERROR:silabs-robin Check other configs. Is useless?
+      illegal_bins  disallow_integrity =
+        binsof(cp_allow.disallow) && binsof(cp_integrity.integrity);
+    }
     x_allow_jvt:        cross  cp_allow, cp_jvt;
 
     x_dmregion_dmode: cross  cp_dmregion, cp_dmode;
@@ -317,7 +378,11 @@ module  uvmt_cv32e40s_pma_cov
       cross  cp_aligned, cp_pmafault, cp_loadstore, cp_firstfail;
 
     x_aligned_loadstore_boundary: cross  cp_aligned, cp_loadstore, cp_boundary {
-      ignore_bins ignore = binsof(cp_aligned) intersect {0};
+      ignore_bins  aligned =
+        binsof(cp_aligned.aligned);
+      ignore_bins  misaligned_io2io =
+        (binsof(cp_aligned.misaligned) && binsof(cp_boundary.io2io))
+        iff (SIMPLIFY_FV);
     }
 
 
