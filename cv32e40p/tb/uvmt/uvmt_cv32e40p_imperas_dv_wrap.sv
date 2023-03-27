@@ -339,12 +339,14 @@ module uvmt_cv32e40p_imperas_dv_wrap
             //       register to be written. For some instructions this is not sufficient
             //       This code will need enhancing once the RVFI has the ability to describe
             //       multiple target register writes, for a single instruction
-            if (`RVFI_IF.rvfi_rd_addr==5'(i))
-            XREG[i] = `RVFI_IF.rvfi_rd_wdata;
+            if (`RVFI_IF.rvfi_rd_addr[0]==5'(i))
+            XREG[i] = `RVFI_IF.rvfi_rd_wdata[0];
+            if (`RVFI_IF.rvfi_rd_addr[1]==5'(i))
+            XREG[i] = `RVFI_IF.rvfi_rd_wdata[1];
         end
     end
 
-    assign rvvi.x_wb[0][0] = 1 << `RVFI_IF.rvfi_rd_addr; // TODO: originally rvfi_rd_addr
+    assign rvvi.x_wb[0][0] = (1 << `RVFI_IF.rvfi_rd_addr[0] | 1 << `RVFI_IF.rvfi_rd_addr[1]); // TODO: originally rvfi_rd_addr
 
     ////////////////////////////////////////////////////////////////////////////
     // DEBUG REQUESTS,
