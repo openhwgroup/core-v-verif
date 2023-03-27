@@ -138,6 +138,18 @@ module uvmt_cv32e40s_rvfi_assert
   ) else `uvm_error(info_tag, "'exception_cause' must match 'mcause'");
 
 
+  // RVFI exception clears 'mcause.interrupt'
+
+  a_exc_mcause: assert property (
+    rvfi_valid  &&
+    rvfi_trap.exception  &&
+    !rvfi_dbg_mode
+    |->
+    (rvfi_csr_mcause_wmask[31] == 1'b 1)  &&
+    (rvfi_csr_mcause_wdata[31] == 1'b 0)
+  ) else `uvm_error(info_tag, "exceptions clear 'mcause.interrupt'");
+
+
   // RVFI interrupt cause matches legal causes
 
   if (!CLIC) begin: gen_legal_cause_clint
@@ -179,12 +191,39 @@ module uvmt_cv32e40s_rvfi_assert
     ) else `uvm_error(info_tag, "rvfi_intr interrupts must have a cause");
   end : gen_clint_cause
 
-  a_debugs_cause: assert property (
+  a_debug_cause: assert property (
     rvfi_valid  &&
     rvfi_trap.debug
     |->
     rvfi_trap.debug_cause
   ) else `uvm_error(info_tag, "rvfi_trap debugs must have a cause");
+
+
+  // Synchronous handler had synchronous cause
+
+  property p_sync_cause;
+    logic  exception;
+    (rvfi_valid, exception = rvfi_trap.exception)
+    ##1
+    (rvfi_valid [->1])
+    |->
+    (rvfi_intr.exception == exception)  ||
+    rvfi_intr.interrupt
+    ;
+  endproperty : p_sync_cause
+
+  a_sync_cause: assert property (
+    p_sync_cause
+  ) else `uvm_error(info_tag, "rvfi_intr.exception can't happen unannounced");
+
+
+  // Trap handler is either sync/async
+
+  a_handler_sync_or_async: assert property (
+    rvfi_valid
+    |->
+    !(rvfi_intr.exception && rvfi_intr.interrupt)
+  ) else `uvm_error(info_tag, "ambiguous handler cause");
 
 
   // Mem accesses reflect actual bus

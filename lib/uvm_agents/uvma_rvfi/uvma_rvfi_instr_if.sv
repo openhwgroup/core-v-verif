@@ -69,11 +69,10 @@ interface uvma_rvfi_instr_if
     input logic [(NMEM*XLEN)-1:0]    rvfi_mem_rdata,
     input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_rmask,
     input logic [(NMEM*XLEN)-1:0]    rvfi_mem_wdata,
-    input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask
+    input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask,
 
-
-
-
+    input logic [2:0]                instr_prot,
+    input logic [NMEM*3-1:0]         mem_prot
   );
 
   // -------------------------------------------------------------------
@@ -442,7 +441,6 @@ endfunction : is_ebreak_compr_f
 function logic is_ebreak_noncompr_f();
   return match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL);
 endfunction : is_ebreak_noncompr_f
-
 
 function logic is_ecall_f();
   return match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);

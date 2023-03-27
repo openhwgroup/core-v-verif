@@ -51,9 +51,9 @@ module  uvmt_cv32e40s_pma_assert
   input wire           bus_trans_valid_o,
 
   // Writebuffer Signals
-  input obi_data_req_t  writebuf_trans_i,
-  input obi_data_req_t  writebuf_trans_o,
-  input wire            writebuf_ready_o,
+  input wire obi_data_req_t  writebuf_trans_i,
+  input wire obi_data_req_t  writebuf_trans_o,
+  input wire                 writebuf_ready_o,
 
   // PMA Verdict
   input wire  pma_err,
