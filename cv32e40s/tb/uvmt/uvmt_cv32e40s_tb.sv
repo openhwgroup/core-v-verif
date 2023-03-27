@@ -166,15 +166,8 @@ module uvmt_cv32e40s_tb;
                                                                    .rvfi_mem_rmask(rvfi_i.rvfi_mem_rmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8]),
                                                                    .rvfi_mem_wdata(rvfi_i.rvfi_mem_wdata[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN]),
                                                                    .rvfi_mem_wmask(rvfi_i.rvfi_mem_wmask[uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvme_cv32e40s_pkg::XLEN/8]),
-                                                                   .gpr_rdata_array(),
-                                                                   .gpr_rmask_array(),
-                                                                   .gpr_wdata_array(),
-                                                                   .gpr_wmask_array(),
-                                                                   .mem_addr_array(),
-                                                                   .mem_rdata_array(),
-                                                                   .mem_rmask_array(),
-                                                                   .mem_wdata_array(),
-                                                                   .mem_wmask_array()
+                                                                   .instr_prot(rvfi_i.rvfi_instr_prot),
+                                                                   .mem_prot(rvfi_i.rvfi_mem_prot)
                                                                    );
 
   // RVFI CSR binds
@@ -622,10 +615,12 @@ module uvmt_cv32e40s_tb;
   end : gen_clic_assert
 
 
-  // User-mode assertions
+  // User-Mode Assertions
 
   bind  cv32e40s_wrapper
-    uvmt_cv32e40s_umode_assert  umode_assert_i (
+    uvmt_cv32e40s_umode_assert #(
+      .CLIC (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC)
+    ) umode_assert_i (
       .rvfi_valid    (rvfi_i.rvfi_valid),
       .rvfi_mode     (rvfi_i.rvfi_mode),
       .rvfi_order    (rvfi_i.rvfi_order),
@@ -635,6 +630,7 @@ module uvmt_cv32e40s_tb;
       .rvfi_dbg_mode (rvfi_i.rvfi_dbg_mode),
       .rvfi_dbg      (rvfi_i.rvfi_dbg),
       .rvfi_pc_rdata (rvfi_i.rvfi_pc_rdata),
+      .rvfi_if       (rvfi_instr_if_0_i),
 
       .rvfi_csr_dcsr_rdata       (rvfi_i.rvfi_csr_dcsr_rdata),
       .rvfi_csr_mcause_rdata     (rvfi_i.rvfi_csr_mcause_rdata),

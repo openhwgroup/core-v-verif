@@ -25,21 +25,35 @@ obi,,InstrProt,"""prot[2:1]
 User/Application (2’b00), Supervisor (2’b01), Reserved (2’b10), Machine (2’b11)
 This matches the privilege levels from [RISC-V-PRIV].""","Track prot[2:1] on instruction fetches on obi, observe retirements on rvfi, ensure the privilege mode of the instruction's execution matches what it was fetched as on obi.
 
-Coverage: Explicitly observe U/M both.",Assertion Check,Constrained-Random,Functional Coverage,"A: ???
+Coverage: Explicitly observe U/M both.",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_instr_prot
 
-COV: ???",Awaiting new rvfi signals
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_instr_prot_legal
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_prot_iside_legal
+
+COV: ???",
 ,,DataProt,"""prot[2:1]
 User/Application (2’b00), Supervisor (2’b01), Reserved (2’b10), Machine (2’b11)
 This matches the privilege levels from [RISC-V-PRIV].""","Track prot[2:1] on data loads/stores, observe retirements on rvfi, ensure the effective privilege mode of the retirement matches what was used on obi.
 
-Coverage: Explicitly observe U/M both.",Assertion Check,Constrained-Random,Functional Coverage,"A: ???
+Coverage: Explicitly observe U/M both.",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_data_prot
 
-COV: ???",Awaiting new rvfi signals
-,,DbgProt,"Since dmode execs as mmode, and obi has corresponding signals, the relationship should be visible on obi.","When obi has a transaction with `dbg` high, check that `prot[2:1]` is mmode.
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_data_prot_legal
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_prot_dside_legal
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_data_prot_equal
+
+COV: ???",
+,,DbgProt,"Since dmode execs as mmode, and obi has corresponding signals, the relationship should be visible on obi.","When obi has a transaction with `dbg` high, check that `prot[2:1]` is M-mode on I-side, and ""effective"" mode on D-side.
 
 Note: Consider checking before MPU.
 
-Note: Both I-side and D-side.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,A: ???,Awaiting new rvfi signals
+Coverage: Observe U-/M-mode on D-side.",Assertion Check,"ENV capability, not specific test",Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dbg_prot_iside
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dbg_prot_dside
+
+COV: ???",
 privspec,CSRs,IllegalAccess,"""Attempts to access a CSR without appropriate privilege level […] also raise illegal instruction exceptions""","Try all kinds of accesses (R, W, RW, S, C, …) to all M-level CSRs while in U-level; ensure illegal instruction exception happens.
 
 (Hint: Assert RVFI vs csr[9:8])
@@ -223,7 +237,7 @@ DTC: cv32e40s/tests/programs/custom/privilege_test/",
 privspec,EffectiveMode,ModifyOff,"""When MPRV=0, loads and stores behave as normal, using the translation and protection mechanisms of the current privilege mode.""","(Handled by ""Prot"" items above. PMA/PMP specifics must also be handled by respective vplans.)",Other,Other,N/A,N/A,
 ,,ModifyOn,"""When MPRV=1, load and store memory addresses are translated and protected, and endianness is applied, as though the current privilege mode were set to MPP""","(Handled by ""Prot"" items above. PMA/PMP specifics must also be handled by those vplans.)",Other,Other,N/A,N/A,
 ,,ModifyIside,"""Instruction address-translation and protection are unaffected by the setting of MPRV.""","(Handled by ""Prot"" items above. PMA/PMP specifics must also be handled by those vplans.)",Other,Other,N/A,N/A,
-,,UmodeUnmodified,Both mret and dret going to umode sets MPRV to 0.,Check that umode never can happen together with MPRV being high.,Assertion Check,"ENV capability, not specific test",Assertion Coverage,A: ???,Waiting for RTL bugfix.
+,,UmodeUnmodified,Both mret and dret going to umode sets MPRV to 0.,Check that umode never can happen together with MPRV being high.,Assertion Check,"ENV capability, not specific test",Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_umode_unmodified,
 privspec,Counters,McounterenClear,"""When the CY, TM, IR, or HPMn bit in the mcounteren register is clear, attempts to read the cycle, time, instret, or hpmcountern register while executing in S-mode or U-mode will cause an illegal instruction exception.""","Attempt to read all of those from U-mode while the corresponding bit is 0, ensure illegal instruction exception happens.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.gen_mcounteren_clear[*].a_check
 
 DTC: cv32e40s/tests/programs/custom/mcounteren_priv_gen_test/",
@@ -237,14 +251,26 @@ COV: ???
 DTC: cv32e40s/tests/programs/custom/privilege_test/",Waiting for exceptions vplan linkage.
 ,,EbreakuOff,"""ebreak instructions in U-mode behave as described in the Privileged Spec.""","Have dcsr.ebreaku=0, be in U-mode, execute ebreak, ensure ""normal"" ebreak behavior and no debug entry.
 
-Note: Only need to check that correct exception occurs, priv spec exception details should be part of the Exceptions vplan.",Assertion Check,Constrained-Random,Assertion Coverage,"A: ???
+Note: Only need to check that correct exception occurs, priv spec exception details should be part of the Exceptions vplan.",Assertion Check,Constrained-Random,Assertion Coverage,"A: A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_off_cause
 
-DTC: cv32e40s/tests/programs/custom/debug_priv_test/",Waiting for RTL implementation.
-,,EbreakuOn,"""ebreak instructions in U-mode enter Debug Mode.""","Have dcsr.ebreaku=1, be in U-mode, execute ebreak, ensure debug entry happens instead of ""normal"" ebreak behavior.",Assertion Check,Constrained-Random,Assertion Coverage,"A: ???
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_off_exception
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_off_nodebug
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_off_nodebugcause
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_off_trap
+
+DTC: cv32e40s/tests/programs/custom/debug_priv_test/",
+,,EbreakuOn,"""ebreak instructions in U-mode enter Debug Mode.""","Have dcsr.ebreaku=1, be in U-mode, execute ebreak, ensure debug entry happens instead of ""normal"" ebreak behavior.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_on_dbgtrap
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_on_rvfivalid
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_on_noexception
 
 COV: ???
 
-DTC: cv32e40s/tests/programs/custom/debug_priv_test/",Waiting for RTL implementation.
+DTC: cv32e40s/tests/programs/custom/debug_priv_test/",
 ,,Mcontrol6Umode0,"""When set, enable this trigger in U-mode.""
 
 With ""mcontrol6.u=0"" trigger condition should not be acted upon.",(Is the responsibility of the debug/triggers vplan. Link to coverage here too.),Other,Other,N/A,"A: ???
@@ -280,15 +306,15 @@ COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_dmode_cs
 COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_dmode_loadstore
 
 COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_dmode_mpp",
-,,ExecuteMprven,"""[...] except that MPRV in mstatus may be ignored according to mprven.""","Check that ""mprven"" is tied ""1"". Amend ""DbdProt"" asserts above wrt MPRV/mprven.
+,,ExecuteMprven,"""[...] except that MPRV in mstatus may be ignored according to mprven.""","Check that ""mprven"" is tied ""1"".
 
 Note: Mind ExecuteMmode above.
 
-Coverage: Cross ""mprven"" vs ""MPRV"" vs D-mode vs load/store/instr.",Assertion Check,Other,Functional Coverage,"A: ???
+Coverage: Cross ""mprven"" vs ""MPRV"" vs D-mode vs load/store/instr.",Assertion Check,Other,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mprven_tied
 
 COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_dmode_mprv
 
-COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_dmode_loadstore_mprv_mpp",Waiting for RTL update.
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_dmode_loadstore_mprv_mpp",
 ,,Relaxedpriv,"""Full permission checks, or a relaxed set of permission checks, will apply according to relaxedpriv.""","(This field is in a DM registers and pertains to subsystem integration, not the core itself.)",N/A,N/A,N/A,N/A,
 ,,UnspecifiedBehav,"""Almost all instructions that change the privilege mode have unspecified behavior. This includes ecall, mret, sret, and uret.""",(The behavior is specified in the user manual. But the effects are debug-specific and not user-mode-specific so it is the responsibility of the debug vplan. Link to coverage here too.),N/A,N/A,N/A,"A: ???
 
@@ -310,13 +336,17 @@ COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_prv_u
 COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_prv_m
 
 DTC: cv32e40s/tests/programs/custom/debug_priv_test/",
-,,ResumeMprv,"""When a hart resumes: [...] If the new privilege mode is less privileged than M-mode, MPRV in mstatus is cleared.""","Transition out of D-mode (dret) into U-mode, while mstatus.mprv=1, ensure that when execution continues outside D-mode that mstatus.mprv=0.",Assertion Check,Constrained-Random,Assertion Coverage,"A: ???
+,,ResumeMprv,"""When a hart resumes: [...] If the new privilege mode is less privileged than M-mode, MPRV in mstatus is cleared.""","Transition out of D-mode (dret) into U-mode, while mstatus.mprv=1, ensure that when execution continues outside D-mode that mstatus.mprv=0.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dret_mprv_umode
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dret_mprv_prv
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dret_mprv_csr
 
 COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cov_umode_mprv
 
 COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_dret_mprv_prv
 
-DTC: cv32e40s/tests/programs/custom/debug_priv_test/",Was waiting for RTL update.
+DTC: cv32e40s/tests/programs/custom/debug_priv_test/",
 ,,PrvEntry,"""prv Contains the privilege mode the hart was operating in when Debug Mode was entered.""","Transition into D-mode from M-mode and U-mode, ensure dcsr.prv contains the privilege mode that was running before D-mode.
 
 Coverage: Observe, spesifically, dcsr.prv set to to U/M each.",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_prv_entry
