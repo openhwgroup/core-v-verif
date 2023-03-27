@@ -988,6 +988,8 @@ module uvmt_cv32e40s_tb;
 
       //CSRs:
       .dataindtiming_enabled (core_i.xsecure_ctrl.cpuctrl.dataindtiming)
+
+
     );
 
 
@@ -995,15 +997,74 @@ module uvmt_cv32e40s_tb;
     uvmt_cv32e40s_xsecure_dummy_and_hint_assert #(
 	    .SECURE	(SECURE)
     ) xsecure_dummy_and_hint_assert_i 	(
+
+      //Interfaces:
+      .rvfi_if	  (rvfi_instr_if_0_i),
+      .rvfi_mcountinhibit_if (rvfi_csr_mcountinhibit_if_0_i),
+      .rvfi_dcsr_if (rvfi_csr_dcsr_if_0_i),
+
       //Signals:
       .clk_i      (clknrst_if.clk),
       .rst_ni     (clknrst_if.reset_n),
+      .gated_clk_enabled (core_i_sleep_unit_i_clock_en),
 
-      //Interfaces:
-    	.xsecure_if	(xsecure_if),
-      .rvfi_if	  (rvfi_instr_if_0_i),
-      .mcountinhibit_if (rvfi_csr_mcountinhibit_if_0_i),
-      .dcsr_if (rvfi_csr_dcsr_if_0_i)
+      //CSRs:
+      .rnddummy_enabled (core_i.xsecure_ctrl.cpuctrl.rnddummy),
+      .rndhint_enabled (core_i.xsecure_ctrl.cpuctrl.rndhint),
+      .dummy_freq (core_i.xsecure_ctrl.cpuctrl.rnddummyfreq),
+      .mhpmcounter (core_i.cs_registers_i.mhpmcounter_rdata),
+      .mcountinhibit (core_i.cs_registers_i.mcountinhibit_rdata),
+      .csr_waddr(core_i.cs_registers_i.csr_waddr),
+
+      //LFSR:
+      .lfsr0_seed_we (core_i.cs_registers_i.xsecure.lfsr0_i.seed_we_i),
+      .lfsr1_seed_we (core_i.cs_registers_i.xsecure.lfsr1_i.seed_we_i),
+      .lfsr2_seed_we (core_i.cs_registers_i.xsecure.lfsr2_i.seed_we_i),
+      .lfsr0_seed (core_i.cs_registers_i.xsecure.lfsr0_i.seed_i),
+      .lfsr1_seed (core_i.cs_registers_i.xsecure.lfsr1_i.seed_i),
+      .lfsr2_seed (core_i.cs_registers_i.xsecure.lfsr2_i.seed_i),
+      .lfsr0 (core_i.cs_registers_i.xsecure.lfsr0_i.lfsr_q),
+      .lfsr1 (core_i.cs_registers_i.xsecure.lfsr1_i.lfsr_q),
+      .lfsr2 (core_i.cs_registers_i.xsecure.lfsr2_i.lfsr_q),
+      .lfsr0_n (core_i.cs_registers_i.xsecure.lfsr0_i.lfsr_n),
+      .lfsr1_n (core_i.cs_registers_i.xsecure.lfsr1_i.lfsr_n),
+      .lfsr2_n (core_i.cs_registers_i.xsecure.lfsr2_i.lfsr_n),
+      .lfsr1_clk_en (core_i.cs_registers_i.xsecure.lfsr1_i.clock_en),
+      .lfsr2_clk_en (core_i.cs_registers_i.xsecure.lfsr2_i.clock_en),
+
+      //IF:
+      //.if_dummy_n (core_i.if_stage_i.instr_meta_n.dummy),
+      .if_hint  (core_i.if_stage_i.instr_hint),
+      .if_dummy (core_i.if_stage_i.dummy_insert),
+      .kill_if  (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.kill_if),
+      .if_valid (core_i.if_valid),
+
+      //ID:
+      .operand_a (core_i.id_stage_i.operand_a),
+      .operand_b (core_i.id_stage_i.operand_b),
+      .id_instr (core_i.if_id_pipe.instr.bus_resp.rdata),
+      .id_dummy (core_i.if_id_pipe.instr_meta.dummy),
+      .id_hint (core_i.if_id_pipe.instr_meta.hint),
+      .kill_id (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.kill_id),
+      .id_ready (core_i.id_ready),
+      .id_valid (core_i.id_valid),
+      .id_last_op (core_i.id_stage_i.last_op),
+
+      //EX:
+      .kill_ex (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.kill_ex),
+      .ex_ready (core_i.ex_ready),
+
+      //WB:
+      .kill_wb (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.kill_wb),
+      .wb_dummy (core_i.ex_wb_pipe.instr_meta.dummy),
+      .wb_hint (core_i.ex_wb_pipe.instr_meta.hint),
+      .wb_valid (core_i.wb_valid),
+      .wb_instr (core_i.ex_wb_pipe.instr.bus_resp.rdata),
+
+      //Controller:
+      .debug_mode (core_i.controller_i.controller_fsm_i.debug_mode_q),
+      .stopcount_in_debug (core_i.cs_registers_i.debug_stopcount),
+      .allow_dummy (core_i.ctrl_fsm.allow_dummy_instr)
     );
 
 
@@ -1088,14 +1149,49 @@ module uvmt_cv32e40s_tb;
     uvmt_cv32e40s_xsecure_hardened_pc_assert #(
 	    .SECURE	(SECURE)
     ) xsecure_hardened_pc_assert_i 	(
+
       //Signals:
       .clk_i      (clknrst_if.clk),
       .rst_ni     (clknrst_if.reset_n),
 
-      //Interfaces:
-    	.xsecure_if	(xsecure_if),
-      .pc_hardening_enabled (core_i.xsecure_ctrl.cpuctrl.pc_hardening)
+      //CSRs:
+      .pc_hardening_enabled (core_i.xsecure_ctrl.cpuctrl.pc_hardening),
+      .dataindtiming_enabled (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
 
+      //Alert:
+      .alert_major_due_to_pc_err (core_i.alert_i.pc_err_i),
+
+      //IF:
+      .if_valid (core_i.if_valid),
+      .ptr_in_if (core_i.if_stage_i.ptr_in_if_o),
+      .if_instr_cmpr (core_i.if_stage_i.compressed_decoder_i.is_compressed_o),
+      .if_pc (core_i.pc_if),
+      .dummy_insert (dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.dummy_insert),
+
+      //ID:
+      .id_ready (core_i.id_ready),
+      .id_pc (core_i.id_stage_i.if_id_pipe_i.pc),
+      .id_last_op (core_i.if_id_pipe.last_op),
+      .id_first_op (core_i.if_id_pipe.first_op),
+      .jump_in_id (core_i.controller_i.controller_fsm_i.jump_in_id),
+      .kill_id (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.kill_id),
+      .halt_id (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.halt_id),
+
+      //EX:
+      .ex_first_op (core_i.id_ex_pipe.first_op),
+      .branch_in_ex (core_i.controller_i.controller_fsm_i.branch_in_ex),
+      .kill_ex (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.kill_ex),
+      .halt_ex (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.halt_ex),
+
+      //Controll signals:
+      .pc_set (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.pc_set),
+      .pc_mux (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.pc_mux),
+
+      //Signals to glitch check:
+      .branch_target (core_i.ex_stage_i.branch_target_o),
+      .branch_decision (core_i.ex_stage_i.alu_i.cmp_result_o),
+      .jump_target (core_i.jump_target_id),
+      .mepc (core_i.cs_registers_i.mepc_rdata)
 
     );
 
