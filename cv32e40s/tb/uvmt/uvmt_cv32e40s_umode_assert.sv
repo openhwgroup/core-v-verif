@@ -391,6 +391,14 @@ module  uvmt_cv32e40s_umode_assert
     (rvfi_mode == MODE_M)
   ) else `uvm_error(info_tag, "all traps shall be handled in mmode");
 
+  a_umodetrap_zeromprv: assert property (
+    (rvfi_valid && (rvfi_mode == MODE_U))
+    ##1
+    (rvfi_valid [->1])
+    |->
+    (rvfi_csr_mstatus_rdata[MPRV_POS+:MPRV_LEN] == 1'b 0)
+  ) else `uvm_error(info_tag, "traps in umode keep mprv at zero");
+
 
   // vplan:MretLeastPrivileged
 
@@ -757,13 +765,7 @@ module  uvmt_cv32e40s_umode_assert
     )
   ) else `uvm_error(info_tag, "mret in umode sets mpp to umode, unless interrupted");
 
-  a_mret_umode_mprv: assert property (
-    (is_rvfi_mret && (rvfi_mode == MODE_U))
-    ##1
-    (rvfi_valid [->1])
-    |->
-    (rvfi_csr_mstatus_rdata[MPRV_POS+:MPRV_LEN] == 1'b 0)
-  ) else `uvm_error(info_tag, "mret in umode clear mprv");
+  // a_mret_umode_mprv - Handled by a_umodetrap_zeromprv.
 
 
   // vplan:McounterenClear & vplan:McounterenSet & vplan:Mcounteren
