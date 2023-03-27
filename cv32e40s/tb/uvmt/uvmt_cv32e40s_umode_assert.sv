@@ -662,7 +662,7 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "exiting dmode towards umode should clear mprv");
 
   a_dret_mprv_csr: assert property (
-    rvfi_if.is_dret()  &&
+    rvfi_if.is_dret  &&
     (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == MODE_U)  &&
     rvfi_if.rvfi_dbg_mode
     |->

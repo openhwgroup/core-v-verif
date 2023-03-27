@@ -25,11 +25,10 @@ module uvmt_cv32e40s_debug_assert
       uvma_rvfi_csr_if csr_dpc,
       uvma_rvfi_csr_if csr_dscratch0,
       uvma_rvfi_csr_if csr_dscratch1,
+      uvma_rvfi_csr_if csr_mcause,
       uvma_rvfi_csr_if csr_mepc,
       uvma_rvfi_csr_if csr_mstatus,
-      uvma_rvfi_csr_if csr_mcause,
       uvma_rvfi_csr_if csr_mtvec,
-      uvma_rvfi_csr_if csr_mcause,
       //TODO:MT tdatas should not be necessary when trigger logic is ready
       uvma_rvfi_csr_if csr_tdata1,
       uvma_rvfi_csr_if csr_tdata2,
@@ -863,7 +862,7 @@ module uvmt_cv32e40s_debug_assert
     // "mret" causes exceptions
 
     a_dbg_mret: assert property (
-      rvfi.is_mret()  &&
+      rvfi.is_mret  &&
       rvfi.rvfi_dbg_mode
       |->
       rvfi.rvfi_valid  &&
