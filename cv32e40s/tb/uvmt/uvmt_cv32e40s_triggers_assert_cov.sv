@@ -524,7 +524,6 @@ module uvmt_cv32e40s_triggers_assert_cov
       |->
       tdata1_w[DMODE]
     ) else `uvm_error(info_tag, "Setting tdata1's dmode bit to 0 succeeds.\n");
-  end // if CORE_PARAM_DBG_NUM_TRIGGERS > 0
 
   /*
   - Vplan:
@@ -536,8 +535,24 @@ module uvmt_cv32e40s_triggers_assert_cov
   2) For any other num triggers, check that "tinfo.info" is "1" for the three supported types, and that the remaining bits are 0.
   */
 
-  /* 1,2) Removed, registers do not exist if we have 0 triggers */
+    //1) Removed, registers do not exist if we have 0 triggers
 
+    //2)
+    a_dt_triggers_tinfo: assert property (
+      uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS != '0
+      && rvfi_if.rvfi_valid
+      |->
+      !tinfo_r[HW_ZERO_1:HW_ZERO_0]
+      && tinfo_r[TTYPE_MCONTROL]
+      && !tinfo_r[HW_ZERO_4:HW_ZERO_3]
+      && tinfo_r[TTYPE_ETRIGGER]
+      && tinfo_r[TTYPE_MCONTROL6]
+      && !tinfo_r[HW_ZERO_14:HW_ZERO_7]
+      && tinfo_r[TTYPE_DISABLED]
+      && !tinfo_r[HW_ZERO_31:HW_ZERO_16]
+    ) else `uvm_error(info_tag, "tinfo does not indicated that only tdata type mcontrol, etrigger, mcontrol6 and disabled are allowed.\n");
+
+  end // if CORE_PARAM_DBG_NUM_TRIGGERS > 0
   /*
   - Vplan: Etrigger!!
   Configure "tdata1" and "tdata2" to fire on exceptions, try both individual and multiple exceptions in addition to supported and unsupported. Exercise scenarios that would trigger or not trigger according to the configuration and check that debug mode is either entered or not entered accordingly, and that the entry goes correctly (pc, dpc, cause, etc).
