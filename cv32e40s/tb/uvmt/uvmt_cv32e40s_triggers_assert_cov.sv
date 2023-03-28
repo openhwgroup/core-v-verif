@@ -26,7 +26,7 @@ module uvmt_cv32e40s_triggers_assert_cov
 
   (
     input logic wb_valid,
-    input logic [5:0] wb_exception_code,
+    input logic [10:0] wb_exception_code,
     input logic [31:0] wb_tdata1,
     input logic [31:0] wb_tdata2,
     input logic [31:0] wb_tselect,
