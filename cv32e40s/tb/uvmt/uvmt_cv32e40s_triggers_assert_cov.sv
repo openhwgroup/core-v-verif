@@ -26,7 +26,7 @@ module uvmt_cv32e40s_triggers_assert_cov
 
   (
     input logic wb_valid,
-    input logic [5:0] wb_exception_code,
+    input logic [10:0] wb_exception_code,
     input logic [31:0] wb_tdata1,
     input logic [31:0] wb_tdata2,
     input logic [31:0] wb_tselect,
@@ -268,44 +268,34 @@ module uvmt_cv32e40s_triggers_assert_cov
   - Assertion verifikasjon:
   1) Have 0 triggers, access any trigger register and check that illegal instruction exception occurs
   2) Have 0 triggers, No trigger ever fires
-  3) Have 0 triggers, tselect is 0
   */
 
-  //1)
-  a_dt_0_triggers_tdata1_access: assert property (
-    uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS == '0
+  if (uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS == 0) begin
+    //1)
+    a_dt_0_triggers_tdata1_access: assert property (
+        (rvfi_if.is_csr_instr(ADDR_TSELECT)
+      || rvfi_if.is_csr_instr(ADDR_TDATA1)
+      || rvfi_if.is_csr_instr(ADDR_TDATA2)
+      || rvfi_if.is_csr_instr(ADDR_TDATA3)
+      || rvfi_if.is_csr_instr(ADDR_TINFO)
+      || rvfi_if.is_csr_instr(ADDR_TCONTROL))
 
-    && (rvfi_if.is_csr_instr(ADDR_TSELECT)
-    || rvfi_if.is_csr_instr(ADDR_TDATA1)
-    || rvfi_if.is_csr_instr(ADDR_TDATA2)
-    || rvfi_if.is_csr_instr(ADDR_TDATA3)
-    || rvfi_if.is_csr_instr(ADDR_TINFO)
-    || rvfi_if.is_csr_instr(ADDR_TCONTROL))
+      |->
+      rvfi_if.rvfi_trap.trap
+      && rvfi_if.rvfi_trap.exception
+      && (rvfi_if.rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
 
-    |->
-    rvfi_if.rvfi_trap.trap
-    && rvfi_if.rvfi_trap.exception
-    && (rvfi_if.rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+    ) else `uvm_error(info_tag, "There are no triggers, but accessing trigger SCRs does not cause exceptions.\n");
 
-  ) else `uvm_error(info_tag, "There are no triggers, but accessing trigger SCRs does not cause exceptions.\n");
+    //2)
+    a_dt_0_triggers_no_triggering: assert property (
+      rvfi_if.rvfi_valid
+      |->
+      rvfi_if.rvfi_dbg != TRIGGER_MATCH
 
-  //2)
-  a_dt_0_triggers_no_triggering: assert property (
-    uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS == '0
-    && rvfi_if.rvfi_valid
-    |->
-    rvfi_if.rvfi_dbg != TRIGGER_MATCH
+    ) else `uvm_error(info_tag, "There are no triggers, but debug cause indicate a trigger match.\n");
 
-  ) else `uvm_error(info_tag, "There are no triggers, but debug cause indicate a trigger match.\n");
-
-  //3)
-  a_dt_0_triggers_tselect_is_0: assert property (
-    uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS == '0
-    && rvfi_if.rvfi_valid
-    |->
-    !tselect_r
-
-  ) else `uvm_error(info_tag, "There are no triggers, but tselect is not set to zero.\n");
+  end
 
 
   /*
@@ -314,20 +304,32 @@ module uvmt_cv32e40s_triggers_assert_cov
   (Also try writing to higher "tselect" than supported and check that a supported number is read back.)
   Make the triggers fire and check that debug mode is entered. Check also that the four context registers trap when accessed.
 
-  - Assertion verifikasjon:
-  1) For all number of triggers, use tselect to exercise each trigger with each supported type
-  2) Make the triggers fire and check that debug mode is entered.
-  3) Writing to higher "tselect" than supported, check that a supported number is read back
-  4) Check also that the four context registers trap when accessed.
+  - Assertion verification:
+  1) Check also that the four context registers trap when accessed.
+  2) For all number of triggers, use tselect to exercise each trigger with each supported type
+  3) Make the triggers fire and check that debug mode is entered.
+  4) Writing to higher "tselect" than supported, check that a supported number is read back
   */
 
   //1)
-  property p_all_trigger(tselect_trigger_i, tdata1_type);
-    tselect_r == tselect_trigger_i
-    && tdata1_r[MSB_TYPE:LSB_TYPE] == tdata1_type;
-  endproperty
+  a_dt_access_context: assert property (
+    (rvfi_if.is_csr_instr(ADDR_MCONTEXT)
+    || rvfi_if.is_csr_instr(ADDR_MSCONTEXT)
+    || rvfi_if.is_csr_instr(ADDR_HCONTEXT)
+    || rvfi_if.is_csr_instr(ADDR_SCONTEXT))
 
-  generate
+    |->
+    rvfi_if.rvfi_trap.trap
+  ) else `uvm_error(info_tag, "Accessing context registers does not trap.\n");
+
+  //2)
+  if (uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS > 0) begin
+
+    property p_all_trigger(tselect_trigger_i, tdata1_type);
+      tselect_r == tselect_trigger_i
+      && tdata1_r[MSB_TYPE:LSB_TYPE] == tdata1_type;
+    endproperty
+
     for (genvar tselect_trigger_i = 0; tselect_trigger_i < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; tselect_trigger_i++) begin
 
       c_trigger_i_has_type_mcontrol: cover property(
@@ -347,27 +349,16 @@ module uvmt_cv32e40s_triggers_assert_cov
       );
 
     end
-  endgenerate
 
-  //2) see a_dt_enter_dbg_*
-
-  //3)
-  a_dt_tselect_higher_than_dbg_num_triggers: assert property(
-    rvfi_if.is_csr_instr(ADDR_TSELECT)
-    |->
-    rvfi_if.rvfi_rd1_wdata < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS
-  ) else `uvm_error(info_tag, "The CSR tselect is set to equal or higher than the number of trigger.\n");
+  //3) see a_dt_enter_dbg_*
 
   //4)
-  a_dt_access_context: assert property (
-    (rvfi_if.is_csr_instr(ADDR_MCONTEXT)
-    || rvfi_if.is_csr_instr(ADDR_MSCONTEXT)
-    || rvfi_if.is_csr_instr(ADDR_HCONTEXT)
-    || rvfi_if.is_csr_instr(ADDR_SCONTEXT))
+    a_dt_tselect_higher_than_dbg_num_triggers: assert property(
+      rvfi_if.is_csr_instr(ADDR_TSELECT)
+      |->
+      rvfi_if.rvfi_rd1_wdata < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS
+    ) else `uvm_error(info_tag, "The CSR tselect is set to equal or higher than the number of trigger.\n");
 
-    |->
-    rvfi_if.rvfi_trap.trap
-  ) else `uvm_error(info_tag, "Accessing context registers does not trap.\n");
 
 
   /*
@@ -387,152 +378,152 @@ module uvmt_cv32e40s_triggers_assert_cov
 
   //4)
   //mcontrol
-  a_dt_tie_offs_tdata1_mcontrol: assert property (
-    rvfi_if.rvfi_valid
-    && tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL
+    a_dt_tie_offs_tdata1_mcontrol: assert property (
+      rvfi_if.rvfi_valid
+      && tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL
 
-    |->
-    tdata1_r[DMODE]
-    && !tdata1_r[MSB_MASKMAX:LSB_MASKMAX]
-    && !tdata1_r[M2_HIT]
-    && !tdata1_r[M2_SELECT]
-    && !tdata1_r[M2_TIMING]
-    && !tdata1_r[M2_MSB_SIZELO:M2_LSB_SIZELO]
-    && tdata1_r[MSB_ACTION:LSB_ACTION] == ENTER_DBG_ON_MATCH
-    && !tdata1_r[CHAIN]
-    && !tdata1_r[HW_ZERO_5]
-    && !tdata1_r[S_MODE]
-  ) else `uvm_error(info_tag, "There is a problem with tdata1-mcontrol's tied off fields.\n");
+      |->
+      tdata1_r[DMODE]
+      && !tdata1_r[MSB_MASKMAX:LSB_MASKMAX]
+      && !tdata1_r[M2_HIT]
+      && !tdata1_r[M2_SELECT]
+      && !tdata1_r[M2_TIMING]
+      && !tdata1_r[M2_MSB_SIZELO:M2_LSB_SIZELO]
+      && tdata1_r[MSB_ACTION:LSB_ACTION] == ENTER_DBG_ON_MATCH
+      && !tdata1_r[CHAIN]
+      && !tdata1_r[HW_ZERO_5]
+      && !tdata1_r[S_MODE]
+    ) else `uvm_error(info_tag, "There is a problem with tdata1-mcontrol's tied off fields.\n");
 
-  //etrigger
-  a_dt_tie_offs_tdata1_etrigger: assert property (
-    rvfi_if.rvfi_valid
-    && tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
+    //etrigger
+    a_dt_tie_offs_tdata1_etrigger: assert property (
+      rvfi_if.rvfi_valid
+      && tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
 
-    |->
-    tdata1_r[DMODE]
-    && !tdata1_r[ET_HIT]
-    && !tdata1_r[HW_ZERO_25:HW_ZERO_13]
-    && !tdata1_r[ET_VS]
-    && !tdata1_r[ET_VU]
-    && !tdata1_r[HW_ZERO_10]
-    && !tdata1_r[HW_ZERO_8]
-    && !tdata1_r[ET_S]
-    && tdata1_r[ET_MSB_ACTION:ET_LSB_ACTION] == ENTER_DBG_ON_MATCH
-  ) else `uvm_error(info_tag, "There is a problem with tdata1-etrigger's tied off fields.\n");
+      |->
+      tdata1_r[DMODE]
+      && !tdata1_r[ET_HIT]
+      && !tdata1_r[HW_ZERO_25:HW_ZERO_13]
+      && !tdata1_r[ET_VS]
+      && !tdata1_r[ET_VU]
+      && !tdata1_r[HW_ZERO_10]
+      && !tdata1_r[HW_ZERO_8]
+      && !tdata1_r[ET_S]
+      && tdata1_r[ET_MSB_ACTION:ET_LSB_ACTION] == ENTER_DBG_ON_MATCH
+    ) else `uvm_error(info_tag, "There is a problem with tdata1-etrigger's tied off fields.\n");
 
-  //mcontrol6
-  a_dt_tie_offs_tdata1_mcontrol6: assert property (
-    rvfi_if.rvfi_valid
-    && tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
+    //mcontrol6
+    a_dt_tie_offs_tdata1_mcontrol6: assert property (
+      rvfi_if.rvfi_valid
+      && tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
 
-    |->
-    tdata1_r[DMODE]
-    && !tdata1_r[HW_ZERO_26:HW_ZERO_25]
-    && !tdata1_r[M6_VS]
-    && !tdata1_r[M6_VU]
-    && !tdata1_r[M6_HIT]
-    && !tdata1_r[M6_SELECT]
-    && !tdata1_r[M6_TIMING]
-    && !tdata1_r[M6_MSB_SIZE:M6_LSB_SIZE]
-    && tdata1_r[MSB_ACTION:LSB_ACTION] == ENTER_DBG_ON_MATCH
-    && !tdata1_r[CHAIN]
-    && !tdata1_r[HW_ZERO_5]
-    && !tdata1_r[S_MODE]
-  ) else `uvm_error(info_tag, "There is a problem with tdata1-mcontrol6's tied off fields.\n");
+      |->
+      tdata1_r[DMODE]
+      && !tdata1_r[HW_ZERO_26:HW_ZERO_25]
+      && !tdata1_r[M6_VS]
+      && !tdata1_r[M6_VU]
+      && !tdata1_r[M6_HIT]
+      && !tdata1_r[M6_SELECT]
+      && !tdata1_r[M6_TIMING]
+      && !tdata1_r[M6_MSB_SIZE:M6_LSB_SIZE]
+      && tdata1_r[MSB_ACTION:LSB_ACTION] == ENTER_DBG_ON_MATCH
+      && !tdata1_r[CHAIN]
+      && !tdata1_r[HW_ZERO_5]
+      && !tdata1_r[S_MODE]
+    ) else `uvm_error(info_tag, "There is a problem with tdata1-mcontrol6's tied off fields.\n");
 
-  //disabled
-  a_dt_tie_offs_tdata1_disabled: assert property (
-    rvfi_if.rvfi_valid
-    && tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_DISABLED
+    //disabled
+    a_dt_tie_offs_tdata1_disabled: assert property (
+      rvfi_if.rvfi_valid
+      && tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_DISABLED
 
-    |->
-    tdata1_r[DMODE]
-    && !tdata1_r[DIS_MSB_DATA:DIS_LSB_DATA]
-  ) else `uvm_error(info_tag, "There is a problem with tdata1-disabled's tied off fields.\n");
+      |->
+      tdata1_r[DMODE]
+      && !tdata1_r[DIS_MSB_DATA:DIS_LSB_DATA]
+    ) else `uvm_error(info_tag, "There is a problem with tdata1-disabled's tied off fields.\n");
 
-  a_dt_tie_offs_tdata3: assert property (
-    rvfi_if.rvfi_valid
-    |->
-    !tdata3_r
-  ) else `uvm_error(info_tag, "There is a problem with tdata3's tied off fields.\n");
+    a_dt_tie_offs_tdata3: assert property (
+      rvfi_if.rvfi_valid
+      |->
+      !tdata3_r
+    ) else `uvm_error(info_tag, "There is a problem with tdata3's tied off fields.\n");
 
-  a_dt_tie_offs_tinfo: assert property (
-    rvfi_if.rvfi_valid
-    |->
-    !tinfo_r[HW_ZERO_31:HW_ZERO_16]
-  ) else `uvm_error(info_tag, "There is a problem with tinfo's tied off fields.\n");
+    a_dt_tie_offs_tinfo: assert property (
+      rvfi_if.rvfi_valid
+      |->
+      !tinfo_r[HW_ZERO_31:HW_ZERO_16]
+    ) else `uvm_error(info_tag, "There is a problem with tinfo's tied off fields.\n");
 
-  a_dt_tie_offs_tcontrol: assert property (
-    rvfi_if.rvfi_valid
-    |->
-    !tcontrol_r[HW_ZERO_31:HW_ZERO_8]
-    && !tcontrol_r[HW_ZERO_6:HW_ZERO_4]
-    && !tcontrol_r[HW_ZERO_2:HW_ZERO_0]
-  ) else `uvm_error(info_tag, "There is a problem with tcontrol's tied off fields.\n");
+    a_dt_tie_offs_tcontrol: assert property (
+      rvfi_if.rvfi_valid
+      |->
+      !tcontrol_r[HW_ZERO_31:HW_ZERO_8]
+      && !tcontrol_r[HW_ZERO_6:HW_ZERO_4]
+      && !tcontrol_r[HW_ZERO_2:HW_ZERO_0]
+    ) else `uvm_error(info_tag, "There is a problem with tcontrol's tied off fields.\n");
 
-  /*
-  - Vplan:
-  Have triggers configured to be able to match, but enable/disable their corresponding mode bit, check that the trigger is either able to fire or is blocked from firing accordingly. Also check the tied values.
+    /*
+    - Vplan:
+    Have triggers configured to be able to match, but enable/disable their corresponding mode bit, check that the trigger is either able to fire or is blocked from firing accordingly. Also check the tied values.
 
-  - Assertion verifikasjon:
-  1) but enable/disable their corresponding mode bit, check that the trigger is either able to fire or is blocked from firing accordingly, using different match configurations.
-  2) Also check the tied values. (P20-P21: 4))
-  */
+    - Assertion verifikasjon:
+    1) but enable/disable their corresponding mode bit, check that the trigger is either able to fire or is blocked from firing accordingly, using different match configurations.
+    2) Also check the tied values. (P20-P21: 4))
+    */
 
-  //1) see a_dt_enter_dbg_*
-  //2) see a_dt_tie_offs_*
+    //1) see a_dt_enter_dbg_*
+    //2) see a_dt_tie_offs_*
 
-  /*
-  - Vplan:
-  Check that these types can be selected, and check that no other types can be selected. (Functionality of these types should be handled by other items in this plan.) Check also that the default is "15".
+    /*
+    - Vplan:
+    Check that these types can be selected, and check that no other types can be selected. (Functionality of these types should be handled by other items in this plan.) Check also that the default is "15".
 
-  - Assertion verifikasjon:
-  1) Sjekk at tdata1 type kun kan være 2, 6, 5 eller 15
-  */
+    - Assertion verifikasjon:
+    1) Sjekk at tdata1 type kun kan være 2, 6, 5 eller 15
+    */
 
-  //1)
-  a_dt_tdata1_types: assert property (
-    rvfi_if.rvfi_valid
-    |->
-    tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL
-    || tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
-    || tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
-    || tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_DISABLED
-  ) else `uvm_error(info_tag, "tdata1 type is neither mcontrol, etrigger, mcontrol6 or disabled.\n");
+    //1)
+    a_dt_tdata1_types: assert property (
+      rvfi_if.rvfi_valid
+      |->
+      tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL
+      || tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
+      || tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
+      || tdata1_r[MSB_TYPE:LSB_TYPE] == TTYPE_DISABLED
+    ) else `uvm_error(info_tag, "tdata1 type is neither mcontrol, etrigger, mcontrol6 or disabled.\n");
 
-  /*
-  - Vplan:
-  Try to write tdata registers outside of debug mode, check that it traps. Try changing "tdata1.dmode" and check that it is WARL (0x1). Cross the above checks with all supported types.
+    /*
+    - Vplan:
+    Try to write tdata registers outside of debug mode, check that it traps. Try changing "tdata1.dmode" and check that it is WARL (0x1). Cross the above checks with all supported types.
 
-  - Assertion verifikasjon:
-  1) write tdata registers outside of debug mode, check that it traps. This verification point is wrong, see https://github.com/openhwgroup/core-v-verif/issues/1664
-  2) Try changing "tdata1.dmode" and check that it is WARL (0x1)
-  */
+    - Assertion verifikasjon:
+    1) write tdata registers outside of debug mode, check that it traps. This verification point is wrong, see https://github.com/openhwgroup/core-v-verif/issues/1664
+    2) Try changing "tdata1.dmode" and check that it is WARL (0x1)
+    */
 
-  //1)
-  a_dt_access_csr_not_dbg_mode: assert property (
-    !rvfi_if.rvfi_dbg_mode
-    && (rvfi_if.is_csr_instr(ADDR_TDATA1)
-    || rvfi_if.is_csr_instr(ADDR_TDATA2)
-    || rvfi_if.is_csr_instr(ADDR_TDATA3))
+    //1)
+    a_dt_access_csr_not_dbg_mode: assert property (
+      !rvfi_if.rvfi_dbg_mode
+      && (rvfi_if.is_csr_instr(ADDR_TDATA1)
+      || rvfi_if.is_csr_instr(ADDR_TDATA2)
+      || rvfi_if.is_csr_instr(ADDR_TDATA3))
 
-    |->
-    !tdata1.rvfi_csr_wmask
-    && !tdata2.rvfi_csr_wmask
-    && !tdata3.rvfi_csr_wmask
-  ) else `uvm_error(info_tag, "Writing tdata1, tdata2 or tdata3 in non-debug mode succeeds.\n");
+      |->
+      !tdata1.rvfi_csr_wmask
+      && !tdata2.rvfi_csr_wmask
+      && !tdata3.rvfi_csr_wmask
+    ) else `uvm_error(info_tag, "Writing tdata1, tdata2 or tdata3 in non-debug mode succeeds.\n");
 
-  //2)
-  a_dt_dmode: assert property (
-    rvfi_if.rvfi_valid
-    && rvfi_if.rvfi_dbg_mode
-    && !rvfi_if.rvfi_trap.trap
-    && tdata1.rvfi_csr_wmask[DMODE]
+    //2)
+    a_dt_dmode: assert property (
+      rvfi_if.rvfi_valid
+      && rvfi_if.rvfi_dbg_mode
+      && !rvfi_if.rvfi_trap.trap
+      && tdata1.rvfi_csr_wmask[DMODE]
 
-    |->
-    tdata1_w[DMODE]
-  ) else `uvm_error(info_tag, "Setting tdata1's dmode bit to 0 succeeds.\n");
+      |->
+      tdata1_w[DMODE]
+    ) else `uvm_error(info_tag, "Setting tdata1's dmode bit to 0 succeeds.\n");
 
   /*
   - Vplan:
@@ -544,29 +535,24 @@ module uvmt_cv32e40s_triggers_assert_cov
   2) For any other num triggers, check that "tinfo.info" is "1" for the three supported types, and that the remaining bits are 0.
   */
 
-  //1)
-  a_dt_0_triggers_tinfo: assert property (
-    uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS == '0
-    && rvfi_if.rvfi_valid
-    |->
-    !tinfo_r
-  ) else `uvm_error(info_tag, "There are no triggers, but tinfo is not set to zero.\n");
+    //1) Removed, registers do not exist if we have 0 triggers
 
-  //2)
-  a_dt_triggers_tinfo: assert property (
-    uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS != '0
-    && rvfi_if.rvfi_valid
-    |->
-    !tinfo_r[HW_ZERO_1:HW_ZERO_0]
-    && tinfo_r[TTYPE_MCONTROL]
-    && !tinfo_r[HW_ZERO_4:HW_ZERO_3]
-    && tinfo_r[TTYPE_ETRIGGER]
-    && tinfo_r[TTYPE_MCONTROL6]
-    && !tinfo_r[HW_ZERO_14:HW_ZERO_7]
-    && tinfo_r[TTYPE_DISABLED]
-    && !tinfo_r[HW_ZERO_31:HW_ZERO_16]
-  ) else `uvm_error(info_tag, "tinfo does not indicated that only tdata type mcontrol, etrigger, mcontrol6 and disabled are allowed.\n");
+    //2)
+    a_dt_triggers_tinfo: assert property (
+      uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS != '0
+      && rvfi_if.rvfi_valid
+      |->
+      !tinfo_r[HW_ZERO_1:HW_ZERO_0]
+      && tinfo_r[TTYPE_MCONTROL]
+      && !tinfo_r[HW_ZERO_4:HW_ZERO_3]
+      && tinfo_r[TTYPE_ETRIGGER]
+      && tinfo_r[TTYPE_MCONTROL6]
+      && !tinfo_r[HW_ZERO_14:HW_ZERO_7]
+      && tinfo_r[TTYPE_DISABLED]
+      && !tinfo_r[HW_ZERO_31:HW_ZERO_16]
+    ) else `uvm_error(info_tag, "tinfo does not indicated that only tdata type mcontrol, etrigger, mcontrol6 and disabled are allowed.\n");
 
+  end // if CORE_PARAM_DBG_NUM_TRIGGERS > 0
   /*
   - Vplan: Etrigger!!
   Configure "tdata1" and "tdata2" to fire on exceptions, try both individual and multiple exceptions in addition to supported and unsupported. Exercise scenarios that would trigger or not trigger according to the configuration and check that debug mode is either entered or not entered accordingly, and that the entry goes correctly (pc, dpc, cause, etc).
@@ -622,24 +608,26 @@ module uvmt_cv32e40s_triggers_assert_cov
 
   generate
     for (genvar t = 0; t < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
-      assign instr_access_fault_m_hit[t]     = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_INSTR_FAULT)            && wb_is_exception(EXC_CAUSE_INSTR_FAULT);
-      assign instr_access_fault_u_hit[t]     = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_INSTR_FAULT)            && wb_is_exception(EXC_CAUSE_INSTR_FAULT);
-      assign illegal_instr_m_hit[t]          = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_ILLEGAL_INSN)           && wb_is_exception(EXC_CAUSE_ILLEGAL_INSN);
-      assign illegal_instr_u_hit[t]          = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_ILLEGAL_INSN)           && wb_is_exception(EXC_CAUSE_ILLEGAL_INSN);
-      assign breakpoint_m_hit[t]             = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_BREAKPOINT)             && wb_is_exception(EXC_CAUSE_BREAKPOINT);
-      assign breakpoint_u_hit[t]             = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_BREAKPOINT)             && wb_is_exception(EXC_CAUSE_BREAKPOINT);
-      assign load_access_fault_m_hit[t]      = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_LOAD_FAULT)             && wb_is_exception(EXC_CAUSE_LOAD_FAULT);
-      assign load_access_fault_u_hit[t]      = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_LOAD_FAULT)             && wb_is_exception(EXC_CAUSE_LOAD_FAULT);
-      assign store_AMO_access_fault_m_hit[t] = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_STORE_FAULT)            && wb_is_exception(EXC_CAUSE_STORE_FAULT);
-      assign store_AMO_access_fault_u_hit[t] = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_STORE_FAULT)            && wb_is_exception(EXC_CAUSE_STORE_FAULT);
-      assign uecall_m_hit[t]                 = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_ECALL_UMODE)            && wb_is_exception(EXC_CAUSE_ECALL_UMODE);
-      assign uecall_u_hit[t]                 = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_ECALL_UMODE)            && wb_is_exception(EXC_CAUSE_ECALL_UMODE);
-      assign mecall_m_hit[t]                 = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_ECALL_MMODE)            && wb_is_exception(EXC_CAUSE_ECALL_MMODE);
-      assign mecall_u_hit[t]                 = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_ECALL_MMODE)            && wb_is_exception(EXC_CAUSE_ECALL_MMODE);
-      assign instr_bus_fault_m_hit[t]        = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_INSTR_BUS_FAULT)        && wb_is_exception(EXC_CAUSE_INSTR_BUS_FAULT);
-      assign instr_bus_fault_u_hit[t]        = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_INSTR_BUS_FAULT)        && wb_is_exception(EXC_CAUSE_INSTR_BUS_FAULT);
-      assign instr_integrity_fault_m_hit[t]  = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_INSTR_INTEGRITY_FAULT)  && wb_is_exception(EXC_CAUSE_INSTR_INTEGRITY_FAULT);
-      assign instr_integrity_fault_u_hit[t]  = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_INSTR_INTEGRITY_FAULT)  && wb_is_exception(EXC_CAUSE_INSTR_INTEGRITY_FAULT);
+      always_comb begin
+        instr_access_fault_m_hit[t]     = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_INSTR_FAULT)            && wb_is_exception(EXC_CAUSE_INSTR_FAULT);
+        instr_access_fault_u_hit[t]     = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_INSTR_FAULT)            && wb_is_exception(EXC_CAUSE_INSTR_FAULT);
+        illegal_instr_m_hit[t]          = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_ILLEGAL_INSN)           && wb_is_exception(EXC_CAUSE_ILLEGAL_INSN);
+        illegal_instr_u_hit[t]          = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_ILLEGAL_INSN)           && wb_is_exception(EXC_CAUSE_ILLEGAL_INSN);
+        breakpoint_m_hit[t]             = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_BREAKPOINT)             && wb_is_exception(EXC_CAUSE_BREAKPOINT);
+        breakpoint_u_hit[t]             = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_BREAKPOINT)             && wb_is_exception(EXC_CAUSE_BREAKPOINT);
+        load_access_fault_m_hit[t]      = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_LOAD_FAULT)             && wb_is_exception(EXC_CAUSE_LOAD_FAULT);
+        load_access_fault_u_hit[t]      = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_LOAD_FAULT)             && wb_is_exception(EXC_CAUSE_LOAD_FAULT);
+        store_AMO_access_fault_m_hit[t] = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_STORE_FAULT)            && wb_is_exception(EXC_CAUSE_STORE_FAULT);
+        store_AMO_access_fault_u_hit[t] = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_STORE_FAULT)            && wb_is_exception(EXC_CAUSE_STORE_FAULT);
+        uecall_m_hit[t]                 = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_ECALL_UMODE)            && wb_is_exception(EXC_CAUSE_ECALL_UMODE);
+        uecall_u_hit[t]                 = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_ECALL_UMODE)            && wb_is_exception(EXC_CAUSE_ECALL_UMODE);
+        mecall_m_hit[t]                 = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_ECALL_MMODE)            && wb_is_exception(EXC_CAUSE_ECALL_MMODE);
+        mecall_u_hit[t]                 = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_ECALL_MMODE)            && wb_is_exception(EXC_CAUSE_ECALL_MMODE);
+        instr_bus_fault_m_hit[t]        = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_INSTR_BUS_FAULT)        && wb_is_exception(EXC_CAUSE_INSTR_BUS_FAULT);
+        instr_bus_fault_u_hit[t]        = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_INSTR_BUS_FAULT)        && wb_is_exception(EXC_CAUSE_INSTR_BUS_FAULT);
+        instr_integrity_fault_m_hit[t]  = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_INSTR_INTEGRITY_FAULT)  && wb_is_exception(EXC_CAUSE_INSTR_INTEGRITY_FAULT);
+        instr_integrity_fault_u_hit[t]  = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_INSTR_INTEGRITY_FAULT)  && wb_is_exception(EXC_CAUSE_INSTR_INTEGRITY_FAULT);
+      end
     end
   endgenerate
 
@@ -752,125 +740,126 @@ module uvmt_cv32e40s_triggers_assert_cov
   //1) see a_dt_enter_dbg_*
 
   //2)
-  a_dt_warl_tselect: assert property (
-    rvfi_if.rvfi_valid
-    && |tselect.rvfi_csr_wmask != 0
-    |->
-    tselect_w < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS
-    || tselect_w == '0 //when uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS == 0
-  ) else `uvm_error(info_tag, "There is a problem with tselect's WARL fields.\n");
+  if (uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS > 0) begin
+    a_dt_warl_tselect: assert property (
+      rvfi_if.rvfi_valid
+      && |tselect.rvfi_csr_wmask != 0
+      |->
+      tselect_w < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS
+    ) else `uvm_error(info_tag, "There is a problem with tselect's WARL fields.\n");
 
-  a_dt_warl_tdata1_general: assert property (
-    rvfi_if.rvfi_valid
-    && |tdata1.rvfi_csr_wmask != 0
-    |->
-    (tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL
-    || tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
-    || tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
-    || tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_DISABLED)
-    && tdata1_w[DMODE]
-  ) else `uvm_error(info_tag, "There is a problem with tdata1's general WARL fields.\n");
+    a_dt_warl_tdata1_general: assert property (
+      rvfi_if.rvfi_valid
+      && |tdata1.rvfi_csr_wmask != 0
+      |->
+      (tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL
+      || tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
+      || tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
+      || tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_DISABLED)
+      && tdata1_w[DMODE]
+    ) else `uvm_error(info_tag, "There is a problem with tdata1's general WARL fields.\n");
 
-  a_dt_warl_tdata1_m2: assert property (
-    rvfi_if.rvfi_valid
-    && |tdata1.rvfi_csr_wmask != 0
-    && tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL
-    |->
-    !tdata1_w[MSB_MASKMAX:LSB_MASKMAX]
-    && !tdata1_w[M2_HIT]
-    && !tdata1_w[M2_SELECT]
-    && !tdata1_w[M2_TIMING]
-    && !tdata1_w[M2_MSB_SIZELO:M2_LSB_SIZELO]
-    && tdata1_w[MSB_ACTION:LSB_ACTION] == ENTER_DBG_ON_MATCH
-    && !tdata1_w[CHAIN]
-    && (tdata1_w[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_EQUAL
-    || tdata1_w[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_GREATER_OR_EQUAL
-    || tdata1_w[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_LESSER)
-    && !tdata1_w[HW_ZERO_5]
-    && !tdata1_w[S_MODE]
-  ) else `uvm_error(info_tag, "There is a problem with tdata1-mcontrol's WARL fields.\n");
+    a_dt_warl_tdata1_m2: assert property (
+      rvfi_if.rvfi_valid
+      && |tdata1.rvfi_csr_wmask != 0
+      && tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL
+      |->
+      !tdata1_w[MSB_MASKMAX:LSB_MASKMAX]
+      && !tdata1_w[M2_HIT]
+      && !tdata1_w[M2_SELECT]
+      && !tdata1_w[M2_TIMING]
+      && !tdata1_w[M2_MSB_SIZELO:M2_LSB_SIZELO]
+      && tdata1_w[MSB_ACTION:LSB_ACTION] == ENTER_DBG_ON_MATCH
+      && !tdata1_w[CHAIN]
+      && (tdata1_w[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_EQUAL
+      || tdata1_w[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_GREATER_OR_EQUAL
+      || tdata1_w[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_LESSER)
+      && !tdata1_w[HW_ZERO_5]
+      && !tdata1_w[S_MODE]
+    ) else `uvm_error(info_tag, "There is a problem with tdata1-mcontrol's WARL fields.\n");
 
-  a_dt_warl_tdata1_etrigger: assert property (
-    rvfi_if.rvfi_valid
-    && |tdata1.rvfi_csr_wmask != 0
-    && tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
-    |->
-    !tdata1_w[ET_HIT]
-    && !tdata1_w[HW_ZERO_25:HW_ZERO_13]
-    && !tdata1_w[ET_VS]
-    && !tdata1_w[ET_VU]
-    && !tdata1_w[HW_ZERO_10]
-    && !tdata1_w[HW_ZERO_8]
-    && !tdata1_w[ET_S]
-    && tdata1_w[ET_MSB_ACTION:ET_LSB_ACTION] == ENTER_DBG_ON_MATCH
-  ) else `uvm_error(info_tag, "There is a problem with tdata1-etrigger's WARL fields.\n");
+    a_dt_warl_tdata1_etrigger: assert property (
+      rvfi_if.rvfi_valid
+      && |tdata1.rvfi_csr_wmask != 0
+      && tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
+      |->
+      !tdata1_w[ET_HIT]
+      && !tdata1_w[HW_ZERO_25:HW_ZERO_13]
+      && !tdata1_w[ET_VS]
+      && !tdata1_w[ET_VU]
+      && !tdata1_w[HW_ZERO_10]
+      && !tdata1_w[HW_ZERO_8]
+      && !tdata1_w[ET_S]
+      && tdata1_w[ET_MSB_ACTION:ET_LSB_ACTION] == ENTER_DBG_ON_MATCH
+    ) else `uvm_error(info_tag, "There is a problem with tdata1-etrigger's WARL fields.\n");
 
-  a_dt_warl_tdata1_m6: assert property (
-    rvfi_if.rvfi_valid
-    && |tdata1.rvfi_csr_wmask != 0
-    && tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
-    |->
-    !tdata1_w[HW_ZERO_26:HW_ZERO_25]
-    && !tdata1_w[M6_VS]
-    && !tdata1_w[M6_VU]
-    && !tdata1_w[M6_HIT]
-    && !tdata1_w[M6_SELECT]
-    && !tdata1_w[M6_TIMING]
-    && !tdata1_w[M6_MSB_SIZE:M6_LSB_SIZE]
-    && tdata1_w[MSB_ACTION:LSB_ACTION] == ENTER_DBG_ON_MATCH
-    && !tdata1_w[CHAIN]
-    && (tdata1_w[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_EQUAL
-    || tdata1_w[MSB_MATCH:LSB_MATCH] ==  MATCH_WHEN_GREATER_OR_EQUAL
-    || tdata1_w[MSB_MATCH:LSB_MATCH] ==  MATCH_WHEN_LESSER)
-    && !tdata1_w[HW_ZERO_5]
-    && !tdata1_w[S_MODE]
-  ) else `uvm_error(info_tag, "There is a problem with tdata1-mcontrol6's WARL fields.\n");
+    a_dt_warl_tdata1_m6: assert property (
+      rvfi_if.rvfi_valid
+      && |tdata1.rvfi_csr_wmask != 0
+      && tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
+      |->
+      !tdata1_w[HW_ZERO_26:HW_ZERO_25]
+      && !tdata1_w[M6_VS]
+      && !tdata1_w[M6_VU]
+      && !tdata1_w[M6_HIT]
+      && !tdata1_w[M6_SELECT]
+      && !tdata1_w[M6_TIMING]
+      && !tdata1_w[M6_MSB_SIZE:M6_LSB_SIZE]
+      && tdata1_w[MSB_ACTION:LSB_ACTION] == ENTER_DBG_ON_MATCH
+      && !tdata1_w[CHAIN]
+      && (tdata1_w[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_EQUAL
+      || tdata1_w[MSB_MATCH:LSB_MATCH] ==  MATCH_WHEN_GREATER_OR_EQUAL
+      || tdata1_w[MSB_MATCH:LSB_MATCH] ==  MATCH_WHEN_LESSER)
+      && !tdata1_w[HW_ZERO_5]
+      && !tdata1_w[S_MODE]
+    ) else `uvm_error(info_tag, "There is a problem with tdata1-mcontrol6's WARL fields.\n");
 
-  a_dt_warl_tdata1_disabled: assert property (
-    rvfi_if.rvfi_valid
-    && |tdata1.rvfi_csr_wmask != 0
-    && tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_DISABLED
-    |->
-    !tdata1_w[DIS_MSB_DATA:DIS_LSB_DATA]
-  ) else `uvm_error(info_tag, "There is a problem with tdata1-disabled's WARL fields.\n");
+    a_dt_warl_tdata1_disabled: assert property (
+      rvfi_if.rvfi_valid
+      && |tdata1.rvfi_csr_wmask != 0
+      && tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_DISABLED
+      |->
+      !tdata1_w[DIS_MSB_DATA:DIS_LSB_DATA]
+    ) else `uvm_error(info_tag, "There is a problem with tdata1-disabled's WARL fields.\n");
 
-  a_dt_warl_tdata2_etrigger: assert property (
-    rvfi_if.rvfi_valid
-    && |tdata2.rvfi_csr_wmask != 0
-    && tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
-    |->
-    !tdata2_w[ET2_DATA_31:ET2_DATA_26]
-    && !tdata2_w[ET2_DATA_23:ET2_DATA_12]
-    && !tdata2_w[ET2_DATA_10:ET2_DATA_9]
-    && !tdata2_w[ET2_DATA_6]
-    && !tdata2_w[ET2_DATA_4]
-    && !tdata2_w[ET2_DATA_0]
-  ) else `uvm_error(info_tag, "There is a problem with tdata1-etrigger's WARL fields.\n");
+    a_dt_warl_tdata2_etrigger: assert property (
+      rvfi_if.rvfi_valid
+      && |tdata2.rvfi_csr_wmask != 0
+      && tdata1_w[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
+      |->
+      !tdata2_w[ET2_DATA_31:ET2_DATA_26]
+      && !tdata2_w[ET2_DATA_23:ET2_DATA_12]
+      && !tdata2_w[ET2_DATA_10:ET2_DATA_9]
+      && !tdata2_w[ET2_DATA_6]
+      && !tdata2_w[ET2_DATA_4]
+      && !tdata2_w[ET2_DATA_0]
+    ) else `uvm_error(info_tag, "There is a problem with tdata1-etrigger's WARL fields.\n");
 
-  a_dt_warl_tdata3: assert property (
-    rvfi_if.rvfi_valid
-    && |tdata3.rvfi_csr_wmask != 0
-    |->
-    !tdata3_w
-  ) else `uvm_error(info_tag, "There is a problem with tdata3's WARL fields.\n");
+    a_dt_warl_tdata3: assert property (
+      rvfi_if.rvfi_valid
+      && |tdata3.rvfi_csr_wmask != 0
+      |->
+      !tdata3_w
+    ) else `uvm_error(info_tag, "There is a problem with tdata3's WARL fields.\n");
 
-  a_dt_warl_tinfo: assert property (
-    rvfi_if.rvfi_valid
-    && |tinfo.rvfi_csr_wmask != 0
-    |->
-    !tinfo_w[31:16]
-  ) else `uvm_error(info_tag, "There is a problem with tinfo's WARL fields.\n");
+    a_dt_warl_tinfo: assert property (
+      rvfi_if.rvfi_valid
+      && |tinfo.rvfi_csr_wmask != 0
+      |->
+      !tinfo_w[31:16]
+    ) else `uvm_error(info_tag, "There is a problem with tinfo's WARL fields.\n");
 
-  a_dt_warl_tcontrol: assert property (
-    rvfi_if.rvfi_valid
-    && |tcontrol.rvfi_csr_wmask != 0
-    |->
-    !tcontrol_w[HW_ZERO_31:HW_ZERO_8]
-    && !tcontrol_w[MPTE]
-    && !tcontrol_w[HW_ZERO_6:HW_ZERO_4]
-    && !tcontrol_w[MTE]
-    && !tcontrol_w[HW_ZERO_2:HW_ZERO_0]
-  ) else `uvm_error(info_tag, "There is a problem with tcontrol's WARL fields.\n");
+    a_dt_warl_tcontrol: assert property (
+      rvfi_if.rvfi_valid
+      && |tcontrol.rvfi_csr_wmask != 0
+      |->
+      !tcontrol_w[HW_ZERO_31:HW_ZERO_8]
+      && !tcontrol_w[MPTE]
+      && !tcontrol_w[HW_ZERO_6:HW_ZERO_4]
+      && !tcontrol_w[MTE]
+      && !tcontrol_w[HW_ZERO_2:HW_ZERO_0]
+    ) else `uvm_error(info_tag, "There is a problem with tcontrol's WARL fields.\n");
+  end // if CORE_PARAM_DBG_NUM_TRIGGERS > 0
 
   /*
     - Assertion verifikasjon:
@@ -977,83 +966,82 @@ module uvmt_cv32e40s_triggers_assert_cov
 
 
   //Set all possible ways of entering debug mode due to trigger match:
-  generate
-    for (genvar t = 0; t < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
+  always_comb begin
+    for (int t = 0; t < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
 
       //Execute:
-      assign exe_eq_m_hit[t]  = set_tdata1_mctrl_state(t, EXECUTE, MATCH_WHEN_EQUAL, M_MODE)            && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.rvfi_pc_rdata, t);
-      assign exe_eq_u_hit[t]  = set_tdata1_mctrl_state(t, EXECUTE, MATCH_WHEN_EQUAL, U_MODE)            && rvfi_if.is_umode() && eq_tdata2(rvfi_if.rvfi_pc_rdata, t);
-      assign exe_geq_m_hit[t] = set_tdata1_mctrl_state(t, EXECUTE, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE) && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.rvfi_pc_rdata, t);
-      assign exe_geq_u_hit[t] = set_tdata1_mctrl_state(t, EXECUTE, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE) && rvfi_if.is_umode() && geq_tdata2(rvfi_if.rvfi_pc_rdata, t);
-      assign exe_l_m_hit[t]   = set_tdata1_mctrl_state(t, EXECUTE, MATCH_WHEN_LESSER, M_MODE)           && rvfi_if.is_mmode() && l_tdata2(rvfi_if.rvfi_pc_rdata, t);
-      assign exe_l_u_hit[t]   = set_tdata1_mctrl_state(t, EXECUTE, MATCH_WHEN_LESSER, U_MODE)           && rvfi_if.is_umode() && l_tdata2(rvfi_if.rvfi_pc_rdata, t);
+        exe_eq_m_hit[t]  = set_tdata1_mctrl_state(t, EXECUTE, MATCH_WHEN_EQUAL, M_MODE)            && rvfi_if.is_mmode_f() && eq_tdata2(rvfi_if.rvfi_pc_rdata, t);
+        exe_eq_u_hit[t]  = set_tdata1_mctrl_state(t, EXECUTE, MATCH_WHEN_EQUAL, U_MODE)            && rvfi_if.is_umode_f() && eq_tdata2(rvfi_if.rvfi_pc_rdata, t);
+        exe_geq_m_hit[t] = set_tdata1_mctrl_state(t, EXECUTE, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE) && rvfi_if.is_mmode_f() && geq_tdata2(rvfi_if.rvfi_pc_rdata, t);
+        exe_geq_u_hit[t] = set_tdata1_mctrl_state(t, EXECUTE, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE) && rvfi_if.is_umode_f() && geq_tdata2(rvfi_if.rvfi_pc_rdata, t);
+        exe_l_m_hit[t]   = set_tdata1_mctrl_state(t, EXECUTE, MATCH_WHEN_LESSER, M_MODE)           && rvfi_if.is_mmode_f() && l_tdata2(rvfi_if.rvfi_pc_rdata, t);
+        exe_l_u_hit[t]   = set_tdata1_mctrl_state(t, EXECUTE, MATCH_WHEN_LESSER, U_MODE)           && rvfi_if.is_umode_f() && l_tdata2(rvfi_if.rvfi_pc_rdata, t);
 
-      //Make sure we check all possible memory entries:
-      for (genvar m = 0; m < NMEM; m++) begin
-        //Load:
-        //Byte 0:
-        assign load_b0_eq_m_hit[t][m]   =  set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, M_MODE)             && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr(m), t)  && get_mem_rmask_byte(m, 0);
-        assign load_b0_eq_u_hit[t][m]   =  set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, U_MODE)             && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr(m), t)  && get_mem_rmask_byte(m, 0);
-        assign load_b0_geq_m_hit[t][m]  =  set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE)  && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr(m), t) && get_mem_rmask_byte(m, 0);
-        assign load_b0_geq_u_hit[t][m]  =  set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE)  && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr(m), t) && get_mem_rmask_byte(m, 0);
-        assign load_b0_l_m_hit[t][m]    =  set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, M_MODE)            && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr(m), t)   && get_mem_rmask_byte(m, 0);
-        assign load_b0_l_u_hit[t][m]    =  set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, U_MODE)            && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr(m), t)   && get_mem_rmask_byte(m, 0);
+        //Make sure we check all possible memory entries:
+        for (int m = 0; m < NMEM; m++) begin
+          //Load:
+          //Byte 0:
+          load_b0_eq_m_hit[t][m]   =  set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, M_MODE)            && rvfi_if.is_mmode_f() && eq_tdata2(rvfi_if.get_mem_addr(m), t)  && get_mem_rmask_byte(m, 0);
+          load_b0_eq_u_hit[t][m]   =  set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, U_MODE)            && rvfi_if.is_umode_f() && eq_tdata2(rvfi_if.get_mem_addr(m), t)  && get_mem_rmask_byte(m, 0);
+          load_b0_geq_m_hit[t][m]  =  set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE) && rvfi_if.is_mmode_f() && geq_tdata2(rvfi_if.get_mem_addr(m), t) && get_mem_rmask_byte(m, 0);
+          load_b0_geq_u_hit[t][m]  =  set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE) && rvfi_if.is_umode_f() && geq_tdata2(rvfi_if.get_mem_addr(m), t) && get_mem_rmask_byte(m, 0);
+          load_b0_l_m_hit[t][m]    =  set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, M_MODE)           && rvfi_if.is_mmode_f() && l_tdata2(rvfi_if.get_mem_addr(m), t)   && get_mem_rmask_byte(m, 0);
+          load_b0_l_u_hit[t][m]    =  set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, U_MODE)           && rvfi_if.is_umode_f() && l_tdata2(rvfi_if.get_mem_addr(m), t)   && get_mem_rmask_byte(m, 0);
 
-        //Byte +1:
-        assign load_b1_eq_m_hit[t][m]   = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, M_MODE)             && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr(m)+1, t)  && get_mem_rmask_byte(m, 1);
-        assign load_b1_eq_u_hit[t][m]   = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, U_MODE)             && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr(m)+1, t)  && get_mem_rmask_byte(m, 1);
-        assign load_b1_geq_m_hit[t][m]  = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE)  && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr(m)+1, t) && get_mem_rmask_byte(m, 1);
-        assign load_b1_geq_u_hit[t][m]  = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE)  && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr(m)+1, t) && get_mem_rmask_byte(m, 1);
-        assign load_b1_l_m_hit[t][m]    = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, M_MODE)            && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr(m)+1, t)   && get_mem_rmask_byte(m, 1);
-        assign load_b1_l_u_hit[t][m]    = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, U_MODE)            && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr(m)+1, t)   && get_mem_rmask_byte(m, 1);
-        //Byte +2:
-        assign load_b2_eq_m_hit[t][m]   = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, M_MODE)             && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr(m)+2, t)  && get_mem_rmask_byte(m, 2);
-        assign load_b2_eq_u_hit[t][m]   = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, U_MODE)             && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr(m)+2, t)  && get_mem_rmask_byte(m, 2);
-        assign load_b2_geq_m_hit[t][m]  = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE)  && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr(m)+2, t) && get_mem_rmask_byte(m, 2);
-        assign load_b2_geq_u_hit[t][m]  = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE)  && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr(m)+2, t) && get_mem_rmask_byte(m, 2);
-        assign load_b2_l_m_hit[t][m]    = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, M_MODE)            && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr(m)+2, t)   && get_mem_rmask_byte(m, 2);
-        assign load_b2_l_u_hit[t][m]    = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, U_MODE)            && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr(m)+2, t)   && get_mem_rmask_byte(m, 2);
-        //Byte +3:
-        assign load_b3_eq_m_hit[t][m]   = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, M_MODE)             && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr(m)+3, t)  && get_mem_rmask_byte(m, 3);
-        assign load_b3_eq_u_hit[t][m]   = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, U_MODE)             && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr(m)+3, t)  && get_mem_rmask_byte(m, 3);
-        assign load_b3_geq_m_hit[t][m]  = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE)  && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr(m)+3, t) && get_mem_rmask_byte(m, 3);
-        assign load_b3_geq_u_hit[t][m]  = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE)  && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr(m)+3, t) && get_mem_rmask_byte(m, 3);
-        assign load_b3_l_m_hit[t][m]    = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, M_MODE)            && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr(m)+3, t)   && get_mem_rmask_byte(m, 3);
-        assign load_b3_l_u_hit[t][m]    = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, U_MODE)            && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr(m)+3, t)   && get_mem_rmask_byte(m, 3);
+          //Byte +1:
+          load_b1_eq_m_hit[t][m]   = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, M_MODE)             && rvfi_if.is_mmode_f() && eq_tdata2(rvfi_if.get_mem_addr(m)+1, t)  && get_mem_rmask_byte(m, 1);
+          load_b1_eq_u_hit[t][m]   = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, U_MODE)             && rvfi_if.is_umode_f() && eq_tdata2(rvfi_if.get_mem_addr(m)+1, t)  && get_mem_rmask_byte(m, 1);
+          load_b1_geq_m_hit[t][m]  = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE)  && rvfi_if.is_mmode_f() && geq_tdata2(rvfi_if.get_mem_addr(m)+1, t) && get_mem_rmask_byte(m, 1);
+          load_b1_geq_u_hit[t][m]  = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE)  && rvfi_if.is_umode_f() && geq_tdata2(rvfi_if.get_mem_addr(m)+1, t) && get_mem_rmask_byte(m, 1);
+          load_b1_l_m_hit[t][m]    = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, M_MODE)            && rvfi_if.is_mmode_f() && l_tdata2(rvfi_if.get_mem_addr(m)+1, t)   && get_mem_rmask_byte(m, 1);
+          load_b1_l_u_hit[t][m]    = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, U_MODE)            && rvfi_if.is_umode_f() && l_tdata2(rvfi_if.get_mem_addr(m)+1, t)   && get_mem_rmask_byte(m, 1);
+          //Byte +2:
+          load_b2_eq_m_hit[t][m]   = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, M_MODE)             && rvfi_if.is_mmode_f() && eq_tdata2(rvfi_if.get_mem_addr(m)+2, t)  && get_mem_rmask_byte(m, 2);
+          load_b2_eq_u_hit[t][m]   = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, U_MODE)             && rvfi_if.is_umode_f() && eq_tdata2(rvfi_if.get_mem_addr(m)+2, t)  && get_mem_rmask_byte(m, 2);
+          load_b2_geq_m_hit[t][m]  = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE)  && rvfi_if.is_mmode_f() && geq_tdata2(rvfi_if.get_mem_addr(m)+2, t) && get_mem_rmask_byte(m, 2);
+          load_b2_geq_u_hit[t][m]  = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE)  && rvfi_if.is_umode_f() && geq_tdata2(rvfi_if.get_mem_addr(m)+2, t) && get_mem_rmask_byte(m, 2);
+          load_b2_l_m_hit[t][m]    = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, M_MODE)            && rvfi_if.is_mmode_f() && l_tdata2(rvfi_if.get_mem_addr(m)+2, t)   && get_mem_rmask_byte(m, 2);
+          load_b2_l_u_hit[t][m]    = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, U_MODE)            && rvfi_if.is_umode_f() && l_tdata2(rvfi_if.get_mem_addr(m)+2, t)   && get_mem_rmask_byte(m, 2);
+          //Byte +3:
+          load_b3_eq_m_hit[t][m]   = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, M_MODE)             && rvfi_if.is_mmode_f() && eq_tdata2(rvfi_if.get_mem_addr(m)+3, t)  && get_mem_rmask_byte(m, 3);
+          load_b3_eq_u_hit[t][m]   = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_EQUAL, U_MODE)             && rvfi_if.is_umode_f() && eq_tdata2(rvfi_if.get_mem_addr(m)+3, t)  && get_mem_rmask_byte(m, 3);
+          load_b3_geq_m_hit[t][m]  = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE)  && rvfi_if.is_mmode_f() && geq_tdata2(rvfi_if.get_mem_addr(m)+3, t) && get_mem_rmask_byte(m, 3);
+          load_b3_geq_u_hit[t][m]  = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE)  && rvfi_if.is_umode_f() && geq_tdata2(rvfi_if.get_mem_addr(m)+3, t) && get_mem_rmask_byte(m, 3);
+          load_b3_l_m_hit[t][m]    = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, M_MODE)            && rvfi_if.is_mmode_f() && l_tdata2(rvfi_if.get_mem_addr(m)+3, t)   && get_mem_rmask_byte(m, 3);
+          load_b3_l_u_hit[t][m]    = set_tdata1_mctrl_state(t, LOAD, MATCH_WHEN_LESSER, U_MODE)            && rvfi_if.is_umode_f() && l_tdata2(rvfi_if.get_mem_addr(m)+3, t)   && get_mem_rmask_byte(m, 3);
 
-        //Store:
-        //Byte 0:
-        assign store_b0_eq_m_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, M_MODE)            && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr(m), t)  && get_mem_wmask_byte(m, 0);
-        assign store_b0_eq_u_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, U_MODE)            && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr(m), t)  && get_mem_wmask_byte(m, 0);
-        assign store_b0_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE) && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr(m), t) && get_mem_wmask_byte(m, 0);
-        assign store_b0_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE) && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr(m), t) && get_mem_wmask_byte(m, 0);
-        assign store_b0_l_m_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, M_MODE)           && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr(m), t)   && get_mem_wmask_byte(m, 0);
-        assign store_b0_l_u_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, U_MODE)           && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr(m), t)   && get_mem_wmask_byte(m, 0);
-        //Byte +1:
-        assign store_b1_eq_m_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, M_MODE)            && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr(m)+1, t)  && get_mem_wmask_byte(m, 1);
-        assign store_b1_eq_u_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, U_MODE)            && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr(m)+1, t)  && get_mem_wmask_byte(m, 1);
-        assign store_b1_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE) && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr(m)+1, t) && get_mem_wmask_byte(m, 1);
-        assign store_b1_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE) && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr(m)+1, t) && get_mem_wmask_byte(m, 1);
-        assign store_b1_l_m_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, M_MODE)           && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr(m)+1, t)   && get_mem_wmask_byte(m, 1);
-        assign store_b1_l_u_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, U_MODE)           && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr(m)+1, t)   && get_mem_wmask_byte(m, 1);
-        //Byte +2:
-        assign store_b2_eq_m_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, M_MODE)            && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr(m)+2, t)  && get_mem_wmask_byte(m, 2);
-        assign store_b2_eq_u_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, U_MODE)            && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr(m)+2, t)  && get_mem_wmask_byte(m, 2);
-        assign store_b2_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE) && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr(m)+2, t) && get_mem_wmask_byte(m, 2);
-        assign store_b2_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE) && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr(m)+2, t) && get_mem_wmask_byte(m, 2);
-        assign store_b2_l_m_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, M_MODE)           && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr(m)+2, t)   && get_mem_wmask_byte(m, 2);
-        assign store_b2_l_u_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, U_MODE)           && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr(m)+2, t)   && get_mem_wmask_byte(m, 2);
-        //Byte +3:
-        assign store_b3_eq_m_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, M_MODE)            && rvfi_if.is_mmode() && eq_tdata2(rvfi_if.get_mem_addr(m)+3, t)  && get_mem_wmask_byte(m, 3);
-        assign store_b3_eq_u_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, U_MODE)            && rvfi_if.is_umode() && eq_tdata2(rvfi_if.get_mem_addr(m)+3, t)  && get_mem_wmask_byte(m, 3);
-        assign store_b3_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE) && rvfi_if.is_mmode() && geq_tdata2(rvfi_if.get_mem_addr(m)+3, t) && get_mem_wmask_byte(m, 3);
-        assign store_b3_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE) && rvfi_if.is_umode() && geq_tdata2(rvfi_if.get_mem_addr(m)+3, t) && get_mem_wmask_byte(m, 3);
-        assign store_b3_l_m_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, M_MODE)           && rvfi_if.is_mmode() && l_tdata2(rvfi_if.get_mem_addr(m)+3, t)   && get_mem_wmask_byte(m, 3);
-        assign store_b3_l_u_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, U_MODE)           && rvfi_if.is_umode() && l_tdata2(rvfi_if.get_mem_addr(m)+3, t)   && get_mem_wmask_byte(m, 3);
-
+          //Store:
+          //Byte 0:
+          store_b0_eq_m_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, M_MODE)            && rvfi_if.is_mmode_f() && eq_tdata2(rvfi_if.get_mem_addr(m), t)  && get_mem_wmask_byte(m, 0);
+          store_b0_eq_u_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, U_MODE)            && rvfi_if.is_umode_f() && eq_tdata2(rvfi_if.get_mem_addr(m), t)  && get_mem_wmask_byte(m, 0);
+          store_b0_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE) && rvfi_if.is_mmode_f() && geq_tdata2(rvfi_if.get_mem_addr(m), t) && get_mem_wmask_byte(m, 0);
+          store_b0_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE) && rvfi_if.is_umode_f() && geq_tdata2(rvfi_if.get_mem_addr(m), t) && get_mem_wmask_byte(m, 0);
+          store_b0_l_m_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, M_MODE)           && rvfi_if.is_mmode_f() && l_tdata2(rvfi_if.get_mem_addr(m), t)   && get_mem_wmask_byte(m, 0);
+          store_b0_l_u_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, U_MODE)           && rvfi_if.is_umode_f() && l_tdata2(rvfi_if.get_mem_addr(m), t)   && get_mem_wmask_byte(m, 0);
+          //Byte +1:
+          store_b1_eq_m_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, M_MODE)            && rvfi_if.is_mmode_f() && eq_tdata2(rvfi_if.get_mem_addr(m)+1, t)  && get_mem_wmask_byte(m, 1);
+          store_b1_eq_u_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, U_MODE)            && rvfi_if.is_umode_f() && eq_tdata2(rvfi_if.get_mem_addr(m)+1, t)  && get_mem_wmask_byte(m, 1);
+          store_b1_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE) && rvfi_if.is_mmode_f() && geq_tdata2(rvfi_if.get_mem_addr(m)+1, t) && get_mem_wmask_byte(m, 1);
+          store_b1_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE) && rvfi_if.is_umode_f() && geq_tdata2(rvfi_if.get_mem_addr(m)+1, t) && get_mem_wmask_byte(m, 1);
+          store_b1_l_m_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, M_MODE)           && rvfi_if.is_mmode_f() && l_tdata2(rvfi_if.get_mem_addr(m)+1, t)   && get_mem_wmask_byte(m, 1);
+          store_b1_l_u_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, U_MODE)           && rvfi_if.is_umode_f() && l_tdata2(rvfi_if.get_mem_addr(m)+1, t)   && get_mem_wmask_byte(m, 1);
+          //Byte +2:
+          store_b2_eq_m_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, M_MODE)            && rvfi_if.is_mmode_f() && eq_tdata2(rvfi_if.get_mem_addr(m)+2, t)  && get_mem_wmask_byte(m, 2);
+          store_b2_eq_u_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, U_MODE)            && rvfi_if.is_umode_f() && eq_tdata2(rvfi_if.get_mem_addr(m)+2, t)  && get_mem_wmask_byte(m, 2);
+          store_b2_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE) && rvfi_if.is_mmode_f() && geq_tdata2(rvfi_if.get_mem_addr(m)+2, t) && get_mem_wmask_byte(m, 2);
+          store_b2_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE) && rvfi_if.is_umode_f() && geq_tdata2(rvfi_if.get_mem_addr(m)+2, t) && get_mem_wmask_byte(m, 2);
+          store_b2_l_m_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, M_MODE)           && rvfi_if.is_mmode_f() && l_tdata2(rvfi_if.get_mem_addr(m)+2, t)   && get_mem_wmask_byte(m, 2);
+          store_b2_l_u_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, U_MODE)           && rvfi_if.is_umode_f() && l_tdata2(rvfi_if.get_mem_addr(m)+2, t)   && get_mem_wmask_byte(m, 2);
+          //Byte +3:
+          store_b3_eq_m_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, M_MODE)            && rvfi_if.is_mmode_f() && eq_tdata2(rvfi_if.get_mem_addr(m)+3, t)  && get_mem_wmask_byte(m, 3);
+          store_b3_eq_u_hit[t][m]  = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_EQUAL, U_MODE)            && rvfi_if.is_umode_f() && eq_tdata2(rvfi_if.get_mem_addr(m)+3, t)  && get_mem_wmask_byte(m, 3);
+          store_b3_geq_m_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, M_MODE) && rvfi_if.is_mmode_f() && geq_tdata2(rvfi_if.get_mem_addr(m)+3, t) && get_mem_wmask_byte(m, 3);
+          store_b3_geq_u_hit[t][m] = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_GREATER_OR_EQUAL, U_MODE) && rvfi_if.is_umode_f() && geq_tdata2(rvfi_if.get_mem_addr(m)+3, t) && get_mem_wmask_byte(m, 3);
+          store_b3_l_m_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, M_MODE)           && rvfi_if.is_mmode_f() && l_tdata2(rvfi_if.get_mem_addr(m)+3, t)   && get_mem_wmask_byte(m, 3);
+          store_b3_l_u_hit[t][m]   = set_tdata1_mctrl_state(t, STORE, MATCH_WHEN_LESSER, U_MODE)           && rvfi_if.is_umode_f() && l_tdata2(rvfi_if.get_mem_addr(m)+3, t)   && get_mem_wmask_byte(m, 3);
       end
     end
-  endgenerate
+  end
 
   property p_enter_debug_due_to_x(x);
     |x
@@ -1336,88 +1324,90 @@ module uvmt_cv32e40s_triggers_assert_cov
 
 
   //2)
-  a_dt_enter_dbg_reason: assert property (
-    rvfi_if.rvfi_valid
-    && rvfi_if.rvfi_trap.debug
-    && rvfi_if.rvfi_trap.debug_cause == TRIGGER_MATCH
+  if (uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS > 0) begin
+    a_dt_enter_dbg_reason: assert property (
+      rvfi_if.rvfi_valid
+      && rvfi_if.rvfi_trap.debug
+      && rvfi_if.rvfi_trap.debug_cause == TRIGGER_MATCH
 
-    |->
-    //mcontrol or mcontrol6:
-    |exe_eq_m_hit
-    || |exe_eq_u_hit
-    || |exe_geq_m_hit
-    || |exe_geq_u_hit
-    || |exe_l_m_hit
-    || |exe_l_u_hit
-    || |load_b0_eq_m_hit
-    || |load_b0_eq_u_hit
-    || |load_b0_geq_m_hit
-    || |load_b0_geq_u_hit
-    || |load_b0_l_m_hit
-    || |load_b0_l_u_hit
-    || |load_b1_eq_m_hit
-    || |load_b1_eq_u_hit
-    || |load_b1_geq_m_hit
-    || |load_b1_geq_u_hit
-    || |load_b1_l_m_hit
-    || |load_b1_l_u_hit
-    || |load_b2_eq_m_hit
-    || |load_b2_eq_u_hit
-    || |load_b2_geq_m_hit
-    || |load_b2_geq_u_hit
-    || |load_b2_l_m_hit
-    || |load_b2_l_u_hit
-    || |load_b3_eq_m_hit
-    || |load_b3_eq_u_hit
-    || |load_b3_geq_m_hit
-    || |load_b3_geq_u_hit
-    || |load_b3_l_m_hit
-    || |load_b3_l_u_hit
-    || |store_b0_eq_m_hit
-    || |store_b0_eq_u_hit
-    || |store_b0_geq_m_hit
-    || |store_b0_geq_u_hit
-    || |store_b0_l_m_hit
-    || |store_b0_l_u_hit
-    || |store_b1_eq_m_hit
-    || |store_b1_eq_u_hit
-    || |store_b1_geq_m_hit
-    || |store_b1_geq_u_hit
-    || |store_b1_l_m_hit
-    || |store_b1_l_u_hit
-    || |store_b2_eq_m_hit
-    || |store_b2_eq_u_hit
-    || |store_b2_geq_m_hit
-    || |store_b2_geq_u_hit
-    || |store_b2_l_m_hit
-    || |store_b2_l_u_hit
-    || |store_b3_eq_m_hit
-    || |store_b3_eq_u_hit
-    || |store_b3_geq_m_hit
-    || |store_b3_geq_u_hit
-    || |store_b3_l_m_hit
-    || |store_b3_l_u_hit
+      |->
+      //mcontrol or mcontrol6:
+      |exe_eq_m_hit
+      || |exe_eq_u_hit
+      || |exe_geq_m_hit
+      || |exe_geq_u_hit
+      || |exe_l_m_hit
+      || |exe_l_u_hit
+      || |load_b0_eq_m_hit
+      || |load_b0_eq_u_hit
+      || |load_b0_geq_m_hit
+      || |load_b0_geq_u_hit
+      || |load_b0_l_m_hit
+      || |load_b0_l_u_hit
+      || |load_b1_eq_m_hit
+      || |load_b1_eq_u_hit
+      || |load_b1_geq_m_hit
+      || |load_b1_geq_u_hit
+      || |load_b1_l_m_hit
+      || |load_b1_l_u_hit
+      || |load_b2_eq_m_hit
+      || |load_b2_eq_u_hit
+      || |load_b2_geq_m_hit
+      || |load_b2_geq_u_hit
+      || |load_b2_l_m_hit
+      || |load_b2_l_u_hit
+      || |load_b3_eq_m_hit
+      || |load_b3_eq_u_hit
+      || |load_b3_geq_m_hit
+      || |load_b3_geq_u_hit
+      || |load_b3_l_m_hit
+      || |load_b3_l_u_hit
+      || |store_b0_eq_m_hit
+      || |store_b0_eq_u_hit
+      || |store_b0_geq_m_hit
+      || |store_b0_geq_u_hit
+      || |store_b0_l_m_hit
+      || |store_b0_l_u_hit
+      || |store_b1_eq_m_hit
+      || |store_b1_eq_u_hit
+      || |store_b1_geq_m_hit
+      || |store_b1_geq_u_hit
+      || |store_b1_l_m_hit
+      || |store_b1_l_u_hit
+      || |store_b2_eq_m_hit
+      || |store_b2_eq_u_hit
+      || |store_b2_geq_m_hit
+      || |store_b2_geq_u_hit
+      || |store_b2_l_m_hit
+      || |store_b2_l_u_hit
+      || |store_b3_eq_m_hit
+      || |store_b3_eq_u_hit
+      || |store_b3_geq_m_hit
+      || |store_b3_geq_u_hit
+      || |store_b3_l_m_hit
+      || |store_b3_l_u_hit
 
-    //etrigger:
-    || |instr_access_fault_m_hit
-    || |instr_access_fault_u_hit
-    || |illegal_instr_m_hit
-    || |illegal_instr_u_hit
-    || |breakpoint_m_hit
-    || |breakpoint_u_hit
-    || |load_access_fault_m_hit
-    || |load_access_fault_u_hit
-    || |store_AMO_access_fault_m_hit
-    || |store_AMO_access_fault_u_hit
-    || |uecall_m_hit
-    || |uecall_u_hit
-    || |mecall_m_hit
-    || |mecall_u_hit
-    || |instr_bus_fault_m_hit
-    || |instr_bus_fault_u_hit
-    || |instr_integrity_fault_m_hit
-    || |instr_integrity_fault_u_hit
+      //etrigger:
+      || |instr_access_fault_m_hit
+      || |instr_access_fault_u_hit
+      || |illegal_instr_m_hit
+      || |illegal_instr_u_hit
+      || |breakpoint_m_hit
+      || |breakpoint_u_hit
+      || |load_access_fault_m_hit
+      || |load_access_fault_u_hit
+      || |store_AMO_access_fault_m_hit
+      || |store_AMO_access_fault_u_hit
+      || |uecall_m_hit
+      || |uecall_u_hit
+      || |mecall_m_hit
+      || |mecall_u_hit
+      || |instr_bus_fault_m_hit
+      || |instr_bus_fault_u_hit
+      || |instr_integrity_fault_m_hit
+      || |instr_integrity_fault_u_hit
 
-  ) else `uvm_error(info_tag, "We have entered debug mode due to triggers but not due to any of the listed reasons.\n");
+    ) else `uvm_error(info_tag, "We have entered debug mode due to triggers but not due to any of the listed reasons.\n");
+  end // if CORE_PARAM_DBG_NUM_TRIGGERS > 0
 
 endmodule : uvmt_cv32e40s_triggers_assert_cov

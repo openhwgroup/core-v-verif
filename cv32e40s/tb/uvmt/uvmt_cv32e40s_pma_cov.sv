@@ -94,10 +94,10 @@ module  uvmt_cv32e40s_pma_cov
   var logic  rvfi_if__is_split_datatrans;
   var logic  rvfi_if__is_tablejump;
   var logic  rvfi_if__is_fencefencei;
-  always_comb  rvfi_if__is_pma_fault       = rvfi_if.is_pma_fault();
-  always_comb  rvfi_if__is_split_datatrans = rvfi_if.is_split_datatrans();
-  always_comb  rvfi_if__is_tablejump       = rvfi_if.is_tablejump();
-  always_comb  rvfi_if__is_fencefencei     = rvfi_if.is_fencefencei();
+  always_comb  rvfi_if__is_pma_fault       = rvfi_if.is_pma_fault;
+  always_comb  rvfi_if__is_split_datatrans = rvfi_if.is_split_datatrans;
+  always_comb  rvfi_if__is_tablejump       = rvfi_if.is_tablejump;
+  always_comb  rvfi_if__is_fencefencei     = rvfi_if.is_fencefencei;
   //TODO:ERROR:silabs-robin Remove if rvfi interface is changed to provide signals.
 
 
@@ -122,7 +122,7 @@ module  uvmt_cv32e40s_pma_cov
     $past(|rvfi_if.rvfi_mem_wmask, , ,@(posedge clk_rvfi));
   always_comb  was_mem_act =
     occured_rvfi_valid  &&
-    $past(rvfi_if.is_mem_act(),    , ,@(posedge clk_rvfi));
+    $past(rvfi_if.is_mem_act,      , ,@(posedge clk_rvfi));
   always_comb  was_rvfi_pmamain_low =
     occured_rvfi_valid  &&
     $past(rvfi_pmamain_lowhigh[1], , ,@(posedge clk_rvfi));
@@ -325,7 +325,7 @@ module  uvmt_cv32e40s_pma_cov
     }
 
     cp_loadstore: coverpoint  rvfi_if.rvfi_mem_wmask
-      iff (rvfi_if.is_mem_act())
+      iff (rvfi_if.is_mem_act)
     {
       bins  load  = {0};
       bins  store = {[1:$]};
@@ -341,13 +341,13 @@ module  uvmt_cv32e40s_pma_cov
     }
 
     cp_firstfail: coverpoint  pma_status_rvfidata_word0lowbyte_i.allow
-      iff (rvfi_if.is_mem_act())
+      iff (rvfi_if.is_mem_act)
     {
       bins  yes = {0};
       bins  no  = {1};
     }
 
-    cp_boundary: coverpoint  rvfi_pmamain_lowhigh  iff (rvfi_if.is_mem_act()) {
+    cp_boundary: coverpoint  rvfi_pmamain_lowhigh  iff (rvfi_if.is_mem_act) {
       bins  main2main = {2'b 11};
       bins  main2io   = {2'b 10};
       bins  io2main   = {2'b 01};

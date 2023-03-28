@@ -145,12 +145,12 @@ function void corev_zcmt_base_stream::generate_jump_table_instr(int entries);
 
   // Insert random end of sequence target instruction (no flow change) as it is
   // unsafe to return to the instruction after the last in sequence
-  instr = riscv_instr::get_rand_instr(.include_category({LOAD, SHIFT, ARITHMETIC, LOGICAL, COMPARE, SYNCH}));
+  instr = riscv_instr::get_rand_instr(.include_category({SHIFT, ARITHMETIC, LOGICAL, COMPARE, SYNCH}));
   `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
-    (category inside {LOAD, SHIFT, ARITHMETIC, LOGICAL, COMPARE, SYNCH});
+    (category inside {SHIFT, ARITHMETIC, LOGICAL, COMPARE, SYNCH});
       // Note: Several of the constraints could be relaxed, but it turns really complicated
-    !(rd inside {cfg.reserved_regs});
-    !((rd == ZERO) && (instr_name inside {ADDI, C_ADDI}));
+    has_rd == 1 -> !(rd inside {cfg.reserved_regs});
+    has_rd == 0 && has_rs1 -> !(rs1 inside {cfg.reserved_regs});
     , "failed to randomize dummy instruction"
   )
   instr.has_label = 1'b1;

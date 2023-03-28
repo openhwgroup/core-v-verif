@@ -52,7 +52,7 @@ module  uvmt_cv32e40s_rvfi_cov
   // Mem access split in two OBI transactions
 
   cov_split_data: cover property (
-    rvfi_if.is_split_datatrans()  &&
+    rvfi_if.is_split_datatrans  &&
     !rvfi_if.rvfi_trap
   );
 
@@ -60,7 +60,7 @@ module  uvmt_cv32e40s_rvfi_cov
   // Pushpop instrs
 
   cov_pushpop: cover property (
-    rvfi_if.is_pushpop()  &&
+    rvfi_if.is_pushpop  &&
     !rvfi_if.rvfi_trap  &&
     ((mem_rmask | mem_wmask) > 'h FF)
   );
@@ -69,7 +69,7 @@ module  uvmt_cv32e40s_rvfi_cov
   // Table Jump
 
   var logic rvfi_if__is_tablejump;
-  always_comb rvfi_if__is_tablejump <= rvfi_if.is_tablejump();
+  always_comb rvfi_if__is_tablejump <= rvfi_if.is_tablejump;
   //TODO:ERROR remove when rvfi_if provides signals
 
   cov_tablejump_notrap: cover property (
