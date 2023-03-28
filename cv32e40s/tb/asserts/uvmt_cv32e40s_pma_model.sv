@@ -56,13 +56,14 @@ module  uvmt_cv32e40s_pma_model
     main    : 1'b 1
   };
 
+  var logic [PMA_MAX_REGIONS-1:0]  match_list;
   function automatic logic  is_match_on(int i);
     logic [33:0]  low  = {PMA_CFG[i].word_addr_low,  2'b 00};
     logic [33:0]  high = {PMA_CFG[i].word_addr_high, 2'b 00};
     return ((low <= addr_i) && (addr_i < high));
   endfunction
   for (genvar i = 0; i < MAX_REGIONS; i++) begin: gen_match_list
-    assign  pma_status_o.match_list[i] = (i < PMA_NUM_REGIONS) && is_match_on(i);
+    always_comb  match_list[i] = (i < PMA_NUM_REGIONS) && is_match_on(i);
   end
 
   var pma_cfg_t    cfg_matched;
@@ -81,8 +82,6 @@ module  uvmt_cv32e40s_pma_model
       end
     end
   end
-  assign pma_status_o.have_match = have_match;
-  assign pma_status_o.match_idx  = match_idx;
 
 
   wire logic  accesses_dmregion;
@@ -126,6 +125,9 @@ module  uvmt_cv32e40s_pma_model
   assign  pma_status_o.override_dm       = override_dm;
   assign  pma_status_o.accesses_dmregion = accesses_dmregion;
   assign  pma_status_o.accesses_jvt      = accesses_jvt;
+  assign  pma_status_o.match_list        = match_list;
+  assign  pma_status_o.have_match        = have_match;
+  assign  pma_status_o.match_idx         = match_idx;
 
 
 endmodule : uvmt_cv32e40s_pma_model
