@@ -648,7 +648,7 @@ int test9() {
 
     active_test = 9;
 
-    __asm__ volatile("csrr %1, mtvec" : "=r" (save_mtvec));
+    __asm__ volatile("csrr %0, mtvec" : "=r" (save_mtvec));
     __asm__ volatile("csrw mtvec, %0" : : "r" ((uint32_t) alt_direct_ecall_table)); // Leave mode at 0
 
     mm_ram_assert_irq(0, 0);
