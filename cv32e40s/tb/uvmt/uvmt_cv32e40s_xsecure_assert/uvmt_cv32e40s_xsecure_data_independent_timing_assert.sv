@@ -23,7 +23,6 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
     parameter int       SECURE   = 1
   )
   (
-   uvmt_cv32e40s_xsecure_if xsecure_if,
    uvma_rvfi_instr_if rvfi_if,
    uvma_rvfi_csr_if rvfi_cpuctrl,
    input rst_ni,

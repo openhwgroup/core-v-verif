@@ -47,7 +47,7 @@ _____________  |  _____________  |  _____________  |
 
 module uvmt_cv32e40s_sl_req_attribute_fifo
   #(
-    parameter int XLEN = 0
+    parameter int XLEN = 1
   )
   (
     input logic rst_ni,
@@ -67,7 +67,7 @@ module uvmt_cv32e40s_sl_req_attribute_fifo
 
   logic [2:0][XLEN-1:0] fifo;
   logic [1:0] pointer;
-  logic [XLEN-1:0] ZERO = '0;
+  logic [XLEN-1:0] ZERO;
 
   assign is_req_attribute_in_response_o = rvalid ? fifo[2] : '0;
 
@@ -75,6 +75,7 @@ module uvmt_cv32e40s_sl_req_attribute_fifo
     if(!rst_ni) begin
       fifo <= 3'b000;
       pointer = 2;
+      ZERO = '0;
     end else begin
       //TODO: endret, så sjekk om andre ting fortsatt passer eller ikke
       //This logic is demonstrated in time t1, t2 and t3 in the figure above

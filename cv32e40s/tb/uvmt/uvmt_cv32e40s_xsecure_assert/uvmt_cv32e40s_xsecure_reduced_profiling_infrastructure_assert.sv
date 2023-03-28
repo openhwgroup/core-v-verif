@@ -27,7 +27,7 @@ module uvmt_cv32e40s_xsecure_reduced_profiling_infrastructure_assert
     input clk_i,
 
     //CSRs:
-    input logic [31:0] mhpmevent,
+    input logic [31:0][31:0] mhpmevent,
     input logic [31:0][63:0] mhpmcounter,
     input logic [31:0] mcountinhibit
 

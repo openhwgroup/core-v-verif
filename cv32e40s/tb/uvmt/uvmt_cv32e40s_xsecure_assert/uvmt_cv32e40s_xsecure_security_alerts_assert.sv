@@ -35,7 +35,7 @@ module uvmt_cv32e40s_xsecure_security_alerts_assert
     //wb:
     input wb_valid,
     input exception_in_wb,
-    input [5:0] exception_cause_wb,
+    input [10:0] exception_cause_wb,
 
     //dummy and hint:
     input logic dummy_en,
@@ -72,11 +72,11 @@ module uvmt_cv32e40s_xsecure_security_alerts_assert
   // Local parameters:
   localparam NO_LOCKUP_ERRORS = 3'b000;
 
-  localparam INSTRUCTION_ACCESS_FAULT = 6'd1;
-  localparam ILLEGAL_INSTRUCTION_FAULT = 6'd2;
-  localparam LOAD_ACCESS_FAULT = 6'd5;
-  localparam STORE_AMO_ACCESS_FAULT = 6'd7;
-  localparam INSTRUCTION_BUS_FAULT = 6'd24;
+  localparam INSTRUCTION_ACCESS_FAULT = 11'd1;
+  localparam ILLEGAL_INSTRUCTION_FAULT = 11'd2;
+  localparam LOAD_ACCESS_FAULT = 11'd5;
+  localparam STORE_AMO_ACCESS_FAULT = 11'd7;
+  localparam INSTRUCTION_BUS_FAULT = 11'd24;
 
   function logic detect_lockup_error;
     input logic dummy_en, hint_en, clock_en, seed_we;

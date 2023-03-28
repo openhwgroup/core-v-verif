@@ -635,10 +635,12 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   assign alb_rptr1_integrity_err = ((alb_resp_q[alb_rptr1].bus_resp.rchk != alb_rptr1_rchk_calculated) && (alb_resp_q[alb_rptr1].mpu_status == MPU_OK) && alb_resp_q[alb_rptr1].bus_resp.integrity) || alb_resp_q[alb_rptr1].bus_resp.integrity_err;
   assign alb_rptr2_integrity_err = ((alb_resp_q[alb_rptr2].bus_resp.rchk != alb_rptr2_rchk_calculated) && (alb_resp_q[alb_rptr2].mpu_status == MPU_OK) && alb_resp_q[alb_rptr2].bus_resp.integrity) || alb_resp_q[alb_rptr2].bus_resp.integrity_err;
 
-  logic if_instr_aligned = if_instr_pc[1:0] == '0;
+  logic if_instr_aligned;
+  assign if_instr_aligned = (if_instr_pc[1:0] == '0);
+
   logic if_integrity_err_calculated;
 
-  always_comb begin
+  always_latch begin
     if(!alb_valid[alb_rptr1]) begin
       if_integrity_err_calculated = alb_input_integrity_err;
     end else if (alb_valid[alb_rptr1] && alb_valid[alb_rptr2]) begin
@@ -682,10 +684,10 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     obi_data_rvalid
     && data_integrity_err
     ##1 $rose(nmip)
-    |=>
-    nmip[*0:$]
-    ##1 !nmip
-    && (mcause_exception_code == LSU_LOAD_INTEGRITY_FAULT || mcause_exception_code == LSU_STORE_INTEGRITY_FAULT)
+    ##1 nmip[*0:$]
+    ##1 !nmip //the nmi is handeled
+    |->
+    (mcause_exception_code == LSU_LOAD_INTEGRITY_FAULT || mcause_exception_code == LSU_STORE_INTEGRITY_FAULT)
     && alert_major
 
   ) else `uvm_error(info_tag_glitch, "The NMI caused by an associated parity/checksum error does not have exception code 1027 or 1026.\n");

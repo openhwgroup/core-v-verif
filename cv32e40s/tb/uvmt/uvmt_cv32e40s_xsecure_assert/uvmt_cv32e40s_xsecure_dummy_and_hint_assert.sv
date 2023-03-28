@@ -38,9 +38,9 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     input logic rnddummy_enabled,
     input logic rndhint_enabled,
     input logic [3:0] dummy_freq,
-    input logic [63:0] mhpmcounter,
+    input logic [31:0][63:0] mhpmcounter,
     input logic [31:0] mcountinhibit,
-    input logic [31:0] csr_waddr,
+    input logic [11:0] csr_waddr,
 
     //LFSR:
     input logic lfsr0_seed_we,
@@ -55,6 +55,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     input logic [31:0] lfsr0_n,
     input logic [31:0] lfsr1_n,
     input logic [31:0] lfsr2_n,
+    input logic lfsr0_clk_en,
     input logic lfsr1_clk_en,
     input logic lfsr2_clk_en,
 
@@ -94,10 +95,10 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
   );
 
-  logic bltu_increment;
+  logic [12:0] bltu_increment;
   assign bltu_increment = ({id_instr[31], id_instr[7], id_instr[30:25], id_instr[11:8], 1'b0});
 
-  logic rvfi_c_slli_shamt;
+  logic [5:0] rvfi_c_slli_shamt;
   assign rvfi_c_slli_shamt = {rvfi_i.rvfi_insn[12], rvfi_i.rvfi_insn[6:2]};
 
   // Default settings:
@@ -443,7 +444,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
 
 
-  //Verify that the LFSR registers are updated if a dummy or hint instruction is executed, TODO:???
+  //Verify that the LFSR registers are updated if a dummy or hint instruction is executed
 
   property p_dummy_hint_update_lfsr0(if_dummy_or_hint, lfsr, lfsr_n, write_lfsr_en, write_lfsr_value);
 
@@ -454,9 +455,8 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     |=>
 
-    (lfsr == $past(lfsr_n)) //the lfsr is updated
-    || (lfsr == CORE_PARAM_LFSR0_CFG) //the lfsr is set to default value
-    || ($past(write_lfsr_en) && $past(lfsr) == write_lfsr_value); //The lfsr is written to, TODO: em??
+    (lfsr == $past(lfsr_n))
+    || (lfsr == CORE_PARAM_LFSR0_CFG);
 
   endproperty
 
@@ -631,7 +631,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
   //Verify that hint instructions update minstret
 
-  a_xsecure_hint_instructions_updates_minstret: assert property ( //TODO:
+  a_xsecure_hint_instructions_updates_minstret: assert property (
 
     !rvfi_mcountinhibit_if.rvfi_csr_rdata[MINSTRET] //minstret was operative (not inhibited)
     && (!rvfi_dcsr_if.rvfi_csr_rdata[STOPCOUNT] || !rvfi_if.rvfi_dbg_mode) //the minstret counter was not stopped
@@ -727,16 +727,15 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   sequence seq_xsecure_dummy_hint_instr_LFSRx_lockup_detection(logic get_new_lfsr_value, logic seed_we, logic [31:0] seed_w_value, logic [31:0] lfsr_n);
 
     (rnddummy_enabled || rndhint_enabled)
-    throughout
-    (get_new_lfsr_value
+    && get_new_lfsr_value
     && ((!seed_we && lfsr_n == '0)
-    || (seed_we && seed_w_value == '0)));
+    || (seed_we && seed_w_value == '0));
   endsequence
 
 
   a_xsecure_dummy_hint_instr_LFSR0_lockup_reset: assert property (
 	  seq_xsecure_dummy_hint_instr_LFSRx_lockup_detection(
-      wb_hint, //TODO??? hva med wb_dummy??
+      lfsr0_clk_en,
       lfsr0_seed_we,
       lfsr0_seed,
       lfsr0_n)
