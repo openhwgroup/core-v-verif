@@ -224,9 +224,6 @@ module  uvmt_cv32e40s_pma_assert
   ) else `uvm_error(info_tag, "pma integrity unexpected value");
 
 
-//TODO:WARNING rvfi trap fault or higher
-
-
 endmodule : uvmt_cv32e40s_pma_assert
 
 

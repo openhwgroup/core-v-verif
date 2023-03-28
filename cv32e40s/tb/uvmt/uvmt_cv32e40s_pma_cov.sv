@@ -97,23 +97,22 @@ module  uvmt_cv32e40s_pma_cov
 
   // Helper Logic - "Past" Values
 
-  var logic  was_pma_fault;
+  var logic  was_rvfi_pma_fault;
   var logic  was_rvfi_mem_wmask;
-  var logic  was_mem_act;
+  var logic  was_rvfi_mem_act;
   var logic  was_rvfi_pmamain_low;
-  always_comb  was_pma_fault =
+  always_comb  was_rvfi_pma_fault =
     occured_rvfi_valid  &&
     $past(rvfi_if.is_pma_fault,    , ,@(posedge clk_rvfi));
   always_comb  was_rvfi_mem_wmask =
     occured_rvfi_valid  &&
     $past(|rvfi_if.rvfi_mem_wmask, , ,@(posedge clk_rvfi));
-  always_comb  was_mem_act =
+  always_comb  was_rvfi_mem_act =
     occured_rvfi_valid  &&
     $past(rvfi_if.is_mem_act,      , ,@(posedge clk_rvfi));
   always_comb  was_rvfi_pmamain_low =
     occured_rvfi_valid  &&
     $past(rvfi_pmamain_lowhigh[1], , ,@(posedge clk_rvfi));
-  //TODO rename "was_pma_fault" -> "was_rvfi_pma_fault" etc
 
 
   // MPU Coverage Definition
@@ -305,7 +304,7 @@ module  uvmt_cv32e40s_pma_cov
       bins  no    = {0};
     }
 
-    cp_waspmafault: coverpoint  was_pma_fault  iff (occured_rvfi_valid) {
+    cp_waspmafault: coverpoint  was_rvfi_pma_fault  iff (occured_rvfi_valid) {
       bins  fault = {1};
       bins  no    = {0};
     }
@@ -319,7 +318,7 @@ module  uvmt_cv32e40s_pma_cov
     }
 
     cp_wasloadstore: coverpoint  was_rvfi_mem_wmask
-      iff (was_mem_act && occured_rvfi_valid)
+      iff (was_rvfi_mem_act && occured_rvfi_valid)
     {
       bins  load  = {0};
       bins  store = {[1:$]};
@@ -341,7 +340,7 @@ module  uvmt_cv32e40s_pma_cov
     }
 
     cp_wasmain: coverpoint  was_rvfi_pmamain_low
-      iff (was_mem_act && occured_rvfi_valid)
+      iff (was_rvfi_mem_act && occured_rvfi_valid)
     {
       bins  main = {1};
       bins  io   = {0};
