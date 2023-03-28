@@ -88,19 +88,6 @@ module  uvmt_cv32e40s_pma_cov
   //TODO:INFO:silabs-robin Could move to "rvfi_if"?
 
 
-  // Helper Logic - Function Waveform Visibility
-
-  var logic  rvfi_if__is_pma_fault;
-  var logic  rvfi_if__is_split_datatrans;
-  var logic  rvfi_if__is_tablejump;
-  var logic  rvfi_if__is_fencefencei;
-  always_comb  rvfi_if__is_pma_fault       = rvfi_if.is_pma_fault;
-  always_comb  rvfi_if__is_split_datatrans = rvfi_if.is_split_datatrans;
-  always_comb  rvfi_if__is_tablejump       = rvfi_if.is_tablejump;
-  always_comb  rvfi_if__is_fencefencei     = rvfi_if.is_fencefencei;
-  //TODO:ERROR:silabs-robin Remove if rvfi interface is changed to provide signals.
-
-
   // Helper Logic - Split Transactions Main vs I/O
 
   wire logic [1:0]  rvfi_pmamain_lowhigh;
@@ -116,7 +103,7 @@ module  uvmt_cv32e40s_pma_cov
   var logic  was_rvfi_pmamain_low;
   always_comb  was_pma_fault =
     occured_rvfi_valid  &&
-    $past(rvfi_if__is_pma_fault,   , ,@(posedge clk_rvfi));
+    $past(rvfi_if.is_pma_fault,    , ,@(posedge clk_rvfi));
   always_comb  was_rvfi_mem_wmask =
     occured_rvfi_valid  &&
     $past(|rvfi_if.rvfi_mem_wmask, , ,@(posedge clk_rvfi));
@@ -287,7 +274,6 @@ module  uvmt_cv32e40s_pma_cov
         binsof(cp_allow.disallow) && binsof(cp_cacheable.cacheable);
     }
     x_allow_integrity:  cross  cp_allow, cp_integrity {
-      //TODO:ERROR:silabs-robin Check other configs. Is useless?
       illegal_bins  disallow_integrity =
         binsof(cp_allow.disallow) && binsof(cp_integrity.integrity);
     }
@@ -307,14 +293,14 @@ module  uvmt_cv32e40s_pma_cov
     option.per_instance = 1;
     option.detect_overlap = 1;
 
-    cp_aligned: coverpoint  rvfi_if__is_split_datatrans
+    cp_aligned: coverpoint  rvfi_if.is_split_datatrans
       iff (rvfi_if.rvfi_valid)
     {
       bins  misaligned = {1};
       bins  aligned    = {0};
     }
 
-    cp_pmafault: coverpoint  rvfi_if__is_pma_fault  iff (rvfi_if.rvfi_valid) {
+    cp_pmafault: coverpoint  rvfi_if.is_pma_fault  iff (rvfi_if.rvfi_valid) {
       bins  fault = {1};
       bins  no    = {0};
     }
@@ -361,12 +347,12 @@ module  uvmt_cv32e40s_pma_cov
       bins  io   = {0};
     }
 
-    cp_tablejump: coverpoint  rvfi_if__is_tablejump  iff (rvfi_if.rvfi_valid) {
+    cp_tablejump: coverpoint  rvfi_if.is_tablejump  iff (rvfi_if.rvfi_valid) {
       bins jump = {1};
       bins no   = {0};
     }
 
-    cp_fence: coverpoint  rvfi_if__is_fencefencei  iff (rvfi_if.rvfi_valid) {
+    cp_fence: coverpoint  rvfi_if.is_fencefencei  iff (rvfi_if.rvfi_valid) {
       bins fencefencei = {1};
       bins no          = {0};
     }
