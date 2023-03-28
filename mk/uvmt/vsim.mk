@@ -123,11 +123,14 @@ VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 
 # Add the ISS to compilation
-VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_RVFI"
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_CORE_LOG"
 VLOG_FLAGS += "+define+UVM"
+ifeq ($(call IS_YES,$(USE_ISS)),YES)
+VLOG_FLAGS += +define+USE_ISS
+VLOG_FLAGS += +define+USE_IMPERASDV
+endif
 
 ###############################################################################
 # VOPT (Optimization)
@@ -157,9 +160,9 @@ VSIM_SCRIPT_DIR	   = $(abspath $(MAKE_PATH)/../tools/vsim)
 
 VSIM_UVM_ARGS      = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 
-VSIM_FLAGS += -sv_lib $(basename $(OVP_MODEL_DPI))
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 VSIM_FLAGS += +USE_ISS
+VSIM_FLAGS += +USE_IMPERASDV
 else
 VSIM_FLAGS += +DISABLE_OVPSIM
 endif
@@ -171,6 +174,7 @@ VSIM_FLAGS += +DISABLE_CSR_CHECK=$(TEST_DISABLE_CSR_CHECK)
 endif
 
 VSIM_FLAGS += -sv_lib $(basename $(DPI_DASM_LIB))
+VSIM_FLAGS += -sv_lib $(basename $(IMPERAS_DV_MODEL))
 VSIM_FLAGS += -sv_lib $(basename $(abspath $(SVLIB_LIB)))
 
 # Skip compile if requested (COMP=NO)
@@ -427,7 +431,6 @@ compliance: $(VSIM_COMPLIANCE_PREREQ) $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 	cd $(COMPLIANCE_RUN_DIR) && \
 		$(VMAP) work $(SIM_CFG_RESULTS)/work
 	cd $(COMPLIANCE_RUN_DIR) && \
-	export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic && \
 		$(VSIM) \
 			-work $(VWORK) \
 			$(VSIM_FLAGS) \
@@ -460,6 +463,7 @@ gen_ovpsim_ic:
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
 		echo "$(CFG_OVPSIM)" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
 	fi
+	export IMPERAS_TOOLS=ovpsim.ic
 
 # Target to create work directory in $(VSIM_RESULTS)/
 lib: mk_vsim_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(TBSRC_PKG) $(TBSRC)
