@@ -71,8 +71,14 @@
       {
         "name":     "uvmt_cv32e40s",
         "image":    "gcr.io/openhwgroup-metrics-project/openhwgroup-toolchain:20220328.14.0-dtc.66",
-        "cmd":      "cd cv32e40s/sim/uvmt; make corev-dv CV_CORE=cv32e40s SIMULATOR=dsim DSIM_WORK=/mux-flow/build/repo/dsim_work SIM_RESULTS=/mux-flow/build/results; make comp CV_CORE=cv32e40s SIMULATOR=dsim DSIM_WORK=/mux-flow/build/repo/dsim_work SIM_RESULTS=/mux-flow/build/results",
-        "wavesCmd": "cd cv32e40s/sim/uvmt; make corev-dv CV_CORE=cv32e40s SIMULATOR=dsim DSIM_WORK=/mux-flow/build/repo/dsim_work SIM_RESULTS=/mux-flow/build/results; make comp CV_CORE=cv32e40s SIMULATOR=dsim DSIM_WORK=/mux-flow/build/repo/dsim_work SIM_RESULTS=/mux-flow/build/results WAVES=1"
+        "cmd":      "cd cv32e40s/sim/uvmt; make corev-dv CV_CORE=cv32e40s SIMULATOR=dsim CFG=default DSIM_WORK=/mux-flow/build/repo/dsim_work SIM_RESULTS=/mux-flow/build/results; make comp CV_CORE=cv32e40s SIMULATOR=dsim CFG=default DSIM_WORK=/mux-flow/build/repo/dsim_work SIM_RESULTS=/mux-flow/build/results",
+        "wavesCmd": "cd cv32e40s/sim/uvmt; make corev-dv CV_CORE=cv32e40s SIMULATOR=dsim CFG=default DSIM_WORK=/mux-flow/build/repo/dsim_work SIM_RESULTS=/mux-flow/build/results; make comp CV_CORE=cv32e40s SIMULATOR=dsim CFG=default DSIM_WORK=/mux-flow/build/repo/dsim_work SIM_RESULTS=/mux-flow/build/results WAVES=1"
+      },
+      {
+        "name":     "uvmt_cv32e40s_clic",
+        "image":    "gcr.io/openhwgroup-metrics-project/openhwgroup-toolchain:20220328.14.0-dtc.66",
+        "cmd":      "cd cv32e40s/sim/uvmt; make corev-dv CV_CORE=cv32e40s SIMULATOR=dsim CFG=clic_default DSIM_WORK=/mux-flow/build/repo/dsim_work SIM_RESULTS=/mux-flow/build/results; make comp CV_CORE=cv32e40s SIMULATOR=dsim CFG=clic_default DSIM_WORK=/mux-flow/build/repo/dsim_work SIM_RESULTS=/mux-flow/build/results",
+        "wavesCmd": "cd cv32e40s/sim/uvmt; make corev-dv CV_CORE=cv32e40s SIMULATOR=dsim CFG=clic_default DSIM_WORK=/mux-flow/build/repo/dsim_work SIM_RESULTS=/mux-flow/build/results; make comp CV_CORE=cv32e40s SIMULATOR=dsim CFG=clic_default DSIM_WORK=/mux-flow/build/repo/dsim_work SIM_RESULTS=/mux-flow/build/results WAVES=1"
       },
       {
         "name":     "uvmt_cv32e40s_num_mhpmcounter_29",
@@ -307,7 +313,7 @@
       "verbose":     "true",
       "tests": {
         "resultsDir": "/mux-flow/build/results",
-        "builds":    ["uvmt_cv32e40s", "uvmt_cv32e40s_pma_1", "uvmt_cv32e40s_pma_2" ],
+        "builds":    ["uvmt_cv32e40s", "uvmt_cv32e40s_clic", "uvmt_cv32e40s_pma_1", "uvmt_cv32e40s_pma_2" ],
         "listCmd":   "/mux-flow/build/repo/bin/cv_regress --core=cv32e40s --file=cv32e40s_ci_check --metrics --outfile=/mux-flow/build/repo/cv32e40s_ci_check.json",
         "listFile":  "/mux-flow/build/repo/cv32e40s_ci_check.json"
       }

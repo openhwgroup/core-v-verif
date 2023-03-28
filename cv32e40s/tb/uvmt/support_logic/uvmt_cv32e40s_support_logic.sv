@@ -100,7 +100,7 @@ module uvmt_cv32e40s_support_logic
               end else begin
                   first_debug_ins_flag <= 0;
               end
-              if(rvfi.is_dret() && !rvfi.rvfi_trap.trap) begin
+              if(rvfi.is_dret && !rvfi.rvfi_trap.trap) begin
                   ins_was_dret <= 1;
               end
           end
