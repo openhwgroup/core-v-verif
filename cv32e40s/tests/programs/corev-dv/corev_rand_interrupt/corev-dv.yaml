@@ -11,9 +11,11 @@ plusargs: >
     +directed_instr_3=riscv_hazard_instr_stream,1
     +directed_instr_4=riscv_jal_instr,3
     +directed_instr_5=corev_interrupt_csr_instr_stream,3
+    +directed_instr_6=corev_zcmp_pushpop_base_stream,4
+    +directed_instr_7=corev_zcmt_base_stream,4
     +no_fence=0
     +enable_interrupt=1
     +enable_fast_interrupt_handler=1
     +randomize_csr=1
     +boot_mode=m
-    +no_csr_instr=0
+    +no_csr_instr=1

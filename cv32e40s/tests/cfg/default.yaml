@@ -1,93 +1,14 @@
 name: default
 description: Default configuration for CV32E40S simulations
-compile_flags:
+compile_flags: >
     +define+ZBA_ZBB_ZBC_ZBS
 ovpsim: >
     --override cpu/envcfg_mask=0x0
-    --override cpu/PMP_registers=64
-    --override cpu/PMP_undefined=T
     --override cpu/PMP_initialparams=T
     --override cpu/PMP_maskparams=T
-    --override cpu/pmpaddr0=0
-    --override cpu/pmpaddr1=0
-    --override cpu/pmpaddr2=0
-    --override cpu/pmpaddr3=0
-    --override cpu/pmpaddr4=0
-    --override cpu/pmpaddr5=0
-    --override cpu/pmpaddr6=0
-    --override cpu/pmpaddr7=0
-    --override cpu/pmpaddr8=0
-    --override cpu/pmpaddr9=0
-    --override cpu/pmpaddr10=0
-    --override cpu/pmpaddr11=0
-    --override cpu/pmpaddr12=0
-    --override cpu/pmpaddr13=0
-    --override cpu/pmpaddr14=0
-    --override cpu/pmpaddr15=0
-    --override cpu/pmpaddr16=0
-    --override cpu/pmpaddr17=0
-    --override cpu/pmpaddr18=0
-    --override cpu/pmpaddr19=0
-    --override cpu/pmpaddr20=0
-    --override cpu/pmpaddr21=0
-    --override cpu/pmpaddr22=0
-    --override cpu/pmpaddr23=0
-    --override cpu/pmpaddr24=0
-    --override cpu/pmpaddr25=0
-    --override cpu/pmpaddr26=0
-    --override cpu/pmpaddr27=0
-    --override cpu/pmpaddr28=0
-    --override cpu/pmpaddr29=0
-    --override cpu/pmpaddr30=0
-    --override cpu/pmpaddr31=0
-    --override cpu/pmpaddr32=0
-    --override cpu/pmpaddr33=0
-    --override cpu/pmpaddr34=0
-    --override cpu/pmpaddr35=0
-    --override cpu/pmpaddr36=0
-    --override cpu/pmpaddr37=0
-    --override cpu/pmpaddr38=0
-    --override cpu/pmpaddr39=0
-    --override cpu/pmpaddr40=0
-    --override cpu/pmpaddr41=0
-    --override cpu/pmpaddr42=0
-    --override cpu/pmpaddr43=0
-    --override cpu/pmpaddr44=0
-    --override cpu/pmpaddr45=0
-    --override cpu/pmpaddr46=0
-    --override cpu/pmpaddr47=0
-    --override cpu/pmpaddr48=0
-    --override cpu/pmpaddr49=0
-    --override cpu/pmpaddr50=0
-    --override cpu/pmpaddr51=0
-    --override cpu/pmpaddr52=0
-    --override cpu/pmpaddr53=0
-    --override cpu/pmpaddr54=0
-    --override cpu/pmpaddr55=0
-    --override cpu/pmpaddr56=0
-    --override cpu/pmpaddr57=0
-    --override cpu/pmpaddr58=0
-    --override cpu/pmpaddr59=0
-    --override cpu/pmpaddr60=0
-    --override cpu/pmpaddr61=0
-    --override cpu/pmpaddr62=0
-    --override cpu/pmpaddr63=0
-    --override cpu/pmpcfg0=0
-    --override cpu/pmpcfg1=0
-    --override cpu/pmpcfg2=0
-    --override cpu/pmpcfg3=0
-    --override cpu/pmpcfg4=0
-    --override cpu/pmpcfg5=0
-    --override cpu/pmpcfg6=0
-    --override cpu/pmpcfg7=0
-    --override cpu/pmpcfg8=0
-    --override cpu/pmpcfg9=0
-    --override cpu/pmpcfg10=0
-    --override cpu/pmpcfg11=0
-    --override cpu/pmpcfg12=0
-    --override cpu/pmpcfg13=0
-    --override cpu/pmpcfg14=0
-    --override cpu/pmpcfg15=0
+    --override cpu/hpmcounter_undefined=T
+    --override cpu/PMP_registers=64
+    --override cpu/PMP_grain=0
     --override cpu/mask_pmpaddr0=0x00000000
     --override cpu/mask_pmpaddr1=0x00000000
     --override cpu/mask_pmpaddr2=0x00000000
@@ -152,23 +73,8 @@ ovpsim: >
     --override cpu/mask_pmpaddr61=0x00000000
     --override cpu/mask_pmpaddr62=0x00000000
     --override cpu/mask_pmpaddr63=0x00000000
-    --override cpu/mask_pmpcfg0=0x00000000
-    --override cpu/mask_pmpcfg1=0x00000000
-    --override cpu/mask_pmpcfg2=0x00000000
-    --override cpu/mask_pmpcfg3=0x00000000
-    --override cpu/mask_pmpcfg4=0x00000000
-    --override cpu/mask_pmpcfg5=0x00000000
-    --override cpu/mask_pmpcfg6=0x00000000
-    --override cpu/mask_pmpcfg7=0x00000000
-    --override cpu/mask_pmpcfg8=0x00000000
-    --override cpu/mask_pmpcfg9=0x00000000
-    --override cpu/mask_pmpcfg10=0x00000000
-    --override cpu/mask_pmpcfg11=0x00000000
-    --override cpu/mask_pmpcfg12=0x00000000
-    --override cpu/mask_pmpcfg13=0x00000000
-    --override cpu/mask_pmpcfg14=0x00000000
-    --override cpu/mask_pmpcfg15=0x00000000
     #--showoverrides
+    #--trace
     #--trace --tracechange --traceshowicount --monitornets
 cflags: >
 plusargs: >
@@ -176,4 +82,14 @@ plusargs: >
     +enable_zbb_extension=1
     +enable_zbc_extension=1
     +enable_zbs_extension=1
-cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zicsr_zca_zifencei
+    +fix_sp=1
+    +fix_ra=1
+    +enable_zca_extension=1
+    +enable_zcb_extension=1
+    +enable_zcmt_extension=1
+    +enable_zcmp_extension=1
+    #+enable_write_pmp_csr=1
+    #+pmp_randomize=0
+    #+pmp_num_regions=64
+    #+pmp_granularity=0
+cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zicsr_zca_zcb_zcmp_zcmt_zifencei

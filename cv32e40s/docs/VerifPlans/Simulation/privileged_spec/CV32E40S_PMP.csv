@@ -1,0 +1,542 @@
+Requirement Location,Feature,Sub Feature,Feature Description,Verification Goal,Pass/Fail Criteria,Test Type,Coverage Method,High Priority?,Link to Coverage,Comment
+,Comments,SmepmpOverrule,"The ""smepmp"" spec features can overrule the ""privspec"" (e.g. for locking). Both specs are included here, so be mindful that checking of certain vplan items could be conditional.",N/A,N/A,N/A,N/A,,N/A,
+,,FunctionalCoverage,"Functional coverage is encouraged to be creative in capturing a broad set of possible state, and evaluate it towards the checkers, to catch aspects of pmp functionality that this vplan might have overlooked.",N/A,N/A,N/A,N/A,,N/A,
+,,ImplementationChanges,"If test implementation reveals new knowledge that contradicts or augments this vplan, then the vplan should be updated.",N/A,N/A,N/A,N/A,,N/A,
+,,TimeAllowance,"Some verification goals in this plan has a ""base level"" of checking plus some optional tweaks that might be tried. It is up to the testing implementation how to prioritize and potentially skip the extras, according to what time allows.",N/A,N/A,N/A,N/A,,N/A,
+privspec,General,Configs,"The pmp must be tested in a wide range of configurations. That includes testing on both instruction-side and data-side, and it includes testing overlapping regions, non-overlaping, no regions, differing settings for overlapping regions, M-mode only, U-mode only, both M-mode and U-mode, etc, etc. Use functional coverage with plenty of crosses.","Run with different configs to test parameters in low/mid/high ranges and in combination with the other parameters, instantiate checking on both instruction-side and data-side, write coverage to see all relevant region overlap combinations and to see an exhaustive combination of block-level input combinations and functional-level states.",Other,"ENV capability, not specific test",Functional Coverage,,COV: ???,TODO missing cover
+,,Smepmp,"Given 1) backwards-compatible reset values, and 2) no change in ""mseccfg"", then C) the PMP should be fully compatible with the privspec.","For all privspec-derived PMP assertions, check that they must hold as long as the two preconditions hold (i.e. must not be excusable/overridable by smepmp features).",Other,Other,N/A,,N/A,
+,,UmodeAlways,"""PMP checks are applied to all accesses whose effective privilege mode is S or U, including instruction fetches in S and U mode, data accesses in S and U mode when the MPRV bit in the mstatus register is clear, and data accesses in any mode when the MPRV bit in mstatus is set and the MPP field in mstatus contains S or U.""
+
+Note: None of those scenarios should let an access bypass the pmp.","Set up the system to match each point in the listing, ensure that the pmp's decision matches all modelled expectations.
+
+Note: Also cover when none of the listed preconditions are active and the pmp's decision can disagree with the modelled expectations.",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_*
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_*
+
+COV: ???","(Same as for ""MmodeDeny"")"
+,,DefaultNone,"""PMP can grant permissions to S and U modes, which by default have none""","Check that, out of reset, given no extraordinary reset values, and given no change to the pmp csrs, then U-mode has no access permissions.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,,"A: ???
+
+DTC: cv32e40s/tests/programs/custom/pmp/",TODO missing assert
+,,DefaultFull,"""can revoke permissions from M-mode, which
+by default has full permissions""","Check that, out of reset, given no extraordinary reset values, and given no change to the pmp csrs, then M-mode has full access permissions.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,,"A: ???
+
+DTC: cv32e40s/tests/programs/custom/pmp/",TODO missing assert
+,Csrs,ResetRegisters,"""Writable PMP registers’ A and L fields are set to 0, unless the platform mandates a different reset value for some PMP registers’ A and L fields.""","Read the A and L values right after reset, ensure that the default reset values are 0.
+
+Note: Should also be visible on rvfi without specifically using csr instructions.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,,"A: ???
+
+DTC: cv32e40s/tests/programs/custom/pmp/",TODO missing assert
+,,Warl,"""All PMP CSR fields are WARL and may be hardwired to zero"".
+
+Note: A field shall also not change its value when an attempt is made to write an illegal value to it. (XWR is one field.)","Try writing any values to the registers and read values out of them, ensure that neither reads nor writes causes exceptions, and ensure that all read values are legal or otherwise as expected and that illegally written fields don't change.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfg_expected[*].a_cfg_expected
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfgwdata_legal[*].a_cfgwdata_legal
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfgrdata_expected[*].a_cfgrdata_expected
+
+COV: ???",TODO missing cover
+,,MmodeOnly,"""PMP CSRs are only accessible to M-mode.""","Try to access any of the pmp CSRs from U-mode, ensure that it always gives ""illegal instruction exception"" and that the CSRs are not updated.
+
+Note: M-mode accesses are covered by AlwaysAccessible below.",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_csrs_mmode_only
+
+COV: ???
+
+DTC: cv32e40s/tests/programs/custom/pmp/","TODO missing cover (combine with ""Warl"" above)"
+,,Addr34bit,"""Each PMP address register encodes bits 33–2 of a 34-bit physical address for RV32""","Ensure that when the pmpaddr MSBs are set, then no NAPOT accesses matches. Cover that all bits have been matched against (""toggle cross""). Ensure that there are no attempted accesses to MSBs that the core should not be able to use.",Assertion Check,Constrained-Random,Functional Coverage,,"A: ???
+
+COV: ???","TODO missing assert
+
+TODO missing cover"
+,,AddrImplemented,"""Not all physical address bits may be implemented, and so the pmpaddr registers are WARL.""",Cover (toggle) that all bits can be both written and set. (UnusedZero below covers the WARL(0x0) case.),Other,Constrained-Random,Functional Coverage,High Priority,COV: ???,TODO missing cover
+,AddressMatching,MatchDisabled,"""When A=0, this PMP entry is disabled and matches no addresses""
+When a cfg is set to off but its address(es) (interpreted as napot/tor) is the only rule that matches an attempted access, then it still does not count as a match.","Have a region's address(es) set up as tor and napot (separate runs), have all other regions not include the target address, have the target region's rule be OFF, make an access within that range, ensure that the outcome is the same as for when an access is outside of all address ranges.
+
+Note: For this and several other items, functional coverage is necessary because the checking doesn't necessarily have the above scenario in its antecedent.
+
+Coverage: Capture the above scenario, minus the checking.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???",TODO missing cover
+,,NapotMatching,"""NAPOT ranges make use of the low-order bits of the associated address register to encode the size of the range [""yyyy...yy01"" etc]""
+
+Note: The napot address matching modes match on addresses that are equal to the requested access when masked to the granularity size.","Configure napot rules of different sizes, try accesses within and outside the regions, ensure that the outcomes corresponds to the designated sizes.
+
+Note: Includes NAPOT and NA4.
+
+Note: Try also max and min.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_na4is4byte.a_na4_is_4byte
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_cg_common.cover_item_covergroup_cg_internals_common_inst_cg_int_coverpoint_cp_napot_encoding_bin_auto[*]
+dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_cg_common.cover_item_covergroup_cg_internals_common_inst_cg_int_coverpoint_cp_napot_encoding_disallowed_bin_auto[*]
+
+COV: ???",TODO missing coverage
+,,TorMatching,"""If TOR is selected, the associated address register forms the top of the address range, and the preceding PMP address register forms the bottom of the address range. If PMP entry i’s A field is set to TOR, the entry matches any address y such that pmpaddri−1 ≤ y < pmpaddri (irrespective  of the value of pmpcfgi−1)""","Configure tor regions of different sizes, try accesses within and outside the regions, ensure that the outcomes corresponds to the designated ranges.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_cg_common.cover_item_covergroup_cg_internals_common_inst_cg_int_coverpoint_cp_ismatch_tor_bin_auto[*]
+
+COV: ???",TODO missing coverage
+,,TorZero,"""If PMP entry 0’s A field is set to TOR, zero is used for the lower bound, and so it matches any address y < pmpaddr0.""","Configure entry 0 as tor regions of different sizes, try accesses within and outside the regions, ensure that the outcomes corresponds to the designated ranges.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???
+
+DTC: cv32e40s/tests/programs/custom/pmp/",TODO missing cover
+,,TorNomatch,"""If pmpaddri−1 ≥ pmpaddri and pmpcfgi.A=TOR, then PMP entry i matches no addresses.""","Set up tor regions where the addresses are not in increasing order, try accesses on or within the designated ""reverse"" regions, ensure that they are treated as if there is no match.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???
+
+DTC: cv32e40s/tests/programs/custom/pmp/",TODO missing cover
+,,SameGrain,"""In general, the PMP grain [...] must be the same across all PMP regions.""","Do the same as for the basic case of GranularityDetermination below, ensure that all read values are the same across all the pmp csrs.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,,A: ???,TODO missing assert
+,,Na4Unselectable,"""When G ≥ 1, the NA4 mode is not selectable.""","Have the G parameter set to at least 1, ensure that NA4 never gets selected (even when writing to non-locked cfg).
+
+Note: Formal should easily check this.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_na4onlyg0[*].a_na4_only_g0
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_na4onlyg0[*].a_na4_only_g0
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_na4onlyg0[*].a_na4_not_when_g uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_na4onlyg0[*].a_na4_not_when_g",
+,,NapotImplied,"""When G ≥ 2 and pmpcfgi.A[1] is set, i.e. the mode is NAPOT"".",(Covered by Na4Unselectable above),Other,Other,N/A,,N/A,
+,,NapotOnes,"""When G ≥ 2 and pmpcfgi.A[1] is set, [...] then bits pmpaddri[G-2:0] read as all ones.""","Have the G parameter set to at least 2, have A set, read pmpaddri, ensure the LSBs are all ones as specified.",Assertion Check,Constrained-Random,Assertion Coverage,High Priority,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_napot_ones_g2.gen_napot_ones_i[*].a_napot_ones,
+,,AllZeros,"""When G ≥ 1 and pmpcfgi.A[1] is clear, i.e. the mode is OFF or TOR, then bits pmpaddri[G-1:0] read as all zeros.""","Create the listed preconditions, ensure that the read value contains zeroes as specified.
+
+Note: Check both OFF/TOR, and for all configs fields (checking of all configs don't need 100% coverage in simulation).",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_all_zeros_g1.gen_all_zeros_i[*].a_all_zeros
+
+COV: ???",TODO missing cover
+,,TorUnaffected,"""Bits pmpaddri[G-1:0] do not affect the TOR address-matching logic.""","Write different values to ""pmpaddri[G-1:0]"", ensure TOR mode matches the same either way.",Assertion Check,Constrained-Random,Assertion Coverage,,A: ???,TODO missing assert
+,,StorageUnaffected,"""Although changing pmpcfgi.A[1] affects the value read from pmpaddri, it does not affect the underlying value stored in that register""
+""in particular, pmpaddri[G-1] retains its original value when pmpcfgi.A is changed from NAPOT to TOR/OFF then back to NAPOT.""","Change in and out of (OFF || TOR) and !(OFF || TOR), ensure that different values can be read without having written anything new to the register.",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_storage_unaffected[*].a_storage_unaffected
+
+COV: ???",TODO missing cover
+,,GranularityDetermination,"""Software may determine the PMP granularity by writing zero to pmp0cfg, then writing all ones to pmpaddr0, then reading back pmpaddr0. If G is the index of the least-significant bit set, the PMP granularity is 2 G+2 bytes.""","Write zero to pmpicfg, write ones to pmpaddri, read pmpaddri, ensure that the LSB index matches to granularity parameter.
+
+Note: Formal can maybe check this for all i.
+
+Note: If time allows, can write something else than zero and ensure that the rest follows as expected.",Assertion Check,Constrained-Random,Assertion Coverage,High Priority,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_granularity_determination,
+,,XlenMatching,"""If the current XLEN is greater than MXLEN, the PMP address registers are zero-extended from MXLEN to XLEN bits for the purposes of address matching.""",N/A,N/A,N/A,N/A,,N/A,
+,LockingAndPrivmode,UntilReset,"""Locked PMP entries remain locked until the hart is reset.""","Lock entry i (for all i, if feasible), ensure that the lock bit is never lifted before reset. (Unless if RLB interferes.)
+
+Note: Sim might do a second reset, formal most likely won't and shouldn't need to.",Assertion Check,Constrained-Random,Assertion Coverage,High Priority,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_until_reset[*].a_until_reset,
+,,IgnoreWrites,"""If PMP entry i is locked, writes to pmpicfg and pmpaddri are ignored.""","Lock entry i (for all i, if feasible), ensure that their value can't change, both when written to and otherwise. (Unless if RLB interferes.)",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_rlb_locked[*].a_norlb_locked_rules_cannot_modify uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_rlb_locked[*].a_norlb_locked_rules_cannot_modify
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_ignore_writes_notrap[*].a_ignore_writes_notrap
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_ignore_writes_nochange[*].a_ignore_writes_nochange
+
+COV: ???",TODO missing cover
+,,IgnoreTor,"""Additionally, if PMP entry i is locked and pmpicfg.A is set to TOR, writes to pmpaddri-1 are ignored.""","Lock entry i (…), have A set and the mode be TOR, ensure that pmpaddri-1 can't change, both for explicit writes and otherwise. (Unless RLB.)",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_ignore_tor[*].a_ignore_tor_stable
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_ignore_tor[*].a_ignore_tor_wdata
+
+COV: ???",TODO missing cover
+,,NotIgnore,"When neither cfg i is locked, nor is cfg i+1 a locked TOR region, then writes to cfg and addr i are not ignored.","Have cfg i unlocked, write to cfg and addr csr i, check that it changes.",Assertion Check,Constrained-Random,Assertion Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_addr_writes[*].a_addr_nonlocked
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_addr_tor[*].a_addr_nonlocked_tor",
+,,LockOff,"""Setting the L bit locks the PMP entry even when the A field is set to OFF.""","Lock entry i while the mode is OFF, ensure that it gets locked in this case too.
+
+Note: Ensure that checking and coverage handles locking for all possible modes.",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: (Same checking as for ""IgnoreWrites"" and ""IgnoreTor"" above.)
+
+COV: ???",TODO missing cover
+,,RwxPrivmode,"""In addition to locking the PMP entry, the L bit  indicates whether the R/W/X permissions are enforced on M-mode accesses. When the L bit is set, these permissions are enforced for all privilege modes.""","Be in M-mode and U-mode (separate runs), access a region where L is set and where RWX {grant, deny R, deny W, deny X}, ensure that the access is correspondingly granted/denied.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???",TODO missing cover
+,,MmodeSucceed,"""When the L bit is clear, any M-mode access matching the PMP entry will succeed""","Be in M-mode, access a region where L is clear, ensure that access is granted in all cases.
+
+(Note, see ""Smepmp"" above.)",Assertion Check,Constrained-Random,Assertion Coverage,,A: ???,TODO missing assert
+,,RwxUmode,"""When the L bit is clear […] the R/W/X permissions apply only to S and U modes.""","Be in U-mode, access a region where L is clear, ensure that access is granted/denied based on RWX.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_uorl_onlyif_rwx
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_uorl_onlyif_rwx
+
+COV: ???",TODO missing cover
+,PriorityAndMatching,LowestDetermines,"""PMP entries are statically prioritized. The lowest-numbered PMP entry that matches any byte of an access determines whether that access succeeds or fails.""
+
+Note: ""any"" byte.","Access a region that is covered by multiple rules, ensure that the lowest indexed match determines the outcome.
+
+Note: Requires that the rules would disagree on the outcome.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???",TODO missing cover
+,,MatchAll,"""The matching PMP entry must match all bytes of an access, or the access fails, irrespective of the L, R, W, and X bits.""",(Only relevant for 64-bit architectures.),N/A,N/A,N/A,,N/A,
+,,LrwxDetermines,"""If a PMP entry matches all bytes of an access, then the L, R, W,and X bits determine whether the access succeeds or fails. [...] if the L bit is set or the privilege mode of the access is S or U, then the access succeeds only if the R, W,or X bit corresponding to the access type is set.""","Access a pmp region where L and the privmode etc is such that nothing else would deny the access, ensure that each of (or a combination of) RWX can either grant or deny the access.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_lrwx_aftermatch
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_lrwx_aftermatch
+
+COV: ???",TODO missing cover
+,,MmodeSucceed2,"""If the L bit is clear and the privilege mode of the access is M, the access succeeds.""","(Same as ""MmodeSucceed"" above)",Other,Other,N/A,,N/A,
+,,MmodeNomatch,"""If no PMP entry matches an M-mode access, the access succeeds.""","Be in M-mode, access a region where no rule matches, ensure that the access is granted (where MMWP is off).
+
+(Note, see ""Smepmp"" above.)",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+
+COV: ???",TODO missing cover
+,,UmodeNomatch,"""If no PMP entry matches an S-mode or U-mode access, but at least one PMP entry is implemented, the access fails.""
+
+Note: ""All PMP CSRs are always implemented"".","Be in U-mode, do an access that doesn't match any region, ensure that the access fails.",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_nomatch_umode_fails
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_nomatch_umode_fails
+
+COV: ???",TODO missing cover
+,,UmodeOff,"""If at least one PMP entry is implemented, but all PMP entries’ A fields are set to OFF, then all S-mode and U-mode memory accesses will fail.""","Be in U-mode, have all entries OFF, make an access, ensure that the access fails (for all variations of accesses).",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???",TODO missing cover
+,,FailException,"""Failed accesses generate an instruction, load, or store access-fault exception.""","Cause failed accesses on instructions/loads/stores, ensure that an exception occurs and that it is the right one.",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_*
+
+A: <embedded>::uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_*
+
+COV: ???",TODO missing cover
+,,MultiAccess,"""Note that a single instruction may generate multiple accesses, which may not be mutually atomic. An access-fault exception is generated if at least one access generated by an instruction fails, though other accesses generated by that instruction may succeed with visible side effects.""
+
+""On some implementations, misaligned loads, stores, and instruction fetches may also be decomposed into multiple accesses, some of which may succeed before an access-fault exception occurs. In particular, a portion of a misaligned store that passes the PMP check may become visible, even if another portion fails the PMP check.""","Induce misaligned word instruction-fetch, load, and store, where the lower and upper (separate runs) parts are either accessible or blocked by pmp, ensure that exceptions occur while parts of the access might reach the bus.
+
+Also check Zc's push/pop and table jump.
+
+Note: It is up to other vplans to check what happens upon the exception. It is up to this PMP vplan to check that the PMP will cause the exceptions.",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_splittrap
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_splittrap
+
+A: ???
+
+COV: ???","TODO missing assert (on split that errs on first)
+
+TODO missing cover"
+smepmp,MsecCfg,MmodeOnly,"""Machine Security Configuration (mseccfg) is [...] only accessible to Machine mode.""
+
+Note: Includes ""mseccfgh"".","Access (read/write) mseccfg (and mseccfgh) from M-mode, access mseccfg from U-mode, ensure that the first always works (WARL) and the second never works (exception).
+
+Note: Cover with MPRV too.",Assertion Check,Constrained-Random,Assertion Coverage,High Priority,A: ???,TODO missing assert
+,,FieldsWarl,"""All mseccfg fields defined on this proposal are WARL""","Try writing any values to the fields (the defined ones, but also other bits) and read values out of the fields, ensure that neither reads nor writes causes exceptions, and ensure that all read values are legal or otherwise as expected.
+
+Note: This relates to the ""stickiness"" of those fields. Regardless of their values and current stickiness, the fields are WARL.
+
+Note: It might be difficult, when trying to write a checker for traps, to filter out all other causes for traps that can occur simultaneously. (Either reduce the scope of checking, or write re-usable helper signals for ""trap causality"" info.)
+
+Note: ""WPRI"" on some bits.",Assertion Check,Constrained-Random,Functional Coverage,,"A: ???
+
+COV: ???","TODO missing assert
+
+TODO missing cover"
+,,ReservedZero,"""the remaining bits are reserved for future standard use and should always read zero.""
+(This spec can't dictate that about other specs, but the user manual agrees on the hardwiring.)","Read mseccfg, ensure the non-smepmp-field bits are always zero.",Assertion Check,Constrained-Random,Assertion Coverage,High Priority,A: ???,TODO missing assert
+,,ResetValue,"""The reset value of mseccfg is implementation-specific, otherwise if backwards compatibility is a requirement it should reset to zero on hard reset.""","Read the value of mseccfg right after reset, ensure that the default reset value is zero.
+
+Note: Should also be visible on rvfi without specifically using csr instructions.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_mseccfg_reset_val
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_mseccfg_reset_val",
+,LockingBypass,ModifiableEntries,"""When mseccfg.RLB is 1 locked PMP rules may be removed/modified and locked PMP entries may be edited.""
+
+Note: Both ""cfg"" and ""addr"" registers, limited to fields within ""cfg"" reg, also TOR affects lower ""addr"" reg.","Have a locked pmp entry i, set RLB to 1, try modifying any(!) field within {pmpicfg, pmpaddri, pmpaddri-1(tor)}, ensure that values are updated succesfully (while respecting other rules like legal values and reserved bits).",Assertion Check,Constrained-Random,Functional Coverage,,"A: ???
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].c_rlb_locked_rules_can_modify_addr
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].c_rlb_locked_rules_can_modify_exec
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].c_rlb_locked_rules_can_modify_lock
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].c_rlb_locked_rules_can_modify_mode
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].c_rlb_locked_rules_can_modify_read
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].c_rlb_locked_rules_can_modify_write
+
+COV: ???",TODO missing assert
+,,RemainZero,"""When mseccfg.RLB is 0 and pmpcfg.L is 1 in any rule or entry (including disabled entries), then mseccfg.RLB remains 0 and any further modifications to mseccfg.RLB are ignored until a PMP reset""
+
+Note: ""any"" entry.","Have RLB=0 and at least one L=1, ensure that RLB is 0 forever (until reset).
+
+Note: No exception occurs on attempted access, but one should try overwriting the value to stimulate the checking.",Assertion Check,Constrained-Random,Assertion Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_rlb_never_fall_while_locked
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_rlb_never_fall_while_locked",
+,,UntilReset,"The sticky zero and update-ignores last until reset, and do not hold after reset.",Ensure that RLB is modifiable after reset. (Unless if reset values are set to activate the RemainZero condition.),Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_until_reset_notbefore
+
+COV: ???",TODO missing cover
+,,HardwireZero,"""Vendors who don’t need this functionality may hardwire this field to 0.""","(40s has not hardwired this to 0, it is RW.)",N/A,N/A,N/A,,N/A,
+,WhiteList,StickyUntilReset,"""[mseccfg.MMWP] is a sticky bit, meaning that once set it cannot be unset until a PMP reset.""","Have MMWP set, ensure that it remains high forever (til reset).",Assertion Check,Constrained-Random,Assertion Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_mmwp_never_fall_until_reset
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_mmwp_never_fall_until_reset",
+,,Denied,"""When set it changes the default PMP policy for M-mode when accessing memory regions that don’t have a matching PMP rule, to denied instead of ignored.""","Have MMWP set, be in (effective mode) M-mode, access regions that don't match any rule (including OFF, ""reversed"" TOR, >32bit NAPOT, etc), ensure that the access is denied.",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_nomatch_mmode_mmwp_fails
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_nomatch_mmode_mmwp_fails
+
+COV: ???",TODO missing cover
+,LockdownGeneral,StickyUntilReset,"""[mseccfg.MML] is a sticky bit, meaning that once set it cannot be unset until a PMP reset.""","Cover: Trying to clear the bit.
+
+Check: Have MML set, ensure that it remains high forever (til reset).",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_mml_never_fall_until_reset
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_mml_never_fall_until_reset
+
+COV: ???",TODO missing cover
+,,ExecIgnored,"""[When mseccfg.MML is set.] Adding an M-mode-only or a locked Shared-Region rule with executable privileges is not possible and such pmpcfg writes are ignored, leaving pmpcfg unchanged.""
+
+Note: ""pmpcfg"" refers to a field, so the write to the CSR itself should still update other fields.","Have MML set, try adding an ""M-mode-only"" rule and a ""locked Shared-Region"" rule with X privileges, ensure that the relevant pmpcfg field is not updated but is left unchanged, ensure also that other fields can still get updated.",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfgwdata_legal[*].a_cfgwdata_legal
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_rlb_locked_cov[0].a_mmode_only_or_shared_executable_ignore
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_rlb_locked_cov[0].a_mmode_only_or_shared_executable_ignore
+
+COV: ???",TODO missing cover
+,,ExecRlb,"""[The above] restriction can be temporarily lifted e.g. during the boot process, by setting mseccfg.RLB.""","Have RLB and MML set, try adding an ""M-mode-only"" rule and a ""locked Shared-Region"" rule with X privileges, ensure that the relevant pmpcfg field is in fact updated.",Assertion Check,Constrained-Random,Assertion Coverage,High Priority,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_rlblifts_lockedexec[*].a_rlblifts_lockedexec,
+,,MmodeExec,"""Executing code with Machine mode privileges is only possible from memory regions with a matching M-mode-only rule or a locked Shared-Region rule with executable privileges. Executing code from a region without a matching rule or with a matching S/U-mode-only rule is denied.""","Execute from ""M-mode-only"" and ""locked Shared-Region"" regions, attempt execution without matching and from ""U-mode-only"" regions, ensure corresponding grant or deny.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???",TODO missing cover
+,,RwReserved,"""If mseccfg.MML is not set, the combination of pmpcfg.RW=01 remains reserved for future standard use.""","Whitelist the conditions that allow RW=01 (including MML conditions), ensure that it is adhered to.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_rwx_mml[*].a_rwx_mml
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_rwfuture[*].a_rw_futureuse
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_rwfuture[*].a_rw_futureuse",
+,LockdownA,MmodeEnforce,"""[When mseccfg.MML is set.] An M-mode-only rule is enforced on Machine mode""","Be in M-mode, have MML set, access an ""M-mode-only"" region, ensure that the grant/deny is always in accordance to the rule. (E.g. it is not denied execute despite the execute bit being set.)
+
+Note: Exclude cases of interference from e.g. PMA.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???","(Same as for ""MmodeDeny"")"
+,,UmodeDeny,"""[When mseccfg.MML is set.] An M-mode-only rule is [...] denied in Supervisor or User mode.""","Be in U-mode, have MML set, access an ""M-mode-only"" region, ensure that the access is always denied.",Assertion Check,Constrained-Random,Assertion Coverage,,A: ???,TODO missing assert
+,,RemainLocked,"""It also remains locked so that any further modifications to its associated configuration or address registers are ignored until a PMP reset""
+
+Certain rules under MML are sticky. They cannot be modified again.","Configure rules for {""M-mode-only"", ""U-mode-only, ""Shared-Region rule where pmpcfg.L is set""(both kinds)}, have MML=1 (and RLB=0), ensure that the configs never change again (until reset).",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: ???
+
+COV: ???",TODO missing assert
+,,RlbUnlocks,"""It also remains locked [...] unless mseccfg.RLB is set.""","Have the same setup as in RemainLocked, but let RLB=1, try changing the configs, ensure that they are indeed changed.
+
+Note: ""Assertion check"" includes cover properties.",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: ???
+
+COV: ???",TODO missing assert
+,,UmodeEnforce,"""[When mseccfg.MML is set.] An S/U-mode-only rule is enforced on Supervisor and User modes ""","Be in U-mode, have MML=1, access a ""U-mode-only"" region, ensure that the grant/deny is in accordance with the rule (apart from PMA etc).",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_cp_data_side.cg_data
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_cp_instr_side.cg_instr
+
+COV: ???","(Same as for ""MmodeDeny"")"
+,,MmodeDeny,"""An S/U-mode-only rule is [...] denied on Machine mode.""","Be in M-mode, have MML=1, access a ""U-mode-only"" region, ensure that the access is always denied.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???",TODO missing coverage. (Just do a cg with crosses of all of these variables.)
+,,SharedEnforced,"""A Shared-Region rule is enforced on all modes""","Be in M-mode and U-mode (separate runs), access a ""Shared-Region"", ensure that the grant/deny is in accordance with the rule.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???","(Same as for ""MmodeDeny"")"
+,,SharedNoexec,"""A Shared-Region rule where pmpcfg.L is not set can be used for sharing data between M-mode and S/U-mode, so is not executable.""","Be in M-mode and U-mode, try to execute from ""A Shared-Region rule where pmpcfg.L is not set"", ensure that it does not work (exception).",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???","(Same as for ""MmodeDeny"")"
+,,MmodeReadwrite,"""[Shared-Region rule where pmpcfg.L is not set.] M-mode has read/write access to that region""","Be in M-mode, perform reads and writes to such a region, ensure that the intended effects happen and that the accesses do not cause exceptions.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???","(Same as for ""MmodeDeny"")"
+,,UmodeRead,"""[For a Shared-Region rule where pmpcfg.L is not set] S/U-mode has read access if pmpcfg.X is not set, or read/write access if pmpcfg.X is set.""","Be in U-mode, perform reads and writes to such a region, ensure that the reads always work and that the writes depend on X.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???","(Same as for ""MmodeDeny"")"
+,,SharedNowrite,"""A Shared-Region rule where pmpcfg.L is set can be used for sharing code between M-mode and S/U-mode, so is not writeable.""
+
+Note: The spec is unclear here, but ""A Shared-Region rule where pmpcfg.L is set"" must refer to ""LRWX=101X"", because ""The encoding pmpcfg.LRWX=1111"" is a separate point. (This holds for the subsequent items below too.)","Be in M-mode and U-mode, write to such a region, ensure that the writes do not reach the bus and that an exception occurs.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???","(Same as for ""MmodeDeny"")"
+,,BothExecute,"""Both M-mode and S/U-mode have execute access on the [Shared-Region rule where pmpcfg.L is set]""","Be in M-mode and U-mode, attempt to execute from such a region, ensure that the code is executed and that the attempt does not cause an exception.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???","(Same as for ""MmodeDeny"")"
+,,MmodeRead,"""M-mode also has read access [to Shared-Region rule where pmpcfg.L is set] if pmpcfg.X is set.""","Be in M-mode, attempt to read from such a region, ensure that the success depends accordingly on X.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: ???","(Same as for ""MmodeDeny"")"
+,,IgnoreUntilReset,"""The [Shared-Region rule where pmpcfg.L is set] remains locked so that any further modifications to its associated configuration or address registers are ignored until a PMP reset, unless mseccfg.RLB is set.""",(Covered by RemainLocked above.),Other,Other,N/A,,N/A,
+,,BothReadonly,"""The encoding pmpcfg.LRWX=1111 can be used for sharing data between M-mode and S/U mode, where both modes only have read-only access to the region.""","Be in M-mode and U-mode, access such a region, ensure that only the reads work and that the rest (write/execute) excepts.",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal
+uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal
+
+COV: dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_cp_instr_side.cover_item_covergroup_cg_internals_instr_side_inst_cg_instr_coverpoint_cp_r_mmode_mml_lrwx
+
+COV: dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_cp_data_side.cover_item_covergroup_cg_internals_data_side_inst_cg_instr_coverpoint_cp_r_mmode_mml_lrwx
+
+COV: dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_cp_data_side.cover_item_covergroup_cg_internals_data_side_inst_cg_instr_coverpoint_cp_r_umode_mml_lrwx
+
+COV: ???","TODO technically missing the ""the rest … excepts"" cover"
+,,ReadonlyLocked,"""The [pmpcfg.LRWX=1111] rule remains locked so that any further modifications to its associated configuration or address registers are ignored until a PMP reset, unless mseccfg.RLB is set.""",(Covered by RemainLocked above.),Other,Other,N/A,,N/A,
+,LegalRwx,,"Depending on the mseccfg control bits and L, some RWX combinations are reserved.
+
+Note: Use the table from the spec.",Ensure that illegal/reserved mseccfg/L/RWX combinations are unreachable.,Assertion Check,"ENV capability, not specific test",Assertion Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfg_expected[*].a_cfg_expected
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfgwdata_legal[*].a_cfgwdata_legal
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfgrdata_expected[*].a_cfgrdata_expected",
+,Reachable,,"All legal states in the table are reachable. It could theoretically be that platform-specific constraints made certain states unreachable (particularily related to locking), but we should be able to reach all legal and supported combinations of settings.",Ensure that all legal states are reachable.,Other,Constrained-Random,Functional Coverage,,COV: ???,TODO missing cover
+manual,Parameters,MinimumGranularity,"""The PMP_GRANULARITY parameter is used to configure the minimum granularity of PMP address matching. The minimum granularity is [2^(PMP_GRANULARITY+2)] bytes, so at least 4 bytes.""","Have runs with max granularity, minimum granularity, and something in between. Make sure all checkers/covers are active for each relevant run configuration, so tor/napot/na4 is tested with different granularities. Cover cases where a match would otherwise occur but the granularity made the access not match.
+
+Note: Ensure TorMatching etc above heed this parameter.",Other,Constrained-Random,Functional Coverage,,COV: ???,TODO missing cover
+,,NumRegions,"""The PMP_NUM_REGIONS parameter is used to configure the number of PMP regions, starting from the lowest numbered region.""
+
+Note: Including 0 regions.","Have runs with max number, minimum number, and something in between.",Other,Constrained-Random,Functional Coverage,,COV: ???,TODO missing cover
+,,ResetValues,"""The reset value of the PMP CSR registers can be set through the top level parameters PMP_PMPNCFG_RV[], PMP_PMPADDR_RV[] and PMP_MSECCFG_RV.""","Have runs with different reset values. Ensure that after reset then the reset values are effectuated.
+
+Note: Try also, reset values with locked configs.",Assertion Check,"ENV capability, not specific test",Functional Coverage,High Priority,"A: ???
+
+COV: ???","TODO missing assert
+
+TODO missing cover"
+,,DefaultValues,The reset value defaults should amount to a safe config. (Including no violation of reserved bits.),(Covered by all the checks that handles the various legalities.),Other,Other,N/A,,N/A,
+,CSRs,AlwaysAccessible,"""All PMP CSRs are always implemented"". ""MRW"". The CSRs are M-mode accessible, and their existence does not depend on PMP_NUM_REGIONS.
+
+Note: ""All"" pmp registers, and all fields within them.","Be in M-mode, access (reads/writes) all the pmp csrs, ensure that it always works without excepting (because the csrs exist and the mode is appropriate).
+
+Note: Potential overlap with CSR vplan.",Assertion Check,Directed Non-Self-Checking,Assertion Coverage,High Priority,A: ???,TODO missing assert
+,,ReservedLegal,"Reserved bits/fields have legal values, matching the platform-specified defaults.","(Overlaps with LegalRwx and RwReservedabove.) Read all fields of all pmp-related csrs, ensure there are no unsupported values anywhere (at all times).",Assertion Check,Constrained-Random,Assertion Coverage,,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfgrdata_expected[*].a_cfgrdata_expected,
+,,MseccfghZero,"""Hardwired to 0""","Read mseccfgh, ensure it is always 0.",Assertion Check,Constrained-Random,Assertion Coverage,High Priority,A: ???,TODO missing assert
+,,UnusedZero,"""CSRs (or bitfields of CSRs) related to PMP entries with number PMP_NUM_REGIONS and above are hardwired to zero.""
+
+Note: Including upper parts of pmpcfgn and also pmpaddr.","Read pmpcfg and pmpaddr csrs, ensure the values are zero as specified. Cover that the other values can be non-zero.",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: ???
+
+COV: ???","TODO missing assert
+
+TODO missing cover"
+,,Hardening,"Certain CSRs related to the PMP shall be ""hardened"" as per Xsecure.","(CSR hardening is the responsibility of the security features vplan, even the pmp-specific part of it.)",N/A,N/A,N/A,,N/A,
+,MicroArchitecture,WaitUpdate,"Updates to pmp configs should NOT have an effect on earlier instructions (nor on the instruction itself).
+
+Note: Potential security hole.","The pmp grant/deny checking must be compared vs ""rvfi_csr_<csrname>_rdata"".
+(This will detect whether the actual pmp decision differs from what the rvfi csr data would incidate.)
+
+Note: Compare ""pc_rdata"" for execute, and ""mem_"" signals for read/write. (Might need additional decoding of ""rvfi_insn"".)",Assertion Check,"ENV capability, not specific test",Functional Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_musttrap
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_cause_load
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_cause_store
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_splittrap
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_musttrap
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_cause
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_splittrap
+
+COV: ???",TODO missing cover
+,,,,"Inject pmp csr write instructions in random testing, intermingled with all other kinds of instructions. This should include random interrupts, bus faults, random bus stalls, etc.",Check against RM,Constrained-Random,Functional Coverage,,COV: ???,TODO missing cover
+,,AffectSuccessors,"Updates to pmp configs MUST have an effect on later instructions.
+
+Note: Potential security hole.
+
+Note: There was a known rtl bug here before (cv32e40s/issues/168).","The ""rvfi_csr_<csrname>_wdata"" (masked) for pmp csrs on one instruction, must match the ""_rdata"" value of the next instruction.
+(Combined with checking grant/deny on ""_rdata"", this should ensure that the subsequent instruction has been affected by any pmp csr update.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,High Priority,"(Shares asserts with ""WaitUpdate"" above.)
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_rvfi_csr_writes[0].a_rvfi_cfg_writes
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_rvfi_csr_writes[0].a_rvfi_addr_writes",
+,,,,(Same random testing as WaitUpdate above.),Other,Other,N/A,,N/A,
+,,ImplementationDetails,"Details about pipeline/prefetcher/bus flushing etc are not part of this vplan. Only black-box observable functional behavior is checked. (Such requirements exists in specs, but are deliberately not addressed here.)",N/A,N/A,N/A,N/A,,N/A,
+,,Performance,Requirements about performance and stalls etc are not covered here (unless review calls for the opposite).,N/A,N/A,N/A,N/A,,N/A,
+,,WriteBuffer,Changes to the pmp config should not impact the write buffer such that a transaction can get its grant/deny status altered.,"Cover cases of the write buffer being full while the pmp cfg changes. Checking of accidental grants is handled by SuppressReq below. Checking of guaranteed writes is not part of this vplan.
+
+Note: The Write buffer is situated between the pmp and the bus.",Other,Other,Functional Coverage,High Priority,COV: ???,TODO missing cover
+,Violations,SuppressReq,"When an access is denied by the pmp, the effect is that the attempted obi transaction is suppressed and does not reach the bus.
+
+Note: Both ""instr_req_o"" and ""data_req_o"".","Observe a transaction request coming in to the pmp module, observe the pmp denying the access, ensure that the obi bus is shielded from the transaction request.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_supress_req_data.a_suppress_req_data
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_supress_req_instr.a_suppress_req_instr",
+,,InternalBuses,(The transaction request feeding into the mpu and its response signaling is not covered by this vplan.),N/A,N/A,N/A,N/A,,N/A,
+,,ExceptionExecute,"""mcause [...] Instruction access fault [...] Execution attempt with address failing PMP check.""","Attempt execution of a region that pmp denies execution of, ensure that an ""instruction access fault"" exception occurs (read mcause and rvfi signals).
+
+Note: Since ISS can check most of this, one could deprioritize this checking if it is not feasible to check within reasonable efforts. (Same for the next 2 items.)",Assertion Check,Constrained-Random,Assertion Coverage,,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_cause,
+,,ExceptionLoad,"""mcause [...] Load access fault [...] Load attempt with address failing PMP check.""
+
+Note: Holds for load-reserved too.","Attempt loads (and load-reserveds) of a region that pmp denies reading from, ensure that a ""load access fault"" exception occurs (read mcause and rvfi signals).",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_cause_load
+
+COV: ???",TODO missing cover
+,,ExceptionStore,"""mcause [...] Store/AMO access fault [...] Store attempt with address failing PMP check.""
+
+Note: Holds for store-conditional and amo too.","Attempt stores (and store-conditionals and amo) to a region that pmp denies writing to, ensure that a ""store/amo access fault"" exception occurs (read mcause and rvfi signals).",Assertion Check,Constrained-Random,Functional Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_cause_store
+
+COV: ???",TODO missing cover
+,,TrapPrecisely,"""All exceptions are precise"".
+Meaning mepc will point to the offending instruction, and exactly previous instructions have their side effects fully visible.
+
+Note: Applies to loads, stores, and executes.","Observe that the pmp causes an exception, ensure that mepc points to the offending instruction.
+
+Note: Let the Exceptions vplan deal with visibility of side effects for earlier instructions. (Zc push/pop does not follow this, but that is mostly the responsibility of the Zc vplan.)
+
+Note: If satisfactory mepc checking already exist then it is acceptable to just add covers for the pmp scenarios.",Assertion Check,Constrained-Random,Functional Coverage,,"A: ???
+
+COV: ???","TODO missing assert
+
+TODO missing cover"
+,,AlertMinor,"""The following issues result in a minor security alert: [...] Instruction access fault [...] Load access fault [...] Store/AMO access fault""",(Responsibility of the xsecure vplan. But link to coverage here too.),N/A,N/A,N/A,,"A: ???
+
+COV: ???",Waiting for xsecure vplan
+,,AlertNothing,"The manual lists which pmp-related events can cause an alert minor, but the pmp should in no other cases be the cause for an alert (major/minor).
+
+Note: Example, ""attempt to reprogram a locked PMP""","Observe an alert signal going high while there is no pmp error that should have caused it, ensure that another viable reason for the alert was present.
+
+Note: This is slightly out of scope for this vplan, so if it is not very easy to hook on to existing xsecure (helper-)signals then this can be skipped.",Assertion Check,Constrained-Random,Assertion Coverage,,A: ???,TODO missing assert
+,,SplitLoadRegfile,"Even if parts of a split load can reach the bus, the instruction itself has failed and so the regfile should not get updated.","(Handled by ""SplitLoadException"" below, because: One only needs to show that an exception is caused, and the exceptions vplan is responsible for checking what that means for the regfile. (But link to coverage here too.))",N/A,N/A,N/A,,A: ???,Waiting for exceptions vplan
+,,SplitLoadException,"For split loads, regardless of which of the access that fails, the instruction should still cause an exception.","Perform a misaligned load that translates to multiple accesses, let any of the accesses be denied by pmp, ensure an exception occurs.
+
+Coverage: See rvfi retire with exception cause from pmp, while the ""low addr"" model checking gave access granted.",Assertion Check,Constrained-Random,Functional Coverage,,"A: ???
+
+COV: ???","TODO missing assert
+
+TODO missing cover"
+,,FirstFail,"If a split load/store fails on its first transaction it should get an exception immediately, so it should not allow the second transaction reach the bus and mcause shall reflect the failing transactions.","Attempt such an instruction, ensure that the denied access does not reach the bus, ensure that following accesses also do not reach the bus.",Assertion Check,Constrained-Random,Assertion Coverage,,A: ???,TODO missing assert
+,,PushPop,"If a push/pop fails on a transaction it should get an exception immediately, so the remaining transactions should not reach the bus and mcause shall reflect the failing transaction.","(Responsibility of the zc vplan. But link to coverage here too.)
+
+Note: Could write a pmp-specific cover, but coordinate with Zc vplan to ensure the checker is written too.",N/A,N/A,N/A,,"A: ???
+
+COV: ???",Waiting for zc vplan
+,,TableJump,PMP applies to table jumps and Zc instructions in general.,"(Responsibility of the zc vplan. But link to coverage here too.)
+
+Note: Could write a pmp-specific cover, but coordinate with Zc vplan to ensure the checker is written too.",N/A,N/A,N/A,,"A: ???
+
+COV: ???",Waiting for zc vplan
+,,ClicVector,"Similarly to TableJump above, CLIC vector fetch needs execute permission.",(Analogous to TableJump above.),N/A,N/A,N/A,,"A: ???
+
+COV: ???",Waiting for clic vplan
+,,Priority,"Exceptions priority apply to the PMP as well. Particularily, PMP exception (instruction access fault) gets priority over bus errors (instruction bus fault) if an instruction is the result of two fetches were both of these occurred.
+
+Note: Both could be present in an attempted executed instruction at the same time, because no exception occurs before the point of execution so there is enough time for both to be captured and travel through the pipeline.","Keep track of words fetched with bus error and with pmp execute denied, check retired instructions for a pc that overlaps two such fetches (cover both orders), ensure that ""instruction access fault"" is the taken exception.",Assertion Check,Constrained-Random,Functional Coverage,,"A: ???
+
+COV: ???","TODO missing assert
+
+TODO missing cover"
+,Pma,RevokeExecutable,"Even if the pma should allow for execution, the pmp can overrule it and deny access.","Set up pma and pmp regions such that both have rules covering the same addresses, let the pma allow for execution, let the pmp deny it, attempt execution, ensure that execution is indeed denied.",Assertion Check,Constrained-Random,Assertion Coverage,,A: ???,TODO missing assert
+,,RemainNonexecutable,"If the pma disallows execution, the pmp cannot change this fact and execution remains disallowed.","Set up pma and pmp regions such that both have rules covering the same addresses, let the pma disallow execution, let the pmp allow and deny execution (separate runs), attempt execution, ensure that execution is denied.",Assertion Check,Constrained-Random,Assertion Coverage,,A: ???,TODO missing assert
+,,RevokePermissible,"Even if the pma allows for data access, the pmp can overrule it and deny access.","Set up pma and pmp regions such that both have rules covering the same addresses, let the pma allow for read and write (separate or same runs), let pmp deny read/write, attempt read/write, ensure that the pmp can overrule the pma.",Assertion Check,Constrained-Random,Assertion Coverage,,A: ???,TODO missing assert
+,,RemainNonpermissible,"If the pma disallows data access, the pmp cannot change this fact and data access remains disallowed.","Set up pma and pmp regions such that both have rules covering the same addresses, let the pma deny read and write, let pmp allow or deny it, attempt read/write, ensure that the access is always denied.",Assertion Check,Constrained-Random,Assertion Coverage,,A: ???,TODO missing assert
+misc,Misc,DisallowDebug,The PMP can deny usage of debug mode by setting up regions for dm_halt_addr and dm_exception_addr.,"Set up pmp rules so all D-mode entries are blocked from execution, attempt to enter debug mode, ensure that nohing is executed in debug mode.",Assertion Check,Directed Non-Self-Checking,Assertion Coverage,,A: ???,Waiting for ongoing spec changes to be resolved
+,,40x,The 40x does not have PMP.,N/A,N/A,N/A,N/A,,N/A,
+,,Xif,"The X-interface can do memory operations, but the 40x does not have PMP and the 40s does not have XIF.",N/A,N/A,N/A,N/A,,N/A,
+,,RvfiReliable,"Rvfi is used for checking some pmp functionality, so the link between rvfi and pmp must be checked.","If feasible to model within reasonable effort, check that 1) the PMPs' privmode inputs and 2) CSRs and 3) wdata/wmask is for csr write instrs, are properly correlated between access attempts and rvfi reportings.
+Otherwise, leave this to general ISS checking.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_*
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_*
+
+(Indirectly checked by those asserts)",
+,,RvfiTrap,"The ""rvfi_trap"" table has PMP-specific fields.","Augment the exception checkers above with checking of ""rvfi_trap.cause_type"" to ensure that specifically PMP is reported as the cause.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,,A: ???,TODO missing assert
+,,UntilReset,"Everything that can get locked ""until reset"" must be possible to change after a reset. It should not be possible that these settings lock up so even resets cannot unlock them.
+
+Note: Formal's reset analysis should in principle be able to find every state that is possible to be in after a reset.","(Covered by ResetValues above. As long as those always take effect out of reset, then a permanent lock up should be either impossible or intentional.)",N/A,N/A,N/A,,N/A,
+,,Xsecure,(Will be covered by its own vplan.),N/A,N/A,N/A,N/A,,N/A,
+,,Reset,The PMP module is never reset without the whole core being reset. (As this could lift all the locks and stickies and grant privilege escalation.),Check that the core's reset is always equal to the pmp module's reset.,Assertion Check,"ENV capability, not specific test",Assertion Coverage,,A: ???,TODO missing assert
+,,UmodeZeroRegions,"If the parameters are set to have 0 pmp regions, then all rules are OFF and U-mode matches nothing and defaults to not have any access.","Be in U-mode, have PMP_NUM_REGIONS=0, ensure all accesses fail (read/write/execute).",Assertion Check,Constrained-Random,Assertion Coverage,,A: ???,TODO missing assert
+debug,Mmode,,"""All operations are executed with machine mode privilege"".
+It is mostly the responsibility of other vplans to check D-mode relationship to M-mode and U-mode, but the pmp inputs should be checked against debug mode.
+
+Note: Refer to user-mode vplan and debug vplan if necessary.
+
+Note: It is assumed that once 1) dmode is shown to be interpreted as mmode by pmp, and 2) all mmode features are verified, then C) the mmode features will work in dmode. But one alternative is to duplicate all the mmode-related checking with dmode variants.","Ensure that the PMP inputs receive the correct mode while in D-mode.
+
+Note: Test w/wo MPRV too.",Assertion Check,Constrained-Random,Functional Coverage,High Priority,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_*
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_*
+
+(Indirectly checked by those asserts, together with effective priv mode and umode asserts for dmode/mmode.)
+
+COV: ???",TODO missing cover
+,,,,,,,,,,
+,,,,,,,,,,
+,,,,,,,,,,
+,,,,,,,,,,
+,,,,,,,,,,
+,,,,,,,,,,
+,,,,,,,,,,
+,,,,,,,,,,
+ -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- END -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------,,,,,,,,,,

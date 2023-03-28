@@ -35,7 +35,7 @@
 #define NUM_TESTS 10
 // Abort test at first self-check fail, useful for debugging.
 #define ABORT_ON_ERROR_IMMEDIATE 0
-#define SMCLIC_ID_WIDTH 5
+#define CLIC_ID_WIDTH 5
 #define MTVEC_ALIGN_BITS 7
 
 // Addresses of VP interrupt control registers
@@ -49,7 +49,7 @@
 #define SET_FUNC_INFO \
   _Pragma("GCC diagnostic push") \
   _Pragma("GCC diagnostic ignored \"-Wpedantic\"") \
-  const char * name = __FUNCTION__; \
+  const volatile char * const volatile name = __FUNCTION__; \
   _Pragma("GCC diagnostic pop")
 
 // ---------------------------------------------------------------
@@ -124,7 +124,7 @@ const uint32_t MCAUSE_MPIE_MASK  = 0x1 << MCAUSE_MPIE_OFFSET;
 
 // Print verbosity, consider implementing this as a virtual
 // peripheral setting to be controlled from UVM.
-const verbosity_t global_verbosity = V_LOW;
+volatile verbosity_t global_verbosity = V_LOW;
 
 extern volatile uint32_t mtvt_table;
 extern volatile uint32_t recovery_pt;
@@ -195,7 +195,7 @@ uint32_t set_test_status(uint32_t test_no, uint32_t val_prev);
  *        only print the name of the test and not actually
  *        run it.
  */
-int get_result(uint32_t res, uint32_t (*ptr[])(uint32_t, uint8_t));
+int get_result(uint32_t res, uint32_t (* volatile ptr[])(uint32_t, uint8_t));
 
 /*
  * max
@@ -250,9 +250,10 @@ void set_mseccfg(mseccfg_t mseccfg);
 // ---------------------------------------------------------------
 int main(int argc, char **argv){
 
-  uint32_t (*tests[NUM_TESTS])(uint32_t, uint8_t);
-  uint32_t test_res = 0x1;
-  int      retval   = 0;
+  volatile uint32_t (* volatile tests[NUM_TESTS])(volatile uint32_t, volatile uint8_t);
+
+  volatile uint32_t test_res = 0x1;
+  volatile int      retval   = 0;
 
   // Add function pointers to new tests here
   tests[0] = mcause_mstatus_mirror_init;
@@ -268,8 +269,8 @@ int main(int argc, char **argv){
 
   // Run all tests in list above
   cvprintf(V_LOW, "\nCLIC Test start\n\n");
-  for (int i = 0; i < NUM_TESTS; i++) {
-    test_res = set_test_status(tests[i](i, 0), test_res);
+  for (volatile int i = 0; i < NUM_TESTS; i++) {
+    test_res = set_test_status(tests[i](i, (volatile uint32_t)(0)), test_res);
   }
 
   // Report failures
@@ -281,7 +282,7 @@ int main(int argc, char **argv){
 
 int cvprintf(verbosity_t verbosity, const char *format, ...){
   va_list args;
-  int retval = 0;
+  volatile int retval = 0;
 
   va_start(args, format);
 
@@ -295,7 +296,7 @@ int cvprintf(verbosity_t verbosity, const char *format, ...){
 // -----------------------------------------------------------------------------
 
 uint32_t set_test_status(uint32_t test_no, uint32_t val_prev){
-  uint32_t res;
+  volatile uint32_t res;
   res = val_prev | (1 << test_no);
   return res;
 }
@@ -308,7 +309,7 @@ uint32_t max(uint32_t a, uint32_t b) {
 
 // -----------------------------------------------------------------------------
 
-int get_result(uint32_t res, uint32_t (*ptr[])(uint32_t, uint8_t)){
+int get_result(uint32_t res, uint32_t (* volatile ptr[])(uint32_t, uint8_t)){
   cvprintf(V_LOW, "=========================\n");
   cvprintf(V_LOW, "=        SUMMARY        =\n");
   cvprintf(V_LOW, "=========================\n");
@@ -335,7 +336,7 @@ int get_result(uint32_t res, uint32_t (*ptr[])(uint32_t, uint8_t)){
 // -----------------------------------------------------------------------------
 
 uint32_t set_clic_assert_val(clic_t clic){
-  uint32_t clic_vector = 0x0;
+  volatile uint32_t clic_vector = 0x0;
 
   clic_vector = (clic_vector & ~(0x007FFFFF))
                 | (clic.irq   << 22)
@@ -559,7 +560,6 @@ void set_pmpcfg(pmpcfg_t pmpcfg){
     break;
   }
 
-  __asm__ volatile ( R"( csrrs %[pmpvec], pmpcfg0, x0)" : [pmpvec] "+r"(pmpcfg_vector): :);
   cvprintf(V_DEBUG, "Wrote pmpcfg_vector: 0x%08lx\n", pmpcfg_vector);
   return;
 }
@@ -928,7 +928,7 @@ _Pragma("GCC pop_options")
 // -----------------------------------------------------------------------------
 
 uint32_t w_mie_notrap_r_zero(uint32_t index, uint8_t report_name){
-  uint8_t test_fail = 0;
+  volatile uint8_t test_fail = 0;
   volatile uint32_t readback_val_mepc = 0x0;
   volatile uint32_t readback_val_mie = 0x0;
 
@@ -967,7 +967,7 @@ uint32_t w_mie_notrap_r_zero(uint32_t index, uint8_t report_name){
 // -----------------------------------------------------------------------------
 
 uint32_t w_mip_notrap_r_zero(uint32_t index, uint8_t report_name){
-  uint8_t test_fail = 0;
+  volatile uint8_t test_fail = 0;
   volatile uint32_t readback_val_mepc = 0x0;
   volatile uint32_t readback_val_mip = 0x0;
 
@@ -1008,7 +1008,7 @@ uint32_t w_mip_notrap_r_zero(uint32_t index, uint8_t report_name){
 // -----------------------------------------------------------------------------
 
 uint32_t w_mtvt_rd_alignment(uint32_t index, uint8_t report_name){
-  uint8_t test_fail = 0;
+  volatile uint8_t test_fail = 0;
   volatile uint32_t mtvt_initial_val = 0x0;
   volatile uint32_t readback_val_mtvt = 0x0;
 
@@ -1046,7 +1046,7 @@ uint32_t w_mtvt_rd_alignment(uint32_t index, uint8_t report_name){
       );
 
   // Check for correct alignment
-  test_fail += ~(readback_val_mtvt >> max(SMCLIC_ID_WIDTH+2, 6));
+  test_fail += ~(readback_val_mtvt >> max(CLIC_ID_WIDTH+2, 6));
   if (ABORT_ON_ERROR_IMMEDIATE) assert (test_fail == 0);
   cvprintf(V_HIGH, "\nmtvt readback after 0xffff_ffff write: 0x%08lx\n", readback_val_mtvt);
 
@@ -1061,7 +1061,7 @@ uint32_t w_mtvt_rd_alignment(uint32_t index, uint8_t report_name){
 // -----------------------------------------------------------------------------
 
 uint32_t w_mtvec_rd_alignment(uint32_t index, uint8_t report_name){
-  uint8_t test_fail = 0;
+  volatile uint8_t test_fail = 0;
   volatile uint32_t mtvec_initial_val = 0x0;
   volatile uint32_t readback_val_mtvec = 0x0;
 
@@ -1124,7 +1124,7 @@ _Pragma("GCC optimize (\"O0\")")
 
 uint32_t invalid_mtvt_ptr_exec(uint32_t index, uint8_t report_name) {
 
-  uint8_t test_fail = 1;
+  volatile uint8_t test_fail = 1;
 
   // These needs to be volatile to prevent loop optimization
   volatile uint8_t never = 0;
@@ -1253,7 +1253,7 @@ uint32_t invalid_mtvt_ptr_exec(uint32_t index, uint8_t report_name) {
 
   clic_vector = set_clic_assert_val((clic_t){
                                     .irq = 0x1,
-                                    .id  = (0x1 << SMCLIC_ID_WIDTH)-1,
+                                    .id  = (0x1 << CLIC_ID_WIDTH)-1,
                                     .level = 0xFF,
                                     .priv  = 0x3,
                                     .shv   = 0x1

@@ -30,12 +30,19 @@ module uvmt_cv32e40s_integration_assert
   input [31:0] boot_addr_i,
   input [31:0] dm_exception_addr_i,
   input [31:0] dm_halt_addr_i,
-  input [31:0] mtvec_addr_i
+  input [31:0] mtvec_addr_i,
+
+  input alert_major_o,
+  input scan_cg_en_i
 );
 
   default clocking @(posedge clk_i); endclocking
   default disable iff !rst_ni;
+
   string info_tag = "CV32E40S_INTEGRATION_ASSERT";
+
+
+  // Helper Logic
 
   logic fetch_enable_i_sticky;
   always @(posedge clk_i or negedge rst_ni) begin
@@ -65,6 +72,7 @@ module uvmt_cv32e40s_integration_assert
   a_stable_mtvecaddr : assert property (p_stable_addr(mtvec_addr_i))
     else `uvm_error(info_tag, "mtvec_addr_i changed after fetch_enable_i");
 
+
   // Check that addresses are word-aligned
 
   property p_aligned_addr(addr);
@@ -80,6 +88,20 @@ module uvmt_cv32e40s_integration_assert
   a_aligned_dmhaltaddr : assert property (p_aligned_addr(dm_halt_addr_i))
     else `uvm_error(info_tag, "dm_halt_addr_i not word-aligned");
 
-  //a_aligned_mtvecaddr is not required by the user manual as per now
+
+  // No major alerts in normal operation
+
+  a_no_alert_major: assert property (
+    !alert_major_o
+    // Note: Do not assume this property
+  ) else `uvm_error(info_tag, "major alert should not happen in normal operation");
+
+
+  // No scan testing in normal operation
+
+  a_no_scan_cg: assert property (
+    !scan_cg_en_i
+  ) else `uvm_error(info_tag, "scan test should be disabled in normal operation");
+
 
 endmodule : uvmt_cv32e40s_integration_assert

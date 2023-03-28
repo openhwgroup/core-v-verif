@@ -1,5 +1,9 @@
-# Python generator files 
+Generated tests on custom U-mode instructions
 
+Needs `CFG=pmp` for allowing U-mode to run.
+
+
+# Python generator files 
 
 ## Motivation
 Runing through the test-plan it became apparant at some point that it would be necessary to have tests which contained a number of instructions to satisfy testing goals. The solution became python scripts which use string manipulation to generate these instructions directly to the relevant .h and .S files in the directory.

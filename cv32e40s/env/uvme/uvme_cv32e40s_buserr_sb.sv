@@ -133,7 +133,7 @@ function void uvme_cv32e40s_buserr_sb_c::write_rvfi(uvma_rvfi_instr_seq_item_c#(
   end
 
   // D-side NMI handler
-  if (trn.intr.intr && (trn.intr.cause inside {1024, 1025})) begin
+  if (trn.intr.intr && (trn.intr.cause inside {1024, 1025, 1026, 1027})) begin
     cnt_rvfi_nmihandl++;
 
     assert (pending_nmi)
@@ -145,7 +145,7 @@ function void uvme_cv32e40s_buserr_sb_c::write_rvfi(uvma_rvfi_instr_seq_item_c#(
   end
 
   // I-side exception handler
-  if (trn.intr.exception && (trn.intr.cause == 48)) begin
+  if (trn.intr.exception && (trn.intr.cause == 24)) begin
     cnt_rvfi_ifaulthandl++;
 
     assert (cnt_rvfi_errmatch == cnt_rvfi_ifaulthandl)
@@ -181,12 +181,12 @@ function void uvme_cv32e40s_buserr_sb_c::check_phase(uvm_phase phase);
   super.check_phase(phase);
 
   // Check OBI D-side
-  assert (cnt_obid_trn > 0)
-    else `uvm_warning(info_tag, "zero D-side OBI transactions received");
+  if (cnt_obid_trn == 0)
+    `uvm_warning(info_tag, "zero D-side OBI transactions received");
   assert (cnt_obid_trn >= cnt_obid_err)
     else `uvm_error(info_tag, "obid 'err' transactions counted wrong");
-  assert (cnt_obid_trn != cnt_obid_err)
-    else `uvm_warning(info_tag, "all the D-side OBI transactions were errs");
+  if (cnt_obid_trn == cnt_obid_err)
+    `uvm_warning(info_tag, "all the D-side OBI transactions were errs");
   assert (cnt_obid_err >= cnt_obid_firsterr)
     else `uvm_error(info_tag, "obid 'first' transactions counted wrong");
   assert (!(cnt_obid_err && !cnt_obid_firsterr))
@@ -203,28 +203,28 @@ function void uvme_cv32e40s_buserr_sb_c::check_phase(uvm_phase phase);
     else `uvm_error(info_tag, $sformatf("more/less 'err' (%0d) than nmi handling (%0d)", cnt_obid_firsterr, cnt_rvfi_nmihandl));
 
   // Check OBI I-side
-  assert (cnt_obii_trn > 0)
-    else `uvm_warning(info_tag, "zero I-side OBI transactions received");
+  if (cnt_obii_trn == 0)
+    `uvm_warning(info_tag, "zero I-side OBI transactions received");
   assert (cnt_obii_trn >= cnt_obii_err)
     else `uvm_error(info_tag, "obii 'err' transactions counted wrong");
-  assert (cnt_obii_trn != cnt_obii_err)
-    else `uvm_warning(info_tag, "all the I-side OBI transactions were errs");
+  if (cnt_obii_trn == cnt_obii_err)
+    `uvm_warning(info_tag, "all the I-side OBI transactions were errs");
 
   // Check RVFI I-side
   assert ((cnt_rvfi_errmatch - cnt_rvfi_errmatch_debug) >= cnt_rvfi_ifaulthandl)
     else `uvm_error(info_tag, "more instr fault handler than actual err retirements");
-  assert ((cnt_rvfi_errmatch - cnt_rvfi_errmatch_debug) == cnt_rvfi_ifaulthandl)
-    else `uvm_warning(info_tag, $sformatf("err retires (%0d) != handler entries (%0d)", (cnt_rvfi_errmatch - cnt_rvfi_errmatch_debug), cnt_rvfi_ifaulthandl));
+  if ((cnt_rvfi_errmatch - cnt_rvfi_errmatch_debug) != cnt_rvfi_ifaulthandl)
+    `uvm_warning(info_tag, $sformatf("err retires (%0d) != handler entries (%0d)", (cnt_rvfi_errmatch - cnt_rvfi_errmatch_debug), cnt_rvfi_ifaulthandl));
 
   // Check OBI I-side vs RVFI
   assert (cnt_obii_err >= cnt_rvfi_ifaulthandl)
     else `uvm_error(info_tag, $sformatf("less I-side err (%0d) than exception handling (%0d)", cnt_obii_err, cnt_rvfi_ifaulthandl));
-  assert (cnt_obii_err >= cnt_rvfi_errmatch)
-    else `uvm_warning(info_tag, "more retired errs than fetches");
+  if (cnt_obii_err < cnt_rvfi_errmatch)
+    `uvm_warning(info_tag, "more retired errs than fetches");
 
   // Check RVFI (just a sanity check)
-  assert (cnt_rvfi_trn > 0)
-    else `uvm_warning(info_tag, "zero rvfi transactions received");
+  if (cnt_rvfi_trn == 0)
+    `uvm_warning(info_tag, "zero rvfi transactions received");
 
   // Inform about the end state
   `uvm_info(info_tag, $sformatf("received %0d D-side 'err' transactions", cnt_obid_err), UVM_NONE)

@@ -330,7 +330,6 @@ interface uvmt_cv32e40s_debug_cov_assert_if_t
 
     // Core signals
     input  [31:0] boot_addr_i,
-    input         fetch_enable_i,
 
     // Debug signals
     input         debug_req_i, // From controller
@@ -338,12 +337,16 @@ interface uvmt_cv32e40s_debug_cov_assert_if_t
     input         debug_havereset,
     input         debug_running,
     input         debug_halted,
+    input  [31:0] debug_pc_o,
+    input         debug_pc_valid_o,
 
     input         pending_sync_debug, // From controller
     input         pending_async_debug, // From controller
     input         pending_nmi, // From controller
     input         nmi_allowed, // From controller
     input         debug_mode_q, // From controller
+    input         debug_mode_if, // From controller
+    input         ctrl_halt_ex, // From controller
     input  [31:0] dcsr_q, // From controller
     input  [31:0] dpc_q, // From cs regs
     input  [31:0] dpc_n,
@@ -457,8 +460,11 @@ interface uvmt_cv32e40s_support_logic_module_i_if_t
    input logic clk,
    input logic rst_n,
 
-   //TODO: Copy pass - dont know what this does: Marton describes
+   //Controller fsm control signals output
    input ctrl_fsm_t ctrl_fsm_o,
+
+   input logic fetch_enable,
+   input logic debug_req_i,
 
    //Obi signals:
 
@@ -502,6 +508,9 @@ interface uvmt_cv32e40s_support_logic_module_i_if_t
 
       ctrl_fsm_o,
 
+      fetch_enable,
+      debug_req_i,
+
       data_bus_rvalid,
       data_bus_gnt,
       data_bus_gntpar,
@@ -536,7 +545,8 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    import cv32e40s_pkg::*;
    import cv32e40s_rvfi_pkg::*;
 
-   //TODO: Copy pass - dont know what this does: Marton describes
+   // Indicates that a new obi data req arrives after an exception is triggered.
+   // Used to verify exception timing with multiop instruction
    logic req_after_exception;
 
    // support logic signals for the obi bus protocol:
@@ -572,6 +582,16 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    logic gntpar_error_in_response_instr;
    logic gntpar_error_in_response_data;
 
+   // indicates that the current rvfi_valid instruction is the first in a debug handler
+   logic first_debug_ins;
+
+   // this signal indicates core startup
+   logic first_fetch;
+
+   // signal indicates that a debug_req has been observed whithin
+   // a timeframe where the core could oboserve it
+   logic recorded_dbg_req;
+
    modport master_mp (
       output req_after_exception,
          data_bus_addr_ph_cont,
@@ -598,36 +618,42 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
          instr_req_had_integrity,
          data_req_had_integrity,
          gntpar_error_in_response_instr,
-         gntpar_error_in_response_data
+         gntpar_error_in_response_data,
+         first_debug_ins,
+         first_fetch,
+         recorded_dbg_req
    );
 
    modport slave_mp (
       input req_after_exception,
          data_bus_addr_ph_cont,
-	      data_bus_resp_ph_cont,
-	      data_bus_v_addr_ph_cnt,
+         data_bus_resp_ph_cont,
+	 data_bus_v_addr_ph_cnt,
 
          instr_bus_addr_ph_cont,
-	      instr_bus_resp_ph_cont,
-	      instr_bus_v_addr_ph_cnt,
+         instr_bus_resp_ph_cont,
+         instr_bus_v_addr_ph_cnt,
 
          abiim_bus_addr_ph_cont,
-	      abiim_bus_resp_ph_cont,
-	      abiim_bus_v_addr_ph_cnt,
+         abiim_bus_resp_ph_cont,
+         abiim_bus_v_addr_ph_cnt,
 
          lml_bus_addr_ph_cont,
-	      lml_bus_resp_ph_cont,
-	      lml_bus_v_addr_ph_cnt,
+         lml_bus_resp_ph_cont,
+         lml_bus_v_addr_ph_cnt,
 
          lrfodi_bus_addr_ph_cont,
-	      lrfodi_bus_resp_ph_cont,
-	      lrfodi_bus_v_addr_ph_cnt,
+         lrfodi_bus_resp_ph_cont,
+         lrfodi_bus_v_addr_ph_cnt,
 
          req_was_store,
          instr_req_had_integrity,
          data_req_had_integrity,
          gntpar_error_in_response_instr,
-         gntpar_error_in_response_data
+         gntpar_error_in_response_data,
+         first_debug_ins,
+         first_fetch,
+         recorded_dbg_req
    );
 
 endinterface : uvmt_cv32e40s_support_logic_module_o_if_t

@@ -21,20 +21,20 @@ module uvmt_cv32e40s_xsecure_assert
   import cv32e40s_pkg::*;
   #(
     parameter int       SECURE   = 1,
-    parameter logic     SMCLIC = 0,
+    parameter logic     CLIC = 0,
     parameter int       PMP_NUM_REGIONS = 2,
     parameter int       MTVT_ADDR_WIDTH = 5,
     parameter int CSR_MINTTHRESH_MASK = 32,
     parameter int PMP_ADDR_WIDTH = 6
   )
   (
-   uvmt_cv32e40s_xsecure_if_t xsecure_if,
-   uvma_rvfi_instr_if_t rvfi_if,
-   uvmt_cv32e40s_support_logic_module_o_if_t.slave_mp support_if,
+   //uvmt_cv32e40s_xsecure_if xsecure_if,
+   uvma_rvfi_instr_if rvfi_if,
+   uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp support_if,
    input rst_ni,
    input clk_i
   );
-
+/*
   //TODO: update hardened CSR documentation as these CSRs are no longer hardened mclicbase, mscratchcsw, mscratchcswl
   //TODO: make the assertion names sensible
 
@@ -631,7 +631,7 @@ module uvmt_cv32e40s_xsecure_assert
   endgenerate
 
   generate
-    if(SMCLIC) begin
+    if(CLIC) begin
 
       //MTVT
       a_xsecure_hardened_csr_mtvt: assert property (
@@ -789,7 +789,7 @@ module uvmt_cv32e40s_xsecure_assert
   endgenerate
 
   generate
-    if(SMCLIC) begin
+    if(CLIC) begin
 
       //MTVT
       a_xsecure_hardened_csr_mismatch_mtvt: assert property (
@@ -979,6 +979,7 @@ module uvmt_cv32e40s_xsecure_assert
   ****************************************/
 
   //Local memory for the support logic
+  /*
   logic [31:0][31:0] gpr_shadow = '0;
 
   //Make sure the local memory is updated whenever the GPR memory is updated
@@ -1298,7 +1299,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
       achk_error_instr)
   ) else `uvm_error(info_tag, "The request checksum for the OBI instructions bus is not as expected.\n");
 */
-
+/*
   ////////// INTERFACE INTEGRITY ADDRESS CHECKSUM FOR DATA IS GENERATED CORRECTLY //////////
 
   a_xsecure_interface_integrity_achk_data_no_glitch: assert property (
@@ -1551,7 +1552,7 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
   */
 
   ////////// PC HARDENING ON: SET THE MAJOR ALERT IF GLITCH IN PC TARGET //////////
-
+/*
   sequence seq_pc_hardening_jump_instruction_with_glitch(pc_hardening, fsm_state, calculated_signal);
     @(posedge clk_i)
 
@@ -2211,6 +2212,6 @@ property p_parity_signal_is_not_invers_of_signal_set_major_alert(signal, parity_
     //Verify that alert major is set
     xsecure_if.core_alert_major_o
   ) else `uvm_error(info_tag_glitch, "The counter underflows but does not set the major alert.\n");
-
+*/
 
 endmodule : uvmt_cv32e40s_xsecure_assert

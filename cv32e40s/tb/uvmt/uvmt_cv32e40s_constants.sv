@@ -20,7 +20,9 @@
 
 
    `ifdef PARAM_SET_0
-      `include  "cvverif_40s_params.svh"
+      `include  "cvverif_param_set_0.svh"
+   `elsif PARAM_SET_1
+      `include  "cvverif_param_set_1.svh"
    `endif
 
 
@@ -28,15 +30,25 @@
 
    `ifdef PARAM_SET_0
       // Sat from the include file
+   `elsif PARAM_SET_1
+      // Sat from the include file
    `elsif DBG_NUM_TRIG_0
       parameter CORE_PARAM_DBG_NUM_TRIGGERS = 0;
    `elsif DBG_NUM_TRIG_1
       parameter CORE_PARAM_DBG_NUM_TRIGGERS = 1;
+   `elsif DBG_NUM_TRIG_2
+      parameter CORE_PARAM_DBG_NUM_TRIGGERS = 2;
+   `elsif DBG_NUM_TRIG_3
+      parameter CORE_PARAM_DBG_NUM_TRIGGERS = 3;
+   `elsif DBG_NUM_TRIG_4
+      parameter CORE_PARAM_DBG_NUM_TRIGGERS = 4;
    `else
       parameter CORE_PARAM_DBG_NUM_TRIGGERS = 1;
    `endif
 
    `ifdef PARAM_SET_0
+      // Sat from the include file
+   `elsif PARAM_SET_1
       // Sat from the include file
    `else
       parameter logic [31:0] CORE_PARAM_DM_REGION_START = 32'hF0000000;
@@ -48,24 +60,30 @@
 
    `ifdef PARAM_SET_0
       // Sat from the include file
-   `elsif SMCLIC_EN
-      parameter int CORE_PARAM_SMCLIC = 1;
+   `elsif PARAM_SET_1
+      // Sat from the include file
+   `elsif CLIC_EN
+      parameter int CORE_PARAM_CLIC = 1;
    `else
-      parameter int CORE_PARAM_SMCLIC = 0;
+      parameter int CORE_PARAM_CLIC = 0;
    `endif
-   parameter logic SMCLIC = CORE_PARAM_SMCLIC;
+   parameter logic CLIC = CORE_PARAM_CLIC;
 
    `ifdef PARAM_SET_0
       // Sat from the include file
+   `elsif PARAM_SET_1
+      // Sat from the include file
    `else
-      parameter int  CORE_PARAM_SMCLIC_INTTHRESHBITS = 8;
-      parameter int  CORE_PARAM_SMCLIC_ID_WIDTH = 5;
+      parameter int  CORE_PARAM_CLIC_INTTHRESHBITS = 8;
+      parameter int  CORE_PARAM_CLIC_ID_WIDTH = 5;
    `endif
 
 
    // B-ext
 
    `ifdef PARAM_SET_0
+      // Sat from the include file
+   `elsif PARAM_SET_1
       // Sat from the include file
    `elsif ZBA_ZBB_ZBS
       parameter cv32e40s_pkg::b_ext_e CORE_PARAM_B_EXT = cv32e40s_pkg::ZBA_ZBB_ZBS;
@@ -80,6 +98,8 @@
 
    `ifdef PARAM_SET_0
       // Sat from the include file
+   `elsif PARAM_SET_1
+      // Sat from the include file
    `else
       parameter cv32e40s_pkg::m_ext_e CORE_PARAM_M_EXT = cv32e40s_pkg::M;
    `endif
@@ -88,6 +108,8 @@
    // I-base & E-base
 
    `ifdef PARAM_SET_0
+      // Sat from the include file
+   `elsif PARAM_SET_1
       // Sat from the include file
    `elsif RV32E
       parameter cv32e40s_pkg::rv32_e CORE_PARAM_RV32              = cv32e40s_pkg::RV32E;
@@ -102,6 +124,8 @@
 
    `ifdef PARAM_SET_0
       // Sat from the include file
+   `elsif PARAM_SET_1
+      // Sat from the include file
    `else
       parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR0_CFG = cv32e40s_pkg::LFSR_CFG_DEFAULT;
       parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR1_CFG = cv32e40s_pkg::LFSR_CFG_DEFAULT;
@@ -113,42 +137,48 @@
 
    `ifdef PARAM_SET_0
       // Sat from the include file
+   `elsif PARAM_SET_1
+      // Sat from the include file
    `elsif PMP_ENABLE_2
-      parameter int CORE_PARAM_PMP_GRANULARITY = 0;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 2;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 2;
    `elsif PMP_ENABLE_64
-      parameter int CORE_PARAM_PMP_GRANULARITY = 0;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 64;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 64;
    `elsif PMP_G0R0
-      parameter int CORE_PARAM_PMP_GRANULARITY = 0;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 0;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 0;
    `elsif PMP_G0R16
-      parameter int CORE_PARAM_PMP_GRANULARITY = 0;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 16;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 16;
    `elsif PMP_G1R5
-      parameter int CORE_PARAM_PMP_GRANULARITY = 1;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 5;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 1;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 5;
    `elsif PMP_G2R6
-      parameter int CORE_PARAM_PMP_GRANULARITY = 2;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 6;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 2;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 6;
    `elsif PMP_G3R3
-      parameter int CORE_PARAM_PMP_GRANULARITY = 3;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 3;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 3;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 3;
    `elsif PMP_G27R64
-      parameter int CORE_PARAM_PMP_GRANULARITY = 27;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 64;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 27;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 64;
    `else
-      parameter int CORE_PARAM_PMP_GRANULARITY = 0;
-      parameter int CORE_PARAM_PMP_NUM_REGIONS = 0;
+     parameter int CORE_PARAM_PMP_GRANULARITY = 0;
+     parameter int CORE_PARAM_PMP_NUM_REGIONS = 0;
    `endif
 
    `ifdef PARAM_SET_0
+      // Sat from the include file
+   `elsif PARAM_SET_1
       // Sat from the include file
    `else
       parameter cv32e40s_pkg::mseccfg_t CORE_PARAM_PMP_MSECCFG_RV = cv32e40s_pkg::MSECCFG_DEFAULT;
    `endif
 
    `ifdef PARAM_SET_0
+      // Sat from the include file
+   `elsif PARAM_SET_1
       // Sat from the include file
    `else
       parameter cv32e40s_pkg::pmpncfg_t  CORE_PARAM_PMP_PMPNCFG_RV [CORE_PARAM_PMP_NUM_REGIONS-1:0] = '{
@@ -157,6 +187,8 @@
    `endif
 
    `ifdef PARAM_SET_0
+      // Sat from the include file
+   `elsif PARAM_SET_1
       // Sat from the include file
    `else
       parameter logic [31:0] CORE_PARAM_PMP_PMPADDR_RV[CORE_PARAM_PMP_NUM_REGIONS-1:0] = '{
@@ -169,9 +201,11 @@
 
    `ifdef PARAM_SET_0
       // Sat from the include file
+   `elsif PARAM_SET_1
+      // Sat from the include file
    `elsif PMA_CUSTOM_CFG
       const string pma_cfg_name = "pma_custom_cfg";
-      parameter int unsigned  CORE_PARAM_PMA_NUM_REGIONS = 3;
+      parameter int unsigned            CORE_PARAM_PMA_NUM_REGIONS = 3;
       parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
          // Overlap "shadow" of main code (.text), for testing overlap priority
          cv32e40s_pkg::pma_cfg_t'{

@@ -30,6 +30,9 @@ void tor_nomatch()
   uint32_t           res1;
 
 
+  printf("\n\t--------\n\tTorNomatch test\n");
+
+
   // Init
 
   // to  make sure temp values are not the same.
@@ -103,7 +106,6 @@ void tor_nomatch()
   if (temp[1] == temp[2]) {
     printf("\n\t orderly region access test pass ");
     printf("\n\t Back in M mode ");
-    printf("\n\t --------------------------------------------- \n");
   } else {
     printf("\n\t 'orderly' test, unexpected results\n");
     exit(EXIT_FAILURE);
@@ -129,7 +131,6 @@ void tor_nomatch()
   if (mcause == 7) {  // Store/AMO access fault
     printf("\n\t reverse region access denied, test pass ");
     printf("\n\t Back in M mode ");
-    printf("\n\t --------------------------------------------- \n");
   } else {
     printf("\n\t 'reverse' test, unexpected results\n");
     exit(EXIT_FAILURE);

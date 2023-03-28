@@ -19,62 +19,81 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define  EXCEPTION_INSN_ACCESS_FAULT  1
-#define  EXCEPTION_LOAD_ACCESS_FAULT  5
+#define  EXCEPTION_INSN_ACCESS_FAULT      1
+#define  EXCEPTION_LOAD_ACCESS_FAULT      5
 #define  EXCEPTION_STOREAMO_ACCESS_FAULT  7
-#define  MEM_ADDR_0  0
-#define  IO_ADDR  (0x1A110800 + 16)
-#define  MEM_ADDR_1  0x1A111000
-#define  MTVAL_READ  0
-#define  MTBLJALVEC  0  // TODO update when RTL is implemented
+
+/* CFG Memory Layout
+ *
+ * [r0, "main"]
+ * 0xFFFF_FFFF
+ * 0x1A11_1000         <MEM_ADDR_1>
+ *
+ * [not a region]
+ * 0x1A11_1000
+ * 0x1A11_0800 + 16    <IO_ADDR>
+ *
+ * [r1, "main"]
+ * 0x1A11_0800 + 16
+ * 0x0000_0000         <MEM_ADDR_0>
+ */
+#define  MEM_ADDR_0        0
+#define  IO_ADDR           (0x1A110800 + 16)
+#define  MEM_ADDR_1        0x1A111000
+#define  MTVAL_READ        0
 #define  TBLJ_TARGET_ADDR  (IO_ADDR + 8)
 
-static volatile uint32_t mcause = 0;
-static volatile uint32_t mepc = 0;
-static volatile uint32_t mtval = 0;
-static volatile uint32_t retpc = 0;
+static volatile uint32_t  g_mcause = 0;
+static volatile uint32_t  g_mepc   = 0;
+static volatile uint32_t  g_mtval  = 0;
 
-// Exception-causing instructions
+
+// Exception-causing Instructions
+
 static void (*instr_access_fault)(void) = (void (*)(void))IO_ADDR;
+
 void misaligned_store(void) {
   uint32_t tmp;
   tmp = 0xBBBBBBBB;
   __asm__ volatile("sw %0, 1(%1)" : "=r"(tmp) : "r"(IO_ADDR));
 }
-void load_misaligned_io(void) {__asm__ volatile("lw t0, 3(%0)" : : "r"(IO_ADDR));}
-void load_misaligned_iomem(void) {__asm__ volatile("lw t0, 0(%0)" : : "r"(MEM_ADDR_1 - 3));}
-void load_misaligned_memio(void) {__asm__ volatile("lw t0, 0(%0)" : : "r"(IO_ADDR - 1));}
-void store_first_access(void) {__asm__ volatile("sw %0, 2(%1)" : : "r"(0x11223344), "r"(IO_ADDR));}
+
+void load_misaligned_io(void)     {__asm__ volatile("lw t0, 3(%0)" : : "r"(IO_ADDR) : "t0");}
+static void load_aligned_io(void) {__asm__ volatile("lw t0, 0(%0)" : : "r"(IO_ADDR) : "t0");}
+void load_misaligned_io2(void)    {__asm__ volatile("lw t0, 5(%0)" : : "r"(IO_ADDR) : "t0");}
+
+void load_misaligned_iomem(void)     {__asm__ volatile("lw t0, 0(%0)" : : "r"(MEM_ADDR_1 - 2) : "t0");}
+static void load_aligned_iomem(void) {__asm__ volatile("lh t0, 0(%0)" : : "r"(MEM_ADDR_1 - 2) : "t0");}
+
+void load_misaligned_memio(void)     {__asm__ volatile("lw t0, 0(%0)" : : "r"(IO_ADDR - 1) : "t0");}
+static void load_aligned_memio(void) {__asm__ volatile("lb t0, 0(%0)" : : "r"(IO_ADDR - 1) : "t0");}
+
+void store_first_access(void)  {__asm__ volatile("sw %0,  2(%1)" : : "r"(0x11223344), "r"(IO_ADDR));}
 void store_second_access(void) {__asm__ volatile("sw %0, -2(%1)" : : "r"(0x22334455), "r"(MEM_ADDR_1));}
 
-__attribute__((naked))
-void provoke(void (*f)(void)) {
-  // Prolog
-  __asm__ volatile("addi sp,sp,-64");
-  __asm__ volatile("sw ra, 0(sp)");
-  __asm__ volatile("sw a0, 4(sp)");
-  __asm__ volatile("sw a1, 8(sp)");
-  __asm__ volatile("sw a2, 12(sp)");
-  __asm__ volatile("sw a3, 16(sp)");
-  __asm__ volatile("sw a4, 20(sp)");
-  __asm__ volatile("sw a5, 24(sp)");
-  __asm__ volatile("sw a6, 28(sp)");
-  __asm__ volatile("sw a7, 32(sp)");
-  __asm__ volatile("sw t0, 36(sp)");
-  __asm__ volatile("sw t1, 40(sp)");
-  __asm__ volatile("sw t2, 44(sp)");
-  __asm__ volatile("sw t3, 48(sp)");
-  __asm__ volatile("sw t4, 52(sp)");
-  __asm__ volatile("sw t5, 56(sp)");
-  __asm__ volatile("sw t6, 60(sp)");
 
-  // Let trap handler know where to continue
-  __asm__ volatile("addi %0, ra, 0" : "=r"(retpc));
+// Utility Functions
 
-  // Call the function that shall trap
-  f();
+__attribute__ ((interrupt))
+void u_sw_irq_handler(void) {  // overrides a "weak" symbol in the bsp
+  uint32_t ra;
 
-  // Handler must do epilog
+  __asm__ volatile( R"(
+    addi %[ra],     ra, 0
+    csrr %[mcause], mcause
+    csrr %[mepc],   mepc
+    csrr %[mtval],  mtval
+    )"
+    : [ra]     "=r"(ra),
+      [mcause] "=r"(g_mcause),
+      [mepc]   "=r"(g_mepc),
+      [mtval]  "=r"(g_mtval)
+  );
+
+  printf("(exec in u_sw_irq_handler: mcause=%lx, mepc=%lx)\n", g_mcause, g_mepc);
+
+  __asm__ volatile("csrw mepc, %0" : : "r"(ra));
+  return;
 }
 
 static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
@@ -85,345 +104,226 @@ static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
   }
 }
 
-__attribute__((naked))
-void u_sw_irq_handler(void) {  // overrides a "weak" symbol in the bsp
-  __asm__ volatile("csrr %0, mcause" : "=r"(mcause));
-  __asm__ volatile("csrr %0, mepc" : "=r"(mepc));
-  __asm__ volatile("csrr %0, mtval" : "=r"(mtval));
-
-  __asm__ volatile("csrw mepc, %0" : : "r"(retpc));
-  printf("(exec in u_sw_irq_handler: mcause=%lx, mepc=%lx, retpc=%lx)\n", mcause, mepc, retpc);
-
-  // provoke() did prolog, handler does epilog
-  __asm__ volatile("lw ra, 0(sp)");
-  __asm__ volatile("lw a0, 4(sp)");
-  __asm__ volatile("lw a1, 8(sp)");
-  __asm__ volatile("lw a2, 12(sp)");
-  __asm__ volatile("lw a3, 16(sp)");
-  __asm__ volatile("lw a4, 20(sp)");
-  __asm__ volatile("lw a5, 24(sp)");
-  __asm__ volatile("lw a6, 28(sp)");
-  __asm__ volatile("lw a7, 32(sp)");
-  __asm__ volatile("lw t0, 36(sp)");
-  __asm__ volatile("lw t1, 40(sp)");
-  __asm__ volatile("lw t2, 44(sp)");
-  __asm__ volatile("lw t3, 48(sp)");
-  __asm__ volatile("lw t4, 52(sp)");
-  __asm__ volatile("lw t5, 56(sp)");
-  __asm__ volatile("lw t6, 60(sp)");
-  __asm__ volatile("addi sp,sp,64");
-  __asm__ volatile("mret");
-}
-
 static void reset_volatiles(void) {
-  mcause = -1;
-  mepc = -1;
-  mtval = -1;
+  g_mcause = -1;
+  g_mepc   = -1;
+  g_mtval  = -1;
 }
+
+
+// Tests
 
 static void check_load_vs_regfile(void) {
-  // within this scope, t0 regs etc should be free to use (ABI, not preserved)
-  uint32_t tmp;
+  volatile uint32_t  tmp;
+  volatile uint32_t  rd_pre;
+  volatile uint32_t  rd_post;
 
   // check misaligned in IO
-  __asm__ volatile("sw %0, 0(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR));
-  __asm__ volatile("sw %0, 4(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR));
-  __asm__ volatile("li t0, 0x11223344");
-  provoke(load_misaligned_io);
-  __asm__ volatile("mv %0, t0" : "=r"(tmp));  // t0 must be "rd" in load_misaligned_io()
-  /* TODO enable when RTL is implemented
-  assert_or_die(tmp, 0x11223344, "error: misaligned IO load shouldn't touch regfile\n");
-  */
+  __asm__ volatile("sw %0, 0(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR) : "memory");
+  __asm__ volatile("sw %0, 4(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR) : "memory");
+  {
+    // misaligned: regfile untouched
+    __asm__ volatile( R"(
+      mv   %[rd_pre],   t0
+      jal  ra,          load_misaligned_io
+      mv   %[rd_post],  t0
+      )"
+      : [rd_pre]  "=r"(rd_pre),
+        [rd_post] "=r"(rd_post)
+      :
+      : "ra", "memory"
+    );  // t0 must be "rd" in load_misaligned_io()
+    assert_or_die(rd_post, rd_pre, "error: misaligned IO load shouldn't touch regfile\n");
+  }
+  {
+    // aligned: regfile touched
+    load_aligned_io();
+    __asm__ volatile("mv %0, t0" : "=r"(tmp):: "t0", "memory");
+    assert_or_die(tmp, 0xAAAAAAAA, "error: aligned IO load should touch regfile\n");
+  }
 
   // check misaligned border from IO to MEM
-  __asm__ volatile("sw %0, -4(%1)" : : "r"(0xAAAAAAAA), "r"(MEM_ADDR_1));
-  __asm__ volatile("sw %0, 0(%1)" : : "r"(0xBBBBBBBB), "r"(MEM_ADDR_1));
-  __asm__ volatile("li t0, 0x22334455");
-  provoke(load_misaligned_iomem);
-  __asm__ volatile("mv %0, t0" : "=r"(tmp));
-  /* TODO enable when RTL is implemented
-  assert_or_die(tmp, 0x22334455, "error: misaligned IO/MEM load shouldn't touch regfile\n");
-  */
+  __asm__ volatile("sw %0, -4(%1)" : : "r"(0xAAAAAAAA), "r"(MEM_ADDR_1) : "memory");
+  __asm__ volatile("sw %0,  0(%1)" : : "r"(0xBBBBBBBB), "r"(MEM_ADDR_1) : "memory");
+  {
+    // misaligned: regfile untouched
+    __asm__ volatile( R"(
+      mv   %[rd_pre],   t0
+      jal  ra,          load_misaligned_iomem  # IO->MEM border
+      mv   %[rd_post],  t0
+      )"
+      : [rd_pre]  "=r"(rd_pre),
+        [rd_post] "=r"(rd_post)
+      :
+      : "ra", "memory"
+    );
+    assert_or_die(rd_post, rd_pre, "error: misaligned IO/MEM load shouldn't touch regfile\n");
+  }
+  {
+    // aligned: regfile touched
+    load_aligned_iomem();
+    __asm__ volatile("mv %0, t0" : "=r"(tmp):: "t0", "memory");
+    assert_or_die(tmp, 0xFFFFAAAA, "error: aligned IO/MEM load should touch regfile\n");
+  }
 
   // check misaligned border from MEM to IO
-  __asm__ volatile("sw %0, -4(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR));
-  __asm__ volatile("sw %0, 0(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR));
-  __asm__ volatile("li t0, 0x33445566");
-  provoke(load_misaligned_memio);
-  __asm__ volatile("mv %0, t0" : "=r"(tmp));
-  /* TODO enable when RTL is implemented
-  assert_or_die(tmp, 0x33445566, "error: misaligned MEM/IO load shouldn't touch regfile\n");
-  */
+  __asm__ volatile("sw %0, -4(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR) : "memory");
+  __asm__ volatile("sw %0, 0(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR) : "memory");
+  {
+    // misaligned: regfile untouched
+    __asm__ volatile( R"(
+      mv   %[rd_pre],   t0
+      jal  ra,          load_misaligned_memio  # MEM->IO border
+      mv   %[rd_post],  t0
+      )"
+      : [rd_pre]  "=r"(rd_pre),
+        [rd_post] "=r"(rd_post)
+      :
+      : "ra", "memory"
+    );
+    assert_or_die(rd_post, rd_pre, "error: misaligned MEM/IO load shouldn't touch regfile\n");
+  }
+  {
+    // aligned: regfile touched
+    load_aligned_memio();
+    __asm__ volatile("mv %0, t0" : "=r"(tmp):: "t0", "memory");
+    assert_or_die(tmp, 0xFFFFFFAA, "error: aligned MEM/IO load should touch regfile\n");
+  }
 
-  // TODO can one programmatically confirm that these addresses are indeed in such regions as intended?
+  // TODO:INFO:silabs-robin  can one programmatically confirm that these addresses are indeed in such regions as intended?
 }
 
-static void check_zce_push(void) {
-  uint32_t defaults[] = {0xAAAAAAAA, 0xBBBBBBBB, 0xCCCCCCCC, 0xDDDDDDDD};
-  uint32_t sp;
-  uint32_t ra;
-  uint32_t tmp;
-
-  // Prologue
-  __asm__ volatile("mv %0, sp" : "=r"(sp));  // Saving "sp", for we shall tamper with it
-
-  // Setup preparations
-  __asm__ volatile("mv sp, %0" : : "r"(MEM_ADDR_1 + 4));  // Set "sp" to have room for 1 MEM before entering IO
-  __asm__ volatile("mv %0, ra" : "=r"(ra));  // Saving "ra" for later use
-  __asm__ volatile("sw %0, 0(%1)" : : "r"(defaults[0]), "r"(MEM_ADDR_1));
-  __asm__ volatile("sw %0, -4(%1)" : : "r"(defaults[1]), "r"(MEM_ADDR_1));
-  __asm__ volatile("sw %0, -8(%1)" : : "r"(defaults[2]), "r"(MEM_ADDR_1));
-  __asm__ volatile("sw %0, -12(%1)" : : "r"(defaults[3]), "r"(MEM_ADDR_1));
-
-  // Run the push stimuli
-  /* TODO enabled when RTL is implemented
-  __asm__ volatile(".word 0x000240AB");  // TODO "push {ra, s0-s1}, -16"
-  */
-
-  // Epilogue
-  __asm__ volatile("mv sp, %0" : : "r"(sp));  // Better restore this quickly
-
-  // Assert results
-  /* TODO enabled when RTL is implemented
-  assert_or_die(mcause, EXCEPTION_STOREAMO_ACCESS_FAULT, "error: bad push should except\n");
-  assert_or_die(mepc, (MEM_ADDR_1 - 4), "error: bad push, unexpected mepc\n");
-  assert_or_die(mtval, MTVAL_READ, "error: bad push, unexpected mtval\n");
-  __asm__ volatile("lw %0, 0(%1)" : "=r"(tmp) : "r"(MEM_ADDR_1));
-  assert_or_die(tmp, ra, "error: PUSH to MEM should SW successfully\n");
-  */
-  __asm__ volatile("lw %0, -4(%1)" : "=r"(tmp) : "r"(MEM_ADDR_1));
-  assert_or_die(tmp, defaults[1], "error: PUSH to IO should not SW\n");
-  __asm__ volatile("lw %0, -8(%1)" : "=r"(tmp) : "r"(MEM_ADDR_1));
-  assert_or_die(tmp, defaults[2], "error: Trailing PUSHes to IO should not SW\n");
-}
-
-static void check_zce_pop(void) {
-  uint32_t defaults[] = {0xAAAAAAAA, 0xBBBBBBBB, 0xCCCCCCCC, 0xDDDDDDDD};
-  register uint32_t sp asm ("s8");  // (ask C to not use the registers needed for testing)
-  register uint32_t s0 asm ("s9");
-  register uint32_t s1 asm ("s10");
-  register uint32_t ra asm ("s11");  // Hereby pledge to not intentionally use s11, to prevent ra getting corrupted
-  uint32_t tmp;
-
-  // Prologue
-  __asm__ volatile("mv %0, sp" : "=r"(sp));  // Saving "sp", for we shall tamper with it
-  __asm__ volatile("mv %0, ra" : "=r"(ra));  // Saving "ra", for we shall tamper with it
-
-  // Setup
-  __asm__ volatile("mv sp, %0" : : "r"(MEM_ADDR_1 + 4 - 16));  // Set previous "sp" to have room for 1 MEM before entering IO
-  __asm__ volatile("sw %0, 0(%1)" : : "r"(defaults[0]), "r"(MEM_ADDR_1));
-  __asm__ volatile("sw %0, -4(%1)" : : "r"(defaults[1]), "r"(MEM_ADDR_1));
-  __asm__ volatile("sw %0, -8(%1)" : : "r"(defaults[2]), "r"(MEM_ADDR_1));
-  __asm__ volatile("sw %0, -12(%1)" : : "r"(defaults[3]), "r"(MEM_ADDR_1));
-  __asm__ volatile("mv %0, s0" : "=r"(s0));  // Will check against this later
-  __asm__ volatile("mv %0, s1" : "=r"(s1));  // Will check against this later
-
-  // Run the instruction
-  /* TODO enable when RTL is implemented
-  __asm__ volatile("pop {ra, s0-s1}, 16");
-  */
-
-  // Epilogue 1/2
-  __asm__ volatile("mv sp, %0" : : "r"(sp));
-
-  // Assert results
-  /* TODO enable when RTL is implemented
-  assert_or_die(mcause, EXCEPTION_LOAD_ACCESS_FAULT, "error: bad pop should except\n");
-  assert_or_die(mepc, (MEM_ADDR_1 - 4), "error: bad pop, unexpected mepc\n");
-  assert_or_die(mtval, MTVAL_READ, "error: bad pop, unexpected mtval\n");
-  __asm__ volatile("mv %0, ra" : "=r"(tmp));
-  assert_or_die(tmp, defaults[0], "error: POP from MEM should LW ra successfully\n");
-  */
-  __asm__ volatile("mv %0, s0" : "=r"(tmp));
-  assert_or_die(tmp, s0, "error: POP from IO should not LW\n");
-  __asm__ volatile("mv %0, s1" : "=r"(tmp));
-  assert_or_die(tmp, s1, "error: POP from IO should not continue LWing\n");
-  //TODO are assertions good enough that C accidentally using the same registers will either be caught or not be a problem?
-
-  // Epilogue 2/2
-  __asm__ volatile("mv ra, %0" : : "r"(ra));
-}
-
-static int fail_first_tblj(void) {
-  int mepc = -1;
-
-  /* TODO enable when RTL is implemented
-  // TODO make sure the target address is non-executable, so we can check if mtval matches first fetch
-  __asm__ volatile("c.tbljal 0");
-  */
-  __asm__ volatile("auipc %0, 0" : "=r"(mepc));
-  mepc -= 4;
-
-  return mepc;
-}
 
 int main(void) {
   uint32_t tmp;
 
   printf("\nHello, PMA test!\n\n");
-  assert_or_die(mcause, 0, "error: mcause variable should initially be 0\n");
-  assert_or_die(mepc, 0, "error: mepc variable should initially be 0\n");
-  assert_or_die(mtval, 0, "error: mtval variable should initially be 0\n");
+  assert_or_die(g_mcause, 0, "error: mcause variable should initially be 0\n");
+  assert_or_die(g_mepc,   0, "error: mepc variable should initially be 0\n");
+  assert_or_die(g_mtval,  0, "error: mtval variable should initially be 0\n");
 
-  // TODO "mtval" should in the future not be read-only read-zero.
+  // TODO:INFO:silabs-robin  "mtval" could in the future not be read-only read-zero.
 
 
-  printf("pma: Exec should only work for 'main memory' regions\n");
+  printf("pma: 1. Exec should only work for 'main memory' regions\n");
 
   reset_volatiles();
-  provoke(instr_access_fault);
-  assert_or_die(mcause, EXCEPTION_INSN_ACCESS_FAULT, "error: expected instruction access fault\n");
-  assert_or_die(mepc, IO_ADDR, "error: expected different mepc\n");
-  assert_or_die(mtval, MTVAL_READ, "error: expected different mtval\n");
+  instr_access_fault();
+  assert_or_die(g_mcause, EXCEPTION_INSN_ACCESS_FAULT, "error: expected instruction access fault\n");
+  assert_or_die(g_mepc, IO_ADDR, "error: expected different mepc\n");
+  assert_or_die(g_mtval, MTVAL_READ, "error: expected different mtval\n");
 
 
-  printf("pma: Non-naturally aligned stores to I/O regions\n");
+  printf("pma: 2. Non-naturally aligned stores to I/O regions\n");
 
   printf("pma: sanity check that aligned stores are ok\n");
   reset_volatiles();
   tmp = 0xAAAAAAAA;
   __asm__ volatile("sw %0, 0(%1)" : "=r"(tmp) : "r"(IO_ADDR));
-  assert_or_die(mcause, -1, "error: aligned store should not change mcause\n");
-  assert_or_die(mepc, -1, "error: aligned store should not change mepc\n");
-  assert_or_die(mtval, -1, "error: aligned store should not change mtval\n");
+  assert_or_die(g_mcause, -1, "error: aligned store should not change mcause\n");
+  assert_or_die(g_mepc, -1, "error: aligned store should not change mepc\n");
+  assert_or_die(g_mtval, -1, "error: aligned store should not change mtval\n");
 
   printf("pma: check that misaligned stores except\n");
   reset_volatiles();
-  provoke(misaligned_store);
-  assert_or_die(mcause, EXCEPTION_STOREAMO_ACCESS_FAULT, "error: misaligned store unexpected mcause\n");
-  //TODO:ropeders fix: assert_or_die(mepc, (IO_ADDR + 1), "error: misaligned store unexpected mepc\n");
-  assert_or_die(mtval, MTVAL_READ, "error: misaligned store unexpected mtval\n");
+  __asm__ volatile("jal ra, misaligned_store");
+  assert_or_die(g_mcause, EXCEPTION_STOREAMO_ACCESS_FAULT, "error: misaligned store unexpected mcause\n");
+  assert_or_die(g_mtval,  MTVAL_READ, "error: misaligned store unexpected mtval\n");
 
   printf("pma: check that misaligned store to MEM is alright\n");
   reset_volatiles();
   tmp = 0xCCCCCCCC;
   __asm__ volatile("sw %0, -9(%1)" : "=r"(tmp) : "r"(IO_ADDR));
-  assert_or_die(mcause, -1, "error: misaligned store to main affected mcause\n");
-  assert_or_die(mepc, -1, "error: misaligned store to main affected mepc\n");
-  assert_or_die(mtval, -1, "error: misaligned store to main affected mtval\n");
+  assert_or_die(g_mcause, -1, "error: misaligned store to main affected mcause\n");
+  assert_or_die(g_mepc, -1, "error: misaligned store to main affected mepc\n");
+  assert_or_die(g_mtval, -1, "error: misaligned store to main affected mtval\n");
 
 
-  printf("pma: Non-naturally aligned loads within I/O regions\n");
+  printf("pma: 3. Non-naturally aligned loads within I/O regions\n");
 
   printf("pma: sanity check that aligned load is no problem\n");
   reset_volatiles();
   tmp = 0;
   __asm__ volatile("lw %0, 0(%1)" : "=r"(tmp) : "r"(IO_ADDR));  // Depends on "store" test filling memory first
-  assert_or_die(!tmp, 0, "error: load should not yield zero\n");  // TODO ensure memory content matches
-  assert_or_die(mcause, -1, "error: natty access should not change mcause\n");
-  assert_or_die(mepc, -1, "error: natty access should not change mepc\n");
-  assert_or_die(mtval, -1, "error: natty access should not change mtval\n");
+  assert_or_die(!tmp, 0, "error: load should not yield zero\n");  // TODO:WARNING:silabs-robin  ensure memory content matches
+  assert_or_die(g_mcause, -1, "error: natty access should not change mcause\n");
+  assert_or_die(g_mepc, -1, "error: natty access should not change mepc\n");
+  assert_or_die(g_mtval, -1, "error: natty access should not change mtval\n");
 
   printf("pma: check that misaligned load will except\n");
- /* TODO:silabs-robin  Uncomment
   reset_volatiles();
-  __asm__ volatile("lw %0, 5(%1)" : "=r"(tmp) : "r"(IO_ADDR));
-  assert_or_die(mcause, EXCEPTION_LOAD_ACCESS_FAULT, "error: misaligned IO load should except\n");
-  assert_or_die(mepc, (IO_ADDR + 5), "error: misaligned IO load unexpected mepc\n");
-  assert_or_die(mtval, MTVAL_READ, "error: misaligned IO load unexpected mtval\n");
-  // TODO more kinds of |addr[0:1]? Try LH too?
- */
+  __asm__ volatile("jal ra, load_misaligned_io2");
+  assert_or_die(g_mcause, EXCEPTION_LOAD_ACCESS_FAULT, "error: misaligned IO load should except\n");
+  assert_or_die(g_mtval, MTVAL_READ, "error: misaligned IO load unexpected mtval\n");
+  // TODO:INFO:silabs-robin  more kinds of |addr[0:1]? Try LH too?
 
   printf("pma: check that misaligned to MEM does not fail\n");
   reset_volatiles();
   tmp = 0;
   __asm__ volatile("lw %0, 0(%1)" : "=r"(tmp) : "r"(0x80));
   assert_or_die(!tmp, 0, "error: load from main should not yield zero\n");
-  assert_or_die(mcause, -1, "error: main access should not change mcause\n");
-  assert_or_die(mepc, -1, "error: main access should not change mepc\n");
-  assert_or_die(mtval, -1, "error: main access should not change mtval\n");
+  assert_or_die(g_mcause, -1, "error: main access should not change mcause\n");
+  assert_or_die(g_mepc, -1, "error: main access should not change mepc\n");
+  assert_or_die(g_mtval, -1, "error: main access should not change mtval\n");
 
 
-  printf("pma: Misaligned load fault shouldn't touch regfile\n");
+  printf("pma: 4. Misaligned load fault shouldn't touch regfile\n");
 
-  // check that various split load access fault leaves regfile untouched
+  printf("pma: check that various split load access fault leaves regfile untouched\n");
   check_load_vs_regfile();
 
 
-  // Misaligned store fault shouldn't reach bus in second access
+  printf("pma: 5. Misaligned store fault shouldn't reach bus in second access\n");
 
-  // check IO store failing in first access
+  printf("pma: check IO store failing in first access\n");
   __asm__ volatile("sw %0, 0(%1)" : : "r"(0xAAAAAAAA), "r"(IO_ADDR));
   __asm__ volatile("sw %0, 4(%1)" : : "r"(0xBBBBBBBB), "r"(IO_ADDR));
-  provoke(store_first_access);
-  /* TODO enable when RTL is implemented
+  __asm__ volatile("jal ra, store_first_access");
   __asm__ volatile("lw %0, 0(%1)" : "=r"(tmp) : "r"(IO_ADDR));
   assert_or_die(tmp, 0xAAAAAAAA, "error: misaligned first store entered bus\n");
   __asm__ volatile("lw %0, 4(%1)" : "=r"(tmp) : "r"(IO_ADDR));
   assert_or_die(tmp, 0xBBBBBBBB, "error: misaligned second store entered bus\n");
-  */
-  // TODO how to programmatically confirm that these region settings match as intended?
+  // TODO:INFO:silabs-robin  how to programmatically confirm that these region settings match as intended?
 
-  // check IO to MEM store failing in first access
+  printf("pma: check IO to MEM store failing in first access\n");
   __asm__ volatile("sw %0, -4(%1)" : : "r"(0xAAAAAAAA), "r"(MEM_ADDR_1));
   __asm__ volatile("sw %0, 0(%1)" : : "r"(0xBBBBBBBB), "r"(MEM_ADDR_1));
-  provoke(store_second_access);
-  /* TODO enable when RTL is implemented
+  __asm__ volatile("jal ra, store_second_access");
   __asm__ volatile("lw %0, -4(%1)" : "=r"(tmp) : "r"(MEM_ADDR_1));
   assert_or_die(tmp, 0xAAAAAAAA, "error: misaligned IO/MEM first store entered bus\n");
   __asm__ volatile("lw %0, 0(%1)" : "=r"(tmp) : "r"(MEM_ADDR_1));
   assert_or_die(tmp, 0xBBBBBBBB, "error: misaligned IO/MEM second store entered bus\n");
-  */
-  // TODO how to programmatically confirm that these region settings match as intended?
+  // TODO:INFO:silabs-robin  how to programmatically confirm that these region settings match as intended?
 
 
-  // Atomics should work only where it is allowed
+/* A-ext not for 40s
+  printf("pma: 6. Atomics should work only where it is allowed\n");
 
-  // Sanity check that atomic ops (lr/sc) to allowed regions is ok
+  printf("pma: Sanity check that atomic ops (lr/sc) to allowed regions is ok\n");
   reset_volatiles();
-  /* TODO enable when RTL is implemented
   __asm__ volatile("lr.w %0, 0(%1)" : "=r"(tmp) : "r"(MEM_ADDR_1));
   __asm__ volatile("sc.w %0, %0, 0(%1)" : "=r"(tmp) : "r"(MEM_ADDR_1));
-  */
-  assert_or_die(mcause, -1, "error: atomics to legal region should not except\n");
-  assert_or_die(mepc, -1, "error: atomics to legal region unexpected mepc\n");
-  assert_or_die(mtval, -1, "error: atomics to legal region unexpected mtval\n");
+  assert_or_die(g_mcause, -1, "error: atomics to legal region should not except\n");
+  assert_or_die(g_mepc, -1, "error: atomics to legal region unexpected mepc\n");
+  assert_or_die(g_mtval, -1, "error: atomics to legal region unexpected mtval\n");
 
-  // Load-reserved to disallowed regions raises precise exception
+  printf("pma: Load-reserved to disallowed regions raises precise exception\n");
   reset_volatiles();
-  /* TODO enable when RTL is implemented
   __asm__ volatile("lr.w %0, 0(%1)" : "=r"(tmp) : "r"(IO_ADDR));
-  assert_or_die(mcause, EXCEPTION_LOAD_ACCESS_FAULT, "error: load-reserved to non-atomic should except\n");
-  assert_or_die(mepc, IO_ADDR, "error: load-reserved to non-atomic unexpected mepc\n");
-  assert_or_die(mtval, MTVAL_READ, "error: load-reserved to non-atomic unexpected mtval\n");
-  */
+  assert_or_die(g_mcause, EXCEPTION_LOAD_ACCESS_FAULT, "error: load-reserved to non-atomic should except\n");
+  assert_or_die(g_mepc, IO_ADDR, "error: load-reserved to non-atomic unexpected mepc\n");
+  assert_or_die(g_mtval, MTVAL_READ, "error: load-reserved to non-atomic unexpected mtval\n");
 
-  // Store-conditional to disallowed regions raises precise exception
+  printf("pma: Store-conditional to disallowed regions raises precise exception\n");
   reset_volatiles();
-  /* TODO enable when RTL is implemented
   __asm__ volatile("sc.w %0, %0, 0(%1)" : "=r"(tmp) : "r"(IO_ADDR));
-  assert_or_die(mcause, EXCEPTION_STOREAMO_ACCESS_FAULT, "error: store-conditional to non-atomic should except\n");
-  assert_or_die(mepc, IO_ADDR, "error: store-conditional to non-atomic unexpected mepc\n");
-  assert_or_die(mtval, MTVAL_READ, "error: store-conditional to non-atomic unexpected mtval\n");
-  */
+  assert_or_die(g_mcause, EXCEPTION_STOREAMO_ACCESS_FAULT, "error: store-conditional to non-atomic should except\n");
+  assert_or_die(g_mepc, IO_ADDR, "error: store-conditional to non-atomic unexpected mepc\n");
+  assert_or_die(g_mtval, MTVAL_READ, "error: store-conditional to non-atomic unexpected mtval\n");
+*/
 
 
-  // Check Zce-related PMA features
-
-  // Push instrs should fault to IO but pass for MEM
-  check_zce_push();
-
-  // Pop instrs should fault to IO but pass for MEM
-  check_zce_pop();
-
-  // Table jump failing first fetch should be the fault of the table jump
-  reset_volatiles();
-  tmp = fail_first_tblj();
-  /* TODO enable when RTL is implemented
-  assert_or_die(mcause, EXCEPTION_INSN_ACCESS_FAULT, "error: tblj failing first should instruction access fault\n");
-  assert_or_die(mepc, tmp, "error: tblj first expected different mepc\n");
-  assert_or_die(mtval, MTBLJALVEC, "error: tblj first expected different mtval\n");
-  */
-
-  // Table jump failing second fetch should be the fault of the target
-  reset_volatiles();
-  /* TODO enable when RTL is implemented
-  make sure table is executable but target is not
-  __asm__ volatile("c.tbljal 1");
-  assert_or_die(mcause, EXCEPTION_INSN_ACCESS_FAULT, "error: tblj failing second should instruction access fault\n");
-  assert_or_die(mepc, TBLJ_TARGET_ADDR, "error: tblj second expected different mepc\n");
-  assert_or_die(mtval, MTVAL_READ, "error: tblj second expected different mtval\n");
-  */
+  // Zc features are in the vplan, but are much easier to check with assertions.
 
 
   printf("\nGoodbye, PMA test!\n\n");

@@ -1,10 +1,15 @@
 name: pma_test_cfg_2
 description: PMA configuration for the PMA_TEST_CFG_2 test case
-compile_flags:
+compile_flags: >
    +define+PMA_TEST_CFG_2
    +define+ZBA_ZBB_ZBC_ZBS
-plusargs:
+plusargs: >
    +enable_pma=1
+   +enable_zca_extension=1
+   +enable_zcb_extension=1
+   +enable_zcmt_extension=1
+   +enable_zcmp_extension=1
+   +fix_ra=1
    +fix_sp=1
    +enable_zba_extension=1
    +enable_zbb_extension=1
@@ -175,4 +180,4 @@ ovpsim: >
    --override cpu/mask_pmpcfg13=0x00000000
    --override cpu/mask_pmpcfg14=0x00000000
    --override cpu/mask_pmpcfg15=0x00000000
-cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zicsr_zca_zifencei
+cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zicsr_zca_zcb_zcmp_zcmt_zifencei
