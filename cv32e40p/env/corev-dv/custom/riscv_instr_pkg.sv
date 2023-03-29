@@ -104,14 +104,11 @@ package riscv_instr_pkg;
     RV32ZBC,
     RV32ZBS,
     RV32ZFINX,
-    RV32ZDINX,
     RV64B,
     RV64ZBA,
     RV64ZBB,
     RV64ZBC,
     RV64ZBS,
-    RV64ZFINX,
-    RV64ZDINX,
     RV32X,
     RV64X
   } riscv_instr_group_t;

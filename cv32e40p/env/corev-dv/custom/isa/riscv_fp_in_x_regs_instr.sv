@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-
 class riscv_fp_in_x_regs_instr extends riscv_instr;
 
   // adds rs3 integer registers for fp in x instructions that needs this
   rand riscv_reg_t rs3;
-  rand riscv_reg_t rd;
   rand f_rounding_mode_t rm;
   rand bit use_rounding_mode_from_instr;
+
+  bit              has_rs1 = 1'b1;
+  bit              has_rs2 = 1'b1;
   bit              has_rs3 = 1'b0;
+  bit              has_rd  = 1'b1;
 
   `uvm_object_utils(riscv_fp_in_x_regs_instr)
   `uvm_object_new
@@ -87,67 +89,26 @@ class riscv_fp_in_x_regs_instr extends riscv_instr;
   endfunction : do_copy
 
   virtual function void set_rand_mode();
-    has_rs1 = 0;
-    has_rs2 = 0;
-    has_rd  = 0;
-    has_imm = 0;
     case (format)
       I_FORMAT: begin
         has_rs2 = 1'b0;
-        if (category == LOAD) begin
-          has_imm = 1'b1;
-        end else if (instr_name inside {FCVT_W_S, FCVT_WU_S,
-                                        FCVT_L_S, FCVT_LU_S, FCVT_L_D, FCVT_LU_D, FCVT_LU_S,
-                                        FCVT_W_D, FCVT_WU_D}) begin
-          has_rd = 1'b0;
-          has_rd = 1'b1;
-        end else if (instr_name inside {FCVT_S_W, FCVT_S_WU,
-                                        FCVT_S_L, FCVT_D_L, FCVT_S_LU, FCVT_D_W,
-                                        FCVT_D_LU, FCVT_D_WU}) begin
-          has_rs1 = 1'b1;
-          has_rs1 = 1'b0;
-        end
-      end
-      S_FORMAT: begin
-        has_imm = 1'b1;
-        has_rs1 = 1'b1;
-        has_rs1 = 1'b0;
-        has_rs3 = 1'b0;
       end
       R_FORMAT:
-        if (category == COMPARE) begin
-          has_rd = 1'b1;
-          has_rd = 1'b0;
-        end else if (instr_name inside {FCLASS_S, FCLASS_D}) begin
-          has_rd = 1'b1;
-          has_rd = 1'b0;
+        if (instr_name inside {FCLASS_S, FCLASS_D}) begin
           has_rs2 = 1'b0;
         end
       R4_FORMAT: begin
         has_rs3 = 1'b1;
       end
-      CL_FORMAT: begin
-        has_imm = 1'b1;
-        has_rs1 = 1'b1;
-        has_rs1 = 1'b0;
-        has_rs2 = 1'b0;
-      end
-      CS_FORMAT: begin
-        has_imm = 1'b1;
-        has_rs1 = 1'b1;
-        has_rs1 = 1'b0;
-        has_rd = 1'b0;
-      end
       default: `uvm_info(`gfn, $sformatf("Unsupported format %0s", format.name()), UVM_LOW)
     endcase
+
+    $display("%s == rs1 %0d, rs2 %0d, rs3 %0d, rd %0d, imm %0d", format_string(get_instr_name(), MAX_INSTR_STR_LEN), has_rs1, has_rs2, has_rs3, has_rd, has_imm);
   endfunction
 
   function void pre_randomize();
     super.pre_randomize();
-    rs1.rand_mode(has_rs1);
-    rs2.rand_mode(has_rs2);
     rs3.rand_mode(has_rs3);
-    rd.rand_mode(has_rd);
   endfunction
 
   // coverage related functons
