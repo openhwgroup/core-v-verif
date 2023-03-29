@@ -938,7 +938,11 @@ module uvmt_cv32e40s_imperas_dv_wrap
     rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR, RVVI_FALSE);
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
 
-    rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR, RVVI_FALSE);
+    if (CORE_PARAM_CLIC == 1) begin
+      rvviRefCsrCompareEnable(hart_id, `CSR_MNXTI_ADDR, RVVI_FALSE);
+      rvviRefCsrCompareEnable(hart_id, `CSR_MSCRATCHCSW_ADDR, RVVI_FALSE);
+      rvviRefCsrCompareEnable(hart_id, `CSR_MSCRATCHCSWL_ADDR, RVVI_FALSE);
+    end
 
     // define asynchronous grouping
     // Interrupts

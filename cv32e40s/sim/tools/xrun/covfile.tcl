@@ -20,6 +20,12 @@ set_optimize -vlog_prune_on
 # Set glitch strobes
 set_glitch_strobe 1ps
 
+# Enable coverage for type parameterized modules
+set_parameterized_module_coverage -type_parameters_only
+
+# Enable coverage for expressions containing inside operator
+set_expr_scoring -inside
+
 # ----------------------------------------------------------------------------------
 # FSM coverage configruation
 # ----------------------------------------------------------------------------------
