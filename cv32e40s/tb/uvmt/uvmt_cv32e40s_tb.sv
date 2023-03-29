@@ -979,6 +979,23 @@ module uvmt_cv32e40s_tb;
       .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
     );
 */
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_data_independent_timing_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_data_independent_timing_assert_i 	(
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Interfaces:
+      .rvfi_if	  (rvfi_instr_if_0_i),
+      .rvfi_cpuctrl (rvfi_csr_cpuctrl_if_0_i),
+
+      //CSRs:
+      .dataindtiming_enabled (core_i.xsecure_ctrl.cpuctrl.dataindtiming)
+    );
+
   // Debug assertion and coverage interface
 
   // Instantiate debug assertions
