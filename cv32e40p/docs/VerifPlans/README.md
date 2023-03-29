@@ -5,7 +5,14 @@ Use the provided CORE-V_Simulation VerifPlan_Template.xlsx spreadsheet as your t
 
 ## Verification Plan Status
 
-The tables below capture the current status of the Verification Plan for the CV32E40P by high-level feature.  Under the heading `Review` is one of following:
+The tables below capture the current status of the Verification Plan for the CV32E40P by high-level feature, as long with status update with respect to CV32E40Pv1 verification plans.  Under the heading `Capture`, the test plan can be **Incomplete**, **draft**, or one of the following: 
+* **Captured _(v1)_**: Vplan has been captured during v1 verification and has no modifications since then. 
+* **Captured _(new)_**: Vplan captures either new features or features not tested in v1
+* **Captured _(formal)_**: Vplan captures a different methodology from v1, using formal tool
+* **Captured _(updated)_**: Vplan has been captured in v1, but contains modifications for v2
+
+Under the heading `Review` is one of following:
+* **Not Available for Review**: Vplan has been captured, but is not available for review yet
 * **Ready for Review**: Vplan has been captured and is awaiting review.
 * **Reviewed**: Vplan has been reviewed, and is waiting for updates to address review feedback.
 * **Waiting for Signoff**: Vplan has been reviewed and review comments addressed by the author.  Document is now waiting for reviewers to signoff on the post-review updates.
@@ -13,27 +20,29 @@ The tables below capture the current status of the Verification Plan for the CV3
 
 ### Base instruction set plus standard instruction extensions
 
-_Refer to the VerifPlans/ISA/RV32/Simulation directory for specific Verification Plan status for each supported extension._
+Base instruction set plus standard instructions extensions have been mainly verified using formal tools for v2. Please refer to the documents inside `Formal` directory to have more details about assertions and properties used. 
+The v1 _simulation_ verification plans can be found there: `core-v-verif/VerifPlans/ISA/RV32/Simulation`
+
 ### Interrupts
 
 | Feature | Capture | Review | Comment |
 |---------|---------|--------|---------|
-| CLINT | Captured | Complete | |
-| CLIC | | | Not a CV32E40P Feature |
+| CLINT | Captured (**updated**) | Ready for Review | |
+| CLIC | N/A | N/A | Not a CV32E40P Feature |
 
 ### Debug & Trace
 
 | Feature | Capture | Review | Comment |
 |---------|---------|--------|---------|
-| Debug | Captured | Complete | |
-| Trigger module | Captured | Complete | Not a CV32E40P Feature |
+| Debug | Captured  (**updated**) | Ready for Review | |
+| Trigger module | Captured (v1) | Complete | Not a CV32E40P Feature |
 | Tracer | N/A | N/A | Behavioral model, not RTL |
 
 ### Privileged spec
 
 | Feature | Capture | Review | Comment |
 |---------|---------|--------|---------|
-| CSRs | Incomplete | | |
+| CSRs | Captured (**formal**) | Not Available for Review | Verified by formal |
 | User mode | N/A| N/A | Not a CV32E40P Feature |
 | PMP | N/A | N/A | Not a CV32E40P Feature |
 
@@ -41,21 +50,34 @@ _Refer to the VerifPlans/ISA/RV32/Simulation directory for specific Verification
 
 | Feature | Capture | Review | Comment |
 |---------|---------|--------|---------|
-| OBI     | Complete | Reviewed | |
-| Sleep Unit | Complete | Reviewed | Updates pending based on review feedback |
-| Pipelines | Complete | Reviewed | Updates pending based on review feedback|
+| OBI     | Captured (v1) | Reviewed | |
+| Sleep Unit | Captured (v1) | Reviewed | Updates pending based on review feedback |
+| Pipelines | Captured (v1) | Reviewed | Updates pending based on review feedback|
+| FPU File Register | Captured (**new**) | Ready for Review | |
+
+### F and Zfinx extensions
+**Note**: As verifying all floating points instructions using formal tools **only** is too complex and would have required too much processing power, the missing features of F/Zfinx extension have been verified by simulation. 
+
+| Features | Capture | Review | Comment |
+|---------|---------|--------|---------|
+| DIV and SQRT Instructions | Captured (**new**) | Ready for Review | Not covered at all by formal verification |
+| FMUL/FDIV | Captured (**new**) | Ready for Review | Formal coverage issue: some bits of operands have been tied low | 
+| FNMADD/FMADD | Captured (**new**) | Ready for Review | Formal coverage issue: some bits of operands have been tied low | 
+| FNMSUB/FMSUB | Captured (**new**) | Ready for Review | Formal coverage issue: some bits of operands have been tied low |
+| Other F instructions | Captured (**new**) | Ready for Review | Formal pipeline issue: Add preceeding F multicycle instruction |
 
 ### Xpulp instruction extensions
-**Note**: Xpulp instructions are "exercised, but not fully verified" in CV32E40P.
+**Note**: Xpulp instructions, as other instructions, has been mainly verified by formal tools. Some aspects needed a complementary simulation verification
 
 | Feature | Capture | Review | Comment |
 |---------|---------|--------|---------|
-| Post-increment load/store | Preliminary draft | | |
-| Hardware Loop | Preliminary draft | | On-going discussions with Cores TWG |
-| Bit Manipulation | Preliminary draft | | |
-| General ALU | Preliminary draft | | |
-| Immediate branching | Preliminary draft | | |
-| SIMD | Preliminary draft | | |
+| Post-increment load/store | Captured (**new+formal**) | Not Available for Review | Formal mainly, pipeline (preceeding F multicycle) with simulation |
+| Hardware Loop | Captured (**new**) | Ready for Review | Simulation only |
+| Bit Manipulation | Captured (**formal**) | Not Available for Review | |
+| General ALU | Captured (**formal**) | Not Available for Review | |
+| Immediate branching | Captured (**formal**) | Not Available for Review | |
+| SIMD | Captured (**new+formal**) | Not Available for Review | Formal coverage issue: some bits of operands have been tied low |
+| MAC | Captured (**new+formal**) | Not Available for Review | Formal coverage issue: some bits of operands have been tied low |
 
 ### Custom circuitry
 
