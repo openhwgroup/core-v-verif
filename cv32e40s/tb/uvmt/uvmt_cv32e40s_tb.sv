@@ -733,54 +733,6 @@ module uvmt_cv32e40s_tb;
   bind cv32e40s_wrapper
     uvmt_cv32e40s_integration_assert  integration_assert_i (.*);
 
-  localparam PMP_ADDR_WIDTH = (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY > 0) ? 33 - uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY : 32;
-
-  // Shadow:
-  mseccfg_t pmp_mseccfg_q_shadow_q;
-  pmpncfg_t pmpncfg_q_shadow_q[PMP_MAX_REGIONS];
-  logic [PMP_ADDR_WIDTH-1:0] pmp_addr_q_shadow_q[PMP_MAX_REGIONS];
-
-  mtvt_t mtvt_q_shadow_q;
-  mtvec_t mtvec_q_shadow_q;
-  mintstatus_t mintstatus_q_shadow_q;
-  logic [31:0] mintthresh_q_shadow_q;
-  logic [31:0] mie_q_hardened_shadow_q;
-
-  // PMP register
-  generate
-    if (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS > 0) begin
-      assign pmp_mseccfg_q_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.gen_hardened.shadow_q);
-    end else begin
-      assign pmp_mseccfg_q_shadow_q = '0;
-    end
-  endgenerate
-
-  generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n++) begin
-    assign pmpncfg_q_shadow_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.gen_hardened.shadow_q;
-    assign pmp_addr_q_shadow_q[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.gen_hardened.shadow_q;
-  end endgenerate
-
-  generate
-    if (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC==1) begin
-
-      assign mtvt_q_shadow_q       = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mtvt_csr_i.gen_hardened.shadow_q);
-      assign mtvec_q_shadow_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mtvec_csr_i.gen_hardened.shadow_q);
-      assign mintstatus_q_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mintstatus_csr_i.gen_hardened.shadow_q);
-      assign mintthresh_q_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.clic_csrs.mintthresh_csr_i.gen_hardened.shadow_q);
-
-      assign mie_q_hardened_shadow_q = '0;
-
-    end else begin
-
-      assign mtvt_q_shadow_q       = '0;
-      assign mtvec_q_shadow_q      = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.gen_hardened.shadow_q);
-      assign mintstatus_q_shadow_q = '0;
-      assign mintthresh_q_shadow_q = '0;
-
-      assign mie_q_hardened_shadow_q = (dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.gen_hardened.shadow_q);
-
-    end
-  endgenerate
 /*
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_if
@@ -979,6 +931,143 @@ module uvmt_cv32e40s_tb;
       .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
     );
 */
+
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_hardened_csrs_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_hardened_csrs_assert_i 	(
+
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Alert:
+      .alert_major (core_i.alert_major_o),
+
+      //CSRs:
+      .mstateen0            (core_i.cs_registers_i.mstateen0_csr_i.rdata_q),
+      .priv_lvl             (core_i.cs_registers_i.priv_lvl_i.rdata_q),
+      .jvt                  (core_i.cs_registers_i.jvt_csr_i.rdata_q),
+      .mstatus              (core_i.cs_registers_i.mstatus_csr_i.rdata_q),
+      .cpuctrl              (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.rdata_q),
+      .dcsr                 (core_i.cs_registers_i.gen_debug_csr.dcsr_csr_i.rdata_q),
+      .mepc                 (core_i.cs_registers_i.mepc_csr_i.rdata_q),
+      .mscratch             (core_i.cs_registers_i.mscratch_csr_i.rdata_q),
+
+      //Shadows:
+      .mstateen0_shadow     (core_i.cs_registers_i.mstateen0_csr_i.gen_hardened.shadow_q),
+      .priv_lvl_shadow      (core_i.cs_registers_i.priv_lvl_i.gen_hardened.shadow_q),
+      .jvt_shadow           (core_i.cs_registers_i.jvt_csr_i.gen_hardened.shadow_q),
+      .mstatus_shadow       (core_i.cs_registers_i.mstatus_csr_i.gen_hardened.shadow_q),
+      .cpuctrl_shadow       (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.gen_hardened.shadow_q),
+      .dcsr_shadow          (core_i.cs_registers_i.gen_debug_csr.dcsr_csr_i.gen_hardened.shadow_q),
+      .mepc_shadow          (core_i.cs_registers_i.mepc_csr_i.gen_hardened.shadow_q),
+      .mscratch_shadow      (core_i.cs_registers_i.mscratch_csr_i.gen_hardened.shadow_q)
+
+    );
+
+  if (CORE_PARAM_CLIC == 1) begin: gen_hardened_csrs_clic_assert
+
+    bind cv32e40s_wrapper
+      uvmt_cv32e40s_xsecure_hardened_csrs_clic_assert #(
+	      .SECURE	(SECURE)
+      ) xsecure_hardened_csrs_clic_assert_i 	(
+
+        //Signals:
+        .clk_i      (clknrst_if.clk),
+        .rst_ni     (clknrst_if.reset_n),
+
+        //Alert:
+        .alert_major (core_i.alert_major_o),
+
+        //CSRs:
+        .mtvt               (core_i.cs_registers_i.clic_csrs.mtvt_csr_i.rdata_q),
+        .mtvec              (core_i.cs_registers_i.clic_csrs.mtvec_csr_i.rdata_q),
+        .mintstatus         (core_i.cs_registers_i.clic_csrs.mintstatus_csr_i.rdata_q),
+        .mintthresh         (core_i.cs_registers_i.clic_csrs.mintthresh_csr_i.rdata_q),
+
+        //Shadows:
+        .mtvt_shadow        (core_i.cs_registers_i.clic_csrs.mtvt_csr_i.gen_hardened.shadow_q),
+        .mtvec_shadow       (core_i.cs_registers_i.clic_csrs.mtvec_csr_i.gen_hardened.shadow_q),
+        .mintstatus_shadow  (core_i.cs_registers_i.clic_csrs.mintstatus_csr_i.gen_hardened.shadow_q),
+        .mintthresh_shadow  (core_i.cs_registers_i.clic_csrs.mintthresh_csr_i.gen_hardened.shadow_q)
+
+      );
+  end : gen_hardened_csrs_clic_assert
+
+  if (CORE_PARAM_CLIC == 0) begin: gen_hardened_csrs_interrupt_assert
+
+    bind cv32e40s_wrapper
+      uvmt_cv32e40s_xsecure_hardened_csrs_interrupt_assert #(
+	      .SECURE	(SECURE)
+      ) xsecure_hardened_csrs_interrupt_assert_i 	(
+
+        //Signals:
+        .clk_i      (clknrst_if.clk),
+        .rst_ni     (clknrst_if.reset_n),
+
+        //Alert:
+        .alert_major (core_i.alert_major_o),
+
+        //CSRs:
+        .mtvec              (core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.rdata_q),
+        .mie                (core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.rdata_q),
+
+        //Shadows:
+        .mtvec_shadow       (core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.gen_hardened.shadow_q),
+        .mie_shadow         (core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.gen_hardened.shadow_q)
+      );
+  end : gen_hardened_csrs_interrupt_assert
+
+
+
+  localparam PMP_ADDR_WIDTH = (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY > 0) ? 33 - uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY : 32;
+
+  pmpncfg_t pmpncfg[PMP_MAX_REGIONS];
+  logic [PMP_ADDR_WIDTH-1:0] pmp_addr[PMP_MAX_REGIONS];
+
+  logic [$bits(pmpncfg_t)-1:0] pmpncfg_shadow[PMP_MAX_REGIONS];
+  logic [PMP_ADDR_WIDTH-1:0] pmp_addr_shadow[PMP_MAX_REGIONS];
+
+  generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n++) begin
+    assign pmpncfg[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.rdata_q;
+    assign pmp_addr[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.rdata_q;
+
+    assign pmpncfg_shadow[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.gen_hardened.shadow_q;
+    assign pmp_addr_shadow[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.gen_hardened.shadow_q;
+  end endgenerate
+
+  if (CORE_PARAM_PMP_NUM_REGIONS > 0) begin: gen_hardened_csrs_pmp_assert
+
+    bind cv32e40s_wrapper
+      uvmt_cv32e40s_xsecure_hardened_csrs_pmp_assert #(
+	      .SECURE	(SECURE),
+        .PMP_ADDR_WIDTH (core_i.cs_registers_i.PMP_ADDR_WIDTH),
+        .PMP_NUM_REGIONS (PMP_NUM_REGIONS)
+      ) xsecure_hardened_csrs_pmp_assert_i 	(
+
+        //Signals:
+        .clk_i      (clknrst_if.clk),
+        .rst_ni     (clknrst_if.reset_n),
+
+        //Alert:
+        .alert_major (core_i.alert_major_o),
+
+        //CSRs:
+        .pmp_mseccfg        (core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.rdata_q),
+        .pmpncfg            (uvmt_cv32e40s_tb.pmpncfg),
+        .pmp_addr           (uvmt_cv32e40s_tb.pmp_addr),
+
+        //Shadows:
+        .pmp_mseccfg_shadow (core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.gen_hardened.shadow_q),
+        .pmpncfg_shadow     (uvmt_cv32e40s_tb.pmpncfg_shadow),
+        .pmp_addr_shadow    (uvmt_cv32e40s_tb.pmp_addr_shadow)
+      );
+
+  end : gen_hardened_csrs_pmp_assert
+
+
   // Debug assertion and coverage interface
 
   // Instantiate debug assertions
