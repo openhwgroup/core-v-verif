@@ -979,6 +979,57 @@ module uvmt_cv32e40s_tb;
       .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
     );
 */
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_hardened_pc_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_hardened_pc_assert_i 	(
+
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //CSRs:
+      .pc_hardening_enabled (core_i.xsecure_ctrl.cpuctrl.pc_hardening),
+      .dataindtiming_enabled (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
+
+      //Alert:
+      .alert_major_due_to_pc_err (core_i.alert_i.pc_err_i),
+
+      //IF:
+      .if_valid (core_i.if_valid),
+      .ptr_in_if (core_i.if_stage_i.ptr_in_if_o),
+      .if_instr_cmpr (core_i.if_stage_i.compressed_decoder_i.is_compressed_o),
+      .if_pc (core_i.pc_if),
+      .dummy_insert (dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.dummy_insert),
+
+      //ID:
+      .id_ready (core_i.id_ready),
+      .id_pc (core_i.id_stage_i.if_id_pipe_i.pc),
+      .id_last_op (core_i.if_id_pipe.last_op),
+      .id_first_op (core_i.if_id_pipe.first_op),
+      .jump_in_id (core_i.controller_i.controller_fsm_i.jump_in_id),
+      .kill_id (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.kill_id),
+      .halt_id (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.halt_id),
+
+      //EX:
+      .ex_first_op (core_i.id_ex_pipe.first_op),
+      .branch_in_ex (core_i.controller_i.controller_fsm_i.branch_in_ex),
+      .kill_ex (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.kill_ex),
+      .halt_ex (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.halt_ex),
+
+      //Controll signals:
+      .pc_set (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.pc_set),
+      .pc_mux (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.pc_mux),
+
+      //Signals to glitch check:
+      .branch_target (core_i.ex_stage_i.branch_target_o),
+      .branch_decision (core_i.ex_stage_i.alu_i.cmp_result_o),
+      .jump_target (core_i.jump_target_id),
+      .mepc (core_i.cs_registers_i.mepc_rdata)
+
+    );
+
   // Debug assertion and coverage interface
 
   // Instantiate debug assertions
