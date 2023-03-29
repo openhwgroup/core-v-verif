@@ -979,6 +979,23 @@ module uvmt_cv32e40s_tb;
       .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
     );
 */
+
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_reduced_profiling_infrastructure_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_reduced_profiling_infrastructure_assert_i 	(
+
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //CSRs:
+      .mhpmevent (core_i.cs_registers_i.mhpmevent_rdata),
+      .mhpmcounter (core_i.cs_registers_i.mhpmcounter_rdata),
+      .mcountinhibit (core_i.cs_registers_i.mcountinhibit_rdata)
+    );
+
   // Debug assertion and coverage interface
 
   // Instantiate debug assertions
