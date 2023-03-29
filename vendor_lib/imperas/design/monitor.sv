@@ -15,10 +15,11 @@
  * for the location of the open source models.
  *
  */
- `ifndef __IMPERAS_MONITOR_SV__
+
+`ifndef __IMPERAS_MONITOR_SV__
 `define __IMPERAS_MONITOR_SV__
 
- `include "typedefs.sv"
+`include "typedefs.sv"
 
 module MONITOR
 (
@@ -297,4 +298,4 @@ module MONITOR
     end
 endmodule
 
- `endif // __IMPERAS_MONITOR_SV__
+`endif // __IMPERAS_MONITOR_SV__

@@ -190,9 +190,9 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
 
    case(cfg.core_cfg.priv_spec_version)
      PRIV_VERSION_MASTER:   $fwrite(fh, $sformatf("--override %s/priv_version=master\n", refpath));
-     PRIV_VERSION_1_10:     $fwrite(fh, $sformatf("--override %s/priv_version=1.10\n", refpath));
-     PRIV_VERSION_1_11:     $fwrite(fh, $sformatf("--override %s/priv_version=1.11\n", refpath));
-     PRIV_VERSION_1_12:     $fwrite(fh, $sformatf("--override %s/priv_version=1.12\n", refpath));
+     PRIV_VERSION_1_10:     $fwrite(fh, $sformatf("--override %s/priv_version=1.10\n",   refpath));
+     PRIV_VERSION_1_11:     $fwrite(fh, $sformatf("--override %s/priv_version=1.11\n",   refpath));
+     PRIV_VERSION_1_12:     $fwrite(fh, $sformatf("--override %s/priv_version=1.12\n",   refpath));
      PRIV_VERSION_20190405: $fwrite(fh, $sformatf("--override %s/priv_version=20190405\n", refpath));
    endcase
 
@@ -207,14 +207,14 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    // -------------------------------------------------------------------------------------
    // Boot strap pins
    // -------------------------------------------------------------------------------------
-   $fwrite(fh, $sformatf("--override %s/mhartid=%0d\n", refpath, cfg.core_cfg.mhartid));
-   $fwrite(fh, $sformatf("--override %s/mimpid=%0d\n", refpath, cfg.core_cfg.mimpid));
-   $fwrite(fh, $sformatf("--override %s/startaddress=0x%08x\n", refpath, cfg.core_cfg.boot_addr));
+   $fwrite(fh, $sformatf("--override %s/mhartid=%0d\n",          refpath, cfg.core_cfg.mhartid));
+   $fwrite(fh, $sformatf("--override %s/mimpid=%0d\n",           refpath, cfg.core_cfg.mimpid));
+   $fwrite(fh, $sformatf("--override %s/startaddress=0x%08x\n",  refpath, cfg.core_cfg.boot_addr));
    // Specification forces mtvec[0] high at reset regardless of bootstrap pin state of mtvec_addr_i]0]
-   $fwrite(fh, $sformatf("--override %s/mtvec=0x%08x\n", refpath, cfg.core_cfg.mtvec_addr | 32'b1));
-   $fwrite(fh, $sformatf("--override %s/nmi_address=0x%08x\n", refpath, cfg.core_cfg.nmi_addr));
+   $fwrite(fh, $sformatf("--override %s/mtvec=0x%08x\n",         refpath, cfg.core_cfg.mtvec_addr | 32'b1));
+   $fwrite(fh, $sformatf("--override %s/nmi_address=0x%08x\n",   refpath, cfg.core_cfg.nmi_addr));
    $fwrite(fh, $sformatf("--override %s/debug_address=0x%08x\n", refpath, cfg.core_cfg.dm_halt_addr));
-   $fwrite(fh, $sformatf("--override %s/dexc_address=0x%08x\n", refpath, cfg.core_cfg.dm_exception_addr));
+   $fwrite(fh, $sformatf("--override %s/dexc_address=0x%08x\n",  refpath, cfg.core_cfg.dm_exception_addr));
 
    // -------------------------------------------------------------------------------------
    // Parameters
@@ -226,12 +226,12 @@ function void uvma_rvvi_ovpsim_agent_c::configure_iss();
    // PMA Regions
    $fwrite(fh, $sformatf("--override %s/extension_*/PMA_NUM_REGIONS=%0d\n", refpath, cfg.core_cfg.pma_regions.size()));
    foreach (cfg.core_cfg.pma_regions[i]) begin
-      $fwrite(fh, $sformatf("--override %s/extension_*/word_addr_low%0d=0x%08x\n", refpath, i, cfg.core_cfg.pma_regions[i].word_addr_low));
+      $fwrite(fh, $sformatf("--override %s/extension_*/word_addr_low%0d=0x%08x\n",  refpath, i, cfg.core_cfg.pma_regions[i].word_addr_low));
       $fwrite(fh, $sformatf("--override %s/extension_*/word_addr_high%0d=0x%08x\n", refpath, i, cfg.core_cfg.pma_regions[i].word_addr_high));
-      $fwrite(fh, $sformatf("--override %s/extension_*/main%0d=%0d\n", refpath, i, cfg.core_cfg.pma_regions[i].main));
-      $fwrite(fh, $sformatf("--override %s/extension_*/bufferable%0d=%0d\n", refpath, i, cfg.core_cfg.pma_regions[i].bufferable));
-      $fwrite(fh, $sformatf("--override %s/extension_*/cacheable%0d=%0d\n", refpath, i, cfg.core_cfg.pma_regions[i].cacheable));
-      $fwrite(fh, $sformatf("--override %s/extension_*/atomic%0d=%0d\n", refpath, i, cfg.core_cfg.pma_regions[i].atomic));
+      $fwrite(fh, $sformatf("--override %s/extension_*/main%0d=%0d\n",              refpath, i, cfg.core_cfg.pma_regions[i].main));
+      $fwrite(fh, $sformatf("--override %s/extension_*/bufferable%0d=%0d\n",        refpath, i, cfg.core_cfg.pma_regions[i].bufferable));
+      $fwrite(fh, $sformatf("--override %s/extension_*/cacheable%0d=%0d\n",         refpath, i, cfg.core_cfg.pma_regions[i].cacheable));
+      $fwrite(fh, $sformatf("--override %s/extension_*/atomic%0d=%0d\n",            refpath, i, cfg.core_cfg.pma_regions[i].atomic));
    end
 
    // Enable use of hw reg names instead of abi
