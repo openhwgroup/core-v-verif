@@ -20,7 +20,7 @@
 `define __UVMA_CLIC_DRV_SV__
 
 /**
- * Component driving a Clock & Reset virtual interface (uvma_clic_if).
+ * Component driving a Clock & Reset virtual interface (uvma_clic_if_t).
  */
 class uvma_clic_drv_c extends uvm_driver#(
    .REQ(uvma_clic_seq_item_c),

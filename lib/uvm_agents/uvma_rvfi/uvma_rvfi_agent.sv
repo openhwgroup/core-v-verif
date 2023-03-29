@@ -193,7 +193,7 @@ function void uvma_rvfi_agent_c::retrieve_vif();
          cntxt.csr_vif[csr] = new[cfg.nret];
 
          for (int i = 0; i < cfg.nret; i++) begin
-            if (!uvm_config_db#(virtual uvma_rvfi_csr_if#(XLEN))::get(this, "", $sformatf("csr_%s_vif%0d", csr, i), cntxt.csr_vif[csr][i])) begin
+            if (!uvm_config_db#(virtual uvma_rvfi_csr_if_t#(XLEN))::get(this, "", $sformatf("csr_%s_vif%0d", csr, i), cntxt.csr_vif[csr][i])) begin
                `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s, csr [%s] in uvm_config_db",
                                            $typename(cntxt.csr_vif[csr][i]), csr))
             end else begin

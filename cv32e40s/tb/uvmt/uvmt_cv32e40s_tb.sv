@@ -450,7 +450,7 @@ module uvmt_cv32e40s_tb;
 
 
   bind uvmt_cv32e40s_dut_wrap
-    uvma_obi_memory_assert_if_wrp_t#(
+    uvma_obi_memory_assert_if_wrp#(
       .ADDR_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_ADDR_WIDTH),
       .DATA_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_DATA_WIDTH),
       .AUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_INSTR_AUSER_WIDTH),
@@ -463,7 +463,7 @@ module uvmt_cv32e40s_tb;
     ) obi_instr_memory_assert_i(.obi(obi_instr_if));
 
   bind uvmt_cv32e40s_dut_wrap
-    uvma_obi_memory_assert_if_wrp_t#(
+    uvma_obi_memory_assert_if_wrp#(
       .ADDR_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_ADDR_WIDTH),
       .DATA_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_DATA_WIDTH),
       .AUSER_WIDTH(uvme_cv32e40s_pkg::ENV_PARAM_DATA_AUSER_WIDTH),
@@ -512,12 +512,12 @@ module uvmt_cv32e40s_tb;
         .irq_id_o  (core_i.irq_id),
 
         .mpu_instr_rvalid (if_stage_i.mpu_i.core_resp_valid_o),
-        .obi_instr_if     (dut_wrap.obi_instr_if_i),
-        .obi_data_if      (dut_wrap.obi_data_if_i),
+        .obi_instr_if     (dut_wrap.obi_instr_if),
+        .obi_data_if      (dut_wrap.obi_data_if),
 
         .writebufstate (load_store_unit_i.write_buffer_i.state),
         .rvfi          (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
-        .support_if    (cv32e40s_wrapper.support_logic_for_assert_coverage_modules_if.slave_mp),
+        .support_if    (cv32e40s_wrapper.support_logic_module_o_if.slave_mp),
 
         .*
       );
@@ -1171,7 +1171,7 @@ module uvmt_cv32e40s_tb;
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
         .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
       ) pma_assert_instr_i (
-        .obi_memory_if    (dut_wrap.obi_instr_if_i),
+        .obi_memory_if    (dut_wrap.obi_instr_if),
         .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
         .writebuf_ready_o ('0),
         .writebuf_trans_i ('0),
@@ -1188,7 +1188,7 @@ module uvmt_cv32e40s_tb;
         .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
         .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
       ) pma_assert_data_i (
-        .obi_memory_if    (dut_wrap.obi_data_if_i),
+        .obi_memory_if    (dut_wrap.obi_data_if),
         .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
         .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
         .writebuf_trans_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.trans_i),
@@ -1197,27 +1197,27 @@ module uvmt_cv32e40s_tb;
       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if),
-                                                                      .in_support_if (input_to_support_logic_module_if.driver_mp),
-                                                                      .out_support_if (support_logic_for_assert_coverage_modules_if.master_mp)
+                                                                      .in_support_if (support_logic_module_i_if.driver_mp),
+                                                                      .out_support_if (support_logic_module_o_if.master_mp)
                                                                       );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.rvfi(rvfi_instr_if),
-                                                                    .csr_dcsr(rvfi_csr_dcsr),
-                                                                    .csr_dpc(rvfi_csr_dpc),
-                                                                    .csr_dscratch0(rvfi_csr_dscratch0),
-                                                                    .csr_dscratch1(rvfi_csr_dscratch1),
-                                                                    .csr_mepc(rvfi_csr_mepc),
-                                                                    .csr_mstatus(rvfi_csr_mstatus),
-                                                                    .csr_mcause(rvfi_csr_mcause),
-                                                                    .csr_mtvec(rvfi_csr_mtvec),
-                                                                    .csr_tdata1(rvfi_csr_tdata1),
-                                                                    .csr_tdata2(rvfi_csr_tdata2),
-                                                                    .instr_obi(dut_wrap.obi_instr_if_i),
-                                                                    .data_obi(dut_wrap.obi_data_if_i), //TODO: if_i til if only?
+                                                                    .csr_dcsr(rvfi_csr_dcsr_if),
+                                                                    .csr_dpc(rvfi_csr_dpc_if),
+                                                                    .csr_dscratch0(rvfi_csr_dscratch0_if),
+                                                                    .csr_dscratch1(rvfi_csr_dscratch1_if),
+                                                                    .csr_mepc(rvfi_csr_mepc_if),
+                                                                    .csr_mstatus(rvfi_csr_mstatus_if),
+                                                                    .csr_mcause(rvfi_csr_mcause_if),
+                                                                    .csr_mtvec(rvfi_csr_mtvec_if),
+                                                                    .csr_tdata1(rvfi_csr_tdata1_if),
+                                                                    .csr_tdata2(rvfi_csr_tdata2_if),
+                                                                    .instr_obi(dut_wrap.obi_instr_if),
+                                                                    .data_obi(dut_wrap.obi_data_if),
                                                                     .cov_assert_if(debug_cov_assert_if),
-                                                                    .support_if (support_logic_for_assert_coverage_modules_if.slave_mp)
+                                                                    .support_if (support_logic_module_o_if.slave_mp)
                                                                     );
-
+/*
     bind cv32e40s_wrapper uvmt_cv32e40s_triggers_assert_cov debug_trigger_assert_i(
                                                                     .wb_valid (core_i.wb_stage_i.wb_valid_o),
                                                                     .wb_exception_code (core_i.controller_i.controller_fsm_i.exception_cause_wb),
@@ -1239,7 +1239,7 @@ module uvmt_cv32e40s_tb;
                                                                     .tinfo (rvfi_csr_tinfo),
                                                                     .tselect (rvfi_csr_tselect),
                                                                     .tcontrol (rvfi_csr_tcontrol)
-                                                                    );
+                                                                    );*/
 
 
 

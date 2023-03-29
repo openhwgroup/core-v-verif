@@ -62,7 +62,7 @@ package uvma_rvfi_pkg;
 endpackage : uvma_rvfi_pkg
 
 // Interface(s) / Module(s) / Checker(s)
-`include "uvma_rvfi_instr_if_t.sv"
+`include "uvma_rvfi_instr_if.sv"
 `include "uvma_rvfi_csr_if.sv"
 `include "uvma_rvfi_assert.sv"
 

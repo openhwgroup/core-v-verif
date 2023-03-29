@@ -69,15 +69,15 @@ module uvmt_cv32e40s_dut_wrap
     parameter RAM_ADDR_WIDTH      =  20
   )
   (
-    uvma_clknrst_if                 clknrst_if,
-    uvma_interrupt_if               interrupt_if,
-    uvma_clic_if                    clic_if,
+    uvma_clknrst_if_t               clknrst_if,
+    uvma_interrupt_if_t             interrupt_if,
+    uvma_clic_if_t                  clic_if,
     uvmt_cv32e40s_vp_status_if_t    vp_status_if,
-    uvme_cv32e40s_core_cntrl_if     core_cntrl_if,
+    uvme_cv32e40s_core_cntrl_if_t   core_cntrl_if,
     uvmt_cv32e40s_core_status_if_t  core_status_if,
-    uvma_obi_memory_if              obi_instr_if,
-    uvma_obi_memory_if              obi_data_if,
-    uvma_fencei_if                  fencei_if
+    uvma_obi_memory_if_t            obi_instr_if,
+    uvma_obi_memory_if_t            obi_data_if,
+    uvma_fencei_if_t                fencei_if
   );
 
     import uvm_pkg::*; // needed for the UVM messaging service (`uvm_info(), etc.)

@@ -22,7 +22,7 @@
 
 
 /**
- * Component driving a Open Bus Interface virtual interface (uvma_obi_if).
+ * Component driving a Open Bus Interface virtual interface (uvma_obi_if_t).
  * @note The req & rsp's roles are switched when this driver is in 'slv' mode.
  * @todo Move implementation to a sequence-based approach
  */
@@ -59,7 +59,7 @@ class uvma_obi_memory_drv_c#(
    uvm_tlm_analysis_fifo #(uvma_obi_memory_mon_trn_c      )  mon_trn_fifo;
 
    // Handles to virtual interface modports
-   virtual uvma_obi_memory_if#(
+   virtual uvma_obi_memory_if_t#(
      .AUSER_WIDTH(AUSER_WIDTH),
      .WUSER_WIDTH(WUSER_WIDTH),
      .RUSER_WIDTH(RUSER_WIDTH),
@@ -70,7 +70,7 @@ class uvma_obi_memory_drv_c#(
      .RCHK_WIDTH(RCHK_WIDTH)
    ).active_mstr_mp  mstr_mp;
 
-   virtual uvma_obi_memory_if#(
+   virtual uvma_obi_memory_if_t#(
      .AUSER_WIDTH(AUSER_WIDTH),
      .WUSER_WIDTH(WUSER_WIDTH),
      .RUSER_WIDTH(RUSER_WIDTH),

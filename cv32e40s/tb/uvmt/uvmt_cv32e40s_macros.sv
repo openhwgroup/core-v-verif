@@ -23,7 +23,7 @@
 // Create bind for RVFI CSR interface
 `define RVFI_CSR_BIND(csr_name) \
   bind cv32e40s_wrapper \
-    uvma_rvfi_csr_if#(uvme_cv32e40s_pkg::XLEN) rvfi_csr_``csr_name``_if(.clk(clk_i), \
+    uvma_rvfi_csr_if_t#(uvme_cv32e40s_pkg::XLEN) rvfi_csr_``csr_name``_if(.clk(clk_i), \
                                                                         .reset_n(rst_ni), \
                                                                         .rvfi_csr_rmask(rvfi_i.rvfi_csr_``csr_name``_rmask), \
                                                                         .rvfi_csr_wmask(rvfi_i.rvfi_csr_``csr_name``_wmask), \
@@ -33,7 +33,7 @@
 
 `define RVFI_CSR_IDX_BIND(csr_name,csr_suffix,idx) \
   bind cv32e40s_wrapper \
-    uvma_rvfi_csr_if#(uvme_cv32e40s_pkg::XLEN) rvfi_csr_``csr_name````idx````csr_suffix``_if( \
+    uvma_rvfi_csr_if_t#(uvme_cv32e40s_pkg::XLEN) rvfi_csr_``csr_name````idx````csr_suffix``_if( \
                                                                            .clk(clk_i), \
                                                                            .reset_n(rst_ni), \
                                                                            .rvfi_csr_rmask(rvfi_i.rvfi_csr_``csr_name````csr_suffix``_rmask[``idx``]), \
@@ -44,7 +44,7 @@
 
 // Create uvm_config_db::set call for a CSR interface
 `define RVFI_CSR_UVM_CONFIG_DB_SET(csr_name) \
-  uvm_config_db#(virtual uvma_rvfi_csr_if)::set(.cntxt(null), \
+  uvm_config_db#(virtual uvma_rvfi_csr_if_t)::set(.cntxt(null), \
                                                 .inst_name("*.env.rvfi_agent"), \
                                                 .field_name({"csr_", `"csr_name`", "_vif0"}), \
                                                 .value(dut_wrap.cv32e40s_wrapper_i.rvfi_csr_``csr_name``_if));

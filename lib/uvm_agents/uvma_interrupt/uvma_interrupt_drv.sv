@@ -20,7 +20,7 @@
 `define __UVMA_INTERRUPT_DRV_SV__
 
 /**
- * Component driving a Clock & Reset virtual interface (uvma_interrupt_if).
+ * Component driving a Clock & Reset virtual interface (uvma_interrupt_if_t).
  */
 class uvma_interrupt_drv_c extends uvm_driver#(
    .REQ(uvma_interrupt_seq_item_c),
