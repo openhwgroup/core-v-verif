@@ -69,25 +69,6 @@ module  uvmt_cv32e40s_pma_cov
   assign  is_mpu_activated = (core_trans_ready_o && core_trans_valid_i);
 
 
-  // Helper Logic - RVFI Clock & Valid
-
-  var logic   was_rvfi_valid;
-  wire logic  clk_rvfi;
-  always_ff @(posedge clk_ungated) was_rvfi_valid <= rvfi_if.rvfi_valid;
-  assign  clk_rvfi = clk & was_rvfi_valid;
-  //TODO:INFO:silabs-robin Could move to "rvfi_if"?
-
-  var logic  occured_rvfi_valid;
-  always_ff @(posedge clk_ungated or negedge rst_n) begin
-    if (rst_n == 0) begin
-      occured_rvfi_valid <= 0;
-    end else if (rvfi_if.rvfi_valid) begin
-      occured_rvfi_valid <= 1;
-    end
-  end
-  //TODO:INFO:silabs-robin Could move to "rvfi_if"?
-
-
   // Helper Logic - Split Transactions Main vs I/O
 
   wire logic [1:0]  rvfi_pmamain_lowhigh;
@@ -97,22 +78,27 @@ module  uvmt_cv32e40s_pma_cov
 
   // Helper Logic - "Past" Values
 
-  var logic  was_rvfi_pma_fault;
-  var logic  was_rvfi_mem_wmask;
-  var logic  was_rvfi_mem_act;
-  var logic  was_rvfi_pmamain_low;
-  always_comb  was_rvfi_pma_fault =
-    occured_rvfi_valid  &&
-    $past(rvfi_if.is_pma_fault,    , ,@(posedge clk_rvfi));
-  always_comb  was_rvfi_mem_wmask =
-    occured_rvfi_valid  &&
-    $past(|rvfi_if.rvfi_mem_wmask, , ,@(posedge clk_rvfi));
-  always_comb  was_rvfi_mem_act =
-    occured_rvfi_valid  &&
-    $past(rvfi_if.is_mem_act,      , ,@(posedge clk_rvfi));
-  always_comb  was_rvfi_pmamain_low =
-    occured_rvfi_valid  &&
-    $past(rvfi_pmamain_lowhigh[1], , ,@(posedge clk_rvfi));
+  var logic  occured_rvfi_valid;
+  var logic  rvfi_pma_fault_q;
+  var logic  rvfi_mem_wmask_q;
+  var logic  rvfi_mem_act_q;
+  var logic  rvfi_pmamain_low_q;
+
+  always_ff @(posedge clk_ungated or negedge rst_n) begin
+    if (rst_n == 0) begin
+      occured_rvfi_valid <= '0;
+      rvfi_pma_fault_q   <= '0;
+      rvfi_mem_wmask_q   <= '0;
+      rvfi_mem_act_q     <= '0;
+      rvfi_pmamain_low_q <= '0;
+    end else if (rvfi_if.rvfi_valid) begin
+      occured_rvfi_valid <= 1;
+      rvfi_pma_fault_q   <= rvfi_if.is_pma_fault;
+      rvfi_mem_wmask_q   <= rvfi_if.rvfi_mem_wmask;
+      rvfi_mem_act_q     <= rvfi_if.is_mem_act;
+      rvfi_pmamain_low_q <= rvfi_pmamain_lowhigh[1];
+    end
+  end
 
 
   // MPU Coverage Definition
@@ -304,7 +290,7 @@ module  uvmt_cv32e40s_pma_cov
       bins  no    = {0};
     }
 
-    cp_waspmafault: coverpoint  was_rvfi_pma_fault  iff (occured_rvfi_valid) {
+    cp_waspmafault: coverpoint  rvfi_pma_fault_q  iff (occured_rvfi_valid) {
       bins  fault = {1};
       bins  no    = {0};
     }
@@ -317,8 +303,8 @@ module  uvmt_cv32e40s_pma_cov
       illegal_bins  undefined = default;  // Should be empty
     }
 
-    cp_wasloadstore: coverpoint  was_rvfi_mem_wmask
-      iff (was_rvfi_mem_act && occured_rvfi_valid)
+    cp_wasloadstore: coverpoint  rvfi_mem_wmask_q
+      iff (rvfi_mem_act_q && occured_rvfi_valid)
     {
       bins  load  = {0};
       bins  store = {[1:$]};
@@ -339,8 +325,8 @@ module  uvmt_cv32e40s_pma_cov
       bins  io2io     = {2'b 00};
     }
 
-    cp_wasmain: coverpoint  was_rvfi_pmamain_low
-      iff (was_rvfi_mem_act && occured_rvfi_valid)
+    cp_wasmain: coverpoint  rvfi_pmamain_low_q
+      iff (rvfi_mem_act_q && occured_rvfi_valid)
     {
       bins  main = {1};
       bins  io   = {0};
