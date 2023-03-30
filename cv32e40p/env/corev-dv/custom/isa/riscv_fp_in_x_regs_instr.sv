@@ -197,7 +197,7 @@ class riscv_fp_in_x_regs_instr extends riscv_instr;
 
     // for single precision sign bit is bit 31, upper 32 bits are all 1s
     // for double precision, it's 63
-    if (group inside {RV32ZFINX, RV64ZFINX}) begin
+    if (group inside {RV32ZFINX}) begin
       rs1_sign = get_fp_operand_sign(rs1_value, 31);
       rs2_sign = get_fp_operand_sign(rs2_value, 31);
       rs3_sign = get_fp_operand_sign(rs3_value, 31);
