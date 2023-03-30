@@ -24,20 +24,12 @@ class uvme_cv32e40s_fetch_toggle_seq_c extends uvme_cv32e40s_core_cntrl_base_seq
 
   rand fetch_toggle_t fetch_toggle_mode;
 
-  rand int unsigned initial_delay;
-
   `uvm_object_utils_begin(uvme_cv32e40s_fetch_toggle_seq_c);
     `uvm_field_enum(fetch_toggle_t, fetch_toggle_mode, UVM_DEFAULT)
-    `uvm_field_int(initial_delay, UVM_DEFAULT)
   `uvm_object_utils_end
 
   constraint default_mode_cons {
     soft fetch_toggle_mode inside { FETCH_CONSTANT, FETCH_INITIAL_DELAY_CONSTANT };
-  }
-
-  constraint default_initial_delay {
-    // Wait a bit before starting
-    initial_delay inside {[50:200]};
   }
 
   extern function new(string name = "");
@@ -95,7 +87,7 @@ endtask : fetch_constant
 
 task uvme_cv32e40s_fetch_toggle_seq_c::fetch_initial_delay();
 
-  repeat (initial_delay) @(cntxt.core_cntrl_vif.drv_cb);
+  repeat (cfg.fetch_toggle_initial_delay) @(cntxt.core_cntrl_vif.drv_cb);
   cntxt.core_cntrl_vif.drv_cb.fetch_en <= 1'b1;
 
 endtask : fetch_initial_delay
