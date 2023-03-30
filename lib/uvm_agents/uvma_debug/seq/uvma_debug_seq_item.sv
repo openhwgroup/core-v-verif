@@ -38,7 +38,7 @@ class uvma_debug_seq_item_c extends uvml_trn_seq_item_c;
    //             abc inside {0,2,4,8,16,32};
    //          }
    constraint active_cons {
-       active_cycles > 0 && active_cycles < 100;
+       soft active_cycles > 0 && active_cycles < 100;
    }
    
    /**
