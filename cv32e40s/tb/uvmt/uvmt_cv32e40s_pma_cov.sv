@@ -274,7 +274,7 @@ module  uvmt_cv32e40s_pma_cov
 
   // RVFI Coverage Definition
 
-  covergroup cg_rvfi @(posedge clk);
+  covergroup cg_rvfi @(posedge clk_ungated);
     option.per_instance = 1;
     option.detect_overlap = 1;
 
