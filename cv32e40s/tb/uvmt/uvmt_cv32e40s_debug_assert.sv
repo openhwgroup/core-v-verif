@@ -185,13 +185,7 @@ module uvmt_cv32e40s_debug_assert
     property p_dpc_dbg_trigger;
         $rose(support_if.first_debug_ins) && rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_TRIGGER
         |->
-        csr_dpc.rvfi_csr_rdata == dpc_dbg_trg
-        or
-        // clic can hit an exception in it's pointer fetch stage without reporting to rvfi.
-        (rvfi.rvfi_intr.exception &&
-        (csr_mtvec.rvfi_csr_rdata[1:0] == 3) &&
-        csr_mcause.rvfi_csr_rdata[MCAUSE_MINHV_POS] &&
-        csr_dpc.rvfi_csr_rdata == mtvec_addr);
+        csr_dpc.rvfi_csr_rdata == dpc_dbg_trg;
     endproperty
 
     a_dpc_dbg_trigger: assert property(p_dpc_dbg_trigger)
@@ -318,14 +312,7 @@ module uvmt_cv32e40s_debug_assert
         |->
         (rvfi.rvfi_dbg == debug_cause_pri)
         or
-        (support_if.recorded_dbg_req && (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ))
-        or
-        // clic can hit an exception in it's pointer fetch stage without reporting to rvfi.
-        ((rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_TRIGGER) &&
-        rvfi.rvfi_intr.exception &&
-        (csr_mtvec.rvfi_csr_rdata[1:0] == 3) &&
-        csr_mcause.rvfi_csr_rdata[MCAUSE_MINHV_POS] &&
-        csr_dpc.rvfi_csr_rdata == mtvec_addr);
+        (support_if.recorded_dbg_req && (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ));
     endproperty
 
     a_dcsr_cause: assert property(p_dcsr_cause)
