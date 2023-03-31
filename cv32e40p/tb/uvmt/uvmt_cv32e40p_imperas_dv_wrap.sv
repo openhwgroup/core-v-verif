@@ -257,7 +257,7 @@ module uvmt_cv32e40p_imperas_dv_wrap
         .CMP_PC      (1),
         .CMP_INS     (1),
         .CMP_GPR     (1),
-        .CMP_FPR     (0),
+        .CMP_FPR     (1),
         .CMP_VR      (0),
         .CMP_CSR     (1)
     )
@@ -433,6 +433,8 @@ module uvmt_cv32e40p_imperas_dv_wrap
 
     // TODO silabs-hfegran: temp fix to work around issues
     rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR,   RVVI_FALSE);
+
+    rvviRefCsrCompareEnable(hart_id, `CSR_MSTATUS_ADDR,   RVVI_FALSE);
     // end TODO
     // define asynchronous grouping
     // Interrupts
