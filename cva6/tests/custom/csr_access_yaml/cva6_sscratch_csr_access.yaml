@@ -1,0 +1,15 @@
+- csr: CSR_SSCRATCH
+  description: >
+    Scartch Register for supervisor trap handlers
+  address: 0x140
+  privilege_mode: M
+  rv32:
+    - field_name: SSCRATCH
+      description: >
+        it is used to hold a pointer to the hart-local supervisor context while the hart is executing user code.
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
+

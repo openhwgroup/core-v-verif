@@ -1,0 +1,14 @@
+- csr: CSR_MCYCLE_H
+  description: >
+    Upper 32 bits of mcycle,RV32I only
+  address: 0xB80
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        upper 32-bits of 64-bit machine cycle counter
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+

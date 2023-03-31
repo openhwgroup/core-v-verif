@@ -1,0 +1,91 @@
+- csr: CSR_MIE
+  description: >
+    Machine Interrupt enable register
+  address: 0x304
+  privilege_mode: M
+  rv32:
+    - field_name: MEIE 
+      description: >
+       enables machine external interrupts when set 
+      type: WARL
+      reset_val: 0
+      msb: 11
+      lsb: 11
+    - field_name: Reserved 
+      description: >
+        Reserved for future use
+      type: R
+      reset_val: 0
+      msb: 10
+      lsb: 10
+    - field_name: SEIE  
+      description: >
+       enable S-mode external interrupts,        
+      type: WARL
+      reset_val: 0
+      msb: 9
+      lsb: 9
+    - field_name: UEIE 
+      description: >
+       enables U-mode external interrupts
+      type: R
+      reset_val: 0
+      msb: 8
+      lsb: 8
+    - field_name: MTIE 
+      description: >
+       timer interrupt-enable bit for M-mode 
+      type: WARL
+      reset_val: 0
+      msb: 7
+      lsb: 7
+    - field_name: Reserved 
+      description: >
+        Reserved for future use
+      type: R
+      reset_val: 0
+      msb: 6
+      lsb: 6
+    - field_name: STIE 
+      description: >
+        timer interrupt-enable bit for S-mode
+      type: WARL
+      reset_val: 0
+      msb: 5
+      lsb: 5 
+    - field_name: UTIE 
+      description: >
+        timer interrupt-enable bit for U-mode
+      type: R
+      reset_val: 0
+      msb: 4
+      lsb: 4
+    - field_name: MSIE 
+      description: >
+       enable M-mode Software interrupts 
+      type: RW
+      reset_val: 0
+      msb: 3
+      lsb: 3
+    - field_name: Reserved 
+      description: >
+        Reserved for future use
+      type: R
+      reset_val: 0
+      msb: 2
+      lsb: 2
+    - field_name: SSIE 
+      description: >
+        enable S-mode software interrupts
+      type: WARL
+      reset_val: 0
+      msb: 1
+      lsb: 1
+    - field_name: USIE 
+      description: >
+        enable U-mode software interrrupts 
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0
+

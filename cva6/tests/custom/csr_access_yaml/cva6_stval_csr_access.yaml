@@ -1,0 +1,14 @@
+- csr: CSR_STVAL
+  description: >
+    Supervisor bad address or instruction
+  address: 0x143
+  privilege_mode: S
+  rv32:
+    - field_name: Count
+      description: >
+        when a trap is taken into S-mode, stval is written with exception-specific information to assist software in handling the trap. 
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+

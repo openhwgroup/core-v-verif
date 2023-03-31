@@ -1,0 +1,21 @@
+- csr: CSR_MCAUSE
+  description: >
+    Machine Trap cause
+  address: 0x342
+  privilege_mode: M
+  rv32:
+    - field_name: Interrupt
+      description: >
+       its set if the trap was caused by an interrupt 
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 31
+    - field_name: exception code
+      description: >
+        hold supported exception codes        
+      type: WLRL
+      reset_val: 0
+      msb: 30
+      lsb: 0
+

@@ -1,0 +1,14 @@
+- csr: CSR_MTVAL
+  description: >
+    Machine bad address or Instruction
+  address: 0x343
+  privilege_mode: M
+  rv32:
+    - field_name: mtval
+      description: >
+        When a trap is taken into M-mode, mtval is either set to zero or written with exception-specific information to assist software in handling the trap.        
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+

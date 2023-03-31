@@ -1,0 +1,28 @@
+- csr: CSR_STVEC
+  description: >
+    Supervisor trap handler base address
+  address: 0x105
+  privilege_mode: S
+  rv32:
+    - field_name: BASE
+      description: >
+        The BASE field in stvec is a WARL field that can hold any valid virtual or physical address, subject to alignment constraints
+      type: WARL
+      reset_val: 0
+      msb: 31
+      lsb: 2
+    - field_name: MODE
+      description: >
+        Reserved for future use        
+      type: R
+      reset_val: 0
+      msb: 1
+      lsb: 1
+    - field_name: MODE
+      description: >
+        When MODE=Direct, all traps into supervisor mode cause the pc to be set to the address in the BASE field. When MODE=Vectored, all synchronous exceptions into supervisor mode cause the pc to be set to the address in the BASE field, whereas interrupts cause the pc to be set to the address in the BASE field plus four times the interrupt cause number.
+      type: WARL
+      reset_val: 0
+      msb: 0
+      lsb: 0
+

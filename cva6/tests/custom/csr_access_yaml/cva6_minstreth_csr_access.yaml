@@ -1,0 +1,13 @@
+- csr: CSR_MINSTRET_H
+  description: >
+    Upper 32 bits of minstret,RV32I only
+  address: 0xB82
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        upper counts of the number of instructions the hart has retired
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0

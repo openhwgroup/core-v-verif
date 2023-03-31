@@ -1,0 +1,69 @@
+- csr: CSR_SIP
+  description: >
+    Supervisor interrupt pending
+  address: 0x144
+  privilege_mode: S
+  rv32:
+    - field_name: WPRI
+      description: >
+        reserved for future use
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 10
+    - field_name: SEIP
+      description: >
+        A supervisor-level external interrupt is pending if the SEIP bit in the sip register is set.
+      type: R
+      reset_val: 0
+      msb: 9
+      lsb: 9
+    - field_name: UEIP
+      description: >
+        UEIP may be written by S-mode software to indicate to U-mode that an external interrupt is pending.        
+      type: R
+      reset_val: 0
+      msb: 8
+      lsb: 8
+    - field_name: Reserved
+      description: >
+        reserved for future use
+      type: R
+      reset_val: 0
+      msb: 7
+      lsb: 6
+    - field_name: STIP
+      description: >
+        A supervisor-level timer interrupt is pending if the STIP bit in the sip register is set
+      type: R
+      reset_val: 0
+      msb: 5
+      lsb: 5
+    - field_name: UTIP
+      description: >
+        A user-level timer interrupt is pending if the UTIP bit in the sip register is set
+      type: R
+      reset_val: 0
+      msb: 4
+      lsb: 4
+    - field_name: WPRI
+      description: >
+        reserved for future use
+      type: R
+      reset_val: 0
+      msb: 3
+      lsb: 2
+    - field_name: SSIP
+      description: >
+        A supervisor-level software interrupt is triggered on the current hart by writing 1 to its supervisor software interrupt-pending (SSIP) bit 
+      type: R
+      reset_val: 0
+      msb: 1
+      lsb: 1
+    - field_name: USIP
+      description: >
+        A user-level software interrupt is triggered on the current hart by  riting 1 to its user software interrupt-pending (USIP) bit 
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0

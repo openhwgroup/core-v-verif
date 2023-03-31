@@ -1,0 +1,20 @@
+- csr: CSR_SEPC
+  description: >
+    Supervisor exception program counter
+  address: 0x141
+  privilege_mode: S
+  rv32:
+    - field_name: SEPC
+      description: >
+        On implementations that support only IALIGN=32, the two low bits (sepc[1:0]) are always zero
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 1
+    - field_name: SEPC
+      description: >
+        On implementations that support only IALIGN=32, the two low bits (sepc[1:0]) are always zero
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0

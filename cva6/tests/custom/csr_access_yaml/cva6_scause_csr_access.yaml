@@ -1,0 +1,20 @@
+- csr: CSR_SCAUSE
+  description: >
+    Supervisor trap cause
+  address: 0x142
+  privilege_mode: S
+  rv32:
+    - field_name: Interrupt
+      description: >
+        The Interrupt bit in the scause register is set if the trap was caused by an interrupt.
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 31
+    - field_name: Exception Code
+      description: >
+        The Exception Code field contains a code identifying the last exception     
+      type: WLRL
+      reset_val: 0
+      msb: 30
+      lsb: 0
