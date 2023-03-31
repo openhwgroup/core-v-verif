@@ -447,6 +447,87 @@ compliance: $(VSIM_COMPLIANCE_PREREQ) $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 hello-world:
 	$(MAKE) test TEST=hello-world
 
+
+################################################################################
+# RISCOF Compliance simulation targets
+
+VSIM_RISCOF_COMPLIANCE_PREREQ = $(RISCOF_TEST_RUN_DIR)/dut_test.elf
+
+vlog_riscof-compliance:
+	@echo "$(BANNER)"
+	@echo "* Running vlog in $(SIM_RISCOF_COMPLIANCE_RESULTS)"
+	@echo "* Log: $(SIM_RISCOF_COMPLIANCE_RESULTS)/vlog.log"
+	@echo "$(BANNER)"
+	mkdir -p $(SIM_RISCOF_COMPLIANCE_RESULTS) && \
+	cd $(SIM_RISCOF_COMPLIANCE_RESULTS) && \
+		$(VLIB) $(VWORK)
+	cd $(SIM_RISCOF_COMPLIANCE_RESULTS) && \
+		$(VLOG) \
+		    -work $(VWORK) \
+			-l vlog.log \
+			$(VLOG_FLAGS) \
+			$(CFG_COMPILE_FLAGS) \
+			+incdir+$(DV_UVME_PATH) \
+			+incdir+$(DV_UVMT_PATH) \
+			+incdir+$(UVM_HOME) \
+			$(UVM_HOME)/uvm_pkg.sv \
+			-f $(CV_CORE_MANIFEST) \
+			$(VLOG_FILE_LIST) \
+			$(CFG_PLUSARGS) \
+			$(TBSRC_PKG)
+
+# Target to run vopt over compiled code in $(VSIM_RESULTS)/
+vopt_riscof-compliance: vlog_riscof-compliance
+	@echo "$(BANNER)"
+	@echo "* Running vopt in $(SIM_RISCOF_COMPLIANCE_RESULTS)"
+	@echo "* Log: $(SIM_RISCOF_COMPLIANCE_RESULTS)/vopt.log"
+	@echo "$(BANNER)"
+	cd $(SIM_RISCOF_COMPLIANCE_RESULTS) && \
+		$(VOPT) \
+			-work $(VWORK) \
+			-l vopt.log \
+			$(VOPT_FLAGS) \
+			$(RTLSRC_VLOG_TB_TOP) \
+			-o $(RTLSRC_VOPT_TB_TOP)
+
+$(SIM_RISCOF_COMPLIANCE_RESULTS)/vlog.log: vlog_riscof-compliance
+
+$(SIM_RISCOF_COMPLIANCE_RESULTS)/vopt.log: vopt_riscof-compliance
+
+comp_rtl_riscof-compliance: $(CV_CORE_PKG) $(SVLIB_PKG) $(SIM_RISCOF_COMPLIANCE_RESULTS)/vlog.log $(SIM_RISCOF_COMPLIANCE_RESULTS)/vopt.log
+
+setup_riscof-compliance: clean_riscof_arch_test_suite clone_riscof_arch_test_suite comp_rtl_riscof-compliance
+
+gen_riscof_ovpsim_ic:
+	@touch $(RISCOF_TEST_RUN_DIR)/ovpsim.ic
+	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
+		echo "$(CFG_OVPSIM)" > $(RISCOF_TEST_RUN_DIR)/ovpsim.ic; \
+	fi
+
+# Target to run RISCOF VSIM (i.e. run the simulation)
+riscof_sim_run: $(VSIM_RISCOF_COMPLIANCE_PREREQ) vopt_riscof-compliance gen_riscof_ovpsim_ic
+	@echo "$(BANNER)"
+	@echo "* Running vsim in $(PWD)"
+	@echo "* Log: $(PWD)/vsim.log"
+	@echo "$(BANNER)"
+	cd $(RISCOF_TEST_RUN_DIR) && \
+		$(VMAP) work $(SIM_RISCOF_COMPLIANCE_RESULTS)/work
+	cd $(RISCOF_TEST_RUN_DIR) && \
+	export IMPERAS_TOOLS=$(RISCOF_TEST_RUN_DIR)/ovpsim.ic && \
+		$(VSIM) \
+			-work $(VWORK) \
+			$(VSIM_FLAGS) \
+			-l vsim.log \
+			$(DPILIB_VSIM_OPT) \
+			+UVM_TESTNAME=uvmt_cv32e40p_riscof_firmware_test_c \
+			$(RTLSRC_VOPT_TB_TOP) \
+			$(CFG_PLUSARGS) \
+			$(RISCOF_TEST_PLUSARGS) \
+			+firmware=dut_test.hex \
+			+elf_file=dut_test.elf \
+			+itb_file=dut_test.itb
+
+
 ################################################################################
 # Questa simulation targets
 
