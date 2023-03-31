@@ -26,26 +26,9 @@ if ! [ -n "$DV_SIMULATORS" ]; then
 fi
 
 cd cva6/sim/
-
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_machine_mode_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-##python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_supervisor_mode_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
+python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_machine_mode_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
+python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_supervisor_mode_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
 python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_M_S_mode_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_stvec_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_scounteren_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_sscratch_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_sepc_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_scause_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_stval_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-## ython3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_sip_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_mscratch_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_mepc_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_mcause_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_mcountern_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_mie_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_mtval_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_mcycleh_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
-## python3 cva6.py --target cv32a60x --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --asm_test ../tests/custom/csr_access_tests/riscv_minstreth_csr_test_0.S $DV_OPTS  --linker=../sim/link.ld
 make -C ../../core-v-cores/cva6 clean
 make clean_all
 
