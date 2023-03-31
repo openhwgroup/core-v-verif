@@ -5,7 +5,7 @@
 .globl _start
 .option norvc
 .org 0x00
-_start:
+_start: 
 RVMODEL_BOOT
 	# CSR_MSCRATCH
 	li x10, 0xa5a5a5a5
