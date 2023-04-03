@@ -126,6 +126,8 @@ def read_file(args, file):
             build.set_cov()
         if args.make:
             build.sub_make(args.make)
+        if args.iss != None:
+            build.iss = args.iss
         if args.cfg:
             build.cfg = args.cfg
 
