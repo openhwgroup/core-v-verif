@@ -69,12 +69,12 @@ module  uvmt_cv32e40s_rvfi_cov
   // Table Jump
 
   cov_tablejump_notrap: cover property (
-    rvfi_if.is_tablejump  &&
+    rvfi_if.is_tablejump_raw  &&
     !rvfi_if.rvfi_trap
   );
 
   cov_tablejump_exception: cover property (
-    rvfi_if.is_tablejump  &&
+    rvfi_if.is_tablejump_raw  &&
     rvfi_if.rvfi_trap.exception
   );
 

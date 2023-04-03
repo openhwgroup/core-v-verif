@@ -332,7 +332,7 @@ module  uvmt_cv32e40s_pma_cov
       bins  io   = {0};
     }
 
-    cp_tablejump: coverpoint  rvfi_if.is_tablejump  iff (rvfi_if.rvfi_valid) {
+    cp_tablejump: coverpoint  rvfi_if.is_tablejump_raw  iff (rvfi_if.rvfi_valid) {
       bins jump = {1};
       bins no   = {0};
     }

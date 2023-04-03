@@ -161,7 +161,7 @@ interface uvma_rvfi_instr_if
   logic                             is_pushpop;
   logic                             is_split_datatrans;
   logic                             is_mem_act;
-  logic                             is_tablejump;
+  logic                             is_tablejump_raw;
   logic                             is_pma_fault;
   logic                             is_fencefencei;
   logic [31:0]                      rvfi_mem_addr_word0highbyte;
@@ -212,7 +212,7 @@ interface uvma_rvfi_instr_if
     is_pushpop          <= is_pushpop_f();
     is_split_datatrans  <= is_split_datatrans_f();
     is_mem_act          <= is_mem_act_f();
-    is_tablejump        <= is_tablejump_f();
+    is_tablejump_raw    <= is_tablejump_raw_f();
     is_pma_fault        <= is_pma_fault_f();
     is_fencefencei      <= is_fencefencei_f();
     rvfi_mem_addr_word0highbyte <= rvfi_mem_addr_word0highbyte_f();
@@ -497,9 +497,9 @@ function automatic logic is_pushpop_f();
           match_instr(INSTR_OPCODE_POPRETZ, INSTR_MASK_PUSHPOP);
 endfunction : is_pushpop_f
 
-function automatic logic is_tablejump_f();
+function automatic logic is_tablejump_raw_f();
   return  match_instr_raw(INSTR_OPCODE_TABLEJUMP, INSTR_MASK_TABLEJUMP);
-endfunction : is_tablejump_f
+endfunction : is_tablejump_raw_f
 
 function automatic logic is_fencefencei_f();
   return  match_instr(INSTR_OPCODE_FENCE,  INSTR_MASK_FENCE)  ||
