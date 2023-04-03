@@ -145,6 +145,10 @@ module  uvmt_cv32e40s_pma_cov
       bins  exec  = {0, 1} with ( IS_INSTR_SIDE);
     }
 
+    cp_store: coverpoint  load_access  iff (is_mpu_activated) {
+      bins  store = {0}  with (!IS_INSTR_SIDE);
+    }
+
     cp_allow: coverpoint  pma_status_i.allow  iff (is_mpu_activated) {
       bins allow    = {1};
       bins disallow = {0};
@@ -245,6 +249,7 @@ module  uvmt_cv32e40s_pma_cov
       //Note: Filtering of this cross seems impossible.
       //Each tool supports each their own disparate subset of the language, so
       //you can seemingly make it work in one or the other but not both at once.
+      //See "x_store_bufferable"
     x_loadstoreexec_cacheable:    cross  cp_loadstoreexec, cp_cacheable;
     x_loadstoreexec_integrity:    cross  cp_loadstoreexec, cp_integrity;
     x_loadstoreexec_overridedm:   cross  cp_loadstoreexec, cp_overridedm;
@@ -265,6 +270,8 @@ module  uvmt_cv32e40s_pma_cov
     x_allow_jvt:        cross  cp_allow, cp_jvt;
 
     x_dmregion_dmode: cross  cp_dmregion, cp_dmode;
+
+    x_store_bufferable: cross  cp_store, cp_bufferable;
 
     //TODO:INFO:silabs-robin more crosses are possible, but bordering on impractical/infeasible
   endgroup
