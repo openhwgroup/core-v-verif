@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+`include "cv32e40p_supported_isa.svh"
+
+`ifndef RV_DV_ISA
+`define RV_DV_ISA { RV32I, RV32M, RV32C }
+`endif
+
 //-----------------------------------------------------------------------------
 // Processor feature configuration
 //-----------------------------------------------------------------------------
@@ -30,7 +36,7 @@ privileged_mode_t supported_privileged_mode[] = {MACHINE_MODE};
 riscv_instr_name_t unsupported_instr[];
 
 // ISA supported by the processor
-riscv_instr_group_t supported_isa[$] = {RV32I, RV32M, RV32C, RV32X};
+riscv_instr_group_t supported_isa[$] = `RV_DV_ISA ;
 
 // Interrupt mode support
 mtvec_mode_t supported_interrupt_mode[$] = {DIRECT, VECTORED};
