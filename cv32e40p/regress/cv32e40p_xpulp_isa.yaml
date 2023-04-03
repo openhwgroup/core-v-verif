@@ -8,6 +8,7 @@ builds:
   uvmt_cv32e40p:    
     cmd: make comp
     dir: cv32e40p/sim/uvmt
+    iss: 0
 
 tests:
   pulp_bit_manipulation:
@@ -141,5 +142,19 @@ tests:
     description: pulp_vectorial_shuffle_pack
     dir: cv32e40p/sim/uvmt
     cmd: make test TEST=pulp_vectorial_shuffle_pack CFG=pulp
+    iss: 0
+
+  pulp_hardware_loop:
+    build: uvmt_cv32e40p
+    description: pulp_hardware_loop
+    dir: cv32e40p/sim/uvmt
+    cmd: make test TEST=pulp_hardware_loop CFG=pulp
+    iss: 0
+
+  pulp_hardware_loop_interrupt_test:
+    build: uvmt_cv32e40p
+    description: pulp_hardware_loop_interrupt_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make test TEST=pulp_hardware_loop_interrupt_test CFG=pulp
     iss: 0
 
