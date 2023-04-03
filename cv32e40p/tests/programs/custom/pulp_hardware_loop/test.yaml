@@ -15,9 +15,7 @@
 #
 # SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 
-name: matmul_32b_float
-uvm_test: uvmt_cv32e40p_firmware_test_c
-default_cflags: >
-    -O3 -g -static -mabi=ilp32 -march=$(RISCV_MARCH) -Wall -pedantic
+name: pulp_hardware_loop
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
 description: >
-    Runs the Single Precision Floating Point Matrices Multiplication benchmark
+    PULP hardware loops test

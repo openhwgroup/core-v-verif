@@ -1,3 +1,4 @@
+// Copyright 2020 ETH Zurich
 // Copyright 2020 OpenHW Group
 // Copyright 2023 Dolphin Design
 //
@@ -14,8 +15,9 @@
 // limitations under the License.
 //
 // SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
-
-// Floating Point Input and Expected result Matrices
+// 
+// Description : Floating Point Input and Expected result Matrices
+// 
 
 float A[N*M] __attribute__ ((aligned (4))) = {
   0x4e3a67f8,  0x4e1da87f,  0x4e70c7b1,  0x4eb4f9e3,  0x4eddc42f,  0x4e94ada5,  0x4e8aa0ca,  0x4ebc7985,  0x4dfbd0cc,  0x4dc30d16,  0x4ec33e42,  0x4ede6e96,  0x4e791541,  0x4eed253d,  0x4ebbcbf3,  0x4e119ed5,
