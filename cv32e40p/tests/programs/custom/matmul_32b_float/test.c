@@ -1,3 +1,4 @@
+// Copyright 2020 ETH Zurich
 // Copyright 2020 OpenHW Group
 // Copyright 2023 Dolphin Design
 //
