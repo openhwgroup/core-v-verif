@@ -450,7 +450,6 @@ hello-world:
 
 ################################################################################
 # RISCOF Compliance simulation targets
-
 VSIM_RISCOF_COMPLIANCE_PREREQ = $(RISCOF_TEST_RUN_DIR)/dut_test.elf
 
 vlog_riscof-compliance:
@@ -505,7 +504,7 @@ gen_riscof_ovpsim_ic:
 	fi
 
 # Target to run RISCOF VSIM (i.e. run the simulation)
-riscof_sim_run: $(VSIM_RISCOF_COMPLIANCE_PREREQ) vopt_riscof-compliance gen_riscof_ovpsim_ic
+riscof_sim_run: $(VSIM_RISCOF_COMPLIANCE_PREREQ) comp_rtl_riscof-compliance gen_riscof_ovpsim_ic
 	@echo "$(BANNER)"
 	@echo "* Running vsim in $(PWD)"
 	@echo "* Log: $(PWD)/vsim.log"

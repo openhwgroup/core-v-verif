@@ -21,12 +21,12 @@
 #
 ###############################################################################
 
-SIM_RISCOF_COMPLIANCE_RESULTS = $(SIM_CFG_RESULTS)/riscof_dut_work
 RISCOF_COMPLIANCE_TEST_SUITE_PKG   := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscof/riscof_arch_test_suite
 RISCOF_SIM ?= NO
 
 RISCOF_TEST_PLUSARGS ?= +signature=DUT-cv32e40p.signature
-RISCOF_TEST_RUN_DIR ?=$(SIM_RISCOF_COMPLIANCE_RESULTS)
+RISCOF_TEST_RUN_DIR ?=$(SIM_CFG_RESULTS)/riscof_dut_work
+SIM_RISCOF_COMPLIANCE_RESULTS ?= $(RISCOF_TEST_RUN_DIR)
 
 RISCOF_COMPLIANCE_TEST_SUITE_REPO    ?= https://github.com/riscv-non-isa/riscv-arch-test.git
 RISCOF_COMPLIANCE_TEST_SUITE_BRANCH  ?= main
@@ -63,7 +63,7 @@ $(RISCOF_COMPLIANCE_TEST_SUITE_PKG):
 ###############################################################################
 #RISCOF Validate YAML Command
 ifeq ($(call IS_YES,$(RISCOF_SIM)),YES)
-RISCOF_VALIDATE_YAML_CMD = /net/eagle/volume1/homes/vja/.local/bin/riscof validateyaml --config=config.ini --work-dir=$(SIM_CFG_RESULTS)/riscof_work
+RISCOF_VALIDATE_YAML_CMD = riscof validateyaml --config=config.ini --work-dir=$(SIM_CFG_RESULTS)/riscof_work
 else
 RISCOF_VALIDATE_YAML_CMD = echo $(RISCOF_SIM)
 endif
@@ -75,7 +75,7 @@ riscof_validate_yaml:
 ###############################################################################
 #RISCOF Get Testlist Command
 ifeq ($(call IS_YES,$(RISCOF_SIM)),YES)
-RISCOF_GET_TESTLIST_CMD = /net/eagle/volume1/homes/vja/.local/bin/riscof testlist --config=config.ini --suite=$(RISCOF_COMPLIANCE_TEST_SUITE_PKG)/riscv-test-suite/ --env=$(RISCOF_COMPLIANCE_TEST_SUITE_PKG)/riscv-test-suite/env --work-dir=$(SIM_CFG_RESULTS)/riscof_work
+RISCOF_GET_TESTLIST_CMD = riscof testlist --config=config.ini --suite=$(RISCOF_COMPLIANCE_TEST_SUITE_PKG)/riscv-test-suite/ --env=$(RISCOF_COMPLIANCE_TEST_SUITE_PKG)/riscv-test-suite/env --work-dir=$(SIM_CFG_RESULTS)/riscof_work
 else
 RISCOF_GET_TESTLIST_CMD = echo $(RISCOF_SIM)
 endif
@@ -87,7 +87,7 @@ riscof_get_testlist:
 #################################################################################
 ##RISCOF Run Command
 ifeq ($(call IS_YES,$(RISCOF_SIM)),YES)
-RISCOF_RUN_ALL_CMD = /net/eagle/volume1/homes/vja/.local/bin/riscof run --config=config.ini --suite=$(RISCOF_COMPLIANCE_TEST_SUITE_PKG)/riscv-test-suite/ --env=$(RISCOF_COMPLIANCE_TEST_SUITE_PKG)/riscv-test-suite/env --work-dir=$(SIM_CFG_RESULTS)/riscof_work
+RISCOF_RUN_ALL_CMD = riscof run --config=config.ini --suite=$(RISCOF_COMPLIANCE_TEST_SUITE_PKG)/riscv-test-suite/ --env=$(RISCOF_COMPLIANCE_TEST_SUITE_PKG)/riscv-test-suite/env --work-dir=$(SIM_CFG_RESULTS)/riscof_work
 else
 RISCOF_RUN_ALL_CMD = echo $(RISCOF_SIM)
 endif
