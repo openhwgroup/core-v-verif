@@ -24,9 +24,6 @@ class cv32e40p(pluginTemplate):
 
         config = kwargs.get('config')
 
-        self.testcount = 3
-        self.loopcount = 0
-
         # If the config node for this DUT is missing or empty. Raise an error. At minimum we need
         # the paths to the ispec and pspec files
         if config is None:
@@ -131,7 +128,7 @@ class cv32e40p(pluginTemplate):
 
         # set the make command that will be used. The num_jobs parameter was set in the __init__
         # function earlier
-        make.makeCommand = 'make -k -j' + self.num_jobs
+        make.makeCommand = 'make -d -j' + self.num_jobs
 
         # we will iterate over each entry in the testList. Each entry node will be refered to by the
         # variable testname.
@@ -180,27 +177,27 @@ class cv32e40p(pluginTemplate):
 
             # set up the simulation command
             simdir = 'cd {0}/cv32e40p/sim/{1}'.format(self.tbpath, self.dut_exe)
-            simcmd = 'make riscof_sim_run USE_ISS={0} RISCOF_TEST_RUN_DIR={1}'.format(self.imperas_iss, testentry['work_dir'])
+            simcmd = 'make riscof_sim_run USE_ISS={0} RISCOF_TEST_RUN_DIR={1} CFG={2}'.format(self.imperas_iss, testentry['work_dir'], self.dut_cfg)
+            clean_work_dir_cmd = 'rm -rf {0}/work/'.format(testentry['work_dir'])
 
             # concatenate all commands that need to be executed within a make-target.
-            execute = '@cd {0}; {1}; {2}; {3}; {4}; {5}; {6}; {7}'.format(testentry['work_dir'], test_compile_cmd, hex_cmd, readelf_cmd, objdmp_cmd, objdmp2itb_cmd, simdir, simcmd)
+            execute = '@cd {0}; {1}; {2}; {3}; {4}; {5}; {6}; {7}; {8}'.format(testentry['work_dir'], test_compile_cmd, hex_cmd, readelf_cmd, objdmp_cmd, objdmp2itb_cmd, simdir, simcmd, clean_work_dir_cmd)
 
             # create a target. The makeutil will create a target with the name "TARGET<num>" where num
             # starts from 0 and increments automatically for each new target that is added
             make.add_target(execute,tname=test_name)
-              
-            self.loopcount = self.loopcount + 1
-          
-            #if self.loopcount == self.testcount:
-            #  break
+
+            # Need to increase the default short timeout
+            self.timeout = 20000
 
         # once the make-targets are done and the makefile has been created, run all the targets in
         # parallel using the make command set above.
         # if target runs are not required then we simply exit as this point after running all
         # the makefile targets.
         if self.target_run:
-          make.execute_all(self.work_dir)
+          make.execute_all(self.work_dir, self.timeout)
         else:
-          raise SystemExit(0)
+          #raise SystemExit(0)
+          print("No target to Run")
 
 

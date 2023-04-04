@@ -75,10 +75,10 @@ class sail_cSim(pluginTemplate):
             self.isa += 'i'
         if "M" in ispec["ISA"]:
             self.isa += 'm'
-        if "C" in ispec["ISA"]:
-            self.isa += 'c'
         if "F" in ispec["ISA"]:
             self.isa += 'f'
+        if "C" in ispec["ISA"]:
+            self.isa += 'c'
         if "D" in ispec["ISA"]:
             self.isa += 'd'
         if "Zicsr" in ispec["ISA"]:
@@ -116,8 +116,8 @@ class sail_cSim(pluginTemplate):
         make = utils.makeUtil(makefilePath=os.path.join(self.work_dir, "Makefile." + self.name[:-1]))
         if self.docker:
             dmake = utils.makeUtil(makefilePath=os.path.join(self.work_dir, "Makefile.docker." + self.name[:-1]))
-            dmake.makeCommand = self.make + ' -j' + self.num_jobs
-        make.makeCommand = self.make + ' -j' + self.num_jobs
+            dmake.makeCommand = self.make + ' -d -j' + self.num_jobs
+        make.makeCommand = self.make + ' -d -j' + self.num_jobs
         for file in testList:
             testentry = testList[file]
             test = testentry['test_path']
@@ -167,6 +167,9 @@ class sail_cSim(pluginTemplate):
                 execute+=coverage_cmd
             make.add_target(execute,tname=test_name)
 
+            # Need to increase the default short timeout
+            self.timeout = 20000
+
             if self.docker:
                 dexecute = self.docker_cmd.format(self.work_dir,self.docker_img,'make -f /work/'+
                     "Makefile." + self.name[:-1]+" "+test_name)
@@ -174,7 +177,7 @@ class sail_cSim(pluginTemplate):
                     dexecute+=";cd "+testentry['work_dir']+";"+coverage_cmd
                 dmake.add_target(dexecute,tname=test_name)
         if self.docker:
-            dmake.execute_all(self.work_dir)
+            dmake.execute_all(self.work_dir, self.timeout)
         else:
-            make.execute_all(self.work_dir)
+            make.execute_all(self.work_dir, self.timeout)
 
