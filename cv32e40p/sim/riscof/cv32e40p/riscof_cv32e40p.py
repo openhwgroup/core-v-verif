@@ -60,6 +60,8 @@ class cv32e40p(pluginTemplate):
         else:
             self.imperas_iss = 'no'
        
+        self.dut_cfg = str(config['dut_cfg'] if 'dut_cfg' in config else 'default')
+
         self.sw_toolchain_prefix = str(config['sw_toolchain_prefix'] if 'sw_toolchain_prefix' in config else 'unknown')
 
         #We capture if the user would like the run the tests on the target or
