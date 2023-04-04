@@ -41,7 +41,14 @@ class uvmt_cv32e40p_riscof_firmware_test_c extends uvmt_cv32e40p_base_test_c;
     constraint env_cfg_cons {
        env_cfg.enabled         == 1;
        env_cfg.is_active       == UVM_ACTIVE;
-       env_cfg.trn_log_enabled == 1;
+       env_cfg.trn_log_enabled == 0;
+       env_cfg.clknrst_cfg.trn_log_enabled           == 0;
+       env_cfg.interrupt_cfg.trn_log_enabled         == 0;
+       env_cfg.debug_cfg.trn_log_enabled             == 0;
+       env_cfg.obi_memory_instr_cfg.trn_log_enabled  == 0;
+       env_cfg.obi_memory_data_cfg.trn_log_enabled   == 0;
+       env_cfg.rvfi_cfg.trn_log_enabled              == 0;
+
     }
     `uvm_component_utils_begin(uvmt_cv32e40p_riscof_firmware_test_c)
     `uvm_object_utils_end
@@ -65,11 +72,21 @@ class uvmt_cv32e40p_riscof_firmware_test_c extends uvmt_cv32e40p_base_test_c;
     extern virtual task configure_phase(uvm_phase phase);
 
     /**
+    * post_randomize
+    */
+    extern function void post_randomize();
+
+    /**
      *  Enable program execution, wait for completion.
      */
     extern virtual task run_phase(uvm_phase phase);
 
     extern function void write_riscof_signature();
+
+    //Function to create empty signature file to avoid issues with
+    //riscof report generation with tests which exit with timeout/fatal
+    //and exit without dumping signature
+    extern function void write_riscof_empty_signature();
 
 
 endclass : uvmt_cv32e40p_riscof_firmware_test_c
@@ -85,8 +102,14 @@ function void uvmt_cv32e40p_riscof_firmware_test_c::build_phase(uvm_phase phase)
 
     super.build_phase(phase);
 
-    env_cfg.boot_addr = 32'h80000000;
+    `uvm_info("TEST", $sformatf("Randomize from TEST class"), UVM_NONE)
+    if (!this.randomize()) begin
+      `uvm_fatal("TEST", "Failed to randomize test");
+    end
    
+    env_cfg.boot_addr = 32'h80000000;
+    test_cfg.watchdog_timeout = 10_000_000; // reduce timeout
+
 endfunction : build_phase
 
 task uvmt_cv32e40p_riscof_firmware_test_c::reset_phase(uvm_phase phase);
@@ -99,7 +122,16 @@ task uvmt_cv32e40p_riscof_firmware_test_c::configure_phase(uvm_phase phase);
 
     super.configure_phase(phase);
 
+    //Create Initial DUT Signature file
+    write_riscof_empty_signature();
+
 endtask : configure_phase
+
+function void uvmt_cv32e40p_riscof_firmware_test_c::post_randomize();
+
+    `uvm_info("TEST", "Post Randomize function ", UVM_NONE)
+
+endfunction : post_randomize
 
 
 task uvmt_cv32e40p_riscof_firmware_test_c::run_phase(uvm_phase phase);
@@ -110,6 +142,7 @@ task uvmt_cv32e40p_riscof_firmware_test_c::run_phase(uvm_phase phase);
     @(posedge env_cntxt.clknrst_cntxt.vif.reset_n);
     repeat (33) @(posedge env_cntxt.clknrst_cntxt.vif.clk);
     `uvm_info("TEST", "Started RUN", UVM_NONE)
+
     // The firmware is expected to write exit status and pass/fail indication to the Virtual Peripheral
     wait (
            (vp_status_vif.exit_valid    == 1'b1) ||
@@ -127,12 +160,13 @@ task uvmt_cv32e40p_riscof_firmware_test_c::run_phase(uvm_phase phase);
 endtask : run_phase
 
 function void uvmt_cv32e40p_riscof_firmware_test_c::write_riscof_signature();
-    bit[31:0] mem_read;
-    int sig_fd;
-    string   sig_file;
+    bit[31:0]     mem_read;
+    int           sig_fd;
+    string        sig_file;
     bit[31:0]     signature_start_address;
     bit[31:0]     signature_end_address;
     bit[31:0]     sig_i;
+    int           i;
 
     signature_start_address = 32'h80801110;
     signature_end_address = 32'h80803000;
@@ -146,6 +180,22 @@ function void uvmt_cv32e40p_riscof_firmware_test_c::write_riscof_signature();
     if (sig_fd == 0) `uvm_fatal("TEST", $sformatf("Could not open file %s for writing", sig_file));
      
     `uvm_info("RISCOF_SIG_WRITE", "Dumping Riscof signature", UVM_NONE)
+
+    //FIXME: make this generic based on hex file output and remove workaround
+    //Workaround to fix issue with different signature start address in F tests
+    for (i=0; i<120; i++) begin
+        mem_read[7:0] = env_cntxt.mem.read(signature_start_address+0);
+        mem_read[15:8] = env_cntxt.mem.read(signature_start_address+1);
+        mem_read[23:16] = env_cntxt.mem.read(signature_start_address+2);
+        mem_read[31:24] = env_cntxt.mem.read(signature_start_address+3);
+
+        if (mem_read != 32'h6f5ca309)  begin
+            signature_start_address = signature_start_address + 16'h1000;
+            signature_end_address = signature_end_address + 16'h1000;
+        end
+        else break;
+    end
+
     
     for (sig_i=signature_start_address; sig_i<signature_end_address; sig_i += 4) begin
         mem_read[7:0] = env_cntxt.mem.read(sig_i+0);
@@ -155,7 +205,7 @@ function void uvmt_cv32e40p_riscof_firmware_test_c::write_riscof_signature();
 
         $fdisplay(sig_fd, "%x", mem_read);
 
-        if ( (mem_read == 32'h6f5ca309) && (sig_i > 32'h80801110) )begin
+        if ( (mem_read == 32'h6f5ca309) && (sig_i > signature_start_address) )begin
             while(sig_i[3:0] != 4'hc) begin // Fill 0's at the end to make 16 byte aligned signature dump to match ref model
                 mem_read[31:0] = 32'h0;
                 $fdisplay(sig_fd, "%x", mem_read);
@@ -166,5 +216,27 @@ function void uvmt_cv32e40p_riscof_firmware_test_c::write_riscof_signature();
     end
 
 endfunction : write_riscof_signature
+
+function void uvmt_cv32e40p_riscof_firmware_test_c::write_riscof_empty_signature();
+    bit[31:0]   sig_value;
+    int         sig_fd;
+    string      sig_file;
+    bit[31:0]   sig_i;
+
+    if ($value$plusargs("signature=%s", sig_file)) begin
+        sig_fd = $fopen(sig_file, "w");
+    end
+    else begin
+        sig_file = "DUT-cv32e40p.signature";
+        sig_fd = $fopen(sig_file, "w");
+    end
+    if (sig_fd == 0) `uvm_fatal("TEST", $sformatf("Could not open file %s for writing", sig_file));
+
+    `uvm_info("RISCOF_SIG_WRITE", "Initialize Riscof signature", UVM_NONE)
+
+    sig_value = 32'h6f5ca309;
+    $fdisplay(sig_fd, "%x", sig_value);
+
+endfunction : write_riscof_empty_signature
 
 `endif // __UVMT_CV32E40P_RISCOF_FIRMWARE_TEST_SV__
