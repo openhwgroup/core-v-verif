@@ -210,9 +210,16 @@ ifneq ($(filter gen_corev-dv,$(MAKECMDGOALS)),)
 ifeq ($(TEST),)
 $(error ERROR must specify a TEST variable with gen_corev-dv target)
 endif
+ifeq ($(RISCVDV_CFG),)
 GEN_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=corev-dv.yaml $(YAML2MAKE_DEBUG) --prefix=GEN --core=$(CV_CORE))
 ifeq ($(GEN_FLAGS_MAKE),)
-$(error ERROR Could not find corev-dv.yaml for test: $(TEST))
+$(error ERROR Could not find corev-dv.yaml of for test: $(TEST))
+endif
+else
+GEN_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=$(RISCVDV_CFG).yaml $(YAML2MAKE_DEBUG) --prefix=GEN --core=$(CV_CORE))
+ifeq ($(GEN_FLAGS_MAKE),)
+$(error ERROR Could not find corev-dv_$(RISCVDV_CFG).yaml of for test: $(TEST))
+endif
 endif
 include $(GEN_FLAGS_MAKE)
 endif
