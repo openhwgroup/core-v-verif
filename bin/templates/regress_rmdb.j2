@@ -26,7 +26,7 @@
     <runnable name="{{r.name}}" type="group">
         <members>
 {% for build in r.get_builds() %}
-            <member>config_{{build.cfg}}</member>
+            <member>{{build.name}}</member>
 {% endfor %}
         </members>
         <preScript launch="exec">
@@ -38,14 +38,14 @@
 
 
 {% for build in r.get_builds() %}
-        <runnable name="config_{{build.cfg}}" type="group">
+        <runnable name="{{build.name}}" type="group">
             <members>
 {% for t in r.get_tests_of_build(build.name) %}
                 <member>{{t.name}}</member>
 {% endfor %}
             </members>
             <preScript launch="exec">
-                <command> cd {{build.abs_dir}} &amp;&amp; {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} CV_SIM_PREFIX= {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results)}} {{makeargs}} </command>
+                <command> cd {{build.abs_dir}} &amp;&amp; {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} CV_SIM_PREFIX= {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results)}} {{makeargs}} </command>
             </preScript>
         </runnable>
 
@@ -60,7 +60,7 @@
                 </method>
 {% endif %}
                 <execScript launch="exec" usestderr="no">
-                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} {{toolchain|upper}}=1 CFG={{build.cfg}} SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
+                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} {{toolchain|upper}}=1 CFG={{build.cfg}} RISCVDV_CFG={{t.riscvdv_cfg}} SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
                 </execScript>
             </runnable>
 {% endfor %}

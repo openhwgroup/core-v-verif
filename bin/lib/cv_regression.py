@@ -88,6 +88,9 @@ class Test:
         if not hasattr(self, 'testname'):
             self.testname = self.name
 
+        if not hasattr(self, 'riscvdv_cfg'):
+            self.riscvdv_cfg = ''
+
         # Log equals the test name if does not exist
         if not hasattr(self, 'log'):
             self.log = self.name
