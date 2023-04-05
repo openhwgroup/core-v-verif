@@ -642,7 +642,6 @@ uint32_t misaligned_border_io_to_mem(uint32_t index, uint8_t report_name) {
   test_fail += g_mcause->raw != MCAUSE_LOAD_FAULT;
   test_fail += *g_mepc       == 0;
   test_fail += *g_mtval      != 0;
-  //cvprintf(V_LOW, "g_mcause: %08lx, g_mepc: %08lx, g_mtval: %08lx\n", g_mcause->raw, *g_mepc, *g_mtval);
   clear_status_csrs();
 
   cvprintf(V_DEBUG, "Tmp: %08lx\n", tmp);
@@ -663,7 +662,6 @@ uint32_t misaligned_border_io_to_mem(uint32_t index, uint8_t report_name) {
   test_fail += g_mcause->raw != 0;
   test_fail += *g_mepc       != 0;
   test_fail += *g_mtval      != 0;
-  //cvprintf(V_LOW, "g_mcause: %08lx, g_mepc: %08lx, g_mtval: %08lx\n", g_mcause->raw, *g_mepc, *g_mtval);
   clear_status_csrs();
 
   cvprintf(V_DEBUG, "Tmp: %08lx\n", tmp);
@@ -786,9 +784,11 @@ uint32_t misalign_store_fault_no_bus_access_second(uint32_t index, uint8_t repor
     : "t0", "memory"
   );
 
-  // Quirk: Split the assembly functions here as we
-  // want gcc to reevaluate the variables (the trap
-  // messes up gcc optimization)
+  test_fail += *g_exp_fault;
+  test_fail += g_mcause->raw != MCAUSE_STORE_FAULT;
+  test_fail += *g_mepc       == 0;
+  test_fail += *g_mtval      != 0;
+  clear_status_csrs();
 
   __asm__ volatile(R"(
     # Check if first store op reached bus
@@ -802,8 +802,8 @@ uint32_t misalign_store_fault_no_bus_access_second(uint32_t index, uint8_t repor
 
   test_fail += *g_exp_fault;
   test_fail += tmp           != 0xaaaaaaaa;
-  test_fail += g_mcause->raw != MCAUSE_STORE_FAULT;
-  test_fail += *g_mepc       == 0;
+  test_fail += g_mcause->raw != 0;
+  test_fail += *g_mepc       != 0;
   test_fail += *g_mtval      != 0;
   clear_status_csrs();
   cvprintf(V_DEBUG, "Tmp: %08lx\n", tmp);
@@ -878,9 +878,6 @@ uint32_t misalign_store_fault_io_no_bus_access_first(uint32_t index, uint8_t rep
   test_fail += *g_mtval      != 0;
   clear_status_csrs();
 
-  // Quirk: Split the assembly functions here as we
-  // want gcc to reevaluate the variables (the trap
-  // messes up gcc optimization)
   *g_exp_fault = 0;
 
   __asm__ volatile(R"(
