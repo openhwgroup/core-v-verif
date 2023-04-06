@@ -259,7 +259,7 @@ module uvmt_cv32e40p_imperas_dv_wrap
         .CMP_GPR     (1),
         .CMP_FPR     (1),
         .CMP_VR      (0),
-        .CMP_CSR     (1)
+        .CMP_CSR     (0)
     )
     trace2api(rvvi);
 
@@ -347,6 +347,40 @@ module uvmt_cv32e40p_imperas_dv_wrap
     end
 
     assign rvvi.x_wb[0][0] = (1 << `RVFI_IF.rvfi_rd_addr[0] | 1 << `RVFI_IF.rvfi_rd_addr[1]); // TODO: originally rvfi_rd_addr
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Assign the RVVI F GPR registers
+    ////////////////////////////////////////////////////////////////////////////
+    bit [31:0] FREG[32];
+
+    bit is_f_reg [1:0];
+
+    assign is_f_reg[0] = `RVFI_IF.rvfi_frd_wvalid[0];
+    assign is_f_reg[1] = `RVFI_IF.rvfi_frd_wvalid[1];
+
+    int f_reg_addr [1:0];
+    assign f_reg_addr[0] = `RVFI_IF.rvfi_frd_addr[0];
+    assign f_reg_addr[1] = `RVFI_IF.rvfi_frd_addr[1];
+
+    genvar fgi;
+    generate
+        for(fgi=0; fgi<32; fgi++) begin
+            assign rvvi.f_wdata[0][0][fgi] = FREG[fgi];
+        end
+    endgenerate
+
+    always @(*) begin
+        int i;
+        for (i=0; i<32; i++) begin
+            FREG[i] = 32'b0;
+            if (is_f_reg[0] & (`RVFI_IF.rvfi_frd_addr[0]==5'(i)))
+            FREG[i] = `RVFI_IF.rvfi_frd_wdata[0];
+            if (is_f_reg[1] & (`RVFI_IF.rvfi_frd_addr[1]==5'(i)))
+            FREG[i] = `RVFI_IF.rvfi_frd_wdata[1];
+        end
+    end
+
+    assign rvvi.f_wb[0][0] = (is_f_reg[0] << f_reg_addr[0] | is_f_reg[1] << f_reg_addr[1]);
 
     ////////////////////////////////////////////////////////////////////////////
     // DEBUG REQUESTS,
