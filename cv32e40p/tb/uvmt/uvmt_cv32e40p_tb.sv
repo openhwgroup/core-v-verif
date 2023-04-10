@@ -35,7 +35,9 @@ module uvmt_cv32e40p_tb;
    import uvmt_cv32e40p_pkg::*;
    import uvme_cv32e40p_pkg::*;
    `ifndef FORMAL
+   `ifdef USE_ISS
    import rvviApiPkg::*;
+   `endif
    `endif
    // DUT (core) parameters: refer to the CV32E40P User Manual.
 `ifdef NO_PULP
@@ -135,7 +137,9 @@ module uvmt_cv32e40p_tb;
 
    // RVVI SystemVerilog Interface
    `ifndef FORMAL
+   `ifdef USE_ISS
       rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+   `endif
    `endif
 
   /**
@@ -696,7 +700,7 @@ module uvmt_cv32e40p_tb;
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_RAM_ADDR_WIDTH"),    .value(ENV_PARAM_RAM_ADDR_WIDTH)   );
 
      // Run test
-     uvm_top.enable_print_topology = 1; // ENV coders enable this as a debug aid
+     uvm_top.enable_print_topology = 0; // ENV coders enable this as a debug aid
      uvm_top.finish_on_completion  = 1;
      uvm_top.run_test();
    end : test_bench_entry_point
@@ -775,10 +779,10 @@ module uvmt_cv32e40p_tb;
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
 
       // Shutdown the Reference Model
-      if ($test$plusargs("USE_ISS")) begin
-         // Exit handler for ImperasDV
-         void'(rvviRefShutdown());
-      end
+      `ifdef USE_ISS
+      // Exit handler for ImperasDV
+      void'(rvviRefShutdown());
+      `endif
 
       // In most other contexts, calls to $display() in a UVM environment are
       // illegal. Here they are OK because the UVM environment has shut down
