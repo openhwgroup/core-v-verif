@@ -25,6 +25,15 @@ module uvmt_cv32e40s_support_logic
     uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.master_mp out_support_if
   );
 
+
+  // ---------------------------------------------------------------------------
+  // Default Resolutions
+  // ---------------------------------------------------------------------------
+
+  default clocking @(posedge in_support_if.clk); endclocking
+  default disable iff (!in_support_if.rst_n);
+
+
   // ---------------------------------------------------------------------------
   // Local parameters
   // ---------------------------------------------------------------------------
@@ -143,6 +152,37 @@ module uvmt_cv32e40s_support_logic
                   req_vs_valid_cnt <= 4'h2;
           end
       end
+  end
+
+
+  // Count "irq_ack"
+
+  always_latch begin
+    if (in_support_if.rst_n == 0) begin
+      out_support_if.cnt_irq_ack = 0;
+    end else if (in_support_if.irq_ack) begin
+      if ($past(out_support_if.cnt_irq_ack) != '1) begin
+        out_support_if.cnt_irq_ack = $past(out_support_if.cnt_irq_ack) + 1;
+      end
+    end
+  end
+
+
+  // Count rvfi reported interrupts
+
+  logic  do_count_rvfi_irq;
+  always_comb  do_count_rvfi_irq =
+    rvfi.rvfi_intr.interrupt  &&
+    !(rvfi.rvfi_intr.cause inside {[1024:1027]})  &&
+    rvfi.rvfi_valid  &&
+    ($past(out_support_if.cnt_rvfi_irqs) != '1);
+
+  always_latch begin
+    if (in_support_if.rst_n == 0) begin
+      out_support_if.cnt_rvfi_irqs = 0;
+    end else if (do_count_rvfi_irq) begin
+      out_support_if.cnt_rvfi_irqs = $past(out_support_if.cnt_rvfi_irqs) + 1;
+    end
   end
 
 
