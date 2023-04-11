@@ -176,9 +176,10 @@ XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_RVFI
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_CORE_LOG
 XRUN_USER_COMPILE_ARGS += +define+UVM
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
-	XRUN_PLUSARGS += +USE_ISS
-	XRUN_USER_COMPILE_ARGS += +define+USE_IMPERASDV
-	XRUN_USER_COMPILE_ARGS += +define+USE_ISS
+    XRUN_PLUSARGS          += +USE_ISS
+    XRUN_USER_COMPILE_ARGS += +define+USE_IMPERASDV
+    XRUN_USER_COMPILE_ARGS += +define+USE_ISS
+    XRUN_FILE_LIST         += -f $(TBSRC_HOME)/uvmt/imperas_dv.flist
 else
     XRUN_PLUSARGS += +DISABLE_OVPSIM
 endif
@@ -511,7 +512,7 @@ cov: $(COV_MERGE)
 
 clean:
 	@echo "$(MAKEFILE_LIST)"
-	rm -rf $(SIM_RUN_RESULTS)
+	rm -rf $(SIM_RESULTS)
 
 # Files created by Eclipse when using the Imperas ISS + debugger
 clean_eclipse:
