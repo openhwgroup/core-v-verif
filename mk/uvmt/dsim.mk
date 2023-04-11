@@ -287,6 +287,7 @@ comp_corev-dv: $(CV_CORE_PKG)
 		+incdir+$(CV_CORE_COREVDV_PKG) \
 		$(DSIM_PMA_INC) \
 		$(CFG_COMPILE_FLAGS) \
+		$(GEN_COMPILE_FLAGS) \
 		-f $(COREVDV_PKG)/manifest.f \
 		-l $(SIM_COREVDV_RESULTS)/compile.log
 
@@ -347,4 +348,3 @@ clean:
 # All generated files plus the clone of the RTL
 clean_all: clean clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
 	rm -rf $(CV_CORE_PKG)
-

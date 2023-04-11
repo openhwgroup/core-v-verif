@@ -253,6 +253,7 @@ XRUN_COMP_FLAGS += -nowarn CGNSWA
 # deselect_coverage -all warnings
 XRUN_COMP_COREV_DV_FLAGS += -nowarn BNDWRN
 XRUN_COMP_COREV_DV_FLAGS += $(CFG_COMPILE_FLAGS)
+XRUN_COMP_COREV_DV_FLAGS += $(GEN_COMPILE_FLAGS)
 
 # instance reporting warings for covergroups
 XRUN_RUN_COV    += -nowarn COVCGN

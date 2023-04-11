@@ -45,7 +45,6 @@ logger.setLevel(logging.INFO)
 
 # Constants
 TOPDIR = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
-# VALID_YAMLS = ('corev-dv.yaml', 'test.yaml')
 REQUIRED_KEYS = ('name', 'uvm_test', 'description',)
 CFG_PATH = (
             '<CV_CORE>/tests/cfg',
