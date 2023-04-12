@@ -118,6 +118,7 @@ VLOG_FLAGS    ?= \
 		$(QUIET) \
 		-writetoplevels  uvmt_$(CV_CORE_LC)_tb
 
+VLOG_FILE_LIST_IDV =
 VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 
 VLOG_FLAGS += $(DPILIB_VLOG_OPT)
@@ -130,6 +131,7 @@ VLOG_FLAGS += "+define+UVM"
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 VLOG_FLAGS += +define+USE_ISS
 VLOG_FLAGS += +define+USE_IMPERASDV
+VLOG_FILE_LIST_IDV = -f $(DV_UVMT_PATH)/imperas_dv.flist
 endif
 
 ###############################################################################
@@ -163,6 +165,7 @@ VSIM_UVM_ARGS      = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 VSIM_FLAGS += +USE_ISS
 VSIM_FLAGS += +USE_IMPERASDV
+VSIM_FLAGS += -sv_lib $(basename $(IMPERAS_DV_MODEL))
 else
 VSIM_FLAGS += +DISABLE_OVPSIM
 endif
@@ -174,7 +177,6 @@ VSIM_FLAGS += +DISABLE_CSR_CHECK=$(TEST_DISABLE_CSR_CHECK)
 endif
 
 VSIM_FLAGS += -sv_lib $(basename $(DPI_DASM_LIB))
-VSIM_FLAGS += -sv_lib $(basename $(IMPERAS_DV_MODEL))
 VSIM_FLAGS += -sv_lib $(basename $(abspath $(SVLIB_LIB)))
 
 # Skip compile if requested (COMP=NO)
@@ -489,6 +491,7 @@ vlog: lib
 			+incdir+$(UVM_HOME) \
 			$(UVM_HOME)/uvm_pkg.sv \
 			-f $(CV_CORE_MANIFEST) \
+			$(VLOG_FILE_LIST_IDV) \
 			$(VLOG_FILE_LIST) \
 			$(TBSRC_PKG)
 
