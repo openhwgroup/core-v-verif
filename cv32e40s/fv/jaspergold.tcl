@@ -36,8 +36,7 @@ proc cvfv_rerun {} {
 
   # Assumes
   assume  -from_assert  {*_memory_assert_i.u_assert.a_r_after_a}
-  assume  -from_assert  {*a_xsecure_interface_integrity_obi_*_parity}
-  #TODO:WARNING:silabs-robin parity should be done by obi assertions
+  assume  -from_assert  {*.obi_*_memory_assert_i.*.a_*par}
   assume  -from_assert  {*integration_assert_i.a_stable_*}
   assume  -from_assert  {*integration_assert_i.a_aligned_*}
   assume  -from_assert  {*integration_assert_i.a_no_scan_cg}
