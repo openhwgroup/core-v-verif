@@ -34,8 +34,8 @@ module uvmt_cv32e40p_tb;
    import cv32e40p_pkg::*;
    import uvmt_cv32e40p_pkg::*;
    import uvme_cv32e40p_pkg::*;
-   `ifndef FORMAL
    `ifdef USE_ISS
+   `ifndef FORMAL
    import rvviApiPkg::*;
    `endif
    `endif
