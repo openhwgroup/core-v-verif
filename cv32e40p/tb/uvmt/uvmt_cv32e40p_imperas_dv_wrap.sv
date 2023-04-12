@@ -75,6 +75,9 @@
 ////////////////////////////////////////////////////////////////////////////
 // CSR definitions
 ////////////////////////////////////////////////////////////////////////////
+`define CSR_FFLAGS_ADDR        32'h001
+`define CSR_FRM_ADDR           32'h002
+`define CSR_FCSR_ADDR          32'h003
 `define CSR_JVT_ADDR           32'h017
 `define CSR_MSTATUS_ADDR       32'h300
 `define CSR_MISA_ADDR          32'h301
@@ -259,7 +262,7 @@ module uvmt_cv32e40p_imperas_dv_wrap
         .CMP_GPR     (1),
         .CMP_FPR     (1),
         .CMP_VR      (0),
-        .CMP_CSR     (0)
+        .CMP_CSR     (1)
     )
     trace2api(rvvi);
 
@@ -320,6 +323,10 @@ module uvmt_cv32e40p_imperas_dv_wrap
     `RVVI_SET_CSR_VEC(`CSR_TDATA2_ADDR, tdata, 2)
     `RVVI_SET_CSR( `CSR_TINFO_ADDR,         tinfo         )
 
+
+    `RVVI_SET_CSR(`CSR_FFLAGS_ADDR, fflags)
+    `RVVI_SET_CSR(`CSR_FRM_ADDR   , frm   )
+    `RVVI_SET_CSR(`CSR_FCSR_ADDR  , fcsr  )
     ////////////////////////////////////////////////////////////////////////////
     // Assign the RVVI GPR registers
     ////////////////////////////////////////////////////////////////////////////
