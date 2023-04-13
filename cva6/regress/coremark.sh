@@ -24,12 +24,50 @@ if ! [ -n "$DV_SIMULATORS" ]; then
 fi
 
 cd cva6/sim/
-# python3 cva6.py --target cv64a6_imafdc_sv39 --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --c_tests ../tests/custom/coremark/core_main.c --gcc_opts '../tests/custom/coremark/core_list_join.c ../tests/custom/coremark/core_matrix.c ../tests/custom/coremark/core_portme.c ../tests/custom/coremark/core_state.c ../tests/custom/coremark/core_util.c -O3 -fno-tree-loop-distribute-patterns -nostdlib -nostartfiles -mcmodel=medany -DFLAGS_STR="-O3_-fno-tree-loop-distribute-patterns" -DITERATIONS=10 -DPERFORMANCE_RUN -g -nostdlib -nostartfiles ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S -I../tests/custom/env -I../tests/custom/common -lgcc'
-# make -C ../../core-v-cores/cva6 clean
-# make clean_all
-# python3 cva6.py --target cv32a6_im_sv0 --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --c_tests ../tests/custom/coremark/core_main.c --gcc_opts '../tests/custom/coremark/core_list_join.c ../tests/custom/coremark/core_matrix.S ../tests/custom/coremark/core_portme.c ../tests/custom/coremark/core_state.c ../tests/custom/coremark/core_util.c -O3 -funroll-all-loops -fno-tree-loop-distribute-patterns -nostdlib -nostartfiles -DFLAGS_STR="-O3_-fno-tree-loop-distribute-patterns" -DITERATIONS=5 -DPERFORMANCE_RUN -g -nostdlib -nostartfiles ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S -I../tests/custom/env -I../tests/custom/common -lgcc'
-python3 cva6.py --target cv32a6_imac_sv0 --iss=$DV_SIMULATORS --iss_yaml=cva6.yaml --c_tests ../tests/custom/coremark/core_main.c --gcc_opts '../tests/custom/coremark/core_list_join.c ../tests/custom/coremark/core_matrix.S ../tests/custom/coremark/core_portme.c ../tests/custom/coremark/core_state.c ../tests/custom/coremark/core_util.c -O3 -funroll-all-loops -fno-tree-loop-distribute-patterns -nostdlib -nostartfiles -DFLAGS_STR="-O3_-fno-tree-loop-distribute-patterns" -DITERATIONS=5 -DPERFORMANCE_RUN -g -nostdlib -nostartfiles ../tests/custom/common/syscalls.c ../tests/custom/common/crt.S -I../tests/custom/env -I../tests/custom/common -lgcc -ffunction-sections -fdata-sections -Wl,-gc-sections -falign-jumps=4 -falign-functions=16 -misa-spec=2.2'
+
 make -C ../../core-v-cores/cva6 clean
 make clean_all
 
-cd -
+src0=../tests/custom/coremark/core_main.c
+srcA=(
+        ../tests/custom/coremark/uart.c
+        ../tests/custom/coremark/core_list_join.c
+        ../tests/custom/coremark/core_matrix.S
+        ../tests/custom/coremark/core_portme.c
+        ../tests/custom/coremark/core_state.c
+        ../tests/custom/coremark/core_util.c
+        ../tests/custom/common/syscalls.c
+        ../tests/custom/common/crt.S
+)
+
+cflags_opt=(
+        -O3 -g
+        -fno-tree-loop-distribute-patterns
+        -nostdlib
+        -nostartfiles
+        -lgcc
+        -funroll-all-loops
+        -ffunction-sections -fdata-sections
+        -Wl,-gc-sections
+        -falign-jumps=4 -falign-functions=16
+        -misa-spec=2.2
+)
+
+cflags=(
+        "${cflags_opt[@]}"
+        "-DCOMPILER_FLAGS='\"${cflags_opt[*]}\"'"
+        -DITERATIONS=5
+        -DPERFORMANCE_RUN
+        -DSKIP_TIME_CHECK
+        -I../tests/custom/env
+        -I../tests/custom/common
+)
+
+set -x
+python3 cva6.py \
+        --target hwconfig \
+        --hwconfig_opts="--default_config=cv32a6_imac_sv0 --isa=rv32imac" \
+        --iss="$DV_SIMULATORS" \
+        --iss_yaml=cva6.yaml \
+        --c_tests "$src0" \
+        --gcc_opts "${srcA[*]} ${cflags[*]}"
