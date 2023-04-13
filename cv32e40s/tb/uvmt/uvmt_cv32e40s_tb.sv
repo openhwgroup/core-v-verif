@@ -1082,6 +1082,11 @@ module uvmt_cv32e40s_tb;
         .fetch_enable        (core_i.fetch_enable),
         .debug_req_i         (core_i.debug_req_i),
 
+        .wb_valid (core_i.wb_stage_i.wb_valid_o),
+        .wb_tselect (core_i.cs_registers_i.tselect_rdata),
+        .wb_tdata1 (core_i.cs_registers_i.tdata1_rdata),
+        .wb_tdata2 (core_i.cs_registers_i.tdata2_rdata),
+
         .data_bus_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
         .data_bus_req (core_i.m_c_obi_data_if.s_req.req),
         .data_bus_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
@@ -1227,7 +1232,6 @@ module uvmt_cv32e40s_tb;
                                                                     .wb_last_op (rvfi_i.last_op_wb_i),
                                                                     .wb_tselect (rvfi_i.rvfi_csr_rdata_d.tselect),
                                                                     .wb_exception (core_i.controller_i.controller_fsm_i.exception_in_wb),
-
 
                                                                     .rvfi_if (rvfi_instr_if_0_i),
                                                                     .clknrst_if (dut_wrap.clknrst_if),
