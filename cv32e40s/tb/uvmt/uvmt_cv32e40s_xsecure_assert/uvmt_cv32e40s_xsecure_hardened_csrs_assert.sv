@@ -1,5 +1,5 @@
-// Copyright 2022 OpenHW Group
-// Copyright 2022 Silicon Labs, Inc.
+// Copyright 2023 OpenHW Group
+// Copyright 2023 Silicon Labs, Inc.
 //
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -126,7 +126,7 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_assert
 
   //Verify that mismatch between the following CSRs and their shadows set alert major
 
-  property p_hardened_csr_mismatch_sets_major_aler(csr, shadow);
+  property p_hardened_csr_mismatch_sets_major_alert(csr, shadow);
 
     shadow != ~csr
     |=>
@@ -136,56 +136,56 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_assert
 
   //MSTATEEN0
   a_glitch_xsecure_hardened_csr_mismatch_mstateen0: assert property (
-    p_hardened_csr_mismatch_sets_major_aler(
+    p_hardened_csr_mismatch_sets_major_alert(
       mstateen0,
       mstateen0_shadow)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MSTATEEN0 and its shadow does not set the major alert.\n");
 
   //PRIVILEGE LEVEL
   a_glitch_xsecure_hardened_csr_mismatch_privlvl: assert property (
-    p_hardened_csr_mismatch_sets_major_aler(
+    p_hardened_csr_mismatch_sets_major_alert(
       priv_lvl,
       priv_lvl_shadow)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the priviliged level and its shadow does not set the major alert.\n");
 
   //JVT
   a_glitch_xsecure_hardened_csr_mismatch_jvt: assert property (
-    p_hardened_csr_mismatch_sets_major_aler(
+    p_hardened_csr_mismatch_sets_major_alert(
       jvt,
       jvt_shadow)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR JVT and its shadow does not set the major alert.\n");
 
   //MSTATUS
   a_glitch_xsecure_hardened_csr_mismatch_mstatus: assert property (
-    p_hardened_csr_mismatch_sets_major_aler(
+    p_hardened_csr_mismatch_sets_major_alert(
       mstatus,
       mstatus_shadow)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MSTATUS and its shadow does not set the major alert.\n");
 
   //CPUCTRL
   a_glitch_xsecure_hardened_csr_mismatch_cpuctrl: assert property (
-    p_hardened_csr_mismatch_sets_major_aler(
+    p_hardened_csr_mismatch_sets_major_alert(
       cpuctrl,
       cpuctrl_shadow)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR CPUCTRL and its shadow does not set the major alert.\n");
 
   //DCSR
   a_glitch_xsecure_hardened_csr_mismatch_dcsr: assert property (
-    p_hardened_csr_mismatch_sets_major_aler(
+    p_hardened_csr_mismatch_sets_major_alert(
       dcsr,
       dcsr_shadow)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR DCSR and its shadow does not set the major alert.\n");
 
   //MEPC
   a_glitch_xsecure_hardened_csr_mismatch_mepc: assert property (
-    p_hardened_csr_mismatch_sets_major_aler(
+    p_hardened_csr_mismatch_sets_major_alert(
       mepc,
       mepc_shadow)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MEPC and its shadow does not set the major alert.\n");
 
   //MSCRATCH
   a_glitch_xsecure_hardened_csr_mismatch_mscratch: assert property (
-    p_hardened_csr_mismatch_sets_major_aler(
+    p_hardened_csr_mismatch_sets_major_alert(
       mscratch,
       mscratch_shadow)
   ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MSCRATCH and its shadow does not set the major alert.\n");
