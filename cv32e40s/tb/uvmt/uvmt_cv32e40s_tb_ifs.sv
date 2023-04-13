@@ -639,7 +639,7 @@ interface uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if;
          is_exception_trigger_hit,
          data_bus_addr_ph_cont,
          data_bus_resp_ph_cont,
-	      data_bus_v_addr_ph_cnt,
+	 data_bus_v_addr_ph_cnt,
 
          instr_bus_addr_ph_cont,
          instr_bus_resp_ph_cont,
