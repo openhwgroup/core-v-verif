@@ -273,7 +273,7 @@ module  uvmt_cv32e40s_pma_cov
 
     x_store_bufferable: cross  cp_store, cp_bufferable;
 
-    //TODO:INFO:silabs-robin more crosses are possible, but bordering on impractical/infeasible
+    //Note: more crosses are possible, but bordering on impractical/infeasible
   endgroup
 
   cg_mpu  mpu_cg = new;
