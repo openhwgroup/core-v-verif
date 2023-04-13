@@ -152,9 +152,11 @@ module uvmt_cv32e40s_support_logic
   localparam ET_U_MODE = 6;
   localparam LSB_TYPE = 28;
   localparam MSB_TYPE = 31;
+  localparam MAX_NUM_TRIGGERS = 5;
 
-  logic [3:0][31:0] tdata1_array;
-  logic [3:0][31:0] tdata2_array;
+  logic [MAX_NUM_TRIGGERS-1:0][31:0] tdata1_array;
+  logic [MAX_NUM_TRIGGERS-1:0][31:0] tdata2_array;
+  logic [MAX_NUM_TRIGGERS-1:0] exception_trigger_hits;
 
   always @(posedge in_support_if.clk, negedge in_support_if.rst_n ) begin
     if(!in_support_if.rst_n) begin
@@ -162,40 +164,18 @@ module uvmt_cv32e40s_support_logic
       tdata1_array[1] = TDATA1_DEFAULT;
       tdata1_array[2] = TDATA1_DEFAULT;
       tdata1_array[3] = TDATA1_DEFAULT;
+      tdata1_array[4] = TDATA1_DEFAULT;
       tdata2_array = '0;
 
     end else if (in_support_if.wb_valid) begin
-      case(in_support_if.wb_tselect)
-        32'h0:
-          begin
-            tdata1_array[0] = in_support_if.wb_tdata1;
-            tdata2_array[0] = in_support_if.wb_tdata2;
-          end
-        32'h1:
-          begin
-            tdata1_array[1] = in_support_if.wb_tdata1;
-            tdata2_array[1] = in_support_if.wb_tdata2;
-          end
-        32'h2:
-          begin
-            tdata1_array[2] = in_support_if.wb_tdata1;
-            tdata2_array[2] = in_support_if.wb_tdata2;
-          end
-        32'h3:
-          begin
-            tdata1_array[3] = in_support_if.wb_tdata1;
-            tdata2_array[3] = in_support_if.wb_tdata2;
-          end
-      endcase
+      tdata1_array[in_support_if.wb_tselect] = in_support_if.wb_tdata1;
+      tdata2_array[in_support_if.wb_tselect] = in_support_if.wb_tdata2;
     end
   end
 
-
-  logic [3:0] exception_trigger_hits;
-
   generate
 
-    for (genvar t = 0; t < 4; t++) begin
+    for (genvar t = 0; t < MAX_NUM_TRIGGERS; t++) begin
       always_comb begin
 
         exception_trigger_hits[t] = t >= (uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS) ? 1'b0 :
