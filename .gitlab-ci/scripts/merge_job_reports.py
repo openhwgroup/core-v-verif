@@ -14,6 +14,7 @@ import yaml
 import datetime
 import sys
 import subprocess
+from github_integration as gh
 
 # arguments: inputdir outputfile
 
@@ -105,12 +106,14 @@ pipeline = {
     'jobs': []
 }
 
+success = True
 dir_list = os.listdir(sys.argv[1])
 for f in dir_list:
     with open(sys.argv[1] + "/" + f, 'r') as job_report:
         report = safe_load(job_report)
         pipeline["jobs"].append(report)
         if report['status'] != 'pass':
+            success = False
             pipeline["status"] = 'fail'
             pipeline["label"] = 'FAIL'
 
@@ -139,3 +142,13 @@ cd -
 ''', shell=True))
 except subprocess.CalledProcessError as e:
     print(f"Error: {e.output}")
+
+ref_branch = None
+if workflow_repo == 'cva6':
+    ref_branch = 'master'
+elif workflow_repo == 'core-v-verif':
+    ref_branch = 'cva6/dev'
+
+if ref_branch is not None:
+    wf = gh.DashboardDone('openhwgroup', workflow_repo, ref_branch)
+    wf.send(pr, success)
