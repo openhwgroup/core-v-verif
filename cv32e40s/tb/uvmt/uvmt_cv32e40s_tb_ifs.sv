@@ -465,6 +465,10 @@ interface uvmt_cv32e40s_support_logic_module_i_if_t
 
    input logic fetch_enable,
    input logic debug_req_i,
+   input logic wb_valid,
+   input logic [31:0] wb_tselect,
+   input logic [31:0] wb_tdata1,
+   input logic [31:0] wb_tdata2,
 
    //Obi signals:
 
@@ -510,6 +514,10 @@ interface uvmt_cv32e40s_support_logic_module_i_if_t
 
       fetch_enable,
       debug_req_i,
+      wb_valid,
+      wb_tselect,
+      wb_tdata1,
+      wb_tdata2,
 
       data_bus_rvalid,
       data_bus_gnt,
@@ -548,6 +556,7 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    // Indicates that a new obi data req arrives after an exception is triggered.
    // Used to verify exception timing with multiop instruction
    logic req_after_exception;
+   logic is_exception_trigger_hit;
 
    // support logic signals for the obi bus protocol:
 
@@ -594,6 +603,7 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
 
    modport master_mp (
       output req_after_exception,
+         is_exception_trigger_hit,
          data_bus_addr_ph_cont,
 	      data_bus_resp_ph_cont,
 	      data_bus_v_addr_ph_cnt,
@@ -626,6 +636,7 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
 
    modport slave_mp (
       input req_after_exception,
+         is_exception_trigger_hit,
          data_bus_addr_ph_cont,
          data_bus_resp_ph_cont,
 	 data_bus_v_addr_ph_cnt,

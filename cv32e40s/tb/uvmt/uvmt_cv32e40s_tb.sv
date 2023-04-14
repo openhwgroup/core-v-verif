@@ -1083,6 +1083,11 @@ module uvmt_cv32e40s_tb;
         .fetch_enable        (core_i.fetch_enable),
         .debug_req_i         (core_i.debug_req_i),
 
+        .wb_valid (core_i.wb_stage_i.wb_valid_o),
+        .wb_tselect (core_i.cs_registers_i.tselect_rdata),
+        .wb_tdata1 (core_i.cs_registers_i.tdata1_rdata),
+        .wb_tdata2 (core_i.cs_registers_i.tdata2_rdata),
+
         .data_bus_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
         .data_bus_req (core_i.m_c_obi_data_if.s_req.req),
         .data_bus_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
@@ -1217,7 +1222,7 @@ module uvmt_cv32e40s_tb;
                                                                     .cov_assert_if(debug_cov_assert_if),
                                                                     .support_if (support_logic_module_o_if.slave_mp)
                                                                     );
-/*
+
     bind cv32e40s_wrapper uvmt_cv32e40s_triggers_assert_cov debug_trigger_assert_i(
                                                                     .wb_valid (core_i.wb_stage_i.wb_valid_o),
                                                                     .wb_exception_code (core_i.controller_i.controller_fsm_i.exception_cause_wb),
@@ -1239,7 +1244,7 @@ module uvmt_cv32e40s_tb;
                                                                     .tinfo (rvfi_csr_tinfo),
                                                                     .tselect (rvfi_csr_tselect),
                                                                     .tcontrol (rvfi_csr_tcontrol)
-                                                                    );*/
+                                                                    );
 
 
 
