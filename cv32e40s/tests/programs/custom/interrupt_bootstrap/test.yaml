@@ -5,3 +5,4 @@ description: >
 plusargs: >
     +mtvec_addr=0x00000201
 llvm_cflags: -fno-integrated-as
+cflags: -mno-relax
