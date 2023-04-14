@@ -140,9 +140,9 @@ foo_drv.sv:
 | `_c`    | Classes                     | `_t`     | Typedefs, Misc. Types |
 | `_e`    | Enumerated Types            | `_s`     | Structs               |
 | `_pkg`  | Packages                    | `_cb`    | Clocking Blocks       |
-| `_if`   | Interface  Types            | `_mp`    | Modports              |
-| `if_i`  | Interface Instances         | `_cnstr` | Constraints           |
-| `_vi`   | Virtual Interface Instances | `_cg`    | Covergroups           |
+| `_if_t` | Interface  Types            | `_mp`    | Modports              |
+| `_if`   | Interface Instances         | `_cnstr` | Constraints           |
+| `_vif`  | Virtual Interface Instances | `_cg`    | Covergroups           |
 |         |                             |          |                       |
 
 The purpose of these suffixes is:
@@ -693,12 +693,12 @@ In this module, the DUT is instantiated (or, a wrapper module that instantiates 
 
 ```v
 module tb_top;
-   foo_if foo_if_i;
+   foo_if_t foo_if;
 
-   blk_wrapper dut_wrapper(.foo_if  (foo_if_i));
+   blk_wrapper dut_wrapper(.foo_if_t  (foo_if));
 
    function void pre_run_test();
-      `cmn_set_if(virtual foo_if, "foo_pkg::if", "foo_vi", foo_if_i);
+      `cmn_set_if(virtual foo_if_t, "foo_pkg::if", "foo_vif", foo_if);
    endfunction : pre_run_test
 
    initial begin
@@ -709,13 +709,13 @@ endmodule : tb_top
 ```
 
 
-In this example, `foo_pkg::if` is the scope, and `foo_vi` is the name, under which the virtual interface is stored in the UVM resource database.
+In this example, `foo_pkg::if` is the scope, and `foo_vif` is the name, under which the virtual interface is stored in the UVM resource database.
 
 Within the module `tb_top`, the structure of the UVM component hierarchy is not necessarily known, which is why the UVM configuration database is not used. Instead, virtual interfaces are put into the UVM resource database, essentially making them globally visible to all UVM components.
 
 In the example above, the scope name ("`foo_pkg::if`") is a name that is required by the foo verification kit. (The `FOO` vkit is hardcoded to look for its interfaces using that scope name.) Note that the scope name starts with `<prefix>_pkg`, as required.
 
-The name ("`foo_vi`" in the example) is a name that is provided by the `tb_top`. The `base_test_c` has knowledge of these names, since it is part of the same testbench as `tb_top`.
+The name ("`foo_vif`" in the example) is a name that is provided by the `tb_top`. The `base_test_c` has knowledge of these names, since it is part of the same testbench as `tb_top`.
 
 The `base_test_c` knows the UVM component hierarchy, so it can provide the interface names to the appropriate UVM components through the UVM configuration database:
 
@@ -726,7 +726,7 @@ class base_test_c;
    function void build_phase(uvm_phase phase);
       super.build_phase(phase);
       foo_env = foo_pkg::env_c::type_id::create("foo_env", this);
-      uvm_config_db#(string)::set(this, "foo_env", "if_name", "foo_vi");
+      uvm_config_db#(string)::set(this, "foo_env", "if_name", "foo_vif");
       …
 ```
 
@@ -744,7 +744,7 @@ The above method for passing virtual interfaces to the verification environment 
 
 4.4.7. *Recommended*: Components should use the `` `uvm_component_utils `` macros to declare configurable variables which perform database lookups during the build phase. Such variables should have the `UVM_COMPONENT` flag attached.
 
-Extending the example from above, the `foo_pkg::env_c` class has a configuration field called "`if_name`". Wherever a FOO class needs to get the virtual interface to a `foo_if`, it knows to look in the UVM resource database under the scope `foo_pkg::if`, and the name specified by the `if_name` field. If the interface was not registered or was registered with a different name, a fatal error prints out and reports that `<UNSPECIFIED>` is not found in the database.
+Extending the example from above, the `foo_pkg::env_c` class has a configuration field called "`if_name`". Wherever a FOO class needs to get the virtual interface to a `foo_if_t`, it knows to look in the UVM resource database under the scope `foo_pkg::if`, and the name specified by the `if_name` field. If the interface was not registered or was registered with a different name, a fatal error prints out and reports that `<UNSPECIFIED>` is not found in the database.
 
 ```v
 class env_c;
@@ -753,11 +753,11 @@ class env_c;
       //...
 
    string if_name = "<UNSPECIFIED>";
-   virtual foo_if foo_vi; //TODO: vi= viritual interface, should this be if_vi?
+   virtual foo_if_t foo_vif; //TODO: vi= viritual interface, should this be if_vi?
 
    function void build_phase(uvm_phase phase);
       super.build_phase(phase);
-      `cmn_get_if(virtual foo_if, "foo_pkg::if", if_name, foo_vi)
+      `cmn_get_if(virtual foo_if_t, "foo_pkg::if", if_name, foo_vif)
       //...
 ```
 
