@@ -85,6 +85,10 @@ interface uvma_rvfi_instr_if
   localparam INSTR_MASK_U_J_TYPE    = 32'h 0000_007F;
   localparam INSTR_MASK_CSRADDR     = 32'h FFF0_0000;
 
+  localparam INSTR_MASK_BRANCH      = 32'h 0000_007F;
+  localparam INSTR_MASK_BRANCH_CMPR = 32'h 0000_C003;
+  localparam INSTR_MASK_DIV_REM     = 32'h FE00_607F;
+
   //instruction (rvfi_instr) comparison values
   localparam INSTR_OPCODE_DRET      = 32'h 7B20_0073;
   localparam INSTR_OPCODE_MRET      = 32'h 3020_0073;
@@ -94,6 +98,12 @@ interface uvma_rvfi_instr_if
   localparam INSTR_OPCODE_EBREAK    = 32'h 0010_0073;
   localparam INSTR_OPCODE_C_EBREAK  = 32'h 0000_9002;
   localparam INSTR_OPCODE_ECALL     = 32'h 0000_0073;
+
+  localparam INSTR_OPCODE_BRANCH    = 32'h 0000_0063;
+  localparam INSTR_OPCODE_C_BRANCH  = 32'h 0000_C001;
+  localparam INSTR_OPCODE_DIV       = 32'h 0200_4033; //TODO: fix
+  localparam INSTR_OPCODE_REM       = 32'h 0200_6033; //TODO: fix
+
 
   localparam INSTR_OPCODE_CSRRW     = 32'h 0000_1073;
   localparam INSTR_OPCODE_CSRRS     = 32'h 0000_2073;
@@ -135,6 +145,9 @@ interface uvma_rvfi_instr_if
   logic                             is_ebreak_compr;
   logic                             is_ebreak_noncompr;
   logic                             is_ecall;
+  logic                             is_branch;
+  logic                             is_div;
+  logic                             is_rem;
   logic                             is_nmi;
   logic                             is_compressed;
   logic                             is_dbg_trg;
@@ -179,6 +192,9 @@ interface uvma_rvfi_instr_if
     is_ebreak_compr     <= is_ebreak_compr_f();
     is_ebreak_noncompr  <= is_ebreak_noncompr_f();
     is_ecall            <= is_ecall_f();
+    is_branch           <= is_branch_f();
+    is_div              <= is_div_f();
+    is_rem              <= is_rem_f();
     is_nmi              <= is_nmi_f();
     is_compressed       <= is_compressed_f();
     is_dbg_trg          <= is_dbg_trg_f();
@@ -445,6 +461,21 @@ endfunction : is_ebreak_noncompr_f
 function logic is_ecall_f();
   return match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);
 endfunction : is_ecall_f
+
+function logic is_branch_f();
+  return (match_instr(INSTR_OPCODE_BRANCH, INSTR_MASK_BRANCH)
+  && rvfi_insn[14:12] != 3'b010
+  && rvfi_insn[14:12] != 3'b011)
+  || match_instr(INSTR_OPCODE_C_BRANCH, INSTR_MASK_BRANCH_CMPR);
+endfunction : is_branch_f
+
+function logic is_div_f();
+  return match_instr(INSTR_OPCODE_DIV, INSTR_MASK_DIV_REM);
+endfunction : is_div_f
+
+function logic is_rem_f();
+  return match_instr(INSTR_OPCODE_REM, INSTR_MASK_DIV_REM);
+endfunction : is_rem_f
 
 function logic is_nmi_f();
   return rvfi_valid && rvfi_intr.intr && (rvfi_intr.cause & INTR_CAUSE_NMI_MASK);
