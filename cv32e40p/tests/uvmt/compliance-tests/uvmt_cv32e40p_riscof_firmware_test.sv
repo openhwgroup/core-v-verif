@@ -169,7 +169,7 @@ function void uvmt_cv32e40p_riscof_firmware_test_c::write_riscof_signature();
     int           i;
 
     signature_start_address = 32'h80801110;
-    signature_end_address = 32'h80803000;
+    signature_end_address = 32'h80900000;
     if ($value$plusargs("signature=%s", sig_file)) begin
         sig_fd = $fopen(sig_file, "w");
     end
