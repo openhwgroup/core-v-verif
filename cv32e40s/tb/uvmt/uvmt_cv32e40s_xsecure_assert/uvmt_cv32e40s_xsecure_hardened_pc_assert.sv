@@ -1,4 +1,3 @@
-// Copyright 2023 OpenHW Group
 // Copyright 2023 Silicon Labs, Inc.
 //
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
@@ -24,7 +23,7 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
   )
   (
     //Signals:
-    input clk_i     ,
+    input clk_i,
     input rst_ni,
 
     //CSRs:
@@ -70,7 +69,7 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
 
   // Default settings:
   default clocking @(posedge clk_i); endclocking
-  default disable iff (!(rst_ni) | !(SECURE));
+  default disable iff (!(rst_ni) || !(SECURE));
   string info_tag = "CV32E40S_XSECURE_ASSERT_COVERPOINTS";
   string info_tag_glitch = "CV32E40S_XSECURE_ASSERT_COVERPOINTS (GLITCH BEHAVIOR)";
 
