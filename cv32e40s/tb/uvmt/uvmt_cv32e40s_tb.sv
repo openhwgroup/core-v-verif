@@ -1069,6 +1069,97 @@ module uvmt_cv32e40s_tb;
   end : gen_hardened_csrs_pmp_assert
 
 
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_interface_integrity_assert #(
+	    .SECURE	(SECURE),
+      .ALBUF_DEPTH (core_i.if_stage_i.ALBUF_DEPTH),
+      .ALBUF_CNT_WIDTH (core_i.if_stage_i.ALBUF_CNT_WIDTH)
+    ) xsecure_interface_integrity_assert_i 	(
+
+      //Interfaces:
+      .support_if (support_logic_module_o_if.slave_mp),
+
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Alert:
+      .alert_major (core_i.alert_major_o),
+      .alert_major_due_to_integrity_err (core_i.alert_i.itf_int_err_i),
+
+      //CSRs:
+      .integrity_enabled (core_i.xsecure_ctrl.cpuctrl.integrity),
+      .nmip (core_i.cs_registers_i.dcsr_rdata.nmip),
+      .mcause_exception_code (core_i.cs_registers_i.mcause_rdata.exception_code),
+
+      //OBI data:
+      .obi_data_req_packet (core_i.m_c_obi_data_if.req_payload),
+      .obi_data_resp_packet (core_i.m_c_obi_data_if.resp_payload),
+      .obi_data_req (core_i.m_c_obi_data_if.s_req.req),
+      .obi_data_reqpar (core_i.m_c_obi_data_if.s_req.reqpar),
+      .obi_data_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
+      .obi_data_gntpar (core_i.m_c_obi_data_if.s_gnt.gntpar),
+      .obi_data_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+      .obi_data_rvalidpar (core_i.m_c_obi_data_if.s_rvalid.rvalidpar),
+
+      //OBI instr:
+      .obi_instr_req_packet (core_i.m_c_obi_instr_if.req_payload),
+      .obi_instr_resp_packet (core_i.m_c_obi_instr_if.resp_payload),
+      .obi_instr_req (core_i.m_c_obi_instr_if.s_req.req),
+      .obi_instr_reqpar (core_i.m_c_obi_instr_if.s_req.reqpar),
+      .obi_instr_gnt (core_i.m_c_obi_instr_if.s_gnt.gnt),
+      .obi_instr_gntpar (core_i.m_c_obi_instr_if.s_gnt.gntpar),
+      .obi_instr_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+      .obi_instr_rvalidpar (core_i.m_c_obi_instr_if.s_rvalid.rvalidpar),
+
+      //Register file memory:
+      .gpr_mem (core_i.register_file_wrapper_i.register_file_i.mem_gated),
+      .rf_we (core_i.rf_we_wb),
+      .rf_waddr (core_i.rf_waddr_wb),
+      .rf_wdata (core_i.rf_wdata_wb),
+
+      //Alignment buffer:
+      .alb_resp_i (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.resp_i),
+      .alb_resp_q (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.resp_q),
+      .alb_valid (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.valid_q),
+      .alb_wptr (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.wptr),
+      .alb_rptr1 (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.rptr),
+      .alb_rptr2 (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.rptr2),
+
+      //If:
+      .if_valid (core_i.if_valid),
+      .if_instr_integrity_err (core_i.if_stage_i.bus_resp.integrity_err),
+      .if_instr_cmpr (core_i.if_stage_i.compressed_decoder_i.is_compressed_o),
+      .if_instr_pc (core_i.if_stage_i.pc_if_o),
+      .dummy_insert (dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.dummy_insert),
+
+      //Id:
+      .id_ready (core_i.id_ready),
+      .id_instr_integrity_err (core_i.if_id_pipe.instr.bus_resp.integrity_err),
+      .id_abort_op (dut_wrap.cv32e40s_wrapper_i.core_i.if_id_pipe.abort_op),
+      .id_illegal_insn (dut_wrap.cv32e40s_wrapper_i.core_i.if_id_pipe.illegal_c_insn),
+
+      //Wb:
+      .wb_valid (core_i.wb_valid),
+      .wb_integrity_err (core_i.ex_wb_pipe.instr.bus_resp.integrity_err),
+      .wb_instr_opcode (core_i.ex_wb_pipe.instr.bus_resp.rdata[6:0]),
+      .wb_exception (core_i.controller_i.controller_fsm_i.exception_in_wb),
+      .wb_exception_code (core_i.controller_i.controller_fsm_i.exception_cause_wb),
+      .data_integrity_err (core_i.load_store_unit_i.bus_resp.integrity_err),
+
+      //MISC:
+      .ctrl_fsm_cs (core_i.controller_i.controller_fsm_i.ctrl_fsm_cs),
+      .pc_mux (dut_wrap.cv32e40s_wrapper_i.core_i.ctrl_fsm.pc_mux),
+      .pc_set (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.ctrl_fsm_i.pc_set),
+      .seq_valid (core_i.if_stage_i.seq_valid),
+      .kill_if (core_i.ctrl_fsm.kill_if),
+      .n_flush_q (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.n_flush_q),
+      .rchk_err_instr (core_i.if_stage_i.instruction_obi_i.rchk_err_resp),
+      .rchk_err_data (core_i.load_store_unit_i.data_obi_i.rchk_err_resp)
+
+    );
+
+
   // Debug assertion and coverage interface
 
   // Instantiate debug assertions
@@ -1204,7 +1295,8 @@ module uvmt_cv32e40s_tb;
 
         .req_is_store (core_i.load_store_unit_i.bus_trans.we),
         .req_instr_integrity (core_i.if_stage_i.mpu_i.bus_trans_integrity),
-        .req_data_integrity (core_i.load_store_unit_i.mpu_i.bus_trans_integrity)
+        .req_data_integrity (core_i.load_store_unit_i.mpu_i.bus_trans_integrity),
+        .instr_req_pc ({core_i.m_c_obi_instr_if.req_payload.addr[31:2], 2'b0})
 
     );
 
