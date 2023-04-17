@@ -1,4 +1,3 @@
-// Copyright 2022 OpenHW Group
 // Copyright 2022 Silicon Labs, Inc.
 //
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
@@ -35,10 +34,10 @@ module uvmt_cv32e40s_xsecure_reduced_profiling_infrastructure_assert
 
   // Default settings:
   default clocking @(posedge clk_i); endclocking
-  default disable iff (!(rst_ni) | !(SECURE));
+  default disable iff (!(rst_ni) || !(SECURE));
   string info_tag = "CV32E40S_XSECURE_ASSERT_COVERPOINTS";
 
-  localparam ZERO = '0;
+  localparam ZERO = 0;
 
 
   //Verify that the following bits in these CSRs are hardwired to 0:
