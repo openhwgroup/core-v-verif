@@ -85,7 +85,10 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
     !rvfi_cpuctrl.rvfi_csr_rdata[PC_HARDENING]
     && rvfi_cpuctrl.rvfi_csr_rdata[DATAINDTIMING]
     && rvfi_if.is_branch
-    ##0 seq_no_mem_instr_for_cycles(2).triggered //Todo: må det være 3 her?
+
+    //The current cycle is not a memory operation (but a branch operation),
+    //and the prior cycle is not a memory operation
+    ##0 seq_no_mem_instr_for_cycles(2).triggered
 
     |=>
     (!rvfi_if.rvfi_valid)[*2]
@@ -97,7 +100,11 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
     rvfi_cpuctrl.rvfi_csr_rdata[PC_HARDENING]
     && rvfi_cpuctrl.rvfi_csr_rdata[DATAINDTIMING]
     && rvfi_if.is_branch
-    ##0 seq_no_mem_instr_for_cycles(3).triggered //TODO: why 3? comment or change to non-magic
+
+    //The current cycle is not a memory operation (but the first part of a branch operation),
+    //the cycle prior to that is not a memory operation (but the second part of a branch operation),
+    //the cycle prior to that is not a memory cycle as well
+    ##0 seq_no_mem_instr_for_cycles(3).triggered
 
     |->
     !$past(rvfi_if.rvfi_valid) //Verifies that the first branch instruction is not considered a retired instruction
