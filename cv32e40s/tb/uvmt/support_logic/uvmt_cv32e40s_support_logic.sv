@@ -319,7 +319,7 @@ module uvmt_cv32e40s_support_logic
     .gnt (in_support_if.instr_bus_gnt),
     .req (in_support_if.instr_bus_req),
     .rvalid (in_support_if.instr_bus_rvalid),
-    .req_attribute_i (in_support_if.req_instr_integrity & in_support_if.rst_n), //TODO ?? med !rst?
+    .req_attribute_i (in_support_if.req_instr_integrity & in_support_if.rst_n),
 
     .is_req_attribute_in_response_o (out_support_if.instr_req_had_integrity)
   );
@@ -339,7 +339,7 @@ module uvmt_cv32e40s_support_logic
     .gnt (in_support_if.data_bus_gnt),
     .req (in_support_if.data_bus_req),
     .rvalid (in_support_if.data_bus_rvalid),
-    .req_attribute_i (in_support_if.req_data_integrity & in_support_if.rst_n), //TODO ?? med !rst?
+    .req_attribute_i (in_support_if.req_data_integrity & in_support_if.rst_n),
 
     .is_req_attribute_in_response_o (out_support_if.data_req_had_integrity)
   );
