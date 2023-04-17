@@ -42,10 +42,19 @@ module uvmt_cv32e40s_xsecure_reduced_profiling_infrastructure_assert
 
   //Verify that the following bits in these CSRs are hardwired to 0:
   //- mphmevent: 3 to 31
-  //- mphmcounter: 3 to 31
-  //- mhpmcounterh: 3 to 31
   //- mcountinhibit: 1 and 3 to 31
 
+  //And that the following CSRs are tied to 0:
+  //- mphmcounter3,
+  //- mphmcounter4,
+  /...
+  //- mphmcounter31,
+  //- mhpmcounterh3,
+  //- mhpmcounterh4,
+  //...
+  //- mhpmcounterh31
+  
+  
   a_xsecure_reduced_profiling_mhpmevent: assert property (
 
     mhpmevent[31:3] == ZERO
