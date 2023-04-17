@@ -23,7 +23,7 @@
 
 /**
  * Component sampling transactions from a Open Bus Interface virtual interface
- * (uvma_obi_if).
+ * (uvma_obi_if_t).
  */
 class uvma_obi_memory_mon_c#(
    parameter AUSER_WIDTH = `UVMA_OBI_MEMORY_AUSER_DEFAULT_WIDTH, ///< Width of the auser signal. RI5CY, Ibex, CV32E40* do not have the auser signal.
@@ -54,7 +54,7 @@ class uvma_obi_memory_mon_c#(
    uvm_analysis_port#(uvma_obi_memory_mon_trn_c)  sequencer_ap;
 
    // Handles to virtual interface modport
-   virtual uvma_obi_memory_if#(
+   virtual uvma_obi_memory_if_t#(
      .AUSER_WIDTH(AUSER_WIDTH),
      .WUSER_WIDTH(WUSER_WIDTH),
      .RUSER_WIDTH(RUSER_WIDTH),

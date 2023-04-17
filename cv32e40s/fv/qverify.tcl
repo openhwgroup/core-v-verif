@@ -36,21 +36,21 @@ proc cvfv_rerun {} {
   #cutpoints needed to subdue "Design Checks" errors that lead to bonkers CEXes
 
   puts  "cvfv: cutpointing obi 'control points'"
-  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if_i.err} -module uvmt_cv32e40s_tb
-  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if_i.gntpar} -module uvmt_cv32e40s_tb
-  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if_i.gnt} -module uvmt_cv32e40s_tb
-  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if_i.rchk} -module uvmt_cv32e40s_tb
-  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if_i.rdata} -module uvmt_cv32e40s_tb
-  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if_i.rvalidpar} -module uvmt_cv32e40s_tb
-  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if_i.rvalid} -module uvmt_cv32e40s_tb
-  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if_i.err} -module uvmt_cv32e40s_tb
-  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if_i.gntpar} -module uvmt_cv32e40s_tb
-  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if_i.gnt} -module uvmt_cv32e40s_tb
-  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if_i.rchk} -module uvmt_cv32e40s_tb
-  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if_i.rdata} -module uvmt_cv32e40s_tb
-  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if_i.rvalidpar} -module uvmt_cv32e40s_tb
-  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if_i.rvalid} -module uvmt_cv32e40s_tb
-  netlist cutpoint {uvmt_cv32e40s_tb.fencei_if_i.flush_ack} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if.err} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if.gntpar} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if.gnt} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if.rchk} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if.rdata} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if.rvalidpar} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_instr_if.rvalid} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if.err} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if.gntpar} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if.gnt} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if.rchk} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if.rdata} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if.rvalidpar} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.obi_data_if.rvalid} -module uvmt_cv32e40s_tb
+  netlist cutpoint {uvmt_cv32e40s_tb.fencei_if.flush_ack} -module uvmt_cv32e40s_tb
 
   puts  "cvfv: setting constants"
   netlist constant {uvmt_cv32e40s_tb.core_cntrl_if.scan_cg_en} {0} -module uvmt_cv32e40s_tb

@@ -33,6 +33,7 @@ typedef struct packed {
 } rvfi_intr_t;
 
 typedef struct packed {
+  logic        clicptr;
   logic [1:0]  cause_type;
   logic [2:0]  debug_cause;
   logic [5:0]  exception_cause;

@@ -59,8 +59,8 @@ module  uvmt_cv32e40s_pma_assert
   input wire  pma_err,
 
   // Support Interfaces
-  uvma_obi_memory_if  obi_memory_if,
-  uvma_rvfi_instr_if  rvfi_instr_if
+  uvma_obi_memory_if_t  obi_memory_if,
+  uvma_rvfi_instr_if_t  rvfi_instr_if
 );
 
 

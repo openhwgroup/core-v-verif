@@ -82,20 +82,20 @@ module uvmt_cv32e40s_interrupt_assert
 
     // OBI
     input wire          mpu_instr_rvalid,
-    uvma_obi_memory_if  obi_instr_if,
-    uvma_obi_memory_if  obi_data_if,
+    uvma_obi_memory_if_t  obi_instr_if,
+    uvma_obi_memory_if_t  obi_data_if,
 
     // Writebuffer
     input wire write_buffer_state_e  writebufstate,
 
     // RVFI
-    uvma_rvfi_instr_if  rvfi,
+    uvma_rvfi_instr_if_t  rvfi,
 
     // NMI
     input wire  pending_nmi,
 
     // Support Interface
-    uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp  support_if
+    uvmt_cv32e40s_support_logic_module_o_if_t.slave_mp  support_if
   );
 
   // ---------------------------------------------------------------------------

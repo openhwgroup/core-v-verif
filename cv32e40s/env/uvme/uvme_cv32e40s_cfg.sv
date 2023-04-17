@@ -35,6 +35,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    bit                              obi_memory_data_one_shot_err_enabled  = 0;
    bit                              iss_suppress_invalid_msg              = 0;
    rand bit                         buserr_scoreboarding_enabled          = 1;
+   rand int unsigned                fetch_toggle_initial_delay;
 
    // Agent cfg handles
    rand uvma_isacov_cfg_c           isacov_cfg;
@@ -61,6 +62,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_int (                         obi_memory_data_random_err_enabled,    UVM_DEFAULT  )
       `uvm_field_int (                         obi_memory_data_one_shot_err_enabled,  UVM_DEFAULT  )
       `uvm_field_int (                         iss_suppress_invalid_msg,              UVM_DEFAULT  )
+      `uvm_field_int (                         fetch_toggle_initial_delay,            UVM_DEFAULT  )
 
       `uvm_field_object(isacov_cfg           , UVM_DEFAULT)
       `uvm_field_object(clknrst_cfg          , UVM_DEFAULT)
@@ -83,6 +85,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       soft trn_log_enabled              == 1;
       soft sys_clk_period               == uvme_cv32e40s_sys_default_clk_period; // see uvme_cv32e40s_constants.sv
       soft buserr_scoreboarding_enabled == 1;
+      soft fetch_toggle_initial_delay inside {[50:200]};
    }
 
    constraint cv32e40s_riscv_cons {
