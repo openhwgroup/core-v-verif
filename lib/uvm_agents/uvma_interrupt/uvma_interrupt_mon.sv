@@ -23,7 +23,7 @@
 
 /**
  * Component sampling transactions from a Clock & Reset virtual interface
- * (uvma_interrupt_if).
+ * (uvma_interrupt_if_t).
  */
 class uvma_interrupt_mon_c extends uvm_monitor;
 

@@ -32,6 +32,7 @@
 
 int main(int argc, char *argv[])
 {
+
     volatile unsigned int misa_rval, mvendorid_rval, marchid_rval, mimpid_rval, mxl;
     volatile          int reserved, tentative, nonstd, user, super;
 

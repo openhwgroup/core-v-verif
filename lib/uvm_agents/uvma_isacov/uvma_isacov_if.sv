@@ -16,7 +16,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
 
-interface uvma_isacov_if;
+interface uvma_isacov_if_t;
 
   // This interface must be instantiated and driven in the tb.
   // TODO ...although, in the future this should be changed to:

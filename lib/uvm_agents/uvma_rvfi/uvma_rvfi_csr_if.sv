@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
+//TODO: should we change the if-defines?
 `ifndef __UVMA_RVFI_CSR_IF_SV__
 `define __UVMA_RVFI_CSR_IF_SV__
 
@@ -22,7 +22,7 @@
  * Encapsulates all signals and clocking of RVFI csruction interface. Used by
  * monitor,
  */
-interface uvma_rvfi_csr_if
+interface uvma_rvfi_csr_if_t
   import uvma_rvfi_pkg::*;
   #(int XLEN=DEFAULT_XLEN)
   (
@@ -77,7 +77,7 @@ interface uvma_rvfi_csr_if
   endfunction : write
 
 
-endinterface : uvma_rvfi_csr_if
+endinterface : uvma_rvfi_csr_if_t
 
 
 `endif // __UVMA_RVFI_CSR_IF_SV__

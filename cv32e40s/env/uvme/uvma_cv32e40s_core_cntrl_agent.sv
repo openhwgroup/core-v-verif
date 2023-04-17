@@ -85,7 +85,7 @@ function void uvma_cv32e40s_core_cntrl_agent_c::retrieve_vif();
    $cast(e40s_cntxt, cntxt);
 
    // Core control interface
-   if (!uvm_config_db#(virtual uvme_cv32e40s_core_cntrl_if)::get(this, "", $sformatf("core_cntrl_vif"), e40s_cntxt.core_cntrl_vif)) begin
+   if (!uvm_config_db#(virtual uvme_cv32e40s_core_cntrl_if_t)::get(this, "", $sformatf("core_cntrl_vif"), e40s_cntxt.core_cntrl_vif)) begin
       `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s in uvm_config_db",
                                     $typename(e40s_cntxt.core_cntrl_vif)))
    end

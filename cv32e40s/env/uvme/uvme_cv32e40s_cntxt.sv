@@ -26,11 +26,11 @@
 class uvme_cv32e40s_cntxt_c extends uvm_object;
 
    // Virtual interface for Debug coverage
-   virtual uvmt_cv32e40s_debug_cov_assert_if debug_cov_vif;
-   virtual uvmt_cv32e40s_vp_status_if        vp_status_vif; ///< Virtual interface for Virtual Peripherals
-   virtual uvma_interrupt_if                 intr_vif     ; ///< Virtual interface for interrupts
-   virtual uvma_clic_if                      clic_vif     ; ///< Virtual interface for clic interrupts
-   virtual uvma_debug_if                     debug_vif    ; ///< Virtual interface for debug
+   virtual uvmt_cv32e40s_debug_cov_assert_if_t  debug_cov_vif;
+   virtual uvmt_cv32e40s_vp_status_if_t         vp_status_vif; ///< Virtual interface for Virtual Peripherals
+   virtual uvma_interrupt_if_t                  intr_vif     ; ///< Virtual interface for interrupts
+   virtual uvma_clic_if_t                       clic_vif     ; ///< Virtual interface for clic interrupts
+   virtual uvma_debug_if_t                      debug_vif    ; ///< Virtual interface for debug
 
    // Agent context handles
    uvma_cv32e40s_core_cntrl_cntxt_c  core_cntrl_cntxt;
