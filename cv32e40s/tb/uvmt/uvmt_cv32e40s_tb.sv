@@ -1068,6 +1068,34 @@ module uvmt_cv32e40s_tb;
 
   end : gen_hardened_csrs_pmp_assert
 
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_register_file_ecc_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_register_file_ecc_assert_i 	(
+
+      //Interfaces:
+      .rvfi_if	  (rvfi_instr_if),
+
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Alert:
+      .alert_major (core_i.alert_major_o),
+
+      //Register file memory:
+      .gpr_mem (core_i.register_file_wrapper_i.register_file_i.mem_gated),
+
+      //Soruce registers:
+      .rs1 (core_i.if_id_pipe.instr.bus_resp.rdata[19:15]),
+      .rs2 (core_i.if_id_pipe.instr.bus_resp.rdata[24:20]),
+
+      //Writing of GPRs:
+      .gpr_we (core_i.rf_we_wb),
+      .gpr_waddr (core_i.rf_waddr_wb),
+      .gpr_wdata (core_i.rf_wdata_wb)
+
+    );
 
   // Debug assertion and coverage interface
 
