@@ -1,5 +1,5 @@
-// Copyright 2022 OpenHW Group
-// Copyright 2022 Silicon Labs, Inc.
+// Copyright 2023 OpenHW Group
+// Copyright 2023 Silicon Labs, Inc.
 //
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
