@@ -36,7 +36,7 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
 
   // Default settings:
   default clocking @(posedge clk_i); endclocking
-  default disable iff (!(rst_ni) | !(SECURE));
+  default disable iff (!(rst_ni) || !(SECURE));
   string info_tag = "CV32E40S_XSECURE_ASSERT_COVERPOINTS";
 
   // Local parameters:
@@ -121,7 +121,7 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
 
     rvfi_cpuctrl.rvfi_csr_rdata[DATAINDTIMING]
     && rvfi_if.is_div || rvfi_if.is_rem
-    seq_no_mem_instr_for_cycles(35).triggered
+    ##0 seq_no_mem_instr_for_cycles(35).triggered
 
     |->
     seq_no_rvalid_for_past_34_cycles.triggered
