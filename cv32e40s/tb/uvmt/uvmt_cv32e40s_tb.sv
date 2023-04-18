@@ -1084,6 +1084,36 @@ module uvmt_cv32e40s_tb;
   end : gen_hardened_csrs_pmp_assert
 
 
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_bus_protocol_hardening_assert_i 	(
+
+      //Interfaces:
+      .support_if (support_logic_module_o_if.slave_mp),
+
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Alerts:
+      .alert_major (core_i.alert_major_o),
+      .bus_protocol_hardening_glitch (core_i.alert_i.itf_prot_err_i),
+
+      //OBI:
+      .obi_data_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+      .obi_instr_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+
+      //Resp valids:
+      .instr_if_mpu_resp (core_i.if_stage_i.prefetch_resp_valid),
+      .lsu_mpu_resp (core_i.load_store_unit_i.resp_valid),
+
+      //Counters:
+      .lsu_rf_core_side_cnt (core_i.load_store_unit_i.response_filter_i.core_cnt_q),
+      .lsu_rf_bus_side_cnt (core_i.load_store_unit_i.response_filter_i.bus_cnt_q)
+
+    );
+
   // Debug assertion and coverage interface
 
   // Instantiate debug assertions

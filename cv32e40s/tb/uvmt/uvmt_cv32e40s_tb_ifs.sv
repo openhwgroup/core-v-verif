@@ -569,10 +569,10 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    logic instr_bus_resp_ph_cont;
 
    logic abiim_bus_addr_ph_cont;
-   logic abiim_bus_resp_ph_cont;
+   logic alignment_buff_resp_ph_cont;
 
    logic lml_bus_addr_ph_cont;
-   logic lml_bus_resp_ph_cont;
+   logic lsu_resp_ph_cont;
 
    logic lrfodi_bus_addr_ph_cont;
    logic lrfodi_bus_resp_ph_cont;
@@ -580,8 +580,8 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    // address phase counter, used to verify no response phase preceedes an address phase
    integer data_bus_v_addr_ph_cnt;
    integer instr_bus_v_addr_ph_cnt;
-   integer abiim_bus_v_addr_ph_cnt;
-   integer lml_bus_v_addr_ph_cnt;
+   integer alignment_buff_addr_ph_cnt;
+   integer lsu_addr_ph_cnt;
    integer lrfodi_bus_v_addr_ph_cnt;
 
    //Signals stating whether the request for the current response had the attribute value or not
@@ -605,24 +605,24 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
       output req_after_exception,
          is_exception_trigger_hit,
          data_bus_addr_ph_cont,
-	      data_bus_resp_ph_cont,
-	      data_bus_v_addr_ph_cnt,
+         data_bus_resp_ph_cont,
+         data_bus_v_addr_ph_cnt,
 
          instr_bus_addr_ph_cont,
-	      instr_bus_resp_ph_cont,
-	      instr_bus_v_addr_ph_cnt,
+         instr_bus_resp_ph_cont,
+         instr_bus_v_addr_ph_cnt,
 
          abiim_bus_addr_ph_cont,
-	      abiim_bus_resp_ph_cont,
-	      abiim_bus_v_addr_ph_cnt,
+         alignment_buff_resp_ph_cont,
+         alignment_buff_addr_ph_cnt,
 
          lml_bus_addr_ph_cont,
-	      lml_bus_resp_ph_cont,
-	      lml_bus_v_addr_ph_cnt,
+         lsu_resp_ph_cont,
+         lsu_addr_ph_cnt,
 
          lrfodi_bus_addr_ph_cont,
-	      lrfodi_bus_resp_ph_cont,
-	      lrfodi_bus_v_addr_ph_cnt,
+         lrfodi_bus_resp_ph_cont,
+         lrfodi_bus_v_addr_ph_cnt,
 
          req_was_store,
          instr_req_had_integrity,
@@ -639,19 +639,19 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
          is_exception_trigger_hit,
          data_bus_addr_ph_cont,
          data_bus_resp_ph_cont,
-	 data_bus_v_addr_ph_cnt,
+         data_bus_v_addr_ph_cnt,
 
          instr_bus_addr_ph_cont,
          instr_bus_resp_ph_cont,
          instr_bus_v_addr_ph_cnt,
 
          abiim_bus_addr_ph_cont,
-         abiim_bus_resp_ph_cont,
-         abiim_bus_v_addr_ph_cnt,
+         alignment_buff_resp_ph_cont,
+         alignment_buff_addr_ph_cnt,
 
          lml_bus_addr_ph_cont,
-         lml_bus_resp_ph_cont,
-         lml_bus_v_addr_ph_cnt,
+         lsu_resp_ph_cont,
+         lsu_addr_ph_cnt,
 
          lrfodi_bus_addr_ph_cont,
          lrfodi_bus_resp_ph_cont,

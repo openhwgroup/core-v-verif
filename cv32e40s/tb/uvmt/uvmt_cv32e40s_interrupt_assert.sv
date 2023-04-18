@@ -421,8 +421,8 @@ module uvmt_cv32e40s_interrupt_assert
 
   logic [31:0]  bus_data_outstanding;
   logic [31:0]  bus_instr_outstanding;
-  assign bus_instr_outstanding = support_if.abiim_bus_v_addr_ph_cnt;
-  assign bus_data_outstanding  = support_if.lrfodi_bus_v_addr_ph_cnt;
+  assign bus_instr_outstanding = support_if.alignment_buff_addr_ph_cnt;
+  assign bus_data_outstanding  = support_if.lsu_addr_ph_cnt;
 
   logic  is_wfi_wfe_blocked;
   assign is_wfi_wfe_blocked = (
