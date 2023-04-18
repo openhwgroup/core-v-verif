@@ -67,12 +67,12 @@ interface uvma_rvfi_csr_if_t
   // -------------------------------------------------------------------
 
 
-  function automatic logic [XLEN-1:0] read;
+  function automatic logic [XLEN-1:0] read();
     read = (rvfi_csr_rdata & rvfi_csr_rmask);
   endfunction : read
 
 
-  function automatic logic [XLEN-1:0] write;
+  function automatic logic [XLEN-1:0] write();
     write = (rvfi_csr_wdata & rvfi_csr_wmask);
   endfunction : write
 
