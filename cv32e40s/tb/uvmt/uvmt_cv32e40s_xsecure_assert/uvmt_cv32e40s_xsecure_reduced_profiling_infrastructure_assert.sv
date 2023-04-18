@@ -47,14 +47,14 @@ module uvmt_cv32e40s_xsecure_reduced_profiling_infrastructure_assert
   //And that the following CSRs are tied to 0:
   //- mphmcounter3,
   //- mphmcounter4,
-  /...
+  //...
   //- mphmcounter31,
   //- mhpmcounterh3,
   //- mhpmcounterh4,
   //...
   //- mhpmcounterh31
-  
-  
+
+
   a_xsecure_reduced_profiling_mhpmevent: assert property (
 
     mhpmevent[31:3] == ZERO
