@@ -19,10 +19,11 @@ module uvmt_cv32e40s_support_logic
   import uvm_pkg::*;
   import uvma_rvfi_pkg::*;
   import cv32e40s_pkg::*;
+  import uvmt_cv32e40s_pkg::*;
   (
-    uvma_rvfi_instr_if rvfi,
-    uvmt_cv32e40s_input_to_support_logic_module_if.driver_mp in_support_if,
-    uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.master_mp out_support_if
+    uvma_rvfi_instr_if_t rvfi,
+    uvmt_cv32e40s_support_logic_module_i_if_t.driver_mp in_support_if,
+    uvmt_cv32e40s_support_logic_module_o_if_t.master_mp out_support_if
   );
 
   // ---------------------------------------------------------------------------
@@ -145,6 +146,63 @@ module uvmt_cv32e40s_support_logic
       end
   end
 
+  //Store trigger data in arrays:
+  localparam TDATA1_DEFAULT = 32'hF800_0000;
+  localparam ET_M_MODE = 9;
+  localparam ET_U_MODE = 6;
+  localparam LSB_TYPE = 28;
+  localparam MSB_TYPE = 31;
+  localparam MAX_NUM_TRIGGERS = 5;
+
+  logic [MAX_NUM_TRIGGERS-1:0][31:0] tdata1_array;
+  logic [MAX_NUM_TRIGGERS-1:0][31:0] tdata2_array;
+  logic [MAX_NUM_TRIGGERS-1:0] exception_trigger_hits;
+
+  always @(posedge in_support_if.clk, negedge in_support_if.rst_n ) begin
+    if(!in_support_if.rst_n) begin
+      tdata1_array[0] = TDATA1_DEFAULT;
+      tdata1_array[1] = TDATA1_DEFAULT;
+      tdata1_array[2] = TDATA1_DEFAULT;
+      tdata1_array[3] = TDATA1_DEFAULT;
+      tdata1_array[4] = TDATA1_DEFAULT;
+      tdata2_array = '0;
+
+    end else if (in_support_if.wb_valid) begin
+      tdata1_array[in_support_if.wb_tselect] = in_support_if.wb_tdata1;
+      tdata2_array[in_support_if.wb_tselect] = in_support_if.wb_tdata2;
+    end
+  end
+
+  generate
+
+    for (genvar t = 0; t < MAX_NUM_TRIGGERS; t++) begin
+      always_comb begin
+
+        exception_trigger_hits[t] = t >= (uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS) ? 1'b0 :
+          rvfi.rvfi_valid
+          && rvfi.rvfi_trap.exception
+          && tdata1_array[t][MSB_TYPE:LSB_TYPE] == 5
+          && tdata2_array[t][rvfi.rvfi_trap.exception_cause]
+          && ((rvfi.is_mmode && tdata1_array[t][ET_M_MODE])
+          || (rvfi.is_umode && tdata1_array[t][ET_U_MODE]));
+
+      end
+    end
+  endgenerate
+
+  assign out_support_if.is_exception_trigger_hit = |exception_trigger_hits;
+
+  //Verify that the support logic make exception triggers work correctly
+    a_sl_etrigger_hit: assert property (
+      @(posedge in_support_if.clk)
+      rvfi.rvfi_valid
+      && !rvfi.rvfi_dbg_mode
+      && out_support_if.is_exception_trigger_hit
+
+      ##1 rvfi.rvfi_valid[->1]
+      |->
+      rvfi.rvfi_dbg_mode
+    ) else `uvm_error("SUPPORT LOGIC", "TODO.\n");
 
 
   // ---------------------------------------------------------------------------

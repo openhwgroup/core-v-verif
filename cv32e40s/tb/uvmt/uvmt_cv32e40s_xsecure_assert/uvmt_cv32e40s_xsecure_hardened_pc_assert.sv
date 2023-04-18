@@ -128,7 +128,7 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
     && $past(if_valid)
     && $past(id_ready)
 
-    && !ptr_in_if // pointers insert a non-incremental PC
+    && !$past(ptr_in_if) // pointers insert a non-incremental PC
 
     |->
 
@@ -152,7 +152,7 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
     $past(if_valid)
     && $past(id_ready)
 
-    && !ptr_in_if // pointers insert a non-incremental PC
+    && !$past(ptr_in_if) // pointers insert a non-incremental PC
 
     and !(if_pc == id_pc + INSTR_INCREMENT_CMPR && $past(if_instr_cmpr))
     and !(if_pc == id_pc + INSTRUCTION_INCREMENT && $past(!if_instr_cmpr))

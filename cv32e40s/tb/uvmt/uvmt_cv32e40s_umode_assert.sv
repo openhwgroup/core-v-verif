@@ -38,7 +38,7 @@ module  uvmt_cv32e40s_umode_assert
   input wire               rvfi_dbg_mode,
   input wire [ 2:0]        rvfi_dbg,
   input wire [31:0]        rvfi_pc_rdata,
-  uvma_rvfi_instr_if       rvfi_if,
+  uvma_rvfi_instr_if_t       rvfi_if,
   //TODO:INFO:silabs-robin Should only use the interface
 
   input wire [31:0]  rvfi_csr_dcsr_rdata,

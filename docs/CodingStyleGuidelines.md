@@ -98,10 +98,10 @@ Files should contain the following, in order:
 | Location             | Item Type           | Item Name           | File Name              |
 | -------------------- | ------------------- | ------------------- | ---------------------- |
 | `verif/vkits/<vkit>` | Package             | `<vkit>_pkg`        | `<vkit>_pkg.sv`        |
-| `verif/vkits/<vkit>` | Interface           | `<iface_name>_intf` | `<iface_name>_intf.sv` |
+| `verif/vkits/<vkit>` | Interface           | `<iface_name>_if`   | `<iface_name>_if.sv`   |
 | `verif/vkits/<vkit>` | Class               | `<classname>_c`     | `<vkit>_<classname>_c` |
 | `verif/vkits/<vkit>` | Flist File          | N/A                 | `<sim>.flist`          |
-| `verif/<tb>`         | Top-level Testbench | `<tb>_tb_top`       | `<tb>_tb_top.sv`       |
+| `verif/<tb>`         | Top-level Testbench | `<tb>_tb`           | `<tb>_tb.sv`           |
 | `verif/<tb>`         | Class               | `<classname>_c`     | `<classname>.sv`       |
 | `verif/<tb>`         | Flist File          | N/A                 | `<sim>.flist`          |
 | `verif/<tb>/tests`   | Base Test           | `base_test_c`       | `base_test.sv`         |
@@ -140,9 +140,9 @@ foo_drv.sv:
 | `_c`    | Classes                     | `_t`     | Typedefs, Misc. Types |
 | `_e`    | Enumerated Types            | `_s`     | Structs               |
 | `_pkg`  | Packages                    | `_cb`    | Clocking Blocks       |
-| `_intf` | Interface  Types            | `_mp`    | Modports              |
-| `_i`    | Interface Instances         | `_cnstr` | Constraints           |
-| `_vi`   | Virtual Interface Instances | `_cg`    | Covergroups           |
+| `_if_t` | Interface  Types            | `_mp`    | Modports              |
+| `_if`   | Interface Instances         | `_cnstr` | Constraints           |
+| `_vif`  | Virtual Interface Instances | `_cg`    | Covergroups           |
 |         |                             |          |                       |
 
 The purpose of these suffixes is:
@@ -300,7 +300,7 @@ verif/vkits/foo/
    mentor.flist
    foo_agent.sv
    foo_drv.sv
-   foo_intf.sv
+   foo_if.sv
    foo_item.sv
    foo_macros.sv
    foo_mon.sv
@@ -420,9 +420,9 @@ See the SystemVerilog standard 1800-2012, section 6.18, for more information on 
 
 Interfaces cannot be defined inside of a package, so they are compiled separately.
 
-2.5.1. The name of the interface shall be `<prefix>_<name>_intf`, where `<prefix>` is the kit prefix.
+2.5.1. The name of the interface shall be `<prefix>_<name>_if`, where `<prefix>` is the kit prefix.
 
-2.5.2. *Recommended*: The name of the file containing the interface definition should be `<prefix>_<name>_intf.sv`.
+2.5.2. *Recommended*: The name of the file containing the interface definition should be `<prefix>_<name>_if.sv`.
 
 2.5.3. *Recommended*: `<name>_` is unnecessary if there is only one interface defined in the verification kit. This alternative also applies to 2.6.1. (See File Naming.)
 
@@ -457,7 +457,7 @@ The simulation requirement is only necessary when different simulators are used,
 ```sh
 verif/vkits/foo/vcs.flist:
 +incdir+../../verif/vkits/foo
-../../verif/vkits/foo/foo_intf.sv
+../../verif/vkits/foo/foo_if.sv
 ../../verif/vkits/foo/foo_pkg.sv
 ```
 
@@ -689,16 +689,16 @@ In this module, the DUT is instantiated (or, a wrapper module that instantiates 
 
 4.4.1. *Recommended*: The `tb_top` module shall instantiate all interfaces that connect to the DUT and provide virtual interfaces that point to these interfaces to the verification environment via the UVM resource database.
 
-4.4.2. *Recommended*: Use the macro `` `cmn_set_intf `` to push virtual interface handles into the resource database.
+4.4.2. *Recommended*: Use the macro `` `cmn_set_if `` to push virtual interface handles into the resource database.
 
 ```v
 module tb_top;
-   foo_intf foo_i;
+   foo_if_t foo_if;
 
-   blk_wrapper dut_wrapper(.foo_intf  (foo_i));
+   blk_wrapper dut_wrapper(.foo_if_t  (foo_if));
 
    function void pre_run_test();
-      `cmn_set_intf(virtual foo_intf, "foo_pkg::intf", "foo_vi", foo_i);
+      `cmn_set_if(virtual foo_if_t, "foo_pkg::if", "foo_vif", foo_if);
    endfunction : pre_run_test
 
    initial begin
@@ -709,13 +709,13 @@ endmodule : tb_top
 ```
 
 
-In this example, `foo_pkg::intf` is the scope, and `foo_vi` is the name, under which the virtual interface is stored in the UVM resource database.
+In this example, `foo_pkg::if` is the scope, and `foo_vif` is the name, under which the virtual interface is stored in the UVM resource database.
 
 Within the module `tb_top`, the structure of the UVM component hierarchy is not necessarily known, which is why the UVM configuration database is not used. Instead, virtual interfaces are put into the UVM resource database, essentially making them globally visible to all UVM components.
 
-In the example above, the scope name ("`foo_pkg::intf`") is a name that is required by the foo verification kit. (The `FOO` vkit is hardcoded to look for its interfaces using that scope name.) Note that the scope name starts with `<prefix>_pkg`, as required.
+In the example above, the scope name ("`foo_pkg::if`") is a name that is required by the foo verification kit. (The `FOO` vkit is hardcoded to look for its interfaces using that scope name.) Note that the scope name starts with `<prefix>_pkg`, as required.
 
-The name ("`foo_vi`" in the example) is a name that is provided by the `tb_top`. The `base_test_c` has knowledge of these names, since it is part of the same testbench as `tb_top`.
+The name ("`foo_vif`" in the example) is a name that is provided by the `tb_top`. The `base_test_c` has knowledge of these names, since it is part of the same testbench as `tb_top`.
 
 The `base_test_c` knows the UVM component hierarchy, so it can provide the interface names to the appropriate UVM components through the UVM configuration database:
 
@@ -726,7 +726,7 @@ class base_test_c;
    function void build_phase(uvm_phase phase);
       super.build_phase(phase);
       foo_env = foo_pkg::env_c::type_id::create("foo_env", this);
-      uvm_config_db#(string)::set(this, "foo_env", "intf_name", "foo_vi");
+      uvm_config_db#(string)::set(this, "foo_env", "if_name", "foo_vif");
       …
 ```
 
@@ -736,28 +736,28 @@ The above method for passing virtual interfaces to the verification environment 
 
 4.4.3. Components only get handles to virtual interfaces from the UVM resource database.
 
-4.4.4. The component defines a string configuration field that is used to look up the virtual interface (`intf_name`, by custom).
+4.4.4. The component defines a string configuration field that is used to look up the virtual interface (`if_name`, by custom).
 
 4.4.5. The vkit defines a scope name under which all virtual interfaces for all instances of the verification kit are stored.
 
-4.4.6. *Recommended*: Use the macro `` `cmn_get_intf `` to pull virtual interface handles from the resource database.
+4.4.6. *Recommended*: Use the macro `` `cmn_get_if `` to pull virtual interface handles from the resource database.
 
 4.4.7. *Recommended*: Components should use the `` `uvm_component_utils `` macros to declare configurable variables which perform database lookups during the build phase. Such variables should have the `UVM_COMPONENT` flag attached.
 
-Extending the example from above, the `foo_pkg::env_c` class has a configuration field called "`intf_name`". Wherever a FOO class needs to get the virtual interface to a `foo_intf`, it knows to look in the UVM resource database under the scope `foo_pkg::intf`, and the name specified by the `intf_name` field. If the interface was not registered or was registered with a different name, a fatal error prints out and reports that `<UNSPECIFIED>` is not found in the database.
+Extending the example from above, the `foo_pkg::env_c` class has a configuration field called "`if_name`". Wherever a FOO class needs to get the virtual interface to a `foo_if_t`, it knows to look in the UVM resource database under the scope `foo_pkg::if`, and the name specified by the `if_name` field. If the interface was not registered or was registered with a different name, a fatal error prints out and reports that `<UNSPECIFIED>` is not found in the database.
 
 ```v
 class env_c;
    `uvm_component_utils_begin(env_c)
-      `uvm_field_string(intf_name, UVM_COMPONENT)
+      `uvm_field_string(if_name, UVM_COMPONENT)
       //...
 
-   string intf_name = "<UNSPECIFIED>";
-   virtual foo_intf foo_vi;
+   string if_name = "<UNSPECIFIED>";
+   virtual foo_if_t foo_vif; //TODO: vi= viritual interface, should this be if_vi?
 
    function void build_phase(uvm_phase phase);
       super.build_phase(phase);
-      `cmn_get_intf(virtual foo_intf, "foo_pkg::intf", intf_name, foo_vi)
+      `cmn_get_if(virtual foo_if_t, "foo_pkg::if", if_name, foo_vif)
       //...
 ```
 

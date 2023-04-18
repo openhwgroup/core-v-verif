@@ -23,9 +23,9 @@
 
 `define RVFI_CSR_BIND(csr_name)                             \
   bind cv32e40s_wrapper                                     \
-    uvma_rvfi_csr_if #(                                     \
+    uvma_rvfi_csr_if_t #(                                     \
       uvme_cv32e40s_pkg::XLEN                               \
-    ) rvfi_csr_``csr_name``_if_0_i (                        \
+    ) rvfi_csr_``csr_name``_if (                            \
       .clk(clk_i),                                          \
       .reset_n(rst_ni),                                     \
       .rvfi_csr_rmask(rvfi_i.rvfi_csr_``csr_name``_rmask),  \
@@ -64,10 +64,10 @@ endpackage
 
 // Interfaces
 
-interface uvma_clknrst_if ();
+interface uvma_clknrst_if_t ();
   logic  clk;
   logic  reset_n;
-endinterface : uvma_clknrst_if
+endinterface : uvma_clknrst_if_t
 
 
 // Modules

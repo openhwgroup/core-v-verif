@@ -23,7 +23,7 @@
 
 /**
  * Component sampling transactions from a Clock & Reset virtual interface
- * (uvma_rvfi_instr_if).
+ * (uvma_rvfi_instr_if_t).
  */
 class uvma_rvfi_instr_mon_c#(int ILEN=DEFAULT_ILEN,
                              int XLEN=DEFAULT_XLEN) extends uvm_monitor;
