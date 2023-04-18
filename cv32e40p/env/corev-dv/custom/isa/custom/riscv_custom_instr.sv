@@ -234,8 +234,6 @@ class cv32e40p_instr extends riscv_instr;
           else if (category == BITMANIP)
             asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), get_imm());
           else if (category == HWLOOP) begin
-            $display("is hwloop ");
-            $display("has_imm = %d", has_imm);
             if (instr_name inside {CV_COUNT, CV_START, CV_END} )
               asm_str_final = $sformatf("%0s %0b, %0s", asm_str, hw_loop_label, rs1.name());
             else if (instr_name inside {CV_SETUP} )
@@ -260,7 +258,7 @@ class cv32e40p_instr extends riscv_instr;
             if (instr_name inside {CV_ABS, CV_EXTHS, CV_EXTHZ, CV_EXTBS, CV_EXTBZ})
               asm_str_final = $sformatf("%0s %0s, %0s", asm_str, rd.name(), rs1.name());
             else if (instr_name inside {CV_CLIP, CV_CLIPU})
-              asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), $sformatf("%0d", $unsigned(int'(rs2))));
+              asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), get_imm());
             else asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), rs2.name());
           end
 
@@ -271,8 +269,8 @@ class cv32e40p_instr extends riscv_instr;
             asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), rs2.name());
         end
         S_FORMAT: begin // instr rs1,rs2,imm
-          if(category == POST_INC_STORE) // Use pseudo instruction format
-            asm_str_final = $sformatf("%0s %0s, %0d(%0s!)", asm_str, rs2.name(), $signed((imm[11:5] << 5) + int'(rd)), rs1.name());
+          if(category == POST_INC_STORE)
+            asm_str_final = $sformatf("%0s %0s, %0d(%0s!)", asm_str, rs2.name(), get_imm(), rs1.name());
           else if (category inside {ALU, MAC} )
             asm_str_final = $sformatf("%0s %0s, %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), rs2.name(), get_imm());
           else
