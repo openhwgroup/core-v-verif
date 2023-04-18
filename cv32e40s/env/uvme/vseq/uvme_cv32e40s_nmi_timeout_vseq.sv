@@ -1,5 +1,4 @@
-// Copyright 2023 OpenHW Group
-// Copyright 2023 Silicon Labs Inc.
+// Copyright 2023 Silicon Labs, Inc.
 //
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +13,15 @@
 // limitations under the License.
 
 
+////////////////////////////////////////////////////////////////////////////////
+// Author:  Henrik Fegran - henrik.fegran@silabs.com                          //
+//                                                                            //
+// Virtual sequence to ensure that random tests encountering                  //
+// nmi terminates correctly after a set timeout                               //
+//                                                                            //
+// Usage: Set nmi_timeout_instr plusarg to non-zero value                     //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
 `ifndef __UVME_CV32E40S_NMI_TIMEOUT_VSEQ_SV__
 `define __UVME_CV32E40S_NMI_TIMEOUT_VSEQ_SV__
 
@@ -59,11 +67,11 @@ task uvme_cv32e40s_nmi_timeout_vseq_c::body();
        forever begin
          @(posedge cntxt.rvfi_cntxt.instr_vif[0].clk) begin
            if (cntxt.rvfi_cntxt.instr_vif[0].rvfi_valid) begin
-            if (cntxt.rvfi_cntxt.instr_vif[0].nmi_instr_cnt >= cfg.nmi_timeout_instr) begin
-              `uvm_info("NMI_TIMEOUT_WATCHDOG", $sformatf("NMI timeout: %0d", cntxt.rvfi_cntxt.instr_vif[0].nmi_instr_cnt), UVM_LOW);
-              cntxt.vp_status_vif.exit_valid = 1;
-              cntxt.vp_status_vif.exit_value = 32'h0;
-            end
+             if (cntxt.rvfi_cntxt.instr_vif[0].nmi_instr_cnt >= cfg.nmi_timeout_instr) begin
+               `uvm_info("NMI_TIMEOUT_WATCHDOG", $sformatf("NMI timeout: %0d", cntxt.rvfi_cntxt.instr_vif[0].nmi_instr_cnt), UVM_LOW);
+               cntxt.vp_status_vif.exit_valid = 1;
+               cntxt.vp_status_vif.exit_value = 32'h0;
+             end
            end
          end
        end
