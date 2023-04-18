@@ -23,7 +23,7 @@
  * Encapsulates all signals and clocking of Interrupt interface. Used by
  * monitor and driver.
  */
-interface uvma_clic_if#(SMCLIC_ID_WIDTH = 5)();
+interface uvma_clic_if_t#(SMCLIC_ID_WIDTH = 5)();
 
     // ---------------------------------------------------------------------------
     // Interface wires
@@ -118,7 +118,7 @@ interface uvma_clic_if#(SMCLIC_ID_WIDTH = 5)();
     modport active_mp (clocking drv_cb);
     modport passive_mp(clocking mon_cb);
 
-endinterface : uvma_clic_if
+endinterface : uvma_clic_if_t
 
 
 `endif // __UVMA_CLIC_IF_SV__

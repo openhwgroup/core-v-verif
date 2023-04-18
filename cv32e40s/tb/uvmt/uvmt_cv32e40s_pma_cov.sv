@@ -41,7 +41,7 @@ module  uvmt_cv32e40s_pma_cov
   input wire pma_status_t  pma_status_i,
   input wire pma_status_t  pma_status_rvfidata_word0lowbyte_i,
   input wire pma_status_t  pma_status_rvfidata_word0highbyte_i,
-  uvma_rvfi_instr_if       rvfi_if
+  uvma_rvfi_instr_if_t     rvfi_if
 );
 
 

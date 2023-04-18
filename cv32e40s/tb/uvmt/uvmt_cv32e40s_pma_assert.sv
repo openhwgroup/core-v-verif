@@ -62,8 +62,8 @@ module  uvmt_cv32e40s_pma_assert
   input wire  bus_trans_integrity,
 
   // Support Logic
-  uvma_obi_memory_if       obi_memory_if,
-  uvma_rvfi_instr_if       rvfi_instr_if,
+  uvma_obi_memory_if_t     obi_memory_if,
+  uvma_rvfi_instr_if_t     rvfi_instr_if,
   input wire pma_status_t  pma_status_i
 );
 

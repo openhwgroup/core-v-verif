@@ -14,7 +14,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This module facilitates easy connection of a uvma_obi_memory_if instance to the assertion module,
+// This module facilitates easy connection of a uvma_obi_memory_if_t instance to the assertion module,
 // which has individual wire ports
 
 module uvma_obi_memory_assert_if_wrp
@@ -31,7 +31,7 @@ module uvma_obi_memory_assert_if_wrp
     parameter bit          IS_1P2      = 0
   )
   (
-    uvma_obi_memory_if obi
+    uvma_obi_memory_if_t obi
   );
 
 

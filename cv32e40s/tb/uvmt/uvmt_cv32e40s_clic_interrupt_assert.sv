@@ -69,7 +69,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     input logic                       irq_ack,
     input logic [1:0]                 current_priv_mode,
 
-    uvma_clic_if                      clic_if,
+    uvma_clic_if_t                    clic_if,
 
     input logic [CLIC_ID_WIDTH-1:0]   irq_id,
     input logic [7:0]                 irq_level,

@@ -45,7 +45,7 @@ module uvmt_cv32e40s_rvfi_assert
   input wire             rvfi_dbg_mode,
   //TODO:INFO:silabs-robin should replace the above with the interface
 
-  uvma_rvfi_instr_if  rvfi_instr_if,
+  uvma_rvfi_instr_if_t  rvfi_instr_if,
 
   input wire  writebuf_valid_i,
   input wire  writebuf_ready_o

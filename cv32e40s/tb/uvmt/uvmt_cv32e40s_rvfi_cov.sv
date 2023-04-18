@@ -35,7 +35,7 @@ module  uvmt_cv32e40s_rvfi_cov
   input wire  clk_i,
   input wire  rst_ni,
 
-  uvma_rvfi_instr_if  rvfi_if
+  uvma_rvfi_instr_if_t  rvfi_if
 );
 
 
