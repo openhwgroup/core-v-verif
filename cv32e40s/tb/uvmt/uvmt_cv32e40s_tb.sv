@@ -33,8 +33,10 @@ module uvmt_cv32e40s_tb;
    import cv32e40s_pkg::*;
    import uvmt_cv32e40s_pkg::*;
    import uvme_cv32e40s_pkg::*;
+   `ifdef USE_ISS
    `ifndef FORMAL
    import rvviApiPkg::*;
+   `endif
    `endif
 
    // Capture regs for test status from Virtual Peripheral in dut_wrap.mem_i
@@ -84,8 +86,10 @@ module uvmt_cv32e40s_tb;
                                                    .sec_lvl());     // Core status outputs
 
    // RVVI SystemVerilog Interface
+   `ifdef USE_ISS
    `ifndef FORMAL
       rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+   `endif
    `endif
 
   /**
@@ -1361,8 +1365,10 @@ module uvmt_cv32e40s_tb;
     //uvmt_cv32e40s_rvvi_handcar u_rvvi_handcar();
 
     // IMPERAS DV
+    `ifdef USE_ISS
     `ifndef FORMAL
       uvmt_cv32e40s_imperas_dv_wrap imperas_dv (rvvi_if);
+    `endif
     `endif
 
    /**
@@ -1643,7 +1649,9 @@ module uvmt_cv32e40s_tb;
      `endif
 
      // IMPERAS_DV interface
+     `ifdef USE_ISS
      uvm_config_db#(virtual rvviTrace)::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("rvvi_vif"), .value(rvvi_if));
+     `endif
 
      // Virtual Peripheral Status interface
      uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if_t              )::set(.cntxt(null), .inst_name("*"), .field_name("vp_status_vif"),       .value(vp_status_if)      );
@@ -1674,6 +1682,7 @@ module uvmt_cv32e40s_tb;
 
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
+   `ifdef USE_ISS
    `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
    // overcome race
    initial begin
@@ -1682,6 +1691,7 @@ module uvmt_cv32e40s_tb;
        imperas_dv.ref_init();
      end
    end
+   `endif
    `endif
 
    //TODO verify these are correct with regards to isacov function
@@ -1747,10 +1757,12 @@ module uvmt_cv32e40s_tb;
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
 
       // Shutdown the Reference Model
+      `ifdef USE_ISS
       if ($test$plusargs("USE_ISS")) begin
          // Exit handler for ImperasDV
          void'(rvviRefShutdown());
       end
+      `endif
 
       `uvm_info("DV_WRAP", $sformatf("\n%m: *** Test Summary ***\n"), UVM_DEBUG);
 
