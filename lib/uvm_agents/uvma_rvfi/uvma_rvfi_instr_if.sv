@@ -26,7 +26,6 @@ interface uvma_rvfi_instr_if_t
   import uvma_rvfi_pkg::*;
   #(int ILEN=DEFAULT_ILEN,
     int XLEN=DEFAULT_XLEN)
-  //import uvma_rvfi_pkg::*;
   (
     input logic                      clk,
     input logic                      reset_n,
@@ -493,41 +492,41 @@ function automatic logic is_dbg_trg_f();
   return  rvfi_valid &&
           rvfi_trap.trap &&
           rvfi_trap.debug &&
-         (rvfi_trap.debug_cause == cv32e40s_pkg::DBG_CAUSE_TRIGGER);
+         (rvfi_trap.debug_cause == DBG_CAUSE_TRIGGER);
 endfunction : is_dbg_trg_f
 
 function automatic logic is_mmode_f();
   return  rvfi_valid &&
-          (rvfi_mode == cv32e40s_pkg::PRIV_LVL_M);
+          (rvfi_mode == PRIV_LVL_M);
 endfunction : is_mmode_f
 
 function automatic logic is_not_mmode_f();
   return  rvfi_valid &&
-          (rvfi_mode != cv32e40s_pkg::PRIV_LVL_M);
+          (rvfi_mode != PRIV_LVL_M);
 endfunction : is_not_mmode_f
 
 function automatic logic is_umode_f();
   return  rvfi_valid &&
-          (rvfi_mode == cv32e40s_pkg::PRIV_LVL_U);
+          (rvfi_mode == PRIV_LVL_U);
 endfunction : is_umode_f
 
 function automatic logic is_not_umode_f();
   return  rvfi_valid &&
-          (rvfi_mode != cv32e40s_pkg::PRIV_LVL_U);
+          (rvfi_mode != PRIV_LVL_U);
 endfunction : is_not_umode_f
 
 function automatic logic is_pma_instr_fault_f();
   return  rvfi_valid  &&
           rvfi_trap.trap  &&
           rvfi_trap.exception  &&
-          (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT)  &&
+          (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_FAULT)  &&
           (rvfi_trap.cause_type == 'h 0);
 endfunction : is_pma_instr_fault_f
 
 function automatic logic is_instr_bus_valid_f();
-  return !( (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT) ||
-            (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_INTEGRITY_FAULT) ||
-            (rvfi_trap.exception_cause == cv32e40s_pkg::EXC_CAUSE_INSTR_BUS_FAULT)
+  return !( (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_FAULT) ||
+            (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_INTEGRITY_FAULT) ||
+            (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_BUS_FAULT)
     );
 endfunction : is_instr_bus_valid_f
 
