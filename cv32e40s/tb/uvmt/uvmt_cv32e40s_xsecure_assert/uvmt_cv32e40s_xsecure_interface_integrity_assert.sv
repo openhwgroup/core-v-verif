@@ -196,6 +196,8 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     obi_data_resp_packet.rdata);
 
 
+  //Verify that interface integrity is enabled by default
+
   a_xsecure_integrity_default_on: assert property (
     $rose(rst_ni)
     |->
