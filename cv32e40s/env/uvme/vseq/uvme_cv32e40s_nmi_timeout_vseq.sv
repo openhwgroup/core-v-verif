@@ -57,12 +57,14 @@ task uvme_cv32e40s_nmi_timeout_vseq_c::body();
    if (cfg.nmi_timeout_instr > 0) begin
      fork
        forever begin
-         @(posedge cntxt.rvfi_cntxt.instr_vif[0].rvfi_valid) begin
-          if (cntxt.rvfi_cntxt.instr_vif[0].nmi_instr_cnt >= cfg.nmi_timeout_instr) begin
-            `uvm_info("NMI_TIMEOUT_WATCHDOG", $sformatf("NMI timeout: %0d", cntxt.rvfi_cntxt.instr_vif[0].nmi_instr_cnt), UVM_LOW);
-            cntxt.vp_status_vif.exit_valid = 1;
-            cntxt.vp_status_vif.exit_value = 32'h0;
-          end
+         @(posedge cntxt.rvfi_cntxt.instr_vif[0].clk) begin
+           if (cntxt.rvfi_cntxt.instr_vif[0].rvfi_valid) begin
+            if (cntxt.rvfi_cntxt.instr_vif[0].nmi_instr_cnt >= cfg.nmi_timeout_instr) begin
+              `uvm_info("NMI_TIMEOUT_WATCHDOG", $sformatf("NMI timeout: %0d", cntxt.rvfi_cntxt.instr_vif[0].nmi_instr_cnt), UVM_LOW);
+              cntxt.vp_status_vif.exit_valid = 1;
+              cntxt.vp_status_vif.exit_value = 32'h0;
+            end
+           end
          end
        end
      join
