@@ -34,8 +34,10 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    bit                              obi_memory_data_random_err_enabled    = 0;
    bit                              obi_memory_data_one_shot_err_enabled  = 0;
    bit                              iss_suppress_invalid_msg              = 0;
+   bit                              nmi_timeout_instr_plusarg_valid       = 0;
    rand bit                         buserr_scoreboarding_enabled          = 1;
    rand int unsigned                fetch_toggle_initial_delay;
+   rand int unsigned                nmi_timeout_instr;
 
    // Agent cfg handles
    rand uvma_isacov_cfg_c           isacov_cfg;
@@ -63,6 +65,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_int (                         obi_memory_data_one_shot_err_enabled,  UVM_DEFAULT  )
       `uvm_field_int (                         iss_suppress_invalid_msg,              UVM_DEFAULT  )
       `uvm_field_int (                         fetch_toggle_initial_delay,            UVM_DEFAULT  )
+      `uvm_field_int (                         nmi_timeout_instr,                     UVM_DEFAULT | UVM_DEC )
 
       `uvm_field_object(isacov_cfg           , UVM_DEFAULT)
       `uvm_field_object(clknrst_cfg          , UVM_DEFAULT)
@@ -86,6 +89,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       soft sys_clk_period               == uvme_cv32e40s_sys_default_clk_period; // see uvme_cv32e40s_constants.sv
       soft buserr_scoreboarding_enabled == 1;
       soft fetch_toggle_initial_delay inside {[50:200]};
+      soft nmi_timeout_instr            == 0; // no timeout
    }
 
    constraint cv32e40s_riscv_cons {
@@ -365,6 +369,11 @@ function uvme_cv32e40s_cfg_c::new(string name="uvme_cv32e40s_cfg");
       obi_memory_data_random_err_enabled = 1;
    if ($test$plusargs("obi_memory_data_one_shot_err"))
       obi_memory_data_one_shot_err_enabled = 1;
+   if ($value$plusargs("nmi_timeout_instr=%d", nmi_timeout_instr)) begin
+      nmi_timeout_instr_plusarg_valid = 1;
+      nmi_timeout_instr.rand_mode(0);
+   end
+
 
    if ($test$plusargs("enable_clic")) begin
      clic_interrupt_enable  = 1;

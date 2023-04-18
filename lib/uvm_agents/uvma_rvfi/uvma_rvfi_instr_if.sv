@@ -115,6 +115,7 @@ interface uvma_rvfi_instr_if
   // Local variables
   // -------------------------------------------------------------------
   bit   [CYCLE_CNT_WL-1:0]          cycle_cnt = 0;
+  int unsigned                      nmi_instr_cnt = 0;
 
   logic [(32)-1:0][XLEN-1:0]        gpr_rdata_array;
   logic [(32)-1:0]                  gpr_rmask_array;
@@ -145,6 +146,8 @@ interface uvma_rvfi_instr_if
   logic                             is_pma_instr_fault;
   logic                             is_instr_bus_valid;
 
+  logic                             is_nmi_triggered = 0;
+
   // -------------------------------------------------------------------
   // Begin module code
   // -------------------------------------------------------------------
@@ -164,7 +167,17 @@ interface uvma_rvfi_instr_if
   assign {>>{mem_wdata_array}} = rvfi_mem_wdata;
   assign {>>{mem_wmask_array}} = rvfi_mem_wmask;
 
-  always @(posedge clk) begin
+  always @(posedge clk or negedge reset_n) begin
+    if (!reset_n) begin
+      nmi_instr_cnt    <= 0;
+      is_nmi_triggered <= 0;
+    end else begin
+      // Detect taken nmi or pending nmi and start counting
+      is_nmi_triggered <= is_nmi_triggered ? 1'b1 : (is_nmi || (rvfi_nmip && rvfi_valid));
+      if (is_nmi_triggered && rvfi_valid) begin
+        nmi_instr_cnt <= nmi_instr_cnt + 1;
+      end
+    end
     cycle_cnt <= cycle_cnt + 1;
   end
 
@@ -202,6 +215,7 @@ interface uvma_rvfi_instr_if
   clocking mon_cb @(posedge clk or reset_n);
       input #1step
         cycle_cnt,
+        nmi_instr_cnt,
         rvfi_valid,
         rvfi_order,
         rvfi_insn,

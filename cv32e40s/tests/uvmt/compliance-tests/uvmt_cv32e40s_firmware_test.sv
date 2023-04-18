@@ -83,6 +83,7 @@ class uvmt_cv32e40s_firmware_test_c extends uvmt_cv32e40s_base_test_c;
     *  Start the clic interrupt sequencer to apply random clic interrupts during test
     */
    extern virtual task clic_noise();
+   extern virtual task nmi_timeout();
 
 endclass : uvmt_cv32e40s_firmware_test_c
 
@@ -135,6 +136,12 @@ task uvmt_cv32e40s_firmware_test_c::run_phase(uvm_phase phase);
     fork
       bootset_debug();
     join_none
+   end
+
+   if (env.cfg.nmi_timeout_instr > 0) begin
+     fork
+       nmi_timeout();
+     join_none
    end
 
    phase.raise_objection(this);
@@ -219,4 +226,16 @@ task uvmt_cv32e40s_firmware_test_c::clic_noise();
   end
 
 endtask : clic_noise
+
+task uvmt_cv32e40s_firmware_test_c::nmi_timeout();
+  `uvm_info("TEST", "Starting NMI timeout watchdog in UVM test", UVM_NONE);
+  forever begin
+    uvme_cv32e40s_nmi_timeout_vseq_c nmi_timeout_vseq;
+    nmi_timeout_vseq = uvme_cv32e40s_nmi_timeout_vseq_c::type_id::create("nmi_timout_vseqr");
+
+    assert(nmi_timeout_vseq.randomize() with {});
+    nmi_timeout_vseq.start(vsequencer);
+    break;
+  end
+endtask : nmi_timeout
 `endif // __UVMT_CV32E40S_FIRMWARE_TEST_SV__
