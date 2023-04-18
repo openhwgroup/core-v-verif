@@ -20,22 +20,22 @@ module uvmt_cv32e40s_debug_assert
   import uvma_rvfi_pkg::*;
   import cv32e40s_pkg::*;
   (
-      uvma_rvfi_instr_if rvfi,
-      uvma_rvfi_csr_if csr_dcsr,
-      uvma_rvfi_csr_if csr_dpc,
-      uvma_rvfi_csr_if csr_dscratch0,
-      uvma_rvfi_csr_if csr_dscratch1,
-      uvma_rvfi_csr_if csr_mcause,
-      uvma_rvfi_csr_if csr_mepc,
-      uvma_rvfi_csr_if csr_mstatus,
-      uvma_rvfi_csr_if csr_mtvec,
+      uvma_rvfi_instr_if_t rvfi,
+      uvma_rvfi_csr_if_t csr_dcsr,
+      uvma_rvfi_csr_if_t csr_dpc,
+      uvma_rvfi_csr_if_t csr_dscratch0,
+      uvma_rvfi_csr_if_t csr_dscratch1,
+      uvma_rvfi_csr_if_t csr_mcause,
+      uvma_rvfi_csr_if_t csr_mepc,
+      uvma_rvfi_csr_if_t csr_mstatus,
+      uvma_rvfi_csr_if_t csr_mtvec,
       //TODO:MT tdatas should not be necessary when trigger logic is ready
-      uvma_rvfi_csr_if csr_tdata1,
-      uvma_rvfi_csr_if csr_tdata2,
-      uvma_obi_memory_if instr_obi,
-      uvma_obi_memory_if data_obi,
-      uvmt_cv32e40s_debug_cov_assert_if cov_assert_if,
-      uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp support_if
+      uvma_rvfi_csr_if_t csr_tdata1,
+      uvma_rvfi_csr_if_t csr_tdata2,
+      uvma_obi_memory_if_t instr_obi,
+      uvma_obi_memory_if_t data_obi,
+      uvmt_cv32e40s_debug_cov_assert_if_t cov_assert_if,
+      uvmt_cv32e40s_support_logic_module_o_if_t.slave_mp support_if
   );
 
   // ---------------------------------------------------------------------------
