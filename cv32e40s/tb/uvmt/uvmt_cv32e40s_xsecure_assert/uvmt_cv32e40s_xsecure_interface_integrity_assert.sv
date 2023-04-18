@@ -288,7 +288,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     chk_input == chk_calculated;
   endproperty
 
-  a_xsecure_integrity_store_data_rchk: assert property (
+    a_xsecure_integrity_store_data_rchk: assert property (
     p_checksum_data_rchk(
       support_if.req_was_store,
       obi_data_rvalid,
@@ -307,7 +307,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
 
   //Verify that major alert and exception code "Instruction parity/checksum fault" are set when executing an instruction with an integrity error
 
-  a_glitch_xsecure_integrity_instr_integrity_error_alert_major: assert property (
+  a_glitch_xsecure_integrity_instr_integrity_error: assert property (
     wb_valid
     && wb_integrity_err
     && ctrl_fsm_cs != DEBUG_TAKEN //When entering debug we dont trigger any exceptions
@@ -694,7 +694,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   ) else `uvm_error(info_tag_glitch, "The NMI caused by an associated parity/checksum error does not have exception code 1027 or 1026.\n");
 
   //Load instructions
-  c_glitch_xsecure_security_alert_major_parity_checksum_fault_NMI_load_instruction: cover property (
+  c_glitch_xsecure_security_parity_checksum_fault_NMI_load_instruction: cover property (
 
     obi_data_rvalid
     && data_integrity_err
@@ -703,7 +703,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   );
 
   //Store instructions
-  c_glitch_xsecure_security_alert_major_parity_checksum_fault_NMI_store_instruction: cover property (
+  c_glitch_xsecure_security_parity_checksum_fault_NMI_store_instruction: cover property (
 
     obi_data_rvalid
     && data_integrity_err
@@ -713,3 +713,4 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   );
 
   endmodule : uvmt_cv32e40s_xsecure_interface_integrity_assert
+    
