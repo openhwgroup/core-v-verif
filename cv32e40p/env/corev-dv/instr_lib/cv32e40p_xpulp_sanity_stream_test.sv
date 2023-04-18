@@ -42,7 +42,7 @@ class cv32e40p_xpulp_sanity_stream_test extends cv32e40p_rand_instr_stream;
     all_xpulp_instr = placeholder_ins.instr_group[RV32X];
 
     foreach (all_xpulp_instr[i]) begin
-      if (all_xpulp_instr[i] inside { CV_BEQIMM, CV_BNEIMM, CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI } ) continue;
+      if (all_xpulp_instr[i] inside { CV_BEQIMM, CV_BNEIMM, CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW } ) continue;
       allowed_instr = {all_xpulp_instr[i]};
       gen_xpulp_instr();
     end
