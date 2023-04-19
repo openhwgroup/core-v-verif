@@ -617,9 +617,9 @@ function automatic logic is_pma_fault_f();
           rvfi_trap.trap  &&
           rvfi_trap.exception  &&
           (rvfi_trap.exception_cause  inside {
-            cv32e40s_pkg::EXC_CAUSE_INSTR_FAULT,
-            cv32e40s_pkg::EXC_CAUSE_LOAD_FAULT,
-            cv32e40s_pkg::EXC_CAUSE_STORE_FAULT
+            EXC_CAUSE_INSTR_FAULT,
+            EXC_CAUSE_LOAD_FAULT,
+            EXC_CAUSE_STORE_FAULT
           })  &&
           (rvfi_trap.cause_type == 'h 0);
 endfunction : is_pma_fault_f
