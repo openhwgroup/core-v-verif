@@ -1,6 +1,7 @@
 ###############################################################################
 #
 # Copyright 2020 OpenHW Group
+# Copyright 2023 Dolphin Design
 # 
 # Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +19,7 @@
 #
 ###############################################################################
 #
-# Makefile for the CV32E40P "uvmt_cv32" testbench.  Substantially modified
+# Makefile for the CV32E40P "riscof compliance simulations". Substantially modified
 # from the original Makefile for the RI5CY testbench.
 #
 ###############################################################################
