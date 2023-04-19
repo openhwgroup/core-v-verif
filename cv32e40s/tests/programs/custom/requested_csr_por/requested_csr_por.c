@@ -36,14 +36,7 @@
 
 int main(int argc, char *argv[])
 {
-  // User CSRs
-  // Not in RM
-  // unsigned int fflags_rval, frm_rval, fcsr_rval;
-  // User Custom CSRs
-  // Not in RM
-  // unsigned int lpstart0_rval, lpend0_rval, lpcount0_rval, lpstart1_rval, lpend1_rval, lpcount1_rval;
-  // unsigned int fprec_rval, privlv_rval, uhartid_rval;
-  // Machine CSRs
+  // CSRs
   uint32_t mstatus_rval, misa_rval, mie_rval, mtvec_rval;
   uint32_t mcounteren_rval, mcountinhibit_rval, mphmevent_rval[32];
   uint32_t mscratch_rval, mepc_rval, mcause_rval, mtval_rval, mip_rval;
@@ -225,8 +218,7 @@ int main(int argc, char *argv[])
     sum += mhpmcounter_rval[i];
   }
   if (sum) {
-    //printf("ERROR: CSR MHPMCOUNTER[3..31] not 0x0!\n\n");
-    printf("ERROR: CSR MHPMCOUNTER[3] not 0x0!\n\n");
+    printf("ERROR: CSR MHPMCOUNTER[3..31] not 0x0!\n\n");
     ++err_cnt;
   }
 
@@ -360,25 +352,14 @@ int main(int argc, char *argv[])
   /////////////////////////////////////////////////////////////////////////////
   // Print a summary to stdout
   printf("\nCSR PoR Test\n");
-  //printf("\tfflags        = 0x%0x\n", fflags_rval);
-  //printf("\tfrm           = 0x%0x\n", frm_rval);
-  //printf("\tfcsr          = 0x%0x\n", fcsr_rval);
-  //printf("\tlpstart0      = 0x%0x\n", lpstart0_rval);
-  //printf("\tlpend0        = 0x%0x\n", lpend0_rval);
-  //printf("\tlpcount0      = 0x%0x\n", lpcount0_rval);
-  //printf("\tlpstart1      = 0x%0x\n", lpstart1_rval);
-  //printf("\tlpend1        = 0x%0x\n", lpend1_rval);
-  //printf("\tlpcount1      = 0x%0x\n", lpcount1_rval);
-  //printf("\tprivlv        = 0x%0x\n", privlv_rval);
-  //printf("\tuhartid       = 0x%0x\n", uhartid_rval);
   printf("\tmstatus       = 0x%0x\n", mstatus_rval);
   printf("\tmisa          = 0x%0x\n", misa_rval);
   printf("\tmie           = 0x%0x\n", mie_rval);
   printf("\tmtvec         = 0x%0x\n", mtvec_rval);
-  //printf("\tmcounteren    = 0x%0x\n", mcounteren_rval);
+  printf("\tmcounteren    = 0x%0x\n", mcounteren_rval);
   printf("\tmcountinhibit = 0x%0x\n", mcountinhibit_rval);
   printf("\tmphmevent3    = 0x%0x\n", mphmevent_rval[3]);
-  //printf("\tmphmevent31   = 0x%0x\n", mphmevent_rval[31]);
+  printf("\tmphmevent31   = 0x%0x\n", mphmevent_rval[31]);
   printf("\tmscratch      = 0x%0x\n", mscratch_rval);
   printf("\tmepc          = 0x%0x\n", mepc_rval);
   printf("\tmcause        = 0x%0x\n", mcause_rval);
@@ -389,18 +370,14 @@ int main(int argc, char *argv[])
   printf("\ttdata2        = 0x%0x\n", tdata2_rval);
   printf("\ttdata3        = 0x%0x\n", tdata3_rval);
   printf("\ttinfo         = 0x%0x\n", tinfo_rval);
-  //printf("\tdcsr          = 0x%0x\n", dcsr_rval);
-  //printf("\tdpc           = 0x%0x\n", dpc_rval);
-  //printf("\tdscratch0     = 0x%0x\n", dscratch0_rval);
-  //printf("\tdscratch1     = 0x%0x\n", dscratch1_rval);
   printf("\tmcycle        = 0x%0x\n", mcycle_rval);
   printf("\tminstret      = 0x%0x\n", minstret_rval);
   printf("\tmhpmcounter3  = 0x%0x\n", mhpmcounter_rval[3]);
-  //printf("\tmhpmcounter31 = 0x%0x\n", mhpmcounter_rval[31]);
+  printf("\tmhpmcounter31 = 0x%0x\n", mhpmcounter_rval[31]);
   printf("\tmcycleh       = 0x%0x\n", mcycleh_rval);
   printf("\tminstreth     = 0x%0x\n", minstreth_rval);
   printf("\tmhpmcounterh3 = 0x%0x\n", mhpmcounterh[3]);
-  //printf("\tmhpmcounterh31= 0x%0x\n", mhpmcounterh[31]);
+  printf("\tmhpmcounterh31= 0x%0x\n", mhpmcounterh[31]);
   printf("\tmvendorid     = 0x%0x\n", mvendorid_rval);
   printf("\tmmarchid      = 0x%0x\n", marchid_rval);
   printf("\tmimpid        = 0x%0x\n", mimpid_rval);
