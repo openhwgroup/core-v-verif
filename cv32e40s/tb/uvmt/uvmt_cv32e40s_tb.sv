@@ -721,7 +721,8 @@ module uvmt_cv32e40s_tb;
       .CLIC          (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC),
       .CLIC_ID_WIDTH (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_ID_WIDTH)
     ) rvfi_assert_i (
-      .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
+      .rvfi_if          (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
+      .support_if       (dut_wrap.cv32e40s_wrapper_i.support_logic_module_o_if.slave_mp),
       .writebuf_ready_o (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.ready_o),
       .writebuf_valid_i (dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.write_buffer_i.valid_i),
       .*
@@ -1192,6 +1193,7 @@ module uvmt_cv32e40s_tb;
 
         .fetch_enable        (core_i.fetch_enable),
         .debug_req_i         (core_i.debug_req_i),
+        .irq_ack             (core_i.irq_ack),
 
         .wb_valid (core_i.wb_stage_i.wb_valid_o),
         .wb_tselect (core_i.cs_registers_i.tselect_rdata),
