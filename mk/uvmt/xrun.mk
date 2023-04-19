@@ -180,7 +180,7 @@ XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 XRUN_USER_COMPILE_ARGS += +define+UVM
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 	XRUN_PLUSARGS          += +USE_ISS
-	XRUN_FILE_LIST_IDV     ?= $(DV_UVMT_PATH)/imperas_dv.flat
+	XRUN_FILE_LIST_IDV     ?= $(DV_UVMT_PATH)/imperas_dv.flist
 	XRUN_USER_COMPILE_ARGS += +define+USE_IMPERASDV
 	XRUN_USER_COMPILE_ARGS += +define+USE_ISS
 else
