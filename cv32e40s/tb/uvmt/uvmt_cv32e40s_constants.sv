@@ -64,6 +64,8 @@
       // Sat from the include file
    `elsif CLIC_EN
       parameter int CORE_PARAM_CLIC = 1;
+   `elsif CLIC_DIS
+      parameter int CORE_PARAM_CLIC = 0;
    `else
       parameter int CORE_PARAM_CLIC = 0;
    `endif
