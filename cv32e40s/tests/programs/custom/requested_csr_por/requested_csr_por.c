@@ -41,7 +41,6 @@ int main(int argc, char *argv[])
   uint32_t mcounteren_rval, mcountinhibit_rval, mphmevent_rval[32];
   uint32_t mscratch_rval, mepc_rval, mcause_rval, mtval_rval, mip_rval;
   uint32_t tselect_rval, tdata1_rval, tdata2_rval, tdata3_rval, tinfo_rval;
-  uint32_t dcsr_rval, dpc_rval, dscratch0_rval, dscratch1_rval;
   uint32_t mcycle_rval, minstret_rval, mhpmcounter_rval[32], mcycleh_rval;
   uint32_t minstreth_rval, mhpmcounterh[32];
   uint32_t mvendorid_rval, marchid_rval, mimpid_rval, mhartid_rval;
@@ -144,31 +143,6 @@ int main(int argc, char *argv[])
     ++err_cnt;
   }
 
-  // IMPERAS - Debug mode enabled
-  //__asm__ volatile("csrr %0, 0x7B0" : "=r"(dcsr_rval));      // only accessible in Debug mode
-  //__asm__ volatile("csrr %0, 0x7B1" : "=r"(dpc_rval));       // only accessible in Debug mode
-  //__asm__ volatile("csrr %0, 0x7B2" : "=r"(dscratch0_rval)); // only accessible in Debug mode
-  //__asm__ volatile("csrr %0, 0x7B3" : "=r"(dscratch1_rval)); // only accessible in Debug mode
-
-  //if (dcsr_rval != 0x0) {
-  //  printf("ERROR: CSR DCSR not 0x0!\n\n");
-  //  ++err_cnt;
-  //}
-
-  //if (dpc_rval != 0x0) {
-  //  printf("ERROR: CSR DPC not 0x0!\n\n");
-  //  ++err_cnt;
-  //}
-
-  //if (dscratch0_rval != 0x0) {
-  //  printf("ERROR: CSR DSCRATCH0 not 0x0!\n\n");
-  //  ++err_cnt;
-  //}
-
-  //if (dscratch1_rval != 0x0) {
-  //  printf("ERROR: CSR DSCRATCH1 not 0x0!\n\n");
-  //  ++err_cnt;
-  //}
 
   __asm__ volatile("csrr %0, 0xB00" : "=r"(mcycle_rval));         // CSR unimplemented in the model
   __asm__ volatile("csrr %0, 0xB02" : "=r"(minstret_rval));       // CSR unimplmented in the model
@@ -352,36 +326,36 @@ int main(int argc, char *argv[])
   /////////////////////////////////////////////////////////////////////////////
   // Print a summary to stdout
   printf("\nCSR PoR Test\n");
-  printf("\tmstatus       = 0x%0x\n", mstatus_rval);
-  printf("\tmisa          = 0x%0x\n", misa_rval);
-  printf("\tmie           = 0x%0x\n", mie_rval);
-  printf("\tmtvec         = 0x%0x\n", mtvec_rval);
-  printf("\tmcounteren    = 0x%0x\n", mcounteren_rval);
-  printf("\tmcountinhibit = 0x%0x\n", mcountinhibit_rval);
-  printf("\tmphmevent3    = 0x%0x\n", mphmevent_rval[3]);
-  printf("\tmphmevent31   = 0x%0x\n", mphmevent_rval[31]);
-  printf("\tmscratch      = 0x%0x\n", mscratch_rval);
-  printf("\tmepc          = 0x%0x\n", mepc_rval);
-  printf("\tmcause        = 0x%0x\n", mcause_rval);
-  printf("\tmtval         = 0x%0x\n", mtval_rval);
-  printf("\tmip           = 0x%0x\n", mip_rval);
-  printf("\ttselect       = 0x%0x\n", tselect_rval);
-  printf("\ttdata1        = 0x%0x\n", tdata1_rval);
-  printf("\ttdata2        = 0x%0x\n", tdata2_rval);
-  printf("\ttdata3        = 0x%0x\n", tdata3_rval);
-  printf("\ttinfo         = 0x%0x\n", tinfo_rval);
-  printf("\tmcycle        = 0x%0x\n", mcycle_rval);
-  printf("\tminstret      = 0x%0x\n", minstret_rval);
-  printf("\tmhpmcounter3  = 0x%0x\n", mhpmcounter_rval[3]);
-  printf("\tmhpmcounter31 = 0x%0x\n", mhpmcounter_rval[31]);
-  printf("\tmcycleh       = 0x%0x\n", mcycleh_rval);
-  printf("\tminstreth     = 0x%0x\n", minstreth_rval);
-  printf("\tmhpmcounterh3 = 0x%0x\n", mhpmcounterh[3]);
-  printf("\tmhpmcounterh31= 0x%0x\n", mhpmcounterh[31]);
-  printf("\tmvendorid     = 0x%0x\n", mvendorid_rval);
-  printf("\tmmarchid      = 0x%0x\n", marchid_rval);
-  printf("\tmimpid        = 0x%0x\n", mimpid_rval);
-  printf("\tmhartid       = 0x%0x\n", mhartid_rval);
+  printf("\tmstatus       = 0x%0lx\n", mstatus_rval);
+  printf("\tmisa          = 0x%0lx\n", misa_rval);
+  printf("\tmie           = 0x%0lx\n", mie_rval);
+  printf("\tmtvec         = 0x%0lx\n", mtvec_rval);
+  printf("\tmcounteren    = 0x%0lx\n", mcounteren_rval);
+  printf("\tmcountinhibit = 0x%0lx\n", mcountinhibit_rval);
+  printf("\tmphmevent3    = 0x%0lx\n", mphmevent_rval[3]);
+  printf("\tmphmevent31   = 0x%0lx\n", mphmevent_rval[31]);
+  printf("\tmscratch      = 0x%0lx\n", mscratch_rval);
+  printf("\tmepc          = 0x%0lx\n", mepc_rval);
+  printf("\tmcause        = 0x%0lx\n", mcause_rval);
+  printf("\tmtval         = 0x%0lx\n", mtval_rval);
+  printf("\tmip           = 0x%0lx\n", mip_rval);
+  printf("\ttselect       = 0x%0lx\n", tselect_rval);
+  printf("\ttdata1        = 0x%0lx\n", tdata1_rval);
+  printf("\ttdata2        = 0x%0lx\n", tdata2_rval);
+  printf("\ttdata3        = 0x%0lx\n", tdata3_rval);
+  printf("\ttinfo         = 0x%0lx\n", tinfo_rval);
+  printf("\tmcycle        = 0x%0lx\n", mcycle_rval);
+  printf("\tminstret      = 0x%0lx\n", minstret_rval);
+  printf("\tmhpmcounter3  = 0x%0lx\n", mhpmcounter_rval[3]);
+  printf("\tmhpmcounter31 = 0x%0lx\n", mhpmcounter_rval[31]);
+  printf("\tmcycleh       = 0x%0lx\n", mcycleh_rval);
+  printf("\tminstreth     = 0x%0lx\n", minstreth_rval);
+  printf("\tmhpmcounterh3 = 0x%0lx\n", mhpmcounterh[3]);
+  printf("\tmhpmcounterh31= 0x%0lx\n", mhpmcounterh[31]);
+  printf("\tmvendorid     = 0x%0lx\n", mvendorid_rval);
+  printf("\tmmarchid      = 0x%0lx\n", marchid_rval);
+  printf("\tmimpid        = 0x%0lx\n", mimpid_rval);
+  printf("\tmhartid       = 0x%0lx\n", mhartid_rval);
   printf("\n\n");
 
   if (!err_cnt) {
