@@ -18,6 +18,7 @@
 `ifndef __UVMA_RVFI_CONSTANTS_SV__
 `define __UVMA_RVFI_CONSTANTS_SV__
 
+
 // RVFI field widths
 localparam ORDER_WL         = 64;
 localparam MODE_WL          = 2;
@@ -41,8 +42,18 @@ localparam TRAP_CAUSE_WL         = 6;
 localparam TRAP_DBG_CAUSE_LSB    = 9;
 localparam TRAP_DBG_CAUSE_WL     = 3;
 
+// Lengths & Sizes
 localparam DEFAULT_ILEN     = 32;
 localparam DEFAULT_XLEN     = 32;
 localparam DEFAULT_NRET     = 1;
+
+// RISC-V Constants
+parameter logic[ 2:0]  DBG_CAUSE_TRIGGER               =  3'h 2;
+parameter logic[ 1:0]  PRIV_LVL_M                      =  2'b 11;
+parameter logic[ 1:0]  PRIV_LVL_U                      =  2'b 00;
+parameter logic[10:0]  EXC_CAUSE_INSTR_FAULT           = 11'h 1;
+parameter logic[10:0]  EXC_CAUSE_INSTR_INTEGRITY_FAULT = 11'h 19;
+parameter logic[10:0]  EXC_CAUSE_INSTR_BUS_FAULT       = 11'h 18;
+
 
 `endif // __UVMA_RVFI_CONSTANTS_SV__

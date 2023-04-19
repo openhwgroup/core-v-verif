@@ -25,7 +25,7 @@
 class uvma_fencei_cntxt_c extends uvm_object;
 
    // Handle to fetch interface
-   virtual uvma_fencei_if  fencei_vif;
+   virtual uvma_fencei_if_t  fencei_vif;
 
    // Events
    uvm_event sample_cfg_e;

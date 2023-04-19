@@ -8,3 +8,4 @@ plusargs: >
     +obi_memory_instr_one_shot_err_enabled
     +gen_irq_noise
     +gen_random_debug
+    +nmi_timeout_instr=1000

@@ -38,7 +38,7 @@ task uvme_cv32e40s_random_debug_reset_c::body();
     fork
         uvma_debug_seq_item_c debug_req;
         `uvm_do_on_with(debug_req, p_sequencer.debug_sequencer, {
-                active_cycles == 50;
+                active_cycles == cfg.fetch_toggle_initial_delay + 50;
         });
     join
 endtask : body

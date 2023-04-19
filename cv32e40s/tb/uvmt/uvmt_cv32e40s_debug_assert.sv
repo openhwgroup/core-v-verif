@@ -20,22 +20,22 @@ module uvmt_cv32e40s_debug_assert
   import uvma_rvfi_pkg::*;
   import cv32e40s_pkg::*;
   (
-      uvma_rvfi_instr_if rvfi,
-      uvma_rvfi_csr_if csr_dcsr,
-      uvma_rvfi_csr_if csr_dpc,
-      uvma_rvfi_csr_if csr_dscratch0,
-      uvma_rvfi_csr_if csr_dscratch1,
-      uvma_rvfi_csr_if csr_mcause,
-      uvma_rvfi_csr_if csr_mepc,
-      uvma_rvfi_csr_if csr_mstatus,
-      uvma_rvfi_csr_if csr_mtvec,
+      uvma_rvfi_instr_if_t rvfi,
+      uvma_rvfi_csr_if_t csr_dcsr,
+      uvma_rvfi_csr_if_t csr_dpc,
+      uvma_rvfi_csr_if_t csr_dscratch0,
+      uvma_rvfi_csr_if_t csr_dscratch1,
+      uvma_rvfi_csr_if_t csr_mcause,
+      uvma_rvfi_csr_if_t csr_mepc,
+      uvma_rvfi_csr_if_t csr_mstatus,
+      uvma_rvfi_csr_if_t csr_mtvec,
       //TODO:MT tdatas should not be necessary when trigger logic is ready
-      uvma_rvfi_csr_if csr_tdata1,
-      uvma_rvfi_csr_if csr_tdata2,
-      uvma_obi_memory_if instr_obi,
-      uvma_obi_memory_if data_obi,
-      uvmt_cv32e40s_debug_cov_assert_if cov_assert_if,
-      uvmt_cv32e40s_support_logic_for_assert_coverage_modules_if.slave_mp support_if
+      uvma_rvfi_csr_if_t csr_tdata1,
+      uvma_rvfi_csr_if_t csr_tdata2,
+      uvma_obi_memory_if_t instr_obi,
+      uvma_obi_memory_if_t data_obi,
+      uvmt_cv32e40s_debug_cov_assert_if_t cov_assert_if,
+      uvmt_cv32e40s_support_logic_module_o_if_t.slave_mp support_if
   );
 
   // ---------------------------------------------------------------------------
@@ -185,13 +185,7 @@ module uvmt_cv32e40s_debug_assert
     property p_dpc_dbg_trigger;
         $rose(support_if.first_debug_ins) && rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_TRIGGER
         |->
-        csr_dpc.rvfi_csr_rdata == dpc_dbg_trg
-        or
-        // clic can hit an exception in it's pointer fetch stage without reporting to rvfi.
-        (rvfi.rvfi_intr.exception &&
-        (csr_mtvec.rvfi_csr_rdata[1:0] == 3) &&
-        csr_mcause.rvfi_csr_rdata[MCAUSE_MINHV_POS] &&
-        csr_dpc.rvfi_csr_rdata == mtvec_addr);
+        csr_dpc.rvfi_csr_rdata == dpc_dbg_trg;
     endproperty
 
     a_dpc_dbg_trigger: assert property(p_dpc_dbg_trigger)
@@ -318,14 +312,7 @@ module uvmt_cv32e40s_debug_assert
         |->
         (rvfi.rvfi_dbg == debug_cause_pri)
         or
-        (support_if.recorded_dbg_req && (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ))
-        or
-        // clic can hit an exception in it's pointer fetch stage without reporting to rvfi.
-        ((rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_TRIGGER) &&
-        rvfi.rvfi_intr.exception &&
-        (csr_mtvec.rvfi_csr_rdata[1:0] == 3) &&
-        csr_mcause.rvfi_csr_rdata[MCAUSE_MINHV_POS] &&
-        csr_dpc.rvfi_csr_rdata == mtvec_addr);
+        (support_if.recorded_dbg_req && (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ));
     endproperty
 
     a_dcsr_cause: assert property(p_dcsr_cause)
@@ -749,7 +736,7 @@ module uvmt_cv32e40s_debug_assert
         ##1 rvfi.rvfi_valid[->1]
         ##0 !rvfi.rvfi_dbg_mode
         |->
-        !rvfi.rvfi_intr.intr;
+        !rvfi.rvfi_intr.intr || (rvfi.rvfi_intr.intr && rvfi.rvfi_trap.clicptr);
     endproperty
 
     a_step_no_trap : assert property(p_step_no_trap)

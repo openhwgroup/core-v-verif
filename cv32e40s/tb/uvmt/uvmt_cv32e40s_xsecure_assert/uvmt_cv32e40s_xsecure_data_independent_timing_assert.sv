@@ -26,8 +26,8 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
     parameter int       SECURE   = 1
   )
   (
-   uvma_rvfi_instr_if rvfi_if,
-   uvma_rvfi_csr_if rvfi_cpuctrl,
+   uvma_rvfi_instr_if_t rvfi_if,
+   uvma_rvfi_csr_if_t rvfi_cpuctrl,
    input rst_ni,
    input clk_i,
 
@@ -76,6 +76,7 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
     //There is therefor only 1 empty cycle after a branch instruction.
 
   sequence seq_no_mem_instr_for_cycles(x);
+    //(!rvfi_if.is_mem_act)[*x];
     (!(((|rvfi_if.rvfi_mem_rmask) || (|rvfi_if.rvfi_mem_wmask)) && rvfi_if.rvfi_valid))[*x];
   endsequence
 
