@@ -32,7 +32,7 @@ ifeq ($(OS_IS_UBUNTU),Ubuntu)
 endif
 
 # Executables
-XRUN              = $(CV_SIM_PREFIX) xrun
+XRUN              = $(CV_SIM_PREFIX) $(CV_TOOL_PREFIX) xrun
 SIMVISION         = $(CV_TOOL_PREFIX) simvision
 INDAGO            = $(CV_TOOL_PREFIX) indago
 IMC               = $(CV_SIM_PREFIX) imc
