@@ -91,7 +91,7 @@ typedef struct packed {
 /**
  * PMP matching status
  */
-typedef struct {
+typedef struct packed {
   logic         is_access_allowed;
   logic         is_access_allowed_no_match;
   logic         is_any_locked;
@@ -102,6 +102,24 @@ typedef struct {
   access_rsn_t  val_access_allowed_reason;
   logic[$clog2(PMP_MAX_REGIONS)-1:0]  val_index;
 } match_status_t;
+
+
+/**
+ * PMA Status
+ */
+typedef struct packed {
+  logic                        allow;
+  logic                        main;
+  logic                        bufferable;
+  logic                        cacheable;
+  logic                        integrity;
+  logic                        override_dm;
+  logic [PMA_MAX_REGIONS-1:0]  match_list;
+  logic [31:0]                 match_idx;
+  logic                        have_match;
+  logic                        accesses_dmregion;
+  logic                        accesses_jvt;
+} pma_status_t;
 
 
 `endif // __UVMT_CV32E40S_TDEFS_SV__

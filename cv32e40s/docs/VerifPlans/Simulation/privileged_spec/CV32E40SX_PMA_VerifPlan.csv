@@ -9,13 +9,11 @@ A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.mpu_if_s
 
 A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.mpu_lsu_sva.genblk2.a_pma_match_index
 
-COV: TODO","TODO tests must be added to regression lists.
+COV: dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pma_cov_instr_i.cg_inst.cp_numregions","TODO tests must be added to regression lists.
 
 TODO directed tests has parts to uncomment if RTL is ready.
 
-TODO everything ""atomics"" must be changed to ""integrity"" for 40s.
-
-TODO missing cover."
+TODO everything ""atomics"" must be changed to ""integrity"" for 40s."
 ,,Configuration to be tested,0 Regions - Deconfigured,"Test configuration 1, aims to verify the following:
 1. Default parameters for entire memory range",Any/All,"ENV capability, not specific test",N/A,N/A,"No cover, but fascilitates other covers below.
 
@@ -121,22 +119,17 @@ R[15]: 0x0000_0000-0xFFFF_FFFF (MBCA = 1111)","Test configuration 7, aims to ver
 
 Address map may be modified to better suit actual implementations, but R[15] must be defined to min/max possible address range. Remaining regions shall have 0 length.
 ",Any/All,"ENV capability, not specific test",N/A,N/A,
-,,Coverpoints,Instruction fetch coverpoint,Region index or default IO unmapped region crossed with passing instruction fetch,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: TODO,TODO missing cover
-,,,Load instruction coverpoint,Region index or default IO unmapped region crossed with passing load instruction,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: TODO,TODO missing cover
-,,,Store instruction coverpoint,Region index or default IO unmapped region crossed with passing store instruction,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: TODO,TODO missing cover
-,,,Atomic instruction coverpoint,Region index or default IO unmapped region crossed with atomic operation,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: TODO,"TODO N/A for 40s, but needs to be updated with ""integrity""."
-,,,Load alignment error coverpoint,Region index or default IO unmapped region crossed with load alignment error,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: TODO,TODO missing cover
-,,,Store alignment error coverpoint,Region index or default IO unmapped region crossed with store alignment error,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: TODO,TODO missing cover
-,,,Atomic load-reserved unallowed error coverpoint,Region index or default IO unmapped region crossed with atomic load-reserved unallowed error,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: TODO,"TODO N/A for 40s, but needs to be updated with ""integrity""."
-,,,Atomic store-conditional unallowed error coverpoint,Region index or default IO unmapped region crossed with atomic store-conditional unallowed error,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: TODO,"TODO N/A for 40s, but needs to be updated with ""integrity""."
-Risc-V Priv. spec,PMA Readability,PMA readable by SW,Design must support SW readback of attributes,"Read back set PMA parameters and ensure correspondence with configured parameters.
+,,Coverpoints,Instruction fetch coverpoint,Region index or default IO unmapped region crossed with passing instruction fetch,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: *.pma_cov_data_i.cover_item_covergroup_cg_mpu_inst_mpu_cg_cross_x_multimatch_aligned_loadstoreexec_allow_*,"Note: These could also have used RVFI instead.
 
-Read back and verify PMA parameters through MMRAM interface.",Self Checking Test,Directed Self-Checking,Testcase,DTC: TODO,TODO missing directed test?
-,,,,,Check against RM,Constrained-Random,Functional Coverage,"RTC: TODO
-
-COV: TODO","TODO missing random test?
-
-TODO missing cover."
+Note: Not very feasible to match on every single cfg index, because some are overshadowed by overlapping regions and to model this is expensive."
+,,,Load instruction coverpoint,Region index or default IO unmapped region crossed with passing load instruction,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: *.pma_cov_data_i.cover_item_covergroup_cg_mpu_inst_mpu_cg_cross_x_multimatch_aligned_loadstoreexec_allow_*,
+,,,Store instruction coverpoint,Region index or default IO unmapped region crossed with passing store instruction,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: *.pma_cov_data_i.cover_item_covergroup_cg_mpu_inst_mpu_cg_cross_x_multimatch_aligned_loadstoreexec_allow_*,
+,,,Atomic instruction coverpoint,Region index or default IO unmapped region crossed with atomic operation,N/A,N/A,N/A,,
+,,,Load alignment error coverpoint,Region index or default IO unmapped region crossed with load alignment error,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: *.pma_cov_data_i.cover_item_covergroup_cg_mpu_inst_mpu_cg_cross_x_multimatch_aligned_loadstoreexec_allow_*,
+,,,Store alignment error coverpoint,Region index or default IO unmapped region crossed with store alignment error,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: *.pma_cov_data_i.cover_item_covergroup_cg_mpu_inst_mpu_cg_cross_x_multimatch_aligned_loadstoreexec_allow_*,
+,,,Atomic load-reserved unallowed error coverpoint,Region index or default IO unmapped region crossed with atomic load-reserved unallowed error,N/A,N/A,N/A,,
+,,,Atomic store-conditional unallowed error coverpoint,Region index or default IO unmapped region crossed with atomic store-conditional unallowed error,N/A,N/A,N/A,,
+Risc-V Priv. spec,PMA Readability,PMA readable by SW,Design must support SW readback of attributes,"N/A. Can be SW-readable via a C-header, or is otherwise the responsibility of integration- or system-level testing.",N/A,N/A,N/A,,
 UM 0e447ac,Code Execution,Code Execution only from main memory,"Code execution is not allowed from IO region, any attempts to do so should result in an instruction access fault (exception code 1)","Verify that attempted code execution from an address located in a PMA region classified as IO always yields an instruction access fault (code 1). Accesses from Memory should never yield this access fault as no eXecutable flag exists, only Memory/IO classification
 
 The following CSRs must be verified: Verify mcause, mepc, mtval
@@ -145,7 +138,7 @@ E.g. execute a JMP instruction to an area defined as IO (and/or unconfigured PMA
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"RTC: cv32e40s/tests/programs/corev-dv/corev_rand_pma_test/
 
 COV: uvm_pkg.uvm_test_top.env.pma_agent.region_cov_model*.pma_access_covg.cross_pma",
-,,Instruction fetch violation coverpoints,Instruction group type for failing instruction fetch violations,Instruction group type cover from ISACOV for each violated PMA instruction fetch,Other,"ENV capability, not specific test",Functional Coverage,COV: TODO,TODO missing cover.
+,,Instruction fetch violation coverpoints,Instruction group type for failing instruction fetch violations,Instruction group type cover from ISACOV for each violated PMA instruction fetch,Other,"ENV capability, not specific test",Functional Coverage,COV: TODO,TODO missing cover. (Problem: Depends on ISACOV updates.)
 UM 0e447ac,Access match,Non-Overlapping PMA Regions,"A match should always be inside its matching region, 
 Lower_bound[region] <= addr[addr_max:2] < Upper_bound[region]","Assert that match[region] always implies that the following holds: 
 lower[region] & 2'b00 <= addr[31:0] < upper[region] 2'b00",Assertion Check,"ENV capability, not specific test",Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.mpu_if_sva.genblk2.a_pma_match_bounds
@@ -156,16 +149,18 @@ A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.m
 A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.mpu_lsu_sva.genblk2.a_pma_match_lowest",
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"RTC: cv32e40s/tests/programs/corev-dv/corev_rand_pma_test/
 
-COV: TODO",TODO missing cover.
-,,Overlapping PMA Regions,Any access matching multiple regions should attain the attributes of the lowest numbered matching region,Perform arbitrary accesses and verify that addr[lowest byte] is always interpreted with the attributes of the lowest numbered matching region,Check against RM,Directed Non-Self-Checking,Testcase,DTC: TODO,TODO missing directed test?
+COV: *pma_cov_*_i.cover_item_covergroup_cg_inst_cg_inst_coverpoint_cp_multimatch*
+
+COV: *pma_cov_*_i.cover_item_covergroup_cg_inst_cg_inst_coverpoint_cp_matchregion*",
+,,Overlapping PMA Regions,Any access matching multiple regions should attain the attributes of the lowest numbered matching region,"Perform arbitrary accesses and verify that addr[lowest byte] is always interpreted with the attributes of the lowest numbered matching region.
+
+Coverage: Multiple regions matching at once.",Check against RM,Directed Non-Self-Checking,Testcase,DTC: TODO,TODO missing directed test?
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"RTC: cv32e40s/tests/programs/corev-dv/corev_rand_pma_test/
 
-COV: TODO",TODO Missing cover.
-,,,,,Assertion Check,"ENV capability, not specific test",Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.mpu_if_sva.genblk2.a_pma_match_lowest
+COV: *pma_cov_*_i.cover_item_covergroup_cg_inst_cg_inst_coverpoint_cp_multimatch*",
+,,,,,Assertion Check,"ENV capability, not specific test",Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.mpu_if_sva.genblk2.a_pma_match_lowest
 
-A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.mpu_lsu_sva.genblk2.a_pma_match_lowest
-
-COV: TODO",TODO Missing cover.
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.mpu_lsu_sva.genblk2.a_pma_match_lowest",
 ,,Non-Matching Accesses,"PMA_NUM_REGIONS==0: 
 Accesses not matching attribute regions should be treated as: 
 Memory
@@ -179,9 +174,7 @@ Self checking test should attempt the following:
 - Instruction fetch and execute: should pass",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/pma_0reg/,
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"RTC: TODO
 
-COV: TODO","TODO is the random stream run without pma regions?
-
-TODO missing cover."
+COV: *pma_cov_*_i.cover_item_covergroup_cg_inst_cg_inst_cross_x_multimatch_aligned_loadstoreexec_*",TODO is the random stream run without pma regions?
 ,,,"PMA_NUM_REGIONS>0
 Accesses not matching attribute regions should be treated as: 
 IO
@@ -195,7 +188,7 @@ Self checking test should attempt the following:
 - Instruction fetch and execute: should fail",Self Checking Test,Directed Self-Checking,Testcase,DTC: TODO,TODO missing directed test?
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"RTC: cv32e40s/tests/programs/corev-dv/corev_rand_pma_test/
 
-COV: TODO",TODO missing cover.
+COV: *pma_cov_*_i.cover_item_covergroup_cg_inst_cg_inst_cross_x_multimatch_aligned_loadstoreexec_*",
 UM 0e447ac,OBI transfer flags,InstructionFetches,"Bufferable flag effects - For any instruction fetch marked bufferable, the corresponding OBI transfer  instr_memtype[0] signal should be set to match the bufferable flag.","Ensure that instr_memtype[0] is set to 1 when an instruction fetch attempt is performed with the bufferable flag set to 1. (Which is never, because ""Accesses to regions marked as bufferable (bufferable=1) will result in the OBI mem_type[0] bit being set, except if the access was an instruction fetch [...]"".)",Assertion Check,"ENV capability, not specific test",Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.mpu_if_sva.a_pma_obi_bufoff
 
 A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.mpu_if_sva.genblk4.a_pma_obi_bufon_unreachable
@@ -218,7 +211,7 @@ COV: uvm_pkg.uvm_test_top.env.pma_agent.region_cov_model*.pma_access_covg",
 COV: uvm_pkg.uvm_test_top.env.pma_agent.region_cov_model*.pma_access_covg",
 ,,,Instruction fetch attempts to PMA restricted regions should cause instr_req_o to be deasserted.,"Ensure that PMA-violating instruction fetch attempts does not assert the instr_req_o signal by attempting execution of instructions from allowed and restricted areas of memory, checking that instr_req_o remains deasserted when restricted areas are accessed",Assertion Check,"ENV capability, not specific test",Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pma_assert_instr_i.a_req_prohibited
 
-COV: TODO","TODO missing cover. ""allowed and restricted""."
+COV: *.pma_cov_instr_i.cover_item_covergroup_cg_inst_cg_inst_cross_x_loadstoreexec_allow_*",
 ,,DataFetches,Bufferable flag effects - data_memtype[0] should match the bufferable flag.,Ensure that data_memtype[0] is set to 1 when a data fetch attempt is performed with the bufferable flag set to 1,Assertion Check,"ENV capability, not specific test",Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.mpu_lsu_sva.genblk4.a_pma_obi_bufon
 
 A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pma_assert_data_i.a_memtype_bufferable
@@ -237,7 +230,7 @@ COV: uvm_pkg.uvm_test_top.env.pma_agent.region_cov_model*.pma_access_covg",
 COV: uvm_pkg.uvm_test_top.env.pma_agent.region_cov_model*.pma_access_covg",
 ,,,Data fetch attempts to PMA restricted regions should cause data_req_o to be deasserted.,Ensure that PMA violating data fetch attempts does not assert the data_req_o signal,Assertion Check,"ENV capability, not specific test",Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pma_assert_data_i.a_req_prohibited
 
-COV: TODO",TODO missing cover.
+COV: *.pma_cov_data_i.cover_item_covergroup_cg_inst_cg_inst_cross_x_loadstoreexec_allow_*",
 UM 0e447ac,Non-Naturally Aligned Accesses,Non-naturally aligned data accesses shall only occur for Main memory accesses.,"Non-naturally aligned load access attempts to I/O shall
  cause a precise load access fault (exception code 5).","Attempt arbitrary non-naturally aligned load accesses to I/O regions specified by PMA and ensure that these accesses triggers precise load access fault exceptions (code 5). Ensure that non-aligned main memory accesses to permitted regions do not generate these exceptions. 
 
@@ -250,7 +243,7 @@ lh from addresses in IO space with and_reduce(addr_lsb[1:0]) = 1
 ",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/pma/,TODO test is commented out
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"RTC: cv32e40s/tests/programs/corev-dv/corev_rand_pma_test/
 
-COV: TODO",TODO missing cover.
+COV: *.pma_cov_data_i.cover_item_covergroup_cg_inst_cg_inst_cross_x_aligned_main_loadstoreexec_*","TODO missing ""ld/lw/lh"" specific covers."
 ,,,"Non-naturally aligned store access attempts to I/O shall
  cause a precise store access fault (exception code 7).","Attempt arbitrary non-naturally aligned store accesses to I/O regions specified by PMA and ensure that these accesses triggers precise store access fault exceptions (code 7). Ensure that non-aligned main memory accesses to permitted regions do not generate these exceptions
 
@@ -262,7 +255,7 @@ sw to addresses in IO space with or_reduce(addr_lsb[1:0]) = 1
 sh to addresses in IO space with and_reduce(addr_lsb[1:0]) = 1",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/pma/,
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"RTC: cv32e40s/tests/programs/corev-dv/corev_rand_pma_test/
 
-COV: TODO",TODO missing cover.
+COV: *.pma_cov_data_i.cover_item_covergroup_cg_inst_cg_inst_cross_x_aligned_main_loadstoreexec_*","TODO missing ""sd/sw/sh"" specific covers."
 ,,Multi-memory operation instructions,"When the first memory access of a non-naturally aligned load operation fails due to PMA checks, the second memory access shall also be supressed. ","Attempt non-naturally aligned load instructions to:
 - IO
 - Boundary between IO region and memory region s.t. first access will be in IO and second access will be in main memory. 
@@ -272,7 +265,9 @@ In both cases, data_req_o should remain low for both operations.",Self Checking 
 
 RTC: cv32e40s/tests/programs/corev-dv/corev_rand_pma_test/
 
-COV: TODO",TODO missing cover.
+COV: *.pma_cov_data_i.gen_rvfi_cg.cover_item_covergroup_cg_rvfi_inst_rvfi_cg_cross_x_aligned_pmafault_loadstore_firstfail_*
+
+COV: *.pma_cov_data_i.gen_rvfi_cg.cover_item_covergroup_cg_rvfi_inst_rvfi_cg_cross_x_aligned_loadstore_boundary_bin_*",
 ,,,"If a PMA access fault occurs for any of the memory accesses in a non-naturally aligned load, the register file shall not be updated","Attempt non-naturally aligned load instructions to:
 - IO
 - Boundary between IO region and memory region s.t. first access will be in IO and second access will be in main memory. 
@@ -281,7 +276,9 @@ COV: TODO",TODO missing cover.
 In both cases, the register file should remain unchanged.",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/pma/,
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"RTC: cv32e40s/tests/programs/corev-dv/corev_rand_pma_test/
 
-COV: TODO",TODO missing cover.
+COV: *.pma_cov_data_i.gen_rvfi_cg.cover_item_covergroup_cg_rvfi_inst_rvfi_cg_cross_x_aligned_pmafault_loadstore_firstfail_*
+
+COV: *.pma_cov_data_i.gen_rvfi_cg.cover_item_covergroup_cg_rvfi_inst_rvfi_cg_cross_x_aligned_loadstore_boundary_bin_*",
 ,,,"When the first memory access of a non-naturally aligned store operation fails due to PMA checks, the second memory access shall also be supressed. ","Attempt non-naturally aligned load instructions to:
 - IO
 - Boundary between IO region and memory region s.t. first access will be in IO and second access will be in main memory. 
@@ -290,19 +287,21 @@ COV: TODO",TODO missing cover.
 In both cases, data_req_o should remain low for both operations.",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/pma/,TODO test is commented out
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"RTC: cv32e40s/tests/programs/corev-dv/corev_rand_pma_test/
 
-COV: TODO",TODO missing cover.
+COV: *.pma_cov_data_i.gen_rvfi_cg.cover_item_covergroup_cg_rvfi_inst_rvfi_cg_cross_x_aligned_pmafault_loadstore_firstfail_*
+
+COV: *.pma_cov_data_i.gen_rvfi_cg.cover_item_covergroup_cg_rvfi_inst_rvfi_cg_cross_x_aligned_loadstore_boundary_bin_*",
 UM 0e447ac,Zce Extension,Push instructions,"push, push.e, c.push, c.push.e instructions shall only occur for main memory regions, any such *push* attempts to I/O shall cause a precise load access fault (exception code 5)","Attempt *push* operations to main memory and IO, verify that all *push* attempts to IO causes a precise store access fault (code 5) and that this does not occur for main memory.",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/pma/,TODO test is commented out
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"RTC: TODO
 
-COV: TODO","TODO missing random test?
+COV: *.pma_cov_data_i.cover_item_covergroup_cg_inst_cg_inst_cross_x_loadstoreexec_main_pushpop_*","TODO missing random test?
 
-TODO missing cover."
-,,Pop instructions,"pop, popret, pop.e, popret.e, c.pop, c.popret, c.pop.e, c.popret.e shall only occur for main memory regions, any such *pop* attempts from I/O shall cause a precise load access fault (exception code 7)","Attempt *pop* operations to main memory and IO, verify that all *pop* attempts to IO causes a precise loac access fault (code 7) and that this does not occur for main memory.",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/pma/,TODO test is commented out
+Note: Cover doesn't check that it goes through WB."
+,,Pop instructions,"pop, popret, pop.e, popret.e, c.pop, c.popret, c.pop.e, c.popret.e shall only occur for main memory regions, any such *pop* attempts from I/O shall cause a precise load access fault (exception code 7)","Attempt *pop* operations to main memory and IO, verify that all *pop* attempts to IO causes a precise loac access fault (code 7) and that this does not occur for main memory.",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/pma/,TODO test is commented out.
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"RTC: TODO
 
-COV: TODO","TODO missing random test?
+COV: *.pma_cov_data_i.cover_item_covergroup_cg_inst_cg_inst_cross_x_loadstoreexec_main_pushpop_*","TODO missing random test?
 
-TODO missing cover."
+Note: Cover doesn't check that it goes through WB."
 ,,Table Jump,"Both jumps from a Zce table jump should be checked by PMA and handled as instruction fetches. 
 
 PMA failure in the first table jump should suppress the second jump - instr_fetch_o should be suppressed and no jump to the restricted address shall be performed","First jump: Testing a violating first jump (jump to the jump table) requires a custom linker script that deliberatly places the jump table in a non-executable (IO) region. A test must verify that instructions attempting to jump to the jump table location causes an instruction access fault (exception code 1) and that instr_req_o is suppressed
@@ -311,9 +310,13 @@ The second instruction fetch should be suppressed.",Self Checking Test,Directed 
 ,,,,"Second jump: Test should verify that a PMA access fault on the second jump (jump to the actual instruction address in IO region) should cause an instruction access fault (exception code 1), suppressing instr_req_o. ",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/pma/,TODO test is commented out
 ,,,,Coverpoint - Table jumps passing PMA checks crossed with region index or default unmapped  memory region,Check against RM,Constrained-Random,Functional Coverage,"RTC: TODO
 
-COV: TODO","TODO missing random test?
+COV: *.pma_cov_data_i.gen_rvfi_cg.cover_item_covergroup_cg_rvfi_inst_rvfi_cg_cross_x_pmafault_tablejump_*
 
-TODO missing cover."
+COV: *.pma_cov_data_i.gen_rvfi_cg.cover_item_covergroup_cg_rvfi_inst_rvfi_cg_cross_x_aligned_pmafault_firstfail_tablejump:_*
+
+COV: *.pma_cov_instr_i.cover_item_covergroup_cg_mpu_inst_mpu_cg_cross_x_allow_jvt_*","TODO missing random test?
+
+Note: This is not maximally comprehensive, but the modelling that would otherwise be required is disproportionately complex."
 Zce spec. proposal,,,"Instruction fetch exceptions occurring when executing an address in the jump table should lead to mepc being set to the C.TBLJ* instruction, and mtval to the address in the jump table entry",Verify that an instruction fetch exception resulting from a jump table entry leads to mepc being set to the C.TBLJ* instruction and mtval to the address in the jump table entry.,Self Checking Test,Directed Self-Checking,Testcase,DTC: TODO,TODO missing directed test?
 Risc-V Debug spec.,Debug mode,Single step PMA exceptions,"Any instruction fetch exception that occurs while single stepping, causes debug mode to be re-entered after PC is changed to the exception handler and the appropriate tval and cause registers are updated","Verify that instruction fetches to PMA IO regions fails, the appropriate CSRs and PC is updated to the appropriate values and debug mode is reentered. ",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/pma_debug/,
 ,,Program buffer PMA exceptions,Exceptions in the program buffer should cause the program buffer code to end and cmderr set to 3 (exception error),"Verify that program buffer code attempting to fetch instructions from PMA IO region fails, PC is set to dm_exception_addr_i and cmderr is set to 3 (exception error). No other registers should be changed due to this exception.",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/pma_debug/,
@@ -323,7 +326,7 @@ A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.p
 
 A: (The other cases are covered by all other testing.)
 
-COV: TODO",
+COV: *.pma_cov_instr_i.cover_item_covergroup_cg_inst_cg_inst_cross_x_dmregion_dmode_*",
 UM 0e447ac,Atomic operations,Atomic operations shall only occur for regions in which Atomic operations are allowed. (Only applies for cores with A-extension),Load-Reserved attempts to a region where atomic operations are not permitted shall cause a precise load access fault (exception code 5),"Attempt arbitrary load-reserved memory operations to regions where atomic operations are not permitted and ensure that these operations trigger precise store/AMO access fault exceptions (code 7). Ensure that these operations do not generate these exceptions when performed on supported regions.
 
 The following CSRs must be verified: Verify mcause, mepc, mtval",Self Checking Test,Directed Self-Checking,Testcase,(N/A for 40s),
@@ -334,9 +337,7 @@ The following CSRs must be verified: Verify mcause, mepc, mtval",Self Checking T
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,(N/A for 40s),
 UM 0e447ac,Fence* instructions,Fence instructions disregards distinction between memory and IO,Fence instruction shall not be impacted by PMA memory/IO attribute and execute as a conservative fence on all operations ,"Coverpoint - Fence instructions (Fence, fence.i) should not be impacted by PMA.",Check against RM,Constrained-Random,Functional Coverage,"RTC: TODO
 
-COV: TODO","TODO missing random test?
-
-TODO missing cover."
+COV: *.pma_cov_data_i.gen_rvfi_cg.cover_item_covergroup_cg_rvfi_inst_rvfi_cg_cross_x_waspmafault_wasmain_wasloadstore_fence_*",TODO missing random test?
 UM 0e447ac,WriteBuffer,Bufferable operations,Only bufferable store accesses should use the internal write buffer,Assert that write buffer remains unchanged unless store accesses carry the bufferable flag,Assertion Check,"ENV capability, not specific test",Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pma_assert_data_i.gen_writebuf.a_writebuf_bufferable
 
 A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pma_assert_data_i.gen_writebuf.gen_noregions_nobuf.a_writebuf_noregions
@@ -346,35 +347,4 @@ COV: uvm_pkg.uvm_test_top.env.pma_agent.region_cov_model*.pma_access_covg",
 ,,,,,,,,,
 ,,,,,,,,,
 ,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
- -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- END -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------,,,,,,,,,
+ -------END---------,,,,,,,,,
