@@ -50,7 +50,7 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
   localparam PC_HARDENING = 3;
 
 
-  //Verify that data independent timing is off then exiting reset mode:
+  //Verify that data independent timing is enabled when exiting reset mode:
 
   a_xsecure_dataindtiming_default_on: assert property (
     $rose(rst_ni)
