@@ -449,18 +449,18 @@ hello-world:
 
 
 ################################################################################
-# RISCOF Compliance simulation targets
-VSIM_RISCOF_COMPLIANCE_PREREQ = $(RISCOF_TEST_RUN_DIR)/dut_test.elf
+# RISCOF RISCV-ARCH-TEST DUT simulation targets
+VSIM_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/dut_test.elf
 
-vlog_riscof-compliance:
+vlog_dut_riscof_sim:
 	@echo "$(BANNER)"
-	@echo "* Running vlog in $(SIM_RISCOF_COMPLIANCE_RESULTS)"
-	@echo "* Log: $(SIM_RISCOF_COMPLIANCE_RESULTS)/vlog.log"
+	@echo "* Running vlog in $(SIM_RISCOF_ARCH_TESTS_RESULTS)"
+	@echo "* Log: $(SIM_RISCOF_ARCH_TESTS_RESULTS)/vlog.log"
 	@echo "$(BANNER)"
-	mkdir -p $(SIM_RISCOF_COMPLIANCE_RESULTS) && \
-	cd $(SIM_RISCOF_COMPLIANCE_RESULTS) && \
+	mkdir -p $(SIM_RISCOF_ARCH_TESTS_RESULTS) && \
+	cd $(SIM_RISCOF_ARCH_TESTS_RESULTS) && \
 		$(VLIB) $(VWORK)
-	cd $(SIM_RISCOF_COMPLIANCE_RESULTS) && \
+	cd $(SIM_RISCOF_ARCH_TESTS_RESULTS) && \
 		$(VLOG) \
 		    -work $(VWORK) \
 			-l vlog.log \
@@ -476,12 +476,12 @@ vlog_riscof-compliance:
 			$(TBSRC_PKG)
 
 # Target to run vopt over compiled code in $(VSIM_RESULTS)/
-vopt_riscof-compliance: vlog_riscof-compliance
+vopt_dut_riscof_sim: vlog_dut_riscof_sim
 	@echo "$(BANNER)"
-	@echo "* Running vopt in $(SIM_RISCOF_COMPLIANCE_RESULTS)"
-	@echo "* Log: $(SIM_RISCOF_COMPLIANCE_RESULTS)/vopt.log"
+	@echo "* Running vopt in $(SIM_RISCOF_ARCH_TESTS_RESULTS)"
+	@echo "* Log: $(SIM_RISCOF_ARCH_TESTS_RESULTS)/vopt.log"
 	@echo "$(BANNER)"
-	cd $(SIM_RISCOF_COMPLIANCE_RESULTS) && \
+	cd $(SIM_RISCOF_ARCH_TESTS_RESULTS) && \
 		$(VOPT) \
 			-work $(VWORK) \
 			-l vopt.log \
@@ -489,13 +489,13 @@ vopt_riscof-compliance: vlog_riscof-compliance
 			$(RTLSRC_VLOG_TB_TOP) \
 			-o $(RTLSRC_VOPT_TB_TOP)
 
-$(SIM_RISCOF_COMPLIANCE_RESULTS)/vlog.log: vlog_riscof-compliance
+$(SIM_RISCOF_ARCH_TESTS_RESULTS)/vlog.log: vlog_dut_riscof_sim
 
-$(SIM_RISCOF_COMPLIANCE_RESULTS)/vopt.log: vopt_riscof-compliance
+$(SIM_RISCOF_ARCH_TESTS_RESULTS)/vopt.log: vopt_dut_riscof_sim
 
-comp_rtl_riscof-compliance: $(CV_CORE_PKG) $(SVLIB_PKG) $(SIM_RISCOF_COMPLIANCE_RESULTS)/vlog.log $(SIM_RISCOF_COMPLIANCE_RESULTS)/vopt.log
+comp_dut_rtl_riscof_sim: $(CV_CORE_PKG) $(SVLIB_PKG) $(SIM_RISCOF_ARCH_TESTS_RESULTS)/vlog.log $(SIM_RISCOF_ARCH_TESTS_RESULTS)/vopt.log
 
-setup_riscof-compliance: clean_riscof_arch_test_suite clone_riscof_arch_test_suite comp_rtl_riscof-compliance
+setup_riscof_sim: clean_riscof_arch_test_suite clone_riscof_arch_test_suite comp_dut_rtl_riscof_sim
 
 gen_riscof_ovpsim_ic:
 	@touch $(RISCOF_TEST_RUN_DIR)/ovpsim.ic
@@ -504,13 +504,13 @@ gen_riscof_ovpsim_ic:
 	fi
 
 # Target to run RISCOF VSIM (i.e. run the simulation)
-riscof_sim_run: $(VSIM_RISCOF_COMPLIANCE_PREREQ) comp_rtl_riscof-compliance gen_riscof_ovpsim_ic
+riscof_sim_run: $(VSIM_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovpsim_ic
 	@echo "$(BANNER)"
 	@echo "* Running vsim in $(PWD)"
 	@echo "* Log: $(PWD)/vsim.log"
 	@echo "$(BANNER)"
 	cd $(RISCOF_TEST_RUN_DIR) && \
-		$(VMAP) work $(SIM_RISCOF_COMPLIANCE_RESULTS)/work
+		$(VMAP) work $(SIM_RISCOF_ARCH_TESTS_RESULTS)/work
 	cd $(RISCOF_TEST_RUN_DIR) && \
 	export IMPERAS_TOOLS=$(RISCOF_TEST_RUN_DIR)/ovpsim.ic && \
 		$(VSIM) \

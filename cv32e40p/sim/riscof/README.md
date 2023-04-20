@@ -1,4 +1,4 @@
-# CV32E40P: RISCOF Compliance Arch-Test-Suite Setup and Flow
+# CV32E40P: RISCOF Arch-Test-Suite Setup and Flow
 
 Read the Documentation for Latest Requirements at [RISCOF Documentation](https://riscof.readthedocs.io/en/stable/).
 
@@ -11,7 +11,7 @@ The riscof work directory path will be available here `riscof_work`.
 
 ## Steps:
 - `cd core-v-verif/cv32e40p/sim/riscof`
-- `make setup_riscof-compliance CFG=<cfg_name>` : RUN this step preferably only once to avoid doing git clone everytime. This step will do git clone for the compilance test suite - `riscv-arch-test` in vendor_lib/riscof/riscof_arch_test_suite directory and also do a sanity RTL compilation. `CFG` option here is to ensure relevant SIM RUN directory based on CFG is created, else `default` CFG will be selected to create directory path similar to uvmt simulations.
+- `make setup_riscof_sim CFG=<cfg_name>` : RUN this step preferably only once to avoid doing git clone everytime. This step will do git clone for the compilance test suite - `riscv-arch-test` in vendor_lib/riscof/riscof_arch_test_suite directory and also do a sanity RTL compilation. `CFG` option here is to ensure relevant SIM RUN directory based on CFG is created, else `default` CFG will be selected to create directory path similar to uvmt simulations.
 
 - `make riscof_get_testlist RISCOF_SIM=YES CFG=<cfg_name>` : This is optional step. This is basically a sanity check to validate the make scripts, flow and all riscof setup files are validated before running.
 
@@ -36,8 +36,8 @@ The riscof work directory path will be available here `riscof_work`.
 
 - signature writer for DUT is added within the uvm test uvmt_cv32e40p_riscof_firmware_test.sv. This function may be required to be updated in future.
 
-- If we just want to check RTL compilation before actual run at any time, we can use below command which is just added for sanity check as it is not needed for actual runs.
-    - `make comp_rtl_riscof-compliance` : Only Compile RTL for riscof DUT simulations
+- For subsequent rerunning of the riscof suite without doing the clone of riscv-arch-test suite again, run the below compilation command before full riscof run at any time.
+    - `make comp_dut_rtl_riscof_sim CFG=<cfg_name>` : Only Compile RTL for riscof DUT simulations and create the work dir for running simulations
 
 - This setup for CV32E40P has been validated to work for all the implemented standard ISA extentions supported by this CORE : RV32IMFCZicsr_Zifencei
 
@@ -46,4 +46,4 @@ The riscof work directory path will be available here `riscof_work`.
         - SIMULATOR = vsim
         - jobs = 8
         - Used same RISCV toolchain for both: riscv32-unknown-gcc-elf
-        - SAIL Ref model run with docker. The sail reference model plugin supports both docker and normal execution methods.
+        - SAIL Ref model run with docker. The sail reference model plugin supports both docker and normal execution methods. Currently config.ini is default set to run with docker

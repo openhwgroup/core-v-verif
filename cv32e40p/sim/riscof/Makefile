@@ -19,7 +19,7 @@
 #
 ###############################################################################
 #
-# Makefile for the CV32E40P "riscof compliance simulations". Substantially modified
+# Makefile for the CV32E40P "riscof arch-test-suite simulations". Substantially modified
 # from the original Makefile for the RI5CY testbench.
 #
 ###############################################################################

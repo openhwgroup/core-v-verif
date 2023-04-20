@@ -17,49 +17,49 @@
 #
 ###############################################################################
 #
-# This Makefile adds RISCOF COMPLIANCE ARCH-TEST-SUITE, related make variables  
-# to support running of riscof compliance suite within the core-v-verif testbench
+# This Makefile adds RISCOF RISCV-ARCH-TEST SUITE, related make variables
+# to support running of riscof's riscv-arch-test suite within the core-v-verif
+# testbench
 #
 ###############################################################################
 
-RISCOF_COMPLIANCE_TEST_SUITE_PKG   := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscof/riscof_arch_test_suite
+RISCOF_ARCH_TEST_SUITE_PKG   := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscof/riscof_arch_test_suite
 RISCOF_SIM ?= NO
 
 RISCOF_TEST_PLUSARGS ?= +signature=DUT-cv32e40p.signature
 RISCOF_TEST_RUN_DIR ?=$(SIM_CFG_RESULTS)/riscof_dut_work
-SIM_RISCOF_COMPLIANCE_RESULTS ?= $(RISCOF_TEST_RUN_DIR)
+SIM_RISCOF_ARCH_TESTS_RESULTS ?= $(RISCOF_TEST_RUN_DIR)
 
-RISCOF_COMPLIANCE_TEST_SUITE_REPO    ?= https://github.com/riscv-non-isa/riscv-arch-test.git
-RISCOF_COMPLIANCE_TEST_SUITE_BRANCH  ?= main
-RISCOF_COMPLIANCE_TEST_SUITE_HASH    ?= head
-
-
-###############################################################################
-# Generate command to clone RISCOF COMPLIANCE ARCH-TEST-SUITE
-ifeq ($(RISCOF_COMPLIANCE_TEST_SUITE_BRANCH), main)
-  RISCOF_TEST_SUITE_CLONE_CMD = git clone $(RISCOF_COMPLIANCE_TEST_SUITE_REPO) --recurse $(RISCOF_COMPLIANCE_TEST_SUITE_PKG)
-else
-  RISCOF_TEST_SUITE_CLONE_CMD = git clone -b $(RISCOF_COMPLIANCE_TEST_SUITE_BRANCH) --single-branch $(RISCOF_COMPLIANCE_TEST_SUITE_REPO) --recurse $(RISCOF_COMPLIANCE_TEST_SUITE_PKG)
-endif
-
-ifeq ($(RISCOF_COMPLIANCE_TEST_SUITE_HASH), head)
-  CLONE_RISCOF_COMPLIANCE_TEST_SUITE_CMD = $(RISCOF_TEST_SUITE_CLONE_CMD)
-else
-  CLONE_RISCOF_COMPLIANCE_TEST_SUITE_CMD = $(RISCOF_TEST_SUITE_CLONE_CMD); cd $(RISCOF_COMPLIANCE_TEST_SUITE_PKG); git checkout $(RISCOF_COMPLIANCE_TEST_SUITE_HASH)
-endif
+RISCOF_ARCH_TEST_SUITE_REPO    ?= https://github.com/riscv-non-isa/riscv-arch-test.git
+RISCOF_ARCH_TEST_SUITE_BRANCH  ?= main
+RISCOF_ARCH_TEST_SUITE_HASH    ?= head
 
 ###############################################################################
-#Clean riscof arch test suite
+# Generate command to clone RISCOF RISCV-ARCH-TEST SUITE
+ifeq ($(RISCOF_ARCH_TEST_SUITE_BRANCH), main)
+  RISCOF_TEST_SUITE_CLONE_CMD = git clone $(RISCOF_ARCH_TEST_SUITE_REPO) --recurse $(RISCOF_ARCH_TEST_SUITE_PKG)
+else
+  RISCOF_TEST_SUITE_CLONE_CMD = git clone -b $(RISCOF_ARCH_TEST_SUITE_BRANCH) --single-branch $(RISCOF_ARCH_TEST_SUITE_REPO) --recurse $(RISCOF_ARCH_TEST_SUITE_PKG)
+endif
+
+ifeq ($(RISCOF_ARCH_TEST_SUITE_HASH), head)
+  CLONE_RISCOF_ARCH_TEST_SUITE_CMD = $(RISCOF_TEST_SUITE_CLONE_CMD)
+else
+  CLONE_RISCOF_ARCH_TEST_SUITE_CMD = $(RISCOF_TEST_SUITE_CLONE_CMD); cd $(RISCOF_ARCH_TEST_SUITE_PKG); git checkout $(RISCOF_ARCH_TEST_SUITE_HASH)
+endif
+
+###############################################################################
+#Clean riscof riscv-arch-test suite
 clean_riscof_arch_test_suite:
-	rm -rf $(RISCOF_COMPLIANCE_TEST_SUITE_PKG)
+	rm -rf $(RISCOF_ARCH_TEST_SUITE_PKG)
 
 
 ###############################################################################
-#Clone the arch test suite in core-v-verif for running the tests
-clone_riscof_arch_test_suite: $(RISCOF_COMPLIANCE_TEST_SUITE_PKG)
+#Clone the riscv-arch-test suite in core-v-verif for running the tests
+clone_riscof_arch_test_suite: $(RISCOF_ARCH_TEST_SUITE_PKG)
 
-$(RISCOF_COMPLIANCE_TEST_SUITE_PKG):
-	$(CLONE_RISCOF_COMPLIANCE_TEST_SUITE_CMD)
+$(RISCOF_ARCH_TEST_SUITE_PKG):
+	$(CLONE_RISCOF_ARCH_TEST_SUITE_CMD)
 
 ###############################################################################
 #RISCOF Validate YAML Command
@@ -76,7 +76,7 @@ riscof_validate_yaml:
 ###############################################################################
 #RISCOF Get Testlist Command
 ifeq ($(call IS_YES,$(RISCOF_SIM)),YES)
-RISCOF_GET_TESTLIST_CMD = riscof testlist --config=config.ini --suite=$(RISCOF_COMPLIANCE_TEST_SUITE_PKG)/riscv-test-suite/ --env=$(RISCOF_COMPLIANCE_TEST_SUITE_PKG)/riscv-test-suite/env --work-dir=$(SIM_CFG_RESULTS)/riscof_work
+RISCOF_GET_TESTLIST_CMD = riscof testlist --config=config.ini --suite=$(RISCOF_ARCH_TEST_SUITE_PKG)/riscv-test-suite/ --env=$(RISCOF_ARCH_TEST_SUITE_PKG)/riscv-test-suite/env --work-dir=$(SIM_CFG_RESULTS)/riscof_work
 else
 RISCOF_GET_TESTLIST_CMD = echo $(RISCOF_SIM)
 endif
@@ -88,7 +88,7 @@ riscof_get_testlist:
 #################################################################################
 ##RISCOF Run Command
 ifeq ($(call IS_YES,$(RISCOF_SIM)),YES)
-RISCOF_RUN_ALL_CMD = riscof run --config=config.ini --suite=$(RISCOF_COMPLIANCE_TEST_SUITE_PKG)/riscv-test-suite/ --env=$(RISCOF_COMPLIANCE_TEST_SUITE_PKG)/riscv-test-suite/env --work-dir=$(SIM_CFG_RESULTS)/riscof_work
+RISCOF_RUN_ALL_CMD = riscof run --config=config.ini --suite=$(RISCOF_ARCH_TEST_SUITE_PKG)/riscv-test-suite/ --env=$(RISCOF_ARCH_TEST_SUITE_PKG)/riscv-test-suite/env --work-dir=$(SIM_CFG_RESULTS)/riscof_work
 else
 RISCOF_RUN_ALL_CMD = echo $(RISCOF_SIM)
 endif
