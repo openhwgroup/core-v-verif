@@ -474,7 +474,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   );
 
 
-  //Verify that the integrity bits to the the data and instructions fetched from the OBI bus are set if there are parity or checksum faults
+  //Verify that the integrity bits to the data and instructions fetched from the OBI bus are set if there are parity or checksum faults
 
   property p_parity_fault_integrity_err_gnt(rvalid, gnt_parity_err, integrity_err);
     rvalid
@@ -651,7 +651,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     end
   end
 
-  a_glitch_xsecure_integrity_test: assert property (
+  a_glitch_xsecure_integrity_instr_fetch_fusion: assert property (
     if_valid
     && id_ready
     && integrity_enabled
