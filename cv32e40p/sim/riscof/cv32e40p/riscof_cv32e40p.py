@@ -69,6 +69,15 @@ class cv32e40p(pluginTemplate):
         else:
             self.target_run = True
 
+        #check SIMULATOR env variable
+        self.simulator_var = os.environ['SIMULATOR']
+
+        supported_simulators = ['vsim', 'xrun', 'vcs']
+
+        if self.simulator_var not in supported_simulators:
+            print("Please set a supported SIMULATOR env variable before proceeding. Currently Supported : vsim, xrun, vcs")
+            raise SystemExit(1)
+
     def initialise(self, suite, work_dir, archtest_env):
 
         # capture the working directory. Any artifacts that the DUT creates should be placed in this
@@ -178,7 +187,17 @@ class cv32e40p(pluginTemplate):
             # set up the simulation command
             simdir = 'cd {0}/cv32e40p/sim/{1}'.format(self.tbpath, self.dut_exe)
             simcmd = 'make riscof_sim_run USE_ISS={0} RISCOF_TEST_RUN_DIR={1} CFG={2}'.format(self.imperas_iss, testentry['work_dir'], self.dut_cfg)
-            clean_work_dir_cmd = 'rm -rf {0}/work/'.format(testentry['work_dir'])
+
+            #clean the build to save disk space during complete suite run
+            if self.simulator_var == 'vsim':
+                clean_work_dir_cmd = 'rm -rf {0}/work/'.format(testentry['work_dir'])
+            elif self.simulator_var == 'xrun':
+                clean_work_dir_cmd = 'rm -rf {0}/xcelium.d/'.format(testentry['work_dir'])
+            elif self.simulator_var == 'vcs':
+                clean_work_dir_cmd = 'rm -rf {0}/simv.daidir/'.format(testentry['work_dir'])
+            else:
+                simcmd = ''
+                clean_work_dir_cmd = ''
 
             # concatenate all commands that need to be executed within a make-target.
             execute = '@cd {0}; {1}; {2}; {3}; {4}; {5}; {6}; {7}; {8}'.format(testentry['work_dir'], test_compile_cmd, hex_cmd, readelf_cmd, objdmp_cmd, objdmp2itb_cmd, simdir, simcmd, clean_work_dir_cmd)
