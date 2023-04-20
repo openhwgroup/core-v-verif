@@ -250,17 +250,20 @@ module uvmt_cv32e40p_imperas_dv_wrap
 //   import uvmt_cv32e40p_pkg::*;
   import rvviApiPkg::*;
   #(
+     parameter FPU   = 0,
+     parameter ZFINX = 0
     )
 
     (
         rvviTrace  rvvi // RVVI SystemVerilog Interface
     );
 
+    localparam bit F_REG = FPU & !ZFINX;
     trace2api #(
         .CMP_PC      (1),
         .CMP_INS     (1),
         .CMP_GPR     (1),
-        .CMP_FPR     (1),
+        .CMP_FPR     (F_REG),
         .CMP_VR      (0),
         .CMP_CSR     (1)
     )
@@ -289,7 +292,7 @@ module uvmt_cv32e40p_imperas_dv_wrap
     assign rvvi.order[0][0]    = `RVFI_IF.rvfi_order;
     assign rvvi.insn[0][0]     = `RVFI_IF.rvfi_insn;
     assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap.trap;
-    assign rvvi.intr[0][0]     = `RVFI_IF.rvfi_intr;
+    assign rvvi.intr[0][0]     = `RVFI_IF.rvfi_intr.intr;
     assign rvvi.mode[0][0]     = `RVFI_IF.rvfi_mode;
     assign rvvi.ixl[0][0]      = `RVFI_IF.rvfi_ixl;
     assign rvvi.pc_rdata[0][0] = `RVFI_IF.rvfi_pc_rdata;
@@ -473,9 +476,11 @@ module uvmt_cv32e40p_imperas_dv_wrap
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
 
     // TODO silabs-hfegran: temp fix to work around issues
-    rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR,   RVVI_FALSE);
+    // rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR,   RVVI_FALSE);
 
-    rvviRefCsrCompareEnable(hart_id, `CSR_MSTATUS_ADDR,   RVVI_FALSE);
+    // rvviRefCsrCompareEnable(hart_id, `CSR_MSTATUS_ADDR,   RVVI_FALSE);
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MSTATUS_ADDR          ));
+    rvviRefCsrCompareEnable(hart_id, `CSR_MISA_ADDR,   RVVI_FALSE);
     // end TODO
     // define asynchronous grouping
     // Interrupts
