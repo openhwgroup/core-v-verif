@@ -21,24 +21,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-//TODO: functions are fetched from the privilege test code. If these functions end up in a common function file, we should adopt this file to use the common functions.
+//TODO: functions are copied or based the privilege test code.
+//If these functions end up in a common function file, we should adopt this file to use the common functions.
 
-
-void convertToBinary(unsigned a)
-{
-    /* step 1 */
-    if (a > 1)
-        convertToBinary(a / 2);
-
-    /* step 2 */
-    printf("%d", a % 2);
-}
-void printNumberInBinary(uint32_t number) {
-    // Write C code here
-    printf("Binary of %ld is: ", number);
-    convertToBinary(number);
-    printf("\n");
-}
 
 #define CSRADDR_CPUCTRL     0xBF0
 #define CSRADDR_SECURESEED0 0xBF9
