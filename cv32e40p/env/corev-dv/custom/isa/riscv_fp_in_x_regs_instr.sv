@@ -91,8 +91,6 @@ class riscv_fp_in_x_regs_instr extends riscv_instr;
       end
       default: `uvm_info(`gfn, $sformatf("Unsupported format %0s", format.name()), UVM_LOW)
     endcase
-
-    $display("%s == rs1 %0d, rs2 %0d, rs3 %0d, rd %0d, imm %0d", format_string(get_instr_name(), MAX_INSTR_STR_LEN), has_rs1, has_rs2, has_rs3, has_rd, has_imm);
   endfunction
 
   function void pre_randomize();
