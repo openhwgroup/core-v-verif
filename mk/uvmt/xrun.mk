@@ -433,6 +433,54 @@ compliance: $(XRUN_COMPLIANCE_PREREQ)
 
 
 
+################################################################################
+# RISCOF RISCV-ARCH-TEST DUT simulation targets
+XRUN_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/dut_test.elf
+
+comp_dut_riscof_sim:
+	@echo "$(BANNER)"
+	@echo "* Compiling xrun in $(SIM_RISCOF_ARCH_TESTS_RESULTS)"
+	@echo "* Log: $(SIM_RISCOF_ARCH_TESTS_RESULTS)/xrun.log"
+	@echo "$(BANNER)"
+	mkdir -p $(SIM_RISCOF_ARCH_TESTS_RESULTS) && \
+	cd $(SIM_RISCOF_ARCH_TESTS_RESULTS) && $(XRUN) \
+		$(XRUN_COMP) \
+		$(XRUN_ELAB_COV_FLAGS) \
+		-top $(RTLSRC_VLOG_TB_TOP) \
+		-l xrun.log \
+		-elaborate
+
+comp_dut_rtl_riscof_sim: $(CV_CORE_PKG) $(SVLIB_PKG) comp_dut_riscof_sim
+
+setup_riscof_sim: clean_riscof_arch_test_suite clone_riscof_arch_test_suite comp_dut_rtl_riscof_sim
+
+gen_riscof_ovpsim_ic:
+	@touch -f $(RISCOF_TEST_RUN_DIR)/ovpsim.ic
+	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
+		echo "$(CFG_OVPSIM)" > $(RISCOF_TEST_RUN_DIR)/ovpsim.ic; \
+	fi
+
+# Target to run RISCOF DUT sim with XRUN
+riscof_sim_run: $(XRUN_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovpsim_ic
+	@echo "$(BANNER)"
+	@echo "* Running xrun in $(PWD)"
+	@echo "$(BANNER)"
+	cd $(RISCOF_TEST_RUN_DIR) && \
+	export IMPERAS_TOOLS=$(RISCOF_TEST_RUN_DIR)/ovpsim.ic && \
+	$(XRUN) \
+		-R -xmlibdirname xcelium.d \
+		-l xrun-dut_test.log \
+		$(XRUN_COMP_RUN) \
+		$(XRUN_RUN_WAVES_FLAGS) \
+		-covtest dut_test \
+		+UVM_TESTNAME=uvmt_cv32e40p_riscof_firmware_test_c \
+		$(CFG_PLUSARGS) \
+		$(RISCOF_TEST_PLUSARGS) \
+		+firmware=dut_test.hex \
+		+elf_file=dut_test.elf \
+		+itb_file=dut_test.itb
+
+
 ###############################################################################
 # Use Google instruction stream generator (RISCV-DV) to create new test-programs
 comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG)

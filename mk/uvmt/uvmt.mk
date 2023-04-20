@@ -217,6 +217,12 @@ endif
 include $(CORE_V_VERIF)/mk/Common.mk
 ###############################################################################
 
+###############################################################################
+# RISCOF Makefile:
+#    - RISCOF Compliance Test Suite and Variables for build and simulations
+include $(CORE_V_VERIF)/mk/riscof.mk
+###############################################################################
+
 # adjust commands if needed
 ifneq ($(COREDV_CUSTOM_INSTR_FILES),)
 $(info Custom files for riscv-dv generator found here $(CV_CORE_COREVDV_CUSTOM). These files will be copied to $(RISCVDV_SRC) after cloning riscv-dv repo, and will override existing files)
