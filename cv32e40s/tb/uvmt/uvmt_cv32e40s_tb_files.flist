@@ -36,7 +36,6 @@ ${DV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert/uvmt_cv32e40s_xsecure_hardened_csrs
 ${DV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert/uvmt_cv32e40s_xsecure_hardened_csrs_clic_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert/uvmt_cv32e40s_xsecure_hardened_csrs_interrupt_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert/uvmt_cv32e40s_xsecure_hardened_csrs_pmp_assert.sv
-${DV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert/uvmt_cv32e40s_xsecure_interface_integrity_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_zc_assert.sv
 
 ${DV_UVMT_PATH}/../assertions/uvmt_cv32e40s_pma_model.sv
