@@ -101,7 +101,7 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
   ) else `uvm_error(info_tag, "The load-store unit does not have outstanding requests but receives a response from the load-store unit MPU.\n");
 
 
-  //Verify that the core side and bus side transaction counters in the load store units response fileter dont overflow
+  //Verify that the core side and bus side transaction counters in the load store units response filter dont underflow
 
   property p_counter(cnt);
 
@@ -167,7 +167,7 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
   ) else `uvm_error(info_tag_glitch, "The load-store unit does not have outstanding requests but receives a response from the load-store unit MPU, but the alert major is not set.\n");
 
 
-  //Verify that the core side and bus side transaction counters in the load store units response fileter dont overflow
+  //Verify that the core side and bus side transaction counters in the load store units response filter dont underflow
 
   property p_counter_underflows(cnt);
 
