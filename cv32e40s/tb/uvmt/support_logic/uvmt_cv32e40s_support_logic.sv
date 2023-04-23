@@ -1,4 +1,3 @@
-//
 // Copyright 2022 OpenHW Group
 // Copyright 2022 Silicon Labs
 //
@@ -292,8 +291,8 @@ module uvmt_cv32e40s_support_logic
     .obi_rvalid (in_support_if.abiim_bus_rvalid),
 
     .addr_ph_cont (out_support_if.abiim_bus_addr_ph_cont),
-    .resp_ph_cont (out_support_if.abiim_bus_resp_ph_cont),
-    .v_addr_ph_cnt (out_support_if.abiim_bus_v_addr_ph_cnt)
+    .resp_ph_cont (out_support_if.alignment_buff_resp_ph_cont),
+    .v_addr_ph_cnt (out_support_if.alignment_buff_addr_ph_cnt)
   );
 
   //obi protocol between LSU (l) MPU (m) and LSU (l) (=> lml)
@@ -306,28 +305,18 @@ module uvmt_cv32e40s_support_logic
     .obi_rvalid (in_support_if.lml_bus_rvalid),
 
     .addr_ph_cont (out_support_if.lml_bus_addr_ph_cont),
-    .resp_ph_cont (out_support_if.lml_bus_resp_ph_cont),
-    .v_addr_ph_cnt (out_support_if.lml_bus_v_addr_ph_cnt)
+    .resp_ph_cont (out_support_if.lsu_resp_ph_cont),
+    .v_addr_ph_cnt (out_support_if.lsu_addr_ph_cnt)
   );
 
-  //obi protocol between LSU (l) respons (r) filter (f) and the OBI (o) data (d) interface (i) (=> lrfodi)
-  uvmt_cv32e40s_sl_obi_phases_monitor lrfodi_bus_obi_phases_monitor (
-    .clk_i (in_support_if.clk),
-    .rst_ni (in_support_if.rst_n),
-
-    .obi_req (in_support_if.lrfodi_bus_req),
-    .obi_gnt (in_support_if.lrfodi_bus_gnt),
-    .obi_rvalid (in_support_if.lrfodi_bus_rvalid),
-
-    .addr_ph_cont (out_support_if.lrfodi_bus_addr_ph_cont),
-    .resp_ph_cont (out_support_if.lrfodi_bus_resp_ph_cont),
-    .v_addr_ph_cnt (out_support_if.lrfodi_bus_v_addr_ph_cnt)
-  );
 
   //The submodule instance under will tell if the
   //the response's request required a store operation.
 
-  uvmt_cv32e40s_sl_req_attribute_fifo req_was_store_i
+  uvmt_cv32e40s_sl_req_attribute_fifo
+  #(
+    .XLEN (1)
+  ) req_was_store_i
   (
     .clk_i (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
@@ -340,11 +329,30 @@ module uvmt_cv32e40s_support_logic
     .is_req_attribute_in_response_o (out_support_if.req_was_store)
   );
 
+  uvmt_cv32e40s_sl_req_attribute_fifo
+  #(
+    .XLEN (32)
+  ) instr_resp_pc_i
+  (
+    .clk_i (in_support_if.clk),
+    .rst_ni (in_support_if.rst_n),
+
+    .gnt (in_support_if.instr_bus_gnt),
+    .req (in_support_if.instr_bus_req),
+    .rvalid (in_support_if.instr_bus_rvalid),
+    .req_attribute_i (in_support_if.instr_req_pc & !in_support_if.rst_n),
+
+    .is_req_attribute_in_response_o (out_support_if.instr_resp_pc)
+  );
+
   //The submodule instance under will tell if the
   //the response's request had integrity
   //in the transfere of instructions on the OBI instruction bus.
 
-  uvmt_cv32e40s_sl_req_attribute_fifo instr_req_had_integrity_i
+  uvmt_cv32e40s_sl_req_attribute_fifo
+  #(
+    .XLEN (1)
+  ) instr_req_had_integrity_i
   (
     .clk_i (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
@@ -361,7 +369,10 @@ module uvmt_cv32e40s_support_logic
   //the response's request had integrity
   //in the transfere of data on the OBI data bus.
 
-  uvmt_cv32e40s_sl_req_attribute_fifo data_req_had_integrity_i
+  uvmt_cv32e40s_sl_req_attribute_fifo
+  #(
+    .XLEN (1)
+  ) data_req_had_integrity_i
   (
     .clk_i (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
@@ -407,7 +418,10 @@ module uvmt_cv32e40s_support_logic
     end
   end
 
-  uvmt_cv32e40s_sl_req_attribute_fifo sl_req_gntpar_error_in_resp_instr_i
+  uvmt_cv32e40s_sl_req_attribute_fifo
+  #(
+    .XLEN (1)
+  ) sl_req_gntpar_error_in_resp_instr_i
   (
     .clk_i (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
@@ -424,7 +438,10 @@ module uvmt_cv32e40s_support_logic
   //the response's request had a gntpar error
   //in the transfere of data on the OBI data bus.
 
-  uvmt_cv32e40s_sl_req_attribute_fifo sl_req_gntpar_error_in_resp_data_i
+  uvmt_cv32e40s_sl_req_attribute_fifo
+  #(
+    .XLEN (1)
+  ) sl_req_gntpar_error_in_resp_data_i
   (
     .clk_i (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
@@ -438,4 +455,3 @@ module uvmt_cv32e40s_support_logic
   );
 
 endmodule : uvmt_cv32e40s_support_logic
-
