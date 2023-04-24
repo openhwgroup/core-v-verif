@@ -15,6 +15,8 @@ ovpsim: >
     --override cpu/misa_Extensions=0x801104
     --override cpu/marchid=4
     --override cpu/noinhibit_mask=0xFFFFFFF0
+    --override cpu/compress_version=1.0.0-RC5.7
+    --override cpu/Zcf=T
 cv_sw_march: rv32imc_zicsr_zifencei_xcvhwlp1p0_xcvmem1p0_xcvmac1p0_xcvbi1p0_xcvalu1p0_xcvsimd1p0_xcvbitmanip1p0
 cflags: >
     -DPULP
