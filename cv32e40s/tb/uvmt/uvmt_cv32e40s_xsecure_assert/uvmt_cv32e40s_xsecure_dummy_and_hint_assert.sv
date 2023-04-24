@@ -442,99 +442,76 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
   //Verify that the LFSR registers are updated if a dummy or hint instruction is executed
 
-  property p_dummy_hint_update_lfsr0(if_dummy_or_hint, lfsr, lfsr_n, write_lfsr_en, write_lfsr_value);
+  property p_dummy_hint_update_lfsr0(is_dummy_or_hint, lfsr);
 
-    //Make sure we detect a dummy instruction
-    if_dummy_or_hint
+    //Make sure we detect a dummy/hint instruction
+    is_dummy_or_hint
     && if_valid
     && id_ready
 
     |=>
 
-    (lfsr == $past(lfsr_n))
-    || (lfsr == CORE_PARAM_LFSR0_CFG);
-
+    lfsr != $past(lfsr);
   endproperty
 
 
   a_xsecure_dummy_updates_lfsr0: assert property (
     p_dummy_hint_update_lfsr0(
       if_dummy,
-      lfsr0,
-      lfsr0_n,
-      lfsr0_seed_we,
-      lfsr0_seed)
+      lfsr0)
   ) else `uvm_error(info_tag, "A dummy instruction does not update the LFSR0 register.\n");
 
   a_xsecure_hint_updates_lfsr0: assert property (
     p_dummy_hint_update_lfsr0(
       if_hint,
-      lfsr0,
-      lfsr0_n,
-      lfsr0_seed_we,
-      lfsr0_seed)
+      lfsr0)
   ) else `uvm_error(info_tag, "A hint instruction does not update the LFSR0 register.\n");
 
 
-  property p_dummy_hint_update_lfsr1_lfsr2(if_dummy_or_hint, lfsr, lfsr_n, default_value, lfsr_we, lfsr_w_value);
+  property p_dummy_hint_update_lfsr1_lfsr2(is_dummy_or_hint, lfsr);
 
-    //Make sure we detect a dummy instruction
-    if_dummy_or_hint
+    //Make sure we detect a dummy/hint instruction
+    is_dummy_or_hint
     && id_valid
     && ex_ready
     && id_last_op
 
     |=>
-
-    (lfsr == $past(lfsr_n))
-    || (lfsr == default_value)
-    || ($past(lfsr_we) && lfsr_w_value == $past(lfsr));
+    lfsr != $past(lfsr);
   endproperty
 
 
   a_xsecure_dummy_updates_lfsr1: assert property (
     p_dummy_hint_update_lfsr1_lfsr2(
       id_dummy,
-      lfsr1,
-      lfsr1_n,
-      CORE_PARAM_LFSR1_CFG[31:0],
-      lfsr1_seed_we,
-      lfsr1_seed)
+      lfsr1)
   ) else `uvm_error(info_tag, "A dummy instruction does not update the LFSR1 register.\n");
 
   a_xsecure_dummy_updates_lfsr2: assert property (
     p_dummy_hint_update_lfsr1_lfsr2(
       id_dummy,
-      lfsr2,
-      lfsr2_n,
-      CORE_PARAM_LFSR2_CFG[31:0],
-      lfsr2_seed_we,
-      lfsr2_seed)
+      lfsr2)
   ) else `uvm_error(info_tag, "A dummy instruction does not update the LFSR2 register.\n");
 
   a_xsecure_hint_updates_lfsr1: assert property (
     p_dummy_hint_update_lfsr1_lfsr2(
       id_hint,
-      lfsr1,
-      lfsr1_n,
-      CORE_PARAM_LFSR1_CFG[31:0],
-      lfsr1_seed_we,
-      lfsr1_seed)
+      lfsr1)
   ) else `uvm_error(info_tag, "A hint instruction does not update the LFSR1 register.\n");
 
   a_xsecure_hint_updates_lfsr2: assert property (
     p_dummy_hint_update_lfsr1_lfsr2(
       id_hint,
-      lfsr2,
-      lfsr2_n,
-      CORE_PARAM_LFSR2_CFG[31:0],
-      lfsr2_seed_we,
-      lfsr2_seed)
+      lfsr2)
   ) else `uvm_error(info_tag, "A hint instruction does not update the LFSR2 register.\n");
 
 
-
   //Verify that the source registers of the dummy and hint instructions generate pipeline stalls as normal
+
+  //If a load instruction set a value in rd=rd_load, and the source register of the next instruction is rs=rd_load,
+  //then the next instruction must wait in id stage untill rd_load is set. This also account for dummy and hint instructions.
+  //The assertions below state that this is true for dummy and hint instruction by verifying that if there is a dummy/hint
+  //instruction in wb stage when there is a load instruction in the rvfi stage, the dummy/hint instruction does not have rs=rd_load
 
   a_xsecure_dummy_instr_load_dummy_stall: assert property (
 
