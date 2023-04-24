@@ -504,7 +504,7 @@ module uvmt_cv32e40p_imperas_dv_wrap
     rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt14"),    1);
     rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt15"),    1);
 
-    rvviRefNetGroupSet(rvviRefNetIndexGet("InstructionBusFault"), 2);
+//  rvviRefNetGroupSet(rvviRefNetIndexGet("InstructionBusFault"), 2);
 
     // Debug
     rvviRefNetGroupSet(rvviRefNetIndexGet("haltreq"),             4);
