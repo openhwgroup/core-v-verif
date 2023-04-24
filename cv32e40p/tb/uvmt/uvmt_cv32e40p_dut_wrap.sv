@@ -47,7 +47,7 @@ module uvmt_cv32e40p_dut_wrap
                                       FPU                 =  0,
                                       FPU_ADDMUL_LAT      =  0,
                                       FPU_OTHERS_LAT      =  0,
-                                      PULP_ZFINX          =  0,
+                                      ZFINX               =  0,
                                       NUM_MHPMCOUNTERS    =  1,
                             // Remaining parameters are used by TB components only
                                       INSTR_ADDR_WIDTH    =  32,
@@ -141,7 +141,7 @@ module uvmt_cv32e40p_dut_wrap
                  .FPU              (FPU),
                  .FPU_ADDMUL_LAT   (FPU_ADDMUL_LAT),
                  .FPU_OTHERS_LAT   (FPU_OTHERS_LAT),
-                 .PULP_ZFINX       (PULP_ZFINX),
+                 .ZFINX            (ZFINX),
                  .NUM_MHPMCOUNTERS (NUM_MHPMCOUNTERS)
                 )
     cv32e40p_tb_wrapper_i

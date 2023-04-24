@@ -72,7 +72,7 @@ module cv32e40s_tb_wrapper
 //          .PULP_XPULP            ( PULP_XPULP            ),
 //          .PULP_CLUSTER          ( PULP_CLUSTER          ),
 //          .FPU                   ( FPU                   ),
-//          .PULP_ZFINX            ( PULP_ZFINX            ),
+//          .ZFINX                 ( ZFINX                 ),
 //          .NUM_MHPMCOUNTERS      ( NUM_MHPMCOUNTERS      ))
 //    core_log_i(
 //          .clk_i              ( cv32e40s_core_i.id_stage_i.clk              ),

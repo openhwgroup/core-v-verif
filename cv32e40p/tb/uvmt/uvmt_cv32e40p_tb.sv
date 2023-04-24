@@ -46,7 +46,7 @@ module uvmt_cv32e40p_tb;
    parameter int CORE_PARAM_FPU                  = 0;
    parameter int CORE_PARAM_FPU_ADDMUL_LAT       = 0;
    parameter int CORE_PARAM_FPU_OTHERS_LAT       = 0;
-   parameter int CORE_PARAM_PULP_ZFINX           = 0;
+   parameter int CORE_PARAM_ZFINX                = 0;
 `else
    `ifdef PULP
       parameter int CORE_PARAM_PULP_XPULP        = 1;
@@ -70,15 +70,15 @@ module uvmt_cv32e40p_tb;
             parameter int CORE_PARAM_FPU_OTHERS_LAT = 0;
          `endif
          `ifdef ZFINX
-            parameter int CORE_PARAM_PULP_ZFINX  = 1;
+            parameter int CORE_PARAM_ZFINX       = 1;
          `else
-            parameter int CORE_PARAM_PULP_ZFINX  = 0;
+            parameter int CORE_PARAM_ZFINX       = 0;
          `endif
       `else
          parameter int CORE_PARAM_FPU            = 0;
          parameter int CORE_PARAM_FPU_ADDMUL_LAT = 0;
          parameter int CORE_PARAM_FPU_OTHERS_LAT = 0;
-         parameter int CORE_PARAM_PULP_ZFINX     = 0;
+         parameter int CORE_PARAM_ZFINX          = 0;
       `endif
 
    `else
@@ -88,7 +88,7 @@ module uvmt_cv32e40p_tb;
       parameter int CORE_PARAM_FPU               = 0;
       parameter int CORE_PARAM_FPU_ADDMUL_LAT    = 0;
       parameter int CORE_PARAM_FPU_OTHERS_LAT    = 0;
-      parameter int CORE_PARAM_PULP_ZFINX        = 0;
+      parameter int CORE_PARAM_ZFINX             = 0;
    `endif
 `endif
 
@@ -153,7 +153,7 @@ module uvmt_cv32e40p_tb;
                              .FPU               (CORE_PARAM_FPU),
                              .FPU_ADDMUL_LAT    (CORE_PARAM_FPU_ADDMUL_LAT),
                              .FPU_OTHERS_LAT    (CORE_PARAM_FPU_OTHERS_LAT),
-                             .PULP_ZFINX        (CORE_PARAM_PULP_ZFINX),
+                             .ZFINX             (CORE_PARAM_ZFINX),
                              .NUM_MHPMCOUNTERS  (CORE_PARAM_NUM_MHPMCOUNTERS),
                              .INSTR_ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
                              .INSTR_RDATA_WIDTH (ENV_PARAM_INSTR_DATA_WIDTH),
@@ -501,8 +501,8 @@ module uvmt_cv32e40p_tb;
     `ifndef FORMAL
     `ifdef USE_ISS
       uvmt_cv32e40p_imperas_dv_wrap #(
-        .FPU(CORE_PARAM_FPU),
-        .ZFINX(CORE_PARAM_PULP_ZFINX)
+        .FPU  (CORE_PARAM_FPU),
+        .ZFINX(CORE_PARAM_ZFINX)
       ) imperas_dv (rvvi_if);
     `endif
     `endif
@@ -696,7 +696,7 @@ module uvmt_cv32e40p_tb;
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_FPU"),              .value(CORE_PARAM_FPU)             );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_FPU_ADDMUL_LAT"),   .value(CORE_PARAM_FPU_ADDMUL_LAT)  );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_FPU_OTHERS_LAT"),   .value(CORE_PARAM_FPU_OTHERS_LAT)  );
-     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_ZFINX"),       .value(CORE_PARAM_PULP_ZFINX)      );
+     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_ZFINX"),            .value(CORE_PARAM_ZFINX)           );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_NUM_MHPMCOUNTERS"), .value(CORE_PARAM_NUM_MHPMCOUNTERS));
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_ADDR_WIDTH"),  .value(ENV_PARAM_INSTR_ADDR_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_DATA_WIDTH"),  .value(ENV_PARAM_INSTR_DATA_WIDTH) );

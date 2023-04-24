@@ -26,7 +26,7 @@ module cv32e40p_tb_wrapper
                 PULP_XPULP        = 0,
                 PULP_CLUSTER      = 0,
                 FPU               = 0,
-                PULP_ZFINX        = 0,
+                ZFINX             = 0,
                 NUM_MHPMCOUNTERS  = 1
     )
     (input logic         clk_i,
@@ -75,7 +75,7 @@ module cv32e40p_tb_wrapper
 //          .PULP_XPULP            ( PULP_XPULP            ),
 //          .PULP_CLUSTER          ( PULP_CLUSTER          ),
 //          .FPU                   ( FPU                   ),
-//          .PULP_ZFINX            ( PULP_ZFINX            ),
+//          .ZFINX                 ( ZFINX                 ),
 //          .NUM_MHPMCOUNTERS      ( NUM_MHPMCOUNTERS      ))
 //    core_log_i(
 //          .clk_i              ( cv32e40p_core_i.id_stage_i.clk              ),
@@ -90,7 +90,7 @@ module cv32e40p_tb_wrapper
                  .PULP_XPULP       (PULP_XPULP),
                  .PULP_CLUSTER     (PULP_CLUSTER),
                  .FPU              (FPU),
-                 .PULP_ZFINX       (PULP_ZFINX),
+                 .ZFINX            (ZFINX),
                  .NUM_MHPMCOUNTERS (NUM_MHPMCOUNTERS)
                 )
     cv32e40p_core_i
