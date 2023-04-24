@@ -500,7 +500,10 @@ module uvmt_cv32e40p_tb;
     // IMPERAS DV
     `ifndef FORMAL
     `ifdef USE_ISS
-      uvmt_cv32e40p_imperas_dv_wrap imperas_dv (rvvi_if);
+      uvmt_cv32e40p_imperas_dv_wrap #(
+        .FPU(CORE_PARAM_FPU),
+        .ZFINX(CORE_PARAM_PULP_ZFINX)
+      ) imperas_dv (rvvi_if);
     `endif
     `endif
    /**

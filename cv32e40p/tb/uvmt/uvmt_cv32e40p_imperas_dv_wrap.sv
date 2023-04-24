@@ -75,6 +75,9 @@
 ////////////////////////////////////////////////////////////////////////////
 // CSR definitions
 ////////////////////////////////////////////////////////////////////////////
+`define CSR_FFLAGS_ADDR        32'h001
+`define CSR_FRM_ADDR           32'h002
+`define CSR_FCSR_ADDR          32'h003
 `define CSR_JVT_ADDR           32'h017
 `define CSR_MSTATUS_ADDR       32'h300
 `define CSR_MISA_ADDR          32'h301
@@ -247,17 +250,20 @@ module uvmt_cv32e40p_imperas_dv_wrap
 //   import uvmt_cv32e40p_pkg::*;
   import rvviApiPkg::*;
   #(
+     parameter FPU   = 0,
+     parameter ZFINX = 0
     )
 
     (
         rvviTrace  rvvi // RVVI SystemVerilog Interface
     );
 
+    localparam bit F_REG = FPU & !ZFINX;
     trace2api #(
         .CMP_PC      (1),
         .CMP_INS     (1),
         .CMP_GPR     (1),
-        .CMP_FPR     (0),
+        .CMP_FPR     (F_REG),
         .CMP_VR      (0),
         .CMP_CSR     (1)
     )
@@ -286,7 +292,7 @@ module uvmt_cv32e40p_imperas_dv_wrap
     assign rvvi.order[0][0]    = `RVFI_IF.rvfi_order;
     assign rvvi.insn[0][0]     = `RVFI_IF.rvfi_insn;
     assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap.trap;
-    assign rvvi.intr[0][0]     = `RVFI_IF.rvfi_intr;
+    assign rvvi.intr[0][0]     = `RVFI_IF.rvfi_intr.intr;
     assign rvvi.mode[0][0]     = `RVFI_IF.rvfi_mode;
     assign rvvi.ixl[0][0]      = `RVFI_IF.rvfi_ixl;
     assign rvvi.pc_rdata[0][0] = `RVFI_IF.rvfi_pc_rdata;
@@ -320,6 +326,10 @@ module uvmt_cv32e40p_imperas_dv_wrap
     `RVVI_SET_CSR_VEC(`CSR_TDATA2_ADDR, tdata, 2)
     `RVVI_SET_CSR( `CSR_TINFO_ADDR,         tinfo         )
 
+
+    `RVVI_SET_CSR(`CSR_FFLAGS_ADDR, fflags)
+    `RVVI_SET_CSR(`CSR_FRM_ADDR   , frm   )
+    `RVVI_SET_CSR(`CSR_FCSR_ADDR  , fcsr  )
     ////////////////////////////////////////////////////////////////////////////
     // Assign the RVVI GPR registers
     ////////////////////////////////////////////////////////////////////////////
@@ -347,6 +357,40 @@ module uvmt_cv32e40p_imperas_dv_wrap
     end
 
     assign rvvi.x_wb[0][0] = (1 << `RVFI_IF.rvfi_rd_addr[0] | 1 << `RVFI_IF.rvfi_rd_addr[1]); // TODO: originally rvfi_rd_addr
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Assign the RVVI F GPR registers
+    ////////////////////////////////////////////////////////////////////////////
+    bit [31:0] FREG[32];
+
+    bit is_f_reg [1:0];
+
+    assign is_f_reg[0] = `RVFI_IF.rvfi_frd_wvalid[0];
+    assign is_f_reg[1] = `RVFI_IF.rvfi_frd_wvalid[1];
+
+    int f_reg_addr [1:0];
+    assign f_reg_addr[0] = `RVFI_IF.rvfi_frd_addr[0];
+    assign f_reg_addr[1] = `RVFI_IF.rvfi_frd_addr[1];
+
+    genvar fgi;
+    generate
+        for(fgi=0; fgi<32; fgi++) begin
+            assign rvvi.f_wdata[0][0][fgi] = FREG[fgi];
+        end
+    endgenerate
+
+    always @(*) begin
+        int i;
+        for (i=0; i<32; i++) begin
+            FREG[i] = 32'b0;
+            if (is_f_reg[0] & (`RVFI_IF.rvfi_frd_addr[0]==5'(i)))
+            FREG[i] = `RVFI_IF.rvfi_frd_wdata[0];
+            if (is_f_reg[1] & (`RVFI_IF.rvfi_frd_addr[1]==5'(i)))
+            FREG[i] = `RVFI_IF.rvfi_frd_wdata[1];
+        end
+    end
+
+    assign rvvi.f_wb[0][0] = (is_f_reg[0] << f_reg_addr[0] | is_f_reg[1] << f_reg_addr[1]);
 
     ////////////////////////////////////////////////////////////////////////////
     // DEBUG REQUESTS,
@@ -432,7 +476,11 @@ module uvmt_cv32e40p_imperas_dv_wrap
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
 
     // TODO silabs-hfegran: temp fix to work around issues
-    rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR,   RVVI_FALSE);
+    // rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR,   RVVI_FALSE);
+
+    // rvviRefCsrCompareEnable(hart_id, `CSR_MSTATUS_ADDR,   RVVI_FALSE);
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MSTATUS_ADDR          ));
+    rvviRefCsrCompareEnable(hart_id, `CSR_MISA_ADDR,   RVVI_FALSE);
     // end TODO
     // define asynchronous grouping
     // Interrupts

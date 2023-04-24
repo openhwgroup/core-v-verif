@@ -6,6 +6,9 @@ ovpsim: >
     --override cpu/misa_Extensions=0x801124
     --override cpu/marchid=4
     --override cpu/noinhibit_mask=0xFFFFFFF0
+    --override cpu/compress_version=1.0.0-RC5.7
+    --override cpu/Zfinx_version=0.41
+    --override cpu/Zcf=T
     --showoverrides
 # Debug options (add to ovpsim section as needed)
 #--trace --tracechange --traceshowicount --tracemode --monitornets
