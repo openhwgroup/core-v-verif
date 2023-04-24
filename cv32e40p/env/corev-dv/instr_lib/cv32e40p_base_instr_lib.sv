@@ -19,7 +19,7 @@
 // Base class as an example
 
  class cv32e40p_base_instr_stream extends riscv_rand_instr_stream;
-  `uvm_object_utils(cv32e40p_rand_instr_stream)
+  `uvm_object_utils(cv32e40p_base_instr_stream)
 
   function new(string name = "");
     super.new(name);
@@ -32,7 +32,7 @@
   virtual function void setup_allowed_instr(bit no_branch = 1'b0, bit no_load_store = 1'b1);
       allowed_instr = riscv_instr::basic_instr;
       if (no_branch == 0) begin
-        allowed_instr = {allowed_instr, riscv_instr::instr_category[BRANCH]
+        allowed_instr = {allowed_instr, riscv_instr::instr_category[BRANCH],
                                         riscv_instr::instr_category[BRANCH_IMM]};
       end
       if (no_load_store == 0) begin
