@@ -400,6 +400,50 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   ) else `uvm_error(info_tag, "A hint branch instruction does not jump to the next non-hint instruction.\n");
 
 
+  //Verify that the source for the operands to dummy and hint instructions can be either of the x0 to x32 registers
+
+  property p_dummy_hint_instr_rs(id_dummy_or_hint, rs, addr_rs);
+
+    if_valid
+    && id_ready
+
+    ##1 id_dummy_or_hint
+
+    && rs == addr_rs;
+  endproperty
+
+  for (genvar rs_addr = 0; rs_addr < 32; rs_addr++) begin
+
+    c_xsecure_dummy_source_reg1: cover property(
+      p_dummy_hint_instr_rs(
+        id_dummy,
+        id_rs1,
+        rs_addr)
+    );
+
+    c_xsecure_dummy_source_reg2: cover property(
+      p_dummy_hint_instr_rs(
+        id_dummy,
+        id_rs2,
+        rs_addr)
+    );
+
+    c_xsecure_hint_source_reg1: cover property(
+      p_dummy_hint_instr_rs(
+        id_hint,
+        id_rs1,
+        rs_addr)
+    );
+
+    c_xsecure_hint_source_reg2: cover property(
+      p_dummy_hint_instr_rs(
+        id_hint,
+        id_rs2,
+        rs_addr)
+    );
+
+  end
+
   //Verify that the source for the operands to dummy and hint instructions are fetched from the LFSR1 and LFSR2 registers,
   //Or that we fetch data from the R0 register
 
