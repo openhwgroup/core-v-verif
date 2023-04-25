@@ -1,6 +1,7 @@
 /*
- * Copyright 2020 OpenHW Group
- * Copyright 2020 Silicon Labs, Inc.
+ * Copyright 2018 Google LLC
+ * Copyright 2020 Andes Technology Co., Ltd.
+ * Copyright 2023 Dolphin Design
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +16,30 @@
  * limitations under the License.
  */
 
-/*
- * xpulp sanity instruction sequences
- *
- * cv32e40p_xpulp_sanity_stream_test: Extension of cv32e40p_rand_instr_stream
- * to generate all xpulp instruction
- */
+class cv32e40p_base_pulp_instr_stream extends cv32e40p_base_instr_stream;
+
+  `uvm_object_utils(cv32e40p_base_pulp_instr_stream)
+
+  function new(string name = "");
+    super.new(name);
+  endfunction
+
+  function void pre_randomize();
+    super.pre_randomize();
+  endfunction
+
+  virtual function void gen_xpulp_instr();
+    riscv_instr instr;
+    randomize_avail_regs();
+    instr = cv32e40p_instr::get_xpulp_instr(allowed_instr);
+    randomize_gpr(instr);
+    instr_list.push_back(instr);
+  endfunction
+
+endclass
 
 
-class cv32e40p_xpulp_sanity_stream_test extends cv32e40p_rand_instr_stream;
+class cv32e40p_xpulp_sanity_stream_test extends cv32e40p_base_pulp_instr_stream;
 
   `uvm_object_utils(cv32e40p_xpulp_sanity_stream_test)
 
@@ -42,7 +58,7 @@ class cv32e40p_xpulp_sanity_stream_test extends cv32e40p_rand_instr_stream;
     all_xpulp_instr = placeholder_ins.instr_group[RV32X];
 
     foreach (all_xpulp_instr[i]) begin
-      if (all_xpulp_instr[i] inside { CV_BEQIMM, CV_BNEIMM, CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI } ) continue;
+      if (all_xpulp_instr[i] inside { CV_BEQIMM, CV_BNEIMM, CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW } ) continue;
       allowed_instr = {all_xpulp_instr[i]};
       gen_xpulp_instr();
     end

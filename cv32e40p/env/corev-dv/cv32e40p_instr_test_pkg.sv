@@ -24,9 +24,9 @@ package cv32e40p_instr_test_pkg;
 
   // Instruction streams specific to CV32E40P
   // `include "instr_lib/cv32e40p_load_store_instr_lib.sv"
-  `include "instr_lib/cv32e40p_simple_instr_lib.sv"
-  // `include "instr_lib/cv32e40p_load_store_incr_stream_test.sv"
-  `include "instr_lib/cv32e40p_xpulp_sanity_stream_test.sv"
+  `include "instr_lib/cv32e40p_base_instr_lib.sv"
+  `include "instr_lib/cv32e40p_pulp_instr_lib.sv"
+  `include "instr_lib/cv32e40p_float_instr_lib.sv"
 
   // RISCV-DV class override definitions
   `include "cv32e40p_compressed_instr.sv"
