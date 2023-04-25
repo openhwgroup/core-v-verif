@@ -19,6 +19,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
   import uvmt_cv32e40s_pkg::*;
+  import uvmt_cv32e40s_instr_pkg::*;
   #(
     parameter int       SECURE   = 1
   )
@@ -93,10 +94,6 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
   );
 
-  logic [12:0] id_branch_imm;
-  assign id_branch_imm = ({id_instr[31], id_instr[7], id_instr[30:25], id_instr[11:8], 1'b0});
-
-
   // Default settings:
   default clocking @(posedge clk_i); endclocking
   default disable iff (!(rst_ni) || !(SECURE));
@@ -153,6 +150,25 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     end
   end
 
+  logic [6:0] id_opcode;
+  logic [2:0] id_funct3;
+  logic [6:0] id_funct7;
+  logic [4:0] id_rd;
+  logic [4:0] id_rs1;
+  logic [4:0] id_rs2;
+  logic [12:0] id_branch_imm;
+
+
+
+  always_comb begin
+    id_opcode           <= opcode_f(id_instr);
+    id_funct3           <= funct3_f(id_instr);
+    id_funct7           <= funct7_f(id_instr);
+    id_rd               <= rd_f(id_instr);
+    id_rs1              <= rs1_f(id_instr);
+    id_rs2              <= rs2_f(id_instr);
+    id_branch_imm       <= branch_imm_f(id_instr);
+  end
 
   //Verify that dummy and hint instructions are default disabled
 
@@ -241,20 +257,20 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     ##1 id_dummy_or_hint
 
     |->
-    (id_instr[6:0] == OPCODE_OP
-    && id_instr[14:12] == FUNCT3_ADD
-    && id_instr[31:25] == FUNCT7_ADD)
+    (id_opcode == OPCODE_OP
+    && id_funct3 == FUNCT3_ADD
+    && id_funct7 == FUNCT7_ADD)
 
-    || (id_instr[6:0] == OPCODE_OP
-    && id_instr[14:12] == FUNCT3_AND
-    && id_instr[31:25] == FUNCT7_AND)
+    || (id_opcode == OPCODE_OP
+    && id_funct3 == FUNCT3_AND
+    && id_funct7 == FUNCT7_AND)
 
-    || (id_instr[6:0] == OPCODE_OP
-    && id_instr[14:12] == FUNCT3_MUL
-    && id_instr[31:25] == FUNCT7_MUL)
+    || (id_opcode == OPCODE_OP
+    && id_funct3 == FUNCT3_MUL
+    && id_funct7 == FUNCT7_MUL)
 
-    || (id_instr[6:0] == OPCODE_BRANCH
-    && id_instr[14:12] == FUNCT3_BLTU);
+    || (id_opcode == OPCODE_BRANCH
+    && id_funct3 == FUNCT3_BLTU);
 
   endproperty
 
@@ -276,9 +292,9 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     ##1 id_dummy_or_hint
 
-    && id_instr[6:0] == opcode
-    && id_instr[14:12] == funct3
-    && id_instr[31:25] == funct7;
+    && id_opcode == opcode
+    && id_funct3 == funct3
+    && id_funct7 == funct7;
 
   endproperty
 
@@ -338,8 +354,8 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     ##1 id_dummy_or_hint
 
-    && id_instr[6:0] == opcode
-    && id_instr[14:12] == funct3;
+    && id_opcode == opcode
+    && id_funct3 == funct3;
   endproperty
 
   c_xsecure_dummy_instr_is_bltu: cover property(
@@ -365,7 +381,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     && id_ready
 
     ##1 id_dummy_or_hint
-    && id_instr[6:0] == cv32e40s_pkg::OPCODE_BRANCH
+    && id_opcode == cv32e40s_pkg::OPCODE_BRANCH
 
     |->
     id_branch_imm == dummy_hint_increment;
@@ -396,10 +412,10 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     |->
     ((operand_a == (lfsr1))
-    || id_instr[19:15] == REGISTER_X0)
+    || id_rs1 == REGISTER_X0)
 
     && ((operand_b == (lfsr2))
-    || id_instr[24:20] == REGISTER_X0);
+    || id_rs2 == REGISTER_X0);
 
   endproperty
 
@@ -423,10 +439,10 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     && id_ready
 
     ##1 id_dummy_or_hint
-    && id_instr[6:0] != OPCODE_BRANCH //branch instructions do not use a destination register
+    && id_opcode != OPCODE_BRANCH //branch instructions do not use a destination register
 
     |->
-    id_instr[11:7] == REGISTER_X0;
+    id_rd == REGISTER_X0;
   endproperty
 
 
@@ -544,8 +560,8 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
       && id_valid
       && ex_ready,
 
-      id_hint_rs1 = id_instr[19:15],
-      id_hint_rs2 = id_instr[24:20])
+      id_hint_rs1 = id_rs1,
+      id_hint_rs2 = id_rs2)
 
       ##0 first_match(##[2:$]
       wb_hint
