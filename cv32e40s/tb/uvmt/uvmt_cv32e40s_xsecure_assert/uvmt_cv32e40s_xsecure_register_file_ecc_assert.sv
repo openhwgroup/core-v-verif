@@ -107,77 +107,35 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
 
   //Verify that the GPRs and their ECC values have not all bits set to 0s or all bits set to 1s in the same clock cycle
 
-  property p_gpr_x_syndrom_not_x(gpr_addr, x);
-    gpr_mem[gpr_addr][(REG_SIZE-1) -:REG_SIZE] == {REG_SIZE{x}}
-    |->
-    gpr_mem[gpr_addr][(ECC_SIZE+REG_SIZE-1) -:ECC_SIZE] != {ECC_SIZE{x}};
-  endproperty
-
-  property p_syndrom_x_gpr_not_x(gpr_addr, x);
-    gpr_mem[gpr_addr][(ECC_SIZE+REG_SIZE-1) -:ECC_SIZE] == {ECC_SIZE{x}}
-    |->
-    gpr_mem[gpr_addr][(REG_SIZE-1) -:REG_SIZE] != {REG_SIZE{x}};
-  endproperty
-
-
   generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
 
-    a_xsecure_rf_ecc_gpr_0_syndrome_not_0: assert property (
-      p_gpr_x_syndrom_not_x(
-        gpr_addr,
-        1'b0)
-    ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s.\n", gpr_addr));
-
-    a_xsecure_rf_ecc_syndrome_0_gpr_not_0: assert property (
-      p_syndrom_x_gpr_not_x(
-        gpr_addr,
-        1'b0)
-    ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s.\n", gpr_addr));
-
-    a_xsecure_rf_ecc_gpr_1_syndrome_not_1: assert property (
-      p_gpr_x_syndrom_not_x(
-        gpr_addr,
-        1'b1)
-    ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 1s.\n", gpr_addr));
-
-    a_xsecure_rf_ecc_syndrome_1_gpr_not_1: assert property (
-      p_syndrom_x_gpr_not_x(
-        gpr_addr,
-        1'b1)
-    ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 1s.\n", gpr_addr));
+    a_xsecure_rf_gpr_not_all_0s_or_1s: assert property (
+      gpr_mem[gpr_addr] != '0
+      && gpr_mem[gpr_addr] != '1
+    ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d is all %0s.\n", gpr_addr, gpr_mem[gpr_addr][0]));
 
   end endgenerate
 
 
   //Verify that we set major alert if the the register sources' values and corresponding ECC score have all bits set to 0s or 1s
 
-  property p_gpr_x_syndrom_x(gpr_addr, x);
-
-    (rs1 == gpr_addr
-    || rs2 == gpr_addr)
-
-    && gpr_mem[gpr_addr][(REG_SIZE-1) -:REG_SIZE] == {REG_SIZE{x}}
-    && gpr_mem[gpr_addr][(ECC_SIZE+REG_SIZE-1) -:ECC_SIZE] == {ECC_SIZE{x}}
-    |=>
-    alert_major;
-  endproperty
-
-
   generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
 
-    a_glitch_xsecure_rf_ecc_gpr_0_syndrom_0: assert property (
-      p_gpr_x_syndrom_x(
-        gpr_addr,
-        1'b0)
-    ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 0s, but the alert major is not set.\n", gpr_addr));
+    a_glitch_xsecure_rf_gpr_not_all_0s_or_1s: assert property (
+      (rs1 == gpr_addr
+      || rs2 == gpr_addr)
 
-    a_glitch_xsecure_rf_ecc_gpr_1_syndrom_1: assert property (
-      p_gpr_x_syndrom_x(
-        gpr_addr,
-        1'b1)
-    ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d \"equals\" its syndrome, and is all 1s, but the alert major is not set.\n", gpr_addr));
+      && (gpr_mem[gpr_addr] == '0
+      || gpr_mem[gpr_addr] == '1)
+
+      |=>
+      alert_major
+
+    ) else `uvm_error(info_tag_glitch, $sformatf("The value of GPR %0d is all %0s, and major alert is not set.\n", gpr_addr, gpr_mem[gpr_addr][0]));
 
   end endgenerate
+
+
 
 
   //Verify that decoding missmatch of 1 og 2 bits sets major alert
