@@ -45,10 +45,12 @@ module uvmt_cv32e40s_rvfi_assert
   input wire             rvfi_dbg_mode,
   //TODO:INFO:silabs-robin should replace the above with the interface
 
-  uvma_rvfi_instr_if_t  rvfi_instr_if,
+  uvma_rvfi_instr_if_t  rvfi_if,
 
   input wire  writebuf_valid_i,
-  input wire  writebuf_ready_o
+  input wire  writebuf_ready_o,
+
+  uvmt_cv32e40s_support_logic_module_o_if_t  support_if
 );
 
   default clocking @(posedge clk_i); endclocking
@@ -173,6 +175,14 @@ module uvmt_cv32e40s_rvfi_assert
   end : gen_legal_cause_clic
 
 
+  // Reported interrupts are not made up
+
+  a_intr_count: assert property (
+    support_if.cnt_rvfi_irqs <= support_if.cnt_irq_ack
+    //Note: This is not comprehensive proof
+  ) else `uvm_error(info_tag, "rvfi_intr.interrupt over-reported");
+
+
   // Exceptions/Interrupts/Debugs have a cause
 
   a_exceptions_cause: assert property (
@@ -261,8 +271,8 @@ module uvmt_cv32e40s_rvfi_assert
 
     rvfi_mem_new = 0;
     for (int i = 0; i < NMEM; i++) begin
-      rvfi_mem_new += |rvfi_instr_if.rvfi_mem_wmask[i*XLEN/8+:XLEN/8] && rvfi_instr_if.rvfi_valid;
-      rvfi_mem_new += |rvfi_instr_if.rvfi_mem_rmask[i*XLEN/8+:XLEN/8] && rvfi_instr_if.rvfi_valid;
+      rvfi_mem_new += |rvfi_if.rvfi_mem_wmask[i*XLEN/8+:XLEN/8] && rvfi_if.rvfi_valid;
+      rvfi_mem_new += |rvfi_if.rvfi_mem_rmask[i*XLEN/8+:XLEN/8] && rvfi_if.rvfi_valid;
     end
     rvfi_mem_count_n = rvfi_mem_count_c + rvfi_mem_new;
   end
