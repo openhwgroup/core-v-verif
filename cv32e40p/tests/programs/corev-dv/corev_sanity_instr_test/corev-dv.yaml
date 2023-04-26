@@ -4,6 +4,8 @@ name: corev_sanity_instr_test
 uvm_test: $(CV_CORE_LC)_instr_base_test
 description: >
     Generates a list of all cv32e40p extension instructions
+compile_flags: >
+    +define+RV_DV_MARCH_RV32IMC_X
 plusargs: >
     +instr_cnt=10
     +num_of_sub_program=0
