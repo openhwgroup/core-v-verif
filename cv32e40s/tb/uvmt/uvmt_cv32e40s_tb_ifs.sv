@@ -465,6 +465,7 @@ interface uvmt_cv32e40s_support_logic_module_i_if_t
 
    input logic fetch_enable,
    input logic debug_req_i,
+   input logic irq_ack,
    input logic wb_valid,
    input logic [31:0] wb_tselect,
    input logic [31:0] wb_tdata1,
@@ -514,6 +515,7 @@ interface uvmt_cv32e40s_support_logic_module_i_if_t
 
       fetch_enable,
       debug_req_i,
+      irq_ack,
       wb_valid,
       wb_tselect,
       wb_tdata1,
@@ -584,6 +586,10 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    integer lml_bus_v_addr_ph_cnt;
    integer lrfodi_bus_v_addr_ph_cnt;
 
+   // Counter for ack'ed irqs
+   logic [31:0] cnt_irq_ack;
+   logic [31:0] cnt_rvfi_irqs;
+
    //Signals stating whether the request for the current response had the attribute value or not
    logic req_was_store;
    logic instr_req_had_integrity;
@@ -624,6 +630,9 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
 	      lrfodi_bus_resp_ph_cont,
 	      lrfodi_bus_v_addr_ph_cnt,
 
+         cnt_irq_ack,
+         cnt_rvfi_irqs,
+
          req_was_store,
          instr_req_had_integrity,
          data_req_had_integrity,
@@ -656,6 +665,9 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
          lrfodi_bus_addr_ph_cont,
          lrfodi_bus_resp_ph_cont,
          lrfodi_bus_v_addr_ph_cnt,
+
+         cnt_irq_ack,
+         cnt_rvfi_irqs,
 
          req_was_store,
          instr_req_had_integrity,
