@@ -17,7 +17,6 @@
  */
 
 class cv32e40p_base_pulp_instr_stream extends cv32e40p_base_instr_stream;
-
   `uvm_object_utils(cv32e40p_base_pulp_instr_stream)
 
   function new(string name = "");
@@ -25,13 +24,19 @@ class cv32e40p_base_pulp_instr_stream extends cv32e40p_base_instr_stream;
   endfunction
 
   function void pre_randomize();
+    avail_regs = new[num_of_avail_regs];
     super.pre_randomize();
   endfunction
 
-  virtual function void gen_xpulp_instr();
+  function void post_randomize();
+    gen_xpulp_instr();
+    super.post_randomize();
+  endfunction
+
+  virtual function void gen_xpulp_instr(riscv_instr_name_t base_instr_list[$] = {});
     riscv_instr instr;
     randomize_avail_regs();
-    instr = cv32e40p_instr::get_xpulp_instr(allowed_instr);
+    instr = cv32e40p_instr::get_xpulp_instr(.include_instr(base_instr_list));
     randomize_gpr(instr);
     instr_list.push_back(instr);
   endfunction
@@ -57,13 +62,59 @@ class cv32e40p_xpulp_sanity_stream_test extends cv32e40p_base_pulp_instr_stream;
 
     all_xpulp_instr = placeholder_ins.instr_group[RV32X];
 
-    foreach (all_xpulp_instr[i]) begin
-      if (all_xpulp_instr[i] inside { CV_BEQIMM, CV_BNEIMM, CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW } ) continue;
-      allowed_instr = {all_xpulp_instr[i]};
-      gen_xpulp_instr();
+    if (all_xpulp_instr.size() == 0) begin
+      `uvm_fatal(this.get_type_name(), "No instruction inside RV32X. Check that RV_DV_ISA is correctly set")
     end
 
-    // add manually the last instructions
+    foreach (all_xpulp_instr[i]) begin
+      if (all_xpulp_instr[i] inside { CV_BEQIMM, CV_BNEIMM, CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW } ) continue;
+      gen_xpulp_instr({all_xpulp_instr[i]});
+    end
   endfunction : post_randomize
 
 endclass : cv32e40p_xpulp_sanity_stream_test
+
+class cv32e40p_xpulp_simd_stream_test extends cv32e40p_base_pulp_instr_stream;
+  `uvm_object_utils(cv32e40p_xpulp_simd_stream_test)
+
+  function new(string name = "cv32e40p_xpulp_simd_stream_test");
+    super.new(name);
+  endfunction : new
+
+  function void post_randomize();
+    super.post_randomize();
+  endfunction : post_randomize
+
+  // overload gen_xpulp_instr
+  virtual function void gen_xpulp_instr(riscv_instr_name_t base_instr_list[$] = {});
+    riscv_instr instr;
+    randomize_avail_regs();
+    instr = cv32e40p_instr::get_xpulp_instr(.include_instr(base_instr_list), .include_category({SIMD}));
+    randomize_gpr(instr);
+    instr_list.push_back(instr);
+  endfunction
+
+endclass : cv32e40p_xpulp_simd_stream_test
+
+
+class cv32e40p_xpulp_mac_stream_test extends cv32e40p_base_pulp_instr_stream;
+  `uvm_object_utils(cv32e40p_xpulp_mac_stream_test)
+
+  function new(string name = "cv32e40p_xpulp_mac_stream_test");
+    super.new(name);
+  endfunction : new
+
+  function void post_randomize();
+    super.post_randomize();
+  endfunction : post_randomize
+
+  // overload gen_xpulp_instr
+  virtual function void gen_xpulp_instr(riscv_instr_name_t base_instr_list[$] = {});
+    riscv_instr instr;
+    randomize_avail_regs();
+    instr = cv32e40p_instr::get_xpulp_instr(.include_instr(base_instr_list), .include_category({MAC}));
+    randomize_gpr(instr);
+    instr_list.push_back(instr);
+  endfunction
+
+endclass : cv32e40p_xpulp_mac_stream_test
