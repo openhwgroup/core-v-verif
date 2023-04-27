@@ -252,6 +252,9 @@ endfunction : check_phase
 
 
 function bit uvme_cv32e40s_buserr_sb_c::should_instr_err(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) rvfi_trn);
+  // This function may have corners that will incorrectly trigger errors when
+  // an error transaction is followed by a non-error transaction to the same address.
+  // To avoid this the scoreboard needs to be re-written to not rely on the addresses to identify transactions
 
   uvma_obi_memory_addr_l_t  err_addrs[$];
   bit [31:0]                rvfi_addr = rvfi_trn.pc_rdata;
