@@ -59,6 +59,7 @@ class uvme_cv32e40s_buserr_sb_c extends uvm_scoreboard;
   bit                       pending_nmi;       // Whether nmi happened and handler is expected
   int                       late_retires;      // Number of non-debug/step/handler retires since "pending_nmi"
   uvma_obi_memory_mon_trn_c obii_err_queue[$]; // All I-side OBI trns last seen with "err"
+  uvma_obi_memory_addr_l_t  obii_ok_addrs[$];  // Latest non-"err" obi transaction addresses
 
   `uvm_component_utils(uvme_cv32e40s_buserr_sb_c)
 
@@ -108,6 +109,11 @@ function void uvme_cv32e40s_buserr_sb_c::write_obii(uvma_obi_memory_mon_trn_c tr
   end else begin
     // Acquit this address, as it was (re)fetched wo/ err
     remove_from_err_queue(trn);
+
+    // Store the 3 latest non-"err" addresses as they could be in the pipeline
+    // after the same address has been added to the "err" queue
+    if (obii_ok_addrs.size() == 3)  void'(obii_ok_addrs.pop_back());
+    obii_ok_addrs.push_front(trn.address);
   end
 
 endfunction : write_obii
@@ -130,6 +136,13 @@ function void uvme_cv32e40s_buserr_sb_c::write_rvfi(uvma_rvfi_instr_seq_item_c#(
       else `uvm_error(info_tag, $sformatf("retire at 0x%08x (expected 'err') lacks 'rvfi_trap'", trn.pc_rdata));
     assert (cnt_rvfi_errmatch - cnt_rvfi_ifaulthandl <= 1)
       else `uvm_error(info_tag, "too many err retires without ifault handling");
+  end else begin
+    foreach(obii_ok_addrs[i]) begin
+      if (obii_ok_addrs[i] == trn.pc_rdata) begin
+        obii_ok_addrs.delete(i);
+        break;
+      end
+    end
   end
 
   // D-side NMI handler
@@ -244,8 +257,11 @@ function bit uvme_cv32e40s_buserr_sb_c::should_instr_err(uvma_rvfi_instr_seq_ite
   bit [31:0]                rvfi_addr = rvfi_trn.pc_rdata;
 
   // Extract all addrs from queue of I-side OBI "err" transactions
+  // but ignore addresses of the 3 latest non-"err" obi transactions.
   foreach (obii_err_queue[i]) begin
-    err_addrs[i] = obii_err_queue[i].address;
+    if (!({obii_err_queue[i].address} inside {obii_ok_addrs})) begin
+      err_addrs[i] = obii_err_queue[i].address;
+    end
   end
 
   foreach (err_addrs[i]) begin
