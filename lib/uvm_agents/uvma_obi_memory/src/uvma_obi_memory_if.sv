@@ -25,7 +25,7 @@
  * Encapsulates all signals and clocking of Open Bus Interface interface. Used
  * by monitor (uvma_obi_mon_c) and driver (uvma_obi_drv_c).
  */
-interface uvma_obi_memory_if #(
+interface uvma_obi_memory_if_t #(
    parameter AUSER_WIDTH = `UVMA_OBI_MEMORY_AUSER_DEFAULT_WIDTH, ///< Width of the auser signal. RI5CY, Ibex, CV32E40* do not have the auser signal.
    parameter WUSER_WIDTH = `UVMA_OBI_MEMORY_WUSER_DEFAULT_WIDTH, ///< Width of the wuser signal. RI5CY, Ibex, CV32E40* do not have the wuser signal.
    parameter RUSER_WIDTH = `UVMA_OBI_MEMORY_RUSER_DEFAULT_WIDTH, ///< Width of the ruser signal. RI5CY, Ibex, CV32E40* do not have the ruser signal.
@@ -238,7 +238,7 @@ interface uvma_obi_memory_if #(
    modport active_slv_mp (clocking drv_slv_cb ); ///< Used by uvma_obi_drv_c in 'slv' mode.
    modport passive_mp    (clocking mon_cb     ); ///< Used by uvma_obi_mon_c.
 
-endinterface : uvma_obi_memory_if
+endinterface : uvma_obi_memory_if_t
 
 
 `endif // __UVMA_OBI_MEMORY_IF_SV__

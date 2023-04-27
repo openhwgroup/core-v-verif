@@ -1,7 +1,7 @@
 /**
  * Quasi-static core control signals.
  */
-interface uvme_cv32e40s_core_cntrl_if
+interface uvme_cv32e40s_core_cntrl_if_t
     import uvm_pkg::*;
     import cv32e40s_pkg::*;
     ();
@@ -29,4 +29,4 @@ interface uvme_cv32e40s_core_cntrl_if
     output fetch_en;
   endclocking : drv_cb
 
-endinterface : uvme_cv32e40s_core_cntrl_if
+endinterface : uvme_cv32e40s_core_cntrl_if_t

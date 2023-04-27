@@ -26,7 +26,7 @@
 class uvma_clic_cntxt_c extends uvm_object;
 
    // Handle to agent interface
-   virtual uvma_clic_if  vif;
+   virtual uvma_clic_if_t  vif;
 
    // Events
    uvm_event  sample_cfg_e;

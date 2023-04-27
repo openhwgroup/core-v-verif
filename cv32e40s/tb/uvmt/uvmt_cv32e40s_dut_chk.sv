@@ -25,7 +25,7 @@
  * All ports are SV interfaces.
  */
 module uvmt_cv32e40s_dut_chk(
-   uvma_debug_if  debug_if
+   uvma_debug_if_t  debug_if
 );
 
    `pragma protect begin

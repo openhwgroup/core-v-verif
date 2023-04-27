@@ -35,15 +35,15 @@ module uvmt_cv32e40s_triggers_assert_cov
     input logic wb_last_op,
     input logic wb_exception,
 
-    uvma_rvfi_instr_if rvfi_if,
-    uvma_clknrst_if clknrst_if,
+    uvma_rvfi_instr_if_t rvfi_if,
+    uvma_clknrst_if_t clknrst_if,
 
-    uvma_rvfi_csr_if tdata1,
-    uvma_rvfi_csr_if tdata2,
-    uvma_rvfi_csr_if tdata3,
-    uvma_rvfi_csr_if tinfo,
-    uvma_rvfi_csr_if tselect,
-    uvma_rvfi_csr_if tcontrol
+    uvma_rvfi_csr_if_t tdata1,
+    uvma_rvfi_csr_if_t tdata2,
+    uvma_rvfi_csr_if_t tdata3,
+    uvma_rvfi_csr_if_t tinfo,
+    uvma_rvfi_csr_if_t tselect,
+    uvma_rvfi_csr_if_t tcontrol
   );
 
   default clocking @(posedge clknrst_if.clk); endclocking

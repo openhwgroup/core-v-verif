@@ -262,4 +262,25 @@ module uvma_obi_memory_1p2_assert
   else
     `uvm_error(info_tag, "EXOKAY may only asserted in response to an LR or SC transaction (signaled via atop)")
 
+  // R-13: The reqpar signal shall be the inverse of req at each rising clk edge (when not in reset).
+  a_reqpar: assert property (
+    reqpar == !req
+  ) else `uvm_error(info_tag, "bad reqpar")
+
+  // R-14: The gntpar signal shall be the inverse of gnt at each rising clk edge (when not in reset).
+  a_gntpar: assert property (
+    gntpar == !gnt
+  ) else `uvm_error(info_tag, "bad gntpar")
+
+  // R-15: The rvalidpar signal shall be the inverse of rvalid at each rising clk edge (when not in reset).
+  a_rvalidpar: assert property (
+    rvalidpar == !rvalid
+  ) else `uvm_error(info_tag, "bad rvalidpar")
+
+  // R-16: The rreadypar signal shall be the inverse of rready at each rising clk edge (when not in reset)
+  a_rreadypar: assert property (
+    rreadypar == !rready
+  ) else `uvm_error(info_tag, "bad rreadypar")
+
+
 endmodule : uvma_obi_memory_1p2_assert

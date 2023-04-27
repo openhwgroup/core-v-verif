@@ -295,7 +295,7 @@ endfunction : get_and_set_cntxt
 
 
 function void uvma_obi_memory_agent_c::retrieve_vif();
-   if (!uvm_config_db#(virtual uvma_obi_memory_if#(
+   if (!uvm_config_db#(virtual uvma_obi_memory_if_t#(
      .AUSER_WIDTH(AUSER_WIDTH),
      .WUSER_WIDTH(WUSER_WIDTH),
      .RUSER_WIDTH(RUSER_WIDTH),

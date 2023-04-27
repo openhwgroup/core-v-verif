@@ -30,6 +30,7 @@
 module  uvmt_cv32e40s_pma_assert
   import cv32e40s_pkg::*;
   import uvm_pkg::*;
+  import uvmt_cv32e40s_pkg::*;
 #(
   parameter type          CORE_REQ_TYPE,
   parameter logic [31:0]  DM_REGION_START,
@@ -46,7 +47,6 @@ module  uvmt_cv32e40s_pma_assert
 
   // Interface towards OBI
   input CORE_REQ_TYPE  bus_trans_o,
-  input wire           bus_trans_bufferable,
   input wire           bus_trans_ready_i,
   input wire           bus_trans_valid_o,
 
@@ -57,10 +57,14 @@ module  uvmt_cv32e40s_pma_assert
 
   // PMA Verdict
   input wire  pma_err,
+  input wire  bus_trans_bufferable,
+  input wire  bus_trans_cacheable,
+  input wire  bus_trans_integrity,
 
-  // Support Interfaces
-  uvma_obi_memory_if  obi_memory_if,
-  uvma_rvfi_instr_if  rvfi_instr_if
+  // Support Logic
+  uvma_obi_memory_if_t     obi_memory_if,
+  uvma_rvfi_instr_if_t     rvfi_instr_if,
+  input wire pma_status_t  pma_status_i
 );
 
 
@@ -199,6 +203,25 @@ module  uvmt_cv32e40s_pma_assert
     ) else `uvm_error(info_tag, "obi attributes must mach mpu");
     //TODO:INFO:silabs-robin Data-side Could be checked by comparing with transaction number IDs
   end : gen_attr_instr
+
+
+  // PMA Verdict Expected
+
+  a_pma_err: assert property (
+    pma_err == !pma_status_i.allow
+  ) else `uvm_error(info_tag, "pma err unexpected value");
+
+  a_pma_bufferable: assert property (
+    bus_trans_bufferable == pma_status_i.bufferable
+  ) else `uvm_error(info_tag, "pma bufferable unexpected value");
+
+  a_pma_cacheable: assert property (
+    bus_trans_cacheable == pma_status_i.cacheable
+  ) else `uvm_error(info_tag, "pma cacheable unexpected value");
+
+  a_pma_integrity: assert property (
+    bus_trans_integrity == pma_status_i.integrity
+  ) else `uvm_error(info_tag, "pma integrity unexpected value");
 
 
 endmodule : uvmt_cv32e40s_pma_assert

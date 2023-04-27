@@ -21,7 +21,7 @@
 `define __UVMT_CV32E40S_IMPERAS_DV_WRAP_SV__
 
 `define DUT_PATH dut_wrap.cv32e40s_wrapper_i
-`define RVFI_IF  `DUT_PATH.rvfi_instr_if_0_i
+`define RVFI_IF  `DUT_PATH.rvfi_instr_if
 
 `define STRINGIFY(x) `"x`"
 
@@ -32,12 +32,12 @@
     bit csr_``CSR_NAME``_wb; \
     wire [31:0] csr_``CSR_NAME``_w; \
     wire [31:0] csr_``CSR_NAME``_r; \
-    assign csr_``CSR_NAME``_w = `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wdata &   `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask; \
-    assign csr_``CSR_NAME``_r = `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rdata & ~(`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask); \
+    assign csr_``CSR_NAME``_w = `DUT_PATH.rvfi_csr_``CSR_NAME``_if.rvfi_csr_wdata &   `DUT_PATH.rvfi_csr_``CSR_NAME``_if.rvfi_csr_wmask; \
+    assign csr_``CSR_NAME``_r = `DUT_PATH.rvfi_csr_``CSR_NAME``_if.rvfi_csr_rdata & ~(`DUT_PATH.rvfi_csr_``CSR_NAME``_if.rvfi_csr_wmask); \
     assign rvvi.csr[0][0][``CSR_ADDR]    = csr_``CSR_NAME``_w | csr_``CSR_NAME``_r; \
     assign rvvi.csr_wb[0][0][``CSR_ADDR] = csr_``CSR_NAME``_wb; \
     always @(rvvi.csr[0][0][``CSR_ADDR]) begin \
-      if (`DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_rmask || `DUT_PATH.rvfi_csr_``CSR_NAME``_if_0_i.rvfi_csr_wmask ) begin \
+      if (`DUT_PATH.rvfi_csr_``CSR_NAME``_if.rvfi_csr_rmask || `DUT_PATH.rvfi_csr_``CSR_NAME``_if.rvfi_csr_wmask ) begin \
         csr_``CSR_NAME``_wb = 1; \
       end \
     end \
@@ -937,8 +937,6 @@ module uvmt_cv32e40s_imperas_dv_wrap
     // in-flight, eg Load/Store
     rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR, RVVI_FALSE);
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
-
-    rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR, RVVI_FALSE);
 
     if (CORE_PARAM_CLIC == 1) begin
       rvviRefCsrCompareEnable(hart_id, `CSR_MNXTI_ADDR, RVVI_FALSE);

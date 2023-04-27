@@ -35,6 +35,8 @@ ${DV_UVMA_PATH}/uvma_obi_memory/src/uvma_obi_memory_1p2_assert.sv
 
 ./dummy_pkg.sv
 
+#TODO: change the file names too?
+
 ${DV_UVMA_PATH}/uvma_clic/uvma_clic_if.sv
 ${DV_UVMA_PATH}/uvma_fencei/uvma_fencei_if.sv
 ${DV_UVMA_PATH}/uvma_rvfi/uvma_rvfi_instr_if.sv

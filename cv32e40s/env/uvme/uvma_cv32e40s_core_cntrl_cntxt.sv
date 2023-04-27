@@ -25,7 +25,7 @@
  */
  class uvma_cv32e40s_core_cntrl_cntxt_c extends uvma_core_cntrl_cntxt_c;
 
-   virtual uvme_cv32e40s_core_cntrl_if core_cntrl_vif;
+   virtual uvme_cv32e40s_core_cntrl_if_t core_cntrl_vif;
 
    `uvm_object_utils_begin(uvma_cv32e40s_core_cntrl_cntxt_c)
    `uvm_object_utils_end
