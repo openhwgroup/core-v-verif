@@ -86,38 +86,6 @@ class cv32e40p_instr extends riscv_instr;
     );
   endfunction
 
-
-  // static function riscv_instr get_xpulp_instr(riscv_instr_name_t base_instr_list[$] = {});
-  //    riscv_instr instr_h;
-  //    int unsigned idx;
-  //    int unsigned i;
-  //    riscv_instr_name_t name;
-  //    if (base_instr_list.size() == 0) begin
-  //       base_instr_list = instr_group[RV32X]; // get all custom instr, in our case all XPULP instructions
-  //    end
-  //    // Filter out unsupported xpulp instruction
-  //    if (unsupported_instr.size() > 0) begin
-  //      while (i < base_instr_list.size()) begin
-  //        if (base_instr_list[i] inside {unsupported_instr}) begin
-  //          base_instr_list.delete(i);
-  //        end else begin
-  //          i++;
-  //        end
-  //      end
-  //    end
-  //    if (base_instr_list.size() == 0) begin
-  //      $error("Cannot find available xpulp instruction");
-  //      $fatal(1);
-  //    end
-  //    idx = $urandom_range(0, base_instr_list.size()-1);
-  //    name = base_instr_list[idx];
-  //    // Shallow copy for all relevant fields, avoid using create() to improve performance
-  //    instr_h = new instr_template[name];
-  //   //  $display("instr is : %s, category : %s, group : %s", name, instr_h.category, instr_h.group);
-  //    return instr_h;
-  // endfunction : get_xpulp_instr
-
-
   static function riscv_instr get_load_store_instr(riscv_instr_name_t load_store_instr[$] = {});
     riscv_instr instr_h;
      int unsigned idx;
