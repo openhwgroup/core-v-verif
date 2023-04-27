@@ -1138,6 +1138,84 @@ module uvmt_cv32e40s_tb;
 
   end : gen_hardened_csrs_pmp_assert
 
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_register_file_ecc_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_register_file_ecc_assert_i 	(
+
+      //Interfaces:
+      .rvfi_if	  (rvfi_instr_if),
+
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Alert:
+      .alert_major (core_i.alert_major_o),
+
+      //Register file memory:
+      .gpr_mem (core_i.register_file_wrapper_i.register_file_i.mem_gated),
+
+      //Soruce registers:
+      .rs1 (core_i.if_id_pipe.instr.bus_resp.rdata[19:15]),
+      .rs2 (core_i.if_id_pipe.instr.bus_resp.rdata[24:20]),
+
+      //Writing of GPRs:
+      .gpr_we (core_i.rf_we_wb),
+      .gpr_waddr (core_i.rf_waddr_wb),
+      .gpr_wdata (core_i.rf_wdata_wb)
+
+    );
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_security_alerts_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_security_alerts_assert_i 	(
+
+      //Interfaces:
+      .rvfi_if	  (rvfi_instr_if),
+      .support_if (support_logic_module_o_if.slave_mp),
+
+      //Signals:
+      .rst_ni     (clknrst_if.reset_n),
+      .clk_i      (clknrst_if.clk),
+
+      //alerts:
+      .alert_minor (core_i.alert_minor_o),
+      .alert_major (core_i.alert_major_o),
+
+      //wb:
+      .wb_valid (core_i.wb_valid),
+      .exception_in_wb (core_i.controller_i.controller_fsm_i.exception_in_wb),
+      .exception_cause_wb (core_i.controller_i.controller_fsm_i.exception_cause_wb),
+
+      //dummy and hint:
+      .dummy_en (core_i.xsecure_ctrl.cpuctrl.rnddummy),
+      .hint_en (core_i.xsecure_ctrl.cpuctrl.rndhint),
+      .lfsr0_clock_en (core_i.cs_registers_i.xsecure.lfsr0_i.clock_en),
+      .lfsr1_clock_en (core_i.cs_registers_i.xsecure.lfsr1_i.clock_en),
+      .lfsr2_clock_en (core_i.cs_registers_i.xsecure.lfsr2_i.clock_en),
+      .seed0_we       (core_i.cs_registers_i.xsecure.lfsr0_i.seed_we_i),
+      .seed1_we       (core_i.cs_registers_i.xsecure.lfsr1_i.seed_we_i),
+      .seed2_we       (core_i.cs_registers_i.xsecure.lfsr2_i.seed_we_i),
+      .seed0_i        (core_i.cs_registers_i.xsecure.lfsr0_i.seed_i),
+      .seed1_i        (core_i.cs_registers_i.xsecure.lfsr1_i.seed_i),
+      .seed2_i        (core_i.cs_registers_i.xsecure.lfsr2_i.seed_i),
+      .lfsr0_n        (core_i.cs_registers_i.xsecure.lfsr0_i.lfsr_n),
+      .lfsr1_n        (core_i.cs_registers_i.xsecure.lfsr1_i.lfsr_n),
+      .lfsr2_n        (core_i.cs_registers_i.xsecure.lfsr2_i.lfsr_n),
+
+      //OBI:
+      .obi_data_rvalid (core_i.data_rvalid_i),
+      .obi_data_err (core_i.data_err_i),
+
+      //NMI:
+      .nmip (core_i.dcsr.nmip),
+
+      //debug:
+      .debug_mode (core_i.controller_i.controller_fsm_i.debug_mode_q)
+
+    );
 
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert #(
