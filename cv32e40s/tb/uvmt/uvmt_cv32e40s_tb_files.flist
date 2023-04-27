@@ -30,15 +30,21 @@ ${DV_UVMT_PATH}/uvmt_cv32e40s_pmprvfi_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_rvfi_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_umode_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert.sv
+${DV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert/uvmt_cv32e40s_xsecure_hardened_pc_assert.sv
+${DV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert/uvmt_cv32e40s_xsecure_reduced_profiling_infrastructure_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert/uvmt_cv32e40s_xsecure_hardened_csrs_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert/uvmt_cv32e40s_xsecure_hardened_csrs_clic_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert/uvmt_cv32e40s_xsecure_hardened_csrs_interrupt_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert/uvmt_cv32e40s_xsecure_hardened_csrs_pmp_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert/uvmt_cv32e40s_xsecure_security_alerts_assert.sv
+${DV_UVMT_PATH}/uvmt_cv32e40s_xsecure_assert/uvmt_cv32e40s_xsecure_register_file_ecc_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_zc_assert.sv
 
+${DV_UVMT_PATH}/../assertions/uvmt_cv32e40s_pma_model.sv
+${DV_UVMT_PATH}/../assertions/uvmt_cv32e40s_pmp_model.sv
 ${DV_UVMT_PATH}/support_logic/uvmt_cv32e40s_sl_obi_phases_monitor.sv
 ${DV_UVMT_PATH}/support_logic/uvmt_cv32e40s_sl_req_attribute_fifo.sv
 ${DV_UVMT_PATH}/support_logic/uvmt_cv32e40s_support_logic.sv
-${DV_UVMT_PATH}/uvmt_cv32e40s_pmp_model.sv
+${DV_UVMT_PATH}/uvmt_cv32e40s_pma_cov.sv
+${DV_UVMT_PATH}/uvmt_cv32e40s_rvfi_cov.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_umode_cov.sv

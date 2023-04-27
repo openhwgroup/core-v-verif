@@ -36,7 +36,7 @@ volatile uint32_t mmstatus = 0;
 volatile uint32_t mmie    = 0;
 volatile uint32_t num_taken_interrupts = 0;
 // MPP bit-field
-int MPP_FIELD [2] = {11, 12};
+volatile int MPP_FIELD [2] = {11, 12};
 
 // Assembly function to setup a generous PMP-region for user mode.
 extern volatile void  setup_pmp();
@@ -165,7 +165,7 @@ int main(void) {
     mm_ram_assert_irq(external_machine_interrupt, 1);
     while (!mmcause); // wait for interrupt to finish
     assert_or_die(num_taken_interrupts, 1, "Error: No interrupts registered!\n");
-    int get_mpp = get_field(mmstatus, 11, 12);
+    volatile int get_mpp = get_field(mmstatus, 11, 12);
     assert_or_die(get_mpp, 0x3, "Error: Interrupt handler did not execute in machine mode!\n");
 
     // case 2 user mode exception
