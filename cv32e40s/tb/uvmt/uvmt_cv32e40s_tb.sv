@@ -33,8 +33,10 @@ module uvmt_cv32e40s_tb;
    import cv32e40s_pkg::*;
    import uvmt_cv32e40s_pkg::*;
    import uvme_cv32e40s_pkg::*;
+   `ifdef USE_ISS
    `ifndef FORMAL
    import rvviApiPkg::*;
+   `endif
    `endif
 
    // Capture regs for test status from Virtual Peripheral in dut_wrap.mem_i
@@ -84,8 +86,10 @@ module uvmt_cv32e40s_tb;
                                                    .sec_lvl());     // Core status outputs
 
    // RVVI SystemVerilog Interface
+   `ifdef USE_ISS
    `ifndef FORMAL
       rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+   `endif
    `endif
 
   /**
@@ -740,205 +744,6 @@ module uvmt_cv32e40s_tb;
   bind cv32e40s_wrapper
     uvmt_cv32e40s_integration_assert  integration_assert_i (.*);
 
-/*
-  bind cv32e40s_wrapper
-    uvmt_cv32e40s_xsecure_if_t
-    #(.MTVT_ADDR_WIDTH   (core_i.MTVT_ADDR_WIDTH),
-      .PMP_NUM_REGIONS   (PMP_NUM_REGIONS),
-      .PMP_ADDR_WIDTH    (core_i.cs_registers_i.PMP_ADDR_WIDTH))
-
-    xsecure_if (
-
-      .core_i_sleep_unit_i_core_clock_gate_i_clk_en                                                                     (core_i.sleep_unit_i.core_clock_gate_i.clk_en),
-
-      .core_i_data_err_i                                                                                                (core_i.data_err_i),
-      .core_rf_we_wb                                                                                                    (core_i.rf_we_wb),
-      .core_rf_waddr_wb                                                                                                 (core_i.rf_waddr_wb),
-      .core_rf_wdata_wb                                                                                                 (core_i.rf_wdata_wb),
-      .core_register_file_wrapper_register_file_mem                                                                     (core_i.register_file_wrapper_i.register_file_i.mem),
-      .core_i_jump_target_id                                                                                            (core_i.jump_target_id),
-
-      // OBI interface
-      .core_i_if_stage_i_bus_resp                                                                                       (core_i.if_stage_i.bus_resp),
-      .core_i_load_store_unit_i_bus_resp                                                                                (core_i.load_store_unit_i.bus_resp),
-
-      .core_i_m_c_obi_data_if_req_payload                                                                               (core_i.m_c_obi_data_if.req_payload),
-      .core_i_m_c_obi_data_if_resp_payload                                                                              (core_i.m_c_obi_data_if.resp_payload),
-      .core_i_m_c_obi_instr_if_req_payload                                                                              (core_i.m_c_obi_instr_if.req_payload),
-      .core_i_m_c_obi_instr_if_resp_payload                                                                             (core_i.m_c_obi_instr_if.resp_payload),
-
-      .core_i_m_c_obi_data_if_s_req_req                                                                                 (core_i.m_c_obi_data_if.s_req.req),
-      .core_i_m_c_obi_data_if_s_req_reqpar                                                                              (core_i.m_c_obi_data_if.s_req.reqpar),
-      .core_i_m_c_obi_data_if_s_gnt_gnt                                                                                 (core_i.m_c_obi_data_if.s_gnt.gnt),
-      .core_i_m_c_obi_data_if_s_gnt_gntpar                                                                              (core_i.m_c_obi_data_if.s_gnt.gntpar),
-      .core_i_m_c_obi_data_if_s_rvalid_rvalid                                                                           (core_i.m_c_obi_data_if.s_rvalid.rvalid),
-      .core_i_m_c_obi_data_if_s_rvalid_rvalidpar                                                                        (core_i.m_c_obi_data_if.s_rvalid.rvalidpar),
-
-      .core_i_m_c_obi_instr_if_s_req_req                                                                                (core_i.m_c_obi_instr_if.s_req.req),
-      .core_i_m_c_obi_instr_if_s_req_reqpar                                                                             (core_i.m_c_obi_instr_if.s_req.reqpar),
-      .core_i_m_c_obi_instr_if_s_gnt_gnt                                                                                (core_i.m_c_obi_instr_if.s_gnt.gnt),
-      .core_i_m_c_obi_instr_if_s_gnt_gntpar                                                                             (core_i.m_c_obi_instr_if.s_gnt.gntpar),
-      .core_i_m_c_obi_instr_if_s_rvalid_rvalid                                                                          (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
-      .core_i_m_c_obi_instr_if_s_rvalid_rvalidpar                                                                       (core_i.m_c_obi_instr_if.s_rvalid.rvalidpar),
-
-      .core_i_if_stage_i_prefetch_resp_valid                                                                            (core_i.if_stage_i.prefetch_resp_valid),
-      .core_i_load_store_unit_i_resp_valid                                                                              (core_i.load_store_unit_i.resp_valid),
-      .core_i_load_store_unit_i_bus_resp_valid                                                                          (core_i.load_store_unit_i.bus_resp_valid),
-
-      .core_i_load_store_unit_i_response_filter_i_core_cnt_q                                                            (core_i.load_store_unit_i.response_filter_i.core_cnt_q),
-
-      // CSR
-      .core_alert_minor_o                                                                                               (core_i.alert_minor_o),
-      .core_alert_major_o                                                                                               (core_i.alert_major_o),
-
-      .core_xsecure_ctrl_cpuctrl_dataindtiming                                                                          (core_i.xsecure_ctrl.cpuctrl.dataindtiming),
-      .core_xsecure_ctrl_cpuctrl_rnddummy                                                                              (core_i.xsecure_ctrl.cpuctrl.rnddummy),
-      .core_xsecure_ctrl_cpuctrl_integrity                                                                              (core_i.xsecure_ctrl.cpuctrl.integrity),
-      .core_xsecure_ctrl_cpuctrl_pc_hardening                                                                           (core_i.xsecure_ctrl.cpuctrl.pc_hardening),
-      .core_xsecure_ctrl_cpuctrl_rndhint                                                                                (core_i.xsecure_ctrl.cpuctrl.rndhint),
-
-      .core_xsecure_ctrl_cpuctrl_rnddummyfreq                                                                           (core_i.xsecure_ctrl.cpuctrl[19:16]),
-      .core_if_stage_gen_dummy_instr_dummy_instr_dummy_en                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.dummy_en),
-      .core_cs_registers_xsecure_lfsr_lockup                                                                            (core_i.cs_registers_i.xsecure.lfsr_lockup),
-
-      .core_cs_registers_mhpmcounter_mcycle                                                                             (core_i.cs_registers_i.mcycle_o),
-      .core_cs_registers_mhpmcounter_minstret                                                                           (core_i.cs_registers_i.mhpmcounter_q[2]),
-      .core_cs_registers_mhpmcounter_31_to_3                                                                            (core_i.cs_registers_i.mhpmcounter_q[31:3]),
-      .core_cs_registers_mhpmevent_31_to_3                                                                              (core_i.cs_registers_i.mhpmevent_q[31:3]),
-      .core_cs_registers_mcountinhibit_q_mcycle_inhibit                                                                 (core_i.cs_registers_i.mcountinhibit_q[0]),
-      .core_cs_registers_mcountinhibit_q_minstret_inhibit                                                               (core_i.cs_registers_i.mcountinhibit_q[2]),
-
-      .core_cs_registers_csr_en_gated                                                                                   (core_i.cs_registers_i.csr_en_gated),
-      .core_cs_registers_csr_waddr                                                                                      (core_i.cs_registers_i.csr_waddr),
-
-      .core_LFSR0_CFG_default_seed                                                                                      (core_i.LFSR0_CFG.default_seed),
-      .core_LFSR1_CFG_default_seed                                                                                      (core_i.LFSR1_CFG.default_seed),
-      .core_LFSR2_CFG_default_seed                                                                                      (core_i.LFSR2_CFG.default_seed),
-
-      .core_xsecure_ctrl_lfsr0                                                                                          (core_i.xsecure_ctrl.lfsr0),
-      .core_xsecure_ctrl_lfsr1                                                                                          (core_i.xsecure_ctrl.lfsr1),
-      .core_xsecure_ctrl_lfsr2                                                                                          (core_i.xsecure_ctrl.lfsr2),
-
-      .core_cs_registers_xsecure_lfsr0_seed_we                                                                          (core_i.cs_registers_i.xsecure.lfsr0_i.seed_we_i),
-      .core_cs_registers_xsecure_lfsr1_seed_we                                                                          (core_i.cs_registers_i.xsecure.lfsr1_i.seed_we_i),
-      .core_cs_registers_xsecure_lfsr2_seed_we                                                                          (core_i.cs_registers_i.xsecure.lfsr2_i.seed_we_i),
-
-      .core_i_cs_registers_i_mepc_o                                                                                     (core_i.cs_registers_i.mepc_o),
-
-      // Hardend CSR registers
-      .core_i_cs_registers_i_mstateen0_q                                                                                (core_i.cs_registers_i.mstateen0_q),
-      .core_i_cs_registers_i_priv_lvl_q_int                                                                             (core_i.cs_registers_i.priv_lvl_q_int),
-      .core_i_cs_registers_i_jvt_q                                                                                      (core_i.cs_registers_i.jvt_q),
-      .core_i_cs_registers_i_mstatus_q                                                                                  (core_i.cs_registers_i.mstatus_q),
-      .core_i_cs_registers_i_cpuctrl_q                                                                                  (core_i.cs_registers_i.cpuctrl_q),
-      .core_i_cs_registers_i_dcsr_q                                                                                     (core_i.cs_registers_i.dcsr_q),
-      .core_i_cs_registers_i_mepc_q                                                                                     (core_i.cs_registers_i.mepc_q),
-      .core_i_cs_registers_i_mscratch_q                                                                                 (core_i.cs_registers_i.mscratch_q),
-
-      .core_i_cs_registers_i_pmp_mseccfg_q                                                                              (core_i.cs_registers_i.pmp_mseccfg_q),
-      .core_i_cs_registers_i_pmpncfg_q                                                                                  (core_i.cs_registers_i.pmpncfg_q),
-      .core_i_cs_registers_i_pmp_addr_q                                                                                 (core_i.cs_registers_i.pmp_addr_q),
-
-      .core_i_cs_registers_i_mtvt_q                                                                                     (core_i.cs_registers_i.mtvt_q),
-      .core_i_cs_registers_i_mtvec_q                                                                                    (core_i.cs_registers_i.mtvec_q),
-      .core_i_cs_registers_i_mintstatus_q                                                                               (core_i.cs_registers_i.mintstatus_q),
-      .core_i_cs_registers_i_mintthresh_q                                                                               (core_i.cs_registers_i.mintthresh_q),
-      .core_i_cs_registers_i_mie_q                                                                                      (core_i.cs_registers_i.mie_q),
-
-      // Shadow registers
-      .core_cs_registers_mstateen0_csr_gen_hardened_shadow_q                                                            (core_i.cs_registers_i.mstateen0_csr_i.gen_hardened.shadow_q),
-      .core_cs_registers_priv_lvl_gen_hardened_shadow_q                                                                 (core_i.cs_registers_i.priv_lvl_i.gen_hardened.shadow_q),
-      .core_cs_registers_jvt_csr_gen_hardened_shadow_q                                                                  (core_i.cs_registers_i.jvt_csr_i.gen_hardened.shadow_q),
-      .core_cs_registers_mstatus_csr_gen_hardened_shadow_q                                                              (core_i.cs_registers_i.mstatus_csr_i.gen_hardened.shadow_q),
-      .core_cs_registers_xsecure_cpuctrl_csr_gen_hardened_shadow_q                                                      (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.gen_hardened.shadow_q),
-      .core_cs_registers_dcsr_csr_gen_hardened_shadow_q                                                                 (core_i.cs_registers_i.gen_debug_csr.dcsr_csr_i.gen_hardened.shadow_q),
-      .core_cs_registers_mepc_csr_gen_hardened_shadow_q                                                                 (core_i.cs_registers_i.mepc_csr_i.gen_hardened.shadow_q),
-      .core_cs_registers_mscratch_csr_gen_hardened_shadow_q                                                             (core_i.cs_registers_i.mscratch_csr_i.gen_hardened.shadow_q),
-
-      .uvmt_cv32e40s_tb_pmp_mseccfg_q_shadow_q                                                                          (uvmt_cv32e40s_tb.pmp_mseccfg_q_shadow_q),
-      .uvmt_cv32e40s_tb_pmpncfg_q_shadow_q                                                                              (uvmt_cv32e40s_tb.pmpncfg_q_shadow_q),
-      .uvmt_cv32e40s_tb_pmp_addr_q_shadow_q                                                                             (uvmt_cv32e40s_tb.pmp_addr_q_shadow_q),
-
-      .uvmt_cv32e40s_tb_mtvt_q_shadow_q                                                                                 (uvmt_cv32e40s_tb.mtvt_q_shadow_q),
-      .uvmt_cv32e40s_tb_mtvec_q_shadow_q                                                                                (uvmt_cv32e40s_tb.mtvec_q_shadow_q),
-      .uvmt_cv32e40s_tb_mintstatus_q_shadow_q                                                                           (uvmt_cv32e40s_tb.mintstatus_q_shadow_q),
-      .uvmt_cv32e40s_tb_mintthresh_q_shadow_q                                                                           (uvmt_cv32e40s_tb.mintthresh_q_shadow_q),
-      .uvmt_cv32e40s_tb_mie_q_hardened_shadow_q                                                                         (uvmt_cv32e40s_tb.mie_q_hardened_shadow_q),
-
-      // Controller
-      .core_i_controller_i_controller_fsm_i_pending_nmi                                                                 (core_i.controller_i.controller_fsm_i.pending_nmi),
-      .core_i_controller_i_controller_fsm_i_dcsr_i_step                                                                 (core_i.controller_i.controller_fsm_i.dcsr_i.step),
-      .core_i_controller_i_controller_fsm_i_dcsr_i_stepie                                                                 (core_i.controller_i.controller_fsm_i.dcsr_i.stepie),
-      .core_controller_controller_fsm_debug_mode_q                                                                      (core_i.controller_i.controller_fsm_i.debug_mode_q),
-
-      // IF stage
-      .core_if_stage_if_valid_o                                                                                         (core_i.if_stage_i.if_valid_o),
-      .core_if_stage_id_ready_i                                                                                         (core_i.if_stage_i.id_ready_i),
-
-      .core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs1                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.lfsr_rs1),
-      .core_if_stage_gen_dummy_instr_dummy_instr_lfsr_rs2                                                               (core_i.if_stage_i.gen_dummy_instr.dummy_instr_i.lfsr_rs2),
-
-      .core_if_stage_instr_meta_n_dummy                                                                                 (core_i.if_stage_i.instr_meta_n.dummy),
-      .core_i_if_stage_i_instr_hint                                                                                     (core_i.if_stage_i.instr_hint),
-      .core_i_if_stage_i_dummy_insert                                                                                   (core_i.if_stage_i.dummy_insert),
-
-      .core_i_if_stage_i_pc_if_o                                                                                        (core_i.if_stage_i.pc_if_o),
-      .core_i_if_stage_i_pc_check_i_pc_set_q                                                                            (core_i.if_stage_i.pc_check_i.pc_set_q),
-
-      .core_i_if_stage_i_ptr_in_if_o                                                                                    (core_i.if_stage_i.ptr_in_if_o),
-      .core_i_if_stage_i_compressed_decoder_i_is_compressed_o                                                           (core_i.if_stage_i.compressed_decoder_i.is_compressed_o),
-
-      // IF ID pipe
-      .core_if_id_pipe_instr_meta_dummy                                                                                 (core_i.if_id_pipe.instr_meta.dummy),
-      .core_if_id_pipe_instr_meta_hint                                                                                  (core_i.if_id_pipe.instr_meta.hint),
-      .core_if_id_pipe_instr_bus_resp_rdata                                                                             (core_i.if_id_pipe.instr.bus_resp.rdata),
-      .core_i_id_stage_i_if_id_pipe_i_pc                                                                                (core_i.id_stage_i.if_id_pipe_i.pc),
-      .core_i_if_id_pipe_last_op                                                                                        (core_i.if_id_pipe.last_op),
-
-      // ID stage
-      .core_id_stage_id_valid_o                                                                                         (core_i.id_stage_i.id_valid_o),
-      .core_id_stage_ex_ready_i                                                                                         (core_i.id_stage_i.ex_ready_i),
-      .core_id_stage_if_id_pipe_instr_meta_compressed                                                                   (core_i.id_stage_i.if_id_pipe_i.instr_meta.compressed),
-      .core_id_stage_if_id_pipe_compressed_instr                                                                        (core_i.id_stage_i.if_id_pipe_i.compressed_instr),
-
-      // ID EX pipe
-      .core_id_ex_pipe_instr_meta_dummy                                                                                 (core_i.id_ex_pipe.instr_meta.dummy),
-
-      // EX stage
-      .core_i_ex_stage_i_branch_target_o                                                                                (core_i.ex_stage_i.branch_target_o),
-      .core_i_ex_stage_i_alu_i_cmp_result_o                                                                             (core_i.ex_stage_i.alu_i.cmp_result_o),
-
-      // EX WB pipe
-      .core_ex_wb_pipe_instr_meta_dummy                                                                                 (core_i.ex_wb_pipe.instr_meta.dummy),
-      .core_ex_wb_pipe_instr_meta_hint                                                                                  (core_i.ex_wb_pipe.instr_meta.hint),
-
-      // WB stage
-      .core_wb_stage_wb_valid_o                                                                                         (core_i.wb_stage_i.wb_valid_o),
-
-      // CTRL
-      .core_i_if_stage_i_prefetch_unit_i_alignment_buffer_i_ctrl_fsm_i_pc_set                                           (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.ctrl_fsm_i.pc_set),
-      .core_i_if_stage_i_pc_check_i_ctrl_fsm_i_pc_mux                                                                   (core_i.if_stage_i.pc_check_i.ctrl_fsm_i.pc_mux)
-
-    );
-   // Xsecure assertions
-
-  bind cv32e40s_wrapper
-    uvmt_cv32e40s_xsecure_assert #(
-      .SECURE              (cv32e40s_pkg::SECURE),
-      .CLIC                (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC),
-      .PMP_NUM_REGIONS     (PMP_NUM_REGIONS),
-      .MTVT_ADDR_WIDTH     (core_i.MTVT_ADDR_WIDTH),
-      .CSR_MINTTHRESH_MASK (core_i.cs_registers_i.CSR_MINTTHRESH_MASK),
-      .PMP_ADDR_WIDTH      (core_i.cs_registers_i.PMP_ADDR_WIDTH)
-    ) xsecure_assert_i (
-      .clk_i      (clknrst_if.clk),
-      .rst_ni     (clknrst_if.reset_n),
-
-      .xsecure_if  (xsecure_if),
-      .rvfi_if    (rvfi_instr_if),
-      .support_if (support_logic_module_o_if.slave_mp)
-    );
-*/
 
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_data_independent_timing_assert #(
@@ -1155,6 +960,114 @@ module uvmt_cv32e40s_tb;
 
   end : gen_hardened_csrs_pmp_assert
 
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_register_file_ecc_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_register_file_ecc_assert_i 	(
+
+      //Interfaces:
+      .rvfi_if	  (rvfi_instr_if),
+
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Alert:
+      .alert_major (core_i.alert_major_o),
+
+      //Register file memory:
+      .gpr_mem (core_i.register_file_wrapper_i.register_file_i.mem_gated),
+
+      //Soruce registers:
+      .rs1 (core_i.if_id_pipe.instr.bus_resp.rdata[19:15]),
+      .rs2 (core_i.if_id_pipe.instr.bus_resp.rdata[24:20]),
+
+      //Writing of GPRs:
+      .gpr_we (core_i.rf_we_wb),
+      .gpr_waddr (core_i.rf_waddr_wb),
+      .gpr_wdata (core_i.rf_wdata_wb)
+
+    );
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_security_alerts_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_security_alerts_assert_i 	(
+
+      //Interfaces:
+      .rvfi_if	  (rvfi_instr_if),
+      .support_if (support_logic_module_o_if.slave_mp),
+
+      //Signals:
+      .rst_ni     (clknrst_if.reset_n),
+      .clk_i      (clknrst_if.clk),
+
+      //alerts:
+      .alert_minor (core_i.alert_minor_o),
+      .alert_major (core_i.alert_major_o),
+
+      //wb:
+      .wb_valid (core_i.wb_valid),
+      .exception_in_wb (core_i.controller_i.controller_fsm_i.exception_in_wb),
+      .exception_cause_wb (core_i.controller_i.controller_fsm_i.exception_cause_wb),
+
+      //dummy and hint:
+      .dummy_en (core_i.xsecure_ctrl.cpuctrl.rnddummy),
+      .hint_en (core_i.xsecure_ctrl.cpuctrl.rndhint),
+      .lfsr0_clock_en (core_i.cs_registers_i.xsecure.lfsr0_i.clock_en),
+      .lfsr1_clock_en (core_i.cs_registers_i.xsecure.lfsr1_i.clock_en),
+      .lfsr2_clock_en (core_i.cs_registers_i.xsecure.lfsr2_i.clock_en),
+      .seed0_we       (core_i.cs_registers_i.xsecure.lfsr0_i.seed_we_i),
+      .seed1_we       (core_i.cs_registers_i.xsecure.lfsr1_i.seed_we_i),
+      .seed2_we       (core_i.cs_registers_i.xsecure.lfsr2_i.seed_we_i),
+      .seed0_i        (core_i.cs_registers_i.xsecure.lfsr0_i.seed_i),
+      .seed1_i        (core_i.cs_registers_i.xsecure.lfsr1_i.seed_i),
+      .seed2_i        (core_i.cs_registers_i.xsecure.lfsr2_i.seed_i),
+      .lfsr0_n        (core_i.cs_registers_i.xsecure.lfsr0_i.lfsr_n),
+      .lfsr1_n        (core_i.cs_registers_i.xsecure.lfsr1_i.lfsr_n),
+      .lfsr2_n        (core_i.cs_registers_i.xsecure.lfsr2_i.lfsr_n),
+
+      //OBI:
+      .obi_data_rvalid (core_i.data_rvalid_i),
+      .obi_data_err (core_i.data_err_i),
+
+      //NMI:
+      .nmip (core_i.dcsr.nmip),
+
+      //debug:
+      .debug_mode (core_i.controller_i.controller_fsm_i.debug_mode_q)
+
+    );
+
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert #(
+	    .SECURE	(SECURE)
+    ) xsecure_bus_protocol_hardening_assert_i 	(
+
+      //Interfaces:
+      .support_if (support_logic_module_o_if.slave_mp),
+
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Alerts:
+      .alert_major (core_i.alert_major_o),
+      .bus_protocol_hardening_glitch (core_i.alert_i.itf_prot_err_i),
+
+      //OBI:
+      .obi_data_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+      .obi_instr_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+
+      //Resp valids:
+      .instr_if_mpu_resp (core_i.if_stage_i.prefetch_resp_valid),
+      .lsu_mpu_resp (core_i.load_store_unit_i.resp_valid),
+
+      //Counters:
+      .lsu_rf_core_side_cnt (core_i.load_store_unit_i.response_filter_i.core_cnt_q),
+      .lsu_rf_bus_side_cnt (core_i.load_store_unit_i.response_filter_i.bus_cnt_q)
+
+    );
 
   // Debug assertion and coverage interface
 
@@ -1542,8 +1455,10 @@ module uvmt_cv32e40s_tb;
     //uvmt_cv32e40s_rvvi_handcar u_rvvi_handcar();
 
     // IMPERAS DV
+    `ifdef USE_ISS
     `ifndef FORMAL
       uvmt_cv32e40s_imperas_dv_wrap imperas_dv (rvvi_if);
+    `endif
     `endif
 
    /**
@@ -1824,7 +1739,9 @@ module uvmt_cv32e40s_tb;
      `endif
 
      // IMPERAS_DV interface
+     `ifdef USE_ISS
      uvm_config_db#(virtual rvviTrace)::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("rvvi_vif"), .value(rvvi_if));
+     `endif
 
      // Virtual Peripheral Status interface
      uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if_t              )::set(.cntxt(null), .inst_name("*"), .field_name("vp_status_vif"),       .value(vp_status_if)      );
@@ -1855,6 +1772,7 @@ module uvmt_cv32e40s_tb;
 
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
+   `ifdef USE_ISS
    `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
    // overcome race
    initial begin
@@ -1863,6 +1781,7 @@ module uvmt_cv32e40s_tb;
        imperas_dv.ref_init();
      end
    end
+   `endif
    `endif
 
    //TODO verify these are correct with regards to isacov function
@@ -1928,10 +1847,12 @@ module uvmt_cv32e40s_tb;
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
 
       // Shutdown the Reference Model
+      `ifdef USE_ISS
       if ($test$plusargs("USE_ISS")) begin
          // Exit handler for ImperasDV
          void'(rvviRefShutdown());
       end
+      `endif
 
       `uvm_info("DV_WRAP", $sformatf("\n%m: *** Test Summary ***\n"), UVM_DEBUG);
 
