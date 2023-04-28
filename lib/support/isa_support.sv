@@ -13,8 +13,8 @@
 // limitations under the License.
 
 
-`ifndef __UVMT_CV32E40S_INSTR_FUNCTIONS__
-`define __UVMT_CV32E40S_INSTR_FUNCTIONS__
+`ifndef __ISA_SUPPORT__
+`define __ISA_SUPPORT__
 
 /**
  * Encapsulates all functions used on instruction words
@@ -343,5 +343,5 @@
 
 //endpackage
 
-`endif // __UVMT_CV32E40S_INSTR_FUNCTIONS__
+`endif // __ISA_SUPPORT__
 

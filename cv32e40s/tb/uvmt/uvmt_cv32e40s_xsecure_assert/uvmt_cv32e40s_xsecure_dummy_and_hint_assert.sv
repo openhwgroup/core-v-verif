@@ -19,7 +19,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
   import uvmt_cv32e40s_pkg::*;
-  import support_instr_pkg::*;
+  import support_pkg::*;
   #(
     parameter int       SECURE   = 1
   )
