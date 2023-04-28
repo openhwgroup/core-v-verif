@@ -49,10 +49,6 @@ package uvmt_cv32e40s_pkg;
   import cv32e40s_pkg::*;
 endpackage
 
-package uvmt_cv32e40s_instr_pkg;
-  `include "uvmt_cv32e40s_instr_functions.sv"
-endpackage
-
 package uvme_cv32e40s_pkg;
   `include "uvme_cv32e40s_constants.sv"
 endpackage
