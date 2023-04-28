@@ -126,6 +126,7 @@ VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 # Add the ISS to compilation
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_RVFI"
+VLOG_FLAGS += "+define+$(CV_CORE_UC)_RVFI_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_CORE_LOG"
 VLOG_FLAGS += "+define+UVM"
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
