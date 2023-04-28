@@ -399,7 +399,7 @@ endfunction
 // input current value of the csr, and the csr address
 // NOTE: that this will work for CSRRW with unspecified csr address,
 // but CSRRS/CSRRC will give incorrect return values
-function automatic logic [DEFAULT_XLEN-1:0] csr_write_intended( logic [DEFAULT_XLEN-1:0] csr_rdata,
+function automatic logic [DEFAULT_XLEN-1:0] csr_intended_wdata( logic [DEFAULT_XLEN-1:0] csr_rdata,
                                                                 logic [11:0] csr_addr = 0);
   if (!is_csr_write(csr_addr)) begin
     return 0;

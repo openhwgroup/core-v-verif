@@ -790,11 +790,11 @@ module uvmt_cv32e40s_pmprvfi_assert
   // RLB lifts restrictions  (vplan:ExecRlb)
 
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_rlblifts_lockedexec
-    logic [31:0] csr_write_intended;
+    logic [31:0] csr_intended_wdata;
     always_comb begin
-      csr_write_intended <= rvfi_if.csr_write_intended((pmp_csr_rvfi_rdata.cfg[i] << 8*(i%4)),CSRADDR_FIRST_PMPCFG + i/4);
+      csr_intended_wdata <= rvfi_if.csr_intended_wdata((pmp_csr_rvfi_rdata.cfg[i] << 8*(i%4)),CSRADDR_FIRST_PMPCFG + i/4);
     end
-    wire pmpncfg_t  cfg_attempt = csr_write_intended[8*(i%4) +: 8];
+    wire pmpncfg_t  cfg_attempt = csr_intended_wdata[8*(i%4) +: 8];
 
     sequence seq_rlblifts_lockedexec_ante;
       pmp_csr_rvfi_rdata.mseccfg.rlb  &&
