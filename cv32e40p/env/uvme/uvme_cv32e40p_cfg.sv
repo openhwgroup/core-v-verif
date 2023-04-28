@@ -291,11 +291,6 @@ function void uvme_cv32e40p_cfg_c::pre_randomize();
       zero_stall_sim = 1;
       zero_stall_sim.rand_mode(0);
 
-      // Hack-set is_stall_sim bit in step_compare
-      retval = uvm_hdl_deposit("uvmt_cv32e40p_tb.step_compare.is_stall_sim", 0);
-      if (!retval) begin
-         `uvm_fatal("ZEROSTALL", "Cannot set is_stall_sim in step_compare")
-      end
    end
    else if ($test$plusargs("max_data_zero_instr_stall")) begin
       // No stalls on the I bus, max on D bus
