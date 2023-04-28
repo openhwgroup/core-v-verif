@@ -180,12 +180,11 @@ XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 XRUN_USER_COMPILE_ARGS += +define+UVM
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 	XRUN_PLUSARGS          += +USE_ISS
-	XRUN_FILE_LIST_IDV     ?= $(DV_UVMT_PATH)/imperas_dv.flist
 	XRUN_USER_COMPILE_ARGS += +define+USE_IMPERASDV
 	XRUN_USER_COMPILE_ARGS += +define+USE_ISS
+	export FILE_LIST_IDV ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
 else
 	XRUN_PLUSARGS          += +DISABLE_OVPSIM
-	XRUN_FILE_LIST_IDV     ?= 
 endif
 ifeq ($(call IS_YES,$(USE_RVVI)),YES)
     XRUN_PLUSARGS +="+USE_RVVI"
@@ -304,7 +303,6 @@ XRUN_COMP = $(XRUN_COMP_FLAGS) \
 		+incdir+$(DV_UVMT_PATH) \
 		$(XRUN_UVM_MACROS_INC_FILE) \
 		-f $(CV_CORE_MANIFEST) \
-		$(XRUN_FILE_LIST_IDV) \
 		$(XRUN_FILE_LIST) \
 		$(UVM_PLUSARGS)
 
