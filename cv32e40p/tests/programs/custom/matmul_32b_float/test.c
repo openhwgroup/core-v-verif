@@ -24,7 +24,7 @@
 #define N 16
 #define M 16
 
-#define MSTATUS_FS 0x00006000
+#define MSTATUS_FS_INITIAL 0x00002000
 
 #include "stimuli.h"
 
@@ -45,7 +45,7 @@ int checkInt (long int *B, long int *A, long int n)
 
 void fp_enable ()
 {
-  unsigned int fs = MSTATUS_FS & (MSTATUS_FS >> 1);
+  unsigned int fs = MSTATUS_FS_INITIAL;
 
   __asm__ volatile("csrs mstatus, %0;"
                    "csrwi fcsr, 0;"
