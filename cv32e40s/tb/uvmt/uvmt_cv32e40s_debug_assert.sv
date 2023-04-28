@@ -84,7 +84,6 @@ module uvmt_cv32e40s_debug_assert
   logic [31:0]  mtvec_addr;
 
   logic         ebreak_allowed;
-  logic         exception_trigger_hit;
 
   int           stable_req_vs_valid_cnt;
 
@@ -483,7 +482,7 @@ module uvmt_cv32e40s_debug_assert
         rvfi.rvfi_valid && //valid
         !rvfi.rvfi_dbg_mode && //not in dbg
         csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && // step set
-        !(rvfi.is_dbg_trg || exception_trigger_hit) && // not trigger
+        !(rvfi.is_dbg_trg || support_if.is_exception_trigger_hit) && // not trigger
         rvfi.rvfi_trap.exception // exception
         ##1 rvfi.rvfi_valid[->1]
         |->
@@ -498,7 +497,7 @@ module uvmt_cv32e40s_debug_assert
 
     // Trigger during single step
     property p_single_step_trigger;
-        (rvfi.is_dbg_trg || exception_trigger_hit) &&
+        (rvfi.is_dbg_trg || support_if.is_exception_trigger_hit) &&
         !rvfi.rvfi_dbg_mode &&
         csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]
         ##1 rvfi.rvfi_valid[->1]
@@ -883,9 +882,8 @@ module uvmt_cv32e40s_debug_assert
                 end else begin //unvectored CLINT
                     pc_at_dbg_req <= mtvec_addr;
                 end
-            //TODO: placeholder, works for 1 available trigger. Fix when trigger support logic is in place
             // Exception with exception trigger active
-            end else if (exception_trigger_hit) begin
+            end else if (support_if.is_exception_trigger_hit) begin
                 pc_at_dbg_req <= rvfi.rvfi_pc_wdata;
 
             end else if ((rvfi.is_ebreak && ebreak_allowed)|| rvfi.is_dbg_trg) begin
@@ -917,7 +915,7 @@ module uvmt_cv32e40s_debug_assert
         end else begin
             if (rvfi.is_dbg_trg) begin
                 dpc_dbg_trg <=  rvfi.rvfi_pc_rdata;
-            end else if (exception_trigger_hit) begin
+            end else if (support_if.is_exception_trigger_hit) begin
                 dpc_dbg_trg <=  rvfi.rvfi_pc_wdata;
             end
         end
@@ -1043,8 +1041,8 @@ module uvmt_cv32e40s_debug_assert
     always@ (posedge cov_assert_if.clk_i or negedge cov_assert_if.rst_ni) begin
         if( !cov_assert_if.rst_ni) begin
             debug_cause_pri <= 3'b000;
-        end else begin  //TODO:MT placeholder for new trigger support logic, this only works with 1 trigger.
-            if (rvfi.is_dbg_trg || exception_trigger_hit) begin
+        end else begin
+            if (rvfi.is_dbg_trg || support_if.is_exception_trigger_hit) begin
                 debug_cause_pri <= cv32e40s_pkg::DBG_CAUSE_TRIGGER;
             end else if(rvfi.is_ebreak && ebreak_allowed) begin
                 debug_cause_pri <= cv32e40s_pkg::DBG_CAUSE_EBREAK;
@@ -1056,11 +1054,6 @@ module uvmt_cv32e40s_debug_assert
         end
     end
 
-    ////TODO:MT placeholder for new trigger support logic, this only works with 1 trigger.
-    assign exception_trigger_hit =  (rvfi.rvfi_valid && rvfi.rvfi_trap.exception && csr_tdata1.rvfi_csr_rdata[31:28] == 5) &&
-                                    (csr_tdata2.rvfi_csr_rdata[rvfi.rvfi_trap.exception_cause] == 1) &&
-                                    ((rvfi.is_mmode && csr_tdata1.rvfi_csr_rdata[9]) ||
-                                    (rvfi.is_umode && csr_tdata1.rvfi_csr_rdata[6]));
     assign ebreak_allowed = (rvfi.is_mmode && csr_dcsr.rvfi_csr_rdata[DCSR_EBREAKM_POS]) || (rvfi.is_umode && csr_dcsr.rvfi_csr_rdata[DCSR_EBREAKU_POS]);
 
 

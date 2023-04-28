@@ -3,9 +3,9 @@
 
 module uvmt_cv32e40s_pmprvfi_assert
   import cv32e40s_pkg::*;
-  import cv32e40s_rvfi_pkg::*;
   import uvm_pkg::*;
   import uvmt_cv32e40s_pkg::*;
+  import uvma_rvfi_pkg::*;
 #(
   parameter int  PMP_GRANULARITY = 0,
   parameter int  PMP_NUM_REGIONS = 0
@@ -14,6 +14,8 @@ module uvmt_cv32e40s_pmprvfi_assert
   input wire  clk_i,
   input wire  rst_ni,
 
+  //RVFI INSTR IF
+  uvma_rvfi_instr_if_t    rvfi_if,
   // RVFI
   input wire              rvfi_valid,
   input wire [31:0]       rvfi_insn,
@@ -788,18 +790,19 @@ module uvmt_cv32e40s_pmprvfi_assert
   // RLB lifts restrictions  (vplan:ExecRlb)
 
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_rlblifts_lockedexec
-    wire pmpncfg_t  cfg_attempt = rvfi_rs1_rdata[8*(i%4) +: 8];
+    logic [31:0] csr_write_intended;
+    always_comb begin
+      csr_write_intended <= rvfi_if.csr_write_intended((pmp_csr_rvfi_rdata.cfg[i] << 8*(i%4)),CSRADDR_FIRST_PMPCFG + i/4);
+    end
+    wire pmpncfg_t  cfg_attempt = csr_write_intended[8*(i%4) +: 8];
 
     sequence seq_rlblifts_lockedexec_ante;
       pmp_csr_rvfi_rdata.mseccfg.rlb  &&
       pmp_csr_rvfi_rdata.mseccfg.mml
       ##0
-      (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw"
-      (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + i/4))          &&  // cfg csr
-      !rvfi_trap
-      ##0
-      ({cfg_attempt.lock, cfg_attempt.read, cfg_attempt.write, cfg_attempt.exec}
-        inside {4'b 1001, 4'b 1010, 4'b 1011, 4'b 1101})
+      rvfi_if.is_csr_write(CSRADDR_FIRST_PMPCFG + i/4) &&
+      !rvfi_trap &&
+      !(PMP_GRANULARITY > 0 && cfg_attempt.mode == PMP_MODE_NA4)
       ;
     endsequence : seq_rlblifts_lockedexec_ante
 
@@ -810,11 +813,6 @@ module uvmt_cv32e40s_pmprvfi_assert
     ) else `uvm_error(info_tag, "with rlb, some illegal cfgs must be writable");
     // Note, "lockedexec" is just one case of a restriction that RLB lifts.
 
-    a_rlblifts_lockedexec_helper: assert property (
-      (clk_cnt < 29)
-      |->
-      not seq_rlblifts_lockedexec_ante
-    ) else `uvm_error(info_tag, "with rlb, some illegal cfgs must be writable");
   end
 
   cov_rlb_mml: cover property (
