@@ -20,6 +20,7 @@
 
  class cv32e40p_base_instr_stream extends riscv_rand_instr_stream;
   `uvm_object_utils(cv32e40p_base_instr_stream)
+  int unsigned num_of_avail_regs;
 
   function new(string name = "");
     super.new(name);
