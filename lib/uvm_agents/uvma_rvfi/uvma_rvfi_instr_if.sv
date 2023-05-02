@@ -83,6 +83,7 @@ interface uvma_rvfi_instr_if_t
   localparam INSTR_MASK_I_S_B_TYPE  = 32'h 0000_707F;
   localparam INSTR_MASK_U_J_TYPE    = 32'h 0000_007F;
   localparam INSTR_MASK_CSRADDR     = 32'h FFF0_0000;
+  localparam INSTR_MASK_CMPR        = 32'h 0000_E003;
 
   //instruction (rvfi_instr) comparison values
   localparam INSTR_OPCODE_DRET      = 32'h 7B20_0073;
@@ -93,6 +94,7 @@ interface uvma_rvfi_instr_if_t
   localparam INSTR_OPCODE_EBREAK    = 32'h 0010_0073;
   localparam INSTR_OPCODE_C_EBREAK  = 32'h 0000_9002;
   localparam INSTR_OPCODE_ECALL     = 32'h 0000_0073;
+  localparam INSTR_OPCODE_CSLLI     = 32'h 0000_0002;
 
   localparam INSTR_OPCODE_CSRRW     = 32'h 0000_1073;
   localparam INSTR_OPCODE_CSRRS     = 32'h 0000_2073;
@@ -140,6 +142,8 @@ interface uvma_rvfi_instr_if_t
   logic [NMEM-1:0][XLEN-1:0]        mem_wdata_array;
   logic [NMEM-1:0][(XLEN/8)-1:0]    mem_wmask_array;
 
+  logic [5:0]                       cslli_shamt;
+
   logic                             is_dret;
   logic                             is_mret;
   logic                             is_uret;
@@ -149,6 +153,7 @@ interface uvma_rvfi_instr_if_t
   logic                             is_ebreak_compr;
   logic                             is_ebreak_noncompr;
   logic                             is_ecall;
+  logic                             is_cslli;
   logic                             is_nmi;
   logic                             is_compressed;
   logic                             is_dbg_trg;
@@ -187,6 +192,8 @@ interface uvma_rvfi_instr_if_t
   assign {>>{mem_wdata_array}} = rvfi_mem_wdata;
   assign {>>{mem_wmask_array}} = rvfi_mem_wmask;
 
+  assign cslli_shamt = {rvfi_i.rvfi_insn[12], rvfi_i.rvfi_insn[6:2]};
+
   always @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
       nmi_instr_cnt    <= 0;
@@ -212,6 +219,7 @@ interface uvma_rvfi_instr_if_t
     is_ebreak_compr     <= is_ebreak_compr_f();
     is_ebreak_noncompr  <= is_ebreak_noncompr_f();
     is_ecall            <= is_ecall_f();
+    is_cslli            <= is_cslli_f();
     is_nmi              <= is_nmi_f();
     is_compressed       <= is_compressed_f();
     is_dbg_trg          <= is_dbg_trg_f();
@@ -511,6 +519,10 @@ endfunction : is_ebreak_noncompr_f
 function automatic logic is_ecall_f();
   return match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);
 endfunction : is_ecall_f
+
+function logic is_cslli_f();
+  return match_instr(INSTR_OPCODE_CSLLI, INSTR_MASK_CMPR);
+endfunction : is_cslli_f
 
 function automatic logic is_pushpop_f();
   return  match_instr(INSTR_OPCODE_PUSH,    INSTR_MASK_PUSHPOP)  ||
