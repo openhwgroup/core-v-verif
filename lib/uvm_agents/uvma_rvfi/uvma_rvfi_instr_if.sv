@@ -83,6 +83,7 @@ interface uvma_rvfi_instr_if_t
   localparam INSTR_MASK_I_S_B_TYPE  = 32'h 0000_707F;
   localparam INSTR_MASK_U_J_TYPE    = 32'h 0000_007F;
   localparam INSTR_MASK_CSRADDR     = 32'h FFF0_0000;
+  localparam INSTR_MASK_CSRUIMM     = 32'h 000F_8000;
   localparam INSTR_MASK_CMPR        = 32'h 0000_E003;
 
   //instruction (rvfi_instr) comparison values
@@ -119,6 +120,7 @@ interface uvma_rvfi_instr_if_t
 
   //positions
   localparam int INSTR_CSRADDR_POS  = 20;
+  localparam int INSTR_CSRUIMM_POS  = 15;
 
 
   localparam INTR_CAUSE_NMI_MASK    = 11'h 400;
@@ -373,39 +375,56 @@ function automatic logic is_csr_instr(logic [11:0] csr_addr = 0);
   end
 endfunction : is_csr_instr
 
-// NOTE!  This instruction differs from the strict definition of "reading a CSR"
-//        in the RISCV-spec, as it returns true only if the read value is actually
-//        stored somewhere. If you need the spec definition, please use the
-//        rvfi_csr_if-signals directly.
+// This function follows the spec definition of a csr read
 function automatic logic is_csr_read(logic [11:0] csr_addr = 0);
-  if (rvfi_rd1_addr != 0) begin
-    return is_csr_instr(csr_addr);
-  end else begin // rd is X0, not a read instruction
+  if (  (rvfi_rd1_addr == 0) &&
+        (   match_instr_isb(INSTR_OPCODE_CSRRW) ||
+            match_instr_isb(INSTR_OPCODE_CSRRWI))) begin
     return 0;
+  end else begin
+    return is_csr_instr(csr_addr);
   end
 endfunction
 
-// NOTE!  This instruction differs from the strict definition of "writing a CSR"
-//        in the RISCV-spec, as it returns true only if the csr is actually
-//        written. If you need the spec definition, please use the
-//        rvfi_csr_if-signals directly.
+// This function follows the spec definition of a csr write
 function automatic logic is_csr_write(logic [11:0] csr_addr = 0);
-  if (csr_addr == 0) begin //not specified
-    return  ( (rvfi_rs1_addr != 0) && match_instr_isb(INSTR_OPCODE_CSRRW))  ||
-            ( (rvfi_rs1_addr != 0) && match_instr_isb(INSTR_OPCODE_CSRRS))  ||
-            ( (rvfi_rs1_addr != 0) && match_instr_isb(INSTR_OPCODE_CSRRC))  ||
-            match_instr_isb(INSTR_OPCODE_CSRRWI) ||
-            //TODO:MT add set and clear with immediate nonzero
-            match_instr_isb(INSTR_OPCODE_CSRRSI) ||
-            match_instr_isb(INSTR_OPCODE_CSRRCI);
+  if (  ( (rvfi_rs1_addr == 0) &&
+          (   match_instr_isb(INSTR_OPCODE_CSRRS) ||
+              match_instr_isb(INSTR_OPCODE_CSRRC))
+        ) || (
+          ((rvfi_insn & INSTR_MASK_CSRUIMM) == 0) &&
+          (   match_instr_isb(INSTR_OPCODE_CSRRSI) ||
+              match_instr_isb(INSTR_OPCODE_CSRRCI))
+        )) begin
+    return 0;
   end else begin
-    return  match_instr(32'h0 | (csr_addr << INSTR_CSRADDR_POS), INSTR_MASK_CSRADDR) &&
-            ( ( (rvfi_rs1_addr != 0) && match_instr_isb(INSTR_OPCODE_CSRRW))  ||
-              ( (rvfi_rs1_addr != 0) && match_instr_isb(INSTR_OPCODE_CSRRS))  ||
-              ( (rvfi_rs1_addr != 0) && match_instr_isb(INSTR_OPCODE_CSRRC))  ||
-              match_instr_isb(INSTR_OPCODE_CSRRWI) ||
-              match_instr_isb(INSTR_OPCODE_CSRRSI) ||
-              match_instr_isb(INSTR_OPCODE_CSRRCI));
+    return is_csr_instr(csr_addr);
+  end
+endfunction
+
+// returns intended write data for any CSR write instruction,
+// without regard for what the legal values are in the CSR
+// input current value of the csr, and the csr address
+// NOTE: that this will work for CSRRW with unspecified csr address,
+// but CSRRS/CSRRC will give incorrect return values
+function automatic logic [DEFAULT_XLEN-1:0] csr_intended_wdata( logic [DEFAULT_XLEN-1:0] csr_rdata,
+                                                                logic [11:0] csr_addr = 0);
+  if (!is_csr_write(csr_addr)) begin
+    return 0;
+  end else begin
+    if (match_instr_isb(INSTR_OPCODE_CSRRW)) begin
+      return rvfi_rs1_rdata;
+    end else if (match_instr_isb(INSTR_OPCODE_CSRRWI)) begin
+      return (rvfi_insn & INSTR_MASK_CSRUIMM) >> INSTR_CSRUIMM_POS;
+    end else if (match_instr_isb(INSTR_OPCODE_CSRRS)) begin
+      return csr_rdata | rvfi_rs1_rdata;
+    end else if (match_instr_isb(INSTR_OPCODE_CSRRSI)) begin
+      return csr_rdata | ((rvfi_insn & INSTR_MASK_CSRUIMM) >> INSTR_CSRUIMM_POS);
+     end else if (match_instr_isb(INSTR_OPCODE_CSRRC)) begin
+      return csr_rdata & ~rvfi_rs1_rdata;
+    end else if (match_instr_isb(INSTR_OPCODE_CSRRCI)) begin
+      return csr_rdata & ~((rvfi_insn & INSTR_MASK_CSRUIMM) >> INSTR_CSRUIMM_POS);
+    end
   end
 endfunction
 
