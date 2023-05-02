@@ -421,8 +421,10 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       rchk_instr_calculated)
 
     |->
+    //No integrity errors have triggered major alert, or an integrity error has triggered major alert, but it is not due to rchk instr error
     !alert_major_due_to_integrity_err
     || (alert_major_due_to_integrity_err && !rchk_err_instr)
+
   ) else `uvm_error(info_tag_glitch, "An error in the OBI instruction bus's response packet's checksum sets the major alert even though interface integrity checking is disabled.\n");
 
   a_glitch_xsecure_integrity_rchk_data_store_integrity_disabled: assert property (

@@ -74,7 +74,6 @@ module uvmt_cv32e40s_sl_req_attribute_fifo
 
   logic [2:0][XLEN-1:0] fifo;
   logic [1:0] pointer;
-  logic [XLEN-1:0] ZERO;
 
   assign is_req_attribute_in_response_o = rvalid ? fifo[2] : '0;
 
@@ -82,7 +81,6 @@ module uvmt_cv32e40s_sl_req_attribute_fifo
     if(!rst_ni) begin
       fifo <= 3'b000;
       pointer = 2;
-      ZERO = '0;
     end else begin
       //This logic is demonstrated in time t1, t2 and t3 in the figure above
       if ((gnt && req) && !rvalid) begin
@@ -92,12 +90,12 @@ module uvmt_cv32e40s_sl_req_attribute_fifo
       //This logic is demonstrated in time t4, t5 and t6 in the figure above
       end else if (!(gnt && req) && rvalid) begin
         pointer <= pointer + 1;
-        fifo <= {fifo[1:0], ZERO};
+        fifo <= {fifo[1:0], '0};
 
       //This logic is demonstrated in time t8 and t9 in the figure above (and uses t7 to generate a situation where this part of the logic can be used)
       end else if ((gnt && req) && rvalid) begin
         fifo[pointer] = req_attribute_i;
-        fifo <= {fifo[1:0], ZERO};
+        fifo <= {fifo[1:0], '0};
 
       end
     end
