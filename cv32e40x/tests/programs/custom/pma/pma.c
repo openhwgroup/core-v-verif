@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define  EXCEPTION_INSN_ACCESS_FAULT  1
 #define  EXCEPTION_LOAD_ACCESS_FAULT  5

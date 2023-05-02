@@ -187,9 +187,19 @@ function void uvme_cv32e40x_core_sb_c::pre_abort();
 endfunction : pre_abort
 
 function void uvme_cv32e40x_core_sb_c::print_instr_checked_stats();
-   `uvm_info("CORESB", $sformatf("checked %0d instruction retirements", pc_checked_cnt), UVM_NONE);
-   `uvm_info("CORESB", $sformatf("checked %0d GPR updates", gpr_checked_cnt), UVM_NONE);
-   `uvm_info("CORESB", $sformatf("checked %0d CSRs", csr_checked_cnt), UVM_NONE);
+   if ($test$plusargs("USE_ISS")) begin
+     if ((pc_checked_cnt > 0) && cfg.scoreboarding_enabled) begin
+        `uvm_info("CORESB", $sformatf("checked %0d instruction retirements", pc_checked_cnt), UVM_NONE)
+        `uvm_info("CORESB", $sformatf("checked %0d GPR updates", gpr_checked_cnt), UVM_NONE)
+        `uvm_info("CORESB", $sformatf("checked %0d CSRs", csr_checked_cnt), UVM_NONE)
+     end
+     else begin
+        `uvm_error("CORESB", "No Instructions checked!")
+     end
+  end
+  else begin
+      `uvm_info("CORESB", "ISS scoreboard disabled for this test.", UVM_NONE)
+  end
 endfunction : print_instr_checked_stats
 
 function void uvme_cv32e40x_core_sb_c::write_core_sb_rvfi_instr(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) rvfi_instr);
@@ -323,15 +333,16 @@ endfunction : check_instr
 function void uvme_cv32e40x_core_sb_c::check_gpr(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) rvfi_instr,
                                                  uvma_rvvi_state_seq_item_c#(ILEN,XLEN) rvvi_state);
 
-   // gpt_checked_cnt represents the GPR "updates" checked, so skip writes to x0
-   if (rvfi_instr.rd1_addr !=0 || rvfi_instr.rd2_addr != 0)
-      gpr_checked_cnt++;
 
-   // Update the local register map
-   if (rvfi_instr.rd1_addr != 0)
-      x[rvfi_instr.rd1_addr] = rvfi_instr.rd1_wdata;
-   if (rvfi_instr.rd2_addr != 0)
-      x[rvfi_instr.rd2_addr] = rvfi_instr.rd2_wdata;
+   if (rvfi_instr.gpr_wmask[31:1] != 0) begin
+      gpr_checked_cnt++;
+   end
+
+   for (int i = 1; i < 32; i++) begin
+      if (rvfi_instr.gpr_wmask[i]) begin
+         x[i] = rvfi_instr.get_gpr_wdata(i);
+      end
+   end
 
    for (int i = 0; i < 32; i++) begin
       if (x[i] != rvvi_state.x[i]) begin
@@ -342,6 +353,7 @@ function void uvme_cv32e40x_core_sb_c::check_gpr(uvma_rvfi_instr_seq_item_c#(ILE
                                           i, rvvi_state.x[i]));
       end
    end
+
 
 endfunction : check_gpr
 

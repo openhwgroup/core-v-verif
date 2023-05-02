@@ -32,4 +32,3 @@ plusargs: >
     +enable_zcmt_extension=1
     +enable_zcmp_extension=1
 cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zca_zcb_zcmp_zcmt_zicsr_zifencei
-

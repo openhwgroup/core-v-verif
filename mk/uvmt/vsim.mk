@@ -150,9 +150,10 @@ VSIM_SCRIPT_DIR	   = $(abspath $(MAKE_PATH)/../tools/vsim)
 
 VSIM_UVM_ARGS      = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 
+VSIM_FLAGS += -sv_lib $(basename $(abspath $(IMPERAS_DV_MODEL)))
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 VSIM_FLAGS += +USE_ISS
-VLOG_FLAGS += "+define+USE_IMPERASDV"
+VLOG_FLAGS += +USE_IMPERASDV
 else
 VSIM_FLAGS += +DISABLE_OVPSIM
 endif
@@ -164,7 +165,6 @@ VSIM_FLAGS += +DISABLE_CSR_CHECK=$(TEST_DISABLE_CSR_CHECK)
 endif
 
 VSIM_FLAGS += -sv_lib $(basename $(DPI_DASM_LIB))
-VSIM_FLAGS += -sv_lib $(basename $(abspath $(IMPERAS_DV_MODEL)))
 VSIM_FLAGS += -sv_lib $(basename $(abspath $(SVLIB_LIB)))
 
 # Skip compile if requested (COMP=NO)
