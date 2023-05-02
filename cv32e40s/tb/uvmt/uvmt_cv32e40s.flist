@@ -50,8 +50,8 @@
 +incdir+${TBSRC_HOME}
 ${DV_UVMT_PATH}/uvmt_cv32e40s_pkg.sv
 
-// ImperasDV
--f ${TBSRC_HOME}/uvmt/imperas_dv.flist
+// ImperasDV  (this env var is not set if not using idv)
+${FILE_LIST_IDV}
 
 // CV32E40S test bench files
 -f ${DV_UVMT_PATH}/uvmt_cv32e40s_tb_files.flist

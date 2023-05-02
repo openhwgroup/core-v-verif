@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include "corev_uvmt.h"
 
+
 #define TEST_LOOPS 6
 
 // Globals
@@ -34,29 +35,64 @@ volatile uint32_t  load_bus_fault_exp        = 0;
 volatile uint32_t  store_bus_fault_count     = 0;
 volatile uint32_t  store_bus_fault_exp       = 0;
 volatile uint32_t  error_word                = 0x789a1234;
+volatile uint32_t  data_word;
 
-void handle_data_load_bus_fault() {
-    __asm__ __volatile__(
-        "la a0, load_bus_fault_count \n"
-        "lw a1, 0(a0) \n"
-        "addi a1,a1,1 \n"
-        "sw a1, 0(a0) \n"
-        "j nmi_end_handler_ret" : : :
-    );
+
+__attribute__((naked)) void u_sw_irq_handler (void) {
+  __asm__ volatile (R"(
+    addi sp,sp,-64
+    sw ra, 0(sp)
+    sw a0, 4(sp)
+    sw a1, 8(sp)
+    sw a2, 12(sp)
+    sw a3, 16(sp)
+    sw a4, 20(sp)
+    sw a5, 24(sp)
+    sw a6, 28(sp)
+    sw a7, 32(sp)
+    sw t0, 36(sp)
+    sw t1, 40(sp)
+    sw t2, 44(sp)
+    sw t3, 48(sp)
+    sw t4, 52(sp)
+    sw t5, 56(sp)
+    sw t6, 60(sp)
+    csrr t3, mcause
+    andi  t0, t3, 0x7FF # Get EXCCODE
+    li t1, 1 # EXCEPTION_INSN_ACCESS_FAULT
+    beq t0, t1, handle_insn_access_fault
+    li t1, 2 # EXCEPTION_ILLEGAL_INSN
+    beq t0, t1, handle_illegal_insn
+    li t1, 1024 # INTERRUPT_LOAD_BUS_FAULT
+    beq t0, t1, handle_data_load_bus_fault
+    li t1, 1025 # INTERRUPT_STORE_BUS_FAULT
+    beq t0, t1, handle_data_store_bus_fault
+    j m_software_irq_handler
+  )");
 }
 
-void handle_data_store_bus_fault() {
-    __asm__ __volatile__(
-        "la a0, store_bus_fault_count \n"
-        "lw a1, 0(a0) \n"
-        "addi a1,a1,1 \n"
-        "sw a1, 0(a0) \n"
-        "j nmi_end_handler_ret" : : :
-    );
+
+__attribute__((naked)) void handle_data_load_bus_fault() {
+  __asm__ __volatile__(R"(
+    la a0, load_bus_fault_count
+    lw a1, 0(a0)
+    addi a1,a1,1
+    sw a1, 0(a0)
+    j end_handler_ret
+  )");
+}
+
+__attribute__((naked)) void handle_data_store_bus_fault() {
+  __asm__ volatile (R"(
+    la a0, store_bus_fault_count
+    lw a1, 0(a0)
+    addi a1,a1,1
+    sw a1, 0(a0)
+    j end_handler_ret
+  )");
 }
 
 int test_data_load_error() {
-  volatile uint32_t data_word;
 
   printf("Testing data load bus fault injection\n");
 
@@ -101,7 +137,6 @@ int test_data_load_error() {
 }
 
 int test_data_store_error() {
-  volatile uint32_t data_word;
 
   printf("Testing data store bus fault injection\n");
 
