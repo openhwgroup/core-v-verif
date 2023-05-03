@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include "corev_uvmt.h"
 
 //TODO: functions are copied or based the privilege test code.
 //If these functions end up in a common function file, we should adopt this file to use the common functions.
@@ -130,6 +131,12 @@ volatile uint32_t unexpected_irq_beh = 0;
 
 // Utility functions:
 
+
+uint32_t random_num32() {
+    volatile uint32_t num = *((volatile int *) CV_VP_RANDOM_NUM_BASE);
+    return num;
+}
+
 // Declaration of assert
 static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
   if (actual != expect) {
@@ -203,23 +210,23 @@ void csr_should_be_present(void){
   num_trap_executions = 0; // resetting the trap handler count
 
   __asm__ volatile("csrr %0, mcounteren" : "=r"(rd)); //Read to csr_acc
-  __asm__ volatile("csrw mcounteren, %0" :: "r"(rand())); //Write csr_acc
+  __asm__ volatile("csrw mcounteren, %0" :: "r"(random_num32())); //Write csr_acc
   __asm__ volatile("csrwi mcounteren, 0xF"); //Write immediate value
 
   __asm__ volatile("csrr %0, mcycle" : "=r"(rd));
-  __asm__ volatile("csrw mcycle, %0" :: "r"(rand()));
+  __asm__ volatile("csrw mcycle, %0" :: "r"(random_num32()));
   __asm__ volatile("csrwi mcycle, 0xF");
 
   __asm__ volatile("csrr %0, mcycleh" : "=r"(rd));
-  __asm__ volatile("csrw mcycleh, %0" :: "r"(rand()));
+  __asm__ volatile("csrw mcycleh, %0" :: "r"(random_num32()));
   __asm__ volatile("csrwi mcycleh, 0xF");
 
   __asm__ volatile("csrr %0, minstret" : "=r"(rd));
-  __asm__ volatile("csrw minstret, %0" :: "r"(rand()));
+  __asm__ volatile("csrw minstret, %0" :: "r"(random_num32()));
   __asm__ volatile("csrwi minstret, 0xF");
 
   __asm__ volatile("csrr %0, minstreth" : "=r"(rd));
-  __asm__ volatile("csrw minstreth, %0" :: "r"(rand()));
+  __asm__ volatile("csrw minstreth, %0" :: "r"(random_num32()));
   __asm__ volatile("csrwi minstreth, 0xF");
 
 
@@ -240,7 +247,7 @@ void csr_should_not_be_present(void) {
 
 
   #define X(addr) __asm__ volatile("csrr %0, " addr : "=r"(rd)); \
-    __asm__ volatile("csrw " addr ", %0" :: "r"(rand())); \
+    __asm__ volatile("csrw " addr ", %0" :: "r"(random_num32())); \
     __asm__ volatile("csrwi " addr ", 0xF");
   CSRADDR_HPMCOUNTER
   CSRADDR_HPMCOUNTERH
@@ -248,19 +255,19 @@ void csr_should_not_be_present(void) {
 
   // test that unimplemented registers results in illegal instructions
   __asm__ volatile("csrr %0, cycle" : "=r"(rd));
-  __asm__ volatile("csrw cycle, %0" :: "r"(rand()));
+  __asm__ volatile("csrw cycle, %0" :: "r"(random_num32()));
   __asm__ volatile("csrwi cycle, 0xF");
 
   __asm__ volatile("csrr %0, cycleh" : "=r"(rd));
-  __asm__ volatile("csrw cycleh, %0" :: "r"(rand()));
+  __asm__ volatile("csrw cycleh, %0" :: "r"(random_num32()));
   __asm__ volatile("csrwi cycleh, 0xF");
 
   __asm__ volatile("csrr %0, instret" : "=r"(rd));
-  __asm__ volatile("csrw instret, %0" :: "r"(rand()));
+  __asm__ volatile("csrw instret, %0" :: "r"(random_num32()));
   __asm__ volatile("csrwi instret, 0xF");
 
   __asm__ volatile("csrr %0, instreth" : "=r"(rd));
-  __asm__ volatile("csrw instreth, %0" :: "r"(rand()));
+  __asm__ volatile("csrw instreth, %0" :: "r"(random_num32()));
   __asm__ volatile("csrwi instreth, 0xF");
 
   assert_or_die(num_trap_executions, 3*4 + 3*2*(32-3), "error: some of the unimplemented registers did not trap on instrs attempt\n");
@@ -284,13 +291,13 @@ void test_secureseeds_show_zero_at_reads(void){
 
 
   // read secureseed:
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(rand()));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(random_num32()));
   assert_or_die(rd, 0, "error: secureseed0 is not read as zero\n");
 
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED1) ", %1" : "=r"(rd) : "r"(rand()));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED1) ", %1" : "=r"(rd) : "r"(random_num32()));
   assert_or_die(rd, 0, "error: secureseed1 is not read as zero\n");
 
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED2) ", %1" : "=r"(rd) : "r"(rand()));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED2) ", %1" : "=r"(rd) : "r"(random_num32()));
   assert_or_die(rd, 0, "error: secureseed2 is not read as zero\n");
 
   // set the trap handler to go into default mode
@@ -316,9 +323,9 @@ void test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only(void){
   __asm__ volatile("csrrs %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(rd));
   __asm__ volatile("csrrc %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(rd));
 
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(rand()));
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(rand()));
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(rand()));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(random_num32()));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(random_num32()));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(random_num32()));
 
   // number of exceptions should equal number of acesses
   assert_or_die(num_trap_executions, 3+3, "error: accessing cpuctrl or secureseed_ in usermode does not cause a trap\n");
@@ -335,11 +342,11 @@ void test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only(void){
   __asm__ volatile("csrrs %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(rd));
   __asm__ volatile("csrrc %0, " STR(CSRADDR_CPUCTRL) ", x0" : "=r"(rd));
 
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(rand()));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(random_num32()));
 
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(rand()));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(random_num32()));
 
-  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(rand()));
+  __asm__ volatile("csrrw %0, " STR(CSRADDR_SECURESEED0) ", %1" : "=r"(rd) : "r"(random_num32()));
 
   // number of exceptions should equal number of acesses
   assert_or_die(num_trap_executions, 0, "error: accessing cpuctrl or secureseed_ in machine mode cause a trap\n");
@@ -354,9 +361,6 @@ void test_ctrlcpu_and_secureseeds_accessable_in_machine_mode_only(void){
 int main(void){
 
   unexpected_irq_beh = 0;
-
-  // seed the rand() function, which is used in some of the test functions
-  srand(1);
 
   csr_should_be_present();
   csr_should_not_be_present();

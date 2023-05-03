@@ -7,7 +7,7 @@ ovpsim: >
     --override cpu/hpmcounter_undefined=T
     --override cpu/PMP_registers=64
     --override cpu/PMP_grain=0
-    --showoverrides
+    #--showoverrides
     #--trace
 cflags: >
 plusargs: >
