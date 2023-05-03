@@ -37,11 +37,8 @@ import "DPI-C" context function void read_section(input longint address, inout b
 module cva6_tb_wrapper
  import uvmt_cva6_pkg::*;
 #(
-  parameter int unsigned AXI_USER_WIDTH    = 1,
-  parameter int unsigned AXI_USER_EN       = 0,
-  parameter int unsigned AXI_ADDRESS_WIDTH = 64,
-  parameter int unsigned AXI_DATA_WIDTH    = 64,
-  parameter int unsigned NUM_WORDS         = 2**25
+  parameter int unsigned AXI_USER_EN = ariane_pkg::DATA_USER_EN,
+  parameter int unsigned NUM_WORDS = 2**25
 ) (
   input  logic                         clk_i,
   input  logic                         rst_ni,
@@ -54,8 +51,8 @@ module cva6_tb_wrapper
   uvmt_axi_switch_intf                 axi_switch_vif
 );
 
-  ariane_axi::req_t    axi_ariane_req;
-  ariane_axi::resp_t   axi_ariane_resp;
+  ariane_axi_soc::req_t    axi_ariane_req;
+  ariane_axi_soc::resp_t   axi_ariane_resp;
 
   static uvm_cmdline_processor uvcl = uvm_cmdline_processor::get_inst();
   string binary = "";
@@ -64,7 +61,18 @@ module cva6_tb_wrapper
   assign rvfi_o = rvfi;
 
   cva6 #(
-    .ArianeCfg  ( ariane_soc::ArianeSocCfg )
+    .ArianeCfg            ( ariane_soc::ArianeSocCfg  ),
+    .AxiAddrWidth         ( ariane_axi_soc::AddrWidth ),
+    .AxiDataWidth         ( ariane_axi_soc::DataWidth ),
+    .AxiIdWidth           ( ariane_axi_soc::IdWidth   ),
+    .AxiUserWidth         ( ariane_axi_soc::UserWidth ),
+    .axi_ar_chan_t        ( ariane_axi_soc::ar_chan_t ),
+    .axi_r_chan_t         ( ariane_axi_soc::r_chan_t  ),
+    .axi_aw_chan_t        ( ariane_axi_soc::aw_chan_t ),
+    .axi_w_chan_t         ( ariane_axi_soc::w_chan_t  ),
+    .axi_b_chan_t         ( ariane_axi_soc::b_chan_t  ),
+    .axi_req_t            ( ariane_axi_soc::req_t     ),
+    .axi_rsp_t            ( ariane_axi_soc::resp_t    )
   ) i_cva6 (
     .clk_i                ( clk_i                     ),
     .rst_ni               ( rst_ni                    ),
@@ -103,12 +111,12 @@ module cva6_tb_wrapper
 
   logic                         req;
   logic                         we;
-  logic [AXI_ADDRESS_WIDTH-1:0] addr;
-  logic [AXI_DATA_WIDTH/8-1:0]  be;
-  logic [AXI_DATA_WIDTH-1:0]    wdata;
-  logic [AXI_USER_WIDTH-1:0]    wuser;
-  logic [AXI_DATA_WIDTH-1:0]    rdata;
-  logic [AXI_USER_WIDTH-1:0]    ruser;
+  logic ariane_axi_soc::addr_t  addr;
+  logic ariane_axi_soc::strb_t  be;
+  logic ariane_axi_soc::data_t  wdata;
+  logic ariane_axi_soc::user_t  wuser;
+  logic ariane_axi_soc::data_t  rdata;
+  logic ariane_axi_soc::user_t  ruser;
 
   //Response structs
    assign axi_ariane_resp.aw_ready = (axi_switch_vif.active) ? axi_slave.aw_ready : cva6_axi_bus.aw_ready;
@@ -181,10 +189,10 @@ module cva6_tb_wrapper
 
 
   AXI_BUS #(
-    .AXI_ADDR_WIDTH ( AXI_ADDRESS_WIDTH        ),
-    .AXI_DATA_WIDTH ( AXI_DATA_WIDTH           ),
-    .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
-    .AXI_USER_WIDTH ( AXI_USER_WIDTH           )
+    .AXI_ADDR_WIDTH ( ariane_axi_soc::AddrWidth    ),
+    .AXI_DATA_WIDTH ( ariane_axi_soc::DataWidth    ),
+    .AXI_ID_WIDTH   ( ariane_axi_soc::IdWidthSlave ),
+    .AXI_USER_WIDTH ( ariane_axi_soc::UserWidth    )
   ) cva6_axi_bus();
 
   axi_master_connect #(
@@ -195,10 +203,10 @@ module cva6_tb_wrapper
   );
 
   axi2mem #(
-    .AXI_ID_WIDTH   ( ariane_soc::IdWidthSlave ),
-    .AXI_ADDR_WIDTH ( AXI_ADDRESS_WIDTH        ),
-    .AXI_DATA_WIDTH ( AXI_DATA_WIDTH           ),
-    .AXI_USER_WIDTH ( AXI_USER_WIDTH           )
+    .AXI_ID_WIDTH   ( ariane_axi_soc::IdWidthSlave ),
+    .AXI_ADDR_WIDTH ( ariane_axi_soc::AddrWidth    ),
+    .AXI_DATA_WIDTH ( ariane_axi_soc::DataWidth    ),
+    .AXI_USER_WIDTH ( ariane_axi_soc::UserWidth    )
   ) i_cva6_axi2mem (
     .clk_i  ( clk_i       ),
     .rst_ni ( rst_ni      ),
@@ -214,17 +222,17 @@ module cva6_tb_wrapper
   );
 
   sram #(
-    .USER_WIDTH ( AXI_USER_WIDTH ),
-    .DATA_WIDTH ( AXI_DATA_WIDTH ),
-    .USER_EN    ( AXI_USER_EN    ),
-    .SIM_INIT   ( "zeros"        ),
-    .NUM_WORDS  ( NUM_WORDS      )
+    .USER_WIDTH ( ariane_axi_soc::UserWidth ),
+    .DATA_WIDTH ( ariane_axi_soc::DataWidth ),
+    .USER_EN    ( AXI_USER_EN               ),
+    .SIM_INIT   ( "zeros"                   ),
+    .NUM_WORDS  ( NUM_WORDS                 )
   ) i_sram (
     .clk_i      ( clk_i                                                                       ),
     .rst_ni     ( rst_ni                                                                      ),
     .req_i      ( req                                                                         ),
     .we_i       ( we                                                                          ),
-    .addr_i     ( addr[$clog2(NUM_WORDS)-1+$clog2(AXI_DATA_WIDTH/8):$clog2(AXI_DATA_WIDTH/8)] ),
+    .addr_i     ( addr[$clog2(NUM_WORDS)-1+$clog2(ariane_axi_soc::StrbWidth):$clog2(ariane_axi_soc::StrbWidth)] ),
     .wuser_i    ( wuser                                                                       ),
     .wdata_i    ( wdata                                                                       ),
     .be_i       ( be                                                                          ),
