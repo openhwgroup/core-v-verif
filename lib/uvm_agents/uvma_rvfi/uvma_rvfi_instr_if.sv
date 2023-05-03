@@ -581,6 +581,10 @@ endfunction : is_rem_f
 function logic is_cslli_f();
   return match_instr(INSTR_OPCODE_CSLLI, INSTR_MASK_CMPR);
 endfunction : is_cslli_f
+<<<<<<< HEAD
+=======
+
+>>>>>>> 9857a0417b3acd68cb6d87d99ab230b33e555d20
 
 function automatic logic is_pushpop_f();
   return  match_instr(INSTR_OPCODE_PUSH,    INSTR_MASK_PUSHPOP)  ||
