@@ -1,10 +1,10 @@
+<?xml version="1.0" ?>
 <!-- Copyright 2023 Dolphin Design -->
 <!-- SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1 -->
 
 {% import 'regress_macros.j2' as regress_macros -%}
 
 
-<?xml version="1.0" ?>
 <rmdb>
 
     <runnable name="{{project}}" type="group" sequential="yes">
@@ -23,7 +23,7 @@
 
 
 {% for r in regressions %}
-    <runnable name="{{r.name}}" type="group">
+    <runnable name="{{r.name}}" type="group" sequential="yes">
         <members>
 {% for build in r.get_builds() %}
             <member>{{build.name}}</member>
@@ -38,7 +38,11 @@
 
 
 {% for build in r.get_builds() %}
-        <runnable name="{{build.name}}" type="group">
+        <runnable name="{{build.name}}" type="group" sequential="no">
+            <parameters>
+                <parameter name="build_config">{{build.cfg}}</parameter>
+                <parameter name="build_name">{{build.name}}</parameter>
+            </parameters>
             <members>
 {% for t in r.get_tests_of_build(build.name) %}
                 <member>{{t.name}}</member>
@@ -49,10 +53,16 @@
             </preScript>
         </runnable>
 
-{% for t in r.get_tests_of_build(build.name) %}
+{% endfor %}
+
+
+{% for k,t in unique_tests.items() %}
             <runnable name="{{t.name}}" type="task" repeat="{{t.num}}">
                 <parameters>
-                    <parameter name="ucdbfile" >{{t.abs_dir}}/vsim_results/{{build.cfg}}/{{t.testname}}/(%ITERATION%)/{{t.testname}}.ucdb</parameter>
+{% if coverage != false %}
+                    <parameter name="ucdbfile" >{{t.abs_dir}}/vsim_results/(%build_config%)/{{t.testname}}/(%ITERATION%)/{{t.testname}}.ucdb</parameter>
+{% endif %}
+                    <parameter name="log_file" >(%DATADIR%)/{{project}}/{{r.name}}/(%build_name%)/(%INSTANCE%)/execScript.log</parameter>
                 </parameters>
 {% if lsf != None %}
                 <method name="grid" gridtype="lsf" action="execScript">
@@ -60,7 +70,7 @@
                 </method>
 {% endif %}
                 <execScript launch="exec" usestderr="no">
-                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} {{toolchain|upper}}=1 CFG={{build.cfg}} RISCVDV_CFG={{t.riscvdv_cfg}} SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
+                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} check_sim CHECK_SIM_LOG=(%log_file%) COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%build_config%) RISCVDV_CFG={{t.riscvdv_cfg}} SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
                 </execScript>
             </runnable>
 {% endfor %}
@@ -68,8 +78,7 @@
 
 {% endfor %}
 
-{% endfor %}
-
+{% if coverage != false %}
     <!-- =========== Reporting =========== -->
     <runnable name="cov_report" type="group">
         <parameters>
@@ -93,5 +102,6 @@
                 <!-- <command> if {[file exists (%merged_file%)]} {vcover report -plansection=/. -html (%mergefile%) -output [file join (%results_sim_path%) cov_html_summary_testplan]} </command> -->
             </execScript>
         </runnable>
+{% endif %}
 
 </rmdb>
