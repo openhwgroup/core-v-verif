@@ -479,8 +479,8 @@ module uvmt_cv32e40p_imperas_dv_wrap
     // rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR,   RVVI_FALSE);
 
     // rvviRefCsrCompareEnable(hart_id, `CSR_MSTATUS_ADDR,   RVVI_FALSE);
-    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MSTATUS_ADDR          ));
-    rvviRefCsrCompareEnable(hart_id, `CSR_MISA_ADDR,   RVVI_FALSE);
+//  void'(rvviRefCsrSetVolatile(hart_id, `CSR_MSTATUS_ADDR          ));
+//  rvviRefCsrCompareEnable(hart_id, `CSR_MISA_ADDR,   RVVI_FALSE);
     // end TODO
     // define asynchronous grouping
     // Interrupts
