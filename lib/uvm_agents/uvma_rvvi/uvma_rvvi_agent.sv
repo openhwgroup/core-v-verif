@@ -113,6 +113,7 @@ class uvma_rvvi_agent_c#(int ILEN=DEFAULT_ILEN,
 
 endclass : uvma_rvvi_agent_c
 
+/////////IMPLEMENTATION BEGINS//////////////////////////////////////////////////
 
 function uvma_rvvi_agent_c::new(string name="uvma_rvvi_agent", uvm_component parent=null);
 

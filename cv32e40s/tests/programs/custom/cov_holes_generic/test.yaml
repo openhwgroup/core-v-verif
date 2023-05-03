@@ -1,0 +1,8 @@
+# Test definition YAML for test
+
+# Generic test for known coverage holes
+name: cov_holes_generic
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+program: cov_holes_generic
+description: >
+    Generic coverage closure directed test

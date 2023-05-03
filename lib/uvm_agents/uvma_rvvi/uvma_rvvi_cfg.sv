@@ -85,6 +85,8 @@ class uvma_rvvi_cfg_c#(int ILEN=DEFAULT_ILEN,
 
 endclass : uvma_rvvi_cfg_c
 
+/////////IMPLEMENTATION BEGINS//////////////////////////////////////////////////
+
 function uvma_rvvi_cfg_c::new(string name="uvma_rvvi_cfg");
 
    super.new(name);

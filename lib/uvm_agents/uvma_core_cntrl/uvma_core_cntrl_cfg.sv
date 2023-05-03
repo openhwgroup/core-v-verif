@@ -206,10 +206,11 @@
    `uvm_field_utils_end
 
    constraint defaults_cons {
-      soft enabled              == 0;
-      soft is_active            == UVM_PASSIVE;
-      soft cov_model_enabled    == 1;
-      soft trn_log_enabled      == 1;
+      soft enabled               == 0;
+      soft is_active             == UVM_PASSIVE;
+      soft cov_model_enabled     == 1;
+      soft trn_log_enabled       == 1;
+      soft ext_nonstd_supported  == 0;
    }
 
    constraint riscv_cons_soft {
@@ -218,7 +219,6 @@
      soft endianness             == ENDIAN_LITTLE;
      soft mode_h_supported       == 0;
      soft ext_nonstd_supported   == 0;
-     soft mode_h_supported       == 0;
      soft clic_levels            == 0;
      soft ext_zba_supported      == 0;
      soft ext_zbb_supported      == 0;

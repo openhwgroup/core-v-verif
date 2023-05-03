@@ -324,15 +324,15 @@ endfunction : get_trap_debug_cause
 
 
 
-function bit [XLEN-1:0] uvma_rvfi_instr_seq_item_c::get_gpr_wdata(int gpr);
+function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] uvma_rvfi_instr_seq_item_c::get_gpr_wdata(int gpr);
   return gpr_wdata[gpr*XLEN +:XLEN];
 endfunction : get_gpr_wdata
 
-function bit [XLEN-1:0] uvma_rvfi_instr_seq_item_c::get_gpr_rdata(int gpr);
+function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] uvma_rvfi_instr_seq_item_c::get_gpr_rdata(int gpr);
   return gpr_rdata[gpr*XLEN +:XLEN];
 endfunction : get_gpr_rdata
 
-function bit [XLEN-1:0] uvma_rvfi_instr_seq_item_c::get_mem_data_word(int txn);
+function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] uvma_rvfi_instr_seq_item_c::get_mem_data_word(int txn);
   bit [XLEN-1:0] ret;
 
   for (int i = 0; i < XLEN/8; i++) begin
@@ -347,19 +347,19 @@ function bit [XLEN-1:0] uvma_rvfi_instr_seq_item_c::get_mem_data_word(int txn);
 
 endfunction : get_mem_data_word
 
-function bit [XLEN-1:0] uvma_rvfi_instr_seq_item_c::get_mem_addr(int txn);
+function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] uvma_rvfi_instr_seq_item_c::get_mem_addr(int txn);
 
   return mem_addr[txn*XLEN +:XLEN];
 
 endfunction : get_mem_addr
 
-function bit [(XLEN/8)-1:0] uvma_rvfi_instr_seq_item_c::get_mem_rmask(int txn);
+function bit [(uvma_rvfi_instr_seq_item_c::XLEN/8)-1:0] uvma_rvfi_instr_seq_item_c::get_mem_rmask(int txn);
 
    return mem_rmask[(txn*XLEN/8) +:(XLEN/8)];
 
 endfunction : get_mem_rmask
 
-function bit [(XLEN/8)-1:0] uvma_rvfi_instr_seq_item_c::get_mem_wmask(int txn);
+function bit [(uvma_rvfi_instr_seq_item_c::XLEN/8)-1:0] uvma_rvfi_instr_seq_item_c::get_mem_wmask(int txn);
 
    return mem_wmask[(txn*XLEN/8) +:(XLEN/8)];
 
