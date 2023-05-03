@@ -43,6 +43,7 @@ int checkInt (long int *B, long int *A, long int n)
   return err;
 }
 
+#ifdef FPU
 void fp_enable ()
 {
   unsigned int fs = MSTATUS_FS_INITIAL;
@@ -52,6 +53,7 @@ void fp_enable ()
                    : : "r"(fs));
 
 }
+#endif
 
 void mcycle_counter_enable ()
 {
@@ -75,8 +77,10 @@ int main()
 
   volatile float fdiv;
 
+#ifdef FPU
   // Floating Point enable
   fp_enable();
+#endif
 
   // Enable mcycle counter
   mcycle_counter_enable();
