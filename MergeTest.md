@@ -1,6 +1,8 @@
 # Merge Test
 Use this file to exercise the GitHub portions of the OpenHW Group workflow.
 
+bla bla bla typo typo typo
+
 Parts of the [OpenHW Group workflow](https://github.com/openhwgroup/core-v-docs/blob/master/verif/Common/OpenHWGroup_WorkFlow.pdf)
 are modeled after Vincent Driessen's [git branching model](https://nvie.com/posts/a-successful-git-branching-model/).  When
 you first register as a member of OpenHW, you can use this file to safely test whether you have the appropriate GitHub contributor priviledges for this repo.   Try this:
