@@ -120,7 +120,8 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
   a_xsecure_dataindtiming_div_rem_timing: assert property (
 
     rvfi_cpuctrl.rvfi_csr_rdata[DATAINDTIMING]
-    && rvfi_if.is_div || rvfi_if.is_rem
+    && (rvfi_if.is_div || rvfi_if.is_rem)
+    && !rvfi_if.rvfi_trap.trap
     ##0 seq_no_mem_instr_for_cycles(35).triggered
 
     |->

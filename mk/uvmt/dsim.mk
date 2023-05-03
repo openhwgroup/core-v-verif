@@ -61,7 +61,7 @@ endif
 DSIM_PMA_INC += +incdir+$(TBSRC_HOME)/uvmt \
                 +incdir+$(CV_CORE_PKG)/rtl/include \
                 +incdir+$(CV_CORE_COREVDV_PKG)/ldgen \
-				+incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
+                +incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
 
 # Seed management for constrained-random sims. This is an intentional repeat
 # of the root Makefile: dsim regressions use random seeds by default.
@@ -146,10 +146,8 @@ comp: mk_results $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI)
 		+$(UVM_PLUSARGS) \
 		-genimage $(DSIM_IMAGE)
 
-
-################################################################################
-# General test execution target "test"
-#
+#		TODO: discuss location of ImperasDV with Imperas.
+#		+incdir+$(CORE_V_VERIF)/vendor_lib/ImperasDV/ImpPublic/include/host \
 
 ################################################################################
 # If the configuration specified OVPSIM arguments, generate an ovpsim.ic file and
@@ -218,6 +216,7 @@ export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic
 ################################################################################
 # General test execution target "test"
 #
+
 # Skip compile if COMP is specified and negative
 ifneq ($(call IS_NO,$(COMP)),NO)
 DSIM_SIM_PREREQ = comp

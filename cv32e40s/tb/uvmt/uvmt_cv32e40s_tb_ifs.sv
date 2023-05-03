@@ -313,7 +313,8 @@ interface uvmt_cv32e40s_support_logic_module_i_if_t
    //Obi request information
    input logic req_is_store,
    input logic req_instr_integrity,
-   input logic req_data_integrity
+   input logic req_data_integrity,
+   input logic [31:0] instr_req_pc
 
    );
 
@@ -355,7 +356,8 @@ interface uvmt_cv32e40s_support_logic_module_i_if_t
 
       req_is_store,
       req_instr_integrity,
-      req_data_integrity
+      req_data_integrity,
+      instr_req_pc
    );
 
 endinterface : uvmt_cv32e40s_support_logic_module_i_if_t
@@ -394,7 +396,7 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    integer instr_bus_v_addr_ph_cnt;
    integer alignment_buff_addr_ph_cnt;
    integer lsu_addr_ph_cnt;
-   integer lrfodi_bus_v_addr_ph_cnt;
+   //integer lrfodi_bus_v_addr_ph_cnt; TODO: remove?
 
    // Counter for ack'ed irqs
    logic [31:0] cnt_irq_ack;
@@ -406,6 +408,7 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    logic data_req_had_integrity;
    logic gntpar_error_in_response_instr;
    logic gntpar_error_in_response_data;
+   logic [31:0] instr_resp_pc;
 
    // indicates that the current rvfi_valid instruction is the first in a debug handler
    logic first_debug_ins;
@@ -438,7 +441,7 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
 
          lrfodi_bus_addr_ph_cont,
          lrfodi_bus_resp_ph_cont,
-         lrfodi_bus_v_addr_ph_cnt,
+         //lrfodi_bus_v_addr_ph_cnt, TODO: remove?
 
          cnt_irq_ack,
          cnt_rvfi_irqs,
@@ -448,6 +451,7 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
          data_req_had_integrity,
          gntpar_error_in_response_instr,
          gntpar_error_in_response_data,
+         instr_resp_pc,
          first_debug_ins,
          first_fetch,
          recorded_dbg_req
@@ -474,7 +478,6 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
 
          lrfodi_bus_addr_ph_cont,
          lrfodi_bus_resp_ph_cont,
-         lrfodi_bus_v_addr_ph_cnt,
 
          cnt_irq_ack,
          cnt_rvfi_irqs,
@@ -484,6 +487,7 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
          data_req_had_integrity,
          gntpar_error_in_response_instr,
          gntpar_error_in_response_data,
+         instr_resp_pc,
          first_debug_ins,
          first_fetch,
          recorded_dbg_req
