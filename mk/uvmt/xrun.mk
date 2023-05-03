@@ -164,6 +164,15 @@ else
 COV_ARGS += $(IMC_REPORT_ARGS)
 endif
 
+
+ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/xrun-$(TEST_NAME).log
+POST_TEST = \
+	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
+		exit 1; \
+	fi
+endif
+
 ################################################################################
 
 # File to `include "uvm_macros.svh" since Xcelium automatic UVM compilation

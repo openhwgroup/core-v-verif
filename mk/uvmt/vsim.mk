@@ -253,6 +253,14 @@ endif
 endif
 endif
 
+ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vsim-$(TEST_NAME).log
+POST_TEST = \
+	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
+		exit 1; \
+	fi
+endif
+
 ################################################################################
 # Waveform (post-process) command line
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
@@ -612,6 +620,13 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 			$(RTLSRC_VOPT_TB_TOP) \
 			$(CFG_PLUSARGS) \
 			$(TEST_PLUSARGS)
+	$(POST_TEST)
+
+# check_sim: CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vsim-*.log
+# check_sim:
+# 	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
+# 		exit 1; \
+# 	fi
 
 ################################################################################
 # Test targets
