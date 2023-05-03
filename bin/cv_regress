@@ -228,6 +228,7 @@ if not args.outfile:
 
 regressions = []
 unique_builds = OrderedDict()
+unique_tests = OrderedDict()
 for f in args.file:
     # Add yaml extension if not supplied
     if not os.path.splitext(f)[1] == 'yaml':
@@ -237,6 +238,9 @@ for f in args.file:
     for b in r.builds.values():
         if not b.name in unique_builds:
             unique_builds[b.name] = b
+    for t in r.tests.values():
+        if not t.name in unique_tests:
+            unique_tests[t.name] = t
 
 # Generate output product
 env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__),
@@ -321,5 +325,6 @@ if args.rmdb:
                                  simulator=args.simulator,
                                  filter_dir=get_filter_dir(),
                                  unique_builds=unique_builds,
+                                 unique_tests=unique_tests,
                                  coverage=args.cov))
     out_fh.close()
