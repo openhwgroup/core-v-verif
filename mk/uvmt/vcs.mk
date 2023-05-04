@@ -136,6 +136,14 @@ COV_ARGS = -dir $(TEST_NAME).vdb
 endif
 
 
+ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vcs-$(TEST_NAME).log
+POST_TEST = \
+	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
+		exit 1; \
+	fi
+endif
+
 ################################################################################
 
 VCS_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
@@ -233,6 +241,7 @@ test: $(VCS_SIM_PREREQ) hex gen_ovpsim_ic
     		+elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
 			+firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
 			+itb_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).itb
+	$(POST_TEST)
 
 ###############################################################################
 # Run a single test-program from the RISC-V Compliance Test-suite. The parent

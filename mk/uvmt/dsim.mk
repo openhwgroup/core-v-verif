@@ -78,6 +78,16 @@ endif
 DSIM_RUN_FLAGS         += $(USER_RUN_FLAGS)
 DSIM_RUN_FLAGS         += -sv_seed $(DSIM_RNDSEED)
 
+
+ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/dsim-$(TEST_NAME).log
+POST_TEST = \
+	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
+		exit 1; \
+	fi
+endif
+
+
 # Variables to control wave dumping from command the line
 # Humans _always_ forget the "S", so you can have it both ways...
 WAVES                  ?= 0
@@ -183,6 +193,7 @@ test: $(DSIM_SIM_PREREQ) hex gen_ovpsim_ic
 			+firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
 			+elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
 			+itb_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).itb
+	$(POST_TEST)
 
 # Similar to above, but for the ASM directory.
 asm: comp $(ASM_DIR)/$(ASM_PROG).hex $(ASM_DIR)/$(ASM_PROG).elf
