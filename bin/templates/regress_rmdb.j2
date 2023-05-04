@@ -70,7 +70,7 @@
                 </method>
 {% endif %}
                 <execScript launch="exec" usestderr="no">
-                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT=YES CHECK_SIM_LOG=(%log_file%) COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} {{toolchain|upper}}=1 CFG={{t.cfg}} RISCVDV_CFG={{t.riscvdv_cfg}} SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
+                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT=YES CHECK_SIM_LOG=(%log_file%) COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%build_config%) RISCVDV_CFG={{t.riscvdv_cfg}} SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
                 </execScript>
             </runnable>
 {% endfor %}
