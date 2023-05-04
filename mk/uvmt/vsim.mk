@@ -622,11 +622,6 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 			$(TEST_PLUSARGS)
 	$(POST_TEST)
 
-# check_sim: CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vsim-*.log
-# check_sim:
-# 	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
-# 		exit 1; \
-# 	fi
 
 ################################################################################
 # Test targets
