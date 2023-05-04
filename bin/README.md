@@ -114,8 +114,8 @@ builds:<br>
 tests:<br>
 &nbsp;&nbsp;<*Required*: test label. If using the test only once in the same yaml file, the label can match the *actual* test name><br>
 &nbsp;&nbsp;**test_name0**:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<*Required*: build dependecies, can be a list of single build_name><br>
-&nbsp;&nbsp;&nbsp;&nbsp;**build**: \<string><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<*Required*: build dependencies, can be a single build_name, or a list of build_name if **builds** is specified (plural) ><br>
+&nbsp;&nbsp;&nbsp;&nbsp;**build(s)**: \<string> (list of \<string>) <br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Required*: human-readable test description><br>
 &nbsp;&nbsp;&nbsp;&nbsp;**description**: \<string><br>
 &nbsp;&nbsp;&nbsp;&nbsp;<*Required*: make directory for the test><br>
