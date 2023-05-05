@@ -20,8 +20,6 @@
 // a configured number of irq&single steps terminates correctly after a set   //
 // timeout                                                                    //
 //                                                                            //
-// TODO: Usage: Set nmi_timeout_instr plusarg to non-zero value                     //
-//                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 `ifndef __UVME_CV32E40S_IRQ_SS_TIMEOUT_VSEQ_SV__
 `define __UVME_CV32E40S_IRQ_SS_TIMEOUT_VSEQ_SV__
@@ -58,10 +56,6 @@ endfunction : new
 
 
 task uvme_cv32e40s_irq_ss_timeout_vseq_c::body();
-
-   int unsigned irq_cnt_min  = 10;
-   int unsigned ss_cnt_min   = 10;
-   int unsigned threshold    = 30;
 
    let single_step_cnt = cntxt.rvfi_cntxt.instr_vif[0].single_step_cnt;
    let irq_cnt         = cntxt.rvfi_cntxt.instr_vif[0].irq_cnt;
