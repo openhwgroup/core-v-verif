@@ -194,7 +194,7 @@ interface uvma_rvfi_instr_if_t
   assign {>>{mem_wdata_array}} = rvfi_mem_wdata;
   assign {>>{mem_wmask_array}} = rvfi_mem_wmask;
 
-  assign cslli_shamt = {rvfi_i.rvfi_insn[12], rvfi_i.rvfi_insn[6:2]};
+  assign cslli_shamt = {rvfi_insn[12], rvfi_insn[6:2]};
 
   always @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
