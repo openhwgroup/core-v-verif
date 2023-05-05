@@ -47640,7 +47640,7 @@ main:
 .word(0x00003063)
 .word(0x000020e3)
 .word(0x000030e3)
-# manually added PULP instructions that are interrupts as illegal when PULP_XPULP=0
+# manually added PULP instructions that are interrupts as illegal when COREV_PULP=0
 .word(0x42000033)
 .word(0x42001033)
 .word(0x04002033)

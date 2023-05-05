@@ -41,20 +41,20 @@ module uvmt_cv32e40p_tb;
    `endif
    // DUT (core) parameters: refer to the CV32E40P User Manual.
 `ifdef NO_PULP
-   parameter int CORE_PARAM_PULP_XPULP           = 0;
-   parameter int CORE_PARAM_PULP_CLUSTER         = 0;
+   parameter int CORE_PARAM_COREV_PULP           = 0;
+   parameter int CORE_PARAM_COREV_CLUSTER        = 0;
    parameter int CORE_PARAM_FPU                  = 0;
    parameter int CORE_PARAM_FPU_ADDMUL_LAT       = 0;
    parameter int CORE_PARAM_FPU_OTHERS_LAT       = 0;
    parameter int CORE_PARAM_ZFINX                = 0;
 `else
    `ifdef PULP
-      parameter int CORE_PARAM_PULP_XPULP        = 1;
+      parameter int CORE_PARAM_COREV_PULP        = 1;
 
       `ifdef CLUSTER
-         parameter int CORE_PARAM_PULP_CLUSTER   = 1;
+         parameter int CORE_PARAM_COREV_CLUSTER  = 1;
       `else
-         parameter int CORE_PARAM_PULP_CLUSTER   = 0;
+         parameter int CORE_PARAM_COREV_CLUSTER  = 0;
       `endif
 
       `ifdef FPU
@@ -83,8 +83,8 @@ module uvmt_cv32e40p_tb;
 
    `else
       // If you don't explicitly specify either NO_PULP or PULP, you get NO_PULP
-      parameter int CORE_PARAM_PULP_XPULP        = 0;
-      parameter int CORE_PARAM_PULP_CLUSTER      = 0;
+      parameter int CORE_PARAM_COREV_PULP        = 0;
+      parameter int CORE_PARAM_COREV_CLUSTER     = 0;
       parameter int CORE_PARAM_FPU               = 0;
       parameter int CORE_PARAM_FPU_ADDMUL_LAT    = 0;
       parameter int CORE_PARAM_FPU_OTHERS_LAT    = 0;
@@ -148,8 +148,8 @@ module uvmt_cv32e40p_tb;
    * a few mods to bring unused ports from the CORE to this level using SV interfaces.
    */
    uvmt_cv32e40p_dut_wrap  #(
-                             .PULP_XPULP        (CORE_PARAM_PULP_XPULP),
-                             .PULP_CLUSTER      (CORE_PARAM_PULP_CLUSTER),
+                             .COREV_PULP        (CORE_PARAM_COREV_PULP),
+                             .COREV_CLUSTER     (CORE_PARAM_COREV_CLUSTER),
                              .FPU               (CORE_PARAM_FPU),
                              .FPU_ADDMUL_LAT    (CORE_PARAM_FPU_ADDMUL_LAT),
                              .FPU_OTHERS_LAT    (CORE_PARAM_FPU_OTHERS_LAT),
@@ -691,8 +691,8 @@ module uvmt_cv32e40p_tb;
      uvm_config_db#(bit[31:0])::set(.cntxt(null), .inst_name("*"), .field_name("evalue"), .value(32'h00000000));
 
      // DUT and ENV parameters
-     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_XPULP"),       .value(CORE_PARAM_PULP_XPULP)      );
-     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_CLUSTER"),     .value(CORE_PARAM_PULP_CLUSTER)    );
+     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_COREV_PULP"),       .value(CORE_PARAM_COREV_PULP)      );
+     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_COREV_CLUSTER"),    .value(CORE_PARAM_COREV_CLUSTER)   );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_FPU"),              .value(CORE_PARAM_FPU)             );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_FPU_ADDMUL_LAT"),   .value(CORE_PARAM_FPU_ADDMUL_LAT)  );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_FPU_OTHERS_LAT"),   .value(CORE_PARAM_FPU_OTHERS_LAT)  );

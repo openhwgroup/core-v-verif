@@ -23,8 +23,8 @@ module cv32e40p_tb_wrapper
                 DM_HALTADDRESS    = 32'h1A11_0800,
                 HART_ID           = 32'h0000_0000,
                 // Parameters used by DUT
-                PULP_XPULP        = 0,
-                PULP_CLUSTER      = 0,
+                COREV_PULP        = 0,
+                COREV_CLUSTER     = 0,
                 FPU               = 0,
                 ZFINX             = 0,
                 NUM_MHPMCOUNTERS  = 1
@@ -72,8 +72,8 @@ module cv32e40p_tb_wrapper
 //    // MIKET: commenting out as the cv32e40p RTL wrapper does this as well.
 //    cv32e40p_core_log
 //     #(
-//          .PULP_XPULP            ( PULP_XPULP            ),
-//          .PULP_CLUSTER          ( PULP_CLUSTER          ),
+//          .COREV_PULP            ( COREV_PULP            ),
+//          .COREV_CLUSTER         ( COREV_CLUSTER         ),
 //          .FPU                   ( FPU                   ),
 //          .ZFINX                 ( ZFINX                 ),
 //          .NUM_MHPMCOUNTERS      ( NUM_MHPMCOUNTERS      ))
@@ -87,8 +87,8 @@ module cv32e40p_tb_wrapper
 
     // instantiate the core
     cv32e40p_core #(
-                 .PULP_XPULP       (PULP_XPULP),
-                 .PULP_CLUSTER     (PULP_CLUSTER),
+                 .COREV_PULP       (COREV_PULP),
+                 .COREV_CLUSTER    (COREV_CLUSTER),
                  .FPU              (FPU),
                  .ZFINX            (ZFINX),
                  .NUM_MHPMCOUNTERS (NUM_MHPMCOUNTERS)

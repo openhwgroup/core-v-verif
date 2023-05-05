@@ -4,9 +4,9 @@ compile_flags:
     +define+PULP
 
 # Imperas ISS Options (in ovpsim section)
-# PULP_XPULP=1
+# COREV_PULP=1
 #--override root/cpu/misa_Extensions=0x801104
-# PULP_XPULP=0
+# COREV_PULP=0
 # Set as below
 # Debug options (add to ovpsim section as needed)
 #--trace --tracechange --traceshowicount --monitornets --tracemode
