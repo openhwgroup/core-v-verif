@@ -19,6 +19,7 @@ module uvmt_cv32e40s_debug_assert
   import uvm_pkg::*;
   import uvma_rvfi_pkg::*;
   import cv32e40s_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
   (
       uvma_rvfi_instr_if_t rvfi,
       uvma_rvfi_csr_if_t csr_dcsr,
@@ -242,7 +243,7 @@ module uvmt_cv32e40s_debug_assert
     endproperty
 
     generate // ignore CLIC, checked in clic asserts
-        if (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC==0) begin
+        if (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC==0) begin
             a_dpc_dbg_step_irq: assert property(p_dpc_dbg_step_irq)
                 else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a step, dpc==%08x", csr_dpc.rvfi_csr_rdata));
         end
@@ -299,7 +300,7 @@ module uvmt_cv32e40s_debug_assert
     endproperty
 
     generate // ignore CLIC, checked in clic asserts
-        if (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC==0) begin
+        if (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC==0) begin
             a_dpc_dbg_haltreq_irq: assert property(p_dpc_dbg_haltreq_irq)
                 else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a haltreq, dpc==%08x", csr_dpc.rvfi_csr_rdata));
         end

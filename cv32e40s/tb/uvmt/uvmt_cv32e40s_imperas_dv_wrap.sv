@@ -306,6 +306,7 @@
 module uvmt_cv32e40s_imperas_dv_wrap
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
   import uvme_cv32e40s_pkg::*;
   import uvmt_cv32e40s_pkg::*;
   import rvviApiPkg::*;
@@ -996,6 +997,7 @@ endmodule : uvmt_cv32e40s_imperas_dv_wrap
 
     module uvmt_cv32e40s_imperas_dv_wrap
       import uvm_pkg::*;
+      import uvmt_cv32e40s_base_test_pkg::*;
       import uvme_cv32e40s_pkg::*;
       #(
        )

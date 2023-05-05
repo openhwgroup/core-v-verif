@@ -24,26 +24,26 @@
  * Top-level component that encapsulates, builds and connects all others.
  * Capable of driving/monitoring Clock & Reset interface.
  */
-class uvma_clic_agent_c extends uvm_agent;
+class uvma_clic_agent_c#(CLIC_ID_WIDTH) extends uvm_agent;
 
    // Objects
    uvma_clic_cfg_c    cfg;
-   uvma_clic_cntxt_c  cntxt;
+   uvma_clic_cntxt_c#(CLIC_ID_WIDTH)  cntxt;
 
    // Components
-   uvma_clic_drv_c              driver;
-   uvma_clic_mon_c              monitor;
-   uvma_clic_sqr_c              sequencer;
-   uvma_clic_cov_model_c        cov_model;
-   uvma_clic_seq_item_logger_c  seq_item_logger;
-   uvma_clic_mon_trn_logger_c   mon_trn_logger;
+   uvma_clic_drv_c#(CLIC_ID_WIDTH)             driver;
+   uvma_clic_mon_c#(CLIC_ID_WIDTH)             monitor;
+   uvma_clic_sqr_c#(CLIC_ID_WIDTH)             sequencer;
+   uvma_clic_cov_model_c#(CLIC_ID_WIDTH)       cov_model;
+   uvma_clic_seq_item_logger_c#(CLIC_ID_WIDTH) seq_item_logger;
+   uvma_clic_mon_trn_logger_c#(CLIC_ID_WIDTH)  mon_trn_logger;
 
    // TLM
-   uvm_analysis_port#(uvma_clic_seq_item_c)  drv_ap;
-   uvm_analysis_port#(uvma_clic_mon_trn_c )  mon_ap;
+   uvm_analysis_port#(uvma_clic_seq_item_c) drv_ap;
+   uvm_analysis_port#(uvma_clic_mon_trn_c#(CLIC_ID_WIDTH))  mon_ap;
 
 
-   `uvm_component_utils_begin(uvma_clic_agent_c)
+   `uvm_component_utils_begin(uvma_clic_agent_c#(CLIC_ID_WIDTH))
       `uvm_field_object(cfg  , UVM_DEFAULT)
       `uvm_field_object(cntxt, UVM_DEFAULT)
    `uvm_component_utils_end
@@ -162,19 +162,19 @@ endfunction : get_and_set_cfg
 
 function void uvma_clic_agent_c::get_and_set_cntxt();
 
-   void'(uvm_config_db#(uvma_clic_cntxt_c)::get(this, "", "cntxt", cntxt));
+   void'(uvm_config_db#(uvma_clic_cntxt_c#(CLIC_ID_WIDTH))::get(this, "", "cntxt", cntxt));
    if (cntxt == null) begin
       `uvm_info("CNTXT", "Context handle is null; creating.", UVM_DEBUG)
-      cntxt = uvma_clic_cntxt_c::type_id::create("cntxt");
+      cntxt = uvma_clic_cntxt_c#(CLIC_ID_WIDTH)::type_id::create("cntxt");
    end
-   uvm_config_db#(uvma_clic_cntxt_c)::set(this, "*", "cntxt", cntxt);
+   uvm_config_db#(uvma_clic_cntxt_c#(CLIC_ID_WIDTH))::set(this, "*", "cntxt", cntxt);
 
 endfunction : get_and_set_cntxt
 
 
 function void uvma_clic_agent_c::retrieve_vif();
 
-   if (!uvm_config_db#(virtual uvma_clic_if_t)::get(this, "", "vif", cntxt.vif)) begin
+   if (!uvm_config_db#(virtual uvma_clic_if_t#(CLIC_ID_WIDTH))::get(this, "", "vif", cntxt.vif)) begin
       `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s in uvm_config_db", $typename(cntxt.vif)))
    end
    else begin
@@ -186,14 +186,14 @@ endfunction : retrieve_vif
 
 function void uvma_clic_agent_c::create_components();
 
-   monitor         = uvma_clic_mon_c            ::type_id::create("monitor"        , this);
-   cov_model       = uvma_clic_cov_model_c      ::type_id::create("cov_model"      , this);
-   mon_trn_logger  = uvma_clic_mon_trn_logger_c ::type_id::create("mon_trn_logger" , this);
+   monitor         = uvma_clic_mon_c#(CLIC_ID_WIDTH)::type_id::create("monitor", this);
+   cov_model       = uvma_clic_cov_model_c#(CLIC_ID_WIDTH)::type_id::create("cov_model", this);
+   mon_trn_logger  = uvma_clic_mon_trn_logger_c#(CLIC_ID_WIDTH)::type_id::create("mon_trn_logger", this);
 
    if (cfg.is_active == UVM_ACTIVE) begin
-      sequencer       = uvma_clic_sqr_c            ::type_id::create("sequencer"      , this);
-      driver          = uvma_clic_drv_c            ::type_id::create("driver"         , this);
-      seq_item_logger = uvma_clic_seq_item_logger_c::type_id::create("seq_item_logger", this);
+      sequencer       = uvma_clic_sqr_c#(CLIC_ID_WIDTH)::type_id::create("sequencer", this);
+      driver          = uvma_clic_drv_c#(CLIC_ID_WIDTH)::type_id::create("driver", this);
+      seq_item_logger = uvma_clic_seq_item_logger_c#(CLIC_ID_WIDTH)::type_id::create("seq_item_logger", this);
    end
 
 endfunction : create_components
@@ -225,7 +225,7 @@ endfunction : connect_cov_model
 
 function void uvma_clic_agent_c::connect_trn_loggers();
 
-   mon_ap.connect(mon_trn_logger .analysis_export);
+   mon_ap.connect(mon_trn_logger.analysis_export);
    drv_ap.connect(seq_item_logger.analysis_export);
 
 endfunction : connect_trn_loggers

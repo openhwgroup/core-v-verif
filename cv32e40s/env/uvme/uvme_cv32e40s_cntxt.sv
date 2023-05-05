@@ -26,18 +26,18 @@
 class uvme_cv32e40s_cntxt_c extends uvm_object;
 
    // Virtual interface for Debug coverage
-   virtual uvmt_cv32e40s_debug_cov_assert_if_t  debug_cov_vif;
-   virtual uvmt_cv32e40s_vp_status_if_t         vp_status_vif; ///< Virtual interface for Virtual Peripherals
-   virtual uvma_interrupt_if_t                  intr_vif     ; ///< Virtual interface for interrupts
-   virtual uvma_clic_if_t                       clic_vif     ; ///< Virtual interface for clic interrupts
-   virtual uvma_debug_if_t                      debug_vif    ; ///< Virtual interface for debug
+   virtual uvmt_cv32e40s_debug_cov_assert_if_t        debug_cov_vif;
+   virtual uvmt_cv32e40s_vp_status_if_t               vp_status_vif; ///< Virtual interface for Virtual Peripherals
+   virtual uvma_interrupt_if_t                        intr_vif; ///< Virtual interface for interrupts
+   virtual uvma_clic_if_t#(CORE_PARAM_CLIC_ID_WIDTH)  clic_vif; ///< Virtual interface for clic interrupts
+   virtual uvma_debug_if_t                            debug_vif; ///< Virtual interface for debug
 
    // Agent context handles
-   uvma_cv32e40s_core_cntrl_cntxt_c  core_cntrl_cntxt;
-   uvma_clknrst_cntxt_c              clknrst_cntxt;
-   uvma_interrupt_cntxt_c            interrupt_cntxt;
-   uvma_clic_cntxt_c                 clic_cntxt;
-   uvma_debug_cntxt_c                debug_cntxt;
+   uvma_cv32e40s_core_cntrl_cntxt_c             core_cntrl_cntxt;
+   uvma_clknrst_cntxt_c                         clknrst_cntxt;
+   uvma_interrupt_cntxt_c                       interrupt_cntxt;
+   uvma_clic_cntxt_c#(CORE_PARAM_CLIC_ID_WIDTH) clic_cntxt;
+   uvma_debug_cntxt_c                           debug_cntxt;
    uvma_obi_memory_cntxt_c#(
      .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
      .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
@@ -104,7 +104,7 @@ function uvme_cv32e40s_cntxt_c::new(string name="uvme_cv32e40s_cntxt");
    debug_cntxt      = uvma_debug_cntxt_c::type_id::create("debug_cntxt");
    fencei_cntxt     = uvma_fencei_cntxt_c::type_id::create("fencei_cntxt");
    interrupt_cntxt  = uvma_interrupt_cntxt_c::type_id::create("interrupt_cntxt");
-   clic_cntxt       = uvma_clic_cntxt_c::type_id::create("clic_cntxt");
+   clic_cntxt       = uvma_clic_cntxt_c#(CORE_PARAM_CLIC_ID_WIDTH)::type_id::create("clic_cntxt");
    obi_memory_data_cntxt  = uvma_obi_memory_cntxt_c#(
      .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
      .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),

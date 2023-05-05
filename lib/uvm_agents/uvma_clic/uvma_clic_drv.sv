@@ -22,21 +22,21 @@
 /**
  * Component driving a Clock & Reset virtual interface (uvma_clic_if_t).
  */
-class uvma_clic_drv_c extends uvm_driver#(
+class uvma_clic_drv_c#(CLIC_ID_WIDTH) extends uvm_driver#(
    .REQ(uvma_clic_seq_item_c),
    .RSP(uvma_clic_seq_item_c)
 );
 
    // Objects
-   uvma_clic_cfg_c    cfg;
-   uvma_clic_cntxt_c  cntxt;
+   uvma_clic_cfg_c                    cfg;
+   uvma_clic_cntxt_c#(CLIC_ID_WIDTH)  cntxt;
 
    semaphore               assert_until_ack_sem[4096];
 
    // TLM
    uvm_analysis_port#(uvma_clic_seq_item_c)  ap;
 
-   `uvm_component_utils_begin(uvma_clic_drv_c)
+   `uvm_component_utils_begin(uvma_clic_drv_c#(CLIC_ID_WIDTH))
       `uvm_field_object(cfg  , UVM_DEFAULT)
       `uvm_field_object(cntxt, UVM_DEFAULT)
    `uvm_component_utils_end
@@ -101,11 +101,11 @@ function void uvma_clic_drv_c::build_phase(uvm_phase phase);
    end
    uvm_config_db#(uvma_clic_cfg_c)::set(this, "*", "cfg", cfg);
 
-   void'(uvm_config_db#(uvma_clic_cntxt_c)::get(this, "", "cntxt", cntxt));
+   void'(uvm_config_db#(uvma_clic_cntxt_c#(CLIC_ID_WIDTH))::get(this, "", "cntxt", cntxt));
    if (cntxt == null) begin
       `uvm_fatal("CNTXT", "Context handle is null")
    end
-   uvm_config_db#(uvma_clic_cntxt_c)::set(this, "*", "cntxt", cntxt);
+   uvm_config_db#(uvma_clic_cntxt_c#(CLIC_ID_WIDTH))::set(this, "*", "cntxt", cntxt);
 
    ap = new("ap", this);
 

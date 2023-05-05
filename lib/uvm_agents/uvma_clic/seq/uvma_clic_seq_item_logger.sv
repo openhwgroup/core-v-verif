@@ -22,13 +22,13 @@
 /**
  * Component writing Interrupt sequence items interrupt data to disk as plain text.
  */
-class uvma_clic_seq_item_logger_c extends uvml_logs_seq_item_logger_c#(
+class uvma_clic_seq_item_logger_c#(CLIC_ID_WIDTH) extends uvml_logs_seq_item_logger_c#(
    .T_TRN  (uvma_clic_seq_item_c),
    .T_CFG  (uvma_clic_cfg_c     ),
-   .T_CNTXT(uvma_clic_cntxt_c   )
+   .T_CNTXT(uvma_clic_cntxt_c#(CLIC_ID_WIDTH))
 );
 
-   `uvm_component_utils(uvma_clic_seq_item_logger_c)
+   `uvm_component_utils(uvma_clic_seq_item_logger_c#(CLIC_ID_WIDTH))
 
 
    /**
@@ -68,7 +68,7 @@ endclass : uvma_clic_seq_item_logger_c
 /**
  * Component writing INTERRUPT monitor transactions interrupt data to disk as JavaScript Object Notation (JSON).
  */
-class uvma_clic_seq_item_logger_json_c extends uvma_clic_seq_item_logger_c;
+class uvma_clic_seq_item_logger_json_c#(CLIC_ID_WIDTH) extends uvma_clic_seq_item_logger_c#(CLIC_ID_WIDTH);
 
    `uvm_component_utils(uvma_clic_seq_item_logger_json_c)
 

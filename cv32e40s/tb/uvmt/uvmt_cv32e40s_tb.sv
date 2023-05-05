@@ -31,8 +31,9 @@ module uvmt_cv32e40s_tb;
 
    import uvm_pkg::*;
    import cv32e40s_pkg::*;
-   import uvmt_cv32e40s_pkg::*;
+   //import uvmt_cv32e40s_pkg::*;
    import uvme_cv32e40s_pkg::*;
+   import uvmt_cv32e40s_base_test_pkg::*;
    `ifdef USE_ISS
    `ifndef FORMAL
    import rvviApiPkg::*;
@@ -51,7 +52,9 @@ module uvmt_cv32e40s_tb;
    uvma_clknrst_if_t            clknrst_if_iss();
    uvma_debug_if_t              debug_if();
    uvma_interrupt_if_t          interrupt_if();
-   uvma_clic_if_t               clic_if();
+   uvma_clic_if_t#(
+     .CLIC_ID_WIDTH(uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC_ID_WIDTH)
+   ) clic_if();
    uvma_obi_memory_if_t #(
      .ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
      .DATA_WIDTH  (ENV_PARAM_INSTR_DATA_WIDTH),
@@ -98,25 +101,25 @@ module uvmt_cv32e40s_tb;
    * a few mods to bring unused ports from the CORE to this level using SV interfaces.
    */
    uvmt_cv32e40s_dut_wrap  #(
-                             .B_EXT                (uvmt_cv32e40s_pkg::CORE_PARAM_B_EXT),
-                             .DBG_NUM_TRIGGERS     (uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS),
-                             .DM_REGION_END        (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
-                             .DM_REGION_START      (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
-                             .LFSR0_CFG            (uvmt_cv32e40s_pkg::CORE_PARAM_LFSR0_CFG),
-                             .LFSR1_CFG            (uvmt_cv32e40s_pkg::CORE_PARAM_LFSR1_CFG),
-                             .LFSR2_CFG            (uvmt_cv32e40s_pkg::CORE_PARAM_LFSR2_CFG),
-                             .M_EXT                (uvmt_cv32e40s_pkg::CORE_PARAM_M_EXT),
-                             .PMA_CFG              (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG),
-                             .PMA_NUM_REGIONS      (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
-                             .PMP_GRANULARITY      (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY),
-                             .PMP_MSECCFG_RV       (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_MSECCFG_RV),
-                             .PMP_NUM_REGIONS      (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS),
-                             .PMP_PMPADDR_RV       (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_PMPADDR_RV),
-                             .PMP_PMPNCFG_RV       (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_PMPNCFG_RV),
-                             .RV32                 (uvmt_cv32e40s_pkg::CORE_PARAM_RV32),
-                             .CLIC                 (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC),
-                             .CLIC_ID_WIDTH        (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_ID_WIDTH),
-                             .CLIC_INTTHRESHBITS   (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_INTTHRESHBITS),
+                             .B_EXT                (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_B_EXT),
+                             .DBG_NUM_TRIGGERS     (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS),
+                             .DM_REGION_END        (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_END),
+                             .DM_REGION_START      (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_START),
+                             .LFSR0_CFG            (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_LFSR0_CFG),
+                             .LFSR1_CFG            (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_LFSR1_CFG),
+                             .LFSR2_CFG            (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_LFSR2_CFG),
+                             .M_EXT                (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_M_EXT),
+                             .PMA_CFG              (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_CFG),
+                             .PMA_NUM_REGIONS      (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+                             .PMP_GRANULARITY      (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY),
+                             .PMP_MSECCFG_RV       (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_MSECCFG_RV),
+                             .PMP_NUM_REGIONS      (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS),
+                             .PMP_PMPADDR_RV       (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_PMPADDR_RV),
+                             .PMP_PMPNCFG_RV       (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_PMPNCFG_RV),
+                             .RV32                 (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_RV32),
+                             .CLIC                 (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC),
+                             .CLIC_ID_WIDTH        (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC_ID_WIDTH),
+                             .CLIC_INTTHRESHBITS   (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC_INTTHRESHBITS),
                              .INSTR_ADDR_WIDTH     (ENV_PARAM_INSTR_ADDR_WIDTH),
                              .INSTR_RDATA_WIDTH    (ENV_PARAM_INSTR_DATA_WIDTH),
                              .RAM_ADDR_WIDTH       (ENV_PARAM_RAM_ADDR_WIDTH)
@@ -531,7 +534,8 @@ module uvmt_cv32e40s_tb;
     // CLIC assertions
     bind cv32e40s_core
       uvmt_cv32e40s_clic_interrupt_assert#(
-        .CLIC (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC)
+        .CLIC (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC),
+        .CLIC_ID_WIDTH (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC_ID_WIDTH)
       ) clic_assert_i(
         .dpc                 (cs_registers_i.dpc_rdata),
         .mintstatus          (cs_registers_i.mintstatus_rdata),
@@ -569,7 +573,7 @@ module uvmt_cv32e40s_tb;
         // External inputs
         .clic_if             (dut_wrap.clic_if),
         // Internal sampled   variants
-        .irq_id              (core_i.irq_id[CLIC_ID_WIDTH-1:0]),
+        .irq_id              (core_i.irq_id[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC_ID_WIDTH-1:0]),
         .irq_level           (core_i.irq_level),
         .irq_priv            (core_i.irq_priv),
         .irq_shv             (core_i.irq_shv),
@@ -623,7 +627,7 @@ module uvmt_cv32e40s_tb;
 
   bind  cv32e40s_wrapper
     uvmt_cv32e40s_umode_assert #(
-      .CLIC (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC)
+      .CLIC (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC)
     ) umode_assert_i (
       .rvfi_valid    (rvfi_i.rvfi_valid),
       .rvfi_mode     (rvfi_i.rvfi_mode),
@@ -698,8 +702,8 @@ module uvmt_cv32e40s_tb;
 
   bind cv32e40s_wrapper
     uvmt_cv32e40s_fencei_assert #(
-      .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
-      .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
+      .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+      .PMA_CFG         (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_CFG)
     ) fencei_assert_i (
       .wb_valid           (core_i.wb_stage_i.wb_valid),
       .wb_instr_valid     (core_i.ex_wb_pipe.instr_valid),
@@ -722,8 +726,8 @@ module uvmt_cv32e40s_tb;
 
   bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i
     uvmt_cv32e40s_rvfi_assert #(
-      .CLIC          (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC),
-      .CLIC_ID_WIDTH (uvmt_cv32e40s_pkg::CORE_PARAM_CLIC_ID_WIDTH)
+      .CLIC          (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC),
+      .CLIC_ID_WIDTH (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC_ID_WIDTH)
     ) rvfi_assert_i (
       .rvfi_if          (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
       .support_if       (dut_wrap.cv32e40s_wrapper_i.support_logic_module_o_if.slave_mp),
@@ -898,7 +902,7 @@ module uvmt_cv32e40s_tb;
 
 
 
-  localparam PMP_ADDR_WIDTH = (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY > 0) ? 33 - uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY : 32;
+  localparam PMP_ADDR_WIDTH = (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY > 0) ? 33 - uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY : 32;
 
   pmpncfg_t pmpncfg[PMP_MAX_REGIONS];
   logic [PMP_ADDR_WIDTH-1:0] pmp_addr[PMP_MAX_REGIONS];
@@ -906,7 +910,7 @@ module uvmt_cv32e40s_tb;
   logic [$bits(pmpncfg_t)-1:0] pmpncfg_shadow[PMP_MAX_REGIONS];
   logic [PMP_ADDR_WIDTH-1:0] pmp_addr_shadow[PMP_MAX_REGIONS];
 
-  generate for (genvar n = 0; n < uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS; n++) begin
+  generate for (genvar n = 0; n < uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS; n++) begin
     assign pmpncfg[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.rdata_q;
     assign pmp_addr[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.rdata_q;
 
@@ -1369,7 +1373,7 @@ module uvmt_cv32e40s_tb;
         .PMP_GRANULARITY  (PMP_GRANULARITY),
         .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
         .IS_INSTR_SIDE    (1'b1),
-        .PMP_MSECCFG_RV   (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_MSECCFG_RV)
+        .PMP_MSECCFG_RV   (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_MSECCFG_RV)
       )
       u_pmp_assert_if_stage(.rst_n          (clknrst_if.reset_n),
                             .bus_trans_dbg  (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.bus_trans_o.dbg),
@@ -1386,7 +1390,7 @@ module uvmt_cv32e40s_tb;
         .PMP_GRANULARITY  (PMP_GRANULARITY),
         .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
         .IS_INSTR_SIDE    (1'b0),
-        .PMP_MSECCFG_RV   (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_MSECCFG_RV)
+        .PMP_MSECCFG_RV   (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_MSECCFG_RV)
       )
       u_pmp_assert_lsu(.rst_n          (clknrst_if.reset_n),
                        .bus_trans_dbg  (uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.bus_trans_o.dbg),
@@ -1399,8 +1403,8 @@ module uvmt_cv32e40s_tb;
 
     bind  dut_wrap.cv32e40s_wrapper_i.rvfi_i
       uvmt_cv32e40s_pmprvfi_assert #(
-        .PMP_GRANULARITY (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_GRANULARITY),
-        .PMP_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMP_NUM_REGIONS)
+        .PMP_GRANULARITY (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY),
+        .PMP_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS)
       ) pmprvfi_assert_i (
         .rvfi_if        (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
         .rvfi_mem_addr  (rvfi_mem_addr [31:0]),
@@ -1419,11 +1423,11 @@ module uvmt_cv32e40s_tb;
 
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i
       uvmt_cv32e40s_pma_model #(
-        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
-        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .DM_REGION_END   (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_START),
         .IS_INSTR_SIDE   (1'b 1),
-        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
-        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_CFG         (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_CFG)
       ) pma_model_instr_i (
         .addr_i       (pma_i.trans_addr_i),
         .dbg          (core_trans_i.dbg),
@@ -1434,11 +1438,11 @@ module uvmt_cv32e40s_tb;
 
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i
       uvmt_cv32e40s_pma_model #(
-        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
-        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .DM_REGION_END   (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_START),
         .IS_INSTR_SIDE   (1'b 0),
-        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
-        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_CFG         (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_CFG)
       ) pma_model_data_i (
         .addr_i       (pma_i.trans_addr_i),
         .dbg          (core_trans_i.dbg),
@@ -1449,11 +1453,11 @@ module uvmt_cv32e40s_tb;
 
     bind  dut_wrap.cv32e40s_wrapper_i
       uvmt_cv32e40s_pma_model #(
-        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
-        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .DM_REGION_END   (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_START),
         .IS_INSTR_SIDE   (1'b 0),
-        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
-        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_CFG         (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_CFG)
       ) pma_model_rvfidata_low_i (
         .clk                  (clknrst_if.clk),
         .rst_n                (clknrst_if.reset_n),
@@ -1468,11 +1472,11 @@ module uvmt_cv32e40s_tb;
 
     bind  dut_wrap.cv32e40s_wrapper_i
       uvmt_cv32e40s_pma_model #(
-        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
-        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .DM_REGION_END   (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_START),
         .IS_INSTR_SIDE   (1'b 0),
-        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
-        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_CFG         (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_CFG)
       ) pma_model_rvfidata_high_i (
         .clk                  (clknrst_if.clk),
         .rst_n                (clknrst_if.reset_n),
@@ -1488,11 +1492,11 @@ module uvmt_cv32e40s_tb;
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i
       uvmt_cv32e40s_pma_assert #(
         .CORE_REQ_TYPE   (cv32e40s_pkg::obi_inst_req_t),
-        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
-        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .DM_REGION_END   (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_START),
         .IS_INSTR_SIDE   (1),
-        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
-        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_CFG         (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_CFG)
       ) pma_assert_instr_i (
         .obi_memory_if    (dut_wrap.obi_instr_if),
         .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
@@ -1506,11 +1510,11 @@ module uvmt_cv32e40s_tb;
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i
       uvmt_cv32e40s_pma_assert #(
         .CORE_REQ_TYPE   (cv32e40s_pkg::obi_data_req_t),
-        .DM_REGION_END   (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END),
-        .DM_REGION_START (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
+        .DM_REGION_END   (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_END),
+        .DM_REGION_START (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_START),
         .IS_INSTR_SIDE   (0),
-        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
-        .PMA_CFG         (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_CFG)
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_CFG         (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_CFG)
       ) pma_assert_data_i (
         .obi_memory_if    (dut_wrap.obi_data_if),
         .rvfi_instr_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
@@ -1523,7 +1527,7 @@ module uvmt_cv32e40s_tb;
 
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i
       uvmt_cv32e40s_pma_cov #(
-        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
         .IS_INSTR_SIDE   (1'b 1)
       ) pma_cov_instr_i (
         .clk_ungated                         (clknrst_if.clk),
@@ -1536,7 +1540,7 @@ module uvmt_cv32e40s_tb;
 
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i
       uvmt_cv32e40s_pma_cov #(
-        .PMA_NUM_REGIONS (uvmt_cv32e40s_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
         .IS_INSTR_SIDE   (1'b 0)
       ) pma_cov_data_i (
         .clk_ungated                         (clknrst_if.clk),
@@ -1627,7 +1631,9 @@ module uvmt_cv32e40s_tb;
      uvm_config_db#(virtual uvma_debug_if_t             )::set(.cntxt(null), .inst_name("*.env.debug_agent"),            .field_name("vif"),           .value(debug_if));
      uvm_config_db#(virtual uvma_clknrst_if_t           )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"),          .field_name("vif"),           .value(clknrst_if));
      uvm_config_db#(virtual uvma_interrupt_if_t         )::set(.cntxt(null), .inst_name("*.env.interrupt_agent"),        .field_name("vif"),           .value(interrupt_if));
-     uvm_config_db#(virtual uvma_clic_if_t              )::set(.cntxt(null), .inst_name("*.env.clic_agent"),             .field_name("vif"),           .value(clic_if));
+     uvm_config_db#(virtual uvma_clic_if_t#(
+       .CLIC_ID_WIDTH(uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC_ID_WIDTH)
+     ))::set(.cntxt(null), .inst_name("*.env.clic_agent"), .field_name("vif"), .value(clic_if));
 
      uvm_config_db#(virtual uvma_obi_memory_if_t#(
        .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
@@ -1654,7 +1660,9 @@ module uvmt_cv32e40s_tb;
      uvm_config_db#(virtual uvma_fencei_if_t            )::set(.cntxt(null), .inst_name("*.env.fencei_agent"),           .field_name("fencei_vif"),    .value(fencei_if)  );
      uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if_t)::set(.cntxt(null), .inst_name("*"),                            .field_name("vp_status_vif"), .value(vp_status_if) );
      uvm_config_db#(virtual uvma_interrupt_if_t         )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("intr_vif"),      .value(interrupt_if) );
-     uvm_config_db#(virtual uvma_clic_if_t              )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("clic_vif"),      .value(clic_if) );
+     uvm_config_db#(virtual uvma_clic_if_t#(
+       .CLIC_ID_WIDTH(uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC_ID_WIDTH)
+     ))::set(.cntxt(null), .inst_name("*.env"), .field_name("clic_vif"), .value(clic_if) );
      uvm_config_db#(virtual uvma_debug_if_t             )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_vif"),     .value(debug_if)     );
 //     uvm_config_db#(virtual uvmt_cv32e40s_debug_cov_assert_if_t)::set(.cntxt(null), .inst_name("*.env"),                 .field_name("debug_cov_vif"),    .value(debug_cov_assert_if));
      `RVFI_CSR_UVM_CONFIG_DB_SET(cpuctrl)

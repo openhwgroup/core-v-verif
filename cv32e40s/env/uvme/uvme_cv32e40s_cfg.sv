@@ -19,7 +19,6 @@
 `define __UVME_CV32E40S_CFG_SV__
 
 
-import cv32e40s_pkg::*;
 /**
  * Object encapsulating all parameters for creating, connecting and running
  * CV32E40S environment (uvme_cv32e40s_env_c) components.
@@ -28,7 +27,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
 
    // Integrals
    rand int unsigned                sys_clk_period;
-   cv32e40s_pkg::b_ext_e            b_ext;
+   b_ext_e                          b_ext;
    bit                              obi_memory_instr_random_err_enabled   = 0;
    bit                              obi_memory_instr_one_shot_err_enabled = 0;
    bit                              obi_memory_data_random_err_enabled    = 0;
@@ -58,7 +57,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_int (                         trn_log_enabled             , UVM_DEFAULT          )
       `uvm_field_int (                         buserr_scoreboarding_enabled, UVM_DEFAULT          )
       `uvm_field_int (                         sys_clk_period              , UVM_DEFAULT | UVM_DEC)
-      `uvm_field_enum (cv32e40s_pkg::b_ext_e,  b_ext                       , UVM_DEFAULT          )
+      `uvm_field_enum (b_ext_e,                b_ext                       , UVM_DEFAULT          )
       `uvm_field_int (                         obi_memory_instr_random_err_enabled,   UVM_DEFAULT  )
       `uvm_field_int (                         obi_memory_instr_one_shot_err_enabled, UVM_DEFAULT  )
       `uvm_field_int (                         obi_memory_data_random_err_enabled,    UVM_DEFAULT  )
@@ -228,13 +227,13 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       isacov_cfg.reg_crosses_enabled        == 0;
       isacov_cfg.reg_hazards_enabled        == 1;
 
-      rvfi_cfg.nret == uvme_cv32e40s_pkg::RVFI_NRET;
-      rvfi_cfg.nmi_load_fault_enabled      == 1;
-      rvfi_cfg.nmi_load_fault_cause        == cv32e40s_pkg::INT_CAUSE_LSU_LOAD_FAULT;
-      rvfi_cfg.nmi_store_fault_enabled     == 1;
-      rvfi_cfg.nmi_store_fault_cause       == cv32e40s_pkg::INT_CAUSE_LSU_STORE_FAULT;
-      rvfi_cfg.insn_bus_fault_enabled      == 1;
-      rvfi_cfg.insn_bus_fault_cause        == cv32e40s_pkg::EXC_CAUSE_INSTR_BUS_FAULT;
+      rvfi_cfg.nret                    == RVFI_NRET;
+      rvfi_cfg.nmi_load_fault_enabled  == 1;
+      rvfi_cfg.nmi_load_fault_cause    == cv32e40s_pkg::INT_CAUSE_LSU_LOAD_FAULT;
+      rvfi_cfg.nmi_store_fault_enabled == 1;
+      rvfi_cfg.nmi_store_fault_cause   == cv32e40s_pkg::INT_CAUSE_LSU_STORE_FAULT;
+      rvfi_cfg.insn_bus_fault_enabled  == 1;
+      rvfi_cfg.insn_bus_fault_cause    == cv32e40s_pkg::EXC_CAUSE_INSTR_BUS_FAULT;
 
       if (is_active == UVM_ACTIVE) {
          isacov_cfg.is_active           == UVM_PASSIVE;
