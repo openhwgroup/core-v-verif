@@ -204,6 +204,10 @@ XRUN_RUN_FLAGS        += $(XRUN_RUN_COV_FLAGS)
 XRUN_RUN_FLAGS        += $(XRUN_USER_RUN_FLAGS)
 XRUN_RUN_FLAGS        += $(USER_RUN_FLAGS)
 
+ifneq ($(CFG_SV_INCLUDE_FILES),)
+XRUN_SV_INCLUDE_FILES += +incdir+$(abspath $(CFG_SV_INCLUDE_FILES))
+endif
+
 ###############################################################################
 # Xcelium warning suppression
 
@@ -304,6 +308,7 @@ XRUN_COMP = $(XRUN_COMP_FLAGS) \
 		$(XRUN_UVM_MACROS_INC_FILE) \
 		-f $(CV_CORE_MANIFEST) \
 		$(XRUN_FILE_LIST) \
+		$(XRUN_SV_INCLUDE_FILES) \
 		$(UVM_PLUSARGS)
 
 comp: mk_xrun_dir $(CV_CORE_PKG) $(SVLIB_PKG)
@@ -460,6 +465,7 @@ comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG)
 		+incdir+$(COREVDV_PKG) \
 		+incdir+$(CV_CORE_COREVDV_PKG) \
 		-f $(COREVDV_PKG)/manifest.f \
+		$(XRUN_SV_INCLUDE_FILES) \
 		-l xrun.log
 
 corev-dv: clean_riscv-dv \
