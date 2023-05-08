@@ -20,7 +20,7 @@ class sail_cSim(pluginTemplate):
     __model__ = "sail_c_simulator"
     __version__ = "0.5.0"
 
-    docker_cmd = 'docker run -w /work -v{0}:/work -a stdout -a stderr --init {1} {2}'
+    docker_cmd = 'docker run -w /work -v {0}:/work -a stdout -a stderr --init {1} {2}'
 
     def __init__(self, *args, **kwargs):
         sclass = super().__init__(*args, **kwargs)
@@ -86,6 +86,11 @@ class sail_cSim(pluginTemplate):
         if "Zifencei" in ispec["ISA"]:
             self.isa += '_zifencei'
 
+        if "hw_data_misaligned_support" in ispec and ispec["hw_data_misaligned_support"]== True:
+            self.enable_data_misaligned = '--enable-misaligned'
+        else:
+            self.enable_data_misaligned = ''
+
         objdump = "riscv{0}-unknown-elf-objdump".format(self.xlen)
 
         if not self.docker:
@@ -147,7 +152,7 @@ class sail_cSim(pluginTemplate):
             else:
                 cmd = self.sail_exe[self.xlen]
             
-            execute += cmd + ' --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
+            execute += cmd + ' {0} --test-signature={1} {2} > {3}.log 2>&1;'.format(self.enable_data_misaligned, sig_file, elf, test_name)
 
             cov_str = ' '
             for label in testentry['coverage_labels']:
@@ -176,8 +181,12 @@ class sail_cSim(pluginTemplate):
                 if coverage_cmd:
                     dexecute+=";cd "+testentry['work_dir']+";"+coverage_cmd
                 dmake.add_target(dexecute,tname=test_name)
-        if self.docker:
-            dmake.execute_all(self.work_dir, self.timeout)
+        if self.target_run:
+            if self.docker:
+                dmake.execute_all(self.work_dir, self.timeout)
+            else:
+                make.execute_all(self.work_dir, self.timeout)
         else:
-            make.execute_all(self.work_dir, self.timeout)
+          #raise SystemExit(0)
+          print("No target to Run")
 
