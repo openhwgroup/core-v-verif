@@ -370,7 +370,12 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    // Indicates that a new obi data req arrives after an exception is triggered.
    // Used to verify exception timing with multiop instruction
    logic req_after_exception;
-   logic is_exception_trigger_hit;
+   logic is_trigger_match_exception;
+   logic is_trigger_match_load;
+   logic is_trigger_match_store;
+   logic is_trigger_match_execute;
+   logic [4:0][31:0] tdata1_array;
+   logic [4:0][31:0] tdata2_array;
 
    // support logic signals for the obi bus protocol:
 
@@ -422,7 +427,13 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
 
    modport master_mp (
       output req_after_exception,
-         is_exception_trigger_hit,
+         is_trigger_match_exception,
+         is_trigger_match_load,
+         is_trigger_match_store,
+         is_trigger_match_execute,
+         tdata1_array,
+         tdata2_array,
+
          data_bus_addr_ph_cont,
          data_bus_resp_ph_cont,
          data_bus_v_addr_ph_cnt,
@@ -459,7 +470,13 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
 
    modport slave_mp (
       input req_after_exception,
-         is_exception_trigger_hit,
+          is_trigger_match_exception,
+         is_trigger_match_load,
+         is_trigger_match_store,
+         is_trigger_match_execute,
+         tdata1_array,
+         tdata2_array,
+
          data_bus_addr_ph_cont,
          data_bus_resp_ph_cont,
          data_bus_v_addr_ph_cnt,

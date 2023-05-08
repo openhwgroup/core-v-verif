@@ -1587,13 +1587,16 @@ module uvmt_cv32e40s_tb;
 
                                                                     .rvfi_if (rvfi_instr_if),
                                                                     .clknrst_if (dut_wrap.clknrst_if),
+                                                                    .support_if (support_logic_module_o_if.slave_mp),
 
                                                                     .tdata1 (rvfi_csr_tdata1_if),
                                                                     .tdata2 (rvfi_csr_tdata2_if),
                                                                     .tdata3 (rvfi_csr_tdata3_if),
                                                                     .tinfo (rvfi_csr_tinfo_if),
                                                                     .tselect (rvfi_csr_tselect_if),
-                                                                    .tcontrol (rvfi_csr_tcontrol_if)
+                                                                    .tcontrol (rvfi_csr_tcontrol_if),
+                                                                    .dcsr (rvfi_csr_dcsr_if),
+                                                                    .dpc (rvfi_csr_dpc_if)
                                                                     );
 
 
