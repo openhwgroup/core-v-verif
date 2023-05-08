@@ -39,6 +39,10 @@
  */
 class uvmt_cv32e40p_riscof_firmware_test_c extends uvmt_cv32e40p_base_test_c;
 
+   localparam RISCOF_SIGNATURE_HEADER = 32'h6f5ca309;
+   localparam RISCOF_TEST_BOOT_ADDRESS = 32'h80000000;
+   localparam RISCOF_TEST_SIG_LOCATION_OFFSET = 32'h03FF1000; // Fixed addr offset wrt BOOT_ADDRESS defined in linker file for riscof sim to store test signature start addr
+
     constraint env_cfg_cons {
        env_cfg.enabled         == 1;
        env_cfg.is_active       == UVM_ACTIVE;
@@ -108,7 +112,7 @@ function void uvmt_cv32e40p_riscof_firmware_test_c::build_phase(uvm_phase phase)
       `uvm_fatal("TEST", "Failed to randomize test");
     end
    
-    env_cfg.boot_addr = 32'h80000000;
+    env_cfg.boot_addr = RISCOF_TEST_BOOT_ADDRESS; //Defined inside riscof linker file
     test_cfg.watchdog_timeout = 10_000_000; // reduce timeout
 
 endfunction : build_phase
@@ -168,9 +172,29 @@ function void uvmt_cv32e40p_riscof_firmware_test_c::write_riscof_signature();
     bit[31:0]     signature_end_address;
     bit[31:0]     sig_i;
     int           i;
+    bit[31:0]     test_sig_begin_addr;
+    bit[31:0]     test_sig_end_addr;
 
-    signature_start_address = 32'h80801110;
-    signature_end_address = 32'h80900000;
+    //Get the Signature begin and end addresses by reading the mailbox address defined in linker file
+    test_sig_begin_addr = RISCOF_TEST_BOOT_ADDRESS + RISCOF_TEST_SIG_LOCATION_OFFSET;
+    test_sig_end_addr = RISCOF_TEST_BOOT_ADDRESS + RISCOF_TEST_SIG_LOCATION_OFFSET + 4;
+
+    //Read the signature start and end addresses from memory
+    mem_read[7:0] = env_cntxt.mem.read(test_sig_begin_addr+0);
+    mem_read[15:8] = env_cntxt.mem.read(test_sig_begin_addr+1);
+    mem_read[23:16] = env_cntxt.mem.read(test_sig_begin_addr+2);
+    mem_read[31:24] = env_cntxt.mem.read(test_sig_begin_addr+3);
+    signature_start_address = mem_read;
+
+    mem_read[7:0] = env_cntxt.mem.read(test_sig_end_addr+0);
+    mem_read[15:8] = env_cntxt.mem.read(test_sig_end_addr+1);
+    mem_read[23:16] = env_cntxt.mem.read(test_sig_end_addr+2);
+    mem_read[31:24] = env_cntxt.mem.read(test_sig_end_addr+3);
+    signature_end_address = mem_read;
+    `uvm_info("TEST", $sformatf("riscv_arch_test signature_start_address = %0h", signature_start_address), UVM_LOW)
+    `uvm_info("TEST", $sformatf("riscv-arch_test signature_end_address = %0h", signature_end_address), UVM_LOW)
+
+
     if ($value$plusargs("signature=%s", sig_file)) begin
         sig_fd = $fopen(sig_file, "w");
     end
@@ -182,22 +206,7 @@ function void uvmt_cv32e40p_riscof_firmware_test_c::write_riscof_signature();
      
     `uvm_info("RISCOF_SIG_WRITE", "Dumping Riscof signature", UVM_NONE)
 
-    //FIXME: make this generic based on hex file output and remove workaround
-    //Workaround to fix issue with different signature start address in F tests
-    for (i=0; i<120; i++) begin
-        mem_read[7:0] = env_cntxt.mem.read(signature_start_address+0);
-        mem_read[15:8] = env_cntxt.mem.read(signature_start_address+1);
-        mem_read[23:16] = env_cntxt.mem.read(signature_start_address+2);
-        mem_read[31:24] = env_cntxt.mem.read(signature_start_address+3);
-
-        if (mem_read != 32'h6f5ca309)  begin
-            signature_start_address = signature_start_address + 16'h1000;
-            signature_end_address = signature_end_address + 16'h1000;
-        end
-        else break;
-    end
-
-    
+    //Dump signature in the output DUT signature file
     for (sig_i=signature_start_address; sig_i<signature_end_address; sig_i += 4) begin
         mem_read[7:0] = env_cntxt.mem.read(sig_i+0);
         mem_read[15:8] = env_cntxt.mem.read(sig_i+1);
@@ -205,15 +214,6 @@ function void uvmt_cv32e40p_riscof_firmware_test_c::write_riscof_signature();
         mem_read[31:24] = env_cntxt.mem.read(sig_i+3);
 
         $fdisplay(sig_fd, "%x", mem_read);
-
-        if ( (mem_read == 32'h6f5ca309) && (sig_i > signature_start_address) )begin
-            while(sig_i[3:0] != 4'hc) begin // Fill 0's at the end to make 16 byte aligned signature dump to match ref model
-                mem_read[31:0] = 32'h0;
-                $fdisplay(sig_fd, "%x", mem_read);
-                sig_i +=4;
-            end
-            break;
-        end
     end
 
 endfunction : write_riscof_signature
@@ -235,7 +235,7 @@ function void uvmt_cv32e40p_riscof_firmware_test_c::write_riscof_empty_signature
 
     `uvm_info("RISCOF_SIG_WRITE", "Initialize Riscof signature", UVM_NONE)
 
-    sig_value = 32'h6f5ca309;
+    sig_value = RISCOF_SIGNATURE_HEADER;
     $fdisplay(sig_fd, "%x", sig_value);
 
 endfunction : write_riscof_empty_signature

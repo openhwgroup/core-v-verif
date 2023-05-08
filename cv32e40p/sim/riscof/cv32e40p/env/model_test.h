@@ -18,11 +18,12 @@
     sw x1, tohost, t5;                                                        \
     j write_tohost;
 
- //   la  t5, tohost                                                            \
- //   addi t5, t5, 4                                                            \
-//    sw x1, t5;                                                                \
-//
-#define RVMODEL_BOOT
+#define RVMODEL_BOOT                        \
+  csrw    mtvec, x0;                        \
+  la    t3, begin_signature;                \
+  sw    t3, __TEST_SIG_BEGIN_ADDR, t4;      \
+  la    t3, end_signature;                  \
+  sw    t3, __TEST_SIG_END_ADDR, t4;
 
 //RV_COMPLIANCE_DATA_BEGIN
 #define RVMODEL_DATA_BEGIN                                              \
