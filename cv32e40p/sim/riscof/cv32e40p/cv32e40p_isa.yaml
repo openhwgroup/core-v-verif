@@ -7,7 +7,7 @@ hart0:
   pmp_granularity: 0
   supported_xlen: [32]
   hw_data_misaligned_support: True
-  mtval_update: 0b11111
+  mtval_update: 0x00000000
   mcause:
     reset-val: 0x00000000
     rv32:
@@ -33,10 +33,9 @@ hart0:
         implemented: true
         type:
           warl:
-            dependency_fields: [mtvec::mode]
+            dependency_fields: []
             legal:
-              - "mode[1:0] in [0] -> base[29:0] in [0x00000000:0x3FFFFFFF]"
-              - "mode[1:0] in [1] -> base[29:6] in [0x000000:0xFFFFFF] base[5:0] in [0x00]"
+              - "base[29:6] in [0x000000:0xFFFFFF] base[5:0] in [0x00]"
             wr_illegal:
               - "Unchanged"
       mode:
@@ -48,4 +47,14 @@ hart0:
               - "mode[1:0] in [0x0:0x1]"
             wr_illegal:
               - "Unchanged"
-
+  mtval:
+    reset-val: 0x00000000
+    rv32:
+      accessible: true
+      type:
+        warl:
+          dependency_fields: []
+          legal:
+            - "mtval[31:0] in [0x00000000]"
+          wr_illegal:
+            - "Unchanged"
