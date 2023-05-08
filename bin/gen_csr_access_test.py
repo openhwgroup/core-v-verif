@@ -71,7 +71,11 @@ if int(args.pmp_num_regions) not in range(65):
 if args.dry_run:
     print('{}'.format(args))
 
+
+# to generate the cv32e40*_csr_access_test, use the yaml file path that is commented out.
+
 script_path      = os.path.join(topdir, '{}/vendor_lib/google/riscv-dv/scripts/gen_csr_test.py'.format(args.core.lower()))
+#yaml_file_path   = os.path.join(topdir, 'core-v-cores/{}'.format(args.core.lower()) + '/yaml/csr.yaml.m4')
 yaml_file_path   = os.path.join(topdir, '{}'.format(args.core.lower()) + '/env/corev-dv/{}'.format(args.core.lower()) + '_csr_template.yaml')
 template_path    = os.path.join(topdir, './bin/templates/csr_access_test_template.S')
 output_yaml_path = ""
