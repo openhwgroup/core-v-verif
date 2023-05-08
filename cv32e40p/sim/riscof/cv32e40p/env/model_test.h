@@ -49,18 +49,16 @@
 //RVTEST_IO_ASSERT_DFPR_EQ
 #define RVMODEL_IO_ASSERT_DFPR_EQ(_D, _R, _I)
 
-#define RVMODEL_SET_MSW_INT       \
- li t1, 1;                         \
- li t2, 0x2000000;                 \
- sw t1, 0(t2);
+#define RVMODEL_SET_MSW_INT
 
-#define RVMODEL_CLEAR_MSW_INT     \
- li t2, 0x2000000;                 \
- sw x0, 0(t2);
+#define RVMODEL_CLEAR_MSW_INT
 
 #define RVMODEL_CLEAR_MTIMER_INT
 
 #define RVMODEL_CLEAR_MEXT_INT
 
+#define SET_REL_TVAL_MSK 0x00000000
+#define NUM_SPECD_EXCPTCAUSES 3
+#define EXCPT_CAUSE_MSK 0x1F
 
 #endif // _COMPLIANCE_MODEL_H
