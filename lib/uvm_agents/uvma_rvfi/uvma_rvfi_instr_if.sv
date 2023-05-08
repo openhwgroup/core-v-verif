@@ -24,8 +24,11 @@
  */
 interface uvma_rvfi_instr_if_t
   import uvma_rvfi_pkg::*;
-  #(int ILEN=DEFAULT_ILEN,
-    int XLEN=DEFAULT_XLEN)
+
+  import support_pkg::*;
+
+  #(int ILEN=uvma_rvfi_pkg::DEFAULT_ILEN,
+    int XLEN=uvma_rvfi_pkg::DEFAULT_XLEN)
   (
     input logic                      clk,
     input logic                      reset_n,
@@ -127,7 +130,6 @@ interface uvma_rvfi_instr_if_t
 
 
 
-
   // -------------------------------------------------------------------
   // Local variables
   // -------------------------------------------------------------------
@@ -175,6 +177,7 @@ interface uvma_rvfi_instr_if_t
 
   logic                             is_nmi_triggered = 0;
 
+  instr_names_e instr_name;
   // -------------------------------------------------------------------
   // Begin module code
   // -------------------------------------------------------------------
@@ -212,6 +215,8 @@ interface uvma_rvfi_instr_if_t
 
   // assigning signal aliases to helper functions
   always_comb begin
+    instr_name          <= decode_instr(rvfi_insn);
+
     is_dret             <= is_dret_f();
     is_mret             <= is_mret_f();
     is_uret             <= is_uret_f();
@@ -300,8 +305,8 @@ interface uvma_rvfi_instr_if_t
   // Usage: instr_mask sets the parts of the instruction you want to compare,
   //        instr_ref is the reference to match
   function automatic logic match_instr(
-    logic [ DEFAULT_XLEN-1:0] instr_ref,
-    logic [ DEFAULT_XLEN-1:0] instr_mask
+    logic [ XLEN-1:0] instr_ref,
+    logic [ XLEN-1:0] instr_mask
   );
 
   return rvfi_valid && is_instr_bus_valid && ((rvfi_insn & instr_mask) == instr_ref);
@@ -312,8 +317,8 @@ interface uvma_rvfi_instr_if_t
   // Usage: instr_mask sets the parts of the instruction you want to compare,
   //        instr_ref is the reference to match
   function automatic logic match_instr_raw(
-    logic [ DEFAULT_XLEN-1:0] instr_ref,
-    logic [ DEFAULT_XLEN-1:0] instr_mask
+    logic [ XLEN-1:0] instr_ref,
+    logic [ XLEN-1:0] instr_mask
   );
 
   return rvfi_valid && ((rvfi_insn & instr_mask) == instr_ref);
@@ -321,7 +326,7 @@ interface uvma_rvfi_instr_if_t
   endfunction : match_instr_raw
 
 // Match instr types
-function automatic logic match_instr_r(logic [ DEFAULT_XLEN-1:0] instr_ref);
+function automatic logic match_instr_r(logic [ XLEN-1:0] instr_ref);
   return match_instr(instr_ref, INSTR_MASK_R_TYPE);
 endfunction : match_instr_r
 
@@ -333,7 +338,7 @@ function automatic logic match_instr_r_var(
   return match_instr_r({funct7, 10'b0, funct3, 5'b0, opcode});
 endfunction : match_instr_r_var
 
-function automatic logic match_instr_isb(logic [ DEFAULT_XLEN-1:0] instr_ref);
+function automatic logic match_instr_isb(logic [ XLEN-1:0] instr_ref);
   return match_instr(instr_ref, INSTR_MASK_I_S_B_TYPE);
 endfunction : match_instr_isb
 
@@ -344,7 +349,7 @@ function automatic logic match_instr_isb_var (
   return match_instr_isb({17'b0, funct3, 5'b0, opcode});
 endfunction : match_instr_isb_var
 
-function automatic logic match_instr_uj(logic [ DEFAULT_XLEN-1:0] instr_ref);
+function automatic logic match_instr_uj(logic [ XLEN-1:0] instr_ref);
   return  match_instr(instr_ref, INSTR_MASK_U_J_TYPE);
 endfunction : match_instr_uj
 
@@ -407,7 +412,7 @@ endfunction
 // input current value of the csr, and the csr address
 // NOTE: that this will work for CSRRW with unspecified csr address,
 // but CSRRS/CSRRC will give incorrect return values
-function automatic logic [DEFAULT_XLEN-1:0] csr_intended_wdata( logic [DEFAULT_XLEN-1:0] csr_rdata,
+function automatic logic [XLEN-1:0] csr_intended_wdata( logic [XLEN-1:0] csr_rdata,
                                                                 logic [11:0] csr_addr = 0);
   if (!is_csr_write(csr_addr)) begin
     return 0;
@@ -429,24 +434,24 @@ function automatic logic [DEFAULT_XLEN-1:0] csr_intended_wdata( logic [DEFAULT_X
 endfunction
 
 // Return wdata of register "gpr"
-function automatic logic [ DEFAULT_XLEN-1:0] get_gpr_wdata( int gpr);
-  return rvfi_gpr_wdata[gpr* DEFAULT_XLEN +: DEFAULT_XLEN];
+function automatic logic [ XLEN-1:0] get_gpr_wdata( int gpr);
+  return rvfi_gpr_wdata[gpr* XLEN +: XLEN];
 endfunction : get_gpr_wdata
 
 // Return rdata of register "gpr"
-function automatic logic [ DEFAULT_XLEN-1:0] get_gpr_rdata( int gpr);
-  return rvfi_gpr_rdata[gpr* DEFAULT_XLEN +: DEFAULT_XLEN];
+function automatic logic [ XLEN-1:0] get_gpr_rdata( int gpr);
+  return rvfi_gpr_rdata[gpr* XLEN +: XLEN];
 endfunction : get_gpr_rdata
 
 // Return valid data of memory transaction "txn"
-function automatic logic [ DEFAULT_XLEN-1:0] get_mem_data_word( int txn);
-  bit [ DEFAULT_XLEN-1:0] ret;
+function automatic logic [ XLEN-1:0] get_mem_data_word( int txn);
+  bit [ XLEN-1:0] ret;
 
-  for (int i = 0; i <  DEFAULT_XLEN/8; i++) begin
-    if (rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) + i]) begin
-      ret[i*8 +:8] = rvfi_mem_wdata[((txn* DEFAULT_XLEN) + (i*8)) +:8];
+  for (int i = 0; i <  XLEN/8; i++) begin
+    if (rvfi_mem_wmask[(txn* XLEN/8) + i]) begin
+      ret[i*8 +:8] = rvfi_mem_wdata[((txn* XLEN) + (i*8)) +:8];
     end else begin
-      ret[i*8 +:8] = rvfi_mem_rdata[((txn* DEFAULT_XLEN) + (i*8)) +:8];
+      ret[i*8 +:8] = rvfi_mem_rdata[((txn* XLEN) + (i*8)) +:8];
     end
   end
 
@@ -455,23 +460,23 @@ function automatic logic [ DEFAULT_XLEN-1:0] get_mem_data_word( int txn);
 endfunction : get_mem_data_word
 
 //Return addr of memory transaction "txn"
-function automatic logic [ DEFAULT_XLEN-1:0] get_mem_addr(int txn);
+function automatic logic [ XLEN-1:0] get_mem_addr(int txn);
 
-  return rvfi_mem_addr[txn* DEFAULT_XLEN +: DEFAULT_XLEN];
+  return rvfi_mem_addr[txn* XLEN +: XLEN];
 
 endfunction : get_mem_addr
 
 //Return rmask of memory transaction "txn"
-function automatic logic [( DEFAULT_XLEN/8)-1:0] get_mem_rmask(int txn);
+function automatic logic [( XLEN/8)-1:0] get_mem_rmask(int txn);
 
-  return rvfi_mem_rmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)];
+  return rvfi_mem_rmask[(txn* XLEN/8) +:( XLEN/8)];
 
 endfunction : get_mem_rmask
 
 //Return wmask of memory transaction "txn"
-function automatic logic [( DEFAULT_XLEN/8)-1:0] get_mem_wmask(int txn);
+function automatic logic [( XLEN/8)-1:0] get_mem_wmask(int txn);
 
-  return rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)];
+  return rvfi_mem_wmask[(txn* XLEN/8) +:( XLEN/8)];
 
 endfunction : get_mem_wmask
 
@@ -485,10 +490,10 @@ function automatic logic [1:0] check_mem_act(int txn);
   bit read = 0;
   bit write = 0;
 
-  if (rvfi_mem_rmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)]) begin
+  if (rvfi_mem_rmask[(txn* XLEN/8) +:( XLEN/8)]) begin
     read = 1;
   end
-  if (rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)]) begin
+  if (rvfi_mem_wmask[(txn* XLEN/8) +:( XLEN/8)]) begin
     write = 1;
   end
 
