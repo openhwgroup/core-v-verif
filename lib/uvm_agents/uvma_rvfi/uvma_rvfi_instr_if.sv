@@ -86,11 +86,11 @@ interface uvma_rvfi_instr_if_t
   localparam INSTR_MASK_U_J_TYPE      = 32'h 0000_007F;
   localparam INSTR_MASK_CSRADDR       = 32'h FFF0_0000;
   localparam INSTR_MASK_CSRUIMM       = 32'h 000F_8000;
-  localparam INSTR_MASK_CMPR          = 32'h 0000_E003;
-  localparam INSTR_MASK_ZC_PUSHPOP    = 32'h 0000_FF03;
-  localparam INSTR_MASK_ZC_LOAD_STORE = 32'h 0000_FC03;
+  localparam INSTR_MASK_CMPR          = 32'h FFFF_E003;
   localparam INSTR_MASK_OPCODE        = 32'h 0000_007F;
-  localparam INSTR_MASK_CLH_CLHU_CSH = 32'b 00000000_00000000_111_111_000_1_0_000_11;
+  localparam INSTR_MASK_ZC_PUSHPOP    = 32'h FFFF_FF03;
+  localparam INSTR_MASK_ZC_CLBU_CSB   = 32'h FFFF_FC03;
+  localparam INSTR_MASK_CLH_CLHU_CSH  = 32'b 1111_1111_1111_1111_1111_1100_0100_0011;
 
 
 
@@ -203,17 +203,7 @@ interface uvma_rvfi_instr_if_t
   logic                             is_tablejump_raw;
   logic                             is_pma_fault;
   logic                             is_fencefencei;
-  logic                             is_load_halfword;
-  logic                             is_load_word;
-  logic                             is_store_halfword;
-  logic                             is_store_word;
-  logic                             is_load_word_cmp;
-  logic                             is_store_word_cmp;
-  logic                             is_spload_word_cmp;
-  logic                             is_spstore_word_cmp;
   logic [31:0]                      rvfi_mem_addr_word0highbyte;
-  logic                             is_store_instr;
-  logic                             is_loadstore_instr;
   logic                             is_nmi_triggered = 0;
   logic [4*NMEM-1:0]                instr_mem_rmask;
   logic [4*NMEM-1:0]                instr_mem_wmask;
@@ -688,11 +678,6 @@ function automatic logic is_split_datatrans_f();
   return  is_mem_act && (low_addr[31:2] != high_addr[31:2]);
 endfunction : is_split_datatrans_f
 
-function logic is_mem_rmask_byte(int mem_txn, int byte_pos);
-  return (|((get_mem_rmask(mem_txn)) & (1 << byte_pos)));
-endfunction
-
-
 function logic [4*NMEM-1:0] instr_mem_rmask_f();
   logic [NMEM-1:0][3:0] rmask;
   logic [3:0] rlist;
@@ -716,7 +701,7 @@ function logic [4*NMEM-1:0] instr_mem_rmask_f();
 
   rmask[0][0] = rmask[0][1] ||
     match_instr(INSTR_OPCODE_LOAD,      INSTR_MASK_OPCODE)  ||
-    match_instr(INSTR_OPCODE_CLBU,      INSTR_MASK_ZC_LOAD_STORE);
+    match_instr(INSTR_OPCODE_CLBU,      INSTR_MASK_ZC_CLBU_CSB);
 
   if(rlist > 4 &&
     (match_instr(INSTR_OPCODE_CMPOP,     INSTR_MASK_ZC_PUSHPOP) ||
@@ -786,26 +771,8 @@ function logic [4*NMEM-1:0] instr_mem_rmask_f();
   end
   return mem_mask_t'(rmask);
 endfunction
-/*
-function logic [4*NMEM-1:0] instr_mem_wmask_f();
-  logic [NMEM-1:0][3:0] wmask;
-  logic [3:0] rlist;
-  rlist = rvfi_insn[7:4];
 
-  wmask[0][3] =
-    match_instr(INSTR_OPCODE_SW,      INSTR_MASK_I_S_B_TYPE)  ||
-    match_instr(INSTR_OPCODE_CSW,     INSTR_MASK_CMPR)           ||
-    match_instr(INSTR_OPCODE_CSWSP,   INSTR_MASK_CMPR)         ||
-    match_instr(INSTR_OPCODE_PUSH,    INSTR_MASK_ZC_PUSHPOP);
 
-  wmask[0][2] = wmask[0][3];
-
-  wmask[0][1] = wmask[0][2] ||
-    match_instr(INSTR_OPCODE_SH,    INSTR_MASK_I_S_B_TYPE)  ||
-    match_instr(INSTR_OPCODE_CSH,   INSTR_MASK_ZC_LOAD_STOREa  sk[0][0] = wmask[0][1] ||
-    match_instr(INSTR_OPCODE_STORE, INSTR_MASK_OPCODE)   ||
-    match_instr(INSTR_OPCODE_CSB,   INSTR_MASK_ZC_LOAD_STORE(rlist > 4 && match_instr(INSTR_OPCODE_PUSH, INSTR_MASK_ZC_PUSHPOP)) begin
-*/
 function logic [4*NMEM-1:0] instr_mem_wmask_f();
   logic [NMEM-1:0][3:0] wmask;
   logic [3:0] rlist;
@@ -821,11 +788,11 @@ function logic [4*NMEM-1:0] instr_mem_wmask_f();
 
   wmask[0][1] = wmask[0][2] ||
     match_instr(INSTR_OPCODE_SH,  INSTR_MASK_I_S_B_TYPE)  ||
-    match_instr(INSTR_OPCODE_CSH,    INSTR_MASK_ZC_LOAD_STORE);
+    match_instr(INSTR_OPCODE_CSH,    INSTR_MASK_CLH_CLHU_CSH);
 
   wmask[0][0] = wmask[0][1] ||
     match_instr(INSTR_OPCODE_STORE,    INSTR_MASK_OPCODE)   ||
-    match_instr(INSTR_OPCODE_CSB,      INSTR_MASK_ZC_LOAD_STORE);
+    match_instr(INSTR_OPCODE_CSB,      INSTR_MASK_ZC_CLBU_CSB);
 
   if(rlist > 4 && match_instr(INSTR_OPCODE_PUSH, INSTR_MASK_ZC_PUSHPOP)) begin
 
