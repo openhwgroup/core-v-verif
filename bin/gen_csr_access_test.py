@@ -27,7 +27,10 @@ parser.add_argument("--dry_run",                help="Prints generated yaml to s
 parser.add_argument("--core",                   help="Set the core to generate test for", choices=supported_cores)
 parser.add_argument("--output",                 help="Output path",                       type=str)
 parser.add_argument("--iterations",             help="Number of generated tests",         type=str, default="1")
-parser.add_argument("--m4",                     help="Use 'm4' for all preprocessing",    action="store_true", default=False)
+parser.add_argument("--m4",                     help="Use 'm4' for all preprocessing, and the m4 yaml file path unless another path is specified",\
+action="store_true", default=False)
+parser.add_argument("--input_yaml_path",        help="Optional: input yaml file path. If not specified: the m4 yaml or the default yaml file path is used",\
+type=str)
 
 parser.add_argument("--pmp_num_regions",        help="Set number of Pmp regions",         type=str, default="0")
 parser.add_argument("--mhpmcounter_num",        help="Set number of mhpmcounters",        type=str, default="3")
@@ -71,10 +74,18 @@ if int(args.pmp_num_regions) not in range(65):
 if args.dry_run:
     print('{}'.format(args))
 
+
 script_path      = os.path.join(topdir, '{}/vendor_lib/google/riscv-dv/scripts/gen_csr_test.py'.format(args.core.lower()))
-yaml_file_path   = os.path.join(topdir, '{}'.format(args.core.lower()) + '/env/corev-dv/{}'.format(args.core.lower()) + '_csr_template.yaml')
 template_path    = os.path.join(topdir, './bin/templates/csr_access_test_template.S')
 output_yaml_path = ""
+
+if (args.input_yaml_path != None):
+    yaml_file_path   = '{}'.format(args.input_yaml_path.lower())
+elif (args.m4):
+    yaml_file_path   = os.path.join(topdir, 'core-v-cores/{}'.format(args.core.lower()) + '/yaml/csr.yaml.m4')
+else:
+    yaml_file_path   = os.path.join(topdir, '{}'.format(args.core.lower()) + '/env/corev-dv/{}'.format(args.core.lower()) + '_csr_template.yaml')
+
 
 def run_riscv_dv_gen_csr_script(output_yaml_path):
     try:
