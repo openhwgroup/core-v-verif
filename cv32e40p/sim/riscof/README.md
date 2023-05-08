@@ -49,7 +49,8 @@ The riscof work directory path will be available here `riscof_work`.
 - For subsequent rerunning of the riscof suite without doing the clone of riscv-arch-test suite again, run the below compilation command before full riscof run at any time.
     - **`make comp_dut_rtl_riscof_sim CFG=<cfg_name>`** : Only does a sanity RTL compilation for riscof DUT simulations and create the work dir for running simulations.
 
-- This setup for CV32E40P has been validated to work for all the implemented standard ISA extentions supported by this CORE : RV32IMFCZicsr_Zifencei
+- This setup for CV32E40P has been validated to work for all the implemented standard ISA extentions supported by this CORE default v1 config.ini: RV32IMCZicsr_Zifencei,
+v2 config_cv32e40p_v2.ini : RV32IMFCZicsr_Zifencei
 
     -   Example Run:
         - dut_cfg=pulp_fpu
