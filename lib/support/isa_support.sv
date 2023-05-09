@@ -955,9 +955,9 @@
 
   endfunction : decode_instr
 
-  function is_instr(instr_t instr, instr_name_e instr_type);
-    is_instr = (decode_instr(instr).instr == instr_type);
-  endfunction : is_instr
+  function match_instr(instr_t instr, instr_name_e instr_type);
+    match_instr = (decode_instr(instr).instr == instr_type);
+  endfunction : match_instr
 
   // -------------------------------------------------------------------
   // CSR Types - TODO replace with include when autogen in place
