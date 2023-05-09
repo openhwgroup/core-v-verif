@@ -178,7 +178,7 @@ class cv32e40p(pluginTemplate):
             readelf_cmd = 'riscv{0}-{1}-elf-readelf -a dut_test.elf > dut_test.readelf'.format(self.xlen, self.sw_toolchain_prefix)
 
             #gen objdump for simulation
-            objdmp_cmd = 'riscv{0}-{1}-elf-objdump -d -M no-aliases -S dut_test.elf > dut_test.objdump'.format(self.xlen, self.sw_toolchain_prefix)
+            objdmp_cmd = 'riscv{0}-{1}-elf-objdump -D -M no-aliases -S dut_test.elf > dut_test.objdump'.format(self.xlen, self.sw_toolchain_prefix)
 
             #gen objdump2itb for simulation
             objdmp2itb_cmd = 'riscv{0}-{1}-elf-objdump -d -S -M no-aliases -l dut_test.elf | '+self.tbpath+'/bin/objdump2itb - > dut_test.itb'

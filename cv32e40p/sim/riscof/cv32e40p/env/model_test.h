@@ -18,11 +18,12 @@
     sw x1, tohost, t5;                                                        \
     j write_tohost;
 
- //   la  t5, tohost                                                            \
- //   addi t5, t5, 4                                                            \
-//    sw x1, t5;                                                                \
-//
-#define RVMODEL_BOOT
+#define RVMODEL_BOOT                        \
+  csrw    mtvec, x0;                        \
+  la    t3, begin_signature;                \
+  sw    t3, __TEST_SIG_BEGIN_ADDR, t4;      \
+  la    t3, end_signature;                  \
+  sw    t3, __TEST_SIG_END_ADDR, t4;
 
 //RV_COMPLIANCE_DATA_BEGIN
 #define RVMODEL_DATA_BEGIN                                              \
@@ -48,18 +49,16 @@
 //RVTEST_IO_ASSERT_DFPR_EQ
 #define RVMODEL_IO_ASSERT_DFPR_EQ(_D, _R, _I)
 
-#define RVMODEL_SET_MSW_INT       \
- li t1, 1;                         \
- li t2, 0x2000000;                 \
- sw t1, 0(t2);
+#define RVMODEL_SET_MSW_INT
 
-#define RVMODEL_CLEAR_MSW_INT     \
- li t2, 0x2000000;                 \
- sw x0, 0(t2);
+#define RVMODEL_CLEAR_MSW_INT
 
 #define RVMODEL_CLEAR_MTIMER_INT
 
 #define RVMODEL_CLEAR_MEXT_INT
 
+#define SET_REL_TVAL_MSK 0x00000000
+#define NUM_SPECD_EXCPTCAUSES 3
+#define EXCPT_CAUSE_MSK 0x1F
 
 #endif // _COMPLIANCE_MODEL_H

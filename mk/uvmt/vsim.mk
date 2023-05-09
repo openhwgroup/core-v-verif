@@ -481,6 +481,7 @@ vlog_dut_riscof_sim:
 			+incdir+$(UVM_HOME) \
 			$(UVM_HOME)/uvm_pkg.sv \
 			-f $(CV_CORE_MANIFEST) \
+			$(VLOG_FILE_LIST_IDV) \
 			$(VLOG_FILE_LIST) \
 			$(CFG_PLUSARGS) \
 			$(TBSRC_PKG)
