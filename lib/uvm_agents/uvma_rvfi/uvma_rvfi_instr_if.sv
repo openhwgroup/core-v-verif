@@ -177,7 +177,7 @@ interface uvma_rvfi_instr_if_t
 
   logic                             is_nmi_triggered = 0;
 
-  instr_names_e instr_name;
+  asm_t instr_asm;
   // -------------------------------------------------------------------
   // Begin module code
   // -------------------------------------------------------------------
@@ -215,7 +215,7 @@ interface uvma_rvfi_instr_if_t
 
   // assigning signal aliases to helper functions
   always_comb begin
-    instr_name          <= decode_instr(rvfi_insn);
+    instr_asm           = decode_instr(rvfi_insn);
 
     is_dret             <= is_dret_f();
     is_mret             <= is_mret_f();
