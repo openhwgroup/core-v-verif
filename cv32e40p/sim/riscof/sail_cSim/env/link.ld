@@ -17,12 +17,13 @@ SECTIONS
   .bss : { *(.bss) }
   _end = .;
 
-  /* Below section is used as a mailbox location to send DUT testbench the symbol address
-     of begin_signature and end_signature for each riscv_arch_test.
-     Sail ref model default ram-size is 0x0400_0000 and to work within this, using a fixed
-     offset of 0x03FF_1000 from the start of text.init section as mailbox addr.
-     Note - if text.init section addr is changed above, then mailbox address to be changed
-     accordingly to keep same offset wrt boot addr, to avoid modifying TB signature writer. */
+  /* Below section "test_env_section" defined to use as mailbox for DUT testbench. To write
+    "begin_signature", "end_signature" symbol addresses from each riscv_arch_test for DUT testbench.
+     Note :
+     Text Section start address defined above = 0x8000_0000
+     Section "test_env_section" chosen offset wrt start of text section = 0x03FF_1000.
+     (This offset addr is chosen to be within a default SAIL ref model "ram-size" constraint of 0x0400_0000).
+     So effective section address = 0x8000_0000 + 0x03FF_1000 = 0x83FF_1000. */
 
   . = 0x83FF1000;
   .test_env_section : {
