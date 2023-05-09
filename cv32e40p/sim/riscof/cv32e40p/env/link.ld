@@ -27,9 +27,17 @@ SECTIONS
 
   . = 0x83FF1000;
   .test_env_section : {
+     /* __TEST_SIG_BEGIN_ADDR -> After boot-up the test code will do a store to this address (0x83FF_1000)
+                                 writing the address of symbol "begin_signature"
+        Refer to riscof/cv32e40p/env/model_test.h -> RVMODEL_BOOT macro for relevant boot code */
     __TEST_SIG_BEGIN_ADDR = .;
+    /* initialize this location to 0xDEADBEEF */
     LONG(0xDEADBEEF);
+     /* __TEST_SIG_END_ADDR -> Next after boot-up the test code will do a store to this address (0x83FF_1004)
+                             writing the address of symbol "end_signature"
+        Refer to riscof/cv32e40p/env/model_test.h -> RVMODEL_BOOT macro for relevant boot code */
     __TEST_SIG_END_ADDR = .;
+    /* initialize this location to 0xDEADBEEF */
     LONG(0xDEADBEEF);
   }
 }
