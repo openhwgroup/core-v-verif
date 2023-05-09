@@ -168,7 +168,7 @@
     LOAD_INSTR,
     // Unknown for instructions that cannot be decoded
     UNKNOWN_INSTR
-  } instr_names_e;
+  } instr_name_e;
 
   // GPR Registers
 
@@ -288,9 +288,10 @@
     BRANCH = 7'b110_0011, JALR_OP  = 7'b110_0111, RES_0 = 7'b110_1011, JAL_OP   = 7'b110_1111, SYSTEM = 7'b111_0011, RES_2    = 7'b111_0111,CUS_3     = 7'b111_1011
   } major_opcode_e;
 
+  // TODO opcode map for rv32c - problem here is that it is multi-field dependent.
   typedef enum logic [1:0] {
-    C0 = 2'b00, C1 = 2'b01, C2 = 2'b10, C3 = 2'b11
-  } compressed_opcode_e;
+    C0 = 2'b00, C1 = 2'b01, C2 = 2'b10, C3 = 2'b11 /* C3 does not exist, is uncompressed */
+  } compressed_major_opcode_e;
 
   // Minor opcodes
   typedef enum logic [2:0] {
@@ -358,13 +359,6 @@
     logic [31:12] imm;
     gpr_t         rd;
   } j_type_t;
-
-  function logic[20:0] read_j_imm(logic[31:0] instr);
-    automatic logic [20:0] imm;
-    imm = instr >> 11;
-    return { imm[20], imm[10:1], imm[11], imm[18:12], 1'b0 };
-  endfunction : read_j_imm
-
 
   typedef struct packed {
     logic [31:25] funct7;
@@ -526,7 +520,7 @@
       cb_type_t    cb;
       cj_type_t    cj;
     } format;
-    compressed_opcode_e opcode;
+    compressed_major_opcode_e opcode;
   } compressed_instr_t;
 
   typedef union packed {
@@ -542,6 +536,7 @@
   typedef struct packed {
     logic[31:0] imm;
     // TODO
+    //logic[31:0] imm_raw; // TODO uninterpreted immediate
     //imm_e       imm_type;
     //int         width;
     //bit         sign_ext;
@@ -576,7 +571,7 @@
   } instr_format_e;
 
   typedef struct packed {
-    instr_names_e  instr;
+    instr_name_e  instr;
     instr_format_e format;
     reg_operand_t rd;
     reg_operand_t rs1;
@@ -586,26 +581,27 @@
     // rlist_operand_t rlist;
   } asm_t;
 
-  function logic [11:0] get_cj_offset(compressed_instr_t instr);
-    get_cj_offset = {
-      instr.format.cj.imm[11+1],
-      instr.format.cj.imm[4+1],
-      instr.format.cj.imm[9+1:8+1],
-      instr.format.cj.imm[10+1],
-      instr.format.cj.imm[6+1],
-      instr.format.cj.imm[7+1],
-      instr.format.cj.imm[3+1:1+1],
-      instr.format.cj.imm[5+1],
-      1'b0
-    };
-  endfunction : get_cj_offset
+  // TODO: Fix - incorrect
+  //function logic [11:0] get_cj_offset(compressed_instr_t instr);
+  //  get_cj_offset = {
+  //    instr.format.cj.imm[11+1],
+  //    instr.format.cj.imm[4+1],
+  //    instr.format.cj.imm[9+1:8+1],
+  //    instr.format.cj.imm[10+1],
+  //    instr.format.cj.imm[6+1],
+  //    instr.format.cj.imm[7+1],
+  //    instr.format.cj.imm[3+1:1+1],
+  //    instr.format.cj.imm[5+1],
+  //    1'b0
+  //  };
+  //endfunction : get_cj_offset
 
   function logic [20:0] get_j_imm(instr_t instr);
     get_j_imm = {
-      instr.uncompressed.format.j.imm[20+11],
-      instr.uncompressed.format.j.imm[10+11:1+11],
-      instr.uncompressed.format.j.imm[11+11],
-      instr.uncompressed.format.j.imm[18+11:12+11],
+      instr.uncompressed.format.j.imm[31],
+      instr.uncompressed.format.j.imm[21:12],
+      instr.uncompressed.format.j.imm[22],
+      instr.uncompressed.format.j.imm[30:23],
       1'b0
     };
   endfunction : get_j_imm
@@ -627,7 +623,7 @@
   endfunction : get_b_imm
 
 
-  function automatic asm_t build_asm(instr_names_e name, instr_format_e format, instr_t instr);
+  function automatic asm_t build_asm(instr_name_e name, instr_format_e format, instr_t instr);
     asm_t asm  = { '0 };
     asm.instr  = name;
     asm.format = format;
@@ -959,61 +955,8 @@
 
   endfunction : decode_instr
 
-  function is_instr(instr_t instr, instr_names_e instr_type);
-    case (instr_type)
-      FENCEI : return (   (instr.uncompressed.opcode              == MISC_MEM)
-                       && (instr.uncompressed.format.i.rd         == 5'b0_0000)
-                       && (instr.uncompressed.format.i.funct3     == 3'b001)
-                       && (instr.uncompressed.format.i.rs1        == 5'b0_0000)
-                       && (instr.uncompressed.format.i.imm        == 12'h000));
-      ECALL  : return (   (instr.uncompressed.opcode              == SYSTEM)
-                       && (instr.uncompressed.format.i.imm        == 12'b0000_0000_0000));
-      EBREAK : return (   (instr.uncompressed.opcode              == SYSTEM)
-                       && (instr.uncompressed.format.i.imm        == 12'b0000_0000_0001));
-      MRET   : return (   (instr.uncompressed.opcode              == SYSTEM)
-                       && (instr.uncompressed.format.i.rd         == 5'b0_0000)
-                       && (instr.uncompressed.format.i.imm        == 12'b0011_0000_0010)
-                       && (instr.uncompressed.format.i.rs1        == 5'b0_0000)
-                       && (instr.uncompressed.format.i.funct3     == 3'b000));
-      DRET   : return (   (instr.uncompressed.opcode              == SYSTEM)
-                       && (instr.uncompressed.format.i.imm        == 12'b0111_1011_0010));
-      WFI    : return (   (instr.uncompressed.opcode              == SYSTEM)
-                       && (instr.uncompressed.format.i.rd         == 5'b0_0000)
-                       && (instr.uncompressed.format.i.funct3     == 3'b000)
-                       && (instr.uncompressed.format.i.rs1        == 5'b0_0000)
-                       && (instr.uncompressed.format.i.imm        == 12'b0001_0000_0101));
-      WFE    : return (   (instr.uncompressed.opcode              == SYSTEM)
-                       && (instr.uncompressed.format.i.rd         == 5'b0_0000)
-                       && (instr.uncompressed.format.i.funct3     == 3'b000)
-                       && (instr.uncompressed.format.i.rs1        == 5'b0_0000)
-                       && (instr.uncompressed.format.i.imm        == 12'b1000_1100_0000));
-      SB     : return (   (instr.uncompressed.opcode              == STORE)
-                       && (instr.uncompressed.format.s.funct3     == FUNCT3_SB));
-      SH     : return (   (instr.uncompressed.opcode              == STORE)
-                       && (instr.uncompressed.format.s.funct3     == FUNCT3_SH));
-      SW     : return (   (instr.uncompressed.opcode              == STORE)
-                       && (instr.uncompressed.format.s.funct3     == FUNCT3_SW));
-      LB     : return (   (instr.uncompressed.opcode              == LOAD)
-                       && (instr.uncompressed.format.i.funct3     == FUNCT3_LB));
-      LH     : return (   (instr.uncompressed.opcode              == LOAD)
-                       && (instr.uncompressed.format.i.funct3     == FUNCT3_LH));
-      LW     : return (   (instr.uncompressed.opcode              == LOAD)
-                       && (instr.uncompressed.format.i.funct3     == FUNCT3_LW));
-      LBU    : return (   (instr.uncompressed.opcode              == LOAD)
-                       && (instr.uncompressed.format.i.funct3     == FUNCT3_LBU));
-      LHU    : return (   (instr.uncompressed.opcode              == LOAD)
-                       && (instr.uncompressed.format.i.funct3     == FUNCT3_LHU));
-      // Not actual instructions but rather classification
-      STORE_INSTR : return (instr.uncompressed.opcode              == STORE)
-                       && (instr.uncompressed.format.s.funct3 inside { FUNCT3_SB, FUNCT3_SH, FUNCT3_SW });
-      LOAD_INSTR  : return (instr.uncompressed.opcode              == LOAD)
-                       && (instr.uncompressed.format.i.funct3 inside { FUNCT3_LB, FUNCT3_LH, FUNCT3_LW, FUNCT3_LBU, FUNCT3_LHU });
-      // Compressed
-      CEBREAK: return (   (instr.compressed.opcode                == 2'b10)
-                       && (instr.compressed.format.cr.rd_rs1.gpr  == X0)
-                       && (instr.compressed.format.cr.rs2.gpr     == X0)
-                       && (instr.compressed.format.cr.funct4      == 4'b1001));
-    endcase
+  function is_instr(instr_t instr, instr_name_e instr_type);
+    is_instr = (decode_instr(instr).instr == instr_type);
   endfunction : is_instr
 
   // -------------------------------------------------------------------
