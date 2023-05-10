@@ -80,6 +80,8 @@ interface uvma_rvfi_instr_if_t
   // Local param
   // -------------------------------------------------------------------
   //instruction (rvfi_instr) masks
+
+  localparam INSTR_MASK_DIV_REM     = 32'h FE00_607F;
   localparam INSTR_MASK_FULL          = 32'h FFFF_FFFF;
   localparam INSTR_MASK_R_TYPE        = 32'h FE00_707F;
   localparam INSTR_MASK_I_S_B_TYPE    = 32'h 0000_707F;
@@ -93,7 +95,6 @@ interface uvma_rvfi_instr_if_t
   localparam INSTR_MASK_CLH_CLHU_CSH  = 32'b 1111_1111_1111_1111_1111_1100_0100_0011;
 
 
-
   //instruction (rvfi_instr) comparison values
   localparam INSTR_OPCODE_DRET      = 32'h 7B20_0073;
   localparam INSTR_OPCODE_MRET      = 32'h 3020_0073;
@@ -105,12 +106,27 @@ interface uvma_rvfi_instr_if_t
   localparam INSTR_OPCODE_ECALL     = 32'h 0000_0073;
   localparam INSTR_OPCODE_CSLLI     = 32'h 0000_0002;
 
+  localparam INSTR_OPCODE_DIV       = 32'h 0200_4033;
+  localparam INSTR_OPCODE_REM       = 32'h 0200_6033;
+
   localparam INSTR_OPCODE_CSRRW     = 32'h 0000_1073;
   localparam INSTR_OPCODE_CSRRS     = 32'h 0000_2073;
   localparam INSTR_OPCODE_CSRRC     = 32'h 0000_3073;
   localparam INSTR_OPCODE_CSRRWI    = 32'h 0000_5073;
   localparam INSTR_OPCODE_CSRRSI    = 32'h 0000_6073;
   localparam INSTR_OPCODE_CSRRCI    = 32'h 0000_7073;
+
+  localparam INSTR_OPCODE_BEQ       = 32'h0000_0063;
+  localparam INSTR_OPCODE_BNE       = 32'h0000_1063;
+  localparam INSTR_OPCODE_BLT       = 32'h0000_4063;
+  localparam INSTR_OPCODE_BGE       = 32'h0000_5063;
+  localparam INSTR_OPCODE_BLTU      = 32'h0000_6063;
+  localparam INSTR_OPCODE_BGEU      = 32'h0000_7063;
+
+  localparam INSTR_OPCODE_CBEQZ  = 32'h 0000_C001;
+  localparam INSTR_OPCODE_CBNEZ  = 32'h 0000_E001;
+
+  localparam INSTR_MASK_PUSHPOP   = 32'b 11111111_11111111_111_11111_0000_00_11;
 
   localparam INSTR_OPCODE_PUSH    = 32'b 00000000_00000000_101_11000_0000_00_10;
   localparam INSTR_OPCODE_POP     = 32'b 00000000_00000000_101_11010_0000_00_10;
@@ -187,6 +203,9 @@ interface uvma_rvfi_instr_if_t
   logic                             is_ebreak_compr;
   logic                             is_ebreak_noncompr;
   logic                             is_ecall;
+  logic                             is_branch;
+  logic                             is_div;
+  logic                             is_rem;
   logic                             is_cslli;
   logic                             is_nmi;
   logic                             is_compressed;
@@ -256,6 +275,9 @@ interface uvma_rvfi_instr_if_t
     is_ebreak_compr     <= is_ebreak_compr_f();
     is_ebreak_noncompr  <= is_ebreak_noncompr_f();
     is_ecall            <= is_ecall_f();
+    is_branch           <= is_branch_f();
+    is_div              <= is_div_f();
+    is_rem              <= is_rem_f();
     is_cslli            <= is_cslli_f();
     is_nmi              <= is_nmi_f();
     is_compressed       <= is_compressed_f();
@@ -575,6 +597,25 @@ endfunction : is_ebreak_noncompr_f
 function automatic logic is_ecall_f();
   return match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);
 endfunction : is_ecall_f
+
+function logic is_branch_f(); //TODO
+  return match_instr(INSTR_OPCODE_BEQ, INSTR_MASK_I_S_B_TYPE) ||
+         match_instr(INSTR_OPCODE_BNE, INSTR_MASK_I_S_B_TYPE) ||
+         match_instr(INSTR_OPCODE_BLT, INSTR_MASK_I_S_B_TYPE) ||
+         match_instr(INSTR_OPCODE_BGE, INSTR_MASK_I_S_B_TYPE) ||
+         match_instr(INSTR_OPCODE_BLTU, INSTR_MASK_I_S_B_TYPE) ||
+         match_instr(INSTR_OPCODE_BGEU, INSTR_MASK_I_S_B_TYPE) ||
+         match_instr(INSTR_OPCODE_CBEQZ, INSTR_MASK_CMPR) ||
+         match_instr(INSTR_OPCODE_CBNEZ, INSTR_MASK_CMPR);
+endfunction : is_branch_f
+
+function logic is_div_f();
+  return match_instr(INSTR_OPCODE_DIV, INSTR_MASK_DIV_REM);
+endfunction : is_div_f
+
+function logic is_rem_f();
+  return match_instr(INSTR_OPCODE_REM, INSTR_MASK_DIV_REM);
+endfunction : is_rem_f
 
 function logic is_cslli_f();
   return match_instr(INSTR_OPCODE_CSLLI, INSTR_MASK_CMPR);
