@@ -177,8 +177,10 @@ interface uvma_rvfi_instr_if_t
   // -------------------------------------------------------------------
   // Local variables
   // -------------------------------------------------------------------
-  bit   [CYCLE_CNT_WL-1:0]          cycle_cnt = 0;
-  int unsigned                      nmi_instr_cnt = 0;
+  bit   [CYCLE_CNT_WL-1:0]          cycle_cnt       = 0;
+  int unsigned                      nmi_instr_cnt   = 0; // number of instructions after nmi
+  int unsigned                      irq_cnt         = 0; // number of taken interrupts
+  int unsigned                      single_step_cnt = 0; // number of instructions stepped
 
   logic [(32)-1:0][XLEN-1:0]        gpr_rdata_array;
   logic [(32)-1:0]                  gpr_rmask_array;
@@ -253,6 +255,8 @@ interface uvma_rvfi_instr_if_t
   always @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
       nmi_instr_cnt    <= 0;
+      single_step_cnt  <= 0;
+      irq_cnt          <= 0;
       is_nmi_triggered <= 0;
     end else begin
       // Detect taken nmi or pending nmi and start counting
@@ -260,6 +264,8 @@ interface uvma_rvfi_instr_if_t
       if (is_nmi_triggered && rvfi_valid) begin
         nmi_instr_cnt <= nmi_instr_cnt + 1;
       end
+      single_step_cnt <= (rvfi_dbg[2:0] == 3'h4 && rvfi_valid) ? single_step_cnt + 1 : single_step_cnt;
+      irq_cnt <= ((rvfi_intr.intr == 1) && (rvfi_intr.interrupt == 1) && rvfi_valid) ? irq_cnt + 1 : irq_cnt;
     end
     cycle_cnt <= cycle_cnt + 1;
   end

@@ -3,3 +3,4 @@
 name: corev_rand_fencei
 uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
 description: RISCV-DV generated random fencei test
+cflags: -mno-relax

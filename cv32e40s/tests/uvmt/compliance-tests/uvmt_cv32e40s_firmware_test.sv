@@ -83,7 +83,18 @@ class uvmt_cv32e40s_firmware_test_c extends uvmt_cv32e40s_base_test_c;
     *  Start the clic interrupt sequencer to apply random clic interrupts during test
     */
    extern virtual task clic_noise();
+
+   /**
+    *  Start the nmi timeout watchdog to terminate tests a certain number of
+    *  instructions after an nmi
+    */
    extern virtual task nmi_timeout();
+
+   /**
+    *  Start the irq single-step timeout watchdog to terminate tests after
+    *  a certain number of irqs and single step instructions has occurred
+    */
+   extern virtual task irq_single_step_timeout();
 
 endclass : uvmt_cv32e40s_firmware_test_c
 
@@ -141,6 +152,12 @@ task uvmt_cv32e40s_firmware_test_c::run_phase(uvm_phase phase);
    if (env.cfg.nmi_timeout_instr > 0) begin
      fork
        nmi_timeout();
+     join_none
+   end
+
+   if (env.cfg.irq_single_step_threshold > 0) begin
+     fork
+       irq_single_step_timeout();
      join_none
    end
 
@@ -230,4 +247,15 @@ task uvmt_cv32e40s_firmware_test_c::nmi_timeout();
   assert(nmi_timeout_vseq.randomize() with {});
   nmi_timeout_vseq.start(vsequencer);
 endtask : nmi_timeout
+
+task uvmt_cv32e40s_firmware_test_c::irq_single_step_timeout();
+  uvme_cv32e40s_irq_ss_timeout_vseq_c irq_ss_timeout_vseq;
+  `uvm_info("TEST", "Starting IRQ/Single step timeout watchdog in UVM test", UVM_NONE);
+
+  irq_ss_timeout_vseq = uvme_cv32e40s_irq_ss_timeout_vseq_c::type_id::create("irq_ss_timout_vseqr");
+
+  assert(irq_ss_timeout_vseq.randomize() with {});
+  irq_ss_timeout_vseq.start(vsequencer);
+endtask : irq_single_step_timeout
+
 `endif // __UVMT_CV32E40S_FIRMWARE_TEST_SV__

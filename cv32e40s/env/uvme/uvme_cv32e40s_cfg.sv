@@ -29,15 +29,21 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    // Integrals
    rand int unsigned                sys_clk_period;
    cv32e40s_pkg::b_ext_e            b_ext;
-   bit                              obi_memory_instr_random_err_enabled   = 0;
-   bit                              obi_memory_instr_one_shot_err_enabled = 0;
-   bit                              obi_memory_data_random_err_enabled    = 0;
-   bit                              obi_memory_data_one_shot_err_enabled  = 0;
-   bit                              iss_suppress_invalid_msg              = 0;
-   bit                              nmi_timeout_instr_plusarg_valid       = 0;
-   rand bit                         buserr_scoreboarding_enabled          = 1;
+   bit                              obi_memory_instr_random_err_enabled     = 0;
+   bit                              obi_memory_instr_one_shot_err_enabled   = 0;
+   bit                              obi_memory_data_random_err_enabled      = 0;
+   bit                              obi_memory_data_one_shot_err_enabled    = 0;
+   bit                              iss_suppress_invalid_msg                = 0;
+   bit                              nmi_timeout_instr_plusarg_valid         = 0;
+   bit                              irq_min_limit_plusarg_valid             = 0;
+   bit                              single_step_min_limit_plusarg_valid     = 0;
+   bit                              irq_single_step_threshold_plusarg_valid = 0;
+   rand bit                         buserr_scoreboarding_enabled            = 1;
    rand int unsigned                fetch_toggle_initial_delay;
    rand int unsigned                nmi_timeout_instr;
+   rand int unsigned                single_step_min_limit;
+   rand int unsigned                irq_min_limit;
+   rand int unsigned                irq_single_step_threshold;
 
    // Agent cfg handles
    rand uvma_isacov_cfg_c           isacov_cfg;
@@ -66,6 +72,9 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_int (                         iss_suppress_invalid_msg,              UVM_DEFAULT  )
       `uvm_field_int (                         fetch_toggle_initial_delay,            UVM_DEFAULT  )
       `uvm_field_int (                         nmi_timeout_instr,                     UVM_DEFAULT | UVM_DEC )
+      `uvm_field_int (                         single_step_min_limit,                 UVM_DEFAULT | UVM_DEC )
+      `uvm_field_int (                         irq_min_limit,                         UVM_DEFAULT | UVM_DEC )
+      `uvm_field_int (                         irq_single_step_threshold,             UVM_DEFAULT | UVM_DEC )
 
       `uvm_field_object(isacov_cfg           , UVM_DEFAULT)
       `uvm_field_object(clknrst_cfg          , UVM_DEFAULT)
@@ -81,15 +90,18 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
 
 
    constraint defaults_cons {
-      soft enabled                      == 0;
-      soft is_active                    == UVM_PASSIVE;
-      soft scoreboarding_enabled        == 1;
-      soft cov_model_enabled            == 1;
-      soft trn_log_enabled              == 1;
-      soft sys_clk_period               == uvme_cv32e40s_sys_default_clk_period; // see uvme_cv32e40s_constants.sv
-      soft buserr_scoreboarding_enabled == 1;
+      soft enabled                         == 0;
+      soft is_active                       == UVM_PASSIVE;
+      soft scoreboarding_enabled           == 1;
+      soft cov_model_enabled               == 1;
+      soft trn_log_enabled                 == 1;
+      soft sys_clk_period                  == uvme_cv32e40s_sys_default_clk_period; // see uvme_cv32e40s_constants.sv
+      soft buserr_scoreboarding_enabled    == 1;
       soft fetch_toggle_initial_delay inside {[50:200]};
-      soft nmi_timeout_instr            == 0; // no timeout
+      soft nmi_timeout_instr               == 0; // no timeout
+      soft irq_min_limit                   == 0; // no timeout
+      soft single_step_min_limit           == 0; // no timeout
+      soft irq_single_step_threshold       == 0; // no timeout
    }
 
    constraint cv32e40s_riscv_cons {
@@ -350,8 +362,9 @@ function uvme_cv32e40s_cfg_c::new(string name="uvme_cv32e40s_cfg");
 
    core_name = "CV32E40S";
 
-   if ($test$plusargs("USE_ISS"))
+   if ($test$plusargs("USE_ISS")) begin
       use_iss = 1;
+   end
    if ($test$plusargs("trn_log_disabled")) begin
       trn_log_enabled = 0;
       trn_log_enabled.rand_mode(0);
@@ -361,17 +374,33 @@ function uvme_cv32e40s_cfg_c::new(string name="uvme_cv32e40s_cfg");
       buserr_scoreboarding_enabled.rand_mode(0);
    end
 
-   if ($test$plusargs("obi_memory_instr_random_err"))
+   if ($test$plusargs("obi_memory_instr_random_err")) begin
       obi_memory_instr_random_err_enabled = 1;
-   if ($test$plusargs("obi_memory_instr_one_shot_err"))
+   end
+   if ($test$plusargs("obi_memory_instr_one_shot_err")) begin
       obi_memory_instr_one_shot_err_enabled = 1;
-   if ($test$plusargs("obi_memory_data_random_err"))
+   end
+   if ($test$plusargs("obi_memory_data_random_err")) begin
       obi_memory_data_random_err_enabled = 1;
-   if ($test$plusargs("obi_memory_data_one_shot_err"))
+   end
+   if ($test$plusargs("obi_memory_data_one_shot_err")) begin
       obi_memory_data_one_shot_err_enabled = 1;
+   end
    if ($value$plusargs("nmi_timeout_instr=%d", nmi_timeout_instr)) begin
       nmi_timeout_instr_plusarg_valid = 1;
       nmi_timeout_instr.rand_mode(0);
+   end
+   if ($value$plusargs("irq_single_step_threshold=%0d", irq_single_step_threshold)) begin
+     irq_single_step_threshold_plusarg_valid = 1;
+     irq_single_step_threshold.rand_mode(0);
+   end
+   if ($value$plusargs("irq_min_limit=%0d", irq_min_limit)) begin
+     irq_min_limit_plusarg_valid = 1;
+     irq_min_limit.rand_mode(0);
+   end
+   if ($value$plusargs("single_step_min_limit=%0d", single_step_min_limit)) begin
+     single_step_min_limit_plusarg_valid = 1;
+     single_step_min_limit.rand_mode(0);
    end
 
 
