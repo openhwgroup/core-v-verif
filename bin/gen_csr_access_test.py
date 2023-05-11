@@ -80,7 +80,7 @@ template_path    = os.path.join(topdir, './bin/templates/csr_access_test_templat
 output_yaml_path = ""
 
 if (args.input_yaml_path != None):
-    yaml_file_path   = '{}'.format(args.input_yaml_path.lower())
+    yaml_file_path   = args.input_yaml_path
 elif (args.m4):
     yaml_file_path   = os.path.join(topdir, 'core-v-cores/{}'.format(args.core.lower()) + '/yaml/csr.yaml.m4')
 else:
