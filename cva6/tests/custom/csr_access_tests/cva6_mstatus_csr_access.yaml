@@ -102,7 +102,7 @@
       reset_val: 0
       msb: 7
       lsb: 7
-    - field_name: WPRI
+    - field_name: UBE
       description: >
        reserved for future use 
       type: R
@@ -119,7 +119,7 @@
     - field_name: UPIE
       description: >
         indicates whether user-level interrupts were enabled prior to taking a user-level trap
-      type: R
+      type: RW
       reset_val: 0
       msb: 4
       lsb: 4
@@ -147,8 +147,7 @@
     - field_name: UIE
       description: >
        Global interrupt-enable bits 
-      type: R
+      type: RW
       reset_val: 0
       msb: 0
       lsb: 0
-
