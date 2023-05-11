@@ -4,3 +4,4 @@ description: >
     Random debug generator test with single-stepping supported in the debug ROM
 plusargs: >
     +gen_random_debug
+cflags: -mno-relax

@@ -101,12 +101,10 @@ task uvme_cv32e40s_clic_noise_c::body();
 
         `uvm_create_on(irq_req, p_sequencer.clic_sequencer);
         start_item(irq_req);
-        //irq_req.default_repeat_count_c.constraint_mode(0); // FIXME TODO
         assert(irq_req.randomize() with {
-          action        == UVMA_CLIC_SEQ_ITEM_ACTION_ASSERT_UNTIL_ACK;
+          action        == UVMA_CLIC_SEQ_ITEM_ACTION_ASSERT;
           repeat_count dist { 1 :/ 9, [2:3] :/ 1 };
 
-          //(irq_mask & local::reserved_irq_mask) == 0;
         });
         finish_item(irq_req);
 
@@ -124,7 +122,6 @@ task uvme_cv32e40s_clic_noise_c::body();
 
         `uvm_do_on_with(irq_req, p_sequencer.clic_sequencer, {
           action        == UVMA_CLIC_SEQ_ITEM_ACTION_DEASSERT;
-          //(irq_mask & local::reserved_irq_mask) == 0;
         })
 
         rand_delay();
@@ -141,7 +138,6 @@ task uvme_cv32e40s_clic_noise_c::body();
 
         `uvm_do_on_with(irq_req, p_sequencer.clic_sequencer, {
           action        == UVMA_CLIC_SEQ_ITEM_ACTION_ASSERT;
-          //(irq_mask & local::reserved_irq_mask) == 0;
         })
 
         rand_delay();
