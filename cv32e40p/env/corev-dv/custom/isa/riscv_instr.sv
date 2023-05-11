@@ -131,7 +131,8 @@ class riscv_instr extends uvm_object;
             (instr_inst.group inside {RVV})) &&
           !(cfg.vector_instr_only &&
             !(instr_inst.group inside {RVV})) &&
-          !(cfg.enable_fp_in_x_regs && !(instr_inst.group inside {RV32ZFINX}))
+          !(!cfg.enable_fp_in_x_regs &&
+            (instr_inst.group inside {RV32ZFINX}))
           ) begin
         instr_category[instr_inst.category].push_back(instr_name);
         instr_group[instr_inst.group].push_back(instr_name);
