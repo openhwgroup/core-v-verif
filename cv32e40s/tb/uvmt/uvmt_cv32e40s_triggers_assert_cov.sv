@@ -51,6 +51,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   default disable iff !(clknrst_if.reset_n);
 
   string info_tag = "TRIGGER ASSERT: ";
+  localparam MAX_MEM_ACCESS = 13; //Push and pop can do 13 memory access. XIF can potentially do more (TODO: check this when merging to cv32e40x)
 
   //Reads and writes of CSR values
   logic [31:0] tdata1_pre_state;
@@ -67,7 +68,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   logic [31:0] tselect_post_state;
   logic [31:0] tcontrol_post_state;
 
-  logic [NMEM-1:0][31:0] rvfi_mem_addrs;
+  logic [MAX_MEM_ACCESS-1:0][31:0] rvfi_mem_addrs;
 
 
   always_comb begin
@@ -89,7 +90,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   end
 
   generate
-    for (genvar i = 0; i < NMEM; i++) begin
+    for (genvar i = 0; i < MAX_MEM_ACCESS; i++) begin
       assign rvfi_mem_addrs[i] = rvfi_if.get_mem_addr(i);
     end
   endgenerate
@@ -1255,7 +1256,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       ) else `uvm_error(info_tag, "The trigger match (instruction match, user mode, match when lesser) does not send the core into debug mode.\n");
 
 
-      for (genvar n = 0; n < NMEM; n++) begin
+      for (genvar n = 0; n < MAX_MEM_ACCESS; n++) begin
 
         a_dt_load_trigger_hit_mmode_match_when_equal: assert property (
           seq_load_hit(

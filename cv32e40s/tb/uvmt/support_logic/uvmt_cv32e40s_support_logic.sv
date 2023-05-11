@@ -174,12 +174,14 @@ module uvmt_cv32e40s_support_logic
   localparam MATCH_WHEN_GREATER_OR_EQUAL = 2;
   localparam MATCH_WHEN_LESSER = 3;
 
+  localparam MAX_MEM_ACCESS = 13; //Push and pop can do 13 memory access. XIF can potentially do more (TODO: check this when merging to cv32e40x)
+
   logic [MAX_NUM_TRIGGERS-1:0][31:0] tdata1_array;
   logic [MAX_NUM_TRIGGERS-1:0][31:0] tdata2_array;
 
   logic [MAX_NUM_TRIGGERS-1:0] trigger_match_exception;
   logic [MAX_NUM_TRIGGERS-1:0] pc_addr_match;
-  logic [MAX_NUM_TRIGGERS-1:0][4*uvma_rvfi_pkg::NMEM-1:0] mem_addr_match;
+  logic [MAX_NUM_TRIGGERS-1:0][4*MAX_MEM_ACCESS-1:0] mem_addr_match;
   logic [MAX_NUM_TRIGGERS-1:0] general_trigger_match_conditions;
   logic [MAX_NUM_TRIGGERS-1:0] trigger_match_load;
   logic [MAX_NUM_TRIGGERS-1:0] trigger_match_store;
@@ -221,7 +223,7 @@ module uvmt_cv32e40s_support_logic
         (tdata1_array[t][MSB_MATCH:LSB_MATCH] == MATCH_WHEN_GREATER_OR_EQUAL && rvfi.rvfi_pc_rdata >= tdata2_array[t]) ||
         (tdata1_array[t][MSB_MATCH:LSB_MATCH] == MATCH_WHEN_LESSER && rvfi.rvfi_pc_rdata < tdata2_array[t]));
 
-    for (genvar i = 0; i < uvma_rvfi_pkg::NMEM; i++) begin
+    for (genvar i = 0; i < MAX_MEM_ACCESS; i++) begin
 
       assign mem_addr_match[t][i*4+0] =
         t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
