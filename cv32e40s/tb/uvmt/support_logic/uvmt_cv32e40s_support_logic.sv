@@ -180,7 +180,7 @@ module uvmt_cv32e40s_support_logic
   logic [MAX_NUM_TRIGGERS-1:0] trigger_match_exception;
   logic [MAX_NUM_TRIGGERS-1:0] pc_addr_match;
   logic [MAX_NUM_TRIGGERS-1:0][4*uvma_rvfi_pkg::NMEM-1:0] mem_addr_match;
-  logic [MAX_NUM_TRIGGERS-1:0] general_triggger_match_conditions;
+  logic [MAX_NUM_TRIGGERS-1:0] general_trigger_match_conditions;
   logic [MAX_NUM_TRIGGERS-1:0] trigger_match_load;
   logic [MAX_NUM_TRIGGERS-1:0] trigger_match_store;
   logic [MAX_NUM_TRIGGERS-1:0] trigger_match_execute;
@@ -253,7 +253,7 @@ module uvmt_cv32e40s_support_logic
     end
 
 
-    assign general_triggger_match_conditions[t] =
+    assign general_trigger_match_conditions[t] =
       t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
         1'b0 :
         rvfi.rvfi_valid                             &&
@@ -265,14 +265,14 @@ module uvmt_cv32e40s_support_logic
     assign trigger_match_execute[t] =
       t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
         1'b0 :
-        general_triggger_match_conditions[t] &&
+        general_trigger_match_conditions[t] &&
         tdata1_array[t][EXECUTE] &&
         pc_addr_match[t];
 
     assign trigger_match_load[t] =
       t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
         1'b0 :
-        general_triggger_match_conditions[t] &&
+        general_trigger_match_conditions[t] &&
         !out_support_if.is_trigger_match_execute &&
         tdata1_array[t][LOAD] &&
         |(rvfi.instr_mem_rmask & mem_addr_match[t]);
@@ -280,7 +280,7 @@ module uvmt_cv32e40s_support_logic
     assign trigger_match_store[t] =
       t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
         1'b0 :
-        general_triggger_match_conditions[t] &&
+        general_trigger_match_conditions[t] &&
         !out_support_if.is_trigger_match_execute &&
         tdata1_array[t][STORE] &&
         |(rvfi.instr_mem_wmask & mem_addr_match[t]);
