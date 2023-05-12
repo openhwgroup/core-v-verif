@@ -42,12 +42,12 @@
 module uvmt_cv32e40p_dut_wrap 
   #(
                             // CV32E40P parameters.  See User Manual.
-                            parameter PULP_XPULP          =  0,
-                                      PULP_CLUSTER        =  0,
+                            parameter COREV_PULP          =  0,
+                                      COREV_CLUSTER       =  0,
                                       FPU                 =  0,
                                       FPU_ADDMUL_LAT      =  0,
                                       FPU_OTHERS_LAT      =  0,
-                                      PULP_ZFINX          =  0,
+                                      ZFINX               =  0,
                                       NUM_MHPMCOUNTERS    =  1,
                             // Remaining parameters are used by TB components only
                                       INSTR_ADDR_WIDTH    =  32,
@@ -136,12 +136,12 @@ module uvmt_cv32e40p_dut_wrap
     // -------------------------------------------------------------
     // Instantiate the Core and optional FPU plus logger and tracers
     cv32e40p_tb_wrapper #(
-                 .PULP_XPULP       (PULP_XPULP),
-                 .PULP_CLUSTER     (PULP_CLUSTER),
+                 .COREV_PULP       (COREV_PULP),
+                 .COREV_CLUSTER    (COREV_CLUSTER),
                  .FPU              (FPU),
                  .FPU_ADDMUL_LAT   (FPU_ADDMUL_LAT),
                  .FPU_OTHERS_LAT   (FPU_OTHERS_LAT),
-                 .PULP_ZFINX       (PULP_ZFINX),
+                 .ZFINX            (ZFINX),
                  .NUM_MHPMCOUNTERS (NUM_MHPMCOUNTERS)
                 )
     cv32e40p_tb_wrapper_i

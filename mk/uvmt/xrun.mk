@@ -182,6 +182,7 @@ XRUN_UVM_MACROS_INC_FILE = $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC)_uvm_macros_inc.sv
 XRUN_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_RVFI
+XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_RVFI_TRACE_EXECUTION
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_CORE_LOG
 XRUN_USER_COMPILE_ARGS += +define+UVM
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
@@ -366,13 +367,12 @@ gen_ovpsim_ic:
 		echo "$(CFG_OVPSIM)" > $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic; \
 	fi
 	# add glossing of registers
-	@echo "--override cpu/wfi_is_nop=T" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+	#@echo "--override cpu/wfi_is_nop=T" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
 	#@echo "--override cpu/sub_Extensions=X" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-	# @echo "--showoverrides --trace --tracechange --traceshowicount --monitornetschange --tracemode --tracemem XSA" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+	#@echo "--showoverrides --trace --tracechange --traceshowicount --monitornetschange --tracemode --tracemem XSA" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
 	#@echo "--extlib refRoot/cpu/cat=imperas.com/intercept/cpuContextAwareTracer/1.0"  >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
 	#@echo "--override refRoot/cpu/cat/show_changes=T" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
 	#@echo "--override refRoot/cpu/cat/definitions_file=${IMPERAS_HOME}/lib/$(IMPERAS_ARCH)/ImperasLib/riscv.ovpworld.org/processor/riscv/1.0/csr_context_info.lis" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-export IMPERAS_TOOLS=ovpsim.ic
 
 ################################################################################
 # The new general test target
@@ -380,6 +380,8 @@ export IMPERAS_TOOLS=ovpsim.ic
 test: $(XRUN_SIM_PREREQ) hex gen_ovpsim_ic
 	mkdir -p $(SIM_RUN_RESULTS)/test_program && \
 	cd $(SIM_RUN_RESULTS) && \
+	export IMPERAS_TOOLS=$(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic && \
+	export IMPERAS_QUEUE_LICENSE=1 && \
 	$(XRUN) \
 		-R -xmlibdirname ../../xcelium.d \
 		-l xrun-$(TEST_NAME).log \
@@ -476,6 +478,7 @@ riscof_sim_run: $(XRUN_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovp
 	@echo "$(BANNER)"
 	cd $(RISCOF_TEST_RUN_DIR) && \
 	export IMPERAS_TOOLS=$(RISCOF_TEST_RUN_DIR)/ovpsim.ic && \
+	export IMPERAS_QUEUE_LICENSE=1 && \
 	$(XRUN) \
 		-R -xmlibdirname xcelium.d \
 		-l xrun-dut_test.log \

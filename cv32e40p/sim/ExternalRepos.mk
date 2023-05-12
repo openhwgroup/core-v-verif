@@ -15,9 +15,8 @@ export SHELL = /bin/bash
 
 CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40p
 CV_CORE_BRANCH ?= dev
-CV_CORE_HASH   ?= f08fe74f8cfacda5ec6883adc689e827ea562ca7
+CV_CORE_HASH   ?= 4d960913d69e2043df80ac249ea17a008b67aaa6
 CV_CORE_TAG    ?= none
-
 
 # The CV_CORE_HASH above points to version of the RTL that is newer.
 # It is logically equivalent with respect to v1.0.0 RTL freeze version with all parameters disabled.

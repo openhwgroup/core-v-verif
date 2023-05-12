@@ -24,7 +24,7 @@
 #define N 16
 #define M 16
 
-#define MSTATUS_FS 0x00006000
+#define MSTATUS_FS_INITIAL 0x00002000
 
 #include "stimuli.h"
 
@@ -43,15 +43,17 @@ int checkInt (long int *B, long int *A, long int n)
   return err;
 }
 
+#ifdef FPU
 void fp_enable ()
 {
-  unsigned int fs = MSTATUS_FS & (MSTATUS_FS >> 1);
+  unsigned int fs = MSTATUS_FS_INITIAL;
 
   __asm__ volatile("csrs mstatus, %0;"
                    "csrwi fcsr, 0;"
                    : : "r"(fs));
 
 }
+#endif
 
 void mcycle_counter_enable ()
 {
@@ -75,8 +77,10 @@ int main()
 
   volatile float fdiv;
 
+#ifdef FPU
   // Floating Point enable
   fp_enable();
+#endif
 
   // Enable mcycle counter
   mcycle_counter_enable();

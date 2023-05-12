@@ -126,6 +126,7 @@ VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 # Add the ISS to compilation
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_RVFI"
+VLOG_FLAGS += "+define+$(CV_CORE_UC)_RVFI_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_CORE_LOG"
 VLOG_FLAGS += "+define+UVM"
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
@@ -524,6 +525,7 @@ riscof_sim_run: $(VSIM_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovp
 		$(VMAP) work $(SIM_RISCOF_ARCH_TESTS_RESULTS)/work
 	cd $(RISCOF_TEST_RUN_DIR) && \
 	export IMPERAS_TOOLS=$(RISCOF_TEST_RUN_DIR)/ovpsim.ic && \
+	export IMPERAS_QUEUE_LICENSE=1 && \
 		$(VSIM) \
 			-work $(VWORK) \
 			$(VSIM_FLAGS) \
@@ -554,7 +556,12 @@ gen_ovpsim_ic:
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
 		echo "$(CFG_OVPSIM)" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
 	fi
-	export IMPERAS_TOOLS=ovpsim.ic
+	#@echo "--override cpu/wfi_is_nop=T" >> $(SIM_RUN_RESULTS)/ovpsim.ic
+	#@echo "--override cpu/sub_Extensions=X" >> $(SIM_RUN_RESULTS)/ovpsim.ic
+	#@echo "--showoverrides --trace --tracechange --traceshowicount --monitornetschange --tracemode --tracemem XSA" >> $(SIM_RUN_RESULTS)/ovpsim.ic
+	#@echo "--extlib refRoot/cpu/cat=imperas.com/intercept/cpuContextAwareTracer/1.0"  >> $(SIM_RUN_RESULTS)/ovpsim.ic
+	#@echo "--override refRoot/cpu/cat/show_changes=T" >> $(SIM_RUN_RESULTS)/ovpsim.ic
+	#@echo "--override refRoot/cpu/cat/definitions_file=${IMPERAS_HOME}/lib/$(IMPERAS_ARCH)/ImperasLib/riscv.ovpworld.org/processor/riscv/1.0/csr_context_info.lis" >> $(SIM_RUN_RESULTS)/ovpsim.ic
 
 # Target to create work directory in $(VSIM_RESULTS)/
 lib: mk_vsim_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(TBSRC_PKG) $(TBSRC)
@@ -612,6 +619,7 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 		$(VMAP) work $(SIM_CFG_RESULTS)/work
 	cd $(RUN_DIR) && \
 	export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic && \
+	export IMPERAS_QUEUE_LICENSE=1 && \
 		$(VSIM) \
 			-work $(VWORK) \
 			$(VSIM_FLAGS) \

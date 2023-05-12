@@ -477,10 +477,6 @@ module uvmt_cv32e40p_imperas_dv_wrap
 
     // TODO silabs-hfegran: temp fix to work around issues
     // rvviRefCsrCompareEnable(hart_id, `CSR_DCSR_ADDR,   RVVI_FALSE);
-
-    // rvviRefCsrCompareEnable(hart_id, `CSR_MSTATUS_ADDR,   RVVI_FALSE);
-    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MSTATUS_ADDR          ));
-    rvviRefCsrCompareEnable(hart_id, `CSR_MISA_ADDR,   RVVI_FALSE);
     // end TODO
     // define asynchronous grouping
     // Interrupts
@@ -504,7 +500,7 @@ module uvmt_cv32e40p_imperas_dv_wrap
     rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt14"),    1);
     rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt15"),    1);
 
-    rvviRefNetGroupSet(rvviRefNetIndexGet("InstructionBusFault"), 2);
+//  rvviRefNetGroupSet(rvviRefNetIndexGet("InstructionBusFault"), 2);
 
     // Debug
     rvviRefNetGroupSet(rvviRefNetIndexGet("haltreq"),             4);
