@@ -528,21 +528,44 @@
     uncompressed_instr_t uncompressed;
   } instr_t;
 
+  // ---------------------------------------------------------------------------
+  // Datatypes used for disassembled instructions, fields that are not
+  // applicable to all instructions are qualified with a valid bit in the
+  // respective structure.
+  // ---------------------------------------------------------------------------
+
+
+  // ---------------------------------------------------------------------------
+  // gpr structure, can represent raw value, enumerated non-abi machine register
+  // and enumerated abi register names
+  // ---------------------------------------------------------------------------
   typedef struct packed {
     gpr_t gpr;
     bit   valid;
   } reg_operand_t;
 
+  // ---------------------------------------------------------------------------
+  // Datatype to represent disassemblede immediate
+  //
+  // TODO:
+  // * Add non-interpreted sorted bitfields for immediates
+  // * Add width-fields and associated logic for setting immediate
+  //   and non-interpreted immediate bitfield widths
+  // * Add type/sign-extension fields and associated logic
+  // ---------------------------------------------------------------------------
   typedef struct packed {
     logic[31:0] imm;
-    // TODO
-    //logic[31:0] imm_raw; // TODO uninterpreted immediate
+    //logic[31:0] imm_raw;
     //imm_e       imm_type;
     //int         width;
     //bit         sign_ext;
     bit         valid;
   } imm_operand_t;
 
+  // ---------------------------------------------------------------------------
+  // Currently not used, can be used as an intermediate representation for
+  // an register + offset field in assembly
+  // ---------------------------------------------------------------------------
   typedef struct packed {
     int   offset;
     gpr_t gpr;
@@ -555,9 +578,11 @@
   //   bit     valid;
   // } rlist_operand_t;
 
+  // ---------------------------------------------------------------------------
+  // Instruction formats
+  // ---------------------------------------------------------------------------
   typedef enum logic[7:0] {
     I_TYPE,
-    I_TYPE_LOAD,
     J_TYPE,
     S_TYPE,
     R_TYPE,
@@ -570,15 +595,18 @@
     UNKNOWN_FORMAT
   } instr_format_e;
 
+  // ---------------------------------------------------------------------------
+  // Main _decoded_ and _disassembled_ data structure
+  // ---------------------------------------------------------------------------
   typedef struct packed {
-    instr_name_e  instr;
-    instr_format_e format;
-    reg_operand_t rd;
-    reg_operand_t rs1;
-    reg_operand_t rs2;
-    reg_operand_t rs3;
-    imm_operand_t imm;
-    // rlist_operand_t rlist;
+    instr_name_e  instr;    // Instruction name
+    instr_format_e format;  // Instruction format type
+    reg_operand_t rd;       // Destination register, qualified by rd.valid
+    reg_operand_t rs1;      // source register 1, qualified by rs1.valid
+    reg_operand_t rs2;      //      --         2,      --        2
+    reg_operand_t rs3;      //      --         3,      --        3
+    imm_operand_t imm;      // Immediate, qualified by imm.valid
+    // rlist_operand_t rlist; // TODO: structure to handle rlist fields for Zcmp-instructions
   } asm_t;
 
   // TODO: Fix - incorrect
@@ -622,6 +650,15 @@
     };
   endfunction : get_b_imm
 
+  // ---------------------------------------------------------------------------
+  // build_asm intends to implement a decoder for the Risc-V ISA
+  // (Currently only RV32I, Zicsr plus a few select other instructions are
+  // supported)
+  //
+  // The ouput format intends to decode the instruction in a human readable
+  // manner, and aims to populate a structure that can be easily parsed to
+  // generate proper risc-v assembly code.
+  // ---------------------------------------------------------------------------
 
   function automatic asm_t build_asm(instr_name_e name, instr_format_e format, instr_t instr);
     asm_t asm  = { '0 };
@@ -635,7 +672,7 @@
           asm.rs2.valid  = 0;
           asm.imm.valid  = 0;
         end else begin
-          asm.rd.gpr.gpr = instr.uncompressed.format.i.rd.gpr;
+          asm.rd.gpr     = instr.uncompressed.format.i.rd.gpr;
           asm.rs1.gpr    = instr.uncompressed.format.i.rs1.gpr;
           asm.imm.imm    = instr.uncompressed.format.i.imm;
           asm.rd.valid   = 1;
@@ -646,7 +683,7 @@
       end
 
       J_TYPE: begin
-        asm.rd.gpr.gpr  = instr.uncompressed.format.j.rd.gpr;
+        asm.rd.gpr      = instr.uncompressed.format.j.rd.gpr;
         asm.imm.imm     = get_j_imm(instr);
         asm.rd.valid    = 1;
         asm.rs1.valid   = 0;
@@ -955,6 +992,9 @@
 
   endfunction : decode_instr
 
+  // ---------------------------------------------------------------------------
+  // Identify if a given instruction matches an expected instruction name
+  // ---------------------------------------------------------------------------
   function match_instr(instr_t instr, instr_name_e instr_type);
     match_instr = (decode_instr(instr).instr == instr_type);
   endfunction : match_instr
