@@ -77,15 +77,16 @@ csr_pass:
 	li x1, 0
 	slli x1, x1, 1
 	addi x1, x1, 1
-	sw x1, tohost, t5
+	sw x1, tohost, x30
 	self_loop: j self_loop
 
 csr_fail:
 	li x1, 1
 	slli x1, x1, 1
 	addi x1, x1, 1
-	sw x1, tohost, t5
+	sw x1, tohost, x30
 	self_loop_2: j self_loop_2
+
 
 RVMODEL_DATA_BEGIN
 RVMODEL_DATA_END
