@@ -1,4 +1,4 @@
-#include "/home/t0268396/Desktop/chamski/core-v-verif/cva6/tests/riscv-isa-sim/arch_test_target/spike/model_test.h"
+#include "../../riscv-isa-sim/arch_test_target/spike/model_test.h"
 .macro init
 .endm
 .section .text.init

@@ -1,4 +1,4 @@
-#include "/home/t0268396/Desktop/chamski/core-v-verif/cva6/tests/riscv-isa-sim/arch_test_target/spike/model_test.h"
+#include "../../riscv-isa-sim/arch_test_target/spike/model_test.h"
 .macro init
 .endm
 .section .text.init
@@ -7,12 +7,6 @@
 .org 0x00
 _start:
 
-	## MSTATUS
-	csrr x6, 0x300
-	li t1, 0x1800
-	or t0, t0, t1
-	csrw 0x300, t0
-	csrr x7, 0x300 
 	# CSR_MIP
 	li x6, 0xa5a5a5a5
 	csrrw x12, 836, x6
@@ -84,15 +78,16 @@ csr_pass:
 	li x1, 0
 	slli x1, x1, 1
 	addi x1, x1, 1
-	sw x1, tohost, t5
+	sw x1, tohost, x30
 	self_loop: j self_loop
 
 csr_fail:
 	li x1, 1
 	slli x1, x1, 1
 	addi x1, x1, 1
-	sw x1, tohost, t5
+	sw x1, tohost, x30
 	self_loop_2: j self_loop_2
+
 
 RVMODEL_DATA_BEGIN
 RVMODEL_DATA_END
