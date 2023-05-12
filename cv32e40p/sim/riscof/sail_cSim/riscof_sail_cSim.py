@@ -30,7 +30,12 @@ class sail_cSim(pluginTemplate):
             logger.error("Config node for sail_cSim missing.")
             raise SystemExit(1)
         self.num_jobs = str(config['jobs'] if 'jobs' in config else 1)
-        self.docker = bool(config['docker']) if 'docker' in config else False
+
+        if 'docker' in config and config['docker']=='True':
+            self.docker = True
+        else:
+            self.docker = False
+
         self.docker_img = str(config['image']) if 'image' in config else 'riscv_compliance'
         self.pluginpath = os.path.abspath(config['pluginpath'])
         path = config['PATH'] if 'PATH' in config else ""
@@ -151,8 +156,11 @@ class sail_cSim(pluginTemplate):
                 cmd = self.sail_exe[self.xlen]+' -C'
             else:
                 cmd = self.sail_exe[self.xlen]
-            
-            execute += cmd + ' {0} --test-signature={1} {2} > {3}.log 2>&1;'.format(self.enable_data_misaligned, sig_file, elf, test_name)
+
+            if self.docker:
+                execute += cmd + ' {0} --test-signature={1} {2} > {3}.log 2>&1;'.format(self.enable_data_misaligned, sig_file, elf, test_name)
+            else:
+                execute += cmd + ' {0} --test-signature={1} {2} > {3}.log;'.format(self.enable_data_misaligned, sig_file, elf, test_name)
 
             cov_str = ' '
             for label in testentry['coverage_labels']:
