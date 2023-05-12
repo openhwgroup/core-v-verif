@@ -37,7 +37,10 @@ The riscof work directory path will be available here `riscof_work`.
            
         - **sw_toolchain_prefix** : to provide chosen riscv toolchain's prefix. Example: `unknown` for riscv32-unknown-elf-gcc.
         - **yaml files** : it is possible to add different ispec/pspec yaml files with needed isa/platform values and modify the path for such files in config file.
-        - **docker** : it is required to be set True or False based on how SAIL ref model is setup in your machine. The executable could be installed and available in your PATH, in which case docker is not used and must be set as False. Otherwise if docker image is used for this purpose then this must be set as True.
+        - **docker** : for sail_cSim it is required to be set to :
+            - True : indicating that docker image is used for SAIL ref model and the docker image to be used is set by the **image** config.
+            - False : SAIL is installed and available directly on the machine.
+            The SAIL executable path, if installed, could be added to env PATH variable or alternatively the **PATH** config of sail_cSim can be used to set it.
         - **imperas_iss** : set it to yes or no based on decision to run with imperas iss enabled for DUT simulations or not.
 
 ## NOTES:
@@ -56,5 +59,7 @@ v2 config_cv32e40p_v2.ini : RV32IMFCZicsr_Zifencei
         - dut_cfg=pulp_fpu
         - SIMULATOR = vsim
         - jobs = 8
-        - Used same RISCV toolchain for both: riscv32-unknown-gcc-elf
-        - SAIL Ref model run with docker. The sail reference model plugin supports both docker and normal execution methods. Currently config.ini is default set to run with docker
+        - Used same RISCV toolchain for both DUT and Ref model: riscv32-unknown-gcc-elf. The Path of toolchain is set from env PATH variable
+        - SAIL Ref model installed on machine. The sail reference model plugin supports running this with both docker image or from local installation. Currently config.ini is default set to run with locally installed Sail model without docker and this installation path is set from env PATH variable.
+        - RISCOF package is installed on the machine and path is set from env PATH variable.
+        - A supported DUT simulator is installed. Currently plugin supports these -> vsim, xrun, vcs
