@@ -453,6 +453,7 @@ module uvmt_cv32e40s_interrupt_assert
       || support_if.nongranted_data_req
       || support_if.nongranted_instr_req
       || writebufstate) begin
+      // TODO (xif): bustransaction for x-interface
       model_sleepmode <= 1'b 0;
     end
     else if (
