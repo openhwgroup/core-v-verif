@@ -86,6 +86,7 @@ VLOG_LDGEN_FLAGS ?= \
                     -sv \
                     -mfcu \
                     +acc=rb \
+                    $(SV_CMP_FLAGS) \
                     $(QUIET)
 
 VOPT_LDGEN_FLAGS ?= \
@@ -115,6 +116,7 @@ VLOG_FLAGS    ?= \
 		-64 \
 		-mfcu \
 		+acc=rb \
+		$(SV_CMP_FLAGS) \
 		$(QUIET) \
 		-writetoplevels  uvmt_$(CV_CORE_LC)_tb
 
