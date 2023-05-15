@@ -23,12 +23,18 @@
  * Test Program Type.  See the Verification Strategy for a discussion of this.
  */
 typedef enum {
-              PREEXISTING_SELFCHECKING,
-              PREEXISTING_NOTSELFCHECKING,
-              GENERATED_SELFCHECKING,
-              GENERATED_NOTSELFCHECKING,
-              NO_TEST_PROGRAM
-             } test_program_type;
+  PREEXISTING_SELFCHECKING,
+  PREEXISTING_NOTSELFCHECKING,
+  GENERATED_SELFCHECKING,
+  GENERATED_NOTSELFCHECKING,
+  NO_TEST_PROGRAM
+} test_program_type;
+
+typedef enum {
+  FETCH_CONSTANT,
+  FETCH_INITIAL_DELAY_CONSTANT,
+  FETCH_RANDOM_TOGGLE
+} fetch_toggle_t;
 
 
 /**

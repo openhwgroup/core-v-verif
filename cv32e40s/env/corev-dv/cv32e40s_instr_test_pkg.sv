@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
+`include "uvmt_cv32e40s_base_test_pkg.sv"
+
 package cv32e40s_instr_test_pkg;
 
   import uvm_pkg::*;
   import riscv_instr_pkg::*;
+  import riscv_instr_pkg::XLEN; // This is needed to avoid conflict with uvmt_cv32e40s_base_test_pkg
   import riscv_instr_test_pkg::*;
   import riscv_signature_pkg::*;
   import corev_instr_test_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
 
   import cv32e40s_pkg::pma_cfg_t;
 
-  `include "uvmt_cv32e40s_constants.sv"
   `include "pma_adapted_mem_region_gen.sv"
   `include "cv32e40s_ldgen.sv"
 

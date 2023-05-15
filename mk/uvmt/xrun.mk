@@ -59,6 +59,8 @@ XRUN_LDGEN_COMP_FLAGS ?=  \
     -nowarn UEXPSC        \
     -nowarn DLCPTH        \
     -sv                   \
+    -uvm                          \
+    -uvmhome $(XRUN_UVMHOME_ARG)  \
     $(TIMESCALE)          \
     $(SV_CMP_FLAGS)
 
@@ -78,7 +80,8 @@ XRUN_UVM_VERBOSITY ?= UVM_MEDIUM
 DPI_INCLUDE        ?= $(shell dirname $(shell which xrun))/../include
 
 # Necessary libraries for the PMA generator class
-XRUN_PMA_INC += +incdir+$(TBSRC_HOME)/uvmt \
+XRUN_PMA_INC += +incdir+$(DV_UVM_TESTCASE_PATH)/base-tests \
+                +incdir+$(TBSRC_HOME)/uvmt \
                 +incdir+$(CV_CORE_PKG)/rtl/include \
                 +incdir+$(CV_CORE_COREVDV_PKG)/ldgen \
                 +incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
