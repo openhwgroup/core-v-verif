@@ -359,7 +359,7 @@ ldgen: $(CV_CORE_PKG)
 		+ldgen_cp_test_path=$(SIM_LDGEN_RESULTS) \
 		$(TBSRC_HOME)/ldgen/ldgen_tb.sv \
 		-top $(basename $(notdir $(TBSRC_HOME)/ldgen/ldgen_tb.sv))
-	cp $(BSP)/link_pma.ld $(SIM_LDGEN_RESULTS)/link.ld
+	cp $(BSP)/link_corev-dv.ld $(SIM_LDGEN_RESULTS)/link.ld
 
 ################################################################################
 # If the configuration specified OVPSIM arguments, generate an ovpsim.ic file and

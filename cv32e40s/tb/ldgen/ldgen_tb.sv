@@ -14,8 +14,6 @@
 // limitations under the License.
 
 `include "cv32e40s_pkg.sv"
-`include "uvml_hrtbt_macros.sv"
-`include "uvml_logs_macros.sv"
 `include "uvmt_cv32e40s_base_test_pkg.sv"
 
 import uvm_pkg::*;
