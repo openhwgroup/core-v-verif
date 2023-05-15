@@ -19,7 +19,6 @@
 /**
  * Encapsulates all functions used on instruction words
  */
-  //package uvmt_cv32e40s_instr_pkg;
 
   localparam CLIC_ID_WIDTH = 5;
   // -------------------------------------------------------------------
@@ -108,7 +107,9 @@
     DSCRATCH1     = 12'h7B3
   } csr_name_e;
 
-  // Instruction names, TODO: add instructions as needed
+  // ---------------------------------------------------------------------------
+  // Instruction names, add instructions as needed
+  // ---------------------------------------------------------------------------
   typedef enum {
     FENCEI,
     MRET,
@@ -170,8 +171,9 @@
     UNKNOWN_INSTR
   } instr_name_e;
 
+  // ---------------------------------------------------------------------------
   // GPR Registers
-
+  // ---------------------------------------------------------------------------
   typedef enum logic [4:0] {
     X0  = 5'd0,
     X1  = 5'd1,
@@ -547,7 +549,7 @@
   // ---------------------------------------------------------------------------
   // Datatype to represent disassemblede immediate
   //
-  // TODO:
+  // TODO: defer until needed
   // * Add non-interpreted sorted bitfields for immediates
   // * Add width-fields and associated logic for setting immediate
   //   and non-interpreted immediate bitfield widths
@@ -624,6 +626,9 @@
   //  };
   //endfunction : get_cj_offset
 
+  // ---------------------------------------------------------------------------
+  // Non-trivial immediate decoder
+  // ---------------------------------------------------------------------------
   function logic [20:0] get_j_imm(instr_t instr);
     get_j_imm = {
       instr.uncompressed.format.j.imm[31],
@@ -754,6 +759,10 @@
     return asm;
   endfunction : build_asm
 
+  // ---------------------------------------------------------------------------
+  // Main decoder logic, identifies type and instruction name,
+  // add instructions here as needed.
+  // ---------------------------------------------------------------------------
   function automatic asm_t decode_instr(instr_t instr);
     asm_t asm = { '0 };
     casex (1)
