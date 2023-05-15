@@ -61,4 +61,12 @@
       `uvm_info(`gfn, $sformatf("setup_instruction_dist: %0d", category_dist.size()), UVM_LOW)
   end
   endfunction
-endclass
+
+  function void post_randomize();
+    for (int i = 0; i < instr_list.size(); i++) begin
+      instr_list[i].comment = $sformatf(" Inserted %0s - idx[%0d]", get_name(), i);
+    end
+    super.post_randomize();
+  endfunction : post_randomize
+
+endclass // cv32e40p_base_instr_stream
