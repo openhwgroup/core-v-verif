@@ -1,0 +1,20 @@
+# Test definition YAML for corev-dv test generator
+
+name: corev_sanity_fp_zfinx_instr_test
+uvm_test: $(CV_CORE_LC)_instr_base_test
+description: >
+    RISCV-DV generated random fp instruction test
+compile_flags: >
+    +define+RV_DV_ISA_RV32IMC_ZFINX
+    +define+FP_IN_X_REGS
+plusargs: >
+    +instr_cnt=1000
+    +num_of_sub_program=0
+    +directed_instr_0=cv32e40p_float_zfinx_base_instr_stream,100
+    +enable_fp_in_x_regs=1
+
+
+# note:
+  # 1) example test for fp instruction with extended 'zfinx'
+  # 2) above setting running 100 streams with [single/multiple b2b] fp instr; insert 100 streams per 1000 instr_cnt
+  # 3) runcmd: make gen_corev-dv test TEST=corev_sanity_fp_zfinx_instr_test USE_ISS=no CFG=pulp_fpu_zfinx CFG_PLUSARGS="+UVM_VERBOSITY=UVM_DEBUG"
