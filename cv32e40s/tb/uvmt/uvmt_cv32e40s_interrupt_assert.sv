@@ -448,15 +448,7 @@ module uvmt_cv32e40s_interrupt_assert
       model_sleepmode <= 1'b 0;
     end
 
-    if ($past(support_if.data_bus_v_addr_ph_cnt) || support_if.data_bus_v_addr_ph_cnt // Arbitrary uarch decision (2 cycles)
-      || support_if.instr_bus_v_addr_ph_cnt
-      || support_if.nongranted_data_req
-      || support_if.nongranted_instr_req
-      || writebufstate) begin
-      // TODO (xif): bustransaction for x-interface
-      model_sleepmode <= 1'b 0;
-    end
-    else if (
+    if (
       is_wfi_wfe_in_wb  &&
       is_wfi_wfe_in_wb_q2)  // Arbitrary uarch decision (2 cycles)
     begin
@@ -470,6 +462,18 @@ module uvmt_cv32e40s_interrupt_assert
     if (should_wfi_wfe_awaken) begin
       model_sleepmode <= 1'b 0;
     end
+
+    if ($past(support_if.data_bus_v_addr_ph_cnt) // Arbitrary uarch decision (2 cycles)
+      || support_if.data_bus_v_addr_ph_cnt
+      || support_if.instr_bus_v_addr_ph_cnt
+      || (obi_data_if.req && !obi_data_if.gnt)
+      || (obi_instr_if.req && !obi_instr_if.gnt)
+      || writebufstate)
+      // TODO:silabs-krdosvik (xif): bustransaction for x-interface
+    begin
+      model_sleepmode <= 1'b 0;
+    end
+
   end
 
   // WFI assertion will assert core_sleep_o (in WFI_TO_CORE_SLEEP_LATENCY cycles after wb, given ideal conditions)

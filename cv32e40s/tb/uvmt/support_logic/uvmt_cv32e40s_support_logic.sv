@@ -253,32 +253,6 @@ module uvmt_cv32e40s_support_logic
 
   // Support logic for obi interfaces:
 
-  // Indicate if there is a data request that has not been granted
-  always_latch begin
-    if (in_support_if.rst_n == 0) begin
-      out_support_if.nongranted_data_req = 1'b0;
-    end else begin
-      if (in_support_if.data_bus_gnt) begin
-        out_support_if.nongranted_data_req = 1'b0;
-      end else if (in_support_if.data_bus_req) begin
-        out_support_if.nongranted_data_req = 1'b1;
-      end
-    end
-  end
-
-  // Indicate if there is an instr request that has not been granted
-  always_latch begin
-    if (in_support_if.rst_n == 0) begin
-      out_support_if.nongranted_instr_req = 1'b0;
-    end else begin
-      if (in_support_if.instr_bus_gnt) begin
-        out_support_if.nongranted_instr_req = 1'b0;
-      end else if (in_support_if.instr_bus_req) begin
-        out_support_if.nongranted_instr_req = 1'b1;
-      end
-    end
-  end
-
   //obi data bus:
   uvmt_cv32e40s_sl_obi_phases_monitor data_bus_obi_phases_monitor (
     .clk_i (in_support_if.clk),

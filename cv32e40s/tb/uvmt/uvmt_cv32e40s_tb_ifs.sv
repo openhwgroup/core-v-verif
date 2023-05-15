@@ -393,8 +393,6 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
 
    // address phase counter, used to verify no response phase preceedes an address phase
    integer data_bus_v_addr_ph_cnt;
-   integer nongranted_data_req;
-   integer nongranted_instr_req;
    integer instr_bus_v_addr_ph_cnt;
    integer alignment_buff_addr_ph_cnt;
    integer lsu_addr_ph_cnt;
@@ -428,8 +426,6 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
          data_bus_addr_ph_cont,
          data_bus_resp_ph_cont,
          data_bus_v_addr_ph_cnt,
-         nongranted_data_req,
-         nongranted_instr_req,
 
          instr_bus_addr_ph_cont,
          instr_bus_resp_ph_cont,
@@ -467,8 +463,6 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
          data_bus_addr_ph_cont,
          data_bus_resp_ph_cont,
          data_bus_v_addr_ph_cnt,
-         nongranted_data_req,
-         nongranted_instr_req,
 
          instr_bus_addr_ph_cont,
          instr_bus_resp_ph_cont,
