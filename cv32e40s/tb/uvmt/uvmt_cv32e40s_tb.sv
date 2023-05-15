@@ -875,12 +875,14 @@ module uvmt_cv32e40s_tb;
         .alert_major (core_i.alert_major_o),
 
         //CSRs:
+        .mcause             (core_i.cs_registers_i.clic_csrs.mcause_csr_i.rdata_q),
         .mtvt               (core_i.cs_registers_i.clic_csrs.mtvt_csr_i.rdata_q),
         .mtvec              (core_i.cs_registers_i.clic_csrs.mtvec_csr_i.rdata_q),
         .mintstatus         (core_i.cs_registers_i.clic_csrs.mintstatus_csr_i.rdata_q),
         .mintthresh         (core_i.cs_registers_i.clic_csrs.mintthresh_csr_i.rdata_q),
 
         //Shadows:
+        .mcause_shadow      (core_i.cs_registers_i.clic_csrs.mcause_csr_i.gen_hardened.shadow_q),
         .mtvt_shadow        (core_i.cs_registers_i.clic_csrs.mtvt_csr_i.gen_hardened.shadow_q),
         .mtvec_shadow       (core_i.cs_registers_i.clic_csrs.mtvec_csr_i.gen_hardened.shadow_q),
         .mintstatus_shadow  (core_i.cs_registers_i.clic_csrs.mintstatus_csr_i.gen_hardened.shadow_q),
@@ -904,10 +906,12 @@ module uvmt_cv32e40s_tb;
         .alert_major (core_i.alert_major_o),
 
         //CSRs:
+        .mcause             (core_i.cs_registers_i.basic_mode_csrs.mcause_csr_i.rdata_q),
         .mtvec              (core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.rdata_q),
         .mie                (core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.rdata_q),
 
         //Shadows:
+        .mcause_shadow      (core_i.cs_registers_i.basic_mode_csrs.mcause_csr_i.gen_hardened.shadow_q),
         .mtvec_shadow       (core_i.cs_registers_i.basic_mode_csrs.mtvec_csr_i.gen_hardened.shadow_q),
         .mie_shadow         (core_i.cs_registers_i.basic_mode_csrs.mie_csr_i.gen_hardened.shadow_q)
       );
