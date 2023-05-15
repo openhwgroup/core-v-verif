@@ -483,7 +483,7 @@ module uvmt_cv32e40s_debug_assert
         rvfi.rvfi_valid && //valid
         !rvfi.rvfi_dbg_mode && //not in dbg
         csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] && // step set
-        !(rvfi.is_dbg_trg || support_if.is_exception_trigger_hit) && // not trigger
+        !(rvfi.is_dbg_trg) && // not trigger
         rvfi.rvfi_trap.exception // exception
         ##1 rvfi.rvfi_valid[->1]
         |->
@@ -498,7 +498,7 @@ module uvmt_cv32e40s_debug_assert
 
     // Trigger during single step
     property p_single_step_trigger;
-        (rvfi.is_dbg_trg || support_if.is_exception_trigger_hit) &&
+        (rvfi.is_dbg_trg) &&
         !rvfi.rvfi_dbg_mode &&
         csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]
         ##1 rvfi.rvfi_valid[->1]
@@ -884,7 +884,7 @@ module uvmt_cv32e40s_debug_assert
                     pc_at_dbg_req <= mtvec_addr;
                 end
             // Exception with exception trigger active
-            end else if (support_if.is_exception_trigger_hit) begin
+            end else if (rvfi.is_dbg_trg && rvfi.rvfi_trap.exception) begin
                 pc_at_dbg_req <= rvfi.rvfi_pc_wdata;
 
             end else if ((rvfi.is_ebreak && ebreak_allowed)|| rvfi.is_dbg_trg) begin
@@ -914,10 +914,10 @@ module uvmt_cv32e40s_debug_assert
         if(!cov_assert_if.rst_ni) begin
             dpc_dbg_trg <= 32'h0;
         end else begin
-            if (rvfi.is_dbg_trg) begin
-                dpc_dbg_trg <=  rvfi.rvfi_pc_rdata;
-            end else if (support_if.is_exception_trigger_hit) begin
+            if (rvfi.is_dbg_trg && rvfi.rvfi_trap.exception) begin
                 dpc_dbg_trg <=  rvfi.rvfi_pc_wdata;
+            end else if (rvfi.is_dbg_trg) begin
+                dpc_dbg_trg <=  rvfi.rvfi_pc_rdata;
             end
         end
     end
@@ -1043,7 +1043,7 @@ module uvmt_cv32e40s_debug_assert
         if( !cov_assert_if.rst_ni) begin
             debug_cause_pri <= 3'b000;
         end else begin
-            if (rvfi.is_dbg_trg || support_if.is_exception_trigger_hit) begin
+            if (rvfi.is_dbg_trg) begin
                 debug_cause_pri <= cv32e40s_pkg::DBG_CAUSE_TRIGGER;
             end else if(rvfi.is_ebreak && ebreak_allowed) begin
                 debug_cause_pri <= cv32e40s_pkg::DBG_CAUSE_EBREAK;

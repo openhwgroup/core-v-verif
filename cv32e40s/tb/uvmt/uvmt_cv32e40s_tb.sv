@@ -750,9 +750,26 @@ module uvmt_cv32e40s_tb;
 
 
   bind cv32e40s_wrapper
+    uvmt_cv32e40s_xsecure_data_independent_timing_assert #(
+      .SECURE  (SECURE)
+    ) xsecure_data_independent_timing_assert_i   (
+
+      //Signals:
+      .clk_i      (clknrst_if.clk),
+      .rst_ni     (clknrst_if.reset_n),
+
+      //Interfaces:
+      .rvfi_if    (rvfi_instr_if),
+      .rvfi_cpuctrl (rvfi_csr_cpuctrl_if),
+
+      //CSRs:
+      .dataindtiming_enabled (core_i.xsecure_ctrl.cpuctrl.dataindtiming)
+    );
+
+  bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_hardened_pc_assert #(
-	    .SECURE	(SECURE)
-    ) xsecure_hardened_pc_assert_i 	(
+      .SECURE  (SECURE)
+    ) xsecure_hardened_pc_assert_i   (
 
       //Signals:
       .clk_i      (clknrst_if.clk),
@@ -801,8 +818,8 @@ module uvmt_cv32e40s_tb;
 
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_reduced_profiling_infrastructure_assert #(
-	    .SECURE	(SECURE)
-    ) xsecure_reduced_profiling_infrastructure_assert_i 	(
+      .SECURE  (SECURE)
+    ) xsecure_reduced_profiling_infrastructure_assert_i   (
 
       //Signals:
       .clk_i      (clknrst_if.clk),
@@ -815,8 +832,8 @@ module uvmt_cv32e40s_tb;
 
   bind cv32e40s_wrapper
     uvmt_cv32e40s_xsecure_hardened_csrs_assert #(
-	    .SECURE	(SECURE)
-    ) xsecure_hardened_csrs_assert_i 	(
+      .SECURE  (SECURE)
+    ) xsecure_hardened_csrs_assert_i   (
 
       //Signals:
       .clk_i      (clknrst_if.clk),
@@ -851,8 +868,8 @@ module uvmt_cv32e40s_tb;
 
     bind cv32e40s_wrapper
       uvmt_cv32e40s_xsecure_hardened_csrs_clic_assert #(
-	      .SECURE	(SECURE)
-      ) xsecure_hardened_csrs_clic_assert_i 	(
+        .SECURE  (SECURE)
+      ) xsecure_hardened_csrs_clic_assert_i   (
 
         //Signals:
         .clk_i      (clknrst_if.clk),
@@ -880,8 +897,8 @@ module uvmt_cv32e40s_tb;
 
     bind cv32e40s_wrapper
       uvmt_cv32e40s_xsecure_hardened_csrs_interrupt_assert #(
-	      .SECURE	(SECURE)
-      ) xsecure_hardened_csrs_interrupt_assert_i 	(
+        .SECURE  (SECURE)
+      ) xsecure_hardened_csrs_interrupt_assert_i   (
 
         //Signals:
         .clk_i      (clknrst_if.clk),
@@ -922,10 +939,10 @@ module uvmt_cv32e40s_tb;
 
     bind cv32e40s_wrapper
       uvmt_cv32e40s_xsecure_hardened_csrs_pmp_assert #(
-	      .SECURE	(SECURE),
+        .SECURE  (SECURE),
         .PMP_ADDR_WIDTH (core_i.cs_registers_i.PMP_ADDR_WIDTH),
         .PMP_NUM_REGIONS (PMP_NUM_REGIONS)
-      ) xsecure_hardened_csrs_pmp_assert_i 	(
+      ) xsecure_hardened_csrs_pmp_assert_i   (
 
         //Signals:
         .clk_i      (clknrst_if.clk),
@@ -1916,7 +1933,7 @@ module uvmt_cv32e40s_tb;
      uvm_config_db#(bit      )::set(.cntxt(null), .inst_name("*"), .field_name("evalid"), .value(1'b0)        );
      uvm_config_db#(bit[31:0])::set(.cntxt(null), .inst_name("*"), .field_name("evalue"), .value(32'h00000000));
 
-	   // DUT and ENV parameters
+     // DUT and ENV parameters
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_ADDR_WIDTH"),  .value(ENV_PARAM_INSTR_ADDR_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_DATA_WIDTH"),  .value(ENV_PARAM_INSTR_DATA_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_RAM_ADDR_WIDTH"),    .value(ENV_PARAM_RAM_ADDR_WIDTH)   );

@@ -294,11 +294,11 @@ module uvmt_cv32e40s_pmprvfi_assert
     (rvfi_mode == MODE_U)  &&
     (rvfi_insn[31:20] inside {['h3A0 : 'h3EF], 'h747, 'h757})  //PMP regs
     |->
-    is_rvfi_exc_ill_instr           ^
-    is_rvfi_exc_instr_bus_fault     ^
-    is_rvfi_exc_instr_chksum_fault  ^
-    is_rvfi_exc_instr_acc_fault     ^
-    is_rvfi_dbg_trigger             ;
+    is_rvfi_exc_ill_instr ||
+    is_rvfi_exc_instr_bus_fault ||
+    is_rvfi_exc_instr_chksum_fault ||
+    is_rvfi_exc_instr_acc_fault ||
+    is_rvfi_dbg_trigger;
   endproperty : p_csrs_mmode_only
 
   a_csrs_mmode_only: assert property (

@@ -103,6 +103,8 @@ module uvmt_cv32e40s_dut_wrap
     logic                         debug_havereset;
     logic                         debug_running;
     logic                         debug_halted;
+    logic                         debug_pc_valid;
+    logic [31:0]                  debug_pc;
 
     assign debug_if.clk      = clknrst_if.clk;
     assign debug_if.reset_n  = clknrst_if.reset_n;
@@ -247,6 +249,8 @@ module uvmt_cv32e40s_dut_wrap
          .debug_havereset_o      ( debug_havereset                ),
          .debug_running_o        ( debug_running                  ),
          .debug_halted_o         ( debug_halted                   ),
+         .debug_pc_valid_o       ( debug_pc_valid                 ),
+         .debug_pc_o             ( debug_pc                       ),
 
          .alert_major_o          ( alert_major                    ),
          .alert_minor_o          ( alert_minor                    ),
