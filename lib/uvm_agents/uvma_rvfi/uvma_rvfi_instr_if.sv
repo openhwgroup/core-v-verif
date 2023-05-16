@@ -251,9 +251,9 @@ interface uvma_rvfi_instr_if_t
   assign {>>{mem_wdata_array}} = rvfi_mem_wdata;
   assign {>>{mem_wmask_array}} = rvfi_mem_wmask;
 
-  assign csri_uimm = rvfi_insn[19:15];
-  assign cslli_shamt = {rvfi_i.rvfi_insn[12], rvfi_i.rvfi_insn[6:2]};
-  assign csr_addr = rvfi_insn[31:20];
+  assign csri_uimm   = rvfi_insn[19:15];
+  assign cslli_shamt = {rvfi_insn[12], rvfi_insn[6:2]};
+  assign csr_addr    = rvfi_insn[31:20];
 
   always @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
