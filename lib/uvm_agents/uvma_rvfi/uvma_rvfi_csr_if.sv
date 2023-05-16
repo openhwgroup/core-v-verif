@@ -67,14 +67,14 @@ interface uvma_rvfi_csr_if_t
   // -------------------------------------------------------------------
 
 
-  function automatic logic [XLEN-1:0] read();
-    read = (rvfi_csr_rdata & rvfi_csr_rmask);
-  endfunction : read
+  function automatic logic [XLEN-1:0] pre_state();
+    pre_state = (rvfi_csr_rdata & rvfi_csr_rmask);
+  endfunction : pre_state
 
 
-  function automatic logic [XLEN-1:0] write();
-    write = (rvfi_csr_wdata & rvfi_csr_wmask);
-  endfunction : write
+  function automatic logic [XLEN-1:0] post_state();
+    post_state = (rvfi_csr_rdata & rvfi_csr_rmask & ~rvfi_csr_wmask) | (rvfi_csr_wdata & rvfi_csr_wmask);
+  endfunction : post_state
 
 
 endinterface : uvma_rvfi_csr_if_t
