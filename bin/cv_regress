@@ -204,6 +204,7 @@ parser.add_argument('--sh', help='Select bash shell script output', action='stor
 parser.add_argument('--vsif', help='Select Vmanager VSIF output', action='store_true')
 parser.add_argument('--rmdb', help='Select Vrun RMDB output', action='store_true')
 parser.add_argument('--toolchain', help='Select toolchain to build with', choices=VALID_TOOLCHAINS, default=DEFAULT_TOOLCHAIN)
+parser.add_argument('--check_sim_results', help='Enable or not error code generation if simulation is failed', action='store_true')
 args = parser.parse_args()
 
 if args.debug:
@@ -309,8 +310,8 @@ if args.vsif:
 if args.rmdb:
     # Generate a Vrun-compatible rmdb file (--rmdb)
     template = env.get_template('regress_rmdb.j2')
-    if not args.cov:
-        logger.warning('Coverage option is not set, regression with Questa Vrun will not be able to detect any failing test')
+    if not args.cov and not args.check_sim_results:
+        logger.warning('Coverage and simulation checking results are not enabled, regression with Questa Vrun will not be able to detect any failing test')
     logger.info('Rendering template: regress_rmdb.j2 into: {}'.format(args.outfile))
     out_fh = open(args.outfile, 'w')
     out_fh.write(template.render(session=os.path.splitext(os.path.basename(args.outfile))[0],
@@ -326,5 +327,6 @@ if args.rmdb:
                                  filter_dir=get_filter_dir(),
                                  unique_builds=unique_builds,
                                  unique_tests=unique_tests,
-                                 coverage=args.cov))
+                                 coverage=args.cov,
+                                 check_sim_results=args.check_sim_results))
     out_fh.close()

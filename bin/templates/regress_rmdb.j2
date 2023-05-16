@@ -59,8 +59,13 @@
 {% for k,t in unique_tests.items() %}
             <runnable name="{{t.name}}" type="task" repeat="{{t.num}}">
                 <parameters>
+{% if t.cfg is defined %}
+                    <parameter name="tst_cfg" >{{t.cfg}}</parameter>
+{% else %}
+                    <parameter name="tst_cfg" >(%build_config%)</parameter>
+{% endif %}
 {% if coverage != false %}
-                    <parameter name="ucdbfile" >{{t.abs_dir}}/vsim_results/(%build_config%)/{{t.testname}}/(%ITERATION%)/{{t.testname}}.ucdb</parameter>
+                    <parameter name="ucdbfile" >{{t.abs_dir}}/vsim_results/(%tst_cfg%)/{{t.testname}}/(%ITERATION%)/{{t.testname}}.ucdb</parameter>
 {% endif %}
                     <parameter name="log_file" >(%DATADIR%)/{{project}}/{{r.name}}/(%build_name%)/(%INSTANCE%)/execScript.log</parameter>
                 </parameters>
@@ -70,7 +75,7 @@
                 </method>
 {% endif %}
                 <execScript launch="exec" usestderr="no">
-                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT=YES CHECK_SIM_LOG=(%log_file%) COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%build_config%) RISCVDV_CFG={{t.riscvdv_cfg}} SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
+                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} CHECK_SIM_LOG=(%log_file%) COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%build_config%) RISCVDV_CFG={{t.riscvdv_cfg}} SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
                 </execScript>
             </runnable>
 {% endfor %}
