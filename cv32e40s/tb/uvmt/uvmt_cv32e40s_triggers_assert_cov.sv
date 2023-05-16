@@ -1,4 +1,3 @@
-
 // Copyright 2023 Silicon Labs, Inc.
 //
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
@@ -53,6 +52,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   default disable iff !(clknrst_if.reset_n);
 
   string info_tag = "TRIGGER ASSERT: ";
+  localparam MAX_MEM_ACCESS = 13; //Push and pop can do 13 memory access. XIF can potentially do more (TODO: check this when merging to cv32e40x)
 
   //Reads and writes of CSR values
   logic [31:0] tdata1_pre_state;
@@ -69,7 +69,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   logic [31:0] tselect_post_state;
   logic [31:0] tcontrol_post_state;
 
-  logic [NMEM-1:0][31:0] rvfi_mem_addrs;
+  logic [MAX_MEM_ACCESS-1:0][31:0] rvfi_mem_addrs;
 
 
   always_comb begin
@@ -91,7 +91,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   end
 
   generate
-    for (genvar i = 0; i < NMEM; i++) begin
+    for (genvar i = 0; i < MAX_MEM_ACCESS; i++) begin
       assign rvfi_mem_addrs[i] = rvfi_if.get_mem_addr(i);
     end
   endgenerate
@@ -395,24 +395,23 @@ module uvmt_cv32e40s_triggers_assert_cov
   //PC is updated to value on dm_haltaddr_i input
   //Core starts executing debug code
 
-  //- Assertion verifikasjon:
-  //1) Verify that core enters debug mode when the trigger matches on instruction address
-  //2) Verify that core enters debug mode on breakpoint addr
-  //3) Current PC is saved to DPC
-  //4) Cause of debug must be saved to DCSR (cause=2)
-  //5) PC is updated to value on dm_haltaddr_i input
-  //6) Core starts executing debug code
+  //- Assertion verification:
+  //1) Verify that core enters debug mode on breakpoint addr
+  //2) Current PC is saved to DPC
+  //3) Cause of debug must be saved to DCSR (cause=2)
+  //4) PC is updated to value on dm_haltaddr_i input
+  //5) Core starts executing debug code
 
 
-  //1) & 2) see a_dt_enter_dbg_*
-  //3) - 6): Debug assertions uvmt_cv32e40s_debug_assert.sv
+  //1) see a_dt_instr_trigger_hit_*
+  //2) - 5): Debug assertions uvmt_cv32e40s_debug_assert.sv
 
 
   //- Vplan:
   //Have 0 triggers, access any trigger register and check that illegal instruction exception occurs.
   //Check that no triggers ever fire. Check that "tselect" is 0.
 
-  //- Assertion verifikasjon:
+  //- Assertion verification:
   //1) Have 0 triggers, access any trigger register and check that illegal instruction exception occurs
   //2) Have 0 triggers, No trigger ever fires
 
@@ -495,7 +494,7 @@ module uvmt_cv32e40s_triggers_assert_cov
 
     end
 
-    //3) see a_dt_enter_dbg_* //TODO: check over these if these are correct.
+    //3) see a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*, a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason
 
     //4)
     a_dt_tselect_higher_than_dbg_num_triggers: assert property(
@@ -512,13 +511,13 @@ module uvmt_cv32e40s_triggers_assert_cov
     //cause triggers to fire and check that debug mode is entered correctly.
     //Also check that the tied fields are tied. All of these configurations must be crossed, also against match conditions.
 
-    //- Assertion verifikasjon:
+    //- Assertion verification:
     //1) trigger on loads if the load setting in tdata1 is set high
     //2) trigger on stores if the store setting in tdata1 is set high
     //3) trigger on instructions if the execute setting in tdata1 is set high
     //4) check that the tied fields are tied
 
-    //1) - 3) see a_dt_enter_dbg_*
+    //1) - 3) see a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*
 
     //4)
     a_dt_tie_offs_tselect: assert property (
@@ -635,19 +634,19 @@ module uvmt_cv32e40s_triggers_assert_cov
     //- Vplan:
     //Have triggers configured to be able to match, but enable/disable their corresponding mode bit, check that the trigger is either able to fire or is blocked from firing accordingly. Also check the tied values.
 
-    //- Assertion verifikasjon:
+    //- Assertion verification:
     //1) but enable/disable their corresponding mode bit, check that the trigger is either able to fire or is blocked from firing accordingly, using different match configurations.
     //2) Also check the tied values. (P20-P21: 4))
 
 
-    //1) see a_dt_enter_dbg_*
+    //1) see a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*, a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason
     //2) see a_dt_tie_offs_*
 
 
     //- Vplan:
     //Check that these types can be selected, and check that no other types can be selected. (Functionality of these types should be handled by other items in this plan.) Check also that the default is "15".
 
-    //- Assertion verifikasjon:
+    //- Assertion verification:
     //1) Sjekk at tdata1 type kun kan være 2, 6, 5 eller 15
 
 
@@ -665,7 +664,7 @@ module uvmt_cv32e40s_triggers_assert_cov
     //- Vplan:
     //Try to write tdata registers outside of debug mode, check that they are not writable. Try changing "tdata1.dmode" and check that it is WARL (0x1). Cross the above checks with all supported types.
 
-    //- Assertion verifikasjon:
+    //- Assertion verification:
     //1) write tdata registers outside of debug mode, check that they are not writable
     //2) Try changing "tdata1.dmode" and check that it is WARL (0x1)
 
@@ -695,7 +694,7 @@ module uvmt_cv32e40s_triggers_assert_cov
     //- Vplan:
     //When num triggers is more than 0, check that "tinfo.info" is "1" for the three supported types, and that the remaining bits are 0.
 
-    //- Assertion verifikasjon:
+    //- Assertion verification:
     //1) When num triggers is more than 0, check that "tinfo.info" is "1" for the three supported types, and that the remaining bits are 0.
 
     //1)
@@ -717,12 +716,12 @@ module uvmt_cv32e40s_triggers_assert_cov
   //- Vplan:
   //Configure an exception trigger, use the privmode bits to disable/enable the trigger, exercise the trigger conditions, check that it fires/not accordingly. Also check the WARL fields.
 
-  //- Assertion verifikasjon:
+  //- Assertion verification:
   //1) Configure an exception trigger, use the privmode bits to disable/enable the trigger, exercise the trigger conditions, check that it fires/not accordingly.
   //2) Check the WARL fields
 
 
-  //1) see a_dt_enter_dbg_*
+  //1) see a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason
 
   //2)
     a_dt_warl_tselect: assert property (
@@ -850,7 +849,7 @@ module uvmt_cv32e40s_triggers_assert_cov
     //Access registers from D-mode and observe full R/W access.
     //Access from U-mode and observe no access at all.
 
-    // - Assertion verifikasjon:
+    // - Assertion verification:
     //1) Verify that all tdata registers can be read in machine mode, but that writes do not have any effect
     //2) Verify that all tdata registers can be read in debug mode, and that writes have an effect
     //3) Verify that the tdata registers are unaccessible in user mode
@@ -967,7 +966,7 @@ module uvmt_cv32e40s_triggers_assert_cov
     //Write 0 to "tdata1", ensure that its state becomes disabled (type 15). Write values to "tdata2" (addresses and/or exception causes)
     //and exercise would-have-been triggers and check that the trigger does not fire.
 
-    //- Assertion verifikasjon:
+    //- Assertion verification:
     //1) Write 0 to "tdata1", ensure that its state becomes disabled (type 15).
     //2) Write values to "tdata2" (addresses and/or exception causes) and exercise would-have-been triggers and check that the trigger does not fire (because tdata1 is in disabled state).
 
@@ -1017,7 +1016,7 @@ module uvmt_cv32e40s_triggers_assert_cov
     //Read the state of all triggers, write to tdata1/2/3 (using all types in tdata1), read back the state of all triggers and
     //check that nothing got changes except the one "tdata*" register that was written.
 
-    //- Assertion verifikasjon:
+    //- Assertion verification:
     //1) write to tdata1/2/3 and check that nothing got changes except the one "tdata*" register that was written
 
     //1)
@@ -1047,7 +1046,7 @@ module uvmt_cv32e40s_triggers_assert_cov
     //Bring core into debug and enable a trigger on the PC (pointing to the debug program buffer).
     //Continue execution in debug, and observe that no action is taken when the trigger matches.
 
-    //- Assertion verifikasjon:
+    //- Assertion verification:
     //1) Bring core into debug and observe that no action is taken when there are trigger matches
 
 
@@ -1079,111 +1078,111 @@ module uvmt_cv32e40s_triggers_assert_cov
     //- Vplan:
     //Configure "tdata1" and "tdata2" to fire on exceptions, try both individual and multiple exceptions in addition to supported and unsupported. Exercise scenarios that would trigger or not trigger according to the configuration and check that debug mode is either entered or not entered accordingly, and that the entry goes correctly (pc, dpc, cause, etc).
 
-    //- Assertion verifikasjon:
+    //- Assertion verification:
     //1) Verify that we enter debug when triggering the enabled exceptions
     //2) Verify that we do not enter debug when triggering unenabled exceptions
 
     //1)
-    a_dt_enter_dbg_etrigger_m_instr_access_fault: assert property(
+    a_dt_exception_trigger_hit_m_instr_access_fault: assert property(
       p_etrigger_hit(
         rvfi_if.is_mmode,
         EXC_CAUSE_INSTR_FAULT)
     ) else `uvm_error(info_tag, "The trigger match (exception match, machine mode, instruction fault) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_u_instr_access_fault: assert property(
+    a_dt_exception_trigger_hit_u_instr_access_fault: assert property(
       p_etrigger_hit(
         rvfi_if.is_umode,
         EXC_CAUSE_INSTR_FAULT)
     ) else `uvm_error(info_tag, "The trigger match (exception match, user mode, instruction fault) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_m_illegal_instr: assert property(
+    a_dt_exception_trigger_hit_m_illegal_instr: assert property(
       p_etrigger_hit(
         rvfi_if.is_mmode,
         EXC_CAUSE_ILLEGAL_INSN)
     ) else `uvm_error(info_tag, "The trigger match (exception match, machine mode, illegal instruction) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_u_illegal_instr: assert property(
+    a_dt_exception_trigger_hit_u_illegal_instr: assert property(
       p_etrigger_hit(
         rvfi_if.is_umode,
         EXC_CAUSE_ILLEGAL_INSN)
     ) else `uvm_error(info_tag, "The trigger match (exception match, user mode, illegal instruction) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_m_breakpoint: assert property(
+    a_dt_exception_trigger_hit_m_breakpoint: assert property(
       p_etrigger_hit(
         rvfi_if.is_mmode,
         EXC_CAUSE_BREAKPOINT)
     ) else `uvm_error(info_tag, "The trigger match (exception match, machine mode, breakpoint in machine mode) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_u_breakpoint: assert property(
+    a_dt_exception_trigger_hit_u_breakpoint: assert property(
       p_etrigger_hit(
         rvfi_if.is_umode,
         EXC_CAUSE_BREAKPOINT)
     ) else `uvm_error(info_tag, "The trigger match (exception match, user mode, breakpoint in user mode) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_m_load_access_fault: assert property(
+    a_dt_exception_trigger_hit_m_load_access_fault: assert property(
       p_etrigger_hit(
         rvfi_if.is_mmode,
         EXC_CAUSE_LOAD_FAULT)
     ) else `uvm_error(info_tag, "The trigger match (exception match, machine mode, load access fault) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_u_load_access_fault: assert property(
+    a_dt_exception_trigger_hit_u_load_access_fault: assert property(
       p_etrigger_hit(
         rvfi_if.is_umode,
         EXC_CAUSE_LOAD_FAULT)
     ) else `uvm_error(info_tag, "The trigger match (exception match, user mode, load access fault) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_m_store_AMO_access_fault: assert property(
+    a_dt_exception_trigger_hit_m_store_AMO_access_fault: assert property(
       p_etrigger_hit(
         rvfi_if.is_mmode,
         EXC_CAUSE_STORE_FAULT)
     ) else `uvm_error(info_tag, "The trigger match (exception match, machine mode, stor/AMO access fault) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_u_store_AMO_access_fault: assert property(
+    a_dt_exception_trigger_hit_u_store_AMO_access_fault: assert property(
       p_etrigger_hit(
         rvfi_if.is_umode,
         EXC_CAUSE_STORE_FAULT)
     ) else `uvm_error(info_tag, "The trigger match (exception match, user mode, stor/AMO access fault) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_m_mecall: assert property(
+    a_dt_exception_trigger_hit_m_mecall: assert property(
       p_etrigger_hit(
         rvfi_if.is_mmode,
         EXC_CAUSE_ECALL_MMODE)
     ) else `uvm_error(info_tag, "The trigger match (exception match, machine mode, ecall in machine mode) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_u_uecall: assert property(
+    a_dt_exception_trigger_hit_u_uecall: assert property(
       p_etrigger_hit(
         rvfi_if.is_umode,
         EXC_CAUSE_ECALL_UMODE)
     ) else `uvm_error(info_tag, "The trigger match (exception match, user mode, ecall in user mode) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_m_instr_bus_fault: assert property(
+    a_dt_exception_trigger_hit_m_instr_bus_fault: assert property(
       p_etrigger_hit(
         rvfi_if.is_mmode,
         EXC_CAUSE_INSTR_BUS_FAULT)
     ) else `uvm_error(info_tag, "The trigger match (exception match, machine mode, instruction bus fault) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_u_instr_bus_fault: assert property(
+    a_dt_exception_trigger_hit_u_instr_bus_fault: assert property(
       p_etrigger_hit(
         rvfi_if.is_umode,
         EXC_CAUSE_INSTR_BUS_FAULT)
     ) else `uvm_error(info_tag, "The trigger match (exception match, user mode, instruction bus fault) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_m_instr_integrity_fault: assert property(
+    a_dt_exception_trigger_hit_m_instr_integrity_fault: assert property(
       p_etrigger_hit(
         rvfi_if.is_mmode,
         EXC_CAUSE_INSTR_INTEGRITY_FAULT)
     ) else `uvm_error(info_tag, "The trigger match (exception match, machine mode, instruction integrity fault) does not send the core into debug mode.\n");
 
-    a_dt_enter_dbg_etrigger_u_instr_integrity_fault: assert property(
+    a_dt_exception_trigger_hit_u_instr_integrity_fault: assert property(
       p_etrigger_hit(
         rvfi_if.is_umode,
         EXC_CAUSE_INSTR_INTEGRITY_FAULT)
     ) else `uvm_error(info_tag, "The trigger match (exception match, user mode, instruction integrity fault) does not send the core into debug mode.\n");
 
-    //- Assertion verifikasjon:
-    //1) Verify that we enter debug when triggering the enabled exceptions
-    //2) Verify that we do not enter debug when triggering unenabled exceptions
 
+    //- Assertion verification:
+    //1) Verify that we enter debug when triggering the enabled instruction, memory address or exception
+    //2) Verify that we do not enter debug when triggering unenabled instruction, memory address or exception
 
     //It is possible to formulate an assertions for general verification of instruction triggering,
     //However, to reduce convergense time we verify this trigger feature with several more constricted assertions:
@@ -1258,7 +1257,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       ) else `uvm_error(info_tag, "The trigger match (instruction match, user mode, match when lesser) does not send the core into debug mode.\n");
 
 
-      for (genvar n = 0; n < NMEM; n++) begin
+      for (genvar n = 0; n < MAX_MEM_ACCESS; n++) begin
 
         a_dt_load_trigger_hit_mmode_match_when_equal: assert property (
           seq_load_hit(
@@ -1399,13 +1398,11 @@ module uvmt_cv32e40s_triggers_assert_cov
 
     ) else `uvm_error(info_tag, "We have entered debug mode due to triggers but not due to any of the listed reasons.\n");
 
-    //2) see a_dt_enter_dbg_reason
-
 
     //- Vplan:
     //Change the type to 2/6/15 and write any data to "tdata2", read it back and check that it always gets set. Do the same for "tdata3" and check that it always reads back 0.
 
-    //- Assertion verifikasjon:
+    //- Assertion verification:
     //1) Change the type to 2/6/15 and write any data to "tdata2", read it back and check that it always gets set.
     //2) Do the same for "tdata3" and check that it always reads back 0.
 
