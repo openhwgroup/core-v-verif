@@ -23,7 +23,7 @@
  * Encapsulates all signals and clocking of Interrupt interface. Used by
  * monitor and driver.
  */
-interface uvma_clic_if_t#(SMCLIC_ID_WIDTH = 5)();
+interface uvma_clic_if_t#(CLIC_ID_WIDTH = 5)();
 
     // ---------------------------------------------------------------------------
     // Interface wires
@@ -32,7 +32,7 @@ interface uvma_clic_if_t#(SMCLIC_ID_WIDTH = 5)();
     wire        reset_n;
 
     wire                        clic_irq;
-    wire [SMCLIC_ID_WIDTH-1:0]  clic_irq_id;
+    wire [CLIC_ID_WIDTH-1:0]    clic_irq_id;
     wire [7:0]                  clic_irq_level;
     wire [1:0]                  clic_irq_priv;
     wire                        clic_irq_shv;
@@ -53,7 +53,7 @@ interface uvma_clic_if_t#(SMCLIC_ID_WIDTH = 5)();
     bit [31:0]  irq_drv;    // TB clic driver
 
     bit                       clic_irq_drv;
-    bit [SMCLIC_ID_WIDTH-1:0] clic_irq_id_drv;
+    bit [CLIC_ID_WIDTH-1:0]   clic_irq_id_drv;
     bit [1:0]                 clic_irq_priv_drv;
     bit [7:0]                 clic_irq_level_drv;
     bit                       clic_irq_shv_drv;

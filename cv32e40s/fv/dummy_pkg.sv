@@ -23,8 +23,8 @@
 
 `define RVFI_CSR_BIND(csr_name)                             \
   bind cv32e40s_wrapper                                     \
-    uvma_rvfi_csr_if_t #(                                     \
-      uvme_cv32e40s_pkg::XLEN                               \
+    uvma_rvfi_csr_if_t #(                                   \
+      uvmt_cv32e40s_base_test_pkg::XLEN                     \
     ) rvfi_csr_``csr_name``_if (                            \
       .clk(clk_i),                                          \
       .reset_n(rst_ni),                                     \

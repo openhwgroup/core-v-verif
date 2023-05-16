@@ -21,10 +21,4 @@
 `define __UVME_CV32E40S_TDEFS_SV__
 
 
-typedef enum {
-    FETCH_CONSTANT,
-    FETCH_INITIAL_DELAY_CONSTANT,
-    FETCH_RANDOM_TOGGLE
-} fetch_toggle_t;
-
 `endif // __UVME_CV32E40S_TDEFS_SV__

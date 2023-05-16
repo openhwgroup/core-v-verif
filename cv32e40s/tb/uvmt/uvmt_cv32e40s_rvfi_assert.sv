@@ -23,7 +23,7 @@ module uvmt_cv32e40s_rvfi_assert
   import cv32e40s_pkg::*;
   import uvm_pkg::*;
   import uvma_rvfi_pkg::*;
-  import uvme_cv32e40s_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
 #(
   parameter logic  CLIC,
   parameter int    CLIC_ID_WIDTH

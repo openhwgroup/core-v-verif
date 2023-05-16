@@ -22,13 +22,13 @@
 /**
  * Component writing Interrupt monitor transactions clic data to disk as plain text.
  */
-class uvma_clic_mon_trn_logger_c extends uvml_logs_mon_trn_logger_c#(
-   .T_TRN  (uvma_clic_mon_trn_c),
+class uvma_clic_mon_trn_logger_c#(CLIC_ID_WIDTH) extends uvml_logs_mon_trn_logger_c#(
+   .T_TRN  (uvma_clic_mon_trn_c#(CLIC_ID_WIDTH)),
    .T_CFG  (uvma_clic_cfg_c    ),
-   .T_CNTXT(uvma_clic_cntxt_c  )
+   .T_CNTXT(uvma_clic_cntxt_c#(CLIC_ID_WIDTH)  )
 );
 
-   `uvm_component_utils(uvma_clic_mon_trn_logger_c)
+   `uvm_component_utils(uvma_clic_mon_trn_logger_c#(CLIC_ID_WIDTH))
 
 
    /**
@@ -43,7 +43,7 @@ class uvma_clic_mon_trn_logger_c extends uvml_logs_mon_trn_logger_c#(
    /**
     * Writes contents of t to disk
     */
-   virtual function void write(uvma_clic_mon_trn_c t);
+   virtual function void write(uvma_clic_mon_trn_c#(CLIC_ID_WIDTH) t);
 
       // TODO Implement uvma_clic_mon_trn_logger_c::write()
       // Ex: fwrite($sformatf(" %t | %08h | %02b | %04d | %02h |", $realtime(), t.a, t.b, t.c, t.d));
@@ -68,9 +68,9 @@ endclass : uvma_clic_mon_trn_logger_c
 /**
  * Component writing CLIC monitor transactions clic data to disk as JavaScript Object Notation (JSON).
  */
-class uvma_clic_mon_trn_logger_json_c extends uvma_clic_mon_trn_logger_c;
+class uvma_clic_mon_trn_logger_json_c#(CLIC_ID_WIDTH) extends uvma_clic_mon_trn_logger_c#(CLIC_ID_WIDTH);
 
-   `uvm_component_utils(uvma_clic_mon_trn_logger_json_c)
+   `uvm_component_utils(uvma_clic_mon_trn_logger_json_c#(CLIC_ID_WIDTH))
 
 
    /**
@@ -86,7 +86,7 @@ class uvma_clic_mon_trn_logger_json_c extends uvma_clic_mon_trn_logger_c;
    /**
     * Writes contents of t to disk.
     */
-   virtual function void write(uvma_clic_mon_trn_c t);
+   virtual function void write(uvma_clic_mon_trn_c#(CLIC_ID_WIDTH) t);
 
       // TODO Implement uvma_clic_mon_trn_logger_json_c::write()
       // Ex: fwrite({"{",

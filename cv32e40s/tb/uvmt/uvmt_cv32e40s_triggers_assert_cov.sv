@@ -22,6 +22,7 @@
 module uvmt_cv32e40s_triggers_assert_cov
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
   import cv32e40s_rvfi_pkg::*;
 
   (
@@ -270,7 +271,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   2) Have 0 triggers, No trigger ever fires
   */
 
-  if (uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS == 0) begin
+  if (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS == 0) begin
     //1)
     a_dt_0_triggers_tdata1_access: assert property (
         (rvfi_if.is_csr_instr(ADDR_TSELECT)
@@ -323,14 +324,14 @@ module uvmt_cv32e40s_triggers_assert_cov
   ) else `uvm_error(info_tag, "Accessing context registers does not trap.\n");
 
   //2)
-  if (uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS > 0) begin
+  if (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS > 0) begin
 
     property p_all_trigger(tselect_trigger_i, tdata1_type);
       tselect_r == tselect_trigger_i
       && tdata1_r[MSB_TYPE:LSB_TYPE] == tdata1_type;
     endproperty
 
-    for (genvar tselect_trigger_i = 0; tselect_trigger_i < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; tselect_trigger_i++) begin
+    for (genvar tselect_trigger_i = 0; tselect_trigger_i < uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; tselect_trigger_i++) begin
 
       c_trigger_i_has_type_mcontrol: cover property(
         p_all_trigger(tselect_trigger_i, TTYPE_MCONTROL)
@@ -356,7 +357,7 @@ module uvmt_cv32e40s_triggers_assert_cov
     a_dt_tselect_higher_than_dbg_num_triggers: assert property(
       rvfi_if.is_csr_instr(ADDR_TSELECT)
       |->
-      rvfi_if.rvfi_rd1_wdata < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS
+      rvfi_if.rvfi_rd1_wdata < uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS
     ) else `uvm_error(info_tag, "The CSR tselect is set to equal or higher than the number of trigger.\n");
 
 
@@ -539,7 +540,7 @@ module uvmt_cv32e40s_triggers_assert_cov
 
     //2)
     a_dt_triggers_tinfo: assert property (
-      uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS != '0
+      uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS != '0
       && rvfi_if.rvfi_valid
       |->
       !tinfo_r[HW_ZERO_1:HW_ZERO_0]
@@ -563,24 +564,24 @@ module uvmt_cv32e40s_triggers_assert_cov
   */
 
   //1)
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] instr_access_fault_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] instr_access_fault_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] illegal_instr_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] illegal_instr_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] breakpoint_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] breakpoint_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] load_access_fault_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] load_access_fault_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] store_AMO_access_fault_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] store_AMO_access_fault_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] uecall_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] uecall_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] mecall_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] mecall_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] instr_bus_fault_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] instr_bus_fault_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] instr_integrity_fault_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] instr_integrity_fault_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] instr_access_fault_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] instr_access_fault_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] illegal_instr_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] illegal_instr_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] breakpoint_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] breakpoint_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] load_access_fault_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] load_access_fault_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] store_AMO_access_fault_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] store_AMO_access_fault_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] uecall_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] uecall_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] mecall_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] mecall_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] instr_bus_fault_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] instr_bus_fault_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] instr_integrity_fault_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] instr_integrity_fault_u_hit;
 
 
   function logic set_tdatas_etrigger_state(int tdata_nr, int priv_lvl, logic [10:0] exception_cause);
@@ -607,7 +608,7 @@ module uvmt_cv32e40s_triggers_assert_cov
 
 
   generate
-    for (genvar t = 0; t < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
+    for (genvar t = 0; t < uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
       always_comb begin
         instr_access_fault_m_hit[t]     = wb_is_mmode() && set_tdatas_etrigger_state(t, ET_M_MODE, EXC_CAUSE_INSTR_FAULT)            && wb_is_exception(EXC_CAUSE_INSTR_FAULT);
         instr_access_fault_u_hit[t]     = wb_is_umode() && set_tdatas_etrigger_state(t, ET_U_MODE, EXC_CAUSE_INSTR_FAULT)            && wb_is_exception(EXC_CAUSE_INSTR_FAULT);
@@ -649,7 +650,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   endproperty
 
   generate
-    for (genvar t = 0; t < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
+    for (genvar t = 0; t < uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
 
       a_dt_enter_dbg_etrigger_m_instr_access_fault: assert property(
         p_wb_enter_debug_due_to_x(instr_access_fault_m_hit[t])
@@ -740,12 +741,12 @@ module uvmt_cv32e40s_triggers_assert_cov
   //1) see a_dt_enter_dbg_*
 
   //2)
-  if (uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS > 0) begin
+  if (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS > 0) begin
     a_dt_warl_tselect: assert property (
       rvfi_if.rvfi_valid
       && |tselect.rvfi_csr_wmask != 0
       |->
-      tselect_w < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS
+      tselect_w < uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS
     ) else `uvm_error(info_tag, "There is a problem with tselect's WARL fields.\n");
 
     a_dt_warl_tdata1_general: assert property (
@@ -877,64 +878,64 @@ module uvmt_cv32e40s_triggers_assert_cov
   //bX = byte number X
 
   //Execute:
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] exe_eq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] exe_eq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] exe_geq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] exe_geq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] exe_l_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] exe_l_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] exe_eq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] exe_eq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] exe_geq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] exe_geq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] exe_l_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0] exe_l_u_hit;
 
   //Load:
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b0_eq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b0_eq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b0_geq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b0_geq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b0_l_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b0_l_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b1_eq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b1_eq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b1_geq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b1_geq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b1_l_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b1_l_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b2_eq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b2_eq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b2_geq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b2_geq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b2_l_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b2_l_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b3_eq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b3_eq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b3_geq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b3_geq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b3_l_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b3_l_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b0_eq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b0_eq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b0_geq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b0_geq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b0_l_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b0_l_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b1_eq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b1_eq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b1_geq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b1_geq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b1_l_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b1_l_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b2_eq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b2_eq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b2_geq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b2_geq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b2_l_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b2_l_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b3_eq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b3_eq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b3_geq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b3_geq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b3_l_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] load_b3_l_u_hit;
 
   //Store:
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b0_eq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b0_eq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b0_geq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b0_geq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b0_l_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b0_l_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b1_eq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b1_eq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b1_geq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b1_geq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b1_l_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b1_l_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b2_eq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b2_eq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b2_geq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b2_geq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b2_l_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b2_l_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b3_eq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b3_eq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b3_geq_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b3_geq_u_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b3_l_m_hit;
-  logic [uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b3_l_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b0_eq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b0_eq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b0_geq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b0_geq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b0_l_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b0_l_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b1_eq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b1_eq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b1_geq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b1_geq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b1_l_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b1_l_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b2_eq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b2_eq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b2_geq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b2_geq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b2_l_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b2_l_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b3_eq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b3_eq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b3_geq_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b3_geq_u_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b3_l_m_hit;
+  logic [uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS-1:0][NMEM-1:0] store_b3_l_u_hit;
 
   function logic set_tdata1_mctrl_state(int tdata_nr, int instr_type, int match_type, int priv_lvl);
 
@@ -967,7 +968,7 @@ module uvmt_cv32e40s_triggers_assert_cov
 
   //Set all possible ways of entering debug mode due to trigger match:
   always_comb begin
-    for (int t = 0; t < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
+    for (int t = 0; t < uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
 
       //Execute:
         exe_eq_m_hit[t]  = set_tdata1_mctrl_state(t, EXECUTE, MATCH_WHEN_EQUAL, M_MODE)            && rvfi_if.is_mmode_f() && eq_tdata2(rvfi_if.rvfi_pc_rdata, t);
@@ -1086,7 +1087,7 @@ module uvmt_cv32e40s_triggers_assert_cov
 
   //1)
   generate
-    for (genvar t = 0; t < uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
+    for (genvar t = 0; t < uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
 
       //Execution
       a_dt_enter_dbg_exe_eq_m: assert property(
@@ -1324,7 +1325,7 @@ module uvmt_cv32e40s_triggers_assert_cov
 
 
   //2)
-  if (uvmt_cv32e40s_pkg::CORE_PARAM_DBG_NUM_TRIGGERS > 0) begin
+  if (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS > 0) begin
     a_dt_enter_dbg_reason: assert property (
       rvfi_if.rvfi_valid
       && rvfi_if.rvfi_trap.debug

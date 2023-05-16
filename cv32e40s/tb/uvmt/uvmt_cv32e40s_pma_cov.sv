@@ -21,7 +21,7 @@
 
 
 module  uvmt_cv32e40s_pma_cov
-  import uvmt_cv32e40s_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
 #(
   parameter int  PMA_NUM_REGIONS,
   parameter bit  IS_INSTR_SIDE
