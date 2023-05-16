@@ -22,7 +22,7 @@
 
 module  uvmt_cv32e40s_pma_model
   import cv32e40s_pkg::*;
-  import uvmt_cv32e40s_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
 #(
   parameter logic [31:0]  DM_REGION_START,
   parameter logic [31:0]  DM_REGION_END,

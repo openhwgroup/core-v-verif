@@ -25,20 +25,20 @@
  * Component sampling transactions from a Clock & Reset virtual interface
  * (uvma_clic_if_t).
  */
-class uvma_clic_mon_c extends uvm_monitor;
+class uvma_clic_mon_c#(CLIC_ID_WIDTH) extends uvm_monitor;
 
    // Objects
    uvma_clic_cfg_c    cfg;
-   uvma_clic_cntxt_c  cntxt;
+   uvma_clic_cntxt_c#(CLIC_ID_WIDTH)  cntxt;
 
    // TLM
    // This analysis port will fire when the irq_ack_o is seen (core acknowledges the clic)
-   uvm_analysis_port#(uvma_clic_mon_trn_c)  ap;
+   uvm_analysis_port#(uvma_clic_mon_trn_c#(CLIC_ID_WIDTH))  ap;
 
    // This analysis port will fire when the first instruction in the ISR is retired (i.e. the MTVEC location)
-   uvm_analysis_port#(uvma_clic_mon_trn_c)  ap_iss;
+   uvm_analysis_port#(uvma_clic_mon_trn_c#(CLIC_ID_WIDTH))  ap_iss;
 
-   `uvm_component_utils_begin(uvma_clic_mon_c)
+   `uvm_component_utils_begin(uvma_clic_mon_c#(CLIC_ID_WIDTH))
       `uvm_field_object(cfg  , UVM_DEFAULT)
       `uvm_field_object(cntxt, UVM_DEFAULT)
    `uvm_component_utils_end
@@ -88,7 +88,7 @@ function void uvma_clic_mon_c::build_phase(uvm_phase phase);
       `uvm_fatal("CFG", "Configuration handle is null")
    end
 
-   void'(uvm_config_db#(uvma_clic_cntxt_c)::get(this, "", "cntxt", cntxt));
+   void'(uvm_config_db#(uvma_clic_cntxt_c#(CLIC_ID_WIDTH))::get(this, "", "cntxt", cntxt));
    if (cntxt == null) begin
       `uvm_fatal("CNTXT", "Context handle is null")
    end
@@ -128,7 +128,7 @@ task uvma_clic_mon_c::monitor_irq();
       @(cntxt.vif.mon_cb);
 
       if (cntxt.vif.mon_cb.irq_ack) begin
-         uvma_clic_mon_trn_c mon_trn = uvma_clic_mon_trn_c::type_id::create("mon_irq_trn");
+         uvma_clic_mon_trn_c#(CLIC_ID_WIDTH) mon_trn = uvma_clic_mon_trn_c#(CLIC_ID_WIDTH)::type_id::create("mon_irq_trn");
          mon_trn.action = UVMA_CLIC_MON_ACTION_IRQ;
          mon_trn.id = cntxt.vif.mon_cb.clic_irq_id_drv;
          ap.write(mon_trn);
@@ -142,7 +142,7 @@ task uvma_clic_mon_c::monitor_irq_iss();
          @(cntxt.vif.mon_cb);
 
          if (cntxt.vif.mon_cb.irq_ack) begin
-            uvma_clic_mon_trn_c mon_trn = uvma_clic_mon_trn_c::type_id::create("mon_irq_trn");
+            uvma_clic_mon_trn_c#(CLIC_ID_WIDTH) mon_trn = uvma_clic_mon_trn_c#(CLIC_ID_WIDTH)::type_id::create("mon_irq_trn");
             mon_trn.action = UVMA_CLIC_MON_ACTION_IRQ;
             mon_trn.id = cntxt.vif.mon_cb.clic_irq_id_drv;
 

@@ -23,13 +23,13 @@
  * Abstract object from which all other Interrupt agent sequences must extend.
  * Subclasses must be run on Interrupt sequencer (uvma_clic_sqr_c) instance.
  */
-class uvma_clic_base_seq_c extends uvm_sequence#(
+class uvma_clic_base_seq_c#(CLIC_ID_WIDTH) extends uvm_sequence#(
    .REQ(uvma_clic_seq_item_c),
    .RSP(uvma_clic_seq_item_c)
 );
 
    `uvm_object_utils(uvma_clic_base_seq_c)
-   `uvm_declare_p_sequencer(uvma_clic_sqr_c)
+   `uvm_declare_p_sequencer(uvma_clic_sqr_c#(CLIC_ID_WIDTH))
 
 
    /**

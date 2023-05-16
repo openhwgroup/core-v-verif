@@ -74,40 +74,45 @@ a_xsecure_hint_updates_lfsr2.",,,,,,,,,,,,,,,,,
 ,,Non-sequential PC value,"Any glitch in the IF stage PC for non-sequential execution (jump, mret and branch) shall result in a alert_major_o (Jumps and branches are covered, reset, exceptions, interrupt and debug entry is not)",Drive a forced error in the IF stage PC and verify that the alert_major_o is driven.,Assertion Check,Directed Self-Checking,Assertion Coverage,"A: a_glitch_xsecure_pc_hardening_branch_hardening_enabled, a_glitch_xsecure_pc_hardening_jump_hardening_enabled, a_glitch_xsecure_pc_hardening_mret_hardening_enabled, a_glitch_xsecure_pc_hardening_branch_decision_hardening_enabled",,,,,,,,,,,,,,,,,
 ,,Default on,PC hardening should be default on,Verify that PC hardening is on after reset,Assertion check,"ENV capability, not specific test",Assertion Coverage,A: a_xsecure_pc_hardening_default_on,,,,,,,,,,,,,,,,,
 ,,Disable/enabled by cpuctrl.pcharden,Disabled/enabled via cpuctrl.pcharden,"Verify that alert major is set if the pc hardening control bit is set, and that alert major is not set if the control bit is cleard.",Assertion check,Directed Self-Checking,Assertion Coverage,"A: a_glitch_xsecure_pc_hardening_sequential_instruction_hardening_enabled, a_glitch_xsecure_pc_hardening_sequential_instruction_hardening_disabled, a_glitch_xsecure_pc_hardening_branch_hardening_enbled, a_glitch_xsecure_pc_hardening_branch_hardening_disabled, a_glitch_xsecure_pc_hardening_jump_hardening_enabled, a_glitch_xsecure_pc_hardening_jump_hardening_disabled, a_glitch_xsecure_pc_hardening_mret_hardening_enabled, a_glitch_xsecure_pc_hardening_mret_hardening_disabled, a_glitch_xsecure_pc_hardening_branch_decision_hardening_enabled, a_glitch_xsecure_pc_hardening_branch_decision_hardening_disabled",,,,,,,,,,,,,,,,,
-,Hardened CSR,Shadow registers to ensure integrity of important CSR's,If a CSR is not equal to the bit-wise complement of its shadow CSR an alert shall be raised on alert_major_o. Hardened CSR's are listed In the User Manu,"Assert that CSRs and their shadows are the invert of eachother at all times (when not in reset), or they are not alert major is set.",Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_mstateen0,
-a_xsecure_hardened_csr_privlvl,
-a_xsecure_hardened_csr_jvt,
-a_xsecure_hardened_csr_mstatus,
-a_xsecure_hardened_csr_cpuctrl,
-a_xsecure_hardened_csr_dcsr,
-a_xsecure_hardened_csr_mepc,
-a_xsecure_hardened_csr_mscratch,
-a_xsecure_hardened_csr_mseccfg,
-a_xsecure_hardened_csr_pmpncfg,
-a_xsecure_hardened_csr_pmpaddr,
-a_xsecure_hardened_csr_mtvt,
-a_xsecure_hardened_csr_mtvec,
-a_xsecure_hardened_csr_mintstatus,
-a_xsecure_hardened_csr_mintthresh,
-a_xsecure_hardened_csr_mtvec,
-a_xsecure_hardened_csr_mie,
-a_glitch_xsecure_hardened_csr_mismatch_mstateen0,
-a_glitch_xsecure_hardened_csr_mismatch_privlvl,
-a_glitch_xsecure_hardened_csr_mismatch_jvt,
-a_glitch_xsecure_hardened_csr_mismatch_mstatus,
-a_glitch_xsecure_hardened_csr_mismatch_cpuctrl,
-a_glitch_xsecure_hardened_csr_mismatch_dcsr,
-a_glitch_xsecure_hardened_csr_mismatch_mepc,
-a_glitch_xsecure_hardened_csr_mismatch_mscratch,
-a_glitch_xsecure_hardened_csr_mismatch_mseccfg,
-a_glitch_xsecure_hardened_csr_mismatch_pmpncfg,
-a_glitch_xsecure_hardened_csr_mismatch_pmpaddr,
-a_glitch_xsecure_hardened_csr_mismatch_mtvt,
-a_glitch_xsecure_hardened_csr_mismatch_mtvec,
-a_glitch_xsecure_hardened_csr_mismatch_mintstatus,
-a_glitch_xsecure_hardened_csr_mismatch_mintthresh,
-a_glitch_xsecure_hardened_csr_mismatch_mtvec,
-a_glitch_xsecure_hardened_csr_mismatch_mie",,,,,,,,,,,,,,,,,
+,Hardened CSR,Shadow registers to ensure integrity of important CSR's,If a CSR is not equal to the bit-wise complement of its shadow CSR an alert shall be raised on alert_major_o. Hardened CSR's are listed In the User Manu,"Assert that CSRs and their shadows are the invert of eachother at all times (when not in reset), or they are not alert major is set.",N/A,N/A,N/A,N/A,,,,,,,,,,,,,,,,,
+,,cpuctrl,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_cpuctrl
+A: a_glitch_xsecure_hardened_csr_mismatch_cpuctrl",,,,,,,,,,,,,,,,,
+,,dcsr,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_dcsr
+A: a_glitch_xsecure_hardened_csr_mismatch_dcsr",,,,,,,,,,,,,,,,,
+,,jvt,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_jvt
+A: a_glitch_xsecure_hardened_csr_mismatch_jvt",,,,,,,,,,,,,,,,,
+,,mcause,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_mcause
+A: a_glitch_xsecure_hardened_csr_mismatch_mcause",,,,,,,,,,,,,,,,,
+,,mepc,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_mepc
+A: a_glitch_xsecure_hardened_csr_mismatch_mepc",,,,,,,,,,,,,,,,,
+,,mie,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_mie
+A: a_glitch_xsecure_hardened_csr_mismatch_mie",,,,,,,,,,,,,,,,,
+,,mintstatus,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_mintstatus
+A: a_glitch_xsecure_hardened_csr_mismatch_mintstatus",,,,,,,,,,,,,,,,,
+,,mintthresh,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_mintthresh
+A: a_glitch_xsecure_hardened_csr_mismatch_mintthresh",,,,,,,,,,,,,,,,,
+,,mscratch,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_mscratch
+A: a_glitch_xsecure_hardened_csr_mismatch_mscratch",,,,,,,,,,,,,,,,,
+,,mscratchcsw,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_mscratch
+A: a_glitch_xsecure_hardened_csr_mismatch_mscratch",,,,,,,,,,,,,,,,,
+,,mscratchcswl,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_mscratch
+A: a_glitch_xsecure_hardened_csr_mismatch_mscratch",,,,,,,,,,,,,,,,,
+,,mseccfg,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_mseccfg
+A: a_glitch_xsecure_hardened_csr_mismatch_mseccfg",,,,,,,,,,,,,,,,,
+,,mstateen,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_mstateen0
+A: a_glitch_xsecure_hardened_csr_mismatch_mstateen0",,,,,,,,,,,,,,,,,
+,,mstatus,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_mstatus
+A: a_glitch_xsecure_hardened_csr_mismatch_mstatus",,,,,,,,,,,,,,,,,
+,,mtvec,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_mtvec
+A: a_glitch_xsecure_hardened_csr_mismatch_mtvec",,,,,,,,,,,,,,,,,
+,,mtvt,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_mtvt
+A: a_glitch_xsecure_hardened_csr_mismatch_mtvt",,,,,,,,,,,,,,,,,
+,,pmpaddr,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_pmpaddr
+A: a_glitch_xsecure_hardened_csr_mismatch_pmpaddr",,,,,,,,,,,,,,,,,
+,,pmpncfg,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_pmpncfg
+A: a_glitch_xsecure_hardened_csr_mismatch_pmpncfg",,,,,,,,,,,,,,,,,
+,,privlvl,(See above.),(See above.),Assertion check,Constrained-Random and Directed Self-Checking,Assertion Coverage,"A: a_xsecure_hardened_csr_privlvl
+A: a_glitch_xsecure_hardened_csr_mismatch_privlvl",,,,,,,,,,,,,,,,,
 ,Interface Integrity,Configurable,Interface checksum checking ( i.e. *_rchk_i related ) shall be globally enabled/disabled via the integrity control bit in the cpuctrl CSR,Verify that checksum verification is enabled or disabled according to the integrity control bit in the cpuctrl CSR,Assertion Check,Directed Self-Checking,Assertion Coverage,"A: a_glitch_xsecure_integrity_rchk_instr_read, a_glitch_xsecure_integrity_rchk_instr_read_integrity_disabled, a_glitch_xsecure_integrity_rchk_data_store, a_glitch_xsecure_integrity_rchk_data_store_integrity_disabled, a_glitch_xsecure_integrity_rchk_data_read, a_glitch_xsecure_integrity_rchk_data_read_integrity_disabled",,,,,,,,,,,,,,,,,
 ,,Default on,The global integrity enable bit shall be default on.,Verify that the integrity enable bit is default on,Assertion Check,"ENV capability, not specific test",Assertion Coverage,A: a_xsecure_integrity_default_on,,,,,,,,,,,,,,,,,
 ,,reqpar generation,*_reqpar_o shall be the inverse of *_req_o at every rising clk _i edge (when not in reset).,Verify that *_reqpar_o is the inverse of *_req when not in reset,Assertion Check,Constrained-Random,Assertion Coverage,"A: a_xsecure_integrity_data_req_parity, a_xsecure_integrity_instr_req_parity",,,,,,,,,,,,,,,,,

@@ -172,33 +172,33 @@ class uvma_rvfi_instr_seq_item_c#(int ILEN=DEFAULT_ILEN,
    /*
     * Return GPR wdata
     */
-   extern function bit [XLEN-1:0] get_gpr_wdata(int gpr);
+   extern function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] get_gpr_wdata(int gpr);
 
    /*
     * Return GPR rdata
     */
-   extern function bit [XLEN-1:0] get_gpr_rdata(int gpr);
+   extern function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] get_gpr_rdata(int gpr);
 
 
    /*
     * Return memory transaction data
     */
-   extern function bit [XLEN-1:0] get_mem_data_word(int txn);
+   extern function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] get_mem_data_word(int txn);
 
    /*
     * Return memory transaction addr
     */
-   extern function bit [XLEN-1:0] get_mem_addr(int txn);
+   extern function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] get_mem_addr(int txn);
 
    /*
     * Return memory transaction wmask
     */
-   extern function bit [(XLEN/8)-1:0] get_mem_wmask(int txn);
+   extern function bit [(uvma_rvfi_instr_seq_item_c::XLEN/8)-1:0] get_mem_wmask(int txn);
 
    /*
     * Return memory transaction rmask
     */
-   extern function bit [(XLEN/8)-1:0] get_mem_rmask(int txn);
+   extern function bit [(uvma_rvfi_instr_seq_item_c::XLEN/8)-1:0] get_mem_rmask(int txn);
 
    /*
     * Check memory transaction activity

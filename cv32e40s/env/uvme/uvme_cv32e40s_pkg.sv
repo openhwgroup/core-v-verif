@@ -34,6 +34,8 @@
  */
 package uvme_cv32e40s_pkg;
 
+   import cv32e40s_pkg::*;
+   import uvmt_cv32e40s_base_test_pkg::*;
    import uvm_pkg::*;
    import uvml_hrtbt_pkg::*;
    import uvml_sb_pkg::*;
@@ -69,6 +71,7 @@ package uvme_cv32e40s_pkg;
    `include "uvme_cv32e40s_base_vseq.sv"
    `include "uvme_cv32e40s_reset_vseq.sv"
    `include "uvme_cv32e40s_nmi_timeout_vseq.sv"
+   `include "uvme_cv32e40s_irq_ss_timeout_vseq.sv"
    `include "uvme_cv32e40s_vp_debug_control_seq.sv"
    `include "uvme_cv32e40s_vp_interrupt_timer_seq.sv"
    `include "uvme_cv32e40s_vp_sig_writer_seq.sv"

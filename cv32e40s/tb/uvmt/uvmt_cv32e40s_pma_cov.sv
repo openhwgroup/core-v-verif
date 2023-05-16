@@ -21,7 +21,7 @@
 
 
 module  uvmt_cv32e40s_pma_cov
-  import uvmt_cv32e40s_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
 #(
   parameter int  PMA_NUM_REGIONS,
   parameter bit  IS_INSTR_SIDE
@@ -208,23 +208,23 @@ module  uvmt_cv32e40s_pma_cov
       cross  cp_multimatch, cp_aligned, cp_loadstoreexec, cp_allow {
         ignore_bins  one_disallow =
           (binsof(cp_multimatch.one) && binsof(cp_allow.disallow))
-          iff (SIMPLIFY_FV);
+          with (SIMPLIFY_FV);
       }
     x_multimatch_main: cross  cp_multimatch, cp_main {
       ignore_bins  one_io =
-        (binsof(cp_multimatch.one) && binsof(cp_main.io)) iff (SIMPLIFY_FV);
+        (binsof(cp_multimatch.one) && binsof(cp_main.io)) with (SIMPLIFY_FV);
     }
     x_multimatch_bufferable: cross  cp_multimatch, cp_bufferable;
     x_multimatch_cacheable: cross  cp_multimatch, cp_cacheable {
       ignore_bins  one_no =
         (binsof(cp_multimatch.one) && binsof(cp_cacheable.no))
-        iff (SIMPLIFY_FV);
+        with (SIMPLIFY_FV);
     }
     x_multimatch_integrity: cross  cp_multimatch, cp_integrity;
     x_multimatch_overridedm: cross  cp_multimatch, cp_overridedm {
       ignore_bins  one_override =
         (binsof(cp_multimatch.one) && binsof(cp_overridedm.override))
-        iff (SIMPLIFY_FV);
+        with (SIMPLIFY_FV);
     }
 
     x_aligned_allow:              cross  cp_aligned, cp_allow;
@@ -257,7 +257,7 @@ module  uvmt_cv32e40s_pma_cov
     x_allow_bufferable: cross  cp_allow, cp_bufferable {
       ignore_bins  disallow_bufferable =
         (binsof(cp_allow.disallow) && binsof(cp_bufferable.bufferable))
-        iff (SIMPLIFY_FV);
+        with (SIMPLIFY_FV);
     }
     x_allow_cacheable:  cross  cp_allow, cp_cacheable {
       illegal_bins  disallow_cacheable =
@@ -360,7 +360,7 @@ module  uvmt_cv32e40s_pma_cov
         binsof(cp_aligned.aligned);
       ignore_bins  misaligned_io2io =
         (binsof(cp_aligned.misaligned) && binsof(cp_boundary.io2io))
-        iff (SIMPLIFY_FV);
+        with (SIMPLIFY_FV);
     }
 
 

@@ -7,3 +7,4 @@ description: >
     Random debug generator test
 plusargs: >
     +gen_random_debug
+cflags: -mno-relax

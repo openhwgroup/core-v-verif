@@ -30,12 +30,14 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_clic_assert
     input logic alert_major,
 
     //CSRs:
+    input mcause_t mcause,
     input mtvt_t mtvt,
     input mtvec_t mtvec,
     input mintstatus_t mintstatus,
     input logic [31:0] mintthresh,
 
     //Shadows:
+    input logic [$bits(mcause_t)-1:0] mcause_shadow,
     input logic [$bits(mtvt_t)-1:0] mtvt_shadow,
     input logic [$bits(mtvec_t)-1:0] mtvec_shadow,
     input logic [$bits(mintstatus_t)-1:0] mintstatus_shadow,
@@ -56,33 +58,40 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_clic_assert
     csr == ~shadow;
   endproperty
 
-    //MTVT
-    a_xsecure_hardened_csr_mtvt: assert property (
-      p_hardened_csr(
-        mtvt,
-        mtvt_shadow)
-    ) else `uvm_error(info_tag, "The CSR MTVT is not shadowed.\n");
+  //MCAUSE
+  a_xsecure_hardened_csr_mcause: assert property (
+    p_hardened_csr(
+    mcause,
+    mcause_shadow)
+  ) else `uvm_error(info_tag, "The CSR MCAUSE is not shadowed.\n");
 
-    //MTVEC
-    a_xsecure_hardened_csr_mtvec: assert property (
-      p_hardened_csr(
-        mtvec,
-        mtvec_shadow)
-    ) else `uvm_error(info_tag, "The CSR MTVEC is not shadowed.\n");
+  //MTVT
+  a_xsecure_hardened_csr_mtvt: assert property (
+    p_hardened_csr(
+      mtvt,
+      mtvt_shadow)
+  ) else `uvm_error(info_tag, "The CSR MTVT is not shadowed.\n");
 
-    //MINTSTATUS
-    a_xsecure_hardened_csr_mintstatus: assert property (
-      p_hardened_csr(
-        mintstatus,
-        mintstatus_shadow)
-    ) else `uvm_error(info_tag, "The CSR MINTSTATUS is not shadowed.\n");
+  //MTVEC
+  a_xsecure_hardened_csr_mtvec: assert property (
+    p_hardened_csr(
+      mtvec,
+      mtvec_shadow)
+  ) else `uvm_error(info_tag, "The CSR MTVEC is not shadowed.\n");
 
-    //MINTTHRESH
-    a_xsecure_hardened_csr_mintthresh: assert property (
-      p_hardened_csr(
-        mintthresh,
-        mintthresh_shadow)
-    ) else `uvm_error(info_tag, "The CSR MINTTHRESH is not shadowed.\n");
+  //MINTSTATUS
+  a_xsecure_hardened_csr_mintstatus: assert property (
+    p_hardened_csr(
+      mintstatus,
+      mintstatus_shadow)
+  ) else `uvm_error(info_tag, "The CSR MINTSTATUS is not shadowed.\n");
+
+  //MINTTHRESH
+  a_xsecure_hardened_csr_mintthresh: assert property (
+    p_hardened_csr(
+      mintthresh,
+      mintthresh_shadow)
+  ) else `uvm_error(info_tag, "The CSR MINTTHRESH is not shadowed.\n");
 
 
   //Verify that mismatch between the following CSRs and their shadows set alert major
@@ -95,34 +104,40 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_clic_assert
 
   endproperty
 
+  //MCAUSE
+  a_glitch_xsecure_hardened_csr_mismatch_mcause: assert property (
+    p_hardened_csr_mismatch_sets_major_alert(
+    mcause,
+    mcause_shadow)
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MCAUSE and its shadow does not set the major alert.\n");
 
-    //MTVT
-    a_glitch_xsecure_hardened_csr_mismatch_mtvt: assert property (
-      p_hardened_csr_mismatch_sets_major_alert(
-        mtvt,
-        mtvt_shadow)
-    ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MTVT and its shadow does not set the major alert.\n");
+  //MTVT
+  a_glitch_xsecure_hardened_csr_mismatch_mtvt: assert property (
+    p_hardened_csr_mismatch_sets_major_alert(
+      mtvt,
+      mtvt_shadow)
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MTVT and its shadow does not set the major alert.\n");
 
-    //MTVEC
-    a_glitch_xsecure_hardened_csr_mismatch_mtvec: assert property (
-      p_hardened_csr_mismatch_sets_major_alert(
-        mtvec,
-        mtvec_shadow)
-    ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MTVEC and its shadow does not set the major alert.\n");
+  //MTVEC
+  a_glitch_xsecure_hardened_csr_mismatch_mtvec: assert property (
+    p_hardened_csr_mismatch_sets_major_alert(
+      mtvec,
+      mtvec_shadow)
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MTVEC and its shadow does not set the major alert.\n");
 
-    //MINTSTATUS
-    a_glitch_xsecure_hardened_csr_mismatch_mintstatus: assert property (
-      p_hardened_csr_mismatch_sets_major_alert(
-        mintstatus,
-        mintstatus_shadow)
-    ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MINTSTATUS and its shadow does not set the major alert.\n");
+  //MINTSTATUS
+  a_glitch_xsecure_hardened_csr_mismatch_mintstatus: assert property (
+    p_hardened_csr_mismatch_sets_major_alert(
+      mintstatus,
+      mintstatus_shadow)
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MINTSTATUS and its shadow does not set the major alert.\n");
 
-    //MINTTHRESH
-    a_glitch_xsecure_hardened_csr_mismatch_mintthresh: assert property (
-      p_hardened_csr_mismatch_sets_major_alert(
-        mintthresh,
-        mintthresh_shadow)
-    ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MINTTHRESH and its shadow does not set the major alert.\n");
+  //MINTTHRESH
+  a_glitch_xsecure_hardened_csr_mismatch_mintthresh: assert property (
+    p_hardened_csr_mismatch_sets_major_alert(
+      mintthresh,
+      mintthresh_shadow)
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MINTTHRESH and its shadow does not set the major alert.\n");
 
 
   endmodule : uvmt_cv32e40s_xsecure_hardened_csrs_clic_assert
