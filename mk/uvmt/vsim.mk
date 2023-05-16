@@ -86,6 +86,7 @@ VLOG_LDGEN_FLAGS ?= \
                     -sv \
                     -mfcu \
                     +acc=rb \
+                    $(SV_CMP_FLAGS) \
                     $(QUIET)
 
 VOPT_LDGEN_FLAGS ?= \
@@ -115,6 +116,7 @@ VLOG_FLAGS    ?= \
 		-64 \
 		-mfcu \
 		+acc=rb \
+		$(SV_CMP_FLAGS) \
 		$(QUIET) \
 		-writetoplevels  uvmt_$(CV_CORE_LC)_tb
 
@@ -197,9 +199,9 @@ endif
 # Waveform generation
 ifeq ($(call IS_YES,$(WAVES)),YES)
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-VSIM_FLAGS += $(VSIM_WAVES_ADV_DEBUG)
+VSIM_WAVES_FLAGS = $(VSIM_WAVES_ADV_DEBUG)
 else
-VSIM_FLAGS += -do $(VSIM_WAVES_DO)
+VSIM_WAVES_FLAGS = -do $(VSIM_WAVES_DO)
 endif
 endif
 
@@ -445,6 +447,7 @@ compliance: $(VSIM_COMPLIANCE_PREREQ) $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 		$(VSIM) \
 			-work $(VWORK) \
 			$(VSIM_FLAGS) \
+			$(VSIM_WAVES_FLAGS) \
 			-l vsim-$(COMPLIANCE_PROG).log \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=uvmt_$(CV_CORE_LC)_firmware_test_c \
@@ -529,6 +532,7 @@ riscof_sim_run: $(VSIM_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovp
 		$(VSIM) \
 			-work $(VWORK) \
 			$(VSIM_FLAGS) \
+			$(VSIM_WAVES_FLAGS) \
 			-l vsim.log \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=uvmt_cv32e40p_riscof_firmware_test_c \
@@ -623,6 +627,7 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 		$(VSIM) \
 			-work $(VWORK) \
 			$(VSIM_FLAGS) \
+			$(VSIM_WAVES_FLAGS) \
 			-l vsim-$(VSIM_TEST).log \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(TEST_UVM_TEST) \
