@@ -232,10 +232,12 @@ test5:
     cv.count 1, x10
 
     csrr x20, 0xCC0
+    andi x5, x5, -4
     beq x20, x5, test5_1
     c.addi x15, 0x1
 test5_1:
     csrr x20, 0xCC1
+    andi x6, x6, -4
     beq x20, x6, test5_2
     c.addi x15, 0x1
 test5_2:
@@ -244,10 +246,12 @@ test5_2:
     c.addi x15, 0x1
 test5_3:
     csrr x20, 0xCC4
+    c.andi x8, -4
     beq x20, x8, test5_4
     c.addi x15, 0x1
 test5_4:
     csrr x20, 0xCC5
+    c.andi x9, -4
     beq x20, x9, test5_5
     c.addi x15, 0x1
 test5_5:
@@ -284,10 +288,12 @@ test6:
 #endif
 
     csrr x20, 0xCC0
+    andi x6, x6, -4
     beq x20, x6, test6_1
     c.addi x15, 0x1
 test6_1:
     csrr x20, 0xCC1
+    andi x5, x5, -4
     beq x20, x5, test6_2
     c.addi x15, 0x1
 test6_2:
@@ -296,10 +302,12 @@ test6_2:
     c.addi x15, 0x1
 test6_3:
     csrr x20, 0xCC4
+    c.andi x9, -4
     beq x20, x9, test6_4
     c.addi x15, 0x1
 test6_4:
     csrr x20, 0xCC5
+    c.andi x8, -4
     beq x20, x8, test6_5
     c.addi x15, 0x1
 test6_5:
