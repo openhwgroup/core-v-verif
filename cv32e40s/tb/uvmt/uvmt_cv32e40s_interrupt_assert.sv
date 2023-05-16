@@ -422,7 +422,7 @@ module uvmt_cv32e40s_interrupt_assert
   logic [31:0]  bus_data_outstanding;
   logic [31:0]  bus_instr_outstanding;
   assign bus_instr_outstanding = support_if.alignment_buff_addr_ph_cnt;
-  assign bus_data_outstanding  = support_if.lsu_addr_ph_cnt;
+  assign bus_data_outstanding  = support_if.data_bus_v_addr_ph_cnt;
 
   logic  is_wfi_wfe_blocked;
   assign is_wfi_wfe_blocked = (
@@ -430,7 +430,10 @@ module uvmt_cv32e40s_interrupt_assert
     |$past(bus_instr_outstanding) ||  // Arbitrary uarch decision
     |bus_data_outstanding         ||
     |$past(bus_data_outstanding)  ||  // Arbitrary uarch decision
+    obi_instr_if.req              ||
+    obi_data_if.req               ||
     (writebufstate != WBUF_EMPTY)
+    // TODO:silabs-krdosvik (xif): add bustransaction for x-interface
   );
 
   logic  should_wfi_wfe_awaken;
@@ -463,7 +466,6 @@ module uvmt_cv32e40s_interrupt_assert
       model_sleepmode <= 1'b 0;
     end
   end
-
 
   // WFI assertion will assert core_sleep_o (in WFI_TO_CORE_SLEEP_LATENCY cycles after wb, given ideal conditions)
 
