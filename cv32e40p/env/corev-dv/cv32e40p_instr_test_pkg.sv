@@ -52,7 +52,19 @@ package cv32e40p_instr_test_pkg;
     end
   endfunction : push_gpr_to_debugger_stack
 
-    // Pop general purpose register from debugger stack
+  // Push floating point registers to the debugger stack
+  function automatic void push_fpr_to_debugger_stack(cv32e40p_instr_gen_config cfg_corev,
+                                                     ref string instr[$]);
+    string store_instr = (FLEN == 32) ? "fsw" : "fsd";
+    // Reserve space from kernel stack to save all 32 FPR except for x0
+    instr.push_back($sformatf("1: addi x%0d, x%0d, -%0d", cfg_corev.dp, cfg_corev.dp, 31 * (XLEN/8)));
+    // Push all FPRs to kernel stack
+    for(int i = 1; i < 32; i++) begin
+      instr.push_back($sformatf("%0s  f%0d, %0d(x%0d)", store_instr, i, i * (FLEN/8), cfg_corev.dp));
+    end
+  endfunction : push_fpr_to_debugger_stack
+
+  // Pop general purpose register from debugger stack
   function automatic void pop_gpr_from_debugger_stack(cv32e40p_instr_gen_config cfg_corev,
                                                       ref string instr[$]);
     string load_instr = (XLEN == 32) ? "lw" : "ld";
@@ -66,5 +78,17 @@ package cv32e40p_instr_test_pkg;
     // Restore debugger stack pointer
     instr.push_back($sformatf("addi x%0d, x%0d, %0d", cfg_corev.dp, cfg_corev.dp, 31 * (XLEN/8)));
   endfunction : pop_gpr_from_debugger_stack
+
+  // Pop floating point register from debugger stack
+  function automatic void pop_fpr_from_debugger_stack(cv32e40p_instr_gen_config cfg_corev,
+                                                      ref string instr[$]);
+    string load_instr = (FLEN == 32) ? "flw" : "fld";
+    // Pop user mode FPRs from kernel stack
+    for(int i = 1; i < 32; i++) begin
+      instr.push_back($sformatf("%0s  f%0d, %0d(x%0d)", load_instr, i, i * (FLEN/8), cfg_corev.dp));
+    end
+    // Restore debugger stack pointer
+    instr.push_back($sformatf("addi x%0d, x%0d, %0d", cfg_corev.dp, cfg_corev.dp, 31 * (XLEN/8)));
+  endfunction : pop_fpr_from_debugger_stack
 
 endpackage : cv32e40p_instr_test_pkg;

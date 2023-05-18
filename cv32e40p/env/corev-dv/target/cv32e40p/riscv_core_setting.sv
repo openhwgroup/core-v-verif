@@ -25,6 +25,7 @@
 //-----------------------------------------------------------------------------
 // XLEN
 parameter int XLEN = 32;
+parameter int FLEN = 32;
 
 // Parameter for SATP mode, set to BARE if address translation is not supported
 parameter satp_mode_t SATP_MODE = BARE;
