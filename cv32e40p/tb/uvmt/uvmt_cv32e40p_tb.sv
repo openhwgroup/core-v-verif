@@ -481,6 +481,11 @@ module uvmt_cv32e40p_tb;
     .pc_set(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.pc_set_o),
     .boot_addr_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.boot_addr_i),
     .branch_in_decode(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.branch_in_id),
+    .rvfi_valid(dut_wrap.cv32e40p_tb_wrapper_i.rvfi_instr_if_0_i.rvfi_valid),
+    .rvfi_insn(dut_wrap.cv32e40p_tb_wrapper_i.rvfi_instr_if_0_i.rvfi_insn),
+    .apu_req(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.apu_req_o),
+    .apu_gnt(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.apu_gnt_i),
+    .apu_busy(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.apu_busy_i),
 
     .is_wfi(),
     .in_wfi(),

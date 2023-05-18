@@ -217,6 +217,12 @@ interface uvmt_cv32e40p_debug_cov_assert_if
 
     input  [31:0] boot_addr_i,
 
+    input         rvfi_valid,
+    input  [31:0] rvfi_insn,
+    input         apu_req,
+    input         apu_gnt,
+    input         apu_busy,
+
     // Debug signals
     input         debug_req_i, // From controller
     input         debug_mode_q, // From controller
@@ -283,7 +289,12 @@ interface uvmt_cv32e40p_debug_cov_assert_if
     illegal_insn_i,
     illegal_insn_q,
     ecall_insn_i,
-    boot_addr_i, 
+    boot_addr_i,
+    rvfi_valid,
+    rvfi_insn,
+    apu_req,
+    apu_gnt,
+    apu_busy,
     debug_req_i,
     debug_mode_q,
     dcsr_q,
