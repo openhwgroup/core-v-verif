@@ -264,8 +264,8 @@ if not (prcmd):
         ask_user()
         os.chdir(os.path.abspath(os.path.join(topdir, args.core.lower(), 'sim/uvmt')))
         os.system('make clean_all')
-        os.chdir(os.path.join(topdir, '{}/sim/core'.format(args.core.lower())))
-        os.system('make clean_all')
+        #os.chdir(os.path.join(topdir, '{}/sim/core'.format(args.core.lower())))
+        #os.system('make clean_all')
         os.chdir(os.path.join(topdir, 'bin'))
 
 ################################################################################
