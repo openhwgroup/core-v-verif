@@ -464,7 +464,7 @@ function void uvme_cv32e40p_env_c::assemble_vsequencer();
 
    vsequencer.clknrst_sequencer          = clknrst_agent         .sequencer;
    vsequencer.interrupt_sequencer        = interrupt_agent       .sequencer;
-   //vsequencer.debug_sequencer            = debug_agent           .sequencer;
+   vsequencer.debug_sequencer            = debug_agent           .sequencer;
    vsequencer.obi_memory_instr_sequencer = obi_memory_instr_agent.sequencer;
    vsequencer.obi_memory_data_sequencer  = obi_memory_data_agent .sequencer;
 

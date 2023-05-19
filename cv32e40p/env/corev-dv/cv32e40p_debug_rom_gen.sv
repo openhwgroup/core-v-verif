@@ -68,6 +68,11 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
             end
             // Need to save off GPRs to avoid modifying program flow
             push_gpr_to_debugger_stack(cfg_corev, debug_main);
+
+            // Need to save off FPRs incase f-extension instructions are used to avoid modifying program flow
+            if(cfg.enable_floating_point && !cfg.enable_fp_in_x_regs) begin
+                push_fpr_to_debugger_stack(cfg_corev, debug_main);
+            end
             // Signal that the core entered debug rom only if the rom is actually
             // being filled with random instructions to prevent stress tests from
             // having to execute unnecessary push/pop of GPRs on the stack ever
@@ -116,6 +121,12 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
             if (cfg.enable_ebreak_in_debug_rom) begin
                 gen_ebreak_footer();
             end            
+
+            //pop FPRs for f-extension instructions
+            if(cfg.enable_floating_point && !cfg.enable_fp_in_x_regs) begin
+                pop_fpr_from_debugger_stack(cfg_corev, debug_end);
+            end
+
             pop_gpr_from_debugger_stack(cfg_corev, debug_end);
             if (cfg.enable_ebreak_in_debug_rom) begin
                 gen_restore_ebreak_scratch_reg();
