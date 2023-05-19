@@ -20,10 +20,97 @@
 # limitations under the License.
 
 
-# Replace "cv32e40x/" dir
-rm -rf cv32e40x  &&
-git clone  -b cv32e40xdev_subtree_gitmerge  https://github.com/silabs-robin/core-v-verif.git  cv32e40x  &&
+# Description:
+#   This script is used to clone core-specific verification environments.
+#   (E.g. "core-v-verif/cv32e40x/".)
+#   Try running it, and it will assist you with helpful messages.
+#
+# Examples:
+#   "$ ./bin/clonetb"
+#   "$ ./bin/clonetb -x"
+#   "$ CV_CORE=cv32e40x ./bin/clonetb --unignore"
 
-# Ignore the cloned directory
-echo cv32e40x >> .git/info/exclude
-git ls-files cv32e40x/ | xargs git update-index --skip-worktree
+
+usage() {
+  echo "usage: $0 [-x] [--clone] [--ignore] [--unignore]"
+  echo "  -x          clone cv32e40x subtree"
+  echo "  --clone     clone subtree based on env vars"
+  echo "  --ignore    tell git to ignore the cloned subtree"
+  echo "  --unignore  tell git to not ignore the cloned subtree"
+
+  exit 1
+}
+
+check_env_vars_cvcore() {
+  if [ -z "${CV_CORE}" ]; then
+    echo "error: 'CV_CORE' not defined"
+    exit 1
+  fi
+}
+
+check_env_vars() {
+  check_env_vars_cvcore
+
+  if [ -z "${VERIF_ENV_REPO}" ]; then
+    echo "error: 'VERIF_ENV_REPO' not defined"
+    exit 1
+  fi
+
+  if [ -z "${VERIF_ENV_BRANCH}" ]; then
+    echo "error: 'VERIF_ENV_BRANCH' not defined"
+    exit 1
+  fi
+}
+
+clone() {
+  check_env_vars
+
+  rm -rf ${CV_CORE}
+  git clone  -b ${VERIF_ENV_BRANCH}  ${VERIF_ENV_REPO}  ${CV_CORE}
+}
+
+clone_cv32e40x() {
+  CV_CORE=cv32e40x
+  VERIF_ENV_REPO=https://github.com/silabs-robin/core-v-verif.git
+  VERIF_ENV_BRANCH=cv32e40xdev_subtree_gitmerge
+
+  clone
+
+  ignore_cloned_directory
+}
+
+ignore_cloned_directory() {
+  check_env_vars_cvcore
+
+  echo ${CV_CORE} >> .git/info/exclude
+  git ls-files ${CV_CORE} | xargs git update-index --skip-worktree
+}
+
+unignore_cloned_directory() {
+  check_env_vars_cvcore
+
+  sed -i "/^${CV_CORE}$/d" .git/info/exclude
+  git ls-files -t | grep '^S' | awk '{print $2}' | xargs git update-index --no-skip-worktree
+}
+
+main() {
+  case $1 in
+    "-x")
+      clone_cv32e40x
+      ;;
+    "--clone")
+      clone
+      ;;
+    "--ignore")
+      ignore_cloned_directory
+      ;;
+    "--unignore")
+      unignore_cloned_directory
+      ;;
+    *)
+      usage
+      ;;
+  esac
+}
+
+main "$@"
