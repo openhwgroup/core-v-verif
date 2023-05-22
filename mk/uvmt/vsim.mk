@@ -135,6 +135,9 @@ ifeq ($(call IS_YES,$(USE_ISS)),YES)
 VLOG_FLAGS += +define+USE_ISS
 VLOG_FLAGS += +define+USE_IMPERASDV
 VLOG_FILE_LIST_IDV = -f $(DV_UVMT_PATH)/imperas_dv.flist
+ifeq ($(call IS_YES,$(COV)),YES)
+VLOG_FLAGS += +define+IMPERAS_COV
+endif
 endif
 
 ###############################################################################
@@ -169,6 +172,9 @@ ifeq ($(call IS_YES,$(USE_ISS)),YES)
 VSIM_FLAGS += +USE_ISS
 VSIM_FLAGS += +USE_IMPERASDV
 VSIM_FLAGS += -sv_lib $(basename $(IMPERAS_DV_MODEL))
+ifeq ($(call IS_YES,$(COV)),YES)
+VSIM_FLAGS += +TRACE2COV_ENABLE=1
+endif
 else
 VSIM_FLAGS += +DISABLE_OVPSIM
 endif
