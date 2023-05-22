@@ -123,22 +123,17 @@ class riscv_instr extends uvm_object;
       if (!cfg.enable_sfence && instr_name == SFENCE_VMA) continue;
       if (cfg.no_fence && (instr_name inside {FENCE, FENCE_I, SFENCE_VMA})) continue;
       if ((instr_inst.group inside {supported_isa}) &&
-          !(cfg.disable_compressed_instr &&
-            (instr_inst.group inside {RV32C, RV64C, RV32DC, RV32FC, RV128C})) &&
-          !(!cfg.enable_floating_point &&
-            (instr_inst.group inside {RV32F, RV64F, RV32D, RV64D})) &&
-          !(!cfg.enable_vector_extension &&
-            (instr_inst.group inside {RVV})) &&
-          !(cfg.vector_instr_only &&
-            !(instr_inst.group inside {RVV})) &&
-          !(!cfg.enable_fp_in_x_regs &&
-            (instr_inst.group inside {RV32ZFINX}))
-          ) begin
+          !(cfg.disable_compressed_instr && (instr_inst.group inside {RV32C, RV64C, RV32DC, RV32FC, RV128C})) &&
+          !(!cfg.enable_floating_point && (instr_inst.group inside {RV32F, RV64F, RV32D, RV64D})) &&
+          !(!cfg.enable_vector_extension && (instr_inst.group inside {RVV})) &&
+          !(cfg.vector_instr_only && !(instr_inst.group inside {RVV})) &&
+          !(!cfg.enable_fp_in_x_regs && (instr_inst.group inside {RV32ZFINX}))
+      ) begin
         instr_category[instr_inst.category].push_back(instr_name);
         instr_group[instr_inst.group].push_back(instr_name);
         instr_names.push_back(instr_name);
       end
-    end
+    end // foreach
     build_basic_instruction_list(cfg);
     create_csr_filter(cfg);
   endfunction : create_instr_list
@@ -355,9 +350,13 @@ class riscv_instr extends uvm_object;
 
   virtual function void extend_imm();
     bit sign;
-    imm = imm << (32 - imm_len);
-    sign = imm[31];
-    imm = imm >> (32 - imm_len);
+    if (format == U_FORMAT) begin
+      imm = imm >> (32 - imm_len); // remove lower unused-bits based on len
+    end else begin
+      imm = imm << (32 - imm_len); // remove upper unused-bits based on len
+      sign = imm[31];
+      imm = imm >> (32 - imm_len);
+    end
     // Signed extension
     if (sign && !((format == U_FORMAT) || (imm_type inside {UIMM, NZUIMM}))) begin
       imm = imm_mask | imm;
