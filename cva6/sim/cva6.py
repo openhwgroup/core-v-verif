@@ -100,7 +100,7 @@ def parse_iss_yaml(iss, iss_yaml, isa, target, setting_dir, debug_cmd):
   for entry in yaml_data:
     if entry['iss'] == iss:
       logging.info("Found matching ISS: %s" % entry['iss'])
-      m = re.search(r"rv(?P<xlen>[0-9]+?)(?P<variant>[a-z]+?)$", isa)
+      m = re.search(r"rv(?P<xlen>[0-9]+?)(?P<variant>[a-z_]+?)$", isa)
       if m: logging.info("ISA %0s" % isa)
       else: logging.error("Illegal ISA %0s" % isa)
 
@@ -829,6 +829,8 @@ def setup_parser():
                       help="Run test N times with random seed")
   parser.add_argument("--sv_seed", type=str, default="1",
                       help="Run test with a specific seed")
+  parser.add_argument("--en_arch_tests", type=bool, default=0,
+                      help="Set the \'march\' flag of toolchain with right ISA string")
   return parser
 
 
@@ -1122,8 +1124,11 @@ def main():
                                       args.core_setting_dir, args.debug)
               # path_asm_test is an assembly file
               elif os.path.isfile(path_asm_test):
+                if(args.en_arch_tests):
+                  args.isa = test_entry.get('march', '')
+                  args.mabi = test_entry.get('mabi', '')
                 run_assembly(path_asm_test, args.iss_yaml, args.isa, args.target, args.mabi, gcc_opts,
-                             args.iss, output_dir, args.core_setting_dir, args.debug, args.linker)
+                              args.iss, output_dir, args.core_setting_dir, args.debug, args.linker)
               else:
                 if not args.debug:
                   logging.error('%s does not exist' % path_asm_test)
