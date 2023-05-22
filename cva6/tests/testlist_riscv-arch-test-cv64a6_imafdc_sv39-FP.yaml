@@ -1,0 +1,363 @@
+# Original Author: Abdul Wadood (@abdulwadoodd) - 10xEngineers
+
+# Double Precision Floating Point 
+- test: rv64i_m-fcvt.d.l_b25-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.d.l_b25-01.S
+
+- test: rv64i_m-fcvt.d.l_b26-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.d.l_b26-01.S
+
+- test: rv64i_m-fcvt.d.lu_b25-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.d.lu_b25-01.S
+
+- test: rv64i_m-fcvt.d.lu_b26-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.d.lu_b26-01.S
+
+- test: rv64i_m-fcvt.l.d_b1-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.l.d_b1-01.S
+
+- test: rv64i_m-fcvt.l.d_b22-01.S
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.l.d_b22-01.S
+
+- test: rv64i_m-fcvt.l.d_b23-01.S
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.l.d_b23-01.S
+
+- test: rv64i_m-fcvt.l.d_b24-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.l.d_b24-01.S
+
+- test: rv64i_m-fcvt.l.d_b27-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.l.d_b27-01.S
+
+- test: rv64i_m-fcvt.l.d_b28-01 # This test fails
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.l.d_b28-01.S
+  
+- test: rv64i_m-fcvt.l.d_b29-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.l.d_b29-01.S
+
+- test: rv64i_m-fcvt.lu.d_b1-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.lu.d_b1-01.S
+
+- test: rv64i_m-fcvt.lu.d_b22-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.lu.d_b22-01.S
+
+- test: rv64i_m-fcvt.lu.d_b23-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.lu.d_b23-01.S
+
+- test: rv64i_m-fcvt.lu.d_b24-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.lu.d_b24-01.S
+  
+- test: rv64i_m-fcvt.lu.d_b27-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.lu.d_b27-01.S
+
+- test: rv64i_m-fcvt.lu.d_b28-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.lu.d_b28-01.S
+
+- test: rv64i_m-fcvt.lu.d_b29-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.lu.d_b29-01.S
+
+- test: rv64i_m-fmv.d.x_b25-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fmv.d.x_b25-01.S
+
+- test: rv64i_m-fmv.d.x_b26-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fmv.d.x_b26-01.S
+
+- test: rv64i_m-fmv.x.d_b1-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fmv.x.d_b1-01.S
+
+- test: rv64i_m-fmv.x.d_b22-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fmv.x.d_b22-01.S
+
+- test: rv64i_m-fmv.x.d_b23-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fmv.x.d_b23-01.S
+
+- test: rv64i_m-fmv.x.d_b24-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fmv.x.d_b24-01.S
+
+- test: rv64i_m-fmv.x.d_b27-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fmv.x.d_b27-01.S
+
+- test: rv64i_m-fmv.x.d_b28-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fmv.x.d_b28-01.S
+
+- test: rv64i_m-fmv.x.d_b29-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fmv.x.d_b29-01.S
+
+# Single Precision Floating Point
+- test: rv64i_m-fcvt.l.s_b1-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.l.s_b1-01.S
+
+- test: rv64i_m-fcvt.l.s_b22-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.l.s_b22-01.S
+
+- test: rv64i_m-fcvt.l.s_b23-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.l.s_b23-01.S
+
+- test: rv64i_m-fcvt.l.s_b24-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.l.s_b24-01.S
+
+- test: rv64i_m-fcvt.l.s_b27-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.l.s_b27-01.S
+
+- test: rv64i_m-fcvt.l.s_b28-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.l.s_b28-01.S
+
+- test: rv64i_m-fcvt.l.s_b29-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.l.s_b29-01.S
+
+- test: rv64i_m-fcvt.lu.s_b1-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.lu.s_b1-01.S
+
+- test: rv64i_m-fcvt.lu.s_b22-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.lu.s_b22-01.S
+
+- test: rv64i_m-fcvt.lu.s_b23-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.lu.s_b23-01.S
+
+- test: rv64i_m-fcvt.lu.s_b24-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.lu.s_b24-01.S
+
+- test: rv64i_m-fcvt.lu.s_b27-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.lu.s_b27-01.S
+
+- test: rv64i_m-fcvt.lu.s_b28-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.lu.s_b28-01.S
+
+- test: rv64i_m-fcvt.lu.s_b29-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.lu.s_b29-01.S
+
+- test: rv64i_m-fcvt.s.l_b25-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.s.l_b25-01.S
+
+- test: rv64i_m-fcvt.s.l_b26-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.s.l_b26-01.S
+
+- test: rv64i_m-fcvt.s.lu_b25-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.s.lu_b25-01.S
+
+- test: rv64i_m-fcvt.s.lu_b26-01
+  iterations: 1
+  path_var: TESTS_PATH
+  march: rv64ifd_zicsr
+  mabi: lp64
+  gcc_opts: "-DXLEN=64  -DFLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/F/src/fcvt.s.lu_b26-01.S
