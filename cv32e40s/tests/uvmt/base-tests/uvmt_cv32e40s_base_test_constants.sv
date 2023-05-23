@@ -179,6 +179,10 @@ parameter logic CLIC = CORE_PARAM_CLIC;
    // Sat from the include file
 `elsif PARAM_SET_1
    // Sat from the include file
+`elsif LFSR_CFG_0
+   parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR0_CFG = cv32e40s_pkg::lfsr_cfg_t'{ coeffs : 32'h80000057, default_seed : 32'habbacafe };
+   parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR1_CFG = cv32e40s_pkg::lfsr_cfg_t'{ coeffs : 32'h80000062, default_seed : 32'hbeef1234 };
+   parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR2_CFG = cv32e40s_pkg::lfsr_cfg_t'{ coeffs : 32'h8000007a, default_seed : 32'ha5a5a5a5 };
 `else
    parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR0_CFG = cv32e40s_pkg::LFSR_CFG_DEFAULT;
    parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR1_CFG = cv32e40s_pkg::LFSR_CFG_DEFAULT;

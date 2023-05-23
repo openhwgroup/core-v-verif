@@ -63,7 +63,9 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     input logic if_hint,
     input logic if_dummy,
     input logic kill_if,
+    input logic ptr_in_if,
     input logic if_valid,
+    input logic if_first_op,
 
     //ID:
     input logic [31:0] operand_a,
@@ -689,32 +691,21 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   sequence seq_dummy_instr_within_normal_valid_instructions (num_valid_instructions);
     @(posedge clk_i)
 
-    if_dummy
-    && if_valid
-    && id_ready
-
-    ##1 (if_valid
-    && id_ready)[->0:(num_valid_instructions)];
+    // Reset the checker every time we see a dummy instruction
+    first_match(
+      if_dummy
+      within
+      // Within n+1 issued instruction, there should be a dummy instruction (dummy counts as issued)
+      (if_valid && if_first_op && id_ready && !ptr_in_if)[->0:(num_valid_instructions + 1)]
+    );
   endsequence
 
 
   property p_xsecure_dummy_instr_frequency(num_normal_valid_instructions_per_dummy_instruction, logic [3:0] rnddummyfreq_reg_value_min, logic [3:0] rnddummyfreq_reg_value_max);
+    disable iff (!rnddummy_enabled || dummy_freq < rnddummyfreq_reg_value_min || dummy_freq > rnddummyfreq_reg_value_max)
 
-    (rnddummy_enabled
-
-    && dummy_freq >= rnddummyfreq_reg_value_min
-    && dummy_freq <= rnddummyfreq_reg_value_max
-    && allow_dummy
-
-    && !debug_mode)
-
-    throughout (if_valid
-    && id_ready)[->(num_normal_valid_instructions_per_dummy_instruction)+1]
-
-    |->
-    //Verify that during the <num_normal_valid_instructions_per_dummy_instruction> number of instructions, there was at least one dummy instruction:
-    seq_dummy_instr_within_normal_valid_instructions(num_normal_valid_instructions_per_dummy_instruction).triggered;
-
+    // This should always hold, unless disabled by any of the clauses in the disable iff-statement above
+    seq_dummy_instr_within_normal_valid_instructions(num_normal_valid_instructions_per_dummy_instruction);
   endproperty
 
 
