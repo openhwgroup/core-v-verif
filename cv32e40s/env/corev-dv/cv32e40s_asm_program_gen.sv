@@ -30,6 +30,43 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
     super.new(name);
   endfunction
 
+  virtual function void gen_program_header();
+    string instr[];
+    cv32e40s_instr_gen_config corev_cfg;
+    `DV_CHECK_FATAL($cast(corev_cfg, cfg), "Could not cast cfg into corev_cfg")
+
+    super.gen_program_header();
+
+    if (corev_cfg.enable_dummy) begin
+      instr = {
+        // SECURESEED0
+        $sformatf("add x%0d, x0, x0", cfg.gpr[0]),
+        $sformatf("lui x%0d, 0x80000", cfg.gpr[0]),
+        $sformatf("addi x%0d, x%0d, 0x57", cfg.gpr[0], cfg.gpr[0]),
+        $sformatf("csrrw x0, 0xbf9, x%0d", cfg.gpr[0]),
+
+        // SECURESEED1
+        $sformatf("add x%0d, x0, x0", cfg.gpr[0]),
+        $sformatf("lui x%0d, 0x80000", cfg.gpr[0]),
+        $sformatf("addi x%0d, x%0d, 0x62", cfg.gpr[0], cfg.gpr[0]),
+        $sformatf("csrrw x0, 0xbfa, x%0d", cfg.gpr[0]),
+
+        // SECURESEED2
+        $sformatf("add x%0d, x0, x0", cfg.gpr[0]),
+        $sformatf("lui x%0d, 0x80000", cfg.gpr[0]),
+        $sformatf("addi x%0d, x%0d, 0x7a", cfg.gpr[0], cfg.gpr[0]),
+        $sformatf("csrrw x0, 0xbfc, x%0d", cfg.gpr[0]),
+
+        // CPUCTRL
+        $sformatf("add x%0d, x0, x0", cfg.gpr[0]),
+        $sformatf("lui x%0d, 0xf0", cfg.gpr[0]),
+        $sformatf("addi x%0d, x%0d, 0x2", cfg.gpr[0], cfg.gpr[0]),
+        $sformatf("csrrs x0, 0xbf0, x%0d", cfg.gpr[0])
+      };
+      gen_section(get_label("enable_dummy_instr", hart), instr);
+    end
+  endfunction : gen_program_header
+
   virtual function void trap_vector_init(int hart);
     string instr[];
     privileged_reg_t trap_vec_reg;
@@ -150,18 +187,9 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
             $sformatf("la x%0d, pop_gpr_instr_fault_handler", cfg.gpr[0]),
             $sformatf("jalr x%0d, x%0d", 0, cfg.gpr[0]),
 
-            // original handler code start
-            $sformatf("non_pma_handler_instr_fault: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC),
-
-            $sformatf("lw  x%0d, 0(x%0d)", cfg.gpr[1], cfg.gpr[0]),
-            $sformatf("andi x%0d, x%0d, 0x3", cfg.gpr[1], cfg.gpr[1]),
-            $sformatf("addi x%0d, zero, 0x3", cfg.gpr[2]),
-            $sformatf("bne x%0d, x%0d, 1f", cfg.gpr[1], cfg.gpr[2]),
-            $sformatf("addi  x%0d, x%0d, 2", cfg.gpr[0], cfg.gpr[0]),
-            $sformatf("1: addi  x%0d, x%0d, 2", cfg.gpr[0], cfg.gpr[0]),
-
-            $sformatf("csrw  0x%0x, x%0d", MEPC, cfg.gpr[0]),
-            // original handler code end
+            // Do not increment MEPC in case of an instruction bus fault, retry
+            // the instruction fetch, as errors are random
+            $sformatf("non_pma_handler_instr_fault:"),
 
             $sformatf("pop_gpr_instr_fault_handler:"),
             // Swap back stack pointer to restore condition prior to handler

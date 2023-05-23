@@ -4,7 +4,7 @@
 module uvmt_cv32e40s_pmprvfi_assert
   import cv32e40s_pkg::*;
   import uvm_pkg::*;
-  import uvmt_cv32e40s_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
   import uvma_rvfi_pkg::*;
 #(
   parameter int  PMP_GRANULARITY = 0,
@@ -193,8 +193,8 @@ module uvmt_cv32e40s_pmprvfi_assert
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
     .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
-    .DM_REGION_START  (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
-    .DM_REGION_END    (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END)
+    .DM_REGION_START  (CORE_PARAM_DM_REGION_START),
+    .DM_REGION_END    (CORE_PARAM_DM_REGION_END)
   ) model_instr_i (
     .clk   (clk_i),
     .rst_n (rst_ni),
@@ -214,8 +214,8 @@ module uvmt_cv32e40s_pmprvfi_assert
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
     .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
-    .DM_REGION_START  (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
-    .DM_REGION_END    (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END)
+    .DM_REGION_START  (CORE_PARAM_DM_REGION_START),
+    .DM_REGION_END    (CORE_PARAM_DM_REGION_END)
   ) model_data_i (
     .clk   (clk_i),
     .rst_n (rst_ni),
@@ -235,8 +235,8 @@ module uvmt_cv32e40s_pmprvfi_assert
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
     .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
-    .DM_REGION_START  (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
-    .DM_REGION_END    (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END)
+    .DM_REGION_START  (CORE_PARAM_DM_REGION_START),
+    .DM_REGION_END    (CORE_PARAM_DM_REGION_END)
   ) model_upperinstr_i (
     .clk   (clk_i),
     .rst_n (rst_ni),
@@ -256,8 +256,8 @@ module uvmt_cv32e40s_pmprvfi_assert
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
     .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
-    .DM_REGION_START  (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_START),
-    .DM_REGION_END    (uvmt_cv32e40s_pkg::CORE_PARAM_DM_REGION_END)
+    .DM_REGION_START  (CORE_PARAM_DM_REGION_START),
+    .DM_REGION_END    (CORE_PARAM_DM_REGION_END)
   ) model_upperdata_i (
     .clk   (clk_i),
     .rst_n (rst_ni),
@@ -294,11 +294,11 @@ module uvmt_cv32e40s_pmprvfi_assert
     (rvfi_mode == MODE_U)  &&
     (rvfi_insn[31:20] inside {['h3A0 : 'h3EF], 'h747, 'h757})  //PMP regs
     |->
-    is_rvfi_exc_ill_instr           ^
-    is_rvfi_exc_instr_bus_fault     ^
-    is_rvfi_exc_instr_chksum_fault  ^
-    is_rvfi_exc_instr_acc_fault     ^
-    is_rvfi_dbg_trigger             ;
+    is_rvfi_exc_ill_instr ||
+    is_rvfi_exc_instr_bus_fault ||
+    is_rvfi_exc_instr_chksum_fault ||
+    is_rvfi_exc_instr_acc_fault ||
+    is_rvfi_dbg_trigger;
   endproperty : p_csrs_mmode_only
 
   a_csrs_mmode_only: assert property (

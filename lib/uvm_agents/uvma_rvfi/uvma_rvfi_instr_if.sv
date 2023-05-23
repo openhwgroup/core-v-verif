@@ -24,8 +24,11 @@
  */
 interface uvma_rvfi_instr_if_t
   import uvma_rvfi_pkg::*;
-  #(int ILEN=DEFAULT_ILEN,
-    int XLEN=DEFAULT_XLEN)
+
+  import support_pkg::*;
+
+  #(int ILEN=uvma_rvfi_pkg::DEFAULT_ILEN,
+    int XLEN=uvma_rvfi_pkg::DEFAULT_XLEN)
   (
     input logic                      clk,
     input logic                      reset_n,
@@ -74,17 +77,26 @@ interface uvma_rvfi_instr_if_t
     input logic [NMEM*3-1:0]         mem_prot
   );
 
+  typedef logic[4*NMEM-1:0] mem_mask_t;
+
   // -------------------------------------------------------------------
   // Local param
   // -------------------------------------------------------------------
   //instruction (rvfi_instr) masks
-  localparam INSTR_MASK_FULL        = 32'h FFFF_FFFF;
-  localparam INSTR_MASK_R_TYPE      = 32'h FE00_707F;
-  localparam INSTR_MASK_I_S_B_TYPE  = 32'h 0000_707F;
-  localparam INSTR_MASK_U_J_TYPE    = 32'h 0000_007F;
-  localparam INSTR_MASK_CSRADDR     = 32'h FFF0_0000;
-  localparam INSTR_MASK_CSRUIMM     = 32'h 000F_8000;
-  localparam INSTR_MASK_CMPR        = 32'h 0000_E003;
+
+  localparam INSTR_MASK_DIV_REM     = 32'h FE00_607F;
+  localparam INSTR_MASK_FULL          = 32'h FFFF_FFFF;
+  localparam INSTR_MASK_R_TYPE        = 32'h FE00_707F;
+  localparam INSTR_MASK_I_S_B_TYPE    = 32'h 0000_707F;
+  localparam INSTR_MASK_U_J_TYPE      = 32'h 0000_007F;
+  localparam INSTR_MASK_CSRADDR       = 32'h FFF0_0000;
+  localparam INSTR_MASK_CSRUIMM       = 32'h 000F_8000;
+  localparam INSTR_MASK_CMPR          = 32'h FFFF_E003;
+  localparam INSTR_MASK_OPCODE        = 32'h 0000_007F;
+  localparam INSTR_MASK_ZC_PUSHPOP    = 32'h FFFF_FF03;
+  localparam INSTR_MASK_ZC_CLBU_CSB   = 32'h FFFF_FC03;
+  localparam INSTR_MASK_CLH_CLHU_CSH  = 32'b 1111_1111_1111_1111_1111_1100_0100_0011;
+
 
   //instruction (rvfi_instr) comparison values
   localparam INSTR_OPCODE_DRET      = 32'h 7B20_0073;
@@ -97,6 +109,9 @@ interface uvma_rvfi_instr_if_t
   localparam INSTR_OPCODE_ECALL     = 32'h 0000_0073;
   localparam INSTR_OPCODE_CSLLI     = 32'h 0000_0002;
 
+  localparam INSTR_OPCODE_DIV       = 32'h 0200_4033;
+  localparam INSTR_OPCODE_REM       = 32'h 0200_6033;
+
   localparam INSTR_OPCODE_CSRRW     = 32'h 0000_1073;
   localparam INSTR_OPCODE_CSRRS     = 32'h 0000_2073;
   localparam INSTR_OPCODE_CSRRC     = 32'h 0000_3073;
@@ -104,7 +119,18 @@ interface uvma_rvfi_instr_if_t
   localparam INSTR_OPCODE_CSRRSI    = 32'h 0000_6073;
   localparam INSTR_OPCODE_CSRRCI    = 32'h 0000_7073;
 
+  localparam INSTR_OPCODE_BEQ       = 32'h0000_0063;
+  localparam INSTR_OPCODE_BNE       = 32'h0000_1063;
+  localparam INSTR_OPCODE_BLT       = 32'h0000_4063;
+  localparam INSTR_OPCODE_BGE       = 32'h0000_5063;
+  localparam INSTR_OPCODE_BLTU      = 32'h0000_6063;
+  localparam INSTR_OPCODE_BGEU      = 32'h0000_7063;
+
+  localparam INSTR_OPCODE_CBEQZ  = 32'h 0000_C001;
+  localparam INSTR_OPCODE_CBNEZ  = 32'h 0000_E001;
+
   localparam INSTR_MASK_PUSHPOP   = 32'b 11111111_11111111_111_11111_0000_00_11;
+
   localparam INSTR_OPCODE_PUSH    = 32'b 00000000_00000000_101_11000_0000_00_10;
   localparam INSTR_OPCODE_POP     = 32'b 00000000_00000000_101_11010_0000_00_10;
   localparam INSTR_OPCODE_POPRET  = 32'b 00000000_00000000_101_11110_0000_00_10;
@@ -118,6 +144,29 @@ interface uvma_rvfi_instr_if_t
   localparam INSTR_MASK_FENCEI   = 32'b 00000000000000000_111_00000_1111111;
   localparam INSTR_OPCODE_FENCEI = 32'b 00000000000000000_001_00000_0001111;
 
+  localparam INSTR_OPCODE_LOAD    = 32'b 0000_0000_0000_0000_0000_0000_0000_0011;
+  localparam INSTR_OPCODE_STORE  = 32'b 00000000_00000000_00000000_0_0100011;
+
+  localparam INSTR_OPCODE_LH    = 32'b00000000000000000_001_00000_0000011;
+  localparam INSTR_OPCODE_LHU   = 32'b00000000000000000_101_00000_0000011;
+  localparam INSTR_OPCODE_LW    = 32'b00000000000000000_010_00000_0000011;
+  localparam INSTR_OPCODE_SH    = 32'b00000000000000000_001_00000_0100011;
+  localparam INSTR_OPCODE_SHU   = 32'b00000000000000000_001_00000_0100011;
+  localparam INSTR_OPCODE_SW    = 32'b00000000000000000_010_00000_0100011;
+  localparam INSTR_OPCODE_CLW   = 32'b0000000000000000_010_000000000_0000;
+  localparam INSTR_OPCODE_CSW   = 32'b0000000000000000_110_000000000_0000;
+  localparam INSTR_OPCODE_CLWSP = 32'b0000000000000000_010_000000000_0010;
+  localparam INSTR_OPCODE_CSWSP = 32'b0000000000000000_110_000000000_0010;
+  localparam INSTR_OPCODE_CSH   = 32'b0000000000000000_100_011_000000_0010;
+  localparam INSTR_OPCODE_CSB   = 32'b0000000000000000_100_010_000000_0010;
+  localparam INSTR_OPCODE_CLBU  = 32'b 00000000_00000000_100_000_000_00_000_00;
+  localparam INSTR_OPCODE_CLHU  = 32'b 00000000_00000000_100_001_000_0_0_000_00;
+  localparam INSTR_OPCODE_CLH   = 32'b 00000000_00000000_100_001_000_1_0_000_00;
+
+  localparam INSTR_OPCODE_CMPOP      = 32'b 00000000_00000000_101_11010_0000_00_10;
+  localparam INSTR_OPCODE_CMPOPRET   = 32'b 00000000_00000000_101_11110_0000_00_10;
+  localparam INSTR_OPCODE_CMPOPRETZ  = 32'b 00000000_00000000_101_11100_0000_00_10;
+
   //positions
   localparam int INSTR_CSRADDR_POS  = 20;
   localparam int INSTR_CSRUIMM_POS  = 15;
@@ -127,12 +176,13 @@ interface uvma_rvfi_instr_if_t
 
 
 
-
   // -------------------------------------------------------------------
   // Local variables
   // -------------------------------------------------------------------
-  bit   [CYCLE_CNT_WL-1:0]          cycle_cnt = 0;
-  int unsigned                      nmi_instr_cnt = 0;
+  bit   [CYCLE_CNT_WL-1:0]          cycle_cnt       = 0;
+  int unsigned                      nmi_instr_cnt   = 0; // number of instructions after nmi
+  int unsigned                      irq_cnt         = 0; // number of taken interrupts
+  int unsigned                      single_step_cnt = 0; // number of instructions stepped
 
   logic [(32)-1:0][XLEN-1:0]        gpr_rdata_array;
   logic [(32)-1:0]                  gpr_rmask_array;
@@ -144,7 +194,9 @@ interface uvma_rvfi_instr_if_t
   logic [NMEM-1:0][XLEN-1:0]        mem_wdata_array;
   logic [NMEM-1:0][(XLEN/8)-1:0]    mem_wmask_array;
 
+  logic [(5)-1:0]                   csri_uimm;
   logic [5:0]                       cslli_shamt;
+  logic [11:0]                      csr_addr;
 
   logic                             is_dret;
   logic                             is_mret;
@@ -155,6 +207,9 @@ interface uvma_rvfi_instr_if_t
   logic                             is_ebreak_compr;
   logic                             is_ebreak_noncompr;
   logic                             is_ecall;
+  logic                             is_branch;
+  logic                             is_div;
+  logic                             is_rem;
   logic                             is_cslli;
   logic                             is_nmi;
   logic                             is_compressed;
@@ -172,9 +227,11 @@ interface uvma_rvfi_instr_if_t
   logic                             is_pma_fault;
   logic                             is_fencefencei;
   logic [31:0]                      rvfi_mem_addr_word0highbyte;
-
   logic                             is_nmi_triggered = 0;
+  logic [4*NMEM-1:0]                instr_mem_rmask;
+  logic [4*NMEM-1:0]                instr_mem_wmask;
 
+  asm_t instr_asm;
   // -------------------------------------------------------------------
   // Begin module code
   // -------------------------------------------------------------------
@@ -194,11 +251,15 @@ interface uvma_rvfi_instr_if_t
   assign {>>{mem_wdata_array}} = rvfi_mem_wdata;
   assign {>>{mem_wmask_array}} = rvfi_mem_wmask;
 
-  assign cslli_shamt = {rvfi_i.rvfi_insn[12], rvfi_i.rvfi_insn[6:2]};
+  assign csri_uimm   = rvfi_insn[19:15];
+  assign cslli_shamt = {rvfi_insn[12], rvfi_insn[6:2]};
+  assign csr_addr    = rvfi_insn[31:20];
 
   always @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
       nmi_instr_cnt    <= 0;
+      single_step_cnt  <= 0;
+      irq_cnt          <= 0;
       is_nmi_triggered <= 0;
     end else begin
       // Detect taken nmi or pending nmi and start counting
@@ -206,12 +267,16 @@ interface uvma_rvfi_instr_if_t
       if (is_nmi_triggered && rvfi_valid) begin
         nmi_instr_cnt <= nmi_instr_cnt + 1;
       end
+      single_step_cnt <= (rvfi_dbg[2:0] == 3'h4 && rvfi_valid) ? single_step_cnt + 1 : single_step_cnt;
+      irq_cnt <= ((rvfi_intr.intr == 1) && (rvfi_intr.interrupt == 1) && rvfi_valid) ? irq_cnt + 1 : irq_cnt;
     end
     cycle_cnt <= cycle_cnt + 1;
   end
 
   // assigning signal aliases to helper functions
   always_comb begin
+    instr_asm           = decode_instr(rvfi_insn);
+
     is_dret             <= is_dret_f();
     is_mret             <= is_mret_f();
     is_uret             <= is_uret_f();
@@ -221,6 +286,9 @@ interface uvma_rvfi_instr_if_t
     is_ebreak_compr     <= is_ebreak_compr_f();
     is_ebreak_noncompr  <= is_ebreak_noncompr_f();
     is_ecall            <= is_ecall_f();
+    is_branch           <= is_branch_f();
+    is_div              <= is_div_f();
+    is_rem              <= is_rem_f();
     is_cslli            <= is_cslli_f();
     is_nmi              <= is_nmi_f();
     is_compressed       <= is_compressed_f();
@@ -238,6 +306,8 @@ interface uvma_rvfi_instr_if_t
     is_pma_fault        <= is_pma_fault_f();
     is_fencefencei      <= is_fencefencei_f();
     rvfi_mem_addr_word0highbyte <= rvfi_mem_addr_word0highbyte_f();
+    instr_mem_rmask     <= instr_mem_rmask_f();
+    instr_mem_wmask     <= instr_mem_wmask_f();
   end
 
   /**
@@ -300,8 +370,8 @@ interface uvma_rvfi_instr_if_t
   // Usage: instr_mask sets the parts of the instruction you want to compare,
   //        instr_ref is the reference to match
   function automatic logic match_instr(
-    logic [ DEFAULT_XLEN-1:0] instr_ref,
-    logic [ DEFAULT_XLEN-1:0] instr_mask
+    logic [ XLEN-1:0] instr_ref,
+    logic [ XLEN-1:0] instr_mask
   );
 
   return rvfi_valid && is_instr_bus_valid && ((rvfi_insn & instr_mask) == instr_ref);
@@ -312,8 +382,8 @@ interface uvma_rvfi_instr_if_t
   // Usage: instr_mask sets the parts of the instruction you want to compare,
   //        instr_ref is the reference to match
   function automatic logic match_instr_raw(
-    logic [ DEFAULT_XLEN-1:0] instr_ref,
-    logic [ DEFAULT_XLEN-1:0] instr_mask
+    logic [ XLEN-1:0] instr_ref,
+    logic [ XLEN-1:0] instr_mask
   );
 
   return rvfi_valid && ((rvfi_insn & instr_mask) == instr_ref);
@@ -321,7 +391,7 @@ interface uvma_rvfi_instr_if_t
   endfunction : match_instr_raw
 
 // Match instr types
-function automatic logic match_instr_r(logic [ DEFAULT_XLEN-1:0] instr_ref);
+function automatic logic match_instr_r(logic [ XLEN-1:0] instr_ref);
   return match_instr(instr_ref, INSTR_MASK_R_TYPE);
 endfunction : match_instr_r
 
@@ -333,7 +403,7 @@ function automatic logic match_instr_r_var(
   return match_instr_r({funct7, 10'b0, funct3, 5'b0, opcode});
 endfunction : match_instr_r_var
 
-function automatic logic match_instr_isb(logic [ DEFAULT_XLEN-1:0] instr_ref);
+function automatic logic match_instr_isb(logic [ XLEN-1:0] instr_ref);
   return match_instr(instr_ref, INSTR_MASK_I_S_B_TYPE);
 endfunction : match_instr_isb
 
@@ -344,7 +414,7 @@ function automatic logic match_instr_isb_var (
   return match_instr_isb({17'b0, funct3, 5'b0, opcode});
 endfunction : match_instr_isb_var
 
-function automatic logic match_instr_uj(logic [ DEFAULT_XLEN-1:0] instr_ref);
+function automatic logic match_instr_uj(logic [ XLEN-1:0] instr_ref);
   return  match_instr(instr_ref, INSTR_MASK_U_J_TYPE);
 endfunction : match_instr_uj
 
@@ -407,7 +477,7 @@ endfunction
 // input current value of the csr, and the csr address
 // NOTE: that this will work for CSRRW with unspecified csr address,
 // but CSRRS/CSRRC will give incorrect return values
-function automatic logic [DEFAULT_XLEN-1:0] csr_intended_wdata( logic [DEFAULT_XLEN-1:0] csr_rdata,
+function automatic logic [XLEN-1:0] csr_intended_wdata( logic [XLEN-1:0] csr_rdata,
                                                                 logic [11:0] csr_addr = 0);
   if (!is_csr_write(csr_addr)) begin
     return 0;
@@ -429,24 +499,24 @@ function automatic logic [DEFAULT_XLEN-1:0] csr_intended_wdata( logic [DEFAULT_X
 endfunction
 
 // Return wdata of register "gpr"
-function automatic logic [ DEFAULT_XLEN-1:0] get_gpr_wdata( int gpr);
-  return rvfi_gpr_wdata[gpr* DEFAULT_XLEN +: DEFAULT_XLEN];
+function automatic logic [ XLEN-1:0] get_gpr_wdata( int gpr);
+  return rvfi_gpr_wdata[gpr* XLEN +: XLEN];
 endfunction : get_gpr_wdata
 
 // Return rdata of register "gpr"
-function automatic logic [ DEFAULT_XLEN-1:0] get_gpr_rdata( int gpr);
-  return rvfi_gpr_rdata[gpr* DEFAULT_XLEN +: DEFAULT_XLEN];
+function automatic logic [ XLEN-1:0] get_gpr_rdata( int gpr);
+  return rvfi_gpr_rdata[gpr* XLEN +: XLEN];
 endfunction : get_gpr_rdata
 
 // Return valid data of memory transaction "txn"
-function automatic logic [ DEFAULT_XLEN-1:0] get_mem_data_word( int txn);
-  bit [ DEFAULT_XLEN-1:0] ret;
+function automatic logic [ XLEN-1:0] get_mem_data_word( int txn);
+  bit [ XLEN-1:0] ret;
 
-  for (int i = 0; i <  DEFAULT_XLEN/8; i++) begin
-    if (rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) + i]) begin
-      ret[i*8 +:8] = rvfi_mem_wdata[((txn* DEFAULT_XLEN) + (i*8)) +:8];
+  for (int i = 0; i <  XLEN/8; i++) begin
+    if (rvfi_mem_wmask[(txn* XLEN/8) + i]) begin
+      ret[i*8 +:8] = rvfi_mem_wdata[((txn* XLEN) + (i*8)) +:8];
     end else begin
-      ret[i*8 +:8] = rvfi_mem_rdata[((txn* DEFAULT_XLEN) + (i*8)) +:8];
+      ret[i*8 +:8] = rvfi_mem_rdata[((txn* XLEN) + (i*8)) +:8];
     end
   end
 
@@ -455,23 +525,23 @@ function automatic logic [ DEFAULT_XLEN-1:0] get_mem_data_word( int txn);
 endfunction : get_mem_data_word
 
 //Return addr of memory transaction "txn"
-function automatic logic [ DEFAULT_XLEN-1:0] get_mem_addr(int txn);
+function automatic logic [ XLEN-1:0] get_mem_addr(int txn);
 
-  return rvfi_mem_addr[txn* DEFAULT_XLEN +: DEFAULT_XLEN];
+  return rvfi_mem_addr[txn* XLEN +: XLEN];
 
 endfunction : get_mem_addr
 
 //Return rmask of memory transaction "txn"
-function automatic logic [( DEFAULT_XLEN/8)-1:0] get_mem_rmask(int txn);
+function automatic logic [( XLEN/8)-1:0] get_mem_rmask(int txn);
 
-  return rvfi_mem_rmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)];
+  return rvfi_mem_rmask[(txn* XLEN/8) +:( XLEN/8)];
 
 endfunction : get_mem_rmask
 
 //Return wmask of memory transaction "txn"
-function automatic logic [( DEFAULT_XLEN/8)-1:0] get_mem_wmask(int txn);
+function automatic logic [( XLEN/8)-1:0] get_mem_wmask(int txn);
 
-  return rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)];
+  return rvfi_mem_wmask[(txn* XLEN/8) +:( XLEN/8)];
 
 endfunction : get_mem_wmask
 
@@ -485,10 +555,10 @@ function automatic logic [1:0] check_mem_act(int txn);
   bit read = 0;
   bit write = 0;
 
-  if (rvfi_mem_rmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)]) begin
+  if (rvfi_mem_rmask[(txn* XLEN/8) +:( XLEN/8)]) begin
     read = 1;
   end
-  if (rvfi_mem_wmask[(txn* DEFAULT_XLEN/8) +:( DEFAULT_XLEN/8)]) begin
+  if (rvfi_mem_wmask[(txn* XLEN/8) +:( XLEN/8)]) begin
     write = 1;
   end
 
@@ -539,15 +609,34 @@ function automatic logic is_ecall_f();
   return match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);
 endfunction : is_ecall_f
 
+function logic is_branch_f(); //TODO
+  return match_instr(INSTR_OPCODE_BEQ, INSTR_MASK_I_S_B_TYPE) ||
+         match_instr(INSTR_OPCODE_BNE, INSTR_MASK_I_S_B_TYPE) ||
+         match_instr(INSTR_OPCODE_BLT, INSTR_MASK_I_S_B_TYPE) ||
+         match_instr(INSTR_OPCODE_BGE, INSTR_MASK_I_S_B_TYPE) ||
+         match_instr(INSTR_OPCODE_BLTU, INSTR_MASK_I_S_B_TYPE) ||
+         match_instr(INSTR_OPCODE_BGEU, INSTR_MASK_I_S_B_TYPE) ||
+         match_instr(INSTR_OPCODE_CBEQZ, INSTR_MASK_CMPR) ||
+         match_instr(INSTR_OPCODE_CBNEZ, INSTR_MASK_CMPR);
+endfunction : is_branch_f
+
+function logic is_div_f();
+  return match_instr(INSTR_OPCODE_DIV, INSTR_MASK_DIV_REM);
+endfunction : is_div_f
+
+function logic is_rem_f();
+  return match_instr(INSTR_OPCODE_REM, INSTR_MASK_DIV_REM);
+endfunction : is_rem_f
+
 function logic is_cslli_f();
   return match_instr(INSTR_OPCODE_CSLLI, INSTR_MASK_CMPR);
 endfunction : is_cslli_f
 
 function automatic logic is_pushpop_f();
-  return  match_instr(INSTR_OPCODE_PUSH,    INSTR_MASK_PUSHPOP)  ||
-          match_instr(INSTR_OPCODE_POP,     INSTR_MASK_PUSHPOP)  ||
-          match_instr(INSTR_OPCODE_POPRET,  INSTR_MASK_PUSHPOP)  ||
-          match_instr(INSTR_OPCODE_POPRETZ, INSTR_MASK_PUSHPOP);
+  return  match_instr(INSTR_OPCODE_PUSH,    INSTR_MASK_ZC_PUSHPOP)  ||
+          match_instr(INSTR_OPCODE_POP,     INSTR_MASK_ZC_PUSHPOP)  ||
+          match_instr(INSTR_OPCODE_POPRET,  INSTR_MASK_ZC_PUSHPOP)  ||
+          match_instr(INSTR_OPCODE_POPRETZ, INSTR_MASK_ZC_PUSHPOP);
 endfunction : is_pushpop_f
 
 function automatic logic is_tablejump_raw_f();
@@ -641,6 +730,187 @@ function automatic logic is_split_datatrans_f();
   return  is_mem_act && (low_addr[31:2] != high_addr[31:2]);
 endfunction : is_split_datatrans_f
 
+function logic [4*NMEM-1:0] instr_mem_rmask_f();
+  logic [NMEM-1:0][3:0] rmask;
+  logic [3:0] rlist;
+  rlist = rvfi_insn[7:4];
+
+  rmask[0][3] =
+    match_instr(INSTR_OPCODE_LW,        INSTR_MASK_I_S_B_TYPE)  ||
+    match_instr(INSTR_OPCODE_CLW,       INSTR_MASK_CMPR)        ||
+    match_instr(INSTR_OPCODE_CLWSP,     INSTR_MASK_CMPR)        ||
+    match_instr(INSTR_OPCODE_CMPOP,     INSTR_MASK_ZC_PUSHPOP)  ||
+    match_instr(INSTR_OPCODE_CMPOPRET,  INSTR_MASK_ZC_PUSHPOP)  ||
+    match_instr(INSTR_OPCODE_CMPOPRETZ, INSTR_MASK_ZC_PUSHPOP);
+
+  rmask[0][2] = rmask[0][3];
+
+  rmask[0][1] = rmask[0][2] ||
+    match_instr(INSTR_OPCODE_LH,        INSTR_MASK_I_S_B_TYPE)    ||
+    match_instr(INSTR_OPCODE_LHU,       INSTR_MASK_I_S_B_TYPE)    ||
+    match_instr(INSTR_OPCODE_CLHU,      INSTR_MASK_CLH_CLHU_CSH)  ||
+    match_instr(INSTR_OPCODE_CLH,       INSTR_MASK_CLH_CLHU_CSH);
+
+  rmask[0][0] = rmask[0][1] ||
+    match_instr(INSTR_OPCODE_LOAD,      INSTR_MASK_OPCODE)  ||
+    match_instr(INSTR_OPCODE_CLBU,      INSTR_MASK_ZC_CLBU_CSB);
+
+  if(rlist > 4 &&
+    (match_instr(INSTR_OPCODE_CMPOP,     INSTR_MASK_ZC_PUSHPOP) ||
+    match_instr(INSTR_OPCODE_CMPOPRET,  INSTR_MASK_ZC_PUSHPOP)  ||
+    match_instr(INSTR_OPCODE_CMPOPRETZ, INSTR_MASK_ZC_PUSHPOP))) begin
+
+    case (rlist)
+      5:  begin
+        rmask[1:0] = '1;
+        rmask[11:2] = '0;
+      end
+
+      6:  begin
+        rmask[2:0] = '1;
+        rmask[11:3] = '0;
+      end
+
+      7:  begin
+        rmask[3:0] = '1;
+        rmask[11:4] = '0;
+      end
+
+      8:  begin
+        rmask[4:0] = '1;
+        rmask[11:5] = '0;
+      end
+
+      9:  begin
+        rmask[5:0] = '1;
+        rmask[11:6] = '0;
+      end
+
+      10: begin
+        rmask[6:0] = '1;
+        rmask[11:7] = '0;
+      end
+
+      11: begin
+        rmask[7:0] = '1;
+        rmask[11:8] = '0;
+      end
+
+      12: begin
+        rmask[8:0] = '1;
+        rmask[11:9] = '0;
+      end
+
+      13: begin
+        rmask[9:0] = '1;
+        rmask[11:10] = '0;
+      end
+
+      14: begin
+        rmask[10:0] = '1;
+        rmask[11:11] = '0;
+      end
+
+      15: begin
+        rmask[11:0] = '1;
+      end
+
+      default: rmask = '0;
+    endcase
+  end
+  else begin
+    rmask[NMEM-1:1] = '0;
+  end
+  return mem_mask_t'(rmask);
+endfunction
+
+
+function logic [4*NMEM-1:0] instr_mem_wmask_f();
+  logic [NMEM-1:0][3:0] wmask;
+  logic [3:0] rlist;
+  rlist = rvfi_insn[7:4];
+
+  wmask[0][3] =
+    match_instr(INSTR_OPCODE_SW,      INSTR_MASK_I_S_B_TYPE) ||
+    match_instr(INSTR_OPCODE_CSW,     INSTR_MASK_CMPR)       ||
+    match_instr(INSTR_OPCODE_CSWSP,   INSTR_MASK_CMPR)       ||
+    match_instr(INSTR_OPCODE_PUSH,    INSTR_MASK_ZC_PUSHPOP);
+
+  wmask[0][2] = wmask[0][3];
+
+  wmask[0][1] = wmask[0][2] ||
+    match_instr(INSTR_OPCODE_SH,  INSTR_MASK_I_S_B_TYPE)  ||
+    match_instr(INSTR_OPCODE_CSH,    INSTR_MASK_CLH_CLHU_CSH);
+
+  wmask[0][0] = wmask[0][1] ||
+    match_instr(INSTR_OPCODE_STORE,    INSTR_MASK_OPCODE)   ||
+    match_instr(INSTR_OPCODE_CSB,      INSTR_MASK_ZC_CLBU_CSB);
+
+  if(rlist > 4 && match_instr(INSTR_OPCODE_PUSH, INSTR_MASK_ZC_PUSHPOP)) begin
+
+    case (rlist)
+      5:  begin
+        wmask[1:0] = '1;
+        wmask[11:2] = '0;
+      end
+
+      6:  begin
+        wmask[2:0] = '1;
+        wmask[11:3] = '0;
+      end
+
+      7:  begin
+        wmask[3:0] = '1;
+        wmask[11:4] = '0;
+      end
+
+      8:  begin
+        wmask[4:0] = '1;
+        wmask[11:5] = '0;
+      end
+
+      9:  begin
+        wmask[5:0] = '1;
+        wmask[11:6] = '0;
+      end
+
+      10: begin
+        wmask[6:0] = '1;
+        wmask[11:7] = '0;
+      end
+
+      11: begin
+        wmask[7:0] = '1;
+        wmask[11:8] = '0;
+      end
+
+      12: begin
+        wmask[8:0] = '1;
+        wmask[11:9] = '0;
+      end
+
+      13: begin
+        wmask[9:0] = '1;
+        wmask[11:10] = '0;
+      end
+
+      14: begin
+        wmask[10:0] = '1;
+        wmask[11:11] = '0;
+      end
+
+      15: begin
+        wmask[11:0] = '1;
+      end
+
+      default: wmask = '0;
+    endcase
+  end
+  else begin
+    wmask[NMEM-1:1] = '0;
+  end
+  return mem_mask_t'(wmask);
+endfunction
 
 endinterface : uvma_rvfi_instr_if_t
 

@@ -4,3 +4,4 @@ description: >
     Random debug generator test with ebreak in debug ROM supported
 plusargs: >
     +gen_random_debug
+cflags: -mno-relax

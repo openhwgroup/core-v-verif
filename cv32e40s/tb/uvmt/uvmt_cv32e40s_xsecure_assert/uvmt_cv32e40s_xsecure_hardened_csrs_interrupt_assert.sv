@@ -30,6 +30,8 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_interrupt_assert
     input logic alert_major,
 
     //CSRs:
+    input mcause_t mcause,
+    input logic [$bits(mcause_t)-1:0] mcause_shadow,
     input logic [31:0] mie,
     input mtvec_t mtvec,
 
@@ -51,6 +53,13 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_interrupt_assert
   property p_hardened_csr(csr, shadow);
     csr == ~shadow;
   endproperty
+
+  //MCAUSE
+  a_xsecure_hardened_csr_mcause: assert property (
+    p_hardened_csr(
+    mcause,
+    mcause_shadow)
+  ) else `uvm_error(info_tag, "The CSR MCAUSE is not shadowed.\n");
 
   //MTVEC
   a_xsecure_hardened_csr_mtvec: assert property (
@@ -76,6 +85,13 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_interrupt_assert
     alert_major;
 
   endproperty
+
+  //MCAUSE
+  a_glitch_xsecure_hardened_csr_mismatch_mcause: assert property (
+    p_hardened_csr_mismatch_sets_major_alert(
+    mcause,
+    mcause_shadow)
+  ) else `uvm_error(info_tag_glitch, "A mismatch between the CSR MCAUSE and its shadow does not set the major alert.\n");
 
   //MTVEC
   a_glitch_xsecure_hardened_csr_mismatch_mtvec: assert property (
