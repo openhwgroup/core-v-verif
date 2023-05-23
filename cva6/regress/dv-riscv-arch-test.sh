@@ -29,7 +29,8 @@ fi
 if ! [ -n "$DV_TESTLISTS" ]; then
   DV_TESTLISTS="../tests/testlist_riscv-arch-test-$DV_TARGET-IMC.yaml \
                 ../tests/testlist_riscv-arch-test-$DV_TARGET-FP.yaml \
-                ../tests/testlist_riscv-arch-test-$DV_TARGET-BitManip.yaml"
+                ../tests/testlist_riscv-arch-test-$DV_TARGET-BitManip.yaml \
+                ../tests/testlist_riscv-arch-test-$DV_TARGET-Privilege.yaml "
 fi
 
 cd cva6/sim
