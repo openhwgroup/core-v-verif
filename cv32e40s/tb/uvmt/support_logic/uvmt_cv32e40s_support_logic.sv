@@ -181,9 +181,9 @@ module uvmt_cv32e40s_support_logic
   logic [MAX_NUM_TRIGGERS-1:0] pc_addr_match;
   logic [MAX_NUM_TRIGGERS-1:0][4*MAX_MEM_ACCESS-1:0] mem_addr_match;
   logic [MAX_NUM_TRIGGERS-1:0] general_trigger_match_conditions;
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_load;
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_store;
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_execute;
+  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_load_array;
+  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_store_array;
+  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_execute_array;
 
   always @(posedge in_support_if.clk, negedge in_support_if.rst_n ) begin
     if(!in_support_if.rst_n) begin
@@ -262,14 +262,14 @@ module uvmt_cv32e40s_support_logic
         ((rvfi.is_mmode && tdata1_array[t][TDATA1_M2_M6_M_MODE]) ||
         (rvfi.is_umode && tdata1_array[t][TDATA1_M2_M6_U_MODE]));
 
-    assign trigger_match_execute[t] =
+    assign trigger_match_execute_array[t] =
       t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
         1'b0 :
         general_trigger_match_conditions[t] &&
         tdata1_array[t][TDATA1_EXECUTE] &&
         pc_addr_match[t];
 
-    assign trigger_match_load[t] =
+    assign trigger_match_load_array[t] =
       t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
         1'b0 :
         general_trigger_match_conditions[t] &&
@@ -277,7 +277,7 @@ module uvmt_cv32e40s_support_logic
         tdata1_array[t][TDATA1_LOAD] &&
         |(rvfi.instr_mem_rmask & mem_addr_match[t]);
 
-    assign trigger_match_store[t] =
+    assign trigger_match_store_array[t] =
       t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
         1'b0 :
         general_trigger_match_conditions[t] &&
@@ -291,9 +291,14 @@ module uvmt_cv32e40s_support_logic
   assign out_support_if.tdata2_array = tdata2_array;
 
   assign out_support_if.is_trigger_match_exception = |trigger_match_exception;
-  assign out_support_if.is_trigger_match_execute = |trigger_match_execute;
-  assign out_support_if.is_trigger_match_load = |trigger_match_load;
-  assign out_support_if.is_trigger_match_store = |trigger_match_store;
+  assign out_support_if.is_trigger_match_execute = |trigger_match_execute_array;
+  assign out_support_if.is_trigger_match_load = |trigger_match_load_array;
+  assign out_support_if.is_trigger_match_store = |trigger_match_store_array;
+
+  assign out_support_if.trigger_match_execute_array = trigger_match_execute_array;
+  assign out_support_if.trigger_match_load_array = trigger_match_load_array;
+  assign out_support_if.trigger_match_store_array = trigger_match_store_array;
+
 
   // Count "irq_ack"
 
