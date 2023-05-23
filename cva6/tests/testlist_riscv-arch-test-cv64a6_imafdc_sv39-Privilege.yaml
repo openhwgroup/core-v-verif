@@ -1,0 +1,131 @@
+# Original Author: Abdul Wadood (@abdulwadoodd) - 10xEngineers
+
+# fence.i
+- test: rv64i_m-Fencei
+  iterations: 1
+  march: rv64i_zifencei
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/Zifencei/src/Fencei.S
+
+# Privilege arch-tests
+- test: rv64i_m-ebreak
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/ebreak.S
+  
+- test: rv64i_m-ecall
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/ecall.S
+  
+- test: rv64i_m-misalign2-jalr-01
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign2-jalr-01.S
+  
+- test: rv64i_m-misalign-beq-01
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-beq-01.S
+  
+- test: rv64i_m-misalign-bge-01
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-bge-01.S
+  
+- test: rv64i_m-misalign-bgeu-01
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-bgeu-01.S
+  
+- test: rv64i_m-misalign-blt-01
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-blt-01.S
+  
+- test: rv64i_m-misalign-bltu-01
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-bltu-01.S
+  
+- test: rv64i_m-misalign-bne-01
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-bne-01.S
+  
+- test: rv64i_m-misalign-jal-01
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-jal-01.S
+  
+- test: rv64i_m-misalign-lh-01
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-lh-01.S
+  
+- test: rv64i_m-misalign-lhu-01
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-lhu-01.S
+  
+- test: rv64i_m-misalign-lw-01
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-lw-01.S
+
+- test: rv64i_m-misalign-sh-01
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-sh-01.S
+  
+- test: rv64i_m-misalign-sw-01
+  iterations: 0
+  march: rv64i_zicsr
+  mabi: lp64
+  path_var: TESTS_PATH
+  gcc_opts: "-DXLEN=64 -DTEST_CASE_1=True -Drvtest_mtrap_routine=True -I<path_var>/riscv-arch-test/riscv-test-suite/env/ -I<path_var>/riscv-arch-test/riscv-target/"
+  asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/privilege/src/misalign-sw-01.S
