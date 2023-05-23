@@ -104,6 +104,7 @@ class riscv_floating_point_instr extends riscv_instr;
       I_FORMAT: begin
         has_fs2 = 1'b0;
         if (category == LOAD) begin
+          has_rs1 = 1'b1;
           has_imm = 1'b1;
         end else if (instr_name inside {FMV_X_W, FMV_X_D, FCVT_W_S, FCVT_WU_S,
                                         FCVT_L_S, FCVT_LU_S, FCVT_L_D, FCVT_LU_D, FCVT_LU_S,
