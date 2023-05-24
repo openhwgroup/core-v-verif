@@ -278,6 +278,37 @@ module uvmt_cv32e40s_rvfi_assert
   end
 
 
+  // Loadstore Instructions
+
+  a_isload_required: assert property (
+    rvfi_if.rvfi_mem_rmask
+    |->
+    rvfi_if.is_load_instr
+  ) else `uvm_error(info_tag, "rmask comes from loads");
+
+  a_isload_demands: assert property (
+    rvfi_if.is_load_instr  &&
+    !rvfi_if.rvfi_trap
+    |->
+    rvfi_if.rvfi_mem_rmask
+  ) else `uvm_error(info_tag, "successful loads have rmask");
+
+  a_isstore_required: assert property (
+    rvfi_if.rvfi_mem_wmask
+    |->
+    rvfi_if.is_store_instr
+  ) else `uvm_error(info_tag, "wmask comes from stores");
+
+  a_isstore_demands: assert property (
+    rvfi_if.is_store_instr  &&
+    !rvfi_if.rvfi_trap
+    |->
+    rvfi_if.rvfi_mem_wmask
+  ) else `uvm_error(info_tag, "successful stores have wmask");
+
+  //TODO:ERROR:silabs-robin  "!is_loadstore_instr |-> !is_exception_loadstore"
+
+
 endmodule : uvmt_cv32e40s_rvfi_assert
 
 

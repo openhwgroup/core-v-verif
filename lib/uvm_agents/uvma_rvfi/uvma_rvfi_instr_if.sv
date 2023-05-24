@@ -221,17 +221,26 @@ interface uvma_rvfi_instr_if_t
   logic                             is_pma_instr_fault;
   logic                             is_instr_bus_valid;
   logic                             is_pushpop;
-  logic                             is_split_datatrans;
+  logic                             is_split_datatrans_actual;
+  logic                             is_split_datatrans_intended;
+  logic                             is_split_instrtrans;
   logic                             is_mem_act;
+  logic                             is_mem_act_actual;
+  logic                             is_mem_act_intended;
   logic                             is_tablejump_raw;
   logic                             is_pma_fault;
   logic                             is_fencefencei;
-  logic [31:0]                      rvfi_mem_addr_word0highbyte;
   logic                             is_nmi_triggered = 0;
+  logic                             is_load_instr;
+  logic                             is_store_instr;
+  logic                             is_loadstore_instr;
+  logic [31:0]                      rvfi_mem_addr_word0highbyte;
+  logic [31:0]                      rvfi_pc_upperrdata;
   logic [4*NMEM-1:0]                instr_mem_rmask;
   logic [4*NMEM-1:0]                instr_mem_wmask;
 
   asm_t instr_asm;
+
   // -------------------------------------------------------------------
   // Begin module code
   // -------------------------------------------------------------------
@@ -300,7 +309,8 @@ interface uvma_rvfi_instr_if_t
     is_pma_instr_fault  <= is_pma_instr_fault_f();
     is_instr_bus_valid  <= is_instr_bus_valid_f();
     is_pushpop          <= is_pushpop_f();
-    is_split_datatrans  <= is_split_datatrans_f();
+    is_split_datatrans_actual   <= is_split_datatrans_actual_f();
+    is_split_datatrans_intended <= is_split_datatrans_intended_f();
     is_mem_act          <= is_mem_act_f();
     is_tablejump_raw    <= is_tablejump_raw_f();
     is_pma_fault        <= is_pma_fault_f();
@@ -308,6 +318,24 @@ interface uvma_rvfi_instr_if_t
     rvfi_mem_addr_word0highbyte <= rvfi_mem_addr_word0highbyte_f();
     instr_mem_rmask     <= instr_mem_rmask_f();
     instr_mem_wmask     <= instr_mem_wmask_f();
+  end
+
+  always_comb begin
+    is_load_instr      <= |instr_mem_rmask;  // (instr_mem_*mask shows intent)
+    is_store_instr     <= |instr_mem_wmask;
+    is_loadstore_instr <= is_load_instr || is_store_instr;
+
+    is_mem_act_actual   <= is_mem_act;  // original signal is already "actual"
+    is_mem_act_intended <= rvfi_valid && (|instr_mem_rmask || |instr_mem_wmask);
+
+    is_split_instrtrans <= rvfi_pc_rdata[31:2] != rvfi_pc_upperrdata[31:2];
+
+    rvfi_pc_upperrdata <=
+      (rvfi_insn[1:0] == 2'b 11) ? (
+        rvfi_pc_rdata + 3
+      ) : (
+        rvfi_pc_rdata + 1
+      );
   end
 
   /**
@@ -724,11 +752,18 @@ function automatic logic [31:0] rvfi_mem_addr_word0highbyte_f();
   endcase
 endfunction : rvfi_mem_addr_word0highbyte_f
 
-function automatic logic is_split_datatrans_f();
+function automatic logic is_split_datatrans_actual_f();
   logic [31:0]  low_addr  = rvfi_mem_addr;
   logic [31:0]  high_addr = rvfi_mem_addr_word0highbyte;
-  return  is_mem_act && (low_addr[31:2] != high_addr[31:2]);
-endfunction : is_split_datatrans_f
+  return  is_mem_act_actual && (low_addr[31:2] != high_addr[31:2]);
+endfunction : is_split_datatrans_actual_f
+
+function automatic logic is_split_datatrans_intended_f();
+  logic [31:0]  low_addr  = rvfi_mem_addr;
+  logic [31:0]  high_addr = rvfi_mem_addr_word0highbyte;
+  // TODO:ERROR:silabs-robin  Can't trust "rvfi_mem_addr" to show intent.
+  return  is_mem_act_intended && (low_addr[31:2] != high_addr[31:2]);
+endfunction : is_split_datatrans_intended_f
 
 function logic [4*NMEM-1:0] instr_mem_rmask_f();
   logic [NMEM-1:0][3:0] rmask;
