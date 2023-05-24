@@ -160,9 +160,12 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   logic [4:0] id_rs2;
   logic [12:0] id_branch_imm;
 
-
+  logic        is_wb_csr_write;
+  asm_t        wb_instr_decoded;
 
   always_comb begin
+    wb_instr_decoded    <= decode_instr(wb_instr);
+    is_wb_csr_write     <= wb_valid && is_csr_write_spec_f(wb_instr_decoded);
     id_opcode           <= opcode_f(id_instr);
     id_funct3           <= funct3_f(id_instr);
     id_funct7           <= funct7_f(id_instr);
@@ -692,17 +695,20 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     @(posedge clk_i)
 
     // Reset the checker every time we see a dummy instruction
-    first_match(
-      if_dummy
-      within
-      // Within n+1 issued instruction, there should be a dummy instruction (dummy counts as issued)
-      (if_valid && if_first_op && id_ready && !ptr_in_if)[->0:(num_valid_instructions + 1)]
-    );
+    first_match(if_dummy)
+    within
+    // Within n+1 issued instruction, there should be a dummy instruction (dummy counts as issued)
+    (if_valid && if_first_op && id_ready && !ptr_in_if)[->0:(num_valid_instructions + 1)];
   endsequence
 
-
   property p_xsecure_dummy_instr_frequency(num_normal_valid_instructions_per_dummy_instruction, logic [3:0] rnddummyfreq_reg_value_min, logic [3:0] rnddummyfreq_reg_value_max);
-    disable iff (!rnddummy_enabled || dummy_freq < rnddummyfreq_reg_value_min || dummy_freq > rnddummyfreq_reg_value_max)
+    disable iff (
+      !rnddummy_enabled
+      || dummy_freq < rnddummyfreq_reg_value_min
+      || dummy_freq > rnddummyfreq_reg_value_max
+      || debug_mode
+      || is_wb_csr_write && wb_instr_decoded.csr.address.name inside { CPUCTRL, SECURESEED0 }
+    )
 
     // This should always hold, unless disabled by any of the clauses in the disable iff-statement above
     seq_dummy_instr_within_normal_valid_instructions(num_normal_valid_instructions_per_dummy_instruction);
