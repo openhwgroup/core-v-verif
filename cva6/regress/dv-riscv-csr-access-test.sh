@@ -27,7 +27,7 @@ if ! [ -n "$DV_SIMULATORS" ]; then
 fi
 
 cd cva6/sim
-python3 cva6.py --testlist=../tests/testlist_riscv-csr-access-test-$DV_TARGET.yaml --target $DV_TARGET --iss_yaml=cva6.yaml --iss=$DV_SIMULATORS $DV_OPTS --linker=../sim/link.ld
+python3 cva6.py --testlist=../tests/testlist_riscv-csr-access-test-$DV_TARGET.yaml --target $DV_TARGET --iss_yaml=cva6.yaml --iss=$DV_SIMULATORS $DV_OPTS --linker=../sim/link.ld --en_arch_tests=1
 
 cd -
 
