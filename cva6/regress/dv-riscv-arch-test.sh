@@ -26,16 +26,6 @@ if ! [ -n "$DV_SIMULATORS" ]; then
   DV_SIMULATORS=veri-testharness,spike
 fi
 
-if ! [ -n "$DV_TESTLISTS" ]; then
-  DV_TESTLISTS="../tests/testlist_riscv-arch-test-$DV_TARGET-IMC.yaml \
-                ../tests/testlist_riscv-arch-test-$DV_TARGET-FP.yaml \
-                ../tests/testlist_riscv-arch-test-$DV_TARGET-BitManip.yaml \
-                ../tests/testlist_riscv-arch-test-$DV_TARGET-Privilege.yaml "
-fi
-
 cd cva6/sim
-for TESTLIST in $DV_TESTLISTS
-do
-  python3 cva6.py --testlist=$TESTLIST --target $DV_TARGET --iss_yaml=cva6.yaml --iss=$DV_SIMULATORS $DV_OPTS --linker=../tests/riscv-arch-test/riscv-target/link.ld --en_arch_tests=1
-done
+python3 cva6.py --testlist=../tests/testlist_riscv-arch-test-$DV_TARGET.yaml --target $DV_TARGET --iss_yaml=cva6.yaml --iss=$DV_SIMULATORS $DV_OPTS --linker=../tests/riscv-arch-test/riscv-target/link.ld --en_arch_tests=1
 cd -
