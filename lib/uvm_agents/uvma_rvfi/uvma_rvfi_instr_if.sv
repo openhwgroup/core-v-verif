@@ -157,8 +157,8 @@ interface uvma_rvfi_instr_if_t
   localparam INSTR_OPCODE_CSW   = 32'b0000000000000000_110_000000000_0000;
   localparam INSTR_OPCODE_CLWSP = 32'b0000000000000000_010_000000000_0010;
   localparam INSTR_OPCODE_CSWSP = 32'b0000000000000000_110_000000000_0010;
-  localparam INSTR_OPCODE_CSH   = 32'b0000000000000000_100_011_000000_0010;
-  localparam INSTR_OPCODE_CSB   = 32'b0000000000000000_100_010_000000_0010;
+  localparam INSTR_OPCODE_CSH   = 32'b0000000000000000_100_011_00000000_00;
+  localparam INSTR_OPCODE_CSB   = 32'b0000000000000000_100_010_00000000_00;
   localparam INSTR_OPCODE_CLBU  = 32'b 00000000_00000000_100_000_000_00_000_00;
   localparam INSTR_OPCODE_CLHU  = 32'b 00000000_00000000_100_001_000_0_0_000_00;
   localparam INSTR_OPCODE_CLH   = 32'b 00000000_00000000_100_001_000_1_0_000_00;
@@ -219,6 +219,7 @@ interface uvma_rvfi_instr_if_t
   logic                             is_umode;
   logic                             is_not_umode;
   logic                             is_pma_instr_fault;
+  logic                             is_instr_acc_fault_pmp;
   logic                             is_instr_bus_valid;
   logic                             is_pushpop;
   logic                             is_split_datatrans_actual;
@@ -321,14 +322,17 @@ interface uvma_rvfi_instr_if_t
   end
 
   always_comb begin
-    is_load_instr      <= |instr_mem_rmask;  // (instr_mem_*mask shows intent)
-    is_store_instr     <= |instr_mem_wmask;
+    is_load_instr      <= rvfi_valid && |instr_mem_rmask;
+    is_store_instr     <= rvfi_valid && |instr_mem_wmask;
+    // ("instr_mem_*mask" shows intent)
     is_loadstore_instr <= is_load_instr || is_store_instr;
 
     is_mem_act_actual   <= is_mem_act;  // original signal is already "actual"
     is_mem_act_intended <= rvfi_valid && (|instr_mem_rmask || |instr_mem_wmask);
 
-    is_split_instrtrans <= rvfi_pc_rdata[31:2] != rvfi_pc_upperrdata[31:2];
+    is_split_instrtrans <=
+      rvfi_valid  &&
+      (rvfi_pc_rdata[31:2] != rvfi_pc_upperrdata[31:2]);
 
     rvfi_pc_upperrdata <=
       (rvfi_insn[1:0] == 2'b 11) ? (
@@ -336,6 +340,14 @@ interface uvma_rvfi_instr_if_t
       ) : (
         rvfi_pc_rdata + 1
       );
+      // TODO:ERROR:silabs-robin  Can't trust rvfi_insn if scrambled data.
+
+    is_instr_acc_fault_pmp <=
+      rvfi_valid  &&
+      rvfi_trap.trap  &&
+      rvfi_trap.exception  &&
+      (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_ACC_FAULT)  &&
+      (rvfi_trap.cause_type == 'h 1);  // TODO:WARNING:silabs-robin  Magic num
   end
 
   /**
@@ -715,7 +727,7 @@ function automatic logic is_pma_instr_fault_f();
   return  rvfi_valid  &&
           rvfi_trap.trap  &&
           rvfi_trap.exception  &&
-          (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_FAULT)  &&
+          (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_ACC_FAULT)  &&
           (rvfi_trap.cause_type == 'h 0);
 endfunction : is_pma_instr_fault_f
 
@@ -724,15 +736,15 @@ function automatic logic is_pma_fault_f();
           rvfi_trap.trap  &&
           rvfi_trap.exception  &&
           (rvfi_trap.exception_cause  inside {
-            EXC_CAUSE_INSTR_FAULT,
-            EXC_CAUSE_LOAD_FAULT,
-            EXC_CAUSE_STORE_FAULT
+            EXC_CAUSE_INSTR_ACC_FAULT,
+            EXC_CAUSE_LOAD_ACC_FAULT,
+            EXC_CAUSE_STORE_ACC_FAULT
           })  &&
           (rvfi_trap.cause_type == 'h 0);
 endfunction : is_pma_fault_f
 
 function automatic logic is_instr_bus_valid_f();
-  return !( (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_FAULT) ||
+  return !( (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_ACC_FAULT) ||
             (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_INTEGRITY_FAULT) ||
             (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_BUS_FAULT)
     );
@@ -947,7 +959,60 @@ function logic [4*NMEM-1:0] instr_mem_wmask_f();
   return mem_mask_t'(wmask);
 endfunction
 
-endinterface : uvma_rvfi_instr_if_t
+function automatic logic[31:0] get_max_exception_cause (
+  logic[31:0] exc_a,
+  logic[31:0] exc_b
+);
+  case (EXC_CAUSE_INSTR_ACC_FAULT)
+    exc_a, exc_b: return EXC_CAUSE_INSTR_ACC_FAULT;
+  endcase
 
+  case (EXC_CAUSE_INSTR_INTEGRITY_FAULT)
+    exc_a, exc_b: return EXC_CAUSE_INSTR_INTEGRITY_FAULT;
+  endcase
+
+  case (EXC_CAUSE_INSTR_BUS_FAULT)
+    exc_a, exc_b: return EXC_CAUSE_INSTR_BUS_FAULT;
+  endcase
+
+  case (EXC_CAUSE_ILLEGAL_INSTR)
+    exc_a, exc_b: return EXC_CAUSE_ILLEGAL_INSTR;
+  endcase
+
+  case (EXC_CAUSE_ENV_CALL_U)
+    exc_a, exc_b: return EXC_CAUSE_ENV_CALL_U;
+  endcase
+
+  case (EXC_CAUSE_ENV_CALL_M)
+    exc_a, exc_b: return EXC_CAUSE_ENV_CALL_M;
+  endcase
+
+  case (EXC_CAUSE_BREAKPOINT)
+    exc_a, exc_b: return EXC_CAUSE_BREAKPOINT;
+  endcase
+
+  case (EXC_CAUSE_STORE_ACC_FAULT)
+    exc_a, exc_b: return EXC_CAUSE_STORE_ACC_FAULT;
+  endcase
+
+  case (EXC_CAUSE_LOAD_ACC_FAULT)
+    exc_a, exc_b: return EXC_CAUSE_LOAD_ACC_FAULT;
+  endcase
+
+  return 0;  // Should not be possible
+endfunction
+
+function automatic logic is_deprioritized_exception (logic[31:0] exc_cause);
+  return (
+    rvfi_valid  &&
+    rvfi_trap.exception  &&
+    (rvfi_trap.exception_cause != exc_cause)  &&
+    (rvfi_trap.exception_cause ==
+      get_max_exception_cause(rvfi_trap.exception_cause, exc_cause)
+    )
+  );
+endfunction
+
+endinterface : uvma_rvfi_instr_if_t
 
 `endif // __UVMA_RVFI_INSTR_IF_SV__

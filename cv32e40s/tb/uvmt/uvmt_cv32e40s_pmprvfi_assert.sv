@@ -168,6 +168,16 @@ module uvmt_cv32e40s_pmprvfi_assert
       )
     );
 
+  logic  is_access_allowed;
+  always_comb begin
+    is_access_allowed =
+      match_status_instr.is_access_allowed  &&
+      !(
+        rvfi_if.is_split_instrtrans  &&
+        !match_status_upperinstr.is_access_allowed
+      );
+  end
+
   pmp_csr_t  pmp_csr_rvfi_rdata;
   pmp_csr_t  pmp_csr_rvfi_wdata;
   pmp_csr_t  pmp_csr_rvfi_wmask;
@@ -761,7 +771,8 @@ module uvmt_cv32e40s_pmprvfi_assert
     !match_status_data.is_access_allowed  &&
     rvfi_trap.exception
     |->
-    (rvfi_trap.exception_cause == EXC_LOAD_ACC_FAULT)
+    (rvfi_trap.exception_cause == EXC_LOAD_ACC_FAULT)  ^
+    rvfi_if.is_deprioritized_exception(EXC_LOAD_ACC_FAULT)
   ) else `uvm_error(info_tag, "on load denied the cause must match");
 
   a_noloadstore_cause_store: assert property (
@@ -769,7 +780,8 @@ module uvmt_cv32e40s_pmprvfi_assert
     !match_status_data.is_access_allowed  &&
     rvfi_trap.exception
     |->
-    (rvfi_trap.exception_cause == EXC_STORE_ACC_FAULT)
+    (rvfi_trap.exception_cause == EXC_STORE_ACC_FAULT)  ^
+    rvfi_if.is_deprioritized_exception(EXC_STORE_ACC_FAULT)
   ) else `uvm_error(info_tag, "on store denied the cause must match");
 
   a_noloadstore_splittrap: assert property (
@@ -785,30 +797,40 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   // RVFI must report what was allowed on the bus  (Not a vplan item)
 
-  a_rvfi_mem_allowed_instr: assert property (
-    rvfi_valid
-    // TODO:ERROR:silabs-robin Will need tweaking, traps etc
-    |->
-    match_status_instr.is_access_allowed
-  ) else `uvm_error(info_tag, "TODO");
-
   a_rvfi_mem_allowed_data: assert property (
-    rvfi_if.is_mem_act
+    rvfi_if.is_mem_act_actual
     |->
     match_status_data.is_access_allowed
   ) else `uvm_error(info_tag, "TODO");
 
+  a_rvfi_mem_allowed_upperdata: assert property (
+    rvfi_if.is_split_datatrans_actual
+    |->
+    match_status_upperdata.is_access_allowed
+  ) else `uvm_error(info_tag, "TODO");
+
+  a_rvfi_mem_allowed_instr: assert property (
+    rvfi_valid  &&
+    !rvfi_if.is_instr_acc_fault_pmp  &&
+    !rvfi_if.is_dbg_trg
+    |->
+    match_status_instr.is_access_allowed
+  ) else `uvm_error(info_tag, "TODO");
+
   a_rvfi_mem_allowed_upperinstr: assert property (
-    rvfi_if.is_split_instrtrans
-    // TODO:ERROR:silabs-robin Will need tweaking, traps etc
+    rvfi_if.is_split_instrtrans  &&
+    !rvfi_if.is_instr_acc_fault_pmp  &&
+    !rvfi_if.is_dbg_trg
     |->
     match_status_upperinstr.is_access_allowed
   ) else `uvm_error(info_tag, "TODO");
 
-  a_rvfi_mem_allowed_upper: assert property (
-    rvfi_if.is_split_datatrans_actual
+  //TODO:ERROR:silabs-robin  Also check fault->!allowed
+
+  a_rvfi_mem_allowed_generalinstr: assert property (
+    rvfi_valid
     |->
-    match_status_upperdata.is_access_allowed
+    rvfi_if.is_instr_acc_fault_pmp ^ is_access_allowed
   ) else `uvm_error(info_tag, "TODO");
 
 

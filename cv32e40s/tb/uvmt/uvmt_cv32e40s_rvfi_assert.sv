@@ -281,6 +281,7 @@ module uvmt_cv32e40s_rvfi_assert
   // Loadstore Instructions
 
   a_isload_required: assert property (
+    rvfi_if.rvfi_valid  &&
     rvfi_if.rvfi_mem_rmask
     |->
     rvfi_if.is_load_instr
@@ -294,6 +295,7 @@ module uvmt_cv32e40s_rvfi_assert
   ) else `uvm_error(info_tag, "successful loads have rmask");
 
   a_isstore_required: assert property (
+    rvfi_if.rvfi_valid  &&
     rvfi_if.rvfi_mem_wmask
     |->
     rvfi_if.is_store_instr
