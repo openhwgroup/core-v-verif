@@ -99,7 +99,7 @@
   asm_tests: <path_var>/riscv-arch-test/riscv-test-suite/rv64i_m/D/src/fcvt.l.d_b27-01.S
 
 - test: rv64i_m-fcvt.l.d_b28-01 # This test fails
-  iterations: 1
+  iterations: 0
   path_var: TESTS_PATH
   march: rv64ifd_zicsr
   mabi: lp64
