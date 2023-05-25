@@ -18,7 +18,6 @@
 //and they describe what vplan tasks the assertions aim to cover.
 
 
-//TODO: removed tcontrol here
 module uvmt_cv32e40s_triggers_assert_cov
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
@@ -52,41 +51,6 @@ module uvmt_cv32e40s_triggers_assert_cov
   default disable iff !(clknrst_if.reset_n);
 
   string info_tag = "TRIGGER ASSERT: ";
-  localparam MAX_MEM_ACCESS = 13; //Push and pop can do 13 memory access. XIF can potentially do more (TODO: check this when merging to cv32e40x)
-
-  //Reads and writes of CSR values
-  logic [31:0] tdata1_pre_state;
-  logic [31:0] tdata2_pre_state;
-  logic [31:0] tinfo_pre_state;
-  logic [31:0] tselect_pre_state;
-
-  logic [31:0] tdata1_post_state;
-  logic [31:0] tdata2_post_state;
-  logic [31:0] tinfo_post_state;
-  logic [31:0] tselect_post_state;
-
-  logic [MAX_MEM_ACCESS-1:0][31:0] rvfi_mem_addrs;
-
-
-  always_comb begin
-    tdata1_pre_state = tdata1.pre_state();
-    tdata2_pre_state = tdata2.pre_state();
-    tinfo_pre_state = tinfo.pre_state();
-    tselect_pre_state = tselect.pre_state();
-  end
-
-  always_comb begin
-    tdata1_post_state = tdata1.post_state();
-    tdata2_post_state = tdata2.post_state();
-    tinfo_post_state = tinfo.post_state();
-    tselect_post_state = tselect.post_state();
-  end
-
-  generate
-    for (genvar i = 0; i < MAX_MEM_ACCESS; i++) begin
-      assign rvfi_mem_addrs[i] = rvfi_if.get_mem_addr(i);
-    end
-  endgenerate
 
   /////////// Local Parameters ///////////
 
@@ -162,9 +126,9 @@ module uvmt_cv32e40s_triggers_assert_cov
   localparam ADDR_TSELECT = 12'h7A0;
   localparam ADDR_TDATA1 = 12'h7A1;
   localparam ADDR_TDATA2 = 12'h7A2;
-  localparam ADDR_TDATA3 = 12'h7A3; //TODO: make sure is not implemented
+  localparam ADDR_TDATA3 = 12'h7A3;
   localparam ADDR_TINFO = 12'h7A4;
-  localparam ADDR_TCONTROL = 12'h7A5; //TODO: make sure is not implemented
+  localparam ADDR_TCONTROL = 12'h7A5;
   localparam ADDR_MCONTEXT = 12'h7A8;
   localparam ADDR_MSCONTEXT = 12'h7AA;
   localparam ADDR_HCONTEXT = 12'h6A8;
@@ -179,9 +143,72 @@ module uvmt_cv32e40s_triggers_assert_cov
   //Initial settings
   localparam TDATA1_DISABLED = 32'hF800_0000;
   localparam MAX_NUM_TRIGGERS = 5;
+  localparam MAX_MEM_ACCESS = 13; //Push and pop can do 13 memory access. XIF can potentially do more (TODO xif: check this when merging to cv32e40x)
 
 
   /////////// Signals ///////////
+
+  logic [31:0] tdata1_pre_state;
+  logic [31:0] tdata2_pre_state;
+  logic [31:0] tinfo_pre_state;
+  logic [31:0] tselect_pre_state;
+
+  logic [31:0] tdata1_post_state;
+  logic [31:0] tdata2_post_state;
+  logic [31:0] tinfo_post_state;
+  logic [31:0] tselect_post_state;
+
+  logic [MAX_MEM_ACCESS-1:0][31:0] rvfi_mem_addrs;
+
+  always_comb begin
+    tdata1_pre_state = tdata1.pre_state();
+    tdata2_pre_state = tdata2.pre_state();
+    tinfo_pre_state = tinfo.pre_state();
+    tselect_pre_state = tselect.pre_state();
+  end
+
+  always_comb begin
+    tdata1_post_state = tdata1.post_state();
+    tdata2_post_state = tdata2.post_state();
+    tinfo_post_state = tinfo.post_state();
+    tselect_post_state = tselect.post_state();
+  end
+
+  generate
+    for (genvar i = 0; i < MAX_MEM_ACCESS; i++) begin
+      assign rvfi_mem_addrs[i] = rvfi_if.get_mem_addr(i);
+    end
+  endgenerate
+
+  logic m6_hits_written;
+  assign m6_hits_written = (rvfi_if.is_csr_write(ADDR_TDATA1)); // && (rvfi_if.rvfi_rs1_rdata[M6_HIT0] || rvfi_if.rvfi_rs1_rdata[M6_HIT1]));
+
+  logic m6_hits_was_0; //TODO: remove if not needed
+  always_latch begin
+    if(clknrst_if.reset_n) begin
+      m6_hits_was_0 = 1'b1;
+    end
+
+    if (rvfi_if.is_csr_write(ADDR_TDATA1)
+    && tdata1_post_state_m6_hits != 1'b0) begin
+      m6_hits_was_0 <= 1'b0;
+    end
+
+    if (rvfi_if.is_csr_write(ADDR_TDATA1)
+    && tdata1_post_state_m6_hits == 1'b0) begin
+      m6_hits_was_0 <= 1'b1;
+    end
+  end
+
+  logic [4:0] trigger_match_execute_array;
+  logic [4:0] trigger_match_load_array;
+  logic [4:0] trigger_match_store_array;
+
+  //TODO: add raw here: support_if.trigger_match_execute_array
+  assign trigger_match_execute_array = support_if.trigger_match_execute_array && rvfi_if.rvfi_valid && !rvfi_if.rvfi_dbg_mode && !rvfi_if.rvfi_trap.exception;
+  assign trigger_match_load_array = support_if.trigger_match_load_array && rvfi_if.rvfi_valid && !rvfi_if.rvfi_dbg_mode && !rvfi_if.rvfi_trap.exception;
+  assign trigger_match_store_array = support_if.trigger_match_store_array && rvfi_if.rvfi_valid && !rvfi_if.rvfi_dbg_mode && !rvfi_if.rvfi_trap.exception;
+
   logic tdata1_pre_state_m6_hits;
   assign tdata1_pre_state_m6_hits = {tdata1_pre_state[M6_HIT1], tdata1_pre_state[M6_HIT0]};
 
@@ -404,7 +431,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   //1) Check that attempts to access "tdata3" raise an illegal instruction exception, always. (Unless overruled by a higher priorit
   //2) Verify that tdata3 is illegal for all tdata2 types.
 
-  //1) //TODO: fix in vplan
+  //1)
   a_dt_tdata3_not_implemented: assert property (
     rvfi_if.is_csr_instr(ADDR_TDATA3) //make sure no bus fault exceptions has occured
     |->
@@ -418,22 +445,22 @@ module uvmt_cv32e40s_triggers_assert_cov
   if (CORE_PARAM_DBG_NUM_TRIGGERS != 0) begin
 
     //2)
-    c_dt_access_tdata3_m2: assert property (
+    c_dt_access_tdata3_m2: cover property (
       rvfi_if.is_csr_instr(ADDR_TDATA3)
-      && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL2
+      && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL
     );
 
-    c_dt_access_tdata3_etrigger: assert property (
+    c_dt_access_tdata3_etrigger: cover property (
       rvfi_if.is_csr_instr(ADDR_TDATA3)
       && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
     );
 
-    c_dt_access_tdata3_m6: assert property (
-      rvfi_if.is_csr_instr(ADDR_TDATA3
+    c_dt_access_tdata3_m6: cover property (
+      rvfi_if.is_csr_instr(ADDR_TDATA3)
       && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
     );
 
-    c_dt_access_tdata3_disabled: assert property (
+    c_dt_access_tdata3_disabled: cover property (
       rvfi_if.is_csr_instr(ADDR_TDATA3)
       && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_DISABLED
     );
@@ -642,7 +669,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       |->
       tinfo_pre_state[VERSION_MSB:VERSION_LSB] == 1
       && !tinfo_pre_state[23:16]
-      && tinfo_pre_state[INFO_MSB:INFO_LSB] == 15'h8064
+      && tinfo_pre_state[INFO_MSB:INFO_LSB] == 16'h8064
     ) else `uvm_error(info_tag, "There is a problem with tinfo's tied off fields.\n");
 
 
@@ -795,22 +822,22 @@ module uvmt_cv32e40s_triggers_assert_cov
       && |tdata1.rvfi_csr_wmask != 0
       && tdata1_post_state[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
       |->
-      tdata1_pre_state[DMODE]
-      && !tdata1_pre_state[M6_UNCERTAIN]
-      && ({tdata1_pre_state[M6_HIT1], tdata1_pre_state[M6_HIT0]} == 0
-      || {tdata1_pre_state[M6_HIT1], tdata1_pre_state[M6_HIT0]} == 1)
-      && !tdata1_pre_state[M6_VS]
-      && !tdata1_pre_state[M6_VU]
-      && !tdata1_pre_state[M6_SELECT]
-      && !tdata1_pre_state[20:19]
-      && !tdata1_pre_state[M6_MSB_SIZE:M6_LSB_SIZE]
-      && tdata1_pre_state[MSB_ACTION:LSB_ACTION] == ENTER_DBG_ON_MATCH
-      && !tdata1_pre_state[CHAIN]
-      && (tdata1_pre_state[MSB_MATCH:LSB_MATMSB_MATCH] == MATCH_WHEN_EQUAL
-      || tdata1_pre_state[MSB_MATCH:LSB_MATMSB_MATCH] == MATCH_WHEN_GREATER_OR_EQUAL
-      || tdata1_pre_state[MSB_MATCH:LSB_MATMSB_MATCH] == MATCH_WHEN_LESSER)
-      && !tdata1_pre_state[M6_UNCERTAINEN]
-      && !tdata1_pre_state[M2_M6_S_MODE]
+      tdata1_post_state[DMODE]
+      && !tdata1_post_state[M6_UNCERTAIN]
+      && ({tdata1_post_state[M6_HIT1], tdata1_post_state[M6_HIT0]} == 0
+      || {tdata1_post_state[M6_HIT1], tdata1_post_state[M6_HIT0]} == 1)
+      && !tdata1_post_state[M6_VS]
+      && !tdata1_post_state[M6_VU]
+      && !tdata1_post_state[M6_SELECT]
+      && !tdata1_post_state[20:19]
+      && !tdata1_post_state[M6_MSB_SIZE:M6_LSB_SIZE]
+      && tdata1_post_state[MSB_ACTION:LSB_ACTION] == ENTER_DBG_ON_MATCH
+      && !tdata1_post_state[CHAIN]
+      && (tdata1_post_state[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_EQUAL
+      || tdata1_post_state[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_GREATER_OR_EQUAL
+      || tdata1_post_state[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_LESSER)
+      && !tdata1_post_state[M6_UNCERTAINEN]
+      && !tdata1_post_state[M2_M6_S_MODE]
     ) else `uvm_error(info_tag, "There is a problem with tdata1-mcontrol6's WARL fields.\n");
 
     a_dt_warl_tdata1_disabled: assert property (
@@ -838,7 +865,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       rvfi_if.rvfi_valid
       && |tinfo.rvfi_csr_wmask != 0
       |->
-      !tinfo_post_state[31:16]
+      !tinfo_post_state[23:16]
     ) else `uvm_error(info_tag, "There is a problem with tinfo's WARL fields.\n");
 
 
@@ -1435,26 +1462,31 @@ module uvmt_cv32e40s_triggers_assert_cov
       //2) Verify that the inital value of the "hit" field is 0x0
       //3) Check that the field is WARL 0x0, 0x1
 
-      //TODO: verify that these assertions passes!
-
       //1)
       a_dt_set_m6_hit_bits_pre_state: assert property(
-        support_if.tdata1_array[t][MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
-        && support_if.trigger_match_execute_array[t]
-        && support_if.trigger_match_load_array[t]
-        && support_if.trigger_match_store_array[t]
+        rvfi_if.rvfi_valid
+        && support_if.tdata1_array[t][MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
+        && (trigger_match_execute_array[t]
+        || trigger_match_load_array[t]
+        || trigger_match_store_array[t])
+        && !rvfi_if.rvfi_dbg_mode
+        && !rvfi_if.rvfi_trap.exception
         && tselect_pre_state == t
+        && !m6_hits_written
 
         |->
-        tdata1_pre_state_m6_hits == 1
+        tdata1_post_state_m6_hits == 1
       ) else `uvm_error(info_tag, "Tdata1 in mcontrol6 state does not set the hit bits even though there was a trigger match on (hit on tdata currently selected with tselect).\n");
 
       a_dt_set_m6_hit_bits_post_state: assert property(
-        support_if.tdata1_array[t][MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
-        && support_if.trigger_match_execute_array[t]
-        && support_if.trigger_match_load_array[t]
-        && support_if.trigger_match_store_array[t]
-        && (tselect_post_state == t)[->1]
+        rvfi_if.rvfi_valid
+        && support_if.tdata1_array[t][MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
+        && (trigger_match_execute_array[t]
+        || trigger_match_load_array[t]
+        || trigger_match_store_array[t])
+        && !rvfi_if.rvfi_dbg_mode
+        && !rvfi_if.rvfi_trap.exception
+        ##0 ((tselect_post_state == t) && !m6_hits_written && m6_hits_was_0)[->1]
         |->
 
         tdata1_post_state_m6_hits == 1
@@ -1462,8 +1494,10 @@ module uvmt_cv32e40s_triggers_assert_cov
 
       //2)
       a_dt_m6_hit_bits_initial_value: assert property(
+        disable iff (m6_hits_written)
         $rose(clknrst_if.reset_n)
-        tdata1_post_state[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
+        ##0 (tdata1_post_state[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
+        && rvfi_if.rvfi_valid)[->1]
         |->
         tdata1_post_state_m6_hits == 0
       ) else `uvm_error(info_tag, "The hit bits of tdata1 in mcontrol6 state is not initially 0.\n");

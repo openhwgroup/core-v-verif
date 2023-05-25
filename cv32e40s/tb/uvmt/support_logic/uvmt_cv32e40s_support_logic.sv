@@ -256,9 +256,9 @@ module uvmt_cv32e40s_support_logic
     assign general_trigger_match_conditions[t] =
       t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
         1'b0 :
-        rvfi.rvfi_valid                             &&
-        (tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 2    ||
-        tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 6)    &&
+        rvfi.rvfi_valid                                          &&
+        (tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 2   ||
+        tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 6)   &&
         ((rvfi.is_mmode && tdata1_array[t][TDATA1_M2_M6_M_MODE]) ||
         (rvfi.is_umode && tdata1_array[t][TDATA1_M2_M6_U_MODE]));
 
