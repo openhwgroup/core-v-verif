@@ -64,7 +64,7 @@
 
   function void post_randomize();
     for (int i = 0; i < instr_list.size(); i++) begin
-      instr_list[i].comment = $sformatf(" Inserted %0s - idx[%0d]", get_name(), i);
+      instr_list[i].comment = {instr_list[i].comment, $sformatf(" Inserted %0s - idx[%0d]", get_name(), i)};
     end
     super.post_randomize();
   endfunction : post_randomize
