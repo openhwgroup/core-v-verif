@@ -77,8 +77,8 @@ clone() {
 
 clone_cv32e40x() {
   CV_CORE=cv32e40x
-  VERIF_ENV_REPO=https://github.com/silabs-robin/core-v-verif.git
-  VERIF_ENV_BRANCH=cv32e40xdev_subtree_gitmerge
+  VERIF_ENV_REPO=https://github.com/openhwgroup/cv32e40x-dv.git
+  VERIF_ENV_BRANCH=main
 
   clone
 
