@@ -36,6 +36,7 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
     override_illegal_instr();
     override_privil_reg();
     override_debug_rom_gen();
+    override_instr_stream();
     super.build_phase(phase);
   endfunction
 
@@ -67,6 +68,17 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
   virtual function void override_debug_rom_gen();
     uvm_factory::get().set_type_override_by_type(riscv_debug_rom_gen::get_type(),
                                                  cv32e40p_debug_rom_gen::get_type());
+  endfunction
+
+  virtual function void override_instr_stream();
+    int test_override_riscv_instr_stream = 0;
+    if ($value$plusargs("test_override_riscv_instr_stream=%0d", test_override_riscv_instr_stream)) begin
+      unique case(test_override_riscv_instr_stream)
+        1: begin 
+          uvm_factory::get().set_type_override_by_type(riscv_rand_instr_stream::get_type(), cv32e40p_rand_instr_stream::get_type()); 
+        end
+      endcase
+    end
   endfunction
 
   virtual function void apply_directed_instr();

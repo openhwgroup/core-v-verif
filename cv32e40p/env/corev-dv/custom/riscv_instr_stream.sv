@@ -73,7 +73,7 @@ class riscv_instr_stream extends uvm_object;
   // Insert an instruction to the existing instruction stream at the given index
   // When index is -1, the instruction is injected at a random location
   // When replace is 1, the original instruction at the inserted position will be replaced
-  function void insert_instr_stream(riscv_instr new_instr[], int idx = -1, bit replace = 1'b0);
+  virtual function void insert_instr_stream(riscv_instr new_instr[], int idx = -1, bit replace = 1'b0);
     int current_instr_cnt = instr_list.size();
     int new_instr_cnt = new_instr.size();
     if(current_instr_cnt == 0) begin
