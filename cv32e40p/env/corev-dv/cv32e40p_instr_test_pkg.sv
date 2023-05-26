@@ -29,6 +29,7 @@ package cv32e40p_instr_test_pkg;
   `include "instr_lib/cv32e40p_float_instr_lib.sv"
 
   // RISCV-DV class override definitions
+  `include "cv32e40p_rand_instr_stream.sv"
   `include "cv32e40p_compressed_instr.sv"
   `include "cv32e40p_illegal_instr.sv"
   `include "cv32e40p_privil_reg.sv"
