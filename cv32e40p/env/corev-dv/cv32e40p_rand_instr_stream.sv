@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 Google LLC
+ * Copyright 2023 Dolphin Design
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +15,11 @@
  * limitations under the License.
  */
 
-// Base class for RISC-V instruction stream
-// A instruction stream here is a  queue of RISC-V basic instructions.
-// This class also provides some functions to manipulate the instruction stream, like insert a new
-// instruction, mix two instruction streams etc.
 
+// [Dolphin Design updates] 
+// Extended class from riscv_rand_instr_stream to override insert_instr_stream.
+// Prevent instructions from multiple streams from overlapping each others and 
+// to ensure the instructions order in one stream is preserved.
 class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
 
   // below properties are for insert_instr_stream function
@@ -29,7 +30,6 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
   `uvm_object_utils(cv32e40p_rand_instr_stream)
   `uvm_object_new
 
-  // overriding this function to modified the instructions placements so that directed streams should not overlap with each others
   virtual function void insert_instr_stream(riscv_instr new_instr[], int idx = -1, bit replace = 1'b0);
 
     int current_instr_cnt = instr_list.size();

@@ -1,5 +1,6 @@
 /*
  * Copyright 2018 Google LLC
+ * Copyright 2023 Dolphin Design
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+// [Dolphin Design updates] Changed insert_instr_stream into virtual function for overridden method in extended class
 
 // Base class for RISC-V instruction stream
 // A instruction stream here is a  queue of RISC-V basic instructions.
