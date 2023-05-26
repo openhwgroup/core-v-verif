@@ -1,0 +1,131 @@
+#!/bin/sh
+
+
+# Copyright 2023 Silicon Laboratories Inc.
+#
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# Licensed under the Solderpad Hardware License v 2.1 (the "License"); you may
+# not use this file except in compliance with the License, or, at your option,
+# the Apache License version 2.0.
+#
+# You may obtain a copy of the License at
+# https://solderpad.org/licenses/SHL-2.1/
+#
+# Unless required by applicable law or agreed to in writing, any work
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# Description:
+#   This script is used to clone core-specific verification environments.
+#   (E.g. "core-v-verif/cv32e40x/".)
+#   Try running it, and it will assist you with helpful messages.
+#
+# Examples:
+#   "$ ./bin/clonetb"
+#   "$ ./bin/clonetb -x"
+#   "$ CV_CORE=cv32e40x ./bin/clonetb --unignore"
+#
+# Environment:
+#   (Typical usage does not require these to be set.)
+#   CV_CORE          - Name of the core to use.
+#   VERIF_ENV_REPO   - URL to external verif env repo.
+#   VERIF_ENV_BRANCH - Branch name of external verif env repo.
+
+
+usage() {
+  echo "usage: $0 [-x] [--clone] [--ignore] [--unignore]"
+  echo "  -x          clone cv32e40x subtree"
+  echo "  --clone     clone subtree based on env vars"
+  echo "  --ignore    tell git to ignore the cloned subtree"
+  echo "  --unignore  tell git to not ignore the cloned subtree"
+
+  exit 1
+}
+
+check_env_vars_cvcore() {
+  if [ -z "${CV_CORE}" ]; then
+    echo "error: 'CV_CORE' not defined"
+    exit 1
+  fi
+}
+
+check_env_vars() {
+  check_env_vars_cvcore
+
+  if [ -z "${VERIF_ENV_REPO}" ]; then
+    echo "error: 'VERIF_ENV_REPO' not defined"
+    exit 1
+  fi
+
+  if [ -z "${VERIF_ENV_BRANCH}" ]; then
+    echo "error: 'VERIF_ENV_BRANCH' not defined"
+    exit 1
+  fi
+}
+
+clone() {
+  check_env_vars
+
+  rm -rf ${CV_CORE}
+  git clone  -b ${VERIF_ENV_BRANCH}  ${VERIF_ENV_REPO}  ${CV_CORE}
+}
+
+clone_cv32e40x() {
+  CV_CORE=cv32e40x
+  VERIF_ENV_REPO=https://github.com/openhwgroup/cv32e40x-dv.git
+  VERIF_ENV_BRANCH=main
+
+  clone
+
+  ignore_cloned_directory
+}
+
+ignore_cloned_directory() {
+  check_env_vars_cvcore
+
+  # Add CV_CORE to git exclude
+  echo ${CV_CORE} >> .git/info/exclude
+
+  # Set "skip-worktree" git flag
+  git ls-files ${CV_CORE} | xargs git update-index --skip-worktree
+}
+
+unignore_cloned_directory() {
+  check_env_vars_cvcore
+
+  # Delete CV_CORE from git exclude
+  sed -i "/^${CV_CORE}$/d" .git/info/exclude
+
+  # Unset "skip-worktree" git flag
+  git ls-files -t    |  # Get git file status "tags"
+    grep '^S'        |  # Filter "skip-worktree" files
+    awk '{print $2}' |  # Filter filename
+    xargs git update-index --no-skip-worktree
+}
+
+main() {
+  case $1 in
+    "-x")
+      clone_cv32e40x
+      ;;
+    "--clone")
+      clone
+      ;;
+    "--ignore")
+      ignore_cloned_directory
+      ;;
+    "--unignore")
+      unignore_cloned_directory
+      ;;
+    *)
+      usage
+      ;;
+  esac
+}
+
+main "$@"
