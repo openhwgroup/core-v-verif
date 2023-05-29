@@ -1,5 +1,7 @@
 /*
  * Copyright 2020 Google LLC
+ * Copyright 2023 Dolphin Design
+ * SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +106,7 @@ class riscv_floating_point_instr extends riscv_instr;
       I_FORMAT: begin
         has_fs2 = 1'b0;
         if (category == LOAD) begin
-          has_rs1 = 1'b1;
+          has_rs1 = 1'b1; // [Dolphin Design update] Floating-point load uses register rs1 to define the base address
           has_imm = 1'b1;
         end else if (instr_name inside {FMV_X_W, FMV_X_D, FCVT_W_S, FCVT_WU_S,
                                         FCVT_L_S, FCVT_LU_S, FCVT_L_D, FCVT_LU_D, FCVT_LU_S,
