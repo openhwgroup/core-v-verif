@@ -41,6 +41,7 @@ module cva6_tb_wrapper
   parameter int unsigned AXI_USER_EN       = 0,
   parameter int unsigned AXI_ADDRESS_WIDTH = 64,
   parameter int unsigned AXI_DATA_WIDTH    = 64,
+  parameter int unsigned AXI_ID_WIDTH      = 4,
   parameter int unsigned NUM_WORDS         = 2**25
 ) (
   input  logic                         clk_i,
@@ -63,9 +64,13 @@ module cva6_tb_wrapper
   ariane_pkg::rvfi_port_t  rvfi;
   assign rvfi_o = rvfi;
 
-  cva6 #(
-    .ArianeCfg  ( ariane_soc::ArianeSocCfg )
-  ) i_cva6 (
+  cva6_params #(
+    .ArianeCfg            ( ariane_soc::ArianeSocCfg  ),
+    .AxiAddrWidth         ( AXI_ADDRESS_WIDTH         ),
+    .AxiDataWidth         ( AXI_DATA_WIDTH            ),
+    .AxiIdWidth           ( AXI_ID_WIDTH              ),
+    .AxiUserWidth         ( AXI_USER_WIDTH            )
+  ) i_cva6_params (
     .clk_i                ( clk_i                     ),
     .rst_ni               ( rst_ni                    ),
     .boot_addr_i          ( boot_addr_i               ),//Driving the boot_addr value from the core control agent
