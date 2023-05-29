@@ -614,7 +614,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     end
     else if (p_instr_f != null) begin
       curr_has_f_flags = {p_instr_f.has_fs3, p_instr_f.has_fs2, p_instr_f.has_fs1, p_instr_f.has_fd};
-      curr_has_r_flags = {0,                 p_instr_f.has_rs2, p_instr_f.has_rs1, p_instr_f.has_rd};
+      curr_has_r_flags = {1'b0,              p_instr_f.has_rs2, p_instr_f.has_rs1, p_instr_f.has_rd};
     end
 
     if (prev_has_r_flags[0]) begin : PREV_HAS_RD
