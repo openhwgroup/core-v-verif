@@ -2,6 +2,7 @@
  * Copyright 2018 Google LLC
  * Copyright 2020 Andes Technology Co., Ltd.
  * Copyright 2023 Dolphin Design
+ * SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
