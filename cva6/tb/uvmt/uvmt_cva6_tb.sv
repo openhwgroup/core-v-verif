@@ -30,8 +30,8 @@ module uvmt_cva6_tb;
    import uvmt_cva6_pkg::*;
    import uvme_cva6_pkg::*;
 
-   localparam AXI_USER_WIDTH    = ariane_pkg::AXI_USER_WIDTH;
-   localparam AXI_USER_EN       = ariane_pkg::AXI_USER_EN;
+   localparam AXI_USER_WIDTH    = 64;
+   localparam AXI_USER_EN       = 0;
    localparam AXI_ADDRESS_WIDTH = 64;
    localparam AXI_DATA_WIDTH    = 64;
    localparam NUM_WORDS         = 2**24;
