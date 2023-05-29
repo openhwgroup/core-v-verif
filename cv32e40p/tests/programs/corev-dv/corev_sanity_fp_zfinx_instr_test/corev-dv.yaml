@@ -14,6 +14,7 @@ plusargs: >
     +test_override_riscv_instr_stream=1
     +directed_instr_0=cv32e40p_float_zfinx_base_instr_stream,10
     +directed_instr_1=cv32e40p_fp_w_special_operands_instr_stream,5
+    +directed_instr_2=cv32e40p_fp_w_prev_rd_as_operand_instr_stream,5
 
 # note:
   # 1) example yaml template for fp test with zfinx_extension
