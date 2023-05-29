@@ -16,10 +16,6 @@
 
 `include "cv32e40p_supported_isa.svh"
 
-`ifndef RV_DV_ISA
-`define RV_DV_ISA { RV32I, RV32M, RV32C }
-`endif
-
 //-----------------------------------------------------------------------------
 // Processor feature configuration
 //-----------------------------------------------------------------------------

@@ -135,6 +135,9 @@ ifeq ($(call IS_YES,$(USE_ISS)),YES)
 VLOG_FLAGS += +define+USE_ISS
 VLOG_FLAGS += +define+USE_IMPERASDV
 VLOG_FILE_LIST_IDV = -f $(DV_UVMT_PATH)/imperas_dv.flist
+ifeq ($(call IS_YES,$(COV)),YES)
+VLOG_FLAGS += +define+IMPERAS_COV
+endif
 endif
 
 ###############################################################################
@@ -169,6 +172,9 @@ ifeq ($(call IS_YES,$(USE_ISS)),YES)
 VSIM_FLAGS += +USE_ISS
 VSIM_FLAGS += +USE_IMPERASDV
 VSIM_FLAGS += -sv_lib $(basename $(IMPERAS_DV_MODEL))
+ifeq ($(call IS_YES,$(COV)),YES)
+VSIM_FLAGS += +TRACE2COV_ENABLE=1
+endif
 else
 VSIM_FLAGS += +DISABLE_OVPSIM
 endif
@@ -446,8 +452,8 @@ compliance: $(VSIM_COMPLIANCE_PREREQ) $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 	cd $(COMPLIANCE_RUN_DIR) && \
 		$(VSIM) \
 			-work $(VWORK) \
-			$(VSIM_FLAGS) \
 			$(VSIM_WAVES_FLAGS) \
+			$(VSIM_FLAGS) \
 			-l vsim-$(COMPLIANCE_PROG).log \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=uvmt_$(CV_CORE_LC)_firmware_test_c \
@@ -531,8 +537,8 @@ riscof_sim_run: $(VSIM_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovp
 	export IMPERAS_QUEUE_LICENSE=1 && \
 		$(VSIM) \
 			-work $(VWORK) \
-			$(VSIM_FLAGS) \
 			$(VSIM_WAVES_FLAGS) \
+			$(VSIM_FLAGS) \
 			-l vsim.log \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=uvmt_cv32e40p_riscof_firmware_test_c \
@@ -626,8 +632,8 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 	export IMPERAS_QUEUE_LICENSE=1 && \
 		$(VSIM) \
 			-work $(VWORK) \
-			$(VSIM_FLAGS) \
 			$(VSIM_WAVES_FLAGS) \
+			$(VSIM_FLAGS) \
 			-l vsim-$(VSIM_TEST).log \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(TEST_UVM_TEST) \
