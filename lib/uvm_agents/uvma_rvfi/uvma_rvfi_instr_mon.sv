@@ -37,8 +37,13 @@ class uvma_rvfi_instr_mon_c#(int ILEN=DEFAULT_ILEN,
    uvm_analysis_port#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN))  ap;
 
    // State of monitor
+<<<<<<< HEAD
    bit            last_dcsr_nmip = 0;
    bit [XLEN-1:0] dcsr_ret_data;
+=======
+   bit                last_dcsr_nmip = 0;
+   bit [uvma_rvfi_csr_seq_item_c#()::XLEN-1:0] dcsr_ret_data;
+>>>>>>> 267ba26c53fd9c94f89226b21bed9f6796d6d454
 
    string log_tag = "RVFIMONLOG";
 

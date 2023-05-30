@@ -49,15 +49,15 @@ class uvma_isacov_instr_c#(int ILEN=DEFAULT_ILEN,
   bit rd_valid;
 
   bit [4:0]  c_rdrs1;
-  bit [5:0]  c_rs1s;
-  bit [5:0]  c_rs2s;
-  bit [5:0]  c_rdp;
+  bit [2:0]  c_rs1s;
+  bit [2:0]  c_rs2s;
+  bit [2:0]  c_rdp;
 
-  bit[31:0]     rs1_value;
+  bit[XLEN-1:0]     rs1_value;
   instr_value_t rs1_value_type;
-  bit[31:0]     rs2_value;
+  bit[XLEN-1:0]     rs2_value;
   instr_value_t rs2_value_type;
-  bit[31:0]     rd_value;
+  bit[XLEN-1:0]     rd_value;
   instr_value_t rd_value_type;
 
   instr_value_t immi_value_type;
@@ -117,7 +117,7 @@ class uvma_isacov_instr_c#(int ILEN=DEFAULT_ILEN,
   extern function bit is_conditional_branch();
   extern function bit is_branch_taken();
 
-  extern function instr_value_t              get_instr_value_type(bit[31:0] value, int unsigned width, bit is_signed);
+  extern function instr_value_t              get_instr_value_type(bit[XLEN-1:0] value, int unsigned width, bit is_signed);
   extern function int                        get_field_rd();
   extern function int                        get_field_rs1();
   extern function int                        get_field_rs2();
@@ -333,11 +333,6 @@ function void uvma_isacov_instr_c::set_valid_flags();
     return;
   end
 
-  if (itype == CSRI_TYPE) begin
-    rd_valid = 1;
-    return;
-  end
-
 endfunction : set_valid_flags
 
 
@@ -359,7 +354,7 @@ function bit uvma_isacov_instr_c::is_csr_write();
 endfunction : is_csr_write
 
 
-function instr_value_t uvma_isacov_instr_c::get_instr_value_type(bit[31:0] value, int unsigned width, bit is_signed);
+function instr_value_t uvma_isacov_instr_c::get_instr_value_type(bit[XLEN-1:0] value, int unsigned width, bit is_signed);
   if (value == 0)
     return ZERO;
 
@@ -392,7 +387,7 @@ function  int  uvma_isacov_instr_c::get_field_imm();
   if (this.itype == CIW_TYPE) begin
     return (dasm_rvc_addi4spn_imm(instr) >> 2);  // Shift 2 because [9:2] to [7:0]
   end
-  if (this.itype == CS_TYPE) begin
+  if (this.itype inside {CL_TYPE, CS_TYPE}) begin
     return (dasm_rvc_lw_imm(instr) >> 2);  // Shift 2 because [6:2] to [4:0]
   end
   if (this.itype == CB_TYPE) begin
@@ -433,13 +428,7 @@ function  int  uvma_isacov_instr_c::get_field_rd();
   // TODO:ropeders is CA handled properly?
   // TODO:ropeders call dpi_dasm from here, instead of elsewhere?
 
-  if (itype inside {CA_TYPE, CB_TYPE}) begin
-    return rd[2:0];
-  end else if (itype inside {CIW_TYPE, CL_TYPE}) begin
-    return rs2[2:0];
-  end else begin
-    return rd;
-  end
+  return (itype inside {CA_TYPE, CL_TYPE, CIW_TYPE, CB_TYPE}) ? rd[2:0] : rd;
 
 endfunction : get_field_rd
 
