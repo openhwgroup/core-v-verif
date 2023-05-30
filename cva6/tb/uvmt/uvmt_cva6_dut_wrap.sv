@@ -22,20 +22,13 @@ module uvmt_cva6_dut_wrap # ( parameter int unsigned AXI_USER_WIDTH    = 1,
 )
 
                            (
-<<<<<<< HEAD
                             uvma_clknrst_if_t                   clknrst_if,
-                            uvma_cvxif_if_t                     cvxif_if,
-                            output wire                         tb_exit_o,
-                            output ariane_rvfi_pkg::rvfi_port_t rvfi_o
-=======
-                            uvma_clknrst_if                     clknrst_if,
                             uvma_cvxif_intf                     cvxif_if,
                             uvma_axi_intf                       axi_if,
                             uvmt_axi_switch_intf                axi_switch_vif,
                             uvme_cva6_core_cntrl_if             core_cntrl_if,
                             output logic[31:0]                  tb_exit_o,
                             output ariane_pkg::rvfi_port_t      rvfi_o
->>>>>>> 267ba26c53fd9c94f89226b21bed9f6796d6d454
                            );
 
 

@@ -266,18 +266,12 @@ module uvmt_cva6_tb;
      $timeformat(-9, 3, " ns", 8);
 
      // Add interfaces handles to uvm_config_db
-<<<<<<< HEAD
-     uvm_config_db#(virtual uvma_clknrst_if_t   )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"), .field_name("vif"),       .value(clknrst_if));
-     uvm_config_db#(virtual uvma_cvxif_if_t     )::set(.cntxt(null), .inst_name("*.env.cvxif_agent"),   .field_name("vif"),       .value(cvxif_if)  );
-     uvm_config_db#(virtual uvmt_rvfi_if_t      )::set(.cntxt(null), .inst_name("*"),                   .field_name("rvfi_vif"),  .value(rvfi_if));
-=======
-     uvm_config_db#(virtual uvma_clknrst_if )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"), .field_name("vif"),       .value(clknrst_if));
+     uvm_config_db#(virtual uvma_clknrst_if_t     )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"), .field_name("vif"),       .value(clknrst_if));
      uvm_config_db#(virtual uvma_cvxif_intf )::set(.cntxt(null), .inst_name("*.env.cvxif_agent"),   .field_name("vif"),       .value(cvxif_if)  );
      uvm_config_db#(virtual uvma_axi_intf   )::set(.cntxt(null), .inst_name("*"),                   .field_name("axi_vif"),    .value(axi_if));
      uvm_config_db#(virtual uvmt_axi_switch_intf  )::set(.cntxt(null), .inst_name("*.env"),             .field_name("axi_switch_vif"),   .value(axi_switch_vif));
      uvm_config_db#(virtual uvmt_rvfi_if    )::set(.cntxt(null), .inst_name("*"),                   .field_name("rvfi_vif"),  .value(rvfi_if));
      uvm_config_db#(virtual uvme_cva6_core_cntrl_if)::set(.cntxt(null), .inst_name("*"), .field_name("core_cntrl_vif"),  .value(core_cntrl_if));
->>>>>>> 267ba26c53fd9c94f89226b21bed9f6796d6d454
 
      // DUT and ENV parameters
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_ADDR_WIDTH"),  .value(ENV_PARAM_INSTR_ADDR_WIDTH) );

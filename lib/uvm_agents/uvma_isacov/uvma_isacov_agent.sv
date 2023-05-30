@@ -107,17 +107,6 @@ endfunction : get_and_set_cntxt
 
 function void uvma_isacov_agent_c::retrieve_vif();
 
-<<<<<<< HEAD
-  if (!uvm_config_db#(virtual uvma_isacov_if_t)::get(this, "", "vif", cntxt.vif)) begin
-    `uvm_fatal("VIF", $sformatf(
-               "Could not find vif handle of type %s in uvm_config_db", $typename(cntxt.vif)))
-  end else begin
-    `uvm_info("VIF", $sformatf("Found vif handle of type %s in uvm_config_db", $typename(cntxt.vif)
-              ), UVM_DEBUG)
-  end
-
-=======
->>>>>>> 267ba26c53fd9c94f89226b21bed9f6796d6d454
 endfunction : retrieve_vif
 
 
