@@ -394,6 +394,7 @@ module uvmt_cv32e40s_triggers_assert_cov
     rvfi_if.rvfi_valid
     |->
     rvfi_if.rvfi_mem_rmask < MAX_MEM_ACCESS_PLUS_ONE
+    && rvfi_if.rvfi_mem_wmask < MAX_MEM_ACCESS_PLUS_ONE
   );
 
   //- Vplan:
