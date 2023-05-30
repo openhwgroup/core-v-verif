@@ -210,9 +210,7 @@
 `define CSR_TSELECT_ADDR        32'h7A0 // only when DBG_NUM_TRIGGERS > 0
 `define CSR_TDATA1_ADDR         32'h7A1 // only when DBG_NUM_TRIGGERS > 0
 `define CSR_TDATA2_ADDR         32'h7A2 // only when DBG_NUM_TRIGGERS > 0
-`define CSR_TDATA3_ADDR         32'h7A3 // only when DBG_NUM_TRIGGERS > 0
 `define CSR_TINFO_ADDR          32'h7A4 // only when DBG_NUM_TRIGGERS > 0
-`define CSR_TCONTROL_ADDR       32'h7A5 // only when DBG_NUM_TRIGGERS > 0
 
 `define CSR_DCSR_ADDR           32'h7B0
 `define CSR_DPC_ADDR            32'h7B1
@@ -516,9 +514,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
      `RVVI_SET_CSR( `CSR_TSELECT_ADDR,       tselect       )
      `RVVI_SET_CSR( `CSR_TDATA1_ADDR,        tdata1        )
      `RVVI_SET_CSR( `CSR_TDATA2_ADDR,        tdata2        )
-     `RVVI_SET_CSR( `CSR_TDATA3_ADDR,        tdata3        )
      `RVVI_SET_CSR( `CSR_TINFO_ADDR,         tinfo         )
-     `RVVI_SET_CSR( `CSR_TCONTROL_ADDR,      tcontrol      )
    end
 
    `RVVI_SET_CSR( `CSR_DCSR_ADDR,          dcsr          )

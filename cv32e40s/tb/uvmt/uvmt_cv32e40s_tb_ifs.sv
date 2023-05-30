@@ -374,6 +374,9 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    logic is_trigger_match_load;
    logic is_trigger_match_store;
    logic is_trigger_match_execute;
+   logic [4:0] trigger_match_load_array;
+   logic [4:0] trigger_match_store_array;
+   logic [4:0] trigger_match_execute_array;
    logic [4:0][31:0] tdata1_array;
    logic [4:0][31:0] tdata2_array;
 
@@ -431,6 +434,9 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
          is_trigger_match_load,
          is_trigger_match_store,
          is_trigger_match_execute,
+         trigger_match_load_array,
+         trigger_match_store_array,
+         trigger_match_execute_array,
          tdata1_array,
          tdata2_array,
 
@@ -474,6 +480,9 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
          is_trigger_match_load,
          is_trigger_match_store,
          is_trigger_match_execute,
+         trigger_match_load_array,
+         trigger_match_store_array,
+         trigger_match_execute_array,
          tdata1_array,
          tdata2_array,
 

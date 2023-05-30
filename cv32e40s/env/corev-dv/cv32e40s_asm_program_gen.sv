@@ -39,24 +39,6 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
 
     if (corev_cfg.enable_dummy) begin
       instr = {
-        // SECURESEED0
-        $sformatf("add x%0d, x0, x0", cfg.gpr[0]),
-        $sformatf("lui x%0d, 0x80000", cfg.gpr[0]),
-        $sformatf("addi x%0d, x%0d, 0x57", cfg.gpr[0], cfg.gpr[0]),
-        $sformatf("csrrw x0, 0xbf9, x%0d", cfg.gpr[0]),
-
-        // SECURESEED1
-        $sformatf("add x%0d, x0, x0", cfg.gpr[0]),
-        $sformatf("lui x%0d, 0x80000", cfg.gpr[0]),
-        $sformatf("addi x%0d, x%0d, 0x62", cfg.gpr[0], cfg.gpr[0]),
-        $sformatf("csrrw x0, 0xbfa, x%0d", cfg.gpr[0]),
-
-        // SECURESEED2
-        $sformatf("add x%0d, x0, x0", cfg.gpr[0]),
-        $sformatf("lui x%0d, 0x80000", cfg.gpr[0]),
-        $sformatf("addi x%0d, x%0d, 0x7a", cfg.gpr[0], cfg.gpr[0]),
-        $sformatf("csrrw x0, 0xbfc, x%0d", cfg.gpr[0]),
-
         // CPUCTRL
         $sformatf("add x%0d, x0, x0", cfg.gpr[0]),
         $sformatf("lui x%0d, 0xf0", cfg.gpr[0]),
