@@ -532,7 +532,7 @@ function void uvme_cv32e40s_cfg_c::set_unsupported_csr_mask();
    unsupported_csr_mask[uvma_core_cntrl_pkg::SCOUNTEREN] = 1;
 
    // TODO:ropeders re-evaluate this when 40s is more stable
-   //unsupported_csr_mask[uvma_core_cntrl_pkg::TDATA3] = 1;
+   unsupported_csr_mask[uvma_core_cntrl_pkg::TDATA3] = 1;
    unsupported_csr_mask[uvma_core_cntrl_pkg::TCONTROL] = 1;
 
    unsupported_csr_mask[uvma_core_cntrl_pkg::MCONTEXT] = 1;

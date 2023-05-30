@@ -1092,6 +1092,7 @@ module uvmt_cv32e40s_tb;
       //OBI data:
       .obi_data_req_packet (core_i.m_c_obi_data_if.req_payload),
       .obi_data_resp_packet (core_i.m_c_obi_data_if.resp_payload),
+      .obi_data_addr (core_i.data_addr_o),
       .obi_data_req (core_i.m_c_obi_data_if.s_req.req),
       .obi_data_reqpar (core_i.m_c_obi_data_if.s_req.reqpar),
       .obi_data_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
@@ -1102,6 +1103,7 @@ module uvmt_cv32e40s_tb;
       //OBI instr:
       .obi_instr_req_packet (core_i.m_c_obi_instr_if.req_payload),
       .obi_instr_resp_packet (core_i.m_c_obi_instr_if.resp_payload),
+      .obi_instr_addr (core_i.instr_addr_o),
       .obi_instr_req (core_i.m_c_obi_instr_if.s_req.req),
       .obi_instr_reqpar (core_i.m_c_obi_instr_if.s_req.reqpar),
       .obi_instr_gnt (core_i.m_c_obi_instr_if.s_gnt.gnt),
