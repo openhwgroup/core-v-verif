@@ -143,7 +143,8 @@ module uvmt_cv32e40s_triggers_assert_cov
   //Initial settings
   localparam TDATA1_DISABLED = 32'hF800_0000;
   localparam MAX_NUM_TRIGGERS = 5;
-  localparam MAX_MEM_ACCESS = 13; //Push and pop can do 13 memory access. XIF can potentially do more (TODO xif: check this when merging to cv32e40x)
+  localparam MAX_MEM_ACCESS = 13; //Push and pop can do 13 memory access. TODO: XIF, can potentially do more, so for XIF assertion a_dt_max_memory_transaction might fail.
+  localparam MAX_MEM_ACCESS_PLUS_ONE = 53'b1_0000__0000_0000_0000_0000__0000_0000_0000_0000__0000_0000_0000_0000;
 
 
   /////////// Signals ///////////
@@ -181,9 +182,9 @@ module uvmt_cv32e40s_triggers_assert_cov
   endgenerate
 
   logic m6_hits_written;
-  assign m6_hits_written = (rvfi_if.is_csr_write(ADDR_TDATA1)); // && (rvfi_if.rvfi_rs1_rdata[M6_HIT0] || rvfi_if.rvfi_rs1_rdata[M6_HIT1]));
+  assign m6_hits_written = (rvfi_if.is_csr_write(ADDR_TDATA1));
 
-  logic m6_hits_was_0; //TODO: remove if not needed
+  logic m6_hits_was_0;
   always_latch begin
     if(clknrst_if.reset_n) begin
       m6_hits_was_0 <= 1'b1;
@@ -205,7 +206,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   logic [4:0] trigger_match_store_array;
   logic handle_trigger_match;
 
-  //TODO: add raw here: support_if.trigger_match_execute_array
+
   assign handle_trigger_match = rvfi_if.rvfi_valid && !rvfi_if.rvfi_dbg_mode && !rvfi_if.rvfi_trap.exception;
   assign trigger_match_execute_array = support_if.trigger_match_execute_array & {5{handle_trigger_match}};
   assign trigger_match_load_array = support_if.trigger_match_load_array & {5{handle_trigger_match}};
@@ -385,6 +386,15 @@ module uvmt_cv32e40s_triggers_assert_cov
 
 
   /////////// Assertions and Coverages ///////////
+
+  //Verify that it isonly possible to do 13 Memory transactions:
+  //TODO XIF: this might not be the case for xif, as it can potentionally do more:
+
+  a_dt_max_memory_transaction: assert property (
+    rvfi_if.rvfi_valid
+    |->
+    rvfi_if.rvfi_mem_rmask < MAX_MEM_ACCESS_PLUS_ONE
+  );
 
   //- Vplan:
   //Verify that core enters debug mode when the trigger matches on instruction address. NB! According to spec, the tdataN registers can only be written from debug mode, as m-mode writes are ignored.
