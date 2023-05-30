@@ -1205,6 +1205,8 @@ module uvmt_cv32e40s_tb;
       .if_dummy (core_i.if_stage_i.dummy_insert),
       .kill_if  (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.kill_if),
       .if_valid (core_i.if_valid),
+      .ptr_in_if (core_i.if_stage_i.ptr_in_if_o),
+      .if_first_op (core_i.if_stage_i.first_op),
 
       //ID:
       .operand_a (core_i.id_stage_i.operand_a),
@@ -1230,8 +1232,7 @@ module uvmt_cv32e40s_tb;
 
       //Controller:
       .debug_mode (core_i.controller_i.controller_fsm_i.debug_mode_q),
-      .stopcount_in_debug (core_i.cs_registers_i.debug_stopcount),
-      .allow_dummy (core_i.ctrl_fsm.allow_dummy_instr)
+      .stopcount_in_debug (core_i.cs_registers_i.debug_stopcount)
     );
 
 
