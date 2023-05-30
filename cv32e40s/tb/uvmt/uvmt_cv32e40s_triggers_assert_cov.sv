@@ -186,16 +186,16 @@ module uvmt_cv32e40s_triggers_assert_cov
   logic m6_hits_was_0; //TODO: remove if not needed
   always_latch begin
     if(clknrst_if.reset_n) begin
-      m6_hits_was_0 = 1'b1;
+      m6_hits_was_0 <= 1'b1;
     end
 
     if (rvfi_if.is_csr_write(ADDR_TDATA1)
-    && tdata1_post_state_m6_hits != 1'b0) begin
+    && m6_hits_was_0 != 1'b0) begin
       m6_hits_was_0 <= 1'b0;
     end
 
     if (rvfi_if.is_csr_write(ADDR_TDATA1)
-    && tdata1_post_state_m6_hits == 1'b0) begin
+    && m6_hits_was_0 == 1'b0) begin
       m6_hits_was_0 <= 1'b1;
     end
   end
@@ -203,11 +203,13 @@ module uvmt_cv32e40s_triggers_assert_cov
   logic [4:0] trigger_match_execute_array;
   logic [4:0] trigger_match_load_array;
   logic [4:0] trigger_match_store_array;
+  logic handle_trigger_match;
 
   //TODO: add raw here: support_if.trigger_match_execute_array
-  assign trigger_match_execute_array = support_if.trigger_match_execute_array && rvfi_if.rvfi_valid && !rvfi_if.rvfi_dbg_mode && !rvfi_if.rvfi_trap.exception;
-  assign trigger_match_load_array = support_if.trigger_match_load_array && rvfi_if.rvfi_valid && !rvfi_if.rvfi_dbg_mode && !rvfi_if.rvfi_trap.exception;
-  assign trigger_match_store_array = support_if.trigger_match_store_array && rvfi_if.rvfi_valid && !rvfi_if.rvfi_dbg_mode && !rvfi_if.rvfi_trap.exception;
+  assign handle_trigger_match = rvfi_if.rvfi_valid && !rvfi_if.rvfi_dbg_mode && !rvfi_if.rvfi_trap.exception;
+  assign trigger_match_execute_array = support_if.trigger_match_execute_array & {5{handle_trigger_match}};
+  assign trigger_match_load_array = support_if.trigger_match_load_array & {5{handle_trigger_match}};
+  assign trigger_match_store_array = support_if.trigger_match_store_array & {5{handle_trigger_match}};
 
   logic tdata1_pre_state_m6_hits;
   assign tdata1_pre_state_m6_hits = {tdata1_pre_state[M6_HIT1], tdata1_pre_state[M6_HIT0]};
