@@ -91,8 +91,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     //Controller:
     input logic debug_mode,
-    input logic stopcount_in_debug,
-    input logic allow_dummy
+    input logic stopcount_in_debug
 
   );
 

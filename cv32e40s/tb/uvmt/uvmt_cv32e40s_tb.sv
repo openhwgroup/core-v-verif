@@ -1240,8 +1240,7 @@ module uvmt_cv32e40s_tb;
 
       //Controller:
       .debug_mode (core_i.controller_i.controller_fsm_i.debug_mode_q),
-      .stopcount_in_debug (core_i.cs_registers_i.debug_stopcount),
-      .allow_dummy (core_i.ctrl_fsm.allow_dummy_instr)
+      .stopcount_in_debug (core_i.cs_registers_i.debug_stopcount)
     );
 
 
