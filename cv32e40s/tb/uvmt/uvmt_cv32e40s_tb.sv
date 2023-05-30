@@ -46,7 +46,6 @@ module uvmt_cv32e40s_tb;
    bit [31:0] evalue;
 
    // Agent interfaces
-   uvma_isacov_if_t             isacov_if();
    uvma_clknrst_if_t            clknrst_if(); // clock and resets from the clknrst agent
    uvma_clknrst_if_t            clknrst_if_iss();
    uvma_debug_if_t              debug_if();
@@ -1650,7 +1649,6 @@ module uvmt_cv32e40s_tb;
      $timeformat(-9, 3, " ns", 8);
 
      // Add interfaces handles to uvm_config_db
-     uvm_config_db#(virtual uvma_isacov_if_t            )::set(.cntxt(null), .inst_name("*.env.isacov_agent"),           .field_name("vif"),           .value(isacov_if));
      uvm_config_db#(virtual uvma_debug_if_t             )::set(.cntxt(null), .inst_name("*.env.debug_agent"),            .field_name("vif"),           .value(debug_if));
      uvm_config_db#(virtual uvma_clknrst_if_t           )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"),          .field_name("vif"),           .value(clknrst_if));
      uvm_config_db#(virtual uvma_interrupt_if_t         )::set(.cntxt(null), .inst_name("*.env.interrupt_agent"),        .field_name("vif"),           .value(interrupt_if));
@@ -1966,13 +1964,6 @@ module uvmt_cv32e40s_tb;
    end
    `endif
    `endif
-
-   //TODO verify these are correct with regards to isacov function
-   `ifndef FORMAL // events ignored for formal - this avoids unnecessary warning
-   always @(dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if.rvfi_valid) -> isacov_if.retire;
-   `endif
-   assign isacov_if.instr = dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if.rvfi_insn;
-   //assign isacov_if.is_compressed = dut_wrap.cv32e40s_wrapper_i.tracer_i.insn_compressed;
 
    // Capture the test status and exit pulse flags
    // TODO: put this logic in the vp_status_if (makes it easier to pass to ENV)
