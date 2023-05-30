@@ -216,7 +216,6 @@ module uvmt_cv32e40s_tb;
   `RVFI_CSR_BIND(dpc)
   `RVFI_CSR_BIND(tselect)
   `RVFI_CSR_BIND(tinfo)
-  `RVFI_CSR_BIND(tcontrol)
 
   `RVFI_CSR_IDX_BIND(mhpmcounter,,3)
   `RVFI_CSR_IDX_BIND(mhpmcounter,,4)
@@ -444,15 +443,6 @@ module uvmt_cv32e40s_tb;
                                                                   .rvfi_csr_wdata(rvfi_i.rvfi_csr_tdata_wdata[2])
     );
 
-  // tdata3
-  bind cv32e40s_wrapper
-    uvma_rvfi_csr_if_t#(uvmt_cv32e40s_base_test_pkg::XLEN) rvfi_csr_tdata3_if(.clk(clk_i),
-                                                                  .reset_n(rst_ni),
-                                                                  .rvfi_csr_rmask(rvfi_i.rvfi_csr_tdata_rmask[3]),
-                                                                  .rvfi_csr_wmask(rvfi_i.rvfi_csr_tdata_wmask[3]),
-                                                                  .rvfi_csr_rdata(rvfi_i.rvfi_csr_tdata_rdata[3]),
-                                                                  .rvfi_csr_wdata(rvfi_i.rvfi_csr_tdata_wdata[3])
-    );
 
 
   bind uvmt_cv32e40s_dut_wrap
@@ -1102,6 +1092,7 @@ module uvmt_cv32e40s_tb;
       //OBI data:
       .obi_data_req_packet (core_i.m_c_obi_data_if.req_payload),
       .obi_data_resp_packet (core_i.m_c_obi_data_if.resp_payload),
+      .obi_data_addr (core_i.data_addr_o),
       .obi_data_req (core_i.m_c_obi_data_if.s_req.req),
       .obi_data_reqpar (core_i.m_c_obi_data_if.s_req.reqpar),
       .obi_data_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
@@ -1112,6 +1103,7 @@ module uvmt_cv32e40s_tb;
       //OBI instr:
       .obi_instr_req_packet (core_i.m_c_obi_instr_if.req_payload),
       .obi_instr_resp_packet (core_i.m_c_obi_instr_if.resp_payload),
+      .obi_instr_addr (core_i.instr_addr_o),
       .obi_instr_req (core_i.m_c_obi_instr_if.s_req.req),
       .obi_instr_reqpar (core_i.m_c_obi_instr_if.s_req.reqpar),
       .obi_instr_gnt (core_i.m_c_obi_instr_if.s_gnt.gnt),
@@ -1608,17 +1600,14 @@ module uvmt_cv32e40s_tb;
                                                                     .wb_tselect (rvfi_i.rvfi_csr_rdata_d.tselect),
                                                                     .wb_exception (core_i.controller_i.controller_fsm_i.exception_in_wb),
 
-
                                                                     .rvfi_if (rvfi_instr_if),
                                                                     .clknrst_if (dut_wrap.clknrst_if),
                                                                     .support_if (support_logic_module_o_if.slave_mp),
 
                                                                     .tdata1 (rvfi_csr_tdata1_if),
                                                                     .tdata2 (rvfi_csr_tdata2_if),
-                                                                    .tdata3 (rvfi_csr_tdata3_if),
                                                                     .tinfo (rvfi_csr_tinfo_if),
                                                                     .tselect (rvfi_csr_tselect_if),
-                                                                    .tcontrol (rvfi_csr_tcontrol_if),
                                                                     .dcsr (rvfi_csr_dcsr_if),
                                                                     .dpc (rvfi_csr_dpc_if)
                                                                     );
@@ -1730,9 +1719,7 @@ module uvmt_cv32e40s_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(tselect)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tdata1)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tdata2)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(tdata3)
      `RVFI_CSR_UVM_CONFIG_DB_SET(tinfo)
-     `RVFI_CSR_UVM_CONFIG_DB_SET(tcontrol)
 
      `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg0)
      `RVFI_CSR_UVM_CONFIG_DB_SET(pmpcfg1)

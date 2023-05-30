@@ -28,11 +28,11 @@
  // For OBI
  parameter ENV_PARAM_INSTR_ADDR_WIDTH  = 32;
  parameter ENV_PARAM_INSTR_DATA_WIDTH  = 32;
- parameter ENV_PARAM_INSTR_ACHK_WIDTH  = 12;
+ parameter ENV_PARAM_INSTR_ACHK_WIDTH  = 13;
  parameter ENV_PARAM_INSTR_RCHK_WIDTH  = 5;
  parameter ENV_PARAM_DATA_ADDR_WIDTH   = 32;
  parameter ENV_PARAM_DATA_DATA_WIDTH   = 32;
- parameter ENV_PARAM_DATA_ACHK_WIDTH   = 12;
+ parameter ENV_PARAM_DATA_ACHK_WIDTH   = 13;
  parameter ENV_PARAM_DATA_RCHK_WIDTH   = 5;
  parameter ENV_PARAM_RAM_ADDR_WIDTH    = 22;
 
