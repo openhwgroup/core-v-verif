@@ -25,6 +25,12 @@ proc cvfv_rerun {} {
   # Message Severities
   ## Error on file not found
   set_message -error WNL074
+  ## Allow omitted param defaults
+  set_message -info VERI-1818
+  ## Allow parameter treated as localparam
+  set_message -info VERI-2418
+  ## Allow empty port in module declaration
+  set_message -info VERI-8026
 
   # Analyze & Elaborate
   analyze  -sv12  -f fv.flist
