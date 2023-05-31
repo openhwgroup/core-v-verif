@@ -3,6 +3,14 @@ This is the root directory of the CV32E40P Verification Plan (aka Test Plan).  E
 
 Use the provided CORE-V_Simulation VerifPlan_Template.xlsx spreadsheet as your template to capture a Verification Plan.
 
+Below are two different chapters describing verification plans status and direct link for CV32E40P**v2** first, and CV32E40P**v1** after
+
+# CV32E40P (V2) Verification Plans
+
+## Short methodology introduction
+For CV32E40P**v2** verification, the formal verification methodology has been choosen over the stimuli-based simulation that was done for version one of the core. However, full verification closure is not feasible using only formal verification due to complexity of specific scenarios. All these specific uncoverable scenarios from formal verification are then exercised by stimuli-based simulation using a reference model of the core.
+
+
 ## Verification Plan Status
 
 The tables below capture the current status of the Verification Plan for the CV32E40P by high-level feature, as long with status update with respect to CV32E40Pv1 verification plans.  Under the heading `Capture`, the test plan can be **Incomplete**, **draft**, or one of the following: 
@@ -88,3 +96,71 @@ The v1 _simulation_ verification plans can be found there: `core-v-verif/VerifPl
 | 128-bit wide Instruction Bus itf | | | Not a CV32E40P Feature |
 | RI5CY interrupt scheme | | | Not a CV32E40P Feature |
 | PULP cluster itf | | | Not a CV32E40P Feature |
+
+
+
+# CV32E40P (V1) Verification Plans
+## Verification Plan Status
+
+The tables below capture the current status of the Verification Plan for the CV32E40P by high-level feature.  Under the heading `Review` is one of following:
+* **Ready for Review**: Vplan has been captured and is awaiting review.
+* **Reviewed**: Vplan has been reviewed, and is waiting for updates to address review feedback.
+* **Waiting for Signoff**: Vplan has been reviewed and review comments addressed by the author.  Document is now waiting for reviewers to signoff on the post-review updates.
+* **Complete**: Post-preview updates have been signed-off.
+
+### Base instruction set plus standard instruction extensions
+
+_Refer to the VerifPlans/ISA/RV32/Simulation directory for specific Verification Plan status for each supported extension._
+### Interrupts
+
+| Feature | Capture | Review | Comment |
+|---------|---------|--------|---------|
+| CLINT | Captured | Complete | |
+| CLIC | | | Not a CV32E40P Feature |
+
+### Debug & Trace
+
+| Feature | Capture | Review | Comment |
+|---------|---------|--------|---------|
+| Debug | Captured | Complete | |
+| Trigger module | Captured | Complete | Not a CV32E40P Feature |
+| Tracer | N/A | N/A | Behavioral model, not RTL |
+
+### Privileged spec
+
+| Feature | Capture | Review | Comment |
+|---------|---------|--------|---------|
+| CSRs | Incomplete | | |
+| User mode | N/A| N/A | Not a CV32E40P Feature |
+| PMP | N/A | N/A | Not a CV32E40P Feature |
+
+### Micro-architecure
+
+| Feature | Capture | Review | Comment |
+|---------|---------|--------|---------|
+| OBI     | Complete | Reviewed | |
+| Sleep Unit | Complete | Reviewed | Updates pending based on review feedback |
+| Pipelines | Complete | Reviewed | Updates pending based on review feedback|
+
+### Xpulp instruction extensions
+**Note**: Xpulp instructions are "exercised, but not fully verified" in CV32E40P.
+
+| Feature | Capture | Review | Comment |
+|---------|---------|--------|---------|
+| Post-increment load/store | Preliminary draft | | |
+| Hardware Loop | Preliminary draft | | On-going discussions with Cores TWG |
+| Bit Manipulation | Preliminary draft | | |
+| General ALU | Preliminary draft | | |
+| Immediate branching | Preliminary draft | | |
+| SIMD | Preliminary draft | | |
+
+### Custom circuitry
+
+| Feature | Capture | Review | Comment |
+|---------|---------|--------|---------|
+| RI5CY performance counters | | | Not a CV32E40P Feature |
+| Advanced Processing Unit itf | | | Not a CV32E40P Feature |
+| 128-bit wide Instruction Bus itf | | | Not a CV32E40P Feature |
+| RI5CY interrupt scheme | | | Not a CV32E40P Feature |
+| PULP cluster itf | | | Not a CV32E40P Feature |
+
