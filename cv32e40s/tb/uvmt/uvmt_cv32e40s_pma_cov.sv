@@ -23,24 +23,26 @@
 module  uvmt_cv32e40s_pma_cov
   import uvmt_cv32e40s_base_test_pkg::*;
 #(
+  parameter bit  IS_INSTR_SIDE,
   parameter int  PMA_NUM_REGIONS,
-  parameter bit  IS_INSTR_SIDE
+  parameter type CORE_REQ_TYPE
 )(
   input wire  clk,
   input wire  clk_ungated,
   input wire  rst_n,
 
   // MPU Signals
-  input wire  core_trans_ready_o,
-  input wire  core_trans_valid_i,
-  input wire  misaligned_access_i,
-  input wire  load_access,
-  input wire  core_trans_pushpop_i,
+  input CORE_REQ_TYPE  core_trans_i,
+  input wire           core_trans_pushpop_i,
+  input wire           core_trans_ready_o,
+  input wire           core_trans_valid_i,
+  input wire           load_access,
+  input wire           misaligned_access_i,
 
   // Helper Logic
   input wire pma_status_t  pma_status_i,
-  input wire pma_status_t  pma_status_rvfidata_word0lowbyte_i,
   input wire pma_status_t  pma_status_rvfidata_word0highbyte_i,
+  input wire pma_status_t  pma_status_rvfidata_word0lowbyte_i,
   uvma_rvfi_instr_if_t     rvfi_if
 );
 

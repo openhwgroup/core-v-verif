@@ -1540,8 +1540,9 @@ module uvmt_cv32e40s_tb;
 
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i
       uvmt_cv32e40s_pma_cov #(
-        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
-        .IS_INSTR_SIDE   (1'b 1)
+        .CORE_REQ_TYPE   (cv32e40s_pkg::obi_inst_req_t),
+        .IS_INSTR_SIDE   (1'b 1),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS)
       ) pma_cov_instr_i (
         .clk_ungated                         (clknrst_if.clk),
         .pma_status_i                        (uvmt_cv32e40s_tb.pma_status_instr),
@@ -1553,8 +1554,9 @@ module uvmt_cv32e40s_tb;
 
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i
       uvmt_cv32e40s_pma_cov #(
-        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
-        .IS_INSTR_SIDE   (1'b 0)
+        .CORE_REQ_TYPE   (cv32e40s_pkg::obi_data_req_t),
+        .IS_INSTR_SIDE   (1'b 0),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS)
       ) pma_cov_data_i (
         .clk_ungated                         (clknrst_if.clk),
         .pma_status_i                        (uvmt_cv32e40s_tb.pma_status_data),
