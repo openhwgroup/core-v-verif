@@ -158,7 +158,11 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       ^rdata[31:24],
       ^rdata[23:16],
       ^rdata[15:8],
-      ^rdata[7:0]};
+      ^rdata[7:0]};/* TODO: remove
+      ^rdata[3],
+      ^rdata[2],
+      ^rdata[1],
+      ^rdata[0]};*/
   endfunction
 
 
@@ -278,7 +282,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       obi_instr_req,
       obi_instr_req_packet.achk,
       achk_instr_calculated)
-  ) else `uvm_error(info_tag_rtl_bug, "The request checksum for the OBI instructions bus is not as expected.\n"); //TODO:remove rtl_bug when ready
+  ) else `uvm_error(info_tag_rtl_bug, "The request checksum for the OBI instructions bus is not as expected.\n");
 
 
   a_xsecure_integrity_instr_rchk: assert property (
@@ -302,7 +306,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       rchk_data_calculated[RCHK_STORE])
   );
 
-/* //TODO: KD: failing in formal
+
   a_xsecure_integrity_load_data_rchk: assert property (
     p_checksum_data_rchk(
     !support_if.req_was_store,
@@ -310,7 +314,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     obi_data_resp_packet.rchk,
     rchk_data_calculated)
   );
-*/
+
 
   //Verify that major alert and exception code "Instruction parity/checksum fault" are set when executing an instruction with an integrity error
 

@@ -24,6 +24,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   import uvmt_cv32e40s_base_test_pkg::*;
   import cv32e40s_rvfi_pkg::*;
   import uvmt_cv32e40s_pkg::*;
+  import support_pkg::*; //TODO:remove
   (
     input logic wb_valid,
     input logic [10:0] wb_exception_code,
@@ -34,6 +35,11 @@ module uvmt_cv32e40s_triggers_assert_cov
     input logic wb_dbg_mode,
     input logic wb_last_op,
     input logic wb_exception,
+    input logic debug_mode_q, //TODO: remove
+    input logic [31:0] if_instr, //TODO: remove
+    input logic [31:0] id_instr, //TODO: remove
+    input logic [31:0] ex_instr, //TODO: remove
+    input logic [31:0] wb_instr, //TODO: remove
 
     uvma_rvfi_instr_if_t rvfi_if,
     uvma_clknrst_if_t clknrst_if,
@@ -234,6 +240,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       && !rvfi_if.rvfi_trap
       && rvfi_if.rvfi_dbg_mode;
 
+
   logic is_csrrw;
   logic is_csrrs;
   logic is_csrrc;
@@ -279,7 +286,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   sequence seq_csr_read_dmode(csr_addr);
     valid_instr_in_dmode
     && rvfi_if.is_csr_read(csr_addr)
-    && rvfi_if.rvfi_rd1_addr != 0;
+    && rvfi_if.rvfi_rd1_addr != 0; //TODO: do I need thid?
   endsequence
 
   sequence seq_csr_write_dmode(csr_addr);
@@ -892,24 +899,59 @@ module uvmt_cv32e40s_triggers_assert_cov
     //2) Verify that all tdata registers can be read in debug mode, and that writes have an effect
     //3) Verify that the tdata registers are unaccessible in user mode
 
-    //1)
-    a_dt_no_write_access_to_tcsrs_in_mmode: assert property (
+    //1)//TODO: sjekk fv
+    a_dt_no_write_access_to_tdata_in_mmode: assert property (
 
       valid_instr_in_mmode
+      && !rvfi_if.rvfi_dbg_mode
       && rvfi_if.csr_addr != ADDR_TSELECT
 
       |->
-      tdata1_post_state == tdata1_pre_state
-      && tdata2_post_state == tdata2_pre_state
+      !tdata1.rvfi_csr_wmask
+      && !tdata2.rvfi_csr_wmask
     ) else `uvm_error(info_tag, "The t-CSRs are written in machine mode (not debug mode), and the write changes the CSRs values.\n");
 
-/* TODO: KD failing in formal
     c_dt_write_tdata1_in_mmode: cover property (
-      seq_csr_write_mmode(ADDR_TDATA1)
+      rvfi_if.is_mmode
+      && !rvfi_if.rvfi_dbg_mode
+      && rvfi_if.is_csr_write(ADDR_TDATA1)
     );
-*/
+/*
+    //////////////////////// TODO: Remove /////////////////////////
+    c_dt_write_tdata1_in_mmode_test: cover property (
+      !rvfi_if.rvfi_dbg_mode
+      && rvfi_if.is_csr_write(ADDR_TDATA1)
+    );
+
+    c_dt_write_tdata1_in_mmode_test_if: cover property (
+      !debug_mode_q
+      &&
+      support_pkg::is_csr_write_f(if_instr, ADDR_TDATA1)
+    );
+
+    c_dt_write_tdata1_in_mmode_test_1d: cover property (
+      !debug_mode_q
+      &&
+      support_pkg::is_csr_write_f(id_instr, ADDR_TDATA1)
+    );
+
+    c_dt_write_tdata1_in_mmode_test_ex: cover property (
+      !debug_mode_q
+      &&
+      support_pkg::is_csr_write_f(ex_instr, ADDR_TDATA1)
+    );
+
+    c_dt_write_tdata1_in_mmode_test_wb: cover property (
+      !debug_mode_q
+      &&
+      support_pkg::is_csr_write_f(wb_instr, ADDR_TDATA1)
+    );*/
+    /////////////////////////////////////////////////
+
     c_dt_write_tdata2_in_mmode: cover property (
-      seq_csr_write_mmode(ADDR_TDATA2)
+      rvfi_if.is_mmode
+      && !rvfi_if.rvfi_dbg_mode
+      && rvfi_if.is_csr_write(ADDR_TDATA2)
     );
 
 
@@ -927,7 +969,14 @@ module uvmt_cv32e40s_triggers_assert_cov
 
 
     //2)
-    /* TODO: KD failing in formal
+    // TODO: KD failing in formal
+    c_dt_write_access_to_tdata1_in_dmode_remove: cover property (
+      rvfi_if.rvfi_valid
+      && rvfi_if.rvfi_dbg_mode
+      //&& !rvfi_if.rvfi_trap
+      && rvfi_if.is_csr_write(ADDR_TDATA1)
+    );
+
     a_dt_write_access_to_tdata1_in_dmode: assert property (
       p_csrrw_in_dmode(ADDR_TDATA1, tdata1_post_state)
       or p_csrrs_in_dmode(ADDR_TDATA1, tdata1_post_state)
@@ -936,7 +985,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       or p_csrrsi_in_dmode(ADDR_TDATA1, tdata1_post_state)
       or p_csrrci_in_dmode(ADDR_TDATA1, tdata1_post_state)
     ) else `uvm_error(info_tag, "No write access to tdata1 in debug mode.\n");
-*/
+
     a_dt_write_access_to_tdata2_in_dmode: assert property (
       p_csrrw_in_dmode(ADDR_TDATA2, tdata2_post_state)
       or p_csrrs_in_dmode(ADDR_TDATA2, tdata2_post_state)
@@ -983,7 +1032,7 @@ module uvmt_cv32e40s_triggers_assert_cov
 
 
     //1)
-    /* TODO: KD coverage failing in formal
+    // TODO: KD coverage failing in formal
     a_dt_write_0_to_tdata1: assert property (
       seq_csr_write_dmode(ADDR_TDATA1)
 
@@ -1005,7 +1054,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       |->
       tdata1_post_state == TDATA1_DISABLED
     ) else `uvm_error(info_tag, "Writing 0 to tdata1 does not set tdata1 into disabled state.\n");
-*/
+
 
     //2) see a_dt_enter_dbg_reason
 
@@ -1032,13 +1081,13 @@ module uvmt_cv32e40s_triggers_assert_cov
     //1) write to tdata1/2/3 and check that nothing got changes except the one "tdata*" register that was written
 
     //1)
-    /* TODO: KD coverage failing in formal
+    // TODO: KD coverage failing in formal
     a_dt_write_only_tdata1: assert property (
       seq_csr_write_dmode(ADDR_TDATA1)
       |->
       !tdata2.rvfi_csr_wmask
     ) else `uvm_error(info_tag, "A write to tdata1 writes tdata2 as well.\n");
-*/
+
     a_dt_write_only_tdata2: assert property (
       seq_csr_write_dmode(ADDR_TDATA2)
       |->
@@ -1414,8 +1463,7 @@ module uvmt_cv32e40s_triggers_assert_cov
     a_dt_write_tdata2_random_in_dmode_type_2_6_15: assert property (
 
       (seq_csr_write_dmode(ADDR_TDATA2)
-      ##0 rvfi_if.rvfi_rs1_rdata == $random()
-      && (tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 2
+      ##0 (tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 2
       || tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 6
       || tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 15))
 

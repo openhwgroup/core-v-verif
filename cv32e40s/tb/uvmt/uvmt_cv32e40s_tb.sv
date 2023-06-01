@@ -1591,6 +1591,7 @@ module uvmt_cv32e40s_tb;
                                                                     );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_triggers_assert_cov debug_trigger_assert_i(
+                                                                    //TODO: remove what is no longer used
                                                                     .wb_valid (core_i.wb_stage_i.wb_valid_o),
                                                                     .wb_exception_code (core_i.controller_i.controller_fsm_i.exception_cause_wb),
                                                                     .wb_tdata1 (core_i.cs_registers_i.tdata1_rdata),
@@ -1600,6 +1601,11 @@ module uvmt_cv32e40s_tb;
                                                                     .wb_last_op (rvfi_i.last_op_wb_i),
                                                                     .wb_tselect (rvfi_i.rvfi_csr_rdata_d.tselect),
                                                                     .wb_exception (core_i.controller_i.controller_fsm_i.exception_in_wb),
+                                                                    .debug_mode_q (controller_i.controller_fsm_i.debug_mode_q),
+                                                                    .if_instr (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.instr),
+                                                                    .id_instr (core_i.if_id_pipe.instr.bus_resp.rdata),
+                                                                    .ex_instr (core_i.id_ex_pipe.instr.bus_resp.rdata),
+                                                                    .wb_instr (core_i.ex_wb_pipe.instr.bus_resp.rdata),
 
                                                                     .rvfi_if (rvfi_instr_if),
                                                                     .clknrst_if (dut_wrap.clknrst_if),
