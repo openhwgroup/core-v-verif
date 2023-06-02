@@ -28,6 +28,8 @@
 
 ./uvm_pkg.sv
 ./defines.sv
+${FV_DEFINES}
+${FV_INCDIRS}
 
 -f  ${CV_CORE_PKG}/cv32e40s_manifest.flist
 -f  ${DV_SUPPORT_PATH}/support_pkg.flist
