@@ -28,19 +28,16 @@ plusargs: >
     +num_of_sub_program=0
     +enable_fp_in_x_regs=1=1
     +test_override_riscv_instr_stream=1
-    +directed_instr_0=cv32e40p_float_zfinx_base_instr_stream,10
-    +directed_instr_1=cv32e40p_fp_w_special_operands_instr_stream,5
-    +directed_instr_2=cv32e40p_fp_w_prev_rd_as_operand_instr_stream,5
+    +directed_instr_0=cv32e40p_float_zfinx_base_instr_stream,2
+    +directed_instr_1=cv32e40p_fp_n_mixed_instr_stream,2
+    +directed_instr_2=cv32e40p_fp_w_special_operands_instr_stream,2
+    +directed_instr_3=cv32e40p_fp_w_prev_rd_as_operand_instr_stream,2
 
 # note:
   # 1) example yaml template for fp test with zfinx_extension
-  # 2) above setting running 100 streams with [single/multiple b2b] fp instr; insert 100 streams per 1000 instr_cnt
-  # 3) runcmd: make gen_corev-dv test TEST=corev_sanity_fp_zfinx_instr_test USE_ISS=no CFG=pulp_fpu_zfinx CFG_PLUSARGS="+UVM_VERBOSITY=UVM_DEBUG"
-  # 4) [Must have plusarg]  enable_floating_point for extension f
+  # 2) above setting running <n> streams with <m> rand instrs; +directed_instr_<idx>=<stream class>,<n>
+  # 3) runcmd: make gen_corev-dv test TEST=corev_sanity_fp_instr_test USE_ISS=no CFG=pulp_fpu CFG_PLUSARGS="+UVM_VERBOSITY=UVM_DEBUG"
+  # 4) [Must have plusarg]  enable_fp_in_x_regs for extension f
   # 5) [Must have plusarg]  test_override_riscv_instr_stream=1
   #   - <value>==1: is to tune the streams not to overlap with other streams during streams placement
-  # 6) [recomendation_1] for single directed_instr_<num==0>, try not to use apply too many streams else it might lead to placement issue
-  #   - e.g +directed_instr_0=cv32e40p_fp_w_special_operands_instr_stream,10
-  # 7) [recomendation_2] for single directed_instr_<num==0 and 1 and 2>, try limit the streams espcially for ext stream from base
-  #   - e.g +directed_instr_0=cv32e40p_float_zfinx_base_instr_stream,10
-  #   - e.g +directed_instr_1=cv32e40p_fp_w_special_operands_instr_stream,5
+  # 6) [recomendation] for single directed_instr_<num==0>, try not to use apply too many streams else it might lead to placement issue
