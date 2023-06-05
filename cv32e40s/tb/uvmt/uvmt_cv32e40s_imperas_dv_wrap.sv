@@ -299,7 +299,7 @@
 ////////////////////////////////////////////////////////////////////////////
 `ifdef USE_IMPERASDV
 
-`include "rvvi/imperasDV.svh" // located in $IMPERAS_HOME/ImpProprietary/include/host
+`include "idv/idv.svh" // located in $IMPERAS_HOME/ImpProprietary/include/host
 
 module uvmt_cv32e40s_imperas_dv_wrap
   import uvm_pkg::*;
@@ -816,7 +816,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
     if ($value$plusargs("elf_file=%s", test_program_elf)) begin
       `uvm_info(info_tag, $sformatf("ImperasDV loading test_program %0s", test_program_elf), UVM_LOW)
       void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,  "openhwgroup.ovpworld.org"));
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT, "CV32E40S_DEV"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT, "CV32E40S")); // replace with CV32E40S_DEV
       if (!rvviRefInit(test_program_elf)) begin
         `uvm_fatal(info_tag, "rvviRefInit failed")
       end
