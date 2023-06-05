@@ -32,6 +32,7 @@ class uvme_cv32e40p_cov_model_c extends uvm_component;
    uvme_rv32isa_covg   isa_covg;   
    uvme_interrupt_covg interrupt_covg;
    uvme_debug_covg debug_covg;
+   uvme_rv32f_zfinx_covg rv32f_zfinx_covg;
 
    `uvm_component_utils_begin(uvme_cv32e40p_cov_model_c)
       `uvm_field_object(cfg  , UVM_DEFAULT)
@@ -110,6 +111,9 @@ function void uvme_cv32e40p_cov_model_c::build_phase(uvm_phase phase);
    debug_covg = uvme_debug_covg::type_id::create("debug_covg", this);
    uvm_config_db#(uvme_cv32e40p_cntxt_c)::set(this, "debug_covg", "cntxt", cntxt);
    
+   rv32f_zfinx_covg = uvme_rv32f_zfinx_covg::type_id::create("rv32f_zfinx_covg", this);
+   uvm_config_db#(uvme_cv32e40p_cntxt_c)::set(this, "rv32f_zfinx_covg", "cntxt", cntxt);
+
 endfunction : build_phase
 
 function void uvme_cv32e40p_cov_model_c::connect_phase(uvm_phase phase);
