@@ -443,4 +443,31 @@ parameter INSTR_CV_SUB_DIV2         =    {5'b01110, 1'b1, 1'b0, 5'b?, 5'b?, 3'b0
 parameter INSTR_CV_SUB_DIV4         =    {5'b01110, 1'b1, 1'b0, 5'b?, 5'b?, 3'b100, 5'b?, OPCODE_CUSTOM_3};
 parameter INSTR_CV_SUB_DIV8         =    {5'b01110, 1'b1, 1'b0, 5'b?, 5'b?, 3'b110, 5'b?, OPCODE_CUSTOM_3};
 
+parameter APU_OP_FMADD              =    {6'h00};
+parameter APU_OP_FNMSUB             =    {6'h01};
+parameter APU_OP_FADD               =    {6'h02};
+parameter APU_OP_FMUL               =    {6'h03};
+parameter APU_OP_FDIV               =    {6'h04};
+parameter APU_OP_FSQRT              =    {6'h05};
+parameter APU_OP_FSGNJ              =    {6'h06};
+parameter APU_OP_FMINMAX            =    {6'h07};
+parameter APU_OP_FCMP               =    {6'h08};
+parameter APU_OP_FCLASSIFY          =    {6'h09};
+parameter APU_OP_F2F                =    {6'h0A};
+parameter APU_OP_F2I                =    {6'h0B};
+parameter APU_OP_I2F                =    {6'h0C};
+
+parameter APU_OP_FMSUB              =    {6'h10};
+parameter APU_OP_FNMADD             =    {6'h11};
+parameter APU_OP_FSUB               =    {6'h12};
+parameter APU_OP_FSGNJ_SE           =    {6'h16};
+parameter APU_OP_F2I_U              =    {6'h1B};
+parameter APU_OP_I2F_U              =    {6'h1C};
+
+`ifdef FPU_ADDMUL_LAT
+    `define FPU_LAT_``FPU_ADDMUL_LAT``_CYC
+`else
+    `define FPU_LAT_0_CYC
+`endif
+
 `endif // __UVME_CV32E40P_CONSTANTS_SV__
