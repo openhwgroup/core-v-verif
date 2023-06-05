@@ -334,4 +334,102 @@ interface uvmt_cv32e40p_debug_cov_assert_if
 
 endinterface : uvmt_cv32e40p_debug_cov_assert_if
 
+//
+//Interface for any TB coverage component that needs it
+//
+interface uvmt_cv32e40p_cov_if
+
+  import uvm_pkg::*;
+  import uvme_cv32e40p_pkg::*;
+  (
+    input           clk_i,
+    input           rst_ni,
+    input           if_stage_instr_rvalid_i,
+    input  [31:0]   if_stage_instr_rdata_i,
+    input           id_stage_instr_valid_i,
+    input  [31:0]   id_stage_instr_rdata_i,
+    input           apu_req,
+    input           apu_gnt,
+    input           apu_busy,
+    input  [5:0]    apu_op,
+    input  [5:0]    id_stage_apu_op_ex_o,
+    input           id_stage_apu_en_ex_o,
+    input  [5:0]    regfile_alu_waddr_ex_o,
+    input           regfile_alu_we_ex_o,
+
+    output logic[5:0] o_curr_fpu_apu_op_if,
+    output logic[4:0] if_clk_cycle_window,
+    output [5:0]    curr_fpu_fd,
+    output [5:0]    curr_fpu_rd
+  );
+
+  logic [4:0]       clk_cycle_window;
+  logic [5:0]       curr_fpu_apu_op_if;
+  logic [4:0]       regfile_alu_waddr_fd;
+  logic [4:0]       regfile_alu_waddr_rd;
+
+  initial begin
+      clk_cycle_window = 0;
+      curr_fpu_apu_op_if = 0;
+      regfile_alu_waddr_fd = 0;
+      regfile_alu_waddr_rd = 0;
+  end
+
+  clocking mon_cb @(posedge clk_i);
+      default input #1step output #1ns;
+      input if_stage_instr_rvalid_i;
+      input if_stage_instr_rdata_i;
+      input id_stage_instr_valid_i;
+      input id_stage_instr_rdata_i;
+      input apu_req;
+      input apu_gnt;
+      input apu_busy;
+      input apu_op;
+      input id_stage_apu_op_ex_o;
+      input id_stage_apu_en_ex_o;
+  endclocking : mon_cb
+
+  //calculate each APU operation's current clock cycle number during execution for functional coverage use
+  always @(posedge clk_i or negedge rst_ni) begin
+      if(!rst_ni) begin
+          clk_cycle_window = 0;
+          curr_fpu_apu_op_if = 0;
+      end
+      else begin
+          if((clk_cycle_window == 0) && (apu_req == 1)) begin
+              clk_cycle_window = 1;
+              curr_fpu_apu_op_if = apu_op;
+          end
+          else if((clk_cycle_window != 0) && (apu_busy == 1)) begin
+              clk_cycle_window += 1;
+          end
+          else if((clk_cycle_window != 0) && (apu_req == 1)) begin
+              clk_cycle_window = 1;
+              curr_fpu_apu_op_if = apu_op;
+          end
+          else begin
+              clk_cycle_window = 0;
+          end
+      end
+  end
+
+  //sample each APU operation's destination register address for functional coverage
+  always @(posedge clk_i) begin
+      if ((apu_req == 1) && (regfile_alu_we_ex_o == 1)) begin
+          regfile_alu_waddr_fd <= (regfile_alu_waddr_ex_o - 32);
+          regfile_alu_waddr_rd <= (regfile_alu_waddr_ex_o < 32) ? regfile_alu_waddr_ex_o : 0;
+      end
+      else if ((apu_busy == 1) && (regfile_alu_we_ex_o == 1)) begin
+          regfile_alu_waddr_fd <= (regfile_alu_waddr_ex_o - 32);
+          regfile_alu_waddr_rd <= (regfile_alu_waddr_ex_o < 32) ? regfile_alu_waddr_ex_o : 0;
+      end
+  end
+
+  assign curr_fpu_fd = regfile_alu_waddr_fd;
+  assign curr_fpu_rd = regfile_alu_waddr_rd;
+  assign if_clk_cycle_window = clk_cycle_window;
+  assign o_curr_fpu_apu_op_if = curr_fpu_apu_op_if;
+
+endinterface : uvmt_cv32e40p_cov_if
+
 `endif // __UVMT_CV32E40P_TB_IFS_SV__

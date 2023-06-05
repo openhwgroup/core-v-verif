@@ -498,6 +498,24 @@ module uvmt_cv32e40p_tb;
     .pending_enabled_irq()
   );
 
+  //Interface for coverage components
+  uvmt_cv32e40p_cov_if cov_if(
+    .clk_i(clknrst_if.clk),
+    .rst_ni(clknrst_if.reset_n),
+    .if_stage_instr_rvalid_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.if_stage_i.instr_rvalid_i),
+    .if_stage_instr_rdata_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.if_stage_i.instr_rdata_i),
+    .id_stage_instr_valid_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.instr_valid_i),
+    .id_stage_instr_rdata_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.instr_rdata_i),
+    .apu_req(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.apu_req_o),
+    .apu_gnt(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.apu_gnt_i),
+    .apu_busy(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.apu_busy_i),
+    .apu_op(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.apu_op_o),
+    .id_stage_apu_op_ex_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.apu_op_ex_o),
+    .id_stage_apu_en_ex_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.apu_en_ex_o),
+    .regfile_alu_waddr_ex_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.regfile_alu_waddr_fw_o),
+    .regfile_alu_we_ex_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.regfile_alu_we_fw_o)
+  );
+
   // Instantiate debug assertions
   uvmt_cv32e40p_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
 
@@ -562,6 +580,7 @@ module uvmt_cv32e40p_tb;
      uvm_config_db#(virtual uvmt_cv32e40p_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_cov_vif"),    .value(debug_cov_assert_if)                             );
      uvm_config_db#(virtual uvmt_cv32e40p_isa_covg_if        )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("isa_covg_vif"),     .value(isa_covg_if)                                     );
      uvm_config_db#(virtual uvma_debug_if                    )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_vif"),        .value(debug_if)                                        );
+     uvm_config_db#(virtual uvmt_cv32e40p_cov_if             )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("cov_vif"),          .value(cov_if)                                          );
 
      `RVFI_CSR_UVM_CONFIG_DB_SET(fflags)
      `RVFI_CSR_UVM_CONFIG_DB_SET(frm)
