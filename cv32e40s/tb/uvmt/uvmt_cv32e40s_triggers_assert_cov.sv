@@ -184,22 +184,22 @@ module uvmt_cv32e40s_triggers_assert_cov
   logic m6_hits_written;
   assign m6_hits_written = (rvfi_if.is_csr_write(ADDR_TDATA1));
 
-  logic m6_hits_was_0;
-  always_latch begin
-    if(clknrst_if.reset_n) begin
-      m6_hits_was_0 <= 1'b1;
-    end
+  //logic m6_hits_was_0;
+  //always_latch begin
+  //  if(clknrst_if.reset_n) begin
+  //    m6_hits_was_0 <= 1'b1;
+  //  end
 
-    if (rvfi_if.is_csr_write(ADDR_TDATA1)
-    && m6_hits_was_0 != 1'b0) begin
-      m6_hits_was_0 <= 1'b0;
-    end
+  //  if (rvfi_if.is_csr_write(ADDR_TDATA1)
+  //  && m6_hits_was_0 != 1'b0) begin
+  //    m6_hits_was_0 <= 1'b0;
+  //  end
 
-    if (rvfi_if.is_csr_write(ADDR_TDATA1)
-    && m6_hits_was_0 == 1'b0) begin
-      m6_hits_was_0 <= 1'b1;
-    end
-  end
+  //  if (rvfi_if.is_csr_write(ADDR_TDATA1)
+  //  && m6_hits_was_0 == 1'b0) begin
+  //    m6_hits_was_0 <= 1'b1;
+  //  end
+  //end
 
   logic [4:0] trigger_match_execute_array;
   logic [4:0] trigger_match_load_array;
@@ -1494,19 +1494,20 @@ module uvmt_cv32e40s_triggers_assert_cov
         tdata1_post_state_m6_hits == 1
       ) else `uvm_error(info_tag, "Tdata1 in mcontrol6 state does not set the hit bits even though there was a trigger match on (hit on tdata currently selected with tselect).\n");
 
-      a_dt_set_m6_hit_bits_post_state: assert property(
-        rvfi_if.rvfi_valid
-        && support_if.tdata1_array[t][MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
-        && (trigger_match_execute_array[t]
-        || trigger_match_load_array[t]
-        || trigger_match_store_array[t])
-        && !rvfi_if.rvfi_dbg_mode
-        && !rvfi_if.rvfi_trap.exception
-        ##0 ((tselect_post_state == t) && !m6_hits_written && m6_hits_was_0)[->1]
-        |->
-
-        tdata1_post_state_m6_hits == 1
-      ) else `uvm_error(info_tag, "Tdata1 in mcontrol6 state does not set the hit bits even though there was a trigger match on (first shown when tselect selects the tdata that was triggered).\n");
+// FIXME m6_hits_was_0 support logic is a loop
+//      a_dt_set_m6_hit_bits_post_state: assert property(
+//        rvfi_if.rvfi_valid
+//        && support_if.tdata1_array[t][MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
+//        && (trigger_match_execute_array[t]
+//        || trigger_match_load_array[t]
+//        || trigger_match_store_array[t])
+//        && !rvfi_if.rvfi_dbg_mode
+//        && !rvfi_if.rvfi_trap.exception
+//        ##0 ((tselect_post_state == t) && !m6_hits_written && m6_hits_was_0)[->1]
+//        |->
+//
+//        tdata1_post_state_m6_hits == 1
+//      ) else `uvm_error(info_tag, "Tdata1 in mcontrol6 state does not set the hit bits even though there was a trigger match on (first shown when tselect selects the tdata that was triggered).\n");
 
       //2)
       a_dt_m6_hit_bits_initial_value: assert property(

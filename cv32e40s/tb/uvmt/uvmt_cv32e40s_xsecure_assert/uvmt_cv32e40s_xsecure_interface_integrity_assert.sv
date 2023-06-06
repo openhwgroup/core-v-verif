@@ -583,19 +583,20 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     && alb_resp_q[wptr_position].bus_resp.integrity == $past(support_if.instr_req_had_integrity);
   endproperty
 
-  generate
-    for (genvar wptr = 0; wptr < ALBUF_DEPTH; wptr++) begin
+ // FIXME: needs 0.9.0 update
+ // generate
+ //   for (genvar wptr = 0; wptr < ALBUF_DEPTH; wptr++) begin
 
-      a_xsecure_integrity_instr_to_alignment_buffer: assert property (
-        p_instr_to_alignment_buffer(wptr)
-      ) else `uvm_error(info_tag, "The integrity error bit and/or the checksum bits from a response packet is not forwarded into the alignment buffer\n");
+ //     a_xsecure_integrity_instr_to_alignment_buffer: assert property (
+ //       p_instr_to_alignment_buffer(wptr)
+ //     ) else `uvm_error(info_tag, "The integrity error bit and/or the checksum bits from a response packet is not forwarded into the alignment buffer\n");
 
-      a_glitch_xsecure_integrity_instr_to_alignment_buffer: assert property (
-        p_instr_to_alignment_buffer(wptr)
-      ) else `uvm_error(info_tag_glitch, "The integrity error bit and/or the checksum bits from a response packet is not forwarded into the alignment buffer\n");
+ //     a_glitch_xsecure_integrity_instr_to_alignment_buffer: assert property (
+ //       p_instr_to_alignment_buffer(wptr)
+ //     ) else `uvm_error(info_tag_glitch, "The integrity error bit and/or the checksum bits from a response packet is not forwarded into the alignment buffer\n");
 
-    end
-  endgenerate
+ //   end
+ // endgenerate
 
 
   //Verify that the instruction propegated to the id stage have an integrity error if any of its related instruction fetches have integrity errors or alignment buffer based checksum errors.
