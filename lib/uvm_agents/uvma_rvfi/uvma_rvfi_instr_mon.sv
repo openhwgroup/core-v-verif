@@ -205,13 +205,13 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
             end
          end
 
-         dcsr_ret_data = mon_trn.csrs["dcsr"].get_csr_retirement_data();
          // In debug mode, detect NMIP event for a data bus error
          if (mon_trn.dbg_mode &&
              !last_dcsr_nmip &&
              mon_trn.nmip[0] &&
              dcsr_ret_data[3])
          begin
+            dcsr_ret_data = mon_trn.csrs["dcsr"].get_csr_retirement_data();
             `uvm_info("RVFIMON", $sformatf("Debug NMIP"), UVM_LOW);
 
             if (mon_trn.nmip[1] == 0) begin
