@@ -222,7 +222,7 @@ module uvma_obi_memory_assert
 
 
   // R-8 Data address LSBs must be consistent with byte enables on writes
-  function bit [1:0] get_addr_lsb(bit[3:0] be);
+  function automatic bit [1:0] get_addr_lsb(bit[3:0] be);
     casex (be)
       4'b???1: return 0;
       4'b??10: return 1;
