@@ -973,14 +973,6 @@ uint32_t trigger_default_val(uint32_t index, uint8_t report_name) {
     cvprintf(V_MEDIUM, "tdata2 exp: 0x0, got: 0x%0x\n", readback_val);
   }
 
-  // tdata3 default value
-  __asm__ volatile ( R"( csrrs %[tdata3], tdata3, zero )" : [tdata3] "=r"(readback_val) : : );
-  test_fail += (readback_val != 0);
-  if (ABORT_ON_ERROR_IMMEDIATE) { assert(test_fail == 0); }
-  if (test_fail) {
-    cvprintf(V_MEDIUM, "tdata3 exp: 0x0, got: 0x%0x\n", readback_val);
-  }
-
   // tinfo default value
   __asm__ volatile ( R"( csrrs %[tinfo], tinfo, zero )" : [tinfo] "=r"(readback_val) : : );
   tinfo = (void *)&readback_val;
@@ -1695,7 +1687,6 @@ void csr_access_default_val_dbg(void) {
   volatile uint32_t dpc;
   volatile uint32_t tdata1;
   volatile uint32_t tdata2;
-  volatile uint32_t tdata3;
 
   __asm__ volatile ( R"(
     # access
@@ -1718,7 +1709,6 @@ void csr_access_default_val_dbg(void) {
     csrrs %[dpc], dpc, zero
     csrrs %[tdata1], tdata1, zero
     csrrs %[tdata2], tdata2, zero
-    csrrs %[tdata3], tdata3, zero
   )"
   : [mvendorid] "=r"(mvendorid),
     [marchid]   "=r"(marchid),
@@ -1736,8 +1726,7 @@ void csr_access_default_val_dbg(void) {
     [dcsr]      "=r"(dcsr.raw),
     [dpc]       "=r"(dpc),
     [tdata1]    "=r"(tdata1),
-    [tdata2]    "=r"(tdata2),
-    [tdata3]    "=r"(tdata3)
+    [tdata2]    "=r"(tdata2)
   ::);
 
   dcsr_default.raw = 0x00000000;
