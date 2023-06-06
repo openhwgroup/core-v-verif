@@ -279,7 +279,8 @@ typedef union {
 typedef union {
   struct {
     volatile uint16_t info      : 16;
-    volatile uint16_t res_31_16 : 16;
+    volatile uint16_t res_23_16 : 8;
+    volatile uint16_t version   : 8;
   } __attribute__((packed)) volatile fields;
   volatile uint32_t raw;
 } __attribute__((packed)) tinfo_t;
@@ -927,7 +928,8 @@ uint32_t trigger_default_val(uint32_t index, uint8_t report_name) {
 
   // Below are volatile for type consistency, ideally should be declared as const
   volatile tinfo_t tinfo_reset = {
-    .fields.info = 0x8064
+    .fields.version = 0x1,
+    .fields.info    = 0x8064
   };
 
   volatile tdata1_t tdata1_reset = {
@@ -976,12 +978,14 @@ uint32_t trigger_default_val(uint32_t index, uint8_t report_name) {
   // tinfo default value
   __asm__ volatile ( R"( csrrs %[tinfo], tinfo, zero )" : [tinfo] "=r"(readback_val) : : );
   tinfo = (void *)&readback_val;
-  test_fail += (  tinfo->fields.info != tinfo_reset.fields.info
-               || tinfo->fields.res_31_16 != 0);
+  test_fail += (  tinfo->fields.info      != tinfo_reset.fields.info
+               || tinfo->fields.res_23_16 != 0
+               || tinfo->fields.version   != tinfo_reset.fields.version);
   if (ABORT_ON_ERROR_IMMEDIATE) { assert(test_fail == 0); }
   if (test_fail) {
-    cvprintf(V_MEDIUM, "tinfo exp: info: 0x%0x, zero: 0x%0x, got: info: 0x%0x, zero: 0x%0x\n",
-           tinfo_reset.fields.info, tinfo_reset.fields.res_31_16, tinfo->fields.info, tinfo->fields.res_31_16);
+    cvprintf(V_MEDIUM, "tinfo exp: info: 0x%0x, zero: 0x%0x, version: 0x%0x, got: info: 0x%0x, zero: 0x%0x, version: 0x%0x\n",
+           tinfo_reset.fields.info, tinfo_reset.fields.res_23_16, tinfo_reset.fields.version,
+           tinfo->fields.info, tinfo->fields.res_23_16, tinfo->fields.version);
   }
 
   if (test_fail) {
