@@ -187,25 +187,26 @@ module uvmt_cv32e40s_triggers_assert_cov
     end
   endgenerate
 
-  logic m6_hits_written;
+
+  logic m6_hits_written; //TODO: kan hende vi må fikse denne til å være litt annerledes
   assign m6_hits_written = (rvfi_if.is_csr_write(ADDR_TDATA1));
 
   logic m6_hits_was_0;
-  always_latch begin
+  always @ (negedge clknrst_if.reset_n, posedge clknrst_if.clk) begin
     if(clknrst_if.reset_n) begin
       m6_hits_was_0 <= 1'b1;
-    end
+    end else begin
 
-    if (rvfi_if.is_csr_write(ADDR_TDATA1)
-    && m6_hits_was_0 != 1'b0) begin
-      m6_hits_was_0 <= 1'b0;
-    end
+      if (rvfi_if.is_csr_write(ADDR_TDATA1) && m6_hits_was_0 != 1'b0) begin
+        m6_hits_was_0 <= 1'b0;
+      end
 
-    if (rvfi_if.is_csr_write(ADDR_TDATA1)
-    && m6_hits_was_0 == 1'b0) begin
-      m6_hits_was_0 <= 1'b1;
+      if (rvfi_if.is_csr_write(ADDR_TDATA1) && m6_hits_was_0 == 1'b0) begin
+        m6_hits_was_0 <= 1'b1;
+      end
     end
   end
+
 
   logic [4:0] trigger_match_execute_array;
   logic [4:0] trigger_match_load_array;
@@ -433,9 +434,11 @@ module uvmt_cv32e40s_triggers_assert_cov
   //- Assertion verification:
   //1) Check that attempts to access "tcontrol" raise an illegal instruction exception, always. (Unless overruled by a higher priority.)
 
-  //1)
+  //1) //TODO: KD: burde lage en property for tcontrol og tdata3
   a_dt_tcontrol_not_implemented: assert property (
     rvfi_if.is_csr_instr(ADDR_TCONTROL) //make sure no bus fault exceptions has occured
+    && rvfi_if.rvfi_trap.debug
+    && rvfi_if.rvfi_trap.debug_cause != DBG_CAUSE_TRIGGER
     |->
     rvfi_if.rvfi_trap.trap
     && rvfi_if.rvfi_trap.exception
@@ -454,6 +457,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   //1)
   a_dt_tdata3_not_implemented: assert property (
     rvfi_if.is_csr_instr(ADDR_TDATA3) //make sure no bus fault exceptions has occured
+    && rvfi_if.rvfi_trap.debug_cause != DBG_CAUSE_TRIGGER
     |->
     rvfi_if.rvfi_trap.trap
     && rvfi_if.rvfi_trap.exception
@@ -731,16 +735,27 @@ module uvmt_cv32e40s_triggers_assert_cov
     //2) Try changing "tdata1.dmode" and check that it is WARL (0x1)
 
 
-    //1)
-    a_dt_access_csr_not_dbg_mode: assert property (
+    //1) //a_dt_access_csr_not_dbg_mode --> changed to the two following assertions: a_dt_not_access_tdata1_dbg_mode, a_dt_not_access_tdata2_dbg_mode
+    a_dt_not_access_tdata1_dbg_mode: assert property (
       !rvfi_if.rvfi_dbg_mode
-      && (rvfi_if.is_csr_instr(ADDR_TDATA1)
-      || rvfi_if.is_csr_instr(ADDR_TDATA2))
-
+      && rvfi_if.is_csr_instr(ADDR_TDATA1)
       |->
       !tdata1.rvfi_csr_wmask
-      && !tdata2.rvfi_csr_wmask
-    ) else `uvm_error(info_tag, "Writing tdata1 or tdata2 in non-debug mode succeeds.\n");
+      //or m6 hit bits are set due to trigger match
+      || (rvfi_if.rvfi_trap.debug
+      && rvfi_if.rvfi_trap.debug_cause == DBG_CAUSE_TRIGGER
+      && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6)
+    ) else `uvm_error(info_tag, "Writing tdata1 in non-debug mode succeeds.\n");
+
+
+    a_dt_not_access_tdata2_dbg_mode: assert property (
+      !rvfi_if.rvfi_dbg_mode
+      && rvfi_if.is_csr_instr(ADDR_TDATA2)
+
+      |->
+      !tdata2.rvfi_csr_wmask
+    ) else `uvm_error(info_tag, "Writing tdata2 in non-debug mode succeeds.\n");
+
 
     //2)
     a_dt_dmode: assert property (
@@ -916,37 +931,6 @@ module uvmt_cv32e40s_triggers_assert_cov
       && !rvfi_if.rvfi_dbg_mode
       && rvfi_if.is_csr_write(ADDR_TDATA1)
     );
-/*
-    //////////////////////// TODO: Remove /////////////////////////
-    c_dt_write_tdata1_in_mmode_test: cover property (
-      !rvfi_if.rvfi_dbg_mode
-      && rvfi_if.is_csr_write(ADDR_TDATA1)
-    );
-
-    c_dt_write_tdata1_in_mmode_test_if: cover property (
-      !debug_mode_q
-      &&
-      support_pkg::is_csr_write_f(if_instr, ADDR_TDATA1)
-    );
-
-    c_dt_write_tdata1_in_mmode_test_1d: cover property (
-      !debug_mode_q
-      &&
-      support_pkg::is_csr_write_f(id_instr, ADDR_TDATA1)
-    );
-
-    c_dt_write_tdata1_in_mmode_test_ex: cover property (
-      !debug_mode_q
-      &&
-      support_pkg::is_csr_write_f(ex_instr, ADDR_TDATA1)
-    );
-
-    c_dt_write_tdata1_in_mmode_test_wb: cover property (
-      !debug_mode_q
-      &&
-      support_pkg::is_csr_write_f(wb_instr, ADDR_TDATA1)
-    );*/
-    /////////////////////////////////////////////////
 
     c_dt_write_tdata2_in_mmode: cover property (
       rvfi_if.is_mmode
@@ -1527,6 +1511,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       //3) Check that the field is WARL 0x0, 0x1
 
       //1)
+
       a_dt_set_m6_hit_bits_pre_state: assert property(
         rvfi_if.rvfi_valid
         && support_if.tdata1_array[t][MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
