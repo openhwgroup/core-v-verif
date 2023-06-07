@@ -911,21 +911,24 @@ module uvmt_cv32e40s_tb;
 
 
 
-  localparam PMP_ADDR_WIDTH = (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY > 0) ? 33 - uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY : 32;
+  if (CORE_PARAM_PMP_NUM_REGIONS > 0) begin
+    localparam PMP_ADDR_WIDTH = (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY > 0) ? 33 - uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY : 32;
 
-  pmpncfg_t pmpncfg[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS];
-  logic [PMP_ADDR_WIDTH-1:0] pmp_addr[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS];
+    pmpncfg_t pmpncfg[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS];
+    logic [PMP_ADDR_WIDTH-1:0] pmp_addr[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS];
 
-  logic [$bits(pmpncfg_t)-1:0] pmpncfg_shadow[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS];
-  logic [PMP_ADDR_WIDTH-1:0] pmp_addr_shadow[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS];
+    logic [$bits(pmpncfg_t)-1:0] pmpncfg_shadow[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS];
+    logic [PMP_ADDR_WIDTH-1:0] pmp_addr_shadow[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS];
 
-  generate for (genvar n = 0; n < uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS; n++) begin
-    assign pmpncfg[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.rdata_q;
-    assign pmp_addr[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.rdata_q;
+    for (genvar n = 0; n < uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS; n++) begin
+      assign pmpncfg[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.rdata_q;
+      assign pmp_addr[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.rdata_q;
 
-    assign pmpncfg_shadow[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.gen_hardened.shadow_q;
-    assign pmp_addr_shadow[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.gen_hardened.shadow_q;
-  end endgenerate
+      assign pmpncfg_shadow[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.gen_hardened.shadow_q;
+      assign pmp_addr_shadow[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.gen_hardened.shadow_q;
+    end
+
+  end
 
   if (CORE_PARAM_PMP_NUM_REGIONS > 0) begin: gen_hardened_csrs_pmp_assert
 

@@ -182,7 +182,9 @@ module uvmt_cv32e40s_triggers_assert_cov
   endgenerate
 
   logic m6_hits_written;
-  assign m6_hits_written = (rvfi_if.is_csr_write(ADDR_TDATA1));
+  always_comb begin
+    m6_hits_written = (rvfi_if.is_csr_write(ADDR_TDATA1));
+  end
 
   //logic m6_hits_was_0;
   //always_latch begin
@@ -242,13 +244,15 @@ module uvmt_cv32e40s_triggers_assert_cov
   logic is_csrrci;
   logic [4:0] csri_uimm;
 
-  assign is_csrrw = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRW);
-  assign is_csrrs = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRS);
-  assign is_csrrc = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRC);
-  assign is_csrrwi = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRWI);
-  assign is_csrrsi = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRSI);
-  assign is_csrrci = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRCI);
-  assign csri_uimm = rvfi_if.rvfi_insn[19:15];
+  always_comb begin
+    is_csrrw = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRW);
+    is_csrrs = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRS);
+    is_csrrc = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRC);
+    is_csrrwi = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRWI);
+    is_csrrsi = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRSI);
+    is_csrrci = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRCI);
+    csri_uimm = rvfi_if.rvfi_insn[19:15];
+  end
 
 
   /////////// Sequences ///////////
