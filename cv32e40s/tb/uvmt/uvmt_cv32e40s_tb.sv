@@ -911,7 +911,7 @@ module uvmt_cv32e40s_tb;
 
 
 
-  if (CORE_PARAM_PMP_NUM_REGIONS > 0) begin
+  if (CORE_PARAM_PMP_NUM_REGIONS > 0) begin: gen_hardened_csrs_pmp_assert
     localparam PMP_ADDR_WIDTH = (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY > 0) ? 33 - uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY : 32;
 
     pmpncfg_t pmpncfg[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS];
@@ -928,9 +928,6 @@ module uvmt_cv32e40s_tb;
       assign pmp_addr_shadow[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.gen_hardened.shadow_q;
     end
 
-  end
-
-  if (CORE_PARAM_PMP_NUM_REGIONS > 0) begin: gen_hardened_csrs_pmp_assert
 
     bind cv32e40s_wrapper
       uvmt_cv32e40s_xsecure_hardened_csrs_pmp_assert #(
@@ -948,13 +945,13 @@ module uvmt_cv32e40s_tb;
 
         //CSRs:
         .pmp_mseccfg        (core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.rdata_q),
-        .pmpncfg            (uvmt_cv32e40s_tb.pmpncfg),
-        .pmp_addr           (uvmt_cv32e40s_tb.pmp_addr),
+        .pmpncfg            (uvmt_cv32e40s_tb.gen_hardened_csrs_pmp_assert.pmpncfg),
+        .pmp_addr           (uvmt_cv32e40s_tb.gen_hardened_csrs_pmp_assert.pmp_addr),
 
         //Shadows:
         .pmp_mseccfg_shadow (core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.gen_hardened.shadow_q),
-        .pmpncfg_shadow     (uvmt_cv32e40s_tb.pmpncfg_shadow),
-        .pmp_addr_shadow    (uvmt_cv32e40s_tb.pmp_addr_shadow)
+        .pmpncfg_shadow     (uvmt_cv32e40s_tb.gen_hardened_csrs_pmp_assert.pmpncfg_shadow),
+        .pmp_addr_shadow    (uvmt_cv32e40s_tb.gen_hardened_csrs_pmp_assert.pmp_addr_shadow)
       );
 
   end : gen_hardened_csrs_pmp_assert
