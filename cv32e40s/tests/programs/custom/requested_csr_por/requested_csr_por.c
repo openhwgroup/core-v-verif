@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
   }
 
   if (tinfo_rval != 0x01008064) {
-    printf("ERROR: CSR TINFO not 0x8064!\n\n");
+    printf("ERROR: CSR TINFO not 0x01008064!\n\n");
     ++err_cnt;
   }
 
