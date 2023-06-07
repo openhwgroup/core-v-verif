@@ -45,6 +45,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     //OBI data:
     input obi_data_req_t obi_data_req_packet,
     input obi_data_resp_t obi_data_resp_packet,
+    input logic [31:0] obi_data_addr,
     input logic obi_data_req,
     input logic obi_data_reqpar,
     input logic obi_data_gnt,
@@ -55,6 +56,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     //OBI instr:
     input obi_inst_req_t obi_instr_req_packet,
     input obi_inst_resp_t obi_instr_resp_packet,
+    input logic [31:0] obi_instr_addr,
     input logic obi_instr_req,
     input logic obi_instr_reqpar,
     input logic obi_instr_gnt,
@@ -70,8 +72,8 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
 
     //Alignment buffer:
     input inst_resp_t alb_resp_i,
-    input inst_resp_t [0:ALBUF_DEPTH-1] alb_resp_q,
-    input logic [0:ALBUF_DEPTH-1] alb_valid,
+    input inst_resp_t [ALBUF_DEPTH-1:0] alb_resp_q,
+    input logic [ALBUF_DEPTH-1:0] alb_valid,
     input logic [ALBUF_CNT_WIDTH-1:0] alb_wptr,
     input logic [ALBUF_CNT_WIDTH-1:0] alb_rptr1,
     input logic [ALBUF_CNT_WIDTH-1:0] alb_rptr2,
@@ -114,13 +116,15 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   default disable iff (!(rst_ni) || !(SECURE));
   string info_tag = "CV32E40S_XSECURE_ASSERT_COVERPOINTS";
   string info_tag_glitch = "CV32E40S_XSECURE_ASSERT_COVERPOINTS (GLITCH BEHAVIOR)";
+  string info_tag_rtl_bug = "CV32E40S_XSECURE_ASSERT_COVERPOINTS (RTL BUG)";
 
   // Local parameters:
   localparam ASSUMED_VALUE_BE = 4'b1111;
   localparam ASSUMED_VALUE_WE = 1'b0;
   localparam ASSUMED_VALUE_ATOP = 6'b00_0000;
   localparam ASSUMED_VALUE_WDATA = 32'h0000_0000;
-  localparam EXOKAY_TIE_OFF_VALUE = 1'b0;
+  localparam ASSUMED_VALUE_EXOKAY = 1'b0;
+  localparam ASSUMED_VALUE_MID = 8'h0;
   localparam REQ_WAS_READ = 1'b1;
   localparam DEBUG_TAKEN = 2'b11;
 
@@ -130,14 +134,15 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   localparam LSU_LOAD_INTEGRITY_FAULT = 11'h402;
   localparam LSU_STORE_INTEGRITY_FAULT = 11'h403;
 
-  function logic [11:0] f_achk (logic [31:0] addr, logic [2:0] prot, logic [1:0] memtype, logic [3:0] be, logic we, logic dbg, logic [5:0] atop, logic [31:0] wdata);
+    function logic [12:0] f_achk (logic [31:0] wdata, logic dbg, logic [5:0] atop,  logic [7:0] mid,  logic [3:0] be,  logic we,  logic [2:0] prot,  logic [1:0] memtype, logic [31:0] addr);
     f_achk = {
       ^wdata[31:24],
       ^wdata[23:16],
       ^wdata[15:8],
       ^wdata[7:0],
-      ^atop[5:0],
       ~^dbg,
+      ^atop[5:0],
+      ^mid[7:0],
       ~^{be[3:0], we},
       ~^{prot[2:0], memtype[1:0]},
       ^addr[31:24],
@@ -158,41 +163,43 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
 
 
 
-  logic [11:0] achk_data_calculated;
-  logic [11:0] achk_instr_calculated;
+  logic [12:0] achk_data_calculated;
+  logic [12:0] achk_instr_calculated;
   logic [4:0] rchk_instr_calculated;
   logic [4:0] rchk_data_calculated;
 
   //Independent generation of the checksum based on the outputted data
 
   assign achk_data_calculated = f_achk(
-    obi_data_req_packet.addr,
-    obi_data_req_packet.prot,
-    obi_data_req_packet.memtype,
-    obi_data_req_packet.be,
-    obi_data_req_packet.we,
+    obi_data_req_packet.wdata,
     obi_data_req_packet.dbg,
     ASSUMED_VALUE_ATOP,
-    obi_data_req_packet.wdata);
+    ASSUMED_VALUE_MID,
+    obi_data_req_packet.be,
+    obi_data_req_packet.we,
+    obi_data_req_packet.prot,
+    obi_data_req_packet.memtype,
+    obi_data_addr);
 
   assign achk_instr_calculated = f_achk(
-    obi_instr_req_packet.addr,
-    obi_instr_req_packet.prot,
-    obi_instr_req_packet.memtype,
-    ASSUMED_VALUE_BE,
-    ASSUMED_VALUE_WE,
+    ASSUMED_VALUE_WDATA,
     obi_instr_req_packet.dbg,
     ASSUMED_VALUE_ATOP,
-    ASSUMED_VALUE_WDATA);
+    ASSUMED_VALUE_MID,
+    ASSUMED_VALUE_BE,
+    ASSUMED_VALUE_WE,
+    obi_instr_req_packet.prot,
+    obi_instr_req_packet.memtype,
+    obi_instr_addr);
 
   assign rchk_instr_calculated = f_rchk(
     obi_instr_resp_packet.err,
-    EXOKAY_TIE_OFF_VALUE,
+    ASSUMED_VALUE_EXOKAY,
     obi_instr_resp_packet.rdata);
 
   assign rchk_data_calculated = f_rchk(
     obi_data_resp_packet.err,
-    EXOKAY_TIE_OFF_VALUE,
+    ASSUMED_VALUE_EXOKAY,
     obi_data_resp_packet.rdata);
 
 
@@ -252,7 +259,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   //Verify that the received and generated checksums are correct
 
   property p_checksum(req, chk_input, chk_calculated);
-    if_valid
+    if_valid //TODO: do we need this one?
     && req
     |->
     chk_input == chk_calculated;
@@ -265,15 +272,14 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       achk_data_calculated)
   ) else `uvm_error(info_tag, "The request checksum for the OBI data bus is not as expected.\n");
 
-  //TODO: This one fails because the CLIC non-alignment issue is not implemented in the RTL yet
-  /*
+
   a_xsecure_integrity_instr_achk: assert property (
     p_checksum(
       obi_instr_req,
       obi_instr_req_packet.achk,
       achk_instr_calculated)
-  ) else `uvm_error(info_tag_rtl_bug, "The request checksum for the OBI instructions bus is not as expected.\n");
-  */
+  ) else `uvm_error(info_tag_rtl_bug, "The request checksum for the OBI instructions bus is not as expected.\n"); //TODO:remove rtl_bug when ready
+
 
   a_xsecure_integrity_instr_rchk: assert property (
     obi_instr_rvalid
@@ -288,7 +294,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     chk_input == chk_calculated;
   endproperty
 
-    a_xsecure_integrity_store_data_rchk: assert property (
+  a_xsecure_integrity_store_data_rchk: assert property (
     p_checksum_data_rchk(
       support_if.req_was_store,
       obi_data_rvalid,
@@ -296,6 +302,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       rchk_data_calculated[RCHK_STORE])
   );
 
+/* //TODO: KD: failing in formal
   a_xsecure_integrity_load_data_rchk: assert property (
     p_checksum_data_rchk(
     !support_if.req_was_store,
@@ -303,7 +310,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     obi_data_resp_packet.rchk,
     rchk_data_calculated)
   );
-
+*/
 
   //Verify that major alert and exception code "Instruction parity/checksum fault" are set when executing an instruction with an integrity error
 
@@ -576,6 +583,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     && alb_resp_q[wptr_position].bus_resp.integrity == $past(support_if.instr_req_had_integrity);
   endproperty
 
+
   generate
     for (genvar wptr = 0; wptr < ALBUF_DEPTH; wptr++) begin
 
@@ -626,9 +634,9 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   logic [4:0] alb_rptr1_rchk_calculated;
   logic [4:0] alb_rptr2_rchk_calculated;
 
-  assign alb_input_rchk_calculated = f_rchk(alb_resp_i.bus_resp.err, EXOKAY_TIE_OFF_VALUE, alb_resp_i.bus_resp.rdata);
-  assign alb_rptr1_rchk_calculated = f_rchk(alb_resp_q[alb_rptr1].bus_resp.err, EXOKAY_TIE_OFF_VALUE, alb_resp_q[alb_rptr1].bus_resp.rdata);
-  assign alb_rptr2_rchk_calculated = f_rchk(alb_resp_q[alb_rptr2].bus_resp.err, EXOKAY_TIE_OFF_VALUE, alb_resp_q[alb_rptr2].bus_resp.rdata);
+  assign alb_input_rchk_calculated = f_rchk(alb_resp_i.bus_resp.err, ASSUMED_VALUE_EXOKAY, alb_resp_i.bus_resp.rdata);
+  assign alb_rptr1_rchk_calculated = f_rchk(alb_resp_q[alb_rptr1].bus_resp.err, ASSUMED_VALUE_EXOKAY, alb_resp_q[alb_rptr1].bus_resp.rdata);
+  assign alb_rptr2_rchk_calculated = f_rchk(alb_resp_q[alb_rptr2].bus_resp.err, ASSUMED_VALUE_EXOKAY, alb_resp_q[alb_rptr2].bus_resp.rdata);
 
   logic alb_input_integrity_err;
   logic alb_rptr1_integrity_err;

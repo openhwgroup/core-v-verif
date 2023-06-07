@@ -4,6 +4,7 @@ compile_flags:
     +define+ZBA_ZBB_ZBC_ZBS
     +define+CLIC_EN
     +define+PMP_ENABLE_64
+    +define+LFSR_CFG_0
 plusargs: >
     +enable_clic=1
     +enable_zba_extension=1

@@ -104,7 +104,11 @@
     DCSR          = 12'h7B0,
     DPC           = 12'h7B1,
     DSCRATCH0     = 12'h7B2,
-    DSCRATCH1     = 12'h7B3
+    DSCRATCH1     = 12'h7B3,
+    CPUCTRL       = 12'hBF0,
+    SECURESEED0   = 12'hBF9,
+    SECURESEED1   = 12'hBFA,
+    SECURESEED2   = 12'hBFC
   } csr_name_e;
 
   // ---------------------------------------------------------------------------
@@ -564,6 +568,12 @@
     bit         valid;
   } imm_operand_t;
 
+  typedef struct packed {
+    union packed {
+      csr_name_e    name;
+    } address;
+    bit           valid;
+  } csr_operand_t;
   // ---------------------------------------------------------------------------
   // Currently not used, can be used as an intermediate representation for
   // an register + offset field in assembly
@@ -608,6 +618,7 @@
     reg_operand_t rs2;      //      --         2,      --        2
     reg_operand_t rs3;      //      --         3,      --        3
     imm_operand_t imm;      // Immediate, qualified by imm.valid
+    csr_operand_t csr;      // CSR register address, qualified by csr.valid
     // rlist_operand_t rlist; // TODO: structure to handle rlist fields for Zcmp-instructions
   } asm_t;
 
@@ -669,21 +680,35 @@
     asm_t asm  = { '0 };
     asm.instr  = name;
     asm.format = format;
+
     casex (format)
       I_TYPE: begin
         if (asm.instr inside { FENCEI, ECALL, EBREAK, MRET, DRET, WFI, WFE }) begin
-          asm.rd.valid   = 0;
-          asm.rs1.valid  = 0;
-          asm.rs2.valid  = 0;
-          asm.imm.valid  = 0;
+          asm.rd.valid    = 0;
+          asm.rs1.valid   = 0;
+          asm.rs2.valid   = 0;
+          asm.imm.valid   = 0;
+        end else if (asm.instr inside { CSRRW, CSRRS, CSRRC }) begin
+          asm.rd.gpr      = instr.uncompressed.format.i.rd.gpr;
+          asm.rs1.gpr     = instr.uncompressed.format.i.rs1.gpr;
+          asm.csr.address = instr.uncompressed.format.i.imm;
+          asm.rd.valid    = 1;
+          asm.rs1.valid   = 1;
+          asm.csr.valid   = 1;
+        end else if (asm.instr inside { CSRRWI, CSRRSI, CSRRCI }) begin
+          asm.rd.gpr      = instr.uncompressed.format.i.rd.gpr;
+          asm.imm.imm     = instr.uncompressed.format.i.rs1;
+          asm.csr.address = instr.uncompressed.format.i.imm;
+          asm.rd.valid    = 1;
+          asm.imm.valid   = 1;
+          asm.csr.valid   = 1;
         end else begin
-          asm.rd.gpr     = instr.uncompressed.format.i.rd.gpr;
-          asm.rs1.gpr    = instr.uncompressed.format.i.rs1.gpr;
-          asm.imm.imm    = instr.uncompressed.format.i.imm;
-          asm.rd.valid   = 1;
-          asm.rs1.valid  = 1;
-          asm.rs2.valid  = 0;
-          asm.imm.valid  = 1;
+          asm.rd.gpr      = instr.uncompressed.format.i.rd.gpr;
+          asm.rs1.gpr     = instr.uncompressed.format.i.rs1.gpr;
+          asm.imm.imm     = instr.uncompressed.format.i.imm;
+          asm.rd.valid    = 1;
+          asm.rs1.valid   = 1;
+          asm.imm.valid   = 1;
         end
       end
 
@@ -807,28 +832,28 @@
         asm = build_asm(WFE, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == SYSTEM)
-       && (instr.uncompressed.format.r.funct3     == FUNCT3_CSRRW)) :
-        asm = build_asm(CSRRW, R_TYPE, instr);
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_CSRRW)) :
+        asm = build_asm(CSRRW, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == SYSTEM)
-       && (instr.uncompressed.format.r.funct3     == FUNCT3_CSRRS)) :
-        asm = build_asm(CSRRS, R_TYPE, instr);
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_CSRRS)) :
+        asm = build_asm(CSRRS, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == SYSTEM)
-       && (instr.uncompressed.format.r.funct3     == FUNCT3_CSRRC)) :
-        asm = build_asm(CSRRC, R_TYPE, instr);
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_CSRRC)) :
+        asm = build_asm(CSRRC, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == SYSTEM)
-       && (instr.uncompressed.format.r.funct3     == FUNCT3_CSRRWI)) :
-        asm = build_asm(CSRRWI, R_TYPE, instr);
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_CSRRWI)) :
+        asm = build_asm(CSRRWI, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == SYSTEM)
-       && (instr.uncompressed.format.r.funct3     == FUNCT3_CSRRSI)) :
-        asm = build_asm(CSRRSI, R_TYPE, instr);
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_CSRRSI)) :
+        asm = build_asm(CSRRSI, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == SYSTEM)
-       && (instr.uncompressed.format.r.funct3     == FUNCT3_CSRRCI)) :
-        asm = build_asm(CSRRCI, R_TYPE, instr);
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_CSRRCI)) :
+        asm = build_asm(CSRRCI, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == STORE)
        && (instr.uncompressed.format.s.funct3     == FUNCT3_SB)) :
@@ -1282,6 +1307,33 @@
     end
   endfunction
 
+  function automatic logic is_csr_read_spec_f(asm_t asm);
+    if (asm.instr inside { CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI }) begin
+      case (asm.instr)
+        CSRRW, CSRRWI : is_csr_read_spec_f  = asm.rd.gpr ? 1'b1 : 1'b0;
+        CSRRS, CSRRC  : is_csr_read_spec_f  = 1'b1;
+        CSRRSI, CSRRCI: is_csr_read_spec_f  = 1'b1;
+        // Should never be here
+        default       : is_csr_read_spec_f  = 1'b0;
+      endcase
+    end else begin
+      is_csr_read_spec_f = 1'b0;
+    end
+  endfunction : is_csr_read_spec_f
+
+  function logic is_csr_write_spec_f(asm_t asm);
+    if (asm.instr inside { CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI }) begin
+      case (asm.instr)
+        CSRRW, CSRRWI : is_csr_write_spec_f = 1'b1;
+        CSRRS, CSRRC  : is_csr_write_spec_f = asm.rs1.gpr  ? 1'b1 : 1'b0;
+        CSRRSI, CSRRCI: is_csr_write_spec_f = asm.imm.imm  ? 1'b1 : 1'b0;
+        // Should never be here
+        default       : is_csr_write_spec_f = 1'b0;
+      endcase
+    end else begin
+      is_csr_write_spec_f = 1'b0;
+    end
+  endfunction : is_csr_write_spec_f
 
   // Short functions for recognising special functions
 

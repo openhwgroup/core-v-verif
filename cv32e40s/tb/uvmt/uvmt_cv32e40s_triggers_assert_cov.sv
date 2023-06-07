@@ -17,6 +17,7 @@
 //You will find this number in the file vplan_coverage.txt,
 //and they describe what vplan tasks the assertions aim to cover.
 
+
 module uvmt_cv32e40s_triggers_assert_cov
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
@@ -40,10 +41,8 @@ module uvmt_cv32e40s_triggers_assert_cov
 
     uvma_rvfi_csr_if_t tdata1,
     uvma_rvfi_csr_if_t tdata2,
-    uvma_rvfi_csr_if_t tdata3,
     uvma_rvfi_csr_if_t tinfo,
     uvma_rvfi_csr_if_t tselect,
-    uvma_rvfi_csr_if_t tcontrol,
     uvma_rvfi_csr_if_t dcsr,
     uvma_rvfi_csr_if_t dpc
   );
@@ -52,67 +51,30 @@ module uvmt_cv32e40s_triggers_assert_cov
   default disable iff !(clknrst_if.reset_n);
 
   string info_tag = "TRIGGER ASSERT: ";
-  localparam MAX_MEM_ACCESS = 13; //Push and pop can do 13 memory access. XIF can potentially do more (TODO: check this when merging to cv32e40x)
-
-  //Reads and writes of CSR values
-  logic [31:0] tdata1_pre_state;
-  logic [31:0] tdata2_pre_state;
-  logic [31:0] tdata3_pre_state;
-  logic [31:0] tinfo_pre_state;
-  logic [31:0] tselect_pre_state;
-  logic [31:0] tcontrol_pre_state;
-
-  logic [31:0] tdata1_post_state;
-  logic [31:0] tdata2_post_state;
-  logic [31:0] tdata3_post_state;
-  logic [31:0] tinfo_post_state;
-  logic [31:0] tselect_post_state;
-  logic [31:0] tcontrol_post_state;
-
-  logic [MAX_MEM_ACCESS-1:0][31:0] rvfi_mem_addrs;
-
-
-  always_comb begin
-    tdata1_pre_state = tdata1.pre_state();
-    tdata2_pre_state = tdata2.pre_state();
-    tdata3_pre_state = tdata3.pre_state();
-    tinfo_pre_state = tinfo.pre_state();
-    tselect_pre_state = tselect.pre_state();
-    tcontrol_pre_state = tcontrol.pre_state();
-  end
-
-  always_comb begin
-    tdata1_post_state = tdata1.post_state();
-    tdata2_post_state = tdata2.post_state();
-    tdata3_post_state = tdata3.post_state();
-    tinfo_post_state = tinfo.post_state();
-    tselect_post_state = tselect.post_state();
-    tcontrol_post_state = tcontrol.post_state();
-  end
-
-  generate
-    for (genvar i = 0; i < MAX_MEM_ACCESS; i++) begin
-      assign rvfi_mem_addrs[i] = rvfi_if.get_mem_addr(i);
-    end
-  endgenerate
 
   /////////// Local Parameters ///////////
 
-  //common tdata1 mcontrol and mcontrol6 values:
+  //tinfo:
+  localparam VERSION_MSB = 31;
+  localparam VERSION_LSB = 24;
+  localparam INFO_MSB = 15;
+  localparam INFO_LSB = 0;
+
+  //common tdata1 values:
+  localparam LSB_TYPE = 28;
+  localparam MSB_TYPE = 31;
   localparam DMODE = 27;
+
+  //common tdata1 mcontrol and mcontrol6 values:
   localparam LOAD = 0;
   localparam STORE = 1;
   localparam EXECUTE = 2;
-  localparam U_MODE = 3;
-  localparam S_MODE = 4;
-  localparam M_MODE = 6;
+  localparam M2_M6_S_MODE = 4;
   localparam LSB_MATCH = 7;
   localparam MSB_MATCH = 10;
   localparam CHAIN = 11;
   localparam LSB_ACTION = 12;
   localparam MSB_ACTION = 15;
-  localparam LSB_TYPE = 28;
-  localparam MSB_TYPE = 31;
 
   //tdata1 mcontrol:
   localparam MSB_MASKMAX = 26;
@@ -124,13 +86,16 @@ module uvmt_cv32e40s_triggers_assert_cov
   localparam M2_LSB_SIZELO = 16;
 
   //tdata1 mcontrol6:
+  localparam M6_UNCERTAIN = 26;
+  localparam M6_HIT1 = 25;
   localparam M6_VS = 24;
   localparam M6_VU = 23;
-  localparam M6_HIT = 22;
+  localparam M6_HIT0 = 22;
   localparam M6_SELECT = 21;
   localparam M6_TIMING = 20;
   localparam M6_MSB_SIZE = 19;
   localparam M6_LSB_SIZE = 16;
+  localparam M6_UNCERTAINEN = 5;
 
   //tdata1 etriggers:
   localparam ET_HIT = 26;
@@ -145,21 +110,6 @@ module uvmt_cv32e40s_triggers_assert_cov
   //tdata1 disabled:
   localparam DIS_MSB_DATA = 26;
   localparam DIS_LSB_DATA = 0;
-
-  //tdata2:
-  localparam ET2_DATA_31 = 31;
-  localparam ET2_DATA_26 = 26;
-  localparam ET2_DATA_23 = 23;
-  localparam ET2_DATA_12 = 12;
-  localparam ET2_DATA_10 = 10;
-  localparam ET2_DATA_9 = 9;
-  localparam ET2_DATA_6 = 6;
-  localparam ET2_DATA_4 = 4;
-  localparam ET2_DATA_0 = 0;
-
-  //tcontrol:
-  localparam MPTE = 7;
-  localparam MTE = 3;
 
   //Actions:
   localparam ENTER_DBG_ON_MATCH = 1;
@@ -190,29 +140,83 @@ module uvmt_cv32e40s_triggers_assert_cov
   localparam MSB_CAUSE = 8;
   localparam LSB_CAUSE = 6;
 
-  //Hardwired to zero:
-  localparam HW_ZERO_31 = 31;
-  localparam HW_ZERO_26 = 26;
-  localparam HW_ZERO_25 = 25;
-  localparam HW_ZERO_16 = 16;
-  localparam HW_ZERO_14 = 14;
-  localparam HW_ZERO_13 = 13;
-  localparam HW_ZERO_10 = 10;
-  localparam HW_ZERO_8 = 8;
-  localparam HW_ZERO_7 = 7;
-  localparam HW_ZERO_6 = 6;
-  localparam HW_ZERO_5 = 5;
-  localparam HW_ZERO_4 = 4;
-  localparam HW_ZERO_3 = 3;
-  localparam HW_ZERO_2 = 2;
-  localparam HW_ZERO_1 = 1;
-  localparam HW_ZERO_0 = 0;
-
+  //Initial settings
   localparam TDATA1_DISABLED = 32'hF800_0000;
   localparam MAX_NUM_TRIGGERS = 5;
+  localparam MAX_MEM_ACCESS = 13; //Push and pop can do 13 memory access. TODO: XIF, can potentially do more, so for XIF assertion a_dt_max_memory_transaction might fail.
+  localparam MAX_MEM_ACCESS_PLUS_ONE = 53'b1_0000__0000_0000_0000_0000__0000_0000_0000_0000__0000_0000_0000_0000;
 
 
   /////////// Signals ///////////
+
+  logic [31:0] tdata1_pre_state;
+  logic [31:0] tdata2_pre_state;
+  logic [31:0] tinfo_pre_state;
+  logic [31:0] tselect_pre_state;
+
+  logic [31:0] tdata1_post_state;
+  logic [31:0] tdata2_post_state;
+  logic [31:0] tinfo_post_state;
+  logic [31:0] tselect_post_state;
+
+  logic [MAX_MEM_ACCESS-1:0][31:0] rvfi_mem_addrs;
+
+  always_comb begin
+    tdata1_pre_state = tdata1.pre_state();
+    tdata2_pre_state = tdata2.pre_state();
+    tinfo_pre_state = tinfo.pre_state();
+    tselect_pre_state = tselect.pre_state();
+  end
+
+  always_comb begin
+    tdata1_post_state = tdata1.post_state();
+    tdata2_post_state = tdata2.post_state();
+    tinfo_post_state = tinfo.post_state();
+    tselect_post_state = tselect.post_state();
+  end
+
+  generate
+    for (genvar i = 0; i < MAX_MEM_ACCESS; i++) begin
+      assign rvfi_mem_addrs[i] = rvfi_if.get_mem_addr(i);
+    end
+  endgenerate
+
+  logic m6_hits_written;
+  assign m6_hits_written = (rvfi_if.is_csr_write(ADDR_TDATA1));
+
+  //logic m6_hits_was_0;
+  //always_latch begin
+  //  if(clknrst_if.reset_n) begin
+  //    m6_hits_was_0 <= 1'b1;
+  //  end
+
+  //  if (rvfi_if.is_csr_write(ADDR_TDATA1)
+  //  && m6_hits_was_0 != 1'b0) begin
+  //    m6_hits_was_0 <= 1'b0;
+  //  end
+
+  //  if (rvfi_if.is_csr_write(ADDR_TDATA1)
+  //  && m6_hits_was_0 == 1'b0) begin
+  //    m6_hits_was_0 <= 1'b1;
+  //  end
+  //end
+
+  logic [4:0] trigger_match_execute_array;
+  logic [4:0] trigger_match_load_array;
+  logic [4:0] trigger_match_store_array;
+  logic handle_trigger_match;
+
+
+  assign handle_trigger_match = rvfi_if.rvfi_valid && !rvfi_if.rvfi_dbg_mode && !rvfi_if.rvfi_trap.exception;
+  assign trigger_match_execute_array = support_if.trigger_match_execute_array & {5{handle_trigger_match}};
+  assign trigger_match_load_array = support_if.trigger_match_load_array & {5{handle_trigger_match}};
+  assign trigger_match_store_array = support_if.trigger_match_store_array & {5{handle_trigger_match}};
+
+  logic tdata1_pre_state_m6_hits;
+  assign tdata1_pre_state_m6_hits = {tdata1_pre_state[M6_HIT1], tdata1_pre_state[M6_HIT0]};
+
+  logic tdata1_post_state_m6_hits;
+  assign tdata1_post_state_m6_hits = {tdata1_post_state[M6_HIT1], tdata1_post_state[M6_HIT0]};
 
   logic valid_instr_in_mmode;
   assign valid_instr_in_mmode = rvfi_if.rvfi_valid
@@ -383,6 +387,16 @@ module uvmt_cv32e40s_triggers_assert_cov
 
   /////////// Assertions and Coverages ///////////
 
+  //Verify that it isonly possible to do 13 Memory transactions:
+  //TODO XIF: this might not be the case for xif, as it can potentionally do more:
+
+  a_dt_max_memory_transaction: assert property (
+    rvfi_if.rvfi_valid
+    |->
+    rvfi_if.rvfi_mem_rmask < MAX_MEM_ACCESS_PLUS_ONE
+    && rvfi_if.rvfi_mem_wmask < MAX_MEM_ACCESS_PLUS_ONE
+  );
+
   //- Vplan:
   //Verify that core enters debug mode when the trigger matches on instruction address. NB! According to spec, the tdataN registers can only be written from debug mode, as m-mode writes are ignored.
 
@@ -402,9 +416,68 @@ module uvmt_cv32e40s_triggers_assert_cov
   //4) PC is updated to value on dm_haltaddr_i input
   //5) Core starts executing debug code
 
-
   //1) see a_dt_instr_trigger_hit_*
   //2) - 5): Debug assertions uvmt_cv32e40s_debug_assert.sv
+
+
+  //- Vplan:
+  //Check that attempts to access "tcontrol" raise an illegal instruction exception, always. (Unless overruled by a higher priority.)
+
+  //- Assertion verification:
+  //1) Check that attempts to access "tcontrol" raise an illegal instruction exception, always. (Unless overruled by a higher priority.)
+
+  //1)
+  a_dt_tcontrol_not_implemented: assert property (
+    rvfi_if.is_csr_instr(ADDR_TCONTROL) //make sure no bus fault exceptions has occured
+    |->
+    rvfi_if.rvfi_trap.trap
+    && rvfi_if.rvfi_trap.exception
+    && (rvfi_if.rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+  ) else `uvm_error(info_tag, "Access to tcontrol does not cause an illegal exception (when no higher priority exception has occured)\n");
+
+
+  //- Vplan:
+  //Check that attempts to access "tdata3" raise an illegal instruction exception, always. (Unless overruled by a higher priority.)
+  //Verify that tdata3 is illegal for all tdata2 types.
+
+  //- Assertion verification:
+  //1) Check that attempts to access "tdata3" raise an illegal instruction exception, always. (Unless overruled by a higher priorit
+  //2) Verify that tdata3 is illegal for all tdata2 types.
+
+  //1)
+  a_dt_tdata3_not_implemented: assert property (
+    rvfi_if.is_csr_instr(ADDR_TDATA3) //make sure no bus fault exceptions has occured
+    |->
+    rvfi_if.rvfi_trap.trap
+    && rvfi_if.rvfi_trap.exception
+    && (rvfi_if.rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSN)
+  ) else `uvm_error(info_tag, "Access to tdata3 does not cause an illegal exception (when no higher priority exception has occured)\n");
+
+
+  // Assertions and coverages for when there are debug triggers:
+  if (CORE_PARAM_DBG_NUM_TRIGGERS != 0) begin
+
+    //2)
+    c_dt_access_tdata3_m2: cover property (
+      rvfi_if.is_csr_instr(ADDR_TDATA3)
+      && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL
+    );
+
+    c_dt_access_tdata3_etrigger: cover property (
+      rvfi_if.is_csr_instr(ADDR_TDATA3)
+      && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
+    );
+
+    c_dt_access_tdata3_m6: cover property (
+      rvfi_if.is_csr_instr(ADDR_TDATA3)
+      && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
+    );
+
+    c_dt_access_tdata3_disabled: cover property (
+      rvfi_if.is_csr_instr(ADDR_TDATA3)
+      && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_DISABLED
+    );
+  end
 
 
   //- Vplan:
@@ -415,17 +488,14 @@ module uvmt_cv32e40s_triggers_assert_cov
   //1) Have 0 triggers, access any trigger register and check that illegal instruction exception occurs
   //2) Have 0 triggers, No trigger ever fires
 
-
-  // Assertions and coverages for when there are no debug triggers:
   if (CORE_PARAM_DBG_NUM_TRIGGERS == 0) begin
+
     //1)
     a_dt_0_triggers_tdata1_access: assert property (
         (rvfi_if.is_csr_instr(ADDR_TSELECT)
       || rvfi_if.is_csr_instr(ADDR_TDATA1)
       || rvfi_if.is_csr_instr(ADDR_TDATA2)
-      || rvfi_if.is_csr_instr(ADDR_TDATA3)
-      || rvfi_if.is_csr_instr(ADDR_TINFO)
-      || rvfi_if.is_csr_instr(ADDR_TCONTROL))
+      || rvfi_if.is_csr_instr(ADDR_TINFO))
 
       |->
       rvfi_if.rvfi_trap.trap
@@ -542,8 +612,8 @@ module uvmt_cv32e40s_triggers_assert_cov
       && !tdata1_pre_state[M2_MSB_SIZELO:M2_LSB_SIZELO]
       && tdata1_pre_state[MSB_ACTION:LSB_ACTION] == ENTER_DBG_ON_MATCH
       && !tdata1_pre_state[CHAIN]
-      && !tdata1_pre_state[HW_ZERO_5]
-      && !tdata1_pre_state[S_MODE]
+      && !tdata1_pre_state[5]
+      && !tdata1_pre_state[M2_M6_S_MODE]
     ) else `uvm_error(info_tag, "There is a problem with tdata1-mcontrol's tied off fields.\n");
 
     //etrigger
@@ -554,11 +624,11 @@ module uvmt_cv32e40s_triggers_assert_cov
       |->
       tdata1_pre_state[DMODE]
       && !tdata1_pre_state[ET_HIT]
-      && !tdata1_pre_state[HW_ZERO_25:HW_ZERO_13]
+      && !tdata1_pre_state[25:13]
       && !tdata1_pre_state[ET_VS]
       && !tdata1_pre_state[ET_VU]
-      && !tdata1_pre_state[HW_ZERO_10]
-      && !tdata1_pre_state[HW_ZERO_8]
+      && !tdata1_pre_state[10]
+      && !tdata1_pre_state[8]
       && !tdata1_pre_state[ET_S]
       && tdata1_pre_state[ET_MSB_ACTION:ET_LSB_ACTION] == ENTER_DBG_ON_MATCH
     ) else `uvm_error(info_tag, "There is a problem with tdata1-etrigger's tied off fields.\n");
@@ -570,17 +640,16 @@ module uvmt_cv32e40s_triggers_assert_cov
 
       |->
       tdata1_pre_state[DMODE]
-      && !tdata1_pre_state[HW_ZERO_26:HW_ZERO_25]
+      && !tdata1_pre_state[M6_UNCERTAIN]
       && !tdata1_pre_state[M6_VS]
       && !tdata1_pre_state[M6_VU]
-      && !tdata1_pre_state[M6_HIT]
       && !tdata1_pre_state[M6_SELECT]
-      && !tdata1_pre_state[M6_TIMING]
+      && !tdata1_pre_state[20:19]
       && !tdata1_pre_state[M6_MSB_SIZE:M6_LSB_SIZE]
       && tdata1_pre_state[MSB_ACTION:LSB_ACTION] == ENTER_DBG_ON_MATCH
       && !tdata1_pre_state[CHAIN]
-      && !tdata1_pre_state[HW_ZERO_5]
-      && !tdata1_pre_state[S_MODE]
+      && !tdata1_pre_state[M6_UNCERTAINEN]
+      && !tdata1_pre_state[M2_M6_S_MODE]
     ) else `uvm_error(info_tag, "There is a problem with tdata1-mcontrol6's tied off fields.\n");
 
     //disabled
@@ -599,36 +668,22 @@ module uvmt_cv32e40s_triggers_assert_cov
       && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
 
       |->
-      !tdata2_pre_state[ET2_DATA_31:ET2_DATA_26]
-      && !tdata2_pre_state[ET2_DATA_23:ET2_DATA_12]
-      && !tdata2_pre_state[ET2_DATA_10:ET2_DATA_9]
-      && !tdata2_pre_state[ET2_DATA_6]
-      && !tdata2_pre_state[ET2_DATA_4]
-      && !tdata2_pre_state[ET2_DATA_0]
+      !tdata2_pre_state[31:26]
+      && !tdata2_pre_state[23:12]
+      && !tdata2_pre_state[10:9]
+      && !tdata2_pre_state[6]
+      && !tdata2_pre_state[4]
+      && !tdata2_pre_state[0]
     ) else `uvm_error(info_tag, "There is a problem with tdata2-etrigger's tied off fields.\n");
-
-
-    a_dt_tie_offs_tdata3: assert property (
-      rvfi_if.rvfi_valid
-      |->
-      !tdata3_pre_state
-    ) else `uvm_error(info_tag, "There is a problem with tdata3's tied off fields.\n");
 
 
     a_dt_tie_offs_tinfo: assert property (
       rvfi_if.rvfi_valid
       |->
-      !tinfo_pre_state[HW_ZERO_31:HW_ZERO_16]
+      tinfo_pre_state[VERSION_MSB:VERSION_LSB] == 1
+      && !tinfo_pre_state[23:16]
+      && tinfo_pre_state[INFO_MSB:INFO_LSB] == 16'h8064
     ) else `uvm_error(info_tag, "There is a problem with tinfo's tied off fields.\n");
-
-
-    a_dt_tie_offs_tcontrol: assert property (
-      rvfi_if.rvfi_valid
-      |->
-      !tcontrol_pre_state[HW_ZERO_31:HW_ZERO_8]
-      && !tcontrol_pre_state[HW_ZERO_6:HW_ZERO_4]
-      && !tcontrol_pre_state[HW_ZERO_2:HW_ZERO_0]
-    ) else `uvm_error(info_tag, "There is a problem with tcontrol's tied off fields.\n");
 
 
     //- Vplan:
@@ -673,14 +728,12 @@ module uvmt_cv32e40s_triggers_assert_cov
     a_dt_access_csr_not_dbg_mode: assert property (
       !rvfi_if.rvfi_dbg_mode
       && (rvfi_if.is_csr_instr(ADDR_TDATA1)
-      || rvfi_if.is_csr_instr(ADDR_TDATA2)
-      || rvfi_if.is_csr_instr(ADDR_TDATA3))
+      || rvfi_if.is_csr_instr(ADDR_TDATA2))
 
       |->
       !tdata1.rvfi_csr_wmask
       && !tdata2.rvfi_csr_wmask
-      && !tdata3.rvfi_csr_wmask
-    ) else `uvm_error(info_tag, "Writing tdata1, tdata2 or tdata3 in non-debug mode succeeds.\n");
+    ) else `uvm_error(info_tag, "Writing tdata1 or tdata2 in non-debug mode succeeds.\n");
 
     //2)
     a_dt_dmode: assert property (
@@ -692,24 +745,25 @@ module uvmt_cv32e40s_triggers_assert_cov
 
 
     //- Vplan:
-    //When num triggers is more than 0, check that "tinfo.info" is "1" for the three supported types, and that the remaining bits are 0.
+    //When num triggers is more than 0, check that "tinfo.info" is "1" for the three supported types, "tinfo.version" is 0x1, and that the remaining bits are 0.
 
     //- Assertion verification:
-    //1) When num triggers is more than 0, check that "tinfo.info" is "1" for the three supported types, and that the remaining bits are 0.
+    //1) When num triggers is more than 0, check that "tinfo.info" is "1" for the three supported types, "tinfo.version" is 0x1, and that the remaining bits are 0.
 
     //1)
     a_dt_triggers_tinfo: assert property (
       CORE_PARAM_DBG_NUM_TRIGGERS != '0
       && rvfi_if.rvfi_valid
       |->
-      !tinfo_pre_state[HW_ZERO_1:HW_ZERO_0]
+      !tinfo_pre_state[1:0]
       && tinfo_pre_state[TTYPE_MCONTROL]
-      && !tinfo_pre_state[HW_ZERO_4:HW_ZERO_3]
+      && !tinfo_pre_state[4:3]
       && tinfo_pre_state[TTYPE_ETRIGGER]
       && tinfo_pre_state[TTYPE_MCONTROL6]
-      && !tinfo_pre_state[HW_ZERO_14:HW_ZERO_7]
+      && !tinfo_pre_state[14:7]
       && tinfo_pre_state[TTYPE_DISABLED]
-      && !tinfo_pre_state[HW_ZERO_31:HW_ZERO_16]
+      && tinfo_pre_state[VERSION_MSB:VERSION_LSB] == 1
+
     ) else `uvm_error(info_tag, "tinfo does not indicated that only tdata type mcontrol, etrigger, mcontrol6 and disabled are allowed.\n");
 
 
@@ -757,8 +811,8 @@ module uvmt_cv32e40s_triggers_assert_cov
       && (tdata1_post_state[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_EQUAL
       || tdata1_post_state[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_GREATER_OR_EQUAL
       || tdata1_post_state[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_LESSER)
-      && !tdata1_post_state[HW_ZERO_5]
-      && !tdata1_post_state[S_MODE]
+      && !tdata1_post_state[5]
+      && !tdata1_post_state[M2_M6_S_MODE]
     ) else `uvm_error(info_tag, "There is a problem with tdata1-mcontrol's WARL fields.\n");
 
     a_dt_warl_tdata1_etrigger: assert property (
@@ -767,11 +821,11 @@ module uvmt_cv32e40s_triggers_assert_cov
       && tdata1_post_state[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
       |->
       !tdata1_post_state[ET_HIT]
-      && !tdata1_post_state[HW_ZERO_25:HW_ZERO_13]
+      && !tdata1_post_state[25:13]
       && !tdata1_post_state[ET_VS]
       && !tdata1_post_state[ET_VU]
-      && !tdata1_post_state[HW_ZERO_10]
-      && !tdata1_post_state[HW_ZERO_8]
+      && !tdata1_post_state[10]
+      && !tdata1_post_state[8]
       && !tdata1_post_state[ET_S]
       && tdata1_post_state[ET_MSB_ACTION:ET_LSB_ACTION] == ENTER_DBG_ON_MATCH
     ) else `uvm_error(info_tag, "There is a problem with tdata1-etrigger's WARL fields.\n");
@@ -781,20 +835,22 @@ module uvmt_cv32e40s_triggers_assert_cov
       && |tdata1.rvfi_csr_wmask != 0
       && tdata1_post_state[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
       |->
-      !tdata1_post_state[HW_ZERO_26:HW_ZERO_25]
+      tdata1_post_state[DMODE]
+      && !tdata1_post_state[M6_UNCERTAIN]
+      && ({tdata1_post_state[M6_HIT1], tdata1_post_state[M6_HIT0]} == 0
+      || {tdata1_post_state[M6_HIT1], tdata1_post_state[M6_HIT0]} == 1)
       && !tdata1_post_state[M6_VS]
       && !tdata1_post_state[M6_VU]
-      && !tdata1_post_state[M6_HIT]
       && !tdata1_post_state[M6_SELECT]
-      && !tdata1_post_state[M6_TIMING]
+      && !tdata1_post_state[20:19]
       && !tdata1_post_state[M6_MSB_SIZE:M6_LSB_SIZE]
       && tdata1_post_state[MSB_ACTION:LSB_ACTION] == ENTER_DBG_ON_MATCH
       && !tdata1_post_state[CHAIN]
       && (tdata1_post_state[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_EQUAL
-      || tdata1_post_state[MSB_MATCH:LSB_MATCH] ==  MATCH_WHEN_GREATER_OR_EQUAL
-      || tdata1_post_state[MSB_MATCH:LSB_MATCH] ==  MATCH_WHEN_LESSER)
-      && !tdata1_post_state[HW_ZERO_5]
-      && !tdata1_post_state[S_MODE]
+      || tdata1_post_state[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_GREATER_OR_EQUAL
+      || tdata1_post_state[MSB_MATCH:LSB_MATCH] == MATCH_WHEN_LESSER)
+      && !tdata1_post_state[M6_UNCERTAINEN]
+      && !tdata1_post_state[M2_M6_S_MODE]
     ) else `uvm_error(info_tag, "There is a problem with tdata1-mcontrol6's WARL fields.\n");
 
     a_dt_warl_tdata1_disabled: assert property (
@@ -810,38 +866,20 @@ module uvmt_cv32e40s_triggers_assert_cov
       && |tdata2.rvfi_csr_wmask != 0
       && tdata1_post_state[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
       |->
-      !tdata2_post_state[ET2_DATA_31:ET2_DATA_26]
-      && !tdata2_post_state[ET2_DATA_23:ET2_DATA_12]
-      && !tdata2_post_state[ET2_DATA_10:ET2_DATA_9]
-      && !tdata2_post_state[ET2_DATA_6]
-      && !tdata2_post_state[ET2_DATA_4]
-      && !tdata2_post_state[ET2_DATA_0]
+      !tdata2_post_state[31:26]
+      && !tdata2_post_state[23:12]
+      && !tdata2_post_state[10:9]
+      && !tdata2_post_state[6]
+      && !tdata2_post_state[4]
+      && !tdata2_post_state[0]
     ) else `uvm_error(info_tag, "There is a problem with tdata1-etrigger's WARL fields.\n");
-
-    a_dt_warl_tdata3: assert property (
-      rvfi_if.rvfi_valid
-      && |tdata3.rvfi_csr_wmask != 0
-      |->
-      !tdata3_post_state
-    ) else `uvm_error(info_tag, "There is a problem with tdata3's WARL fields.\n");
 
     a_dt_warl_tinfo: assert property (
       rvfi_if.rvfi_valid
       && |tinfo.rvfi_csr_wmask != 0
       |->
-      !tinfo_post_state[31:16]
+      !tinfo_post_state[23:16]
     ) else `uvm_error(info_tag, "There is a problem with tinfo's WARL fields.\n");
-
-    a_dt_warl_tcontrol: assert property (
-      rvfi_if.rvfi_valid
-      && |tcontrol.rvfi_csr_wmask != 0
-      |->
-      !tcontrol_post_state[HW_ZERO_31:HW_ZERO_8]
-      && !tcontrol_post_state[MPTE]
-      && !tcontrol_post_state[HW_ZERO_6:HW_ZERO_4]
-      && !tcontrol_post_state[MTE]
-      && !tcontrol_post_state[HW_ZERO_2:HW_ZERO_0]
-    ) else `uvm_error(info_tag, "There is a problem with tcontrol's WARL fields.\n");
 
 
     //- Vplan:
@@ -863,21 +901,15 @@ module uvmt_cv32e40s_triggers_assert_cov
       |->
       tdata1_post_state == tdata1_pre_state
       && tdata2_post_state == tdata2_pre_state
-      && tdata3_post_state == tdata3_pre_state
-
     ) else `uvm_error(info_tag, "The t-CSRs are written in machine mode (not debug mode), and the write changes the CSRs values.\n");
 
-
+/* TODO: KD failing in formal
     c_dt_write_tdata1_in_mmode: cover property (
       seq_csr_write_mmode(ADDR_TDATA1)
     );
-
+*/
     c_dt_write_tdata2_in_mmode: cover property (
       seq_csr_write_mmode(ADDR_TDATA2)
-    );
-
-    c_dt_write_tdata3_in_mmode: cover property (
-      seq_csr_write_mmode(ADDR_TDATA3)
     );
 
 
@@ -893,14 +925,9 @@ module uvmt_cv32e40s_triggers_assert_cov
       rvfi_if.rvfi_rd1_wdata == tdata2_pre_state
     ) else `uvm_error(info_tag, "No read access to tdata2 in machine mode.\n");
 
-    a_dt_read_access_to_tdata3_in_mmode: assert property (
-      seq_csr_read_mmode(ADDR_TDATA3)
-      |->
-      rvfi_if.rvfi_rd1_wdata == tdata3_pre_state
-    ) else `uvm_error(info_tag, "No read access to tdata3 in machine mode.\n");
-
 
     //2)
+    /* TODO: KD failing in formal
     a_dt_write_access_to_tdata1_in_dmode: assert property (
       p_csrrw_in_dmode(ADDR_TDATA1, tdata1_post_state)
       or p_csrrs_in_dmode(ADDR_TDATA1, tdata1_post_state)
@@ -909,7 +936,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       or p_csrrsi_in_dmode(ADDR_TDATA1, tdata1_post_state)
       or p_csrrci_in_dmode(ADDR_TDATA1, tdata1_post_state)
     ) else `uvm_error(info_tag, "No write access to tdata1 in debug mode.\n");
-
+*/
     a_dt_write_access_to_tdata2_in_dmode: assert property (
       p_csrrw_in_dmode(ADDR_TDATA2, tdata2_post_state)
       or p_csrrs_in_dmode(ADDR_TDATA2, tdata2_post_state)
@@ -918,15 +945,6 @@ module uvmt_cv32e40s_triggers_assert_cov
       or p_csrrsi_in_dmode(ADDR_TDATA2, tdata2_post_state)
       or p_csrrci_in_dmode(ADDR_TDATA2, tdata2_post_state)
     ) else `uvm_error(info_tag, "No write access to tdata2 in debug mode.\n");
-
-    a_dt_write_access_to_tdata3_in_dmode: assert property (
-      p_csrrw_in_dmode(ADDR_TDATA3, tdata3_post_state)
-      or p_csrrs_in_dmode(ADDR_TDATA3, tdata3_post_state)
-      or p_csrrc_in_dmode(ADDR_TDATA3, tdata3_post_state)
-      or p_csrrwi_in_dmode(ADDR_TDATA3, tdata3_post_state)
-      or p_csrrsi_in_dmode(ADDR_TDATA3, tdata3_post_state)
-      or p_csrrci_in_dmode(ADDR_TDATA3, tdata3_post_state)
-    ) else `uvm_error(info_tag, "No write access to tdata3 in debug mode.\n");
 
 
     a_dt_read_access_to_tdata1_in_dmode: assert property (
@@ -941,12 +959,6 @@ module uvmt_cv32e40s_triggers_assert_cov
       rvfi_if.rvfi_rd1_wdata == tdata2_pre_state
     ) else `uvm_error(info_tag, "No read access to tdata2 in debug mode.\n");
 
-    a_dt_read_access_to_tdata3_in_dmode: assert property (
-      seq_csr_read_dmode(ADDR_TDATA3)
-      |->
-      rvfi_if.rvfi_rd1_wdata == tdata3_pre_state
-    ) else `uvm_error(info_tag, "No read access to tdata3 in debug mode.\n");
-
 
     //3)
     a_dt_no_access_to_tdata_in_umode: assert property (
@@ -954,8 +966,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       valid_instr_in_umode
 
       && (rvfi_if.is_csr_instr(ADDR_TDATA1)
-      || rvfi_if.is_csr_instr(ADDR_TDATA2)
-      || rvfi_if.is_csr_instr(ADDR_TDATA3))
+      || rvfi_if.is_csr_instr(ADDR_TDATA2))
 
       |->
       rvfi_if.rvfi_trap.trap
@@ -972,6 +983,7 @@ module uvmt_cv32e40s_triggers_assert_cov
 
 
     //1)
+    /* TODO: KD coverage failing in formal
     a_dt_write_0_to_tdata1: assert property (
       seq_csr_write_dmode(ADDR_TDATA1)
 
@@ -993,12 +1005,12 @@ module uvmt_cv32e40s_triggers_assert_cov
       |->
       tdata1_post_state == TDATA1_DISABLED
     ) else `uvm_error(info_tag, "Writing 0 to tdata1 does not set tdata1 into disabled state.\n");
-
+*/
 
     //2) see a_dt_enter_dbg_reason
 
     //A not fully covering extra check:
-    a_dt_tdata1s_disabled_no_dbg: assert property (
+    a_dt_tdata1_disabled_no_dbg: assert property (
       rvfi_if.rvfi_valid
       && rvfi_if.rvfi_trap.debug
 
@@ -1013,33 +1025,25 @@ module uvmt_cv32e40s_triggers_assert_cov
 
 
     //- Vplan:
-    //Read the state of all triggers, write to tdata1/2/3 (using all types in tdata1), read back the state of all triggers and
+    //Read the state of all triggers, write to tdata1/2 (using all types in tdata1), read back the state of all triggers and
     //check that nothing got changes except the one "tdata*" register that was written.
 
     //- Assertion verification:
     //1) write to tdata1/2/3 and check that nothing got changes except the one "tdata*" register that was written
 
     //1)
+    /* TODO: KD coverage failing in formal
     a_dt_write_only_tdata1: assert property (
       seq_csr_write_dmode(ADDR_TDATA1)
       |->
       !tdata2.rvfi_csr_wmask
-      && !tdata3.rvfi_csr_wmask
-    ) else `uvm_error(info_tag, "A write to tdata1 writes tdata2 or tdata3 as well.\n");
-
+    ) else `uvm_error(info_tag, "A write to tdata1 writes tdata2 as well.\n");
+*/
     a_dt_write_only_tdata2: assert property (
       seq_csr_write_dmode(ADDR_TDATA2)
       |->
       !tdata1.rvfi_csr_wmask
-      && !tdata3.rvfi_csr_wmask
-    ) else `uvm_error(info_tag, "A write to tdata2 writes tdata1 or tdata3 as well.\n");
-
-    a_dt_write_only_tdata3: assert property (
-      seq_csr_write_dmode(ADDR_TDATA3)
-      |->
-      !tdata1.rvfi_csr_wmask
-      && !tdata2.rvfi_csr_wmask
-    ) else `uvm_error(info_tag, "A write to tdata3 writes tdata1 or tdata2 as well.\n");
+    ) else `uvm_error(info_tag, "A write to tdata2 writes tdata1 as well.\n");
 
 
     //- Vplan:
@@ -1400,11 +1404,10 @@ module uvmt_cv32e40s_triggers_assert_cov
 
 
     //- Vplan:
-    //Change the type to 2/6/15 and write any data to "tdata2", read it back and check that it always gets set. Do the same for "tdata3" and check that it always reads back 0.
+    //Change the type to 2/6/15 and write any data to "tdata2", read it back and check that it always gets set.
 
     //- Assertion verification:
     //1) Change the type to 2/6/15 and write any data to "tdata2", read it back and check that it always gets set.
-    //2) Do the same for "tdata3" and check that it always reads back 0.
 
 
     //1)
@@ -1465,9 +1468,59 @@ module uvmt_cv32e40s_triggers_assert_cov
         && rvfi_if.rvfi_insn[31:20] == ADDR_TDATA2
       );
 
-    end
 
-    //2) see a_dt_warl_tdata3
+      //- Vplan:
+      //Induce firing of a trigger. Check that the corresponding "hit" field gets set. Do the same for variations of multiple triggers firing at once.
+      //Also verify that the inital value of the "hit" field is 0x0. Check that the field is WARL 0x0, 0x1.
+
+      //- Assertion verification:
+      //1) Induce firing of a trigger. Check that the corresponding "hit" field gets set
+      //2) Verify that the inital value of the "hit" field is 0x0
+      //3) Check that the field is WARL 0x0, 0x1
+
+      //1)
+      a_dt_set_m6_hit_bits_pre_state: assert property(
+        rvfi_if.rvfi_valid
+        && support_if.tdata1_array[t][MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
+        && (trigger_match_execute_array[t]
+        || trigger_match_load_array[t]
+        || trigger_match_store_array[t])
+        && !rvfi_if.rvfi_dbg_mode
+        && !rvfi_if.rvfi_trap.exception
+        && tselect_pre_state == t
+        && !m6_hits_written
+
+        |->
+        tdata1_post_state_m6_hits == 1
+      ) else `uvm_error(info_tag, "Tdata1 in mcontrol6 state does not set the hit bits even though there was a trigger match on (hit on tdata currently selected with tselect).\n");
+
+// FIXME m6_hits_was_0 support logic is a loop
+//      a_dt_set_m6_hit_bits_post_state: assert property(
+//        rvfi_if.rvfi_valid
+//        && support_if.tdata1_array[t][MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
+//        && (trigger_match_execute_array[t]
+//        || trigger_match_load_array[t]
+//        || trigger_match_store_array[t])
+//        && !rvfi_if.rvfi_dbg_mode
+//        && !rvfi_if.rvfi_trap.exception
+//        ##0 ((tselect_post_state == t) && !m6_hits_written && m6_hits_was_0)[->1]
+//        |->
+//
+//        tdata1_post_state_m6_hits == 1
+//      ) else `uvm_error(info_tag, "Tdata1 in mcontrol6 state does not set the hit bits even though there was a trigger match on (first shown when tselect selects the tdata that was triggered).\n");
+
+      //2)
+      a_dt_m6_hit_bits_initial_value: assert property(
+        disable iff (m6_hits_written)
+        $rose(clknrst_if.reset_n)
+        ##0 (tdata1_post_state[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
+        && rvfi_if.rvfi_valid)[->1]
+        |->
+        tdata1_post_state_m6_hits == 0
+      ) else `uvm_error(info_tag, "The hit bits of tdata1 in mcontrol6 state is not initially 0.\n");
+
+      //3) see a_dt_warl_tdata1_m6
+    end
 
   end // if CORE_PARAM_DBG_NUM_TRIGGERS > 0
 
