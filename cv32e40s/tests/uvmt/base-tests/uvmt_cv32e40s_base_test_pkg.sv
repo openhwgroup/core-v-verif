@@ -28,7 +28,7 @@ package uvmt_cv32e40s_base_test_pkg;
     `include "uvmt_cv32e40s_base_test_constants.sv"
     `include "uvmt_cv32e40s_base_test_tdefs.sv"
 
-endpackage : uvmt_cv32e40s_base_test_pkg;
+endpackage : uvmt_cv32e40s_base_test_pkg
 
 `endif // __UVMT_CV32E40S_BASE_TEST_PKG_SV__
 

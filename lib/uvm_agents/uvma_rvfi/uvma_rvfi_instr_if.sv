@@ -262,6 +262,7 @@ interface uvma_rvfi_instr_if_t
       irq_cnt          <= 0;
       is_nmi_triggered <= 0;
     end else begin
+      cycle_cnt <= cycle_cnt + 1;
       // Detect taken nmi or pending nmi and start counting
       is_nmi_triggered <= is_nmi_triggered ? 1'b1 : (is_nmi || (rvfi_nmip && rvfi_valid));
       if (is_nmi_triggered && rvfi_valid) begin
@@ -270,7 +271,6 @@ interface uvma_rvfi_instr_if_t
       single_step_cnt <= (rvfi_dbg[2:0] == 3'h4 && rvfi_valid) ? single_step_cnt + 1 : single_step_cnt;
       irq_cnt <= ((rvfi_intr.intr == 1) && (rvfi_intr.interrupt == 1) && rvfi_valid) ? irq_cnt + 1 : irq_cnt;
     end
-    cycle_cnt <= cycle_cnt + 1;
   end
 
   // assigning signal aliases to helper functions
@@ -725,7 +725,7 @@ function automatic logic [31:0] rvfi_mem_addr_word0highbyte_f();
 endfunction : rvfi_mem_addr_word0highbyte_f
 
 function automatic logic is_split_datatrans_f();
-  logic [31:0]  low_addr  = rvfi_mem_addr;
+  logic [31:0]  low_addr  = rvfi_mem_addr[XLEN-1:0];
   logic [31:0]  high_addr = rvfi_mem_addr_word0highbyte;
   return  is_mem_act && (low_addr[31:2] != high_addr[31:2]);
 endfunction : is_split_datatrans_f

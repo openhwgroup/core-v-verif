@@ -34,10 +34,13 @@ interface uvma_debug_if_t(
 
     assign debug_req = is_active ? debug_drv : 1'b0;
 
+    `ifndef FORMAL
     initial begin
         is_active = 1'b0;
         debug_drv = 1'b0;
     end
+    `endif // `ifndef FORMAL
+
    /**
     * Used by target DUT.
     */

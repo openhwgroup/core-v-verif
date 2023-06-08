@@ -54,10 +54,12 @@ interface uvma_interrupt_if_t
     // Mux in driver to irq lines
     assign irq = is_active ? irq_drv : 1'b0;
 
+    `ifndef FORMAL
     initial begin
         is_active = 1'b0;
         irq_drv = '0;
     end
+    `endif // `ifndef FORMAL
 
 
     /**

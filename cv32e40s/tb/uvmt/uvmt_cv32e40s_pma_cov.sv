@@ -78,13 +78,15 @@ module  uvmt_cv32e40s_pma_cov
   assign  rvfi_pmamain_lowhigh[0] = pma_status_rvfidata_word0highbyte_i.main;
 
 
-  // Helper Logic - "Past" Values
+  // typedef to parameterize size of helper signals
+  typedef logic [$bits(rvfi_if.rvfi_mem_wmask)-1:0] rvfi_mem_wmask_t;
 
-  var logic  occured_rvfi_valid;
-  var logic  rvfi_pma_fault_q;
-  var logic  rvfi_mem_wmask_q;
-  var logic  rvfi_mem_act_q;
-  var logic  rvfi_pmamain_low_q;
+  // Helper Logic - "Past" Values
+  var logic             occured_rvfi_valid;
+  var logic             rvfi_pma_fault_q;
+  var logic             rvfi_mem_act_q;
+  var logic             rvfi_pmamain_low_q;
+  var rvfi_mem_wmask_t  rvfi_mem_wmask_q;
 
   always_ff @(posedge clk_ungated or negedge rst_n) begin
     if (rst_n == 0) begin
@@ -96,7 +98,7 @@ module  uvmt_cv32e40s_pma_cov
     end else if (rvfi_if.rvfi_valid) begin
       occured_rvfi_valid <= 1;
       rvfi_pma_fault_q   <= rvfi_if.is_pma_fault;
-      rvfi_mem_wmask_q   <= rvfi_if.rvfi_mem_wmask;
+      rvfi_mem_wmask_q   <= rvfi_mem_wmask_t'(rvfi_if.rvfi_mem_wmask);
       rvfi_mem_act_q     <= rvfi_if.is_mem_act;
       rvfi_pmamain_low_q <= rvfi_pmamain_lowhigh[1];
     end
@@ -127,10 +129,10 @@ module  uvmt_cv32e40s_pma_cov
     }
 
     cp_matchregion: coverpoint  match_idx  iff (is_mpu_activated) {
-      bins  regions[] = {[0:PMA_NUM_REGIONS-1]}
+      bins  regions[] = {[0:(PMA_NUM_REGIONS > 0) ? (PMA_NUM_REGIONS-1) : 0 ]}
         with (!SIMPLIFY_FV)
         iff (have_match == 1);
-      bins  nomatch   = {[0:PMA_NUM_REGIONS-1]}
+      bins  nomatch   = {[0:(PMA_NUM_REGIONS > 0) ? (PMA_NUM_REGIONS-1) : 0]}
         with (!SIMPLIFY_FV)
         iff (have_match == 0);
     }

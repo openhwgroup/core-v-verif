@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
   uint32_t mstatus_rval, misa_rval, mie_rval, mtvec_rval;
   uint32_t mcounteren_rval, mcountinhibit_rval, mphmevent_rval[32];
   uint32_t mscratch_rval, mepc_rval, mcause_rval, mtval_rval, mip_rval;
-  uint32_t tselect_rval, tdata1_rval, tdata2_rval, tdata3_rval, tinfo_rval;
+  uint32_t tselect_rval, tdata1_rval, tdata2_rval, tinfo_rval;
   uint32_t mcycle_rval, minstret_rval, mhpmcounter_rval[32], mcycleh_rval;
   uint32_t minstreth_rval, mhpmcounterh[32];
   uint32_t mvendorid_rval, marchid_rval, mimpid_rval, mhartid_rval;
@@ -115,7 +115,6 @@ int main(int argc, char *argv[])
   __asm__ volatile("csrr %0, 0x7A0" : "=r"(tselect_rval));
   __asm__ volatile("csrr %0, 0x7A1" : "=r"(tdata1_rval));
   __asm__ volatile("csrr %0, 0x7A2" : "=r"(tdata2_rval));
-  __asm__ volatile("csrr %0, 0x7A3" : "=r"(tdata3_rval));
   __asm__ volatile("csrr %0, 0x7A4" : "=r"(tinfo_rval));
 
   if (tselect_rval != 0x0) {
@@ -133,13 +132,8 @@ int main(int argc, char *argv[])
     ++err_cnt;
   }
 
-  if (tdata3_rval != 0x0) {
-    printf("ERROR: CSR TDATA3 not 0x0!\n\n");
-    ++err_cnt;
-  }
-
-  if (tinfo_rval != 0x8064) {
-    printf("ERROR: CSR TINFO not 0x8064!\n\n");
+  if (tinfo_rval != 0x01008064) {
+    printf("ERROR: CSR TINFO not 0x01008064!\n\n");
     ++err_cnt;
   }
 
@@ -342,7 +336,6 @@ int main(int argc, char *argv[])
   printf("\ttselect       = 0x%0lx\n", tselect_rval);
   printf("\ttdata1        = 0x%0lx\n", tdata1_rval);
   printf("\ttdata2        = 0x%0lx\n", tdata2_rval);
-  printf("\ttdata3        = 0x%0lx\n", tdata3_rval);
   printf("\ttinfo         = 0x%0lx\n", tinfo_rval);
   printf("\tmcycle        = 0x%0lx\n", mcycle_rval);
   printf("\tminstret      = 0x%0lx\n", minstret_rval);
