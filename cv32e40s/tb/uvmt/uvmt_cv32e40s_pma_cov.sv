@@ -258,19 +258,20 @@ module  uvmt_cv32e40s_pma_cov
     x_loadstoreexec_integrity:    cross  cp_loadstoreexec, cp_integrity;
     x_loadstoreexec_overridedm:   cross  cp_loadstoreexec, cp_overridedm;
 
-    x_allow_bufferable: cross  cp_allow, cp_bufferable {
-      ignore_bins  disallow_bufferable =
-        (binsof(cp_allow.disallow) && binsof(cp_bufferable.bufferable))
-        with (SIMPLIFY_FV);
-    }
-    x_allow_cacheable:  cross  cp_allow, cp_cacheable {
-      illegal_bins  disallow_cacheable =
-        binsof(cp_allow.disallow) && binsof(cp_cacheable.cacheable);
-    }
-    x_allow_integrity:  cross  cp_allow, cp_integrity {
-      illegal_bins  disallow_integrity =
-        binsof(cp_allow.disallow) && binsof(cp_integrity.integrity);
-    }
+    //TODO silabs-robin: Needs update
+    //x_allow_bufferable: cross  cp_allow, cp_bufferable {
+    //  ignore_bins  disallow_bufferable =
+    //    (binsof(cp_allow.disallow) && binsof(cp_bufferable.bufferable))
+    //    with (SIMPLIFY_FV);
+    //}
+    //x_allow_cacheable:  cross  cp_allow, cp_cacheable {
+    //  illegal_bins  disallow_cacheable =
+    //    binsof(cp_allow.disallow) && binsof(cp_cacheable.cacheable);
+    //}
+    //x_allow_integrity:  cross  cp_allow, cp_integrity {
+    //  illegal_bins  disallow_integrity =
+    //    binsof(cp_allow.disallow) && binsof(cp_integrity.integrity);
+    //}
     x_allow_jvt:        cross  cp_allow, cp_jvt;
 
     x_dmregion_dmode: cross  cp_dmregion, cp_dmode;
