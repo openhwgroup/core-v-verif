@@ -125,6 +125,22 @@ VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 
 VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 
+VLOG_COREVDV_FLAGS    ?= \
+		-suppress 2577 \
+		-suppress 2583 \
+		-suppress 13185 \
+		-suppress 13314 \
+		-suppress 13288 \
+		-suppress 2181 \
+		-suppress 13262 \
+		-suppress vlog-2745 \
+		-timescale "1ns/1ps" \
+		-sv \
+		-64 \
+		-mfcu \
+		$(QUIET) \
+		-writetoplevels  uvmt_corev_dv_tb
+
 # Add the ISS to compilation
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_RVFI"
@@ -150,6 +166,12 @@ VOPT_FLAGS    ?= \
                  +acc \
                  $(QUIET)
 
+VOPT_COREVDV_FLAGS ?= \
+                 -64 \
+                 -debugdb \
+                 -suppress 7034 \
+                 $(QUIET)
+
 ###############################################################################
 # VSIM (Simulaion)
 VSIM_FLAGS        += $(VSIM_USER_FLAGS)
@@ -167,6 +189,8 @@ VSIM_GUI_FLAGS    ?= -gui -debugdb
 VSIM_SCRIPT_DIR	   = $(abspath $(MAKE_PATH)/../tools/vsim)
 
 VSIM_UVM_ARGS      = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
+
+VSIM_COREVDV_FLAGS = $(VSIM_FLAGS)
 
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 VSIM_FLAGS += +USE_ISS
@@ -191,6 +215,7 @@ VSIM_FLAGS += -sv_lib $(basename $(abspath $(SVLIB_LIB)))
 # Skip compile if requested (COMP=NO)
 ifneq ($(call IS_NO,$(COMP)),NO)
 VSIM_SIM_PREREQ = comp
+VSIM_COREVDV_RUN_PREREQ = comp_corev-dv
 endif
 
 ################################################################################
@@ -354,7 +379,8 @@ vlog_corev-dv:
 		$(VLIB) $(VWORK)
 	cd $(SIM_COREVDV_RESULTS) && \
 		$(VLOG) \
-			$(VLOG_FLAGS) \
+			$(VLOG_COREVDV_FLAGS) \
+			-work $(VWORK) \
 			+incdir+$(UVM_HOME) \
 			$(VSIM_PMA_INC) \
 			$(UVM_HOME)/uvm_pkg.sv \
@@ -364,37 +390,37 @@ vlog_corev-dv:
 			+incdir+$(CV_CORE_COREVDV_PKG) \
 			$(CFG_COMPILE_FLAGS) \
 			$(GEN_COMPILE_FLAGS) \
-			-f $(CV_CORE_MANIFEST) \
 			-f $(COREVDV_PKG)/manifest.f \
 			$(CFG_PLUSARGS) \
 			-l vlog.log
+# -f $(CV_CORE_MANIFEST)
 
 vopt_corev-dv:
 	cd $(SIM_COREVDV_RESULTS) && \
 		$(VOPT) \
 			-work $(VWORK) \
-			$(VOPT_FLAGS) \
+			$(VOPT_COREVDV_FLAGS) \
 			$(CV_CORE_LC)_instr_gen_tb_top \
 			-o $(CV_CORE_LC)_instr_gen_tb_top_vopt \
 			-l vopt.log
 
-gen_corev-dv: comp_corev-dv
+gen_corev-dv: $(VSIM_COREVDV_RUN_PREREQ)
 	mkdir -p $(SIM_COREVDV_RESULTS)/$(TEST)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
-		mkdir -p $(SIM_TEST_RESULTS)/$$idx/test_program; \
+		mkdir -p $(SIM_TEST_RESULTS)/$$idx/test_program ; \
 	done
 	cd $(SIM_COREVDV_RESULTS)/$(TEST) && \
-		$(VMAP) work $(SIM_COREVDV_RESULTS)/work
+		$(VMAP) $(VWORK) $(SIM_COREVDV_RESULTS)/$(VWORK) ; \
 	cd  $(SIM_COREVDV_RESULTS)/$(TEST) && \
 		$(VSIM) \
-			$(VSIM_FLAGS) \
+			$(VSIM_COREVDV_FLAGS) \
+			-work $(VWORK) \
 			$(CV_CORE_LC)_instr_gen_tb_top_vopt \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(GEN_UVM_TEST) \
 			+num_of_tests=$(GEN_NUM_TESTS)  \
 			-l $(TEST)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log \
 			+start_idx=$(GEN_START_INDEX) \
-			+num_of_tests=$(GEN_NUM_TESTS) \
 			+asm_file_name_opts=$(TEST) \
 			+ldgen_cp_test_path=$(SIM_TEST_RESULTS) \
 			$(CFG_PLUSARGS) \
