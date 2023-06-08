@@ -117,7 +117,6 @@ module uvmt_cv32e40s_dut_wrap
     assign obi_instr_if.wuser     = 'b0;
     assign obi_instr_if.aid       = 'b0;
     assign obi_instr_if.wdata     = 'b0;
-    assign obi_instr_if.reqpar    = ~obi_instr_if.req;
     assign obi_instr_if.rready    = 1'b1;
     assign obi_instr_if.rreadypar = 1'b0;
 
@@ -126,7 +125,6 @@ module uvmt_cv32e40s_dut_wrap
     assign obi_data_if.auser      = 'b0;
     assign obi_data_if.wuser      = 'b0;
     assign obi_data_if.aid        = 'b0;
-    assign obi_data_if.reqpar     = ~obi_data_if.req;
     assign obi_data_if.rready     = 1'b1;
     assign obi_data_if.rreadypar  = 1'b0;
 
@@ -134,7 +132,7 @@ module uvmt_cv32e40s_dut_wrap
     // Connect to uvma_interrupt_if
     assign interrupt_if.clk         = clknrst_if.clk;
     assign interrupt_if.reset_n     = clknrst_if.reset_n;
-    assign interrupt_if.irq_id      = cv32e40s_wrapper_i.core_i.irq_id;
+    assign interrupt_if.irq_id      = $bits(interrupt_if.irq_id)'(cv32e40s_wrapper_i.core_i.irq_id); // cast to avoid the warning with clic (TODO: tieoff with clic instead?)
     assign interrupt_if.irq_ack     = cv32e40s_wrapper_i.core_i.irq_ack;
 
     // --------------------------------------------

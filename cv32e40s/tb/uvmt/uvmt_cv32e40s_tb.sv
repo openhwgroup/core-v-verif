@@ -46,7 +46,6 @@ module uvmt_cv32e40s_tb;
    bit [31:0] evalue;
 
    // Agent interfaces
-   uvma_isacov_if_t             isacov_if();
    uvma_clknrst_if_t            clknrst_if(); // clock and resets from the clknrst agent
    uvma_clknrst_if_t            clknrst_if_iss();
    uvma_debug_if_t              debug_if();
@@ -912,23 +911,23 @@ module uvmt_cv32e40s_tb;
 
 
 
-  localparam PMP_ADDR_WIDTH = (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY > 0) ? 33 - uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY : 32;
-
-  pmpncfg_t pmpncfg[PMP_MAX_REGIONS];
-  logic [PMP_ADDR_WIDTH-1:0] pmp_addr[PMP_MAX_REGIONS];
-
-  logic [$bits(pmpncfg_t)-1:0] pmpncfg_shadow[PMP_MAX_REGIONS];
-  logic [PMP_ADDR_WIDTH-1:0] pmp_addr_shadow[PMP_MAX_REGIONS];
-
-  generate for (genvar n = 0; n < uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS; n++) begin
-    assign pmpncfg[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.rdata_q;
-    assign pmp_addr[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.rdata_q;
-
-    assign pmpncfg_shadow[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.gen_hardened.shadow_q;
-    assign pmp_addr_shadow[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.gen_hardened.shadow_q;
-  end endgenerate
-
   if (CORE_PARAM_PMP_NUM_REGIONS > 0) begin: gen_hardened_csrs_pmp_assert
+    localparam PMP_ADDR_WIDTH = (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY > 0) ? 33 - uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY : 32;
+
+    pmpncfg_t pmpncfg[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS];
+    logic [PMP_ADDR_WIDTH-1:0] pmp_addr[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS];
+
+    logic [$bits(pmpncfg_t)-1:0] pmpncfg_shadow[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS];
+    logic [PMP_ADDR_WIDTH-1:0] pmp_addr_shadow[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS];
+
+    for (genvar n = 0; n < uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS; n++) begin
+      assign pmpncfg[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.rdata_q;
+      assign pmp_addr[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.rdata_q;
+
+      assign pmpncfg_shadow[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmpncfg_csr_i.gen_hardened.shadow_q;
+      assign pmp_addr_shadow[n] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.csr_pmp.gen_pmp_csr[n].pmp_region.pmp_addr_csr_i.gen_hardened.shadow_q;
+    end
+
 
     bind cv32e40s_wrapper
       uvmt_cv32e40s_xsecure_hardened_csrs_pmp_assert #(
@@ -946,13 +945,13 @@ module uvmt_cv32e40s_tb;
 
         //CSRs:
         .pmp_mseccfg        (core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.rdata_q),
-        .pmpncfg            (uvmt_cv32e40s_tb.pmpncfg),
-        .pmp_addr           (uvmt_cv32e40s_tb.pmp_addr),
+        .pmpncfg            (uvmt_cv32e40s_tb.gen_hardened_csrs_pmp_assert.pmpncfg),
+        .pmp_addr           (uvmt_cv32e40s_tb.gen_hardened_csrs_pmp_assert.pmp_addr),
 
         //Shadows:
         .pmp_mseccfg_shadow (core_i.cs_registers_i.csr_pmp.pmp_mseccfg_csr_i.gen_hardened.shadow_q),
-        .pmpncfg_shadow     (uvmt_cv32e40s_tb.pmpncfg_shadow),
-        .pmp_addr_shadow    (uvmt_cv32e40s_tb.pmp_addr_shadow)
+        .pmpncfg_shadow     (uvmt_cv32e40s_tb.gen_hardened_csrs_pmp_assert.pmpncfg_shadow),
+        .pmp_addr_shadow    (uvmt_cv32e40s_tb.gen_hardened_csrs_pmp_assert.pmp_addr_shadow)
       );
 
   end : gen_hardened_csrs_pmp_assert
@@ -1540,8 +1539,9 @@ module uvmt_cv32e40s_tb;
 
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i
       uvmt_cv32e40s_pma_cov #(
-        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
-        .IS_INSTR_SIDE   (1'b 1)
+        .CORE_REQ_TYPE   (cv32e40s_pkg::obi_inst_req_t),
+        .IS_INSTR_SIDE   (1'b 1),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS)
       ) pma_cov_instr_i (
         .clk_ungated                         (clknrst_if.clk),
         .pma_status_i                        (uvmt_cv32e40s_tb.pma_status_instr),
@@ -1553,8 +1553,9 @@ module uvmt_cv32e40s_tb;
 
     bind  dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i
       uvmt_cv32e40s_pma_cov #(
-        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
-        .IS_INSTR_SIDE   (1'b 0)
+        .CORE_REQ_TYPE   (cv32e40s_pkg::obi_data_req_t),
+        .IS_INSTR_SIDE   (1'b 0),
+        .PMA_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS)
       ) pma_cov_data_i (
         .clk_ungated                         (clknrst_if.clk),
         .pma_status_i                        (uvmt_cv32e40s_tb.pma_status_data),
@@ -1646,7 +1647,6 @@ module uvmt_cv32e40s_tb;
      $timeformat(-9, 3, " ns", 8);
 
      // Add interfaces handles to uvm_config_db
-     uvm_config_db#(virtual uvma_isacov_if_t            )::set(.cntxt(null), .inst_name("*.env.isacov_agent"),           .field_name("vif"),           .value(isacov_if));
      uvm_config_db#(virtual uvma_debug_if_t             )::set(.cntxt(null), .inst_name("*.env.debug_agent"),            .field_name("vif"),           .value(debug_if));
      uvm_config_db#(virtual uvma_clknrst_if_t           )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"),          .field_name("vif"),           .value(clknrst_if));
      uvm_config_db#(virtual uvma_interrupt_if_t         )::set(.cntxt(null), .inst_name("*.env.interrupt_agent"),        .field_name("vif"),           .value(interrupt_if));
@@ -1960,13 +1960,6 @@ module uvmt_cv32e40s_tb;
    end
    `endif
    `endif
-
-   //TODO verify these are correct with regards to isacov function
-   `ifndef FORMAL // events ignored for formal - this avoids unnecessary warning
-   always @(dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if.rvfi_valid) -> isacov_if.retire;
-   `endif
-   assign isacov_if.instr = dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if.rvfi_insn;
-   //assign isacov_if.is_compressed = dut_wrap.cv32e40s_wrapper_i.tracer_i.insn_compressed;
 
    // Capture the test status and exit pulse flags
    // TODO: put this logic in the vp_status_if (makes it easier to pass to ENV)

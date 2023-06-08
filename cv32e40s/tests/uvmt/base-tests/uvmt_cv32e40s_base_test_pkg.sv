@@ -18,7 +18,6 @@
 `define __UVMT_CV32E40S_BASE_TEST_PKG_SV__
 
 // Pre-processor macros
-`include "uvm_macros.svh"
 `include "uvmt_cv32e40s_macros.sv"
 
 package uvmt_cv32e40s_base_test_pkg;
@@ -29,7 +28,7 @@ package uvmt_cv32e40s_base_test_pkg;
     `include "uvmt_cv32e40s_base_test_constants.sv"
     `include "uvmt_cv32e40s_base_test_tdefs.sv"
 
-endpackage : uvmt_cv32e40s_base_test_pkg;
+endpackage : uvmt_cv32e40s_base_test_pkg
 
 `endif // __UVMT_CV32E40S_BASE_TEST_PKG_SV__
 

@@ -1289,12 +1289,12 @@ void _debug_mode_register_test(void) {
 
   // TDATA1 - Check reset value
   __asm__ volatile (R"(csrr  s0,     tdata1
-                           li    s1,     0x28001000
-                           beq   s0,     s1, 1f
-                           li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
-                           sw    s1,     g_debug_entry_status, s2
-                         1:nop
-                           )" ::: "s0", "s1", "s2", "memory");
+                       li    s1,     0x28001000
+                       beq   s0,     s1, 1f
+                       li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
+                       sw    s1,     g_debug_entry_status, s2
+                     1:nop
+                       )" ::: "s0", "s1", "s2", "memory");
 
   // TDATA1 (Type==6) - Write 1s
   __asm__ volatile (R"(li   s0,     0x6FFFFFFF
@@ -1476,21 +1476,11 @@ void _debug_mode_register_test(void) {
                      1:nop
                        )" ::: "s0", "s1", "s2", "memory");
 
-  // TDATA3 - Write 1s
-  __asm__ volatile (R"(li    s0,     0xFFFFFFFF
-                       csrw  tdata3, s0
-                       csrr  s1,     tdata3
-                       beqz  s1,     1f
-                       li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
-                       sw    s1,     g_debug_entry_status, s2
-                     1:nop
-                       )" ::: "s0", "s1", "s2", "memory");
-
   // TINFO - Write 1s, Debug Access test
   __asm__ volatile (R"(li    s1,     0xFFFFFFFF
                        csrw  tinfo,  s1
                        csrr  s0,     tinfo
-                       li    s1,     0x8064
+                       li    s1,     0x01008064
                        beq   s0,     s1,  1f
                        li    s1,     0x2   #DEBUG_STATUS_ENTERED_FAIL
                        sw    s1,     g_debug_entry_status, s2
@@ -1516,7 +1506,7 @@ int test_register_access(void) {
   printf("\n\n\n --- Testing register access ---\n\n");
 
   if (DEBUG_PRINT) printf("  Checking register access from debug mode\n");
-  
+
   g_debug_sel = DEBUG_SEL_REGTEST;
   g_debug_entry_status = DEBUG_STATUS_NOT_ENTERED;
   DEBUG_REQ_CONTROL_REG = (CV_VP_DEBUG_CONTROL_DBG_REQ(0x1)        |
@@ -1560,26 +1550,13 @@ int test_register_access(void) {
   __asm__ volatile (R"(li    s1,     0x0
                        csrw  tinfo,  s1
                        csrr  s0,     tinfo
-                       li    s1,     0x8064
+                       li    s1,     0x01008064
                        bne   s0,     s1,  1f
                        li    s1,     0x0   #SUCCESS
                        sw    s1,     g_register_access_status, s2
                      1:nop
                        )" ::: "s0", "s1", "s2", "memory");
   if (g_register_access_status != SUCCESS) return FAIL;
-
-  // TCONTROL - Write 1s
-  g_register_access_status = FAIL;
-  __asm__ volatile (R"(li    s1,     0xFFFFFFFF
-                       csrw  tcontrol,  s1
-                       csrr  s0,     tcontrol
-                       bnez  s0,     1f
-                       li    s1,     0x0   #SUCCESS
-                       sw    s1,     g_register_access_status, s2
-                     1:nop
-                       )" ::: "s0", "s1", "s2", "memory");
-  if (g_register_access_status != SUCCESS) return FAIL;
-
 
   // TDATA1 - Write valid value (in m-mode), check that is ignored
   g_register_access_status = FAIL;
@@ -1611,7 +1588,7 @@ int test_register_access(void) {
   __asm__ volatile (R"(li    s1,     0x0
                        csrw  tinfo,  s1
                        csrr  s0,     tinfo
-                       li    s1,     0x8064
+                       li    s1,     0x01008064
                        bne   s0,     s1, 1f
                        li    s1,     0x0   #SUCCESS
                        sw    s1,     g_register_access_status, s2
@@ -1619,17 +1596,15 @@ int test_register_access(void) {
                        )" ::: "s0", "s1", "s2");
   if (g_register_access_status != SUCCESS) return FAIL;
 
-  // TCONTROL - Write 1s
-  g_register_access_status = FAIL;
-  __asm__ volatile (R"(li    s1,     0xFFFFFFFF
-                       csrw  tcontrol,  s1
-                       csrr  s0,     tcontrol
-                       bnez  s0,     1f
-                       li    s1,     0x0   #SUCCESS
-                       sw    s1,     g_register_access_status, s2
-                     1:nop
-                       )" ::: "s0", "s1", "s2", "memory");
-  if (g_register_access_status != SUCCESS) return FAIL;
+  // TDATA3 - Access Checks (in machine mode) - CSR should not exist
+  g_illegal_insn_status = 0;
+  __asm__ volatile ("csrwi tdata3, 0x0");
+  if (!g_illegal_insn_status) return FAIL;
+
+  // TCONTROL - Access Checks (in machine mode) - CSR should not exist
+  g_illegal_insn_status = 0;
+  __asm__ volatile ("csrwi tcontrol, 0x0");
+  if (!g_illegal_insn_status) return FAIL;
 
   // Context Registers - Access Checks (in machine mode)
   g_illegal_insn_status = 0;
@@ -1660,7 +1635,6 @@ int test_register_access(void) {
   __asm__ volatile ("csrwi tdata1, 0x0");
   if (!g_illegal_insn_status) return FAIL;
 
-
   // TDATA2 - Read/Write valid value (in u-mode), check that it traps
   g_illegal_insn_status = 0;
   __asm__ volatile ("csrr  s0, tdata2" ::: "s0");
@@ -1679,11 +1653,12 @@ int test_register_access(void) {
   __asm__ volatile ("csrwi tinfo, 0x0");
   if (!g_illegal_insn_status) return FAIL;
 
-  // TCONTROL - Read/Write valid value (in u-mode), check that it traps
+  // TDATA3 - Access Checks (in user mode) - CSR should not exist
   g_illegal_insn_status = 0;
-  __asm__ volatile ("csrr  s0, tcontrol" ::: "s0");
+  __asm__ volatile ("csrwi tdata3, 0x0");
   if (!g_illegal_insn_status) return FAIL;
 
+  // TCONTROL - Access Checks (in user mode) - CSR should not exist
   g_illegal_insn_status = 0;
   __asm__ volatile ("csrwi tcontrol, 0x0");
   if (!g_illegal_insn_status) return FAIL;

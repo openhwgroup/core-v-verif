@@ -174,16 +174,16 @@ module uvmt_cv32e40s_support_logic
       end
   end
 
+
+  //Support logic for debug triggers:
+logic [CORE_PARAM_DBG_NUM_TRIGGERS:0] system_conditions;
+logic [CORE_PARAM_DBG_NUM_TRIGGERS:0] csr_conditions;
+logic [CORE_PARAM_DBG_NUM_TRIGGERS:0] trigger_match_mem;
+logic [CORE_PARAM_DBG_NUM_TRIGGERS:0] trigger_match_exception;
+logic [CORE_PARAM_DBG_NUM_TRIGGERS:0] trigger_match_execute;
+
   logic [MAX_NUM_TRIGGERS-1:0][31:0] tdata1_array;
   logic [MAX_NUM_TRIGGERS-1:0][31:0] tdata2_array;
-
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_exception;
-  logic [MAX_NUM_TRIGGERS-1:0] pc_addr_match;
-  logic [MAX_NUM_TRIGGERS-1:0][4*MAX_MEM_ACCESS-1:0] mem_addr_match;
-  logic [MAX_NUM_TRIGGERS-1:0] general_trigger_match_conditions;
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_load_array;
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_store_array;
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_execute_array;
 
   always @(posedge in_support_if.clk, negedge in_support_if.rst_n ) begin
     if(!in_support_if.rst_n) begin
@@ -195,10 +195,105 @@ module uvmt_cv32e40s_support_logic
       tdata2_array = '0;
 
     end else if (in_support_if.wb_valid) begin
-      tdata1_array[in_support_if.wb_tselect] = in_support_if.wb_tdata1;
-      tdata2_array[in_support_if.wb_tselect] = in_support_if.wb_tdata2;
+      tdata1_array[in_support_if.wb_tselect[$clog2(MAX_NUM_TRIGGERS)-1:0]] = in_support_if.wb_tdata1;
+      tdata2_array[in_support_if.wb_tselect[$clog2(MAX_NUM_TRIGGERS)-1:0]] = in_support_if.wb_tdata2;
     end
   end
+
+
+assign system_conditions = rvfi.rvfi_valid && !rvfi.rvfi_dbg_mode;
+
+generate
+  for (genvar t = 0; t < CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
+    assign csr_conditions[t] =
+      (tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 2 ||
+      tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 6) &&
+
+      ((rvfi.is_mmode && tdata1_array[t][TDATA1_M2_M6_M_MODE]) ||
+      (rvfi.is_umode && tdata1_array[t][TDATA1_M2_M6_U_MODE])) &&
+
+      ((tdata1_array[t][TDATA1_LOAD] && |rvfi.instr_mem_rmask) ||
+      (tdata1_array[t][TDATA1_STORE] && |rvfi.instr_mem_wmask) ||
+      (tdata1_array[t][TDATA1_EXECUTE]));
+
+      // Trigger match instruction:
+    assign trigger_match_execute[t] = (csr_conditions[t] && tdata1_array[t][TDATA1_EXECUTE])
+      && system_conditions &&
+      (((rvfi.rvfi_pc_rdata == tdata2_array[t]) && tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL)
+      || ((rvfi.rvfi_pc_rdata >= tdata2_array[t]) && tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL)
+      || ((rvfi.rvfi_pc_rdata < tdata2_array[t]) && tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER));
+
+    // Trigger match exception:
+    assign trigger_match_exception[t] = rvfi.rvfi_valid
+      && rvfi.rvfi_trap.exception
+      && tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 5
+      && tdata2_array[t][rvfi.rvfi_trap.exception_cause]
+      && ((rvfi.is_mmode && tdata1_array[t][TDATA1_ET_M_MODE])
+      || (rvfi.is_umode && tdata1_array[t][TDATA1_ET_U_MODE]));
+
+  end
+endgenerate
+
+
+// Trigger match load and store:
+
+function [$bits(rvfi.rvfi_mem_rmask)-1:0] trigger_match_mem_f();
+
+  logic [31:0] addr;
+  logic [31:0] addr_n;
+  logic [CORE_PARAM_DBG_NUM_TRIGGERS:0] trigger_match_mem_int;
+
+  addr = rvfi.rvfi_mem_addr;
+  addr_n = addr;
+  trigger_match_mem_int = 0;
+
+  for (int i = 0; i < $bits(rvfi.rvfi_mem_rmask); i++) begin
+
+    if(trigger_match_mem_int != 0) begin
+      break;
+    end
+
+    if ((rvfi.rvfi_mem_rmask[i] || rvfi.rvfi_mem_wmask[i]) && trigger_match_mem_int == 0) begin
+      for (int t = 0; t < CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
+        trigger_match_mem_int[t] = csr_conditions[t]
+        && system_conditions &&
+        (((addr == tdata2_array[t]) && tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL)
+        || ((addr >= tdata2_array[t]) && tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL)
+        || ((addr < tdata2_array[t]) && tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER));
+      end
+
+    end else begin
+      trigger_match_mem_int = 0;
+    end
+
+    if((i+1) % 4) begin
+      addr-=4;
+    end else begin
+      addr+=1;
+    end
+  end
+
+  return trigger_match_mem_int;
+
+endfunction
+
+
+always_comb begin
+  trigger_match_mem = trigger_match_mem_f();
+end
+
+
+//Old:
+///////////////////////////////
+
+  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_exception;
+  logic [MAX_NUM_TRIGGERS-1:0] pc_addr_match;
+  logic [MAX_NUM_TRIGGERS-1:0][4*MAX_MEM_ACCESS-1:0] mem_addr_match;
+  logic [MAX_NUM_TRIGGERS-1:0] general_trigger_match_conditions;
+  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_load_array;
+  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_store_array;
+  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_execute_array;
+
 
 
   for (genvar t = 0; t < MAX_NUM_TRIGGERS; t++) begin
@@ -298,6 +393,9 @@ module uvmt_cv32e40s_support_logic
   assign out_support_if.trigger_match_execute_array = trigger_match_execute_array;
   assign out_support_if.trigger_match_load_array = trigger_match_load_array;
   assign out_support_if.trigger_match_store_array = trigger_match_store_array;
+
+
+///////////////////////////////
 
 
   // Count "irq_ack"

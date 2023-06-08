@@ -72,8 +72,8 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
 
     //Alignment buffer:
     input inst_resp_t alb_resp_i,
-    input inst_resp_t [0:ALBUF_DEPTH-1] alb_resp_q,
-    input logic [0:ALBUF_DEPTH-1] alb_valid,
+    input inst_resp_t [ALBUF_DEPTH-1:0] alb_resp_q,
+    input logic [ALBUF_DEPTH-1:0] alb_valid,
     input logic [ALBUF_CNT_WIDTH-1:0] alb_wptr,
     input logic [ALBUF_CNT_WIDTH-1:0] alb_rptr1,
     input logic [ALBUF_CNT_WIDTH-1:0] alb_rptr2,
@@ -586,6 +586,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     && alb_resp_q[wptr_position].bus_resp.integrity_err == $past(if_instr_integrity_err)
     && alb_resp_q[wptr_position].bus_resp.integrity == $past(support_if.instr_req_had_integrity);
   endproperty
+
 
   generate
     for (genvar wptr = 0; wptr < ALBUF_DEPTH; wptr++) begin

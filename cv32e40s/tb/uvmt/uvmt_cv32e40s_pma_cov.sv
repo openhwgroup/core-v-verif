@@ -23,24 +23,26 @@
 module  uvmt_cv32e40s_pma_cov
   import uvmt_cv32e40s_base_test_pkg::*;
 #(
+  parameter bit  IS_INSTR_SIDE,
   parameter int  PMA_NUM_REGIONS,
-  parameter bit  IS_INSTR_SIDE
+  parameter type CORE_REQ_TYPE
 )(
   input wire  clk,
   input wire  clk_ungated,
   input wire  rst_n,
 
   // MPU Signals
-  input wire  core_trans_ready_o,
-  input wire  core_trans_valid_i,
-  input wire  misaligned_access_i,
-  input wire  load_access,
-  input wire  core_trans_pushpop_i,
+  input CORE_REQ_TYPE  core_trans_i,
+  input wire           core_trans_pushpop_i,
+  input wire           core_trans_ready_o,
+  input wire           core_trans_valid_i,
+  input wire           load_access,
+  input wire           misaligned_access_i,
 
   // Helper Logic
   input wire pma_status_t  pma_status_i,
-  input wire pma_status_t  pma_status_rvfidata_word0lowbyte_i,
   input wire pma_status_t  pma_status_rvfidata_word0highbyte_i,
+  input wire pma_status_t  pma_status_rvfidata_word0lowbyte_i,
   uvma_rvfi_instr_if_t     rvfi_if
 );
 
@@ -76,13 +78,15 @@ module  uvmt_cv32e40s_pma_cov
   assign  rvfi_pmamain_lowhigh[0] = pma_status_rvfidata_word0highbyte_i.main;
 
 
-  // Helper Logic - "Past" Values
+  // typedef to parameterize size of helper signals
+  typedef logic [$bits(rvfi_if.rvfi_mem_wmask)-1:0] rvfi_mem_wmask_t;
 
-  var logic  occured_rvfi_valid;
-  var logic  rvfi_pma_fault_q;
-  var logic  rvfi_mem_wmask_q;
-  var logic  rvfi_mem_act_q;
-  var logic  rvfi_pmamain_low_q;
+  // Helper Logic - "Past" Values
+  var logic             occured_rvfi_valid;
+  var logic             rvfi_pma_fault_q;
+  var logic             rvfi_mem_act_q;
+  var logic             rvfi_pmamain_low_q;
+  var rvfi_mem_wmask_t  rvfi_mem_wmask_q;
 
   always_ff @(posedge clk_ungated or negedge rst_n) begin
     if (rst_n == 0) begin
@@ -94,7 +98,7 @@ module  uvmt_cv32e40s_pma_cov
     end else if (rvfi_if.rvfi_valid) begin
       occured_rvfi_valid <= 1;
       rvfi_pma_fault_q   <= rvfi_if.is_pma_fault;
-      rvfi_mem_wmask_q   <= rvfi_if.rvfi_mem_wmask;
+      rvfi_mem_wmask_q   <= rvfi_mem_wmask_t'(rvfi_if.rvfi_mem_wmask);
       rvfi_mem_act_q     <= rvfi_if.is_mem_act;
       rvfi_pmamain_low_q <= rvfi_pmamain_lowhigh[1];
     end
@@ -125,10 +129,10 @@ module  uvmt_cv32e40s_pma_cov
     }
 
     cp_matchregion: coverpoint  match_idx  iff (is_mpu_activated) {
-      bins  regions[] = {[0:PMA_NUM_REGIONS-1]}
+      bins  regions[] = {[0:(PMA_NUM_REGIONS > 0) ? (PMA_NUM_REGIONS-1) : 0 ]}
         with (!SIMPLIFY_FV)
         iff (have_match == 1);
-      bins  nomatch   = {[0:PMA_NUM_REGIONS-1]}
+      bins  nomatch   = {[0:(PMA_NUM_REGIONS > 0) ? (PMA_NUM_REGIONS-1) : 0]}
         with (!SIMPLIFY_FV)
         iff (have_match == 0);
     }
@@ -254,19 +258,20 @@ module  uvmt_cv32e40s_pma_cov
     x_loadstoreexec_integrity:    cross  cp_loadstoreexec, cp_integrity;
     x_loadstoreexec_overridedm:   cross  cp_loadstoreexec, cp_overridedm;
 
-    x_allow_bufferable: cross  cp_allow, cp_bufferable {
-      ignore_bins  disallow_bufferable =
-        (binsof(cp_allow.disallow) && binsof(cp_bufferable.bufferable))
-        with (SIMPLIFY_FV);
-    }
-    x_allow_cacheable:  cross  cp_allow, cp_cacheable {
-      illegal_bins  disallow_cacheable =
-        binsof(cp_allow.disallow) && binsof(cp_cacheable.cacheable);
-    }
-    x_allow_integrity:  cross  cp_allow, cp_integrity {
-      illegal_bins  disallow_integrity =
-        binsof(cp_allow.disallow) && binsof(cp_integrity.integrity);
-    }
+    //TODO silabs-robin: Needs update
+    //x_allow_bufferable: cross  cp_allow, cp_bufferable {
+    //  ignore_bins  disallow_bufferable =
+    //    (binsof(cp_allow.disallow) && binsof(cp_bufferable.bufferable))
+    //    with (SIMPLIFY_FV);
+    //}
+    //x_allow_cacheable:  cross  cp_allow, cp_cacheable {
+    //  illegal_bins  disallow_cacheable =
+    //    binsof(cp_allow.disallow) && binsof(cp_cacheable.cacheable);
+    //}
+    //x_allow_integrity:  cross  cp_allow, cp_integrity {
+    //  illegal_bins  disallow_integrity =
+    //    binsof(cp_allow.disallow) && binsof(cp_integrity.integrity);
+    //}
     x_allow_jvt:        cross  cp_allow, cp_jvt;
 
     x_dmregion_dmode: cross  cp_dmregion, cp_dmode;

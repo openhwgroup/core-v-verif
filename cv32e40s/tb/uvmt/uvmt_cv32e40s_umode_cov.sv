@@ -62,18 +62,18 @@ module  uvmt_cv32e40s_umode_cov
 
   // Helper Definitions
 
-  localparam int  MODE_U = 2'b 00;
-  localparam int  MODE_M = 2'b 11;
+  localparam bit [1:0]  MODE_U = 2'b 00;
+  localparam bit [1:0]  MODE_M = 2'b 11;
+
+  localparam bit [11:0]  CSRADDR_MISA       = 12'h 301;
+  localparam bit [11:0]  CSRADDR_MSCRATCH   = 12'h 340;
+  localparam bit [11:0]  CSRADDR_MSTATUS    = 12'h 300;
+  localparam bit [11:0]  CSRADDR_MEDELEG    = 12'h 302;
+  localparam bit [11:0]  CSRADDR_MIDELEG    = 12'h 303;
+  localparam bit [11:0]  CSRADDR_MCOUNTEREN = 12'h 306;
 
   localparam int  EXC_ACCESFAULT =  1;
   localparam int  EXC_BUSFAULT   = 24;
-
-  localparam int  CSRADDR_MISA       = 12'h 301;
-  localparam int  CSRADDR_MSCRATCH   = 12'h 340;
-  localparam int  CSRADDR_MSTATUS    = 12'h 300;
-  localparam int  CSRADDR_MEDELEG    = 12'h 302;
-  localparam int  CSRADDR_MIDELEG    = 12'h 303;
-  localparam int  CSRADDR_MCOUNTEREN = 12'h 306;
 
   typedef struct packed {
     logic [31:18]  dontcare2;

@@ -20,8 +20,7 @@
 
 CORE_V_VERIF ?= $(realpath ../..)
 
-CV_CORE ?= cv32e40s
-
+CV_CORE        ?= cv32e40s
 CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40s
 CV_CORE_BRANCH ?= master
 CV_CORE_TAG    ?= none
@@ -35,9 +34,13 @@ DPI_DASM_SPIKE_REPO ?= TODO_dontwanttodefinethis
 include  $(CORE_V_VERIF)/mk/fv/fv.mk
 
 
-# Extras
+# Options
 
-JG_OPTIONS = -bg dimgray -fg lightgray
+JG_EXTRAS  = -bg dimgray -fg lightgray
+
+export FV_DEFINES = ${USER_DEFINES}
+export FV_INCDIRS = ${USER_INCDIRS}
+#TODO:silabs-robin This defines system is not perfect.
 
 
 # Safety Check
@@ -52,7 +55,7 @@ endif
 jaspergold: jg
 jasper: jg
 jg:  $(CV_CORE_PKG)
-	$(CV_SIM_PREFIX)  jaspergold  $(JG_OPTIONS)  jaspergold.tcl
+	$(CV_SIM_PREFIX)  jaspergold  $(JG_EXTRAS)  jaspergold.tcl
 	# TODO:silabs-robin  Move to "mk/fv/jg.mk"?
 
 qverify: q

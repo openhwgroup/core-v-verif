@@ -25,9 +25,11 @@ default_target:
 
 export CV_CORE_PKG  ?= $(CORE_V_VERIF)/core-v-cores/$(CV_CORE)
 
-export DV_UVMT_PATH ?= $(CORE_V_VERIF)/$(CV_CORE)/tb/uvmt
-export DV_UVME_PATH ?= $(CORE_V_VERIF)/$(CV_CORE)/env/uvme
-export DV_UVMA_PATH ?= $(CORE_V_VERIF)/lib/uvm_agents
+export DV_SUPPORT_PATH      ?= $(CORE_V_VERIF)/lib/support
+export DV_UVM_TESTCASE_PATH ?= $(CORE_V_VERIF)/$(CV_CORE)/tests/uvmt
+export DV_UVMA_PATH         ?= $(CORE_V_VERIF)/lib/uvm_agents
+export DV_UVME_PATH         ?= $(CORE_V_VERIF)/$(CV_CORE)/env/uvme
+export DV_UVMT_PATH         ?= $(CORE_V_VERIF)/$(CV_CORE)/tb/uvmt
 
 export DESIGN_RTL_DIR ?= $(CV_CORE_PKG)/rtl
 
