@@ -22,9 +22,10 @@
 
 module uvmt_cv32e40s_pmprvfi_assert
   import cv32e40s_pkg::*;
+  import support_pkg::*;
   import uvm_pkg::*;
-  import uvmt_cv32e40s_base_test_pkg::*;
   import uvma_rvfi_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
 #(
   parameter int  PMP_GRANULARITY = 0,
   parameter int  PMP_NUM_REGIONS = 0
@@ -67,6 +68,8 @@ module uvmt_cv32e40s_pmprvfi_assert
   input wire [31:0]  rvfi_csr_mseccfgh_wmask,
   //(mstatus)
   input wire [31:0]  rvfi_csr_mstatus_rdata,
+  //(jvt)
+  input wire [31:0]  rvfi_csr_jvt_rdata,
 
   // Debug
   input wire  rvfi_dbg_mode
@@ -176,6 +179,10 @@ module uvmt_cv32e40s_pmprvfi_assert
         rvfi_if.is_split_instrtrans  &&
         !match_status_upperinstr.is_access_allowed
       );
+
+  logic [31:0]  jvt_addr;
+  always_comb begin
+    jvt_addr = get_jvt_addr_f(rvfi_if.rvfi_insn, rvfi_csr_jvt_rdata);
   end
 
   pmp_csr_t  pmp_csr_rvfi_rdata;
@@ -205,6 +212,7 @@ module uvmt_cv32e40s_pmprvfi_assert
   match_status_t  match_status_data;
   match_status_t  match_status_upperinstr;
   match_status_t  match_status_upperdata;
+  match_status_t  match_status_jvt;
 
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
@@ -280,12 +288,33 @@ module uvmt_cv32e40s_pmprvfi_assert
 
     .csr_pmp_i      (pmp_csr_rvfi_rdata),
     .debug_mode     (rvfi_dbg_mode),
-    .pmp_req_addr_i ({2'b 00, rvfi_mem_upperaddr}),  // TODO:silabs-robin  Multi-op instructions
+    .pmp_req_addr_i ({2'b 00, rvfi_mem_upperaddr}),  // TODO:WARNING:silabs-robin  Multi-op instructions
     .pmp_req_err_o  ('Z),
     .pmp_req_type_i (rvfi_if.is_store_instr ? PMP_ACC_WRITE : PMP_ACC_READ),
     .priv_lvl_i     (privlvl_t'(rvfi_effective_mode)),
 
     .match_status_o (match_status_upperdata),
+
+    .*
+  );
+
+  uvmt_cv32e40s_pmp_model #(
+    .PMP_GRANULARITY (PMP_GRANULARITY),
+    .PMP_NUM_REGIONS (PMP_NUM_REGIONS),
+    .DM_REGION_START (CORE_PARAM_DM_REGION_START),
+    .DM_REGION_END   (CORE_PARAM_DM_REGION_END)
+  ) model_jvt_i (
+    .clk   (clk_i),
+    .rst_n (rst_ni),
+
+    .csr_pmp_i      (pmp_csr_rvfi_rdata),
+    .debug_mode     (rvfi_dbg_mode),
+    .pmp_req_addr_i (jvt_addr),
+    .pmp_req_err_o  ('Z),
+    .pmp_req_type_i (PMP_ACC_EXEC),
+    .priv_lvl_i     (privlvl_t'(rvfi_mode)),
+
+    .match_status_o (match_status_jvt),
 
     .*
   );
@@ -830,7 +859,9 @@ module uvmt_cv32e40s_pmprvfi_assert
   a_rvfi_mem_allowed_generalinstr: assert property (
     rvfi_valid
     |->
-    rvfi_if.is_instr_acc_fault_pmp ^ is_access_allowed
+    (rvfi_if.is_instr_acc_fault_pmp ^ is_access_allowed)  ||
+    (rvfi_if.is_tablejump_raw && !match_status_jvt.is_access_allowed) ||
+    rvfi_if.is_dbg_trg
   ) else `uvm_error(info_tag, "TODO");
 
 

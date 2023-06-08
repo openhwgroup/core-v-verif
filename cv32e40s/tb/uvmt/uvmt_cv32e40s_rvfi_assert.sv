@@ -16,6 +16,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
 
+// Description:
+//   Sanity-checking behavior of "rvfi" and "rvfi_instr_if".
+//   (Note: This does not replace the original "riscv_formal" assertions.)
+//
+// Rationale:
+//   We use these interfaces a lot to verify other features.
+//   But we need to know that these interfaces themselves can be trusted.
+
+
 `default_nettype  none
 
 
@@ -78,7 +87,7 @@ module uvmt_cv32e40s_rvfi_assert
     (rvfi_valid [->1])  ##0
     addr
     |->
-    (rdata == 0);  // TODO:ropeders use "RF_REG_RV"
+    (rdata == 0);  // TODO:silabs-robin use "RF_REG_RV"
   endproperty : p_rs_resetvalue
 
   a_rs1_resetvalue: assert property (
