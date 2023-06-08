@@ -129,10 +129,10 @@ module  uvmt_cv32e40s_pma_cov
     }
 
     cp_matchregion: coverpoint  match_idx  iff (is_mpu_activated) {
-      bins  regions[] = {[0:PMA_NUM_REGIONS-1]}
+      bins  regions[] = {[0:(PMA_NUM_REGIONS > 0) ? (PMA_NUM_REGIONS-1) : 0 ]}
         with (!SIMPLIFY_FV)
         iff (have_match == 1);
-      bins  nomatch   = {[0:PMA_NUM_REGIONS-1]}
+      bins  nomatch   = {[0:(PMA_NUM_REGIONS > 0) ? (PMA_NUM_REGIONS-1) : 0]}
         with (!SIMPLIFY_FV)
         iff (have_match == 0);
     }
