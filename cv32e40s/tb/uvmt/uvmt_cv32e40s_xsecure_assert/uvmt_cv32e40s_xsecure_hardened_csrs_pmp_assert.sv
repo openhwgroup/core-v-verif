@@ -33,13 +33,13 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_pmp_assert
 
     //CSRs:
     input mseccfg_t pmp_mseccfg,
-    input pmpncfg_t pmpncfg[PMP_MAX_REGIONS],
-    input logic [PMP_ADDR_WIDTH-1:0] pmp_addr[PMP_MAX_REGIONS],
+    input pmpncfg_t pmpncfg[PMP_NUM_REGIONS],
+    input logic [PMP_ADDR_WIDTH-1:0] pmp_addr[PMP_NUM_REGIONS],
 
     //Shadows:
     input logic [$bits(mseccfg_t)-1:0] pmp_mseccfg_shadow,
-    input logic [$bits(pmpncfg_t)-1:0] pmpncfg_shadow[PMP_MAX_REGIONS],
-    input logic [PMP_ADDR_WIDTH-1:0] pmp_addr_shadow[PMP_MAX_REGIONS]
+    input logic [$bits(pmpncfg_t)-1:0] pmpncfg_shadow[PMP_NUM_REGIONS],
+    input logic [PMP_ADDR_WIDTH-1:0] pmp_addr_shadow[PMP_NUM_REGIONS]
 
   );
 

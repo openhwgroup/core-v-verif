@@ -322,9 +322,9 @@ module uvmt_cv32e40s_pmprvfi_assert
   var [31:0]  clk_cnt;
   always @(posedge clk_i, negedge rst_ni) begin
     if (rst_ni == 0) begin
-      clk_cnt <= 64'd 1;
+      clk_cnt <= 32'd 1;
     end else if (clk_cnt != '1) begin
-      clk_cnt <= clk_cnt + 64'd 1;
+      clk_cnt <= clk_cnt + 32'd 1;
     end
   end
 

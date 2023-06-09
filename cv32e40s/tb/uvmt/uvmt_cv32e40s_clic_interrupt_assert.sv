@@ -1070,8 +1070,11 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
     property p_only_one_ack_per_irq;
         clic.irq
-      |->
-        irq_ack[=0:1] within $changed(clic)[->1];
+        && $changed(clic)
+      |=>
+        irq_ack[=1] within ($changed(clic)[->1])
+      or
+        !irq_ack until ($changed(clic)[->1]);
     endproperty : p_only_one_ack_per_irq
 
     a_only_one_ack_per_irq: assert property (p_only_one_ack_per_irq)

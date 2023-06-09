@@ -195,8 +195,8 @@ module uvmt_cv32e40s_support_logic
       tdata2_array = '0;
 
     end else if (in_support_if.wb_valid) begin
-      tdata1_array[in_support_if.wb_tselect] = in_support_if.wb_tdata1;
-      tdata2_array[in_support_if.wb_tselect] = in_support_if.wb_tdata2;
+      tdata1_array[in_support_if.wb_tselect[$clog2(MAX_NUM_TRIGGERS)-1:0]] = in_support_if.wb_tdata1;
+      tdata2_array[in_support_if.wb_tselect[$clog2(MAX_NUM_TRIGGERS)-1:0]] = in_support_if.wb_tdata2;
     end
   end
 

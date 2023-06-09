@@ -146,9 +146,9 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   We detect bit flip in the GPRs by comparing them with the local memory
   ****************************************/
 
-  logic [31:0][31:0] gpr_mem_shadow = '0;
+  logic [31:0][31:0] gpr_mem_shadow;
 
-  always @(posedge clk_i) begin
+  always @(posedge clk_i or negedge rst_ni) begin
     if(!rst_ni) begin
       gpr_mem_shadow = '0;
     end else if (gpr_we && gpr_waddr != ZERO) begin
@@ -159,7 +159,7 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   //Verify that support logic work as expected:
 
   a_xsecure_rf_ecc_reset_gpr_mem_shadow: assert property (
-
+    ##0
     $rose(rst_ni)
     |->
     gpr_mem_shadow == '0

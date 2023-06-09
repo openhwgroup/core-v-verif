@@ -138,7 +138,8 @@ module uvmt_cv32e40s_rvfi_assert
   // RVFI exception cause matches "mcause"
 
   wire logic [10:0]  rvfi_mcause_exccode;
-  assign rvfi_mcause_exccode = (rvfi_csr_mcause_wdata & rvfi_csr_mcause_wmask);
+  // Explicit truncation to avoid warning
+  assign rvfi_mcause_exccode = $bits(rvfi_mcause_exccode)'(rvfi_csr_mcause_wdata & rvfi_csr_mcause_wmask);
 
   a_exc_cause: assert property (
     rvfi_valid           &&

@@ -182,7 +182,9 @@ module uvmt_cv32e40s_triggers_assert_cov
   endgenerate
 
   logic m6_hits_written;
-  assign m6_hits_written = (rvfi_if.is_csr_write(ADDR_TDATA1));
+  always_comb begin
+    m6_hits_written = (rvfi_if.is_csr_write(ADDR_TDATA1));
+  end
 
   //logic m6_hits_was_0;
   //always_latch begin
@@ -215,7 +217,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   logic tdata1_pre_state_m6_hits;
   assign tdata1_pre_state_m6_hits = {tdata1_pre_state[M6_HIT1], tdata1_pre_state[M6_HIT0]};
 
-  logic tdata1_post_state_m6_hits;
+  logic [1:0] tdata1_post_state_m6_hits;
   assign tdata1_post_state_m6_hits = {tdata1_post_state[M6_HIT1], tdata1_post_state[M6_HIT0]};
 
   logic valid_instr_in_mmode;
@@ -242,13 +244,15 @@ module uvmt_cv32e40s_triggers_assert_cov
   logic is_csrrci;
   logic [4:0] csri_uimm;
 
-  assign is_csrrw = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRW);
-  assign is_csrrs = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRS);
-  assign is_csrrc = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRC);
-  assign is_csrrwi = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRWI);
-  assign is_csrrsi = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRSI);
-  assign is_csrrci = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRCI);
-  assign csri_uimm = rvfi_if.rvfi_insn[19:15];
+  always_comb begin
+    is_csrrw = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRW);
+    is_csrrs = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRS);
+    is_csrrc = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRC);
+    is_csrrwi = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRWI);
+    is_csrrsi = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRSI);
+    is_csrrci = rvfi_if.match_instr_isb(rvfi_if.INSTR_OPCODE_CSRRCI);
+    csri_uimm = rvfi_if.rvfi_insn[19:15];
+  end
 
 
   /////////// Sequences ///////////
@@ -1414,8 +1418,7 @@ module uvmt_cv32e40s_triggers_assert_cov
     a_dt_write_tdata2_random_in_dmode_type_2_6_15: assert property (
 
       (seq_csr_write_dmode(ADDR_TDATA2)
-      ##0 rvfi_if.rvfi_rs1_rdata == $random()
-      && (tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 2
+      ##0 (tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 2
       || tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 6
       || tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 15))
 
