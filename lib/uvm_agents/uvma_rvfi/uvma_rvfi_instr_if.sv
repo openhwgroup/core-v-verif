@@ -179,10 +179,10 @@ interface uvma_rvfi_instr_if_t
   // -------------------------------------------------------------------
   // Local variables
   // -------------------------------------------------------------------
-  bit   [CYCLE_CNT_WL-1:0]          cycle_cnt       = 0;
-  int unsigned                      nmi_instr_cnt   = 0; // number of instructions after nmi
-  int unsigned                      irq_cnt         = 0; // number of taken interrupts
-  int unsigned                      single_step_cnt = 0; // number of instructions stepped
+  int unsigned                      irq_cnt;         // number of taken interrupts
+  int unsigned                      nmi_instr_cnt;   // number of instructions after nmi
+  int unsigned                      single_step_cnt; // number of instructions stepped
+  logic [CYCLE_CNT_WL-1:0]          cycle_cnt;       // i'th number cycle since reset
 
   logic [(32)-1:0][XLEN-1:0]        gpr_rdata_array;
   logic [(32)-1:0]                  gpr_rmask_array;
@@ -265,14 +265,13 @@ interface uvma_rvfi_instr_if_t
   assign cslli_shamt = {rvfi_insn[12], rvfi_insn[6:2]};
   assign csr_addr    = rvfi_insn[31:20];
 
-  always @(posedge clk or negedge reset_n) begin
+  always_ff @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
-      nmi_instr_cnt    <= 0;
-      single_step_cnt  <= 0;
       irq_cnt          <= 0;
       is_nmi_triggered <= 0;
+      nmi_instr_cnt    <= 0;
+      single_step_cnt  <= 0;
     end else begin
-      cycle_cnt <= cycle_cnt + 1;
       // Detect taken nmi or pending nmi and start counting
       is_nmi_triggered <= is_nmi_triggered ? 1'b1 : (is_nmi || (rvfi_nmip && rvfi_valid));
       if (is_nmi_triggered && rvfi_valid) begin
@@ -322,19 +321,22 @@ interface uvma_rvfi_instr_if_t
   end
 
   always_comb begin
-    is_load_instr      <= rvfi_valid && |instr_mem_rmask;
-    is_store_instr     <= rvfi_valid && |instr_mem_wmask;
+    cycle_cnt =
+      (!reset_n) ? (
+        0
+      ) : (
+        $past(cycle_cnt, , , @(posedge clk)) + 1
+      );
+
+    is_load_instr      = rvfi_valid && |instr_mem_rmask;
+    is_store_instr     = rvfi_valid && |instr_mem_wmask;
     // ("instr_mem_*mask" shows intent)
-    is_loadstore_instr <= is_load_instr || is_store_instr;
+    is_loadstore_instr = is_load_instr || is_store_instr;
 
-    is_mem_act_actual   <= is_mem_act;  // original signal is already "actual"
-    is_mem_act_intended <= rvfi_valid && (|instr_mem_rmask || |instr_mem_wmask);
+    is_mem_act_actual   = is_mem_act;  // original signal is already "actual"
+    is_mem_act_intended = rvfi_valid && (|instr_mem_rmask || |instr_mem_wmask);
 
-    is_split_instrtrans <=
-      rvfi_valid  &&
-      (rvfi_pc_rdata[31:2] != rvfi_pc_upperrdata[31:2]);
-
-    rvfi_pc_upperrdata <=
+    rvfi_pc_upperrdata =
       (rvfi_insn[1:0] == 2'b 11) ? (
         rvfi_pc_rdata + 3
       ) : (
@@ -342,7 +344,11 @@ interface uvma_rvfi_instr_if_t
       );
       // TODO:ERROR:silabs-robin  Can't trust rvfi_insn if scrambled data.
 
-    is_instr_acc_fault_pmp <=
+    is_split_instrtrans =
+      rvfi_valid  &&
+      (rvfi_pc_rdata[31:2] != rvfi_pc_upperrdata[31:2]);
+
+    is_instr_acc_fault_pmp =
       rvfi_valid  &&
       rvfi_trap.trap  &&
       rvfi_trap.exception  &&

@@ -17,7 +17,7 @@
 
 
 // Description:
-//   Sanity-checking behavior of "rvfi" and "rvfi_instr_if".
+//   Sanity-checking behavior of "rvfi" and "rvfi_instr_if" helper logic.
 //   (Note: This does not replace the original "riscv_formal" assertions.)
 //
 // Rationale:
@@ -191,6 +191,17 @@ module uvmt_cv32e40s_rvfi_assert
     support_if.cnt_rvfi_irqs <= support_if.cnt_irq_ack
     //Note: This is not comprehensive proof
   ) else `uvm_error(info_tag, "rvfi_intr.interrupt over-reported");
+
+
+  // Confirm that the counter is right.
+
+  cov_cycle_cnt_1: cover property (
+    rvfi_if.cycle_cnt == 1
+  );
+
+  cov_cycle_cnt_2: cover property (
+    rvfi_if.cycle_cnt ==2
+  );
 
 
   // Exceptions/Interrupts/Debugs have a cause
