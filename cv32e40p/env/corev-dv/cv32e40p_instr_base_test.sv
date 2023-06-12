@@ -1,6 +1,8 @@
 /*
  * Copyright 2018 Google LLC
  * Copyright 2020 OpenHW Group
+ * Copyright 2023 Dolphin Design
+ * SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,13 +74,44 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
 
   virtual function void override_instr_stream();
     int test_override_riscv_instr_stream = 0;
-    if ($value$plusargs("test_override_riscv_instr_stream=%0d", test_override_riscv_instr_stream)) begin
+    int test_override_fp_instr_stream = 99;
+    if ($value$plusargs("test_override_riscv_instr_stream=%0d", test_override_riscv_instr_stream)) begin : TEST_OVERRIDE_RISCV_INSTR_STREAM
       unique case(test_override_riscv_instr_stream)
         1: begin 
           uvm_factory::get().set_type_override_by_type(riscv_rand_instr_stream::get_type(), cv32e40p_rand_instr_stream::get_type()); 
         end
       endcase
-    end
+    end // TEST_OVERRIDE_RISCV_INSTR_STREAM
+    if ($value$plusargs("test_override_fp_instr_stream=%0d", test_override_fp_instr_stream)) begin : TEST_OVERRIDE_FP_INSTR_STREAM
+      unique case(test_override_fp_instr_stream)
+        0: begin 
+           end
+        1: begin
+          `uvm_info(this.type_name, $sformatf("uvm_factory set_type_override_by_type to CV32E40P_FP_N_MIXED_INSTR_STREAM"), UVM_NONE);
+          uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_fp_n_mixed_instr_stream::get_type()); 
+        end
+        2: begin
+          `uvm_info(this.type_name, $sformatf("uvm_factory set_type_override_by_type to CV32E40P_FP_N_MIXED_INSTR_W_EXCL_STREAM"), UVM_NONE);
+          uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_fp_n_mixed_instr_w_excl_stream::get_type()); 
+        end
+        3: begin
+          `uvm_info(this.type_name, $sformatf("uvm_factory set_type_override_by_type to CV32E40P_FP_N_MIXED_INSTR_MORE_FDIV_FSQRT_STREAM"), UVM_NONE);
+          uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_fp_n_mixed_instr_more_fdiv_fsqrt_stream::get_type()); 
+        end
+        4: begin
+          `uvm_info(this.type_name, $sformatf("uvm_factory set_type_override_by_type to CV32E40P_FP_W_SPECIAL_OPERANDS_INSTR_STREAM"), UVM_NONE);
+          uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_fp_w_special_operands_instr_stream::get_type()); 
+        end
+        5: begin
+          `uvm_info(this.type_name, $sformatf("uvm_factory set_type_override_by_type to CV32E40P_FP_W_PREV_RD_AS_OPERAND_INSTR_STREAM"), UVM_NONE);
+          uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_fp_w_prev_rd_as_operand_instr_stream::get_type()); 
+        end
+        6: begin
+          `uvm_info(this.type_name, $sformatf("uvm_factory set_type_override_by_type to CV32E40P_CONSTRAINT_MC_FP_INSTR_STREAM"), UVM_NONE);
+          uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_constraint_mc_fp_instr_stream::get_type()); 
+        end
+      endcase
+    end // TEST_OVERRIDE_FP_INSTR_STREAM
   endfunction
 
   virtual function void apply_directed_instr();
