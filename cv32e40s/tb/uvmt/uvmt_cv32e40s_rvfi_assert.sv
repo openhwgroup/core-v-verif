@@ -257,13 +257,13 @@ module uvmt_cv32e40s_rvfi_assert
   ) else `uvm_error(info_tag, "ambiguous handler cause");
 
 
-  // Mem accesses reflect actual bus
+  // Num mem accesses reflect actual bus
 
-  var logic [31:0] writebuf_req_count_c;
   var logic [31:0] rvfi_mem_count_c;
-  var logic [31:0] writebuf_req_count_n;
   var logic [31:0] rvfi_mem_count_n;
   var logic [31:0] rvfi_mem_new;
+  var logic [31:0] writebuf_req_count_c;
+  var logic [31:0] writebuf_req_count_n;
 
   a_obi_vs_rvfi: assert property (
     writebuf_req_count_c >= rvfi_mem_count_c
@@ -299,37 +299,52 @@ module uvmt_cv32e40s_rvfi_assert
   end
 
 
-  // Loadstore Instructions
+  // Load Instructions
 
-  a_isload_required: assert property (
+  a_isloadinstr_required: assert property (
     rvfi_if.rvfi_valid  &&
     rvfi_if.rvfi_mem_rmask
     |->
     rvfi_if.is_load_instr
   ) else `uvm_error(info_tag, "rmask comes from loads");
 
-  a_isload_demands: assert property (
+  a_isloadinstr_demands: assert property (
     rvfi_if.is_load_instr  &&
     !rvfi_if.rvfi_trap
     |->
     rvfi_if.rvfi_mem_rmask
   ) else `uvm_error(info_tag, "successful loads have rmask");
 
-  a_isstore_required: assert property (
+  a_isloadinstr_exception: assert property (
+    rvfi_if.rvfi_valid
+    |->
+    rvfi_if.is_load_instr  ||
+    !rvfi_if.is_load_acc_fault
+  ) else `uvm_error(info_tag, "!load->!exce, exce->load");
+
+
+  // Store Instructions
+
+  a_isstoreinstr_required: assert property (
     rvfi_if.rvfi_valid  &&
     rvfi_if.rvfi_mem_wmask
     |->
     rvfi_if.is_store_instr
   ) else `uvm_error(info_tag, "wmask comes from stores");
 
-  a_isstore_demands: assert property (
+  a_isstoreinstrs_demands: assert property (
     rvfi_if.is_store_instr  &&
     !rvfi_if.rvfi_trap
     |->
     rvfi_if.rvfi_mem_wmask
   ) else `uvm_error(info_tag, "successful stores have wmask");
 
-  //TODO:ERROR:silabs-robin  "!is_loadstore_instr |-> !is_exception_loadstore"
+  a_isstoreinstr_exception: assert property (
+    rvfi_if.rvfi_valid
+    |->
+    rvfi_if.is_store_instr  ||
+    !rvfi_if.is_store_acc_fault
+  ) else `uvm_error(info_tag, "!store->!exce, exce->store");
 
 
 endmodule : uvmt_cv32e40s_rvfi_assert

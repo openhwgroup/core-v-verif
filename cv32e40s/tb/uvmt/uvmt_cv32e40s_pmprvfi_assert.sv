@@ -25,6 +25,8 @@ module uvmt_cv32e40s_pmprvfi_assert
   import support_pkg::*;
   import uvm_pkg::*;
   import uvma_rvfi_pkg::*;
+  import uvma_rvfi_pkg::EXC_CAUSE_INSTR_BUS_FAULT;
+  import uvma_rvfi_pkg::EXC_CAUSE_INSTR_INTEGRITY_FAULT;
   import uvmt_cv32e40s_base_test_pkg::*;
 #(
   parameter int  PMP_GRANULARITY = 0,
@@ -82,24 +84,14 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   string info_tag = "CV32E40S_PMPRVFI_ASSERT";
 
-  localparam logic [1:0] MODE_U = 2'b 00;
-  localparam logic [1:0] MODE_M = 2'b 11;
-
-  localparam logic [5:0] EXC_INSTR_ACC_FAULT    = 6'd 1;
-  localparam logic [5:0] EXC_ILL_INSTR          = 6'd 2;
-  localparam logic [5:0] EXC_LOAD_ACC_FAULT     = 6'd 5;
-  localparam logic [5:0] EXC_STORE_ACC_FAULT    = 6'd 7;
-  localparam logic [5:0] EXC_INSTR_BUS_FAULT    = 6'd 24;
-  localparam logic [5:0] EXC_INSTR_CHKSUM_FAULT = 6'd 25;
-
-  localparam logic [2:0] DBG_TRIGGER = 3'd 2;
-
-  localparam int NUM_CFG_REGS  = 16;
-  localparam int NUM_ADDR_REGS = 64;
-
-  localparam int CSRADDR_FIRST_PMPCFG  = 12'h 3A0;
-  localparam int CSRADDR_FIRST_PMPADDR = 12'h 3B0;
-  localparam int CSRADDR_MSECCFG       = 12'h 747;
+  localparam logic [1:0] MODE_U                = 2'b 00;
+  localparam logic [1:0] MODE_M                = 2'b 11;
+  localparam logic [2:0] DBG_TRIGGER           = 3'd 2;
+  localparam int         NUM_CFG_REGS          = 16;
+  localparam int         NUM_ADDR_REGS         = 64;
+  localparam int         CSRADDR_FIRST_PMPCFG  = 12'h 3A0;
+  localparam int         CSRADDR_FIRST_PMPADDR = 12'h 3B0;
+  localparam int         CSRADDR_MSECCFG       = 12'h 747;
 
   typedef struct packed {
     logic  pc_lower;
@@ -129,19 +121,19 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   wire  is_rvfi_exc_ill_instr =
     is_rvfi_exception  &&
-    (rvfi_trap.exception_cause == EXC_ILL_INSTR);
+    (rvfi_trap.exception_cause == EXC_CAUSE_ILLEGAL_INSTR);
 
   wire  is_rvfi_exc_instr_acc_fault =
     is_rvfi_exception  &&
-    (rvfi_trap.exception_cause == EXC_INSTR_ACC_FAULT);
+    (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_ACC_FAULT);
 
   wire  is_rvfi_exc_instr_bus_fault=
     is_rvfi_exception  &&
-    (rvfi_trap.exception_cause == EXC_INSTR_BUS_FAULT);
+    (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_BUS_FAULT);
 
   wire  is_rvfi_exc_instr_chksum_fault=
     is_rvfi_exception  &&
-    (rvfi_trap.exception_cause == EXC_INSTR_CHKSUM_FAULT);
+    (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_INTEGRITY_FAULT);
 
   wire  is_rvfi_dbg_trigger =
     rvfi_valid  &&
@@ -178,15 +170,14 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   denial_reasons_t  denial_reasons;
   always_comb begin
-    // WARNING: Some of these are approximations.
-    // Suitable for "conservative consequents" or "eager antecedents".
-    // The reason is the cost and complexity of necessary helper signals.
+    // WARNING: Some of these are approximations. Useful in some scenarios.
 
     denial_reasons.pc_lower = !match_status_instr.is_access_allowed;
 
     denial_reasons.pc_upper = (
       rvfi_if.is_split_instrtrans  &&
       !match_status_upperinstr.is_access_allowed
+      //TODO:WARNING:silabs-robin Assert, low word match obi if no lower fault.
     );
 
     denial_reasons.tablejump = (
@@ -223,7 +214,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     assign  pmp_csr_rvfi_wdata.cfg[i]  = rvfi_csr_pmpcfg_wdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
     assign  pmp_csr_rvfi_wmask.cfg[i]  = rvfi_csr_pmpcfg_wmask[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
 
-    assign  pmp_csr_rvfi_rdata.addr[i] = {rvfi_csr_pmpaddr_rdata[i], 2'b 00};  // TODO:ERROR:silabs-robin are these assignment correct?
+    assign  pmp_csr_rvfi_rdata.addr[i] = {rvfi_csr_pmpaddr_rdata[i], 2'b 00};
     assign  pmp_csr_rvfi_wdata.addr[i] = {rvfi_csr_pmpaddr_wdata[i], 2'b 00};
     assign  pmp_csr_rvfi_wmask.addr[i] = {rvfi_csr_pmpaddr_wmask[i], 2'b 00};
   end
@@ -335,7 +326,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
     .csr_pmp_i      (pmp_csr_rvfi_rdata),
     .debug_mode     (rvfi_dbg_mode),
-    .pmp_req_addr_i (jvt_addr),
+    .pmp_req_addr_i ({2'b 00, jvt_addr}),
     .pmp_req_err_o  ('Z),
     .pmp_req_type_i (PMP_ACC_EXEC),
     .priv_lvl_i     (privlvl_t'(rvfi_mode)),
@@ -360,32 +351,26 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   // PMP CSRs only accessible from M-mode  (vplan:Csrs:MmodeOnly)
 
-  property p_csrs_mmode_only;
+  sequence seq_csrs_mmode_only_ante;
     is_rvfi_csr_instr      &&
     (rvfi_mode == MODE_U)  &&
     (rvfi_insn[31:20] inside {['h3A0 : 'h3EF], 'h747, 'h757})  //PMP regs
-    |->
-    is_rvfi_exc_ill_instr ||
-    is_rvfi_exc_instr_bus_fault ||
-    is_rvfi_exc_instr_chksum_fault ||
-    is_rvfi_exc_instr_acc_fault ||
-    is_rvfi_dbg_trigger;
-  endproperty : p_csrs_mmode_only
+    ;
+  endsequence : seq_csrs_mmode_only_ante
 
   a_csrs_mmode_only: assert property (
-    p_csrs_mmode_only
-  ) else `uvm_error(info_tag, "PMP CSRs are illegal to access from umode");
-
-  a_csrs_mmode_only_25: assert property (
-    // For ease of reproducing a known CEX (could help in case-splitting too)
-    if (clk_cnt < 25) (
-      p_csrs_mmode_only
-    )
+    seq_csrs_mmode_only_ante
+    |->
+    is_rvfi_exc_ill_instr          ||
+    is_rvfi_exc_instr_bus_fault    ||
+    is_rvfi_exc_instr_chksum_fault ||
+    is_rvfi_exc_instr_acc_fault    ||
+    is_rvfi_dbg_trigger
   ) else `uvm_error(info_tag, "PMP CSRs are illegal to access from umode");
 
   cov_csrs_mmode_only: cover property (
-    // Want to see "the real cause" finishing this property
-    p_csrs_mmode_only  and  is_rvfi_exc_ill_instr
+    // Want to see "the real cause" (ill exc) finishing this property
+    seq_csrs_mmode_only_ante  ##0  is_rvfi_exc_ill_instr
   );
 
 
@@ -488,8 +473,8 @@ module uvmt_cv32e40s_pmprvfi_assert
       (pmp_csr_rvfi_rdata.cfg[0] == '0)                    &&  // Related cfg is 0,
       (pmp_csr_rvfi_rdata.cfg[0+1] == '0)                  &&  // above cfg is 0.
       !rvfi_trap                                               // (Trap doesn't meddle.)
-      |=>
-      (rvfi_valid [->1])  ##0
+      ##1 (rvfi_valid [->1])
+      |->
       (rvfi_csr_pmpaddr_rdata[0][31:PMP_GRANULARITY] == '1)  &&
       (
         (rvfi_csr_pmpaddr_rdata[0][`max(PMP_GRANULARITY-1, 0) : 0] == '0)  ^
@@ -514,33 +499,26 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   // Stickiness isn't effectuated before triggered  (vplan:LockingBypass:UntilReset)
 
-  property  p_until_reset_notbefore;
-    logic  rlb;
+  property  p_until_reset_notbefore(logic rlb);
     $rose(rst_ni)                                               ##0
     (rvfi_valid [->1])                                          ##0  // First retire
     (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  ##0  // ..."csrrw"
     (rvfi_insn[31:20] == CSRADDR_MSECCFG)                       ##0  // ...to mseccfg
     !rvfi_trap                                                  ##0
-    (1, rlb = rvfi_rs1_rdata[2])                                     // (Write-attempt's data)
+    (rvfi_rs1_rdata[2] == rlb)                                       // (Write-attempt's data)
     |->
     pmp_csr_rvfi_wmask.mseccfg.rlb          &&  // Must attempt
     (pmp_csr_rvfi_wdata.mseccfg.rlb == rlb)     // Must succeed
     ;
   endproperty : p_until_reset_notbefore
 
-  a_until_reset_notbefore: assert property (
-    p_until_reset_notbefore
+  a_until_reset_notbefore_0: assert property (
+    p_until_reset_notbefore(1'b 0)
   ) else `uvm_error(info_tag, "RLB must be changeable after reset");
 
-/* TODO:ERROR:silabs-robin  Write so the intention becomes legal SV
-  cov_until_reset_notbefore_on: cover property (
-    p_until_reset_notbefore #-#  pmp_csr_rvfi_wmask.mseccfg.rlb
-  );
-
-  cov_until_reset_notbefore_off: cover property (
-    p_until_reset_notbefore #-# !pmp_csr_rvfi_wmask.mseccfg.rlb
-  );
-*/
+  a_until_reset_notbefore_1: assert property (
+    p_until_reset_notbefore(1'b 1)
+  ) else `uvm_error(info_tag, "RLB must be changeable after reset");
 
 
   // Locked entries  (vplan:IgnoreWrites, vplan:IgnoreTor)
@@ -554,7 +532,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       (pmp_csr_rvfi_rdata.cfg[i].lock && !pmp_csr_rvfi_rdata.mseccfg.rlb)  &&
       (rvfi_mode == MODE_M)
       |->
-      (rvfi_trap.exception_cause != EXC_ILL_INSTR)
+      (rvfi_trap.exception_cause != EXC_CAUSE_ILLEGAL_INSTR)
     ) else `uvm_error(info_tag, "writing to locked entries shouldn't except");
   end
 
@@ -603,36 +581,33 @@ module uvmt_cv32e40s_pmprvfi_assert
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_cfg_expected
     wire pmpncfg_t  cfg_expected = rectify_cfg_write(pmp_csr_rvfi_rdata.cfg[i], rvfi_rs1_rdata[8*(i%4) +: 8]);
 
-    property  p_cfg_expected;
+    sequence seq_cfg_expected_ante;
       (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  &&  // "csrrw"
       (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + i/4))          &&  // ...to cfg's csr
       (!rvfi_trap)
+      // Note, this doesn't check csrr(s/c)[i]
+      ;
+    endsequence : seq_cfg_expected_ante
+
+    a_cfg_expected: assert property (
+      seq_cfg_expected_ante
       |->
       (pmp_csr_rvfi_wmask.cfg[i] == 8'h FF)  &&  // Must write cfg
       (pmp_csr_rvfi_wdata.cfg[i] == cfg_expected)
-      // Note, this doesn't check csrr(s/c)[i]
-      ;
-    endproperty : p_cfg_expected
-
-    a_cfg_expected: assert property (
-      p_cfg_expected
     ) else `uvm_error(info_tag, "updating cfgs must use legal values");
 
-    a_not_ignore_writes_cfg_unlocked: assert property (
-      // Locked entries, ignore pmpicfg writes
-      if (!pmp_csr_rvfi_rdata.cfg[i].lock)
-        p_cfg_expected
-      // This is redundant, but explicitly checks non-locked regions
-    ) else `uvm_error(info_tag, "updating locked cfgs must use legal values");
+    cov_not_ignore_writes_cfg_unlocked: cover property (
+      !pmp_csr_rvfi_rdata.cfg[i].lock  ##0
+      seq_cfg_expected_ante
+    );
 
-    a_cfg_expected_updates: assert property (
-      if (pmp_csr_rvfi_wdata.cfg[i] != pmp_csr_rvfi_rdata.cfg[i]) (
-        p_cfg_expected
-      )
-    ) else `uvm_error(info_tag, "updating cfgs must attempt legal new values");
+    cov_cfg_expected_updates: cover property (
+      (pmp_csr_rvfi_wdata.cfg[i] != pmp_csr_rvfi_rdata.cfg[i])  ##0
+      seq_cfg_expected_ante
+    );
 
     cov_cfg_expected_ones: cover property (
-      p_cfg_expected  and
+      seq_cfg_expected_ante  ##0
       (rvfi_rs1_rdata[8*(i%4) +: 8] == '1)
     );
   end
@@ -733,8 +708,8 @@ module uvmt_cv32e40s_pmprvfi_assert
       (1, cfg_w = (pmp_csr_rvfi_wdata.cfg[i] &  pmp_csr_rvfi_wmask.cfg[i]))  ##0
       (1, cfg_r = (pmp_csr_rvfi_rdata.cfg[i] & ~pmp_csr_rvfi_wmask.cfg[i]))  ##0
       (1, cfg = (cfg_r | cfg_w))
-      |=>
-      (rvfi_valid [->1])  ##0
+      ##1 (rvfi_valid [->1])
+      |->
       (pmp_csr_rvfi_rdata.cfg[i] == cfg)
       ;
     endproperty : p_rvfi_cfg_writes
@@ -749,8 +724,8 @@ module uvmt_cv32e40s_pmprvfi_assert
       (1, addr_w = (pmp_csr_rvfi_wdata.addr[i][33:2] &  pmp_csr_rvfi_wmask.addr[i][33:2]))  ##0
       (1, addr_r = (pmp_csr_rvfi_rdata.addr[i][33:2] & ~pmp_csr_rvfi_wmask.addr[i][33:2]))  ##0
       (1, addr = (addr_r | addr_w))
-      |=>
-      (rvfi_valid [->1])  ##0
+      ##1 (rvfi_valid [->1])
+      |->
       (pmp_csr_rvfi_rdata.addr[i][31+2:PMP_GRANULARITY+2] == addr[31:PMP_GRANULARITY])
       ;
     endproperty : p_rvfi_addr_writes;
@@ -797,7 +772,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     !match_status_instr.is_access_allowed  &&
     rvfi_trap.exception
     |->
-    (rvfi_trap.exception_cause == EXC_INSTR_ACC_FAULT)
+    (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_ACC_FAULT)
     // Note, if we implement etrigger etc then priority will change
   ) else `uvm_error(info_tag, "on access denied the cause must match");
 
@@ -824,8 +799,8 @@ module uvmt_cv32e40s_pmprvfi_assert
     !match_status_data.is_access_allowed  &&
     rvfi_trap.exception
     |->
-    (rvfi_trap.exception_cause == EXC_LOAD_ACC_FAULT)  ^
-    rvfi_if.is_deprioritized_exception(EXC_LOAD_ACC_FAULT)
+    (rvfi_trap.exception_cause == EXC_CAUSE_LOAD_ACC_FAULT)  ^
+    rvfi_if.is_deprioritized_exception({21'd 0, EXC_CAUSE_LOAD_ACC_FAULT})
   ) else `uvm_error(info_tag, "on load denied the cause must match");
 
   a_noloadstore_cause_store: assert property (
@@ -833,8 +808,8 @@ module uvmt_cv32e40s_pmprvfi_assert
     !match_status_data.is_access_allowed  &&
     rvfi_trap.exception
     |->
-    (rvfi_trap.exception_cause == EXC_STORE_ACC_FAULT)  ^
-    rvfi_if.is_deprioritized_exception(EXC_STORE_ACC_FAULT)
+    (rvfi_trap.exception_cause == EXC_CAUSE_STORE_ACC_FAULT)  ^
+    rvfi_if.is_deprioritized_exception({21'd 0, EXC_CAUSE_STORE_ACC_FAULT})
   ) else `uvm_error(info_tag, "on store denied the cause must match");
 
   a_noloadstore_splittrap: assert property (
@@ -845,7 +820,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     rvfi_trap
   ) else `uvm_error(info_tag, "on split-access denied we must trap");
 
-  //TODO:ERROR:silabs-robin  "is_blocked |-> pma_deny || pmp_deny" etc
+  //TODO:INFO:silabs-robin Could model "is_blocked |-> pma_deny || pmp_deny" etc
 
 
   // RVFI must report what was allowed on the data bus  (Not a vplan item)
@@ -854,13 +829,13 @@ module uvmt_cv32e40s_pmprvfi_assert
     rvfi_if.is_mem_act_actual
     |->
     match_status_data.is_access_allowed
-  ) else `uvm_error(info_tag, "TODO:ERROR");
+  ) else `uvm_error(info_tag, "Data trans first word access must be allowed");
 
   a_rvfi_mem_allowed_upperdata: assert property (
     rvfi_if.is_split_datatrans_actual
     |->
     match_status_upperdata.is_access_allowed
-  ) else `uvm_error(info_tag, "TODO:ERROR");
+  ) else `uvm_error(info_tag, "Data trans second word access must be allowed");
 
 
   // RVFI must report what was allowed on the instr bus  (Not a vplan item)
@@ -872,7 +847,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     (rvfi_if.is_instr_acc_fault_pmp && denial_reasons)  ||
     rvfi_if.is_dbg_trg
     //TODO:INFO:silabs-robin Would like "fault!=allowed". Alas, impractical.
-  ) else `uvm_error(info_tag, "TODO:ERROR");
+  ) else `uvm_error(info_tag, "RVFI PMP faults must match prediction");
 
   a_instr_nofault_nopclower: assert property (
     rvfi_if.rvfi_valid  &&
@@ -880,7 +855,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     |->
     !denial_reasons.pc_lower  ||
     rvfi_if.is_dbg_trg
-  ) else `uvm_error(info_tag, "TODO:ERROR");
+  ) else `uvm_error(info_tag, "RVFI no fault, instr first word not denied");
 
   a_instr_nofault_nopcupper: assert property (
     rvfi_if.rvfi_valid  &&
@@ -888,19 +863,19 @@ module uvmt_cv32e40s_pmprvfi_assert
     |->
     !denial_reasons.pc_upper  ||
     rvfi_if.is_dbg_trg
-  ) else `uvm_error(info_tag, "TODO:ERROR");
+  ) else `uvm_error(info_tag, "RVFI no fault, instr second word not denied");
 
   a_instr_yesfault_yesdenial: assert property (
     rvfi_if.is_instr_acc_fault_pmp
     |->
     denial_reasons
-  ) else `uvm_error(info_tag, "TODO:ERROR");
+  ) else `uvm_error(info_tag, "RVFI fault must be predicted");
 
   a_instr_nodenial_nofault: assert property (
     !denial_reasons
     |->
     !rvfi_if.is_instr_acc_fault_pmp
-  ) else `uvm_error(info_tag, "TODO:ERROR");
+  ) else `uvm_error(info_tag, "no prediction, no RVFI fault");
 
 
   // RWX has reservations  (vplan:RwReserved)
@@ -919,16 +894,20 @@ module uvmt_cv32e40s_pmprvfi_assert
   for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_rlblifts_lockedexec
     logic [31:0] csr_intended_wdata;
     always_comb begin
-      csr_intended_wdata <= rvfi_if.csr_intended_wdata((pmp_csr_rvfi_rdata.cfg[i] << 8*(i%4)),CSRADDR_FIRST_PMPCFG + i/4);
+      csr_intended_wdata <=
+        rvfi_if.csr_intended_wdata(
+          ({24'd 0, pmp_csr_rvfi_rdata.cfg[i]} << 8*(i%4)),
+          (CSRADDR_FIRST_PMPCFG + (i / 3'd4))
+        );
     end
-    wire pmpncfg_t  cfg_attempt = csr_intended_wdata[8*(i%4) +: 8];
+    wire pmpncfg_t  cfg_attempt = csr_intended_wdata[32'd 8 * (i%4) +: 8];
 
     sequence seq_rlblifts_lockedexec_ante;
       pmp_csr_rvfi_rdata.mseccfg.rlb  &&
       pmp_csr_rvfi_rdata.mseccfg.mml
       ##0
-      rvfi_if.is_csr_write(CSRADDR_FIRST_PMPCFG + i/4) &&
-      !rvfi_trap &&
+      rvfi_if.is_csr_write(CSRADDR_FIRST_PMPCFG + (i / 3'd4))  &&
+      !rvfi_trap  &&
       !(PMP_GRANULARITY > 0 && cfg_attempt.mode == PMP_MODE_NA4)
       ;
     endsequence : seq_rlblifts_lockedexec_ante

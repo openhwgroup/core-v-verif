@@ -183,6 +183,7 @@ interface uvma_rvfi_instr_if_t
   int unsigned                      nmi_instr_cnt;   // number of instructions after nmi
   int unsigned                      single_step_cnt; // number of instructions stepped
   logic [CYCLE_CNT_WL-1:0]          cycle_cnt;       // i'th number cycle since reset
+  logic [CYCLE_CNT_WL-1:0]          cycle_cnt_q;
 
   logic [(32)-1:0][XLEN-1:0]        gpr_rdata_array;
   logic [(32)-1:0]                  gpr_rmask_array;
@@ -231,10 +232,13 @@ interface uvma_rvfi_instr_if_t
   logic                             is_tablejump_raw;
   logic                             is_pma_fault;
   logic                             is_fencefencei;
-  logic                             is_nmi_triggered = 0;
+  logic                             is_nmi_triggered;
   logic                             is_load_instr;
   logic                             is_store_instr;
   logic                             is_loadstore_instr;
+  logic                             is_exception;
+  logic                             is_load_acc_fault;
+  logic                             is_store_acc_fault;
   logic [31:0]                      rvfi_mem_addr_word0highbyte;
   logic [31:0]                      rvfi_pc_upperrdata;
   logic [4*NMEM-1:0]                instr_mem_rmask;
@@ -282,6 +286,10 @@ interface uvma_rvfi_instr_if_t
     end
   end
 
+  always_ff @(posedge clk) begin
+    cycle_cnt_q <= cycle_cnt;
+  end
+
   // assigning signal aliases to helper functions
   always_comb begin
     instr_asm           = decode_instr(rvfi_insn);
@@ -320,41 +328,47 @@ interface uvma_rvfi_instr_if_t
     instr_mem_wmask     <= instr_mem_wmask_f();
   end
 
-  always_comb begin
-    cycle_cnt =
-      (!reset_n) ? (
-        0
-      ) : (
-        $past(cycle_cnt, , , @(posedge clk)) + 1
-      );
+  always_comb  cycle_cnt = !reset_n ? 0 : (cycle_cnt_q + 1'b 1);
 
-    is_load_instr      = rvfi_valid && |instr_mem_rmask;
-    is_store_instr     = rvfi_valid && |instr_mem_wmask;
-    // ("instr_mem_*mask" shows intent)
-    is_loadstore_instr = is_load_instr || is_store_instr;
+  always_comb  is_load_instr      = rvfi_valid && |instr_mem_rmask;
+  always_comb  is_store_instr     = rvfi_valid && |instr_mem_wmask;
+  always_comb  is_loadstore_instr = is_load_instr || is_store_instr;
 
-    is_mem_act_actual   = is_mem_act;  // original signal is already "actual"
-    is_mem_act_intended = rvfi_valid && (|instr_mem_rmask || |instr_mem_wmask);
+  always_comb  is_mem_act_actual =
+    is_mem_act;  // original signal is already "actual"
+  always_comb  is_mem_act_intended =
+    rvfi_valid && (|instr_mem_rmask || |instr_mem_wmask);
 
-    rvfi_pc_upperrdata =
-      (rvfi_insn[1:0] == 2'b 11) ? (
-        rvfi_pc_rdata + 3
-      ) : (
-        rvfi_pc_rdata + 1
-      );
-      // TODO:ERROR:silabs-robin  Can't trust rvfi_insn if scrambled data.
+  always_comb  rvfi_pc_upperrdata =
+    (rvfi_insn[1:0] == 2'b 11) ? (
+      rvfi_pc_rdata + 3
+    ) : (
+      rvfi_pc_rdata + 1
+    );
+    // WARNING: Can't trust rvfi_insn if scrambled data.
+    // TODO:WARNING:silabs-robin  Can it be modelled exact?
 
-    is_split_instrtrans =
-      rvfi_valid  &&
-      (rvfi_pc_rdata[31:2] != rvfi_pc_upperrdata[31:2]);
+  always_comb  is_split_instrtrans =
+    rvfi_valid  &&
+    (rvfi_pc_rdata[31:2] != rvfi_pc_upperrdata[31:2]);
 
-    is_instr_acc_fault_pmp =
-      rvfi_valid  &&
-      rvfi_trap.trap  &&
-      rvfi_trap.exception  &&
-      (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_ACC_FAULT)  &&
-      (rvfi_trap.cause_type == 'h 1);  // TODO:WARNING:silabs-robin  Magic num
-  end
+  always_comb  is_exception =
+    rvfi_valid  &&
+    rvfi_trap.trap  &&
+    rvfi_trap.exception;
+
+  always_comb  is_instr_acc_fault_pmp =
+    is_exception  &&
+    (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_ACC_FAULT)  &&
+    (rvfi_trap.cause_type == 'h 1);  // TODO:INFO:silabs-robin  Magic num
+
+  always_comb  is_load_acc_fault =
+    is_exception  &&
+    (rvfi_trap.exception_cause == EXC_CAUSE_LOAD_ACC_FAULT);
+
+  always_comb  is_store_acc_fault =
+    is_exception  &&
+    (rvfi_trap.exception_cause == EXC_CAUSE_STORE_ACC_FAULT);
 
   /**
       * Used by target DUT.
@@ -779,10 +793,11 @@ endfunction : is_split_datatrans_actual_f
 function automatic logic is_split_datatrans_intended_f();
   logic [31:0]  low_addr  = rvfi_mem_addr[XLEN-1:0];
   logic [31:0]  high_addr = rvfi_mem_addr_word0highbyte;
-  // TODO:ERROR:silabs-robin  Can't trust "rvfi_mem_addr" to show intent.
+  // TODO:ERROR:silabs-robin Create "instr_mem_addr" when decoder facilitates it
   return  is_mem_act_intended && (low_addr[31:2] != high_addr[31:2]);
 endfunction : is_split_datatrans_intended_f
 
+// Shows "intended" version of rvfi_mem_wmask
 function automatic logic [4*NMEM-1:0] instr_mem_rmask_f();
   logic [NMEM-1:0][3:0] rmask;
   logic [3:0] rlist;
@@ -878,6 +893,7 @@ function automatic logic [4*NMEM-1:0] instr_mem_rmask_f();
 endfunction
 
 
+// Shows "intended" version of rvfi_mem_wmask
 function automatic logic [4*NMEM-1:0] instr_mem_wmask_f();
   logic [NMEM-1:0][3:0] wmask;
   logic [3:0] rlist;
@@ -1014,7 +1030,7 @@ function automatic logic is_deprioritized_exception (logic[31:0] exc_cause);
     rvfi_trap.exception  &&
     (rvfi_trap.exception_cause != exc_cause)  &&
     (rvfi_trap.exception_cause ==
-      get_max_exception_cause(rvfi_trap.exception_cause, exc_cause)
+      get_max_exception_cause({26'd0, rvfi_trap.exception_cause}, exc_cause)
     )
   );
 endfunction
