@@ -100,7 +100,7 @@
         .imm    ({12'h0, ``OPERAND``[31:12]})\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][LUI] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][LUI] `", ``OPERAND``_pattern.name())};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({SW}));\
       override_instr(\
         .instr  (m_instr),\
@@ -109,7 +109,7 @@
         .imm    (32'h0)\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][SW] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][SW] `", ``OPERAND``_pattern.name())};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({FLW}));\
       `DV_CHECK_FATAL($cast(f_instr, m_instr), "Cast to instr_f failed!");\
       override_instr(\
@@ -119,7 +119,7 @@
         .imm      (32'h0)\
       );\
       instr_list.push_back(f_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][FLW] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][FLW] `", ``OPERAND``_pattern.name())};\
     end
 
   // Add overhead instructions to override fp instr operands with specific operand pattern for FP_SPECIAL_OPERANDS_LIST_2
@@ -135,7 +135,7 @@
         .imm    ({12'h0, ``OPERAND``[31:12]})\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][LUI] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][LUI] `", ``OPERAND``_pattern.name())};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({LUI}));\
       override_instr(\
         .instr  (m_instr),\
@@ -143,7 +143,7 @@
         .imm    ({20'h0, ``OPERAND``[11:0]})\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][LUI] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][LUI] `", ``OPERAND``_pattern.name())};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({SRLI}));\
       override_instr(\
         .instr  (m_instr),\
@@ -152,7 +152,7 @@
         .imm    ({20'h0,7'h0,5'd12})\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][SRLI] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][SRLI] `", ``OPERAND``_pattern.name())};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({OR}));\
       override_instr(\
         .instr  (m_instr),\
@@ -161,7 +161,7 @@
         .rd     (imm_rd)\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][OR] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][OR] `", ``OPERAND``_pattern.name())};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({SW}));\
       override_instr(\
         .instr  (m_instr),\
@@ -170,7 +170,7 @@
         .imm    (32'h0)\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][SW] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][SW] `", ``OPERAND``_pattern.name())};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({FLW}));\
       `DV_CHECK_FATAL($cast(f_instr, m_instr), "Cast to instr_f failed!");\
       override_instr(\
@@ -180,7 +180,7 @@
         .imm      (32'h0)\
       );\
       instr_list.push_back(f_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][FLW] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_f_instr_``OPERAND`` - %s][FLW] `", ``OPERAND``_pattern.name())};\
     end
 
   // Add overhead instructions to override zfinx fp instr operands with specific operand pattern for FP_SPECIAL_OPERANDS_LIST_1
@@ -195,7 +195,7 @@
         .imm    ({12'h0, ``OPERAND``[31:12]})\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][LUI] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][LUI] `", ``OPERAND``_pattern.name())};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({SW}));\
       override_instr(\
         .instr  (m_instr),\
@@ -204,7 +204,7 @@
         .imm    (32'h0)\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][SW] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][SW] `", ``OPERAND``_pattern.name())};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({LW}));\
       override_instr(\
         .instr  (m_instr),\
@@ -213,7 +213,7 @@
         .imm    (32'h0)\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][LW] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][LW] `", ``OPERAND``_pattern.name())};\
     end
 
   //fixme
@@ -229,7 +229,7 @@
         .imm    ({12'h0, ``OPERAND``[31:12]})\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][LUI] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][LUI] `", ``OPERAND``_pattern.name())};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({LUI}));\
       override_instr(\
         .instr  (m_instr),\
@@ -237,7 +237,7 @@
         .imm    ({20'h0, ``OPERAND``[11:0]})\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][LUI] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][LUI] `", ``OPERAND``_pattern.name())};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({SRLI}));\
       override_instr(\
         .instr  (m_instr),\
@@ -246,7 +246,7 @@
         .imm    ({20'h0,7'h0,5'd12})\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][SRLI] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][SRLI] `", ``OPERAND``_pattern.name())};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({OR}));\
       override_instr(\
         .instr  (m_instr),\
@@ -255,7 +255,7 @@
         .rd     (imm_rd)\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][OR] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][OR] `", ``OPERAND``_pattern.name())};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({SW}));\
       override_instr(\
         .instr  (m_instr),\
@@ -264,7 +264,7 @@
         .imm    (32'h0)\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][SW] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][SW] `", ``OPERAND``_pattern.name())};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({LW}));\
       override_instr(\
         .instr  (m_instr),\
@@ -273,7 +273,7 @@
         .imm    (32'h0)\
       );\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][LW] `", ``OPERAND``_pattern)};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [manipulate_zfinx_instr_``OPERAND`` - %s][LW] `", ``OPERAND``_pattern.name())};\
     end
 
 
