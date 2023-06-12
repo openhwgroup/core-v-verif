@@ -161,8 +161,21 @@ u_sw_irq_handler:
 	sw t4, 52(sp)
 	sw t5, 56(sp)
 	sw t6, 60(sp)
-	csrr t0, mcause
-	li t1, EXCEPTION_INSN_ACCESS_FAULT
+  csrr t0, mtvec
+  # Check for clic
+  andi t0, t0, 0x3
+  addi t1, zero, 0x3
+  # non-clic jump
+  bne t0, t1, 1f
+  # clic section (Filter out upper bits, mpp etc.)
+  csrr t0, mcause
+  lui t1, 0x1
+  addi t1, t1, -1
+  and t0, t1, t0
+  j 2f
+
+	1: csrr t0, mcause
+	2: li t1, EXCEPTION_INSN_ACCESS_FAULT
 	beq t0, t1, handle_insn_access_fault
 	li t1, EXCEPTION_ILLEGAL_INSN
 	beq t0, t1, handle_illegal_insn
