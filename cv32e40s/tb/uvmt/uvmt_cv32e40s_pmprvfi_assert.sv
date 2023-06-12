@@ -101,6 +101,13 @@ module uvmt_cv32e40s_pmprvfi_assert
   localparam int CSRADDR_FIRST_PMPADDR = 12'h 3B0;
   localparam int CSRADDR_MSECCFG       = 12'h 747;
 
+  typedef struct packed {
+    logic  pc_lower;
+    logic  pc_upper;
+    logic  tablejump;
+    logic  mret_pointer;
+  } denial_reasons_t;
+
 
   // Defaults
 
@@ -144,12 +151,10 @@ module uvmt_cv32e40s_pmprvfi_assert
   wire  is_rvfi_csr_read_instr =
     is_rvfi_csr_instr  &&
     rvfi_rd_addr;
-    // TODO:silabs-robin double check correctness
 
   wire  is_rvfi_csr_write_instr =
     is_rvfi_csr_instr  &&
     !((rvfi_insn[13:12] inside {2'b 10, 2'b 11}) && !rvfi_rs1_addr);  // CSRRS/C[I] w/ rs1=x0/0
-    // TODO:silabs-robin double check correctness
 
   wire [1:0]  rvfi_effective_mode =
     rvfi_csr_mstatus_rdata[17]      ?  // "mstatus.MPRV", modify privilege?
@@ -171,14 +176,35 @@ module uvmt_cv32e40s_pmprvfi_assert
       )
     );
 
+  denial_reasons_t  denial_reasons;
+  always_comb begin
+    // WARNING: Some of these are approximations.
+    // Suitable for "conservative consequents" or "eager antecedents".
+    // The reason is the cost and complexity of necessary helper signals.
+
+    denial_reasons.pc_lower = !match_status_instr.is_access_allowed;
+
+    denial_reasons.pc_upper = (
+      rvfi_if.is_split_instrtrans  &&
+      !match_status_upperinstr.is_access_allowed
+    );
+
+    denial_reasons.tablejump = (
+      rvfi_if.is_tablejump_raw  &&
+      !match_status_jvt.is_access_allowed
+    );
+
+    denial_reasons.mret_pointer =
+      rvfi_if.match_instr_raw(INSTR_OPCODE_MRET, INSTR_MASK_FULL);
+  end
+
   logic  is_access_allowed;
   always_comb begin
     is_access_allowed =
-      match_status_instr.is_access_allowed  &&
-      !(
-        rvfi_if.is_split_instrtrans  &&
-        !match_status_upperinstr.is_access_allowed
-      );
+      !denial_reasons.pc_lower  &&
+      !denial_reasons.pc_upper;
+      // Note: This is incomplete but useful. Lacks cm.jt, mret ptr, etc.
+  end
 
   logic [31:0]  jvt_addr;
   always_comb begin
@@ -197,7 +223,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     assign  pmp_csr_rvfi_wdata.cfg[i]  = rvfi_csr_pmpcfg_wdata[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
     assign  pmp_csr_rvfi_wmask.cfg[i]  = rvfi_csr_pmpcfg_wmask[pmpcfg_reg_i][pmpcfg_field_hi : pmpcfg_field_lo];
 
-    assign  pmp_csr_rvfi_rdata.addr[i] = {rvfi_csr_pmpaddr_rdata[i], 2'b 00};  // TODO:silabs-robin are these assignment correct?
+    assign  pmp_csr_rvfi_rdata.addr[i] = {rvfi_csr_pmpaddr_rdata[i], 2'b 00};  // TODO:ERROR:silabs-robin are these assignment correct?
     assign  pmp_csr_rvfi_wdata.addr[i] = {rvfi_csr_pmpaddr_wdata[i], 2'b 00};
     assign  pmp_csr_rvfi_wmask.addr[i] = {rvfi_csr_pmpaddr_wmask[i], 2'b 00};
   end
@@ -246,7 +272,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
     .csr_pmp_i      (pmp_csr_rvfi_rdata),
     .debug_mode     (rvfi_dbg_mode),
-    .pmp_req_addr_i ({2'b 00, rvfi_mem_addr}),  // TODO:silabs-robin  Multi-op instructions
+    .pmp_req_addr_i ({2'b 00, rvfi_mem_addr}),  // TODO:WARNING:silabs-robin  Multi-op instructions
     .pmp_req_err_o  ('Z),
     .pmp_req_type_i (rvfi_if.is_store_instr ? PMP_ACC_WRITE : PMP_ACC_READ),
     .priv_lvl_i     (privlvl_t'(rvfi_effective_mode)),
@@ -366,7 +392,7 @@ module uvmt_cv32e40s_pmprvfi_assert
   // NAPOT, some bits read as ones, depending on G  (vplan:NapotOnes)
 
   if (PMP_GRANULARITY >= 2) begin: gen_napot_ones_g2
-    //TODO:silabs-robin no magic numbers
+    //TODO:INFO:silabs-robin no magic numbers
     for (genvar i = 0; i < PMP_NUM_REGIONS; i++) begin: gen_napot_ones_i
       a_napot_ones: assert property (
         rvfi_valid  &&
@@ -404,7 +430,6 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   for (genvar i = 0; i < NUM_CFG_REGS; i++) begin: gen_swview_cfg
     a_pmpcfg_swview: assert property (
-      // TODO:silabs-robin no magic numbers
       is_rvfi_csr_read_instr  &&
       (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPCFG + i))
       |->
@@ -414,7 +439,6 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   for (genvar i = 0; i < NUM_ADDR_REGS; i++) begin: gen_swview_addr
     a_pmpaddr_swview: assert property (
-      // TODO:silabs-robin no magic numbers
       is_rvfi_csr_read_instr  &&
       (rvfi_insn[31:20] == (CSRADDR_FIRST_PMPADDR + i))
       |->
@@ -508,7 +532,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     p_until_reset_notbefore
   ) else `uvm_error(info_tag, "RLB must be changeable after reset");
 
-/* TODO:silabs-robin  Write so the intention becomes legal SV
+/* TODO:ERROR:silabs-robin  Write so the intention becomes legal SV
   cov_until_reset_notbefore_on: cover property (
     p_until_reset_notbefore #-#  pmp_csr_rvfi_wmask.mseccfg.rlb
   );
@@ -765,7 +789,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     !match_status_instr.is_access_allowed
     |->
     rvfi_trap
-    // TODO:silabs-robin  Can assert the opposite too?
+    // TODO:INFO:silabs-robin  Can assert the opposite too?
   ) else `uvm_error(info_tag, "on access denied we must trap");
 
   a_noexec_cause: assert property (
@@ -824,45 +848,59 @@ module uvmt_cv32e40s_pmprvfi_assert
   //TODO:ERROR:silabs-robin  "is_blocked |-> pma_deny || pmp_deny" etc
 
 
-  // RVFI must report what was allowed on the bus  (Not a vplan item)
+  // RVFI must report what was allowed on the data bus  (Not a vplan item)
 
   a_rvfi_mem_allowed_data: assert property (
     rvfi_if.is_mem_act_actual
     |->
     match_status_data.is_access_allowed
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "TODO:ERROR");
 
   a_rvfi_mem_allowed_upperdata: assert property (
     rvfi_if.is_split_datatrans_actual
     |->
     match_status_upperdata.is_access_allowed
-  ) else `uvm_error(info_tag, "TODO");
+  ) else `uvm_error(info_tag, "TODO:ERROR");
 
-  a_rvfi_mem_allowed_instr: assert property (
-    rvfi_valid  &&
-    !rvfi_if.is_instr_acc_fault_pmp  &&
-    !rvfi_if.is_dbg_trg
+
+  // RVFI must report what was allowed on the instr bus  (Not a vplan item)
+
+  a_instr_prediction: assert property (
+    rvfi_if.rvfi_valid
     |->
-    match_status_instr.is_access_allowed
-  ) else `uvm_error(info_tag, "TODO");
-
-  a_rvfi_mem_allowed_upperinstr: assert property (
-    rvfi_if.is_split_instrtrans  &&
-    !rvfi_if.is_instr_acc_fault_pmp  &&
-    !rvfi_if.is_dbg_trg
-    |->
-    match_status_upperinstr.is_access_allowed
-  ) else `uvm_error(info_tag, "TODO");
-
-  //TODO:ERROR:silabs-robin  Also check fault->!allowed
-
-  a_rvfi_mem_allowed_generalinstr: assert property (
-    rvfi_valid
-    |->
-    (rvfi_if.is_instr_acc_fault_pmp ^ is_access_allowed)  ||
-    (rvfi_if.is_tablejump_raw && !match_status_jvt.is_access_allowed) ||
+    (rvfi_if.is_instr_acc_fault_pmp != is_access_allowed)  ||
+    (rvfi_if.is_instr_acc_fault_pmp && denial_reasons)  ||
     rvfi_if.is_dbg_trg
-  ) else `uvm_error(info_tag, "TODO");
+    //TODO:INFO:silabs-robin Would like "fault!=allowed". Alas, impractical.
+  ) else `uvm_error(info_tag, "TODO:ERROR");
+
+  a_instr_nofault_nopclower: assert property (
+    rvfi_if.rvfi_valid  &&
+    !rvfi_if.is_instr_acc_fault_pmp
+    |->
+    !denial_reasons.pc_lower  ||
+    rvfi_if.is_dbg_trg
+  ) else `uvm_error(info_tag, "TODO:ERROR");
+
+  a_instr_nofault_nopcupper: assert property (
+    rvfi_if.rvfi_valid  &&
+    !rvfi_if.is_instr_acc_fault_pmp
+    |->
+    !denial_reasons.pc_upper  ||
+    rvfi_if.is_dbg_trg
+  ) else `uvm_error(info_tag, "TODO:ERROR");
+
+  a_instr_yesfault_yesdenial: assert property (
+    rvfi_if.is_instr_acc_fault_pmp
+    |->
+    denial_reasons
+  ) else `uvm_error(info_tag, "TODO:ERROR");
+
+  a_instr_nodenial_nofault: assert property (
+    !denial_reasons
+    |->
+    !rvfi_if.is_instr_acc_fault_pmp
+  ) else `uvm_error(info_tag, "TODO:ERROR");
 
 
   // RWX has reservations  (vplan:RwReserved)
@@ -944,7 +982,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       )
       begin
         cfg_rfied = cfg_pre;
-        // TODO:silabs-robin  Test "a_cfg_expected" without this clause.
+        // TODO:WARNING:silabs-robin  Test "a_cfg_expected" without this clause.
       end
     end
 
