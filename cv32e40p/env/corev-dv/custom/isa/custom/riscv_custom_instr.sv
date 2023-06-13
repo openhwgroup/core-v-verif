@@ -23,6 +23,8 @@ class cv32e40p_instr extends riscv_instr;
 
   bit hw_loop_label;
 
+  static cv32e40p_instr         cv32e40p_instr_template[riscv_instr_name_t];
+
   // All derived instructions
   `uvm_object_utils(cv32e40p_instr)
   `uvm_object_new
@@ -44,7 +46,7 @@ class cv32e40p_instr extends riscv_instr;
     return inst;
   endfunction : create_instr
 
-  static function riscv_instr get_xpulp_instr( riscv_instr_name_t include_instr[$] = {},
+  static function cv32e40p_instr get_xpulp_instr( riscv_instr_name_t include_instr[$] = {},
                                                 riscv_instr_name_t exclude_instr[$] = {},
                                                 riscv_instr_category_t include_category[$] = {},
                                                 riscv_instr_category_t exclude_category[$] = {});
@@ -52,13 +54,18 @@ class cv32e40p_instr extends riscv_instr;
     // do this to manage list of unsupported instruction that is somehow not managed in parent class
     riscv_instr_name_t disallowed_instr [$] = { unsupported_instr, exclude_instr };
     riscv_instr_name_t valid_instr[$];
+    riscv_instr instr;
+    cv32e40p_instr cv32_instr;
+
+    instr = riscv_instr::type_id::create();
+    cv32_instr = cv32e40p_instr::type_id::create();
 
     // if a specific instruction list is wanted, return it along with exclusions
     if (include_instr.size() > 0) begin
       // we create an intersect with given instruction and available RV32X instruction, to make sure
       // non-X instructions has not sneaked-in
       valid_instr = include_instr.find with (item inside { instr_group[RV32X] });
-      return riscv_instr::get_rand_instr(
+      instr = riscv_instr::get_rand_instr(
         .include_instr    ( valid_instr      ) ,
         .exclude_instr    ( disallowed_instr ) ,
         .exclude_category ( exclude_category )
@@ -72,19 +79,84 @@ class cv32e40p_instr extends riscv_instr;
       foreach (include_category[i]) begin
         valid_instr = { valid_instr, instr_category[include_category[i]].find with (item inside { instr_group[RV32X] }) } ;
       end
-      return riscv_instr::get_rand_instr (
+      instr = riscv_instr::get_rand_instr (
         .include_instr    ( valid_instr      ) ,
         .exclude_instr    ( disallowed_instr ) ,
         .exclude_category ( exclude_category )
       );
     end
 
-    return riscv_instr::get_rand_instr (
+    instr = riscv_instr::get_rand_instr (
       .exclude_instr    ( disallowed_instr ) ,
       .exclude_category ( exclude_category ) ,
       .include_group    ( {RV32X}          )
     );
+
+    $cast(cv32_instr,instr);
+    return cv32_instr;
+
   endfunction
+
+  static function cv32e40p_instr get_cv32e40p_rand_instr(cv32e40p_instr instr_h = null,
+                                             riscv_instr_name_t include_instr[$] = {},
+                                             riscv_instr_name_t exclude_instr[$] = {},
+                                             riscv_instr_category_t include_category[$] = {},
+                                             riscv_instr_category_t exclude_category[$] = {},
+                                             riscv_instr_group_t include_group[$] = {},
+                                             riscv_instr_group_t exclude_group[$] = {});
+     int unsigned idx;
+     riscv_instr_name_t name;
+     riscv_instr_name_t allowed_instr[$];
+     riscv_instr_name_t disallowed_instr[$];
+     riscv_instr_category_t allowed_categories[$];
+     foreach (include_category[i]) begin
+       allowed_instr = {allowed_instr, instr_category[include_category[i]]};
+     end
+     foreach (exclude_category[i]) begin
+       if (instr_category.exists(exclude_category[i])) begin
+         disallowed_instr = {disallowed_instr, instr_category[exclude_category[i]]};
+       end
+     end
+     foreach (include_group[i]) begin
+       allowed_instr = {allowed_instr, instr_group[include_group[i]]};
+     end
+     foreach (exclude_group[i]) begin
+       if (instr_group.exists(exclude_group[i])) begin
+         disallowed_instr = {disallowed_instr, instr_group[exclude_group[i]]};
+       end
+     end
+     disallowed_instr = {disallowed_instr, exclude_instr};
+     if (disallowed_instr.size() == 0) begin
+       if (include_instr.size() > 0) begin
+         idx = $urandom_range(0, include_instr.size()-1);
+         name = include_instr[idx];
+       end else if (allowed_instr.size() > 0) begin
+         idx = $urandom_range(0, allowed_instr.size()-1);
+         name = allowed_instr[idx];
+       end else begin
+         idx = $urandom_range(0, instr_names.size()-1);
+         name = instr_names[idx];
+       end
+     end else begin
+       if (!std::randomize(name) with {
+          name inside {instr_names};
+          if (include_instr.size() > 0) {
+            name inside {include_instr};
+          }
+          if (allowed_instr.size() > 0) {
+            name inside {allowed_instr};
+          }
+          if (disallowed_instr.size() > 0) {
+            !(name inside {disallowed_instr});
+          }
+       }) begin
+         `uvm_fatal("cv32e40p_instr", "Cannot generate random instruction")
+       end
+     end
+     // Shallow copy for all relevant fields, avoid using create() to improve performance
+     instr_h = new cv32e40p_instr_template[name];
+     return instr_h;
+  endfunction : get_cv32e40p_rand_instr
 
   static function riscv_instr get_load_store_instr(riscv_instr_name_t load_store_instr[$] = {});
     riscv_instr instr_h;
@@ -116,15 +188,23 @@ class cv32e40p_instr extends riscv_instr;
      return instr_h;
   endfunction : get_load_store_instr
 
-  static function riscv_instr get_instr(riscv_instr_name_t name);
+  static function cv32e40p_instr get_cv32e40p_instr(riscv_instr_name_t name);
      riscv_instr instr_h;
+     cv32e40p_instr cv32_instr;
+
+     cv32_instr = cv32e40p_instr::type_id::create();
+
      if (!instr_template.exists(name)) begin
-       `uvm_fatal("riscv_instr", $sformatf("Cannot get instr %0s", name.name()))
+       `uvm_fatal("cv32e40p_instr", $sformatf("Cannot get instr %0s", name.name()))
      end
      // Shallow copy for all relevant fields, avoid using create() to improve performance
      instr_h = new instr_template[name];
-     return instr_h;
-  endfunction : get_instr
+
+     $cast(cv32_instr,instr_h);
+     return cv32_instr;
+
+     //return instr_h;
+  endfunction : get_cv32e40p_instr
 
   // Disable the rand mode for unused operands to randomization performance
   virtual function void set_rand_mode();
