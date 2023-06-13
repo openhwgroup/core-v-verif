@@ -666,7 +666,7 @@ class cv32e40p_instr extends riscv_instr;
         imm_str = $sformatf("%0d, %0d", $unsigned(imm[9:5]), $unsigned(imm[4:0]));
     end else if (category == HWLOOP) begin
       if (instr_name == CV_SETUPI) begin
-        imm_str = $sformatf("%0d, %0d", $unsigned(imm[11:0]), $unsigned(imm[16:12] << 2));
+        imm_str = $sformatf("%0d, %0d", $unsigned(imm[11:0]), $unsigned(imm[16:12]));
       end else begin
         imm_str = $sformatf("%0d", $unsigned(imm[11:0] << 2));
       end
