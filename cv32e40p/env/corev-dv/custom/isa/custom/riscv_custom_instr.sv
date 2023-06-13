@@ -277,7 +277,7 @@ class cv32e40p_instr extends riscv_instr;
         end
         S_FORMAT: begin // instr rs1,rs2,imm
           if(category == POST_INC_STORE)
-            asm_str_final = $sformatf("%0s %0s, %0d(%0s!)", asm_str, rs2.name(), get_imm(), rs1.name());
+            asm_str_final = $sformatf("%0s %0s, %0s(%0s!)", asm_str, rs2.name(), get_imm(), rs1.name());
           else if (category inside {ALU, MAC} )
             asm_str_final = $sformatf("%0s %0s, %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), rs2.name(), get_imm());
           else
@@ -297,9 +297,13 @@ class cv32e40p_instr extends riscv_instr;
     end else begin
       super.convert2asm(prefix);
     end
-    if(comment != "")
-     asm_str_final = {asm_str, " #",comment};
-     return asm_str_final.tolower();
+
+    if (comment == "") begin
+      return asm_str_final.tolower();
+    end else begin
+      return {asm_str_final.tolower(), "    # ", comment};
+    end
+
   endfunction
 
   function bit [6:0] get_opcode();
