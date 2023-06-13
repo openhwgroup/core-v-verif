@@ -142,5 +142,63 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
     end
   endfunction
 
+  //Function: cv32e40p_rand_instr_stream::gen_instr()
+  //override the parent class gen_instr() inside cv32e40p_rand_instr_stream
+  virtual function void gen_instr(bit no_branch = 1'b0, bit no_load_store = 1'b1,
+                                  bit is_debug_program = 1'b0);
+    setup_allowed_instr(no_branch, no_load_store);
+
+    //Use this plusarg - add_xpulp_instr_in_debug_rom to include xpulp instr
+    //in random debug_rom instructions. Added for v2 debug tests with xpulp.
+    if ($test$plusargs("add_xpulp_instr_in_debug_rom") && is_debug_program) begin
+        foreach(instr_list[i])
+          randomize_debug_rom_instr(.instr(instr_list[i]), .is_in_debug(is_debug_program), .disable_dist(), .include_group({RV32X}));
+          `uvm_info("cv32e40p_rand_instr_stream", $sformatf("add_xpulp_instr_in_debug_rom set- Including xpulp instr in debug_rom"), UVM_DEBUG);
+    end
+    else begin
+        foreach(instr_list[i])
+          randomize_instr(instr_list[i], is_debug_program);
+    end
+    // Do not allow branch instruction as the last instruction because there's no
+    // forward branch target
+    while (instr_list[$].category == BRANCH) begin
+      void'(instr_list.pop_back());
+      if (instr_list.size() == 0) break;
+    end
+  endfunction
+
+  //Function: randomize_debug_rom_instr()
+  //Added for v2 debug tests to generate random instructions for debug_rom.
+  //Need to create this function to handle xpulp specific randomization
+  //which is not available in parent class func randomize_instr()
+  function void randomize_debug_rom_instr(output riscv_instr instr,
+                                input  bit is_in_debug = 1'b1,
+                                input  bit disable_dist = 1'b0,
+                                input  riscv_instr_group_t include_group[$] = {});
+    riscv_instr_name_t exclude_instr[];
+    if ((SP inside {reserved_rd, cfg.reserved_regs}) ||
+        ((avail_regs.size() > 0) && !(SP inside {avail_regs}))) begin
+      exclude_instr = {C_ADDI4SPN, C_ADDI16SP, C_LWSP, C_LDSP};
+    end
+    // Post-process the allowed_instr and exclude_instr lists to handle
+    // adding ebreak instructions to the debug rom.
+    if (is_in_debug) begin
+      if (cfg.no_ebreak && cfg.enable_ebreak_in_debug_rom) begin
+        allowed_instr = {allowed_instr, EBREAK, C_EBREAK};
+      end else if (!cfg.no_ebreak && !cfg.enable_ebreak_in_debug_rom) begin
+        exclude_instr = {exclude_instr, EBREAK, C_EBREAK};
+      end
+    end
+
+    if(cfg.no_branch_jump) begin
+      exclude_instr = {exclude_instr, CV_BEQIMM, CV_BNEIMM, BEQ, BNE, BLT, BGE, BLTU, BGEU, C_BEQZ, C_BNEZ, JALR, JAL, C_JR, C_JALR, C_J, C_JAL};
+    end
+
+    exclude_instr = {exclude_instr, CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW, C_ADDI16SP, URET, SRET, MRET, DRET, ECALL};
+    instr = riscv_instr::get_rand_instr(.exclude_instr(exclude_instr));
+    instr.m_cfg = cfg;
+    randomize_gpr(instr);
+  endfunction
+
 endclass
 
