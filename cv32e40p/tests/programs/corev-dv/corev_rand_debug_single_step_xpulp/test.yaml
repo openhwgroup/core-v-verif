@@ -1,0 +1,10 @@
+# Test definition YAML for random debug test
+
+# corev-dv generator test
+name: corev_rand_debug_single_step_xpulp
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Random debug with xpulp stream
+plusargs: >
+    +gen_reduced_rand_dbg_req
+    +num_debug_req=1
