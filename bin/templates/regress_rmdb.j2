@@ -15,9 +15,7 @@
 {% for r in regressions %}
             <member>{{r.name}}</member>
 {% endfor %}
-{% if coverage != false %}
-            <member>cov_report</member>
-{% endif %}
+            <member>report</member>
         </members>
     </runnable>
 
@@ -45,7 +43,11 @@
             </parameters>
             <members>
 {% for t in r.get_tests_of_build(build.name) %}
+{% if t.precmd is defined %}
+                <member>{{t.name}}_precmd</member>
+{% else %}
                 <member>{{t.name}}</member>
+{% endif %}
 {% endfor %}
             </members>
             <preScript launch="exec">
@@ -57,56 +59,88 @@
 
 
 {% for k,t in unique_tests.items() %}
-            <runnable name="{{t.name}}" type="task" repeat="{{t.num}}">
+{% if t.precmd is defined %}
+            <runnable name="{{t.name}}_precmd" type="group" sequential="no">
                 <parameters>
 {% if t.cfg is defined %}
                     <parameter name="tst_cfg" >{{t.cfg}}</parameter>
 {% else %}
                     <parameter name="tst_cfg" >(%build_config%)</parameter>
 {% endif %}
-{% if coverage != false %}
-                    <parameter name="ucdbfile" >{{t.abs_dir}}/vsim_results/(%tst_cfg%)/{{t.testname}}/(%ITERATION%)/{{t.testname}}.ucdb</parameter>
-{% endif %}
-                    <parameter name="log_file" >(%DATADIR%)/{{project}}/{{r.name}}/(%build_name%)/(%INSTANCE%)/execScript.log</parameter>
                 </parameters>
 {% if lsf != None %}
-                <method name="grid" gridtype="lsf" action="execScript">
+                <method name="grid" gridtype="lsf" action="preScript">
                     <command> {{lsf}} -P {{project}} -J (%RUNNABLE%) (%WRAPPER%) </command>
                 </method>
 {% endif %}
-                <execScript launch="exec" usestderr="no">
-                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} CHECK_SIM_LOG=(%log_file%) COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%build_config%) RISCVDV_CFG={{t.riscvdv_cfg}} SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
-                </execScript>
+                <members>
+                    <member>{{t.name}}</member>
+                </members>
+                <preScript launch="exec" usestderr="no">
+                    <command>cd {{t.abs_dir}} &amp;&amp; {{t.precmd}} COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} COV=0 SIMULATOR={{t.simulator}} CFG=(%tst_cfg%) RISCVDV_CFG={{t.riscvdv_cfg}} GEN_START_INDEX=1 GEN_NUM_TESTS={{t.num}} USE_ISS=NO SEED=random</command>
+                </preScript>
             </runnable>
-{% endfor %}
+{% endif %}
 
-
-{% endfor %}
-
+                <runnable name="{{t.name}}" type="task" sequential="no" repeat="{{t.num}}">
+                    <parameters>
+{% if t.precmd is not defined %}
+{% if t.cfg is defined %}
+                        <parameter name="tst_cfg" >{{t.cfg}}</parameter>
+{% else %}
+                        <parameter name="tst_cfg" >(%build_config%)</parameter>
+{% endif %}
+{% endif %}
 {% if coverage != false %}
+                        <parameter name="ucdbfile" >{{t.abs_dir}}/{{simulator}}_results/(%tst_cfg%)/{{t.testname}}/(%ITERATION%)/{{t.testname}}.ucdb</parameter>
+{% endif %}
+{% if t.precmd is not defined %}
+                        <parameter name="log_file" >(%DATADIR%)/{{project}}/{{r.name}}/(%build_name%)/(%INSTANCE%)/execScript.log</parameter>
+{% else %}
+                        <parameter name="log_file" >(%DATADIR%)/{{project}}/{{r.name}}/(%build_name%)/{{t.testname}}_precmd/(%INSTANCE%)/execScript.log</parameter>
+{% endif %}
+                    </parameters>
+{% if lsf != None %}
+                    <method name="grid" gridtype="lsf" action="execScript">
+                        <command> {{lsf}} -P {{project}} -J (%RUNNABLE%) (%WRAPPER%) </command>
+                    </method>
+{% endif %}
+                    <execScript launch="exec" usestderr="no">
+                        <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%build_config%) RISCVDV_CFG={{t.riscvdv_cfg}} SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
+                    </execScript>
+                </runnable>
+
+
+{% endfor %}
+
+
+
+{% endfor %}
+
     <!-- =========== Reporting =========== -->
-    <runnable name="cov_report" type="group">
+    <runnable name="report" type="group">
         <parameters>
             <parameter name="merged_file">(%results_sim_path%)/merged/merged.ucdb</parameter>
             <!-- <parameter name="tplan_file">(%results_sim_path%)/merged.ucdb</parameter> -->
         </parameters>
+{% if coverage != false %}
         <preScript launch="exec">
-            <command> cd {{results_path}} &amp;&amp; make cov_merge </command>
+            <command> cd {{results_path}} &amp;&amp; make cov_merge SIMULATOR={{simulator}}</command>
         </preScript>
+{% endif %}
         <members>
-            <member>cov_html_report</member>
+            <member>html_report</member>
         </members>
-        <postScript>
-
+        <postScript mintimeout="3000">
+            <command>vrun -vrmdata (%DATADIR%) -status -full -html -htmldir (%DATADIR%)/vrun</command>
         </postScript>
     </runnable>
 
-        <runnable name="cov_html_report" type="task">
+        <runnable name="html_report" type="task">
             <execScript>
                 <command> if {[file exists (%merged_file%)]} {vcover report -annotate -testdetails -details -html (%merged_file%) -output [file join {{results_path}} cov_html_summary]} </command>
                 <!-- <command> if {[file exists (%merged_file%)]} {vcover report -plansection=/. -html (%mergefile%) -output [file join (%results_sim_path%) cov_html_summary_testplan]} </command> -->
             </execScript>
         </runnable>
-{% endif %}
 
 </rmdb>
