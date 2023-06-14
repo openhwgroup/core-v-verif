@@ -89,7 +89,7 @@
 
   // Add overhead instructions to override fp instr operands with specific operand pattern for FP_SPECIAL_OPERANDS_LIST_1
   // LUI->SW->FLW
-  `define MANIPULATE_F_INSTR_OPERANDS_UPPER_20BITS_ONLY(FPR,OPERAND) \
+  `define MANIPULATE_FPR_OPERANDS_UPPER_20BITS_ONLY(FPR,OPERAND) \
     if (instr.has_``FPR && ``OPERAND``_pattern != IS_RAND) begin\
       riscv_instr                 m_instr;\
       riscv_floating_point_instr  f_instr;\
@@ -124,7 +124,7 @@
 
   // Add overhead instructions to override fp instr operands with specific operand pattern for FP_SPECIAL_OPERANDS_LIST_2
   // LUI->LUI->SRLI->OR->SW->SLW
-  `define MANIPULATE_F_INSTR_OPERANDS_WORD(FPR,OPERAND) \
+  `define MANIPULATE_FPR_OPERANDS_WORD(FPR,OPERAND) \
     if (instr.has_``FPR && ``OPERAND``_pattern != IS_RAND) begin\
       riscv_instr                 m_instr;\
       riscv_floating_point_instr  f_instr;\
@@ -185,7 +185,7 @@
 
   // Add overhead instructions to override zfinx fp instr operands with specific operand pattern for FP_SPECIAL_OPERANDS_LIST_1
   // LUI->SW->LW
-  `define MANIPULATE_ZFINX_INSTR_OPERANDS_UPPER_20BITS_ONLY(GPR,OPERAND) \
+  `define MANIPULATE_GPR_OPERANDS_UPPER_20BITS_ONLY(GPR,OPERAND) \
     if (instr.has_``GPR && ``OPERAND``_pattern != IS_RAND) begin\
       riscv_instr                 m_instr;\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({LUI}));\
@@ -219,7 +219,7 @@
   //fixme
   // Add overhead instructions to override zfinx fp instr operands with specific operand pattern for FP_SPECIAL_OPERANDS_LIST_2
   // LUI->LUI->SRLI->OR->SW->SLW
-  `define MANIPULATE_ZFINX_INSTR_OPERANDS_WORD(GPR,OPERAND) \
+  `define MANIPULATE_GPR_OPERANDS_WORD(GPR,OPERAND) \
     if (instr.has_``GPR && ``OPERAND``_pattern != IS_RAND) begin\
       riscv_instr                 m_instr;\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({LUI}));\
@@ -286,4 +286,8 @@
   `define   FP_SPECIAL_OPERANDS_LIST_1  {IS_POSITIVE_ZERO, IS_NEGATIVE_ZERO, IS_POSITIVE_INFINITY, IS_NEGATIVE_INFINITY, IS_POSITIVE_SUBNORMAL, IS_NEGATIVE_SUBNORMAL, IS_Q_NAN, IS_S_NAN}
   `define   FP_SPECIAL_OPERANDS_LIST_2  {IS_POSITIVE_MAX, IS_NEGATIVE_MAX, IS_POSITIVE_MIN, IS_NEGATIVE_MIN}
 
+  // refer Table 6-1 user manual
+  `define   RV32I_INT_COMP_INSTR_LIST   {ADD, ADDI, SUB, LUI, AUIPC, SLL, SLLI, SRL, SRLI, SRA, SRAI, \
+                                         XOR, XORI, OR, ORI, AND, ANDI} /* with deterministic 1 cycle defined */
+  `define   RV32M_MULH_INSTR_LIST       {MULH, MULHSU, MULHU} /* with deterministic 5 cycles defined */
 
