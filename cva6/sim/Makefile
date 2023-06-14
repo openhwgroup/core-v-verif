@@ -38,6 +38,10 @@ issrun_opts     ?=
 isspostrun_opts ?=
 log             ?=
 variant         ?=
+
+# Do NOT enable spike-tandem by default
+spike-tandem    ?=
+
 # Set Spike step count limit if the caller provided a step count value in variable 'steps'.
 ifneq ($(steps),)
   spike_stepout = --steps=$(steps)
@@ -179,7 +183,8 @@ ALL_UVM_FLAGS           = -lca -sverilog +incdir+$(VCS_HOME)/etc/uvm/src \
 	  $(VCS_HOME)/etc/uvm/src/uvm_pkg.sv +UVM_VERBOSITY=UVM_MEDIUM -ntb_opts uvm-1.2 -timescale=1ns/1ps \
 	  -assert svaext -race=all -ignore unique_checks -full64 -q +incdir+$(VCS_HOME)/etc/uvm/src \
 	  +incdir+$(CORE_V_VERIF)/$(CV_CORE_LC)/env/uvme +incdir+$(CORE_V_VERIF)/$(CV_CORE_LC)/tb/uvmt \
-	  $(if $(DEBUG), -debug_access+all $(if $(VERDI), -kdb) $(if $(TRACE_COMPACT),+vcs+fsdbon))
+	  $(if $(DEBUG), -debug_access+all $(if $(VERDI), -kdb) $(if $(TRACE_COMPACT),+vcs+fsdbon)) \
+	  $(if $(spike-tandem), +SPIKE_TANDEM=1)
 
 ALL_SIMV_UVM_FLAGS      = -licwait 20 $(issrun_opts) \
 		-sv_lib $(CORE_V_VERIF)/lib/dpi_dasm/lib/Linux64/libdpi_dasm +signature=I-ADD-01.signature_output \
@@ -203,13 +208,9 @@ ifneq ($(DEBUG),)               # If RTL DEBUG support requested
   endif
 endif
 
-dpi-library = $(VCS_WORK_DIR)/work-dpi
+dpi-library = $(CVA6_REPO_DIR)/work-dpi
 dpi_build:
-	mkdir -p $(dpi-library)
-	g++ -shared -fPIC -std=c++17 -Bsymbolic -I../corev_apu/tb/dpi -O3 -I$(SPIKE_ROOT)/include \
-	-I$(VCS_HOME)/include -I$(RISCV)/include -c $(CVA6_REPO_DIR)/corev_apu/tb/dpi/elfloader.cc \
-	-o $(dpi-library)/elfloader.o
-	g++ -shared -m64 -o $(dpi-library)/ariane_dpi.so $(dpi-library)/elfloader.o -L$(RISCV)/lib -Wl,-rpath,$(RISCV)/lib
+	$(MAKE) -C $(CVA6_REPO_DIR) spike-tandem=$(spike-tandem) $@
 
 vcs_uvm_comp: dpi_build
 	@echo "[VCS] Building Model"
