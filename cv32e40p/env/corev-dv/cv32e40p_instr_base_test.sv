@@ -74,7 +74,7 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
 
   virtual function void override_instr_stream();
     int    test_override_riscv_instr_stream = 0;
-    string test_override_fp_instr_stream;
+    string test_override_fp_instr_stream = "default";
     if ($value$plusargs("test_override_riscv_instr_stream=%0d", test_override_riscv_instr_stream)) begin : TEST_OVERRIDE_RISCV_INSTR_STREAM
       unique case(test_override_riscv_instr_stream)
         1: begin 
@@ -83,7 +83,7 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
       endcase
     end // TEST_OVERRIDE_RISCV_INSTR_STREAM
     if ($value$plusargs("test_override_fp_instr_stream=%s", test_override_fp_instr_stream)) begin : TEST_OVERRIDE_FP_INSTR_STREAM
-      unique case(test_override_fp_instr_stream)
+      case (test_override_fp_instr_stream)
         "default": begin 
                    end
         "fp_n_mixed_instr": begin
@@ -109,6 +109,10 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
         "constraint_mc_fp": begin
           `uvm_info(this.type_name, $sformatf("uvm_factory set_type_override_by_type to CV32E40P_CONSTRAINT_MC_FP_INSTR_STREAM"), UVM_NONE);
           uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_constraint_mc_fp_instr_stream::get_type()); 
+        end
+        "fp_operand_forwarding": begin
+          `uvm_info(this.type_name, $sformatf("uvm_factory set_type_override_by_type to CV32E40P_FP_OPERAND_FORWARDING_INSTR_STREAM"), UVM_NONE);
+          uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_fp_operand_forwarding_instr_stream::get_type()); 
         end
       endcase
     end // TEST_OVERRIDE_FP_INSTR_STREAM
