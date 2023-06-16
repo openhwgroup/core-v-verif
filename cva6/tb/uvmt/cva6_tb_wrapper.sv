@@ -97,6 +97,21 @@ module cva6_tb_wrapper
     .end_of_test_o(tb_exit_o)
   ) ;
 
+`ifdef SPIKE_TANDEM
+    spike #(
+        .Size ( NUM_WORDS * 8 )
+    ) i_spike (
+        .clk_i,
+        .rst_ni,
+        .clint_tick_i ( 1'b0 ),  // FORNOW No RTC interrupts
+        .rvfi_i       ( rvfi )
+    );
+    initial begin
+        $display("Running binary in tandem mode");
+    end
+`endif
+
+
   //----------------------------------------------------------------------------
   // Memory
   //----------------------------------------------------------------------------

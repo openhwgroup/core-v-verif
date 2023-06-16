@@ -22,7 +22,9 @@ endif
 
 .DEFAULT_GOAL := help
 
-FLIST_TB   := $(CVA6_TB_DIR)/Flist.cva6_tb
+FLIST_TB    := $(CVA6_TB_DIR)/Flist.cva6_tb
+FLIST_COSIM := $(CVA6_TB_DIR)/Flist.cva6_tandem_cosim
+
 # target takes one of the following cva6 hardware configuration:
 # cv64a6_imafdc_sv39, cv32a6_imac_sv0, cv32a6_imac_sv32, cv32a6_imafc_sv32
 target     ?= cv64a6_imafdc_sv39
@@ -39,8 +41,8 @@ isspostrun_opts ?=
 log             ?=
 variant         ?=
 
-# Do NOT enable spike-tandem by default
-spike-tandem    ?=
+# Spike tandem mode: default to environment setting (DISABLED if envariable SPIKE_TANDEM is not set).
+export spike-tandem ?= $(SPIKE_TANDEM)
 
 # Set Spike step count limit if the caller provided a step count value in variable 'steps'.
 ifneq ($(steps),)
@@ -184,9 +186,10 @@ ALL_UVM_FLAGS           = -lca -sverilog +incdir+$(VCS_HOME)/etc/uvm/src \
 	  -assert svaext -race=all -ignore unique_checks -full64 -q +incdir+$(VCS_HOME)/etc/uvm/src \
 	  +incdir+$(CORE_V_VERIF)/$(CV_CORE_LC)/env/uvme +incdir+$(CORE_V_VERIF)/$(CV_CORE_LC)/tb/uvmt \
 	  $(if $(DEBUG), -debug_access+all $(if $(VERDI), -kdb) $(if $(TRACE_COMPACT),+vcs+fsdbon)) \
-	  $(if $(spike-tandem), +SPIKE_TANDEM=1)
+	  $(if $(spike-tandem), +define+SPIKE_TANDEM=1)
 
-ALL_SIMV_UVM_FLAGS      = -licwait 20 $(issrun_opts) \
+ALL_SIMV_UVM_FLAGS      = $(if $(spike-tandem), +permissive) -licwait 20 $(issrun_opts) \
+		$(if $(spike-tandem),-sv_lib $(CORE_V_VERIF)/tools/spike/lib/libdisasm) \
 		-sv_lib $(CORE_V_VERIF)/lib/dpi_dasm/lib/Linux64/libdpi_dasm +signature=I-ADD-01.signature_output \
 		+UVM_TESTNAME=uvmt_cva6_firmware_test_c
 
@@ -210,13 +213,14 @@ endif
 
 dpi-library = $(CVA6_REPO_DIR)/work-dpi
 dpi_build:
-	$(MAKE) -C $(CVA6_REPO_DIR) spike-tandem=$(spike-tandem) $@
+	$(MAKE) -C $(CVA6_REPO_DIR) $@
 
 vcs_uvm_comp: dpi_build
 	@echo "[VCS] Building Model"
 	mkdir -p $(VCS_WORK_DIR)
 	cd $(VCS_WORK_DIR) && vcs $(ALL_UVM_FLAGS) \
 	  -f $(FLIST_CORE) -f $(FLIST_TB) \
+	  $(if $(spike-tandem), -f $(FLIST_COSIM)) \
 	  -f $(CVA6_UVMT_DIR)/uvmt_cva6.flist \
 	  $(cov-comp-opt) +define+UNSUPPORTED_WITH+ $(isscomp_opts)\
 	  -top uvmt_cva6_tb

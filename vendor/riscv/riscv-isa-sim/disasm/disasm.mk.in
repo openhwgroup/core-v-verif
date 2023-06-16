@@ -3,3 +3,4 @@ disasm_srcs = \
   regnames.cc \
 
 disasm_install_lib = yes
+disasm_install_shared_lib = yes

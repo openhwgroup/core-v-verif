@@ -1,0 +1,9 @@
+diff --git a/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in b/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in
+index 9eafb12f9..89c7b04a6 100644
+--- a/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in
++++ b/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in
+@@ -3,3 +3,4 @@ disasm_srcs = \
+   regnames.cc \
+ 
+ disasm_install_lib = yes
++disasm_install_shared_lib = yes
