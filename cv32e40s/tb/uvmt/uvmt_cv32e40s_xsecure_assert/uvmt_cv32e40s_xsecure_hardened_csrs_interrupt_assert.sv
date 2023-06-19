@@ -31,11 +31,11 @@ module uvmt_cv32e40s_xsecure_hardened_csrs_interrupt_assert
 
     //CSRs:
     input mcause_t mcause,
-    input logic [$bits(mcause_t)-1:0] mcause_shadow,
     input logic [31:0] mie,
     input mtvec_t mtvec,
 
     //Shadows:
+    input logic [$bits(mcause_t)-1:0] mcause_shadow,
     input logic [31:0] mie_shadow,
     input logic [$bits(mtvec_t)-1:0] mtvec_shadow
 
