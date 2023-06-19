@@ -23,9 +23,9 @@
  * monitor,
  */
 interface uvma_rvfi_instr_if_t
-  import uvma_rvfi_pkg::*;
-
   import support_pkg::*;
+  import uvm_pkg::*;
+  import uvma_rvfi_pkg::*;
 
   #(int ILEN=uvma_rvfi_pkg::DEFAULT_ILEN,
     int XLEN=uvma_rvfi_pkg::DEFAULT_XLEN)
@@ -184,6 +184,8 @@ interface uvma_rvfi_instr_if_t
   int unsigned                      single_step_cnt; // number of instructions stepped
   logic [CYCLE_CNT_WL-1:0]          cycle_cnt;       // i'th number cycle since reset
   logic [CYCLE_CNT_WL-1:0]          cycle_cnt_q;
+
+  string                            info_tag = "RVFI_INSTR_IF";
 
   logic [(32)-1:0][XLEN-1:0]        gpr_rdata_array;
   logic [(32)-1:0]                  gpr_rmask_array;
@@ -1010,44 +1012,38 @@ function automatic logic[31:0] get_max_exception_cause (
   logic[31:0] exc_a,
   logic[31:0] exc_b
 );
-  case (EXC_CAUSE_INSTR_ACC_FAULT)
-    exc_a, exc_b: return EXC_CAUSE_INSTR_ACC_FAULT;
+
+  case (1)
+    EXC_CAUSE_INSTR_ACC_FAULT inside {exc_a, exc_b}:
+      return EXC_CAUSE_INSTR_ACC_FAULT;
+
+    EXC_CAUSE_INSTR_INTEGRITY_FAULT inside {exc_a, exc_b}:
+      return EXC_CAUSE_INSTR_INTEGRITY_FAULT;
+
+    EXC_CAUSE_INSTR_BUS_FAULT inside {exc_a, exc_b}:
+      return EXC_CAUSE_INSTR_BUS_FAULT;
+
+    EXC_CAUSE_ILLEGAL_INSTR inside {exc_a, exc_b}:
+      return EXC_CAUSE_ILLEGAL_INSTR;
+
+    EXC_CAUSE_ENV_CALL_U inside {exc_a, exc_b}:
+      return EXC_CAUSE_ENV_CALL_U;
+
+    EXC_CAUSE_ENV_CALL_M inside {exc_a, exc_b}:
+      return EXC_CAUSE_ENV_CALL_M;
+
+    EXC_CAUSE_BREAKPOINT inside {exc_a, exc_b}:
+      return EXC_CAUSE_BREAKPOINT;
+
+    EXC_CAUSE_STORE_ACC_FAULT inside {exc_a, exc_b}:
+      return EXC_CAUSE_STORE_ACC_FAULT;
+
+    EXC_CAUSE_LOAD_ACC_FAULT inside {exc_a, exc_b}:
+      return EXC_CAUSE_LOAD_ACC_FAULT;
   endcase
 
-  case (EXC_CAUSE_INSTR_INTEGRITY_FAULT)
-    exc_a, exc_b: return EXC_CAUSE_INSTR_INTEGRITY_FAULT;
-  endcase
-
-  case (EXC_CAUSE_INSTR_BUS_FAULT)
-    exc_a, exc_b: return EXC_CAUSE_INSTR_BUS_FAULT;
-  endcase
-
-  case (EXC_CAUSE_ILLEGAL_INSTR)
-    exc_a, exc_b: return EXC_CAUSE_ILLEGAL_INSTR;
-  endcase
-
-  case (EXC_CAUSE_ENV_CALL_U)
-    exc_a, exc_b: return EXC_CAUSE_ENV_CALL_U;
-  endcase
-
-  case (EXC_CAUSE_ENV_CALL_M)
-    exc_a, exc_b: return EXC_CAUSE_ENV_CALL_M;
-  endcase
-
-  case (EXC_CAUSE_BREAKPOINT)
-    exc_a, exc_b: return EXC_CAUSE_BREAKPOINT;
-  endcase
-
-  case (EXC_CAUSE_STORE_ACC_FAULT)
-    exc_a, exc_b: return EXC_CAUSE_STORE_ACC_FAULT;
-  endcase
-
-  case (EXC_CAUSE_LOAD_ACC_FAULT)
-    exc_a, exc_b: return EXC_CAUSE_LOAD_ACC_FAULT;
-  endcase
-
-  return 0;  // Should not be possible
-endfunction
+  `uvm_error(info_tag, "unhandled 'max' exception cause");
+endfunction : get_max_exception_cause
 
 function automatic logic is_deprioritized_exception (logic[31:0] exc_cause);
   return (
