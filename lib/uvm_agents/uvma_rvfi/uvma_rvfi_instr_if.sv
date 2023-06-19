@@ -328,47 +328,72 @@ interface uvma_rvfi_instr_if_t
     instr_mem_wmask     <= instr_mem_wmask_f();
   end
 
-  always_comb  cycle_cnt = !reset_n ? 0 : (cycle_cnt_q + 1'b 1);
+  always_comb begin
+    cycle_cnt = !reset_n ? 0 : (cycle_cnt_q + 1'b 1);
+  end
 
-  always_comb  is_load_instr      = rvfi_valid && |instr_mem_rmask;
-  always_comb  is_store_instr     = rvfi_valid && |instr_mem_wmask;
-  always_comb  is_loadstore_instr = is_load_instr || is_store_instr;
+  always_comb begin
+    is_load_instr = rvfi_valid && |instr_mem_rmask;
+  end
 
-  always_comb  is_mem_act_actual =
-    is_mem_act;  // original signal is already "actual"
-  always_comb  is_mem_act_intended =
-    rvfi_valid && (|instr_mem_rmask || |instr_mem_wmask);
+  always_comb begin
+    is_store_instr = rvfi_valid && |instr_mem_wmask;
+  end
 
-  always_comb  rvfi_pc_upperrdata =
-    (rvfi_insn[1:0] == 2'b 11) ? (
-      rvfi_pc_rdata + 3
-    ) : (
-      rvfi_pc_rdata + 1
-    );
-    // WARNING: Can't trust rvfi_insn if scrambled data.
-    // TODO:WARNING:silabs-robin  Can it be modelled exact?
+  always_comb begin
+    is_loadstore_instr = is_load_instr || is_store_instr;
+  end
 
-  always_comb  is_split_instrtrans =
-    rvfi_valid  &&
-    (rvfi_pc_rdata[31:2] != rvfi_pc_upperrdata[31:2]);
+  always_comb begin
+    is_mem_act_actual = is_mem_act;  // original signal is already "actual"
+  end
 
-  always_comb  is_exception =
-    rvfi_valid  &&
-    rvfi_trap.trap  &&
-    rvfi_trap.exception;
+  always_comb begin
+    is_mem_act_intended = rvfi_valid  && (|instr_mem_rmask || |instr_mem_wmask);
+  end
 
-  always_comb  is_instr_acc_fault_pmp =
-    is_exception  &&
-    (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_ACC_FAULT)  &&
-    (rvfi_trap.cause_type == 'h 1);  // TODO:INFO:silabs-robin  Magic num
+  always_comb begin
+    rvfi_pc_upperrdata =
+      (rvfi_insn[1:0] == 2'b 11) ? (
+        rvfi_pc_rdata + 3
+      ) : (
+        rvfi_pc_rdata + 1
+      );
+      // WARNING: Can't trust rvfi_insn if scrambled data.
+      // TODO:WARNING:silabs-robin  Can it be modelled exact?
+  end
 
-  always_comb  is_load_acc_fault =
-    is_exception  &&
-    (rvfi_trap.exception_cause == EXC_CAUSE_LOAD_ACC_FAULT);
+  always_comb begin
+    is_split_instrtrans =
+      rvfi_valid  &&
+      (rvfi_pc_rdata[31:2] != rvfi_pc_upperrdata[31:2]);
+  end
 
-  always_comb  is_store_acc_fault =
-    is_exception  &&
-    (rvfi_trap.exception_cause == EXC_CAUSE_STORE_ACC_FAULT);
+  always_comb begin
+    is_exception =
+      rvfi_valid  &&
+      rvfi_trap.trap  &&
+      rvfi_trap.exception;
+  end
+
+  always_comb begin
+    is_instr_acc_fault_pmp =
+      is_exception  &&
+      (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_ACC_FAULT)  &&
+      (rvfi_trap.cause_type == 'h 1);  // TODO:INFO:silabs-robin  Magic num
+  end
+
+  always_comb begin
+    is_load_acc_fault =
+      is_exception  &&
+      (rvfi_trap.exception_cause == EXC_CAUSE_LOAD_ACC_FAULT);
+  end
+
+  always_comb begin
+    is_store_acc_fault =
+      is_exception  &&
+      (rvfi_trap.exception_cause == EXC_CAUSE_STORE_ACC_FAULT);
+  end
 
   /**
       * Used by target DUT.
