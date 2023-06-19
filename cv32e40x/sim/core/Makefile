@@ -56,11 +56,37 @@ CV_CORE_UC     = $(shell echo $(CV_CORE) | tr a-z A-Z)
 # Compile compile flags for all simulators
 SV_CMP_FLAGS =
 
-# Default "custom test-program"
-CUSTOM_PROG  ?= requested_csr_por
-TEST         ?= hello-world
+# Common output directories
+RUN_INDEX               ?= 0
+SIM_RESULTS              = simulation_results
+SIM_TEST_RESULTS         = $(SIM_RESULTS)/$(TEST)
+SIM_RUN_RESULTS          = $(SIM_TEST_RESULTS)/$(RUN_INDEX)
+SIM_TEST_PROGRAM_RESULTS = $(SIM_RUN_RESULTS)/test_program
+SIM_BSP_RESULTS          = $(SIM_TEST_PROGRAM_RESULTS)/bsp
+
+# Test-Program directores.
+# Relative path is used for Verilator which cannot seem to handle loooong pathnames.
+TEST_PROGRAM_PATH    ?= $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs/custom
+TEST_PROGRAM_RELPATH ?= ../../tests/programs/custom
+# Default test-program
+TEST                 ?= hello-world
 
 ###############################################################################
+# Generate and include TEST_FLAGS_MAKE, based on the YAML test description.
+# An example of what is generated is below (not all of these flags are used):
+#       TEST_DESCRIPTION=Simple hello-world sanity test
+#       TEST_NAME=hello-world
+#       TEST_PROGRAM=hello-world
+#       TEST_TEST_DIR=/home/mike/GitHubRepos/MikeOpenHWGroup/core-v-verif/master/cv32e40p/tests/programs/custom/hello-world
+#       TEST_UVM_TEST=uvmt_$(CV_CORE_LC)_firmware_test_c
+###############################################################################
+YAML2MAKE = $(CORE_V_VERIF)/bin/yaml2make
+TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml  $(YAML2MAKE_DEBUG) --run-index=$(u) --prefix=TEST --core=$(CV_CORE))
+ifeq ($(TEST_FLAGS_MAKE),)
+$(error ERROR Could not find test.yaml for test: $(TEST))
+endif
+include $(TEST_FLAGS_MAKE)
+
 # Common Makefiles:
 #  -Variables for RTL and other dependencies (e.g. RISCV-DV)
 include ../ExternalRepos.mk
@@ -74,7 +100,7 @@ VLIB      = vlib
 VWORK     = work
 
 VLOG          = vlog
-VLOG_FLAGS    = -pedanticerrors -suppress 2577 -suppress 2583
+VLOG_FLAGS    = -pedanticerrors -suppress 2577 -suppress 2583 +define+COREV_ASSERT_OFF
 VLOG_LOG      = vloggy
 
 VOPT          = vopt
@@ -124,7 +150,7 @@ XRUN_DIR          = xcelium.d
 # verilator configuration
 VERILATOR           = verilator
 VERI_FLAGS         +=
-VERI_COMPILE_FLAGS += -Wno-BLKANDNBLK +define+COREV_ASSERT_OFF $(SV_CMP_FLAGS) # hope this doesn't hurt us in the long run
+VERI_COMPILE_FLAGS += -Wno-COMBDLY -Wno-BLKANDNBLK +define+COREV_ASSERT_OFF $(SV_CMP_FLAGS) # hope this doesn't hurt us in the long run
 VERI_TRACE         ?=
 VERI_OBJ_DIR       ?= cobj_dir
 VERI_LOG_DIR       ?= cobj_dir/logs
@@ -272,7 +298,7 @@ dsim-custom:
 	@echo "This target is depreciated.  Please use 'make dsim-test TEST=<test-program>'"
 	@echo "                             Example:   'make dsim-test TEST=fibonacci'"
 
-dsim-test: dsim-comp $(VERI_CUSTOM)/$(TEST)/$(TEST).hex
+dsim-test: dsim-comp $(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
 	@echo "$(BANNER)"
 	@echo "* Running with Metrics DSIM"
 	@echo "$(BANNER)"
@@ -283,7 +309,7 @@ dsim-test: dsim-comp $(VERI_CUSTOM)/$(TEST)/$(TEST).hex
 		$(DSIM_RUN_FLAGS) \
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(OVP_MODEL_DPI)  \
-		+firmware=../../$(VERI_CUSTOM)/$(TEST)/$(TEST).hex
+		+firmware=$(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
 
 # Metrics dsim cleanup
 .PHONY: dsim-clean
@@ -308,7 +334,7 @@ dsim-clean: tc-clean
 	touch .lib-rtl
 
 
-.build-rtl: .lib-rtl $(CV_CORE_PKG) $(TBSRC_PKG) $(TBSRC)
+.build-rtl: .lib-rtl CV_CORE_pkg $(CV_CORE_PKG) $(TBSRC_PKG) $(TBSRC)
 	$(VLOG) \
 		-work $(VWORK) \
 		$(VLOG_FLAGS) \
@@ -327,7 +353,7 @@ vsim-all:  .opt-rtl
 .PHONY: vsim-run
 vsim-run: ALL_VSIM_FLAGS += -c
 vsim-run: vsim-all
-	$(VSIM) -work $(VWORK) $(DPILIB_VSIM_OPT) $(ALL_VSIM_FLAGS)\
+	$(VSIM) -work $(VWORK) $(DPILIB_VSIM_OPT) $(ALL_VSIM_FLAGS) \
 	$(RTLSRC_VOPT_TB_TOP) -do 'source $(VSIM_SCRIPT); exit -f'
 
 
@@ -347,13 +373,13 @@ vsim-run-gui: vsim-all
 	$(RTLSRC_VOPT_TB_TOP) -do $(VSIM_SCRIPT)
 
 .PHONY: questa-custom
-questa-custom: vsim-all $(CUSTOM)/$(CUSTOM_PROG)/$(CUSTOM_PROG).hex
-questa-custom: ALL_VSIM_FLAGS += +firmware=$(CUSTOM)/$(CUSTOM_PROG)/$(CUSTOM_PROG).hex
+questa-custom: vsim-all $(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
+questa-custom: ALL_VSIM_FLAGS += +firmware=$(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
 questa-custom: vsim-run
 
 .PHONY: questa-custom-gui
-questa-custom-gui: vsim-all $(CUSTOM)/$(CUSTOM_PROG)/$(CUSTOM_PROG).hex
-questa-custom-gui: ALL_VSIM_FLAGS += +firmware=$(CUSTOM)/$(CUSTOM_PROG)/$(CUSTOM_PROG).hex
+questa-custom-gui: vsim-all $(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
+questa-custom-gui: ALL_VSIM_FLAGS += +firmware=$(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
 questa-custom-gui: vsim-run-gui
 
 .PHONY: questa-cv32_riscv_tests
@@ -417,12 +443,12 @@ xrun-custom:
 	@echo "                             Example:   'make xrun-test TEST=fibonacci'"
 
 .PHONY: xrun-test
-xrun-test: xrun-all $(VERI_CUSTOM)/$(TEST)/$(TEST).hex
+xrun-test: xrun-all $(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
 	$(XRUN) \
 		$(XRUN_FLAGS) \
 		-f $(CV_CORE_MANIFEST) \
 		$(TBSRC_PKG) $(TBSRC) \
-		+firmware=$(VERI_CUSTOM)/$(TEST)/$(CUSTOM_PROG).hex
+		+firmware=$(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
 
 # Cadence Xcelium xrun cleanup
 .PHONY: xrun-clean xrun-clean-all
@@ -470,13 +496,13 @@ testbench_verilator: CV_CORE_pkg $(TBSRC_VERI) $(TBSRC_PKG)
 	$(MAKE) -C $(VERI_OBJ_DIR) -f Vtb_top_verilator.mk
 	cp $(VERI_OBJ_DIR)/Vtb_top_verilator testbench_verilator
 
-veri-test: verilate $(VERI_CUSTOM)/$(TEST)/$(TEST).hex
+veri-test: verilate $(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
 	@echo "$(BANNER)"
 	@echo "* Running with Verilator: logfile in $(VERI_LOG_DIR)/$(TEST).log"
 	@echo "$(BANNER)"
 	mkdir -p $(VERI_LOG_DIR)
 	./testbench_verilator $(VERI_FLAGS) \
-		"+firmware=$(VERI_CUSTOM)/$(TEST)/$(TEST).hex" \
+		"+firmware=$(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex" \
 		| tee $(VERI_LOG_DIR)/$(TEST).log
 
 # verilator specific cleanup
@@ -509,13 +535,13 @@ vcs-run-gui: vcsify
 	$(SIMV) $(ALL_VCS_FLAGS) -gui -do $(VCS_SCRIPT_GUI)
 
 .PHONY: vcs-hello-world
-vcs-hello-world: vcsify $(CUSTOM)/hello-world.hex
-vcs-hello-world: ALL_VCS_FLAGS += +firmware=$(CUSTOM)/hello-world.hex
+vcs-hello-world: vcsify $(TEST_PROGRAM_PATH)/hello-world.hex
+vcs-hello-world: ALL_VCS_FLAGS += +firmware=$(TEST_PROGRAM_PATH)/hello-world.hex
 vcs-hello-world: vcs-run
 
 .PHONY: vcs-custom
-vcs-custom: vcsify $(CUSTOM)/$(CUSTOM_PROG).hex
-vcs-custom: ALL_VCS_FLAGS += +firmware=$(CUSTOM)/$(CUSTOM_PROG).hex
+vcs-custom: vcsify $(TEST_PROGRAM_PATH)/$(TEST).hex
+vcs-custom: ALL_VCS_FLAGS += +firmware=$(TEST_PROGRAM_PATH)/$(TEST).hex
 vcs-custom: vcs-run
 
 .PHONY: vcs-cv32_riscv_tests
@@ -602,23 +628,23 @@ asim-run-gui: rvr-build-rtl
 	$(RTLSRC_VLOG_TB_TOP) -do "run -all"
 
 .PHONY: riviera-hello-world
-riviera-hello-world: rvr-build-rtl $(CUSTOM)/hello-world/hello-world.hex
-riviera-hello-world: ALL_ASIM_FLAGS += +firmware=$(CUSTOM)/hello-world/hello-world.hex
+riviera-hello-world: rvr-build-rtl $(TEST_PROGRAM_PATH)/hello-world/hello-world.hex
+riviera-hello-world: ALL_ASIM_FLAGS += +firmware=$(TEST_PROGRAM_PATH)/hello-world/hello-world.hex
 riviera-hello-world: asim-run
 
 .PHONY: riviera-hello-world-gui
-riviera-hello-world-gui: rvr-build-rtl $(CUSTOM)/hello-world/hello-world.hex
-riviera-hello-world-gui: ALL_ASIM_FLAGS += +firmware=$(CUSTOM)/hello-world/hello-world.hex
+riviera-hello-world-gui: rvr-build-rtl $(TEST_PROGRAM_PATH)/hello-world/hello-world.hex
+riviera-hello-world-gui: ALL_ASIM_FLAGS += +firmware=$(TEST_PROGRAM_PATH)/hello-world/hello-world.hex
 riviera-hello-world-gui: asim-run-gui
 
 .PHONY: riviera-custom
-riviera-custom: rvr-build-rtl $(CUSTOM)/$(CUSTOM_PROG)/$(CUSTOM_PROG).hex
-riviera-custom: ALL_ASIM_FLAGS += +firmware=$(CUSTOM)/$(CUSTOM_PROG)/$(CUSTOM_PROG).hex
+riviera-custom: rvr-build-rtl $(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
+riviera-custom: ALL_ASIM_FLAGS += +firmware=$(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
 riviera-custom: asim-run
 
 .PHONY: riviera-custom-gui
-riviera-custom-gui: rvr-build-rtl $(CUSTOM)/$(CUSTOM_PROG)/$(CUSTOM_PROG).hex
-riviera-custom-gui: ALL_ASIM_FLAGS += +firmware=$(CUSTOM)/$(CUSTOM_PROG)/$(CUSTOM_PROG).hex
+riviera-custom-gui: rvr-build-rtl $(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
+riviera-custom-gui: ALL_ASIM_FLAGS += +firmware=$(TEST_PROGRAM_PATH)/$(TEST)/$(TEST).hex
 riviera-custom-gui: asim-run-gui
 
 riviera-clean:

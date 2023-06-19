@@ -176,7 +176,7 @@ endfunction : get_and_set_cntxt
 function void uvma_fencei_agent_c::retrieve_vif();
 
    // Retrieve instruction interface
-   if (!uvm_config_db#(virtual uvma_fencei_if)::get(this, "", "fencei_vif", cntxt.fencei_vif)) begin
+   if (!uvm_config_db#(virtual uvma_fencei_if_t)::get(this, "", "fencei_vif", cntxt.fencei_vif)) begin
       `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s in uvm_config_db",
                                   $typename(cntxt.fencei_vif)))
    end

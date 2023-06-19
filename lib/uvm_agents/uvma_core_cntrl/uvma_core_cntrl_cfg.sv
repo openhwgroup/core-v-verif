@@ -39,7 +39,11 @@
 
    // ISS configuration
    bit                           use_iss;
+   int                           iss_suppress_invalid_msg = 0;
    string                        iss_control_file = "ovpsim.ic";
+
+   // Controls printing of CSR status
+   bit                           csr_print;
 
    // RISC-V ISA Configuration
    rand corev_mxl_t              xlen;
@@ -63,6 +67,11 @@
    rand bit                      ext_zbr_supported;
    rand bit                      ext_zbs_supported;
    rand bit                      ext_zbt_supported;
+   rand bit                      ext_zca_supported;
+   rand bit                      ext_zcb_supported;
+   rand bit                      ext_zcmb_supported;
+   rand bit                      ext_zcmp_supported;
+   rand bit                      ext_zcmt_supported;
    rand bit                      ext_zifencei_supported;
    rand bit                      ext_zicsr_supported;
    rand bit                      ext_nonstd_supported;
@@ -81,6 +90,8 @@
    rand endianness_t             endianness;
 
    rand int unsigned             clic_levels;
+   bit                           clic_interrupt_enable  = 0;
+   bit                           basic_interrupt_enable = 1;
 
    rand bit                      unaligned_access_supported;
    rand bit                      unaligned_access_amo_supported;
@@ -154,6 +165,11 @@
       `uvm_field_int(                          ext_zbr_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zbs_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zbt_supported              , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zca_supported              , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zcb_supported              , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zcmb_supported             , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zcmp_supported             , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zcmt_supported             , UVM_DEFAULT          )
       `uvm_field_int(                          mode_s_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          mode_h_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          mode_u_supported               , UVM_DEFAULT          )
@@ -186,23 +202,39 @@
       `uvm_field_int(                          nmi_addr                       , UVM_DEFAULT          )
       `uvm_field_int(                          nmi_addr_valid                 , UVM_DEFAULT          )
       `uvm_field_int(                          nmi_addr_plusarg_valid         , UVM_DEFAULT          )
+      `uvm_field_int(                          csr_print                      , UVM_DEFAULT          )
    `uvm_field_utils_end
 
    constraint defaults_cons {
-      soft enabled                == 0;
-      soft is_active              == UVM_PASSIVE;
-      soft cov_model_enabled      == 1;
-      soft trn_log_enabled        == 1;
-      soft mode_h_supported       == 0;
+      soft enabled               == 0;
+      soft is_active             == UVM_PASSIVE;
+      soft cov_model_enabled     == 1;
+      soft trn_log_enabled       == 1;
+      soft ext_nonstd_supported  == 0;
    }
 
    constraint riscv_cons_soft {
-     soft priv_spec_version    == PRIV_VERSION_1_11;
-     soft debug_spec_version   == DEBUG_VERSION_0_13_2;
-     soft endianness           == ENDIAN_LITTLE;
-     soft mode_h_supported     == 0;
-     soft ext_nonstd_supported == 0;
-     soft clic_levels        == 0;
+     soft priv_spec_version      == PRIV_VERSION_1_11;
+     soft debug_spec_version     == DEBUG_VERSION_0_13_2;
+     soft endianness             == ENDIAN_LITTLE;
+     soft mode_h_supported       == 0;
+     soft ext_nonstd_supported   == 0;
+     soft clic_levels            == 0;
+     soft ext_zba_supported      == 0;
+     soft ext_zbb_supported      == 0;
+     soft ext_zbc_supported      == 0;
+     soft ext_zbs_supported      == 0;
+     soft ext_zbe_supported      == 0;
+     soft ext_zbf_supported      == 0;
+     soft ext_zbm_supported      == 0;
+     soft ext_zbp_supported      == 0;
+     soft ext_zbr_supported      == 0;
+     soft ext_zbt_supported      == 0;
+     soft ext_zca_supported      == 0;
+     soft ext_zcb_supported      == 0;
+     soft ext_zcmb_supported     == 0;
+     soft ext_zcmp_supported     == 0;
+     soft ext_zcmt_supported     == 0;
    }
 
    constraint addr_xlen_align_cons {
@@ -219,6 +251,10 @@
          dm_exception_addr[MAX_XLEN-1:64] == '0;
          nmi_addr[MAX_XLEN-1:64]          == '0;
       }
+   }
+
+   constraint boot_addr_cons { //boot addr should be half-word aligned
+      boot_addr % 2 == 0;
    }
 
    /**
@@ -292,6 +328,16 @@ function uvma_core_cntrl_cfg_c::new(string name="uvme_cv_base_cfg");
 
    if ($test$plusargs("USE_ISS"))
       use_iss = 1;
+
+   if ($test$plusargs("no_csr_print")) begin
+      csr_print = 0;
+   end else begin
+      csr_print = 1;
+   end
+
+   if ($test$plusargs("iss_suppress_invalid_msg")) begin
+     iss_suppress_invalid_msg = 1;
+   end
 
    // Read plusargs for defaults
    if (read_cfg_plusarg_xlen("mhartid", mhartid)) begin
@@ -369,26 +415,27 @@ function void uvma_core_cntrl_cfg_c::do_print(uvm_printer printer);
 
    super.do_print(printer);
 
-   // Print out CSRs that are supported
-   printer.print_string("-----------------------------", "--------------------------------------------------------------------");
-   begin
-      instr_csr_t csr;
+   if (csr_print) begin
+      // Print out CSRs that are supported
+      printer.print_string("-----------------------------", "--------------------------------------------------------------------");
+      begin
+         instr_csr_t csr;
 
-      csr = csr.first();
-      while (1) begin
-         if (unsupported_csr_mask[csr])
-            printer.print_string(csr.name(), "Unsupported");
-         else if (disable_all_csr_checks || disable_csr_check_mask[csr])
-            printer.print_string(csr.name(), "Supported but not checked in scoreboard");
-         else
-            printer.print_string(csr.name(), "Supported and checked in scoreboard");
+         csr = csr.first();
+         while (1) begin
+            if (unsupported_csr_mask[csr])
+               printer.print_string(csr.name(), "Unsupported");
+            else if (disable_all_csr_checks || disable_csr_check_mask[csr])
+               printer.print_string(csr.name(), "Supported but not checked in scoreboard");
+            else
+               printer.print_string(csr.name(), "Supported and checked in scoreboard");
 
-         if (csr == csr.last()) break;
-         csr = csr.next();
+            if (csr == csr.last()) break;
+            csr = csr.next();
+         end
       end
+      printer.print_string("-----------------------------", "--------------------------------------------------------------------");
    end
-   printer.print_string("-----------------------------", "--------------------------------------------------------------------");
-
 endfunction : do_print
 
 function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();

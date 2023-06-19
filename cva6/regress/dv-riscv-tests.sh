@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 # You may obtain a copy of the License at https://solderpad.org/licenses/
 #
-# Original Author: Jean-Roch COULON (jean-roch.coulon@thalesgroup.fr)
+# Original Author: Jean-Roch COULON - Thales
 
 # where are the tools
 if ! [ -n "$RISCV" ]; then
@@ -23,7 +23,7 @@ if ! [ -n "$DV_TARGET" ]; then
 fi
 
 if ! [ -n "$DV_SIMULATORS" ]; then
-  DV_SIMULATORS=veri-core,spike
+  DV_SIMULATORS=veri-testharness,spike
 fi
 
 if ! [ -n "$DV_TESTLISTS" ]; then

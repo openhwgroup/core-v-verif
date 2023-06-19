@@ -7,3 +7,4 @@ description: >
 plusargs: >
     +random_fetch_toggle
     +max_data_zero_instr_stall
+cflags: -mno-relax

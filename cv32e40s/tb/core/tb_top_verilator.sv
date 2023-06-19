@@ -89,8 +89,7 @@ module tb_top_verilator
           .RAM_ADDR_WIDTH    (RAM_ADDR_WIDTH),
           .BOOT_ADDR         (BOOT_ADDR),
           .DM_HALTADDRESS    (32'h1A11_0800),
-          .HART_ID           (32'h0000_0000),
-          .NUM_MHPMCOUNTERS  (1)
+          .HART_ID           (32'h0000_0000)
          )
     cv32e40s_tb_wrapper_i
         (.clk_i          ( clk_i          ),

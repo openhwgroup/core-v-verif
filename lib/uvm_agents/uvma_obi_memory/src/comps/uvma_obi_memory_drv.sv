@@ -22,18 +22,36 @@
 
 
 /**
- * Component driving a Open Bus Interface virtual interface (uvma_obi_if).
+ * Component driving a Open Bus Interface virtual interface (uvma_obi_if_t).
  * @note The req & rsp's roles are switched when this driver is in 'slv' mode.
  * @todo Move implementation to a sequence-based approach
  */
-class uvma_obi_memory_drv_c extends uvm_driver#(
+class uvma_obi_memory_drv_c#(
+   parameter AUSER_WIDTH = `UVMA_OBI_MEMORY_AUSER_DEFAULT_WIDTH, ///< Width of the auser signal. RI5CY, Ibex, CV32E40* do not have the auser signal.
+   parameter WUSER_WIDTH = `UVMA_OBI_MEMORY_WUSER_DEFAULT_WIDTH, ///< Width of the wuser signal. RI5CY, Ibex, CV32E40* do not have the wuser signal.
+   parameter RUSER_WIDTH = `UVMA_OBI_MEMORY_RUSER_DEFAULT_WIDTH, ///< Width of the ruser signal. RI5CY, Ibex, CV32E40* do not have the ruser signal.
+   parameter ADDR_WIDTH  = `UVMA_OBI_MEMORY_ADDR_DEFAULT_WIDTH , ///< Width of the addr signal.
+   parameter DATA_WIDTH  = `UVMA_OBI_MEMORY_DATA_DEFAULT_WIDTH , ///< Width of the rdata and wdata signals. be width is DATA_WIDTH / 8. Valid DATA_WIDTH settings are 32 and 64.
+   parameter ID_WIDTH    = `UVMA_OBI_MEMORY_ID_DEFAULT_WIDTH   , ///< Width of the aid and rid signals.
+   parameter ACHK_WIDTH  = `UVMA_OBI_MEMORY_ACHK_DEFAULT_WIDTH , ///< Width of the achk signal.
+   parameter RCHK_WIDTH  = `UVMA_OBI_MEMORY_RCHK_DEFAULT_WIDTH   ///< Width of the rchk signal.
+) extends uvm_driver#(
    .REQ(uvma_obi_memory_base_seq_item_c),
    .RSP(uvma_obi_memory_mon_trn_c      )
 );
 
    // Objects
    uvma_obi_memory_cfg_c    cfg;
-   uvma_obi_memory_cntxt_c  cntxt;
+   uvma_obi_memory_cntxt_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ) cntxt;
 
    // TLM
    uvm_analysis_port     #(uvma_obi_memory_mstr_seq_item_c)  mstr_ap;
@@ -41,10 +59,38 @@ class uvma_obi_memory_drv_c extends uvm_driver#(
    uvm_tlm_analysis_fifo #(uvma_obi_memory_mon_trn_c      )  mon_trn_fifo;
 
    // Handles to virtual interface modports
-   virtual uvma_obi_memory_if.active_mstr_mp  mstr_mp;
-   virtual uvma_obi_memory_if.active_slv_mp   slv_mp ;
+   virtual uvma_obi_memory_if_t#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ).active_mstr_mp  mstr_mp;
 
-   `uvm_component_utils_begin(uvma_obi_memory_drv_c)
+   virtual uvma_obi_memory_if_t#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ).active_slv_mp   slv_mp ;
+
+   `uvm_component_utils_begin(uvma_obi_memory_drv_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ))
       `uvm_field_object(cfg  , UVM_DEFAULT)
       `uvm_field_object(cntxt, UVM_DEFAULT)
    `uvm_component_utils_end
@@ -156,11 +202,29 @@ function void uvma_obi_memory_drv_c::build_phase(uvm_phase phase);
    end
    uvm_config_db#(uvma_obi_memory_cfg_c)::set(this, "*", "cfg", cfg);
 
-   void'(uvm_config_db#(uvma_obi_memory_cntxt_c)::get(this, "", "cntxt", cntxt));
+   void'(uvm_config_db#(uvma_obi_memory_cntxt_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ))::get(this, "", "cntxt", cntxt));
    if (cntxt == null) begin
       `uvm_fatal("CNTXT", "Context handle is null")
    end
-   uvm_config_db#(uvma_obi_memory_cntxt_c)::set(this, "*", "cntxt", cntxt);
+   uvm_config_db#(uvma_obi_memory_cntxt_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ))::set(this, "*", "cntxt", cntxt);
    mstr_mp = cntxt.vif.active_mstr_mp;
    slv_mp  = cntxt.vif.active_slv_mp ;
 
@@ -304,7 +368,7 @@ task uvma_obi_memory_drv_c::drv_slv_gnt();
 
          // In case 0 latency was selected, we must go ahead and drive gnt (combinatorial path)
          if (effective_latency == 0) begin
-            slv_mp.drv_slv_cb.gnt <= 1'b1; 
+            slv_mp.drv_slv_cb.gnt <= 1'b1;
             if (cfg.is_1p2_or_higher()) begin
                slv_mp.drv_slv_cb.gntpar <= 1'b0;
             end
@@ -455,6 +519,7 @@ task uvma_obi_memory_drv_c::drv_slv_read_req(ref uvma_obi_memory_slv_seq_item_c 
       slv_mp.drv_slv_cb.rid       <= req.rid;
       slv_mp.drv_slv_cb.err       <= req.err;
       slv_mp.drv_slv_cb.exokay    <= req.exokay;
+      slv_mp.drv_slv_cb.rchk      <= req.rchk;
    end
    for (int unsigned ii=0; ii<cfg.data_width; ii++) begin
       slv_mp.drv_slv_cb.rdata[ii] <= req.rdata[ii];
@@ -479,6 +544,7 @@ task uvma_obi_memory_drv_c::drv_slv_write_req(ref uvma_obi_memory_slv_seq_item_c
       slv_mp.drv_slv_cb.rid       <= req.rid;
       slv_mp.drv_slv_cb.err       <= req.err;
       slv_mp.drv_slv_cb.exokay    <= req.exokay;
+      slv_mp.drv_slv_cb.rchk      <= req.rchk;
    end
    @(slv_mp.drv_slv_cb);
    `uvm_info("OBI_MEMORY_DRV", "drv_slv_write_req FIN", UVM_HIGH)

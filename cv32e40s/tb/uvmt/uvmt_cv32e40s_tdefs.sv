@@ -19,17 +19,4 @@
 `ifndef __UVMT_CV32E40S_TDEFS_SV__
 `define __UVMT_CV32E40S_TDEFS_SV__
 
-
-/**
- * Test Program Type.  See the Verification Strategy for a discussion of this.
- */
-typedef enum {
-              PREEXISTING_SELFCHECKING,
-              PREEXISTING_NOTSELFCHECKING,
-              GENERATED_SELFCHECKING,
-              GENERATED_NOTSELFCHECKING,
-              NO_TEST_PROGRAM
-             } test_program_type;
-
-
 `endif // __UVMT_CV32E40S_TDEFS_SV__

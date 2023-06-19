@@ -1,7 +1,7 @@
 # YAML file to specify a regression testlist
 ---
 # Header
-name: cv32e40s_full
+name: cv32e40s_rel_check
 description: Release regression for CV32E40S
 
 # List of builds
@@ -90,12 +90,6 @@ tests:
     description: CSR instruction assembly test
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=csr_instr_asm
-
-  perf_counters_instructions:
-    build: uvmt_cv32e40s
-    description: Performance counter test
-    dir: cv32e40s/sim/uvmt
-    cmd: make test TEST=perf_counters_instructions
 
   hpmcounter_basic_test:
     build: uvmt_cv32e40s

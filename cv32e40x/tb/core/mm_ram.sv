@@ -75,19 +75,58 @@ module mm_ram
 
     localparam int                        RND_IRQ_ID     = 31;
 
-    localparam int                        MMADDR_PRINT          = 32'h1000_0000;
-    localparam int                        MMADDR_TESTSTATUS     = 32'h2000_0000;
-    localparam int                        MMADDR_EXIT           = 32'h2000_0004;
-    localparam int                        MMADDR_SIGBEGIN       = 32'h2000_0008;
-    localparam int                        MMADDR_SIGEND         = 32'h2000_000C;
-    localparam int                        MMADDR_SIGDUMP        = 32'h2000_0010;
-    localparam int                        MMADDR_TIMERREG       = 32'h1500_0000;
-    localparam int                        MMADDR_TIMERVAL       = 32'h1500_0004;
-    localparam int                        MMADDR_DBG            = 32'h1500_0008;
+    // Map the virtual peripheral registers. See bsp/corev_uvmt.h
+    parameter CV_VP_REGISTER_BASE          = 32'h0080_0000;
+    parameter CV_VP_REGISTER_SIZE          = 32'h0000_1000;
+
+    parameter CV_VP_VIRTUAL_PRINTER_OFFSET = 32'h0000_0000;
+    parameter CV_VP_RANDOM_NUM_OFFSET      = 32'h0000_0040;
+    parameter CV_VP_CYCLE_COUNTER_OFFSET   = 32'h0000_0080;
+    parameter CV_VP_STATUS_FLAGS_OFFSET    = 32'h0000_00c0;
+    parameter CV_VP_FENCEI_TAMPER_OFFSET   = 32'h0000_0100;
+    parameter CV_VP_INTR_TIMER_OFFSET      = 32'h0000_0140;
+    parameter CV_VP_DEBUG_CONTROL_OFFSET   = 32'h0000_0180;
+    parameter CV_VP_OBI_SLV_RESP_OFFSET    = 32'h0000_01c0;
+    parameter CV_VP_SIG_WRITER_OFFSET      = 32'h0000_0200;
+
+    parameter CV_VP_VIRTUAL_PRINTER_BASE   = CV_VP_REGISTER_BASE + CV_VP_VIRTUAL_PRINTER_OFFSET;
+    parameter CV_VP_RANDOM_NUM_BASE        = CV_VP_REGISTER_BASE + CV_VP_RANDOM_NUM_OFFSET;
+    parameter CV_VP_CYCLE_COUNTER_BASE     = CV_VP_REGISTER_BASE + CV_VP_CYCLE_COUNTER_OFFSET;
+    parameter CV_VP_STATUS_FLAGS_BASE      = CV_VP_REGISTER_BASE + CV_VP_STATUS_FLAGS_OFFSET;
+    parameter CV_VP_INTR_TIMER_BASE        = CV_VP_REGISTER_BASE + CV_VP_INTR_TIMER_OFFSET;
+    parameter CV_VP_DEBUG_CONTROL_BASE     = CV_VP_REGISTER_BASE + CV_VP_DEBUG_CONTROL_OFFSET;
+    parameter CV_VP_OBI_SLV_RESP_BASE      = CV_VP_REGISTER_BASE + CV_VP_OBI_SLV_RESP_OFFSET;
+    parameter CV_VP_SIG_WRITER_BASE        = CV_VP_REGISTER_BASE + CV_VP_SIG_WRITER_OFFSET;
+    parameter CV_VP_FENCEI_TAMPER_BASE     = CV_VP_REGISTER_BASE + CV_VP_FENCEI_TAMPER_OFFSET;
+
+    localparam int                        MMADDR_PRINT          = CV_VP_VIRTUAL_PRINTER_BASE;
+    localparam int                        MMADDR_TESTSTATUS     = CV_VP_STATUS_FLAGS_BASE;
+    localparam int                        MMADDR_EXIT           = CV_VP_STATUS_FLAGS_BASE + 32'h0000_0004;
+    localparam int                        MMADDR_SIGBEGIN       = CV_VP_SIG_WRITER_BASE;
+    localparam int                        MMADDR_SIGEND         = CV_VP_SIG_WRITER_BASE + 32'h0000_0004;
+    localparam int                        MMADDR_SIGDUMP        = CV_VP_SIG_WRITER_BASE + 32'h0000_0008;;
+    localparam int                        MMADDR_TIMERREG       = CV_VP_INTR_TIMER_BASE;
+    localparam int                        MMADDR_TIMERVAL       = CV_VP_INTR_TIMER_BASE + 32'h0000_0004;
+    localparam int                        MMADDR_DBG            = CV_VP_DEBUG_CONTROL_BASE;
     localparam int                        MMADDR_RNDSTALL       = 16'h1600;
-    localparam int                        MMADDR_RNDNUM         = 32'h1500_1000;
-    localparam int                        MMADDR_TICKS          = 32'h1500_1004;
-    localparam int                        MMADDR_TICKS_PRINT    = 32'h1500_1008;
+    localparam int                        MMADDR_RNDNUM         = CV_VP_RANDOM_NUM_BASE;
+    localparam int                        MMADDR_TICKS          = CV_VP_CYCLE_COUNTER_BASE;
+    localparam int                        MMADDR_TICKS_PRINT    = CV_VP_CYCLE_COUNTER_BASE + 32'h0000_0004;
+
+    // Old virtual peripheral register map for RI5CY
+    // localparam int                        MMADDR_PRINT          = 32'h1000_0000;
+    // localparam int                        MMADDR_TESTSTATUS     = 32'h2000_0000;
+    // localparam int                        MMADDR_EXIT           = 32'h2000_0004;
+    // localparam int                        MMADDR_SIGBEGIN       = 32'h2000_0008;
+    // localparam int                        MMADDR_SIGEND         = 32'h2000_000C;
+    // localparam int                        MMADDR_SIGDUMP        = 32'h2000_0010;
+    // localparam int                        MMADDR_TIMERREG       = 32'h1500_0000;
+    // localparam int                        MMADDR_TIMERVAL       = 32'h1500_0004;
+    // localparam int                        MMADDR_DBG            = 32'h1500_0008;
+    // localparam int                        MMADDR_RNDSTALL       = 16'h1600;
+    // localparam int                        MMADDR_RNDNUM         = 32'h1500_1000;
+    // localparam int                        MMADDR_TICKS          = 32'h1500_1004;
+    // localparam int                        MMADDR_TICKS_PRINT    = 32'h1500_1008;
 
     // UVM info tags
     localparam string                     MM_RAM_TAG = "MM_RAM";

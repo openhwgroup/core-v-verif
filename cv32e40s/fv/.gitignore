@@ -1,0 +1,7 @@
+jgproject/
+.qverify/
+qverify_ui*
+.visualizer/
+ZinUIStateFile
+formal_*.rpt
+propcheck.db/
