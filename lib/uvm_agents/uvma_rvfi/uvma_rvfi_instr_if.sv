@@ -243,8 +243,8 @@ interface uvma_rvfi_instr_if_t
   logic                             is_store_acc_fault;
   logic [31:0]                      rvfi_mem_addr_word0highbyte;
   logic [31:0]                      rvfi_pc_upperrdata;
-  logic [4*NMEM-1:0]                instr_mem_rmask;
-  logic [4*NMEM-1:0]                instr_mem_wmask;
+  logic [4*NMEM-1:0]                rvfi_mem_rmask_intended;
+  logic [4*NMEM-1:0]                rvfi_mem_wmask_intended;
 
   asm_t instr_asm;
 
@@ -326,8 +326,8 @@ interface uvma_rvfi_instr_if_t
     is_pma_fault        <= is_pma_fault_f();
     is_fencefencei      <= is_fencefencei_f();
     rvfi_mem_addr_word0highbyte <= rvfi_mem_addr_word0highbyte_f();
-    instr_mem_rmask     <= instr_mem_rmask_f();
-    instr_mem_wmask     <= instr_mem_wmask_f();
+    rvfi_mem_rmask_intended     <= rvfi_mem_rmask_intended_f();
+    rvfi_mem_wmask_intended     <= rvfi_mem_wmask_intended_f();
   end
 
   always_comb begin
@@ -335,11 +335,11 @@ interface uvma_rvfi_instr_if_t
   end
 
   always_comb begin
-    is_load_instr = rvfi_valid && |instr_mem_rmask;
+    is_load_instr = rvfi_valid && |rvfi_mem_rmask_intended;
   end
 
   always_comb begin
-    is_store_instr = rvfi_valid && |instr_mem_wmask;
+    is_store_instr = rvfi_valid && |rvfi_mem_wmask_intended;
   end
 
   always_comb begin
@@ -351,7 +351,7 @@ interface uvma_rvfi_instr_if_t
   end
 
   always_comb begin
-    is_mem_act_intended = rvfi_valid  && (|instr_mem_rmask || |instr_mem_wmask);
+    is_mem_act_intended = rvfi_valid  && (|rvfi_mem_rmask_intended || |rvfi_mem_wmask_intended);
   end
 
   always_comb begin
@@ -825,7 +825,7 @@ function automatic logic is_split_datatrans_intended_f();
 endfunction : is_split_datatrans_intended_f
 
 // Shows "intended" version of rvfi_mem_wmask
-function automatic logic [4*NMEM-1:0] instr_mem_rmask_f();
+function automatic logic [4*NMEM-1:0] rvfi_mem_rmask_intended_f();
   logic [NMEM-1:0][3:0] rmask;
   logic [3:0] rlist;
   rlist = rvfi_insn[7:4];
@@ -921,7 +921,7 @@ endfunction
 
 
 // Shows "intended" version of rvfi_mem_wmask
-function automatic logic [4*NMEM-1:0] instr_mem_wmask_f();
+function automatic logic [4*NMEM-1:0] rvfi_mem_wmask_intended_f();
   logic [NMEM-1:0][3:0] wmask;
   logic [3:0] rlist;
   rlist = rvfi_insn[7:4];
