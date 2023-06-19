@@ -75,18 +75,19 @@ VSIM_PMA_INC += +incdir+$(TBSRC_HOME)/uvmt \
                 +incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
 
 VLOG_LDGEN_FLAGS ?= \
-				    -suppress 2577 \
-				    -suppress 2583 \
-				    -suppress 13185 \
-				    -suppress 13314 \
-				    -suppress 13288 \
-        		    -suppress 2181 \
-				    -suppress 13262 \
-				    -timescale "1ns/1ps" \
-				    -sv \
-        		    -mfcu \
-        		    +acc=rb \
-				    $(QUIET)
+                    -suppress 2577 \
+                    -suppress 2720 \
+                    -suppress 2583 \
+                    -suppress 13185 \
+                    -suppress 13314 \
+                    -suppress 13288 \
+                    -suppress 2181 \
+                    -suppress 13262 \
+                    -timescale "1ns/1ps" \
+                    -sv \
+                    -mfcu \
+                    +acc=rb \
+                    $(QUIET)
 
 VOPT_LDGEN_FLAGS ?= \
                     -debugdb \
@@ -102,19 +103,21 @@ VSIM_LDGEN_FLAGS ?= \
 ###############################################################################
 # VLOG (Compilation)
 VLOG_FLAGS    ?= \
-				-suppress 2577 \
-				-suppress 2583 \
-				-suppress 13185 \
-				-suppress 13314 \
-				-suppress 13288 \
-        		-suppress 2181 \
-				-suppress 13262 \
-				-timescale "1ns/1ps" \
-				-sv \
-        		-mfcu \
-        		+acc=rb \
-				$(QUIET) \
-        		-writetoplevels  uvmt_$(CV_CORE_LC)_tb
+                 -suppress 2577 \
+                 -suppress 2720 \
+                 -suppress 2583 \
+                 -suppress 13185 \
+                 -suppress 13314 \
+                 -suppress 13288 \
+                 -suppress 2181 \
+                 -suppress 13262 \
+                 -timescale "1ns/1ps" \
+                 -sv \
+                 -mfcu \
+                 +acc=rb \
+                 $(QUIET) \
+                 -writetoplevels  uvmt_$(CV_CORE_LC)_tb
+
 VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 
 VLOG_FLAGS += $(DPILIB_VLOG_OPT)

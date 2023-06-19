@@ -22,6 +22,7 @@
 `ifndef __UVMT_CV32E20_DUT_WRAP_SV__
 `define __UVMT_CV32E20_DUT_WRAP_SV__
 
+import cve2_pkg::*;
 
 /**
  * Wrapper for the CV32E20 RTL DUT.
@@ -29,15 +30,17 @@
  */
 module uvmt_cv32e20_dut_wrap #(
                             // CV32E20 parameters.  See User Manual.
-                            parameter PULP_XPULP          =  0,
-                                      PULP_CLUSTER        =  0,
-                                      FPU                 =  0,
-                                      PULP_ZFINX          =  0,
-                                      NUM_MHPMCOUNTERS    =  1,
+                            parameter int unsigned MHPMCounterNum    = 0,
+                            parameter int unsigned MHPMCounterWidth  = 40,
+                            parameter bit          RV32E             = 1'b0,
+                            parameter rv32m_e      RV32M             = RV32MFast,
+                            parameter bit          BranchPredictor   = 1'b0,
+                            parameter int unsigned DmHaltAddr        = 32'h1A110800,
+                            parameter int unsigned DmExceptionAddr   = 32'h1A110808,
                             // Remaining parameters are used by TB components only
-                                      INSTR_ADDR_WIDTH    =  32,
-                                      INSTR_RDATA_WIDTH   =  32,
-                                      RAM_ADDR_WIDTH      =  22
+                            parameter int unsigned INSTR_ADDR_WIDTH  = 32,
+                            parameter int unsigned INSTR_RDATA_WIDTH = 32,
+                            parameter int unsigned RAM_ADDR_WIDTH    = 22
                            )
 
                            (
@@ -52,6 +55,7 @@ module uvmt_cv32e20_dut_wrap #(
                            );
 
     import uvm_pkg::*; // needed for the UVM messaging service (`uvm_info(), etc.)
+    import cve2_pkg::*;
 
     // signals connecting core to memory
     logic                         instr_req;
@@ -109,33 +113,14 @@ module uvmt_cv32e20_dut_wrap #(
 
     // ------------------------------------------------------------------------
     // Instantiate the core
-    ibex_top #(
-               // TODO: work out parameterization for CV32E20 v1.0.0
-               //parameter bit          PMPEnable        = 1'b0,
-               //parameter int unsigned PMPGranularity   = 0,
-               //parameter int unsigned PMPNumRegions    = 4,
-               //parameter int unsigned MHPMCounterNum   = 0,
-               //parameter int unsigned MHPMCounterWidth = 40,
-               //parameter bit          RV32E            = 1'b0,
-               //parameter rv32m_e      RV32M            = RV32MFast,
-               //parameter rv32b_e      RV32B            = RV32BNone,
-               //parameter regfile_e    RegFile          = RegFileFF,
-               //parameter bit          BranchTargetALU  = 1'b0,
-               //parameter bit          WritebackStage   = 1'b0,
-               //parameter bit          ICache           = 1'b0,
-               //parameter bit          ICacheECC        = 1'b0,
-               //parameter bit          BranchPredictor  = 1'b0,
-               //parameter bit          DbgTriggerEn     = 1'b0,
-               //parameter int unsigned DbgHwBreakNum    = 1,
-               //parameter bit          SecureIbex       = 1'b0,
-               //parameter bit          ICacheScramble   = 1'b0,
-               //parameter lfsr_seed_t  RndCnstLfsrSeed  = RndCnstLfsrSeedDefault,
-               //parameter lfsr_perm_t  RndCnstLfsrPerm  = RndCnstLfsrPermDefault,
-               //parameter int unsigned DmHaltAddr       = 32'h1A110800,
-               //parameter int unsigned DmExceptionAddr  = 32'h1A110808,
-               //// Default seed and nonce for scrambling
-               //parameter logic [SCRAMBLE_KEY_W-1:0]   RndCnstIbexKey   = RndCnstIbexKeyDefault,
-               //parameter logic [SCRAMBLE_NONCE_W-1:0] RndCnstIbexNonce = RndCnstIbexNonceDefault
+    cve2_top #(
+               .MHPMCounterNum   (MHPMCounterNum),
+               .MHPMCounterWidth (MHPMCounterWidth),
+               .RV32E            (RV32E),
+               .RV32M            (RV32M),
+               .BranchPredictor  (BranchPredictor),
+               .DmHaltAddr       (DmHaltAddr),
+               .DmExceptionAddr  (DmExceptionAddr)
               )
     cv32e20_top_i
         (
@@ -154,7 +139,6 @@ module uvmt_cv32e20_dut_wrap #(
          .instr_rvalid_i         ( obi_memory_instr_if.rvalid     ),
          .instr_addr_o           ( obi_memory_instr_if.addr       ),
          .instr_rdata_i          ( obi_memory_instr_if.rdata      ),
-         .instr_rdata_intg_i     ( '0                             ),
          .instr_err_i            ( '0                             ),
 
   // Data memory interface
@@ -165,9 +149,7 @@ module uvmt_cv32e20_dut_wrap #(
          .data_be_o              ( obi_memory_data_if.be          ),
          .data_addr_o            ( obi_memory_data_if.addr        ),
          .data_wdata_o           ( obi_memory_data_if.wdata       ),
-         .data_wdata_intg_o      (                                ),
          .data_rdata_i           ( obi_memory_data_if.rdata       ),
-         .data_rdata_intg_i      ( '0                             ),
          .data_err_i             ( '0                             ),
 
   // Interrupt inputs
@@ -177,16 +159,9 @@ module uvmt_cv32e20_dut_wrap #(
          .irq_fast_i             ( '0),
          .irq_nm_i               ( '0),       // non-maskeable interrupt
 
-  // Scrambling Interface
-         .scramble_key_valid_i    ('0),
-         .scramble_key_i          ('0),
-         .scramble_nonce_i        ('0),
-         .scramble_req_o          (),
-
   // Debug Interface
          .debug_req_i             ('0),
          .crash_dump_o            (),
-         .double_fault_seen_o     (),
 
   // RISC-V Formal Interface
   // Does not comply with the coding standards of _i/_o suffixes, but follows
@@ -223,74 +198,8 @@ module uvmt_cv32e20_dut_wrap #(
 
   // CPU Control Signals
          .fetch_enable_i          ('1), // fetch_enable_t
-         .alert_minor_o           (),
-         .alert_major_internal_o  (),
-         .alert_major_bus_o       (),
-         .core_sleep_o            (),
-
-  // DFT bypass controls
-         .scan_rst_ni             (1'b1)
+         .core_sleep_o            ()
         );
-    /*
-    cv32e20_wrapper #(
-                 .PULP_XPULP       (PULP_XPULP),
-                 .PULP_CLUSTER     (PULP_CLUSTER),
-                 .FPU              (FPU),
-                 .PULP_ZFINX       (PULP_ZFINX),
-                 .NUM_MHPMCOUNTERS (NUM_MHPMCOUNTERS)
-                )
-    cv32e20_wrapper_i
-        (
-         .clk_i                  ( clknrst_if.clk                 ),
-         .rst_ni                 ( clknrst_if.reset_n             ),
-
-         .pulp_clock_en_i        ( core_cntrl_if.pulp_clock_en    ),
-         .scan_cg_en_i           ( core_cntrl_if.scan_cg_en       ),
-
-         .boot_addr_i            ( core_cntrl_if.boot_addr        ),
-         .mtvec_addr_i           ( core_cntrl_if.mtvec_addr       ),
-         .dm_halt_addr_i         ( core_cntrl_if.dm_halt_addr     ),
-         .hart_id_i              ( core_cntrl_if.hart_id          ),
-         .dm_exception_addr_i    ( core_cntrl_if.dm_exception_addr),
-
-         .instr_req_o            ( obi_memory_instr_if.req        ), // core to agent
-         .instr_gnt_i            ( obi_memory_instr_if.gnt        ), // agent to core
-         .instr_rvalid_i         ( obi_memory_instr_if.rvalid     ),
-         .instr_addr_o           ( obi_memory_instr_if.addr       ),
-         .instr_rdata_i          ( obi_memory_instr_if.rdata      ),
-
-         .data_req_o             ( obi_memory_data_if.req         ),
-         .data_gnt_i             ( obi_memory_data_if.gnt         ),
-         .data_rvalid_i          ( obi_memory_data_if.rvalid      ),
-         .data_we_o              ( obi_memory_data_if.we          ),
-         .data_be_o              ( obi_memory_data_if.be          ),
-         .data_addr_o            ( obi_memory_data_if.addr        ),
-         .data_wdata_o           ( obi_memory_data_if.wdata       ),
-         .data_rdata_i           ( obi_memory_data_if.rdata       ),
-
-         // APU not verified in cv32e20 (future work)
-         .apu_req_o              (                                ),
-         .apu_gnt_i              ( 1'b0                           ),
-         .apu_operands_o         (                                ),
-         .apu_op_o               (                                ),
-         .apu_flags_o            (                                ),
-         .apu_rvalid_i           ( 1'b0                           ),
-         .apu_result_i           ( {32{1'b0}}                     ),
-         .apu_flags_i            ( {5{1'b0}}                      ), // APU_NUSFLAGS_CPU
-
-         .irq_i                  ( irq_uvma                       ),
-         .irq_ack_o              ( irq_ack                        ),
-         .irq_id_o               ( irq_id                         ),
-
-         .debug_req_i            ( debug_req_uvma                 ),
-         .debug_havereset_o      ( debug_havereset                ),
-         .debug_running_o        ( debug_running                  ),
-         .debug_halted_o         ( debug_halted                   ),
-
-         .fetch_enable_i         ( core_cntrl_if.fetch_en         ),
-         .core_sleep_o           ( core_status_if.core_busy       )
-        ); // cv32e20_wrapper_i
-    */
 
 
 endmodule : uvmt_cv32e20_dut_wrap

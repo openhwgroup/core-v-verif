@@ -34,24 +34,6 @@ module uvmt_cv32e20_tb;
    import uvmt_cv32e20_pkg::*;
    import uvme_cv32e20_pkg::*;
 
-   // DUT (core) parameters: refer to the CV2E40P User Manual.
-`ifdef NO_PULP
-   parameter int CORE_PARAM_PULP_XPULP       = 0;
-   parameter int CORE_PARAM_PULP_CLUSTER     = 0;
-   parameter int CORE_PARAM_PULP_ZFINX       = 0;
-`else
-   `ifdef PULP
-      parameter int CORE_PARAM_PULP_XPULP       = 1;
-      parameter int CORE_PARAM_PULP_CLUSTER     = 0;
-      parameter int CORE_PARAM_PULP_ZFINX       = 0;
-   `else
-      // If you don't explicitly specify either NO_PULP or PULP, you get NO_PULP
-      parameter int CORE_PARAM_PULP_XPULP       = 0;
-      parameter int CORE_PARAM_PULP_CLUSTER     = 0;
-      parameter int CORE_PARAM_PULP_ZFINX       = 0;
-   `endif
-`endif
-
 `ifdef SET_NUM_MHPMCOUNTERS
    parameter int CORE_PARAM_NUM_MHPMCOUNTERS = `SET_NUM_MHPMCOUNTERS;
 `else
@@ -110,14 +92,7 @@ module uvmt_cv32e20_tb;
    * a few mods to bring unused ports from the CORE to this level using SV interfaces.
    */
    uvmt_cv32e20_dut_wrap  #(
-                             .PULP_XPULP        (CORE_PARAM_PULP_XPULP),
-                             .PULP_CLUSTER      (CORE_PARAM_PULP_CLUSTER),
-                             .PULP_ZFINX        (CORE_PARAM_PULP_ZFINX),
-                             .NUM_MHPMCOUNTERS  (CORE_PARAM_NUM_MHPMCOUNTERS),
-                             .INSTR_ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
-                             .INSTR_RDATA_WIDTH (ENV_PARAM_INSTR_DATA_WIDTH),
-                             .RAM_ADDR_WIDTH    (ENV_PARAM_RAM_ADDR_WIDTH)
-                            )
+                           )
                             dut_wrap (.*);
 
   bind uvmt_cv32e20_dut_wrap
@@ -466,12 +441,6 @@ module uvmt_cv32e20_tb;
     */
    initial begin : test_bench_entry_point
 
-     `ifdef PULP
-       `ifdef NO_PULP
-         `uvm_fatal("CV32E20 TB", "PULP and NO_PULP macros are mutually exclusive.")
-       `endif
-     `endif
-
      // Specify time format for simulation (units_number, precision_number, suffix_string, minimum_field_width)
      $timeformat(-9, 3, " ns", 8);
 
@@ -501,13 +470,8 @@ module uvmt_cv32e20_tb;
      uvm_config_db#(bit[31:0])::set(.cntxt(null), .inst_name("*"), .field_name("evalue"), .value(32'h00000000));
 
      // DUT and ENV parameters
-     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_XPULP"),       .value(CORE_PARAM_PULP_XPULP)      );
-     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_CLUSTER"),     .value(CORE_PARAM_PULP_CLUSTER)    );
-     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_ZFINX"),       .value(CORE_PARAM_PULP_ZFINX)      );
-     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_NUM_MHPMCOUNTERS"), .value(CORE_PARAM_NUM_MHPMCOUNTERS));
-     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_ADDR_WIDTH"),  .value(ENV_PARAM_INSTR_ADDR_WIDTH) );
-     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_DATA_WIDTH"),  .value(ENV_PARAM_INSTR_DATA_WIDTH) );
-     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_RAM_ADDR_WIDTH"),    .value(ENV_PARAM_RAM_ADDR_WIDTH)   );
+     // TODO: the E40P env uses this, but it is not clear that the E20 ever will.
+     //uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_XPULP"),       .value(CORE_PARAM_PULP_XPULP)      );
 
      // Run test
      uvm_top.enable_print_topology = 0; // ENV coders enable this as a debug aid
