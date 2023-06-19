@@ -846,7 +846,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     (rvfi_if.is_instr_acc_fault_pmp != is_access_allowed)  ||
     (rvfi_if.is_instr_acc_fault_pmp && denial_reasons)  ||
     rvfi_if.is_dbg_trg
-    //TODO:INFO:silabs-robin Would like "fault!=allowed". Alas, impractical.
+    //Would like "fault!=allowed". Alas, impractical.
   ) else `uvm_error(info_tag, "RVFI PMP faults must match prediction");
 
   a_instr_nofault_nopclower: assert property (
