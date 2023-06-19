@@ -241,6 +241,8 @@ interface uvma_rvfi_instr_if_t
   logic                             is_exception;
   logic                             is_load_acc_fault;
   logic                             is_store_acc_fault;
+  logic                             is_deprioritized_load_acc_fault;
+  logic                             is_deprioritized_store_acc_fault;
   logic [31:0]                      rvfi_mem_addr_word0highbyte;
   logic [31:0]                      rvfi_pc_upperrdata;
   logic [4*NMEM-1:0]                rvfi_mem_rmask_intended;
@@ -328,6 +330,8 @@ interface uvma_rvfi_instr_if_t
     rvfi_mem_addr_word0highbyte <= rvfi_mem_addr_word0highbyte_f();
     rvfi_mem_rmask_intended     <= rvfi_mem_rmask_intended_f();
     rvfi_mem_wmask_intended     <= rvfi_mem_wmask_intended_f();
+    is_deprioritized_load_acc_fault  <= is_deprioritized_exception_f({21'd 0, EXC_CAUSE_LOAD_ACC_FAULT});
+    is_deprioritized_store_acc_fault <= is_deprioritized_exception_f({21'd 0, EXC_CAUSE_STORE_ACC_FAULT});
   end
 
   always_comb begin
@@ -1008,50 +1012,41 @@ function automatic logic [4*NMEM-1:0] rvfi_mem_wmask_intended_f();
   return mem_mask_t'(wmask);
 endfunction
 
-function automatic logic[31:0] get_max_exception_cause (
+function automatic logic[31:0] get_max_exception_cause_f (
   logic[31:0] exc_a,
   logic[31:0] exc_b
 );
-
-  case (1)
-    EXC_CAUSE_INSTR_ACC_FAULT inside {exc_a, exc_b}:
+  if (EXC_CAUSE_INSTR_ACC_FAULT inside {exc_a, exc_b}) begin
       return EXC_CAUSE_INSTR_ACC_FAULT;
-
-    EXC_CAUSE_INSTR_INTEGRITY_FAULT inside {exc_a, exc_b}:
+  end else if (EXC_CAUSE_INSTR_INTEGRITY_FAULT inside {exc_a, exc_b}) begin
       return EXC_CAUSE_INSTR_INTEGRITY_FAULT;
-
-    EXC_CAUSE_INSTR_BUS_FAULT inside {exc_a, exc_b}:
+  end else if (EXC_CAUSE_INSTR_BUS_FAULT inside {exc_a, exc_b}) begin
       return EXC_CAUSE_INSTR_BUS_FAULT;
-
-    EXC_CAUSE_ILLEGAL_INSTR inside {exc_a, exc_b}:
+  end else if (EXC_CAUSE_ILLEGAL_INSTR inside {exc_a, exc_b}) begin
       return EXC_CAUSE_ILLEGAL_INSTR;
-
-    EXC_CAUSE_ENV_CALL_U inside {exc_a, exc_b}:
+  end else if (EXC_CAUSE_ENV_CALL_U inside {exc_a, exc_b}) begin
       return EXC_CAUSE_ENV_CALL_U;
-
-    EXC_CAUSE_ENV_CALL_M inside {exc_a, exc_b}:
+  end else if (EXC_CAUSE_ENV_CALL_M inside {exc_a, exc_b}) begin
       return EXC_CAUSE_ENV_CALL_M;
-
-    EXC_CAUSE_BREAKPOINT inside {exc_a, exc_b}:
+  end else if (EXC_CAUSE_BREAKPOINT inside {exc_a, exc_b}) begin
       return EXC_CAUSE_BREAKPOINT;
-
-    EXC_CAUSE_STORE_ACC_FAULT inside {exc_a, exc_b}:
+  end else if (EXC_CAUSE_STORE_ACC_FAULT inside {exc_a, exc_b}) begin
       return EXC_CAUSE_STORE_ACC_FAULT;
-
-    EXC_CAUSE_LOAD_ACC_FAULT inside {exc_a, exc_b}:
+  end else if (EXC_CAUSE_LOAD_ACC_FAULT inside {exc_a, exc_b}) begin
       return EXC_CAUSE_LOAD_ACC_FAULT;
-  endcase
+  end else begin
+    `uvm_error(info_tag, "unhandled 'max' exception cause");
+    return '0;
+  end
+endfunction : get_max_exception_cause_f
 
-  `uvm_error(info_tag, "unhandled 'max' exception cause");
-endfunction : get_max_exception_cause
-
-function automatic logic is_deprioritized_exception (logic[31:0] exc_cause);
+function automatic logic is_deprioritized_exception_f (logic[31:0] exc_cause);
   return (
     rvfi_valid  &&
     rvfi_trap.exception  &&
     (rvfi_trap.exception_cause != exc_cause)  &&
     (rvfi_trap.exception_cause ==
-      get_max_exception_cause({26'd0, rvfi_trap.exception_cause}, exc_cause)
+      get_max_exception_cause_f({26'd0, rvfi_trap.exception_cause}, exc_cause)
     )
   );
 endfunction

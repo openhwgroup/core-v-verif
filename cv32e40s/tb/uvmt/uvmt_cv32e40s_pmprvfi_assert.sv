@@ -800,7 +800,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     rvfi_trap.exception
     |->
     (rvfi_trap.exception_cause == EXC_CAUSE_LOAD_ACC_FAULT)  ^
-    rvfi_if.is_deprioritized_exception({21'd 0, EXC_CAUSE_LOAD_ACC_FAULT})
+    rvfi_if.is_deprioritized_load_acc_fault
   ) else `uvm_error(info_tag, "on load denied the cause must match");
 
   a_noloadstore_cause_store: assert property (
@@ -809,7 +809,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     rvfi_trap.exception
     |->
     (rvfi_trap.exception_cause == EXC_CAUSE_STORE_ACC_FAULT)  ^
-    rvfi_if.is_deprioritized_exception({21'd 0, EXC_CAUSE_STORE_ACC_FAULT})
+    rvfi_if.is_deprioritized_store_acc_fault
   ) else `uvm_error(info_tag, "on store denied the cause must match");
 
   a_noloadstore_splittrap: assert property (
