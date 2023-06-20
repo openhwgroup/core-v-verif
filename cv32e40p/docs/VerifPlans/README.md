@@ -8,7 +8,7 @@ Below are two different chapters describing verification plans status and direct
 # CV32E40P (V2) Verification Plans
 
 ## Short verification methodology introduction
-For CV32E40P**v2** verification, the formal verification methodology has been choosen over the stimuli-based simulation that was done for version one of the core. However, full verification closure is not feasible using only formal verification due to complexity of specific scenarios. All these specific uncoverable scenarios from formal verification are then exercised by stimuli-based simulation using a reference model of the core. These scenarios along with formal assertions are described inside verifications plans, for which details are given below. Regarding already available v1 plans, their re-use status is described in table
+For CV32E40P**v2** verification, the formal verification methodology has been choosen over the stimuli-based simulation that was done for version one of the core. However, full verification closure is not feasible using only formal verification due to complexity of specific scenarios. All these specific uncoverable scenarios from formal verification are then exercised by stimuli-based simulation using a reference model of the core. These scenarios along with formal assertions are described inside verifications plans, for which details are given in a table below. Regarding already available v1 plans, their re-use or not is specified in this table.
 
 ## Verification Plan Status
 
