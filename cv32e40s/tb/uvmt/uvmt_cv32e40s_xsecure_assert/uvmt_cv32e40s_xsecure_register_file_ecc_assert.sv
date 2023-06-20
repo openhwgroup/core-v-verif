@@ -108,7 +108,7 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
 
   generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
 
-    a_xsecure_rf_gpr_not_all_0s_or_1s: assert property (
+    a_xsecure_rf_ecc_gpr_not_all_0s_or_1s: assert property (
       gpr_mem[gpr_addr] != '0
       && gpr_mem[gpr_addr] != '1
     ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d is all %0s.\n", gpr_addr, gpr_mem[gpr_addr][0]));
