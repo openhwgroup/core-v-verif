@@ -510,8 +510,12 @@ module uvmt_cv32e40p_tb;
     .apu_gnt(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.apu_gnt_i),
     .apu_busy(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.apu_busy_i),
     .apu_op(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.apu_op_o),
+    .apu_rvalid_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.apu_rvalid_i),
+    .apu_perf_wb_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.apu_perf_wb_o),
     .id_stage_apu_op_ex_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.apu_op_ex_o),
     .id_stage_apu_en_ex_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.apu_en_ex_o),
+    .regfile_waddr_wb_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.regfile_waddr_wb_o),
+    .regfile_we_wb_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.regfile_we_wb_o),
     .regfile_alu_waddr_ex_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.regfile_alu_waddr_fw_o),
     .regfile_alu_we_ex_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.regfile_alu_we_fw_o)
   );
