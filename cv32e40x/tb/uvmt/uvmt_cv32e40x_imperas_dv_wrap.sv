@@ -219,7 +219,7 @@
 ////////////////////////////////////////////////////////////////////////////
 `ifdef USE_IMPERASDV
 
-`include "rvvi/imperasDV.svh" // located in $IMPERAS_HOME/ImpProprietary/include/host
+`include "idv/idv.svh" // located in $IMPERAS_HOME/ImpProprietary/include/host
 
 module uvmt_cv32e40x_imperas_dv_wrap
   import uvm_pkg::*;

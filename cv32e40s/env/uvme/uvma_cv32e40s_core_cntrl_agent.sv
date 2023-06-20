@@ -225,8 +225,6 @@ function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
      DEBUG_VERSION_0_14_0: $fwrite(fh, $sformatf("--override %s/debug_version=0.14.0-DRAFT\n", refpath));
      DEBUG_VERSION_1_0_0: begin
        $fwrite(fh, $sformatf("--override %s/debug_version=1.0.0-STABLE\n", refpath));
-       // TODO silabs-hfegran: Update this if/when ISS changes the default setting
-       $fwrite(fh, $sformatf("--override %s/no_hit=F\n",refpath));
      end
    endcase
 

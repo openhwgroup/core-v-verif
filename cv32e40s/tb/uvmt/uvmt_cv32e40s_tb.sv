@@ -1392,11 +1392,10 @@ module uvmt_cv32e40s_tb;
         .lrfodi_bus_req (core_i.load_store_unit_i.buffer_trans_valid),
         .lrfodi_bus_gnt (core_i.load_store_unit_i.buffer_trans_ready),
 
-        .req_is_store (core_i.load_store_unit_i.bus_trans.we),
-        .req_instr_integrity (core_i.if_stage_i.mpu_i.bus_trans_integrity),
-        .req_data_integrity (core_i.load_store_unit_i.mpu_i.bus_trans_integrity),
+        .req_is_store (core_i.m_c_obi_data_if.req_payload.we),
+        .req_instr_integrity (core_i.m_c_obi_instr_if.req_payload.integrity),
+        .req_data_integrity (core_i.m_c_obi_data_if.req_payload.integrity),
         .instr_req_pc ({core_i.m_c_obi_instr_if.req_payload.addr[31:2], 2'b0})
-
     );
 
     bind cv32e40s_wrapper
@@ -2068,6 +2067,12 @@ module uvmt_cv32e40s_tb;
             $display("    --------------------------------------------------------");
          end
       end
+      // If there are any liveness assertions still pending at this time,
+      // kill all of them to prevent false failures after end of test.
+      // Actual failures _should_ have been caught and logged at this time
+      // This is needed as the core is not necessarily terminated by software,
+      // and there may be outstanding transactions.
+      $assertkill();
    end
    `endif
 
