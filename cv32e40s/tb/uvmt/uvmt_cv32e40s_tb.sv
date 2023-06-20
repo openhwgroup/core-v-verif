@@ -1328,10 +1328,33 @@ module uvmt_cv32e40s_tb;
     );
 
 
+    logic [31:0] tdata1_array[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS+1];
+    logic [31:0] tdata2_array[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS+1];
+
+    logic [31:0] tdata_array_0[1];
+    assign tdata_array_0[0] = '0;
+
+    if (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS > 0) begin
+      for (genvar t = 0; t < uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
+        assign tdata1_array[t] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.debug_triggers_i.gen_triggers.tdata1_rdata[t];
+        assign tdata2_array[t] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.debug_triggers_i.gen_triggers.tdata2_rdata[t];
+      end
+      assign tdata1_array[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS] = '0;
+      assign tdata2_array[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS] = '0;
+
+    end else begin
+      assign tdata1_array = tdata_array_0;
+      assign tdata2_array = tdata_array_0;
+    end
+
+
     bind cv32e40s_wrapper
       uvmt_cv32e40s_support_logic_module_i_if_t support_logic_module_i_if (
         .clk     (core_i.clk),
         .rst_n (rst_ni),
+
+        .tdata1_array (uvmt_cv32e40s_tb.tdata1_array),
+        .tdata2_array (uvmt_cv32e40s_tb.tdata2_array),
 
         .ctrl_fsm_o (core_i.controller_i.controller_fsm_i.ctrl_fsm_o),
 
@@ -1568,7 +1591,7 @@ module uvmt_cv32e40s_tb;
 
     // Support Logic
 
-    bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi(rvfi_instr_if),
+    bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi (rvfi_instr_if),
                                                                       .in_support_if (support_logic_module_i_if.driver_mp),
                                                                       .out_support_if (support_logic_module_o_if.master_mp)
                                                                       );
@@ -1592,36 +1615,18 @@ module uvmt_cv32e40s_tb;
                                                                     );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_triggers_assert_cov debug_trigger_assert_i(
-                                                                    //TODO: remove what is no longer used
-                                                                    .wb_valid (core_i.wb_stage_i.wb_valid_o),
-                                                                    .wb_exception_code (core_i.controller_i.controller_fsm_i.exception_cause_wb),
-                                                                    .wb_tdata1 (core_i.cs_registers_i.tdata1_rdata),
-                                                                    .wb_tdata2 (core_i.cs_registers_i.tdata2_rdata),
+                                                                    .tdata1_array (uvmt_cv32e40s_tb.tdata1_array),
                                                                     .priv_lvl (core_i.priv_lvl),
-                                                                    .wb_dbg_mode (rvfi_i.debug_mode[3]),
-                                                                    .wb_last_op (rvfi_i.last_op_wb_i),
-                                                                    .wb_tselect (rvfi_i.rvfi_csr_rdata_d.tselect),
-                                                                    .wb_exception (core_i.controller_i.controller_fsm_i.exception_in_wb),
-                                                                    .debug_mode_q (core_i.controller_i.controller_fsm_i.debug_mode_q),
-                                                                    .if_instr (core_i.if_stage_i.prefetch_unit_i.alignment_buffer_i.instr),
-                                                                    .id_instr (core_i.if_id_pipe.instr.bus_resp.rdata),
-                                                                    .ex_instr (core_i.id_ex_pipe.instr.bus_resp.rdata),
-                                                                    .wb_instr (core_i.ex_wb_pipe.instr.bus_resp.rdata),
-
                                                                     .rvfi_if (rvfi_instr_if),
                                                                     .clknrst_if (dut_wrap.clknrst_if),
                                                                     .support_if (support_logic_module_o_if.slave_mp),
-
-                                                                    .tdata1 (rvfi_csr_tdata1_if),
-                                                                    .tdata2 (rvfi_csr_tdata2_if),
-                                                                    .tinfo (rvfi_csr_tinfo_if),
-                                                                    .tselect (rvfi_csr_tselect_if),
-                                                                    .dcsr (rvfi_csr_dcsr_if),
-                                                                    .dpc (rvfi_csr_dpc_if)
+                                                                    .tdata1_if (rvfi_csr_tdata1_if),
+                                                                    .tdata2_if (rvfi_csr_tdata2_if),
+                                                                    .tinfo_if (rvfi_csr_tinfo_if),
+                                                                    .tselect_if (rvfi_csr_tselect_if),
+                                                                    .dcsr_if (rvfi_csr_dcsr_if),
+                                                                    .dpc_if (rvfi_csr_dpc_if)
                                                                     );
-
-
-
 
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if),
                                                               .support_if(support_logic_module_o_if.slave_mp)

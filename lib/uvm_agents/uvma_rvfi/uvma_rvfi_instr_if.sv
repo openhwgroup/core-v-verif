@@ -763,56 +763,57 @@ function automatic logic [4*NMEM-1:0] instr_mem_rmask_f();
     case (rlist)
       5:  begin
         rmask[1:0] = '1;
-        rmask[12:2] = '0;
+        rmask[NMEM-1:2] = '0;
       end
 
       6:  begin
         rmask[2:0] = '1;
-        rmask[12:3] = '0;
+        rmask[NMEM-1:3] = '0;
       end
 
       7:  begin
         rmask[3:0] = '1;
-        rmask[12:4] = '0;
+        rmask[NMEM-1:4] = '0;
       end
 
       8:  begin
         rmask[4:0] = '1;
-        rmask[12:5] = '0;
+        rmask[NMEM-1:5] = '0;
       end
 
       9:  begin
         rmask[5:0] = '1;
-        rmask[12:6] = '0;
+        rmask[NMEM-1:6] = '0;
       end
 
       10: begin
         rmask[6:0] = '1;
-        rmask[12:7] = '0;
+        rmask[NMEM-1:7] = '0;
       end
 
       11: begin
         rmask[7:0] = '1;
-        rmask[12:8] = '0;
+        rmask[NMEM-1:8] = '0;
       end
 
       12: begin
         rmask[8:0] = '1;
-        rmask[12:9] = '0;
+        rmask[NMEM-1:9] = '0;
       end
 
       13: begin
         rmask[9:0] = '1;
-        rmask[12:10] = '0;
+        rmask[NMEM-1:10] = '0;
       end
 
       14: begin
         rmask[10:0] = '1;
-        rmask[12:11] = '0;
+        rmask[NMEM-1:11] = '0;
       end
 
       15: begin //Does two extra memory accesses
         rmask[12:0] = '1;
+        rmask[NMEM-1:13] = '1;
       end
 
       default: rmask = '0;
@@ -851,37 +852,37 @@ function automatic logic [4*NMEM-1:0] instr_mem_wmask_f();
     case (rlist)
       5:  begin
         wmask[1:0] = '1;
-        wmask[12:2] = '0;
+        wmask[NMEM-1:2] = '0;
       end
 
       6:  begin
         wmask[2:0] = '1;
-        wmask[12:3] = '0;
+        wmask[NMEM-1:3] = '0;
       end
 
       7:  begin
         wmask[3:0] = '1;
-        wmask[12:4] = '0;
+        wmask[NMEM-1:4] = '0;
       end
 
       8:  begin
         wmask[4:0] = '1;
-        wmask[12:5] = '0;
+        wmask[NMEM-1:5] = '0;
       end
 
       9:  begin
         wmask[5:0] = '1;
-        wmask[12:6] = '0;
+        wmask[NMEM-1:6] = '0;
       end
 
       10: begin
         wmask[6:0] = '1;
-        wmask[12:7] = '0;
+        wmask[NMEM-1:7] = '0;
       end
 
       11: begin
         wmask[7:0] = '1;
-        wmask[12:8] = '0;
+        wmask[NMEM-1:8] = '0;
       end
 
       12: begin
@@ -891,16 +892,17 @@ function automatic logic [4*NMEM-1:0] instr_mem_wmask_f();
 
       13: begin
         wmask[9:0] = '1;
-        wmask[12:10] = '0;
+        wmask[NMEM-1:10] = '0;
       end
 
       14: begin
         wmask[10:0] = '1;
-        wmask[12:11] = '0;
+        wmask[NMEM-1:11] = '0;
       end
 
       15: begin //Does two extra memory accesses
         wmask[12:0] = '1;
+        wmask[NMEM-1:13] = '1;
       end
 
       default: wmask = '0;
