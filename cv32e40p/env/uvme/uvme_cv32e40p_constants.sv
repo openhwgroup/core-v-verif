@@ -55,6 +55,55 @@ parameter CV_VP_OBI_SLV_RESP_BASE      = CV_VP_REGISTER_BASE + CV_VP_OBI_SLV_RES
 parameter CV_VP_SIG_WRITER_BASE        = CV_VP_REGISTER_BASE + CV_VP_SIG_WRITER_OFFSET;
 parameter CV_VP_FENCEI_TAMPER_BASE     = CV_VP_REGISTER_BASE + CV_VP_FENCEI_TAMPER_OFFSET;
 
+parameter TB_OPCODE_SYSTEM             =    7'h73;
+parameter TB_OPCODE_FENCE              =    7'h0f;
+parameter TB_OPCODE_OP                 =    7'h33;
+parameter TB_OPCODE_OPIMM              =    7'h13;
+parameter TB_OPCODE_STORE              =    7'h23;
+parameter TB_OPCODE_LOAD               =    7'h03;
+parameter TB_OPCODE_BRANCH             =    7'h63;
+parameter TB_OPCODE_JALR               =    7'h67;
+parameter TB_OPCODE_JAL                =    7'h6f;
+parameter TB_OPCODE_AUIPC              =    7'h17;
+parameter TB_OPCODE_LUI                =    7'h37;
+parameter TB_OPCODE_AMO                =    7'h2F;
+
+parameter TB_OPCODE_OP_FP              =    7'h53;
+parameter TB_OPCODE_OP_FMADD           =    7'h43;
+parameter TB_OPCODE_OP_FNMADD          =    7'h4f;
+parameter TB_OPCODE_OP_FMSUB           =    7'h47;
+parameter TB_OPCODE_OP_FNMSUB          =    7'h4b;
+parameter TB_OPCODE_STORE_FP           =    7'h27;
+parameter TB_OPCODE_LOAD_FP            =    7'h07;
+
+parameter INSTR_FMADD               =    {5'b?, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FMADD};
+parameter INSTR_FMSUB               =    {5'b?, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FMSUB};
+parameter INSTR_FNMSUB              =    {5'b?, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FNMSUB};
+parameter INSTR_FNMADD              =    {5'b?, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FNMADD};
+parameter INSTR_FADD                =    {5'b00000, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FSUB                =    {5'b00001, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FMUL                =    {5'b00010, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FDIV                =    {5'b00011, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FSQRT               =    {5'b01011, 2'b00, 5'b0, 5'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FSGNJS              =    {5'b00100, 2'b00, 10'b?, 3'b000, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FSGNJNS             =    {5'b00100, 2'b00, 10'b?, 3'b001, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FSGNJXS             =    {5'b00100, 2'b00, 10'b?, 3'b010, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FMIN                =    {5'b00101, 2'b00, 10'b?, 3'b000, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FMAX                =    {5'b00101, 2'b00, 10'b?, 3'b001, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FCVTWS              =    {5'b11000, 2'b00, 5'b0, 5'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FCVTWUS             =    {5'b11000, 2'b00, 5'b1, 5'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FMVXS               =    {5'b11100, 2'b00, 5'b0, 5'b?, 3'b000, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FEQS                =    {5'b10100, 2'b00, 10'b?, 3'b010, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FLTS                =    {5'b10100, 2'b00, 10'b?, 3'b001, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FLES                =    {5'b10100, 2'b00, 10'b?, 3'b000, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FCLASS              =    {5'b11100, 2'b00, 5'b0, 5'b?, 3'b001, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FCVTSW              =    {5'b11010, 2'b00, 5'b0, 5'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FCVTSWU             =    {5'b11010, 2'b00, 5'b1, 5'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FMVSX               =    {5'b11110, 2'b00, 5'b0, 5'b?, 3'b000, 5'b?, TB_OPCODE_OP_FP};
+parameter INSTR_FLW                 =    {12'b?,5'b?,3'b010,5'b?,TB_OPCODE_LOAD_FP};
+parameter INSTR_FSW                 =    {7'b?,5'b?,5'b?,3'b010,5'b?,TB_OPCODE_STORE_FP};
+
+
 //XPULP instructions custom opcodes
 parameter OPCODE_CUSTOM_0 = 7'h0b;
 parameter OPCODE_CUSTOM_1 = 7'h2b;
