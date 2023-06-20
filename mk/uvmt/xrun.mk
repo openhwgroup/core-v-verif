@@ -103,7 +103,10 @@ endif
 # ADV_DEBUG=YES will enable Indago, default is to use SimVision
 ifeq ($(call IS_YES,$(GUI)),YES)
 XRUN_GUI += -gui
-XRUN_USER_COMPILE_ARGS += -linedebug
+ifeq ($(call IS_YES,$(SRC_DEBUG)),YES)
+XRUN_USER_COMPILE_ARGS += -linedebug -uvmlinedebug -enable_tpe -classlinedebug
+XRUN_USER_RUN_FLAGS += -linedebug -uvmlinedebug -enable_tpe -classlinedebug
+endif
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
 XRUN_GUI += -indago
 endif
