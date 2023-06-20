@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Copyright 2020,2022 OpenHW Group
+// Copyright 2020,2023 OpenHW Group
 // Copyright 2020 Datum Technology Corporation
 // Copyright 2020 Silicon Labs, Inc.
 //
@@ -22,7 +22,8 @@
 `ifndef __UVMT_CV32E20_DUT_WRAP_SV__
 `define __UVMT_CV32E20_DUT_WRAP_SV__
 
-import cve2_pkg::*;
+import uvm_pkg::*;  // needed for the UVM messaging service (`uvm_info(), etc.)
+import cve2_pkg::*; // definitions of enumerated types used by cve2
 
 /**
  * Wrapper for the CV32E20 RTL DUT.
@@ -54,8 +55,6 @@ module uvmt_cv32e20_dut_wrap #(
                             uvma_obi_memory_if           obi_memory_data_if
                            );
 
-    import uvm_pkg::*; // needed for the UVM messaging service (`uvm_info(), etc.)
-    import cve2_pkg::*;
 
     // signals connecting core to memory
     logic                         instr_req;
