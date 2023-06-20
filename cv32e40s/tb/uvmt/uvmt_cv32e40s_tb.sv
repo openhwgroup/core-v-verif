@@ -1369,11 +1369,10 @@ module uvmt_cv32e40s_tb;
         .lrfodi_bus_req (core_i.load_store_unit_i.buffer_trans_valid),
         .lrfodi_bus_gnt (core_i.load_store_unit_i.buffer_trans_ready),
 
-        .req_is_store (core_i.load_store_unit_i.bus_trans.we),
-        .req_instr_integrity (core_i.if_stage_i.mpu_i.bus_trans_integrity),
-        .req_data_integrity (core_i.load_store_unit_i.mpu_i.bus_trans_integrity),
+        .req_is_store (core_i.m_c_obi_data_if.req_payload.we),
+        .req_instr_integrity (core_i.m_c_obi_instr_if.req_payload.integrity),
+        .req_data_integrity (core_i.m_c_obi_data_if.req_payload.integrity),
         .instr_req_pc ({core_i.m_c_obi_instr_if.req_payload.addr[31:2], 2'b0})
-
     );
 
     bind cv32e40s_wrapper
