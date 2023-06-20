@@ -34,23 +34,27 @@ module uvmt_cv32e40p_tb;
    import cv32e40p_pkg::*;
    import uvmt_cv32e40p_pkg::*;
    import uvme_cv32e40p_pkg::*;
-
+   `ifdef USE_ISS
+   `ifndef FORMAL
+   import rvviApiPkg::*;
+   `endif
+   `endif
    // DUT (core) parameters: refer to the CV32E40P User Manual.
 `ifdef NO_PULP
-   parameter int CORE_PARAM_PULP_XPULP           = 0;
-   parameter int CORE_PARAM_PULP_CLUSTER         = 0;
+   parameter int CORE_PARAM_COREV_PULP           = 0;
+   parameter int CORE_PARAM_COREV_CLUSTER        = 0;
    parameter int CORE_PARAM_FPU                  = 0;
    parameter int CORE_PARAM_FPU_ADDMUL_LAT       = 0;
    parameter int CORE_PARAM_FPU_OTHERS_LAT       = 0;
-   parameter int CORE_PARAM_PULP_ZFINX           = 0;
+   parameter int CORE_PARAM_ZFINX                = 0;
 `else
    `ifdef PULP
-      parameter int CORE_PARAM_PULP_XPULP        = 1;
+      parameter int CORE_PARAM_COREV_PULP        = 1;
 
       `ifdef CLUSTER
-         parameter int CORE_PARAM_PULP_CLUSTER   = 1;
+         parameter int CORE_PARAM_COREV_CLUSTER  = 1;
       `else
-         parameter int CORE_PARAM_PULP_CLUSTER   = 0;
+         parameter int CORE_PARAM_COREV_CLUSTER  = 0;
       `endif
 
       `ifdef FPU
@@ -66,25 +70,25 @@ module uvmt_cv32e40p_tb;
             parameter int CORE_PARAM_FPU_OTHERS_LAT = 0;
          `endif
          `ifdef ZFINX
-            parameter int CORE_PARAM_PULP_ZFINX  = 1;
+            parameter int CORE_PARAM_ZFINX       = 1;
          `else
-            parameter int CORE_PARAM_PULP_ZFINX  = 0;
+            parameter int CORE_PARAM_ZFINX       = 0;
          `endif
       `else
          parameter int CORE_PARAM_FPU            = 0;
          parameter int CORE_PARAM_FPU_ADDMUL_LAT = 0;
          parameter int CORE_PARAM_FPU_OTHERS_LAT = 0;
-         parameter int CORE_PARAM_PULP_ZFINX     = 0;
+         parameter int CORE_PARAM_ZFINX          = 0;
       `endif
 
    `else
       // If you don't explicitly specify either NO_PULP or PULP, you get NO_PULP
-      parameter int CORE_PARAM_PULP_XPULP        = 0;
-      parameter int CORE_PARAM_PULP_CLUSTER      = 0;
+      parameter int CORE_PARAM_COREV_PULP        = 0;
+      parameter int CORE_PARAM_COREV_CLUSTER     = 0;
       parameter int CORE_PARAM_FPU               = 0;
       parameter int CORE_PARAM_FPU_ADDMUL_LAT    = 0;
       parameter int CORE_PARAM_FPU_OTHERS_LAT    = 0;
-      parameter int CORE_PARAM_PULP_ZFINX        = 0;
+      parameter int CORE_PARAM_ZFINX             = 0;
    `endif
 `endif
 
@@ -131,18 +135,25 @@ module uvmt_cv32e40p_tb;
    uvmt_cv32e40p_isa_covg_if     isa_covg_if();
 
 
+   // RVVI SystemVerilog Interface
+   `ifndef FORMAL
+   `ifdef USE_ISS
+      rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+   `endif
+   `endif
+
   /**
    * DUT WRAPPER instance:
    * This is an update of the riscv_wrapper.sv from PULP-Platform RI5CY project with
    * a few mods to bring unused ports from the CORE to this level using SV interfaces.
    */
    uvmt_cv32e40p_dut_wrap  #(
-                             .PULP_XPULP        (CORE_PARAM_PULP_XPULP),
-                             .PULP_CLUSTER      (CORE_PARAM_PULP_CLUSTER),
+                             .COREV_PULP        (CORE_PARAM_COREV_PULP),
+                             .COREV_CLUSTER     (CORE_PARAM_COREV_CLUSTER),
                              .FPU               (CORE_PARAM_FPU),
                              .FPU_ADDMUL_LAT    (CORE_PARAM_FPU_ADDMUL_LAT),
                              .FPU_OTHERS_LAT    (CORE_PARAM_FPU_OTHERS_LAT),
-                             .PULP_ZFINX        (CORE_PARAM_PULP_ZFINX),
+                             .ZFINX             (CORE_PARAM_ZFINX),
                              .NUM_MHPMCOUNTERS  (CORE_PARAM_NUM_MHPMCOUNTERS),
                              .INSTR_ADDR_WIDTH  (ENV_PARAM_INSTR_ADDR_WIDTH),
                              .INSTR_RDATA_WIDTH (ENV_PARAM_INSTR_DATA_WIDTH),
@@ -184,8 +195,8 @@ module uvmt_cv32e40p_tb;
                                                                    .rvfi_rs2_rdata(rvfi_i.rvfi_rs2_rdata[uvme_cv32e40p_pkg::XLEN*0+:uvme_cv32e40p_pkg::XLEN]),
                                                                    .rvfi_rs3_addr('0),
                                                                    .rvfi_rs3_rdata('0),
-                                                                   .rvfi_rd1_addr(rvfi_i.rvfi_rd_addr[uvma_rvfi_pkg::GPR_ADDR_WL*0+:uvma_rvfi_pkg::GPR_ADDR_WL]),
-                                                                   .rvfi_rd1_wdata(rvfi_i.rvfi_rd_wdata[uvme_cv32e40p_pkg::XLEN*0+:uvme_cv32e40p_pkg::XLEN]),
+                                                                   .rvfi_rd1_addr(rvfi_i.rvfi_rd_addr[0][uvma_rvfi_pkg::GPR_ADDR_WL*0+:uvma_rvfi_pkg::GPR_ADDR_WL]),
+                                                                   .rvfi_rd1_wdata(rvfi_i.rvfi_rd_wdata[0][uvme_cv32e40p_pkg::XLEN*0+:uvme_cv32e40p_pkg::XLEN]),
                                                                    .rvfi_rd2_addr('0),
                                                                    .rvfi_rd2_wdata('0),
                                                                    .rvfi_mem_addr(rvfi_i.rvfi_mem_addr[uvme_cv32e40p_pkg::XLEN*0+:uvme_cv32e40p_pkg::XLEN]),
@@ -416,60 +427,65 @@ module uvmt_cv32e40p_tb;
    uvmt_cv32e40p_debug_cov_assert_if debug_cov_assert_if(
     .clk_i(clknrst_if.clk),
     .rst_ni(clknrst_if.reset_n),
-    .fetch_enable_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.fetch_enable_i),
-    .if_stage_instr_rvalid_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.if_stage_i.instr_rvalid_i),
-    .if_stage_instr_rdata_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.if_stage_i.instr_rdata_i),
-    .id_stage_instr_valid_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.instr_valid_i),
-    .id_stage_instr_rdata_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.instr_rdata_i),
-    .id_stage_is_compressed(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.is_compressed_i),
-    .id_valid(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.id_valid_i),
-    .is_decoding(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.is_decoding_o),
-    .id_stage_pc(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.pc_id_i),
-    .if_stage_pc(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.if_stage_i.pc_if_o),
-    .mie_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mie_q),
-    .ctrl_fsm_cs(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ctrl_fsm_cs),
-    .illegal_insn_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_i),
-    .illegal_insn_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_q),
-    .ecall_insn_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ecall_insn_i),
-    .debug_req_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.debug_req_pending),
-    .debug_mode_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.debug_mode_q),
-    .dcsr_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.dcsr_q),
-    .depc_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.depc_q),
-    .depc_n(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.depc_n),
-    .mcause_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mcause_q),
-    .mtvec({dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mtvec_q, 8'h00}),
-    .mepc_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mepc_q),
-    .tdata1(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.tmatch_control_rdata),
-    .tdata2(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.tmatch_value_rdata),
-    .trigger_match_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.trigger_match_i),
-    .mcountinhibit_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mcountinhibit_q),
-    .mcycle(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mhpmcounter_q[0]),
-    .minstret(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mhpmcounter_q[2]),
-    .fence_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.decoder_i.fencei_insn_o),
+    .fetch_enable_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.fetch_enable_i),
+    .if_stage_instr_rvalid_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.if_stage_i.instr_rvalid_i),
+    .if_stage_instr_rdata_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.if_stage_i.instr_rdata_i),
+    .id_stage_instr_valid_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.instr_valid_i),
+    .id_stage_instr_rdata_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.instr_rdata_i),
+    .id_stage_is_compressed(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.is_compressed_i),
+    .id_valid(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.id_valid_i),
+    .is_decoding(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.is_decoding_o),
+    .id_stage_pc(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.pc_id_i),
+    .if_stage_pc(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.if_stage_i.pc_if_o),
+    .mie_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.mie_q),
+    .ctrl_fsm_cs(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.ctrl_fsm_cs),
+    .illegal_insn_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.illegal_insn_i),
+    .illegal_insn_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.illegal_insn_q),
+    .ecall_insn_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.ecall_insn_i),
+    .debug_req_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.debug_req_pending),
+    .debug_mode_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.debug_mode_q),
+    .dcsr_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.dcsr_q),
+    .depc_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.depc_q),
+    .depc_n(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.depc_n),
+    .mcause_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.mcause_q),
+    .mtvec({dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.mtvec_q, 8'h00}),
+    .mepc_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.mepc_q),
+    .tdata1(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.tmatch_control_rdata),
+    .tdata2(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.tmatch_value_rdata),
+    .trigger_match_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.trigger_match_i),
+    .mcountinhibit_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.mcountinhibit_q),
+    .mcycle(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.mhpmcounter_q[0]),
+    .minstret(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.mhpmcounter_q[2]),
+    .fence_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.decoder_i.fencei_insn_o),
 
     // TODO: review this change from CV32E40P_HASH f6196bf to a26b194. It should be logically equivalent.
-    //assign debug_cov_assert_if.inst_ret = dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.inst_ret;
+    //assign debug_cov_assert_if.inst_ret = dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.inst_ret;
     // First attempt: this causes unexpected failures of a_minstret_count
-    //assign debug_cov_assert_if.inst_ret = (dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_valid &
-    //                                       dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.is_decoding);
+    //assign debug_cov_assert_if.inst_ret = (dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_valid &
+    //                                       dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.is_decoding);
     // Second attempt: (based on OK input).  This passes, but maybe only because p_minstret_count
     //                                       is the only property sensitive to inst_ret. Will
     //                                       this work in the general case?
-    .inst_ret(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.mhpmevent_minstret_i),
-    .csr_access(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.csr_access),
-    .csr_op(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.csr_op),
-    .csr_op_dec(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.decoder_i.csr_op),
-    .csr_addr(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.csr_addr),
-    .csr_we_int(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.cs_registers_i.csr_we_int),
-    .irq_ack_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.irq_ack_o),
-    .irq_id_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.irq_id_o),
-    .dm_halt_addr_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.dm_halt_addr_i),
-    .dm_exception_addr_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.dm_exception_addr_i),
-    .core_sleep_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.core_sleep_o),
-    .irq_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.irq_i),
-    .pc_set(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.pc_set_o),
-    .boot_addr_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.boot_addr_i),
-    .branch_in_decode(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.branch_in_id),
+    .inst_ret(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.mhpmevent_minstret_i),
+    .csr_access(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.csr_access),
+    .csr_op(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.csr_op),
+    .csr_op_dec(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.decoder_i.csr_op),
+    .csr_addr(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.csr_addr),
+    .csr_we_int(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.csr_we_int),
+    .irq_ack_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.irq_ack_o),
+    .irq_id_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.irq_id_o),
+    .dm_halt_addr_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.dm_halt_addr_i),
+    .dm_exception_addr_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.dm_exception_addr_i),
+    .core_sleep_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.core_sleep_o),
+    .irq_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.irq_i),
+    .pc_set(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.pc_set_o),
+    .boot_addr_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.boot_addr_i),
+    .branch_in_decode(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.branch_in_id),
+    .rvfi_valid(dut_wrap.cv32e40p_tb_wrapper_i.rvfi_instr_if_0_i.rvfi_valid),
+    .rvfi_insn(dut_wrap.cv32e40p_tb_wrapper_i.rvfi_instr_if_0_i.rvfi_insn),
+    .apu_req(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.apu_req_o),
+    .apu_gnt(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.apu_gnt_i),
+    .apu_busy(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.apu_busy_i),
 
     .is_wfi(),
     .in_wfi(),
@@ -485,41 +501,16 @@ module uvmt_cv32e40p_tb;
   // Instantiate debug assertions
   uvmt_cv32e40p_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
 
-  /**
-   * ISS WRAPPER instance:
-   */
-    uvmt_cv32e40p_iss_wrap  #(
-                              .ID (0)
-                              )
-                              iss_wrap (.clk_period(clknrst_if.clk_period),
-                                        .clknrst_if(clknrst_if_iss)//,
-                                        // .isa_covg_if(isa_covg_if)
-                                );
 
-    /**
-    * Step-and-Compare logic
-    */
-
-    // Count number of issued and retired instructions
-    // This makes synchronizing haltreq to RM easier
-    logic [31:0] count_issue;
-    logic [31:0] count_retire;
-
-    always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-      if (!clknrst_if.reset_n) begin
-          count_issue <= 32'h0;
-      end else begin
-          if ((dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.id_valid_o && dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.is_decoding_o &&
-              !dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_i) ||
-              (dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.is_decoding_o && dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ebrk_insn_i &&
-                !dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.trigger_match_i &&
-              (dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.ebrk_force_debug_mode || dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_wrapper_i.core_i.id_stage_i.controller_i.debug_mode_q))) begin
-              count_issue <= count_issue + 1;
-          end
-      end
-    end
-
-
+    // IMPERAS DV
+    `ifndef FORMAL
+    `ifdef USE_ISS
+      uvmt_cv32e40p_imperas_dv_wrap #(
+        .FPU  (CORE_PARAM_FPU),
+        .ZFINX(CORE_PARAM_ZFINX)
+      ) imperas_dv (rvvi_if);
+    `endif
+    `endif
    /**
     * Test bench entry point.
     */
@@ -571,7 +562,6 @@ module uvmt_cv32e40p_tb;
      uvm_config_db#(virtual uvmt_cv32e40p_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_cov_vif"),    .value(debug_cov_assert_if)                             );
      uvm_config_db#(virtual uvmt_cv32e40p_isa_covg_if        )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("isa_covg_vif"),     .value(isa_covg_if)                                     );
      uvm_config_db#(virtual uvma_debug_if                    )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_vif"),        .value(debug_if)                                        );
-     uvm_config_db#(virtual RVVI_memory                      )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("rvvi_memory_vif"),  .value(iss_wrap.ram.memory)                             );
 
      `RVFI_CSR_UVM_CONFIG_DB_SET(fflags)
      `RVFI_CSR_UVM_CONFIG_DB_SET(frm)
@@ -699,14 +689,6 @@ module uvmt_cv32e40p_tb;
      `RVFI_CSR_UVM_CONFIG_DB_SET(mhpmcounter31h)
      //`RVFI_CSR_UVM_CONFIG_DB_SET(mconfigptr)
 
-     uvm_config_db#(virtual RVVI_state#(.ILEN(uvme_cv32e40p_pkg::ILEN),
-                                        .XLEN(uvme_cv32e40p_pkg::XLEN)
-                                        ))::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("state_vif"), .value(iss_wrap.cpu.state));
-     uvm_config_db#(virtual RVVI_control                )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("control_vif"), .value(iss_wrap.cpu.control));
-     uvm_config_db#(virtual RVVI_bus                    )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_bus_vif"), .value(iss_wrap.bus));
-     uvm_config_db#(virtual RVVI_io                     )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_io_vif"), .value(iss_wrap.io));
-     uvm_config_db#(virtual RVVI_memory                 )::set(.cntxt(null), .inst_name("*.env.rvvi_agent"), .field_name("ovpsim_mem_vif"), .value(iss_wrap.ram.memory));
-
      // Make the DUT Wrapper Virtual Peripheral's status outputs available to the base_test
      uvm_config_db#(bit      )::set(.cntxt(null), .inst_name("*"), .field_name("tp"),     .value(1'b0)        );
      uvm_config_db#(bit      )::set(.cntxt(null), .inst_name("*"), .field_name("tf"),     .value(1'b0)        );
@@ -714,19 +696,19 @@ module uvmt_cv32e40p_tb;
      uvm_config_db#(bit[31:0])::set(.cntxt(null), .inst_name("*"), .field_name("evalue"), .value(32'h00000000));
 
      // DUT and ENV parameters
-     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_XPULP"),       .value(CORE_PARAM_PULP_XPULP)      );
-     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_CLUSTER"),     .value(CORE_PARAM_PULP_CLUSTER)    );
+     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_COREV_PULP"),       .value(CORE_PARAM_COREV_PULP)      );
+     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_COREV_CLUSTER"),    .value(CORE_PARAM_COREV_CLUSTER)   );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_FPU"),              .value(CORE_PARAM_FPU)             );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_FPU_ADDMUL_LAT"),   .value(CORE_PARAM_FPU_ADDMUL_LAT)  );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_FPU_OTHERS_LAT"),   .value(CORE_PARAM_FPU_OTHERS_LAT)  );
-     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_PULP_ZFINX"),       .value(CORE_PARAM_PULP_ZFINX)      );
+     uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_ZFINX"),            .value(CORE_PARAM_ZFINX)           );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("CORE_PARAM_NUM_MHPMCOUNTERS"), .value(CORE_PARAM_NUM_MHPMCOUNTERS));
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_ADDR_WIDTH"),  .value(ENV_PARAM_INSTR_ADDR_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_INSTR_DATA_WIDTH"),  .value(ENV_PARAM_INSTR_DATA_WIDTH) );
      uvm_config_db#(int)::set(.cntxt(null), .inst_name("*"), .field_name("ENV_PARAM_RAM_ADDR_WIDTH"),    .value(ENV_PARAM_RAM_ADDR_WIDTH)   );
 
      // Run test
-     uvm_top.enable_print_topology = 1; // ENV coders enable this as a debug aid
+     uvm_top.enable_print_topology = 0; // ENV coders enable this as a debug aid
      uvm_top.finish_on_completion  = 1;
      uvm_top.run_test();
    end : test_bench_entry_point
@@ -735,23 +717,22 @@ module uvmt_cv32e40p_tb;
 
    // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
    // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
-   longint start_ovpsim_init_time;
-   longint end_ovpsim_init_time;
+   `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
+   // overcome race
+   `ifdef USE_ISS
    initial begin
-      if (!$test$plusargs("DISABLE_OVPSIM")) begin
-        #0.9ns;
-        `uvm_info("OVPSIM", $sformatf("Start benchmarking OVPSIM initialization"), UVM_LOW)
-        start_ovpsim_init_time = svlib_pkg::sys_dayTime();
-        #1.1ns;
-        end_ovpsim_init_time = svlib_pkg::sys_dayTime();
-        `uvm_info("OVPSIM", $sformatf("Initialization time: %0d seconds", end_ovpsim_init_time - start_ovpsim_init_time), UVM_LOW)
-      end
-    end
+     if ($test$plusargs("USE_ISS")) begin
+       #0.9ns;
+       imperas_dv.ref_init();
+     end
+   end
+   `endif
+   `endif
 
    //TODO verify these are correct with regards to isacov function
-   //always @(dut_wrap.cv32e40p_wrapper_i.rvfi_instr_if_0_i.rvfi_valid) -> isacov_if.retire;
-   //assign isacov_if.instr = dut_wrap.cv32e40p_wrapper_i.rvfi_instr_if_0_i.rvfi_insn;
-   //assign isacov_if.is_compressed = dut_wrap.cv32e40p_wrapper_i.tracer_i.insn_compressed;
+   //always @(dut_wrap.cv32e40p_top_i.rvfi_instr_if_0_i.rvfi_valid) -> isacov_if.retire;
+   //assign isacov_if.instr = dut_wrap.cv32e40p_top_i.rvfi_instr_if_0_i.rvfi_insn;
+   //assign isacov_if.is_compressed = dut_wrap.cv32e40p_top_i.tracer_i.insn_compressed;
 
    // Capture the test status and exit pulse flags
    // TODO: put this logic in the vp_status_if (makes it easier to pass to ENV)
@@ -804,6 +785,12 @@ module uvmt_cv32e40p_tb;
       fatal_count   = rs.get_severity_count(UVM_FATAL);
 
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
+
+      // Shutdown the Reference Model
+      `ifdef USE_ISS
+      // Exit handler for ImperasDV
+      void'(rvviRefShutdown());
+      `endif
 
       // In most other contexts, calls to $display() in a UVM environment are
       // illegal. Here they are OK because the UVM environment has shut down

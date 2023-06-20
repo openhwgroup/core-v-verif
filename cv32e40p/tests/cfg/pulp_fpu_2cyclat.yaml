@@ -1,15 +1,17 @@
 name: pulp_fpu_2cyclat
 description: Sets PULP instructions and FPU parameters to 1
-compile_flags: 
+compile_flags:
     +define+PULP +define+FPU +define+FPU_ADDMUL_LAT=2 +define+FPU_OTHERS_LAT=2
 ovpsim: >
-    --override root/cpu/misa_Extensions=0x801124
-    --override root/cpu/marchid=4
-    --override root/cpu/noinhibit_mask=0xFFFFFFF0
+    --override cpu/misa_Extensions=0x801124
+    --override cpu/marchid=4
+    --override cpu/noinhibit_mask=0xFFFFFFF0
+    --override cpu/compress_version=1.0.0-RC5.7
+    --override cpu/Zcf=T
     --showoverrides
 # Debug options (add to ovpsim section as needed)
 #--trace --tracechange --traceshowicount --tracemode --monitornets
 #--showoverrides
-cv_sw_march: rv32imfc_zicsr_zifencei_xcorevmem1p0_xcorevmac1p0_xcorevbi1p0_xcorevalu1p0_xcorevsimd1p0_xcorevbitmanip1p0
+cv_sw_march: rv32imfc_zicsr_zifencei_xcvhwlp1p0_xcvmem1p0_xcvmac1p0_xcvbi1p0_xcvalu1p0_xcvsimd1p0_xcvbitmanip1p0
 cflags: >
     -DPULP -DFPU

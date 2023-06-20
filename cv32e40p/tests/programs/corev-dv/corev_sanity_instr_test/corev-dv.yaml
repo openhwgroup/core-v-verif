@@ -1,0 +1,17 @@
+# Test definition YAML for corev-dv test generator
+
+name: corev_sanity_instr_test
+uvm_test: $(CV_CORE_LC)_instr_base_test
+description: >
+    Generates a list of all cv32e40p extension instructions
+compile_flags: >
+    +define+RV_DV_ISA_RV32IMC_X
+plusargs: >
+    +instr_cnt=10
+    +num_of_sub_program=0
+    +directed_instr_0=cv32e40p_xpulp_sanity_stream_test,1
+    +no_fence=1
+    +no_data_page=1
+    +no_branch_jump=0
+    +boot_mode=m
+    +no_csr_instr=1

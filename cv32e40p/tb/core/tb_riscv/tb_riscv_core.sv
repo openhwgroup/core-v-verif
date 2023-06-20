@@ -34,7 +34,7 @@ module tb_riscv_core
   parameter INSTR_RDATA_WIDTH   = 32,
   parameter PULP_SECURE         =  0,
   parameter N_PMP_ENTRIES       = 16,
-  parameter PULP_CLUSTER        =  1,
+  parameter COREV_CLUSTER       =  1,
   parameter FPU                 =  0,
   parameter SHARED_FP           =  0,
   parameter SHARED_DSP_MULT     =  0,

@@ -136,10 +136,18 @@ COV_ARGS = -dir $(TEST_NAME).vdb
 endif
 
 
+ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vcs-$(TEST_NAME).log
+POST_TEST = \
+	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
+		exit 1; \
+	fi
+endif
+
 ################################################################################
 
 VCS_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-VCS_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
+#VCS_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
 VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_RVFI
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
@@ -233,6 +241,7 @@ test: $(VCS_SIM_PREREQ) hex gen_ovpsim_ic
     		+elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
 			+firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
 			+itb_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).itb
+	$(POST_TEST)
 
 ###############################################################################
 # Run a single test-program from the RISC-V Compliance Test-suite. The parent
@@ -267,6 +276,48 @@ compliance: $(VCS_COMPLIANCE_PREREQ)
 		+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).hex \
 		+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).elf
 
+################################################################################
+# RISCOF RISCV-ARCH-TEST DUT simulation targets
+VCS_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/dut_test.elf
+
+comp_dut_riscof_sim:
+	@echo "$(BANNER)"
+	@echo "* Compiling vcs in $(SIM_RISCOF_ARCH_TESTS_RESULTS)"
+	@echo "* Log: $(SIM_RISCOF_ARCH_TESTS_RESULTS)/vcs.log"
+	@echo "$(BANNER)"
+	mkdir -p $(SIM_RISCOF_ARCH_TESTS_RESULTS) && \
+	cd $(SIM_RISCOF_ARCH_TESTS_RESULTS) && \
+		$(VCS) $(VCS_COMP) -top uvmt_$(CV_CORE_LC)_tb
+
+comp_dut_rtl_riscof_sim: $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI) comp_dut_riscof_sim
+
+setup_riscof_sim: clean_riscof_arch_test_suite clone_riscof_arch_test_suite comp_dut_rtl_riscof_sim
+
+gen_riscof_ovpsim_ic:
+	@touch $(RISCOF_TEST_RUN_DIR)/ovpsim.ic
+	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
+		echo "$(CFG_OVPSIM)" > $(RISCOF_TEST_RUN_DIR)/ovpsim.ic; \
+	fi
+
+# Target to run RISCOF DUT sim with VCS
+riscof_sim_run: $(VCS_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovpsim_ic
+	@echo "$(BANNER)"
+	@echo "* Running vcs in $(PWD)"
+	@echo "$(BANNER)"
+	cd $(RISCOF_TEST_RUN_DIR) && \
+	export IMPERAS_TOOLS=$(RISCOF_TEST_RUN_DIR)/ovpsim.ic && \
+		$(RISCOF_TEST_RUN_DIR)/$(SIMV) \
+			-l vcs-dut_test.log \
+			-cm_name dut_test $(VCS_RUN_FLAGS) \
+			$(CFG_PLUSARGS) \
+			$(RISCOF_TEST_PLUSARGS) \
+			+UVM_TESTNAME=uvmt_cv32e40p_riscof_firmware_test_c \
+			+UVM_VERBOSITY=$(VCS_UVM_VERBOSITY) \
+			+firmware=dut_test.hex \
+			+elf_file=dut_test.elf \
+			+itb_file=dut_test.itb
+
+
 ###############################################################################
 # Use Google instruction stream generator (RISCV-DV) to create new test-programs
 comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG)
@@ -281,6 +332,7 @@ comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG)
 		+incdir+$(CV_CORE_COREVDV_PKG) \
 		-f $(CV_CORE_MANIFEST) \
 		$(CFG_COMPILE_FLAGS) \
+		$(GEN_COMPILE_FLAGS) \
 		-f $(COREVDV_PKG)/manifest.f \
 		-l vcs.log
 

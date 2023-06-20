@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
   /*
   // These CSRs are present in the RTL, but will not be modeled in the RM
   // as they are XPULP-specific.
-  // lpstat0/1, lpend0/1 and lpcount0/1 present when PULP_XPULP=1
+  // lpstat0/1, lpend0/1 and lpcount0/1 present when COREV_PULP=1
   __asm__ volatile("csrr %0, 0x7C0" : "=r"(lpstart0_rval));
   __asm__ volatile("csrr %0, 0x7C1" : "=r"(lpend0_rval));
   __asm__ volatile("csrr %0, 0x7C2" : "=r"(lpcount0_rval));

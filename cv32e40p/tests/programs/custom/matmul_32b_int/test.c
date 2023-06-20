@@ -1,3 +1,4 @@
+// Copyright 2020 ETH Zurich
 // Copyright 2020 OpenHW Group
 // Copyright 2023 Dolphin Design
 //
@@ -43,14 +44,14 @@ int checkInt (long int *B, long int *A, long int n)
 void mcycle_counter_enable ()
 {
   // Enable mcycle counter
-  __asm__ volatile("csrci 0x320, 0x1"); // mcountinhibit.cy = 0
+  __asm__ volatile("csrci mcountinhibit, 0x1"); // mcountinhibit.cy = 0
 
 }
 
 int cpu_perf_get_cycle()
 {
   unsigned int cycle;
-  __asm__ volatile("csrr %0, 0xB00" : "=r"(cycle)); // mcycle
+  __asm__ volatile("rdcycle %0" : "=r"(cycle)); // cycle
   return cycle;
 }
 

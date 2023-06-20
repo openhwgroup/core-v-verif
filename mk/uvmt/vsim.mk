@@ -32,7 +32,7 @@ VCOVER                  = vcover
 
 # Paths
 VWORK     				= work
-VSIM_COV_MERGE_DIR      = $(SIM_CFG_RESULTS)/$(CFG)/merged
+VSIM_COV_MERGE_DIR      = $(SIM_RESULTS)/merged
 UVM_HOME               ?= $(abspath $(shell which $(VLIB))/../../verilog_src/uvm-1.2/src)
 DPI_INCLUDE            ?= $(abspath $(shell which $(VLIB))/../../include)
 USES_DPI = 1
@@ -86,6 +86,7 @@ VLOG_LDGEN_FLAGS ?= \
                     -sv \
                     -mfcu \
                     +acc=rb \
+                    $(SV_CMP_FLAGS) \
                     $(QUIET)
 
 VOPT_LDGEN_FLAGS ?= \
@@ -115,19 +116,26 @@ VLOG_FLAGS    ?= \
 		-64 \
 		-mfcu \
 		+acc=rb \
+		$(SV_CMP_FLAGS) \
 		$(QUIET) \
 		-writetoplevels  uvmt_$(CV_CORE_LC)_tb
 
+VLOG_FILE_LIST_IDV =
 VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 
 VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 
 # Add the ISS to compilation
-VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_RVFI"
+VLOG_FLAGS += "+define+$(CV_CORE_UC)_RVFI_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_CORE_LOG"
 VLOG_FLAGS += "+define+UVM"
+ifeq ($(call IS_YES,$(USE_ISS)),YES)
+VLOG_FLAGS += +define+USE_ISS
+VLOG_FLAGS += +define+USE_IMPERASDV
+VLOG_FILE_LIST_IDV = -f $(DV_UVMT_PATH)/imperas_dv.flist
+endif
 
 ###############################################################################
 # VOPT (Optimization)
@@ -157,9 +165,10 @@ VSIM_SCRIPT_DIR	   = $(abspath $(MAKE_PATH)/../tools/vsim)
 
 VSIM_UVM_ARGS      = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 
-VSIM_FLAGS += -sv_lib $(basename $(OVP_MODEL_DPI))
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 VSIM_FLAGS += +USE_ISS
+VSIM_FLAGS += +USE_IMPERASDV
+VSIM_FLAGS += -sv_lib $(basename $(IMPERAS_DV_MODEL))
 else
 VSIM_FLAGS += +DISABLE_OVPSIM
 endif
@@ -183,16 +192,16 @@ endif
 ifeq ($(call IS_YES,$(COV)),YES)
 VOPT_FLAGS  += $(VOPT_COV)
 VSIM_FLAGS  += $(VSIM_COV)
-VSIM_FLAGS  += -do 'set TEST ${VSIM_TEST}; source $(VSIM_SCRIPT_DIR)/cov.tcl'
+VSIM_FLAGS  += -do 'set TEST ${VSIM_TEST}; set TEST_CONFIG $(CFG); set TEST_SEED $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
 endif
 
 ################################################################################
 # Waveform generation
 ifeq ($(call IS_YES,$(WAVES)),YES)
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-VSIM_FLAGS += $(VSIM_WAVES_ADV_DEBUG)
+VSIM_WAVES_FLAGS = $(VSIM_WAVES_ADV_DEBUG)
 else
-VSIM_FLAGS += -do $(VSIM_WAVES_DO)
+VSIM_WAVES_FLAGS = -do $(VSIM_WAVES_DO)
 endif
 endif
 
@@ -219,8 +228,8 @@ endif
 COV_FLAGS =
 COV_REPORT = cov_report
 COV_MERGE_TARGET =
-COV_MERGE_FIND = find $(SIM_CFG_RESULTS) -type f -name "*.ucdb" | grep -v merged.ucdb
-COV_MERGE_FLAGS=merge -64 -out merged.ucdb -inputs ucdb.list
+COV_MERGE_FIND = find $(SIM_RESULTS) -type f -name "*.ucdb" | grep -v merged.ucdb
+COV_MERGE_FLAGS=merge -testassociated -verbose -64 -out merged.ucdb -inputs ucdb.list
 
 ifeq ($(call IS_YES,$(MERGE)),YES)
 COV_DIR=$(VSIM_COV_MERGE_DIR)
@@ -245,6 +254,14 @@ else
 COV_FLAGS=-c -viewcov $(TEST).ucdb -do "file delete -force $(COV_REPORT); coverage report -html -details -precision 2 -annotate -output $(COV_REPORT); exit -f"
 endif
 endif
+endif
+
+ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vsim-$(TEST_NAME).log
+POST_TEST = \
+	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
+		exit 1; \
+	fi
 endif
 
 ################################################################################
@@ -340,6 +357,7 @@ vlog_corev-dv:
 			+incdir+$(COREVDV_PKG) \
 			+incdir+$(CV_CORE_COREVDV_PKG) \
 			$(CFG_COMPILE_FLAGS) \
+			$(GEN_COMPILE_FLAGS) \
 			-f $(CV_CORE_MANIFEST) \
 			-f $(COREVDV_PKG)/manifest.f \
 			$(CFG_PLUSARGS) \
@@ -371,7 +389,6 @@ gen_corev-dv: comp_corev-dv
 			-l $(TEST)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log \
 			+start_idx=$(GEN_START_INDEX) \
 			+num_of_tests=$(GEN_NUM_TESTS) \
-			+UVM_TESTNAME=$(GEN_UVM_TEST) \
 			+asm_file_name_opts=$(TEST) \
 			+ldgen_cp_test_path=$(SIM_TEST_RESULTS) \
 			$(CFG_PLUSARGS) \
@@ -427,10 +444,10 @@ compliance: $(VSIM_COMPLIANCE_PREREQ) $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 	cd $(COMPLIANCE_RUN_DIR) && \
 		$(VMAP) work $(SIM_CFG_RESULTS)/work
 	cd $(COMPLIANCE_RUN_DIR) && \
-	export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic && \
 		$(VSIM) \
 			-work $(VWORK) \
 			$(VSIM_FLAGS) \
+			$(VSIM_WAVES_FLAGS) \
 			-l vsim-$(COMPLIANCE_PROG).log \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=uvmt_$(CV_CORE_LC)_firmware_test_c \
@@ -443,6 +460,89 @@ compliance: $(VSIM_COMPLIANCE_PREREQ) $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 # This special target is to support the special sanity target in the Common Makefile
 hello-world:
 	$(MAKE) test TEST=hello-world
+
+
+################################################################################
+# RISCOF RISCV-ARCH-TEST DUT simulation targets
+VSIM_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/dut_test.elf
+
+vlog_dut_riscof_sim:
+	@echo "$(BANNER)"
+	@echo "* Running vlog in $(SIM_RISCOF_ARCH_TESTS_RESULTS)"
+	@echo "* Log: $(SIM_RISCOF_ARCH_TESTS_RESULTS)/vlog.log"
+	@echo "$(BANNER)"
+	mkdir -p $(SIM_RISCOF_ARCH_TESTS_RESULTS) && \
+	cd $(SIM_RISCOF_ARCH_TESTS_RESULTS) && \
+		$(VLIB) $(VWORK)
+	cd $(SIM_RISCOF_ARCH_TESTS_RESULTS) && \
+		$(VLOG) \
+		    -work $(VWORK) \
+			-l vlog.log \
+			$(VLOG_FLAGS) \
+			$(CFG_COMPILE_FLAGS) \
+			+incdir+$(DV_UVME_PATH) \
+			+incdir+$(DV_UVMT_PATH) \
+			+incdir+$(UVM_HOME) \
+			$(UVM_HOME)/uvm_pkg.sv \
+			-f $(CV_CORE_MANIFEST) \
+			$(VLOG_FILE_LIST_IDV) \
+			$(VLOG_FILE_LIST) \
+			$(CFG_PLUSARGS) \
+			$(TBSRC_PKG)
+
+# Target to run vopt over compiled code in $(VSIM_RESULTS)/
+vopt_dut_riscof_sim: vlog_dut_riscof_sim
+	@echo "$(BANNER)"
+	@echo "* Running vopt in $(SIM_RISCOF_ARCH_TESTS_RESULTS)"
+	@echo "* Log: $(SIM_RISCOF_ARCH_TESTS_RESULTS)/vopt.log"
+	@echo "$(BANNER)"
+	cd $(SIM_RISCOF_ARCH_TESTS_RESULTS) && \
+		$(VOPT) \
+			-work $(VWORK) \
+			-l vopt.log \
+			$(VOPT_FLAGS) \
+			$(RTLSRC_VLOG_TB_TOP) \
+			-o $(RTLSRC_VOPT_TB_TOP)
+
+$(SIM_RISCOF_ARCH_TESTS_RESULTS)/vlog.log: vlog_dut_riscof_sim
+
+$(SIM_RISCOF_ARCH_TESTS_RESULTS)/vopt.log: vopt_dut_riscof_sim
+
+comp_dut_rtl_riscof_sim: $(CV_CORE_PKG) $(SVLIB_PKG) $(SIM_RISCOF_ARCH_TESTS_RESULTS)/vlog.log $(SIM_RISCOF_ARCH_TESTS_RESULTS)/vopt.log
+
+setup_riscof_sim: clean_riscof_arch_test_suite clone_riscof_arch_test_suite comp_dut_rtl_riscof_sim
+
+gen_riscof_ovpsim_ic:
+	@touch $(RISCOF_TEST_RUN_DIR)/ovpsim.ic
+	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
+		echo "$(CFG_OVPSIM)" > $(RISCOF_TEST_RUN_DIR)/ovpsim.ic; \
+	fi
+
+# Target to run RISCOF VSIM (i.e. run the simulation)
+riscof_sim_run: $(VSIM_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovpsim_ic
+	@echo "$(BANNER)"
+	@echo "* Running vsim in $(PWD)"
+	@echo "* Log: $(PWD)/vsim.log"
+	@echo "$(BANNER)"
+	cd $(RISCOF_TEST_RUN_DIR) && \
+		$(VMAP) work $(SIM_RISCOF_ARCH_TESTS_RESULTS)/work
+	cd $(RISCOF_TEST_RUN_DIR) && \
+	export IMPERAS_TOOLS=$(RISCOF_TEST_RUN_DIR)/ovpsim.ic && \
+	export IMPERAS_QUEUE_LICENSE=1 && \
+		$(VSIM) \
+			-work $(VWORK) \
+			$(VSIM_FLAGS) \
+			$(VSIM_WAVES_FLAGS) \
+			-l vsim.log \
+			$(DPILIB_VSIM_OPT) \
+			+UVM_TESTNAME=uvmt_cv32e40p_riscof_firmware_test_c \
+			$(RTLSRC_VOPT_TB_TOP) \
+			$(CFG_PLUSARGS) \
+			$(RISCOF_TEST_PLUSARGS) \
+			+firmware=dut_test.hex \
+			+elf_file=dut_test.elf \
+			+itb_file=dut_test.itb
+
 
 ################################################################################
 # Questa simulation targets
@@ -460,6 +560,12 @@ gen_ovpsim_ic:
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
 		echo "$(CFG_OVPSIM)" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
 	fi
+	#@echo "--override cpu/wfi_is_nop=T" >> $(SIM_RUN_RESULTS)/ovpsim.ic
+	#@echo "--override cpu/sub_Extensions=X" >> $(SIM_RUN_RESULTS)/ovpsim.ic
+	#@echo "--showoverrides --trace --tracechange --traceshowicount --monitornetschange --tracemode --tracemem XSA" >> $(SIM_RUN_RESULTS)/ovpsim.ic
+	#@echo "--extlib refRoot/cpu/cat=imperas.com/intercept/cpuContextAwareTracer/1.0"  >> $(SIM_RUN_RESULTS)/ovpsim.ic
+	#@echo "--override refRoot/cpu/cat/show_changes=T" >> $(SIM_RUN_RESULTS)/ovpsim.ic
+	#@echo "--override refRoot/cpu/cat/definitions_file=${IMPERAS_HOME}/lib/$(IMPERAS_ARCH)/ImperasLib/riscv.ovpworld.org/processor/riscv/1.0/csr_context_info.lis" >> $(SIM_RUN_RESULTS)/ovpsim.ic
 
 # Target to create work directory in $(VSIM_RESULTS)/
 lib: mk_vsim_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(TBSRC_PKG) $(TBSRC)
@@ -484,6 +590,7 @@ vlog: lib
 			+incdir+$(UVM_HOME) \
 			$(UVM_HOME)/uvm_pkg.sv \
 			-f $(CV_CORE_MANIFEST) \
+			$(VLOG_FILE_LIST_IDV) \
 			$(VLOG_FILE_LIST) \
 			$(TBSRC_PKG)
 
@@ -516,15 +623,19 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 		$(VMAP) work $(SIM_CFG_RESULTS)/work
 	cd $(RUN_DIR) && \
 	export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic && \
+	export IMPERAS_QUEUE_LICENSE=1 && \
 		$(VSIM) \
 			-work $(VWORK) \
 			$(VSIM_FLAGS) \
+			$(VSIM_WAVES_FLAGS) \
 			-l vsim-$(VSIM_TEST).log \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(TEST_UVM_TEST) \
 			$(RTLSRC_VOPT_TB_TOP) \
 			$(CFG_PLUSARGS) \
 			$(TEST_PLUSARGS)
+	$(POST_TEST)
+
 
 ################################################################################
 # Test targets

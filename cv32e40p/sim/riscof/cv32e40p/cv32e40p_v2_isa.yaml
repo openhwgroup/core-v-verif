@@ -1,0 +1,60 @@
+hart_ids: [0]
+hart0:
+  ISA: RV32IMFCZicsr_Zifencei
+  physical_addr_sz: 32
+  User_Spec_Version: '2.3'
+  Privilege_Spec_Version: '1.11'
+  pmp_granularity: 0
+  supported_xlen: [32]
+  hw_data_misaligned_support: True
+  mtval_update: 0x00000000
+  mcause:
+    reset-val: 0x00000000
+    rv32:
+      accessible: true
+      interrupt:
+        implemented: true
+        type:
+          wlrl: [0x0:0x1]
+        msb: 31
+        lsb: 31
+      exception_code:
+        implemented: true
+        type:
+          wlrl:
+            - 0:31
+        msb: 30
+        lsb: 0
+  mtvec:
+    reset-val: 0x00000001
+    rv32:
+      accessible: true
+      base:
+        implemented: true
+        type:
+          warl:
+            dependency_fields: []
+            legal:
+              - "base[29:6] in [0x000000:0xFFFFFF] base[5:0] in [0x00]"
+            wr_illegal:
+              - "Unchanged"
+      mode:
+        implemented: true
+        type:
+          warl:
+            dependency_fields: []
+            legal:
+              - "mode[1:0] in [0x0:0x1]"
+            wr_illegal:
+              - "Unchanged"
+  mtval:
+    reset-val: 0x00000000
+    rv32:
+      accessible: true
+      type:
+        warl:
+          dependency_fields: []
+          legal:
+            - "mtval[31:0] in [0x00000000]"
+          wr_illegal:
+            - "Unchanged"

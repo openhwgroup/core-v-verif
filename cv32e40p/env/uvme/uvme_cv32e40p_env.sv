@@ -42,7 +42,6 @@ class uvme_cv32e40p_env_c extends uvm_env;
    uvme_cv32e40p_cov_model_c  cov_model;
    uvme_cv32e40p_prd_c        predictor;
    uvme_cv32e40p_sb_c         sb       ;
-   uvme_cv32e40p_core_sb_c    core_sb  ;
    uvme_cv32e40p_vsqr_c       vsequencer;
 
    // Agents
@@ -53,7 +52,6 @@ class uvme_cv32e40p_env_c extends uvm_env;
    uvma_obi_memory_agent_c          obi_memory_instr_agent;
    uvma_obi_memory_agent_c          obi_memory_data_agent ;
    uvma_rvfi_agent_c#(ILEN,XLEN)    rvfi_agent;
-   uvma_rvvi_agent_c#(ILEN,XLEN)    rvvi_agent;
 
 
 
@@ -77,7 +75,6 @@ class uvme_cv32e40p_env_c extends uvm_env;
 
    /**
     * 1. Connects agents to predictor via connect_predictor()
-    * 3. Connects predictor & agents to scoreboard via connect_scoreboard()
     * 4. Assembles virtual sequencer handles via assemble_vsequencer()
     * 5. Connects agents to coverage model via connect_coverage_model()
     */
@@ -132,16 +129,6 @@ class uvme_cv32e40p_env_c extends uvm_env;
     * Connects agents to predictor.
     */
    extern virtual function void connect_predictor();
-
-   /**
-    * Connects the RVFI to the RVVI for step and compare feedback
-    */
-   extern virtual function void connect_rvfi_rvvi();
-
-   /**
-    * Connects scoreboards components to agents/predictor.
-    */
-   extern virtual function void connect_scoreboard();
 
    /**
     * Connects environment coverage model to agents/scoreboards/predictor.
@@ -208,19 +195,8 @@ function void uvme_cv32e40p_env_c::connect_phase(uvm_phase phase);
    super.connect_phase(phase);
 
    if (cfg.enabled) begin
-      if (cfg.rvvi_cfg.is_active == UVM_ACTIVE) begin
-         uvma_rvvi_ovpsim_agent_c rvvi_ovpsim_agent;
-
-         connect_rvfi_rvvi();
-         if (!$cast(rvvi_ovpsim_agent, rvvi_agent)) begin
-            `uvm_fatal("UVMECV32PENV", "Could not cast agent to rvvi_ovpsim_agent");
-         end
-         rvvi_ovpsim_agent.set_clknrst_sequencer(clknrst_agent.sequencer);
-      end
-
       if (cfg.scoreboarding_enabled) begin
          connect_predictor ();
-         connect_scoreboard();
       end
 
       if (cfg.is_active) begin
@@ -401,15 +377,6 @@ function void uvme_cv32e40p_env_c::retrieve_vifs();
       `uvm_fatal("UVME_CV32E40P_ENV", $sformatf("No uvmt_cv32e40p_debug_cov_assert_if found in config database"))
    end
 
-   // fixme:strichmo:This is a hack, that can be removed when RVFI/RVVI is enabled
-   // This enables the vp_rnd_num_seq to backdoor update memories when a "volatile" register is read
-   if (!uvm_config_db#(virtual RVVI_memory)::get(this, "", "rvvi_memory_vif", cntxt.rvvi_memory_vif)) begin
-      `uvm_fatal("VIF", $sformatf("Could not find rvvi_memory_vif handle of type %s in uvm_config_db", $typename(cntxt.rvvi_memory_vif)))
-   end
-   else begin
-      `uvm_info("VIF", $sformatf("Found rvvi_memory_vifhandle of type %s in uvm_config_db", $typename(cntxt.rvvi_memory_vif)), UVM_DEBUG)
-   end
-
 endfunction: retrieve_vifs
 
 
@@ -423,7 +390,6 @@ function void uvme_cv32e40p_env_c::assign_cfg();
    uvm_config_db#(uvma_obi_memory_cfg_c      )::set(this, "obi_memory_instr_agent", "cfg", cfg.obi_memory_instr_cfg);
    uvm_config_db#(uvma_obi_memory_cfg_c      )::set(this, "obi_memory_data_agent" , "cfg", cfg.obi_memory_data_cfg );
    uvm_config_db#(uvma_rvfi_cfg_c#(ILEN,XLEN))::set(this, "rvfi_agent"            , "cfg", cfg.rvfi_cfg            );
-   uvm_config_db#(uvma_rvvi_cfg_c#(ILEN,XLEN))::set(this, "rvvi_agent"            , "cfg", cfg.rvvi_cfg            );
 
 endfunction: assign_cfg
 
@@ -438,7 +404,6 @@ function void uvme_cv32e40p_env_c::assign_cntxt();
    uvm_config_db#(uvma_obi_memory_cntxt_c      )::set(this, "obi_memory_data_agent" , "cntxt", cntxt.obi_memory_data_cntxt );
    uvm_config_db#(uvma_obi_memory_cntxt_c      )::set(this, "obi_memory_instr_agent", "cntxt", cntxt.obi_memory_instr_cntxt);
    uvm_config_db#(uvma_rvfi_cntxt_c#(ILEN,XLEN))::set(this, "rvfi_agent"            , "cntxt", cntxt.rvfi_cntxt            );
-   uvm_config_db#(uvma_rvvi_cntxt_c#(ILEN,XLEN))::set(this, "rvvi_agent"            , "cntxt", cntxt.rvvi_cntxt            );
 
 endfunction: assign_cntxt
 
@@ -452,7 +417,6 @@ function void uvme_cv32e40p_env_c::create_agents();
    obi_memory_instr_agent  = uvma_obi_memory_agent_c             ::type_id::create("obi_memory_instr_agent", this);
    obi_memory_data_agent   = uvma_obi_memory_agent_c             ::type_id::create("obi_memory_data_agent" , this);
    rvfi_agent              = uvma_rvfi_agent_c#(ILEN,XLEN)       ::type_id::create("rvfi_agent"            , this);
-   rvvi_agent              = uvma_rvvi_ovpsim_agent_c#(ILEN,XLEN)::type_id::create("rvvi_agent"            , this);
 
 endfunction: create_agents
 
@@ -462,7 +426,6 @@ function void uvme_cv32e40p_env_c::create_env_components();
    if (cfg.scoreboarding_enabled) begin
       predictor = uvme_cv32e40p_prd_c    ::type_id::create("predictor", this);
       sb        = uvme_cv32e40p_sb_c     ::type_id::create("sb"       , this);
-      core_sb   = uvme_cv32e40p_core_sb_c::type_id::create("core_sb"  , this);
    end
 
 endfunction: create_env_components
@@ -490,33 +453,6 @@ function void uvme_cv32e40p_env_c::connect_predictor();
 
 endfunction: connect_predictor
 
-function void uvme_cv32e40p_env_c::connect_rvfi_rvvi();
-
-   foreach (rvfi_agent.instr_mon_ap[i]) begin
-      rvfi_agent.instr_mon_ap[i].connect(rvvi_agent.sequencer.rvfi_instr_export);
-   end
-   `uvm_info ("ENV", "RVFI connected to RVVI", UVM_NONE)
-
-endfunction : connect_rvfi_rvvi
-
-function void uvme_cv32e40p_env_c::connect_scoreboard();
-
-   // Connect the CORE Scoreboard (but only if the ISS is running)
-   if (cfg.use_iss) begin
-      rvvi_agent.state_mon_ap.connect(core_sb.rvvi_state_export);
-      foreach (rvfi_agent.instr_mon_ap[i]) begin
-         rvfi_agent.instr_mon_ap[i].connect(core_sb.rvfi_instr_export);
-      end
-   end
-   // TODO Connect agents -> scoreboard
-   //      Ex: debug_agent.mon_ap.connect(sb.debug_sb.act_export);
-
-   // TODO Connect predictor -> scoreboard
-   //      Ex: predictor.debug_ap.connect(sb.debug_sb.exp_export);
-
-endfunction: connect_scoreboard
-
-
 function void uvme_cv32e40p_env_c::connect_coverage_model();
 
    //interrupt_agent.monitor.ap_iss.connect(cov_model.interrupt_covg.interrupt_mon_export);
@@ -528,7 +464,7 @@ function void uvme_cv32e40p_env_c::assemble_vsequencer();
 
    vsequencer.clknrst_sequencer          = clknrst_agent         .sequencer;
    vsequencer.interrupt_sequencer        = interrupt_agent       .sequencer;
-   //vsequencer.debug_sequencer            = debug_agent           .sequencer;
+   vsequencer.debug_sequencer            = debug_agent           .sequencer;
    vsequencer.obi_memory_instr_sequencer = obi_memory_instr_agent.sequencer;
    vsequencer.obi_memory_data_sequencer  = obi_memory_data_agent .sequencer;
 

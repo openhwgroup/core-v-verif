@@ -117,6 +117,15 @@ VLOG_FLAGS  += $(VLOG_COV)
 VSIM_FLAGS  += $(VSIM_COV)
 endif
 
+ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vsim-$(TEST_NAME).log
+POST_TEST = \
+	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
+		exit 1; \
+	fi
+endif
+
+
 ################################################################################
 # Waveform generation
 #TODO
@@ -174,6 +183,7 @@ vlog_corev-dv:
 			+incdir+$(COREVDV_PKG) \
 			+incdir+$(CV_CORE_COREVDV_PKG) \
 			$(CFG_COMPILE_FLAGS) \
+			$(GEN_COMPILE_FLAGS) \
 			-f $(CV_CORE_MANIFEST) \
 			-f $(COREVDV_PKG)/manifest.f
 
@@ -304,6 +314,7 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 			$(CFG_PLUSARGS) \
 			$(TEST_PLUSARGS) \
 			-do '$(VRUN_FLAGS)'
+	$(POST_TEST)
 
 ################################################################################
 # Test targets

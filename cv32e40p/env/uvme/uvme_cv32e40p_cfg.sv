@@ -44,7 +44,6 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
    rand uvma_obi_memory_cfg_c       obi_memory_instr_cfg;
    rand uvma_obi_memory_cfg_c       obi_memory_data_cfg;
    rand uvma_rvfi_cfg_c#(ILEN,XLEN) rvfi_cfg;
-   rand uvma_rvvi_cfg_c#(ILEN,XLEN) rvvi_cfg;
    // Objects
    // TODO Add scoreboard configuration handles
    //      Ex: rand uvml_sb_cfg_c  sb_egress_cfg;
@@ -66,7 +65,6 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_object(obi_memory_instr_cfg , UVM_DEFAULT)
       `uvm_field_object(obi_memory_data_cfg  , UVM_DEFAULT)
       `uvm_field_object(rvfi_cfg             , UVM_DEFAULT)
-      `uvm_field_object(rvvi_cfg             , UVM_DEFAULT)
       // TODO Add scoreboard cfg field macros
       //      Ex: `uvm_field_object(sb_egress_cfg , UVM_DEFAULT)
       //          `uvm_field_object(sb_ingress_cfg, UVM_DEFAULT)
@@ -162,7 +160,6 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
          interrupt_cfg.enabled         == 1;
          debug_cfg.enabled             == 1;
          rvfi_cfg.enabled              == 1;
-         rvvi_cfg.enabled              == use_iss;
          obi_memory_instr_cfg.enabled  == 1;
          obi_memory_data_cfg.enabled   == 1;
       }
@@ -213,7 +210,6 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
          obi_memory_instr_cfg.is_active == UVM_ACTIVE;
          obi_memory_data_cfg.is_active  == UVM_ACTIVE;
          rvfi_cfg.is_active             == UVM_PASSIVE;
-         rvvi_cfg.is_active             == UVM_ACTIVE;
       }
 
       if (trn_log_enabled) {
@@ -223,7 +219,6 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
          obi_memory_instr_cfg.trn_log_enabled  == 1;
          obi_memory_data_cfg.trn_log_enabled   == 1;
          rvfi_cfg.trn_log_enabled              == 1;
-         rvvi_cfg.trn_log_enabled              == 1;
       }
 
       if (cov_model_enabled) {
@@ -283,10 +278,8 @@ function uvme_cv32e40p_cfg_c::new(string name="uvme_cv32e40p_cfg");
    obi_memory_data_cfg   = uvma_obi_memory_cfg_c::type_id::create("obi_memory_data_cfg" );
 
    rvfi_cfg = uvma_rvfi_cfg_c#(ILEN,XLEN)::type_id::create("rvfi_cfg");
-   rvvi_cfg = uvma_rvvi_ovpsim_cfg_c#(ILEN,XLEN)::type_id::create("rvvi_cfg");
 
    rvfi_cfg.core_cfg = this;
-   rvvi_cfg.core_cfg = this;
 
 endfunction : new
 
@@ -298,11 +291,6 @@ function void uvme_cv32e40p_cfg_c::pre_randomize();
       zero_stall_sim = 1;
       zero_stall_sim.rand_mode(0);
 
-      // Hack-set is_stall_sim bit in step_compare
-      retval = uvm_hdl_deposit("uvmt_cv32e40p_tb.step_compare.is_stall_sim", 0);
-      if (!retval) begin
-         `uvm_fatal("ZEROSTALL", "Cannot set is_stall_sim in step_compare")
-      end
    end
    else if ($test$plusargs("max_data_zero_instr_stall")) begin
       // No stalls on the I bus, max on D bus
@@ -316,9 +304,6 @@ function void uvme_cv32e40p_cfg_c::post_randomize();
    super.post_randomize();
 
    rvfi_cfg.instr_name[0] = "INSTR";
-
-   // Set volatile locations for virtual peripherals
-   rvvi_cfg.add_volatile_mem_addr_range(CV_VP_REGISTER_BASE, CV_VP_REGISTER_BASE + CV_VP_REGISTER_SIZE - 1);
 
    // Disable some CSR checks from all tests
    configure_disable_csr_checks();

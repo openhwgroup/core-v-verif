@@ -39,7 +39,6 @@ package uvmt_cv32e40p_pkg;
    import uvme_cv32e40p_pkg::*;
    import uvml_hrtbt_pkg::*;
    import uvml_logs_pkg::*;
-   import uvma_rvvi_ovpsim_pkg::*;
 
    // Constants / Structs / Enums
    `include "uvmt_cv32e40p_constants.sv"
@@ -58,6 +57,7 @@ package uvmt_cv32e40p_pkg;
 
    // Compilance tests
    `include "uvmt_cv32e40p_firmware_test.sv"
+   `include "uvmt_cv32e40p_riscof_firmware_test.sv"
 
 endpackage : uvmt_cv32e40p_pkg
 

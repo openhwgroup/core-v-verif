@@ -1,3 +1,4 @@
+// Copyright 2020 ETH Zurich
 // Copyright 2020 OpenHW Group
 // Copyright 2023 Dolphin Design
 //
@@ -23,7 +24,7 @@
 #define N 16
 #define M 16
 
-#define MSTATUS_FS 0x00006000
+#define MSTATUS_FS_INITIAL 0x00002000
 
 #include "stimuli.h"
 
@@ -42,27 +43,27 @@ int checkInt (long int *B, long int *A, long int n)
   return err;
 }
 
+#ifdef FPU
 void fp_enable ()
 {
-  unsigned int fs = MSTATUS_FS & (MSTATUS_FS >> 1);
-
+  unsigned int fs = MSTATUS_FS_INITIAL;
   __asm__ volatile("csrs mstatus, %0;"
                    "csrwi fcsr, 0;"
                    : : "r"(fs));
-
 }
+#endif
 
 void mcycle_counter_enable ()
 {
   // Enable mcycle counter
-  __asm__ volatile("csrci 0x320, 0x1"); // mcountinhibit.cy = 0
+  __asm__ volatile("csrci mcountinhibit, 0x1"); // mcountinhibit.cy = 0
 
 }
 
 int cpu_perf_get_cycle()
 {
   unsigned int cycle;
-  __asm__ volatile("csrr %0, 0xB00" : "=r"(cycle)); // mcycle
+  __asm__ volatile("rdcycle %0" : "=r"(cycle)); // cycle
   return cycle;
 }
 
@@ -74,8 +75,24 @@ int main()
 
   volatile float fdiv;
 
+#ifdef FPU
   // Floating Point enable
   fp_enable();
+
+  unsigned int zfinx_val;
+  __asm__ volatile("csrr %0, 0xCD2" : "=r"(zfinx_val)); // Zfinx CSR
+#ifdef ZFINX
+  if (zfinx_val != 1) {
+    error++;
+    printf("STDOUT : Error, Zfinx expected 0x00000001 but result is %08x\n", zfinx_val);
+  }
+#else
+  if (zfinx_val != 0) {
+    error++;
+    printf("STDOUT : Error, Zfinx expected 0x00000000 but result is %08x\n", zfinx_val);
+  }
+#endif
+#endif
 
   // Enable mcycle counter
   mcycle_counter_enable();
@@ -99,7 +116,7 @@ int main()
   // Fdiv example
   fdiv = A[0] / B[1];
 
-  error = checkInt((long int *)C, (long int *)exp_C, N*M);
+  error += checkInt((long int *)C, (long int *)exp_C, N*M);
   printf("STDOUT : Number of errors in matmul : %d\n", error);
 
   return error;

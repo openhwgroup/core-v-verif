@@ -191,6 +191,11 @@ OVP_MODEL_DPI   = $(DV_OVPM_MODEL)/bin/Linux64/imperas_CV32.dpi.so
 #OVP_CTRL_FILE   = $(DV_OVPM_DESIGN)/riscv_CV32E40P.ic
 
 ###############################################################################
+# Imperas OVPsim Instruction Set Simulator
+#IMPERAS_DV_MODEL = $(CORE_V_VERIF)/vendor_lib/ImperasDV/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model.so
+IMPERAS_DV_MODEL = $(IMPERAS_HOME)/lib/$(IMPERAS_ARCH)/ImperasLib/imperas.com/verification/riscv/1.0/model.so
+
+###############################################################################
 # Run the yaml2make scripts
 
 ifeq ($(VERBOSE),1)
@@ -205,9 +210,16 @@ ifneq ($(filter gen_corev-dv,$(MAKECMDGOALS)),)
 ifeq ($(TEST),)
 $(error ERROR must specify a TEST variable with gen_corev-dv target)
 endif
+ifeq ($(RISCVDV_CFG),)
 GEN_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=corev-dv.yaml $(YAML2MAKE_DEBUG) --prefix=GEN --core=$(CV_CORE))
 ifeq ($(GEN_FLAGS_MAKE),)
-$(error ERROR Could not find corev-dv.yaml for test: $(TEST))
+$(error ERROR Could not find corev-dv.yaml of for test: $(TEST))
+endif
+else
+GEN_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=$(RISCVDV_CFG).yaml $(YAML2MAKE_DEBUG) --prefix=GEN --core=$(CV_CORE))
+ifeq ($(GEN_FLAGS_MAKE),)
+$(error ERROR Could not find corev-dv_$(RISCVDV_CFG).yaml of for test: $(TEST))
+endif
 endif
 include $(GEN_FLAGS_MAKE)
 endif
@@ -228,7 +240,7 @@ endif
 ###############################################################################
 # cfg
 CFGYAML2MAKE = $(CORE_V_VERIF)/bin/cfgyaml2make
-CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp
+CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp riscof_sim_run
 ifneq ($(filter $(CFG_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
 ifneq ($(CFG),)
 CFG_FLAGS_MAKE := $(shell $(CFGYAML2MAKE) --yaml=$(CFG).yaml $(YAML2MAKE_DEBUG) --prefix=CFG --core=$(CV_CORE))
@@ -702,5 +714,3 @@ firmware-unit-test-clean:
 		$(FIRMWARE_OBJS) $(FIRMWARE_UNIT_TEST_OBJS)
 
 #endend
-
-

@@ -78,6 +78,16 @@ endif
 DSIM_RUN_FLAGS         += $(USER_RUN_FLAGS)
 DSIM_RUN_FLAGS         += -sv_seed $(DSIM_RNDSEED)
 
+
+ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/dsim-$(TEST_NAME).log
+POST_TEST = \
+	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
+		exit 1; \
+	fi
+endif
+
+
 # Variables to control wave dumping from command the line
 # Humans _always_ forget the "S", so you can have it both ways...
 WAVES                  ?= 0
@@ -183,6 +193,7 @@ test: $(DSIM_SIM_PREREQ) hex gen_ovpsim_ic
 			+firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
 			+elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
 			+itb_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).itb
+	$(POST_TEST)
 
 # Similar to above, but for the ASM directory.
 asm: comp $(ASM_DIR)/$(ASM_PROG).hex $(ASM_DIR)/$(ASM_PROG).elf
@@ -287,6 +298,7 @@ comp_corev-dv: $(CV_CORE_PKG)
 		+incdir+$(CV_CORE_COREVDV_PKG) \
 		$(DSIM_PMA_INC) \
 		$(CFG_COMPILE_FLAGS) \
+		$(GEN_COMPILE_FLAGS) \
 		-f $(COREVDV_PKG)/manifest.f \
 		-l $(SIM_COREVDV_RESULTS)/compile.log
 
@@ -347,4 +359,3 @@ clean:
 # All generated files plus the clone of the RTL
 clean_all: clean clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
 	rm -rf $(CV_CORE_PKG)
-

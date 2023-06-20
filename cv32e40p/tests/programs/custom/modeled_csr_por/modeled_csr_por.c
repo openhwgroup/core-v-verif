@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 	*/
 
   /*
-  // lpstat0/1, lpend0/1 and lpcount0/1 present when PULP_XPULP=1
+  // lpstat0/1, lpend0/1 and lpcount0/1 present when COREV_PULP=1
   // Not currently modeled.
   __asm__ volatile("csrr %0, 0x7C0" : "=r"(lpstart0_rval));
   __asm__ volatile("csrr %0, 0x7C1" : "=r"(lpend0_rval));
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
   /*
   __asm__ volatile("csrr %0, 0x006" : "=r"(fprec_rval));    // not present because FP=0
   __asm__ volatile("csrr %0, 0xC10" : "=r"(privlv_rval));   // not modeled by the Imperas RM
-  __asm__ volatile("csrr %0, 0x014" : "=r"(uhartid_rval));  // present because PULP_XPULP=1
+  __asm__ volatile("csrr %0, 0x014" : "=r"(uhartid_rval));  // present because COREV_PULP=1
 
   if (fprec_rval != 0x0) {
     printf("ERROR: CSR FPREC not zero!\n\n");

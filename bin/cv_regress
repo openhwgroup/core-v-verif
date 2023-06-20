@@ -126,6 +126,8 @@ def read_file(args, file):
             build.set_cov()
         if args.make:
             build.sub_make(args.make)
+        if args.iss != None:
+            build.iss = args.iss
         if args.cfg:
             build.cfg = args.cfg
 
@@ -155,7 +157,7 @@ def read_file(args, file):
         # Determine if a test is valid, skip for compliance tests
         # Since it is not possible to determine apriori if a compliance test is valid
         if not 'compliance' in test.cmd:
-            check_valid_test(args.project, test.name)
+            check_valid_test(args.project, test.testname)
 
         # Determine if a test is indexed for setting test iterations
         if args.num:
@@ -200,7 +202,9 @@ parser.add_argument('--make', help='Substitute for make command (to use short-cu
 parser.add_argument('--makearg', action='append', help='Arguments to supply to each make command, can be specified multiple times')
 parser.add_argument('--sh', help='Select bash shell script output', action='store_true')
 parser.add_argument('--vsif', help='Select Vmanager VSIF output', action='store_true')
+parser.add_argument('--rmdb', help='Select Vrun RMDB output', action='store_true')
 parser.add_argument('--toolchain', help='Select toolchain to build with', choices=VALID_TOOLCHAINS, default=DEFAULT_TOOLCHAIN)
+parser.add_argument('--check_sim_results', help='Enable or not error code generation if simulation is failed', action='store_true')
 args = parser.parse_args()
 
 if args.debug:
@@ -220,9 +224,12 @@ if not args.outfile:
         args.outfile = args.outfile + '.sh'
     elif args.vsif:
         args.outfile = args.outfile + '.vsif'
+    elif args.rmdb:
+        args.outfile = args.outfile + '.rmdb'
 
 regressions = []
 unique_builds = OrderedDict()
+unique_tests = OrderedDict()
 for f in args.file:
     # Add yaml extension if not supplied
     if not os.path.splitext(f)[1] == 'yaml':
@@ -232,6 +239,9 @@ for f in args.file:
     for b in r.builds.values():
         if not b.name in unique_builds:
             unique_builds[b.name] = b
+    for t in r.tests.values():
+        if not t.name in unique_tests:
+            unique_tests[t.name] = t
 
 # Generate output product
 env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__),
@@ -294,4 +304,29 @@ if args.vsif:
     logger.info('Rendering template: regress_sve.j2 into: {}'.format(sve))
     out_fh = open(sve, 'w')
     out_fh.write(template.render(env=os.environ))
+    out_fh.close()
+
+
+if args.rmdb:
+    # Generate a Vrun-compatible rmdb file (--rmdb)
+    template = env.get_template('regress_rmdb.j2')
+    if not args.cov and not args.check_sim_results:
+        logger.warning('Coverage and simulation checking results are not enabled, regression with Questa Vrun will not be able to detect any failing test')
+    logger.info('Rendering template: regress_rmdb.j2 into: {}'.format(args.outfile))
+    out_fh = open(args.outfile, 'w')
+    out_fh.write(template.render(session=os.path.splitext(os.path.basename(args.outfile))[0],
+                                 results_path=get_results_path(args.project),
+                                 project=args.project,
+                                 parallel=args.parallel,
+                                 regressions=regressions,
+                                 results=args.results,
+                                 makeargs=' '.join(args.makearg) if args.makearg else '',
+                                 lsf=args.lsf,
+                                 toolchain=args.toolchain,
+                                 simulator=args.simulator,
+                                 filter_dir=get_filter_dir(),
+                                 unique_builds=unique_builds,
+                                 unique_tests=unique_tests,
+                                 coverage=args.cov,
+                                 check_sim_results=args.check_sim_results))
     out_fh.close()

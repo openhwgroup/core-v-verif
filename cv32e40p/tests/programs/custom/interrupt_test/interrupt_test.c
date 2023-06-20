@@ -41,6 +41,17 @@ void delay(int count) {
     for (volatile int d = 0; d < count; d++);
 }
 
+#ifdef FPU
+void fp_enable ()
+{
+  unsigned int fs = MSTATUS_FS_INITIAL;
+
+  asm volatile("csrs mstatus, %0;"
+               "csrwi fcsr, 0;"
+               : : "r"(fs));
+}
+#endif
+
 void mstatus_mie_enable() {
     int mie_bit = 0x1 << MSTATUS_MIE_BIT;
     asm volatile("csrrs x0, mstatus, %0" : : "r" (mie_bit));
@@ -212,6 +223,12 @@ __attribute__((interrupt ("machine"))) void u_sw_direct_irq_handler(void)  {
     );
 
 int main(int argc, char *argv[]) {
+
+#ifdef FPU
+    // Floating Point enable
+    fp_enable();
+#endif
+
     int retval;
 
     // Test 1
