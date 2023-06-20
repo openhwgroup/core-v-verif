@@ -70,6 +70,9 @@ class cv32e40p_instr extends riscv_instr;
         .exclude_instr    ( disallowed_instr ) ,
         .exclude_category ( exclude_category )
       );
+
+      $cast(cv32_instr,instr);
+      return cv32_instr;
     end
 
     // if a specific instruction category is wanted, return it along with exclusions
@@ -84,6 +87,9 @@ class cv32e40p_instr extends riscv_instr;
         .exclude_instr    ( disallowed_instr ) ,
         .exclude_category ( exclude_category )
       );
+
+      $cast(cv32_instr,instr);
+      return cv32_instr;
     end
 
     instr = riscv_instr::get_rand_instr (

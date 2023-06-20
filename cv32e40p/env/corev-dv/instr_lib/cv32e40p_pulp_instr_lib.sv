@@ -34,11 +34,21 @@ class cv32e40p_base_pulp_instr_stream extends cv32e40p_base_instr_stream;
   endfunction
 
   virtual function void gen_xpulp_instr(riscv_instr_name_t base_instr_list[$] = {});
-    riscv_instr instr;
+    riscv_instr     instr;
+    cv32e40p_instr  cv32_instr;
+
+    avail_regs = new[num_of_avail_regs];
     randomize_avail_regs();
-    instr = cv32e40p_instr::get_xpulp_instr(.include_instr(base_instr_list));
-    randomize_gpr(instr);
-    instr_list.push_back(instr);
+    cv32_instr = cv32e40p_instr::get_xpulp_instr(.include_instr(base_instr_list));
+
+    //randomize GPRs for each instruction
+    randomize_cv32e40p_gpr(cv32_instr, avail_regs);
+
+    //randomize immediates for each instruction
+    randomize_cv32e40p_instr_imm(cv32_instr);
+
+    instr_list.push_back(cv32_instr);
+
   endfunction
 
 endclass
