@@ -158,11 +158,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
       ^rdata[31:24],
       ^rdata[23:16],
       ^rdata[15:8],
-      ^rdata[7:0]};/* TODO: remove
-      ^rdata[3],
-      ^rdata[2],
-      ^rdata[1],
-      ^rdata[0]};*/
+      ^rdata[7:0]};
   endfunction
 
 
