@@ -2057,6 +2057,12 @@ module uvmt_cv32e40s_tb;
             $display("    --------------------------------------------------------");
          end
       end
+      // If there are any liveness assertions still pending at this time,
+      // kill all of them to prevent false failures after end of test.
+      // Actual failures _should_ have been caught and logged at this time
+      // This is needed as the core is not necessarily terminated by software,
+      // and there may be outstanding transactions.
+      $assertkill();
    end
    `endif
 

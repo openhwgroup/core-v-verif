@@ -37,7 +37,7 @@
     assign rvvi.csr[0][0][``CSR_ADDR]    = csr_``CSR_NAME``_w | csr_``CSR_NAME``_r; \
     assign rvvi.csr_wb[0][0][``CSR_ADDR] = csr_``CSR_NAME``_wb; \
     always @(rvvi.csr[0][0][``CSR_ADDR]) begin \
-      if (`DUT_PATH.rvfi_csr_``CSR_NAME``_if.rvfi_csr_rmask || `DUT_PATH.rvfi_csr_``CSR_NAME``_if.rvfi_csr_wmask ) begin \
+      if ((`DUT_PATH.rvfi_csr_``CSR_NAME``_if.rvfi_csr_rmask || `DUT_PATH.rvfi_csr_``CSR_NAME``_if.rvfi_csr_wmask) && `RVFI_IF.rvfi_valid) begin \
         csr_``CSR_NAME``_wb = 1; \
       end \
     end \
