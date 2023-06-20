@@ -362,6 +362,7 @@ ldgen: $(CV_CORE_PKG)
 		$(XRUN_PMA_INC) \
 		$(CFG_PLUSARGS) \
 		$(CFG_COMPILE_FLAGS) \
+		$(XRUN_SV_INCLUDE_FILES) \
 		+ldgen_cp_test_path=$(SIM_LDGEN_RESULTS) \
 		$(TBSRC_HOME)/ldgen/ldgen_tb.sv \
 		-top $(basename $(notdir $(TBSRC_HOME)/ldgen/ldgen_tb.sv))
