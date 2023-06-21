@@ -85,6 +85,9 @@ endclass : uvmt_cv32e40p_firmware_test_c
 function uvmt_cv32e40p_firmware_test_c::new(string name="uvmt_cv32e40p_firmware_test", uvm_component parent=null);
 
    super.new(name, parent);
+   if ($test$plusargs("gen_reduced_rand_dbg_req")) begin
+        uvme_cv32e40p_random_debug_c::type_id::set_type_override(uvme_cv32e40p_reduced_rand_debug_req_c::get_type());
+   end
    `uvm_info("TEST", "This is the FIRMWARE TEST", UVM_NONE)
 
 endfunction : new
@@ -128,6 +131,12 @@ task uvmt_cv32e40p_firmware_test_c::run_phase(uvm_phase phase);
    if ($test$plusargs("debug_boot_set")) begin
     fork
       bootset_debug();
+    join_none
+   end
+
+   if ($test$plusargs("gen_reduced_rand_dbg_req")) begin
+    fork
+      random_debug();
     join_none
    end
 

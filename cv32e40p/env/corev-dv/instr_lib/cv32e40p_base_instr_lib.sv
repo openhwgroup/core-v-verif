@@ -16,9 +16,12 @@
  * limitations under the License.
  */
 
-// Base class as an example
+// cv32e40p specific stream classes extended from RISCV-DV stream classes
 
  class cv32e40p_base_instr_stream extends riscv_rand_instr_stream;
+
+  rand bit [31:0]           temp_imm; // variable used for immediate value randomization
+
   `uvm_object_utils(cv32e40p_base_instr_stream)
   int unsigned num_of_avail_regs;
 
@@ -68,5 +71,102 @@
     end
     super.post_randomize();
   endfunction : post_randomize
+
+  //Function: randomize_cv32e40p_gpr()
+  //Similar to randomize_gpr() of parent class which is not a virtual method
+  //Thus need to create a new function here for cv32e40p_instr instr type
+  function void randomize_cv32e40p_gpr(cv32e40p_instr instr, riscv_reg_t avail_reg_list[]);
+    instr.set_rand_mode();
+    `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
+      if ( (instr.format != (CI_FORMAT || CB_FORMAT || CJ_FORMAT || CR_FORMAT || CA_FORMAT || CL_FORMAT || CS_FORMAT || CSS_FORMAT || CIW_FORMAT)) ) {
+        if (avail_reg_list.size() > 0) {
+          if (has_rs1) {
+            rs1 inside {avail_reg_list};
+          }
+          if (has_rs2) {
+            rs2 inside {avail_reg_list};
+          }
+          if (has_rd) {
+            rd  inside {avail_reg_list};
+          }
+        }
+        foreach (reserved_rd[i]) {
+          if (has_rd) {
+            rd != reserved_rd[i];
+          }
+          if (format == CB_FORMAT) {
+            rs1 != reserved_rd[i];
+          }
+        }
+        foreach (cfg.reserved_regs[i]) {
+          if (has_rd) {
+            rd != cfg.reserved_regs[i];
+          }
+          if (format == CB_FORMAT) {
+            rs1 != cfg.reserved_regs[i];
+          }
+        }
+      }
+      // TODO: Add constraint for CSR, floating point register
+    )
+  endfunction
+
+  //Function: randomize_cv32e40p_instr_imm()
+  //Function to randomize immediates for cv32e40p_instr type.
+  //It solves the issue where if same instruction is generated in a stream
+  //multiple times, the immediate values were not re-randomized as they
+  //were only randomized once during creation of instruction class
+  function void randomize_cv32e40p_instr_imm(cv32e40p_instr instr);
+    std::randomize(temp_imm);
+    instr.imm = temp_imm;
+
+    if (instr.has_imm) begin
+      instr.extend_imm();
+      instr.update_imm_str();
+    end
+  endfunction
+
+  //Function: randomize_riscv_instr_imm()
+  //Function to randomize immediates for riscv_instr type.
+  //It solves the issue where if same instruction is generated in a stream
+  //multiple times, the immediate values were not re-randomized as they
+  //were only randomized once during creation of instruction class
+  function void randomize_riscv_instr_imm(riscv_instr instr);
+
+    if (instr.is_compressed) begin
+      std::randomize(temp_imm) with  {
+                                       if(instr.imm_type inside {NZIMM, NZUIMM}) {
+                                         temp_imm[4:0] != 0;
+                                         if (instr.instr_name == C_LUI) {
+                                           temp_imm[31:5] == 0;
+                                         }
+                                         if (instr.instr_name == (C_SRAI || C_SRLI || C_SLLI || C_LUI)) {
+                                           temp_imm[31:5] == 0;
+                                         }
+                                       }
+                                       if (instr.instr_name == C_ADDI4SPN) {
+                                         temp_imm[1:0] == 0;
+                                       }
+                                     };
+      instr.imm = temp_imm;
+    end
+    else begin
+      std::randomize(temp_imm) with  {
+                                       if (instr.instr_name inside {SLLIW, SRLIW, SRAIW}) {
+                                         temp_imm[11:5] == 0;
+                                       }
+                                       if (instr.instr_name inside {SLLI, SRLI, SRAI}) {
+                                         if (XLEN == 32) {
+                                           temp_imm[11:5] == 0;
+                                         } else {
+                                           temp_imm[11:6] == 0;
+                                         }
+                                       }
+                                     };
+      instr.imm = temp_imm;
+      instr.extend_imm();
+      instr.update_imm_str();
+    end
+  endfunction
 
 endclass // cv32e40p_base_instr_stream
