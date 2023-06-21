@@ -34,7 +34,7 @@ _start:
 .option pop
 
 /* initialize stack pointer */
-  la sp, __stack_end
+  la sp, __stack_start
 
 /* set vector table address */
   la a0, __vector_start

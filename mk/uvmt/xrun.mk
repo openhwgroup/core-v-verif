@@ -349,6 +349,18 @@ endif
 # Standalone tb that generates appropriate linker files based on a given pma
 # configuration. Uses same code as the generator embedded in corev-dv.
 
+# By default, emit results to cfg run directory (Needs CFG set),
+# if TEST is set, then emit results to specific test run directory
+
+LDGEN ?= $(if $(TEST),$(TEST)/$(RUN_INDEX)/test_program,)
+WRITABLE_REGION_IDX ?= -1
+ifeq ($(call IS_YES,$(IS_ROM_RAM_LAYOUT)), YES)
+  ifeq ($(WRITABLE_REGION_IDX), -1)
+    $(error WRITABLE_REGION_IDX undefined)
+  endif
+  LDGEN_CFG_LAYOUT = +writable_region_idx=$(WRITABLE_REGION_IDX)
+endif
+
 ldgen: $(CV_CORE_PKG)
 	@echo "$(BANNER)"
 	@echo "* Generating linker scripts in $(SIM_LDGEN_RESULTS)"
@@ -364,6 +376,8 @@ ldgen: $(CV_CORE_PKG)
 		$(CFG_COMPILE_FLAGS) \
 		$(XRUN_SV_INCLUDE_FILES) \
 		+ldgen_cp_test_path=$(SIM_LDGEN_RESULTS) \
+		+standalone_generate=1 \
+		$(LDGEN_CFG_LAYOUT) \
 		$(TBSRC_HOME)/ldgen/ldgen_tb.sv \
 		-top $(basename $(notdir $(TBSRC_HOME)/ldgen/ldgen_tb.sv))
 	cp $(BSP)/link_corev-dv.ld $(SIM_LDGEN_RESULTS)/link.ld
