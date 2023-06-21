@@ -82,7 +82,7 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   endproperty
 
 
-  generate for (genvar gpr_addr = 0; gpr_addr < 32; gpr_addr++) begin
+  generate for (genvar gpr_addr = 0; gpr_addr < 32; gpr_addr++) begin : gpr_reset_value
 
     a_xsecure_rf_ecc_gpr_reset_value: assert property (
       p_gpr_ecc_reset(
@@ -101,24 +101,24 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
         gpr_addr)
     ) else `uvm_error(info_tag, $sformatf("GPR %0d is not set to 0 when exiting reset stage (as RS2 is not 0).\n", gpr_addr));
 
-  end endgenerate
+  end endgenerate //gpr_reset_value
 
 
   //Verify that the GPRs and their ECC values have not all bits set to 0s or all bits set to 1s in the same clock cycle
 
-  generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
+  generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin : gpr_not_1s_or_0s
 
     a_xsecure_rf_ecc_gpr_not_all_0s_or_1s: assert property (
       gpr_mem[gpr_addr] != '0
       && gpr_mem[gpr_addr] != '1
     ) else `uvm_error(info_tag, $sformatf("The value of GPR %0d is all %0s.\n", gpr_addr, gpr_mem[gpr_addr][0]));
 
-  end endgenerate
+  end endgenerate //gpr_not_1s_or_0s
 
 
   //Verify that we set major alert if the the register sources' values and corresponding ECC score have all bits set to 0s or 1s
 
-  generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
+  generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin : gpr_1s_or_0s
 
     a_glitch_xsecure_rf_gpr_not_all_0s_or_1s: assert property (
       (rs1 == gpr_addr
@@ -132,7 +132,7 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
 
     ) else `uvm_error(info_tag_glitch, $sformatf("The value of GPR %0d is all %0s, and major alert is not set.\n", gpr_addr, gpr_mem[gpr_addr][0]));
 
-  end endgenerate
+  end endgenerate //gpr_1s_or_0s
 
 
 
@@ -189,7 +189,7 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
   endproperty
 
 
-  generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin
+  generate for (genvar gpr_addr = 1; gpr_addr < 32; gpr_addr++) begin : gpr_bit_faults
 
     a_glitch_xsecure_rf_ecc_rs1_bit_fault: assert property (
       p_rs_bit_fault(
@@ -203,6 +203,6 @@ module uvmt_cv32e40s_xsecure_register_file_ecc_assert
         gpr_addr)
     ) else `uvm_error(info_tag_glitch, $sformatf("1 or 2 bit errors when reading RS2 (address %0d) do not set the alert major.\n", gpr_addr));
 
-  end endgenerate
+  end endgenerate //gpr_bit_faults
 
   endmodule : uvmt_cv32e40s_xsecure_register_file_ecc_assert
