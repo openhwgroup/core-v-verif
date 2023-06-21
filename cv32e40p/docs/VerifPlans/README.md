@@ -12,13 +12,13 @@ For CV32E40P**v2** verification, the formal verification methodology has been ch
 
 ## Verification Plan Status
 
-The tables below capture the current status of the Verification Plan for the CV32E40P by high-level feature, as long with status update with respect to CV32E40Pv1 verification plans.  Under the heading `Capture`, the test plan can be **Incomplete**, **draft**. If the verification is **captured**, it has one of the following status:
+The tables below capture the current status of the Verification Plan for the CV32E40P by high-level feature, as long with status update with respect to CV32E40Pv1 verification plans.  Under the heading `VPlan Status`, the test plan can be **Incomplete**, **draft**. If the verification is **captured**, it has one of the following status:
 * **v1-reused**: Vplan has been captured during v1 verification and has no modifications since then
 * **v1-updated**: Vplan has been captured during v1 verification and contains updates, described in comments
 * **v2-sim-new**: Vplan captures either new features or features not tested in v1 that will be execised within simulation environment
 * **v2-formal-new**: Vplan captures either new features or features not tested in v1 that are verified using formal
 
-Under the heading `Review` is one of following:
+Under the heading `Review Status` is one of following:
 * **Not Available for Review**: Vplan has been captured, but is not available for review yet
 * **Ready for Review**: Vplan has been captured and is awaiting review.
 * **Reviewed**: Vplan has been reviewed, and is waiting for updates to address review feedback.
@@ -30,8 +30,8 @@ Under the heading `Link`, the name shown corresponds to the filename of the vpla
 | Category            | Feature        | VPlan Status | Review Status | Comment | Link |
 |---------------------|----------------|--------------|---------------|---------|------|
 | **Base Instruction Set** | RV32IMC + F + Zfinx + Zifencei | v2-formal-new | Not Available for Review | Waiting Approval from Siemens |      |
-| **Interrupts**      | CLINT | v1-updated   | **Ready for Review** | Addition of missing XPULP / F / Zfinx interrupts |[CV32E40P_interrupts.xlsx](https://github.com/openhwgroup/core-v-verif/blob/2378099bfce1c7b2b3d089ea2cb60ad422c05e94/cv32e40p/docs/VerifPlans/Simulation/interrupts/CV32E40P_interrupts.xlsx "Interrupts Vplan")|
-| **Debug & Trace**   | Debug          | v1-reused | Reviewed | Missing XPULP-specific debug are in a separate vplan |[CV32E40P_debug.xlsx](https://github.com/openhwgroup/core-v-verif/blob/2378099bfce1c7b2b3d089ea2cb60ad422c05e94/cv32e40p/docs/VerifPlans/Simulation/debug-trace/CV32E40P_debug.xlsx "Debug Vplan")|
+| **Interrupts**      | CLINT | v1-updated   | **Ready for Review** | Addition of missing XPULP / F / Zfinx interrupts | [CV32E40P_interrupts.xlsx](https://github.com/openhwgroup/core-v-verif/blob/2378099bfce1c7b2b3d089ea2cb60ad422c05e94/cv32e40p/docs/VerifPlans/Simulation/interrupts/CV32E40P_interrupts.xlsx "Interrupts Vplan")|
+| **Debug & Trace**   | Debug          | v1-reused | Reviewed | Missing XPULP-specific debug are in a separate vplan | [CV32E40P_debug.xlsx](https://github.com/openhwgroup/core-v-verif/blob/2378099bfce1c7b2b3d089ea2cb60ad422c05e94/cv32e40p/docs/VerifPlans/Simulation/debug-trace/CV32E40P_debug.xlsx "Debug Vplan")|
 | **Privileged Spec** | CSRs / Zicsr | v2-formal-new | Not Available for Review | Waiting Approval from Siemens |      |
 | **Micro-architecture** | OBI |  v1-reused  | Reviewed |         | [CV32E40P_OBI_VerifPlan.xlsx](https://github.com/openhwgroup/core-v-verif/blob/2378099bfce1c7b2b3d089ea2cb60ad422c05e94/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_OBI_VerifPlan.xlsx "OBI Vplan") |
 |                        | Pipeline / SleepUnit | v1-reused | Reviewed |  | [CV32E40P_Pipeline_Sleep.xlsx](https://github.com/openhwgroup/core-v-verif/blob/2378099bfce1c7b2b3d089ea2cb60ad422c05e94/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_Pipeline_Sleep.xlsx "Pipeline Sleep Vplan") |
@@ -53,10 +53,15 @@ Under the heading `Link`, the name shown corresponds to the filename of the vpla
 
 
 
+________________________________________________________________________
+
 # CV32E40P (V1) Verification Plans
+
+Below are the verification plans status for the first version of the core.
+
 ## Verification Plan Status
 
-The tables below capture the current status of the Verification Plan for the CV32E40P by high-level feature.  Under the heading `Review` is one of following:
+The tables below capture the current status of the Verification Plan for the CV32E40P by high-level feature.  Under the heading `Review Status` is one of following:
 * **Ready for Review**: Vplan has been captured and is awaiting review.
 * **Reviewed**: Vplan has been reviewed, and is waiting for updates to address review feedback.
 * **Waiting for Signoff**: Vplan has been reviewed and review comments addressed by the author.  Document is now waiting for reviewers to signoff on the post-review updates.
@@ -64,56 +69,58 @@ The tables below capture the current status of the Verification Plan for the CV3
 
 ### Base instruction set plus standard instruction extensions
 
-_Refer to the VerifPlans/ISA/RV32/Simulation directory for specific Verification Plan status for each supported extension._
+_Refer to the [VerifPlans/ISA/RV32/Simulation](https://github.com/openhwgroup/core-v-verif/tree/4bb9858cd7c58f8856ff544f53fe102c76ea9683/docs/VerifPlans/ISA/RV32/Simulation "ISA Simulation vPlans") directory for specific Verification Plan status for each supported extension._
 ### Interrupts
 
-| Feature | Capture | Review | Comment |
-|---------|---------|--------|---------|
-| CLINT | Captured | Complete | |
-| CLIC | | | Not a CV32E40P Feature |
+| Feature | VPlan Status | Review Status | Comment | Link |
+|---------|---------|--------|---------|------|------|
+| CLINT | Captured | Complete | | [CV32E40P_interrupts.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/interrupts/CV32E40P_interrupts.xlsx "v1 Interrupts Vplan") |
+| CLIC | | | Not a CV32E40P Feature | |
 
 ### Debug & Trace
 
-| Feature | Capture | Review | Comment |
-|---------|---------|--------|---------|
-| Debug | Captured | Complete | |
-| Trigger module | Captured | Complete | Not a CV32E40P Feature |
-| Tracer | N/A | N/A | Behavioral model, not RTL |
+| Feature | VPlan Status | Review Status | Comment | Link |
+|---------|---------|--------|---------|------|------|
+| Debug | Captured | Complete | | [CV32E40P_debug.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/debug-trace/CV32E40P_debug.xlsx "Debug Vplan") |
+| Trigger module | Captured | Complete | Not a CV32E40P Feature | |
+| Tracer | N/A | N/A | Behavioral model, not RTL | |
 
 ### Privileged spec
 
-| Feature | Capture | Review | Comment |
-|---------|---------|--------|---------|
-| CSRs | Incomplete | | |
-| User mode | N/A| N/A | Not a CV32E40P Feature |
-| PMP | N/A | N/A | Not a CV32E40P Feature |
+| Feature | VPlan Status | Review Status | Comment | Link |
+|---------|---------|--------|---------|------|------|
+| CSRs | Incomplete | | | [CSR_Vplan.md](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/privileged_spec/CSR_Vplan.md "v1 CSR Vplan") |
+| User mode | N/A| N/A | Not a CV32E40P Feature | |
+| PMP | N/A | N/A | Not a CV32E40P Feature | |
 
 ### Micro-architecure
 
-| Feature | Capture | Review | Comment |
-|---------|---------|--------|---------|
-| OBI     | Complete | Reviewed | |
-| Sleep Unit | Complete | Reviewed | Updates pending based on review feedback |
-| Pipelines | Complete | Reviewed | Updates pending based on review feedback|
+| Feature | VPlan Status | Review Status | Comment | Link |
+|---------|---------|--------|---------|------|------|
+| OBI     | Complete | Reviewed | | [CV32E40P_OBI_VerifPlan.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_OBI_VerifPlan.xlsx "v1 OBI Vplan") |
+| Sleep Unit | Complete | Reviewed | Updates pending based on review feedback | [CV32E40P_Pipeline_Sleep.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_Pipeline_Sleep.xlsx "v1 Pipeline Sleep Vplan") |
+| Pipelines | Complete | Reviewed | Updates pending based on review feedback | [CV32E40P_Pipeline_Sleep.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/micro_architecture/CV32E40P_Pipeline_Sleep.xlsx "v1 Pipeline Sleep Vplan") |
 
 ### Xpulp instruction extensions
 **Note**: Xpulp instructions are "exercised, but not fully verified" in CV32E40P.
 
-| Feature | Capture | Review | Comment |
-|---------|---------|--------|---------|
-| Post-increment load/store | Preliminary draft | | |
-| Hardware Loop | Preliminary draft | | On-going discussions with Cores TWG |
-| Bit Manipulation | Preliminary draft | | |
-| General ALU | Preliminary draft | | |
-| Immediate branching | Preliminary draft | | |
-| SIMD | Preliminary draft | | |
+| Feature | VPlan Status | Review Status | Comment | Link |
+|---------|---------|--------|---------|------|-----|
+| Post-increment load/store | Preliminary draft | | | [CV32E40P_xpulp-postinc-loadstore.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-postinc-loadstore.xlsx "v1 Post-Inc Load/Store simu Vplan") | |
+| Hardware Loop | Preliminary draft | | On-going discussions with Cores TWG | [CV32E40P_xpulp-hwloop.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-hwloop.xlsx "v1 HWLoop Vplan") |
+| Bit Manipulation | Preliminary draft | | | [CV32E40P_xpulp-bitmanipulation.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-bitmanipulations.xlsx "v1 Bitmanip simu Vplan") |
+| General ALU | Preliminary draft | | | [CV32E40P_xpulp-general-alu.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-general-alu.xlsx "v1 General ALU simu Vplan") |
+| Immediate branching | Preliminary draft | | | [CV32E40P_xpulp-immediate-branching.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-immediate-branching.xlsx "v1 Imm Branching simu Vplan") |
+| SIMD | Preliminary draft | | | [CV32E40P_xpulp-packed-simd.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-packed-simd.xlsx "v1 SIMD simu Vplan") |
+| MAC | Preliminary draft | | | [CV32E40P_xpulp-multiply-accumulate.xlsx](https://github.com/openhwgroup/core-v-verif/blob/4bb9858cd7c58f8856ff544f53fe102c76ea9683/cv32e40p/docs/VerifPlans/Simulation/xpulp_instruction_extensions/CV32E40P_xpulp-multiply-accumulate.xlsx "v1 MAC simu Vplan") |
+
 
 ### Custom circuitry
 
-| Feature | Capture | Review | Comment |
-|---------|---------|--------|---------|
-| RI5CY performance counters | | | Not a CV32E40P Feature |
-| Advanced Processing Unit itf | | | Not a CV32E40P Feature |
-| 128-bit wide Instruction Bus itf | | | Not a CV32E40P Feature |
-| RI5CY interrupt scheme | | | Not a CV32E40P Feature |
-| PULP cluster itf | | | Not a CV32E40P Feature |
+| Feature | VPlan Status | Review Status | Comment | Link |
+|---------|---------|--------|---------|------|-----|
+| RI5CY performance counters | | | Not a CV32E40P Feature | |
+| Advanced Processing Unit itf | | | Not a CV32E40P Feature | |
+| 128-bit wide Instruction Bus itf | | | Not a CV32E40P Feature | |
+| RI5CY interrupt scheme | | | Not a CV32E40P Feature | |
+| PULP cluster itf | | | Not a CV32E40P Feature | |
