@@ -28,7 +28,7 @@ module uvmt_cva6_dut_wrap # ( parameter int unsigned AXI_USER_WIDTH    = 1,
                             uvmt_axi_switch_intf                axi_switch_vif,
                             uvme_cva6_core_cntrl_if             core_cntrl_if,
                             output logic[31:0]                  tb_exit_o,
-                            output ariane_pkg::rvfi_port_t      rvfi_o
+                            output rvfi_pkg::rvfi_instr_t [ariane_pkg::NR_COMMIT_PORTS-1:0] rvfi_o
                            );
 
 
