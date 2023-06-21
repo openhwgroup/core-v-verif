@@ -233,15 +233,15 @@
     C_NOT,
     C_MUL,
     //Zcmp
-    C_MPUSH,
-    C_MPOP,
-    C_MPOPRET,
-    C_MPOPRETZ,
-    C_MMVA01S,
-    C_MMVSA01,
+    CM_PUSH,
+    CM_POP,
+    CM_POPRET,
+    CM_POPRETZ,
+    CM_MVA01S,
+    CM_MVSA01,
     //Zcmt
-    C_MJT,
-    C_MJALT,
+    CM_JT,
+    CM_JALT,
 
 
     // Pseudo name, class of instructions
@@ -433,23 +433,6 @@
     FUNCT3_AND     = 3'b111
   } op_minor_opcode_e;
 
-  // Minor opcodes for min and max instructions
-  typedef enum logic [2:0] {
-    FUNCT3_MIN   = 3'b100,
-    FUNCT3_MINU  = 3'b101,
-    FUNCT3_MAX   = 3'b110,
-    FUNCT3_MAXU  = 3'b111
-  } min_max_minor_opcode_e;
-
-  // Minor opcodes for logical operators and sign extend (FUNCT3_SEXT)
-  typedef enum logic [2:0] {
-    FUNCT3_XNOR = 3'b100,
-    FUNCT3_ORCB = 3'b101,
-    FUNCT3_ORN  = 3'b110,
-    FUNCT3_ANDN = 3'b111,
-    FUNCT3_SEXT = 3'b001
-  } logical_minor_opcode_e;
-
 
   // Minor opcodes for Zba
   typedef enum logic [2:0] {
@@ -458,25 +441,29 @@
     FUNCT3_SH1ADD = 3'b010
   } zba_minor_opcode_e;
 
-  // Minor opcodes for Zbc
+  // Minor opcodes for Zbb
+  // Minor opcodes for min and max instructions
   typedef enum logic [2:0] {
-    FUNCT3_CLMUL  = 3'b001,
-    FUNCT3_CLMULR = 3'b010,
-    FUNCT3_CLMULH = 3'b011
-  } zbc_minor_opcode_e;
+    FUNCT3_MIN   = 3'b100,
+    FUNCT3_MINU  = 3'b101,
+    FUNCT3_MAX   = 3'b110,
+    FUNCT3_MAXU  = 3'b111
+  } zbb_min_max_minor_opcode_e;
+
+  // Minor opcodes for logical operators and sign extend (FUNCT3_SEXT)
+  typedef enum logic [2:0] {
+    FUNCT3_XNOR = 3'b100,
+    FUNCT3_ORCB = 3'b101,
+    FUNCT3_ORN  = 3'b110,
+    FUNCT3_ANDN = 3'b111,
+    FUNCT3_SEXT = 3'b001
+  } zbb_logical_minor_opcode_e;
 
   // Minor opcodes for rotate instructions
   typedef enum logic [2:0] {
     FUNCT3_ROR_RORI = 3'b101,
     FUNCT3_ROL      = 3'b001
-  } rotate_minor_opcode_e;
-
-  // Minor opcodes for single-Bit instructions
-  // FUNCT3_B_BI corresponds to all single-Bit instructions other than BEXT and BEXTI.
-  typedef enum logic [2:0] {
-    FUNCT3_BEXT_BEXTI = 3'b101,
-    FUNCT3_B_BI       = 3'b001
-  } single_bit_minor_opcode_e;
+  } zbb_rotate_minor_opcode_e;
 
   // Minor opcodes for byte reverse register (FUNCT3_REV8), count instructions (FUNCT3_C)
   // and zero extend halfword instruction (FUNCT3_ZEXTH).
@@ -485,7 +472,21 @@
     FUNCT3_REV8  = 3'b101,
     FUNCT3_C     = 3'b001,
     FUNCT3_ZEXTH = 3'b100
-  } rev8_count_minor_opcode_e;
+  } zbb_rev8_c_zexth_minor_opcode_e;
+
+  // Minor opcodes for Zbc
+  typedef enum logic [2:0] {
+    FUNCT3_CLMUL  = 3'b001,
+    FUNCT3_CLMULR = 3'b010,
+    FUNCT3_CLMULH = 3'b011
+  } zbc_minor_opcode_e;
+
+  // Minor opcodes for Zbs
+  // FUNCT3_B_BI corresponds to all single-Bit instructions other than BEXT and BEXTI.
+  typedef enum logic [2:0] {
+    FUNCT3_BEXT_BEXTI = 3'b101,
+    FUNCT3_B_BI       = 3'b001
+  } zbs_single_bit_minor_opcode_e;
 
   // Minor opcodes for multiplication and division, "M".
   typedef enum logic [2:0] {
