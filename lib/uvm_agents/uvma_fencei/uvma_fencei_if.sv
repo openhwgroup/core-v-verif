@@ -21,7 +21,7 @@
 /**
  * Encapsulates all signals and clocking of FENCEI flush request/acknowledge interface
  */
-interface uvma_fencei_if
+interface uvma_fencei_if_t
   import uvma_fencei_pkg::*;
   (
     input                      clk,
@@ -57,7 +57,7 @@ interface uvma_fencei_if
                   flush_ack;
   endclocking : mon_cb
 
-endinterface : uvma_fencei_if
+endinterface : uvma_fencei_if_t
 
 
 `endif // __UVMA_FENCEI_IF_SV__

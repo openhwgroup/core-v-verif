@@ -99,7 +99,7 @@ function void uvma_pma_mon_c::process_trn(ref uvma_pma_mon_trn_c trn);
 
    trn.cfg = cfg;
    trn.__originator = get_full_name();
-   `uvm_info("${name_uppecase}_MON", $sformatf("Sampled transaction from the virtual interface:\n%s", trn.sprint()), UVM_HIGH)
+   `uvm_info("PMA_MON", $sformatf("Sampled transaction from the virtual interface:\n%s", trn.sprint()), UVM_HIGH)
    `uvml_hrtbt()
 
 endfunction : process_trn

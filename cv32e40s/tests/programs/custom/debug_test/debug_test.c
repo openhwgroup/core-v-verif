@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "corev_uvmt.h"
 
 volatile int glb_hart_status  = 0; // Written by main code only, read by debug code
@@ -247,7 +248,7 @@ int main(int argc, char *argv[])
     printf("------------------------\n");
     printf(" Test2.2: check access to Trigger registers\n");
     // Writes are ignored
-    temp = 0xFFFFFFFF;
+    temp = 0xFFFFFFFF;    //TODO:MT should these be writes?
     __asm__ volatile("csrw  0x7a0, %0"     : "=r"(temp)); // Trigger TSELECT
     __asm__ volatile("csrw  0x7a1, %0"     : "=r"(temp)); // Trigger TDATA1
     __asm__ volatile("csrw  0x7a2, %0"     : "=r"(temp)); // Trigger TDATA2
@@ -284,7 +285,7 @@ int main(int argc, char *argv[])
     };
     if(mstatus_cmp.bits != mstatus.bits) {printf("ERROR: init mstatus mismatch exp=%x val=%x\n",
                                            mstatus_cmp.bits, mstatus.bits); TEST_FAILED;}
-
+    //TODO:MT are these switched up?
     printf("------------------------\n");
     printf(" Test3.1: check hart ebreak executes ebreak handler but does not execute debugger code\n");
     glb_expect_ebreak_handler = 1;
@@ -304,7 +305,7 @@ int main(int argc, char *argv[])
       .fields.value            = 1,
       .fields.pulse_mode       = 1, //PULSE Mode
       .fields.rand_pulse_width = 0,
-      .fields.pulse_width      = 5,// FIXME: BUG: one clock pulse cause core to lock up
+      .fields.pulse_width      = 5,// TODO:MT determine pulse width with non-sticky debug_req
       .fields.rand_start_delay = 0,
       .fields.start_delay      = 200
     };

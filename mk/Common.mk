@@ -182,13 +182,18 @@ endif
 # SVLIB repo var end
 
 ###############################################################################
-# Imperas Instruction Set Simulator
+# Imperas OVPsim Instruction Set Simulator
 
 DV_OVPM_HOME    = $(CORE_V_VERIF)/vendor_lib/imperas
 DV_OVPM_MODEL   = $(DV_OVPM_HOME)/imperas_DV_COREV
 DV_OVPM_DESIGN  = $(DV_OVPM_HOME)/design
 OVP_MODEL_DPI   = $(DV_OVPM_MODEL)/bin/Linux64/imperas_CV32.dpi.so
 #OVP_CTRL_FILE   = $(DV_OVPM_DESIGN)/riscv_CV32E40P.ic
+
+###############################################################################
+# Imperas OVPsim Instruction Set Simulator
+#IMPERAS_DV_MODEL = $(CORE_V_VERIF)/vendor_lib/ImperasDV/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model.so
+IMPERAS_DV_MODEL = $(IMPERAS_HOME)/lib/$(IMPERAS_ARCH)/ImperasLib/imperas.com/verification/riscv/1.0/model.so
 
 ###############################################################################
 # Run the yaml2make scripts
@@ -231,7 +236,11 @@ CFGYAML2MAKE = $(CORE_V_VERIF)/bin/cfgyaml2make
 CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp compliance
 ifneq ($(filter $(CFG_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
 ifneq ($(CFG),)
+ifneq ($(CFG_PATH_OVERRIDE),)
+CFG_FLAGS_MAKE := $(shell $(CFGYAML2MAKE) --yaml=$(abspath $(CFG_PATH_OVERRIDE))/$(CFG).yaml $(YAML2MAKE_DEBUG) --prefix=CFG --core=$(CV_CORE))
+else
 CFG_FLAGS_MAKE := $(shell $(CFGYAML2MAKE) --yaml=$(CFG).yaml $(YAML2MAKE_DEBUG) --prefix=CFG --core=$(CV_CORE))
+endif
 ifeq ($(CFG_FLAGS_MAKE),)
 $(error ERROR Error finding or parsing configuration: $(CFG).yaml)
 endif
@@ -399,11 +408,12 @@ sanity: hello-world
 
 ###############################################################################
 # Code generators
+# New agent is pulled from moore.io temp site
 new-agent:
 	mkdir -p $(CORE_V_VERIF)/temp
 	wget --no-check-certificate -q https://mooreio.com/packages/uvm_gen.tgz -P $(CORE_V_VERIF)/temp
 	tar xzf $(CORE_V_VERIF)/temp/uvm_gen.tgz -C $(CORE_V_VERIF)/temp
-	cd $(CORE_V_VERIF)/temp && ./src/new_agent_simplex_no_layers.py $(CORE_V_VERIF)/lib/uvm_agents "OpenHW Group"
+	cd $(CORE_V_VERIF)/temp && ./src/new_agent_basic.py $(CORE_V_VERIF)/lib/uvm_agents "OpenHW Group"
 	rm -rf $(CORE_V_VERIF)/temp
 
 

@@ -3,7 +3,7 @@ uvm_test: $(CV_CORE_LC)_instr_base_test
 description: >
     RISCV-DV generated test with OBI instruction bus errors in debug mode
 plusargs: >
-    +instr_cnt=10000
+    +instr_cnt=5000
     +num_of_sub_program=6
     +directed_instr_0=riscv_load_store_rand_instr_stream,4
     +directed_instr_1=riscv_loop_instr,4
@@ -13,10 +13,12 @@ plusargs: >
     +directed_instr_5=riscv_mem_region_stress_test,4
     +directed_instr_6=riscv_jal_instr,4
     +directed_instr_7=corev_xori_not_instr,1
+    +directed_instr_8=corev_zcmp_pushpop_base_stream,4
+    +directed_instr_9=corev_zcmt_base_stream,4
     +hint_instr_ratio=2
     +randomize_csr=1
     +boot_mode=m
-    +no_csr_instr=0
+    +no_csr_instr=1
     +enable_interrupt=1
     +enable_fast_interrupt_handler=1
     +no_wfi=0

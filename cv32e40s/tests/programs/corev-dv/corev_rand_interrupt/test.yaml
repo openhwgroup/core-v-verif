@@ -7,3 +7,4 @@ description: >
     Random interrupt generator test
 plusargs: >
     +gen_irq_noise
+cflags: -mno-relax

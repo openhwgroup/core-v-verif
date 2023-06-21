@@ -17,8 +17,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <corev_uvmt.h>
 
-#define  DEBUG_REQ_CONTROL_REG  *(volatile int *) CV_VP_DEBUG_CONTROL_BASE)
+#define  DEBUG_REQ_CONTROL_REG  *((volatile int *) CV_VP_DEBUG_CONTROL_BASE)
 
 #define  DBG_ADDR  0x1A110800
 #define  IO_ADDR  (DBG_ADDR - 16)

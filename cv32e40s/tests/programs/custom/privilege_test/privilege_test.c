@@ -18,11 +18,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "corev_uvmt.h"
 
 
 
-// Declaration of assert 
+// Declaration of assert
 static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
   if (actual != expect) {
     printf(msg);
@@ -31,7 +32,7 @@ static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
   }
 }
 
-/* 
+/*
 Retuns specific bit-field from [bit_indx_low : bit_indx_high] in register x
 */
 unsigned int get_field(unsigned int x, int bit_indx_low, int bit_indx_high){
@@ -51,10 +52,10 @@ extern volatile void set_u_mode();
 // global values to hold registers for tests
 volatile uint32_t mstatus, mscratchg, mie, mip, mcause;
 // MPP bit-field
-int MPP_FIELD [2] = {11, 12}; 
+int MPP_FIELD [2] = {11, 12};
 // Illegal instruction bit-field
-int ILL_ACC_FIELD [2] = {0, 1}; 
-// Tracks the number of trapped executions. 
+int ILL_ACC_FIELD [2] = {0, 1};
+// Tracks the number of trapped executions.
 volatile uint32_t NUM_TRAP_EXECUTIONS;
 
 typedef enum {
@@ -62,7 +63,7 @@ typedef enum {
   READ_MIP,
   EXPECTED_TRAP,
   M_MODE_BEH,
-  MSCRATCH_TEST_BEH, 
+  MSCRATCH_TEST_BEH,
   PRIVILEGE_TEST_BEH,
   TRAP_INCR_BEH
 } trap_behavior_t;
@@ -110,7 +111,7 @@ void increment_mepc(void){
     } else {
       mepc += 2;
     }
-    __asm__ volatile("csrrw x0, mepc, %0" :: "r"(mepc)); // write to the mepc 
+    __asm__ volatile("csrrw x0, mepc, %0" :: "r"(mepc)); // write to the mepc
 }
 
 // Rewritten interrupt handler
@@ -123,7 +124,7 @@ void u_sw_irq_handler(void) {
 
     case READ_MIP : // read mip, mie, and move on  (6)
       __asm__ volatile("csrrs %0, mip, x0" : "=r"(mip));
-      __asm__ volatile("csrrs %0, mie, x0" : "=r"(mie)); 
+      __asm__ volatile("csrrs %0, mie, x0" : "=r"(mie));
 
       increment_mepc();
       break;
@@ -131,27 +132,27 @@ void u_sw_irq_handler(void) {
 
     case EXPECTED_TRAP : // trapping is expected behavior, increment mepc and move on (5)
       increment_mepc();
-      break;   
+      break;
 
 
     case M_MODE_BEH : // set Machine mode in the trap handler (4)
       __asm__ volatile("csrrs x0, mstatus, %0" :: "r"(MSTATUS_STD_VAL));
       increment_mepc();
       break;
-    
+
 
     case MSCRATCH_TEST_BEH : // mscratch_reliable_check test behavior (2)
       __asm__ volatile("csrrs %0, mscratch, x0" : "=r"(mscratchg));
-      __asm__ volatile("csrrs x0, mstatus, %0" :: "r"(MSTATUS_STD_VAL)); // set machine mode 
-      increment_mepc(); 
+      __asm__ volatile("csrrs x0, mstatus, %0" :: "r"(MSTATUS_STD_VAL)); // set machine mode
+      increment_mepc();
       break;
-    
+
 
     case PRIVILEGE_TEST_BEH : // privilege_test test behavior (0)
       __asm__ volatile("csrrs %0, mcause, x0" : "=r"(mcause)); // read the mcause register
       __asm__ volatile("csrrs %0, mstatus, x0" : "=r"(mstatus)); // read the mstatus register
-      __asm__ volatile("csrrs x0, mstatus, %0" :: "r"(MSTATUS_STD_VAL)); // set machine mode 
-      increment_mepc(); 
+      __asm__ volatile("csrrs x0, mstatus, %0" :: "r"(MSTATUS_STD_VAL)); // set machine mode
+      increment_mepc();
       break;
 
 
@@ -165,13 +166,16 @@ void u_sw_irq_handler(void) {
 
 /* Changes the handler functionality, and then calls an exception to change into m-mode. */
 void set_m_mode(void) {
-  trap_handler_beh = M_MODE_BEH; 
+  trap_handler_beh = M_MODE_BEH;
   __asm__ volatile("ecall");
 }
 
 
 
-/* Loops through the different spec modes (00, 01, 10, 11) and asserts that only the implemented modes User (00) and Machine (11) are entered. */
+/*
+ * Loops through the different spec modes (00, 01, 10, 11) and asserts that only the implemented modes User (00) and Machine (11) are entered.
+ * vplan:SupportedLevels
+ */
 void privilege_test(void){
   int input_mode = 0;
   trap_handler_beh = PRIVILEGE_TEST_BEH;
@@ -189,23 +193,26 @@ void privilege_test(void){
   };
 
 }
-/* 
-To satisfy the testing criteria this test must run first
-this is to ensure 'Ensure that M-mode is the first mode entered after reset.
-*/
+
+/*
+ * To satisfy the testing criteria this test must run first
+ * this is to ensure 'Ensure that M-mode is the first mode entered after reset.
+ * vplan:ResetMode
+ */
 void reset_mode(void){
   __asm__ volatile("csrrs %0, mstatus, x0" : "=r"(mstatus)); // read the mstatus register
   assert_or_die(mstatus, MSTATUS_STD_VAL, "error: core did not enter M-mode after reset\n");
 }
 
 
-/* 
-Try all kinds of access to all implemented U- and M-mode CSR registers while in U- and M-mode (cross), ensure appropriate access grant/deny. (Caveat) There is only one register, JVT.
+/*
+ * Try all kinds of access to all implemented U- and M-mode CSR registers while in U- and M-mode (cross), ensure appropriate access grant/deny. (Caveat) There is only one register, JVT.
+ * vplan:???
  */
-void JVT_cross_privilege(void) { // TODO: Change name to JVT-something test, more appropriate
+void JVT_cross_privilege(void) {
 
   NUM_TRAP_EXECUTIONS = 0;
-  trap_handler_beh = TRAP_INCR_BEH; 
+  trap_handler_beh = TRAP_INCR_BEH;
   set_u_mode();
   unsigned int utest;
   __asm__ volatile("csrrs %0, 0x017, x0" : "=r"(utest)); // read
@@ -213,14 +220,16 @@ void JVT_cross_privilege(void) { // TODO: Change name to JVT-something test, mor
   __asm__ volatile("csrrs x0, 0x017, %0" :: "r"(utest)); // set
   __asm__ volatile("csrrc x0, 0x017, %0" :: "r"(utest)); // clear
   __asm__ volatile("csrrw x0, 0x017, %0" :: "r"(utest)); // write again to 'reset' the initial value of the register before moving to another test
-  assert_or_die(NUM_TRAP_EXECUTIONS, 0, "Some tests seem to have triggered the exception handler, user should have access to this register\n"); 
+  assert_or_die(NUM_TRAP_EXECUTIONS, 0, "Some tests seem to have triggered the exception handler, user should have access to this register\n");
 
 }
 
 
- /* 
-Read misa and assert that "U" bit-field is high and "N" bit-field is low.
-*/
+/*
+ * Read misa and assert that "U" bit-field is high and "N" bit-field is low.
+ * vplan:MisaU
+ * vplan:MisaN
+ */
 void misa_check(void) {
 
   set_m_mode();
@@ -234,9 +243,10 @@ void misa_check(void) {
 }
 
 
-/* 
-F-extension, S-mode are not supported on the platform, FS and XS should therefore be 0, and if both of those are 0 then the SD field should also be 0.
-*/
+/*
+ * F-extension, S-mode are not supported on the platform, FS and XS should therefore be 0, and if both of those are 0 then the SD field should also be 0.
+ * vplan:UserExtensions
+ */
 void mstatus_implement_check(void){
 
   unsigned int mstatus, XS, FS, SD;
@@ -250,15 +260,16 @@ void mstatus_implement_check(void){
 }
 
 
-/* 
-Check that mscratch never changes in U-mode.
-change to u-mode, attempt to write to mscratch, trap and assert that mscratch is the same.
-*/
+/*
+ * Check that mscratch never changes in U-mode.
+ * change to u-mode, attempt to write to mscratch, trap and assert that mscratch is the same.
+ * vplan:MscratchReliable
+ */
 void mscratch_reliable_check(void){
 
   trap_handler_beh = MSCRATCH_TEST_BEH; // set the exception handler behavior.
   volatile unsigned int mscratch,
-  mscratchg = 0; // zero global mscratch value 
+  mscratchg = 0; // zero global mscratch value
 
   __asm__ volatile("csrrs %0, mscratch, x0" : "=r"(mscratch));
   set_u_mode();
@@ -268,9 +279,12 @@ void mscratch_reliable_check(void){
 
 }
 
-/* 
-Catch all funciton for registers which should not exist according to the intern v-plan (Summer 2022) for the cv32e40s core.
-*/
+/*
+ * Catch-all function for registers which should not exist according to the intern v-plan (Summer 2022) for the cv32e40s core.
+ * vplan:NExt
+ * vplan:Mcounteren
+ * vplan:MedelegMideleg
+ */
 void csr_should_not_exist_check(void) {
 
   uint32_t csr_acc, s_mode_bit, misa;
@@ -295,9 +309,9 @@ void csr_should_not_exist_check(void) {
   __asm__ volatile("csrrw x0, mcounteren, %0" : "=r"(csr_acc)); // write the value back
   assert_or_die(NUM_TRAP_EXECUTIONS, 0, "error: reading the mcounteren register should not trap in M-mode\n");
 
-  /*csrrs  t0, 0x100, x0 Read 
-    csrrw  x0, 0x100, t0 Write 
-    csrrs  x0, 0x100, t0 Set 
+  /*csrrs  t0, 0x100, x0 Read
+    csrrw  x0, 0x100, t0 Write
+    csrrs  x0, 0x100, t0 Set
     csrrc  x0, 0x100, t0 Clear */
 
   // mideleg and medeleg register should not be implemented
@@ -357,20 +371,21 @@ void csr_should_not_exist_check(void) {
   assert_or_die(NUM_TRAP_EXECUTIONS, 40, "error: some of the unimplemented registers did not trap on instrs attempt\n");
 }
 
+/*
+ * U-mode interrupts are not supported. The 'zero-bits' in the 'mip' and 'mie' should remain zero.
+ * vplan:SoftwareInterrupts
+ */
 void no_u_traps(void) {
-  /* 
-  U-mode interrupts are not supported. The 'zero-bits' in the 'mip' and 'mie' should remain zero.
-  */
   unsigned int mask, garb, mipr, mier;
   mip = 1; // dummy values for the mip and mie
   mie = 1; // these are both read by the trap handler
-  
+
   mask = 0xF777; // bit_mask for the mip zero-bits
   trap_handler_beh = READ_MIP; // set trap handler behaviour
 
   // Core is expected to trap when u-mode tries to read mstatus
   set_u_mode();
-  __asm__ volatile("csrrs %0, mstatus, x0" : "=r"(garb)); // illegal read 
+  __asm__ volatile("csrrs %0, mstatus, x0" : "=r"(garb)); // illegal read
   mip = mip & mask; // And over the Hardcoded zero bit-fields
   // mie register is supposed  to be 0
   assert_or_die(mie, 0x0, "error: zero-fields in the mier changed after interrrupts\n");
@@ -379,9 +394,10 @@ void no_u_traps(void) {
 }
 
 
-/* 
-Assert that U-mode is set in the MPP after returning from a M-mode.
-*/
+/*
+ * Assert that U-mode is set in the MPP after returning from M-mode.
+ * vplan:MretLeastPrivileged
+ */
 void proper_ret_priv(void) {
 
   uint32_t MPP, MPRV;
@@ -396,21 +412,22 @@ void proper_ret_priv(void) {
 }
 
 
-/* 
-When in U-mode and TW=1 in mstatus, executing a WFI should trap to an illegal exception.
-*/
+/*
+ * When in U-mode and TW=1 in mstatus, executing a WFI should trap to an illegal exception.
+ * vplan:WfiIllegal
+ */
 void check_wfi_trap(void) {
 
   trap_handler_beh = PRIVILEGE_TEST_BEH;
   uint32_t set_tw, pmstatus;
-  set_tw = 0x200000; // mask for mstatus.TW bit 
+  set_tw = 0x200000; // mask for mstatus.TW bit
   set_m_mode();
 
   //Read add and write back mstatus with the TW bit set high
   __asm__ volatile("csrrs %0, mstatus, x0" : "=r"(mstatus));
   pmstatus = mstatus | set_tw;
   __asm__ volatile("csrrw x0, mstatus, %0" :: "r"(pmstatus));
-  
+
   // Initiate the trap
   set_u_mode();
   __asm__ volatile("wfi");
@@ -422,9 +439,10 @@ void check_wfi_trap(void) {
 
 
 
-/* 
-Be in U-mode, execute ecall, ensure that an exception is taken and mcause is set correctly.
-*/
+/*
+ * Be in U-mode, execute ecall, ensure that an exception is taken and mcause is set correctly.
+ * vplan:Ecall
+ */
 void correct_ecall(void) {
 
   trap_handler_beh = PRIVILEGE_TEST_BEH;
@@ -438,9 +456,10 @@ void correct_ecall(void) {
 }
 
 
-/* 
-Be in U-mode, execute MRET, ensure that it does not execute like it does in M-mode: Raise illegal exception, priv mode goes to M and not MPP, MPP becomes U, MPRV is unchanged.
-*/
+/*
+ * Be in U-mode, execute MRET, ensure that it does not execute like it does in M-mode: Raise illegal exception, priv mode goes to M and not MPP, MPP becomes U, MPRV is unchanged.
+ * vplan:Mret
+ */
 void correct_xret(void) {
 
   trap_handler_beh = PRIVILEGE_TEST_BEH;
@@ -450,7 +469,7 @@ void correct_xret(void) {
   __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus));
   MPRV_from_M_mode = get_field(mstatus, MPRV_BIT, MPRV_BIT);
 
-  // Call an illegal MRET 
+  // Call an illegal MRET
   set_u_mode();
   __asm__ volatile("mret");
   __asm__ volatile("csrrw %0, mstatus, x0" : "=r"(mstatus));
@@ -468,7 +487,10 @@ void correct_xret(void) {
 
 }
 
-/* Executing uret should give an illegal instruction exception. */
+/*
+ * Executing uret should give an illegal instruction exception.
+ * vplan:Uret
+ */
 void check_uret(){
   trap_handler_beh = PRIVILEGE_TEST_BEH;
   uint32_t mcode;
@@ -478,12 +500,15 @@ void check_uret(){
 }
 
 
+/*
+ * Access to all trigger registers should be illegal while the core is in usermode.
+ * vplan:TriggersAccess
+ */
 void access_trigger(){
-/* Access to all trigger registers should be illegal while the core is in usermode*/
   trap_handler_beh = TRAP_INCR_BEH;
   NUM_TRAP_EXECUTIONS = 0;
   uint32_t csr_acc; // dummy value holder
-  
+
   set_u_mode();
   __asm__ volatile("csrrw %0, tselect, x0"      : "=r"(csr_acc));
   __asm__ volatile("csrrw %0, tdata1, x0"       : "=r"(csr_acc));

@@ -25,14 +25,16 @@
 */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #define EXP_MISA 0x40901104
 
 int main(int argc, char *argv[])
 {
-    unsigned int misa_rval, mvendorid_rval, marchid_rval, mimpid_rval, mxl;
-             int reserved, tentative, nonstd, user, super;
+
+    volatile unsigned int misa_rval, mvendorid_rval, marchid_rval, mimpid_rval, mxl;
+    volatile          int reserved, tentative, nonstd, user, super;
 
     mxl = 0; reserved = 0; tentative = 0; nonstd = 0; user = 0; super = 0;
 

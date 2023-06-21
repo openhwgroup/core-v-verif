@@ -15,9 +15,12 @@
  * for the location of the open source models.
  *
  */
- 
- `include "typedefs.sv"
- 
+
+`ifndef __IMPERAS_RAM_SV__
+`define __IMPERAS_RAM_SV__
+
+`include "typedefs.sv"
+
 interface RVVI_memory;
 
     reg [31:0] mem [bit[29:0]];
@@ -36,7 +39,7 @@ module RAM
     parameter int RAM_BYTE_SIZE  = 'h20000
 )
 (
-    RVVI_bus bus   
+    RVVI_bus bus
 );
 
     Uns32 daddr4, iaddr4;
@@ -53,7 +56,7 @@ module RAM
         loRAM = hiROM + 1;
         hiRAM = loRAM + RAM_BYTE_SIZE - 1;
     end
-    
+
     function automatic Uns32 byte2bit (input int ByteEn);
         Uns32 BitEn = 0;
         if (ByteEn & 'h1) BitEn |= 'h000000FF;
@@ -62,14 +65,14 @@ module RAM
         if (ByteEn & 'h8) BitEn |= 'hFF000000;
         return BitEn;
     endfunction
-    
+
     always @(posedge bus.Clk) begin
         isROM = (bus.IAddr>=loROM && bus.IAddr<=hiROM);
         isRAM = (bus.DAddr>=loRAM && bus.DAddr<=hiRAM);
-        
+
         daddr4 = bus.DAddr >> 2;
         iaddr4 = bus.IAddr >> 2;
-        
+
         // Uninitialized Memory
         if (!memory.mem.exists(daddr4)) memory.mem[daddr4] = 'h0;
         if (!memory.mem.exists(iaddr4)) memory.mem[iaddr4] = 'h0;
@@ -88,10 +91,10 @@ module RAM
                 value = memory.mem[daddr4] & ~(byte2bit(bus.Dbe));
                 memory.mem[daddr4] = value | (bus.DData & byte2bit(bus.Dbe));
                 //$display("Store %08x <= %08X", daddr4, mem[daddr4]);
-                
+
             end
         end
-        
+
         // EXEC
         if (isROM) begin
             if (bus.Ird==1) begin
@@ -99,7 +102,7 @@ module RAM
                 //$display("Fetch %08x <= [%08X]", bus.IData, iaddr4);
             end
         end
-        
+
         // checkers
         if (bus.Ird==1 && isROM==0) begin
             //$display("ERROR: Fetch Address %08X does not have EXECUTE permission", bus.IAddr);
@@ -116,3 +119,5 @@ module RAM
 
     end
 endmodule
+
+`endif // __IMPERAS_RAM_SV__

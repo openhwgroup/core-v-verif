@@ -16,10 +16,9 @@
 */
 
 
-
-
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <time.h>
 #include "corev_uvmt.h"
 
@@ -31,19 +30,20 @@
 #define external_machine_interrupt  0x800
 // standard value for the mstatus register
 #define MSTATUS_STD_VAL 0x1800
+
 volatile uint32_t mmcause = 0;
 volatile uint32_t mmstatus = 0;
 volatile uint32_t mmie    = 0;
 volatile uint32_t num_taken_interrupts = 0;
 // MPP bit-field
-int MPP_FIELD [2] = {11, 12}; 
+volatile int MPP_FIELD [2] = {11, 12};
 
 // Assembly function to setup a generous PMP-region for user mode.
 extern volatile void  setup_pmp();
 // Assembly function to set privilege-mode to user-mode
 extern volatile void set_u_mode();
 
-// Declaration of assert 
+// Declaration of assert
 static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
   if (actual != expect) {
     printf(msg);
@@ -52,8 +52,8 @@ static void assert_or_die(uint32_t actual, uint32_t expect, char *msg) {
   }
 }
 
-/* 
-Retuns specific bit-field from [bit_indx_low : bit_indx_high] in register x
+/*
+Returns specific bit-field from [bit_indx_low : bit_indx_high] in register x
 */
 unsigned int get_field(unsigned int x, int bit_indx_low, int bit_indx_high){
     int field = ( 1 << ( (bit_indx_high - bit_indx_low) + 1) )  - 1;
@@ -72,7 +72,7 @@ void increment_mepc(void){
     } else {
       mepc += 2;
     }
-    __asm__ volatile("csrrw x0, mepc, %0" :: "r"(mepc)); // write to the mepc 
+    __asm__ volatile("csrrw x0, mepc, %0" :: "r"(mepc)); // write to the mepc
 }
 
 // example use:  "mm_ram_assert_irq(0x1 << i, 1);"
@@ -80,7 +80,6 @@ void mm_ram_assert_irq(uint32_t mask, uint32_t cycle_delay) {
     *TIMER_REG_ADDR = mask;
     *TIMER_VAL_ADDR = 1 + cycle_delay;
 }
-
 
 void mstatus_mie_enable() {
     int mie_bit = 0x1 << MSTATUS_MIE_BIT;
@@ -94,7 +93,6 @@ void mie_enable(uint32_t irq) {
 }
 
 typedef enum {
-
   GET_MSTATUS,
   EXCEPTION_MODE,
 } trap_behavior_t;
@@ -103,9 +101,8 @@ typedef enum {
 volatile trap_behavior_t trap_handler_beh;
 
 
-
 /*
-There is (currently) no way for the hart to know which privilege mode it is executing in, but its possible to use the mstatus to figure out the previous privilege mode. 
+There is (currently) no way for the hart to know which privilege mode it is executing in, but its possible to use the mstatus to figure out the previous privilege mode.
 Therefore the interrupt tests will have the m_external_irq_handler trap into u_sw_irq_handler, in order to see the interrupt handlers privilege.
 For the trap tests the trap handler will trap again into itself to see which mode its operating in, a sort of self-policing action.
 */
@@ -114,8 +111,8 @@ void u_sw_irq_handler(void) {
   volatile uint32_t mepc = 0;
     switch(trap_handler_beh) {
 
-      case GET_MSTATUS :   
-        asm volatile("csrrs %0, mstatus, x0": "=r" (mmstatus));  
+      case GET_MSTATUS :
+        asm volatile("csrrs %0, mstatus, x0": "=r" (mmstatus));
         // set the mode going forward to machine mode.
         asm volatile("csrrs x0, mstatus, %0" :: "r"(MSTATUS_STD_VAL));
         increment_mepc();
@@ -123,7 +120,7 @@ void u_sw_irq_handler(void) {
 
       case EXCEPTION_MODE :
         __asm__ volatile("csrrs %0, mepc, x0" : "=r"(mepc)); // read the mepc
-        trap_handler_beh = GET_MSTATUS; 
+        trap_handler_beh = GET_MSTATUS;
         asm volatile("ecall");
         __asm__ volatile("csrrw x0, mepc, %0" :: "r"(mepc)); // write to the mepc
         increment_mepc();
@@ -132,7 +129,7 @@ void u_sw_irq_handler(void) {
 }
 
 // specific interrupt handler
-__attribute__((interrupt ("machine"))) 
+__attribute__((interrupt ("machine")))
 void m_external_irq_handler(void) {
   volatile uint32_t mepc = 0;
   __asm__ volatile("csrrs %0, mepc, x0" : "=r"(mepc)); // read the mepc
@@ -142,7 +139,7 @@ void m_external_irq_handler(void) {
     num_taken_interrupts++;
   }
 
-  // ecall to trap handler in order to see previous privilege mode. 
+  // ecall to trap handler in order to see previous privilege mode.
   asm volatile("ecall");
   asm volatile("csrrs x0, mstatus, %0" :: "r"(MSTATUS_STD_VAL));
   __asm__ volatile("csrrw x0, mepc, %0" :: "r"(mepc)); // write to the mepc
@@ -163,16 +160,16 @@ int main(void) {
     num_taken_interrupts = 0;
 
     // case 1 user mode interrupt
-    trap_handler_beh = GET_MSTATUS; 
+    trap_handler_beh = GET_MSTATUS;
     set_u_mode();
     mm_ram_assert_irq(external_machine_interrupt, 1);
     while (!mmcause); // wait for interrupt to finish
     assert_or_die(num_taken_interrupts, 1, "Error: No interrupts registered!\n");
-    int get_mpp = get_field(mmstatus, 11, 12);
+    volatile int get_mpp = get_field(mmstatus, 11, 12);
     assert_or_die(get_mpp, 0x3, "Error: Interrupt handler did not execute in machine mode!\n");
 
     // case 2 user mode exception
-    trap_handler_beh = EXCEPTION_MODE; 
+    trap_handler_beh = EXCEPTION_MODE;
     set_u_mode();
     asm volatile("ecall");
     get_mpp = get_field(mmstatus, MPP_FIELD[0], MPP_FIELD[1]);
@@ -181,20 +178,20 @@ int main(void) {
 
     // case 3 machine mode interrupt
     mmcause = 0;
-     trap_handler_beh = GET_MSTATUS; 
+     trap_handler_beh = GET_MSTATUS;
     mm_ram_assert_irq(external_machine_interrupt, 1);
     while (!mmcause); // wait for interrupt to finish
     assert_or_die(num_taken_interrupts, 2, "Error: No interrupts registered!\n");
     get_mpp = get_field(mmstatus,  MPP_FIELD[0], MPP_FIELD[1]);
-    assert_or_die(get_mpp, 0x3, "Error: Interrupt handler did not execute in machine mode!\n");   
+    assert_or_die(get_mpp, 0x3, "Error: Interrupt handler did not execute in machine mode!\n");
 
 
     // case 4 machine mode exception
-    trap_handler_beh = EXCEPTION_MODE; 
+    trap_handler_beh = EXCEPTION_MODE;
     asm volatile("ecall");
     get_mpp = get_field(mmstatus,  MPP_FIELD[0], MPP_FIELD[1]);
     assert_or_die(get_mpp, 0x3, "Error: Interrupt handler did not execute in machine mode!\n");
 
-  
-exit(EXIT_SUCCESS);
+
+    exit(EXIT_SUCCESS);
 }

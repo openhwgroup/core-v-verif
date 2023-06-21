@@ -1,0 +1,7 @@
+# Test definition YAML for test
+
+name: debug_test_0_triggers
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Debug trigger directed test for DBG_NUM_TRIG == 0
+

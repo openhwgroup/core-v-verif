@@ -184,8 +184,10 @@ module uvma_obi_memory_assert
   else
     `uvm_error(info_tag, "be was zero during an address cycle")
 
+
   // R-7 All ones must be contiguous in writes
-  reg[3:0] contiguous_be[] = {
+
+  localparam logic [9:0] [3:0] CONTIGUOUS_BE = '{
     4'b0001,
     4'b0011,
     4'b0111,
@@ -197,19 +199,30 @@ module uvma_obi_memory_assert
     4'b1100,
     4'b1000
   };
-  bit be_inside_contiguous_be;
+
+  bit  be_inside_contiguous_be;
+
   always_comb begin
-    be_inside_contiguous_be = be inside {contiguous_be};
+    be_inside_contiguous_be = 0;
+
+    foreach (CONTIGUOUS_BE[i]) begin
+      if (be == CONTIGUOUS_BE[i]) begin
+        be_inside_contiguous_be = 1;
+      end
+    end
   end
+
   property p_be_contiguous;
-    req ##0 we |-> be_inside_contiguous_be;
+    req && we |-> be_inside_contiguous_be;
   endproperty : p_be_contiguous
-  a_be_contiguous : assert property(p_be_contiguous)
-  else
-    `uvm_error(info_tag, $sformatf("be of 0x%0x was not contiguous", $sampled(be)));
+
+  a_be_contiguous : assert property(
+    p_be_contiguous
+  ) else `uvm_error(info_tag, $sformatf("be of 0x%0x was not contiguous", $sampled(be)));
+
 
   // R-8 Data address LSBs must be consistent with byte enables on writes
-  function bit [1:0] get_addr_lsb(bit[3:0] be);
+  function automatic bit [1:0] get_addr_lsb(bit[3:0] be);
     casex (be)
       4'b???1: return 0;
       4'b??10: return 1;

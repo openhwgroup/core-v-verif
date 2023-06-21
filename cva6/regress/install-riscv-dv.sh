@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 # You may obtain a copy of the License at https://solderpad.org/licenses/
 #
-# Original Author: Jean-Roch COULON (jean-roch.coulon@thalesgroup.fr)
+# Original Author: Jean-Roch COULON - Thales
 
 # riscv-dv env variables
 export RISCV_TOOLCHAIN=$RISCV
@@ -23,13 +23,13 @@ export TESTS_PATH=$ROOT_PROJECT/cva6/tests
 if ! [ -n "$DV_REPO" ]; then
   export DV_REPO="https://github.com/google/riscv-dv.git"
   export DV_BRANCH=master
-  export DV_HASH=0ce85d3187689855cd2b3b9e3fae21ca32de2248
+  export DV_HASH=96c1ee6f371f2754c45b4831fcab95f6671689d9
   export DV_PATCH=
 fi
-echo $DV_REPO
-echo $DV_BRANCH
-echo $DV_HASH
-echo $DV_PATCH
+echo "Repo:  " $DV_REPO
+echo "Branch:" $DV_BRANCH
+echo "Hash:  " $DV_HASH
+echo "Patch: " $DV_PATCH
 
 mkdir -p cva6/sim
 if ! [ -d cva6/sim/dv ]; then
@@ -39,7 +39,7 @@ if ! [ -d cva6/sim/dv ]; then
     git apply $DV_PATCH
   fi
   cd -
+  # install riscv-dv dependencies
+  cd cva6/sim/dv; pip3 install -r requirements.txt; cd -
 fi
 
-# install riscv-dv dependencies
-cd cva6/sim/dv; pip3 install -r requirements.txt; cd -
