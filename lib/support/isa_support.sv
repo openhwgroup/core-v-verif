@@ -243,7 +243,6 @@
     CM_JT,
     CM_JALT,
 
-
     // Pseudo name, class of instructions
     STORE_INSTR,
     LOAD_INSTR,
@@ -1383,13 +1382,12 @@
         asm = build_asm(REMU, R_TYPE, instr);
 
       // Compressed
-      //Zca
+      // Zca
       (   (instr.compressed.opcode                == 2'b10)
        && (instr.compressed.format.cr.rd_rs1.gpr  == X0)
        && (instr.compressed.format.cr.rs2.gpr     == X0)
        && (instr.compressed.format.cr.funct4      == 4'b1001)) :
         asm = build_asm(C_EBREAK, CR_TYPE, instr);
-
 
       //Zcb
       //Zcmp
