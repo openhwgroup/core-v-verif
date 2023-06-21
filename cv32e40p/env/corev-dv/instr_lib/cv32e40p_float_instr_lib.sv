@@ -63,14 +63,14 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
 
   // properties - start
   string                  _header;
-  bit                     is_zfinx = riscv_instr_pkg::RV32ZFINX inside {riscv_instr_pkg::supported_isa};;
+  bit                     is_zfinx = riscv_instr_pkg::RV32ZFINX inside {riscv_instr_pkg::supported_isa};
   bit                     is_fp_instr;
   riscv_instr_name_t      include_instr[];
   riscv_instr_name_t      exclude_instr[];
   riscv_instr_group_t     include_group[];
   riscv_instr_group_t     exclude_group[];
   bit                     use_fp_only_for_directed_instr;     // use fp instr only as directed instrs in stream
-  bit                     use_no_repetitive_instr_per_stream; // directed instr is not allow in a stream
+  bit                     use_no_repetitive_instr_per_stream; // directed instr is not allow to repeat in a stream
   bit                     use_same_instr_per_stream;          // same directed is use within a stream
   bit                     use_prev_rd_on_next_operands;       // previous instr rd is used for directed instr operands
   bit                     more_weight_for_fdiv_fsqrt_gen;     // more weight on generating fdiv and fsqrt directed_instr
@@ -188,7 +188,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     for (int i = 0; i < num_of_instr_per_stream; i++) begin : GEN_N_MANIPULATE_INSTR
 
       // directed instr gen per stream generation
-      update_directed_instr_arg_list(i);
+      update_current_instr_arg_list(i);
       instr = new riscv_instr::get_rand_instr(
         .include_instr(include_instr),
         .exclude_instr(exclude_instr),
@@ -196,7 +196,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
         .exclude_group(exclude_group)
       );
       is_fp_instr = (instr.group inside {RV32F, RV32ZFINX});
-      update_next_instr(instr, i);
+      update_next_instr_arg_list(instr, i);
       rand_var_for_inline_constraint();
 
       // multicycle instr prior directed instr
@@ -277,7 +277,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
   endfunction : print_stream_setting
 
   // for updating the arguments that use in get_rand_instr 
-  virtual function void update_directed_instr_arg_list(int idx=0);
+  virtual function void update_current_instr_arg_list(int idx=0);
     include_group = new[1] ((is_zfinx) ? {RV32ZFINX} : {RV32F});
     if (!use_fp_only_for_directed_instr) begin : USE_MIXED_FP_N_OTHERS_INSTR
       bit more_fp_instr, rand_status;
@@ -299,13 +299,13 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       end
     end // !use_fp_only_for_directed_instr
     if (temp_exclude_fdiv_fsqrt) exclude_instr = new[exclude_instr.size() + 2] ({exclude_instr, FDIV_S, FSQRT_S});
-  endfunction: update_directed_instr_arg_list
+  endfunction: update_current_instr_arg_list
 
   // placeholder for ext class to insert multicycle instrs
   virtual function void insert_mc_instr(riscv_instr instr, int idx=0);
   endfunction : insert_mc_instr
 
-  virtual function void update_next_instr(riscv_instr prev_instr=null, int idx=0);
+  virtual function void update_next_instr_arg_list(riscv_instr prev_instr=null, int idx=0);
     if (use_no_repetitive_instr_per_stream && prev_instr != null) begin
       int size = exclude_instr.size();
       exclude_instr       = new[size+1] (exclude_instr);
@@ -319,7 +319,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       if (idx%2 && !(prev_instr.instr_name inside {FDIV_S, FSQRT_S})) include_instr = new[1] ($urandom_range(1) ? {FDIV_S} : {FSQRT_S});
       else                                                            include_instr.delete();
     end
-  endfunction: update_next_instr
+  endfunction: update_next_instr_arg_list
 
   function void randomize_gpr(riscv_instr instr, int idx=0);
     instr.set_rand_mode();
@@ -882,8 +882,8 @@ class cv32e40p_fp_w_special_operands_instr_stream extends cv32e40p_float_zfinx_b
   endfunction: pre_randomize
 
   // to define exclude list for this stream class
-  virtual function void update_directed_instr_arg_list(int idx=0);
-    super.update_directed_instr_arg_list(idx);
+  virtual function void update_current_instr_arg_list(int idx=0);
+    super.update_current_instr_arg_list(idx);
     // exclude FLW, FSW and FMV_W_X: no fp regs as operand and by refering to verif plan
     exclude_instr = new[exclude_instr.size() + 2] ({exclude_instr, FLW, FSW});
     // note: should test all rather just focus on specific instrs as per verifplan. although others are covered in onespin?
@@ -891,7 +891,7 @@ class cv32e40p_fp_w_special_operands_instr_stream extends cv32e40p_float_zfinx_b
     //TBD   exclude_instr = new[exclude_instr.size() + 12] (
     //TBD     {exclude_instr, FADD_S, FSUB_S, FMIN_S, FMAX_S, FSGNJ_S, FSGNJN_S, FSGNJX_S, FMV_W_X, FEQ_S, FLT_S, FLE_S, FCLASS_S});
     //TBD end
-  endfunction: update_directed_instr_arg_list
+  endfunction: update_current_instr_arg_list
 
 endclass: cv32e40p_fp_w_special_operands_instr_stream
 
@@ -910,11 +910,11 @@ class cv32e40p_fp_w_prev_rd_as_operand_instr_stream extends cv32e40p_float_zfinx
   endfunction: pre_randomize
 
   // to define exclude list for this stream class
-  virtual function void update_directed_instr_arg_list(int idx=0);
-    super.update_directed_instr_arg_list(idx);
+  virtual function void update_current_instr_arg_list(int idx=0);
+    super.update_current_instr_arg_list(idx);
     // exclude FSW: rs1/offset need to prevent from overriding the code space; rs1 should not overriden by prev rd
     exclude_instr = new[exclude_instr.size() + 1] ({exclude_instr, FSW});
-  endfunction: update_directed_instr_arg_list
+  endfunction: update_current_instr_arg_list
 
 endclass: cv32e40p_fp_w_prev_rd_as_operand_instr_stream
 
