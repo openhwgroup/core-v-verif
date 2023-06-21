@@ -19,17 +19,17 @@ tests:
     cmd: make hello-world
     cmd: make test COREV=YES TEST=hello-world
     
-#  interrupt_test:
-#    build: uvmt_cv32e20
-#    description: Interrupt directed test  
-#    dir: cv32e20/sim/uvmt
-#    cmd: make test COREV=YES TEST=interrupt_test
+  interrupt_test:
+    build: uvmt_cv32e20
+    description: Interrupt directed test  
+    dir: cv32e20/sim/uvmt
+    cmd: make test COREV=YES TEST=interrupt_test
     
-#  corev_rand_interrupt:
-#    build: uvmt_cv32e20
-#    description: Interrupt random test
-#    dir: cv32e20/sim/uvmt
-#    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt
+  corev_rand_interrupt:
+    build: uvmt_cv32e20
+    description: Interrupt random test
+    dir: cv32e20/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt
 #    num: 2
 
   illegal:
@@ -37,16 +37,16 @@ tests:
     dir: cv32e20/sim/uvmt
     cmd: make test COREV=YES TEST=illegal
 
-#  debug_test:
-#    build: uvmt_cv32e20
-#    dir: cv32e20/sim/uvmt
-#    cmd: make test COREV=YES TEST=debug_test
+  debug_test:
+    build: uvmt_cv32e20
+    dir: cv32e20/sim/uvmt
+    cmd: make test COREV=YES TEST=debug_test
 
-#  csr_instructions:
-#    build: uvmt_cv32e20
-#    description: CSR Instruction Test
-#    dir: cv32e20/sim/uvmt
-#    cmd: make test COREV=YES TEST=csr_instructions
+  csr_instructions:
+    build: uvmt_cv32e20
+    description: CSR Instruction Test
+    dir: cv32e20/sim/uvmt
+    cmd: make test COREV=YES TEST=csr_instructions
 
   riscv_arithmetic_basic_test_0:
     build: uvmt_cv32e20
@@ -54,24 +54,24 @@ tests:
     dir: cv32e20/sim/uvmt
     cmd: make test COREV=YES TEST=riscv_arithmetic_basic_test_0
 
-#  corev_rand_arithmetic_base_test:
-#    build: uvmt_cv32e20
-#    description: Generated corev-dv random arithmetic test
-#    dir: cv32e20/sim/uvmt
-#    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_arithmetic_base_test
+  corev_rand_arithmetic_base_test:
+    build: uvmt_cv32e20
+    description: Generated corev-dv random arithmetic test
+    dir: cv32e20/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_arithmetic_base_test
 #    num: 2
 
-#  corev_rand_instr_test:
-#    build: uvmt_cv32e20  
-#    description: Generated corev-dv random instruction test
-#    dir: cv32e20/sim/uvmt
-#    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_instr_test
+  corev_rand_instr_test:
+    build: uvmt_cv32e20  
+    description: Generated corev-dv random instruction test
+    dir: cv32e20/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_instr_test
 #    num: 2
 
-#  corev_rand_jump_stress_test:
-#    build: uvmt_cv32e20  
-#    description: Generated corev-dv jump stress test
-#    dir: cv32e20/sim/uvmt
-#    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_jump_stress_test
+  corev_rand_jump_stress_test:
+    build: uvmt_cv32e20  
+    description: Generated corev-dv jump stress test
+    dir: cv32e20/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_jump_stress_test
 #    num: 2
 

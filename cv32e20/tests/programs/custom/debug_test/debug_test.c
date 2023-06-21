@@ -20,8 +20,10 @@
 *******************************************************************************
 */
 
-#include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
+
 
 volatile int glb_hart_status  = 0; // Written by main code only, read by debug code
 volatile int glb_debug_status = 0; // Written by debug code only, read by main code
@@ -247,12 +249,19 @@ int main(int argc, char *argv[])
     printf(" Test2.2: check access to Trigger registers\n");
     // Writes are ignored
     temp = 0xFFFFFFFF;
+    printf("        - Trigger TSELECT check\n");
     __asm__ volatile("csrw  0x7a0, %0"     : "=r"(temp)); // Trigger TSELECT
+    printf("        - Trigger TDATA1 check\n");
     __asm__ volatile("csrw  0x7a1, %0"     : "=r"(temp)); // Trigger TDATA1
+    printf("        - Trigger TDATA2 check\n");
     __asm__ volatile("csrw  0x7a2, %0"     : "=r"(temp)); // Trigger TDATA2
+    printf("        - Trigger TDATA3 check\n");
     __asm__ volatile("csrw  0x7a3, %0"     : "=r"(temp)); // Trigger TDATA3
+    printf("        - Trigger TINFO check\n");
     __asm__ volatile("csrw  0x7a4, %0"     : "=r"(temp)); // Trigger TINFO
+    printf("        - Trigger MCONTEXT check\n");
     __asm__ volatile("csrw  0x7a8, %0"     : "=r"(temp)); // Trigger MCONTEXT
+    printf("        - Trigger SCONTEXT check\n");
     __asm__ volatile("csrw  0x7aa, %0"     : "=r"(temp)); // Trigger SCONTEXT
 
     // Read default value
