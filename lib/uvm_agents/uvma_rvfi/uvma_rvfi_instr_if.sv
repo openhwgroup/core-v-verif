@@ -275,7 +275,7 @@ interface uvma_rvfi_instr_if_t
 
   // assigning signal aliases to helper functions
   always_comb begin
-    instr_asm           = decode_instr(rvfi_insn);
+    instr_asm           <= decode_instr(rvfi_insn);
 
     is_dret             <= is_dret_f();
     is_mret             <= is_mret_f();
