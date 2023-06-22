@@ -16,6 +16,8 @@
 
 package cv32e40p_instr_test_pkg;
 
+  parameter int HWLOOP_LABEL_STR_LEN = 32;
+
   import uvm_pkg::*;
   import riscv_instr_pkg::*;
   import riscv_instr_test_pkg::*;
@@ -26,6 +28,7 @@ package cv32e40p_instr_test_pkg;
   // `include "instr_lib/cv32e40p_load_store_instr_lib.sv"
   `include "instr_lib/cv32e40p_base_instr_lib.sv"
   `include "instr_lib/cv32e40p_pulp_instr_lib.sv"
+  `include "instr_lib/cv32e40p_pulp_hwloop_instr_lib.sv"
   `include "instr_lib/cv32e40p_float_instr_lib.sv"
 
   // RISCV-DV class override definitions
