@@ -91,7 +91,9 @@ module uvmt_cv32e20_tb;
    * This is an update of the riscv_wrapper.sv from PULP-Platform RI5CY project with
    * a few mods to bring unused ports from the CORE to this level using SV interfaces.
    */
-   uvmt_cv32e20_dut_wrap  #( ) dut_wrap (.*);
+   uvmt_cv32e20_dut_wrap  #(
+                           )
+                            dut_wrap (.*);
 
   bind uvmt_cv32e20_dut_wrap
     uvma_obi_memory_assert_if_wrp#(
