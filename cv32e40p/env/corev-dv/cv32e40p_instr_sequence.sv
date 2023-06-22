@@ -23,16 +23,36 @@
 // specific implementation.
 // Overriden Methods - 
 //   -- post_process_instr()
+//   -- generate_instr_stream()
 //-----------------------------------------------------------------------------------------
 
 class cv32e40p_instr_sequence extends riscv_instr_sequence;
-
-  bit label_is_pulp_hwloop_body_label = 0; // variable to indicate if given instr's Label is for HWLOOP
 
   `uvm_object_utils(cv32e40p_instr_sequence)
 
   function new (string name = "");
     super.new(name);
+  endfunction
+
+  function automatic bit check_str_pattern_match(string check_str, string pattern_str);
+    int     str_len;
+    int     pattern_str_len;
+    bit     match_val;
+
+    match_val = 0;
+    str_len = check_str.len();
+    pattern_str_len = pattern_str.len();
+
+    if(pattern_str_len < str_len) begin
+      for(int j = 0;j < str_len-pattern_str_len+1; j++) begin
+        if(check_str.substr(j,j+pattern_str_len -1) == pattern_str) begin
+          match_val = 1;  //set indicates str pattern found
+          break;
+        end
+      end
+    end
+    return match_val;
+
   endfunction
 
   //Function: cv32e40p_instr_sequence::post_process_instr()
@@ -45,8 +65,8 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
     int             branch_cnt;
     int unsigned    branch_idx[];
     int             branch_target[int] = '{default: 0};
-    string          hwloop_label, temp_label;
-    int             len1, len2;
+    string          temp_label_str;
+    bit             label_is_pulp_hwloop_body_label = 0; // variable to indicate if given instr's Label is for HWLOOP
     
 
     // Insert directed instructions, it's randomly mixed with the random instruction stream.
@@ -63,20 +83,14 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
       //in post_process_instr(). Using label_is_pulp_hwloop_body_label.
       label_is_pulp_hwloop_body_label = 0;
       if(instr_stream.instr_list[i].has_label) begin
-        hwloop_label = "hwloop"; //Using this string for hwloop specific labels in random hwloop stream tests
-        temp_label=instr_stream.instr_list[i].label;
-        len1=hwloop_label.len();
-        len2=temp_label.len();
 
-        if(len1 < len2) begin
-            for(int j = 0;j < len2-len1+1; j++) begin
-                if(temp_label.substr(j,j+len1 -1) == hwloop_label) begin
-                  label_is_pulp_hwloop_body_label = 1; // This var set indicates that this instr's label is for HWLOOP and must be kept
-                  `uvm_info("cv32e40p_inst_sequence", $sformatf("Print HWLOOP label instr - instr_stream.instr_list[%0d] %0s =  %0s ",i,instr_stream.instr_list[i].convert2asm(),instr_stream.instr_list[i].label), UVM_DEBUG);
-                  break;
-                end
-            end
+        temp_label_str=instr_stream.instr_list[i].label;
+        label_is_pulp_hwloop_body_label = check_str_pattern_match(temp_label_str, "hwloop");
+
+        if(label_is_pulp_hwloop_body_label) begin
+          `uvm_info("cv32e40p_inst_sequence", $sformatf("Print HWLOOP label instr - instr_stream.instr_list[%0d] %0s =  %0s ",i,instr_stream.instr_list[i].convert2asm(),instr_stream.instr_list[i].label), UVM_DEBUG);
         end
+
       end
 
       if (instr_stream.instr_list[i].has_label && !instr_stream.instr_list[i].atomic && !label_is_pulp_hwloop_body_label) begin
@@ -163,5 +177,107 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
     `uvm_info(get_full_name(), "Finished post-processing instructions", UVM_HIGH)
   endfunction
 
+  //Function: cv32e40p_instr_sequence::generate_instr_stream()
+  //Override parent class generate_instr_stream() inside cv32e40p_instr_sequence
+  //Keeping same code as parent class post_process_intr() with additions -
+  //--logic to check for hwloop stream related labels
+  virtual function void generate_instr_stream(bit no_label = 1'b0);
+    string  prefix, str;
+    int     i;
+    int     format_str_len;
+    bit     label_is_pulp_hwloop_body_label = 0; // variable to indicate if given instr's label is for HWLOOP
+    bit     insert_hwloop_start_directives = 0; // variable to indicate whether assembler directives are needed before hwloop starts
+    bit     insert_hwloop_end_directives = 0; // variable to indicate whether assembler directives are needed after hwloop ends
+    bit     insert_hwloop_align_directive = 0; // variable to indicate whether .align directive is needed before hwloop setup instr
+    string  temp_str;
+
+    instr_string_list = {};
+    format_str_len = LABEL_STR_LEN;
+    for(i = 0; i < instr_stream.instr_list.size(); i++) begin
+      label_is_pulp_hwloop_body_label = 0;
+      insert_hwloop_start_directives = 0;
+      insert_hwloop_end_directives = 0;
+      insert_hwloop_align_directive = 0;
+
+      if(i == 0) begin
+        if (no_label) begin
+          prefix = format_string(" ", format_str_len);
+        end else begin
+          prefix = format_string($sformatf("%0s:", label_name), format_str_len);
+        end
+        instr_stream.instr_list[i].has_label = 1'b1;
+      end else begin
+        if(instr_stream.instr_list[i].has_label) begin
+          //check if it is hwloop label
+          label_is_pulp_hwloop_body_label = check_str_pattern_match(instr_stream.instr_list[i].label, "hwloop");
+          if(!label_is_pulp_hwloop_body_label) begin
+            prefix = format_string($sformatf("%0s:", instr_stream.instr_list[i].label),format_str_len);
+          end
+          else begin
+            insert_hwloop_start_directives = ((check_str_pattern_match(instr_stream.instr_list[i].label, "hwloop1_nested_start")) |
+                                              (check_str_pattern_match(instr_stream.instr_list[i].label, "hwloop1_start")) |
+                                              (check_str_pattern_match(instr_stream.instr_list[i].label, "hwloop0_start")));
+
+            insert_hwloop_end_directives = ((check_str_pattern_match(instr_stream.instr_list[i].label, "hwloop1_nested_end")) |
+                                            (check_str_pattern_match(instr_stream.instr_list[i].label, "hwloop1_end")) |
+                                            (check_str_pattern_match(instr_stream.instr_list[i].label, "hwloop0_end")));
+
+            insert_hwloop_align_directive = check_str_pattern_match(instr_stream.instr_list[i].label, "align_hwloop");
+
+            if(insert_hwloop_align_directive) begin
+              prefix = format_string(" ", format_str_len);
+              //dont insert directives for cv_setup instr at current index: i,as the directives for these cases are handled in else block
+              if(!((instr_stream.instr_list[i].instr_name == CV_SETUP) || (instr_stream.instr_list[i].instr_name == CV_SETUPI))) begin
+                str = {prefix,".align 2"};
+                instr_string_list.push_back(str);
+              end
+              instr_stream.instr_list[i].has_label = 0; //remove temp label
+              instr_stream.instr_list[i].label = ""; //remove temp label
+            end
+            else begin
+              if(insert_hwloop_start_directives) begin
+                //check for cv_setup instr at index: i-1 , the directives need to be inserted before cv_setup/cv_setupi
+                if((instr_stream.instr_list[i-1].instr_name == CV_SETUP) || (instr_stream.instr_list[i-1].instr_name == CV_SETUPI)) begin
+                    temp_str = instr_string_list.pop_back(); // temporarily remove cv_setup/cv_setupi to insert directives
+                end
+                prefix = format_string(" ", format_str_len);
+                str = {prefix,".align 2"};
+                instr_string_list.push_back(str);
+                str = {prefix,".option norvc"};
+                instr_string_list.push_back(str);
+                if((instr_stream.instr_list[i-1].instr_name == CV_SETUP) || (instr_stream.instr_list[i-1].instr_name == CV_SETUPI)) begin
+                  instr_string_list.push_back(temp_str);  // insert back cv_setup/cv_setupi
+                end
+                format_str_len = HWLOOP_LABEL_STR_LEN;
+              end
+              prefix = format_string($sformatf("%0s:", instr_stream.instr_list[i].label), format_str_len);
+            end
+            insert_hwloop_align_directive = 0;
+          end
+        end else begin
+          prefix = format_string(" ", format_str_len);
+        end
+      end
+      str = {prefix, instr_stream.instr_list[i].convert2asm()};
+      instr_string_list.push_back(str);
+
+      if(insert_hwloop_end_directives) begin
+        format_str_len = LABEL_STR_LEN;
+        prefix = format_string(" ", format_str_len);
+        str = {prefix,".option rvc"};
+        instr_string_list.push_back(str);
+      end
+
+    end
+    // If PMP is supported, need to align <main> to a 4-byte boundary.
+    if (riscv_instr_pkg::support_pmp && !uvm_re_match(uvm_glob_to_re("*main*"), label_name)) begin
+      instr_string_list.push_front(".align 2");
+    end
+    insert_illegal_hint_instr();
+    prefix = format_string($sformatf("%0d:", i), LABEL_STR_LEN);
+    if(!is_main_program) begin
+      generate_return_routine(prefix);
+    end
+  endfunction
 
 endclass
