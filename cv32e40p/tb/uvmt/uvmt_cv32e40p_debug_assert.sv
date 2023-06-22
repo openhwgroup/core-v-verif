@@ -72,7 +72,7 @@ module uvmt_cv32e40p_debug_assert
                                    cov_assert_if.id_stage_instr_rdata_i[6:0]   == 7'h33;
 
 
-  assign decode_valid =  cov_assert_if.id_stage_instr_valid_i & cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE;
+  assign decode_valid =  cov_assert_if.id_stage_instr_valid_i & ((cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE) || (cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE_HWLOOP));
     // ---------------------------------------
     // Assertions
     // ---------------------------------------
@@ -351,7 +351,7 @@ module uvmt_cv32e40p_debug_assert
     // not pc from interrupt handler
     // PC is checked in another assertion
     property p_debug_req_and_irq;
-        cov_assert_if.debug_req_i && cov_assert_if.pending_enabled_irq  && cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE
+        cov_assert_if.debug_req_i && cov_assert_if.pending_enabled_irq  && ((cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE) || (cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE_HWLOOP))
         |-> (decode_valid & cov_assert_if.id_valid) [->1:2] ##0 cov_assert_if.debug_mode_q;
     endproperty
 
@@ -461,7 +461,7 @@ module uvmt_cv32e40p_debug_assert
         end else begin
             // Debug evaluated in decode state with valid instructions only
             //if(cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE & !cov_assert_if.debug_mode_q) begin
-            if(cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE) begin
+            if((cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE) || (cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE_HWLOOP)) begin
                 if(cov_assert_if.is_decoding & cov_assert_if.id_stage_instr_valid_i) begin
                     if(cov_assert_if.trigger_match_i)
                         debug_cause_pri <= 3'b010;
