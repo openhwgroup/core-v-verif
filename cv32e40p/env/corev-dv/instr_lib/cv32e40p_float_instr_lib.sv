@@ -456,7 +456,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     riscv_fpr_t fs1=FT0,  riscv_fpr_t fs2=FT0,  riscv_fpr_t fs3=FT0,  riscv_fpr_t fd=FT0,
     riscv_reg_t rs1=ZERO, riscv_reg_t rs2=ZERO, riscv_reg_t rd=ZERO,  bit[31:0] imm=0);
 
-    // user to expend the list when necessary
+    // user can expand the list if necessary
     if (instr != null) begin
     unique case(instr.instr_name)
       LUI : begin // LUI rd imm20
@@ -464,29 +464,9 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
                 rd == local::rd; imm == local::imm;
               )
             end
-      SW :  begin // SW rs2 imm12(rs1)
-              `DV_CHECK_RANDOMIZE_WITH_FATAL(instr, 
-                rs2 == local::rs2; rs1 == local::rs1; imm == local::imm;
-              )
-            end
-      LW :  begin // LW rd imm12(rs1)
-              `DV_CHECK_RANDOMIZE_WITH_FATAL(instr, 
-                rd == local::rd; rs1 == local::rs1; imm == local::imm;
-              )
-            end
-      OR :  begin // OR rd rs1 rs2
-              `DV_CHECK_RANDOMIZE_WITH_FATAL(instr, 
-                rd == local::rd; rs1 == local::rs1; rs2 == local::rs2;
-              )
-            end
-      SRLI : begin // SRLI rd rs1 imm
-              `DV_CHECK_RANDOMIZE_WITH_FATAL(instr, 
-                rd == local::rd; rs1 == local::rs1; imm == local::imm;
-              )
-             end
     endcase
     end
-    // user to expend the list when needed
+    // user can expand the list if necessary
     if (f_instr != null) begin
     unique case(f_instr.instr_name)
       FLW:  begin // FLW rd, imm12(rs1)
@@ -494,6 +474,11 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
                 fd == local::fd; rs1 == local::rs1; imm == local::imm;
               )
             end
+      FMV_W_X : begin // fmv.s.x fd, rs1
+                  `DV_CHECK_RANDOMIZE_WITH_FATAL(f_instr, 
+                    fd == local::fd; rs1 == local::rs1;
+                  )
+                end
     endcase
     end
 
@@ -531,51 +516,15 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
 
     bit [31:0]        m_operand_a, m_operand_b, m_operand_c;
     operand_pattens_t m_operand_a_pattern, m_operand_b_pattern, m_operand_c_pattern;
-    riscv_reg_t       mem_rd, imm_rd, imm_rd2;
-
-    if (
-      instr.has_rs1 && operand_a_pattern[idx] != IS_RAND ||
-      instr.has_rs2 && operand_b_pattern[idx] != IS_RAND ||
-      instr.has_rs3 && operand_c_pattern[idx] != IS_RAND ||
-      (instr.instr_name inside {FCVT_S_W, FCVT_S_WU})
-    ) begin : DEFINE_MEM_ADDR
-      riscv_instr m_instr;
-
-      void'(std::randomize(mem_rd)  with {!(mem_rd  inside {cfg.reserved_regs, reserved_rd, instr.rs1, instr.rs2, instr.rs3, instr.rd, ZERO});          });
-      void'(std::randomize(imm_rd)  with {!(imm_rd  inside {cfg.reserved_regs, reserved_rd, instr.rs1, instr.rs2, instr.rs3, instr.rd, ZERO, mem_rd});  });
-      if ( 
-        (instr.has_rs1 && operand_a_pattern[idx] inside `FP_SPECIAL_OPERANDS_LIST_2) ||
-        (instr.has_rs2 && operand_b_pattern[idx] inside `FP_SPECIAL_OPERANDS_LIST_2) ||
-        (instr.has_rs3 && operand_c_pattern[idx] inside `FP_SPECIAL_OPERANDS_LIST_2) ||
-        (instr.instr_name inside {FCVT_S_W, FCVT_S_WU})
-      ) begin
-        void'(std::randomize(imm_rd2) with {!(imm_rd2 inside {cfg.reserved_regs, reserved_rd, instr.rs1, instr.rs2, instr.rs3, instr.rd, ZERO, mem_rd, imm_rd});  });
-      end
-
-      m_instr = new riscv_instr::get_rand_instr(.include_instr({LUI}));
-      override_instr(
-        .instr  (m_instr),
-        .rd     (mem_rd),
-        .imm    ({12'h0, 8'b1100_0000, 12'h0}) // use higher memory as mailbox
-      );
-      instr_list.push_back(m_instr);
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(" [manipulate_zfinx_instr_operands][mem_addr] ")};
-    end // DEFINE_MEM_ADDR
 
     m_operand_a = operand_a[idx]; m_operand_a_pattern = operand_a_pattern[idx];
     m_operand_b = operand_b[idx]; m_operand_b_pattern = operand_b_pattern[idx];
     m_operand_c = operand_c[idx]; m_operand_c_pattern = operand_c_pattern[idx];
 
     if (!(instr.instr_name inside {FCVT_S_W, FCVT_S_WU})) begin
-      if      (m_operand_a_pattern inside `FP_SPECIAL_OPERANDS_LIST_1) begin `MANIPULATE_GPR_OPERANDS_UPPER_20BITS_ONLY(rs1,m_operand_a) end
-      else if (m_operand_a_pattern inside `FP_SPECIAL_OPERANDS_LIST_2) begin `MANIPULATE_GPR_OPERANDS_WORD(rs1,m_operand_a) end
-      else if (m_operand_a_pattern != IS_RAND) begin `uvm_fatal(_header, $sformatf("[manipulate_zfinx_instr_operands] Invalid m_operand_a_pattern[%s]", m_operand_a_pattern.name())); end
-      if      (m_operand_b_pattern inside `FP_SPECIAL_OPERANDS_LIST_1) begin `MANIPULATE_GPR_OPERANDS_UPPER_20BITS_ONLY(rs2,m_operand_b) end
-      else if (m_operand_b_pattern inside `FP_SPECIAL_OPERANDS_LIST_2) begin `MANIPULATE_GPR_OPERANDS_WORD(rs2,m_operand_b) end
-      else if (m_operand_b_pattern != IS_RAND) begin `uvm_fatal(_header, $sformatf("[manipulate_zfinx_instr_operands] Invalid m_operand_b_pattern[%s]", m_operand_b_pattern.name())); end
-      if      (m_operand_c_pattern inside `FP_SPECIAL_OPERANDS_LIST_1) begin `MANIPULATE_GPR_OPERANDS_UPPER_20BITS_ONLY(rs3,m_operand_c) end
-      else if (m_operand_c_pattern inside `FP_SPECIAL_OPERANDS_LIST_2) begin `MANIPULATE_GPR_OPERANDS_WORD(rs3,m_operand_c) end
-      else if (m_operand_c_pattern != IS_RAND) begin `uvm_fatal(_header, $sformatf("[manipulate_zfinx_instr_operands] Invalid m_operand_c_pattern[%s]", m_operand_c_pattern.name())); end
+      `MANIPULATE_GPR_OPERANDS(rs1,m_operand_a);
+      `MANIPULATE_GPR_OPERANDS(rs2,m_operand_b);
+      `MANIPULATE_GPR_OPERANDS(rs3,m_operand_c);
     end
     else begin : FOR_CVT_FROM_INT_TO_FP
       if (instr.has_rs1 && operand_a_pattern[idx] != IS_RAND) begin
@@ -588,11 +537,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
         );
         if (instr.instr_name == FCVT_S_WU) m_operand_a = rs1_unsigned;
         else                               m_operand_a = rs1_signed;
-        if (m_operand_a_pattern inside {W_IS_AT_PERCISION_MAX, W_IS_AT_PERCISION_MIN, W_IS_MIN_INTEGER}) begin 
-          `MANIPULATE_GPR_OPERANDS_UPPER_20BITS_ONLY(rs1, m_operand_a); 
-        end else begin : W_IS_WITHIN_PERCISION_LIMIT_OR_W_IS_MAX_INTEGER
-          `MANIPULATE_GPR_OPERANDS_WORD(rs1, m_operand_a);
-        end
+        `MANIPULATE_GPR_OPERANDS(rs1, m_operand_a);
       end
     end // FOR_CVT_FROM_INT_TO_FP
     
@@ -603,51 +548,18 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
 
     bit [31:0]        m_operand_a, m_operand_b, m_operand_c;
     operand_pattens_t m_operand_a_pattern, m_operand_b_pattern, m_operand_c_pattern;
-    riscv_reg_t       mem_rd, imm_rd, imm_rd2;
+    riscv_reg_t       imm_rd;
 
-    if (
-      instr.has_fs1 && operand_a_pattern[idx] != IS_RAND ||
-      instr.has_fs2 && operand_b_pattern[idx] != IS_RAND ||
-      instr.has_fs3 && operand_c_pattern[idx] != IS_RAND ||
-      (instr.instr_name inside {FCVT_S_W, FCVT_S_WU})
-    ) begin : DEFINE_MEM_ADDR
-      riscv_instr m_instr;
-
-      void'(std::randomize(mem_rd)  with {!(mem_rd  inside {cfg.reserved_regs, reserved_rd, instr.rs1, instr.rs2, instr.rd, ZERO});        });
-      void'(std::randomize(imm_rd)  with {!(imm_rd  inside {cfg.reserved_regs, reserved_rd, instr.rs1, instr.rs2, instr.rd, ZERO, mem_rd});  });
-      if ( 
-        (instr.has_fs1 && operand_a_pattern[idx] inside `FP_SPECIAL_OPERANDS_LIST_2) ||
-        (instr.has_fs2 && operand_b_pattern[idx] inside `FP_SPECIAL_OPERANDS_LIST_2) ||
-        (instr.has_fs3 && operand_c_pattern[idx] inside `FP_SPECIAL_OPERANDS_LIST_2) ||
-        (instr.instr_name inside {FCVT_S_W, FCVT_S_WU})
-      ) begin
-        void'(std::randomize(imm_rd2) with {!(imm_rd2 inside {cfg.reserved_regs, reserved_rd, instr.rs1, instr.rs2, instr.rd, ZERO, mem_rd, imm_rd});  });
-      end
-
-      m_instr = new riscv_instr::get_rand_instr(.include_instr({LUI}));
-      override_instr(
-        .instr  (m_instr),
-        .rd     (mem_rd),
-        .imm    ({12'h0, 8'b1100_0000, 12'h0}) // use higher memory as mailbox
-      );
-      instr_list.push_back(m_instr);
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(" [manipulate_f_instr_operands][mem_addr] ")};
-    end // DEFINE_MEM_ADDR
+    void'(std::randomize(imm_rd)  with {!(imm_rd  inside {cfg.reserved_regs, reserved_rd, instr.rs1, instr.rs2, instr.rd, ZERO}); });
 
     m_operand_a = operand_a[idx]; m_operand_a_pattern = operand_a_pattern[idx];
     m_operand_b = operand_b[idx]; m_operand_b_pattern = operand_b_pattern[idx];
     m_operand_c = operand_c[idx]; m_operand_c_pattern = operand_c_pattern[idx];
 
     if (!(instr.instr_name inside {FCVT_S_W, FCVT_S_WU})) begin
-      if      (m_operand_a_pattern inside `FP_SPECIAL_OPERANDS_LIST_1) begin `MANIPULATE_FPR_OPERANDS_UPPER_20BITS_ONLY(fs1,m_operand_a) end
-      else if (m_operand_a_pattern inside `FP_SPECIAL_OPERANDS_LIST_2) begin `MANIPULATE_FPR_OPERANDS_WORD(fs1,m_operand_a) end
-      else if (m_operand_a_pattern != IS_RAND) begin `uvm_fatal(_header, $sformatf("[manipulate_f_instr_operands] Invalid m_operand_a_pattern[%s]", m_operand_a_pattern.name())); end
-      if      (m_operand_b_pattern inside `FP_SPECIAL_OPERANDS_LIST_1) begin `MANIPULATE_FPR_OPERANDS_UPPER_20BITS_ONLY(fs2,m_operand_b) end
-      else if (m_operand_b_pattern inside `FP_SPECIAL_OPERANDS_LIST_2) begin `MANIPULATE_FPR_OPERANDS_WORD(fs2,m_operand_b) end
-      else if (m_operand_b_pattern != IS_RAND) begin `uvm_fatal(_header, $sformatf("[manipulate_f_instr_operands] Invalid m_operand_b_pattern[%s]", m_operand_b_pattern.name())); end
-      if      (m_operand_c_pattern inside `FP_SPECIAL_OPERANDS_LIST_1) begin `MANIPULATE_FPR_OPERANDS_UPPER_20BITS_ONLY(fs3,m_operand_c) end
-      else if (m_operand_c_pattern inside `FP_SPECIAL_OPERANDS_LIST_2) begin `MANIPULATE_FPR_OPERANDS_WORD(fs3,m_operand_c) end
-      else if (m_operand_c_pattern != IS_RAND) begin `uvm_fatal(_header, $sformatf("[manipulate_f_instr_operands] Invalid m_operand_c_pattern[%s]", m_operand_c_pattern.name())); end
+      `MANIPULATE_FPR_OPERANDS(fs1,m_operand_a);
+      `MANIPULATE_FPR_OPERANDS(fs2,m_operand_b);
+      `MANIPULATE_FPR_OPERANDS(fs3,m_operand_c);
     end
     else begin : FOR_CVT_FROM_INT_TO_FP
       if (instr.has_rs1 && operand_a_pattern[idx] != IS_RAND) begin
@@ -660,11 +572,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
         );
         if (instr.instr_name == FCVT_S_WU) m_operand_a = rs1_unsigned;
         else                               m_operand_a = rs1_signed;
-        if (m_operand_a_pattern inside {W_IS_AT_PERCISION_MAX, W_IS_AT_PERCISION_MIN, W_IS_MIN_INTEGER}) begin 
-          `MANIPULATE_GPR_OPERANDS_UPPER_20BITS_ONLY(rs1, m_operand_a); 
-        end else begin : W_IS_WITHIN_PERCISION_LIMIT_OR_W_IS_MAX_INTEGER
-          `MANIPULATE_GPR_OPERANDS_WORD(rs1, m_operand_a);
-        end
+        `MANIPULATE_GPR_OPERANDS(rs1, m_operand_a);
       end
     end // FOR_CVT_FROM_INT_TO_FP
     
@@ -942,7 +850,7 @@ class cv32e40p_constraint_mc_fp_instr_stream extends cv32e40p_float_zfinx_base_i
   `uvm_object_new
 
   constraint ovr_c_others {
-    // FIXME_TEMP_EXCLUDE_UNTIL_RTL_IS_FIXED (-2)
+    // FIXME_TEMP_EXCLUDE_UNTIL_RTL_IS_FIXED (remove -2)
     if (is_zfinx) {num_of_instr_per_stream == TOTAL_INSTR_ZFINX_TYPE - 2;}
     else          {num_of_instr_per_stream == TOTAL_INSTR_F_TYPE - 2;}
   }
