@@ -229,7 +229,6 @@ SECTIONS
   .heap                    : ALIGN(16)
   {
    PROVIDE(__heap_start = .);
-   . = __heap_start;
    /* If end of ram is not 16-byte aligned, align to previous 16-byte
       boundary */
    PROVIDE(__heap_end = ALIGN(ORIGIN(ram) + LENGTH(ram) - 15, 16));
