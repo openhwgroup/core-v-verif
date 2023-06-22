@@ -22,7 +22,8 @@
 `ifndef __UVMT_CV32E20_DUT_WRAP_SV__
 `define __UVMT_CV32E20_DUT_WRAP_SV__
 
-import cve2_pkg::*;
+import uvm_pkg::*; // needed for the UVM messaging service (`uvm_info(), etc.)
+import cve2_pkg::*;// definitions of enumerated types used by cve2
 
 /**
  * Wrapper for the CV32E20 RTL DUT.
@@ -38,9 +39,9 @@ module uvmt_cv32e20_dut_wrap #(
                             parameter int unsigned DmHaltAddr        = 32'h1A110800,
                             parameter int unsigned DmExceptionAddr   = 32'h1A110808,
                             // Remaining parameters are used by TB components only
-                                      INSTR_ADDR_WIDTH    =  32,
-                                      INSTR_RDATA_WIDTH   =  32,
-                                      RAM_ADDR_WIDTH      =  22
+                            parameter int unsigned INSTR_ADDR_WIDTH    =  32,
+                            parameter int unsigned INSTR_RDATA_WIDTH   =  32,
+                            parameter int unsigned RAM_ADDR_WIDTH      =  22
                            )
 
                            (
@@ -53,9 +54,6 @@ module uvmt_cv32e20_dut_wrap #(
                             uvma_obi_memory_if           obi_memory_instr_if,
                             uvma_obi_memory_if           obi_memory_data_if
                            );
-
-    import uvm_pkg::*; // needed for the UVM messaging service (`uvm_info(), etc.)
-    import cve2_pkg::*;
 
     // signals connecting core to memory
     logic                         instr_req;
@@ -108,17 +106,12 @@ module uvmt_cv32e20_dut_wrap #(
     assign irq_vp                               = vp_interrupt_if.irq;
     assign interrupt_if.irq_id                  = cv32e20_top_i.u_cve2_core.id_stage_i.controller_i.mfip_id; //irq_id;
     assign interrupt_if.irq_ack                 = cv32e20_top_i.u_cve2_core.id_stage_i.controller_i.handle_irq; //irq_ack;
-//  assign interrupt_if.irq_ack                 = cv32e40x_wrapper_i.core_i.irq_ack;
-//  assign interrupt_if.irq_ack                 = cv32e40s_wrapper_i.core_i.irq_ack;
     
     assign irq = irq_uvma | irq_vp;
 
-//    assign irq_ack = 1'b0; //cv32e20_top_i.u_cve2_core.id_stage_i.controller_i.handle_irq;
-//    assign irq_id  = 5'b00000; //cv32e20_top_i.u_cve2_core.id_stage_i.controller_i.mfip_id;
-
     // ------------------------------------------------------------------------
     // Instantiate the core
-    cve2_top #( 
+    cve2_top #(
                .MHPMCounterNum   (MHPMCounterNum),
                .MHPMCounterWidth (MHPMCounterWidth),
                .RV32E            (RV32E),
