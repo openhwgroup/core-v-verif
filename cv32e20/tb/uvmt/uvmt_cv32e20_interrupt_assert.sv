@@ -18,7 +18,7 @@
 
 module uvmt_cv32e20_interrupt_assert  
   import uvm_pkg::*;
-  import cv32e20_pkg::*;
+  import uvme_cv32e20_pkg::*;
   (
     
     input clk,   // Gated clock
@@ -114,7 +114,7 @@ module uvmt_cv32e20_interrupt_assert
   // ---------------------------------------------------------------------------
   // Interrupt interface checks
   // ---------------------------------------------------------------------------
-
+/* *** LRH commented out
   // irq_ack_o is always a pulse
   property p_irq_ack_o_pulse;
     irq_ack_o |=> !irq_ack_o;
@@ -210,6 +210,8 @@ module uvmt_cv32e20_interrupt_assert
   end
   endgenerate
 
+ */  // LRH Commented out assertions
+ 
   // Detect arbitration of interrupt assertion
   always @* begin
     next_irq_valid = 1'b0;
@@ -261,6 +263,7 @@ module uvmt_cv32e20_interrupt_assert
 
   assign expected_irq_ack = next_irq_valid & mstatus_mie;
 
+/* *** LRH commented out
   // Check expected interrupt wins
   property p_irq_arb;
     irq_ack_o |-> irq_id_o == next_irq;
@@ -340,7 +343,9 @@ module uvmt_cv32e20_interrupt_assert
         in_wfi <= 1'b0;
     end
   end
-
+ 
+ /* *** // LRH Commented out assertions.
+ 
   // WFI assertion will assert core_sleep_o in 6 clocks
   property p_wfi_assert_core_sleep_o;
     !pending_enabled_irq_q ##0 !in_wfi ##1 !pending_enabled_irq_q ##0
@@ -391,5 +396,5 @@ module uvmt_cv32e20_interrupt_assert
     end
   end
   endgenerate
-
+ */ // LRH Commented out assertions.
 endmodule : uvmt_cv32e20_interrupt_assert

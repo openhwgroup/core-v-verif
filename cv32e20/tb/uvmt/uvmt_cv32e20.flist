@@ -52,5 +52,5 @@ ${TBSRC_HOME}/uvmt/uvmt_cv32e20_dut_wrap.sv
 
 // FIXME:Find a better location
 // FIXME:fix usage of RTL package (currently non-existant cv32e20_pkg.sv)
-//${DV_UVMT_PATH}/uvmt_cv32e20_interrupt_assert.sv
+${DV_UVMT_PATH}/uvmt_cv32e20_interrupt_assert.sv
 ${DV_UVMT_PATH}/uvmt_cv32e20_debug_assert.sv

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Copyright 2020,2023 OpenHW Group
+// Copyright 2020,2022 OpenHW Group
 // Copyright 2020 Datum Technology Corporation
 // Copyright 2020 Silicon Labs, Inc.
 //
@@ -22,8 +22,7 @@
 `ifndef __UVMT_CV32E20_DUT_WRAP_SV__
 `define __UVMT_CV32E20_DUT_WRAP_SV__
 
-import uvm_pkg::*;  // needed for the UVM messaging service (`uvm_info(), etc.)
-import cve2_pkg::*; // definitions of enumerated types used by cve2
+import cve2_pkg::*;
 
 /**
  * Wrapper for the CV32E20 RTL DUT.
@@ -39,9 +38,9 @@ module uvmt_cv32e20_dut_wrap #(
                             parameter int unsigned DmHaltAddr        = 32'h1A110800,
                             parameter int unsigned DmExceptionAddr   = 32'h1A110808,
                             // Remaining parameters are used by TB components only
-                            parameter int unsigned INSTR_ADDR_WIDTH  = 32,
-                            parameter int unsigned INSTR_RDATA_WIDTH = 32,
-                            parameter int unsigned RAM_ADDR_WIDTH    = 22
+                                      INSTR_ADDR_WIDTH    =  32,
+                                      INSTR_RDATA_WIDTH   =  32,
+                                      RAM_ADDR_WIDTH      =  22
                            )
 
                            (
@@ -55,6 +54,8 @@ module uvmt_cv32e20_dut_wrap #(
                             uvma_obi_memory_if           obi_memory_data_if
                            );
 
+    import uvm_pkg::*; // needed for the UVM messaging service (`uvm_info(), etc.)
+    import cve2_pkg::*;
 
     // signals connecting core to memory
     logic                         instr_req;
@@ -105,14 +106,19 @@ module uvmt_cv32e20_dut_wrap #(
     assign vp_interrupt_if.clk                  = clknrst_if.clk;
     assign vp_interrupt_if.reset_n              = clknrst_if.reset_n;
     assign irq_vp                               = vp_interrupt_if.irq;
-    assign interrupt_if.irq_id                  = irq_id;
-    assign interrupt_if.irq_ack                 = irq_ack;
-
+    assign interrupt_if.irq_id                  = cv32e20_top_i.u_cve2_core.id_stage_i.controller_i.mfip_id; //irq_id;
+    assign interrupt_if.irq_ack                 = cv32e20_top_i.u_cve2_core.id_stage_i.controller_i.handle_irq; //irq_ack;
+//  assign interrupt_if.irq_ack                 = cv32e40x_wrapper_i.core_i.irq_ack;
+//  assign interrupt_if.irq_ack                 = cv32e40s_wrapper_i.core_i.irq_ack;
+    
     assign irq = irq_uvma | irq_vp;
+
+//    assign irq_ack = 1'b0; //cv32e20_top_i.u_cve2_core.id_stage_i.controller_i.handle_irq;
+//    assign irq_id  = 5'b00000; //cv32e20_top_i.u_cve2_core.id_stage_i.controller_i.mfip_id;
 
     // ------------------------------------------------------------------------
     // Instantiate the core
-    cve2_top #(
+    cve2_top #( 
                .MHPMCounterNum   (MHPMCounterNum),
                .MHPMCounterWidth (MHPMCounterWidth),
                .RV32E            (RV32E),
@@ -152,11 +158,11 @@ module uvmt_cv32e20_dut_wrap #(
          .data_err_i             ( '0                             ),
 
   // Interrupt inputs
-         .irq_software_i         ( '0),
-         .irq_timer_i            ( '0),
-         .irq_external_i         ( '0),
-         .irq_fast_i             ( '0),
-         .irq_nm_i               ( '0),       // non-maskeable interrupt
+         .irq_software_i         ( irq_uvma[3]),
+         .irq_timer_i            ( irq_uvma[7]),
+         .irq_external_i         ( irq_uvma[11]),
+         .irq_fast_i             ( irq_uvma[30:16]),
+         .irq_nm_i               ( irq_uvma[31]),       // non-maskeable interrupt
 
   // Debug Interface
          .debug_req_i             ('0),
