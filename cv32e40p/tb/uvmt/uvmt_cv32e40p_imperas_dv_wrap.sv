@@ -131,6 +131,13 @@
 `define CSR_CYCLEH_ADDR        32'hC80
 `define CSR_INSTRETH_ADDR      32'hC82
 
+`define CSR_LPSTART0_ADDR      32'hCC0
+`define CSR_LPEND0_ADDR        32'hCC1
+`define CSR_LPCOUNT0_ADDR      32'hCC2
+`define CSR_LPSTART1_ADDR      32'hCC4
+`define CSR_LPEND1_ADDR        32'hCC5
+`define CSR_LPCOUNT1_ADDR      32'hCC6
+
 `define CSR_MHPMCOUNTER3_ADDR  32'hB03
 `define CSR_MHPMCOUNTER4_ADDR  32'hB04
 `define CSR_MHPMCOUNTER5_ADDR  32'hB05
@@ -330,6 +337,14 @@ module uvmt_cv32e40p_imperas_dv_wrap
     `RVVI_SET_CSR(`CSR_FFLAGS_ADDR, fflags)
     `RVVI_SET_CSR(`CSR_FRM_ADDR   , frm   )
     `RVVI_SET_CSR(`CSR_FCSR_ADDR  , fcsr  )
+
+    `RVVI_SET_CSR(`CSR_LPCOUNT0_ADDR  , lpcount0  )
+    `RVVI_SET_CSR(`CSR_LPSTART0_ADDR  , lpstart0  )
+    `RVVI_SET_CSR(`CSR_LPEND0_ADDR    , lpend0    )
+
+    `RVVI_SET_CSR(`CSR_LPCOUNT1_ADDR  , lpcount1  )
+    `RVVI_SET_CSR(`CSR_LPSTART1_ADDR  , lpstart1  )
+    `RVVI_SET_CSR(`CSR_LPEND1_ADDR    , lpend1    )
     ////////////////////////////////////////////////////////////////////////////
     // Assign the RVVI GPR registers
     ////////////////////////////////////////////////////////////////////////////
