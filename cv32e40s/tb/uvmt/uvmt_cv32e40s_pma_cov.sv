@@ -290,7 +290,7 @@ module  uvmt_cv32e40s_pma_cov
     option.per_instance = 1;
     option.detect_overlap = 1;
 
-    cp_aligned: coverpoint  rvfi_if.is_split_datatrans
+    cp_aligned: coverpoint  rvfi_if.is_split_datatrans_intended
       iff (rvfi_if.rvfi_valid)
     {
       bins  misaligned = {1};

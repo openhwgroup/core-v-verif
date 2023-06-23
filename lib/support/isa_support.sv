@@ -1786,6 +1786,16 @@
     return  match_instr_raw_f(instr, INSTR_OPCODE_TABLEJUMP, INSTR_MASK_TABLEJUMP);
   endfunction : is_tablejump_raw_f
 
+  function automatic logic[31:0] get_jvt_addr_f(
+    logic [DEFAULT_XLEN-1:0] instr,
+    logic [31:0] jvt
+  );
+    logic [ 9:2] field_index = instr[9:2];
+    logic [31:6] field_base  = jvt[31:6];
+
+    return ({field_base, 6'd 0} + (field_index << 2));
+  endfunction : get_jvt_addr_f
+
   function automatic logic is_fencefencei_f(
     logic [ DEFAULT_XLEN-1:0] instr
   );

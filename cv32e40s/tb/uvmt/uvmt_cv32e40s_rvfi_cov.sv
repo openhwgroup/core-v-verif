@@ -52,7 +52,7 @@ module  uvmt_cv32e40s_rvfi_cov
   // Mem access split in two OBI transactions
 
   cov_split_data: cover property (
-    rvfi_if.is_split_datatrans  &&
+    rvfi_if.is_split_datatrans_intended  &&
     !rvfi_if.rvfi_trap
   );
 

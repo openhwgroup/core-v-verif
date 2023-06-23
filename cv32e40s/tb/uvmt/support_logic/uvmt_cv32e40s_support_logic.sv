@@ -275,7 +275,7 @@ module uvmt_cv32e40s_support_logic
         general_trigger_match_conditions[t] &&
         !out_support_if.is_trigger_match_execute &&
         tdata1_array[t][TDATA1_LOAD] &&
-        |(rvfi.instr_mem_rmask & mem_addr_match[t]);
+        |(rvfi.rvfi_mem_rmask_intended & mem_addr_match[t]);
 
     assign trigger_match_store_array[t] =
       t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
@@ -283,7 +283,7 @@ module uvmt_cv32e40s_support_logic
         general_trigger_match_conditions[t] &&
         !out_support_if.is_trigger_match_execute &&
         tdata1_array[t][TDATA1_STORE] &&
-        |(rvfi.instr_mem_wmask & mem_addr_match[t]);
+        |(rvfi.rvfi_mem_wmask_intended & mem_addr_match[t]);
 
   end
 

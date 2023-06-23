@@ -47,7 +47,6 @@ ${DV_UVMA_PATH}/uvma_rvfi/uvma_rvfi_instr_if.sv
 ${DV_UVMA_PATH}/uvma_rvfi/uvma_rvfi_csr_if.sv
 ${DV_UVMA_PATH}/uvma_obi_memory/src/uvma_obi_memory_assert_if_wrp.sv
 ${DV_UVMA_PATH}/uvma_obi_memory/src/uvma_obi_memory_if.sv
-${DV_UVMA_PATH}/uvma_isacov/uvma_isacov_if.sv
 ${DV_UVMA_PATH}/uvma_debug/uvma_debug_if.sv
 ${DV_UVMA_PATH}/uvma_interrupt/uvma_interrupt_if.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_tb_ifs.sv

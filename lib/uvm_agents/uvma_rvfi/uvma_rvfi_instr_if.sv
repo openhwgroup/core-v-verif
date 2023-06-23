@@ -23,9 +23,9 @@
  * monitor,
  */
 interface uvma_rvfi_instr_if_t
-  import uvma_rvfi_pkg::*;
-
   import support_pkg::*;
+  import uvm_pkg::*;
+  import uvma_rvfi_pkg::*;
 
   #(int ILEN=uvma_rvfi_pkg::DEFAULT_ILEN,
     int XLEN=uvma_rvfi_pkg::DEFAULT_XLEN)
@@ -179,10 +179,13 @@ interface uvma_rvfi_instr_if_t
   // -------------------------------------------------------------------
   // Local variables
   // -------------------------------------------------------------------
-  bit   [CYCLE_CNT_WL-1:0]          cycle_cnt       = 0;
-  int unsigned                      nmi_instr_cnt   = 0; // number of instructions after nmi
-  int unsigned                      irq_cnt         = 0; // number of taken interrupts
-  int unsigned                      single_step_cnt = 0; // number of instructions stepped
+  int unsigned                      irq_cnt;         // number of taken interrupts
+  int unsigned                      nmi_instr_cnt;   // number of instructions after nmi
+  int unsigned                      single_step_cnt; // number of instructions stepped
+  logic [CYCLE_CNT_WL-1:0]          cycle_cnt;       // i'th number cycle since reset
+  logic [CYCLE_CNT_WL-1:0]          cycle_cnt_q;
+
+  string                            info_tag = "RVFI_INSTR_IF";
 
   logic [(32)-1:0][XLEN-1:0]        gpr_rdata_array;
   logic [(32)-1:0]                  gpr_rmask_array;
@@ -219,19 +222,34 @@ interface uvma_rvfi_instr_if_t
   logic                             is_umode;
   logic                             is_not_umode;
   logic                             is_pma_instr_fault;
+  logic                             is_instr_acc_fault_pmp;
   logic                             is_instr_bus_valid;
   logic                             is_pushpop;
-  logic                             is_split_datatrans;
+  logic                             is_split_datatrans_actual;
+  logic                             is_split_datatrans_intended;
+  logic                             is_split_instrtrans;
   logic                             is_mem_act;
+  logic                             is_mem_act_actual;
+  logic                             is_mem_act_intended;
   logic                             is_tablejump_raw;
   logic                             is_pma_fault;
   logic                             is_fencefencei;
+  logic                             is_nmi_triggered;
+  logic                             is_load_instr;
+  logic                             is_store_instr;
+  logic                             is_loadstore_instr;
+  logic                             is_exception;
+  logic                             is_load_acc_fault;
+  logic                             is_store_acc_fault;
+  logic                             is_deprioritized_load_acc_fault;
+  logic                             is_deprioritized_store_acc_fault;
   logic [31:0]                      rvfi_mem_addr_word0highbyte;
-  logic                             is_nmi_triggered = 0;
-  logic [4*NMEM-1:0]                instr_mem_rmask;
-  logic [4*NMEM-1:0]                instr_mem_wmask;
+  logic [31:0]                      rvfi_pc_upperrdata;
+  logic [4*NMEM-1:0]                rvfi_mem_rmask_intended;
+  logic [4*NMEM-1:0]                rvfi_mem_wmask_intended;
 
   asm_t instr_asm;
+
   // -------------------------------------------------------------------
   // Begin module code
   // -------------------------------------------------------------------
@@ -255,14 +273,13 @@ interface uvma_rvfi_instr_if_t
   assign cslli_shamt = {rvfi_insn[12], rvfi_insn[6:2]};
   assign csr_addr    = rvfi_insn[31:20];
 
-  always @(posedge clk or negedge reset_n) begin
+  always_ff @(posedge clk or negedge reset_n) begin
     if (!reset_n) begin
-      nmi_instr_cnt    <= 0;
-      single_step_cnt  <= 0;
       irq_cnt          <= 0;
       is_nmi_triggered <= 0;
+      nmi_instr_cnt    <= 0;
+      single_step_cnt  <= 0;
     end else begin
-      cycle_cnt <= cycle_cnt + 1;
       // Detect taken nmi or pending nmi and start counting
       is_nmi_triggered <= is_nmi_triggered ? 1'b1 : (is_nmi || (rvfi_nmip && rvfi_valid));
       if (is_nmi_triggered && rvfi_valid) begin
@@ -271,6 +288,10 @@ interface uvma_rvfi_instr_if_t
       single_step_cnt <= (rvfi_dbg[2:0] == 3'h4 && rvfi_valid) ? single_step_cnt + 1 : single_step_cnt;
       irq_cnt <= ((rvfi_intr.intr == 1) && (rvfi_intr.interrupt == 1) && rvfi_valid) ? irq_cnt + 1 : irq_cnt;
     end
+  end
+
+  always_ff @(posedge clk) begin
+    cycle_cnt_q <= cycle_cnt;
   end
 
   // assigning signal aliases to helper functions
@@ -300,14 +321,84 @@ interface uvma_rvfi_instr_if_t
     is_pma_instr_fault  <= is_pma_instr_fault_f();
     is_instr_bus_valid  <= is_instr_bus_valid_f();
     is_pushpop          <= is_pushpop_f();
-    is_split_datatrans  <= is_split_datatrans_f();
+    is_split_datatrans_actual   <= is_split_datatrans_actual_f();
+    is_split_datatrans_intended <= is_split_datatrans_intended_f();
     is_mem_act          <= is_mem_act_f();
     is_tablejump_raw    <= is_tablejump_raw_f();
     is_pma_fault        <= is_pma_fault_f();
     is_fencefencei      <= is_fencefencei_f();
     rvfi_mem_addr_word0highbyte <= rvfi_mem_addr_word0highbyte_f();
-    instr_mem_rmask     <= instr_mem_rmask_f();
-    instr_mem_wmask     <= instr_mem_wmask_f();
+    rvfi_mem_rmask_intended     <= rvfi_mem_rmask_intended_f();
+    rvfi_mem_wmask_intended     <= rvfi_mem_wmask_intended_f();
+    is_deprioritized_load_acc_fault  <= is_deprioritized_exception_f({21'd 0, EXC_CAUSE_LOAD_ACC_FAULT});
+    is_deprioritized_store_acc_fault <= is_deprioritized_exception_f({21'd 0, EXC_CAUSE_STORE_ACC_FAULT});
+  end
+
+  always_comb begin
+    cycle_cnt = !reset_n ? 0 : (cycle_cnt_q + 1'b 1);
+  end
+
+  always_comb begin
+    is_load_instr = rvfi_valid && |rvfi_mem_rmask_intended;
+  end
+
+  always_comb begin
+    is_store_instr = rvfi_valid && |rvfi_mem_wmask_intended;
+  end
+
+  always_comb begin
+    is_loadstore_instr = is_load_instr || is_store_instr;
+  end
+
+  always_comb begin
+    is_mem_act_actual = is_mem_act;  // original signal is already "actual"
+  end
+
+  always_comb begin
+    is_mem_act_intended = rvfi_valid  && (|rvfi_mem_rmask_intended || |rvfi_mem_wmask_intended);
+  end
+
+  always_comb begin
+    rvfi_pc_upperrdata =
+      (rvfi_insn[1:0] == 2'b 11) ? (
+        rvfi_pc_rdata + 3
+      ) : (
+        rvfi_pc_rdata + 1
+      );
+      // WARNING: Can't trust rvfi_insn if scrambled data.
+      // TODO:WARNING:silabs-robin  Can it be modelled exact?
+  end
+
+  always_comb begin
+    is_split_instrtrans =
+      rvfi_valid  &&
+      (rvfi_pc_rdata[31:2] != rvfi_pc_upperrdata[31:2]);
+  end
+
+  always_comb begin
+    is_exception =
+      rvfi_valid  &&
+      rvfi_trap.trap  &&
+      rvfi_trap.exception;
+  end
+
+  always_comb begin
+    is_instr_acc_fault_pmp =
+      is_exception  &&
+      (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_ACC_FAULT)  &&
+      (rvfi_trap.cause_type == 'h 1);  // TODO:INFO:silabs-robin  Magic num
+  end
+
+  always_comb begin
+    is_load_acc_fault =
+      is_exception  &&
+      (rvfi_trap.exception_cause == EXC_CAUSE_LOAD_ACC_FAULT);
+  end
+
+  always_comb begin
+    is_store_acc_fault =
+      is_exception  &&
+      (rvfi_trap.exception_cause == EXC_CAUSE_STORE_ACC_FAULT);
   end
 
   /**
@@ -687,7 +778,7 @@ function automatic logic is_pma_instr_fault_f();
   return  rvfi_valid  &&
           rvfi_trap.trap  &&
           rvfi_trap.exception  &&
-          (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_FAULT)  &&
+          (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_ACC_FAULT)  &&
           (rvfi_trap.cause_type == 'h 0);
 endfunction : is_pma_instr_fault_f
 
@@ -696,15 +787,15 @@ function automatic logic is_pma_fault_f();
           rvfi_trap.trap  &&
           rvfi_trap.exception  &&
           (rvfi_trap.exception_cause  inside {
-            EXC_CAUSE_INSTR_FAULT,
-            EXC_CAUSE_LOAD_FAULT,
-            EXC_CAUSE_STORE_FAULT
+            EXC_CAUSE_INSTR_ACC_FAULT,
+            EXC_CAUSE_LOAD_ACC_FAULT,
+            EXC_CAUSE_STORE_ACC_FAULT
           })  &&
           (rvfi_trap.cause_type == 'h 0);
 endfunction : is_pma_fault_f
 
 function automatic logic is_instr_bus_valid_f();
-  return !( (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_FAULT) ||
+  return !( (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_ACC_FAULT) ||
             (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_INTEGRITY_FAULT) ||
             (rvfi_trap.exception_cause == EXC_CAUSE_INSTR_BUS_FAULT)
     );
@@ -724,13 +815,21 @@ function automatic logic [31:0] rvfi_mem_addr_word0highbyte_f();
   endcase
 endfunction : rvfi_mem_addr_word0highbyte_f
 
-function automatic logic is_split_datatrans_f();
+function automatic logic is_split_datatrans_actual_f();
   logic [31:0]  low_addr  = rvfi_mem_addr[XLEN-1:0];
   logic [31:0]  high_addr = rvfi_mem_addr_word0highbyte;
-  return  is_mem_act && (low_addr[31:2] != high_addr[31:2]);
-endfunction : is_split_datatrans_f
+  return  is_mem_act_actual && (low_addr[31:2] != high_addr[31:2]);
+endfunction : is_split_datatrans_actual_f
 
-function automatic logic [4*NMEM-1:0] instr_mem_rmask_f();
+function automatic logic is_split_datatrans_intended_f();
+  logic [31:0]  low_addr  = rvfi_mem_addr[XLEN-1:0];
+  logic [31:0]  high_addr = rvfi_mem_addr_word0highbyte;
+  // TODO:ERROR:silabs-robin Create "instr_mem_addr" when decoder facilitates it
+  return  is_mem_act_intended && (low_addr[31:2] != high_addr[31:2]);
+endfunction : is_split_datatrans_intended_f
+
+// Shows "intended" version of rvfi_mem_wmask
+function automatic logic [4*NMEM-1:0] rvfi_mem_rmask_intended_f();
   logic [NMEM-1:0][3:0] rmask;
   logic [3:0] rlist;
   rlist = rvfi_insn[7:4];
@@ -825,7 +924,8 @@ function automatic logic [4*NMEM-1:0] instr_mem_rmask_f();
 endfunction
 
 
-function automatic logic [4*NMEM-1:0] instr_mem_wmask_f();
+// Shows "intended" version of rvfi_mem_wmask
+function automatic logic [4*NMEM-1:0] rvfi_mem_wmask_intended_f();
   logic [NMEM-1:0][3:0] wmask;
   logic [3:0] rlist;
   rlist = rvfi_insn[7:4];
@@ -912,7 +1012,45 @@ function automatic logic [4*NMEM-1:0] instr_mem_wmask_f();
   return mem_mask_t'(wmask);
 endfunction
 
-endinterface : uvma_rvfi_instr_if_t
+function automatic logic[31:0] get_max_exception_cause_f (
+  logic[31:0] exc_a,
+  logic[31:0] exc_b
+);
+  if (EXC_CAUSE_INSTR_ACC_FAULT inside {exc_a, exc_b}) begin
+      return EXC_CAUSE_INSTR_ACC_FAULT;
+  end else if (EXC_CAUSE_INSTR_INTEGRITY_FAULT inside {exc_a, exc_b}) begin
+      return EXC_CAUSE_INSTR_INTEGRITY_FAULT;
+  end else if (EXC_CAUSE_INSTR_BUS_FAULT inside {exc_a, exc_b}) begin
+      return EXC_CAUSE_INSTR_BUS_FAULT;
+  end else if (EXC_CAUSE_ILLEGAL_INSTR inside {exc_a, exc_b}) begin
+      return EXC_CAUSE_ILLEGAL_INSTR;
+  end else if (EXC_CAUSE_ENV_CALL_U inside {exc_a, exc_b}) begin
+      return EXC_CAUSE_ENV_CALL_U;
+  end else if (EXC_CAUSE_ENV_CALL_M inside {exc_a, exc_b}) begin
+      return EXC_CAUSE_ENV_CALL_M;
+  end else if (EXC_CAUSE_BREAKPOINT inside {exc_a, exc_b}) begin
+      return EXC_CAUSE_BREAKPOINT;
+  end else if (EXC_CAUSE_STORE_ACC_FAULT inside {exc_a, exc_b}) begin
+      return EXC_CAUSE_STORE_ACC_FAULT;
+  end else if (EXC_CAUSE_LOAD_ACC_FAULT inside {exc_a, exc_b}) begin
+      return EXC_CAUSE_LOAD_ACC_FAULT;
+  end else begin
+    `uvm_error(info_tag, "unhandled 'max' exception cause");
+    return '0;
+  end
+endfunction : get_max_exception_cause_f
 
+function automatic logic is_deprioritized_exception_f (logic[31:0] exc_cause);
+  return (
+    rvfi_valid  &&
+    rvfi_trap.exception  &&
+    (rvfi_trap.exception_cause != exc_cause)  &&
+    (rvfi_trap.exception_cause ==
+      get_max_exception_cause_f({26'd0, rvfi_trap.exception_cause}, exc_cause)
+    )
+  );
+endfunction
+
+endinterface : uvma_rvfi_instr_if_t
 
 `endif // __UVMA_RVFI_INSTR_IF_SV__
