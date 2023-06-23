@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
-//The assertions written in this file are denoted with a number.
-//You will find this number in the file vplan_coverage.txt,
-//and they describe what vplan tasks the assertions aim to cover.
 
 module uvmt_cv32e40s_triggers_assert_cov
   import uvm_pkg::*;
@@ -138,6 +136,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   localparam MAX_NUM_TRIGGERS = 5;
   localparam MAX_MEM_ACCESS = 13; //Push and pop can do 13 memory access. TODO: XIF, can potentially do more, so for XIF assertion a_dt_max_memory_transaction might fail.
   localparam MAX_MEM_ACCESS_PLUS_ONE = 53'b1_0000__0000_0000_0000_0000__0000_0000_0000_0000__0000_0000_0000_0000;
+
 
 
   /////////// Signals ///////////
@@ -828,11 +827,13 @@ module uvmt_cv32e40s_triggers_assert_cov
 
       valid_instr_in_mmode
       && !rvfi_if.rvfi_dbg_mode
-      && rvfi_if.csr_addr != ADDR_TSELECT //This make sure we dont write other trigger specifications to the tdata registers
-
       |->
-      !tdata1_if.rvfi_csr_wmask
-      && !tdata2_if.rvfi_csr_wmask
+      (!tdata1_if.rvfi_csr_wmask
+      && !tdata2_if.rvfi_csr_wmask)
+
+      // A write to tselect will make the core display new tdata values, and consequently write the tdata csrs.
+      || rvfi_if.is_csr_write(ADDR_TSELECT)
+
     ) else `uvm_error(info_tag, "The t-CSRs are written in machine mode (not debug mode), and the write changes the CSRs values.\n");
 
     c_dt_write_tdata1_in_mmode: cover property (

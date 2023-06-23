@@ -377,10 +377,10 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    // Indicates that a new obi data req arrives after an exception is triggered.
    // Used to verify exception timing with multiop instruction
    logic req_after_exception;
-   logic [CORE_PARAM_DBG_NUM_TRIGGERS-1:0] trigger_match_mem;
-   logic [CORE_PARAM_DBG_NUM_TRIGGERS-1:0] trigger_match_execute;
-   logic [CORE_PARAM_DBG_NUM_TRIGGERS-1:0] trigger_match_exception;
-   logic [CORE_PARAM_DBG_NUM_TRIGGERS-1:0] is_trigger_match;
+   logic [CORE_PARAM_DBG_NUM_TRIGGERS:0] trigger_match_mem;
+   logic [CORE_PARAM_DBG_NUM_TRIGGERS:0] trigger_match_execute;
+   logic [CORE_PARAM_DBG_NUM_TRIGGERS:0] trigger_match_exception;
+   logic [CORE_PARAM_DBG_NUM_TRIGGERS:0] is_trigger_match;
 
 
    // support logic signals for the obi bus protocol:

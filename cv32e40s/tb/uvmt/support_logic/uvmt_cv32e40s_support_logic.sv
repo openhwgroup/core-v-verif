@@ -41,25 +41,6 @@ module uvmt_cv32e40s_support_logic
   // ---------------------------------------------------------------------------
 
 
-  localparam TDATA1_RESET = 32'h2800_1000;
-  localparam TDATA1_ET_M_MODE = 9;
-  localparam TDATA1_ET_U_MODE = 6;
-  localparam TDATA1_LSB_TYPE = 28;
-  localparam TDATA1_MSB_TYPE = 31;
-  localparam TDATA1_LOAD = 0;
-  localparam TDATA1_STORE = 1;
-  localparam TDATA1_EXECUTE = 2;
-  localparam TDATA1_M2_M6_U_MODE = 3;
-  localparam TDATA1_M2_M6_M_MODE = 6;
-  localparam TDATA1_LSB_MATCH = 7;
-  localparam TDATA1_MSB_MATCH = 10;
-  localparam TDATA1_MATCH_WHEN_EQUAL = 0;
-  localparam TDATA1_MATCH_WHEN_GREATER_OR_EQUAL = 2;
-  localparam TDATA1_MATCH_WHEN_LESSER = 3;
-
-  localparam MAX_MEM_ACCESS = 13; //Push and pop can do 13 memory access. XIF can potentially do more (TODO (xif): check this when merging to cv32e40x)
-
-
   // ---------------------------------------------------------------------------
   // Local variables
   // ---------------------------------------------------------------------------
@@ -79,14 +60,6 @@ module uvmt_cv32e40s_support_logic
   logic fetch_enable_q;
   // counter for keeping track of the number of rvfi_valids that have passed since the last observed debug_req
   int   req_vs_valid_cnt;
-
-  // signals to keep track of the conditions for triggering.
-  logic [CORE_PARAM_DBG_NUM_TRIGGERS-1:0] system_conditions;
-  logic [CORE_PARAM_DBG_NUM_TRIGGERS-1:0] csr_conditions_m2_m6;
-  logic [CORE_PARAM_DBG_NUM_TRIGGERS-1:0] csr_conditions_etrigger;
-
-  // keep track of what obi memory transactions that seems to trigger
-  logic [MAX_MEM_ACCESS:0][CORE_PARAM_DBG_NUM_TRIGGERS-1:0] trigger_match_mem_op;
 
 
   // ---------------------------------------------------------------------------
@@ -182,123 +155,32 @@ module uvmt_cv32e40s_support_logic
       end
   end
 
+if (CORE_PARAM_DBG_NUM_TRIGGERS == 0) begin
+  assign trigger_match_mem = '0;
+  assign trigger_match_execute = '0;
+  assign trigger_match_exception = '0;
+  assign is_trigger_match = '0;
 
-  //Support logic for debug triggers:
+end else begin
 
-generate
-
-assign system_conditions = rvfi.rvfi_valid && !rvfi.rvfi_dbg_mode;
-
-  for (genvar t = 0; t < CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
-
-    assign csr_conditions_m2_m6[t] =
-      (in_support_if.tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 2 ||
-      in_support_if.tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 6) &&
-      ((rvfi.is_mmode && in_support_if.tdata1_array[t][TDATA1_M2_M6_M_MODE]) ||
-      (rvfi.is_umode && in_support_if.tdata1_array[t][TDATA1_M2_M6_U_MODE]));
-
-
-    assign csr_conditions_etrigger[t] =
-      (in_support_if.tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 5) &&
-      ((rvfi.is_mmode && in_support_if.tdata1_array[t][TDATA1_ET_M_MODE]) ||
-      (rvfi.is_umode && in_support_if.tdata1_array[t][TDATA1_ET_U_MODE]));
-
-
-      // Trigger match instruction:
-    assign out_support_if.trigger_match_execute[t] = csr_conditions_m2_m6[t]
-      && in_support_if.tdata1_array[t][TDATA1_EXECUTE]
-      && system_conditions
-      && rvfi.rvfi_trap.exception_cause != 6'h18
-      && rvfi.rvfi_trap.exception_cause != 6'h19
-      && rvfi.rvfi_trap.exception_cause != 6'h1
-      && (((rvfi.rvfi_pc_rdata == in_support_if.tdata2_array[t]) && in_support_if.tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL)
-      || ((rvfi.rvfi_pc_rdata >= in_support_if.tdata2_array[t]) && in_support_if.tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL)
-      || ((rvfi.rvfi_pc_rdata < in_support_if.tdata2_array[t]) && in_support_if.tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER));
-
-    // Trigger match exception:
-    assign out_support_if.trigger_match_exception[t] = system_conditions
-      && !out_support_if.trigger_match_execute
-      && csr_conditions_etrigger[t]
-      && rvfi.rvfi_trap.exception
-      && in_support_if.tdata2_array[t][rvfi.rvfi_trap.exception_cause];
-
-  end
-endgenerate
-
-
-// Trigger match load and store:
-
-  generate
-    for (genvar mem_op = 0; mem_op < 13; mem_op++) begin : trigger_match_memory_operation
-  uvmt_cv32e40s_sl_trigger_match_mem
-  #(
-    .mem_op (mem_op)
-  )
-  sl_trigger_match_mem
+  uvmt_cv32e40s_sl_trigger_match
+  sl_trigger_match
   (
     .clk_i (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
-    .csr_conditions_m2_m6 (csr_conditions_m2_m6),
-    .tdata1_array (in_support_if.tdata1_array),
-    .tdata2_array (in_support_if.tdata2_array),
-    .trigger_match_execute (out_support_if.trigger_match_execute),
-    .trigger_match_mem (trigger_match_mem_op[mem_op])
+    .trigger_match_mem (out_support_if.trigger_match_mem[CORE_PARAM_DBG_NUM_TRIGGERS-1:0]),
+    .trigger_match_execute (out_support_if.trigger_match_execute[CORE_PARAM_DBG_NUM_TRIGGERS-1:0]),
+    .trigger_match_exception (out_support_if.trigger_match_exception[CORE_PARAM_DBG_NUM_TRIGGERS-1:0]),
+    .is_trigger_match (out_support_if.is_trigger_match[CORE_PARAM_DBG_NUM_TRIGGERS-1:0])
   );
-    end : trigger_match_memory_operation
-  endgenerate
 
-logic execute_exception_trigger_match;
-assign execute_exception_trigger_match = (|out_support_if.trigger_match_execute) || (|out_support_if.trigger_match_exception);
+  assign out_support_if.trigger_match_mem[CORE_PARAM_DBG_NUM_TRIGGERS] = 1'b0;
+  assign out_support_if.trigger_match_execute[CORE_PARAM_DBG_NUM_TRIGGERS] = 1'b0;
+  assign out_support_if.trigger_match_exception[CORE_PARAM_DBG_NUM_TRIGGERS] = 1'b0;
+  assign out_support_if.is_trigger_match[CORE_PARAM_DBG_NUM_TRIGGERS] = 1'b0;
 
-//always @ (posedge in_support_if.clk, negedge in_support_if.rst_n) begin
-always_comb begin
-  if (trigger_match_mem_op[0] && !execute_exception_trigger_match) begin
-    out_support_if.trigger_match_mem = trigger_match_mem_op[0];
-
-  end else if (trigger_match_mem_op[1] && !execute_exception_trigger_match) begin
-    out_support_if.trigger_match_mem = trigger_match_mem_op[1];
-
-  end else if (trigger_match_mem_op[2] && !execute_exception_trigger_match) begin
-    out_support_if.trigger_match_mem = trigger_match_mem_op[2];
-
-  end else if (trigger_match_mem_op[3] && !execute_exception_trigger_match) begin
-    out_support_if.trigger_match_mem = trigger_match_mem_op[3];
-
-  end else if (trigger_match_mem_op[4] && !execute_exception_trigger_match) begin
-    out_support_if.trigger_match_mem = trigger_match_mem_op[4];
-
-  end else if (trigger_match_mem_op[5] && !execute_exception_trigger_match) begin
-    out_support_if.trigger_match_mem = trigger_match_mem_op[5];
-
-  end else if (trigger_match_mem_op[6] && !execute_exception_trigger_match) begin
-    out_support_if.trigger_match_mem = trigger_match_mem_op[6];
-
-  end else if (trigger_match_mem_op[7] && !execute_exception_trigger_match) begin
-    out_support_if.trigger_match_mem = trigger_match_mem_op[7];
-
-  end else if (trigger_match_mem_op[8] && !execute_exception_trigger_match) begin
-    out_support_if.trigger_match_mem = trigger_match_mem_op[8];
-
-  end else if (trigger_match_mem_op[9] && !execute_exception_trigger_match) begin
-    out_support_if.trigger_match_mem = trigger_match_mem_op[9];
-
-  end else if (trigger_match_mem_op[10] && !execute_exception_trigger_match) begin
-    out_support_if.trigger_match_mem = trigger_match_mem_op[10];
-
-  end else if (trigger_match_mem_op[11] && !execute_exception_trigger_match) begin
-    out_support_if.trigger_match_mem = trigger_match_mem_op[11];
-
-  end else if (trigger_match_mem_op[12] && !execute_exception_trigger_match) begin
-    out_support_if.trigger_match_mem = trigger_match_mem_op[12];
-
-  end else begin
-    out_support_if.trigger_match_mem = '0;
-  end
 end
 
-
-
-assign out_support_if.is_trigger_match = out_support_if.trigger_match_mem | out_support_if.trigger_match_execute | out_support_if.trigger_match_exception;
 
 
   // Count "irq_ack"

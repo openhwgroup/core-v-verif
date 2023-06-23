@@ -1331,9 +1331,6 @@ module uvmt_cv32e40s_tb;
     logic [31:0] tdata1_array[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS+1];
     logic [31:0] tdata2_array[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS+1];
 
-    logic [31:0] tdata_array_0[1];
-    assign tdata_array_0[0] = '0;
-
     if (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS > 0) begin
       for (genvar t = 0; t < uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
         assign tdata1_array[t] = dut_wrap.cv32e40s_wrapper_i.core_i.cs_registers_i.debug_triggers_i.gen_triggers.tdata1_rdata[t];
@@ -1343,8 +1340,8 @@ module uvmt_cv32e40s_tb;
       assign tdata2_array[uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS] = '0;
 
     end else begin
-      assign tdata1_array = tdata_array_0;
-      assign tdata2_array = tdata_array_0;
+      assign tdata1_array = {'0};
+      assign tdata2_array = {'0};
     end
 
 
@@ -1614,18 +1611,19 @@ module uvmt_cv32e40s_tb;
                                                                     );
 
     bind cv32e40s_wrapper uvmt_cv32e40s_triggers_assert_cov debug_trigger_assert_i(
-                                                                    .tdata1_array (uvmt_cv32e40s_tb.tdata1_array),
-                                                                    .priv_lvl (core_i.priv_lvl),
-                                                                    .rvfi_if (rvfi_instr_if),
-                                                                    .clknrst_if (dut_wrap.clknrst_if),
-                                                                    .support_if (support_logic_module_o_if.slave_mp),
-                                                                    .tdata1_if (rvfi_csr_tdata1_if),
-                                                                    .tdata2_if (rvfi_csr_tdata2_if),
-                                                                    .tinfo_if (rvfi_csr_tinfo_if),
-                                                                    .tselect_if (rvfi_csr_tselect_if),
-                                                                    .dcsr_if (rvfi_csr_dcsr_if),
-                                                                    .dpc_if (rvfi_csr_dpc_if)
-                                                                    );
+      .tdata1_array (uvmt_cv32e40s_tb.tdata1_array),
+      .priv_lvl (core_i.priv_lvl),
+      .rvfi_if (rvfi_instr_if),
+      .clknrst_if (dut_wrap.clknrst_if),
+      .support_if (support_logic_module_o_if.slave_mp),
+      .tdata1_if (rvfi_csr_tdata1_if),
+      .tdata2_if (rvfi_csr_tdata2_if),
+      .tinfo_if (rvfi_csr_tinfo_if),
+      .tselect_if (rvfi_csr_tselect_if),
+      .dcsr_if (rvfi_csr_dcsr_if),
+      .dpc_if (rvfi_csr_dpc_if)
+    );
+
 
     bind cv32e40s_wrapper uvmt_cv32e40s_zc_assert u_zc_assert(.rvfi(rvfi_instr_if),
                                                               .support_if(support_logic_module_o_if.slave_mp)

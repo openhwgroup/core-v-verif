@@ -13,20 +13,15 @@
 // limitations under the License.
 //
 
-//The assertions written in this file are denoted with a number.
-//You will find this number in the file vplan_coverage.txt,
-//and they describe what vplan tasks the assertions aim to cover.
-
 
 module uvmt_cv32e40s_sl_trigger_match_mem
   import uvmt_cv32e40s_base_test_pkg::*;
   #(
-    parameter int mem_op = 0
+    parameter int MEMORY_OPERATION_NR = 0
   )
   (
     input logic clk_i,
     input logic rst_ni,
-    //input logic[3:0] mem_op,
     input logic [CORE_PARAM_DBG_NUM_TRIGGERS-1:0] csr_conditions_m2_m6,
     input logic [31:0] tdata1_array[CORE_PARAM_DBG_NUM_TRIGGERS+1],
     input logic [31:0] tdata2_array[CORE_PARAM_DBG_NUM_TRIGGERS+1],
@@ -53,7 +48,7 @@ module uvmt_cv32e40s_sl_trigger_match_mem
     for (genvar b = 0; b < 4; b++) begin
 
       // Calculate the address of each byte
-      assign byte_addr[b] = rvfi.rvfi_mem_addr[(mem_op+1)*32-1:(mem_op)*32] + b;
+      assign byte_addr[b] = rvfi.rvfi_mem_addr[MEMORY_OPERATION_NR*32 +: 32] + b;
 
       // Check if the bytes trigger
       for (genvar t = 0; t < CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
@@ -61,8 +56,8 @@ module uvmt_cv32e40s_sl_trigger_match_mem
           !rvfi.rvfi_trap.exception &&
           !trigger_match_execute &&
           csr_conditions_m2_m6[t] &&
-          ((tdata1_array[t][TDATA1_LOAD] && rvfi.instr_mem_rmask[mem_op*4+b]) ||
-          (tdata1_array[t][TDATA1_STORE] && rvfi.instr_mem_wmask[mem_op*4+b])) &&
+          ((tdata1_array[t][TDATA1_LOAD] && rvfi.instr_mem_rmask[MEMORY_OPERATION_NR*4+b]) ||
+          (tdata1_array[t][TDATA1_STORE] && rvfi.instr_mem_wmask[MEMORY_OPERATION_NR*4+b])) &&
           (((byte_addr[b] == tdata2_array[t]) && tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL) ||
           ((byte_addr[b] >= tdata2_array[t]) && tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL) ||
           ((byte_addr[b] < tdata2_array[t]) && tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER));
