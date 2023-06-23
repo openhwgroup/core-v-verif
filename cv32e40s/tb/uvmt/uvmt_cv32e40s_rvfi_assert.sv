@@ -16,6 +16,15 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
 
+// Description:
+//   Sanity-checking behavior of "rvfi" and "rvfi_instr_if" helper logic.
+//   (Note: This does not replace the original "riscv_formal" assertions.)
+//
+// Rationale:
+//   We use these interfaces a lot to verify other features.
+//   But we need to know that these interfaces themselves can be trusted.
+
+
 `default_nettype  none
 
 
@@ -78,7 +87,7 @@ module uvmt_cv32e40s_rvfi_assert
     (rvfi_valid [->1])  ##0
     addr
     |->
-    (rdata == 0);  // TODO:ropeders use "RF_REG_RV"
+    (rdata == 0);  // TODO:silabs-robin use "RF_REG_RV"
   endproperty : p_rs_resetvalue
 
   a_rs1_resetvalue: assert property (
@@ -184,6 +193,17 @@ module uvmt_cv32e40s_rvfi_assert
   ) else `uvm_error(info_tag, "rvfi_intr.interrupt over-reported");
 
 
+  // Confirm that the counter is right.
+
+  cov_cycle_cnt_1: cover property (
+    rvfi_if.cycle_cnt == 1
+  );
+
+  cov_cycle_cnt_2: cover property (
+    rvfi_if.cycle_cnt ==2
+  );
+
+
   // Exceptions/Interrupts/Debugs have a cause
 
   a_exceptions_cause: assert property (
@@ -237,13 +257,13 @@ module uvmt_cv32e40s_rvfi_assert
   ) else `uvm_error(info_tag, "ambiguous handler cause");
 
 
-  // Mem accesses reflect actual bus
+  // Num mem accesses reflect actual bus
 
-  var logic [31:0] writebuf_req_count_c;
   var logic [31:0] rvfi_mem_count_c;
-  var logic [31:0] writebuf_req_count_n;
   var logic [31:0] rvfi_mem_count_n;
   var logic [31:0] rvfi_mem_new;
+  var logic [31:0] writebuf_req_count_c;
+  var logic [31:0] writebuf_req_count_n;
 
   a_obi_vs_rvfi: assert property (
     writebuf_req_count_c >= rvfi_mem_count_c
@@ -277,6 +297,54 @@ module uvmt_cv32e40s_rvfi_assert
     end
     rvfi_mem_count_n = rvfi_mem_count_c + rvfi_mem_new;
   end
+
+
+  // Load Instructions
+
+  a_isloadinstr_required: assert property (
+    rvfi_if.rvfi_valid  &&
+    rvfi_if.rvfi_mem_rmask
+    |->
+    rvfi_if.is_load_instr
+  ) else `uvm_error(info_tag, "rmask comes from loads");
+
+  a_isloadinstr_demands: assert property (
+    rvfi_if.is_load_instr  &&
+    !rvfi_if.rvfi_trap
+    |->
+    rvfi_if.rvfi_mem_rmask
+  ) else `uvm_error(info_tag, "successful loads have rmask");
+
+  a_isloadinstr_exception: assert property (
+    rvfi_if.rvfi_valid
+    |->
+    rvfi_if.is_load_instr  ||
+    !rvfi_if.is_load_acc_fault
+  ) else `uvm_error(info_tag, "!load->!exce, exce->load");
+
+
+  // Store Instructions
+
+  a_isstoreinstr_required: assert property (
+    rvfi_if.rvfi_valid  &&
+    rvfi_if.rvfi_mem_wmask
+    |->
+    rvfi_if.is_store_instr
+  ) else `uvm_error(info_tag, "wmask comes from stores");
+
+  a_isstoreinstrs_demands: assert property (
+    rvfi_if.is_store_instr  &&
+    !rvfi_if.rvfi_trap
+    |->
+    rvfi_if.rvfi_mem_wmask
+  ) else `uvm_error(info_tag, "successful stores have wmask");
+
+  a_isstoreinstr_exception: assert property (
+    rvfi_if.rvfi_valid
+    |->
+    rvfi_if.is_store_instr  ||
+    !rvfi_if.is_store_acc_fault
+  ) else `uvm_error(info_tag, "!store->!exce, exce->store");
 
 
 endmodule : uvmt_cv32e40s_rvfi_assert

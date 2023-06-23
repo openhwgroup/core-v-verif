@@ -166,8 +166,83 @@
     SRA,
     OR,
     AND,
+    //Zba
+    SH1ADD,
+    SH2ADD,
+    SH3ADD,
+    //Zbb
+    MIN,
+    MINU,
+    MAX,
+    MAXU,
+    CPOP,
+    CTZ,
+    ORCB,
+    ORN,
+    CLZ,
+    ANDN,
+    ROL,
+    ROR,
+    RORI,
+    XNOR,
+    REV8,
+    SEXTB,
+    SEXTH,
+    ZEXTH,
+    //Zbc
+    CLMUL,
+    CLMULH,
+    CLMULR,
+    //Zbs
+    BCLR,
+    BCLRI,
+    BEXT,
+    BEXTI,
+    BINV,
+    BINVI,
+    BSET,
+    BSETI,
+    //M
+    MUL,
+    MULH,
+    MULHSU,
+    MULHU,
+    DIV,
+    DIVU,
+    REM,
+    REMU,
     // Compressed
-    CEBREAK,
+    //Zca
+    C_EBREAK,
+    C_LWSP,
+    C_FLWSP, //QUESTION: Not included in Zca?
+    C_FLDSP, //QUESTION: Not included in Zca?
+    C_SWSP,
+    C_FSWSP,
+    C_FSDSP,
+    //Zcb
+    C_LBU,
+    C_LHU,
+    C_LH,
+    C_SB,
+    C_SH,
+    C_ZEXTB,
+    C_SEXTB,
+    C_ZEXTH,
+    C_SEXTH,
+    C_NOT,
+    C_MUL,
+    //Zcmp
+    CM_PUSH,
+    CM_POP,
+    CM_POPRET,
+    CM_POPRETZ,
+    CM_MVA01S,
+    CM_MVSA01,
+    //Zcmt
+    CM_JT,
+    CM_JALT,
+
     // Pseudo name, class of instructions
     STORE_INSTR,
     LOAD_INSTR,
@@ -294,10 +369,13 @@
     BRANCH = 7'b110_0011, JALR_OP  = 7'b110_0111, RES_0 = 7'b110_1011, JAL_OP   = 7'b110_1111, SYSTEM = 7'b111_0011, RES_2    = 7'b111_0111,CUS_3     = 7'b111_1011
   } major_opcode_e;
 
+
   // TODO opcode map for rv32c - problem here is that it is multi-field dependent.
   typedef enum logic [1:0] {
     C0 = 2'b00, C1 = 2'b01, C2 = 2'b10, C3 = 2'b11 /* C3 does not exist, is uncompressed */
   } compressed_major_opcode_e;
+
+
 
   // Minor opcodes
   typedef enum logic [2:0] {
@@ -354,6 +432,73 @@
     FUNCT3_AND     = 3'b111
   } op_minor_opcode_e;
 
+
+  // Minor opcodes for Zba
+  typedef enum logic [2:0] {
+    FUNCT3_SH2ADD = 3'b100,
+    FUNCT3_SH3ADD = 3'b110,
+    FUNCT3_SH1ADD = 3'b010
+  } zba_minor_opcode_e;
+
+  // Minor opcodes for Zbb
+  // Minor opcodes for min and max instructions
+  typedef enum logic [2:0] {
+    FUNCT3_MIN   = 3'b100,
+    FUNCT3_MINU  = 3'b101,
+    FUNCT3_MAX   = 3'b110,
+    FUNCT3_MAXU  = 3'b111
+  } zbb_min_max_minor_opcode_e;
+
+  // Minor opcodes for logical operators and sign extend (FUNCT3_SEXT)
+  typedef enum logic [2:0] {
+    FUNCT3_XNOR = 3'b100,
+    FUNCT3_ORCB = 3'b101,
+    FUNCT3_ORN  = 3'b110,
+    FUNCT3_ANDN = 3'b111,
+    FUNCT3_SEXT = 3'b001
+  } zbb_logical_minor_opcode_e;
+
+  // Minor opcodes for rotate instructions
+  typedef enum logic [2:0] {
+    FUNCT3_ROR_RORI = 3'b101,
+    FUNCT3_ROL      = 3'b001
+  } zbb_rotate_minor_opcode_e;
+
+  // Minor opcodes for byte reverse register (FUNCT3_REV8), count instructions (FUNCT3_C)
+  // and zero extend halfword instruction (FUNCT3_ZEXTH).
+  // FUNCT3_C is correct for all count isntructions.
+  typedef enum logic [2:0] {
+    FUNCT3_REV8  = 3'b101,
+    FUNCT3_C     = 3'b001,
+    FUNCT3_ZEXTH = 3'b100
+  } zbb_rev8_c_zexth_minor_opcode_e;
+
+  // Minor opcodes for Zbc
+  typedef enum logic [2:0] {
+    FUNCT3_CLMUL  = 3'b001,
+    FUNCT3_CLMULR = 3'b010,
+    FUNCT3_CLMULH = 3'b011
+  } zbc_minor_opcode_e;
+
+  // Minor opcodes for Zbs
+  // FUNCT3_B_BI corresponds to all single-Bit instructions other than BEXT and BEXTI.
+  typedef enum logic [2:0] {
+    FUNCT3_BEXT_BEXTI = 3'b101,
+    FUNCT3_B_BI       = 3'b001
+  } zbs_single_bit_minor_opcode_e;
+
+  // Minor opcodes for multiplication and division, "M".
+  typedef enum logic [2:0] {
+    FUNCT3_MUL    = 3'b000,
+    FUNCT3_MULH   = 3'b001,
+    FUNCT3_MULHSU = 3'b010,
+    FUNCT3_MULHU  = 3'b011,
+    FUNCT3_DIV    = 3'b100,
+    FUNCT3_DIVU   = 3'b101,
+    FUNCT3_REM    = 3'b110,
+    FUNCT3_REMU   = 3'b111
+  } m_minor_opcode_e;
+
   // U type
   typedef struct packed {
     logic [31:12]  imm;
@@ -365,6 +510,7 @@
     logic [31:12] imm;
     gpr_t         rd;
   } j_type_t;
+
 
   typedef struct packed {
     logic [31:25] funct7;
@@ -603,6 +749,14 @@
     U_TYPE,
     // Compressed formats
     CR_TYPE,
+    CI_TYPE,
+    CSS_TYPE,
+    CIW_TYPE,
+    CL_TYPE,
+    CS_TYPE,
+    CA_TYPE,
+    CB_TYPE,
+    CJ_TYPE,
     // Others
     UNKNOWN_FORMAT
   } instr_format_e;
@@ -622,20 +776,6 @@
     // rlist_operand_t rlist; // TODO: structure to handle rlist fields for Zcmp-instructions
   } asm_t;
 
-  // TODO: Fix - incorrect
-  //function logic [11:0] get_cj_offset(compressed_instr_t instr);
-  //  get_cj_offset = {
-  //    instr.format.cj.imm[11+1],
-  //    instr.format.cj.imm[4+1],
-  //    instr.format.cj.imm[9+1:8+1],
-  //    instr.format.cj.imm[10+1],
-  //    instr.format.cj.imm[6+1],
-  //    instr.format.cj.imm[7+1],
-  //    instr.format.cj.imm[3+1:1+1],
-  //    instr.format.cj.imm[5+1],
-  //    1'b0
-  //  };
-  //endfunction : get_cj_offset
 
   // ---------------------------------------------------------------------------
   // Non-trivial immediate decoder
@@ -702,6 +842,13 @@
           asm.rd.valid    = 1;
           asm.imm.valid   = 1;
           asm.csr.valid   = 1;
+        end else if (asm.instr inside { RORI, BEXTI, BCLRI, BINVI, BSETI, SLLI, SRLI, SRAI }) begin
+          asm.rd.gpr      = instr.uncompressed.format.i.rd.gpr;
+          asm.rs1.gpr     = instr.uncompressed.format.i.rs1.gpr;
+          asm.imm.imm     = instr.uncompressed.format.i.imm.shamt;
+          asm.rd.valid    = 1;
+          asm.rs1.valid   = 1;
+          asm.imm.valid   = 1;
         end else begin
           asm.rd.gpr      = instr.uncompressed.format.i.rd.gpr;
           asm.rs1.gpr     = instr.uncompressed.format.i.rs1.gpr;
@@ -716,15 +863,12 @@
         asm.rd.gpr      = instr.uncompressed.format.j.rd.gpr;
         asm.imm.imm     = get_j_imm(instr);
         asm.rd.valid    = 1;
-        asm.rs1.valid   = 0;
-        asm.rs2.valid   = 0;
         asm.imm.valid   = 1;
       end
       S_TYPE: begin
         asm.rs1.gpr     = instr.uncompressed.format.s.rs1.gpr;
         asm.rs2.gpr     = instr.uncompressed.format.s.rs2.gpr;
         asm.imm.imm     = get_s_imm(instr);
-        asm.rd.valid    = 0;
         asm.rs1.valid   = 1;
         asm.rs2.valid   = 1;
         asm.imm.valid   = 1;
@@ -736,7 +880,6 @@
         asm.rd.valid    = 1;
         asm.rs1.valid   = 1;
         asm.rs2.valid   = 1;
-        asm.imm.valid   = 0;
       end
       R4_TYPE: begin
         asm.rd.gpr      = instr.uncompressed.format.r4.rd.gpr;
@@ -747,30 +890,24 @@
         asm.rs1.valid   = 1;
         asm.rs2.valid   = 1;
         asm.rs3.valid   = 1;
-        asm.imm.valid   = 0;
       end
       B_TYPE: begin
         asm.rs1.gpr     = instr.uncompressed.format.b.rs1.gpr;
         asm.rs2.gpr     = instr.uncompressed.format.b.rs2.gpr;
         asm.imm.imm     = get_b_imm(instr);
-        asm.rd.valid    = 0;
         asm.rs1.valid   = 1;
         asm.rs2.valid   = 1;
-        asm.rs3.valid   = 0;
         asm.imm.valid   = 1;
       end
       U_TYPE: begin
         asm.rd.gpr      = instr.uncompressed.format.u.rd.gpr;
         asm.imm.imm     = { instr.uncompressed.format.u.imm, 12'b0000_0000_0000 };
         asm.rd.valid    = 1;
-        asm.rs1.valid   = 0;
-        asm.rs2.valid   = 0;
-        asm.rs3.valid   = 0;
         asm.imm.valid   = 1;
       end
       // TODO: Expand with compressed
       CR_TYPE: begin
-        if (name inside { CEBREAK }) begin
+        if (name inside { C_EBREAK }) begin
           asm.rd.valid  = 0;
           asm.rs1.valid = 0;
           asm.rs2.valid = 0;
@@ -778,6 +915,33 @@
           asm.imm.valid = 0;
         end
       end
+
+      //TODO:
+      // CI_TYPE: begin
+
+      // end
+      // CSS_TYPE: begin
+
+      // end
+      // CIW_TYPE: begin
+
+      // end
+      // CL_TYPE: begin
+
+      // end
+      // CS_TYPE: begin
+
+      // end
+      // CA_TYPE: begin
+
+      // end
+      // CB_TYPE: begin
+
+      // end
+      // CJ_TYPE: begin
+
+      // end
+
       default : ;
     endcase
 
@@ -1012,12 +1176,222 @@
        && (instr.uncompressed.format.b.funct3     == FUNCT3_BGEU)) :
         asm = build_asm(BGEU, B_TYPE, instr);
 
+      //Zba
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_SH1ADD)
+       && (instr.uncompressed.format.r.funct7     == 7'b001_0000)) :
+        asm = build_asm(SH1ADD, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_SH2ADD)
+       && (instr.uncompressed.format.r.funct7     == 7'b001_0000)) :
+        asm = build_asm(SH2ADD, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_SH3ADD)
+       && (instr.uncompressed.format.r.funct7     == 7'b001_0000)) :
+        asm = build_asm(SH3ADD, R_TYPE, instr);
+
+      //Zbb
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_MIN)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0101)) :
+        asm = build_asm(MIN, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_MINU)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0101)) :
+        asm = build_asm(MINU, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_MAX)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0101)) :
+        asm = build_asm(MAX, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_MAXU)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0101)) :
+        asm = build_asm(MAXU, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP_IMM)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_C)
+       && (instr.uncompressed.format.i.imm        == 12'b0110_0000_0010)) :
+        asm = build_asm(CPOP, I_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP_IMM)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_C)
+       && (instr.uncompressed.format.i.imm        == 12'b0110_0000_0001)) :
+        asm = build_asm(CTZ, I_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP_IMM)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_ORCB)
+       && (instr.uncompressed.format.i.imm        == 12'b0010_1000_0111)) :
+        asm = build_asm(ORCB, I_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_ORN)
+       && (instr.uncompressed.format.r.funct7     == 7'b010_0000)) :
+        asm = build_asm(ORN, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP_IMM)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_C)
+       && (instr.uncompressed.format.i.imm        == 12'b0110_0000_0000)) :
+        asm = build_asm(CLZ, I_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_ANDN)
+       && (instr.uncompressed.format.r.funct7     == 7'b010_0000)) :
+        asm = build_asm(ANDN, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_ROL)
+       && (instr.uncompressed.format.r.funct7     == 7'b011_0000)) :
+        asm = build_asm(ROL, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_ROR_RORI)
+       && (instr.uncompressed.format.r.funct7     == 7'b011_0000)) :
+        asm = build_asm(ROR, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP_IMM)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_ROR_RORI)
+       && (instr.uncompressed.format.i.imm.funct7 == 7'b011_0000)) :
+        asm = build_asm(RORI, I_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_XNOR)
+       && (instr.uncompressed.format.r.funct7     == 7'b010_0000)) :
+        asm = build_asm(XNOR, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP_IMM)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_REV8)
+       && (instr.uncompressed.format.i.imm        == 12'b0110_1001_1000)) :
+        asm = build_asm(REV8, I_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP_IMM)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_SEXT)
+       && (instr.uncompressed.format.i.imm        == 12'b0110_0000_0100)) :
+        asm = build_asm(SEXTB, I_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP_IMM)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_SEXT)
+       && (instr.uncompressed.format.i.imm        == 12'b0110_0000_0101)) :
+        asm = build_asm(SEXTH, I_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_ZEXTH)
+       && (instr.uncompressed.format.i.imm        == 12'b0000_1000_0000)) :
+        asm = build_asm(ZEXTH, I_TYPE, instr);
+
+      //Zbc
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_CLMUL)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0101)) :
+        asm = build_asm(CLMUL, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_CLMULH)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0101)) :
+        asm = build_asm(CLMULH, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_CLMULR)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0101)) :
+        asm = build_asm(CLMULR, R_TYPE, instr);
+
+      //Zbs
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_BEXT_BEXTI)
+       && (instr.uncompressed.format.r.funct7     == 7'b010_0100)) :
+        asm = build_asm(BEXT, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP_IMM)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_BEXT_BEXTI)
+       && (instr.uncompressed.format.i.imm.funct7 == 7'b010_0100)) :
+        asm = build_asm(BEXTI, I_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_B_BI)
+       && (instr.uncompressed.format.r.funct7     == 7'b010_0100)) :
+        asm = build_asm(BCLR, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP_IMM)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_B_BI)
+       && (instr.uncompressed.format.i.imm.funct7 == 7'b010_0100)) :
+        asm = build_asm(BCLRI, I_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_B_BI)
+       && (instr.uncompressed.format.r.funct7     == 7'b011_0100)) :
+        asm = build_asm(BINV, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP_IMM)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_B_BI)
+       && (instr.uncompressed.format.i.imm.funct7 == 7'b011_0100)) :
+        asm = build_asm(BINVI, I_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_B_BI)
+       && (instr.uncompressed.format.r.funct7     == 7'b001_0100)) :
+        asm = build_asm(BSET, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP_IMM)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_B_BI)
+       && (instr.uncompressed.format.i.imm.funct7 == 7'b001_0100)) :
+        asm = build_asm(BSETI, I_TYPE, instr);
+
+      //M
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_MUL)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0001)) :
+        asm = build_asm(MUL, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_MULH)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0001)) :
+        asm = build_asm(MULH, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_MULHSU)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0001)) :
+        asm = build_asm(MULHSU, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_MULHU)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0001)) :
+        asm = build_asm(MULHU, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_DIV)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0001)) :
+        asm = build_asm(DIV, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_DIVU)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0001)) :
+        asm = build_asm(DIVU, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_REM)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0001)) :
+        asm = build_asm(REM, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode              == OP)
+       && (instr.uncompressed.format.r.funct3     == FUNCT3_REMU)
+       && (instr.uncompressed.format.r.funct7     == 7'b000_0001)) :
+        asm = build_asm(REMU, R_TYPE, instr);
+
       // Compressed
+      // Zca
       (   (instr.compressed.opcode                == 2'b10)
        && (instr.compressed.format.cr.rd_rs1.gpr  == X0)
        && (instr.compressed.format.cr.rs2.gpr     == X0)
        && (instr.compressed.format.cr.funct4      == 4'b1001)) :
-        asm = build_asm(CEBREAK, CR_TYPE, instr);
+        asm = build_asm(C_EBREAK, CR_TYPE, instr);
+
+      //Zcb
+      //Zcmp
+      //Zcmt
 
       default: asm = build_asm(UNKNOWN_INSTR, UNKNOWN_FORMAT, instr_t'(32'h0));
     endcase
@@ -1411,6 +1785,16 @@
   );
     return  match_instr_raw_f(instr, INSTR_OPCODE_TABLEJUMP, INSTR_MASK_TABLEJUMP);
   endfunction : is_tablejump_raw_f
+
+  function automatic logic[31:0] get_jvt_addr_f(
+    logic [DEFAULT_XLEN-1:0] instr,
+    logic [31:0] jvt
+  );
+    logic [ 9:2] field_index = instr[9:2];
+    logic [31:6] field_base  = jvt[31:6];
+
+    return ({field_base, 6'd 0} + (field_index << 2));
+  endfunction : get_jvt_addr_f
 
   function automatic logic is_fencefencei_f(
     logic [ DEFAULT_XLEN-1:0] instr

@@ -1497,7 +1497,7 @@ module uvmt_cv32e40s_tb;
         .dbg                  (rvfi_instr_if.rvfi_dbg_mode),
         .jvt_q                (rvfi_csr_jvt_if.rvfi_csr_rdata),
         .load_access          (|rvfi_instr_if.rvfi_mem_rmask),
-        .misaligned_access_i  (rvfi_instr_if.is_split_datatrans),
+        .misaligned_access_i  (rvfi_instr_if.is_split_datatrans_intended),
         .pma_status_o         (uvmt_cv32e40s_tb.pma_status_rvfidata_word0lowbyte)
       );
 
@@ -1512,11 +1512,12 @@ module uvmt_cv32e40s_tb;
         .clk                  (clknrst_if.clk),
         .rst_n                (clknrst_if.reset_n),
         .addr_i               (rvfi_instr_if.rvfi_mem_addr_word0highbyte),
+          // TODO:WARNING:silabs-robin Should use "instr_mem_addr_word0highbyte"?
         .core_trans_pushpop_i (rvfi_instr_if.is_pushpop),
         .dbg                  (rvfi_instr_if.rvfi_dbg_mode),
         .jvt_q                (rvfi_csr_jvt_if.rvfi_csr_rdata),
         .load_access          (|rvfi_instr_if.rvfi_mem_rmask),
-        .misaligned_access_i  (rvfi_instr_if.is_split_datatrans),
+        .misaligned_access_i  (rvfi_instr_if.is_split_datatrans_intended),
         .pma_status_o         (uvmt_cv32e40s_tb.pma_status_rvfidata_word0highbyte)
       );
 
