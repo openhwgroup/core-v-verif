@@ -47,10 +47,11 @@ TEST_CFG=pulp_fpu${IS_ZFINX}
 
 ITERATION_TEST_LOOPS=1
   # refer test_override_fp_instr_stream to determine the numbers
-ITERATION_TEST_OPTIONS=7
+ITERATION_TEST_OPTIONS=8
 TEST_INDEX=0
 TEST_SEED=random
 LIST_EXCLUDE_TEST_OPTIONS=()
+# LIST_EXCLUDE_TEST_OPTIONS=(0 1 2 3 4 5 6 7)
 # LIST_EXCLUDE_TEST_OPTIONS=(0 1 2 3 4 5 6)
 
 
@@ -139,9 +140,21 @@ if [[ ${LIST_EXCLUDE_TEST_OPTIONS[*]} =~ $n ]]; then
   echo "Excluded test option $n"
 else
 
+  case $n in
+    0) TEST_OVERRIDE_FP_INSTR_STREAM="default" ;;
+    1) TEST_OVERRIDE_FP_INSTR_STREAM="fp_n_mixed_instr" ;;
+    2) TEST_OVERRIDE_FP_INSTR_STREAM="fp_n_mixed_instr_w_excl" ;;
+    3) TEST_OVERRIDE_FP_INSTR_STREAM="fp_n_mixed_instr_more_fdiv_fsqrt" ;;
+    4) TEST_OVERRIDE_FP_INSTR_STREAM="fp_w_special_operands" ;;
+    5) TEST_OVERRIDE_FP_INSTR_STREAM="fp_w_prev_rd_as_operand" ;;
+    6) TEST_OVERRIDE_FP_INSTR_STREAM="constraint_mc_fp" ;;
+    7) TEST_OVERRIDE_FP_INSTR_STREAM="fp_operand_forwarding" ;;
+    *) TEST_OVERRIDE_FP_INSTR_STREAM="INVALID" ;;
+  esac
+
   # regression tests
   pushd ${WORKSPACE}/cv32e40p/sim/uvmt > /dev/null
-  make gen_corev-dv test TEST=corev_fp${IS_ZFINX}_instr_test_for_regr CFG_PLUSARGS="+test_override_fp_instr_stream=$n" CV_CORE=cv32e40p CFG=$TEST_CFG COREV=1 RISCVDV_CFG= SIMULATOR=${SIMULATOR} COMP=0 USE_ISS=$USE_ISS COV=$COV SEED=$TEST_SEED GEN_START_INDEX=$TEST_INDEX RUN_INDEX=$TEST_INDEX   >& /dev/null;
+  make gen_corev-dv test TEST=corev_fp${IS_ZFINX}_instr_test_for_regr CFG_PLUSARGS="+test_override_fp_instr_stream=${TEST_OVERRIDE_FP_INSTR_STREAM}" CV_CORE=cv32e40p CFG=$TEST_CFG COREV=1 RISCVDV_CFG= SIMULATOR=${SIMULATOR} COMP=0 USE_ISS=$USE_ISS COV=$COV SEED=$TEST_SEED GEN_START_INDEX=$TEST_INDEX RUN_INDEX=$TEST_INDEX   >& /dev/null;
   popd > /dev/null
   log=${WORKSPACE}/cv32e40p/sim/uvmt/${SIMULATOR}_results/${TEST_CFG}/corev_fp${IS_ZFINX}_instr_test_for_regr/${TEST_INDEX}/${SIMULATOR}-corev_fp${IS_ZFINX}_instr_test_for_regr.log
   failed=0
