@@ -1178,7 +1178,7 @@ module uvmt_cv32e40s_triggers_assert_cov
         a_dt_load_trigger_hit_mmode_match_when_equal: assert property (
           rvfi_if.is_mmode
           && tdata1_array[t][MSB_MATCH:LSB_MATCH] == MATCH_WHEN_EQUAL
-          && rvfi_if.instr_mem_rmask //TODO: rvfi_if.is_load
+          && rvfi_if.is_load_instr
           && support_if.trigger_match_mem[t]
           && !rvfi_if.rvfi_dbg_mode
           |->
@@ -1188,7 +1188,7 @@ module uvmt_cv32e40s_triggers_assert_cov
         a_dt_load_trigger_hit_umode_match_when_equal: assert property (
           rvfi_if.is_umode
           && tdata1_array[t][MSB_MATCH:LSB_MATCH] == MATCH_WHEN_EQUAL
-          && rvfi_if.instr_mem_rmask //TODO: rvfi_if.is_load
+          && rvfi_if.is_load_instr
           && support_if.trigger_match_mem[t]
           && !rvfi_if.rvfi_dbg_mode
           |->
@@ -1198,7 +1198,7 @@ module uvmt_cv32e40s_triggers_assert_cov
         a_dt_load_trigger_hit_mmode_match_when_equal_or_greater: assert property (
           rvfi_if.is_mmode
           && tdata1_array[t][MSB_MATCH:LSB_MATCH] == MATCH_WHEN_GREATER_OR_EQUAL
-          && rvfi_if.instr_mem_rmask //TODO: rvfi_if.is_load
+          && rvfi_if.is_load_instr
           && support_if.trigger_match_mem[t]
           && !rvfi_if.rvfi_dbg_mode
           |->
@@ -1208,7 +1208,7 @@ module uvmt_cv32e40s_triggers_assert_cov
         a_dt_load_trigger_hit_umode_match_when_equal_or_greater: assert property (
           rvfi_if.is_umode
           && tdata1_array[t][MSB_MATCH:LSB_MATCH] == MATCH_WHEN_GREATER_OR_EQUAL
-          && rvfi_if.instr_mem_rmask //TODO: rvfi_if.is_load
+          && rvfi_if.is_load_instr
           && support_if.trigger_match_mem[t]
           && !rvfi_if.rvfi_dbg_mode
           |->
@@ -1218,7 +1218,7 @@ module uvmt_cv32e40s_triggers_assert_cov
         a_dt_load_trigger_hit_mmode_match_when_lesser: assert property (
           rvfi_if.is_mmode
           && tdata1_array[t][MSB_MATCH:LSB_MATCH] == MATCH_WHEN_LESSER
-          && rvfi_if.instr_mem_rmask //TODO: rvfi_if.is_load
+          && rvfi_if.is_load_instr
           && support_if.trigger_match_mem[t]
           && !rvfi_if.rvfi_dbg_mode
           |->
@@ -1228,7 +1228,7 @@ module uvmt_cv32e40s_triggers_assert_cov
         a_dt_load_trigger_hit_umode_match_when_lesser: assert property (
           rvfi_if.is_umode
           && tdata1_array[t][MSB_MATCH:LSB_MATCH] == MATCH_WHEN_LESSER
-          && rvfi_if.instr_mem_rmask //TODO: rvfi_if.is_load
+          && rvfi_if.is_load_instr
           && support_if.trigger_match_mem[t]
           && !rvfi_if.rvfi_dbg_mode
           |->
@@ -1239,7 +1239,7 @@ module uvmt_cv32e40s_triggers_assert_cov
         a_dt_store_trigger_hit_mmode_match_when_equal: assert property (
           rvfi_if.is_mmode
           && tdata1_array[t][MSB_MATCH:LSB_MATCH] == MATCH_WHEN_EQUAL
-          && rvfi_if.instr_mem_wmask //TODO: rvif_if.is_store
+          && rvfi_if.is_store_instr
           && support_if.trigger_match_mem[t]
           && !rvfi_if.rvfi_dbg_mode
           |->
@@ -1249,7 +1249,7 @@ module uvmt_cv32e40s_triggers_assert_cov
         a_dt_store_trigger_hit_umode_match_when_equal: assert property (
           rvfi_if.is_umode
           && tdata1_array[t][MSB_MATCH:LSB_MATCH] == MATCH_WHEN_EQUAL
-          && rvfi_if.instr_mem_wmask //TODO: rvif_if.is_store
+          && rvfi_if.is_store_instr
           && support_if.trigger_match_mem[t]
           && !rvfi_if.rvfi_dbg_mode
           |->
@@ -1259,7 +1259,7 @@ module uvmt_cv32e40s_triggers_assert_cov
         a_dt_store_trigger_hit_mmode_match_when_equal_or_greater: assert property (
           rvfi_if.is_mmode
           && tdata1_array[t][MSB_MATCH:LSB_MATCH] == MATCH_WHEN_GREATER_OR_EQUAL
-          && rvfi_if.instr_mem_wmask //TODO: rvif_if.is_store
+          && rvfi_if.is_store_instr
           && support_if.trigger_match_mem[t]
           && !rvfi_if.rvfi_dbg_mode
           |->
@@ -1269,7 +1269,7 @@ module uvmt_cv32e40s_triggers_assert_cov
         a_dt_store_trigger_hit_umode_match_when_equal_or_greater: assert property (
           rvfi_if.is_umode
           && tdata1_array[t][MSB_MATCH:LSB_MATCH] == MATCH_WHEN_GREATER_OR_EQUAL
-          && rvfi_if.instr_mem_wmask //TODO: rvif_if.is_store
+          && rvfi_if.is_store_instr
           && support_if.trigger_match_mem[t]
           && !rvfi_if.rvfi_dbg_mode
           |->
@@ -1279,7 +1279,7 @@ module uvmt_cv32e40s_triggers_assert_cov
         a_dt_store_trigger_hit_mmode_match_when_lesser: assert property (
           rvfi_if.is_mmode
           && tdata1_array[t][MSB_MATCH:LSB_MATCH] == MATCH_WHEN_LESSER
-          && rvfi_if.instr_mem_wmask //TODO: rvif_if.is_store
+          && rvfi_if.is_store_instr
           && support_if.trigger_match_mem[t]
           && !rvfi_if.rvfi_dbg_mode
           |->
@@ -1289,7 +1289,7 @@ module uvmt_cv32e40s_triggers_assert_cov
         a_dt_store_trigger_hit_umode_match_when_lesser: assert property (
           rvfi_if.is_umode
           && tdata1_array[t][MSB_MATCH:LSB_MATCH] == MATCH_WHEN_LESSER
-          && rvfi_if.instr_mem_wmask //TODO: rvif_if.is_store
+          && rvfi_if.is_store_instr
           && support_if.trigger_match_mem[t]
           && !rvfi_if.rvfi_dbg_mode
           |->

@@ -56,8 +56,8 @@ module uvmt_cv32e40s_sl_trigger_match_mem
           !rvfi.rvfi_trap.exception &&
           !trigger_match_execute &&
           csr_conditions_m2_m6[t] &&
-          ((tdata1_array[t][TDATA1_LOAD] && rvfi.instr_mem_rmask[MEMORY_OPERATION_NR*4+b]) ||
-          (tdata1_array[t][TDATA1_STORE] && rvfi.instr_mem_wmask[MEMORY_OPERATION_NR*4+b])) &&
+          ((tdata1_array[t][TDATA1_LOAD] && rvfi.rvfi_mem_rmask_intended[MEMORY_OPERATION_NR*4+b]) ||
+          (tdata1_array[t][TDATA1_STORE] && rvfi.rvfi_mem_wmask_intended[MEMORY_OPERATION_NR*4+b])) &&
           (((byte_addr[b] == tdata2_array[t]) && tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL) ||
           ((byte_addr[b] >= tdata2_array[t]) && tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL) ||
           ((byte_addr[b] < tdata2_array[t]) && tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER));

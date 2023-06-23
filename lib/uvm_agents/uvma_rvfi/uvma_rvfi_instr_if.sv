@@ -830,7 +830,7 @@ endfunction : is_split_datatrans_intended_f
 
 // Shows "intended" version of rvfi_mem_wmask
 function automatic logic [4*NMEM-1:0] rvfi_mem_rmask_intended_f();
-  logic [NMEM-1:0][3:0] rmask;
+  logic [NMEM-1:0][3:0] rmask = {'0};
   logic [3:0] rlist;
   rlist = rvfi_insn[7:4];
 
@@ -913,7 +913,7 @@ endfunction
 
 // Shows "intended" version of rvfi_mem_wmask
 function automatic logic [4*NMEM-1:0] rvfi_mem_wmask_intended_f();
-  logic [NMEM-1:0][3:0] wmask;
+  logic [NMEM-1:0][3:0] wmask = {'0};
   logic [3:0] rlist;
   rlist = rvfi_insn[7:4];
 
