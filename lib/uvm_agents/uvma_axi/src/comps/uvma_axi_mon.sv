@@ -21,25 +21,8 @@ class uvma_axi_mon_c extends uvm_monitor;
 
    //Handles to the monitor ports
 
-   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_aw_mon_port;
-   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_aw_mon2drv_port;
-   uvm_analysis_port#(uvma_axi_base_seq_item_c)  aw_mon2log_port;
-
-   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_w_mon_port;
-   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_w_mon2drv_port;
-   uvm_analysis_port#(uvma_axi_base_seq_item_c)  w_mon2log_port;
-
-   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_ar_mon_port;
-   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_ar_mon2drv_port;
-   uvm_analysis_port#(uvma_axi_base_seq_item_c)  ar_mon2log_port;
-
-   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_r_mon_port;
-   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_r_mon2drv_port;
-   uvm_analysis_port#(uvma_axi_base_seq_item_c)  r_mon2log_port;
-
-   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_b_mon_port;
-   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_b_mon2drv_port;
-   uvm_analysis_port#(uvma_axi_base_seq_item_c)  b_mon2log_port;
+   uvm_analysis_port #(uvma_axi_base_seq_item_c)       uvma_mon_port;
+   uvm_analysis_port#(uvma_axi_base_seq_item_c)        mon2log_port;
 
    // Handles to virtual interface modport
    virtual uvma_axi_intf.passive                 passive_mp;
@@ -48,25 +31,8 @@ class uvma_axi_mon_c extends uvm_monitor;
    function new(string name = "uvma_axi_mon_c", uvm_component parent);
       super.new(name, parent);
 
-      this.uvma_aw_mon_port     = new("uvma_aw_mon_port", this);
-      this.uvma_aw_mon2drv_port = new("uvma_aw_mon2drv_port", this);
-      this.aw_mon2log_port      = new("aw_mon2log_port", this);
-
-      this.uvma_w_mon_port      = new("uvma_w_mon_port", this);
-      this.uvma_w_mon2drv_port  = new("uvma_w_mon2drv_port", this);
-      this.w_mon2log_port       = new("w_mon2log_port", this);
-
-      this.uvma_ar_mon_port     = new("uvma_ar_mon_port", this);
-      this.uvma_ar_mon2drv_port = new("uvma_awrmon2drv_port", this);
-      this.ar_mon2log_port      = new("ar_mon2log_port", this);
-
-      this.uvma_r_mon_port      = new("uvma_r_mon_port", this);
-      this.uvma_r_mon2drv_port  = new("uvma_r_mon2drv_port", this);
-      this.r_mon2log_port       = new("r_mon2log_port", this);
-
-      this.uvma_b_mon_port      = new("uvma_b_mon_port", this);
-      this.uvma_b_mon2drv_port  = new("uvma_b_mon2drv_port", this);
-      this.b_mon2log_port       = new("b_mon2log_port", this);
+      this.uvma_mon_port     = new("uvma_mon_port", this);
+      this.mon2log_port      = new("mon2log_port", this);
 
    endfunction
 
@@ -94,26 +60,7 @@ class uvma_axi_mon_c extends uvm_monitor;
 
       fork
          observe_reset();
-      join_none
-
-      fork
-         monitor_aw_channel();
-      join_none
-
-      fork
-         monitor_w_channel();
-      join_none
-
-      fork
-         monitor_ar_channel();
-      join_none
-
-      fork
-         monitor_r_channel();
-      join_none
-
-      fork
-         monitor_b_channel();
+         run_monitor();
       join_none
 
    endtask: run_phase
@@ -132,7 +79,7 @@ class uvma_axi_mon_c extends uvm_monitor;
 
    endtask : observe_reset
 
-   task monitor_aw_channel();
+   task run_monitor();
 
       uvma_axi_base_seq_item_c                 item;
       uvma_axi_base_seq_item_c                 drv_item;
@@ -180,53 +127,6 @@ class uvma_axi_mon_c extends uvm_monitor;
             end
 
          end
-
-         this.uvma_aw_mon_port.write(item);
-
-         // collect AW signals
-         drv_item.aw_id    = vif.aw_id;
-         drv_item.aw_addr  = vif.aw_addr;
-         drv_item.aw_len   = vif.aw_len;
-         drv_item.aw_size  = vif.aw_size;
-         drv_item.aw_burst = vif.aw_burst;
-         drv_item.aw_user  = vif.aw_user;
-         drv_item.aw_valid = vif.aw_valid;
-         drv_item.aw_ready = vif.aw_ready;
-         drv_item.aw_lock  = vif.aw_lock;
-         drv_item.aw_atop  = vif.aw_atop;
-
-         `uvm_info(get_type_name(), $sformatf("Monitor send aw_req to seq"), UVM_HIGH)
-
-         repeat(2) begin
-            this.uvma_aw_mon2drv_port.write(drv_item);
-         end
-
-         transaction.aw_id    = passive_mp.psv_axi_cb.aw_id;
-         transaction.aw_addr  = passive_mp.psv_axi_cb.aw_addr;
-         transaction.aw_valid = passive_mp.psv_axi_cb.aw_valid;
-         transaction.aw_ready = passive_mp.psv_axi_cb.aw_ready;
-         transaction.aw_lock  = passive_mp.psv_axi_cb.aw_lock;
-
-         if( cntxt.reset_state == UVMA_AXI_RESET_STATE_POST_RESET) begin
-            this.aw_mon2log_port.write(transaction);
-         end
-
-         @(passive_mp.psv_axi_cb);
-       end
-    endtask: monitor_aw_channel
-
-   task monitor_w_channel();
-
-      uvma_axi_base_seq_item_c                item;
-      uvma_axi_base_seq_item_c                drv_item;
-      uvma_axi_base_seq_item_c                transaction;
-
-      forever begin
-
-         item        = uvma_axi_base_seq_item_c::type_id::create("item", this);
-         drv_item    = uvma_axi_base_seq_item_c::type_id::create("drv_item", this);
-         transaction = uvma_axi_base_seq_item_c::type_id::create("transaction", this);
-
          `uvm_info(get_type_name(), $sformatf("write data, monitor DUT response and send data"), UVM_HIGH)
          item.w_strb  = passive_mp.psv_axi_cb.w_strb;
          item.w_data  = passive_mp.psv_axi_cb.w_data;
@@ -234,45 +134,6 @@ class uvma_axi_mon_c extends uvm_monitor;
          item.w_user  = passive_mp.psv_axi_cb.w_user;
          item.w_valid = passive_mp.psv_axi_cb.w_valid;
          item.w_ready = passive_mp.psv_axi_cb.w_ready;
-
-         this.uvma_w_mon_port.write(item);
-
-         transaction.w_valid = passive_mp.psv_axi_cb.w_valid;
-         transaction.w_ready = passive_mp.psv_axi_cb.w_ready;
-         transaction.w_data  = passive_mp.psv_axi_cb.w_data;
-         transaction.w_last  = passive_mp.psv_axi_cb.w_last;
-
-         if( cntxt.reset_state == UVMA_AXI_RESET_STATE_POST_RESET) begin
-            this.w_mon2log_port.write(transaction);
-         end
-
-         //Collect W signals
-         drv_item.w_strb   = vif.w_strb;
-         drv_item.w_data   = vif.w_data;
-         drv_item.w_last   = vif.w_last;
-         drv_item.w_user   = vif.w_user;
-         drv_item.w_valid  = vif.w_valid;
-         drv_item.w_ready  = vif.w_ready;
-
-         this.uvma_w_mon2drv_port.write(drv_item);
-
-         @(passive_mp.psv_axi_cb);
-      end
-
-   endtask : monitor_w_channel
-
-   task monitor_ar_channel();
-
-      uvma_axi_base_seq_item_c          item;
-      uvma_axi_base_seq_item_c          drv_item;
-      uvma_axi_base_seq_item_c          transaction;
-
-      forever begin
-
-         item        = uvma_axi_base_seq_item_c::type_id::create("item", this);
-         drv_item    = uvma_axi_base_seq_item_c::type_id::create("drv_item", this);
-         transaction = uvma_axi_base_seq_item_c::type_id::create("transaction", this);
-
          if(this.passive_mp.psv_axi_cb.ar_valid) begin
            `uvm_info(get_type_name(), $sformatf("read address, collect AR signals and send item"), UVM_HIGH)
            item.ar_id    = passive_mp.psv_axi_cb.ar_id;
@@ -284,7 +145,6 @@ class uvma_axi_mon_c extends uvm_monitor;
            item.ar_valid = passive_mp.psv_axi_cb.ar_valid;
            item.ar_ready = passive_mp.psv_axi_cb.ar_ready;
            item.ar_lock  = passive_mp.psv_axi_cb.ar_lock;
-
          end  else begin
             if( cntxt.reset_state == UVMA_AXI_RESET_STATE_POST_RESET) begin
                item.ar_id    = 0;
@@ -298,9 +158,43 @@ class uvma_axi_mon_c extends uvm_monitor;
                item.ar_lock  = 0;
             end
          end
+         `uvm_info(get_type_name(), $sformatf("read data, collect resp signals from interface"), UVM_HIGH)
+         item.r_id    = passive_mp.psv_axi_cb.r_id;
+         item.r_data  = passive_mp.psv_axi_cb.r_data;
+         item.r_resp  = passive_mp.psv_axi_cb.r_resp;
+         item.r_last  = passive_mp.psv_axi_cb.r_last;
+         item.r_user  = passive_mp.psv_axi_cb.r_user;
+         item.r_valid = passive_mp.psv_axi_cb.r_valid;
+         item.r_ready = passive_mp.psv_axi_cb.r_ready;
+         `uvm_info(get_type_name(), $sformatf("response, collect resp signals from interface"), UVM_HIGH)
 
-         this.uvma_ar_mon_port.write(item);
+         item.b_id    = passive_mp.psv_axi_cb.b_id;
+         item.b_resp  = passive_mp.psv_axi_cb.b_resp;
+         item.b_user  = passive_mp.psv_axi_cb.b_user;
+         item.b_valid = passive_mp.psv_axi_cb.b_valid;
+         item.b_ready = passive_mp.psv_axi_cb.b_ready;
+         item.monitoring_mode = passive_mode;
 
+         this.uvma_mon_port.write(item);
+
+         // collect AW signals
+         drv_item.aw_id    = vif.aw_id;
+         drv_item.aw_addr  = vif.aw_addr;
+         drv_item.aw_len   = vif.aw_len;
+         drv_item.aw_size  = vif.aw_size;
+         drv_item.aw_burst = vif.aw_burst;
+         drv_item.aw_user  = vif.aw_user;
+         drv_item.aw_valid = vif.aw_valid;
+         drv_item.aw_ready = vif.aw_ready;
+         drv_item.aw_lock  = vif.aw_lock;
+         drv_item.aw_atop  = vif.aw_atop;
+         //Collect W signals
+         drv_item.w_strb   = vif.w_strb;
+         drv_item.w_data   = vif.w_data;
+         drv_item.w_last   = vif.w_last;
+         drv_item.w_user   = vif.w_user;
+         drv_item.w_valid  = vif.w_valid;
+         drv_item.w_ready  = vif.w_ready;
          //Collect AR signals
          drv_item.ar_id    = vif.ar_id;
          drv_item.ar_addr  = vif.ar_addr;
@@ -311,46 +205,6 @@ class uvma_axi_mon_c extends uvm_monitor;
          drv_item.ar_valid = vif.ar_valid;
          drv_item.ar_ready = vif.ar_ready;
          drv_item.ar_lock  = vif.ar_lock;
-
-         this.uvma_ar_mon2drv_port.write(drv_item);
-
-         transaction.ar_id    = passive_mp.psv_axi_cb.ar_id;
-         transaction.ar_addr  = passive_mp.psv_axi_cb.ar_addr;
-         transaction.ar_valid = passive_mp.psv_axi_cb.ar_valid;
-         transaction.ar_ready = passive_mp.psv_axi_cb.ar_ready;
-         transaction.ar_lock  = passive_mp.psv_axi_cb.ar_lock;
-
-         if( cntxt.reset_state == UVMA_AXI_RESET_STATE_POST_RESET) begin
-             this.ar_mon2log_port.write(transaction);
-         end
-
-         @(passive_mp.psv_axi_cb);
-      end
-   endtask:monitor_ar_channel
-
-   task monitor_r_channel();
-
-      uvma_axi_base_seq_item_c         item;
-      uvma_axi_base_seq_item_c         drv_item;
-      uvma_axi_base_seq_item_c         transaction;
-
-      forever begin
-
-         item        = uvma_axi_base_seq_item_c::type_id::create("item", this);
-         drv_item    = uvma_axi_base_seq_item_c::type_id::create("drv_item", this);
-         transaction = uvma_axi_base_seq_item_c::type_id::create("transaction", this);
-
-         `uvm_info(get_type_name(), $sformatf("read data, collect resp signals from interface"), UVM_HIGH)
-         item.r_id    = passive_mp.psv_axi_cb.r_id;
-         item.r_data  = passive_mp.psv_axi_cb.r_data;
-         item.r_resp  = passive_mp.psv_axi_cb.r_resp;
-         item.r_last  = passive_mp.psv_axi_cb.r_last;
-         item.r_user  = passive_mp.psv_axi_cb.r_user;
-         item.r_valid = passive_mp.psv_axi_cb.r_valid;
-         item.r_ready = passive_mp.psv_axi_cb.r_ready;
-
-         this.uvma_r_mon_port.write(item);
-
          //Collect R signals
          drv_item.r_id    = vif.r_id;
          drv_item.r_data  = vif.r_data;
@@ -359,67 +213,53 @@ class uvma_axi_mon_c extends uvm_monitor;
          drv_item.r_user  = vif.r_user;
          drv_item.r_valid = vif.r_valid;
          drv_item.r_ready = vif.r_ready;
-
-         this.uvma_r_mon2drv_port.write(drv_item);
-
-         transaction.r_id    = passive_mp.psv_axi_cb.r_id;
-         transaction.r_data  = passive_mp.psv_axi_cb.r_data;
-         transaction.r_valid = passive_mp.psv_axi_cb.r_valid;
-         transaction.r_ready = passive_mp.psv_axi_cb.r_ready;
-         transaction.r_resp  = passive_mp.psv_axi_cb.r_resp;
-         transaction.r_last  = passive_mp.psv_axi_cb.r_last;
-
-         if( cntxt.reset_state == UVMA_AXI_RESET_STATE_POST_RESET) begin
-            this.r_mon2log_port.write(transaction);
-         end
-
-         @(passive_mp.psv_axi_cb);
-      end
-   endtask:monitor_r_channel
-
-   task monitor_b_channel();
-
-      uvma_axi_base_seq_item_c         item;
-      uvma_axi_base_seq_item_c         drv_item;
-      uvma_axi_base_seq_item_c         transaction;
-
-      forever begin
-
-         item        = uvma_axi_base_seq_item_c::type_id::create("item", this);
-         drv_item    = uvma_axi_base_seq_item_c::type_id::create("drv_item", this);
-         transaction = uvma_axi_base_seq_item_c::type_id::create("transaction", this);
-
-         `uvm_info(get_type_name(), $sformatf("response, collect resp signals from interface"), UVM_HIGH)
-
-         item.b_id    = passive_mp.psv_axi_cb.b_id;
-         item.b_resp  = passive_mp.psv_axi_cb.b_resp;
-         item.b_user  = passive_mp.psv_axi_cb.b_user;
-         item.b_valid = passive_mp.psv_axi_cb.b_valid;
-         item.b_ready = passive_mp.psv_axi_cb.b_ready;
-
-         this.uvma_b_mon_port.write(item);
-
          //Collect B signals
          drv_item.b_id    = vif.b_id;
          drv_item.b_resp  = vif.b_resp;
          drv_item.b_user  = vif.b_user;
          drv_item.b_valid = vif.b_valid;
          drv_item.b_ready = vif.b_ready;
+         drv_item.monitoring_mode = native_mode;
 
-         this.uvma_b_mon2drv_port.write(drv_item);
+         `uvm_info(get_type_name(), $sformatf("Monitor send aw_req to seq"), UVM_HIGH)
 
+         repeat(2) begin
+            this.uvma_mon_port.write(drv_item);
+         end
+
+         transaction.aw_id    = passive_mp.psv_axi_cb.aw_id;
+         transaction.aw_addr  = passive_mp.psv_axi_cb.aw_addr;
+         transaction.aw_valid = passive_mp.psv_axi_cb.aw_valid;
+         transaction.aw_ready = passive_mp.psv_axi_cb.aw_ready;
+         transaction.aw_lock  = passive_mp.psv_axi_cb.aw_lock;
+         transaction.w_valid = passive_mp.psv_axi_cb.w_valid;
+         transaction.w_ready = passive_mp.psv_axi_cb.w_ready;
+         transaction.w_data  = passive_mp.psv_axi_cb.w_data;
+         transaction.w_last  = passive_mp.psv_axi_cb.w_last;
+         transaction.ar_id    = passive_mp.psv_axi_cb.ar_id;
+         transaction.ar_addr  = passive_mp.psv_axi_cb.ar_addr;
+         transaction.ar_valid = passive_mp.psv_axi_cb.ar_valid;
+         transaction.ar_ready = passive_mp.psv_axi_cb.ar_ready;
+         transaction.ar_lock  = passive_mp.psv_axi_cb.ar_lock;
+         transaction.r_id    = passive_mp.psv_axi_cb.r_id;
+         transaction.r_data  = passive_mp.psv_axi_cb.r_data;
+         transaction.r_valid = passive_mp.psv_axi_cb.r_valid;
+         transaction.r_ready = passive_mp.psv_axi_cb.r_ready;
+         transaction.r_resp  = passive_mp.psv_axi_cb.r_resp;
+         transaction.r_last  = passive_mp.psv_axi_cb.r_last;
          transaction.b_id    = passive_mp.psv_axi_cb.b_id;
          transaction.b_resp  = passive_mp.psv_axi_cb.b_resp;
          transaction.b_valid = passive_mp.psv_axi_cb.b_valid;
          transaction.b_ready = passive_mp.psv_axi_cb.b_ready;
 
          if( cntxt.reset_state == UVMA_AXI_RESET_STATE_POST_RESET) begin
-            this.b_mon2log_port.write(transaction);
+            this.mon2log_port.write(transaction);
          end
 
          @(passive_mp.psv_axi_cb);
-      end
-   endtask:monitor_b_channel
+       end
+    endtask: run_monitor
+
 
 endclass : uvma_axi_mon_c
 

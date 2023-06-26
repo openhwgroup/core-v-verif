@@ -51,7 +51,9 @@ task uvma_axi_aw_seq_c::body();
       cntxt = p_sequencer.cntxt;
 
       req_item = uvma_axi_base_seq_item_c::type_id::create("req_item");
-      p_sequencer.aw_drv_req_export.get(req_item);
+      while(req_item.monitoring_mode!=native_mode) begin
+         p_sequencer.aw_drv_req_export.get(req_item);
+      end
 
       `uvm_info(get_type_name(), "start getting AW request sequence", UVM_HIGH)
 

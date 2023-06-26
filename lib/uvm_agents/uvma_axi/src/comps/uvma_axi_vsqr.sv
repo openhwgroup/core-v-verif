@@ -38,6 +38,14 @@ class uvma_axi_vsqr_c extends uvm_sequencer#(uvma_axi_base_seq_item_c);
    uvm_get_port#(uvma_axi_base_seq_item_c)               ar_drv_req_export;
    uvm_get_port#(uvma_axi_base_seq_item_c)                r_resp_export;
    uvm_get_port#(uvma_axi_base_seq_item_c)                b_drv_resp_export;
+   uvm_analysis_export#(uvma_axi_base_seq_item_c)         aw_analysis_export;
+   uvm_analysis_export#(uvma_axi_base_seq_item_c)         w_analysis_export;
+   uvm_analysis_export#(uvma_axi_base_seq_item_c)         ar_analysis_export;
+   uvm_analysis_export#(uvma_axi_base_seq_item_c)         r_analysis_export;
+   uvm_analysis_export#(uvma_axi_base_seq_item_c)         aw_drv_analysis_export;
+   uvm_analysis_export#(uvma_axi_base_seq_item_c)         w_drv_analysis_export;
+   uvm_analysis_export#(uvma_axi_base_seq_item_c)         ar_drv_analysis_export;
+   uvm_analysis_export#(uvma_axi_base_seq_item_c)         b_drv_analysis_export;
 
    function new(string name = "uvma_axi_sqr_c", uvm_component parent = null);
 
@@ -76,6 +84,14 @@ class uvma_axi_vsqr_c extends uvm_sequencer#(uvma_axi_base_seq_item_c);
 
       this.r_resp_export      = new("r_resp_export", this);
       this.r_resp_fifo        = new("r_resp_fifo", this);
+      this.aw_analysis_export     = new("aw_analysis_export", this);
+      this.w_analysis_export      = new("w_analysis_export", this);
+      this.ar_analysis_export     = new("ar_analysis_export", this);
+      this.r_analysis_export      = new("r_analysis_export", this);
+      this.aw_drv_analysis_export = new("aw_drv_analysis_export", this);
+      this.w_drv_analysis_export  = new("w_drv_analysis_export", this);
+      this.ar_drv_analysis_export = new("ar_drv_analysis_export", this);
+      this.b_drv_analysis_export  = new("b_drv_analysis_export", this);
 
    endfunction
 
@@ -83,6 +99,16 @@ class uvma_axi_vsqr_c extends uvm_sequencer#(uvma_axi_base_seq_item_c);
 
       super.connect_phase(phase);
 
+      // Connect analysis export ports to FIFO analysis export ports
+      aw_analysis_export.connect(aw_req_fifo.analysis_export);
+      w_analysis_export.connect(w_req_fifo.analysis_export);
+      ar_analysis_export.connect(ar_req_fifo.analysis_export);
+      r_analysis_export.connect(r_resp_fifo.analysis_export);
+
+      aw_drv_analysis_export.connect(aw_drv_req_fifo.analysis_export);
+      w_drv_analysis_export.connect(w_drv_req_fifo.analysis_export);
+      ar_drv_analysis_export.connect(ar_drv_req_fifo.analysis_export);
+      b_drv_analysis_export.connect(b_drv_resp_fifo.analysis_export);
       // Connect get ports to FIFO get peek_export ports
 
       this.aw_req_export.connect(aw_req_fifo.get_peek_export);
