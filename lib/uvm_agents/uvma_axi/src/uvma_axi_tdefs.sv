@@ -36,5 +36,10 @@
    R_CHANNEL,
    B_CHANNEL
    } uvma_axi_channel_enum;
+   typedef enum {
+   NULL,
+   passive_mode,
+   native_mode
+   } uvma_axi_mode_enum;
 
 `endif // __UVMA_AXI_TDEFS_SV__

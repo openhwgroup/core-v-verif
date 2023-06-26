@@ -7,6 +7,7 @@
 //
 // Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com) – sub-contractor MU-Electronics for Thales group
 
+
 `ifndef __UVMA_AXI_BASE_SEQ_ITEM_SV__
 `define __UVMA_AXI_BASE_SEQ_ITEM_SV__
 
@@ -17,6 +18,7 @@
 class uvma_axi_base_seq_item_c extends uvml_trn_seq_item_c;
 
    uvma_axi_channel_enum           channel;
+   uvma_axi_mode_enum              monitoring_mode;
    rand logic                      ar_valid;
    rand logic                      ar_ready;
    rand logic                      ar_lock;

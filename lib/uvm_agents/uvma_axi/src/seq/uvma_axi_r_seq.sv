@@ -74,8 +74,18 @@ task uvma_axi_r_seq_c::body();
 
       `uvm_info(get_type_name(), "READ DATA sequence starting", UVM_HIGH)
 
-      p_sequencer.ar_req_export.get(req_item);
-      p_sequencer.r_resp_export.get(pre_resp);
+      fork
+         begin
+            do begin
+               p_sequencer.ar_req_export.get(req_item);
+            end while(req_item.monitoring_mode!=passive_mode);
+         end
+         begin
+            do begin
+               p_sequencer.r_resp_export.get(pre_resp);
+            end while(pre_resp.monitoring_mode!=passive_mode);
+         end
+       join
 
       start_item(resp_item);
 

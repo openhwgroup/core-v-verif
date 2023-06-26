@@ -89,6 +89,7 @@ class uvma_axi_agent_c extends uvm_agent;
    function void connect_phase(uvm_phase phase);
 
       super.connect_phase(phase);
+
       if( cfg.is_active == UVM_ACTIVE) begin
 
          //Establishing connections between driver and sequencer
@@ -97,21 +98,21 @@ class uvma_axi_agent_c extends uvm_agent;
 
          //Establishing connections between monitor ports and sequencer FIFOS
 
-         this.monitor.uvma_aw_mon2drv_port.connect(vsequencer.aw_drv_req_fifo.analysis_export);
+         this.monitor.uvma_mon_port.connect(vsequencer.aw_drv_analysis_export);
 
-         this.monitor.uvma_w_mon2drv_port.connect(vsequencer.w_drv_req_fifo.analysis_export);
+         this.monitor.uvma_mon_port.connect(vsequencer.w_drv_analysis_export);
 
-         this.monitor.uvma_aw_mon_port.connect(vsequencer.aw_req_fifo.analysis_export);
+         this.monitor.uvma_mon_port.connect(vsequencer.aw_analysis_export);
 
-         this.monitor.uvma_w_mon_port.connect(vsequencer.w_req_fifo.analysis_export);
+         this.monitor.uvma_mon_port.connect(vsequencer.w_analysis_export);
 
-         this.monitor.uvma_b_mon2drv_port.connect(vsequencer.b_drv_resp_fifo.analysis_export);
+         this.monitor.uvma_mon_port.connect(vsequencer.b_drv_analysis_export);
 
-         this.monitor.uvma_ar_mon2drv_port.connect(vsequencer.ar_drv_req_fifo.analysis_export);
+         this.monitor.uvma_mon_port.connect(vsequencer.ar_analysis_export);
 
-         this.monitor.uvma_ar_mon_port.connect(vsequencer.ar_req_fifo.analysis_export);
+         this.monitor.uvma_mon_port.connect(vsequencer.ar_drv_analysis_export);
 
-         this.monitor.uvma_r_mon_port.connect(vsequencer.r_resp_fifo.analysis_export);
+         this.monitor.uvma_mon_port.connect(vsequencer.r_analysis_export);
 
       end else begin
          `uvm_info(get_type_name(), $sformatf("PASSIVE MODE"), UVM_LOW)
@@ -120,15 +121,7 @@ class uvma_axi_agent_c extends uvm_agent;
 
          //Establishing connections between monitor ports and logger
 
-         this.monitor.aw_mon2log_port.connect(seq_item_logger.analysis_export);
-
-         this.monitor.w_mon2log_port.connect(seq_item_logger.analysis_export);
-
-         this.monitor.ar_mon2log_port.connect(seq_item_logger.analysis_export);
-
-         this.monitor.r_mon2log_port.connect(seq_item_logger.analysis_export);
-
-         this.monitor.b_mon2log_port.connect(seq_item_logger.analysis_export);
+         this.monitor.mon2log_port.connect(seq_item_logger.analysis_export);
 
          `uvm_info(get_type_name(), $sformatf("Transaction Loger enable"), UVM_LOW)
 
