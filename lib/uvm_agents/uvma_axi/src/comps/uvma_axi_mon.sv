@@ -175,8 +175,9 @@ class uvma_axi_mon_c extends uvm_monitor;
          item.b_ready = passive_mp.psv_axi_cb.b_ready;
          item.monitoring_mode = passive_mode;
 
-         this.uvma_mon_port.write(item);
-
+         repeat(9) begin
+            this.uvma_mon_port.write(item);
+         end
          // collect AW signals
          drv_item.aw_id    = vif.aw_id;
          drv_item.aw_addr  = vif.aw_addr;
@@ -223,7 +224,7 @@ class uvma_axi_mon_c extends uvm_monitor;
 
          `uvm_info(get_type_name(), $sformatf("Monitor send aw_req to seq"), UVM_HIGH)
 
-         repeat(2) begin
+         repeat(9) begin
             this.uvma_mon_port.write(drv_item);
          end
 

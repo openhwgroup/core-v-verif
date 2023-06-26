@@ -70,12 +70,12 @@ task uvma_axi_w_seq_c::body();
       fork
          begin
             while(aw_req_item.monitoring_mode!=native_mode) begin
-               p_sequencer.aw_drv_req_export.get(aw_req_item);
+               p_sequencer.mon2seq_export.get(aw_req_item);
             end
          end
          begin
             while(w_req_item.monitoring_mode!=native_mode) begin
-               p_sequencer.w_drv_req_export.get(w_req_item);
+               p_sequencer.mon2seq_export.get(w_req_item);
             end
          end
       join

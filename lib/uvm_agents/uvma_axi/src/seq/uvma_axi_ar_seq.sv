@@ -52,7 +52,7 @@ task uvma_axi_ar_seq_c::body();
 
       req_item = uvma_axi_base_seq_item_c::type_id::create("req_item");
       do begin
-         p_sequencer.ar_drv_req_export.get(req_item);
+         p_sequencer.mon2seq_export.get(req_item);
       end while(req_item.monitoring_mode!=native_mode);
 
       `uvm_info(get_type_name(), "start getting AR request sequence", UVM_HIGH)
