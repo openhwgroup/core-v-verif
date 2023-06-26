@@ -34,27 +34,6 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
     super.new(name);
   endfunction
 
-  function automatic bit check_str_pattern_match(string check_str, string pattern_str);
-    int     str_len;
-    int     pattern_str_len;
-    bit     match_val;
-
-    match_val = 0;
-    str_len = check_str.len();
-    pattern_str_len = pattern_str.len();
-
-    if(pattern_str_len < str_len) begin
-      for(int j = 0;j < str_len-pattern_str_len+1; j++) begin
-        if(check_str.substr(j,j+pattern_str_len -1) == pattern_str) begin
-          match_val = 1;  //set indicates str pattern found
-          break;
-        end
-      end
-    end
-    return match_val;
-
-  endfunction
-
   //Function: cv32e40p_instr_sequence::post_process_instr()
   //Override parent class post_process_instr() inside cv32e40p_instr_sequence
   //Keeping same code as parent class post_process_intr() with additions -
@@ -88,7 +67,10 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
         label_is_pulp_hwloop_body_label = check_str_pattern_match(temp_label_str, "hwloop");
 
         if(label_is_pulp_hwloop_body_label) begin
-          `uvm_info("cv32e40p_inst_sequence", $sformatf("Print HWLOOP label instr - instr_stream.instr_list[%0d] %0s =  %0s ",i,instr_stream.instr_list[i].convert2asm(),instr_stream.instr_list[i].label), UVM_DEBUG);
+          `uvm_info("cv32e40p_inst_sequence",
+                     $sformatf("Print HWLOOP label instr - instr_stream.instr_list[%0d] %0s =  %0s ",
+                     i,instr_stream.instr_list[i].convert2asm(),instr_stream.instr_list[i].label),
+                     UVM_DEBUG)
         end
 
       end

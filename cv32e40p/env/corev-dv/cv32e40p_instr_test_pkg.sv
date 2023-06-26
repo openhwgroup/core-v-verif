@@ -96,4 +96,32 @@ package cv32e40p_instr_test_pkg;
     instr.push_back($sformatf("addi x%0d, x%0d, %0d", cfg_corev.dp, cfg_corev.dp, 31 * (XLEN/8)));
   endfunction : pop_fpr_from_debugger_stack
 
+  //Function: check_str_pattern_match
+  //Description: Search for a string pattern withing a given string
+  //Inputs:
+  //    - check_str   - Main string to be searched for pattern within
+  //    - pattern_str - Sub-String "pattern" to search within main string
+  //Output :
+  //    - Return 1 if pattern found, else return 0
+  function automatic bit check_str_pattern_match(string check_str, string pattern_str);
+    int     str_len;
+    int     pattern_str_len;
+    bit     match_val;
+
+    match_val = 0;
+    str_len = check_str.len();
+    pattern_str_len = pattern_str.len();
+
+    if(pattern_str_len < str_len) begin
+      for(int j = 0;j < str_len-pattern_str_len+1; j++) begin
+        if(check_str.substr(j,j+pattern_str_len -1) == pattern_str) begin
+          match_val = 1;  //set indicates str pattern found
+          break;
+        end
+      end
+    end
+    return match_val;
+
+  endfunction
+
 endpackage : cv32e40p_instr_test_pkg;
