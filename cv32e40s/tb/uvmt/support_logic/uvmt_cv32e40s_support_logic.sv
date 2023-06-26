@@ -40,25 +40,6 @@ module uvmt_cv32e40s_support_logic
   // Local parameters
   // ---------------------------------------------------------------------------
 
-  localparam MAX_NUM_TRIGGERS = 5;
-  localparam TDATA1_DEFAULT = 32'hF800_0000;
-  localparam TDATA1_ET_M_MODE = 9;
-  localparam TDATA1_ET_U_MODE = 6;
-  localparam TDATA1_LSB_TYPE = 28;
-  localparam TDATA1_MSB_TYPE = 31;
-  localparam TDATA1_LOAD = 0;
-  localparam TDATA1_STORE = 1;
-  localparam TDATA1_EXECUTE = 2;
-  localparam TDATA1_M2_M6_U_MODE = 3;
-  localparam TDATA1_M2_M6_M_MODE = 6;
-  localparam TDATA1_LSB_MATCH = 7;
-  localparam TDATA1_MSB_MATCH = 10;
-  localparam TDATA1_MATCH_WHEN_EQUAL = 0;
-  localparam TDATA1_MATCH_WHEN_GREATER_OR_EQUAL = 2;
-  localparam TDATA1_MATCH_WHEN_LESSER = 3;
-
-  localparam MAX_MEM_ACCESS = 13; //Push and pop can do 13 memory access. XIF can potentially do more (TODO (xif): check this when merging to cv32e40x)
-
 
   // ---------------------------------------------------------------------------
   // Local variables
@@ -174,130 +155,32 @@ module uvmt_cv32e40s_support_logic
       end
   end
 
-  logic [MAX_NUM_TRIGGERS-1:0][31:0] tdata1_array;
-  logic [MAX_NUM_TRIGGERS-1:0][31:0] tdata2_array;
+if (CORE_PARAM_DBG_NUM_TRIGGERS == 0) begin
+  assign trigger_match_mem = '0;
+  assign trigger_match_execute = '0;
+  assign trigger_match_exception = '0;
+  assign is_trigger_match = '0;
 
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_exception;
-  logic [MAX_NUM_TRIGGERS-1:0] pc_addr_match;
-  logic [MAX_NUM_TRIGGERS-1:0][4*MAX_MEM_ACCESS-1:0] mem_addr_match;
-  logic [MAX_NUM_TRIGGERS-1:0] general_trigger_match_conditions;
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_load_array;
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_store_array;
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_execute_array;
+end else begin
 
-  always @(posedge in_support_if.clk, negedge in_support_if.rst_n ) begin
-    if(!in_support_if.rst_n) begin
-      tdata1_array[0] = TDATA1_DEFAULT;
-      tdata1_array[1] = TDATA1_DEFAULT;
-      tdata1_array[2] = TDATA1_DEFAULT;
-      tdata1_array[3] = TDATA1_DEFAULT;
-      tdata1_array[4] = TDATA1_DEFAULT;
-      tdata2_array = '0;
+  uvmt_cv32e40s_sl_trigger_match
+  sl_trigger_match
+  (
+    .clk_i (in_support_if.clk),
+    .rst_ni (in_support_if.rst_n),
+    .trigger_match_mem (out_support_if.trigger_match_mem[CORE_PARAM_DBG_NUM_TRIGGERS-1:0]),
+    .trigger_match_execute (out_support_if.trigger_match_execute[CORE_PARAM_DBG_NUM_TRIGGERS-1:0]),
+    .trigger_match_exception (out_support_if.trigger_match_exception[CORE_PARAM_DBG_NUM_TRIGGERS-1:0]),
+    .is_trigger_match (out_support_if.is_trigger_match[CORE_PARAM_DBG_NUM_TRIGGERS-1:0])
+  );
 
-    end else if (in_support_if.wb_valid) begin
-      tdata1_array[in_support_if.wb_tselect[$clog2(MAX_NUM_TRIGGERS)-1:0]] = in_support_if.wb_tdata1;
-      tdata2_array[in_support_if.wb_tselect[$clog2(MAX_NUM_TRIGGERS)-1:0]] = in_support_if.wb_tdata2;
-    end
-  end
+  assign out_support_if.trigger_match_mem[CORE_PARAM_DBG_NUM_TRIGGERS] = 1'b0;
+  assign out_support_if.trigger_match_execute[CORE_PARAM_DBG_NUM_TRIGGERS] = 1'b0;
+  assign out_support_if.trigger_match_exception[CORE_PARAM_DBG_NUM_TRIGGERS] = 1'b0;
+  assign out_support_if.is_trigger_match[CORE_PARAM_DBG_NUM_TRIGGERS] = 1'b0;
 
+end
 
-  for (genvar t = 0; t < MAX_NUM_TRIGGERS; t++) begin
-
-    assign trigger_match_exception[t] =
-      t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-        1'b0 :
-        rvfi.rvfi_valid
-        && rvfi.rvfi_trap.exception
-        && tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 5
-        && tdata2_array[t][rvfi.rvfi_trap.exception_cause]
-        && ((rvfi.is_mmode && tdata1_array[t][TDATA1_ET_M_MODE])
-        || (rvfi.is_umode && tdata1_array[t][TDATA1_ET_U_MODE]));
-
-
-    assign pc_addr_match[t] =
-      t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-        1'b0 :
-        ((tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL && rvfi.rvfi_pc_rdata == tdata2_array[t]) ||
-        (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL && rvfi.rvfi_pc_rdata >= tdata2_array[t]) ||
-        (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER && rvfi.rvfi_pc_rdata < tdata2_array[t]));
-
-    for (genvar i = 0; i < MAX_MEM_ACCESS; i++) begin
-
-      assign mem_addr_match[t][i*4+0] =
-        t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-          1'b0 :
-          ((tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL && rvfi.mem_addr_array[i] == tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL && rvfi.mem_addr_array[i] >= tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER && rvfi.mem_addr_array[i] < tdata2_array[t]));
-
-      assign mem_addr_match[t][i*4+1] =
-        t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-          1'b0 :
-          ((tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL && rvfi.mem_addr_array[i] + 1 == tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL && rvfi.mem_addr_array[i] + 1 >= tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER && rvfi.mem_addr_array[i] + 1 < tdata2_array[t]));
-
-      assign mem_addr_match[t][i*4+2] =
-        t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-          1'b0 :
-          ((tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL && rvfi.mem_addr_array[i] + 2 == tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL && rvfi.mem_addr_array[i] + 2 >= tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER && rvfi.mem_addr_array[i] + 2 < tdata2_array[t]));
-
-      assign mem_addr_match[t][i*4+3] =
-        t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-          1'b0 :
-          ((tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL && rvfi.mem_addr_array[i] +3 == tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL && rvfi.mem_addr_array[i] +3 >= tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER && rvfi.mem_addr_array[i] +3 < tdata2_array[t]));
-    end
-
-
-    assign general_trigger_match_conditions[t] =
-      t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-        1'b0 :
-        rvfi.rvfi_valid                                          &&
-        (tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 2   ||
-        tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 6)   &&
-        ((rvfi.is_mmode && tdata1_array[t][TDATA1_M2_M6_M_MODE]) ||
-        (rvfi.is_umode && tdata1_array[t][TDATA1_M2_M6_U_MODE]));
-
-    assign trigger_match_execute_array[t] =
-      t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-        1'b0 :
-        general_trigger_match_conditions[t] &&
-        tdata1_array[t][TDATA1_EXECUTE] &&
-        pc_addr_match[t];
-
-    assign trigger_match_load_array[t] =
-      t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-        1'b0 :
-        general_trigger_match_conditions[t] &&
-        !out_support_if.is_trigger_match_execute &&
-        tdata1_array[t][TDATA1_LOAD] &&
-        |(rvfi.rvfi_mem_rmask_intended & mem_addr_match[t]);
-
-    assign trigger_match_store_array[t] =
-      t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-        1'b0 :
-        general_trigger_match_conditions[t] &&
-        !out_support_if.is_trigger_match_execute &&
-        tdata1_array[t][TDATA1_STORE] &&
-        |(rvfi.rvfi_mem_wmask_intended & mem_addr_match[t]);
-
-  end
-
-  assign out_support_if.tdata1_array = tdata1_array;
-  assign out_support_if.tdata2_array = tdata2_array;
-
-  assign out_support_if.is_trigger_match_exception = |trigger_match_exception;
-  assign out_support_if.is_trigger_match_execute = |trigger_match_execute_array;
-  assign out_support_if.is_trigger_match_load = |trigger_match_load_array;
-  assign out_support_if.is_trigger_match_store = |trigger_match_store_array;
-
-  assign out_support_if.trigger_match_execute_array = trigger_match_execute_array;
-  assign out_support_if.trigger_match_load_array = trigger_match_load_array;
-  assign out_support_if.trigger_match_store_array = trigger_match_store_array;
 
 
   // Count "irq_ack"

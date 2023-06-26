@@ -47,6 +47,8 @@ ${DV_UVMT_PATH}/../assertions/uvmt_cv32e40s_pma_model.sv
 ${DV_UVMT_PATH}/../assertions/uvmt_cv32e40s_pmp_model.sv
 ${DV_UVMT_PATH}/support_logic/uvmt_cv32e40s_sl_obi_phases_monitor.sv
 ${DV_UVMT_PATH}/support_logic/uvmt_cv32e40s_sl_req_attribute_fifo.sv
+${DV_UVMT_PATH}/support_logic/uvmt_cv32e40s_sl_trigger_match_mem.sv
+${DV_UVMT_PATH}/support_logic/uvmt_cv32e40s_sl_trigger_match.sv
 ${DV_UVMT_PATH}/support_logic/uvmt_cv32e40s_support_logic.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_pma_cov.sv
 ${DV_UVMT_PATH}/uvmt_cv32e40s_rvfi_cov.sv
