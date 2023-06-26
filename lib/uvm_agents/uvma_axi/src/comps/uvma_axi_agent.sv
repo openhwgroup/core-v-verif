@@ -98,21 +98,7 @@ class uvma_axi_agent_c extends uvm_agent;
 
          //Establishing connections between monitor ports and sequencer FIFOS
 
-         this.monitor.uvma_mon_port.connect(vsequencer.aw_drv_analysis_export);
-
-         this.monitor.uvma_mon_port.connect(vsequencer.w_drv_analysis_export);
-
-         this.monitor.uvma_mon_port.connect(vsequencer.aw_analysis_export);
-
-         this.monitor.uvma_mon_port.connect(vsequencer.w_analysis_export);
-
-         this.monitor.uvma_mon_port.connect(vsequencer.b_drv_analysis_export);
-
-         this.monitor.uvma_mon_port.connect(vsequencer.ar_analysis_export);
-
-         this.monitor.uvma_mon_port.connect(vsequencer.ar_drv_analysis_export);
-
-         this.monitor.uvma_mon_port.connect(vsequencer.r_analysis_export);
+         this.monitor.uvma_mon_port.connect(vsequencer.mon2seq_fifo.analysis_export);
 
       end else begin
          `uvm_info(get_type_name(), $sformatf("PASSIVE MODE"), UVM_LOW)

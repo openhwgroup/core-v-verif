@@ -72,17 +72,17 @@ task uvma_axi_b_seq_c::body();
       fork
          begin
             do begin
-               p_sequencer.aw_req_export.get(aw_req_item);
+               p_sequencer.mon2seq_export.get(aw_req_item);
             end while(aw_req_item.monitoring_mode!=passive_mode);
          end
          begin
             do begin
-               p_sequencer.w_req_export.get(w_req_item);
+               p_sequencer.mon2seq_export.get(w_req_item);
             end while(w_req_item.monitoring_mode!=passive_mode);
          end
          begin
             do begin
-               p_sequencer.b_drv_resp_export.get(b_preresp_item);
+               p_sequencer.mon2seq_export.get(b_preresp_item);
             end while(b_preresp_item.monitoring_mode!=native_mode);
          end
       join

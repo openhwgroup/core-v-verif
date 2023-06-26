@@ -20,32 +20,10 @@ class uvma_axi_vsqr_c extends uvm_sequencer#(uvma_axi_base_seq_item_c);
    uvma_axi_cntxt_c  cntxt;
 
    //Handles to sequencer FIFOS
-   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,2)    aw_req_fifo;
-   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,2)    aw_drv_req_fifo;
-   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,1)     w_req_fifo;
-   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,1)     w_drv_req_fifo;
-   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,1)    ar_req_fifo;
-   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,1)    ar_drv_req_fifo;
-   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,1)     r_resp_fifo;
-   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,1)     b_drv_resp_fifo;
+   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,10)    mon2seq_fifo;
 
    //Handles to sequencer port connected to the FIFOS
-   uvm_get_port#(uvma_axi_base_seq_item_c)               aw_req_export;
-   uvm_get_port#(uvma_axi_base_seq_item_c)               aw_drv_req_export;
-   uvm_get_port#(uvma_axi_base_seq_item_c)                w_req_export;
-   uvm_get_port#(uvma_axi_base_seq_item_c)                w_drv_req_export;
-   uvm_get_port#(uvma_axi_base_seq_item_c)               ar_req_export;
-   uvm_get_port#(uvma_axi_base_seq_item_c)               ar_drv_req_export;
-   uvm_get_port#(uvma_axi_base_seq_item_c)                r_resp_export;
-   uvm_get_port#(uvma_axi_base_seq_item_c)                b_drv_resp_export;
-   uvm_analysis_export#(uvma_axi_base_seq_item_c)         aw_analysis_export;
-   uvm_analysis_export#(uvma_axi_base_seq_item_c)         w_analysis_export;
-   uvm_analysis_export#(uvma_axi_base_seq_item_c)         ar_analysis_export;
-   uvm_analysis_export#(uvma_axi_base_seq_item_c)         r_analysis_export;
-   uvm_analysis_export#(uvma_axi_base_seq_item_c)         aw_drv_analysis_export;
-   uvm_analysis_export#(uvma_axi_base_seq_item_c)         w_drv_analysis_export;
-   uvm_analysis_export#(uvma_axi_base_seq_item_c)         ar_drv_analysis_export;
-   uvm_analysis_export#(uvma_axi_base_seq_item_c)         b_drv_analysis_export;
+   uvm_get_port#(uvma_axi_base_seq_item_c)                mon2seq_export;
 
    function new(string name = "uvma_axi_sqr_c", uvm_component parent = null);
 
@@ -64,68 +42,17 @@ class uvma_axi_vsqr_c extends uvm_sequencer#(uvma_axi_base_seq_item_c);
       if (cntxt == null) begin
          `uvm_fatal("CNTXT", "Context handle is null")
       end
-      this.ar_req_export      = new("ar_req_export", this);
-      this.ar_req_fifo        = new("ar_req_fifo", this);
-      this.ar_drv_req_fifo    = new("ar_drv_req_fifo", this);
-      this.ar_drv_req_export  = new("ar_drv_req_export", this);
-
-      this.aw_req_export      = new("aw_req_export", this);
-      this.aw_drv_req_export  = new("aw_drv_req_export", this);
-      this.aw_req_fifo        = new("aw_req_fifo", this);
-      this.aw_drv_req_fifo    = new("aw_drv_req_fifo", this);
-
-      this.w_req_export       = new("w_req_export", this);
-      this.w_req_fifo         = new("w_req_fifo", this);
-      this.w_drv_req_fifo     = new("w_drv_req_fifo", this);
-      this.w_drv_req_export   = new("w_drv_req_export", this);
-
-      this.b_drv_resp_export  = new("b_drv_resp_export", this);
-      this.b_drv_resp_fifo    = new("b_drv_resp_fifo", this);
-
-      this.r_resp_export      = new("r_resp_export", this);
-      this.r_resp_fifo        = new("r_resp_fifo", this);
-      this.aw_analysis_export     = new("aw_analysis_export", this);
-      this.w_analysis_export      = new("w_analysis_export", this);
-      this.ar_analysis_export     = new("ar_analysis_export", this);
-      this.r_analysis_export      = new("r_analysis_export", this);
-      this.aw_drv_analysis_export = new("aw_drv_analysis_export", this);
-      this.w_drv_analysis_export  = new("w_drv_analysis_export", this);
-      this.ar_drv_analysis_export = new("ar_drv_analysis_export", this);
-      this.b_drv_analysis_export  = new("b_drv_analysis_export", this);
+      this.mon2seq_export      = new("mon2seq_export", this);
+      this.mon2seq_fifo        = new("mon2seq_fifo", this);
 
    endfunction
 
    function void connect_phase(uvm_phase phase);
 
       super.connect_phase(phase);
-
-      // Connect analysis export ports to FIFO analysis export ports
-      aw_analysis_export.connect(aw_req_fifo.analysis_export);
-      w_analysis_export.connect(w_req_fifo.analysis_export);
-      ar_analysis_export.connect(ar_req_fifo.analysis_export);
-      r_analysis_export.connect(r_resp_fifo.analysis_export);
-
-      aw_drv_analysis_export.connect(aw_drv_req_fifo.analysis_export);
-      w_drv_analysis_export.connect(w_drv_req_fifo.analysis_export);
-      ar_drv_analysis_export.connect(ar_drv_req_fifo.analysis_export);
-      b_drv_analysis_export.connect(b_drv_resp_fifo.analysis_export);
       // Connect get ports to FIFO get peek_export ports
 
-      this.aw_req_export.connect(aw_req_fifo.get_peek_export);
-
-      this.aw_drv_req_export.connect(aw_drv_req_fifo.get_peek_export);
-
-      this.w_req_export.connect(w_req_fifo.get_peek_export);
-
-      this.w_drv_req_export.connect(w_drv_req_fifo.get_peek_export);
-
-      this.ar_req_export.connect(ar_req_fifo.get_peek_export);
-
-      this.ar_drv_req_export.connect(ar_drv_req_fifo.get_peek_export);
-
-      this.r_resp_export.connect(r_resp_fifo.get_peek_export);
-
-      this.b_drv_resp_export.connect(b_drv_resp_fifo.get_peek_export);
+      this.mon2seq_export.connect(mon2seq_fifo.get_peek_export);
 
    endfunction
 
