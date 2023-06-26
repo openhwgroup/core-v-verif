@@ -20,24 +20,24 @@ class uvma_axi_vsqr_c extends uvm_sequencer#(uvma_axi_base_seq_item_c);
    uvma_axi_cntxt_c  cntxt;
 
    //Handles to sequencer FIFOS
-   uvm_tlm_analysis_fifo#(uvma_axi_aw_item_c,2)    aw_req_fifo;
-   uvm_tlm_analysis_fifo#(uvma_axi_aw_item_c,2)    aw_drv_req_fifo;
-   uvm_tlm_analysis_fifo#(uvma_axi_w_item_c,1)     w_req_fifo;
-   uvm_tlm_analysis_fifo#(uvma_axi_w_item_c,1)     w_drv_req_fifo;
-   uvm_tlm_analysis_fifo#(uvma_axi_ar_item_c,1)    ar_req_fifo;
-   uvm_tlm_analysis_fifo#(uvma_axi_ar_item_c,1)    ar_drv_req_fifo;
-   uvm_tlm_analysis_fifo#(uvma_axi_r_item_c,1)     r_resp_fifo;
-   uvm_tlm_analysis_fifo#(uvma_axi_b_item_c,1)     b_drv_resp_fifo;
+   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,2)    aw_req_fifo;
+   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,2)    aw_drv_req_fifo;
+   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,1)     w_req_fifo;
+   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,1)     w_drv_req_fifo;
+   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,1)    ar_req_fifo;
+   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,1)    ar_drv_req_fifo;
+   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,1)     r_resp_fifo;
+   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c,1)     b_drv_resp_fifo;
 
    //Handles to sequencer port connected to the FIFOS
-   uvm_get_port#(uvma_axi_aw_item_c)               aw_req_export;
-   uvm_get_port#(uvma_axi_aw_item_c)               aw_drv_req_export;
-   uvm_get_port#(uvma_axi_w_item_c)                w_req_export;
-   uvm_get_port#(uvma_axi_w_item_c)                w_drv_req_export;
-   uvm_get_port#(uvma_axi_ar_item_c)               ar_req_export;
-   uvm_get_port#(uvma_axi_ar_item_c)               ar_drv_req_export;
-   uvm_get_port#(uvma_axi_r_item_c)                r_resp_export;
-   uvm_get_port#(uvma_axi_b_item_c)                b_drv_resp_export;
+   uvm_get_port#(uvma_axi_base_seq_item_c)               aw_req_export;
+   uvm_get_port#(uvma_axi_base_seq_item_c)               aw_drv_req_export;
+   uvm_get_port#(uvma_axi_base_seq_item_c)                w_req_export;
+   uvm_get_port#(uvma_axi_base_seq_item_c)                w_drv_req_export;
+   uvm_get_port#(uvma_axi_base_seq_item_c)               ar_req_export;
+   uvm_get_port#(uvma_axi_base_seq_item_c)               ar_drv_req_export;
+   uvm_get_port#(uvma_axi_base_seq_item_c)                r_resp_export;
+   uvm_get_port#(uvma_axi_base_seq_item_c)                b_drv_resp_export;
 
    function new(string name = "uvma_axi_sqr_c", uvm_component parent = null);
 

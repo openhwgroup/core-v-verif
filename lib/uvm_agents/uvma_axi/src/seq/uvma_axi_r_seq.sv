@@ -14,7 +14,7 @@
 `ifndef UVMA_AXI_R_SEQ_SV
 `define UVMA_AXI_R_SEQ_SV
 
-class uvma_axi_r_seq_c extends uvm_sequence#(uvma_axi_r_item_c);
+class uvma_axi_r_seq_c extends uvm_sequence#(uvma_axi_base_seq_item_c);
 
 
    int i = 0;
@@ -26,10 +26,10 @@ class uvma_axi_r_seq_c extends uvm_sequence#(uvma_axi_r_item_c);
    uvma_axi_cfg_c    cfg;
    uvma_axi_cntxt_c  cntxt;
 
-   uvma_axi_r_item_c  resp_item;
-   uvma_axi_r_item_c  pre_resp;
-   uvma_axi_ar_item_c req_item;
-   uvma_axi_ar_item_c req_requette[][];
+   uvma_axi_base_seq_item_c  resp_item;
+   uvma_axi_base_seq_item_c  pre_resp;
+   uvma_axi_base_seq_item_c req_item;
+   uvma_axi_base_seq_item_c req_requette[][];
 
    int selected_id;
    int ar_id_tr[];
@@ -44,7 +44,7 @@ class uvma_axi_r_seq_c extends uvm_sequence#(uvma_axi_r_item_c);
    extern function void create_item();
    extern task body();
    extern function int  check_tab(int tab[]);
-   extern function void prepare_resp(uvma_axi_ar_item_c req_item, uvma_axi_r_item_c resp_item, int error);
+   extern function void prepare_resp(uvma_axi_base_seq_item_c req_item, uvma_axi_base_seq_item_c resp_item, int error);
    extern function int  select_first_id(int tab[], int id);
 
 endclass : uvma_axi_r_seq_c
@@ -57,9 +57,9 @@ endfunction : new
 
 function void uvma_axi_r_seq_c::create_item();
 
-   resp_item = uvma_axi_r_item_c::type_id::create("resp_item");
-   pre_resp = uvma_axi_r_item_c::type_id::create("pre_resp");
-   req_item = uvma_axi_ar_item_c::type_id::create("req_item");
+   resp_item = uvma_axi_base_seq_item_c::type_id::create("resp_item");
+   pre_resp = uvma_axi_base_seq_item_c::type_id::create("pre_resp");
+   req_item = uvma_axi_base_seq_item_c::type_id::create("req_item");
 
 endfunction : create_item
 
@@ -79,6 +79,7 @@ task uvma_axi_r_seq_c::body();
 
       start_item(resp_item);
 
+         resp_item.channel = R_CHANNEL;
          if(req_item.ar_valid && req_item.ar_ready) begin
 
             `uvm_info(get_type_name(), "Read request registere", UVM_HIGH)
@@ -180,7 +181,7 @@ task uvma_axi_r_seq_c::body();
 
 endtask : body
 
-function void uvma_axi_r_seq_c::prepare_resp(uvma_axi_ar_item_c req_item, uvma_axi_r_item_c resp_item, int error);
+function void uvma_axi_r_seq_c::prepare_resp(uvma_axi_base_seq_item_c req_item, uvma_axi_base_seq_item_c resp_item, int error);
 
    resp_item.r_id = req_item.ar_id;
    for(int i = 0; i < 2**req_item.ar_size; i++) begin

@@ -21,24 +21,24 @@ class uvma_axi_mon_c extends uvm_monitor;
 
    //Handles to the monitor ports
 
-   uvm_analysis_port #(uvma_axi_aw_item_c)       uvma_aw_mon_port;
-   uvm_analysis_port #(uvma_axi_aw_item_c)       uvma_aw_mon2drv_port;
+   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_aw_mon_port;
+   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_aw_mon2drv_port;
    uvm_analysis_port#(uvma_axi_base_seq_item_c)  aw_mon2log_port;
 
-   uvm_analysis_port #(uvma_axi_w_item_c)        uvma_w_mon_port;
-   uvm_analysis_port #(uvma_axi_w_item_c)        uvma_w_mon2drv_port;
+   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_w_mon_port;
+   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_w_mon2drv_port;
    uvm_analysis_port#(uvma_axi_base_seq_item_c)  w_mon2log_port;
 
-   uvm_analysis_port #(uvma_axi_ar_item_c)       uvma_ar_mon_port;
-   uvm_analysis_port #(uvma_axi_ar_item_c)       uvma_ar_mon2drv_port;
+   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_ar_mon_port;
+   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_ar_mon2drv_port;
    uvm_analysis_port#(uvma_axi_base_seq_item_c)  ar_mon2log_port;
 
-   uvm_analysis_port #(uvma_axi_r_item_c)        uvma_r_mon_port;
-   uvm_analysis_port #(uvma_axi_r_item_c)        uvma_r_mon2drv_port;
+   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_r_mon_port;
+   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_r_mon2drv_port;
    uvm_analysis_port#(uvma_axi_base_seq_item_c)  r_mon2log_port;
 
-   uvm_analysis_port #(uvma_axi_b_item_c)        uvma_b_mon_port;
-   uvm_analysis_port #(uvma_axi_b_item_c)        uvma_b_mon2drv_port;
+   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_b_mon_port;
+   uvm_analysis_port #(uvma_axi_base_seq_item_c) uvma_b_mon2drv_port;
    uvm_analysis_port#(uvma_axi_base_seq_item_c)  b_mon2log_port;
 
    // Handles to virtual interface modport
@@ -134,14 +134,14 @@ class uvma_axi_mon_c extends uvm_monitor;
 
    task monitor_aw_channel();
 
-      uvma_axi_aw_item_c                       item;
-      uvma_axi_aw_item_c                       drv_item;
+      uvma_axi_base_seq_item_c                 item;
+      uvma_axi_base_seq_item_c                 drv_item;
       uvma_axi_base_seq_item_c                 transaction;
 
       forever begin
 
-         item        = uvma_axi_aw_item_c::type_id::create("item", this);
-         drv_item    = uvma_axi_aw_item_c::type_id::create("drv_item", this);
+         item        = uvma_axi_base_seq_item_c::type_id::create("item", this);
+         drv_item    = uvma_axi_base_seq_item_c::type_id::create("drv_item", this);
          transaction = uvma_axi_base_seq_item_c::type_id::create("transaction", this);
 
          if(passive_mp.psv_axi_cb.aw_valid) begin
@@ -217,14 +217,14 @@ class uvma_axi_mon_c extends uvm_monitor;
 
    task monitor_w_channel();
 
-      uvma_axi_w_item_c                       item;
-      uvma_axi_w_item_c                       drv_item;
+      uvma_axi_base_seq_item_c                item;
+      uvma_axi_base_seq_item_c                drv_item;
       uvma_axi_base_seq_item_c                transaction;
 
       forever begin
 
-         item        = uvma_axi_w_item_c::type_id::create("item", this);
-         drv_item    = uvma_axi_w_item_c::type_id::create("drv_item", this);
+         item        = uvma_axi_base_seq_item_c::type_id::create("item", this);
+         drv_item    = uvma_axi_base_seq_item_c::type_id::create("drv_item", this);
          transaction = uvma_axi_base_seq_item_c::type_id::create("transaction", this);
 
          `uvm_info(get_type_name(), $sformatf("write data, monitor DUT response and send data"), UVM_HIGH)
@@ -263,14 +263,14 @@ class uvma_axi_mon_c extends uvm_monitor;
 
    task monitor_ar_channel();
 
-      uvma_axi_ar_item_c                item;
-      uvma_axi_ar_item_c                drv_item;
+      uvma_axi_base_seq_item_c          item;
+      uvma_axi_base_seq_item_c          drv_item;
       uvma_axi_base_seq_item_c          transaction;
 
       forever begin
 
-         item        = uvma_axi_ar_item_c::type_id::create("item", this);
-         drv_item    = uvma_axi_ar_item_c::type_id::create("drv_item", this);
+         item        = uvma_axi_base_seq_item_c::type_id::create("item", this);
+         drv_item    = uvma_axi_base_seq_item_c::type_id::create("drv_item", this);
          transaction = uvma_axi_base_seq_item_c::type_id::create("transaction", this);
 
          if(this.passive_mp.psv_axi_cb.ar_valid) begin
@@ -330,14 +330,14 @@ class uvma_axi_mon_c extends uvm_monitor;
 
    task monitor_r_channel();
 
-      uvma_axi_r_item_c                item;
-      uvma_axi_r_item_c                drv_item;
+      uvma_axi_base_seq_item_c         item;
+      uvma_axi_base_seq_item_c         drv_item;
       uvma_axi_base_seq_item_c         transaction;
 
       forever begin
 
-         item        = uvma_axi_r_item_c::type_id::create("item", this);
-         drv_item    = uvma_axi_r_item_c::type_id::create("drv_item", this);
+         item        = uvma_axi_base_seq_item_c::type_id::create("item", this);
+         drv_item    = uvma_axi_base_seq_item_c::type_id::create("drv_item", this);
          transaction = uvma_axi_base_seq_item_c::type_id::create("transaction", this);
 
          `uvm_info(get_type_name(), $sformatf("read data, collect resp signals from interface"), UVM_HIGH)
@@ -379,14 +379,14 @@ class uvma_axi_mon_c extends uvm_monitor;
 
    task monitor_b_channel();
 
-      uvma_axi_b_item_c                item;
-      uvma_axi_b_item_c                drv_item;
+      uvma_axi_base_seq_item_c         item;
+      uvma_axi_base_seq_item_c         drv_item;
       uvma_axi_base_seq_item_c         transaction;
 
       forever begin
 
-         item        = uvma_axi_b_item_c::type_id::create("item", this);
-         drv_item    = uvma_axi_b_item_c::type_id::create("drv_item", this);
+         item        = uvma_axi_base_seq_item_c::type_id::create("item", this);
+         drv_item    = uvma_axi_base_seq_item_c::type_id::create("drv_item", this);
          transaction = uvma_axi_base_seq_item_c::type_id::create("transaction", this);
 
          `uvm_info(get_type_name(), $sformatf("response, collect resp signals from interface"), UVM_HIGH)
