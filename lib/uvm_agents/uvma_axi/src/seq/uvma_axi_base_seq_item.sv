@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 // You may obtain a copy of the License at https://solderpad.org/licenses/
 //
-// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com)
+// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com) – sub-contractor MU-Electronics for Thales group
 
 
 `ifndef __UVMA_AXI_BASE_SEQ_ITEM_SV__
@@ -22,27 +22,44 @@ class uvma_axi_base_seq_item_c extends uvml_trn_seq_item_c;
    rand logic                      ar_lock;
    rand logic [AXI_ID_WIDTH-1:0]   ar_id;
    rand logic [AXI_ADDR_WIDTH-1:0] ar_addr;
+   rand logic [7:0]                ar_len;
+   rand logic [2:0]                ar_size;
+   rand logic [1:0]                ar_burst;
+   rand logic [1:0]                ar_user;
+
    rand logic [AXI_ID_WIDTH-1:0]   r_id;
    rand logic [AXI_ADDR_WIDTH-1:0] r_data;
    rand logic                      r_last;
    rand logic                      r_valid;
-   logic                           r_ready;
    rand logic [1:0]                r_resp;
+   logic                           r_ready;
 
    rand logic                      aw_valid;
    rand logic                      aw_ready;
    rand logic                      aw_lock;
    rand logic [AXI_ID_WIDTH-1:0]   aw_id;
    rand logic [AXI_ADDR_WIDTH-1:0] aw_addr;
-   rand logic [AXI_DATA_WIDTH-1:0] w_data;
-   rand logic                      w_last;
-   rand logic                      w_valid;
-   rand logic                      w_ready;
+   rand logic [AXI_USER_WIDTH-1:0] aw_user;
+   rand logic [7:0]                aw_len;
+   rand logic [2:0]                aw_size;
+   rand logic [1:0]                aw_burst;
+   rand logic [3:0]                aw_cache;
+   rand logic [2:0]                aw_prot;
+   rand logic [3:0]                aw_qos;
+   rand logic [3:0]                aw_region;
+   rand logic [5:0]                aw_atop;
+
+   rand logic [AXI_DATA_WIDTH-1:0]   w_data;
+   rand logic                        w_last;
+   rand logic                        w_valid;
+   rand logic                        w_ready;
+   rand logic [AXI_DATA_WIDTH/8-1:0] w_strb;
+   rand logic                        w_user;
+
    rand logic [AXI_ID_WIDTH-1:0]   b_id;
    rand logic [1:0]                b_resp;
    rand logic                      b_valid;
    rand logic                      b_ready;
-
 
    // Metadata
    uvma_axi_cfg_c  cfg; ///< Handle to agent's configuration object
@@ -53,10 +70,23 @@ class uvma_axi_base_seq_item_c extends uvml_trn_seq_item_c;
       `uvm_field_int(aw_valid, UVM_ALL_ON | UVM_NOPACK);
       `uvm_field_int(aw_ready, UVM_ALL_ON | UVM_NOPACK);
       `uvm_field_int(aw_lock, UVM_ALL_ON | UVM_NOPACK);
+      `uvm_field_int(aw_len, UVM_ALL_ON | UVM_NOPACK);
+      `uvm_field_int(aw_size, UVM_ALL_ON | UVM_NOPACK);
+      `uvm_field_int(aw_burst, UVM_ALL_ON | UVM_NOPACK);
+      `uvm_field_int(aw_cache, UVM_ALL_ON | UVM_NOPACK);
+      `uvm_field_int(aw_user, UVM_ALL_ON | UVM_NOPACK);
+      `uvm_field_int(aw_prot, UVM_ALL_ON | UVM_NOPACK);
+      `uvm_field_int(aw_qos, UVM_ALL_ON | UVM_NOPACK);
+      `uvm_field_int(aw_region, UVM_ALL_ON | UVM_NOPACK);
+      `uvm_field_int(aw_atop, UVM_ALL_ON | UVM_NOPACK);
+
       `uvm_field_int(w_data, UVM_ALL_ON | UVM_NOPACK);
       `uvm_field_int(w_last, UVM_ALL_ON | UVM_NOPACK);
       `uvm_field_int(w_valid, UVM_ALL_ON | UVM_NOPACK);
       `uvm_field_int(w_ready, UVM_ALL_ON | UVM_NOPACK);
+       `uvm_field_int(w_strb, UVM_ALL_ON | UVM_NOPACK);
+      `uvm_field_int(w_user, UVM_ALL_ON | UVM_NOPACK);
+
       `uvm_field_int(b_id, UVM_ALL_ON | UVM_NOPACK);
       `uvm_field_int(b_resp, UVM_ALL_ON | UVM_NOPACK);
       `uvm_field_int(b_valid, UVM_ALL_ON | UVM_NOPACK);
@@ -67,6 +97,11 @@ class uvma_axi_base_seq_item_c extends uvml_trn_seq_item_c;
       `uvm_field_int(ar_valid, UVM_ALL_ON | UVM_NOPACK);
       `uvm_field_int(ar_ready, UVM_ALL_ON | UVM_NOPACK);
       `uvm_field_int(ar_lock, UVM_ALL_ON | UVM_NOPACK);
+      `uvm_field_int(ar_len, UVM_ALL_ON | UVM_NOPACK);
+      `uvm_field_int(ar_size, UVM_ALL_ON | UVM_NOPACK);
+      `uvm_field_int(ar_burst, UVM_ALL_ON | UVM_NOPACK);
+      `uvm_field_int(ar_user, UVM_ALL_ON | UVM_NOPACK);
+
       `uvm_field_int(r_id, UVM_ALL_ON | UVM_NOPACK);
       `uvm_field_int(r_data, UVM_ALL_ON | UVM_NOPACK);
       `uvm_field_int(r_resp, UVM_ALL_ON | UVM_NOPACK);
@@ -74,14 +109,12 @@ class uvma_axi_base_seq_item_c extends uvml_trn_seq_item_c;
       `uvm_field_int(r_valid, UVM_ALL_ON | UVM_NOPACK);
       `uvm_field_int(r_ready, UVM_ALL_ON | UVM_NOPACK);
    `uvm_object_utils_end
-
    /**
     * Default constructor.
     */
    extern function new(string name="uvma_axi_base_seq_item");
 
 endclass : uvma_axi_base_seq_item_c
-
 
 function uvma_axi_base_seq_item_c::new(string name="uvma_axi_base_seq_item");
 

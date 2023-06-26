@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 // You may obtain a copy of the License at https://solderpad.org/licenses/
 //
-// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com)
+// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com) – sub-contractor MU-Electronics for Thales group
 
 
 //=============================================================================
@@ -18,7 +18,7 @@
 class uvma_axi_b_seq_c extends uvm_sequence#(uvma_axi_b_item_c);
 
    `uvm_object_utils(uvma_axi_b_seq_c)
-   `uvm_declare_p_sequencer(uvma_axi_b_sqr_c)
+   `uvm_declare_p_sequencer(uvma_axi_vsqr_c)
 
    // Agent handles
    uvma_axi_cfg_c    cfg;
@@ -71,7 +71,7 @@ task uvma_axi_b_seq_c::body();
 
       p_sequencer.aw_req_export.get(aw_req_item);
       p_sequencer.w_req_export.get(w_req_item);
-      p_sequencer.b_resp_fifo.get(b_preresp_item);
+      p_sequencer.b_drv_resp_export.get(b_preresp_item);
 
       start_item(b_resp_item);
 
