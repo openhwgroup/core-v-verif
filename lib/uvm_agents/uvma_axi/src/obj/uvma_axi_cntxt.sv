@@ -5,8 +5,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 // You may obtain a copy of the License at https://solderpad.org/licenses/
 //
-// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com)
-// Co-Author: Abdelaali Khardazi
+// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com) – sub-contractor MU-Electronics for Thales group
 
 `ifndef __UVMA_AXI_CNTXT_SV__
 `define __UVMA_AXI_CNTXT_SV__

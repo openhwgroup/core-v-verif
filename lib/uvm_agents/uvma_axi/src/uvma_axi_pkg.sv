@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 // You may obtain a copy of the License at https://solderpad.org/licenses/
 //
-// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com)
+// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com) – sub-contractor MU-Electronics for Thales group
 // Co-Author: Abdelaali Khardazi
 
 /***** AXI4 slave agent package *****/
@@ -59,33 +59,12 @@ package uvma_axi_pkg;
    `include "uvma_axi_ar_item.sv"
    `include "uvma_axi_r_item.sv"
 
-   `include "uvma_axi_aw_drv.sv"
-   `include "uvma_axi_w_drv.sv"
-   `include "uvma_axi_b_drv.sv"
-   `include "uvma_axi_ar_drv.sv"
-   `include "uvma_axi_r_drv.sv"
-   `include "uvma_axi_aw_mon.sv"
-   `include "uvma_axi_w_mon.sv"
-   `include "uvma_axi_b_mon.sv"
-   `include "uvma_axi_ar_mon.sv"
-   `include "uvma_axi_r_mon.sv"
-
-   `include "uvma_axi_aw_sqr.sv"
-   `include "uvma_axi_w_sqr.sv"
-   `include "uvma_axi_b_sqr.sv"
-   `include "uvma_axi_ar_sqr.sv"
-   `include "uvma_axi_r_sqr.sv"
-
    `include "uvma_axi_seq_item_logger.sv"
-
-   `include "uvma_axi_aw_agent.sv"
-   `include "uvma_axi_w_agent.sv"
-   `include "uvma_axi_b_agent.sv"
-   `include "uvma_axi_ar_agent.sv"
-   `include "uvma_axi_r_agent.sv"
 
    `include "uvma_axi_vsqr.sv"
 
+   `include "uvma_axi_drv.sv"
+   `include "uvma_axi_mon.sv"
    `include "uvma_axi_agent.sv"
     // Sequences
    `include "uvma_axi_seq_lib.sv"

@@ -5,8 +5,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 // You may obtain a copy of the License at https://solderpad.org/licenses/
 //
-// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com)
-// Co-Author: Abdelaali Khardazi
+// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com) – sub-contractor MU-Electronics for Thales group
+
 
 //=============================================================================
 // Description: Sequence for agent axi_w
@@ -18,7 +18,7 @@
 class uvma_axi_w_seq_c extends uvm_sequence#(uvma_axi_w_item_c);
 
    `uvm_object_utils(uvma_axi_w_seq_c)
-   `uvm_declare_p_sequencer(uvma_axi_w_sqr_c)
+   `uvm_declare_p_sequencer(uvma_axi_vsqr_c)
 
    // Agent handles
    uvma_axi_cfg_c    cfg;
@@ -65,8 +65,8 @@ task uvma_axi_w_seq_c::body();
 
       `uvm_info(get_type_name(), "WRITE DATA sequence starting", UVM_HIGH)
 
-      p_sequencer.aw_req_export.get(aw_req_item);
-      p_sequencer.w_req_fifo.get(w_req_item);
+      p_sequencer.aw_drv_req_export.get(aw_req_item);
+      p_sequencer.w_drv_req_export.get(w_req_item);
 
       if(aw_req_item.aw_valid || check_ready == 1) begin
 

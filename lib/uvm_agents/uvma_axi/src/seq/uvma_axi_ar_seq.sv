@@ -5,7 +5,8 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 // You may obtain a copy of the License at https://solderpad.org/licenses/
 //
-// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com)
+// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com) – sub-contractor MU-Electronics for Thales group
+
 
 //=============================================================================
 // Description: Sequence for agent axi_ar
@@ -17,12 +18,14 @@
 class uvma_axi_ar_seq_c extends uvm_sequence#(uvma_axi_ar_item_c);
 
    `uvm_object_utils(uvma_axi_ar_seq_c)
-   `uvm_declare_p_sequencer(uvma_axi_ar_sqr_c)
+   `uvm_declare_p_sequencer(uvma_axi_vsqr_c)
 
-   // Agent handles
    uvma_axi_cfg_c    cfg;
    uvma_axi_cntxt_c  cntxt;
    uvma_axi_ar_item_c  req_item;
+
+   int                                      latency;
+   int                                      ready_latency;
 
    extern function new(string name = "");
    extern function void add_latencies(uvma_axi_ar_item_c master_req);
@@ -42,19 +45,45 @@ function void uvma_axi_ar_seq_c::add_latencies(uvma_axi_ar_item_c master_req);
 endfunction : add_latencies
 
 task uvma_axi_ar_seq_c::body();
+
    forever begin
       cfg   = p_sequencer.cfg;
       cntxt = p_sequencer.cntxt;
 
       req_item = uvma_axi_ar_item_c::type_id::create("req_item");
-      p_sequencer.ar_req_fifo.get(req_item);
+      p_sequencer.ar_drv_req_export.get(req_item);
+
+      `uvm_info(get_type_name(), "start getting AR request sequence", UVM_HIGH)
 
       start_item(req_item);
+
          `uvm_info(get_type_name(), "READ ADDRESS sequence starting", UVM_HIGH)
-         add_latencies(req_item);
+
+         if(req_item.ar_valid) begin
+
+            if(latency == 0) begin
+               add_latencies(req_item);
+               ready_latency = req_item.ar_latency;
+            end
+
+            req_item.ar_ready = 0;
+
+            if(latency == ready_latency) begin
+               req_item.ar_ready = 1;
+               latency = 0;
+            end else begin
+               latency++;
+            end
+
+         end else begin
+            req_item.ar_ready = 0;
+         end
+
       finish_item(req_item);
+
    end
-   `uvm_info(get_type_name(), "Default sequence completed", UVM_HIGH)
+
+   `uvm_info(get_type_name(), "AR sequence completed", UVM_HIGH)
 
 endtask : body
 

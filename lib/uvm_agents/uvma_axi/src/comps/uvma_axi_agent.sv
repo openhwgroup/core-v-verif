@@ -5,8 +5,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 // You may obtain a copy of the License at https://solderpad.org/licenses/
 //
-// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com)
-// Co-Author: Abdelaali Khardazi
+// Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com) – sub-contractor MU-Electronics for Thales group
 
 /**** AXI4 (top) agent ****/
 
@@ -17,12 +16,10 @@ class uvma_axi_agent_c extends uvm_agent;
 
    `uvm_component_utils(uvma_axi_agent_c)
 
-   uvma_axi_aw_agent_c        aw_agent;
-   uvma_axi_w_agent_c         w_agent;
-   uvma_axi_b_agent_c         b_agent;
-   uvma_axi_ar_agent_c        ar_agent;
-   uvma_axi_r_agent_c         r_agent;
+   uvma_axi_mon_c             monitor;
+   uvma_axi_drv_c             driver;
    uvma_axi_vsqr_c            vsequencer;
+
 
    uvma_axi_seq_item_logger_c seq_item_logger;
 
@@ -80,76 +77,66 @@ class uvma_axi_agent_c extends uvm_agent;
 
    function void create_components();
 
-      this.aw_agent = uvma_axi_aw_agent_c :: type_id :: create("aw_agent", this);
-      this.w_agent  = uvma_axi_w_agent_c  :: type_id :: create("w_agent",  this);
-      this.b_agent  = uvma_axi_b_agent_c  :: type_id :: create("b_agent",  this);
-      this.ar_agent = uvma_axi_ar_agent_c :: type_id :: create("ar_agent", this);
-      this.r_agent  = uvma_axi_r_agent_c  :: type_id :: create("r_agent",  this);
+      this.monitor = uvma_axi_mon_c :: type_id :: create("monitor", this);
       this.seq_item_logger = uvma_axi_seq_item_logger_c::type_id::create("seq_item_logger", this);
       if( cfg.is_active == UVM_ACTIVE) begin
-         vsequencer = uvma_axi_vsqr_c::type_id::create("sequencer", this);
+         this.vsequencer = uvma_axi_vsqr_c::type_id::create("vsequencer", this);
+         this.driver  = uvma_axi_drv_c  :: type_id :: create("driver",  this);
       end
 
    endfunction : create_components
 
    function void connect_phase(uvm_phase phase);
 
-      //super.connect_phase(phase);
+      super.connect_phase(phase);
       if( cfg.is_active == UVM_ACTIVE) begin
-         connect_mon_2_sqr();
-         assemble_vsequencer();
+
+         //Establishing connections between driver and sequencer
+
+         this.driver.seq_item_port.connect(vsequencer.seq_item_export);
+
+         //Establishing connections between monitor ports and sequencer FIFOS
+
+         this.monitor.uvma_aw_mon2drv_port.connect(vsequencer.aw_drv_req_fifo.analysis_export);
+
+         this.monitor.uvma_w_mon2drv_port.connect(vsequencer.w_drv_req_fifo.analysis_export);
+
+         this.monitor.uvma_aw_mon_port.connect(vsequencer.aw_req_fifo.analysis_export);
+
+         this.monitor.uvma_w_mon_port.connect(vsequencer.w_req_fifo.analysis_export);
+
+         this.monitor.uvma_b_mon2drv_port.connect(vsequencer.b_drv_resp_fifo.analysis_export);
+
+         this.monitor.uvma_ar_mon2drv_port.connect(vsequencer.ar_drv_req_fifo.analysis_export);
+
+         this.monitor.uvma_ar_mon_port.connect(vsequencer.ar_req_fifo.analysis_export);
+
+         this.monitor.uvma_r_mon_port.connect(vsequencer.r_resp_fifo.analysis_export);
+
       end else begin
          `uvm_info(get_type_name(), $sformatf("PASSIVE MODE"), UVM_LOW)
       end
-
       if (cfg.trn_log_enabled) begin
-         connect_trn_loggers();
+
+         //Establishing connections between monitor ports and logger
+
+         this.monitor.aw_mon2log_port.connect(seq_item_logger.analysis_export);
+
+         this.monitor.w_mon2log_port.connect(seq_item_logger.analysis_export);
+
+         this.monitor.ar_mon2log_port.connect(seq_item_logger.analysis_export);
+
+         this.monitor.r_mon2log_port.connect(seq_item_logger.analysis_export);
+
+         this.monitor.b_mon2log_port.connect(seq_item_logger.analysis_export);
+
          `uvm_info(get_type_name(), $sformatf("Transaction Loger enable"), UVM_LOW)
+
       end
 
    endfunction
 
-   function void connect_mon_2_sqr();
 
-      this.aw_agent.monitor.uvma_aw_mon2drv_port.connect(aw_agent.sequencer.aw_req_export);
-
-      this.w_agent.monitor.uvma_w_mon2drv_port.connect(w_agent.sequencer.w_req_export);
-
-      this.aw_agent.monitor.uvma_aw_mon2drv_port.connect(w_agent.sequencer.aw_req_export.analysis_export);
-
-      this.aw_agent.monitor.uvma_aw_mon_port.connect(b_agent.sequencer.aw_req_export.analysis_export);
-
-      this.w_agent.monitor.uvma_w_mon_port.connect(b_agent.sequencer.w_req_export.analysis_export);
-
-      this.b_agent.monitor.uvma_b_mon2drv_port.connect(b_agent.sequencer.b_resp_export);
-
-      this.ar_agent.monitor.uvma_ar_mon2drv_port.connect(ar_agent.sequencer.ar_req_export);
-
-      this.ar_agent.monitor.uvma_ar_mon_port.connect(r_agent.sequencer.ar_req_export.analysis_export);
-
-      this.r_agent.monitor.uvma_r_mon_port.connect(r_agent.sequencer.r_resp_export);
-
-   endfunction: connect_mon_2_sqr
-
-   function void assemble_vsequencer();
-
-      vsequencer.aw_sequencer  = aw_agent.sequencer;
-      vsequencer.ar_sequencer  = ar_agent.sequencer;
-      vsequencer.w_sequencer   = w_agent.sequencer;
-      vsequencer.b_sequencer   = b_agent.sequencer;
-      vsequencer.r_sequencer   = r_agent.sequencer;
-
-   endfunction: assemble_vsequencer
-
-   function void connect_trn_loggers();
-
-      this.aw_agent.monitor.aw_mon2log_port.connect(seq_item_logger.analysis_export);
-      this.w_agent.monitor.w_mon2log_port.connect(seq_item_logger.analysis_export);
-      this.b_agent.monitor.b_mon2log_port.connect(seq_item_logger.analysis_export);
-      this.ar_agent.monitor.ar_mon2log_port.connect(seq_item_logger.analysis_export);
-      this.r_agent.monitor.r_mon2log_port.connect(seq_item_logger.analysis_export);
-
-   endfunction : connect_trn_loggers
 
 endclass : uvma_axi_agent_c
 
