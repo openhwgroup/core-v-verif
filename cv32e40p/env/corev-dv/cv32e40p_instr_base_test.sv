@@ -32,6 +32,8 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
   endfunction
 
   virtual function void build_phase(uvm_phase phase);
+    override_instr_type();
+    override_instr_sequence();
     override_asm_program_gen();
     override_gen_config();
     override_compressed_instr();
@@ -116,6 +118,28 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
         end
       endcase
     end // TEST_OVERRIDE_FP_INSTR_STREAM
+  endfunction
+
+  virtual function void override_instr_sequence();
+    int test_override_riscv_instr_sequence = 0;
+    if ($value$plusargs("test_override_riscv_instr_sequence=%0d", test_override_riscv_instr_sequence)) begin
+      unique case(test_override_riscv_instr_sequence)
+        1: begin
+          uvm_factory::get().set_type_override_by_type(riscv_instr_sequence::get_type(), cv32e40p_instr_sequence::get_type());
+        end
+      endcase
+    end
+  endfunction
+
+  virtual function void override_instr_type();
+    int test_override_riscv_instr_type = 0;
+    if ($value$plusargs("test_override_riscv_instr_type=%0d", test_override_riscv_instr_type)) begin
+      unique case(test_override_riscv_instr_type)
+        1: begin
+          uvm_factory::get().set_type_override_by_type(riscv_instr::get_type(), cv32e40p_instr::get_type());
+        end
+      endcase
+    end
   endfunction
 
   virtual function void apply_directed_instr();

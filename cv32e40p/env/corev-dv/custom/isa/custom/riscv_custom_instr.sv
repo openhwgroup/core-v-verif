@@ -678,7 +678,7 @@ class cv32e40p_instr extends riscv_instr;
       if (instr_name == CV_SETUPI) begin
         imm_str = $sformatf("%0d, %0d", $unsigned(imm[11:0]), $unsigned(imm[16:12]));
       end else begin
-        imm_str = $sformatf("%0d", $unsigned(imm[11:0] << 2));
+        imm_str = $sformatf("%0d", $unsigned(imm[11:0]));
       end
     end else
     super.update_imm_str();
