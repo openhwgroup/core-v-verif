@@ -53,16 +53,10 @@ package uvma_axi_pkg;
    `include "uvma_axi_cntxt.sv"
 
    `include "uvma_axi_base_seq_item.sv"
-   `include "uvma_axi_aw_item.sv"
-   `include "uvma_axi_w_item.sv"
-   `include "uvma_axi_b_item.sv"
-   `include "uvma_axi_ar_item.sv"
-   `include "uvma_axi_r_item.sv"
 
    `include "uvma_axi_seq_item_logger.sv"
 
    `include "uvma_axi_vsqr.sv"
-
    `include "uvma_axi_drv.sv"
    `include "uvma_axi_mon.sv"
    `include "uvma_axi_agent.sv"

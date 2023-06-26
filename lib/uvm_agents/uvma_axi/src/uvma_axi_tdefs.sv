@@ -28,5 +28,13 @@
    UVMA_AXI_DRV_SLV_ERR_MODE_OK,
    UVMA_AXI_DRV_SLV_ERR_MODE_RANDOM
    } uvma_axi_drv_slv_err_mode_enum;
+   typedef enum {
+   NONE,
+   AW_CHANNEL,
+   W_CHANNEL,
+   AR_CHANNEL,
+   R_CHANNEL,
+   B_CHANNEL
+   } uvma_axi_channel_enum;
 
 `endif // __UVMA_AXI_TDEFS_SV__

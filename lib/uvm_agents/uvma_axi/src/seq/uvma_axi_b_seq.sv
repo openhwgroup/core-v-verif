@@ -15,7 +15,7 @@
 `ifndef UVMA_AXI_B_SEQ_SV
 `define UVMA_AXI_B_SEQ_SV
 
-class uvma_axi_b_seq_c extends uvm_sequence#(uvma_axi_b_item_c);
+class uvma_axi_b_seq_c extends uvm_sequence#(uvma_axi_base_seq_item_c);
 
    `uvm_object_utils(uvma_axi_b_seq_c)
    `uvm_declare_p_sequencer(uvma_axi_vsqr_c)
@@ -24,11 +24,11 @@ class uvma_axi_b_seq_c extends uvm_sequence#(uvma_axi_b_item_c);
    uvma_axi_cfg_c    cfg;
    uvma_axi_cntxt_c  cntxt;
 
-   uvma_axi_b_item_c   b_resp_item;
-   uvma_axi_b_item_c   b_preresp_item;
-   uvma_axi_aw_item_c  aw_req_item;
-   uvma_axi_aw_item_c  req_requette[][];
-   uvma_axi_w_item_c   w_req_item;
+   uvma_axi_base_seq_item_c   b_resp_item;
+   uvma_axi_base_seq_item_c   b_preresp_item;
+   uvma_axi_base_seq_item_c  aw_req_item;
+   uvma_axi_base_seq_item_c  req_requette[][];
+   uvma_axi_base_seq_item_c   w_req_item;
 
    int aw_id_tr[];
    int req_status[][];
@@ -51,10 +51,10 @@ endfunction : new
 
 function void uvma_axi_b_seq_c::create_item();
 
-   b_resp_item = uvma_axi_b_item_c::type_id::create("b_resp_item");
-   b_preresp_item = uvma_axi_b_item_c::type_id::create("b_preresp_item");
-   aw_req_item = uvma_axi_aw_item_c::type_id::create("aw_req_item");
-   w_req_item = uvma_axi_w_item_c::type_id::create("w_req_item");
+   b_resp_item = uvma_axi_base_seq_item_c::type_id::create("b_resp_item");
+   b_preresp_item = uvma_axi_base_seq_item_c::type_id::create("b_preresp_item");
+   aw_req_item = uvma_axi_base_seq_item_c::type_id::create("aw_req_item");
+   w_req_item = uvma_axi_base_seq_item_c::type_id::create("w_req_item");
 
 endfunction : create_item
 
@@ -75,6 +75,7 @@ task uvma_axi_b_seq_c::body();
 
       start_item(b_resp_item);
 
+          b_resp_item.channel = B_CHANNEL;
           if(aw_req_item.aw_valid && aw_req_item.aw_ready) begin
 
             `uvm_info(get_type_name(), "read request registere", UVM_HIGH)
