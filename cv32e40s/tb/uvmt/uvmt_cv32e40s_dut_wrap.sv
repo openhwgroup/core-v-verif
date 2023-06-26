@@ -59,7 +59,6 @@ module uvmt_cv32e40s_dut_wrap
     parameter int                    PMP_GRANULARITY                     = 0,
     parameter logic                  CLIC                                = 0,
     parameter int                    CLIC_ID_WIDTH                       = 5,
-    parameter int                    CLIC_INTTHRESHBITS                  = 8,
     parameter int                    DBG_NUM_TRIGGERS                    = 1,
     parameter rv32_e                 RV32                                = RV32I,
 
@@ -179,8 +178,7 @@ module uvmt_cv32e40s_dut_wrap
                       .PMP_PMPNCFG_RV       (PMP_PMPNCFG_RV),
                       .RV32                 (RV32),
                       .CLIC                 (CLIC),
-                      .CLIC_ID_WIDTH        (CLIC_ID_WIDTH),
-                      .CLIC_INTTHRESHBITS   (CLIC_INTTHRESHBITS)
+                      .CLIC_ID_WIDTH        (CLIC_ID_WIDTH)
                       )
     cv32e40s_wrapper_i
         (

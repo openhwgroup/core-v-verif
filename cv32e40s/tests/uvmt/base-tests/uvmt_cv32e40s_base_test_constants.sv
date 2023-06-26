@@ -127,7 +127,6 @@ parameter logic CLIC = CORE_PARAM_CLIC;
 `elsif PARAM_SET_1
    // Sat from the include file
 `else
-   parameter int  CORE_PARAM_CLIC_INTTHRESHBITS = 8;
    parameter int  CORE_PARAM_CLIC_ID_WIDTH = 5;
 `endif
 
