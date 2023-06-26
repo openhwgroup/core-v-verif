@@ -1,3 +1,8 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Test definition YAML for corev-dv test generator
+# corev-dv generator test
 name: corev_rand_pulp_hwloop_debug
 uvm_test: $(CV_CORE_LC)_instr_base_test
 description: >
