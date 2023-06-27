@@ -82,6 +82,7 @@ class cv32e40p_pulp_base_instr_stream extends cv32e40p_base_instr_stream;
     avail_regs_gpr    = new[num_of_avail_regs_gpr];
     if (num_of_avail_regs_rv32c < 9) avail_regs_rv32c = new[num_of_avail_regs_rv32c];
     else                             avail_regs_rv32c = new[8];
+
     if (use_same_reglist_per_instr) randomize_avail_regs();
     for (int i=0; i<num_of_instr_per_stream; i++) begin : GEN_DIRECTED_INSTR
       gen_directed_instr(.idx(i));
@@ -152,6 +153,8 @@ class cv32e40p_pulp_base_instr_stream extends cv32e40p_base_instr_stream;
                                          "Cannot randomize avail_regs_gpr")
     end
     if(avail_regs_rv32c.size() > 0) begin
+      if (SP inside {avail_regs_rv32c}) 
+        avail_regs_rv32c = new[avail_regs_rv32c.size() - 1] ({avail_regs_rv32c});
       `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(avail_regs_rv32c,
                                          unique{avail_regs_rv32c};
                                          foreach(avail_regs_rv32c[i]) {
@@ -163,7 +166,7 @@ class cv32e40p_pulp_base_instr_stream extends cv32e40p_base_instr_stream;
   endfunction : randomize_avail_regs
 
   function void randomize_gpr(riscv_instr instr, riscv_reg_t avail_regs[]={});
-    if (avail_regs.size() == 0) $fatal();
+    assert(avail_regs.size() > 0);
     `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
       if (avail_regs.size() > 0) {
         if (has_rs1) { rs1 inside {avail_regs};}
