@@ -230,7 +230,8 @@ class cv32e40p_instr extends riscv_instr;
     // special overrides for xcorev
 
     // for ALU, there exists variations for R and S types
-    if (category == ALU) begin
+    // for MAC, there exists variations for S types
+    if (category == ALU || category == MAC) begin
       if (instr_name inside {CV_CLIP, CV_CLIPU}) has_imm = 1'b1;
       if (format == S_FORMAT) has_rd = 1'b1;
     end
