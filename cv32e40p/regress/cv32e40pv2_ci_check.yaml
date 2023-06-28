@@ -49,12 +49,7 @@ builds:
     cfg: pulp_fpu_3cyclat
     dir: cv32e40p/sim/uvmt
 
-  uvmt_cv32e40p_pulp_fpu_4cyclat:
-    cmd: make comp
-    cfg: pulp_fpu_4cyclat
-    dir: cv32e40p/sim/uvmt
-
-  uvmt_cv32e40p_pulp_fpu_zfinx:
+    uvmt_cv32e40p_pulp_fpu_zfinx:
     cmd: make comp
     cfg: pulp_fpu_zfinx
     dir: cv32e40p/sim/uvmt
@@ -74,12 +69,7 @@ builds:
     cfg: pulp_fpu_zfinx_3cyclat
     dir: cv32e40p/sim/uvmt
 
-  uvmt_cv32e40p_pulp_fpu_zfinx_4cyclat:
-    cmd: make comp
-    cfg: pulp_fpu_zfinx_4cyclat
-    dir: cv32e40p/sim/uvmt
-
-  uvmt_cv32e40p_pulp_cluster:
+    uvmt_cv32e40p_pulp_cluster:
     cmd: make comp
     cfg: pulp_cluster
     dir: cv32e40p/sim/uvmt
@@ -104,12 +94,7 @@ builds:
     cfg: pulp_cluster_fpu_3cyclat
     dir: cv32e40p/sim/uvmt
 
-  uvmt_cv32e40p_pulp_cluster_fpu_4cyclat:
-    cmd: make comp
-    cfg: pulp_cluster_fpu_4cyclat
-    dir: cv32e40p/sim/uvmt
-
-  uvmt_cv32e40p_pulp_cluster_fpu_zfinx:
+    uvmt_cv32e40p_pulp_cluster_fpu_zfinx:
     cmd: make comp
     cfg: pulp_cluster_fpu_zfinx
     dir: cv32e40p/sim/uvmt
@@ -129,11 +114,6 @@ builds:
     cfg: pulp_cluster_fpu_zfinx_3cyclat
     dir: cv32e40p/sim/uvmt
 
-  uvmt_cv32e40p_pulp_cluster_fpu_zfinx_4cyclat:
-    cmd: make comp
-    cfg: pulp_cluster_fpu_zfinx_4cyclat
-    dir: cv32e40p/sim/uvmt
-
 
 # make sure that everything is compiling and running, with iss
 tests:
@@ -146,23 +126,19 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_1cyclat
       - uvmt_cv32e40p_pulp_fpu_2cyclat
       - uvmt_cv32e40p_pulp_fpu_3cyclat
-      - uvmt_cv32e40p_pulp_fpu_4cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_4cyclat
       - uvmt_cv32e40p_pulp_cluster
       - uvmt_cv32e40p_pulp_cluster_fpu
       - uvmt_cv32e40p_pulp_cluster_fpu_1cyclat
       - uvmt_cv32e40p_pulp_cluster_fpu_2cyclat
       - uvmt_cv32e40p_pulp_cluster_fpu_3cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_4cyclat
       - uvmt_cv32e40p_pulp_cluster_fpu_zfinx
       - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_2cyclat
       - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_3cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_4cyclat
     description: UVM Hello World Test
     dir: cv32e40p/sim/uvmt
     iss: 1
@@ -176,17 +152,13 @@ tests:
       - uvmt_cv32e40p_pulp
       - uvmt_cv32e40p_pulp_fpu
       - uvmt_cv32e40p_pulp_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_fpu_4cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_4cyclat
       - uvmt_cv32e40p_pulp_cluster
       - uvmt_cv32e40p_pulp_cluster_fpu
       - uvmt_cv32e40p_pulp_cluster_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_4cyclat
       - uvmt_cv32e40p_pulp_cluster_fpu_zfinx
       - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_1cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_4cyclat
     description: Interrupt directed test on the 5 configurations + FPU latencies and default
     dir: cv32e40p/sim/uvmt
     iss: 1
@@ -200,17 +172,13 @@ tests:
       - uvmt_cv32e40p_pulp
       - uvmt_cv32e40p_pulp_fpu
       - uvmt_cv32e40p_pulp_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_fpu_4cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_4cyclat
       - uvmt_cv32e40p_pulp_cluster
       - uvmt_cv32e40p_pulp_cluster_fpu
       - uvmt_cv32e40p_pulp_cluster_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_4cyclat
       - uvmt_cv32e40p_pulp_cluster_fpu_zfinx
       - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_1cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_4cyclat
     dir: cv32e40p/sim/uvmt
     iss: 1
     cov: 0
@@ -222,7 +190,6 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_1cyclat
       - uvmt_cv32e40p_pulp_fpu_2cyclat
       - uvmt_cv32e40p_pulp_fpu_3cyclat
-      - uvmt_cv32e40p_pulp_fpu_4cyclat
     dir: cv32e40p/sim/uvmt
     iss: 1
     cov: 0
@@ -234,7 +201,6 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_4cyclat
     dir: cv32e40p/sim/uvmt
     iss: 1
     cov: 0
@@ -246,7 +212,6 @@ tests:
   #     - uvmt_cv32e40p_pulp_fpu_1cyclat
   #     - uvmt_cv32e40p_pulp_fpu_2cyclat
   #     - uvmt_cv32e40p_pulp_fpu_3cyclat
-  #     - uvmt_cv32e40p_pulp_fpu_4cyclat
   #   dir: cv32e40p/sim/uvmt
   #   iss: 1
   #   cov: 0
@@ -258,7 +223,6 @@ tests:
   #     - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
   #     - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
   #     - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
-  #     - uvmt_cv32e40p_pulp_fpu_zfinx_4cyclat
   #   dir: cv32e40p/sim/uvmt
   #   iss: 1
   #   cov: 0
@@ -296,17 +260,13 @@ tests:
       - uvmt_cv32e40p_pulp
       - uvmt_cv32e40p_pulp_fpu
       - uvmt_cv32e40p_pulp_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_fpu_4cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_4cyclat
       - uvmt_cv32e40p_pulp_cluster
       - uvmt_cv32e40p_pulp_cluster_fpu
       - uvmt_cv32e40p_pulp_cluster_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_4cyclat
       - uvmt_cv32e40p_pulp_cluster_fpu_zfinx
       - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_1cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_4cyclat
     dir: cv32e40p/sim/uvmt
     iss: 1
     cov: 0
@@ -317,17 +277,13 @@ tests:
       - uvmt_cv32e40p_pulp
       - uvmt_cv32e40p_pulp_fpu
       - uvmt_cv32e40p_pulp_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_fpu_4cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_4cyclat
       - uvmt_cv32e40p_pulp_cluster
       - uvmt_cv32e40p_pulp_cluster_fpu
       - uvmt_cv32e40p_pulp_cluster_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_4cyclat
       - uvmt_cv32e40p_pulp_cluster_fpu_zfinx
       - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_1cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_4cyclat
     dir: cv32e40p/sim/uvmt
     iss: 1
     cov: 0
