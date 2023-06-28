@@ -18,6 +18,7 @@ plusargs: >
     +enable_zcmt_extension=1
     +enable_zcmp_extension=1
     +enable_dummy=1
+    +enable_hint=1
 ovpsim: >
     --override cpu/CLICLEVELS=256
     --override cpu/CLICXCSW=T
