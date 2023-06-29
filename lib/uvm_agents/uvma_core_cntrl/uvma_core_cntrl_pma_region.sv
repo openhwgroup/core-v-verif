@@ -130,6 +130,7 @@ function bit uvma_core_cntrl_pma_region_c::is_addr_in_region(bit [MAX_XLEN-1:0] 
    end else begin
       if (((byte_addr >> 2) >= word_addr_low) &&
           ((byte_addr >> 2) <= word_addr_high)) begin
+         return 1;
       end
    end
 
