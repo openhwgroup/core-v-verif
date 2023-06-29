@@ -288,7 +288,7 @@ function void uvma_pma_sb_c::check_obi_i_default_region(uvma_obi_memory_mon_trn_
      if (obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT] != cfg.region_overrides[override_region].cacheable) begin
         `uvm_error("PMAOBII", $sformatf("OBI I %s address: 0x%08x, override region: %0d cacheable bit mismatch, OBI: %0d, PMA: %0d",
                                          obi.access_type.name(), obi.address, override_region,
-                                         obi.memtype[1], cfg.regions[override_region].cacheable));
+                                         obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT], cfg.region_overrides[override_region].cacheable));
      end
 
      // TODO: this needs to be modified when atomics are introduced for X to preserve code compatibility
@@ -340,7 +340,7 @@ function void uvma_pma_sb_c::check_obi_i_mapped_region(uvma_obi_memory_mon_trn_c
      if (obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT] != cfg.region_overrides[override_region].cacheable) begin
         `uvm_error("PMAOBII", $sformatf("OBI I %s address: 0x%08x, override region: %0d cacheable bit mismatch, OBI: %0d, PMA: %0d",
                                          obi.access_type.name(), obi.address, override_region,
-                                         obi.memtype[1], cfg.regions[override_region].cacheable));
+                                         obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT], cfg.region_overrides[override_region].cacheable));
      end
 
      // TODO: this needs to be modified when atomics are introduced for X to preserve code compatibility
@@ -367,7 +367,7 @@ function void uvma_pma_sb_c::check_obi_i_mapped_region(uvma_obi_memory_mon_trn_c
      if (obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT] != cfg.regions[index].cacheable) begin
         `uvm_error("PMAOBII", $sformatf("OBI I %s address: 0x%08x, region: %0d cacheable bit mismatch, OBI: %0d, PMA: %0d",
                                          obi.access_type.name(), obi.address, index,
-                                         obi.memtype[1], cfg.regions[index].cacheable));
+                                         obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT], cfg.regions[index].cacheable));
      end
 
      // Check: atomic attributes should be 0
@@ -410,7 +410,7 @@ function void uvma_pma_sb_c::check_obi_d_default_region(uvma_obi_memory_mon_trn_
      if (obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT] != cfg.region_overrides[override_region].cacheable) begin
         `uvm_error("PMAOBII", $sformatf("OBI I %s address: 0x%08x, override region: %0d cacheable bit mismatch, OBI: %0d, PMA: %0d",
                                          obi.access_type.name(), obi.address, override_region,
-                                         obi.memtype[1], cfg.regions[override_region].cacheable));
+                                         obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT], cfg.region_overrides[override_region].cacheable));
      end
 
      // TODO: this needs to be modified when atomics are introduced for X to preserve code compatibility
@@ -458,7 +458,7 @@ function void uvma_pma_sb_c::check_obi_d_mapped_region(uvma_obi_memory_mon_trn_c
      if (obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT] != cfg.region_overrides[override_region].cacheable) begin
         `uvm_error("PMAOBII", $sformatf("OBI I %s address: 0x%08x, override region: %0d cacheable bit mismatch, OBI: %0d, PMA: %0d",
                                          obi.access_type.name(), obi.address, override_region,
-                                         obi.memtype[1], cfg.regions[override_region].cacheable));
+                                         obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT], cfg.region_overrides[override_region].cacheable));
      end
 
      // TODO: this needs to be modified when atomics are introduced for X to preserve code compatibility

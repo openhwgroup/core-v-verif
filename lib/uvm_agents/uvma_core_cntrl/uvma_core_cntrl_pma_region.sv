@@ -89,7 +89,7 @@
    /**
     * Simple lookup if address is in region
     */
-   extern function bit is_addr_in_region(bit [MAX_XLEN-1:0] byte_addr);
+   extern function bit is_addr_in_region(bit [MAX_XLEN-1:0] byte_addr, bit include_upper_word_address = 0);
 
    /**
     * Convert word address to byte address
@@ -119,12 +119,19 @@ function void uvma_core_cntrl_pma_region_c::do_print(uvm_printer printer);
 
 endfunction : do_print
 
-function bit uvma_core_cntrl_pma_region_c::is_addr_in_region(bit [MAX_XLEN-1:0] byte_addr);
+function bit uvma_core_cntrl_pma_region_c::is_addr_in_region(bit [MAX_XLEN-1:0] byte_addr, bit include_upper_word_address = 0);
 
    // Per User manual, do not include the upper word address
-   if (((byte_addr >> 2) >= word_addr_low) &&
-       ((byte_addr >> 2) < word_addr_high))
-      return 1;
+   if (!include_upper_word_address) begin
+      if (((byte_addr >> 2) >= word_addr_low) &&
+          ((byte_addr >> 2) < word_addr_high)) begin
+         return 1;
+      end
+   end else begin
+      if (((byte_addr >> 2) >= word_addr_low) &&
+          ((byte_addr >> 2) <= word_addr_high)) begin
+      end
+   end
 
    return 0;
 

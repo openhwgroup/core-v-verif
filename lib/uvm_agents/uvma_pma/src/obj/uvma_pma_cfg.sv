@@ -106,7 +106,7 @@ endfunction : get_pma_region_for_addr
 function int uvma_pma_cfg_c::get_pma_override_region_for_addr(bit[XLEN-1:0] addr);
 
    for (int i = 0; i < region_overrides.size(); i++) begin
-      if (region_overrides[i].is_addr_in_region(addr))
+      if (region_overrides[i].is_addr_in_region(addr, 1 /* include upper address boundary*/))
          return i;
    end
 
