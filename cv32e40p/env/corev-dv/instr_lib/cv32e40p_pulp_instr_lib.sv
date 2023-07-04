@@ -84,50 +84,6 @@ class cv32e40p_xpulp_sanity_stream_test extends cv32e40p_base_pulp_instr_stream;
 
 endclass : cv32e40p_xpulp_sanity_stream_test
 
-class cv32e40p_xpulp_simd_stream_test extends cv32e40p_base_pulp_instr_stream;
-  `uvm_object_utils(cv32e40p_xpulp_simd_stream_test)
-
-  function new(string name = "cv32e40p_xpulp_simd_stream_test");
-    super.new(name);
-  endfunction : new
-
-  function void post_randomize();
-    super.post_randomize();
-  endfunction : post_randomize
-
-  // overload gen_xpulp_instr
-  virtual function void gen_xpulp_instr(riscv_instr_name_t base_instr_list[$] = {});
-    riscv_instr instr;
-    randomize_avail_regs();
-    instr = cv32e40p_instr::get_xpulp_instr(.include_instr(base_instr_list), .include_category({SIMD}));
-    randomize_gpr(instr);
-    instr_list.push_back(instr);
-  endfunction
-
-endclass : cv32e40p_xpulp_simd_stream_test
-
-
-class cv32e40p_xpulp_mac_stream_test extends cv32e40p_base_pulp_instr_stream;
-  `uvm_object_utils(cv32e40p_xpulp_mac_stream_test)
-
-  function new(string name = "cv32e40p_xpulp_mac_stream_test");
-    super.new(name);
-  endfunction : new
-
-  function void post_randomize();
-    super.post_randomize();
-  endfunction : post_randomize
-
-  // overload gen_xpulp_instr
-  virtual function void gen_xpulp_instr(riscv_instr_name_t base_instr_list[$] = {});
-    riscv_instr instr;
-    randomize_avail_regs();
-    instr = cv32e40p_instr::get_xpulp_instr(.include_instr(base_instr_list), .include_category({MAC}));
-    randomize_gpr(instr);
-    instr_list.push_back(instr);
-  endfunction
-
-endclass : cv32e40p_xpulp_mac_stream_test
 
 //Class : cv32e40p_xpulp_rand_stream
 //Random xpulp stream class for randomized pulp instr stream
@@ -337,3 +293,53 @@ class cv32e40p_xpulp_short_rand_stream extends cv32e40p_xpulp_rand_stream;
   endfunction : post_randomize
 
 endclass : cv32e40p_xpulp_short_rand_stream
+
+//Class : cv32e40p_xpulp_simd_stream_test
+//extended from cv32e40p_xpulp_rand_stream
+//Generate only PULP-SIMD instr from pulp instr group
+class cv32e40p_xpulp_simd_stream_test extends cv32e40p_xpulp_rand_stream;
+  `uvm_object_utils(cv32e40p_xpulp_simd_stream_test)
+
+  constraint x_inst_gen_c {
+    num_of_xpulp_instr inside {[50:300]};
+  }
+
+  constraint rv_inst_gen_c {
+    num_of_riscv_instr inside {[10:150]};
+  }
+
+  function new(string name = "cv32e40p_xpulp_simd_stream_test");
+    super.new(name);
+  endfunction : new
+
+  function void post_randomize();
+    xpulp_include_category = {SIMD};
+    super.post_randomize();
+  endfunction : post_randomize
+
+endclass : cv32e40p_xpulp_simd_stream_test
+
+//Class : cv32e40p_xpulp_mac_stream_test
+//extended from cv32e40p_xpulp_rand_stream
+//Generate only PULP-MAC instr from pulp instr group
+class cv32e40p_xpulp_mac_stream_test extends cv32e40p_xpulp_rand_stream;
+  `uvm_object_utils(cv32e40p_xpulp_mac_stream_test)
+
+  constraint x_inst_gen_c {
+    num_of_xpulp_instr inside {[30:100]};
+  }
+
+  constraint rv_inst_gen_c {
+    num_of_riscv_instr inside {[10:100]};
+  }
+
+  function new(string name = "cv32e40p_xpulp_mac_stream_test");
+    super.new(name);
+  endfunction : new
+
+  function void post_randomize();
+    xpulp_include_category = {MAC};
+    super.post_randomize();
+  endfunction : post_randomize
+
+endclass : cv32e40p_xpulp_mac_stream_test
