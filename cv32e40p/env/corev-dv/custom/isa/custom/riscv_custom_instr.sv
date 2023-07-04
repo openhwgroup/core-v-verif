@@ -317,71 +317,72 @@ class cv32e40p_instr extends riscv_instr;
     if (group != RV32X) begin
       super.convert2asm(prefix);
     end
-
-    asm_str = format_string(get_instr_name(), MAX_INSTR_STR_LEN);
-    if(category != SYSTEM) begin
-      case(format)
-        I_FORMAT: begin // instr rd,rs1,imm more or less
-          if(category inside {POST_INC_LOAD, EVENT_LOAD})
-            asm_str_final = $sformatf("%0s %0s, %0s(%0s%0s)", asm_str, rd.name(), get_imm(), rs1.name(), get_post_incr_str());
-          else if (category == BITMANIP)
-            asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), get_imm());
-          else if (category == HWLOOP) begin
-            if (instr_name inside {CV_COUNT, CV_START, CV_END} )
-              asm_str_final = $sformatf("%0s %0b, %0s", asm_str, hw_loop_label, rs1.name());
-            else if (instr_name inside {CV_SETUP} )
-              asm_str_final = $sformatf("%0s %0b, %0s, %0s", asm_str, hw_loop_label, rs1.name(), get_imm());
-            else
-              asm_str_final = $sformatf("%0s %0b, %0s", asm_str, hw_loop_label, get_imm());
-          end else
-            asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), get_imm());
-        end
-        R_FORMAT: begin
-          if (category == POST_INC_LOAD)
-            asm_str_final = $sformatf("%0s %0s, %0s(%0s%0s)", asm_str, rd.name(), rs2.name(), rs1.name(), get_post_incr_str());
-
-          else if (category == POST_INC_STORE)
-            // rd is used as offset (rs3 in mnemonic, no use to add another register in the sv class just for this)
-            asm_str_final = $sformatf("%0s %0s, %0s(%0s%0s)", asm_str, rs2.name(), rd.name(), rs1.name(), get_post_incr_str());
-
-          else if (category == BITMANIP && instr_name inside {CV_FF1, CV_FL1, CV_CLB, CV_CNT})
-            asm_str_final = $sformatf("%0s %0s, %0s", asm_str, rd.name(), rs1.name());
-
-          else if (category == ALU) begin
-            if (instr_name inside {CV_ABS, CV_EXTHS, CV_EXTHZ, CV_EXTBS, CV_EXTBZ})
-              asm_str_final = $sformatf("%0s %0s, %0s", asm_str, rd.name(), rs1.name());
-            else if (instr_name inside {CV_CLIP, CV_CLIPU})
+    else begin
+      asm_str = format_string(get_instr_name(),MAX_PULP_INSTR_STR_LEN);
+      if(category != SYSTEM) begin
+        case(format)
+          I_FORMAT: begin // instr rd,rs1,imm more or less
+            if(category inside {POST_INC_LOAD, EVENT_LOAD})
+              asm_str_final = $sformatf("%0s %0s, %0s(%0s%0s)", asm_str, rd.name(), get_imm(), rs1.name(), get_post_incr_str());
+            else if (category == BITMANIP)
               asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), get_imm());
-            else asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), rs2.name());
+            else if (category == HWLOOP) begin
+              if (instr_name inside {CV_COUNT, CV_START, CV_END} )
+                asm_str_final = $sformatf("%0s %0b, %0s", asm_str, hw_loop_label, rs1.name());
+              else if (instr_name inside {CV_SETUP} )
+                asm_str_final = $sformatf("%0s %0b, %0s, %0s", asm_str, hw_loop_label, rs1.name(), get_imm());
+              else
+                asm_str_final = $sformatf("%0s %0b, %0s", asm_str, hw_loop_label, get_imm());
+            end else
+              asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), get_imm());
           end
+          R_FORMAT: begin
+            if (category == POST_INC_LOAD)
+              asm_str_final = $sformatf("%0s %0s, %0s(%0s%0s)", asm_str, rd.name(), rs2.name(), rs1.name(), get_post_incr_str());
 
-          else if (instr_name inside {CV_ABS_H, CV_ABS_B, CV_CPLXCONJ})
+            else if (category == POST_INC_STORE)
+              // rd is used as offset (rs3 in mnemonic, no use to add another register in the sv class just for this)
+              asm_str_final = $sformatf("%0s %0s, %0s(%0s%0s)", asm_str, rs2.name(), rd.name(), rs1.name(), get_post_incr_str());
+
+            else if (category == BITMANIP && instr_name inside {CV_FF1, CV_FL1, CV_CLB, CV_CNT})
               asm_str_final = $sformatf("%0s %0s, %0s", asm_str, rd.name(), rs1.name());
 
-          else
-            asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), rs2.name());
-        end
-        S_FORMAT: begin // instr rs1,rs2,imm
-          if(category == POST_INC_STORE)
-            asm_str_final = $sformatf("%0s %0s, %0s(%0s!)", asm_str, rs2.name(), get_imm(), rs1.name());
-          else if (category inside {ALU, MAC} )
-            asm_str_final = $sformatf("%0s %0s, %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), rs2.name(), get_imm());
-          else
-            asm_str_final = super.convert2asm(prefix);
-        end
-        B_FORMAT: begin
-          if (category == BRANCH_IMM) begin
-            asm_str_final = $sformatf("%0s %0s, %0s", asm_str, rs1.name(), get_imm() );
-          end else begin
-            asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rs1.name(), rs2.name(), get_imm());
-          end
-        end
+            else if (category == ALU) begin
+              if (instr_name inside {CV_ABS, CV_EXTHS, CV_EXTHZ, CV_EXTBS, CV_EXTBZ})
+                asm_str_final = $sformatf("%0s %0s, %0s", asm_str, rd.name(), rs1.name());
+              else if (instr_name inside {CV_CLIP, CV_CLIPU})
+                asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), get_imm());
+              else asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), rs2.name());
+            end
 
-        default: `uvm_fatal(`gfn, $sformatf("Unsupported format %0s [%0s]",
-                                            format.name(), instr_name.name()))
-      endcase
-    end else begin
-      super.convert2asm(prefix);
+            else if (instr_name inside {CV_ABS_H, CV_ABS_B, CV_CPLXCONJ})
+                asm_str_final = $sformatf("%0s %0s, %0s", asm_str, rd.name(), rs1.name());
+
+            else
+              asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), rs2.name());
+          end
+          S_FORMAT: begin // instr rs1,rs2,imm
+            if(category == POST_INC_STORE)
+              asm_str_final = $sformatf("%0s %0s, %0s(%0s!)", asm_str, rs2.name(), get_imm(), rs1.name());
+            else if (category inside {ALU, MAC} )
+              asm_str_final = $sformatf("%0s %0s, %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), rs2.name(), get_imm());
+            else
+              asm_str_final = super.convert2asm(prefix);
+          end
+          B_FORMAT: begin
+            if (category == BRANCH_IMM) begin
+              asm_str_final = $sformatf("%0s %0s, %0s", asm_str, rs1.name(), get_imm() );
+            end else begin
+              asm_str_final = $sformatf("%0s %0s, %0s, %0s", asm_str, rs1.name(), rs2.name(), get_imm());
+            end
+          end
+
+          default: `uvm_fatal(`gfn, $sformatf("Unsupported format %0s [%0s]",
+                                              format.name(), instr_name.name()))
+        endcase
+      end else begin
+        super.convert2asm(prefix);
+      end
     end
 
     if (comment == "") begin
