@@ -132,6 +132,11 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       soft num_of_riscv_instr inside {[50:300]};
   }
 
+  constraint avail_regs_pulp_instr_c {
+    num_of_avail_regs inside {[10:20]};
+    num_of_reserved_regs == 5;
+  }
+
   constraint gen_hwloop_count_c {
 
       num_loops_active inside {1,2,3};
@@ -216,6 +221,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
   endfunction : pre_randomize
 
   function void post_randomize();
+      uvm_default_printer.knobs.begin_elements = -1;
       this.print();
       gen_xpulp_hwloop_control_instr();
   endfunction : post_randomize
@@ -230,7 +236,10 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
           rd == gpr;
       )
       if(use_label_as_imm) begin
-          if(label.len() == 0) `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream", $sformatf("initialize_gpr_la_inst() have null label string for LA instr immediate"));
+          if(label.len() == 0) begin
+            `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream",
+                        $sformatf("initialize_gpr_la_inst() have null label string for LA instr immediate"))
+          end
           pseudo_instr.imm_str = $sformatf("%0s", label);
       end
       else begin
@@ -335,6 +344,9 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                                    .end_lbl_str(end_label_s),
                                    .instr_label(label_s));  //Gen Outer HWLOOP Instr - 1
 
+          reserved_rd.delete(); //no longer need to keep the hwloop1 reserved gprs
+          reserved_rd = {hwloop_avail_regs[0],hwloop_avail_regs[1],hwloop_avail_regs[2]}; //preserve count0 reg for nested loop
+
           if(!use_setup_inst[1] && !use_setup_inst[0] && setup_l0_before_l1_start) begin
 
               start_label_s = $sformatf("hwloop0_nested_start_stream%0d",stream_count);
@@ -347,13 +359,19 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                                        .end_lbl_str(end_label_s),
                                        .instr_label(""));  //Gen Inner HWLOOP Instr- 0
 
+              reserved_rd.delete(); //no longer need to keep the hwloop reserved gpr except for count0
+              reserved_rd = {hwloop_avail_regs[2]}; //preserve count0 reg for nested loop
+
               num_fill_instr_cv_end_to_loop_start_label[1] = num_fill_instr_cv_end_to_loop_start_label[1] - 2;
               if(gen_cv_count0_instr)
                   num_fill_instr_cv_end_to_loop_start_label[1] = num_fill_instr_cv_end_to_loop_start_label[1] - 1;
           end
 
           if(!use_setup_inst[1]) begin
-              insert_rand_instr(num_fill_instr_cv_end_to_loop_start_label[1]-1);
+              insert_rand_instr(.num_rand_instr(num_fill_instr_cv_end_to_loop_start_label[1]-1),
+                                .no_branch(1),
+                                .no_compressed(0),
+                                .no_fence(0));  //TODO: Fence instr allowed here?
           end
           else begin
               set_label_at_next_instr = 1; //no rand instr so next instruction must have a label
@@ -413,11 +431,22 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
           insert_rand_instr_with_label(label_s,1);
           insert_rand_instr(num_rem_hwloop1_instr-1);
 
+
           //LABEL HWLOOP1_NESTED_END:
           //Insert Some Random instructions
+          //compressed instr allowed here
+          reserved_rd.delete(); //hwloop nested body end so not required to keep the hwloop reserved gpr
           label_s = $sformatf("hwloop1_nested_end_stream%0d",stream_count);
-          insert_rand_instr_with_label(label_s,1);
-          insert_rand_instr($urandom_range(0,20));
+          insert_rand_instr_with_label(.label_str(label_s),
+                                       .label_is_pulp_hwloop_body_label(1),
+                                       .no_branch(1),
+                                       .no_compressed(0),
+                                       .no_fence(0)); //TODO: Fence instr allowed here?
+
+          insert_rand_instr(.num_rand_instr($urandom_range(0,20)),
+                            .no_branch(1),
+                            .no_compressed(0),
+                            .no_fence(0));
 
 
       //*************************************************************
@@ -474,19 +503,28 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
               //Insert Random instructions till Loop HWLOOP_START0/1 label ->  use_setup_inst ? 0 : num_fill_instr_cv_end_to_loop_start_label[0/1] - 1
               if(!use_setup_inst[hwloop_L])
-                  insert_rand_instr((num_fill_instr_cv_end_to_loop_start_label[hwloop_L]-1),1,0);  // allow compressed instructions here
+                  insert_rand_instr((num_fill_instr_cv_end_to_loop_start_label[hwloop_L]-1),1,0,0);  // allow compressed instructions here ; TODO: Fence instr allowed here?
 
               //LABEL HWLOOP_START0/1:
-              insert_rand_instr_with_label(start_label_s,1);
+              insert_rand_instr_with_label(start_label_s,1); // no branch, no compressed, no fence instructions inside hwloop
 
               //Insert Random instructions till Loop END0/1 label     ->  num_hwloop_instr[0/1]
-              insert_rand_instr(num_hwloop_instr[hwloop_L]-1);  // no branch, no compressed instructions inside hwloop
+              insert_rand_instr(num_hwloop_instr[hwloop_L]-1);  // no branch, no compressed, no fence instructions inside hwloop
 
               //LABEL HWLOOP_END0/1: Random instructions
-              insert_rand_instr_with_label(end_label_s,1);
+              //compressed instr allowed here
+              insert_rand_instr_with_label(.label_str(end_label_s),
+                                           .label_is_pulp_hwloop_body_label(1),
+                                           .no_branch(1),
+                                           .no_compressed(0),
+                                           .no_fence(0)); //TODO: Fence instr allowed here?
 
               //<Some more Random instructions>
-              insert_rand_instr(($urandom_range(0,30)),1,0);  // allow compressed instructions here
+              // allow compressed, fence instructions here
+              insert_rand_instr(.num_rand_instr($urandom_range(0,30)),
+                                .no_branch(1),
+                                .no_compressed(0),
+                                .no_fence(0));
           end
       end
 
@@ -506,18 +544,20 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
       //with cv.setupi the loop must start immidiately after setup instruction so we dont need to have fill instructions here
       if(num_hwloop_instr[hwloop_L]>=31) 
-          `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream", $sformatf("gen_cv_setupi_instr() cv_setupi uimmS value more than 30"));
+          `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream", $sformatf("gen_cv_setupi_instr() cv_setupi uimmS value more than 30"))
       
       if(setupi_uimm[16:12] < 3)
-          `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream", $sformatf("gen_cv_setupi_instr() cv_setupi uimmS value less than 3"));
+          `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream", $sformatf("gen_cv_setupi_instr() cv_setupi uimmS value less than 3"))
           //setupi_uimm[16:12] = 3;  //HWLoop body must contain at least 3 instructions
       
       hwloop_setupi_instr[hwloop_L].imm = setupi_uimm;
       hwloop_setupi_instr[hwloop_L].extend_imm();
 
       if(use_str_uimmS) begin
-          if(str_uimmS.len() == 0)
-              `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream",$sformatf("gen_cv_setupi_instr() have null uimmS string for CV_SETUPI instr immediate"));
+          if(str_uimmS.len() == 0) begin
+              `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream",
+                          $sformatf("gen_cv_setupi_instr() have null uimmS string for CV_SETUPI instr immediate"))
+          end
           hwloop_setupi_instr[hwloop_L].imm_str = $sformatf("%0d, %0s",$unsigned(setupi_uimm[11:0]),str_uimmS);
       end
       else begin
@@ -529,7 +569,11 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
   endfunction : gen_cv_setupi_instr
 
-  virtual function void gen_cv_setup_instr(bit hwloop_L=0,bit use_str_uimmL=0,string str_uimmL="",bit add_label=0,string label_str="");
+  virtual function void gen_cv_setup_instr(bit hwloop_L=0,
+                                           bit use_str_uimmL=0,
+                                           string str_uimmL="",
+                                           bit add_label=0,
+                                           string label_str="");
 
       bit[11:0] setup_uimmL;
 
@@ -539,14 +583,16 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
       //randomize immediates
       //with cv.setup the loop must start immidiately after setup instruction so we dont need to have fill instructions here
-      setup_uimmL = num_hwloop_instr[hwloop_L] + 1;  //+ 1 reason:  End addr of HWLoop must point to instr just after the last one of Loop body
+      setup_uimmL = num_hwloop_instr[hwloop_L] + 1; //+ 1 : End addr of HWLoop point to instr just after the last one of Loop body
 
       hwloop_setup_instr[hwloop_L].imm = setup_uimmL;
       hwloop_setup_instr[hwloop_L].extend_imm();
 
       if(use_str_uimmL) begin
-          if(str_uimmL.len() == 0)
-              `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream",$sformatf("gen_cv_setup_instr() have null uimmL string for CV_SETUP instr immediate"));
+          if(str_uimmL.len() == 0) begin
+              `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream",
+                          $sformatf("gen_cv_setup_instr() have null uimmL string for CV_SETUP instr immediate"))
+          end
           hwloop_setup_instr[hwloop_L].imm_str = $sformatf("%0s", str_uimmL);
       end
       else begin
@@ -560,7 +606,11 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
   endfunction : gen_cv_setup_instr
 
-  virtual function void gen_cv_starti_instr(bit hwloop_L=0,bit use_str_uimmL=0,string str_uimmL="",bit add_label=0,string label_str="");
+  virtual function void gen_cv_starti_instr(bit hwloop_L=0,
+                                            bit use_str_uimmL=0,
+                                            string str_uimmL="",
+                                            bit add_label=0,
+                                            string label_str="");
 
       bit[11:0] starti_uimmL;
 
@@ -574,8 +624,10 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       hwloop_starti_instr[hwloop_L].extend_imm();
 
       if(use_str_uimmL) begin
-          if(str_uimmL.len() == 0)
-              `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream",$sformatf("gen_cv_starti_instr() have null uimmL string for CV_STARTI instr immediate"));
+          if(str_uimmL.len() == 0) begin
+              `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream",
+                         $sformatf("gen_cv_starti_instr() have null uimmL string for CV_STARTI instr immediate"))
+          end
           hwloop_starti_instr[hwloop_L].imm_str = $sformatf("%0s", str_uimmL);
       end
       else begin
@@ -600,7 +652,11 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
   endfunction : gen_cv_start_instr
 
-  virtual function void gen_cv_endi_instr(bit hwloop_L=0,bit use_str_uimmL=0,string str_uimmL="",bit add_label=0,string label_str="");
+  virtual function void gen_cv_endi_instr(bit hwloop_L=0,
+                                          bit use_str_uimmL=0,
+                                          string str_uimmL="",
+                                          bit add_label=0,
+                                          string label_str="");
 
       bit[11:0] endi_uimmL;
 
@@ -609,17 +665,20 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       hwloop_endi_instr[hwloop_L].hw_loop_label = hwloop_L;
 
       //randomize immediates
-      //TODO: check : while using cv_endi there is possiblity of some other instr before loop start thats why using a count for such fill instructions
-      //add 1 to imm as - End address of an HWLoop must point to the instruction just after the last one of the HWLoop body;
+      //TODO: check : while using cv_endi there is possiblity of some other instr before loop start
+      //thats why using a count for such fill instructions
+
+      //add 1 to imm - End addr of an HWLoop must point to the instr just after the last one of the HWLoop body
       endi_uimmL = num_fill_instr_cv_end_to_loop_start_label[hwloop_L] + num_hwloop_instr[hwloop_L] + 1;
 
-      //std::randomize(hwloop_endi_instr[hwloop_L].imm) with {hwloop_endi_instr[hwloop_L].imm == endi_uimmL;};
       hwloop_endi_instr[hwloop_L].imm = endi_uimmL;
       hwloop_endi_instr[hwloop_L].extend_imm();
 
       if(use_str_uimmL) begin
-        if(str_uimmL.len() == 0)
-            `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream", $sformatf("gen_cv_endi_instr() have null uimmL string for CV_ENDI instr immediate"));
+        if(str_uimmL.len() == 0) begin
+            `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream",
+                        $sformatf("gen_cv_endi_instr() have null uimmL string for CV_ENDI instr immediate"))
+        end
         hwloop_endi_instr[hwloop_L].imm_str = $sformatf("%0s", str_uimmL);
       end
       else begin
@@ -692,11 +751,21 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
       if(use_setup_inst[hwloop_L]) begin //HWLOOP with CV.SETUP/I instruction
           if(use_loop_setupi_inst[hwloop_L]) begin
-              gen_cv_setupi_instr(.hwloop_L(hwloop_L),.use_str_uimmS(1),.str_uimmS(end_lbl_str),.add_label(set_label_for_first_instr),.label_str(instr_label));
+              gen_cv_setupi_instr(.hwloop_L(hwloop_L),
+                                  .use_str_uimmS(1),
+                                  .str_uimmS(end_lbl_str),
+                                  .add_label(set_label_for_first_instr),
+                                  .label_str(instr_label));
+
               instr_list.push_back(hwloop_setupi_instr[hwloop_L]);
           end
           else begin
-              gen_cv_setup_instr(.hwloop_L(hwloop_L),.use_str_uimmL(1),.str_uimmL(end_lbl_str),.add_label(set_label_for_first_instr),.label_str(instr_label));
+              gen_cv_setup_instr(.hwloop_L(hwloop_L),
+                                 .use_str_uimmL(1),
+                                 .str_uimmL(end_lbl_str),
+                                 .add_label(set_label_for_first_instr),
+                                 .label_str(instr_label));
+
               instr_list.push_back(hwloop_setup_instr[hwloop_L]);
           end
       end
@@ -705,11 +774,19 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
               set_label = set_label_for_first_instr;
                //(1) Gen CV_START/I instruction
               if(use_loop_starti_inst[hwloop_L]) begin
-                  gen_cv_starti_instr(.hwloop_L(hwloop_L),.use_str_uimmL(1),.str_uimmL(str_lbl_str),.add_label(set_label),.label_str(instr_label));
+                  gen_cv_starti_instr(.hwloop_L(hwloop_L),
+                                      .use_str_uimmL(1),
+                                      .str_uimmL(str_lbl_str),
+                                      .add_label(set_label),
+                                      .label_str(instr_label));
+
                   instr_list.push_back(hwloop_starti_instr[hwloop_L]);
               end
               else begin
-                  gen_cv_start_instr(.hwloop_L(hwloop_L),.add_label(set_label),.label_str(instr_label));
+                  gen_cv_start_instr(.hwloop_L(hwloop_L),
+                                     .add_label(set_label),
+                                     .label_str(instr_label));
+
                   instr_list.push_back(hwloop_start_instr[hwloop_L]);
               end
               order_count++;
@@ -717,7 +794,12 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                //(2) Gen CV_END/I instruction ;
                //TODO:No label added as this order is not randomized 
               if(use_loop_endi_inst[hwloop_L]) begin
-                  gen_cv_endi_instr(.hwloop_L(hwloop_L),.use_str_uimmL(1),.str_uimmL(end_lbl_str),.add_label(0),.label_str(""));
+                  gen_cv_endi_instr(.hwloop_L(hwloop_L),
+                                    .use_str_uimmL(1),
+                                    .str_uimmL(end_lbl_str),
+                                    .add_label(0),
+                                    .label_str(""));
+
                   instr_list.push_back(hwloop_endi_instr[hwloop_L]);
               end
               else begin
@@ -742,19 +824,13 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       end
   endfunction : gen_hwloop_control_instr
 
-  virtual function void insert_rand_instr(int unsigned num_rand_instr, bit no_branch=1, bit no_compressed=1);
+  virtual function void insert_rand_instr(int unsigned num_rand_instr,
+                                          bit no_branch=1,
+                                          bit no_compressed=1,
+                                          bit no_fence=1);
+
       riscv_instr instr;
       int i;
-
-      //Exclude list for all random instruction generation part
-      riscv_exclude_instr = {  CV_BEQIMM, CV_BNEIMM,
-                               CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI,
-                               CV_ELW,
-                               C_ADDI16SP,
-                               WFI,
-                               URET, SRET, MRET, DRET,
-                               ECALL,
-                               JALR, JAL, C_JR, C_JALR, C_J, C_JAL};
 
       //use cfg for ebreak
       if(cfg.no_ebreak)
@@ -764,40 +840,42 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
           riscv_exclude_instr = {riscv_exclude_instr, BEQ, BNE, BLT, BGE, BLTU, BGEU, C_BEQZ, C_BNEZ};
 
       if(no_compressed)
-          riscv_exclude_group = {RV32C};
+          riscv_exclude_group = {riscv_exclude_group, RV32C};
 
-      `uvm_info("cv32e40p_xpulp_hwloop_base_stream", $sformatf("insert_rand_instr - Number of Random instr to be generated =  %0d",num_rand_instr), UVM_HIGH);
+      if(no_fence)
+          riscv_exclude_instr = {riscv_exclude_instr, FENCE, FENCE_I};
 
-      for (i = 0; i < num_rand_instr; i++) begin
+      `uvm_info("cv32e40p_xpulp_hwloop_base_stream",
+                 $sformatf("insert_rand_instr- Number of Random instr to generate= %0d",num_rand_instr),
+                 UVM_HIGH)
+
+      i = 0;
+      while (i < num_rand_instr) begin
           //Create and Randomize array for avail_regs each time to ensure randomization
           avail_regs = new[num_of_avail_regs];
           randomize_avail_regs();
 
           instr = riscv_instr::type_id::create($sformatf("instr_%0d", i));
-          instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),.exclude_group(riscv_exclude_group));
+          instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                              .exclude_group(riscv_exclude_group));
 
           //randomize GPRs for each instruction
           randomize_gpr(instr);
           //randomize immediates for each instruction
           randomize_riscv_instr_imm(instr);
           instr_list.push_back(instr);
+          i++;
       end
 
   endfunction
 
-  virtual function void insert_rand_instr_with_label(string label_str, bit label_is_pulp_hwloop_body_label=0, bit no_branch=1, bit no_compressed=1);
+  virtual function void insert_rand_instr_with_label(string label_str,
+                                                     bit label_is_pulp_hwloop_body_label=0,
+                                                     bit no_branch=1,
+                                                     bit no_compressed=1,
+                                                     bit no_fence=1);
       riscv_instr instr;
       cv32e40p_instr cv32_instr;
-
-      //Exclude list for all random instruction generation part
-      riscv_exclude_instr = {  CV_BEQIMM, CV_BNEIMM,
-                               CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI,
-                               CV_ELW,
-                               C_ADDI16SP,
-                               WFI,
-                               URET, SRET, MRET, DRET,
-                               ECALL,
-                               JALR, JAL, C_JR, C_JALR, C_J, C_JAL};
 
       //use cfg for ebreak
       if(cfg.no_ebreak)
@@ -807,14 +885,18 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
           riscv_exclude_instr = {riscv_exclude_instr, BEQ, BNE, BLT, BGE, BLTU, BGEU, C_BEQZ, C_BNEZ};
 
       if(no_compressed)
-          riscv_exclude_group = {RV32C};
+          riscv_exclude_group = {riscv_exclude_group, RV32C};
+
+      if(no_fence)
+          riscv_exclude_instr = {riscv_exclude_instr, FENCE, FENCE_I};
 
       //Create and Randomize array for avail_regs each time to ensure randomization
       avail_regs = new[num_of_avail_regs];
       randomize_avail_regs();
 
       instr = riscv_instr::type_id::create($sformatf("instr_%0s", label_str));
-      instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),.exclude_group(riscv_exclude_group));
+      instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                          .exclude_group(riscv_exclude_group));
 
       //randomize GPRs for each instruction
       randomize_gpr(instr);
@@ -855,11 +937,13 @@ class cv32e40p_xpulp_short_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stre
       num_loops_active inside {1};
 
       foreach(hwloop_counti[i])
-          hwloop_counti[i] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150, [2048:4095] := 50, 4095 := 300}; //TODO: check 0 is valid
+        hwloop_counti[i] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
+                               [2048:4095] := 50, 4095 := 300}; //TODO: check 0 is valid
 
       //TODO: for rs1 32 bit count ?
       foreach(hwloop_count[i])
-          hwloop_count[i] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150, [2048:4094] := 50, 4095 := 300};//TODO: check 0 is valid
+        hwloop_count[i] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
+                              [2048:4094] := 50, 4095 := 300};//TODO: check 0 is valid
   }
 
   constraint num_hwloop_setupi_instr_c {
