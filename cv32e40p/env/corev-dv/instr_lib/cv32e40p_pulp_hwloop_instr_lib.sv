@@ -1136,3 +1136,127 @@ class cv32e40p_xpulp_long_hwloop_stream extends cv32e40p_xpulp_hwloop_base_strea
 
 endclass : cv32e40p_xpulp_long_hwloop_stream
 
+//Class: cv32e40p_xpulp_hwloop_isa_stress_stream
+//Hwloop stream with more randomized instr categories and groups
+//to focus on running more combinations inside hwloop
+class cv32e40p_xpulp_hwloop_isa_stress_stream extends cv32e40p_xpulp_hwloop_base_stream;
+
+  rand riscv_instr_category_t   rand_exclude_category[];
+  rand bit                      exclude_floating_pt_instr;
+
+  `uvm_object_utils_begin(cv32e40p_xpulp_hwloop_isa_stress_stream)
+      `uvm_field_int(num_loops_active, UVM_DEFAULT)
+      `uvm_field_int(gen_nested_loop, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_setup_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_counti_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_starti_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_endi_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_setupi_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(hwloop_count, UVM_DEFAULT)
+      `uvm_field_sarray_int(hwloop_counti, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_hwloop_instr, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_hwloop_setupi_instr, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_fill_instr_cv_end_to_loop_start_label, UVM_DEFAULT)
+      `uvm_field_int(num_fill_instr_in_loop1_till_loop0_setup, UVM_DEFAULT)
+      `uvm_field_int(setup_l0_before_l1_start, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_fill_instr_cv_start_to_loop_start_label, UVM_DEFAULT)
+      `uvm_field_int(exclude_floating_pt_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_category_t,rand_exclude_category, UVM_DEFAULT)
+  `uvm_object_utils_end
+
+  constraint excl_f_inst_c {
+      exclude_floating_pt_instr dist {0 := 90, 1 := 10};
+  }
+
+  constraint exc_category_c {
+      rand_exclude_category.size() inside {[4:6]};
+      unique {rand_exclude_category};
+      foreach(rand_exclude_category[i]) {
+          rand_exclude_category[i] dist { SIMD := 80,MAC := 75,
+                                          BITMANIP := 70,ALU := 60,
+                                          POST_INC_LOAD := 30,POST_INC_STORE := 30,
+                                          ARITHMETIC := 5,LOGICAL := 5
+                                        };
+      }
+  }
+
+
+  function new(string name = "cv32e40p_xpulp_hwloop_isa_stress_stream");
+      super.new(name);
+  endfunction : new
+
+  function void pre_randomize();
+      super.pre_randomize();
+  endfunction : pre_randomize
+
+  function void post_randomize();
+      cv32e40p_exclude_regs = {cv32e40p_exclude_regs,cv32e40p_reserved_regs};
+      super.post_randomize();
+      this.print();
+  endfunction : post_randomize
+
+  virtual function void insert_rand_instr(int unsigned num_rand_instr,
+                                          bit no_branch=1,
+                                          bit no_compressed=1,
+                                          bit no_fence=1);
+
+      riscv_instr         instr;
+      cv32e40p_instr      cv32_instr;
+      int i;
+
+      //use cfg for ebreak
+      if(cfg.no_ebreak)
+          riscv_exclude_instr = {riscv_exclude_instr, EBREAK, C_EBREAK};
+
+      if(no_branch)
+          riscv_exclude_instr = {riscv_exclude_instr, BEQ, BNE, BLT, BGE, BLTU, BGEU, C_BEQZ, C_BNEZ};
+
+      if(no_compressed)
+          riscv_exclude_group = {riscv_exclude_group, RV32C};
+
+      if(no_fence)
+          riscv_exclude_instr = {riscv_exclude_instr, FENCE, FENCE_I};
+
+      if(exclude_floating_pt_instr)
+          riscv_exclude_group = {riscv_exclude_group, RV32F, RV32ZFINX};
+
+      `uvm_info("cv32e40p_xpulp_hwloop_isa_stress_stream",
+                 $sformatf("Insert_rand_instr- Number of Random instr to generate = %0d",num_rand_instr),
+                 UVM_HIGH)
+
+      i = 0;
+      while (i < num_rand_instr) begin
+          //Create and Randomize array for avail_regs each time to ensure randomization
+          avail_regs = new[num_of_avail_regs];
+          randomize_avail_regs();
+
+          cv32e40p_avail_regs = new[num_of_avail_regs];
+          std::randomize(cv32e40p_avail_regs) with {  foreach(cv32e40p_avail_regs[i]) {
+                                                        !(cv32e40p_avail_regs[i] inside {cv32e40p_exclude_regs});
+                                                   }
+                                                };
+
+          instr = riscv_instr::type_id::create();
+          cv32_instr = cv32e40p_instr::type_id::create();
+          instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                              .exclude_category(rand_exclude_category),
+                                              .exclude_group(riscv_exclude_group));
+
+          //randomize GPRs and immediates for each instruction
+          if(instr.group != RV32X) begin
+            randomize_gpr(instr);
+            randomize_riscv_instr_imm(instr);
+            instr_list.push_back(instr);
+          end
+          else begin
+            $cast(cv32_instr,instr);
+            randomize_cv32e40p_gpr(cv32_instr, cv32e40p_avail_regs);
+            randomize_cv32e40p_instr_imm(cv32_instr);
+            instr_list.push_back(cv32_instr);
+          end
+          i++;
+      end
+
+  endfunction
+endclass : cv32e40p_xpulp_hwloop_isa_stress_stream
+
