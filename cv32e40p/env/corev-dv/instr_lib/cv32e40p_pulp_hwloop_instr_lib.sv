@@ -271,7 +271,6 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       num_fill_instr_cv_start_to_loop_start_label[0] = num_fill_instr_cv_end_to_loop_start_label[0] + 1;//TODO: can be randomized?
       num_fill_instr_cv_start_to_loop_start_label[1] = num_fill_instr_cv_end_to_loop_start_label[1] + 1;//TODO: can be randomized?
 
-      num_rem_hwloop1_instr = num_hwloop_instr[1] - (num_hwloop_instr[0] + num_fill_instr_cv_end_to_loop_start_label[0] + num_fill_instr_in_loop1_till_loop0_setup + 2);
       set_label_at_next_instr = 0;
 
       if(use_setup_inst[1] && use_loop_setupi_inst[1])
@@ -279,6 +278,9 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
       if(use_setup_inst[0] && use_loop_setupi_inst[0])
           num_hwloop_instr[0] = num_hwloop_setupi_instr[0];
+
+      //calc num_rem_hwloop1_instr after final num_hwloop_instr is available
+      num_rem_hwloop1_instr = num_hwloop_instr[1] - (num_hwloop_instr[0] + num_fill_instr_cv_end_to_loop_start_label[0] + num_fill_instr_in_loop1_till_loop0_setup + 2);
 
       //*************************************************************
       //*******************NESTED HWLOOP*****************************
