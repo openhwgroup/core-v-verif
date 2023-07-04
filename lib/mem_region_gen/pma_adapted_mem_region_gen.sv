@@ -434,7 +434,7 @@ class pma_adapted_memory_regions_c;
       // In lieu of creating a typed queue to restrict size of process_stack, do a check on max size here to ensure the queue
       // does not grow beyond expected bounds
       if (process_stack.size() > MAX_PROCESS_STACK_SIZE) begin
-        `uvm_fatal("PMAPROCSTACK", $sformatf("process_stack size of %0d is greater than maximum allowed: %0s", process_stack.size(), MAX_PROCESS_STACK_SIZE));
+        display_fatal($sformatf("process_stack size of %0d is greater than maximum allowed: %0s", process_stack.size(), MAX_PROCESS_STACK_SIZE));
       end
 
       fsm_state_transitions;

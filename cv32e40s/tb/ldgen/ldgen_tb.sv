@@ -24,11 +24,15 @@ import uvmt_cv32e40s_base_test_pkg::*;
 `include "cv32e40s_ldgen.sv"
 
 module ldgen_tb;
+  cv32e40s_ldgen_c linker_generator;
 
   initial begin : ldgen_start
-    cv32e40s_ldgen_c linker_generator;
     linker_generator = new();
     linker_generator.gen_pma_linker_scripts();
+  end
+
+  final begin : ldgen_end
+    linker_generator.display_message("Linker script generation complete");
   end
 
 endmodule : ldgen_tb

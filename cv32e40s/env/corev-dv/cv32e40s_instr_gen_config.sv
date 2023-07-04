@@ -28,6 +28,7 @@ class cv32e40s_instr_gen_config extends riscv_instr_gen_config;
   bit enable_fast_interrupt_handler;
   bit enable_pma;
   bit enable_dummy;
+  bit enable_hint;
   bit exit_on_debug_exception;
   cv32e40s_pma_cfg pma_cfg;
 
@@ -95,6 +96,7 @@ class cv32e40s_instr_gen_config extends riscv_instr_gen_config;
     `uvm_field_int(enable_pma,                    UVM_DEFAULT)
     `uvm_field_int(exit_on_debug_exception,       UVM_DEFAULT)
     `uvm_field_int(enable_dummy,                  UVM_DEFAULT)
+    `uvm_field_int(enable_hint,                   UVM_DEFAULT)
   `uvm_object_utils_end
 
   function new(string name="");
@@ -104,6 +106,7 @@ class cv32e40s_instr_gen_config extends riscv_instr_gen_config;
     get_bool_arg_value("+enable_pma=", enable_pma);
     get_bool_arg_value("+exit_on_debug_exception=", exit_on_debug_exception);
     get_bool_arg_value("+enable_dummy=", enable_dummy);
+    get_bool_arg_value("+enable_hint=", enable_hint);
 
     if (enable_pma) begin
       pma_cfg = cv32e40s_pma_cfg::type_id::create("pma_cfg");
