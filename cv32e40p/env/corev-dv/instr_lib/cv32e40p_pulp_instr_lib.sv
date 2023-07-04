@@ -289,8 +289,14 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
       avail_regs = new[num_of_avail_regs];
       randomize_avail_regs();
 
+      //Dont include RV32X instr here again
+      riscv_exclude_group = {riscv_exclude_group, RV32X};
+
       riscv_instr_list[i] = riscv_instr::type_id::create($sformatf("riscv_instr_list_%0d", i));
-      riscv_instr_list[i] = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr)); //FIXME: reduce frequency of pulp instructions
+
+      //exclude pulp instructions here
+      riscv_instr_list[i] = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                                        .exclude_group(riscv_exclude_group));
 
       //randomize GPRs for each instruction
       randomize_gpr(riscv_instr_list[i]);
