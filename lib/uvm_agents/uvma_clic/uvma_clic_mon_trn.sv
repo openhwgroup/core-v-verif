@@ -22,13 +22,13 @@
 /**
  * Object rebuilt from the Interrupt monitor Analog of uvma_clic_seq_item_c.
  */
-class uvma_clic_mon_trn_c extends uvml_trn_mon_trn_c;
+class uvma_clic_mon_trn_c#(CLIC_ID_WIDTH) extends uvml_trn_mon_trn_c;
 
    uvma_clic_mon_action_enum action;
 
    int unsigned  id;
 
-   `uvm_object_utils_begin(uvma_clic_mon_trn_c)
+   `uvm_object_utils_begin(uvma_clic_mon_trn_c#(CLIC_ID_WIDTH))
       `uvm_field_enum(uvma_clic_mon_action_enum, action, UVM_DEFAULT)
       `uvm_field_int(id, UVM_DEFAULT)
    `uvm_object_utils_end

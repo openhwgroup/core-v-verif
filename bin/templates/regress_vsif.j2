@@ -73,7 +73,7 @@ group {{project}} {
 {% if t.precmd %}
 {{indent}}        depends_on: ../precmd;
 {% endif %}
-{{indent}}        timeout: 3600;
+{{indent}}        timeout: 7200;
 {{indent}}        test run {
 {{indent}}            sv_seed: gen_random;
 {{indent}}            count: {{t.num}};

@@ -25,17 +25,17 @@
  * Component running Clock & Reset sequences extending uvma_clic_seq_base_c.
  * Provides sequence items for uvma_clic_drv_c.
  */
-class uvma_clic_sqr_c extends uvm_sequencer#(
+class uvma_clic_sqr_c#(CLIC_ID_WIDTH) extends uvm_sequencer#(
    .REQ(uvma_clic_seq_item_c),
    .RSP(uvma_clic_seq_item_c)
 );
 
    // Objects
-   uvma_clic_cfg_c    cfg;
-   uvma_clic_cntxt_c  cntxt;
+   uvma_clic_cfg_c                   cfg;
+   uvma_clic_cntxt_c#(CLIC_ID_WIDTH) cntxt;
 
 
-   `uvm_component_utils_begin(uvma_clic_sqr_c)
+   `uvm_component_utils_begin(uvma_clic_sqr_c#(CLIC_ID_WIDTH))
       `uvm_field_object(cfg  , UVM_DEFAULT)
       `uvm_field_object(cntxt, UVM_DEFAULT)
    `uvm_component_utils_end
@@ -70,7 +70,7 @@ function void uvma_clic_sqr_c::build_phase(uvm_phase phase);
       `uvm_fatal("CFG", "Configuration handle is null")
    end
 
-   void'(uvm_config_db#(uvma_clic_cntxt_c)::get(this, "", "cntxt", cntxt));
+   void'(uvm_config_db#(uvma_clic_cntxt_c#(CLIC_ID_WIDTH))::get(this, "", "cntxt", cntxt));
    if (cntxt == null) begin
       `uvm_fatal("CNTXT", "Context handle is null")
    end

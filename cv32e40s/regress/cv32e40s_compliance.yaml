@@ -1,7 +1,7 @@
 # YAML file to specify a regression testlist
 ---
 # Header
-name: cv32_compliance
+name: cv32e40s_compliance
 description: Runs all RISCV compliance tests on the CV32E40S
 
 # List of builds

@@ -1,27 +1,48 @@
+// Copyright 2022 Silicon Labs, Inc.
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Licensed under the Solderpad Hardware License v 2.1 (the "License"); you may
+// not use this file except in compliance with the License, or, at your option,
+// the Apache License version 2.0.
+//
+// You may obtain a copy of the License at
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work
+// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
 `default_nettype none
+
 
 module uvmt_cv32e40s_pmp_assert
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
-  import uvmt_cv32e40s_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
   #(
-    parameter int       PMP_GRANULARITY   = 0,
-    parameter int       PMP_NUM_REGIONS   = 0,
-    parameter int       IS_INSTR_SIDE     = 0,
-    parameter mseccfg_t MSECCFG_RESET_VAL = MSECCFG_DEFAULT
+    parameter int        PMP_GRANULARITY,
+    parameter int        PMP_NUM_REGIONS,
+    parameter int        IS_INSTR_SIDE,
+    parameter mseccfg_t  PMP_MSECCFG_RV
   )
   (
    // Clock and Reset
    input wire            clk,
    input wire            rst_n,
 
-   // Interface to CSRs
+   // CSRs
    input wire pmp_csr_t  csr_pmp_i,
 
-   // Privilege mode
+   // Mode Info
    input wire privlvl_t  priv_lvl_i,
+   input wire            bus_trans_dbg,
 
-   // Access checking
+   // Access Checking
    input wire [33:0]     pmp_req_addr_i,
    input wire pmp_req_e  pmp_req_type_i,
    input wire            pmp_req_err_o,
@@ -37,6 +58,9 @@ module uvmt_cv32e40s_pmp_assert
   );
 
 
+  string info_tag = "CV32E40S_PMP_ASSERT";
+
+
   // Defaults
 
   default clocking @(posedge clk); endclocking
@@ -48,8 +72,11 @@ module uvmt_cv32e40s_pmp_assert
   match_status_t  match_status;
   uvmt_cv32e40s_pmp_model #(
     .PMP_GRANULARITY  (PMP_GRANULARITY),
-    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS)
+    .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
+    .DM_REGION_START  (CORE_PARAM_DM_REGION_START),
+    .DM_REGION_END    (CORE_PARAM_DM_REGION_END)
   ) model_i (
+    .debug_mode     (bus_trans_dbg),
     .match_status_o (match_status),
     .*
   );
@@ -210,13 +237,14 @@ module uvmt_cv32e40s_pmp_assert
       (csr_pmp_i.cfg[region].mode == PMP_MODE_NA4)
       |->
       (PMP_GRANULARITY === 1'b 0)
-    );
+    ) else `uvm_error(info_tag, "G must be 0 if using NA4");
+
 
     if (PMP_GRANULARITY !== 1'b 0) begin: gen_na4onlyg0_reverse
       a_na4_not_when_g: assert property (
         // "Redundant" assert for coverage
         (csr_pmp_i.cfg[region].mode !== PMP_MODE_NA4)
-      );
+      ) else `uvm_error(info_tag, "mode can't be NA4 if G=0");
     end
   end endgenerate
 
@@ -227,7 +255,7 @@ module uvmt_cv32e40s_pmp_assert
         match_status.is_matched        == 1'b1 &&
         match_status.is_access_allowed == 1 |->
            pmp_req_addr_i[31:2] == csr_pmp_i.addr[match_status.val_index][31:2]
-    );
+    ) else `uvm_error(info_tag, "NA4 matches must match word-aligned");
   end endgenerate
 
   // Spec: "The combination R=0 and W=1 is reserved for future use" - Exception: mml set
@@ -236,7 +264,7 @@ module uvmt_cv32e40s_pmp_assert
     a_rw_futureuse: assert property  (
       csr_pmp_i.mseccfg.mml === 1'b0 |->
         !(csr_pmp_i.cfg[region].read == 0 && csr_pmp_i.cfg[region].write == 1)
-    );
+    ) else `uvm_error(info_tag, "'RW' cannot be 01");
   end endgenerate
 
   // mseccfg.RLB = 1 LOCKED rules may be modified/removed, LOCKED entries may be modified -> test inverse
@@ -245,41 +273,41 @@ module uvmt_cv32e40s_pmp_assert
     a_norlb_locked_rules_cannot_modify : assert property (
       csr_pmp_i.mseccfg.rlb === 1'b0 && csr_pmp_i.cfg[region].lock === 1'b1 |=>
         $stable(csr_pmp_i.cfg[region])
-    );
+    ) else `uvm_error(info_tag, "locked unbypassed cfgs must be stable");
   end endgenerate
 
   generate for (genvar region = 0; region < PMP_NUM_REGIONS; region++) begin: gen_rlb_locked_cov
-    c_rlb_locked_rules_can_modify_addr : cover property (
+    cov_rlb_locked_rules_can_modify_addr : cover property (
       csr_pmp_i.mseccfg.rlb === 1'b1 && csr_pmp_i.cfg[region].lock === 1'b1 ##1
         $changed(csr_pmp_i.addr[region])
     );
 
-    c_rlb_locked_rules_can_modify_lock : cover property (
+    cov_rlb_locked_rules_can_modify_lock : cover property (
       csr_pmp_i.mseccfg.rlb === 1'b1 && csr_pmp_i.cfg[region].lock === 1'b1 ##1
         $changed(csr_pmp_i.cfg[region].lock)
     );
 
-    c_rlb_locked_rules_can_modify_exec : cover property (
+    cov_rlb_locked_rules_can_modify_exec : cover property (
       csr_pmp_i.mseccfg.rlb === 1'b1 && csr_pmp_i.cfg[region].lock === 1'b1 ##1
         $changed(csr_pmp_i.cfg[region].exec)
     );
 
-    c_rlb_locked_rules_can_modify_mode : cover property (
+    cov_rlb_locked_rules_can_modify_mode : cover property (
       csr_pmp_i.mseccfg.rlb === 1'b1 && csr_pmp_i.cfg[region].lock === 1'b1 ##1
         $changed(csr_pmp_i.cfg[region].mode)
     );
 
-    c_rlb_locked_rules_can_modify_write : cover property (
+    cov_rlb_locked_rules_can_modify_write : cover property (
       csr_pmp_i.mseccfg.rlb === 1'b1 && csr_pmp_i.cfg[region].lock === 1'b1 ##1
         $changed(csr_pmp_i.cfg[region].write)
     );
 
-    c_rlb_locked_rules_can_modify_read : cover property (
+    cov_rlb_locked_rules_can_modify_read : cover property (
       csr_pmp_i.mseccfg.rlb === 1'b1 && csr_pmp_i.cfg[region].lock === 1'b1 ##1
         $changed(csr_pmp_i.cfg[region].read)
     );
 
-    c_rlb_locked_rules_can_remove : cover property (
+    cov_rlb_locked_rules_can_remove : cover property (
       csr_pmp_i.mseccfg.rlb === 1'b1 &&
       csr_pmp_i.cfg[region].lock == 1'b1 &&
       csr_pmp_i.cfg[region].mode != PMP_MODE_OFF ##1
@@ -298,9 +326,9 @@ module uvmt_cv32e40s_pmp_assert
         csr_pmp_i.cfg[region].lock === 1'b1 ##0
         csr_pmp_i.cfg[region].read === 1'b0 ##0
         csr_pmp_i.cfg[region].write || csr_pmp_i.cfg[region].exec)
-    );
+    ) else `uvm_error(info_tag, "certain rules can't be added");
 
-    c_mmode_only_or_shared_executable: cover property (
+    cov_mmode_only_or_shared_executable: cover property (
       csr_pmp_i.mseccfg.mml === 1'b1 && csr_pmp_i.mseccfg.rlb === 1'b1
       ##1
         $changed(csr_pmp_i.cfg[region])     ##0
@@ -319,22 +347,22 @@ module uvmt_cv32e40s_pmp_assert
         PMP_MODE_NA4,
         PMP_MODE_NAPOT
       }
-    );
+    ) else `uvm_error(info_tag, "pmp mode must be supported");
   end endgenerate
 
   generate if (PMP_NUM_REGIONS > 0) begin : gen_pmp_assert
     // Check output vs model  (Myriad vplan items)
     a_accept_only_legal : assert property (
       (pmp_req_err_o === 1'b0) |-> match_status.is_access_allowed
-    );
+    ) else `uvm_error(info_tag, "mismatch, PMP allow must match model");
     a_deny_only_illegal : assert property (
       pmp_req_err_o |-> (match_status.is_access_allowed === 1'b0)
-    );
+    ) else `uvm_error(info_tag, "mismatch, PMP deny must match model");
 
     // Assert that only one (or none) valid access reason can exist for any given access  (Not a vplan item)
     a_unique_access_allowed_reason: assert property (
       $countones(match_status.val_access_allowed_reason) <= 1
-    );
+    ) else `uvm_error(info_tag, "there can only be 1 accept reason");
 
     // Validate privilege level  (Not a vplan item)
     a_privmode: assert property (
@@ -342,16 +370,28 @@ module uvmt_cv32e40s_pmp_assert
         PRIV_LVL_M,
         PRIV_LVL_U
       }
-    );
+    ) else `uvm_error(info_tag, "the privilege mode must be supported");
 
-    // Validate access type  (Not a vplan item)
-    a_req_type: assert property (
-      pmp_req_type_i inside {
-        PMP_ACC_READ,
-        PMP_ACC_WRITE,
-        PMP_ACC_EXEC
-      }
-    );
+
+    // Validate access type  (TODO:silabs-robin make it a vplan item)
+
+    if (IS_INSTR_SIDE) begin: gen_req_type_instr
+      a_req_type_instr: assert property (
+        pmp_req_type_i inside {
+          PMP_ACC_EXEC
+        }
+      ) else `uvm_error(info_tag, "instr-side access must be execution");
+    end : gen_req_type_instr
+
+    if (!IS_INSTR_SIDE) begin: gen_req_type_data
+      a_req_type_data: assert property (
+        pmp_req_type_i inside {
+          PMP_ACC_READ,
+          PMP_ACC_WRITE
+        }
+      ) else `uvm_error(info_tag, "data-side access must be loadstore");
+    end : gen_req_type_data
+
 
     // SMEPMP 2b: When mseccfg.RLB is 0 and pmpcfg.L is 1 in any rule or entry (including disabled entries), then
     // mseccfg.RLB remains 0 and any further modifications to mseccfg.RLB are ignored until a PMP reset.
@@ -362,7 +402,7 @@ module uvmt_cv32e40s_pmp_assert
     a_rlb_never_fall_while_locked: assert property (
       csr_pmp_i.mseccfg.rlb === 1'b0 && match_status.is_any_locked |=>
         $stable(csr_pmp_i.mseccfg.rlb)
-    );
+    ) else `uvm_error(info_tag, "RLB must remain off after it is locked");
 
     // SMEPMP 3: On mseccfg we introduce a field in bit 1 called Machine Mode Whitelist Policy (mseccfg.MMWP).
     // This is a sticky bit, meaning that once set it cannot be unset until a PMP reset.
@@ -370,7 +410,7 @@ module uvmt_cv32e40s_pmp_assert
     a_mmwp_never_fall_until_reset: assert property (
       csr_pmp_i.mseccfg.mmwp === 1'b1 |=>
         $stable(csr_pmp_i.mseccfg.mmwp)
-    );
+    ) else `uvm_error(info_tag, "MMWP is sticky high");
 
     // SMEPMP 4: On mseccfg we introduce a field in bit 0 called Machine Mode Lockdown (mseccfg.MML). This is a
     // sticky bit, meaning that once set it cannot be unset until a PMP reset.
@@ -378,13 +418,13 @@ module uvmt_cv32e40s_pmp_assert
     a_mml_never_fall_until_reset: assert property (
       csr_pmp_i.mseccfg.mml === 1'b1 |=>
         $stable(csr_pmp_i.mseccfg.mml)
-    );
+    ) else `uvm_error(info_tag, "MML is sticky high");
 
     // U-mode fails if no match  (vplan:UmodeNomatch)
     a_nomatch_umode_fails: assert property (
       priv_lvl_i == PRIV_LVL_U && match_status.is_matched == 1'b0 |->
-        pmp_req_err_o
-    );
+        pmp_req_err_o ^ match_status.is_dm_override
+    ) else `uvm_error(info_tag, "non-matched umode access must fail");
 
     // M-mode fails if: no match, and "mseccfg.MMWP"  (vplan:WhiteList:Denied)
     a_nomatch_mmode_mmwp_fails: assert property (
@@ -392,28 +432,30 @@ module uvmt_cv32e40s_pmp_assert
       !match_status.is_matched  &&
       csr_pmp_i.mseccfg.mmwp
       |->
-      pmp_req_err_o
-    );
+      pmp_req_err_o ^ match_status.is_dm_override
+    ) else `uvm_error(info_tag, "non-matched mmode access must fail when MMWP");
 
     // U-mode or L=1 succeed only if RWX  (vplan:RwxUmode)
     a_uorl_onlyif_rwx: assert property (
-      //TODO:silabs-robin  Why, 'L=1' in comment, 'is_matched' in code?
-      ( priv_lvl_i == PRIV_LVL_U || match_status.is_matched == 1'b1 ) && !pmp_req_err_o |->
-        match_status.is_rwx_ok
-    );
+      //TODO:silabs-robin  Why, 'L=1' in comment, but 'is_matched' in code?
+      ( priv_lvl_i == PRIV_LVL_U || match_status.is_matched == 1'b1 ) && !pmp_req_err_o
+      |->
+        match_status.is_rwx_ok || match_status.is_dm_override
+    ) else `uvm_error(info_tag, "RWX must agree for allowing umode and L");
 
     // After a match, LRWX determines access  (vplan:LrwxDetermines)
     a_lrwx_aftermatch: assert property (
+      //TODO:silabs-robin  Why, "LRWX" in comment, but "rwx" in code?
       match_status.is_matched == 1'b1 && !pmp_req_err_o |->
-        match_status.is_rwx_ok
-    );
+        match_status.is_rwx_ok || match_status.is_dm_override
+    ) else `uvm_error(info_tag, "LRWX must agree for allowing matched access");
 
     // SMEPMP 1: The reset value of mseccfg is implementation-specific, otherwise if backwards
     // compatibility is a requirement it should reset to zero on hard reset.
     // (vplan:MsecCfg:ResetValue)
     a_mseccfg_reset_val: assert property (
-      $rose(rst_n) |-> csr_pmp_i.mseccfg === MSECCFG_RESET_VAL
-    );
+      $rose(rst_n) |-> csr_pmp_i.mseccfg === PMP_MSECCFG_RV
+    ) else `uvm_error(info_tag, "mseccfg must be reset correctly");
   end endgenerate
 
 
@@ -453,7 +495,7 @@ module uvmt_cv32e40s_pmp_assert
 
     a_suppress_req_instr: assert property (
       p_suppress_req_instr
-    );
+    ) else `uvm_error(info_tag, "denied ifetch must refetch or not retire");
   end
 
 
@@ -486,7 +528,7 @@ module uvmt_cv32e40s_pmp_assert
 
     a_suppress_req_data: assert property (
       p_suppress_req_data
-    );
+    ) else `uvm_error(info_tag, "denied data access doesn't reach bus");
     // TODO:silabs-robin  Add covers, or get reviews, and become convinced this is "bullet proof".
   end
 

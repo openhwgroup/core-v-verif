@@ -49,7 +49,7 @@ class uvme_cv32e40s_core_sb_c extends uvm_scoreboard;
    int unsigned csr_checked_cnt;
 
    // Analysis exports
-   uvm_analysis_imp_core_sb_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvme_cv32e40s_core_sb_c) rvfi_instr_export;
+   uvm_analysis_imp_core_sb_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvme_cv32e40s_core_sb_c) rvfi_instr_imp;
    uvm_analysis_imp_core_sb_rvvi_state#(uvma_rvvi_state_seq_item_c#(ILEN,XLEN), uvme_cv32e40s_core_sb_c) rvvi_state_export;
 
    `uvm_component_utils_begin(uvme_cv32e40s_core_sb_c)
@@ -129,7 +129,7 @@ function uvme_cv32e40s_core_sb_c::new(string name="uvme_cv32e40s_core_sb", uvm_c
 
    super.new(name, parent);
 
-   rvfi_instr_export = new("rvfi_instr_export", this);
+   rvfi_instr_imp = new("rvfi_instr_imp", this);
    rvvi_state_export = new("rvvi_state_export", this);
 endfunction : new
 

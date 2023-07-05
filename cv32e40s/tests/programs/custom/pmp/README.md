@@ -15,8 +15,7 @@ limitations under the License.
 
 SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0 -->
 
-This folder includes the direct tests covering the default PMP behavior when PMP_NUM_REGIONS=64.
 
-All tests are enabled by default and individually test can be enabled or disabled by commenting the test function in `main()` in `pmp.c`.
+This folder has direct tests for default PMP behavior when PMP_NUM_REGIONS=64.
 
-At this stage, when testing `tor_zero()` the ISS should be disabled `USE_ISS=0` due to some mismatch issue.
+`make <...> CFG=pmp`.

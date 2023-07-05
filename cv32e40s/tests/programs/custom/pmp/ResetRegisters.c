@@ -25,42 +25,26 @@
 
 void reset_registers()
 {
-  printf("\n\t testing ResetRegisters \n");
+  printf("\n\t--------\n\tResetRegisters test\n");
   uint32_t pmpcfg[PMPCFGX];
 
   // read out pmpcfg register values with given address from 0x3a - 0x3af
-  __asm__ volatile("csrr %0, 0x3A0"
-                   : "=r"(pmpcfg[0]));
-  __asm__ volatile("csrr %0, 0x3A1"
-                   : "=r"(pmpcfg[1]));
-  __asm__ volatile("csrr %0, 0x3A2"
-                   : "=r"(pmpcfg[2]));
-  __asm__ volatile("csrr %0, 0x3A3"
-                   : "=r"(pmpcfg[3]));
-  __asm__ volatile("csrr %0, 0x3A4"
-                   : "=r"(pmpcfg[4]));
-  __asm__ volatile("csrr %0, 0x3A5"
-                   : "=r"(pmpcfg[5]));
-  __asm__ volatile("csrr %0, 0x3A6"
-                   : "=r"(pmpcfg[6]));
-  __asm__ volatile("csrr %0, 0x3A7"
-                   : "=r"(pmpcfg[7]));
-  __asm__ volatile("csrr %0, 0x3A8"
-                   : "=r"(pmpcfg[8]));
-  __asm__ volatile("csrr %0, 0x3A9"
-                   : "=r"(pmpcfg[9]));
-  __asm__ volatile("csrr %0, 0x3Aa"
-                   : "=r"(pmpcfg[10]));
-  __asm__ volatile("csrr %0, 0x3Ab"
-                   : "=r"(pmpcfg[11]));
-  __asm__ volatile("csrr %0, 0x3Ac"
-                   : "=r"(pmpcfg[12]));
-  __asm__ volatile("csrr %0, 0x3Ad"
-                   : "=r"(pmpcfg[13]));
-  __asm__ volatile("csrr %0, 0x3Ae"
-                   : "=r"(pmpcfg[14]));
-  __asm__ volatile("csrr %0, 0x3Af"
-                   : "=r"(pmpcfg[15]));
+  __asm__ volatile("csrr %0, 0x3A0" : "=r"(pmpcfg[0]));
+  __asm__ volatile("csrr %0, 0x3A1" : "=r"(pmpcfg[1]));
+  __asm__ volatile("csrr %0, 0x3A2" : "=r"(pmpcfg[2]));
+  __asm__ volatile("csrr %0, 0x3A3" : "=r"(pmpcfg[3]));
+  __asm__ volatile("csrr %0, 0x3A4" : "=r"(pmpcfg[4]));
+  __asm__ volatile("csrr %0, 0x3A5" : "=r"(pmpcfg[5]));
+  __asm__ volatile("csrr %0, 0x3A6" : "=r"(pmpcfg[6]));
+  __asm__ volatile("csrr %0, 0x3A7" : "=r"(pmpcfg[7]));
+  __asm__ volatile("csrr %0, 0x3A8" : "=r"(pmpcfg[8]));
+  __asm__ volatile("csrr %0, 0x3A9" : "=r"(pmpcfg[9]));
+  __asm__ volatile("csrr %0, 0x3Aa" : "=r"(pmpcfg[10]));
+  __asm__ volatile("csrr %0, 0x3Ab" : "=r"(pmpcfg[11]));
+  __asm__ volatile("csrr %0, 0x3Ac" : "=r"(pmpcfg[12]));
+  __asm__ volatile("csrr %0, 0x3Ad" : "=r"(pmpcfg[13]));
+  __asm__ volatile("csrr %0, 0x3Ae" : "=r"(pmpcfg[14]));
+  __asm__ volatile("csrr %0, 0x3Af" : "=r"(pmpcfg[15]));
 
   // check for the specific bits
   for (int i = 0; i < PMPCFGX; i++)
@@ -72,6 +56,5 @@ void reset_registers()
     }
   }
 
-  printf("\n\t ResetRegisters test pass ");
-  printf("\n\t --------------------------------------------- \n");
+  printf("\tResetRegisters pass\n");
 }

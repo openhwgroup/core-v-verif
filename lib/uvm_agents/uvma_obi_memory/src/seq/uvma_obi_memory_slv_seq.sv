@@ -91,14 +91,14 @@ class uvma_obi_memory_slv_seq_c#(
     * Waiving Verissimo SVTB.32.2.0: Pass strings by reference unless otherwise needed
     */
    extern virtual function uvma_obi_memory_vp_base_seq_c#(
-     .AUSER_WIDTH(AUSER_WIDTH),
-     .WUSER_WIDTH(WUSER_WIDTH),
-     .RUSER_WIDTH(RUSER_WIDTH),
-     .ADDR_WIDTH(ADDR_WIDTH),
-     .DATA_WIDTH(DATA_WIDTH),
-     .ID_WIDTH(ID_WIDTH),
-     .ACHK_WIDTH(ACHK_WIDTH),
-     .RCHK_WIDTH(RCHK_WIDTH)
+     .AUSER_WIDTH(uvma_obi_memory_slv_seq_c::AUSER_WIDTH),
+     .WUSER_WIDTH(uvma_obi_memory_slv_seq_c::WUSER_WIDTH),
+     .RUSER_WIDTH(uvma_obi_memory_slv_seq_c::RUSER_WIDTH),
+     .ADDR_WIDTH(uvma_obi_memory_slv_seq_c::ADDR_WIDTH),
+     .DATA_WIDTH(uvma_obi_memory_slv_seq_c::DATA_WIDTH),
+     .ID_WIDTH(uvma_obi_memory_slv_seq_c::ID_WIDTH),
+     .ACHK_WIDTH(uvma_obi_memory_slv_seq_c::ACHK_WIDTH),
+     .RCHK_WIDTH(uvma_obi_memory_slv_seq_c::RCHK_WIDTH)
    ) register_vp_vseq(string name,                  //@DVT_LINTER_WAIVER "MT20211228_9" disable SVTB.32.2.0
                       bit[31:0] start_address,
                       uvm_object_wrapper seq_type);

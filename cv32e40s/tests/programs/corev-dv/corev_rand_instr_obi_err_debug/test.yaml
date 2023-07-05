@@ -8,3 +8,8 @@ plusargs: >
     +obi_memory_instr_one_shot_err_enabled
     +gen_irq_noise
     +gen_random_debug
+    +nmi_timeout_instr=1000
+    +irq_single_step_threshold=500
+    +irq_min_limit=100
+    +single_step_min_limit=100
+cflags: -mno-relax

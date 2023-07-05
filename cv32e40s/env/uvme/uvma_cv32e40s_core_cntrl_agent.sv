@@ -85,7 +85,7 @@ function void uvma_cv32e40s_core_cntrl_agent_c::retrieve_vif();
    $cast(e40s_cntxt, cntxt);
 
    // Core control interface
-   if (!uvm_config_db#(virtual uvme_cv32e40s_core_cntrl_if)::get(this, "", $sformatf("core_cntrl_vif"), e40s_cntxt.core_cntrl_vif)) begin
+   if (!uvm_config_db#(virtual uvme_cv32e40s_core_cntrl_if_t)::get(this, "", $sformatf("core_cntrl_vif"), e40s_cntxt.core_cntrl_vif)) begin
       `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s in uvm_config_db",
                                     $typename(e40s_cntxt.core_cntrl_vif)))
    end
@@ -169,6 +169,7 @@ function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
   $fwrite(fh, $sformatf("--override %s/nmi_address=0x%08x\n", refpath, cfg.nmi_addr));
   $fwrite(fh, $sformatf("--override %s/debug_address=0x%08x\n", refpath, cfg.dm_halt_addr));
   $fwrite(fh, $sformatf("--override %s/dexc_address=0x%08x\n", refpath, cfg.dm_exception_addr));
+  $fwrite(fh, $sformatf("--override %s/extension_*/tdata1_reset=0x%08x\n", refpath, 'h28001000));
 
   if (cfg.ext_zca_supported) begin
     $fwrite(fh, $sformatf("--override %s/Zca=1\n", refpath));
@@ -193,13 +194,6 @@ function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
   end else begin
     $fwrite(fh, $sformatf("--override %s/Zcmt=0\n", refpath));
   end
-
-  if (cfg.ext_zcmb_supported) begin
-    $fwrite(fh, $sformatf("--override %s/Zcmb=1\n", refpath));
-  end else begin
-    $fwrite(fh, $sformatf("--override %s/Zcmb=0\n", refpath));
-  end
-
 
   if (cfg.is_ext_b_supported()) begin
      // Bitmanip version
@@ -229,7 +223,9 @@ function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
    case(cfg.debug_spec_version)
      DEBUG_VERSION_0_13_2: $fwrite(fh, $sformatf("--override %s/debug_version=0.13.2-DRAFT\n", refpath));
      DEBUG_VERSION_0_14_0: $fwrite(fh, $sformatf("--override %s/debug_version=0.14.0-DRAFT\n", refpath));
-     DEBUG_VERSION_1_0_0: $fwrite(fh, $sformatf("--override %s/debug_version=1.0.0-STABLE\n", refpath));
+     DEBUG_VERSION_1_0_0: begin
+       $fwrite(fh, $sformatf("--override %s/debug_version=1.0.0-STABLE\n", refpath));
+     end
    endcase
 
    case(cfg.priv_spec_version)
@@ -255,7 +251,7 @@ function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
       $fwrite(fh, $sformatf("--override %s/extension_*/main%0d=%0d\n", refpath, i, cfg.pma_regions[i].main));
       $fwrite(fh, $sformatf("--override %s/extension_*/bufferable%0d=%0d\n", refpath, i, cfg.pma_regions[i].bufferable));
       $fwrite(fh, $sformatf("--override %s/extension_*/cacheable%0d=%0d\n", refpath, i, cfg.pma_regions[i].cacheable));
-      $fwrite(fh, $sformatf("--override %s/extension_*/atomic%0d=%0d\n", refpath, i, cfg.pma_regions[i].atomic));
+      $fwrite(fh, $sformatf("--override %s/extension_*/atomic%0d=%0d\n", refpath, i, 1));
    end
 
    // Enable use of hw reg names instead of abi

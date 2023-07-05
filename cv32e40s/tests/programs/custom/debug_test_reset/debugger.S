@@ -49,13 +49,8 @@ _debugger_trigger_regs_access:
     li t0, 0xff
     csrw 0x7a4, t0 # tinfo
     csrr t0, 0x7a4
-    li t1, 4
+    li t1, 1<<0x18 | 1<<0xF | 1<<6 | 1<<5 | 1<<2 # Supported trigger types
     bne t0, t1, _debugger_error
-
-    li t0, 0xff
-    csrw 0x7a3, t0 # tdata3
-    csrr t0, 0x7a3
-    bne t0, x0, _debugger_error
 
     li t0, 0xff
     csrw 0x7a0, t0 # tsel
@@ -69,7 +64,7 @@ _debugger_trigger_regs_access:
     csrrsi t0, 0x7A1, 0x4 # Set bit 2
     bne t0, t1, _debugger_error
     csrr t0, 0x7A1
-    li t1, 2<<28 | 1<<27 | 1<<12 | 1<<6 | 1<<2
+    li t1, 2<<28 | 1<<27 | 1<<12 | 1<<2
     bne t0, t1, _debugger_error
 
     # TDATA1, CSRRCI
@@ -77,7 +72,7 @@ _debugger_trigger_regs_access:
     csrrci t0, 0x7A1, 0x4 # Clear bit 2
     bne t0, t1, _debugger_error
     csrr t0, 0x7A1
-    li t1, 2<<28 | 1<<27 | 1<<12 | 1<<6 | 0<<2
+    li t1, 2<<28 | 1<<27 | 1<<12 | 0<<2
     bne t0, t1, _debugger_error
 
     # TDATA1, CSRRS
@@ -86,7 +81,7 @@ _debugger_trigger_regs_access:
     csrrs t0, 0x7A1, t0 # Set bit 2
     bne t0, t1, _debugger_error
     csrr t0, 0x7A1
-    li t1, 2<<28 | 1<<27 | 1<<12 | 1<<6 | 1<<2
+    li t1, 2<<28 | 1<<27 | 1<<12 | 1<<2
     bne t0, t1, _debugger_error
 
     # TDATA1, CSRRC
@@ -95,7 +90,7 @@ _debugger_trigger_regs_access:
     csrrc t0, 0x7A1, t0 # Clear bit 2
     bne t0, t1, _debugger_error
     csrr t0, 0x7A1
-    li t1, 2<<28 | 1<<27 | 1<<12 | 1<<6 | 0<<2
+    li t1, 2<<28 | 1<<27 | 1<<12 | 0<<2
     bne t0, t1, _debugger_error
 
     # TDATA1, CSRRWI
@@ -103,7 +98,7 @@ _debugger_trigger_regs_access:
     csrrwi t0, 0x7A1, 0x4 # Set bit 2
     bne t0, t1, _debugger_error
     csrr t0, 0x7A1
-    li t1, 2<<28 | 1<<27 | 1<<12 | 1<<6 | 1<<2
+    li t1, 0xF<<28 | 1<<27 # Trigger disabled
     bne t0, t1, _debugger_error
 
     # TDATA1, CSRRW
@@ -112,7 +107,7 @@ _debugger_trigger_regs_access:
     csrrw t0, 0x7A1, t0
     bne t0, t1, _debugger_error
     csrr t0, 0x7A1
-    li t1, 2<<28 | 1<<27 | 1<<12 | 1<<6 | 1<<2
+    li t1, 0xF<<28 | 1<<27 # Trigger disabled
     bne t0, t1, _debugger_error
 
     # TDATA2, CSRRSI
@@ -158,56 +153,13 @@ _debugger_trigger_regs_access:
     li t1,  1<<2
     bne t0, t1, _debugger_error
 
-    # TDATA3, CSRRSI
-    csrw 0x7A3, x0 # clear before test
-    csrr t1, 0x7A3
-    csrrsi t0, 0x7A3, 0x4 # Set bit 2
-    bne t0, t1, _debugger_error
-    csrr t0, 0x7A3
-    li t1, 0
-    bne t0, t1, _debugger_error
-
-    # TDATA3, CSRRCI
-    csrr t1, 0x7A3
-    csrrci t0, 0x7A3, 0x4 # Clear bit 2
-    bne t0, t1, _debugger_error
-    csrr t0, 0x7A3
-    li t1, 0x0
-    bne t0, t1, _debugger_error
-
-    # TDATA3, CSRRS
-    csrr t1, 0x7A3
-    li t0, 0xa5a5a5a5
-    csrrs t0, 0x7A3, t0
-    bne t0, t1, _debugger_error
-    csrr t0, 0x7A3
-    li t1,  0x0
-    bne t0, t1, _debugger_error
-
-    # TDATA3, CSRRC
-    csrr t1, 0x7A3
-    li t0, 0xFFFFFFFF
-    csrrc t0, 0x7A3, t0
-    bne t0, t1, _debugger_error
-    csrr t0, 0x7A3
-    li t1,  0x0
-    bne t0, t1, _debugger_error
-
-    # TDATA3, CSRRWI
-    csrr t1, 0x7A3
-    csrrwi t0, 0x7A3, 0x4 # Set bit 2
-    bne t0, t1, _debugger_error
-    csrr t0, 0x7A3
-    li t1,  0x0
-    bne t0, t1, _debugger_error
-
     # TINFO, CSRRSI
     csrw 0x7A4, x0 # clear before test
     csrr t1, 0x7A4
     csrrsi t0, 0x7A4, 0x4 # Set bit 2
     bne t0, t1, _debugger_error
     csrr t0, 0x7A4
-    li t1, 4
+    li t1, 1<<0x18 | 1<<0xF | 1<<6 | 1<<5 | 1<<2 # Supported trigger types
     bne t0, t1, _debugger_error
 
     # TINFO, CSRRCI
@@ -215,7 +167,7 @@ _debugger_trigger_regs_access:
     csrrci t0, 0x7A4, 0x4 # Clear bit 2
     bne t0, t1, _debugger_error
     csrr t0, 0x7A4
-    li t1, 4
+    li t1, 1<<0x18 | 1<<0xF | 1<<6 | 1<<5 | 1<<2 # Supported trigger types
     bne t0, t1, _debugger_error
 
     # TINFO, CSRRS
@@ -224,7 +176,7 @@ _debugger_trigger_regs_access:
     csrrs t0, 0x7A4, t0
     bne t0, t1, _debugger_error
     csrr t0, 0x7A4
-    li t1,  4
+    li t1, 1<<0x18 | 1<<0xF | 1<<6 | 1<<5 | 1<<2 # Supported trigger types
     bne t0, t1, _debugger_error
 
     # TINFO, CSRRC
@@ -233,7 +185,7 @@ _debugger_trigger_regs_access:
     csrrc t0, 0x7A4, t0
     bne t0, t1, _debugger_error
     csrr t0, 0x7A4
-    li t1,  4
+    li t1, 1<<0x18 | 1<<0xF | 1<<6 | 1<<5 | 1<<2 # Supported trigger types
     bne t0, t1, _debugger_error
 
     # TINFO, CSRRWI
@@ -241,7 +193,7 @@ _debugger_trigger_regs_access:
     csrrwi t0, 0x7A4, 0x4 # Set bit 2
     bne t0, t1, _debugger_error
     csrr t0, 0x7A4
-    li t1,  4
+    li t1, 1<<0x18 | 1<<0xF | 1<<6 | 1<<5 | 1<<2 # Supported trigger types
     bne t0, t1, _debugger_error
 
     # TSELECT, CSRRSI
@@ -437,7 +389,7 @@ _debugger_trigger_regs_access:
     csrrsi t0, dcsr, 0x4 # Set bit 2
     bne t0, t1, _debugger_error
     csrr t0, dcsr
-    addi t1, t2, 0x4
+    addi t1, t1, 0x4
     bne t0, t1, _debugger_error
 
     # DCSR, CSRRCI
@@ -445,7 +397,6 @@ _debugger_trigger_regs_access:
     csrrci t0, dcsr, 0x4 # Clear bit 2
     bne t0, t1, _debugger_error
     csrr t0, dcsr
-    bne t0, t2, _debugger_error
 
     # DCSR, CSRRS
     csrr t1, dcsr
@@ -462,18 +413,14 @@ _debugger_trigger_regs_access:
     li t0, 0x4
     csrrc t0, dcsr, t0
     bne t0, t1, _debugger_error
-    csrr t0, dcsr
-    bne t0, t2, _debugger_error
 
     # DCSR, CSRRWI
     csrr t1, dcsr
     csrrwi t0, dcsr, 0x4 # Set bit 2
     bne t0, t1, _debugger_error
     csrr t0, dcsr
-    addi t1, t2, 0x4
-    bne t0, t1, _debugger_error
 
-    # Restore dpc
+    # Restore dcsr
     csrw dcsr, t2
     dret
 

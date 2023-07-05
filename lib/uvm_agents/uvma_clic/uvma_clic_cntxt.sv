@@ -23,16 +23,16 @@
  * Object encapsulating all state variables for all Interrupt agent
  * (uvma_clic_agent_c) components.
  */
-class uvma_clic_cntxt_c extends uvm_object;
+class uvma_clic_cntxt_c#(CLIC_ID_WIDTH) extends uvm_object;
 
    // Handle to agent interface
-   virtual uvma_clic_if  vif;
+   virtual uvma_clic_if_t#(CLIC_ID_WIDTH)  vif;
 
    // Events
    uvm_event  sample_cfg_e;
    uvm_event  sample_cntxt_e;
 
-   `uvm_object_utils_begin(uvma_clic_cntxt_c)
+   `uvm_object_utils_begin(uvma_clic_cntxt_c#(CLIC_ID_WIDTH))
       `uvm_field_event(sample_cfg_e  , UVM_DEFAULT)
       `uvm_field_event(sample_cntxt_e, UVM_DEFAULT)
    `uvm_object_utils_end

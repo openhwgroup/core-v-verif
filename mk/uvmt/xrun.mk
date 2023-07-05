@@ -37,25 +37,32 @@ SIMVISION         = $(CV_TOOL_PREFIX) simvision
 INDAGO            = $(CV_TOOL_PREFIX) indago
 IMC               = $(CV_SIM_PREFIX) imc
 
-XRUN_UVMHOME_ARG     ?= CDNS-1.2-ML
+XRUN_UVMHOME_ARG ?= CDNS-1.2-ML
 
 # Flags
-XRUN_COMP_FLAGS  ?= -64bit \
-					-disable_sem2009 \
-					-access +rwc \
-                    -nowarn UEXPSC \
-					-lwdgen \
-                    -sv \
-					-uvm \
-					-uvmhome $(XRUN_UVMHOME_ARG) \
-                    $(TIMESCALE) \
-					$(SV_CMP_FLAGS)
+XRUN_COMP_FLAGS  ?=               \
+    -64bit                        \
+    -disable_sem2009              \
+    -access +rwc                  \
+    -nowarn UEXPSC                \
+    -lwdgen                       \
+    -sv                           \
+    -uvm                          \
+    -uvmhome $(XRUN_UVMHOME_ARG)  \
+    $(TIMESCALE)                  \
+    $(SV_CMP_FLAGS)
 
-XRUN_LDGEN_COMP_FLAGS ?= -64bit -disable_sem2009 -access +rwc \
-												 -nowarn UEXPSC \
-												 -nowarn DLCPTH \
-												 -sv \
-												 $(TIMESCALE) $(SV_CMP_FLAGS)
+XRUN_LDGEN_COMP_FLAGS ?=  \
+    -64bit                \
+    -disable_sem2009      \
+    -access +rwc          \
+    -nowarn UEXPSC        \
+    -nowarn DLCPTH        \
+    -sv                   \
+    -uvm                          \
+    -uvmhome $(XRUN_UVMHOME_ARG)  \
+    $(TIMESCALE)          \
+    $(SV_CMP_FLAGS)
 
 XRUN_RUN_BASE_FLAGS ?= -64bit $(XRUN_GUI) -licqueue +UVM_VERBOSITY=$(XRUN_UVM_VERBOSITY) \
                        $(XRUN_PLUSARGS) -svseed $(RNDSEED)
@@ -70,10 +77,14 @@ XRUN_RUN_BASE_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
 XRUN_RUN_BASE_FLAGS += -sv_lib $(abspath $(SVLIB_LIB))
 
 XRUN_UVM_VERBOSITY ?= UVM_MEDIUM
+
+# Special var to point to tool and installation dependent path of DPI headers.
+# Used to recompile dpi_dasm_spike if needed (by default, not needed).
 DPI_INCLUDE        ?= $(shell dirname $(shell which xrun))/../include
 
 # Necessary libraries for the PMA generator class
-XRUN_PMA_INC += +incdir+$(TBSRC_HOME)/uvmt \
+XRUN_PMA_INC += +incdir+$(DV_UVM_TESTCASE_PATH)/base-tests \
+                +incdir+$(TBSRC_HOME)/uvmt \
                 +incdir+$(CV_CORE_PKG)/rtl/include \
                 +incdir+$(CV_CORE_COREVDV_PKG)/ldgen \
                 +incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
@@ -92,7 +103,10 @@ endif
 # ADV_DEBUG=YES will enable Indago, default is to use SimVision
 ifeq ($(call IS_YES,$(GUI)),YES)
 XRUN_GUI += -gui
-XRUN_USER_COMPILE_ARGS += -linedebug
+ifeq ($(call IS_YES,$(SRC_DEBUG)),YES)
+XRUN_USER_COMPILE_ARGS += -linedebug -uvmlinedebug -enable_tpe -classlinedebug
+XRUN_USER_RUN_FLAGS += -linedebug -uvmlinedebug -enable_tpe -classlinedebug
+endif
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
 XRUN_GUI += -indago
 endif
@@ -174,8 +188,12 @@ XRUN_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 XRUN_USER_COMPILE_ARGS += +define+UVM
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
-	XRUN_PLUSARGS += +USE_ISS
+	XRUN_PLUSARGS          += +USE_ISS
 	XRUN_USER_COMPILE_ARGS += +define+USE_IMPERASDV
+	XRUN_USER_COMPILE_ARGS += +define+USE_ISS
+	export FILE_LIST_IDV ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
+else
+	XRUN_PLUSARGS          += +DISABLE_OVPSIM
 endif
 ifeq ($(call IS_YES,$(USE_RVVI)),YES)
     XRUN_PLUSARGS +="+USE_RVVI"
@@ -194,6 +212,10 @@ XRUN_RUN_FLAGS        += $(XRUN_RUN_BASE_FLAGS)
 XRUN_RUN_FLAGS        += $(XRUN_RUN_COV_FLAGS)
 XRUN_RUN_FLAGS        += $(XRUN_USER_RUN_FLAGS)
 XRUN_RUN_FLAGS        += $(USER_RUN_FLAGS)
+
+ifneq ($(CFG_SV_INCLUDE_FILES),)
+XRUN_SV_INCLUDE_FILES += +incdir+$(abspath $(CFG_SV_INCLUDE_FILES))
+endif
 
 ###############################################################################
 # Xcelium warning suppression
@@ -244,6 +266,12 @@ XRUN_COMP_FLAGS += -nowarn CGPIDF
 # deselect_coverage -all warnings
 XRUN_COMP_FLAGS += -nowarn CGNSWA
 
+# Value Parameters without default values
+XRUN_COMP_FLAGS += -setenv CADENCE_ENABLE_AVSREQ_44905_PHASE_1=1
+
+# Type Parameters without default values
+XRUN_COMP_FLAGS += -setenv CADENCE_ENABLE_AVSREQ_63188_PHASE_1=1
+
 # deselect_coverage -all warnings
 XRUN_COMP_COREV_DV_FLAGS += -nowarn BNDWRN
 XRUN_COMP_COREV_DV_FLAGS += $(CFG_COMPILE_FLAGS)
@@ -259,6 +287,7 @@ XRUN_RUN_COV    += -nowarn WCROSS
 
 # Un-named covergroup instances
 XRUN_RUN_COV    += -nowarn CGDEFN
+
 
 ###############################################################################
 # Targets
@@ -288,6 +317,7 @@ XRUN_COMP = $(XRUN_COMP_FLAGS) \
 		$(XRUN_UVM_MACROS_INC_FILE) \
 		-f $(CV_CORE_MANIFEST) \
 		$(XRUN_FILE_LIST) \
+		$(XRUN_SV_INCLUDE_FILES) \
 		$(UVM_PLUSARGS)
 
 comp: mk_xrun_dir $(CV_CORE_PKG) $(SVLIB_PKG)
@@ -335,7 +365,7 @@ ldgen: $(CV_CORE_PKG)
 		+ldgen_cp_test_path=$(SIM_LDGEN_RESULTS) \
 		$(TBSRC_HOME)/ldgen/ldgen_tb.sv \
 		-top $(basename $(notdir $(TBSRC_HOME)/ldgen/ldgen_tb.sv))
-	cp $(BSP)/link_pma.ld $(SIM_LDGEN_RESULTS)/link.ld
+	cp $(BSP)/link_corev-dv.ld $(SIM_LDGEN_RESULTS)/link.ld
 
 ################################################################################
 # If the configuration specified OVPSIM arguments, generate an ovpsim.ic file and
@@ -444,6 +474,7 @@ comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG)
 		+incdir+$(COREVDV_PKG) \
 		+incdir+$(CV_CORE_COREVDV_PKG) \
 		-f $(COREVDV_PKG)/manifest.f \
+		$(XRUN_SV_INCLUDE_FILES) \
 		-l xrun.log
 
 corev-dv: clean_riscv-dv \

@@ -119,6 +119,7 @@ export DV_UVML_TRN_PATH         = $(CORE_V_VERIF)/lib/uvm_libs/uvml_trn
 export DV_UVML_LOGS_PATH        = $(CORE_V_VERIF)/lib/uvm_libs/uvml_logs
 export DV_UVML_SB_PATH          = $(CORE_V_VERIF)/lib/uvm_libs/uvml_sb
 export DV_UVML_MEM_PATH         = $(CORE_V_VERIF)/lib/uvm_libs/uvml_mem
+export DV_SUPPORT_PATH          = $(CORE_V_VERIF)/lib/support
 
 # ImperasDV
 export IMPERAS_DV_HOME          = $(CORE_V_VERIF)/vendor_lib/ImperasDV
@@ -126,7 +127,7 @@ export IMPERAS_DV_HOME          = $(CORE_V_VERIF)/vendor_lib/ImperasDV
 # Verilab SVlib
 export DV_SVLIB_PATH            = $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/verilab
 
-DV_UVMT_SRCS                  = $(wildcard $(DV_UVMT_PATH)/*.sv))
+DV_UVMT_SRCS                    = $(wildcard $(DV_UVMT_PATH)/*.sv))
 
 # Testcase name: must be the CLASS name of the testcase (not the filename).
 # Look in ../../tests/uvmt

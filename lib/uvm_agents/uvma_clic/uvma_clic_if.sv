@@ -23,7 +23,7 @@
  * Encapsulates all signals and clocking of Interrupt interface. Used by
  * monitor and driver.
  */
-interface uvma_clic_if#(SMCLIC_ID_WIDTH = 5)();
+interface uvma_clic_if_t#(CLIC_ID_WIDTH = 5);
 
     // ---------------------------------------------------------------------------
     // Interface wires
@@ -32,7 +32,7 @@ interface uvma_clic_if#(SMCLIC_ID_WIDTH = 5)();
     wire        reset_n;
 
     wire                        clic_irq;
-    wire [SMCLIC_ID_WIDTH-1:0]  clic_irq_id;
+    wire [CLIC_ID_WIDTH-1:0]    clic_irq_id;
     wire [7:0]                  clic_irq_level;
     wire [1:0]                  clic_irq_priv;
     wire                        clic_irq_shv;
@@ -53,12 +53,17 @@ interface uvma_clic_if#(SMCLIC_ID_WIDTH = 5)();
     bit [31:0]  irq_drv;    // TB clic driver
 
     bit                       clic_irq_drv;
-    bit [SMCLIC_ID_WIDTH-1:0] clic_irq_id_drv;
+    bit [CLIC_ID_WIDTH-1:0]   clic_irq_id_drv;
     bit [1:0]                 clic_irq_priv_drv;
     bit [7:0]                 clic_irq_level_drv;
     bit                       clic_irq_shv_drv;
 
     bit [1:0]                 clic_irq_priv_masked;
+
+    // typedef to be able to parameterize clic_irq_id_drv assignments
+    // without warnings
+    typedef bit [$bits(clic_irq_id_drv) - 1:0] clic_irq_id_t;
+
     // -------------------------------------------------------------------
     // Begin module code
     // -------------------------------------------------------------------
@@ -67,11 +72,11 @@ interface uvma_clic_if#(SMCLIC_ID_WIDTH = 5)();
     //always_comb begin
     //  clic_irq = is_active ? clic_irq_drv : 1'b0;
     //end
-    assign clic_irq       = is_active ? clic_irq_drv          : 'b0;
-    assign clic_irq_id    = is_active ? clic_irq_id_drv       : 'b0;
-    assign clic_irq_level = is_active ? clic_irq_level_drv    : 'b0;
-    assign clic_irq_priv  = is_active ? clic_irq_priv_masked  : 'b11;
-    assign clic_irq_shv   = is_active ? clic_irq_shv_drv      : 'b0;
+    assign clic_irq       = is_active ? clic_irq_drv          : 1'b0;
+    assign clic_irq_id    = is_active ? clic_irq_id_drv       : clic_irq_id_t'('b0);
+    assign clic_irq_level = is_active ? clic_irq_level_drv    : 2'b0;
+    assign clic_irq_priv  = is_active ? clic_irq_priv_masked  : 2'b11;
+    assign clic_irq_shv   = is_active ? clic_irq_shv_drv      : 1'b0;
 
     assign clic_irq_priv_masked = is_mmode_irq_only ? 2'b11 : clic_irq_priv_drv;
 
@@ -118,7 +123,7 @@ interface uvma_clic_if#(SMCLIC_ID_WIDTH = 5)();
     modport active_mp (clocking drv_cb);
     modport passive_mp(clocking mon_cb);
 
-endinterface : uvma_clic_if
+endinterface : uvma_clic_if_t
 
 
 `endif // __UVMA_CLIC_IF_SV__

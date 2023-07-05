@@ -1,0 +1,414 @@
+Requirement Location,Feature,Sub Feature,Feature Description,Verification Goal,Pass/Fail Criteria,Test Type,Coverage Method,Link to Coverage
+CLIC 8675ec,Reset behavior,CSR reset value,mintstatus.mil resets to 0,"CSR value check after reset
+
+Do not implement in initial-block to include formal checking",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Reset behavior,CSR reset value,"mstatus.mie resets to 0
+","CSR value check after reset
+
+Do not implement in initial-block to include formal checking",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,Reset behavior,CSR reset value,"mtvec resets to {mtvec_addr_i[31:7]. 5'b0_0000, 2'b11}",Assert that mtvec resets to the correct initialization value,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+Risc-V Priv. 1.12,Reset behavior,Interrupts never enabled out of reset,mstatus.mie resets to 0,Assert that interrupts are disabled and never taken immediately after deasserting reset,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,Constraints,Privilege Modes,CLIC interrupts only support machine mode,"Assert that clic_irq_priv_i[1:0] is always  2'b11
+Assume on input for formal",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,Constraints,NMI,"NMI address is located at the 15th entry in the machine trap vector table, located at mtvec. In other words, nmi_addr = { mtvec[31:7], 5'b0_1111, 2'b00 }","Assert that nmi addr = { mtvec[31:7], 5'b0_1111, 2'b00 }",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,Constraints,Interrupts,Support up to a maximum of 1024 CLIC interrupts,Assert that SMCLIC_ID_WIDTH is inside { 1 .. 10 },Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,Constraints,Interrupts,"Interrupt levels inside { 0, 2 .. 255 }",Correct functionality of interrupts of all valid levels,Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Constraints,Input ports,irq_i[31:0] tied to zero,Assert that non-clic irq[31:0] signals are tied to 0,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+Silabs Internal,Eventually taken,Interrupt taken,"An interrupt that is both pending and enabled shall be taken, unless if the core is in debug mode or is blocked by external interfaces (rvalid, fence_flush_ack, etc), and the taking happens within a fixed number of cycles","Check that when conditions are right, then the interrupt gets taken within expected time",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,Interrupt interface,Level sensitive,All interrupt lines are level-sensitive,All assertions and modeling of interrupts for checking assume no edges required to qualify an interrupt,Any/All,"ENV capability, not specific test",N/A,
+Silabs Internal,Interrupt interface,Interrupt ack pulse,Interrupt acknowledge is always a pulse,Assert that irq_ack is always a pulse,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+Silabs Internal,Interrupt interface,Interrupt ack valid,Interrupt acknowledge is only asserted when a valid interrupt has been taken by the core,irq_ack never asserted unless core has taken an interrupt,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+Silabs Internal,Interrupt interface,NMI,NMI not reported on irq_ack,"Check that after an NMI is triggered, if there is no other interrupt occuring, then there should be no irq_ack",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+Silabs Internal,Interrupt Interface,Interrupt ID is valid,Interrupt valid ID matches the active interrupt during the cycle where interrupt acknowledge is asserted,Ensure that irq_id is the active interrupt when irq_ack is asserted,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+Silabs Internal,Interrupt Interface,Interrupt ID is never reserved,"Interrupt valid ID during interrupt acknowledge is never a reserved interrupt [15,14,13,12,10,9,8,6,5,4,2,1,0]",Assert irq_id is not a reserved valid when irq_ack is asserted,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+Silabs Internal,Interrupt Interface,Single interrupt ack per ISR,Interrupt acknowledge only asserted once per interrupt,irq_ack only asserts once for an interrupt service period,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+Silabs internal,Interrupt interface,RVFI,Every irq_ack must be followed by a corresponding rvfi_intr,"Check that whenever and irq_ack occurs, then the next rvfi retired instruction must have rvfi interrupt set correctly",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+Silabs Internal,Interrupt CSR,mclicbase,12 least significant bits hardwired to zero,"Assert mclicbase[11:0] = 0 
+
+Note: This register will possibly be removed in the future",Assertion Check,"ENV capability, not specific test",functional Coverage,
+CLIC 8675ec,Interrupt CSR,mstatus.mpp,mstatus.mpp accessible through mcause.mpp,Read/Write mpp to mcause.mpp and read back through mstatus.mpp,Self Checking Test,Directed Self-Checking,Testcase,
+CLIC 8675ec,Interrupt CSR,mcause.mpp,mcause.mpp accessible through mstatus.mpp,Read/Write mpp to mstatus.mpp and read back through mcause.mpp,Self Checking Test,Directed Self-Checking,Testcase,
+CLIC 8675ec,Interrupt CSR,mstatus.mpie,mstatus.mpie accessible through mcause.mpie,Read/Write mpp to mcause.mpie and read back through mstatus.mpie,Self Checking Test,Directed Self-Checking,Testcase,
+CLIC 8675ec,Interrupt CSR,mcause.mpie,mcause.mpie accessible through mstatus.mpie,Read/Write mpp to mstatus.mpie and read back through mcause.mpie,Self Checking Test,Directed Self-Checking,Testcase,
+CLIC 8675ec,Interrupt CSR,mie,mie not used and hardwired to zero,Assert that mie always appears as hardwired 0,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt CSR,mie,Writes to mie should not trap,Attempt writes to mie and ensure that 0 is read back,Self Checking Test,Directed Self-Checking,Testcase,
+CLIC 8675ec,Interrupt CSR,mip,mip not used and hardwired to zero,Assert that mip always appears as hardwired 0,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt CSR,mip,Writes should not trap,Attempt writes to mip and ensure that 0 is read back,Self Checking Test,Directed Self-Checking,Testcase,
+UM v0.3.0 Common,Interrupt CSR,mtvec,Always aligned to 128 bytes,Assert that mtvec[6:2] always zero,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,Interrupt CSR,mtvec,Always in CLIC mode (I.e. model can not switch between interrupt modes),Assert that mtvec.mode is always 2'b11 when CLIC is enabled,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+Silabs Internal,Interrupt CSR,mtvt,Memory writes to the vector table require an instruction barrier (fence.i) to guarantee that they are visible to the instruction fetch.,Verify that a fence.i instruction after writes to the vector table guarantees that the new vector table pointer taken matches the latest pointer written to the vector table.,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt CSR,mtvt,"Function ptr reads treated as instruction fetch, adhering to configured PMA settings 
+(CV32E40S): PMP settings apply as for any other instruction fetch","Assert that interrupts accessing the vector table pointers do so through the instruction interface, and that a lack of PMP execute and PMA main-memory settings causes the instruction fetch to fail.
+
+Note, instruction fetch is treated as an implicit read, thus do not require PMP read permissions, but execute permission is required.
+
+Both the pointer fetch and the fetch of the actual instruction located at the pointer address should be covered by the above restrictions. ",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,Interrupt CSR,mtvt,"Always aligned to 2^(max(6, 2+SMCLIC_ID_WIDTH)","Assert that mtvt [max(6, 2+SMCLIC_ID_WIDTH)-1:0] = 0",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt CSR,mtvt,"Determine alignment by software access,
+Write ones to lower order bits and read back",Test that correct alignment can be inferred by writing to these fields and read back.,Self Checking Test,Directed Self-Checking,Testcase,
+CLIC 8675ec,Interrupt CSR,mepc,The CSR mepc is set to the PC of the interrupted application code or preempted interrupt handler,"Ensure that MEPC in ISR is value of saved PC.
+",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+Risc-V Priv. 1.12,Interrupt CSR,mcause,mcause.interrupt flag always set during ISR regardless of the active interrupt,mcause[31] is set when an interrupt is taken,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt CSR,mcause,mcause.exccode is set to the active interrupt code,mcause.exccode reflects the taken interrupt,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt CSR,mcause,mcause.mpil: Previous interrupt level,mpil reflects the previous privilege level,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt CSR,mcause,mcause.mpp: Previous privilege mode,Ensure that mcause.mpp reflects mstatus.mpp previous privilege mode after taking a trap,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt CSR,mcause,mcause.mpie: Previous interrupt enable,Ensure that mcause.mpie reflects mstatus.mpie previous interrupt enable value after taking a trap,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt CSR,mnxti,"mnxti read value after ISR is entered:
+
+Case 1:
+""The II is still the ranking interrupt (no change). In this case, as the level of the II will still be higher than pil from the OIC, xil and exccode will be rewritten with the same value that they already had (effectively unchanged), and xnxti will return the table entry for the II.""
+
+(II: Initital interrupt,
+OIC: Original interrupted context)",Assert that mnxti returns the table entry for the initial interrupt when the current interrupt is still being signalled to the core as the highest enabled and pending interrupt.,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt CSR,mnxti,"mnxti read value after ISR is entered:
+
+Case 2:
+""The II has been superceded by a higher-level non-SHV interrupt. In this case, xil will be set to the new higher interrupt level, exccode will be updated to the new interrupt id, and xnxti will return the vector table entry for the new higher-level interrupt. The OIC is not disturbed, retaining the original epc and the original pil. This case reduces latency to service a more-important interrupt that arrives after the state-save sequence was begun for the less-important II. The II, if still pending-enabled, will be serviced sometime after the higher-level interrupt as described below.""","Assert that mnxti returns the table entry for the new higher-level interrupt when the current interrupt is being interrupted by a higher level, non-shv interrupt",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt CSR,mnxti,"mnxti read value after ISR is entered:
+
+Case 3: 
+""The II has been superceded by a higher-priority non-SHV interrupt at the same level. This operates similarly to the previous case, with exccode updated to the new interrupt id. Because the lower-priority interrupt had not begun to run its service routine, this optimization preserves the property that interrupt handlers at the same interrupt level but different priorities execute atomically with respect to each other (i.e., they do not preempt each other).""","Only machine mode interrupts are supported, an interrupt of the same level but higher priority cannot occur
+",N/A,N/A,N/A,
+CLIC 8675ec,Interrupt CSR,mnxti,"mnxti read value after ISR is entered:
+
+Case 4:
+""The II has disappeared and a lower-ranked non-SHV interrupt, which has interrupt level greater than the OIC’s pil is present in CLIC. In this case, the xil of the handler will be reduced to the lower-ranked interrupt’s level, exccode will be updated with the new interrupt id, and xnxti will return a pointer to the appropriate handler in table. In this case, the new lower-ranked interrupt would still have caused the original context to have been interrupted to run the handler, and the disappearing II has simply caused the lower-ranked interrupt’s entry and state-save sequence to begin earlier.""","Assert that mnxti returns the table entry for the new lower-level interrupt when the current interrupt is no longer present in the CLIC, and replaced by a new lower-leveled interrupt, with a greater interrupt level than the original interrupted context's pil",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt CSR,mnxti,"mnxti read value after ISR is entered:
+
+Case 5:
+""The II has disappeared and either there is no current interrupt from the CLIC, or the current ranking interrupt is a non-SHV interrupt with level lower than xpil. In this case, the xil and exccode are not updated, and 0 is returned by xnxti. The following trampoline code will then not fetch a vector from the table, and instead just restore the OIC context and mret back to it. This preserves the property that the OIC completes execution before servicing any new interrupt with a lower or equal interrupt level.""","Ensure that mnxti returns 0 in case the initial interrupt is no longer signalled, nor replaced by a new interrupt from the CLIC",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt CSR,mnxti,"mnxti read value after ISR is entered:
+
+Case 6:
+""The II has been superceded by a higher-level SHV interrupt. In this case, the xil and exccode are not updated, and 0 is returned by xnxti. Once interrupts are reenabled for the following instruction, the hart will preempt the current handler and execute the vectored interrupt at a higher interrupt level using the function pointer stored in the vector table.""",Assert that mnxti will return 0 in case of a higher-leveled SHV interrupt pending,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.9.0 Common,Interrupt CSR,mintstatus,"R/O CSR, Holds active interrupt level for each supported privilege mode","Assert that the mil field gets updated with the current interrupt level when an interrupt is taken, and that sil and uil-fields are hard-coded zero.
+
+Note: NMIs explicitly leave ""mintstatus"" unchanged.",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,CSR,CSR access,CSR registers should be accessible as defined in UM,"Add new CLIC-specific registers to CSR access tests and ensure that the registers and their fields can be read/written according to specification
+
+mtvt
+mnxti
+mintstatus
+mintthresh
+mscratchcsw
+mscratchcswl
+
+Note: ""mclicbase"" was removed.
+Note: ""mintstatus"" got moved.",Self Checking Test,Directed Self-Checking,Testcase,
+CLIC 8675ec,Interrupt CSR,Hardware vectoring,mcause.minhv: Set at start of hw vectoring,Assert that mcause.minhv is set when a hw-vectored interrupt is taken,Assertion Check,Constrained-Random,Functional Coverage,
+CLIC 8675ec,Interrupt CSR,Hardware vectoring,mcause.minhv: Cleared at end of hw vectoring,Assert that mcause.minhv is cleared when pointer fetch of hw-vectored interrupt is taken successfully,Assertion Check,Constrained-Random,Functional Coverage,
+CLIC 8675ec,Interrupt Vector,Hardware vectoring,"Exception on fetch:
+mepc : set to faulting address (pointer, rather than address for an instruction)
+mcause: exception type","Write invalid (not pointing to a valid instruction or a region with pmp restricted execute access) pointer to the mtvt table, and trigger this handler. 
+",Check against RM,Directed Non-Self-Checking,Testcase,
+Silabs Internal,Interrupt Vector,Hardware vectoring,Prefetcher: no prefetches between pointer fetch and fetch of final vectored target,Assert that no new instructions get fetched that does not match the final vectored target after a pointer fetch is attempted,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt Vector,Hardware vectoring,Interrupt executes trap handler function pointer located at the address specified in mtvt when shv = 1,"Assert that first pc after a taken, shv interrupt always matches address fetched from mtvt
+",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt Vector,Hardware vectoring,Interrupt jumps to common code at mtvec when shv = 0,Assert that first pc after a taken non-shv interrupt matches ,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,Interrupt Vector,PC,"non-shv: taken trap handler always has address[6:0] = 0;
+implied by mtvec alignment restriction","Assert that first pc after a taken, non-shv interrupt always has bits [6:0] = 0
+",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Interrupt arbitration,Interrupts ignored,"Interrupts ignored when 
+new privilege mode (nP) lower than current privilege mode (P)","Not allowed, assuming clic_irq_priv_i always = 2'b11
+Covered by assertion that asserts that clic_irq_priv_i is always 2'b11 in sim and assumed in formal",N/A,N/A,N/A,
+CLIC 8675ec,Interrupt arbitration,Interrupts ignored,"Interrupts ignored when 
+new privilege mode (nP) = current privilege mode(P) and new interrupt level (nL) != 0 and nL < current interrupt level (L)","During constrained random testing, the following should be true
+
+Current privilege mode: M-mode
+Inside interrupt handler (Nested)
+
+clic_irq_i = 1
+clic_irq_id_i = random 0 .. max_index
+clic_irq_lvl > 0 and < current level
+clic_irq_priv_i = 2'b11 assumed always true
+clic_irq_shv_i = random 0 .. 1
+
+Check that no inadvertent state/register change occurs from a pending, enabled but not taken interrupt",Check against RM,Constrained-Random,Functional Coverage,
+CLIC 8675ec,Interrupt arbitration,Interupts disabled,"Interrupts disabled when
+mtatus.mie and clicintie[i] = 0","mstatus.mie = 0 should disallow any pending and enabled interrupts from being taken as we only have one level where interrupts can be taken (M-mode), so no other higher modes exist
+
+Check that no inadvertent state/register change occurs from a pending, enabled but not taken interrupt",Check against RM,Constrained-Random,Functional Coverage,
+CLIC 8675ec,Interrupt arbitration,No interrupt,"No interrupt when 
+new privilege mode (nP) = current privilege mode (P) 
+clic.level = 0
+
+P, nP in M, U","During constrained random testing, the following should be true
+
+Current privilege mode: M-mode (Cannot signal U-mode)
+Test in both nested and non-nested cases
+
+clic_irq_i = 1 
+clic_irq_id_i = random 0 .. max index
+clic_irq_lvl = 0
+clic_irq_priv_i = 2'b11 assumed always true
+clic_irq_shv_i = random 0 .. 1
+
+Check that no inadvertent state/register change occurs from a pending, enabled but not taken interrupt",Check against RM,Constrained-Random,Functional Coverage,
+CLIC 8675ec,Interrupt arbitration,No interrupt,"No interrupt when 
+new privilege mode (nP) > current privilege mode (P)
+clic.level = 0
+
+nP = M, P = U, clic.level = 0
+(CV32E40S)","During constrained random testing, the following should be true
+
+Current privilege mode: U-mode
+Test for both nested and non-nested cases
+
+clic_irq_i = 1
+clic_irq_id_i = random 0 .. max_index
+clic_irq_lvl = 0
+clic_irq_priv_i = 2'b11 assumed always true
+clic_irq_shv_i = random 0 .. 1
+
+Check that no inadvertent state/register change occurs from a pending, enabled but not taken interrupt",Check against RM,Constrained-Random,Functional Coverage,
+CLIC 8675ec,Interrupt arbitration,"Horizontal interrupt taken
+(Nested)","Horizontal interrupt taken when
+mtatus.mie and clicintie[i] = 1
+new privilege mode (nP) = current privilege mode (P)
+new privilege level (nL) > current privilege level (L)
+
+Only applicable for M-mode (P, nP = M) as horizontal user mode traps are not supported (N-extension) in neither CV32E40X nor S","During constrained random testing, the following should be true
+
+Current privilege mode: M-mode (Cannot signal U-mode)
+
+clic_irq_i = 1
+clic_irq_id_i = random 0 .. max_index
+clic_lvl > current_lvl
+clic_irq_priv_i = 2'b11 assumed always true
+clic_irq_shv_i = random 0 .. 1
+
+Check that an interrupt that should be taken under the given circumstances always get taken
+Check that system behaves correctly when a pending and enabled interrupt gets taken",Check against RM,Constrained-Random,Functional Coverage,
+CLIC 8675ec,Interrupt arbitration,Vertical interrupt taken,"Vertical interrupt taken when
+new privilege mode (nP) > current privilege mode (P)
+new privilege level (nL) > 0
+
+nP = M, P = U
+
+(CV32E40S)","During constrained random testing, the following should be true
+
+Current privilege mode: U-mode
+
+clic_irq_i = 1
+clic_irq_id_i = random 0 .. max_index
+clic_lvl > 0
+clic_irq_priv_i = 2'b11 assumed always true
+clic_irq_shv_i = random 0 .. 1
+
+Check that an interrupt that should be taken under the given circumstances always gets taken
+Check that the system behaves correctly when a pending and enabled interrupt gets taken",Check against RM,Constrained-Random,Functional Coverage,
+CLIC 8675ec,Interrupt arbitration,Interrupt taken,"mstatus.mie = 1
+nP = P = M
+nL > L
+
+or
+
+nP > P (i.e. nP = M, P = U)
+nL > 0",Assert that an interrupt is taken if and only if any of the two conditions are true,Assertion Check,"ENV capability, not specific test",Assertion Coverage,
+CLIC 8675ec,Interrupt preemption,mintthresh,Higher level interrupts than mintthresh.th can preempt execution,Assert that interrupts with the same privilege mode and higher privilege level than the running ISR can interrupt the currently running ISR,Assertion Check,"ENV capability, not specific test",Assertion Coverage,
+CLIC 8675ec,Interrupt preemption,mintthresh,Lower level interrupts than mintthresh.th cannot preempt execution,Assert that interrupts with the same privilege mode and lower privilege level than the running ISR cannot interrupt the currently running ISR,Assertion Check,"ENV capability, not specific test",Assertion Coverage,
+CLIC 8675ec,WFI resume,Resumes,"when 
+nP > P
+interrupt is highest among pending-and-enabled interrupts
+i.level != 0
+
+nP = M, P = U
+
+(CV32E40S)","clic_irq_i = 1
+clic_irq_lvl > 0
+P = U
+nP = M",Check against RM,Constrained-Random,Functional Coverage,
+CLIC 8675ec,WFI resume,Resumes,"when
+nP = P
+interrupt is highest among pending-and-enabled interrupts
+i.level > max(xintstatus.xil, xintthresh.th)
+
+(xintthresh only applies to current privilege mode)
+nP, P = M","clic_irq_i = 1
+clic_irq_lvl > max(mintstatus.mil, mintthresh.th)
+P, nP = M
+
+Test that only interrupts with a sufficiently high interrupt level are able to preempt execution with both true or temporarily risen interrupt level",Check against RM,Constrained-Random,Functional Coverage,
+CLIC 8675ec,WFI resume,Resumes,"nP < P
+interrupt is highest among pending-and-enabled interrupts
+i.level != 0
+
+Can not occur 40S/40X as new privilege mode signalled on the CLIC interface can never be less than current privilege mode","nP < P cannot occur as we assume clic_irq_lvl = 2'b11
+
+No test/assertion applicable, should be covered by clic_irq_lvl assertion ensuring that an interrupt with irq_lvl != 2'b11 never occurs",N/A,N/A,N/A,
+CLIC 8675ec,WFI resume,Ignores,Everything not covered above,Core does not resume operation unless any of the above resume conditions are true,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,Interrupt instruction,Killed instructions have no side-effects,"When an instruction is interrupted, it is killed, meaning that it has no side-effects: 1) load/store instructions don't reach the bus, 2) control transfer instructions don't jump, 3) CSRs don't get updated, 4) GPRs don't get updated","Check that bus, jumps, and registers are unaffected by killed instructions",Check against RM,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Return from handler,mret,"Execution continues at 
+Privilege mode = mcause.mpp
+pc = mepc
+interrupt level = mcause.mpil
+global interrupt enable mie = mcause.mpie
+
+mcause.mpil unchanged
+mcause.mpp = least privileged mode
+mcause.mpie = 1",Correct update of CSR values when core returns from an ISR,Check against RM,Constrained-Random,Functional Coverage,
+CLIC 8675ec,Return from handler,mret,"Execution continues at 
+P = mcause.mpp
+pc = mepc
+L = mcause.mpil
+ie = mcause.mpie
+
+mcause.mpil unchanged
+mcause.mpp = least privileged mode
+mcause.mpie = 1","Correct update of CSR values when core returns from an ISR
+Added assertion for formal coverage",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 0.9-draft 4/11/2023,Return from handler,mret,"""If the hart is currently running at some privilege mode x, an MRET or SRET instruction that changes the privilege mode to a mode less privileged than x also sets xintthresh = 0.""","Use ""mret"" to enter U-mode.
+Check that ""mintthresh"" is written to zero upon executing the mret.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,
+CLIC 0.9-draft 4/11/2023,Return from debug mode,dret,"""Likewise, if the RISC-V debug specification is implemented and the hart is currently running at some privilege mode x, a DRET instruction that changes the privilege mode to a mode less privileged than x also sets xintthresh = 0.""","Use ""dret"" to enter U-mode.
+Check that ""mintthresh"" is written to zero upon executing the dret.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,
+CLIC 8675ec,WFI,Wakeup conditions,"A pending-and-enabled interrupt i causes the hart to resume execution if interrupt i
+• has a higher privilege mode than the current privilege mode and
+• the interrupt priority reduction tree selects interrupt i as the maximum across all pending-and-enabled
+interrupts and
+• the interrupt i level is not equal to 0.",Test that interrupts of higher privilege modes than the current privilege mode can wakeup the core from wfi,Check against RM,Constrained-Random,Functional Coverage,
+CLIC 8675ec,WFI,Wakeup conditions,"A pending-and-enabled interrupt i causes the hart to resume execution if interrupt i
+ • has the same privilege mode as the current privilege mode and
+ • the interrupt priority reduction tree selects interrupt i as the maximum across all pending-and-enabled interrupts and
+ • the interrupt i level is greater than max(xintstatus.xil, xintthresh.th )",Test that interrupts of higher privilege level than the current privilege level can wake the core from WFI,Check against RM,Constrained-Random,Functional Coverage,
+CLIC 8675ec,WFI,Wakeup conditions,"A pending-and-enabled interrupt i causes the hart to resume execution if interrupt i 
+• has a lower privilege mode than the current privilege mode and 
+• the interrupt priority reduction tree selects interrupt i as the maximum across all pending-and-enabled interrupts and 
+• the interrupt i level is not equal to 0.","nP < P cannot occur as we assume clic_irq_lvl = 2'b11
+
+No test/assertion applicable, should be covered by clic_irq_lvl assertion ensuring that an interrupt with irq_lvl != 2'b11 never occurs",N/A,N/A,N/A,
+CLIC 8675ec,WFI,Wakeup conditions,Core only wakes up if any of the conditions mentioned above is true,Assert that core remains in WFI mode unless correct wakeup conditions occur,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,WFI ,Entry,Execution of WFI causes the core to stop,In normal execution the core stop within a certain time period after execution.,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,WFI ,Clock gating,WFI entry causes the clock to be gated,The core is not clocked during WFI,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,WFI ,Output signal,core_sleep_o output signal is only asserted during active WFI,Assert the proper operation of core_sleep_o,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Synchronous exception handling,Horizontal synchronous exception traps,Serviced at same privilege mode with same interrupt level as instruction that raised exception ,"Assert that interrupt level is not changed when entering the exception handler
+(Can only occur in machine mode)",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+CLIC 8675ec,Synchronous exception handling,Vertical synchronous exception traps,"Serviced at higher privilege mode at interrupt level 0 in the higher privilege mode
+
+(CV32E40S)",Assert that user mode traps are taken in machine mode with interrupt level 0,Assertion Check,"ENV capability, not specific test",Functional Coverage,
+UM v0.3.0 Common,Trap priority,Interrupt + WFI,Proper interactions between interrupts and WFI,"Corner case
+
+Test random combinations of streams containing WFI-instructions with random interrupt requests",Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Trap priority,Interrupt + Back to back WFI,Correct interactions between interrupts and back-to-back WFI instructions,"Corner case
+
+In embedded context WFI is used often, ensure that WFI can be re-entered ASAP after servicing a ISR for a previous WFI",Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Trap priority,Interrupt + Debug,Correct interaction between interrupts and debug,"Corner case
+Test random streams of instructions interrupted by debug and random interrupt requests.
+Goal is to verify that interrupts are never taken in debug mode, and that interrupt- and debug transitions are handled correctly
+
+Note, these potential corners are deliberately mentioned separately to be able to more easily pinpoint any bugs that may occur in regressions - thus ideally should be implemented with different tests.",Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Trap priority,Interrupt + Exceptions,Correct interaction between interrupts and exceptions,"Corner case
+Test random streams of instructions interrupted by exceptions and random interrupt requests.
+Generated exception code must take care to back up mepc, mcause when triggering exceptions to avoid corrupting program flow (these CSRs will be overwritten)
+
+Note, these potential corners are deliberately mentioned separately to be able to more easily pinpoint any bugs that may occur in regressions - thus ideally should be implemented with different tests.",Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Trap priority,Interrupt + Bus Error,Correct interaction between interrupts and bus errors,"Corner case
+Test random streams of instructions interrupted by random interrupt requests and random bus errors. Aims to verify that interrupts and bus errors are correctly prioritized by the system.
+
+Note, these potential corners are deliberately mentioned separately to be able to more easily pinpoint any bugs that may occur in regressions - thus ideally should be implemented with different tests.",Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Trap priority,Interrupt + Debug + Bus Error,"Correct interaction between interrupts, debug and bus errors
+","Corner case
+Test random streams of instructions, 
+
+Note, these potential corners are deliberately mentioned separately to be able to more easily pinpoint any bugs that may occur in regressions - thus ideally should be implemented with different tests.",Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Trap priority,Interrupt + Debug + WFI,"Correct interaction between interrupts, debug and WFI
+","Test random instruction streams containing WFI, where control flow changes occur due to random debug requests and random interrupts
+
+Note, these potential corners are deliberately mentioned separately to be able to more easily pinpoint any bugs that may occur in regressions - thus ideally should be implemented with different tests.",Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Trap priority,Interrupt + Debug + WFI + Bus Error,"Correct interaction between interrupts, debug, wfi and bus errors","Test random instruction streams containing WFI instructions, where control flow changes occur due to random debug requests, random bus errors, random interrupts
+
+Note, these potential corners are deliberately mentioned separately to be able to more easily pinpoint any bugs that may occur in regressions - thus ideally should be implemented with different tests.",Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Trap priority,Interrupt + Debug + WFI + Bus Error + Exceptions,Correct interaction between all trap sources,"Trap priority stress test
+Test random streams containing all trap sources to verify correct behavior
+
+Note, these potential corners are deliberately mentioned separately to be able to more easily pinpoint any bugs that may occur in regressions - thus ideally should be implemented with different tests.",Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Trap priority,Nested Interrupts,Correct interactions between nested interrupts,"Verify potential corner case
+
+Implement nested ISR. Randomly modify mintthresh.th to mask out certain interrupts and randomly trigger new interrupts with higher or lower priority to verify that interrupts with a higher privilege level are allowed to preempt
+
+Note, these potential corners are deliberately mentioned separately to be able to more easily pinpoint any bugs that may occur in regressions - thus ideally should be implemented with different tests.",Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Trap priority,Nested Interrupts + exceptions,Correct interactions between nested interrupts and exceptions,"Verify potential corner case
+Same as nested interrupts, but random streams include randomly inserted exception-causing instructions
+Generated exception code must take care to back up mepc, mcause when triggering exceptions to avoid corrupting program flow (these CSRs will be overwritten)
+
+Note, these potential corners are deliberately mentioned separately to be able to more easily pinpoint any bugs that may occur in regressions - thus ideally should be implemented with different tests.",Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Trap priority,Nested interrupts + Debug,Correct interactions between nested interrupts and debug,"Verify potential corner case
+Same as nested interrupts, but random streams also gets control flow modified by random debug requests.
+
+Note, these potential corners are deliberately mentioned separately to be able to more easily pinpoint any bugs that may occur in regressions - thus ideally should be implemented with different tests.",Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Trap priority,Nested Interrupts + Debug + Bus Error,"
+Correct interactions between nested inteerrupts, debug and bus-errors","Verify potential corner case
+Same as nested interrupts with debug, but also includes random bus errors
+
+Note, these potential corners are deliberately mentioned separately to be able to more easily pinpoint any bugs that may occur in regressions - thus ideally should be implemented with different tests.",Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Trap priority,Nested interrupts + Debug + WFI,"Correct interactions between nested interrupts, debug and WFI","Verify potential corner case
+Same as nested interrupts with debug, but  the instruction stream should also include WFI instructions.
+
+Note, these potential corners are deliberately mentioned separately to be able to more easily pinpoint any bugs that may occur in regressions - thus ideally should be implemented with different tests.",Check against RM,Constrained-Random,Functional Coverage,
+UM v0.3.0 Common,Trap priority,Nested interrupts + Debug + WFI + Bus Error + Exceptions,Correct interactions between nested interrupts and all other trap types,"Verify potential corner case
+Test nested interrupts with randomly traps (all types)
+Generated exception code must take care to back up mepc, mcause when triggering exceptions to avoid corrupting program flow (these CSRs will be overwritten)
+
+Note, these potential corners are deliberately mentioned separately to be able to more easily pinpoint any bugs that may occur in regressions - thus ideally should be implemented with different tests.",Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All 32-bit Load instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All 32-bit Store instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All 32-bit Shift instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All 32-bit logical instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All 32-bit compare instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All 32-bit jump instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All 32-bit FENCE instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All 32-bit system instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Nontaken BEQ instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Taken BEQ instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Nontaken BNE instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Taken BNE instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Nontaken BLT instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Taken BLT instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Nontaken BGE instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Taken BGE instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Nontaken BLTU instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Taken BLTU instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Nontaken BGEU instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Taken BGEU instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All 16-bit load instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All 16-bit store instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All 16-bit arithmetic instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All 16-bit shift instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All 16-bit jump instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All 16-bit system instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Nontaken C.BEQZ instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Taken C.BEQZ instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Nontaken C.BNEZ instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Taken C.BNEZ instruction interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All RV32 M instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All RV32 Zba instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All RV32 Zbb instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All RV32 Zbc instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All RV32 Zbs instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All RV32 Zicsr instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All RV32 Zifencei instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All RV32 Zc instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,"All RV32 Zca instructions interrupted
+",A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,"All RV32 Zcb instructions interrupted
+",A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,"All RV32 Zcmb instructions interrupted
+",A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,"All RV32 Zcmt instructions interrupted
+",A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,All RV32 Zcmp instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,Illegal instructions interrupted,A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,"All RV32 A instructions interrupted
+(CV32E40X)",A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,"All X interface instructions interrupted
+(CV32E40X)",A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,"All RV32F instructions interrupted
+(CV32E40X XIF only if supported)",A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,"All RV32 P instructions interrupted
+(CV32E40X XIF only if supported)",A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+Risc-V Priv. 1.12,Interrupt instruction,"All RV32V instructions interrupted
+(CV32E40X XIF only if supported)",A specific instruction is interrupted properly,Randomness check on interrupts versus instruction stream,Check against RM,Constrained-Random,Functional Coverage,
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,
+ ---- END ----,,,,,,,,
