@@ -382,6 +382,10 @@ gen_ovpsim_ic:
 # The new general test target
 
 test: $(XRUN_SIM_PREREQ) hex gen_ovpsim_ic
+	@echo "$(BANNER)"
+	@echo "* Running xrun in $(SIM_RUN_RESULTS)"
+	@echo "* Log: $(SIM_RUN_RESULTS)/xrun-$(TEST_NAME).log"
+	@echo "$(BANNER)"
 	mkdir -p $(SIM_RUN_RESULTS)/test_program && \
 	cd $(SIM_RUN_RESULTS) && \
 	export IMPERAS_TOOLS=$(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic && \
@@ -399,6 +403,7 @@ test: $(XRUN_SIM_PREREQ) hex gen_ovpsim_ic
 		+firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
 		+itb_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).itb \
 		+nm_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).nm
+	@echo "* Log: $(SIM_RUN_RESULTS)/xrun-$(TEST_NAME).log"
 	$(POST_TEST)
 
 ###############################################################################
@@ -450,7 +455,7 @@ compliance: $(XRUN_COMPLIANCE_PREREQ)
 
 ################################################################################
 # RISCOF RISCV-ARCH-TEST DUT simulation targets
-XRUN_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/dut_test.elf
+XRUN_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/$(TEST).elf
 
 comp_dut_riscof_sim:
 	@echo "$(BANNER)"
@@ -478,23 +483,25 @@ gen_riscof_ovpsim_ic:
 # Target to run RISCOF DUT sim with XRUN
 riscof_sim_run: $(XRUN_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovpsim_ic
 	@echo "$(BANNER)"
-	@echo "* Running xrun in $(PWD)"
+	@echo "* Running xrun in $(RISCOF_TEST_RUN_DIR)"
+	@echo "* Log: $(RISCOF_TEST_RUN_DIR)/xrun-$(TEST).log"
 	@echo "$(BANNER)"
 	cd $(RISCOF_TEST_RUN_DIR) && \
 	export IMPERAS_TOOLS=$(RISCOF_TEST_RUN_DIR)/ovpsim.ic && \
 	export IMPERAS_QUEUE_LICENSE=1 && \
 	$(XRUN) \
 		-R -xmlibdirname xcelium.d \
-		-l xrun-dut_test.log \
+		-l xrun-$(TEST).log \
 		$(XRUN_COMP_RUN) \
 		$(XRUN_RUN_WAVES_FLAGS) \
-		-covtest dut_test \
+		-covtest $(TEST) \
 		+UVM_TESTNAME=uvmt_cv32e40p_riscof_firmware_test_c \
 		$(CFG_PLUSARGS) \
 		$(RISCOF_TEST_PLUSARGS) \
-		+firmware=dut_test.hex \
-		+elf_file=dut_test.elf \
-		+itb_file=dut_test.itb
+		+firmware=$(TEST).hex \
+		+elf_file=$(TEST).elf \
+		+itb_file=$(TEST).itb
+	@echo "* Log: $(RISCOF_TEST_RUN_DIR)/xrun-$(TEST).log"
 
 
 ###############################################################################

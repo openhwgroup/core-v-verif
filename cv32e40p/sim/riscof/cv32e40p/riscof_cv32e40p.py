@@ -160,7 +160,7 @@ class cv32e40p(pluginTemplate):
             test_name = test.rsplit('/',1)[1][:-2]
 
             # name of the elf file after compilation of the test
-            elf = 'dut_test.elf'
+            elf = '{0}.elf'.format(test_name)
 
             # name of the signature file as per requirement of RISCOF. RISCOF expects the signature to
             # be named as DUT-<dut-name>.signature. The below variable creates an absolute path of
@@ -177,21 +177,21 @@ class cv32e40p(pluginTemplate):
             test_compile_cmd = self.compile_cmd.format(self.isa, self.xlen, self.sw_toolchain_prefix, test, elf, compile_macros)
           
             #gen hex for simulation
-            hex_cmd = 'riscv{0}-{1}-elf-objcopy -O verilog dut_test.elf dut_test.hex'.format(self.xlen, self.sw_toolchain_prefix)
+            hex_cmd = 'riscv{0}-{1}-elf-objcopy -O verilog {2} {3}.hex'.format(self.xlen, self.sw_toolchain_prefix, elf, test_name)
 
             #gen readelf for simulation
-            readelf_cmd = 'riscv{0}-{1}-elf-readelf -a dut_test.elf > dut_test.readelf'.format(self.xlen, self.sw_toolchain_prefix)
+            readelf_cmd = 'riscv{0}-{1}-elf-readelf -a {2} > {3}.readelf'.format(self.xlen, self.sw_toolchain_prefix, elf, test_name)
 
             #gen objdump for simulation
-            objdmp_cmd = 'riscv{0}-{1}-elf-objdump -D -M no-aliases -S dut_test.elf > dut_test.objdump'.format(self.xlen, self.sw_toolchain_prefix)
+            objdmp_cmd = 'riscv{0}-{1}-elf-objdump -D -M no-aliases -S {2} > {3}.objdump'.format(self.xlen, self.sw_toolchain_prefix, elf, test_name)
 
             #gen objdump2itb for simulation
-            objdmp2itb_cmd = 'riscv{0}-{1}-elf-objdump -d -S -M no-aliases -l dut_test.elf | '+self.tbpath+'/bin/objdump2itb - > dut_test.itb'
-            objdmp2itb_cmd = objdmp2itb_cmd.format(self.xlen, self.sw_toolchain_prefix)
+            objdmp2itb_cmd = 'riscv{0}-{1}-elf-objdump -d -S -M no-aliases -l {2} | '+self.tbpath+'/bin/objdump2itb - > {3}.itb'
+            objdmp2itb_cmd = objdmp2itb_cmd.format(self.xlen, self.sw_toolchain_prefix, elf, test_name)
 
             # set up the simulation command
             simdir = 'cd {0}/cv32e40p/sim/{1}'.format(self.tbpath, self.dut_exe)
-            simcmd = 'make riscof_sim_run USE_ISS={0} RISCOF_TEST_RUN_DIR={1} CFG={2}'.format(self.imperas_iss, testentry['work_dir'], self.dut_cfg)
+            simcmd = 'make riscof_sim_run TEST={0} USE_ISS={1} RISCOF_TEST_RUN_DIR={2} CFG={3} COV={4} SEED=random'.format(test_name, self.imperas_iss, testentry['work_dir'], self.dut_cfg, self.enable_sim_cov)
 
             #clean the build to save disk space during complete suite run
             if self.simulator_var == 'vsim':

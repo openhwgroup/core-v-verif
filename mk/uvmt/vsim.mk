@@ -470,7 +470,7 @@ hello-world:
 
 ################################################################################
 # RISCOF RISCV-ARCH-TEST DUT simulation targets
-VSIM_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/dut_test.elf
+VSIM_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/$(TEST).elf
 
 vlog_dut_riscof_sim:
 	@echo "$(BANNER)"
@@ -525,10 +525,11 @@ gen_riscof_ovpsim_ic:
 	fi
 
 # Target to run RISCOF VSIM (i.e. run the simulation)
+riscof_sim_run: VSIM_TEST=$(TEST)
 riscof_sim_run: $(VSIM_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovpsim_ic
 	@echo "$(BANNER)"
-	@echo "* Running vsim in $(PWD)"
-	@echo "* Log: $(PWD)/vsim.log"
+	@echo "* Running vsim in $(RISCOF_TEST_RUN_DIR)"
+	@echo "* Log: $(RISCOF_TEST_RUN_DIR)/vsim-$(TEST).log"
 	@echo "$(BANNER)"
 	cd $(RISCOF_TEST_RUN_DIR) && \
 		$(VMAP) work $(SIM_RISCOF_ARCH_TESTS_RESULTS)/work
@@ -539,15 +540,16 @@ riscof_sim_run: $(VSIM_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovp
 			-work $(VWORK) \
 			$(VSIM_WAVES_FLAGS) \
 			$(VSIM_FLAGS) \
-			-l vsim.log \
+			-l vsim-$(TEST).log \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=uvmt_cv32e40p_riscof_firmware_test_c \
 			$(RTLSRC_VOPT_TB_TOP) \
 			$(CFG_PLUSARGS) \
 			$(RISCOF_TEST_PLUSARGS) \
-			+firmware=dut_test.hex \
-			+elf_file=dut_test.elf \
-			+itb_file=dut_test.itb
+			+firmware=$(TEST).hex \
+			+elf_file=$(TEST).elf \
+			+itb_file=$(TEST).itb
+	@echo "* Log: $(RISCOF_TEST_RUN_DIR)/vsim-$(TEST).log"
 
 
 ################################################################################
@@ -640,6 +642,7 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 			$(RTLSRC_VOPT_TB_TOP) \
 			$(CFG_PLUSARGS) \
 			$(TEST_PLUSARGS)
+	@echo "* Log: $(RUN_DIR)/vsim-$(VSIM_TEST).log"
 	$(POST_TEST)
 
 
