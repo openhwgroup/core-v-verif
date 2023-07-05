@@ -51,15 +51,20 @@ class cv32e40p(pluginTemplate):
         self.platform_spec = os.path.abspath(config['pspec'])
 
         self.tbpath=os.path.abspath(config['corevverifPATH'])
-        
+
         if 'imperas_iss' in config and config['imperas_iss']=='yes':
             self.imperas_iss = 'yes'
         else:
             self.imperas_iss = 'no'
-       
+
         self.dut_cfg = str(config['dut_cfg'] if 'dut_cfg' in config else 'default')
 
         self.sw_toolchain_prefix = str(config['sw_toolchain_prefix'] if 'sw_toolchain_prefix' in config else 'unknown')
+
+        if 'enable_sim_cov' in config and config['enable_sim_cov']=='yes':
+            self.enable_sim_cov = 'yes'
+        else:
+            self.enable_sim_cov = 'no'
 
         #We capture if the user would like the run the tests on the target or
         #not. If you are interested in just compiling the tests and not running
