@@ -438,6 +438,9 @@ clean:
 	@echo "$(MAKEFILE_LIST)"
 	rm -rf $(SIM_RESULTS)
 
+clean_test:
+	rm -rf $(SIM_RUN_RESULTS)
+
 # Files created by Eclipse when using the Imperas ISS + debugger
 clean_eclipse:
 	rm  -f eguieclipse.log
@@ -445,6 +448,8 @@ clean_eclipse:
 	rm  -f stdout.txt
 	rm  -rf workspace
 
-# All generated files plus the clone of the RTL
-clean_all: clean clean_eclipse clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
+clean_rtl:
 	rm -rf $(CV_CORE_PKG)
+
+# All generated files plus the clone of the RTL
+clean_all: clean clean_rtl clean_eclipse clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib clean_riscof_arch_test_suite

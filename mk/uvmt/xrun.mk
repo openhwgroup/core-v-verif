@@ -66,7 +66,6 @@ XRUN_ELAB_COVFILE = -covfile $(abspath $(MAKE_PATH)/../tools/xrun/covfile.tcl)
 XRUN_RUN_COV      = -covscope uvmt_$(CV_CORE_LC)_tb \
 					-nowarn CGDEFN
 XRUN_RUN_BASE_FLAGS += -sv_lib $(DPI_DASM_LIB)
-XRUN_RUN_BASE_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
 XRUN_RUN_BASE_FLAGS += -sv_lib $(abspath $(SVLIB_LIB))
 
 XRUN_UVM_VERBOSITY ?= UVM_MEDIUM
@@ -187,6 +186,8 @@ XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_CORE_LOG
 XRUN_USER_COMPILE_ARGS += +define+UVM
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 	XRUN_PLUSARGS += +USE_ISS
+	XRUN_PLUSARGS += +USE_IMPERASDV
+	XRUN_RUN_BASE_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
 	XRUN_FILE_LIST_IDV ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
 	XRUN_USER_COMPILE_ARGS += +define+USE_IMPERASDV
 	XRUN_USER_COMPILE_ARGS += +define+USE_ISS
@@ -588,6 +589,9 @@ clean:
 	@echo "$(MAKEFILE_LIST)"
 	rm -rf $(SIM_RESULTS)
 
+clean_test:
+	rm -rf $(SIM_RUN_RESULTS)
+
 # Files created by Eclipse when using the Imperas ISS + debugger
 clean_eclipse:
 	rm  -f eguieclipse.log
@@ -599,4 +603,4 @@ clean_rtl:
 	rm -rf $(CV_CORE_PKG)
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_rtl clean_eclipse clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
+clean_all: clean clean_rtl clean_eclipse clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib clean_riscof_arch_test_suite

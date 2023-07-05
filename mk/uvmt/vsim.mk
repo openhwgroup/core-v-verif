@@ -32,7 +32,7 @@ VCOVER                  = vcover
 
 # Paths
 VWORK     				= work
-VSIM_COV_MERGE_DIR      = $(SIM_RESULTS)/merged
+VSIM_COV_MERGE_DIR      = $(SIM_CFG_RESULTS)/merged
 UVM_HOME               ?= $(abspath $(shell which $(VLIB))/../../verilog_src/uvm-1.2/src)
 DPI_INCLUDE            ?= $(abspath $(shell which $(VLIB))/../../include)
 USES_DPI = 1
@@ -391,7 +391,6 @@ gen_corev-dv: comp_corev-dv
 			$(CV_CORE_LC)_instr_gen_tb_top_vopt \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(GEN_UVM_TEST) \
-			+num_of_tests=$(GEN_NUM_TESTS)  \
 			-l $(TEST)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log \
 			+start_idx=$(GEN_START_INDEX) \
 			+num_of_tests=$(GEN_NUM_TESTS) \
@@ -687,8 +686,11 @@ cov: $(COV_MERGE_TARGET)
 clean:
 	rm -rf $(SIM_RESULTS)
 
+clean_test:
+	rm -rf $(SIM_RUN_RESULTS)
+
 clean_rtl:
 	rm -rf $(CV_CORE_PKG)
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_rtl clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
+clean_all: clean clean_rtl clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib clean_riscof_arch_test_suite
