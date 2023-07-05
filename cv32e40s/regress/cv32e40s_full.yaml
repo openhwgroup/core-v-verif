@@ -29,11 +29,6 @@ builds:
     cfg: clic_default
     dir: cv32e40s/sim/uvmt
 
-  uvmt_cv32e40s_b_ext_abs:
-    cmd: make comp_corev-dv comp
-    cfg: b_ext_abs
-    dir: cv32e40s/sim/uvmt
-
   uvmt_cv32e40s_b_ext_all:
     cmd: make comp_corev-dv comp
     cfg: b_ext_all
@@ -478,7 +473,7 @@ tests:
 
   b_ext_test:
     description: Directed Zb extension test
-    builds: [ uvmt_cv32e40s_b_ext_abs, uvmt_cv32e40s_b_ext_all]
+    builds: [ uvmt_cv32e40s_b_ext_all]
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=b_ext_test
 
