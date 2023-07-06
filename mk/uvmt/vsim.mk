@@ -682,7 +682,7 @@ cov: $(COV_MERGE_TARGET)
 # Clean up your mess!
 
 clean:
-	rm -rf $(SIM_RUN_RESULTS)
+	rm -rf $(SIM_RESULTS)
 
 clean_rtl:
 	rm -rf $(CV_CORE_PKG)

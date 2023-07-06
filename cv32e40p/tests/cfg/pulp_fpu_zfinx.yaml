@@ -9,7 +9,6 @@ ovpsim: >
     --override cpu/compress_version=1.0.0-RC5.7
     --override cpu/Zcf=T
     --override cpu/Zfinx_version=0.41
-    --showoverrides
 # Debug options (add to ovpsim section as needed)
 #--trace --tracechange --traceshowicount --tracemode --monitornets
 #--showoverrides
