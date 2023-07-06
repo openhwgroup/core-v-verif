@@ -248,13 +248,14 @@
 // `define USE_ISS
 `ifdef USE_ISS
 
-`include "rvvi/imperasDV.svh" // located in $IMPERAS_HOME/ImpProprietary/include/host
+`include "idv/idv.svh" // located in $IMPERAS_HOME/ImpProprietary/include/host
 
 module uvmt_cv32e40p_imperas_dv_wrap
   import uvm_pkg::*;
   import cv32e40p_pkg::*;
 //   import uvme_cv32e40p_pkg::*;
 //   import uvmt_cv32e40p_pkg::*;
+  import idvPkg::*;
   import rvviApiPkg::*;
   #(
      parameter FPU   = 0,
