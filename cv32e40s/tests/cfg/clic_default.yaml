@@ -19,6 +19,7 @@ ovpsim: >
     #--showoverrides
     # --trace --tracechange --traceshowicount --monitornets
 cflags: >
+    -Wl,--nmagic
 plusargs: >
     +enable_clic=1
     +enable_zba_extension=1

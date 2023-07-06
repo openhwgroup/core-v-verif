@@ -37,16 +37,36 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
 
     super.gen_program_header();
 
-    if (corev_cfg.enable_dummy) begin
-      instr = {
-        // CPUCTRL
-        $sformatf("add x%0d, x0, x0", cfg.gpr[0]),
-        $sformatf("lui x%0d, 0xf0", cfg.gpr[0]),
-        $sformatf("addi x%0d, x%0d, 0x2", cfg.gpr[0], cfg.gpr[0]),
-        $sformatf("csrrs x0, 0xbf0, x%0d", cfg.gpr[0])
-      };
-      gen_section(get_label("enable_dummy_instr", hart), instr);
-    end
+    case ({corev_cfg.enable_dummy, corev_cfg.enable_hint})
+      2'b00: begin
+        // Not enabled
+      end
+      2'b01: begin
+        instr = {
+          $sformatf("add x%0d, zero", cfg.gpr[0]),
+          $sformatf("addi x%0d, 0x4", cfg.gpr[0]),
+          $sformatf("csrrs x0, 0xbf0, x%0d", cfg.gpr[0])
+        };
+        gen_section(get_label("enable_hint_instr", hart), instr);
+      end
+      2'b10: begin
+        instr = {
+          $sformatf("lui x%0d, 0xf0", cfg.gpr[0]),
+          $sformatf("addi x%0d, x%0d, 0x2", cfg.gpr[0], cfg.gpr[0]),
+          $sformatf("csrrs x0, 0xbf0, x%0d", cfg.gpr[0])
+        };
+        gen_section(get_label("enable_dummy_instr", hart), instr);
+      end
+      2'b11: begin
+        instr = {
+          $sformatf("lui x%0d, 0xf0", cfg.gpr[0]),
+          $sformatf("addi x%0d, x%0d, 0x6", cfg.gpr[0], cfg.gpr[0]),
+          $sformatf("csrrs x0, 0xbf0, x%0d", cfg.gpr[0])
+        };
+        gen_section(get_label("enable_dummy_hint_instr", hart), instr);
+      end
+    endcase
+
   endfunction : gen_program_header
 
   virtual function void trap_vector_init(int hart);

@@ -399,6 +399,11 @@ task uvma_obi_memory_mon_c::sample_trn_a_from_vif(uvma_obi_memory_mon_trn_c trn)
       end
    end
 
+   // 1P3 signals
+   if (cfg.is_1p3_or_higher()) begin
+      trn.dbg     = passive_mp.mon_cb.dbg;
+   end
+
 endtask : sample_trn_a_from_vif
 
 
