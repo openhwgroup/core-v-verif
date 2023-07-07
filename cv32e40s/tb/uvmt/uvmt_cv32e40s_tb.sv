@@ -524,6 +524,21 @@ module uvmt_cv32e40s_tb;
         .CLIC (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC),
         .CLIC_ID_WIDTH (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC_ID_WIDTH)
       ) clic_assert_i(
+        .support_if (cv32e40s_wrapper.support_logic_module_o_if.slave_mp),
+        .rvfi_if(cv32e40s_wrapper.rvfi_instr_if),
+        .csr_mepc_if(cv32e40s_wrapper.rvfi_csr_mepc_if),
+        .csr_mcause_if(cv32e40s_wrapper.rvfi_csr_mcause_if),
+        .csr_mintthresh_if(cv32e40s_wrapper.rvfi_csr_mintthresh_if),
+        .csr_mintstatus_if(cv32e40s_wrapper.rvfi_csr_mintstatus_if),
+        //.csr_dcsr(rvfi_csr_dcsr_if),
+        //.csr_dpc(rvfi_csr_dpc_if),
+        //.csr_dscratch0(rvfi_csr_dscratch0_if),
+        //.csr_dscratch1(rvfi_csr_dscratch1_if),
+        //.csr_mstatus(rvfi_csr_mstatus_if),
+        //.csr_mtvec(rvfi_csr_mtvec_if),
+        //.csr_tdata1(rvfi_csr_tdata1_if),
+        //.csr_tdata2(rvfi_csr_tdata2_if),
+
         .dpc                 (cs_registers_i.dpc_rdata),
         .mintstatus          (cs_registers_i.mintstatus_rdata),
         .mintthresh          (cs_registers_i.mintthresh_rdata),

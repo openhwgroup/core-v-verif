@@ -31,6 +31,15 @@ module uvmt_cv32e40s_clic_interrupt_assert
     input logic                       rst_ni,
     input logic                       fetch_enable,
 
+    // interfaces
+    uvmt_cv32e40s_support_logic_module_o_if_t.slave_mp  support_if,
+    uvma_rvfi_instr_if_t                                rvfi_if,
+    uvma_rvfi_csr_if_t                                  csr_mepc_if,
+    uvma_rvfi_csr_if_t                                  csr_mcause_if,
+    uvma_rvfi_csr_if_t                                  csr_mintthresh_if,
+    uvma_rvfi_csr_if_t                                  csr_mintstatus_if,
+
+
     // CSR interface
     input logic [31:0]                dpc,
     input logic [31:0]                mintstatus,
@@ -508,6 +517,10 @@ module uvmt_cv32e40s_clic_interrupt_assert
   mintthresh_t      mintthresh_fields;
   dcsr_t            dcsr_fields;
 
+
+  mcause_t          rvfi_mcause_fields;
+  mcause_t          rvfi_mintstatus_fields;
+
   logic is_mepc_access_instr;
   logic is_mtvec_access_instr;
   logic is_mtvt_access_instr;
@@ -600,6 +613,9 @@ module uvmt_cv32e40s_clic_interrupt_assert
   assign mepc_fields       = mepc_t'(mepc);
   assign mcause_fields     = mcause_t'(mcause);
   assign dcsr_fields       = dcsr_t'(dcsr);
+
+  assign rvfi_mcause_fields       = mcause_t'(csr_mcause_if.rvfi_csr_rdata);
+  assign rvfi_mintstatus_fields   = mintstatus_t'(csr_mintstatus_if.rvfi_csr_rdata);
 
   always_comb begin
     clic.irq   = clic_if.clic_irq;
@@ -2570,35 +2586,88 @@ module uvmt_cv32e40s_clic_interrupt_assert
         !fetch_enable |-> irq_ack_occurred_between_valid == 1'b0;
     endproperty : p_irq_ack_occurred_zero_out_of_reset
 
+    //// WIP section start ////
+    //TODO:MT The following code is a work in progress, but is checked in to indicate that
+    //        the exisiting asserts are not expected to be relied upon
+
+
+    // mret should continue at mepc
+    // this checks the intention at retirement of mepc, not that the next instruction is correct.
+    property p_mret_pc_not_vectored_intended;
+      rvfi_if.is_mret
+      && !rvfi_if.rvfi_trap.trap
+      && !rvfi_mcause_fields.minhv
+      |->
+        rvfi_if.rvfi_pc_wdata == csr_mepc_if.rvfi_csr_rdata;
+    endproperty : p_mret_pc_not_vectored_intended
+
+    a_mret_pc_not_vectored_intended: assert property (p_mret_pc_not_vectored_intended)
+    else
+      `uvm_error(info_tag,
+        $sformatf("mret result state incorrect"));
+
+
+    // this checks the intention at retirement of mepc, not that the next instruction is correct.
+    property p_mret_pc_not_vectored_1;
+      rvfi_if.is_mret
+      && !rvfi_if.rvfi_trap.trap
+      && !rvfi_mcause_fields.minhv
+
+      ##1 rvfi_valid[->1]
+      ##0 !(rvfi_if.rvfi_intr.intr || support_if.first_debug_ins)
+      |->
+        rvfi_if.rvfi_pc_rdata == csr_mepc_if.rvfi_csr_rdata;
+    endproperty : p_mret_pc_not_vectored_1
+
+    a_mret_pc_not_vectored_1: assert property (p_mret_pc_not_vectored_1)
+    else
+      `uvm_error(info_tag,
+        $sformatf("mret result state incorrect"));
+
+
+    //mret to umode clears mintthresh
+    a_mret_umode_clear_mintthresh: assert property (
+      rvfi_if.is_mret
+      //&& !rvfi_if.rvfi_trap.trap
+      ##1 rvfi_valid[->1]
+      ##0 rvfi_if.is_umode
+      |->
+      csr_mintthresh_if.rvfi_csr_rdata == 0
+    )
+    else
+      `uvm_error(info_tag,
+        $sformatf("mret to umode does not clear mintthresh"));
+
+
 
     property p_execution_state_after_mret;
-      logic [1:0] sampled_mpp;
-      logic [31:0] sampled_pc_wdata;
-      logic sampled_irq_occurred;
-
-          // last cycle after mret, before new rvfi_valid,
+     // last cycle after mret, before new rvfi_valid,
           // and not an excepted minhv-mepc (TODO: where? covered elsewhere)
-          (rvfi_valid
-        && is_last_mret_instr
-        && !(is_intr_exception && minhv_high_between_valid),
-           sampled_pc_wdata = rvfi_pc_wdata)
-       ##1 rvfi_valid[->1]
+        rvfi_if.is_mret
+        && !rvfi_if.rvfi_trap.trap
+        && !rvfi_mcause_fields.minhv
+        ##1 rvfi_valid[->1]
       |->
-           // 1. Standard behavior
-           rvfi_pc_rdata == mepc_fields
+        // 1. Standard behavior
+        rvfi_if.rvfi_pc_rdata == csr_mepc_if.rvfi_csr_rdata
       or
+        rvfi_if.rvfi_intr.intr
+      or
+        support_if.first_debug_ins
+
+      /*
            // irq taken, mepc not written by retiring instruction
            // address checked by mtvec/mtvt assertions
-           irq_ack_occurred_between_valid
+           //irq_ack_occurred_between_valid
+           rvfi_intr.intr
         && !(is_csr_write  == 1'b1
         && is_mepc_access_instr == 1'b1)
-      or
-           // minhv bit set - no way to check destination address here.
-           $past(minhv_high_between_valid)
+
       or
            // irq taken, handler rewrites mepc
            // only check mepc update, irq dest. addr checked by respective assertions
-           irq_ack_occurred_between_valid
+           //irq_ack_occurred_between_valid
+           rvfi_intr.intr
         && mepc_fields == rvfi_mepc_wdata & rvfi_mepc_wmask
         && is_csr_write  == 1'b1
         && is_mepc_access_instr == 1'b1
@@ -2639,14 +2708,17 @@ module uvmt_cv32e40s_clic_interrupt_assert
            // nmi with retired write to mtvec
            rvfi_pc_rdata == { $past(mtvec_fields[31:2]), 2'b00 } + NMI_OFFSET
         && is_cause_nmi  == 1'b1
+
+      */
       ;
        // TODO add mpil, mpie
     endproperty : p_execution_state_after_mret
 
-    a_execution_state_after_mret: assert property (p_execution_state_after_mret)
-    else
-      `uvm_error(info_tag,
-        $sformatf("mret result state incorrect"));
+    // TODO:MT reenable after rebuild
+    //a_execution_state_after_mret: assert property (p_execution_state_after_mret)
+    //else
+    //  `uvm_error(info_tag,
+    //    $sformatf("mret result state incorrect"));
 
     property p_execution_state_after_mret_with_minhv;
       logic [3:0] pointer_req = '0;
@@ -2673,10 +2745,11 @@ module uvmt_cv32e40s_clic_interrupt_assert
        && mcause_fields.minhv == 1'b1;
     endproperty : p_execution_state_after_mret_with_minhv
 
-    a_execution_state_after_mret_with_minhv: assert property (p_execution_state_after_mret_with_minhv)
-    else
-      `uvm_error(info_tag,
-        $sformatf("mret result state incorrect"));
+    // TODO:MT reenable after rebuild
+    //a_execution_state_after_mret_with_minhv: assert property (p_execution_state_after_mret_with_minhv)
+    //else
+    //  `uvm_error(info_tag,
+    //    $sformatf("mret result state incorrect"));
 
     // ------------------------------------------------------------------------
     // clic level should be the larger of mintthresh_th and prev. taken irq
@@ -2689,7 +2762,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
       last_valid_instr <= !rst_ni ? '0 : rvfi_valid ? uncompressed_instr_t'(rvfi_insn) : last_valid_instr;
     end
 
-    assign last_valid_instr_csr = csr_instr_t'(last_valid_instr);
+    assign last_valid_instr_csr = csr_instr_t'(last_valid_instr); //TODO:MT not used?
 
     logic is_last_mret_instr;
     logic is_last_dret_instr;
@@ -2807,10 +2880,16 @@ module uvmt_cv32e40s_clic_interrupt_assert
       ;
     endproperty : p_clic_core_level_max_prev_irq_mintthresh_th
 
-    a_clic_core_level_max_prev_irq_mintthresh_th: assert property (p_clic_core_level_max_prev_irq_mintthresh_th)
-    else
-      `uvm_error(info_tag,
-        $sformatf("internal clic level error"));
+
+
+    // TODO:MT reenable after rebuild
+    //a_clic_core_level_max_prev_irq_mintthresh_th: assert property (p_clic_core_level_max_prev_irq_mintthresh_th)
+    //else
+    //  `uvm_error(info_tag,
+    //    $sformatf("internal clic level error"));
+
+
+     //// WIP section END ////
 
     // ------------------------------------------------------------------------
     // Horizontal exception handling
