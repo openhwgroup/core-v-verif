@@ -188,8 +188,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
   typedef struct packed {
     logic [31:N_MTVT]  base_31_n;
-    logic [N_MTVT-1:6] base_n_6;
-    logic [5:0]        reserved;
+    logic [N_MTVT-1:0] base_n_0;
   } mtvt_t;
 
   typedef struct packed {
@@ -1533,7 +1532,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
     property p_mtvt_alignment_correct;
       accept_on(N_MTVT <= 6) // Pass if field does not exist
-      mtvt_fields.base_n_6 == '0;
+      mtvt_fields.base_n_0 == '0;
     endproperty : p_mtvt_alignment_correct
 
     a_mtvt_alignment_correct: assert property (p_mtvt_alignment_correct)

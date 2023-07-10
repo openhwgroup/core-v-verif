@@ -198,7 +198,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       obi_memory_data_cfg.basic_interrupts_enabled  == basic_interrupt_enable;
       obi_memory_instr_cfg.basic_interrupts_enabled == basic_interrupt_enable;
 
-      obi_memory_instr_cfg.version       == UVMA_OBI_MEMORY_VERSION_1P2;
+      obi_memory_instr_cfg.version       == UVMA_OBI_MEMORY_VERSION_1P3;
       obi_memory_instr_cfg.drv_mode      == UVMA_OBI_MEMORY_MODE_SLV;
       obi_memory_instr_cfg.chk_scheme    == UVMA_OBI_MEMORY_CHK_CV32E40S;
       obi_memory_instr_cfg.write_enabled == 0;
@@ -215,7 +215,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       soft obi_memory_instr_cfg.drv_slv_gnt_random_latency_max    <= 3;
       soft obi_memory_instr_cfg.drv_slv_rvalid_random_latency_max <= 6;
 
-      obi_memory_data_cfg.version        == UVMA_OBI_MEMORY_VERSION_1P2;
+      obi_memory_data_cfg.version        == UVMA_OBI_MEMORY_VERSION_1P3;
       obi_memory_data_cfg.drv_mode       == UVMA_OBI_MEMORY_MODE_SLV;
       obi_memory_data_cfg.chk_scheme     == UVMA_OBI_MEMORY_CHK_CV32E40S;
       obi_memory_data_cfg.addr_width     == XLEN;
@@ -472,7 +472,17 @@ function void uvme_cv32e40s_cfg_c::sample_parameters(uvma_core_cntrl_cntxt_c cnt
    foreach (pma_cfg.regions[i])
       pma_cfg.regions[i] = pma_regions[i];
 
-endfunction : sample_parameters
+   // Debug region overrides
+   pma_cfg.region_override_condition = uvma_pma_cfg_c#(ILEN,XLEN)::PMA_OVERRIDE_DEBUG;
+   pma_cfg.region_overrides = new[1];
+   pma_cfg.region_overrides[0] = uvma_core_cntrl_pma_region_c::type_id::create("debug_pma_region_override");
+   pma_cfg.region_overrides[0].word_addr_low  = CORE_PARAM_DM_REGION_START >> 2;
+   pma_cfg.region_overrides[0].word_addr_high = CORE_PARAM_DM_REGION_END >> 2;
+   pma_cfg.region_overrides[0].main = 1;
+   pma_cfg.region_overrides[0].bufferable = 0;
+   pma_cfg.region_overrides[0].cacheable = 0;
+   pma_cfg.region_overrides[0].integrity = 0;
+endfunction: sample_parameters
 
 function bit uvme_cv32e40s_cfg_c::is_csr_check_disabled(string name);
 

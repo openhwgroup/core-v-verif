@@ -102,9 +102,9 @@ _debugger_start:
 end_debugger:
 	// sets the glb_debug_status value high to signal 'debug_priv_test.c' that the debugger is finished executing.
 	la t2, glb_debug_status
-	lw t1, 0(t2)
+	lb t1, 0(t2)
 	addi t1, t1, 1
-	sw t1, 0(t2)
+	sb t1, 0(t2)
 	
 	lw ra, 0(sp)
 	lw s0, 4(sp)

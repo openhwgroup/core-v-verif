@@ -7,4 +7,5 @@ ovpsim: >
     # --showoverrides
     # --trace --tracechange --traceshowicount --monitornets
 cflags: >
+    -Wl,--nmagic
 cv_sw_march: rv32im_zicsr_zca_zcb_zcmp_zifencei

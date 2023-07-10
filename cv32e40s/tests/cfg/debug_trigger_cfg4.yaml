@@ -9,6 +9,7 @@ ovpsim: >
     --override cpu/PMP_registers=64
     # --showoverrides
 cflags: >
+    -Wl,--nmagic
 plusargs: >
     +enable_zba_extension=1
     +enable_zbb_extension=1

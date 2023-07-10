@@ -51,11 +51,15 @@ localparam DEFAULT_NRET     = 1;
 parameter logic[ 2:0]  DBG_CAUSE_TRIGGER               =  3'h 2;
 parameter logic[ 1:0]  PRIV_LVL_M                      =  2'b 11;
 parameter logic[ 1:0]  PRIV_LVL_U                      =  2'b 00;
-parameter logic[10:0]  EXC_CAUSE_INSTR_FAULT           = 11'h 1;
-parameter logic[10:0]  EXC_CAUSE_LOAD_FAULT            = 11'h 5;
-parameter logic[10:0]  EXC_CAUSE_STORE_FAULT           = 11'h 7;
-parameter logic[10:0]  EXC_CAUSE_INSTR_INTEGRITY_FAULT = 11'h 19;
-parameter logic[10:0]  EXC_CAUSE_INSTR_BUS_FAULT       = 11'h 18;
+parameter logic[10:0]  EXC_CAUSE_INSTR_ACC_FAULT       = 11'd 1;
+parameter logic[10:0]  EXC_CAUSE_ILLEGAL_INSTR         = 11'd 2;
+parameter logic[10:0]  EXC_CAUSE_BREAKPOINT            = 11'd 3;
+parameter logic[10:0]  EXC_CAUSE_LOAD_ACC_FAULT        = 11'd 5;
+parameter logic[10:0]  EXC_CAUSE_STORE_ACC_FAULT       = 11'd 7;
+parameter logic[10:0]  EXC_CAUSE_ENV_CALL_U            = 11'd 8;
+parameter logic[10:0]  EXC_CAUSE_ENV_CALL_M            = 11'd 11;
+parameter logic[10:0]  EXC_CAUSE_INSTR_BUS_FAULT       = 11'd 24;
+parameter logic[10:0]  EXC_CAUSE_INSTR_INTEGRITY_FAULT = 11'd 25;
 
 
 `endif // __UVMA_RVFI_CONSTANTS_SV__
