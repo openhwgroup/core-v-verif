@@ -34,7 +34,7 @@
 #   (Typical usage does not require these to be set.)
 #   CV_CORE          - Name of the core to use.
 #   VERIF_ENV_REPO   - URL to external verif env repo.
-#   VERIF_ENV_BRANCH - Branch name of external verif env repo.
+#   VERIF_ENV_REF - Branch/hash/tag of external verif env repo.
 
 
 usage() {
@@ -62,8 +62,8 @@ check_env_vars() {
     exit 1
   fi
 
-  if [ -z "${VERIF_ENV_BRANCH}" ]; then
-    echo "error: 'VERIF_ENV_BRANCH' not defined"
+  if [ -z "${VERIF_ENV_REF}" ]; then
+    echo "error: 'VERIF_ENV_REF' not defined"
     exit 1
   fi
 }
@@ -72,13 +72,15 @@ clone() {
   check_env_vars
 
   rm -rf ${CV_CORE}
-  git clone  -b ${VERIF_ENV_BRANCH}  ${VERIF_ENV_REPO}  ${CV_CORE}
+  git clone  ${VERIF_ENV_REPO}  ${CV_CORE}
+  cd ${CV_CORE} && git checkout ${VERIF_ENV_REF} && cd -
+
 }
 
 clone_cv32e40x() {
   CV_CORE=cv32e40x
   VERIF_ENV_REPO=https://github.com/openhwgroup/cv32e40x-dv.git
-  VERIF_ENV_BRANCH=main
+  VERIF_ENV_REF=443f11c
 
   clone
 

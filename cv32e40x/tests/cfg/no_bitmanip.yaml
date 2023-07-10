@@ -1,7 +1,0 @@
-name: no_bitmanip
-description: Default configuration for CV32E40X simulations
-ovpsim: >
-#    --showoverrides
-#    --trace --tracechange --traceshowicount --monitornets
-cflags: >
-cv_sw_march: rv32im_zicsr_zca_zifencei
