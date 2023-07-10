@@ -612,7 +612,6 @@
     gpr_t         rd;
   } j_type_t;
 
-
   typedef struct packed {
     logic [31:25] funct7;
     gpr_t         rs2;
@@ -1157,28 +1156,29 @@
   function hint_name_e get_hint_name(instr_name_e name);
     hint_name_e hint_name;
 
-    if (name inside { SLTI, SLTIU, ANDI, ORI, XORI, SLLI, SRLI, SRAI })
-      hint_name = REG_IMM_I_H;
-    else if (name inside { ADD, SUB, AND, OR, XOR, SLL, SRL, SRA, SLT, SLTU })
-      hint_name = REG_REG_R_H;
-    else if (name inside { C_LUI, C_SLLI })
-      hint_name = CONST_GEN_CI_H;
-    else if (name inside { C_MV, C_ADD })
-      hint_name = REG_REG_CR_H;
-    else if (name inside { LUI, AUIPC })
-      hint_name = REG_IMM_U_H;
-    else if (name == ADDI)
-      hint_name = ADDI_H;
-    else if (name == FENCE)
-      hint_name = FENCE_H;
-    else if (name == C_NOP)
-      hint_name = C_NOP_H;
-    else if (name == C_ADDI)
-      hint_name = C_ADDI_H;
-    else if (name == C_LI)
-      hint_name = C_LI_H;
-    else
-      hint_name = UNKNOWN_HINT;
+    casex(name)
+      SLTI, SLTIU, ANDI, ORI, XORI, SLLI, SRLI, SRAI:   hint_name = REG_IMM_I_H;
+
+      ADD, SUB, AND, OR, XOR, SLL, SRL, SRA, SLT, SLTU: hint_name = REG_REG_R_H;
+
+      C_LUI, C_SLLI: hint_name = CONST_GEN_CI_H;
+
+      C_MV, C_ADD: hint_name = REG_REG_CR_H;
+
+      LUI, AUIPC:hint_name = REG_IMM_U_H;
+
+      ADDI: hint_name = ADDI_H;
+
+      FENCE: hint_name = FENCE_H;
+
+      C_NOP: hint_name = C_NOP_H;
+
+      C_ADDI: hint_name = C_ADDI_H;
+
+      C_LI: hint_name = C_LI_H;
+
+    default : hint_name = UNKNOWN_HINT;
+    endcase
 
     return hint_name;
   endfunction
@@ -1188,69 +1188,29 @@
     logic hint;
 
     casex (get_hint_name(name))
-      ADDI_H: begin
-        if (instr.uncompressed.format.i.rd == X0 && (instr.uncompressed.format.i.rs1 != X0 || instr.uncompressed.format.i.imm != 12'b0))
-          hint = 1'b1;
-        else
-          hint = 1'b0;
-      end
-      FENCE_H: begin
-        if ((instr.uncompressed.format.i.imm.funct7[27:25] == 3'b0 && instr.uncompressed.format.i.imm.shamt[24] == 1'b0) || instr.uncompressed.format.i.imm.shamt[23:20] == 4'b0)
-          hint = 1'b1;
-        else
-          hint = 1'b0;
-      end
-      REG_IMM_I_H: begin
-        if (instr.uncompressed.format.i.rd == X0)
-          hint = 1'b1;
-        else
-          hint = 1'b0;
-      end
-      REG_IMM_U_H: begin
-        if (instr.uncompressed.format.u.rd == X0)
-          hint = 1'b1;
-        else
-          hint = 1'b0;
-      end
-      REG_REG_R_H: begin
-        if (instr.uncompressed.format.r.rd == X0)
-          hint = 1'b1;
-        else
-          hint = 1'b0;
-      end
-      C_NOP_H: begin
-        if ((instr.compressed.format.ci.imm_12 != 1'b0 || instr.compressed.format.ci.imm_6_2 != 5'b0))
-          hint = 1;
-        else
-          hint = 0;
-      end
-      C_ADDI_H: begin
-        if ((instr.compressed.format.ci.imm_12 == 1'b0 && instr.compressed.format.ci.imm_6_2 == 5'b0) && instr.compressed.format.ci.rd_rs1 != X0)
-          hint = 1;
-        else
-          hint = 0;
-      end
-      C_LI_H: begin
-        if (instr.compressed.format.ci.rd_rs1 == X0)
-          hint = 1;
-        else
-          hint = 0;
-      end
-      CONST_GEN_CI_H: begin
-        if (instr.compressed.format.ci.rd_rs1 == X0 && (instr.compressed.format.ci.imm_12 != 1'b0 || instr.compressed.format.ci.imm_6_2 != 5'b0))
-          hint = 1'b1;
-        else
-          hint = 1'b0;
-      end
-      REG_REG_CR_H: begin
-        if (instr.compressed.format.cr.rd_rs1 == X0 && instr.compressed.format.cr.rs2 != X0)
-          hint = 1;
-        else
-          hint = 0;
-      end
+      ADDI_H:         hint = (instr.uncompressed.format.i.rd == X0 && (instr.uncompressed.format.i.rs1 != X0 || instr.uncompressed.format.i.imm != 12'b0));
+
+      FENCE_H:        hint = ((instr.uncompressed.format.i.imm.funct7[27:25] == 3'b0 && instr.uncompressed.format.i.imm.shamt[24] == 1'b0) || instr.uncompressed.format.i.imm.shamt[23:20] == 4'b0);
+
+      REG_IMM_I_H:    hint = (instr.uncompressed.format.i.rd == X0);
+
+      REG_IMM_U_H:    hint = (instr.uncompressed.format.u.rd == X0);
+
+      REG_REG_R_H:    hint = (instr.uncompressed.format.r.rd == X0);
+
+      C_NOP_H:        hint = ((instr.compressed.format.ci.imm_12 != 1'b0 || instr.compressed.format.ci.imm_6_2 != 5'b0));
+
+      C_ADDI_H:       hint = ((instr.compressed.format.ci.imm_12 == 1'b0 && instr.compressed.format.ci.imm_6_2 == 5'b0) && instr.compressed.format.ci.rd_rs1 != X0);
+
+      C_LI_H:         hint = (instr.compressed.format.ci.rd_rs1 == X0);
+
+      CONST_GEN_CI_H: hint = (instr.compressed.format.ci.rd_rs1 == X0 && (instr.compressed.format.ci.imm_12 != 1'b0 || instr.compressed.format.ci.imm_6_2 != 5'b0));
+
+      REG_REG_CR_H:   hint = (instr.compressed.format.cr.rd_rs1 == X0 && instr.compressed.format.cr.rs2 != X0);
 
     default : hint = 0;
     endcase
+
     return hint;
   endfunction
 
@@ -1396,7 +1356,7 @@
         asm.imm.imm_type        = IMM;
         asm.imm.width           = 12;
         asm.imm.sign_ext        = 1;
-        asm.imm.imm_value       = get_imm_value_b(sort_b_imm(instr)); //TODO: FIX function names
+        asm.imm.imm_value       = get_imm_value_b(sort_b_imm(instr));
         asm.rs1.valid           = 1;
         asm.rs2.valid           = 1;
         asm.imm.valid           = 1;
@@ -1450,7 +1410,6 @@
           asm.imm.imm_value       = get_imm_value_ci({ instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 });
           asm.rd.valid            = 1;
           asm.imm.valid           = 1;
-          asm.is_hint             = 0;
         end else if (name == C_LUI) begin
           asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
           asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
@@ -1461,7 +1420,6 @@
           asm.imm.imm_value       = get_imm_value_ci_lui({ instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 });
           asm.rd.valid            = 1;
           asm.imm.valid           = 1;
-          asm.is_hint             = 0;
         end else if (name inside { C_LWSP }) begin
           asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
           asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
