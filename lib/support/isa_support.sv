@@ -431,14 +431,13 @@
     int stack_adj_base;
     int stack_adj;
 
-    if(rlist >= 4 && rlist <= 7)
-      stack_adj_base = 16;
-    else if (rlist >= 8 && rlist <= 11)
-      stack_adj_base = 32;
-    else if (rlist >= 12 && rlist <= 14)
-      stack_adj_base = 48;
-    else if (rlist == 15)
-      stack_adj_base = 64;
+    case(rlist) inside
+      [4:7]:    stack_adj_base = 16;
+      [8:11]:   stack_adj_base = 32;
+      [12:14]:  stack_adj_base = 48;
+      15:       stack_adj_base = 64;
+      default:  stack_adj_base = 0;
+    endcase
 
     stack_adj = stack_adj_base + spimm*16;
     return stack_adj;
@@ -975,62 +974,62 @@
   // ---------------------------------------------------------------------------
   // Non-trivial immediate decoder
   // ---------------------------------------------------------------------------
-  function logic [20:1] sort_j_imm(instr_t instr);
-    sort_j_imm = {
+  function logic [20:1] get_sort_j_imm(instr_t instr);
+    get_sort_j_imm = {
       instr.uncompressed.format.j.imm[31],
       instr.uncompressed.format.j.imm[21:12],
       instr.uncompressed.format.j.imm[22],
       instr.uncompressed.format.j.imm[30:23]
     };
-  endfunction : sort_j_imm
+  endfunction : get_sort_j_imm
 
-  function logic [11:0] sort_s_imm(instr_t instr);
-    sort_s_imm = {
+  function logic [11:0] get_sort_s_imm(instr_t instr);
+    get_sort_s_imm = {
       instr.uncompressed.format.s.imm_h,
       instr.uncompressed.format.s.imm_l
     };
-  endfunction : sort_s_imm
+  endfunction : get_sort_s_imm
 
-  function logic [11:0] sort_b_imm(instr_t instr);
-    sort_b_imm = {
+  function logic [11:0] get_sort_b_imm(instr_t instr);
+    get_sort_b_imm = {
       instr.uncompressed.format.b.imm_h[31],
       instr.uncompressed.format.b.imm_l[7],
       instr.uncompressed.format.b.imm_h[30:25],
       instr.uncompressed.format.b.imm_l[11:8],
       1'b0
     };
-  endfunction : sort_b_imm
+  endfunction : get_sort_b_imm
 
-  function logic [5:0] sort_ci_imm_lwsp(instr_t instr);
-    sort_ci_imm_lwsp = {
+  function logic [5:0] get_sort_ci_imm_lwsp(instr_t instr);
+    get_sort_ci_imm_lwsp = {
       instr.compressed.format.ci.imm_6_2[3:2],
       instr.compressed.format.ci.imm_12,
       instr.compressed.format.ci.imm_6_2[6:4]
     };
-  endfunction : sort_ci_imm_lwsp
+  endfunction : get_sort_ci_imm_lwsp
 
-  function logic [5:0] sort_ci_imm_addi16sp(instr_t instr);
-    sort_ci_imm_addi16sp = {
+  function logic [5:0] get_sort_ci_imm_addi16sp(instr_t instr);
+    get_sort_ci_imm_addi16sp = {
       instr.compressed.format.ci.imm_12,
       instr.compressed.format.ci.imm_6_2[4:3],
       instr.compressed.format.ci.imm_6_2[5],
       instr.compressed.format.ci.imm_6_2[2],
       instr.compressed.format.ci.imm_6_2[6]
     };
-  endfunction : sort_ci_imm_addi16sp
+  endfunction : get_sort_ci_imm_addi16sp
 
-  function logic [8:0] sort_cb_imm_not_sequential(instr_t instr);
-    sort_cb_imm_not_sequential = {
+  function logic [8:0] get_sort_cb_imm_not_sequential(instr_t instr);
+    get_sort_cb_imm_not_sequential = {
       instr.compressed.format.cb.offset_12_10[12],
       instr.compressed.format.cb.offset_6_2[6:5],
       instr.compressed.format.cb.offset_6_2[2],
       instr.compressed.format.cb.offset_12_10[11:10],
       instr.compressed.format.cb.offset_6_2[4:3]
     };
-  endfunction : sort_cb_imm_not_sequential
+  endfunction : get_sort_cb_imm_not_sequential
 
-  function logic [5:0] sort_cj_imm(instr_t instr);
-      sort_cj_imm = {
+  function logic [5:0] get_sort_cj_imm(instr_t instr);
+      get_sort_cj_imm = {
         instr.compressed.format.cj.imm[12],
         instr.compressed.format.cj.imm[8],
         instr.compressed.format.cj.imm[10:9],
@@ -1040,32 +1039,32 @@
         instr.compressed.format.cj.imm[11],
         instr.compressed.format.cj.imm[5:3]
       };
-  endfunction : sort_cj_imm
+  endfunction : get_sort_cj_imm
 
-  function logic [4:0] sort_cl_imm(instr_t instr);
-      sort_cl_imm = {
+  function logic [4:0] get_sort_cl_imm(instr_t instr);
+      get_sort_cl_imm = {
         instr.compressed.format.cl.imm_6_5[5],
         instr.compressed.format.cl.imm_12_10,
         instr.compressed.format.cl.imm_6_5[6]
       };
-  endfunction : sort_cl_imm
+  endfunction : get_sort_cl_imm
 
-  function logic [4:0] sort_cs_imm(instr_t instr);
-      sort_cs_imm = {
+  function logic [4:0] get_sort_cs_imm(instr_t instr);
+      get_sort_cs_imm = {
         instr.compressed.format.cs.imm_6_5[5],
         instr.compressed.format.cs.imm_12_10,
         instr.compressed.format.cs.imm_6_5[6]
       };
-  endfunction : sort_cs_imm
+  endfunction : get_sort_cs_imm
 
-  function logic [7:0] sort_ciw_imm(instr_t instr);
-      sort_ciw_imm = {
-        instr.compressed.format.ciw.imm[10:7],
-        instr.compressed.format.ciw.imm[12:11],
-        instr.compressed.format.ciw.imm[6],
-        instr.compressed.format.ciw.imm[5]
-        };
-  endfunction : sort_ciw_imm
+  function logic [7:0] get_sort_ciw_imm(instr_t instr);
+    get_sort_ciw_imm = {
+      instr.compressed.format.ciw.imm[10:7],
+      instr.compressed.format.ciw.imm[12:11],
+      instr.compressed.format.ciw.imm[6],
+      instr.compressed.format.ciw.imm[5]
+      };
+  endfunction : get_sort_ciw_imm
 
   // ---------------------------------------------------------------------------
   // Find the value of immediate
@@ -1309,23 +1308,23 @@
       J_TYPE: begin
         asm.rd.gpr              = instr.uncompressed.format.j.rd.gpr;
         asm.imm.imm_raw         = instr.uncompressed.format.j.imm;
-        asm.imm.imm_raw_sorted  = sort_j_imm(instr);
+        asm.imm.imm_raw_sorted  = get_sort_j_imm(instr);
         asm.imm.imm_type        = OFFSET;
         asm.imm.width           = 20;
         asm.imm.sign_ext        = 1;
-        asm.imm.imm_value       = get_imm_value_j(sort_j_imm(instr));
+        asm.imm.imm_value       = get_imm_value_j(get_sort_j_imm(instr));
         asm.rd.valid            = 1;
         asm.imm.valid           = 1;
       end
       S_TYPE: begin
         asm.rs1.gpr             = instr.uncompressed.format.s.rs1.gpr;
         asm.rs2.gpr             = instr.uncompressed.format.s.rs2.gpr;
-        asm.imm.imm_raw         = sort_s_imm(instr);
-        asm.imm.imm_raw_sorted  = sort_s_imm(instr);
+        asm.imm.imm_raw         = get_sort_s_imm(instr);
+        asm.imm.imm_raw_sorted  = get_sort_s_imm(instr);
         asm.imm.imm_type        = IMM;
         asm.imm.width           = 12;
         asm.imm.sign_ext        = 1;
-        asm.imm.imm_value       = get_imm_value_i(sort_s_imm(instr));
+        asm.imm.imm_value       = get_imm_value_i(get_sort_s_imm(instr));
         asm.rs1.valid           = 1;
         asm.rs2.valid           = 1;
         asm.imm.valid           = 1;
@@ -1352,11 +1351,11 @@
         asm.rs1.gpr             = instr.uncompressed.format.b.rs1.gpr;
         asm.rs2.gpr             = instr.uncompressed.format.b.rs2.gpr;
         asm.imm.imm_raw         = {instr.uncompressed.format.b.imm_h, instr.uncompressed.format.b.imm_l};
-        asm.imm.imm_raw_sorted  = sort_b_imm(instr);
+        asm.imm.imm_raw_sorted  = get_sort_b_imm(instr);
         asm.imm.imm_type        = IMM;
         asm.imm.width           = 12;
         asm.imm.sign_ext        = 1;
-        asm.imm.imm_value       = get_imm_value_b(sort_b_imm(instr));
+        asm.imm.imm_value       = get_imm_value_b(get_sort_b_imm(instr));
         asm.rs1.valid           = 1;
         asm.rs2.valid           = 1;
         asm.imm.valid           = 1;
@@ -1423,10 +1422,10 @@
         end else if (name inside { C_LWSP }) begin
           asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
           asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
-          asm.imm.imm_raw_sorted  = sort_ci_imm_lwsp(instr);
+          asm.imm.imm_raw_sorted  = get_sort_ci_imm_lwsp(instr);
           asm.imm.imm_type        = OFFSET;
           asm.imm.width           = 6;
-          asm.imm.imm_value       = {24'b0, sort_ci_imm_lwsp(instr), 2'b0};
+          asm.imm.imm_value       = {24'b0, get_sort_ci_imm_lwsp(instr), 2'b0};
           asm.imm.sign_ext        = 0;
           asm.rd.valid            = 1;
           asm.imm.valid           = 1;
@@ -1434,11 +1433,11 @@
           asm.rs1.gpr             = instr.compressed.format.ci.rd_rs1.gpr;
           asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
           asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
-          asm.imm.imm_raw_sorted  = sort_ci_imm_addi16sp(instr);
+          asm.imm.imm_raw_sorted  = get_sort_ci_imm_addi16sp(instr);
           asm.imm.imm_type        = NZIMM;
           asm.imm.width           = 6;
           asm.imm.sign_ext        = 1;
-          asm.imm.imm_value       = get_imm_value_ci_addi16sp(sort_ci_imm_addi16sp(instr));
+          asm.imm.imm_value       = get_imm_value_ci_addi16sp(get_sort_ci_imm_addi16sp(instr));
           asm.rs1.valid           = 1;
           asm.rd.valid            = 1;
           asm.imm.valid           = 1;
@@ -1470,11 +1469,11 @@
       CIW_TYPE: begin
         asm.rd.gpr              = instr.compressed.format.ciw.rd.gpr;
         asm.imm.imm_raw         = instr.compressed.format.ciw.imm;
-        asm.imm.imm_raw_sorted  = sort_ciw_imm(instr);
+        asm.imm.imm_raw_sorted  = get_sort_ciw_imm(instr);
         asm.imm.imm_type        = NZUIMM;
         asm.imm.width           = 8;
         asm.imm.sign_ext        = 0;
-        asm.imm.imm_value       = { 22'b0, sort_ciw_imm(instr), 2'b0 };
+        asm.imm.imm_value       = { 22'b0, get_sort_ciw_imm(instr), 2'b0 };
         asm.imm.valid           = 1;
         asm.rd.valid            = 1;
       end
@@ -1482,11 +1481,11 @@
         asm.rd.gpr              = instr.compressed.format.cl.rd.gpr;
         asm.rs1.gpr             = instr.compressed.format.cl.rs1.gpr;
         asm.imm.imm_raw         = { instr.compressed.format.cl.imm_12_10, instr.compressed.format.cl.imm_6_5 };
-        asm.imm.imm_raw_sorted  = sort_cl_imm(instr);
+        asm.imm.imm_raw_sorted  = get_sort_cl_imm(instr);
         asm.imm.imm_type        = OFFSET;
         asm.imm.width           = 5;
         asm.imm.sign_ext        = 0;
-        asm.imm.imm_value       = { 25'b0, sort_cl_imm(instr), 2'b0 };
+        asm.imm.imm_value       = { 25'b0, get_sort_cl_imm(instr), 2'b0 };
         asm.rd.valid            = 1;
         asm.rs1.valid           = 1;
         asm.imm.valid           = 1;
@@ -1495,11 +1494,11 @@
         asm.rs2.gpr             = instr.compressed.format.cs.rs2.gpr;
         asm.rs1.gpr             = instr.compressed.format.cs.rs1.gpr;
         asm.imm.imm_raw         = { instr.compressed.format.cs.imm_12_10, instr.compressed.format.cs.imm_6_5 };
-        asm.imm.imm_raw_sorted  = sort_cs_imm(instr);
+        asm.imm.imm_raw_sorted  = get_sort_cs_imm(instr);
         asm.imm.imm_type        = OFFSET;
         asm.imm.width           = 5;
         asm.imm.sign_ext        = 0;
-        asm.imm.imm_value       = { 25'b0, sort_cs_imm(instr), 2'b0 };
+        asm.imm.imm_value       = { 25'b0, get_sort_cs_imm(instr), 2'b0 };
         asm.rs2.valid           = 1;
         asm.rs1.valid           = 1;
         asm.imm.valid           = 1;
@@ -1528,22 +1527,22 @@
         end else if (name inside { C_BEQZ, C_BNEZ }) begin
           asm.rs1.gpr             = instr.compressed.format.cb.rd_rs1.gpr;
           asm.imm.imm_raw         = { instr.compressed.format.cb.offset_12_10, instr.compressed.format.cb.offset_6_2 };
-          asm.imm.imm_raw_sorted  = sort_cb_imm_not_sequential(instr);
+          asm.imm.imm_raw_sorted  = get_sort_cb_imm_not_sequential(instr);
           asm.imm.imm_type        = OFFSET;
           asm.imm.width           = 8;
           asm.imm.sign_ext        = 1;
-          asm.imm.imm_value       = get_imm_value_cb(sort_cb_imm_not_sequential(instr));
+          asm.imm.imm_value       = get_imm_value_cb(get_sort_cb_imm_not_sequential(instr));
           asm.rs1.valid           = 1;
           asm.imm.valid           = 1;
         end
       end
       CJ_TYPE: begin
         asm.imm.imm_raw         = instr.compressed.format.cj.imm;
-        asm.imm.imm_raw_sorted  = sort_cj_imm(instr);
+        asm.imm.imm_raw_sorted  = get_sort_cj_imm(instr);
         asm.imm.imm_type        = OFFSET;
         asm.imm.width           = 11;
         asm.imm.sign_ext        = 1;
-        asm.imm.imm_value       = get_imm_value_cj(sort_cj_imm(instr));
+        asm.imm.imm_value       = get_imm_value_cj(get_sort_cj_imm(instr));
         asm.imm.valid           = 1;
       end
       CLB_TYPE: begin
