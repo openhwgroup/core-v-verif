@@ -1270,11 +1270,6 @@
     asm.format = format;
 
     if(check_if_hint(name, format, instr)) begin
-      asm.rd.valid    = 0;
-      asm.rs1.valid   = 0;
-      asm.rs2.valid   = 0;
-      asm.imm.valid   = 0;
-      asm.csr.valid   = 0;
       asm.is_hint     = 1;
       return asm;
     end
