@@ -557,6 +557,36 @@
     FUNCT3_ZEXTH = 3'b100
   } zbb_rev8_c_zexth_minor_opcode_e;
 
+  typedef enum logic [2:0] {
+    FUNCT3_C_SRLI_SRAI  = 3'b100,
+    FUNCT3_C_SLLI       = 3'b000,
+    FUNCT3_C_SW         = 3'b110
+  } compressed_shift_store_minor_opcode_e;
+
+  typedef enum logic [2:0] {
+    FUNCT3_C_BEQZ  = 3'b110,
+    FUNCT3_C_BNEZ  = 3'b111,
+    FUNCT3_C_J     = 3'b101,
+    FUNCT3_C_JAL   = 3'b001
+  } compressed_branch_jump_minor_opcode_e;
+
+  typedef enum logic [2:0] {
+    FUNCT3_C_LI_LW  = 3'b010,
+    FUNCT3_C_LUI    = 3'b011
+  } compressed_load_minor_opcode_e;
+
+  typedef enum logic [2:0] {
+    FUNCT3_C_LWSP     = 3'b010,
+    FUNCT3_C_SWSP     = 3'b110,
+    FUNCT3_C_ADDI4SPN = 3'b000,
+    FUNCT3_C_ADDI16SP = 3'b011
+  } compressed_sp_minor_opcode_e;
+
+  typedef enum logic [2:0] {
+    FUNCT3_C_ANDI     = 3'b010,
+    FUNCT3_C_ADDI_NOP = 3'b110
+  } compressed_minor_opcode_e;
+
   // Minor opcodes for Zbc
   typedef enum logic [2:0] {
     FUNCT3_CLMUL  = 3'b001,
@@ -582,6 +612,15 @@
     FUNCT3_REM    = 3'b110,
     FUNCT3_REMU   = 3'b111
   } m_minor_opcode_e;
+
+
+  typedef enum logic [4:0] {
+    FUNCT5_C_ZEXTB = 5'b11000,
+    FUNCT5_C_SEXTB = 5'b11001,
+    FUNCT5_C_ZEXTH = 5'b11010,
+    FUNCT5_C_SEXTH = 5'b11011,
+    FUNCT5_C_NOT   = 5'b11101
+  } funct5_e;
 
   // Funct7
   typedef enum logic [6:0] {
@@ -1956,7 +1995,7 @@
 
       (   (instr.uncompressed.opcode              == OP_IMM)
        && (instr.uncompressed.format.i.funct3     == FUNCT3_ROR_RORI)
-       && (instr.uncompressed.format.i.imm.funct7 == 7'b011_0000)) :
+       && (instr.uncompressed.format.i.imm.funct7 == FUNCT7_ZBB_ROTATE )) :
         asm = build_asm(RORI, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == OP)
@@ -2121,34 +2160,34 @@
 
       (   (instr.compressed.opcode                        == C2)
        && (instr.compressed.format.ci.rd_rs1.gpr          != X0)
-       && (instr.compressed.format.ci.funct3              == 3'b010)) :
+       && (instr.compressed.format.ci.funct3              == FUNCT3_C_LWSP)) :
         asm = build_asm(C_LWSP, CI_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.ci.funct3              == 3'b010)) :
+       && (instr.compressed.format.ci.funct3              == FUNCT3_C_LI_LW)) :
         asm = build_asm(C_LI, CI_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
        && (instr.compressed.format.ci.rd_rs1.gpr          != X2)
-       && (instr.compressed.format.ci.funct3              == 3'b011)) :
+       && (instr.compressed.format.ci.funct3              == FUNCT3_C_LUI)) :
         asm = build_asm(C_LUI, CI_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.ci.funct3              == 3'b0)) :
+       && (instr.compressed.format.ci.funct3              == FUNCT3_C_ADDI_NOP)) :
         asm = build_asm(C_ADDI, CI_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
        && (instr.compressed.format.ci.rd_rs1.gpr          == X2)
-       && (instr.compressed.format.ci.funct3              == 3'b011)) :
+       && (instr.compressed.format.ci.funct3              == FUNCT3_C_ADDI16SP)) :
         asm = build_asm(C_ADDI16SP, CI_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C2)
-       && (instr.compressed.format.ci.funct3              == 3'b0)) :
+       && (instr.compressed.format.ci.funct3              == FUNCT3_C_SLLI)) :
         asm = build_asm(C_SLLI, CI_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
        && (instr.compressed.format.ci.rd_rs1.gpr          == X0)
-       && (instr.compressed.format.ci.funct3              == 3'b0)) :
+       && (instr.compressed.format.ci.funct3              == FUNCT3_C_ADDI_NOP)) :
         asm = build_asm(C_NOP, CI_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
@@ -2174,77 +2213,77 @@
       (   (instr.compressed.opcode                        == C1)
        && (instr.compressed.format.cb.offset_12_10[12]    == 1'b0)
        && (instr.compressed.format.cb.offset_12_10[11:10] == 2'b00)
-       && (instr.compressed.format.cb.funct3              == 3'b100)) :
+       && (instr.compressed.format.cb.funct3              == FUNCT3_C_SRLI_SRAI)) :
         asm = build_asm(C_SRLI, CB_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
        && (instr.compressed.format.cb.offset_12_10[12]    == 1'b0)
        && (instr.compressed.format.cb.offset_12_10[11:10] == 2'b01)
-       && (instr.compressed.format.cb.funct3              == 3'b100)) :
+       && (instr.compressed.format.cb.funct3              == FUNCT3_C_SRLI_SRAI)) :
         asm = build_asm(C_SRAI, CB_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.cb.funct3              == 3'b110)) :
+       && (instr.compressed.format.cb.funct3              == FUNCT3_C_BEQZ)) :
         asm = build_asm(C_BEQZ, CB_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.cb.funct3              == 3'b111)) :
+       && (instr.compressed.format.cb.funct3              == FUNCT3_C_BNEZ)) :
         asm = build_asm(C_BNEZ, CB_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
        && (instr.compressed.format.cb.offset_12_10[11:10] == 2'b10)
-       && (instr.compressed.format.cb.funct3              == 3'b100)) :
+       && (instr.compressed.format.cb.funct3              == FUNCT3_C_ANDI)) :
         asm = build_asm(C_ANDI, CB_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C2)
-       && (instr.compressed.format.css.funct3             == 3'b110)) :
+       && (instr.compressed.format.css.funct3             == FUNCT3_C_SWSP)) :
         asm = build_asm(C_SWSP, CSS_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C0)
        && (instr.compressed.format.ciw.imm                != X0)
-       && (instr.compressed.format.ciw.funct3             == 3'b000)) :
+       && (instr.compressed.format.ciw.funct3             == FUNCT3_C_ADDI4SPN)) :
         asm = build_asm(C_ADDI4SPN, CIW_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C0)
-       && (instr.compressed.format.cl.funct3              == 3'b010)) :
+       && (instr.compressed.format.cl.funct3              == FUNCT3_C_LI_LW)) :
         asm = build_asm(C_LW, CL_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C0)
-       && (instr.compressed.format.cs.funct3              == 3'b110)) :
+       && (instr.compressed.format.cs.funct3              == FUNCT3_C_SW)) :
         asm = build_asm(C_SW, CS_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.cj.funct3             == 3'b101)) :
+       && (instr.compressed.format.cj.funct3              == FUNCT3_C_J)) :
         asm = build_asm(C_J, CJ_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.cj.funct3             == 3'b001)) :
+       && (instr.compressed.format.cj.funct3              == FUNCT3_C_JAL)) :
         asm = build_asm(C_JAL, CJ_TYPE, instr);
 
       //Zcb
 
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.cu.funct5              == 5'b11000)
+       && (instr.compressed.format.cu.funct5              == FUNCT5_C_ZEXTB)
        && (instr.compressed.format.cu.funct6              == 6'b100111)) :
         asm = build_asm(C_ZEXTB, CU_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.cu.funct5              == 5'b11001)
+       && (instr.compressed.format.cu.funct5              == FUNCT5_C_SEXTB)
        && (instr.compressed.format.cu.funct6              == 6'b100111)) :
         asm = build_asm(C_SEXTB, CU_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.cu.funct5              == 5'b11010)
+       && (instr.compressed.format.cu.funct5              == FUNCT5_C_ZEXTH)
        && (instr.compressed.format.cu.funct6              == 6'b100111)) :
         asm = build_asm(C_ZEXTH, CU_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.cu.funct5              == 5'b11011)
+       && (instr.compressed.format.cu.funct5              == FUNCT5_C_SEXTH)
        && (instr.compressed.format.cu.funct6              == 6'b100111)) :
         asm = build_asm(C_SEXTH, CU_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.cu.funct5              == 5'b11101)
+       && (instr.compressed.format.cu.funct5              == FUNCT5_C_NOT)
        && (instr.compressed.format.cu.funct6              == 6'b100111)) :
         asm = build_asm(C_NOT, CU_TYPE, instr);
 
