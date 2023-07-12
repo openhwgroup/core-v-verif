@@ -140,12 +140,12 @@ endif
 ifeq ($(call IS_YES,$(MERGE)),YES)
 COV_ARGS = -dir cov_work/scope/merged
 else
-COV_ARGS = -dir $(TEST_NAME).vdb
+COV_ARGS = -dir $(TEST_RUN_NAME).vdb
 endif
 
 
 ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
-CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vcs-$(TEST_NAME).log
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vcs-$(TEST_RUN_NAME).log
 POST_TEST = \
 	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
 		exit 1; \
@@ -261,17 +261,18 @@ test: $(VCS_SIM_PREREQ) hex gen_ovpsim_ic
 	export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic && \
 	export IMPERAS_QUEUE_LICENSE=1 && \
 		$(VCS_DIR)/$(SIMV) \
-		-l vcs-$(TEST_NAME).log \
-		-cm_name $(TEST_NAME) \
+		-l vcs-$(TEST_RUN_NAME).log \
+		-cm_name $(TEST_RUN_NAME) \
 		$(VCS_RUN_FLAGS) \
 		$(CFG_PLUSARGS) \
 		$(TEST_PLUSARGS) \
+		$(TEST_CFG_FILE_PLUSARGS) \
 		+UVM_TESTNAME=$(TEST_UVM_TEST) \
 		+UVM_VERBOSITY=$(VCS_UVM_VERBOSITY) \
 		+elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
 		+firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
 		+itb_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).itb
-	@echo "* Log: $(SIM_RUN_RESULTS)/vcs-$(TEST_NAME).log"
+	@echo "* Log: $(SIM_RUN_RESULTS)/vcs-$(TEST_RUN_NAME).log"
 	$(POST_TEST)
 
 ###############################################################################
@@ -392,6 +393,7 @@ gen_corev-dv: comp_corev-dv
 			+asm_file_name_opts=$(TEST) \
 			+ldgen_cp_test_path=$(SIM_TEST_RESULTS) \
 			$(CFG_PLUSARGS) \
+			$(TEST_CFG_FILE_PLUSARGS) \
 			$(GEN_PLUSARGS)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		cp -f ${BSP}/link_corev-dv.ld ${SIM_TEST_RESULTS}/$$idx/test_program/link.ld; \
@@ -413,13 +415,7 @@ cov_merge:
 ifeq ($(call IS_YES,$(MERGE)),YES)
   COVERAGE_TARGET_DIR=$(SIM_CFG_RESULTS)/$(MERGED_COV_DIR)
 else
-  COVERAGE_TARGET_DIR=$(SIM_CFG_RESULTS)/$(TEST_NAME)
-endif
-
-ifeq ($(call IS_YES,$(MERGE)),YES)
-  COVERAGE_TARGET_DIR=$(SIM_RESULTS)/$(MERGED_COV_DIR)
-else
-  COVERAGE_TARGET_DIR=$(SIM_RESULTS)/$(TEST_NAME)_$(RUN_INDEX)
+  COVERAGE_TARGET_DIR=$(SIM_RUN_RESULTS)
 endif
 
 # the report is in html format: use a browser to access it when GUI mode is selected

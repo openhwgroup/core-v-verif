@@ -154,7 +154,7 @@ endif
 ifeq ($(call IS_YES,$(MERGE)),YES)
 COV_DIR ?= $(XRUN_RESULTS)/$(CFG)/$(MERGED_COV_DIR)/cov_work/scope/merged
 else
-COV_DIR ?= cov_work/uvmt_$(CV_CORE_LC)_tb/$(TEST_NAME)
+COV_DIR ?= cov_work/uvmt_$(CV_CORE_LC)_tb/$(TEST_RUN_NAME)
 endif
 
 ifeq ($(call IS_YES,$(GUI)),YES)
@@ -165,7 +165,7 @@ endif
 
 
 ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
-CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/xrun-$(TEST_NAME).log
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/xrun-$(TEST_RUN_NAME).log
 POST_TEST = \
 	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
 		exit 1; \
@@ -365,11 +365,11 @@ ldgen: $(CV_CORE_PKG)
 # If the configuration specified OVPSIM arguments, generate an ovpsim.ic file and
 # set IMPERAS_TOOLS to point to it
 gen_ovpsim_ic:
-	@rm -f $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-	@mkdir -p $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX);
-	@touch -f $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+	@rm -f $(SIM_RUN_RESULTS)/ovpsim.ic
+	@mkdir -p $(SIM_RUN_RESULTS);
+	@touch -f $(SIM_RUN_RESULTS)/ovpsim.ic
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
-		echo "$(CFG_OVPSIM)" > $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic; \
+		echo "$(CFG_OVPSIM)" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
 	fi
 	# add glossing of registers
 	#@echo "--override cpu/wfi_is_nop=T" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
@@ -389,16 +389,17 @@ test: $(XRUN_SIM_PREREQ) hex gen_ovpsim_ic
 	@echo "$(BANNER)"
 	mkdir -p $(SIM_RUN_RESULTS)/test_program && \
 	cd $(SIM_RUN_RESULTS) && \
-	export IMPERAS_TOOLS=$(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic && \
+	export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic && \
 	export IMPERAS_QUEUE_LICENSE=1 && \
 	$(XRUN) \
-		-R -xmlibdirname ../../xcelium.d \
-		-l xrun-$(TEST_NAME).log \
+		-R -xmlibdirname $(SIM_CFG_RESULTS)/xcelium.d \
+		-l xrun-$(TEST_RUN_NAME).log \
 		$(XRUN_COMP_RUN) \
 		$(XRUN_RUN_WAVES_FLAGS) \
-		-covtest $(TEST_NAME) \
+		-covtest $(TEST_RUN_NAME) \
 		$(CFG_PLUSARGS) \
 		$(TEST_PLUSARGS) \
+		$(TEST_CFG_FILE_PLUSARGS) \
 		+UVM_TESTNAME=$(TEST_UVM_TEST) \
 		+elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
 		+firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
@@ -550,6 +551,7 @@ gen_corev-dv: comp_corev-dv
 			+asm_file_name_opts=$(TEST) \
 			+ldgen_cp_test_path=$(SIM_TEST_RESULTS) \
 			$(CFG_PLUSARGS) \
+			$(TEST_CFG_FILE_PLUSARGS) \
 			$(GEN_PLUSARGS)
 
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
@@ -574,7 +576,7 @@ cov_merge:
 ifeq ($(call IS_YES,$(MERGE)),YES)
   COVERAGE_TARGET_DIR=$(SIM_CFG_RESULTS)/$(MERGED_COV_DIR)
 else
-  COVERAGE_TARGET_DIR=$(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)
+  COVERAGE_TARGET_DIR=$(SIM_RUN_RESULTS)
 endif
 
 cov: $(COV_MERGE)

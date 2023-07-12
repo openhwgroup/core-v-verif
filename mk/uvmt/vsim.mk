@@ -254,16 +254,16 @@ endif
 else
 ifeq ($(call IS_YES,$(GUI)),YES)
 # Test coverage GUI
-COV_FLAGS=-viewcov $(TEST).ucdb
+COV_FLAGS=-viewcov $(TEST_RUN_NAME).ucdb
 else
 # Test coverage report
-COV_FLAGS=-c -viewcov $(TEST).ucdb -do "file delete -force $(COV_REPORT); coverage report -html -details -precision 2 -annotate -output $(COV_REPORT); exit -f"
+COV_FLAGS=-c -viewcov $(TEST_RUN_NAME).ucdb -do "file delete -force $(COV_REPORT); coverage report -html -details -precision 2 -annotate -output $(COV_REPORT); exit -f"
 endif
 endif
 endif
 
 ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
-CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vsim-$(TEST_NAME).log
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vsim-$(TEST_RUN_NAME).log
 POST_TEST = \
 	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
 		exit 1; \
@@ -397,6 +397,7 @@ gen_corev-dv: comp_corev-dv
 			+asm_file_name_opts=$(TEST) \
 			+ldgen_cp_test_path=$(SIM_TEST_RESULTS) \
 			$(CFG_PLUSARGS) \
+			$(TEST_CFG_FILE_PLUSARGS) \
 			$(GEN_PLUSARGS)
 
 	# Copy out final assembler files to test directory
@@ -640,7 +641,8 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 			+UVM_TESTNAME=$(TEST_UVM_TEST) \
 			$(RTLSRC_VOPT_TB_TOP) \
 			$(CFG_PLUSARGS) \
-			$(TEST_PLUSARGS)
+			$(TEST_PLUSARGS) \
+			$(TEST_CFG_FILE_PLUSARGS)
 	@echo "* Log: $(RUN_DIR)/vsim-$(VSIM_TEST).log"
 	$(POST_TEST)
 
@@ -651,7 +653,7 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 ################################################################################
 # The new general test target
 
-test: VSIM_TEST=$(TEST_PROGRAM)
+test: VSIM_TEST=$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX)
 test: VSIM_FLAGS += +firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex
 test: VSIM_FLAGS += +elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf
 test: VSIM_FLAGS += +itb_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).itb
