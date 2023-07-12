@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
  */
 `ifdef IMPERAS_COV
-  `define INCLUDE_TRACE2COV
+  `define IDV_INCLUDE_TRACE2COV
   `define COVER_BASE_RV32I
   `define COVER_LEVEL_COMPL_BAS
   `define COVER_LEVEL_COMPL_EXT

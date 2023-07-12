@@ -173,7 +173,7 @@ VSIM_FLAGS += +USE_ISS
 VSIM_FLAGS += +USE_IMPERASDV
 VSIM_FLAGS += -sv_lib $(basename $(IMPERAS_DV_MODEL))
 ifeq ($(call IS_YES,$(COV)),YES)
-VSIM_FLAGS += +TRACE2COV_ENABLE=1
+VSIM_FLAGS += +IDV_TRACE2COV=1
 endif
 else
 VSIM_FLAGS += +DISABLE_OVPSIM
@@ -277,13 +277,13 @@ WAVES_CMD = \
 	cd $(SIM_RUN_RESULTS) && \
 		$(VISUALIZER) \
 			-designfile $(SIM_CFG_RESULTS)/design.bin \
-			-wavefile qwave.db
+			-wavefile qwave.db &
 else
 WAVES_CMD = \
 	cd $(SIM_RUN_RESULTS) && \
 		$(VSIM) \
 			-gui \
-			-view vsim.wlf
+			-view vsim.wlf &
 endif
 
 # Compute vsim (run) prereqs, by default do a full compile + run when running

@@ -165,7 +165,7 @@ ifeq ($(call IS_YES,$(USE_ISS)),YES)
     VCS_PLUSARGS += -sv_lib $(basename $(IMPERAS_DV_MODEL))
     ifeq ($(call IS_YES,$(COV)),YES)
         VCS_USER_COMPILE_ARGS += +define+IMPERAS_COV
-        VCS_PLUSARGS += +TRACE2COV_ENABLE=1
+        VCS_PLUSARGS += +IDV_TRACE2COV=1
     endif
 else
 	VCS_PLUSARGS += +DISABLE_OVPSIM
