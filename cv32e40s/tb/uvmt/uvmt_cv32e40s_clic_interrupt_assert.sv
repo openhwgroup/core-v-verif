@@ -1800,8 +1800,14 @@ module uvmt_cv32e40s_clic_interrupt_assert
     endsequence : seq_valid_irq_pending
 
     property p_mnxti_case_1_irq_req_unchanged;
+      // Due to simulator issues (xcelium) one cannot sample sampled_clic = clic, must sample individual signals
       clic_irq_bundle_t sampled_clic;
-          (seq_irq_req_unchanged.triggered, sampled_clic = clic)
+          (seq_irq_req_unchanged.triggered,
+            sampled_clic.irq   = clic.irq,
+            sampled_clic.id    = clic.id,
+            sampled_clic.level = clic.level,
+            sampled_clic.priv  = clic.priv,
+            sampled_clic.shv   = clic.shv)
         ##2
             is_valid_mnxti_read && !irq_ack
       |->
@@ -2000,18 +2006,28 @@ module uvmt_cv32e40s_clic_interrupt_assert
     endsequence : seq_pending_nonshv_irq
 
     property p_mnxti_side_effects_on_write;
-      clic_irq_bundle_t sampled_clic;
+      logic [$bits(clic.id)-1:0] sampled_id;
+      logic [$bits(clic.level)-1:0] sampled_level;
 
-          (seq_pending_nonshv_irq.triggered, sampled_clic = clic)
+          (seq_pending_nonshv_irq,
+            // Sampled values
+            sampled_id = clic.id,
+            sampled_level = clic.level)
       ##2 is_valid_mnxti_write
+       && !rvfi_trap.exception
+       && !rvfi_trap.debug
       |->
-          mintstatus_fields.mil         == sampled_clic.level
-          && mcause_fields.n.exccode_10_0 == sampled_clic.id
-          && mcause_fields.interrupt    == 1'b1
-      or
-          rvfi_trap.exception
-      or
-          rvfi_trap.debug;
+            (mintstatus_fields.mil        == sampled_level)
+         && (mcause_fields.n.exccode_10_0 == sampled_id)
+         && (mcause_fields.interrupt      == 1'b1)
+
+         // TODO: The code below should work, but fails with xcelium - evaluate if this can
+         // be reenabled if this issue is fixed (needs changes to sampling code above as well):
+
+         //   (mintstatus_fields.mil == sampled_clic.level)
+         //&& (mcause_fields.n.exccode_10_0 == sampled_clic.id)
+         //&& (mcause_fields.interrupt == 1'b1)
+      ;
 
     endproperty : p_mnxti_side_effects_on_write
 
@@ -2428,7 +2444,11 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
       core_sleep_o ##1 // first cycle $fell will fail out of reset
             ($fell(core_sleep_o),
-              sampled_clic = clic,
+              sampled_clic.irq   = clic.irq,
+              sampled_clic.id    = clic.id,
+              sampled_clic.level = clic.level,
+              sampled_clic.priv  = clic.priv,
+              sampled_clic.shv   = clic.shv,
               sampled_priv = priv_mode_t'(current_priv_mode),
               sampled_level = effective_clic_level,
               sampled_wfe_wakeup_event = is_wfe_wakeup_event)
