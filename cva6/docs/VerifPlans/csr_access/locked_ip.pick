@@ -1,0 +1,14 @@
+(dp0
+VUser_Mode_Counter_CSRs(cycle, instret)
+p1
+Vt0268396
+p2
+sVMachine_mode_counter_csr(mcycle,mcycleh,minstret,munstreth)
+p3
+Vt0268396
+p4
+sVCVA6_Machine_mode_RW_CSRs(mstatus, mideleg, medeleg, mie, mtvec, mcounteren, mepc, mcause, mtval, mip,)
+p5
+Vt0268396
+p6
+s.
