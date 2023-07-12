@@ -35,9 +35,9 @@
 
 // MUST be 31 or less (bit position-1 in result array determines test pass/fail
 // status, thus we are limited to 31 tests with this construct.
-#define NUM_TESTS (volatile uint32_t)(21)
+#define NUM_TESTS 21
 // Set which test index to start testing at (for quickly running specific tests during development)
-#define START_TEST_IDX (volatile uint32_t)(0)
+#define START_TEST_IDX 0
 // Abort test at first self-check fail, useful for debugging.
 #define ABORT_ON_ERROR_IMMEDIATE 0
 #define CLIC_ID_WIDTH 5
