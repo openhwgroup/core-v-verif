@@ -519,7 +519,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
 
   mcause_t          rvfi_mcause_fields;
-  mcause_t          rvfi_mintstatus_fields;
+  mintstatus_t      rvfi_mintstatus_fields;
 
   logic is_mepc_access_instr;
   logic is_mtvec_access_instr;
