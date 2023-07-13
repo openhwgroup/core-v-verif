@@ -583,8 +583,8 @@
   } compressed_sp_minor_opcode_e;
 
   typedef enum logic [2:0] {
-    FUNCT3_C_ANDI     = 3'b010,
-    FUNCT3_C_ADDI_NOP = 3'b110
+    FUNCT3_C_ANDI     = 3'b100,
+    FUNCT3_C_ADDI_NOP = 3'b000
   } compressed_minor_opcode_e;
 
   // Minor opcodes for Zbc
