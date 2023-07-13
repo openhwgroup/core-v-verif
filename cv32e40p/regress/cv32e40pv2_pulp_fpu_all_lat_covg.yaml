@@ -35,7 +35,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_3cyclat
     description: corev_multicycle_fp_instr_test
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_fp_instr_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_fp_instr_test
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -48,7 +48,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_3cyclat
     description: corev_multicycle_fp_instr_test
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_multicycle_fp_instr_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_multicycle_fp_instr_test
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -61,7 +61,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_3cyclat
     description: corev_rand_hwloop_instr_test
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_hwloop_instr_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_hwloop_instr_test
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -74,7 +74,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_3cyclat
     description: corev_rand_debug_ebreak_xpulp
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_debug_ebreak_xpulp
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak_xpulp
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -87,7 +87,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_3cyclat
     description: corev_rand_debug_ebreak_single_step_xpulp
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_debug_ebreak_single_step_xpulp
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak_single_step_xpulp
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -100,7 +100,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_3cyclat
     description: corev_rand_instr_long_stall
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_instr_long_stall
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_instr_long_stall
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -113,7 +113,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_3cyclat
     description: corev_rand_interrupt
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_interrupt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -126,7 +126,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_3cyclat
     description: corev_rand_interrupt_debug
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_interrupt_debug
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_debug
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -139,7 +139,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_3cyclat
     description: corev_rand_interrupt_exception
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_interrupt_exception
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_exception
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -152,7 +152,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_3cyclat
     description: corev_rand_interrupt_nested
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_interrupt_nested
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_nested
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -165,7 +165,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_3cyclat
     description: corev_rand_interrupt_wfi_mem_stress
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_interrupt_wfi_mem_stress
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_wfi_mem_stress
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -178,7 +178,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_3cyclat
     description: corev_rand_jump_stress_test
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_jump_stress_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_jump_stress_test
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1

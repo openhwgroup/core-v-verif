@@ -67,7 +67,7 @@ tests:
     build: uvmt_cv32e40p_pulp
     description: corev_rand_pulp_instr_test
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_pulp_instr_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_instr_test
     iss: 1
     cov: 1
     num: 200
@@ -78,7 +78,7 @@ tests:
     build: uvmt_cv32e40p_pulp
     description: corev_rand_pulp_simd_test
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_pulp_simd_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_simd_test
     iss: 1
     cov: 1
     num: 200
@@ -89,7 +89,7 @@ tests:
     build: uvmt_cv32e40p_pulp
     description: corev_rand_pulp_mac_test
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_pulp_mac_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_mac_test
     iss: 1
     cov: 1
     num: 200
@@ -100,7 +100,7 @@ tests:
     build: uvmt_cv32e40p_pulp
     description: corev_rand_hwloop_instr_test
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_hwloop_instr_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_hwloop_instr_test
     iss: 1
     cov: 1
     num: 20
@@ -118,7 +118,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_hwloop_instr_test with FPU enabled
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_hwloop_instr_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_hwloop_instr_test
     iss: 1
     cov: 1
     num: 20
@@ -129,7 +129,7 @@ tests:
     build: uvmt_cv32e40p_pulp
     description: corev_rand_debug_ebreak_xpulp
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_debug_ebreak_xpulp
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak_xpulp
     iss: 1
     cov: 1
     num: 100
@@ -147,7 +147,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_debug_ebreak_xpulp with FPU enabled
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_debug_ebreak_xpulp
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak_xpulp
     iss: 1
     cov: 1
     num: 20
@@ -158,7 +158,7 @@ tests:
     build: uvmt_cv32e40p_pulp
     description: corev_rand_debug_ebreak_single_step_xpulp
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_debug_ebreak_single_step_xpulp
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak_single_step_xpulp
     iss: 1
     cov: 1
     num: 100
@@ -176,7 +176,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_debug_ebreak_single_step_xpulp
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_debug_ebreak_single_step_xpulp
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak_single_step_xpulp
     iss: 1
     cov: 1
     num: 20
@@ -193,7 +193,7 @@ tests:
     build: uvmt_cv32e40p_pulp
     description: corev_rand_instr_long_stall
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_instr_long_stall
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_instr_long_stall
     iss: 1
     cov: 1
     num: 50
@@ -211,7 +211,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_instr_long_stall
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_instr_long_stall
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_instr_long_stall
     iss: 1
     cov: 1
     num: 5
@@ -222,7 +222,7 @@ tests:
     build: uvmt_cv32e40p_pulp
     description: legacy v1 corev_rand_interrupt with added instructions
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_interrupt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt
     iss: 1
     cov: 1
     num: 10
@@ -240,7 +240,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_interrupt
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_interrupt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt
     iss: 1
     cov: 1
     num: 10
@@ -251,7 +251,7 @@ tests:
     build: uvmt_cv32e40p_pulp
     description: corev_rand_interrupt_debug
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_interrupt_debug
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_debug
     iss: 1
     cov: 1
     num: 50
@@ -269,7 +269,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_interrupt_debug
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_interrupt_debug
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_debug
     iss: 1
     cov: 1
     num: 20
@@ -287,7 +287,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_interrupt_exception
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_interrupt_exception
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_exception
     iss: 1
     cov: 1
     num: 10
@@ -305,7 +305,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_interrupt_nested
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_interrupt_nested
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_nested
     iss: 1
     cov: 1
     num: 10
@@ -323,7 +323,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_interrupt_wfi_mem_stress
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_interrupt_wfi_mem_stress
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_wfi_mem_stress
     iss: 1
     cov: 1
     num: 10
@@ -341,7 +341,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_jump_stress_test
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_rand_jump_stress_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_jump_stress_test
     iss: 1
     cov: 1
     num: 10
@@ -357,7 +357,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_3cyclat
     description: corev_fp_instr_test
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_fp_instr_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_fp_instr_test
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -371,7 +371,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_fp_zfinx_instr_test
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_fp_zfinx_instr_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_fp_zfinx_instr_test
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -385,7 +385,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_3cyclat
     description: corev_multicycle_fp_instr_test
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_multicycle_fp_instr_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_multicycle_fp_instr_test
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -399,7 +399,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_multicycle_fp_zfinx_instr_test
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=corev_multicycle_fp_zfinx_instr_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_multicycle_fp_zfinx_instr_test
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -726,7 +726,7 @@ pulp_bit_manipulation:
     build: uvmt_cv32e40p_pulp
     description: pulp_bit_manipulation legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_bit_manipulation
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_bit_manipulation
     iss: 1
     cov: 1
     num: 1
@@ -735,7 +735,7 @@ pulp_general_alu:
     build: uvmt_cv32e40p_pulp
     description: pulp_general_alu legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_general_alu
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_general_alu
     iss: 1
     cov: 1
     num: 1
@@ -744,7 +744,7 @@ pulp_immediate_branching:
     build: uvmt_cv32e40p_pulp
     description: pulp_immediate_branching legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_immediate_branching
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_immediate_branching
     iss: 1
     cov: 1
     num: 1
@@ -753,7 +753,7 @@ pulp_multiply_accumulate:
     build: uvmt_cv32e40p_pulp
     description: pulp_multiply_accumulate legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_multiply_accumulate
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_multiply_accumulate
     iss: 1
     cov: 1
     num: 1
@@ -762,7 +762,7 @@ pulp_post_increment_load_store:
     build: uvmt_cv32e40p_pulp
     description: pulp_post_increment_load_store legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_post_increment_load_store
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_post_increment_load_store
     iss: 1
     cov: 1
     num: 1
@@ -771,7 +771,7 @@ pulp_vectorial_add_sub:
     build: uvmt_cv32e40p_pulp
     description: pulp_vectorial_add_sub legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_vectorial_add_sub
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_vectorial_add_sub
     iss: 1
     cov: 1
     num: 1
@@ -780,7 +780,7 @@ pulp_vectorial_avg:
     build: uvmt_cv32e40p_pulp
     description: pulp_vectorial_avg legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_vectorial_avg
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_vectorial_avg
     iss: 1
     cov: 1
     num: 1
@@ -789,7 +789,7 @@ pulp_vectorial_bit_manip:
     build: uvmt_cv32e40p_pulp
     description: pulp_vectorial_bit_manip legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_vectorial_bit_manip
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_vectorial_bit_manip
     iss: 1
     cov: 1
     num: 1
@@ -798,7 +798,7 @@ pulp_vectorial_bitwise:
     build: uvmt_cv32e40p_pulp
     description: pulp_vectorial_bitwise legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_vectorial_bitwise
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_vectorial_bitwise
     iss: 1
     cov: 1
     num: 1
@@ -807,7 +807,7 @@ pulp_vectorial_comparison_1:
     build: uvmt_cv32e40p_pulp
     description: pulp_vectorial_comparison_1 legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_vectorial_comparison_1
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_vectorial_comparison_1
     iss: 1
     cov: 1
     num: 1
@@ -816,7 +816,7 @@ pulp_vectorial_comparison_2:
     build: uvmt_cv32e40p_pulp
     description: pulp_vectorial_comparison_2 legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_vectorial_comparison_2
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_vectorial_comparison_2
     iss: 1
     cov: 1
     num: 1
@@ -825,7 +825,7 @@ pulp_vectorial_comparison_3:
     build: uvmt_cv32e40p_pulp
     description: pulp_vectorial_comparison_3 legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_vectorial_comparison_3
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_vectorial_comparison_3
     iss: 1
     cov: 1
     num: 1
@@ -834,7 +834,7 @@ pulp_vectorial_complex:
     build: uvmt_cv32e40p_pulp
     description: pulp_vectorial_complex legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_vectorial_complex
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_vectorial_complex
     iss: 1
     cov: 1
     num: 1
@@ -843,7 +843,7 @@ pulp_vectorial_dot_product_1:
     build: uvmt_cv32e40p_pulp
     description: pulp_vectorial_dot_product_1 legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_vectorial_dot_product_1
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_vectorial_dot_product_1
     iss: 1
     cov: 1
     num: 1
@@ -852,7 +852,7 @@ pulp_vectorial_dot_product_2:
     build: uvmt_cv32e40p_pulp
     description: pulp_vectorial_dot_product_2 legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_vectorial_dot_product_2
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_vectorial_dot_product_2
     iss: 1
     cov: 1
     num: 1
@@ -861,7 +861,7 @@ pulp_vectorial_max:
     build: uvmt_cv32e40p_pulp
     description: pulp_vectorial_max legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_vectorial_max
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_vectorial_max
     iss: 1
     cov: 1
     num: 1
@@ -870,7 +870,7 @@ pulp_vectorial_min:
     build: uvmt_cv32e40p_pulp
     description: pulp_vectorial_min legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_vectorial_min
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_vectorial_min
     iss: 1
     cov: 1
     num: 1
@@ -879,7 +879,7 @@ pulp_vectorial_shift:
     build: uvmt_cv32e40p_pulp
     description: pulp_vectorial_shift legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_vectorial_shift
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_vectorial_shift
     iss: 1
     cov: 1
     num: 1
@@ -888,7 +888,7 @@ pulp_vectorial_shuffle_pack:
     build: uvmt_cv32e40p_pulp
     description: pulp_vectorial_shuffle_pack legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test gen_corev-dv COREV=YES TEST=pulp_vectorial_shuffle_pack
+    cmd: make gen_corev-dv test COREV=YES TEST=pulp_vectorial_shuffle_pack
     iss: 1
     cov: 1
     num: 1
