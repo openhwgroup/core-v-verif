@@ -124,9 +124,11 @@ task uvma_clic_drv_c::run_phase(uvm_phase phase);
    cntxt.vif.is_mmode_irq_only = cfg.is_mmode_irq_only;
 
    // Fork thread to deassert randomly asserted clics when acknowledged
-   fork
-      irq_ack_clear();
-   join_none
+   if (cfg.clear_irq_on_ack) begin
+     fork
+        irq_ack_clear();
+     join_none
+   end
 
    forever begin
       seq_item_port.get_next_item(req);
