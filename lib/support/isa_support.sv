@@ -420,7 +420,7 @@
   } rlist_abi_name_e;
 
   typedef union packed {
-    bit [3:0]      raw;
+    bit [3:0]        raw;
     rlist_name_e     rlist;
     rlist_abi_name_e rlist_abi;
   } rlist_t;
@@ -813,16 +813,16 @@
   typedef struct packed {
     logic[15:10] funct6;
     c_gpr_t      rs1;
-    logic     funct1;
-    logic     uimm;
+    logic        funct1;
+    logic        uimm;
     c_gpr_t      rd;
   } clh_type_t;
 
   typedef struct packed {
     logic[15:10] funct6;
     c_gpr_t      rs1;
-    logic     funct1;
-    logic     uimm;
+    logic        funct1;
+    logic        uimm;
     c_gpr_t      rs2;
   } csh_type_t;
 
@@ -956,8 +956,8 @@
 
   // stack_adj operand for Zcmp instructions
   typedef struct packed {
-    int         stack_adj;
-    bit         valid;
+    int stack_adj;
+    bit valid;
   } stack_adj_operand_t;
 
   // ---------------------------------------------------------------------------
@@ -1613,16 +1613,16 @@
         asm.imm.valid           = 1;
       end
       CU_TYPE: begin
-        asm.rs1.gpr = instr.compressed.format.cu.rd_rs1.gpr;
-        asm.rd.gpr  = instr.compressed.format.cu.rd_rs1.gpr;
+        asm.rs1.gpr    = instr.compressed.format.cu.rd_rs1.gpr;
+        asm.rd.gpr     = instr.compressed.format.cu.rd_rs1.gpr;
         asm.rs1.valid  = 1;
         asm.rd.valid   = 1;
       end
       CMMV_TYPE: begin
-        asm.rs1.gpr = instr.compressed.format.cmmv.r1s.gpr;
-        asm.rs2.gpr  = instr.compressed.format.cmmv.r2s.gpr;
+        asm.rs1.gpr    = instr.compressed.format.cmmv.r1s.gpr;
+        asm.rs2.gpr    = instr.compressed.format.cmmv.r2s.gpr;
         asm.rs1.valid  = 1;
-        asm.rs2.valid   = 1;
+        asm.rs2.valid  = 1;
       end
       CMJT_TYPE: begin
         asm.imm.imm_raw         = instr.compressed.format.cmjt.index;
@@ -1662,8 +1662,8 @@
     asm_t asm = { '0 };
     case (1)
 
-      (   (instr.uncompressed.opcode                     == MISC_MEM)
-       && (instr.uncompressed.format.i.funct3            == 3'b0)) :
+      (   (instr.uncompressed.opcode              == MISC_MEM)
+       && (instr.uncompressed.format.i.funct3     == 3'b0)) :
         asm = build_asm(FENCE, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == MISC_MEM)
