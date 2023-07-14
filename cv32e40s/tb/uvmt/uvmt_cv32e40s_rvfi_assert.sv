@@ -354,7 +354,7 @@ module uvmt_cv32e40s_rvfi_assert
     (rvfi_if.instr_asm.instr == UNKNOWN_INSTR) && rvfi_if.rvfi_valid
     |->
     rvfi_if.rvfi_trap.trap
-  ) else `uvm_error(info_tag, "Unknown instruction is not trap");
+  ) else `uvm_error(info_tag, "Unknown instruction is not trapped");
 
 
 
