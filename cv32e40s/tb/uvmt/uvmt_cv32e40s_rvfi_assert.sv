@@ -33,6 +33,7 @@ module uvmt_cv32e40s_rvfi_assert
   import uvm_pkg::*;
   import uvma_rvfi_pkg::*;
   import uvmt_cv32e40s_base_test_pkg::*;
+  import support_pkg::*;
 #(
   parameter logic  CLIC,
   parameter int    CLIC_ID_WIDTH
@@ -345,6 +346,16 @@ module uvmt_cv32e40s_rvfi_assert
     rvfi_if.is_store_instr  ||
     !rvfi_if.is_store_acc_fault
   ) else `uvm_error(info_tag, "!store->!exce, exce->store");
+
+
+
+// Disassembler
+  a_unknowninstr_trap: assert property (
+    (rvfi_if.instr_asm.instr == UNKNOWN_INSTR) && rvfi_if.rvfi_valid
+    |->
+    rvfi_if.rvfi_trap.trap
+  ) else `uvm_error(info_tag, "Unknown instruction is not trap");
+
 
 
 endmodule : uvmt_cv32e40s_rvfi_assert

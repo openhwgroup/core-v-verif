@@ -1667,10 +1667,7 @@
         asm = build_asm(FENCE, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == MISC_MEM)
-       && (instr.uncompressed.format.i.rd         == 5'b0_0000)
-       && (instr.uncompressed.format.i.funct3     == 3'b001)
-       && (instr.uncompressed.format.i.rs1        == 5'b0_0000)
-       && (instr.uncompressed.format.i.imm        == 12'h000)) :
+       && (instr.uncompressed.format.i.funct3     == 3'b001)) :
         asm = build_asm(FENCEI, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == SYSTEM)
