@@ -375,13 +375,13 @@
   } c_gpr_abi_name_e;
 
   typedef union packed {
-    bit [2:0]      raw;
+    bit [2:0]        raw;
     c_gpr_name_e     gpr;
     c_gpr_abi_name_e gpr_abi;
   } c_gpr_t;
 
   typedef union packed {
-    bit [4:0]    raw;
+    bit [4:0]      raw;
     gpr_name_e     gpr;
     gpr_abi_name_e gpr_abi;
   } gpr_t;
