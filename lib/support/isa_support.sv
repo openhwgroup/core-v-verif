@@ -115,6 +115,8 @@
   // Instruction names, add instructions as needed
   // ---------------------------------------------------------------------------
   typedef enum {
+    // Unknown for instructions that cannot be decoded
+    UNKNOWN_INSTR = 0,
     FENCE,
     FENCEI,
     MRET,
@@ -273,9 +275,8 @@
     HINT_C_ADD,
     // Pseudo name, class of instructions
     STORE_INSTR,
-    LOAD_INSTR,
-    // Unknown for instructions that cannot be decoded
-    UNKNOWN_INSTR
+    LOAD_INSTR
+
   } instr_name_e;
 
   // ---------------------------------------------------------------------------
@@ -374,13 +375,13 @@
   } c_gpr_abi_name_e;
 
   typedef union packed {
-    logic [2:0]      raw;
+    bit [2:0]      raw;
     c_gpr_name_e     gpr;
     c_gpr_abi_name_e gpr_abi;
   } c_gpr_t;
 
   typedef union packed {
-    logic [4:0]    raw;
+    bit [4:0]    raw;
     gpr_name_e     gpr;
     gpr_abi_name_e gpr_abi;
   } gpr_t;
@@ -419,7 +420,7 @@
   } rlist_abi_name_e;
 
   typedef union packed {
-    logic [3:0]      raw;
+    bit [3:0]      raw;
     rlist_name_e     rlist;
     rlist_abi_name_e rlist_abi;
   } rlist_t;
@@ -922,13 +923,13 @@
   } imm_e;
 
   typedef struct packed {
-    int         imm_value;
-    logic[31:0] imm_raw;        // The immediate in the order it is presented in the instruction without shifting.
-    logic[31:0] imm_raw_sorted; // The immediate sorted in the correct order. No shifitng.
-    imm_e       imm_type;       // States the type of the immediate
-    int         width;          // Number of bits in immediate
-    bit         sign_ext;       // Indicates whether the immediate is sign-extended or not.
-    bit         valid;
+    int       imm_value;
+    bit[31:0] imm_raw;        // The immediate in the order it is presented in the instruction without shifting.
+    bit[31:0] imm_raw_sorted; // The immediate sorted in the correct order. No shifitng.
+    imm_e     imm_type;       // States the type of the immediate
+    int       width;          // Number of bits in immediate
+    bit       sign_ext;       // Indicates whether the immediate is sign-extended or not.
+    bit       valid;
   } imm_operand_t;
 
   typedef struct packed {
@@ -963,6 +964,8 @@
   // Instruction formats
   // ---------------------------------------------------------------------------
   typedef enum logic[7:0] {
+    // Others
+    UNKNOWN_FORMAT = 0,
     I_TYPE,
     J_TYPE,
     S_TYPE,
@@ -987,25 +990,23 @@
     CU_TYPE,
     CMMV_TYPE,
     CMJT_TYPE,
-    CMPP_TYPE,
-    // Others
-    UNKNOWN_FORMAT
+    CMPP_TYPE
   } instr_format_e;
 
   // ---------------------------------------------------------------------------
   // Main _decoded_ and _disassembled_ data structure
   // ---------------------------------------------------------------------------
   typedef struct packed {
-    instr_name_e  instr;    // Instruction name
-    instr_format_e format;  // Instruction format type
-    reg_operand_t rd;       // Destination register, qualified by rd.valid
-    reg_operand_t rs1;      // source register 1, qualified by rs1.valid
-    reg_operand_t rs2;      //      --         2,      --        2
-    reg_operand_t rs3;      //      --         3,      --        3
-    imm_operand_t imm;      // Immediate, qualified by imm.valid
-    csr_operand_t csr;      // CSR register address, qualified by csr.valid
-    logic         is_hint;  // Indicates whether the current instruction is a HINT.
-    rlist_operand_t rlist;  // structure to handle rlist fields for Zcmp-instructions
+    instr_name_e        instr;    // Instruction name
+    instr_format_e      format;  // Instruction format type
+    reg_operand_t       rd;       // Destination register, qualified by rd.valid
+    reg_operand_t       rs1;      // source register 1, qualified by rs1.valid
+    reg_operand_t       rs2;      //      --         2,      --        2
+    reg_operand_t       rs3;      //      --         3,      --        3
+    imm_operand_t       imm;      // Immediate, qualified by imm.valid
+    csr_operand_t       csr;      // CSR register address, qualified by csr.valid
+    logic               is_hint;  // Indicates whether the current instruction is a HINT.
+    rlist_operand_t     rlist;  // structure to handle rlist fields for Zcmp-instructions
     stack_adj_operand_t stack_adj; // structure to handle stack_adj fields for Zcmp-instructions
   } asm_t;
 
@@ -1029,13 +1030,12 @@
     };
   endfunction : get_sort_s_imm
 
-  function logic [11:0] get_sort_b_imm(instr_t instr);
+  function logic [12:1] get_sort_b_imm(instr_t instr);
     get_sort_b_imm = {
       instr.uncompressed.format.b.imm_h[31],
       instr.uncompressed.format.b.imm_l[7],
       instr.uncompressed.format.b.imm_h[30:25],
-      instr.uncompressed.format.b.imm_l[11:8],
-      1'b0
+      instr.uncompressed.format.b.imm_l[11:8]
     };
   endfunction : get_sort_b_imm
 
@@ -1660,13 +1660,10 @@
   // ---------------------------------------------------------------------------
   function automatic asm_t decode_instr(instr_t instr);
     asm_t asm = { '0 };
-    casex (1)
+    case (1)
 
       (   (instr.uncompressed.opcode                     == MISC_MEM)
-       && (instr.uncompressed.format.i.rd                == 5'b0)
-       && (instr.uncompressed.format.i.funct3            == 3'b0)
-       && (instr.uncompressed.format.i.rs1               == 5'b0)
-       && (instr.uncompressed.format.i.imm.funct7[31:28] == 4'h0)) :
+       && (instr.uncompressed.format.i.funct3            == 3'b0)) :
         asm = build_asm(FENCE, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == MISC_MEM)
