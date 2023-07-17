@@ -15,9 +15,7 @@
 {% for r in regressions %}
             <member>{{r.name}}</member>
 {% endfor %}
-{% if coverage != false %}
-            <member>cov_report</member>
-{% endif %}
+            <member>report</member>
         </members>
     </runnable>
 
@@ -41,6 +39,9 @@
         <runnable name="{{build.name}}" type="group" sequential="no">
             <parameters>
                 <parameter name="build_config">{{build.cfg}}</parameter>
+{% if build.test_cfg is defined %}
+                <parameter name="build_test_config">{{build.test_cfg}}</parameter>
+{% endif %}
                 <parameter name="build_name">{{build.name}}</parameter>
             </parameters>
             <members>
@@ -60,12 +61,25 @@
             <runnable name="{{t.name}}" type="task" repeat="{{t.num}}">
                 <parameters>
 {% if t.cfg is defined %}
-                    <parameter name="tst_cfg" >{{t.cfg}}</parameter>
+                    <parameter name="t_cfg" >{{t.cfg}}</parameter>
 {% else %}
-                    <parameter name="tst_cfg" >(%build_config%)</parameter>
+                    <parameter name="t_cfg" >(%build_config%)</parameter>
+{% endif %}
+{% if t.test_cfg is defined %}
+                    <parameter name="t_test_cfg"    >{{t.test_cfg}}</parameter>
+                    <parameter name="ucdb_path"     >(%results_sim_path%)/(%t_cfg%)/{{t.testname}}/{{t.test_cfg}}/(%ITERATION%)</parameter>
+                    <parameter name="ucdb_filename" >{{t.testname}}-{{t.test_cfg}}</parameter>
+{% elif build.test_cfg is defined %}
+                    <parameter name="t_test_cfg"    >{{build.test_cfg}}</parameter>
+                    <parameter name="ucdb_path"     >(%results_sim_path%)/(%t_cfg%)/{{t.testname}}/{{build.test_cfg}}/(%ITERATION%)</parameter>
+                    <parameter name="ucdb_filename" >{{t.testname}}-{{build.test_cfg}}</parameter>
+{% else %}
+                    <parameter name="t_test_cfg"    ></parameter>
+                    <parameter name="ucdb_path"     >(%results_sim_path%)/(%t_cfg%)/{{t.testname}}/(%ITERATION%)</parameter>
+                    <parameter name="ucdb_filename" >{{t.testname}}</parameter>
 {% endif %}
 {% if coverage != false %}
-                    <parameter name="ucdbfile" >{{t.abs_dir}}/vsim_results/(%tst_cfg%)/{{t.testname}}/(%ITERATION%)/{{t.testname}}.ucdb</parameter>
+                    <parameter name="ucdbfile" >(%ucdb_path%)/(%ucdb_filename%).ucdb</parameter>
 {% endif %}
                     <parameter name="log_file" >(%DATADIR%)/{{project}}/{{r.name}}/(%build_name%)/(%INSTANCE%)/execScript.log</parameter>
                 </parameters>
@@ -75,38 +89,38 @@
                 </method>
 {% endif %}
                 <execScript launch="exec" usestderr="no">
-                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} CHECK_SIM_LOG=(%log_file%) COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%build_config%) RISCVDV_CFG={{t.riscvdv_cfg}} SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
+                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} CHECK_SIM_LOG=(%log_file%) COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg%) RISCVDV_CFG={{t.riscvdv_cfg}} SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} COV={{regress_macros.yesorno(t.cov)}} RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
                 </execScript>
             </runnable>
-{% endfor %}
-
 
 {% endfor %}
 
-{% if coverage != false %}
+
+{% endfor %}
+
     <!-- =========== Reporting =========== -->
-    <runnable name="cov_report" type="group">
+    <runnable name="report" type="group">
         <parameters>
             <parameter name="merged_file">(%results_sim_path%)/merged/merged.ucdb</parameter>
             <!-- <parameter name="tplan_file">(%results_sim_path%)/merged.ucdb</parameter> -->
         </parameters>
+{% if coverage != false %}
         <preScript launch="exec">
-            <command> cd {{results_path}} &amp;&amp; make cov_merge </command>
+            <command> cd {{results_path}} &amp;&amp; make cov_merge SIMULATOR={{simulator}}</command>
         </preScript>
+{% endif %}
         <members>
-            <member>cov_html_report</member>
+            <member>html_report</member>
         </members>
-        <postScript>
-
+        <postScript mintimeout="3000">
+            <command>vrun -vrmdata (%DATADIR%) -status -full -html -htmldir (%DATADIR%)/vrun</command>
         </postScript>
     </runnable>
 
-        <runnable name="cov_html_report" type="task">
+        <runnable name="html_report" type="task">
             <execScript>
                 <command> if {[file exists (%merged_file%)]} {vcover report -annotate -testdetails -details -html (%merged_file%) -output [file join {{results_path}} cov_html_summary]} </command>
-                <!-- <command> if {[file exists (%merged_file%)]} {vcover report -plansection=/. -html (%mergefile%) -output [file join (%results_sim_path%) cov_html_summary_testplan]} </command> -->
             </execScript>
         </runnable>
-{% endif %}
 
 </rmdb>
