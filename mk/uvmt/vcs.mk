@@ -92,12 +92,18 @@ endif
 # Waveform generation
 # WAVES=YES enables waveform generation for entire testbench
 # ADV_DEBUG=YES currently not supported
+# FSDB=YES enables FSDB waveform file generation for entire testbench
 ifeq ($(call IS_YES,$(WAVES)),YES)
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
 $(error ADV_DEBUG not yet supported by VCS )
-VCS_USER_COMPILE_ARGS = +vcs+vcdpluson
+VCS_USER_COMPILE_ARGS += +vcs+vcdpluson
 else
-VCS_USER_COMPILE_ARGS = +vcs+vcdpluson
+ifeq ($(call IS_YES,$(FSDB)),YES)
+VCS_USER_COMPILE_ARGS += -debug_access+all +vcs+fsdbon -kdb
+VCS_RUN_WAVES_FLAGS  ?= -ucli -i $(abspath $(MAKE_PATH)/../tools/vcs/vcs_wave.tcl)
+else
+VCS_USER_COMPILE_ARGS += +vcs+vcdpluson
+endif
 endif
 endif
 
@@ -134,17 +140,33 @@ endif
 ifeq ($(call IS_YES,$(MERGE)),YES)
 COV_ARGS = -dir cov_work/scope/merged
 else
-COV_ARGS = -dir $(TEST_NAME).vdb
+COV_ARGS = -dir $(TEST_RUN_NAME).vdb
 endif
 
+
+ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vcs-$(TEST_RUN_NAME).log
+POST_TEST = \
+	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
+		exit 1; \
+	fi
+endif
 
 ################################################################################
 
 VCS_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-#VCS_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
 VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
+    VCS_USER_COMPILE_ARGS += +define+USE_ISS
+    VCS_USER_COMPILE_ARGS += +define+USE_IMPERASDV
+    VCS_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_dv.flist
     VCS_PLUSARGS += +USE_ISS
+    VCS_PLUSARGS += +USE_IMPERASDV
+    VCS_PLUSARGS += -sv_lib $(basename $(IMPERAS_DV_MODEL))
+    ifeq ($(call IS_YES,$(COV)),YES)
+        VCS_USER_COMPILE_ARGS += +define+IMPERAS_COV
+        VCS_PLUSARGS += +IDV_TRACE2COV=1
+    endif
 else
 	VCS_PLUSARGS += +DISABLE_OVPSIM
 endif
@@ -161,7 +183,7 @@ VCS_RUN_BASE_FLAGS   ?= $(VCS_GUI) \
                         -sv_lib $(abspath $(VCS_SVLIB_LIB))
 
 # Simulate using latest elab
-VCS_RUN_FLAGS        ?= 
+VCS_RUN_FLAGS        ?=
 VCS_RUN_FLAGS        += $(VCS_RUN_BASE_FLAGS)
 VCS_RUN_FLAGS        += $(VCS_RUN_WAVES_FLAGS)
 VCS_RUN_FLAGS        += $(VCS_RUN_COV_FLAGS)
@@ -225,7 +247,6 @@ gen_ovpsim_ic:
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
 		echo "$(CFG_OVPSIM)" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
 	fi
-export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic
 
 ################################################################################
 # The new general test target
@@ -237,16 +258,22 @@ test: $(VCS_SIM_PREREQ) hex gen_ovpsim_ic
 	@echo "$(BANNER)"
 	mkdir -p $(SIM_RUN_RESULTS)
 	cd $(SIM_RUN_RESULTS) && \
+	export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic && \
+	export IMPERAS_QUEUE_LICENSE=1 && \
 		$(VCS_DIR)/$(SIMV) \
-		-l vcs-$(TEST_NAME).log \
-		-cm_name $(TEST_NAME) \
+		-l vcs-$(TEST_RUN_NAME).log \
+		-cm_name $(TEST_RUN_NAME) \
 		$(VCS_RUN_FLAGS) \
 		$(CFG_PLUSARGS) \
 		$(TEST_PLUSARGS) \
+		$(TEST_CFG_FILE_PLUSARGS) \
 		+UVM_TESTNAME=$(TEST_UVM_TEST) \
-    		+elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
+		+UVM_VERBOSITY=$(VCS_UVM_VERBOSITY) \
+		+elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
 		+firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
 		+itb_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).itb
+	@echo "* Log: $(SIM_RUN_RESULTS)/vcs-$(TEST_RUN_NAME).log"
+	$(POST_TEST)
 
 ###############################################################################
 # Run a single test-program from the RISC-V Compliance Test-suite. The parent
@@ -281,13 +308,61 @@ compliance: $(VCS_COMPLIANCE_PREREQ)
 		+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).hex \
 		+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).elf
 
+################################################################################
+# RISCOF RISCV-ARCH-TEST DUT simulation targets
+VCS_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/$(TEST).elf
+
+comp_dut_riscof_sim:
+	@echo "$(BANNER)"
+	@echo "* Compiling vcs in $(SIM_RISCOF_ARCH_TESTS_RESULTS)"
+	@echo "* Log: $(SIM_RISCOF_ARCH_TESTS_RESULTS)/vcs.log"
+	@echo "$(BANNER)"
+	mkdir -p $(SIM_RISCOF_ARCH_TESTS_RESULTS) && \
+	cd $(SIM_RISCOF_ARCH_TESTS_RESULTS) && \
+		$(VCS) $(VCS_COMP) -top uvmt_$(CV_CORE_LC)_tb
+
+comp_dut_rtl_riscof_sim: $(CV_CORE_PKG) $(SVLIB_PKG) comp_dut_riscof_sim
+
+setup_riscof_sim: clean_riscof_arch_test_suite clone_riscof_arch_test_suite comp_dut_rtl_riscof_sim
+
+gen_riscof_ovpsim_ic:
+	@touch $(RISCOF_TEST_RUN_DIR)/ovpsim.ic
+	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
+		echo "$(CFG_OVPSIM)" > $(RISCOF_TEST_RUN_DIR)/ovpsim.ic; \
+	fi
+
+# Target to run RISCOF DUT sim with VCS
+riscof_sim_run: $(VCS_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovpsim_ic
+	@echo "$(BANNER)"
+	@echo "* Running vcs in $(RISCOF_TEST_RUN_DIR)"
+	@echo "* Log: $(RISCOF_TEST_RUN_DIR)/vcs-$(TEST).log"
+	@echo "$(BANNER)"
+	cd $(RISCOF_TEST_RUN_DIR) && \
+	export IMPERAS_TOOLS=$(RISCOF_TEST_RUN_DIR)/ovpsim.ic && \
+	export IMPERAS_QUEUE_LICENSE=1 && \
+		$(RISCOF_TEST_RUN_DIR)/$(SIMV) \
+			-l vcs-$(TEST).log \
+			-cm_name $(TEST) \
+			$(VCS_RUN_FLAGS) \
+			$(CFG_PLUSARGS) \
+			$(RISCOF_TEST_PLUSARGS) \
+			+UVM_TESTNAME=uvmt_cv32e40p_riscof_firmware_test_c \
+			+UVM_VERBOSITY=$(VCS_UVM_VERBOSITY) \
+			+firmware=$(TEST).hex \
+			+elf_file=$(TEST).elf \
+			+itb_file=$(TEST).itb
+	@echo "* Log: $(RISCOF_TEST_RUN_DIR)/vcs-$(TEST).log"
+
+
 ###############################################################################
 # Use Google instruction stream generator (RISCV-DV) to create new test-programs
 comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG)
 	mkdir -p $(SIM_COREVDV_RESULTS)
 	cd $(SIM_COREVDV_RESULTS) && \
 	$(VCS) $(VCS_COMP_FLAGS) \
-		$(QUIET) $(VCS_USER_COMPILE_ARGS) \
+		$(QUIET) \
+		$(VCS_UVM_ARGS) \
+		$(VCS_USER_COMPILE_ARGS) \
 		$(VCS_PMA_INC) \
 		+incdir+$(CV_CORE_COREVDV_PKG)/target/$(CV_CORE_LC) \
 		+incdir+$(RISCVDV_PKG)/user_extension \
@@ -300,7 +375,7 @@ comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG)
 
 corev-dv: clean_riscv-dv clone_riscv-dv comp_corev-dv
 
-gen_corev-dv:
+gen_corev-dv: comp_corev-dv
 	@echo "$(BANNER)"
 	@echo "* Generating $(TEST) with corev-dv..."
 	@echo "* with VCS_RUN_FLAGS = $(VCS_RUN_FLAGS) "
@@ -318,6 +393,7 @@ gen_corev-dv:
 			+asm_file_name_opts=$(TEST) \
 			+ldgen_cp_test_path=$(SIM_TEST_RESULTS) \
 			$(CFG_PLUSARGS) \
+			$(TEST_CFG_FILE_PLUSARGS) \
 			$(GEN_PLUSARGS)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		cp -f ${BSP}/link_corev-dv.ld ${SIM_TEST_RESULTS}/$$idx/test_program/link.ld; \
@@ -339,13 +415,7 @@ cov_merge:
 ifeq ($(call IS_YES,$(MERGE)),YES)
   COVERAGE_TARGET_DIR=$(SIM_CFG_RESULTS)/$(MERGED_COV_DIR)
 else
-  COVERAGE_TARGET_DIR=$(SIM_CFG_RESULTS)/$(TEST_NAME)
-endif
-
-ifeq ($(call IS_YES,$(MERGE)),YES)
-  COVERAGE_TARGET_DIR=$(SIM_RESULTS)/$(MERGED_COV_DIR)
-else
-  COVERAGE_TARGET_DIR=$(SIM_RESULTS)/$(TEST_NAME)_$(RUN_INDEX)
+  COVERAGE_TARGET_DIR=$(SIM_RUN_RESULTS)
 endif
 
 # the report is in html format: use a browser to access it when GUI mode is selected
@@ -364,6 +434,9 @@ clean:
 	@echo "$(MAKEFILE_LIST)"
 	rm -rf $(SIM_RESULTS)
 
+clean_test:
+	rm -rf $(SIM_RUN_RESULTS)
+
 # Files created by Eclipse when using the Imperas ISS + debugger
 clean_eclipse:
 	rm  -f eguieclipse.log
@@ -371,6 +444,8 @@ clean_eclipse:
 	rm  -f stdout.txt
 	rm  -rf workspace
 
-# All generated files plus the clone of the RTL
-clean_all: clean clean_eclipse clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
+clean_rtl:
 	rm -rf $(CV_CORE_PKG)
+
+# All generated files plus the clone of the RTL
+clean_all: clean clean_rtl clean_eclipse clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib clean_riscof_arch_test_suite

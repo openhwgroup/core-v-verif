@@ -251,6 +251,19 @@ include $(CFG_FLAGS_MAKE)
 endif
 endif
 
+# test_cfg
+CFGYAML2MAKE = $(CORE_V_VERIF)/bin/cfgyaml2make
+CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp riscof_sim_run
+ifneq ($(filter $(CFG_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
+ifneq ($(TEST_CFG_FILE),)
+TEST_CFG_FLAGS_MAKE := $(shell $(CFGYAML2MAKE) --yaml=$(TEST_CFG_FILE).yaml $(YAML2MAKE_DEBUG) --prefix=TEST_CFG_FILE --core=$(CV_CORE))
+ifeq ($(TEST_CFG_FLAGS_MAKE),)
+$(error ERROR Error finding or parsing configuration: $(TEST_CFG_FILE).yaml)
+endif
+include $(TEST_CFG_FLAGS_MAKE)
+endif
+endif
+
 ###############################################################################
 # Determine the values of the CV_SW_ variables.
 # The priority order is ENV > TEST > CFG.

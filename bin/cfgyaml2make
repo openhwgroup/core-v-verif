@@ -48,6 +48,7 @@ TOPDIR = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)
 REQUIRED_KEYS = ('name', 'description',)
 CFG_PATHS = (
              '<CV_CORE>/tests/cfg',
+             '<CV_CORE>/tests/test_cfg',
             )
 try:
     DEFAULT_CORE=os.environ['CV_CORE']

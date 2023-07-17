@@ -32,7 +32,7 @@ VCOVER                  = vcover
 
 # Paths
 VWORK     				= work
-VSIM_COV_MERGE_DIR      = $(SIM_RESULTS)/merged
+VSIM_COV_MERGE_DIR      = $(SIM_CFG_RESULTS)/merged
 UVM_HOME               ?= $(abspath $(shell which $(VLIB))/../../verilog_src/uvm-1.2/src)
 DPI_INCLUDE            ?= $(abspath $(shell which $(VLIB))/../../include)
 USES_DPI = 1
@@ -173,7 +173,7 @@ VSIM_FLAGS += +USE_ISS
 VSIM_FLAGS += +USE_IMPERASDV
 VSIM_FLAGS += -sv_lib $(basename $(IMPERAS_DV_MODEL))
 ifeq ($(call IS_YES,$(COV)),YES)
-VSIM_FLAGS += +TRACE2COV_ENABLE=1
+VSIM_FLAGS += +IDV_TRACE2COV=1
 endif
 else
 VSIM_FLAGS += +DISABLE_OVPSIM
@@ -254,16 +254,16 @@ endif
 else
 ifeq ($(call IS_YES,$(GUI)),YES)
 # Test coverage GUI
-COV_FLAGS=-viewcov $(TEST).ucdb
+COV_FLAGS=-viewcov $(TEST_RUN_NAME).ucdb
 else
 # Test coverage report
-COV_FLAGS=-c -viewcov $(TEST).ucdb -do "file delete -force $(COV_REPORT); coverage report -html -details -precision 2 -annotate -output $(COV_REPORT); exit -f"
+COV_FLAGS=-c -viewcov $(TEST_RUN_NAME).ucdb -do "file delete -force $(COV_REPORT); coverage report -html -details -precision 2 -annotate -output $(COV_REPORT); exit -f"
 endif
 endif
 endif
 
 ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
-CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vsim-$(TEST_NAME).log
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vsim-$(TEST_RUN_NAME).log
 POST_TEST = \
 	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
 		exit 1; \
@@ -277,13 +277,13 @@ WAVES_CMD = \
 	cd $(SIM_RUN_RESULTS) && \
 		$(VISUALIZER) \
 			-designfile $(SIM_CFG_RESULTS)/design.bin \
-			-wavefile qwave.db
+			-wavefile qwave.db &
 else
 WAVES_CMD = \
 	cd $(SIM_RUN_RESULTS) && \
 		$(VSIM) \
 			-gui \
-			-view vsim.wlf
+			-view vsim.wlf &
 endif
 
 # Compute vsim (run) prereqs, by default do a full compile + run when running
@@ -391,13 +391,13 @@ gen_corev-dv: comp_corev-dv
 			$(CV_CORE_LC)_instr_gen_tb_top_vopt \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(GEN_UVM_TEST) \
-			+num_of_tests=$(GEN_NUM_TESTS)  \
 			-l $(TEST)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log \
 			+start_idx=$(GEN_START_INDEX) \
 			+num_of_tests=$(GEN_NUM_TESTS) \
 			+asm_file_name_opts=$(TEST) \
 			+ldgen_cp_test_path=$(SIM_TEST_RESULTS) \
 			$(CFG_PLUSARGS) \
+			$(TEST_CFG_FILE_PLUSARGS) \
 			$(GEN_PLUSARGS)
 
 	# Copy out final assembler files to test directory
@@ -470,7 +470,7 @@ hello-world:
 
 ################################################################################
 # RISCOF RISCV-ARCH-TEST DUT simulation targets
-VSIM_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/dut_test.elf
+VSIM_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/$(TEST).elf
 
 vlog_dut_riscof_sim:
 	@echo "$(BANNER)"
@@ -525,10 +525,11 @@ gen_riscof_ovpsim_ic:
 	fi
 
 # Target to run RISCOF VSIM (i.e. run the simulation)
+riscof_sim_run: VSIM_TEST=$(TEST)
 riscof_sim_run: $(VSIM_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovpsim_ic
 	@echo "$(BANNER)"
-	@echo "* Running vsim in $(PWD)"
-	@echo "* Log: $(PWD)/vsim.log"
+	@echo "* Running vsim in $(RISCOF_TEST_RUN_DIR)"
+	@echo "* Log: $(RISCOF_TEST_RUN_DIR)/vsim-$(TEST).log"
 	@echo "$(BANNER)"
 	cd $(RISCOF_TEST_RUN_DIR) && \
 		$(VMAP) work $(SIM_RISCOF_ARCH_TESTS_RESULTS)/work
@@ -539,15 +540,16 @@ riscof_sim_run: $(VSIM_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovp
 			-work $(VWORK) \
 			$(VSIM_WAVES_FLAGS) \
 			$(VSIM_FLAGS) \
-			-l vsim.log \
+			-l vsim-$(TEST).log \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=uvmt_cv32e40p_riscof_firmware_test_c \
 			$(RTLSRC_VOPT_TB_TOP) \
 			$(CFG_PLUSARGS) \
 			$(RISCOF_TEST_PLUSARGS) \
-			+firmware=dut_test.hex \
-			+elf_file=dut_test.elf \
-			+itb_file=dut_test.itb
+			+firmware=$(TEST).hex \
+			+elf_file=$(TEST).elf \
+			+itb_file=$(TEST).itb
+	@echo "* Log: $(RISCOF_TEST_RUN_DIR)/vsim-$(TEST).log"
 
 
 ################################################################################
@@ -639,7 +641,9 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 			+UVM_TESTNAME=$(TEST_UVM_TEST) \
 			$(RTLSRC_VOPT_TB_TOP) \
 			$(CFG_PLUSARGS) \
-			$(TEST_PLUSARGS)
+			$(TEST_PLUSARGS) \
+			$(TEST_CFG_FILE_PLUSARGS)
+	@echo "* Log: $(RUN_DIR)/vsim-$(VSIM_TEST).log"
 	$(POST_TEST)
 
 
@@ -649,7 +653,7 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 ################################################################################
 # The new general test target
 
-test: VSIM_TEST=$(TEST_PROGRAM)
+test: VSIM_TEST=$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX)
 test: VSIM_FLAGS += +firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex
 test: VSIM_FLAGS += +elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf
 test: VSIM_FLAGS += +itb_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).itb
@@ -684,8 +688,11 @@ cov: $(COV_MERGE_TARGET)
 clean:
 	rm -rf $(SIM_RESULTS)
 
+clean_test:
+	rm -rf $(SIM_RUN_RESULTS)
+
 clean_rtl:
 	rm -rf $(CV_CORE_PKG)
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_rtl clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
+clean_all: clean clean_rtl clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib clean_riscof_arch_test_suite
