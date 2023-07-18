@@ -551,72 +551,73 @@
       lsb: 0
 
 
-- csr: CSR_PMPCFG0
-  description: >
-   Physical Memory Protection CSRs
-  address: 0x3A0
-  privilege_mode: M
-  rv32:
-    - field_name: pmp3cfg
-      description: >
-       hold the configurations 
-      type: RW
-      reset_val: 0
-      msb: 31
-      lsb: 24
-    - field_name: pmp2cfg
-      description: >
-        hold the configurations
-      type: RW
-      reset_val: 0
-      msb: 23
-      lsb: 16
-    - field_name: pmp1cfg
-      description: >
-        hold the configurations
-      type: RW
-      reset_val: 0
-      msb: 15
-      lsb: 8
-    - field_name: pmp0cfg
-      description: >
-        hold the configurations
-      type: RW
-      reset_val: 0
-      msb: 7
-      lsb: 0
-
-- csr: CSR_PMPCFG1
-  description: >
-   Physical Memory Protection CSRs
-  address: 0x3A1
-  privilege_mode: M
-  rv32:
-    - field_name: pmp7cfg
-      description: >
-       hold the configurations 
-      type: RW
-      reset_val: 0
-      msb: 31
-      lsb: 24
-    - field_name: pmp6cfg
-      description: >
-        hold the configurations
-      type: RW
-      reset_val: 0
-      msb: 23
-      lsb: 16
-    - field_name: pmp5cfg
-      description: >
-        hold the configurations
-      type: RW
-      reset_val: 0
-      msb: 15
-      lsb: 8
-    - field_name: pmp4cfg
-      description: >
-        hold the configurations
-      type: RW
-      reset_val: 0
-      msb: 7
-      lsb: 0       
+## - csr: CSR_PMPCFG0
+##   description: >
+##    Physical Memory Protection CSRs
+##   address: 0x3A0
+##   privilege_mode: M
+##   rv32:
+##     - field_name: pmp3cfg
+##       description: >
+##        hold the configurations 
+##       type: RW
+##       reset_val: 0
+##       msb: 31
+##       lsb: 24
+##     - field_name: pmp2cfg
+##       description: >
+##         hold the configurations
+##       type: RW
+##       reset_val: 0
+##       msb: 23
+##       lsb: 16
+##     - field_name: pmp1cfg
+##       description: >
+##         hold the configurations
+##       type: RW
+##       reset_val: 0
+##       msb: 15
+##       lsb: 8
+##     - field_name: pmp0cfg
+##       description: >
+##         hold the configurations
+##       type: RW
+##       reset_val: 0
+##       msb: 7
+##       lsb: 0
+## 
+## - csr: CSR_PMPCFG1
+##   description: >
+##    Physical Memory Protection CSRs
+##   address: 0x3A1
+##   privilege_mode: M
+##   rv32:
+##     - field_name: pmp7cfg
+##       description: >
+##        hold the configurations 
+##       type: RW
+##       reset_val: 0
+##       msb: 31
+##       lsb: 24
+##     - field_name: pmp6cfg
+##       description: >
+##         hold the configurations
+##       type: RW
+##       reset_val: 0
+##       msb: 23
+##       lsb: 16
+##     - field_name: pmp5cfg
+##       description: >
+##         hold the configurations
+##       type: RW
+##       reset_val: 0
+##       msb: 15
+##       lsb: 8
+##     - field_name: pmp4cfg
+##       description: >
+##         hold the configurations
+##       type: RW
+##       reset_val: 0
+##       msb: 7
+##       lsb: 0 
+      
