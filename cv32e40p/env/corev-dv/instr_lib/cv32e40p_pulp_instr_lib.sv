@@ -129,11 +129,10 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
 
   constraint avail_regs_pulp_instr_c {
     num_of_avail_regs inside {[8:25]};
-    num_of_reserved_regs == 5;
   }
 
   constraint cv32e40p_avail_regs_c {
-    solve num_of_avail_regs,num_of_reserved_regs before cv32e40p_exclude_regs;
+    solve num_of_avail_regs before cv32e40p_exclude_regs;
     cv32e40p_avail_regs.size() == num_of_avail_regs;
     cv32e40p_exclude_regs.size() == (32-num_of_reserved_regs-num_of_avail_regs);
     unique {cv32e40p_exclude_regs};
