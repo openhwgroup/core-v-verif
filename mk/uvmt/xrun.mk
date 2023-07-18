@@ -73,7 +73,14 @@ XRUN_ELAB_COVFILE = -covfile $(abspath $(MAKE_PATH)/../tools/xrun/covfile.tcl)
 XRUN_RUN_COV      = -covscope uvmt_$(CV_CORE_LC)_tb \
 					-nowarn CGDEFN
 XRUN_RUN_BASE_FLAGS += -sv_lib $(DPI_DASM_LIB)
+
+# Only append the IMPERAS_DV_MODEL sv_lib flag if the file actually exists)
+ifneq (,$(wildcard $(IMPERAS_DV_MODEL)))
+ifeq ($(call IS_YES,$(USE_ISS)),YES)
 XRUN_RUN_BASE_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
+endif
+endif
+
 XRUN_RUN_BASE_FLAGS += -sv_lib $(abspath $(SVLIB_LIB))
 
 XRUN_UVM_VERBOSITY ?= UVM_MEDIUM
@@ -187,13 +194,20 @@ XRUN_UVM_MACROS_INC_FILE = $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC)_uvm_macros_inc.sv
 XRUN_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 XRUN_USER_COMPILE_ARGS += +define+UVM
+
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
+  ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
+	  export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
+  else
+	  export FILE_LIST_IDV      ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
+		export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dv_deps.flist
+  endif
 	XRUN_PLUSARGS          += +USE_ISS
 	XRUN_USER_COMPILE_ARGS += +define+USE_IMPERASDV
 	XRUN_USER_COMPILE_ARGS += +define+USE_ISS
-	export FILE_LIST_IDV ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
 else
 	XRUN_PLUSARGS          += +DISABLE_OVPSIM
+	export FILE_LIST_IDV_DEPS   ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
 endif
 ifeq ($(call IS_YES,$(USE_RVVI)),YES)
     XRUN_PLUSARGS +="+USE_RVVI"
