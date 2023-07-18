@@ -33,7 +33,7 @@ class uvma_isacov_cfg_c extends uvm_object;
   rand bit                     reg_crosses_enabled;
   rand bit                     reg_hazards_enabled;
 
-  rand decoder_e            decoder;
+  rand decoder_e               decoder;
 
   // Core configuration object to filter extensions, csrs, modes, supported
   uvma_core_cntrl_cfg_c        core_cfg;
