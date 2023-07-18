@@ -26,7 +26,7 @@ class uvma_isacov_mon_c#(int ILEN=DEFAULT_ILEN,
   uvma_isacov_cfg_c                          cfg;
   uvm_analysis_port#(uvma_isacov_mon_trn_c)  ap;
   instr_name_t                               instr_name_lookup[string];
-  asm_t                                      instr_asm; 
+  asm_t                                      instr_asm;
 
   // Analysis export to receive instructions from RVFI
   uvm_analysis_imp_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvma_isacov_mon_c) rvfi_instr_imp;
@@ -154,6 +154,7 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
   if (cfg.decoder == SPIKE) begin
     // Attempt to decode instruction with Spike DASM
     instr_name = dasm_name(rvfi_instr.insn);
+
     if (instr_name_lookup.exists(instr_name)) begin
       mon_trn.instr.name = instr_name_lookup[instr_name];
     end else begin
@@ -165,7 +166,6 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
 
     `uvm_info("ISACOVMON", $sformatf("rvfi = 0x%08x %s", rvfi_instr.insn, instr_name), UVM_HIGH);
 
-    mon_trn.instr.itype = get_instr_type(mon_trn.instr.name);
     mon_trn.instr.ext   = get_instr_ext(mon_trn.instr.name);
     mon_trn.instr.group = get_instr_group(mon_trn.instr.name, rvfi_instr.mem_addr);
 
@@ -193,10 +193,7 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
     end
 
     // Make instructions as illegal,
-    // 1. If UNKNOWN (undecodable)
-    if (mon_trn.instr.name == UNKNOWN)
-      mon_trn.instr.illegal = 1;
-    // 2. If a CSR instruction is not targeted to a valid CSR
+    // 1. If a CSR instruction is not targeted to a valid CSR
     if (mon_trn.instr.group == CSR_GROUP) begin
       mon_trn.instr.csr_val = dasm_csr(instr);
       if (!$cast(mon_trn.instr.csr, mon_trn.instr.csr_val) ||
@@ -205,7 +202,7 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
       end
     end
 
-  end else if (cfg.decoder == RISCV_DISASSEMBLER) begin
+  end else if (cfg.decoder == ISA_SUPPORT) begin
     // Attempt to decode instruction with the RISC-V disassembler
     instr_asm = decode_instr(rvfi_instr.insn);
 
@@ -217,36 +214,24 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
       mon_trn.instr.name = UNKNOWN;
     end
 
-    mon_trn.instr.itype = get_instr_type(mon_trn.instr.name);
     mon_trn.instr.ext   = get_instr_ext(mon_trn.instr.name);
     mon_trn.instr.group = get_instr_group(mon_trn.instr.name, rvfi_instr.mem_addr);
 
-    if (mon_trn.instr.ext == C_EXT) begin
-      mon_trn.instr.rs1     = instr_asm.rs1.gpr;
-      mon_trn.instr.rs2     = instr_asm.rs2.gpr;
-      mon_trn.instr.rd      = instr_asm.rd.gpr;
-      mon_trn.instr.c_rdrs1 = instr_asm.rd.gpr;
-      mon_trn.instr.c_rdp   = instr_asm.rd.gpr;
-      mon_trn.instr.c_rs1s  = instr_asm.rs1.gpr;
-      mon_trn.instr.c_rs2s  = instr_asm.rs2.gpr;
-    end
-    else begin
-      mon_trn.instr.rs1     = instr_asm.rs1.gpr;
-      mon_trn.instr.rs2     = instr_asm.rs2.gpr;
-      mon_trn.instr.rd      = instr_asm.rd.gpr;
-      mon_trn.instr.immi    = instr_asm.imm.imm_raw_sorted;
-      mon_trn.instr.imms    = instr_asm.imm.imm_raw_sorted;
-      mon_trn.instr.immb    = instr_asm.imm.imm_raw_sorted;
-      mon_trn.instr.immu    = instr_asm.imm.imm_raw_sorted;
-      mon_trn.instr.immj    = instr_asm.imm.imm_raw_sorted;
-    end
+    mon_trn.instr.c_rdrs1 = instr_asm.rd.gpr;
+    mon_trn.instr.c_rdp   = instr_asm.rd.gpr;
+    mon_trn.instr.c_rs1s  = instr_asm.rs1.gpr;
+    mon_trn.instr.c_rs2s  = instr_asm.rs2.gpr;
+    mon_trn.instr.rs1     = instr_asm.rs1.gpr;
+    mon_trn.instr.rs2     = instr_asm.rs2.gpr;
+    mon_trn.instr.rd      = instr_asm.rd.gpr;
+    mon_trn.instr.immi    = instr_asm.imm.imm_raw_sorted;
+    mon_trn.instr.imms    = instr_asm.imm.imm_raw_sorted;
+    mon_trn.instr.immb    = instr_asm.imm.imm_raw_sorted;
+    mon_trn.instr.immu    = instr_asm.imm.imm_raw_sorted;
+    mon_trn.instr.immj    = instr_asm.imm.imm_raw_sorted;
 
     // Make instructions as illegal,
-    // 1. If UNKNOWN (undecodable)
-    if (mon_trn.instr.name == UNKNOWN) begin
-      mon_trn.instr.illegal = 1;
-    end
-    // 2. If a CSR instruction is not targeted to a valid CSR
+    // 1. If a CSR instruction is not targeted to a valid CSR
     if (mon_trn.instr.group == CSR_GROUP) begin
       mon_trn.instr.csr_val = instr_asm.csr.address;
       if (!$cast(mon_trn.instr.csr, mon_trn.instr.csr_val) ||
@@ -256,6 +241,15 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
     end
   end
 
+  mon_trn.instr.itype = get_instr_type(mon_trn.instr.name);
+
+  // Make instructions as illegal,
+  // 2. If UNKNOWN (undecodable)
+  if (mon_trn.instr.name == UNKNOWN) begin
+    mon_trn.instr.illegal = 1;
+  end
+
+  // Make instructions as illegal,
   // 3. Instruction is in unsupported extension
   if ((mon_trn.instr.ext == A_EXT && !cfg.core_cfg.ext_a_supported) ||
       (mon_trn.instr.ext == C_EXT && !cfg.core_cfg.ext_c_supported) ||
@@ -364,4 +358,3 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
   ap.write(mon_trn);
 
 endfunction : write_rvfi_instr
-

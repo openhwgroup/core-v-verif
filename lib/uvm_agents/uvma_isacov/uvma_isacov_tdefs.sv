@@ -20,7 +20,7 @@
 
 typedef enum {
   SPIKE,
-  RISCV_DISASSEMBLER
+  ISA_SUPPORT
 } decoder_e;
 
 typedef enum {

@@ -243,7 +243,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       isacov_cfg.seq_instr_x2_enabled       == 1;
       isacov_cfg.reg_crosses_enabled        == 0;
       isacov_cfg.reg_hazards_enabled        == 1;
-      isacov_cfg.decoder                    == RISCV_DISASSEMBLER;
+      isacov_cfg.decoder                    == ISA_SUPPORT;
 
 
       rvfi_cfg.nret                    == RVFI_NRET;
