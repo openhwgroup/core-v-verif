@@ -154,21 +154,27 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
   if (cfg.decoder == SPIKE) begin
     // Attempt to decode instruction with Spike DASM
     instr_name = dasm_name(rvfi_instr.insn);
+  end else if (cfg.decoder == ISA_SUPPORT) begin
+    // Attempt to decode instruction with isa_support
+    instr_asm = decode_instr(rvfi_instr.insn);
+    instr_name = instr_asm.instr.name();
+  end
 
-    if (instr_name_lookup.exists(instr_name)) begin
-      mon_trn.instr.name = instr_name_lookup[instr_name];
-    end else begin
-      // Undecodable instruction
-      // Note that Spike can decode "everything" so if it doesn't map above, then it is an undecodable instruction
-      // from OpenHW core-v-verif perspective so set to UNKNOWN
-      mon_trn.instr.name = UNKNOWN;
-    end
+  if (instr_name_lookup.exists(instr_name)) begin
+    mon_trn.instr.name = instr_name_lookup[instr_name];
+  end else begin
+    // Undecodable instruction
+    // Note that Spike can decode "everything" so if it doesn't map above, then it is an undecodable instruction
+    // from OpenHW core-v-verif perspective so set to UNKNOWN
+    mon_trn.instr.name = UNKNOWN;
+  end
+  `uvm_info("ISACOVMON", $sformatf("rvfi = 0x%08x %s", rvfi_instr.insn, instr_name), UVM_HIGH);
+  mon_trn.instr.ext   = get_instr_ext(mon_trn.instr.name);
+  mon_trn.instr.group = get_instr_group(mon_trn.instr.name, rvfi_instr.mem_addr);
+  mon_trn.instr.itype = get_instr_type(mon_trn.instr.name);
 
-    `uvm_info("ISACOVMON", $sformatf("rvfi = 0x%08x %s", rvfi_instr.insn, instr_name), UVM_HIGH);
-
-    mon_trn.instr.ext   = get_instr_ext(mon_trn.instr.name);
-    mon_trn.instr.group = get_instr_group(mon_trn.instr.name, rvfi_instr.mem_addr);
-
+  if (cfg.decoder == SPIKE) begin
+    // Attempt to decode instruction with Spike DASM
     instr = $signed(rvfi_instr.insn);
 
     //Disassemble the instruction using Spike (via DPI)
@@ -203,20 +209,7 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
     end
 
   end else if (cfg.decoder == ISA_SUPPORT) begin
-    // Attempt to decode instruction with the RISC-V disassembler
-    instr_asm = decode_instr(rvfi_instr.insn);
-
-    instr_name = instr_asm.instr.name();
-    if (instr_name_lookup.exists(instr_name)) begin
-      mon_trn.instr.name = instr_name_lookup[instr_name];
-    end else begin
-      // Undecodable instruction
-      mon_trn.instr.name = UNKNOWN;
-    end
-
-    mon_trn.instr.ext   = get_instr_ext(mon_trn.instr.name);
-    mon_trn.instr.group = get_instr_group(mon_trn.instr.name, rvfi_instr.mem_addr);
-
+    // Attempt to decode instruction with isa_support
     mon_trn.instr.c_rdrs1 = instr_asm.rd.gpr;
     mon_trn.instr.c_rdp   = instr_asm.rd.gpr;
     mon_trn.instr.c_rs1s  = instr_asm.rs1.gpr;
@@ -240,8 +233,6 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
       end
     end
   end
-
-  mon_trn.instr.itype = get_instr_type(mon_trn.instr.name);
 
   // Make instructions as illegal,
   // 2. If UNKNOWN (undecodable)
