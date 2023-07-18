@@ -551,7 +551,7 @@ user_exception_handler:
 next_iter2:
 
  	beq x30, x0, csr_fail
- 	#Return to supervisor mode after handling the exception
+ 	#Return to user mode after handling the exception
  	
  	csrr x1, 0x100	
         addi x7, x30, 12
