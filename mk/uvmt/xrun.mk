@@ -66,7 +66,6 @@ XRUN_ELAB_COVFILE = -covfile $(abspath $(MAKE_PATH)/../tools/xrun/covfile.tcl)
 XRUN_RUN_COV      = -covscope uvmt_$(CV_CORE_LC)_tb \
 					-nowarn CGDEFN
 XRUN_RUN_BASE_FLAGS += -sv_lib $(DPI_DASM_LIB)
-XRUN_RUN_BASE_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
 XRUN_RUN_BASE_FLAGS += -sv_lib $(abspath $(SVLIB_LIB))
 
 XRUN_UVM_VERBOSITY ?= UVM_MEDIUM
@@ -155,7 +154,7 @@ endif
 ifeq ($(call IS_YES,$(MERGE)),YES)
 COV_DIR ?= $(XRUN_RESULTS)/$(CFG)/$(MERGED_COV_DIR)/cov_work/scope/merged
 else
-COV_DIR ?= cov_work/uvmt_$(CV_CORE_LC)_tb/$(TEST_NAME)
+COV_DIR ?= cov_work/uvmt_$(CV_CORE_LC)_tb/$(TEST_RUN_NAME)
 endif
 
 ifeq ($(call IS_YES,$(GUI)),YES)
@@ -166,7 +165,7 @@ endif
 
 
 ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
-CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/xrun-$(TEST_NAME).log
+CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/xrun-$(TEST_RUN_NAME).log
 POST_TEST = \
 	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
 		exit 1; \
@@ -187,12 +186,14 @@ XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_CORE_LOG
 XRUN_USER_COMPILE_ARGS += +define+UVM
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 	XRUN_PLUSARGS += +USE_ISS
+	XRUN_PLUSARGS += +USE_IMPERASDV
+	XRUN_RUN_BASE_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
 	XRUN_FILE_LIST_IDV ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
 	XRUN_USER_COMPILE_ARGS += +define+USE_IMPERASDV
 	XRUN_USER_COMPILE_ARGS += +define+USE_ISS
 ifeq ($(call IS_YES,$(COV)),YES)
 	XRUN_USER_COMPILE_ARGS += +define+IMPERAS_COV
-	XRUN_PLUSARGS += +TRACE2COV_ENABLE=1
+	XRUN_PLUSARGS += +IDV_TRACE2COV=1
 endif
 else
     XRUN_PLUSARGS += +DISABLE_OVPSIM
@@ -364,11 +365,11 @@ ldgen: $(CV_CORE_PKG)
 # If the configuration specified OVPSIM arguments, generate an ovpsim.ic file and
 # set IMPERAS_TOOLS to point to it
 gen_ovpsim_ic:
-	@rm -f $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
-	@mkdir -p $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX);
-	@touch -f $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+	@rm -f $(SIM_RUN_RESULTS)/ovpsim.ic
+	@mkdir -p $(SIM_RUN_RESULTS);
+	@touch -f $(SIM_RUN_RESULTS)/ovpsim.ic
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
-		echo "$(CFG_OVPSIM)" > $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic; \
+		echo "$(CFG_OVPSIM)" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
 	fi
 	# add glossing of registers
 	#@echo "--override cpu/wfi_is_nop=T" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
@@ -382,23 +383,29 @@ gen_ovpsim_ic:
 # The new general test target
 
 test: $(XRUN_SIM_PREREQ) hex gen_ovpsim_ic
+	@echo "$(BANNER)"
+	@echo "* Running xrun in $(SIM_RUN_RESULTS)"
+	@echo "* Log: $(SIM_RUN_RESULTS)/xrun-$(TEST_NAME).log"
+	@echo "$(BANNER)"
 	mkdir -p $(SIM_RUN_RESULTS)/test_program && \
 	cd $(SIM_RUN_RESULTS) && \
-	export IMPERAS_TOOLS=$(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic && \
+	export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic && \
 	export IMPERAS_QUEUE_LICENSE=1 && \
 	$(XRUN) \
-		-R -xmlibdirname ../../xcelium.d \
-		-l xrun-$(TEST_NAME).log \
+		-R -xmlibdirname $(SIM_CFG_RESULTS)/xcelium.d \
+		-l xrun-$(TEST_RUN_NAME).log \
 		$(XRUN_COMP_RUN) \
 		$(XRUN_RUN_WAVES_FLAGS) \
-		-covtest $(TEST_NAME) \
+		-covtest $(TEST_RUN_NAME) \
 		$(CFG_PLUSARGS) \
 		$(TEST_PLUSARGS) \
+		$(TEST_CFG_FILE_PLUSARGS) \
 		+UVM_TESTNAME=$(TEST_UVM_TEST) \
 		+elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
 		+firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
 		+itb_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).itb \
 		+nm_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).nm
+	@echo "* Log: $(SIM_RUN_RESULTS)/xrun-$(TEST_NAME).log"
 	$(POST_TEST)
 
 ###############################################################################
@@ -450,7 +457,7 @@ compliance: $(XRUN_COMPLIANCE_PREREQ)
 
 ################################################################################
 # RISCOF RISCV-ARCH-TEST DUT simulation targets
-XRUN_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/dut_test.elf
+XRUN_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/$(TEST).elf
 
 comp_dut_riscof_sim:
 	@echo "$(BANNER)"
@@ -478,23 +485,25 @@ gen_riscof_ovpsim_ic:
 # Target to run RISCOF DUT sim with XRUN
 riscof_sim_run: $(XRUN_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovpsim_ic
 	@echo "$(BANNER)"
-	@echo "* Running xrun in $(PWD)"
+	@echo "* Running xrun in $(RISCOF_TEST_RUN_DIR)"
+	@echo "* Log: $(RISCOF_TEST_RUN_DIR)/xrun-$(TEST).log"
 	@echo "$(BANNER)"
 	cd $(RISCOF_TEST_RUN_DIR) && \
 	export IMPERAS_TOOLS=$(RISCOF_TEST_RUN_DIR)/ovpsim.ic && \
 	export IMPERAS_QUEUE_LICENSE=1 && \
 	$(XRUN) \
 		-R -xmlibdirname xcelium.d \
-		-l xrun-dut_test.log \
+		-l xrun-$(TEST).log \
 		$(XRUN_COMP_RUN) \
 		$(XRUN_RUN_WAVES_FLAGS) \
-		-covtest dut_test \
+		-covtest $(TEST) \
 		+UVM_TESTNAME=uvmt_cv32e40p_riscof_firmware_test_c \
 		$(CFG_PLUSARGS) \
 		$(RISCOF_TEST_PLUSARGS) \
-		+firmware=dut_test.hex \
-		+elf_file=dut_test.elf \
-		+itb_file=dut_test.itb
+		+firmware=$(TEST).hex \
+		+elf_file=$(TEST).elf \
+		+itb_file=$(TEST).itb
+	@echo "* Log: $(RISCOF_TEST_RUN_DIR)/xrun-$(TEST).log"
 
 
 ###############################################################################
@@ -542,6 +551,7 @@ gen_corev-dv: comp_corev-dv
 			+asm_file_name_opts=$(TEST) \
 			+ldgen_cp_test_path=$(SIM_TEST_RESULTS) \
 			$(CFG_PLUSARGS) \
+			$(TEST_CFG_FILE_PLUSARGS) \
 			$(GEN_PLUSARGS)
 
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
@@ -566,7 +576,7 @@ cov_merge:
 ifeq ($(call IS_YES,$(MERGE)),YES)
   COVERAGE_TARGET_DIR=$(SIM_CFG_RESULTS)/$(MERGED_COV_DIR)
 else
-  COVERAGE_TARGET_DIR=$(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)
+  COVERAGE_TARGET_DIR=$(SIM_RUN_RESULTS)
 endif
 
 cov: $(COV_MERGE)
@@ -581,6 +591,9 @@ clean:
 	@echo "$(MAKEFILE_LIST)"
 	rm -rf $(SIM_RESULTS)
 
+clean_test:
+	rm -rf $(SIM_RUN_RESULTS)
+
 # Files created by Eclipse when using the Imperas ISS + debugger
 clean_eclipse:
 	rm  -f eguieclipse.log
@@ -592,4 +605,4 @@ clean_rtl:
 	rm -rf $(CV_CORE_PKG)
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_rtl clean_eclipse clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib
+clean_all: clean clean_rtl clean_eclipse clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib clean_riscof_arch_test_suite

@@ -1,0 +1,5 @@
+name: floating_point_instr_enable
+description: >
+    Enable Floating point instruction
+plusargs: >
+    +enable_floating_point=1

@@ -58,8 +58,16 @@ v2 config_cv32e40p_v2.ini : RV32IMFCZicsr_Zifencei
     -   Example Run:
         - dut_cfg=pulp_fpu
         - SIMULATOR = vsim
-        - jobs = 8
+        - jobs = 6
         - Used same RISCV toolchain for both DUT and Ref model: riscv32-unknown-gcc-elf. The Path of toolchain is set from env PATH variable
         - SAIL Ref model installed on machine. The sail reference model plugin supports running this with both docker image or from local installation. Currently config.ini is default set to run with locally installed Sail model without docker and this installation path is set from env PATH variable.
         - RISCOF package is installed on the machine and path is set from env PATH variable.
         - A supported DUT simulator is installed. Currently plugin supports these -> vsim, xrun, vcs
+
+- STEPS for RHEL/CentOS Installation of SAIL C-emulator
+    - Install opam on the machine: Refer to: (https://opam.ocaml.org/doc/Install.html)
+    - Install Z3 on the machine: Refer to: (https://github.com/Z3Prover/z3)
+    - Follow the SAIL (Local Install) steps at: (https://riscof.readthedocs.io/en/stable/installation.html#install-plugin-models)
+        - Note: If the "head" @ sail-riscv repo has compilation errors, below hash can be used which is verified to work:
+            - git clone https://github.com/riscv/sail-riscv.git; cd sail-riscv; git checkout 5d0ed1b5cd70b7f53d5d24380507e51b603a71ed
+
