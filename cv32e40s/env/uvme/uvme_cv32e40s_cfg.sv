@@ -243,6 +243,8 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       isacov_cfg.seq_instr_x2_enabled       == 1;
       isacov_cfg.reg_crosses_enabled        == 0;
       isacov_cfg.reg_hazards_enabled        == 1;
+      isacov_cfg.decoder                    == RISCV_DISASSEMBLER;
+
 
       rvfi_cfg.nret                    == RVFI_NRET;
       rvfi_cfg.nmi_load_fault_enabled  == 1;
@@ -417,6 +419,7 @@ function uvme_cv32e40s_cfg_c::new(string name="uvme_cv32e40s_cfg");
      clic_irq_clear_on_ack_plusarg_valid = 1;
      clic_irq_clear_on_ack.rand_mode(0);
    end
+
 
    isacov_cfg           = uvma_isacov_cfg_c::type_id::create("isacov_cfg");
    clknrst_cfg          = uvma_clknrst_cfg_c::type_id::create("clknrst_cfg");
