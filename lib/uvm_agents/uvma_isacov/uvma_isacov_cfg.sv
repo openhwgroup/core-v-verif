@@ -54,6 +54,9 @@ class uvma_isacov_cfg_c extends uvm_object;
     `uvm_field_enum(decoder_e, decoder, UVM_DEFAULT);
   `uvm_object_utils_end;
 
+   constraint defaults_cons {
+      soft decoder  == SPIKE;
+   }
   extern function new(string name = "uvma_isacov_cfg");
 
 endclass : uvma_isacov_cfg_c
