@@ -77,7 +77,7 @@ int main()
 
   unsigned int misa_val;
   __asm__ volatile("csrr %0, 0x301" : "=r"(misa_val)); // Misa CSR
-  printf("STDOUT : Misa is %08x\n", misa_val);
+  printf("STDOUT : Misa.F is %d\n", (misa_val & 0x20) >> 5);
 
   unsigned int zfinx_val;
   __asm__ volatile("csrr %0, 0xCD2" : "=r"(zfinx_val)); // Zfinx CSR
@@ -89,14 +89,19 @@ int main()
 #ifdef ZFINX
   if (zfinx_val != 1) {
     error++;
-    printf("STDOUT : Error, Zfinx expected 0x00000001 but result is %08x\n", zfinx_val);
+    printf("STDOUT : Error, Zfinx expected 1 but result is %d\n", zfinx_val);
+  } else {
+    printf("STDOUT : Zfinx is %d\n", zfinx_val);
   }
 #else
   printf("STDOUT : Should generate an illegal exception as Zfinx CSR is not implemented.\n");
 #endif
+#else
   if (zfinx_val != 0) {
     error++;
-    printf("STDOUT : Error, Zfinx expected 0x00000000 but result is %08x\n", zfinx_val);
+    printf("STDOUT : Error, Zfinx expected 0 but result is %d\n", zfinx_val);
+  } else {
+    printf("STDOUT : Zfinx is %d\n", zfinx_val);
   }
 #endif
 
