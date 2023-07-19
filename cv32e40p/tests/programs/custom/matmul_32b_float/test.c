@@ -75,23 +75,29 @@ int main()
 
   volatile float fdiv;
 
+  unsigned int misa_val;
+  __asm__ volatile("csrr %0, 0x301" : "=r"(misa_val)); // Misa CSR
+  printf("STDOUT : Misa is %08x\n", misa_val);
+
+  unsigned int zfinx_val;
+  __asm__ volatile("csrr %0, 0xCD2" : "=r"(zfinx_val)); // Zfinx CSR
+
 #ifdef FPU
   // Floating Point enable
   fp_enable();
 
-  unsigned int zfinx_val;
-  __asm__ volatile("csrr %0, 0xCD2" : "=r"(zfinx_val)); // Zfinx CSR
 #ifdef ZFINX
   if (zfinx_val != 1) {
     error++;
     printf("STDOUT : Error, Zfinx expected 0x00000001 but result is %08x\n", zfinx_val);
   }
 #else
+  printf("STDOUT : Should generate an illegal exception as Zfinx CSR is not implemented.\n");
+#endif
   if (zfinx_val != 0) {
     error++;
     printf("STDOUT : Error, Zfinx expected 0x00000000 but result is %08x\n", zfinx_val);
   }
-#endif
 #endif
 
   // Enable mcycle counter
