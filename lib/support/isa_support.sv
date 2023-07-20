@@ -1407,9 +1407,11 @@
           asm.imm.valid = 0;
         end else if (name inside { C_MV }) begin
           asm.rd.gpr    = instr.compressed.format.cr.rd_rs1.gpr;
+          asm.rs1.gpr   = instr.compressed.format.cr.rd_rs1.gpr;
           asm.rs2.gpr   = instr.compressed.format.cr.rs2.gpr;
           asm.rd.valid  = 1;
           asm.rs2.valid = 1;
+          asm.rs1.valid = 1;
         end else if (name inside { C_ADD }) begin
           asm.rd.gpr    = instr.compressed.format.cr.rd_rs1.gpr;
           asm.rs1.gpr   = instr.compressed.format.cr.rd_rs1.gpr;
@@ -1427,6 +1429,7 @@
       CI_TYPE: begin
         if (name inside { C_LI, C_NOP, C_ADDI }) begin
           asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
+          asm.rs1.gpr             = instr.compressed.format.ci.rd_rs1.gpr;
           asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
           asm.imm.imm_raw_sorted  = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
           asm.imm.imm_type        = IMM;
@@ -1434,6 +1437,7 @@
           asm.imm.sign_ext        = 1;
           asm.imm.imm_value       = get_imm_value_ci({ instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 });
           asm.rd.valid            = 1;
+          asm.rs1.valid           = 1;
           asm.imm.valid           = 1;
         end else if (name == C_LUI) begin
           asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
