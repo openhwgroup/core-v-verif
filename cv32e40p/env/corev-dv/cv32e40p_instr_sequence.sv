@@ -232,9 +232,17 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
                 end
                 format_str_len = HWLOOP_LABEL_STR_LEN;
               end
+              if(insert_hwloop_end_directives) begin
+                prefix = format_string(" ", format_str_len);
+                str = {prefix,".option rvc"};
+                instr_string_list.push_back(str);
+              end
               prefix = format_string($sformatf("%0s:", instr_stream.instr_list[i].label), format_str_len);
             end
             insert_hwloop_align_directive = 0;
+            if(insert_hwloop_end_directives) begin
+              format_str_len = LABEL_STR_LEN;
+            end
           end
         end else begin
           prefix = format_string(" ", format_str_len);
@@ -242,13 +250,6 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
       end
       str = {prefix, instr_stream.instr_list[i].convert2asm()};
       instr_string_list.push_back(str);
-
-      if(insert_hwloop_end_directives) begin
-        format_str_len = LABEL_STR_LEN;
-        prefix = format_string(" ", format_str_len);
-        str = {prefix,".option rvc"};
-        instr_string_list.push_back(str);
-      end
 
     end
     // If PMP is supported, need to align <main> to a 4-byte boundary.

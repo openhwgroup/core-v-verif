@@ -1,6 +1,7 @@
 /*
  * Copyright 2018 Google LLC
  * Copyright 2020 OpenHW Group
+ * Copyright 2023 Dolphin Design
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +37,13 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
 
   // Random register for debug stack pointer
   rand riscv_reg_t     dp;
+
+  // Config for random selection of directed_instr stream from
+  // rand_directed_instr_* passed from test plusargs
+  bit insert_rand_directed_instr_stream = 0;
+
+  // Config to specify number of rand_directed_instr_* passed in test plusargs
+  int test_rand_directed_instr_stream_num = 1;
 
   constraint dp_c {
     // Debug pointer may not be the return address, stack pointer, nor thread pointer
@@ -92,6 +100,8 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
     super.new(name);
 
     get_bool_arg_value("+enable_fast_interrupt_handler=", enable_fast_interrupt_handler);
+    get_bool_arg_value("+insert_rand_directed_instr_stream=", insert_rand_directed_instr_stream);
+    get_int_arg_value("+test_rand_directed_instr_stream_num=", test_rand_directed_instr_stream_num);
   endfunction : new
 
   function void post_randomize();
