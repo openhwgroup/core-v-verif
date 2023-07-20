@@ -1,4 +1,5 @@
-
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 # Header
 name: cv32e40pv2_pulp_fpu_zfinx_no_lat_covg

@@ -1,3 +1,6 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 # YAML file to specify a regression testlist
 # Note that the COREV=YES is set for all tests in this regression.
 # This means you need to have a toolchain at COREV_SW_TOOLCHAIN (see Common.mk)

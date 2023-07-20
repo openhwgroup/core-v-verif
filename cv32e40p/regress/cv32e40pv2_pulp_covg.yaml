@@ -1,8 +1,9 @@
-
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 # Header
-name: cv32e40pv2_pulp_fpu_no_lat_covg
-description: regression for CV32E40Pv2, pulp_fpu tests with no latency, step-and-compare against RM, cov enabled
+name: cv32e40pv2_pulp_covg
+description: regression for CV32E40Pv2, pulp step-and-compare against RM, cov enabled
 
 # List of builds
 builds:
