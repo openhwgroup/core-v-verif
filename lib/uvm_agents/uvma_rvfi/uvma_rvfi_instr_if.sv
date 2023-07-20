@@ -296,42 +296,42 @@ interface uvma_rvfi_instr_if_t
 
   // assigning signal aliases to helper functions
   always_comb begin
-    instr_asm           <= decode_instr(rvfi_insn);
+    instr_asm                        = decode_instr(rvfi_insn);
 
-    is_dret             <= is_dret_f();
-    is_mret             <= is_mret_f();
-    is_uret             <= is_uret_f();
-    is_wfi              <= is_wfi_f();
-    is_wfe              <= is_wfe_f();
-    is_ebreak           <= is_ebreak_f();
-    is_ebreak_compr     <= is_ebreak_compr_f();
-    is_ebreak_noncompr  <= is_ebreak_noncompr_f();
-    is_ecall            <= is_ecall_f();
-    is_branch           <= is_branch_f();
-    is_div              <= is_div_f();
-    is_rem              <= is_rem_f();
-    is_cslli            <= is_cslli_f();
-    is_nmi              <= is_nmi_f();
-    is_compressed       <= is_compressed_f();
-    is_dbg_trg          <= is_dbg_trg_f();
-    is_mmode            <= is_mmode_f();
-    is_not_mmode        <= is_not_mmode_f();
-    is_umode            <= is_umode_f();
-    is_not_umode        <= is_not_umode_f();
-    is_pma_instr_fault  <= is_pma_instr_fault_f();
-    is_instr_bus_valid  <= is_instr_bus_valid_f();
-    is_pushpop          <= is_pushpop_f();
-    is_split_datatrans_actual   <= is_split_datatrans_actual_f();
-    is_split_datatrans_intended <= is_split_datatrans_intended_f();
-    is_mem_act          <= is_mem_act_f();
-    is_tablejump_raw    <= is_tablejump_raw_f();
-    is_pma_fault        <= is_pma_fault_f();
-    is_fencefencei      <= is_fencefencei_f();
-    rvfi_mem_addr_word0highbyte <= rvfi_mem_addr_word0highbyte_f();
-    rvfi_mem_rmask_intended     <= rvfi_mem_rmask_intended_f();
-    rvfi_mem_wmask_intended     <= rvfi_mem_wmask_intended_f();
-    is_deprioritized_load_acc_fault  <= is_deprioritized_exception_f({21'd 0, EXC_CAUSE_LOAD_ACC_FAULT});
-    is_deprioritized_store_acc_fault <= is_deprioritized_exception_f({21'd 0, EXC_CAUSE_STORE_ACC_FAULT});
+    is_dret                          = is_dret_f();
+    is_mret                          = is_mret_f();
+    is_uret                          = is_uret_f();
+    is_wfi                           = is_wfi_f();
+    is_wfe                           = is_wfe_f();
+    is_ebreak                        = is_ebreak_f();
+    is_ebreak_compr                  = is_ebreak_compr_f();
+    is_ebreak_noncompr               = is_ebreak_noncompr_f();
+    is_ecall                         = is_ecall_f();
+    is_branch                        = is_branch_f();
+    is_div                           = is_div_f();
+    is_rem                           = is_rem_f();
+    is_cslli                         = is_cslli_f();
+    is_nmi                           = is_nmi_f();
+    is_compressed                    = is_compressed_f();
+    is_dbg_trg                       = is_dbg_trg_f();
+    is_mmode                         = is_mmode_f();
+    is_not_mmode                     = is_not_mmode_f();
+    is_umode                         = is_umode_f();
+    is_not_umode                     = is_not_umode_f();
+    is_pma_instr_fault               = is_pma_instr_fault_f();
+    is_instr_bus_valid               = is_instr_bus_valid_f();
+    is_pushpop                       = is_pushpop_f();
+    is_split_datatrans_actual        = is_split_datatrans_actual_f();
+    is_split_datatrans_intended      = is_split_datatrans_intended_f();
+    is_mem_act                       = is_mem_act_f();
+    is_tablejump_raw                 = is_tablejump_raw_f();
+    is_pma_fault                     = is_pma_fault_f();
+    is_fencefencei                   = is_fencefencei_f();
+    rvfi_mem_addr_word0highbyte      = rvfi_mem_addr_word0highbyte_f();
+    rvfi_mem_rmask_intended          = rvfi_mem_rmask_intended_f();
+    rvfi_mem_wmask_intended          = rvfi_mem_wmask_intended_f();
+    is_deprioritized_load_acc_fault  = is_deprioritized_exception_f({21'd 0, EXC_CAUSE_LOAD_ACC_FAULT});
+    is_deprioritized_store_acc_fault = is_deprioritized_exception_f({21'd 0, EXC_CAUSE_STORE_ACC_FAULT});
   end
 
   always_comb begin
