@@ -28,7 +28,7 @@
 #
 OS_IS_UBUNTU = $(findstring Ubuntu,$(shell lsb_release -d))
 ifeq ($(OS_IS_UBUNTU),Ubuntu)
-    .IGNORE: hello-world comp test compliance comp_corev-dv corev-dv gen_corev-dv
+  .IGNORE: hello-world comp test compliance comp_corev-dv corev-dv gen_corev-dv
 endif
 
 # Executables
@@ -70,10 +70,16 @@ XRUN_GUI         ?=
 XRUN_SINGLE_STEP ?=
 XRUN_ELAB_COV     = -covdut uvmt_$(CV_CORE_LC)_tb -coverage b:e:f:u
 XRUN_ELAB_COVFILE = -covfile $(abspath $(MAKE_PATH)/../tools/xrun/covfile.tcl)
-XRUN_RUN_COV      = -covscope uvmt_$(CV_CORE_LC)_tb \
-					-nowarn CGDEFN
+XRUN_RUN_COV      = -covscope uvmt_$(CV_CORE_LC)_tb -nowarn CGDEFN
 XRUN_RUN_BASE_FLAGS += -sv_lib $(DPI_DASM_LIB)
-XRUN_RUN_BASE_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
+
+# Only append the IMPERAS_DV_MODEL sv_lib flag if the file actually exists)
+ifneq (,$(wildcard $(IMPERAS_DV_MODEL)))
+  ifeq ($(call IS_YES,$(USE_ISS)),YES)
+    XRUN_RUN_BASE_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
+  endif
+endif
+
 XRUN_RUN_BASE_FLAGS += -sv_lib $(abspath $(SVLIB_LIB))
 
 XRUN_UVM_VERBOSITY ?= UVM_MEDIUM
@@ -92,9 +98,9 @@ XRUN_PMA_INC += +incdir+$(DV_UVM_TESTCASE_PATH)/base-tests \
 ###############################################################################
 # Common QUIET flag defaults to -quiet unless VERBOSE is set
 ifeq ($(call IS_YES,$(VERBOSE)),YES)
-QUIET=
+  QUIET=
 else
-QUIET=-quiet
+  QUIET=-quiet
 endif
 
 ################################################################################
@@ -102,14 +108,14 @@ endif
 # GUI=YES enables interactive mode
 # ADV_DEBUG=YES will enable Indago, default is to use SimVision
 ifeq ($(call IS_YES,$(GUI)),YES)
-XRUN_GUI += -gui
-ifeq ($(call IS_YES,$(SRC_DEBUG)),YES)
-XRUN_USER_COMPILE_ARGS += -linedebug -uvmlinedebug -enable_tpe -classlinedebug
-XRUN_USER_RUN_FLAGS += -linedebug -uvmlinedebug -enable_tpe -classlinedebug
-endif
-ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-XRUN_GUI += -indago
-endif
+  XRUN_GUI += -gui
+  ifeq ($(call IS_YES,$(SRC_DEBUG)),YES)
+    XRUN_USER_COMPILE_ARGS += -linedebug -uvmlinedebug -enable_tpe -classlinedebug
+    XRUN_USER_RUN_FLAGS += -linedebug -uvmlinedebug -enable_tpe -classlinedebug
+  endif
+  ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
+    XRUN_GUI += -indago
+  endif
 endif
 
 ################################################################################
@@ -136,9 +142,9 @@ endif
 ################################################################################
 # Waveform (post-process) command line
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-WAVES_CMD = cd $(SIM_RUN_RESULTS) && $(INDAGO) -db ida.db
+  WAVES_CMD = cd $(SIM_RUN_RESULTS) && $(INDAGO) -db ida.db
 else
-WAVES_CMD = cd $(SIM_RUN_RESULTS) && $(SIMVISION) waves.shm
+  WAVES_CMD = cd $(SIM_RUN_RESULTS) && $(SIMVISION) waves.shm
 endif
 
 XRUN_USER_COMPILE_ARGS += $(USER_COMPILE_FLAGS)
@@ -151,31 +157,31 @@ IMC_REPORT_ARGS = -exec $(CORE_V_VERIF)/$(CV_CORE)/sim/tools/xrun/cov_report.tcl
 MERGED_COV_DIR ?= merged_cov
 
 ifeq ($(call IS_YES,$(COV)),YES)
-XRUN_ELAB_COV_FLAGS += $(XRUN_ELAB_COV)
-XRUN_ELAB_COV_FLAGS += $(XRUN_ELAB_COVFILE)
-XRUN_RUN_COV_FLAGS += $(XRUN_RUN_COV)
+  XRUN_ELAB_COV_FLAGS += $(XRUN_ELAB_COV)
+  XRUN_ELAB_COV_FLAGS += $(XRUN_ELAB_COVFILE)
+  XRUN_RUN_COV_FLAGS += $(XRUN_RUN_COV)
 endif
 
 # Find command to gather ucd files
 COV_MERGE_FIND = find "$(SIM_CFG_RESULTS)" -type f -name "*.ucd" | grep -v d_cov | xargs dirname
 
 ifeq ($(call IS_YES,$(MERGE)),YES)
-COV_MERGE = cov_merge
-TEST = $(MERGED_COV_DIR)
+  COV_MERGE = cov_merge
+  TEST = $(MERGED_COV_DIR)
 else
-COV_MERGE =
+  COV_MERGE =
 endif
 
 ifeq ($(call IS_YES,$(MERGE)),YES)
-COV_DIR ?= $(XRUN_RESULTS)/$(CFG)/$(MERGED_COV_DIR)/cov_work/scope/merged
+  COV_DIR ?= $(XRUN_RESULTS)/$(CFG)/$(MERGED_COV_DIR)/cov_work/scope/merged
 else
-COV_DIR ?= cov_work/uvmt_$(CV_CORE_LC)_tb/$(TEST_NAME)
+  COV_DIR ?= cov_work/uvmt_$(CV_CORE_LC)_tb/$(TEST_NAME)
 endif
 
 ifeq ($(call IS_YES,$(GUI)),YES)
-COV_ARGS += -gui
+  COV_ARGS += -gui
 else
-COV_ARGS += $(IMC_REPORT_ARGS)
+  COV_ARGS += $(IMC_REPORT_ARGS)
 endif
 
 ################################################################################
@@ -187,22 +193,29 @@ XRUN_UVM_MACROS_INC_FILE = $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC)_uvm_macros_inc.sv
 XRUN_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 XRUN_USER_COMPILE_ARGS += +define+UVM
+
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
-	XRUN_PLUSARGS          += +USE_ISS
-	XRUN_USER_COMPILE_ARGS += +define+USE_IMPERASDV
-	XRUN_USER_COMPILE_ARGS += +define+USE_ISS
-	export FILE_LIST_IDV ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
+  ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
+    export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
+  else
+    export FILE_LIST_IDV      ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
+    export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dv_deps.flist
+  endif
+  XRUN_PLUSARGS          += +USE_ISS
+  XRUN_USER_COMPILE_ARGS += +define+USE_IMPERASDV
+  XRUN_USER_COMPILE_ARGS += +define+USE_ISS
 else
-	XRUN_PLUSARGS          += +DISABLE_OVPSIM
+  XRUN_PLUSARGS          += +DISABLE_OVPSIM
+  export FILE_LIST_IDV_DEPS   ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
 endif
 ifeq ($(call IS_YES,$(USE_RVVI)),YES)
-    XRUN_PLUSARGS +="+USE_RVVI"
+  XRUN_PLUSARGS +="+USE_RVVI"
 endif
 ifeq ($(call IS_YES,$(TEST_DISABLE_ALL_CSR_CHECKS)),YES)
-    XRUN_PLUSARGS +="+DISABLE_ALL_CSR_CHECKS"
+  XRUN_PLUSARGS +="+DISABLE_ALL_CSR_CHECKS"
 endif
 ifneq ($(TEST_DISABLE_CSR_CHECK),)
-	XRUN_PLUSARGS += +DISABLE_CSR_CHECK=$(TEST_DISABLE_CSR_CHECK)
+  XRUN_PLUSARGS += +DISABLE_CSR_CHECK=$(TEST_DISABLE_CSR_CHECK)
 endif
 
 # Simulate using latest elab
@@ -333,7 +346,7 @@ comp: mk_xrun_dir $(CV_CORE_PKG) $(SVLIB_PKG)
 		-elaborate
 
 ifneq ($(call IS_NO,$(COMP)),NO)
-XRUN_SIM_PREREQ = comp
+  XRUN_SIM_PREREQ = comp
 endif
 
 XRUN_COMP_RUN = $(XRUN_RUN_FLAGS)
@@ -435,7 +448,7 @@ test: $(XRUN_SIM_PREREQ) hex gen_ovpsim_ic
 #                make compliance RISCV_DEVICE=C COMPLIANCE_PROG=add-01
 #
 RISCV_ISA       ?= rv32i_m
-RISCV_DEVICE		?= I
+RISCV_DEVICE    ?= I
 COMPLIANCE_PROG ?= add-01
 
 SIG_ROOT      ?= $(SIM_CFG_RESULTS)/$(RISCV_ISA)
@@ -444,7 +457,7 @@ REF           ?= $(COMPLIANCE_PKG)/riscv-test-suite/$(RISCV_ISA)/$(RISCV_DEVICE)
 TEST_PLUSARGS ?= +signature=$(COMPLIANCE_PROG).signature_output
 
 ifneq ($(call IS_NO,$(COMP)),NO)
-XRUN_COMPLIANCE_PREREQ = comp build_compliance
+  XRUN_COMPLIANCE_PREREQ = comp build_compliance
 endif
 
 # 40p workaround for ISS configuration
