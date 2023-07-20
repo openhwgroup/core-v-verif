@@ -58,7 +58,7 @@ VCS_UVM_ARGS    ?= +incdir+$(VCS_UVMHOME_ARG)/src $(VCS_UVMHOME_ARG)/src/uvm_pkg
 VCS_COMP_FLAGS  ?= -lca -sverilog \
                    $(SV_CMP_FLAGS) $(VCS_UVM_ARGS) $(VCS_TIMESCALE) \
                    +define+CV32E40P_RVFI \
-                   -assert svaext -race=all -ignore unique_checks -full64
+                   -assert svaext -ignore unique_checks -full64 -licwait 20
 VCS_GUI         ?=
 VCS_RUN_COV      = -cm line+cond+tgl+fsm+branch+assert -cm_dir $(MAKECMDGOALS).vdb
 
@@ -159,7 +159,7 @@ VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
     VCS_USER_COMPILE_ARGS += +define+USE_ISS
     VCS_USER_COMPILE_ARGS += +define+USE_IMPERASDV
-    VCS_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_dv.flist
+    VCS_FILE_LIST_IDV ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
     VCS_PLUSARGS += +USE_ISS
     VCS_PLUSARGS += +USE_IMPERASDV
     VCS_PLUSARGS += -sv_lib $(basename $(IMPERAS_DV_MODEL))
@@ -169,6 +169,7 @@ ifeq ($(call IS_YES,$(USE_ISS)),YES)
     endif
 else
 	VCS_PLUSARGS += +DISABLE_OVPSIM
+	VCS_FILE_LIST_IDV ?=
 endif
 
 # TODO: determine impact of removing VCS_OVP_MODEL_DPI with USE_ISS=YES
@@ -218,6 +219,7 @@ VCS_COMP = $(VCS_COMP_FLAGS) \
 		+incdir+$(DV_UVME_PATH) \
 		+incdir+$(DV_UVMT_PATH) \
 		-f $(CV_CORE_MANIFEST) \
+		$(VCS_FILE_LIST_IDV) \
 		$(VCS_FILE_LIST) \
 		$(UVM_PLUSARGS)
 

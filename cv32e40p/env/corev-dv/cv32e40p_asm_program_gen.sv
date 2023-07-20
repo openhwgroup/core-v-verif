@@ -2,6 +2,7 @@
  * Copyright 2018 Google LLC
  * Copyright 2020 Andes Technology Co., Ltd.
  * Copyright 2020 OpenHW Group
+ * Copyright 2023 Dolphin Design
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +20,10 @@
 //-----------------------------------------------------------------------------------------
 // CV32E40P CORE-V assembly program generator - extension of the RISC-V assembly program generator.
 // 
-// Overrides gen_program_header() and gen_test_done()
+// Overrides:
+//   - gen_program_header()
+//   - gen_test_done()
+//   - get_directed_instr_stream()
 //-----------------------------------------------------------------------------------------
 
 class cv32e40p_asm_program_gen extends corev_asm_program_gen;
@@ -290,6 +294,62 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
         };)
       str = $sformatf("%0sli x%0d, 0x%0x", indent, i, reg_val);
       instr_stream.push_back(str);
+    end
+  endfunction
+
+  // Override get_directed_instr_stream for cfg "insert_rand_directed_instr_stream"
+  // Use this plusarg cfg along with "test_rand_directed_instr_stream_num" and
+  // "rand_directed_instr_*" to select 1 single directed_instr_stream randomly
+  // and insert in the generated instruction stream.
+  virtual function void get_directed_instr_stream();
+    string args, val;
+    string stream_name_opts, stream_freq_opts;
+    string stream_name;
+    int stream_freq;
+    string opts[$];
+    int dir_stream_id = 0;
+
+    cv32e40p_instr_gen_config corev_cfg;
+    `DV_CHECK_FATAL($cast(corev_cfg, cfg), "Could not cast cfg into corev_cfg")
+
+    if(corev_cfg.insert_rand_directed_instr_stream) begin
+      //test_rand_directed_instr_stream_num specify the total num of rand_* streams to select from
+      dir_stream_id = $urandom_range(0,corev_cfg.test_rand_directed_instr_stream_num-1);
+      //Specify rand_directed_instr_0="" to rand_directed_instr_n="" as streams to randomize
+      args = $sformatf("rand_directed_instr_%0d=", dir_stream_id);
+      stream_name_opts = $sformatf("rand_stream_name_%0d=", dir_stream_id);
+      stream_freq_opts = $sformatf("rand_stream_freq_%0d=", dir_stream_id);
+      `uvm_info("cv32e40p_asm_program_gen", $sformatf("Randomly selected dir_stream_id : %0d", dir_stream_id), UVM_NONE)
+      if ($value$plusargs({args,"%0s"}, val)) begin
+        uvm_split_string(val, ",", opts);
+        if (opts.size() != 2) begin
+          `uvm_fatal(`gfn, $sformatf(
+            "Incorrect directed instruction format : %0s, expect: name,ratio", val))
+        end else begin
+          add_directed_instr_stream(opts[0], opts[1].atoi());
+        end
+      end else if ($value$plusargs({stream_name_opts,"%0s"}, stream_name) &&
+                   $value$plusargs({stream_freq_opts,"%0d"}, stream_freq)) begin
+        add_directed_instr_stream(stream_name, stream_freq);
+      end
+    end
+
+    for (int i=0; i<cfg.max_directed_instr_stream_seq; i++) begin
+      args = $sformatf("directed_instr_%0d=", i);
+      stream_name_opts = $sformatf("stream_name_%0d=", i);
+      stream_freq_opts = $sformatf("stream_freq_%0d=", i);
+      if ($value$plusargs({args,"%0s"}, val)) begin
+        uvm_split_string(val, ",", opts);
+        if (opts.size() != 2) begin
+          `uvm_fatal(`gfn, $sformatf(
+            "Incorrect directed instruction format : %0s, expect: name,ratio", val))
+        end else begin
+          add_directed_instr_stream(opts[0], opts[1].atoi());
+        end
+      end else if ($value$plusargs({stream_name_opts,"%0s"}, stream_name) &&
+                   $value$plusargs({stream_freq_opts,"%0d"}, stream_freq)) begin
+        add_directed_instr_stream(stream_name, stream_freq);
+      end
     end
   endfunction
 
