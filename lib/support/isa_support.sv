@@ -1271,7 +1271,6 @@
 
     if(check_if_hint(name, format, instr)) begin
       asm.is_hint     = 1;
-      return asm;
     end
 
     casex (format)
