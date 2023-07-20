@@ -2141,7 +2141,7 @@
         asm = build_asm(C_LUI, CI_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
-        && (instr.compressed.format.ci.rd_rs1.gpr         != X0)
+       && (instr.compressed.format.ci.rd_rs1.gpr          != X0)
        && (instr.compressed.format.ci.funct3              == FUNCT3_C_ADDI_NOP)) :
         asm = build_asm(C_ADDI, CI_TYPE, instr);
 
