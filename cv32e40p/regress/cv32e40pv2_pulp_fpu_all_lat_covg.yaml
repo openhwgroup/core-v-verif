@@ -1,0 +1,186 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Header
+name: cv32e40pv2_pulp_fpu_all_lat_covg
+description: regression for CV32E40Pv2, pulp_fpu tests with all three latencies configurations, step-and-compare against RM, cov enabled
+
+# List of builds
+builds:
+  clean_fw:
+    cmd: make clean-bsp clean_test_programs
+    dir: cv32e40p/sim/uvmt
+  corev-dv:
+    cmd: make clean_riscv-dv comp_corev-dv
+    dir: cv32e40p/sim/uvmt
+    cov: 0
+  uvmt_cv32e40p_pulp_fpu_1cyclat:
+    cmd: make comp
+    dir: cv32e40p/sim/uvmt
+    cfg: pulp_fpu_1cyclat
+  uvmt_cv32e40p_pulp_fpu_2cyclat:
+    cmd: make comp
+    dir: cv32e40p/sim/uvmt
+    cfg: pulp_fpu_2cyclat
+  uvmt_cv32e40p_pulp_fpu_3cyclat:
+    cmd: make comp
+    dir: cv32e40p/sim/uvmt
+    cfg: pulp_fpu_3cyclat
+
+# List of tests
+tests:
+  corev_fp_instr_test:
+    builds:
+      - uvmt_cv32e40p_pulp_fpu_1cyclat
+      - uvmt_cv32e40p_pulp_fpu_2cyclat
+      - uvmt_cv32e40p_pulp_fpu_3cyclat
+    description: corev_multicycle_fp_instr_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_fp_instr_test
+    test_cfg: floating_pt_instr_en
+    iss: 1
+    cov: 1
+    num: 20
+
+  corev_multicycle_fp_instr_test:
+    builds:
+      - uvmt_cv32e40p_pulp_fpu_1cyclat
+      - uvmt_cv32e40p_pulp_fpu_2cyclat
+      - uvmt_cv32e40p_pulp_fpu_3cyclat
+    description: corev_multicycle_fp_instr_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_multicycle_fp_instr_test
+    test_cfg: floating_pt_instr_en
+    iss: 1
+    cov: 1
+    num: 50
+
+  corev_rand_hwloop_instr_test:
+    builds:
+      - uvmt_cv32e40p_pulp_fpu_1cyclat
+      - uvmt_cv32e40p_pulp_fpu_2cyclat
+      - uvmt_cv32e40p_pulp_fpu_3cyclat
+    description: corev_rand_hwloop_instr_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_hwloop_instr_test
+    test_cfg: floating_pt_instr_en
+    iss: 1
+    cov: 1
+    num: 10
+
+  corev_rand_debug_ebreak_xpulp:
+    builds:
+      - uvmt_cv32e40p_pulp_fpu_1cyclat
+      - uvmt_cv32e40p_pulp_fpu_2cyclat
+      - uvmt_cv32e40p_pulp_fpu_3cyclat
+    description: corev_rand_debug_ebreak_xpulp
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak_xpulp
+    test_cfg: floating_pt_instr_en
+    iss: 1
+    cov: 1
+    num: 50
+
+  corev_rand_debug_ebreak_single_step_xpulp:
+    builds:
+      - uvmt_cv32e40p_pulp_fpu_1cyclat
+      - uvmt_cv32e40p_pulp_fpu_2cyclat
+      - uvmt_cv32e40p_pulp_fpu_3cyclat
+    description: corev_rand_debug_ebreak_single_step_xpulp
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak_single_step_xpulp
+    test_cfg: floating_pt_instr_en
+    iss: 1
+    cov: 1
+    num: 50
+
+  corev_rand_instr_long_stall:
+    builds:
+      - uvmt_cv32e40p_pulp_fpu_1cyclat
+      - uvmt_cv32e40p_pulp_fpu_2cyclat
+      - uvmt_cv32e40p_pulp_fpu_3cyclat
+    description: corev_rand_instr_long_stall
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_instr_long_stall
+    test_cfg: floating_pt_instr_en
+    iss: 1
+    cov: 1
+    num: 50
+
+  corev_rand_interrupt:
+    builds:
+      - uvmt_cv32e40p_pulp_fpu_1cyclat
+      - uvmt_cv32e40p_pulp_fpu_2cyclat
+      - uvmt_cv32e40p_pulp_fpu_3cyclat
+    description: corev_rand_interrupt
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt
+    test_cfg: floating_pt_instr_en
+    iss: 1
+    cov: 1
+    num: 50
+
+  corev_rand_interrupt_debug:
+    builds:
+      - uvmt_cv32e40p_pulp_fpu_1cyclat
+      - uvmt_cv32e40p_pulp_fpu_2cyclat
+      - uvmt_cv32e40p_pulp_fpu_3cyclat
+    description: corev_rand_interrupt_debug
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_debug
+    test_cfg: floating_pt_instr_en
+    iss: 1
+    cov: 1
+    num: 50
+
+  corev_rand_interrupt_exception:
+    builds:
+      - uvmt_cv32e40p_pulp_fpu_1cyclat
+      - uvmt_cv32e40p_pulp_fpu_2cyclat
+      - uvmt_cv32e40p_pulp_fpu_3cyclat
+    description: corev_rand_interrupt_exception
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_exception
+    test_cfg: floating_pt_instr_en
+    iss: 1
+    cov: 1
+    num: 50
+
+  corev_rand_interrupt_nested:
+    builds:
+      - uvmt_cv32e40p_pulp_fpu_1cyclat
+      - uvmt_cv32e40p_pulp_fpu_2cyclat
+      - uvmt_cv32e40p_pulp_fpu_3cyclat
+    description: corev_rand_interrupt_nested
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_nested
+    test_cfg: floating_pt_instr_en
+    iss: 1
+    cov: 1
+    num: 50
+
+  corev_rand_interrupt_wfi_mem_stress:
+    builds:
+      - uvmt_cv32e40p_pulp_fpu_1cyclat
+      - uvmt_cv32e40p_pulp_fpu_2cyclat
+      - uvmt_cv32e40p_pulp_fpu_3cyclat
+    description: corev_rand_interrupt_wfi_mem_stress
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_wfi_mem_stress
+    test_cfg: floating_pt_instr_en
+    iss: 1
+    cov: 1
+    num: 50
+
+  corev_rand_jump_stress_test:
+    builds:
+      - uvmt_cv32e40p_pulp_fpu_1cyclat
+      - uvmt_cv32e40p_pulp_fpu_2cyclat
+      - uvmt_cv32e40p_pulp_fpu_3cyclat
+    description: corev_rand_jump_stress_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_jump_stress_test
+    test_cfg: floating_pt_instr_en
+    iss: 1
+    cov: 1
+    num: 50
