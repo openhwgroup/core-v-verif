@@ -614,7 +614,6 @@
     FUNCT3_REMU   = 3'b111
   } m_minor_opcode_e;
 
-
   typedef enum logic [4:0] {
     FUNCT5_C_ZEXTB = 5'b11000,
     FUNCT5_C_SEXTB = 5'b11001,
@@ -1427,7 +1426,7 @@
         end
       end
       CI_TYPE: begin
-        if (name inside { C_LI, C_NOP, C_ADDI }) begin
+        if (name inside { C_NOP, C_ADDI }) begin
           asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
           asm.rs1.gpr             = instr.compressed.format.ci.rd_rs1.gpr;
           asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
@@ -1438,6 +1437,16 @@
           asm.imm.imm_value       = get_imm_value_ci({ instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 });
           asm.rd.valid            = 1;
           asm.rs1.valid           = 1;
+          asm.imm.valid           = 1;
+        end else if (name == C_LI) begin
+          asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
+          asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.imm.imm_raw_sorted  = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.imm.imm_type        = IMM;
+          asm.imm.width           = 6;
+          asm.imm.sign_ext        = 1;
+          asm.imm.imm_value       = get_imm_value_ci({ instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 });
+          asm.rd.valid            = 1;
           asm.imm.valid           = 1;
         end else if (name == C_LUI) begin
           asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
