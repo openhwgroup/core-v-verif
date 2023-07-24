@@ -385,7 +385,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                                    .instr_label(label_s));  //Gen Outer HWLOOP Instr - 1
 
           reserved_rd.delete(); //no longer need to keep the hwloop1 reserved gprs
-          reserved_rd = {hwloop_avail_regs[0],hwloop_avail_regs[1],hwloop_avail_regs[2]}; //preserve count0 reg for nested loop
+          reserved_rd = {hwloop_avail_regs[0],hwloop_avail_regs[1],hwloop_avail_regs[2]}; //preserve hwloop_0 reg for nested loop
 
           if(!use_setup_inst[1] && !use_setup_inst[0] && setup_l0_before_l1_start) begin
 
@@ -893,7 +893,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       i = 0;
       while (i < num_rand_instr) begin
           //Create and Randomize array for avail_regs each time to ensure randomization
-          avail_regs = new[num_of_avail_regs];
+          avail_regs = new[num_of_avail_regs - reserved_rd.size()];
           randomize_avail_regs();
 
           instr = riscv_instr::type_id::create($sformatf("instr_%0d", i));
