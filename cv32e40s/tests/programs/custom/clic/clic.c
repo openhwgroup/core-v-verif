@@ -35,7 +35,7 @@
 
 // MUST be 31 or less (bit position-1 in result array determines test pass/fail
 // status, thus we are limited to 31 tests with this construct.
-#define NUM_TESTS 21
+#define NUM_TESTS 23
 // Set which test index to start testing at (for quickly running specific tests during development)
 #define START_TEST_IDX 0
 // Abort test at first self-check fail, useful for debugging.
@@ -238,7 +238,9 @@ uint32_t r_mnxti_with_pending_irq(uint32_t index, uint8_t report_name);
 uint32_t r_mnxti_with_lower_lvl_pending_irq(uint32_t index, uint8_t report_name);
 uint32_t w_mnxti_side_effects(uint32_t index, uint8_t report_name);
 uint32_t rw_mscratchcsw(uint32_t index, uint8_t report_name);
+uint32_t rw_mscratchcsw_illegal(uint32_t index, uint8_t report_name);
 uint32_t rw_mscratchcswl(uint32_t index, uint8_t report_name);
+uint32_t rw_mscratchcswl_illegal(uint32_t index, uint8_t report_name);
 uint32_t mret_with_minhv(uint32_t index, uint8_t report_name);
 uint32_t mintthresh_higher(uint32_t index, uint8_t report_name);
 uint32_t mintthresh_lower(uint32_t index, uint8_t report_name);
@@ -378,11 +380,13 @@ int main(int argc, char **argv){
   tests[13] = r_mnxti_with_lower_lvl_pending_irq;
   tests[14] = w_mnxti_side_effects;
   tests[15] = rw_mscratchcsw;
-  tests[16] = rw_mscratchcswl;
-  tests[17] = mret_with_minhv;
-  tests[18] = mintthresh_lower;
-  tests[19] = mintthresh_higher;
-  tests[20] = mintthresh_equal;
+  tests[16] = rw_mscratchcsw_illegal;
+  tests[17] = rw_mscratchcswl;
+  tests[18] = rw_mscratchcswl_illegal;
+  tests[19] = mret_with_minhv;
+  tests[20] = mintthresh_lower;
+  tests[21] = mintthresh_higher;
+  tests[22] = mintthresh_equal;
 
   // Run all tests in list above
   cvprintf(V_LOW, "\nCLIC Test start\n\n");
@@ -2129,6 +2133,208 @@ uint32_t rw_mscratchcsw(uint32_t index, uint8_t report_name) {
 
 // -----------------------------------------------------------------------------
 
+uint32_t rw_mscratchcsw_illegal(uint32_t index, uint8_t report_name) {
+  volatile uint8_t test_fail = 0;
+  volatile uint32_t reg_backup_1 = 0;
+  volatile mstatus_t mstatus_rval = { 0 };
+
+  SET_FUNC_INFO
+  if (report_name) {
+    cvprintf(V_LOW, "\"%s\"", name);
+    return 0;
+  }
+
+  // Set mpp to 0x3 and attempt swap
+  mstatus_rval.fields.mpp = 0x3;
+  __asm__ volatile (R"( csrrs zero, mstatus, %[rs1])"
+    :: [rs1] "r"(mstatus_rval.raw):);
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrs  %[rd], 0x348, sp)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrs  zero,  0x348, sp)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrc  %[rd], 0x348, sp)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrc  zero,  0x348, sp)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrs  %[rd], 0x348, zero)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrs  zero,  0x348, zero)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrc  %[rd], 0x348, zero)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrc  zero,  0x348, zero)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrsi %[rd], 0x348, 0x1f)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrsi zero,  0x348, 0x1f)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrsi %[rd], 0x348, 0x0)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrsi zero,  0x348, 0x0)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrci %[rd], 0x348, 0x1f)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrci zero,  0x348, 0x1f)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrci %[rd], 0x348, 0x0)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrci zero,  0x348, 0x0)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrw  zero,  0x348, %[rs1])"
+      :: [rs1] "r"(reg_backup_1) :);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrw  zero,  0x348, zero)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrw  %[rd], 0x348, 0x0)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  // Set mpp to 0x0 and attempt swap
+  mstatus_rval.fields.mpp = 0x3;
+  __asm__ volatile (R"( csrrc zero, mstatus, %[rs1])"
+    :: [rs1] "r"(mstatus_rval.raw):);
+
+  __asm__ volatile (R"( csrrs  %[rd], 0x348, sp)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrs  zero,  0x348, sp)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrc  %[rd], 0x348, sp)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrc  zero,  0x348, sp)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrs  %[rd], 0x348, zero)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrs  zero,  0x348, zero)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrc  %[rd], 0x348, zero)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrc  zero,  0x348, zero)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrsi %[rd], 0x348, 0x1f)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrsi zero,  0x348, 0x1f)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrsi %[rd], 0x348, 0x0)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrsi zero,  0x348, 0x0)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrci %[rd], 0x348, 0x1f)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrci zero,  0x348, 0x1f)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrci %[rd], 0x348, 0x0)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrci zero,  0x348, 0x0)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrw  zero,  0x348, %[rs1])"
+      :: [rs1] "r"(reg_backup_1) :);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrw  zero,  0x348, zero)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrw  %[rd], 0x348, 0x0)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  if (test_fail) {
+    cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
+    return index + 1;
+  }
+  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+
 uint32_t rw_mscratchcswl(uint32_t index, uint8_t report_name) {
   volatile uint8_t test_fail = 0;
   volatile uint32_t reg_backup_1 = 0;
@@ -2352,6 +2558,112 @@ uint32_t rw_mscratchcswl(uint32_t index, uint8_t report_name) {
   cvprintf(V_DEBUG, "Reg1 read: %08x, mscratchcswl swap result: %08x, mscratch: %08x, mcause.mpil: %01x, mintstatus.mil: %01x\n", reg_backup_1, reg_backup_2, mscratch, mcause_rval.clic.mpil, mintstatus_rval.fields.mil);
   test_fail += reg_backup_1 != reg_backup_2 || mscratch != 0;
   vp_assert_irq(0, 0);
+
+  if (test_fail) {
+    cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
+    return index + 1;
+  }
+  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+
+uint32_t rw_mscratchcswl_illegal(uint32_t index, uint8_t report_name) {
+  volatile uint8_t test_fail = 0;
+  volatile uint32_t reg_backup_1 = 0;
+
+  SET_FUNC_INFO
+  if (report_name) {
+    cvprintf(V_LOW, "\"%s\"", name);
+    return 0;
+  }
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrs  %[rd], 0x349, sp)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrs  zero,  0x349, sp)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrc  %[rd], 0x349, sp)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrc  zero,  0x349, sp)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrs  %[rd], 0x349, zero)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrs  zero,  0x349, zero)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrc  %[rd], 0x349, zero)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrc  zero,  0x349, zero)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrsi %[rd], 0x349, 0x1f)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrsi zero,  0x349, 0x1f)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrsi %[rd], 0x349, 0x0)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrsi zero,  0x349, 0x0)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrci %[rd], 0x349, 0x1f)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrci zero,  0x349, 0x1f)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrci %[rd], 0x349, 0x0)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrci zero,  0x349, 0x0)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrw  zero,  0x349, %[rs1])"
+      :: [rs1] "r"(reg_backup_1) :);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrw  zero,  0x349, zero)":::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  *g_expect_illegal = 1;
+  __asm__ volatile (R"( csrrw  %[rd], 0x349, 0x0)"
+      : [rd] "=r"(reg_backup_1) ::);
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
 
   if (test_fail) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
