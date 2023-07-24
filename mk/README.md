@@ -392,7 +392,7 @@ If applicable for a simulator, line debugging will be enabled in the compile to 
 
 **make test TEST=hello-world GUI=1**
 
-### Passing run-time arguments to the simulator
+### Passing run-time arguments to the simulator using **USER_RUN_FLAGS**
 
 The Makefiles support a user controllable variable **USER_RUN_FLAGS** which can be used to pass run-time arguments.  Two typical use-cases for this are provided below:
 
@@ -410,6 +410,18 @@ and signals that you want UVM to use your plusarg over any internally configured
 The following will increase the verbosity level to DEBUG.
 
 **make test TEST=hello-world USER_RUN_FLAGS=+UVM_VERBOSITY=UVM_DEBUG**
+
+### Passing run-time arguments to the simulator using **TEST_CFG_FILE**
+
+For a given test, test.yaml file would typically have all the relevant plusargs for that test, but in certain cases there are new features or updates added to TB, or there is a need to run all the tests with a new TB config, say for example a particular bus delay config. This would previously require to either update all existing tests with new plusargs, or add new tests just for this requirement.
+
+Using this **TEST_CFG_FILE** allows us to retain all existing test setup while providing a simple mechanism to run those tests with additional configs, on top of the ones in test.yaml, passed through a separate yaml file provided using variable TEST_CFG_FILE with the make command.
+
+This is different from above **USER_RUN_FLAGS** method, as this would also create a unique directory path, log names, coverage db etc. suffixed with TEST_CFG_FILE name, and hence this mechanism goes beyond the **USER_RUN_FLAGS** method in a sense that it provides a way to run tests through regression scripts as unique tests differentitated from same default TEST by TEST_CFG_FILE. And hence such tests can be also be rerun, for example in case of failing tests from regression report, without the knowledge of CMD line arguments such as the ones passed through USER_RUN_FLAGS mechanism.
+
+Example:
+
+**make gen_corev-dv test TEST=corev_rand_arithmetic_base_test USE_ISS=no CFG=pulp_fpu WAVES=1 SEED=random TEST_CFG_FILE=floating_pt_instr_en**
 
 ### Post-process Waveform Debug
 
