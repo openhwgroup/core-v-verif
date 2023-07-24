@@ -117,12 +117,44 @@
   //multiple times, the immediate values were not re-randomized as they
   //were only randomized once during creation of instruction class
   function void randomize_cv32e40p_instr_imm(cv32e40p_instr instr);
-    std::randomize(temp_imm);
-    instr.imm = temp_imm;
+    //std::randomize(temp_imm);
+    if (instr.is_compressed) begin
+      std::randomize(temp_imm) with  {
+                                       if(instr.imm_type inside {NZIMM, NZUIMM}) {
+                                         temp_imm[4:0] != 0;
+                                         if (instr.instr_name == C_LUI) {
+                                           temp_imm[31:5] == 0;
+                                         }
+                                         if (instr.instr_name == (C_SRAI || C_SRLI || C_SLLI || C_LUI)) {
+                                           temp_imm[31:5] == 0;
+                                         }
+                                       }
+                                       if (instr.instr_name == C_ADDI4SPN) {
+                                         temp_imm[1:0] == 0;
+                                       }
+                                     };
+      instr.imm = temp_imm;
+    end
+    else begin
+      std::randomize(temp_imm) with  {
+                                       if (instr.instr_name inside {SLLIW, SRLIW, SRAIW}) {
+                                         temp_imm[11:5] == 0;
+                                       }
+                                       if (instr.instr_name inside {SLLI, SRLI, SRAI}) {
+                                         if (XLEN == 32) {
+                                           temp_imm[11:5] == 0;
+                                         } else {
+                                           temp_imm[11:6] == 0;
+                                         }
+                                       }
+                                     };
 
-    if (instr.has_imm) begin
-      instr.extend_imm();
-      instr.update_imm_str();
+      instr.imm = temp_imm;
+
+      if (instr.has_imm) begin
+        instr.extend_imm();
+        instr.update_imm_str();
+      end
     end
   endfunction
 
