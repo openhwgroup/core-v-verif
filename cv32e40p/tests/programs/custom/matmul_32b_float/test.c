@@ -82,6 +82,9 @@ int main()
   unsigned int zfinx_val;
   __asm__ volatile("csrr %0, 0xCD2" : "=r"(zfinx_val)); // Zfinx CSR
 
+#ifndef PULP
+  printf("STDOUT : Should generate an illegal exception as Zfinx CSR is not implemented.\n");
+#else
 #ifdef FPU
   // Floating Point enable
   fp_enable();
@@ -103,6 +106,7 @@ int main()
   } else {
     printf("STDOUT : Zfinx is %d\n", zfinx_val);
   }
+#endif
 #endif
 
   // Enable mcycle counter
