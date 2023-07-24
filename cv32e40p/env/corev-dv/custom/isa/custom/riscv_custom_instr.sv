@@ -681,6 +681,12 @@ class cv32e40p_instr extends riscv_instr;
       end else begin
         imm_str = $sformatf("%0d", $unsigned(imm[11:0]));
       end
+    end else if (category == SIMD) begin
+      if (imm_type == UIMM) begin
+        imm_str = $sformatf("%0d", $unsigned(imm[5:0]));
+      end else begin
+        imm_str = $sformatf("%0d", $signed(imm[5:0]));
+      end
     end else
     super.update_imm_str();
   endfunction
