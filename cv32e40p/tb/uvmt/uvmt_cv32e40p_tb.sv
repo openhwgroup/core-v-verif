@@ -103,6 +103,12 @@ module uvmt_cv32e40p_tb;
    parameter int ENV_PARAM_INSTR_DATA_WIDTH  = 32;
    parameter int ENV_PARAM_RAM_ADDR_WIDTH    = 22;
 
+`ifndef IDV_RECONVERGE
+   parameter int SET_IDV_RECONVERGE = 0;
+`else
+   parameter int SET_IDV_RECONVERGE = 1;
+`endif
+
    // Capture regs for test status from Virtual Peripheral in dut_wrap.mem_i
    bit        tp;
    bit        tf;
@@ -506,8 +512,9 @@ module uvmt_cv32e40p_tb;
     `ifndef FORMAL
     `ifdef USE_ISS
       uvmt_cv32e40p_imperas_dv_wrap #(
-        .FPU  (CORE_PARAM_FPU),
-        .ZFINX(CORE_PARAM_ZFINX)
+        .FPU                    (CORE_PARAM_FPU),
+        .ZFINX                  (CORE_PARAM_ZFINX),
+        .SET_IDV_RECONVERGE     (SET_IDV_RECONVERGE)
       ) imperas_dv (rvvi_if);
     `endif
     `endif
