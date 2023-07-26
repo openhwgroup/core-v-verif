@@ -10,8 +10,8 @@ builds:
   clean_fw:
     cmd: make clean-bsp clean_test_programs
     dir: cv32e40p/sim/uvmt
-  corev-dv:
-    cmd: make clean_riscv-dv comp_corev-dv
+  clean_corev-dv:
+    cmd: make clean_riscv-dv clone_riscv-dv
     dir: cv32e40p/sim/uvmt
     cov: 0
   uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat:
@@ -21,45 +21,49 @@ builds:
   uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat:
     cmd: make comp
     dir: cv32e40p/sim/uvmt
-    cfg: pulp_fpu_zfinx_2cyclat
-  uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat:
-    cmd: make comp
-    dir: cv32e40p/sim/uvmt
-    cfg: pulp_fpu_zfinx_3cyclat
 
 # List of tests
 tests:
-  corev_fp_instr_test:
+  corev_sanity_fp_zfinx_instr_test:
     builds:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_multicycle_fp_instr_test
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_fp_instr_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_sanity_fp_zfinx_instr_test
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
     num: 20
 
-  corev_multicycle_fp_instr_test:
+  # corev_multicycle_fp_instr_test:
+  #   builds:
+  #     - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
+  #     - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
+  #   description: corev_multicycle_fp_instr_test
+  #   dir: cv32e40p/sim/uvmt
+  #   cmd: make gen_corev-dv test COREV=YES TEST=corev_multicycle_fp_instr_test
+  #   test_cfg: floating_pt_instr_en
+  #   iss: 1
+  #   cov: 1
+  #   num: 50
+
+  corev_rand_pulp_hwloop_test:
     builds:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
-    description: corev_multicycle_fp_instr_test
+    description: corev_rand_pulp_hwloop_test
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_multicycle_fp_instr_test
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_hwloop_test
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
-    num: 50
+    num: 20
 
   corev_rand_debug_ebreak_xpulp:
     builds:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_debug_ebreak_xpulp
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak_xpulp
@@ -68,14 +72,13 @@ tests:
     cov: 1
     num: 50
 
-  corev_rand_debug_ebreak_single_step_xpulp:
+  corev_rand_debug_single_step_xpulp:
     builds:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
-    description: corev_rand_debug_ebreak_single_step_xpulp
+    description: corev_rand_debug_single_step_xpulp
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak_single_step_xpulp
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_single_step_xpulp
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
@@ -85,7 +88,6 @@ tests:
     builds:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_instr_long_stall
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_instr_long_stall
@@ -98,7 +100,6 @@ tests:
     builds:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_interrupt
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt
@@ -111,7 +112,6 @@ tests:
     builds:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_interrupt_debug
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_debug
@@ -124,7 +124,6 @@ tests:
     builds:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_interrupt_exception
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_exception
@@ -137,7 +136,6 @@ tests:
     builds:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_interrupt_nested
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_nested
@@ -150,7 +148,6 @@ tests:
     builds:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_interrupt_wfi_mem_stress
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_wfi_mem_stress
@@ -163,7 +160,6 @@ tests:
     builds:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     description: corev_rand_jump_stress_test
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_jump_stress_test
