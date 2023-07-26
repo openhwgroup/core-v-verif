@@ -28,7 +28,7 @@ _start:
 	la sp, __stack_end
 
 /* set vector table address */
-	la a0, __vector_start
+	la a0, vector_table /*MJS __vector_start*/
 	ori a0, a0, 1 /*vector mode = vectored */
 	csrw mtvec, a0
 
