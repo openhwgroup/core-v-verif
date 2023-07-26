@@ -85,11 +85,8 @@ void mie_disable(uint32_t irq) {
 }
 
 void mm_ram_assert_irq(uint32_t mask, uint32_t cycle_delay) {
-    // printf("duud %d %d\n", mask, cycle_delay);
     *TIMER_REG_ADDR = mask;
-    // printf("dooh\n");
     *TIMER_VAL_ADDR = 1 + cycle_delay;
-    // printf("diid\n");
 }
 
 uint32_t random_num(uint32_t upper_bound, uint32_t lower_bound) {
@@ -295,32 +292,25 @@ int test1() {
 // break out the test 1 implementation here
 int test1_impl(int direct_mode) {
     for (uint32_t i = 0; i < 32; i++) {
-// #ifdef DEBUG_MSG
-        printf("Test1 -> Testing interrupt %lu\n", i);
-// #endif
+#ifdef DEBUG_MSG
+        printf("Testing interrupt %lu\n", i);
+#endif
         for (uint32_t gmie = 0; gmie <= 1; gmie++) {
             for (uint32_t mie = 0; mie <= 1; mie++) {
                 uint32_t mip;
-// printf("salut\n");
                 // Set global MIE
                 if (gmie) mstatus_mie_enable();
                 else mstatus_mie_disable();
-// printf("lalalal\n");
                 // Set individual mie
                 if (mie) mie_enable(i);
                 else mie_disable(i);
-// printf("lilili\n");
                 in_direct_handler = 0;
                 mmcause = 0;
-                // printf("bouh\n");
                 mm_ram_assert_irq(0x1 << i, 1);
-// printf("tytytyt\n");
                 if (((0x1 << i) & IRQ_MASK) && mie && gmie) {
                     // Interrupt is valid and enabled
                     // wait for the irq to be served
-                    // printf("blibli\n");
                     while (!mmcause);
-// printf("blabla\n");
                     if ((mmcause & (0x1 << 31)) == 0) {
                         printf("MCAUSE[31] was not set: mmcause = 0x%08lx\n", (uint32_t) mmcause);
 
@@ -340,7 +330,6 @@ int test1_impl(int direct_mode) {
                         }
                     }
                 }
-// printf("coucou\n");
                 // Check MIP
                 // For unimplemented irqs, this should always be 0
                 // For masked irqs, this should always be 0
@@ -406,7 +395,7 @@ int test2() {
     for (int i = 0; i < IRQ_NUM; i++) {
         // The irq_id_q should now contain interrupt IDs in the same order as IRQ_ID_PRIORITY
         if (IRQ_ID_PRIORITY[i] != irq_id_q[i]) {
-            printf("priority mismatch, index %d, exp %lu, act %lu\n",
+            printf("Priority mismatch, index %d, exp %lu, act %lu\n",
                     i, IRQ_ID_PRIORITY[i], irq_id_q[i]);
             return ERR_CODE_TEST_2;
         }
@@ -443,7 +432,7 @@ int test3() {
         nested_irq_valid = 1;
 
 #ifdef DEBUG_MSG
-        printf("TEST3: Test nested irqs %lu and %lu\n", irq[0], irq[1]);
+        printf("Test nested irqs %lu and %lu\n", irq[0], irq[1]);
 #endif
 
         mm_ram_assert_irq(0x1 << irq[0], 0);
@@ -451,11 +440,11 @@ int test3() {
         delay(50);
 
         if (irq_id_q[0] != irq[0]) {
-            printf("TEST3, first interrupt exp %lu act %lu\n", irq[0], irq_id_q[0]);
+            printf("First interrupt exp %lu act %lu\n", irq[0], irq_id_q[0]);
             return ERR_CODE_TEST_3;
         }
         if (irq_id_q[1] != irq[1]) {
-            printf("TEST3, second interrupt exp %lu act %lu\n", irq[1], irq_id_q[1]);
+            printf("Second interrupt exp %lu act %lu\n", irq[1], irq_id_q[1]);
             return ERR_CODE_TEST_3;
         }
     }
