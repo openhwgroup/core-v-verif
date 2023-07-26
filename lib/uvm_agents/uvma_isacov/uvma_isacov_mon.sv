@@ -194,6 +194,23 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
       mon_trn.instr.illegal = 1;
     end
   end
+
+  // CSR Pseudocode
+  if (mon_trn.instr.name == CSRRS && mon_trn.instr.rs1 == 0)
+    mon_trn.instr.name = CSRR;
+  if (mon_trn.instr.name == CSRRW && mon_trn.instr.rd == 0)
+    mon_trn.instr.name = CSRW;
+  if (mon_trn.instr.name == CSRRS && mon_trn.instr.rd == 0)
+    mon_trn.instr.name = CSRS;
+  if (mon_trn.instr.name == CSRRC && mon_trn.instr.rd == 0)
+    mon_trn.instr.name = CSRC;
+  if (mon_trn.instr.name == CSRRWI && mon_trn.instr.rd == 0)
+    mon_trn.instr.name = CSRWI;
+  if (mon_trn.instr.name == CSRRSI && mon_trn.instr.rd == 0)
+    mon_trn.instr.name = CSRSI;
+  if (mon_trn.instr.name == CSRRCI && mon_trn.instr.rd == 0)
+    mon_trn.instr.name = CSRCI;
+
   // 3. Instruction is in unsupported extension
   if ((mon_trn.instr.ext == A_EXT && !cfg.core_cfg.ext_a_supported) ||
       (mon_trn.instr.ext == C_EXT && !cfg.core_cfg.ext_c_supported) ||

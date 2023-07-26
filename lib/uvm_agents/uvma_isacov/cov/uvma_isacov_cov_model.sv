@@ -2580,12 +2580,12 @@ function void uvma_isacov_cov_model_c::sample (uvma_isacov_instr_c instr);
   if (!have_sampled && is_normal_instr && cfg.core_cfg.ext_zicsr_supported) begin
     have_sampled = 1;
     case (instr.name)
-      CSRRW:   rv32zicsr_csrrw_cg.sample(instr);
-      CSRRS:   rv32zicsr_csrrs_cg.sample(instr);
-      CSRRC:   rv32zicsr_csrrc_cg.sample(instr);
-      CSRRWI:  rv32zicsr_csrrwi_cg.sample(instr);
-      CSRRSI:  rv32zicsr_csrrsi_cg.sample(instr);
-      CSRRCI:  rv32zicsr_csrrci_cg.sample(instr);
+      CSRRW, CSRW:         rv32zicsr_csrrw_cg.sample(instr);
+      CSRRS, CSRR, CSRS:   rv32zicsr_csrrs_cg.sample(instr);
+      CSRRC, CSRC:         rv32zicsr_csrrc_cg.sample(instr);
+      CSRRWI, CSRWI:       rv32zicsr_csrrwi_cg.sample(instr);
+      CSRRSI, CSRSI:       rv32zicsr_csrrsi_cg.sample(instr);
+      CSRRCI, CSRCI:       rv32zicsr_csrrci_cg.sample(instr);
       default: have_sampled = 0;
     endcase
   end

@@ -73,6 +73,10 @@ typedef enum {
   CSRRW, CSRRS, CSRRC,
   CSRRWI, CSRRSI, CSRRCI,
 
+  // Zicsr Pseudocode
+  CSRW, CSRR, CSRS, CSRC,
+  CSRWI, CSRSI, CSRCI,
+
   // Zifencei
   FENCE_I
 } instr_name_t;
@@ -621,7 +625,9 @@ function instr_ext_t get_instr_ext(instr_name_t name);
   if (name inside
     {
       CSRRW, CSRRS, CSRRC,
-      CSRRWI, CSRRSI, CSRRCI
+      CSRRWI, CSRRSI, CSRRCI,
+      CSRW, CSRR, CSRS, CSRC,
+      CSRWI, CSRSI, CSRCI
     })
     return ZICSR_EXT;
 
@@ -696,10 +702,10 @@ function instr_type_t get_instr_type(instr_name_t name);
   if (name inside {JAL})
     return J_TYPE;
 
-  if (name inside {CSRRW,CSRRS,CSRRC})
+  if (name inside {CSRRW,CSRRS,CSRRC,CSRW,CSRR,CSRS,CSRC})
     return CSR_TYPE;
 
-  if (name inside {CSRRWI,CSRRSI,CSRRCI})
+  if (name inside {CSRRWI,CSRRSI,CSRRCI,CSRWI,CSRSI,CSRCI})
     return CSRI_TYPE;
 
   if (name inside {SH1ADD,SH2ADD,SH3ADD})
@@ -790,7 +796,7 @@ function instr_group_t get_instr_group(instr_name_t name, bit[DEFAULT_XLEN-1:0] 
   if (name inside {WFI})
     return WFI_GROUP;
 
-  if (name inside {CSRRW,CSRRS,CSRRC,CSRRWI,CSRRSI,CSRRCI})
+  if (name inside {CSRRW,CSRRS,CSRRC,CSRRWI,CSRRSI,CSRRCI,CSRW,CSRR,CSRS,CSRC,CSRWI,CSRSI,CSRCI})
     return CSR_GROUP;
 
   if (name inside {MUL})

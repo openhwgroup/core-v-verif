@@ -338,16 +338,16 @@ endfunction : set_valid_flags
 
 function bit uvma_isacov_instr_c::is_csr_write();
   // Using Table 9.1 in RISC-V specification to define a CSR write
-  if (name inside {CSRRW})
+  if (name inside {CSRRW, CSRW})
     return 1;
 
-  if (name inside {CSRRS, CSRRC} && rs1 != 0)
+  if (name inside {CSRRS, CSRRC, CSRS, CSRC} && rs1 != 0)
     return 1;
 
-  if (name inside {CSRRWI})
+  if (name inside {CSRRWI, CSRWI})
     return 1;
 
-  if (name inside {CSRRSI, CSRRCI} && immu != 0)
+  if (name inside {CSRRSI, CSRRCI, CSRSI, CSRCI} && immu != 0)
     return 1;
 
   return 0;
