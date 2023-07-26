@@ -86,8 +86,8 @@
       lsb: 11
     - field_name: VS
       description: >
-       reserved for future use 
-      type: R
+       Vector Extension state 
+      type: RW
       reset_val: 0
       msb: 10
       lsb: 9
@@ -107,7 +107,7 @@
       lsb: 7
     - field_name: UBE
       description: >
-       reserved for future use 
+       User break point Enable
       type: R
       reset_val: 0
       msb: 6
@@ -640,7 +640,7 @@
     - field_name: MEIP
       description: >
         machine external interrupt pending
-      type: RW
+      type: R
       reset_val: 0
       msb: 11
       lsb: 11
@@ -668,7 +668,7 @@
     - field_name: MTIP 
       description: >
        timer interrupt-pending bit for M-mode 
-      type: RW
+      type: R
       reset_val: 0
       msb: 7
       lsb: 7
@@ -696,7 +696,7 @@
     - field_name: MSIP
       description: >
        enable M-mode Software pending 
-      type: RW
+      type: R
       reset_val: 0
       msb: 3
       lsb: 3
@@ -720,7 +720,176 @@
       type: R
       reset_val: 0
       msb: 0
-      lsb: 0    
+      lsb: 0   
+
+
+- csr: CSR_PMPADDR0
+  description: >
+   PMP address registers
+  address: 0x3B0
+  privilege_mode: M
+  rv32:
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 1
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0
+
+- csr: CSR_PMPADDR1
+  description: >
+   PMP address registers
+  address: 0x3B1
+  privilege_mode: M
+  rv32:
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 1
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0
+
+- csr: CSR_PMPADDR2
+  description: >
+   PMP address registers
+  address: 0x3B2
+  privilege_mode: M
+  rv32:
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 1
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0
+
+- csr: CSR_PMPADDR3
+  description: >
+   PMP address registers
+  address: 0x3B3
+  privilege_mode: M
+  rv32:
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 1
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0
+
+- csr: CSR_PMPADDR4
+  description: >
+   PMP address registers
+  address: 0x3B4
+  privilege_mode: M
+  rv32:
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 1
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0
+
+- csr: CSR_PMPADDR5
+  description: >
+   PMP address registers
+  address: 0x3B5
+  privilege_mode: M
+  rv32:
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 1
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0
+
+- csr: CSR_PMPADDR6
+  description: >
+   PMP address registers
+  address: 0x3B6
+  privilege_mode: M
+  rv32:
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 1
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0
+
+- csr: CSR_PMPADDR7
+  description: >
+   PMP address registers
+  address: 0x3B7
+  privilege_mode: M
+  rv32:
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 1
+    - field_name: address
+      description: >
+        encodes bits 33-2 of a 34-bit physical address
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0
 
 - csr: CSR_ICACHE
   description: >
