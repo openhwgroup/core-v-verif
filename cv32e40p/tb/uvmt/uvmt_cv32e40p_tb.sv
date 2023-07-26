@@ -103,6 +103,12 @@ module uvmt_cv32e40p_tb;
    parameter int ENV_PARAM_INSTR_DATA_WIDTH  = 32;
    parameter int ENV_PARAM_RAM_ADDR_WIDTH    = 22;
 
+`ifndef IDV_RECONVERGE
+   parameter int SET_IDV_RECONVERGE = 0;
+`else
+   parameter int SET_IDV_RECONVERGE = 1;
+`endif
+
    // Capture regs for test status from Virtual Peripheral in dut_wrap.mem_i
    bit        tp;
    bit        tf;
@@ -506,8 +512,9 @@ module uvmt_cv32e40p_tb;
     `ifndef FORMAL
     `ifdef USE_ISS
       uvmt_cv32e40p_imperas_dv_wrap #(
-        .FPU  (CORE_PARAM_FPU),
-        .ZFINX(CORE_PARAM_ZFINX)
+        .FPU                    (CORE_PARAM_FPU),
+        .ZFINX                  (CORE_PARAM_ZFINX),
+        .SET_IDV_RECONVERGE     (SET_IDV_RECONVERGE)
       ) imperas_dv (rvvi_if);
     `endif
     `endif
@@ -774,6 +781,11 @@ module uvmt_cv32e40p_tb;
       int                warning_count;
       int                fatal_count;
       static bit         sim_finished = 0;
+      longint            rvvi_metric_retires;
+      longint            rvvi_metric_comparisons_pc;
+      longint            rvvi_metric_comparisons_gpr;
+      longint            rvvi_metric_comparisons_insbin;
+      longint            rvvi_metric_mismatches;
 
       static string  red   = "\033[31m\033[1m";
       static string  green = "\033[32m\033[1m";
@@ -788,8 +800,42 @@ module uvmt_cv32e40p_tb;
 
       // Shutdown the Reference Model
       `ifdef USE_ISS
-      // Exit handler for ImperasDV
-      void'(rvviRefShutdown());
+        //Check RVVI metrics at the end of the test
+        rvvi_metric_retires             = rvviRefMetricGet(RVVI_METRIC_RETIRES);
+        rvvi_metric_comparisons_pc      = rvviRefMetricGet(RVVI_METRIC_COMPARISONS_PC);
+        rvvi_metric_comparisons_gpr     = rvviRefMetricGet(RVVI_METRIC_COMPARISONS_GPR);
+        rvvi_metric_comparisons_insbin  = rvviRefMetricGet(RVVI_METRIC_COMPARISONS_INSBIN);
+        rvvi_metric_mismatches          = rvviRefMetricGet(RVVI_METRIC_MISMATCHES);
+
+        // Exit handler for ImperasDV
+        void'(rvviRefShutdown());
+
+        if(rvvi_metric_retires == 0) begin
+          err_count++;
+          $display("ERROR: SIM Run with reference model but no instruction retires sent to Reference model");
+        end
+
+        if(rvvi_metric_comparisons_pc == 0) begin
+          err_count++;
+          $display("ERROR: SIM Run with reference model but no PC comparison done in model");
+        end
+
+        if(rvvi_metric_comparisons_gpr == 0) begin
+          err_count++;
+          $display("ERROR: SIM Run with reference model but no GPR comparison done in model");
+        end
+
+        if(rvvi_metric_comparisons_insbin == 0) begin
+          err_count++;
+          $display("ERROR: SIM Run with reference model but no Instruction comparison done in model");
+        end
+
+        if(rvvi_metric_mismatches != 0) begin
+          err_count = err_count + rvvi_metric_mismatches;
+          $display("ERROR: Reference model mismatches found!");
+          $display("ERROR: Total Reference model mismatches = %0d", rvvi_metric_mismatches);
+        end
+
       `endif
 
       // In most other contexts, calls to $display() in a UVM environment are

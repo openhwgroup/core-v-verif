@@ -43,11 +43,11 @@
 //Nested HWLOOP random generated instruction structure
 //*******************************************************************************************************************************************
 //<loop1_setup_instructions>  -> using start->end->count for this stream TODO: randomize this order?
-//<Random instructions till Loop START1 label>                  ->  use_setup_inst ? 0 : num_fill_instr_cv_end_to_loop_start_label[1] - 1
+//<Random instructions till Loop START1 label>                  ->  use_setup_inst ? 0 : num_fill_instr_loop_ctrl_to_loop_start[1] - 1
 //START1:
 //    <Random instructions till <loop0_setup_instructions>>     ->  gen_nested_loop ? num_fill_instr_in_loop1_till_loop0_setup : NA
 //    <loop0_setup_instructions>
-//    <Random instructions till Loop START0 label>              ->  use_setup_inst ? 0 : num_fill_instr_cv_end_to_loop_start_label[0] - 1
+//    <Random instructions till Loop START0 label>              ->  use_setup_inst ? 0 : num_fill_instr_loop_ctrl_to_loop_start[0] - 1
 //    START0:
 //           <Random instructions till Loop END0 label>         ->  num_hwloop_instr[0]
 //    END0:
@@ -62,7 +62,7 @@
 //Not-Nested HWLOOP random generated instruction structure
 //*******************************************************************************************************************************************
 //<loop0/1_setup_instructions>  -> using start->end->count for this stream TODO: randomize this order?
-//<Random instructions till Loop START0/1 label>                  ->  use_setup_inst ? 0 : num_fill_instr_cv_end_to_loop_start_label[0/1] - 1
+//<Random instructions till Loop START0/1 label>                  ->  use_setup_inst ? 0 : num_fill_instr_loop_ctrl_to_loop_start[0/1] - 1
 //START0/1:
 //    <Random instructions till Loop END0/1 label>                ->  num_hwloop_instr[0/1]
 //END0/1:
@@ -84,12 +84,12 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
   rand bit[11:0]        hwloop_counti[2];
 
   rand int unsigned     num_hwloop_instr[2];
-  rand int unsigned     num_hwloop_setupi_instr[2];
-  rand int unsigned     num_fill_instr_cv_end_to_loop_start_label[2];
+  rand int unsigned     num_hwloop_ctrl_instr[2];
+  rand int unsigned     num_fill_instr_loop_ctrl_to_loop_start[2];
   rand int unsigned     num_fill_instr_in_loop1_till_loop0_setup;
   rand bit              setup_l0_before_l1_start;
 
-  int unsigned          num_fill_instr_cv_start_to_loop_start_label[2];
+  int unsigned          num_instr_cv_start_to_loop_start_label[2];
   cv32e40p_instr        hwloop_setupi_instr[2];
   cv32e40p_instr        hwloop_setup_instr[2];
   cv32e40p_instr        hwloop_starti_instr[2];
@@ -114,11 +114,11 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       `uvm_field_sarray_int(hwloop_count, UVM_DEFAULT)
       `uvm_field_sarray_int(hwloop_counti, UVM_DEFAULT)
       `uvm_field_sarray_int(num_hwloop_instr, UVM_DEFAULT)
-      `uvm_field_sarray_int(num_hwloop_setupi_instr, UVM_DEFAULT)
-      `uvm_field_sarray_int(num_fill_instr_cv_end_to_loop_start_label, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_hwloop_ctrl_instr, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_fill_instr_loop_ctrl_to_loop_start, UVM_DEFAULT)
       `uvm_field_int(num_fill_instr_in_loop1_till_loop0_setup, UVM_DEFAULT)
       `uvm_field_int(setup_l0_before_l1_start, UVM_DEFAULT)
-      `uvm_field_sarray_int(num_fill_instr_cv_start_to_loop_start_label, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_instr_cv_start_to_loop_start_label, UVM_DEFAULT)
   `uvm_object_utils_end
 
 //
@@ -148,68 +148,99 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
           hwloop_count[i] inside {[0:200]};//TODO: check 0 is valid
   }
 
-  constraint num_hwloop_setupi_instr_c {
-      solve use_loop_setupi_inst[1] before use_loop_setupi_inst[0];
-      solve use_loop_setupi_inst before num_hwloop_setupi_instr;
-      solve use_setup_inst before num_hwloop_setupi_instr;
-      solve gen_nested_loop before num_hwloop_setupi_instr;
-
-      if(gen_nested_loop && use_setup_inst[1] && use_loop_setupi_inst[1]) { //with setupi only [4:0] uimmS range avail for end label
-          num_hwloop_setupi_instr[1] inside {[6:30]}; //with setupi only [4:0] uimmS range avail for end label
-          num_hwloop_setupi_instr[0] inside {[3:27]}; //TODO:in nested hwloop0 with setupi instr more than 27 instructions will have issue if setupi used for hwloop1?
-      } else if(gen_nested_loop && use_setup_inst[0] && use_loop_setupi_inst[0]) {
-          num_hwloop_setupi_instr[0] inside {[3:30]};
-      } else if( (!gen_nested_loop && use_setup_inst[1] && use_loop_setupi_inst[1]) || (!gen_nested_loop && use_setup_inst[0] && use_loop_setupi_inst[0]) ) {
-          num_hwloop_setupi_instr[0] inside {[3:30]};
-          num_hwloop_setupi_instr[1] inside {[3:30]};
-      }
-  }
-
   constraint num_hwloop_instr_c {
       solve num_hwloop_instr[0] before num_hwloop_instr[1];
-      solve num_hwloop_instr[1] before num_fill_instr_in_loop1_till_loop0_setup, num_fill_instr_cv_end_to_loop_start_label[0];
-      solve use_setup_inst before num_hwloop_instr,num_fill_instr_cv_end_to_loop_start_label,num_fill_instr_in_loop1_till_loop0_setup;
-      solve setup_l0_before_l1_start before num_hwloop_instr,num_fill_instr_cv_end_to_loop_start_label,num_fill_instr_in_loop1_till_loop0_setup, use_setup_inst;
-      solve gen_nested_loop before num_hwloop_instr,num_fill_instr_cv_end_to_loop_start_label,num_fill_instr_in_loop1_till_loop0_setup,setup_l0_before_l1_start,use_setup_inst;
 
-      if (setup_l0_before_l1_start == 1) { use_setup_inst[0] == 0};
+      solve num_hwloop_instr[1] before num_fill_instr_in_loop1_till_loop0_setup,
+                                       num_fill_instr_loop_ctrl_to_loop_start[0];
+
+      solve use_loop_setupi_inst[1] before use_loop_setupi_inst[0];
+
+      solve num_hwloop_ctrl_instr before num_hwloop_instr;
+
+      solve gen_nested_loop, setup_l0_before_l1_start, use_setup_inst before num_hwloop_instr,
+                                                                             num_fill_instr_loop_ctrl_to_loop_start,
+                                                                             num_fill_instr_in_loop1_till_loop0_setup,
+                                                                             num_hwloop_ctrl_instr;
+
+      solve gen_nested_loop, setup_l0_before_l1_start before use_setup_inst,
+                                                             use_loop_setupi_inst;
+
+      solve gen_nested_loop before setup_l0_before_l1_start;
+
+
+      setup_l0_before_l1_start dist {0 := 80, 1 := 20};
+
+      if ((gen_nested_loop == 1) && (setup_l0_before_l1_start == 1)) {
+          use_setup_inst[0] == 0;
+          use_setup_inst[1] == 0;
+          use_loop_setupi_inst[0] == 0;
+          use_loop_setupi_inst[1] == 0;
+      }
+
+      if(use_setup_inst[0]) {
+          num_fill_instr_loop_ctrl_to_loop_start[0] == 0;
+          num_hwloop_ctrl_instr[0] == 1;
+      } else {
+          num_fill_instr_loop_ctrl_to_loop_start[0] inside {[0:7]};
+          num_hwloop_ctrl_instr[0] == 3;
+      }
+
+      if(use_setup_inst[1]) {
+          num_fill_instr_loop_ctrl_to_loop_start[1] == 0;
+          num_hwloop_ctrl_instr[1] == 1;
+      } else {
+          num_fill_instr_loop_ctrl_to_loop_start[1] inside {[0:7]};
+          num_hwloop_ctrl_instr[1] == 3;
+      }
 
       if (gen_nested_loop == 1) {
           if (setup_l0_before_l1_start == 1) {
             num_hwloop_instr[0] inside {[3:97]};
-            num_hwloop_instr[1] >= num_hwloop_instr[0] + 3;
-            num_hwloop_instr[1] <= 100;
-            num_fill_instr_cv_end_to_loop_start_label[0] inside {[1:5]};
-            num_fill_instr_cv_end_to_loop_start_label[1] inside {[1:5]};
+            num_hwloop_instr[1] >= num_hwloop_instr[0] + 1 + 2; // 1 for cv.count0 ; 2 for end of loop req
+            num_hwloop_instr[1] <= 99 + 1; // 1 for cv.count0
             num_fill_instr_in_loop1_till_loop0_setup inside {[0:20]};
-            (num_fill_instr_cv_end_to_loop_start_label[0] + num_fill_instr_in_loop1_till_loop0_setup) <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 2);
+            (num_fill_instr_loop_ctrl_to_loop_start[0] + num_fill_instr_in_loop1_till_loop0_setup) <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 2 - 1); // 1 for cv.count0
           } else {
-            if (use_setup_inst[0]) {
-                num_hwloop_instr[0] inside {[3:97]};
-                num_hwloop_instr[1] >= num_hwloop_instr[0] + 3;
-                num_hwloop_instr[1] <= 100;
-                num_fill_instr_cv_end_to_loop_start_label[0] == 0;
-                num_fill_instr_cv_end_to_loop_start_label[1] inside {[1:5]};
+            if (use_setup_inst[1] && use_loop_setupi_inst[1]) { //with setupi only [4:0] uimmS range avail for end label
+                if(use_setup_inst[0]) {
+                  num_hwloop_instr[0] inside {[3:27]}; //TODO:in nested hwloop0 with setupi instr more than 27 instructions will have issue if setupi used for hwloop1?
+                  num_hwloop_instr[1] >= num_hwloop_instr[0] + 1 + 2; // num_hwloop_ctrl_instr[0] == 1 ; 2 for end of loop req
+                } else {
+                  num_hwloop_instr[0] inside {[3:25]}; //TODO:in nested hwloop0 with setupi instr more than 27 instructions will have issue if setupi used for hwloop1?
+                  num_hwloop_instr[1] >= num_hwloop_instr[0] + 3 + 2; // num_hwloop_ctrl_instr[0] == 3 ; 2 for end of loop req
+                }
+                //num_hwloop_instr[1] inside {[6:30]};
+                num_hwloop_instr[1] <= 30; //with setupi only [4:0] uimmS range avail for end label which is equivalent to 30 hwloop body instructions
+                num_fill_instr_in_loop1_till_loop0_setup inside {[0:5]};
+            } else if(use_setup_inst[0] && use_loop_setupi_inst[0]) {
+                num_hwloop_instr[0] inside {[3:30]};
+                num_hwloop_instr[1] >= num_hwloop_instr[0] + 1 + 2; // num_hwloop_ctrl_instr[0] == 1 ; 2 for end of loop req
+                num_hwloop_instr[1] <= 99 + num_hwloop_ctrl_instr[0];
                 num_fill_instr_in_loop1_till_loop0_setup inside {[0:20]};
-                num_fill_instr_in_loop1_till_loop0_setup <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 3);
             } else {
-                num_hwloop_instr[0] inside {[3:95]};
-                num_hwloop_instr[1] >= num_hwloop_instr[0] + 5;
-                num_hwloop_instr[1] <= 100;
-                num_fill_instr_cv_end_to_loop_start_label[0] inside {[1:5]};
-                num_fill_instr_cv_end_to_loop_start_label[1] inside {[1:5]};
+                num_hwloop_instr[0] inside {[3:97]};
+                num_hwloop_instr[1] >= num_hwloop_instr[0] + num_hwloop_ctrl_instr[0] + 2;
+                num_hwloop_instr[1] <= 99 + num_hwloop_ctrl_instr[0];
                 num_fill_instr_in_loop1_till_loop0_setup inside {[0:20]};
-                (num_fill_instr_cv_end_to_loop_start_label[0] + num_fill_instr_in_loop1_till_loop0_setup) <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 4);
             }
+            (num_fill_instr_loop_ctrl_to_loop_start[0] + num_fill_instr_in_loop1_till_loop0_setup) <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 2 - num_hwloop_ctrl_instr[0]);
           }
       } else {
-          num_hwloop_instr[0] inside {[3:100]};
-          num_hwloop_instr[1] inside {[3:100]};
-          num_fill_instr_cv_end_to_loop_start_label[0] inside {[1:5]};
-          num_fill_instr_cv_end_to_loop_start_label[1] inside {[1:5]};
+          if(use_setup_inst[1] && use_loop_setupi_inst[1]) {
+              num_hwloop_instr[1] inside {[3:30]};
+          } else {
+              num_hwloop_instr[1] inside {[3:100]};
+          }
+          if(use_setup_inst[0] && use_loop_setupi_inst[0]) {
+              num_hwloop_instr[0] inside {[3:30]};
+          } else {
+              num_hwloop_instr[0] inside {[3:100]};
+          }
           num_fill_instr_in_loop1_till_loop0_setup == 0;
       }
   }
+
 
   function new(string name = "cv32e40p_xpulp_hwloop_base_stream");
       super.new(name);
@@ -272,24 +303,15 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       bit                   set_label_at_next_instr = 0;
 
       riscv_instr           hwloop_instr_list[$];
-      int unsigned          num_rem_hwloop1_instr;
+      int unsigned          num_rem_hwloop1_instr; //indicates num of hwloop_1 body instructions after  hwloop_0 body for nested hwloops
       string                label_s;
       string                start_label_s;
       string                end_label_s;
 
-      num_fill_instr_cv_start_to_loop_start_label[0] = num_fill_instr_cv_end_to_loop_start_label[0] + 1;//TODO: can be randomized?
-      num_fill_instr_cv_start_to_loop_start_label[1] = num_fill_instr_cv_end_to_loop_start_label[1] + 1;//TODO: can be randomized?
+      num_instr_cv_start_to_loop_start_label[0] = num_fill_instr_loop_ctrl_to_loop_start[0] + 2;//TODO: can be randomized?
+      num_instr_cv_start_to_loop_start_label[1] = num_fill_instr_loop_ctrl_to_loop_start[1] + 2;//TODO: can be randomized?
 
       set_label_at_next_instr = 0;
-
-      if(use_setup_inst[1] && use_loop_setupi_inst[1])
-          num_hwloop_instr[1] = num_hwloop_setupi_instr[1];
-
-      if(use_setup_inst[0] && use_loop_setupi_inst[0])
-          num_hwloop_instr[0] = num_hwloop_setupi_instr[0];
-
-      //calc num_rem_hwloop1_instr after final num_hwloop_instr is available
-      num_rem_hwloop1_instr = num_hwloop_instr[1] - (num_hwloop_instr[0] + num_fill_instr_cv_end_to_loop_start_label[0] + num_fill_instr_in_loop1_till_loop0_setup + 2);
 
       //*************************************************************
       //*******************NESTED HWLOOP*****************************
@@ -298,7 +320,25 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       if(gen_nested_loop) begin  //NESTED HWLOOP
           gen_cv_count0_instr = $urandom();
 
-    
+          //calculate num_rem_hwloop1_instr
+          if(!setup_l0_before_l1_start) begin
+            num_rem_hwloop1_instr = num_hwloop_instr[1] - (num_fill_instr_in_loop1_till_loop0_setup +
+                                                           num_hwloop_ctrl_instr[0] +
+                                                           num_fill_instr_loop_ctrl_to_loop_start[0] +
+                                                           num_hwloop_instr[0]);
+          end
+          else begin
+            num_rem_hwloop1_instr = num_hwloop_instr[1] - (num_fill_instr_in_loop1_till_loop0_setup +
+                                                           1 +
+                                                           num_fill_instr_loop_ctrl_to_loop_start[0] +
+                                                           num_hwloop_instr[0]);
+
+          end
+
+          //Atleast 2 instructions needed between hwloop_0 and hwloop_1 end labels
+          if(num_rem_hwloop1_instr < 2)
+            `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream",$sformatf("num_rem_hwloop1_instr < 2"))
+
           //Initialize GPRs used as RS1 in HWLOOP Instructions
           hwloop_avail_regs = new[6];  //index fixed for this stream from 0:2 for start0,end0,count0=setup0; 3:5 for start1,end1,count1=setup1 respectively
           std::randomize(hwloop_avail_regs) with  {   unique {hwloop_avail_regs};
@@ -345,7 +385,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                                    .instr_label(label_s));  //Gen Outer HWLOOP Instr - 1
 
           reserved_rd.delete(); //no longer need to keep the hwloop1 reserved gprs
-          reserved_rd = {hwloop_avail_regs[0],hwloop_avail_regs[1],hwloop_avail_regs[2]}; //preserve count0 reg for nested loop
+          reserved_rd = {hwloop_avail_regs[0],hwloop_avail_regs[1],hwloop_avail_regs[2]}; //preserve hwloop_0 reg for nested loop
 
           if(!use_setup_inst[1] && !use_setup_inst[0] && setup_l0_before_l1_start) begin
 
@@ -362,13 +402,13 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
               reserved_rd.delete(); //no longer need to keep the hwloop reserved gpr except for count0
               reserved_rd = {hwloop_avail_regs[2]}; //preserve count0 reg for nested loop
 
-              num_fill_instr_cv_end_to_loop_start_label[1] = num_fill_instr_cv_end_to_loop_start_label[1] - 2;
+              num_fill_instr_loop_ctrl_to_loop_start[1] = num_fill_instr_loop_ctrl_to_loop_start[1] - 2;
               if(gen_cv_count0_instr)
-                  num_fill_instr_cv_end_to_loop_start_label[1] = num_fill_instr_cv_end_to_loop_start_label[1] - 1;
+                  num_fill_instr_loop_ctrl_to_loop_start[1] = num_fill_instr_loop_ctrl_to_loop_start[1] - 1;
           end
 
           if(!use_setup_inst[1]) begin
-              insert_rand_instr(.num_rand_instr(num_fill_instr_cv_end_to_loop_start_label[1]-1),
+              insert_rand_instr(.num_rand_instr(num_fill_instr_loop_ctrl_to_loop_start[1]),
                                 .no_branch(1),
                                 .no_compressed(0),
                                 .no_fence(0));  //TODO: Fence instr allowed here?
@@ -392,7 +432,6 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
               set_label_at_next_instr = 1; //no fill instr so next instr must have label
           end
 
-
           start_label_s = $sformatf("hwloop0_nested_start_stream%0d",stream_count);
           end_label_s = $sformatf("hwloop0_nested_end_stream%0d",stream_count);
 
@@ -415,20 +454,21 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
           set_label_at_next_instr = 0; //reset flag
 
-          reserved_rd.delete(); //no longer need to keep the hwloop reserved gpr except for count0
-          reserved_rd = {hwloop_avail_regs[2]}; //preserve count0 reg for nested loop
+          //reserved_rd = {hwloop_avail_regs[2]}; //preserve count0 reg for nested loop
 
           if(!use_setup_inst[0])
-              insert_rand_instr(num_fill_instr_cv_end_to_loop_start_label[0]-1);
+              insert_rand_instr(num_fill_instr_loop_ctrl_to_loop_start[0]);
 
           //LABEL HWLOOP0_NESTED_START:
           label_s = $sformatf("hwloop0_nested_start_stream%0d",stream_count);
           insert_rand_instr_with_label(label_s,1);
+
           insert_rand_instr(num_hwloop_instr[0]-1);
 
           //LABEL HWLOOP0_NESTED_END:
           label_s = $sformatf("hwloop0_nested_end_stream%0d",stream_count);
           insert_rand_instr_with_label(label_s,1);
+
           insert_rand_instr(num_rem_hwloop1_instr-1);
 
 
@@ -501,9 +541,9 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                                        .end_lbl_str(end_label_s),
                                        .instr_label(label_s));
 
-              //Insert Random instructions till Loop HWLOOP_START0/1 label ->  use_setup_inst ? 0 : num_fill_instr_cv_end_to_loop_start_label[0/1] - 1
+              //Insert Random instructions till Loop HWLOOP_START0/1 label ->  use_setup_inst ? 0 : num_fill_instr_loop_ctrl_to_loop_start[0/1]
               if(!use_setup_inst[hwloop_L])
-                  insert_rand_instr((num_fill_instr_cv_end_to_loop_start_label[hwloop_L]-1),1,0,0);  // allow compressed instructions here ; TODO: Fence instr allowed here?
+                  insert_rand_instr((num_fill_instr_loop_ctrl_to_loop_start[hwloop_L]),1,0,0);  // allow compressed instructions here ; TODO: Fence instr allowed here?
 
               //LABEL HWLOOP_START0/1:
               insert_rand_instr_with_label(start_label_s,1); // no branch, no compressed, no fence instructions inside hwloop
@@ -619,7 +659,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       hwloop_starti_instr[hwloop_L].hw_loop_label = hwloop_L;
 
       //randomize immediates
-      starti_uimmL = num_fill_instr_cv_start_to_loop_start_label[hwloop_L] + 1;
+      starti_uimmL = num_instr_cv_start_to_loop_start_label[hwloop_L] + 1;
       hwloop_starti_instr[hwloop_L].imm = starti_uimmL;
       hwloop_starti_instr[hwloop_L].extend_imm();
 
@@ -668,8 +708,9 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       //TODO: check : while using cv_endi there is possiblity of some other instr before loop start
       //thats why using a count for such fill instructions
 
+      //add 1 to imm - for cv.count instuction after cv.endi instr
       //add 1 to imm - End addr of an HWLoop must point to the instr just after the last one of the HWLoop body
-      endi_uimmL = num_fill_instr_cv_end_to_loop_start_label[hwloop_L] + num_hwloop_instr[hwloop_L] + 1;
+      endi_uimmL = 1 + num_fill_instr_loop_ctrl_to_loop_start[hwloop_L] + num_hwloop_instr[hwloop_L] + 1;
 
       hwloop_endi_instr[hwloop_L].imm = endi_uimmL;
       hwloop_endi_instr[hwloop_L].extend_imm();
@@ -830,7 +871,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                                           bit no_fence=1);
 
       riscv_instr instr;
-      int i;
+      int unsigned i;
 
       //use cfg for ebreak
       if(cfg.no_ebreak)
@@ -852,7 +893,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       i = 0;
       while (i < num_rand_instr) begin
           //Create and Randomize array for avail_regs each time to ensure randomization
-          avail_regs = new[num_of_avail_regs];
+          avail_regs = new[num_of_avail_regs - reserved_rd.size()];
           randomize_avail_regs();
 
           instr = riscv_instr::type_id::create($sformatf("instr_%0d", i));
@@ -861,8 +902,10 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
           //randomize GPRs for each instruction
           randomize_gpr(instr);
+
           //randomize immediates for each instruction
           randomize_riscv_instr_imm(instr);
+
           instr_list.push_back(instr);
           i++;
       end
@@ -926,11 +969,11 @@ class cv32e40p_xpulp_short_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stre
       `uvm_field_sarray_int(hwloop_count, UVM_DEFAULT)
       `uvm_field_sarray_int(hwloop_counti, UVM_DEFAULT)
       `uvm_field_sarray_int(num_hwloop_instr, UVM_DEFAULT)
-      `uvm_field_sarray_int(num_hwloop_setupi_instr, UVM_DEFAULT)
-      `uvm_field_sarray_int(num_fill_instr_cv_end_to_loop_start_label, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_hwloop_ctrl_instr, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_fill_instr_loop_ctrl_to_loop_start, UVM_DEFAULT)
       `uvm_field_int(num_fill_instr_in_loop1_till_loop0_setup, UVM_DEFAULT)
       `uvm_field_int(setup_l0_before_l1_start, UVM_DEFAULT)
-      `uvm_field_sarray_int(num_fill_instr_cv_start_to_loop_start_label, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_instr_cv_start_to_loop_start_label, UVM_DEFAULT)
   `uvm_object_utils_end
 
   constraint gen_hwloop_count_c {
@@ -946,65 +989,74 @@ class cv32e40p_xpulp_short_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stre
                               [2048:4094] := 50, 4095 := 300};//TODO: check 0 is valid
   }
 
-  constraint num_hwloop_setupi_instr_c {
-      solve use_loop_setupi_inst[1] before use_loop_setupi_inst[0];
-      solve use_loop_setupi_inst before num_hwloop_setupi_instr;
-      solve use_setup_inst before num_hwloop_setupi_instr;
-      solve gen_nested_loop before num_hwloop_setupi_instr;
-
-      if(gen_nested_loop && use_setup_inst[1] && use_loop_setupi_inst[1]) { //with setupi only [4:0] uimmS range avail for end label
-          num_hwloop_setupi_instr[1] inside {[6:15]}; //with setupi only [4:0] uimmS range avail for end label
-          num_hwloop_setupi_instr[0] inside {[3:12]}; //TODO:in nested hwloop0 with setupi instr more than 27 instructions will have issue if setupi used for hwloop1?
-      } else if(gen_nested_loop && use_setup_inst[0] && use_loop_setupi_inst[0]) {
-          num_hwloop_setupi_instr[0] inside {[3:15]};
-      } else if( (!gen_nested_loop && use_setup_inst[1] && use_loop_setupi_inst[1]) || (!gen_nested_loop && use_setup_inst[0] && use_loop_setupi_inst[0]) ) {
-          num_hwloop_setupi_instr[0] inside {[3:15]};
-          num_hwloop_setupi_instr[1] inside {[3:15]};
-      }
-  }
 
   constraint num_hwloop_instr_c {
       solve num_hwloop_instr[0] before num_hwloop_instr[1];
-      solve num_hwloop_instr[1] before num_fill_instr_in_loop1_till_loop0_setup, num_fill_instr_cv_end_to_loop_start_label[0];
-      solve use_setup_inst before num_hwloop_instr,num_fill_instr_cv_end_to_loop_start_label,num_fill_instr_in_loop1_till_loop0_setup;
-      solve setup_l0_before_l1_start before num_hwloop_instr,num_fill_instr_cv_end_to_loop_start_label,num_fill_instr_in_loop1_till_loop0_setup, use_setup_inst;
-      solve gen_nested_loop before num_hwloop_instr,num_fill_instr_cv_end_to_loop_start_label,num_fill_instr_in_loop1_till_loop0_setup,setup_l0_before_l1_start,use_setup_inst;
 
-      if (setup_l0_before_l1_start == 1) { use_setup_inst[0] == 0};
+      solve num_hwloop_instr[1] before num_fill_instr_in_loop1_till_loop0_setup,
+                                       num_fill_instr_loop_ctrl_to_loop_start[0];
+
+      solve use_loop_setupi_inst[1] before use_loop_setupi_inst[0];
+
+      solve num_hwloop_ctrl_instr before num_hwloop_instr;
+
+      solve gen_nested_loop, setup_l0_before_l1_start, use_setup_inst before num_hwloop_instr,
+                                                                             num_fill_instr_loop_ctrl_to_loop_start,
+                                                                             num_fill_instr_in_loop1_till_loop0_setup,
+                                                                             num_hwloop_ctrl_instr;
+
+      solve gen_nested_loop, setup_l0_before_l1_start before use_setup_inst,
+                                                             use_loop_setupi_inst;
+
+      solve gen_nested_loop before setup_l0_before_l1_start;
+
+
+      setup_l0_before_l1_start dist {0 := 80, 1 := 20};
+
+      if ((gen_nested_loop == 1) && (setup_l0_before_l1_start == 1)) {
+          use_setup_inst[0] == 0;
+          use_setup_inst[1] == 0;
+          use_loop_setupi_inst[0] == 0;
+          use_loop_setupi_inst[1] == 0;
+      }
+
+      if(use_setup_inst[0]) {
+          num_fill_instr_loop_ctrl_to_loop_start[0] == 0;
+          num_hwloop_ctrl_instr[0] == 1;
+      } else {
+          num_fill_instr_loop_ctrl_to_loop_start[0] inside {[0:3]};
+          num_hwloop_ctrl_instr[0] == 3;
+      }
+
+      if(use_setup_inst[1]) {
+          num_fill_instr_loop_ctrl_to_loop_start[1] == 0;
+          num_hwloop_ctrl_instr[1] == 1;
+      } else {
+          num_fill_instr_loop_ctrl_to_loop_start[1] inside {[0:3]};
+          num_hwloop_ctrl_instr[1] == 3;
+      }
 
       if (gen_nested_loop == 1) {
           if (setup_l0_before_l1_start == 1) {
             num_hwloop_instr[0] inside {[3:17]};
-            num_hwloop_instr[1] >= num_hwloop_instr[0] + 3;
-            num_hwloop_instr[1] <= 20;
-            num_fill_instr_cv_end_to_loop_start_label[0] inside {[1:2]};
-            num_fill_instr_cv_end_to_loop_start_label[1] inside {[1:2]};
+            num_hwloop_instr[1] >= num_hwloop_instr[0] + 1 + 2; // 1 for cv.count0 ; 2 for end of loop req
+            num_hwloop_instr[1] <= 19 + 1; // 1 for cv.count0
             num_fill_instr_in_loop1_till_loop0_setup inside {[0:5]};
-            (num_fill_instr_cv_end_to_loop_start_label[0] + num_fill_instr_in_loop1_till_loop0_setup) <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 2);
+            (num_fill_instr_loop_ctrl_to_loop_start[0] + num_fill_instr_in_loop1_till_loop0_setup) <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 2 - 1); // 1 for cv.count0
           } else {
-            if (use_setup_inst[0]) {
-              num_hwloop_instr[0] inside {[3:17]};
-              num_hwloop_instr[1] >= num_hwloop_instr[0] + 3;
-              num_hwloop_instr[1] <= 20;
-              num_fill_instr_cv_end_to_loop_start_label[0] == 0;
-              num_fill_instr_cv_end_to_loop_start_label[1] inside {[1:2]};
-              num_fill_instr_in_loop1_till_loop0_setup inside {[0:5]};
-              num_fill_instr_in_loop1_till_loop0_setup <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 3);
+            if (use_setup_inst[1] && use_loop_setupi_inst[1] && ~use_setup_inst[0]) { //with setupi only [4:0] uimmS range avail for end label
+                  num_hwloop_instr[0] inside {[3:15]};
             } else {
-                num_hwloop_instr[0] inside {[3:15]};
-                num_hwloop_instr[1] >= num_hwloop_instr[0] + 5;
-                num_hwloop_instr[1] <= 20;
-                num_fill_instr_cv_end_to_loop_start_label[0] inside {[1:2]};
-                num_fill_instr_cv_end_to_loop_start_label[1] inside {[1:2]};
-                num_fill_instr_in_loop1_till_loop0_setup inside {[0:5]};
-                (num_fill_instr_cv_end_to_loop_start_label[0] + num_fill_instr_in_loop1_till_loop0_setup) <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 4);
+                num_hwloop_instr[0] inside {[3:17]};
             }
+            num_hwloop_instr[1] >= num_hwloop_instr[0] + num_hwloop_ctrl_instr[0] + 2;
+            num_hwloop_instr[1] <= 20;
+            num_fill_instr_in_loop1_till_loop0_setup inside {[0:4]};
+            (num_fill_instr_loop_ctrl_to_loop_start[0] + num_fill_instr_in_loop1_till_loop0_setup) <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 2 - num_hwloop_ctrl_instr[0]);
           }
       } else {
-          num_hwloop_instr[0] inside {[3:20]};
           num_hwloop_instr[1] inside {[3:20]};
-          num_fill_instr_cv_end_to_loop_start_label[0] inside {[1:2]};
-          num_fill_instr_cv_end_to_loop_start_label[1] inside {[1:2]};
+          num_hwloop_instr[0] inside {[3:20]};
           num_fill_instr_in_loop1_till_loop0_setup == 0;
       }
   }
@@ -1042,11 +1094,11 @@ class cv32e40p_xpulp_long_hwloop_stream extends cv32e40p_xpulp_hwloop_base_strea
       `uvm_field_sarray_int(hwloop_count, UVM_DEFAULT)
       `uvm_field_sarray_int(hwloop_counti, UVM_DEFAULT)
       `uvm_field_sarray_int(num_hwloop_instr, UVM_DEFAULT)
-      `uvm_field_sarray_int(num_hwloop_setupi_instr, UVM_DEFAULT)
-      `uvm_field_sarray_int(num_fill_instr_cv_end_to_loop_start_label, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_hwloop_ctrl_instr, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_fill_instr_loop_ctrl_to_loop_start, UVM_DEFAULT)
       `uvm_field_int(num_fill_instr_in_loop1_till_loop0_setup, UVM_DEFAULT)
       `uvm_field_int(setup_l0_before_l1_start, UVM_DEFAULT)
-      `uvm_field_sarray_int(num_fill_instr_cv_start_to_loop_start_label, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_instr_cv_start_to_loop_start_label, UVM_DEFAULT)
   `uvm_object_utils_end
 
   constraint gen_hwloop_count_c {
@@ -1058,65 +1110,84 @@ class cv32e40p_xpulp_long_hwloop_stream extends cv32e40p_xpulp_hwloop_base_strea
           hwloop_count[i] inside {[0:50]};//TODO: check 0 is valid
   }
 
-  constraint num_hwloop_setupi_instr_c {
-      solve use_loop_setupi_inst[1] before use_loop_setupi_inst[0];
-      solve use_loop_setupi_inst before num_hwloop_setupi_instr;
-      solve use_setup_inst before num_hwloop_setupi_instr;
-      solve gen_nested_loop before num_hwloop_setupi_instr;
-
-      if(gen_nested_loop && use_setup_inst[1] && use_loop_setupi_inst[1]) { //with setupi only [4:0] uimmS range avail for end label
-          num_hwloop_setupi_instr[1] inside {[6:30]}; //with setupi only [4:0] uimmS range avail for end label
-          num_hwloop_setupi_instr[0] inside {[3:27]}; //TODO:in nested hwloop0 with setupi instr more than 27 instructions will have issue if setupi used for hwloop1?
-      } else if(gen_nested_loop && use_setup_inst[0] && use_loop_setupi_inst[0]) {
-          num_hwloop_setupi_instr[0] inside {[3:30]};
-      } else if( (!gen_nested_loop && use_setup_inst[1] && use_loop_setupi_inst[1]) || (!gen_nested_loop && use_setup_inst[0] && use_loop_setupi_inst[0]) ) {
-          num_hwloop_setupi_instr[0] inside {[3:30]};
-          num_hwloop_setupi_instr[1] inside {[3:30]};
-      }
-  }
 
   constraint num_hwloop_instr_c {
       solve num_hwloop_instr[0] before num_hwloop_instr[1];
-      solve num_hwloop_instr[1] before num_fill_instr_in_loop1_till_loop0_setup, num_fill_instr_cv_end_to_loop_start_label[0];
-      solve use_setup_inst before num_hwloop_instr,num_fill_instr_cv_end_to_loop_start_label,num_fill_instr_in_loop1_till_loop0_setup;
-      solve setup_l0_before_l1_start before num_hwloop_instr,num_fill_instr_cv_end_to_loop_start_label,num_fill_instr_in_loop1_till_loop0_setup, use_setup_inst;
-      solve gen_nested_loop before num_hwloop_instr,num_fill_instr_cv_end_to_loop_start_label,num_fill_instr_in_loop1_till_loop0_setup,setup_l0_before_l1_start,use_setup_inst;
 
-      if (setup_l0_before_l1_start == 1) { use_setup_inst[0] == 0};
+      solve num_hwloop_instr[1] before num_fill_instr_in_loop1_till_loop0_setup,
+                                       num_fill_instr_loop_ctrl_to_loop_start[0];
+
+      solve use_loop_setupi_inst[1] before use_loop_setupi_inst[0];
+
+      solve num_hwloop_ctrl_instr before num_hwloop_instr;
+
+      solve gen_nested_loop, setup_l0_before_l1_start, use_setup_inst before num_hwloop_instr,
+                                                                             num_fill_instr_loop_ctrl_to_loop_start,
+                                                                             num_fill_instr_in_loop1_till_loop0_setup,
+                                                                             num_hwloop_ctrl_instr;
+
+      solve gen_nested_loop, setup_l0_before_l1_start before use_setup_inst,
+                                                             use_loop_setupi_inst;
+
+      solve gen_nested_loop before setup_l0_before_l1_start;
+
+
+      setup_l0_before_l1_start dist {0 := 80, 1 := 20};
+
+      if ((gen_nested_loop == 1) && (setup_l0_before_l1_start == 1)) {
+          use_setup_inst[0] == 0;
+          use_setup_inst[1] == 0;
+          use_loop_setupi_inst[0] == 0;
+      }
+
+      if (gen_nested_loop == 0) {
+          use_loop_setupi_inst[0] == 0; //we don't want this case again in long hwloop stream
+      }
+
+      use_loop_setupi_inst[1] == 0; //we don't want this case again in long hwloop stream
+
+      if(use_setup_inst[0]) {
+          num_fill_instr_loop_ctrl_to_loop_start[0] == 0;
+          num_hwloop_ctrl_instr[0] == 1;
+      } else {
+          num_fill_instr_loop_ctrl_to_loop_start[0] inside {[0:200]};
+          num_hwloop_ctrl_instr[0] == 3;
+      }
+
+      if(use_setup_inst[1]) {
+          num_fill_instr_loop_ctrl_to_loop_start[1] == 0;
+          num_hwloop_ctrl_instr[1] == 1;
+      } else {
+          //num_fill_instr_loop_ctrl_to_loop_start[1] inside {[0:200]};
+          num_fill_instr_loop_ctrl_to_loop_start[1] == 0; // For this long test non-zero value here is not necessary
+          num_hwloop_ctrl_instr[1] == 3;
+      }
 
       if (gen_nested_loop == 1) {
           if (setup_l0_before_l1_start == 1) {
-            num_hwloop_instr[0] inside {[3:4091]};
-            num_hwloop_instr[1] >= num_hwloop_instr[0] + 3;
-            num_hwloop_instr[1] <= 4094;
-            num_fill_instr_cv_end_to_loop_start_label[0] inside {[1:100]};
-            num_fill_instr_cv_end_to_loop_start_label[1] inside {[1:100]};
-            num_fill_instr_in_loop1_till_loop0_setup inside {[0:400]};
-            (num_fill_instr_cv_end_to_loop_start_label[0] + num_fill_instr_in_loop1_till_loop0_setup) <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 2);
+              num_hwloop_instr[0] inside {[3:4082]};
+              num_hwloop_instr[1] >= num_hwloop_instr[0] + 1 + 2; // 1 for cv.count0 ; 2 for end of loop req
+              num_hwloop_instr[1] <= 4085; // Max can be 4094 only as end label is on instruction after last instr of HWLOOP
+              num_fill_instr_in_loop1_till_loop0_setup inside {[0:800]};
+              (num_fill_instr_loop_ctrl_to_loop_start[0] + num_fill_instr_in_loop1_till_loop0_setup) <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 2 - 1); // 1 for cv.count0
           } else {
-            if (use_setup_inst[0]) {
-              num_hwloop_instr[0] inside {[3:4091]};
-              num_hwloop_instr[1] >= num_hwloop_instr[0] + 3;
-              num_hwloop_instr[1] <= 4094;
-              num_fill_instr_cv_end_to_loop_start_label[0] == 0;
-              num_fill_instr_cv_end_to_loop_start_label[1] inside {[1:100]};
-              num_fill_instr_in_loop1_till_loop0_setup inside {[0:400]};
-              num_fill_instr_in_loop1_till_loop0_setup <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 3);
-            } else {
-                num_hwloop_instr[0] inside {[3:4089]};
-                num_hwloop_instr[1] >= num_hwloop_instr[0] + 5;
-                num_hwloop_instr[1] <= 4094;
-                num_fill_instr_cv_end_to_loop_start_label[0] inside {[1:100]};
-                num_fill_instr_cv_end_to_loop_start_label[1] inside {[1:100]};
-                num_fill_instr_in_loop1_till_loop0_setup inside {[0:400]};
-                (num_fill_instr_cv_end_to_loop_start_label[0] + num_fill_instr_in_loop1_till_loop0_setup) <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 4);
-            }
+              if (use_setup_inst[0]) {
+                  if (use_loop_setupi_inst[0]) {
+                      num_hwloop_instr[0] inside {[3:30]};
+                  } else {
+                      num_hwloop_instr[0] inside {[3:4082]};
+                  }
+              } else {
+                  num_hwloop_instr[0] inside {[3:4080]};
+              }
+              num_hwloop_instr[1] >= num_hwloop_instr[0] + num_hwloop_ctrl_instr[0] + 2; // 2 for end of loop req
+              num_hwloop_instr[1] <= 4085; // Max can be 4094 only as end label is on instruction after last instr of HWLOOP
+              num_fill_instr_in_loop1_till_loop0_setup inside {[0:800]};
+              (num_fill_instr_loop_ctrl_to_loop_start[0] + num_fill_instr_in_loop1_till_loop0_setup) <= (num_hwloop_instr[1] - num_hwloop_instr[0] - 2 - num_hwloop_ctrl_instr[0]);
           }
       } else {
-          num_hwloop_instr[0] inside {[3:4094]}; // Max can be 4094 only as end label is on instruction after last instr of HWLOOP
-          num_hwloop_instr[1] inside {[3:4094]};
-          num_fill_instr_cv_end_to_loop_start_label[0] inside {[1:100]};
-          num_fill_instr_cv_end_to_loop_start_label[1] inside {[1:100]};
+          num_hwloop_instr[1] inside {[3:4085]}; // Max can be 4094 only as end label is on instruction after last instr of HWLOOP
+          num_hwloop_instr[0] inside {[3:4085]}; // Max can be 4094 only as end label is on instruction after last instr of HWLOOP
           num_fill_instr_in_loop1_till_loop0_setup == 0;
       }
   }
@@ -1155,11 +1226,11 @@ class cv32e40p_xpulp_hwloop_isa_stress_stream extends cv32e40p_xpulp_hwloop_base
       `uvm_field_sarray_int(hwloop_count, UVM_DEFAULT)
       `uvm_field_sarray_int(hwloop_counti, UVM_DEFAULT)
       `uvm_field_sarray_int(num_hwloop_instr, UVM_DEFAULT)
-      `uvm_field_sarray_int(num_hwloop_setupi_instr, UVM_DEFAULT)
-      `uvm_field_sarray_int(num_fill_instr_cv_end_to_loop_start_label, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_hwloop_ctrl_instr, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_fill_instr_loop_ctrl_to_loop_start, UVM_DEFAULT)
       `uvm_field_int(num_fill_instr_in_loop1_till_loop0_setup, UVM_DEFAULT)
       `uvm_field_int(setup_l0_before_l1_start, UVM_DEFAULT)
-      `uvm_field_sarray_int(num_fill_instr_cv_start_to_loop_start_label, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_instr_cv_start_to_loop_start_label, UVM_DEFAULT)
       `uvm_field_int(exclude_floating_pt_instr, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_instr_category_t,rand_exclude_category, UVM_DEFAULT)
   `uvm_object_utils_end
@@ -1202,7 +1273,7 @@ class cv32e40p_xpulp_hwloop_isa_stress_stream extends cv32e40p_xpulp_hwloop_base
 
       riscv_instr         instr;
       cv32e40p_instr      cv32_instr;
-      int i;
+      int unsigned i;
 
       //use cfg for ebreak
       if(cfg.no_ebreak)

@@ -259,25 +259,29 @@ module uvmt_cv32e40p_imperas_dv_wrap
   import rvviApiPkg::*;
   #(
      parameter FPU   = 0,
-     parameter ZFINX = 0
+     parameter ZFINX = 0,
+     parameter SET_IDV_RECONVERGE = 0
     )
 
     (
         rvviTrace  rvvi // RVVI SystemVerilog Interface
     );
 
+    trace2log       idv_trace2log(rvvi);
+
     localparam bit F_REG = FPU & !ZFINX;
+
     trace2api #(
-        .CMP_PC      (1),
-        .CMP_INS     (1),
-        .CMP_GPR     (1),
-        .CMP_FPR     (F_REG),
-        .CMP_VR      (0),
-        .CMP_CSR     (1)
+        .CMP_PC                 (1),
+        .CMP_INS                (1),
+        .CMP_GPR                (1),
+        .CMP_FPR                (F_REG),
+        .CMP_VR                 (0),
+        .CMP_CSR                (1),
+        .ON_MISMATCH_RECONVERGE (SET_IDV_RECONVERGE)
     )
     trace2api(rvvi);
 
-    trace2log       idv_trace2log(rvvi);
     trace2cov       idv_trace2cov(rvvi);
 
     string info_tag = "ImperasDV_wrap";
