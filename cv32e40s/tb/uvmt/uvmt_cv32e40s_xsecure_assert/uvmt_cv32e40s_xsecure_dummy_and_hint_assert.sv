@@ -151,27 +151,12 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     end
   end
 
-  logic [6:0] id_opcode;
-  logic [2:0] id_funct3;
-  logic [6:0] id_funct7;
-  logic [4:0] id_rd;
-  logic [4:0] id_rs1;
-  logic [4:0] id_rs2;
-  logic [12:0] id_branch_imm;
-
   logic        is_wb_csr_write;
   asm_t        wb_instr_decoded;
 
   always_comb begin
     wb_instr_decoded    <= decode_instr(wb_instr);
     is_wb_csr_write     <= wb_valid && is_csr_write_spec_f(wb_instr_decoded);
-    id_opcode           <= opcode_f(id_instr);
-    id_funct3           <= funct3_f(id_instr);
-    id_funct7           <= funct7_f(id_instr);
-    id_rd               <= rd_f(id_instr);
-    id_rs1              <= rs1_f(id_instr);
-    id_rs2              <= rs2_f(id_instr);
-    id_branch_imm       <= branch_imm_f(id_instr);
   end
 
   //Verify that dummy and hint instructions are default disabled
@@ -199,10 +184,8 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   property p_generate_dummy_hint_instruction(feature_enabled, hint_or_dummy);
 
     feature_enabled
-    && if_valid
-    && id_ready
-    ##1
-    hint_or_dummy;
+    && id_valid
+    && hint_or_dummy;
   endproperty
 
   c_xsecure_dummy_instr_generated_dummy_instr_if_dummy_setting_is_on: cover property(
@@ -222,9 +205,8 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   property p_dont_generate_dummy_hint_instruction(feature_enabled, hint_or_dummy);
 
     !feature_enabled
-    && if_valid
-    && id_ready
-    |=>
+    && id_valid
+    |->
     !hint_or_dummy;
   endproperty
 
@@ -246,7 +228,10 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   a_xsecure_dummy_instr_is_inserted_in_if_stage: assert property(
     if_valid
     && id_ready
+
     ##1 id_dummy
+    && id_valid
+
     |->
     $past(if_dummy)
   ) else `uvm_error(info_tag, "The dummy instruction is not inserted in the IF stage.\n");
@@ -256,9 +241,8 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
   property p_dummy_hint_instr_is_either_add_and_mul_or_bltu(id_dummy_or_hint);
 
-    if_valid
-    && id_ready
-    ##1 id_dummy_or_hint
+    id_valid
+    && id_dummy_or_hint
 
     |->
     (id_opcode == OPCODE_OP
@@ -291,10 +275,8 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
   property p_dummy_hint_instr_is_add_and_or_mul(id_dummy_or_hint, opcode, funct3, funct7);
 
-    if_valid
-    && id_ready
-
-    ##1 id_dummy_or_hint
+    id_valid
+    && id_dummy_or_hint
 
     && id_opcode == opcode
     && id_funct3 == funct3
@@ -351,29 +333,24 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   );
 
 
-  property p_dummy_hint_instr_bltu(id_dummy_or_hint, opcode, funct3);
+  property p_dummy_hint_instr_bltu(id_dummy_or_hint, instr_name);
 
-    if_valid
-    && id_ready
+    id_valid
+    && id_dummy_or_hint
 
-    ##1 id_dummy_or_hint
-
-    && id_opcode == opcode
-    && id_funct3 == funct3;
+    && id_instr_decoded.instr == instr_name;
   endproperty
 
   c_xsecure_dummy_instr_is_bltu: cover property(
     p_dummy_hint_instr_bltu(
       id_dummy,
-      OPCODE_BRANCH,
-      FUNCT3_BLTU)
+      BLTU)
   );
 
   c_xsecure_hint_instr_is_btlu: cover property(
     p_dummy_hint_instr_bltu(
       id_hint,
-      OPCODE_BRANCH,
-      FUNCT3_BLTU)
+      BLTU)
   );
 
 
@@ -381,14 +358,12 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
   property p_bltu_dummy_hint_instr_jumps_to_the_subsequent_instruction(id_dummy_or_hint, dummy_hint_increment);
 
-    if_valid
-    && id_ready
-
-    ##1 id_dummy_or_hint
-    && id_opcode == cv32e40s_pkg::OPCODE_BRANCH
+    id_valid
+    && id_dummy_or_hint
+    && id_instr_decoded.instr == BLTU
 
     |->
-    id_branch_imm == dummy_hint_increment;
+    id_instr_decoded.imm.imm_value == dummy_hint_increment;
   endproperty
 
   a_xsecure_dummy_instr_bltu_jumping: assert property(
@@ -406,12 +381,11 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
   //Verify that the source for the operands to dummy and hint instructions can be either of the x0 to x32 registers
 
+
   property p_dummy_hint_instr_rs(id_dummy_or_hint, rs, addr_rs);
 
-    if_valid
-    && id_ready
-
-    ##1 id_dummy_or_hint
+    id_valid
+    && id_dummy_or_hint
 
     && rs == addr_rs;
   endproperty
@@ -421,49 +395,48 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     c_xsecure_dummy_source_reg1: cover property(
       p_dummy_hint_instr_rs(
         id_dummy,
-        id_rs1,
+        id_instr_decoded.rs1.gpr.raw,
         rs_addr)
     );
 
     c_xsecure_dummy_source_reg2: cover property(
       p_dummy_hint_instr_rs(
         id_dummy,
-        id_rs2,
+        id_instr_decoded.rs2.gpr.raw,
         rs_addr)
     );
 
     c_xsecure_hint_source_reg1: cover property(
       p_dummy_hint_instr_rs(
         id_hint,
-        id_rs1,
+        id_instr_decoded.rs1.gpr.raw,
         rs_addr)
     );
 
     c_xsecure_hint_source_reg2: cover property(
       p_dummy_hint_instr_rs(
         id_hint,
-        id_rs2,
+        id_instr_decoded.rs2.gpr.raw,
         rs_addr)
     );
 
   end
+
 
   //Verify that the source for the operands to dummy and hint instructions are fetched from the LFSR1 and LFSR2 registers,
   //Or that we fetch data from the R0 register
 
   property p_dummy_hint_instr_operands_originate_from_lfsr1_lfsr2_or_r0(id_dummy_or_hint);
 
-    if_valid
-    && id_ready
-
-    ##1 id_dummy_or_hint
+    id_valid
+    && id_dummy_or_hint
 
     |->
     ((operand_a == (lfsr1))
-    || id_rs1 == REGISTER_X0)
+    || id_instr_decoded.rs1.gpr.raw == REGISTER_X0)
 
     && ((operand_b == (lfsr2))
-    || id_rs2 == REGISTER_X0);
+    || id_instr_decoded.rs2.gpr.raw == REGISTER_X0);
 
   endproperty
 
@@ -483,14 +456,12 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
   property p_dummy_hint_destination_is_r0(id_dummy_or_hint);
 
-    if_valid
-    && id_ready
-
-    ##1 id_dummy_or_hint
-    && id_opcode != OPCODE_BRANCH //branch instructions do not use a destination register
+    id_valid
+    && id_dummy_or_hint
+    && id_instr_decoded.instr != BLTU //branch instructions do not use a destination register
 
     |->
-    id_rd == REGISTER_X0;
+    id_instr_decoded.rd.gpr.raw == REGISTER_X0;
   endproperty
 
 
@@ -608,8 +579,8 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
       && id_valid
       && ex_ready,
 
-      id_hint_rs1 = id_rs1,
-      id_hint_rs2 = id_rs2)
+      id_hint_rs1 = id_instr_decoded.rs1.gpr.raw,
+      id_hint_rs2 = id_instr_decoded.rs2.gpr.raw)
 
       ##0 first_match(##[2:$]
       wb_hint
@@ -629,7 +600,6 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   a_xsecure_hint_instr_load_hint_stall: assert property (
     p_load_stall_for_hints
   ) else `uvm_error(info_tag, "A hint instruction does not stall in ID stage even though the value of a source register is not fetched from memory yet.\n");
-
 
 
   //Verify that both the dummy and the hint instructions update mcycle

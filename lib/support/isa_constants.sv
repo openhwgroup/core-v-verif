@@ -11,20 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
-`ifndef __SUPPORT_PKG_SV__
-`define __SUPPORT_PKG_SV__
+// -------------------------------------------------------------------
+// This file holds constants related to the ISA
+// -------------------------------------------------------------------
 
+`ifndef __ISA_CONSTANTS__
+`define __ISA_CONSTANTS__
 
-package support_pkg;
-  `include "isa_constants.sv"
-  `include "isa_typedefs.sv"
-  `include "isa_typedefs_csr.sv"
-  `include "isa_support.sv" //TODO: krdosvik, change name to isa_disassembler when no outstanding PR
-  `include "isa_utility.sv"
-endpackage
+parameter CLIC_ID_WIDTH = 5;
+parameter DEFAULT_XLEN = 32;
 
-`endif // __SUPPORT_PKG_SV__
-
+`endif // __ISA_CONSTANTS__
