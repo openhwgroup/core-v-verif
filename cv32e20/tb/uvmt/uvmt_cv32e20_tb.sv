@@ -128,21 +128,22 @@ module uvmt_cv32e20_tb;
   // in step_compare defined:
   // CV32E20_CORE   $root.uvmt_cv32e20_tb.dut_wrap.cv32e20_top_i.core_i
   // but currently instanced as: 
-  // uvmt_cv32e20_tb.dut_wrap.cv32e20_top_i.u_cve2_core.cs_registers_i
+  // uvmt_cv32e20_tb.dut_wrap.cv32e20_top_i.u_cve2_top.u_cve2_core.cs_registers_i
   bind uvmt_cv32e20_dut_wrap
-    uvmt_cv32e20_interrupt_assert interrupt_assert_i(.mcause_n(~cv32e20_top_i.u_cve2_core.cs_registers_i.mcause_q), // was mcause_n
-                                                      .mip(cv32e20_top_i.u_cve2_core.cs_registers_i.mip),
-                                                      .mie_q(cv32e20_top_i.u_cve2_core.cs_registers_i.mie_q),
-                                                      .mie_n(cv32e20_top_i.u_cve2_core.cs_registers_i.mie_q),  // was mie_n
-                                                      .mstatus_mie(cv32e20_top_i.u_cve2_core.cs_registers_i.mstatus_q.mie),
-                                                      .mtvec_mode_q(cv32e20_top_i.u_cve2_core.cs_registers_i.mtvec_q),  // was mtvec_mode_q
-                                                      .if_stage_instr_rvalid_i(cv32e20_top_i.u_cve2_core.if_stage_i.instr_rvalid_i),
-                                                      .if_stage_instr_rdata_i(cv32e20_top_i.u_cve2_core.if_stage_i.instr_rdata_i),
-                                                      .id_stage_instr_valid_i(cv32e20_top_i.u_cve2_core.id_stage_i.instr_valid_i),
-                                                      .id_stage_instr_rdata_i(cv32e20_top_i.u_cve2_core.id_stage_i.instr_rdata_i),
-                                                      .branch_taken_ex(cv32e20_top_i.u_cve2_core.id_stage_i.perf_branch_o),  // was branch_taken_ex
-                                                      .ctrl_fsm_cs(cv32e20_top_i.u_cve2_core.id_stage_i.controller_i.ctrl_fsm_cs),
-                                                      .debug_mode_q(cv32e20_top_i.u_cve2_core.id_stage_i.controller_i.debug_mode_q),
+    uvmt_cv32e20_interrupt_assert interrupt_assert_i(.mcause_n(cv32e20_top_i.u_cve2_top.u_cve2_core.cs_registers_i.mcause_d), 
+                                                      .mip(cv32e20_top_i.u_cve2_top.u_cve2_core.cs_registers_i.mip),
+                                                      .mie_q(cv32e20_top_i.u_cve2_top.u_cve2_core.cs_registers_i.mie_q),
+                                                      .mie_n(cv32e20_top_i.u_cve2_top.u_cve2_core.cs_registers_i.mie_d),  
+                                                      .mstatus_mie(cv32e20_top_i.u_cve2_top.u_cve2_core.cs_registers_i.mstatus_q.mie),
+                                                      .mtvec_mode_q(cv32e20_top_i.u_cve2_top.u_cve2_core.cs_registers_i.mtvec_q),  
+                                                      .if_stage_instr_rvalid_i(cv32e20_top_i.u_cve2_top.u_cve2_core.if_stage_i.instr_rvalid_i),
+                                                      .if_stage_instr_rdata_i(cv32e20_top_i.u_cve2_top.u_cve2_core.if_stage_i.instr_rdata_i),
+                                                      .id_stage_instr_valid_i(cv32e20_top_i.u_cve2_top.u_cve2_core.id_stage_i.instr_valid_i),
+                                                      .id_stage_instr_rdata_i(cv32e20_top_i.u_cve2_top.u_cve2_core.id_stage_i.instr_rdata_i),
+                                                   // .branch_taken_ex(cv32e20_top_i.u_cve2_top.u_cve2_core.id_stage_i.perf_branch_o),  // was branch_taken_ex
+                                                      .branch_taken_ex(cv32e20_top_i.u_cve2_top.u_cve2_core.perf_tbranch),  // was branch_taken_ex
+                                                      .ctrl_fsm_cs(cv32e20_top_i.u_cve2_top.u_cve2_core.id_stage_i.controller_i.ctrl_fsm_cs),
+                                                      .debug_mode_q(cv32e20_top_i.u_cve2_top.u_cve2_core.id_stage_i.controller_i.debug_mode_q),
                                                       .clk       (clknrst_if.clk),
                                                       .clk_i     (clknrst_if.clk),
                                                       .rst_ni    (clknrst_if.reset_n),
@@ -159,10 +160,10 @@ module uvmt_cv32e20_tb;
     .fetch_enable_i          (),
 
     // External interrupt interface
-    .irq_i                   (),
-    .irq_ack_o               (),
-    .irq_id_o                (),
-    .mie_q                   (),
+    .irq_i                   (dut_wrap.irq),
+    .irq_ack_o               (dut_wrap.irq_ack),
+    .irq_id_o                (dut_wrap.irq_id),
+    .mie_q                   (dut_wrap.cv32e20_top_i.u_cve2_top.u_cve2_core.cs_registers_i.mie_q),
 
     .if_stage_instr_rvalid_i (),
     .if_stage_instr_rdata_i  (),

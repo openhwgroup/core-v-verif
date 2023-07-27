@@ -78,7 +78,7 @@ task uvme_cv32e20_vp_rand_num_seq_c::vp_body(uvma_obi_memory_mon_trn_c mon_trn);
    `uvm_info("VPRNDSEQ", $sformatf("Issuing a random number: 0x%08x", slv_rsp.rdata), UVM_HIGH);
 
    // Temporary hack to write the random number into ISS memory so that ISS can "see" the random number GPR register load as the RTL
-   cv32e20_cntxt.rvvi_memory_vif.mem[mon_trn.address >> 2] = slv_rsp.rdata;
+  // cv32e20_cntxt.rvvi_memory_vif.mem[mon_trn.address >> 2] = slv_rsp.rdata;
 
    add_r_fields(mon_trn, slv_rsp);
    `uvm_send(slv_rsp)

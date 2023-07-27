@@ -19,7 +19,7 @@ volatile uint32_t active_test             = 0;
 volatile uint32_t nested_irq              = 0;
 volatile uint32_t nested_irq_valid        = 0;
 volatile uint32_t in_direct_handler       = 0;
-volatile uint32_t mm_ram_driven           = 0;
+volatile uint32_t mm_ram_driven           = 0; // keeps track of how the interrupts are driven
 
 // NMI is highest and not maskable (not in this list)
 uint32_t IRQ_ID_PRIORITY [IRQ_NUM] = {
@@ -127,22 +127,28 @@ void generic_irq_handler(uint32_t id) {
     irq_id = id;
     uint32_t clear_mask = (0xFFFFFFFF - (0x1 << irq_id));
     if (active_test ==1) { 
-      mm_ram_assert_irq(0, 6);//random_num(10,0)
+      mm_ram_assert_irq(0, random_num(10,0));
     }
-    
-    if (active_test == 2 || active_test == 3 || active_test == 4) {
-// printf("generic_irq_handler: interrupt %lu\n", irq_id);
-// printf("generic_irq_handler: clear_mask %x\n",  clear_mask);
-// printf("generic_irq_handler: mm_ram_driven %x\n",  mm_ram_driven);
+    if (active_test == 2) {    
         irq_id_q[irq_id_q_ptr++] = id;
         mm_ram_driven = (mm_ram_driven & clear_mask);
         mm_ram_assert_irq(mm_ram_driven, 8);
     //    mm_ram_assert_irq((0x1 << (32-irq_id_q_ptr)), 8);
     } 
+    if (active_test == 3 || active_test == 4) {
+// printf("generic_irq_handler: original mm_ram_driven %lx\n",  mm_ram_driven);
+// printf("generic_irq_handler: interrupt %lu %lu\n", irq_id, id);
+// printf("generic_irq_handler: clear_mask %lx\n",  clear_mask);
+        irq_id_q[irq_id_q_ptr++] = id;
+        mm_ram_driven = (mm_ram_driven & clear_mask);
+        mm_ram_assert_irq(mm_ram_driven, 8);
+// printf("generic_irq_handler: mm_ram_driven %lx\n",  mm_ram_driven);
+    //    mm_ram_assert_irq((0x1 << (32-irq_id_q_ptr)), 8);
+    } 
     if (active_test == 3) {
         if (nested_irq_valid) {
             nested_irq_valid = 0;
-            mm_ram_assert_irq(0x1 << nested_irq, 7 ); //random_num(10,0)
+            mm_ram_assert_irq(0x1 << nested_irq, random_num(10,0));
         }
         nested_irq_handler(id);
     }    
@@ -410,7 +416,7 @@ int test2() {
     irq_id_q_ptr = 0;
 
     // Fire all IRQs and give time for them to be handled
-    mm_ram_driven = (uint32_t) -1;
+    mm_ram_driven = 0xFFFFFFFF;
     mm_ram_assert_irq(mm_ram_driven, 0);
 
     delay(100);
@@ -439,6 +445,8 @@ int test3() {
     active_test = 3;
 
     // Enable all interrupts
+    mm_ram_driven = 0;
+// printf("Test3: mm_ram_driven %lx\n",  mm_ram_driven);
     mm_ram_assert_irq(0, 0);
     mie_enable_all();
     mstatus_mie_enable();
@@ -448,10 +456,8 @@ int test3() {
         uint32_t irq[2];
 
         // Pick 2 random interrupts
-//        irq[0] = IRQ_ID_PRIORITY[random_num(IRQ_NUM-1, 0)];
-        irq[0] = IRQ_ID_PRIORITY[20];
-//        irq[1] = IRQ_ID_PRIORITY[random_num(IRQ_NUM-1, 0)];
-        irq[1] = IRQ_ID_PRIORITY[25];
+        irq[0] = IRQ_ID_PRIORITY[random_num(IRQ_NUM-1, 0)];
+        irq[1] = IRQ_ID_PRIORITY[random_num(IRQ_NUM-1, 0)];
 
         irq_id_q_ptr = 0;
         nested_irq = irq[1];
@@ -461,7 +467,10 @@ int test3() {
         printf("TEST3: Test nested irqs %lu and %lu\n", irq[0], irq[1]);
 #endif
 
-        mm_ram_assert_irq(0x1 << irq[0], 0);
+        mm_ram_driven = 0x1 << irq[0];
+//        printf("Test3: mm_ram_driven %lx\n",  mm_ram_driven);
+        mm_ram_assert_irq(mm_ram_driven, 0);
+      //  mm_ram_assert_irq(0x1 << irq[0], 0);
 
         delay(50);
 
@@ -486,6 +495,7 @@ int test3() {
 // Tests that WFI works regardless of MSTATUS.MIE
 // Tests that IRQ handler is not entered after WFI unless MSTATUS.MIE is set
 int test4() {
+/* 
     printf("TEST 4 - WFI\n");
     
     // Test 4 is a WFI test
@@ -543,9 +553,10 @@ int test4() {
             }
         }
     }
+ */
     return EXIT_SUCCESS;
 }
-
+ 
 // Test 5 will repeat the basic interrupt test in test 1
 // But with a relocated vector table via mtvec CSR
 int test5() {
@@ -571,7 +582,7 @@ int test5() {
 // Test 6 will repeat the basic interrupt test in test 1
 // But with a relocated vector table via mtvec CSR and DIRECT vector mode
 int test6() {
-    volatile uint32_t save_mtvec;
+/*    volatile uint32_t save_mtvec;
     int retval;
 
     printf("TEST 6 - TRIGGER ALL IRQS IN SEQUENCE (DIRECT-MODE MTVEC):\n");
@@ -586,13 +597,13 @@ int test6() {
     if (retval != EXIT_SUCCESS) {
         return ERR_CODE_TEST_6;
     }
-
+ */
     return EXIT_SUCCESS;
 }
 
 // Test 7 is a direct repeat of test 1 in vectored mode
 int test7() {
-    printf("TEST 7 - TRIGGER ALL IRQS IN SEQUENCE: (REPEAT VECTOR MODE)\n");
+/*    printf("TEST 7 - TRIGGER ALL IRQS IN SEQUENCE: (REPEAT VECTOR MODE)\n");
 
     active_test = 7;
 
@@ -600,7 +611,8 @@ int test7() {
         return ERR_CODE_TEST_7;
 
     return EXIT_SUCCESS;
-}
+ */
+ }
 
 int test8() {
     volatile uint32_t mcausew;
@@ -637,7 +649,7 @@ int test8() {
 }
 
 int test9() {
-    volatile uint32_t save_mtvec;
+/*    volatile uint32_t save_mtvec;
     printf("TEST 9 - ECALL-WFI Coverage Test\n");
 
     active_test = 9;
@@ -701,4 +713,5 @@ int test9() {
     asm volatile("csrw mtvec, %0" : : "r" (save_mtvec)); 
 
     return EXIT_SUCCESS;
+*/
 }

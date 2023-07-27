@@ -101,17 +101,24 @@ module uvmt_cv32e20_dut_wrap #(
     assign interrupt_if.clk                     = clknrst_if.clk;
     assign interrupt_if.reset_n                 = clknrst_if.reset_n;
     assign irq_uvma                             = interrupt_if.irq;
+    assign interrupt_if.irq_id                  = cv32e20_top_i.u_cve2_top.u_cve2_core.id_stage_i.controller_i.exc_cause_o[4:0]; //irq_id;
+//    assign interrupt_if.irq_ack                 = cv32e20_top_i.u_cve2_top.u_cve2_core.id_stage_i.controller_i.handle_irq; //irq_ack;
+    assign interrupt_if.irq_ack                 = (cv32e20_top_i.u_cve2_top.u_cve2_core.id_stage_i.controller_i.ctrl_fsm_cs == 4'h7);//irq_ack
+
     assign vp_interrupt_if.clk                  = clknrst_if.clk;
     assign vp_interrupt_if.reset_n              = clknrst_if.reset_n;
-    assign irq_vp                               = vp_interrupt_if.irq;
-    assign interrupt_if.irq_id                  = cv32e20_top_i.u_cve2_core.id_stage_i.controller_i.mfip_id; //irq_id;
-    assign interrupt_if.irq_ack                 = cv32e20_top_i.u_cve2_core.id_stage_i.controller_i.handle_irq; //irq_ack;
-    
+    assign irq_vp                               = irq_uvma;
+    // {irq_q[31:16], pending_enabled_irq_q[11], pending_enabled_irq_q[3], pending_enabled_irq_q[7]}
+    // was vp_interrupt_if.irq;
+    assign vp_interrupt_if.irq_id               = cv32e20_top_i.u_cve2_top.u_cve2_core.id_stage_i.controller_i.exc_cause_o[4:0];    //irq_id;
+    assign vp_interrupt_if.irq_ack              = (cv32e20_top_i.u_cve2_top.u_cve2_core.id_stage_i.controller_i.ctrl_fsm_cs == 4'h7);//irq_ack
+
     assign irq = irq_uvma | irq_vp;
 
     // ------------------------------------------------------------------------
     // Instantiate the core
-    cve2_top #(
+//    cve2_top #( 
+    cve2_top_tracing #( 
                .MHPMCounterNum   (MHPMCounterNum),
                .MHPMCounterWidth (MHPMCounterWidth),
                .RV32E            (RV32E),
@@ -129,7 +136,7 @@ module uvmt_cv32e20_dut_wrap #(
          .ram_cfg_i              ( prim_ram_1p_pkg::RAM_1P_CFG_DEFAULT ),
 
          .hart_id_i              ( 32'h0000_0000                  ),
-         .boot_addr_i            ( 32'h0000_0800                  ),
+         .boot_addr_i            ( 32'h0000_0000                  ), //<---MJS changing to 0 
 
   // Instruction memory interface
          .instr_req_o            ( obi_memory_instr_if.req        ), // core to agent
@@ -164,6 +171,7 @@ module uvmt_cv32e20_dut_wrap #(
   // RISC-V Formal Interface
   // Does not comply with the coding standards of _i/_o suffixes, but follows
   // the convention of RISC-V Formal Interface Specification.
+/*
 `ifdef RVFI
          .rvfi_valid              (),
          .rvfi_order              (),
@@ -193,7 +201,7 @@ module uvmt_cv32e20_dut_wrap #(
          .rvfi_ext_debug_req      (),
          .rvfi_ext_mcycle         (),
 `endif
-
+ */ //LRH
   // CPU Control Signals
          .fetch_enable_i          ('1), // fetch_enable_t
          .core_sleep_o            ()
