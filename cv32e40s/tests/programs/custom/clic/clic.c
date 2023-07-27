@@ -341,9 +341,19 @@ void set_mseccfg(mseccfg_t mseccfg);
 /*
  * increment_mepc
  *
- * TODO
+ * Increments mepc,
+ * incr_val 0 = auto detect
+ *          2 = halfword
+ *          4 = word
  */
 void increment_mepc(uint32_t incr_val);
+
+/*
+ * reset_cpu_interrupt_lvl
+ *
+ * Resets core internal interrupt level (as reported by mintsstatus.mil)
+ */
+void reset_cpu_interrupt_lvl(void);
 
 // ---------------------------------------------------------------
 // Test entry point
@@ -2723,9 +2733,41 @@ uint32_t mret_with_minhv(uint32_t index, uint8_t report_name) {
 
 // -----------------------------------------------------------------------------
 
+void reset_cpu_interrupt_lvl(void) {
+  volatile mcause_t mcause = { 0 };
+  volatile mstatus_t mstatus = { 0 };
+  volatile uint32_t  pc = 0;
+
+  __asm__ volatile ( R"(
+    csrrs %[mstatus], mstatus, zero
+    csrrs %[mcause], mcause, zero
+  )":[mstatus] "=r"(mstatus.raw),
+     [mcause] "=r"(mcause.raw)
+    ::);
+
+  mcause.clic.mpil = 0;
+  mcause.clic.mpie = mstatus.fields.mie;
+  mcause.clic.mpp = 0x3;
+
+  __asm__ volatile ( R"(
+    la %[pc], continued
+    csrrw zero, mcause, %[mcause]
+    csrrw zero, mepc, %[pc]
+    mret
+    continued:
+    nop
+  )":[pc] "+r"(pc)
+    :[mcause] "r"(mcause.raw)
+    :);
+  return;
+}
+
+// -----------------------------------------------------------------------------
+
 uint32_t mintthresh_lower(uint32_t index, uint8_t report_name) {
   volatile uint8_t test_fail = 0;
   volatile mintthresh_t mintthresh = { 0 };
+  volatile mintstatus_t mintstatus = { 0 };
   volatile uint32_t mnxti_rval = 0;
   volatile clic_t clic_irq_vector = { 0 };
 
@@ -2737,10 +2779,20 @@ uint32_t mintthresh_lower(uint32_t index, uint8_t report_name) {
 
   mintthresh.fields.th = 0xff;
   *g_special_handler_idx = 4;
+
+  __asm__ volatile (R"(csrrs %[rd], 0xfb1, zero)":[rd] "=r"(mintstatus.raw));
   // To be potentially set by handler if incorrectly entered
   *g_irq_handler_reported_error = 0;
+
   *g_asserted_irq_idx = get_random_interrupt_number(0, NUM_INTERRUPTS);
-  *g_asserted_irq_lvl = get_random_interrupt_level(0, NUM_INTERRUPT_LVLS-1);
+
+  // Random interrupt with higher level than core, but lower than mintthresh;
+  *g_asserted_irq_lvl = get_random_interrupt_level(mintstatus.fields.mil + 1, NUM_INTERRUPT_LVLS-1);
+
+  if (*g_asserted_irq_lvl <= mintstatus.fields.mil) {
+    // Reset cpu interrupt level, as we cannot not reach our desired test case
+    reset_cpu_interrupt_lvl();
+  }
 
   cvprintf(V_DEBUG, "mintthresh.th: %01x, interrupt: %02x, level: %02x\n", mintthresh.fields.th, *g_asserted_irq_idx, *g_asserted_irq_lvl);
 
@@ -2788,10 +2840,11 @@ uint32_t mintthresh_lower(uint32_t index, uint8_t report_name) {
 
 uint32_t mintthresh_higher(uint32_t index, uint8_t report_name) {
   volatile uint8_t test_fail = 0;
-  volatile mintthresh_t mintthresh = { 0 };
   volatile uint32_t mnxti_rval = 0;
-  volatile clic_t clic_irq_vector = { 0 };
   volatile uint32_t mtvt = 0;
+  volatile mintthresh_t mintthresh = { 0 };
+  volatile mintstatus_t mintstatus = { 0 };
+  volatile clic_t clic_irq_vector = { 0 };
 
   SET_FUNC_INFO
   if (report_name) {
@@ -2800,11 +2853,19 @@ uint32_t mintthresh_higher(uint32_t index, uint8_t report_name) {
   }
 
   *g_special_handler_idx = 5;
+
+  __asm__ volatile (R"(csrrs %[rd], 0xfb1, zero)":[rd] "=r"(mintstatus.raw));
+
   // To be cleared by handler
   *g_irq_handler_reported_error = 1;
   mintthresh.fields.th = get_random_interrupt_level(1, NUM_INTERRUPT_LVLS-1);
   *g_asserted_irq_idx = get_random_interrupt_number(1, NUM_INTERRUPTS);
   *g_asserted_irq_lvl = get_random_interrupt_level(mintthresh.fields.th + 1, NUM_INTERRUPT_LVLS);
+
+  if (*g_asserted_irq_lvl <= mintstatus.fields.mil) {
+    // Reset cpu interrupt level, as we cannot not reach our desired test case
+    reset_cpu_interrupt_lvl();
+  }
 
   cvprintf(V_DEBUG, "mintthresh.th: %01x, interrupt: %02x, level: %02x\n", mintthresh.fields.th, *g_asserted_irq_idx, *g_asserted_irq_lvl);
 
@@ -2824,7 +2885,7 @@ uint32_t mintthresh_higher(uint32_t index, uint8_t report_name) {
     .fields.shv   = 0x0
   };
 
-  // asserted interrupt should not be taken (mintthresh.th too high)
+  // asserted interrupt should be taken (mintthresh.th low enough)
   vp_assert_irq(clic_irq_vector.raw, 0);
 
   __asm__ volatile ( R"(
@@ -2852,8 +2913,9 @@ uint32_t mintthresh_higher(uint32_t index, uint8_t report_name) {
 
 uint32_t mintthresh_equal(uint32_t index, uint8_t report_name) {
   volatile uint8_t test_fail = 0;
-  volatile mintthresh_t mintthresh = { 0 };
   volatile uint32_t mnxti_rval = 0;
+  volatile mintthresh_t mintthresh = { 0 };
+  volatile mintstatus_t mintstatus = { 0 };
   volatile clic_t clic_irq_vector = { 0 };
 
   SET_FUNC_INFO
@@ -2863,11 +2925,19 @@ uint32_t mintthresh_equal(uint32_t index, uint8_t report_name) {
   }
 
   *g_special_handler_idx = 6;
+
+  __asm__ volatile (R"(csrrs %[rd], 0xfb1, zero)":[rd] "=r"(mintstatus.raw));
+
   // To be set by handler in case of entry
   *g_irq_handler_reported_error = 0;
   mintthresh.fields.th = get_random_interrupt_level(1, NUM_INTERRUPT_LVLS);
   *g_asserted_irq_idx = get_random_interrupt_number(1, NUM_INTERRUPTS);
   *g_asserted_irq_lvl = mintthresh.fields.th;
+
+  if (*g_asserted_irq_lvl <= mintstatus.fields.mil) {
+    // Reset cpu interrupt level, as we cannot not reach our desired test case
+    reset_cpu_interrupt_lvl();
+  }
 
   cvprintf(V_DEBUG, "mintthresh.th: %01x, interrupt: %02x, level: %02x\n", mintthresh.fields.th, *g_asserted_irq_idx, *g_asserted_irq_lvl);
 
