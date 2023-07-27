@@ -942,10 +942,12 @@ interface uvmt_imperas_dv_if_t;
     rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR, RVVI_FALSE);
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
 
+    // TODO: Set these as volatiles as a temporary fix until
+    // we have a proper fix implemented in the ISS
     if (CORE_PARAM_CLIC == 1) begin
-      rvviRefCsrCompareEnable(hart_id, `CSR_MNXTI_ADDR, RVVI_FALSE);
-      rvviRefCsrCompareEnable(hart_id, `CSR_MSCRATCHCSW_ADDR, RVVI_FALSE);
-      rvviRefCsrCompareEnable(hart_id, `CSR_MSCRATCHCSWL_ADDR, RVVI_FALSE);
+      void'(rvviRefCsrSetVolatile(hart_id, `CSR_MNXTI_ADDR));
+      void'(rvviRefCsrSetVolatile(hart_id, `CSR_MSCRATCHCSW_ADDR));
+      void'(rvviRefCsrSetVolatile(hart_id, `CSR_MSCRATCHCSWL_ADDR));
     end
 
     // define asynchronous grouping
