@@ -295,42 +295,149 @@ interface uvma_rvfi_instr_if_t
   end
 
   // assigning signal aliases to helper functions
+  // These signals may be have dependencies on each other, thus to
+  // avoid having to micromanage order of execution, they are split
+  // into separate always_comb blocks. Assign will not work due to
+  // sensitivity list issues with functions, and a single always_comb
+  // block will cause issues due to clause b in section 9.2.2.2.1 of
+  // ieee 1800-2017
   always_comb begin
     instr_asm                        = decode_instr(rvfi_insn);
+  end
 
+  always_comb begin
     is_dret                          = is_dret_f();
+  end
+
+  always_comb begin
     is_mret                          = is_mret_f();
+  end
+
+  always_comb begin
     is_uret                          = is_uret_f();
+  end
+
+  always_comb begin
     is_wfi                           = is_wfi_f();
+  end
+
+  always_comb begin
     is_wfe                           = is_wfe_f();
+  end
+
+  always_comb begin
     is_ebreak                        = is_ebreak_f();
+  end
+
+  always_comb begin
     is_ebreak_compr                  = is_ebreak_compr_f();
+  end
+
+  always_comb begin
     is_ebreak_noncompr               = is_ebreak_noncompr_f();
+  end
+
+  always_comb begin
     is_ecall                         = is_ecall_f();
+  end
+
+  always_comb begin
     is_branch                        = is_branch_f();
+  end
+
+  always_comb begin
     is_div                           = is_div_f();
+  end
+
+  always_comb begin
     is_rem                           = is_rem_f();
+  end
+
+  always_comb begin
     is_cslli                         = is_cslli_f();
+  end
+
+  always_comb begin
     is_nmi                           = is_nmi_f();
+  end
+
+  always_comb begin
     is_compressed                    = is_compressed_f();
+  end
+
+  always_comb begin
     is_dbg_trg                       = is_dbg_trg_f();
+  end
+
+  always_comb begin
     is_mmode                         = is_mmode_f();
+  end
+
+  always_comb begin
     is_not_mmode                     = is_not_mmode_f();
+  end
+
+  always_comb begin
     is_umode                         = is_umode_f();
+  end
+
+  always_comb begin
     is_not_umode                     = is_not_umode_f();
+  end
+
+  always_comb begin
     is_pma_instr_fault               = is_pma_instr_fault_f();
+  end
+
+  always_comb begin
     is_instr_bus_valid               = is_instr_bus_valid_f();
+  end
+
+  always_comb begin
     is_pushpop                       = is_pushpop_f();
+  end
+
+  always_comb begin
     is_split_datatrans_actual        = is_split_datatrans_actual_f();
+  end
+
+  always_comb begin
     is_split_datatrans_intended      = is_split_datatrans_intended_f();
+  end
+
+  always_comb begin
     is_mem_act                       = is_mem_act_f();
+  end
+
+  always_comb begin
     is_tablejump_raw                 = is_tablejump_raw_f();
+  end
+
+  always_comb begin
     is_pma_fault                     = is_pma_fault_f();
+  end
+
+  always_comb begin
     is_fencefencei                   = is_fencefencei_f();
+  end
+
+  always_comb begin
     rvfi_mem_addr_word0highbyte      = rvfi_mem_addr_word0highbyte_f();
+  end
+
+  always_comb begin
     rvfi_mem_rmask_intended          = rvfi_mem_rmask_intended_f();
+  end
+
+  always_comb begin
     rvfi_mem_wmask_intended          = rvfi_mem_wmask_intended_f();
+  end
+
+  always_comb begin
     is_deprioritized_load_acc_fault  = is_deprioritized_exception_f({21'd 0, EXC_CAUSE_LOAD_ACC_FAULT});
+  end
+
+  always_comb begin
     is_deprioritized_store_acc_fault = is_deprioritized_exception_f({21'd 0, EXC_CAUSE_STORE_ACC_FAULT});
   end
 
@@ -700,7 +807,7 @@ function automatic logic is_ecall_f();
   return match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);
 endfunction : is_ecall_f
 
-function logic is_branch_f(); //TODO
+function automatic logic is_branch_f(); //TODO
   return match_instr(INSTR_OPCODE_BEQ, INSTR_MASK_I_S_B_TYPE) ||
          match_instr(INSTR_OPCODE_BNE, INSTR_MASK_I_S_B_TYPE) ||
          match_instr(INSTR_OPCODE_BLT, INSTR_MASK_I_S_B_TYPE) ||
@@ -711,15 +818,15 @@ function logic is_branch_f(); //TODO
          match_instr(INSTR_OPCODE_CBNEZ, INSTR_MASK_CMPR);
 endfunction : is_branch_f
 
-function logic is_div_f();
+function automatic logic is_div_f();
   return match_instr(INSTR_OPCODE_DIV, INSTR_MASK_DIV_REM);
 endfunction : is_div_f
 
-function logic is_rem_f();
+function automatic logic is_rem_f();
   return match_instr(INSTR_OPCODE_REM, INSTR_MASK_DIV_REM);
 endfunction : is_rem_f
 
-function logic is_cslli_f();
+function automatic logic is_cslli_f();
   return match_instr(INSTR_OPCODE_CSLLI, INSTR_MASK_CMPR);
 endfunction : is_cslli_f
 
