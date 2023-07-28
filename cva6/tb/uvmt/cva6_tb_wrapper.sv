@@ -62,9 +62,7 @@ module cva6_tb_wrapper import uvmt_cva6_pkg::*; #(
   assign rvfi_o = rvfi;
 
   cva6 #(
-     .CVA6Cfg ( CVA6Cfg ),
-     //
-    .ArianeCfg  ( ariane_soc::ArianeSocCfg )
+     .CVA6Cfg ( CVA6Cfg )
   ) i_cva6 (
     .clk_i                ( clk_i                     ),
     .rst_ni               ( rst_ni                    ),

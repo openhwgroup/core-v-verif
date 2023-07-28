@@ -31,14 +31,6 @@ module uvmt_cva6_tb;
    import uvme_cva6_pkg::*;
 
    // cva6 configuration
-   localparam ariane_pkg::cva6_cfg_t CVA6Cfg = {
-     unsigned'(cva6_config_pkg::CVA6ConfigNrCommitPorts),  // NrCommitPorts
-     unsigned'(cva6_config_pkg::CVA6ConfigRvfiTrace),      // IsRVFI
-     unsigned'(cva6_config_pkg::CVA6ConfigAxiAddrWidth),   // AxiAddrWidth
-     unsigned'(cva6_config_pkg::CVA6ConfigAxiDataWidth),   // AxiDataWidth
-     unsigned'(cva6_config_pkg::CVA6ConfigAxiIdWidth),     // AxiIdWidth
-     unsigned'(cva6_config_pkg::CVA6ConfigDataUserWidth)   // AxiUserWidth
-   };
    localparam type rvfi_instr_t = struct packed {
      logic [ariane_pkg::NRET-1:0]                  valid;
      logic [ariane_pkg::NRET*64-1:0]               order;
@@ -108,7 +100,7 @@ module uvmt_cva6_tb;
    uvmt_rvfi_if #(
      // RVFI
      .rvfi_instr_t      ( rvfi_instr_t ),
-     .CVA6Cfg           ( CVA6Cfg      )
+     .CVA6Cfg           ( ariane_pkg::CVA6DefaultCfg )
    ) rvfi_if(
                                                  .rvfi_o(),
                                                  .tb_exit_o()
@@ -119,7 +111,7 @@ module uvmt_cva6_tb;
    */
 
    uvmt_cva6_dut_wrap #(
-     .CVA6Cfg           ( CVA6Cfg       ),
+     .CVA6Cfg           ( ariane_pkg::CVA6DefaultCfg ),
      .rvfi_instr_t      ( rvfi_instr_t  ),
      //
      .AXI_USER_EN       (AXI_USER_EN),
