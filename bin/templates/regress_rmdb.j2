@@ -18,8 +18,8 @@
     <!-- arguments from command line override yaml parameters, test parameters override build parameters -->
     <usertcl name="getParameterByPriority">
         proc getParameterByPriority {cmd_option test_option build_option} {
-            if {[string trim $cmd_option] == ""} {
-                if {[string trim $test_option] == ""} {
+            if {[string trim $cmd_option] == "" || [string trim $cmd_option] == "None"} {
+                if {[string trim $test_option] == ""  || [string trim $cmd_option] == "None"} {
                     return $build_option
                 }
                 return $test_option
