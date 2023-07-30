@@ -1,5 +1,5 @@
 !Feature
-next_elt_id: 3
+next_elt_id: 4
 name: User_Mode_Counter_CSRs(cycle, instret, cycleh, instreth)
 id: 3
 display_order: 3
@@ -82,6 +82,31 @@ subfeatures: !!omap
         ref_viewer: firefox
         verif_goals: Ensure that User mode counter CSR can be accessed in all privilege
           modes by configuring scounteren and mcounteren CSRs as per riscv specification.
+        pfc: 1
+        test_type: 1
+        cov_method: 1
+        cores: 8
+        coverage_loc: ''
+        comments: ''
+- ? "003_Testing CSR with inverted reset value\n"
+  : !Subfeature
+    name: "003_Testing CSR with inverted reset value\n"
+    tag: VP_csr-access_F003_S003
+    next_elt_id: 1
+    display_order: 3
+    items: !!omap
+    - '000': !VerifItem
+        name: '000'
+        tag: VP_csr-access_F003_S003_I000
+        description: This test scnerio involves applying inverted reset values on
+          CSR during the system reset process.
+        reqt_doc: ''
+        ref_mode: page
+        ref_page: ''
+        ref_section: ''
+        ref_viewer: firefox
+        verif_goals: To verify system's performance and stability when when inverted
+          reset value are applied on CSR.
         pfc: 1
         test_type: 1
         cov_method: 1

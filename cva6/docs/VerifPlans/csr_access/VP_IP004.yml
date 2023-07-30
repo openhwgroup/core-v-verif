@@ -1,5 +1,5 @@
 !Feature
-next_elt_id: 3
+next_elt_id: 4
 name: Machine_mode_counter_csr(mcycle,mcycleh,minstret,minstreth)
 id: 4
 display_order: 4
@@ -84,6 +84,30 @@ subfeatures: !!omap
           privilege mode according to the specification.\n2.Verify that trying to
           access Machine Mode CSR in an incorrect privilege mode raises an illegal
           instruction exception."
+        pfc: 1
+        test_type: 1
+        cov_method: 1
+        cores: 8
+        coverage_loc: ''
+        comments: ''
+- 003_Testing CSR with inverted RESET value: !Subfeature
+    name: 003_Testing CSR with inverted RESET value
+    tag: VP_csr-access_F004_S003
+    next_elt_id: 1
+    display_order: 3
+    items: !!omap
+    - '000': !VerifItem
+        name: '000'
+        tag: VP_csr-access_F004_S003_I000
+        description: This test scnerio involves applying inverted reset values on
+          CSR during the system reset process.
+        reqt_doc: ''
+        ref_mode: page
+        ref_page: ''
+        ref_section: ''
+        ref_viewer: firefox
+        verif_goals: To verify system's performance and stability when when inverted
+          reset value are applied on CSR.
         pfc: 1
         test_type: 1
         cov_method: 1
