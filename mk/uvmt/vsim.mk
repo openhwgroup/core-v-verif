@@ -191,6 +191,7 @@ VSIM_FLAGS += -sv_lib $(basename $(abspath $(SVLIB_LIB)))
 # Skip compile if requested (COMP=NO)
 ifneq ($(call IS_NO,$(COMP)),NO)
 VSIM_SIM_PREREQ = comp
+VSIM_COREVDV_SIM_PREREQ = comp_corev-dv
 endif
 
 ################################################################################
@@ -378,7 +379,7 @@ vopt_corev-dv:
 			-o $(CV_CORE_LC)_instr_gen_tb_top_vopt \
 			-l vopt.log
 
-gen_corev-dv: comp_corev-dv
+gen_corev-dv: $(VSIM_COREVDV_SIM_PREREQ)
 	mkdir -p $(SIM_COREVDV_RESULTS)/$(TEST)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		mkdir -p $(SIM_TEST_RESULTS)/$$idx/test_program; \
@@ -403,7 +404,7 @@ gen_corev-dv: comp_corev-dv
 	# Copy out final assembler files to test directory
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		cp -f ${BSP}/link_corev-dv.ld ${SIM_TEST_RESULTS}/$$idx/test_program/link.ld; \
-		cp ${SIM_COREVDV_RESULTS}/${TEST}/${TEST}_$$idx.S ${SIM_TEST_RESULTS}/$$idx/test_program; \
+		cp -f ${SIM_COREVDV_RESULTS}/${TEST}/${TEST}_$$idx.S ${SIM_TEST_RESULTS}/$$idx/test_program; \
 	done
 
 $(SIM_COREVDV_RESULTS)/vlog.log: vlog_corev-dv

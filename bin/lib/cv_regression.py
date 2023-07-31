@@ -26,7 +26,7 @@ from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_ISS = 'YES'
+DEFAULT_ISS = 'NO'
 DEFAULT_COV = 'NO'
 DEFAULT_CFG = 'default'
 DEFAULT_SIMULATION_PASSED = 'SIMULATION PASSED'
