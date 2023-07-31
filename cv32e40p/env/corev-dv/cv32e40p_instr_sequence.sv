@@ -38,6 +38,7 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
   //Override parent class post_process_instr() inside cv32e40p_instr_sequence
   //Keeping same code as parent class post_process_intr() with additions -
   //--logic to check for hwloop stream related labels
+  //--logic for PULP IMM_BRANCH
   virtual function void post_process_instr();
     int             i;
     int             label_idx;
@@ -109,7 +110,10 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
                                          branch_idx[i] inside {[1:cfg.max_branch_step]};
                                        })
     while(i < instr_stream.instr_list.size()) begin
-      if((instr_stream.instr_list[i].category == BRANCH) &&
+      if((
+        (instr_stream.instr_list[i].category == BRANCH) || 
+        (instr_stream.instr_list[i].category == BRANCH_IMM)
+        ) &&
         (!instr_stream.instr_list[i].branch_assigned) &&
         (!instr_stream.instr_list[i].is_illegal_instr)) begin
         // Post process the branch instructions to give a valid local label
@@ -119,11 +123,11 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
         int branch_target_label;
         int branch_byte_offset;
         branch_target_label = instr_stream.instr_list[i].idx + branch_idx[branch_cnt];
-        if (branch_target_label >= label_idx) begin
+        if (branch_target_label >= label_idx) begin : BRANCH_EXCEED_MAX_LABEL_IDX
           branch_target_label = label_idx-1;
         end
         branch_cnt++;
-        if (branch_cnt == branch_idx.size()) begin
+        if (branch_cnt == branch_idx.size()) begin : RESET_BRANCH_SETTING
           branch_cnt = 0;
           branch_idx.shuffle();
         end
@@ -131,13 +135,23 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
                   $sformatf("Processing branch instruction[%0d]:%0s # %0d -> %0d",
                   i, instr_stream.instr_list[i].convert2asm(),
                   instr_stream.instr_list[i].idx, branch_target_label), UVM_HIGH)
-        instr_stream.instr_list[i].imm_str = $sformatf("%0df", branch_target_label);
+
+        if (instr_stream.instr_list[i].category == BRANCH_IMM) begin
+          instr_stream.instr_list[i].imm_str = $sformatf("%0d, %0df", $signed(instr_stream.instr_list[i].imm[16:12]), branch_target_label);
+        end else begin
+          instr_stream.instr_list[i].imm_str = $sformatf("%0df", branch_target_label); // <num>f
+        end
+
         // Below calculation is only needed for generating the instruction stream in binary format
         for (int j = i + 1; j < instr_stream.instr_list.size(); j++) begin
           branch_byte_offset = (instr_stream.instr_list[j-1].is_compressed) ?
                                branch_byte_offset + 2 : branch_byte_offset + 4;
           if (instr_stream.instr_list[j].label == $sformatf("%0d", branch_target_label)) begin
-            instr_stream.instr_list[i].imm = branch_byte_offset;
+            if (instr_stream.instr_list[i].category == BRANCH_IMM) begin
+              instr_stream.instr_list[i].imm[11:0] = branch_byte_offset;
+            end else begin
+              instr_stream.instr_list[i].imm = branch_byte_offset;
+            end
             break;
           end else if (j == instr_stream.instr_list.size() - 1) begin
             `uvm_fatal(`gfn, $sformatf("Cannot find target label : %0d", branch_target_label))
@@ -155,7 +169,7 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
         end
       end
       i++;
-    end
+    end // while
     `uvm_info(get_full_name(), "Finished post-processing instructions", UVM_HIGH)
   endfunction
 
