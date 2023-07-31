@@ -19,7 +19,7 @@
     <usertcl name="getParameterByPriority">
         proc getParameterByPriority {cmd_option test_option build_option} {
             if {[string trim $cmd_option] == "" || [string trim $cmd_option] == "None"} {
-                if {[string trim $test_option] == ""  || [string trim $cmd_option] == "None"} {
+                if {[string trim $test_option] == ""  || [string trim $test_option] == "None"} {
                     return $build_option
                 }
                 return $test_option
@@ -32,7 +32,7 @@
         proc getParameterByPriorityYesOrNo {cmd_option test_option build_option} {
             set param [getParameterByPriority $cmd_option $test_option $build_option]
             if {($param == "True") || ($param == "1")} { return "YES" }
-            if {($param == "Frue") || ($param == "0")} { return "NO" }
+            if {($param == "False") || ($param == "0")} { return "NO" }
             return $param
         }
     </usertcl>
@@ -59,7 +59,7 @@
         </members>
         <preScript launch="exec">
 {% for b in r.get_builds_with_no_tests() %}
-            <command> cd {{b.abs_dir}} &amp;&amp; {{b.cmd}} CV_CORE={{project}} CFG={{b.cfg}} CV_SIM_PREFIX= {{toolchain|upper}}=1 SIMULATOR={{b.simulator}} COV={{regress_macros.yesorno(b.cov)}} {{regress_macros.cv_results(results)}} {{makeargs}} </command>
+            <command> cd {{b.abs_dir}} &amp;&amp; {{b.cmd}} CV_CORE={{project}} CFG={{b.cfg}} {{toolchain|upper}}=1 SIMULATOR={{b.simulator}} {{regress_macros.cv_results(results)}} {{makeargs}} </command>
 {% endfor %}
         </preScript>
     </runnable>
@@ -81,7 +81,7 @@
 {% endfor %}
             </members>
             <preScript launch="exec">
-                <command> cd {{build.abs_dir}} &amp;&amp; {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} CV_SIM_PREFIX= {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results)}} {{makeargs}} </command>
+                <command> cd {{build.abs_dir}} &amp;&amp; {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} {{regress_macros.cv_results(results)}} {{makeargs}} </command>
             </preScript>
         </runnable>
 
@@ -108,7 +108,7 @@
                 </method>
 {% endif %}
                 <execScript launch="exec" usestderr="no">
-                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} CHECK_SIM_LOG=(%log_file%) COMP=0 CV_SIM_PREFIX= CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) RISCVDV_CFG={{t.riscvdv_cfg}} SIMULATOR={{t.simulator}} USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
+                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} CHECK_SIM_LOG=(%log_file%) COMP=0 CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR={{t.simulator}} USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
                 </execScript>
             </runnable>
 
