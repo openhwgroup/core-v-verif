@@ -15,11 +15,11 @@ builds:
     dir: cv32e40p/sim/uvmt
     cov: 0
   uvmt_cv32e40p_pulp_fpu_1cyclat:
-    cmd: make comp
+    cmd: make comp comp_corev-dv
     dir: cv32e40p/sim/uvmt
     cfg: pulp_fpu_1cyclat
   uvmt_cv32e40p_pulp_fpu_2cyclat:
-    cmd: make comp
+    cmd: make comp comp_corev-dv
     dir: cv32e40p/sim/uvmt
     cfg: pulp_fpu_2cyclat
 
