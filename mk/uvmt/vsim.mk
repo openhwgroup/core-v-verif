@@ -39,8 +39,8 @@ USES_DPI = 1
 
 # Default flags
 VSIM_USER_FLAGS         ?=
-VOPT_COV  				?= +cover=setf+$(RTLSRC_VLOG_TB_TOP).
-VSIM_COV 				?= -coverage
+VOPT_COV                ?= +cover=setf+$(RTLSRC_VLOG_TB_TOP).
+VSIM_COV                ?= -coverage
 VOPT_WAVES_ADV_DEBUG    ?= -designfile design.bin
 VSIM_WAVES_ADV_DEBUG    ?= -qwavedb=+signal+assertion+ignoretxntime+msgmode=both
 VSIM_WAVES_DO           ?= $(VSIM_SCRIPT_DIR)/waves.tcl
@@ -93,12 +93,13 @@ VOPT_LDGEN_FLAGS ?= \
                     -debugdb \
                     -fsmdebug \
                     -suppress 7034 \
+                    -suppress 2732 \
                     +acc \
                     $(QUIET)
 
 VSIM_LDGEN_FLAGS ?= \
-					-batch \
-					-do $(VSIM_SCRIPT_DIR)/vsim.tcl
+		-batch \
+		-do $(VSIM_SCRIPT_DIR)/vsim.tcl
 
 ###############################################################################
 # VLOG (Compilation)
@@ -126,15 +127,18 @@ VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+UVM"
+VLOG_FLAGS += "+define+RVFI"
 
 ###############################################################################
 # VOPT (Optimization)
 VOPT_FLAGS    ?= \
-                 -debugdb \
-				 -fsmdebug \
-				 -suppress 7034 \
-				 +acc \
-				 $(QUIET)
+              -debugdb \
+              -fsmdebug \
+              -suppress 7034 \
+              -suppress 2732 \
+              -suppress 2247 \
+              +acc \
+              $(QUIET)
 
 ###############################################################################
 # VSIM (Simulaion)
@@ -146,6 +150,7 @@ VSIM_FLAGS        += -suppress 8858
 VSIM_FLAGS        += -suppress 8522
 VSIM_FLAGS        += -suppress 8550
 VSIM_FLAGS        += -suppress 8549
+VSIM_FLAGS        += -suppress 3694
 VSIM_FLAGS        += -permit_unmatched_virtual_intf
 VSIM_DEBUG_FLAGS  ?= -debugdb
 VSIM_GUI_FLAGS    ?= -gui -debugdb
