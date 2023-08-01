@@ -52,6 +52,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    rand uvma_interrupt_cfg_c        interrupt_cfg;
    rand uvma_clic_cfg_c             clic_cfg;
    rand uvma_debug_cfg_c            debug_cfg;
+   rand uvma_wfe_wu_cfg_c           wfe_wu_cfg;
    rand uvma_obi_memory_cfg_c       obi_memory_instr_cfg;
    rand uvma_obi_memory_cfg_c       obi_memory_data_cfg;
    rand uvma_fencei_cfg_c           fencei_cfg;
@@ -59,19 +60,19 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    rand uvma_pma_cfg_c#(ILEN,XLEN)  pma_cfg;
 
    `uvm_object_utils_begin(uvme_cv32e40s_cfg_c)
-      `uvm_field_int (                         enabled                     , UVM_DEFAULT          )
-      `uvm_field_enum(uvm_active_passive_enum, is_active                   , UVM_DEFAULT          )
-      `uvm_field_int (                         cov_model_enabled           , UVM_DEFAULT          )
-      `uvm_field_int (                         trn_log_enabled             , UVM_DEFAULT          )
-      `uvm_field_int (                         buserr_scoreboarding_enabled, UVM_DEFAULT          )
-      `uvm_field_int (                         sys_clk_period              , UVM_DEFAULT | UVM_DEC)
-      `uvm_field_enum (b_ext_e,                b_ext                       , UVM_DEFAULT          )
-      `uvm_field_int (                         obi_memory_instr_random_err_enabled,   UVM_DEFAULT  )
-      `uvm_field_int (                         obi_memory_instr_one_shot_err_enabled, UVM_DEFAULT  )
-      `uvm_field_int (                         obi_memory_data_random_err_enabled,    UVM_DEFAULT  )
-      `uvm_field_int (                         obi_memory_data_one_shot_err_enabled,  UVM_DEFAULT  )
-      `uvm_field_int (                         iss_suppress_invalid_msg,              UVM_DEFAULT  )
-      `uvm_field_int (                         fetch_toggle_initial_delay,            UVM_DEFAULT  )
+      `uvm_field_int (                         enabled,                               UVM_DEFAULT           )
+      `uvm_field_enum(uvm_active_passive_enum, is_active,                             UVM_DEFAULT           )
+      `uvm_field_int (                         cov_model_enabled,                     UVM_DEFAULT           )
+      `uvm_field_int (                         trn_log_enabled,                       UVM_DEFAULT           )
+      `uvm_field_int (                         buserr_scoreboarding_enabled,          UVM_DEFAULT           )
+      `uvm_field_int (                         sys_clk_period,                        UVM_DEFAULT | UVM_DEC )
+      `uvm_field_enum (b_ext_e,                b_ext,                                 UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_instr_random_err_enabled,   UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_instr_one_shot_err_enabled, UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_data_random_err_enabled,    UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_data_one_shot_err_enabled,  UVM_DEFAULT           )
+      `uvm_field_int (                         iss_suppress_invalid_msg,              UVM_DEFAULT           )
+      `uvm_field_int (                         fetch_toggle_initial_delay,            UVM_DEFAULT           )
       `uvm_field_int (                         nmi_timeout_instr,                     UVM_DEFAULT | UVM_DEC )
       `uvm_field_int (                         single_step_min_limit,                 UVM_DEFAULT | UVM_DEC )
       `uvm_field_int (                         irq_min_limit,                         UVM_DEFAULT | UVM_DEC )
@@ -82,6 +83,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_object(interrupt_cfg        , UVM_DEFAULT)
       `uvm_field_object(clic_cfg             , UVM_DEFAULT)
       `uvm_field_object(debug_cfg            , UVM_DEFAULT)
+      `uvm_field_object(wfe_wu_cfg           , UVM_DEFAULT)
       `uvm_field_object(obi_memory_instr_cfg , UVM_DEFAULT)
       `uvm_field_object(obi_memory_data_cfg  , UVM_DEFAULT)
       `uvm_field_object(rvfi_cfg             , UVM_DEFAULT)
@@ -189,6 +191,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          interrupt_cfg.enabled         == basic_interrupt_enable;
          clic_cfg.enabled              == clic_interrupt_enable;
          debug_cfg.enabled             == 1;
+         wfe_wu_cfg.enabled            == 1;
          rvfi_cfg.enabled              == 1;
          obi_memory_instr_cfg.enabled  == 1;
          obi_memory_data_cfg.enabled   == 1;
@@ -259,6 +262,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          clknrst_cfg.is_active          == UVM_ACTIVE;
          interrupt_cfg.is_active        == UVM_ACTIVE;
          clic_cfg.is_active             == UVM_ACTIVE;
+         wfe_wu_cfg.is_active           == UVM_ACTIVE;
          debug_cfg.is_active            == UVM_ACTIVE;
          obi_memory_instr_cfg.is_active == UVM_ACTIVE;
          obi_memory_data_cfg.is_active  == UVM_ACTIVE;
@@ -272,6 +276,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          debug_cfg.trn_log_enabled             == 0;
          interrupt_cfg.trn_log_enabled         == 0;
          clic_cfg.trn_log_enabled              == 0;
+         wfe_wu_cfg.trn_log_enabled            == 0;
          isacov_cfg.trn_log_enabled            == 0;
          obi_memory_data_cfg.trn_log_enabled   == 1;
          obi_memory_instr_cfg.trn_log_enabled  == 1;
@@ -281,6 +286,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          debug_cfg.trn_log_enabled             == 0;
          interrupt_cfg.trn_log_enabled         == 0;
          clic_cfg.trn_log_enabled              == 0;
+         wfe_wu_cfg.trn_log_enabled            == 0;
          isacov_cfg.trn_log_enabled            == 0;
          obi_memory_data_cfg.trn_log_enabled   == 0;
          obi_memory_instr_cfg.trn_log_enabled  == 0;
@@ -409,7 +415,6 @@ function uvme_cv32e40s_cfg_c::new(string name="uvme_cv32e40s_cfg");
      single_step_min_limit.rand_mode(0);
    end
 
-
    if ($test$plusargs("enable_clic")) begin
      clic_interrupt_enable  = 1;
      basic_interrupt_enable = 0;
@@ -426,6 +431,7 @@ function uvme_cv32e40s_cfg_c::new(string name="uvme_cv32e40s_cfg");
    interrupt_cfg        = uvma_interrupt_cfg_c::type_id::create("interrupt_cfg");
    clic_cfg             = uvma_clic_cfg_c::type_id::create("clic_cfg");
    debug_cfg            = uvma_debug_cfg_c::type_id::create("debug_cfg");
+   wfe_wu_cfg           = uvma_wfe_wu_cfg_c::type_id::create("wfe_wu_cfg");
    obi_memory_instr_cfg = uvma_obi_memory_cfg_c::type_id::create("obi_memory_instr_cfg");
    obi_memory_data_cfg  = uvma_obi_memory_cfg_c::type_id::create("obi_memory_data_cfg" );
    rvfi_cfg             = uvma_rvfi_cfg_c#(ILEN,XLEN)::type_id::create("rvfi_cfg");

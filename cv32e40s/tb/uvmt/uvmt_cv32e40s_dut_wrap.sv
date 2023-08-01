@@ -71,6 +71,7 @@ module uvmt_cv32e40s_dut_wrap
     uvma_clknrst_if_t               clknrst_if,
     uvma_interrupt_if_t             interrupt_if,
     uvma_clic_if_t                  clic_if,
+    uvma_wfe_wu_if_t                wfe_wu_if,
     uvmt_cv32e40s_vp_status_if_t    vp_status_if,
     uvme_cv32e40s_core_cntrl_if_t   core_cntrl_if,
     uvmt_cv32e40s_core_status_if_t  core_status_if,
@@ -140,6 +141,10 @@ module uvmt_cv32e40s_dut_wrap
     assign clic_if.irq_ack          = cv32e40s_wrapper_i.core_i.irq_ack;
 
     // --------------------------------------------
+    assign wfe_wu_if.clk              = clknrst_if.clk;
+    assign wfe_wu_if.reset_n          = clknrst_if.reset_n;
+
+    // --------------------------------------------
     // Connect to core_cntrl_if
     assign core_cntrl_if.b_ext = B_EXT;
     `ifndef FORMAL
@@ -194,43 +199,43 @@ module uvmt_cv32e40s_dut_wrap
          .mimpid_patch_i         ( core_cntrl_if.mimpid_patch     ),
          .dm_exception_addr_i    ( core_cntrl_if.dm_exception_addr),
 
-         .instr_req_o            ( obi_instr_if.req             ),
-         .instr_reqpar_o         ( obi_instr_if.reqpar          ),
-         .instr_gnt_i            ( obi_instr_if.gnt             ),
-         .instr_gntpar_i         ( obi_instr_if.gntpar          ),
-         .instr_addr_o           ( obi_instr_if.addr            ),
-         .instr_achk_o           ( obi_instr_if.achk            ),
-         .instr_prot_o           ( obi_instr_if.prot            ),
-         .instr_dbg_o            ( obi_instr_if.dbg             ),
-         .instr_memtype_o        ( obi_instr_if.memtype         ),
-         .instr_rdata_i          ( obi_instr_if.rdata           ),
-         .instr_rchk_i           ( obi_instr_if.rchk            ),
-         .instr_rvalid_i         ( obi_instr_if.rvalid          ),
-         .instr_rvalidpar_i      ( obi_instr_if.rvalidpar       ),
-         .instr_err_i            ( obi_instr_if.err             ),
+         .instr_req_o            ( obi_instr_if.req               ),
+         .instr_reqpar_o         ( obi_instr_if.reqpar            ),
+         .instr_gnt_i            ( obi_instr_if.gnt               ),
+         .instr_gntpar_i         ( obi_instr_if.gntpar            ),
+         .instr_addr_o           ( obi_instr_if.addr              ),
+         .instr_achk_o           ( obi_instr_if.achk              ),
+         .instr_prot_o           ( obi_instr_if.prot              ),
+         .instr_dbg_o            ( obi_instr_if.dbg               ),
+         .instr_memtype_o        ( obi_instr_if.memtype           ),
+         .instr_rdata_i          ( obi_instr_if.rdata             ),
+         .instr_rchk_i           ( obi_instr_if.rchk              ),
+         .instr_rvalid_i         ( obi_instr_if.rvalid            ),
+         .instr_rvalidpar_i      ( obi_instr_if.rvalidpar         ),
+         .instr_err_i            ( obi_instr_if.err               ),
 
-         .data_req_o             ( obi_data_if.req              ),
-         .data_reqpar_o          ( obi_data_if.reqpar           ),
-         .data_gnt_i             ( obi_data_if.gnt              ),
-         .data_gntpar_i          ( obi_data_if.gntpar           ),
-         .data_rvalid_i          ( obi_data_if.rvalid           ),
-         .data_rvalidpar_i       ( obi_data_if.rvalidpar        ),
-         .data_we_o              ( obi_data_if.we               ),
-         .data_be_o              ( obi_data_if.be               ),
-         .data_addr_o            ( obi_data_if.addr             ),
-         .data_achk_o            ( obi_data_if.achk             ),
-         .data_wdata_o           ( obi_data_if.wdata            ),
-         .data_prot_o            ( obi_data_if.prot             ),
-         .data_dbg_o             ( obi_data_if.dbg              ),
-         .data_memtype_o         ( obi_data_if.memtype          ),
-         .data_rdata_i           ( obi_data_if.rdata            ),
-         .data_rchk_i            ( obi_data_if.rchk             ),
-         .data_err_i             ( obi_data_if.err              ),
+         .data_req_o             ( obi_data_if.req                ),
+         .data_reqpar_o          ( obi_data_if.reqpar             ),
+         .data_gnt_i             ( obi_data_if.gnt                ),
+         .data_gntpar_i          ( obi_data_if.gntpar             ),
+         .data_rvalid_i          ( obi_data_if.rvalid             ),
+         .data_rvalidpar_i       ( obi_data_if.rvalidpar          ),
+         .data_we_o              ( obi_data_if.we                 ),
+         .data_be_o              ( obi_data_if.be                 ),
+         .data_addr_o            ( obi_data_if.addr               ),
+         .data_achk_o            ( obi_data_if.achk               ),
+         .data_wdata_o           ( obi_data_if.wdata              ),
+         .data_prot_o            ( obi_data_if.prot               ),
+         .data_dbg_o             ( obi_data_if.dbg                ),
+         .data_memtype_o         ( obi_data_if.memtype            ),
+         .data_rdata_i           ( obi_data_if.rdata              ),
+         .data_rchk_i            ( obi_data_if.rchk               ),
+         .data_err_i             ( obi_data_if.err                ),
 
          .mcycle_o               ( /*todo: connect */             ),
 
          .irq_i                  ( interrupt_if.irq               ),
-         .wu_wfe_i               ( 1'b0                           ), // todo: hook up
+         .wu_wfe_i               ( wfe_wu_if.wfe_wu_o             ),
          .clic_irq_i             ( clic_if.clic_irq               ),
          .clic_irq_id_i          ( clic_if.clic_irq_id            ),
          .clic_irq_level_i       ( clic_if.clic_irq_level         ),
@@ -238,8 +243,8 @@ module uvmt_cv32e40s_dut_wrap
          .clic_irq_shv_i         ( clic_if.clic_irq_shv           ),
 
 
-         .fencei_flush_req_o     ( fencei_if.flush_req          ),
-         .fencei_flush_ack_i     ( fencei_if.flush_ack          ),
+         .fencei_flush_req_o     ( fencei_if.flush_req            ),
+         .fencei_flush_ack_i     ( fencei_if.flush_ack            ),
 
          .debug_req_i            ( debug_if.debug_req             ),
          .debug_havereset_o      ( debug_havereset                ),

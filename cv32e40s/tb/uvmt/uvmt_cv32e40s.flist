@@ -40,6 +40,7 @@ ${FILE_LIST_IDV_DEPS}
 -f ${DV_UVMA_CLIC_PATH}/uvma_clic_pkg.flist
 -f ${DV_UVMA_DEBUG_PATH}/uvma_debug_pkg.flist
 -f ${DV_UVMA_FENCEI_PATH}/uvma_fencei_pkg.flist
+-f ${DV_UVMA_WFE_WU_PATH}/uvma_wfe_wu_pkg.flist
 
 
 // CV32E40S test bench Directories
