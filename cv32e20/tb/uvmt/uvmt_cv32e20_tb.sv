@@ -33,6 +33,11 @@ module uvmt_cv32e20_tb;
    import uvm_pkg::*;
    import uvmt_cv32e20_pkg::*;
    import uvme_cv32e20_pkg::*;
+   `ifndef FORMAL
+   `ifdef USE_ISS
+   import rvviApiPkg::*;
+   `endif
+   `endif
 
 `ifdef SET_NUM_MHPMCOUNTERS
    parameter int CORE_PARAM_NUM_MHPMCOUNTERS = `SET_NUM_MHPMCOUNTERS;
@@ -85,6 +90,12 @@ module uvmt_cv32e20_tb;
    uvmt_cv32e20_step_compare_if step_compare_if();
    uvmt_cv32e20_isa_covg_if     isa_covg_if();
 
+   // RVVI SystemVerilog Interface
+   `ifndef FORMAL
+   `ifdef USE_ISS
+      rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
+   `endif
+   `endif
 
   /**
    * DUT WRAPPER instance:
@@ -226,192 +237,13 @@ module uvmt_cv32e20_tb;
   // TODO: replace with CV32E20-specific DEBUG assertions
   uvmt_cv32e20_debug_assert u_debug_assert(/*.cov_assert_if(debug_cov_assert_if)*/);
 
-  /////////////////////////////////////////////////////////////////////////////
-  // TODO: integrate the RVFI-to-RVVI-to-ImperasDV logic here.
-  ///**
-  // * ISS WRAPPER instance:
-  // */
-  //  uvmt_cv32e20_iss_wrap  #(
-  //                            .ID (0)
-  //                            )
-  //                            iss_wrap (.clk_period(clknrst_if.clk_period),
-  //                                      .clknrst_if(clknrst_if_iss),
-  //                                      .step_compare_if(step_compare_if),
-  //                                      .isa_covg_if(isa_covg_if)
-  //                              );
-
-  //  /**
-  //  * Step-and-Compare logic
-  //  */
-  //  uvmt_cv32e20_step_compare step_compare (.clknrst_if(clknrst_if),
-  //                                            .step_compare_if(step_compare_if) );
-
-  //  always @(dut_wrap.cv32e20_wrapper_i.tracer_i.retire) -> step_compare_if.riscv_retire;
-  //  assign step_compare_if.insn_pc   = dut_wrap.cv32e20_wrapper_i.tracer_i.insn_pc;
-  //  assign step_compare_if.riscy_GPR = dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.register_file_i.mem;
-  //  assign clknrst_if_iss.reset_n = clknrst_if.reset_n;
-
-  //  // Connect step-and-compare signals to interrupt_if for functional coverage of instructions and interrupts
-  //  assign interrupt_if.deferint = iss_wrap.io.deferint;
-  //  assign interrupt_if.ovp_cpu_state_stepi = step_compare_if.ovp_cpu_state_stepi;
-
-  //  // Interrupt modeling logic - used to time interrupt entry from RTL to the ISS    
-  //  wire [31:0] irq_enabled;
-  //  reg [31:0] irq_deferint_ack;
-  //  reg [31:0] irq_deferint_sleep;
-  //  reg        deferint_ack;      
-  //  reg [31:0] irq_mip;
-  //  reg core_sleep_o_d;
-
-  //  always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-  //    if (!clknrst_if.reset_n)
-  //      core_sleep_o_d <= 1'b0;
-  //    else
-  //      core_sleep_o_d <= dut_wrap.cv32e20_wrapper_i.core_sleep_o;
-  //  end
-
-  //  // Advance acknowledged interrupt to ISS when next valid instruction decode executes
-  //  // Ignoring any instructon decodes in debug mode
-  //  wire id_start = dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.id_valid_o &
-  //                  dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.is_decoding_o &
-  //                  ~dut_wrap.cv32e20_wrapper_i.core_i.debug_mode;
-
-  //  assign irq_enabled = dut_wrap.cv32e20_wrapper_i.irq_i & dut_wrap.cv32e20_wrapper_i.core_i.cs_registers_i.mie_n;
-
-  //  /**
-  //    * step_compare_if.deferint_prime is set to 0 (asserted) when the controller in ID commits to an interrupt
-  //      derefint_prime is then reset to 1 when the ID stage commits to the next instruction (which should be the MTVEC entry address)
-  //  */
-  //  always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-  //    if (!clknrst_if_iss.reset_n) begin
-  //      step_compare_if.deferint_prime     <= 1'b1;
-  //      step_compare_if.deferint_prime_ack <= 1'b1;
-  //    end
-  //    else if (dut_wrap.irq_ack) begin
-  //      step_compare_if.deferint_prime     <= 1'b0;
-  //      step_compare_if.deferint_prime_ack <= 1'b0;
-  //    end
-  //    else if (core_sleep_o_d && irq_enabled) begin
-  //      step_compare_if.deferint_prime <= 1'b0;
-  //    end
-  //    else if (id_start && !step_compare_if.deferint_prime) begin
-  //      step_compare_if.deferint_prime     <= 1'b1;
-  //      step_compare_if.deferint_prime_ack <= 1'b1;
-  //    end
-  //  end
-
-  //  /**
-  //    * When the ID stage commits, we set deferint to the ISS to signal to look at the interrrupts
-  //    */
-  //  always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-  //    if (!clknrst_if_iss.reset_n) begin
-  //      iss_wrap.io.deferint <= 1'b1;
-  //      deferint_ack <= 1'b1;
-  //    end
-  //    else if (id_start && !step_compare_if.deferint_prime) begin
-  //      iss_wrap.io.deferint <= 1'b0;
-  //      deferint_ack <= step_compare_if.deferint_prime_ack;
-  //    end
-  //  end
-
-  //  /**
-  //    * deferint deassertion logic, on negedge of ovp_cpu_state_stepi from the ISS the deferint has been consumed 
-  //    */
-  //  always @(negedge step_compare_if.ovp_cpu_state_stepi) begin
-  //    if (iss_wrap.io.deferint == 0) begin
-  //      iss_wrap.io.deferint <= 1'b1;
-  //      deferint_ack <= 1'b1;
-  //      irq_deferint_ack <= '0;
-  //    end
-  //    irq_deferint_sleep <= '0;
-  //  end
-
-  //  /**
-  //    * irq_deferint_ack will capture the asserted interrupt to present to the ISS later
-  //    * since the autoclear/ack interface can clear the IRQ long before the ISS sees it
-  //    */
-  //  always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-  //    if (!clknrst_if.reset_n)
-  //      irq_deferint_ack <= '0;
-  //    else if (dut_wrap.irq_ack)
-  //      irq_deferint_ack <= (1 << dut_wrap.irq_id);
-  //  end
-
-  //  always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-  //    if (!clknrst_if.reset_n)
-  //      irq_deferint_sleep <= '0;
-  //    else if (core_sleep_o_d)
-  //      irq_deferint_sleep <= irq_enabled;
-  //  end
-
-  //  always @*
-  //    iss_wrap.io.irq_i = iss_wrap.io.deferint ? dut_wrap.irq :
-  //                        !deferint_ack ? irq_deferint_ack :
-  //                        irq_deferint_sleep;
-
-  //  /**
-  //    * Interrupt assertion to iss_wrap, note this runs on the ISS clock (skewed from core clock)
-  //    */
-  //  always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-  //    if (!clknrst_if.reset_n) begin
-  //      irq_mip <= '0;
-  //    end
-  //    else begin
-  //      for (int irq_idx=0; irq_idx<32; irq_idx++) begin
-
-  //        // Leave ISS side asserted as long as RTL interrupt line is asserted
-  //        if (dut_wrap.cv32e20_wrapper_i.irq_i[irq_idx]) 
-  //          irq_mip[irq_idx] <= 1'b1;
-  //        // If deferint is low and ovp_cpu_state_stepi is asserted, then interrupt was consumed by model
-  //        // Clear it now to avoid mip miscompare
-  //        else if (step_compare_if.ovp_cpu_state_stepi && iss_wrap.io.deferint == 0)
-  //          irq_mip[irq_idx] <= 1'b0;
-  //        // If RTL interrupt deasserts, but the core has not taken the interrupt, then clear ISS irq
-  //        else if (iss_wrap.io.deferint == 1)
-  //          irq_mip[irq_idx] <= 1'b0;
-  //      end
-  //    end
-  //  end
-
-  //  // Count number of issued and retired instructions
-  //  // This makes synchronizing haltreq to RM easier
-  //  logic [31:0] count_issue;
-  //  logic [31:0] count_retire;
-
-  //  always @(posedge clknrst_if.clk or negedge clknrst_if.reset_n) begin
-  //    if (!clknrst_if.reset_n) begin
-  //        count_issue <= 32'h0;
-  //    end else begin
-  //        if ((dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.id_valid_o && dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.is_decoding_o &&
-  //            !dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.illegal_insn_i) ||
-  //            (dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.is_decoding_o && dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.ebrk_insn_i &&
-  //              !dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.trigger_match_i &&
-  //            (dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.ebrk_force_debug_mode || dut_wrap.cv32e20_wrapper_i.core_i.id_stage_i.controller_i.debug_mode_q))) begin
-  //            count_issue <= count_issue + 1;
-  //        end
-  //    end
-  //  end
-
-  //  always @(dut_wrap.cv32e20_wrapper_i.tracer_i.retire or negedge clknrst_if.reset_n) begin
-  //      if (!clknrst_if.reset_n) begin
-  //          count_retire <= 32'h0;
-  //      end else begin
-  //          count_retire <= count_retire + 1;
-  //      end
-  //  end
-
-  //  // A simple FSM for controlling haltreq into RM
-  //  typedef enum logic [1:0] {INACTIVE, DBG_TAKEN, DRIVE_REQ} dbg_state_e;
-  //  dbg_state_e debug_req_state;
-
-  //  always @(posedge clknrst_if_iss.clk or negedge clknrst_if_iss.reset_n) begin
-  //    if (!clknrst_if_iss.reset_n) begin
-  //        iss_wrap.io.haltreq <= 1'b0;
-  //        debug_req_state <= INACTIVE;
-  //    end else begin
-  //        unique case(debug_req_state)
-  //            INACTIVE: begin
-  //                iss_wrap.io.haltreq <= 1'b0;
+  // IMPERAS DV
+  `ifndef FORMAL
+  `ifdef USE_ISS
+    uvmt_cv32e20_imperas_dv_wrap #(
+    ) imperas_dv (rvvi_if);
+  `endif
+  `endif
 
   //                // Only drive haltreq if we have an external request
   //                // TODO: replace with ImperasDV
@@ -493,6 +325,21 @@ module uvmt_cv32e20_tb;
 
    assign core_cntrl_if.clk = clknrst_if.clk;
 
+   // Informational print message on loading of OVPSIM ISS to benchmark some elf image loading times
+   // OVPSIM runs its initialization at the #1ns timestamp, and should dominate the initial startup time
+   `ifndef FORMAL // Formal ignores initial blocks, avoids unnecessary warning
+   // overcome race
+   `ifdef USE_ISS
+   initial begin
+     if ($test$plusargs("USE_ISS")) begin
+       #0.9ns;
+       imperas_dv.ref_init();
+     end
+   end
+   `endif
+   `endif
+
+   
    // Capture the test status and exit pulse flags
    // TODO: put this logic in the vp_status_if (makes it easier to pass to ENV)
    always @(posedge clknrst_if.clk) begin
@@ -539,6 +386,12 @@ module uvmt_cv32e20_tb;
       fatal_count   = rs.get_severity_count(UVM_FATAL);
 
       void'(uvm_config_db#(bit)::get(null, "", "sim_finished", sim_finished));
+
+      // Shutdown the Reference Model
+      `ifdef USE_ISS
+      // Exit handler for ImperasDV
+      void'(rvviRefShutdown());
+      `endif
 
       // In most other contexts, calls to $display() in a UVM environment are
       // illegal. Here they are OK because the UVM environment has shut down

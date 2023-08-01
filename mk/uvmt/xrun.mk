@@ -58,7 +58,7 @@ XRUN_LDGEN_COMP_FLAGS ?= -64bit -disable_sem2009 -access +rwc \
 												 $(TIMESCALE) $(SV_CMP_FLAGS)
 
 XRUN_RUN_BASE_FLAGS ?= -64bit $(XRUN_GUI) -licqueue +UVM_VERBOSITY=$(XRUN_UVM_VERBOSITY) \
-                       $(XRUN_PLUSARGS) -svseed $(RNDSEED) -sv_lib $(OVP_MODEL_DPI)
+                       $(XRUN_PLUSARGS) -svseed $(RNDSEED)
 XRUN_GUI         ?=
 XRUN_SINGLE_STEP ?=
 XRUN_ELAB_COV     = -covdut uvmt_$(CV_CORE_LC)_tb -coverage b:e:f:u
@@ -66,6 +66,7 @@ XRUN_ELAB_COVFILE = -covfile $(abspath $(MAKE_PATH)/../tools/xrun/covfile.tcl)
 XRUN_RUN_COV      = -covscope uvmt_$(CV_CORE_LC)_tb \
 					-nowarn CGDEFN
 XRUN_RUN_BASE_FLAGS += -sv_lib $(DPI_DASM_LIB)
+XRUN_RUN_BASE_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
 XRUN_RUN_BASE_FLAGS += -sv_lib $(abspath $(SVLIB_LIB))
 
 XRUN_UVM_VERBOSITY ?= UVM_MEDIUM
@@ -170,20 +171,31 @@ endif
 XRUN_UVM_MACROS_INC_FILE = $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC)_uvm_macros_inc.sv
 
 XRUN_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-XRUN_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 XRUN_USER_COMPILE_ARGS += +define+RVFI
 XRUN_USER_COMPILE_ARGS += +define+UVM
-# FIXME: See https://github.com/openhwgroup/cve2/issues/15
-XRUN_USER_COMPILE_ARGS += +define+SYNTHESIS
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 	XRUN_PLUSARGS += +USE_ISS
+	XRUN_FILE_LIST_IDV ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
+	XRUN_USER_COMPILE_ARGS += +define+USE_IMPERASDV
+	XRUN_USER_COMPILE_ARGS += +define+USE_ISS
+ifeq ($(call IS_YES,$(COV)),YES)
+	XRUN_USER_COMPILE_ARGS += +define+IMPERAS_COV
+	XRUN_PLUSARGS += +TRACE2COV_ENABLE=1
+endif
 else
     XRUN_PLUSARGS += +DISABLE_OVPSIM
+	XRUN_FILE_LIST_IDV ?=
 endif
 ifeq ($(call IS_YES,$(USE_RVVI)),YES)
     XRUN_PLUSARGS +="+USE_RVVI"
 endif
+
+
+# FIXME: See https://github.com/openhwgroup/cve2/issues/15
+XRUN_USER_COMPILE_ARGS += +define+SYNTHESIS
+
+
 ifeq ($(call IS_YES,$(TEST_DISABLE_ALL_CSR_CHECKS)),YES)
     XRUN_PLUSARGS +="+DISABLE_ALL_CSR_CHECKS"
 endif
@@ -291,6 +303,7 @@ XRUN_COMP = $(XRUN_COMP_FLAGS) \
 		+incdir+$(DV_UVMT_PATH) \
 		$(XRUN_UVM_MACROS_INC_FILE) \
 		-f $(CV_CORE_MANIFEST) \
+		$(XRUN_FILE_LIST_IDV) \
 		$(XRUN_FILE_LIST) \
 		$(UVM_PLUSARGS)
 
@@ -348,10 +361,10 @@ gen_ovpsim_ic:
 	@rm -f $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
 	@mkdir -p $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX);
 	@touch -f $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+	@echo "# Imperas Control File" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
 		echo "$(CFG_OVPSIM)" > $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic; \
 	fi
-export IMPERAS_TOOLS=ovpsim.ic
 
 ################################################################################
 # The new general test target
@@ -359,6 +372,8 @@ export IMPERAS_TOOLS=ovpsim.ic
 test: $(XRUN_SIM_PREREQ) hex gen_ovpsim_ic
 	mkdir -p $(SIM_RUN_RESULTS)/test_program && \
 	cd $(SIM_RUN_RESULTS) && \
+	export IMPERAS_TOOLS=$(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic && \
+	export IMPERAS_QUEUE_LICENSE=1 && \
 	$(XRUN) \
 		-R -xmlibdirname ../../xcelium.d \
 		-l xrun-$(TEST_NAME).log \
@@ -403,6 +418,7 @@ compliance: $(XRUN_COMPLIANCE_PREREQ)
 	mkdir -p $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX) && \
     cd $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX)  && \
 	export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic && \
+	export IMPERAS_QUEUE_LICENSE=1 && \
 	$(XRUN) -R -xmlibdirname ../../../xcelium.d \
 		-l xrun-$(COMPLIANCE_PROG).log \
 		-covtest riscv-compliance $(XRUN_COMP_RUN) \
