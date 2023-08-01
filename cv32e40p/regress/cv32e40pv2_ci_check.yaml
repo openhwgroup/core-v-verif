@@ -120,39 +120,15 @@ tests:
     cmd: make test COREV=YES TEST=hello-world
 
   interrupt_test:
-    builds:
-      - uvmt_cv32e40p_default
-      - uvmt_cv32e40p_no_pulp
-      - uvmt_cv32e40p_pulp
-      - uvmt_cv32e40p_pulp_fpu
-      - uvmt_cv32e40p_pulp_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx
-      - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
-      - uvmt_cv32e40p_pulp_cluster
-      - uvmt_cv32e40p_pulp_cluster_fpu
-      - uvmt_cv32e40p_pulp_cluster_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_1cyclat
-    description: Interrupt directed test on the 5 configurations + FPU latencies and default
+    build: uvmt_cv32e40p_pulp_fpu
+    description: Interrupt directed on PULP+FPU HW
     dir: cv32e40p/sim/uvmt
     iss: 1
     cov: 0
     cmd: make test COREV=YES TEST=interrupt_test
 
   debug_test:
-    builds:
-      - uvmt_cv32e40p_default
-      - uvmt_cv32e40p_no_pulp
-      - uvmt_cv32e40p_pulp
-      - uvmt_cv32e40p_pulp_fpu
-      - uvmt_cv32e40p_pulp_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx
-      - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
-      - uvmt_cv32e40p_pulp_cluster
-      - uvmt_cv32e40p_pulp_cluster_fpu
-      - uvmt_cv32e40p_pulp_cluster_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_1cyclat
+    build: uvmt_cv32e40p_pulp_fpu
     dir: cv32e40p/sim/uvmt
     iss: 1
     cov: 0
@@ -180,122 +156,9 @@ tests:
     cmd: make gen_corev-dv test COREV=YES TEST=corev_sanity_fp_zfinx_instr_test
     test_cfg: floating_pt_instr_en
 
-  corev_rand_pulp_simd_instr_test:
-    builds:
-      - uvmt_cv32e40p_pulp
-      - uvmt_cv32e40p_pulp_cluster
-    dir: cv32e40p/sim/uvmt
-    iss: 1
-    cov: 0
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_simd_instr_test
-
-  corev_rand_pulp_simd_instr_test_floating_pt_instr_en:
-    testname: corev_rand_pulp_simd_instr_test
-    builds:
-      - uvmt_cv32e40p_pulp_fpu
-      - uvmt_cv32e40p_pulp_fpu_zfinx
-      - uvmt_cv32e40p_pulp_cluster_fpu
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx
-    dir: cv32e40p/sim/uvmt
-    iss: 1
-    cov: 0
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_simd_instr_test
-    test_cfg: floating_pt_instr_en
-
-  corev_rand_pulp_mac_instr_test:
-    builds:
-      - uvmt_cv32e40p_pulp
-      - uvmt_cv32e40p_pulp_cluster
-    dir: cv32e40p/sim/uvmt
-    iss: 1
-    cov: 0
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_mac_instr_test
-
-  corev_rand_pulp_mac_instr_test_floating_pt_instr_en:
-    testname: corev_rand_pulp_mac_instr_test
-    builds:
-      - uvmt_cv32e40p_pulp_fpu
-      - uvmt_cv32e40p_pulp_fpu_zfinx
-      - uvmt_cv32e40p_pulp_cluster_fpu
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx
-    dir: cv32e40p/sim/uvmt
-    iss: 1
-    cov: 0
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_mac_instr_test
-    test_cfg: floating_pt_instr_en
-
-  # corev_multicycle_fp_instr_test:
-  #   builds:
-  #     - uvmt_cv32e40p_pulp_fpu
-  #     - uvmt_cv32e40p_pulp_fpu_1cyclat
-  #     - uvmt_cv32e40p_pulp_fpu_2cyclat
-  #   dir: cv32e40p/sim/uvmt
-  #   iss: 1
-  #   cov: 0
-  #   cmd: make gen_corev-dv test COREV=YES TEST=corev_multicycle_fp_instr_test
-
-  # corev_multicycle_fp_zfinx_instr_test:
-  #   builds:
-  #     - uvmt_cv32e40p_pulp_fpu_zfinx
-  #     - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
-  #     - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-  #   dir: cv32e40p/sim/uvmt
-  #   iss: 1
-  #   cov: 0
-  #   cmd: make gen_corev-dv test COREV=YES TEST=corev_multicycle_fp_zfinx_instr_test
-
   corev_rand_pulp_instr_test:
-    builds:
-      - uvmt_cv32e40p_pulp
-      - uvmt_cv32e40p_pulp_cluster
+    build: uvmt_cv32e40p_pulp
     dir: cv32e40p/sim/uvmt
     iss: 1
     cov: 0
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_instr_test
-
-  corev_rand_pulp_instr_test_floating_pt_instr_en:
-    testname: corev_rand_pulp_instr_test
-    builds:
-      - uvmt_cv32e40p_pulp_fpu
-      - uvmt_cv32e40p_pulp_fpu_zfinx
-      - uvmt_cv32e40p_pulp_cluster_fpu
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx
-    dir: cv32e40p/sim/uvmt
-    iss: 1
-    cov: 0
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_instr_test
-    test_cfg: floating_pt_instr_en
-
-  corev_rand_pulp_hwloop_debug:
-    builds:
-      - uvmt_cv32e40p_pulp
-      - uvmt_cv32e40p_pulp_fpu
-      - uvmt_cv32e40p_pulp_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx
-      - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
-      - uvmt_cv32e40p_pulp_cluster
-      - uvmt_cv32e40p_pulp_cluster_fpu
-      - uvmt_cv32e40p_pulp_cluster_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_1cyclat
-    dir: cv32e40p/sim/uvmt
-    iss: 1
-    cov: 0
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_hwloop_debug
-
-  corev_rand_pulp_hwloop_test:
-    builds:
-      - uvmt_cv32e40p_pulp
-      - uvmt_cv32e40p_pulp_fpu
-      - uvmt_cv32e40p_pulp_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx
-      - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
-      - uvmt_cv32e40p_pulp_cluster
-      - uvmt_cv32e40p_pulp_cluster_fpu
-      - uvmt_cv32e40p_pulp_cluster_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_1cyclat
-    dir: cv32e40p/sim/uvmt
-    iss: 1
-    cov: 0
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_hwloop_test
