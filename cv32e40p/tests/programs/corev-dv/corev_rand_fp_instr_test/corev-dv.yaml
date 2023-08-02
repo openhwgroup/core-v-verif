@@ -16,22 +16,16 @@
   
 # Test definition YAML for corev-dv test generator
 
-name: corev_fp_zfinx_instr_test_for_regr
+name: corev_rand_fp_instr_test
 uvm_test: $(CV_CORE_LC)_instr_base_test
 description: >
-    RISCV-DV generated random fp instruction test
-compile_flags: >
-    +define+RV_DV_ISA_RV32IMC_ZFINX
-    +define+FP_IN_X_REGS
+    RISCV-DV generated random fp with specific streams
 plusargs: >
     +instr_cnt=1000
     +num_of_sub_program=0
-    +enable_fp_in_x_regs=1=1
     +test_override_riscv_instr_stream=1
-    +directed_instr_0=cv32e40p_float_zfinx_base_instr_stream,10
+    +no_branch_jump=1
+    +directed_instr_0=cv32e40p_float_zfinx_base_instr_stream,1
+    +directed_instr_1=cv32e40p_fp_n_mixed_instr_stream,2
+    +directed_instr_2=cv32e40p_fp_n_mixed_instr_more_fdiv_fsqrt_stream,2
 
-# note:
-  # 1) this is yaml test for regression run for 10 strems per class
-  # 2) override the stream by using factory method [range 0..4]. example
-  # +test_override_fp_instr_stream=0
-  # 3) [recomendation] for single directed_instr_<num==0>, try not to use apply too many streams else it might lead to placement issue

@@ -16,32 +16,31 @@
   
 # Test definition YAML for corev-dv test generator
 
-name: corev_sanity_fp_zfinx_instr_test
+name: corev_rand_fp_instr_sanity_test
 uvm_test: $(CV_CORE_LC)_instr_base_test
 description: >
-    RISCV-DV generated random fp instruction test
-compile_flags: >
-    +define+RV_DV_ISA_RV32IMC_ZFINX
-    +define+FP_IN_X_REGS
+    RISCV-DV generated random fp streams for sanity run
 plusargs: >
     +instr_cnt=1000
     +num_of_sub_program=0
-    +enable_fp_in_x_regs=1
     +test_override_riscv_instr_stream=1
-    +directed_instr_0=cv32e40p_float_zfinx_base_instr_stream,2
-    +directed_instr_1=cv32e40p_fp_n_mixed_instr_stream,2
-    +directed_instr_2=cv32e40p_fp_n_mixed_instr_w_excl_stream,2
-    +directed_instr_3=cv32e40p_fp_n_mixed_instr_more_fdiv_fsqrt_stream,2
-    +directed_instr_4=cv32e40p_fp_w_special_operands_instr_stream,2
-    +directed_instr_5=cv32e40p_fp_w_prev_rd_as_operand_instr_stream,2
-    +directed_instr_6=cv32e40p_constraint_mc_fp_instr_stream,2
-    +directed_instr_7=cv32e40p_fp_operand_forwarding_instr_stream,1
+    +no_branch_jump=1
+    +directed_instr_0=cv32e40p_float_zfinx_base_instr_stream,1
+    +directed_instr_1=cv32e40p_fp_n_mixed_instr_stream,1
+    +directed_instr_2=cv32e40p_fp_n_mixed_instr_more_fdiv_fsqrt_stream,1
+    +directed_instr_3=cv32e40p_fp_w_special_operands_instr_stream,1
+    +directed_instr_4=cv32e40p_fp_w_prev_rd_as_operand_instr_stream,1
+    +directed_instr_5=cv32e40p_constraint_mc_fp_instr_stream,1
+    +directed_instr_6=cv32e40p_fp_operand_forwarding_instr_stream,1
+    # +directed_instr_7=cv32e40p_fp_followed_by_csrr_instr_stream,1
 
 # note:
-  # 1) example yaml template for fp test with zfinx_extension
+  # 1) example yaml template for fp test with f_extension
   # 2) above setting running <n> streams with <m> rand instrs; +directed_instr_<idx>=<stream class>,<n>
   # 3) runcmd: make gen_corev-dv test TEST=corev_sanity_fp_instr_test USE_ISS=no CFG=pulp_fpu CFG_PLUSARGS="+UVM_VERBOSITY=UVM_DEBUG"
-  # 4) [Must have plusarg]  enable_fp_in_x_regs for extension f
+  # 4) [Must have plusarg]  enable_floating_point for extension f
   # 5) [Must have plusarg]  test_override_riscv_instr_stream=1
   #   - <value>==1: is to tune the streams not to overlap with other streams during streams placement
   # 6) [recomendation] for single directed_instr_<num==0>, try not to use apply too many streams else it might lead to placement issue
+  # 7) [recomendation] no branch/jump for non-directed streams
+  # 8) Must use together with test_cfg = floating_pt_instr_en OR floating_pt_zfinx_instr_en
