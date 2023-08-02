@@ -21,25 +21,15 @@ builds:
 
 # List of tests
 tests:
-  corev_sanity_fp_instr_test:
+  corev_rand_fp_instr_sanity_test_nonzfinx:
+    testname: corev_rand_fp_instr_sanity_test
     build: uvmt_cv32e40p_pulp_fpu
-    description: corev_multicycle_fp_instr_test
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_sanity_fp_instr_test
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     test_cfg: floating_pt_instr_en
     iss: 1
     cov: 1
     num: 50
-
-  # corev_multicycle_fp_instr_test:
-  #   build: uvmt_cv32e40p_pulp_fpu
-  #   description: corev_multicycle_fp_instr_test
-  #   dir: cv32e40p/sim/uvmt
-  #   cmd: make gen_corev-dv test COREV=YES TEST=corev_multicycle_fp_instr_test
-  #   test_cfg: floating_pt_instr_en
-  #   iss: 1
-  #   cov: 1
-  #   num: 100
 
   corev_rand_debug_ebreak_xpulp:
     build: uvmt_cv32e40p_pulp_fpu
