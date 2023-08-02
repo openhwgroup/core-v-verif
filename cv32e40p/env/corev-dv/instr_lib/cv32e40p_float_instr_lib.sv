@@ -20,10 +20,6 @@
 // [Dolphin Design updates]
 // This file contains stream classes that use to generate single precision fp instructions
 
-// General fixme:
-// 1) remove all stuff related to temp_exclude_fdiv_fsqrt once known fdiv/fsqrt issues are fixed
-// 2) review FIXME_TEMP_EXCLUDE_UNTIL_RTL_IS_FIXED once known fdiv/fsqrt issues are fixed
-
 // ALL FP (SINGLE PERCISION) STREAM CLASSESS - start
   // base class for fp instruction stream generation
   // all the directed instrs generated in a stream are fp instr 
@@ -67,6 +63,8 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
   bit                     is_fp_instr;
   riscv_instr_name_t      include_instr[];
   riscv_instr_name_t      exclude_instr[];
+  riscv_instr_category_t  include_category[];
+  riscv_instr_category_t  exclude_category[];
   riscv_instr_group_t     include_group[];
   riscv_instr_group_t     exclude_group[];
   bit                     use_fp_only_for_directed_instr;     // use fp instr only as directed instrs in stream
@@ -74,7 +72,10 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
   bit                     use_same_instr_per_stream;          // same directed is use within a stream
   bit                     use_prev_rd_on_next_operands;       // previous instr rd is used for directed instr operands
   bit                     more_weight_for_fdiv_fsqrt_gen;     // more weight on generating fdiv and fsqrt directed_instr
-  bit                     temp_exclude_fdiv_fsqrt;
+  bit                     init_gpr = (is_zfinx) ? 1 : 0;      // initialize gpr registers in stream with rand value
+  bit                     init_fpr = (is_zfinx) ? 0 : 1;      // initialize fpr registers in stream with rand value
+  bit                     en_clr_fflags_b4_instr;             // clear fflag to prevent residual fflags status from prev f_instr
+  bit                     f_clr_fflags_done = 0;
 
     // for use_prev_rd_on_next_operands implementation usage - start
   riscv_reg_t                 prev_rd;
@@ -87,6 +88,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
   rand int unsigned       num_of_instr_per_stream;
   rand riscv_reg_t        avail_gp_regs[][];  // regs for extension zfinx and f
   rand riscv_fpr_t        avail_fp_regs[][];  // regs for extension f only
+  rand riscv_reg_t        gp_scratch_reg;     // allocation for scratch reg 
   rand bit [31:0]         imm;
   rand f_rounding_mode_t  rm;
   rand bit                use_rounding_mode_from_instr;
@@ -109,7 +111,8 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       if (is_zfinx) {soft num_of_instr_per_stream inside {[TOTAL_INSTR_ZFINX_TYPE/2 : TOTAL_INSTR_ZFINX_TYPE]};}
       else          {soft num_of_instr_per_stream inside {[TOTAL_INSTR_F_TYPE/2 : TOTAL_INSTR_F_TYPE]};}
     } else {
-      soft num_of_instr_per_stream == 30; // fixed to 30
+      if (en_clr_fflags_b4_instr) {soft num_of_instr_per_stream == 50;}
+      else                        {soft num_of_instr_per_stream == 100;}
     }
     num_of_instr_per_stream > 0;
     solve num_of_instr_per_stream before enable_special_operand_patterns;
@@ -123,9 +126,14 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       soft avail_gp_regs[i][0] inside {[S0:A5]}; // MUST: RV32C only uses 8 most common regs
       soft avail_gp_regs[i][1] inside {SP};      // MUST: some random instr uses SP as rd
       foreach (avail_gp_regs[i][j]) {
-        !(avail_gp_regs[i][j] inside {cfg.reserved_regs, reserved_rd});
+        !(avail_gp_regs[i][j] inside {cfg.reserved_regs, reserved_rd, gp_scratch_reg});
       }
     }
+  }
+  
+  constraint c_gp_scratch_reg {
+    !(gp_scratch_reg inside {cfg.reserved_regs, reserved_rd, ZERO, SP});
+    solve gp_scratch_reg before avail_gp_regs;
   }
 
   constraint c_avail_fp_regs {
@@ -162,7 +170,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     use_fp_only_for_directed_instr      = 1; // directed instr is fp only
     use_prev_rd_on_next_operands        = 0;
     use_no_repetitive_instr_per_stream  = 0;
-    temp_exclude_fdiv_fsqrt             = 1; // excliude these instr from directed instr
+    en_clr_fflags_b4_instr              = 1;
   endfunction: pre_randomize
 
   function void post_randomize();
@@ -171,6 +179,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     riscv_floating_point_instr  instr_f;
 
     print_stream_setting();
+    initialize_regs();
 
     if (enable_special_operand_patterns) begin
       foreach (operand_a[i]) begin
@@ -181,7 +190,8 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
           \n>>", 
           i, operand_a[i][31:12], operand_a_pattern[i],
           i, operand_b[i][31:12], operand_b_pattern[i],
-          i, operand_c[i][31:12], operand_c_pattern[i]), (enable_special_operand_patterns) ? UVM_NONE : UVM_DEBUG);
+          i, operand_c[i][31:12], operand_c_pattern[i]), UVM_DEBUG);
+          // i, operand_c[i][31:12], operand_c_pattern[i]), (enable_special_operand_patterns) ? UVM_NONE : UVM_DEBUG);
       end
     end // enable_special_operand_patterns
 
@@ -192,15 +202,15 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       instr = new riscv_instr::get_rand_instr(
         .include_instr(include_instr),
         .exclude_instr(exclude_instr),
+        .include_category(include_category),
+        .exclude_category(exclude_category),
         .include_group(include_group),
         .exclude_group(exclude_group)
       );
       is_fp_instr = (instr.group inside {RV32F, RV32ZFINX});
       update_next_instr_arg_list(instr, i);
       rand_var_for_inline_constraint();
-
-      // multicycle instr prior directed instr
-      insert_mc_instr(instr, i); 
+      add_instr_prior_directed_instr(instr, i); 
 
       // directed instr randomization based on extension
       if (!is_fp_instr) begin : OTHER_NON_FP_SUPPORTED_EXTENSIONS
@@ -268,42 +278,89 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       \n>> use_same_instr_per_stream          [%0b] \
       \n>> use_prev_rd_on_next_operands       [%0b] \
       \n>> more_weight_for_fdiv_fsqrt_gen     [%0b] \
-      \n>> temp_exclude_fdiv_fsqrt            [%0b] \
+      \n>> en_clr_fflags_b4_instr             [%0b] \
       ",
       get_name(), num_of_instr_per_stream, enable_special_operand_patterns, use_fp_only_for_directed_instr, 
       use_no_repetitive_instr_per_stream, use_same_instr_per_stream, use_prev_rd_on_next_operands, 
-      more_weight_for_fdiv_fsqrt_gen, temp_exclude_fdiv_fsqrt
+      more_weight_for_fdiv_fsqrt_gen, en_clr_fflags_b4_instr
       ), UVM_NONE);
   endfunction : print_stream_setting
+
+  // clear csr fflags
+  virtual function void clr_crs_fflags(riscv_reg_t rs1);
+    directed_csr_access(.instr_name(CSRRC), .rs1(rs1), .csr(12'h001));
+    f_clr_fflags_done = 1;
+  endfunction : clr_crs_fflags
+
+  // init all the gpr/fpr based on F/zfinx respectly prior directed stream
+  // reset fpu fflag prior directed stream
+  virtual function void rand_fp_val(output logic [31:0] val);
+    int option = $urandom_range(0,3);
+    void'(std::randomize(val) with {
+      if (option == 0) {val[22:18] == 0; val[17:13] == 0; val[12:8] == 0; val[7:0] != 0;}
+      if (option == 1) {val[22:18] == 0; val[17:13] == 0; val[12:8] != 0; val[7:0] == 0;}
+      if (option == 2) {val[22:18] == 0; val[17:13] != 0; val[12:8] == 0; val[7:0] == 0;}
+      if (option == 3) {val[22:18] != 0; val[17:13] == 0; val[12:8] == 0; val[7:0] == 0;}
+    });
+  endfunction : rand_fp_val
+  virtual function void initialize_regs();
+    // set random value on all gpr/fpr registers prior directed stream
+    // random fp value with mantissa not zeroes
+    if (init_gpr) begin : SET_GPR_RAND_VALUE
+      logic [31:0] i_imm;
+      for (int i=1; i<32; i++) begin
+        riscv_reg_t i_gpr = riscv_reg_t'(i);
+        rand_fp_val(i_imm);
+        `SET_GPR_VALUE(i_gpr,i_imm);
+      end
+    end
+    if (init_fpr) begin : SET_FPR_RAND_VALUE
+      logic [31:0] i_imm;
+      for (int i=0; i<32; i++) begin
+        riscv_fpr_t i_fpr = riscv_fpr_t'(i);
+        rand_fp_val(i_imm);
+        `SET_FPR_VALUE(i_fpr,i_imm);
+      end
+    end
+    begin : RESET_FFLAG_TO_ALL_ZEROES
+      // riscv_reg_t rs1 = T0;
+      // `SET_GPR_VALUE(local::rs1,32'h0000_001F);
+      `SET_GPR_VALUE(local::gp_scratch_reg,32'h0000_001F);
+      clr_crs_fflags(gp_scratch_reg);
+    end
+  endfunction : initialize_regs
 
   // for updating the arguments that use in get_rand_instr 
   virtual function void update_current_instr_arg_list(int idx=0);
     include_group = new[1] ((is_zfinx) ? {RV32ZFINX} : {RV32F});
     if (!use_fp_only_for_directed_instr) begin : USE_MIXED_FP_N_OTHERS_INSTR
-      bit more_fp_instr, rand_status;
+      bit select_fp_instr, rand_status;
 
-      exclude_instr = new[24] (`FP_STREAM_EXCLUDE_LIST);
+      exclude_instr = new[22] (`EXCLUDE_INSTR_LIST);
       if (more_weight_for_fdiv_fsqrt_gen) begin
         include_group = new[5] (`RV_DV_ISA);
       end
       else begin
         // put more weight in generating fp instr in directed streams
-        rand_status = std::randomize(more_fp_instr) with {more_fp_instr dist {1:=2, 0:=1};};
+        rand_status = std::randomize(select_fp_instr) with {select_fp_instr dist {1:=2, 0:=1};};
         assert(rand_status);
-        if (more_fp_instr) begin
+        if (select_fp_instr) begin
           include_group = new[1] ((is_zfinx) ? {RV32ZFINX} : {RV32F});
         end else begin
           include_group = new[3] ({RV32I, RV32M, RV32C}); 
-        end // !more_weight_for_fdiv_fsqrt_gen
-
+        end
       end
-    end // !use_fp_only_for_directed_instr
-    if (temp_exclude_fdiv_fsqrt) exclude_instr = new[exclude_instr.size() + 2] ({exclude_instr, FDIV_S, FSQRT_S});
+
+    end
   endfunction: update_current_instr_arg_list
 
-  // placeholder for ext class to insert multicycle instrs
-  virtual function void insert_mc_instr(riscv_instr instr, int idx=0);
-  endfunction : insert_mc_instr
+  // insert additonal instr if there is any prior directed instr
+  virtual function void add_instr_prior_directed_instr(riscv_instr instr, int idx=0);
+    if (is_fp_instr && en_clr_fflags_b4_instr && !f_clr_fflags_done) begin
+      clr_crs_fflags(gp_scratch_reg);
+      f_clr_fflags_done = 1;
+    end
+  endfunction : add_instr_prior_directed_instr
 
   virtual function void update_next_instr_arg_list(riscv_instr prev_instr=null, int idx=0);
     if (use_no_repetitive_instr_per_stream && prev_instr != null) begin
@@ -555,7 +612,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     m_operand_a = operand_a[idx]; m_operand_a_pattern = operand_a_pattern[idx];
     m_operand_b = operand_b[idx]; m_operand_b_pattern = operand_b_pattern[idx];
     m_operand_c = operand_c[idx]; m_operand_c_pattern = operand_c_pattern[idx];
-
+    
     if (!(instr.instr_name inside {FCVT_S_W, FCVT_S_WU})) begin
       `MANIPULATE_FPR_OPERANDS(fs1,m_operand_a);
       `MANIPULATE_FPR_OPERANDS(fs2,m_operand_b);
@@ -584,6 +641,9 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     riscv_fp_in_x_regs_instr    p_instr_zfinx=null, 
     riscv_floating_point_instr  p_instr_f=null, 
     int idx=0);
+    if (is_fp_instr) begin
+      f_clr_fflags_done = 0;
+    end
   endfunction: act_post_directed_instr
 
   // add b2b nop instr (eq to ADDI x0, x0, 0)
@@ -632,7 +692,6 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       curr_has_r_flags = {1'b0, p_instr.has_rs2, p_instr.has_rs1, p_instr.has_rd};
     end
 
-    // if (prev_has_r_flags[0]) begin : PREV_HAS_RD
     if (prev_has_rd_detected) begin : PREV_HAS_RD
       if (curr_has_r_flags[TOTAL_D_AND_S_REG-1:1] != 0) begin : CURR_HAS_RS
         do begin
@@ -662,7 +721,6 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       end // CURR_HAS_RS
     end // PREV_HAS_RD
 
-    // else if (prev_has_f_flags[0]) begin : PREV_HAS_FD
     if (prev_has_fd_detected) begin : PREV_HAS_FD
       if (curr_has_f_flags[TOTAL_D_AND_S_REG-1:1] != 0) begin : CURR_HAS_FS
         do begin
@@ -721,6 +779,30 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
 
   endfunction: wa_prevent_store_on_code_space
 
+  // generate instr for csr access (limited use cases)
+  virtual function void directed_csr_access(
+    riscv_instr_name_t instr_name=INVALID_INSTR, riscv_reg_t rd=ZERO, riscv_reg_t rs1=ZERO,
+    logic [11:0] csr=12'h000, int idx=0
+  );
+    riscv_instr instr;
+    assert(instr_name != INVALID_INSTR);
+    instr = new riscv_instr::get_rand_instr(
+      .include_instr({instr_name})
+    );
+    instr.set_rand_mode();
+    instr.csr_c.constraint_mode(0);
+    `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
+      if (has_rs1) {
+        rs1 == local::rs1;
+      }
+      if (has_rd) {
+        rd == local::rd;
+      }
+      csr == local::csr;
+    )
+    instr_list.push_back(instr);
+  endfunction : directed_csr_access
+
 endclass: cv32e40p_float_zfinx_base_instr_stream
 
 
@@ -728,7 +810,7 @@ endclass: cv32e40p_float_zfinx_base_instr_stream
   // extended class that having mixed of others and fp directed_instrs within a stream
   // fp instr generation has more weightage than others isa
   // note: these are default classes that use to cover all the verif plan requirements
-  // note: 3 variants: with/without specific fdiv/fsqrt exclusion, more_weight_for_fdiv_fsqrt_gen
+  // variant: more_weight_for_fdiv_fsqrt_gen
 class cv32e40p_fp_n_mixed_instr_stream extends cv32e40p_float_zfinx_base_instr_stream;
 
   `uvm_object_utils(cv32e40p_fp_n_mixed_instr_stream)
@@ -737,37 +819,22 @@ class cv32e40p_fp_n_mixed_instr_stream extends cv32e40p_float_zfinx_base_instr_s
   function void pre_randomize();
     super.pre_randomize();
     use_fp_only_for_directed_instr = 0; // directed instr is mixtured of supported isa
-    temp_exclude_fdiv_fsqrt        = 0;
+    en_clr_fflags_b4_instr         = 0;
   endfunction: pre_randomize
 
 endclass: cv32e40p_fp_n_mixed_instr_stream
-class cv32e40p_fp_n_mixed_instr_w_excl_stream extends cv32e40p_float_zfinx_base_instr_stream;
-
-  `uvm_object_utils(cv32e40p_fp_n_mixed_instr_w_excl_stream)
-  `uvm_object_new
-
-  function void pre_randomize();
-    super.pre_randomize();
-    use_fp_only_for_directed_instr = 0; // directed instr is mixtured of supported isa
-    temp_exclude_fdiv_fsqrt        = 1; // excliude these instr from directed instr
-    assert (!more_weight_for_fdiv_fsqrt_gen && temp_exclude_fdiv_fsqrt);
-  endfunction: pre_randomize
-
-endclass: cv32e40p_fp_n_mixed_instr_w_excl_stream
-class cv32e40p_fp_n_mixed_instr_more_fdiv_fsqrt_stream extends cv32e40p_float_zfinx_base_instr_stream;
+class cv32e40p_fp_n_mixed_instr_more_fdiv_fsqrt_stream extends cv32e40p_fp_n_mixed_instr_stream;
 
   `uvm_object_utils(cv32e40p_fp_n_mixed_instr_more_fdiv_fsqrt_stream)
   `uvm_object_new
 
   function void pre_randomize();
     super.pre_randomize();
-    use_fp_only_for_directed_instr = 0; // directed instr is mixtured of supported isa
-    temp_exclude_fdiv_fsqrt        = 0;
     more_weight_for_fdiv_fsqrt_gen = 1;
-    assert (!temp_exclude_fdiv_fsqrt && more_weight_for_fdiv_fsqrt_gen);
   endfunction: pre_randomize
 
 endclass: cv32e40p_fp_n_mixed_instr_more_fdiv_fsqrt_stream
+
 
   //
   // extended class that use to override instr operands with specific patterns
@@ -776,10 +843,6 @@ class cv32e40p_fp_w_special_operands_instr_stream extends cv32e40p_float_zfinx_b
   `uvm_object_utils(cv32e40p_fp_w_special_operands_instr_stream)
   `uvm_object_new
 
-  constraint ovr_c_others {
-    num_of_instr_per_stream == 15; // fixed
-  }
-
   constraint ovr_c_enable_special_operand_patterns {
     enable_special_operand_patterns == 1;
   }
@@ -787,21 +850,22 @@ class cv32e40p_fp_w_special_operands_instr_stream extends cv32e40p_float_zfinx_b
   function void pre_randomize();
     super.pre_randomize();
     use_fp_only_for_directed_instr = 1;
+    // exclude FLW, FSW and FMV_W_X: no fp regs as operand and by refering to verif plan
+    exclude_instr = new[exclude_instr.size() + 2] ({exclude_instr, FLW, FSW});
   endfunction: pre_randomize
 
   // to define exclude list for this stream class
   virtual function void update_current_instr_arg_list(int idx=0);
     super.update_current_instr_arg_list(idx);
-    // exclude FLW, FSW and FMV_W_X: no fp regs as operand and by refering to verif plan
-    exclude_instr = new[exclude_instr.size() + 2] ({exclude_instr, FLW, FSW});
-    // note: should test all rather just focus on specific instrs as per verifplan. although others are covered in onespin?
-    //TBD if (!use_no_repetitive_instr_per_stream && !use_same_instr_per_stream) begin
-    //TBD   exclude_instr = new[exclude_instr.size() + 12] (
-    //TBD     {exclude_instr, FADD_S, FSUB_S, FMIN_S, FMAX_S, FSGNJ_S, FSGNJN_S, FSGNJX_S, FMV_W_X, FEQ_S, FLT_S, FLE_S, FCLASS_S});
-    //TBD end
+    // TODO: should test all rather just focus on specific instrs as per verifplan. although others are covered in onespin?
+    // if (!use_no_repetitive_instr_per_stream && !use_same_instr_per_stream) begin
+    //   exclude_instr = new[exclude_instr.size() + 12] (
+    //     {exclude_instr, FADD_S, FSUB_S, FMIN_S, FMAX_S, FSGNJ_S, FSGNJN_S, FSGNJX_S, FMV_W_X, FEQ_S, FLT_S, FLE_S, FCLASS_S});
+    // end
   endfunction: update_current_instr_arg_list
 
 endclass: cv32e40p_fp_w_special_operands_instr_stream
+
 
   //
   // extended class that use to override current directed_instr operands with previous rd/fd (previous does not mean in b2b instr manner)
@@ -813,8 +877,9 @@ class cv32e40p_fp_w_prev_rd_as_operand_instr_stream extends cv32e40p_float_zfinx
 
   function void pre_randomize();
     super.pre_randomize();
-    use_prev_rd_on_next_operands   = 1;
-    use_fp_only_for_directed_instr = 0;
+    use_prev_rd_on_next_operands    = 1;
+    use_fp_only_for_directed_instr  = 0;
+    en_clr_fflags_b4_instr          = 0;
   endfunction: pre_randomize
 
   // to define exclude list for this stream class
@@ -850,16 +915,16 @@ class cv32e40p_constraint_mc_fp_instr_stream extends cv32e40p_float_zfinx_base_i
   `uvm_object_new
 
   constraint ovr_c_others {
-    // FIXME_TEMP_EXCLUDE_UNTIL_RTL_IS_FIXED (remove -2)
-    if (is_zfinx) {num_of_instr_per_stream == TOTAL_INSTR_ZFINX_TYPE - 2;}
-    else          {num_of_instr_per_stream == TOTAL_INSTR_F_TYPE - 2;}
+    if (is_zfinx) {num_of_instr_per_stream == TOTAL_INSTR_ZFINX_TYPE;}
+    else          {num_of_instr_per_stream == TOTAL_INSTR_F_TYPE;}
   }
 
   function void pre_randomize();
     super.pre_randomize();
     // cycle through all possible mc instrs for selected directed fp instr per stream
-    use_fp_only_for_directed_instr = 1;
-    use_same_instr_per_stream      = 1;
+    use_fp_only_for_directed_instr  = 1;
+    use_same_instr_per_stream       = 1;
+    en_clr_fflags_b4_instr          = 0;
     assert (use_fp_only_for_directed_instr && use_same_instr_per_stream);
   endfunction: pre_randomize
 
@@ -873,7 +938,7 @@ class cv32e40p_constraint_mc_fp_instr_stream extends cv32e40p_float_zfinx_base_i
   endfunction: act_post_directed_instr
 
   // stream implementation to insert mc fp instr
-  virtual function void insert_mc_instr(riscv_instr instr, int idx=0);
+  virtual function void add_instr_prior_directed_instr(riscv_instr instr, int idx=0);
 
     riscv_instr                 mc_instr;
     riscv_fp_in_x_regs_instr    mc_instr_zfinx;
@@ -882,9 +947,7 @@ class cv32e40p_constraint_mc_fp_instr_stream extends cv32e40p_float_zfinx_base_i
     if (instr.group inside {RV32F, RV32ZFINX}) begin : BODY
 
       mc_instr = new riscv_instr::get_rand_instr(
-        // FIXME_TEMP_EXCLUDE_UNTIL_RTL_IS_FIXED (fdiv and fsqrt)
-        .exclude_instr({mc_exclude_instr, FDIV_S, FSQRT_S}),
-        // .exclude_instr(mc_exclude_instr),
+        .exclude_instr(mc_exclude_instr),
         .include_group((is_zfinx) ? {RV32ZFINX} : {RV32F})
       );
       update_next_mc_instr(mc_instr);
@@ -904,21 +967,19 @@ class cv32e40p_constraint_mc_fp_instr_stream extends cv32e40p_float_zfinx_base_i
         update_mc_instr_latency(mc_instr_f);
         instr_list.push_back(mc_instr_f);
       end
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(" [insert_mc_instr] ")};
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(" [add_instr_prior_directed_instr] ")};
 
       rand_fill_mc_latency_w_instrs( .instr_zfinx(mc_instr_zfinx), .instr_f(mc_instr_f) );
 
     end // BODY
 
-  endfunction : insert_mc_instr
+  endfunction : add_instr_prior_directed_instr
 
   // for cycle through all posible mc instr
   virtual function void update_next_mc_instr(riscv_instr prev_instr=null);
     int size = mc_exclude_instr.size();
     if (prev_instr != null) begin
-      // FIXME_TEMP_EXCLUDE_UNTIL_RTL_IS_FIXED (fdiv and fsqrt)
-      mc_exclude_instr       = new[size+2+1] ({mc_exclude_instr, FDIV_S, FSQRT_S});
-      // mc_exclude_instr       = new[size+1] (mc_exclude_instr);
+      mc_exclude_instr       = new[size+1] (mc_exclude_instr);
       mc_exclude_instr[size] = prev_instr.instr_name;
     end
   endfunction: update_next_mc_instr
@@ -1032,12 +1093,13 @@ class cv32e40p_fp_operand_forwarding_instr_stream extends cv32e40p_float_zfinx_b
     IS_FP
   } instr_type_t;
 
-  int unsigned        num_of_instr_per_block;
-  int unsigned        num_of_fp_instr_per_block;
-  riscv_instr         i_instr_list[$];
-  instr_type_t        instr_order_per_block[];
-  forward_pattern_t   next_instr_pattern;
-  riscv_reg_t         prev_rd, prev_rs1, prev_rs2, prev_rs3;
+  int unsigned                num_of_instr_per_block;
+  int unsigned                num_of_fp_instr_per_block;
+  riscv_instr                 i_instr_list[$];
+  instr_type_t                instr_order_per_block[];
+  forward_pattern_t           next_instr_pattern;
+  riscv_reg_t                 prev_rd, prev_rs1, prev_rs2, prev_rs3;
+  bit [TOTAL_D_AND_S_REG-1:0] prev_instr_has_gpr; // rd-rs1-rs2-rs3
 
   rand bit            fp_first_instr_per_block;
   rand int unsigned   fp_cnt_percent_per_block;
@@ -1049,23 +1111,25 @@ class cv32e40p_fp_operand_forwarding_instr_stream extends cv32e40p_float_zfinx_b
     fp_cnt_percent_per_block != 0;
     fp_cnt_percent_per_block % 10 == 0;
     soft fp_first_instr_per_block dist {1 := 4, 0 := 1};
-    soft fp_cnt_percent_per_block dist {20 := 4, 30 := 5, 40 := 1};
+    // soft fp_cnt_percent_per_block dist {30 := 5, 50 := 3, 70 :=2};
+    soft fp_cnt_percent_per_block dist {20 := 5, 30 := 3, 40 :=3};
     soft shuffle_instr_per_block == 0;
   }
 
   constraint ovr_c_avail_gp_regs {
     foreach (avail_gp_regs[i]) {
-      avail_gp_regs[i].size() == XLEN - cfg.reserved_regs.size() - reserved_rd.size() - 1; // 1 for zero
+      avail_gp_regs[i].size() == XLEN - cfg.reserved_regs.size() - reserved_rd.size() - 2; // 2 for ZERO and gp_scratch_reg
       foreach (avail_gp_regs[i][j]) {
-        !(avail_gp_regs[i][j] inside {ZERO});
+        !(avail_gp_regs[i][j] inside {ZERO, gp_scratch_reg});
       }
     }
   }
 
   function void pre_randomize();
     super.pre_randomize();
-    use_fp_only_for_directed_instr = 0;
-    num_of_instr_per_block         = 10;
+    use_fp_only_for_directed_instr  = 0;
+    num_of_instr_per_block          = 10;
+    en_clr_fflags_b4_instr          = 0;
     assert (num_of_instr_per_block != 0 && num_of_instr_per_block%10 == 0);
   endfunction: pre_randomize
 
@@ -1083,7 +1147,7 @@ class cv32e40p_fp_operand_forwarding_instr_stream extends cv32e40p_float_zfinx_b
 
   // to define exclude list for this stream class
   virtual function void update_directed_instr_arg_list(int idx=0);
-    exclude_instr = new[24] (`FP_STREAM_EXCLUDE_LIST);
+    exclude_instr = new[22] (`EXCLUDE_INSTR_LIST);
     // always exclude all store instr to prevent from overriding the code space;
     exclude_instr = new[exclude_instr.size() + 4] ({exclude_instr, FSW, SB, SH, SW});
     // always exclude RV32C because it only uses 8 common gpr. We cover > 8 gpr here
@@ -1108,13 +1172,18 @@ class cv32e40p_fp_operand_forwarding_instr_stream extends cv32e40p_float_zfinx_b
     int idx=0);
 
     bit [TOTAL_D_AND_S_REG-1:0] instr_has_gpr; // rd-rs1-rs2-rs3
+    string instr_name="NA";
 
     // get current instr has_flags {idx high to low}
-    if (!is_fp_instr)             instr_has_gpr = {1'b0,                  p_instr.has_rs2,       p_instr.has_rs1,       p_instr.has_rd};
-    if (is_fp_instr && !is_zfinx) instr_has_gpr = {1'b0,                  p_instr_f.has_rs2,     p_instr_f.has_rs1,     p_instr_f.has_rd};
-    if (is_fp_instr && is_zfinx)  instr_has_gpr = {p_instr_zfinx.has_rs3, p_instr_zfinx.has_rs2, p_instr_zfinx.has_rs1, p_instr_zfinx.has_rd};
+    if (!is_fp_instr)                  begin instr_has_gpr = {1'b0,                  p_instr.has_rs2,       p_instr.has_rs1,       p_instr.has_rd};       instr_name = p_instr.instr_name.name(); end
+    else if (is_fp_instr && !is_zfinx) begin instr_has_gpr = {1'b0,                  p_instr_f.has_rs2,     p_instr_f.has_rs1,     p_instr_f.has_rd};     instr_name = p_instr_f.instr_name.name(); end
+    else if (is_fp_instr && is_zfinx)  begin instr_has_gpr = {p_instr_zfinx.has_rs3, p_instr_zfinx.has_rs2, p_instr_zfinx.has_rs1, p_instr_zfinx.has_rd}; instr_name = p_instr_zfinx.instr_name.name(); end
+    else begin
+      `uvm_fatal(_header, $sformatf("Unexpected call on act_post_directed_instr() "));
+    end
     // execute next_instr_pattern
     if (idx > 0) begin
+      int gpr_idx, cnt=0, cnt_limit=40;
       unique case (next_instr_pattern) 
         PREV_RD_IS_CURR_RD :  begin
                                 if (!is_fp_instr)             p_instr.rd       = prev_rd;
@@ -1122,22 +1191,44 @@ class cv32e40p_fp_operand_forwarding_instr_stream extends cv32e40p_float_zfinx_b
                                 if (is_fp_instr && is_zfinx)  p_instr_zfinx.rd = prev_rd;
                               end
         PREV_RD_IS_CURR_RS :  begin
-                                if (!is_fp_instr)             p_instr.rs1       = prev_rd;
-                                if (is_fp_instr && !is_zfinx) p_instr_f.rs1     = prev_rd;
-                                if (is_fp_instr && is_zfinx)  p_instr_zfinx.rs1 = prev_rd;
+                                do begin
+                                  gpr_idx = $urandom_range(1,3); cnt++;
+                                  assert (cnt<cnt_limit) else begin `uvm_fatal(_header, $sformatf("cnt limit reached - instr_name is %s with instr_has_gpr %4b", instr_name, instr_has_gpr)); end
+                                end
+                                while(!instr_has_gpr[gpr_idx]);
+                                unique case(gpr_idx)
+                                  1: begin
+                                    if (!is_fp_instr)             p_instr.rs1       = prev_rd;
+                                    if (is_fp_instr && !is_zfinx) p_instr_f.rs1     = prev_rd;
+                                    if (is_fp_instr && is_zfinx)  p_instr_zfinx.rs1 = prev_rd;
+                                  end
+                                  2: begin
+                                    if (!is_fp_instr)             p_instr.rs2       = prev_rd;
+                                    if (is_fp_instr && !is_zfinx) p_instr_f.rs2     = prev_rd;
+                                    if (is_fp_instr && is_zfinx)  p_instr_zfinx.rs2 = prev_rd;
+                                  end
+                                  3: begin
+                                    if (is_fp_instr && is_zfinx)  p_instr_zfinx.rs3 = prev_rd;
+                                  end
+                                endcase
                               end
         PREV_RS_IS_CURR_RD :  begin
-                                if (!is_fp_instr)             p_instr.rd       = prev_rs1;
-                                if (is_fp_instr && !is_zfinx) p_instr_f.rd     = prev_rs1;
-                                if (is_fp_instr && is_zfinx)  p_instr_zfinx.rd = prev_rs1;
+                                do begin
+                                  gpr_idx = $urandom_range(1,3); cnt++;
+                                  assert (cnt<cnt_limit) else begin `uvm_fatal(_header, $sformatf("cnt limit reached - instr_name is %s with prev_instr_has_gpr %4b", instr_name, prev_instr_has_gpr)); end
+                                end
+                                while(!prev_instr_has_gpr[gpr_idx]);
+                                if (!is_fp_instr)             p_instr.rd       = (gpr_idx==1) ? prev_rs1 : ((gpr_idx==2) ? prev_rs2 : prev_rs3);
+                                if (is_fp_instr && !is_zfinx) p_instr_f.rd     = (gpr_idx==1) ? prev_rs1 : ((gpr_idx==2) ? prev_rs2 : prev_rs3);
+                                if (is_fp_instr && is_zfinx)  p_instr_zfinx.rd = (gpr_idx==1) ? prev_rs1 : ((gpr_idx==2) ? prev_rs2 : prev_rs3);
                               end
       endcase
     end
     // update next_instr_pattern
     casez (instr_has_gpr)
-      4'b??10 : next_instr_pattern = PREV_RS_IS_CURR_RD;
-      4'b??11 : next_instr_pattern = forward_pattern_t'($urandom_range(0,2));
-      4'b0001 : next_instr_pattern = forward_pattern_t'($urandom_range(0,1));
+      4'b??10 : next_instr_pattern = PREV_RS_IS_CURR_RD; // prev: rs
+      4'b??11 : next_instr_pattern = forward_pattern_t'($urandom_range(0,2)); // prev: rd, rs1
+      4'b0001 : next_instr_pattern = forward_pattern_t'($urandom_range(0,1)); // prev: rd
     endcase
     // update prev_xreg
     if (!is_fp_instr)             begin prev_rd = p_instr.rd;       prev_rs1 = p_instr.rs1;       prev_rs2 = p_instr.rs2;         end
@@ -1145,12 +1236,14 @@ class cv32e40p_fp_operand_forwarding_instr_stream extends cv32e40p_float_zfinx_b
     if (is_fp_instr && is_zfinx)  begin prev_rd = p_instr_zfinx.rd; prev_rs1 = p_instr_zfinx.rs1; prev_rs2 = p_instr_zfinx.rs2;   end
     if (is_fp_instr && is_zfinx)  begin prev_rs3 = p_instr_zfinx.rs3; end
     else                          begin prev_rs3 = ZERO; end
+    prev_instr_has_gpr = instr_has_gpr;
   endfunction: act_post_directed_instr
 
   // override becase this testcase need overall special handling
   function void post_randomize();
 
     print_stream_setting();
+    initialize_regs();
 
     num_of_fp_instr_per_block = (num_of_instr_per_block * fp_cnt_percent_per_block)/100;
     instr_order_per_block = new[(num_of_instr_per_block-num_of_fp_instr_per_block)];
@@ -1173,7 +1266,7 @@ class cv32e40p_fp_operand_forwarding_instr_stream extends cv32e40p_float_zfinx_b
           loop_cnt++;
         end
         while (fp_first_instr_per_block && instr_order_per_block[0] == IS_NON_FP);
-        $display("instr_order_per_block[shuffle] is %p", instr_order_per_block);
+        // $display("instr_order_per_block[shuffle] is %p", instr_order_per_block);
       end
 
       update_directed_instr_arg_list(i % num_of_instr_per_block);
@@ -1220,7 +1313,7 @@ class cv32e40p_fp_operand_forwarding_instr_stream extends cv32e40p_float_zfinx_b
         .p_instr_f(instr_f),
         .idx(i)
       );
-      $display("next_instr_pattern is %s", next_instr_pattern.name());
+      // $display("next_instr_pattern is %s", next_instr_pattern.name());
 
       if (!is_fp_instr)   i_instr_list.push_back(instr);
       else if (is_zfinx)  i_instr_list.push_back(instr_zfinx);
@@ -1240,6 +1333,73 @@ class cv32e40p_fp_operand_forwarding_instr_stream extends cv32e40p_float_zfinx_b
   endfunction: post_randomize
 
 endclass: cv32e40p_fp_operand_forwarding_instr_stream
+
+
+// directed test for below scenarios (for zfinx=0)
+// scenario_1 - fp isntr cause FS changed to dirty state following by csrr on mstatus
+// scenario_2 - csrr fflags after any fp instr that have chances to alter fflags 
+class cv32e40p_fp_followed_by_csrr_instr_stream extends cv32e40p_fp_w_special_operands_instr_stream;
+
+  `uvm_object_utils(cv32e40p_fp_followed_by_csrr_instr_stream)
+  `uvm_object_new
+
+  constraint ovr_c_others {
+    num_of_instr_per_stream == 5;
+  }
+
+  constraint ovr_c_operand_pattern {
+    foreach (operand_a_pattern[i]) {
+      operand_a_pattern[i] dist {IS_RAND := 2, IS_POSITIVE_ZERO := 1, IS_NEGATIVE_ZERO := 1, IS_POSITIVE_MAX := 1, IS_NEGATIVE_MAX := 1, IS_POSITIVE_MIN := 1, IS_NEGATIVE_MIN := 1};
+      operand_b_pattern[i] dist {IS_RAND := 2, IS_POSITIVE_ZERO := 1, IS_NEGATIVE_ZERO := 1, IS_POSITIVE_MAX := 1, IS_NEGATIVE_MAX := 1, IS_POSITIVE_MIN := 1, IS_NEGATIVE_MIN := 1};
+      operand_c_pattern[i] dist {IS_RAND := 2, IS_POSITIVE_ZERO := 1, IS_NEGATIVE_ZERO := 1, IS_POSITIVE_MAX := 1, IS_NEGATIVE_MAX := 1, IS_POSITIVE_MIN := 1, IS_NEGATIVE_MIN := 1};
+    }
+  }
+
+  function void pre_randomize();
+    super.pre_randomize();
+    en_clr_fflags_b4_instr  = 0;
+    include_instr = new[3] ({FMUL_S, FDIV_S, FSQRT_S}); // these instr can easily causes fflag get updated
+    if (is_zfinx) begin
+      `uvm_fatal(_header, $sformatf("This test is for FPU with zfinx==0"))
+    end
+  endfunction: pre_randomize
+
+  // scenario_1
+  virtual function void initialize_regs();
+    riscv_reg_t                 rs1 = T0;
+    riscv_reg_t                 rd  = T1;
+    riscv_instr                 instr;
+    riscv_floating_point_instr  instr_f;
+    // set mstatus.FS from dirty->initial
+    `SET_GPR_VALUE(local::gp_scratch_reg,32'h0000_4000);
+    directed_csr_access(.instr_name(CSRRC), .rs1(gp_scratch_reg), .csr(12'h300));
+    insert_nop_instr(2);
+    // insert any fp instr
+    instr = new riscv_instr::get_rand_instr(
+        .include_instr({FMV_W_X}) // todo: maybe need to put some which affect by latency param / fdiv
+    );
+    `DV_CHECK_FATAL($cast(instr_f, instr), "Cast to instr_f failed!");
+    randomize_fpr(instr_f);
+    instr_list.push_back(instr_f);
+    // csrr mstatus
+    directed_csr_access(.instr_name(CSRRS), .rd(rd), .csr(12'h300));
+    insert_nop_instr(2);
+
+    super.initialize_regs();
+  endfunction : initialize_regs
+
+  // scenario_2
+  virtual function void act_post_directed_instr(
+    riscv_instr                 p_instr=null,
+    riscv_fp_in_x_regs_instr    p_instr_zfinx=null, 
+    riscv_floating_point_instr  p_instr_f=null, 
+    int idx=0);
+    riscv_reg_t rd;
+    void'(std::randomize(rd) with {!(rd inside {avail_gp_regs[idx]});});
+    directed_csr_access(.instr_name(CSRRS), .rd(rd), .csr(12'h001), .idx(idx));
+  endfunction: act_post_directed_instr
+
+endclass: cv32e40p_fp_followed_by_csrr_instr_stream
 
 
 // ALL FP STREAM CLASSESS - end

@@ -87,7 +87,32 @@
       }\
     }
 
-  // Add overhead instructions to override fp instr operands with specific operand patterns
+  // Overhead instruction to set fpr with specific value
+  `define SET_FPR_VALUE(FRD,IMM) \
+    begin\
+      riscv_instr                 m_instr;\
+      riscv_pseudo_instr          p_instr;\
+      riscv_floating_point_instr  f_instr;\
+      p_instr = riscv_pseudo_instr::type_id::create("p_instr");\
+      `DV_CHECK_RANDOMIZE_WITH_FATAL(p_instr,\
+        pseudo_instr_name == LI;\
+        rd  == T2;\
+      );\
+      p_instr.imm = ``IMM``;\
+      p_instr.update_imm_str();\
+      instr_list.push_back(p_instr);\
+      m_instr = new riscv_instr::get_rand_instr(.include_instr({FMV_W_X}));\
+      `DV_CHECK_FATAL($cast(f_instr, m_instr), "Cast to instr_f failed!");\
+      override_instr(\
+        .f_instr  (f_instr),\
+        .fd       (``FRD``),\
+        .rs1      (T2)\
+      );\
+      instr_list.push_back(f_instr);\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [SET REG TO 32'h%8h] `", ``IMM``)};\
+    end
+
+  // Overhead instructions to override fp instr operands with specific operand patterns
   `define MANIPULATE_FPR_OPERANDS(FPR,OPERAND) \
     if (instr.has_``FPR && ``OPERAND``_pattern != IS_RAND) begin\
       riscv_instr                 m_instr;\
@@ -101,7 +126,7 @@
       p_instr.imm = ``OPERAND``;\
       p_instr.update_imm_str();\
       instr_list.push_back(p_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [``OPERAND`` - %s] `", ``OPERAND``_pattern.name())};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [``OPERAND`` - %s - 32'h%8h] `", ``OPERAND``_pattern.name(), ``OPERAND``)};\
       m_instr = new riscv_instr::get_rand_instr(.include_instr({FMV_W_X}));\
       `DV_CHECK_FATAL($cast(f_instr, m_instr), "Cast to instr_f failed!");\
       override_instr(\
@@ -113,7 +138,22 @@
       instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [``OPERAND`` - %s] `", ``OPERAND``_pattern.name())};\
     end
 
-  // Add overhead instructions to override zfinx fp instr operands with specific operand patterns
+  // Overhead instruction to set gpr with specific value
+  `define SET_GPR_VALUE(RD,IMM) \
+    begin\
+      riscv_pseudo_instr          p_instr;\
+      p_instr = riscv_pseudo_instr::type_id::create("p_instr");\
+      `DV_CHECK_RANDOMIZE_WITH_FATAL(p_instr,\
+        pseudo_instr_name == LI;\
+        rd  == ``RD``;\
+      );\
+      p_instr.imm = ``IMM``;\
+      p_instr.update_imm_str();\
+      instr_list.push_back(p_instr);\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [SET REG TO 32'h%8h] `", ``IMM``)};\
+    end
+
+  // Overhead instructions to override zfinx fp instr operands with specific operand patterns
   `define MANIPULATE_GPR_OPERANDS(GPR,OPERAND) \
     if (instr.has_``GPR && ``OPERAND``_pattern != IS_RAND) begin\
       riscv_pseudo_instr          m_instr;\
@@ -125,11 +165,11 @@
       m_instr.imm = ``OPERAND``;\
       m_instr.update_imm_str();\
       instr_list.push_back(m_instr);\
-      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [``OPERAND`` - %s] `", ``OPERAND``_pattern.name())};\
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [``OPERAND`` - %s - 32'h%8h] `", ``OPERAND``_pattern.name(), ``OPERAND``)};\
     end
 
   // 22 always exclude list within fp stream
-  `define   FP_STREAM_EXCLUDE_LIST   {JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU, ECALL, EBREAK, \
+  `define   EXCLUDE_INSTR_LIST      {JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU, ECALL, EBREAK, \
                                      DRET, MRET, URET, SRET, WFI, C_EBREAK, C_BEQZ, C_BNEZ, C_J, C_JAL, \
                                      C_JR, C_JALR}
 

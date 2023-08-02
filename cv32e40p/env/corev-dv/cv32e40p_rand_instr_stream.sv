@@ -101,7 +101,7 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
         end // idx_search_done
 
         rand_cnt++;
-        if (rand_cnt >= 100) begin
+        if (rand_cnt >= 200) begin
           `uvm_fatal(`gfn, $sformatf("rand_cnt hit limit %0d and not able to find space for instr placement. Please revise the stream", rand_cnt))
         end // rand_cnt
 
