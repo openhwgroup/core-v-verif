@@ -44,17 +44,17 @@ builds:
     dir: cv32e40p/sim/uvmt
 
   uvmt_cv32e40p_pulp_fpu_zfinx:
-    cmd: make comp comp_corev-dv
+    cmd: make comp comp_corev-dv GEN_COMPILE_FLAGS="+define+FP_IN_X_REGS"
     cfg: pulp_fpu_zfinx
     dir: cv32e40p/sim/uvmt
 
   uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat:
-    cmd: make comp comp_corev-dv
+    cmd: make comp comp_corev-dv GEN_COMPILE_FLAGS="+define+FP_IN_X_REGS"
     cfg: pulp_fpu_zfinx_1cyclat
     dir: cv32e40p/sim/uvmt
 
   uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat:
-    cmd: make comp comp_corev-dv
+    cmd: make comp comp_corev-dv GEN_COMPILE_FLAGS="+define+FP_IN_X_REGS"
     cfg: pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
 
@@ -134,27 +134,31 @@ tests:
     cov: 0
     cmd: make test COREV=YES TEST=debug_test
 
-  corev_sanity_fp_instr_test:
+  corev_rand_fp_instr_sanity_test_nonzfinx:
+    testname: corev_rand_fp_instr_sanity_test
     builds:
       - uvmt_cv32e40p_pulp_fpu
       - uvmt_cv32e40p_pulp_fpu_1cyclat
       - uvmt_cv32e40p_pulp_fpu_2cyclat
+    test_cfg: floating_pt_instr_en
     dir: cv32e40p/sim/uvmt
     iss: 1
     cov: 0
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_sanity_fp_instr_test
-    test_cfg: floating_pt_instr_en
+    # cmd: make gen_corev-dv test COREV=YES TEST=corev_sanity_fp_instr_test
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
 
-  corev_sanity_fp_zfinx_instr_test:
+  corev_rand_fp_instr_sanity_test_zfinx:
+    testname: corev_rand_fp_instr_sanity_test
     builds:
       - uvmt_cv32e40p_pulp_fpu_zfinx
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
+    test_cfg: floating_pt_zfinx_instr_en
     dir: cv32e40p/sim/uvmt
     iss: 1
     cov: 0
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_sanity_fp_zfinx_instr_test
-    test_cfg: floating_pt_instr_en
+    # cmd: make gen_corev-dv test COREV=YES TEST=corev_sanity_fp_zfinx_instr_test
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000" 
 
   corev_rand_pulp_instr_test:
     build: uvmt_cv32e40p_pulp
