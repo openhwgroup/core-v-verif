@@ -220,7 +220,7 @@ endif
 # Interactive simulation
 ifeq ($(call IS_YES,$(GUI)),YES)
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-VSIM_FLAGS += -visualizer=+designfile=../design.bin
+VSIM_FLAGS += -visualizer=+designfile=$(SIM_TEST_RESULTS)/../design.bin
 else
 VSIM_FLAGS += -gui
 endif
@@ -384,8 +384,11 @@ gen_corev-dv: $(VSIM_COREVDV_SIM_PREREQ)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		mkdir -p $(SIM_TEST_RESULTS)/$$idx/test_program; \
 	done
+	if [ -f "$(SIM_COREVDV_RESULTS)/$(TEST)/modelsim.ini" ]; then \
+		rm -rf $(SIM_COREVDV_RESULTS)/$(TEST)/modelsim.ini; \
+	fi
 	cd $(SIM_COREVDV_RESULTS)/$(TEST) && \
-		$(VMAP) work $(SIM_COREVDV_RESULTS)/work
+		$(VMAP) work $(SIM_COREVDV_RESULTS)/work; \
 	cd  $(SIM_COREVDV_RESULTS)/$(TEST) && \
 		$(VSIM) \
 			$(VSIM_FLAGS) \
@@ -393,6 +396,7 @@ gen_corev-dv: $(VSIM_COREVDV_SIM_PREREQ)
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(GEN_UVM_TEST) \
 			-l $(TEST)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log \
+			-modelsimini modelsim.ini \
 			+start_idx=$(GEN_START_INDEX) \
 			+num_of_tests=$(GEN_NUM_TESTS) \
 			+asm_file_name_opts=$(TEST) \
@@ -638,6 +642,7 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 			$(VSIM_WAVES_FLAGS) \
 			$(VSIM_FLAGS) \
 			-l vsim-$(VSIM_TEST).log \
+			-modelsimini modelsim.ini \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(TEST_UVM_TEST) \
 			$(RTLSRC_VOPT_TB_TOP) \
