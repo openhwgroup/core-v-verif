@@ -235,7 +235,7 @@ module uvmt_cv32e40s_dut_wrap
          .mcycle_o               ( /*todo: connect */             ),
 
          .irq_i                  ( interrupt_if.irq               ),
-         .wu_wfe_i               ( wfe_wu_if.wfe_wu_o             ),
+         .wu_wfe_i               ( wfe_wu_if.wfe_wu               ),
          .clic_irq_i             ( clic_if.clic_irq               ),
          .clic_irq_id_i          ( clic_if.clic_irq_id            ),
          .clic_irq_level_i       ( clic_if.clic_irq_level         ),

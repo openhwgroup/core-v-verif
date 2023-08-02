@@ -34,8 +34,6 @@ interface uvma_wfe_wu_if_t ();
     bit   is_active;
     bit   wfe_wu;
 
-    assign wfe_wu_o = is_active ? wfe_wu : 1'b0;
-
     `ifndef FORMAL
     initial begin
       is_active = 1'b0;

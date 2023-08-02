@@ -98,8 +98,6 @@ task uvma_wfe_wu_drv_c::run_phase(uvm_phase phase);
 
    super.run_phase(phase);
 
-   cntxt.vif.is_active = cfg.enabled;
-
    forever begin
       seq_item_port.get_next_item(req);
       `uvml_hrtbt()
