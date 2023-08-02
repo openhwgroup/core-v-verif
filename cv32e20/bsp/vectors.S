@@ -17,10 +17,8 @@
 .section .vectors, "ax"
 .option norvc
 .global vector_table
-.global _start
 
-        j _start /*MJS: Reset address is now 0x0, so add a jump to start right before vector table.  */
-.align 8        
+        
 vector_table:
 	j u_sw_irq_handler
 	j __no_irq_handler
