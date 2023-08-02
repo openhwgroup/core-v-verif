@@ -252,9 +252,6 @@
 
 module uvmt_cv32e20_imperas_dv_wrap
   import uvm_pkg::*;
-//  import cv32e20_pkg::*;
-//   import uvme_cv32e20_pkg::*;
-//   import uvmt_cv32e20_pkg::*;
   import idvPkg::*;
   import rvviApiPkg::*;
   #(

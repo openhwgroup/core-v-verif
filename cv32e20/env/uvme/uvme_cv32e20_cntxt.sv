@@ -35,7 +35,7 @@ class uvme_cv32e20_cntxt_c extends uvm_object;
    virtual uvmt_cv32e20_debug_cov_assert_if  debug_cov_vif; ///< Virtual interface for Debug coverage
 
    // Hack to support backdoor updating of memory for vitual peripherals until we properly port RVFI/RVVI
-   virtual RVVI_memory                        rvvi_memory_vif;
+//   virtual RVVI_memory                        rvvi_memory_vif;
 
    // Agent context handles
    uvma_clknrst_cntxt_c    clknrst_cntxt;
