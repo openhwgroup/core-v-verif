@@ -567,7 +567,6 @@ module uvmt_cv32e40s_debug_assert
 
 
     // dret in D-mode will place dpc in mepc if re-entry is interrupted (excluding nmi)
-    //TODO:MT fails due to irregular behaviour in RVFI. Await 40S bug issue 414 before changing
     property p_dmode_dret_pc_int;
         int dpc;
         (rvfi.is_dret && rvfi.rvfi_dbg_mode,
