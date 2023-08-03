@@ -32,6 +32,7 @@ class uvma_isacov_mon_c#(int ILEN=DEFAULT_ILEN,
   uvm_analysis_imp_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvma_isacov_mon_c) rvfi_instr_imp;
 
   extern function new(string name = "uvma_isacov_mon", uvm_component parent = null);
+
   extern virtual function void build_phase(uvm_phase phase);
 
   /**
@@ -43,6 +44,8 @@ class uvma_isacov_mon_c#(int ILEN=DEFAULT_ILEN,
    * Analysis port write from RVFI instruction retirement monitor
    */
   extern virtual function void write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) rvfi_instr);
+
+
 
 endclass : uvma_isacov_mon_c
 
@@ -76,8 +79,6 @@ function void uvma_isacov_mon_c::build_phase(uvm_phase phase);
   dasm_set_config(32, "rv32imc", 0);
 
   // Use the enumerations in <instr_name_t> to setup the instr_name_lookup
-  // convert the enums to lower-case and substitute underscore with . to match
-  // Spike disassembler
   in = in.first;
   repeat(in.num) begin
     string instr_name_key = in.name();
@@ -144,7 +145,6 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
   mon_trn = uvma_isacov_mon_trn_c#(.ILEN(ILEN), .XLEN(XLEN))::type_id::create("mon_trn");
   mon_trn.instr = uvma_isacov_instr_c#(ILEN,XLEN)::type_id::create("mon_instr");
   mon_trn.instr.rvfi = rvfi_instr;
-
   // Mark trapped instructions from RVFI
   mon_trn.instr.trap = rvfi_instr.trap;
 
@@ -168,15 +168,12 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
     // from OpenHW core-v-verif perspective so set to UNKNOWN
     mon_trn.instr.name = UNKNOWN;
   end
-
   `uvm_info("ISACOVMON", $sformatf("rvfi = 0x%08x %s", rvfi_instr.insn, instr_name), UVM_HIGH);
-
-  mon_trn.instr.itype = get_instr_type(mon_trn.instr.name);
   mon_trn.instr.ext   = get_instr_ext(mon_trn.instr.name);
   mon_trn.instr.group = get_instr_group(mon_trn.instr.name, rvfi_instr.mem_addr);
   mon_trn.instr.itype = get_instr_type(mon_trn.instr.name);
 
-if (cfg.decoder == SPIKE) begin
+  if (cfg.decoder == SPIKE) begin
     // Attempt to decode instruction with Spike DASM
     instr = $signed(rvfi_instr.insn);
 
@@ -241,14 +238,6 @@ if (cfg.decoder == SPIKE) begin
   // 2. If UNKNOWN (undecodable)
   if (mon_trn.instr.name == UNKNOWN) begin
     mon_trn.instr.illegal = 1;
-  end
-  // 2. If a CSR instruction is not targeted to a valid CSR
-  if (mon_trn.instr.group == CSR_GROUP) begin
-    mon_trn.instr.csr_val = dasm_csr(instr);
-    if (!$cast(mon_trn.instr.csr, mon_trn.instr.csr_val) ||
-         cfg.core_cfg.unsupported_csr_mask[mon_trn.instr.csr_val]) begin
-      mon_trn.instr.illegal = 1;
-    end
   end
 
   // Make instructions as illegal,
@@ -359,6 +348,4 @@ if (cfg.decoder == SPIKE) begin
   // Write to analysis port
   ap.write(mon_trn);
 
-endfunction
-
-
+endfunction : write_rvfi_instr

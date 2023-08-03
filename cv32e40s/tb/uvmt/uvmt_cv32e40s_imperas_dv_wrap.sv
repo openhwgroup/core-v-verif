@@ -311,7 +311,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
    )
 
    (
-           rvviTrace  rvvi // RVVI SystemVerilog Interface
+           rvviTrace rvvi // RVVI SystemVerilog Interface
    );
 
    trace2api       #(.CMP_PC      (1),
@@ -793,12 +793,20 @@ module uvmt_cv32e40s_imperas_dv_wrap
        end
    end: Monitor_RVFI
 
-  /////////////////////////////////////////////////////////////////////////////
-  // REF control
-  /////////////////////////////////////////////////////////////////////////////
+endmodule : uvmt_cv32e40s_imperas_dv_wrap
+
+interface uvmt_imperas_dv_if_t;
+  import uvm_pkg::*;
+  import cv32e40s_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
+  import uvme_cv32e40s_pkg::*;
+  import rvviApiPkg::*;
+
+  string info_tag = "ImperasDV_if";
+
   task ref_init;
     string test_program_elf;
-    reg [31:0] hart_id;
+    logic [31:0] hart_id;
 
     // Select processor name
     void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME, "CVE4S"));
@@ -934,10 +942,12 @@ module uvmt_cv32e40s_imperas_dv_wrap
     rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR, RVVI_FALSE);
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
 
+    // TODO: Set these as volatiles as a temporary fix until
+    // we have a proper fix implemented in the ISS
     if (CORE_PARAM_CLIC == 1) begin
-      rvviRefCsrCompareEnable(hart_id, `CSR_MNXTI_ADDR, RVVI_FALSE);
-      rvviRefCsrCompareEnable(hart_id, `CSR_MSCRATCHCSW_ADDR, RVVI_FALSE);
-      rvviRefCsrCompareEnable(hart_id, `CSR_MSCRATCHCSWL_ADDR, RVVI_FALSE);
+      void'(rvviRefCsrSetVolatile(hart_id, `CSR_MNXTI_ADDR));
+      void'(rvviRefCsrSetVolatile(hart_id, `CSR_MSCRATCHCSW_ADDR));
+      void'(rvviRefCsrSetVolatile(hart_id, `CSR_MSCRATCHCSWL_ADDR));
     end
 
     // define asynchronous grouping
@@ -985,25 +995,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
 
     `uvm_info(info_tag, "ref_init() complete", UVM_LOW)
   endtask // ref_init
-
-endmodule : uvmt_cv32e40s_imperas_dv_wrap
-
-`else // ! USE_IMPERASDV
-
-    module uvmt_cv32e40s_imperas_dv_wrap
-      import uvm_pkg::*;
-      import uvmt_cv32e40s_base_test_pkg::*;
-      import uvme_cv32e40s_pkg::*;
-      #(
-       )
-
-       (
-               rvviTrace  rvvi // RVVI SystemVerilog Interface
-       );
-
-       task ref_init;
-       endtask
-endmodule : uvmt_cv32e40s_imperas_dv_wrap
+endinterface : uvmt_imperas_dv_if_t
 
 `endif  // USE_IMPERASDV
 

@@ -169,6 +169,18 @@
     SRA,
     OR,
     AND,
+    //A
+    LR_W,
+    SC_W,
+    AMOSWAP_W,
+    AMOADD_W,
+    AMOXOR_W,
+    AMOAND_W,
+    AMOOR_W,
+    AMOMIN_W,
+    AMOMAX_W,
+    AMOMINU_W,
+    AMOMAXU_W,
     //Zba
     SH1ADD,
     SH2ADD,
@@ -614,14 +626,34 @@
     FUNCT3_REMU   = 3'b111
   } m_minor_opcode_e;
 
+  // Minor opcode for atomic instructions, "A".
+  typedef enum logic [2:0] {
+    FUNCT3_A_W    = 3'b010,
+    FUNCT3_A_D    = 3'b011
+  } a_minor_opcode_e;
 
   typedef enum logic [4:0] {
-    FUNCT5_C_ZEXTB = 5'b11000,
-    FUNCT5_C_SEXTB = 5'b11001,
-    FUNCT5_C_ZEXTH = 5'b11010,
-    FUNCT5_C_SEXTH = 5'b11011,
-    FUNCT5_C_NOT   = 5'b11101
-  } funct5_e;
+    FUNCT5_C_SEXTB  = 5'b11001,
+    FUNCT5_C_ZEXTB  = 5'b11000,
+    FUNCT5_C_ZEXTH  = 5'b11010,
+    FUNCT5_C_SEXTH  = 5'b11011,
+    FUNCT5_C_NOT    = 5'b11101
+  } funct5_compressed_e;
+
+  typedef enum logic [4:0] {
+    FUNCT5_LR_W       = 5'b00010,
+    FUNCT5_SC_W       = 5'b00011,
+    FUNCT5_AMOSWAP_W  = 5'b00001,
+    FUNCT5_AMOADD_W   = 5'b00000,
+    FUNCT5_AMOXOR_W   = 5'b00100,
+    FUNCT5_AMOAND_W   = 5'b01100,
+    FUNCT5_AMOOR_W    = 5'b01000,
+    FUNCT5_AMOMIN_W   = 5'b10000,
+    FUNCT5_AMOMAX_W   = 5'b10100,
+    FUNCT5_AMOMINU_W  = 5'b11000,
+    FUNCT5_AMOMAXU_W  = 5'b11100
+  } funct5_atomic_e;
+
 
   // Funct7
   typedef enum logic [6:0] {
@@ -960,6 +992,12 @@
     bit valid;
   } stack_adj_operand_t;
 
+  // Atomic operand to specify additional memory ordering constraints for atomic instructions
+  typedef struct packed {
+    bit aq;
+    bit rl;
+    bit valid;
+  } atomic_operand_t;
   // ---------------------------------------------------------------------------
   // Instruction formats
   // ---------------------------------------------------------------------------
@@ -1008,6 +1046,7 @@
     logic               is_hint;  // Indicates whether the current instruction is a HINT.
     rlist_operand_t     rlist;  // structure to handle rlist fields for Zcmp-instructions
     stack_adj_operand_t stack_adj; // structure to handle stack_adj fields for Zcmp-instructions
+    atomic_operand_t    atomic;
   } asm_t;
 
 
@@ -1271,7 +1310,6 @@
 
     if(check_if_hint(name, format, instr)) begin
       asm.is_hint     = 1;
-      return asm;
     end
 
     casex (format)
@@ -1357,12 +1395,24 @@
         asm.imm.valid           = 1;
       end
       R_TYPE: begin
-        asm.rd.gpr      = instr.uncompressed.format.r.rd.gpr;
-        asm.rs1.gpr     = instr.uncompressed.format.r.rs1.gpr;
-        asm.rs2.gpr     = instr.uncompressed.format.r.rs2.gpr;
-        asm.rd.valid    = 1;
-        asm.rs1.valid   = 1;
-        asm.rs2.valid   = 1;
+        if ( asm.instr inside { LR_W, SC_W, AMOSWAP_W, AMOADD_W, AMOXOR_W, AMOAND_W, AMOOR_W, AMOMIN_W, AMOMAX_W, AMOMINU_W, AMOMAXU_W } ) begin
+          asm.rd.gpr        = instr.uncompressed.format.r.rd.gpr;
+          asm.rs1.gpr       = instr.uncompressed.format.r.rs1.gpr;
+          asm.rs2.gpr       = instr.uncompressed.format.r.rs2.gpr;
+          asm.atomic.aq     = instr.uncompressed.format.r.funct7[26];
+          asm.atomic.rl     = instr.uncompressed.format.r.funct7[25];
+          asm.rd.valid      = 1;
+          asm.rs1.valid     = 1;
+          asm.rs2.valid     = 1;
+          asm.atomic.valid  = 1;
+        end else begin
+          asm.rd.gpr      = instr.uncompressed.format.r.rd.gpr;
+          asm.rs1.gpr     = instr.uncompressed.format.r.rs1.gpr;
+          asm.rs2.gpr     = instr.uncompressed.format.r.rs2.gpr;
+          asm.rd.valid    = 1;
+          asm.rs1.valid   = 1;
+          asm.rs2.valid   = 1;
+        end
       end
       R4_TYPE: begin
         asm.rd.gpr      = instr.uncompressed.format.r4.rd.gpr;
@@ -1407,9 +1457,11 @@
           asm.imm.valid = 0;
         end else if (name inside { C_MV }) begin
           asm.rd.gpr    = instr.compressed.format.cr.rd_rs1.gpr;
+          asm.rs1.gpr   = instr.compressed.format.cr.rd_rs1.gpr;
           asm.rs2.gpr   = instr.compressed.format.cr.rs2.gpr;
           asm.rd.valid  = 1;
           asm.rs2.valid = 1;
+          asm.rs1.valid = 1;
         end else if (name inside { C_ADD }) begin
           asm.rd.gpr    = instr.compressed.format.cr.rd_rs1.gpr;
           asm.rs1.gpr   = instr.compressed.format.cr.rd_rs1.gpr;
@@ -1425,7 +1477,19 @@
         end
       end
       CI_TYPE: begin
-        if (name inside { C_LI, C_NOP, C_ADDI }) begin
+        if (name inside { C_NOP, C_ADDI }) begin
+          asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
+          asm.rs1.gpr             = instr.compressed.format.ci.rd_rs1.gpr;
+          asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.imm.imm_raw_sorted  = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.imm.imm_type        = IMM;
+          asm.imm.width           = 6;
+          asm.imm.sign_ext        = 1;
+          asm.imm.imm_value       = get_imm_value_ci({ instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 });
+          asm.rd.valid            = 1;
+          asm.rs1.valid           = 1;
+          asm.imm.valid           = 1;
+        end else if (name == C_LI) begin
           asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
           asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
           asm.imm.imm_raw_sorted  = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
@@ -1884,6 +1948,63 @@
        && (instr.uncompressed.format.b.funct3     == FUNCT3_BGEU)) :
         asm = build_asm(BGEU, B_TYPE, instr);
 
+	    //A
+      (   (instr.uncompressed.opcode                 == AMO)
+       && (instr.uncompressed.format.r.funct3        == FUNCT3_A_W)
+       && (instr.uncompressed.format.r.rs2           == X0)
+       && (instr.uncompressed.format.r.funct7[31:27] == FUNCT5_LR_W)) :
+        asm = build_asm(LR_W, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode                 == AMO)
+       && (instr.uncompressed.format.r.funct3        == FUNCT3_A_W)
+       && (instr.uncompressed.format.r.funct7[31:27] == FUNCT5_SC_W)) :
+        asm = build_asm(SC_W, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode                 == AMO)
+       && (instr.uncompressed.format.r.funct3        == FUNCT3_A_W)
+       && (instr.uncompressed.format.r.funct7[31:27] == FUNCT5_AMOSWAP_W)) :
+        asm = build_asm(AMOSWAP_W, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode                 == AMO)
+       && (instr.uncompressed.format.r.funct3        == FUNCT3_A_W)
+       && (instr.uncompressed.format.r.funct7[31:27] == FUNCT5_AMOADD_W)) :
+        asm = build_asm(AMOADD_W, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode                 == AMO)
+       && (instr.uncompressed.format.r.funct3        == FUNCT3_A_W)
+       && (instr.uncompressed.format.r.funct7[31:27] == FUNCT5_AMOXOR_W)) :
+        asm = build_asm(AMOXOR_W, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode                 == AMO)
+       && (instr.uncompressed.format.r.funct3        == FUNCT3_A_W)
+       && (instr.uncompressed.format.r.funct7[31:27] == FUNCT5_AMOAND_W)) :
+        asm = build_asm(AMOAND_W, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode                 == AMO)
+       && (instr.uncompressed.format.r.funct3        == FUNCT3_A_W)
+       && (instr.uncompressed.format.r.funct7[31:27] == FUNCT5_AMOOR_W)) :
+        asm = build_asm(AMOOR_W, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode                 == AMO)
+       && (instr.uncompressed.format.r.funct3        == FUNCT3_A_W)
+       && (instr.uncompressed.format.r.funct7[31:27] == FUNCT5_AMOMIN_W)) :
+        asm = build_asm(AMOMIN_W, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode                 == AMO)
+       && (instr.uncompressed.format.r.funct3        == FUNCT3_A_W)
+       && (instr.uncompressed.format.r.funct7[31:27] == FUNCT5_AMOMAX_W)) :
+        asm = build_asm(AMOMAX_W, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode                 == AMO)
+       && (instr.uncompressed.format.r.funct3        == FUNCT3_A_W)
+       && (instr.uncompressed.format.r.funct7[31:27] == FUNCT5_AMOMINU_W)) :
+        asm = build_asm(AMOMINU_W, R_TYPE, instr);
+
+      (   (instr.uncompressed.opcode                 == AMO)
+       && (instr.uncompressed.format.r.funct3        == FUNCT3_A_W)
+       && (instr.uncompressed.format.r.funct7[31:27] == FUNCT5_AMOMAXU_W)) :
+        asm = build_asm(AMOMAXU_W, R_TYPE, instr);
+
       //Zba
       (   (instr.uncompressed.opcode              == OP)
        && (instr.uncompressed.format.r.funct3     == FUNCT3_SH1ADD)
@@ -2141,6 +2262,7 @@
         asm = build_asm(C_LUI, CI_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
+       && (instr.compressed.format.ci.rd_rs1.gpr          != X0)
        && (instr.compressed.format.ci.funct3              == FUNCT3_C_ADDI_NOP)) :
         asm = build_asm(C_ADDI, CI_TYPE, instr);
 
@@ -2229,7 +2351,6 @@
         asm = build_asm(C_JAL, CJ_TYPE, instr);
 
       //Zcb
-
       (   (instr.compressed.opcode                        == C1)
        && (instr.compressed.format.cu.funct5              == FUNCT5_C_ZEXTB)
        && (instr.compressed.format.cu.funct6              == 6'b100111)) :
