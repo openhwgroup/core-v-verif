@@ -199,7 +199,6 @@ class uvmt_cv32e40s_base_test_c extends uvm_test;
 
 endclass : uvmt_cv32e40s_base_test_c
 
-
 function uvmt_cv32e40s_base_test_c::new(string name="uvmt_cv32e40s_base_test", uvm_component parent=null);
 
    super.new(name, parent);
@@ -246,7 +245,6 @@ function void uvmt_cv32e40s_base_test_c::connect_phase(uvm_phase phase);
 endfunction : connect_phase
 
 function void uvmt_cv32e40s_base_test_c::end_of_elaboration_phase(uvm_phase phase);
-
    super.end_of_elaboration_phase(phase);
 
    `uvm_info("BASE TEST", $sformatf("Top-level environment configuration:\n%s", env_cfg.sprint()), UVM_NONE)
@@ -254,18 +252,16 @@ function void uvmt_cv32e40s_base_test_c::end_of_elaboration_phase(uvm_phase phas
 
 endfunction : end_of_elaboration_phase
 
-
 task uvmt_cv32e40s_base_test_c::run_phase(uvm_phase phase);
-
    super.run_phase(phase);
 
    watchdog_timer();
 
 endtask : run_phase
 
-
 task uvmt_cv32e40s_base_test_c::reset_phase(uvm_phase phase);
 
+   virtual uvmt_imperas_dv_if_t imperas_dv_if;
    super.reset_phase(phase);
 
    phase.raise_objection(this);
@@ -275,6 +271,13 @@ task uvmt_cv32e40s_base_test_c::reset_phase(uvm_phase phase);
    `uvm_info("BASE TEST", $sformatf("Starting reset virtual sequence:\n%s", reset_vseq.sprint()), UVM_NONE)
    reset_vseq.start(vsequencer);
    `uvm_info("BASE TEST", $sformatf("Finished reset virtual sequence:\n%s", reset_vseq.sprint()), UVM_NONE)
+
+   if(!(uvm_config_db#(virtual uvmt_imperas_dv_if_t)::get(.cntxt(null), .inst_name("uvm_test_top"), .field_name("idv_support_vif"), .value(imperas_dv_if)))) begin
+     `uvm_error("BASE TEST", "imperas_dv_if instance not found in uvm_config_db");
+   end
+   if ($test$plusargs("USE_ISS")) begin
+     imperas_dv_if.ref_init();
+   end
 
    phase.drop_objection(this);
 
