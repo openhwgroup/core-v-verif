@@ -3,11 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
  */
 
-//Base default ISA for tests if nothing else is defined
-`ifndef RV_DV_ISA
-`define RV_DV_ISA { RV32I, RV32M, RV32C }
-`endif
-
 //Additional defines based on DUT config parameters
 `ifdef PULP //PULP = 1
   `ifndef FPU //FPU = 0
@@ -16,6 +11,7 @@
     `ifndef ZFINX
       `define RV_DV_ISA { RV32I, RV32M, RV32C, RV32X, RV32F }
     `else
+      `define FP_IN_X_REGS
       `define RV_DV_ISA { RV32I, RV32M, RV32C, RV32X, RV32ZFINX }
     `endif
   `endif
@@ -24,6 +20,7 @@
     `ifndef ZFINX
       `define RV_DV_ISA { RV32I, RV32M, RV32C, RV32F }
     `else
+      `define FP_IN_X_REGS
       `define RV_DV_ISA { RV32I, RV32M, RV32C, RV32ZFINX }
     `endif
   `endif
@@ -35,6 +32,7 @@
 `endif
 
 `ifdef RV_DV_ISA_RV32IMC_ZFINX
+`define FP_IN_X_REGS
 `define RV_DV_ISA { RV32I, RV32M, RV32C, RV32ZFINX }
 `endif
 
@@ -47,5 +45,12 @@
 `endif
 
 `ifdef RV_DV_ISA_RV32IMC_ZFINX_X
+`define FP_IN_X_REGS
 `define RV_DV_ISA { RV32I, RV32M, RV32C, RV32ZFINX, RV32X }
+`endif
+
+
+//Base default ISA for tests if nothing else is defined
+`ifndef RV_DV_ISA
+`define RV_DV_ISA { RV32I, RV32M, RV32C }
 `endif
