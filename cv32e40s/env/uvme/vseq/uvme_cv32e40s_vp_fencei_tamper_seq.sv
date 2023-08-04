@@ -18,6 +18,7 @@
 `ifndef __UVME_CV32E40S_VP_FENCEI_TAMPER_SEQ_SV__
 `define __UVME_CV32E40S_VP_FENCEI_TAMPER_SEQ_SV__
 
+import rvviApiPkg::*;
 
 class uvme_cv32e40s_vp_fencei_tamper_seq_c#(
    parameter AUSER_WIDTH = `UVMA_OBI_MEMORY_AUSER_DEFAULT_WIDTH, ///< Width of the auser signal. RI5CY, Ibex, CV32E40* do not have the auser signal.
@@ -139,25 +140,11 @@ function void uvme_cv32e40s_vp_fencei_tamper_seq_c::write_rtl_mem();
 
 endfunction : write_rtl_mem
 
-`ifdef USE_ISS
-import "DPI-C" context function void rvviRefMemoryWrite(
-    input int hartId,
-    input longint address,
-    input longint data,
-    input int size);
-`endif
-
 function void uvme_cv32e40s_vp_fencei_tamper_seq_c::write_iss_mem();
 
-//  `ifdef USE_ISS
-//    rvviRefMemoryWrite(0, addr, data, 4);
-//  `endif
-
-`ifdef USE_ISS
   if ($test$plusargs("USE_ISS")) begin
     rvviRefMemoryWrite(0, addr, data, 4);
   end
-`endif
 
 endfunction : write_iss_mem
 

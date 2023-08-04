@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
       return EXIT_FAILURE;
     }
 
-    /* Check MARCHID CSR: 0x4 is the value assigned by the RISC-V Foundation to CV32E40S */
+    /* Check MARCHID CSR: 0x15 is the value assigned by the RISC-V Foundation to CV32E40S */
     if (marchid_rval != 0x15) {
       printf("\tERROR: CSR MARCHID reads as 0x%x - should be 0x00000015 for CV32E40S.\n\n", marchid_rval);
       return EXIT_FAILURE;

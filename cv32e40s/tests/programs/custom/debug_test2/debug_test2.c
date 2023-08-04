@@ -44,6 +44,9 @@
 #define TIMER_VAL_ADDR         ((volatile uint32_t * volatile) (CV_VP_INTR_TIMER_BASE + 4))
 #define DEBUG_REQ_CONTROL_REG *((volatile uint32_t * volatile) (CV_VP_DEBUG_CONTROL_BASE))
 
+#define MARCHID_CV32E40X 0x14
+#define MARCHID_CV32E40S 0x15
+
 // __FUNCTION__ is C99 and newer, -Wpedantic flags a warning that
 // this is not ISO C, thus we wrap this instatiation in a macro
 // ignoring this GCC warning to avoid a long list of warnings during
@@ -3115,6 +3118,21 @@ void single_step_basic_dbg(void) {
 uint32_t has_pmp_configured(void) {
   volatile uint32_t pmpaddr0 = 0xffffffff;
   volatile uint32_t pmpaddr0_backup = 0;
+  volatile uint32_t marchid = 0x0;
+
+  __asm__ volatile (R"(
+    csrrs %[marchid], marchid, zero
+  )":[marchid] "=r"(marchid));
+
+  // CV32E40X does not support PMP, skip test
+  switch (marchid) {
+    case (MARCHID_CV32E40X):
+      return 0;
+      break;
+    case (MARCHID_CV32E40S):
+      ;; // Do nothing and continue execution
+      break;
+  }
 
   __asm__ volatile (R"(
     csrrw %[pmpaddr0_backup] , pmpaddr0, %[pmpaddr0]
@@ -3144,7 +3162,7 @@ uint32_t mprv_dret_to_umode(uint32_t index, uint8_t report_name) {
 
   // Check if there are configured pmp-regions:
   if (!has_pmp_configured()) {
-    cvprintf(V_LOW, "Skipping test: 0 PMP regions, cannot enter user mode\n");
+    cvprintf(V_LOW, "Skipping test: 0 PMP regions or PMP not supported, cannot enter user mode\n");
     return 0;
   }
 

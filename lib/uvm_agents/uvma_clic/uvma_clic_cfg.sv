@@ -38,6 +38,7 @@ class uvma_clic_cfg_c extends uvm_object;
    // Implementation options
    rand bit[31:0]                valid_irq_mask;   ///< State variable: the valid clics for the core under test
    rand bit[31:0]                enabled_irq_mask; ///< The mask of clics that can be driven
+   rand bit                      clear_irq_on_ack;
 
    `uvm_object_utils_begin(uvma_clic_cfg_c)
       `uvm_field_int (                         enabled           , UVM_DEFAULT)
@@ -45,7 +46,7 @@ class uvma_clic_cfg_c extends uvm_object;
       `uvm_field_int (                         is_mmode_irq_only , UVM_DEFAULT)
       `uvm_field_int (                         cov_model_enabled , UVM_DEFAULT)
       `uvm_field_int (                         trn_log_enabled   , UVM_DEFAULT)
-
+      `uvm_field_int (                         clear_irq_on_ack  , UVM_DEFAULT)
       `uvm_field_int (                         enabled_irq_mask  , UVM_DEFAULT)
    `uvm_object_utils_end
 
@@ -56,8 +57,8 @@ class uvma_clic_cfg_c extends uvm_object;
       soft is_mmode_irq_only == 0;
       soft cov_model_enabled == 0;
       soft trn_log_enabled   == 1;
-
-      soft enabled_irq_mask         == 32'hffff_ffff;
+      soft clear_irq_on_ack  == 1;
+      soft enabled_irq_mask  == 32'hffff_ffff;
    }
 
    constraint valid_irq {
