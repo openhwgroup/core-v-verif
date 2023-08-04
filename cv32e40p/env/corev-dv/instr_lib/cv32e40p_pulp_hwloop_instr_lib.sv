@@ -72,6 +72,8 @@
 
 class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
+  localparam MAX_HWLOOP_INSTR_GEN = 4095;
+
   rand riscv_reg_t      hwloop_avail_regs[];
   rand bit[1:0]         num_loops_active;
   rand bit              gen_nested_loop; //nested or not-nested hwloop
@@ -892,6 +894,11 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                  $sformatf("insert_rand_instr- Number of Random instr to generate= %0d",num_rand_instr),
                  UVM_HIGH)
 
+      if(num_rand_instr > MAX_HWLOOP_INSTR_GEN) begin
+          `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream",
+                      $sformatf("Too many hwloop instr. num_rand_instr = %0d",num_rand_instr))
+      end
+
       i = 0;
       while (i < num_rand_instr) begin
           //Create and Randomize array for avail_regs each time to ensure randomization
@@ -1328,6 +1335,11 @@ class cv32e40p_xpulp_hwloop_isa_stress_stream extends cv32e40p_xpulp_hwloop_base
       `uvm_info("cv32e40p_xpulp_hwloop_isa_stress_stream",
                  $sformatf("Insert_rand_instr- Number of Random instr to generate = %0d",num_rand_instr),
                  UVM_HIGH)
+
+      if(num_rand_instr > MAX_HWLOOP_INSTR_GEN) begin
+          `uvm_fatal("cv32e40p_xpulp_hwloop_isa_stress_stream",
+                      $sformatf("Too many hwloop instr. num_rand_instr = %0d",num_rand_instr))
+      end
 
       i = 0;
       while (i < num_rand_instr) begin
