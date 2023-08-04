@@ -402,8 +402,10 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
               reserved_rd.delete(); //no longer need to keep the hwloop reserved gpr except for count0
               reserved_rd = {hwloop_avail_regs[2]}; //preserve count0 reg for nested loop
 
-              num_fill_instr_loop_ctrl_to_loop_start[1] = num_fill_instr_loop_ctrl_to_loop_start[1] - 2;
-              if(gen_cv_count0_instr)
+              if(num_fill_instr_loop_ctrl_to_loop_start[1] >= 2)
+                  num_fill_instr_loop_ctrl_to_loop_start[1] = num_fill_instr_loop_ctrl_to_loop_start[1] - 2;
+
+              if(gen_cv_count0_instr && num_fill_instr_loop_ctrl_to_loop_start[1] >= 1)
                   num_fill_instr_loop_ctrl_to_loop_start[1] = num_fill_instr_loop_ctrl_to_loop_start[1] - 1;
           end
 
