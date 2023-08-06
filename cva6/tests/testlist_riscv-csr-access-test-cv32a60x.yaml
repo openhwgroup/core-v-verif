@@ -1,3 +1,6 @@
+// Copyright 2023 Thales 
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 - test: M_RW_CSR
   iterations: 1
   path_var: TESTS_PATH
@@ -13,7 +16,6 @@
   # It will populate '<path_var>/riscv-arch-test/riscv-target/spike/' using the current Spike installation.
   gcc_opts: "-DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-target/spike/"
   asm_tests: <path_var>/custom/csr_access_tests/riscv_s_rw_csr_test_0.S
-
 
 - test: M_RO_CSR
   iterations: 1
