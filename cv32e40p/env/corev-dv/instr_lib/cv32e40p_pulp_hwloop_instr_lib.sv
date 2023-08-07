@@ -72,6 +72,8 @@
 
 class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
+  localparam MAX_HWLOOP_INSTR_GEN = 4095;
+
   rand riscv_reg_t      hwloop_avail_regs[];
   rand bit[1:0]         num_loops_active;
   rand bit              gen_nested_loop; //nested or not-nested hwloop
@@ -402,8 +404,10 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
               reserved_rd.delete(); //no longer need to keep the hwloop reserved gpr except for count0
               reserved_rd = {hwloop_avail_regs[2]}; //preserve count0 reg for nested loop
 
-              num_fill_instr_loop_ctrl_to_loop_start[1] = num_fill_instr_loop_ctrl_to_loop_start[1] - 2;
-              if(gen_cv_count0_instr)
+              if(num_fill_instr_loop_ctrl_to_loop_start[1] >= 2)
+                  num_fill_instr_loop_ctrl_to_loop_start[1] = num_fill_instr_loop_ctrl_to_loop_start[1] - 2;
+
+              if(gen_cv_count0_instr && num_fill_instr_loop_ctrl_to_loop_start[1] >= 1)
                   num_fill_instr_loop_ctrl_to_loop_start[1] = num_fill_instr_loop_ctrl_to_loop_start[1] - 1;
           end
 
@@ -890,6 +894,11 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                  $sformatf("insert_rand_instr- Number of Random instr to generate= %0d",num_rand_instr),
                  UVM_HIGH)
 
+      if(num_rand_instr > MAX_HWLOOP_INSTR_GEN) begin
+          `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream",
+                      $sformatf("Too many hwloop instr. num_rand_instr = %0d",num_rand_instr))
+      end
+
       i = 0;
       while (i < num_rand_instr) begin
           //Create and Randomize array for avail_regs each time to ensure randomization
@@ -958,6 +967,8 @@ endclass : cv32e40p_xpulp_hwloop_base_stream
 //Increase Loop Count range to excersize upto 4095 (12-bit) uimmL value
 class cv32e40p_xpulp_short_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stream;
 
+  rand bit              loop0_high_count;
+
   `uvm_object_utils_begin(cv32e40p_xpulp_short_hwloop_stream)
       `uvm_field_int(num_loops_active, UVM_DEFAULT)
       `uvm_field_int(gen_nested_loop, UVM_DEFAULT)
@@ -974,19 +985,49 @@ class cv32e40p_xpulp_short_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stre
       `uvm_field_int(num_fill_instr_in_loop1_till_loop0_setup, UVM_DEFAULT)
       `uvm_field_int(setup_l0_before_l1_start, UVM_DEFAULT)
       `uvm_field_sarray_int(num_instr_cv_start_to_loop_start_label, UVM_DEFAULT)
+      `uvm_field_int(loop0_high_count, UVM_DEFAULT)
   `uvm_object_utils_end
 
   constraint gen_hwloop_count_c {
+
+      solve gen_nested_loop, loop0_high_count before hwloop_count, hwloop_counti;
+      solve gen_nested_loop before loop0_high_count;
+
       num_loops_active inside {1};
 
-      foreach(hwloop_counti[i])
-        hwloop_counti[i] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                               [2048:4095] := 50, 4095 := 300}; //TODO: check 0 is valid
+      if(gen_nested_loop) {
+        if(loop0_high_count) {
+          hwloop_counti[0] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
+                                 [2048:4095] := 50, 4095 := 300};
 
-      //TODO: for rs1 32 bit count ?
-      foreach(hwloop_count[i])
-        hwloop_count[i] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                              [2048:4094] := 50, 4095 := 300};//TODO: check 0 is valid
+          hwloop_count[0] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
+                                [2048:4094] := 50, 4095 := 300};
+
+          hwloop_counti[1] inside {[0:5]};
+          hwloop_count[1] inside {[0:5]};
+
+        } else {
+          hwloop_counti[0] inside {[0:5]};
+          hwloop_count[0] inside {[0:5]};
+
+          hwloop_counti[1] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
+                                 [2048:4095] := 50, 4095 := 300};
+
+          hwloop_count[1] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
+                                [2048:4094] := 50, 4095 := 300};
+        }
+
+
+      } else {
+        foreach(hwloop_counti[i])
+          hwloop_counti[i] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
+                                 [2048:4095] := 50, 4095 := 300}; //TODO: check 0 is valid
+
+        //TODO: for rs1 32 bit count ?
+        foreach(hwloop_count[i])
+          hwloop_count[i] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
+                                [2048:4094] := 50, 4095 := 300};//TODO: check 0 is valid
+      }
   }
 
 
@@ -1294,6 +1335,11 @@ class cv32e40p_xpulp_hwloop_isa_stress_stream extends cv32e40p_xpulp_hwloop_base
       `uvm_info("cv32e40p_xpulp_hwloop_isa_stress_stream",
                  $sformatf("Insert_rand_instr- Number of Random instr to generate = %0d",num_rand_instr),
                  UVM_HIGH)
+
+      if(num_rand_instr > MAX_HWLOOP_INSTR_GEN) begin
+          `uvm_fatal("cv32e40p_xpulp_hwloop_isa_stress_stream",
+                      $sformatf("Too many hwloop instr. num_rand_instr = %0d",num_rand_instr))
+      end
 
       i = 0;
       while (i < num_rand_instr) begin
