@@ -1,5 +1,5 @@
-// Copyright 2023 Thales 
-// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+## // Copyright 2023 Thales 
+## // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 - test: M_RW_CSR
   iterations: 1
