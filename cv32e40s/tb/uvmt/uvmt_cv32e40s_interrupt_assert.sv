@@ -454,19 +454,6 @@ module uvmt_cv32e40s_interrupt_assert
     end
   end
 
-  // WFI assertion will assert core_sleep_o (in WFI_TO_CORE_SLEEP_LATENCY cycles after wb, given ideal conditions)
-  cov_wfi_assert_core_sleep_long: cover property(
-    (
-      p_wfi_assert_coresleepo_ideal_cond
-    ) and
-    (
-      ((is_wfi_wfe_in_wb == 1) && (is_wfi_wfe_blocked == 1) && (core_sleep_o == 0)) [*1:$]  ##1
-      ((is_wfi_wfe_in_wb == 1) && (is_wfi_wfe_blocked == 0) && (core_sleep_o == 0)) [*1:$]  ##1
-      ((is_wfi_wfe_in_wb == 1) && (is_wfi_wfe_blocked == 0) && (core_sleep_o == 1)) [*1:$]
-    )
-  );
-
-
   // Check expectations for sleep mode
 
   a_wfi_assert_sleepmode_expected: assert property (
@@ -651,6 +638,18 @@ module uvmt_cv32e40s_interrupt_assert
   a_wfi_assert_coresleepo_ideal_cond: assert property (
     p_wfi_assert_coresleepo_ideal_cond
   ) else `uvm_error(info_tag, "no retire until sleep or giveup");
+
+  // WFI assertion will assert core_sleep_o (in WFI_TO_CORE_SLEEP_LATENCY cycles after wb, given ideal conditions)
+  cov_wfi_assert_core_sleep_long: cover property(
+    (
+      p_wfi_assert_coresleepo_ideal_cond
+    ) and
+    (
+      ((is_wfi_wfe_in_wb == 1) && (is_wfi_wfe_blocked == 1) && (core_sleep_o == 0)) [*1:$]  ##1
+      ((is_wfi_wfe_in_wb == 1) && (is_wfi_wfe_blocked == 0) && (core_sleep_o == 0)) [*1:$]  ##1
+      ((is_wfi_wfe_in_wb == 1) && (is_wfi_wfe_blocked == 0) && (core_sleep_o == 1)) [*1:$]
+    )
+  );
 
 
   // core_sleep_o deassertion should result in the wfi/wfe instruction retiring
