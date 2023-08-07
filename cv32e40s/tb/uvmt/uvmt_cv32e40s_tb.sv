@@ -47,6 +47,7 @@ module uvmt_cv32e40s_tb;
    uvma_clknrst_if_t            clknrst_if(); // clock and resets from the clknrst agent
    uvma_clknrst_if_t            clknrst_if_iss();
    uvma_debug_if_t              debug_if();
+   uvma_wfe_wu_if_t             wfe_wu_if();
    uvma_interrupt_if_t          interrupt_if();
    uvma_clic_if_t#(
      .CLIC_ID_WIDTH(uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC_ID_WIDTH)
@@ -1663,6 +1664,7 @@ module uvmt_cv32e40s_tb;
      uvm_config_db#(virtual uvma_debug_if_t             )::set(.cntxt(null), .inst_name("*.env.debug_agent"),            .field_name("vif"),           .value(debug_if));
      uvm_config_db#(virtual uvma_clknrst_if_t           )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"),          .field_name("vif"),           .value(clknrst_if));
      uvm_config_db#(virtual uvma_interrupt_if_t         )::set(.cntxt(null), .inst_name("*.env.interrupt_agent"),        .field_name("vif"),           .value(interrupt_if));
+     uvm_config_db#(virtual uvma_wfe_wu_if_t            )::set(.cntxt(null), .inst_name("*.env.wfe_wu_agent"),           .field_name("vif"),           .value(wfe_wu_if));
      uvm_config_db#(virtual uvma_clic_if_t#(
        .CLIC_ID_WIDTH(uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC_ID_WIDTH)
      ))::set(.cntxt(null), .inst_name("*.env.clic_agent"), .field_name("vif"), .value(clic_if));
@@ -1692,10 +1694,11 @@ module uvmt_cv32e40s_tb;
      uvm_config_db#(virtual uvma_fencei_if_t            )::set(.cntxt(null), .inst_name("*.env.fencei_agent"),           .field_name("fencei_vif"),    .value(fencei_if)  );
      uvm_config_db#(virtual uvmt_cv32e40s_vp_status_if_t)::set(.cntxt(null), .inst_name("*"),                            .field_name("vp_status_vif"), .value(vp_status_if) );
      uvm_config_db#(virtual uvma_interrupt_if_t         )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("intr_vif"),      .value(interrupt_if) );
+     uvm_config_db#(virtual uvma_debug_if_t             )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_vif"),     .value(debug_if)     );
+     uvm_config_db#(virtual uvma_wfe_wu_if_t            )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("wfe_wu_vif"),    .value(wfe_wu_if)     );
      uvm_config_db#(virtual uvma_clic_if_t#(
        .CLIC_ID_WIDTH(uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC_ID_WIDTH)
      ))::set(.cntxt(null), .inst_name("*.env"), .field_name("clic_vif"), .value(clic_if) );
-     uvm_config_db#(virtual uvma_debug_if_t             )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_vif"),     .value(debug_if)     );
 //     uvm_config_db#(virtual uvmt_cv32e40s_debug_cov_assert_if_t)::set(.cntxt(null), .inst_name("*.env"),                 .field_name("debug_cov_vif"),    .value(debug_cov_assert_if));
      `RVFI_CSR_UVM_CONFIG_DB_SET(cpuctrl)
      `RVFI_CSR_UVM_CONFIG_DB_SET(jvt)

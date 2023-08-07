@@ -89,6 +89,7 @@ plusargs: >
     +enable_zcb_extension=1
     +enable_zcmt_extension=1
     +enable_zcmp_extension=1
+    #+gen_wfe_wu_noise=1
     #+enable_write_pmp_csr=1
     #+pmp_randomize=0
     #+pmp_num_regions=64

@@ -1,0 +1,9 @@
+name: wfe_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    WFE directed test
+plusargs: >
+  +clic_irq_clear_on_ack=0
+  +gen_wfe_wu_noise=1
+cflags: >
+  -mno-relax
