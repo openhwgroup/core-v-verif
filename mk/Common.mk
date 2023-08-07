@@ -184,11 +184,7 @@ endif
 ###############################################################################
 # Imperas Instruction Set Simulator
 
-DV_OVPM_HOME    = $(CORE_V_VERIF)/vendor_lib/imperas
-DV_OVPM_MODEL   = $(DV_OVPM_HOME)/imperas_DV_COREV
-DV_OVPM_DESIGN  = $(DV_OVPM_HOME)/design
-OVP_MODEL_DPI   = $(DV_OVPM_MODEL)/bin/Linux64/imperas_CV32.dpi.so
-#OVP_CTRL_FILE   = $(DV_OVPM_DESIGN)/riscv_CV32E40P.ic
+IMPERAS_DV_MODEL = $(IMPERAS_HOME)/lib/$(IMPERAS_ARCH)/ImperasLib/imperas.com/verification/riscv/1.0/model.so
 
 ###############################################################################
 # Run the yaml2make scripts

@@ -2,7 +2,8 @@ name: default
 description: Default configuration for CV32E20 simulations
 compile_flags: 
 ovpsim: >
-    --override root/cpu/misa_Extensions=0x001104
-    --override root/cpu/marchid=4
-    --override root/cpu/noinhibit_mask=0xFFFFFFF0
+# Alternate reference model configuration using parameter overrides
+#    --override cpu/misa_Extensions=0x001104
+#    --override cpu/marchid=4
+#    --override cpu/noinhibit_mask=0xFFFFFFF0
 cflags: >

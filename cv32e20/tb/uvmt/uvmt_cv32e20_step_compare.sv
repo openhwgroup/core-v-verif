@@ -182,11 +182,11 @@ module uvmt_cv32e20_step_compare
           ignore = 1;
           case (index)
 
-            "marchid"       : csr_val = cv32e20_pkg::MARCHID; // warning!  defined in cv32e20_pkg
+//            "marchid"       : csr_val = cve2_pkg::MARCHID; // warning!  defined in cve2_pkg
 
             "mcountinhibit" : csr_val = `CV32E20_CORE.cs_registers_i.mcountinhibit_q;
 
-            "mvendorid"     : csr_val = {cv32e20_pkg::MVENDORID_BANK, cv32e20_pkg::MVENDORID_OFFSET};
+//            "mvendorid"     : csr_val = {cve2_pkg::MVENDORID_BANK, cve2_pkg::MVENDORID_OFFSET};
             "mstatus"       : if (step_compare_if.deferint_prime == 0) ignore = 1;
                               else csr_val = {`CV32E20_CORE.cs_registers_i.mstatus_q.mprv, // Not documented in Rev 4.5 of user_manual.doc but is in the design
                                         4'b0,

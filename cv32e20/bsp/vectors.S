@@ -18,6 +18,7 @@
 .option norvc
 .global vector_table
 
+        
 vector_table:
 	j u_sw_irq_handler
 	j __no_irq_handler

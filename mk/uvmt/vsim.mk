@@ -119,15 +119,23 @@ VLOG_FLAGS    ?= \
                  $(QUIET) \
                  -writetoplevels  uvmt_$(CV_CORE_LC)_tb
 
+VLOG_FILE_LIST_IDV =
 VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 
 VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 
 # Add the ISS to compilation
-VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+UVM"
 VLOG_FLAGS += "+define+RVFI"
+ifeq ($(call IS_YES,$(USE_ISS)),YES)
+VLOG_FLAGS += +define+USE_ISS
+VLOG_FLAGS += +define+USE_IMPERASDV
+VLOG_FILE_LIST_IDV = -f $(DV_UVMT_PATH)/imperas_dv.flist
+ifeq ($(call IS_YES,$(COV)),YES)
+VLOG_FLAGS += +define+IMPERAS_COV
+endif
+endif
 
 ###############################################################################
 # VOPT (Optimization)
@@ -145,6 +153,7 @@ VOPT_FLAGS    ?= \
 VSIM_FLAGS        += $(VSIM_USER_FLAGS)
 VSIM_FLAGS        += $(USER_RUN_FLAGS)
 VSIM_FLAGS        += -sv_seed $(RNDSEED)
+VSIM_FLAGS        += -64
 VSIM_FLAGS        += -suppress 7031
 VSIM_FLAGS        += -suppress 8858
 VSIM_FLAGS        += -suppress 8522
@@ -158,9 +167,13 @@ VSIM_SCRIPT_DIR	   = $(abspath $(MAKE_PATH)/../tools/vsim)
 
 VSIM_UVM_ARGS      = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 
-VSIM_FLAGS += -sv_lib $(basename $(OVP_MODEL_DPI))
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
 VSIM_FLAGS += +USE_ISS
+VSIM_FLAGS += +USE_IMPERASDV
+VSIM_FLAGS += -sv_lib $(basename $(IMPERAS_DV_MODEL))
+ifeq ($(call IS_YES,$(COV)),YES)
+VSIM_FLAGS += +TRACE2COV_ENABLE=1
+endif
 else
 VSIM_FLAGS += +DISABLE_OVPSIM
 endif
@@ -451,10 +464,10 @@ gen_ovpsim_ic:
 	@rm -f $(SIM_RUN_RESULTS)/ovpsim.ic
 	@mkdir -p $(SIM_RUN_RESULTS)
 	@touch $(SIM_RUN_RESULTS)/ovpsim.ic
+	@echo "# Imperas Control File" >> $(SIM_RUN_RESULTS)/ovpsim.ic
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
 		echo "$(CFG_OVPSIM)" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
 	fi
-export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic
 
 # Target to create work directory in $(VSIM_RESULTS)/
 lib: mk_vsim_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(TBSRC_PKG) $(TBSRC)
@@ -479,6 +492,7 @@ vlog: lib
 			+incdir+$(UVM_HOME) \
 			$(UVM_HOME)/uvm_pkg.sv \
 			-f $(CV_CORE_MANIFEST) \
+			$(VLOG_FILE_LIST_IDV) \
 			$(VLOG_FILE_LIST) \
 			$(TBSRC_PKG)
 
@@ -510,6 +524,8 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 	cd $(RUN_DIR) && \
 		$(VMAP) work $(SIM_CFG_RESULTS)/work
 	cd $(RUN_DIR) && \
+	export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic && \
+	export IMPERAS_QUEUE_LICENSE=1 && \
 		$(VSIM) \
 			-work $(VWORK) \
 			$(VSIM_FLAGS) \

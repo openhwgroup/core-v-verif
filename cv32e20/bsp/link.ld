@@ -47,20 +47,21 @@ SECTIONS
   } >dbg
 
   /* CORE-V: we want a fixed entry point */
-  PROVIDE(__boot_address = 0x800);
+  PROVIDE(__boot_address = 0x000);
 
-  /* CORE-V: interrupt vectors */
-  .vectors (ORIGIN(ram)):
-  {
-    PROVIDE(__vector_start = .);
-    KEEP(*(.vectors));
-  } >ram
 
   /* CORE-V: crt0 init code */
-  .init (__boot_address):
+  .init (ORIGIN(ram)):
   {
     KEEP (*(SORT_NONE(.init)))
     KEEP (*(.text.start))
+  } >ram
+
+/* CORE-V: interrupt vectors */
+  .vectors : ALIGN(128)
+  {
+    PROVIDE(__vector_start = .);
+    KEEP(*(.vectors));
   } >ram
 
   /* Read-only sections, merged into text segment: */
