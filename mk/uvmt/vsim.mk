@@ -178,6 +178,7 @@ endif
 else
 VSIM_FLAGS += +DISABLE_OVPSIM
 endif
+
 ifeq ($(call IS_YES,$(TEST_DISABLE_ALL_CSR_CHECKS)),YES)
 VSIM_FLAGS +="+DISABLE_ALL_CSR_CHECKS"
 endif
@@ -264,9 +265,14 @@ endif
 endif
 
 ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
-CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vsim-$(TEST_RUN_NAME).log
 POST_TEST = \
-	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
+	@if grep -q "Errors:\s\+0" $(RUN_DIR)/vsim-$(TEST_RUN_NAME).log; then \
+	if grep -q "SIMULATION FAILED" $(RUN_DIR)/vsim-$(TEST_RUN_NAME).log; then \
+		exit 1; \
+	else \
+		exit 0; \
+	fi \
+	else \
 		exit 1; \
 	fi
 endif
@@ -649,7 +655,7 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 			$(CFG_PLUSARGS) \
 			$(TEST_PLUSARGS) \
 			$(TEST_CFG_FILE_PLUSARGS)
-	@echo "* Log: $(RUN_DIR)/vsim-$(VSIM_TEST).log"
+	@echo "* Log: $(RUN_DIR)/vsim-$(TEST_RUN_NAME).log"
 	$(POST_TEST)
 
 
