@@ -384,17 +384,14 @@ vopt_corev-dv:
 			$(CV_CORE_LC)_instr_gen_tb_top \
 			-o $(CV_CORE_LC)_instr_gen_tb_top_vopt \
 			-l vopt.log
+	cd $(SIM_COREVDV_RESULTS) && \
+			$(VMAP) work $(SIM_COREVDV_RESULTS)/work;
 
 gen_corev-dv: $(VSIM_COREVDV_SIM_PREREQ)
 	mkdir -p $(SIM_COREVDV_RESULTS)/$(TEST)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		mkdir -p $(SIM_TEST_RESULTS)/$$idx/test_program; \
 	done
-	if [ -f "$(SIM_COREVDV_RESULTS)/$(TEST)/modelsim.ini" ]; then \
-		rm -rf $(SIM_COREVDV_RESULTS)/$(TEST)/modelsim.ini; \
-	fi
-	cd $(SIM_COREVDV_RESULTS)/$(TEST) && \
-		$(VMAP) work $(SIM_COREVDV_RESULTS)/work; \
 	cd  $(SIM_COREVDV_RESULTS)/$(TEST) && \
 		$(VSIM) \
 			$(VSIM_FLAGS) \
@@ -402,7 +399,7 @@ gen_corev-dv: $(VSIM_COREVDV_SIM_PREREQ)
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(GEN_UVM_TEST) \
 			-l $(TEST)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log \
-			-modelsimini modelsim.ini \
+			-modelsimini $(SIM_COREVDV_RESULTS)/modelsim.ini \
 			+start_idx=$(GEN_START_INDEX) \
 			+num_of_tests=$(GEN_NUM_TESTS) \
 			+asm_file_name_opts=$(TEST) \
