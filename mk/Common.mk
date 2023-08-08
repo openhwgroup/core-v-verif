@@ -253,10 +253,10 @@ endif
 
 ifndef CV_SW_PREFIX
 ifdef  TEST_CV_SW_PREFIX
-CV_SW_PREFIX = $(TEST_CV_SW_PREFIX)
+export CV_SW_PREFIX = $(TEST_CV_SW_PREFIX)
 else
 ifdef  CFG_CV_SW_PREFIX
-CV_SW_PREFIX = $(CFG_CV_SW_PREFIX)
+export CV_SW_PREFIX = $(CFG_CV_SW_PREFIX)
 else
 $(error CV_SW_PREFIX not defined in either the shell environment, test.yaml or cfg.yaml)
 endif
@@ -265,12 +265,12 @@ endif
 
 ifndef CV_SW_MARCH
 ifdef  TEST_CV_SW_MARCH
-CV_SW_MARCH = $(TEST_CV_SW_MARCH)
+export CV_SW_MARCH = $(TEST_CV_SW_MARCH)
 else
 ifdef  CFG_CV_SW_MARCH
-CV_SW_MARCH = $(CFG_CV_SW_MARCH)
+export CV_SW_MARCH = $(CFG_CV_SW_MARCH)
 else
-CV_SW_MARCH = rv32imc
+export CV_SW_MARCH = rv32imc
 $(warning CV_SW_MARCH not defined in either the shell environment, test.yaml or cfg.yaml)
 endif
 endif
@@ -477,7 +477,7 @@ ifeq ($(TEST_FIXED_ELF),1)
 	mkdir -p $(SIM_TEST_PROGRAM_RESULTS)
 	cp $(TEST_TEST_DIR)/$(TEST).elf $@
 else
-%.elf: $(TEST_FILES)
+%.elf: svlibs $(TEST_FILES)
 	mkdir -p $(SIM_TEST_PROGRAM_RESULTS)
 	make bsp
 	@echo "$(BANNER)"
@@ -525,6 +525,19 @@ clean_bsp:
 	make -C $(BSP) clean
 	rm -rf $(SIM_BSP_RESULTS)
 
+# elfloader lib
+VENDOR_ELFLOADER = $(CORE_V_VERIF)/vendor/elfloader
+ELFLOADER_LIB = $(VENDOR_ELFLOADER)/elfloader.so
+
+elfloader_lib:
+	@echo "$(BANNER)"
+	@echo "* Compiling the elfloader"
+	@echo "$(BANNER)"
+	make -C  $(VENDOR_ELFLOADER) \
+	    DPI_INCLUDE="$(DPI_INCLUDE)" \
+	    all
+
+svlibs: elfloader_lib
 
 # compile and dump RISCV_TESTS only
 #$(CV32_RISCV_TESTS_FIRMWARE)/cv32_riscv_tests_firmware.elf: $(CV32_RISCV_TESTS_FIRMWARE_OBJS) $(RISCV_TESTS_OBJS) \

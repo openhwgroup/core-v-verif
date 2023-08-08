@@ -129,7 +129,7 @@ function void uvma_obi_memory_mon_c::build_phase(uvm_phase phase);
    if (cntxt == null) begin
       `uvm_fatal("CNTXT", "Context handle is null")
    end
-   passive_mp = cntxt.vif.passive_mp;
+   passive_mp = cntxt.vif;
 
    ap           = new("ap"          , this);
    sequencer_ap = new("sequencer_ap", this);

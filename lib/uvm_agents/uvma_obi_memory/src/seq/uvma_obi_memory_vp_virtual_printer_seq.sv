@@ -77,7 +77,7 @@ task uvma_obi_memory_vp_virtual_printer_seq_c::vp_body(uvma_obi_memory_mon_trn_c
    end
    else if (mon_trn.access_type == UVMA_OBI_MEMORY_ACCESS_READ) begin
       // If reading from virtual printer, simply return 0
-      slv_rsp.rdata =0;
+      slv_rsp.rdata = 0;
    end
 
    add_r_fields(mon_trn, slv_rsp);

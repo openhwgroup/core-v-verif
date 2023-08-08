@@ -1,18 +1,18 @@
 ..
    Copyright (c) 2020 OpenHW Group
-   
+
    Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
-  
+
    https://solderpad.org/licenses/
-  
+
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-  
+
    SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
 
@@ -42,7 +42,7 @@ The address range for I&D memory is 0x0..0x10_0000 (1Mbyte).
 The virtual peripherals start at address 0x1000_0000.
 
 The addresses and sizes of the I&D memory and virtual peripheral must be compatible with the Configuration inputs of the core
-(see `Core Integration <https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/integration.html>`__ 
+(see `Core Integration <https://core-v-docs-verif-strat.readthedocs.io/projects/cv32e40p_um/en/latest/integration.html>`__
 in the CV32E40P User Manual.
 The core will start fetching instructions from the address provided on its **boot_addr_i** input.
 In addition, if debug_req_i is asserted, execution jumps to **dm_halt_addr_i**.
@@ -121,15 +121,9 @@ new test programs developed for CORE-V is strongly discouraged.
 | Instruction Memory       | 32’h1600_XXXX         | Program a table that introduces “random” stalls on IMEM I/F.   |
 | Interface Stall Control  |                       |                                                                |
 +--------------------------+-----------------------+----------------------------------------------------------------+
-| Virtual Peripheral       | 32’h2000_0000         | Assert test_passed if wdata==’d123456789                       |
+| Virtual Peripheral       | 32’h2000_0000         | Program exit code using tohost procedure.                      |
 | Status Flags             |                       |                                                                |
-|                          |                       | Assert test_failed if wdata==’d1                               |
-|                          |                       |                                                                |
-|                          |                       | **Note**: asserted for one clk cycle only.                     |
-|                          +-----------------------+----------------------------------------------------------------+
-|                          | 32’h2000_0004         | Assert exit_valid;                                             |
-|                          |                       |                                                                |
-|                          |                       | exit_value <= wdata;                                           |
+|                          |                       | Stored Value = [XLEN:1] Exit Code, [0:0] Valid Bit             |
 |                          |                       |                                                                |
 |                          |                       | **Note**: asserted for one clk cycle only.                     |
 +--------------------------+-----------------------+----------------------------------------------------------------+
@@ -166,7 +160,7 @@ Note that the UVM verification environment will use the same test program enviro
 .. figure:: ../images/TestProgramEnvironment.png
    :name: Test_Program_Environment_Illustration
    :align: center
-   :alt: 
+   :alt:
 
    Illustration 9: Board Support Package for "Core" testbench
 
@@ -233,7 +227,7 @@ two contributions have been merged into a single script by Mike Thompson::
         }
      } >dbg
 
-     MEM : 
+     MEM :
      {
         . = 0x00000000;
         .vectors : { *(.vectors) }
@@ -269,7 +263,7 @@ arguments is deliberately not supported**.
 Additional Information
 ......................
 
-Additional information on the Board Support Package can be found in its associated 
+Additional information on the Board Support Package can be found in its associated
 `README <https://github.com/openhwgroup/core-v-verif/blob/master/cv32e40p/bsp/README.md>`__
 in the `core-v-verif <https://github.com/openhwgroup/core-v-verif>`__ GitHub repository.
 

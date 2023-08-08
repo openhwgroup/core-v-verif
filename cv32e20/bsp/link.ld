@@ -58,7 +58,7 @@ SECTIONS
     KEEP (*(.text.start))
   } >ram
 
-/* CORE-V: interrupt vectors */
+  /* CORE-V: interrupt vectors */
   .vectors : ALIGN(256)
   {
     PROVIDE(__vector_start = .);
@@ -119,6 +119,19 @@ SECTIONS
   {
     KEEP (*(SORT_NONE(.fini)))
   } >ram
+
+  /* tohost symbol to detect end-of-test */
+  .tohost : ALIGN (256)
+  {
+      *(.tohost);
+  } >ram
+
+  /* tohost symbol to detect end-of-test */
+  .stdout_reg : ALIGN (256)
+  {
+      *(.stdout_reg);
+  } >ram
+
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);

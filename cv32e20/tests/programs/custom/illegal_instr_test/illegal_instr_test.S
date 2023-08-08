@@ -47696,7 +47696,7 @@ main:
 .word(0x04008033) # p.abs   [31:25]==000_0010, [14:12]==000, [6:0]==011_0011
     nop
 .word(0x040080B3) # p.abs   [31:25]==000_0010, [14:12]==000, [6:0]==011_0011
-    
+
     lw      x5,80(sp)
     bne     x5, x6, fail
     lw      x5,76(sp)
@@ -47738,11 +47738,11 @@ main:
     lw      x5,4(sp)
     bne     x5, x25, fail
     addi    sp,sp,84
-    li x18, 123456789
+    li x18, 1
     li x16, 47595      # this is the number of EXPECTED illegal instructions
     beq x31, x16, test_end
 fail:
-    li x18, 1
+    li x18, 2
 test_end:
     li x17, 0x20000000
     sw x18,0(x17)
@@ -47759,7 +47759,7 @@ u_sw_irq_handler:
     csrrw x0, mepc, x27
     c.addi x31, 1
     mret
-    
+
 _exit:
     j _exit
 

@@ -46,6 +46,16 @@ class uvme_cv32e20_cfg_c extends uvm_object;
    rand uvma_obi_memory_cfg_c obi_memory_instr_cfg;
    rand uvma_obi_memory_cfg_c obi_memory_data_cfg;
 
+   longint unsigned vp_virtual_printer_symbol = 32'h1000_0000;
+   longint unsigned vp_virtual_printer_legacy = 32'h1000_0000;
+   longint unsigned vp_rand_num = 32'h1500_1000;
+   longint unsigned vp_cycle_counter = 32'h1500_1004;
+   longint unsigned vp_sig_writer = 32'h2000_0008;
+   longint unsigned vp_status_flags_symbol = 32'h2000_0000;
+   longint unsigned vp_status_flags_legacy = 32'h2000_0000;
+   longint unsigned vp_interrupt_timer = 32'h1500_0000;
+   longint unsigned vp_debug_control = 32'h1500_0008;
+
    // Objects
    // TODO Add scoreboard configuration handles
    //      Ex: rand uvml_sb_cfg_c  sb_egress_cfg;

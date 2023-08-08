@@ -1,13 +1,13 @@
 ################################################################################
 #
 # Copyright 2020,2022 OpenHW Group
-# 
+#
 # Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     https://solderpad.org/licenses/
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 # SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
-# 
+#
 ################################################################################
 # Script-generated, brute force and ignorance approach to running all legal CSR
 # instructions for the MSCRATCH CSR. Implements all 6 real (not pseudo) CSR
@@ -6292,7 +6292,7 @@ extra_store_load:
     bne x16, x18, csr_fail
 
 csr_pass:
-    li x18, 123456789
+    li x18, 1
     li x17, 0x20000000
     sw x18,0(x17)
     wfi
@@ -6323,7 +6323,7 @@ csr_fail:
     sw a1,0(a0)
     sw a1,0(a0)
 
-    li x18, 1
+    li x18, 2
     li x17, 0x20000000
     sw x18,0(x17)
     wfi

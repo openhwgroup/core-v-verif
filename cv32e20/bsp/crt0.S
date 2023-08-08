@@ -55,7 +55,7 @@ _start:
 	li a2, 0
 
 	call main
-	tail exit
+	tail _exit
 
 .size  _start, .-_start
 

@@ -48,8 +48,8 @@ Defines the test's success/failure values, one of which will be written to
 the chosen signature address to indicate the test's result.
 """
 TEST_RESULT = 1
-TEST_PASS = 123456789
-TEST_FAIL = 1
+TEST_PASS = 1
+TEST_FAIL = 2
 PRIVILEGE_MODES =  ["DRO", "DRW", "MRO", "MRW",  "HRO", "HRW", "SRO", "SRW","URO", "URW"]
 PRIVILEGE_LEVELS = {'D' : 4, 'M' : 3, 'H' : 2, 'S' : 1, 'U' :0}
 INTERRUPT_CSRS   =  ["mtvec", "mepc", "mstatus", "mcause", "mtval"]
@@ -263,7 +263,7 @@ def add_auto_gen_comment(test_file, csr_file):
     test_file.write("/* This is an auto-generated file not intended to be hand edited.\n")
     test_file.write(" * Changes should be made by editing the yaml file {}\n".format(csr_file))
     test_file.write(" * Then invoking {} to regenerate this file.\n */\n".format(__file__))
-               
+
 
 
 def gen_setup(test_file):
@@ -285,22 +285,22 @@ def gen_check_writeable_csr(test_file, source_reg, dest_reg, csr_instructions, x
     Writes self checking code for accesses to a writable CSR. Writes randomly generated
     values into the CSR and reads back the data.  Does not expect any exceptions to occur.
 
-    Args: 
-      test_file:        File to write the code to. 
+    Args:
+      test_file:        File to write the code to.
       source_reg:       Register used to store the value to be written to the CSR and
-                        the expected read value. 
+                        the expected read value.
       dest_reg:         Register used to store the value read from the CSR
-      csr_instructions: List of CSR access instructions to be tested. 
-      xlen:             ISA width, passed from command line. 
-      The following come direclty from the yaml file: 
+      csr_instructions: List of CSR access instructions to be tested.
+      xlen:             ISA width, passed from command line.
+      The following come direclty from the yaml file:
       csr_address:      The address of the CSR, as an integer.
       csr_val:          The reset value for this csr. Used by the predict_csr_val funciton.
       csr_write_fields: A list of the CSR's fields. Used by the predict_csr_val funciton.
       csr_read_mask:    A bitarray of readable fields. Used by the predict_csr_val funciton.
-      csr_is_volatile:  Boolean value.  If set, no data checking will be done.    
+      csr_is_volatile:  Boolean value.  If set, no data checking will be done.
     """
     reset_val = copy.deepcopy(csr_val)
-    
+
     for op in csr_instructions:
         for i in range(3):
             # hex string
@@ -344,30 +344,30 @@ def gen_check_writeable_csr(test_file, source_reg, dest_reg, csr_instructions, x
             test_file.write(branch_check)
     test_file.write("\tli {}, {}\n".format(source_reg, reset_val))
     test_file.write("\tcsrw {}, {}\n".format(hex(csr_address),source_reg))
-            
+
 def gen_check_read_only_csr(test_file,  source_reg, dest_reg, csr_instructions, xlen,
                             csr_address, csr_val, csr_write_fields, csr_read_mask,
                             csr_is_volatile):
     """
     Writes self checking code for accesses to a read only CSR. All write accesses
-    should result in an exception.  The code written assumes that the address of a 
-    global variable used to flag expected illegal instructions is already loaded in 
+    should result in an exception.  The code written assumes that the address of a
+    global variable used to flag expected illegal instructions is already loaded in
     register t1 (x6). It also assumes that the exception handler will advance the PC
     past the unconditional branch to error code that it will place after the illegal access.
 
-    Args: 
-      test_file:        File to write the code to. 
+    Args:
+      test_file:        File to write the code to.
       source_reg:       Register used to store the value to be written to the CSR and
-                        the expected read value. 
+                        the expected read value.
       dest_reg:         Register used to store the value read from the CSR
-      csr_instructions: List of CSR access instructions to be tested. 
-      xlen:             ISA width, passed from command line. 
-      The following come direclty from the yaml file: 
+      csr_instructions: List of CSR access instructions to be tested.
+      xlen:             ISA width, passed from command line.
+      The following come direclty from the yaml file:
       csr_address:      The address of the CSR, as an integer.
       csr_val:          The reset value for this csr. Used by the predict_csr_valf funciton.
       csr_write_fields: A list of the CSR's fields. Used by the predict_csr_valf funciton.
       csr_read_mask:    A bitarray of readable fields. Used by the predict_csr_valf funciton.
-      csr_is_volatile:  Boolean value.  If set, no data checking will be done.    
+      csr_is_volatile:  Boolean value.  If set, no data checking will be done.
     """
     for op in csr_instructions:
         for i in range(3):
@@ -376,7 +376,7 @@ def gen_check_read_only_csr(test_file,  source_reg, dest_reg, csr_instructions, 
             if (op[4] == 'w'):
                 test_file.write("\tlw t0, 0(t1)\n")
                 test_file.write("\taddi t0, t0, 1\n")
-                test_file.write("\tsw t0, 0(t1)\n") 
+                test_file.write("\tsw t0, 0(t1)\n")
             if op[-1] == "i":
                 imm = rand_rs1_val[-5:]
                 csr_inst = "\t{} {}, {}, 0b{}\n".format(op,
@@ -411,28 +411,28 @@ def gen_check_read_only_csr(test_file,  source_reg, dest_reg, csr_instructions, 
                 test_file.write(predict_li)
                 test_file.write(branch_check)
             else:
-                test_file.write("\tj csr_user_unauth\n")     
+                test_file.write("\tj csr_user_unauth\n")
 
 def gen_check_inaccessible_csr(test_file,  source_reg, dest_reg, csr_instructions, xlen,
                             csr_address):
     """
     Writes self checking code for accesses to inaccessilbe CSRs.  Every attempted access
-    should result in an exception.  The code written assumes that the address of a 
-    global variable used to flag expected illegal instructions is already loaded in 
+    should result in an exception.  The code written assumes that the address of a
+    global variable used to flag expected illegal instructions is already loaded in
     register t1 (x6). It also assumes that the exception handler will advance the PC
     past the unconditional branch to error code that it will place after the illegal access.
 
-    Args: 
-      test_file:        File to write the code to. 
+    Args:
+      test_file:        File to write the code to.
       source_reg:       Register used to store the value to be written to the CSR and
-                        the expected read value. 
+                        the expected read value.
       dest_reg:         Register used to store the value read from the CSR
-      csr_instructions: List of CSR access instructions to be tested. 
-      xlen:             ISA width, passed from command line. 
-      The following come direclty from the yaml file: 
-      csr_address:      The address of the CSR, as an integer. 
+      csr_instructions: List of CSR access instructions to be tested.
+      xlen:             ISA width, passed from command line.
+      The following come direclty from the yaml file:
+      csr_address:      The address of the CSR, as an integer.
     """
-     
+
     for op in csr_instructions:
         rand_rs1_val = get_rs1_val(0, xlen)
         if op[-1] == "i":
@@ -453,72 +453,72 @@ def gen_check_inaccessible_csr(test_file,  source_reg, dest_reg, csr_instruction
 
 def gen_interrupt_csr_check_func(test_file, header_file, original_csr_map, csr_instructions, xlen):
     """
-    Generates a function to check the interrupt related CSRs.  This is done by calling 
-    gen_check_writeable_csr on each CSR named in the global list INTERRUPT_CSRS. 
- 
-    The value placed in mtvec by the C startup code is preserved by this funciton. 
+    Generates a function to check the interrupt related CSRs.  This is done by calling
+    gen_check_writeable_csr on each CSR named in the global list INTERRUPT_CSRS.
+
+    The value placed in mtvec by the C startup code is preserved by this funciton.
 
     This allows the interrupt related CSR's to be checked, but still allows for exception
-    related features to be exercised in machine mode. 
+    related features to be exercised in machine mode.
 
     Args:
       test_file:        File to write assembly test code out to.
-      header_file:      File to write C headers to. 
+      header_file:      File to write C headers to.
       original_csr_map: The dictionary containing CSR mappings generated by get_csr_map()
       csr_instructions: A list of all supported CSR instructions in string form.
       xlen:             The RISC-V ISA bit length.
     """
     csr_map = copy.deepcopy(original_csr_map)
     source_reg = "x12"
-    dest_reg   = "x13"    
+    dest_reg   = "x13"
     test_file.write(".globl interrupt_csr_check\n")
     test_file.write("interrupt_csr_check:\n")
     header_file.write("void interrupt_csr_check();\n")
     for csr in INTERRUPT_CSRS:
         csr_address, csr_val, csr_write_fields, csr_read_mask, csr_privilege_mode, \
-            csr_is_volatile, csr_skip_me = csr_map.get( csr)    
-        test_file.write("\t# {}\n".format(csr)) 
-        if (csr_skip_me): 
+            csr_is_volatile, csr_skip_me = csr_map.get( csr)
+        test_file.write("\t# {}\n".format(csr))
+        if (csr_skip_me):
             test_file.write("\t# \tCSR marked SKIP_ME: {}\n".format(csr_skip_me))
-            continue     
-        test_file.write("\tli a1, {}\n".format(hex(csr_address))) 
+            continue
+        test_file.write("\tli a1, {}\n".format(hex(csr_address)))
         if (csr == "mtvec"):
-            test_file.write("\tli t0, {}\n".format(csr_val)) 
+            test_file.write("\tli t0, {}\n".format(csr_val))
             test_file.write("\tcsrrw t1, {}, t0\n".format(hex(csr_address)))
         gen_check_writeable_csr(test_file,  source_reg, dest_reg,csr_instructions, xlen,
                                 csr_address, csr_val, csr_write_fields, csr_read_mask,
                                 csr_is_volatile)
         if (csr == "mtvec"):
             test_file.write("\tcsrrw t0, {}, t1\n".format(hex(csr_address)))
-                
+
     test_file.write("\tret\n");
-        
+
 
 def gen_csr_check_func(test_file, header_file, original_csr_map, csr_instructions, xlen,
                        function_name, privilege):
-    
-    """
-    Generates a function to check CSR accesses.  This is done by calling 
-    gen_check_writeable_csr, gen_check_read_only_csr, or gen_check_inaccessible_csr
-    as approriate based on the privilege leve of the CSR and the privilege 
-    level being tested.   
- 
-    Machine and debug level will skip testing CSR's in the global INTERRUPT_CSR list;
-    This allows exception to be taken during the function without worrying about 
-    the exception related CSR's chaning in ways that are difficult to predict. These
-    CSR's should be tested using the function generated by gen_interrupt_csr_check_func 
-    above. 
 
-    This function is coded to handle all possible privilege levels, but only Machine and User 
-    are actually used by this script. 
+    """
+    Generates a function to check CSR accesses.  This is done by calling
+    gen_check_writeable_csr, gen_check_read_only_csr, or gen_check_inaccessible_csr
+    as approriate based on the privilege leve of the CSR and the privilege
+    level being tested.
+
+    Machine and debug level will skip testing CSR's in the global INTERRUPT_CSR list;
+    This allows exception to be taken during the function without worrying about
+    the exception related CSR's chaning in ways that are difficult to predict. These
+    CSR's should be tested using the function generated by gen_interrupt_csr_check_func
+    above.
+
+    This function is coded to handle all possible privilege levels, but only Machine and User
+    are actually used by this script.
 
     Args:
       test_file:        File to write assembly test code out to.
-      header_file:      File to write C headers to. 
+      header_file:      File to write C headers to.
       original_csr_map: The dictionary containing CSR mappings generated by get_csr_map()
       csr_instructions: A list of all supported CSR instructions in string form.
       xlen:             The RISC-V ISA bit length.
-      fucntion_name:    The name of the function to create. 
+      fucntion_name:    The name of the function to create.
       privilege:        A single character indicating the privilege level to test.
     """
     csr_map = copy.deepcopy(original_csr_map)
@@ -536,14 +536,14 @@ def gen_csr_check_func(test_file, header_file, original_csr_map, csr_instruction
         csr_address, csr_val, csr_write_fields, csr_read_mask, csr_privilege_mode, \
             csr_is_volatile, csr_skip_me = csr_map.get( csr)
         test_file.write("\t# {}\n".format(csr))
-        
-        if (csr_skip_me): 
+
+        if (csr_skip_me):
             test_file.write("\t# \tCSR marked SKIP_ME: {}\n".format(csr_skip_me))
             continue
         test_file.write("\tli a1, {}\n".format(hex(csr_address)))
         if (PRIVILEGE_LEVELS[privilege] < PRIVILEGE_LEVELS[csr_privilege_mode[0]]):
             gen_check_inaccessible_csr(test_file, source_reg, dest_reg, csr_instructions, xlen,
-                                       csr_address) 
+                                       csr_address)
         elif ( csr_privilege_mode[-2:] == "RO"):
             gen_check_read_only_csr(test_file, source_reg, dest_reg, csr_instructions, xlen,
                                     csr_address, csr_val, csr_write_fields, csr_read_mask,
@@ -552,26 +552,24 @@ def gen_csr_check_func(test_file, header_file, original_csr_map, csr_instruction
             gen_check_writeable_csr(test_file,  source_reg, dest_reg,csr_instructions, xlen,
                                     csr_address, csr_val, csr_write_fields, csr_read_mask,
                                     csr_is_volatile)
-     
-    test_file.write("\tret\n"); 
 
 
 def gen_csr_check_unimplemented(test_file, header_file, original_csr_map):
-    
+
     """
     Generates a function to that verifies that no CSR accesses are possible
     to CSR address not listed int the .yaml file.
-    
+
     This function will do a read access to every possible address not listed
     in the .yaml file, setting the glbl_expect_illegal_insn for each one
-    and branching to csr_bad_impl if the exectption is not taken. 
+    and branching to csr_bad_impl if the exectption is not taken.
 
     CSR address with the "SKIP_ME" entry in the .yaml file will not be accessed
-    by this function. 
+    by this function.
 
     Args:
       test_file:        File to write assembly test code out to.
-      header_file:      File to write C headers to. 
+      header_file:      File to write C headers to.
       original_csr_map: The dictionary containing CSR mappings generated by get_csr_map()
     """
     csr_map = copy.deepcopy(original_csr_map)
@@ -590,20 +588,19 @@ def gen_csr_check_unimplemented(test_file, header_file, original_csr_map):
     for addr in range (0x1000):
         if (addr in csr_addrs):
             continue
-        else :       
-            test_file.write("\tli a1, {}\n".format(hex(addr))) 
+        else :
+            test_file.write("\tli a1, {}\n".format(hex(addr)))
             test_file.write("\tlw t0, 0(t1)\n")
             test_file.write("\taddi t0, t0, 1\n")
             test_file.write("\tsw t0, 0(t1)\n")
             test_file.write("\tcsrr t0, {}\n".format(hex(addr)))
             test_file.write("\tjal ra, csr_bad_impl\n")
-    
-    test_file.write("\tlw ra, 0(sp)\n") 
+
+    test_file.write("\tlw ra, 0(sp)\n")
     test_file.write("\taddi sp, sp, 4\n")
-    test_file.write("\tret\n"); 
-            
-        
-    
+    test_file.write("\tret\n");
+
+
 def main():
     """Main entry point of CSR test generation script.
      Will set up a list of all supported CSR instructions,
@@ -641,7 +638,7 @@ def main():
     add_auto_gen_comment(csr_test_file, args.csr_file)
     csr_header_file =  open("{}/riscv_csr_test_{}.h".format(args.out, 0), "w")
     add_auto_gen_comment(csr_header_file, args.csr_file)
-    
+
     gen_setup(csr_test_file)
     gen_interrupt_csr_check_func(csr_test_file, csr_header_file,
                                  csr_map, csr_ops, args.xlen)
@@ -652,6 +649,6 @@ def main():
                        csr_map, csr_ops, args.xlen, "user_mode_check", 'U')
     csr_test_file.close()
     csr_header_file.close()
-        
+
 if __name__ == "__main__":
     main()

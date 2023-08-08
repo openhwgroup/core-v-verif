@@ -117,8 +117,8 @@ module uvmt_cv32e20_dut_wrap #(
 
     // ------------------------------------------------------------------------
     // Instantiate the core
-//    cve2_top #( 
-    cve2_top_tracing #( 
+//    cve2_top #(
+    cve2_top_tracing #(
                .MHPMCounterNum   (MHPMCounterNum),
                .MHPMCounterWidth (MHPMCounterWidth),
                .RV32E            (RV32E),
@@ -136,7 +136,7 @@ module uvmt_cv32e20_dut_wrap #(
          .ram_cfg_i              ( prim_ram_1p_pkg::RAM_1P_CFG_DEFAULT ),
 
          .hart_id_i              ( 32'h0000_0000                  ),
-         .boot_addr_i            ( 32'h0000_0000                  ), //<---MJS changing to 0 
+         .boot_addr_i            ( 32'h0000_0000                  ), //<---MJS changing to 0
 
   // Instruction memory interface
          .instr_req_o            ( obi_memory_instr_if.req        ), // core to agent

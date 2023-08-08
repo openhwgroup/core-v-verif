@@ -23,8 +23,6 @@
 
 .section .debugger, "ax"
 .global _debugger_start
-.set test_ret_val, 0x20000000
-.set test_fail, 0x1
 .set test_debugger_ok, 0xa5
 
 _debugger_start:
@@ -38,9 +36,7 @@ _debugger_start:
     // We don't have any globals or pointers
     // at this time, so we must rely on
     // memory (hopefully) not being used
-    la a0, test_debugger_entry
-    li t0, test_debugger_ok
-    sw t0, 0(a0)
+    j test_pass
 
 _debugger_trigger_regs_access:
     # R/W trigger regs otherwise not accessed
@@ -477,10 +473,7 @@ _debugger_trigger_regs_access:
     dret
 
 _debugger_error:
-    li a0, test_ret_val
-    li t0, test_fail
-    sw t0, 0(a0)
-    dret
+    j test_fail
 
 .section .data
 .global test_debugger_entry

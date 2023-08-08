@@ -34,7 +34,7 @@ VCOVER                  = vcover
 VWORK     				= work
 VSIM_COV_MERGE_DIR      = $(SIM_CFG_RESULTS)/$(CFG)/merged
 UVM_HOME               ?= $(abspath $(shell which $(VLIB))/../../verilog_src/uvm-1.2/src)
-DPI_INCLUDE            ?= $(abspath $(shell which $(VLIB))/../../include)
+DPI_INCLUDE            ?= $(abspath $(shell dirname $(shell which $(VLIB)))/../include)
 USES_DPI = 1
 
 # Default flags
@@ -185,6 +185,7 @@ VSIM_FLAGS += +DISABLE_CSR_CHECK=$(TEST_DISABLE_CSR_CHECK)
 endif
 
 VSIM_FLAGS += -sv_lib $(basename $(DPI_DASM_LIB))
+VSIM_FLAGS += -sv_lib $(basename $(ELFLOADER_LIB))
 VSIM_FLAGS += -sv_lib $(basename $(abspath $(SVLIB_LIB)))
 
 # Skip compile if requested (COMP=NO)
@@ -399,7 +400,7 @@ gen_corev-dv:
 
 comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG) vlog_corev-dv vopt_corev-dv
 
-corev-dv: clean_riscv-dv clone_riscv-dv comp_corev-dv
+corev-dv: clone_riscv-dv comp_corev-dv
 
 ###############################################################################
 # Run a single test-program from the RISC-V Compliance Test-suite. The parent

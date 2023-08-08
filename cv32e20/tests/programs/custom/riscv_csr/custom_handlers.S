@@ -1,23 +1,23 @@
 /*
 **
-** Copyright 2023 Intrinsix
-** 
+** Copyright 2023 Cadence
+**
 ** Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
 ** You may obtain a copy of the License at
-** 
+**
 **     https://solderpad.org/licenses/
-** 
+**
 ** Unless required by applicable law or agreed to in writing, software
 ** distributed under the License is distributed on an "AS IS" BASIS,
 ** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ** See the License for the specific language governing permissions and
 ** limitations under the License.
-** 
+**
 *******************************************************************************
 ** This file contains a modified version of the u_sw_irq_handler
-** found in bsp/handler.S.  The u_sw_irq_handler in that file is designated as 
-** a weak symbol while this one is not, so the one in this file should override 
+** found in bsp/handler.S.  The u_sw_irq_handler in that file is designated as
+** a weak symbol while this one is not, so the one in this file should override
 ** it.
 **
 ** This version of u_sw_irq_handler calls different functions to handle
@@ -34,7 +34,7 @@
 #define EXCEPTION_BREAKPOINT 3
 #define EXCEPTION_ECALL_M 11
 
-	
+
 .section .text.handlers
 .global __no_irq_handler
 .global u_sw_irq_handler
@@ -44,10 +44,8 @@
 .global csr_unexpected_int
 .global switch_to_user_mode
 .global switch_to_machine_mode
-.set test_ret_val, 0x20000000
-.set test_fail, 0x1
 
-	
+
 u_sw_irq_handler:
         /* While we are still using puts in handlers, save all caller saved
            regs.  Eventually, some of these saves could be deferred.  */
@@ -91,7 +89,7 @@ handle_illegal_csr:
  	csrrsi t0, mepc, 0
  	addi t0, t0, 0x8
  	csrrw t0, mepc, t0
-end_handler_ret:	
+end_handler_ret:
  	lw ra, 0(sp)
  	lw a0, 4(sp)
  	lw a1, 8(sp)
@@ -110,14 +108,14 @@ end_handler_ret:
  	lw t6, 60(sp)
  	addi sp,sp,64
  	mret
-	
+
 handle_unknown:
         la a0, unknown_msg
         jal ra, puts
         /* We don't know what interrupt/exception is being handled, so don't
            increment mepc.  */
         j end_handler_ret
-	
+
 end_handler_incr_mepc:
         csrr t0, mepc
         lb t1, 0(t0)
@@ -130,9 +128,9 @@ end_handler_incr_mepc:
 end_handler_incr_mepc2:
         addi t0, t0, 2
         csrw mepc, t0
-	j end_handler_ret	
+	j end_handler_ret
 
-	
+
 /* This is unchanged from bsp/handlers.S
  * The handle_syscall function is in bsp/syscalls.c
  */
@@ -166,17 +164,17 @@ switch_to_user_mode:
 	/*Write the return address into the mepc*/
         csrrw x0, mepc, ra
 	/*Return with 'mret' rather than ret instruction*/
-        mret  
+        mret
 
 switch_to_machine_mode:
 	/*Force execution of the ebreak handler*/
 	ebreak
-        ret  
-	
+        ret
+
 /* Error reporting code.
  * Each of tehse labels does a printf of a different message,
  * then jumps to a failure loop.
- */	
+ */
 csr_mismatch:
 	la a0, csr_mismatch_msg
 	jal ra, printf
@@ -186,7 +184,7 @@ csr_user_unauth:
 	la a0, csr_user_unauth_msg
 	jal ra, printf
 	j csr_fail_loop
-	
+
 csr_bad_impl:
 	addi sp, sp,-8
 	sw ra, 0(sp)
@@ -213,15 +211,13 @@ csr_unexpected_illegal_inst:
 	j csr_fail_loop
 
 csr_fail_loop:
-	li t1, test_fail
-	li t2, test_ret_val
-	sw t1, 0(t2)
+        jal test_fail
 	j csr_fail_loop
-	
+
 /* Error messages.  Pointers to these should go into a0(x10) before calling printf
  * Assumptions are that data is loaded into registers as follows:
  *   a1(x11): CSR Address
- *   a2(x12): Expected Data 
+ *   a2(x12): Expected Data
  *   a3(x13): Actual Data
  */
 .section .rodata

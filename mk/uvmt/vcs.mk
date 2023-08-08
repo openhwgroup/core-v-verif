@@ -183,6 +183,8 @@ VCS_RUN_BASE_FLAGS   ?= $(VCS_GUI) \
                         -assert nopostproc \
                         -sv_lib $(abspath $(VCS_SVLIB_LIB))
 
+VCS_RUN_BASE_FLAGS   += -sv_lib $(basename $(ELFLOADER_LIB))
+
 # Simulate using latest elab
 VCS_RUN_FLAGS        ?=
 VCS_RUN_FLAGS        += $(VCS_RUN_BASE_FLAGS)
@@ -452,4 +454,4 @@ clean_rtl:
 	rm -rf $(CV_CORE_PKG)
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_test clean_rtl clean_eclipse clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib 
+clean_all: clean clean_test clean_rtl clean_eclipse clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib

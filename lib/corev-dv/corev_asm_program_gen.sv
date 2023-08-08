@@ -112,9 +112,15 @@ class corev_asm_program_gen extends riscv_asm_program_gen;
     instr_stream.push_back($sformatf("                  sw %s,0(%s)", td_nam[1].tolower(), td_nam[0].tolower()));
     instr_stream.push_back($sformatf(""));
     instr_stream.push_back($sformatf("                  csrrwi x0,mie,0 /* clear mie so that final wfi never awakens */"));
-    instr_stream.push_back($sformatf("                  wfi  /* we are done */"));
     instr_stream.push_back($sformatf("#End: Extracted from riscv_compliance_tests/riscv_test.h"));
     instr_stream.push_back($sformatf(""));
+    instr_stream.push_back({indent, "li gp, 1"});
+    if (cfg.bare_program_mode) begin
+      instr_stream.push_back({indent, "j write_tohost"});
+    end else begin
+      instr_stream.push_back({indent, "addi a0,x0,48"}); // Shutdown syscall
+      instr_stream.push_back({indent, "ecall"});
+    end
   endfunction : gen_test_done
 
   // Therefore to enable random ecalls in test, simply handle ecall as an exception with no special
@@ -127,6 +133,11 @@ class corev_asm_program_gen extends riscv_asm_program_gen;
             $sformatf("csrw  mepc, x%0d", cfg.gpr[0])
     };
     pop_gpr_from_kernel_stack(MSTATUS, MSCRATCH, cfg.mstatus_mprv, cfg.sp, cfg.tp, instr);
+
+    instr.push_back("li t0,48"); // Shutdown syscall
+    instr.push_back("bne a0,t0,1f");
+    instr.push_back("j write_tohost");
+    instr.push_back("1:");
     instr.push_back("mret");
     gen_section(get_label("ecall_handler", hart), instr);
   endfunction : gen_ecall_handler

@@ -26,6 +26,8 @@ typedef class uvme_cv32e20_vp_sig_writer_seq_c;
 typedef class uvme_cv32e20_vp_status_flags_seq_c;
 typedef class uvme_cv32e20_vp_rand_num_seq_c;
 
+import "DPI-C" function longint read_symbol(input string symbol, output longint unsigned address);
+import "DPI-C" function read_elf(input string filename);
 /**
  * Top-level component that encapsulates, builds and connects all other
  * CV32E20 environment components.
@@ -49,7 +51,8 @@ class uvme_cv32e20_env_c extends uvm_env;
    uvma_obi_memory_agent_c  obi_memory_instr_agent;
    uvma_obi_memory_agent_c  obi_memory_data_agent ;
 
-
+   byte vp_status_flags_symbol_present = 0;
+   byte vp_virtual_printer_symbol_present = 0;
 
    `uvm_component_utils_begin(uvme_cv32e20_env_c)
       `uvm_field_object(cfg  , UVM_DEFAULT)
@@ -142,6 +145,11 @@ class uvme_cv32e20_env_c extends uvm_env;
     */
    extern virtual function void assemble_vsequencer();
 
+   /**
+    * Load binary into elfloader to enable aux functions
+    */
+   extern virtual function void load_binary();
+
 endclass : uvme_cv32e20_env_c
 
 
@@ -181,6 +189,7 @@ function void uvme_cv32e20_env_c::build_phase(uvm_phase phase);
       create_env_components();
 
       if (cfg.is_active) begin
+         load_binary();
          create_vsequencer();
       end
 
@@ -242,15 +251,18 @@ task uvme_cv32e20_env_c::run_phase(uvm_phase phase);
             data_slv_seq = uvma_obi_memory_slv_seq_c::type_id::create("data_slv_seq");
 
             // Install the virtual peripheral registers
-            void'(data_slv_seq.register_vp_vseq("vp_virtual_printer", 32'h1000_0000, uvma_obi_memory_vp_virtual_printer_seq_c::get_type()));
-            void'(data_slv_seq.register_vp_vseq("vp_cycle_counter", 32'h1500_1004, uvma_obi_memory_vp_cycle_counter_seq_c::get_type()));
+            void'(data_slv_seq.register_vp_vseq("vp_virtual_printer_legacy", cfg.vp_virtual_printer_legacy, uvma_obi_memory_vp_virtual_printer_seq_c::get_type()));
+            if (vp_virtual_printer_symbol_present)
+                void'(data_slv_seq.register_vp_vseq("vp_virtual_printer_symbol", cfg.vp_virtual_printer_symbol, uvma_obi_memory_vp_virtual_printer_seq_c::get_type()));
+
+            void'(data_slv_seq.register_vp_vseq("vp_cycle_counter", cfg.vp_cycle_counter, uvma_obi_memory_vp_cycle_counter_seq_c::get_type()));
 
             // FIXME:strichmo:When RVVI/RVFI ported, the core-specific random number sequence is no longer needed
             // Use this one instead:
             //void'(data_slv_seq.register_vp_vseq("vp_rand_num", 32'h1500_1000, 1, uvma_obi_memory_vp_rand_num_seq_c::get_type()));
             begin
                uvme_cv32e20_vp_rand_num_seq_c vp_seq;
-               if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_rand_num", 32'h1500_1000, uvme_cv32e20_vp_rand_num_seq_c::get_type()))) begin
+               if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_rand_num", cfg.vp_rand_num, uvme_cv32e20_vp_rand_num_seq_c::get_type()))) begin
                   `uvm_fatal("CV32E20VPSEQ", $sformatf("Could not cast vp_rand_num correctly"));
                end
                vp_seq.cv32e20_cntxt = cntxt;
@@ -258,15 +270,27 @@ task uvme_cv32e20_env_c::run_phase(uvm_phase phase);
 
             begin
                uvme_cv32e20_vp_sig_writer_seq_c vp_seq;
-               if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_sig_writer", 32'h2000_0008, uvme_cv32e20_vp_sig_writer_seq_c::get_type()))) begin
+               if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_sig_writer", cfg.vp_sig_writer, uvme_cv32e20_vp_sig_writer_seq_c::get_type()))) begin
                   `uvm_fatal("CV32E20VPSEQ", $sformatf("Could not cast vp_sig_writes correctly"));
                end
                vp_seq.cv32e20_cntxt = cntxt;
             end
 
             begin
+                if (vp_status_flags_symbol_present) begin
+                    uvme_cv32e20_vp_status_flags_seq_c vp_seq;
+                    `uvm_info("CV32E20VPSEQ", $sformatf("Setting up vp_status with addr %h", cfg.vp_status_flags_symbol), UVM_LOW)
+                    if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_status_flags", cfg.vp_status_flags_symbol, uvme_cv32e20_vp_status_flags_seq_c::get_type()))) begin
+                        `uvm_fatal("CV32E20VPSEQ", $sformatf("Could not cast vp_status_flags correctly"));
+                    end
+                    vp_seq.cv32e20_cntxt = cntxt;
+                end
+            end
+
+            begin
                uvme_cv32e20_vp_status_flags_seq_c vp_seq;
-               if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_status_flags", 32'h2000_0000, uvme_cv32e20_vp_status_flags_seq_c::get_type()))) begin
+               `uvm_info("CV32E20VPSEQ", $sformatf("Setting up vp_status with addr %h", cfg.vp_status_flags_legacy), UVM_LOW)
+               if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_status_flags", cfg.vp_status_flags_legacy, uvme_cv32e20_vp_status_flags_seq_c::get_type()))) begin
                   `uvm_fatal("CV32E20VPSEQ", $sformatf("Could not cast vp_status_flags correctly"));
                end
                vp_seq.cv32e20_cntxt = cntxt;
@@ -274,7 +298,7 @@ task uvme_cv32e20_env_c::run_phase(uvm_phase phase);
 
             begin
                uvme_cv32e20_vp_interrupt_timer_seq_c vp_seq;
-               if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_interrupt_timer", 32'h1500_0000, uvme_cv32e20_vp_interrupt_timer_seq_c::get_type()))) begin
+               if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_interrupt_timer", cfg.vp_interrupt_timer, uvme_cv32e20_vp_interrupt_timer_seq_c::get_type()))) begin
                   `uvm_fatal("CV32E20VPSEQ", $sformatf("Could not cast vp_interrupt_timer correctly"));
                end
                vp_seq.cv32e20_cntxt = cntxt;
@@ -282,7 +306,7 @@ task uvme_cv32e20_env_c::run_phase(uvm_phase phase);
 
             begin
                uvme_cv32e20_vp_debug_control_seq_c vp_seq;
-               if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_debug_control", 32'h1500_0008, uvme_cv32e20_vp_debug_control_seq_c::get_type()))) begin
+               if (!$cast(vp_seq, data_slv_seq.register_vp_vseq("vp_debug_control", cfg.vp_debug_control, uvme_cv32e20_vp_debug_control_seq_c::get_type()))) begin
                   `uvm_fatal("CV32E20VPSEQ", $sformatf("Could not cast vp_debug_control correctly"));
                end
                vp_seq.cv32e20_cntxt = cntxt;
@@ -448,6 +472,37 @@ function void uvme_cv32e20_env_c::assemble_vsequencer();
 
 endfunction: assemble_vsequencer
 
+
+function void uvme_cv32e20_env_c::load_binary();
+
+    string binary;
+
+    $value$plusargs("vp_virtual_printer_legacy=%0h", cfg.vp_virtual_printer_legacy);
+    $value$plusargs("vp_rand_num=%0h", cfg.vp_rand_num);
+    $value$plusargs("vp_cycle_counter=%0h", cfg.vp_cycle_counter);
+    $value$plusargs("vp_sig_writer=%0h", cfg.vp_sig_writer);
+    $value$plusargs("vp_status_flags_legacy=%0h", cfg.vp_status_flags_legacy);
+    $value$plusargs("vp_interrupt_timer=%0h",cfg.vp_interrupt_timer);
+    $value$plusargs("vp_debug_control=%0h", cfg.vp_debug_control);
+
+    if ($value$plusargs("elf_file=%s", binary))
+    begin
+        read_elf(binary);
+        vp_status_flags_symbol_present = ! read_symbol("tohost", cfg.vp_status_flags_symbol);
+        if (vp_status_flags_symbol_present) begin
+            `uvm_info("cv32e20_env", $sformatf("Loading tohost symbol: %h", cfg.vp_status_flags_symbol), UVM_LOW)
+        end else begin
+            `uvm_info("cv32e20_env", "tohost symbol not present" , UVM_LOW)
+        end
+        vp_virtual_printer_symbol_present = ! read_symbol("stdout_reg", cfg.vp_virtual_printer_symbol);
+        if (vp_virtual_printer_symbol_present) begin
+            `uvm_info("cv32e20_env", $sformatf("Loading stdout_reg symbol: %h", cfg.vp_virtual_printer_symbol), UVM_LOW)
+        end else begin
+            `uvm_info("cv32e20_env", "stdout_reg symbol not present" , UVM_LOW)
+        end
+    end
+
+endfunction: load_binary
 
 `endif // __UVME_CV32E20_ENV_SV__
 

@@ -29,66 +29,66 @@ _start0:
 	li x7, 0xa5a5a5a5
 	csrrw x12, 2816, x7
 	li x7, 0x00000000
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	li x7, 0x5a5a5a5a
 	csrrw x12, 2816, x7
 	li x7, 0xa5a5a5a5
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	li x7, 0xd5583a6b
 	csrrw x12, 2816, x7
 	li x7, 0x5a5a5a5a
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	li x7, 0xa5a5a5a5
 	csrrs x12, 2816, x7
 	li x7, 0xd5583a6b
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	li x7, 0x5a5a5a5a
 	csrrs x12, 2816, x7
 	li x7, 0xf5fdbfef
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	li x7, 0x1ac809f1
 	csrrs x12, 2816, x7
 	li x7, 0xffffffff
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	li x7, 0xa5a5a5a5
 	csrrc x12, 2816, x7
 	li x7, 0xffffffff
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	li x7, 0x5a5a5a5a
 	csrrc x12, 2816, x7
 	li x7, 0x5a5a5a5a
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	li x7, 0xe34ffa80
 	csrrc x12, 2816, x7
 	li x7, 0x00000000
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	csrrwi x12, 2816, 0b00101
 	li x7, 0x00000000
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	csrrwi x12, 2816, 0b11010
 	li x7, 0x00000005
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	csrrwi x12, 2816, 0b01111
 	li x7, 0x0000001a
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	csrrsi x12, 2816, 0b00101
 	li x7, 0x0000000f
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	csrrsi x12, 2816, 0b11010
 	li x7, 0x0000000f
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	csrrsi x12, 2816, 0b01100
 	li x7, 0x0000001f
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	csrrci x12, 2816, 0b00101
 	li x7, 0x0000001f
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	csrrci x12, 2816, 0b11010
 	li x7, 0x0000001a
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 	csrrci x12, 2816, 0b11001
 	li x7, 0x00000000
-	bne x7, x12, csr_fail
+	bne x7, x12, test_fail
 
 ################################################################################
 # Generated code ends...
@@ -107,7 +107,7 @@ _start0:
   add x2, x0, x3
   sw  x2, 0(x0)
   lw  x1, 0(x0)          # hole: load/store with rs1==x0
-  bne x2, x1, csr_fail
+  bne x2, x1, test_fail
 
   li  x1, 0xFFFFFFFF
   li  x2, 0xFFFFFFFF
@@ -117,7 +117,7 @@ _start0:
   add x2, x0, x3
   sb  x2, 0(x0)
   lb  x1, 0(x0)          # hole: load/store with rs1==x0
-  bne x2, x1, csr_fail
+  bne x2, x1, test_fail
 
   li  x1, 0xFFFFFFFF
   li  x2, 0xFFFFFFFF
@@ -127,7 +127,7 @@ _start0:
   add x2, x0, x3
   sb  x2, 0(x0)
   lbu x1, 0(x0)          # hole: load/store with rs1==x0
-  bne x2, x1, csr_fail
+  bne x2, x1, test_fail
 
   li  x1, 0xFFFFFFFF
   li  x2, 0xFFFFFFFF
@@ -137,7 +137,7 @@ _start0:
   add x2, x0, x3
   sh  x2, 0(x0)
   lh  x1, 0(x0)          # hole: load/store with rs1==x0
-  bne x2, x1, csr_fail
+  bne x2, x1, test_fail
 
   li  x1, 0xFFFFFFFF
   li  x2, 0xFFFFFFFF
@@ -147,7 +147,7 @@ _start0:
   add x2, x0, x3
   sh  x2, 0(x0)
   lhu x1, 0(x0)          # hole: load/store with rs1==x0
-  bne x2, x1, csr_fail
+  bne x2, x1, test_fail
 
   lw  x3, 4(x0)
   add x3, x0, x4         # hole: rs1==x0
@@ -368,7 +368,7 @@ next69:
   c.addi      x2, 0
   c.jal next70
 next70:
-  c.addi16sp  sp, -16 
+  c.addi16sp  sp, -16
   c.jal next71
 next71:
   c.addi4spn  a2, sp,  4
@@ -522,69 +522,7 @@ test_lui0:
   lui x28, 0
   bne x0, x28, test_fail # we skipped lui x28, 0
 
-test_done:
-    lui a0,print_port>>12
-    addi a1,zero,'\n'
-    sw a1,0(a0)
-    addi a1,zero,'C'
-    sw a1,0(a0)
-    addi a1,zero,'V'
-    sw a1,0(a0)
-    addi a1,zero,'3'
-    sw a1,0(a0)
-    addi a1,zero,'2'
-    sw a1,0(a0)
-    addi a1,zero,' '
-    sw a1,0(a0)
-    addi a1,zero,'D'
-    sw a1,0(a0)
-    addi a1,zero,'O'
-    sw a1,0(a0)
-    addi a1,zero,'N'
-    sw a1,0(a0)
-    addi a1,zero,'E'
-    sw a1,0(a0)
-    addi a1,zero,'\n'
-    sw a1,0(a0)
-    sw a1,0(a0)
-
-csr_pass:
-    li x18, 123456789
-    li x17, 0x20000000
-    sw x18,0(x17)
-    wfi
-
-csr_fail:
-test_fail:
-    lui a0,print_port>>12
-    addi a1,zero,'\n'
-    sw a1,0(a0)
-    addi a1,zero,'C'
-    sw a1,0(a0)
-    addi a1,zero,'V'
-    sw a1,0(a0)
-    addi a1,zero,'3'
-    sw a1,0(a0)
-    addi a1,zero,'2'
-    sw a1,0(a0)
-    addi a1,zero,' '
-    sw a1,0(a0)
-    addi a1,zero,'F'
-    sw a1,0(a0)
-    addi a1,zero,'A'
-    sw a1,0(a0)
-    addi a1,zero,'I'
-    sw a1,0(a0)
-    addi a1,zero,'L'
-    sw a1,0(a0)
-    addi a1,zero,'\n'
-    sw a1,0(a0)
-    sw a1,0(a0)
-
-    li x18, 1
-    li x17, 0x20000000
-    sw x18,0(x17)
-    wfi
+  jal test_pass
 #
 # end
 #

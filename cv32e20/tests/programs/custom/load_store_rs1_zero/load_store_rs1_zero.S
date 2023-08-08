@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 # SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
-# 
+#
 ################################################################################
 # - Addresses coverage hole in which load and store instructions are not
 #   generated for which operand rs1=ZERO.
@@ -53,7 +53,7 @@ _start_main:
     li a3, 0xFFFFFF9A # Sign extended expected value
     lb a4, 2047(zero)
     bne a4, a3, test_fail
-        
+
     # write/read mem[2047]=0xBC with sb and lbu (lbu does not sign extend)
     li a5, 0xBC
     sb a5, 2047(zero)
@@ -66,13 +66,13 @@ _start_main:
     li a7, 0xFFFFDEF0 # Sign extended expected value
     lh a0, 2046(zero)
     bne a7, a0, test_fail
-        
+
     # write/read mem[2047]=0x81 & mem[2046]=0x23 with sh and lhu (lhu does not sign extend)
     li a1, 0x8123
     sh a1, 2046(zero)
     lhu a2, 2046(zero)
     bne a1, a2, test_fail
-        
+
 test_done:
     lui a0,print_port>>12
     addi a1,zero,'\n'
@@ -99,42 +99,8 @@ test_done:
     sw a1,0(a0)
     sw a1,0(a0)
 
-test_pass:
-    li x18, 123456789
-    li x17, 0x20000000
-    sw x18,0(x17)
-    wfi
+    j test_pass
 
-test_fail:
-    lui a0,print_port>>12
-    addi a1,zero,'\n'
-    sw a1,0(a0)
-    addi a1,zero,'C'
-    sw a1,0(a0)
-    addi a1,zero,'V'
-    sw a1,0(a0)
-    addi a1,zero,'3'
-    sw a1,0(a0)
-    addi a1,zero,'2'
-    sw a1,0(a0)
-    addi a1,zero,' '
-    sw a1,0(a0)
-    addi a1,zero,'F'
-    sw a1,0(a0)
-    addi a1,zero,'A'
-    sw a1,0(a0)
-    addi a1,zero,'I'
-    sw a1,0(a0)
-    addi a1,zero,'L'
-    sw a1,0(a0)
-    addi a1,zero,'\n'
-    sw a1,0(a0)
-    sw a1,0(a0)
-
-    li x18, 1
-    li x17, 0x20000000
-    sw x18,0(x17)
-    wfi
 #
 # end
 #

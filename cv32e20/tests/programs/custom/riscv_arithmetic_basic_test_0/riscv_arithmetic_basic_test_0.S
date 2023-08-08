@@ -2,10 +2,11 @@
 #.include "user_define.h"
 #.globl _start
 #.section .text
-#_start:           
+#_start:
 # END: riscv-dv
 # BEGIN: gtumbush
 .include "user_define.h"
+
 .section .text.start
 .globl _start
 .section .text
@@ -18,7 +19,7 @@ _start:
 
 .globl _start_main
 .section .text
-_start_main:          
+_start_main:
 # END: gtumbush
 # BEGIN: riscv-dv
                   csrr x5, mhartid
@@ -29,20 +30,20 @@ _start_main:
 h0_start:
                   li x30, 0x40001104
                   csrw misa, x30
-kernel_sp:        
+kernel_sp:
                   la x13, kernel_stack_end
 
-trap_vec_init:    
+trap_vec_init:
                   la x30, mtvec_handler
                   ori x30, x30, 1
                   csrw 0x305, x30 # MTVEC
 
-mepc_setup:       
+mepc_setup:
                   la x30, init
                   csrw mepc, x30
                   j init_machine_mode
 
-init:             
+init:
                   li x0, 0xffae545d
                   li x1, 0xf
                   li x2, 0xfaea503e
@@ -11305,22 +11306,7 @@ fast_exit:
                   sw a5,0(a0)
                   sw a5,0(a0)
 
-                  li a0, test_ret_val
-                  lw a1, test_results /* report result */
-                  sw a1,0(a0)
-
-                  wfi  /* we are done */
-##End: Extracted from riscv_compliance_tests/riscv_test.h
-
-                  j test_done
-test_done:        
-                  li gp, 1
-                  ecall
-write_tohost:     
-                  sw gp, tohost, t5
-
-_exit:            
-                  j write_tohost
+                  j test_pass
 
 init_machine_mode:
                   li x30, 0x1800
@@ -11328,13 +11314,9 @@ init_machine_mode:
                   li x30, 0x0
                   csrw 0x304, x30 # MIE
                   mret
-instr_end:        
+instr_end:
                   nop
 
-.section .data
-.align 6; .global tohost; tohost: .dword 0;
-.align 6; .global fromhost; fromhost: .dword 0;
-.section .user_stack,"aw",@progbits;
 .align 2
 user_stack_start:
 .rept 4999
@@ -11384,7 +11366,7 @@ mmode_intr_vector_1:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
 mmode_intr_vector_2:
                   csrrw x12, 0x340, x12
@@ -11425,7 +11407,7 @@ mmode_intr_vector_2:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
 mmode_intr_vector_3:
                   csrrw x12, 0x340, x12
@@ -11466,7 +11448,7 @@ mmode_intr_vector_3:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
 mmode_intr_vector_4:
                   csrrw x12, 0x340, x12
@@ -11507,7 +11489,7 @@ mmode_intr_vector_4:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
 mmode_intr_vector_5:
                   csrrw x12, 0x340, x12
@@ -11548,7 +11530,7 @@ mmode_intr_vector_5:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
 mmode_intr_vector_6:
                   csrrw x12, 0x340, x12
@@ -11589,7 +11571,7 @@ mmode_intr_vector_6:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
 mmode_intr_vector_7:
                   csrrw x12, 0x340, x12
@@ -11630,7 +11612,7 @@ mmode_intr_vector_7:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
 mmode_intr_vector_8:
                   csrrw x12, 0x340, x12
@@ -11671,7 +11653,7 @@ mmode_intr_vector_8:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
 mmode_intr_vector_9:
                   csrrw x12, 0x340, x12
@@ -11712,7 +11694,7 @@ mmode_intr_vector_9:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
 mmode_intr_vector_10:
                   csrrw x12, 0x340, x12
@@ -11753,7 +11735,7 @@ mmode_intr_vector_10:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
 mmode_intr_vector_11:
                   csrrw x12, 0x340, x12
@@ -11794,7 +11776,7 @@ mmode_intr_vector_11:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
 mmode_intr_vector_12:
                   csrrw x12, 0x340, x12
@@ -11835,7 +11817,7 @@ mmode_intr_vector_12:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
 mmode_intr_vector_13:
                   csrrw x12, 0x340, x12
@@ -11876,7 +11858,7 @@ mmode_intr_vector_13:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
 mmode_intr_vector_14:
                   csrrw x12, 0x340, x12
@@ -11917,7 +11899,7 @@ mmode_intr_vector_14:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
 mmode_intr_vector_15:
                   csrrw x12, 0x340, x12
@@ -11958,10 +11940,10 @@ mmode_intr_vector_15:
                   srli x30, x30, 0x1f
                   beqz x30, 1f
                   j mmode_intr_handler
-                  1: j test_done
+                  1: j test_pass
 
-.align 2
-mtvec_handler:    
+.align 8
+mtvec_handler:
                   .option norvc;
                   j mmode_exception_handler
                   j mmode_intr_vector_1
@@ -12041,9 +12023,9 @@ mmode_exception_handler:
                   li x22, 0x2 # ILLEGAL_INSTRUCTION
                   beq x30, x22, illegal_instr_handler
                   csrr x22, 0x343 # MTVAL
-                  1: jal x1, test_done 
+                  1: jal x1, test_pass
 
-ecall_handler:    
+ecall_handler:
                   la x30, _start
                   sw x0, 0(x30)
                   sw x1, 4(x30)
@@ -12077,7 +12059,7 @@ ecall_handler:
                   sw x29, 116(x30)
                   sw x30, 120(x30)
                   sw x31, 124(x30)
-                  j write_tohost
+                  j _exit
 instr_fault_handler:
                   lw  x1, 4(x12)
                   lw  x2, 8(x12)
@@ -12189,7 +12171,7 @@ store_fault_handler:
                   csrrw x12, 0x340, x12
                   mret
 
-ebreak_handler:   
+ebreak_handler:
                   csrr  x30, mepc
                   addi  x30, x30, 4
                   csrw  mepc, x30
@@ -12269,7 +12251,7 @@ illegal_instr_handler:
                   csrrw x12, 0x340, x12
                   mret
 
-pt_fault_handler: 
+pt_fault_handler:
                   nop
 
 .align 2
