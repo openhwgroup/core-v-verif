@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // -------------------------------------------------------------------
-// This file holds typedefs related to the ISA
+// This file holds typedefs related to the ISA decoder
 // -------------------------------------------------------------------
 
 `ifndef __ISA_TYPEDEFS__
@@ -21,7 +21,14 @@
 
 `include "isa_typedefs_csr.sv"
 
+
+  // ---------------------------------------------------------------------------
+  // Instruction names, add instructions as needed
+  // ---------------------------------------------------------------------------
   typedef enum {
+    // Unknown for instructions that cannot be decoded
+    UNKNOWN_INSTR = 0,
+    FENCE,
     FENCEI,
     MRET,
     DRET,
@@ -73,6 +80,18 @@
     SRA,
     OR,
     AND,
+    //A
+    LR_W,
+    SC_W,
+    AMOSWAP_W,
+    AMOADD_W,
+    AMOXOR_W,
+    AMOAND_W,
+    AMOOR_W,
+    AMOMIN_W,
+    AMOMAX_W,
+    AMOMINU_W,
+    AMOMAXU_W,
     //Zba
     SH1ADD,
     SH2ADD,
@@ -119,14 +138,35 @@
     REM,
     REMU,
     // Compressed
+    ILLEGAL_INSTR,
     //Zca
-    C_EBREAK,
     C_LWSP,
-    C_FLWSP, //QUESTION: Not included in Zca?
-    C_FLDSP, //QUESTION: Not included in Zca?
     C_SWSP,
-    C_FSWSP,
-    C_FSDSP,
+    C_LW,
+    C_SW,
+    C_EBREAK,
+    C_MV,
+    C_ADD,
+    C_LI,
+    C_LUI,
+    C_JR,
+    C_JALR,
+    C_J,
+    C_JAL,
+    C_ANDI,
+    C_AND,
+    C_OR,
+    C_XOR,
+    C_SUB,
+    C_NOP,
+    C_ADDI4SPN,
+    C_ADDI16SP,
+    C_ADDI,
+    C_SLLI,
+    C_SRLI,
+    C_SRAI,
+    C_BEQZ,
+    C_BNEZ,
     //Zcb
     C_LBU,
     C_LHU,
@@ -149,12 +189,17 @@
     //Zcmt
     CM_JT,
     CM_JALT,
-
+    //Hints
+    HINT_C_LI,
+    HINT_C_LUI,
+    HINT_C_NOP,
+    HINT_C_ADDI,
+    HINT_C_MV,
+    HINT_C_ADD,
     // Pseudo name, class of instructions
     STORE_INSTR,
-    LOAD_INSTR,
-    // Unknown for instructions that cannot be decoded
-    UNKNOWN_INSTR
+    LOAD_INSTR
+
   } instr_name_e;
 
   // ---------------------------------------------------------------------------
@@ -253,16 +298,55 @@
   } c_gpr_abi_name_e;
 
   typedef union packed {
-    logic [2:0]      raw;
+    bit [2:0]        raw;
     c_gpr_name_e     gpr;
     c_gpr_abi_name_e gpr_abi;
   } c_gpr_t;
 
   typedef union packed {
-    logic [4:0]    raw;
+    bit [4:0]      raw;
     gpr_name_e     gpr;
     gpr_abi_name_e gpr_abi;
   } gpr_t;
+
+  // ---------------------------------------------------------------------------
+  // Rlist for zcmp instructions
+  // ---------------------------------------------------------------------------
+  typedef enum logic [3:0] {
+    X1__                = 4'd4,
+    X1__X8              = 4'd5,
+    X1__X8_X9           = 4'd6,
+    X1__X8_X9__X18      = 4'd7,
+    X1__X8_X9__X18_X19  = 4'd8,
+    X1__X8_X9__X18_X20  = 4'd9,
+    X1__X8_X9__X18_X21  = 4'd10,
+    X1__X8_X9__X18_X22  = 4'd11,
+    X1__X8_X9__X18_X23  = 4'd12,
+    X1__X8_X9__X18_X24  = 4'd13,
+    X1__X8_X9__X18_X25  = 4'd14,
+    X1__X8_X9__X18_X27  = 4'd15
+  } rlist_name_e;
+
+  typedef enum logic [3:0] {
+    RA__        = 4'd4,
+    RA__S0      = 4'd5,
+    RA__S0_S1   = 4'd6,
+    RA__S0_S2   = 4'd7,
+    RA__S0_S3   = 4'd8,
+    RA__S0_S4   = 4'd9,
+    RA__S0_S5   = 4'd10,
+    RA__S0_S6   = 4'd11,
+    RA__S0_S7   = 4'd12,
+    RA__S0_S8   = 4'd13,
+    RA__S0_S9   = 4'd14,
+    RA__S0_S11  = 4'd15
+  } rlist_abi_name_e;
+
+  typedef union packed {
+    bit [3:0]        raw;
+    rlist_name_e     rlist;
+    rlist_abi_name_e rlist_abi;
+  } rlist_t;
 
   // -------------------------------------------------------------------
   // Function types
@@ -281,7 +365,6 @@
   typedef enum logic [1:0] {
     C0 = 2'b00, C1 = 2'b01, C2 = 2'b10, C3 = 2'b11 /* C3 does not exist, is uncompressed */
   } compressed_major_opcode_e;
-
 
 
   // Minor opcodes
@@ -339,7 +422,6 @@
     FUNCT3_AND     = 3'b111
   } op_minor_opcode_e;
 
-
   // Minor opcodes for Zba
   typedef enum logic [2:0] {
     FUNCT3_SH2ADD = 3'b100,
@@ -380,6 +462,36 @@
     FUNCT3_ZEXTH = 3'b100
   } zbb_rev8_c_zexth_minor_opcode_e;
 
+  typedef enum logic [2:0] {
+    FUNCT3_C_SRLI_SRAI  = 3'b100,
+    FUNCT3_C_SLLI       = 3'b000,
+    FUNCT3_C_SW         = 3'b110
+  } compressed_shift_store_minor_opcode_e;
+
+  typedef enum logic [2:0] {
+    FUNCT3_C_BEQZ  = 3'b110,
+    FUNCT3_C_BNEZ  = 3'b111,
+    FUNCT3_C_J     = 3'b101,
+    FUNCT3_C_JAL   = 3'b001
+  } compressed_branch_jump_minor_opcode_e;
+
+  typedef enum logic [2:0] {
+    FUNCT3_C_LI_LW  = 3'b010,
+    FUNCT3_C_LUI    = 3'b011
+  } compressed_load_minor_opcode_e;
+
+  typedef enum logic [2:0] {
+    FUNCT3_C_LWSP     = 3'b010,
+    FUNCT3_C_SWSP     = 3'b110,
+    FUNCT3_C_ADDI4SPN = 3'b000,
+    FUNCT3_C_ADDI16SP = 3'b011
+  } compressed_sp_minor_opcode_e;
+
+  typedef enum logic [2:0] {
+    FUNCT3_C_ANDI     = 3'b100,
+    FUNCT3_C_ADDI_NOP = 3'b000
+  } compressed_minor_opcode_e;
+
   // Minor opcodes for Zbc
   typedef enum logic [2:0] {
     FUNCT3_CLMUL  = 3'b001,
@@ -406,6 +518,51 @@
     FUNCT3_REMU   = 3'b111
   } m_minor_opcode_e;
 
+  // Minor opcode for atomic instructions, "A".
+  typedef enum logic [2:0] {
+    FUNCT3_A_W    = 3'b010,
+    FUNCT3_A_D    = 3'b011
+  } a_minor_opcode_e;
+
+  typedef enum logic [4:0] {
+    FUNCT5_C_SEXTB  = 5'b11001,
+    FUNCT5_C_ZEXTB  = 5'b11000,
+    FUNCT5_C_ZEXTH  = 5'b11010,
+    FUNCT5_C_SEXTH  = 5'b11011,
+    FUNCT5_C_NOT    = 5'b11101
+  } funct5_compressed_e;
+
+  typedef enum logic [4:0] {
+    FUNCT5_LR_W       = 5'b00010,
+    FUNCT5_SC_W       = 5'b00011,
+    FUNCT5_AMOSWAP_W  = 5'b00001,
+    FUNCT5_AMOADD_W   = 5'b00000,
+    FUNCT5_AMOXOR_W   = 5'b00100,
+    FUNCT5_AMOAND_W   = 5'b01100,
+    FUNCT5_AMOOR_W    = 5'b01000,
+    FUNCT5_AMOMIN_W   = 5'b10000,
+    FUNCT5_AMOMAX_W   = 5'b10100,
+    FUNCT5_AMOMINU_W  = 5'b11000,
+    FUNCT5_AMOMAXU_W  = 5'b11100
+  } funct5_atomic_e;
+
+
+  // Funct7
+  typedef enum logic [6:0] {
+    FUNCT7_ZBB_MIN_MAX 		= 7'b000_0101,
+    FUNCT7_ZBB_LOGICAL 		= 7'b010_0000,
+    FUNCT7_ZBB_ROTATE  		= 7'b011_0000,
+    FUNCT7_ZBS_BCLR_BEXT 	= 7'b010_0100,
+    FUNCT7_ZBS_BINV 		  = 7'b011_0100,
+    FUNCT7_ZBS_BSET  		  = 7'b001_0100
+  } zbb_zbs_funct7_e;
+
+  typedef enum logic [6:0] {
+    FUNCT7_ZBA  = 7'b001_0000,
+    FUNCT7_ZBC  = 7'b000_0101,
+    FUNCT7_M	  = 7'b000_0001
+  } zba_zbc_m_funct7_e;
+
   // U type
   typedef struct packed {
     logic [31:12]  imm;
@@ -417,7 +574,6 @@
     logic [31:12] imm;
     gpr_t         rd;
   } j_type_t;
-
 
   typedef struct packed {
     logic [31:25] funct7;
@@ -558,6 +714,61 @@
     logic[12:2]  imm;
   } cj_type_t;
 
+  typedef struct packed {
+    logic[15:10] funct6;
+    c_gpr_t      rs1;
+    logic[6:5]   uimm;
+    c_gpr_t      rd;
+  } clb_type_t;
+
+  typedef struct packed {
+    logic[15:10] funct6;
+    c_gpr_t      rs1;
+    logic[6:5]   uimm;
+    c_gpr_t      rs2;
+  } csb_type_t;
+
+  typedef struct packed {
+    logic[15:10] funct6;
+    c_gpr_t      rs1;
+    logic        funct1;
+    logic        uimm;
+    c_gpr_t      rd;
+  } clh_type_t;
+
+  typedef struct packed {
+    logic[15:10] funct6;
+    c_gpr_t      rs1;
+    logic        funct1;
+    logic        uimm;
+    c_gpr_t      rs2;
+  } csh_type_t;
+
+  typedef struct packed {
+    logic[15:10] funct6;
+    c_gpr_t      rd_rs1;
+    logic[6:2]   funct5;
+  } cu_type_t;
+
+  typedef struct packed {
+    logic[15:10] funct6;
+    c_gpr_t      r1s;
+    logic[6:5]   funct2;
+    c_gpr_t      r2s;
+  } cmmv_type_t;
+
+  typedef struct packed {
+    logic[15:10] funct6;
+    logic[9:2]   index;
+  } cmjt_type_t;
+
+  typedef struct packed {
+    logic[15:10] funct6;
+    logic[9:8]   funct2;
+    rlist_t      urlist;
+    logic[5:4]   spimm;
+  } cmpp_type_t;
+
   // Compressed instruction types
   typedef struct packed {
     logic [31:16]  reserved_31_16;
@@ -572,6 +783,14 @@
       ca_type_t    ca;
       cb_type_t    cb;
       cj_type_t    cj;
+      clb_type_t   clb;
+      csb_type_t   csb;
+      clh_type_t   clh;
+      csh_type_t   csh;
+      cu_type_t    cu;
+      cmmv_type_t  cmmv;
+      cmjt_type_t  cmjt;
+      cmpp_type_t  cmpp;
     } format;
     compressed_major_opcode_e opcode;
   } compressed_instr_t;
@@ -606,13 +825,29 @@
   //   and non-interpreted immediate bitfield widths
   // * Add type/sign-extension fields and associated logic
   // ---------------------------------------------------------------------------
+
+  //Immediate types
+  typedef enum {
+    IMM,
+    NZIMM,
+    NZUIMM,
+    OFFSET,
+    I_IMM,
+    U_IMM,
+    SHAMT,
+    UIMM,
+    SPIMM,
+    INDEX
+  } imm_e;
+
   typedef struct packed {
-    logic[31:0] imm;
-    //logic[31:0] imm_raw;
-    //imm_e       imm_type;
-    //int         width;
-    //bit         sign_ext;
-    bit         valid;
+    int       imm_value;
+    bit[31:0] imm_raw;        // The immediate in the order it is presented in the instruction without shifting.
+    bit[31:0] imm_raw_sorted; // The immediate sorted in the correct order. No shifitng.
+    imm_e     imm_type;       // States the type of the immediate
+    int       width;          // Number of bits in immediate
+    bit       sign_ext;       // Indicates whether the immediate is sign-extended or not.
+    bit       valid;
   } imm_operand_t;
 
   typedef struct packed {
@@ -631,16 +866,30 @@
     bit   valid;
   } mem_operand_t;
 
-  // TODO Zc
-  // typedef struct packed {
-  //   rlist_t rlist;
-  //   bit     valid;
-  // } rlist_operand_t;
+  // rlist operand for Zcmp instructions
+  typedef struct packed {
+    rlist_t rlist;
+    bit     valid;
+  } rlist_operand_t;
 
+  // stack_adj operand for Zcmp instructions
+  typedef struct packed {
+    int stack_adj;
+    bit valid;
+  } stack_adj_operand_t;
+
+  // Atomic operand to specify additional memory ordering constraints for atomic instructions
+  typedef struct packed {
+    bit aq;
+    bit rl;
+    bit valid;
+  } atomic_operand_t;
   // ---------------------------------------------------------------------------
   // Instruction formats
   // ---------------------------------------------------------------------------
   typedef enum logic[7:0] {
+    // Others
+    UNKNOWN_FORMAT = 0,
     I_TYPE,
     J_TYPE,
     S_TYPE,
@@ -658,24 +907,51 @@
     CA_TYPE,
     CB_TYPE,
     CJ_TYPE,
-    // Others
-    UNKNOWN_FORMAT
+    CLB_TYPE,
+    CSB_TYPE,
+    CLH_TYPE,
+    CSH_TYPE,
+    CU_TYPE,
+    CMMV_TYPE,
+    CMJT_TYPE,
+    CMPP_TYPE
   } instr_format_e;
 
   // ---------------------------------------------------------------------------
   // Main _decoded_ and _disassembled_ data structure
   // ---------------------------------------------------------------------------
   typedef struct packed {
-    instr_name_e  instr;    // Instruction name
-    instr_format_e format;  // Instruction format type
-    reg_operand_t rd;       // Destination register, qualified by rd.valid
-    reg_operand_t rs1;      // source register 1, qualified by rs1.valid
-    reg_operand_t rs2;      //      --         2,      --        2
-    reg_operand_t rs3;      //      --         3,      --        3
-    imm_operand_t imm;      // Immediate, qualified by imm.valid
-    csr_operand_t csr;      // CSR register address, qualified by csr.valid
-    // rlist_operand_t rlist; // TODO: structure to handle rlist fields for Zcmp-instructions
+    instr_name_e        instr;    // Instruction name
+    instr_format_e      format;  // Instruction format type
+    reg_operand_t       rd;       // Destination register, qualified by rd.valid
+    reg_operand_t       rs1;      // source register 1, qualified by rs1.valid
+    reg_operand_t       rs2;      //      --         2,      --        2
+    reg_operand_t       rs3;      //      --         3,      --        3
+    imm_operand_t       imm;      // Immediate, qualified by imm.valid
+    csr_operand_t       csr;      // CSR register address, qualified by csr.valid
+    logic               is_hint;  // Indicates whether the current instruction is a HINT.
+    rlist_operand_t     rlist;  // structure to handle rlist fields for Zcmp-instructions
+    stack_adj_operand_t stack_adj; // structure to handle stack_adj fields for Zcmp-instructions
+    atomic_operand_t    atomic;
   } asm_t;
+
+  // ---------------------------------------------------------------------------
+  // HINT
+  // ---------------------------------------------------------------------------
+  typedef enum logic[7:0] {
+    ADDI_H,
+    FENCE_H,
+    C_NOP_H,
+    C_ADDI_H,
+    C_LI_H,
+    REG_IMM_I_H,
+    REG_IMM_U_H,
+    REG_REG_R_H,
+    REG_REG_CR_H,
+    CONST_GEN_CI_H,
+    // Others
+    UNKNOWN_HINT
+  } hint_name_e;
 
 
 `endif // __ISA_TYPEDEFS__

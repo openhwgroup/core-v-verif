@@ -13,14 +13,14 @@
 // limitations under the License.
 
 // -------------------------------------------------------------------
-// This file holds typedefs related to the CSRs in the ISA.
+// This file holds typedefs related to the CSRs in the ISA decoder.
 // -------------------------------------------------------------------
 
 `ifndef __ISA_TYPEDEFS_CSR__
 `define __ISA_TYPEDEFS_CSR__
 
-
-  // -------------------------------------------------------------------
+  `include "isa_constants.sv"
+// -------------------------------------------------------------------
   // CSR Addresses
   // -------------------------------------------------------------------
 

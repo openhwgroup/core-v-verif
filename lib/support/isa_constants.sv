@@ -13,13 +13,15 @@
 // limitations under the License.
 
 // -------------------------------------------------------------------
-// This file holds constants related to the ISA
+// This file holds constants related to the ISA decoder
 // -------------------------------------------------------------------
 
 `ifndef __ISA_CONSTANTS__
 `define __ISA_CONSTANTS__
 
-parameter CLIC_ID_WIDTH = 5;
-parameter DEFAULT_XLEN = 32;
+
+  parameter CLIC_ID_WIDTH = 5;
+  parameter DEFAULT_XLEN = 32;
+
 
 `endif // __ISA_CONSTANTS__

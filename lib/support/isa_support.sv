@@ -12,13 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// -------------------------------------------------------------------
+// This file holds the ISA disassembler, and its subfunctions
+// -------------------------------------------------------------------
 
 `ifndef __ISA_SUPPORT__
 `define __ISA_SUPPORT__
 
-  `include "isa_constants.sv"
   `include "isa_typedefs.sv"
-  //`include "isa_typedefs_csr.sv"
+
+  // ---------------------------------------------------------------------------
+  // Stack_adj for zcmp instructions
+  // ---------------------------------------------------------------------------
+  function int get_stack_adj( rlist_t rlist, logic[5:4] spimm);
+    int stack_adj_base;
+    int stack_adj;
+
+    case(rlist) inside
+      [4:7]:    stack_adj_base = 16;
+      [8:11]:   stack_adj_base = 32;
+      [12:14]:  stack_adj_base = 48;
+      15:       stack_adj_base = 64;
+      default:  stack_adj_base = 0;
+    endcase
+
+    stack_adj = stack_adj_base + spimm*16;
+    return stack_adj;
+  endfunction
+
 
   // ---------------------------------------------------------------------------
   // Non-trivial immediate decoder
@@ -181,23 +202,6 @@
     end
   endfunction : get_imm_value_cj
 
-  // ---------------------------------------------------------------------------
-  // HINT
-  // ---------------------------------------------------------------------------
-  typedef enum logic[7:0] {
-    ADDI_H,
-    FENCE_H,
-    C_NOP_H,
-    C_ADDI_H,
-    C_LI_H,
-    REG_IMM_I_H,
-    REG_IMM_U_H,
-    REG_REG_R_H,
-    REG_REG_CR_H,
-    CONST_GEN_CI_H,
-    // Others
-    UNKNOWN_HINT
-  } hint_name_e;
 
   // Get the correspopnding name of the hint instruction
   function hint_name_e get_hint_name(instr_name_e name);
@@ -260,7 +264,6 @@
 
     return hint;
   endfunction
-
 
 
   function logic[11:0] read_s_imm(logic[31:0] instr);

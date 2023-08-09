@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // -------------------------------------------------------------------
-// This file holds functions related to the ISA
+// This file holds functions related to the ISA decoder
 // -------------------------------------------------------------------
 
 `ifndef __ISA_UTILITY__
@@ -22,6 +22,22 @@
   `include "isa_support.sv"
   `include "isa_constants.sv"
 
+  // -------------------------------------------------------------------
+  // Functions
+  // -------------------------------------------------------------------
+/*
+  function automatic logic dummy_hint_rd(asm_t asm);
+  endfunction : dummy_hint_rd
+
+  function automatic logic dummy_hint_rs1(asm_t asm);
+  endfunction : dummy_hint_rs1
+
+  function automatic logic dummy_hint_rs2(asm_t asm);
+  endfunction : dummy_hint_rs2
+
+  function automatic logic dummy_hint_branch_imm(asm_t asm);
+  endfunction : dummy_hint_branch_imm
+*/
   function automatic logic is_csr_read_spec_f(asm_t asm);
     if (asm.instr inside { CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI }) begin
       case (asm.instr)
@@ -36,14 +52,13 @@
     end
   endfunction : is_csr_read_spec_f
 
-
   function logic is_csr_write_spec_f(asm_t asm);
     if (asm.instr inside { CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI }) begin
       case (asm.instr)
         CSRRW, CSRRWI : is_csr_write_spec_f = 1'b1;
         CSRRS, CSRRC  : is_csr_write_spec_f = asm.rs1.gpr  ? 1'b1 : 1'b0;
         CSRRSI, CSRRCI: is_csr_write_spec_f = asm.imm.imm_value  ? 1'b1 : 1'b0;
-      // Should never be here
+        // Should never be here
         default       : is_csr_write_spec_f = 1'b0;
       endcase
     end else begin
@@ -51,6 +66,7 @@
     end
   endfunction : is_csr_write_spec_f
 
+  // Short functions for recognising special functions
 
   function automatic logic[31:0] get_jvt_addr_f(
     logic [DEFAULT_XLEN-1:0] instr,

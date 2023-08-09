@@ -17,12 +17,12 @@
 `ifndef __SUPPORT_PKG_SV__
 `define __SUPPORT_PKG_SV__
 
-
+//TODO: krdosvik, change name to isa_disassembler when no outstanding PR
 package support_pkg;
   `include "isa_constants.sv"
   `include "isa_typedefs.sv"
   `include "isa_typedefs_csr.sv"
-  `include "isa_support.sv" //TODO: krdosvik, change name to isa_disassembler when no outstanding PR
+  `include "isa_support.sv"
   `include "isa_utility.sv"
 endpackage
 

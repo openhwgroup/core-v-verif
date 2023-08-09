@@ -153,9 +153,11 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
   logic        is_wb_csr_write;
   asm_t        wb_instr_decoded;
+  asm_t        id_instr_decoded;
 
   always_comb begin
     wb_instr_decoded    <= decode_instr(wb_instr);
+    id_instr_decoded    <= decode_instr(id_instr);
     is_wb_csr_write     <= wb_valid && is_csr_write_spec_f(wb_instr_decoded);
   end
 
@@ -245,20 +247,10 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     && id_dummy_or_hint
 
     |->
-    (id_opcode == OPCODE_OP
-    && id_funct3 == FUNCT3_ADD
-    && id_funct7 == FUNCT7_ADD)
-
-    || (id_opcode == OPCODE_OP
-    && id_funct3 == FUNCT3_AND
-    && id_funct7 == FUNCT7_AND)
-
-    || (id_opcode == OPCODE_OP
-    && id_funct3 == FUNCT3_MUL
-    && id_funct7 == FUNCT7_MUL)
-
-    || (id_opcode == OPCODE_BRANCH
-    && id_funct3 == FUNCT3_BLTU);
+    id_instr_decoded.instr == ADD
+    || id_instr_decoded.instr == AND
+    || id_instr_decoded.instr == MUL
+    || id_instr_decoded.instr == BLTU;
 
   endproperty
 
@@ -273,63 +265,49 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   ) else `uvm_error(info_tag, "The hint instruction is neither an ADD, MUL nor a BTLU instruction.\n");
 
 
-  property p_dummy_hint_instr_is_add_and_or_mul(id_dummy_or_hint, opcode, funct3, funct7);
+  property p_dummy_hint_instr_is_add_and_or_mul(id_dummy_or_hint, instr_name);
 
     id_valid
     && id_dummy_or_hint
 
-    && id_opcode == opcode
-    && id_funct3 == funct3
-    && id_funct7 == funct7;
+    && id_instr_decoded.instr == instr_name;
 
   endproperty
 
   c_xsecure_dummy_instr_is_add: cover property(
     p_dummy_hint_instr_is_add_and_or_mul(
       id_dummy,
-      OPCODE_OP,
-      FUNCT3_ADD,
-      FUNCT7_ADD)
+      ADD)
   );
 
   c_xsecure_hint_instr_is_add: cover property(
     p_dummy_hint_instr_is_add_and_or_mul(
       id_hint,
-      OPCODE_OP,
-      FUNCT3_ADD,
-      FUNCT7_ADD)
+      ADD)
   );
 
   c_xsecure_dummy_instr_is_and: cover property(
     p_dummy_hint_instr_is_add_and_or_mul(
       id_dummy,
-      OPCODE_OP,
-      FUNCT3_AND,
-      FUNCT7_AND)
+      AND)
   );
 
   c_xsecure_hint_instr_is_and: cover property(
     p_dummy_hint_instr_is_add_and_or_mul(
       id_hint,
-      OPCODE_OP,
-      FUNCT3_AND,
-      FUNCT7_AND)
+      AND)
   );
 
   c_xsecure_dummy_instr_is_mul: cover property(
     p_dummy_hint_instr_is_add_and_or_mul(
       id_dummy,
-      OPCODE_OP,
-      FUNCT3_MUL,
-      FUNCT7_MUL)
+      MUL)
   );
 
   c_xsecure_hint_instr_is_mul: cover property(
     p_dummy_hint_instr_is_add_and_or_mul(
       id_hint,
-      OPCODE_OP,
-      FUNCT3_MUL,
-      FUNCT7_MUL)
+      MUL)
   );
 
 
