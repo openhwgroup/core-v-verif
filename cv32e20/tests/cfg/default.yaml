@@ -1,9 +1,11 @@
 name: default
 description: Default configuration for CV32E20 simulations
 compile_flags: 
+# Alternate reference model configuration using parameter overrides and tool control
 ovpsim: >
-# Alternate reference model configuration using parameter overrides
-#    --override cpu/misa_Extensions=0x001104
-#    --override cpu/marchid=4
-#    --override cpu/noinhibit_mask=0xFFFFFFF0
+  --override cpu/mvendorid=0
+  --override cpu/mimpid=0
+  --override cpu/marchid=22
+  --showinstanceparams cpu
+  --trace --tracechange --traceshowicount --tracemode --monitornets
 cflags: >

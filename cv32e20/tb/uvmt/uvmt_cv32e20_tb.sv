@@ -161,6 +161,9 @@ module uvmt_cv32e20_tb;
                                                       .irq_i     (dut_wrap.irq),
                                                       .irq_ack_o (dut_wrap.irq_ack),
                                                       .irq_id_o  (dut_wrap.irq_id),
+    .fetch_enable_i          (),
+    .debug_req_i             (),
+    .core_sleep_o            (),
                                                       .*);
 
    // Debug assertion and coverage interface
