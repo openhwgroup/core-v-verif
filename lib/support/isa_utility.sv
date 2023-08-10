@@ -25,19 +25,7 @@
   // -------------------------------------------------------------------
   // Functions
   // -------------------------------------------------------------------
-/*
-  function automatic logic dummy_hint_rd(asm_t asm);
-  endfunction : dummy_hint_rd
 
-  function automatic logic dummy_hint_rs1(asm_t asm);
-  endfunction : dummy_hint_rs1
-
-  function automatic logic dummy_hint_rs2(asm_t asm);
-  endfunction : dummy_hint_rs2
-
-  function automatic logic dummy_hint_branch_imm(asm_t asm);
-  endfunction : dummy_hint_branch_imm
-*/
   function automatic logic is_csr_read_spec_f(asm_t asm);
     if (asm.instr inside { CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI }) begin
       case (asm.instr)
