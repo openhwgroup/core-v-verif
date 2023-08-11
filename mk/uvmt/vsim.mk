@@ -221,7 +221,12 @@ endif
 # Interactive simulation
 ifeq ($(call IS_YES,$(GUI)),YES)
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-VSIM_FLAGS += -visualizer=+designfile=$(SIM_TEST_RESULTS)/../design.bin
+ifneq ($(TEST_CFG_FILE),)
+test:         VSIM_FLAGS += -visualizer=+designfile=$(SIM_TEST_RESULTS)/../../design.bin
+else
+test:         VSIM_FLAGS += -visualizer=+designfile=$(SIM_TEST_RESULTS)/../design.bin
+endif
+gen_corev-dv: VSIM_FLAGS += -visualizer=+designfile=../design.bin
 else
 VSIM_FLAGS += -gui
 endif
