@@ -23,7 +23,7 @@
  * monitor,
  */
 interface uvma_rvfi_instr_if_t
-  import support_pkg::*;
+  import isa_decoder_pkg::*;
   import uvm_pkg::*;
   import uvma_rvfi_pkg::*;
 

@@ -26,7 +26,7 @@ package uvma_isacov_pkg;
   import uvma_core_cntrl_pkg::*;
   import uvma_rvfi_pkg::*;
 
-  import support_pkg::*;
+  import isa_decoder_pkg::*;
 
   // DPI imports
   `include "dpi_dasm_imports.svh"

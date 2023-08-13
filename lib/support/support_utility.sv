@@ -16,11 +16,12 @@
 // This file holds functions related to the ISA decoder
 // -------------------------------------------------------------------
 
-`ifndef __ISA_UTILITY__
-`define __ISA_UTILITY__
+`ifndef __SUPPORT_UTILITY__
+`define __SUPPORT_UTILITY__
 
-  `include "isa_support.sv"
-  `include "isa_constants.sv"
+
+  `include "support_constants.sv"
+  import isa_decoder_pkg::*;
 
   // -------------------------------------------------------------------
   // Functions
@@ -67,4 +68,4 @@
   endfunction : get_jvt_addr_f
 
 
-`endif // __ISA_UTILITY__
+`endif // __SUPPORT_UTILITY__

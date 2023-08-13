@@ -11,15 +11,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
-`ifndef __SUPPORT_PKG__
-`define __SUPPORT_PKG__
+// -------------------------------------------------------------------
+// This file holds constants related to the ISA decoder
+// -------------------------------------------------------------------
 
-package support_pkg;
-  `include "support_utility.sv"
-endpackage
+`ifndef __ISA_CONSTANTS__
+`define __ISA_CONSTANTS__
 
-`endif // __SUPPORT_PKG__
 
+  parameter CLIC_ID_WIDTH = 5;
+
+
+`endif // __ISA_CONSTANTS__

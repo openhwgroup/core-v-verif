@@ -19,6 +19,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
   import uvm_pkg::*;
   import cv32e40s_pkg::*;
   import uvmt_cv32e40s_base_test_pkg::*;
+  import isa_decoder_pkg::*;
   import support_pkg::*;
   #(
     parameter int       SECURE   = 1

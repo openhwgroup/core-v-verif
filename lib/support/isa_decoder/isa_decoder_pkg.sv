@@ -14,12 +14,14 @@
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
-`ifndef __SUPPORT_PKG__
-`define __SUPPORT_PKG__
+`ifndef __ISA_DECODER_PKG__
+`define __ISA_DECODER_PKG__
 
-package support_pkg;
-  `include "support_utility.sv"
+
+package isa_decoder_pkg;
+  `include "isa_decoder.sv"
 endpackage
 
-`endif // __SUPPORT_PKG__
+
+`endif // __ISA_DECODER_PKG__
 

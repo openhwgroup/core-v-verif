@@ -20,6 +20,7 @@
 `define __ISA_TYPEDEFS__
 
 `include "isa_typedefs_csr.sv"
+//import "isa_typedefs_csr.sv"
 
 
   // ---------------------------------------------------------------------------

@@ -120,6 +120,7 @@ export DV_UVML_TRN_PATH         = $(CORE_V_VERIF)/lib/uvm_libs/uvml_trn
 export DV_UVML_LOGS_PATH        = $(CORE_V_VERIF)/lib/uvm_libs/uvml_logs
 export DV_UVML_SB_PATH          = $(CORE_V_VERIF)/lib/uvm_libs/uvml_sb
 export DV_UVML_MEM_PATH         = $(CORE_V_VERIF)/lib/uvm_libs/uvml_mem
+export DV_ISA_DECODER_PATH      = $(CORE_V_VERIF)/lib/support/isa_decoder
 export DV_SUPPORT_PATH          = $(CORE_V_VERIF)/lib/support
 
 # ImperasDV

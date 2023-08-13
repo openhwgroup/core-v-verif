@@ -16,10 +16,12 @@
 // This file holds the ISA disassembler, and its subfunctions
 // -------------------------------------------------------------------
 
-`ifndef __ISA_SUPPORT__
-`define __ISA_SUPPORT__
+`ifndef __ISA_DECODER__
+`define __ISA_DECODER__
 
   `include "isa_typedefs.sv"
+  //import "isa_typedefs.sv"
+
 
   // ---------------------------------------------------------------------------
   // Stack_adj for zcmp instructions
@@ -1444,5 +1446,5 @@
 
 //endpackage
 
-`endif // __ISA_SUPPORT__
+`endif // __ISA_DECODER__
 

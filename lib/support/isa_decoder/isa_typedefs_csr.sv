@@ -20,9 +20,12 @@
 `define __ISA_TYPEDEFS_CSR__
 
   `include "isa_constants.sv"
+  //import "isa_constants.sv"
 // -------------------------------------------------------------------
   // CSR Addresses
   // -------------------------------------------------------------------
+
+
 
   // TODO: expand
   typedef enum logic [31:20] {
