@@ -43,8 +43,6 @@
  */
 
 module uvmt_cv32e40s_dut_wrap
-  import cv32e40s_pkg::*;
-  import uvm_pkg::*; // needed for the UVM messaging service (`uvm_info(), etc.)
 #(
     parameter INSTR_ADDR_WIDTH  =  32,
     parameter INSTR_RDATA_WIDTH =  32,
