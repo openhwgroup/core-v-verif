@@ -13,14 +13,11 @@
 // limitations under the License.
 
 // -------------------------------------------------------------------
-// This file holds the ISA disassembler, and its subfunctions
+// This file holds the ISA decoder, and its subfunctions
 // -------------------------------------------------------------------
 
 `ifndef __ISA_DECODER__
 `define __ISA_DECODER__
-
-  `include "isa_typedefs.sv"
-  //import "isa_typedefs.sv"
 
 
   // ---------------------------------------------------------------------------

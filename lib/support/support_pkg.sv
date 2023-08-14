@@ -17,7 +17,10 @@
 `ifndef __SUPPORT_PKG__
 `define __SUPPORT_PKG__
 
+
 package support_pkg;
+  import isa_decoder_pkg::*;
+  `include "support_constants.sv"
   `include "support_utility.sv"
 endpackage
 

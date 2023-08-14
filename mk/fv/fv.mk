@@ -25,7 +25,7 @@ default_target:
 
 export CV_CORE_PKG  ?= $(CORE_V_VERIF)/core-v-cores/$(CV_CORE)
 
-export DV_ISA_DECODER_PATH  ?= $(CORE_V_VERIF)/lib/support/isa_decoder
+export DV_ISA_DECODER_PATH  ?= $(CORE_V_VERIF)/lib/isa_decoder
 export DV_SUPPORT_PATH      ?= $(CORE_V_VERIF)/lib/support
 export DV_UVM_TESTCASE_PATH ?= $(CORE_V_VERIF)/$(CV_CORE)/tests/uvmt
 export DV_UVMA_PATH         ?= $(CORE_V_VERIF)/lib/uvm_agents

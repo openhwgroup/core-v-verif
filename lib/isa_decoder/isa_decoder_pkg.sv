@@ -19,9 +19,11 @@
 
 
 package isa_decoder_pkg;
+  `include "isa_constants.sv"
+  `include "isa_typedefs_csr.sv"
+  `include "isa_typedefs.sv"
   `include "isa_decoder.sv"
 endpackage
-
 
 `endif // __ISA_DECODER_PKG__
 

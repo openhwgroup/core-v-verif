@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // -------------------------------------------------------------------
-// This file holds constants related to the ISA decoder
+// This file holds constants for the support logic
 // -------------------------------------------------------------------
 
 `ifndef __SUPPORT_CONSTANTS__

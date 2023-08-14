@@ -13,15 +13,12 @@
 // limitations under the License.
 
 // -------------------------------------------------------------------
-// This file holds functions related to the ISA decoder
+// This file holds utilities (functions and signals) for the support logic
 // -------------------------------------------------------------------
 
 `ifndef __SUPPORT_UTILITY__
 `define __SUPPORT_UTILITY__
 
-
-  `include "support_constants.sv"
-  import isa_decoder_pkg::*;
 
   // -------------------------------------------------------------------
   // Functions
