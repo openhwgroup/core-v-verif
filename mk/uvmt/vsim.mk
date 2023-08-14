@@ -38,6 +38,7 @@ DPI_INCLUDE            ?= $(abspath $(shell which $(VLIB))/../../include)
 USES_DPI = 1
 
 # Default flags
+VSIM_LOCAL_MODELSIMINI  ?= YES
 VSIM_USER_FLAGS         ?=
 VOPT_COV  				?= +cover=setf+$(RTLSRC_VLOG_TB_TOP).
 VSIM_COV 				?= -coverage
@@ -195,6 +196,12 @@ VSIM_SIM_PREREQ = comp
 VSIM_COREVDV_SIM_PREREQ = comp_corev-dv
 endif
 
+# option to use local modelsim.ini file
+ifeq ($(call IS_NO,$(VSIM_LOCAL_MODELSIMINI)),YES)
+gen_corev-dv: VSIM_FLAGS += -modelsimini $(SIM_COREVDV_RESULTS)/modelsim.ini
+run: 					VSIM_FLAGS += -modelsimini modelsim.ini
+endif
+
 ################################################################################
 # Coverage database generation
 ifeq ($(call IS_YES,$(COV)),YES)
@@ -221,11 +228,7 @@ endif
 # Interactive simulation
 ifeq ($(call IS_YES,$(GUI)),YES)
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-ifneq ($(TEST_CFG_FILE),)
-test:         VSIM_FLAGS += -visualizer=+designfile=$(SIM_TEST_RESULTS)/../../design.bin
-else
-test:         VSIM_FLAGS += -visualizer=+designfile=$(SIM_TEST_RESULTS)/../design.bin
-endif
+test:         VSIM_FLAGS += -visualizer=+designfile=$(SIM_CFG_RESULTS)/design.bin
 gen_corev-dv: VSIM_FLAGS += -visualizer=+designfile=../design.bin
 else
 VSIM_FLAGS += -gui
@@ -271,8 +274,8 @@ endif
 
 ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
 POST_TEST = \
-	@if grep -q "Errors:\s\+0" $(RUN_DIR)/vsim-$(TEST_RUN_NAME).log; then \
-	if grep -q "SIMULATION FAILED" $(RUN_DIR)/vsim-$(TEST_RUN_NAME).log; then \
+	@if grep -q "Errors:\s\+0" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
+	if grep -q "SIMULATION FAILED" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
 		exit 1; \
 	else \
 		exit 0; \
@@ -404,7 +407,6 @@ gen_corev-dv: $(VSIM_COREVDV_SIM_PREREQ)
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(GEN_UVM_TEST) \
 			-l $(TEST)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log \
-			-modelsimini $(SIM_COREVDV_RESULTS)/modelsim.ini \
 			+start_idx=$(GEN_START_INDEX) \
 			+num_of_tests=$(GEN_NUM_TESTS) \
 			+asm_file_name_opts=$(TEST) \
@@ -650,14 +652,13 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 			$(VSIM_WAVES_FLAGS) \
 			$(VSIM_FLAGS) \
 			-l vsim-$(VSIM_TEST).log \
-			-modelsimini modelsim.ini \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(TEST_UVM_TEST) \
 			$(RTLSRC_VOPT_TB_TOP) \
 			$(CFG_PLUSARGS) \
 			$(TEST_PLUSARGS) \
 			$(TEST_CFG_FILE_PLUSARGS)
-	@echo "* Log: $(RUN_DIR)/vsim-$(TEST_RUN_NAME).log"
+	@echo "* Log: $(RUN_DIR)/vsim-$(VSIM_TEST).log"
 	$(POST_TEST)
 
 
