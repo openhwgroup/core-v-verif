@@ -127,26 +127,22 @@ merge_xdev_into_sdev () {
 check_cv32e40x_repo() {
 
   echo "=== Check if cv32e40x exist ==="
-  if [ ! -d "cv32e40x" ]
-  then
+  if [ ! -d "./cv32e40x/" ]; then
     echo "Directory cv32e40x does not exists."
     echo "Run: ./bin/clonetb -x"
     echo "before running: ./bin/merge_script --s_into_x-dv"
     exit 1
   fi
+  printf "OK\n\n"
 
-  echo "=== check if cv32e40x is the core-v-verif repo ==="
-  cd cv32e40x
-
-  if [ $(git config -l | grep remote.origin.url | grep core-v-verif) ]
-  then
-    echo "Directory cv32e40x is a core-v-verif repo and not a cv32e40x-dv repo."
+  echo "=== Check if cv32e40x is the core-v-verif repo ==="
+  if [ ! -d "./cv32e40x/.git/" ]; then
+    echo "Directory cv32e40x is a 'core-v-verif' repo and not a 'cv32e40x-dv' repo."
     echo "Run: ./bin/clonetb -x"
     echo "before running: ./bin/merge_script --s_into_x-dv"
     exit 1
   fi
-
-  cd ..
+  printf "OK\n\n"
 
 }
 
