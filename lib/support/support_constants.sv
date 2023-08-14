@@ -11,18 +11,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 
-`ifndef __SUPPORT_PKG__
-`define __SUPPORT_PKG__
+// -------------------------------------------------------------------
+// This file holds constants for the support logic
+// -------------------------------------------------------------------
+
+`ifndef __SUPPORT_CONSTANTS__
+`define __SUPPORT_CONSTANTS__
 
 
-package support_pkg;
-  import isa_decoder_pkg::*;
-  `include "support_constants.sv"
-  `include "support_utility.sv"
-endpackage
+  parameter DEFAULT_XLEN = 32;
 
-`endif // __SUPPORT_PKG__
 
+`endif // __SUPPORT_CONSTANTS__

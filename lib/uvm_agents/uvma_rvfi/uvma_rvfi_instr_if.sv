@@ -23,7 +23,7 @@
  * monitor,
  */
 interface uvma_rvfi_instr_if_t
-  import support_pkg::*;
+  import isa_decoder_pkg::*;
   import uvm_pkg::*;
   import uvma_rvfi_pkg::*;
 
@@ -87,6 +87,7 @@ interface uvma_rvfi_instr_if_t
   localparam INSTR_MASK_DIV_REM     = 32'h FE00_607F;
   localparam INSTR_MASK_FULL          = 32'h FFFF_FFFF;
   localparam INSTR_MASK_R_TYPE        = 32'h FE00_707F;
+  localparam INSTR_MASK_AMO_TYPE      = 32'h F800_707F;
   localparam INSTR_MASK_I_S_B_TYPE    = 32'h 0000_707F;
   localparam INSTR_MASK_U_J_TYPE      = 32'h 0000_007F;
   localparam INSTR_MASK_CSRADDR       = 32'h FFF0_0000;
@@ -167,6 +168,18 @@ interface uvma_rvfi_instr_if_t
   localparam INSTR_OPCODE_CMPOPRET   = 32'b 00000000_00000000_101_11110_0000_00_10;
   localparam INSTR_OPCODE_CMPOPRETZ  = 32'b 00000000_00000000_101_11100_0000_00_10;
 
+  localparam INSTR_OPCODE_LRW       = 32'b 00010_0_0_00000_00000_010_00000_0101111;
+  localparam INSTR_OPCODE_SCW       = 32'b 00011_0_0_00000_00000_010_00000_0101111;
+  localparam INSTR_OPCODE_AMOSWAPW  = 32'b 00001_0_0_00000_00000_010_00000_0101111;
+  localparam INSTR_OPCODE_AMOADDW   = 32'b 00000_0_0_00000_00000_010_00000_0101111;
+  localparam INSTR_OPCODE_AMOXORW   = 32'b 00100_0_0_00000_00000_010_00000_0101111;
+  localparam INSTR_OPCODE_AMOANDW   = 32'b 01100_0_0_00000_00000_010_00000_0101111;
+  localparam INSTR_OPCODE_AMOORW    = 32'b 01000_0_0_00000_00000_010_00000_0101111;
+  localparam INSTR_OPCODE_AMOMINW   = 32'b 10000_0_0_00000_00000_010_00000_0101111;
+  localparam INSTR_OPCODE_AMOMAXW   = 32'b 10100_0_0_00000_00000_010_00000_0101111;
+  localparam INSTR_OPCODE_AMOMINUW  = 32'b 11000_0_0_00000_00000_010_00000_0101111;
+  localparam INSTR_OPCODE_AMOMAXUW  = 32'b 11100_0_0_00000_00000_010_00000_0101111;
+
   //positions
   localparam int INSTR_CSRADDR_POS  = 20;
   localparam int INSTR_CSRUIMM_POS  = 15;
@@ -237,6 +250,8 @@ interface uvma_rvfi_instr_if_t
   logic                             is_nmi_triggered;
   logic                             is_load_instr;
   logic                             is_store_instr;
+  logic                             is_amo_instr;
+  logic                             is_atomic_instr;
   logic                             is_loadstore_instr;
   logic                             is_exception;
   logic                             is_load_acc_fault;
@@ -451,6 +466,25 @@ interface uvma_rvfi_instr_if_t
 
   always_comb begin
     is_store_instr = rvfi_valid && |rvfi_mem_wmask_intended;
+  end
+
+  always_comb begin
+    is_amo_instr = rvfi_valid && (
+      match_instr(INSTR_OPCODE_AMOSWAPW,  INSTR_MASK_AMO_TYPE)    ||
+      match_instr(INSTR_OPCODE_AMOADDW,   INSTR_MASK_AMO_TYPE)    ||
+      match_instr(INSTR_OPCODE_AMOXORW,   INSTR_MASK_AMO_TYPE)    ||
+      match_instr(INSTR_OPCODE_AMOANDW,   INSTR_MASK_AMO_TYPE)    ||
+      match_instr(INSTR_OPCODE_AMOORW,    INSTR_MASK_AMO_TYPE)    ||
+      match_instr(INSTR_OPCODE_AMOMINW,   INSTR_MASK_AMO_TYPE)    ||
+      match_instr(INSTR_OPCODE_AMOMAXW,   INSTR_MASK_AMO_TYPE)    ||
+      match_instr(INSTR_OPCODE_AMOMINUW,  INSTR_MASK_AMO_TYPE)    ||
+      match_instr(INSTR_OPCODE_AMOMAXUW,  INSTR_MASK_AMO_TYPE));
+  end
+
+  always_comb begin
+    is_atomic_instr = rvfi_valid && (is_amo_instr ||
+      match_instr(INSTR_OPCODE_SCW,  INSTR_MASK_AMO_TYPE) ||
+      match_instr(INSTR_OPCODE_LRW,  INSTR_MASK_AMO_TYPE));
   end
 
   always_comb begin
@@ -947,7 +981,17 @@ function automatic logic [4*NMEM-1:0] rvfi_mem_rmask_intended_f();
     match_instr(INSTR_OPCODE_CLWSP,     INSTR_MASK_CMPR)        ||
     match_instr(INSTR_OPCODE_CMPOP,     INSTR_MASK_ZC_PUSHPOP)  ||
     match_instr(INSTR_OPCODE_CMPOPRET,  INSTR_MASK_ZC_PUSHPOP)  ||
-    match_instr(INSTR_OPCODE_CMPOPRETZ, INSTR_MASK_ZC_PUSHPOP);
+    match_instr(INSTR_OPCODE_CMPOPRETZ, INSTR_MASK_ZC_PUSHPOP)  ||
+    match_instr(INSTR_OPCODE_LRW,       INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOSWAPW,  INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOADDW,   INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOXORW,   INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOANDW,   INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOORW,    INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOMINW,   INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOMAXW,   INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOMINUW,  INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOMAXUW,  INSTR_MASK_AMO_TYPE);
 
   rmask[0][2] = rmask[0][3];
 
@@ -1025,10 +1069,21 @@ function automatic logic [4*NMEM-1:0] rvfi_mem_wmask_intended_f();
   rlist = rvfi_insn[7:4];
 
   wmask[0][3] =
-    match_instr(INSTR_OPCODE_SW,      INSTR_MASK_I_S_B_TYPE) ||
-    match_instr(INSTR_OPCODE_CSW,     INSTR_MASK_CMPR)       ||
-    match_instr(INSTR_OPCODE_CSWSP,   INSTR_MASK_CMPR)       ||
-    match_instr(INSTR_OPCODE_PUSH,    INSTR_MASK_ZC_PUSHPOP);
+    match_instr(INSTR_OPCODE_SW,        INSTR_MASK_I_S_B_TYPE)  ||
+    match_instr(INSTR_OPCODE_CSW,       INSTR_MASK_CMPR)        ||
+    match_instr(INSTR_OPCODE_CSWSP,     INSTR_MASK_CMPR)        ||
+    match_instr(INSTR_OPCODE_PUSH,      INSTR_MASK_ZC_PUSHPOP)  ||
+    match_instr(INSTR_OPCODE_SCW,       INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOSWAPW,  INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOADDW,   INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOXORW,   INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOANDW,   INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOORW,    INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOMINW,   INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOMAXW,   INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOMINUW,  INSTR_MASK_AMO_TYPE)    ||
+    match_instr(INSTR_OPCODE_AMOMAXUW,  INSTR_MASK_AMO_TYPE);
+
 
   wmask[0][2] = wmask[0][3];
 
