@@ -2,21 +2,18 @@ name: pulp
 description: Sets all PULP-related parameters to 1
 compile_flags:
     +define+PULP
-
-# Imperas ISS Options (in ovpsim section)
-# COREV_PULP=1
-#--override root/cpu/misa_Extensions=0x801104
-# COREV_PULP=0
-# Set as below
-# Debug options (add to ovpsim section as needed)
-#--trace --tracechange --traceshowicount --monitornets --tracemode
-#--showoverrides
 ovpsim: >
-    --override cpu/misa_Extensions=0x801104
-    --override cpu/marchid=4
-    --override cpu/noinhibit_mask=0xFFFFFFF0
+    --override cpu/misa_Extensions=0x001104
     --override cpu/compress_version=1.0.0-RC5.7
-    --override cpu/Zcf=T
+    --override cpu/noinhibit_mask=0xFFFFFFF0
+    --override cpu/marchid=4
+    --override cpu/extension_CVE4P/CORE_VERSION=2
+    --override cpu/extension_CVE4P/COREV_PULP=T
+    --override cpu/extension_CVE4P/COREV_CLUSTER=F
+    --override cpu/add_Extensions=X
+    -showinstanceparams cpu
+# Debug options (add to ovpsim section as needed)
+#    --trace --tracechange --traceshowicount --tracemode --monitornets
 cv_sw_march: rv32imc_zicsr_zifencei_xcvhwlp1p0_xcvmem1p0_xcvmac1p0_xcvbi1p0_xcvalu1p0_xcvsimd1p0_xcvbitmanip1p0
 cflags: >
     -DPULP
