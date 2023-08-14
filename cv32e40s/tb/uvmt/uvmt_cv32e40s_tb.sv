@@ -97,24 +97,6 @@ module uvmt_cv32e40s_tb;
    * a few mods to bring unused ports from the CORE to this level using SV interfaces.
    */
    uvmt_cv32e40s_dut_wrap  #(
-                             .B_EXT                (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_B_EXT),
-                             .DBG_NUM_TRIGGERS     (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS),
-                             .DM_REGION_END        (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_END),
-                             .DM_REGION_START      (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_START),
-                             .LFSR0_CFG            (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_LFSR0_CFG),
-                             .LFSR1_CFG            (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_LFSR1_CFG),
-                             .LFSR2_CFG            (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_LFSR2_CFG),
-                             .M_EXT                (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_M_EXT),
-                             .PMA_CFG              (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_CFG),
-                             .PMA_NUM_REGIONS      (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
-                             .PMP_GRANULARITY      (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY),
-                             .PMP_MSECCFG_RV       (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_MSECCFG_RV),
-                             .PMP_NUM_REGIONS      (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS),
-                             .PMP_PMPADDR_RV       (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_PMPADDR_RV),
-                             .PMP_PMPNCFG_RV       (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_PMPNCFG_RV),
-                             .RV32                 (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_RV32),
-                             .CLIC                 (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC),
-                             .CLIC_ID_WIDTH        (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC_ID_WIDTH),
                              .INSTR_ADDR_WIDTH     (ENV_PARAM_INSTR_ADDR_WIDTH),
                              .INSTR_RDATA_WIDTH    (ENV_PARAM_INSTR_DATA_WIDTH),
                              .RAM_ADDR_WIDTH       (ENV_PARAM_RAM_ADDR_WIDTH)

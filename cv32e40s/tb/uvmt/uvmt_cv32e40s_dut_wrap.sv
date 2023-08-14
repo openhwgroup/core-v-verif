@@ -42,30 +42,9 @@
 module uvmt_cv32e40s_dut_wrap
   import cv32e40s_pkg::*;
 #(
-    // DUT (riscv_core) parameters.
-    parameter logic [31:0]           DM_REGION_START                     = 32'hF0000000,
-    parameter logic [31:0]           DM_REGION_END                       = 32'hF0003FFF,
-    parameter lfsr_cfg_t             LFSR0_CFG                           = LFSR_CFG_DEFAULT,
-    parameter lfsr_cfg_t             LFSR1_CFG                           = LFSR_CFG_DEFAULT,
-    parameter lfsr_cfg_t             LFSR2_CFG                           = LFSR_CFG_DEFAULT,
-    parameter m_ext_e                M_EXT                               = M,
-    parameter mseccfg_t              PMP_MSECCFG_RV                      = MSECCFG_DEFAULT,
-    parameter cv32e40s_pkg::b_ext_e  B_EXT                               = cv32e40s_pkg::B_NONE,
-    parameter int                    PMA_NUM_REGIONS                     =  0,
-    parameter pma_cfg_t              PMA_CFG[PMA_NUM_REGIONS-1 : 0]      = '{default:PMA_R_DEFAULT},
-    parameter int                    PMP_NUM_REGIONS                     = 0,
-    parameter pmpncfg_t              PMP_PMPNCFG_RV[PMP_NUM_REGIONS-1:0] = '{default:PMPNCFG_DEFAULT},
-    parameter logic [31:0]           PMP_PMPADDR_RV[PMP_NUM_REGIONS-1:0] = '{default:32'h0},
-    parameter int                    PMP_GRANULARITY                     = 0,
-    parameter logic                  CLIC                                = 0,
-    parameter int                    CLIC_ID_WIDTH                       = 5,
-    parameter int                    DBG_NUM_TRIGGERS                    = 1,
-    parameter rv32_e                 RV32                                = RV32I,
-
-    // Remaining parameters are used by TB components only
-    parameter INSTR_ADDR_WIDTH    =  32,
-    parameter INSTR_RDATA_WIDTH   =  32,
-    parameter RAM_ADDR_WIDTH      =  20
+    parameter INSTR_ADDR_WIDTH  =  32,
+    parameter INSTR_RDATA_WIDTH =  32,
+    parameter RAM_ADDR_WIDTH    =  20
   )
   (
     uvma_clknrst_if_t               clknrst_if,
@@ -146,7 +125,7 @@ module uvmt_cv32e40s_dut_wrap
 
     // --------------------------------------------
     // Connect to core_cntrl_if
-    assign core_cntrl_if.b_ext = B_EXT;
+    assign core_cntrl_if.b_ext = uvmt_cv32e40s_base_test_pkg::CORE_PARAM_B_EXT;
     `ifndef FORMAL
     initial begin
       core_cntrl_if.pma_cfg = new[PMA_NUM_REGIONS];
@@ -166,27 +145,25 @@ module uvmt_cv32e40s_dut_wrap
     // --------------------------------------------
     // instantiate the core
     cv32e40s_wrapper #(
-                      .B_EXT                (B_EXT),
-                      .DBG_NUM_TRIGGERS     (DBG_NUM_TRIGGERS),
-                      .DM_REGION_END        (DM_REGION_END),
-                      .DM_REGION_START      (DM_REGION_START),
-                      .LFSR0_CFG            (LFSR0_CFG),
-                      .LFSR1_CFG            (LFSR1_CFG),
-                      .LFSR2_CFG            (LFSR2_CFG),
-                      .M_EXT                (M_EXT),
-                      .PMA_CFG              (PMA_CFG),
-                      .PMA_NUM_REGIONS      (PMA_NUM_REGIONS),
-                      .PMP_GRANULARITY      (PMP_GRANULARITY),
-                      .PMP_MSECCFG_RV       (PMP_MSECCFG_RV),
-                      .PMP_NUM_REGIONS      (PMP_NUM_REGIONS),
-                      .PMP_PMPADDR_RV       (PMP_PMPADDR_RV),
-                      .PMP_PMPNCFG_RV       (PMP_PMPNCFG_RV),
-                      .RV32                 (RV32),
-                      .CLIC                 (CLIC),
-                      .CLIC_ID_WIDTH        (CLIC_ID_WIDTH)
-                      )
-    cv32e40s_wrapper_i
-        (
+      .B_EXT            (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_B_EXT),
+      .CLIC             (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC),
+      .CLIC_ID_WIDTH    (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC_ID_WIDTH),
+      .DBG_NUM_TRIGGERS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DBG_NUM_TRIGGERS),
+      .DM_REGION_END    (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_END),
+      .DM_REGION_START  (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_DM_REGION_START),
+      .LFSR0_CFG        (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_LFSR0_CFG),
+      .LFSR1_CFG        (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_LFSR1_CFG),
+      .LFSR2_CFG        (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_LFSR2_CFG),
+      .M_EXT            (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_M_EXT),
+      .PMA_CFG          (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_CFG),
+      .PMA_NUM_REGIONS  (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+      .PMP_GRANULARITY  (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_GRANULARITY),
+      .PMP_MSECCFG_RV   (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_MSECCFG_RV),
+      .PMP_NUM_REGIONS  (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS),
+      .PMP_PMPADDR_RV   (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_PMPADDR_RV),
+      .PMP_PMPNCFG_RV   (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_PMPNCFG_RV),
+      .RV32             (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_RV32)
+    ) cv32e40s_wrapper_i (
          .clk_i                  ( clknrst_if.clk                 ),
          .rst_ni                 ( clknrst_if.reset_n             ),
 
