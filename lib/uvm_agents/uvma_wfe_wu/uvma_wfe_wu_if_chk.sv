@@ -1,4 +1,5 @@
-// Copyright 2023 Silicon Labs, Inc.
+//
+// Copyright 2023 Silicon Labs Inc.
 //
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,17 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
-
-`ifndef __SUPPORT_PKG__
-`define __SUPPORT_PKG__
 
 
-package support_pkg;
-  import isa_decoder_pkg::*;
-  `include "support_constants.sv"
-  `include "support_utility.sv"
-endpackage
+`ifndef __UVMA_WFE_WU_IF_CHK_SV__
+`define __UVMA_WFE_WU_IF_CHK_SV__
 
-`endif // __SUPPORT_PKG__
 
+/**
+ * Encapsulates assertions targeting uvma_wfe_wu_if.
+ */
+module uvma_wfe_wu_if_chk(
+   uvma_wfe_wu_if_t  wfe_wu_if
+);
+
+endmodule : uvma_wfe_wu_if_chk
+
+
+`endif // __UVMA_WFE_WU_IF_CHK_SV__

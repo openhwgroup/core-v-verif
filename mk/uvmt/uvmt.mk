@@ -115,11 +115,13 @@ export DV_UVMA_DEBUG_PATH       = $(CORE_V_VERIF)/lib/uvm_agents/uvma_debug
 export DV_UVMA_PMA_PATH         = $(CORE_V_VERIF)/lib/uvm_agents/uvma_pma
 export DV_UVMA_OBI_MEMORY_PATH  = $(CORE_V_VERIF)/lib/uvm_agents/uvma_obi_memory
 export DV_UVMA_FENCEI_PATH      = $(CORE_V_VERIF)/lib/uvm_agents/uvma_fencei
+export DV_UVMA_WFE_WU_PATH      = $(CORE_V_VERIF)/lib/uvm_agents/uvma_wfe_wu
 export DV_UVML_TRN_PATH         = $(CORE_V_VERIF)/lib/uvm_libs/uvml_trn
 export DV_UVML_LOGS_PATH        = $(CORE_V_VERIF)/lib/uvm_libs/uvml_logs
 export DV_UVML_SB_PATH          = $(CORE_V_VERIF)/lib/uvm_libs/uvml_sb
 export DV_UVML_MEM_PATH         = $(CORE_V_VERIF)/lib/uvm_libs/uvml_mem
 export DV_SUPPORT_PATH          = $(CORE_V_VERIF)/lib/support
+export DV_ISA_DECODER_PATH      = $(CORE_V_VERIF)/lib/isa_decoder
 
 # ImperasDV
 export IMPERAS_DV_HOME          = $(CORE_V_VERIF)/vendor_lib/ImperasDV
