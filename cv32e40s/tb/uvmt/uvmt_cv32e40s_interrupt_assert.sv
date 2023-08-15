@@ -163,7 +163,7 @@ module uvmt_cv32e40s_interrupt_assert
 
   // irq_id_o is never a reserved irq
   property p_irq_id_o_not_reserved;
-    irq_ack_o |-> VALID_IRQ_MASK[irq_id_o];
+    irq_ack_o |-> VALID_IRQ_MASK[irq_id_o[4:0]];
   endproperty
   a_irq_id_o_not_reserved: assert property(p_irq_id_o_not_reserved)
     else
@@ -172,7 +172,7 @@ module uvmt_cv32e40s_interrupt_assert
 
   // irq_id_o is never a disabled irq
   property p_irq_id_o_mie_enabled;
-    irq_ack_o |-> mie_q[irq_id_o];
+    irq_ack_o |-> mie_q[irq_id_o[4:0]];
   endproperty
   a_irq_id_o_mie_enabled: assert property(p_irq_id_o_mie_enabled)
     else

@@ -198,7 +198,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     obi_instr_resp_packet.rdata);
 
   assign rchk_data_calculated = f_rchk(
-    obi_data_resp_packet.err,
+    obi_data_resp_packet.err[0],
     ASSUMED_VALUE_EXOKAY,
     obi_data_resp_packet.rdata);
 
