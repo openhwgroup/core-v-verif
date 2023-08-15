@@ -191,6 +191,7 @@ VSIM_FLAGS += -sv_lib $(basename $(abspath $(SVLIB_LIB)))
 # Skip compile if requested (COMP=NO)
 ifneq ($(call IS_NO,$(COMP)),NO)
 VSIM_SIM_PREREQ = comp
+VSIM_COREVDV_SIM_PREREQ = comp_corev-dv
 endif
 
 ################################################################################
@@ -219,7 +220,7 @@ endif
 # Interactive simulation
 ifeq ($(call IS_YES,$(GUI)),YES)
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-VSIM_FLAGS += -visualizer=+designfile=../design.bin
+VSIM_FLAGS += -visualizer=+designfile=$(SIM_TEST_RESULTS)/../design.bin
 else
 VSIM_FLAGS += -gui
 endif
@@ -378,13 +379,16 @@ vopt_corev-dv:
 			-o $(CV_CORE_LC)_instr_gen_tb_top_vopt \
 			-l vopt.log
 
-gen_corev-dv: comp_corev-dv
+gen_corev-dv: $(VSIM_COREVDV_SIM_PREREQ)
 	mkdir -p $(SIM_COREVDV_RESULTS)/$(TEST)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		mkdir -p $(SIM_TEST_RESULTS)/$$idx/test_program; \
 	done
+	if [ -f "$(SIM_COREVDV_RESULTS)/$(TEST)/modelsim.ini" ]; then \
+		rm -rf $(SIM_COREVDV_RESULTS)/$(TEST)/modelsim.ini; \
+	fi
 	cd $(SIM_COREVDV_RESULTS)/$(TEST) && \
-		$(VMAP) work $(SIM_COREVDV_RESULTS)/work
+		$(VMAP) work $(SIM_COREVDV_RESULTS)/work; \
 	cd  $(SIM_COREVDV_RESULTS)/$(TEST) && \
 		$(VSIM) \
 			$(VSIM_FLAGS) \
@@ -392,6 +396,7 @@ gen_corev-dv: comp_corev-dv
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(GEN_UVM_TEST) \
 			-l $(TEST)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log \
+			-modelsimini modelsim.ini \
 			+start_idx=$(GEN_START_INDEX) \
 			+num_of_tests=$(GEN_NUM_TESTS) \
 			+asm_file_name_opts=$(TEST) \
@@ -403,7 +408,7 @@ gen_corev-dv: comp_corev-dv
 	# Copy out final assembler files to test directory
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		cp -f ${BSP}/link_corev-dv.ld ${SIM_TEST_RESULTS}/$$idx/test_program/link.ld; \
-		cp ${SIM_COREVDV_RESULTS}/${TEST}/${TEST}_$$idx.S ${SIM_TEST_RESULTS}/$$idx/test_program; \
+		cp -f ${SIM_COREVDV_RESULTS}/${TEST}/${TEST}_$$idx.S ${SIM_TEST_RESULTS}/$$idx/test_program; \
 	done
 
 $(SIM_COREVDV_RESULTS)/vlog.log: vlog_corev-dv
@@ -637,6 +642,7 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 			$(VSIM_WAVES_FLAGS) \
 			$(VSIM_FLAGS) \
 			-l vsim-$(VSIM_TEST).log \
+			-modelsimini modelsim.ini \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(TEST_UVM_TEST) \
 			$(RTLSRC_VOPT_TB_TOP) \

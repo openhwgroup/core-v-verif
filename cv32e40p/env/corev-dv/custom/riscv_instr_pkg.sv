@@ -19,7 +19,6 @@
 package riscv_instr_pkg;
 
   `include "dv_defines.svh"
-  `include "riscv_defines.svh"
   `include "uvm_macros.svh"
 
   import uvm_pkg::*;
@@ -1393,6 +1392,7 @@ package riscv_instr_pkg;
               UVM_FULL)
   endfunction : get_val
 
+  `include "riscv_defines.svh"
   `include "riscv_vector_cfg.sv"
   `include "riscv_pmp_cfg.sv"
   typedef class riscv_instr;

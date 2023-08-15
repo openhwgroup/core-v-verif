@@ -89,9 +89,14 @@ popd > /dev/null
 {% endif %}
 {% for run_index in range(t.num|int) %}
 {% set test_cmd = t.cmd %}
-{% set test_log = t.log %}
+{% set test_log = t.testname %}
+{% if t.test_cfg is defined %}
+  {% set test_cfg = t.test_cfg %}
+{% else %}
+  {% set test_cfg = "" %}
+{% endif %}
 # --> Test (Index: {{run_index}}): {{t.cmd}} : {{t.description}}
-{% set cmd = test_cmd + ' CV_CORE=' + project + ' CFG=' + r.builds[build].cfg + ' ' + toolchain|upper + '=1' + ' RISCVDV_CFG=' + t.riscvdv_cfg + ' SIMULATOR=' + t.simulator + ' COMP=0 USE_ISS=' + regress_macros.yesorno(t.iss) + ' COV=' + regress_macros.yesorno(t.cov) + ' SEED=random GEN_START_INDEX=' + run_index|string + ' RUN_INDEX=' + run_index|string + ' ' + regress_macros.cv_results(results) + ' ' + makeargs %}
+{% set cmd = test_cmd + ' CV_CORE=' + project + ' CFG=' + r.builds[build].cfg + ' ' + toolchain|upper + '=1' + ' RISCVDV_CFG=' + t.riscvdv_cfg + ' SIMULATOR=' + t.simulator + ' COMP=0 USE_ISS=' + regress_macros.yesorno(t.iss) + ' COV=' + regress_macros.yesorno(t.cov) + ' SEED=random GEN_START_INDEX=' + run_index|string + ' RUN_INDEX=' + run_index|string + ' TEST_CFG_FILE=' + test_cfg + ' ' + regress_macros.cv_results(results) + ' ' + makeargs %}
 echo "{{session}}: Running test [cd {{t.abs_dir}} && {{cmd}}]"
 pushd {{t.abs_dir}} > /dev/null
 {{cmd}} >& /dev/null;
@@ -103,12 +108,19 @@ popd > /dev/null
 {% else %}
 {% set results_dir = t.simulator + '_results' %}
 {% endif %}
+{% if t.test_cfg is defined %}
+  {% set sim_log = t.simulator + '-' + test_log + '_' + t.test_cfg + '.log' %}
+  {% set test_cfg_path = t.test_cfg %}
+{% else %}
+  {% set sim_log = t.simulator + '-' + test_log + '.log' %}
+  {% set test_cfg_path = '' %}
+{% endif %}
 
 {# Determine log location #}
 {% if t.results %}
-log={{t.abs_dir}}/{{results_dir}}/{{r.builds[build].cfg}}/{{t.results}}/{{run_index}}/{{t.simulator}}-{{test_log}}.log
+  log={{t.abs_dir}}/{{results_dir}}/{{r.builds[build].cfg}}/{{t.results}}/{{test_cfg_path}}/{{run_index}}/{{sim_log}}
 {% else %}
-log={{t.abs_dir}}/{{results_dir}}/{{r.builds[build].cfg}}/{{test_log}}/{{run_index}}/{{t.simulator}}-{{test_log}}.log
+  log={{t.abs_dir}}/{{results_dir}}/{{r.builds[build].cfg}}/{{test_log}}/{{test_cfg_path}}/{{run_index}}/{{sim_log}}
 {% endif %}
 
 {# Compliance signature check #}

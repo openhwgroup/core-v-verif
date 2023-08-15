@@ -9,61 +9,63 @@ description: Random pulp tests for CV32E40P
 
 # List of builds
 builds:
-  corev-dv:
-    # required: Make the corev-dv infrastructure    
-    cmd: make comp_corev-dv
+  clean_fw:
+    cmd: make clean-bsp clean_test_programs
+    dir: cv32e40p/sim/uvmt
+
+  clean_corev-dv:
+    cmd: make clean_riscv-dv clone_riscv-dv
     dir: cv32e40p/sim/uvmt
     cov: 0
 
-  uvmt_cv32e40p:
-    # required: the make command to create the build
-    cmd: make comp
-    dir: cv32e40p/sim/uvmt
-
   uvmt_cv32e40p_pulp:
-    cmd: make comp
+    cmd: make comp comp_corev-dv
     cfg: pulp
     dir: cv32e40p/sim/uvmt
+    iss: 1
+    cov: 1
 
   uvmt_cv32e40p_pulp_fpu:
-    cmd: make comp
+    cmd: make comp comp_corev-dv
     cfg: pulp_fpu
     dir: cv32e40p/sim/uvmt
+    iss: 1
+    cov: 1
 
   uvmt_cv32e40p_pulp_fpu_1cyclat:
-    cmd: make comp
+    cmd: make comp comp_corev-dv
     cfg: pulp_fpu_1cyclat
     dir: cv32e40p/sim/uvmt
+    iss: 1
+    cov: 1
 
   uvmt_cv32e40p_pulp_fpu_2cyclat:
-    cmd: make comp
+    cmd: make comp comp_corev-dv
     cfg: pulp_fpu_2cyclat
     dir: cv32e40p/sim/uvmt
-
-  uvmt_cv32e40p_pulp_fpu_3cyclat:
-    cmd: make comp
-    cfg: pulp_fpu_3cyclat
-    dir: cv32e40p/sim/uvmt
+    iss: 1
+    cov: 1
 
   uvmt_cv32e40p_pulp_fpu_zfinx:
-    cmd: make comp
+    cmd: make comp comp_corev-dv
     cfg: pulp_fpu_zfinx
     dir: cv32e40p/sim/uvmt
+    iss: 1
+    cov: 1
 
   uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat:
-    cmd: make comp
+    cmd: make comp comp_corev-dv
     cfg: pulp_fpu_zfinx_1cyclat
     dir: cv32e40p/sim/uvmt
+    iss: 1
+    cov: 1
 
   uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat:
-    cmd: make comp
+    cmd: make comp comp_corev-dv
     cfg: pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
-
-  uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat:
-    cmd: make comp
-    cfg: pulp_fpu_zfinx_3cyclat
-    dir: cv32e40p/sim/uvmt
+    iss: 1
+    cov: 1
 
 # List of tests
 tests:
@@ -74,15 +76,14 @@ tests:
       - uvmt_cv32e40p_pulp_fpu
       - uvmt_cv32e40p_pulp_fpu_1cyclat
       - uvmt_cv32e40p_pulp_fpu_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_3cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_pulp_instr_test
     num: 10
     iss: 1
+    cov: 1
 
   corev_rand_pulp_hwloop_test:
     description: hwloop random test
@@ -91,15 +92,14 @@ tests:
       - uvmt_cv32e40p_pulp_fpu
       - uvmt_cv32e40p_pulp_fpu_1cyclat
       - uvmt_cv32e40p_pulp_fpu_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_3cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_test
     num: 10
     iss: 1
+    cov: 1
 
   corev_rand_pulp_mac_instr_test:
     description: pulp mac instr random test
@@ -108,15 +108,14 @@ tests:
       - uvmt_cv32e40p_pulp_fpu
       - uvmt_cv32e40p_pulp_fpu_1cyclat
       - uvmt_cv32e40p_pulp_fpu_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_3cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_pulp_mac_instr_test
     num: 5
     iss: 1
+    cov: 1
 
   corev_rand_pulp_simd_instr_test:
     description: pulp simd instr random test
@@ -125,15 +124,14 @@ tests:
       - uvmt_cv32e40p_pulp_fpu
       - uvmt_cv32e40p_pulp_fpu_1cyclat
       - uvmt_cv32e40p_pulp_fpu_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_3cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_pulp_simd_instr_test
     num: 5
     iss: 1
+    cov: 1
 
   corev_rand_pulp_hwloop_debug:
     description: hwloop debug random test
@@ -142,12 +140,11 @@ tests:
       - uvmt_cv32e40p_pulp_fpu
       - uvmt_cv32e40p_pulp_fpu_1cyclat
       - uvmt_cv32e40p_pulp_fpu_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_3cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_fpu_zfinx_3cyclat
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug
     num: 5
     iss: 1
+    cov: 1

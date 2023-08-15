@@ -27,6 +27,18 @@ builds:
     dir: cv32e40p/sim/riscof
     iss: 0
 
+  riscof_cv32e40p_pulp_fpu_1cyclat:
+    cmd: make comp_dut_rtl_riscof_sim USE_ISS=no
+    cfg: pulp_fpu_1cyclat
+    dir: cv32e40p/sim/riscof
+    iss: 0
+
+  riscof_cv32e40p_pulp_fpu_2cyclat:
+    cmd: make comp_dut_rtl_riscof_sim USE_ISS=no
+    cfg: pulp_fpu_2cyclat
+    dir: cv32e40p/sim/riscof
+    iss: 0
+
 # List of tests
 tests:
   hello-world:
@@ -34,7 +46,25 @@ tests:
     builds:
       - riscof_cv32e40p_pulp_fpu
     dir: cv32e40p/sim/riscof
-    cmd: make riscof_run_all RISCOF_SIM=YES RISCOF_CONFIG_FILE=config_cv32e40p_v2.ini
+    cmd: make riscof_run_all RISCOF_SIM=YES RISCOF_CONFIG_FILE=config_cv32e40p_v2_ForIssDebugOnly.ini
+    num: 1
+    iss: 0
+
+  csr_instructions:
+    description: riscv-arch-test suite with riscof for cv32e40p v2 with fpu 1 cyclat, test name is dummy here for regression script
+    builds:
+      - riscof_cv32e40p_pulp_fpu_1cyclat
+    dir: cv32e40p/sim/riscof
+    cmd: make riscof_run_all RISCOF_SIM=YES RISCOF_CONFIG_FILE=config_cv32e40p_v2_pulp_fpu_1cyclat.ini
+    num: 1
+    iss: 0
+
+  cv32e40p_csr_access_test:
+    description: riscv-arch-test suite with riscof for cv32e40p v2 with fpu 2 cyclat, test name is dummy here for regression script
+    builds:
+      - riscof_cv32e40p_pulp_fpu_2cyclat
+    dir: cv32e40p/sim/riscof
+    cmd: make riscof_run_all RISCOF_SIM=YES RISCOF_CONFIG_FILE=config_cv32e40p_v2_pulp_fpu_2cyclat.ini
     num: 1
     iss: 0
 
@@ -43,6 +73,6 @@ tests:
     builds:
       - riscof_cv32e40p_pulp
     dir: cv32e40p/sim/riscof
-    cmd: make riscof_run_all RISCOF_SIM=YES RISCOF_CONFIG_FILE=config.ini
+    cmd: make riscof_run_all RISCOF_SIM=YES RISCOF_CONFIG_FILE=config_ForIssDebugOnly.ini
     num: 1
     iss: 0
