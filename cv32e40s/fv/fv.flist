@@ -32,8 +32,8 @@ ${FV_DEFINES}
 ${FV_INCDIRS}
 
 -f  ${CV_CORE_PKG}/cv32e40s_manifest.flist
--f  ${DV_SUPPORT_PATH}/support_pkg.flist
 -f  ${DV_ISA_DECODER_PATH}/isa_decoder_pkg.flist
+-f  ${DV_SUPPORT_PATH}/support_pkg.flist
 ${DV_UVM_TESTCASE_PATH}/base-tests/uvmt_cv32e40s_base_test_pkg.sv
 ${DV_UVMA_PATH}/uvma_obi_memory/src/uvma_obi_memory_assert.sv
 ${DV_UVMA_PATH}/uvma_obi_memory/src/uvma_obi_memory_1p2_assert.sv
@@ -43,14 +43,15 @@ ${DV_UVMA_PATH}/uvma_obi_memory/src/uvma_obi_memory_1p2_assert.sv
 #TODO: change the file names too?
 
 ${DV_UVMA_PATH}/uvma_clic/uvma_clic_if.sv
+${DV_UVMA_PATH}/uvma_debug/uvma_debug_if.sv
 ${DV_UVMA_PATH}/uvma_fencei/uvma_fencei_if.sv
-${DV_UVMA_PATH}/uvma_rvfi/uvma_rvfi_instr_if.sv
-${DV_UVMA_PATH}/uvma_rvfi/uvma_rvfi_csr_if.sv
+${DV_UVMA_PATH}/uvma_interrupt/uvma_interrupt_if.sv
 ${DV_UVMA_PATH}/uvma_obi_memory/src/uvma_obi_memory_assert_if_wrp.sv
 ${DV_UVMA_PATH}/uvma_obi_memory/src/uvma_obi_memory_if.sv
-${DV_UVMA_PATH}/uvma_debug/uvma_debug_if.sv
-${DV_UVMA_PATH}/uvma_interrupt/uvma_interrupt_if.sv
-${DV_UVMT_PATH}/uvmt_cv32e40s_tb_ifs.sv
+${DV_UVMA_PATH}/uvma_rvfi/uvma_rvfi_csr_if.sv
+${DV_UVMA_PATH}/uvma_rvfi/uvma_rvfi_instr_if.sv
+${DV_UVMA_PATH}/uvma_wfe_wu/uvma_wfe_wu_if.sv
 ${DV_UVME_PATH}/uvme_cv32e40s_core_cntrl_if.sv
+${DV_UVMT_PATH}/uvmt_cv32e40s_tb_ifs.sv
 
 -f  ${DV_UVMT_PATH}/uvmt_cv32e40s_tb_files.flist
