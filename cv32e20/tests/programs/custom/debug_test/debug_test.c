@@ -431,7 +431,7 @@ int main(int argc, char *argv[])
     asm volatile(".4byte 0x00100073"); //ebreak
     check_debug_status(10, glb_hart_status);
 
-    printf("\n\nTEST DELIBERATELY ENDED PREMATURELY (several tests still outstnading...)\n\n");
+    printf("\n\nTEST DELIBERATELY ENDED PREMATURELY (several tests still outstanding...)\n\n");
     TEST_PASSED;
 
     // glb_hart_status == 11 selects the "_debugger_csr_exception" test in debugger.S

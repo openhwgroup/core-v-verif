@@ -58,7 +58,7 @@ SECTIONS
   } >ram
 
 /* CORE-V: interrupt vectors */
-  .vectors : ALIGN(128)
+  .vectors : ALIGN(256)
   {
     PROVIDE(__vector_start = .);
     KEEP(*(.vectors));

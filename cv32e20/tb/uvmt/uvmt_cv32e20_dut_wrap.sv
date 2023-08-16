@@ -165,7 +165,7 @@ module uvmt_cv32e20_dut_wrap #(
          .irq_nm_i               ( irq_uvma[31]),       // non-maskeable interrupt
 
   // Debug Interface
-         .debug_req_i             ('0),
+         .debug_req_i             (debug_req_uvma),
          .crash_dump_o            (),
 
   // RISC-V Formal Interface
