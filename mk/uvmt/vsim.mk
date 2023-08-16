@@ -22,26 +22,27 @@
 ###############################################################################
 
 # Executables
-VLIB   					= vlib
-VMAP 					= vmap
-VLOG 					= $(CV_SIM_PREFIX) vlog
-VOPT 					= $(CV_SIM_PREFIX) vopt
-VSIM 					= $(CV_SIM_PREFIX) vsim
-VISUALIZER				= $(CV_TOOL_PREFIX) visualizer
+VLIB   									= vlib
+VMAP 										= vmap
+VLOG 										= $(CV_SIM_PREFIX) vlog
+VOPT 										= $(CV_SIM_PREFIX) vopt
+VSIM 										= $(CV_SIM_PREFIX) vsim
+VISUALIZER							= $(CV_TOOL_PREFIX) visualizer
 VCOVER                  = vcover
 
 # Paths
-VWORK     				= work
+VWORK     							= work
 VSIM_COV_MERGE_DIR      = $(SIM_CFG_RESULTS)/merged
 UVM_HOME               ?= $(abspath $(shell which $(VLIB))/../../verilog_src/uvm-1.2/src)
 DPI_INCLUDE            ?= $(abspath $(shell which $(VLIB))/../../include)
 USES_DPI = 1
 
 # Default flags
+VSIM_COV_ONLY_PASS_TEST ?= YES
 VSIM_LOCAL_MODELSIMINI  ?= YES
 VSIM_USER_FLAGS         ?=
-VOPT_COV  				?= +cover=setf+$(RTLSRC_VLOG_TB_TOP).
-VSIM_COV 				?= -coverage
+VOPT_COV  							?= +cover=setf+$(RTLSRC_VLOG_TB_TOP).
+VSIM_COV 								?= -coverage
 VOPT_WAVES_ADV_DEBUG    ?= -designfile design.bin
 VSIM_WAVES_ADV_DEBUG    ?= -qwavedb=+signal+assertion+ignoretxntime+msgmode=both
 VSIM_WAVES_DO           ?= $(VSIM_SCRIPT_DIR)/waves.tcl
@@ -244,8 +245,8 @@ endif
 COV_FLAGS =
 COV_REPORT = cov_report
 COV_MERGE_TARGET =
-COV_MERGE_FIND = find $(SIM_RESULTS) -type f -name "*.ucdb" | grep -v merged.ucdb
-COV_MERGE_FLAGS=merge -testassociated -verbose -64 -out merged.ucdb -inputs ucdb.list
+COV_MERGE_FIND  = find $(SIM_CFG_RESULTS) -type f -name "*.ucdb" | grep -v merged.ucdb
+COV_MERGE_FLAGS = merge -testassociated -verbose -64 -out merged.ucdb -inputs ucdb.list
 
 ifeq ($(call IS_YES,$(MERGE)),YES)
 COV_DIR=$(VSIM_COV_MERGE_DIR)
@@ -272,10 +273,24 @@ endif
 endif
 endif
 
+# to filter out failing test from ucdb merging
+ifeq ($(call IS_YES,$(COV)),YES)
+ifeq ($(call IS_YES,$(VSIM_COV_ONLY_PASS_TEST)),YES)
+COV_TEST = mv $(RUN_DIR)/$(VSIM_TEST).ucdb $(RUN_DIR)/$(VSIM_TEST).ucdb_FAIL;
+else
+COV_TEST = :;
+endif
+else
+COV_TEST = :;
+endif
+
+################################################################################
+# Check simulation log
 ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
 POST_TEST = \
 	@if grep -q "Errors:\s\+0" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
 	if grep -q "SIMULATION FAILED" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
+		$(COV_TEST) \
 		exit 1; \
 	else \
 		exit 0; \
