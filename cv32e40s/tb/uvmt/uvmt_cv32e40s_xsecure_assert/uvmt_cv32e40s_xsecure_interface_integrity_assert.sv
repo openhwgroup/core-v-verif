@@ -134,6 +134,8 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   localparam LSU_LOAD_INTEGRITY_FAULT = 11'h402;
   localparam LSU_STORE_INTEGRITY_FAULT = 11'h403;
 
+  localparam int  OBI_DATA_RESP_ERR_BIT0_ERROR_FROM_BUS = 0;
+
     function logic [12:0] f_achk (logic [31:0] wdata, logic dbg, logic [5:0] atop,  logic [7:0] mid,  logic [3:0] be,  logic we,  logic [2:0] prot,  logic [1:0] memtype, logic [31:0] addr);
     f_achk = {
       ^wdata[31:24],
@@ -198,7 +200,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     obi_instr_resp_packet.rdata);
 
   assign rchk_data_calculated = f_rchk(
-    obi_data_resp_packet.err[0],
+    obi_data_resp_packet.err[OBI_DATA_RESP_ERR_BIT0_ERROR_FROM_BUS],
     ASSUMED_VALUE_EXOKAY,
     obi_data_resp_packet.rdata);
 

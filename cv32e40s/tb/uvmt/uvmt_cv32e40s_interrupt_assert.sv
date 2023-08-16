@@ -162,8 +162,9 @@ module uvmt_cv32e40s_interrupt_assert
                  "Interrupt ack was asserted for more than one cycle");
 
   // irq_id_o is never a reserved irq
+  let valid_irq_mask_index = irq_id_o[ $clog2($bits(VALID_IRQ_MASK)) - 1 : 0 ];
   property p_irq_id_o_not_reserved;
-    irq_ack_o |-> VALID_IRQ_MASK[irq_id_o[4:0]];
+    irq_ack_o |-> VALID_IRQ_MASK[ valid_irq_mask_index ];
   endproperty
   a_irq_id_o_not_reserved: assert property(p_irq_id_o_not_reserved)
     else
@@ -171,8 +172,9 @@ module uvmt_cv32e40s_interrupt_assert
                  $sformatf("int_id_o output is 0x%0x which is reserved", irq_id_o));
 
   // irq_id_o is never a disabled irq
+  let mie_q_index = irq_id_o[ $clog2($bits(mie_q)) - 1 : 0 ];
   property p_irq_id_o_mie_enabled;
-    irq_ack_o |-> mie_q[irq_id_o[4:0]];
+    irq_ack_o |-> mie_q[ mie_q_index ];
   endproperty
   a_irq_id_o_mie_enabled: assert property(p_irq_id_o_mie_enabled)
     else
