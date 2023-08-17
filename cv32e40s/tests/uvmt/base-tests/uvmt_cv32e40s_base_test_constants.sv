@@ -179,6 +179,14 @@ parameter logic CLIC = CORE_PARAM_CLIC;
 `endif
 
 
+`ifdef INTEGRITY_ERRORS_ENABLED
+   parameter logic INTEGRITY_ERRORS_ENABLED = 1;
+`else
+   parameter logic INTEGRITY_ERRORS_ENABLED = 0;
+`endif
+
+
+
 // PMP
 
 `ifdef PARAM_SET_0
