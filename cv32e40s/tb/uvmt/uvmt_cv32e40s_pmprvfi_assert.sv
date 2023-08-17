@@ -186,7 +186,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     );
 
     denial_reasons.mret_pointer =
-      rvfi_if.match_instr_raw(INSTR_OPCODE_MRET, INSTR_MASK_FULL);
+      rvfi_if.match_instr_raw(rvfi_if.INSTR_OPCODE_MRET, rvfi_if.INSTR_MASK_FULL);
   end
 
   logic  is_access_allowed;

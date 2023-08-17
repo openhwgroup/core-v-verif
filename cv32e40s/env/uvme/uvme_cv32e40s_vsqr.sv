@@ -35,6 +35,7 @@ class uvme_cv32e40s_vsqr_c extends uvm_sequencer#(
    uvma_clknrst_sqr_c                         clknrst_sequencer;
    uvma_interrupt_sqr_c                       interrupt_sequencer;
    uvma_clic_sqr_c#(CORE_PARAM_CLIC_ID_WIDTH) clic_sequencer;
+   uvma_wfe_wu_sqr_c                          wfe_wu_sequencer;
    uvma_debug_sqr_c                           debug_sequencer;
    uvma_obi_memory_sqr_c#(
      .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),

@@ -8,6 +8,7 @@ interface uvme_cv32e40s_core_cntrl_if_t
 
     logic        clk;
     logic        fetch_en;
+    logic        wu_wfe;
 
     logic        scan_cg_en;
     logic [31:0] boot_addr;
@@ -31,6 +32,7 @@ interface uvme_cv32e40s_core_cntrl_if_t
 
   clocking drv_cb @(posedge clk);
     output fetch_en;
+    output wu_wfe;
   endclocking : drv_cb
 
 endinterface : uvme_cv32e40s_core_cntrl_if_t

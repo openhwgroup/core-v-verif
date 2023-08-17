@@ -24,7 +24,9 @@
 -f ${DV_UVML_SB_PATH}/uvml_sb_pkg.flist
 -f ${DV_UVML_MEM_PATH}/uvml_mem_pkg.flist
 -f ${DV_SVLIB_PATH}/svlib_pkg.flist
+-f ${DV_ISA_DECODER_PATH}/isa_decoder_pkg.flist
 -f ${DV_SUPPORT_PATH}/support_pkg.flist
+
 
 // Imperas dv dependencies (rvvi, idv) or dummy package goes here (later packages depend on this)
 ${FILE_LIST_IDV_DEPS}
@@ -40,6 +42,7 @@ ${FILE_LIST_IDV_DEPS}
 -f ${DV_UVMA_CLIC_PATH}/uvma_clic_pkg.flist
 -f ${DV_UVMA_DEBUG_PATH}/uvma_debug_pkg.flist
 -f ${DV_UVMA_FENCEI_PATH}/uvma_fencei_pkg.flist
+-f ${DV_UVMA_WFE_WU_PATH}/uvma_wfe_wu_pkg.flist
 
 
 // CV32E40S test bench Directories
