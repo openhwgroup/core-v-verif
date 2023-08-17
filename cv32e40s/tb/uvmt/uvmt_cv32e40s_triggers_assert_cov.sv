@@ -1098,7 +1098,7 @@ module uvmt_cv32e40s_triggers_assert_cov
           EXC_CAUSE_INSTR_BUS_FAULT)
       ) else `uvm_error(info_tag, "The trigger match (exception match, user mode, instruction bus fault) does not send the core into debug mode.\n");
 
-      if (uvmt_cv32e40s_base_test_pkg::INTEGRITY_ERR_ENABLE) begin
+      if (INTEGRITY_ERRORS_ENABLED) begin
 
         a_glitch_dt_exception_trigger_hit_m_instr_integrity_fault: assert property(
           p_etrigger_hit(

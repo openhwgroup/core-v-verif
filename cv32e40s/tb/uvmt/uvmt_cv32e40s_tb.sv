@@ -1394,6 +1394,11 @@ module uvmt_cv32e40s_tb;
         .clk     (core_i.clk),
         .rst_n (rst_ni),
 
+        .if_instr (core_i.if_stage_i.prefetch_instr.bus_resp.rdata),
+        .id_instr (core_i.if_id_pipe.instr.bus_resp.rdata),
+        .ex_instr (core_i.id_ex_pipe.instr.bus_resp.rdata),
+        .wb_instr (core_i.ex_wb_pipe.instr.bus_resp.rdata),
+
         .tdata1_array (uvmt_cv32e40s_tb.tdata1_array),
         .tdata2_array (uvmt_cv32e40s_tb.tdata2_array),
 
