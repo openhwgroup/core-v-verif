@@ -6,7 +6,7 @@
 # This means you need to have a toolchain at COREV_SW_TOOLCHAIN (see Common.mk)
 ---
 # Header
-name: full regression tests for build(s) - pulp_fpu* (non-zfinx) 
+name: cv32_full_build_pulp_fpu_nonzfinx
 description: Full regression (all tests) for CV32E40P with step-and-compare against RM"
 
 # List of builds
