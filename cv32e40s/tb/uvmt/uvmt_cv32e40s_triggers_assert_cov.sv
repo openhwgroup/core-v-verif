@@ -234,6 +234,13 @@ module uvmt_cv32e40s_triggers_assert_cov
     || tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_DISABLED);
   endsequence
 
+  sequence seq_etrigger_hit(t, priv_lvl, exception);
+    support_if.trigger_match_exception[t]
+    && !rvfi_if.rvfi_dbg_mode
+    && priv_lvl
+    && rvfi_if.rvfi_trap.exception_cause == exception;
+  endsequence
+
 
   /////////// Properties ///////////
 
@@ -250,10 +257,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   endproperty
 
   property p_etrigger_hit(t, priv_lvl, exception);
-    support_if.trigger_match_exception[t]
-    && !rvfi_if.rvfi_dbg_mode
-    && priv_lvl
-    && rvfi_if.rvfi_trap.exception_cause == exception
+    seq_etrigger_hit(t,priv_lvl, exception)
     |->
     rvfi_if.rvfi_trap.debug;
   endproperty
@@ -1094,19 +1098,39 @@ module uvmt_cv32e40s_triggers_assert_cov
           EXC_CAUSE_INSTR_BUS_FAULT)
       ) else `uvm_error(info_tag, "The trigger match (exception match, user mode, instruction bus fault) does not send the core into debug mode.\n");
 
-      a_dt_exception_trigger_hit_m_instr_integrity_fault: assert property(
-        p_etrigger_hit(
-          t,
-          rvfi_if.is_mmode,
-          EXC_CAUSE_INSTR_INTEGRITY_FAULT)
-      ) else `uvm_error(info_tag, "The trigger match (exception match, machine mode, instruction integrity fault) does not send the core into debug mode.\n");
+      if (uvmt_cv32e40s_base_test_pkg::INTEGRITY_ERR_ENABLE) begin
 
-      a_dt_exception_trigger_hit_u_instr_integrity_fault: assert property(
-        p_etrigger_hit(
-          t,
-          rvfi_if.is_umode,
-          EXC_CAUSE_INSTR_INTEGRITY_FAULT)
-      ) else `uvm_error(info_tag, "The trigger match (exception match, user mode, instruction integrity fault) does not send the core into debug mode.\n");
+        a_glitch_dt_exception_trigger_hit_m_instr_integrity_fault: assert property(
+          p_etrigger_hit(
+            t,
+            rvfi_if.is_mmode,
+            EXC_CAUSE_INSTR_INTEGRITY_FAULT)
+        ) else `uvm_error(info_tag, "The trigger match (exception match, machine mode, instruction integrity fault) does not send the core into debug mode.\n");
+
+        a_glitch_dt_exception_trigger_hit_u_instr_integrity_fault: assert property(
+          p_etrigger_hit(
+            t,
+            rvfi_if.is_umode,
+            EXC_CAUSE_INSTR_INTEGRITY_FAULT)
+        ) else `uvm_error(info_tag, "The trigger match (exception match, user mode, instruction integrity fault) does not send the core into debug mode.\n");
+
+      end else begin
+
+        a_glitch_dt_exception_trigger_hit_m_instr_integrity_fault_noprecondition: assert property(
+          not seq_etrigger_hit(
+            t,
+            rvfi_if.is_mmode,
+            EXC_CAUSE_INSTR_INTEGRITY_FAULT)
+        ) else `uvm_error(info_tag, "exception trigger hit precondition is met for machine mode even though we assueme no integrity faults.\n");
+
+        a_glitch_dt_exception_trigger_hit_u_instr_integrity_fault_noprecondition: assert property(
+          not seq_etrigger_hit(
+            t,
+            rvfi_if.is_umode,
+            EXC_CAUSE_INSTR_INTEGRITY_FAULT)
+        ) else `uvm_error(info_tag, "exception trigger hit precondition is met for user mode even though we assueme no integrity faults.\n");
+
+      end
 
       //2) see a_dt_enter_dbg_reason
 

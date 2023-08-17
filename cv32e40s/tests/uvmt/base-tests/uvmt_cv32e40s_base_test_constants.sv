@@ -178,6 +178,17 @@ parameter logic CLIC = CORE_PARAM_CLIC;
    parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR2_CFG = cv32e40s_pkg::LFSR_CFG_DEFAULT;
 `endif
 
+`ifdef PARAM_SET_0
+   // Sat from the include file
+`elsif PARAM_SET_1
+   // Sat from the include file
+`elsif INTEGRITY_ERR_ENABLE
+   parameter logic INTEGRITY_ERR_ENABLE = 1;
+`else
+   parameter logic INTEGRITY_ERR_ENABLE = 0;
+`endif
+
+
 
 // PMP
 
