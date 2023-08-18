@@ -70,8 +70,8 @@
     </runnable>
 
 
-{% for build in r.get_builds() %}
     <!-- =========== Builds =========== START -->
+{% for build in r.get_builds() %}
         <runnable name="{{build.name}}" type="group" sequential="no">
             <!-- set of parameters to be given to leaf runnables -->
             <parameters>
