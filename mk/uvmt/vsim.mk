@@ -289,11 +289,11 @@ endif
 ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
 POST_TEST = \
 	@if grep -q "Errors:\s\+0" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
-	if grep -q "SIMULATION FAILED" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
+	if grep -q "SIMULATION PASSED" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
+		exit 0; \
+	else \
 		$(COV_TEST) \
 		exit 1; \
-	else \
-		exit 0; \
 	fi \
 	else \
 		$(COV_TEST) \
