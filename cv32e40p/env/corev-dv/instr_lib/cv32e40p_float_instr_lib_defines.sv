@@ -168,10 +168,11 @@
       instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [``OPERAND`` - %s - 32'h%8h] `", ``OPERAND``_pattern.name(), ``OPERAND``)};\
     end
 
-  // 22 always exclude list within fp stream
-  `define   EXCLUDE_INSTR_LIST      {JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU, ECALL, EBREAK, \
-                                     DRET, MRET, URET, SRET, WFI, C_EBREAK, C_BEQZ, C_BNEZ, C_J, C_JAL, \
-                                     C_JR, C_JALR}
+// 22 always exclude list within fp stream; 11 are related to hw-loop
+  `define   EXCLUDE_INSTR_LIST      {JAL,  JALR, BEQ,  BNE,  BLT, BGE,      BLTU,   BGEU,   ECALL, EBREAK, \
+                                     DRET, MRET, URET, SRET, WFI, C_EBREAK, C_BEQZ, C_BNEZ, C_J,   C_JAL, \
+                                     C_JR, C_JALR, \
+                                     CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW, CV_BEQIMM, CV_BNEIMM}
 
   // refer Table 6-1 user manual
   `define   RV32I_INT_COMP_INSTR_LIST   {ADD, ADDI, SUB, LUI, AUIPC, SLL, SLLI, SRL, SRLI, SRA, SRAI, \
