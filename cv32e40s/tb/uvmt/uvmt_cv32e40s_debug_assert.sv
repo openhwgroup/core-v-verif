@@ -1070,4 +1070,41 @@ module uvmt_cv32e40s_debug_assert
         end
     end
 
+    sequence dbg_with_nmi_dret_stepie;
+          rvfi.rvfi_dbg_mode
+      ##1
+          rvfi.is_dret
+       && rvfi.rvfi_nmip
+       && csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
+       && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]
+       && rvfi.rvfi_valid
+      ##1
+          csr_mtvec.rvfi_csr_rdata > 3 // ignore lower bits
+       && csr_dpc.rvfi_csr_rdata != 0
+       && csr_mtvec.rvfi_csr_rdata != csr_dpc.rvfi_csr_rdata
+       && !rvfi.rvfi_trap.exception
+       && rvfi.rvfi_valid[->1]
+      ;
+    endsequence : dbg_with_nmi_dret_stepie
+
+    sequence dbg_with_nmi_dret_stepie_n;
+          rvfi.rvfi_dbg_mode
+      ##1
+          rvfi.is_dret
+       && rvfi.rvfi_nmip
+       && !csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
+       && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]
+       && rvfi.rvfi_valid
+      ##1
+          csr_mtvec.rvfi_csr_rdata > 3 // ignore lower bits
+       && csr_dpc.rvfi_csr_rdata != 0
+       && csr_mtvec.rvfi_csr_rdata != csr_dpc.rvfi_csr_rdata
+       && !rvfi.rvfi_trap.exception
+       && rvfi.rvfi_valid[->1]
+      ;
+    endsequence : dbg_with_nmi_dret_stepie_n
+
+    cov_dbg_with_nmi_dret_stepie:   cover property (dbg_with_nmi_dret_stepie);
+    cov_dbg_with_nmi_dret_stepie_n: cover property (dbg_with_nmi_dret_stepie_n);
+
 endmodule : uvmt_cv32e40s_debug_assert
