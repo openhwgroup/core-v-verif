@@ -1075,8 +1075,8 @@ module uvmt_cv32e40s_debug_assert
       ##1
           rvfi.is_dret
        && rvfi.rvfi_nmip
-       && csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
-       && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS] == stepie_value
+       && csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS] == stepie_value
+       && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]
        && rvfi.rvfi_valid
       ##1
           csr_mtvec.rvfi_csr_rdata > 3 // ignore lower bits
