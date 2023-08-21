@@ -2703,16 +2703,15 @@ module uvmt_cv32e40s_clic_interrupt_assert
       `uvm_error(info_tag,
         $sformatf("mret does not update mode according to mpp"));
 
-
     // this assert verifies that mil is correctly restored on an mret
     property p_mret_mil_mpil;
-      mcause_t prev_rvfi_mcause_fields;
+      logic [7:0] prev_rvfi_mcause_mpil;
       (rvfi_if.is_mret,
-        prev_rvfi_mcause_fields = rvfi_mcause_fields)
+        prev_rvfi_mcause_mpil = rvfi_mcause_fields.mpil)
       ##1 rvfi_valid[->1]
       ##0 !(rvfi_if.rvfi_intr.intr || support_if.first_debug_ins)
       |->
-      rvfi_mintstatus_fields.mil == prev_rvfi_mcause_fields.mpil;
+      rvfi_mintstatus_fields.mil == prev_rvfi_mcause_mpil;
     endproperty : p_mret_mil_mpil
 
     a_mret_mil_mpil: assert property (p_mret_mil_mpil)
@@ -2737,13 +2736,13 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
      // this assert verifies that mie is correctly restored on an mret
     property p_mret_mie_mpie;
-      mcause_t prev_rvfi_mcause_fields;
+      logic prev_rvfi_mcause_mpie;
       (rvfi_if.is_mret,
-        prev_rvfi_mcause_fields = rvfi_mcause_fields)
+        prev_rvfi_mcause_mpie = rvfi_mcause_fields.mpie)
       ##1 rvfi_valid[->1]
       ##0 !(rvfi_if.rvfi_intr.intr || support_if.first_debug_ins)
       |->
-        rvfi_mstatus_fields.mie == prev_rvfi_mcause_fields.mpie
+        rvfi_mstatus_fields.mie == prev_rvfi_mcause_mpie
       ;
     endproperty : p_mret_mie_mpie
 
