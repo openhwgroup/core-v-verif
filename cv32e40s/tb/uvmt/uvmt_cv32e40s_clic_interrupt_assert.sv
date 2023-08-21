@@ -35,9 +35,11 @@ module uvmt_cv32e40s_clic_interrupt_assert
     uvmt_cv32e40s_support_logic_module_o_if_t.slave_mp  support_if,
     uvma_rvfi_instr_if_t                                rvfi_if,
     uvma_rvfi_csr_if_t                                  csr_mepc_if,
+    uvma_rvfi_csr_if_t                                  csr_mstatus_if,
     uvma_rvfi_csr_if_t                                  csr_mcause_if,
     uvma_rvfi_csr_if_t                                  csr_mintthresh_if,
     uvma_rvfi_csr_if_t                                  csr_mintstatus_if,
+    uvma_rvfi_csr_if_t                                  csr_dcsr_if,
 
 
     // CSR interface
@@ -55,6 +57,10 @@ module uvmt_cv32e40s_clic_interrupt_assert
     input logic [31:0]                mscratchcsw,
     input logic [31:0]                mscratchcswl,
     input logic [31:0]                dcsr,
+
+    //Control signals:
+    input logic                       pc_set,
+    input logic [3:0]                 pc_mux,
 
     input logic [31:0]                rvfi_mepc_wdata,
     input logic [31:0]                rvfi_mepc_wmask,
@@ -135,6 +141,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
   string info_tag = "CLIC_ASSERT";
 
   localparam logic [31:0] NMI_OFFSET    = 0;
+  localparam logic [3:0]  PC_MUX_MRET   = 4'b0001;
 
   typedef struct packed {
     logic                       irq;
@@ -518,8 +525,16 @@ module uvmt_cv32e40s_clic_interrupt_assert
   dcsr_t            dcsr_fields;
 
 
+  mstatus_t         rvfi_mstatus_fields;
+  mstatus_t         rvfi_mstatus_wdata_fields;
+  mstatus_t         rvfi_mstatus_wmask_fields;
   mcause_t          rvfi_mcause_fields;
+  mcause_t          rvfi_mcause_wdata_fields;
+  mcause_t          rvfi_mcause_wmask_fields;
   mintstatus_t      rvfi_mintstatus_fields;
+  mintstatus_t      rvfi_mintstatus_wdata_fields;
+  mintthresh_t      rvfi_mintthresh_fields;
+  dcsr_t            rvfi_dcsr_fields;
 
   logic is_mepc_access_instr;
   logic is_mtvec_access_instr;
@@ -614,8 +629,15 @@ module uvmt_cv32e40s_clic_interrupt_assert
   assign mcause_fields     = mcause_t'(mcause);
   assign dcsr_fields       = dcsr_t'(dcsr);
 
-  assign rvfi_mcause_fields       = mcause_t'(csr_mcause_if.rvfi_csr_rdata);
-  assign rvfi_mintstatus_fields   = mintstatus_t'(csr_mintstatus_if.rvfi_csr_rdata);
+  assign rvfi_mstatus_fields              = mstatus_t'(csr_mstatus_if.rvfi_csr_rdata);
+  assign rvfi_mstatus_wdata_fields        = mstatus_t'(csr_mstatus_if.rvfi_csr_wdata & csr_mstatus_if.rvfi_csr_wmask);
+  assign rvfi_mcause_fields               = mcause_t'(csr_mcause_if.rvfi_csr_rdata);
+  assign rvfi_mcause_wdata_fields         = mcause_t'(csr_mcause_if.rvfi_csr_wdata & csr_mcause_if.rvfi_csr_wmask);
+  assign rvfi_mcause_wmask_fields         = mcause_t'(csr_mcause_if.rvfi_csr_wmask);
+  assign rvfi_mintstatus_fields           = mintstatus_t'(csr_mintstatus_if.rvfi_csr_rdata);
+  assign rvfi_mintstatus_wdata_fields     = mintstatus_t'(csr_mintstatus_if.rvfi_csr_wdata & csr_mintstatus_if.rvfi_csr_wmask);
+  assign rvfi_mintthresh_fields           = mintthresh_t'(csr_mintthresh_if.rvfi_csr_rdata);
+  assign rvfi_dcsr_fields                 = dcsr_t'(csr_dcsr_if.rvfi_csr_rdata);
 
   always_comb begin
     clic.irq   = clic_if.clic_irq;
@@ -960,39 +982,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
         !rvfi_valid |-> !rvfi_valid[*0:MAX_RVFI_VALID_DELAY] ##1 rvfi_valid;
     endproperty
 
-    // TODO: disabled pending discussions on if & how to do this
-    //// Pending and enabled interrupts will eventually be taken if the conditions are right
-    //// Excludes checking in blocking regions (debug, exception handlers, nmi)
-    //// Deliberately written as a liveness property, might want to exclude or constrain
-    //// for sim to avoid the liveness issues.
-    ////sequence s_irq_ack;
-    ////  irq_ack within 1[*1:$];
-    ////endsequence : s_irq_ack
-
-    //property p_always_taken;
-    //  @(posedge clk_i)
-
-    //  disable iff(
-    //       !rst_ni
-    //    || core_in_debug
-    //    || rvfi_intr.exception
-    //    || rvfi_trap.exception
-    //    || is_cause_nmi
-    //    || $changed(mstatus_fields.mie, @(posedge clk_i))
-    //    || $changed(mintthresh_fields.th, @(posedge clk_i))
-    //    || $changed(mintstatus_fields.mil, @(posedge clk_i))
-    //            )
-    //  // Valid pending, clic stable and no outstanding obi data transactions
-    //  (seq_irq_pend(1'b1) and $stable(clic) ) ##1 is_interrupt_allowed
-    //  |->
-    //   irq_ack
-    //  ;
-    //endproperty : p_always_taken
-
-    //a_always_taken: assert property(p_always_taken)
-    //else
-    //  `uvm_error(info_tag,
-    //    $sformatf("Interrupt should have been taken"));
 
     // ------------------------------------------------------------------------
     // irq_ack is always single cycle pulse
@@ -1324,7 +1313,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
       is_mtvt_store_event;
     endsequence : s_store_mtvt_value
 
-    // TODO cleanup names
     logic [0:7][3:0] obi_instr_fifo_tag;
     logic [0:7][3:0] obi_instr_fifo_tag_n;
     logic [2:0]      obi_instr_fifo_tag_size;
@@ -1349,6 +1337,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     typedef struct packed {
       logic [35:32] tag;
       logic [31:0]  addr;
+      logic         is_mret;
     } obi_tagged_txn_t;
 
     logic obi_instr_fifo_tag_we;
@@ -1455,6 +1444,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
           if (obi_instr_fifo_tag_wena[i]) begin
             obi_instr_fifo_tag_ff[i].tag  <= obi_instr_request_n;
             obi_instr_fifo_tag_ff[i].addr <= obi_instr_addr;
+            obi_instr_fifo_tag_ff[i].is_mret <= obi_req_is_mret;
           end else begin
             obi_instr_fifo_tag_ff[i]      <= obi_instr_fifo_tag_ff[i];
           end
@@ -1495,11 +1485,53 @@ module uvmt_cv32e40s_clic_interrupt_assert
       endcase
     end
 
+    //this signal remembers the return address from an mret related pointer fetch.
+    logic [31:0] mepc_as_pointer_rdata;
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        mepc_as_pointer_rdata <= '0;
+      end else begin
+        if (obi_instr_fifo_tag_rena && obi_instr_fifo_tag_out.addr == {mepc[31:2], 2'b0} && obi_instr_fifo_tag_out.is_mret) begin
+          mepc_as_pointer_rdata <= {obi_instr_rdata[31:1], 1'b0};
+        end
+      end
+    end
+
+    logic pc_mux_mret_q;
+    logic obi_req_is_mret;
+    logic delayed_mret_req;
+
+    // signal obi_req_is_mret is high if the address phase originates from an mret in the pc_mux
+    assign obi_req_is_mret =  (pc_mux_mret_q && !delayed_mret_req) || (!support_if.instr_bus_addr_ph_cont && (pc_mux == PC_MUX_MRET && pc_set));
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        pc_mux_mret_q <= 0;
+        delayed_mret_req <= 0;
+      end else begin
+        // if the pc mux mret-related address phase is delayed, we need to remember it
+        if (pc_mux == PC_MUX_MRET && pc_set && (!(obi_instr_req && obi_instr_gnt) || support_if.instr_bus_addr_ph_cont)) begin
+          pc_mux_mret_q <= 1;
+          // double delay, previous address phase is not gnt'ed
+          if (support_if.instr_bus_addr_ph_cont && !(obi_instr_req && obi_instr_gnt)) begin
+            delayed_mret_req <= 1;
+          end
+        end else if (delayed_mret_req == 1 && obi_instr_req && obi_instr_gnt) begin
+          delayed_mret_req <= 0;
+        end else if (obi_instr_req && obi_instr_gnt) begin
+          pc_mux_mret_q <= 0;
+        end
+      end
+    end
+
+
+
+
     assign obi_instr_fifo_tag_we = obi_instr_push;
     assign obi_data_fifo_tag_we  = obi_data_push;
 
     assign obi_instr_fifo_tag_re = obi_instr_pop;
-    assign obi_data_fifo_tag_re  = obi_data_pop ;
+    assign obi_data_fifo_tag_re  = obi_data_pop;
 
     property p_mtvt_table_read_equals_value_written;
       is_read_from_mtvt
@@ -2036,7 +2068,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
          && (mcause_fields.n.exccode_10_0 == sampled_id)
          && (mcause_fields.interrupt      == 1'b1)
 
-         // TODO: The code below should work, but fails with xcelium - evaluate if this can
+         // NOTE: The code below should work, but fails with xcelium - evaluate if this can
          // be reenabled if this issue is fixed (needs changes to sampling code above as well):
 
          //   (mintstatus_fields.mil == sampled_clic.level)
@@ -2606,29 +2638,26 @@ module uvmt_cv32e40s_clic_interrupt_assert
         !fetch_enable |-> irq_ack_occurred_between_valid == 1'b0;
     endproperty : p_irq_ack_occurred_zero_out_of_reset
 
-    //// WIP section start ////
-    //TODO:MT The following code is a work in progress, but is checked in to indicate that
-    //        the exisiting asserts are not expected to be relied upon
-
-
-    // mret should continue at mepc
+    // mret should continue at mepc, or at the pointer fetched from mepc if minhv
     // this checks the intention at retirement of mepc, not that the next instruction is correct.
-    property p_mret_pc_not_vectored_intended;
+
+    property p_mret_pc_intended;
       rvfi_if.is_mret
       && !rvfi_if.rvfi_trap.trap
-      && !rvfi_mcause_fields.minhv
       |->
-        rvfi_if.rvfi_pc_wdata == csr_mepc_if.rvfi_csr_rdata;
-    endproperty : p_mret_pc_not_vectored_intended
+        rvfi_if.rvfi_pc_wdata == csr_mepc_if.rvfi_csr_rdata
+      or
+        (rvfi_mcause_fields.minhv && rvfi_mcause_fields.mpp != U_MODE) && rvfi_if.rvfi_pc_wdata == mepc_as_pointer_rdata;
+    endproperty : p_mret_pc_intended
 
-    a_mret_pc_not_vectored_intended: assert property (p_mret_pc_not_vectored_intended)
+    a_mret_pc_intended: assert property (p_mret_pc_intended)
     else
       `uvm_error(info_tag,
         $sformatf("mret result state incorrect"));
 
 
-    // this checks the intention at retirement of mepc, not that the next instruction is correct.
-    property p_mret_pc_not_vectored_1;
+    // this checks actual next instruction, if not interrupt or debug
+    property p_mret_pc_not_vectored;
       rvfi_if.is_mret
       && !rvfi_if.rvfi_trap.trap
       && !rvfi_mcause_fields.minhv
@@ -2637,9 +2666,9 @@ module uvmt_cv32e40s_clic_interrupt_assert
       ##0 !(rvfi_if.rvfi_intr.intr || support_if.first_debug_ins)
       |->
         rvfi_if.rvfi_pc_rdata == csr_mepc_if.rvfi_csr_rdata;
-    endproperty : p_mret_pc_not_vectored_1
+    endproperty : p_mret_pc_not_vectored
 
-    a_mret_pc_not_vectored_1: assert property (p_mret_pc_not_vectored_1)
+    a_mret_pc_not_vectored: assert property (p_mret_pc_not_vectored)
     else
       `uvm_error(info_tag,
         $sformatf("mret result state incorrect"));
@@ -2648,7 +2677,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
     //mret to umode clears mintthresh
     a_mret_umode_clear_mintthresh: assert property (
       rvfi_if.is_mret
-      //&& !rvfi_if.rvfi_trap.trap
       ##1 rvfi_valid[->1]
       ##0 rvfi_if.is_umode
       |->
@@ -2659,257 +2687,238 @@ module uvmt_cv32e40s_clic_interrupt_assert
         $sformatf("mret to umode does not clear mintthresh"));
 
 
-
-    property p_execution_state_after_mret;
-     // last cycle after mret, before new rvfi_valid,
-          // and not an excepted minhv-mepc (TODO: where? covered elsewhere)
-        rvfi_if.is_mret
-        && !rvfi_if.rvfi_trap.trap
-        && !rvfi_mcause_fields.minhv
-        ##1 rvfi_valid[->1]
+    // this assert verifies that mode is correctly restored on an mret
+    property p_mret_mode_mpp;
+      logic [1:0] prev_mpp = '0;
+      (rvfi_if.is_mret,
+        prev_mpp = rvfi_mcause_fields.mpp)
+      ##1 rvfi_valid[->1]
+      ##0 !(rvfi_if.rvfi_intr.intr || support_if.first_debug_ins)
       |->
-        // 1. Standard behavior
-        rvfi_if.rvfi_pc_rdata == csr_mepc_if.rvfi_csr_rdata
-      or
-        rvfi_if.rvfi_intr.intr
-      or
-        support_if.first_debug_ins
+      rvfi_if.rvfi_mode == prev_mpp;
+    endproperty : p_mret_mode_mpp
 
-      /*
-           // irq taken, mepc not written by retiring instruction
-           // address checked by mtvec/mtvt assertions
-           //irq_ack_occurred_between_valid
-           rvfi_intr.intr
-        && !(is_csr_write  == 1'b1
-        && is_mepc_access_instr == 1'b1)
+    a_mret_mode_mpp: assert property (p_mret_mode_mpp)
+    else
+      `uvm_error(info_tag,
+        $sformatf("mret does not update mode according to mpp"));
 
-      or
-           // irq taken, handler rewrites mepc
-           // only check mepc update, irq dest. addr checked by respective assertions
-           //irq_ack_occurred_between_valid
-           rvfi_intr.intr
-        && mepc_fields == rvfi_mepc_wdata & rvfi_mepc_wmask
-        && is_csr_write  == 1'b1
-        && is_mepc_access_instr == 1'b1
-      or
-           // debug gets taken, write effects of instruction on rvfi_valid should have no effect,
-           // but there might be an instruction fault
-           rvfi_dbg_mode == 1'b1
-        && rvfi_pc_rdata == { debug_halt_addr[31:2], 2'b00 }
-        && is_trap_exception
-      or
-           // Trap to debug and take exception
-           rvfi_dbg_mode == 1'b1
-        && rvfi_pc_rdata == { debug_exc_addr[31:2], 2'b00 }
-        && is_intr_exception
-      or
-           // Trap to debug and take ecall/ebreak
-           rvfi_dbg_mode == 1'b1
-        && rvfi_pc_rdata == { debug_halt_addr[31:2], 2'b00 }
-        && is_intr_ecall_ebreak
+    // this assert verifies that mil is correctly restored on an mret
+    property p_mret_mil_mpil;
+      logic [7:0] prev_rvfi_mcause_mpil;
+      (rvfi_if.is_mret,
+        prev_rvfi_mcause_mpil = rvfi_mcause_fields.mpil)
+      ##1 rvfi_valid[->1]
+      ##0 !(rvfi_if.rvfi_intr.intr || support_if.first_debug_ins)
+      |->
+      rvfi_mintstatus_fields.mil == prev_rvfi_mcause_mpil;
+    endproperty : p_mret_mil_mpil
 
-      or
-           // Trap to debug
-           rvfi_dbg_mode == 1'b1
-        && rvfi_pc_rdata == { debug_halt_addr[31:2], 2'b00 }
-        && !is_intr_exception
-        && !is_trap_exception
-      or
-           // Write to mepc, need to check past mepc
-           !irq_ack_occurred_between_valid
-        && rvfi_pc_rdata == $past(mepc_fields)
-        && is_csr_write  == 1'b1
-        && is_mepc_access_instr == 1'b1
-      or
-           // nmi
-           rvfi_pc_rdata == { mtvec_fields[31:2], 2'b00 } + NMI_OFFSET
-        && is_cause_nmi  == 1'b1
-      or
-           // nmi with retired write to mtvec
-           rvfi_pc_rdata == { $past(mtvec_fields[31:2]), 2'b00 } + NMI_OFFSET
-        && is_cause_nmi  == 1'b1
+    a_mret_mil_mpil: assert property (p_mret_mil_mpil)
+    else
+      `uvm_error(info_tag,
+        $sformatf("mret does not update mil according to mpil"));
 
-      */
+    // this assert verifies that mil is correctly restored on an mret
+    property p_mret_mil_mpil_intended;
+      rvfi_if.is_mret
+      && !rvfi_if.rvfi_trap.trap
+      |->
+      rvfi_mintstatus_wdata_fields.mil == rvfi_mcause_fields.mpil;
+    endproperty : p_mret_mil_mpil_intended
+
+    a_mret_mil_mpil_intended: assert property (p_mret_mil_mpil_intended)
+    else
+      `uvm_error(info_tag,
+        $sformatf("mret does not update mil according to mpil"));
+
+
+
+     // this assert verifies that mie is correctly restored on an mret
+    property p_mret_mie_mpie;
+      logic prev_rvfi_mcause_mpie;
+      (rvfi_if.is_mret,
+        prev_rvfi_mcause_mpie = rvfi_mcause_fields.mpie)
+      ##1 rvfi_valid[->1]
+      ##0 !(rvfi_if.rvfi_intr.intr || support_if.first_debug_ins)
+      |->
+        rvfi_mstatus_fields.mie == prev_rvfi_mcause_mpie
       ;
-       // TODO add mpil, mpie
-    endproperty : p_execution_state_after_mret
+    endproperty : p_mret_mie_mpie
 
-    // TODO:MT reenable after rebuild
-    //a_execution_state_after_mret: assert property (p_execution_state_after_mret)
-    //else
-    //  `uvm_error(info_tag,
-    //    $sformatf("mret result state incorrect"));
+    a_mret_mie_mpie: assert property (p_mret_mie_mpie)
+    else
+      `uvm_error(info_tag,
+        $sformatf("mret does not update mie according to mpie"));
 
-    property p_execution_state_after_mret_with_minhv;
-      logic [3:0] pointer_req = '0;
-      logic [31:0] pointer_value = '0;
-      sync_accept_on(
-           !$stable(mepc_fields, @(posedge clk_i))
-        || is_csr_write && is_mcause_access_instr && $fell(mcause_fields.minhv, @(posedge clk_i))
-      )
-           rvfi_valid
-        && is_trap_exception
-        && mcause_fields.minhv
-       ##0 ((obi_instr_addr == mepc_fields)[->1],
-            pointer_req = obi_instr_request_n
-       )
-       ##1 ((pointer_req == obi_instr_service_n)[->1],
-            pointer_value = obi_instr_rdata
-       )
-       ##0 (rvfi_valid && is_last_mret_instr && !rvfi_trap.exception)[->1]
-       ##1 rvfi_valid[->1]
-         |->
-       rvfi_pc_rdata == pointer_value
+     // this assert verifies that mie is correctly restored on an mret
+    property p_mret_mie_mpie_intended;
+      rvfi_if.is_mret
+      && !rvfi_if.rvfi_trap.trap
+      |->
+      rvfi_mstatus_wdata_fields.mie == rvfi_mcause_fields.mpie;
+    endproperty : p_mret_mie_mpie_intended
+
+    a_mret_mie_mpie_intended: assert property (p_mret_mie_mpie_intended)
+    else
+      `uvm_error(info_tag,
+        $sformatf("mret does not update mie according to mpie"));
+
+    // this assert verifies that mpie is correctly set on an mret
+    a_mret_mpie_intended: assert property (
+      rvfi_if.is_mret
+      && !rvfi_if.rvfi_trap.trap
+      |->
+      rvfi_mstatus_wdata_fields.mpie
+    )
+    else
+      `uvm_error(info_tag,
+        $sformatf("mret does not set mpie"));
+
+    // this assert verifies that mpil is unchanged on an mret
+    a_mret_mpil_intended: assert property (
+      rvfi_if.is_mret
+      && !rvfi_if.rvfi_trap.trap
+      |->
+        rvfi_mcause_wmask_fields.mpil == '0
       or
-          is_instr_access_fault
-       && mcause_fields.minhv == 1'b1;
-    endproperty : p_execution_state_after_mret_with_minhv
+        (rvfi_mcause_fields.mpil == rvfi_mcause_wdata_fields.mpil)
+    )
+    else
+      `uvm_error(info_tag,
+        $sformatf("mret does change mpil"));
 
-    // TODO:MT reenable after rebuild
-    //a_execution_state_after_mret_with_minhv: assert property (p_execution_state_after_mret_with_minhv)
-    //else
-    //  `uvm_error(info_tag,
-    //    $sformatf("mret result state incorrect"));
 
     // ------------------------------------------------------------------------
     // clic level should be the larger of mintthresh_th and prev. taken irq
     // ------------------------------------------------------------------------
-    uncompressed_instr_t last_valid_instr;
-    csr_instr_t          last_valid_instr_csr;
-
-    // Formal tools generate warnings for latch behavior in assign statements, use explicit always_latch here
-    always_latch begin
-      last_valid_instr <= !rst_ni ? '0 : rvfi_valid ? uncompressed_instr_t'(rvfi_insn) : last_valid_instr;
-    end
-
-    assign last_valid_instr_csr = csr_instr_t'(last_valid_instr); //TODO:MT not used?
-
-    logic is_last_mret_instr;
-    logic is_last_dret_instr;
-
-    property p_last_valid_instr_reset_state;
-        !fetch_enable |-> last_valid_instr == 'h0;
-    endproperty : p_last_valid_instr_reset_state
-
-    // Keep track of last retired instruction type
-    assign is_last_mret_instr   = is_instr(last_valid_instr, MRET);
-    assign is_last_dret_instr   = is_instr(last_valid_instr, DRET);
+    logic [7:0] mintstatus_mil_q;
+    logic [7:0] expected_mpil;
+    logic prev_was_valid_mnxti_write;
+    logic prev_was_mret;
+    logic intended_mode_u;
+    logic prev_was_trapped_u;
 
     function logic[7:0] max_level(logic[7:0] a, logic[7:0] b);
       max_level = a > b ? a : b;
     endfunction : max_level
 
-    property p_clic_core_level_max_prev_irq_mintthresh_th;
-      // Evaluates to true false on second cycle, thus the duality of
-      // $past and present statements below. TODO: possible to simplify without leaving holes?
-      1 ##1 // out of reset fix
-      $changed(mintstatus_fields.mil)
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        mintstatus_mil_q <= 0;
+        prev_was_valid_mnxti_write <= 0;
+        prev_was_mret <= 0;
+        intended_mode_u <= 0;
+        prev_was_trapped_u <= 0;
+        expected_mpil <= 0;
+      end else begin
+        if (rvfi_valid) begin
+          mintstatus_mil_q <= rvfi_mintstatus_fields.mil;
+          prev_was_valid_mnxti_write <= is_valid_mnxti_write;
+          prev_was_mret <= rvfi_if.is_mret;
+          intended_mode_u <= !rvfi_if.rvfi_trap.trap && (
+                              (rvfi_if.is_mret && rvfi_mcause_fields.mpp == U_MODE) ||
+                              (rvfi_if.is_dret && rvfi_dcsr_fields.prv == U_MODE) ||
+                              rvfi_if.rvfi_mode == U_MODE);
+          prev_was_trapped_u <= rvfi_if.rvfi_trap.trap && intended_mode_u;
+          expected_mpil <= rvfi_mcause_wmask_fields.mpil ? (rvfi_mcause_wdata_fields.mpil & rvfi_mcause_wmask_fields.mpil) : rvfi_mcause_fields.mpil;
+        end
+      end
+    end
+
+    a_mintstatus_mil_decrease_intended: assert property(
+        rvfi_valid &&
+        csr_mintstatus_if.rvfi_csr_wmask &&
+        rvfi_mintstatus_wdata_fields.mil < rvfi_mintstatus_fields.mil
       |->
-          // first cycle ack, no mret, mpp machine mode
-          $past(irq_ack)
-       && !$past(is_mret_instr)
-       && $past(mcause_fields.mpp) == M_MODE
-       && mintstatus_fields.mil == clic_oic.level
-       && clic_oic.level > max_level($past(mintthresh_fields.th), $past(mintstatus_fields.mil))
+        rvfi_if.is_mret
       or
-         // first cycle ack, no mret, mpp user mode
-          $past(irq_ack)
-       && !$past(is_mret_instr)
-       && $past(mcause_fields.mpp) == U_MODE
-       && mintstatus_fields.mil == clic_oic.level
-       && clic_oic.level > 0
+        is_valid_mnxti_write &&
+        rvfi_mintstatus_wdata_fields.mil > max_level(rvfi_mintthresh_fields.th, rvfi_mcause_fields.mpil)
       or
-         // first cycle ack, no mret
-         // mret sets mil to mpil, but at next rvfi_valid this is replaced by
-         // the il of the taken interrupt
-          $past(irq_ack)
-       && $past(is_mret_instr)
-       && mintstatus_fields.mil == mcause_fields.mpil
-      ##1 mintstatus_fields.mil == clic_oic.level
+        rvfi_if.rvfi_mode == U_MODE &&
+        rvfi_if.rvfi_trap.exception &&
+        rvfi_mintstatus_wdata_fields.mil == 0
+    )
+    else
+      `uvm_error(info_tag,
+        $sformatf("minstatus.mil decreased wihout mret"));
+
+    a_mintstatus_mil_decreased: assert property(
+        rvfi_valid &&
+        rvfi_mintstatus_fields.mil < mintstatus_mil_q
+      |->
+        prev_was_mret
       or
-         // first cycle ack and mnxti write
-         // mnxti updated mil with pending interrupt
-         $past(irq_ack)
-      && $past(is_valid_mnxti_write)
-      && mintstatus_fields.mil == $past(clic.level, 3)
-      ##1 mintstatus_fields.mil == clic_oic.level
-       && clic_oic.level > max_level($past(mintthresh_fields.th), $past(mintstatus_fields.mil))
+        prev_was_valid_mnxti_write &&
+        rvfi_mintstatus_fields.mil > max_level(rvfi_mintthresh_fields.th, expected_mpil)
       or
-          // first cycle ack, mret, mpp user mode
-          $past(irq_ack)
-       && $past(is_mret_instr)
-       && $past(mcause_fields.mpp) == U_MODE
-       && $past(mintstatus_fields.mil) == $past(mcause_fields.mpil)
-      ##1 mintstatus_fields.mil > 0
-       && clic_oic.level == mintstatus_fields.mil
+        rvfi_if.rvfi_intr.intr &&
+        (intended_mode_u || prev_was_trapped_u)
+    )
+    else
+      `uvm_error(info_tag,
+        $sformatf("minstatus.mil decreased wihout mret"));
+
+    a_mintstatus_mil_increase_intended: assert property(
+        rvfi_valid &&
+        csr_mintstatus_if.rvfi_csr_wmask &&
+        rvfi_mintstatus_wdata_fields.mil > rvfi_mintstatus_fields.mil
+      |->
+        is_valid_mnxti_write
       or
-         // no taken interrupt and mret
-         // mret updates mil to mpil
-          !$past(irq_ack)
-       && $past(is_mret_instr)
-       && mintstatus_fields.mil == mcause_fields.mpil
+        rvfi_if.is_mret
+    )
+    else
+      `uvm_error(info_tag,
+        $sformatf("minstatus.mil written illegally"));
+
+    a_mintstatus_mil_increase_intended_th: assert property(
+        rvfi_valid &&
+        csr_mintstatus_if.rvfi_csr_wmask && // mil is changed
+        rvfi_mintstatus_fields.mil > 0 && // in an interrupt handler
+        rvfi_mintstatus_wdata_fields.mil > rvfi_mintstatus_fields.mil
+      |->
+        is_valid_mnxti_write && rvfi_mintstatus_wdata_fields.mil >= rvfi_mintthresh_fields.th
       or
-          // no taken interrupt but mnxti updated mil with pending interrupt
-          is_valid_mnxti_write
-       && mintstatus_fields.mil == $past(clic.level, 2)
+        rvfi_if.is_mret
+    )
+    else
+      `uvm_error(info_tag,
+        $sformatf("minstatus.mil written illegally"));
+
+      a_mintstatus_mil_increased: assert property(
+        rvfi_valid &&
+        rvfi_mintstatus_fields.mil > mintstatus_mil_q
+      |->
+        prev_was_valid_mnxti_write
       or
-          // last instruction before taken interrupt is dret, with prv set to user mode
-          // vertical interrupt handling
-          (is_last_dret_instr || $past(is_dret_instr))
-       && $past(irq_ack)
-       && $past(dcsr_fields.prv) == U_MODE
-      ##1 mintstatus_fields.mil > 0
-       && clic_oic.level == mintstatus_fields.mil
+        rvfi_if.rvfi_intr.intr
       or
-          // last instruction before taken interrupt is dret, with prv set to machine mode
-          // horizontal interrupt handling
-          (is_last_dret_instr || $past(is_dret_instr))
-       && $past(irq_ack)
-       && $past(dcsr_fields.prv) == M_MODE
-      ##1 clic_oic.level > max_level($past(mintthresh_fields.th), $past(mintstatus_fields.mil))
-       && clic_oic.level == mintstatus_fields.mil
-      or
-          // pure mret, no irq, no prior back to back instruction in wb
-          is_mret_instr
-       && !irq_ack
-       && mintstatus_fields.mil == mcause_fields.mpil
-      or
-           // mret retire immediately prior to ack, with mpp machine mode
-           irq_ack
-       &&  is_mret_instr
-       &&  mcause_fields.mpp == M_MODE
-       &&  mintstatus_fields.mil == mcause_fields.mpil
-      ##1  mintstatus_fields.mil == clic_oic.level
-       &&  clic_oic.level > max_level($past(mintthresh_fields.th), $past(mintstatus_fields.mil))
-      or
-           // mret retire immediately prior to ack, with mpp user mode
-           irq_ack
-       &&  is_mret_instr
-       &&  mcause_fields.mpp == U_MODE
-       &&  mintstatus_fields.mil == mcause_fields.mpil
-      ##1  mintstatus_fields.mil == clic_oic.level
-       &&  clic_oic.level > 0
-      or
-          // something wrong happened and instruction trapped
-          rvfi_valid[->1]
-      ##0 rvfi_trap
-      or
-          // nmi occurred
-          rvfi_valid[->1]
-      ##0 is_cause_nmi
-      ;
-    endproperty : p_clic_core_level_max_prev_irq_mintthresh_th
+        prev_was_mret
+    )
+    else
+      `uvm_error(info_tag,
+        $sformatf("minstatus.mil written illegally"));
 
 
 
-    // TODO:MT reenable after rebuild
-    //a_clic_core_level_max_prev_irq_mintthresh_th: assert property (p_clic_core_level_max_prev_irq_mintthresh_th)
-    //else
-    //  `uvm_error(info_tag,
-    //    $sformatf("internal clic level error"));
+    a_mintstatus_mil_increased_th: assert property(
+        rvfi_valid &&
+        rvfi_mintstatus_fields.mil > mintstatus_mil_q &&
+        mintstatus_mil_q > 0
 
+      |->
+        prev_was_valid_mnxti_write && rvfi_mintstatus_fields.mil >= rvfi_mintthresh_fields.th
+      or
+        rvfi_if.rvfi_intr.intr && ((rvfi_mintstatus_fields.mil >= rvfi_mintthresh_fields.th) || intended_mode_u)
+      or
+        prev_was_mret
+    )
+    else
+      `uvm_error(info_tag,
+        $sformatf("minstatus.mil written illegally"));
 
-     //// WIP section END ////
 
     // ------------------------------------------------------------------------
     // Horizontal exception handling
@@ -3048,7 +3057,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
       r_irq_i:                                 restrict property (irq_i == 0);
 
       // prevents undefined latch value out of reset in formal
-      r_last_valid_init_state:                 restrict property (p_last_valid_instr_reset_state);
       r_irq_ack_occurred_zero_out_of_of_reset: restrict property (p_irq_ack_occurred_zero_out_of_reset);
 
       // Sanity cover for mtvt table helper logic
