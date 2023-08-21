@@ -25,3 +25,34 @@
   gcc_opts: "-DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-target/spike/"
   asm_tests: <path_var>/custom/csr_access_tests/riscv_m_ro_csr_test_0.S
 
+- test: M_MCYCLE_CSR
+  iterations: 0
+  path_var: TESTS_PATH
+  # Prerequisite: install riscv-arch-test (== run 'cva6/regress/install-riscv-arch-test.sh') first.
+  # It will populate '<path_var>/riscv-arch-test/riscv-target/spike/' using the current Spike installation.
+  gcc_opts: "-DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-target/spike/"
+  asm_tests: <path_var>/custom/csr_access_tests/riscv_mcycle_csr_test_0.S
+
+- test: M_MCYCLEH_CSR
+  iterations: 0
+  path_var: TESTS_PATH
+  # Prerequisite: install riscv-arch-test (== run 'cva6/regress/install-riscv-arch-test.sh') first.
+  # It will populate '<path_var>/riscv-arch-test/riscv-target/spike/' using the current Spike installation.
+  gcc_opts: "-DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-target/spike/"
+  asm_tests: <path_var>/custom/csr_access_tests/riscv_mcycleh_csr_test_0.S
+
+- test: M_MINSTRET_CSR
+  iterations: 0
+  path_var: TESTS_PATH
+  # Prerequisite: install riscv-arch-test (== run 'cva6/regress/install-riscv-arch-test.sh') first.
+  # It will populate '<path_var>/riscv-arch-test/riscv-target/spike/' using the current Spike installation.
+  gcc_opts: "-DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-target/spike/"
+  asm_tests: <path_var>/custom/csr_access_tests/riscv_minstret_csr_test_0.S
+
+- test: M_MINSTRETH_CSR
+  iterations: 0
+  path_var: TESTS_PATH
+  # Prerequisite: install riscv-arch-test (== run 'cva6/regress/install-riscv-arch-test.sh') first.
+  # It will populate '<path_var>/riscv-arch-test/riscv-target/spike/' using the current Spike installation.
+  gcc_opts: "-DTEST_CASE_1=True -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -I<path_var>/riscv-arch-test/riscv-target/spike/"
+  asm_tests: <path_var>/custom/csr_access_tests/riscv_minstreth_csr_test_0.S
