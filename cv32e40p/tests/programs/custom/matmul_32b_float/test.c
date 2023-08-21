@@ -73,6 +73,10 @@ int main()
   static volatile int nb_cycles;
   int error = 0;
 
+  float *A = A_int;
+  float *B = B_int;
+  float *C = C_int;
+
   volatile float fdiv;
 
   unsigned int misa_val;
@@ -131,7 +135,7 @@ int main()
   // Fdiv example
   fdiv = A[0] / B[1];
 
-  error += checkInt((long int *)C, (long int *)exp_C, N*M);
+  error += checkInt(C_int, exp_C_int, N*M);
   printf("STDOUT : Number of errors in matmul : %d\n", error);
 
   return error;
