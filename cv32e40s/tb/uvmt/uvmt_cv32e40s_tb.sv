@@ -557,17 +557,11 @@ module uvmt_cv32e40s_tb;
         .support_if (cv32e40s_wrapper.support_logic_module_o_if.slave_mp),
         .rvfi_if(cv32e40s_wrapper.rvfi_instr_if),
         .csr_mepc_if(cv32e40s_wrapper.rvfi_csr_mepc_if),
+        .csr_mstatus_if(cv32e40s_wrapper.rvfi_csr_mstatus_if),
         .csr_mcause_if(cv32e40s_wrapper.rvfi_csr_mcause_if),
         .csr_mintthresh_if(cv32e40s_wrapper.rvfi_csr_mintthresh_if),
         .csr_mintstatus_if(cv32e40s_wrapper.rvfi_csr_mintstatus_if),
-        //.csr_dcsr(rvfi_csr_dcsr_if),
-        //.csr_dpc(rvfi_csr_dpc_if),
-        //.csr_dscratch0(rvfi_csr_dscratch0_if),
-        //.csr_dscratch1(rvfi_csr_dscratch1_if),
-        //.csr_mstatus(rvfi_csr_mstatus_if),
-        //.csr_mtvec(rvfi_csr_mtvec_if),
-        //.csr_tdata1(rvfi_csr_tdata1_if),
-        //.csr_tdata2(rvfi_csr_tdata2_if),
+        .csr_dcsr_if(cv32e40s_wrapper.rvfi_csr_dcsr_if),
 
         .dpc                 (cs_registers_i.dpc_rdata),
         .mintstatus          (cs_registers_i.mintstatus_rdata),
@@ -583,6 +577,10 @@ module uvmt_cv32e40s_tb;
         .mscratchcsw         (cs_registers_i.mscratchcsw_rdata),
         .mscratchcswl        (cs_registers_i.mscratchcswl_rdata),
         .dcsr                (cs_registers_i.dcsr_rdata),
+
+        //Control signals:
+        .pc_set              (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.pc_set),
+        .pc_mux              (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.pc_mux),
 
         .rvfi_mepc_wdata     (rvfi_i.rvfi_csr_mepc_wdata),
         .rvfi_mepc_wmask     (rvfi_i.rvfi_csr_mepc_wmask),
