@@ -245,7 +245,7 @@ endif
 COV_FLAGS =
 COV_REPORT = cov_report
 COV_MERGE_TARGET =
-COV_MERGE_FIND  = find $(SIM_CFG_RESULTS) -type f -name "*.ucdb" | grep -v merged.ucdb
+COV_MERGE_FIND  = find $(SIM_CFG_RESULTS) -type f -name "*.ucdb" -exec echo {} > $(VSIM_COV_MERGE_DIR)/ucdb.list \;
 COV_MERGE_FLAGS = merge -testassociated -verbose -64 -out merged.ucdb -inputs ucdb.list
 
 ifeq ($(call IS_YES,$(MERGE)),YES)
@@ -704,10 +704,9 @@ waves:
 cov_merge:
 	$(MKDIR_P) $(VSIM_COV_MERGE_DIR)
 	cd $(VSIM_COV_MERGE_DIR) && \
-		$(COV_MERGE_FIND) > $(VSIM_COV_MERGE_DIR)/ucdb.list
+		$(COV_MERGE_FIND)
 	cd $(VSIM_COV_MERGE_DIR) && \
-		$(VCOVER) \
-			$(COV_MERGE_FLAGS)
+		[ -s $(VSIM_COV_MERGE_DIR)/ucdb.list ] && $(VCOVER) $(COV_MERGE_FLAGS) || echo "ucdb.list is empty"
 cov: $(COV_MERGE_TARGET)
 	cd $(COV_DIR) && \
 		$(VSIM) \
