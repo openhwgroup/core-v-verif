@@ -3,97 +3,102 @@ name: cv32e40pv2_ci_check
 description: Commit sanity for the cv32e40pv2
 
 builds:
-  clean_fw:
-    cmd: make clean-bsp clean_test_programs
-    dir: cv32e40p/sim/uvmt
-
-  # Cleaning previous clone of corev-dv
-  clean_corev-dv:
-    cmd: make clean_riscv-dv clone_riscv-dv
-    dir: cv32e40p/sim/uvmt
-
-  # One tb per configuration
   uvmt_cv32e40p_default:
     cmd: make comp comp_corev-dv
     cfg: default
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_no_pulp:
     cmd: make comp comp_corev-dv
     cfg: no_pulp
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_pulp:
     cmd: make comp comp_corev-dv
     cfg: pulp
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_pulp_fpu:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_pulp_fpu_1cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu_1cyclat
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_pulp_fpu_2cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu_2cyclat
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_pulp_fpu_zfinx:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu_zfinx
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu_zfinx_1cyclat
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_pulp_cluster:
     cmd: make comp comp_corev-dv
     cfg: pulp_cluster
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_pulp_cluster_fpu:
     cmd: make comp comp_corev-dv
     cfg: pulp_cluster_fpu
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_pulp_cluster_fpu_1cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_cluster_fpu_1cyclat
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_pulp_cluster_fpu_2cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_cluster_fpu_2cyclat
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_pulp_cluster_fpu_zfinx:
     cmd: make comp comp_corev-dv
     cfg: pulp_cluster_fpu_zfinx
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_pulp_cluster_fpu_zfinx_1cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_cluster_fpu_zfinx_1cyclat
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
   uvmt_cv32e40p_pulp_cluster_fpu_zfinx_2cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_cluster_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
+    iss: 1
 
-# make sure that everything is compiling and running, with iss
 tests:
   hello-world:
     builds:
@@ -116,7 +121,6 @@ tests:
     description: UVM Hello World Test
     dir: cv32e40p/sim/uvmt
     iss: 1
-    cov: 0
     cmd: make test COREV=YES TEST=hello-world
 
   interrupt_test:
@@ -124,14 +128,12 @@ tests:
     description: Interrupt directed on PULP+FPU HW
     dir: cv32e40p/sim/uvmt
     iss: 1
-    cov: 0
     cmd: make test COREV=YES TEST=interrupt_test
 
   debug_test:
     build: uvmt_cv32e40p_pulp_fpu
     dir: cv32e40p/sim/uvmt
     iss: 1
-    cov: 0
     cmd: make test COREV=YES TEST=debug_test
 
   corev_rand_fp_instr_sanity_test_nonzfinx:
@@ -143,8 +145,6 @@ tests:
     test_cfg: floating_pt_instr_en
     dir: cv32e40p/sim/uvmt
     iss: 1
-    cov: 0
-    # cmd: make gen_corev-dv test COREV=YES TEST=corev_sanity_fp_instr_test
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
 
   corev_rand_fp_instr_sanity_test_zfinx:
@@ -156,13 +156,10 @@ tests:
     test_cfg: floating_pt_zfinx_instr_en
     dir: cv32e40p/sim/uvmt
     iss: 1
-    cov: 0
-    # cmd: make gen_corev-dv test COREV=YES TEST=corev_sanity_fp_zfinx_instr_test
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000" 
 
   corev_rand_pulp_instr_test:
     build: uvmt_cv32e40p_pulp
     dir: cv32e40p/sim/uvmt
     iss: 1
-    cov: 0
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_instr_test
