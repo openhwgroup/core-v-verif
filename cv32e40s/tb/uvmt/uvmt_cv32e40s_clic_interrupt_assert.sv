@@ -498,6 +498,18 @@ module uvmt_cv32e40s_clic_interrupt_assert
     LOAD_INSN
   } instr_names_e;
 
+  typedef struct packed {
+    logic [35:32] tag;
+    logic [31:0]  addr;
+    logic         is_mret;
+  } obi_tagged_txn_t;
+
+
+
+  function logic[7:0] max_level(logic[7:0] a, logic[7:0] b);
+    max_level = a > b ? a : b;
+  endfunction : max_level
+
   logic core_not_in_debug;
   logic core_in_debug;
   logic is_csr_access_instr;
@@ -577,6 +589,100 @@ module uvmt_cv32e40s_clic_interrupt_assert
   logic is_intr_exception;
 
   logic is_wfe_wakeup_event;
+
+  logic [7:0] effective_clic_level;
+
+  //arbitrary limit, 8 should be OK for now (by some margin) update as needed
+  localparam MAX_OBI_OUTSTANDING = 8;
+  logic [31:0] mtvt_write_offset;
+  logic [31:0] mtvt_read_offset;
+  logic [31:0] mtvt_table_value[0:(2**(CLIC_ID_WIDTH))-1];
+  logic is_mtvt_store_event;
+  logic no_mtvt_store_event_occurred;
+  int   items_in_obi_instr_fifo;
+  int   items_in_obi_data_wfifo;
+  logic obi_instr_pop;
+  logic obi_instr_push;
+  logic obi_instr_pending;
+  logic obi_data_pop;
+  logic obi_data_push;
+  logic obi_data_pending;
+  logic [0:8][31:0] obi_instr_addr_fifo;
+  logic [0:8][31:0] obi_data_addr_fifo;
+  logic [31:0] obi_instr_resp;
+
+  logic [2:0] obi_instr_service;
+  logic [2:0] obi_instr_service_n;
+  logic [2:0] obi_instr_request;
+  logic [2:0] obi_instr_request_n;
+  logic [2:0] obi_data_service;
+  logic [2:0] obi_data_service_n;
+  logic [2:0] obi_data_request;
+  logic [2:0] obi_data_request_n;
+
+  logic is_read_mtvt_table_val_obi;
+  localparam logic [31:0] mtvt_max_offset = ((2**CLIC_ID_WIDTH)*4-1);
+  logic [31:0] last_mtvt_table_read_addr;
+  logic is_mtvt_load_event;
+
+  logic [0:7][3:0] obi_instr_fifo_tag;
+  logic [0:7][3:0] obi_instr_fifo_tag_n;
+  logic [2:0]      obi_instr_fifo_tag_size;
+  logic [2:0]      obi_instr_fifo_tag_size_n;
+  logic [0:7][3:0] obi_data_fifo_tag;
+  logic [0:7][3:0] obi_data_fifo_tag_n;
+  logic [2:0]      obi_data_fifo_tag_size;
+  logic [2:0]      obi_data_fifo_tag_size_n;
+
+  logic is_mtvt_table_access;
+  logic is_read_from_mtvt;
+  logic [0:7][3:0]  obi_instr_tag;
+  logic [0:7][3:0]  obi_instr_tag_n;
+  logic [0:7][31:0] obi_instr_tag_addr;
+  logic [0:7][31:0] obi_instr_tag_addr_n;
+  logic [2:0]       obi_instr_tag_size;
+  logic [2:0]       obi_instr_tag_size_n;
+
+  logic obi_instr_fifo_tag_we;
+  logic obi_instr_fifo_tag_re;
+  logic obi_instr_fifo_tag_full;
+  logic obi_instr_fifo_tag_empty;
+  logic [7:0] obi_instr_fifo_tag_wena;
+  logic [7:0] obi_instr_fifo_tag_rena;
+  logic [2:0] obi_instr_fifo_tag_waddr;
+  logic [2:0] obi_instr_fifo_tag_waddr_ff;
+  logic [2:0] obi_instr_fifo_tag_raddr;
+  logic [2:0] obi_instr_fifo_tag_raddr_ff;
+  obi_tagged_txn_t obi_instr_fifo_tag_ff[8];
+  obi_tagged_txn_t obi_instr_fifo_tag_out;
+
+  logic obi_data_fifo_tag_we;
+  logic obi_data_fifo_tag_re;
+  logic obi_data_fifo_tag_full;
+  logic obi_data_fifo_tag_empty;
+  logic [7:0] obi_data_fifo_tag_wena;
+  logic [7:0] obi_data_fifo_tag_rena;
+  logic [2:0] obi_data_fifo_tag_waddr;
+  logic [2:0] obi_data_fifo_tag_waddr_ff;
+  logic [2:0] obi_data_fifo_tag_raddr;
+  logic [2:0] obi_data_fifo_tag_raddr_ff;
+  obi_tagged_txn_t obi_data_fifo_tag_ff[8];
+  obi_tagged_txn_t obi_data_fifo_tag_out;
+
+  logic [31:0] mepc_as_pointer_rdata;
+  logic pc_mux_mret_q;
+  logic obi_req_is_mret;
+  logic delayed_mret_req;
+  logic [31:0] next_pc;
+  logic irq_ack_occurred_between_valid;
+  logic minhv_high_between_valid;
+  logic [7:0] mintstatus_mil_q;
+  logic [7:0] expected_mpil;
+  logic prev_was_valid_mnxti_write;
+  logic prev_was_mret;
+  logic intended_mode_u;
+  logic prev_was_trapped_u;
+
   assign is_wfe_wakeup_event = wu_wfe;
 
   assign is_wfi_instr = is_instr(rvfi_insn, WFI);
@@ -1002,7 +1108,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // irq_ack should only be asserted on taken interrupts
     // ------------------------------------------------------------------------
 
-    logic [7:0] effective_clic_level;
+
 
     always_comb begin
       effective_clic_level = mintthresh_fields.th > mintstatus_fields.mil ? mintthresh_fields.th : mintstatus_fields.mil;
@@ -1161,34 +1267,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // fencei guarantees that updated mtvt table values are fetched
     // ------------------------------------------------------------------------
 
-    //arbitrary limit, 8 should be OK for now (by some margin) update as needed
-    localparam MAX_OBI_OUTSTANDING = 8;
-    logic [31:0] mtvt_write_offset;
-    logic [31:0] mtvt_read_offset;
-    logic [31:0] mtvt_table_value[0:(2**(CLIC_ID_WIDTH))-1];
-    logic is_mtvt_store_event;
-    logic no_mtvt_store_event_occurred;
-    int   items_in_obi_instr_fifo;
-    int   items_in_obi_data_wfifo;
-    logic obi_instr_pop;
-    logic obi_instr_push;
-    logic obi_instr_pending;
-    logic obi_data_pop;
-    logic obi_data_push;
-    logic obi_data_pending;
-    logic [0:8][31:0] obi_instr_addr_fifo;
-    logic [0:8][31:0] obi_data_addr_fifo;
-    logic [31:0] obi_instr_resp;
-
-    logic [2:0] obi_instr_service;
-    logic [2:0] obi_instr_service_n;
-    logic [2:0] obi_instr_request;
-    logic [2:0] obi_instr_request_n;
-    logic [2:0] obi_data_service;
-    logic [2:0] obi_data_service_n;
-    logic [2:0] obi_data_request;
-    logic [2:0] obi_data_request_n;
-
     always @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         obi_instr_service <= '0;
@@ -1249,8 +1327,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
     assign obi_instr_pending = obi_instr_req && !obi_instr_gnt;
     assign obi_data_pending = obi_data_req && !obi_data_gnt;
 
-    logic is_read_mtvt_table_val_obi;
-    localparam logic [31:0] mtvt_max_offset = ((2**CLIC_ID_WIDTH)*4-1);
 
     always_comb begin
       if (!rst_ni) begin
@@ -1271,7 +1347,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
       end
     end
 
-    logic [31:0] last_mtvt_table_read_addr;
+
     always @(posedge clk_i) begin
       if (!rst_ni) begin
         last_mtvt_table_read_addr <= 0;
@@ -1284,7 +1360,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
       end
     end
 
-    logic is_mtvt_load_event;
+
     assign is_mtvt_store_event = is_store_instr_addr_in_mtvt_region(rvfi_insn) && !rvfi_trap.exception && rvfi_valid;
     assign is_mtvt_load_event  = is_read_mtvt_table_val_obi;
 
@@ -1313,58 +1389,9 @@ module uvmt_cv32e40s_clic_interrupt_assert
       is_mtvt_store_event;
     endsequence : s_store_mtvt_value
 
-    logic [0:7][3:0] obi_instr_fifo_tag;
-    logic [0:7][3:0] obi_instr_fifo_tag_n;
-    logic [2:0]      obi_instr_fifo_tag_size;
-    logic [2:0]      obi_instr_fifo_tag_size_n;
-    logic [0:7][3:0] obi_data_fifo_tag;
-    logic [0:7][3:0] obi_data_fifo_tag_n;
-    logic [2:0]      obi_data_fifo_tag_size;
-    logic [2:0]      obi_data_fifo_tag_size_n;
-
-    logic is_mtvt_table_access;
-    logic is_read_from_mtvt;
-    logic [0:7][3:0]  obi_instr_tag;
-    logic [0:7][3:0]  obi_instr_tag_n;
-    logic [0:7][31:0] obi_instr_tag_addr;
-    logic [0:7][31:0] obi_instr_tag_addr_n;
-    logic [2:0]       obi_instr_tag_size;
-    logic [2:0]       obi_instr_tag_size_n;
 
     assign is_mtvt_table_access = obi_instr_addr inside { [mtvt : mtvt + ((2**CLIC_ID_WIDTH)*4)-1] } && obi_instr_push;
     assign is_read_from_mtvt = obi_instr_fifo_tag_out.addr inside { [ mtvt : mtvt + ((2**CLIC_ID_WIDTH)*4)-1 ] } && obi_instr_pop;
-
-    typedef struct packed {
-      logic [35:32] tag;
-      logic [31:0]  addr;
-      logic         is_mret;
-    } obi_tagged_txn_t;
-
-    logic obi_instr_fifo_tag_we;
-    logic obi_instr_fifo_tag_re;
-    logic obi_instr_fifo_tag_full;
-    logic obi_instr_fifo_tag_empty;
-    logic [7:0] obi_instr_fifo_tag_wena;
-    logic [7:0] obi_instr_fifo_tag_rena;
-    logic [2:0] obi_instr_fifo_tag_waddr;
-    logic [2:0] obi_instr_fifo_tag_waddr_ff;
-    logic [2:0] obi_instr_fifo_tag_raddr;
-    logic [2:0] obi_instr_fifo_tag_raddr_ff;
-    obi_tagged_txn_t obi_instr_fifo_tag_ff[8];
-    obi_tagged_txn_t obi_instr_fifo_tag_out;
-
-    logic obi_data_fifo_tag_we;
-    logic obi_data_fifo_tag_re;
-    logic obi_data_fifo_tag_full;
-    logic obi_data_fifo_tag_empty;
-    logic [7:0] obi_data_fifo_tag_wena;
-    logic [7:0] obi_data_fifo_tag_rena;
-    logic [2:0] obi_data_fifo_tag_waddr;
-    logic [2:0] obi_data_fifo_tag_waddr_ff;
-    logic [2:0] obi_data_fifo_tag_raddr;
-    logic [2:0] obi_data_fifo_tag_raddr_ff;
-    obi_tagged_txn_t obi_data_fifo_tag_ff[8];
-    obi_tagged_txn_t obi_data_fifo_tag_out;
 
     assign obi_instr_fifo_tag_wena = obi_instr_fifo_tag_we ? ( 8'h1 << obi_instr_fifo_tag_waddr ) : 8'h00;
     assign obi_instr_fifo_tag_rena = obi_instr_fifo_tag_re ? ( 8'h1 << obi_instr_fifo_tag_raddr ) : 8'h00;
@@ -1486,7 +1513,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     end
 
     //this signal remembers the return address from an mret related pointer fetch.
-    logic [31:0] mepc_as_pointer_rdata;
+
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         mepc_as_pointer_rdata <= '0;
@@ -1497,9 +1524,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
       end
     end
 
-    logic pc_mux_mret_q;
-    logic obi_req_is_mret;
-    logic delayed_mret_req;
 
     // signal obi_req_is_mret is high if the address phase originates from an mret in the pc_mux
     assign obi_req_is_mret =  (pc_mux_mret_q && !delayed_mret_req) || (!support_if.instr_bus_addr_ph_cont && (pc_mux == PC_MUX_MRET && pc_set));
@@ -1594,7 +1618,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // mepc is always set correctly when taking an interrupt
     // ------------------------------------------------------------------------
 
-    logic [31:0] next_pc;
 
     // Formal tools generate warnings for latch behavior in assign statements, use explicit always_latch here
     always_latch begin
@@ -2615,8 +2638,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // Regular execution (excludes debug, exceptions etc...)
     // ------------------------------------------------------------------------
 
-    logic irq_ack_occurred_between_valid;
-    logic minhv_high_between_valid;
 
     always @(posedge clk_i) begin
       if (!rst_ni || (rvfi_valid && !irq_ack)) begin
@@ -2792,16 +2813,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
     // clic level should be the larger of mintthresh_th and prev. taken irq
     // ------------------------------------------------------------------------
-    logic [7:0] mintstatus_mil_q;
-    logic [7:0] expected_mpil;
-    logic prev_was_valid_mnxti_write;
-    logic prev_was_mret;
-    logic intended_mode_u;
-    logic prev_was_trapped_u;
 
-    function logic[7:0] max_level(logic[7:0] a, logic[7:0] b);
-      max_level = a > b ? a : b;
-    endfunction : max_level
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
