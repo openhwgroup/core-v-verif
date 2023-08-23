@@ -200,7 +200,7 @@ endif
 # option to use local modelsim.ini file
 ifeq ($(call IS_NO,$(VSIM_LOCAL_MODELSIMINI)),YES)
 gen_corev-dv: VSIM_FLAGS += -modelsimini $(SIM_COREVDV_RESULTS)/modelsim.ini
-run:          VSIM_FLAGS += -modelsimini modelsim.ini
+run: 					VSIM_FLAGS += -modelsimini modelsim.ini
 endif
 
 ################################################################################
@@ -289,12 +289,12 @@ endif
 ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
 POST_TEST = \
 	@if grep -q "Errors:\s\+0" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
-	if grep -q "SIMULATION PASSED" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
-		exit 0; \
-	else \
-		$(COV_TEST) \
-		exit 1; \
-	fi \
+        if grep -q "SIMULATION PASSED" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
+            exit 0; \
+        else \
+            $(COV_TEST) \
+            exit 1; \
+        fi \
 	else \
 		$(COV_TEST) \
 		exit 1; \
