@@ -63,10 +63,10 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
    bit                        long_random_instr_stall; // variable set by plusarg +long_random_instr_stall
 
    bit                        max_rand_data_latency; // variable set by plusarg +max_rand_data_latency=<>
-   int                        rand_data_latency;
+   int                        max_rand_data_latency_limit;
 
    bit                        max_rand_instr_latency; // variable set by plusarg +max_rand_instr_latency=<>
-   int                        rand_instr_latency;
+   int                        max_rand_instr_latency_limit;
 
    // Agent cfg handles
    rand uvma_clknrst_cfg_c          clknrst_cfg;
@@ -182,8 +182,8 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
       }
 
       if (max_rand_data_latency) {
-         obi_memory_data_cfg.drv_slv_gnt_random_latency_max == rand_data_latency;
-         obi_memory_data_cfg.drv_slv_rvalid_random_latency_max == rand_data_latency;
+         obi_memory_data_cfg.drv_slv_gnt_random_latency_max == max_rand_data_latency_limit;
+         obi_memory_data_cfg.drv_slv_rvalid_random_latency_max == max_rand_data_latency_limit;
       }
    }
 
@@ -193,8 +193,8 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
          obi_memory_instr_cfg.drv_slv_rvalid_mode  == UVMA_OBI_MEMORY_DRV_SLV_RVALID_MODE_RANDOM_LATENCY;
       }
       if (max_rand_instr_latency) {
-         obi_memory_instr_cfg.drv_slv_gnt_random_latency_max == rand_instr_latency;
-         obi_memory_instr_cfg.drv_slv_rvalid_random_latency_max == rand_instr_latency;
+         obi_memory_instr_cfg.drv_slv_gnt_random_latency_max == max_rand_instr_latency_limit;
+         obi_memory_instr_cfg.drv_slv_rvalid_random_latency_max == max_rand_instr_latency_limit;
       }
    }
 
@@ -468,7 +468,7 @@ function void uvme_cv32e40p_cfg_c::pre_randomize();
         fixed_data_stall = 1;
       else if ($test$plusargs("random_data_stall")) begin // Random stalls on D bus
         random_data_stall = 1;
-        if($value$plusargs("max_rand_data_latency=%0d", rand_data_latency))
+        if($value$plusargs("max_rand_data_latency=%0d", max_rand_data_latency_limit))
           max_rand_data_latency = 1;
       end else if ($test$plusargs("long_random_data_stall"))  // Long Random stalls on D bus
         long_random_data_stall = 1;
@@ -483,7 +483,7 @@ function void uvme_cv32e40p_cfg_c::pre_randomize();
         fixed_instr_stall = 1;
       else if ($test$plusargs("random_instr_stall")) begin  // Random stalls on I bus
         random_instr_stall = 1;
-        if($value$plusargs("max_rand_instr_latency=%0d", rand_instr_latency))
+        if($value$plusargs("max_rand_instr_latency=%0d", max_rand_instr_latency_limit))
           max_rand_instr_latency = 1;
       end else if ($test$plusargs("long_random_instr_stall"))  // Long Random stalls on I bus
         long_random_instr_stall = 1;
