@@ -412,10 +412,10 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
 
     |->
     ((operand_a == (lfsr1))
-    || id_instr_decoded.rs1.gpr.raw == REGISTER_X0)
+    || id_instr_decoded.rs1.gpr.gpr == X0)
 
     && ((operand_b == (lfsr2))
-    || id_instr_decoded.rs2.gpr.raw == REGISTER_X0);
+    || id_instr_decoded.rs2.gpr.gpr == X0);
 
   endproperty
 
@@ -440,7 +440,7 @@ module uvmt_cv32e40s_xsecure_dummy_and_hint_assert
     && id_instr_decoded.instr != BLTU //branch instructions do not use a destination register
 
     |->
-    id_instr_decoded.rd.gpr.raw == REGISTER_X0;
+    id_instr_decoded.rd.gpr.gpr == X0;
   endproperty
 
 
