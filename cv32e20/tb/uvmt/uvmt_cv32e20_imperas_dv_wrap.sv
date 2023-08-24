@@ -1,6 +1,6 @@
 //
 // Copyright 2022 OpenHW Group
-// Copyright 2022 Imperas
+// Copyright 2023 Imperas
 //
 // Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,8 +20,9 @@
 `ifndef __UVMT_CV32E20_IMPERAS_DV_WRAP_SV__
 `define __UVMT_CV32E20_IMPERAS_DV_WRAP_SV__
 
-`define DUT_PATH dut_wrap.cv32e20_tb_wrapper_i
-`define RVFI_IF  `DUT_PATH.rvfi_i
+`define DUT_PATH dut_wrap.cv32e20_top_i
+`define RVFI_IF  `DUT_PATH
+`define DUT_CORE_PATH dut_wrap.cv32e20_top_i.u_cve2_top.u_cve2_core
 
 `define STRINGIFY(x) `"x`"
 
@@ -72,175 +73,7 @@
         void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), irq_``IRQ_NAME)); \
     end
 
-////////////////////////////////////////////////////////////////////////////
-// CSR definitions
-////////////////////////////////////////////////////////////////////////////
-`define CSR_FFLAGS_ADDR        32'h001
-`define CSR_FRM_ADDR           32'h002
-`define CSR_FCSR_ADDR          32'h003
-`define CSR_JVT_ADDR           32'h017
-`define CSR_MSTATUS_ADDR       32'h300
-`define CSR_MISA_ADDR          32'h301
-`define CSR_MIE_ADDR           32'h304
-`define CSR_MTVEC_ADDR         32'h305
-`define CSR_MCOUNTEREN_ADDR    32'h306
-`define CSR_MENVCFG_ADDR       32'h30A
-`define CSR_MSTATEEN0_ADDR     32'h30C
-`define CSR_MSTATEEN1_ADDR     32'h30D
-`define CSR_MSTATEEN2_ADDR     32'h30E
-`define CSR_MSTATEEN3_ADDR     32'h30F
-`define CSR_MTVT_ADDR          32'h307 // only available when SMCLIC=1
-`define CSR_MSTATUSH_ADDR      32'h310
-`define CSR_MENVCFGH_ADDR      32'h31A
-`define CSR_MSTATEEN0H_ADDR    32'h31C
-`define CSR_MSTATEEN1H_ADDR    32'h31D
-`define CSR_MSTATEEN2H_ADDR    32'h31E
-`define CSR_MSTATEEN3H_ADDR    32'h31F
-`define CSR_MCOUNTINHIBIT_ADDR 32'h320
-`define CSR_MSCRATCH_ADDR      32'h340
-`define CSR_MEPC_ADDR          32'h341
-`define CSR_MCAUSE_ADDR        32'h342
-`define CSR_MTVAL_ADDR         32'h343
-`define CSR_MIP_ADDR           32'h344
-`define CSR_MNXTI_ADDR         32'h345 // only available when SMCLIC=1
-`define CSR_MINTSTATUS_ADDR    32'h346 // only available when SMCLIC=1
-`define CSR_MINTTHRESH_ADDR    32'h347 // only available when SMCLIC=1
-`define CSR_MSCRATCHCSW_ADDR   32'h348 // only available when SMCLIC=1
-`define CSR_MCLICBASE_ADDR     32'h34A // only available when SMCLIC=1
-`define CSR_MSECCFG            32'h747
-`define CSR_MSECCFGH           32'h757
-
-`define CSR_TSELECT_ADDR       32'h7A0 // only when DBG_NUM_TRIGGERS > 0
-`define CSR_TDATA1_ADDR        32'h7A1 // only when DBG_NUM_TRIGGERS > 0
-`define CSR_TDATA2_ADDR        32'h7A2 // only when DBG_NUM_TRIGGERS > 0
-`define CSR_TDATA3_ADDR        32'h7A3 // only when DBG_NUM_TRIGGERS > 0
-`define CSR_TINFO_ADDR         32'h7A4 // only when DBG_NUM_TRIGGERS > 0
-`define CSR_TCONTROL_ADDR      32'h7A5 // only when DBG_NUM_TRIGGERS > 0
-`define CSR_MCONTEXT_ADDR      32'h7A8
-`define CSR_MSCONTEXT_ADDR     32'h7A9 // ???
-`define CSR_SCONTEXT_ADDR      32'h7AA
-`define CSR_DCSR_ADDR          32'h7B0
-`define CSR_DPC_ADDR           32'h7B1
-`define CSR_DSCRATCH0_ADDR     32'h7B2
-`define CSR_DSCRATCH1_ADDR     32'h7B3
-`define CSR_MCYCLE_ADDR        32'hB00
-`define CSR_MINSTRET_ADDR      32'hB02
-
-`define CSR_CYCLE_ADDR         32'hC00
-`define CSR_INSTRET_ADDR       32'hC02
-`define CSR_CYCLEH_ADDR        32'hC80
-`define CSR_INSTRETH_ADDR      32'hC82
-
-`define CSR_LPSTART0_ADDR      32'hCC0
-`define CSR_LPEND0_ADDR        32'hCC1
-`define CSR_LPCOUNT0_ADDR      32'hCC2
-`define CSR_LPSTART1_ADDR      32'hCC4
-`define CSR_LPEND1_ADDR        32'hCC5
-`define CSR_LPCOUNT1_ADDR      32'hCC6
-
-`define CSR_MHPMCOUNTER3_ADDR  32'hB03
-`define CSR_MHPMCOUNTER4_ADDR  32'hB04
-`define CSR_MHPMCOUNTER5_ADDR  32'hB05
-`define CSR_MHPMCOUNTER6_ADDR  32'hB06
-`define CSR_MHPMCOUNTER7_ADDR  32'hB07
-`define CSR_MHPMCOUNTER8_ADDR  32'hB08
-`define CSR_MHPMCOUNTER9_ADDR  32'hB09
-`define CSR_MHPMCOUNTER10_ADDR 32'hB0A
-`define CSR_MHPMCOUNTER11_ADDR 32'hB0B
-`define CSR_MHPMCOUNTER12_ADDR 32'hB0C
-`define CSR_MHPMCOUNTER13_ADDR 32'hB0D
-`define CSR_MHPMCOUNTER14_ADDR 32'hB0E
-`define CSR_MHPMCOUNTER15_ADDR 32'hB0F
-`define CSR_MHPMCOUNTER16_ADDR 32'hB10
-`define CSR_MHPMCOUNTER17_ADDR 32'hB11
-`define CSR_MHPMCOUNTER18_ADDR 32'hB12
-`define CSR_MHPMCOUNTER19_ADDR 32'hB13
-`define CSR_MHPMCOUNTER20_ADDR 32'hB14
-`define CSR_MHPMCOUNTER21_ADDR 32'hB15
-`define CSR_MHPMCOUNTER22_ADDR 32'hB16
-`define CSR_MHPMCOUNTER23_ADDR 32'hB17
-`define CSR_MHPMCOUNTER24_ADDR 32'hB18
-`define CSR_MHPMCOUNTER25_ADDR 32'hB19
-`define CSR_MHPMCOUNTER26_ADDR 32'hB1A
-`define CSR_MHPMCOUNTER27_ADDR 32'hB1B
-`define CSR_MHPMCOUNTER28_ADDR 32'hB1C
-`define CSR_MHPMCOUNTER29_ADDR 32'hB1D
-`define CSR_MHPMCOUNTER30_ADDR 32'hB1E
-`define CSR_MHPMCOUNTER31_ADDR 32'hB1F
-
-`define CSR_MHPMCOUNTER3H_ADDR  32'hB83
-`define CSR_MHPMCOUNTER4H_ADDR  32'hB84
-`define CSR_MHPMCOUNTER5H_ADDR  32'hB85
-`define CSR_MHPMCOUNTER6H_ADDR  32'hB86
-`define CSR_MHPMCOUNTER7H_ADDR  32'hB87
-`define CSR_MHPMCOUNTER8H_ADDR  32'hB88
-`define CSR_MHPMCOUNTER9H_ADDR  32'hB89
-`define CSR_MHPMCOUNTER10H_ADDR 32'hB8A
-`define CSR_MHPMCOUNTER11H_ADDR 32'hB8B
-`define CSR_MHPMCOUNTER12H_ADDR 32'hB8C
-`define CSR_MHPMCOUNTER13H_ADDR 32'hB8D
-`define CSR_MHPMCOUNTER14H_ADDR 32'hB8E
-`define CSR_MHPMCOUNTER15H_ADDR 32'hB8F
-`define CSR_MHPMCOUNTER16H_ADDR 32'hB90
-`define CSR_MHPMCOUNTER17H_ADDR 32'hB91
-`define CSR_MHPMCOUNTER18H_ADDR 32'hB92
-`define CSR_MHPMCOUNTER19H_ADDR 32'hB93
-`define CSR_MHPMCOUNTER20H_ADDR 32'hB94
-`define CSR_MHPMCOUNTER21H_ADDR 32'hB95
-`define CSR_MHPMCOUNTER22H_ADDR 32'hB96
-`define CSR_MHPMCOUNTER23H_ADDR 32'hB97
-`define CSR_MHPMCOUNTER24H_ADDR 32'hB98
-`define CSR_MHPMCOUNTER25H_ADDR 32'hB99
-`define CSR_MHPMCOUNTER26H_ADDR 32'hB9A
-`define CSR_MHPMCOUNTER27H_ADDR 32'hB9B
-`define CSR_MHPMCOUNTER28H_ADDR 32'hB9C
-`define CSR_MHPMCOUNTER29H_ADDR 32'hB9D
-`define CSR_MHPMCOUNTER30H_ADDR 32'hB9E
-`define CSR_MHPMCOUNTER31H_ADDR 32'hB9F
-
-`define CSR_MHPMEVENT3_ADDR     32'h323
-`define CSR_MHPMEVENT4_ADDR     32'h324
-`define CSR_MHPMEVENT5_ADDR     32'h325
-`define CSR_MHPMEVENT6_ADDR     32'h326
-`define CSR_MHPMEVENT7_ADDR     32'h327
-`define CSR_MHPMEVENT8_ADDR     32'h328
-`define CSR_MHPMEVENT9_ADDR     32'h329
-`define CSR_MHPMEVENT10_ADDR    32'h32A
-`define CSR_MHPMEVENT11_ADDR    32'h32B
-`define CSR_MHPMEVENT12_ADDR    32'h32C
-`define CSR_MHPMEVENT13_ADDR    32'h32D
-`define CSR_MHPMEVENT14_ADDR    32'h32E
-`define CSR_MHPMEVENT15_ADDR    32'h32F
-`define CSR_MHPMEVENT16_ADDR    32'h330
-`define CSR_MHPMEVENT17_ADDR    32'h331
-`define CSR_MHPMEVENT18_ADDR    32'h332
-`define CSR_MHPMEVENT19_ADDR    32'h333
-`define CSR_MHPMEVENT20_ADDR    32'h334
-`define CSR_MHPMEVENT21_ADDR    32'h335
-`define CSR_MHPMEVENT22_ADDR    32'h336
-`define CSR_MHPMEVENT23_ADDR    32'h337
-`define CSR_MHPMEVENT24_ADDR    32'h338
-`define CSR_MHPMEVENT25_ADDR    32'h339
-`define CSR_MHPMEVENT26_ADDR    32'h33A
-`define CSR_MHPMEVENT27_ADDR    32'h33B
-`define CSR_MHPMEVENT28_ADDR    32'h33C
-`define CSR_MHPMEVENT29_ADDR    32'h33D
-`define CSR_MHPMEVENT30_ADDR    32'h33E
-`define CSR_MHPMEVENT31_ADDR    32'h33F
-
-`define CSR_MCYCLEH_ADDR        32'hB80
-`define CSR_MINSTRETH_ADDR      32'hB82
-
-`define CSR_CPUCTRL_ADDR        32'hBF0
-`define CSR_SECURESEED0_ADDR    32'hBF9
-`define CSR_SECURESEED1_ADDR    32'hBFA
-`define CSR_SECURESEED2_ADDR    32'hBFC
-
-`define CSR_MVENDORID_ADDR      32'hF11
-`define CSR_MARCHID_ADDR        32'hF12
-`define CSR_MIMPID_ADDR         32'hF13
-`define CSR_MHARTID_ADDR        32'hF14
-`define CSR_MCONFIGPTR_ADDR     32'hF15
+`include "csr_macros.svh" // CSR address
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module wrapper for Imperas DV.
@@ -267,11 +100,11 @@ module uvmt_cv32e20_imperas_dv_wrap
 
     trace2api #(
         .CMP_PC      (1),
-        .CMP_INS     (0),
-        .CMP_GPR     (0),
+        .CMP_INS     (1),
+        .CMP_GPR     (1),
         .CMP_FPR     (0),
         .CMP_VR      (0),
-        .CMP_CSR     (0)
+        .CMP_CSR     (1)
     )
     trace2api(rvvi);
 
@@ -292,17 +125,231 @@ module uvmt_cv32e20_imperas_dv_wrap
     // instance the ability to register a callback on fetch, in order to assert
     // this signal.
     ////////////////////////////////////////////////////////////////////////////
-//    assign rvvi.clk            = `RVFI_IF.clk_i;
-//    assign rvvi.valid[0][0]    = `RVFI_IF.rvfi_valid;
-//    assign rvvi.order[0][0]    = `RVFI_IF.rvfi_order;
-//    assign rvvi.insn[0][0]     = `RVFI_IF.rvfi_insn;
-//    assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap.trap;
-//    assign rvvi.intr[0][0]     = `RVFI_IF.rvfi_intr.intr;
+    assign rvvi.clk            = `RVFI_IF.clk_i;
+    assign rvvi.valid[0][0]    = `RVFI_IF.rvfi_valid;
+    assign rvvi.order[0][0]    = `RVFI_IF.rvfi_order;
+    assign rvvi.insn[0][0]     = `RVFI_IF.rvfi_insn;
+    assign rvvi.trap[0][0]     = `RVFI_IF.rvfi_trap;
+    assign rvvi.intr[0][0]     = `RVFI_IF.rvfi_intr;
 //    assign rvvi.mode[0][0]     = `RVFI_IF.rvfi_mode;
 //    assign rvvi.ixl[0][0]      = `RVFI_IF.rvfi_ixl;
-//    assign rvvi.pc_rdata[0][0] = `RVFI_IF.rvfi_pc_rdata;
-//    //  assign rvvi.pc_wdata[0][0] = `RVFI_IF.rvfi_pc_wdata;
-//
+    assign rvvi.pc_rdata[0][0] = `RVFI_IF.rvfi_pc_rdata;
+    assign rvvi.pc_wdata[0][0] = `RVFI_IF.rvfi_pc_wdata;
+    
+    bit rvfi_csr_write;
+    assign rvfi_csr_write = ( `DUT_CORE_PATH.csr_access &&
+                              `DUT_CORE_PATH.csr_op_en &&
+                             ((`DUT_CORE_PATH.csr_op == 2'b01) | // CSR_OP_WRITE
+                              (`DUT_CORE_PATH.csr_op == 2'b10) | // CSR_OP_SET  
+                              (`DUT_CORE_PATH.csr_op == 2'b11))  // CSR_OP_CLEAR  
+                             );  
+    
+
+// CSR_MINSTRET
+    bit csr_minstret_wb; 
+    wire [31:0] csr_minstret_w; 
+    wire [31:0] csr_minstret_r; 
+    assign csr_minstret_r = `DUT_CORE_PATH.cs_registers_i.minstret_raw[31:0] ; 
+    assign rvvi.csr[0][0]['hb02]    = csr_minstret_w | csr_minstret_r; 
+    assign rvvi.csr_wb[0][0]['hb02] = csr_minstret_wb; 
+    always @(rvvi.csr[0][0]['hb02]) begin 
+        csr_minstret_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_minstret_wb) begin 
+            csr_minstret_wb = 0; 
+        end 
+    end
+
+//CSR_MTVEC
+    wire [31:0] csr_mtvec_w; 
+    wire [31:0] csr_mtvec_wmask; 
+    wire [31:0] csr_mtvec_r;
+    bit         csr_mtvec_wb;
+    assign csr_mtvec_wmask =32'hFFFFFF00;                          
+    assign csr_mtvec_w = `DUT_CORE_PATH.cs_registers_i.csr_wdata_int & (csr_mtvec_wmask);
+    assign csr_mtvec_r = `DUT_CORE_PATH.cs_registers_i.csr_mtvec_o;
+
+//    assign rvvi.csr[0][0]['h305]    = csr_mtvec_w | csr_mtvec_r;
+    assign rvvi.csr[0][0]['h305]    = csr_mtvec_r;
+    assign rvvi.csr_wb[0][0]['h305] = csr_mtvec_wb; 
+
+    always @(posedge rvvi.clk) begin 
+        if ( rvfi_csr_write && // CSR_OP_READ
+                      (`DUT_CORE_PATH.csr_addr == 12'h305) ) 
+           csr_mtvec_wb = 1;
+        else
+           csr_mtvec_wb = 0;
+    end
+
+// CSR_MSCRATCH  0x340
+    wire [31:0] csr_mscratch_w; 
+    wire [31:0] csr_mscratch_wmask; 
+    wire [31:0] csr_mscratch_r;
+    bit         csr_mscratch_wb;
+    assign csr_mscratch_wmask =32'hFFFFFFFF;                          
+    assign csr_mscratch_w = `DUT_CORE_PATH.cs_registers_i.csr_wdata_int & (csr_mscratch_wmask);
+    assign csr_mscratch_r = `DUT_CORE_PATH.cs_registers_i.mscratch_q;
+
+    assign rvvi.csr[0][0]['h340]    = csr_mscratch_r;
+    assign rvvi.csr_wb[0][0]['h340] = csr_mscratch_wb; 
+
+    always @(posedge rvvi.clk) begin 
+        if ( rvfi_csr_write && (`DUT_CORE_PATH.csr_addr == 12'h340) ) 
+           csr_mscratch_wb = 1;
+        else
+           csr_mscratch_wb = 0;
+    end
+
+// CSR_MSTATUS 0x300
+    wire [31:0] csr_mstatus_r;
+    bit         csr_mstatus_wb;
+
+// LRH - mstatus timing mismatch between DUT and RefModel. 
+// if doing a csr write using mstatus_q passes, but mret instructions fail.
+// using mstatus_d for mret instruction passes, but fails with csr writes.
+// 
+    assign csr_mstatus_r[31:0] = {10'b0000000000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[0],  //tw
+                                  3'b000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[1],  //mprv
+                                  4'b0000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[3:2],//mpp
+                                  3'b000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[4],  //mpie
+                                  3'b000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[5],  //mie
+                                  3'b000};
+    assign rvvi.csr[0][0]['h300]    = csr_mstatus_r;
+    assign rvvi.csr_wb[0][0]['h300] = csr_mstatus_wb; 
+    always @(rvvi.csr[0][0]['h300]) begin 
+        csr_mstatus_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_mstatus_wb) begin 
+            csr_mstatus_wb = 0; 
+        end 
+    end
+  
+ // CSR_MEPC 0x341
+    wire [31:0] csr_mepc_w; 
+    wire [31:0] csr_mepc_wmask; 
+    wire [31:0] csr_mepc_r;
+    bit         csr_mepc_wb;
+//    assign csr_mepc_wmask =32'hFFFFFFFE;                          
+//    assign csr_mepc_w = `DUT_CORE_PATH.cs_registers_i.csr_wdata_int & (csr_mepc_wmask);
+    assign csr_mepc_r = `DUT_CORE_PATH.cs_registers_i.mepc_q;
+
+    assign rvvi.csr[0][0]['h341]    = csr_mepc_r;
+    assign rvvi.csr_wb[0][0]['h341] = csr_mepc_wb; 
+
+//    always @(posedge rvvi.clk) begin 
+//        if ( `DUT_CORE_PATH.cs_registers_i.mepc_en ) //mepc_en
+//           csr_mepc_wb = 1;
+//        else
+//           csr_mepc_wb = 0;
+//    end
+    always @(rvvi.csr[0][0]['h341]) begin 
+        csr_mepc_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_mepc_wb) begin 
+            csr_mepc_wb = 0; 
+        end 
+    end
+
+//CSR_MCAUSE 0x342
+    wire [31:0] csr_mcause_r;
+    bit         csr_mcause_wb;
+    assign csr_mcause_r = {`DUT_CORE_PATH.cs_registers_i.mcause_q[5], 26'b0,`DUT_CORE_PATH.cs_registers_i.mcause_q[4:0]};
+    assign rvvi.csr[0][0]['h342]    = csr_mcause_r;
+    assign rvvi.csr_wb[0][0]['h342] = csr_mcause_wb; 
+//    always @(posedge rvvi.clk) begin 
+//        if ( `DUT_CORE_PATH.cs_registers_i.mcause_en ) //mcause_en
+//           csr_mcause_wb = 1;
+//        else
+//           csr_mcause_wb = 0;
+//    end
+    always @(rvvi.csr[0][0]['h342]) begin 
+        csr_mcause_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_mcause_wb) begin 
+            csr_mcause_wb = 0; 
+        end 
+    end
+//CSR_MTVAL 0x343
+    wire [31:0] csr_mtval_r;
+    bit         csr_mtval_wb;
+    assign csr_mtval_r = `DUT_CORE_PATH.cs_registers_i.mtval_q;
+    assign rvvi.csr[0][0]['h343]    = csr_mtval_r;
+    assign rvvi.csr_wb[0][0]['h343] = csr_mtval_wb; 
+    always @(posedge rvvi.clk) begin 
+        if ( rvfi_csr_write && (`DUT_CORE_PATH.csr_addr == 12'h343) ) //mtval_en
+           csr_mtval_wb = 1;
+        else
+           csr_mtval_wb = 0;
+    end
+
+//CSR_MIE 0x304
+    wire [31:0] csr_mie_r;
+    bit         csr_mie_wb;
+    assign csr_mie_r = {1'b0,
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[17:3], // irq_fast[14:0]
+                        3'b0,
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[2], // irq_external
+                        3'b0,
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[1], // irq_timer
+                        3'b0,
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[0], // irq_software
+                        3'b0};
+    assign rvvi.csr[0][0]['h304]    = csr_mie_r;
+    assign rvvi.csr_wb[0][0]['h304] = csr_mie_wb; 
+    always @(rvvi.csr[0][0]['h304]) begin 
+        csr_mie_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_mie_wb) begin 
+            csr_mie_wb = 0; 
+        end 
+    end
+
+//CSR_DCSR_ADDR 0x7B0
+    wire [31:0] csr_dcsr_r;
+    bit         csr_dcsr_wb;
+    assign csr_dcsr_r = `DUT_CORE_PATH.cs_registers_i.dcsr_q;
+    assign rvvi.csr[0][0]['h7B0]    = csr_dcsr_r;
+    assign rvvi.csr_wb[0][0]['h7B0] = csr_dcsr_wb; 
+    always @(rvvi.csr[0][0]['h7B0]) begin 
+        csr_dcsr_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_dcsr_wb) begin 
+            csr_dcsr_wb = 0; 
+        end 
+    end
+
+//CSR_DPC 0x7B1
+    wire [31:0] csr_dpc_r;
+    bit         csr_dpc_wb;
+    assign csr_dpc_r = `DUT_CORE_PATH.cs_registers_i.depc_q;
+    assign rvvi.csr[0][0]['h7B1]    = csr_dpc_r;
+    assign rvvi.csr_wb[0][0]['h7B1] = csr_dpc_wb; 
+    always @(rvvi.csr[0][0]['h7B1]) begin 
+        csr_dpc_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_dpc_wb) begin 
+            csr_dpc_wb = 0; 
+        end 
+    end
+
+//rvviApiPkg.sv
+//rvviRefCsrCompareEnable
+//rvviRefCsrCompareMask
+//rvviRefCsrSetVolatileMask
+//rvviRefCsrsCompare
+
 //    `RVVI_SET_CSR( `CSR_MSTATUS_ADDR,       mstatus       )
 //    `RVVI_SET_CSR( `CSR_MISA_ADDR,          misa          )
 //    `RVVI_SET_CSR( `CSR_MIE_ADDR,           mie           )
@@ -319,7 +366,7 @@ module uvmt_cv32e20_imperas_dv_wrap
 //    //  `RVVI_SET_CSR( `CSR_MINSTRETH_ADDR,     minstreth     )
 //    `RVVI_SET_CSR( `CSR_MVENDORID_ADDR,     mvendorid     )
 //    `RVVI_SET_CSR( `CSR_MARCHID_ADDR,       marchid       )
-//    //  `RVVI_SET_CSR( `CSR_MIMPID_ADDR,        mimpid        )
+    //  `RVVI_SET_CSR( `CSR_MIMPID_ADDR,        mimpid        )
 //    `RVVI_SET_CSR( `CSR_MHARTID_ADDR,       mhartid       )
 //
 //    //  `RVVI_SET_CSR( `CSR_TSELECT_ADDR,       tselect       )
@@ -343,34 +390,28 @@ module uvmt_cv32e20_imperas_dv_wrap
 //    `RVVI_SET_CSR(`CSR_LPCOUNT1_ADDR  , lpcount1  )
 //    `RVVI_SET_CSR(`CSR_LPSTART1_ADDR  , lpstart1  )
 //    `RVVI_SET_CSR(`CSR_LPEND1_ADDR    , lpend1    )
-//    ////////////////////////////////////////////////////////////////////////////
-//    // Assign the RVVI GPR registers
-//    ////////////////////////////////////////////////////////////////////////////
-//    bit [31:0] XREG[32];
-//    genvar gi;
-//    generate
-//        for(gi=0; gi<32; gi++) begin
-//            assign rvvi.x_wdata[0][0][gi] = XREG[gi];
-//        end
-//    endgenerate
-//
-//    always @(*) begin
-//        int i;
-//        for (i=1; i<32; i++) begin
-//            XREG[i] = 32'b0;
-//            // TODO: This current RVFI implementation will only allow a single destination
-//            //       register to be written. For some instructions this is not sufficient
-//            //       This code will need enhancing once the RVFI has the ability to describe
-//            //       multiple target register writes, for a single instruction
-//            if (`RVFI_IF.rvfi_rd_addr[0]==5'(i))
-//            XREG[i] = `RVFI_IF.rvfi_rd_wdata[0];
-//            if (`RVFI_IF.rvfi_rd_addr[1]==5'(i))
-//            XREG[i] = `RVFI_IF.rvfi_rd_wdata[1];
-//        end
-//    end
-//
-//    assign rvvi.x_wb[0][0] = (1 << `RVFI_IF.rvfi_rd_addr[0] | 1 << `RVFI_IF.rvfi_rd_addr[1]); // TODO: originally rvfi_rd_addr
-//
+    ////////////////////////////////////////////////////////////////////////////
+    // Assign the RVVI GPR registers
+    ////////////////////////////////////////////////////////////////////////////
+    bit [31:0] XREG[32];
+    genvar gi;
+    generate
+        for(gi=0; gi<32; gi++) begin
+            assign rvvi.x_wdata[0][0][gi] = XREG[gi];
+        end
+    endgenerate
+
+    always @(*) begin
+        int i;
+        for (i=1; i<32; i++) begin
+            XREG[i] = 32'b0;
+            if (`RVFI_IF.rvfi_rd_addr==5'(i))
+            XREG[i] = `RVFI_IF.rvfi_rd_wdata;
+        end
+    end
+
+    assign rvvi.x_wb[0][0] = (1 << `RVFI_IF.rvfi_rd_addr);
+
 //    ////////////////////////////////////////////////////////////////////////////
 //    // Assign the RVVI F GPR registers
 //    ////////////////////////////////////////////////////////////////////////////
@@ -476,6 +517,8 @@ module uvmt_cv32e20_imperas_dv_wrap
 
     hart_id = 32'h0000_0000;
 
+//    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MINSTRET_ADDR     ));
+    
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLE_ADDR        ));
 
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRET_ADDR      ));
@@ -486,6 +529,7 @@ module uvmt_cv32e20_imperas_dv_wrap
     // pending and taken
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MIP_ADDR          ));
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
+    void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_MSTATUS_ADDR, 'h40));// UBE always 0.
 
 //    // define asynchronous grouping
 //    // Interrupts
