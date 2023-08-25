@@ -21,9 +21,12 @@
 // CV32E40P CORE-V assembly program generator - extension of the RISC-V assembly program generator.
 // 
 // Overrides:
+//   - gen_interrupt_vector_table()
 //   - gen_program_header()
 //   - gen_test_done()
 //   - get_directed_instr_stream()
+//   - init_gpr()
+//   - init_floating_point_gpr()
 //-----------------------------------------------------------------------------------------
 
 class cv32e40p_asm_program_gen extends corev_asm_program_gen;
@@ -275,8 +278,10 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
   // Override of init_gpr to remove cfg.dp from initiailization if a debug section is generated
   virtual function void init_gpr();
     string str;
+    string reg_name;
     bit [DATA_WIDTH-1:0] reg_val;
     cv32e40p_instr_gen_config cfg_corev;
+    bit [31:0] imm;
 
     `DV_CHECK($cast(cfg_corev, cfg))    
     // Init general purpose registers with random values
@@ -292,8 +297,19 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
           ['h10        : 'hEFFF_FFFF] :/ 1,
           ['hF000_0000 : 'hFFFF_FFFF] :/ 1
         };)
-      str = $sformatf("%0sli x%0d, 0x%0x", indent, i, reg_val);
+      str = $sformatf("%0sli%0s x%0d, 0x%0x", indent, indent, i, reg_val);
       instr_stream.push_back(str);
+    end
+    //after initializing all gprs, for zfinx extention tests again initialize
+    //gprs for floating point instructions
+    if(RV32ZFINX inside {supported_isa}) begin
+      foreach(cfg_corev.zfinx_reserved_gpr[i]) begin
+        if (cfg_corev.zfinx_reserved_gpr[i] inside {ZERO, RA, SP, GP, TP}) continue;
+        imm = get_rand_spf_value();
+        reg_name = cfg_corev.zfinx_reserved_gpr[i].name();
+        str = $sformatf("%0sli%0s %0s, 0x%0x", indent, indent, reg_name.tolower(), imm);
+        instr_stream.push_back(str);
+      end
     end
   endfunction
 
@@ -351,6 +367,21 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
         add_directed_instr_stream(stream_name, stream_freq);
       end
     end
+  endfunction
+
+  // Override init_floating_point_gpr
+  virtual function void init_floating_point_gpr();
+    int int_gpr;
+    string str;
+    for(int i = 0; i < NUM_FLOAT_GPR; i++) begin
+      randcase
+        RV32F inside {supported_isa}: init_floating_point_gpr_with_spf(i);
+        RV64D inside {supported_isa}: init_floating_point_gpr_with_dpf(i);
+      endcase
+    end
+    // Initialize rounding mode of FCSR
+    str = $sformatf("%0sfsrmi%0s %0d", indent, indent, cfg.fcsr_rm);
+    instr_stream.push_back(str);
   endfunction
 
 endclass : cv32e40p_asm_program_gen
