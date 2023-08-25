@@ -76,7 +76,8 @@ class Test:
         self.simulation_passed = DEFAULT_SIMULATION_PASSED
         self.simulation_failed = DEFAULT_SIMULATION_FAILED
         self.iss = DEFAULT_ISS
-        self.num = 1
+        # value is handled in main cv_regress script
+        self.num = None
         self.builds = []
 
         for k, v in kwargs.items():

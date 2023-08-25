@@ -160,8 +160,12 @@ def read_file(args, file):
             check_valid_test(args.project, test.testname)
 
         # Determine if a test is indexed for setting test iterations
-        if args.num:
-            test.num = int(args.num)
+        # if num is not specified in the yaml, it can be overriden by args.num or set to 1 to avoid issues
+        # else, if it is not set to 1 (unique), it can be overriden by args.num if argument is defined
+        if test.num == None:
+            test.num = int(args.num or 1)
+        elif test.num != 1:
+            test.num = int(args.num or test.num)
 
         regression.add_test(test)
 
