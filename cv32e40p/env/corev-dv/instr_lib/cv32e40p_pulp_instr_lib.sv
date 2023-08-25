@@ -219,7 +219,7 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
         riscv_exclude_instr = {riscv_exclude_instr, BEQ, BNE, BLT, BGE, BLTU, BGEU, C_BEQZ, C_BNEZ, CV_BEQIMM, CV_BNEIMM};
 
     if(no_compressed)
-        riscv_exclude_group = {riscv_exclude_group, RV32C};
+        riscv_exclude_group = {riscv_exclude_group, RV32C, RV32FC};
 
     if(no_fence)
         riscv_exclude_instr = {riscv_exclude_instr, FENCE, FENCE_I};

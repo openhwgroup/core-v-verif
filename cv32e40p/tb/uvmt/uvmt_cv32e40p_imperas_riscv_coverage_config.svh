@@ -18,6 +18,7 @@
   `ifdef FPU
     `ifndef ZFINX
       `define COVER_RV32F
+      `define COVER_RV32ZCF
     `else
       `define COVER_RV32ZFINX
     `endif
