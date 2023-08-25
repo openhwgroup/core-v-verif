@@ -187,6 +187,7 @@ export TBSRC_HOME = $(CORE_V_VERIF)/$(CV_CORE_LC)/tb
 
 SIM_LIBS    := $(CORE_V_VERIF)/lib/sim_libs
 
+RTLSRC_VLOG_CORE_TOP := $(CV_CORE_LC)_top
 RTLSRC_VLOG_TB_TOP	:= $(basename $(notdir $(TBSRC_TOP)))
 RTLSRC_VOPT_TB_TOP	:= $(addsuffix _vopt, $(RTLSRC_VLOG_TB_TOP))
 
