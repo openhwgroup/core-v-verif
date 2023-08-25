@@ -1197,7 +1197,7 @@ package riscv_instr_pkg;
   parameter int DATA_WIDTH  = 32;
 
   // Parameters for output assembly program formatting
-  parameter int MAX_INSTR_STR_LEN = 13;
+  parameter int MAX_INSTR_STR_LEN = 21;
   parameter int MAX_PULP_INSTR_STR_LEN = 20;
 
   parameter int LABEL_STR_LEN     = 18;
@@ -1413,6 +1413,7 @@ package riscv_instr_pkg;
   `include "isa/riscv_fp_in_x_regs_instr.sv"
   `include "isa/riscv_vector_instr.sv"
   `include "isa/riscv_compressed_instr.sv"
+  `include "isa/cv32e40p_riscv_compressed_instr.sv"
   `include "isa/rv32a_instr.sv"
   `include "isa/rv32c_instr.sv"
   `include "isa/rv32dc_instr.sv"
