@@ -213,7 +213,12 @@ endif
 ifeq ($(call IS_YES,$(COV)),YES)
 VOPT_FLAGS  += $(VOPT_COV)
 VSIM_FLAGS  += $(VSIM_COV)
-VSIM_FLAGS  += -do 'set TEST ${VSIM_TEST}; set TEST_CONFIG $(CFG); set TEST_SEED $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
+# VSIM_FLAGS  += -do 'set TEST ${VSIM_TEST}; set TEST_CONFIG $(CFG); set TEST_SEED $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
+ifneq ($(TEST_CFG_FILE),)
+VSIM_FLAGS  += -do 'setenv TEST_COV ${TEST}; setenv TEST_CONFIG_COV $(CFG); setenv TEST_CFG_FILE_COV \"__$(TEST_CFG_FILE)\"; setenv TEST_SEED_COV $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
+else
+VSIM_FLAGS  += -do 'setenv TEST_COV ${TEST}; setenv TEST_CONFIG_COV $(CFG); setenv TEST_CFG_FILE_COV \"\"; setenv TEST_SEED_COV $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
+endif
 endif
 
 ################################################################################

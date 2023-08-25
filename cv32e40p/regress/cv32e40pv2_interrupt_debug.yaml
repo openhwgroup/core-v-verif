@@ -1,0 +1,89 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Header
+name: cv32e40pv2_fpu_instr
+description: regression for CV32E40Pv2, focused on debug and interrupt without hwloop
+
+# List of builds
+builds:
+  clean_fw:
+    cmd: make clean-bsp clean_test_programs
+    dir: cv32e40p/sim/uvmt
+  clean_corev-dv:
+    cmd: make clean_riscv-dv clone_riscv-dv
+    dir: cv32e40p/sim/uvmt
+  uvmt_cv32e40p:
+    cmd: make comp comp_corev-dv
+    dir: cv32e40p/sim/uvmt
+    cfg: pulp
+
+# List of tests
+tests:
+  corev_rand_debug_ebreak_xpulp:
+    build: uvmt_cv32e40p
+    description: corev_rand_debug_ebreak_xpulp
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak_xpulp
+
+  corev_rand_debug_single_step_xpulp:
+    build: uvmt_cv32e40p
+    description: corev_rand_debug_single_step_xpulp
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_single_step_xpulp
+    test_cfg: debug_single_step_en
+
+  corev_rand_debug:
+    build: uvmt_cv32e40p
+    description: corev_rand_debug
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug
+
+  corev_rand_debug_ebreak:
+    build: uvmt_cv32e40p
+    description: corev_rand_debug_ebreak
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak
+
+  corev_rand_debug_single_step:
+    build: uvmt_cv32e40p
+    description: corev_rand_debug_single_step
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_single_step
+    test_cfg: debug_single_step_en
+
+  corev_rand_interrupt:
+    build: uvmt_cv32e40p
+    description: corev_rand_interrupt
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt
+
+  corev_rand_interrupt_debug:
+    build: uvmt_cv32e40p
+    description: corev_rand_interrupt_debug
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_debug
+
+  corev_rand_interrupt_exception:
+    build: uvmt_cv32e40p
+    description: corev_rand_interrupt_exception
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_exception
+
+  corev_rand_interrupt_nested:
+    build: uvmt_cv32e40p
+    description: corev_rand_interrupt_nested
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_nested
+
+  corev_rand_interrupt_wfi:
+    build: uvmt_cv32e40p
+    description: corev_rand_interrupt_wfi
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_wfi
+
+  corev_rand_interrupt_wfi_mem_stress:
+    build: uvmt_cv32e40p
+    description: corev_rand_interrupt_wfi_mem_stress
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_wfi_mem_stress

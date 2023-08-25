@@ -1,0 +1,90 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Header
+name: cv32e40pv2_fpu_instr
+description: regression for CV32E40Pv2, focused on FP instructions excluding hwloop, debug, interrupts, etc.
+
+# List of builds
+builds:
+  clean_fw:
+    cmd: make clean-bsp clean_test_programs
+    dir: cv32e40p/sim/uvmt
+  clean_corev-dv:
+    cmd: make clean_riscv-dv clone_riscv-dv
+    dir: cv32e40p/sim/uvmt
+  uvmt_cv32e40p:
+    cmd: make comp comp_corev-dv
+    dir: cv32e40p/sim/uvmt
+    cfg: pulp_fpu
+  uvmt_cv32e40p_zfinx:
+    cmd: make comp comp_corev-dv
+    dir: cv32e40p/sim/uvmt
+    cfg: pulp_fpu_zfinx
+
+# List of tests
+tests:
+  corev_rand_fp_instr_sanity_test:
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    test_cfg: floating_pt_instr_en
+
+  corev_rand_fp_instr_test:
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    test_cfg: floating_pt_instr_en
+
+  corev_rand_fp_instr_data_fwd_test:
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_data_fwd_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    test_cfg: floating_pt_instr_en
+
+  corev_rand_fp_instr_mlt_cyc_test:
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_mlt_cyc_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    test_cfg: floating_pt_instr_en
+
+  corev_rand_fp_instr_w_special_ops_test:
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_w_special_ops_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    test_cfg: floating_pt_instr_en
+
+  corev_rand_fp_instr_sanity_test_zfinx:
+    testname: corev_rand_fp_instr_sanity_test
+    build: uvmt_cv32e40p_zfinx
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    test_cfg: floating_pt_zfinx_instr_en
+
+  corev_rand_fp_instr_test_zfinx:
+    testname: corev_rand_fp_instr_test
+    build: uvmt_cv32e40p_zfinx
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    test_cfg: floating_pt_zfinx_instr_en
+
+  corev_rand_fp_instr_data_fwd_test_zfinx:
+    testname: corev_rand_fp_instr_data_fwd_test
+    build: uvmt_cv32e40p_zfinx
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_data_fwd_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    test_cfg: floating_pt_zfinx_instr_en
+
+  corev_rand_fp_instr_mlt_cyc_test_zfinx:
+    testname: corev_rand_fp_instr_mlt_cyc_test
+    build: uvmt_cv32e40p_zfinx
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_mlt_cyc_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    test_cfg: floating_pt_zfinx_instr_en
+
+  corev_rand_fp_instr_w_special_ops_test_zfinx:
+    testname: corev_rand_fp_instr_w_special_ops_test
+    build: uvmt_cv32e40p_zfinx
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_w_special_ops_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    test_cfg: floating_pt_zfinx_instr_en
