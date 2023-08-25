@@ -24,6 +24,7 @@ package cv32e40p_instr_test_pkg;
   import riscv_signature_pkg::*;
   import corev_instr_test_pkg::*;
 
+  `include "cv32e40p_instr_gen_config.sv"
   // Instruction streams specific to CV32E40P
   // `include "instr_lib/cv32e40p_load_store_instr_lib.sv"
   `include "instr_lib/cv32e40p_base_instr_lib.sv"
@@ -37,7 +38,6 @@ package cv32e40p_instr_test_pkg;
   `include "cv32e40p_compressed_instr.sv"
   `include "cv32e40p_illegal_instr.sv"
   `include "cv32e40p_privil_reg.sv"
-  `include "cv32e40p_instr_gen_config.sv"
   `include "cv32e40p_debug_rom_gen.sv"
   `include "cv32e40p_asm_program_gen.sv"
   `include "cv32e40p_instr_base_test.sv"
