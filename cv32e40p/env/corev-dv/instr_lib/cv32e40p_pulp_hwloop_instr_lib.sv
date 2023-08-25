@@ -907,6 +907,10 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                       $sformatf("Too many hwloop instr. num_rand_instr = %0d",num_rand_instr))
       end
 
+      riscv_exclude_xpulp = {riscv_exclude_group, RV32X};
+      rv32_ins = $urandom_range(0,3);
+      pulp_ins = $urandom_range(0,3);
+
       i = 0;
       while (i < num_rand_instr) begin
           //Create and Randomize array for avail_regs each time to ensure randomization
@@ -914,8 +918,23 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
           randomize_avail_regs();
 
           instr = riscv_instr::type_id::create($sformatf("instr_%0d", i));
-          instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
-                                              .exclude_group(riscv_exclude_group));
+
+          if((rv32_ins + pulp_ins) == 0) begin
+            instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                                .exclude_group(riscv_exclude_group));
+          end
+
+          randcase
+            pulp_ins: begin
+                        instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                                            .exclude_group(riscv_exclude_group));
+                      end
+
+            rv32_ins: begin
+                        instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                                            .exclude_group(riscv_exclude_xpulp));
+                      end
+          endcase
 
           //randomize GPRs for each instruction
           if(instr.group != RV32ZFINX)
@@ -942,6 +961,8 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       riscv_instr                 instr;
       cv32e40p_instr              cv32_instr;
       riscv_fp_in_x_regs_instr    zfinx_instr;
+      riscv_instr_group_t         riscv_exclude_xpulp[];
+      int                         rv32_ins, pulp_ins;
 
       //use cfg for ebreak
       if(cfg.no_ebreak)
@@ -956,13 +977,32 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       if(no_fence)
           riscv_exclude_instr = {riscv_exclude_instr, FENCE, FENCE_I};
 
+      riscv_exclude_xpulp = {riscv_exclude_group, RV32X};
+      rv32_ins = $urandom_range(0,2);
+      pulp_ins = $urandom_range(0,2);
+
       //Create and Randomize array for avail_regs each time to ensure randomization
       avail_regs = new[num_of_avail_regs];
       randomize_avail_regs();
 
       instr = riscv_instr::type_id::create($sformatf("instr_%0s", label_str));
-      instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
-                                          .exclude_group(riscv_exclude_group));
+
+      if((rv32_ins + pulp_ins) == 0) begin
+        instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                            .exclude_group(riscv_exclude_group));
+      end
+
+      randcase
+        pulp_ins: begin
+                    instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                                        .exclude_group(riscv_exclude_group));
+                  end
+
+        rv32_ins: begin
+                    instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                                        .exclude_group(riscv_exclude_xpulp));
+                  end
+      endcase
 
       //randomize GPRs for each instruction
       if(instr.group != RV32ZFINX)
