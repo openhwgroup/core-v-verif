@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <refinement-file-root>
-  <information comment-version="1" creation-time="Thu 24 Aug 2023 15:13:31 CEST" creator="ropeders" csCheck="false" modified-by="ropeders" modify-time="Thu 24 Aug 2023 16:27:19 CEST" save-ref-method="seq" tool-version="Cadence vManager21.03" rules-signature-c="e8bebae98dd259d39a1df15da2c7798f">
+  <information comment-version="1" creation-time="Thu 24 Aug 2023 15:13:31 CEST" creator="ropeders" csCheck="false" modified-by="ropeders" modify-time="Thu 24 Aug 2023 16:43:46 CEST" save-ref-method="seq" tool-version="Cadence vManager21.03" rules-signature-c="a683e718d01cd56145af245d8b60ff15">
     <ucm-files>
       <ucm-file domain="icc" modelCheckSum="1012019031" path="icc_3c522f57_7b1c448b.ucm(merged)"></ucm-file>
     </ucm-files>
@@ -9,6 +9,15 @@
     </ccf-files>
   </information>
   <rules>
+    <rule ccType="type" domain="icc" entityName="&quot;uvmt_cv32e40s_support_logic.genblk1_F&quot;/Code" entityType="metrics" excTime="1692887670" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
+    <rule ccType="type" domain="icc" entityName="&quot;uvmt_cv32e40s_support_logic.genblk1_T&quot;/Code" entityType="metrics" excTime="1692887675" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
+    <rule ccType="type" domain="icc" entityName="uvmt_cv32e40s_sl_req_attribute_fifo/Code" entityType="metrics" excTime="1692888094" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
+    <rule ccType="type" domain="icc" entityName="&quot;uvmt_cv32e40s_sl_trigger_match_mem.genblk1&quot;/Code" entityType="metrics" excTime="1692888100" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
+    <rule ccType="type" domain="icc" entityName="&quot;uvmt_cv32e40s_sl_trigger_match.trigger_match_memory_operation&quot;/Code" entityType="metrics" excTime="1692888112" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
+    <rule ccType="type" domain="icc" entityName="&quot;cv32e40s_rvfi.genblk1&quot;/Code" entityType="metrics" excTime="1692887173" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
+    <rule ccType="type" domain="icc" entityName="&quot;cv32e40s_rvfi.genblk2&quot;/Code" entityType="metrics" excTime="1692887177" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
+    <rule ccType="type" domain="icc" entityName="&quot;cv32e40s_rvfi.genblk3&quot;/Code" entityType="metrics" excTime="1692887183" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
+    <rule ccType="type" domain="icc" entityName="&quot;cv32e40s_rvfi.genblk6&quot;/Code" entityType="metrics" excTime="1692887195" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
     <rule ccType="type" domain="icc" entityName="uvmt_cv32e40s_tb/Code" entityType="metrics" excTime="1692882534" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
     <rule ccType="type" domain="icc" entityName="cv32e40s_rvfi/Code" entityType="metrics" excTime="1692882569" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
     <rule ccType="type" domain="icc" entityName="&quot;cv32e40s_rvfi.genblk4&quot;/Code" entityType="metrics" excTime="1692882576" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
@@ -22,10 +31,6 @@
     <rule ccType="type" domain="icc" entityName="uvmt_cv32e40s_sl_trigger_match_mem/Code" entityType="metrics" excTime="1692882757" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
     <rule ccType="type" domain="icc" entityName="&quot;uvmt_cv32e40s_sl_trigger_match_mem.genblk1.genblk1&quot;/Code" entityType="metrics" excTime="1692882761" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
     <rule ccType="type" domain="icc" entityName="uvmt_cv32e40s_sl_obi_phases_monitor/Code" entityType="metrics" excTime="1692882772" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
-    <rule ccType="type" domain="icc" entityName="&quot;cv32e40s_rvfi.genblk1&quot;/Code" entityType="metrics" excTime="1692887173" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
-    <rule ccType="type" domain="icc" entityName="&quot;cv32e40s_rvfi.genblk2&quot;/Code" entityType="metrics" excTime="1692887177" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
-    <rule ccType="type" domain="icc" entityName="&quot;cv32e40s_rvfi.genblk3&quot;/Code" entityType="metrics" excTime="1692887183" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
-    <rule ccType="type" domain="icc" entityName="&quot;cv32e40s_rvfi.genblk6&quot;/Code" entityType="metrics" excTime="1692887195" name="exclude" packageName="worklib" reviewer="unknown" user="0" vscope="default"></rule>
   </rules>
   <cache-map>
     <cache-entry key="0" value="ropeders"></cache-entry>
