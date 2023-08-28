@@ -281,7 +281,7 @@ endif
 # to filter out failing test from ucdb merging
 ifeq ($(call IS_YES,$(COV)),YES)
 ifeq ($(call IS_YES,$(VSIM_COV_ONLY_PASS_TEST)),YES)
-COV_TEST = $(VSIM) -c -viewcov $(RUN_DIR)/$(VSIM_TEST).ucdb -do "coverage clear; coverage attr -name TESTSTATUS -value 2; coverage save $(RUN_DIR)/$(VSIM_TEST).ucdb; exit "
+COV_TEST = cd $(RUN_DIR) && $(VSIM) -c -viewcov $(VSIM_TEST).ucdb -do "coverage clear; coverage attr -name TESTSTATUS -value 2; coverage save $(VSIM_TEST).ucdb; exit " ;
 # COV_TEST = mv $(RUN_DIR)/$(VSIM_TEST).ucdb $(RUN_DIR)/$(VSIM_TEST).ucdb_FAIL;
 else
 COV_TEST = :;
@@ -292,7 +292,8 @@ endif
 
 ################################################################################
 # Check simulation log
-ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
+#ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES) OR ifeq ($(call IS_YES,$(COV)),YES)
+ifneq ($(filter YES, $(call IS_YES,$(CHECK_SIM_RESULT)) $(call IS_YES,$(COV))),)
 POST_TEST = \
 	@if grep -q "Errors:\s\+0" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
         if grep -q "SIMULATION PASSED" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
