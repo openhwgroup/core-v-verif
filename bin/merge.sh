@@ -23,7 +23,7 @@
 #List up the PRs these changes are from (so it is easy to see what to include in the cv32e40s/dev to cv32e40x/dev merge)
 
 #Variables:
-date_time=$(date +%Y.%m.%d-%k.%M)
+date_time=$(date +%Y.%m.%d-%H.%M)
 
 
 usage() {
