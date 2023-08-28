@@ -17,12 +17,8 @@ RVMODEL_BOOT
 	li x31, 0xFFFFFFFC
 	csrrw x30, 0xB02, x31	
 	csrr x6, 0xB02 		## Read the current value of minstret into x6
-	csrr x7, 0xB02
-	csrr x8, 0xB02
-	csrr x9, 0xB02
-	csrr x10,0xB02
-	csrr x11, 0xB02
-   	li x28, 10  ## set x28 to the number of times to read the CSR
+
+	li x28, 10  ## set x28 to the number of times to read the CSR
    	
 read_csr_loop:
 		csrr x6, 0xB02 		## Read the current value of minstret into x6
@@ -32,7 +28,6 @@ read_csr_loop:
     
     	next_iter9 :
     		addi x28, x28, -1	## Decrement counter value
-		auipc x26, 0
 	   	bnez x28, read_csr_loop		## If x28 is not equal to zero then jump back to loop
 	
 	j supervisor_mode_code_start
@@ -74,11 +69,6 @@ supervisor_code:
 	li x31, 0xFFFFFFFC
 	csrrw x30, 0xB02, x31	
 	csrr x6, 0xB02 		## Read the current value of minstret into x6
-	csrr x7, 0xB02
-	csrr x8, 0xB02
-	csrr x9, 0xB02
-	csrr x10,0xB02
-	csrr x11, 0xB02
 
    	li x28, 2  ## set x28 to the number of times to read the CSR
 	li x8, 10
@@ -122,18 +112,12 @@ user_mode_code:
 	li x31, 0xFFFFFFFC
 	csrrw x30, 0xB02, x31	
 	csrr x6, 0xB02 		## Read the current value of minstret into x6
-	csrr x7, 0xB02
-	csrr x8, 0xB02
-	csrr x9, 0xB02
-	csrr x10,0xB02
-	csrr x11, 0xB02
 
    	li x28, 5  ## set x28 to the number of times to read the CSR
     	loop:
 
 read_csr_loop3:
 
-		addi x6,x26, 8
 		csrr x6, 0xB02 		## Read the current value of minstret into x6
    		csrr x7, 0xB02  		## Read the current value of minstret again into x7
 		csrr x9, 0x342

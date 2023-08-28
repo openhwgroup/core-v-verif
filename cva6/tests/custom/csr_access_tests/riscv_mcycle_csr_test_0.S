@@ -18,10 +18,6 @@ RVMODEL_BOOT
 	csrrw x30, 0xB00, x31	
 	csrr x6, 0xB00 		## Read the current value of mcycle into x6
 	csrr x7, 0xB00
-	csrr x8, 0xB00
-	csrr x9, 0xB00
-	csrr x10,0xB00
-	csrr x11, 0xB00
    	li x28, 10  ## set x28 to the number of times to read the CSR
    	
 read_csr_loop:
@@ -71,29 +67,23 @@ supervisor_mode_code_start:
       
 # Supervisor code starts here
 supervisor_code:
+	csrr x8, 0xB00
 	li x31, 0xFFFFFFFC
 	csrrw x30, 0xB00, x31	
-	csrr x6, 0xB00 		## Read the current value of mcycle into x6
+	csrr x6, 0xB00 				## Read the current value of mcycle into x6
 	csrr x7, 0xB00
-	csrr x8, 0xB00
-	csrr x9, 0xB00
-	csrr x10,0xB00
-	csrr x11, 0xB00
-
-   	li x28, 2  ## set x28 to the number of times to read the CSR
+	
+   	li x28, 2  				## set x28 to the number of times to read the CSR
 	li x8, 10
 read_csr_loop2:
 
-		addi x6,x26, 8
-		csrr x6, 0xB00 		## Read the current value of mcycle into x6
+		csrr x6, 0xB00 			## Read the current value of mcycle into x6
    		csrr x7, 0xB00  		## Read the current value of mcycle again into x7
-		csrr x9, 0x342
-		beq  x8, x9, user_mode_code_start
-   		bgt  x7, x6, next_iter98  ## if x7 >= x6, jump to next iter
+   		bgt  x7, x6, next_iter98 	 ## if x7 > x6, jump to next iter
     	j csr_fail
     
     	next_iter98 :
-    		addi x28, x28, -1	## Decrement counter value
+    		addi x28, x28, -1			## Decrement counter value
 	   	bnez x28, read_csr_loop2		## If x28 is not equal to zero then jump back to loo
 	j csr_fail
 
@@ -121,25 +111,20 @@ user_mode_code:
 	li x31, 0xFFFFFFFC
 	csrrw x30, 0xB00, x31	
 	csrr x6, 0xB00 		## Read the current value of mcycle into x6
-	csrr x7, 0xB00
-	csrr x8, 0xB00
-	csrr x9, 0xB00
-	csrr x10,0xB00
-	csrr x11, 0xB00
 
-   	li x28, 5  ## set x28 to the number of times to read the CSR
+   	li x28, 5 		 ## set x28 to the number of times to read the CSR
     	loop:
 
 read_csr_loop3:
 
 		csrr x6, 0xB00 	        	## Read the current value of mcycle into x6
    		csrr x7, 0xB00  		## Read the current value of mcycle again into x7
-   		bgt  x7, x6, next_iter99  ## if x7 >= x6, jump to next iter
+   		bgt  x7, x6, next_iter99  	## if x7 >= x6, jump to next iter
 
     	j csr_fail
     
     	next_iter99 :
-    		addi x28, x28, -1	## Decrement counter value
+    		addi x28, x28, -1			## Decrement counter value
 	   	bnez x28, read_csr_loop3		## If x28 is not equal to zero then jump back to loop	
 	j csr_fail
 
