@@ -210,9 +210,9 @@ VOPT_FLAGS  += $(VOPT_COV)
 VSIM_FLAGS  += $(VSIM_COV)
 # VSIM_FLAGS  += -do 'set TEST ${VSIM_TEST}; set TEST_CONFIG $(CFG); set TEST_SEED $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
 ifneq ($(TEST_CFG_FILE),)
-VSIM_FLAGS  += -do 'setenv TEST_COV ${TEST}; setenv TEST_CONFIG_COV $(CFG); setenv TEST_CFG_FILE_COV \"__$(TEST_CFG_FILE)\"; setenv TEST_SEED_COV $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
+VSIM_FLAGS  += -do 'setenv TEST_COV ${TEST}; setenv TEST_CONFIG_COV $(CFG); setenv TEST_CFG_FILE_COV _$(TEST_CFG_FILE); setenv TEST_SEED_COV $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
 else
-VSIM_FLAGS  += -do 'setenv TEST_COV ${TEST}; setenv TEST_CONFIG_COV $(CFG); setenv TEST_CFG_FILE_COV \"\"; setenv TEST_SEED_COV $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
+VSIM_FLAGS  += -do 'setenv TEST_COV ${TEST}; setenv TEST_CONFIG_COV $(CFG); setenv TEST_CFG_FILE_COV ""; setenv TEST_SEED_COV $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
 endif
 endif
 
@@ -281,7 +281,8 @@ endif
 # to filter out failing test from ucdb merging
 ifeq ($(call IS_YES,$(COV)),YES)
 ifeq ($(call IS_YES,$(VSIM_COV_ONLY_PASS_TEST)),YES)
-COV_TEST = mv $(RUN_DIR)/$(VSIM_TEST).ucdb $(RUN_DIR)/$(VSIM_TEST).ucdb_FAIL;
+COV_TEST = $(VSIM) -c -viewcov $(RUN_DIR)/$(VSIM_TEST).ucdb -do "coverage clear; coverage attr -name TESTSTATUS -value 2; coverage save $(RUN_DIR)/$(VSIM_TEST).ucdb; exit "
+# COV_TEST = mv $(RUN_DIR)/$(VSIM_TEST).ucdb $(RUN_DIR)/$(VSIM_TEST).ucdb_FAIL;
 else
 COV_TEST = :;
 endif
