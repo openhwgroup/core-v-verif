@@ -11,11 +11,10 @@ plusargs: >
     +instr_cnt=2000
     +num_of_sub_program=0
     +insert_rand_directed_instr_stream=1
-    +test_rand_directed_instr_stream_num=8
+    +test_rand_directed_instr_stream_num=9
     +directed_instr_0=cv32e40p_xpulp_rand_stream,2
     +directed_instr_1=cv32e40p_xpulp_short_rand_stream,4
-    +directed_instr_2=riscv_int_numeric_corner_stream,2
-    +directed_instr_3=riscv_load_store_rand_instr_stream,1
+    +directed_instr_2=riscv_load_store_rand_instr_stream,1
     +rand_directed_instr_0=riscv_load_store_rand_instr_stream,2
     +rand_directed_instr_1=riscv_mem_region_stress_test,2
     +rand_directed_instr_2=riscv_load_store_hazard_instr_stream,2
@@ -24,6 +23,7 @@ plusargs: >
     +rand_directed_instr_5=riscv_hazard_instr_stream,2
     +rand_directed_instr_6=cv32e40p_xpulp_simd_stream_test,2
     +rand_directed_instr_7=cv32e40p_xpulp_mac_stream_test,2
+    +rand_directed_instr_8=riscv_int_numeric_corner_stream,2
     +no_fence=0
     +hint_instr_ratio=2
     +no_data_page=0
@@ -32,10 +32,8 @@ plusargs: >
     +boot_mode=m
     +no_csr_instr=0
     +no_wfi=1
-    +no_ebreak=1
     +no_dret=1
     +enable_misaligned_instr=1
-    +set_dcsr_ebreak=0
     +enable_floating_point=1
     +test_override_riscv_instr_stream=1
     +test_override_riscv_instr_sequence=1
