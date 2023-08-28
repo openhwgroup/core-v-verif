@@ -1443,3 +1443,185 @@ class cv32e40p_xpulp_hwloop_isa_stress_stream extends cv32e40p_xpulp_hwloop_base
   endfunction
 endclass : cv32e40p_xpulp_hwloop_isa_stress_stream
 
+
+//Class: cv32e40p_xpulp_hwloop_exception
+//Hwloop stream with exceptions
+class cv32e40p_xpulp_hwloop_exception extends cv32e40p_xpulp_hwloop_base_stream;
+
+  `uvm_object_utils_begin(cv32e40p_xpulp_hwloop_exception)
+      `uvm_field_int(num_of_xpulp_instr, UVM_DEFAULT)
+      `uvm_field_int(num_of_riscv_instr, UVM_DEFAULT)
+      `uvm_field_int(num_of_avail_regs, UVM_DEFAULT)
+      `uvm_field_int(num_of_reserved_regs, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_avail_regs, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_exclude_regs, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_reserved_regs, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_name_t,xpulp_exclude_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_name_t,riscv_exclude_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_group_t,riscv_exclude_group, UVM_DEFAULT)
+      `uvm_field_int(num_loops_active, UVM_DEFAULT)
+      `uvm_field_int(gen_nested_loop, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_setup_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_counti_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_starti_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_endi_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_setupi_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(hwloop_count, UVM_DEFAULT)
+      `uvm_field_sarray_int(hwloop_counti, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_hwloop_instr, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_hwloop_ctrl_instr, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_fill_instr_loop_ctrl_to_loop_start, UVM_DEFAULT)
+      `uvm_field_int(num_fill_instr_in_loop1_till_loop0_setup, UVM_DEFAULT)
+      `uvm_field_int(setup_l0_before_l1_start, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_instr_cv_start_to_loop_start_label, UVM_DEFAULT)
+  `uvm_object_utils_end
+
+  function new(string name = "cv32e40p_xpulp_hwloop_exception");
+      super.new(name);
+  endfunction : new
+
+  function void pre_randomize();
+      super.pre_randomize();
+  endfunction : pre_randomize
+
+  function void post_randomize();
+      cv32e40p_exclude_regs = {cv32e40p_exclude_regs,cv32e40p_reserved_regs};
+      //Exclude list for all random instruction generation part
+      riscv_exclude_instr = {CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI,
+                             CV_ELW,
+                             JAL, C_J, C_JAL};
+      super.post_randomize();
+      this.print();
+  endfunction : post_randomize
+
+  virtual function void insert_rand_instr_with_label(string label_str,
+                                                     bit label_is_pulp_hwloop_body_label=0,
+                                                     bit no_branch=1,
+                                                     bit no_compressed=1,
+                                                     bit no_fence=1);
+      riscv_instr                 instr;
+      cv32e40p_instr              cv32_instr;
+      riscv_fp_in_x_regs_instr    zfinx_instr;
+      string                      branch_imm_str;
+      riscv_instr_group_t         riscv_exclude_xpulp[];
+
+      //use cfg for ebreak
+      if(cfg.no_ebreak)
+          riscv_exclude_instr = {riscv_exclude_instr, EBREAK, C_EBREAK};
+
+      if(no_compressed)
+          riscv_exclude_group = {riscv_exclude_group, RV32C, RV32FC};
+
+      riscv_exclude_xpulp = {riscv_exclude_group, RV32X};
+
+      //Create and Randomize array for avail_regs each time to ensure randomization
+      avail_regs = new[num_of_avail_regs];
+      randomize_avail_regs();
+
+      instr = riscv_instr::type_id::create($sformatf("instr_%0s", label_str));
+
+      randcase
+        2: instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                          .exclude_group(riscv_exclude_group));
+
+        2: instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                          .exclude_group(riscv_exclude_xpulp));
+      endcase
+
+      if(instr.instr_name inside {BEQ, BNE, BLT, BGE, BLTU, BGEU, C_BEQZ, C_BNEZ, CV_BEQIMM, CV_BNEIMM}) begin
+        if(gen_nested_loop)
+          branch_imm_str =  $sformatf("hwloop0_nested_end_stream%0d",stream_count);
+        else
+          branch_imm_str =  end_label_s;
+
+        instr.imm_str = branch_imm_str;
+      end
+
+      //randomize GPRs for each instruction
+      if(instr.group != RV32ZFINX)
+        randomize_gpr(instr);
+      else begin
+        `DV_CHECK_FATAL($cast(zfinx_instr, instr), "Cast to zfinx instruction type failed!");
+        randomize_zfinx_gpr(zfinx_instr, cv32e40p_zfinx_regs);
+      end
+
+      //randomize immediates for each instruction
+      randomize_riscv_instr_imm(instr);
+      instr.has_label=1;
+      instr.label = label_str;
+      instr_list.push_back(instr);
+
+  endfunction
+
+  virtual function void insert_rand_instr(int unsigned num_rand_instr,
+                                          bit no_branch=1,
+                                          bit no_compressed=1,
+                                          bit no_fence=1);
+
+      riscv_instr                 instr;
+      riscv_fp_in_x_regs_instr    zfinx_instr;
+      int unsigned                i;
+      string                      branch_imm_str;
+      riscv_instr_group_t         riscv_exclude_xpulp[];
+
+      //use cfg for ebreak
+      if(cfg.no_ebreak)
+          riscv_exclude_instr = {riscv_exclude_instr, EBREAK, C_EBREAK};
+
+      if(no_compressed)
+          riscv_exclude_group = {riscv_exclude_group, RV32C, RV32FC};
+
+      `uvm_info("cv32e40p_xpulp_hwloop_base_stream",
+                 $sformatf("insert_rand_instr- Number of Random instr to generate= %0d",num_rand_instr),
+                 UVM_HIGH)
+
+      if(num_rand_instr > MAX_HWLOOP_INSTR_GEN) begin
+          `uvm_fatal("cv32e40p_xpulp_hwloop_base_stream",
+                      $sformatf("Too many hwloop instr. num_rand_instr = %0d",num_rand_instr))
+      end
+
+      riscv_exclude_xpulp = {riscv_exclude_group, RV32X};
+
+      i = 0;
+      while (i < num_rand_instr) begin
+          //Create and Randomize array for avail_regs each time to ensure randomization
+          avail_regs = new[num_of_avail_regs - reserved_rd.size()];
+          randomize_avail_regs();
+
+          instr = riscv_instr::type_id::create($sformatf("instr_%0d", i));
+
+          randcase
+            2: instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                              .exclude_group(riscv_exclude_group));
+
+            2: instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                              .exclude_group(riscv_exclude_xpulp));
+          endcase
+
+          if(instr.instr_name inside {BEQ, BNE, BLT, BGE, BLTU, BGEU, C_BEQZ, C_BNEZ, CV_BEQIMM, CV_BNEIMM}) begin
+            if(gen_nested_loop)
+              branch_imm_str =  $sformatf("hwloop0_nested_end_stream%0d",stream_count);
+            else
+              branch_imm_str =  end_label_s;
+
+            instr.imm_str = branch_imm_str;
+          end
+
+          //randomize GPRs for each instruction
+          if(instr.group != RV32ZFINX)
+            randomize_gpr(instr);
+          else begin
+            `DV_CHECK_FATAL($cast(zfinx_instr, instr), "Cast to zfinx instruction type failed!");
+            randomize_zfinx_gpr(zfinx_instr, cv32e40p_zfinx_regs);
+          end
+
+          //randomize immediates for each instruction
+          randomize_riscv_instr_imm(instr);
+
+          instr_list.push_back(instr);
+          i++;
+      end
+
+  endfunction
+endclass : cv32e40p_xpulp_hwloop_exception
+
