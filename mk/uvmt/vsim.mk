@@ -38,6 +38,7 @@ DPI_INCLUDE            ?= $(abspath $(shell which $(VLIB))/../../include)
 USES_DPI = 1
 
 # Default flags
+VSIM_LOCAL_MODELSIMINI  ?= YES
 VSIM_USER_FLAGS         ?=
 VOPT_COV  				?= +cover=setf+$(RTLSRC_VLOG_TB_TOP).
 VSIM_COV 				?= -coverage
@@ -178,6 +179,7 @@ endif
 else
 VSIM_FLAGS += +DISABLE_OVPSIM
 endif
+
 ifeq ($(call IS_YES,$(TEST_DISABLE_ALL_CSR_CHECKS)),YES)
 VSIM_FLAGS +="+DISABLE_ALL_CSR_CHECKS"
 endif
@@ -192,6 +194,12 @@ VSIM_FLAGS += -sv_lib $(basename $(abspath $(SVLIB_LIB)))
 ifneq ($(call IS_NO,$(COMP)),NO)
 VSIM_SIM_PREREQ = comp
 VSIM_COREVDV_SIM_PREREQ = comp_corev-dv
+endif
+
+# option to use local modelsim.ini file
+ifeq ($(call IS_NO,$(VSIM_LOCAL_MODELSIMINI)),YES)
+gen_corev-dv: VSIM_FLAGS += -modelsimini $(SIM_COREVDV_RESULTS)/modelsim.ini
+run: 					VSIM_FLAGS += -modelsimini modelsim.ini
 endif
 
 ################################################################################
@@ -220,7 +228,8 @@ endif
 # Interactive simulation
 ifeq ($(call IS_YES,$(GUI)),YES)
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-VSIM_FLAGS += -visualizer=+designfile=$(SIM_TEST_RESULTS)/../design.bin
+test:         VSIM_FLAGS += -visualizer=+designfile=$(SIM_CFG_RESULTS)/design.bin
+gen_corev-dv: VSIM_FLAGS += -visualizer=+designfile=../design.bin
 else
 VSIM_FLAGS += -gui
 endif
@@ -264,9 +273,14 @@ endif
 endif
 
 ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
-CHECK_SIM_LOG ?= $(abspath $(SIM_RUN_RESULTS))/vsim-$(TEST_RUN_NAME).log
 POST_TEST = \
-	@if grep -q "SIMULATION FAILED" $(CHECK_SIM_LOG); then \
+	@if grep -q "Errors:\s\+0" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
+	if grep -q "SIMULATION FAILED" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
+		exit 1; \
+	else \
+		exit 0; \
+	fi \
+	else \
 		exit 1; \
 	fi
 endif
@@ -378,17 +392,14 @@ vopt_corev-dv:
 			$(CV_CORE_LC)_instr_gen_tb_top \
 			-o $(CV_CORE_LC)_instr_gen_tb_top_vopt \
 			-l vopt.log
+	cd $(SIM_COREVDV_RESULTS) && \
+			$(VMAP) work $(SIM_COREVDV_RESULTS)/work;
 
 gen_corev-dv: $(VSIM_COREVDV_SIM_PREREQ)
 	mkdir -p $(SIM_COREVDV_RESULTS)/$(TEST)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		mkdir -p $(SIM_TEST_RESULTS)/$$idx/test_program; \
 	done
-	if [ -f "$(SIM_COREVDV_RESULTS)/$(TEST)/modelsim.ini" ]; then \
-		rm -rf $(SIM_COREVDV_RESULTS)/$(TEST)/modelsim.ini; \
-	fi
-	cd $(SIM_COREVDV_RESULTS)/$(TEST) && \
-		$(VMAP) work $(SIM_COREVDV_RESULTS)/work; \
 	cd  $(SIM_COREVDV_RESULTS)/$(TEST) && \
 		$(VSIM) \
 			$(VSIM_FLAGS) \
@@ -396,7 +407,6 @@ gen_corev-dv: $(VSIM_COREVDV_SIM_PREREQ)
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(GEN_UVM_TEST) \
 			-l $(TEST)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log \
-			-modelsimini modelsim.ini \
 			+start_idx=$(GEN_START_INDEX) \
 			+num_of_tests=$(GEN_NUM_TESTS) \
 			+asm_file_name_opts=$(TEST) \
@@ -642,7 +652,6 @@ run: $(VSIM_RUN_PREREQ) gen_ovpsim_ic
 			$(VSIM_WAVES_FLAGS) \
 			$(VSIM_FLAGS) \
 			-l vsim-$(VSIM_TEST).log \
-			-modelsimini modelsim.ini \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(TEST_UVM_TEST) \
 			$(RTLSRC_VOPT_TB_TOP) \

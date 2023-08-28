@@ -44,17 +44,17 @@ builds:
     dir: cv32e40p/sim/uvmt
 
   uvmt_cv32e40p_pulp_fpu_zfinx:
-    cmd: make comp comp_corev-dv GEN_COMPILE_FLAGS="+define+FP_IN_X_REGS"
+    cmd: make comp comp_corev-dv
     cfg: pulp_fpu_zfinx
     dir: cv32e40p/sim/uvmt
 
   uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat:
-    cmd: make comp comp_corev-dv GEN_COMPILE_FLAGS="+define+FP_IN_X_REGS"
+    cmd: make comp comp_corev-dv
     cfg: pulp_fpu_zfinx_1cyclat
     dir: cv32e40p/sim/uvmt
 
   uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat:
-    cmd: make comp comp_corev-dv GEN_COMPILE_FLAGS="+define+FP_IN_X_REGS"
+    cmd: make comp comp_corev-dv
     cfg: pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
 

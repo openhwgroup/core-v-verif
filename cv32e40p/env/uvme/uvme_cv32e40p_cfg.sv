@@ -36,6 +36,37 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
    // Random knobs
    rand bit                   zero_stall_sim; // When randomized to 1, clears is_stall_sim in step and compare
    bit                        max_data_zero_instr_stall; // state variable set by plusarg +max_data_zero_instr_stall
+   bit                        zero_data_max_instr_stall; // variable set by plusarg +zero_data_max_instr_stall
+
+   bit                        fixed_data_stall; // variable set by plusarg +fixed_data_stall=<>
+   int                        fixed_data_stall_latency;
+
+   bit                        fixed_data_gnt_stall; // variable set by plusarg +fixed_data_gnt_stall=<>
+   int                        fixed_data_gnt_stall_latency;
+
+   bit                        fixed_data_rvalid_stall; // variable set by plusarg +fixed_data_rvaild_stall=<>
+   int                        fixed_data_rvalid_stall_latency;
+
+   bit                        fixed_instr_stall; // variable set by plusarg +fixed_instr_stall=<>
+   int                        fixed_instr_stall_latency;
+
+   bit                        fixed_instr_gnt_stall; // variable set by plusarg +fixed_instr_gnt_stall=<>
+   int                        fixed_instr_gnt_stall_latency;
+
+   bit                        fixed_instr_rvalid_stall; // variable set by plusarg +fixed_instr_rvaild_stall=<>
+   int                        fixed_instr_rvalid_stall_latency;
+
+   bit                        random_data_stall; // variable set by plusarg +random_data_stall
+   bit                        random_instr_stall; // variable set by plusarg +random_instr_stall
+
+   bit                        long_random_data_stall; // variable set by plusarg +long_random_data_stall
+   bit                        long_random_instr_stall; // variable set by plusarg +long_random_instr_stall
+
+   bit                        max_rand_data_latency; // variable set by plusarg +max_rand_data_latency=<>
+   int                        max_rand_data_latency_limit;
+
+   bit                        max_rand_instr_latency; // variable set by plusarg +max_rand_instr_latency=<>
+   int                        max_rand_instr_latency_limit;
 
    // Agent cfg handles
    rand uvma_clknrst_cfg_c          clknrst_cfg;
@@ -106,6 +137,116 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
          obi_memory_data_cfg.drv_slv_rvalid_mode == UVMA_OBI_MEMORY_DRV_SLV_RVALID_MODE_RANDOM_LATENCY;
          obi_memory_data_cfg.drv_slv_rvalid_random_latency_min == 0;
          obi_memory_data_cfg.drv_slv_rvalid_random_latency_max == 8;
+      }
+   }
+
+   constraint zero_data_max_instr_stall_sim_cons {
+      if (zero_data_max_instr_stall) {
+         obi_memory_instr_cfg.drv_slv_gnt_mode    == UVMA_OBI_MEMORY_DRV_SLV_GNT_MODE_RANDOM_LATENCY;
+         obi_memory_instr_cfg.drv_slv_gnt_random_latency_min == 0;
+         obi_memory_instr_cfg.drv_slv_gnt_random_latency_max == 8;
+
+         obi_memory_instr_cfg.drv_slv_rvalid_mode == UVMA_OBI_MEMORY_DRV_SLV_RVALID_MODE_RANDOM_LATENCY;
+         obi_memory_instr_cfg.drv_slv_rvalid_random_latency_min == 0;
+         obi_memory_instr_cfg.drv_slv_rvalid_random_latency_max == 8;
+
+         obi_memory_data_cfg.drv_slv_gnt_mode    == UVMA_OBI_MEMORY_DRV_SLV_GNT_MODE_CONSTANT;
+         obi_memory_data_cfg.drv_slv_rvalid_mode == UVMA_OBI_MEMORY_DRV_SLV_RVALID_MODE_CONSTANT;
+      }
+   }
+
+   constraint fixed_data_stall_sim_cons {
+      if (fixed_data_stall) {
+         obi_memory_data_cfg.drv_slv_gnt_mode          == UVMA_OBI_MEMORY_DRV_SLV_GNT_MODE_FIXED_LATENCY;
+         obi_memory_data_cfg.drv_slv_gnt_fixed_latency == 0;
+
+         obi_memory_data_cfg.drv_slv_rvalid_mode          == UVMA_OBI_MEMORY_DRV_SLV_RVALID_MODE_FIXED_LATENCY;
+         obi_memory_data_cfg.drv_slv_rvalid_fixed_latency == fixed_data_stall_latency;
+      }
+   }
+
+   constraint fixed_instr_stall_sim_cons {
+      if (fixed_instr_stall) {
+         obi_memory_instr_cfg.drv_slv_gnt_mode          == UVMA_OBI_MEMORY_DRV_SLV_GNT_MODE_FIXED_LATENCY;
+         obi_memory_instr_cfg.drv_slv_gnt_fixed_latency == 0;
+
+         obi_memory_instr_cfg.drv_slv_rvalid_mode          == UVMA_OBI_MEMORY_DRV_SLV_RVALID_MODE_FIXED_LATENCY;
+         obi_memory_instr_cfg.drv_slv_rvalid_fixed_latency == fixed_instr_stall_latency;
+      }
+   }
+
+   constraint random_data_stall_sim_cons {
+      if (random_data_stall) {
+         obi_memory_data_cfg.drv_slv_gnt_mode    == UVMA_OBI_MEMORY_DRV_SLV_GNT_MODE_RANDOM_LATENCY;
+         obi_memory_data_cfg.drv_slv_rvalid_mode == UVMA_OBI_MEMORY_DRV_SLV_RVALID_MODE_RANDOM_LATENCY;
+      }
+
+      if (max_rand_data_latency) {
+         obi_memory_data_cfg.drv_slv_gnt_random_latency_max == max_rand_data_latency_limit;
+         obi_memory_data_cfg.drv_slv_rvalid_random_latency_max == max_rand_data_latency_limit;
+      }
+   }
+
+   constraint random_instr_stall_sim_cons {
+      if (random_instr_stall) {
+         obi_memory_instr_cfg.drv_slv_gnt_mode     == UVMA_OBI_MEMORY_DRV_SLV_GNT_MODE_RANDOM_LATENCY;
+         obi_memory_instr_cfg.drv_slv_rvalid_mode  == UVMA_OBI_MEMORY_DRV_SLV_RVALID_MODE_RANDOM_LATENCY;
+      }
+      if (max_rand_instr_latency) {
+         obi_memory_instr_cfg.drv_slv_gnt_random_latency_max == max_rand_instr_latency_limit;
+         obi_memory_instr_cfg.drv_slv_rvalid_random_latency_max == max_rand_instr_latency_limit;
+      }
+   }
+
+   constraint long_random_data_stall_sim_cons {
+      if (long_random_data_stall) {
+         obi_memory_data_cfg.drv_slv_gnt_mode    == UVMA_OBI_MEMORY_DRV_SLV_GNT_MODE_RANDOM_LATENCY;
+         obi_memory_data_cfg.drv_slv_gnt_random_latency_min == 0;
+         obi_memory_data_cfg.drv_slv_gnt_random_latency_max == 16;
+
+         obi_memory_data_cfg.drv_slv_rvalid_mode == UVMA_OBI_MEMORY_DRV_SLV_RVALID_MODE_RANDOM_LATENCY;
+         obi_memory_data_cfg.drv_slv_rvalid_random_latency_min == 0;
+         obi_memory_data_cfg.drv_slv_rvalid_random_latency_max == 16;
+      }
+   }
+
+   constraint long_random_instr_stall_sim_cons {
+      if (long_random_instr_stall) {
+         obi_memory_instr_cfg.drv_slv_gnt_mode     == UVMA_OBI_MEMORY_DRV_SLV_GNT_MODE_RANDOM_LATENCY;
+         obi_memory_instr_cfg.drv_slv_gnt_random_latency_min == 0;
+         obi_memory_instr_cfg.drv_slv_gnt_random_latency_max == 16;
+
+         obi_memory_instr_cfg.drv_slv_rvalid_mode == UVMA_OBI_MEMORY_DRV_SLV_RVALID_MODE_RANDOM_LATENCY;
+         obi_memory_instr_cfg.drv_slv_rvalid_random_latency_min == 0;
+         obi_memory_instr_cfg.drv_slv_rvalid_random_latency_max == 16;
+      }
+   }
+
+   constraint fixed_data_gnt_stall_sim_cons {
+      if (fixed_data_gnt_stall) {
+         obi_memory_data_cfg.drv_slv_gnt_mode          == UVMA_OBI_MEMORY_DRV_SLV_GNT_MODE_FIXED_LATENCY;
+         obi_memory_data_cfg.drv_slv_gnt_fixed_latency == fixed_data_gnt_stall_latency;
+      }
+   }
+
+   constraint fixed_data_rvalid_stall_sim_cons {
+      if (fixed_data_rvalid_stall) {
+         obi_memory_data_cfg.drv_slv_rvalid_mode          == UVMA_OBI_MEMORY_DRV_SLV_RVALID_MODE_FIXED_LATENCY;
+         obi_memory_data_cfg.drv_slv_rvalid_fixed_latency == fixed_data_rvalid_stall_latency;
+      }
+   }
+
+   constraint fixed_instr_gnt_stall_sim_cons {
+      if (fixed_instr_gnt_stall) {
+         obi_memory_instr_cfg.drv_slv_gnt_mode          == UVMA_OBI_MEMORY_DRV_SLV_GNT_MODE_FIXED_LATENCY;
+         obi_memory_instr_cfg.drv_slv_gnt_fixed_latency == fixed_instr_gnt_stall_latency;
+      }
+   }
+
+   constraint fixed_instr_rvalid_stall_sim_cons {
+      if (fixed_instr_rvalid_stall) {
+         obi_memory_instr_cfg.drv_slv_rvalid_mode          == UVMA_OBI_MEMORY_DRV_SLV_RVALID_MODE_FIXED_LATENCY;
+         obi_memory_instr_cfg.drv_slv_rvalid_fixed_latency == fixed_instr_rvalid_stall_latency;
       }
    }
 
@@ -285,17 +426,82 @@ endfunction : new
 
 function void uvme_cv32e40p_cfg_c::pre_randomize();
 
-   if ($test$plusargs("rand_stall_obi_disable")) begin
-      int retval;
+   zero_stall_sim = 0;
+   zero_stall_sim.rand_mode(0);
+   max_data_zero_instr_stall = 0;
+   zero_data_max_instr_stall = 0;
+   fixed_data_stall = 0;
+   fixed_instr_stall = 0;
+   random_data_stall = 0;
+   random_instr_stall = 0;
+   long_random_data_stall = 0;
+   long_random_instr_stall = 0;
+   fixed_data_gnt_stall = 0;
+   fixed_data_rvalid_stall = 0;
+   fixed_instr_gnt_stall = 0;
+   fixed_instr_rvalid_stall = 0;
+   max_rand_data_latency = 0;
+   max_rand_instr_latency = 0;
 
+   // Used if-else to ensure only 1 plusarg takes effect.
+   // To avoid un-wanted result, only the required plusargs should be provided
+   // Provide either the plusargs which group all instr/data configs together ->
+   //   rand_stall_obi_disable or max_data_zero_instr_stall or zero_data_max_instr_stall
+   // else
+   //   If needed use more individual config control for data and instr bus.
+   //   Data
+   //   fixed_data_stall or random_data_stall or long_random_data_stall or
+   //   fixed_data_gnt_stall or/and fixed_data_rvalid_stall
+   //
+   //   Instr
+   //   fixed_instr_stall or random_instr_stall or long_random_instr_stall or
+   //   fixed_instr_gnt_stall or/and fixed_instr_rvalid_stall
+
+   if ($test$plusargs("rand_stall_obi_disable"))
       zero_stall_sim = 1;
-      zero_stall_sim.rand_mode(0);
+   else if ($test$plusargs("max_data_zero_instr_stall"))  // No stalls on the I bus, max on D bus
+      max_data_zero_instr_stall = 1;
+   else if ($test$plusargs("zero_data_max_instr_stall"))  // No stalls on the D bus, max on I bus
+      zero_data_max_instr_stall = 1;
+   else begin
+      if ($value$plusargs("fixed_data_stall=%0d", fixed_data_stall_latency))  // Fixed stalls on D bus
+        fixed_data_stall = 1;
+      else if ($test$plusargs("random_data_stall")) begin // Random stalls on D bus
+        random_data_stall = 1;
+        if($value$plusargs("max_rand_data_latency=%0d", max_rand_data_latency_limit))
+          max_rand_data_latency = 1;
+      end else if ($test$plusargs("long_random_data_stall"))  // Long Random stalls on D bus
+        long_random_data_stall = 1;
+      else begin
+        if ($value$plusargs("fixed_data_gnt_stall=%0d", fixed_data_gnt_stall_latency))  // Fixed stalls on D bus for GNT
+          fixed_data_gnt_stall = 1;
+        if ($value$plusargs("fixed_data_rvalid_stall=%0d", fixed_data_rvalid_stall_latency))  // Fixed stalls on D bus for RVALID
+          fixed_data_rvalid_stall = 1;
+      end
+
+      if ($value$plusargs("fixed_instr_stall=%0d", fixed_instr_stall_latency))  // Fixed stalls on I bus
+        fixed_instr_stall = 1;
+      else if ($test$plusargs("random_instr_stall")) begin  // Random stalls on I bus
+        random_instr_stall = 1;
+        if($value$plusargs("max_rand_instr_latency=%0d", max_rand_instr_latency_limit))
+          max_rand_instr_latency = 1;
+      end else if ($test$plusargs("long_random_instr_stall"))  // Long Random stalls on I bus
+        long_random_instr_stall = 1;
+      else begin
+        if ($value$plusargs("fixed_instr_gnt_stall=%0d", fixed_instr_gnt_stall_latency))  // Fixed stalls on I bus for GNT
+          fixed_instr_gnt_stall = 1;
+        if ($value$plusargs("fixed_instr_rvalid_stall=%0d", fixed_instr_rvalid_stall_latency))  // Fixed stalls on I bus for RVALID
+          fixed_instr_rvalid_stall = 1;
+      end
 
    end
-   else if ($test$plusargs("max_data_zero_instr_stall")) begin
-      // No stalls on the I bus, max on D bus
-      max_data_zero_instr_stall = 1;
-   end
+
+   // re-enable zero_stall_sim rand_mode for default case with no delay plusargs
+   if (!(zero_stall_sim | max_data_zero_instr_stall | zero_data_max_instr_stall | fixed_data_stall |
+         random_data_stall | long_random_data_stall | fixed_data_gnt_stall | fixed_data_rvalid_stall |
+         fixed_instr_stall | random_instr_stall | long_random_instr_stall | fixed_instr_gnt_stall |
+         fixed_instr_rvalid_stall ))
+      zero_stall_sim.rand_mode(1);
 
 endfunction : pre_randomize
 
