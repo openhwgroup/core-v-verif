@@ -124,4 +124,187 @@ package cv32e40p_instr_test_pkg;
 
   endfunction
 
+  // Push general purpose register to stack, this is needed before trap handling
+  // Push fpr to stack if rv32f exists
+  function automatic void push_regfile_to_kernel_stack(privileged_reg_t status,
+                                                       privileged_reg_t scratch,
+                                                       bit mprv,
+                                                       riscv_reg_t sp,
+                                                       riscv_reg_t tp,
+                                                       ref string instr[$],
+                                                       cv32e40p_instr_gen_config cfg_corev);
+    string store_instr = (XLEN == 32) ? "sw" : "sd";
+    if (scratch inside {implemented_csr}) begin
+      // Use kernal stack for handling exceptions
+      // Save the user mode stack pointer to the scratch register
+      instr.push_back($sformatf("csrrw x%0d, 0x%0x, x%0d", sp, scratch, sp));
+      // Move TP to SP
+      instr.push_back($sformatf("add x%0d, x%0d, zero", sp, tp));
+    end
+    // If MPRV is set and MPP is S/U mode, it means the address translation and memory protection
+    // for load/store instruction is the same as the mode indicated by MPP. In this case, we
+    // need to use the virtual address to access the kernel stack.
+    if((status == MSTATUS) && (SATP_MODE != BARE)) begin
+      // We temporarily use tp to check mstatus to avoid changing other GPR. The value of sp has
+      // been saved to xScratch and can be restored later.
+      if(mprv) begin
+        instr.push_back($sformatf("csrr x%0d, 0x%0x // MSTATUS", tp, status));
+        instr.push_back($sformatf("srli x%0d, x%0d, 11", tp, tp));  // Move MPP to bit 0
+        instr.push_back($sformatf("andi x%0d, x%0d, 0x3", tp, tp)); // keep the MPP bits
+        // Check if MPP equals to M-mode('b11)
+        instr.push_back($sformatf("xori x%0d, x%0d, 0x3", tp, tp));
+        instr.push_back($sformatf("bnez x%0d, 1f", tp));      // Use physical address for kernel SP
+        // Use virtual address for stack pointer
+        instr.push_back($sformatf("slli x%0d, x%0d, %0d", sp, sp, XLEN - MAX_USED_VADDR_BITS));
+        instr.push_back($sformatf("srli x%0d, x%0d, %0d", sp, sp, XLEN - MAX_USED_VADDR_BITS));
+      end
+    end
+    // Reserve space from kernel stack to save all 32 GPR except for x0
+    instr.push_back($sformatf("1: addi x%0d, x%0d, -%0d", sp, sp, 31 * (XLEN/8)));
+    // Push all GPRs to kernel stack
+    for(int i = 1; i < 32; i++) begin
+      instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, i, (i-1) * (XLEN/8), sp));
+    end
+
+    if(cfg_corev.enable_floating_point && !cfg_corev.enable_fp_in_x_regs) begin
+      randcase
+        1: store_instr = (FLEN == 32) ? "fsw" : "fsd";
+        (sp == 2): store_instr = (FLEN == 32) ? "c.fswsp" : "fsd";
+      endcase
+
+      //Check if mstatus.FS != 3 ,i.e., Not "Dirty" state
+      instr.push_back($sformatf("csrr x%0d, 0x%0x # %0s", cfg_corev.gpr[0], status, status.name()));
+      instr.push_back($sformatf("srli x%0d, x%0d, 13", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+      instr.push_back($sformatf("andi x%0d, x%0d, 0x3", cfg_corev.gpr[0], cfg_corev.gpr[0]));  //Check MSTATUS.FS bit
+      instr.push_back($sformatf("li x%0d, 0x%0x", cfg_corev.gpr[1], 3));
+      instr.push_back($sformatf("bne x%0d, x%0d, 2f", cfg_corev.gpr[0], cfg_corev.gpr[1])); // MSTATUS.FS!=3 do not push
+
+      // Reserve space from kernel stack to save all 32 FPR + FCSR
+      instr.push_back($sformatf("addi x%0d, x%0d, -%0d", sp, sp, 33 * (XLEN/8)));
+      // Push all FPRs to kernel stack
+      for(int i = 0; i < 32; i++) begin
+        instr.push_back($sformatf("%0s  f%0d, %0d(x%0d)", store_instr, i, i * (XLEN/8), sp));
+      end
+
+      store_instr = (XLEN == 32) ? "sw" : "sd";
+
+      // Push FCSR to kernel stack
+      instr.push_back($sformatf("fscsr x%0d, x0", cfg_corev.gpr[0])); // Read and Clear FCSR
+      instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, cfg_corev.gpr[0], 32 * (XLEN/8), sp));
+
+      // Reserve space from kernel stack to save MSTATUS.FS
+      instr.push_back($sformatf("addi x%0d, x%0d, -%0d", sp, sp, 1 * (XLEN/8)));
+
+      // Push MSTATUS.FS to kernel stack
+      instr.push_back($sformatf("csrr x%0d, 0x%0x # %0s", cfg_corev.gpr[0], status, status.name()));
+      instr.push_back($sformatf("srli x%0d, x%0d, 13", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+      instr.push_back($sformatf("andi x%0d, x%0d, 0x3", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+      instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, cfg_corev.gpr[0], 0, sp));
+
+      //Set the MSTATUS.FS status to Clean
+      instr.push_back($sformatf("li x%0d, 0x%0x", cfg_corev.gpr[0], 1));  //Set FS from 3->2 Clean, clear bit 13
+      instr.push_back($sformatf("slli x%0d, x%0d, 13", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+      instr.push_back($sformatf("csrrc x0, 0x%0x, x%0d # %0s", status, cfg_corev.gpr[0], status.name()));
+
+      instr.push_back($sformatf("j 3f"));
+
+      instr.push_back($sformatf("2: nop")); //BNE 2f Target
+
+      // Reserve space from kernel stack to save MSTATUS.FS
+      instr.push_back($sformatf("addi x%0d, x%0d, -%0d", sp, sp, 1 * (XLEN/8)));
+
+      // Push MSTATUS.FS to kernel stack
+      instr.push_back($sformatf("csrr x%0d, 0x%0x # %0s", cfg_corev.gpr[0], status, status.name()));
+      instr.push_back($sformatf("srli x%0d, x%0d, 13", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+      instr.push_back($sformatf("andi x%0d, x%0d, 0x3", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+      instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, cfg_corev.gpr[0], 0, sp));
+
+      instr.push_back($sformatf("3: nop")); //Jump 3f Target
+
+      //Check if mstatus.FS != 0 ,i.e., Not "All Off" state
+      instr.push_back($sformatf("csrr x%0d, 0x%0x # %0s", cfg_corev.gpr[0], status, status.name()));
+      instr.push_back($sformatf("srli x%0d, x%0d, 13", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+      instr.push_back($sformatf("andi x%0d, x%0d, 0x3", cfg_corev.gpr[0], cfg_corev.gpr[0]));  //Check MSTATUS.FS bit
+      instr.push_back($sformatf("bnez x%0d, 4f", cfg_corev.gpr[0])); // check MSTATUS.FS!=0
+
+      // if MSTATUS.FS==0 set MSTATUS.FS to Initial
+      instr.push_back($sformatf("li x%0d, 0x%0x", cfg_corev.gpr[0], 1));  //Change FS from 0 to 1, i.e., Initial
+      instr.push_back($sformatf("slli x%0d, x%0d, 13", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+      instr.push_back($sformatf("csrrs x0, 0x%0x, x%0d # %0s", status, cfg_corev.gpr[0], status.name()));
+
+      instr.push_back($sformatf("4: nop")); //BNE 4f Target
+
+    end
+
+  endfunction
+
+  // Pop general purpose register from stack + FPR + FCSR
+  function automatic void pop_regfile_from_kernel_stack(privileged_reg_t status,
+                                                        privileged_reg_t scratch,
+                                                        bit mprv,
+                                                        riscv_reg_t sp,
+                                                        riscv_reg_t tp,
+                                                        ref string instr[$],
+                                                        cv32e40p_instr_gen_config cfg_corev);
+
+
+    string load_instr;
+
+    if(cfg_corev.enable_floating_point && !cfg_corev.enable_fp_in_x_regs) begin
+      load_instr = (XLEN == 32) ? "lw" : "ld";
+
+      // Pop MSTATUS.FS from kernel stack
+      instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, cfg_corev.gpr[0], 0, sp));
+      // Restore MSTATUS.FS
+      instr.push_back($sformatf("li x%0d, 0x%0x", cfg_corev.gpr[1], 3));  //Clear FS
+      instr.push_back($sformatf("slli x%0d, x%0d, 13", cfg_corev.gpr[1], cfg_corev.gpr[1]));
+      instr.push_back($sformatf("csrrc x0, 0x%0x, x%0d # %0s", status, cfg_corev.gpr[1], status.name()));
+      instr.push_back($sformatf("slli x%0d, x%0d, 13", cfg_corev.gpr[1], cfg_corev.gpr[0]));
+      instr.push_back($sformatf("csrrs x0, 0x%0x, x%0d # %0s", status, cfg_corev.gpr[1], status.name()));
+
+      // Restore kernel stack pointer
+      instr.push_back($sformatf("addi x%0d, x%0d, %0d", sp, sp, 1 * (XLEN/8)));
+
+      instr.push_back($sformatf("li x%0d, 0x%0x", cfg_corev.gpr[1], 3));
+      instr.push_back($sformatf("bne x%0d, x%0d, 2f", cfg_corev.gpr[0], cfg_corev.gpr[1])); // MSTATUS.FS!=3 do not pop FPR
+
+      randcase
+        1: load_instr = (FLEN == 32) ? "flw" : "fld";
+        (sp == 2): load_instr = (FLEN == 32) ? "c.flwsp" : "fld";
+      endcase
+
+      // Pop FPRs from kernel stack
+      for(int i = 0; i < 32; i++) begin
+        instr.push_back($sformatf("%0s  f%0d, %0d(x%0d)", load_instr, i, i * (FLEN/8), sp));
+      end
+
+      load_instr = (XLEN == 32) ? "lw" : "ld";
+
+      // Pop FCSR from kernel stack
+      instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, cfg_corev.gpr[1], 32 * (XLEN/8), sp));
+      instr.push_back($sformatf("fscsr x%0d", cfg_corev.gpr[1])); // Restore FCSR
+
+      // Restore kernel stack pointer
+      instr.push_back($sformatf("addi x%0d, x%0d, %0d", sp, sp, 33 * (XLEN/8)));
+
+      instr.push_back($sformatf("2: nop")); //BNE 2f Target
+
+    end
+
+    load_instr = (XLEN == 32) ? "lw" : "ld";
+    // Pop user mode GPRs from kernel stack
+    for(int i = 1; i < 32; i++) begin
+      instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, i, (i-1) * (XLEN/8), sp));
+    end
+    // Restore kernel stack pointer
+    instr.push_back($sformatf("addi x%0d, x%0d, %0d", sp, sp, 31 * (XLEN/8)));
+    if (scratch inside {implemented_csr}) begin
+      // Move SP to TP
+      instr.push_back($sformatf("add x%0d, x%0d, zero", tp, sp));
+      // Restore user mode stack pointer
+      instr.push_back($sformatf("csrrw x%0d, 0x%0x, x%0d", sp, scratch, sp));
+    end
+  endfunction
+
+
 endpackage : cv32e40p_instr_test_pkg;
