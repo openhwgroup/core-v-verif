@@ -27,7 +27,7 @@
 
 .text
 .global _start
-
+.option norvc
 _start:
     ALL_MEM_PMP                                                            # PMP permission to all the memory
     la t1,trap_handler                                                     # loads the address of trap handler 

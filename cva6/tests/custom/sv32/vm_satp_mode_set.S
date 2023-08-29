@@ -24,7 +24,6 @@
 
 .text
 .global _start
-
 _start:
     ALL_MEM_PMP                                                            # PMP permission to all the memory
     la t1,trap_handler                                                     # loads the address of trap handler 
@@ -67,6 +66,7 @@ check_load:
 
     csrr t1, satp                                                           # tests the load access 
     srli t1, t1, 31															# t1 should be equal to 1
+    nop
 
     #ifdef smode
         SMODE_ECALL                                                         # SMODE ecall 

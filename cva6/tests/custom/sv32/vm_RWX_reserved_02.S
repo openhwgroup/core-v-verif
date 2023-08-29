@@ -27,7 +27,7 @@
 
 .text
 .global _start
-
+.option norvc
 _start:
     ALL_MEM_PMP                                                            # PMP permission to all the memory
     la t1,trap_handler                                                     # loads the address of trap handler 
@@ -77,6 +77,7 @@ vm_en:
 check_load:
 
     lw t1,0(a1)                                                             # tests the load access 
+    nop
     TEST_STATUS                                                             # checks the status of the test
 # ----------------Store test prolog--------------------------------------
 
