@@ -54,8 +54,10 @@
 
 #define RVTEST_EXIT_LOGIC                                          ;\
 exit:                                                              ;\
+    add t1, zero, x1                                               ;\
+    slli t1, t1, 1                                                 ;\
+    addi t1, t1, 1                                                 ;\
     la t0, tohost                                                  ;\
-    li t1, 1                                                       ;\
     sw t1, 0(t0)                                                   ;\
     j exit                                                         ;
 
