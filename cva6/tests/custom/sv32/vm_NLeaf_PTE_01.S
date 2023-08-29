@@ -69,9 +69,7 @@ _start:
 
 vm_en:
 
-    li t1,10                                                               
-    
-pre_load:
+# ----------------Load test prolog--------------------------------------
 
     TEST_PROLOG(check_load,CAUSE_LOAD_PAGE_FAULT)                           # load the addr and expected cause 
     la a1, rvtest_data                                                      # loads the address of label rvtest_data
@@ -79,25 +77,22 @@ pre_load:
 check_load:
 
     lw t1,0(a1)                                                             # tests the load access 
-    nop
-
-pre_store:
+    TEST_STATUS                                                             # checks the status of the test
+# ----------------Store test prolog--------------------------------------
 
     TEST_PROLOG(check_store,CAUSE_STORE_PAGE_FAULT)                         # load the addr and expected cause 
     la a1,rvtest_data                                                       # loads the address of label rvtest_data
 
 check_store:
     sw t1,0(a1)                                                             # test the store access
-    nop  
+    TEST_STATUS                                                             # checks the status of the test
 
     #ifdef smode
       SMODE_ECALL                                                           # changes mode M to S and set the MEPC
     #else
      UMODE_ECALL                                                            # changes mode M to U and set the MEPC
     #endif
-
-
-pre_execute:
+# ----------------------Execute test prolog------------------------------
 
     TEST_PROLOG(check_execute,CAUSE_FETCH_PAGE_FAULT)                       # load the addr and expected cause 
 
@@ -105,7 +100,7 @@ pre_execute:
                                                                             # Setup a new PTE to test execute
     la a1,check_execute                                                     # loads the address of label vm_en
     mv a0, a1                                                               # VA = PA - Identity Map
-    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_D)		  			   # sets the permission bits -- No RWX permission
+    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X )                       # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level0
 
 # ----------------Set the SATP and change the mode---------------------
@@ -122,8 +117,18 @@ pre_execute:
 check_execute:
    
     li t1, 0x45                                                             # page fault should raise 
-    j exit
+    TEST_STATUS                                                             # checks the status of the test
+    
+test_pass:
 
+    li x1, 0                                                                # Write 0 in x1 if test pass
+    j exit                                                                  # Jump to exit
+
+test_fail:
+
+    li x1, 1                                                                # Write 1 in x1 if test failed
+    j exit                                                                  # Jump to exit
+                                                                   
 trap_handler:
 
     csrr t0, mcause                                                         # read the value of mcause 
@@ -138,30 +143,35 @@ trap_handler:
 
     li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
     beq t0,t1,next_instr                                                    # checks for ecall is occured
-
-    beqz t2, exit                                                           # Jumps to exit if cause is not expected
+    beqz t2, test_fail                                                           # Jumps to exit if cause is not expected
  
     csrr t5,mepc                                                            # read the value of mepc 
-    bne t3,t5,exit                                                          # check the value of mepc with it's expected value
+    bne t3,t5,test_fail                                                          # check the value of mepc with it's expected value
 
-    bne  t0, t4, exit                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
+    bne  t0, t4, test_fail                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
     li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
     beq t0,t5,next_instr                                                    # if fetch page fault jump to next instr in M mode
 
-
 continue_execution:
 
-    INCREMENT_MEPC    _SUMODE_                                              # update the value of mepc 
-    mret                                                                    # return 
+    INCREMENT_MEPC   _SUMODE_                                               # update the value of mepc
+    j trap_epilogs
 
 next_instr:
 
-    INCREMENT_MEPC    _MMODE_                                               # update the value of mepc 
+    INCREMENT_MEPC   _MMODE_                                                # update the value of mepc
     li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
-    csrs mstatus,t1                                                         # update the value mstatus MPP 
-    mret                                                                    # return 
+    csrs mstatus,t1                                                         # update the value mstatus MPP
 
+trap_epilogs:
+
+    la t1, rvtest_check                                                     # load the addr of rvtest_check
+    li t2, 0
+    sw t2, 0(t1)                                                            # Clear the expected cause
+    sw t2, 4(t1)                                                            # Clear the exception PC
+    sw t2, 8(t1)                                                            # Clear cause execution number
+    mret
 
 COREV_VERIF_EXIT_LOGIC                                                      # exit logic 
 

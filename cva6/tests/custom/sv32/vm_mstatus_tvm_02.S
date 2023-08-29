@@ -65,45 +65,55 @@ _start:
         CHANGE_T0_U_MODE(a1)                                        	   # changes mode M to U and set the MEPC value to a1
     #endif
 
+
 # ----------------Virtualization Enabeled-------------------------------
 
 vm_en:
+                                               
+# ----------------------Load test prolog------------------------------
 
-    li t1,10                                                               
-    
-pre_load:
-
-    TEST_PROLOG(check_load, CAUSE_ILLEGAL_INSTRUCTION)                      # load the addr and expected cause 
-    la a1, rvtest_data                                                      # loads the address of label rvtest_data
+    TEST_PROLOG(check_load, CAUSE_ILLEGAL_INSTRUCTION)                    # load the addr and expected cause 
+    la a1, rvtest_data                                                    # loads the address of label rvtest_data
 
 check_load:
 
-    csrr t1, satp                                                             # tests the load access 
-    nop
+    csrr t1, satp                                                         # tests the load access 
+    TEST_STATUS                                                           # checks the status of the test                                                               
 
-pre_store:
+# ----------------------store - satp test prolog------------------------------
 
-    TEST_PROLOG(check_store,CAUSE_ILLEGAL_INSTRUCTION)                         # load the addr and expected cause 
-    la a1,rvtest_data	                                                       # loads the address of label rvtest_data
+    TEST_PROLOG(check_store,CAUSE_ILLEGAL_INSTRUCTION)                    # load the addr and expected cause 
+    la a1,rvtest_data	                                                  # loads the address of label rvtest_data
 
 check_store:
-    csrw  satp, t1                                                             # test the store access
-    nop                          
+    csrw  satp, t1                                                        # test the store access
+    TEST_STATUS                                                           # checks the status of the test                                                               
                                                                            
-pre_store_sfence:
+# ----------------------store - sfence test prolog------------------------------
 
-    TEST_PROLOG(check_store_sfence,CAUSE_ILLEGAL_INSTRUCTION)                         # load the addr and expected cause 
-    la a1,rvtest_data                                                       # loads the address of label rvtest_data
+    TEST_PROLOG(check_store_sfence,CAUSE_ILLEGAL_INSTRUCTION)             # load the addr and expected cause 
+    la a1,rvtest_data                                                     # loads the address of label rvtest_data
 
 check_store_sfence:
-    sfence.vma                                                             # test the store access
-    #ifdef smode
-        SMODE_ECALL                                                         # SMODE ecall 
-    #else
-        UMODE_ECALL                                                         # UMODE ecall 
-    #endif	
-    j exit
+    sfence.vma                                                            # test the store access
+    TEST_STATUS                                                           # checks the status of the test                                                               
 
+    #ifdef smode
+        SMODE_ECALL                                                       # SMODE ecall 
+    #else
+        UMODE_ECALL                                                       # UMODE ecall 
+    #endif	
+	
+test_pass:
+
+    li x1, 0                                                              # Write 0 in x1 if test pass
+    j exit                                                                # Jump to exit
+
+test_fail:
+
+    li x1, 1                                                                # Write 1 in x1 if test failed
+    j exit                                                                  # Jump to exit
+                                                                   
 trap_handler:
 
     csrr t0, mcause                                                         # read the value of mcause 
@@ -118,30 +128,35 @@ trap_handler:
 
     li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
     beq t0,t1,next_instr                                                    # checks for ecall is occured
-
-    beqz t2, exit                                                           # Jumps to exit if cause is not expected
+    beqz t2, test_fail                                                           # Jumps to exit if cause is not expected
  
     csrr t5,mepc                                                            # read the value of mepc 
-    bne t3,t5,exit                                                          # check the value of mepc with it's expected value
+    bne t3,t5,test_fail                                                          # check the value of mepc with it's expected value
 
-    bne  t0, t4, exit                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
+    bne  t0, t4, test_fail                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
     li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
     beq t0,t5,next_instr                                                    # if fetch page fault jump to next instr in M mode
 
-
 continue_execution:
 
-    INCREMENT_MEPC    _SUMODE_                                              # update the value of mepc 
-    mret                                                                    # return 
+    INCREMENT_MEPC   _SUMODE_                                               # update the value of mepc
+    j trap_epilogs
 
 next_instr:
 
-    INCREMENT_MEPC    _MMODE_                                               # update the value of mepc 
+    INCREMENT_MEPC   _MMODE_                                                # update the value of mepc
     li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
-    csrs mstatus,t1                                                         # update the value mstatus MPP 
-    mret                                                                    # return 
+    csrs mstatus,t1                                                         # update the value mstatus MPP
 
+trap_epilogs:
+
+    la t1, rvtest_check                                                     # load the addr of rvtest_check
+    li t2, 0
+    sw t2, 0(t1)                                                            # Clear the expected cause
+    sw t2, 4(t1)                                                            # Clear the exception PC
+    sw t2, 8(t1)                                                            # Clear cause execution number
+    mret
 
 COREV_VERIF_EXIT_LOGIC                                                      # exit logic 
 
