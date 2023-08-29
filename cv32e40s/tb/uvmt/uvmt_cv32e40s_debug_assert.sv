@@ -161,9 +161,9 @@ module uvmt_cv32e40s_debug_assert
         ) else `uvm_error(info_tag, $sformatf("Debug mode entered with wrong pc. pc==%08x", rvfi.rvfi_pc_rdata));
 
     a_debug_mode_pc_dpc: assert property(
-        $rose(support_if.first_debug_ins) &&
         // ignore CLIC, checked in clic asserts
-        !(rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt && (csr_mtvec.rvfi_csr_rdata[1:0] == 3))
+        disable iff (!(cov_assert_if.rst_ni) || uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC == 1)
+        $rose(support_if.first_debug_ins)
         |->
         (rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt
         ##1
@@ -192,11 +192,11 @@ module uvmt_cv32e40s_debug_assert
         else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a trigger, dpc==%08x", csr_dpc.rvfi_csr_rdata));
 
     //TODO:MT Fully covered by those below, remove?
-     property p_dpc_dbg_step;
-        $rose(support_if.first_debug_ins) &&
-        rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP &&
+    property p_dpc_dbg_step;
         // ignore CLIC, checked in clic asserts
-        !(rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt && (csr_mtvec.rvfi_csr_rdata[1:0] == 3))
+        disable iff (!(cov_assert_if.rst_ni) || uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC == 1)
+        $rose(support_if.first_debug_ins) &&
+        rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP
         |->
         (csr_dpc.rvfi_csr_rdata == dpc_dbg_step)
         or
@@ -233,6 +233,8 @@ module uvmt_cv32e40s_debug_assert
 
 
     property p_dpc_dbg_step_irq;
+        // ignore CLIC, checked in clic asserts
+        disable iff (!(cov_assert_if.rst_ni) || uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC == 1)
         $rose(support_if.first_debug_ins) &&
         rvfi.rvfi_intr.intr &&
         rvfi.rvfi_intr.interrupt &&
@@ -242,19 +244,15 @@ module uvmt_cv32e40s_debug_assert
         dpc_rdata_q == dpc_dbg_step_irq;
     endproperty
 
-    generate // ignore CLIC, checked in clic asserts
-        if (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC==0) begin
-            a_dpc_dbg_step_irq: assert property(p_dpc_dbg_step_irq)
-                else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a step, dpc==%08x", csr_dpc.rvfi_csr_rdata));
-        end
-    endgenerate
+    a_dpc_dbg_step_irq: assert property(p_dpc_dbg_step_irq)
+        else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a step, dpc==%08x", csr_dpc.rvfi_csr_rdata));
 
     //TODO:MT Fully covered by those below, remove?
     property p_dpc_dbg_haltreq;
-        $rose(support_if.first_debug_ins) &&
-        (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ) &&
         // ignore CLIC, checked in clic asserts
-        !(rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt && (csr_mtvec.rvfi_csr_rdata[1:0] == 3))
+        disable iff (!(cov_assert_if.rst_ni) || uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC == 1)
+        $rose(support_if.first_debug_ins) &&
+        (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ)
         |->
         (csr_dpc.rvfi_csr_rdata == dpc_dbg_haltreq)
         or
@@ -290,6 +288,8 @@ module uvmt_cv32e40s_debug_assert
 
 
     property p_dpc_dbg_haltreq_irq;
+        // ignore CLIC, checked in clic asserts
+        disable iff (!(cov_assert_if.rst_ni) || uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC == 1)
         $rose(support_if.first_debug_ins) &&
         rvfi.rvfi_intr.intr &&
         rvfi.rvfi_intr.interrupt &&
@@ -299,12 +299,8 @@ module uvmt_cv32e40s_debug_assert
         dpc_rdata_q == dpc_dbg_haltreq_irq;
     endproperty
 
-    generate // ignore CLIC, checked in clic asserts
-        if (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC==0) begin
-            a_dpc_dbg_haltreq_irq: assert property(p_dpc_dbg_haltreq_irq)
-                else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a haltreq, dpc==%08x", csr_dpc.rvfi_csr_rdata));
-        end
-    endgenerate
+    a_dpc_dbg_haltreq_irq: assert property(p_dpc_dbg_haltreq_irq)
+        else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a haltreq, dpc==%08x", csr_dpc.rvfi_csr_rdata));
 
     // Check that dcsr.cause is as expected
     property p_dcsr_cause;
@@ -1093,7 +1089,7 @@ module uvmt_cv32e40s_debug_assert
     endproperty : p_dbg_with_nmi_dret_stepie
 
 
-    cov_dbg_with_nmi_dret_stepie:   cover property (p_dbg_with_nmi_dret_stepie(1));
-    cov_dbg_with_nmi_dret_stepie_n: cover property (p_dbg_with_nmi_dret_stepie(0));
+    cov_dbg_with_nmi_dret_stepie: cover property (p_dbg_with_nmi_dret_stepie(1'b1));
+    cov_dbg_with_nmi_dret_stepie_n: cover property (p_dbg_with_nmi_dret_stepie(1'b0));
 
 endmodule : uvmt_cv32e40s_debug_assert
