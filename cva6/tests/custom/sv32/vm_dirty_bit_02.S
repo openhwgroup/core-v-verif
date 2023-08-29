@@ -107,7 +107,7 @@ trap_handler:
 
     bne  t0, t4, test_fail                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
-    li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
+    li t5, CAUSE_STORE_PAGE_FAULT                                           # load the value of fetch page fault exception 
     beq t0,t5,next_instr                                                    # if fetch page fault jump to next instr in M mode
 
 continue_execution:
