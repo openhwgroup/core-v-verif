@@ -95,7 +95,7 @@ check_store:
                                                                             # Setup a new PTE to test execute
     la a1,check_execute                                                     # loads the address of label vm_en
     mv a0, a1                                                               # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X )                       # sets the permission bits
+    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_D | PTE_W )                       # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
