@@ -53,20 +53,84 @@ package cv32e40p_instr_test_pkg;
       if (i == cfg_corev.dp) continue;
       if (i == cfg_corev.sp) continue;
       if (i == cfg_corev.tp) continue;
-      instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, i, i * (XLEN/8), cfg_corev.dp));
+      instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, i, (i-1) * (XLEN/8), cfg_corev.dp));
     end
   endfunction : push_gpr_to_debugger_stack
 
   // Push floating point registers to the debugger stack
   function automatic void push_fpr_to_debugger_stack(cv32e40p_instr_gen_config cfg_corev,
-                                                     ref string instr[$]);
-    string store_instr = (FLEN == 32) ? "fsw" : "fsd";
-    // Reserve space from kernel stack to save all 32 FPR except for x0
-    instr.push_back($sformatf("1: addi x%0d, x%0d, -%0d", cfg_corev.dp, cfg_corev.dp, 31 * (XLEN/8)));
+                                                     ref string instr[$],
+                                                     privileged_reg_t status);
+    string store_instr;
+
+    randcase
+      1: store_instr = (FLEN == 32) ? "fsw" : "fsd";
+      (cfg_corev.dp == 2): store_instr = (FLEN == 32) ? "c.fswsp" : "fsd";
+    endcase
+
+    //Check if mstatus.FS != 3 ,i.e., Not "Dirty" state
+    instr.push_back($sformatf("csrr x%0d, 0x%0x # %0s", cfg_corev.gpr[0], status, status.name()));
+    instr.push_back($sformatf("srli x%0d, x%0d, 13", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+    instr.push_back($sformatf("andi x%0d, x%0d, 0x3", cfg_corev.gpr[0], cfg_corev.gpr[0]));  //Check MSTATUS.FS bit
+    instr.push_back($sformatf("li x%0d, 0x%0x", cfg_corev.gpr[1], 3));
+    instr.push_back($sformatf("bne x%0d, x%0d, 2f", cfg_corev.gpr[0], cfg_corev.gpr[1])); // MSTATUS.FS!=3 do not push
+
+    // Reserve space from kernel stack to save all 32 FPR + FCSR + MSTATUS
+    instr.push_back($sformatf("1: addi x%0d, x%0d, -%0d", cfg_corev.dp, cfg_corev.dp, 33 * (XLEN/8)));
     // Push all FPRs to kernel stack
-    for(int i = 1; i < 32; i++) begin
+    for(int i = 0; i < 32; i++) begin
       instr.push_back($sformatf("%0s  f%0d, %0d(x%0d)", store_instr, i, i * (FLEN/8), cfg_corev.dp));
     end
+
+    store_instr = (XLEN == 32) ? "sw" : "sd";
+
+    // Push FCSR to kernel stack
+    instr.push_back($sformatf("fscsr x%0d, x0", cfg_corev.gpr[0])); // Read and Clear FCSR
+    instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, cfg_corev.gpr[0], 32 * (XLEN/8),  cfg_corev.dp));
+
+    // Reserve space from kernel stack to save MSTATUS.FS
+    instr.push_back($sformatf("addi x%0d, x%0d, -%0d",  cfg_corev.dp,  cfg_corev.dp, 1 * (XLEN/8)));
+
+    // Push MSTATUS.FS to kernel stack
+    instr.push_back($sformatf("csrr x%0d, 0x%0x # %0s", cfg_corev.gpr[0], status, status.name()));
+    instr.push_back($sformatf("srli x%0d, x%0d, 13", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+    instr.push_back($sformatf("andi x%0d, x%0d, 0x3", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+    instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, cfg_corev.gpr[0], 0,  cfg_corev.dp));
+
+    //Set the MSTATUS.FS status to Clean
+    instr.push_back($sformatf("li x%0d, 0x%0x", cfg_corev.gpr[0], 1));  //Set FS from 3->2 Clean, clear bit 13
+    instr.push_back($sformatf("slli x%0d, x%0d, 13", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+    instr.push_back($sformatf("csrrc x0, 0x%0x, x%0d # %0s", status, cfg_corev.gpr[0], status.name()));
+
+    instr.push_back($sformatf("j 3f"));
+
+    instr.push_back($sformatf("2: nop")); //BNE 2f Target
+
+    // Reserve space from kernel stack to save MSTATUS.FS
+    instr.push_back($sformatf("addi x%0d, x%0d, -%0d",  cfg_corev.dp,  cfg_corev.dp, 1 * (XLEN/8)));
+
+    // Push MSTATUS.FS to kernel stack
+    instr.push_back($sformatf("csrr x%0d, 0x%0x # %0s", cfg_corev.gpr[0], status, status.name()));
+    instr.push_back($sformatf("srli x%0d, x%0d, 13", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+    instr.push_back($sformatf("andi x%0d, x%0d, 0x3", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+    instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, cfg_corev.gpr[0], 0,  cfg_corev.dp));
+
+    instr.push_back($sformatf("3: nop")); //Jump 3f Target
+
+    //Check if mstatus.FS != 0 ,i.e., Not "All Off" state
+    instr.push_back($sformatf("csrr x%0d, 0x%0x # %0s", cfg_corev.gpr[0], status, status.name()));
+    instr.push_back($sformatf("srli x%0d, x%0d, 13", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+    instr.push_back($sformatf("andi x%0d, x%0d, 0x3", cfg_corev.gpr[0], cfg_corev.gpr[0]));  //Check MSTATUS.FS bit
+    instr.push_back($sformatf("bnez x%0d, 4f", cfg_corev.gpr[0])); // check MSTATUS.FS!=0
+
+    // if MSTATUS.FS==0 set MSTATUS.FS to Initial
+    instr.push_back($sformatf("li x%0d, 0x%0x", cfg_corev.gpr[0], 1));  //Change FS from 0 to 1, i.e., Initial
+    instr.push_back($sformatf("slli x%0d, x%0d, 13", cfg_corev.gpr[0], cfg_corev.gpr[0]));
+    instr.push_back($sformatf("csrrs x0, 0x%0x, x%0d # %0s", status, cfg_corev.gpr[0], status.name()));
+
+    instr.push_back($sformatf("4: nop")); //BNE 4f Target
+
+
   endfunction : push_fpr_to_debugger_stack
 
   // Pop general purpose register from debugger stack
@@ -78,7 +142,7 @@ package cv32e40p_instr_test_pkg;
       if (i == cfg_corev.dp) continue;
       if (i == cfg_corev.sp) continue;
       if (i == cfg_corev.tp) continue;
-      instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, i, i * (XLEN/8), cfg_corev.dp));
+      instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, i, (i-1) * (XLEN/8), cfg_corev.dp));
     end
     // Restore debugger stack pointer
     instr.push_back($sformatf("addi x%0d, x%0d, %0d", cfg_corev.dp, cfg_corev.dp, 31 * (XLEN/8)));
@@ -86,14 +150,48 @@ package cv32e40p_instr_test_pkg;
 
   // Pop floating point register from debugger stack
   function automatic void pop_fpr_from_debugger_stack(cv32e40p_instr_gen_config cfg_corev,
-                                                      ref string instr[$]);
-    string load_instr = (FLEN == 32) ? "flw" : "fld";
-    // Pop user mode FPRs from kernel stack
-    for(int i = 1; i < 32; i++) begin
+                                                      ref string instr[$],
+                                                      privileged_reg_t status);
+    string load_instr;
+
+    load_instr = (XLEN == 32) ? "lw" : "ld";
+
+    // Pop MSTATUS.FS from kernel stack
+    instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, cfg_corev.gpr[0], 0, cfg_corev.dp));
+    // Restore MSTATUS.FS
+    instr.push_back($sformatf("li x%0d, 0x%0x", cfg_corev.gpr[1], 3));  //Clear FS
+    instr.push_back($sformatf("slli x%0d, x%0d, 13", cfg_corev.gpr[1], cfg_corev.gpr[1]));
+    instr.push_back($sformatf("csrrc x0, 0x%0x, x%0d # %0s", status, cfg_corev.gpr[1], status.name()));
+    instr.push_back($sformatf("slli x%0d, x%0d, 13", cfg_corev.gpr[1], cfg_corev.gpr[0]));
+    instr.push_back($sformatf("csrrs x0, 0x%0x, x%0d # %0s", status, cfg_corev.gpr[1], status.name()));
+
+    // Restore kernel stack pointer
+    instr.push_back($sformatf("addi x%0d, x%0d, %0d", cfg_corev.dp, cfg_corev.dp, 1 * (XLEN/8)));
+
+    instr.push_back($sformatf("li x%0d, 0x%0x", cfg_corev.gpr[1], 3));
+    instr.push_back($sformatf("bne x%0d, x%0d, 2f", cfg_corev.gpr[0], cfg_corev.gpr[1])); // MSTATUS.FS!=3 do not pop FPR
+
+    randcase
+      1: load_instr = (FLEN == 32) ? "flw" : "fld";
+      (cfg_corev.dp == 2): load_instr = (FLEN == 32) ? "c.flwsp" : "fld";
+    endcase
+
+    // Pop FPRs from kernel stack
+    for(int i = 0; i < 32; i++) begin
       instr.push_back($sformatf("%0s  f%0d, %0d(x%0d)", load_instr, i, i * (FLEN/8), cfg_corev.dp));
     end
+
+    load_instr = (XLEN == 32) ? "lw" : "ld";
+
+    // Pop FCSR from kernel stack
+    instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, cfg_corev.gpr[1], 32 * (XLEN/8), cfg_corev.dp));
+    instr.push_back($sformatf("fscsr x%0d", cfg_corev.gpr[1])); // Restore FCSR
+
     // Restore debugger stack pointer
-    instr.push_back($sformatf("addi x%0d, x%0d, %0d", cfg_corev.dp, cfg_corev.dp, 31 * (XLEN/8)));
+    instr.push_back($sformatf("addi x%0d, x%0d, %0d", cfg_corev.dp, cfg_corev.dp, 33 * (XLEN/8)));
+
+    instr.push_back($sformatf("2: nop")); //BNE 2f Target
+
   endfunction : pop_fpr_from_debugger_stack
 
   //Function: check_str_pattern_match
