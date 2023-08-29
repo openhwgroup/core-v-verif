@@ -1,0 +1,9 @@
+# Test definition YAML for test
+
+# Debug directed test
+name: pulp_hardware_loop_debug_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+program: pulp_hardware_loop_debug_test
+description: >
+    Hardware Loops debug directed test
+
