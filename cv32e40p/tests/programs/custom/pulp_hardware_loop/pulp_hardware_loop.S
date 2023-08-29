@@ -70,15 +70,15 @@ test1:
     li x17, 0
     li x18, 0
 
-    .align 4
+    .balign 4
 
     cv.counti 1, 10
     cv.endi 1, endO_1
     cv.starti 1, startO_1
     cv.endi 0, endZ_1
     cv.starti 0, startZ_1
-startO_1:
     cv.counti 0, 10
+startO_1:
 
     .option norvc
 
@@ -87,7 +87,7 @@ startZ_1:
     addi x17, x17, 1
     addi x17, x17, 1
 endZ_1:
-    addi x18, x18, 2
+    cv.counti 0, 10
     addi x18, x18, 2
 endO_1:
 
@@ -97,7 +97,7 @@ endO_1:
     beq x20, x17, test1_1
     c.addi x15, 0x1
 test1_1:
-    li x21, 40
+    li x21, 20
     beq x21, x18, test2
     c.addi x15, 0x1
 
@@ -116,7 +116,7 @@ test2:
 4:	auipc x9, %pcrel_hi(startZ_2)
 	  addi  x9, x9, %pcrel_lo(4b)
 
-    .align 4
+    .balign 4
 
     cv.count 1, x5
     cv.end 1, x6
@@ -152,7 +152,7 @@ test3:
     li x17, 0
     li x18, 0
 
-    .align 4
+    .balign 4
 
     cv.setupi 1, 10, endO_3
 startO_3:
@@ -186,7 +186,7 @@ test4:
 
     li x5, 10
 
-    .align 4
+    .balign 4
 
     cv.setup 1, x5, endO_4
 startO_4:
