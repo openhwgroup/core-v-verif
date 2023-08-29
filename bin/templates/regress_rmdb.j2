@@ -4,8 +4,7 @@
 
 {% import 'regress_macros.j2' as regress_macros -%}
 
-
-<rmdb loadtcl="getUCDBFilename getParameterByPriority getParameterByPriorityYesOrNo getRandSeed getTestName">
+<rmdb version="1.0" toprunnables="{{project}}" loadtcl="getUCDBFilename getParameterByPriority getParameterByPriorityYesOrNo getRandSeed getTestName">
     <usertcl name="getUCDBFilename">
         proc getUCDBFilename {base_name test_cfg} {
             if {[string trim $test_cfg] != ""} {
@@ -167,7 +166,7 @@
             <member>html_report_{{build.name}}</member>
         </members>
         <postScript mintimeout="3000">
-            <command>vrun -vrmdata (%DATADIR%) -status -full -html -htmldir (%DATADIR%)/vrun</command>
+            <command>vrun -vrmdata (%DATADIR%) -status -testname -full -html -htmldir (%DATADIR%)/vrun</command>
         </postScript>
     </runnable>
     <runnable name="html_report_{{build.name}}" type="task">
