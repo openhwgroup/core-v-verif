@@ -145,23 +145,58 @@ module uvmt_cv32e20_imperas_dv_wrap
                              );  
     
 
-// CSR_MINSTRET
-    bit csr_minstret_wb; 
-    wire [31:0] csr_minstret_w; 
-    wire [31:0] csr_minstret_r; 
-    assign csr_minstret_r = `DUT_CORE_PATH.cs_registers_i.minstret_raw[31:0] ; 
-    assign rvvi.csr[0][0]['hb02]    = csr_minstret_w | csr_minstret_r; 
-    assign rvvi.csr_wb[0][0]['hb02] = csr_minstret_wb; 
-    always @(rvvi.csr[0][0]['hb02]) begin 
-        csr_minstret_wb = 1; 
+// CSR_MSTATUS 0x300
+    wire [31:0] csr_mstatus_r;
+    wire [31:0] csr_mstatus_w;
+    bit         csr_mstatus_wb;
+    assign csr_mstatus_r[31:0] = {10'b0000000000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[0],  //tw
+                                  3'b000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[1],  //mprv
+                                  4'b0000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[3:2],//mpp
+                                  3'b000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[4],  //mpie
+                                  3'b000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[5],  //mie
+                                  3'b000};
+    assign rvvi.csr[0][0]['h300]    = csr_mstatus_r; // works with fixed DUT timing
+    assign rvvi.csr_wb[0][0]['h300] = csr_mstatus_wb; 
+        always @(rvvi.csr[0][0]['h300]) begin 
+        csr_mstatus_wb = 1; 
     end 
     always @(posedge rvvi.clk) begin 
-        if (`RVFI_IF.rvfi_valid && csr_minstret_wb) begin 
-            csr_minstret_wb = 0; 
+        if (`RVFI_IF.rvfi_valid && csr_mstatus_wb) begin 
+            csr_mstatus_wb = 0; 
         end 
     end
 
-//CSR_MTVEC
+//CSR_MISA 0x301
+
+//CSR_MIE 0x304
+    wire [31:0] csr_mie_r;
+    bit         csr_mie_wb;
+    assign csr_mie_r = {1'b0,
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[17:3], // irq_fast[14:0]
+                        3'b0,
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[2], // irq_external
+                        3'b0,
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[1], // irq_timer
+                        3'b0,
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[0], // irq_software
+                        3'b0};
+    assign rvvi.csr[0][0]['h304]    = csr_mie_r;
+    assign rvvi.csr_wb[0][0]['h304] = csr_mie_wb; 
+    always @(rvvi.csr[0][0]['h304]) begin 
+        csr_mie_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_mie_wb) begin 
+            csr_mie_wb = 0; 
+        end 
+    end
+
+//CSR_MTVEC 0x305
     wire [31:0] csr_mtvec_w; 
     wire [31:0] csr_mtvec_wmask; 
     wire [31:0] csr_mtvec_r;
@@ -181,8 +216,20 @@ module uvmt_cv32e20_imperas_dv_wrap
         else
            csr_mtvec_wb = 0;
     end
+//CSR_MCOUNTINHIBIT 0x320    
+//CSR_MHPMEVENT3 0x323
+//CSR_MHPMEVENT4 0x324
+//CSR_MHPMEVENT5 0x325
+//CSR_MHPMEVENT6 0x326
+//CSR_MHPMEVENT7 0x327
+//CSR_MHPMEVENT8 0x328
+//CSR_MHPMEVENT9 0x329
+//CSR_MHPMEVENT10 0x32A
+//CSR_MHPMEVENT11 0x32B
+//CSR_MHPMEVENT12 0x32C
 
-// CSR_MSCRATCH  0x340
+
+//CSR_MSCRATCH  0x340
     wire [31:0] csr_mscratch_w; 
     wire [31:0] csr_mscratch_wmask; 
     wire [31:0] csr_mscratch_r;
@@ -201,37 +248,7 @@ module uvmt_cv32e20_imperas_dv_wrap
            csr_mscratch_wb = 0;
     end
 
-// CSR_MSTATUS 0x300
-    wire [31:0] csr_mstatus_r;
-    bit         csr_mstatus_wb;
-
-// LRH - mstatus timing mismatch between DUT and RefModel. 
-// if doing a csr write using mstatus_q passes, but mret instructions fail.
-// using mstatus_d for mret instruction passes, but fails with csr writes.
-// 
-    assign csr_mstatus_r[31:0] = {10'b0000000000,
-                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[0],  //tw
-                                  3'b000,
-                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[1],  //mprv
-                                  4'b0000,
-                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[3:2],//mpp
-                                  3'b000,
-                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[4],  //mpie
-                                  3'b000,
-                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[5],  //mie
-                                  3'b000};
-    assign rvvi.csr[0][0]['h300]    = csr_mstatus_r;
-    assign rvvi.csr_wb[0][0]['h300] = csr_mstatus_wb; 
-    always @(rvvi.csr[0][0]['h300]) begin 
-        csr_mstatus_wb = 1; 
-    end 
-    always @(posedge rvvi.clk) begin 
-        if (`RVFI_IF.rvfi_valid && csr_mstatus_wb) begin 
-            csr_mstatus_wb = 0; 
-        end 
-    end
-  
- // CSR_MEPC 0x341
+//CSR_MEPC 0x341
     wire [31:0] csr_mepc_w; 
     wire [31:0] csr_mepc_wmask; 
     wire [31:0] csr_mepc_r;
@@ -278,6 +295,7 @@ module uvmt_cv32e20_imperas_dv_wrap
             csr_mcause_wb = 0; 
         end 
     end
+    
 //CSR_MTVAL 0x343
     wire [31:0] csr_mtval_r;
     bit         csr_mtval_wb;
@@ -291,30 +309,9 @@ module uvmt_cv32e20_imperas_dv_wrap
            csr_mtval_wb = 0;
     end
 
-//CSR_MIE 0x304
-    wire [31:0] csr_mie_r;
-    bit         csr_mie_wb;
-    assign csr_mie_r = {1'b0,
-                        `DUT_CORE_PATH.cs_registers_i.mie_q[17:3], // irq_fast[14:0]
-                        3'b0,
-                        `DUT_CORE_PATH.cs_registers_i.mie_q[2], // irq_external
-                        3'b0,
-                        `DUT_CORE_PATH.cs_registers_i.mie_q[1], // irq_timer
-                        3'b0,
-                        `DUT_CORE_PATH.cs_registers_i.mie_q[0], // irq_software
-                        3'b0};
-    assign rvvi.csr[0][0]['h304]    = csr_mie_r;
-    assign rvvi.csr_wb[0][0]['h304] = csr_mie_wb; 
-    always @(rvvi.csr[0][0]['h304]) begin 
-        csr_mie_wb = 1; 
-    end 
-    always @(posedge rvvi.clk) begin 
-        if (`RVFI_IF.rvfi_valid && csr_mie_wb) begin 
-            csr_mie_wb = 0; 
-        end 
-    end
+//CSR_MIP 0x344
 
-//CSR_DCSR_ADDR 0x7B0
+//CSR_DCSR 0x7B0
     wire [31:0] csr_dcsr_r;
     bit         csr_dcsr_wb;
     assign csr_dcsr_r = `DUT_CORE_PATH.cs_registers_i.dcsr_q;
@@ -329,7 +326,15 @@ module uvmt_cv32e20_imperas_dv_wrap
         end 
     end
 
-//CSR_DPC 0x7B1
+//CSR_TSELECT_ADDR 0x7A0
+//CSR_TDATA1_ADDR 0x7A1
+//CSR_TDATA2_ADDR 0x7A2
+//CSR_TDATA3_ADDR 0x7A3
+//CSR_MCONTEXT_ADDR 0x7A8
+//CSR_SCONTEXT_ADDR 0x7AA
+//CSR_DCSR_ADDR 0x7B0
+
+//CSR_DPC 0x7B1 //depc?
     wire [31:0] csr_dpc_r;
     bit         csr_dpc_wb;
     assign csr_dpc_r = `DUT_CORE_PATH.cs_registers_i.depc_q;
@@ -343,6 +348,82 @@ module uvmt_cv32e20_imperas_dv_wrap
             csr_dpc_wb = 0; 
         end 
     end
+
+//CSR_DSCRATCH0 0x7B2
+    wire [31:0] csr_dscratch0_r;
+    bit         csr_dscratch0_wb;
+    assign csr_dscratch0_r = `DUT_CORE_PATH.cs_registers_i.dscratch0_q;
+    assign rvvi.csr[0][0]['h7B2]    = csr_dscratch0_r;
+    assign rvvi.csr_wb[0][0]['h7B2] = csr_dscratch0_wb; 
+    always @(rvvi.csr[0][0]['h7B2]) begin 
+        csr_dscratch0_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_dscratch0_wb) begin 
+            csr_dscratch0_wb = 0; 
+        end 
+    end
+
+//CSR_DSCRATCH1 0x7B3
+    wire [31:0] csr_dscratch1_r;
+    bit         csr_dscratch1_wb;
+    assign csr_dscratch1_r = `DUT_CORE_PATH.cs_registers_i.depc_q;
+    assign rvvi.csr[0][0]['h7B3]    = csr_dscratch1_r;
+    assign rvvi.csr_wb[0][0]['h7B3] = csr_dscratch1_wb; 
+    always @(rvvi.csr[0][0]['h7B3]) begin 
+        csr_dscratch1_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_dscratch1_wb) begin 
+            csr_dscratch1_wb = 0; 
+        end 
+    end
+
+//CSR_CPUCTRL 0x7C0
+//CSR_MCYCLE 0xB00
+
+//CSR_MINSTRET 0xB02
+    bit csr_minstret_wb; 
+    wire [31:0] csr_minstret_w; 
+    wire [31:0] csr_minstret_r; 
+    assign csr_minstret_r = `DUT_CORE_PATH.cs_registers_i.minstret_raw[31:0] ; 
+    assign rvvi.csr[0][0]['hb02]    = csr_minstret_w | csr_minstret_r; 
+    assign rvvi.csr_wb[0][0]['hb02] = csr_minstret_wb; 
+    always @(rvvi.csr[0][0]['hb02]) begin 
+        csr_minstret_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_minstret_wb) begin 
+            csr_minstret_wb = 0; 
+        end 
+    end
+    
+//CSR_MHPMCOUNTER3_ADDR  0xB03
+//CSR_MHPMCOUNTER4_ADDR  0xB04
+//CSR_MHPMCOUNTER5_ADDR  0xB05
+//CSR_MHPMCOUNTER6_ADDR  0xB06
+//CSR_MHPMCOUNTER7_ADDR  0xB07
+//CSR_MHPMCOUNTER8_ADDR  0xB08
+//CSR_MHPMCOUNTER9_ADDR  0xB09
+//CSR_MHPMCOUNTER10_ADDR 0xB0A
+//CSR_MHPMCOUNTER11_ADDR 0xB0B
+//CSR_MHPMCOUNTER12_ADDR 0xB0C
+//CSR_MCYCLEH 0xB80
+//CSR_MINSTRETH 0xB82
+//CSR_MHPMCOUNTER3H_ADDR  0xB83
+//CSR_MHPMCOUNTER4H_ADDR  0xB84
+//CSR_MHPMCOUNTER5H_ADDR  0xB85
+//CSR_MHPMCOUNTER6H_ADDR  0xB86
+//CSR_MHPMCOUNTER7H_ADDR  0xB87
+//CSR_MHPMCOUNTER8H_ADDR  0xB88
+//CSR_MHPMCOUNTER9H_ADDR  0xB89
+//CSR_MHPMCOUNTER10H_ADDR 0xB8A
+//CSR_MHPMCOUNTER11H_ADDR 0xB8B
+//CSR_MHPMCOUNTER12H_ADDR 0xB8C
+//CSR_MVENDORID_ADDR  0xF11
+//CSR_MARCHID_ADDR    0xF12
+//CSR_MIMPID_ADDR     0xF13
+//CSR_MHARTID_ADDR    0xF14
 
 //rvviApiPkg.sv
 //rvviRefCsrCompareEnable
@@ -522,6 +603,8 @@ module uvmt_cv32e20_imperas_dv_wrap
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLE_ADDR        ));
 
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRET_ADDR      ));
+//    void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLEH_ADDR        ));
+//    void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRETH_ADDR      ));
 
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLE_ADDR       ));
 
