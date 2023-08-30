@@ -21,10 +21,20 @@
 
 
 """
-TODO description
+Description:
+    Converts ".csv" vplans to ".json".
+
+Rationale:
+    It is an alternative to the ".csv" vplans, which in some cases might be
+    easier to review.
+
+Usage:
+    Run it on a ".csv" vplan.
 """
 
 
+import csv
+import json
 import sys
 
 
@@ -38,5 +48,29 @@ if len(sys.argv) != 2:
 # Read ".csv"
 
 csv_filename = sys.argv[1]
+csv_file     = open(csv_filename, 'r', encoding='utf-8')
+csv_reader   = csv.DictReader(csv_file)
 
-print("TODO convert {}".format(csv_filename))
+
+# Fill empty cells  (with value of above cell)
+
+csv_rows         = []
+csv_row_previous = None
+
+for row in csv_reader:
+    for key, value in row.items():
+        if not value and csv_row_previous:
+            row[key] = csv_row_previous[key]
+            # TODO not for "link-to-cov" etc
+
+    csv_rows.append(row)
+    csv_row_previous = row
+
+
+# Write ".json"
+
+json_string   = json.dumps(csv_rows, indent = 4)
+json_filename = csv_filename.replace(".csv", ".json")
+json_file     = open(json_filename, 'w', encoding='utf-8')
+
+json_file.write(json_string)
