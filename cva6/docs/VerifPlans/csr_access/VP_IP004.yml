@@ -43,7 +43,7 @@ subfeatures: !!omap
           RISC-V mcycle, mcycleh, minstret and minstreth Control Status Register (CSR).
           In a RISC-V architecture\n\n1.’mcycle’ and ‘mcycleh’ are machine-level CSRs
           that hold low 32 bits and high 32 bits respectively of the count of clock
-          cycles executed by the processor.\n2.’minstret’ and ‘minstreth’ are also
+          cycles executed by the processor.\n\n2.’minstret’ and ‘minstreth’ are also
           machine-level CSR that count the total number of instructions executed by
           the processor.\n\nThe functionality of machine mode counter CSR is being
           tested by performing two continuous reads and checking whether the value
@@ -57,7 +57,9 @@ subfeatures: !!omap
         verif_goals: "1.Verify that these CSR are properly initialized.\n2.Initiate
           a second read from the counter CSR immediately after the first read.\n3.Ensure
           that the value of the second read from counter CSR is greater than the value
-          of the initial read.\n4.Confirm that counter CSRs are correctly incrementing."
+          of the initial read.\n4.Confirm that Machine Mode counter CSRs are incrementing.\n
+          \nNote: This algorithm is only an \"approximate test\" of the functionality
+          of these CSRs."
         pfc: 1
         test_type: 1
         cov_method: 1

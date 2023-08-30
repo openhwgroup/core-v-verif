@@ -47,8 +47,9 @@ subfeatures: !!omap
         ref_page: ''
         ref_section: ''
         ref_viewer: firefox
-        verif_goals: Ensure that write into Machine read-only CSR raises an illegal
-          instruction exception.
+        verif_goals: "1.Attempt to write a RO CSR.\n2.Check to see that an illegal
+          instruction exception occurred.\n3.Immediately after returning from the
+          exception handler, check to see that the CSR value is not changed."
         pfc: 1
         test_type: 1
         cov_method: 1
@@ -73,9 +74,9 @@ subfeatures: !!omap
         ref_section: ''
         ref_viewer: firefox
         verif_goals: "1.Ensure that Machine mode read only CSRs can only be accessed
-          in Machine mode according to the RISC-V specification.\n\n2.Verify that
-          trying to access a Machine read only CSRs in an lower privilege mode raises
-          an illegal instruction exception."
+          in Machine mode according to the RISC-V specification and does not alter
+          the value of the CSR.\n\n2.Verify that trying to access a Machine read only
+          CSRs in an lower privilege mode raises an illegal instruction exception."
         pfc: 1
         test_type: 1
         cov_method: 1

@@ -56,7 +56,9 @@ subfeatures: !!omap
         verif_goals: "1.Verify that these CSR are properly initialized.\n2.Initiate
           a second read from the counter CSR immediately after the first read.\n3.Ensure
           that the value of the second read from counter CSR is greater than the value
-          of the initial read.\n4.Confirm that counter CSRs are correctly incrementing."
+          of the initial read.\n4.Confirm that user mode counter CSRs are incrementing.\n
+          \nNote: This algorithm is only an \"approximate test\" of the functionality
+          of these CSRs."
         pfc: 1
         test_type: 1
         cov_method: -1
@@ -81,7 +83,7 @@ subfeatures: !!omap
         ref_section: ''
         ref_viewer: firefox
         verif_goals: Ensure that User mode counter CSRs can be accessed in user and
-          Supervisor modes by configuring MCOUNTEREN and SCOUNTEREN CSRs.
+          Supervisor modes by configuring MCOUNTEREN CSR.
         pfc: 1
         test_type: 1
         cov_method: 1
