@@ -1,9 +1,9 @@
   CORE-V CV32A6-step1 Design Verification Plan documentation     
-  
+
 [CORE-V CV32A6-step1 Design Verification Plan ![Logo](_static/openhw-landscape.svg)](#) 
- 
+
 Contents:
- 
+
 *   [Introduction](index.html#document-dvplan_intro)
 *   [Module: CSR ACCESS VERIFICATION](index.html#document-dvplan_csr-access)
 
@@ -262,7 +262,9 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
     
 *   **Verification Goals**
     
-    Ensure that write into Machine read-only CSR raises an illegal instruction exception.
+    1.Attempt to write a RO CSR.  
+    2.Check to see that an illegal instruction exception occurred.  
+    3.Immediately after returning from the exception handler, check to see that the CSR value is not changed.
     
 *   **Pass/Fail Criteria:** Self-Check
     
@@ -293,7 +295,7 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
     
 *   **Verification Goals**
     
-    1.Ensure that Machine mode read only CSRs can only be accessed in Machine mode according to the RISC-V specification.
+    1.Ensure that Machine mode read only CSRs can only be accessed in Machine mode according to the RISC-V specification and does not alter the value of the CSR.
     
     2.Verify that trying to access a Machine read only CSRs in an lower privilege mode raises an illegal instruction exception.
     
@@ -347,48 +349,15 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
     _(none)_
     
 
-#### Sub-feature: 001\_Testing CSR with inverted reset value[](#id10 "Permalink to this heading")
+#### Sub-feature: 001\_CSR write and read operations[](#id10 "Permalink to this heading")
 
 ##### Item: 000[](#id11 "Permalink to this heading")
-
-*   **Requirement location:**
-    
-*   **Feature Description**
-    
-    Check the behaviour of the RISC-V Supervisor mode CVA6 CSRs,when reset inverted values are written to respective CSRs.
-    
-*   **Verification Goals**
-    
-    1.  Verify CSR reading post write operation.
-        
-    2.  Verify if the core correctly handles inverted reset values or not.
-        
-*   **Pass/Fail Criteria:** Self-Check
-    
-*   **Test Type:** Directed SelfChk
-    
-*   **Coverage Method:** Functional Coverage
-    
-*   **Applicable Cores:** CV32A6\_v0.1.0
-    
-*   **Unique verification tag:** VP\_csr-access\_F004\_S003\_I000
-    
-*   **Link to Coverage:**
-    
-*   **Comments**
-    
-    _(none)_
-    
-
-#### Sub-feature: 002\_CSR write and read operations[](#id12 "Permalink to this heading")
-
-##### Item: 000[](#id13 "Permalink to this heading")
 
 *   **Requirement location:** https://docs.openhwgroup.org/projects/cva6-user-manual/01\_cva6\_user/CV32A6\_Control\_Status\_Registers.html
     
 *   **Feature Description**
     
-    Check the correctness of RISCV CVA6 Supervisor Mode RW CSR by writing random values like 0xa5a5a5a5, 0x5a5a5a5a, 0xffa1ae40.. and read using the CSR instructions defined in the instruction set architecture (ISA).
+    Check the correctness of RISCV CVA6 Supervisor Mode RW CSR by writing random values like inverted reset value, 0xa5a5a5a5, 0x5a5a5a5a, 0xffa1ae40.. and read using the CSR instructions defined in the instruction set architecture (ISA).
     
 *   **Verification Goals**
     
@@ -413,9 +382,9 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
     _(none)_
     
 
-#### Sub-feature: 003\_CSR access in different privilege modes[](#id14 "Permalink to this heading")
+#### Sub-feature: 002\_CSR access in different privilege modes[](#id12 "Permalink to this heading")
 
-##### Item: 000[](#id15 "Permalink to this heading")
+##### Item: 000[](#id13 "Permalink to this heading")
 
 *   **Requirement location:** https://docs.openhwgroup.org/projects/cva6-user-manual/01\_cva6\_user/CV32A6\_Control\_Status\_Registers.html
     
@@ -447,9 +416,9 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
 
 ### Feature: CVA6\_User\_Mode\_Counter\_CSRs(cycle, instret, cycleh, instreth)[](#feature-cva6-user-mode-counter-csrs-cycle-instret-cycleh-instreth "Permalink to this heading")
 
-#### Sub-feature: 000\_Power-on-reset (POR) values of CSR[](#id16 "Permalink to this heading")
+#### Sub-feature: 000\_Power-on-reset (POR) values of CSR[](#id14 "Permalink to this heading")
 
-##### Item: 000[](#id17 "Permalink to this heading")
+##### Item: 000[](#id15 "Permalink to this heading")
 
 *   **Requirement location:** https://docs.openhwgroup.org/projects/cva6-user-manual/01\_cva6\_user/CV32A6\_Control\_Status\_Registers.html
     
@@ -480,7 +449,7 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
 
 #### Sub-feature: 001\_Counter \_CSRs\_functionality\_checking[](#sub-feature-001-counter-csrs-functionality-checking "Permalink to this heading")
 
-##### Item: 000[](#id18 "Permalink to this heading")
+##### Item: 000[](#id16 "Permalink to this heading")
 
 *   **Requirement location:** https://docs.openhwgroup.org/projects/cva6-user-manual/01\_cva6\_user/CV32A6\_Control\_Status\_Registers.html
     
@@ -498,7 +467,9 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
     1.Verify that these CSR are properly initialized.  
     2.Initiate a second read from the counter CSR immediately after the first read.  
     3.Ensure that the value of the second read from counter CSR is greater than the value of the initial read.  
-    4.Confirm that counter CSRs are correctly incrementing.
+    4.Confirm that user mode counter CSRs are incrementing.
+    
+    Note: This algorithm is only an “approximate test” of the functionality of these CSRs.
     
 *   **Pass/Fail Criteria:** Self-Check
     
@@ -517,9 +488,9 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
     _(none)_
     
 
-#### Sub-feature: 002\_CSR access in different privilege modes[](#id19 "Permalink to this heading")
+#### Sub-feature: 002\_CSR access in different privilege modes[](#id17 "Permalink to this heading")
 
-##### Item: 000[](#id20 "Permalink to this heading")
+##### Item: 000[](#id18 "Permalink to this heading")
 
 *   **Requirement location:** https://docs.openhwgroup.org/projects/cva6-user-manual/01\_cva6\_user/CV32A6\_Control\_Status\_Registers.html
     
@@ -529,7 +500,7 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
     
 *   **Verification Goals**
     
-    Ensure that User mode counter CSRs can be accessed in user and Supervisor modes by configuring MCOUNTEREN and SCOUNTEREN CSRs.
+    Ensure that User mode counter CSRs can be accessed in user and Supervisor modes by configuring MCOUNTEREN CSR.
     
 *   **Pass/Fail Criteria:** Self-Check
     
@@ -550,7 +521,7 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
 
 #### Sub-feature: 003\_Verify the user mode counter CSRs behaviour after reaching maximum values[](#sub-feature-003-verify-the-user-mode-counter-csrs-behaviour-after-reaching-maximum-values "Permalink to this heading")
 
-##### Item: 000[](#id21 "Permalink to this heading")
+##### Item: 000[](#id19 "Permalink to this heading")
 
 *   **Requirement location:**
     
@@ -581,9 +552,9 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
 
 ### Feature: CVA6\_Machine\_mode\_counter\_csr(mcycle,mcycleh,minstret,minstreth)[](#feature-cva6-machine-mode-counter-csr-mcycle-mcycleh-minstret-minstreth "Permalink to this heading")
 
-#### Sub-feature: 000\_Power-on-reset (POR) values of CSR[](#id22 "Permalink to this heading")
+#### Sub-feature: 000\_Power-on-reset (POR) values of CSR[](#id20 "Permalink to this heading")
 
-##### Item: 000[](#id23 "Permalink to this heading")
+##### Item: 000[](#id21 "Permalink to this heading")
 
 *   **Requirement location:** https://docs.openhwgroup.org/projects/cva6-user-manual/01\_cva6\_user/CV32A6\_Control\_Status\_Registers.html
     
@@ -612,9 +583,9 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
     _(none)_
     
 
-#### Sub-feature: 001\_Counter \_CSRs\_functionality\_checking[](#id24 "Permalink to this heading")
+#### Sub-feature: 001\_Counter \_CSRs\_functionality\_checking[](#id22 "Permalink to this heading")
 
-##### Item: 000[](#id25 "Permalink to this heading")
+##### Item: 000[](#id23 "Permalink to this heading")
 
 *   **Requirement location:** https://docs.openhwgroup.org/projects/cva6-user-manual/01\_cva6\_user/CV32A6\_Control\_Status\_Registers.html
     
@@ -622,7 +593,8 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
     
     This feature pertains to the verification of functionality of RISC-V mcycle, mcycleh, minstret and minstreth Control Status Register (CSR). In a RISC-V architecture
     
-    1.’mcycle’ and ‘mcycleh’ are machine-level CSRs that hold low 32 bits and high 32 bits respectively of the count of clock cycles executed by the processor.  
+    1.’mcycle’ and ‘mcycleh’ are machine-level CSRs that hold low 32 bits and high 32 bits respectively of the count of clock cycles executed by the processor.
+    
     2.’minstret’ and ‘minstreth’ are also machine-level CSR that count the total number of instructions executed by the processor.
     
     The functionality of machine mode counter CSR is being tested by performing two continuous reads and checking whether the value in the second read is greater than the value in the first read.
@@ -632,7 +604,9 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
     1.Verify that these CSR are properly initialized.  
     2.Initiate a second read from the counter CSR immediately after the first read.  
     3.Ensure that the value of the second read from counter CSR is greater than the value of the initial read.  
-    4.Confirm that counter CSRs are correctly incrementing.
+    4.Confirm that Machine Mode counter CSRs are incrementing.
+    
+    Note: This algorithm is only an “approximate test” of the functionality of these CSRs.
     
 *   **Pass/Fail Criteria:** Self-Check
     
@@ -651,9 +625,9 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
     _(none)_
     
 
-#### Sub-feature: 002\_CSR access in different privilege modes[](#id26 "Permalink to this heading")
+#### Sub-feature: 002\_CSR access in different privilege modes[](#id24 "Permalink to this heading")
 
-##### Item: 000[](#id27 "Permalink to this heading")
+##### Item: 000[](#id25 "Permalink to this heading")
 
 *   **Requirement location:** https://docs.openhwgroup.org/projects/cva6-user-manual/01\_cva6\_user/CV32A6\_Control\_Status\_Registers.html
     
@@ -685,7 +659,7 @@ Module: CSR ACCESS VERIFICATION[](#module-csr-access-verification "Permalink 
 
 #### Sub-feature: 003\_Verify the Machine mode counter CSRs behaviour after reaching maximum value[](#sub-feature-003-verify-the-machine-mode-counter-csrs-behaviour-after-reaching-maximum-value "Permalink to this heading")
 
-##### Item: 000[](#id28 "Permalink to this heading")
+##### Item: 000[](#id26 "Permalink to this heading")
 
 *   **Requirement location:**
     
