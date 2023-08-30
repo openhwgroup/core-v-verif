@@ -392,7 +392,7 @@ function void uvmt_cv32e40p_base_test_c::create_cfg();
 
    test_cfg = uvmt_cv32e40p_test_cfg_c::type_id::create("test_cfg");
    env_cfg  = uvme_cv32e40p_cfg_c     ::type_id::create("env_cfg" );
-   //ral      = env_cfg.ral;
+   test_randvars = uvmt_cv32e40p_test_randvars_c::type_id::create("test_randvars");
 
 endfunction : create_cfg
 
