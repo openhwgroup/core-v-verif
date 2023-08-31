@@ -1,20 +1,28 @@
 #=======================================================================
-#  RWX Access of Level0 PTE in User and Supervisor mode when access
-#  bit is low 
+#  PMP permissions on Physical Address in User and supervisor mode
+#  at level 0 PTE
 #-----------------------------------------------------------------------
 # Test Description:
 #
-# If implementation does not sets the pte.A on accessing the PTE, 
-# and PTE has pte.A=0, then accessing it would raise page fault 
-# exception of the corresponding access type. 
+# If PTE has valid and non-reserved RWX permissions, but the translated
+# Physical address (pte.ppn of leaf PTE + offset) does not have (r,w,x)
+# PMP permissions, then accessing the translated Physical address would
+# raise access fault exception.
 #
-# - Set pte.r=1 & pte.a=0 and test the read acces. 
-# - Set pte.w=1 & pte.a=0 and test the write access.
-# - Set pte.x=1 & pte.a=0 and test the execute access.
+# - Remove read PMP permission of translated Physical Address in pmpcfg
+#   and test the read acces.
+# - Remvoe write PMP permission of translated Physical Address in pmpcfg
+#   and test the write access.
+# - Remove execute PMP permission of translated Physical Address in 
+#   pmpcfg and test the execute access.
 #
 #=======================================================================
 
 #include "macros.h"
+
+#define NAPOT_RANGE_4KB 0x1FF                                           # Set 4kB range with NAPOT
+#define NAPOT_RANGE_32B 0x3                                             # Set 32B range with NAPOT
+
 #define _MMODE_ "M"
 #define _SUMODE_ "SU"
 
@@ -29,15 +37,54 @@
 .option norvc
 
 _start:
-    ALL_MEM_PMP                                                         # PMP permission to all the mem
+
+# -------------------------------- PMP Configurations --------------------------------
+
+    la t2, vm_en                                                        # Loads the address of vm_en                
+    srli t2, t2, PMP_SHIFT                                              # Right shift the PA by PMP_Shift(2) 
+    ori t2, t2, NAPOT_RANGE_4KB                                         # Selects the range of 4kB    
+    csrw pmpaddr0, t2                                                   # Region 1 for the pmp permissions
+    sfence.vma  
+
+    la t2, pgtb_l1                                                      # loads the base address of LEVEL1 4kbpage table                 
+    srli t2, t2, PMP_SHIFT                                              # Right shift the address of LEVEL 1 page table  by PMP_Shift(2)		
+    ori t2, t2, NAPOT_RANGE_4KB                                         # Selects the range of 4kB						 	 										
+    csrw pmpaddr1, t2                                                   # Region 2 for the pmp permission
+    sfence.vma
+
+    la t2, pgtb_l0                                                      # loads the base address of LEVEL0 4kbpage table                 
+    srli t2, t2, PMP_SHIFT                                              # Right shift the address of LEVEL 0 page table  by PMP_Shift(2)		
+    ori t2, t2, NAPOT_RANGE_4KB                                         # Selects the range of 4kB						 	 										
+    csrw pmpaddr4, t2                                                   # Region 3 for the pmp permission
+    sfence.vma
+
+    la t2, rvtest_check                                                 # loads the base address of rvtest_data label        
+    srli t2, t2, PMP_SHIFT                                              # Right shift the address of rvtest_data label by PMP_Shift(2)
+    ori t2, t2, NAPOT_RANGE_32B                                         # Selects the range of 32B    
+	csrw pmpaddr2, t2                                               # Region 4 for the pmp permission
+    sfence.vma
+
+    la t2, rvtest_data                                                  # loads the base address of rvtest_data label        
+    srli t2, t2, PMP_SHIFT                                              # Right shift the address of rvtest_data label by PMP_Shift(2)
+    ori t2, t2, NAPOT_RANGE_32B                                         # Selects the range of 32B    
+	csrw pmpaddr3, t2                                               # Region 5 for the pmp permission
+    sfence.vma
+
+    # Region 1, 2, 3, 4: NAPOT with RWX PMP Permissions
+    li t2, ((PMP_NAPOT | PMP_X) << 24) | ((PMP_NAPOT | PMP_X | PMP_W | PMP_R) << 16) | ((PMP_NAPOT | PMP_X | PMP_W | PMP_R) << 8) | (PMP_NAPOT | PMP_X | PMP_W | PMP_R)
+    csrw pmpcfg0, t2                                                    # Write PMP Regions Configration
+    li t2, (PMP_NAPOT | PMP_X | PMP_W | PMP_R)                          # Region5: NAPOT with RWX PMP Permissions
+    csrw pmpcfg1, t2                                                    # Write PMP Regions Configration
+    sfence.vma
+
     la t1,trap_handler                                                  # loads the address of trap handler 
     csrw mtvec,t1                                                       # sets the mtvec to trap handler 
     
-PTE_LEVEL0_SUPERVISOR:
+PTE_LEVEL0:
 
 # ----------------LEVEL 0 PTE Setup for load and store test---------------------
 
-    la a1,pgtb_l0                                                       # loads the address of label vm_en
+    la a1,pgtb_l0                                                       # loads the address of label pgtb_l0
     la a0, _start                                                       # VA = PA - Identity Map
     ori a2, x0, ( PTE_V )                                               # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                     # setup the PTE for level1
@@ -49,11 +96,11 @@ PTE_LEVEL0_SUPERVISOR:
  
     la a1,rvtest_data                                                   # loads the address of label rvtest_data
     mv a0, a1                                                           # VA = PA - Identity Map
-    ori a2, x0, ( PTE_D | PTE_X | SET_PTE_U | PTE_W | PTE_R | PTE_V )   # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_W | PTE_R | PTE_V )   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                     # setup the PTE for level0   
 
     la a1,rvtest_check                                                  # loads the address of label rvtest_data
-    mv a0, a1                                                           # VA = PA - Identity Map                                        
+    mv a0, a1                                                           # VA = PA - Identity Map                                         
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_W | PTE_R | PTE_V)    # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                     # setup the PTE for level0
 
@@ -71,47 +118,41 @@ PTE_LEVEL0_SUPERVISOR:
 
 vm_en:
 
-# -------------------Load Test Prolog-------------------------
+# -------------------Load Test Prolog------------------------
 
-    TEST_PROLOG(check_load, CAUSE_LOAD_PAGE_FAULT)                      # load the addr and expected cause
+    TEST_PROLOG(check_load, CAUSE_LOAD_ACCESS)                          # load the addr and expected cause
 
 check_load:                                                             # test the load access
 
-    lw t1,0(a1)  
+    lw t1,0(a1) 
     TEST_STATUS                                                         # checks the status of the test
     nop
 
-# -------------------Store Test Prolog------------------------
+# -------------------Store Test Prolog------------------------                       
 
-    TEST_PROLOG(check_store, CAUSE_STORE_PAGE_FAULT)                    # load the addr and expected cause
+    TEST_PROLOG(check_store, CAUSE_STORE_ACCESS)                        # load the addr and expected cause
 
 check_store:                                                            # test the store access
     sw t1,0(a1)
-    nop          
-    TEST_STATUS                                                             # checks the status of the test           
+    nop        
+    TEST_STATUS                                                         # checks the status of the test                
     #ifdef smode
         SMODE_ECALL                                                     # SMODE ecall 
     #else
         UMODE_ECALL                                                     # UMODE ecall 
     #endif
 
-# -------------------Execute Test Prolog-----------------------
+# -------------------Execute Test Prolog------------------------
 
-    TEST_PROLOG(check_execute, CAUSE_FETCH_PAGE_FAULT)                  # load the addr and expected cause
+    TEST_PROLOG(check_execute, CAUSE_FETCH_ACCESS)                      # load the addr and expected cause
 
-PTE_LEVEL0_SUPERVISOR_EXECUTE:
+    li t2, (PMP_NAPOT | PMP_X | PMP_W | PMP_R)
+    csrc pmpcfg0, t2                                                    # Clear PMP Region 1 Configration
+    li t2, (PMP_NAPOT | PMP_W | PMP_R)
+    csrs pmpcfg0, t2                                                    # Set PMP Region 1 Configration
+    sfence.vma
 
-# -------------LEVEL 1 PTE Setup for execute test------------------------
-                                                                        # Setup a new PTE to test execute 
-    la a1,check_execute                                                 # loads the address of label vm_en
-    mv a0, a1                                                           # VA = PA - Identity Map
-    ori a2, x0, ( PTE_D | SET_PTE_U | PTE_X | PTE_V )                   # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                     # setup the PTE for level0
-
-# ----------------Set the SATP and change the mode---------------------
-
-    SATP_SETUP_SV32(pgtb_l1)                                            # set the SATP for virtualization
-    la a1,check_execute                                                 # loads the address of check_execute
+    la a1, check_execute
 
     #ifdef smode
         CHANGE_T0_S_MODE(a1)                                            # changes mode M to S and set the MEPC 
@@ -121,9 +162,7 @@ PTE_LEVEL0_SUPERVISOR_EXECUTE:
 
 check_execute:                                                          # test the execute access
     li t1, 0x45                                                         # page fault should raise
-    la a1, rvtest_check                                                 # load the addr of rvtest_check
-    lw t1, 0(a1)                                                        # load value to check if expected exception is handled
-    bne t1, x0, test_fail                                               # If exception is expected but not handled then jump to test_fail
+    TEST_STATUS                                                         # checks the status of the test
     j test_pass
 
 trap_handler:
@@ -146,8 +185,8 @@ trap_handler:
     bne t3,t5, test_fail                                                # check the value of mepc with it's expected value
     bne t0, t4, test_fail                                               # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
-    li t5, CAUSE_FETCH_PAGE_FAULT                                       # load the value of fetch page fault exception
-    beq t0,t5,next_instr                                                # if fetch page fault jump to next instr in M mode
+    li t5, CAUSE_FETCH_ACCESS                                           # load the value of fetch access fault
+    beq t0, t5, next_instr                                              # if fetch access fault jump to next instr in M mode
 
 continue_execution:
 
