@@ -1,6 +1,6 @@
 #include "../env/encoding.h"
 
-#define _start   rvtest_entry_point                            
+#define _start   rvtest_entry_point
 #define SMODE_ECALL ecall
 #define UMODE_ECALL ecall
 
@@ -70,9 +70,9 @@ exit:                                                              ;\
     self_loop: j self_loop                                         ;
 
 #define ALL_MEM_PMP                                                ;\
-    li t2, -1		                                           ;\
+    li t2, -1                                                      ;\
     csrw pmpaddr0, t2                                              ;\
-    li t2, 0x0F		                                           ;\
+    li t2, 0x0F	                                                ;\
     csrw pmpcfg0, t2                                               ;\
     sfence.vma                                                     ;
 
@@ -84,7 +84,7 @@ exit:                                                              ;\
     sw t4, 0(t1)                                                   ;\
     sw t2, 4(t1)                                                   ;\
     sw t3, 8(t1)                                                   ;\
-    la a1,rvtest_data                                              ; 
+    la a1,rvtest_data                                              ;
 
 .macro INCREMENT_MEPC label_suffix                                 ;\
     csrr t1, mepc                                                  ;\

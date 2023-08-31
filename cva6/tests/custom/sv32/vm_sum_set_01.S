@@ -27,39 +27,39 @@
 
 _start:
 
-    ALL_MEM_PMP                                                           # PMP permission to all the mem
-    la t1,trap_handler                                                    # loads the address of trap handler 
-    csrw mtvec,t1                                                         # sets the mtvec to trap handler
+    ALL_MEM_PMP                                                            # PMP permission to all the mem
+    la t1,trap_handler                                                     # loads the address of trap handler 
+    csrw mtvec,t1                                                          # sets the mtvec to trap handler
     
 PTE_LEVEL1_SUPERVISOR:
 
-# ----------------LEVEL 1 PTE Setup for load and store test---------------------
+# ----------------LEVEL 1 PTE Setup for load and store test------------
 
-    la a1,vm_en                                                           # loads the address of label vm_en
-    mv a0, a1                                                             # VA = PA - Identity Map
-    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_V )                         # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                       # setup the PTE for level1
+    la a1,vm_en                                                            # loads the address of label vm_en
+    mv a0, a1                                                              # VA = PA - Identity Map
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_V )                          # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
  
-    la a1,rvtest_data                                                     # loads the address of label rvtest_data
-    mv a0, a1                                                             # VA = PA - Identity Map
-    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_W | PTE_R | PTE_V ) # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                       # setup the PTE for level1   
+    la a1,rvtest_data                                                      # loads the address of label rvtest_data
+    mv a0, a1                                                              # VA = PA - Identity Map
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_W | PTE_R | PTE_V )          # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
 
-    la a1,rvtest_check                                                    # loads the address of label rvtest_data
-    mv a0, a1                                                             # VA = PA - Identity Map                                         
-    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V)          # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                       # setup the PTE for level1
+    la a1,rvtest_check                                                     # loads the address of label rvtest_data
+    mv a0, a1                                                              # VA = PA - Identity Map                                         
+    ori a2, x0, ( PTE_D | PTE_A | PTE_W | PTE_R | PTE_V)                   # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
 
 
-    SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
+    SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
     li a1, MSTATUS_SUM
-    csrs mstatus, a1                                                       # Clear mstatus.SUM
-    la a1,vm_en                                                            # loads the address of vm_en
-    CHANGE_T0_S_MODE(a1)                                                   # changes mode M to S and set the MEPC value to a1
+    csrs mstatus, a1                                                        # Clear mstatus.SUM
+    la a1,vm_en                                                             # loads the address of vm_en
+    CHANGE_T0_S_MODE(a1)                                                    # changes mode M to S and set the MEPC value to a1
 
-# ----------------Virtualization Enabeled---------------------
+# ----------------Virtualization Enabeled-----------------------------
 
 vm_en:
 
@@ -116,32 +116,26 @@ trap_handler:
     lw t4, 8(t1)                                                            # load the expected value of mcause  
 
     li  t1, CAUSE_SUPERVISOR_ECALL                                          # load the value of supervisor ecall
-    beq t0,t1,next_instr                                                    # checks if ecall is occured
+    beq t0,t1,continue_in_m_mode                                            # checks if ecall is occured
 
-    li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
-    beq t0,t1,next_instr                                                    # checks for ecall is occured
-
-    beqz t2, exit                                                           # Jumps to exit if cause is not expected
+    beqz t2, test_fail:                                                     # Jumps to exit if cause is not expected
  
     csrr t5,mepc                                                            # read the value of mepc 
-    bne t3,t5,exit                                                          # check the value of mepc with it's expected value
-
-    bne  t0, t4, exit                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
-
-    li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
-    beq t0,t5,next_instr                                                    # if fetch page fault jump to next instr in M mode
+    bne t3,t5,test_fail:                                                    # check the value of mepc with it's expected value
+    
+    bne  t0, t4, test_fail:                                                 # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
 continue_execution:
 
     INCREMENT_MEPC   _SUMODE_                                               # update the value of mepc
     j trap_epilogs
 
-next_instr:
+continue_in_m_mode:
 
     INCREMENT_MEPC   _MMODE_                                                # update the value of mepc
     li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
     csrs mstatus,t1                                                         # update the value mstatus MPP
-
+    
 trap_epilogs:
 
     la t1, rvtest_check                                                     # load the addr of rvtest_check

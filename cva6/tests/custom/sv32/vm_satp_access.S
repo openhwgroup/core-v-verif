@@ -66,29 +66,28 @@ trap_handler:
     lw t4, 8(t1)                                      # load the expected value of mcause  
 
     li  t1, CAUSE_SUPERVISOR_ECALL                    # load the value of supervisor ecall
-    beq t0,t1,next_instr                              # checks if ecall is occured
+    beq t0,t1,continue_in_m_mode                      # checks if ecall is occured
 
     li  t1, CAUSE_USER_ECALL                          # load the value of user ecall
-    beq t0,t1,next_instr                              # checks for ecall is occured
+    beq t0,t1,continue_in_m_mode                      # checks if ecall is occured
 
-    beqz t2, exit                                     # Jumps to exit if cause is not expected
+    beqz t2, test_fail:                               # Jumps to exit if cause is not expected
  
     csrr t5,mepc                                      # read the value of mepc 
-    bne t3,t5,exit                                    # check the value of mepc with it's expected value
-
-    bne  t0, t4, exit                                 # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
+    bne t3,t5,test_fail:                              # check the value of mepc with it's expected value
+    
+    bne  t0, t4, test_fail:                           # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
 continue_execution:
 
     INCREMENT_MEPC   _SUMODE_                         # update the value of mepc
     j trap_epilogs
 
-next_instr:
+continue_in_m_mode:
 
     INCREMENT_MEPC   _MMODE_                          # update the value of mepc
     li t1,MSTATUS_MPP                                 # update the MPP to MSTATUS_MPP for M mode
     csrs mstatus,t1                                   # update the value mstatus MPP
-
 trap_epilogs:
 
     la t1, rvtest_check                               # load the addr of rvtest_check
@@ -98,7 +97,7 @@ trap_epilogs:
     sw t2, 8(t1)                                      # Clear cause execution number
     mret
 
-COREV_VERIF_EXIT_LOGIC                               # exit logic 
+COREV_VERIF_EXIT_LOGIC                                # exit logic 
 
 .data  
     rvtest_check: 
