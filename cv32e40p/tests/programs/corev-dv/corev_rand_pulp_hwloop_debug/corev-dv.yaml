@@ -31,3 +31,5 @@ plusargs: >
     +test_override_riscv_instr_stream=1
     +test_override_riscv_instr_sequence=1
     +gen_debug_section=1
+    +is_hwloop_test=1
+    +include_xpulp_instr_in_debug_rom
