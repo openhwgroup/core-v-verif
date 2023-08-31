@@ -137,7 +137,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
   }
 
   constraint avail_regs_pulp_instr_c {
-    num_of_avail_regs inside {[10:20]};
+    num_of_avail_regs inside {[10:19]};
     num_of_reserved_regs == 5;
   }
 

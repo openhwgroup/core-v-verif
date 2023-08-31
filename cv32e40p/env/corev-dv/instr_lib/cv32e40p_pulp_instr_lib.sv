@@ -133,9 +133,9 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
   constraint avail_regs_pulp_instr_c {
     if ((cfg.enable_fp_in_x_regs == 1) && (RV32ZFINX inside {riscv_instr_pkg::supported_isa})) {
       num_of_avail_regs  >= 8;
-      num_of_avail_regs  <= 25 - num_zfinx_gpr;
+      num_of_avail_regs  <= 24 - num_zfinx_gpr;
     } else {
-      num_of_avail_regs inside {[8:25]};
+      num_of_avail_regs inside {[8:24]};
     }
   }
 
