@@ -142,6 +142,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
   localparam logic [31:0] NMI_OFFSET    = 0;
   localparam logic [3:0]  PC_MUX_MRET   = 4'b0001;
+  localparam logic [3:0]  PC_MUX_CLICV  = 4'b1101;
 
   typedef struct packed {
     logic                       irq;
@@ -502,6 +503,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     logic [35:32] tag;
     logic [31:0]  addr;
     logic         is_mret;
+    logic         is_clicv;
   } obi_tagged_txn_t;
 
 
@@ -670,9 +672,13 @@ module uvmt_cv32e40s_clic_interrupt_assert
   obi_tagged_txn_t obi_data_fifo_tag_out;
 
   logic [31:0] mepc_as_pointer_rdata;
+  logic [31:0] clicv_pointer_rdata;
   logic pc_mux_mret_q;
   logic obi_req_is_mret;
   logic delayed_mret_req;
+  logic pc_mux_clicv_q;
+  logic obi_req_is_clicv;
+  logic delayed_clicv_req;
   logic [31:0] next_pc;
   logic irq_ack_occurred_between_valid;
   logic minhv_high_between_valid;
@@ -1472,6 +1478,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
             obi_instr_fifo_tag_ff[i].tag  <= obi_instr_request_n;
             obi_instr_fifo_tag_ff[i].addr <= obi_instr_addr;
             obi_instr_fifo_tag_ff[i].is_mret <= obi_req_is_mret;
+            obi_instr_fifo_tag_ff[i].is_clicv <= obi_req_is_clicv;
           end else begin
             obi_instr_fifo_tag_ff[i]      <= obi_instr_fifo_tag_ff[i];
           end
@@ -1518,7 +1525,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
       if (!rst_ni) begin
         mepc_as_pointer_rdata <= '0;
       end else begin
-        if (obi_instr_fifo_tag_rena && obi_instr_fifo_tag_out.addr == {mepc[31:2], 2'b0} && obi_instr_fifo_tag_out.is_mret) begin
+        if (obi_instr_fifo_tag_rena && obi_instr_fifo_tag_out.is_mret) begin
           mepc_as_pointer_rdata <= {obi_instr_rdata[31:1], 1'b0};
         end
       end
@@ -1544,6 +1551,41 @@ module uvmt_cv32e40s_clic_interrupt_assert
           delayed_mret_req <= 0;
         end else if (obi_instr_req && obi_instr_gnt) begin
           pc_mux_mret_q <= 0;
+        end
+      end
+    end
+
+    //this signal remembers the return address from a clicv related pointer fetch.
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        clicv_pointer_rdata <= '0;
+      end else begin
+        if (obi_instr_fifo_tag_rena && obi_instr_fifo_tag_out.is_clicv) begin
+          clicv_pointer_rdata <= {obi_instr_rdata[31:1], 1'b0};
+        end
+      end
+    end
+
+    // signal obi_req_is_clicv is high if the address phase originates from a clicv in the pc_mux
+    assign obi_req_is_clicv =  (pc_mux_clicv_q && !delayed_clicv_req) || (!support_if.instr_bus_addr_ph_cont && (pc_mux == PC_MUX_CLICV && pc_set));
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        pc_mux_clicv_q <= 0;
+        delayed_clicv_req <= 0;
+      end else begin
+        // if the pc mux clicv-related address phase is delayed, we need to remember it
+        if (pc_mux == PC_MUX_CLICV && pc_set && (!(obi_instr_req && obi_instr_gnt) || support_if.instr_bus_addr_ph_cont)) begin
+          pc_mux_clicv_q <= 1;
+          // double delay, previous address phase is not gnt'ed
+          if (support_if.instr_bus_addr_ph_cont && !(obi_instr_req && obi_instr_gnt)) begin
+            delayed_clicv_req <= 1;
+          end
+        end else if (delayed_clicv_req == 1 && obi_instr_req && obi_instr_gnt) begin
+          delayed_clicv_req <= 0;
+        end else if (obi_instr_req && obi_instr_gnt) begin
+          pc_mux_clicv_q <= 0;
         end
       end
     end
@@ -1703,6 +1745,14 @@ module uvmt_cv32e40s_clic_interrupt_assert
         && rvfi_intr.cause        == 1'h1
         && is_mtvt_access_instr && is_csr_write
         && rvfi_mepc_rdata        == $past(mtvt_fields) + (4 * $past(clic_oic.id))
+      or
+        // 12. Nmi occurred with shv first
+        sampled_next_pc        == $past(next_pc) // should always match
+        && rvfi_intr.cause        >= 'h400
+        && !(is_mepc_access_instr && is_csr_write)
+        && $past(clic_oic.shv)    == 1'b1
+        && rvfi_mepc_rdata        ==  clicv_pointer_rdata
+
       ;
     endproperty : p_mepc_set_correct_after_irq;
 
