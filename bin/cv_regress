@@ -171,7 +171,7 @@ DEFAULT_SIMULATOR = 'dsim'
 VALID_TOOLCHAINS  = ('gnu','llvm','corev','pulp')
 DEFAULT_TOOLCHAIN = 'corev'
 
-VALID_PROJECTS = ('cv32e40p', 'cv32e40x', 'cv32e40s', 'cv64')
+VALID_PROJECTS = ('cv32e40p', 'cv32e40x', 'cv32e40s', 'cv64', 'cv32e20')
 try:
     DEFAULT_PROJECT = os.environ['CV_CORE']
 except KeyError:
