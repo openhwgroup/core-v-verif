@@ -25,8 +25,10 @@
 
 .text
 .global _start
+.option norvc
 
 _start:
+
     ALL_MEM_PMP                                                            # PMP permission to all the memory
     la t1,trap_handler                                                     # loads the address of trap handler 
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
@@ -43,7 +45,7 @@ _start:
     ori a2, x0,( PTE_D | PTE_A | PTE_W | PTE_R | PTE_V)                     # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1   
 
-    la a1,rvtest_check                                                      # loads the address of label rvtest_data
+    la a1,rvtest_check                                                      # loads the address of label rvtest_check
     mv a0, a1                                                               # set the VA to PA (identity mapping)                                          
     ori a2, x0, ( PTE_D | PTE_A | PTE_W | PTE_R | PTE_V )                   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
@@ -53,7 +55,7 @@ _start:
     SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
     la a1,vm_en                                                             # loads the address of vm_en
 																													 
-    CHANGE_T0_S_MODE(a1)                                        	         # changes mode M to S and set the MEPC value to a1
+    CHANGE_T0_S_MODE(a1)                                        	        # changes mode M to S and set the MEPC value to a1
 
 # ----------------Virtualization Enabeled-------------------------------
 vm_en:
@@ -71,18 +73,9 @@ check_load:
 check_execute:
    
     li t1, 0x45                                                             # test the execute access
-    SMODE_ECALL                                                             # ecall to go back to M mode
-
-test_pass:
-
-    li x1, 0                                                                # Write 0 in x1 if test pass
-    j exit                                                                  # Jump to exit
-
-test_fail:
-
-    li x1, 1                                                                # Write 1 in x1 if test failed
-    j exit                                                                  # Jump to exit
-                                                                   
+    SMODE_ECALL                                                             # to go back to M mode
+    j test_pass
+    
 trap_handler:
 
     csrr t0, mcause                                                         # read the value of mcause 
@@ -121,6 +114,15 @@ trap_epilogs:
     sw t2, 4(t1)                                                            # Clear the exception PC
     sw t2, 8(t1)                                                            # Clear cause execution number
     mret
+
+test_pass:
+
+    li x1, 0                                                                # Write 0 in x1 if test pass
+    j exit                                                                  # Jump to exit
+
+test_fail:
+
+    li x1, 1                                                                # Write 1 in x1 if test failed
 
 COREV_VERIF_EXIT_LOGIC                                                      # exit logic 
 

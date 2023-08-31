@@ -29,6 +29,7 @@
 
 .text
 .global _start
+.option norvc
 
 _start:
 
@@ -82,6 +83,7 @@ check_load:
     la a1,rvtest_data                                                       # loads the address of label rvtest_data
 
 check_store:
+
     sw t1,0(a1)                                                             # test the store access
     TEST_STATUS                                                             # checks the status of the test                
                                                                            
@@ -115,17 +117,8 @@ check_execute:
    
     li t1, 0x45                                                             # page fault should raise 
     TEST_STATUS                                                             # checks the status of the test                                                               
+    j test_pass
 
-test_pass:
-
-    li x1, 0                                                                # Write 0 in x1 if test pass
-    j exit                                                                  # Jump to exit
-
-test_fail:
-
-    li x1, 1                                                                # Write 1 in x1 if test failed
-    j exit                                                                  # Jump to exit
-                                                                   
 trap_handler:
 
     csrr t0, mcause                                                         # read the value of mcause 
@@ -170,6 +163,15 @@ trap_epilogs:
     sw t2, 4(t1)                                                            # Clear the exception PC
     sw t2, 8(t1)                                                            # Clear cause execution number
     mret
+
+test_pass:
+
+    li x1, 0                                                                # Write 0 in x1 if test pass
+    j exit                                                                  # Jump to exit
+
+test_fail:
+
+    li x1, 1                                                                # Write 1 in x1 if test failed
 
 COREV_VERIF_EXIT_LOGIC                                                      # exit logic 
 

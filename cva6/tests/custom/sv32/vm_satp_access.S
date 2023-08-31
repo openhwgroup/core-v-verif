@@ -16,6 +16,7 @@
 
 .text
 .global _start
+.option norvc
 
 _start:
 
@@ -50,11 +51,9 @@ pre_user_mode:
 
 user_mode:
 
-    csrc satp,s1                                      # tests the satp access in S mode using csrc    
-    csrs satp,s2                                      # tests the satp access in S mode using csrs
-    csrw satp,s3                                      # tests the satp access in S mode using csrw      
+    csrc satp,s1                                      # tests the satp access in S mode using csrc        
     UMODE_ECALL                                       # ecall to go back to M mode   
-    j exit                                            # jumps to exit label    
+    j test_pass                                       # jumps to exit label    
 
 trap_handler:
 

@@ -28,6 +28,7 @@
 
 .text
 .global _start
+.option norvc
 
 _start:
 
@@ -118,22 +119,7 @@ check_execute:
 
     li t1, 0x45                                                             # page fault should raise 
     TEST_STATUS                                                             # checks the status of the test
-
-    #ifdef smode
-      SMODE_ECALL                                                           # changes mode M to S and set the MEPC
-    #else
-     UMODE_ECALL                                                            # changes mode M to U and set the MEPC
-    #endif
-
-test_pass:
-
-    li x1, 0                                                                # Write 0 in x1 if test pass
-    j exit                                                                  # Jump to exit
-
-test_fail:
-
-    li x1, 1                                                                # Write 1 in x1 if test failed
-    j exit                                                                  # Jump to exit
+    j test_pass
                                                                    
 trap_handler:
 
@@ -180,7 +166,16 @@ trap_epilogs:
     sw t2, 8(t1)                                                            # Clear cause execution number
     mret
 
-COREV_VERIF_EXIT_LOGIC                                                      # exit logic 
+test_pass:
+
+    li x1, 0                                                                # Write 0 in x1 if test pass
+    j exit                                                                  # Jump to exit
+
+test_fail:
+
+    li x1, 1                                                                # Write 1 in x1 if test failed
+
+COREV_VERIF_EXIT_LOGIC                                                      # Exit logic 
 
 .data  
 .align 24                                                                   # Superpage align  

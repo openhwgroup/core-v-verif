@@ -24,15 +24,14 @@
 
 .text
 .global _start
+.option norvc
 
 _start:
 
     ALL_MEM_PMP                                                            # PMP permission to all the mem
     la t1,trap_handler                                                     # loads the address of trap handler 
     csrw mtvec,t1                                                          # sets the mtvec to trap handler
-    
-PTE_LEVEL1_SUPERVISOR:
-
+  
 # ----------------LEVEL 1 PTE Setup for load and store test------------
 
     la a1,vm_en                                                            # loads the address of label vm_en
@@ -45,13 +44,12 @@ PTE_LEVEL1_SUPERVISOR:
     ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_W | PTE_R | PTE_V )          # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
 
-    la a1,rvtest_check                                                     # loads the address of label rvtest_data
+    la a1,rvtest_check                                                     # loads the address of label rvtest_check
     mv a0, a1                                                              # VA = PA - Identity Map                                         
     ori a2, x0, ( PTE_D | PTE_A | PTE_W | PTE_R | PTE_V)                   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
-
 
     SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
     li a1, MSTATUS_SUM
@@ -73,7 +71,7 @@ check_load:
 
     lw t1,0(a1)                                                             # tests the load access 
     SMODE_ECALL                                                             # SMODE ecall 
-      
+
 # ----------------------Execute test prolog------------------------------
 
     TEST_PROLOG(check_execute, CAUSE_FETCH_PAGE_FAULT)                      # load the addr and expected cause
@@ -86,25 +84,16 @@ check_load:
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------
-
+  
     SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
     la a1,check_execute                                                     # loads the address of check_execute
-    CHANGE_T0_S_MODE(a1)                                                    # changes mode M to S and set the MEPC 
+    CHANGE_T0_S_MODE(a1)                                                    # changes mode M to S and set the MEPC   
 
 check_execute:                                                             
                                                                             # test the execute access
     li t1, 0x45                                                             # page fault should raise 
     TEST_STATUS                                                             # checks the status of the test
-
-test_pass:
-
-    li x1, 0                                                                # Write 0 in x1 if test pass
-    j exit                                                                  # Jump to exit
-
-test_fail:
-
-    li x1, 1                                                                # Write 1 in x1 if test failed
-    j exit                                                                  # Jump to exit
+    j test_pass
 
 trap_handler:
 
@@ -125,6 +114,9 @@ trap_handler:
     
     bne  t0, t4, test_fail                                                  # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
+    li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception
+    beq t0,t5,continue_in_m_mode                                            # if fetch page fault jump to next instr in M mode
+
 continue_execution:
 
     INCREMENT_MEPC   _SUMODE_                                               # update the value of mepc
@@ -144,6 +136,15 @@ trap_epilogs:
     sw t2, 4(t1)                                                            # Clear the exception PC
     sw t2, 8(t1)                                                            # Clear cause execution number
     mret
+
+test_pass:
+
+    li x1, 0                                                                # Write 0 in x1 if test pass
+    j exit                                                                  # Jump to exit
+
+test_fail:
+
+    li x1, 1                                                                # Write 1 in x1 if test failed
 
 COREV_VERIF_EXIT_LOGIC                                                      # exit logic 
 

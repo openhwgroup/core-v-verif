@@ -25,8 +25,10 @@
 
 .text
 .global _start
+.option norvc
 
 _start:
+
     ALL_MEM_PMP                                                             # PMP permission to all the memory
     la t1,trap_handler                                                      # loads the address of trap handler 
     csrw mtvec,t1                                                           # sets the mtvec to trap handler 
@@ -71,18 +73,9 @@ check_load:
 check_execute:
    
     li t1, 0x45                                                             # test the execute access
-    SMODE_ECALL                                                             # ecall to go back to M mode
-
-test_pass:
-
-    li x1, 0                                                                # Write 0 in x1 if test pass
-    j exit                                                                  # Jump to exit
-
-test_fail:
-
-    li x1, 1                                                                # Write 1 in x1 if test failed
-    j exit                                                                  # Jump to exit
-
+    SMODE_ECALL                                                             # to go back to M mode
+    j test_pass
+        
 trap_handler:
 
     csrr t0, mcause                                                         # read the value of mcause 
@@ -122,6 +115,15 @@ trap_epilogs:
     sw t2, 8(t1)                                                            # Clear cause execution number
     mret
 
+test_pass:
+
+    li x1, 0                                                                # Write 0 in x1 if test pass
+    j exit                                                                  # Jump to exit
+
+test_fail:
+
+    li x1, 1                                                                # Write 1 in x1 if test failed
+    
 COREV_VERIF_EXIT_LOGIC                                                      # exit logic 
 
 .data                                                                      

@@ -29,6 +29,7 @@
 
 .text
 .global _start
+.option norvc
 
 _start:
     ALL_MEM_PMP                                                             # PMP permission to all the memory
@@ -36,7 +37,7 @@ _start:
     csrw mtvec,t1                                                           # sets the mtvec to trap handler 
 
 # ----------------LEVEL1 PTE Setup to point to LEVEL0 PTE----------------
-    la a1,pgtb_l0                                                           # loads the address of label vm_en
+    la a1,pgtb_l0                                                           # loads the address of label pgtb_l0
     mv a0, a1                                                               # generrates the VA for label vm_en
     ori a2, x0, ( PTE_V )                                                   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
@@ -52,7 +53,7 @@ _start:
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_W | PTE_R )               # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level0
 
-    la a1,rvtest_check                                                      # loads the address of label rvtest_data
+    la a1,rvtest_check                                                      # loads the address of label rvtest_check   
     mv a0, a1                                                               # set the VA to PA (identity mapping)                                          
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_W | PTE_R | PTE_V )       # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level0
@@ -86,6 +87,7 @@ check_load:
     la a1,rvtest_data                                                       # loads the address of label rvtest_data
 
 check_store:
+
     sw t1,0(a1)                                                             # test the store access
     TEST_STATUS                                                             # checks the status of the test
 
@@ -120,16 +122,7 @@ check_execute:
    
     li t1, 0x45                                                             # page fault should raise 
     TEST_STATUS                                                             # checks the status of the test
-    
-test_pass:
-
-    li x1, 0                                                                # Write 0 in x1 if test pass
-    j exit                                                                  # Jump to exit
-
-test_fail:
-
-    li x1, 1                                                                # Write 1 in x1 if test failed
-    j exit                                                                  # Jump to exit
+    j test_pass
                                                                    
 trap_handler:
 
@@ -175,6 +168,15 @@ trap_epilogs:
     sw t2, 4(t1)                                                            # Clear the exception PC
     sw t2, 8(t1)                                                            # Clear cause execution number
     mret
+
+test_pass:
+
+    li x1, 0                                                                # Write 0 in x1 if test pass
+    j exit                                                                  # Jump to exit
+
+test_fail:
+
+    li x1, 1                                                                # Write 1 in x1 if test failed
 
 COREV_VERIF_EXIT_LOGIC                                                      # exit logic 
 
