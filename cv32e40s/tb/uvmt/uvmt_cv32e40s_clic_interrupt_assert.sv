@@ -3052,20 +3052,22 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
     // Checks correct behavior of accesses to mscratchcsw
     // ------------------------------------------------------------------------
-    // FIXME: Fails for undefined CSR instructions (needs defined behavior)
     property p_mscratchcsw_value;
            is_mscratchcsw_access_instr
-        && csr_instr.funct3    == CSRRW
-        && csr_instr.rd        != X0
-        && csr_instr.n.rs1     != X0
       |->
            rvfi_rd_wdata       == (csr_instr.rd != X0 ? rvfi_mscratch_rdata : 'b0)
         && rvfi_mscratch_wdata == rvfi_rs1_rdata
         && mstatus_fields.mpp  != rvfi_mode
+        && csr_instr.funct3    == CSRRW
+        && csr_instr.rd        != X0
+        && csr_instr.n.rs1     != X0
       or
            rvfi_rd_wdata       == rvfi_rs1_rdata
         && rvfi_mscratch_wmask == 'h0
         && mstatus_fields.mpp  == rvfi_mode
+        && csr_instr.funct3    == CSRRW
+        && csr_instr.rd        != X0
+        && csr_instr.n.rs1     != X0
       or
            rvfi_trap.exception
       or
@@ -3081,20 +3083,22 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
     // Checks correct behavior of accesses to mscratchcswl
     // ------------------------------------------------------------------------
-    // FIXME: Fails for undefined CSR instructions (needs defined behavior)
     property p_mscratchcswl_value;
            is_mscratchcswl_access_instr
-        && csr_instr.funct3    == CSRRW
-        && csr_instr.rd        != X0
-        && csr_instr.n.rs1     != X0
       |->
            rvfi_rd_wdata       == (csr_instr.rd != X0 ? rvfi_mscratch_rdata : 'b0)
         && rvfi_mscratch_wdata == rvfi_rs1_rdata
         && |mcause_fields.mpil  ^ |mintstatus_fields.mil
+        && csr_instr.funct3    == CSRRW
+        && csr_instr.rd        != X0
+        && csr_instr.n.rs1     != X0
       or
            rvfi_rd_wdata       == rvfi_rs1_rdata
         && rvfi_mscratch_wmask == 'h0
         && |mcause_fields.mpil ^~ |mintstatus_fields.mil
+        && csr_instr.funct3    == CSRRW
+        && csr_instr.rd        != X0
+        && csr_instr.n.rs1     != X0
       or
            rvfi_trap.exception
       or
