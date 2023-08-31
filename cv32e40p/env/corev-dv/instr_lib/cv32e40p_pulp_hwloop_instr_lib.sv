@@ -351,6 +351,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
           std::randomize(hwloop_avail_regs) with  {   unique {hwloop_avail_regs};
                                                        foreach(hwloop_avail_regs[i]) {
                                                            !(hwloop_avail_regs[i] inside {ZERO, RA, SP, GP, TP});
+                                                           !(hwloop_avail_regs[i] inside {cfg.reserved_regs});
                                                        }
                                                    };
 
@@ -512,6 +513,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
               std::randomize(hwloop_avail_regs) with  {   unique {hwloop_avail_regs};
                                                            foreach(hwloop_avail_regs[i]) {
                                                                !(hwloop_avail_regs[i] inside {ZERO, RA, SP, GP, TP});
+                                                               !(hwloop_avail_regs[i] inside {cfg.reserved_regs});
                                                            }
                                                        };
 
@@ -885,6 +887,8 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       riscv_instr_group_t         riscv_exclude_xpulp[];
       int                         rv32_ins, pulp_ins;
 
+      riscv_exclude_instr = {riscv_exclude_common_instr};
+
       //use cfg for ebreak
       if(cfg.no_ebreak)
           riscv_exclude_instr = {riscv_exclude_instr, EBREAK, C_EBREAK};
@@ -963,6 +967,8 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       riscv_fp_in_x_regs_instr    zfinx_instr;
       riscv_instr_group_t         riscv_exclude_xpulp[];
       int                         rv32_ins, pulp_ins;
+
+      riscv_exclude_instr = {riscv_exclude_common_instr};
 
       //use cfg for ebreak
       if(cfg.no_ebreak)
@@ -1362,7 +1368,7 @@ class cv32e40p_xpulp_hwloop_isa_stress_stream extends cv32e40p_xpulp_hwloop_base
   endfunction : pre_randomize
 
   function void post_randomize();
-      cv32e40p_exclude_regs = {cv32e40p_exclude_regs,cv32e40p_reserved_regs};
+      cv32e40p_exclude_regs = {cv32e40p_exclude_regs, cfg.reserved_regs};
       super.post_randomize();
       this.print();
   endfunction : post_randomize
@@ -1376,6 +1382,8 @@ class cv32e40p_xpulp_hwloop_isa_stress_stream extends cv32e40p_xpulp_hwloop_base
       cv32e40p_instr              cv32_instr;
       riscv_fp_in_x_regs_instr    zfinx_instr;
       int unsigned                i;
+
+      riscv_exclude_instr = {riscv_exclude_common_instr};
 
       //use cfg for ebreak
       if(cfg.no_ebreak)
@@ -1455,8 +1463,8 @@ class cv32e40p_xpulp_hwloop_exception extends cv32e40p_xpulp_hwloop_base_stream;
       `uvm_field_int(num_of_reserved_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_avail_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_exclude_regs, UVM_DEFAULT)
-      `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_reserved_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_instr_name_t,xpulp_exclude_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_name_t,riscv_exclude_common_instr, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_instr_name_t,riscv_exclude_instr, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_instr_group_t,riscv_exclude_group, UVM_DEFAULT)
       `uvm_field_int(num_loops_active, UVM_DEFAULT)
@@ -1485,11 +1493,11 @@ class cv32e40p_xpulp_hwloop_exception extends cv32e40p_xpulp_hwloop_base_stream;
   endfunction : pre_randomize
 
   function void post_randomize();
-      cv32e40p_exclude_regs = {cv32e40p_exclude_regs,cv32e40p_reserved_regs};
+      cv32e40p_exclude_regs = {cv32e40p_exclude_regs, cfg.reserved_regs};
       //Exclude list for all random instruction generation part
-      riscv_exclude_instr = {CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI,
-                             CV_ELW,
-                             JAL, C_J, C_JAL};
+      riscv_exclude_common_instr = {CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI,
+                                    CV_ELW,
+                                    JAL, C_J, C_JAL};
       super.post_randomize();
       this.print();
   endfunction : post_randomize
@@ -1504,6 +1512,8 @@ class cv32e40p_xpulp_hwloop_exception extends cv32e40p_xpulp_hwloop_base_stream;
       riscv_fp_in_x_regs_instr    zfinx_instr;
       string                      branch_imm_str;
       riscv_instr_group_t         riscv_exclude_xpulp[];
+
+      riscv_exclude_instr = {riscv_exclude_common_instr};
 
       //use cfg for ebreak
       if(cfg.no_ebreak)
@@ -1563,6 +1573,8 @@ class cv32e40p_xpulp_hwloop_exception extends cv32e40p_xpulp_hwloop_base_stream;
       int unsigned                i;
       string                      branch_imm_str;
       riscv_instr_group_t         riscv_exclude_xpulp[];
+
+      riscv_exclude_instr = {riscv_exclude_common_instr};
 
       //use cfg for ebreak
       if(cfg.no_ebreak)
