@@ -26,9 +26,16 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
   protected int         idx_start[$];            
   protected int         idx_end[$];            
   protected int         idx_min = 0;            
+  cv32e40p_instr_gen_config cv32e40p_cfg;
 
   `uvm_object_utils(cv32e40p_rand_instr_stream)
-  `uvm_object_new
+  //`uvm_object_new
+  function new(string name = "");
+    super.new(name);
+    if(!uvm_config_db#(cv32e40p_instr_gen_config)::get(null,get_full_name(),"cv32e40p_instr_cfg", cv32e40p_cfg)) begin
+      `uvm_fatal(get_full_name(), "Cannot get cv32e40p_instr_gen_config")
+    end
+  endfunction : new
 
   virtual function void insert_instr_stream(riscv_instr new_instr[], int idx = -1, bit replace = 1'b0);
 
