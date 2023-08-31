@@ -90,7 +90,7 @@ check_load:                                                             # test t
     j test_pass
 
 trap_handler:
-
+    csrr t0, mcause                                                     # read the value of mcause
     la t1, rvtest_check                                                 # load the address of trvtest_check
 
     lw t2, 0(t1)                                                        # if cause expected then load 1 else 0
@@ -104,11 +104,9 @@ trap_handler:
     beq t0,t1,next_instr                                                # checks for ecall is occured
 
     beqz t2, test_fail                                                  # Jumps to exit if cause is not expected
-
     csrr t5,mepc                                                        # read the value of mepc
-    bne t3,t5, test_fail                                                # check the value of mepc with it's expected value
 
-    csrr t0, mcause                                                     # read the value of mcause
+    bne t3,t5, test_fail                                                # check the value of mepc with it's expected value
     bne t0, t4, test_fail                                               # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
 continue_execution:
