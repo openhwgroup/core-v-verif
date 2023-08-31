@@ -5,11 +5,11 @@
 # Test Description:
 # If mstatus.TVM=1, read and write access to the satp and sfence.vma will 
 # raise illegal instruction exception in S-mode. This test
-# covers the following scenarios in both supervisor and user privilege
+# covers the following scenarios in both supervisor
 # modes for level0 PTE.
 #                           Level 0
 #   - mstatus.tvm = 1 and test the RW access of satp and sfence in 
-#     in supervisor and user mode
+#     in supervisor mode.
 #=======================================================================
 
 #include "macros.h"
@@ -96,13 +96,8 @@ check_store:
 
 check_store_sfence:
     sfence.vma                                                            # test the store access
-    TEST_STATUS                                                           # checks the status of the test                                                               
-
-    #ifdef smode
-        SMODE_ECALL                                                       # SMODE ecall 
-    #else
-        UMODE_ECALL                                                       # UMODE ecall 
-    #endif	
+    TEST_STATUS                                                           # checks the status of the test
+    SMODE_ECALL                                                           # SMODE ecall 
 	
 test_pass:
 

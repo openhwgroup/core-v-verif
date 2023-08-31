@@ -4,7 +4,7 @@
 #-----------------------------------------------------------------------
 # Test Description:
 # If implementation does not sets the pte.D when PTE is written,
-# and PTE has pte.D=0, then attempting to store on that PTE would
+# then attempting to store on that PTE would
 # raise Store/AMO page fault exception, this test
 # covers the following scenarios in both supervisor and user privilege
 # modes for level1 PTE.

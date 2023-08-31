@@ -5,11 +5,11 @@
 # Test Description:
 # If mstatus.TVM=1, read and write access to the satp and sfence.vma will 
 # raise illegal instruction exception in S-mode. This test
-# covers the following scenarios in both supervisor and user privilege
+# covers the following scenarios in both supervisor 
 # modes for level1 PTE.
 #                           Level 1
 #   - mstatus.tvm = 1 and test the RW access of satp and sfence in 
-#     in supervisor and user mode
+#     in supervisor mode.
 #=======================================================================
 
 #include "macros.h"
@@ -43,7 +43,7 @@ _start:
     ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_D | PTE_W | PTE_R | PTE_X)# sets the permission bits -- only W permission
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
 
-    la a1,rvtest_check                                                     # loads the address of label rvtest_data
+    la a1,rvtest_check                                                     # loads the address of label rvtest_checck
     mv a0, a1                                                              # set the VA to PA (identity mapping)                                          
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_W | PTE_R | PTE_V )      # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
@@ -91,13 +91,8 @@ check_store:
 check_store_sfence:
     sfence.vma                                                              # test the store access
     TEST_STATUS                                                             # checks the status of the test                                                               
+    SMODE_ECALL
 
-    #ifdef smode
-        SMODE_ECALL                                                         # SMODE ecall 
-    #else
-        UMODE_ECALL                                                         # UMODE ecall 
-    #endif	
-	
 test_pass:
 
     li x1, 0                                                                # Write 0 in x1 if test pass
@@ -129,8 +124,6 @@ trap_handler:
 
     bne  t0, t4, test_fail                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
-    li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
-    beq t0,t5,next_instr                                                    # if fetch page fault jump to next instr in M mode
 
 continue_execution:
 
