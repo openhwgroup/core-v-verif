@@ -81,10 +81,10 @@ trap_handler:
     lw t4, 8(t1)                                                            # load the expected value of mcause  
 
     li  t1, CAUSE_SUPERVISOR_ECALL                                          # load the value of supervisor ecall
-    beq t0,t1,next_instr                                                    # checks if ecall is occured
+    beq t0,t1,continue_in_m_mode                                            # checks if ecall is occured
 
     li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
-    beq t0,t1,next_instr                                                    # checks for ecall is occured
+    beq t0,t1,continue_in_m_mode                                            # checks for ecall is occured
 
     beqz t2, exit                                                           # Jumps to exit if cause is not expected
  
@@ -93,26 +93,26 @@ trap_handler:
 
     bne  t0, t4, exit                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
-    li t5, CAUSE_ILLEGAL_INSTRUCTION                                       # load the value of illegal instruction fault 
-    beq t0,t5,Back_to_check_access                                         # if illegal instruction fault jump to check access in M mod
+    li t5, CAUSE_ILLEGAL_INSTRUCTION                                        # load the value of illegal instruction fault 
+    beq t0,t5,Back_to_check_access                                          # if illegal instruction fault jump to check access in M mod
 
 continue_execution:
 
     INCREMENT_MEPC   _SUMODE_                                               # update the value of mepc
     j trap_epilogs
 
-next_instr:
+continue_in_m_mode:
 
     INCREMENT_MEPC   _MMODE_                                                # update the value of mepc
     li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
     csrs mstatus,t1                                                         # update the value mstatus MPP
 
 Back_to_check_access:
-    la t3,check_access                                                     # loads the address of check_access
-    csrw mepc,t3                                                           # update the value of mepc with check_access address
-    li t1,MSTATUS_MPP                                                      # update the MPP to MSTATUS_MPP for M mode
-    csrs mstatus,t1                                                        # update the value mstatus MPP 
-    mret                                                                   # return
+    la t3,check_access                                                      # loads the address of check_access
+    csrw mepc,t3                                                            # update the value of mepc with check_access address
+    li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
+    csrs mstatus,t1                                                         # update the value mstatus MPP 
+    mret                                                                    # return
 
 trap_epilogs:
 
@@ -123,14 +123,14 @@ trap_epilogs:
     sw t2, 8(t1)                                                            # Clear cause execution number
     mret
 
-COREV_VERIF_EXIT_LOGIC                                                          # Exit logic 
+COREV_VERIF_EXIT_LOGIC                                                      # Exit logic 
 
 .data  
-.align 24                                                                  # Superpage align  
+.align 24                                                                   # Superpage align  
     rvtest_check: 
-      .word 0xdeadbeef                                                     # 1 for cause expected 0  for no cause 
-      .word 0xbeefdead                                                     # write the value of mepc here (where  cause is expected)
-      .word 0xcafecafe                                                     # write the value of expect cause 
+      .word 0xdeadbeef                                                      # 1 for cause expected 0  for no cause 
+      .word 0xbeefdead                                                      # write the value of mepc here (where  cause is expected)
+      .word 0xcafecafe                                                      # write the value of expect cause 
 .align 22                                     
     rvtest_data:   
       .word 0xbeefcafe                                                 

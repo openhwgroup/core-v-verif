@@ -150,12 +150,12 @@ trap_handler:
     li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
     beq t0,t1,continue_in_m_mode                                            # checks for ecall is occured
 
-    beqz t2, test_fail:                                                     # Jumps to exit if cause is not expected
+    beqz t2, test_fail                                                      # Jumps to exit if cause is not expected
  
     csrr t5,mepc                                                            # read the value of mepc 
-    bne t3,t5,test_fail:                                                    # check the value of mepc with it's expected value
+    bne t3,t5,test_fail                                                     # check the value of mepc with it's expected value
     
-    bne  t0, t4, test_fail:                                                 # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
+    bne  t0, t4, test_fail                                                  # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
     li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
     beq t0,t5,continue_in_m_mode                                            # if fetch page fault jump to next instr in M mode

@@ -31,7 +31,7 @@ _start:
 # ----------------LEVEL1 PTE Setup to point to LEVEL0 PTE----------------
     la a1,pgtb_l0                                                          # loads the address of label vm_en
     mv a0, a1                                                              # generrates the VA for label vm_en
-    ori a2, x0, ( PTE_V)                                                  # sets the permission bits
+    ori a2, x0, ( PTE_V)                                                   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
 # ----------------LEVEL 0 PTE Setup for load and store test--------------
@@ -54,7 +54,7 @@ _start:
 
     SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
     la a1,vm_en                                                            # loads the address of vm_en																													 
-    CHANGE_T0_U_MODE(a1)                                        	   # changes mode M to U and set the MEPC value to a1
+    CHANGE_T0_U_MODE(a1)                                        	       # changes mode M to U and set the MEPC value to a1
 
 # ----------------Virtualization Enabeled-------------------------------
 
@@ -78,7 +78,7 @@ check_load:
 check_store:
     sw t1,0(a1)                                                             # test the store access
     TEST_STATUS                          
-    UMODE_ECALL                                                            # ecall to go to m mode
+    UMODE_ECALL                                                             # ecall to go to m mode
 
 # ----------------------Execute test prolog------------------------------
 
@@ -121,10 +121,10 @@ trap_handler:
     lw t4, 8(t1)                                                            # load the expected value of mcause  
 
     li  t1, CAUSE_SUPERVISOR_ECALL                                          # load the value of supervisor ecall
-    beq t0,t1,next_instr                                                    # checks if ecall is occured
+    beq t0,t1,continue_in_m_mode                                            # checks if ecall is occured
 
     li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
-    beq t0,t1,next_instr                                                    # checks for ecall is occured
+    beq t0,t1,continue_in_m_mode                                            # checks for ecall is occured
 
     beqz t2, exit                                                           # Jumps to exit if cause is not expected
  
@@ -134,14 +134,14 @@ trap_handler:
     bne  t0, t4, exit                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
     li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
-    beq t0,t5,next_instr                                                    # if fetch page fault jump to next instr in M mode
+    beq t0,t5,continue_in_m_mode                                            # if fetch page fault jump to next instr in M mode
 
 continue_execution:
 
     INCREMENT_MEPC   _SUMODE_                                               # update the value of mepc
     j trap_epilogs
 
-next_instr:
+continue_in_m_mode:
 
     INCREMENT_MEPC   _MMODE_                                                # update the value of mepc
     li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
@@ -154,10 +154,10 @@ trap_epilogs:
     sw t2, 0(t1)                                                            # Clear the expected cause
     sw t2, 4(t1)                                                            # Clear the exception PC
     sw t2, 8(t1)                                                            # Clear cause execution number
-    mret                                                                   # return 
+    mret                                                                    # return 
 
 
-COREV_VERIF_EXIT_LOGIC                                                           # Exit logic 
+COREV_VERIF_EXIT_LOGIC                                                      # Exit logic 
 
 .data  
 .align                                                                     

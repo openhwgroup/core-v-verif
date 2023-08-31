@@ -192,10 +192,10 @@ trap_handler:
     lw t4, 8(t1)                                                            # load the expected value of mcause  
 
     li  t1, CAUSE_SUPERVISOR_ECALL                                          # load the value of supervisor ecall
-    beq t0,t1,next_instr                                                    # checks if ecall is occured
+    beq t0,t1,continue_in_m_mode                                            # checks if ecall is occured
 
     li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
-    beq t0,t1,next_instr                                                    # checks for ecall is occured
+    beq t0,t1,continue_in_m_mode                                            # checks for ecall is occured
 
     beqz t2, exit                                                           # Jumps to exit if cause is not expected
  
@@ -205,14 +205,14 @@ trap_handler:
     bne  t0, t4, exit                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
     li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
-    beq t0,t5,next_instr                                                    # if fetch page fault jump to next instr in M mode
+    beq t0,t5,continue_in_m_mode                                            # if fetch page fault jump to next instr in M mode
 
 continue_execution:
 
     INCREMENT_MEPC   _SUMODE_                                               # update the value of mepc
     j trap_epilogs
 
-next_instr:
+continue_in_m_mode:
 
     INCREMENT_MEPC   _MMODE_                                                # update the value of mepc
     li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode

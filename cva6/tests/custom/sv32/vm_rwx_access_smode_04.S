@@ -130,12 +130,12 @@ trap_handler:
     li  t1, CAUSE_SUPERVISOR_ECALL                                          # load the value of supervisor ecall
     beq t0,t1,continue_in_m_mode                                            # checks if ecall is occured
 
-    beqz t2, test_fail:                                                     # Jumps to exit if cause is not expected
+    beqz t2, test_fail                                                      # Jumps to exit if cause is not expected
  
     csrr t5,mepc                                                            # read the value of mepc 
-    bne t3,t5,test_fail:                                                    # check the value of mepc with it's expected value
+    bne t3,t5,test_fail                                                     # check the value of mepc with it's expected value
     
-    bne  t0, t4, test_fail:                                                 # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
+    bne  t0, t4, test_fail                                                  # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
 continue_execution:
 
