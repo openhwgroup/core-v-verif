@@ -70,7 +70,7 @@ exit:                                                              ;\
 #define ALL_MEM_PMP                                                ;\
     li t2, -1		                                           ;\
     csrw pmpaddr0, t2                                              ;\
-    li t2, 0x0F		                                               ;\
+    li t2, 0x0F		                                           ;\
     csrw pmpcfg0, t2                                               ;\
     sfence.vma                                                     ;
 
@@ -97,3 +97,8 @@ exit:                                                              ;\
     write_mepc_\label_suffix:                                      ;\
     csrw mepc, t1                                                  ;\
 .endm                                                              ;
+
+#define TEST_STATUS                                                ;\
+    la a1, rvtest_check                                            ;\
+    lw t1, 0(a1)                                                   ;\
+    bne t1, x0, test_fail                                          ;

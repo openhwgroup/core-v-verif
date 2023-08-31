@@ -80,18 +80,25 @@ trap_handler:
 
 continue_execution:
 
-    INCREMENT_MEPC  _SUMODE_                          # update the value of mepc 
-    mret                                              # return 
+    INCREMENT_MEPC   _SUMODE_                         # update the value of mepc
+    j trap_epilogs
 
 next_instr:
 
-    INCREMENT_MEPC  _MMODE_                           # update the value of mepc 
+    INCREMENT_MEPC   _MMODE_                          # update the value of mepc
     li t1,MSTATUS_MPP                                 # update the MPP to MSTATUS_MPP for M mode
-    csrs mstatus,t1                                   # update the value mstatus MPP 
-    mret                                              # return 
+    csrs mstatus,t1                                   # update the value mstatus MPP
 
+trap_epilogs:
 
-COREV_VERIF_EXIT_LOGIC                                                      # exit logic 
+    la t1, rvtest_check                               # load the addr of rvtest_check
+    li t2, 0
+    sw t2, 0(t1)                                      # Clear the expected cause
+    sw t2, 4(t1)                                      # Clear the exception PC
+    sw t2, 8(t1)                                      # Clear cause execution number
+    mret
+
+COREV_VERIF_EXIT_LOGIC                               # exit logic 
 
 .data  
     rvtest_check: 
@@ -105,5 +112,3 @@ COREV_VERIF_EXIT_LOGIC                                                      # ex
                                                                                                                        
 .align 4; .global tohost;   tohost:   .dword 0;
 .align 4; .global fromhost; fromhost: .dword 0;
-
-
