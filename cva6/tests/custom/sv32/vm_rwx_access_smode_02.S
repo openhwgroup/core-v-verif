@@ -50,6 +50,11 @@ _start:
     ori a2, x0,( PTE_D | PTE_A | PTE_W | PTE_R | PTE_V)                     # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level1   
 
+    la a1,rvtest_check                                                      # loads the address of label rvtest_check
+    mv a0, a1                                                               # set the VA to PA (identity mapping)                                          
+    ori a2, x0, ( PTE_D | PTE_A | PTE_W | PTE_R | PTE_V )                   # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level1
+
 # ----------------Set the SATP and change the mode----------------------
 
     SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization

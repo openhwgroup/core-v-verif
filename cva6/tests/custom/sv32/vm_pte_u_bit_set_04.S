@@ -29,26 +29,26 @@ _start:
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
 
 # ----------------LEVEL1 PTE Setup to point to LEVEL0 PTE----------------
-    la a1,pgtb_l0                                                          # loads the address of pgtb_l0
-    mv a0, a1                                                              # generrates the VA for pgtb_l0
-    ori a2, x0, ( PTE_V)                                                   # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
+    la a1,pgtb_l0                                                           # loads the address of label pgtb_l0
+    mv a0, a1                                                               # set the VA to PA (identity mapping)
+    ori a2, x0, ( PTE_V )                                                   # sets the permission bits
+    PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l1, LEVEL1 )                      # setup the PTE for level1
 
-# ----------------LEVEL 0 PTE Setup for load and store test--------------
-    la a1,vm_en                                                            # loads the address of label vm_en
-    mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_V )                  # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
+# ----------------LEVEL0 PTE Setup to point to LEVEL0 PTE----------------
+    la a1,vm_en                                                             # loads the address of label vm_en
+    mv a0, a1                                                               # set the VA to PA (identity mapping)
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_V )                    # sets the permission bits
+    PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l0, LEVEL0 )                      # setup the PTE for level1
  
-    la a1,rvtest_data                                                      # loads the address of label rvtest_data
-    mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_U | PTE_R | PTE_W)           # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
+    la a1,rvtest_data                                                       # loads the address of label rvtest_data
+    mv a0, a1                                                               # set the VA to PA (identity mapping)
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_V )                           # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level1   
 
-    la a1,rvtest_check                                                     # loads the address of label rvtest_data
-    mv a0, a1                                                              # set the VA to PA (identity mapping)                                          
-    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_W | PTE_R | PTE_V )          # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
+    la a1,rvtest_check                                                      # loads the address of label rvtest_check
+    mv a0, a1                                                               # set the VA to PA (identity mapping)                                          
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_W | PTE_R | PTE_V )           # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode-----------------------
 

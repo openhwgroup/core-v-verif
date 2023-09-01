@@ -40,7 +40,7 @@ _start:
     ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_V )                          # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
 
-    la a1,rvtest_check                                                     # loads the address of label rvtest_data
+    la a1,rvtest_check                                                     # loads the address of label rvtest_check
     mv a0, a1                                                              # set the VA to PA (identity mapping)                                          
     ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_W | PTE_R | PTE_V )          # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
@@ -83,7 +83,7 @@ check_store:
                                                                            # Setup a new PTE to test execute
     la a1,check_execute                                                    # loads the address of label vm_en
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, (PTE_D | PTE_A | PTE_R | PTE_V | PTE_U )                   # sets the permission bits
+    ori a2, x0, (PTE_D | PTE_A | PTE_U | PTE_R | PTE_V )                   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode---------------------

@@ -28,31 +28,30 @@
 .global _start
 .option norvc
 
-
 _start:
 
     ALL_MEM_PMP                                                            # PMP permission to all the memory
     la t1,trap_handler                                                     # loads the address of trap handler 
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
-    
+
 # ----------------LEVEL 1 PTE Setup for load and store test------------
 
     la a1,vm_en                                                             # loads the address of label vm_en
     mv a0, a1                                                               # set the VA to PA (identity mapping)
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_V )               # sets the permission bits
     PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l1, LEVEL1 )                      # setup the PTE for level1
- 
+
     la a1,rvtest_data                                                       # loads the address of label rvtest_data
     mv a0, a1                                                               # set the VA to PA (identity mapping)
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_V)                        # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1   
 
-    la a1,rvtest_check                                                      # loads the address of label rvtest_data
+    la a1,rvtest_check                                                      # loads the address of label rvtest_check
     mv a0, a1                                                               # set the VA to PA (identity mapping)                                          
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_W | PTE_R | PTE_V )       # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
 
-# ----------------Set the SATP to Bare_Mode and change the mode---------------------
+# ----------------Set the SATP to Bare_Mode and change the mode----------
 
     csrw satp, x0           	                                            # Write satp with all zeros (bare mode)
     la a1,vm_en                                                             # loads the address of vm_en
@@ -66,6 +65,8 @@ _start:
 
 vm_en:
 
+    la a1,rvtest_data                                                       # loads the address of label rvtest_data
+
 check_store:
 
     sw t1,0(a1)                                                             # test the store access  
@@ -73,7 +74,7 @@ check_store:
 check_load:
 
     lw t1,0(a1)                                                             # tests the load access                                                                                                 
-                                                                           
+
     #ifdef smode
       SMODE_ECALL                                                           # changes mode M to S and set the MEPC
     #else
@@ -100,18 +101,17 @@ check_load:
       CHANGE_T0_U_MODE(a1)                                                 # changes mode M to U and set the MEPC
     #endif
 
-
 check_access:                                                              # check access to PTE first with va then with physical address
 
     li t1, 0x45                                                             
     TEST_STATUS                                                             # checks the status of the test
     j test_pass                                                             # Jump to exit
-                                                                   
+
 trap_handler:
 
     csrr t0, mcause                                                         # read the value of mcause 
     la t1, rvtest_check                                                     # load the address of trvtest_check
-    
+
     lw t2, 0(t1)                                                            # if cause expected then load 1 else 0
     lw t3, 4(t1)                                                            # load the expected value of mepc 
     lw t4, 8(t1)                                                            # load the expected value of mcause  
@@ -123,10 +123,10 @@ trap_handler:
     beq t0,t1,continue_in_m_mode                                            # checks for ecall is occured
 
     beqz t2, test_fail                                                      # Jumps to exit if cause is not expected
- 
+
     csrr t5,mepc                                                            # read the value of mepc 
     bne t3,t5,test_fail                                                     # check the value of mepc with it's expected value
-    
+
     bne  t0, t4, test_fail                                                  # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
     li t5, CAUSE_ILLEGAL_INSTRUCTION                                        # load the value of illegal instruction fault 
@@ -153,12 +153,12 @@ trap_epilogs:
     mret
 
 Back_to_check_access:
+
     la t3,check_access                                                      # loads the address of check_access
     csrw mepc,t3                                                            # update the value of mepc with check_access address
     li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
     csrs mstatus,t1                                                         # update the value mstatus MPP 
-    mret                                                                    # return
-
+    j trap_epilogs
 
 test_pass:
 
@@ -168,8 +168,7 @@ test_pass:
 test_fail:
 
     li x1, 1                                                                # Write 1 in x1 if test failed
-    j exit
-    
+
 COREV_VERIF_EXIT_LOGIC                                                      # Exit logic 
 
 .data  
@@ -191,4 +190,4 @@ COREV_VERIF_EXIT_LOGIC                                                      # Ex
         .zero 4096                                                                                                     
 
 .align 4; .global tohost;   tohost:   .dword 0;
-.align 4; .global fromhost; fromhost: .dword 0;
+.align 4; .global fromhost; fromhost: .dword 0; 
