@@ -56,7 +56,8 @@ package riscv_instr_pkg;
     RTZ = 3'b001,
     RDN = 3'b010,
     RUP = 3'b011,
-    RMM = 3'b100
+    RMM = 3'b100,
+    DYN = 3'b111
   } f_rounding_mode_t;
 
   typedef enum bit [1:0] {
