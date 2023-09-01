@@ -467,6 +467,10 @@ class riscv_instr_gen_config extends uvm_object;
     }
   }
 
+  constraint fcsr_rm_c {
+    fcsr_rm != DYN;
+  }
+
   `uvm_object_utils_begin(riscv_instr_gen_config)
     `uvm_field_int(main_program_instr_cnt, UVM_DEFAULT)
     `uvm_field_sarray_int(sub_program_instr_cnt, UVM_DEFAULT)

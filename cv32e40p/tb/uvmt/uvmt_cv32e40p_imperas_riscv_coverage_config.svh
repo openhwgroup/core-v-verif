@@ -15,11 +15,28 @@
   `define COVER_RV32M
   `define COVER_RV32C
   `define COVER_RVVI_METRICS
+
   `ifdef FPU
     `ifndef ZFINX
       `define COVER_RV32F
+      `define COVER_RV32ZCF
     `else
       `define COVER_RV32ZFINX
     `endif
+  `else
+    `define COVER_RV32F_ILLEGAL
+    `define COVER_RV32ZCF_ILLEGAL
+  `endif
+
+  `ifdef PULP
+    `define COVER_XPULPV2
+    `ifdef CLUSTER
+      `define COVER_XPULPV2C
+    `else
+      `define COVER_XPULPV2C_ILLEGAL
+    `endif
+  `else
+    `define COVER_XPULPV2_ILLEGAL
+    `define COVER_XPULPV2C_ILLEGAL
   `endif
 `endif

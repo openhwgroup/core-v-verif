@@ -9,7 +9,7 @@
     `define RV_DV_ISA { RV32I, RV32M, RV32C, RV32X }
   `else //FPU = 1
     `ifndef ZFINX
-      `define RV_DV_ISA { RV32I, RV32M, RV32C, RV32X, RV32F }
+      `define RV_DV_ISA { RV32I, RV32M, RV32C, RV32X, RV32F, RV32FC }
     `else
       `define FP_IN_X_REGS
       `define RV_DV_ISA { RV32I, RV32M, RV32C, RV32X, RV32ZFINX }
@@ -18,7 +18,7 @@
 `else //PULP = 0, FPU = 1
   `ifdef FPU
     `ifndef ZFINX
-      `define RV_DV_ISA { RV32I, RV32M, RV32C, RV32F }
+      `define RV_DV_ISA { RV32I, RV32M, RV32C, RV32F, RV32FC }
     `else
       `define FP_IN_X_REGS
       `define RV_DV_ISA { RV32I, RV32M, RV32C, RV32ZFINX }
@@ -28,7 +28,7 @@
 
 //Following defines are provided to allow overwrite from test yaml files
 `ifdef RV_DV_ISA_RV32IMFC
-`define RV_DV_ISA { RV32I, RV32M, RV32C, RV32F }
+`define RV_DV_ISA { RV32I, RV32M, RV32C, RV32F, RV32FC }
 `endif
 
 `ifdef RV_DV_ISA_RV32IMC_ZFINX
@@ -41,7 +41,7 @@
 `endif
 
 `ifdef RV_DV_ISA_RV32IMFC_X
-`define RV_DV_ISA { RV32I, RV32M, RV32C, RV32F, RV32X }
+`define RV_DV_ISA { RV32I, RV32M, RV32C, RV32F, RV32FC, RV32X }
 `endif
 
 `ifdef RV_DV_ISA_RV32IMC_ZFINX_X
