@@ -25,6 +25,7 @@
 
 .text
 .global _start
+.option norvc
 
 _start:
     ALL_MEM_PMP                                                            # PMP permission to all the memory
@@ -39,8 +40,9 @@ _start:
     PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l1, LEVEL1 )                     # setup the PTE for level1
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
+    sw a1, 0(a1)                                                           # store the random number 
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_D | PTE_X )			   # sets the permission bits -- only X permission
+    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_V )       	   # sets the permission bits -- only X permission
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
 
 # ----------------Set the SATP and change the mode----------------------
@@ -59,8 +61,7 @@ _start:
 
 vm_en:
 
-    la a1, rvtest_data                                                      # loads the address of label rvtest_data
-    sw t1,0(a1)                                                             # stores the value of t1 
+    la a1, rvtest_data                                                      # loads the address of label rvtest_data                                                          # stores the value of t1 
 
 check_load:
 

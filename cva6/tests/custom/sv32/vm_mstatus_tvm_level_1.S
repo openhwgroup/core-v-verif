@@ -1,17 +1,14 @@
 #=======================================================================
-#      Write Access of Level1 PTE in User and Supervisor mode when dirty
-#      bit is low  
+#      RW Access of satp and sfence.vma in User and Supervisor mode when 
+#      mstatus.tvm = 1  
 #-----------------------------------------------------------------------
 # Test Description:
-# If implementation does not sets the pte.D when PTE is written,
-# then attempting to store on that PTE would
-# raise Store/AMO page fault exception, this test
-# covers the following scenarios in both supervisor and user privilege
-# modes for level1 PTE.
+# If mstatus.TVM=1, read and write access to the satp and sfence.vma will 
+# raise illegal instruction exception in S-mode. This test
+# covers the following scenarios in supervisor mode for level1 PTE.
 #                           Level 1
-# - Set PTE.D = 0 and test the write access in Supervisor Mode
-# - Set PTE.D = 0 and test the write access in User Mode
-#
+#   - mstatus.tvm = 1 and test the RW access of satp and sfence in 
+#     in supervisor mode.
 #=======================================================================
 
 #include "macros.h"
@@ -27,6 +24,7 @@
 
 .text
 .global _start
+.option norvc
 
 _start:
     ALL_MEM_PMP                                                            # PMP permission to all the memory
@@ -42,7 +40,7 @@ _start:
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_W | PTE_R )              # sets the permission bits --No dirty bit
+    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_D | PTE_W | PTE_R )      # sets the permission bits -- only W permission
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_check
@@ -54,6 +52,8 @@ _start:
 
     SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
     la a1,vm_en                                                            # loads the address of vm_en
+    li t4, MSTATUS_TVM
+    csrs mstatus, t4    				                                   # TVM bit set on mstatus
     #ifdef smode																													 
         CHANGE_T0_S_MODE(a1)                                        	   # changes mode M to S and set the MEPC value to a1
     #else
@@ -63,16 +63,33 @@ _start:
 # ----------------Virtualization Enabeled-------------------------------
 
 vm_en:
+                                               
+# ----------------------Load test prolog------------------------------
 
-# ----------------------Store test prolog------------------------------
+    TEST_PROLOG(check_load, CAUSE_ILLEGAL_INSTRUCTION)                      # load the addr and expected cause 
 
-    TEST_PROLOG(check_store,CAUSE_STORE_PAGE_FAULT)                         # load the addr and expected cause 
-    la a1,rvtest_data                                                       # loads the address of label rvtest_data
+check_load:
+
+    csrr t1, satp                                                           # tests the load access 
+    TEST_STATUS                                                             # checks the status of the test                                                               
+
+# ----------------------store - satp test prolog------------------------------
+
+    TEST_PROLOG(check_store,CAUSE_ILLEGAL_INSTRUCTION)                      # load the addr and expected cause 
 
 check_store:
-    sw t1,0(a1)                                                             # test the store access
+    csrw  satp, t1                                                          # test the store access
     TEST_STATUS                                                             # checks the status of the test                                                               
-	
+                                                                           
+# ----------------------store - sfence test prolog------------------------------
+
+    TEST_PROLOG(check_store_sfence,CAUSE_ILLEGAL_INSTRUCTION)               # load the addr and expected cause 
+
+check_store_sfence:
+    sfence.vma                                                              # test the store access
+    TEST_STATUS                                                             # checks the status of the test                                                               
+    SMODE_ECALL
+
 test_pass:
 
     li x1, 0                                                                # Write 0 in x1 if test pass
@@ -93,7 +110,7 @@ trap_handler:
     lw t4, 8(t1)                                                            # load the expected value of mcause  
 
     li  t1, CAUSE_SUPERVISOR_ECALL                                          # load the value of supervisor ecall
-    beq t0,t1,continue_in_m_mode                                                    # checks if ecall is occured
+    beq t0,t1,continue_in_m_mode                                            # checks if ecall is occured
 
     li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
     beq t0,t1,continue_in_m_mode                                            # checks for ecall is occured
@@ -103,9 +120,6 @@ trap_handler:
     bne t3,t5,test_fail                                                     # check the value of mepc with it's expected value
 
     bne  t0, t4, test_fail                                                  # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
-
-    li t5, CAUSE_STORE_PAGE_FAULT                                           # load the value of fetch page fault exception 
-    beq t0,t5,continue_in_m_mode                                            # if fetch page fault jump to next instr in M mode
 
 continue_execution:
 

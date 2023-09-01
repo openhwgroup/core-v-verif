@@ -1,16 +1,15 @@
 #=======================================================================
-#      RWX Access of Level0 PTE in User and Supervisor mode when
-#      Non-Leaf PTE persmissions at Level 0  
+#      RWX Access of Level0 PTE in User and Supervisor mode when RWX
+#      reserved PTE persmissions (PTE.W=1 only)  
 #-----------------------------------------------------------------------
 # Test Description:
-# If PTE at level0 has non-leaf RWX permissions (pte.x=0 & pte.r=0 & pte.w=0), 
+# If PTE has reserved RWX encodings (pte.w=1 & pte.r=0 & pte.x=0), 
 # then accessing it would raise page fault exception of the corresponding
-# access type. This test
-# covers the following scenarios in both supervisor and user privilege
-# modes for level0 PTE.
-#                            Level 0
-#  Set PTE.R = 0 and PTE.W = 0 and PTE.X = 0 test the RWX access in SMode
-#  Set PTE.R = 0 and PTE.W = 0 and PTE.X = 0 test the RWX access in UMode
+# access type. this test covers the following scenarios in both supervisor
+# and user privilege modes for level0 PTE.
+#                           Level 0
+#  Set PTE.R = 0 and PTE.W = 1 and PTE.X = 0 test the RWX access in SMode
+#  Set PTE.R = 0 and PTE.W = 1 and PTE.X = 0 test the RWX access in UMode
 #
 #=======================================================================
 
@@ -27,14 +26,14 @@
 
 .text
 .global _start
-
+.option norvc
 _start:
     ALL_MEM_PMP                                                             # PMP permission to all the memory
     la t1,trap_handler                                                      # loads the address of trap handler 
     csrw mtvec,t1                                                           # sets the mtvec to trap handler 
 
 # ----------------LEVEL1 PTE Setup to point to LEVEL0 PTE----------------
-    la a1,pgtb_l0                                                           # loads the address of label pgbt_l0
+    la a1,pgtb_l0                                                           # loads the address of label pgtb_l0
     mv a0, a1                                                               # generrates the VA for label pgtb_l0
     ori a2, x0, ( PTE_V )                                                   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
@@ -47,7 +46,7 @@ _start:
  
     la a1,rvtest_data                                                       # loads the address of label rvtest_data
     mv a0, a1                                                               # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_D )                       # sets the permission bits -- No RWX permission
+    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_D | PTE_W)  			    # sets the permission bits -- only W permission
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level0
 
     la a1,rvtest_check                                                      # loads the address of label rvtest_check
@@ -62,7 +61,7 @@ _start:
     #ifdef smode																													 
         CHANGE_T0_S_MODE(a1)                                                # changes mode M to S and set the MEPC value to a1
     #else
-        CHANGE_T0_U_MODE(a1)                                                # changes mode M to U and set the MEPC value to a1
+        CHANGE_T0_U_MODE(a1)                                        	    # changes mode M to U and set the MEPC value to a1
     #endif
 
 # ----------------Virtualization Enabeled-------------------------------
@@ -77,6 +76,7 @@ vm_en:
 check_load:
 
     lw t1,0(a1)                                                             # tests the load access 
+    nop
     TEST_STATUS                                                             # checks the status of the test
 # ----------------Store test prolog--------------------------------------
 
@@ -100,7 +100,7 @@ check_store:
                                                                             # Setup a new PTE to test execute
     la a1,check_execute                                                     # loads the address of label vm_en
     mv a0, a1                                                               # VA = PA - Identity Map
-    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_D )                       # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_W | PTE_V)        # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level0
 
 # ----------------Set the SATP and change the mode---------------------
@@ -143,7 +143,6 @@ trap_handler:
 
     li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
     beq t0,t1,continue_in_m_mode                                            # checks for ecall is occured
-    
     beqz t2, test_fail                                                      # Jumps to exit if cause is not expected
  
     csrr t5,mepc                                                            # read the value of mepc 

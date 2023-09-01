@@ -1,5 +1,5 @@
 #=======================================================================
-#      Read Access of PTE at level1 in User and Supervisor mode when 
+#      Read Access of PTE at level0 in User and Supervisor mode when 
 #      mstatus.mxr = 1  and only PTE.X = 1
 #-----------------------------------------------------------------------
 # Test Description:
@@ -26,6 +26,7 @@
 
 .text
 .global _start
+.option norvc
 
 _start:
     ALL_MEM_PMP                                                            # PMP permission to all the memory
@@ -45,8 +46,9 @@ _start:
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
+    sw a1, 0(a1)                                                           # store the random number
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_D | PTE_X )				   # sets the permission bits -- only X permission
+    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_V )			   # sets the permission bits -- only X permission
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
 
 # ----------------Set the SATP and change the mode-----------------------
@@ -54,7 +56,7 @@ _start:
     SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
     la a1,vm_en                                                            # loads the address of vm_en
     li t4, MSTATUS_MXR
-    csrs mstatus, t4    				                                   #MXR bit set on mstatus
+    csrs mstatus, t4    				                                   # MXR bit set on mstatus
     #ifdef smode																													 
         CHANGE_T0_S_MODE(a1)                                        	   # changes mode M to S and set the MEPC value to a1
     #else

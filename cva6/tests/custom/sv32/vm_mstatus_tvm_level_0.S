@@ -5,8 +5,9 @@
 # Test Description:
 # If mstatus.TVM=1, read and write access to the satp and sfence.vma will 
 # raise illegal instruction exception in S-mode. This test
-# covers the following scenarios in supervisor mode for level1 PTE.
-#                           Level 1
+# covers the following scenarios in both supervisor
+# modes for level0 PTE.
+#                           Level 0
 #   - mstatus.tvm = 1 and test the RW access of satp and sfence in 
 #     in supervisor mode.
 #=======================================================================
@@ -24,30 +25,36 @@
 
 .text
 .global _start
+.option norvc
 
 _start:
     ALL_MEM_PMP                                                            # PMP permission to all the memory
     la t1,trap_handler                                                     # loads the address of trap handler 
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
-    
-# ----------------LEVEL 1 PTE Setup for load and store test------------
 
+# ----------------LEVEL1 PTE Setup to point to LEVEL0 PTE----------------
+    la a1,pgtb_l0                                                          # loads the address of label pgtb_l0
+    mv a0, a1                                                              # generrates the VA for label pgtb_l0
+    ori a2, x0, ( PTE_V )                                                  # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
+
+# ----------------LEVEL 0 PTE Setup for load and store test--------------
     la a1,vm_en                                                            # loads the address of label vm_en
     mv a0, a1                                                              # set the VA to PA (identity mapping)
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_V )              # sets the permission bits
-    PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l1, LEVEL1 )                     # setup the PTE for level1
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_D | PTE_W | PTE_R | PTE_X)# sets the permission bits -- only W permission
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
+    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_D | PTE_W | PTE_R )      # sets the permission bits -- only W permission
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
 
-    la a1,rvtest_check                                                     # loads the address of label rvtest_check
+    la a1,rvtest_check                                                     # loads the address of label rvtest_check    
     mv a0, a1                                                              # set the VA to PA (identity mapping)                                          
     ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_W | PTE_R | PTE_V )      # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
 
-# ----------------Set the SATP and change the mode----------------------
+# ----------------Set the SATP and change the mode-----------------------
 
     SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
     la a1,vm_en                                                            # loads the address of vm_en
@@ -59,43 +66,42 @@ _start:
         CHANGE_T0_U_MODE(a1)                                        	   # changes mode M to U and set the MEPC value to a1
     #endif
 
+
 # ----------------Virtualization Enabeled-------------------------------
 
 vm_en:
                                                
 # ----------------------Load test prolog------------------------------
 
-    TEST_PROLOG(check_load, CAUSE_ILLEGAL_INSTRUCTION)                      # load the addr and expected cause 
-    la a1, rvtest_data                                                      # loads the address of label rvtest_data
+    TEST_PROLOG(check_load, CAUSE_ILLEGAL_INSTRUCTION)                    # load the addr and expected cause 
 
 check_load:
 
-    csrr t1, satp                                                           # tests the load access 
-    TEST_STATUS                                                             # checks the status of the test                                                               
+    csrr t1, satp                                                         # tests the load access 
+    TEST_STATUS                                                           # checks the status of the test                                                               
 
 # ----------------------store - satp test prolog------------------------------
 
-    TEST_PROLOG(check_store,CAUSE_ILLEGAL_INSTRUCTION)                      # load the addr and expected cause 
-    la a1,rvtest_data	                                                    # loads the address of label rvtest_data
+    TEST_PROLOG(check_store,CAUSE_ILLEGAL_INSTRUCTION)                    # load the addr and expected cause 
 
 check_store:
-    csrw  satp, t1                                                          # test the store access
-    TEST_STATUS                                                             # checks the status of the test                                                               
+    csrw  satp, t1                                                        # test the store access
+    TEST_STATUS                                                           # checks the status of the test                                                               
                                                                            
 # ----------------------store - sfence test prolog------------------------------
 
-    TEST_PROLOG(check_store_sfence,CAUSE_ILLEGAL_INSTRUCTION)               # load the addr and expected cause 
-    la a1,rvtest_data                                                       # loads the address of label rvtest_data
+    TEST_PROLOG(check_store_sfence,CAUSE_ILLEGAL_INSTRUCTION)             # load the addr and expected cause 
+    la a1,rvtest_data                                                     # loads the address of label rvtest_data
 
 check_store_sfence:
-    sfence.vma                                                              # test the store access
-    TEST_STATUS                                                             # checks the status of the test                                                               
-    SMODE_ECALL
-
+    sfence.vma                                                            # test the store access
+    TEST_STATUS                                                           # checks the status of the test
+    SMODE_ECALL                                                           # SMODE ecall 
+	
 test_pass:
 
-    li x1, 0                                                                # Write 0 in x1 if test pass
-    j exit                                                                  # Jump to exit
+    li x1, 0                                                              # Write 0 in x1 if test pass
+    j exit                                                                # Jump to exit
 
 test_fail:
 
@@ -123,6 +129,9 @@ trap_handler:
 
     bne  t0, t4, test_fail                                                  # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
+    li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
+    beq t0,t5,continue_in_m_mode                                            # if fetch page fault jump to next instr in M mode
+
 continue_execution:
 
     INCREMENT_MEPC   _SUMODE_                                               # update the value of mepc
@@ -146,12 +155,12 @@ trap_epilogs:
 COREV_VERIF_EXIT_LOGIC                                                      # exit logic 
 
 .data  
-.align 24                                                                   # Superpage align  
+.align                                                                     
     rvtest_check: 
       .word 0xdeadbeef                                                      # 1 for cause expected 0  for no cause 
       .word 0xbeefdead                                                      # write the value of mepc here (where  cause is expected)
       .word 0xcafecafe                                                      # write the value of expect cause 
-.align 22                                     
+.align 12                                     
     rvtest_data:   
       .word 0xbeefcafe                                                 
       .word 0xdeadcafe                                                 
