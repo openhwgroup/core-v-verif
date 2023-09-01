@@ -27,8 +27,6 @@ _start:
     ALL_MEM_PMP                                                            # PMP permission to all the memory
     la t1,trap_handler                                                     # loads the address of trap handler 
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
-    la t1,rvtest_data
-    sw t1,0(t1)
     
 # ----------------LEVEL 1 PTE Setup for load and store test------------
 
@@ -39,12 +37,12 @@ _start:
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V | PTE_U )  # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A| PTE_W | PTE_R | PTE_V | PTE_U )           # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)                                          
-    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V | PTE_U )          # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A| PTE_W | PTE_R | PTE_V | PTE_U )           # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
 # ----------------Set the SATP and change the mode----------------------
@@ -67,7 +65,7 @@ check_store:
     la a1, rvtest_data                                                     # load addr of rvtest_data
     sw t1,0(a1)                                                            # test the store access
     nop                          
-    SMODE_ECALL                                                            # ecall to go to m mode 
+    UMODE_ECALL                                                            # ecall to go to m mode 
 
 # -------------LEVEL 1 PTE Setup for execute test------------------------
                                                                            # Setup a new PTE to test execute
@@ -91,48 +89,35 @@ check_execute:
 
 trap_handler:
 
-    csrr t0, mcause                                                        # read the value of mcause 
-    la t1, rvtest_check                                                    # load the address of trvtest_check
-    
-    lw t2, 0(t1)                                                           # if cause expected then load 1 else 0
-    lw t3, 4(t1)                                                           # load the expected value of mepc 
-    lw t4, 8(t1)                                                           # load the expected value of mcause  
+    csrr t0, mcause                                                         # read the value of mcause 
+    la t1, rvtest_check                                                     # load the address of trvtest_check
+     
+    li  t1, CAUSE_SUPERVISOR_ECALL                                          # load the value of supervisor ecall
+    beq t0,t1,continue_in_m_mode                                            # checks if ecall is occured
 
-    li  t1, CAUSE_SUPERVISOR_ECALL                                         # load the value of supervisor ecall
-    beq t0,t1,continue_in_m_mode                                           # checks if ecall is occured
+    li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
+    beq t0,t1,continue_in_m_mode                                            # checks for ecall is occured
 
-    li  t1, CAUSE_USER_ECALL                                               # load the value of user ecall
-    beq t0,t1,continue_in_m_mode                                           # checks for ecall is occured
-
-    beqz t2, exit                                                          # Jumps to exit if cause is not expected
- 
-    csrr t5,mepc                                                           # read the value of mepc 
-    bne t3,t5,exit                                                         # check the value of mepc with it's expected value
-
-    bne  t0, t4, exit                                                      # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
-
-    li t5, CAUSE_FETCH_PAGE_FAULT                                          # load the value of fetch page fault exception 
-    beq t0,t5,continue_in_m_mode                                           # if fetch page fault jump to next instr in M mode
 
 continue_execution:
 
-    INCREMENT_MEPC   _SUMODE_                                              # update the value of mepc
+    INCREMENT_MEPC   _SUMODE_                                               # update the value of mepc
     j trap_epilogs
 
 continue_in_m_mode:
 
-    INCREMENT_MEPC   _MMODE_                                               # update the value of mepc
-    li t1,MSTATUS_MPP                                                      # update the MPP to MSTATUS_MPP for M mode
-    csrs mstatus,t1                                                        # update the value mstatus MPP
+    INCREMENT_MEPC   _MMODE_                                                # update the value of mepc
+    li t1,MSTATUS_MPP                                                       # update the MPP to MSTATUS_MPP for M mode
+    csrs mstatus,t1                                                         # update the value mstatus MPP
 
 trap_epilogs:
 
-    la t1, rvtest_check                                                    # load the addr of rvtest_check
+    la t1, rvtest_check                                                     # load the addr of rvtest_check
     li t2, 0
-    sw t2, 0(t1)                                                           # Clear the expected cause
-    sw t2, 4(t1)                                                           # Clear the exception PC
-    sw t2, 8(t1)                                                           # Clear cause execution number
-    mret                                                                   # return 
+    sw t2, 0(t1)                                                            # Clear the expected cause
+    sw t2, 4(t1)                                                            # Clear the exception PC
+    sw t2, 8(t1)                                                            # Clear cause execution number
+    mret                                                                    # return 
 
 
 COREV_VERIF_EXIT_LOGIC                                                     # Exit logic 

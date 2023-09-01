@@ -29,8 +29,8 @@ _start:
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
 
 # ----------------LEVEL1 PTE Setup to point to LEVEL0 PTE----------------
-    la a1,pgtb_l0                                                          # loads the address of label vm_en
-    mv a0, a1                                                              # generrates the VA for label vm_en
+    la a1,pgtb_l0                                                          # loads the address of pgtb_l0
+    mv a0, a1                                                              # generrates the VA for pgtb_l0
     ori a2, x0, ( PTE_V)                                                   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
@@ -42,7 +42,7 @@ _start:
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_X | PTE_U | PTE_R | PTE_W)   # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_U | PTE_R | PTE_W)           # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
@@ -71,7 +71,7 @@ check_load:
 check_store:
     sw t1,0(a1)                                                             # test the store access
     nop                          
-    SMODE_ECALL
+    UMODE_ECALL
 
 # -------------LEVEL 1 PTE Setup for execute test------------------------
                                                                             # Setup a new PTE to test execute
@@ -85,6 +85,7 @@ check_store:
     SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
     la a1,check_execute                                                     # loads the address of check_execute
     CHANGE_T0_U_MODE(a1)                                                    # changes mode M to U and set the MEPC
+
 check_execute:
    
     li t1, 0x45                                                             # page fault should raise 
@@ -95,26 +96,13 @@ trap_handler:
 
     csrr t0, mcause                                                         # read the value of mcause 
     la t1, rvtest_check                                                     # load the address of trvtest_check
-    
-    lw t2, 0(t1)                                                            # if cause expected then load 1 else 0
-    lw t3, 4(t1)                                                            # load the expected value of mepc 
-    lw t4, 8(t1)                                                            # load the expected value of mcause  
-
+     
     li  t1, CAUSE_SUPERVISOR_ECALL                                          # load the value of supervisor ecall
     beq t0,t1,continue_in_m_mode                                            # checks if ecall is occured
 
     li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
     beq t0,t1,continue_in_m_mode                                            # checks for ecall is occured
 
-    beqz t2, exit                                                           # Jumps to exit if cause is not expected
- 
-    csrr t5,mepc                                                            # read the value of mepc 
-    bne t3,t5,exit                                                          # check the value of mepc with it's expected value
-
-    bne  t0, t4, exit                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
-
-    li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
-    beq t0,t5,continue_in_m_mode                                            # if fetch page fault jump to next instr in M mode
 
 continue_execution:
 

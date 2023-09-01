@@ -36,7 +36,7 @@ _start:
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_W | PTE_R | PTE_V )          # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_W | PTE_R | PTE_V )                  # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1   
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
@@ -47,7 +47,7 @@ _start:
 # ----------------Set the SATP and change the mode----------------------
 
     SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
-    la a1,vm_en                                                            # loads the address of vm_en
+    la a1,vm_en                        PTE_V                                    # loads the address of vm_en
     CHANGE_T0_U_MODE(a1)                                        	       # changes mode M to U and set the MEPC value to a1
 
 # ----------------Virtualization Enabeled-------------------------------
@@ -95,17 +95,8 @@ check_execute:
    
     li t1, 0x45                                                             # page fault should raise 
     TEST_STATUS                                                             # checks the status of the test                                                               
+    j test_pass
 
-test_pass:
-
-    li x1, 0                                                                # Write 0 in x1 if test pass
-    j exit                                                                  # Jump to exit
-
-test_fail:
-
-    li x1, 1                                                                # Write 1 in x1 if test failed
-    j exit                                                                  # Jump to exit
-                                                                   
 trap_handler:
 
     csrr t0, mcause                                                         # read the value of mcause 
@@ -121,12 +112,12 @@ trap_handler:
     li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
     beq t0,t1,continue_in_m_mode                                            # checks for ecall is occured
 
-    beqz t2, exit                                                           # Jumps to exit if cause is not expected
+    beqz t2, test_fail                                                      # Jumps to exit if cause is not expected
  
     csrr t5,mepc                                                            # read the value of mepc 
-    bne t3,t5,exit                                                          # check the value of mepc with it's expected value
-
-    bne  t0, t4, exit                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
+    bne t3,t5,test_fail                                                     # check the value of mepc with it's expected value
+    
+    bne  t0, t4, test_fail                                                  # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
     li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
     beq t0,t5,continue_in_m_mode                                            # if fetch page fault jump to next instr in M mode
@@ -150,6 +141,15 @@ trap_epilogs:
     sw t2, 4(t1)                                                            # Clear the exception PC
     sw t2, 8(t1)                                                            # Clear cause execution number
     mret
+
+test_pass:
+
+    li x1, 0                                                                # Write 0 in x1 if test pass
+    j exit                                                                  # Jump to exit
+
+test_fail:
+
+    li x1, 1                                                                # Write 1 in x1 if test failed
 
 
 COREV_VERIF_EXIT_LOGIC                                                      # Exit logic 

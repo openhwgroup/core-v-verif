@@ -29,8 +29,8 @@ _start:
     csrw mtvec,t1                                                          # sets the mtvec to trap handler 
 
 # ----------------LEVEL1 PTE Setup to point to LEVEL0 PTE----------------
-    la a1,pgtb_l0                                                          # loads the address of label vm_en
-    mv a0, a1                                                              # generrates the VA for label vm_en
+    la a1,pgtb_l0                                                          # loads the address of pgtb_l0
+    mv a0, a1                                                              # generrates the VA for pgtb_l0
     ori a2, x0, ( PTE_V)                                                   # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
 
@@ -42,7 +42,7 @@ _start:
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_X | PTE_U )                  # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_V | PTE_U | PTE_R | PTE_W)           # sets the permission bits
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_data
@@ -126,12 +126,12 @@ trap_handler:
     li  t1, CAUSE_USER_ECALL                                                # load the value of user ecall
     beq t0,t1,continue_in_m_mode                                            # checks for ecall is occured
 
-    beqz t2, exit                                                           # Jumps to exit if cause is not expected
+    beqz t2, test_fail                                                      # Jumps to exit if cause is not expected
  
     csrr t5,mepc                                                            # read the value of mepc 
-    bne t3,t5,exit                                                          # check the value of mepc with it's expected value
-
-    bne  t0, t4, exit                                                       # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
+    bne t3,t5,test_fail                                                     # check the value of mepc with it's expected value
+    
+    bne  t0, t4, test_fail                                                  # jumps to exit if EXPECTED_CAUSE is'nt equal to mcause
 
     li t5, CAUSE_FETCH_PAGE_FAULT                                           # load the value of fetch page fault exception 
     beq t0,t5,continue_in_m_mode                                            # if fetch page fault jump to next instr in M mode
