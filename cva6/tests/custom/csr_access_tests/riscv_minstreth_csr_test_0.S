@@ -24,12 +24,6 @@ RVMODEL_BOOT
   	csrw 0xB82, x30
 	csrr x6, 0xB82 		        ## Read the current value of minstreth into x6
 
-	csrr x7, 0xB82
-	csrr x8, 0xB82
-	csrr x9, 0xB82
-	csrr x10,0xB82
-	csrr x11, 0xB82
-
 	
 	li x30, 0XFFFFFFFF
   	csrw 0xB02, x30
@@ -96,13 +90,6 @@ read_csr_loop:
 	li x30, 0XFFFFFFFD
   	csrw 0xB82, x30
 	csrr x6, 0xB82 		## Read the current value of minstreth into x6
-
-	csrr x7, 0xB82
-	csrr x8, 0xB82
-	csrr x9, 0xB82
-	csrr x10,0xB82
-	csrr x11, 0xB82
-
 	
 	li x30, 0XFFFFFFFF
   	csrw 0xB02, x30
@@ -156,14 +143,7 @@ read_csr_loop2:
 
 	li x30, 0XFFFFFFFD
   	csrw 0xB82, x30
-	csrr x6, 0xB82 		## Read the current value of minstreth into x6
-
-	csrr x7, 0xB82
-	csrr x8, 0xB82
-	csrr x9, 0xB82
-	csrr x10,0xB82
-	csrr x11, 0xB82
-
+	csrr x6, 0xB82 		## Read the current value of minstreth into x6	
 	
 	li x30, 0XFFFFFFFF
   	csrw 0xB02, x30

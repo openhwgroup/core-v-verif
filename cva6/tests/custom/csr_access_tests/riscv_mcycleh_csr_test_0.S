@@ -22,32 +22,25 @@ RVMODEL_BOOT
 
 	li x30, 0XFFFFFFFD
   	csrw 0xB80, x30
-	csrr x6, 0xB80 		## Read the current value of mcycle into x6
-
-	csrr x7, 0xB80
-	csrr x8, 0xB80
-	csrr x9, 0xB80
-	csrr x10,0xB80
-	csrr x11, 0xB80
-
+	csrr x6, 0xB80 		## Read the current value of mcycleh into x6
 	
 	li x30, 0XFFFFFFFF
   	csrw 0xB00, x30
 
 	csrr x7, 0xB80
-   	li x28, 5  ## set x28 to the number of times to read the CSR
+   	li x28, 5  		## set x28 to the number of times to read the CSR
    	
 read_csr_loop:
 		li x30, 0XFFFFFFFF
   		csrw 0xB00, x30                 ## Hardcoding MCYCLE CSR value to maximum
 	
-		csrr x6, 0xB80 	        	## Read the current value of mcycle into x6
+		csrr x6, 0xB80 	        	## Read the current value of mcycleh into x6
 		
 		li x30, 0XFFFFFFFF
   		csrw 0xB00, x30
 
-   		csrr x7, 0xB80  		## Read the current value of mcycle again into x7
-   		bgt  x7, x6, next_iter9         ## if x7 >= x6, jump to next iter
+   		csrr x7, 0xB80  		## Read the current value of mcycleh again into x7
+   		bgt  x7, x6, next_iter9         ## if x7 > x6, jump to next iter
     	j csr_fail
     
     	next_iter9 :
@@ -84,10 +77,8 @@ read_csr_loop:
  	la x28, supervisor_code
          csrw 0x341, x28
  
- ##	la x6, supervisor_exception_handler  
- ##        csrw mtvec, x6	   ## Writing address of the exception handler into MTVEC
- 	csrr x31, 0x300
-        	mret
+  	csrr x31, 0x300
+       	mret
        
  # Supervisor code starts here
  supervisor_code:
@@ -98,14 +89,7 @@ read_csr_loop:
 
 	li x30, 0XFFFFFFFD
   	csrw 0xB80, x30
-	csrr x6, 0xB80 		## Read the current value of mcycle into x6
-
-	csrr x7, 0xB80
-	csrr x8, 0xB80
-	csrr x9, 0xB80
-	csrr x10,0xB80
-	csrr x11, 0xB80
-
+	csrr x6, 0xB80 		## Read the current value of mcycleh into x6
 	
 	li x30, 0XFFFFFFFF
   	csrw 0xB00, x30
@@ -116,11 +100,11 @@ read_csr_loop:
 read_csr_loop2:
 		li x30, 0XFFFFFFFF
   		csrw 0xB00, x30
-		csrr x6, 0xB80 	        	## Read the current value of mcycle into x6
+		csrr x6, 0xB80 	        	## Read the current value of mcycleh into x6
 		
 		li x30, 0XFFFFFFFF
   		csrw 0xB00, x30
-   		csrr x7, 0xB80  		## Read the current value of mcycle again into x7
+   		csrr x7, 0xB80  		## Read the current value of mcycleh again into x7
 
    		bgt  x7, x6, next_iter10          ## if x7 > x6, jump to next iter
     	j csr_fail
@@ -149,8 +133,7 @@ read_csr_loop2:
  	sret
  
  ## USER Mode code starts here
- user_mode_code:
- 
+ user_mode_code: 
 
 	csrr x31, 0xB80
 	
@@ -159,15 +142,8 @@ read_csr_loop2:
 
 	li x30, 0XFFFFFFFD
   	csrw 0xB80, x30
-	csrr x6, 0xB80 		## Read the current value of mcycle into x6
+	csrr x6, 0xB80 		## Read the current value of mcycleh into x6
 
-	csrr x7, 0xB80
-	csrr x8, 0xB80
-	csrr x9, 0xB80
-	csrr x10,0xB80
-	csrr x11, 0xB80
-
-	
 	li x30, 0XFFFFFFFF
   	csrw 0xB00, x30
 
@@ -178,12 +154,12 @@ read_csr_loop3:
 		li x30, 0XFFFFFFFF
   		csrw 0xB00, x30
 	
-		csrr x6, 0xB80 	        	## Read the current value of mcycle into x6
+		csrr x6, 0xB80 	        	## Read the current value of mcycleh into x6
 		
 		li x30, 0XFFFFFFFF
   		csrw 0xB00, x30
 
-   		csrr x7, 0xB80  		## Read the current value of mcycle again into x7
+   		csrr x7, 0xB80  		## Read the current value of mcycleh again into x7
    		bgt  x7, x6, next_iter11         ## if x7 > x6, jump to next iter
     	j csr_fail
     
