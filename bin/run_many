@@ -35,26 +35,44 @@ else
 fi
 let RUNSM1=$RUNS-1
 
-cd ../cv32e40p/sim/uvmt
-echo "make clean_all SIMULATOR=$SIM"
-make clean_all SIMULATOR=$SIM
+if [[ -z "${CV_CORE}" ]];
+then
+  echo CV_CORE not defined... cannot proceed.
+  exit 1
+else
+  cd ../${CV_CORE}/sim/uvmt
+  echo "Running in ../${CV_CORE}/sim/uvmt"
+fi
+
+echo "IMPORTANT!!! Do you want to skip 'make clean_all' [Y/N]?"
+read YORN
+if [ $YORN != "Y" ];
+then
+  echo "make clean_all SIMULATOR=$SIM"
+  make clean_all SIMULATOR=$SIM
+fi
 
 counter=0
 until [ $counter -gt $RUNSM1 ]
 do
   THISSEED=`date +%N`
-  echo "make test COREV=YES SEED=$THISSEED TEST=$TESTPROGRAM SIMULATOR=$SIM GEN_START_INDEX=$counter RUN_INDEX=$counter USE_ISS=NO"
-  make test COREV=YES SEED=$THISSEED TEST=$TESTPROGRAM SIMULATOR=$SIM GEN_START_INDEX=$counter RUN_INDEX=$counter USE_ISS=NO
+  echo "make test SEED=$THISSEED TEST=$TESTPROGRAM SIMULATOR=$SIM GEN_START_INDEX=$counter RUN_INDEX=$counter USE_ISS=NO"
+  make test SEED=$THISSEED TEST=$TESTPROGRAM SIMULATOR=$SIM GEN_START_INDEX=$counter RUN_INDEX=$counter USE_ISS=NO
   ((counter++))
 done
 
-echo
-echo
+echo $'\n'
 echo "Summary:"
+echo "  CORE-V Core:  $CV_CORE"
 echo "  Test-Program: $TESTPROGRAM"
 echo "  Simulator:    $SIM"
-echo -n "  Number of tests run:    "
-grep "SIMULATION" `find ${SIM}_results/default/$TESTPROGRAM -name ${SIM}-*` | wc -l
-echo -n "  Number of tests FAILED: "
-grep "SIMULATION FAILED" `find ${SIM}_results/default/$TESTPROGRAM -name ${SIM}-*` | wc -l
-echo
+if [ -d "${SIM}_results" ];
+then
+  echo -n "  Number of tests run:    "
+  grep "SIMULATION" `find ${SIM}_results/default/$TESTPROGRAM -name ${SIM}-*` | wc -l
+  echo -n "  Number of tests FAILED: "
+  grep "SIMULATION FAILED" `find ${SIM}_results/default/$TESTPROGRAM -name ${SIM}-*` | wc -l
+  echo
+else
+  echo -e '\nNo tests found.\n'
+fi
