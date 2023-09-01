@@ -32,6 +32,5 @@ plusargs: >
     +no_dret=1
     +enable_misaligned_instr=1
     +set_dcsr_ebreak=0
-    +enable_floating_point=1
     +test_override_riscv_instr_stream=1
     +test_override_riscv_instr_sequence=1

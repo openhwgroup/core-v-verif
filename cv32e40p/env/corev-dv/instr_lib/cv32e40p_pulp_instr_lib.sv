@@ -98,10 +98,10 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
   rand riscv_reg_t          cv32e40p_exclude_regs[];
 
   int unsigned              num_of_reserved_regs;
-  riscv_reg_t               cv32e40p_reserved_regs[];
 
   riscv_instr_name_t        xpulp_exclude_instr[];
   riscv_instr_category_t    xpulp_include_category[];
+  riscv_instr_name_t        riscv_exclude_common_instr[];
   riscv_instr_name_t        riscv_exclude_instr[];
   riscv_instr_group_t       riscv_exclude_group[];
   riscv_instr               riscv_instr_list[];
@@ -116,8 +116,8 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
       `uvm_field_int(num_of_reserved_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_avail_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_exclude_regs, UVM_DEFAULT)
-      `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_reserved_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_instr_name_t,xpulp_exclude_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_name_t,riscv_exclude_common_instr, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_instr_name_t,riscv_exclude_instr, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_instr_group_t,riscv_exclude_group, UVM_DEFAULT)
   `uvm_object_utils_end
@@ -133,9 +133,9 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
   constraint avail_regs_pulp_instr_c {
     if ((cfg.enable_fp_in_x_regs == 1) && (RV32ZFINX inside {riscv_instr_pkg::supported_isa})) {
       num_of_avail_regs  >= 8;
-      num_of_avail_regs  <= 25 - num_zfinx_gpr;
+      num_of_avail_regs  <= 24 - num_zfinx_gpr;
     } else {
-      num_of_avail_regs inside {[8:25]};
+      num_of_avail_regs inside {[8:24]};
     }
   }
 
@@ -149,7 +149,7 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
     }
     unique {cv32e40p_exclude_regs};
     foreach(cv32e40p_exclude_regs[i]) {
-      !(cv32e40p_exclude_regs[i] inside {cv32e40p_reserved_regs});
+      !(cv32e40p_exclude_regs[i] inside {cfg.reserved_regs});
       !(cv32e40p_exclude_regs[i] inside {cv32e40p_zfinx_regs});
     }
   }
@@ -158,8 +158,6 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
     super.new(name);
 
     num_of_reserved_regs = 5;
-    cv32e40p_reserved_regs = new[num_of_reserved_regs];
-    cv32e40p_reserved_regs = {ZERO, RA, SP, GP, TP};
 
   endfunction : new
 
@@ -171,13 +169,13 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
                              C_ADDI16SP };
 
     //Exclude list for all random instruction generation part
-    riscv_exclude_instr = {  CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI,
-                             CV_ELW,
-                             C_ADDI16SP,
-                             WFI,
-                             URET, SRET, MRET, DRET,
-                             ECALL,
-                             JALR, JAL, C_JR, C_JALR, C_J, C_JAL};
+    riscv_exclude_common_instr = { CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI,
+                                   CV_ELW,
+                                   C_ADDI16SP,
+                                   WFI,
+                                   URET, SRET, MRET, DRET,
+                                   ECALL,
+                                   JALR, JAL, C_JR, C_JALR, C_J, C_JAL };
 
     num_zfinx_gpr = cv32e40p_cfg.num_zfinx_reserved_reg;
     cv32e40p_zfinx_regs = new[num_zfinx_gpr];
@@ -186,7 +184,7 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
   endfunction : pre_randomize
 
   function void post_randomize();
-    cv32e40p_exclude_regs = {cv32e40p_exclude_regs,cv32e40p_reserved_regs};
+    cv32e40p_exclude_regs = {cv32e40p_exclude_regs,cfg.reserved_regs};
 
     if((cv32e40p_exclude_regs.size() < 2) || (cv32e40p_exclude_regs.size() > 25))
       `uvm_fatal(this.get_type_name(), "cv32e40p_exclude_regs out of range")
@@ -210,6 +208,8 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
     riscv_fp_in_x_regs_instr    zfinx_instr;
     string                      str;
     int                         i;
+
+    riscv_exclude_instr = {riscv_exclude_common_instr};
 
     //use cfg for ebreak
     if(cfg.no_ebreak)

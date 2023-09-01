@@ -32,7 +32,6 @@
 
   function void pre_randomize();
     `DV_CHECK_FATAL($cast(cv32e40p_cfg, cfg), "Could not cast cfg into cv32e40p_cfg")
-    cv32e40p_cfg.print();
     super.pre_randomize();
   endfunction
 
