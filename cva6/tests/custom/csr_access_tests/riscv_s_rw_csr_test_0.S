@@ -16,6 +16,76 @@ RVMODEL_BOOT
 	csrw 0x341, x0  ## Writing Zero to MEPC CSR
     	csrw 0x342, x0  ## Writing Zero to MCAUSE CSR
 
+	li x1, 0x222
+	csrw 0x303, x1  ## Configuring MIDELEG CSR 
+
+	# CSR_SIE
+	li x5, 0xa5a5a5a5
+	csrrw x4, 260, x5
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	li x5, 0x5a5a5a5a
+	csrrw x4, 260, x5
+	li x5, 0x00000020
+	bne x5, x4, csr_fail
+	li x5, 0xe4ca5ed3
+	csrrw x4, 260, x5
+	li x5, 0x00000202
+	bne x5, x4, csr_fail
+	li x5, 0xa5a5a5a5
+	csrrs x4, 260, x5
+	li x5, 0x00000202
+	bne x5, x4, csr_fail
+	li x5, 0x5a5a5a5a
+	csrrs x4, 260, x5
+	li x5, 0x00000222
+	bne x5, x4, csr_fail
+	li x5, 0x66c2984c
+	csrrs x4, 260, x5
+	li x5, 0x00000222
+	bne x5, x4, csr_fail
+	li x5, 0xa5a5a5a5
+	csrrc x4, 260, x5
+	li x5, 0x00000222
+	bne x5, x4, csr_fail
+	li x5, 0x5a5a5a5a
+	csrrc x4, 260, x5
+	li x5, 0x00000202
+	bne x5, x4, csr_fail
+	li x5, 0x9d619640
+	csrrc x4, 260, x5
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	csrrwi x4, 260, 0b00101
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	csrrwi x4, 260, 0b11010
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	csrrwi x4, 260, 0b00110
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	csrrsi x4, 260, 0b00101
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	csrrsi x4, 260, 0b11010
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	csrrsi x4, 260, 0b01100
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	csrrci x4, 260, 0b00101
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	csrrci x4, 260, 0b11010
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	csrrci x4, 260, 0b10001
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	csrr x4, 260
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
 
 	# CSR_STVEC
 	li x7, 0xa5a5a5a5
@@ -396,6 +466,75 @@ supervisor_mode_code_start:
 # Supervisor code starts here
 supervisor_code:
 
+	# CSR_SIE
+	li x5, 0xa5a5a5a5
+	csrrw x4, 260, x5
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	li x5, 0x5a5a5a5a
+	csrrw x4, 260, x5
+	li x5, 0x00000020
+	bne x5, x4, csr_fail
+	li x5, 0xe4ca5ed3
+	csrrw x4, 260, x5
+	li x5, 0x00000202
+	bne x5, x4, csr_fail
+	li x5, 0xa5a5a5a5
+	csrrs x4, 260, x5
+	li x5, 0x00000202
+	bne x5, x4, csr_fail
+	li x5, 0x5a5a5a5a
+	csrrs x4, 260, x5
+	li x5, 0x00000222
+	bne x5, x4, csr_fail
+	li x5, 0x66c2984c
+	csrrs x4, 260, x5
+	li x5, 0x00000222
+	bne x5, x4, csr_fail
+	li x5, 0xa5a5a5a5
+	csrrc x4, 260, x5
+	li x5, 0x00000222
+	bne x5, x4, csr_fail
+	li x5, 0x5a5a5a5a
+	csrrc x4, 260, x5
+	li x5, 0x00000202
+	bne x5, x4, csr_fail
+	li x5, 0x9d619640
+	csrrc x4, 260, x5
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	csrrwi x4, 260, 0b00101
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	csrrwi x4, 260, 0b11010
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	csrrwi x4, 260, 0b00110
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	csrrsi x4, 260, 0b00101
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	csrrsi x4, 260, 0b11010
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	csrrsi x4, 260, 0b01100
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	csrrci x4, 260, 0b00101
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	csrrci x4, 260, 0b11010
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	csrrci x4, 260, 0b10001
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	csrr x4, 260
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+
+
 	# CSR_STVEC
 	li x7, 0xa5a5a5a5
 	csrrw x1, 261, x7
@@ -760,6 +899,108 @@ user_mode_code_start:
 
 ## USER Mode code starts here
 user_mode_code:
+
+	# CSR_SIE
+	li x5, 0xa5a5a5a5
+	csrrw x4, 260, x5
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	nop
+	nop
+	li x5, 0x5a5a5a5a
+	csrrw x4, 260, x5
+	li x5, 0x00000020
+	bne x5, x4, csr_fail
+	nop
+	li x5, 0xe4ca5ed3
+	csrrw x4, 260, x5
+	li x5, 0x00000202
+	bne x5, x4, csr_fail
+	nop
+	li x5, 0xa5a5a5a5
+	csrrs x4, 260, x5
+	li x5, 0x00000202
+	bne x5, x4, csr_fail
+	nop
+	li x5, 0x5a5a5a5a
+	csrrs x4, 260, x5
+	li x5, 0x00000222
+	bne x5, x4, csr_fail
+	nop
+	li x5, 0x66c2984c
+	csrrs x4, 260, x5
+	li x5, 0x00000222
+	bne x5, x4, csr_fail
+	nop
+	nop
+	li x5, 0xa5a5a5a5
+	csrrc x4, 260, x5
+	li x5, 0x00000222
+	bne x5, x4, csr_fail
+	nop
+	li x5, 0x5a5a5a5a
+	csrrc x4, 260, x5
+	li x5, 0x00000202
+	bne x5, x4, csr_fail
+	nop
+	nop
+	li x5, 0x9d619640
+	csrrc x4, 260, x5
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	nop
+	nop
+	csrrwi x4, 260, 0b00101
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	nop
+	nop
+	csrrwi x4, 260, 0b11010
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	nop
+	nop
+	csrrwi x4, 260, 0b00110
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	nop
+	nop
+	csrrsi x4, 260, 0b00101
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	nop
+	nop
+	csrrsi x4, 260, 0b11010
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	nop
+	nop
+	csrrsi x4, 260, 0b01100
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	nop
+	nop
+	csrrci x4, 260, 0b00101
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	nop
+	nop
+	csrrci x4, 260, 0b11010
+	li x5, 0x00000002
+	bne x5, x4, csr_fail
+	nop
+	nop
+	csrrci x4, 260, 0b10001
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	nop
+	nop
+	csrr x4, 260
+	li x5, 0x00000000
+	bne x5, x4, csr_fail
+	nop
+
+
   	# CSR_STVEC
 	li x7, 0xa5a5a5a5
 	csrrw x1, 261, x7
@@ -1340,5 +1581,6 @@ csr_fail:
 	addi x1, x1, 1
 	sw x1, tohost, t5
 	self_loop_2: j self_loop_2
+
 RVMODEL_DATA_BEGIN
 RVMODEL_DATA_END 
