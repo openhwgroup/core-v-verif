@@ -56,7 +56,7 @@ class riscv_fp_in_x_regs_instr extends riscv_instr;
         !(instr_name inside {FMIN_S, FMAX_S, FMIN_D, FMAX_D, FCLASS_S, FCLASS_D,
                              FCVT_D_S, FCVT_D_W, FCVT_D_WU,
                              FSGNJ_S, FSGNJN_S, FSGNJX_S, FSGNJ_D, FSGNJN_D, FSGNJX_D})) begin
-      asm_str = {asm_str, ", ", rm.name()};
+      if (rm != DYN) asm_str = {asm_str, ", ", rm.name()};
     end
     if(comment != "")
       asm_str = {asm_str, " #",comment};

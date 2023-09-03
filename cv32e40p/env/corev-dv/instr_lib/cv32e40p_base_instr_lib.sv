@@ -21,6 +21,7 @@
  class cv32e40p_base_instr_stream extends riscv_rand_instr_stream;
 
   rand bit [31:0]           temp_imm; // variable used for immediate value randomization
+  cv32e40p_instr_gen_config cv32e40p_cfg;
 
   `uvm_object_utils(cv32e40p_base_instr_stream)
   int unsigned num_of_avail_regs;
@@ -30,6 +31,7 @@
   endfunction
 
   function void pre_randomize();
+    `DV_CHECK_FATAL($cast(cv32e40p_cfg, cfg), "Could not cast cfg into cv32e40p_cfg")
     super.pre_randomize();
   endfunction
 
@@ -199,6 +201,45 @@
       instr.extend_imm();
       instr.update_imm_str();
     end
+  endfunction
+
+  //Function: randomize_zfinx_gpr()
+  function void randomize_zfinx_gpr(riscv_fp_in_x_regs_instr instr, riscv_reg_t avail_reg_list[]);
+    instr.set_rand_mode();
+    `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
+      if ( (instr.format != (CI_FORMAT || CB_FORMAT || CJ_FORMAT || CR_FORMAT || CA_FORMAT || CL_FORMAT || CS_FORMAT || CSS_FORMAT || CIW_FORMAT)) ) {
+        if (avail_reg_list.size() > 0) {
+          if (has_rs1) {
+            rs1 inside {avail_reg_list};
+          }
+          if (has_rs2) {
+            rs2 inside {avail_reg_list};
+          }
+          if (has_rs3) {
+            rs3 inside {avail_reg_list};
+          }
+          if (has_rd) {
+            rd  inside {avail_reg_list};
+          }
+        }
+        foreach (reserved_rd[i]) {
+          if (has_rd) {
+            rd != reserved_rd[i];
+          }
+          if (format == CB_FORMAT) {
+            rs1 != reserved_rd[i];
+          }
+        }
+        foreach (cfg.reserved_regs[i]) {
+          if (has_rd) {
+            rd != cfg.reserved_regs[i];
+          }
+          if (format == CB_FORMAT) {
+            rs1 != cfg.reserved_regs[i];
+          }
+        }
+      }
+    )
   endfunction
 
 endclass // cv32e40p_base_instr_stream

@@ -45,6 +45,31 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
   // Config to specify number of rand_directed_instr_* passed in test plusargs
   int test_rand_directed_instr_stream_num = 1;
 
+  rand int num_zfinx_reserved_reg;
+
+  rand riscv_reg_t       zfinx_reserved_gpr[];
+
+  rand bit ss_dbg_high_iteration_cnt;
+
+  bit is_hwloop_test = 0;
+
+  rand bit xpulp_instr_in_debug_rom;
+
+  constraint ss_dbg_high_iteration_cnt_c {
+    ss_dbg_high_iteration_cnt dist {0 := 60, 1 := 40};
+  }
+
+  // Override single step constraint
+  constraint debug_single_step_c {
+    solve ss_dbg_high_iteration_cnt before single_step_iterations;
+    if (enable_debug_single_step & is_hwloop_test & ss_dbg_high_iteration_cnt) {
+      single_step_iterations inside {[1000 : 5000]};
+    }
+    else if (enable_debug_single_step) {
+      single_step_iterations inside {[10 : 50]};
+    }
+  }
+
   constraint dp_c {
     // Debug pointer may not be the return address, stack pointer, nor thread pointer
     if (!gen_debug_section) {
@@ -87,13 +112,46 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
     }
   }
 
+  constraint num_zfinx_reserved_reg_c {
+    num_zfinx_reserved_reg inside {[5:12]};
+  }
+
+  constraint zfinx_reserved_gpr_c {
+    solve num_zfinx_reserved_reg before zfinx_reserved_gpr;
+    solve dp before zfinx_reserved_gpr;
+    if (RV32ZFINX inside {riscv_instr_pkg::supported_isa}) {
+      zfinx_reserved_gpr.size() == num_zfinx_reserved_reg;
+      unique {zfinx_reserved_gpr};
+      foreach(zfinx_reserved_gpr[i]) {
+        !(zfinx_reserved_gpr[i] inside {ZERO, RA, SP, GP, TP});
+        (zfinx_reserved_gpr[i] != dp);
+      }
+
+    }
+  }
+
+  constraint xpulp_instr_in_debug_rom_c {
+    if($test$plusargs("include_xpulp_instr_in_debug_rom")) {
+      xpulp_instr_in_debug_rom dist {0 := 1, 1 := 2};
+    } else {
+      xpulp_instr_in_debug_rom == 0;
+    }
+  }
+
   `uvm_object_utils_begin(cv32e40p_instr_gen_config)
     `uvm_field_enum(mtvec_mode_t, mtvec_mode, UVM_DEFAULT)
     `uvm_field_int(knob_zero_fast_intr_handlers, UVM_DEFAULT)
     `uvm_field_enum(riscv_reg_t, dp, UVM_DEFAULT)
     `uvm_field_enum(riscv_reg_t, scratch_reg, UVM_DEFAULT)
     `uvm_field_int(enable_fast_interrupt_handler, UVM_DEFAULT)
-    `uvm_field_int(use_fast_intr_handler, UVM_DEFAULT)    
+    `uvm_field_int(use_fast_intr_handler, UVM_DEFAULT)
+    `uvm_field_int(insert_rand_directed_instr_stream, UVM_DEFAULT)
+    `uvm_field_int(test_rand_directed_instr_stream_num, UVM_DEFAULT)
+    `uvm_field_int(num_zfinx_reserved_reg, UVM_DEFAULT)
+    `uvm_field_array_enum(riscv_reg_t, zfinx_reserved_gpr, UVM_DEFAULT)
+    `uvm_field_int(ss_dbg_high_iteration_cnt, UVM_DEFAULT)
+    `uvm_field_int(is_hwloop_test, UVM_DEFAULT)
+    `uvm_field_int(xpulp_instr_in_debug_rom, UVM_DEFAULT)
   `uvm_object_utils_end
 
   function new(string name="");
@@ -102,6 +160,7 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
     get_bool_arg_value("+enable_fast_interrupt_handler=", enable_fast_interrupt_handler);
     get_bool_arg_value("+insert_rand_directed_instr_stream=", insert_rand_directed_instr_stream);
     get_int_arg_value("+test_rand_directed_instr_stream_num=", test_rand_directed_instr_stream_num);
+    get_bool_arg_value("+is_hwloop_test=", is_hwloop_test);
   endfunction : new
 
   function void post_randomize();
@@ -120,7 +179,8 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
                    $sformatf("Illegal combination of debug plusargs: enable_ebreak_in_debug_rom = %0d, set_dcsr_ebreakl = %0d, enable_debug_single_step = %0d",
                              enable_ebreak_in_debug_rom, set_dcsr_ebreak, enable_debug_single_step))
       end
-    end    
+    end
+
   endfunction : post_randomize
 
 endclass : cv32e40p_instr_gen_config

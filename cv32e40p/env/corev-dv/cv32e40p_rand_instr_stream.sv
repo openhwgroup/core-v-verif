@@ -26,9 +26,16 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
   protected int         idx_start[$];            
   protected int         idx_end[$];            
   protected int         idx_min = 0;            
+  cv32e40p_instr_gen_config cv32e40p_cfg;
 
   `uvm_object_utils(cv32e40p_rand_instr_stream)
-  `uvm_object_new
+  //`uvm_object_new
+  function new(string name = "");
+    super.new(name);
+    if(!uvm_config_db#(cv32e40p_instr_gen_config)::get(null,get_full_name(),"cv32e40p_instr_cfg", cv32e40p_cfg)) begin
+      `uvm_fatal(get_full_name(), "Cannot get cv32e40p_instr_gen_config")
+    end
+  endfunction : new
 
   virtual function void insert_instr_stream(riscv_instr new_instr[], int idx = -1, bit replace = 1'b0);
 
@@ -148,12 +155,16 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
                                   bit is_debug_program = 1'b0);
     setup_allowed_instr(no_branch, no_load_store);
 
-    //Use this plusarg - add_xpulp_instr_in_debug_rom to include xpulp instr
-    //in random debug_rom instructions. Added for v2 debug tests with xpulp.
-    if ($test$plusargs("add_xpulp_instr_in_debug_rom") && is_debug_program) begin
-        foreach(instr_list[i])
-          randomize_debug_rom_instr(.instr(instr_list[i]), .is_in_debug(is_debug_program), .disable_dist(), .include_group({RV32X}));
-          `uvm_info("cv32e40p_rand_instr_stream", $sformatf("add_xpulp_instr_in_debug_rom set- Including xpulp instr in debug_rom"), UVM_DEBUG);
+    //Use this plusarg - include_xpulp_instr_in_debug_rom to include xpulp instr
+    //In random debug_rom instructions. Added for v2 debug tests with xpulp.
+    if (cv32e40p_cfg.xpulp_instr_in_debug_rom && is_debug_program) begin
+        foreach(instr_list[i]) begin
+          randcase
+            1: randomize_debug_rom_instr(.instr(instr_list[i]), .is_in_debug(is_debug_program), .disable_dist());
+            2: randomize_instr(instr_list[i], is_debug_program);
+          endcase
+          `uvm_info("cv32e40p_rand_instr_stream", $sformatf("add_xpulp_instr_in_debug_rom set- Including xpulp instr in debug_rom"), UVM_LOW)
+        end
     end
     else begin
         foreach(instr_list[i])
@@ -183,9 +194,9 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
     // Post-process the allowed_instr and exclude_instr lists to handle
     // adding ebreak instructions to the debug rom.
     if (is_in_debug) begin
-      if (cfg.no_ebreak && cfg.enable_ebreak_in_debug_rom) begin
+      if (cfg.enable_ebreak_in_debug_rom) begin
         allowed_instr = {allowed_instr, EBREAK, C_EBREAK};
-      end else if (!cfg.no_ebreak && !cfg.enable_ebreak_in_debug_rom) begin
+      end else begin
         exclude_instr = {exclude_instr, EBREAK, C_EBREAK};
       end
     end

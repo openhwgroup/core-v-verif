@@ -40,8 +40,13 @@ USES_DPI = 1
 # Default flags
 VSIM_COV_ONLY_PASS_TEST ?= YES
 VSIM_LOCAL_MODELSIMINI  ?= YES
+VOPT_CODE_COV_DUT_ONLY  ?= YES
 VSIM_USER_FLAGS         ?=
+ifeq ($(call IS_YES,$(VOPT_CODE_COV_DUT_ONLY)),YES)
+VOPT_COV                ?= +cover=bcsetf+$(RTLSRC_VLOG_CORE_TOP).
+else
 VOPT_COV                ?= +cover=setf+$(RTLSRC_VLOG_TB_TOP).
+endif
 VSIM_COV                ?= -coverage
 VOPT_WAVES_ADV_DEBUG    ?= -designfile design.bin
 VSIM_WAVES_ADV_DEBUG    ?= -qwavedb=+signal+assertion+ignoretxntime+msgmode=both
