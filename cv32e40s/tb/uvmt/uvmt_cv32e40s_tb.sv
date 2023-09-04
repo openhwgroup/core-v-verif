@@ -1436,10 +1436,8 @@ module uvmt_cv32e40s_tb;
         .lrfodi_bus_req (core_i.load_store_unit_i.buffer_trans_valid),
         .lrfodi_bus_gnt (core_i.load_store_unit_i.buffer_trans_ready),
 
-        .req_is_store (core_i.m_c_obi_data_if.req_payload.we),
         .req_instr_integrity (core_i.m_c_obi_instr_if.req_payload.integrity),
-        .req_data_integrity (core_i.m_c_obi_data_if.req_payload.integrity),
-        .instr_req_pc ({core_i.m_c_obi_instr_if.req_payload.addr[31:2], 2'b0})
+        .req_data_integrity (core_i.m_c_obi_data_if.req_payload.integrity)
     );
 
     bind cv32e40s_wrapper
@@ -1637,7 +1635,9 @@ module uvmt_cv32e40s_tb;
 
     bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi (rvfi_instr_if),
                                                                       .in_support_if (support_logic_module_i_if.driver_mp),
-                                                                      .out_support_if (support_logic_module_o_if.master_mp)
+                                                                      .out_support_if (support_logic_module_o_if.master_mp),
+                                                                      .data_obi_if (dut_wrap.obi_data_if),
+                                                                      .instr_obi_if (dut_wrap.obi_instr_if)
                                                                       );
 
 
