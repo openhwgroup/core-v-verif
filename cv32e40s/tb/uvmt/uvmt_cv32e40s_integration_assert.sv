@@ -21,9 +21,15 @@
 
 module uvmt_cv32e40s_integration_assert
   import uvm_pkg::*;
+  import uvma_rvfi_pkg::*;
+  import cv32e40s_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
+  import isa_decoder_pkg::*;
 (
   input clk_i,
   input rst_ni,
+
+  uvma_rvfi_instr_if_t rvfi_if,
 
   input fetch_enable_i,
 
@@ -102,6 +108,27 @@ module uvmt_cv32e40s_integration_assert
   a_no_scan_cg: assert property (
     !scan_cg_en_i
   ) else `uvm_error(info_tag, "scan test should be disabled in normal operation");
+
+  //if m_ext = M_NONE, all mul and div instructions should trap
+  if (CORE_PARAM_M_EXT == cv32e40s_pkg::M_NONE) begin: gen_m_none_assert
+    a_m_none_mul_trap: assert property(
+      rvfi_if.rvfi_valid &&
+      rvfi_if.instr_asm.instr inside{CLMUL, CLMULH, CLMULR, MUL, MULH, MULHSU, MULHU, C_MUL}
+      |->
+      rvfi_if.rvfi_trap.trap
+    ) else `uvm_error(info_tag, "Multiply instruction is not illegal when M_EXT = M_NONE");
+
+    a_m_none_div_trap: assert property(
+      rvfi_if.rvfi_valid &&
+      rvfi_if.instr_asm.instr inside{DIV, DIVU}
+      |->
+      rvfi_if.rvfi_trap.trap
+    ) else `uvm_error(info_tag, "Divide instruction is not illegal when M_EXT = M_NONE");
+
+
+  end: gen_m_none_assert
+
+
 
 
 endmodule : uvmt_cv32e40s_integration_assert

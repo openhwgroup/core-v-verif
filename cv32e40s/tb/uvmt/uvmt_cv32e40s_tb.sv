@@ -776,7 +776,10 @@ module uvmt_cv32e40s_tb;
   // Core integration assertions
 
   bind cv32e40s_wrapper
-    uvmt_cv32e40s_integration_assert  integration_assert_i (.*);
+    uvmt_cv32e40s_integration_assert  integration_assert_i (
+      .rvfi_if (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
+      .*
+    );
 
 
   bind cv32e40s_wrapper
