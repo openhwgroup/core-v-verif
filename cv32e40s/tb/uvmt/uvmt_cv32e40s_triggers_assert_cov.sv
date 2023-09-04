@@ -647,7 +647,7 @@ module uvmt_cv32e40s_triggers_assert_cov
     //2) Try changing "tdata1.dmode" and check that it is WARL (0x1)
 
 
-    //1) //a_dt_access_csr_not_dbg_mode --> changed to the two following assertions: a_dt_not_access_tdata1_dbg_mode, a_dt_not_access_tdata2_dbg_mode
+    //1)
     a_dt_not_access_tdata1_dbg_mode: assert property (
       !rvfi_if.rvfi_dbg_mode
       && rvfi_if.is_csr_instr(ADDR_TDATA1)
