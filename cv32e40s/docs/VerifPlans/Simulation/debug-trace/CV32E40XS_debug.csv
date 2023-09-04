@@ -120,7 +120,7 @@ Core starts executing debug code",Self Checking Test,Directed Self-Checking,Test
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_match
 A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause
 A:  uvmt_cv32_tb.u_debug_assert.a_dpc_dbg_trigger
-A:  uvmt_cv32_tb.u_debug_assert.a_enter_debug",?,?,?
+A:  uvmt_cv32_tb.u_debug_assert.a_enter_debug A:a_dt_instr_trigger_hit_*",?,?,?
 "CV32E40P doc rev 46711ac
 
 RISCV-V External Debug Support Version 0.13.2","Debug chapter 
@@ -138,52 +138,52 @@ A:   uvmt_cv32_tb.u_debug_assert.a_trigger_match_disabled
 40S User Manual 0.8.0,Debug & Trigger,Trigger module,Number of triggers,"The number of triggers is determined by DBG_NUM_TRIGGERS.
 When num triggers is 0, accessing the trigger registers causes illegal instruction exception.
 Triggers never fire.
-""tselect"" is 0.","Have 0 triggers, access any trigger register and check that illegal instruction exception occurs. Check that no triggers ever fire. Check that ""tselect"" is 0.",Self Checking Test,Directed Self-Checking,Testcase,"A:a_dt_0_triggers_tdata1_access, a_dt_0_triggers_no_triggering",?,?,"""[40x? Also below.]"""
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?
+""tselect"" is 0.","Have 0 triggers, access any trigger register and check that illegal instruction exception occurs. Check that no triggers ever fire. Check that ""tselect"" is 0.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,"""[40x? Also below.]"""
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A:a_dt_0_triggers_tdata1_access, a_dt_0_triggers_no_triggering",?,?,?
 ,,,,"The number of triggers is determined by DBG_NUM_TRIGGERS.
 DBG_NUM_TRIGGERS can be any value within 0-4.
 ""tselect"" is WARL (0x0 - (DBG_NUM_TRIGGERS-1)).
 All selectable triggers are functional.
-All trigger registers are accessible except for ""mcontext"", ""mscontext"", ""hcontext"", and ""scontext"" (those four trap upon access).","For all number of triggers, use tselect to exercise each trigger with each supported type. (Also try writing to higher ""tselect"" than supported and check that a supported number is read back.) Make the triggers fire and check that debug mode is entered. Check also that the four context registers trap when accessed.",Self Checking Test,Directed Self-Checking,Testcase,"A: a_dt_access_context, a_dt_tselect_higher_than_dbg_num_triggers, a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*, a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason. COV: c_trigger_i_has_type_mcontrol, c_trigger_i_has_type_etrigger, c_trigger_i_has_type_mcontrol6, c_trigger_i_has_type_disable","There are a lot of things to check in a single point here. Nothing is wrong with this point as I see it, so there is no need to change, but ideally this point should be split up.",?,?
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?
-User Manual v0.9.0.,Control and Status Registers,Trigger module,tcontrol,"""tcontrol"" doesn't exist.","Check that attempts to access ""tcontrol"" raise an illegal instruction exception, always. (Unless overruled by a higher priority.)",Self Checking Test,Directed Self-Checking,Testcase,A: a_dt_tcontrol_not_implemented,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,,,
+All trigger registers are accessible except for ""mcontext"", ""mscontext"", ""hcontext"", and ""scontext"" (those four trap upon access).","For all number of triggers, use tselect to exercise each trigger with each supported type. (Also try writing to higher ""tselect"" than supported and check that a supported number is read back.) Make the triggers fire and check that debug mode is entered. Check also that the four context registers trap when accessed.",Self Checking Test,Directed Self-Checking,Testcase,,"There are a lot of things to check in a single point here. Nothing is wrong with this point as I see it, so there is no need to change, but ideally this point should be split up.",?,?
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A: a_dt_access_context, a_dt_tselect_higher_than_dbg_num_triggers, a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*, a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason. COV: c_trigger_i_has_type_mcontrol, c_trigger_i_has_type_etrigger, c_trigger_i_has_type_mcontrol6, c_trigger_i_has_type_disable",?,?,?
+User Manual v0.9.0.,Control and Status Registers,Trigger module,tcontrol,"""tcontrol"" doesn't exist.","Check that attempts to access ""tcontrol"" raise an illegal instruction exception, always. (Unless overruled by a higher priority.)",Self Checking Test,Directed Self-Checking,Testcase,,,,
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,A: a_dt_tcontrol_not_implemented,,,
 ,,,"""mcontrol6"" compare values","
 Instr execute matching uses only one ""compare value"" (the PC itself).
-Load/Store matching uses compare values depending on the size of the access {A, A+1, etc}.","Exercise address match triggers for instr/load/store with different sizes (16/32 for instr, 8/16/32 for loadstore). Check that instr match only happens on the exact address. Check that loadstore addr matching triggers on any byte.",Self Checking Test,Directed Self-Checking,Testcase,"A: a_dt_enter_dbg_reason, a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*",?,?,?
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?
+Load/Store matching uses compare values depending on the size of the access {A, A+1, etc}.","Exercise address match triggers for instr/load/store with different sizes (16/32 for instr, 8/16/32 for loadstore). Check that instr match only happens on the exact address. Check that loadstore addr matching triggers on any byte.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A: a_dt_enter_dbg_reason, a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*",?,?,?
 "User Manual v0.9.0.
 
 Debug 1.0-STABLE fb7025",,,Mcontrol6Hit,"When a trigger fires, it's ""mcontrol6.hit"" field gets set to 1.
 (This is also true when multiple triggers fire at once.)","Induce firing of a trigger.
 Check that the corresponding ""hit"" field gets set.
 Do the same for variations of multiple triggers firing at once.
-Check that the field is WARL 0x0, 0x1.",Self Checking Test,Directed Self-Checking,Testcase,"A: a_dt_m6_hit_bit
+Check that the field is WARL 0x0, 0x1.",Self Checking Test,Directed Self-Checking,Testcase,,,,
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A: a_dt_m6_hit_bit
 a_dt_warl_tdata1_m6",,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,,,
-,,,Mcontrol6Match,"Supported match conditions in ""mcontrol6.match"" are {0 (eq), 2 (geq), 3 (less)}.","Configure triggers using all three match conditions, exercise them within and outside of the conditions, check that debug mode is/isn't entered. Must also cross against the ""match types"" item above.",Self Checking Test,Directed Self-Checking,Testcase,"A: a_dt_enter_dbg_reason, a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*",?,?,?
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?
+,,,Mcontrol6Match,"Supported match conditions in ""mcontrol6.match"" are {0 (eq), 2 (geq), 3 (less)}.","Configure triggers using all three match conditions, exercise them within and outside of the conditions, check that debug mode is/isn't entered. Must also cross against the ""match types"" item above.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A: a_dt_enter_dbg_reason, a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*",?,?,?
 ,,,Mcontrol6UM,"Triggers can be en/disabled in M-mode, ""mcontrol6.m"", default is 0.
 40S, triggers can be en/disabled in U-mode, ""mcontrol6.u"", default is 0.
 40X, triggers cannot be enabled in U-mode, ""mcontrol6.u"", WARL (0x0).
-The trigger action is always to enter D-mode, so ""mcontrol6.action"" is always 1.","Have triggers configured to be able to match, but enable/disable their corresponding mode bit, check that the trigger is either able to fire or is blocked from firing accordingly. Also check the tied values.",Self Checking Test,Directed Self-Checking,Testcase,"A: a_dt_enter_dbg_*, a_dt_tie_offs_*",?,?,?
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?
+The trigger action is always to enter D-mode, so ""mcontrol6.action"" is always 1.","Have triggers configured to be able to match, but enable/disable their corresponding mode bit, check that the trigger is either able to fire or is blocked from firing accordingly. Also check the tied values.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A:a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*, a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason, a_dt_tie_offs_*",?,?,?
 ,,,Mcontrol6LoadStoreExecute,"The ""load"" and ""store"" bits are supported (so load/store addr matching is supported).
 The ""execute"" bit is also supported.
 The only supported match types are ""address match"" for {instr execution, load, store}, all using ""before"" timing.
-Data matching is not supported (only addr matching), so ""mcontrol6.select"" is always 0.","Configure triggers for load/store/execute and combinations of them, configure tdata2, cause triggers to fire and check that debug mode is entered correctly.  All of these configurations must be crossed, also against match conditions.",Self Checking Test,Directed Self-Checking,Testcase,"A: a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*. ",?,"""tdata3"" and ""tcontrol"" should be removed.",?
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?
-User Manual v0.9.0.,,,trigger csrs,Some fields in the trigger csrs are hardwired.,Check that the tied fields are tied.,Self Checking Test,Directed Self-Checking,Testcase,"TODO csr access test? A: a_dt_tie_offs_tselect, a_dt_tie_offs_tdata1_mcontrol, a_dt_tie_offs_tdata1_etrigger, a_dt_tie_offs_tdata1_mcontrol6, a_dt_tie_offs_tdata1_disabled, a_dt_tie_offs_tdata2_etrigger. a_dt_tie_offs_tinfo.",,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,,,
+Data matching is not supported (only addr matching), so ""mcontrol6.select"" is always 0.","Configure triggers for load/store/execute and combinations of them, configure tdata2, cause triggers to fire and check that debug mode is entered correctly.  All of these configurations must be crossed, also against match conditions.",Self Checking Test,Directed Self-Checking,Testcase,,?,"""tdata3"" and ""tcontrol"" should be removed.",?
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A: a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*. ",?,?,?
+User Manual v0.9.0.,,,trigger csrs,Some fields in the trigger csrs are hardwired.,Check that the tied fields are tied.,Self Checking Test,Directed Self-Checking,Testcase,TODO csr access test? ,,,
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A: a_dt_tie_offs_tselect, a_dt_tie_offs_tdata1_mcontrol, a_dt_tie_offs_tdata1_etrigger, a_dt_tie_offs_tdata1_mcontrol6, a_dt_tie_offs_tdata1_disabled, a_dt_tie_offs_tdata2_etrigger. a_dt_tie_offs_tinfo.",,,
 ,,,"""mcontrol6"" atomics","40X, ""mcontrol6"" trigger behavior has specific descriptions for ""A"" extension.","40X, TODO this section must be filled out when the time comes for planning atomics verification.",,,,,?,?,?
 "40S User Manual
 
 Debug 1.0.0","Control and Status Registers
 
-Trigger Data 1",Trigger module,"""tdata1.type""","The only supported types are ""2 = address match legacy"", ""5 = Exception trigger"", ""6 = Address match"",  and ""15 = Disabled"".","Check that these types can be selected, and check that no other types can be selected. (Functionality of these types should be handled by other items in this plan.) Check also that the default is ""15"".",Self Checking Test,Directed Self-Checking,Testcase,A: a_dt_tdata1_types,?,?,"""[type 2]"""
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,"""[type 2]"""
-,,,"""tdata1.dmode""","This bit is WARL (0x1), so only D-mode can write tdata registers. And this bit is still WARL (0x1) regardless of ""type"" (2, 5, 6, 15).","Try to write tdata registers outside of debug mode, check that they are not writable. Try changing ""tdata1.dmode"" and check that it is WARL (0x1). Cross the above checks with all supported types.",Self Checking Test,Directed Self-Checking,Testcase,"A: a_dt_access_csr_not_dbg_mode, a_dt_dmode",?,?,?
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?
+Trigger Data 1",Trigger module,"""tdata1.type""","The only supported types are ""2 = address match legacy"", ""5 = Exception trigger"", ""6 = Address match"",  and ""15 = Disabled"".","Check that these types can be selected, and check that no other types can be selected. (Functionality of these types should be handled by other items in this plan.) Check also that the default is ""15"".",Self Checking Test,Directed Self-Checking,Testcase,,?,?,"""[type 2]"""
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,A: a_dt_tdata1_types,?,?,"""[type 2]"""
+,,,"""tdata1.dmode""","This bit is WARL (0x1), so only D-mode can write tdata registers. And this bit is still WARL (0x1) regardless of ""type"" (2, 5, 6, 15).","Try to write tdata registers outside of debug mode, check that they are not writable. Try changing ""tdata1.dmode"" and check that it is WARL (0x1). Cross the above checks with all supported types.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A: a_dt_not_access_tdata1_dbg_mode,  a_dt_not_access_tdata2_dbg_mode, a_dt_dmode",?,?,?
 "40S User Manual
 
 Debug 1.0.0","Control and Status Registers
@@ -193,21 +193,21 @@ Trigger Info",Trigger module,"""tinfo""","""tinfo.info"" holds the  supported ty
 and the register is otherwise WARL (0x0).","
 When num triggers is more than 0, check that ""tinfo.info"" is ""1"" for the three supported types,
 ""tinfo.version"" is 0x1,
-and that the remaining bits are 0.",Self Checking Test,Directed Self-Checking,Testcase,A: a_dt_triggers_tinfo,?,?,"""[type 2]"""
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,"""[type 2]"""
+and that the remaining bits are 0.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,"""[type 2]"""
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,A: a_dt_triggers_tinfo,?,?,"""[type 2]"""
 "40S User Manual
 
 Debug 1.0.0","Control and Status Registers
 
-Exception Trigger",Trigger module,"""etrigger""","A trigger (""tdata1"") can be configured as an exception trigger (""etrigger""). Where ""tdata2"" configures the exceptions to fire upon.","Configure ""tdata1"" and ""tdata2"" to fire on exceptions, try both individual and multiple exceptions in addition to supported and unsupported. Exercise scenarios that would trigger or not trigger according to the configuration and check that debug mode is either entered or not entered accordingly, and that the entry goes correctly (pc, dpc, cause, etc).",Self Checking Test,Directed Self-Checking,Testcase,"A: a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason",?,?,?
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?
+Exception Trigger",Trigger module,"""etrigger""","A trigger (""tdata1"") can be configured as an exception trigger (""etrigger""). Where ""tdata2"" configures the exceptions to fire upon.","Configure ""tdata1"" and ""tdata2"" to fire on exceptions, try both individual and multiple exceptions in addition to supported and unsupported. Exercise scenarios that would trigger or not trigger according to the configuration and check that debug mode is either entered or not entered accordingly, and that the entry goes correctly (pc, dpc, cause, etc).",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A: a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason, a_glitch_dt_exception_trigger_hit_*",?,?,?
 ,,,,"The bits {""hit"", ""vs"", ""vu"", ""s""} are not supported (WARL 0).
 ""nmi"" does not exist (mentioned because it briefly did).
 ""m"" is fully supported.
 40S, ""u"" is fully supported.
 40X, ""u"" is not supported (WARL0).
-The triggers always enter D-mode, so ""etrigger.action"" is WARL 1.","Configure an exception trigger, use the privmode bits to disable/enable the trigger, exercise the trigger conditions, check that it fires/not accordingly. Also check the WARL fields.",Self Checking Test,Directed Self-Checking,Testcase,"A: a_dt_exception_trigger_hit*, a_dt_warl_tselect, a_dt_warl_tdata1_general, a_dt_warl_tdata1_m2, a_dt_warl_tdata1_etrigger, a_dt_warl_tdata1_m6, a_dt_warl_tdata1_disabled, a_dt_warl_tdata2_etrigger, a_dt_warl_tinfo. ",?,"""tdata3"" and ""tcontrol"" should be removed.",?
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?
+The triggers always enter D-mode, so ""etrigger.action"" is WARL 1.","Configure an exception trigger, use the privmode bits to disable/enable the trigger, exercise the trigger conditions, check that it fires/not accordingly. Also check the WARL fields.",Self Checking Test,Directed Self-Checking,Testcase,,?,"""tdata3"" and ""tcontrol"" should be removed.",?
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A: a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason, a_dt_warl_tselect, a_dt_warl_tdata1_general, a_dt_warl_tdata1_m2, a_dt_warl_tdata1_etrigger, a_dt_warl_tdata1_m6, a_dt_warl_tdata1_disabled, a_dt_warl_tdata2_etrigger, a_dt_warl_tinfo. ",?,?,?
 40s User Manual 0.8.0,Debug Chapter,debug_pc_o,,"Signal ""debug_pc_o"" is the PC of the last retired instruction The signal is only valid when ""debug_pc_valid_o"" is equal to 1",Verify that the signal can be matched with related rvfi signals,Assertion Check,Assertion Check,Assertion Coverage,"A:   uvmt_cv32_tb.u_debug_assert.a_debug_pc_o
 A:   uvmt_cv32_tb.u_debug_assert.a_debug_pc_o_inv",,,
 40S User Manual 0.8.0,Debug chapter,Debug exception addr,,"If an exception occurs during debug mode, the PC should be set to the dm_exception_addr_i input without changing the status registers","Bring core into debug mode, generate all exception types and observe that the PC jumps to the address given by dm_exception_addr_i. Observe no change in status registers
@@ -228,7 +228,8 @@ Debug 1.0.0,Debug Control and Status,"""dcsr"" writability",,"All fields of ""dc
 
 Access registers from D-mode and observe full R/W access.
 
-Access from U-mode and observe no access at all.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test"". A: a_dt_no_write_access_to_tdata_in_mmode,
+Access from U-mode and observe no access at all.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test"".",Should we also check r/w in U-mode?,"""tdata3"" should be removed.",?
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_regs.  A: a_dt_no_write_access_to_tdata_in_mmode,
 a_dt_read_access_to_tdata1_in_mmode,
 a_dt_read_access_to_tdata2_in_mmode,
 a_dt_write_access_to_tdata1_in_dmode,
@@ -238,29 +239,27 @@ a_dt_read_access_to_tdata2_in_dmode,
 a_dt_no_access_to_tdata_in_umode.
 COV: c_dt_write_tdata1_in_mmode,
 c_dt_write_tdata2_in_mmode.
-",Should we also check r/w in U-mode?,"""tdata3"" should be removed.",?
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_regs
+
 ",?,?,?
 Debug 1.0.0,Trigger Registers,Trigger module registers,"""tdata1"", writing zero","""it is guaranteed that writing 0 to tdata1 disables the trigger, and leaves it in a state where tdata2 and tdata3 can be written with any value that makes sense for any trigger type supported by this trigger.""
 
-More generally, ""When a selected trigger is disabled [type 15], tdata2 and tdata3 can be written with any value supported by any of the types this trigger supports"".","Write 0 to ""tdata1"", ensure that its state becomes disabled (type 15). Write values to ""tdata2"" (addresses and/or exception causes) and exercise would-have-been triggers and check that the trigger does not fire.",Self Checking Test,Directed Self-Checking,Testcase,"A: a_dt_write_0_to_tdata1,
-a_dt_enter_dbg_reason,
-a_dt_tdata1_disabled_no_dbg",?,?,?
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?
+More generally, ""When a selected trigger is disabled [type 15], tdata2 and tdata3 can be written with any value supported by any of the types this trigger supports"".","Write 0 to ""tdata1"", ensure that its state becomes disabled (type 15). Write values to ""tdata2"" (addresses and/or exception causes) and exercise would-have-been triggers and check that the trigger does not fire.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A: a_dt_write_0_to_tdata1,
+a_dt_enter_dbg_reason",?,?,?
 "Debug 1.0.0
-UserManual v0.9.0.",,,tdata2,"""tdata2"" should always be RW (any) for type 2/6/15.","Change the type to 2/6/15 and write any data to ""tdata2"", read it back and check that it always gets set.",Self Checking Test,Directed Self-Checking,Testcase,"A: a_dt_write_tdata2_random_in_dmode_type_2_6_15. COV: c_dt_w_csrrw_tdata2_m2_m6_disabled,
+UserManual v0.9.0.",,,tdata2,"""tdata2"" should always be RW (any) for type 2/6/15.","Change the type to 2/6/15 and write any data to ""tdata2"", read it back and check that it always gets set.",Self Checking Test,Directed Self-Checking,Testcase,,?,"""tdata3"" should be removed.",?
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A: a_dt_write_tdata2_random_in_dmode_type_2_6_15. COV: c_dt_w_csrrw_tdata2_m2_m6_disabled,
 c_dt_w_csrrs_tdata2_m2_m6_disabled,
 c_dt_w_csrrc_tdata2_m2_m6_disabled,
 c_dt_w_csrrwi_tdata2_m2_m6_disabled,
 c_dt_w_csrrsi_tdata2_m2_m6_disabled,
-c_dt_w_csrrci_tdata2_m2_m6_disabled",?,"""tdata3"" should be removed.",?
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,Type 2,?
+c_dt_w_csrrci_tdata2_m2_m6_disabled",?,Type 2,?
 User Manual v0.9.0.,,,tdata3,"""tdata3"" doesn't exist.","Check that attempts to access ""tdata3"" raise an illegal instruction exception, always. (Unless overruled by a higher priority.)
-Verify that tdata3 is illegal for all tdata2 types.",Self Checking Test,Directed Self-Checking,Testcase,"A: a_dt_tdata3_not_implemented. COV: c_dt_access_tdata3_m2, c_dt_access_tdata3_etrigger, c_dt_access_tdata3_m6, c_dt_access_tdata3_disabled.",,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,,,
-Debug 1.0.0,,,Other tdata registers,"Writing one ""tdata*"" register must not modify other ""tdata*"" registers, and must not modify other triggers than the currently selected.","Read the state of all triggers, write to tdata1/2 (using all types in tdata1), read back the state of all triggers and check that nothing got changes except the one ""tdata*"" register that was written.",Self Checking Test,Directed Self-Checking,Testcase,"A: a_dt_write_only_tdata1,
-a_dt_write_only_tdata2.",?,"""tdata3"" should be removed.",?
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?
+Verify that tdata3 is illegal for all tdata2 types.",Self Checking Test,Directed Self-Checking,Testcase,,,,
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A: a_dt_tdata3_not_implemented. COV: c_dt_access_tdata3_m2, c_dt_access_tdata3_etrigger, c_dt_access_tdata3_m6, c_dt_access_tdata3_disabled.",,,
+Debug 1.0.0,,,Other tdata registers,"Writing one ""tdata*"" register must not modify other ""tdata*"" registers, and must not modify other triggers than the currently selected.","Read the state of all triggers, write to tdata1/2 (using all types in tdata1), read back the state of all triggers and check that nothing got changes except the one ""tdata*"" register that was written.",Self Checking Test,Directed Self-Checking,Testcase,,?,"""tdata3"" should be removed.",?
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A: a_dt_write_only_tdata1,
+a_dt_write_only_tdata2.",?,?,?
 RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt2,Program Buffer,Interrupts,"While in debug mode and executing from the program buffer, all interrupts are masked.","Enable interrupts (setting mstatus.mie field and mie register).
 Bring core into debug mode and start executing from program buffer.
 Generate interrupts while in debug mode and ensure they are masked.",Self Checking Test,Directed Self-Checking,Testcase,,,,
@@ -268,9 +267,9 @@ Generate interrupts while in debug mode and ensure they are masked.",Self Checki
 A:   uvmt_cv32_tb.u_debug_assert.a_irq_in_debug",,,
 RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt3,Program Buffer,Exceptions,"While in debug mode and executing from the program buffer, exceptions don’t update any registers but they DO end execution of PB (TBD: goes back to M-mode or restarts in debug(?)) [PZ] this is redundnant with dm_exception_addr_i (on line 10 & 11)","Bring core into debug mode and start executing from program buffer. Make sure PB includes code that will hit an exception. Make sure core doesn’t update any registers, and jumps out of debug mode into M-mode",Self Checking Test,,,N/A,,,
 ,,,,,,Check against ISS,,,N/A,,,
-RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt4,Program Buffer,Triggers,"While in debug mode and executing from the program buffer, no action is taken on any trigger match.","Bring core into debug and enable a trigger on the PC (pointing to the debug program buffer). Continue execution in debug, and observe that no action is taken when the trigger matches.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test"". A:a_dt_no_actions_on_trigger_matches_in_debug_dcsr
+RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt4,Program Buffer,Triggers,"While in debug mode and executing from the program buffer, no action is taken on any trigger match.","Bring core into debug and enable a trigger on the PC (pointing to the debug program buffer). Continue execution in debug, and observe that no action is taken when the trigger matches.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test"". ",,,
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_match_disabled (d_match_with_en) A:a_dt_no_actions_on_trigger_matches_in_debug_dcsr
 a_dt_no_actions_on_trigger_matches_in_debug_dpc",,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_match_disabled (d_match_with_en),,,
 Debug 1.0.0,dcsr,Counters,,"Spec:Counters may be stopped, depending on stopcount in dscr","""dcsr.stopcount"" is WARL and we must test the counter bevaior for both values of stopcount.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
 tc: test_stopcnt_bits",?,"Is wrong, need update.",?
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_counters_enabled
