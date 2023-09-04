@@ -120,7 +120,7 @@ module uvmt_cv32e40s_integration_assert
 
     a_m_none_div_trap: assert property(
       rvfi_if.rvfi_valid &&
-      rvfi_if.instr_asm.instr inside{DIV, DIVU}
+      rvfi_if.instr_asm.instr inside{DIV, DIVU, REM, REMU}
       |->
       rvfi_if.rvfi_trap.trap
     ) else `uvm_error(info_tag, "Divide instruction is not illegal when M_EXT = M_NONE");
