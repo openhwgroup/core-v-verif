@@ -7,97 +7,81 @@ builds:
     cmd: make comp comp_corev-dv
     cfg: default
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_no_pulp:
     cmd: make comp comp_corev-dv
     cfg: no_pulp
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_pulp:
     cmd: make comp comp_corev-dv
     cfg: pulp
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_pulp_fpu:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_pulp_fpu_1cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu_1cyclat
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_pulp_fpu_2cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu_2cyclat
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_pulp_fpu_zfinx:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu_zfinx
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu_zfinx_1cyclat
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_pulp_cluster:
     cmd: make comp comp_corev-dv
     cfg: pulp_cluster
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_pulp_cluster_fpu:
     cmd: make comp comp_corev-dv
     cfg: pulp_cluster_fpu
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_pulp_cluster_fpu_1cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_cluster_fpu_1cyclat
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_pulp_cluster_fpu_2cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_cluster_fpu_2cyclat
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_pulp_cluster_fpu_zfinx:
     cmd: make comp comp_corev-dv
     cfg: pulp_cluster_fpu_zfinx
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_pulp_cluster_fpu_zfinx_1cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_cluster_fpu_zfinx_1cyclat
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
   uvmt_cv32e40p_pulp_cluster_fpu_zfinx_2cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_cluster_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
-    iss: 1
 
 tests:
   hello-world:
@@ -120,31 +104,29 @@ tests:
       - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_2cyclat
     description: UVM Hello World Test
     dir: cv32e40p/sim/uvmt
-    iss: 1
     cmd: make test COREV=YES TEST=hello-world
+    num: 1
 
   interrupt_test:
     build: uvmt_cv32e40p_pulp_fpu
     description: Interrupt directed on PULP+FPU HW
     dir: cv32e40p/sim/uvmt
-    iss: 1
     cmd: make test COREV=YES TEST=interrupt_test
+    num: 1
 
   debug_test:
     build: uvmt_cv32e40p_pulp_fpu
     dir: cv32e40p/sim/uvmt
-    iss: 1
     cmd: make test COREV=YES TEST=debug_test
+    num: 1
 
-  corev_rand_fp_instr_sanity_test_nonzfinx:
-    testname: corev_rand_fp_instr_sanity_test
+  corev_rand_fp_instr_sanity_test:
     builds:
       - uvmt_cv32e40p_pulp_fpu
       - uvmt_cv32e40p_pulp_fpu_1cyclat
       - uvmt_cv32e40p_pulp_fpu_2cyclat
     test_cfg: floating_pt_instr_en
     dir: cv32e40p/sim/uvmt
-    iss: 1
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
 
   corev_rand_fp_instr_sanity_test_zfinx:
@@ -153,13 +135,16 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-    test_cfg: floating_pt_zfinx_instr_en
     dir: cv32e40p/sim/uvmt
-    iss: 1
-    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000" 
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    test_cfg: floating_pt_zfinx_instr_en
 
   corev_rand_pulp_instr_test:
     build: uvmt_cv32e40p_pulp
     dir: cv32e40p/sim/uvmt
-    iss: 1
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_instr_test
+
+  corev_rand_pulp_hwloop_test:
+    build: uvmt_cv32e40p_pulp
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_hwloop_test

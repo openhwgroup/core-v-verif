@@ -286,8 +286,8 @@ endif
 # to filter out failing test from ucdb merging
 ifeq ($(call IS_YES,$(COV)),YES)
 ifeq ($(call IS_YES,$(VSIM_COV_ONLY_PASS_TEST)),YES)
-COV_TEST = cd $(RUN_DIR) && $(VSIM) -c -viewcov $(VSIM_TEST).ucdb -do "coverage clear; coverage attr -name TESTSTATUS -value 2; coverage save $(VSIM_TEST).ucdb; exit " ;
-# COV_TEST = mv $(RUN_DIR)/$(VSIM_TEST).ucdb $(RUN_DIR)/$(VSIM_TEST).ucdb_FAIL;
+COV_TEST = cd $(RUN_DIR) && $(VSIM) -c -viewcov $(TEST_RUN_NAME).ucdb -do "coverage clear; coverage attr -name TESTSTATUS -value 2; coverage save $(TEST_RUN_NAME).ucdb; exit " ;
+# COV_TEST = mv $(RUN_DIR)/$(TEST_RUN_NAME).ucdb $(RUN_DIR)/$(TEST_RUN_NAME).ucdb_FAIL;
 else
 COV_TEST = :;
 endif
