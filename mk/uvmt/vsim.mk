@@ -203,7 +203,7 @@ VSIM_COREVDV_SIM_PREREQ = comp_corev-dv
 endif
 
 # option to use local modelsim.ini file
-ifeq ($(call IS_NO,$(VSIM_LOCAL_MODELSIMINI)),YES)
+ifeq ($(call IS_YES,$(VSIM_LOCAL_MODELSIMINI)),YES)
 gen_corev-dv: VSIM_FLAGS += -modelsimini $(SIM_COREVDV_RESULTS)/modelsim.ini
 run: 					VSIM_FLAGS += -modelsimini modelsim.ini
 endif
@@ -214,8 +214,8 @@ ifeq ($(call IS_YES,$(COV)),YES)
 VOPT_FLAGS  += $(VOPT_COV)
 VSIM_FLAGS  += $(VSIM_COV)
 # VSIM_FLAGS  += -do 'set TEST ${VSIM_TEST}; set TEST_CONFIG $(CFG); set TEST_SEED $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
-ifneq ($(TEST_CFG_FILE),)
-VSIM_FLAGS  += -do 'setenv TEST_COV ${TEST}; setenv TEST_CONFIG_COV $(CFG); setenv TEST_CFG_FILE_COV _$(TEST_CFG_FILE); setenv TEST_SEED_COV $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
+ifneq ($(TEST_CFG_FILE_NAME),)
+VSIM_FLAGS  += -do 'setenv TEST_COV ${TEST}; setenv TEST_CONFIG_COV $(CFG); setenv TEST_CFG_FILE_COV _$(TEST_CFG_FILE_NAME); setenv TEST_SEED_COV $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
 else
 VSIM_FLAGS  += -do 'setenv TEST_COV ${TEST}; setenv TEST_CONFIG_COV $(CFG); setenv TEST_CFG_FILE_COV ""; setenv TEST_SEED_COV $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
 endif
