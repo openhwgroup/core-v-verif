@@ -130,10 +130,6 @@ def read_file(args, file):
             build.iss = args.iss
         if args.cfg:
             build.cfg = args.cfg
-        if args.force_test_cfg:
-            build.test_cfg = args.force_test_cfg
-        # if args.add_test_cfg:
-        #     build.test_cfg += "," + args.add_test_cfg
 
         regression.add_build(build)
 
@@ -160,9 +156,9 @@ def read_file(args, file):
 
         if args.force_test_cfg:
             test.test_cfg = args.force_test_cfg
-
-        # if args.add_test_cfg:
-        #     test.test_cfg += "," + args.add_test_cfg
+        if args.add_test_cfg:
+            arg_list = [test.test_cfg if hasattr(test, 'test_cfg') else "", args.add_test_cfg]
+            test.test_cfg = ",".join(a for a in arg_list if a)
 
         # Determine if a test is valid, skip for compliance tests
         # Since it is not possible to determine apriori if a compliance test is valid
