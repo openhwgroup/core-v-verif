@@ -676,6 +676,136 @@ covergroup cg_itype_load (
 
 endgroup : cg_itype_load
 
+covergroup cg_itype_load_lbu (
+    string name,
+    bit reg_crosses_enabled,
+    bit reg_hazards_enabled,
+    bit rs1_is_signed,
+    bit immi_is_signed,
+    bit rd_is_signed,
+    bit align_halfword,
+    bit align_word
+) with function sample (
+    uvma_isacov_instr_c instr
+);
+  option.per_instance = 1;
+  option.name = name;
+
+  cp_rs1: coverpoint instr.rs1;
+  cp_rd: coverpoint instr.rd;
+
+  cp_rd_rs1_hazard: coverpoint instr.rd {
+    ignore_bins IGN_RS1_HAZARD_OFF = {[0:$]} `WITH (!reg_hazards_enabled);
+    bins RD[] = {[0:31]} iff (instr.rd == instr.rs1);
+  }
+
+  cross_rd_rs1: cross cp_rd, cp_rs1 {
+    ignore_bins IGN_OFF = cross_rd_rs1 `WITH (!reg_crosses_enabled);
+  }
+
+  cp_rs1_value: coverpoint instr.rs1_value_type {
+    ignore_bins POS_OFF = {POSITIVE} `WITH (!rs1_is_signed);
+    ignore_bins NEG_OFF = {NEGATIVE} `WITH (!rs1_is_signed);
+    ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (rs1_is_signed);
+  }
+
+  cp_immi_value: coverpoint instr.immi_value_type {
+    ignore_bins POS_OFF = {POSITIVE} `WITH (!immi_is_signed);
+    ignore_bins NEG_OFF = {NEGATIVE} `WITH (!immi_is_signed);
+    ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (immi_is_signed);
+  }
+
+  cross_rs1_immi_value: cross cp_rs1_value, cp_immi_value;
+
+  cp_rd_value: coverpoint instr.rd_value_type {
+    ignore_bins POS_OFF = {POSITIVE} `WITH (!rd_is_signed);
+    ignore_bins NEG_OFF = {NEGATIVE} `WITH (!rd_is_signed);
+    ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (rd_is_signed);
+  }
+
+  `ISACOV_CP_BITWISE(cp_rs1_toggle,  instr.rs1_value, 1)
+  `ISACOV_CP_BITWISE_11_0(cp_imm1_toggle, instr.immi, 1)
+  `ISACOV_CP_BITWISE_LBU(cp_rd_toggle,   instr.rd_value,  1)
+
+  cp_align_halfword: coverpoint (instr.rvfi.mem_addr[0]) {
+    ignore_bins IGN_OFF = {[0:$]} `WITH (!align_halfword);
+    bins ALIGNED  = {0};
+    bins UNALIGNED = {1};
+  }
+
+  cp_align_word: coverpoint (instr.rvfi.mem_addr[1:0]) {
+    ignore_bins IGN_OFF = {[0:$]} `WITH (!align_word);
+    bins ALIGNED     = {0};
+    bins UNALIGNED[] = {[1:3]};
+  }
+
+endgroup : cg_itype_load_lbu
+
+covergroup cg_itype_load_lhu (
+    string name,
+    bit reg_crosses_enabled,
+    bit reg_hazards_enabled,
+    bit rs1_is_signed,
+    bit immi_is_signed,
+    bit rd_is_signed,
+    bit align_halfword,
+    bit align_word
+) with function sample (
+    uvma_isacov_instr_c instr
+);
+  option.per_instance = 1;
+  option.name = name;
+
+  cp_rs1: coverpoint instr.rs1;
+  cp_rd: coverpoint instr.rd;
+
+  cp_rd_rs1_hazard: coverpoint instr.rd {
+    ignore_bins IGN_RS1_HAZARD_OFF = {[0:$]} `WITH (!reg_hazards_enabled);
+    bins RD[] = {[0:31]} iff (instr.rd == instr.rs1);
+  }
+
+  cross_rd_rs1: cross cp_rd, cp_rs1 {
+    ignore_bins IGN_OFF = cross_rd_rs1 `WITH (!reg_crosses_enabled);
+  }
+
+  cp_rs1_value: coverpoint instr.rs1_value_type {
+    ignore_bins POS_OFF = {POSITIVE} `WITH (!rs1_is_signed);
+    ignore_bins NEG_OFF = {NEGATIVE} `WITH (!rs1_is_signed);
+    ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (rs1_is_signed);
+  }
+
+  cp_immi_value: coverpoint instr.immi_value_type {
+    ignore_bins POS_OFF = {POSITIVE} `WITH (!immi_is_signed);
+    ignore_bins NEG_OFF = {NEGATIVE} `WITH (!immi_is_signed);
+    ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (immi_is_signed);
+  }
+
+  cross_rs1_immi_value: cross cp_rs1_value, cp_immi_value;
+
+  cp_rd_value: coverpoint instr.rd_value_type {
+    ignore_bins POS_OFF = {POSITIVE} `WITH (!rd_is_signed);
+    ignore_bins NEG_OFF = {NEGATIVE} `WITH (!rd_is_signed);
+    ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (rd_is_signed);
+  }
+
+  `ISACOV_CP_BITWISE(cp_rs1_toggle,  instr.rs1_value, 1)
+  `ISACOV_CP_BITWISE_11_0(cp_imm1_toggle, instr.immi, 1)
+  `ISACOV_CP_BITWISE_LHU(cp_rd_toggle,   instr.rd_value,  1)
+
+  cp_align_halfword: coverpoint (instr.rvfi.mem_addr[0]) {
+    ignore_bins IGN_OFF = {[0:$]} `WITH (!align_halfword);
+    bins ALIGNED  = {0};
+    bins UNALIGNED = {1};
+  }
+
+  cp_align_word: coverpoint (instr.rvfi.mem_addr[1:0]) {
+    ignore_bins IGN_OFF = {[0:$]} `WITH (!align_word);
+    bins ALIGNED     = {0};
+    bins UNALIGNED[] = {[1:3]};
+  }
+
+endgroup : cg_itype_load_lhu
+
 covergroup cg_itype_slt (
     string name,
     bit reg_crosses_enabled,
@@ -1513,8 +1643,8 @@ class uvma_isacov_cov_model_c extends uvm_component;
   cg_itype_load rv32i_lb_cg;
   cg_itype_load rv32i_lh_cg;
   cg_itype_load rv32i_lw_cg;
-  cg_itype_load rv32i_lbu_cg;
-  cg_itype_load rv32i_lhu_cg;
+  cg_itype_load_lbu rv32i_lbu_cg;
+  cg_itype_load_lhu rv32i_lhu_cg;
   cg_itype      rv32i_addi_cg;
   cg_itype_slt rv32i_slti_cg;
   cg_itype_slt rv32i_sltiu_cg;
