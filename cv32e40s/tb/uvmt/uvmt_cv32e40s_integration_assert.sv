@@ -39,7 +39,9 @@ module uvmt_cv32e40s_integration_assert
   input [31:0] mtvec_addr_i,
 
   input alert_major_o,
-  input scan_cg_en_i
+  input scan_cg_en_i,
+
+  uvmt_cv32e40s_support_logic_module_o_if_t  support_if
 );
 
   default clocking @(posedge clk_i); endclocking
@@ -125,10 +127,38 @@ module uvmt_cv32e40s_integration_assert
       rvfi_if.rvfi_trap.trap
     ) else `uvm_error(info_tag, "Divide instruction is not illegal when M_EXT = M_NONE");
 
-
   end: gen_m_none_assert
 
 
+  // Maximum Outstanding OBI Transactions
+
+  a_maximum_outstanding_instr: assert property (
+    support_if.instr_bus_v_addr_ph_cnt  inside  {0, 1, 2}
+  ) else `uvm_error(info_tag, "More than 2 outstanding OBI transactions");
+
+  a_maximum_outstanding_data: assert property (
+    support_if.data_bus_v_addr_ph_cnt  inside  {0, 1, 2}
+  ) else `uvm_error(info_tag, "More than 2 outstanding OBI transactions");
+
+  covergroup cg_outstanding @(posedge clk_i);
+    option.per_instance = 1;
+
+    cp_instr: coverpoint support_if.instr_bus_v_addr_ph_cnt {
+      bins zero = {0};
+      bins one  = {1};
+      bins two  = {2};
+    }
+
+    cp_data: coverpoint support_if.data_bus_v_addr_ph_cnt {
+      bins zero = {0};
+      bins one  = {1};
+      bins two  = {2};
+    }
+
+    x_instr_data: cross cp_instr, cp_data;
+  endgroup
+
+  cg_outstanding  outstanding_cg = new;
 
 
 endmodule : uvmt_cv32e40s_integration_assert
