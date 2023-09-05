@@ -266,6 +266,23 @@ csr_test:
     - source cva6/regress/dv-riscv-csr-access-test.sh
     - python3 .gitlab-ci/scripts/report_simu.py cva6/sim/logfile.log
 
+mmu_sv32_test:
+  extends:
+    - .verif_test
+    - .template_job_short_ci
+  parallel:
+    matrix:
+      - DV_TARGET: [cv32a60x]
+  variables:
+    DV_SIMULATORS: "veri-testharness,spike"
+    DASHBOARD_JOB_TITLE: "mmu_sv32_test $DV_TARGET"
+    DASHBOARD_JOB_DESCRIPTION: "MMU SV32 regression suite"
+    DASHBOARD_SORT_INDEX: 0
+    DASHBOARD_JOB_CATEGORY: "Test suites"
+  script:
+    - source cva6/regress/dv-riscv-mmu-sv32-arch-test.sh
+    - python3 .gitlab-ci/scripts/report_simu.py cva6/sim/logfile.log
+
 pub_hwconfig:
   extends:
     - .verif_test
