@@ -256,11 +256,42 @@ CFGYAML2MAKE = $(CORE_V_VERIF)/bin/cfgyaml2make
 CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp riscof_sim_run
 ifneq ($(filter $(CFG_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
 ifneq ($(TEST_CFG_FILE),)
-TEST_CFG_FLAGS_MAKE := $(shell $(CFGYAML2MAKE) --yaml=$(TEST_CFG_FILE).yaml $(YAML2MAKE_DEBUG) --prefix=TEST_CFG_FILE --core=$(CV_CORE))
-ifeq ($(TEST_CFG_FLAGS_MAKE),)
-$(error ERROR Error finding or parsing configuration: $(TEST_CFG_FILE).yaml)
+TEST_CFG_FILE_PLUSARGS =
+SPACE_CHAR := $(subst ,, )
+COMMA_CHAR := ,
+PLUS_CHAR := +
+TEST_CFG_FILE_TEMP_NAME := $(patsubst  , ,$(TEST_CFG_FILE))
+ifneq (,$(findstring $(COMMA_CHAR),$(TEST_CFG_FILE_TEMP_NAME)))
+    TEST_CFG_FILE_LIST_TEMP := $(subst $(COMMA_CHAR), ,$(TEST_CFG_FILE_TEMP_NAME))
+else
+  ifneq (,$(findstring $(PLUS_CHAR),$(TEST_CFG_FILE_TEMP_NAME)))
+    TEST_CFG_FILE_LIST_TEMP := $(subst $(PLUS_CHAR), ,$(TEST_CFG_FILE_TEMP_NAME))
+  else
+    TEST_CFG_FILE_LIST_TEMP := $(TEST_CFG_FILE_TEMP_NAME)
+  endif
 endif
-include $(TEST_CFG_FLAGS_MAKE)
+
+TEST_CFG_FILE_LIST := $(sort $(TEST_CFG_FILE_LIST_TEMP))
+
+TEST_CFG_FILE_NAME = $(subst $(SPACE_CHAR),__,$(TEST_CFG_FILE_LIST))
+
+define GET_TEST_CONFIG_LIST =
+TEST_CFG_LIST_FLAGS_MAKE_$(1) := $$(shell $(CFGYAML2MAKE) --yaml=$(1).yaml $(YAML2MAKE_DEBUG) --prefix=TEST_CFG_FILE_LIST_$(1) --core=$(CV_CORE) --debug)
+ifeq ($$(TEST_CFG_LIST_FLAGS_MAKE_$(1)),)
+  $$(error ERROR Error finding or parsing configuration: $(1).yaml)
+endif
+include $$(TEST_CFG_LIST_FLAGS_MAKE_$(1))
+TEST_CFG_FILE_PLUSARGS += $$(TEST_CFG_FILE_LIST_$(2)_PLUSARGS)
+endef
+
+$(foreach TEST_CFG_FILE_IN_LIST,$(TEST_CFG_FILE_LIST), $(eval $(call GET_TEST_CONFIG_LIST,$(TEST_CFG_FILE_IN_LIST),$(shell echo $(TEST_CFG_FILE_IN_LIST) | tr  '[:lower:]' '[:upper:]'))))
+
+$(info $(BANNER))
+$(info [INFO] Using TEST_CFG_FILE_LIST $(TEST_CFG_FILE_LIST))
+$(info [INFO] TEST_CFG dir name $(TEST_CFG_FILE_NAME))
+$(info [INFO] TEST_CFG_FILE plusargs $(TEST_CFG_FILE_PLUSARGS))
+$(info $(BANNER))
+
 endif
 endif
 
