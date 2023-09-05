@@ -65,21 +65,21 @@ trap_epilogs:
 
 test_pass:
 
-    li x1, 0                                          # Write 0 in x1 if test pass
-    j exit                                            # Jump to exit
+    li x1, 0                                                                # Write 0 in x1 if test pass
+    j exit                                                                  # Jump to exit
 
 test_fail:
 
-    li x1, 1                                          # Write 1 in x1 if test failed
+    li x1, 1                                                                # Write 1 in x1 if test failed
 
-COREV_VERIF_EXIT_LOGIC                                # exit logic 
+COREV_VERIF_EXIT_LOGIC                                                      # exit logic 
 
 .data
 rvtest_check: 
 
-    .word 0xdeadbeef                                                    # 1 for cause expected 0  for no cause 
-    .word 0xbeefdead                                                    # write the value of mepc here (where  cause is expected)
-    .word 0xcafecafe                                                    # write the value of expect cause 
+    .word 0xdeadbeef                                                         # 1 for cause expected 0  for no cause 
+    .word 0xbeefdead                                                         # write the value of mepc here (where  cause is expected)
+    .word 0xcafecafe                                                         # write the value of expect cause 
 .align 12                                   
 rvtest_data:   
     .word 0xbeefcafe                                                 

@@ -61,13 +61,13 @@ _start:
     la t2, rvtest_check                                                 # loads the base address of rvtest_data label        
     srli t2, t2, PMP_SHIFT                                              # Right shift the address of rvtest_data label by PMP_Shift(2)
     ori t2, t2, NAPOT_RANGE_32B                                         # Selects the range of 32B    
-	csrw pmpaddr2, t2                                               # Region 4 for the pmp permission
+	csrw pmpaddr2, t2                                                   # Region 4 for the pmp permission
     sfence.vma
 
     la t2, rvtest_data                                                  # loads the base address of rvtest_data label        
     srli t2, t2, PMP_SHIFT                                              # Right shift the address of rvtest_data label by PMP_Shift(2)
     ori t2, t2, NAPOT_RANGE_32B                                         # Selects the range of 32B    
-	csrw pmpaddr3, t2                                               # Region 5 for the pmp permission
+	csrw pmpaddr3, t2                                                   # Region 5 for the pmp permission
     sfence.vma
 
     # Region 1, 2, 3, 4: NAPOT with RWX PMP Permissions

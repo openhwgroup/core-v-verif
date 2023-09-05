@@ -48,7 +48,7 @@ _start:
  
     la a1,rvtest_data                                                      # loads the address of label rvtest_data
     mv a0, a1                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_W | PTE_R )               # sets the permission bits -- No dirty bit
+    ori a2, x0, ( PTE_V | PTE_A | SET_PTE_U | PTE_W | PTE_R )              # sets the permission bits -- No dirty bit
     PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
 
     la a1,rvtest_check                                                     # loads the address of label rvtest_check

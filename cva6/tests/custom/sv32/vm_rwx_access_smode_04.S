@@ -59,7 +59,7 @@ _start:
 
     SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
     la a1,vm_en                                                             # loads the address of vm_en																												 
-    CHANGE_T0_S_MODE(a1)                                        	         # changes mode M to S and set the MEPC value to a1
+    CHANGE_T0_S_MODE(a1)                                        	        # changes mode M to S and set the MEPC value to a1
 
 # ----------------Virtualization Enabeled-------------------------------
 

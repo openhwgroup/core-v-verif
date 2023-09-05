@@ -27,33 +27,33 @@
 .option norvc
 
 _start:
-    ALL_MEM_PMP                                                            # PMP permission to all the mem
-    la t1,trap_handler                                                     # loads the address of trap handler 
-    csrw mtvec,t1                                                          # sets the mtvec to trap handler
+    ALL_MEM_PMP                                                             # PMP permission to all the mem
+    la t1,trap_handler                                                      # loads the address of trap handler 
+    csrw mtvec,t1                                                           # sets the mtvec to trap handler
     
 PTE_LEVEL1_SUPERVISOR:
 
 # ----------------LEVEL 1 PTE Setup for load and store test---------------------
 
-    la a1,pgtb_l0                                                          # loads the address of label pgtb_l0
-    mv a0, a1                                                              # VA = PA - Identity Map
-    ori a2, x0, ( PTE_V )                                                  # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
+    la a1,pgtb_l0                                                           # loads the address of label pgtb_l0
+    mv a0, a1                                                               # VA = PA - Identity Map
+    ori a2, x0, ( PTE_V )                                                   # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
 
-    la a1,vm_en                                                            # loads the address of label vm_en
-    mv a0, a1                                                              # VA = PA - Identity Map
-    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_V )                          # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
+    la a1,vm_en                                                             # loads the address of label vm_en
+    mv a0, a1                                                               # VA = PA - Identity Map
+    ori a2, x0, ( PTE_D | PTE_A | PTE_X | PTE_V )                           # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level0
   
-    la a1,rvtest_data                                                      # loads the address of label rvtest_data
-    mv a0, a1                                                              # VA = PA - Identity Map
-    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_W | PTE_R | PTE_V )          # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0   
+    la a1,rvtest_data                                                       # loads the address of label rvtest_data
+    mv a0, a1                                                               # VA = PA - Identity Map
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_W | PTE_R | PTE_V )           # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level0   
 
-    la a1,rvtest_check                                                     # loads the address of label rvtest_data
-    mv a0, a1                                                              # VA = PA - Identity Map                                         
-    ori a2, x0, ( PTE_D | PTE_A | PTE_W | PTE_R | PTE_V)                   # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                        # setup the PTE for level0
+    la a1,rvtest_check                                                      # loads the address of label rvtest_data
+    mv a0, a1                                                               # VA = PA - Identity Map                                         
+    ori a2, x0, ( PTE_D | PTE_A | PTE_W | PTE_R | PTE_V)                    # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l0, LEVEL0)                         # setup the PTE for level0
 
 # ----------------Set the SATP and change the mode---------------------
 

@@ -29,9 +29,9 @@
 
 _start:
 
-    ALL_MEM_PMP                                                            # PMP permission to all the memory
-    la t1,trap_handler                                                     # loads the address of trap handler 
-    csrw mtvec,t1                                                          # sets the mtvec to trap handler 
+    ALL_MEM_PMP                                                             # PMP permission to all the memory
+    la t1,trap_handler                                                      # loads the address of trap handler 
+    csrw mtvec,t1                                                           # sets the mtvec to trap handler 
     
 # --------LEVEL 1 PTE Setup for load and store and execute access-------
 

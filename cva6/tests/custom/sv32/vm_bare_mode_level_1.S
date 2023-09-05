@@ -30,9 +30,9 @@
 
 _start:
 
-    ALL_MEM_PMP                                                            # PMP permission to all the memory
-    la t1,trap_handler                                                     # loads the address of trap handler 
-    csrw mtvec,t1                                                          # sets the mtvec to trap handler 
+    ALL_MEM_PMP                                                             # PMP permission to all the memory
+    la t1,trap_handler                                                      # loads the address of trap handler 
+    csrw mtvec,t1                                                           # sets the mtvec to trap handler 
 
 # ----------------LEVEL 1 PTE Setup for load and store test------------
 
@@ -85,23 +85,23 @@ check_load:
     TEST_PROLOG(va,CAUSE_ILLEGAL_INSTRUCTION)                               # load the addr and expected cause 
 
 # -------------LEVEL 1 PTE Setup for execute test------------------------
-                                                                           # Setup a new PTE to test execute
-    la a1,check_access                                                     # loads the address of label vm_en
-    la a0, va                                                              # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_V )              # sets the permission bits
-    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                        # setup the PTE for level1
+                                                                            # Setup a new PTE to test execute
+    la a1,check_access                                                      # loads the address of label vm_en
+    la a0, va                                                               # set the VA to PA (identity mapping)
+    ori a2, x0, ( PTE_D | PTE_A | SET_PTE_U | PTE_X | PTE_V )               # sets the permission bits
+    PTE_SETUP_RV32(a1, a2, t1, a0, pgtb_l1, LEVEL1)                         # setup the PTE for level1
 
 # ----------------Set the SATP to Bare_Mode and change the mode---------------------
 
-    csrw satp, x0           	                                           # Write satp with all zeros (bare mode)
-    la a1 , va                                                             # loads the virual address of check_access
+    csrw satp, x0           	                                            # Write satp with all zeros (bare mode)
+    la a1 , va                                                              # loads the virual address of check_access
     #ifdef smode
-      CHANGE_T0_S_MODE(a1)                                                 # changes mode M to S and set the MEPC
+      CHANGE_T0_S_MODE(a1)                                                  # changes mode M to S and set the MEPC
     #else
-      CHANGE_T0_U_MODE(a1)                                                 # changes mode M to U and set the MEPC
+      CHANGE_T0_U_MODE(a1)                                                  # changes mode M to U and set the MEPC
     #endif
 
-check_access:                                                              # check access to PTE first with va then with physical address
+check_access:                                                               # check access to PTE first with va then with physical address
 
     li t1, 0x45                                                             
     TEST_STATUS                                                             # checks the status of the test

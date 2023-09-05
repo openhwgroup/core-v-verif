@@ -24,9 +24,9 @@
 .option norvc
 
 _start:
-    ALL_MEM_PMP                                                            # PMP permission to all the memory
-    la t1,trap_handler                                                     # loads the address of trap handler 
-    csrw mtvec,t1                                                          # sets the mtvec to trap handler 
+    ALL_MEM_PMP                                                             # PMP permission to all the memory
+    la t1,trap_handler                                                      # loads the address of trap handler 
+    csrw mtvec,t1                                                           # sets the mtvec to trap handler 
 
 # ----------------LEVEL1 PTE Setup to point to LEVEL0 PTE----------------
     la a1,pgtb_l0                                                           # loads the address of label pgtb_l0
@@ -37,7 +37,7 @@ _start:
 # ----------------LEVEL0 PTE Setup to point to LEVEL0 PTE----------------
     la a1,vm_en                                                             # loads the address of label vm_en
     mv a0, a1                                                               # set the VA to PA (identity mapping)
-    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_V )                    # sets the permission bits
+    ori a2, x0, ( PTE_D | PTE_A | PTE_U | PTE_X | PTE_V )                   # sets the permission bits
     PTE_SETUP_RV32 ( a1, a2, t1, a0, pgtb_l0, LEVEL0 )                      # setup the PTE for level1
  
     la a1,rvtest_data                                                       # loads the address of label rvtest_data
@@ -52,9 +52,9 @@ _start:
 
 # ----------------Set the SATP and change the mode-----------------------
 
-    SATP_SETUP_SV32(pgtb_l1)                                               # set the SATP for virtualization
-    la a1,vm_en                                                            # loads the address of vm_en																													 
-    CHANGE_T0_U_MODE(a1)                                        	       # changes mode M to U and set the MEPC value to a1
+    SATP_SETUP_SV32(pgtb_l1)                                                # set the SATP for virtualization
+    la a1,vm_en                                                             # loads the address of vm_en																													 
+    CHANGE_T0_U_MODE(a1)                                        	        # changes mode M to U and set the MEPC value to a1
 
 # ----------------Virtualization Enabeled-------------------------------
 
