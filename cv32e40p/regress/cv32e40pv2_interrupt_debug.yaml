@@ -32,12 +32,14 @@ tests:
     description: corev_rand_debug_ebreak
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
+    test_cfg: debug_ebreak
 
   corev_rand_debug_ebreak_xpulp:
     build: uvmt_cv32e40p
     description: corev_rand_debug_ebreak_xpulp
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak_xpulp
+    test_cfg: debug_ebreak
 
   corev_rand_debug_single_step:
     build: uvmt_cv32e40p
