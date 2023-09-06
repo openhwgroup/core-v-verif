@@ -144,9 +144,9 @@
                 </method>
 {% endif %}
                 <execScript launch="exec" usestderr="no">
-                    <command> echo " TEST RUNCMD: {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} COMP=0 CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR={{t.simulator}} USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) RNDSEED=(%t_seed%) {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}"</command>
+                    <command> echo " TEST RUNCMD: {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} COMP=0 CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR={{t.simulator}} USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=(%t_seed%) {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}"</command>
                     <command> echo "     logfile: (%log_file%)"</command>
-                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} CHECK_SIM_LOG=(%log_file%) COMP=0 CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR={{t.simulator}} USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) RNDSEED=(%t_seed%) {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
+                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} CHECK_SIM_LOG=(%log_file%) COMP=0 CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR={{t.simulator}} USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=(%t_seed%) {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
                 </execScript>
             </runnable>
 
