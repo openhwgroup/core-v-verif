@@ -389,6 +389,10 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    asm_t asm_wb;
    asm_t asm_rvfi;
 
+   //OBI packets:
+   obi_data_packet_t obi_data_packet;
+   obi_instr_packet_t obi_instr_packet;
+
    // Indicates that a new obi data req arrives after an exception is triggered.
    // Used to verify exception timing with multiop instruction
    logic req_after_exception;
@@ -429,12 +433,10 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    logic [31:0] cnt_rvfi_irqs;
 
    //Signals stating whether the request for the current response had the attribute value or not
-   obi_data_req_t data_obi_req_was;
-   obi_inst_req_t instr_obi_req_was;
-   logic instr_req_had_integrity;
-   logic data_req_had_integrity;
-   logic gntpar_error_in_response_instr;
-   logic gntpar_error_in_response_data;
+   logic              instr_req_had_integrity;
+   logic              data_req_had_integrity;
+   logic              gntpar_error_in_response_instr;
+   logic              gntpar_error_in_response_data;
 
    // indicates that the current rvfi_valid instruction is the first in a debug handler
    logic first_debug_ins;
@@ -482,8 +484,8 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
          cnt_irq_ack,
          cnt_rvfi_irqs,
 
-         data_obi_req_was,
-         instr_obi_req_was,
+         obi_data_packet,
+         obi_instr_packet,
          instr_req_had_integrity,
          data_req_had_integrity,
          gntpar_error_in_response_instr,
@@ -528,8 +530,8 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
          cnt_irq_ack,
          cnt_rvfi_irqs,
 
-         data_obi_req_was,
-         instr_obi_req_was,
+         obi_data_packet,
+         obi_instr_packet,
          instr_req_had_integrity,
          data_req_had_integrity,
          gntpar_error_in_response_instr,

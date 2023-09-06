@@ -38,11 +38,11 @@ module uvmt_cv32e40s_support_logic
   default clocking @(posedge in_support_if.clk); endclocking
   default disable iff (!in_support_if.rst_n);
 
-
   // ---------------------------------------------------------------------------
   // Local parameters
   // ---------------------------------------------------------------------------
 
+  localparam MAX_NUM_OUTSTANDING_OBI_REQUESTS = 2;
 
   // ---------------------------------------------------------------------------
   // Local variables
@@ -74,6 +74,7 @@ module uvmt_cv32e40s_support_logic
   assign data_obi_req.prot      = data_obi_if.prot;
   assign data_obi_req.dbg       = data_obi_if.dbg;
   assign data_obi_req.achk      = data_obi_if.achk;
+  assign data_obi_req.integrity = '0;
 
   obi_inst_req_t instr_obi_req;
   assign instr_obi_req.addr      = instr_obi_if.addr;
@@ -81,6 +82,7 @@ module uvmt_cv32e40s_support_logic
   assign instr_obi_req.prot      = instr_obi_if.prot;
   assign instr_obi_req.dbg       = instr_obi_if.dbg;
   assign instr_obi_req.achk      = instr_obi_if.achk;
+  assign instr_obi_req.integrity = '0;
 
   // ---------------------------------------------------------------------------
   // Support logic blocks
@@ -321,69 +323,85 @@ end
   //The submodule instances under will tell if the
   //the response's request had integrity
 
-  uvmt_cv32e40s_sl_req_attribute_fifo
+  uvmt_cv32e40s_sl_fifo
   #(
-    .FIFO_TYPE (logic)
+    .FIFO_TYPE_T (logic),
+    .FIFO_SIZE (MAX_NUM_OUTSTANDING_OBI_REQUESTS)
   ) instr_req_had_integrity_i
   (
     .clk_i (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
 
-    .gnt (in_support_if.instr_bus_gnt),
-    .req (in_support_if.instr_bus_req),
-    .rvalid (in_support_if.instr_bus_rvalid),
-    .req_attribute_i (in_support_if.req_instr_integrity),
+    .add_item   (in_support_if.instr_bus_gnt && in_support_if.instr_bus_req),
+    .shift_fifo (in_support_if.instr_bus_rvalid),
 
-    .is_req_attribute_in_response_o (out_support_if.instr_req_had_integrity)
+    .item_in    (in_support_if.req_instr_integrity),
+    .item_out   (out_support_if.instr_req_had_integrity)
   );
 
-  uvmt_cv32e40s_sl_req_attribute_fifo
+  uvmt_cv32e40s_sl_fifo
   #(
-    .FIFO_TYPE (logic)
+    .FIFO_TYPE_T (logic),
+    .FIFO_SIZE (MAX_NUM_OUTSTANDING_OBI_REQUESTS)
   ) data_req_had_integrity_i
   (
     .clk_i (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
 
-    .gnt (in_support_if.data_bus_gnt),
-    .req (in_support_if.data_bus_req),
-    .rvalid (in_support_if.data_bus_rvalid),
-    .req_attribute_i (in_support_if.req_data_integrity),
+    .add_item   (in_support_if.data_bus_gnt && in_support_if.data_bus_req),
+    .shift_fifo (in_support_if.data_bus_rvalid),
 
-    .is_req_attribute_in_response_o (out_support_if.data_req_had_integrity)
+    .item_in    (in_support_if.req_data_integrity),
+    .item_out   (out_support_if.data_req_had_integrity)
   );
 
-  uvmt_cv32e40s_sl_req_attribute_fifo
+  uvmt_cv32e40s_sl_fifo
   #(
-    .FIFO_TYPE (obi_data_req_t)
-  ) data_resp_i
+    .FIFO_TYPE_T (obi_data_req_t),
+    .FIFO_SIZE (MAX_NUM_OUTSTANDING_OBI_REQUESTS)
+  ) fifo_obi_data_req
   (
     .clk_i (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
 
-    .gnt (data_obi_if.gnt),
-    .req (data_obi_if.req),
-    .rvalid (data_obi_if.rvalid),
-    .req_attribute_i (data_obi_req),
+    .add_item   (data_obi_if.gnt && data_obi_if.req),
+    .shift_fifo (data_obi_if.rvalid),
 
-    .is_req_attribute_in_response_o (out_support_if.data_obi_req_was)
+    .item_in    (data_obi_req),
+    .item_out   (out_support_if.obi_data_packet.req)
   );
 
-  uvmt_cv32e40s_sl_req_attribute_fifo
+  assign out_support_if.obi_data_packet.resp.rdata         = data_obi_if.rdata;
+  assign out_support_if.obi_data_packet.resp.err           = data_obi_if.err;
+  assign out_support_if.obi_data_packet.resp.rchk          = data_obi_if.rchk;
+  assign out_support_if.obi_data_packet.resp.integrity_err = '0;
+  assign out_support_if.obi_data_packet.resp.integrity     = '0;
+  assign out_support_if.obi_data_packet.valid              = data_obi_if.rvalid;
+
+
+  uvmt_cv32e40s_sl_fifo
   #(
-    .FIFO_TYPE (obi_inst_req_t)
-  ) instr_resp_i
+    .FIFO_TYPE_T (obi_inst_req_t),
+    .FIFO_SIZE (MAX_NUM_OUTSTANDING_OBI_REQUESTS)
+  ) fifo_obi_instr_req
   (
     .clk_i (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
 
-    .gnt (instr_obi_if.gnt),
-    .req (instr_obi_if.req),
-    .rvalid (instr_obi_if.rvalid),
-    .req_attribute_i (instr_obi_req),
+    .add_item   (instr_obi_if.gnt && instr_obi_if.req),
+    .shift_fifo (instr_obi_if.rvalid),
 
-    .is_req_attribute_in_response_o (out_support_if.instr_obi_req_was)
+    .item_in    (instr_obi_req),
+    .item_out   (out_support_if.obi_instr_packet.req)
   );
+
+  assign out_support_if.obi_instr_packet.resp.rdata         = instr_obi_if.rdata;
+  assign out_support_if.obi_instr_packet.resp.err           = instr_obi_if.err;
+  assign out_support_if.obi_instr_packet.resp.rchk          = instr_obi_if.rchk;
+  assign out_support_if.obi_instr_packet.resp.integrity_err = '0;
+  assign out_support_if.obi_instr_packet.resp.integrity     = '0;
+  assign out_support_if.obi_instr_packet.valid              = instr_obi_if.rvalid;
+
 
   //The submodule instance under will tell if the
   //the response's request had a gntpar error
@@ -418,40 +436,40 @@ end
     end
   end
 
-  uvmt_cv32e40s_sl_req_attribute_fifo
+  uvmt_cv32e40s_sl_fifo
   #(
-    .FIFO_TYPE (logic)
+    .FIFO_TYPE_T (logic),
+    .FIFO_SIZE (MAX_NUM_OUTSTANDING_OBI_REQUESTS)
   ) sl_req_gntpar_error_in_resp_instr_i
   (
-    .clk_i (in_support_if.clk),
+    .clk_i  (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
 
-    .gnt (in_support_if.instr_bus_gnt),
-    .req (in_support_if.instr_bus_req),
-    .rvalid (in_support_if.instr_bus_rvalid),
-    .req_attribute_i (instr_gntpar_error),
+    .add_item   (in_support_if.instr_bus_gnt && in_support_if.instr_bus_req),
+    .shift_fifo (in_support_if.instr_bus_rvalid),
 
-    .is_req_attribute_in_response_o (out_support_if.gntpar_error_in_response_instr)
+    .item_in    (instr_gntpar_error),
+    .item_out   (out_support_if.gntpar_error_in_response_instr)
   );
 
   //The submodule instance under will tell if the
   //the response's request had a gntpar error
   //in the transfere of data on the OBI data bus.
 
-  uvmt_cv32e40s_sl_req_attribute_fifo
+  uvmt_cv32e40s_sl_fifo
   #(
-    .FIFO_TYPE (logic)
+    .FIFO_TYPE_T (logic),
+    .FIFO_SIZE (MAX_NUM_OUTSTANDING_OBI_REQUESTS)
   ) sl_req_gntpar_error_in_resp_data_i
   (
-    .clk_i (in_support_if.clk),
+    .clk_i  (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
 
-    .gnt (in_support_if.data_bus_gnt),
-    .req (in_support_if.data_bus_req),
-    .rvalid (in_support_if.data_bus_rvalid),
-    .req_attribute_i (data_gntpar_error),
+    .add_item   (in_support_if.data_bus_gnt && in_support_if.data_bus_req),
+    .shift_fifo (in_support_if.data_bus_rvalid),
 
-    .is_req_attribute_in_response_o (out_support_if.gntpar_error_in_response_data)
+    .item_in    (data_gntpar_error),
+    .item_out   (out_support_if.gntpar_error_in_response_data)
   );
 
 endmodule : uvmt_cv32e40s_support_logic
