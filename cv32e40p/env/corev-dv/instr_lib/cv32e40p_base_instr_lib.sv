@@ -80,7 +80,7 @@
   function void randomize_cv32e40p_gpr(cv32e40p_instr instr, riscv_reg_t avail_reg_list[]);
     instr.set_rand_mode();
     `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
-      if ( (instr.format != (CI_FORMAT || CB_FORMAT || CJ_FORMAT || CR_FORMAT || CA_FORMAT || CL_FORMAT || CS_FORMAT || CSS_FORMAT || CIW_FORMAT)) ) {
+      if ( (format != (CI_FORMAT || CB_FORMAT || CJ_FORMAT || CR_FORMAT || CA_FORMAT || CL_FORMAT || CS_FORMAT || CSS_FORMAT || CIW_FORMAT)) ) {
         if (avail_reg_list.size() > 0) {
           if (has_rs1) {
             rs1 inside {avail_reg_list};
@@ -99,12 +99,18 @@
           if (format == CB_FORMAT) {
             rs1 != reserved_rd[i];
           }
+          if ((category == POST_INC_LOAD) || (category == POST_INC_STORE)) {
+            rs1 != reserved_rd[i];
+          }
         }
         foreach (cfg.reserved_regs[i]) {
           if (has_rd) {
             rd != cfg.reserved_regs[i];
           }
           if (format == CB_FORMAT) {
+            rs1 != cfg.reserved_regs[i];
+          }
+          if ((category == POST_INC_LOAD) || (category == POST_INC_STORE)) {
             rs1 != cfg.reserved_regs[i];
           }
         }
@@ -207,7 +213,7 @@
   function void randomize_zfinx_gpr(riscv_fp_in_x_regs_instr instr, riscv_reg_t avail_reg_list[]);
     instr.set_rand_mode();
     `DV_CHECK_RANDOMIZE_WITH_FATAL(instr,
-      if ( (instr.format != (CI_FORMAT || CB_FORMAT || CJ_FORMAT || CR_FORMAT || CA_FORMAT || CL_FORMAT || CS_FORMAT || CSS_FORMAT || CIW_FORMAT)) ) {
+      if ( (format != (CI_FORMAT || CB_FORMAT || CJ_FORMAT || CR_FORMAT || CA_FORMAT || CL_FORMAT || CS_FORMAT || CSS_FORMAT || CIW_FORMAT)) ) {
         if (avail_reg_list.size() > 0) {
           if (has_rs1) {
             rs1 inside {avail_reg_list};

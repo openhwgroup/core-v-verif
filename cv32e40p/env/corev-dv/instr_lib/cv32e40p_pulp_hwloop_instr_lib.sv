@@ -1418,7 +1418,7 @@ class cv32e40p_xpulp_hwloop_isa_stress_stream extends cv32e40p_xpulp_hwloop_base
 
           cv32e40p_avail_regs = new[num_of_avail_regs];
           std::randomize(cv32e40p_avail_regs) with {  foreach(cv32e40p_avail_regs[i]) {
-                                                        !(cv32e40p_avail_regs[i] inside {cv32e40p_exclude_regs});
+                                                        !(cv32e40p_avail_regs[i] inside {cv32e40p_exclude_regs, reserved_rd});
                                                    }
                                                 };
 
