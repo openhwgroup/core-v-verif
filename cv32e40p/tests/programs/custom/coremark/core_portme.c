@@ -100,5 +100,5 @@ get_time(void)
 secs_ret
 time_in_secs(CORE_TICKS ticks)
 {
-    return ticks;  // NB! Not implemented. Score is derivable from cycle count.
+    return ticks*1E-6;  // Normalized to 1 MHz clock period
 }
