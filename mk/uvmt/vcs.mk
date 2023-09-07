@@ -213,6 +213,7 @@ hello-world:
 	$(MAKE) test TEST=hello-world
 
 VCS_COMP = $(VCS_COMP_FLAGS) \
+		$(CFG_COMPILE_FLAGS) \
 		$(QUIET) \
 		$(VCS_UVM_ARGS) \
 		$(VCS_USER_COMPILE_ARGS) \
