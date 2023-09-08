@@ -117,6 +117,12 @@
       }
       // TODO: Add constraint for CSR, floating point register
     )
+
+    if (instr.instr_name inside {SB, SH, SW, C_SW, C_FSW, FSW, CV_SB, CV_SH, CV_SW}) begin
+      instr.rs1 = cv32e40p_cfg.str_rs1;
+      instr.rd  = cv32e40p_cfg.str_rs3;
+    end
+
   endfunction
 
   //Function: randomize_cv32e40p_instr_imm()
@@ -236,16 +242,17 @@
             rs1 != reserved_rd[i];
           }
         }
-        foreach (cfg.reserved_regs[i]) {
-          if (has_rd) {
-            rd != cfg.reserved_regs[i];
-          }
-          if (format == CB_FORMAT) {
-            rs1 != cfg.reserved_regs[i];
-          }
-        }
       }
     )
+  endfunction
+
+  // Function to assign reserved reg for store instr from cfg to avoid random
+  // reg operands for stores which may result in corruption of instr memory
+  function void store_instr_gpr_handling(riscv_instr instr);
+    if (instr.instr_name inside {SB, SH, SW, C_SW, C_FSW, FSW, CV_SB, CV_SH, CV_SW}) begin
+      instr.rs1 = cv32e40p_cfg.str_rs1;
+      instr.rd  = cv32e40p_cfg.str_rs3;
+    end
   endfunction
 
 endclass // cv32e40p_base_instr_stream
