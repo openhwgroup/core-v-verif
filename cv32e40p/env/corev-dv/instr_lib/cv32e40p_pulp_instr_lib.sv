@@ -97,23 +97,20 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
   rand riscv_reg_t          cv32e40p_avail_regs[];
   rand riscv_reg_t          cv32e40p_exclude_regs[];
 
-  int unsigned              num_of_reserved_regs;
-
   riscv_instr_name_t        xpulp_exclude_instr[];
   riscv_instr_category_t    xpulp_include_category[];
   riscv_instr_name_t        riscv_exclude_common_instr[];
   riscv_instr_name_t        riscv_exclude_instr[];
   riscv_instr_group_t       riscv_exclude_group[];
-  riscv_instr               riscv_instr_list[];
 
   int unsigned              num_zfinx_gpr;
+  int unsigned              num_str_reserved_gpr;
   riscv_reg_t               cv32e40p_zfinx_regs[];
 
   `uvm_object_utils_begin(cv32e40p_xpulp_rand_stream)
       `uvm_field_int(num_of_xpulp_instr, UVM_DEFAULT)
       `uvm_field_int(num_of_riscv_instr, UVM_DEFAULT)
       `uvm_field_int(num_of_avail_regs, UVM_DEFAULT)
-      `uvm_field_int(num_of_reserved_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_avail_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_exclude_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_instr_name_t,xpulp_exclude_instr, UVM_DEFAULT)
@@ -133,36 +130,31 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
   constraint avail_regs_pulp_instr_c {
     if ((cfg.enable_fp_in_x_regs == 1) && (RV32ZFINX inside {riscv_instr_pkg::supported_isa})) {
       num_of_avail_regs  >= 8;
-      num_of_avail_regs  <= 24 - num_zfinx_gpr;
+      num_of_avail_regs  <= (24 - num_zfinx_gpr - num_str_reserved_gpr);
     } else {
-      num_of_avail_regs inside {[8:24]};
+      num_of_avail_regs  >= 8;
+      num_of_avail_regs  <= (24 - num_str_reserved_gpr);
     }
   }
 
   constraint cv32e40p_avail_regs_c {
     solve num_of_avail_regs before cv32e40p_exclude_regs;
     cv32e40p_avail_regs.size() == num_of_avail_regs;
-    if ((cfg.enable_fp_in_x_regs == 1) && (RV32ZFINX inside {riscv_instr_pkg::supported_isa})) {
-      cv32e40p_exclude_regs.size() == (32-num_of_reserved_regs-num_of_avail_regs-num_zfinx_gpr);
-    } else {
-      cv32e40p_exclude_regs.size() == (32-num_of_reserved_regs-num_of_avail_regs);
-    }
+    cv32e40p_exclude_regs.size() == (32 - num_of_avail_regs - cfg.reserved_regs.size());
     unique {cv32e40p_exclude_regs};
     foreach(cv32e40p_exclude_regs[i]) {
       !(cv32e40p_exclude_regs[i] inside {cfg.reserved_regs});
-      !(cv32e40p_exclude_regs[i] inside {cv32e40p_zfinx_regs});
     }
   }
 
   function new(string name = "cv32e40p_xpulp_rand_stream");
     super.new(name);
 
-    num_of_reserved_regs = 5;
-
   endfunction : new
 
   function void pre_randomize();
     super.pre_randomize();
+    uvm_default_printer.knobs.begin_elements = -1;
     //Exclude list for XPULP instruction generation part
     xpulp_exclude_instr = {  CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI,
                              CV_ELW,
@@ -180,11 +172,13 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
     num_zfinx_gpr = cv32e40p_cfg.num_zfinx_reserved_reg;
     cv32e40p_zfinx_regs = new[num_zfinx_gpr];
     cv32e40p_zfinx_regs = cv32e40p_cfg.zfinx_reserved_gpr;
+    num_str_reserved_gpr = (!cv32e40p_cfg.no_load_store) ? 2 : 0; // TODO: add more randomization
 
   endfunction : pre_randomize
 
   function void post_randomize();
     cv32e40p_exclude_regs = {cv32e40p_exclude_regs,cfg.reserved_regs};
+    cv32e40p_exclude_regs.sort();
 
     if((cv32e40p_exclude_regs.size() < 2) || (cv32e40p_exclude_regs.size() > 25))
       `uvm_fatal(this.get_type_name(), "cv32e40p_exclude_regs out of range")
