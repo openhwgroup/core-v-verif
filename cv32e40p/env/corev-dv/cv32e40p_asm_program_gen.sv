@@ -440,6 +440,19 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
         instr_stream.push_back(str);
       end
     end
+
+    // Initialize reserved registers for store instr
+    if (!cfg_corev.no_load_store) begin
+      reg_name = cfg_corev.str_rs1.name();
+      reg_val = 32'h80000000; // FIXME : Remove hardcoded value to allow configuration based on linker
+      str = $sformatf("%0sli%0s %0s, 0x%0x", indent, indent, reg_name.tolower(), reg_val);
+      instr_stream.push_back(str);
+
+      reg_name = cfg_corev.str_rs3.name();
+      reg_val = $urandom_range(0,255); // FIXME : include negative also
+      str = $sformatf("%0sli%0s %0s, 0x%0x", indent, indent, reg_name.tolower(), reg_val);
+      instr_stream.push_back(str);
+    end
   endfunction
 
   // Override get_directed_instr_stream for cfg "insert_rand_directed_instr_stream"
