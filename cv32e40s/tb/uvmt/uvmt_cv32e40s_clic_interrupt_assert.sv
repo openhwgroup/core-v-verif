@@ -500,10 +500,10 @@ module uvmt_cv32e40s_clic_interrupt_assert
   } instr_names_e;
 
   typedef struct packed {
-    logic [35:32] tag;
-    logic [31:0]  addr;
     logic         is_mret;
     logic         is_clicv;
+    logic [35:32] tag;
+    logic [31:0]  addr;
   } obi_tagged_txn_t;
 
 
@@ -1430,13 +1430,10 @@ module uvmt_cv32e40s_clic_interrupt_assert
     assign is_mtvt_store_event = is_store_instr_addr_in_mtvt_region(rvfi_insn) && !rvfi_trap.exception && rvfi_valid;
     assign is_mtvt_load_event  = is_read_mtvt_table_val_obi;
 
+    `ifdef FORMAL
     always@* begin
       if (!rst_ni) begin
         no_mtvt_store_event_occurred <= 1'b1;
-        `ifndef FORMAL
-        // We don't want this table to be initialized in formal, should be free net for formal
-        mtvt_table_value <= {<<{ '0}};
-        `endif
       end
       if (is_mtvt_store_event) begin
         mtvt_write_offset                       <= rvfi_rs1_rdata + s_imm - mtvt;
@@ -1448,6 +1445,15 @@ module uvmt_cv32e40s_clic_interrupt_assert
         mtvt_table_value[(CLIC_ID_WIDTH)'(mtvt_read_offset/'d4)] <= rvfi_rd_wdata;
       end
     end
+    `else
+    always @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        mtvt_table_value <= {<<{'0}};
+      end else if (is_read_from_mtvt) begin
+          mtvt_table_value[(CLIC_ID_WIDTH)'((obi_instr_fifo_tag_out.addr - mtvt)/4)] <= obi_instr_rdata;
+      end
+    end
+    `endif
 
     sequence s_store_mtvt_value;
       @(posedge clk_i)
@@ -1533,21 +1539,24 @@ module uvmt_cv32e40s_clic_interrupt_assert
       always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
           obi_instr_fifo_tag_ff[i] <= '0;
+          obi_data_fifo_tag_ff[i]  <= '0;
         end else begin
           if (obi_instr_fifo_tag_wena[i]) begin
-            obi_instr_fifo_tag_ff[i].tag  <= obi_instr_request_n;
-            obi_instr_fifo_tag_ff[i].addr <= obi_instr_addr;
-            obi_instr_fifo_tag_ff[i].is_mret <= obi_req_is_mret;
+            obi_instr_fifo_tag_ff[i].tag      <= obi_instr_request_n;
+            obi_instr_fifo_tag_ff[i].addr     <= obi_instr_addr;
+            obi_instr_fifo_tag_ff[i].is_mret  <= obi_req_is_mret;
             obi_instr_fifo_tag_ff[i].is_clicv <= obi_req_is_clicv;
           end else begin
-            obi_instr_fifo_tag_ff[i]      <= obi_instr_fifo_tag_ff[i];
+            obi_instr_fifo_tag_ff[i]          <= obi_instr_fifo_tag_ff[i];
           end
 
           if (obi_data_fifo_tag_wena[i]) begin
-            obi_data_fifo_tag_ff[i].tag  <= obi_data_request_n;
-            obi_data_fifo_tag_ff[i].addr <= obi_data_addr;
+            obi_data_fifo_tag_ff[i].tag      <= obi_data_request_n;
+            obi_data_fifo_tag_ff[i].addr     <= obi_data_addr;
+            obi_data_fifo_tag_ff[i].is_mret  <= 0;  // Not used for data fifo
+            obi_data_fifo_tag_ff[i].is_clicv <= 0;  // Not used for data fifo
           end else begin
-            obi_data_fifo_tag_ff[i]      <= obi_data_fifo_tag_ff[i];
+            obi_data_fifo_tag_ff[i]          <= obi_data_fifo_tag_ff[i];
           end
         end
       end
