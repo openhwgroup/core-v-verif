@@ -21,8 +21,8 @@ They are used to generate coverage reports that focus on necessary coverage, whi
 
 *Note that some files are automatically generated and some are manually maintained.  This is indicated in the table.*
 
-| File                              | Maintenance | Description |
-|-----------------------------------|-------------|-------------|
-| cv32e40s.non_dut_code_cov.vRefine | Manual      | Removes non-DUT code coverage from coverage database, that are not to be considered for coverage (e.g. testbench) |
-| cv32e40s.auto.vRefine             | Automatic   | Auto-generated refinements based on parameter usage for the CV32E40S without PULP extensions.  *Do not manually edit* |
-| cv32e40s.manual.vRefine           | Manual      | Manually added coverage exception based on deesign verification reviews. |
+| File                               | Maintenance | Description |
+|------------------------------------|-------------|-------------|
+| cv32e40s.non_dut_code_cov*.vRefine | Manual      | Removes non-DUT code coverage from coverage database, that are not to be considered for coverage (e.g. testbench) |
+| cv32e40s.auto.vRefine              | Automatic   | Auto-generated refinements based on parameter usage for the CV32E40S without PULP extensions.  *Do not manually edit* |
+| cv32e40s.manual*.vRefine           | Manual      | Manually added coverage exception based on deesign verification reviews. |
