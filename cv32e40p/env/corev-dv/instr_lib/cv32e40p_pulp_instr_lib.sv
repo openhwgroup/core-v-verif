@@ -202,6 +202,8 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
     riscv_fp_in_x_regs_instr    zfinx_instr;
     string                      str;
     int                         i;
+    riscv_instr_group_t         riscv_exclude_xpulp[];
+    int                         rv32_ins, pulp_ins;
 
     riscv_exclude_instr = {riscv_exclude_common_instr};
 
@@ -222,66 +224,71 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
         riscv_exclude_group = {riscv_exclude_group, RV32F, RV32ZFINX};
 
     `uvm_info("cv32e40p_xpulp_rand_stream",
-               $sformatf("Number of XPULP instr to be generated = %0d",num_of_xpulp_instr),UVM_HIGH)
+               $sformatf("Total XPULP+RISCV instr gen in test %0d + %0d",num_of_xpulp_instr,num_of_riscv_instr),UVM_HIGH)
 
-    //(1) Generate random xpulp instructions
+    //Exclude RV32X instr for riscv_exclude_xpulp
+    riscv_exclude_xpulp = {riscv_exclude_group, RV32X};
+    rv32_ins = num_of_riscv_instr;
+    pulp_ins = num_of_xpulp_instr;
+
     i = 0;
-    while (i < num_of_xpulp_instr) begin
-      //Create and Randomize array for avail_regs each time to ensure randomization
-      //To resolve the randomization issue within the same stream need this step
-      cv32e40p_avail_regs = new[num_of_avail_regs];
-      std::randomize(cv32e40p_avail_regs) with {  foreach(cv32e40p_avail_regs[i]) {
-                                                    !(cv32e40p_avail_regs[i] inside {cv32e40p_exclude_regs});
-                                                  }
-                                               };
+    while (i < (num_of_xpulp_instr+num_of_riscv_instr)) begin
 
-      cv32_instr = cv32e40p_instr::type_id::create($sformatf("cv32_instr_%0d", i));
-      cv32_instr = cv32e40p_instr::get_xpulp_instr(.exclude_instr(xpulp_exclude_instr),
-                                                   .include_category(xpulp_include_category));
+      randcase
+        pulp_ins:
+          begin
+            //Create and Randomize array for avail_regs each time to ensure randomization
+            //To resolve the randomization issue within the same stream need this step
+            cv32e40p_avail_regs = new[num_of_avail_regs];
+            std::randomize(cv32e40p_avail_regs) with {  foreach(cv32e40p_avail_regs[i]) {
+                                                          !(cv32e40p_avail_regs[i] inside {cv32e40p_exclude_regs});
+                                                        }
+                                                     };
+            cv32_instr = cv32e40p_instr::type_id::create($sformatf("cv32_instr_%0d", i));
+            cv32_instr = cv32e40p_instr::get_xpulp_instr(.exclude_instr(xpulp_exclude_instr),
+                                                         .include_category(xpulp_include_category));
 
-      //randomize GPRs for each instruction
-      randomize_cv32e40p_gpr(cv32_instr, cv32e40p_avail_regs);
+            //randomize GPRs for each instruction
+            randomize_cv32e40p_gpr(cv32_instr, cv32e40p_avail_regs);
 
-      //randomize immediates for each instruction
-      randomize_cv32e40p_instr_imm(cv32_instr);
+            //randomize immediates for each instruction
+            randomize_cv32e40p_instr_imm(cv32_instr);
 
-      instr_list.push_back(cv32_instr);
+            instr_list.push_back(cv32_instr);
+          end
+        rv32_ins:
+          begin
+            //Create and Randomize array for avail_regs each time to ensure randomization
+            avail_regs = new[num_of_avail_regs];
+            randomize_avail_regs();
+
+            instr = riscv_instr::type_id::create($sformatf("riscv_instr_%0d", i));
+
+            //exclude pulp instructions here
+            instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                                .exclude_group(riscv_exclude_xpulp));
+
+            //randomize immediates for each instruction
+            randomize_riscv_instr_imm(instr);
+
+            //randomize GPRs for each instruction
+            if(instr.group != RV32ZFINX) begin
+              randomize_gpr(instr);
+              store_instr_gpr_handling(instr);
+              instr_list.push_back(instr);
+            end else begin
+              zfinx_instr = riscv_fp_in_x_regs_instr::type_id::create($sformatf("zfinx_instr_%0d", i));
+              `DV_CHECK_FATAL($cast(zfinx_instr, instr), "Cast to zfinx instruction type failed!");
+              randomize_zfinx_gpr(zfinx_instr, cv32e40p_zfinx_regs);
+              instr_list.push_back(zfinx_instr);
+            end
+
+          end
+      endcase
+
       i++;
 
-    end // while num_of_xpulp_instr
-
-    //(2) Generate all random instructions
-    riscv_instr_list = new[num_of_riscv_instr];
-    for (i = 0; i < num_of_riscv_instr; i++) begin
-
-      //Create and Randomize array for avail_regs each time to ensure randomization
-      avail_regs = new[num_of_avail_regs];
-      randomize_avail_regs();
-
-      //Dont include RV32X instr here again
-      riscv_exclude_group = {riscv_exclude_group, RV32X};
-
-      riscv_instr_list[i] = riscv_instr::type_id::create($sformatf("riscv_instr_list_%0d", i));
-
-      //exclude pulp instructions here
-      riscv_instr_list[i] = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
-                                                        .exclude_group(riscv_exclude_group));
-
-      //randomize GPRs for each instruction
-      if(riscv_instr_list[i].group != RV32ZFINX)
-        randomize_gpr(riscv_instr_list[i]);
-      else begin
-        `DV_CHECK_FATAL($cast(zfinx_instr, riscv_instr_list[i]), "Cast to zfinx instruction type failed!");
-        randomize_zfinx_gpr(zfinx_instr, cv32e40p_zfinx_regs);
-      end
-
-      //randomize immediates for each instruction
-      randomize_riscv_instr_imm(riscv_instr_list[i]);
-
-    end // num_of_riscv_instr
-
-    //mix steams for randomization
-    mix_instr_stream(riscv_instr_list);
+    end // while
 
   endfunction
 
