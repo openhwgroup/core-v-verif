@@ -108,6 +108,15 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
   riscv_instr_category_t xpulp_exclude_category[];
 
   `uvm_object_utils_begin(cv32e40p_xpulp_hwloop_base_stream)
+      `uvm_field_int(num_of_xpulp_instr, UVM_DEFAULT)
+      `uvm_field_int(num_of_riscv_instr, UVM_DEFAULT)
+      `uvm_field_int(num_of_avail_regs, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_avail_regs, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_exclude_regs, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_name_t,xpulp_exclude_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_name_t,riscv_exclude_common_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_name_t,riscv_exclude_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_group_t,riscv_exclude_group, UVM_DEFAULT)
       `uvm_field_int(num_loops_active, UVM_DEFAULT)
       `uvm_field_int(gen_nested_loop, UVM_DEFAULT)
       `uvm_field_sarray_int(use_setup_inst, UVM_DEFAULT)
@@ -138,7 +147,6 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
   constraint avail_regs_pulp_instr_c {
     num_of_avail_regs inside {[10:19]};
-    num_of_reserved_regs == 5;
   }
 
   constraint gen_hwloop_count_c {
@@ -256,7 +264,6 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
   endfunction : pre_randomize
 
   function void post_randomize();
-      uvm_default_printer.knobs.begin_elements = -1;
 
       if((cv32e40p_exclude_regs.size() < 2) || (cv32e40p_exclude_regs.size() > 25)) begin
         `uvm_fatal(this.get_type_name(), "cv32e40p_exclude_regs out of range")
@@ -940,18 +947,22 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                       end
           endcase
 
-          //randomize GPRs for each instruction
-          if(instr.group != RV32ZFINX)
-            randomize_gpr(instr);
-          else begin
-            `DV_CHECK_FATAL($cast(zfinx_instr, instr), "Cast to zfinx instruction type failed!");
-            randomize_zfinx_gpr(zfinx_instr, cv32e40p_zfinx_regs);
-          end
-
           //randomize immediates for each instruction
           randomize_riscv_instr_imm(instr);
 
-          instr_list.push_back(instr);
+          if(instr.group != RV32ZFINX) begin
+            //randomize GPRs for each instruction
+            randomize_gpr(instr);
+            store_instr_gpr_handling(instr);
+            instr_list.push_back(instr);
+          end else begin
+            zfinx_instr = riscv_fp_in_x_regs_instr::type_id::create($sformatf("zfinx_instr_%0d", i));
+            `DV_CHECK_FATAL($cast(zfinx_instr, instr), "Cast to zfinx instruction type failed!");
+            //randomize GPRs for each instruction
+            randomize_zfinx_gpr(zfinx_instr, cv32e40p_zfinx_regs);
+            instr_list.push_back(zfinx_instr);
+          end
+
           i++;
       end
 
@@ -1010,19 +1021,23 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                   end
       endcase
 
-      //randomize GPRs for each instruction
-      if(instr.group != RV32ZFINX)
-        randomize_gpr(instr);
-      else begin
-        `DV_CHECK_FATAL($cast(zfinx_instr, instr), "Cast to zfinx instruction type failed!");
-        randomize_zfinx_gpr(zfinx_instr, cv32e40p_zfinx_regs);
-      end
-
       //randomize immediates for each instruction
       randomize_riscv_instr_imm(instr);
       instr.has_label=1;
       instr.label = label_str;
-      instr_list.push_back(instr);
+
+      if(instr.group != RV32ZFINX) begin
+        //randomize GPRs for each instruction
+        randomize_gpr(instr);
+        store_instr_gpr_handling(instr);
+        instr_list.push_back(instr);
+      end else begin
+        zfinx_instr = riscv_fp_in_x_regs_instr::type_id::create($sformatf("zfinx_instr_%0s", label_str));
+        `DV_CHECK_FATAL($cast(zfinx_instr, instr), "Cast to zfinx instruction type failed!");
+        //randomize GPRs for each instruction
+        randomize_zfinx_gpr(zfinx_instr, cv32e40p_zfinx_regs);
+        instr_list.push_back(zfinx_instr);
+      end
 
   endfunction
 
@@ -1430,16 +1445,18 @@ class cv32e40p_xpulp_hwloop_isa_stress_stream extends cv32e40p_xpulp_hwloop_base
 
           //randomize GPRs and immediates for each instruction
           if(instr.group != RV32X) begin
-            if(instr.group != RV32ZFINX)
+            randomize_riscv_instr_imm(instr);
+            if(instr.group != RV32ZFINX) begin
               randomize_gpr(instr);
-            else begin
+              store_instr_gpr_handling(instr);
+              instr_list.push_back(instr);
+            end else begin
+              zfinx_instr = riscv_fp_in_x_regs_instr::type_id::create();
               `DV_CHECK_FATAL($cast(zfinx_instr, instr), "Cast to zfinx instruction type failed!");
               randomize_zfinx_gpr(zfinx_instr, cv32e40p_zfinx_regs);
+              instr_list.push_back(zfinx_instr);
             end
-            randomize_riscv_instr_imm(instr);
-            instr_list.push_back(instr);
-          end
-          else begin
+          end else begin
             $cast(cv32_instr,instr);
             randomize_cv32e40p_gpr(cv32_instr, cv32e40p_avail_regs);
             randomize_cv32e40p_instr_imm(cv32_instr);
@@ -1460,7 +1477,6 @@ class cv32e40p_xpulp_hwloop_exception extends cv32e40p_xpulp_hwloop_base_stream;
       `uvm_field_int(num_of_xpulp_instr, UVM_DEFAULT)
       `uvm_field_int(num_of_riscv_instr, UVM_DEFAULT)
       `uvm_field_int(num_of_avail_regs, UVM_DEFAULT)
-      `uvm_field_int(num_of_reserved_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_avail_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_exclude_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_instr_name_t,xpulp_exclude_instr, UVM_DEFAULT)
@@ -1547,19 +1563,23 @@ class cv32e40p_xpulp_hwloop_exception extends cv32e40p_xpulp_hwloop_base_stream;
         instr.imm_str = branch_imm_str;
       end
 
-      //randomize GPRs for each instruction
-      if(instr.group != RV32ZFINX)
-        randomize_gpr(instr);
-      else begin
-        `DV_CHECK_FATAL($cast(zfinx_instr, instr), "Cast to zfinx instruction type failed!");
-        randomize_zfinx_gpr(zfinx_instr, cv32e40p_zfinx_regs);
-      end
-
       //randomize immediates for each instruction
       randomize_riscv_instr_imm(instr);
       instr.has_label=1;
       instr.label = label_str;
-      instr_list.push_back(instr);
+
+      //randomize GPRs for each instruction
+      if(instr.group != RV32ZFINX) begin
+        randomize_gpr(instr);
+        store_instr_gpr_handling(instr);
+        instr_list.push_back(instr);
+      end else begin
+        zfinx_instr = riscv_fp_in_x_regs_instr::type_id::create($sformatf("zfinx_instr_%0s", label_str));
+        `DV_CHECK_FATAL($cast(zfinx_instr, instr), "Cast to zfinx instruction type failed!");
+        randomize_zfinx_gpr(zfinx_instr, cv32e40p_zfinx_regs);
+        instr_list.push_back(zfinx_instr);
+      end
+
 
   endfunction
 
@@ -1619,18 +1639,21 @@ class cv32e40p_xpulp_hwloop_exception extends cv32e40p_xpulp_hwloop_base_stream;
             instr.imm_str = branch_imm_str;
           end
 
-          //randomize GPRs for each instruction
-          if(instr.group != RV32ZFINX)
-            randomize_gpr(instr);
-          else begin
-            `DV_CHECK_FATAL($cast(zfinx_instr, instr), "Cast to zfinx instruction type failed!");
-            randomize_zfinx_gpr(zfinx_instr, cv32e40p_zfinx_regs);
-          end
-
           //randomize immediates for each instruction
           randomize_riscv_instr_imm(instr);
 
-          instr_list.push_back(instr);
+          //randomize GPRs for each instruction
+          if(instr.group != RV32ZFINX) begin
+            randomize_gpr(instr);
+            store_instr_gpr_handling(instr);
+            instr_list.push_back(instr);
+          end else begin
+            zfinx_instr = riscv_fp_in_x_regs_instr::type_id::create($sformatf("zfinx_instr_%0d", i));
+            `DV_CHECK_FATAL($cast(zfinx_instr, instr), "Cast to zfinx instruction type failed!");
+            randomize_zfinx_gpr(zfinx_instr, cv32e40p_zfinx_regs);
+            instr_list.push_back(zfinx_instr);
+          end
+
           i++;
       end
 
