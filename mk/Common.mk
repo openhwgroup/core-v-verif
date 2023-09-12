@@ -685,6 +685,7 @@ SVLIB_CXX    = gcc
 
 svlib: $(SVLIB_PKG)
 	$(SVLIB_CXX) $(SVLIB_CFLAGS) $(SVLIB) $(SVLIB_SRC) -I$(DPI_INCLUDE) -o $(SVLIB_LIB)
+	cp $(SVLIB_PKG)/../svlib_dpi.so $(SVLIB_PKG)/../svlib_dpi
 
 .PHONY: firmware-clean
 firmware-clean:
