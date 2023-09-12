@@ -182,6 +182,7 @@ void counters_enable() {
 int main(int argc, char *argv[])
 {
     unsigned int temp,temp1,temp2;
+    unsigned int expected_illegal_instruction_count;
     debug_req_control_t debug_req_control;
     mstatus_t mstatus, mstatus_cmp;
     counters_enable();
@@ -211,41 +212,41 @@ int main(int argc, char *argv[])
     //    We are _not_ in debug-mode, so each of these writes should invoke
     //    an illegal instruction exception.
     temp = 0xFFFFFFFF;
-    temp1 = glb_illegal_insn_status+1;
+    expected_illegal_instruction_count = glb_illegal_insn_status+1;
     glb_expect_illegal_insn = 1; // will be reset by Handler
     __asm__ volatile("csrw  dcsr, %0"     : "=r"(temp)); // Debug DCSR
-    check_illegal_insn_status("Test 2.1: DCSR write", temp1++);
+    check_illegal_insn_status("Test 2.1: DCSR write", expected_illegal_instruction_count++);
 
     glb_expect_illegal_insn = 1;
     __asm__ volatile("csrw  dpc, %0"      : "=r"(temp)); // Debug DPC
-    check_illegal_insn_status("Test 2.1: DPC write", temp1++);
+    check_illegal_insn_status("Test 2.1: DPC write", expected_illegal_instruction_count++);
 
     glb_expect_illegal_insn = 1;
     __asm__ volatile("csrw  dscratch, %0" : "=r"(temp)); // Debug DSCRATCH0
-    check_illegal_insn_status("Test 2.1: DSCRATCH0 write", temp1++);
+    check_illegal_insn_status("Test 2.1: DSCRATCH0 write", expected_illegal_instruction_count++);
 
     glb_expect_illegal_insn = 1;
     __asm__ volatile("csrw  0x7b3, %0" : "=r"(temp));    // Debug DSCRATCH1
-    check_illegal_insn_status("Test 2.1: DSCRATCH1 write", temp1++);
+    check_illegal_insn_status("Test 2.1: DSCRATCH1 write", expected_illegal_instruction_count++);
 
     // Check Read Access of Debug CSRs:
     //    We are _not_ in debug-mode, so each of these reads should invoke
     //    an illegal instruction exception.
     glb_expect_illegal_insn = 1;
     __asm__ volatile("csrr %0, dcsr"    : "=r"(temp)); // Debug DCSR
-    check_illegal_insn_status("Test 2.1: DCSR read", temp1++);
+    check_illegal_insn_status("Test 2.1: DCSR read", expected_illegal_instruction_count++);
 
     glb_expect_illegal_insn = 1;
     __asm__ volatile("csrr %0, dpc"     : "=r"(temp)); // Debug DPC
-    check_illegal_insn_status("Test 2.1: DPC read", temp1++);
+    check_illegal_insn_status("Test 2.1: DPC read", expected_illegal_instruction_count++);
 
     glb_expect_illegal_insn = 1;
     __asm__ volatile("csrr %0, dscratch": "=r"(temp)); // Debug DSCRATCH0
-    check_illegal_insn_status("Test 2.1: DSCRATCH0 read", temp1++);
+    check_illegal_insn_status("Test 2.1: DSCRATCH0 read", expected_illegal_instruction_count++);
 
     glb_expect_illegal_insn = 1;
     __asm__ volatile("csrr %0, 0x7b3"   : "=r"(temp)); // Debug DSCRATCH1
-    check_illegal_insn_status("Test 2.1: DSCRATCH1 read", temp1++);
+    check_illegal_insn_status("Test 2.1: DSCRATCH1 read", expected_illegal_instruction_count++);
 
     printf("------------------------\n");
     printf(" Test2.2: check write access to Trigger CSRs\n");
@@ -265,6 +266,8 @@ int main(int argc, char *argv[])
     glb_expect_illegal_insn = 1;
     printf("        - Trigger TINFO write check (illegal instruction expected)\n");
     __asm__ volatile("csrw  0x7a4, %0"     : "=r"(temp)); // Trigger TINFO
+    check_illegal_insn_status("Test 2.2: TINFO read", expected_illegal_instruction_count++);
+
     // CVE2 does not support the features requiring MCONTEXT or MSCONTEXT, so
     // writes to these CSRs are ignored and reads will always return 0x0.
     glb_expect_illegal_insn = 0;
@@ -307,12 +310,14 @@ int main(int argc, char *argv[])
     glb_expect_illegal_insn = 1;
     printf("        - Trigger TINFO read check (expecting illegal instruction exception)\n");
     __asm__ volatile("csrr %0, 0x7a4"   : "=r"(temp)); // Trigger TINFO
+    check_illegal_insn_status("Test 2.3: TINFO read", expected_illegal_instruction_count++);
 
     // CV32E20 does not implement a CSR at addr 0xea8, so we expect an illegal instruction
     // expection here.
     glb_expect_illegal_insn = 1;
     printf("        - CSR 0xea8 read check (expecting illegal instruction exception)\n");
     __asm__ volatile("csrr %0, 0xea8"   : "=r"(temp)); // non-existant CSR
+    check_illegal_insn_status("Test 2.3: Non-existant CSR read", expected_illegal_instruction_count++);
 
     // CVE2 does not support the features requiring MCONTEXT or MSCONTEXT, so
     // writes to these CSRs are ignored and reads will always return 0x0.
@@ -431,12 +436,10 @@ int main(int argc, char *argv[])
     asm volatile(".4byte 0x00100073"); //ebreak
     check_debug_status(10, glb_hart_status);
 
-    printf("\n\nTEST DELIBERATELY ENDED PREMATURELY (several tests still outstanding...)\n\n");
-    TEST_PASSED;
-
     // glb_hart_status == 11 selects the "_debugger_csr_exception" test in debugger.S
     printf("------------------------\n");
     printf(" Test11: check illegal csr exception during debug launches debugger exception and no csr modified\n");
+    // TODO : check CSRs not modified.
     glb_hart_status = 11;
     glb_expect_debug_entry = 1;
     glb_expect_debug_exception = 1;
@@ -446,9 +449,10 @@ int main(int argc, char *argv[])
     }
     check_debug_status(111,glb_hart_status);
     check_debug_exception_status(111,glb_hart_status);
-    //FIXME TBD BUG : need to update test to check actual csrs not modified.
+
     printf("------------------------\n");
     printf(" Test12: check ecall exception during debug launches debugger exception and no csr modified\n");
+    // TODO : check CSRs not modified.
     glb_hart_status = 12;
     glb_expect_debug_entry = 1;
     glb_expect_debug_exception = 1;
@@ -458,18 +462,21 @@ int main(int argc, char *argv[])
     }
     check_debug_status(112,glb_hart_status);
     check_debug_exception_status(112,glb_hart_status);
-    //FIXME TBD BUG : need to update test to check actual csrs not modified.
+
+//
     printf("------------------------\n");
     printf(" Test13: check mret during debug launches debugger exception and no csr modified\n");
+    printf("         TODO: mret has been replaced by ecall in debugger.S\n");
     glb_hart_status = 13;
     glb_expect_debug_entry = 1;
     glb_expect_debug_exception = 1;
     DEBUG_REQ_CONTROL_REG = debug_req_control.bits;
-    while(glb_debug_status != glb_hart_status){
+    while(glb_debug_status != glb_hart_status) {
       printf("Wait for Debugger\n");
     }
     check_debug_status(113,glb_hart_status);
     check_debug_exception_status(113,glb_hart_status);
+
     printf("------------------------\n");
     printf(" Test14: Check exception ebreak enters debug mode\n");
     glb_hart_status = 14;
@@ -482,15 +489,17 @@ int main(int argc, char *argv[])
     while(glb_debug_status != glb_hart_status){
         printf("Wait for Debugger\n");
     } 
-
-    check_illegal_insn_status("Test 14", temp1++);
+    check_illegal_insn_status("Test 14", expected_illegal_instruction_count++);
     check_debug_status(114, glb_hart_status);
+
+    printf("\n Test 15 not implemented\n\n");
+
     printf("----------------------\n");
     printf("Test 16: dret in m-mode causes exception\n");
 
     glb_expect_illegal_insn = 1;
     __asm__ volatile("dret");
-    check_illegal_insn_status("Test 16", temp1++); 
+    check_illegal_insn_status("Test 16", expected_illegal_instruction_count++); 
 
     printf("------------------------\n");
     printf("Test 17: WFI before debug_req_i and WFI in debug mode\n");
@@ -515,6 +524,8 @@ int main(int argc, char *argv[])
     mm_ram_assert_irq(0,0);
     printf("Irq check done\n");
     
+    printf("\n Jumping to Test 21\n\n");
+
     // Check that stoupcount bit (10) in dcsr has no affect
     printf("-------------------------\n");
     printf("Test 21: Setting stopcount bit=1\n");
@@ -526,6 +537,10 @@ int main(int argc, char *argv[])
         printf("Wait for Debugger\n");
     }
     check_debug_status(121, glb_hart_status);
+
+    printf("\n\nTEST DELIBERATELY ENDED PREMATURELY (several tests still outstanding...)\n\n");
+    TEST_PASSED;
+
     printf("------------------------\n");
     printf("Test 18: Single stepping\n");
     glb_hart_status = 18;

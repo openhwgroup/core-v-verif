@@ -24,7 +24,7 @@ MEMORY
 	   sections to ram. */
 
 	ram (rwxai) : ORIGIN = 0x00000000, LENGTH = 0x400000
-	dbg (rwxai) : ORIGIN = 0x1A110800, LENGTH = 0x1000
+	dbg (rwxai) : ORIGIN = 0x1A110800, LENGTH = 0x50000
 }
 
 SECTIONS
@@ -35,7 +35,7 @@ SECTIONS
   {
     KEEP(*(.debugger));
   } >dbg
-  .debugger_exception (0x1A111000):
+  .debugger_exception (0x1A140000):
   {
     KEEP(*(.debugger_exception));
   } >dbg
@@ -48,6 +48,7 @@ SECTIONS
 
   /* CORE-V: we want a fixed entry point */
   PROVIDE(__boot_address = 0x000);
+  PROVIDE(_debugger_exception_start = 0x1A140000);
 
 
   /* CORE-V: crt0 init code */

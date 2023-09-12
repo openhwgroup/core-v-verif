@@ -376,9 +376,12 @@ _debugger_csr_exception:
     dret
 
 _debugger_ecall_exception:
-	ecall // exception
+    ecall // exception
+
 _debugger_mret_call:
-	mret // will invoke debugger exception routine
+//  mret // will invoke debugger exception routine
+//  dret // this works (but it is not what we want)
+    ecall // TODO: why does this work, but mret does not?
 
 _debugger_ebreak_entry:
     la a1, glb_debug_status
