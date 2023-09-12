@@ -419,7 +419,7 @@ class cv32e40p_instr extends riscv_instr;
       CV_EXTRACT, CV_EXTRACTU, CV_INSERT, CV_BCLR,
       CV_BSET, CV_BITREV                               : get_opcode = 7'b1011011;
       // General ALU
-      CV_ABS, CV_SLET, CV_SLETU, CV_MIN, CV_MINU,
+      CV_ABS, CV_SLE, CV_SLEU, CV_MIN, CV_MINU,
       CV_MAX, CV_MAXU, CV_EXTHS, CV_EXTHZ, CV_EXTBS,
       CV_EXTBZ, CV_CLIP, CV_CLIPU, CV_CLIPR, CV_CLIPUR,
       CV_ADDNR, CV_ADDUNR, CV_ADDRNR, CV_ADDURNR,
@@ -581,7 +581,7 @@ class cv32e40p_instr extends riscv_instr;
       CV_EXTRACT, CV_EXTRACTU, CV_INSERT               : get_func3 = 3'b000;
       CV_BCLR, CV_BSET, CV_BITREV                      : get_func3 = 3'b001;
       // General ALU
-      CV_ABS, CV_SLET, CV_SLETU, CV_MIN, CV_MINU,
+      CV_ABS, CV_SLE, CV_SLEU, CV_MIN, CV_MINU,
       CV_MAX, CV_MAXU, CV_EXTHS, CV_EXTHZ, CV_EXTBS,
       CV_EXTBZ, CV_CLIP, CV_CLIPU, CV_CLIPR, CV_CLIPUR,
       CV_ADDNR, CV_ADDUNR, CV_ADDRNR, CV_ADDURNR,
