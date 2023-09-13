@@ -24,12 +24,15 @@
       soft operand_``IDX``_pattern.size() == num_of_instr_per_stream;\
       foreach (operand_``IDX``_pattern[i]) {\
         if (enable_special_operand_patterns) {\
-          soft operand_``IDX``_pattern[i] dist { IS_RAND := 8, IS_Q_NAN  := 4, IS_S_NAN              := 4, \
-                                                 IS_POSITIVE_ZERO        := 4, IS_NEGATIVE_ZERO      := 4, \
-                                                 IS_POSITIVE_INFINITY    := 4, IS_NEGATIVE_INFINITY  := 4, \
-                                                 IS_POSITIVE_MAX         := 2, IS_NEGATIVE_MAX       := 2, \
-                                                 IS_POSITIVE_MIN         := 2, IS_NEGATIVE_MIN       := 2, \
-                                                 IS_POSITIVE_SUBNORMAL   := 4, IS_NEGATIVE_SUBNORMAL := 4 };\
+          soft operand_``IDX``_pattern[i] dist { IS_RAND                    := 6, \
+                                                 IS_Q_NAN                   := 4, IS_S_NAN                    := 4,  \
+                                                 IS_POSITIVE_ZERO           := 4, IS_NEGATIVE_ZERO            := 4,  \
+                                                 IS_POSITIVE_INFINITY       := 4, IS_NEGATIVE_INFINITY        := 4,  \
+                                                 IS_POSITIVE_MAX            := 4, IS_NEGATIVE_MAX             := 4,  \
+                                                 IS_POSITIVE_MIN            := 4, IS_NEGATIVE_MIN             := 4,  \
+                                                 IS_POSITIVE_MIN_DIV2       := 4, IS_NEGATIVE_MIN_DIV2        := 4,  \
+                                                 IS_POSITIVE_SUBNORMAL_MAX  := 4, IS_NEGATIVE_SUBNORMAL_MAX   := 4,  \
+                                                 IS_POSITIVE_SUBNORMAL_MIN  := 4, IS_NEGATIVE_SUBNORMAL_MIN   := 4 };\
         } else {\
           soft operand_``IDX``_pattern[i] == IS_RAND;\
         }\
@@ -62,22 +65,34 @@
           sign_``IDX``[i] == 1'b1; exp_``IDX``[i] == 8'hFE; mantissa_``IDX``[i][22:0] == 23'h7FFFFF;\
         }\
         if (operand_``IDX``_pattern[i] == IS_POSITIVE_MIN) {\
-          sign_``IDX``[i] == 1'b0; exp_``IDX``[i] == 8'h00; mantissa_``IDX``[i][22:0] == 23'h1;\
+          sign_``IDX``[i] == 1'b0; exp_``IDX``[i] == 8'h01; mantissa_``IDX``[i][22:0] == 23'h0;\
         }\
         if (operand_``IDX``_pattern[i] == IS_NEGATIVE_MIN) {\
+          sign_``IDX``[i] == 1'b1; exp_``IDX``[i] == 8'h01; mantissa_``IDX``[i][22:0] == 23'h0;\
+        }\
+        if (operand_``IDX``_pattern[i] == IS_POSITIVE_MIN_DIV2) {\
+          sign_``IDX``[i] == 1'b0; exp_``IDX``[i] == 8'h00; mantissa_``IDX``[i][22:0] == 23'h400000;\
+        }\
+        if (operand_``IDX``_pattern[i] == IS_NEGATIVE_MIN_DIV2) {\
+          sign_``IDX``[i] == 1'b1; exp_``IDX``[i] == 8'h00; mantissa_``IDX``[i][22:0] == 23'h400000;\
+        }\
+        if (operand_``IDX``_pattern[i] == IS_POSITIVE_SUBNORMAL_MAX) {\
+          sign_``IDX``[i] == 1'b0; exp_``IDX``[i] == 8'h00; mantissa_``IDX``[i][22:0] == 23'h7FFFFF;\
+        }\
+        if (operand_``IDX``_pattern[i] == IS_NEGATIVE_SUBNORMAL_MAX) {\
+          sign_``IDX``[i] == 1'b1; exp_``IDX``[i] == 8'h00; mantissa_``IDX``[i][22:0] == 23'h7FFFFF;\
+        }\
+        if (operand_``IDX``_pattern[i] == IS_POSITIVE_SUBNORMAL_MIN) {\
+          sign_``IDX``[i] == 1'b0; exp_``IDX``[i] == 8'h00; mantissa_``IDX``[i][22:0] == 23'h1;\
+        }\
+        if (operand_``IDX``_pattern[i] == IS_NEGATIVE_SUBNORMAL_MIN) {\
           sign_``IDX``[i] == 1'b1; exp_``IDX``[i] == 8'h00; mantissa_``IDX``[i][22:0] == 23'h1;\
         }\
-        if (operand_``IDX``_pattern[i] == IS_POSITIVE_SUBNORMAL) {\
-          sign_``IDX``[i] == 1'b0; exp_``IDX``[i] == 8'h00; mantissa_``IDX``[i][22:0] != 0;\
-        }\
-        if (operand_``IDX``_pattern[i] == IS_NEGATIVE_SUBNORMAL) {\
-          sign_``IDX``[i] == 1'b1; exp_``IDX``[i] == 8'h00; mantissa_``IDX``[i][22:0] != 0;\
-        }\
         if (operand_``IDX``_pattern[i] == IS_Q_NAN) {\
-          sign_``IDX``[i] == 1'b1; exp_``IDX``[i] == 8'hFF; mantissa_``IDX``[i][22] == 1'b1;\
+          sign_``IDX``[i] == 1'b0; exp_``IDX``[i] == 8'hFF; mantissa_``IDX``[i][22] == 1'b1;\
         }\
         if (operand_``IDX``_pattern[i] == IS_S_NAN) {\
-          sign_``IDX``[i] == 1'b1; exp_``IDX``[i] == 8'hFF; mantissa_``IDX``[i][22] == 1'b0; mantissa_``IDX``[i][21:0] != 0;\
+          sign_``IDX``[i] == 1'b0; exp_``IDX``[i] == 8'hFF; mantissa_``IDX``[i][22] == 1'b0; mantissa_``IDX``[i][21:0] != 0;\
         }\
         operand_``IDX[i] == {sign_``IDX``[i], exp_``IDX``[i], mantissa_``IDX``[i]};\
         solve operand_``IDX``_pattern[i] before sign_``IDX``[i];\
@@ -168,10 +183,11 @@
       instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [``OPERAND`` - %s - 32'h%8h] `", ``OPERAND``_pattern.name(), ``OPERAND``)};\
     end
 
-  // 22 always exclude list within fp stream
-  `define   EXCLUDE_INSTR_LIST      {JAL, JALR, BEQ, BNE, BLT, BGE, BLTU, BGEU, ECALL, EBREAK, \
-                                     DRET, MRET, URET, SRET, WFI, C_EBREAK, C_BEQZ, C_BNEZ, C_J, C_JAL, \
-                                     C_JR, C_JALR}
+  // 22 always exclude list within fp stream; 11 are related to hw-loop (total 33)
+  `define   EXCLUDE_INSTR_LIST      {JAL,  JALR, BEQ,  BNE,  BLT, BGE,      BLTU,   BGEU,   ECALL, EBREAK, \
+                                     DRET, MRET, URET, SRET, WFI, C_EBREAK, C_BEQZ, C_BNEZ, C_J,   C_JAL, \
+                                     C_JR, C_JALR, \
+                                     CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW, CV_BEQIMM, CV_BNEIMM}
 
   // refer Table 6-1 user manual
   `define   RV32I_INT_COMP_INSTR_LIST   {ADD, ADDI, SUB, LUI, AUIPC, SLL, SLLI, SRL, SRLI, SRA, SRAI, \

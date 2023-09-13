@@ -28,10 +28,15 @@
 
 class cv32e40p_instr_sequence extends riscv_instr_sequence;
 
+  cv32e40p_instr_gen_config    cv32e40p_cfg;
+
   `uvm_object_utils(cv32e40p_instr_sequence)
 
   function new (string name = "");
     super.new(name);
+    if(!uvm_config_db#(cv32e40p_instr_gen_config)::get(null, "*", "cv32e40p_instr_cfg", cv32e40p_cfg)) begin
+      `uvm_fatal(get_full_name(), "Cannot get cv32e40p_instr_gen_config")
+    end
   endfunction
 
   //Function: cv32e40p_instr_sequence::post_process_instr()

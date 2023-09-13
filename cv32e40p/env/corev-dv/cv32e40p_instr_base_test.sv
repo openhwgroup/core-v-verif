@@ -25,6 +25,8 @@
 
 class cv32e40p_instr_base_test extends corev_instr_base_test;
 
+  cv32e40p_instr_gen_config cv32e40p_cfg;
+
   `uvm_component_utils(cv32e40p_instr_base_test)
 
   function new(string name="", uvm_component parent=null);
@@ -32,16 +34,32 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
   endfunction
 
   virtual function void build_phase(uvm_phase phase);
+    cv32e40p_cfg = cv32e40p_instr_gen_config::type_id::create("cv32e40p_cfg");
+    uvm_config_db#(cv32e40p_instr_gen_config)::set(null, "*", "cv32e40p_instr_cfg", cv32e40p_cfg);
+    override_gen_config();
     override_instr_type();
     override_instr_sequence();
     override_asm_program_gen();
-    override_gen_config();
     override_compressed_instr();
     override_illegal_instr();
     override_privil_reg();
     override_debug_rom_gen();
     override_instr_stream();
     super.build_phase(phase);
+  endfunction
+
+  //Override randomize_cfg to randomize cv32e40p_instr_gen_config object
+  virtual function void randomize_cfg();
+    `DV_CHECK_RANDOMIZE_FATAL(cfg);
+
+    `DV_CHECK_RANDOMIZE_FATAL(cv32e40p_cfg);
+    `uvm_info(`gfn, $sformatf("cv32e40p_instr_gen_config is randomized:\n%0s",
+                    cv32e40p_cfg.sprint()), UVM_LOW)
+
+    cfg.copy(cv32e40p_cfg);
+
+    `uvm_info(`gfn, $sformatf("riscv_instr_gen_config is randomized:\n%0s",
+                    cfg.sprint()), UVM_LOW)
   endfunction
 
   virtual function void override_asm_program_gen();
@@ -84,20 +102,6 @@ class cv32e40p_instr_base_test extends corev_instr_base_test;
         end
       endcase
     end // TEST_OVERRIDE_RISCV_INSTR_STREAM
-    if ($value$plusargs("test_override_fp_instr_stream=%s", test_override_fp_instr_stream)) begin : TEST_OVERRIDE_FP_INSTR_STREAM
-      if (test_override_fp_instr_stream != "default") begin
-        `uvm_info(this.type_name, $sformatf("uvm_factory override stream to %s", test_override_fp_instr_stream), UVM_NONE);
-        case (test_override_fp_instr_stream)
-          "fp_n_mixed_instr":                 begin uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_fp_n_mixed_instr_stream::get_type()); end
-          "fp_n_mixed_instr_more_fdiv_fsqrt": begin uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_fp_n_mixed_instr_more_fdiv_fsqrt_stream::get_type()); end
-          "fp_w_special_operands":            begin uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_fp_w_special_operands_instr_stream::get_type()); end
-          "fp_w_prev_rd_as_operand":          begin uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_fp_w_prev_rd_as_operand_instr_stream::get_type()); end
-          "constraint_mc_fp":                 begin uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_constraint_mc_fp_instr_stream::get_type()); end
-          "fp_operand_forwarding":            begin uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_fp_operand_forwarding_instr_stream::get_type()); end
-          "fp_followed_by_csrr":              begin uvm_factory::get().set_type_override_by_type(cv32e40p_float_zfinx_base_instr_stream::get_type(),  cv32e40p_fp_followed_by_csrr_instr_stream::get_type()); end
-        endcase
-      end
-    end // TEST_OVERRIDE_FP_INSTR_STREAM
   endfunction
 
   virtual function void override_instr_sequence();

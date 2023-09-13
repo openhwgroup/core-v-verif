@@ -3,16 +3,6 @@ name: cv32e40pv2_ci_check
 description: Commit sanity for the cv32e40pv2
 
 builds:
-  clean_fw:
-    cmd: make clean-bsp clean_test_programs
-    dir: cv32e40p/sim/uvmt
-
-  # Cleaning previous clone of corev-dv
-  clean_corev-dv:
-    cmd: make clean_riscv-dv clone_riscv-dv
-    dir: cv32e40p/sim/uvmt
-
-  # One tb per configuration
   uvmt_cv32e40p_default:
     cmd: make comp comp_corev-dv
     cfg: default
@@ -93,7 +83,6 @@ builds:
     cfg: pulp_cluster_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
 
-# make sure that everything is compiling and running, with iss
 tests:
   hello-world:
     builds:
@@ -115,36 +104,29 @@ tests:
       - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_2cyclat
     description: UVM Hello World Test
     dir: cv32e40p/sim/uvmt
-    iss: 1
-    cov: 0
     cmd: make test COREV=YES TEST=hello-world
+    num: 1
 
   interrupt_test:
     build: uvmt_cv32e40p_pulp_fpu
     description: Interrupt directed on PULP+FPU HW
     dir: cv32e40p/sim/uvmt
-    iss: 1
-    cov: 0
     cmd: make test COREV=YES TEST=interrupt_test
+    num: 1
 
   debug_test:
     build: uvmt_cv32e40p_pulp_fpu
     dir: cv32e40p/sim/uvmt
-    iss: 1
-    cov: 0
     cmd: make test COREV=YES TEST=debug_test
+    num: 1
 
-  corev_rand_fp_instr_sanity_test_nonzfinx:
-    testname: corev_rand_fp_instr_sanity_test
+  corev_rand_fp_instr_sanity_test:
     builds:
       - uvmt_cv32e40p_pulp_fpu
       - uvmt_cv32e40p_pulp_fpu_1cyclat
       - uvmt_cv32e40p_pulp_fpu_2cyclat
     test_cfg: floating_pt_instr_en
     dir: cv32e40p/sim/uvmt
-    iss: 1
-    cov: 0
-    # cmd: make gen_corev-dv test COREV=YES TEST=corev_sanity_fp_instr_test
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
 
   corev_rand_fp_instr_sanity_test_zfinx:
@@ -153,16 +135,16 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-    test_cfg: floating_pt_zfinx_instr_en
     dir: cv32e40p/sim/uvmt
-    iss: 1
-    cov: 0
-    # cmd: make gen_corev-dv test COREV=YES TEST=corev_sanity_fp_zfinx_instr_test
-    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000" 
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    test_cfg: floating_pt_zfinx_instr_en
 
   corev_rand_pulp_instr_test:
     build: uvmt_cv32e40p_pulp
     dir: cv32e40p/sim/uvmt
-    iss: 1
-    cov: 0
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_instr_test
+
+  corev_rand_pulp_hwloop_test:
+    build: uvmt_cv32e40p_pulp
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_hwloop_test

@@ -22,26 +22,32 @@
 ###############################################################################
 
 # Executables
-VLIB   					= vlib
-VMAP 					= vmap
-VLOG 					= $(CV_SIM_PREFIX) vlog
-VOPT 					= $(CV_SIM_PREFIX) vopt
-VSIM 					= $(CV_SIM_PREFIX) vsim
-VISUALIZER				= $(CV_TOOL_PREFIX) visualizer
+VLIB                    = vlib
+VMAP                    = vmap
+VLOG                    = $(CV_SIM_PREFIX) vlog
+VOPT                    = $(CV_SIM_PREFIX) vopt
+VSIM                    = $(CV_SIM_PREFIX) vsim
+VISUALIZER              = $(CV_TOOL_PREFIX) visualizer
 VCOVER                  = vcover
 
 # Paths
-VWORK     				= work
+VWORK                   = work
 VSIM_COV_MERGE_DIR      = $(SIM_CFG_RESULTS)/merged
-UVM_HOME               ?= $(abspath $(shell which $(VLIB))/../../verilog_src/uvm-1.2/src)
-DPI_INCLUDE            ?= $(abspath $(shell which $(VLIB))/../../include)
+UVM_HOME                ?= $(abspath $(shell which $(VLIB))/../../verilog_src/uvm-1.2/src)
+DPI_INCLUDE             ?= $(abspath $(shell which $(VLIB))/../../include)
 USES_DPI = 1
 
 # Default flags
+VSIM_COV_ONLY_PASS_TEST ?= YES
 VSIM_LOCAL_MODELSIMINI  ?= YES
+VOPT_CODE_COV_DUT_ONLY  ?= YES
 VSIM_USER_FLAGS         ?=
-VOPT_COV  				?= +cover=setf+$(RTLSRC_VLOG_TB_TOP).
-VSIM_COV 				?= -coverage
+ifeq ($(call IS_YES,$(VOPT_CODE_COV_DUT_ONLY)),YES)
+VOPT_COV                ?= +cover=bcsetf+$(RTLSRC_VLOG_CORE_TOP).
+else
+VOPT_COV                ?= +cover=setf+$(RTLSRC_VLOG_TB_TOP).
+endif
+VSIM_COV                ?= -coverage
 VOPT_WAVES_ADV_DEBUG    ?= -designfile design.bin
 VSIM_WAVES_ADV_DEBUG    ?= -qwavedb=+signal+assertion+ignoretxntime+msgmode=both
 VSIM_WAVES_DO           ?= $(VSIM_SCRIPT_DIR)/waves.tcl
@@ -197,7 +203,7 @@ VSIM_COREVDV_SIM_PREREQ = comp_corev-dv
 endif
 
 # option to use local modelsim.ini file
-ifeq ($(call IS_NO,$(VSIM_LOCAL_MODELSIMINI)),YES)
+ifeq ($(call IS_YES,$(VSIM_LOCAL_MODELSIMINI)),YES)
 gen_corev-dv: VSIM_FLAGS += -modelsimini $(SIM_COREVDV_RESULTS)/modelsim.ini
 run: 					VSIM_FLAGS += -modelsimini modelsim.ini
 endif
@@ -207,7 +213,12 @@ endif
 ifeq ($(call IS_YES,$(COV)),YES)
 VOPT_FLAGS  += $(VOPT_COV)
 VSIM_FLAGS  += $(VSIM_COV)
-VSIM_FLAGS  += -do 'set TEST ${VSIM_TEST}; set TEST_CONFIG $(CFG); set TEST_SEED $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
+# VSIM_FLAGS  += -do 'set TEST ${VSIM_TEST}; set TEST_CONFIG $(CFG); set TEST_SEED $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
+ifneq ($(TEST_CFG_FILE_NAME),)
+VSIM_FLAGS  += -do 'setenv TEST_COV ${TEST}; setenv TEST_CONFIG_COV $(CFG); setenv TEST_CFG_FILE_COV _$(TEST_CFG_FILE_NAME); setenv TEST_SEED_COV $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
+else
+VSIM_FLAGS  += -do 'setenv TEST_COV ${TEST}; setenv TEST_CONFIG_COV $(CFG); setenv TEST_CFG_FILE_COV ""; setenv TEST_SEED_COV $(RNDSEED); source $(VSIM_SCRIPT_DIR)/cov.tcl'
+endif
 endif
 
 ################################################################################
@@ -244,8 +255,8 @@ endif
 COV_FLAGS =
 COV_REPORT = cov_report
 COV_MERGE_TARGET =
-COV_MERGE_FIND = find $(SIM_RESULTS) -type f -name "*.ucdb" | grep -v merged.ucdb
-COV_MERGE_FLAGS=merge -testassociated -verbose -64 -out merged.ucdb -inputs ucdb.list
+COV_MERGE_FIND  = find $(SIM_CFG_RESULTS) -type f -name "*.ucdb" -exec echo {} > $(VSIM_COV_MERGE_DIR)/ucdb.list \;
+COV_MERGE_FLAGS = merge -testassociated -verbose -64 -out merged.ucdb -inputs ucdb.list
 
 ifeq ($(call IS_YES,$(MERGE)),YES)
 COV_DIR=$(VSIM_COV_MERGE_DIR)
@@ -272,15 +283,32 @@ endif
 endif
 endif
 
-ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES)
+# to filter out failing test from ucdb merging
+ifeq ($(call IS_YES,$(COV)),YES)
+ifeq ($(call IS_YES,$(VSIM_COV_ONLY_PASS_TEST)),YES)
+COV_TEST = cd $(RUN_DIR) && $(VSIM) -c -viewcov $(TEST_RUN_NAME).ucdb -do "coverage clear; coverage attr -name TESTSTATUS -value 2; coverage save $(TEST_RUN_NAME).ucdb; exit " ;
+# COV_TEST = mv $(RUN_DIR)/$(TEST_RUN_NAME).ucdb $(RUN_DIR)/$(TEST_RUN_NAME).ucdb_FAIL;
+else
+COV_TEST = :;
+endif
+else
+COV_TEST = :;
+endif
+
+################################################################################
+# Check simulation log
+#ifeq ($(call IS_YES,$(CHECK_SIM_RESULT)),YES) OR ifeq ($(call IS_YES,$(COV)),YES)
+ifneq ($(filter YES, $(call IS_YES,$(CHECK_SIM_RESULT)) $(call IS_YES,$(COV))),)
 POST_TEST = \
 	@if grep -q "Errors:\s\+0" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
-	if grep -q "SIMULATION FAILED" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
-		exit 1; \
+        if grep -q "SIMULATION PASSED" $(RUN_DIR)/vsim-$(VSIM_TEST).log; then \
+            exit 0; \
+        else \
+            $(COV_TEST) \
+            exit 1; \
+        fi \
 	else \
-		exit 0; \
-	fi \
-	else \
+		$(COV_TEST) \
 		exit 1; \
 	fi
 endif
@@ -688,10 +716,9 @@ waves:
 cov_merge:
 	$(MKDIR_P) $(VSIM_COV_MERGE_DIR)
 	cd $(VSIM_COV_MERGE_DIR) && \
-		$(COV_MERGE_FIND) > $(VSIM_COV_MERGE_DIR)/ucdb.list
+		$(COV_MERGE_FIND)
 	cd $(VSIM_COV_MERGE_DIR) && \
-		$(VCOVER) \
-			$(COV_MERGE_FLAGS)
+		[ -s $(VSIM_COV_MERGE_DIR)/ucdb.list ] && $(VCOVER) $(COV_MERGE_FLAGS) || echo "ucdb.list is empty"
 cov: $(COV_MERGE_TARGET)
 	cd $(COV_DIR) && \
 		$(VSIM) \

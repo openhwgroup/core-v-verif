@@ -4,12 +4,11 @@
 
 {% import 'regress_macros.j2' as regress_macros -%}
 
-
-<rmdb loadtcl="getUCDBFilename getParameterByPriority getParameterByPriorityYesOrNo">
+<rmdb version="1.0" toprunnables="{{project}}" loadtcl="getUCDBFilename getParameterByPriority getParameterByPriorityYesOrNo getTestName getTestCfgName">
     <usertcl name="getUCDBFilename">
         proc getUCDBFilename {base_name test_cfg} {
             if {[string trim $test_cfg] != ""} {
-                return [concat $base_name "-" $test_cfg ]
+              return ${base_name}_${test_cfg}
             }
             return $base_name
         }
@@ -37,6 +36,24 @@
         }
     </usertcl>
 
+    <usertcl name="getTestCfgName">
+        proc getTestCfgName { test_config_from_cmd } {
+            return [join [lsort -unique [split $test_config_from_cmd ",+ "]] "__"]
+        }
+    </usertcl>
+
+    <usertcl name="getTestName">
+        proc getTestName {testname config test_config seed} {
+            if {$test_config == ""} {
+                return [format "%s" ${testname}__${config}__$seed]
+            } else {
+                set test_list_name [getTestCfgName $test_config]
+                return [format "%s" ${testname}__${test_list_name}__${config}__$seed]
+            }
+
+        }
+    </usertcl>
+
     <runnable name="{{project}}" type="group" sequential="yes">
         <parameters>
             <parameter name="results_sim_path">{{results_path}}/{{simulator}}_results</parameter>
@@ -45,16 +62,21 @@
 {% for r in regressions %}
             <member>{{r.name}}</member>
 {% endfor %}
-            <member>report</member>
         </members>
     </runnable>
 
 
 {% for r in regressions %}
+    <!-- =========== Regression =========== START -->
     <runnable name="{{r.name}}" type="group" sequential="yes">
         <members>
 {% for build in r.get_builds() %}
             <member>{{build.name}}</member>
+{% endfor %}
+{% for build in r.get_builds() %}
+{% if coverage != false %}
+            <member>cov_report_{{build.name}}</member>
+{% endif %}
 {% endfor %}
         </members>
         <preScript launch="exec">
@@ -65,6 +87,7 @@
     </runnable>
 
 
+    <!-- =========== Builds =========== START -->
 {% for build in r.get_builds() %}
         <runnable name="{{build.name}}" type="group" sequential="no">
             <!-- set of parameters to be given to leaf runnables -->
@@ -81,22 +104,28 @@
 {% endfor %}
             </members>
             <preScript launch="exec">
+                <command> echo "BUILD RUNCMD: {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results)}} {{makeargs}}"</command>
                 <command> cd {{build.abs_dir}} &amp;&amp; {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results)}} {{makeargs}} </command>
             </preScript>
         </runnable>
-
 {% endfor %}
 
+    <!-- =========== Builds =========== END -->
 
+
+    <!-- =========== Tests =========== START -->
 {% for k,t in unique_tests.items() %}
-            <runnable name="{{t.name}}" type="task" repeat="{{t.num}}">
+            <runnable name="{{t.name}}" type="task" foreach="(%seeds%)">
                 <parameters>
-                    <parameter name="t_cfg"         type="tcl">[getParameterByPriority "{{config}}" "{{t.cfg}}" "(%build_config:%)"]</parameter>
-                    <parameter name="t_test_cfg"    type="tcl">[getParameterByPriority "" "{{t.test_cfg}}" "(%build_test_cfg:%)"]</parameter>
-                    <parameter name="t_iss"         type="tcl">[getParameterByPriorityYesOrNo "{{iss}}" "{{t.iss}}" "(%build_iss:%)"]</parameter>
-                    <parameter name="t_cov"         type="tcl">[getParameterByPriorityYesOrNo "{{coverage}}" "{{t.cov}}" "(%build_cov:%)"]</parameter>
-                    <parameter name="ucdb_path"     type="tcl">[file join "(%results_sim_path%)" "(%t_cfg%)" "{{t.testname}}" "(%t_test_cfg:%)" "(%ITERATION%)"]</parameter>
-                    <parameter name="ucdb_basename" type="tcl">[getUCDBFilename "{{t.testname}}" "(%t_test_cfg:%)"]</parameter>
+                    <parameter name="t_cfg"           type="tcl">[getParameterByPriority "{{config}}" "{{t.cfg}}" "(%build_config:%)"]</parameter>
+                    <parameter name="t_test_cfg"      type="tcl">[getParameterByPriority "" "{{t.test_cfg}}" "(%build_test_cfg:%)"]</parameter>
+                    <parameter name="t_test_cfg_name" type="tcl">[getTestCfgName (%t_test_cfg:%)]</parameter>
+                    <parameter name="t_iss"           type="tcl">[getParameterByPriorityYesOrNo "{{iss}}" "{{t.iss}}" "(%build_iss:%)"]</parameter>
+                    <parameter name="t_cov"           type="tcl">[getParameterByPriorityYesOrNo "{{coverage}}" "{{t.cov}}" "(%build_cov:%)"]</parameter>
+                    <parameter name="seeds"           type="tcl">[GetRandomValues {{t.num}}]</parameter>
+                    <parameter name="ucdb_path"       type="tcl">[file join "(%results_sim_path%)" "(%t_cfg%)" "{{t.testname}}" "(%t_test_cfg_name:%)" "(%ITERATION%)"]</parameter>
+                    <parameter name="testname"        type="tcl">[getTestName "{{t.testname}}" "(%t_cfg%)" "(%t_test_cfg_name:%)" "(%ITERATION%)"]</parameter>
+                    <parameter name="ucdb_basename"   type="tcl">[getUCDBFilename "{{t.testname}}" "(%t_test_cfg_name:%)"]</parameter>
 {% if coverage != false %}
                     <parameter name="ucdbfile" >(%ucdb_path%)/(%ucdb_basename%).ucdb</parameter>
 {% endif %}
@@ -108,38 +137,48 @@
                 </method>
 {% endif %}
                 <execScript launch="exec" usestderr="no">
-                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} CHECK_SIM_LOG=(%log_file%) COMP=0 CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR={{t.simulator}} USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=random {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
+                    <command> echo " TEST RUNCMD: {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} COMP=0 CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR={{t.simulator}} USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=(%ITERATION%) {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}"</command>
+                    <command> echo "     logfile: (%log_file%)"</command>
+                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} CHECK_SIM_LOG=(%log_file%) COMP=0 CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR={{t.simulator}} USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=(%ITERATION%) {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
                 </execScript>
             </runnable>
 
 {% endfor %}
+    <!-- =========== Tests =========== END -->
 
 
 {% endfor %}
+    <!-- =========== Regression =========== END -->
 
-    <!-- =========== Reporting =========== -->
-    <runnable name="report" type="group">
+
+    <!-- =========== Coverage Reports =========== START -->
+{% for r in regressions %}
+{% for build in r.get_builds() %}
+    <runnable name="cov_report_{{build.name}}" type="group">
         <parameters>
-            <parameter name="merged_file">(%results_sim_path%)/merged/merged.ucdb</parameter>
+          <parameter name="merged_file">(%results_sim_path%)/{{build.cfg}}/merged/merged.ucdb</parameter>
             <!-- <parameter name="tplan_file">(%results_sim_path%)/merged.ucdb</parameter> -->
         </parameters>
 {% if coverage != false %}
         <preScript launch="exec">
-            <command> cd {{results_path}} &amp;&amp; make cov_merge SIMULATOR={{simulator}}</command>
+            <command> cd {{results_path}} &amp;&amp; make cov_merge CFG={{build.cfg}} SIMULATOR={{simulator}}</command>
         </preScript>
 {% endif %}
         <members>
-            <member>html_report</member>
+            <member>html_report_{{build.name}}</member>
         </members>
         <postScript mintimeout="3000">
-            <command>vrun -vrmdata (%DATADIR%) -status -full -html -htmldir (%DATADIR%)/vrun</command>
+            <command>vrun -vrmdata (%DATADIR%) -status -testname -full -html -htmldir (%DATADIR%)/vrun</command>
         </postScript>
     </runnable>
-
-        <runnable name="html_report" type="task">
-            <execScript>
-                <command> if {[file exists (%merged_file%)]} {vcover report -annotate -testdetails -details -html (%merged_file%) -output [file join {{results_path}} cov_html_summary]} </command>
+    <runnable name="html_report_{{build.name}}" type="task">
+        <execScript>
+          <command> if {[file exists (%merged_file%)]} {vcover report -annotate -testdetails -details -html (%merged_file%) -output (%results_sim_path%)/{{build.cfg}}/cov_html_summary} </command>
             </execScript>
-        </runnable>
+    </runnable>
+
+{% endfor %}
+{% endfor %}
+    <!-- =========== Coverage Reports =========== END -->
 
 </rmdb>

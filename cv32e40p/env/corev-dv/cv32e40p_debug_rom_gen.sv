@@ -28,6 +28,7 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
     virtual function void gen_program();
         string sub_program_name[$] = {};
         cv32e40p_instr_gen_config cfg_corev;
+        privileged_reg_t status = MSTATUS;
 
         // CORE-V Addition
         // Insert section info so linker can place
@@ -71,7 +72,7 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
 
             // Need to save off FPRs incase f-extension instructions are used to avoid modifying program flow
             if(cfg.enable_floating_point && !cfg.enable_fp_in_x_regs) begin
-                push_fpr_to_debugger_stack(cfg_corev, debug_main);
+                push_fpr_to_debugger_stack(cfg_corev, debug_main, status);
             end
             // Signal that the core entered debug rom only if the rom is actually
             // being filled with random instructions to prevent stress tests from
@@ -124,7 +125,7 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
 
             //pop FPRs for f-extension instructions
             if(cfg.enable_floating_point && !cfg.enable_fp_in_x_regs) begin
-                pop_fpr_from_debugger_stack(cfg_corev, debug_end);
+                pop_fpr_from_debugger_stack(cfg_corev, debug_end, status);
             end
 
             pop_gpr_from_debugger_stack(cfg_corev, debug_end);

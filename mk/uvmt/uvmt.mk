@@ -95,10 +95,10 @@ export RUN_INDEX       ?= 0
 
 # Common test runtime plusargs from external file, used as test-configuration
 # Test Name with test-configuration
-TEST_RUN_NAME =  $(if $(TEST_CFG_FILE),$(TEST)_$(TEST_CFG_FILE),$(TEST))
-# Build unique _suffix based on TEST_CFG_FILE, for unique test log files and ucdb file names
-ifneq ($(TEST_CFG_FILE),)
-export TEST_CFG_FILE_SUFFIX=_$(TEST_CFG_FILE)
+TEST_RUN_NAME =  $(if $(TEST_CFG_FILE_NAME),$(TEST)_$(TEST_CFG_FILE_NAME),$(TEST))
+# Build unique _suffix based on TEST_CFG_FILE_NAME, for unique test log files and ucdb file names
+ifneq ($(TEST_CFG_FILE_NAME),)
+export TEST_CFG_FILE_SUFFIX=_$(TEST_CFG_FILE_NAME)
 endif
 
 # Common output directories
@@ -106,7 +106,7 @@ SIM_RESULTS             ?= $(if $(CV_RESULTS),$(abspath $(CV_RESULTS))/$(SIMULAT
 SIM_CFG_RESULTS          = $(SIM_RESULTS)/$(CFG)
 SIM_COREVDV_RESULTS      = $(SIM_CFG_RESULTS)/corev-dv
 SIM_LDGEN_RESULTS        = $(SIM_CFG_RESULTS)/$(LDGEN)
-SIM_TEST_RESULTS         = $(if $(TEST_CFG_FILE),$(SIM_CFG_RESULTS)/$(TEST)/$(TEST_CFG_FILE),$(SIM_CFG_RESULTS)/$(TEST))
+SIM_TEST_RESULTS         = $(if $(TEST_CFG_FILE_NAME),$(SIM_CFG_RESULTS)/$(TEST)/$(TEST_CFG_FILE_NAME),$(SIM_CFG_RESULTS)/$(TEST))
 SIM_RUN_RESULTS          = $(SIM_TEST_RESULTS)/$(RUN_INDEX)
 SIM_TEST_PROGRAM_RESULTS = $(SIM_RUN_RESULTS)/test_program
 SIM_BSP_RESULTS          = $(SIM_TEST_PROGRAM_RESULTS)/bsp
@@ -187,6 +187,7 @@ export TBSRC_HOME = $(CORE_V_VERIF)/$(CV_CORE_LC)/tb
 
 SIM_LIBS    := $(CORE_V_VERIF)/lib/sim_libs
 
+RTLSRC_VLOG_CORE_TOP := $(CV_CORE_LC)_top
 RTLSRC_VLOG_TB_TOP	:= $(basename $(notdir $(TBSRC_TOP)))
 RTLSRC_VOPT_TB_TOP	:= $(addsuffix _vopt, $(RTLSRC_VLOG_TB_TOP))
 

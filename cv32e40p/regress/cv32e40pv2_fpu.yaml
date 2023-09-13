@@ -17,19 +17,16 @@ builds:
     cfg: pulp_fpu
     dir: cv32e40p/sim/uvmt
     iss: 0
-    cov: 0
   uvmt_cv32e40p_pulp_fpu_1cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu_1cyclat
     dir: cv32e40p/sim/uvmt
     iss: 0
-    cov: 0
   uvmt_cv32e40p_pulp_fpu_2cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu_2cyclat
     dir: cv32e40p/sim/uvmt
     iss: 0
-    cov: 0
 
   # zfinx related tests
   uvmt_cv32e40p_pulp_fpu_zfinx:
@@ -37,19 +34,16 @@ builds:
     cfg: pulp_fpu_zfinx
     dir: cv32e40p/sim/uvmt
     iss: 0
-    cov: 0
   uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu_zfinx_1cyclat
     dir: cv32e40p/sim/uvmt
     iss: 0
-    cov: 0
   uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat:
     cmd: make comp comp_corev-dv
     cfg: pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
     iss: 0
-    cov: 0
 
 # run many
 tests:
@@ -64,7 +58,6 @@ tests:
     test_cfg: floating_pt_instr_en
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
-    num: 1
 
   corev_rand_fp_instr_test_nonzfinx:
     testname: corev_rand_fp_instr_test
@@ -76,7 +69,6 @@ tests:
     test_cfg: floating_pt_instr_en
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
-    num: 1
 
   corev_rand_fp_instr_mlt_cyc_test_nonzfinx:
     testname: corev_rand_fp_instr_mlt_cyc_test
@@ -88,7 +80,6 @@ tests:
     test_cfg: floating_pt_instr_en
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_mlt_cyc_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
-    num: 1
 
   corev_rand_fp_instr_w_special_ops_test_nonzfinx:
     testname: corev_rand_fp_instr_w_special_ops_test
@@ -100,7 +91,6 @@ tests:
     test_cfg: floating_pt_instr_en
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_w_special_ops_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
-    num: 1
 
   corev_rand_fp_instr_data_fwd_test_nonzfinx:
     testname: corev_rand_fp_instr_data_fwd_test
@@ -112,7 +102,6 @@ tests:
     test_cfg: floating_pt_instr_en
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_data_fwd_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
-    num: 1
 
   # zfinx related tests
   corev_rand_fp_instr_sanity_test_zfinx:
@@ -125,7 +114,6 @@ tests:
     test_cfg: floating_pt_zfinx_instr_en
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000" 
-    num: 1
 
   corev_rand_fp_instr_test_zfinx:
     testname: corev_rand_fp_instr_test
@@ -137,7 +125,6 @@ tests:
     test_cfg: floating_pt_zfinx_instr_en
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
-    num: 1
 
   corev_rand_fp_instr_mlt_cyc_test_zfinx:
     testname: corev_rand_fp_instr_mlt_cyc_test
@@ -149,7 +136,6 @@ tests:
     test_cfg: floating_pt_zfinx_instr_en
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_mlt_cyc_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
-    num: 1
 
   corev_rand_fp_instr_w_special_ops_test_zfinx:
     testname: corev_rand_fp_instr_w_special_ops_test
@@ -161,7 +147,6 @@ tests:
     test_cfg: floating_pt_zfinx_instr_en
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_w_special_ops_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
-    num: 1
 
   corev_rand_fp_instr_data_fwd_test_zfinx:
     testname: corev_rand_fp_instr_data_fwd_test
@@ -173,7 +158,6 @@ tests:
     test_cfg: floating_pt_zfinx_instr_en
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_data_fwd_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
-    num: 1
 
 
 # Info:
@@ -182,7 +166,4 @@ tests:
 # 3) use below commands to generate regression file. e.g below for vrun rmdb file
 #   - default (follow yaml settings): %./cv_regress --rmdb --file=<test>.yaml --outfile=<test>.rmdb --simulator=vsim
 #   - override                      : %./cv_regress --rmdb --file=<test>.yaml --outfile=<test>.rmdb --simulator=vsim --iss=1 --cov --num=2
-# 4) important switches that should be considered during overriding: --cov, --iss and --num
-#
-# potantial issues?
-# 1) the merged ucdb - how it is hanndle in this case
+# 4) important switches commonly use together with cmd to run with this yaml file: --cov, --iss=<1/0> and --num=<test iteration>

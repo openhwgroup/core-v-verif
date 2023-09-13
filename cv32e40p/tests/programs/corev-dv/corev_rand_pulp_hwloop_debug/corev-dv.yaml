@@ -10,7 +10,14 @@ description: >
 plusargs: >
     +instr_cnt=1000
     +num_of_sub_program=0
-    +directed_instr_0=cv32e40p_xpulp_hwloop_base_stream,1
+    +insert_rand_directed_instr_stream=1
+    +test_rand_directed_instr_stream_num=6
+    +rand_directed_instr_0=cv32e40p_xpulp_hwloop_base_stream,1
+    +rand_directed_instr_1=cv32e40p_xpulp_hwloop_base_stream,1
+    +rand_directed_instr_2=cv32e40p_xpulp_short_hwloop_stream,1
+    +rand_directed_instr_3=cv32e40p_xpulp_long_hwloop_stream,1
+    +rand_directed_instr_4=cv32e40p_xpulp_hwloop_isa_stress_stream,1
+    +rand_directed_instr_5=cv32e40p_xpulp_hwloop_exception,1
     +no_fence=1
     +no_data_page=0
     +randomize_csr=1
@@ -18,12 +25,11 @@ plusargs: >
     +boot_mode=m
     +no_csr_instr=0
     +no_wfi=1
-    +no_ebreak=1
     +no_dret=1
     +enable_misaligned_instr=1
     +enable_ebreak_in_debug_rom=0
-    +set_dcsr_ebreak=0
     +test_override_riscv_instr_stream=1
     +test_override_riscv_instr_sequence=1
-    +enable_debug_single_step=0
     +gen_debug_section=1
+    +is_hwloop_test=1
+    +include_xpulp_instr_in_debug_rom

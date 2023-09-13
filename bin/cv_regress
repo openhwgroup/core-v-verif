@@ -154,14 +154,24 @@ def read_file(args, file):
         if not test.builds and test.build:
             test.builds = [ test.build ]
 
+        if args.force_test_cfg:
+            test.test_cfg = args.force_test_cfg
+        if args.add_test_cfg:
+            arg_list = [test.test_cfg if hasattr(test, 'test_cfg') else "", args.add_test_cfg]
+            test.test_cfg = ",".join(a for a in arg_list if a)
+
         # Determine if a test is valid, skip for compliance tests
         # Since it is not possible to determine apriori if a compliance test is valid
         if not 'compliance' in test.cmd:
             check_valid_test(args.project, test.testname)
 
         # Determine if a test is indexed for setting test iterations
-        if args.num:
-            test.num = int(args.num)
+        # if num is not specified in the yaml, it can be overriden by args.num or set to 1 to avoid issues
+        # else, if it is not set to 1 (unique), it can be overriden by args.num if argument is defined
+        if test.num == None:
+            test.num = int(args.num or 1)
+        elif test.num != 1:
+            test.num = int(args.num or test.num)
 
         regression.add_test(test)
 
@@ -193,6 +203,8 @@ parser.add_argument('--results', help='Set a non-standard results directory')
 parser.add_argument('-s', '--simulator', help='Select simulator', choices=VALID_SIMULATORS, default=DEFAULT_SIMULATOR)
 parser.add_argument('-c', '--cov', help='Enable coverage', action='store_true')
 parser.add_argument('--cfg', default=None, help='Override configuration for all builds and tests in regression')
+parser.add_argument('--force_test_cfg', default=None, help='Override test_cfg file(s) for all builds and tests in regression. Each cfg file should be separated by a comma')
+parser.add_argument('--add_test_cfg', default=None, help='Additional test_cfg file(s) for all builds and tests in regression. Each cfg file should be separated by a comma')
 parser.add_argument('--iss', default=None, help='Force USE_ISS flag to each test run')
 parser.add_argument('--parallel', default=DEFAULT_PARALLEL, help='For VSIF only, set number of parallel jobs')
 parser.add_argument('-m', '--metrics', help='Select Metrics waves output', action='store_true')

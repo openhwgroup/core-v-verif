@@ -1,0 +1,207 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Header
+name: cv32e40pv2_pulp_instr
+description: regression for CV32E40Pv2, focused on simple PULP instructions excluding hwloop, debug, interrupts, fpu instr, etc.
+
+# List of builds
+builds:
+  clean_fw:
+    cmd: make clean-bsp clean_test_programs
+    dir: cv32e40p/sim/uvmt
+  clean_corev-dv:
+    cmd: make clean_riscv-dv clone_riscv-dv
+    dir: cv32e40p/sim/uvmt
+  uvmt_cv32e40p:
+    cmd: make comp comp_corev-dv
+    dir: cv32e40p/sim/uvmt
+    cfg: pulp
+
+# ====================================================================================
+# List of tests
+tests:
+  # ====================================================================================
+  # V2 PULP tests
+  # ====================================================================================
+  corev_rand_pulp_hwloop_test:
+    build: uvmt_cv32e40p
+    description: corev_rand_pulp_hwloop_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+
+  corev_rand_pulp_instr_test:
+    build: uvmt_cv32e40p
+    description: corev_rand_pulp_instr_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+
+  corev_rand_pulp_simd_instr_test:
+    build: uvmt_cv32e40p
+    description: corev_rand_pulp_simd_instr_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_simd_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+
+  corev_rand_pulp_mac_instr_test:
+    build: uvmt_cv32e40p
+    description: corev_rand_pulp_mac_instr_test
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_mac_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+
+  pulp_hardware_loop:
+    build: uvmt_cv32e40p
+    description: pulp_hardware_loop directed test
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_hardware_loop
+    num: 1
+
+  pulp_hardware_loop_interrupt_test:
+    build: uvmt_cv32e40p
+    description: pulp_hardware_loop directed test
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_hardware_loop_interrupt_test
+    num: 1
+
+  # pulp_hardware_loop_debug_test:
+  #   build: uvmt_cv32e40p
+  #   description: pulp_hardware_loop directed test
+  #   dir: cv32e40p/sim/uvmt
+  #   cmd: make test COREV=YES TEST=pulp_hardware_loop_debug_test
+  #   num: 1
+
+# ====================================================================================
+# V1 legacy pulp tests
+# ====================================================================================
+
+  pulp_bit_manipulation:
+    build: uvmt_cv32e40p
+    description: pulp_bit_manipulation legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_bit_manipulation
+    num: 1
+
+  pulp_general_alu:
+    build: uvmt_cv32e40p
+    description: pulp_general_alu legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_general_alu
+    num: 1
+
+  pulp_immediate_branching:
+    build: uvmt_cv32e40p
+    description: pulp_immediate_branching legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_immediate_branching
+    num: 1
+
+  pulp_multiply_accumulate:
+    build: uvmt_cv32e40p
+    description: pulp_multiply_accumulate legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_multiply_accumulate
+    num: 1
+
+  pulp_post_increment_load_store:
+    build: uvmt_cv32e40p
+    description: pulp_post_increment_load_store legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_post_increment_load_store
+    num: 1
+
+  pulp_vectorial_add_sub:
+    build: uvmt_cv32e40p
+    description: pulp_vectorial_add_sub legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_vectorial_add_sub
+    num: 1
+
+  pulp_vectorial_avg:
+    build: uvmt_cv32e40p
+    description: pulp_vectorial_avg legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_vectorial_avg
+    num: 1
+
+  pulp_vectorial_bit_manip:
+    build: uvmt_cv32e40p
+    description: pulp_vectorial_bit_manip legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_vectorial_bit_manip
+    num: 1
+
+  pulp_vectorial_bitwise:
+    build: uvmt_cv32e40p
+    description: pulp_vectorial_bitwise legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_vectorial_bitwise
+    num: 1
+
+  pulp_vectorial_comparison_1:
+    build: uvmt_cv32e40p
+    description: pulp_vectorial_comparison_1 legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_vectorial_comparison_1
+    num: 1
+
+  pulp_vectorial_comparison_2:
+    build: uvmt_cv32e40p
+    description: pulp_vectorial_comparison_2 legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_vectorial_comparison_2
+    num: 1
+
+  pulp_vectorial_comparison_3:
+    build: uvmt_cv32e40p
+    description: pulp_vectorial_comparison_3 legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_vectorial_comparison_3
+    num: 1
+
+  pulp_vectorial_complex:
+    build: uvmt_cv32e40p
+    description: pulp_vectorial_complex legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_vectorial_complex
+    num: 1
+
+  pulp_vectorial_dot_product_1:
+    build: uvmt_cv32e40p
+    description: pulp_vectorial_dot_product_1 legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_vectorial_dot_product_1
+    num: 1
+
+  pulp_vectorial_dot_product_2:
+    build: uvmt_cv32e40p
+    description: pulp_vectorial_dot_product_2 legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_vectorial_dot_product_2
+    num: 1
+
+  pulp_vectorial_max:
+    build: uvmt_cv32e40p
+    description: pulp_vectorial_max legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_vectorial_max
+    num: 1
+
+  pulp_vectorial_min:
+    build: uvmt_cv32e40p
+    description: pulp_vectorial_min legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_vectorial_min
+    num: 1
+
+  pulp_vectorial_shift:
+    build: uvmt_cv32e40p
+    description: pulp_vectorial_shift legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_vectorial_shift
+    num: 1
+
+  pulp_vectorial_shuffle_pack:
+    build: uvmt_cv32e40p
+    description: pulp_vectorial_shuffle_pack legacy v1, kept as it stresses corner cases
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_vectorial_shuffle_pack
+    num: 1

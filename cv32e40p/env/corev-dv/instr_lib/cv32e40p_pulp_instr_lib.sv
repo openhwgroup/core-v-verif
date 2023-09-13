@@ -97,24 +97,24 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
   rand riscv_reg_t          cv32e40p_avail_regs[];
   rand riscv_reg_t          cv32e40p_exclude_regs[];
 
-  int unsigned              num_of_reserved_regs;
-  riscv_reg_t               cv32e40p_reserved_regs[];
-
   riscv_instr_name_t        xpulp_exclude_instr[];
   riscv_instr_category_t    xpulp_include_category[];
+  riscv_instr_name_t        riscv_exclude_common_instr[];
   riscv_instr_name_t        riscv_exclude_instr[];
   riscv_instr_group_t       riscv_exclude_group[];
-  riscv_instr               riscv_instr_list[];
+
+  int unsigned              num_zfinx_gpr;
+  int unsigned              num_str_reserved_gpr;
+  riscv_reg_t               cv32e40p_zfinx_regs[];
 
   `uvm_object_utils_begin(cv32e40p_xpulp_rand_stream)
       `uvm_field_int(num_of_xpulp_instr, UVM_DEFAULT)
       `uvm_field_int(num_of_riscv_instr, UVM_DEFAULT)
       `uvm_field_int(num_of_avail_regs, UVM_DEFAULT)
-      `uvm_field_int(num_of_reserved_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_avail_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_exclude_regs, UVM_DEFAULT)
-      `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_reserved_regs, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_instr_name_t,xpulp_exclude_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_name_t,riscv_exclude_common_instr, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_instr_name_t,riscv_exclude_instr, UVM_DEFAULT)
       `uvm_field_sarray_enum(riscv_instr_group_t,riscv_exclude_group, UVM_DEFAULT)
   `uvm_object_utils_end
@@ -128,55 +128,66 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
   }
 
   constraint avail_regs_pulp_instr_c {
-    num_of_avail_regs inside {[8:25]};
+    if ((cfg.enable_fp_in_x_regs == 1) && (RV32ZFINX inside {riscv_instr_pkg::supported_isa})) {
+      num_of_avail_regs  >= 8;
+      num_of_avail_regs  <= (24 - num_zfinx_gpr - num_str_reserved_gpr);
+    } else {
+      num_of_avail_regs  >= 8;
+      num_of_avail_regs  <= (24 - num_str_reserved_gpr);
+    }
   }
 
   constraint cv32e40p_avail_regs_c {
     solve num_of_avail_regs before cv32e40p_exclude_regs;
     cv32e40p_avail_regs.size() == num_of_avail_regs;
-    cv32e40p_exclude_regs.size() == (32-num_of_reserved_regs-num_of_avail_regs);
+    cv32e40p_exclude_regs.size() == (32 - num_of_avail_regs - cfg.reserved_regs.size());
     unique {cv32e40p_exclude_regs};
     foreach(cv32e40p_exclude_regs[i]) {
-      !(cv32e40p_exclude_regs[i] inside {cv32e40p_reserved_regs});
+      !(cv32e40p_exclude_regs[i] inside {cfg.reserved_regs});
     }
   }
 
   function new(string name = "cv32e40p_xpulp_rand_stream");
     super.new(name);
 
-    num_of_reserved_regs = 5;
-    cv32e40p_reserved_regs = new[num_of_reserved_regs];
-    cv32e40p_reserved_regs = {ZERO, RA, SP, GP, TP};
-
   endfunction : new
 
   function void pre_randomize();
     super.pre_randomize();
+    uvm_default_printer.knobs.begin_elements = -1;
     //Exclude list for XPULP instruction generation part
-    xpulp_exclude_instr = {  CV_BEQIMM, CV_BNEIMM,
-                             CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI,
+    xpulp_exclude_instr = {  CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI,
                              CV_ELW,
                              C_ADDI16SP };
 
     //Exclude list for all random instruction generation part
-    riscv_exclude_instr = {  CV_BEQIMM, CV_BNEIMM,
-                             CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI,
-                             CV_ELW,
-                             C_ADDI16SP,
-                             WFI,
-                             URET, SRET, MRET, DRET,
-                             ECALL,
-                             JALR, JAL, C_JR, C_JALR, C_J, C_JAL};
+    riscv_exclude_common_instr = { CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI,
+                                   CV_ELW,
+                                   C_ADDI16SP,
+                                   WFI,
+                                   URET, SRET, MRET, DRET,
+                                   ECALL,
+                                   JALR, JAL, C_JR, C_JALR, C_J, C_JAL };
+
+    num_zfinx_gpr = cv32e40p_cfg.num_zfinx_reserved_reg;
+    cv32e40p_zfinx_regs = new[num_zfinx_gpr];
+    cv32e40p_zfinx_regs = cv32e40p_cfg.zfinx_reserved_gpr;
+    num_str_reserved_gpr = (!cv32e40p_cfg.no_load_store) ? 2 : 0; // TODO: add more randomization
 
   endfunction : pre_randomize
 
   function void post_randomize();
-    cv32e40p_exclude_regs = {cv32e40p_exclude_regs,cv32e40p_reserved_regs};
+    cv32e40p_exclude_regs = {cv32e40p_exclude_regs,cfg.reserved_regs};
+    cv32e40p_exclude_regs.sort();
+
+    if((cv32e40p_exclude_regs.size() < 2) || (cv32e40p_exclude_regs.size() > 25))
+      `uvm_fatal(this.get_type_name(), "cv32e40p_exclude_regs out of range")
+
     this.print();
     insert_rand_xpulp_instr(.no_branch(cfg.no_branch_jump),
                             .no_compressed(cfg.disable_compressed_instr),
                             .no_fence(cfg.no_fence),
-                            .no_floating_point_instr(!cfg.enable_floating_point));
+                            .no_floating_point_instr(~(cfg.enable_floating_point | cfg.enable_fp_in_x_regs)));
 
     //super.post_randomize();
   endfunction : post_randomize
@@ -186,20 +197,25 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
                                            bit no_fence=1,
                                            bit no_floating_point_instr=0);
 
-    riscv_instr         instr;
-    cv32e40p_instr      cv32_instr;
-    string              str;
-    int                 i;
+    riscv_instr                 instr;
+    cv32e40p_instr              cv32_instr;
+    riscv_fp_in_x_regs_instr    zfinx_instr;
+    string                      str;
+    int                         i;
+    riscv_instr_group_t         riscv_exclude_xpulp[];
+    int                         rv32_ins, pulp_ins;
+
+    riscv_exclude_instr = {riscv_exclude_common_instr};
 
     //use cfg for ebreak
     if(cfg.no_ebreak)
         riscv_exclude_instr = {riscv_exclude_instr, EBREAK, C_EBREAK};
 
     if(no_branch)
-        riscv_exclude_instr = {riscv_exclude_instr, BEQ, BNE, BLT, BGE, BLTU, BGEU, C_BEQZ, C_BNEZ};
+        riscv_exclude_instr = {riscv_exclude_instr, BEQ, BNE, BLT, BGE, BLTU, BGEU, C_BEQZ, C_BNEZ, CV_BEQIMM, CV_BNEIMM};
 
     if(no_compressed)
-        riscv_exclude_group = {riscv_exclude_group, RV32C};
+        riscv_exclude_group = {riscv_exclude_group, RV32C, RV32FC};
 
     if(no_fence)
         riscv_exclude_instr = {riscv_exclude_instr, FENCE, FENCE_I};
@@ -208,61 +224,71 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
         riscv_exclude_group = {riscv_exclude_group, RV32F, RV32ZFINX};
 
     `uvm_info("cv32e40p_xpulp_rand_stream",
-               $sformatf("Number of XPULP instr to be generated = %0d",num_of_xpulp_instr),UVM_HIGH)
+               $sformatf("Total XPULP+RISCV instr gen in test %0d + %0d",num_of_xpulp_instr,num_of_riscv_instr),UVM_HIGH)
 
-    //(1) Generate random xpulp instructions
+    //Exclude RV32X instr for riscv_exclude_xpulp
+    riscv_exclude_xpulp = {riscv_exclude_group, RV32X};
+    rv32_ins = num_of_riscv_instr;
+    pulp_ins = num_of_xpulp_instr;
+
     i = 0;
-    while (i < num_of_xpulp_instr) begin
-      //Create and Randomize array for avail_regs each time to ensure randomization
-      //To resolve the randomization issue within the same stream need this step
-      cv32e40p_avail_regs = new[num_of_avail_regs];
-      std::randomize(cv32e40p_avail_regs) with {  foreach(cv32e40p_avail_regs[i]) {
-                                                    !(cv32e40p_avail_regs[i] inside {cv32e40p_exclude_regs});
-                                                  }
-                                               };
+    while (i < (num_of_xpulp_instr+num_of_riscv_instr)) begin
 
-      cv32_instr = cv32e40p_instr::type_id::create($sformatf("cv32_instr_%0d", i));
-      cv32_instr = cv32e40p_instr::get_xpulp_instr(.exclude_instr(xpulp_exclude_instr),
-                                                   .include_category(xpulp_include_category));
+      randcase
+        pulp_ins:
+          begin
+            //Create and Randomize array for avail_regs each time to ensure randomization
+            //To resolve the randomization issue within the same stream need this step
+            cv32e40p_avail_regs = new[num_of_avail_regs];
+            std::randomize(cv32e40p_avail_regs) with {  foreach(cv32e40p_avail_regs[i]) {
+                                                          !(cv32e40p_avail_regs[i] inside {cv32e40p_exclude_regs});
+                                                        }
+                                                     };
+            cv32_instr = cv32e40p_instr::type_id::create($sformatf("cv32_instr_%0d", i));
+            cv32_instr = cv32e40p_instr::get_xpulp_instr(.exclude_instr(xpulp_exclude_instr),
+                                                         .include_category(xpulp_include_category));
 
-      //randomize GPRs for each instruction
-      randomize_cv32e40p_gpr(cv32_instr, cv32e40p_avail_regs);
+            //randomize GPRs for each instruction
+            randomize_cv32e40p_gpr(cv32_instr, cv32e40p_avail_regs);
 
-      //randomize immediates for each instruction
-      randomize_cv32e40p_instr_imm(cv32_instr);
+            //randomize immediates for each instruction
+            randomize_cv32e40p_instr_imm(cv32_instr);
 
-      instr_list.push_back(cv32_instr);
+            instr_list.push_back(cv32_instr);
+          end
+        rv32_ins:
+          begin
+            //Create and Randomize array for avail_regs each time to ensure randomization
+            avail_regs = new[num_of_avail_regs];
+            randomize_avail_regs();
+
+            instr = riscv_instr::type_id::create($sformatf("riscv_instr_%0d", i));
+
+            //exclude pulp instructions here
+            instr = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
+                                                .exclude_group(riscv_exclude_xpulp));
+
+            //randomize immediates for each instruction
+            randomize_riscv_instr_imm(instr);
+
+            //randomize GPRs for each instruction
+            if(instr.group != RV32ZFINX) begin
+              randomize_gpr(instr);
+              store_instr_gpr_handling(instr);
+              instr_list.push_back(instr);
+            end else begin
+              zfinx_instr = riscv_fp_in_x_regs_instr::type_id::create($sformatf("zfinx_instr_%0d", i));
+              `DV_CHECK_FATAL($cast(zfinx_instr, instr), "Cast to zfinx instruction type failed!");
+              randomize_zfinx_gpr(zfinx_instr, cv32e40p_zfinx_regs);
+              instr_list.push_back(zfinx_instr);
+            end
+
+          end
+      endcase
+
       i++;
 
-    end // while num_of_xpulp_instr
-
-    //(2) Generate all random instructions
-    riscv_instr_list = new[num_of_riscv_instr];
-    for (i = 0; i < num_of_riscv_instr; i++) begin
-
-      //Create and Randomize array for avail_regs each time to ensure randomization
-      avail_regs = new[num_of_avail_regs];
-      randomize_avail_regs();
-
-      //Dont include RV32X instr here again
-      riscv_exclude_group = {riscv_exclude_group, RV32X};
-
-      riscv_instr_list[i] = riscv_instr::type_id::create($sformatf("riscv_instr_list_%0d", i));
-
-      //exclude pulp instructions here
-      riscv_instr_list[i] = riscv_instr::get_rand_instr(.exclude_instr(riscv_exclude_instr),
-                                                        .exclude_group(riscv_exclude_group));
-
-      //randomize GPRs for each instruction
-      randomize_gpr(riscv_instr_list[i]);
-
-      //randomize immediates for each instruction
-      randomize_riscv_instr_imm(riscv_instr_list[i]);
-
-    end // num_of_riscv_instr
-
-    //mix steams for randomization
-    mix_instr_stream(riscv_instr_list);
+    end // while
 
   endfunction
 
