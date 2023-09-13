@@ -23,19 +23,15 @@
     constraint c_operand_``IDX``_pattern {\
       soft operand_``IDX``_pattern.size() == num_of_instr_per_stream;\
       foreach (operand_``IDX``_pattern[i]) {\
-        if (enable_special_operand_patterns) {\
-          soft operand_``IDX``_pattern[i] dist { IS_RAND                    := 6, \
-                                                 IS_Q_NAN                   := 4, IS_S_NAN                    := 4,  \
-                                                 IS_POSITIVE_ZERO           := 4, IS_NEGATIVE_ZERO            := 4,  \
-                                                 IS_POSITIVE_INFINITY       := 4, IS_NEGATIVE_INFINITY        := 4,  \
-                                                 IS_POSITIVE_MAX            := 4, IS_NEGATIVE_MAX             := 4,  \
-                                                 IS_POSITIVE_MIN            := 4, IS_NEGATIVE_MIN             := 4,  \
-                                                 IS_POSITIVE_MIN_DIV2       := 4, IS_NEGATIVE_MIN_DIV2        := 4,  \
-                                                 IS_POSITIVE_SUBNORMAL_MAX  := 4, IS_NEGATIVE_SUBNORMAL_MAX   := 4,  \
-                                                 IS_POSITIVE_SUBNORMAL_MIN  := 4, IS_NEGATIVE_SUBNORMAL_MIN   := 4 };\
-        } else {\
-          soft operand_``IDX``_pattern[i] == IS_RAND;\
-        }\
+        soft operand_``IDX``_pattern[i] dist { IS_RAND                    := 6, \
+                                               IS_Q_NAN                   := 4, IS_S_NAN                    := 4,  \
+                                               IS_POSITIVE_ZERO           := 4, IS_NEGATIVE_ZERO            := 4,  \
+                                               IS_POSITIVE_INFINITY       := 4, IS_NEGATIVE_INFINITY        := 4,  \
+                                               IS_POSITIVE_MAX            := 4, IS_NEGATIVE_MAX             := 4,  \
+                                               IS_POSITIVE_MIN            := 4, IS_NEGATIVE_MIN             := 4,  \
+                                               IS_POSITIVE_MIN_DIV2       := 4, IS_NEGATIVE_MIN_DIV2        := 4,  \
+                                               IS_POSITIVE_SUBNORMAL_MAX  := 4, IS_NEGATIVE_SUBNORMAL_MAX   := 4,  \
+                                               IS_POSITIVE_SUBNORMAL_MIN  := 4, IS_NEGATIVE_SUBNORMAL_MIN   := 4 };\
       }\
     } 
 
@@ -183,14 +179,20 @@
       instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [``OPERAND`` - %s - 32'h%8h] `", ``OPERAND``_pattern.name(), ``OPERAND``)};\
     end
 
-  // 22 always exclude list within fp stream; 11 are related to hw-loop (total 33)
-  `define   EXCLUDE_INSTR_LIST      {JAL,  JALR, BEQ,  BNE,  BLT, BGE,      BLTU,   BGEU,   ECALL, EBREAK, \
-                                     DRET, MRET, URET, SRET, WFI, C_EBREAK, C_BEQZ, C_BNEZ, C_J,   C_JAL, \
-                                     C_JR, C_JALR, \
-                                     CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW, CV_BEQIMM, CV_BNEIMM}
+  // 22 always exclude list within fp stream + 11 are related to hw-loop (total 33)
+  `define   EXCLUDE_INSTR_LIST      JAL,  JALR, BEQ,  BNE,  BLT, BGE,      BLTU,   BGEU,   ECALL, EBREAK, \
+                                    DRET, MRET, URET, SRET, WFI, C_EBREAK, C_BEQZ, C_BNEZ, C_J,   C_JAL, \
+                                    C_JR, C_JALR, \
+                                    CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW, CV_BEQIMM, CV_BNEIMM
+  
+  // store instruction list
+  `define   STORE_INSTR_LIST        SB, SH, SW, C_SW, C_SWSP, CV_SB, CV_SH, CV_SW, C_FSW, C_FSWSP
+  `define   FP_STORE_INSTR_LIST     FSW, C_FSW, C_FSWSP
+  `define   STORE_INSTR_W_SP_LIST   C_SWSP, C_FSWSP
 
   // refer Table 6-1 user manual
   `define   RV32I_INT_COMP_INSTR_LIST   {ADD, ADDI, SUB, LUI, AUIPC, SLL, SLLI, SRL, SRLI, SRA, SRAI, \
                                          XOR, XORI, OR, ORI, AND, ANDI} /* with deterministic 1 cycle defined */
   `define   RV32M_MULH_INSTR_LIST       {MULH, MULHSU, MULHU} /* with deterministic 5 cycles defined */
+
 
