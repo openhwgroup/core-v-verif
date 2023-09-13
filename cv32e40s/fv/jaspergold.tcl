@@ -31,10 +31,12 @@ proc cvfv_rerun {} {
   set_message -info VERI-2418
   ## Allow empty port in module declaration
   set_message -info VERI-8026
+  ## Allow multiplier blackboxing
+  set_message -info WNL018
 
   # Analyze & Elaborate
   analyze  -sv12  -f fv.flist
-  elaborate  -top uvmt_cv32e40s_tb
+  elaborate  -top uvmt_cv32e40s_tb  -extract_covergroup
 
   # Clock & Reset
   clock  clknrst_if.clk

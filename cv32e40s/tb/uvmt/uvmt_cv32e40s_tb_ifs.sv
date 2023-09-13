@@ -271,6 +271,12 @@ interface uvmt_cv32e40s_support_logic_module_i_if_t
    input logic clk,
    input logic rst_n,
 
+   //Decoder:
+   input logic [31:0] if_instr,
+   input logic [31:0] id_instr,
+   input logic [31:0] ex_instr,
+   input logic [31:0] wb_instr,
+
    //Controller fsm control signals output
    input ctrl_fsm_t ctrl_fsm_o,
 
@@ -325,6 +331,11 @@ interface uvmt_cv32e40s_support_logic_module_i_if_t
      input  clk,
       rst_n,
 
+      if_instr,
+      id_instr,
+      ex_instr,
+      wb_instr,
+
       tdata1_array,
       tdata2_array,
 
@@ -373,6 +384,14 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    import cv32e40s_pkg::*;
    import cv32e40s_rvfi_pkg::*;
    import uvmt_cv32e40s_base_test_pkg::*;
+   import isa_decoder_pkg::*;
+
+   //Decoder:
+   asm_t asm_if;
+   asm_t asm_id;
+   asm_t asm_ex;
+   asm_t asm_wb;
+   asm_t asm_rvfi;
 
    // Indicates that a new obi data req arrives after an exception is triggered.
    // Used to verify exception timing with multiop instruction
@@ -432,7 +451,13 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    logic recorded_dbg_req;
 
    modport master_mp (
-      output req_after_exception,
+      output asm_if,
+         asm_id,
+         asm_ex,
+         asm_wb,
+         asm_rvfi,
+
+         req_after_exception,
          trigger_match_mem,
          trigger_match_execute,
          trigger_match_exception,
@@ -473,7 +498,13 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    );
 
    modport slave_mp (
-      input req_after_exception,
+      input asm_if,
+         asm_id,
+         asm_ex,
+         asm_wb,
+         asm_rvfi,
+
+         req_after_exception,
          trigger_match_mem,
          trigger_match_execute,
          trigger_match_exception,
