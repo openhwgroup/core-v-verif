@@ -142,11 +142,7 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
   }
 
   constraint xpulp_instr_in_debug_rom_c {
-    if($test$plusargs("include_xpulp_instr_in_debug_rom")) {
-      xpulp_instr_in_debug_rom dist {0 := 1, 1 := 2};
-    } else {
-      xpulp_instr_in_debug_rom == 0;
-    }
+    xpulp_instr_in_debug_rom dist {0 := 1, 1 := 2};
   }
 
   constraint str_rs1_rs3_c {
