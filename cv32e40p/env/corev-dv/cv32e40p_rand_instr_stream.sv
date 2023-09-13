@@ -157,13 +157,13 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
 
     //Use this plusarg - include_xpulp_instr_in_debug_rom to include xpulp instr
     //In random debug_rom instructions. Added for v2 debug tests with xpulp.
-    if (cv32e40p_cfg.xpulp_instr_in_debug_rom && is_debug_program) begin
+    if (cv32e40p_cfg.xpulp_instr_in_debug_rom && is_debug_program && $test$plusargs("include_xpulp_instr_in_debug_rom")) begin
         foreach(instr_list[i]) begin
           randcase
             1: randomize_debug_rom_instr(.instr(instr_list[i]), .is_in_debug(is_debug_program), .disable_dist());
             2: randomize_instr(instr_list[i], is_debug_program);
           endcase
-          `uvm_info("cv32e40p_rand_instr_stream", $sformatf("add_xpulp_instr_in_debug_rom set- Including xpulp instr in debug_rom"), UVM_LOW)
+          `uvm_info("cv32e40p_rand_instr_stream", $sformatf("include_xpulp_instr_in_debug_rom set- Including xpulp instr in debug_rom"), UVM_LOW)
         end
     end
     else begin
