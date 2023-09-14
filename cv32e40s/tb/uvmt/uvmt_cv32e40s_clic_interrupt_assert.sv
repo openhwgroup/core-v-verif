@@ -1733,6 +1733,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
       or
        // Trap
           rvfi_trap.exception
+       && (rvfi_dpc_rdata & rvfi_dpc_rmask) == debug_exc_addr
       ;
     endproperty : p_dpc_to_mtvt_shv
 
@@ -1756,6 +1757,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
       or
        // Trap
           rvfi_trap.exception
+       && (rvfi_dpc_rdata & rvfi_dpc_rmask) == debug_exc_addr
       ;
     endproperty : p_dpc_to_mtvec_nonshv
 
@@ -1785,8 +1787,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
        && rvfi_pc_rdata == debug_halt_addr
        && rvfi_dpc_rdata == past_rvfi_pc_wdata
       or
-          rvfi_intr.exception
-      or
        // Interrupt or nmi (checked above)
           rvfi_intr.interrupt
       or
@@ -1807,8 +1807,6 @@ module uvmt_cv32e40s_clic_interrupt_assert
           rvfi_dbg_mode
        && rvfi_pc_rdata == debug_halt_addr
        && rvfi_dpc_rdata == past_rvfi_pc_wdata
-      or
-          rvfi_intr.exception
       or
        // Interrupt or nmi (checked below)
           rvfi_intr.interrupt
