@@ -19,18 +19,9 @@
 # Defines and Includes
 
 CORE_V_VERIF ?= $(realpath ../..)
+CV_CORE      ?= cv32e40s
 
-CV_CORE        ?= cv32e40s
-CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40s
-CV_CORE_BRANCH ?= master
-CV_CORE_TAG    ?= none
-CV_CORE_HASH   ?= head
-
-RISCVDV_REPO        ?= TODO_dontwanttodefinethis
-EMBENCH_REPO        ?= TODO_dontwanttodefinethis
-COMPLIANCE_REPO     ?= TODO_dontwanttodefinethis
-DPI_DASM_SPIKE_REPO ?= TODO_dontwanttodefinethis
-
+include  $(CORE_V_VERIF)/$(CV_CORE)/sim/ExternalRepos.mk
 include  $(CORE_V_VERIF)/mk/fv/fv.mk
 
 

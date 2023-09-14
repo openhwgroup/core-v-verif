@@ -21,9 +21,6 @@
 
 // Defines
 
-`define  RVFI_CSR_IDX_BIND(csr_name,csr_suffix,idx)
-`define  RVFI_CSR_UVM_CONFIG_DB_SET(csr_name)
-
 `include "uvma_obi_memory_macros.sv"
 
 
