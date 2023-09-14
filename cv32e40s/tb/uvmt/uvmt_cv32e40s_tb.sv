@@ -776,7 +776,11 @@ module uvmt_cv32e40s_tb;
   // Core integration assertions
 
   bind cv32e40s_wrapper
-    uvmt_cv32e40s_integration_assert  integration_assert_i (.*);
+    uvmt_cv32e40s_integration_assert  integration_assert_i (
+      .rvfi_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
+      .support_if (support_logic_module_o_if.slave_mp),
+      .*
+    );
 
 
   bind cv32e40s_wrapper
@@ -874,7 +878,7 @@ module uvmt_cv32e40s_tb;
 
       //CSRs:
       .mstateen0            (core_i.cs_registers_i.mstateen0_csr_i.rdata_q),
-      .priv_lvl             (core_i.cs_registers_i.priv_lvl_i.rdata_q),
+      .priv_lvl             (core_i.cs_registers_i.privlvl_user.priv_lvl_i.rdata_q),
       .jvt                  (core_i.cs_registers_i.jvt_csr_i.rdata_q),
       .mstatus              (core_i.cs_registers_i.mstatus_csr_i.rdata_q),
       .cpuctrl              (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.rdata_q),
@@ -884,7 +888,7 @@ module uvmt_cv32e40s_tb;
 
       //Shadows:
       .mstateen0_shadow     (core_i.cs_registers_i.mstateen0_csr_i.gen_hardened.shadow_q),
-      .priv_lvl_shadow      (core_i.cs_registers_i.priv_lvl_i.gen_hardened.shadow_q),
+      .priv_lvl_shadow      (core_i.cs_registers_i.privlvl_user.priv_lvl_i.gen_hardened.shadow_q),
       .jvt_shadow           (core_i.cs_registers_i.jvt_csr_i.gen_hardened.shadow_q),
       .mstatus_shadow       (core_i.cs_registers_i.mstatus_csr_i.gen_hardened.shadow_q),
       .cpuctrl_shadow       (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.gen_hardened.shadow_q),

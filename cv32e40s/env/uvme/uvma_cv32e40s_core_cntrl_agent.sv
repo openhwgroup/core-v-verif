@@ -163,6 +163,7 @@ function void uvma_cv32e40s_core_cntrl_agent_c::configure_iss();
   $fwrite(fh, $sformatf("--override %s/mhartid=%0d\n", refpath, cfg.mhartid));
   $fwrite(fh, $sformatf("--override %s/mimpid=%0d\n", refpath, cfg.mimpid));
   $fwrite(fh, $sformatf("--override %s/startaddress=0x%08x\n", refpath, cfg.boot_addr));
+  $fwrite(fh, $sformatf("--override %s/reset_address=0x%08x\n", refpath, cfg.boot_addr));
   // Specification forces mtvec[0] high at reset regardless of bootstrap pin state of mtvec_addr_i]0]
   $fwrite(fh, $sformatf("--override %s/mtvec_mask=0xffffff8%1d\n", refpath, (cfg.clic_interrupt_enable ? 0 : 1)));
   $fwrite(fh, $sformatf("--override %s/mtvec=0x%08x\n", refpath, cfg.mtvec_addr | (cfg.clic_interrupt_enable ? 32'b11 : 32'b1)));
