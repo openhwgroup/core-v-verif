@@ -15,7 +15,7 @@ export SHELL = /bin/bash
 
 CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40s
 CV_CORE_BRANCH ?= master
-CV_CORE_HASH   ?= 6feea13d7c345bb63728d9893d2256a0a45c3d2f
+CV_CORE_HASH   ?= 86b09c6f88bdaec9e28fc192cdbbc6d88bee038a
 CV_CORE_TAG    ?= none
 
 #RISCVDV_REPO    ?= https://github.com/google/riscv-dv
