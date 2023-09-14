@@ -31,7 +31,8 @@ plusargs: >
     +directed_instr_3=cv32e40p_fp_w_special_operands_instr_stream,1
     +directed_instr_4=cv32e40p_fp_w_prev_rd_as_operand_instr_stream,1
     +directed_instr_5=cv32e40p_constraint_mc_fp_instr_stream,1
-    +directed_instr_6=cv32e40p_fp_operand_forwarding_instr_stream,1
+    +directed_instr_6=cv32e40p_fp_op_fwd_instr_stream,1
+    +directed_instr_7=cv32e40p_fp_op_fwd_instr_w_loadstore_stream,1
 
 # note:
   # 1) example yaml template for fp test with f_extension
