@@ -198,7 +198,6 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       );
       is_fp_instr = (instr.group inside {RV32F, RV32ZFINX});
       update_next_instr_arg_list(instr, i);
-      // rand_var_for_inline_constraint(); // fixme
       add_instr_prior_directed_instr(instr, i); 
 
       // directed instr randomization based on extension
@@ -1226,7 +1225,7 @@ class cv32e40p_fp_op_fwd_instr_stream extends cv32e40p_float_zfinx_base_instr_st
   // to define exclude list for this stream class
   virtual function void update_current_instr_arg_list(int idx=0);
     // exclude store instrs for this stream
-    exclude_instr = new[33+8+3] ({`EXCLUDE_INSTR_LIST, `STORE_INSTR_LIST, `FP_STORE_INSTR_LIST}); // fixme: need to have a specific to stress on all types of store operations with data forwarding
+    exclude_instr = new[33+8+3] ({`EXCLUDE_INSTR_LIST, `STORE_INSTR_LIST, `FP_STORE_INSTR_LIST});
     // always exclude RV32C because it only uses 8 common gpr/fpr. We cover more than 8 registers here
     exclude_group = new[2] ({RV32C, RV32FC});
     // 
