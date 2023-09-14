@@ -25,5 +25,6 @@ plusargs: >
     +num_of_sub_program=0
     +test_override_riscv_instr_stream=1
     +no_branch_jump=1
-    +directed_instr_0=cv32e40p_fp_w_prev_rd_as_operand_instr_stream,5
-    +directed_instr_1=cv32e40p_fp_operand_forwarding_instr_stream,3
+    +directed_instr_0=cv32e40p_fp_w_prev_rd_as_operand_instr_stream,2
+    +directed_instr_1=cv32e40p_fp_op_fwd_instr_stream,4
+    +directed_instr_2=cv32e40p_fp_op_fwd_instr_w_loadstore_stream,4

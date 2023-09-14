@@ -15,7 +15,66 @@
  * limitations under the License.
  */
 
-// This file contains all the macro defines that used in cv32e40p_float_instr_lib.sv
+// This file contains all the macro/type defines that used in cv32e40p_float_instr_lib.sv
+
+// TYPEDEF LIST - START
+
+  typedef enum bit [4:0] {
+    IS_RAND = 0,
+    IS_POSITIVE_ZERO,
+    IS_NEGATIVE_ZERO,
+    IS_POSITIVE_INFINITY,
+    IS_NEGATIVE_INFINITY,
+    IS_POSITIVE_MAX,
+    IS_NEGATIVE_MAX,
+    IS_POSITIVE_MIN,
+    IS_NEGATIVE_MIN,
+    IS_POSITIVE_MIN_DIV2,
+    IS_NEGATIVE_MIN_DIV2,
+    IS_POSITIVE_SUBNORMAL_MAX,
+    IS_NEGATIVE_SUBNORMAL_MAX,
+    IS_POSITIVE_SUBNORMAL_MIN,
+    IS_NEGATIVE_SUBNORMAL_MIN,
+    IS_Q_NAN,
+    IS_S_NAN,
+    IS_FMV_RAND_RS1,
+    IS_FCVT_RAND_RS1
+  } operand_pattens_t;
+  
+  typedef enum bit [1:0] {
+    PREV_RD_IS_CURR_RD = 0,
+    PREV_RD_IS_CURR_RS,
+    PREV_RS_IS_CURR_RD,
+    PREV_RS_IS_CURR_RS /* this is not cover here */
+  } forward_pattern_t;
+
+  typedef enum bit {
+    IS_NON_FP = 0,
+    IS_FP
+  } instr_type_t;
+
+  typedef enum bit [1:0] {
+    STORE_ONLY = 0,
+    LOAD_ONLY,
+    LOAD_STORE,
+    NULL
+  } load_store_opt_t;
+
+  typedef enum logic [31:0] {
+    ALL_ZERO          = 32'h0,
+    F_NEG_ZERO        = 32'h8000_0000,
+    F_NEG_ZERO_DIV2   = 32'h4000_0000,
+    F_POS_ONE         = 32'h3F80_0000,
+    F_NEG_ONE         = 32'hBF80_0000,
+    F_POS_FOUR        = 32'h4080_0000,
+    F_POS_VAL1        = 32'h4E80_0000,
+    D_POS_TWO         = 32'h0000_0002
+  } preload_imm_t;
+
+// TYPEDEF LIST - END
+
+
+// MACRO DEFINE LIST - START
 
   // constraint for special pattern operands
   // note: DONOT insert " solve enable_special_operand_patterns before operand_``IDX``_pattern;\" at below code, it will limit the constraints (havent root caused)
@@ -195,4 +254,4 @@
                                          XOR, XORI, OR, ORI, AND, ANDI} /* with deterministic 1 cycle defined */
   `define   RV32M_MULH_INSTR_LIST       {MULH, MULHSU, MULHU} /* with deterministic 5 cycles defined */
 
-
+// MACRO DEFINE LIST - END
