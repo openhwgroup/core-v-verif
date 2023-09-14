@@ -202,13 +202,13 @@ module uvmt_cv32e40s_pmp_assert
 
         cp_ismatch_tor:   coverpoint model_i.is_match_tor(match_status.val_index) iff (match_status.is_matched);
 
-        cp_napot_min_8byte: coverpoint { pmp_req_addr_i[2], csr_pmp_i.addr[match_status.val_index][2] }
+        cp_napot_min_8byte: coverpoint { pmp_req_addr_i[2+PMP_GRANULARITY], csr_pmp_i.addr[match_status.val_index][2+PMP_GRANULARITY] }
           iff (csr_pmp_i.cfg[match_status.val_index].mode == PMP_MODE_NAPOT &&
                match_status.is_matched         == 1'b1 &&
                match_status.is_access_allowed  == 1'b1
         );
 
-        cp_napot_min_8byte_disallowed: coverpoint { pmp_req_addr_i[2], csr_pmp_i.addr[match_status.val_index][2] }
+        cp_napot_min_8byte_disallowed: coverpoint { pmp_req_addr_i[2+PMP_GRANULARITY], csr_pmp_i.addr[match_status.val_index][2+PMP_GRANULARITY] }
           iff (csr_pmp_i.cfg[match_status.val_index].mode == PMP_MODE_NAPOT &&
                match_status.is_matched         == 1'b1 &&
                match_status.is_access_allowed  == 1'b0
