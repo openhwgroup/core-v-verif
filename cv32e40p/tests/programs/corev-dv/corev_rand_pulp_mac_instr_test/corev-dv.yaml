@@ -30,6 +30,7 @@ plusargs: >
     +no_wfi=1
     +no_ebreak=1
     +no_dret=1
+    +fix_sp=1
     +enable_misaligned_instr=1
     +set_dcsr_ebreak=0
     +test_override_riscv_instr_stream=1
