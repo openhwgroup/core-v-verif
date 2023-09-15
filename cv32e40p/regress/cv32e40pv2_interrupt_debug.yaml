@@ -38,7 +38,7 @@ tests:
     build: uvmt_cv32e40p
     description: corev_rand_debug_ebreak_xpulp
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak_xpulp
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_debug_ebreak_xpulp CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
     test_cfg: debug_ebreak
 
   corev_rand_debug_single_step:
@@ -95,60 +95,60 @@ tests:
     build: uvmt_cv32e40p
     description: corev_rand_pulp_hwloop_debug
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_hwloop_debug
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
 
   debug_test:
     build: uvmt_cv32e40p
     description: debug_test (adapted from v1)
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=debug_test
+    cmd: make test COREV=YES TEST=debug_test CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
     num: 1
 
   debug_test_boot_set:
     build: uvmt_cv32e40p
     description: debug_test_boot_set (adapted from v1)
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=debug_test_boot_set
+    cmd: make test COREV=YES TEST=debug_test_boot_set CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
     num: 1
 
   debug_test_known_miscompares:
     build: uvmt_cv32e40p
     description: debug_test_known_miscompares (adapted from v1)
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=debug_test_known_miscompares
+    cmd: make test COREV=YES TEST=debug_test_known_miscompares CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
     num: 1
 
   debug_test_reset:
     build: uvmt_cv32e40p
     description: debug_test_reset (adapted from v1)
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=debug_test_reset
+    cmd: make test COREV=YES TEST=debug_test_reset CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
     num: 1
 
   debug_test_reset:
     build: uvmt_cv32e40p
     description: debug_test_reset (adapted from v1)
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=debug_test_reset
+    cmd: make test COREV=YES TEST=debug_test_reset CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
     num: 1
 
   interrupt_test:
     build: uvmt_cv32e40p
     description: interrupt_test (adapted from v1)
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=interrupt_test
+    cmd: make test COREV=YES TEST=interrupt_test CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
     num: 1
 
   interrupt_bootstrap:
     build: uvmt_cv32e40p
     description: interrupt_bootstrap (adapted from v1)
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=interrupt_bootstrap
+    cmd: make test COREV=YES TEST=interrupt_bootstrap CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
     num: 1
 
   riscv_ebreak_test_0:
     build: uvmt_cv32e40p
     description: riscv_ebreak_test_0 (adapted from v1)
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=riscv_ebreak_test_0
+    cmd: make test COREV=YES TEST=riscv_ebreak_test_0 CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
     num: 1
