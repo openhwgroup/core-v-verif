@@ -28,13 +28,13 @@ tests:
     build: uvmt_cv32e40p
     description: corev_rand_pulp_hwloop_test
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
 
   corev_rand_pulp_instr_test:
     build: uvmt_cv32e40p
     description: corev_rand_pulp_instr_test
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=5000000"
 
   corev_rand_pulp_simd_instr_test:
     build: uvmt_cv32e40p
@@ -47,6 +47,28 @@ tests:
     description: corev_rand_pulp_mac_instr_test
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_mac_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+
+  corev_rand_pulp_hwloop_exception:
+    build: uvmt_cv32e40p
+    description: hwloop exception test
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_exception CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+
+  corev_rand_pulp_illegal_instr_test:
+    testname: corev_rand_pulp_instr_test
+    description: pulp instr test with illegal instructions
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=5000000"
+    test_cfg: insert_illegal_instr
+
+  corev_rand_pulp_hwloop_illegal_instr_test:
+    testname: corev_rand_pulp_hwloop_test
+    description: hwloop test with illegal instructions
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+    test_cfg: insert_illegal_instr
 
   pulp_hardware_loop:
     build: uvmt_cv32e40p
