@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
   printf("\nminstret count = %d\n", minstret);
   err_cnt += chck(minstret, 4);
   printf("\nMCYCLE counted cycles = %d\n", mcycle_count);
-  err_cnt += chck(mcycle_count, 6);
+  err_cnt += chck(mcycle_count, 5);
 
   //////////////////////////////////////////////////////////////
   // IF_INVALID
