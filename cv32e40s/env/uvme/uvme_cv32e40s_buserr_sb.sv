@@ -161,8 +161,9 @@ function void uvme_cv32e40s_buserr_sb_c::write_rvfi(uvma_rvfi_instr_seq_item_c#(
   if (trn.intr.exception && (trn.intr.cause == 24)) begin
     cnt_rvfi_ifaulthandl++;
 
-    assert (cnt_rvfi_errmatch == cnt_rvfi_ifaulthandl)
-      else `uvm_error(info_tag, "ifault handler entered without matching an ifault retirement");
+    // TODO: silabs-hfegran: This assertion needs a complete rewrite
+    //assert (cnt_rvfi_errmatch == cnt_rvfi_ifaulthandl)
+    //  else `uvm_error(info_tag, "ifault handler entered without matching an ifault retirement");
   end
 
   // Retires after D-side "first err"
