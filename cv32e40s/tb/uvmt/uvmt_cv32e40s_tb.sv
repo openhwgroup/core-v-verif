@@ -557,17 +557,11 @@ module uvmt_cv32e40s_tb;
         .support_if (cv32e40s_wrapper.support_logic_module_o_if.slave_mp),
         .rvfi_if(cv32e40s_wrapper.rvfi_instr_if),
         .csr_mepc_if(cv32e40s_wrapper.rvfi_csr_mepc_if),
+        .csr_mstatus_if(cv32e40s_wrapper.rvfi_csr_mstatus_if),
         .csr_mcause_if(cv32e40s_wrapper.rvfi_csr_mcause_if),
         .csr_mintthresh_if(cv32e40s_wrapper.rvfi_csr_mintthresh_if),
         .csr_mintstatus_if(cv32e40s_wrapper.rvfi_csr_mintstatus_if),
-        //.csr_dcsr(rvfi_csr_dcsr_if),
-        //.csr_dpc(rvfi_csr_dpc_if),
-        //.csr_dscratch0(rvfi_csr_dscratch0_if),
-        //.csr_dscratch1(rvfi_csr_dscratch1_if),
-        //.csr_mstatus(rvfi_csr_mstatus_if),
-        //.csr_mtvec(rvfi_csr_mtvec_if),
-        //.csr_tdata1(rvfi_csr_tdata1_if),
-        //.csr_tdata2(rvfi_csr_tdata2_if),
+        .csr_dcsr_if(cv32e40s_wrapper.rvfi_csr_dcsr_if),
 
         .dpc                 (cs_registers_i.dpc_rdata),
         .mintstatus          (cs_registers_i.mintstatus_rdata),
@@ -583,6 +577,10 @@ module uvmt_cv32e40s_tb;
         .mscratchcsw         (cs_registers_i.mscratchcsw_rdata),
         .mscratchcswl        (cs_registers_i.mscratchcswl_rdata),
         .dcsr                (cs_registers_i.dcsr_rdata),
+
+        //Control signals:
+        .pc_set              (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.pc_set),
+        .pc_mux              (core_i.controller_i.controller_fsm_i.ctrl_fsm_o.pc_mux),
 
         .rvfi_mepc_wdata     (rvfi_i.rvfi_csr_mepc_wdata),
         .rvfi_mepc_wmask     (rvfi_i.rvfi_csr_mepc_wmask),
@@ -778,7 +776,11 @@ module uvmt_cv32e40s_tb;
   // Core integration assertions
 
   bind cv32e40s_wrapper
-    uvmt_cv32e40s_integration_assert  integration_assert_i (.*);
+    uvmt_cv32e40s_integration_assert  integration_assert_i (
+      .rvfi_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
+      .support_if (support_logic_module_o_if.slave_mp),
+      .*
+    );
 
 
   bind cv32e40s_wrapper
@@ -876,7 +878,7 @@ module uvmt_cv32e40s_tb;
 
       //CSRs:
       .mstateen0            (core_i.cs_registers_i.mstateen0_csr_i.rdata_q),
-      .priv_lvl             (core_i.cs_registers_i.priv_lvl_i.rdata_q),
+      .priv_lvl             (core_i.cs_registers_i.privlvl_user.priv_lvl_i.rdata_q),
       .jvt                  (core_i.cs_registers_i.jvt_csr_i.rdata_q),
       .mstatus              (core_i.cs_registers_i.mstatus_csr_i.rdata_q),
       .cpuctrl              (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.rdata_q),
@@ -886,7 +888,7 @@ module uvmt_cv32e40s_tb;
 
       //Shadows:
       .mstateen0_shadow     (core_i.cs_registers_i.mstateen0_csr_i.gen_hardened.shadow_q),
-      .priv_lvl_shadow      (core_i.cs_registers_i.priv_lvl_i.gen_hardened.shadow_q),
+      .priv_lvl_shadow      (core_i.cs_registers_i.privlvl_user.priv_lvl_i.gen_hardened.shadow_q),
       .jvt_shadow           (core_i.cs_registers_i.jvt_csr_i.gen_hardened.shadow_q),
       .mstatus_shadow       (core_i.cs_registers_i.mstatus_csr_i.gen_hardened.shadow_q),
       .cpuctrl_shadow       (core_i.cs_registers_i.xsecure.cpuctrl_csr_i.gen_hardened.shadow_q),
@@ -1393,6 +1395,11 @@ module uvmt_cv32e40s_tb;
       uvmt_cv32e40s_support_logic_module_i_if_t support_logic_module_i_if (
         .clk     (core_i.clk),
         .rst_n (rst_ni),
+
+        .if_instr (core_i.if_stage_i.prefetch_instr.bus_resp.rdata),
+        .id_instr (core_i.if_id_pipe.instr.bus_resp.rdata),
+        .ex_instr (core_i.id_ex_pipe.instr.bus_resp.rdata),
+        .wb_instr (core_i.ex_wb_pipe.instr.bus_resp.rdata),
 
         .tdata1_array (uvmt_cv32e40s_tb.tdata1_array),
         .tdata2_array (uvmt_cv32e40s_tb.tdata2_array),
