@@ -1610,21 +1610,25 @@ class cv32e40p_fp_op_fwd_instr_w_loadstore_stream extends cv32e40p_float_zfinx_b
       post_fp_src_is_load_dest      = (load_store_option inside {LOAD_ONLY, LOAD_STORE}) ? $urandom_range(1) : 0;
 
       if (use_compress_load_store_only) begin
-        void'(std::randomize(avail_gp_regs[i]) with {
-          avail_gp_regs[i].size() == 8;
-          unique{avail_gp_regs[i]};
-          foreach (avail_gp_regs[i][j]) {
-            avail_gp_regs[i][j] inside {[S0:A5]};
+        riscv_reg_t rand_avail_gp_regs[];
+        riscv_fpr_t rand_avail_fp_regs[];
+        void'(std::randomize(rand_avail_gp_regs) with {
+          rand_avail_gp_regs.size() == 8;
+          unique{rand_avail_gp_regs};
+          foreach (rand_avail_gp_regs[j]) {
+            rand_avail_gp_regs[j] inside {[S0:A5]};
           }
         });
-        void'(std::randomize(avail_fp_regs[i]) with {
-          avail_fp_regs[i].size() == 8;
-          // avail_fp_regs[i].size() == 4; // limitation_1
-          unique{avail_fp_regs[i]};
-          foreach (avail_fp_regs[i][j]) {
-            avail_fp_regs[i][j] inside {[FS0:FA5]};
+        void'(std::randomize(rand_avail_fp_regs) with {
+          rand_avail_fp_regs.size() == 8;
+          // rand_avail_fp_regs.size() == 4; // limitation_1
+          unique{rand_avail_fp_regs};
+          foreach (rand_avail_fp_regs[j]) {
+            rand_avail_fp_regs[j] inside {[FS0:FA5]};
           }
         });
+        avail_gp_regs[i] = rand_avail_gp_regs;
+        avail_fp_regs[i] = rand_avail_fp_regs;
       end
 
 
@@ -1819,10 +1823,12 @@ class cv32e40p_fp_op_fwd_instr_w_loadstore_stream extends cv32e40p_float_zfinx_b
       if (q_load_rd.size() != 0) begin : OVERRIDE_USED_LOAD_RD_TO_STORE_SAFEZONE_ADDR
         q_load_rd.sort();
         foreach (q_load_rd[idx]) begin
+          riscv_reg_t temp_q_load_rd;
           if (idx != 0) begin
             if (q_load_rd[idx] == q_load_rd[idx-1]) continue;
           end
-          `SET_GPR_VALUE(q_load_rd[idx], F_NEG_ZERO_DIV2);
+          temp_q_load_rd = q_load_rd[idx];
+          `SET_GPR_VALUE(temp_q_load_rd, F_NEG_ZERO_DIV2);
         end
         q_load_rd.delete();
       end
