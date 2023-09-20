@@ -62,7 +62,7 @@
 
   typedef enum logic [31:0] {
     ALL_ZERO          = 32'h0,
-    F_NEG_ZERO        = 32'h8000_0000,
+    F_NEG_ZERO        = 32'h8000_0000, /* not used here because of cv.s|l post increment */
     F_NEG_ZERO_DIV2   = 32'h4000_0000,
     F_POS_ONE         = 32'h3F80_0000,
     F_NEG_ONE         = 32'hBF80_0000,

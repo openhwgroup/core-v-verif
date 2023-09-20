@@ -15,7 +15,7 @@ export SHELL = /bin/bash
 
 CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40p
 CV_CORE_BRANCH ?= dev
-CV_CORE_HASH   ?= d0f3305c82492f63e7eaad3f6781453de9c4573d
+CV_CORE_HASH   ?= c520546c0cc3f64ef064d52dfdc91abbba63f181
 CV_CORE_TAG    ?= none
 
 # The CV_CORE_HASH above points to version of the RTL that is newer.
