@@ -80,7 +80,7 @@ clone() {
 clone_cv32e40x() {
   CV_CORE=cv32e40x
   VERIF_ENV_REPO=https://github.com/openhwgroup/cv32e40x-dv.git
-  VERIF_ENV_REF=942c8d0a7f625175958d2134796d354c5fd53da8
+  VERIF_ENV_REF=61906fcede6877c2f51aa30c9ba76314af2a9dfd
   clone
 
   ignore_cloned_directory
