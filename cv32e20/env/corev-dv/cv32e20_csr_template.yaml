@@ -163,6 +163,7 @@
     Lower 32 Machine Cycle Counter
   address: 0xB00
   privilege_mode: M
+  volatile: Yes
   rv32:
     - field_name: Count
       description: >
@@ -189,6 +190,7 @@
     Lower 32 Machine Instructions-Retired Counter
   address: 0xB02
   privilege_mode: M
+  volatile: Yes
   rv32:
     - field_name: Count
       description: >
@@ -211,6 +213,7 @@
       msb: 31
       lsb: 0
 - csr: mhpmcounter3
+  #SKIP_ME: Performance counters not currently implemented
   description: >
     Lower 32-bit Machine Performance Monitoring Counter
   address: 0xB03
@@ -223,42 +226,315 @@
       reset_val: 0
       msb: 31
       lsb: 0
-- csr: mhpmcounter3h
+- csr: mhpmcounter4
+  SKIP_ME: Seeing a value in this counter at first read.
   description: >
-    Upper 32-bit Machine Performance Monitoring Counter
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB04
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 40-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter5
+  SKIP_ME: Performance counters not currently implemented
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB05
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 40-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter6
+  #SKIP_ME: Performance counters not currently implemented
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB06
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 40-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter7
+  #SKIP_ME: Performance counters not currently implemented
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB07
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 40-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter8
+  SKIP_ME: Seeing a value in this counter at first read.
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB08
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 40-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter9
+  SKIP_ME: Seeing a value in this counter at first read.
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB09
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 40-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter10
+  #SKIP_ME: Performance counters not currently implemented
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB0A
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 40-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter11
+  #SKIP_ME: Performance counters not currently implemented
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB0B
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 40-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mhpmcounter12
+  #SKIP_ME: Performance counters not currently implemented
+  description: >
+    Lower 32-bit Machine Performance Monitoring Counter
+  address: 0xB0C
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Lower 32-bits of 40-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 31
+      lsb: 0      
+- csr: mhpmcounter3h
+  #SKIP_ME: Performance counters not currently implemented
+  description: >
+    Upper 8 bits of 40-bit Machine Performance Monitoring Counter
   address: 0xB83
   privilege_mode: M
   rv32:
     - field_name: Count
       description: >
-        Upper 32-bits of 64-bit machine performance-monitoring counter
+        Upper 8 bits of  40 bit machine performance-monitoring counter
       type: RW
       reset_val: 0
-      msb: 31
+      msb: 7
+      lsb: 0
+- csr: mhpmcounter4h
+  #SKIP_ME: Performance counters not currently implemented
+  description: >
+    Upper 8 bits of 40-bit Machine Performance Monitoring Counter
+  address: 0xB84
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 8-bits of 64-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 7
+      lsb: 0
+- csr: mhpmcounter5h
+  #SKIP_ME: Performance counters not currently implemented
+  description: >
+    Upper 8 bits of 40-bit Machine Performance Monitoring Counter
+  address: 0xB85
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 8-bits of 64-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 7
+      lsb: 0
+- csr: mhpmcounter6h
+  SKIP_ME: Performance counters not currently implemented
+  description: >
+    Upper 8 bits of 40-bit Machine Performance Monitoring Counter
+  address: 0xB86
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 8-bits of 64-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 7
+      lsb: 0
+- csr: mhpmcounter7h
+  #SKIP_ME: Performance counters not currently implemented
+  description: >
+    Upper 8 bits of 40-bit Machine Performance Monitoring Counter
+  address: 0xB87
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 8-bits of 64-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 7
+      lsb: 0
+- csr: mhpmcounter8h
+  SKIP_ME: Performance counters not currently implemented
+  description: >
+    Upper 8 bits of 40-bit Machine Performance Monitoring Counter
+  address: 0xB88
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 8-bits of 64-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 7
+      lsb: 0
+- csr: mhpmcounter9h
+  SKIP_ME: Performance counters not currently implemented
+  description: >
+    Upper 8 bits of 40-bit Machine Performance Monitoring Counter
+  address: 0xB89
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 8-bits of 64-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 7
+      lsb: 0
+- csr: mhpmcounter10h
+  #SKIP_ME: Performance counters not currently implemented
+  description: >
+    Upper 8 bits of 40-bit Machine Performance Monitoring Counter
+  address: 0xB8A
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 8-bits of 64-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 7
+      lsb: 0
+- csr: mhpmcounter11h
+  #SKIP_ME: Performance counters not currently implemented
+  description: >
+    Upper 8 bits of 40-bit Machine Performance Monitoring Counter
+  address: 0xB8B
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 8-bits of 64-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 7
+      lsb: 0
+- csr: mhpmcounter12h
+  #SKIP_ME: Performance counters not currently implemented
+  description: >
+    Upper 8 bits of 40-bit Machine Performance Monitoring Counter
+  address: 0xB8C
+  privilege_mode: M
+  rv32:
+    - field_name: Count
+      description: >
+        Upper 8-bits of 64-bit machine performance-monitoring counter
+      type: RW
+      reset_val: 0
+      msb: 7
       lsb: 0
 - csr: mstatus
   description: >
     Machine ISA Register
   address: 0x300
   privilege_mode: M
+  SKIP_ME: Imperas model does not have U bit set to 1
   rv32:
+    - field_name: TW
+      description: >
+        Timeout Wait
+      type: WARL
+      reset_val: 0
+      msb: 21
+      lsb: 21
+    - field_name: MPRV
+      description: >
+        Modify Privilege 
+      type: RW 
+      reset_val: 0
+      msb: 17
+      lsb: 17
     - field_name: MPP
       description: >
-        Machine Previous Privilege mode, hardwired to 3'b11 when User mode not enabled
-      type: R
+        Machine Previous Privilege mode
+      type: WARL
       reset_val: 3
       msb: 12
       lsb: 11
-    - field_name: PMIE
+      warl_legalize: >
+        if ((val_in == 3) or (val_in == 0)) :
+           val_out = val_in
+        else:
+           val_out = 3
+    - field_name: MPIE
       description: >
-          Previous Machine Interrupt Enable
+           Machine Previous Interrupt Enable
       type: WARL
       reset_val: 0
       msb: 7
       lsb: 7
-    - field_name: PUIE
+    - field_name: PUIE 
       description: >
-          Previous User Interrupt Enable
+          Previous User Interrupt Enable; Not implementend in CV32E20
       type: R
       reset_val: 0
       msb: 4
@@ -270,13 +546,6 @@
       reset_val: 0
       msb: 3
       lsb: 3
-    - field_name: UIE
-      description: >
-          User Interrupt Enable
-      type: R
-      reset_val: 0
-      msb: 0
-      lsb: 0
 - csr: misa
   description: >
     Machine ISA Register
@@ -294,10 +563,11 @@
       description: >
           Encodes all supported ISA extensions
       type: R
-      reset_val: 0x801104
+      reset_val: 0x101104
       msb: 25
       lsb: 0
 - csr: mie
+  SKIP_ME: Imperas checker has bit 31 writeable 
   description: >
     Machine Interrupt Enable
   address: 0x304
@@ -308,7 +578,7 @@
         Machine Fast Interrupt Enables
       type: WARL
       reset_val: 0
-      msb: 31
+      msb: 30
       lsb: 16
     - field_name: MEIE
       description: >
@@ -326,7 +596,7 @@
       lsb: 7 
     - field_name: MSIE
       description: >
-        Machine Software Interrupt Enable
+              Machine Software Interrupt Enable
       type: WARL 
       reset_val: 0
       msb: 3
@@ -341,7 +611,7 @@
       description: >
         Trap-handler base address, always aligned to 256 bytes
       type: WARL
-      reset_val: 0 # assumes mtvec_i == 0
+      reset_val: 0 
       msb: 31
       lsb: 8
     - field_name: BASE[7:2]
@@ -351,66 +621,125 @@
       reset_val: 0
       msb: 7
       lsb: 2
-    - field_name: MODE[1]
+    - field_name: MODE
       description: >
-        Always 0
-      type: R
-      reset_val: 0
-      msb: 1
-      lsb: 1
-    - field_name: MODE[0]
-      description: >
-        0 = Direct mode, 1 = vectored mode
+        Trap-handler base address, always aligned to 256 bytes
       type: WARL
+      #This field will always read 1 for the cv32e20
+      warl_legalize: val_out = 1
       reset_val: 1
-      msb: 0
+      msb: 1
       lsb: 0
 - csr: mcountinhibit
   description: >
     Machine Counter-Inhibit
   address: 0x320
   privilege_mode: M
+  SKIP_ME: Imperas checker has this reading as 0's DUT has non zero values.
   rv32:
-    - field_name: Selectors 31..4
+    - field_name: Selectors 31..13
       description: >
-        Selectors for mhpmcounter31..4 inhibit (assuming NUM_MHPMCOUNTER set to 1)
+        Selectors for mhpmcounter31..13 these are hard coded to 1 in RTL - THIS DOES NOT MATCH THE CSR DEFINITIONS FILE!
       type: R
-      reset_val: 0
+      reset_val: 0x7ffff
       msb: 31
-      lsb: 4
-    - field_name: Selectors 3
+      lsb: 13
+    - field_name: hpmi12
       description: >
-        Selectors for mhpmcounter3 inhibit (assuming NUM_MHPMCOUNTER set to 1)
+        Selectors for mhpmcounter12 inhibit
       type: WARL
-      reset_val: 1
-      msb: 3
-      lsb: 3
+      reset_val: 0
+      msb: 12
+      lsb: 12
+    - field_name: hpmi11
+      description: >
+        Selectors for mhpmcounter11 inhibit
+      type: WARL
+      reset_val: 0
+      msb: 11
+      lsb: 11
+    - field_name: hpmi10
+      description: >
+        Selectors for mhpmcounter10 inhibit 
+      type: WARL
+      reset_val: 0
+      msb: 10
+      lsb: 10
+    - field_name: hpmi9
+      description: >
+        Selectors for mhpmcounter9 inhibit 
+      type: WARL
+      reset_val: 0
+      msb:  9
+      lsb:  9
+    - field_name: hpmi8
+      description: >
+        Selectors for mhpmcounter8 inhibit 
+      type: WARL
+      reset_val: 0
+      msb:  8
+      lsb:  8
+    - field_name: hpmi7
+      description: >
+        Selectors for mhpmcounter7 inhibit 
+      type: WARL
+      reset_val: 0
+      msb:  7
+      lsb:  7
+    - field_name: hpmi6
+      description: >
+        Selectors for mhpmcounter6 inhibit 
+      type: WARL
+      reset_val: 0
+      msb:  6
+      lsb:  6
+    - field_name: hpmi5
+      description: >
+        Selectors for mhpmcounter5 inhibit 
+      type: WARL
+      reset_val: 0
+      msb:  5
+      lsb:  5
+    - field_name: hpmi4
+      description: >
+        Selectors for mhpmcounter4 inhibit 
+      type: WARL
+      reset_val: 0
+      msb:  4
+      lsb:  4
+    - field_name: hpmi3
+      description: >
+        Selectors for mhpmcounter3 inhibit 
+      type: WARL
+      reset_val: 0
+      msb:  3
+      lsb:  3
     - field_name: minstret inhibit
       description: >
         Inhibit minstret counting
       type: WARL
-      reset_val: 1
-      msb: 2
-      lsb: 2
+      reset_val: 0
+      msb:  2
+      lsb:  2
     - field_name: zero
       description: >
         Zero
       type: R
       reset_val: 0
-      msb: 1
-      lsb: 1
+      msb:  1
+      lsb:  1
     - field_name: mcycle inhibit
       description: >
         Inhibit mcycle counting
       type: WARL
-      reset_val: 1
-      msb: 0
-      lsb: 0
-# MHPMEVENT4..31 not full modeled by RM
+      reset_val: 0
+      msb:  0
+      lsb:  0
 - csr: mhpmevent3
   description: >
     (HPM) Machine Performance-Monitoring Event Selector 3
   address: 0x323
+  SKIP_ME: Appears to be unimplemented in RTL.
   privilege_mode: M
   rv32:
     - field_name: Zero
@@ -420,12 +749,341 @@
       reset_val: 0
       msb: 31
       lsb: 16
-    - field_name: Selectors
+    - field_name: Selectors[15:4]
       description: >
         Event selector
-      type: WARL
+      type: R
       reset_val: 0
       msb: 15
+      lsb: 4
+    - field_name: Selectors[3]
+      description: >
+        Event selector
+      type: R
+      reset_val: 1
+      msb: 3
+      lsb: 3
+    - field_name: Selectors[2:0]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 2
+      lsb: 0
+- csr: mhpmevent4
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 4
+  address: 0x324
+  SKIP_ME: Appears to be unimplemented in RTL.
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 16
+    - field_name: Selectors[15:5]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 15
+      lsb: 5
+    - field_name: Selectors[4]
+      description: >
+        Event selector
+      type: R
+      reset_val: 1
+      msb: 4
+      lsb: 4
+    - field_name: Selectors[3:0]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 3
+      lsb: 0
+- csr: mhpmevent5
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 5
+  address: 0x325
+  SKIP_ME: Appears to be unimplemented in RTL.
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 16
+    - field_name: Selectors[15:6]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 15
+      lsb: 6
+    - field_name: Selectors[5]
+      description: >
+        Event selector
+      type: R
+      reset_val: 1
+      msb: 5
+      lsb: 5
+    - field_name: Selectors[4:0]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 4
+      lsb: 0
+- csr: mhpmevent6
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 6
+  address: 0x326
+  SKIP_ME: Appears to be unimplemented in RTL.
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 16
+    - field_name: Selectors[15:7]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 15
+      lsb: 7
+    - field_name: Selectors[6]
+      description: >
+        Event selector
+      type: R
+      reset_val: 1
+      msb: 6
+      lsb: 6
+    - field_name: Selectors[5:0]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 5
+      lsb: 0
+- csr: mhpmevent7
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 7
+  address: 0x327
+  SKIP_ME: Appears to be unimplemented in RTL.
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 16
+    - field_name: Selectors[15:8]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 15
+      lsb: 8
+    - field_name: Selectors[7]
+      description: >
+        Event selector
+      type: R
+      reset_val: 1
+      msb: 7
+      lsb: 7
+    - field_name: Selectors[6:0]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 6
+      lsb: 0
+- csr: mhpmevent8
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 8
+  address: 0x328
+  SKIP_ME: Appears to be unimplemented in RTL.
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 16
+    - field_name: Selectors[15:9]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 15
+      lsb: 9
+    - field_name: Selectors[8]
+      description: >
+        Event selector
+      type: R
+      reset_val: 1
+      msb: 8
+      lsb: 8
+    - field_name: Selectors[7:0]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 7
+      lsb: 0
+- csr: mhpmevent9
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 9
+  address: 0x329
+  SKIP_ME: Appears to be unimplemented in RTL.
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 16
+    - field_name: Selectors[15:10]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 15
+      lsb: 10
+    - field_name: Selectors[9]
+      description: >
+        Event selector
+      type: R
+      reset_val: 1
+      msb: 9
+      lsb: 9
+    - field_name: Selectors[8:0]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 8
+      lsb: 0
+- csr: mhpmevent10
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 10
+  address: 0x32A
+  SKIP_ME: Appears to be unimplemented in RTL.
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 16
+    - field_name: Selectors[15:11]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 15
+      lsb: 11
+    - field_name: Selectors[10]
+      description: >
+        Event selector
+      type: R
+      reset_val: 1
+      msb: 10
+      lsb: 10
+    - field_name: Selectors[9:0]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 9
+      lsb: 0
+- csr: mhpmevent11
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 11
+  address: 0x32B
+  SKIP_ME: Appears to be unimplemented in RTL.
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 16
+    - field_name: Selectors[15:12]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 15
+      lsb: 12
+    - field_name: Selectors[11]
+      description: >
+        Event selector
+      type: R
+      reset_val: 1
+      msb: 11
+      lsb: 11
+    - field_name: Selectors[10:0]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 10
+      lsb: 0
+- csr: mhpmevent12
+  description: >
+    (HPM) Machine Performance-Monitoring Event Selector 12
+  address: 0x32C
+  SKIP_ME: Appears to be unimplemented in RTL.
+  privilege_mode: M
+  rv32:
+    - field_name: Zero
+      description: >
+        Always zero
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 16
+    - field_name: Selectors[15:13]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 15
+      lsb: 13
+    - field_name: Selectors[12]
+      description: >
+        Event selector
+      type: R
+      reset_val: 1
+      msb: 12
+      lsb: 12
+    - field_name: Selectors[11:0]
+      description: >
+        Event selector
+      type: R
+      reset_val: 0
+      msb: 11
       lsb: 0
 - csr: mscratch
   description: >
@@ -491,12 +1149,13 @@
   description: >
     Machine Trap Value
   address: 0x343
+  SKIP_ME: Imperas does not have this CSR writeable
   privilege_mode: M
   rv32:
     - field_name: Trap value
       description: >
          Machine Trap Value
-      type: R
+      type: RW
       reset_val: 0
       msb: 31
       lsb: 0
@@ -541,24 +1200,33 @@
       reset_val: 0
       msb: 3
       lsb: 3
+#TODO: Add PMP registers
 - csr: tselect
   description: >
     Trigger Select Register
   address: 0x7A0
   privilege_mode: M
   rv32:
-    - field_name: Trigger
+    - field_name: Trigger_RESERVED
       description: >
          Trigger select field
       type: R
       reset_val: 0
       msb: 31
+      lsb: 1
+    - field_name: Trigger
+      description: >
+         Trigger select field
+      type: R
+      reset_val: 0
+      msb: 0
       lsb: 0
 - csr: tdata1
   description: >
     Trigger Data Register 1
   address: 0x7A1
   privilege_mode: M
+  SKIP_ME: DUT hardcodes U-mode to 1, Imperas has it as  0
   rv32:
     - field_name: Type
       description: >
@@ -655,7 +1323,7 @@
       description: >
          U-mode not supported
       type: R
-      reset_val: 0
+      reset_val: 1
       msb: 3
       lsb: 3
     - field_name: execute
@@ -704,26 +1372,6 @@
       type: R
       reset_val: 0
       msb: 31
-      lsb: 0
-- csr: tinfo
-  description: >
-    Trigger Info
-  address: 0x7A4
-  privilege_mode: M
-  rv32:
-    - field_name: Zero
-      description: >
-        Always zero
-      type: R
-      reset_val: 0
-      msb: 31
-      lsb: 16
-    - field_name: Info
-      description: >
-        Only type 2 supported
-      type: R
-      reset_val: 4
-      msb: 15
       lsb: 0
 - csr: mcontext
   description: >
