@@ -123,7 +123,7 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
 
   constraint num_zfinx_reserved_reg_c {
     if (RV32ZFINX inside {riscv_instr_pkg::supported_isa}) {
-      num_zfinx_reserved_reg inside {[5:10]};
+      num_zfinx_reserved_reg inside {[5:8]};
     } else {
       num_zfinx_reserved_reg == 0;
     }
@@ -135,7 +135,7 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
       zfinx_reserved_gpr.size() == num_zfinx_reserved_reg;
       unique {zfinx_reserved_gpr};
       foreach(zfinx_reserved_gpr[i]) {
-        !(zfinx_reserved_gpr[i] inside {ZERO, RA, SP, GP, TP});
+        !(zfinx_reserved_gpr[i] inside {ZERO, RA, SP, GP, TP, S0, S1, A0, A1, A2, A3, A4, A5});
         (zfinx_reserved_gpr[i] != dp);
         (zfinx_reserved_gpr[i] != str_rs1);
         (zfinx_reserved_gpr[i] != str_rs3);
