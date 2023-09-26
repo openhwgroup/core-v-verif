@@ -2721,6 +2721,13 @@ uint32_t mret_with_minhv(uint32_t index, uint8_t report_name) {
     :[mcause] "r"(mcause.raw)
     :"t0");
 
+  // Clear minhv-bit
+  mcause.clic.minhv = 0;
+
+  __asm__ volatile (R"(
+    csrrw zero, mcause, %[mcause]
+  )"::[mcause] "r"(mcause.raw));
+
   test_fail += (result != 0);
 
   if (test_fail) {
