@@ -43,8 +43,8 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
       end
       2'b01: begin
         instr = {
-          $sformatf("add x%0d, zero", cfg.gpr[0]),
-          $sformatf("addi x%0d, 0x4", cfg.gpr[0]),
+          $sformatf("add x%0d, x%0d, zero", cfg.gpr[0], cfg.gpr[0]),
+          $sformatf("addi x%0d, x%0d, 0x4", cfg.gpr[0], cfg.gpr[0]),
           $sformatf("csrrs x0, 0xbf0, x%0d", cfg.gpr[0])
         };
         gen_section(get_label("enable_hint_instr", hart), instr);
@@ -64,6 +64,36 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
           $sformatf("csrrs x0, 0xbf0, x%0d", cfg.gpr[0])
         };
         gen_section(get_label("enable_dummy_hint_instr", hart), instr);
+      end
+    endcase
+
+    case ({corev_cfg.disable_pc_hardening, corev_cfg.disable_data_independent_timing})
+      2'b00: begin
+        // Nothing disabled
+      end
+      2'b01: begin
+        instr = {
+          $sformatf("add x%0d, x%0d, zero", cfg.gpr[0], cfg.gpr[0]),
+          $sformatf("addi x%0d, x%0d, 0x1", cfg.gpr[0], cfg.gpr[0]),
+          $sformatf("csrrc x0, 0xbf0, x%0d", cfg.gpr[0])
+        };
+        gen_section(get_label("disable_pc_hardening_data_ind_timing", hart), instr);
+      end
+      2'b10: begin
+        instr = {
+          $sformatf("add x%0d, x%0d, zero", cfg.gpr[0], cfg.gpr[0]),
+          $sformatf("addi x%0d, x%0d, 0x8", cfg.gpr[0], cfg.gpr[0]),
+          $sformatf("csrrc x0, 0xbf0, x%0d", cfg.gpr[0])
+        };
+        gen_section(get_label("disable_pc_hardening_data_ind_timing", hart), instr);
+      end
+      2'b11: begin
+        instr = {
+          $sformatf("add x%0d, x%0d, zero", cfg.gpr[0], cfg.gpr[0]),
+          $sformatf("addi x%0d, x%0d, 0x9", cfg.gpr[0], cfg.gpr[0]),
+          $sformatf("csrrc x0, 0xbf0, x%0d", cfg.gpr[0])
+        };
+        gen_section(get_label("disable_pc_hardening_data_ind_timing", hart), instr);
       end
     endcase
 
