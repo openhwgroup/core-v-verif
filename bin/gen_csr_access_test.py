@@ -1,11 +1,41 @@
 #!/usr/bin/env python3
 
+
+# Copyright 2023 Silicon Labs, Inc.
+#
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# Licensed under the Solderpad Hardware License v 2.1 (the "License"); you may
+# not use this file except in compliance with the License, or, at your option,
+# the Apache License version 2.0.
+#
+# You may obtain a copy of the License at
+# https://solderpad.org/licenses/SHL-2.1/
+#
+# Unless required by applicable law or agreed to in writing, any work
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# Description:
+#     This script is for generating the CSR access test:
+#     `cv32e40(s|x)/tests/programs/custom/cv32e40x_csr_access_test/`.
+#
+#     It calls a generation script within `riscv-dv`.
+#     A Yaml config as per `--input_yaml_path` is used as its input.
+#     See the README in the path mention above for additional usage info.
+
+
 import sys
 import os
 import argparse
 import subprocess
 import yaml
 import shlex
+
 
 if (sys.version_info < (3,5,0)):
     print ('Requires python 3.5')
@@ -110,6 +140,119 @@ def run_riscv_dv_gen_csr_script(output_yaml_path):
         print("error: exception in 'run_riscv_dv_gen_csr_script'")
         print(e)
 
+def set_enabled_features(enabled_features_previous, str_args_previous, args):
+    enabled_features = enabled_features_previous
+    str_args = str_args_previous
+
+    # "VERIF_HEADER"  (Design-workaround for CSR field alternatives.)
+    enabled_features["verif_header"] = True
+
+    # CLIC
+    if (args.clic_enable):
+        str_args = str_args + "_clic"
+        enabled_features["clic"] = True
+
+    # CLINT
+    if (args.clint_enable or not args.clic_enable):
+        str_args = str_args + "_clint"
+        enabled_features["clint"] = True if not enabled_features["clic"] else False
+
+    # DEBUG
+    if (args.debug_enable):
+        str_args = str_args + "_debug"
+        enabled_features["debug"] = True
+
+    # I/E
+    if (args.i_base_enable or args.i_ext_enable):
+        str_args = str_args + "_i"
+        enabled_features["i_base"] = True
+    elif (args.e_base_enable or args.e_ext_enable):
+        str_args = str_args + "_e"
+        enabled_features["e_base"] = True
+    else:
+        print("error: need '--i_base_enable' or '--e_base_enable'", file=sys.stderr)
+        exit(1)
+    if (args.i_ext_enable or args.e_ext_enable):
+        print("warning: i and e are 'base' modules, not extensions", file=sys.stderr)
+
+    # M
+    if (args.m_ext_enable):
+        str_args = str_args + "_m"
+        enabled_features["m_ext"] = True
+    elif (args.m_none_enable):
+        str_args = str_args + "_mnone"
+        enabled_features["m_none"] = True
+    else:
+        print("error: need '--m_ext_enable' or '--m_none_enable'", file=sys.stderr)
+        exit(1)
+
+    # A_EXT
+    if (args.a_ext_enable):
+        str_args = str_args + "_a"
+        enabled_features["a_ext"] = True
+
+    # F_EXT
+    if (args.f_ext_enable):
+        str_args = str_args + "_f"
+        enabled_features["f_ext"] = True
+
+    # P_EXT
+    if (args.p_ext_enable):
+        str_args = str_args + "_p"
+        enabled_features["p_ext"] = True
+
+    # V_EXT
+    if (args.v_ext_enable):
+        str_args = str_args + "_v"
+        enabled_features["v_ext"] = True
+
+    # X_EXT
+    if (args.x_ext_enable):
+        str_args = str_args + "_x"
+        enabled_features["x_ext"] = True
+
+    # XSECURE
+    if (args.xsecure_enable):
+        str_args = str_args + "_xsecure"
+        enabled_features["xsecure"] = True
+
+    # UMODE
+    if (args.umode_enable):
+        str_args = str_args + "_umode"
+        enabled_features["umode"] = True
+
+    # ZC
+    if (args.zc_enable):
+        str_args = str_args + "_zc"
+        enabled_features["zc"] = True
+
+    # ZICNTR
+    if (args.zicntr_enable):
+        str_args = str_args + "_zicntr"
+        enabled_features["zicntr"] = True
+
+    # MARCHID
+    if (int(args.marchid) > 0):
+        str_args = str_args + "_marchid" + args.marchid
+        enabled_features["marchid"] = int(args.marchid)
+
+    # MHPMCOUNTERS
+    if (int(args.mhpmcounter_num) > 0):
+        str_args = str_args + "_mhpmctr" + args.mhpmcounter_num
+        enabled_features["num_mhpmcounters"] = int(args.mhpmcounter_num)
+
+    # PMP
+    if (int(args.pmp_num_regions) > 0):
+        str_args = str_args + "_pmp" + args.pmp_num_regions
+        enabled_features["pmp_num_regions"] = int(args.pmp_num_regions)
+
+    # TRIGGERS
+    if (int(args.num_triggers) > 0):
+        str_args = str_args + "_triggers" + args.num_triggers
+        enabled_features["dbg_num_triggers"] = int(args.num_triggers)
+
+    return (enabled_features, str_args)
+
 def preprocess_yaml():
     input_script_path = yaml_file_path
     w_enable = True
@@ -139,93 +282,8 @@ def preprocess_yaml():
       "dbg_num_triggers": 0,
       }
 
-    # CLIC
-    if (args.clic_enable):
-        str_args = str_args + "_clic"
-        enabled_features["clic"] = True
-    # CLINT
-    if (args.clint_enable or not args.clic_enable):
-        str_args = str_args + "_clint"
-        enabled_features["clint"] = True if not enabled_features["clic"] else False
-    # DEBUG
-    if (args.debug_enable):
-        str_args = str_args + "_debug"
-        enabled_features["debug"] = True
-    # I/E
-    if (args.i_base_enable or args.i_ext_enable):
-        str_args = str_args + "_i"
-        enabled_features["i_base"] = True
-    elif (args.e_base_enable or args.e_ext_enable):
-        str_args = str_args + "_e"
-        enabled_features["e_base"] = True
-    else:
-        print("error: need '--i_base_enable' or '--e_base_enable'", file=sys.stderr)
-        exit(1)
-    if (args.i_ext_enable or args.e_ext_enable):
-        print("warning: i and e are 'base' modules, not extensions", file=sys.stderr)
-    # M
-    if (args.m_ext_enable):
-        str_args = str_args + "_m"
-        enabled_features["m_ext"] = True
-    elif (args.m_none_enable):
-        str_args = str_args + "_mnone"
-        enabled_features["m_none"] = True
-    else:
-        print("error: need '--m_ext_enable' or '--m_none_enable'", file=sys.stderr)
-        exit(1)
-    # A_EXT
-    if (args.a_ext_enable):
-        str_args = str_args + "_a"
-        enabled_features["a_ext"] = True
-    # F_EXT
-    if (args.f_ext_enable):
-        str_args = str_args + "_f"
-        enabled_features["f_ext"] = True
-    # P_EXT
-    if (args.p_ext_enable):
-        str_args = str_args + "_p"
-        enabled_features["p_ext"] = True
-    # V_EXT
-    if (args.v_ext_enable):
-        str_args = str_args + "_v"
-        enabled_features["v_ext"] = True
-    # X_EXT
-    if (args.x_ext_enable):
-        str_args = str_args + "_x"
-        enabled_features["x_ext"] = True
-    # XSECURE
-    if (args.xsecure_enable):
-        str_args = str_args + "_xsecure"
-        enabled_features["xsecure"] = True
-    # UMODE
-    if (args.umode_enable):
-        str_args = str_args + "_umode"
-        enabled_features["umode"] = True
-    # ZC
-    if (args.zc_enable):
-        str_args = str_args + "_zc"
-        enabled_features["zc"] = True
-    # ZICNTR
-    if (args.zicntr_enable):
-        str_args = str_args + "_zicntr"
-        enabled_features["zicntr"] = True
-    # MARCHID
-    if (int(args.marchid) > 0):
-        str_args = str_args + "_marchid" + args.marchid
-        enabled_features["marchid"] = int(args.marchid)
-    # MHPMCOUNTERS
-    if (int(args.mhpmcounter_num) > 0):
-        str_args = str_args + "_mhpmctr" + args.mhpmcounter_num
-        enabled_features["num_mhpmcounters"] = int(args.mhpmcounter_num)
-    # PMP
-    if (int(args.pmp_num_regions) > 0):
-        str_args = str_args + "_pmp" + args.pmp_num_regions
-        enabled_features["pmp_num_regions"] = int(args.pmp_num_regions)
-    # TRIGGERS
-    if (int(args.num_triggers) > 0):
-        str_args = str_args + "_triggers" + args.num_triggers
-        enabled_features["dbg_num_triggers"] = int(args.num_triggers)
-    # TODO:silabs-robin Any other "enabled_features"?
+    (enabled_features, str_args) = \
+        set_enabled_features(enabled_features, str_args, args)
 
     print("enabled_features: {}".format(enabled_features))
 
@@ -322,7 +380,7 @@ def preprocess_yaml_m4(enabled_features, input_script_path, output_script_handle
 
     # Run the preprocessing
     args = args_pre + args_mid + args_post
-    print('running m4 as: ' + str(args))  # TODO:silabs-robin  "if '--verbose'"
+    print('running m4 as: ' + str(args))
     proc_results = subprocess.run(args, stdout=output_script_handle)
 
     if proc_results.returncode != 0:
