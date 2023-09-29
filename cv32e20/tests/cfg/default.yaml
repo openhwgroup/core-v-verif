@@ -5,7 +5,8 @@ compile_flags:
 ovpsim: >
   --override cpu/mvendorid=0
   --override cpu/mimpid=0
-  --override cpu/marchid=22
+  --override cpu/priv_version=20211203
+  --override cpu/marchid=35
   --showinstanceparams cpu
   --trace --tracechange --traceshowicount --tracemode --monitornets
 cflags: >

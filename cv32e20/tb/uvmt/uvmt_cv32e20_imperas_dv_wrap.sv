@@ -22,6 +22,7 @@
 
 `define DUT_PATH dut_wrap.cv32e20_top_i
 `define RVFI_IF  `DUT_PATH
+`define DUT_CORE_PATH dut_wrap.cv32e20_top_i.u_cve2_top.u_cve2_core
 
 `define STRINGIFY(x) `"x`"
 
@@ -103,7 +104,7 @@ module uvmt_cv32e20_imperas_dv_wrap
         .CMP_GPR     (1),
         .CMP_FPR     (0),
         .CMP_VR      (0),
-        .CMP_CSR     (0)
+        .CMP_CSR     (1)
     )
     trace2api(rvvi);
 
@@ -134,6 +135,301 @@ module uvmt_cv32e20_imperas_dv_wrap
 //    assign rvvi.ixl[0][0]      = `RVFI_IF.rvfi_ixl;
     assign rvvi.pc_rdata[0][0] = `RVFI_IF.rvfi_pc_rdata;
     assign rvvi.pc_wdata[0][0] = `RVFI_IF.rvfi_pc_wdata;
+    
+    bit rvfi_csr_write;
+    assign rvfi_csr_write = ( `DUT_CORE_PATH.csr_access &&
+                              `DUT_CORE_PATH.csr_op_en &&
+                             ((`DUT_CORE_PATH.csr_op == 2'b01) | // CSR_OP_WRITE
+                              (`DUT_CORE_PATH.csr_op == 2'b10) | // CSR_OP_SET  
+                              (`DUT_CORE_PATH.csr_op == 2'b11))  // CSR_OP_CLEAR  
+                             );  
+    
+
+// CSR_MSTATUS 0x300
+    wire [31:0] csr_mstatus_r;
+    wire [31:0] csr_mstatus_w;
+    bit         csr_mstatus_wb;
+    assign csr_mstatus_r[31:0] = {10'b0000000000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[0],  //tw
+                                  3'b000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[1],  //mprv
+                                  4'b0000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[3:2],//mpp
+                                  3'b000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[4],  //mpie
+                                  3'b000,
+                                  `DUT_CORE_PATH.cs_registers_i.mstatus_q[5],  //mie
+                                  3'b000};
+    assign rvvi.csr[0][0]['h300]    = csr_mstatus_r; // works with fixed DUT timing
+    assign rvvi.csr_wb[0][0]['h300] = csr_mstatus_wb; 
+        always @(rvvi.csr[0][0]['h300]) begin 
+        csr_mstatus_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_mstatus_wb) begin 
+            csr_mstatus_wb = 0; 
+        end 
+    end
+
+//CSR_MISA 0x301
+
+//CSR_MIE 0x304
+    wire [31:0] csr_mie_r;
+    bit         csr_mie_wb;
+    assign csr_mie_r = {1'b0,
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[17:3], // irq_fast[14:0]
+                        3'b0,
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[2], // irq_external
+                        3'b0,
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[1], // irq_timer
+                        3'b0,
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[0], // irq_software
+                        3'b0};
+    assign rvvi.csr[0][0]['h304]    = csr_mie_r;
+    assign rvvi.csr_wb[0][0]['h304] = csr_mie_wb; 
+    always @(rvvi.csr[0][0]['h304]) begin 
+        csr_mie_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_mie_wb) begin 
+            csr_mie_wb = 0; 
+        end 
+    end
+
+//CSR_MTVEC 0x305
+    wire [31:0] csr_mtvec_w; 
+    wire [31:0] csr_mtvec_wmask; 
+    wire [31:0] csr_mtvec_r;
+    bit         csr_mtvec_wb;
+    assign csr_mtvec_wmask =32'hFFFFFF00;                          
+    assign csr_mtvec_w = `DUT_CORE_PATH.cs_registers_i.csr_wdata_int & (csr_mtvec_wmask);
+    assign csr_mtvec_r = `DUT_CORE_PATH.cs_registers_i.csr_mtvec_o;
+
+//    assign rvvi.csr[0][0]['h305]    = csr_mtvec_w | csr_mtvec_r;
+    assign rvvi.csr[0][0]['h305]    = csr_mtvec_r;
+    assign rvvi.csr_wb[0][0]['h305] = csr_mtvec_wb; 
+
+    always @(posedge rvvi.clk) begin 
+        if ( rvfi_csr_write && // CSR_OP_READ
+                      (`DUT_CORE_PATH.csr_addr == 12'h305) ) 
+           csr_mtvec_wb = 1;
+        else
+           csr_mtvec_wb = 0;
+    end
+//CSR_MCOUNTINHIBIT 0x320    
+//CSR_MHPMEVENT3 0x323
+//CSR_MHPMEVENT4 0x324
+//CSR_MHPMEVENT5 0x325
+//CSR_MHPMEVENT6 0x326
+//CSR_MHPMEVENT7 0x327
+//CSR_MHPMEVENT8 0x328
+//CSR_MHPMEVENT9 0x329
+//CSR_MHPMEVENT10 0x32A
+//CSR_MHPMEVENT11 0x32B
+//CSR_MHPMEVENT12 0x32C
+
+
+//CSR_MSCRATCH  0x340
+    wire [31:0] csr_mscratch_w; 
+    wire [31:0] csr_mscratch_wmask; 
+    wire [31:0] csr_mscratch_r;
+    bit         csr_mscratch_wb;
+    assign csr_mscratch_wmask =32'hFFFFFFFF;                          
+    assign csr_mscratch_w = `DUT_CORE_PATH.cs_registers_i.csr_wdata_int & (csr_mscratch_wmask);
+    assign csr_mscratch_r = `DUT_CORE_PATH.cs_registers_i.mscratch_q;
+
+    assign rvvi.csr[0][0]['h340]    = csr_mscratch_r;
+    assign rvvi.csr_wb[0][0]['h340] = csr_mscratch_wb; 
+
+    always @(posedge rvvi.clk) begin 
+        if ( rvfi_csr_write && (`DUT_CORE_PATH.csr_addr == 12'h340) ) 
+           csr_mscratch_wb = 1;
+        else
+           csr_mscratch_wb = 0;
+    end
+
+//CSR_MEPC 0x341
+    wire [31:0] csr_mepc_w; 
+    wire [31:0] csr_mepc_wmask; 
+    wire [31:0] csr_mepc_r;
+    bit         csr_mepc_wb;
+//    assign csr_mepc_wmask =32'hFFFFFFFE;                          
+//    assign csr_mepc_w = `DUT_CORE_PATH.cs_registers_i.csr_wdata_int & (csr_mepc_wmask);
+    assign csr_mepc_r = `DUT_CORE_PATH.cs_registers_i.mepc_q;
+
+    assign rvvi.csr[0][0]['h341]    = csr_mepc_r;
+    assign rvvi.csr_wb[0][0]['h341] = csr_mepc_wb; 
+
+//    always @(posedge rvvi.clk) begin 
+//        if ( `DUT_CORE_PATH.cs_registers_i.mepc_en ) //mepc_en
+//           csr_mepc_wb = 1;
+//        else
+//           csr_mepc_wb = 0;
+//    end
+    always @(rvvi.csr[0][0]['h341]) begin 
+        csr_mepc_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_mepc_wb) begin 
+            csr_mepc_wb = 0; 
+        end 
+    end
+
+//CSR_MCAUSE 0x342
+    wire [31:0] csr_mcause_r;
+    bit         csr_mcause_wb;
+    assign csr_mcause_r = {`DUT_CORE_PATH.cs_registers_i.mcause_q[5], 26'b0,`DUT_CORE_PATH.cs_registers_i.mcause_q[4:0]};
+    assign rvvi.csr[0][0]['h342]    = csr_mcause_r;
+    assign rvvi.csr_wb[0][0]['h342] = csr_mcause_wb; 
+//    always @(posedge rvvi.clk) begin 
+//        if ( `DUT_CORE_PATH.cs_registers_i.mcause_en ) //mcause_en
+//           csr_mcause_wb = 1;
+//        else
+//           csr_mcause_wb = 0;
+//    end
+    always @(rvvi.csr[0][0]['h342]) begin 
+        csr_mcause_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_mcause_wb) begin 
+            csr_mcause_wb = 0; 
+        end 
+    end
+    
+//CSR_MTVAL 0x343
+    wire [31:0] csr_mtval_r;
+    bit         csr_mtval_wb;
+    assign csr_mtval_r = `DUT_CORE_PATH.cs_registers_i.mtval_q;
+    assign rvvi.csr[0][0]['h343]    = csr_mtval_r;
+    assign rvvi.csr_wb[0][0]['h343] = csr_mtval_wb; 
+    always @(posedge rvvi.clk) begin 
+        if ( rvfi_csr_write && (`DUT_CORE_PATH.csr_addr == 12'h343) ) //mtval_en
+           csr_mtval_wb = 1;
+        else
+           csr_mtval_wb = 0;
+    end
+
+//CSR_MIP 0x344
+
+//CSR_DCSR 0x7B0
+    wire [31:0] csr_dcsr_r;
+    bit         csr_dcsr_wb;
+    assign csr_dcsr_r = `DUT_CORE_PATH.cs_registers_i.dcsr_q;
+    assign rvvi.csr[0][0]['h7B0]    = csr_dcsr_r;
+    assign rvvi.csr_wb[0][0]['h7B0] = csr_dcsr_wb; 
+    always @(rvvi.csr[0][0]['h7B0]) begin 
+        csr_dcsr_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_dcsr_wb) begin 
+            csr_dcsr_wb = 0; 
+        end 
+    end
+
+//CSR_TSELECT_ADDR 0x7A0
+//CSR_TDATA1_ADDR 0x7A1
+//CSR_TDATA2_ADDR 0x7A2
+//CSR_TDATA3_ADDR 0x7A3
+//CSR_MCONTEXT_ADDR 0x7A8
+//CSR_SCONTEXT_ADDR 0x7AA
+//CSR_DCSR_ADDR 0x7B0
+
+//CSR_DPC 0x7B1 //depc?
+    wire [31:0] csr_dpc_r;
+    bit         csr_dpc_wb;
+    assign csr_dpc_r = `DUT_CORE_PATH.cs_registers_i.depc_q;
+    assign rvvi.csr[0][0]['h7B1]    = csr_dpc_r;
+    assign rvvi.csr_wb[0][0]['h7B1] = csr_dpc_wb; 
+    always @(rvvi.csr[0][0]['h7B1]) begin 
+        csr_dpc_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_dpc_wb) begin 
+            csr_dpc_wb = 0; 
+        end 
+    end
+
+//CSR_DSCRATCH0 0x7B2
+    wire [31:0] csr_dscratch0_r;
+    bit         csr_dscratch0_wb;
+    assign csr_dscratch0_r = `DUT_CORE_PATH.cs_registers_i.dscratch0_q;
+    assign rvvi.csr[0][0]['h7B2]    = csr_dscratch0_r;
+    assign rvvi.csr_wb[0][0]['h7B2] = csr_dscratch0_wb; 
+    always @(rvvi.csr[0][0]['h7B2]) begin 
+        csr_dscratch0_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_dscratch0_wb) begin 
+            csr_dscratch0_wb = 0; 
+        end 
+    end
+
+//CSR_DSCRATCH1 0x7B3
+    wire [31:0] csr_dscratch1_r;
+    bit         csr_dscratch1_wb;
+    assign csr_dscratch1_r = `DUT_CORE_PATH.cs_registers_i.depc_q;
+    assign rvvi.csr[0][0]['h7B3]    = csr_dscratch1_r;
+    assign rvvi.csr_wb[0][0]['h7B3] = csr_dscratch1_wb; 
+    always @(rvvi.csr[0][0]['h7B3]) begin 
+        csr_dscratch1_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_dscratch1_wb) begin 
+            csr_dscratch1_wb = 0; 
+        end 
+    end
+
+//CSR_CPUCTRL 0x7C0
+//CSR_MCYCLE 0xB00
+
+//CSR_MINSTRET 0xB02
+    bit csr_minstret_wb; 
+    wire [31:0] csr_minstret_w; 
+    wire [31:0] csr_minstret_r; 
+    assign csr_minstret_r = `DUT_CORE_PATH.cs_registers_i.minstret_raw[31:0] ; 
+    assign rvvi.csr[0][0]['hb02]    = csr_minstret_w | csr_minstret_r; 
+    assign rvvi.csr_wb[0][0]['hb02] = csr_minstret_wb; 
+    always @(rvvi.csr[0][0]['hb02]) begin 
+        csr_minstret_wb = 1; 
+    end 
+    always @(posedge rvvi.clk) begin 
+        if (`RVFI_IF.rvfi_valid && csr_minstret_wb) begin 
+            csr_minstret_wb = 0; 
+        end 
+    end
+    
+//CSR_MHPMCOUNTER3_ADDR  0xB03
+//CSR_MHPMCOUNTER4_ADDR  0xB04
+//CSR_MHPMCOUNTER5_ADDR  0xB05
+//CSR_MHPMCOUNTER6_ADDR  0xB06
+//CSR_MHPMCOUNTER7_ADDR  0xB07
+//CSR_MHPMCOUNTER8_ADDR  0xB08
+//CSR_MHPMCOUNTER9_ADDR  0xB09
+//CSR_MHPMCOUNTER10_ADDR 0xB0A
+//CSR_MHPMCOUNTER11_ADDR 0xB0B
+//CSR_MHPMCOUNTER12_ADDR 0xB0C
+//CSR_MCYCLEH 0xB80
+//CSR_MINSTRETH 0xB82
+//CSR_MHPMCOUNTER3H_ADDR  0xB83
+//CSR_MHPMCOUNTER4H_ADDR  0xB84
+//CSR_MHPMCOUNTER5H_ADDR  0xB85
+//CSR_MHPMCOUNTER6H_ADDR  0xB86
+//CSR_MHPMCOUNTER7H_ADDR  0xB87
+//CSR_MHPMCOUNTER8H_ADDR  0xB88
+//CSR_MHPMCOUNTER9H_ADDR  0xB89
+//CSR_MHPMCOUNTER10H_ADDR 0xB8A
+//CSR_MHPMCOUNTER11H_ADDR 0xB8B
+//CSR_MHPMCOUNTER12H_ADDR 0xB8C
+//CSR_MVENDORID_ADDR  0xF11
+//CSR_MARCHID_ADDR    0xF12
+//CSR_MIMPID_ADDR     0xF13
+//CSR_MHARTID_ADDR    0xF14
+
+//rvviApiPkg.sv
+//rvviRefCsrCompareEnable
+//rvviRefCsrCompareMask
+//rvviRefCsrSetVolatileMask
+//rvviRefCsrsCompare
 
 //    `RVVI_SET_CSR( `CSR_MSTATUS_ADDR,       mstatus       )
 //    `RVVI_SET_CSR( `CSR_MISA_ADDR,          misa          )
@@ -302,10 +598,13 @@ module uvmt_cv32e20_imperas_dv_wrap
 
     hart_id = 32'h0000_0000;
 
+//    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MINSTRET_ADDR     ));
     
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLE_ADDR        ));
 
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRET_ADDR      ));
+//    void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLEH_ADDR        ));
+//    void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRETH_ADDR      ));
 
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLE_ADDR       ));
 
@@ -313,6 +612,7 @@ module uvmt_cv32e20_imperas_dv_wrap
     // pending and taken
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MIP_ADDR          ));
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
+    void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_MSTATUS_ADDR, 'h40));// UBE always 0.
 
 //    // define asynchronous grouping
 //    // Interrupts
