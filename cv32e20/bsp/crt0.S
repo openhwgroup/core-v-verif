@@ -28,8 +28,8 @@ _start:
 	la sp, __stack_end
 
 /* set vector table address */
-	la a0, vector_table /*MJS __vector_start*/
-	ori a0, a0, 1 /*vector mode = vectored */
+	la a0, __vector_start // TODO: why is this __vector_start and not vector_table?
+	ori a0, a0, 1         // vector mode is always 'vectored' for CV32E20
 	csrw mtvec, a0
 
 /* clear the bss segment */

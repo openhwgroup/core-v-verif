@@ -36,8 +36,8 @@ module uvmt_cv32e20_dut_wrap #(
                             parameter bit          RV32E             = 1'b0,
                             parameter rv32m_e      RV32M             = RV32MFast,
                             parameter bit          BranchPredictor   = 1'b0,
-                            parameter int unsigned DmHaltAddr        = 32'h1A110800,
-                            parameter int unsigned DmExceptionAddr   = 32'h1A110808,
+                            parameter int unsigned DmHaltAddr        = 32'h1A11_0800,
+                            parameter int unsigned DmExceptionAddr   = 32'h1A14_0000,
                             // Remaining parameters are used by TB components only
                             parameter int unsigned INSTR_ADDR_WIDTH    =  32,
                             parameter int unsigned INSTR_RDATA_WIDTH   =  32,
@@ -165,7 +165,7 @@ module uvmt_cv32e20_dut_wrap #(
          .irq_nm_i               ( irq_uvma[31]),       // non-maskeable interrupt
 
   // Debug Interface
-         .debug_req_i             ('0),
+         .debug_req_i             (debug_req_uvma),
          .crash_dump_o            (),
 
   // RISC-V Formal Interface
