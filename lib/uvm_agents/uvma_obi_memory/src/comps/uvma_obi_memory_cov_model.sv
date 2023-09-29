@@ -20,6 +20,12 @@
 `ifndef __UVMA_OBI_MEMORY_COV_MODEL_SV__
 `define __UVMA_OBI_MEMORY_COV_MODEL_SV__
 
+`ifdef UNSUPPORTED_WITH //TODO - Remove ifdef when the issue in VCS simulator is fixed
+  `define WITH iff
+`else
+   `define WITH with
+`endif
+
    /*
    * Covergroups
    * Decalred at package-level to enable mutliple instances per monitor class (e.g. read/write)
@@ -49,23 +55,23 @@ covergroup cg_obi(string name,
    option.name         = name;
 
    we: coverpoint (trn.access_type) {
-      ignore_bins IGN_WRITE = {UVMA_OBI_MEMORY_ACCESS_WRITE} with (!write_enabled);
-      ignore_bins IGN_READ =  {UVMA_OBI_MEMORY_ACCESS_READ} with (!read_enabled);
+      ignore_bins IGN_WRITE = {UVMA_OBI_MEMORY_ACCESS_WRITE} `WITH (!write_enabled);
+      ignore_bins IGN_READ =  {UVMA_OBI_MEMORY_ACCESS_READ} `WITH (!read_enabled);
       bins WRITE = {UVMA_OBI_MEMORY_ACCESS_WRITE};
       bins READ = {UVMA_OBI_MEMORY_ACCESS_READ};
    }
 
    memtype: coverpoint (trn.memtype) {
-      ignore_bins IGN_MEMTYPE = {[0:$]} with (!is_1p2);
+      ignore_bins IGN_MEMTYPE = {[0:$]} `WITH (!is_1p2);
    }
 
    prot: coverpoint (trn.prot) {
-      ignore_bins IGN_MEMTYPE = {[0:$]} with (!is_1p2);
+      ignore_bins IGN_MEMTYPE = {[0:$]} `WITH (!is_1p2);
       ignore_bins IGN_RSVD_PRIV = {3'b100, 3'b101};
    }
 
    err: coverpoint (trn.err) {
-      ignore_bins IGN_ERR = {[0:$]} with (!is_1p2);
+      ignore_bins IGN_ERR = {[0:$]} `WITH (!is_1p2);
    }
 
 endgroup : cg_obi
@@ -263,6 +269,7 @@ function void uvma_obi_memory_cov_model_c::sample_slv_seq_item();
    
 endfunction : sample_slv_seq_item
 
+`undef WITH //TODO - Remove ifdef when the issue in VCS simulator is fixed
 
 `endif // __UVMA_OBI_MEMORY_COV_MODEL_SV__
 
