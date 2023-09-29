@@ -2755,6 +2755,7 @@ void reset_cpu_interrupt_lvl(void) {
   mcause.clic.mpil = 0;
   mcause.clic.mpie = mstatus.fields.mie;
   mcause.clic.mpp = 0x3;
+  mcause.clic.minhv = 0;
 
   __asm__ volatile ( R"(
     la %[pc], continued
