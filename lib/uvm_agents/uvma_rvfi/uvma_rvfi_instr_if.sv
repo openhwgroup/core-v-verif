@@ -73,10 +73,10 @@ interface uvma_rvfi_instr_if_t
     input logic [(NMEM*XLEN)-1:0]    rvfi_mem_wdata,
     input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask,
 
-    input logic [2:0]                instr_prot,
+    input logic [2:0]                rvfi_instr_prot,
     input logic [1:0]                rvfi_instr_memtype,
     input logic                      rvfi_instr_dbg,
-    input logic [ NMEM*3-1:0]        mem_prot,
+    input logic [ NMEM*3-1:0]        rvfi_mem_prot,
     input logic [ 1*NMEM-1:0]        rvfi_mem_exokay,
     input logic [ 1*NMEM-1:0]        rvfi_mem_err,
     input logic [ 6*NMEM-1:0]        rvfi_mem_atop,
