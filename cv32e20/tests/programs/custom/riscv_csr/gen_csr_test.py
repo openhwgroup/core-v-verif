@@ -45,7 +45,7 @@ Defines the test's success/failure values, one of which will be written to
 the chosen signature address to indicate the test's result.
 """
 TEST_RESULT = 1
-TEST_PASS = 0
+TEST_PASS = 123456789
 TEST_FAIL = 1
 
 class SimpleWriteCSRField:
@@ -110,12 +110,16 @@ def get_csr_map(csr_file, xlen):
         for csr_dict in csr_description:
             csr_name = csr_dict.get("csr")
             csr_address = csr_dict.get("address")
+            if not csr_address:
+                print ("ERROR: No address for csr {}".format(csr_name));
             assert (rv_string in csr_dict), "The {} CSR must be configured for rv{}".format(
                 csr_name, str(rv))
             csr_value = bitarray(uintbe=0, length=xlen)
             csr_write_fields = []
             csr_read_mask = bitarray(uintbe=0, length=xlen)
             csr_field_list = csr_dict.get(rv_string)
+            csr_is_volatile = csr_dict.get("volatile")
+            csr_skip_me = csr_dict.get("SKIP_ME")
             for csr_field_detail_dict in csr_field_list:
                 field_type = csr_field_detail_dict.get("type")
                 field_val = csr_field_detail_dict.get("reset_val")
@@ -139,7 +143,7 @@ def get_csr_map(csr_file, xlen):
                             (start_pos, end_pos), read_only))
 
             csrs.update({csr_name: [csr_address, csr_value, csr_write_fields,
-                                    csr_read_mask]})
+                                    csr_read_mask, csr_is_volatile, csr_skip_me]})
     return csrs
 
 
@@ -253,26 +257,27 @@ def gen_setup(test_file):
     test_file.write(".section .text.init\n")
     test_file.write(".globl _start\n")
     test_file.write(".option norvc\n")
-    test_file.write(".org 0x80\n")
     test_file.write("_start:\n")
 
 
-def gen_csr_test_fail(test_file, end_addr):
+def gen_csr_test_fail(test_file, end_addr, source_reg, dest_reg):
     """
     Generates code to handle a test failure.
     This code consists of writing 1 to the GP register in an infinite loop.
     The testbench will poll this register at the end of the test to detect failure.
 
     Args:
-      test_file: the file containing the generated assembly test code.
-      end_addr: address that should be written to at end of test
+      test_file:  the file containing the generated assembly test code.
+      end_addr:   address that should be written to at end of test
+      source_reg: source register to be output to end_addr +4  
+      dest_reg:   destination register to be output to end_addr +8 
     """
     test_file.write("csr_fail:\n")
     test_file.write("\tli x1, {}\n".format(TEST_FAIL))
-    test_file.write("\tslli x1, x1, 8\n")
-    test_file.write("\taddi x1, x1, {}\n".format(TEST_RESULT))
     test_file.write("\tli x2, 0x{}\n".format(end_addr))
     test_file.write("\tsw x1, 0(x2)\n")
+    test_file.write("\tsw {}, 4(x2)\n".format(source_reg))
+    test_file.write("\tsw {}, 8(x2)\n".format(dest_reg))
     test_file.write("\tj csr_fail\n")
 
 
@@ -288,8 +293,6 @@ def gen_csr_test_pass(test_file, end_addr):
     """
     test_file.write("csr_pass:\n")
     test_file.write("\tli x1, {}\n".format(TEST_PASS))
-    test_file.write("\tslli x1, x1, 8\n")
-    test_file.write("\taddi x1, x1, {}\n".format(TEST_RESULT))
     test_file.write("\tli x2, 0x{}\n".format(end_addr))
     test_file.write("\tsw x1, 0(x2)\n")
     test_file.write("\tj csr_pass\n")
@@ -324,9 +327,17 @@ def gen_csr_instr(original_csr_map, csr_instructions, xlen,
                   "w") as csr_test_file:
             gen_setup(csr_test_file)
             for csr in csr_list:
-                csr_address, csr_val, csr_write_fields, csr_read_mask = csr_map.get(
+                csr_address, csr_val, csr_write_fields, csr_read_mask, csr_is_volatile, csr_skip_me= csr_map.get(
                     csr)
                 csr_test_file.write("\t# {}\n".format(csr))
+
+                if (csr_is_volatile):
+                    csr_test_file.write("\t# \tCSR marked volatile, skipping it.\n")
+                    continue
+                if (csr_skip_me): 
+                    csr_test_file.write("\t# \tCSR marked SKIP_ME: {}\n".format(csr_skip_me))
+                    continue
+                    
                 for op in csr_instructions:
                     for i in range(3):
                         # hex string
@@ -337,7 +348,7 @@ def gen_csr_instr(original_csr_map, csr_instructions, xlen,
                             imm = rand_rs1_val[-5:]
                             csr_inst = "\t{} {}, {}, 0b{}\n".format(op,
                                                                     dest_reg,
-                                                                    csr_address,
+                                                                    hex(csr_address),
                                                                     imm.bin)
                             imm_val = bitarray(uint=0, length=xlen - 5)
                             imm_val.append(imm)
@@ -352,7 +363,7 @@ def gen_csr_instr(original_csr_map, csr_instructions, xlen,
                             first_li = "\tli {}, 0x{}\n".format(source_reg,
                                                                 rand_rs1_val.hex)
                             csr_inst = "\t{} {}, {}, {}\n".format(op, dest_reg,
-                                                                  csr_address,
+                                                                  hex(csr_address),
                                                                   source_reg)
                             predict_li = ("\tli {}, "
                                           "{}\n".format(source_reg,
@@ -389,7 +400,7 @@ def gen_csr_instr(original_csr_map, csr_instructions, xlen,
                             csr_test_file.write(final_li)
                             csr_test_file.write(final_branch_check)
             gen_csr_test_pass(csr_test_file, end_signature_addr)
-            gen_csr_test_fail(csr_test_file, end_signature_addr)
+            gen_csr_test_fail(csr_test_file, end_signature_addr, source_reg, dest_reg)
 
 
 def main():
