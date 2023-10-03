@@ -370,33 +370,6 @@ module uvmt_cv32e40s_triggers_assert_cov
     p_dt_tcsr_not_implemented(ADDR_TDATA3)
   ) else `uvm_error(info_tag, "Access to tdata3 does not cause an illegal exception (when no higher priority exception has occured)\n");
 
-
-  // Assertions and coverages for when there are debug triggers:
-  if (CORE_PARAM_DBG_NUM_TRIGGERS != 0) begin
-
-    //2)
-    c_dt_access_tdata3_m2: cover property (
-      rvfi_if.is_csr_instr(ADDR_TDATA3)
-      && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL
-    );
-
-    c_dt_access_tdata3_etrigger: cover property (
-      rvfi_if.is_csr_instr(ADDR_TDATA3)
-      && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_ETRIGGER
-    );
-
-    c_dt_access_tdata3_m6: cover property (
-      rvfi_if.is_csr_instr(ADDR_TDATA3)
-      && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL6
-    );
-
-    c_dt_access_tdata3_disabled: cover property (
-      rvfi_if.is_csr_instr(ADDR_TDATA3)
-      && tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_DISABLED
-    );
-  end
-
-
   //- Vplan:
   //Have 0 triggers, access any trigger register and check that illegal instruction exception occurs.
   //Check that no triggers ever fire. Check that "tselect" is 0.
