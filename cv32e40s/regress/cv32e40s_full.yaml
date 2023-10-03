@@ -541,3 +541,20 @@ tests:
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=debug_test_0_triggers
 
+  wfe_test:
+    description: Short directed wfe test
+    builds: [ uvmt_cv32e40s_clic, uvmt_cv32e40s ]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=wfe_test
+
+  xsecure_test:
+    description: xsecure test
+    builds: [ uvmt_cv32e40s_clic ]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=xsecure_test
+
+  xsecure_csrs:
+    description: xsecure csr test
+    builds: [ uvmt_cv32e40s_clic, uvmt_cv32e40s ]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=xsecure_csrs
