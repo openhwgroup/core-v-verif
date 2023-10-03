@@ -293,7 +293,7 @@
 
     casex (format)
       I_TYPE: begin
-        if (asm.instr inside { FENCEI, ECALL, EBREAK, MRET, DRET, WFI, WFE }) begin
+        if (asm.instr inside { FENCE_I, ECALL, EBREAK, MRET, DRET, WFI, WFE }) begin
           asm.rd.valid    = 0;
           asm.rs1.valid   = 0;
           asm.rs2.valid   = 0;
@@ -711,7 +711,7 @@
 
       (   (instr.uncompressed.opcode              == MISC_MEM)
        && (instr.uncompressed.format.i.funct3     == 3'b001)) :
-        asm = build_asm(FENCEI, I_TYPE, instr);
+        asm = build_asm(FENCE_I, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == SYSTEM)
        && (instr.uncompressed.format.i.imm        == 12'b0000_0000_0000)) :
@@ -1032,9 +1032,9 @@
         asm = build_asm(CTZ, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == OP_IMM)
-       && (instr.uncompressed.format.i.funct3     == FUNCT3_ORCB)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_ORC_B)
        && (instr.uncompressed.format.i.imm        == 12'b0010_1000_0111)) :
-        asm = build_asm(ORCB, I_TYPE, instr);
+        asm = build_asm(ORC_B, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == OP)
        && (instr.uncompressed.format.r.funct3     == FUNCT3_ORN)
@@ -1079,17 +1079,17 @@
       (   (instr.uncompressed.opcode              == OP_IMM)
        && (instr.uncompressed.format.i.funct3     == FUNCT3_SEXT)
        && (instr.uncompressed.format.i.imm        == 12'b0110_0000_0100)) :
-        asm = build_asm(SEXTB, I_TYPE, instr);
+        asm = build_asm(SEXT_B, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == OP_IMM)
        && (instr.uncompressed.format.i.funct3     == FUNCT3_SEXT)
        && (instr.uncompressed.format.i.imm        == 12'b0110_0000_0101)) :
-        asm = build_asm(SEXTH, I_TYPE, instr);
+        asm = build_asm(SEXT_H, I_TYPE, instr);
 
       (   (instr.uncompressed.opcode              == OP)
-       && (instr.uncompressed.format.i.funct3     == FUNCT3_ZEXTH)
+       && (instr.uncompressed.format.i.funct3     == FUNCT3_ZEXT_H)
        && (instr.uncompressed.format.i.imm        == 12'b0000_1000_0000)) :
-        asm = build_asm(ZEXTH, I_TYPE, instr);
+        asm = build_asm(ZEXT_H, I_TYPE, instr);
 
       //Zbc
       (   (instr.uncompressed.opcode              == OP)
@@ -1331,24 +1331,24 @@
 
       //Zcb
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.cu.funct5              == FUNCT5_C_ZEXTB)
+       && (instr.compressed.format.cu.funct5              == FUNCT5_C_ZEXT_B)
        && (instr.compressed.format.cu.funct6              == 6'b100111)) :
-        asm = build_asm(C_ZEXTB, CU_TYPE, instr);
+        asm = build_asm(C_ZEXT_B, CU_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.cu.funct5              == FUNCT5_C_SEXTB)
+       && (instr.compressed.format.cu.funct5              == FUNCT5_C_SEXT_B)
        && (instr.compressed.format.cu.funct6              == 6'b100111)) :
-        asm = build_asm(C_SEXTB, CU_TYPE, instr);
+        asm = build_asm(C_SEXT_B, CU_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.cu.funct5              == FUNCT5_C_ZEXTH)
+       && (instr.compressed.format.cu.funct5              == FUNCT5_C_ZEXT_H)
        && (instr.compressed.format.cu.funct6              == 6'b100111)) :
-        asm = build_asm(C_ZEXTH, CU_TYPE, instr);
+        asm = build_asm(C_ZEXT_H, CU_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
-       && (instr.compressed.format.cu.funct5              == FUNCT5_C_SEXTH)
+       && (instr.compressed.format.cu.funct5              == FUNCT5_C_SEXT_H)
        && (instr.compressed.format.cu.funct6              == 6'b100111)) :
-        asm = build_asm(C_SEXTH, CU_TYPE, instr);
+        asm = build_asm(C_SEXT_H, CU_TYPE, instr);
 
       (   (instr.compressed.opcode                        == C1)
        && (instr.compressed.format.cu.funct5              == FUNCT5_C_NOT)

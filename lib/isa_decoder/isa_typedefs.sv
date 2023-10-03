@@ -27,7 +27,7 @@
     // Unknown for instructions that cannot be decoded
     UNKNOWN_INSTR = 0,
     FENCE,
-    FENCEI,
+    FENCE_I,
     MRET,
     DRET,
     ECALL,
@@ -101,7 +101,7 @@
     MAXU,
     CPOP,
     CTZ,
-    ORCB,
+    ORC_B,
     ORN,
     CLZ,
     ANDN,
@@ -110,9 +110,9 @@
     RORI,
     XNOR,
     REV8,
-    SEXTB,
-    SEXTH,
-    ZEXTH,
+    SEXT_B,
+    SEXT_H,
+    ZEXT_H,
     //Zbc
     CLMUL,
     CLMULH,
@@ -171,10 +171,10 @@
     C_LH,
     C_SB,
     C_SH,
-    C_ZEXTB,
-    C_SEXTB,
-    C_ZEXTH,
-    C_SEXTH,
+    C_ZEXT_B,
+    C_SEXT_B,
+    C_ZEXT_H,
+    C_SEXT_H,
     C_NOT,
     C_MUL,
     //Zcmp
@@ -438,11 +438,11 @@
 
   // Minor opcodes for logical operators and sign extend (FUNCT3_SEXT)
   typedef enum logic [2:0] {
-    FUNCT3_XNOR = 3'b100,
-    FUNCT3_ORCB = 3'b101,
-    FUNCT3_ORN  = 3'b110,
-    FUNCT3_ANDN = 3'b111,
-    FUNCT3_SEXT = 3'b001
+    FUNCT3_XNOR  = 3'b100,
+    FUNCT3_ORC_B = 3'b101,
+    FUNCT3_ORN   = 3'b110,
+    FUNCT3_ANDN  = 3'b111,
+    FUNCT3_SEXT  = 3'b001
   } zbb_logical_minor_opcode_e;
 
   // Minor opcodes for rotate instructions
@@ -455,9 +455,9 @@
   // and zero extend halfword instruction (FUNCT3_ZEXTH).
   // FUNCT3_C is correct for all count isntructions.
   typedef enum logic [2:0] {
-    FUNCT3_REV8  = 3'b101,
-    FUNCT3_C     = 3'b001,
-    FUNCT3_ZEXTH = 3'b100
+    FUNCT3_REV8   = 3'b101,
+    FUNCT3_C      = 3'b001,
+    FUNCT3_ZEXT_H = 3'b100
   } zbb_rev8_c_zexth_minor_opcode_e;
 
   typedef enum logic [2:0] {
@@ -523,10 +523,10 @@
   } a_minor_opcode_e;
 
   typedef enum logic [4:0] {
-    FUNCT5_C_SEXTB  = 5'b11001,
-    FUNCT5_C_ZEXTB  = 5'b11000,
-    FUNCT5_C_ZEXTH  = 5'b11010,
-    FUNCT5_C_SEXTH  = 5'b11011,
+    FUNCT5_C_SEXT_B  = 5'b11001,
+    FUNCT5_C_ZEXT_B  = 5'b11000,
+    FUNCT5_C_ZEXT_H  = 5'b11010,
+    FUNCT5_C_SEXT_H  = 5'b11011,
     FUNCT5_C_NOT    = 5'b11101
   } funct5_compressed_e;
 
