@@ -329,7 +329,13 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
     endcase
   end
 
-  mon_trn.instr.set_valid_flags();
+  if (cfg.decoder == SPIKE) begin
+    mon_trn.instr.set_valid_flags();
+  end else begin // if ISA_DECODER
+    mon_trn.instr.rd_valid  = instr_asm.rd.valid;
+    mon_trn.instr.rs1_valid = instr_asm.rs1.valid;
+    mon_trn.instr.rs2_valid = instr_asm.rs2.valid;
+  end
 
   // Set enumerations for register values as reported from RVFI
   if (mon_trn.instr.rs1_valid) begin
