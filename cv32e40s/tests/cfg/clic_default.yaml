@@ -5,6 +5,7 @@ compile_flags:
     +define+CLIC_EN
     +define+PMP_ENABLE_64
 ovpsim: >
+    --override cpu/hpmcounter_undefined=T
     --override cpu/CLICLEVELS=256
     --override cpu/CLICXCSW=T
     --override cpu/CLICXNXTI=T
