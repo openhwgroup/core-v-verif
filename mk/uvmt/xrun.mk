@@ -68,7 +68,7 @@ XRUN_RUN_BASE_FLAGS ?= -64bit $(XRUN_GUI) -licqueue +UVM_VERBOSITY=$(XRUN_UVM_VE
                        $(XRUN_PLUSARGS) -svseed $(RNDSEED)
 XRUN_GUI         ?=
 XRUN_SINGLE_STEP ?=
-XRUN_ELAB_COV     = -covdut uvmt_$(CV_CORE_LC)_tb -coverage b:e:f:u
+XRUN_ELAB_COV     = -covdut uvmt_$(CV_CORE_LC)_tb -coverage b:e:f:t:u
 XRUN_ELAB_COVFILE = -covfile $(abspath $(MAKE_PATH)/../tools/xrun/covfile.tcl)
 XRUN_RUN_COV      = -covscope uvmt_$(CV_CORE_LC)_tb -nowarn CGDEFN
 XRUN_RUN_BASE_FLAGS += -sv_lib $(DPI_DASM_LIB)
@@ -278,6 +278,16 @@ XRUN_COMP_FLAGS += -nowarn CGPIDF
 
 # deselect_coverage -all warnings
 XRUN_COMP_FLAGS += -nowarn CGNSWA
+
+# Newer tool version has different fsm coverage options than old version. Ok.
+XRUN_COMP_FLAGS += -nowarn COVFDP
+
+# Certain data types are not supported for toggle cov. Ok.
+XRUN_COMP_FLAGS += -nowarn COVUTA
+
+# MORE toggle cov support CAN be enabled.
+XRUN_COMP_FLAGS += -nowarn COVNOEN
+XRUN_COMP_FLAGS += -nowarn COVMDD
 
 # Value Parameters without default values
 XRUN_COMP_FLAGS += -setenv CADENCE_ENABLE_AVSREQ_44905_PHASE_1=1
