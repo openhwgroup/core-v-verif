@@ -64,13 +64,13 @@
         proc ActionCompleted {userdata} {
             upvar $userdata data
             if {![string equal $data(reason) "empty"]} {
-                if {[string equal $data(SCRIPT) "execScript"]} {
+                if { [string equal $data(SCRIPT) "execScript"] &amp;&amp; [string equal $data(RUNNABLE) "simulation"] } {
                     <!-- puts "Entering custom actionComplete" -->
                     set ucdb_basename [ExpandRmdbParameters $data(ACTION) (%ucdb_basename%)]
                     set ucdb_path [ExpandRmdbParameters $data(ACTION) (%ucdb_path%)]
                     set testname  [ExpandRmdbParameters $data(ACTION) (%testname%)]
                     set USE_POST_COMPRESSION [ExpandRmdbParameters $data(ACTION) (%USE_POST_COMPRESSION%)]
-                    if { [string equal $data(RUNNABLE) "simulation"] &amp;&amp; ![string equal $USE_POST_COMPRESSION "NO"]} {
+                    if { ![string equal $USE_POST_COMPRESSION "NO"]} {
                         cd $ucdb_path
                         if { [string equal $data(passfail) "failed"] } {
                             exec touch ../${testname}.bz2
@@ -102,7 +102,7 @@
 
 {% for r in regressions %}
     <!-- =========== Regression =========== START -->
-    <runnable name="{{r.name}}" type="group" sequential="yes">
+    <runnable name="{{r.name}}" type="group" sequential="yes" onerror="continue">
         <members>
 {% for build in r.get_builds() %}
             <member>{{build.name}}</member>
@@ -173,9 +173,6 @@
                 <members>
                     <member>simulation</member>
                 </members>
-
-                <postScript launch="exec">
-                </postScript>
             </runnable>
 
 {% endfor %}
@@ -237,7 +234,7 @@
 {% for build in r.get_builds() %}
     <runnable name="{{build.name}}_clean" type="task" if="&quot;(%USE_POST_COMPRESSION%)&quot; != &quot;NO&quot;">
         <execScript launch="exec">
-            <command>cd (%results_sim_path%)/{{build.cfg}}/ &amp;&amp; rm -rf work rm -rf corev-dv/work &amp;&amp;  </command>
+            <command>cd (%results_sim_path%)/{{build.cfg}}/ &amp;&amp; rm -rf work &amp;&amp; rm -rf corev-dv/work </command>
         </execScript>
     </runnable>
 {% endfor %}
