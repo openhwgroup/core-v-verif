@@ -4,7 +4,7 @@
 
 {% import 'regress_macros.j2' as regress_macros -%}
 
-<rmdb version="1.0" toprunnables="{{project}}" loadtcl="getUCDBFilename getParameterByPriority getParameterByPriorityYesOrNo getTestName getTestCfgName">
+<rmdb version="1.0" toprunnables="{{project}}" loadtcl="getAbsPath getUCDBFilename getParameterByPriority getParameterByPriorityYesOrNo getTestName getTestCfgName vrmOverrides">
     <usertcl name="getUCDBFilename">
         proc getUCDBFilename {base_name test_cfg} {
             if {[string trim $test_cfg] != ""} {
@@ -54,9 +54,43 @@
         }
     </usertcl>
 
+    <usertcl name="getAbsPath">
+        proc getAbsPath { path } {
+            return [file normalize $path]
+        }
+    </usertcl>
+
+    <usertcl name="vrmOverrides">
+        proc ActionCompleted {userdata} {
+            upvar $userdata data
+            if {![string equal $data(reason) "empty"]} {
+                if {[string equal $data(SCRIPT) "execScript"]} {
+                    <!-- puts "Entering custom actionComplete" -->
+                    set ucdb_basename [ExpandRmdbParameters $data(ACTION) (%ucdb_basename%)]
+                    set ucdb_path [ExpandRmdbParameters $data(ACTION) (%ucdb_path%)]
+                    set testname  [ExpandRmdbParameters $data(ACTION) (%testname%)]
+                    set USE_POST_COMPRESSION [ExpandRmdbParameters $data(ACTION) (%USE_POST_COMPRESSION%)]
+                    if { [string equal $data(RUNNABLE) "simulation"] &amp;&amp; ![string equal $USE_POST_COMPRESSION "NO"]} {
+                        cd $ucdb_path
+                        if { [string equal $data(passfail) "failed"] } {
+                            exec touch ../${testname}.bz2
+                            <!-- in some cases, when a test is killed by timeout, writing to tracer is not completed a bit of time is given -->
+                            if { [string match "timeout*" $data(reason)] } { exec sleep 5 }
+                            exec tar --exclude=${ucdb_basename}.ucdb -cjvf ../${testname}.bz2 .
+                            exec mv ../${testname}.bz2 ${ucdb_path}/.
+                        }
+                        exec find . -not \( -name "*.ucdb" -or -name "*.bz2" \) -delete
+                    }
+                }
+                echo "ActionCompleted: Action '$data(ACTION)' completed at [RightNow]"
+            }
+        }
+    </usertcl>
+
     <runnable name="{{project}}" type="group" sequential="yes">
         <parameters>
-            <parameter name="results_sim_path">{{results_path}}/{{simulator}}_results</parameter>
+            <parameter name="results_sim_path" type="tcl">[getAbsPath {{results_path}}/{{simulator}}_results]</parameter>
+            <parameter name="USE_POST_COMPRESSION">NO</parameter>
         </parameters>
         <members>
 {% for r in regressions %}
@@ -72,16 +106,15 @@
         <members>
 {% for build in r.get_builds() %}
             <member>{{build.name}}</member>
-{% endfor %}
-{% for build in r.get_builds() %}
 {% if coverage != false %}
             <member>cov_report_{{build.name}}</member>
 {% endif %}
+            <member>{{build.name}}_clean</member>
 {% endfor %}
         </members>
         <preScript launch="exec">
 {% for b in r.get_builds_with_no_tests() %}
-            <command> cd {{b.abs_dir}} &amp;&amp; {{b.cmd}} CV_CORE={{project}} CFG={{b.cfg}} {{toolchain|upper}}=1 SIMULATOR={{b.simulator}} {{regress_macros.cv_results(results)}} {{makeargs}} </command>
+            <command> cd {{b.abs_dir}} &amp;&amp; {{b.cmd}} CV_CORE={{project}} CFG={{b.cfg}} {{toolchain|upper}}=1 SIMULATOR={{b.simulator}} {{regress_macros.cv_results(results_path)}} {{makeargs}} </command>
 {% endfor %}
         </preScript>
     </runnable>
@@ -104,8 +137,8 @@
 {% endfor %}
             </members>
             <preScript launch="exec">
-                <command> echo "BUILD RUNCMD: {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results)}} {{makeargs}}"</command>
-                <command> cd {{build.abs_dir}} &amp;&amp; {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results)}} {{makeargs}} </command>
+                <command> echo "BUILD RUNCMD: {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results_path)}} {{makeargs}}"</command>
+                <command> cd {{build.abs_dir}} &amp;&amp; {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results_path)}} {{makeargs}} </command>
             </preScript>
         </runnable>
 {% endfor %}
@@ -115,36 +148,53 @@
 
     <!-- =========== Tests =========== START -->
 {% for k,t in unique_tests.items() %}
-            <runnable name="{{t.name}}" type="task" foreach="(%seeds%)">
+            <runnable name="{{t.name}}" type="group" foreach="(%seeds%)" onerror="continue">
                 <parameters>
+                    <parameter name="t_abs_dir"                 >{{t.abs_dir}}</parameter>
+                    <parameter name="t_cmd"                     >{{t.cmd}}</parameter>
+                    <parameter name="t_simulator"               >{{t.simulator}}</parameter>
+                    <parameter name="t_makearg"                 >{{t.makearg}}</parameter>
+                    <parameter name="t_iteration"               >(%{{t.name}}.ITERATION%)</parameter>
                     <parameter name="t_cfg"           type="tcl">[getParameterByPriority "{{config}}" "{{t.cfg}}" "(%build_config:%)"]</parameter>
                     <parameter name="t_test_cfg"      type="tcl">[getParameterByPriority "" "{{t.test_cfg}}" "(%build_test_cfg:%)"]</parameter>
                     <parameter name="t_test_cfg_name" type="tcl">[getTestCfgName "(%t_test_cfg:%)"]</parameter>
                     <parameter name="t_iss"           type="tcl">[getParameterByPriorityYesOrNo "{{iss}}" "{{t.iss}}" "(%build_iss:%)"]</parameter>
                     <parameter name="t_cov"           type="tcl">[getParameterByPriorityYesOrNo "{{coverage}}" "{{t.cov}}" "(%build_cov:%)"]</parameter>
                     <parameter name="seeds"           type="tcl">[GetRandomValues {{t.num}}]</parameter>
-                    <parameter name="ucdb_path"       type="tcl">[file join "(%results_sim_path%)" "(%t_cfg%)" "{{t.testname}}" "(%t_test_cfg_name:%)" "(%ITERATION%)"]</parameter>
-                    <parameter name="testname"        type="tcl">[getTestName "{{t.testname}}" "(%t_cfg%)" "(%t_test_cfg_name:%)" "(%ITERATION%)"]</parameter>
+                    <parameter name="ucdb_path"       type="tcl">[file join "(%results_sim_path%)" "(%t_cfg%)" "{{t.testname}}" "(%t_test_cfg_name:%)" (%t_iteration%)]</parameter>
+                    <parameter name="testname"        type="tcl">[getTestName "{{t.testname}}" "(%t_cfg%)" "(%t_test_cfg_name:%)" (%t_iteration%)]</parameter>
                     <parameter name="ucdb_basename"   type="tcl">[getUCDBFilename "{{t.testname}}" "(%t_test_cfg_name:%)"]</parameter>
 {% if coverage != false %}
                     <parameter name="ucdbfile" >(%ucdb_path%)/(%ucdb_basename%).ucdb</parameter>
 {% endif %}
                     <parameter name="log_file" >(%DATADIR%)/{{project}}/{{r.name}}/(%build_name%)/(%INSTANCE%)/execScript.log</parameter>
                 </parameters>
+
+                <members>
+                    <member>simulation</member>
+                </members>
+
+                <postScript launch="exec">
+                </postScript>
+            </runnable>
+
+{% endfor %}
+
+            <runnable name="simulation" type="task">
 {% if lsf != None %}
                 <method name="grid" gridtype="lsf" action="execScript">
                     <command> {{lsf}} -P {{project}} -J (%RUNNABLE%) (%WRAPPER%) </command>
                 </method>
 {% endif %}
                 <execScript launch="exec" usestderr="no">
-                    <command> echo " TEST RUNCMD: {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} COMP=0 CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR={{t.simulator}} USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=(%ITERATION%) {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}"</command>
+                    <command> echo " TEST RUNCMD: (%t_cmd%) CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} COMP=0 CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR=(%t_simulator%) USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%t_iteration%) GEN_START_INDEX=(%t_iteration%) SEED=(%t_iteration%) {{regress_macros.cv_results(results_path)}} {{makeargs}} (%t_makearg%)"</command>
                     <command> echo "     logfile: (%log_file%)"</command>
-                    <command> cd {{t.abs_dir}} &amp;&amp; {{t.cmd}} CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} CHECK_SIM_LOG=(%log_file%) COMP=0 CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR={{t.simulator}} USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%ITERATION%) GEN_START_INDEX=(%ITERATION%) SEED=(%ITERATION%) {{regress_macros.cv_results(results)}} {{makeargs}} {{t.makearg}}</command>
+                    <command> cd (%t_abs_dir%) &amp;&amp; (%t_cmd%) CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} CHECK_SIM_LOG=(%log_file%) COMP=0 CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR=(%t_simulator%) USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%t_iteration%) GEN_START_INDEX=(%t_iteration%) SEED=(%t_iteration%) {{regress_macros.cv_results(results_path)}} {{makeargs}} (%t_makearg%)</command>
                 </execScript>
             </runnable>
 
-{% endfor %}
     <!-- =========== Tests =========== END -->
+
 
 
 {% endfor %}
@@ -161,7 +211,7 @@
         </parameters>
 {% if coverage != false %}
         <preScript launch="exec">
-            <command> cd {{results_path}} &amp;&amp; make cov_merge CFG={{build.cfg}} SIMULATOR={{simulator}}</command>
+            <command> cd {{make_path}} &amp;&amp; make cov_merge CFG={{build.cfg}} SIMULATOR={{simulator}}</command>
         </preScript>
 {% endif %}
         <members>
@@ -181,4 +231,16 @@
 {% endfor %}
     <!-- =========== Coverage Reports =========== END -->
 
+
+    <!-- =========== Clean-up / Final compression =========== START -->
+{% for r in regressions %}
+{% for build in r.get_builds() %}
+    <runnable name="{{build.name}}_clean" type="task" if="&quot;(%USE_POST_COMPRESSION%)&quot; != &quot;NO&quot;">
+        <execScript launch="exec">
+            <command>cd (%results_sim_path%)/{{build.cfg}}/ &amp;&amp; rm -rf work rm -rf corev-dv/work &amp;&amp;  </command>
+        </execScript>
+    </runnable>
+{% endfor %}
+{% endfor %}
+    <!-- =========== Clean-up / Final compression =========== END -->
 </rmdb>

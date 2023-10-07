@@ -78,8 +78,15 @@ def get_regress_path(project):
     '''Fetch regression path using project'''
     return os.path.abspath(os.path.join(get_project_path(project), 'regress'))
 
-def get_results_path(project):
-    return os.path.abspath(os.path.join(get_project_path(project), 'sim', 'uvmt'))
+def get_results_path(project, results = None):
+    if results is None:
+        return os.path.abspath(os.path.join(get_project_path(project), 'sim', 'uvmt'))
+    else:
+        if os.path.exists(os.path.abspath(results)):
+            return os.path.abspath(results)
+        else:
+            logger.fatal("given results path: {} does not exists".format(results))
+            os.sys.exit(2)
 
 def read_file(args, file):
     '''Read a YAML definition filelist'''
@@ -332,11 +339,12 @@ if args.rmdb:
     logger.info('Rendering template: regress_rmdb.j2 into: {}'.format(args.outfile))
     out_fh = open(args.outfile, 'w')
     out_fh.write(template.render(session=os.path.splitext(os.path.basename(args.outfile))[0],
-                                 results_path=get_results_path(args.project),
+                                 results_path=get_results_path(args.project, args.results),
+                                 make_path=os.path.abspath(os.path.join(get_project_path(args.project), 'sim', 'uvmt')),
                                  project=args.project,
                                  parallel=args.parallel,
                                  regressions=regressions,
-                                 results=args.results,
+#                                 results=args.results,
                                  makeargs=' '.join(args.makearg) if args.makearg else '',
                                  lsf=args.lsf,
                                  toolchain=args.toolchain,
