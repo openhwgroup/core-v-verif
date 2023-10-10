@@ -9,3 +9,10 @@ phases:
       - export VCS_HOME=/synopsys/vcs/S-2021.09-SP1
       - export PATH=$VCS_HOME/bin:$PATH
       - vcs -id
+      - wget https://buildbot.embecosm.com/job/corev-gcc-centos7/19/artifact/corev-openhw-gcc-centos7-20230905.tar.gz
+      - tar xvf corev-openhw-gcc-centos7-20230905.tar.gz
+      - export CV_SW_TOOLCHAIN=corev-openhw-gcc-centos7-20230905
+      - export CV_SW_PREFIX=riscv32-corev-elf-
+      - export CV_SW_MARCH=rv32imc_zicsr_zifencei
+      - corev-openhw-gcc-centos7-20230905/bin/riscv32-corev-elf-gcc --version
+      
