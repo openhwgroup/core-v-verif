@@ -5,4 +5,7 @@ phases:
   build:
     commands:
       - chown -R florian:florian .
-      - su florian -c "source /synopsys/scripts/env.sh; echo $PATH"
+#      - su florian -c "source /synopsys/scripts/env.sh; echo $PATH"
+      - export VCS_HOME=/synopsys/vcs/S-2021.09-SP1
+      - export PATH=$VCS_HOME/bin:$PATH
+      - vcs -id
