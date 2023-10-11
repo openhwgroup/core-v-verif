@@ -476,35 +476,31 @@ module uvmt_cv32e40s_tb;
 
   // Bind in verification modules to the design
 
-  `ifndef  COREV_ASSERT_OFF
-    bind uvmt_cv32e40s_dut_wrap
-      uvma_obi_memory_assert_if_wrp#(
-        .ADDR_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_ADDR_WIDTH),
-        .DATA_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_DATA_WIDTH),
-        .AUSER_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_AUSER_WIDTH),
-        .WUSER_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_WUSER_WIDTH),
-        .RUSER_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_RUSER_WIDTH),
-        .ID_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_ID_WIDTH),
-        .ACHK_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_ACHK_WIDTH),
-        .RCHK_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_RCHK_WIDTH),
-        .IS_1P2(1)
-      ) obi_instr_memory_assert_i(.obi(obi_instr_if));
-  `endif
+  bind uvmt_cv32e40s_dut_wrap
+    uvma_obi_memory_assert_if_wrp#(
+      .ADDR_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_ADDR_WIDTH),
+      .DATA_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_DATA_WIDTH),
+      .AUSER_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_AUSER_WIDTH),
+      .WUSER_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_WUSER_WIDTH),
+      .RUSER_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_RUSER_WIDTH),
+      .ID_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_ID_WIDTH),
+      .ACHK_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_ACHK_WIDTH),
+      .RCHK_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_INSTR_RCHK_WIDTH),
+      .IS_1P2(1)
+    ) obi_instr_memory_assert_i(.obi(obi_instr_if));
 
-  `ifndef  COREV_ASSERT_OFF
-    bind uvmt_cv32e40s_dut_wrap
-      uvma_obi_memory_assert_if_wrp#(
-        .ADDR_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_ADDR_WIDTH),
-        .DATA_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_DATA_WIDTH),
-        .AUSER_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_AUSER_WIDTH),
-        .WUSER_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_WUSER_WIDTH),
-        .RUSER_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_RUSER_WIDTH),
-        .ID_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_ID_WIDTH),
-        .ACHK_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_ACHK_WIDTH),
-        .RCHK_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_RCHK_WIDTH),
-        .IS_1P2(1)
-      ) obi_data_memory_assert_i(.obi(obi_data_if));
-  `endif
+  bind uvmt_cv32e40s_dut_wrap
+    uvma_obi_memory_assert_if_wrp#(
+      .ADDR_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_ADDR_WIDTH),
+      .DATA_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_DATA_WIDTH),
+      .AUSER_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_AUSER_WIDTH),
+      .WUSER_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_WUSER_WIDTH),
+      .RUSER_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_RUSER_WIDTH),
+      .ID_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_ID_WIDTH),
+      .ACHK_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_ACHK_WIDTH),
+      .RCHK_WIDTH(uvmt_cv32e40s_base_test_pkg::ENV_PARAM_DATA_RCHK_WIDTH),
+      .IS_1P2(1)
+    ) obi_data_memory_assert_i(.obi(obi_data_if));
 
 
   if (CORE_PARAM_CLIC == 0) begin: gen_interrupt_assert
@@ -791,14 +787,12 @@ module uvmt_cv32e40s_tb;
 
   // Core integration assertions
 
-  `ifndef  COREV_ASSERT_OFF
-    bind cv32e40s_wrapper
-      uvmt_cv32e40s_integration_assert  integration_assert_i (
-        .rvfi_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
-        .support_if (support_logic_module_o_if.slave_mp),
-        .*
-      );
-  `endif
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_integration_assert  integration_assert_i (
+      .rvfi_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
+      .support_if (support_logic_module_o_if.slave_mp),
+      .*
+    );
 
 
   `ifndef  COREV_ASSERT_OFF
@@ -1433,65 +1427,61 @@ module uvmt_cv32e40s_tb;
     end
 
 
-  `ifndef  COREV_ASSERT_OFF
-    bind cv32e40s_wrapper
-      uvmt_cv32e40s_support_logic_module_i_if_t support_logic_module_i_if (
-        .clk     (core_i.clk),
-        .rst_n (rst_ni),
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_support_logic_module_i_if_t support_logic_module_i_if (
+      .clk     (core_i.clk),
+      .rst_n (rst_ni),
 
-        .if_instr (core_i.if_stage_i.prefetch_instr.bus_resp.rdata),
-        .id_instr (core_i.if_id_pipe.instr.bus_resp.rdata),
-        .ex_instr (core_i.id_ex_pipe.instr.bus_resp.rdata),
-        .wb_instr (core_i.ex_wb_pipe.instr.bus_resp.rdata),
+      .if_instr (core_i.if_stage_i.prefetch_instr.bus_resp.rdata),
+      .id_instr (core_i.if_id_pipe.instr.bus_resp.rdata),
+      .ex_instr (core_i.id_ex_pipe.instr.bus_resp.rdata),
+      .wb_instr (core_i.ex_wb_pipe.instr.bus_resp.rdata),
 
-        .tdata1_array (uvmt_cv32e40s_tb.tdata1_array),
-        .tdata2_array (uvmt_cv32e40s_tb.tdata2_array),
+      .tdata1_array (uvmt_cv32e40s_tb.tdata1_array),
+      .tdata2_array (uvmt_cv32e40s_tb.tdata2_array),
 
-        .ctrl_fsm_o (core_i.controller_i.controller_fsm_i.ctrl_fsm_o),
+      .ctrl_fsm_o (core_i.controller_i.controller_fsm_i.ctrl_fsm_o),
 
-        .fetch_enable        (core_i.fetch_enable),
-        .debug_req_i         (core_i.debug_req_i),
-        .irq_ack             (core_i.irq_ack),
+      .fetch_enable        (core_i.fetch_enable),
+      .debug_req_i         (core_i.debug_req_i),
+      .irq_ack             (core_i.irq_ack),
 
-        .wb_valid (core_i.wb_stage_i.wb_valid_o),
-        .wb_tselect (core_i.cs_registers_i.tselect_rdata),
-        .wb_tdata1 (core_i.cs_registers_i.tdata1_rdata),
-        .wb_tdata2 (core_i.cs_registers_i.tdata2_rdata),
+      .wb_valid (core_i.wb_stage_i.wb_valid_o),
+      .wb_tselect (core_i.cs_registers_i.tselect_rdata),
+      .wb_tdata1 (core_i.cs_registers_i.tdata1_rdata),
+      .wb_tdata2 (core_i.cs_registers_i.tdata2_rdata),
 
-        .data_bus_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
-        .data_bus_req (core_i.m_c_obi_data_if.s_req.req),
-        .data_bus_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
-        .data_bus_gntpar (core_i.m_c_obi_data_if.s_gnt.gntpar),
+      .data_bus_rvalid (core_i.m_c_obi_data_if.s_rvalid.rvalid),
+      .data_bus_req (core_i.m_c_obi_data_if.s_req.req),
+      .data_bus_gnt (core_i.m_c_obi_data_if.s_gnt.gnt),
+      .data_bus_gntpar (core_i.m_c_obi_data_if.s_gnt.gntpar),
 
-        .instr_bus_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
-        .instr_bus_req (core_i.m_c_obi_instr_if.s_req.req),
-        .instr_bus_gnt (core_i.m_c_obi_instr_if.s_gnt.gnt),
-        .instr_bus_gntpar (core_i.m_c_obi_instr_if.s_gnt.gntpar),
+      .instr_bus_rvalid (core_i.m_c_obi_instr_if.s_rvalid.rvalid),
+      .instr_bus_req (core_i.m_c_obi_instr_if.s_req.req),
+      .instr_bus_gnt (core_i.m_c_obi_instr_if.s_gnt.gnt),
+      .instr_bus_gntpar (core_i.m_c_obi_instr_if.s_gnt.gntpar),
 
-        //obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) is refered to as abiim
-        .abiim_bus_rvalid (core_i.if_stage_i.prefetch_resp_valid),
-        .abiim_bus_req (core_i.if_stage_i.prefetch_trans_ready),
-        .abiim_bus_gnt (core_i.if_stage_i.prefetch_trans_valid),
+      //obi protocol between alignmentbuffer (ab) and instructoin (i) interface (i) mpu (m) is refered to as abiim
+      .abiim_bus_rvalid (core_i.if_stage_i.prefetch_resp_valid),
+      .abiim_bus_req (core_i.if_stage_i.prefetch_trans_ready),
+      .abiim_bus_gnt (core_i.if_stage_i.prefetch_trans_valid),
 
-        //obi protocol between LSU (l) mpu (m) and LSU (l) is refered to as lml
-        .lml_bus_rvalid (core_i.load_store_unit_i.resp_valid),
-        .lml_bus_req (core_i.load_store_unit_i.trans_ready),
-        .lml_bus_gnt (core_i.load_store_unit_i.trans_valid),
+      //obi protocol between LSU (l) mpu (m) and LSU (l) is refered to as lml
+      .lml_bus_rvalid (core_i.load_store_unit_i.resp_valid),
+      .lml_bus_req (core_i.load_store_unit_i.trans_ready),
+      .lml_bus_gnt (core_i.load_store_unit_i.trans_valid),
 
-        //obi protocol between LSU (l) respons (r) filter (f) and OBI (o) data (d) interface (i) is refered to as lrfodi
-        .lrfodi_bus_rvalid (core_i.load_store_unit_i.bus_resp_valid),
-        .lrfodi_bus_req (core_i.load_store_unit_i.buffer_trans_valid),
-        .lrfodi_bus_gnt (core_i.load_store_unit_i.buffer_trans_ready),
+      //obi protocol between LSU (l) respons (r) filter (f) and OBI (o) data (d) interface (i) is refered to as lrfodi
+      .lrfodi_bus_rvalid (core_i.load_store_unit_i.bus_resp_valid),
+      .lrfodi_bus_req (core_i.load_store_unit_i.buffer_trans_valid),
+      .lrfodi_bus_gnt (core_i.load_store_unit_i.buffer_trans_ready),
 
-        .req_instr_integrity (core_i.m_c_obi_instr_if.req_payload.integrity),
-        .req_data_integrity (core_i.m_c_obi_data_if.req_payload.integrity)
-    );
-  `endif
+      .req_instr_integrity (core_i.m_c_obi_instr_if.req_payload.integrity),
+      .req_data_integrity (core_i.m_c_obi_data_if.req_payload.integrity)
+  );
 
-  `ifndef  COREV_ASSERT_OFF
-    bind cv32e40s_wrapper
-      uvmt_cv32e40s_support_logic_module_o_if_t support_logic_module_o_if();
-  `endif
+  bind cv32e40s_wrapper
+    uvmt_cv32e40s_support_logic_module_o_if_t support_logic_module_o_if();
 
   `ifndef  COREV_ASSERT_OFF
     bind cv32e40s_pmp :
@@ -1703,16 +1693,14 @@ module uvmt_cv32e40s_tb;
   `endif
 
 
-    // Support Logic
+  // Support Logic
 
-  `ifndef  COREV_ASSERT_OFF
-    bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi (rvfi_instr_if),
-                                                                      .in_support_if (support_logic_module_i_if.driver_mp),
-                                                                      .out_support_if (support_logic_module_o_if.master_mp),
-                                                                      .data_obi_if (dut_wrap.obi_data_if),
-                                                                      .instr_obi_if (dut_wrap.obi_instr_if)
-                                                                      );
-  `endif
+  bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi (rvfi_instr_if),
+                                                                    .in_support_if (support_logic_module_i_if.driver_mp),
+                                                                    .out_support_if (support_logic_module_o_if.master_mp),
+                                                                    .data_obi_if (dut_wrap.obi_data_if),
+                                                                    .instr_obi_if (dut_wrap.obi_instr_if)
+                                                                    );
 
 
   `ifndef  COREV_ASSERT_OFF
