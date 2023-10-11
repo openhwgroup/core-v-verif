@@ -6,11 +6,15 @@ phases:
     commands:
       - chown -R florian:florian .
 #      - su florian -c "source /synopsys/scripts/env.sh; echo $PATH"
+# VCS environment
       - export VCS_HOME=/synopsys/vcs/S-2021.09-SP1
       - export PATH=$VCS_HOME/bin:$PATH
       - vcs -id
-      - source /onespin/scripts/questasim.2022.10.bash
-      - export MTI_VCO_MODE=64
+# Questasim (vsim) environment
+#      - export QUESTAROOT=/onespin/questasim
+#      - export LM_LICENSE_FILE=29000@ip-172-31-46-244
+#      - export PATH=${QUESTAROOT}/bin:${PATH}
+#      - export MTI_VCO_MODE=64
 #      - wget https://buildbot.embecosm.com/job/corev-gcc-centos7/19/artifact/corev-openhw-gcc-centos7-20230905.tar.gz
       - curl -O https://buildbot.embecosm.com/job/corev-gcc-centos7/19/artifact/corev-openhw-gcc-centos7-20230905.tar.gz
       - tar xf corev-openhw-gcc-centos7-20230905.tar.gz
@@ -19,4 +23,4 @@ phases:
       - export CV_SW_MARCH=rv32imc_zicsr_zifencei
       - corev-openhw-gcc-centos7-20230905/bin/riscv32-corev-elf-gcc --version
       - cd cv32e40p/sim/uvmt
-      - make test USE_ISS=0 SIMULATOR=vsim TEST=hello-world
+#      - make test USE_ISS=0 SIMULATOR=vcs TEST=hello-world
