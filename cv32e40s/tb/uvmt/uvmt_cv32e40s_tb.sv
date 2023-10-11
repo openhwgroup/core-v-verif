@@ -757,10 +757,7 @@ module uvmt_cv32e40s_tb;
         .wb_rdata           (core_i.ex_wb_pipe.instr.bus_resp.rdata),
         .wb_buffer_state    (core_i.load_store_unit_i.write_buffer_i.state),
 
-        .rvfi_valid         (rvfi_i.rvfi_valid),
-        .rvfi_intr          (rvfi_i.rvfi_intr.intr),
-        .rvfi_dbg_mode      (rvfi_i.rvfi_dbg_mode),
-        .rvfi_insn          (rvfi_i.rvfi_insn),
+        .rvfi (rvfi_instr_if),
 
         .*
       );
