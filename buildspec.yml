@@ -7,6 +7,7 @@ phases:
       - chown -R florian:florian .
 #      - su florian -c "source /synopsys/scripts/env.sh; echo $PATH"
 # VCS environment
+      - apt get install build-essentials
       - export VCS_HOME=/synopsys/vcs/S-2021.09-SP1
       - export PATH=$VCS_HOME/bin:$PATH
       - vcs -id
@@ -23,4 +24,4 @@ phases:
       - export CV_SW_MARCH=rv32imc_zicsr_zifencei
       - corev-openhw-gcc-centos7-20230905/bin/riscv32-corev-elf-gcc --version
       - cd cv32e40p/sim/uvmt
-#      - make test USE_ISS=0 SIMULATOR=vcs TEST=hello-world
+      - make test USE_ISS=0 SIMULATOR=vcs TEST=hello-world
