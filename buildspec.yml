@@ -11,6 +11,7 @@ phases:
       - export VCS_HOME=/synopsys/vcs/S-2021.09-SP1
       - export PATH=$VCS_HOME/bin:$PATH
       - vcs -id
+      - export LM_LICENSE_FILE=29000@ip-172-31-46-244
 # Questasim (vsim) environment
 #      - export QUESTAROOT=/onespin/questasim
 #      - export LM_LICENSE_FILE=29000@ip-172-31-46-244
