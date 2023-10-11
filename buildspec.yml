@@ -21,7 +21,7 @@ phases:
 #      - wget https://buildbot.embecosm.com/job/corev-gcc-centos7/19/artifact/corev-openhw-gcc-centos7-20230905.tar.gz
       - curl -O https://buildbot.embecosm.com/job/corev-gcc-centos7/19/artifact/corev-openhw-gcc-centos7-20230905.tar.gz
       - tar xf corev-openhw-gcc-centos7-20230905.tar.gz
-      - export CV_SW_TOOLCHAIN=corev-openhw-gcc-centos7-20230905
+      - export CV_SW_TOOLCHAIN=../../../corev-openhw-gcc-centos7-20230905
       - export CV_SW_PREFIX=riscv32-corev-elf-
       - export CV_SW_MARCH=rv32imc_zicsr_zifencei
       - corev-openhw-gcc-centos7-20230905/bin/riscv32-corev-elf-gcc --version
