@@ -1,3 +1,8 @@
+# Copyright 2023, OpenHW Group
+# SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
+#
+# Build-specification for the aws.yml workflow.
+
 version: 0.2
 
 phases:
@@ -26,5 +31,7 @@ phases:
       - export CV_SW_PREFIX=riscv32-corev-elf-
       - export CV_SW_MARCH=rv32imc_zicsr_zifencei
       - corev-openhw-gcc-centos7-20230905/bin/riscv32-corev-elf-gcc --version
-      - cd cv32e40p/sim/uvmt
-      - make test USE_ISS=0 SIMULATOR=vcs TEST=hello-world
+#      - cd cv32e40p/sim/uvmt
+#      - make test USE_ISS=0 SIMULATOR=vcs TEST=hello-world
+      - cd bin
+      - ./ci_check --batch --iss 0 --simulator vcs --core cv32e40p
