@@ -99,13 +99,6 @@ module uvmt_cv32e40s_fencei_assert
     end
   endfunction
 
-  logic [31:0]  pc_at_fencei;
-  always_latch  begin
-    if (fencei_flush_req_o) begin
-      pc_at_fencei = wb_pc;
-    end
-  end
-
 
   // vplan:ReqLow
 
@@ -222,19 +215,28 @@ module uvmt_cv32e40s_fencei_assert
 
   // vplan:BranchInitiated
 
-  let  pc_after_fencei = pc_at_fencei + 32'd4;
-
-  property p_branch_after_retire;
+  sequence  seq_branch_after_retire_ante;
     $fell(fencei_flush_req_o)
     ##0
     rvfi.rvfi_valid [->2]
+    ;
+  endsequence
 
+  sequence  seq_branch_after_retire_conse (pc_at_fencei);
+    (rvfi.rvfi_pc_rdata == pc_at_fencei + 32'd 4)
+    || rvfi.rvfi_intr
+    || rvfi.rvfi_dbg_mode
+    ;
+  endsequence
+
+  property p_branch_after_retire;
+    logic [31:0]  pc_at_fencei;
+
+    (fencei_flush_req_o, pc_at_fencei = wb_pc)
+    ##1
+    seq_branch_after_retire_ante
     |->
-
-    (rvfi.rvfi_pc_rdata == pc_after_fencei)
-    //TODO || rvfi.rvfi_intr
-    //TODO || rvfi.rvfi_dbg_mode)
-
+    seq_branch_after_retire_conse (pc_at_fencei)
     ;
   endproperty
 
@@ -243,9 +245,7 @@ module uvmt_cv32e40s_fencei_assert
   ) else `uvm_error(info_tag, "the pc following fencei did not enter WB");
 
   cov_branch_after_retire: cover property (
-    reject_on
-      (rvfi.rvfi_intr || rvfi.rvfi_dbg_mode)
-      p_branch_after_retire
+    seq_branch_after_retire_ante ##0 !rvfi.rvfi_intr ##0 !rvfi.rvfi_dbg_mode
   );
 
 
