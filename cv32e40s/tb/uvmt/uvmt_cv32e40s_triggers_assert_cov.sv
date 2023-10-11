@@ -359,11 +359,9 @@ module uvmt_cv32e40s_triggers_assert_cov
 
   //- Vplan:
   //Check that attempts to access "tdata3" raise an illegal instruction exception, always. (Unless overruled by a higher priority.)
-  //Verify that tdata3 is illegal for all tdata2 types.
 
   //- Assertion verification:
   //1) Check that attempts to access "tdata3" raise an illegal instruction exception, always. (Unless overruled by a higher priorit
-  //2) Verify that tdata3 is illegal for all tdata2 types.
 
   //1)
   a_dt_tdata3_not_implemented: assert property (
