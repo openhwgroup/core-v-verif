@@ -4,7 +4,7 @@
 
 {% import 'regress_macros.j2' as regress_macros -%}
 
-<rmdb version="1.0" toprunnables="{{project}}" loadtcl="getAbsPath getUCDBFilename getParameterByPriority getParameterByPriorityYesOrNo getTestName getTestCfgName vrmOverrides">
+<rmdb version="1.0" toprunnables="{{project}}" loadtcl="getAbsPath getUCDBFilename getParameterByPriority getParameterByPriorityYesOrNo getTestName getTestCfgName seedGen vrmOverrides">
     <usertcl name="getUCDBFilename">
         proc getUCDBFilename {base_name test_cfg} {
             if {[string trim $test_cfg] != ""} {
@@ -60,6 +60,24 @@
         }
     </usertcl>
 
+    <usertcl name="seedGen">
+        proc getSeeds { num mode regr_name } {
+            set seed 0
+            if {[string equal $mode "FIXED"]} {
+                return [GetRandomValues $num]
+            }
+            if {[string equal $mode "RAND"]} {
+                set seed [clock milliseconds]
+            }
+            # for mode HASH
+            foreach char [split $regr_name ""] {
+                set seed [expr {($seed + (($seed &lt;&lt; 3) + [scan $char %c])) % (2**31)}]
+            }
+            expr {srand($seed)}
+            return [GetRandomValues $num]
+        }
+    </usertcl>
+
     <usertcl name="vrmOverrides">
         proc ActionCompleted {userdata} {
             upvar $userdata data
@@ -69,7 +87,7 @@
                     set ucdb_basename [ExpandRmdbParameters $data(ACTION) (%ucdb_basename%)]
                     set ucdb_path [ExpandRmdbParameters $data(ACTION) (%ucdb_path%)]
                     set testname  [ExpandRmdbParameters $data(ACTION) (%testname%)]
-                    set USE_POST_COMPRESSION [ExpandRmdbParameters $data(ACTION) (%USE_POST_COMPRESSION%)]
+                    set USE_POST_COMPRESSION [ExpandRmdbParameters $data(ACTION) (%USE_POST_COMPRESSION:NO%)]
                     if { ![string equal $USE_POST_COMPRESSION "NO"]} {
                         cd $ucdb_path
                         if { [string equal $data(passfail) "failed"] } {
@@ -90,7 +108,6 @@
     <runnable name="{{project}}" type="group" sequential="yes">
         <parameters>
             <parameter name="results_sim_path" type="tcl">[getAbsPath {{results_path}}/{{simulator}}_results]</parameter>
-            <parameter name="USE_POST_COMPRESSION">NO</parameter>
         </parameters>
         <members>
 {% for r in regressions %}
@@ -160,7 +177,7 @@
                     <parameter name="t_test_cfg_name" type="tcl">[getTestCfgName "(%t_test_cfg:%)"]</parameter>
                     <parameter name="t_iss"           type="tcl">[getParameterByPriorityYesOrNo "{{iss}}" "{{t.iss}}" "(%build_iss:%)"]</parameter>
                     <parameter name="t_cov"           type="tcl">[getParameterByPriorityYesOrNo "{{coverage}}" "{{t.cov}}" "(%build_cov:%)"]</parameter>
-                    <parameter name="seeds"           type="tcl">[GetRandomValues {{t.num}}]</parameter>
+                    <parameter name="seeds"           type="tcl">[getSeeds "{{t.num}}" "(%SEED_MODE:FIXED%)" "{{r.name}}"]</parameter>
                     <parameter name="ucdb_path"       type="tcl">[file join "(%results_sim_path%)" "(%t_cfg%)" "{{t.testname}}" "(%t_test_cfg_name:%)" (%t_iteration%)]</parameter>
                     <parameter name="testname"        type="tcl">[getTestName "{{t.testname}}" "(%t_cfg%)" "(%t_test_cfg_name:%)" (%t_iteration%)]</parameter>
                     <parameter name="ucdb_basename"   type="tcl">[getUCDBFilename "{{t.testname}}" "(%t_test_cfg_name:%)"]</parameter>
@@ -232,7 +249,7 @@
     <!-- =========== Clean-up / Final compression =========== START -->
 {% for r in regressions %}
 {% for build in r.get_builds() %}
-    <runnable name="{{build.name}}_clean" type="task" if="&quot;(%USE_POST_COMPRESSION%)&quot; != &quot;NO&quot;">
+    <runnable name="{{build.name}}_clean" type="task" if="&quot;(%USE_POST_COMPRESSION:NO%)&quot; != &quot;NO&quot;">
         <execScript launch="exec">
             <command>cd (%results_sim_path%)/{{build.cfg}}/ &amp;&amp; rm -rf work &amp;&amp; rm -rf corev-dv/work </command>
         </execScript>
