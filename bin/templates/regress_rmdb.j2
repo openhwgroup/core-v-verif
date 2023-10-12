@@ -65,7 +65,7 @@
             if {[string equal $mode "FIXED"]} {
                 return [GetRandomValues $num]
             }
-            if { [string equal $mode HASH_FROM_REGR] } {
+            if { [string match "HASH*" $mode] } {
                 set seed 0
             } else {
                 set seed [clock milliseconds]
