@@ -48,11 +48,9 @@ module uvmt_cv32e40s_fencei_assert
   input wire         data_gnt_i,
   input wire         data_rvalid_i,
 
-  input wire         rvfi_valid,
-  input wire         rvfi_intr,
-  input wire         rvfi_dbg_mode,
-  input wire [31:0]  rvfi_insn
+  uvma_rvfi_instr_if_t  rvfi_if
 );
+
 
   default clocking @(posedge clk_i); endclocking
   default disable iff !rst_ni;
@@ -65,6 +63,7 @@ module uvmt_cv32e40s_fencei_assert
   localparam int FENCE_IDATA  = 32'b 000000000000_00000_000_00000_0001111;
   localparam int FENCE_IMASK  = 32'b 000000000000_00000_111_00000_1111111;
 
+
   // Helper Signals/Functions
 
   logic  is_fencei_in_wb;
@@ -72,16 +71,16 @@ module uvmt_cv32e40s_fencei_assert
 
   logic  is_rvfiinstr_fencei;
   assign is_rvfiinstr_fencei = (
-    ((rvfi_insn & FENCEI_IMASK) == FENCEI_IDATA)
+    ((rvfi_if.rvfi_insn & FENCEI_IMASK) == FENCEI_IDATA)
   );
 
   logic  is_rvfiinstr_fence;
   assign is_rvfiinstr_fence = (
-    ((rvfi_insn & FENCE_IMASK) == FENCE_IDATA)
+    ((rvfi_if.rvfi_insn & FENCE_IMASK) == FENCE_IDATA)
   );
 
   int obi_outstanding;
-  always @(posedge clk_i, negedge rst_ni) begin
+  always_ff @(posedge clk_i, negedge rst_ni) begin
     if (~rst_ni) begin
       obi_outstanding <= 0;
     end else if (data_req_o && data_gnt_i && !data_rvalid_i) begin
@@ -161,7 +160,7 @@ module uvmt_cv32e40s_fencei_assert
   a_req_must_rvfi_fencei: assert property (
     fencei_flush_req_o
     |=>
-    (rvfi_valid [->1])   ##0
+    (rvfi_if.rvfi_valid [->1])   ##0
     is_rvfiinstr_fencei
   ) else `uvm_error(info_tag, "A handshake must results in fencei retire");
 
@@ -169,7 +168,7 @@ module uvmt_cv32e40s_fencei_assert
   a_req_mustnt_rvfi_fence: assert property (
     fencei_flush_req_o
     |=>
-    (rvfi_valid [->1])   ##0
+    (rvfi_if.rvfi_valid [->1])   ##0
     !is_rvfiinstr_fence
   ) else `uvm_error(info_tag, "A handshake must not results in a fence retire");
 
@@ -186,8 +185,8 @@ module uvmt_cv32e40s_fencei_assert
       ##0 (instr_addr_o == pc_next)
     ) or (
       // Exception execution
-      rvfi_valid [->2:3]  // retire: fencei, (optionally "rvfi_trap"), interrupt/debug handler
-      ##0 (rvfi_intr || rvfi_dbg_mode)
+      rvfi_if.rvfi_valid [->2:3]  // retire: fencei, (optionally "rvfi_trap"), interrupt/debug handler
+      ##0 (rvfi_if.rvfi_intr || rvfi_if.rvfi_dbg_mode)
     );
   endproperty
 
@@ -216,19 +215,29 @@ module uvmt_cv32e40s_fencei_assert
 
   // vplan:BranchInitiated
 
-  property p_branch_after_retire;
-    int pc_next;
+  sequence  seq_branch_after_retire_ante;
+    $fell(fencei_flush_req_o)
+    ##0
+    rvfi_if.rvfi_valid [->2]
+    ;
+  endsequence
 
-    (fencei_flush_req_o, pc_next=wb_pc+4)
-    ##1 !fencei_flush_req_o
-    |=>
-    (
-      wb_valid [->1:2]
-      ##0 (wb_pc == pc_next)
-    ) or (
-      rvfi_valid [->2]
-      ##0 (rvfi_intr || rvfi_dbg_mode)
-    );
+  sequence  seq_branch_after_retire_conse (pc_at_fencei);
+    (rvfi_if.rvfi_pc_rdata == pc_at_fencei + 32'd 4)
+    || rvfi_if.rvfi_intr
+    || rvfi_if.rvfi_dbg_mode
+    ;
+  endsequence
+
+  property p_branch_after_retire;
+    logic [31:0]  pc_at_fencei;
+
+    (fencei_flush_req_o, pc_at_fencei = wb_pc)
+    ##1
+    seq_branch_after_retire_ante
+    |->
+    seq_branch_after_retire_conse (pc_at_fencei)
+    ;
   endproperty
 
   a_branch_after_retire: assert property (
@@ -236,9 +245,11 @@ module uvmt_cv32e40s_fencei_assert
   ) else `uvm_error(info_tag, "the pc following fencei did not enter WB");
 
   cov_branch_after_retire: cover property (
-    reject_on
-      (rvfi_intr || rvfi_dbg_mode)
-      p_branch_after_retire
+    seq_branch_after_retire_ante
+    ##0
+    ! rvfi_if.rvfi_intr
+    ##0
+    ! rvfi_if.rvfi_dbg_mode
   );
 
 
