@@ -706,7 +706,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   ) else `uvm_error(info_tag_glitch, "The NMI caused by an associated parity/checksum error does not have exception code 1027 or 1026.\n");
 
   //Load instructions
-  c_glitch_xsecure_security_parity_checksum_fault_NMI_load_instruction: cover property (
+  c_glitch_xsecure_integrity_parity_checksum_fault_NMI_load_instruction: cover property (
 
     obi_data_rvalid
     && data_integrity_err
@@ -715,7 +715,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   );
 
   //Store instructions
-  c_glitch_xsecure_security_parity_checksum_fault_NMI_store_instruction: cover property (
+  c_glitch_xsecure_integrity_parity_checksum_fault_NMI_store_instruction: cover property (
 
     obi_data_rvalid
     && data_integrity_err
