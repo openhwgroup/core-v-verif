@@ -62,14 +62,17 @@
 
     <usertcl name="seedGen">
         proc getSeeds { num mode regr_name } {
-            set seed 0
             if {[string equal $mode "FIXED"]} {
                 return [GetRandomValues $num]
             }
-            if {[string equal $mode "RAND"]} {
+            if { [string equal $mode HASH_FROM_REGR] } {
+                set seed 0
+            } else {
                 set seed [clock milliseconds]
+                if {![string match "RAND*" $mode]} {
+                    puts "SEED_MODE: $mode is unknown. Selecting default rand_mode to -GSEED_MODE=RANDOM"
+                }
             }
-            # for mode HASH
             foreach char [split $regr_name ""] {
                 set seed [expr {($seed + (($seed &lt;&lt; 3) + [scan $char %c])) % (2**31)}]
             }
