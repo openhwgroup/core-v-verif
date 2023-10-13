@@ -28,14 +28,14 @@
 #include <stdlib.h>
 
 // MVENDORID CSR: 0x602 is the value assigned by JEDEC to the OpenHW Group
-#define EXP_MVENDORID 0x00000000
-//#define EXP_MVENDORID 0x00000602
+//#define EXP_MVENDORID 0x00000000
+#define EXP_MVENDORID 0x00000602
 
 //#define EXP_MISA 0x40001104
 #define EXP_MISA 0x40101104
 
 //#define EXP_MARCHID 0x00000004
-#define EXP_MARCHID 0x00000016
+#define EXP_MARCHID 0x00000023
 
 #define EXP_MIMPID 0x00000000
 
