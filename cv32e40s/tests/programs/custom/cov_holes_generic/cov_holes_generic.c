@@ -364,8 +364,9 @@ extern volatile uint32_t mtvt_table;
 // Message strings for use in assembly printf
 //const volatile char * const volatile asm_printf_msg_template = "Entered handler %0d\n";
 
-// Handler flag
+// Handler flags
 volatile uint32_t  g_got_illegal_instruction_exception;
+volatile uint32_t  g_got_trap;
 
 // ---------------------------------------------------------------
 // Generic test template:
@@ -474,11 +475,18 @@ int cvprintf(verbosity_t verbosity, const char *format, ...) __attribute((__noin
 void vp_assert_irq(uint32_t mask, uint32_t cycle_delay);
 
 /*
- * test_secureseed_x0
+ * test_lfsr_lockup
  *
- * Test of secureseed using x0.
+ * Test of LFSR lockup.
  */
-void test_secureseed_x0(void);
+void test_lfsr_lockup(void);
+
+/*
+ * test_secureseed_rs1_x0
+ *
+ * Test of secureseed using rs1=x0.
+ */
+void test_secureseed_rs1_x0(void);
 
 /*
  * u_sw_irq_handler.
@@ -510,7 +518,8 @@ int main(int argc, char **argv){
 
   // Run all tests in list above
   cvprintf(V_LOW, "\nDebug test start\n\n");
-  test_secureseed_x0();
+  test_lfsr_lockup();
+  test_secureseed_rs1_x0();
   for (volatile uint32_t i = START_TEST_NUM; i < NUM_TESTS; i++) {
     test_res = set_test_status(tests[i](i, (volatile uint32_t)(0)), test_res);
   }
@@ -547,6 +556,8 @@ void u_sw_irq_handler(void){
 
   // Handle causes
 
+  g_got_trap = 1;
+
   if (exccode == EXC_CAUSE_ILLEGAL_INSTR) {
     g_got_illegal_instruction_exception = 1;
   }
@@ -577,7 +588,67 @@ void u_sw_irq_handler(void){
 
 // -----------------------------------------------------------------------------
 
-void test_secureseed_x0(void){
+void turn_on_dummies(void){
+  // "cpuctrl.rnddummy"
+  __asm__ volatile( "csrrs x0, 0xBF0, 2" );
+}
+
+// -----------------------------------------------------------------------------
+
+void test_lfsr_lockup(void){
+  volatile uint32_t  zero = 0;
+
+  turn_on_dummies();
+
+
+  // "secureseed0"  (Have to copy-paste because csr instr...)
+
+  g_got_trap = 0;
+
+  __asm__ volatile(
+    "csrrw x0, 0xBF9, %[zero]"
+    : : [zero] "r" (zero)
+  );
+
+  if (g_got_trap) {
+    printf("error: writing 0 to secureseed0 shouldn't trap\n");
+    exit(EXIT_FAILURE);
+  }
+
+
+  // "secureseed1"
+
+  g_got_trap = 0;
+
+  __asm__ volatile(
+    "csrrw x0, 0xBFA, %[zero]"
+    : : [zero] "r" (zero)
+  );
+
+  if (g_got_trap) {
+    printf("error: writing 0 to secureseed1 shouldn't trap\n");
+    exit(EXIT_FAILURE);
+  }
+
+
+  // "secureseed2"
+
+  g_got_trap = 0;
+
+  __asm__ volatile(
+    "csrrw x0, 0xBFC, %[zero]"
+    : : [zero] "r" (zero)
+  );
+
+  if (g_got_trap) {
+    printf("error: writing 0 to secureseed2 shouldn't trap\n");
+    exit(EXIT_FAILURE);
+  }
+}
+
+// -----------------------------------------------------------------------------
+
+void test_secureseed_rs1_x0(void){
   // "secureseed0"  (Have to copy-paste because csr instr...)
 
   g_got_illegal_instruction_exception = 0;
