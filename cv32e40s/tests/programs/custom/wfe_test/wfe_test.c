@@ -30,7 +30,7 @@
 
 // MUST be 31 or less (bit position-1 in result array determines test pass/fail
 // status, thus we are limited to 31 tests with this construct.
-#define NUM_TESTS 1
+#define NUM_TESTS 2
 // Set which test index to start testing at (for quickly running specific tests during development)
 #define START_TEST_IDX 0
 
@@ -45,6 +45,69 @@
   _Pragma("GCC diagnostic ignored \"-Wpedantic\"") \
   const volatile char * const volatile name = __FUNCTION__; \
   _Pragma("GCC diagnostic pop")
+
+typedef union {
+  struct {
+    volatile uint32_t uie   : 1;  //     0
+    volatile uint32_t sie   : 1;  //     1
+    volatile uint32_t wpri  : 1;  //     2
+    volatile uint32_t mie   : 1;  //     3
+    volatile uint32_t upie  : 1;  //     4
+    volatile uint32_t spie  : 1;  //     5
+    volatile uint32_t wpri0 : 1;  //     6
+    volatile uint32_t mpie  : 1;  //     7
+    volatile uint32_t spp   : 1;  //     8
+    volatile uint32_t wpri1 : 2;  // 10: 9
+    volatile uint32_t mpp   : 2;  // 12:11
+    volatile uint32_t fs    : 2;  // 14:13
+    volatile uint32_t xs    : 2;  // 16:15
+    volatile uint32_t mprv  : 1;  //    17
+    volatile uint32_t sum   : 1;  //    18
+    volatile uint32_t mxr   : 1;  //    19
+    volatile uint32_t tvm   : 1;  //    20
+    volatile uint32_t tw    : 1;  //    21
+    volatile uint32_t tsr   : 1;  //    22
+    volatile uint32_t wpri3 : 8;  // 30:23
+    volatile uint32_t sd    : 1;  //    31
+  } volatile fields;
+  volatile uint32_t raw;
+} __attribute__((packed)) mstatus_t;
+
+typedef union {
+  struct {
+    volatile uint32_t mml           : 1;
+    volatile uint32_t mmwp          : 1;
+    volatile uint32_t rlb           : 1;
+    volatile uint32_t reserved_31_3 : 29;
+  } __attribute__((packed)) volatile fields;
+  volatile uint32_t raw : 32;
+} mseccfg_t;
+
+typedef union {
+  struct {
+    volatile uint32_t r            : 1;
+    volatile uint32_t w            : 1;
+    volatile uint32_t x            : 1;
+    volatile uint32_t a            : 1;
+    volatile uint32_t reserved_6_5 : 2;
+    volatile uint32_t l            : 1;
+  } __attribute__((packed)) volatile fields;
+  volatile uint32_t raw : 8;
+} __attribute__((packed)) pmpsubcfg_t;
+
+typedef union {
+  struct {
+    volatile uint32_t cfg : 8;
+  } __attribute__((packed)) volatile reg_idx[4];
+  volatile uint32_t raw : 32;
+} __attribute__((packed)) pmpcfg_t;
+
+typedef enum {
+  PMPMODE_OFF   = 0,
+  PMPMODE_TOR   = 1,
+  PMPMODE_NA4   = 2,
+  PMPMODE_NAPOT = 3
+} pmp_mode_t;
 
 // ---------------------------------------------------------------
 // Convenience macros for bit fields
@@ -66,6 +129,7 @@ typedef enum {
 // peripheral setting to be controlled from UVM.
 volatile verbosity_t global_verbosity = V_LOW;
 
+volatile uint32_t * volatile g_illegal_instr_exp;
 // ---------------------------------------------------------------
 // Test prototypes - should match
 // uint32_t <name>(uint32_t index, uint8_t report_name)
@@ -73,6 +137,7 @@ volatile verbosity_t global_verbosity = V_LOW;
 // Use template below for implementation
 // ---------------------------------------------------------------
 uint32_t wfe_wakeup(uint32_t index, uint8_t report_name);
+uint32_t wfe_wakeup_umode(uint32_t index, uint8_t report_name);
 
 // ---------------------------------------------------------------
 // Generic test template:
@@ -145,8 +210,11 @@ int main(int argc, char **argv){
   volatile uint32_t test_res = 0x1;
   volatile int      retval   = 0;
 
+  g_illegal_instr_exp = calloc(1, sizeof(uint32_t));
+
   // Add function pointers to new tests here
   tests[0]  = wfe_wakeup;
+  tests[1]  = wfe_wakeup_umode;
 
   // Run all tests in list above
   cvprintf(V_LOW, "\nWFE Test start\n\n");
@@ -157,6 +225,7 @@ int main(int argc, char **argv){
   // Report failures
   retval = get_result(test_res, tests);
 
+  free((void *)g_illegal_instr_exp            );
   return retval; // Nonzero for failing tests
 }
 
@@ -211,8 +280,298 @@ int get_result(uint32_t res, uint32_t (* volatile ptr[])(uint32_t, uint8_t)){
 
 // -----------------------------------------------------------------------------
 
+void set_mseccfg(mseccfg_t mseccfg){
+
+  __asm__ volatile ( R"(
+    csrrs x0, mseccfg, %[cfg_vec]
+  )"
+      :
+      : [cfg_vec] "r"(mseccfg.raw)
+      :);
+
+  cvprintf(V_DEBUG, "Wrote mseccfg: 0x%08lx\n", mseccfg.raw);
+}
+
+// -----------------------------------------------------------------------------
+
+void set_pmpcfg(pmpsubcfg_t pmpsubcfg, uint32_t reg_no){
+  volatile pmpcfg_t temp   = { 0 };
+  volatile pmpcfg_t pmpcfg = { 0 };
+
+  pmpcfg.reg_idx[reg_no % 4].cfg = pmpsubcfg.raw;
+
+  temp.reg_idx[reg_no % 4].cfg = 0xff;
+
+  switch (reg_no / 4) {
+    case 0:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg0, t0
+        csrrs zero, pmpcfg0, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+    case 1:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg1, t0
+        csrrs zero, pmpcfg1, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+    case 2:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg2, t0
+        csrrs zero, pmpcfg2, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+    case 3:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg3, t0
+        csrrs zero, pmpcfg3, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+    case 4:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg4, t0
+        csrrs zero, pmpcfg4, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    case 5:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg5, t0
+        csrrs zero, pmpcfg5, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+    case 6:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg6, t0
+        csrrs zero, pmpcfg6, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+    case 7:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg7, t0
+        csrrs zero, pmpcfg7, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+    case 8:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg8, t0
+        csrrs zero, pmpcfg8, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+    case 9:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg9, t0
+        csrrs zero, pmpcfg9, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+    case 10:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg10, t0
+        csrrs zero, pmpcfg10, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+    case 11:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg11, t0
+        csrrs zero, pmpcfg11, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+    case 12:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg12, t0
+        csrrs zero, pmpcfg12, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+    case 13:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg13, t0
+        csrrs zero, pmpcfg13, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+    case 14:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg14, t0
+        csrrs zero, pmpcfg14, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+    case 15:
+      __asm__ volatile ( R"(
+        add t0, x0, %[tmp]
+        csrrc x0, pmpcfg15, t0
+        csrrs zero, pmpcfg15, %[cfg_vec]
+        )"
+          : [cfg_vec] "+r"(pmpcfg.raw)
+          : [tmp] "r"(temp.raw)
+          : "t0"
+          );
+    break;
+  }
+
+  cvprintf(V_DEBUG, "Set pmpcfg_vector: 0x%08lx\n", pmpcfg.raw);
+  return;
+}
+
+// -----------------------------------------------------------------------------
+
+void increment_mepc(volatile uint32_t incr_val) {
+  volatile uint32_t mepc = 0;
+
+  __asm__ volatile ( R"(
+    csrrs %[mepc], mepc, zero
+  )" : [mepc] "=r"(mepc));
+
+  if (incr_val == 0) {
+    // No increment specified, check *mepc instruction
+    if (((*(uint32_t *)mepc) & 0x3UL) == 0x3UL) {
+      // non-compressed
+      mepc += 4;
+    } else {
+      // compressed
+      mepc += 2;
+    }
+  } else {
+    // explicitly requested increment
+    mepc += incr_val;
+  }
+
+  __asm__ volatile ( R"(
+    csrrw zero, mepc, %[mepc]
+  )" :: [mepc] "r"(mepc));
+}
+
+// -----------------------------------------------------------------------------
+void __attribute__((naked)) handle_ecall(){
+  __asm__ volatile ( R"(
+    j handle_ecall_u
+  )");
+}
+
+void __attribute__((naked)) handle_ecall_u(){
+  __asm__ volatile ( R"(
+    ## handle_ecall_u swaps privilege level,
+    ## if in M-mode -> mret to U
+    ## else U-mode -> mret to M
+
+    addi sp, sp, -12
+    sw   a0, 0(sp)
+    sw   a1, 4(sp)
+    sw   a2, 8(sp)
+
+    # Get current priv-mode
+    csrrs a2, mstatus, zero
+
+    # clear out non-mpp bits and set up a2 to update mpp
+    lui a1, 2
+    addi a1, a1, -2048
+    and a2, a2, a1
+
+    # check if we trapped from U or M-mode
+    beq a1, a2, 1f
+    j 2f
+
+    # mpp = M-mode -> U-mode
+    1:
+    csrrc zero, mstatus, a1
+    j 3f
+
+    # mpp = U-mode -> M-mode
+    2:
+    csrrs zero, mstatus, a1
+
+    3:
+    # Set 0 as argument for increment_mepc
+    addi a0, zero, 0
+    call increment_mepc
+
+    lw   a2, 8(sp)
+    lw   a1, 4(sp)
+    lw   a0, 0(sp)
+    addi sp, sp, 12
+
+    # return to regular bsp handler flow
+    j end_handler_ret
+
+  )");
+}
+
+// -----------------------------------------------------------------------------
+
 uint32_t wfe_wakeup(uint32_t index, uint8_t report_name){
   volatile uint8_t test_fail = 0;
+  volatile mstatus_t mstatus   = { 0 };
 
   SET_FUNC_INFO
 
@@ -220,6 +579,8 @@ uint32_t wfe_wakeup(uint32_t index, uint8_t report_name){
     cvprintf(V_LOW, "\"%s\"", name);
     return 0;
   }
+
+  *g_illegal_instr_exp = 0;
 
   // Execute wfe instructions and wait for wfe noise gen to wake core up
   // Expected to be checked by ISS
@@ -240,10 +601,31 @@ uint32_t wfe_wakeup(uint32_t index, uint8_t report_name){
   )"::[wfe] "i"(WFE_INSTR));
 
   // print another string to execute many instructions
-  cvprintf(V_LOW, "abcdefghijklmnopqrstuvwxyz");
+  cvprintf(V_LOW, "abcdefghijklmnopqrstuvwxyz\n");
   __asm__ volatile (R"(
     .word(%[wfe])
   )"::[wfe] "i"(WFE_INSTR));
+
+  // Set timeout wait (mstatus.tw)
+  mstatus.fields.tw = 1;
+  __asm__ volatile ( R"(
+    csrrs zero, mstatus, %[mstatus]
+  )":: [mstatus] "r"(mstatus.raw));
+
+  __asm__ volatile (R"(
+    .word(%[wfe])
+    .word(%[wfe])
+    .word(%[wfe])
+    .word(%[wfe])
+    .word(%[wfe])
+    .word(%[wfe])
+  )"::[wfe] "i"(WFE_INSTR));
+
+  __asm__ volatile ( R"(
+    csrrc zero, mstatus, %[mstatus]
+  )":: [mstatus] "r"(mstatus.raw));
+
+  test_fail = (*g_illegal_instr_exp != 0);
 
   if (test_fail) {
     // Should never be here in this test case unless something goes really wrong
@@ -253,5 +635,102 @@ uint32_t wfe_wakeup(uint32_t index, uint8_t report_name){
   cvprintf(V_MEDIUM, "\nTest: \"%s\" No self checking in this test, OK!\n", name);
   return 0;
 }
+
+// -----------------------------------------------------------------------------
+
+uint32_t wfe_wakeup_umode(uint32_t index, uint8_t report_name){
+  volatile uint8_t   test_fail = 0;
+  volatile uint32_t  pmpaddr   = 0xffffffff;
+  volatile mstatus_t mstatus   = { 0 };
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    cvprintf(V_LOW, "\"%s\"", name);
+    return 0;
+  }
+
+  // Setup PMP access for u-mode (otherwise all deny)
+  set_mseccfg((mseccfg_t){
+      .fields.mml  = 0,
+      .fields.mmwp = 0,
+      .fields.rlb  = 1,
+  });
+
+  set_pmpcfg((pmpsubcfg_t){
+      .fields.r = 1,
+      .fields.w = 1,
+      .fields.x = 1,
+      .fields.a = PMPMODE_TOR,
+      .fields.l = 0
+  }, 0);
+
+  __asm__ volatile ( R"(
+    csrrw zero, pmpaddr0, %[pmpaddr]
+  )":: [pmpaddr] "r"(pmpaddr));
+
+  *g_illegal_instr_exp = 0;
+  __asm__ volatile ( R"(
+    ecall
+    .word(%[wfe])
+    .word(%[wfe])
+    .word(%[wfe])
+    .word(%[wfe])
+    .word(%[wfe])
+    ecall
+    # add safe return location
+    nop
+  )"::[wfe] "i"(WFE_INSTR));
+
+  test_fail = (*g_illegal_instr_exp != 0);
+
+  // Set timeout wait (mstatus.tw)
+  mstatus.fields.tw = 1;
+  __asm__ volatile ( R"(
+    csrrs zero, mstatus, %[mstatus]
+  )":: [mstatus] "r"(mstatus.raw));
+
+  *g_illegal_instr_exp = 6;
+  __asm__ volatile ( R"(
+    ecall
+    .word(%[wfe])
+    .word(%[wfe])
+    .word(%[wfe])
+    .word(%[wfe])
+    .word(%[wfe])
+    .word(%[wfe])
+    ecall
+    # add safe return location
+    nop
+  )"::[wfe] "i"(WFE_INSTR));
+
+  __asm__ volatile ( R"(
+    csrrc zero, mstatus, %[mstatus]
+  )":: [mstatus] "r"(mstatus.raw));
+
+  test_fail = (*g_illegal_instr_exp != 0);
+
+  if (test_fail) {
+    // Should never be here in this test case unless something goes really wrong
+    cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
+    return index + 1;
+  }
+  cvprintf(V_MEDIUM, "\nTest: \"%s\" No self checking in this test, OK!\n", name);
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+
+void __attribute__((naked)) handle_illegal_insn(void) {
+  __asm__ volatile ( R"(
+    # Decrement *g_illegal_instr_exp
+    lw s0, g_illegal_instr_exp
+    lw s1, 0(s0)
+    addi s1, s1, -1
+    sw s1, 0(s0)
+    j end_handler_incr_mepc
+  )");
+}
+
 
 // -----------------------------------------------------------------------------
