@@ -68,7 +68,7 @@
 ////////////////////////////////////////////////////////////////////////////
 `define RVVI_WRITE_IRQ(IRQ_NAME, IRQ_IDX) \
     wire   irq_``IRQ_NAME; \
-    assign irq_``IRQ_NAME = `DUT_PATH.irq_i[IRQ_IDX]; \
+    assign irq_``IRQ_NAME = dut_wrap.irq[IRQ_IDX]; \
     always @(irq_``IRQ_NAME) begin \
         void'(rvvi.net_push(`STRINGIFY(``IRQ_NAME), irq_``IRQ_NAME)); \
     end
@@ -177,13 +177,13 @@ module uvmt_cv32e20_imperas_dv_wrap
     wire [31:0] csr_mie_r;
     bit         csr_mie_wb;
     assign csr_mie_r = {1'b0,
-                        `DUT_CORE_PATH.cs_registers_i.mie_q[17:3], // irq_fast[14:0]
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[15:0], // irq_fast[14:0]
+                        4'b0,
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[16],   // irq_external
                         3'b0,
-                        `DUT_CORE_PATH.cs_registers_i.mie_q[2], // irq_external
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[17],   // irq_timer
                         3'b0,
-                        `DUT_CORE_PATH.cs_registers_i.mie_q[1], // irq_timer
-                        3'b0,
-                        `DUT_CORE_PATH.cs_registers_i.mie_q[0], // irq_software
+                        `DUT_CORE_PATH.cs_registers_i.mie_q[18],   // irq_software
                         3'b0};
     assign rvvi.csr[0][0]['h304]    = csr_mie_r;
     assign rvvi.csr_wb[0][0]['h304] = csr_mie_wb; 
@@ -278,7 +278,10 @@ module uvmt_cv32e20_imperas_dv_wrap
 //CSR_MCAUSE 0x342
     wire [31:0] csr_mcause_r;
     bit         csr_mcause_wb;
-    assign csr_mcause_r = {`DUT_CORE_PATH.cs_registers_i.mcause_q[5], 26'b0,`DUT_CORE_PATH.cs_registers_i.mcause_q[4:0]};
+    assign csr_mcause_r = {`DUT_CORE_PATH.cs_registers_i.mcause_q[6], 
+                            25'b0,
+                           `DUT_CORE_PATH.cs_registers_i.mcause_q[5:0]
+                          };
     assign rvvi.csr[0][0]['h342]    = csr_mcause_r;
     assign rvvi.csr_wb[0][0]['h342] = csr_mcause_wb; 
 //    always @(posedge rvvi.clk) begin 
@@ -367,7 +370,7 @@ module uvmt_cv32e20_imperas_dv_wrap
 //CSR_DSCRATCH1 0x7B3
     wire [31:0] csr_dscratch1_r;
     bit         csr_dscratch1_wb;
-    assign csr_dscratch1_r = `DUT_CORE_PATH.cs_registers_i.depc_q;
+    assign csr_dscratch1_r = `DUT_CORE_PATH.cs_registers_i.dscratch1_q;
     assign rvvi.csr[0][0]['h7B3]    = csr_dscratch1_r;
     assign rvvi.csr_wb[0][0]['h7B3] = csr_dscratch1_wb; 
     always @(rvvi.csr[0][0]['h7B3]) begin 
@@ -384,10 +387,11 @@ module uvmt_cv32e20_imperas_dv_wrap
 
 //CSR_MINSTRET 0xB02
     bit csr_minstret_wb; 
-    wire [31:0] csr_minstret_w; 
+//    wire [31:0] csr_minstret_w; 
     wire [31:0] csr_minstret_r; 
     assign csr_minstret_r = `DUT_CORE_PATH.cs_registers_i.minstret_raw[31:0] ; 
-    assign rvvi.csr[0][0]['hb02]    = csr_minstret_w | csr_minstret_r; 
+    assign rvvi.csr[0][0]['hb02]    = csr_minstret_r; 
+//    assign rvvi.csr[0][0]['hb02]    = csr_minstret_w | csr_minstret_r; 
     assign rvvi.csr_wb[0][0]['hb02] = csr_minstret_wb; 
     always @(rvvi.csr[0][0]['hb02]) begin 
         csr_minstret_wb = 1; 
@@ -397,6 +401,7 @@ module uvmt_cv32e20_imperas_dv_wrap
             csr_minstret_wb = 0; 
         end 
     end
+//    `RVVI_SET_CSR( `CSR_MINSTRET_ADDR,      minstret      )
     
 //CSR_MHPMCOUNTER3_ADDR  0xB03
 //CSR_MHPMCOUNTER4_ADDR  0xB04
@@ -493,73 +498,48 @@ module uvmt_cv32e20_imperas_dv_wrap
 
     assign rvvi.x_wb[0][0] = (1 << `RVFI_IF.rvfi_rd_addr);
 
-//    ////////////////////////////////////////////////////////////////////////////
-//    // Assign the RVVI F GPR registers
-//    ////////////////////////////////////////////////////////////////////////////
-//    bit [31:0] FREG[32];
-//
-//    bit is_f_reg [1:0];
-//
-//    assign is_f_reg[0] = `RVFI_IF.rvfi_frd_wvalid[0];
-//    assign is_f_reg[1] = `RVFI_IF.rvfi_frd_wvalid[1];
-//
-//    int f_reg_addr [1:0];
-//    assign f_reg_addr[0] = `RVFI_IF.rvfi_frd_addr[0];
-//    assign f_reg_addr[1] = `RVFI_IF.rvfi_frd_addr[1];
-//
-//    genvar fgi;
-//    generate
-//        for(fgi=0; fgi<32; fgi++) begin
-//            assign rvvi.f_wdata[0][0][fgi] = FREG[fgi];
-//        end
-//    endgenerate
-//
-//    always @(*) begin
-//        int i;
-//        for (i=0; i<32; i++) begin
-//            FREG[i] = 32'b0;
-//            if (is_f_reg[0] & (`RVFI_IF.rvfi_frd_addr[0]==5'(i)))
-//            FREG[i] = `RVFI_IF.rvfi_frd_wdata[0];
-//            if (is_f_reg[1] & (`RVFI_IF.rvfi_frd_addr[1]==5'(i)))
-//            FREG[i] = `RVFI_IF.rvfi_frd_wdata[1];
-//        end
-//    end
-//
-//    assign rvvi.f_wb[0][0] = (is_f_reg[0] << f_reg_addr[0] | is_f_reg[1] << f_reg_addr[1]);
-//
+
 //    ////////////////////////////////////////////////////////////////////////////
 //    // DEBUG REQUESTS,
 //    ////////////////////////////////////////////////////////////////////////////
-//    logic debug_req_i;
-//    assign debug_req_i = `DUT_PATH.debug_req_i;
-//    always @(debug_req_i) begin
-//        void'(rvvi.net_push("haltreq", debug_req_i));
-//    end
-//
+    logic debug_req_i;
+    assign debug_req_i = `DUT_PATH.debug_req_i;
+    always @(debug_req_i) begin
+        void'(rvvi.net_push("haltreq", debug_req_i));
+    end
+
 //    ////////////////////////////////////////////////////////////////////////////
 //    // INTERRUPTS
 //    // assert when MIP or cause bit
 //    // negate when posedge clk && valid=1 && debug=0
 //    ////////////////////////////////////////////////////////////////////////////
-//    `RVVI_WRITE_IRQ(MSWInterrupt,        3)
-//    `RVVI_WRITE_IRQ(MTimerInterrupt,     7)
-//    `RVVI_WRITE_IRQ(MExternalInterrupt, 11)
-//    `RVVI_WRITE_IRQ(LocalInterrupt0,    16)
-//    `RVVI_WRITE_IRQ(LocalInterrupt1,    17)
-//    `RVVI_WRITE_IRQ(LocalInterrupt2,    18)
-//    `RVVI_WRITE_IRQ(LocalInterrupt3,    19)
-//    `RVVI_WRITE_IRQ(LocalInterrupt4,    20)
-//    `RVVI_WRITE_IRQ(LocalInterrupt5,    21)
-//    `RVVI_WRITE_IRQ(LocalInterrupt6,    22)
-//    `RVVI_WRITE_IRQ(LocalInterrupt7,    23)
-//    `RVVI_WRITE_IRQ(LocalInterrupt8,    24)
-//    `RVVI_WRITE_IRQ(LocalInterrupt9,    25)
-//    `RVVI_WRITE_IRQ(LocalInterrupt10,   26)
-//    `RVVI_WRITE_IRQ(LocalInterrupt11,   27)
-//    `RVVI_WRITE_IRQ(LocalInterrupt12,   28)
-//    `RVVI_WRITE_IRQ(LocalInterrupt13,   29)
-//    `RVVI_WRITE_IRQ(LocalInterrupt14,   30)
-//    `RVVI_WRITE_IRQ(LocalInterrupt15,   31)
+    `RVVI_WRITE_IRQ(MSWInterrupt,        3)
+    `RVVI_WRITE_IRQ(MTimerInterrupt,     7)
+    `RVVI_WRITE_IRQ(MExternalInterrupt, 11)
+    `RVVI_WRITE_IRQ(LocalInterrupt0,    16)
+    `RVVI_WRITE_IRQ(LocalInterrupt1,    17)
+    `RVVI_WRITE_IRQ(LocalInterrupt2,    18)
+    `RVVI_WRITE_IRQ(LocalInterrupt3,    19)
+    `RVVI_WRITE_IRQ(LocalInterrupt4,    20)
+    `RVVI_WRITE_IRQ(LocalInterrupt5,    21)
+    `RVVI_WRITE_IRQ(LocalInterrupt6,    22)
+    `RVVI_WRITE_IRQ(LocalInterrupt7,    23)
+    `RVVI_WRITE_IRQ(LocalInterrupt8,    24)
+    `RVVI_WRITE_IRQ(LocalInterrupt9,    25)
+    `RVVI_WRITE_IRQ(LocalInterrupt10,   26)
+    `RVVI_WRITE_IRQ(LocalInterrupt11,   27)
+    `RVVI_WRITE_IRQ(LocalInterrupt12,   28)
+    `RVVI_WRITE_IRQ(LocalInterrupt13,   29)
+    `RVVI_WRITE_IRQ(LocalInterrupt14,   30)
+    `RVVI_WRITE_IRQ(LocalInterrupt15,   31)
+    
+
+// NMI
+//    wire   nmi;
+//    assign nmi = dut_wrap.irq[IRQ_IDX];
+//    always @(nmi) begin
+//        void'(rvvi.net_push(nmi, nmi));
+//    end
 
     /////////////////////////////////////////////////////////////////////////////
     // REF control
@@ -570,7 +550,7 @@ module uvmt_cv32e20_imperas_dv_wrap
 
     // Select processor
     void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,  "openhwgroup.ovpworld.org"));
-    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,    "riscv"));
+    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,    "CVE2"));
     void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT, "CV32E20"));
     // Worst case propagation of events 4 retirements (actually 3 observed)
     void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 4));
@@ -603,6 +583,7 @@ module uvmt_cv32e20_imperas_dv_wrap
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLE_ADDR        ));
 
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRET_ADDR      ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MINSTRET_ADDR     ));
 //    void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLEH_ADDR        ));
 //    void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRETH_ADDR      ));
 
@@ -613,35 +594,39 @@ module uvmt_cv32e20_imperas_dv_wrap
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MIP_ADDR          ));
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_MSTATUS_ADDR, 'h40));// UBE always 0.
+//
+// DEBUG
+//
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MTVAL_ADDR       ));
 
-//    // define asynchronous grouping
-//    // Interrupts
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("MSWInterrupt"),        1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("MTimerInterrupt"),     1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("MExternalInterrupt"),  1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt0"),     1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt1"),     1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt2"),     1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt3"),     1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt4"),     1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt5"),     1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt6"),     1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt7"),     1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt8"),     1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt9"),     1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt10"),    1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt11"),    1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt12"),    1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt13"),    1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt14"),    1);
-//    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt15"),    1);
+    // define asynchronous grouping
+    // Interrupts
+    rvviRefNetGroupSet(rvviRefNetIndexGet("MSWInterrupt"),        1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("MTimerInterrupt"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("MExternalInterrupt"),  1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt0"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt1"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt2"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt3"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt4"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt5"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt6"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt7"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt8"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt9"),     1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt10"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt11"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt12"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt13"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt14"),    1);
+    rvviRefNetGroupSet(rvviRefNetIndexGet("LocalInterrupt15"),    1);
 
 //  rvviRefNetGroupSet(rvviRefNetIndexGet("InstructionBusFault"), 2);
 
     // Debug
 //    rvviRefNetGroupSet(rvviRefNetIndexGet("haltreq"),             4);
 
-//    void'(rvviRefMemorySetVolatile('h15001000, 'h15001007)); //TODO: deal with int return value
+    void'(rvviRefMemorySetVolatile('h15001000, 'h15001007)); //TODO: deal with int return value
   endtask // ref_init
 endmodule : uvmt_cv32e20_imperas_dv_wrap
 `endif  // USE_ISS
