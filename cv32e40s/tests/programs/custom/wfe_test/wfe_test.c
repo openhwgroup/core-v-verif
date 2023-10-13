@@ -18,6 +18,7 @@
 // Author: Henrik Fegran
 //
 // WFE directed test
+// Also includes test for wfi + mstatus.tw = 1 => illegal instruction in U-mode
 //
 /////////////////////////////////////////////////////////////////////////////////
 
@@ -30,7 +31,7 @@
 
 // MUST be 31 or less (bit position-1 in result array determines test pass/fail
 // status, thus we are limited to 31 tests with this construct.
-#define NUM_TESTS 2
+#define NUM_TESTS 3
 // Set which test index to start testing at (for quickly running specific tests during development)
 #define START_TEST_IDX 0
 
@@ -138,6 +139,7 @@ volatile uint32_t * volatile g_illegal_instr_exp;
 // ---------------------------------------------------------------
 uint32_t wfe_wakeup(uint32_t index, uint8_t report_name);
 uint32_t wfe_wakeup_umode(uint32_t index, uint8_t report_name);
+uint32_t wfi_mstatus_tw_umode_illegal(uint32_t index, uint8_t report_name);
 
 // ---------------------------------------------------------------
 // Generic test template:
@@ -200,6 +202,39 @@ int get_result(uint32_t res, uint32_t (* volatile ptr[])(uint32_t, uint8_t));
  */
 int cvprintf(verbosity_t verbosity, const char *format, ...);
 
+/*
+ * set_mseccfg
+ *
+ * Sets up mseccfg with the provided
+ * mseccfg_t object
+ */
+void set_mseccfg(mseccfg_t mseccfg);
+
+/*
+ * set_pmpcfg
+ *
+ * Sets up pmp configuration for a given region
+ * (defined in pmpcfg_t object)
+ */
+void set_pmpcfg(pmpsubcfg_t pmpsubcfg, uint32_t reg_no);
+
+/*
+ * increment_mepc
+ *
+ * Increments mepc,
+ * incr_val 0 = auto detect
+ *          2 = halfword
+ *          4 = word
+ */
+void increment_mepc(volatile uint32_t incr_val);
+
+/*
+ * Non-standard illegal instruction and ecall handlers
+ */
+void handle_illegal_insn(void);
+void handle_ecall(void);
+void handle_ecall_u(void);
+
 // ---------------------------------------------------------------
 // Test entry point
 // ---------------------------------------------------------------
@@ -215,6 +250,7 @@ int main(int argc, char **argv){
   // Add function pointers to new tests here
   tests[0]  = wfe_wakeup;
   tests[1]  = wfe_wakeup_umode;
+  tests[2]  = wfi_mstatus_tw_umode_illegal;
 
   // Run all tests in list above
   cvprintf(V_LOW, "\nWFE Test start\n\n");
@@ -513,13 +549,16 @@ void increment_mepc(volatile uint32_t incr_val) {
 }
 
 // -----------------------------------------------------------------------------
-void __attribute__((naked)) handle_ecall(){
+
+void __attribute__((naked)) handle_ecall(void){
   __asm__ volatile ( R"(
     j handle_ecall_u
   )");
 }
 
-void __attribute__((naked)) handle_ecall_u(){
+// -----------------------------------------------------------------------------
+
+void __attribute__((naked)) handle_ecall_u(void){
   __asm__ volatile ( R"(
     ## handle_ecall_u swaps privilege level,
     ## if in M-mode -> mret to U
@@ -564,6 +603,28 @@ void __attribute__((naked)) handle_ecall_u(){
     # return to regular bsp handler flow
     j end_handler_ret
 
+  )");
+}
+
+// -----------------------------------------------------------------------------
+
+void __attribute__((naked)) handle_illegal_insn(void) {
+  __asm__ volatile ( R"(
+    addi sp, sp, -8
+    sw   s0, 0(sp)
+    sw   s1, 4(sp)
+
+    # Decrement *g_illegal_instr_exp
+    lw s0, g_illegal_instr_exp
+    lw s1, 0(s0)
+    addi s1, s1, -1
+    sw s1, 0(s0)
+
+    lw s1, 4(sp)
+    lw s0, 0(sp)
+    addi sp, sp, 8
+
+    j end_handler_incr_mepc
   )");
 }
 
@@ -721,15 +782,50 @@ uint32_t wfe_wakeup_umode(uint32_t index, uint8_t report_name){
 
 // -----------------------------------------------------------------------------
 
-void __attribute__((naked)) handle_illegal_insn(void) {
+uint32_t wfi_mstatus_tw_umode_illegal(uint32_t index, uint8_t report_name){
+  volatile uint8_t   test_fail = 0;
+  volatile mstatus_t mstatus   = { 0 };
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    cvprintf(V_LOW, "\"%s\"", name);
+    return 0;
+  }
+
+  // Set timeout wait (mstatus.tw)
+  mstatus.fields.tw = 1;
   __asm__ volatile ( R"(
-    # Decrement *g_illegal_instr_exp
-    lw s0, g_illegal_instr_exp
-    lw s1, 0(s0)
-    addi s1, s1, -1
-    sw s1, 0(s0)
-    j end_handler_incr_mepc
-  )");
+    csrrs zero, mstatus, %[mstatus]
+  )":: [mstatus] "r"(mstatus.raw));
+
+  *g_illegal_instr_exp = 6;
+  __asm__ volatile ( R"(
+    ecall
+    wfi
+    wfi
+    wfi
+    wfi
+    wfi
+    wfi
+    ecall
+    # add safe return location
+    nop
+  )":::);
+
+  __asm__ volatile ( R"(
+    csrrc zero, mstatus, %[mstatus]
+  )":: [mstatus] "r"(mstatus.raw));
+
+  test_fail = (*g_illegal_instr_exp != 0);
+
+  if (test_fail) {
+    // Should never be here in this test case unless something goes really wrong
+    cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
+    return index + 1;
+  }
+  cvprintf(V_MEDIUM, "\nTest: \"%s\" No self checking in this test, OK!\n", name);
+  return 0;
 }
 
 
