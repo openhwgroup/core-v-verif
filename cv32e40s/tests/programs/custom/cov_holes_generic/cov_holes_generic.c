@@ -29,6 +29,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <assert.h>
+#include "bsp.h"
 #include "corev_uvmt.h"
 
 // MUST be 31 or less (bit position-1 in result array determines test pass/fail
@@ -363,6 +364,9 @@ extern volatile uint32_t mtvt_table;
 // Message strings for use in assembly printf
 //const volatile char * const volatile asm_printf_msg_template = "Entered handler %0d\n";
 
+// Handler flag
+volatile uint32_t  g_got_illegal_instruction_exception;
+
 // ---------------------------------------------------------------
 // Generic test template:
 // ---------------------------------------------------------------
@@ -469,6 +473,21 @@ int cvprintf(verbosity_t verbosity, const char *format, ...) __attribute((__noin
  */
 void vp_assert_irq(uint32_t mask, uint32_t cycle_delay);
 
+/*
+ * test_secureseed_x0
+ *
+ * Test of secureseed using x0.
+ */
+void test_secureseed_x0(void);
+
+/*
+ * u_sw_irq_handler.
+ *
+ * IRQ handler.
+ */
+__attribute__((interrupt("machine")))
+void u_sw_irq_handler(void);
+
 // ---------------------------------------------------------------
 // Test entry point
 // ---------------------------------------------------------------
@@ -491,6 +510,7 @@ int main(int argc, char **argv){
 
   // Run all tests in list above
   cvprintf(V_LOW, "\nDebug test start\n\n");
+  test_secureseed_x0();
   for (volatile uint32_t i = START_TEST_NUM; i < NUM_TESTS; i++) {
     test_res = set_test_status(tests[i](i, (volatile uint32_t)(0)), test_res);
   }
@@ -502,6 +522,96 @@ int main(int argc, char **argv){
   free((void *)g_has_clic );
 
   return retval; // Nonzero for failing tests
+}
+
+// -----------------------------------------------------------------------------
+
+__attribute__((interrupt("machine")))
+void u_sw_irq_handler(void){
+  uint32_t  exccode;
+  uint32_t  instr_word;
+  uint32_t  mcause;
+  uint32_t  ret_addr;
+  uint32_t *mepc;
+
+
+  // Read CSRs
+
+  __asm__ volatile(
+    "csrr %[mcause], mcause"
+    : [mcause] "=r" (mcause)
+  );
+
+  exccode = mcause & 0xFFF;
+
+
+  // Handle causes
+
+  if (exccode == EXC_CAUSE_ILLEGAL_INSTR) {
+    g_got_illegal_instruction_exception = 1;
+  }
+
+
+  // Setup mepc
+
+  __asm__ volatile(
+    "csrr %[mepc], mepc"
+    : [mepc] "=r" (mepc)
+  );
+
+  instr_word = *mepc;
+
+  if ((instr_word & 0x3) == 0x3) {
+    ret_addr = ((uint32_t)mepc) + 4;
+  } else {
+    ret_addr = ((uint32_t)mepc) + 2;
+  }
+
+  __asm__ volatile(
+    "csrw  mepc, %[ret_addr]"
+    : : [ret_addr] "r" (ret_addr)
+  );
+
+  return;
+}
+
+// -----------------------------------------------------------------------------
+
+void test_secureseed_x0(void){
+  // "secureseed0"  (Have to copy-paste because csr instr...)
+
+  g_got_illegal_instruction_exception = 0;
+
+  __asm__ volatile( "csrrw x0, 0xBF9, x0" );
+
+  if (g_got_illegal_instruction_exception == 0) {
+    printf("error: 'secureseed0' access w/ rs1=x0 should trap\n");
+    exit(EXIT_FAILURE);
+  }
+
+
+  // "secureseed1"
+
+  g_got_illegal_instruction_exception = 0;
+
+  __asm__ volatile( "csrrw x0, 0xBFA, x0" );
+
+  if (g_got_illegal_instruction_exception == 0) {
+    printf("error: 'secureseed1' access w/ rs1=x0 should trap\n");
+    exit(EXIT_FAILURE);
+  }
+
+
+  // "secureseed2"
+
+  g_got_illegal_instruction_exception = 0;
+
+  __asm__ volatile( "csrrw x0, 0xBFC, x0" );
+
+  if (g_got_illegal_instruction_exception == 0) {
+    printf("error: 'secureseed2' access w/ rs1=x0 should trap\n");
+    exit(EXIT_FAILURE);
+  }
 }
 
 // -----------------------------------------------------------------------------
