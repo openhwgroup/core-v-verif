@@ -52,4 +52,5 @@ vector_table:
 	j m_fast13_irq_handler
 	j m_fast14_irq_handler
 	j m_fast15_irq_handler
-
+	j m_nmi_irq_handler
+        

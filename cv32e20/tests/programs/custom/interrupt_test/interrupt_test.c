@@ -23,7 +23,7 @@ volatile uint32_t mm_ram_driven           = 0; // keeps track of how the interru
 
 // NMI is highest and not maskable (not in this list)
 uint32_t IRQ_ID_PRIORITY [IRQ_NUM] = {
-    FAST15_IRQ_ID   ,
+    NMI_IRQ_ID   ,
     FAST0_IRQ_ID    ,
     FAST1_IRQ_ID    ,
     FAST2_IRQ_ID    ,
@@ -39,6 +39,7 @@ uint32_t IRQ_ID_PRIORITY [IRQ_NUM] = {
     FAST12_IRQ_ID   ,
     FAST13_IRQ_ID   ,
     FAST14_IRQ_ID   ,
+    FAST15_IRQ_ID   ,
     EXTERNAL_IRQ_ID ,
     SOFTWARE_IRQ_ID ,
     TIMER_IRQ_ID
@@ -173,6 +174,7 @@ void m_fast12_irq_handler(void) { generic_irq_handler(FAST12_IRQ_ID); }
 void m_fast13_irq_handler(void) { generic_irq_handler(FAST13_IRQ_ID); }
 void m_fast14_irq_handler(void) { generic_irq_handler(FAST14_IRQ_ID); }
 void m_fast15_irq_handler(void) { generic_irq_handler(FAST15_IRQ_ID); }
+void m_nmi_irq_handler(void)   { generic_irq_handler(NMI_IRQ_ID); }
 
 // A Special version of the SW Handler (vector 0) used in the direct mode
 __attribute__((interrupt ("machine"))) void u_sw_direct_irq_handler(void)  {
@@ -217,6 +219,7 @@ __attribute__((interrupt ("machine"))) void u_sw_direct_irq_handler(void)  {
 	    "j m_fast13_irq_handler\n"
 	    "j m_fast14_irq_handler\n"
 	    "j m_fast15_irq_handler\n"
+	    "j m_nmi_irq_handler\n"
     );
 
     asm (
@@ -302,7 +305,7 @@ int test1() {
 // To share implementation of basic interrupt test with vector relocation tests,
 // break out the test 1 implementation here
 int test1_impl(int direct_mode) {
-    for (uint32_t i = 0; i < 31; i++) {  // LRH NMI is 31
+    for (uint32_t i = 1; i < 31; i++) {  // LRH NMI is 0
 #ifdef DEBUG_MSG
         printf("Test1 -> Testing interrupt %lu\n", i);
 #endif
@@ -385,9 +388,9 @@ int test1_impl(int direct_mode) {
     }
     mmcause = 0;
     // set NMI
-    mm_ram_assert_irq(0x1 << 31, 1);    
+    mm_ram_assert_irq(0x1 << 0, 1);    
     while (!mmcause);
-    if (mmcause != 0x8000001f) {
+    if (mmcause != 0x80000020) {
         printf("MMCAUSE = 0x%08lx while expecting 0x8000001f\n", mmcause);
         return ERR_CODE_TEST_1;
     }

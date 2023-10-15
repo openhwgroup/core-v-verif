@@ -47,6 +47,7 @@
 .global m_fast13_irq_handler
 .global m_fast14_irq_handler
 .global m_fast15_irq_handler
+.global m_nmi_irq_handler
 
 .weak u_sw_irq_handler
 .weak m_software_irq_handler
@@ -68,7 +69,7 @@
 .weak m_fast13_irq_handler
 .weak m_fast14_irq_handler
 .weak m_fast15_irq_handler
-
+.weak m_nmi_irq_handler
 
 /* exception handling */
 __no_irq_handler:
@@ -131,6 +132,9 @@ m_fast14_irq_handler:
 	j __no_irq_handler
 
 m_fast15_irq_handler:
+	j __no_irq_handler
+
+m_nmi_irq_handler:
 	j __no_irq_handler
 
 u_sw_irq_handler:
