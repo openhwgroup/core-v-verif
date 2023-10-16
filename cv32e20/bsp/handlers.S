@@ -49,6 +49,7 @@
 .global m_fast15_irq_handler
 .global m_nmi_irq_handler
 
+.weak __no_irq_handler
 .weak u_sw_irq_handler
 .weak m_software_irq_handler
 .weak m_timer_irq_handler
