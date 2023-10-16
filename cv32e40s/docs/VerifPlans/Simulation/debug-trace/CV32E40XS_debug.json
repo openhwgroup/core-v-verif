@@ -5,15 +5,14 @@
         "Feature": "Enter DEBUG mode",
         "Sub Feature": "EBREAK instruction",
         "Feature Description": "Debug mode can be entered by executing the EBREAK or C.EBREAK instruction when dcsr.ebreakm = 1\ncause = 1\n\n40S, same is true for \"dcsr.ebreaku\".",
-        "Verification Goal": "Add EBREAK or/and C.EBREAK to arbitrary code\nVerify that:\nCore switches into debug mode.\nCurrent PC must be saved to DPC\nCause of debug must be saved to DCSR (cause=1)\nPC is updated to value on dm_haltaddr_i input\nCore starts executing debug cod\n\nEnsure exception routine is not enterred",
+        "Verification Goal": "Add EBREAK or/and C.EBREAK to arbitrary code\nVerify that:\nCore switches into debug mode.\nCurrent PC must be saved to DPC\nCause of debug must be saved to DCSR (cause=1)\nPC is updated to value on dm_haltaddr_i input\nCore starts executing debug code\n\nEnsure exception routine is not enterred",
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\" \ntc: mmode_ebreak_executes_debug_code",
         "Review (Marton)": "?",
         "Review (Robin)": "Are Lee's corner cases handled in this vplan?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -21,15 +20,14 @@
         "Feature": "Enter DEBUG mode",
         "Sub Feature": "",
         "Feature Description": "",
-        "Verification Goal": "Add EBREAK or/and C.EBREAK to arbitrary code\nVerify that:\nCore switches into debug mode.\nCurrent PC must be saved to DPC\nCause of debug must be saved to DCSR (cause=1)\nPC is updated to value on dm_haltaddr_i input\nCore starts executing debug cod\n\nEnsure exception routine is not enterred",
+        "Verification Goal": "Add EBREAK or/and C.EBREAK to arbitrary code\nVerify that:\nCore switches into debug mode.\nCurrent PC must be saved to DPC\nCause of debug must be saved to DCSR (cause=1)\nPC is updated to value on dm_haltaddr_i input\nCore starts executing debug code\n\nEnsure exception routine is not enterred",
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "Link to Coverage": "\nCG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_ebreak_execute_with_ebreakm\nCG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_cebreak_execute_with_ebreakm\nA  :uvmt_cv32_tb.u_debug_assert.a_enter_debug\nA: uvmt_cv32_tb.u_debug_assert.dcsr_cause",
         "Review (Marton)": "?",
         "Review (Robin)": "Is Mike's gh issue handled in this vplan?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "RISC-V ISM vol 1 (unpriv. ISA), 20191213\n\nCV32E40P doc rev 46711ac",
@@ -41,11 +39,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: exception_enters_debug_mode",
         "Review (Marton)": "?",
         "Review (Robin)": "Is the PMA overrule handled in this vplan?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -60,8 +57,7 @@
         "Link to Coverage": "N/A: Hard to detect that we are executing an exception handler.\nCovered in debug_test with ISS enabled.\nA: uvmt_cv32_tb.u_debug_assert.a_enter_debug\nA: uvmt_cv32_tb.u_debug_assert.dcsr_cause",
         "Review (Marton)": "?",
         "Review (Robin)": "Note: From OE about counters, \"vi burde ogs\u00e5 ha assert som sjekker at vi IKKE teller n\u00e5 countinhibit, sleep, eller stopcount... de assertionene jeg har endre sjekker bare at de teller... vet du om vi har andre sjekker p\u00e5 dette?\"",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "RISC-V ISM vol 1 (unpriv. ISA), 20191213\n\nCV32E40P doc rev 46711ac",
@@ -73,11 +69,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: ebreak_behavior_m_mode",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "\"[ebreakm=1?]\"",
-        "": ""
+        "Review (Henrik)": "\"[ebreakm=1?]\""
     },
     {
         "Reference document": "",
@@ -92,8 +87,7 @@
         "Link to Coverage": "\nCG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_ebreak_execute_without_ebreakm (ebreak_regular_nodebug)\nCG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_cebreak_execute_without_ebreakm (cebreak_regular_nodebug)\nA: uvmt_cv32_tb.u_debug_assert.a_ebreak_umode_exception\nA: uvmt_cv32_tb.u_debug_assert.a.ebreak_mmode_exception",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "\"[ebreakm=1?]\"",
-        "": ""
+        "Review (Henrik)": "\"[ebreakm=1?]\""
     },
     {
         "Reference document": "RISC-V ISM vol 1 (unpriv. ISA), 20191213\n\nCV32E40P doc rev 46711ac",
@@ -108,8 +102,7 @@
         "Link to Coverage": "Covered in DTC \"debug_test_known_miscompares\"",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "\"[ebreakm=1?]\"",
-        "": ""
+        "Review (Henrik)": "\"[ebreakm=1?]\""
     },
     {
         "Reference document": "",
@@ -124,8 +117,7 @@
         "Link to Coverage": "\nCG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_ebreak_execute_without_ebreakm (ebreak_step_nodebug)\nCG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_cebreak_execute_without_ebreakm (cebreak_step_nodebug)\n\nA: uvmt_cv32_tb.u_debug_assert.a_ebreak_umode_exception\nA: uvmt_cv32_tb.u_debug_assert.a.ebreak_mmode_exception",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "\"[ebreakm=1?]\"",
-        "": ""
+        "Review (Henrik)": "\"[ebreakm=1?]\""
     },
     {
         "Reference document": "CV32E40P doc rev 46711ac",
@@ -137,11 +129,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: request_hw_debugger",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -156,8 +147,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_mode_ext\nA:   uvmt_cv32_tb.u_debug_assert.a_enter_debug\nA:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause\nA:   uvmt_cv32_tb.u_debug_assert.a_debug_mode_pc\nA: uvmt_cv32_tb.u_debug_assert.a_dpc_dbg_haltreq\nA: uvmt_cv32_tb.u_debug_assert.a_debug_req_taken",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "CV32E40P doc rev 46711ac\n\nRISCV-V External Debug Support Version 0.13.2",
@@ -172,8 +162,7 @@
         "Link to Coverage": "Covered in DTC \"debug_test_trigger\"",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -185,11 +174,10 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_match\nA:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause\nA:  uvmt_cv32_tb.u_debug_assert.a_dpc_dbg_trigger\nA:  uvmt_cv32_tb.u_debug_assert.a_enter_debug",
+        "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_match\nA:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause\nA:  uvmt_cv32_tb.u_debug_assert.a_dpc_dbg_trigger\nA:  uvmt_cv32_tb.u_debug_assert.a_enter_debug A:a_dt_instr_trigger_hit_*",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "CV32E40P doc rev 46711ac\n\nRISCV-V External Debug Support Version 0.13.2",
@@ -203,9 +191,8 @@
         "Coverage Method": "Testcase",
         "Link to Coverage": "Covered in DTC \"debug_test_trigger\"",
         "Review (Marton)": "",
-        "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Robin)": "Why is the \"Trigger module\" Feature in red text?",
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -220,8 +207,7 @@
         "Link to Coverage": "CG: cg_trigger_match_disabled\nA:   uvmt_cv32_tb.u_debug_assert.a_trigger_match_disabled\n",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "40S User Manual 0.8.0",
@@ -236,8 +222,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "\"[40x? Also below.]\"",
-        "": ""
+        "Review (Henrik)": "\"[40x? Also below.]\""
     },
     {
         "Reference document": "",
@@ -249,18 +234,17 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A:a_dt_0_triggers_tdata1_access, a_dt_0_triggers_no_triggering",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
         "Requirement Location": "",
         "Feature": "Trigger module",
         "Sub Feature": "",
-        "Feature Description": "The number of triggers is determined by DBG_NUM_TRIGGERS.\nDBG_NUM_TRIGGERS can be any value within 0-4.\n\"tselect\" is WARL (0x0 - (DBG_NUM_TRIGGERS-1)).\n\"tcontrol\" is WARL (0x0).\nAll selectable triggers are functional.\nAll trigger registers are accessible except for \"mcontext\", \"mscontext\", \"hcontext\", and \"scontext\" (those four trap upon access).",
+        "Feature Description": "The number of triggers is determined by DBG_NUM_TRIGGERS.\nDBG_NUM_TRIGGERS can be any value within 0-4.\n\"tselect\" is WARL (0x0 - (DBG_NUM_TRIGGERS-1)).\nAll selectable triggers are functional.\nAll trigger registers are accessible except for \"mcontext\", \"mscontext\", \"hcontext\", and \"scontext\" (those four trap upon access).",
         "Verification Goal": "For all number of triggers, use tselect to exercise each trigger with each supported type. (Also try writing to higher \"tselect\" than supported and check that a supported number is read back.) Make the triggers fire and check that debug mode is entered. Check also that the four context registers trap when accessed.",
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
@@ -268,8 +252,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "There are a lot of things to check in a single point here. Nothing is wrong with this point as I see it, so there is no need to change, but ideally this point should be split up.",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -281,27 +264,25 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: a_dt_access_context, a_dt_tselect_higher_than_dbg_num_triggers, a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*, a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason. COV: c_trigger_i_has_type_mcontrol, c_trigger_i_has_type_etrigger, c_trigger_i_has_type_mcontrol6, c_trigger_i_has_type_disable",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
-        "Reference document": "40S User Manual\n\nDebug 1.0.0",
-        "Requirement Location": "Control and Status Registers\n\nMatch Control Type 6",
+        "Reference document": "User Manual v0.9.0.",
+        "Requirement Location": "Control and Status Registers",
         "Feature": "Trigger module",
-        "Sub Feature": "\"mcontrol6\" match types",
-        "Feature Description": "The \"load\" and \"store\" bits are supported (so load/store addr matching is supported).\nThe \"execute\" bit is also supported.\nThe only supported match types are \"address match\" for {instr execution, load, store}, all using \"before\" timing so \"mcontrol6.timing\" is always 0.\nData matching is not supported (only addr matching), so \"mcontrol6.select\" is always 0.",
-        "Verification Goal": "Configure triggers for load/store/execute and combinations of them, configure tdata2, cause triggers to fire and check that debug mode is entered correctly. Also check that the tied fields are tied. All of these configurations must be crossed, also against match conditions.",
+        "Sub Feature": "tcontrol",
+        "Feature Description": "\"tcontrol\" doesn't exist.",
+        "Verification Goal": "Check that attempts to access \"tcontrol\" raise an illegal instruction exception, always. (Unless overruled by a higher priority.)",
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
         "Link to Coverage": "",
-        "Review (Marton)": "?",
-        "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Marton)": "",
+        "Review (Robin)": "",
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -309,47 +290,14 @@
         "Feature": "Trigger module",
         "Sub Feature": "",
         "Feature Description": "",
-        "Verification Goal": "Configure triggers for load/store/execute and combinations of them, configure tdata2, cause triggers to fire and check that debug mode is entered correctly. Also check that the tied fields are tied. All of these configurations must be crossed, also against match conditions.",
+        "Verification Goal": "Check that attempts to access \"tcontrol\" raise an illegal instruction exception, always. (Unless overruled by a higher priority.)",
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
-        "Review (Marton)": "?",
-        "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
-    },
-    {
-        "Reference document": "",
-        "Requirement Location": "",
-        "Feature": "Trigger module",
-        "Sub Feature": "\"mcontrol6\" match conditions",
-        "Feature Description": "Supported match conditions in \"mcontrol6.match\" are {0 (eq), 2 (geq), 3 (less)}.",
-        "Verification Goal": "Configure triggers using all three match conditions, exercise them within and outside of the conditions, check that debug mode is/isn't entered. Must also cross against the \"match types\" item above.",
-        "Pass/Fail Criteria": "Self Checking Test",
-        "Test Type": "Directed Self-Checking",
-        "Coverage Method": "Testcase",
-        "Link to Coverage": "",
-        "Review (Marton)": "?",
-        "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
-    },
-    {
-        "Reference document": "",
-        "Requirement Location": "",
-        "Feature": "Trigger module",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Configure triggers using all three match conditions, exercise them within and outside of the conditions, check that debug mode is/isn't entered. Must also cross against the \"match types\" item above.",
-        "Pass/Fail Criteria": "Check against ISS",
-        "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
-        "Review (Marton)": "?",
-        "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Link to Coverage": "A: a_dt_tcontrol_not_implemented",
+        "Review (Marton)": "",
+        "Review (Robin)": "",
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -364,8 +312,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -377,17 +324,76 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: a_dt_enter_dbg_reason, a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
+    },
+    {
+        "Reference document": "User Manual v0.9.0.\n\nDebug 1.0-STABLE fb7025",
+        "Requirement Location": "",
+        "Feature": "Trigger module",
+        "Sub Feature": "Mcontrol6Hit",
+        "Feature Description": "When a trigger fires, it's \"mcontrol6.hit\" field gets set to 1.\n(This is also true when multiple triggers fire at once.)",
+        "Verification Goal": "Induce firing of a trigger.\nCheck that the corresponding \"hit\" field gets set.\nDo the same for variations of multiple triggers firing at once.\nCheck that the field is WARL 0x0, 0x1.",
+        "Pass/Fail Criteria": "Self Checking Test",
+        "Test Type": "Directed Self-Checking",
+        "Coverage Method": "Testcase",
+        "Link to Coverage": "",
+        "Review (Marton)": "",
+        "Review (Robin)": "",
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
         "Requirement Location": "",
         "Feature": "Trigger module",
-        "Sub Feature": "\"mcontrol6\" enable",
+        "Sub Feature": "",
+        "Feature Description": "",
+        "Verification Goal": "Induce firing of a trigger.\nCheck that the corresponding \"hit\" field gets set.\nDo the same for variations of multiple triggers firing at once.\nCheck that the field is WARL 0x0, 0x1.",
+        "Pass/Fail Criteria": "Check against ISS",
+        "Test Type": "Constrained-Random",
+        "Coverage Method": "Functional Coverage",
+        "Link to Coverage": "A: a_dt_m6_hit_bit\na_dt_warl_tdata1_m6",
+        "Review (Marton)": "",
+        "Review (Robin)": "",
+        "Review (Henrik)": ""
+    },
+    {
+        "Reference document": "",
+        "Requirement Location": "",
+        "Feature": "Trigger module",
+        "Sub Feature": "Mcontrol6Match",
+        "Feature Description": "Supported match conditions in \"mcontrol6.match\" are {0 (eq), 2 (geq), 3 (less)}.",
+        "Verification Goal": "Configure triggers using all three match conditions, exercise them within and outside of the conditions, check that debug mode is/isn't entered. Must also cross against the \"match types\" item above.",
+        "Pass/Fail Criteria": "Self Checking Test",
+        "Test Type": "Directed Self-Checking",
+        "Coverage Method": "Testcase",
+        "Link to Coverage": "",
+        "Review (Marton)": "?",
+        "Review (Robin)": "?",
+        "Review (Henrik)": "?"
+    },
+    {
+        "Reference document": "",
+        "Requirement Location": "",
+        "Feature": "Trigger module",
+        "Sub Feature": "",
+        "Feature Description": "",
+        "Verification Goal": "Configure triggers using all three match conditions, exercise them within and outside of the conditions, check that debug mode is/isn't entered. Must also cross against the \"match types\" item above.",
+        "Pass/Fail Criteria": "Check against ISS",
+        "Test Type": "Constrained-Random",
+        "Coverage Method": "Functional Coverage",
+        "Link to Coverage": "A: a_dt_enter_dbg_reason, a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*",
+        "Review (Marton)": "?",
+        "Review (Robin)": "?",
+        "Review (Henrik)": "?"
+    },
+    {
+        "Reference document": "",
+        "Requirement Location": "",
+        "Feature": "Trigger module",
+        "Sub Feature": "Mcontrol6UM",
         "Feature Description": "Triggers can be en/disabled in M-mode, \"mcontrol6.m\", default is 0.\n40S, triggers can be en/disabled in U-mode, \"mcontrol6.u\", default is 0.\n40X, triggers cannot be enabled in U-mode, \"mcontrol6.u\", WARL (0x0).\nThe trigger action is always to enter D-mode, so \"mcontrol6.action\" is always 1.",
         "Verification Goal": "Have triggers configured to be able to match, but enable/disable their corresponding mode bit, check that the trigger is either able to fire or is blocked from firing accordingly. Also check the tied values.",
         "Pass/Fail Criteria": "Self Checking Test",
@@ -396,8 +402,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -409,11 +414,70 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A:a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*, a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason, a_dt_tie_offs_*",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
+    },
+    {
+        "Reference document": "",
+        "Requirement Location": "",
+        "Feature": "Trigger module",
+        "Sub Feature": "Mcontrol6LoadStoreExecute",
+        "Feature Description": "The \"load\" and \"store\" bits are supported (so load/store addr matching is supported).\nThe \"execute\" bit is also supported.\nThe only supported match types are \"address match\" for {instr execution, load, store}, all using \"before\" timing.\nData matching is not supported (only addr matching), so \"mcontrol6.select\" is always 0.",
+        "Verification Goal": "Configure triggers for load/store/execute and combinations of them, configure tdata2, cause triggers to fire and check that debug mode is entered correctly.  All of these configurations must be crossed, also against match conditions.",
+        "Pass/Fail Criteria": "Self Checking Test",
+        "Test Type": "Directed Self-Checking",
+        "Coverage Method": "Testcase",
+        "Link to Coverage": "",
+        "Review (Marton)": "?",
+        "Review (Robin)": "\"tdata3\" and \"tcontrol\" should be removed.",
+        "Review (Henrik)": "?"
+    },
+    {
+        "Reference document": "",
+        "Requirement Location": "",
+        "Feature": "Trigger module",
+        "Sub Feature": "",
+        "Feature Description": "",
+        "Verification Goal": "Configure triggers for load/store/execute and combinations of them, configure tdata2, cause triggers to fire and check that debug mode is entered correctly.  All of these configurations must be crossed, also against match conditions.",
+        "Pass/Fail Criteria": "Check against ISS",
+        "Test Type": "Constrained-Random",
+        "Coverage Method": "Functional Coverage",
+        "Link to Coverage": "A: a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*. ",
+        "Review (Marton)": "?",
+        "Review (Robin)": "?",
+        "Review (Henrik)": "?"
+    },
+    {
+        "Reference document": "User Manual v0.9.0.",
+        "Requirement Location": "",
+        "Feature": "Trigger module",
+        "Sub Feature": "trigger csrs",
+        "Feature Description": "Some fields in the trigger csrs are hardwired.",
+        "Verification Goal": "Check that the tied fields are tied.",
+        "Pass/Fail Criteria": "Self Checking Test",
+        "Test Type": "Directed Self-Checking",
+        "Coverage Method": "Testcase",
+        "Link to Coverage": "TODO csr access test? ",
+        "Review (Marton)": "",
+        "Review (Robin)": "",
+        "Review (Henrik)": ""
+    },
+    {
+        "Reference document": "",
+        "Requirement Location": "",
+        "Feature": "Trigger module",
+        "Sub Feature": "",
+        "Feature Description": "",
+        "Verification Goal": "Check that the tied fields are tied.",
+        "Pass/Fail Criteria": "Check against ISS",
+        "Test Type": "Constrained-Random",
+        "Coverage Method": "Functional Coverage",
+        "Link to Coverage": "A: a_dt_tie_offs_tselect, a_dt_tie_offs_tdata1_mcontrol, a_dt_tie_offs_tdata1_etrigger, a_dt_tie_offs_tdata1_mcontrol6, a_dt_tie_offs_tdata1_disabled, a_dt_tie_offs_tdata2_etrigger. a_dt_tie_offs_tinfo.",
+        "Review (Marton)": "",
+        "Review (Robin)": "",
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -421,15 +485,14 @@
         "Feature": "Trigger module",
         "Sub Feature": "\"mcontrol6\" atomics",
         "Feature Description": "40X, \"mcontrol6\" trigger behavior has specific descriptions for \"A\" extension.",
-        "Verification Goal": "40X, this section must be filled out when the time comes for planning atomics verification.",
+        "Verification Goal": "40X, TODO this section must be filled out when the time comes for planning atomics verification.",
         "Pass/Fail Criteria": "",
         "Test Type": "",
         "Coverage Method": "",
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "40S User Manual\n\nDebug 1.0.0",
@@ -444,8 +507,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "\"[type 2]\"",
-        "": ""
+        "Review (Henrik)": "\"[type 2]\""
     },
     {
         "Reference document": "",
@@ -457,11 +519,10 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: a_dt_tdata1_types",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "\"[type 2]\"",
-        "": ""
+        "Review (Henrik)": "\"[type 2]\""
     },
     {
         "Reference document": "",
@@ -469,15 +530,14 @@
         "Feature": "Trigger module",
         "Sub Feature": "\"tdata1.dmode\"",
         "Feature Description": "This bit is WARL (0x1), so only D-mode can write tdata registers. And this bit is still WARL (0x1) regardless of \"type\" (2, 5, 6, 15).",
-        "Verification Goal": "Try to write tdata registers outside of debug mode, check that it traps. Try changing \"tdata1.dmode\" and check that it is WARL (0x1). Cross the above checks with all supported types.",
+        "Verification Goal": "Try to write tdata registers outside of debug mode, check that they are not writable. Try changing \"tdata1.dmode\" and check that it is WARL (0x1). Cross the above checks with all supported types.",
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -485,31 +545,29 @@
         "Feature": "Trigger module",
         "Sub Feature": "",
         "Feature Description": "",
-        "Verification Goal": "Try to write tdata registers outside of debug mode, check that it traps. Try changing \"tdata1.dmode\" and check that it is WARL (0x1). Cross the above checks with all supported types.",
+        "Verification Goal": "Try to write tdata registers outside of debug mode, check that they are not writable. Try changing \"tdata1.dmode\" and check that it is WARL (0x1). Cross the above checks with all supported types.",
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: a_dt_not_access_tdata1_dbg_mode,  a_dt_not_access_tdata2_dbg_mode, a_dt_dmode",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "40S User Manual\n\nDebug 1.0.0",
         "Requirement Location": "Control and Status Registers\n\nTrigger Info",
         "Feature": "Trigger module",
         "Sub Feature": "\"tinfo\"",
-        "Feature Description": "\"tinfo.info\" holds the  supported types {2, 5, 6, 15}, and the register is otherwise WARL (0x0).",
-        "Verification Goal": "When num triggers is 0, check that \"tinfo\" is 0.\nFor any other num triggers, check that \"tinfo.info\" is \"1\" for the three supported types, and that the remaining bits are 0.",
+        "Feature Description": "\"tinfo.info\" holds the  supported types {2, 5, 6, 15},\n\"tinfo.version\" holds the \"Sdtrig\" spec version,\nand the register is otherwise WARL (0x0).",
+        "Verification Goal": "\nWhen num triggers is more than 0, check that \"tinfo.info\" is \"1\" for the three supported types,\n\"tinfo.version\" is 0x1,\nand that the remaining bits are 0.",
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "\"[type 2]\"",
-        "": ""
+        "Review (Henrik)": "\"[type 2]\""
     },
     {
         "Reference document": "",
@@ -517,15 +575,14 @@
         "Feature": "Trigger module",
         "Sub Feature": "",
         "Feature Description": "",
-        "Verification Goal": "When num triggers is 0, check that \"tinfo\" is 0.\nFor any other num triggers, check that \"tinfo.info\" is \"1\" for the three supported types, and that the remaining bits are 0.",
+        "Verification Goal": "\nWhen num triggers is more than 0, check that \"tinfo.info\" is \"1\" for the three supported types,\n\"tinfo.version\" is 0x1,\nand that the remaining bits are 0.",
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: a_dt_triggers_tinfo",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "\"[type 2]\"",
-        "": ""
+        "Review (Henrik)": "\"[type 2]\""
     },
     {
         "Reference document": "40S User Manual\n\nDebug 1.0.0",
@@ -540,8 +597,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -553,11 +609,10 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason, a_glitch_dt_exception_trigger_hit_*",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -571,9 +626,8 @@
         "Coverage Method": "Testcase",
         "Link to Coverage": "",
         "Review (Marton)": "?",
-        "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Robin)": "\"tdata3\" and \"tcontrol\" should be removed.",
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -585,11 +639,10 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason, a_dt_warl_tselect, a_dt_warl_tdata1_general, a_dt_warl_tdata1_m2, a_dt_warl_tdata1_etrigger, a_dt_warl_tdata1_m6, a_dt_warl_tdata1_disabled, a_dt_warl_tdata2_etrigger, a_dt_warl_tinfo. ",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "40s User Manual 0.8.0",
@@ -604,8 +657,7 @@
         "Link to Coverage": "A:   uvmt_cv32_tb.u_debug_assert.a_debug_pc_o\nA:   uvmt_cv32_tb.u_debug_assert.a_debug_pc_o_inv",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "40S User Manual 0.8.0",
@@ -617,11 +669,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: illegal_csr_in_dmode\ntc: ecall_in_dmode\ntc: mret_in_dmode\ntc: single_step",
         "Review (Marton)": "Point mentions the exceptions supported by the e40p, need to match 40s/x capabilities and update text",
         "Review (Robin)": "\"0.8.0\"",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -636,8 +687,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_mode_exception\nCG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_mode_ecall\nA:   uvmt_cv32_tb.u_debug_assert.a_debug_mode_exception",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "40S User Manual 0.8.0",
@@ -649,11 +699,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: debug_csr_rw",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -668,8 +717,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_regs_m_mode\nA:   uvmt_cv32_tb.u_debug_assert.a_debug_regs_mmode",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "Debug 1.0.0",
@@ -684,24 +732,22 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "40S User Manual 0.8.0",
         "Requirement Location": "Debug chapter",
         "Feature": "Trigger module registers",
         "Sub Feature": "Access from M-mode",
-        "Feature Description": "Accessing the trigger module registers - tselect, tdata1/2/3, tinfo, tcontrol are readable from M-mode, but not writeable. (And is not accessible at all from U-mode.)",
-        "Verification Goal": "Access all trigger module registers in M-mode and observe writes have no effects and reads should reflect register content.\n\nAccess registers from D-mode and observe full R/W access.\n\nAccess from U-mode and observe no access at all.",
+        "Feature Description": "Accessing the tdata1/2 registers are readable from M-mode, but not writeable. (And is not accessible at all from U-mode.)",
+        "Verification Goal": "Access all tdata registers in M-mode and observe writes have no effects and reads should reflect register content.\n\nAccess registers from D-mode and observe full R/W access.\n\nAccess from U-mode and observe no access at all.",
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test\".",
         "Review (Marton)": "Should we also check r/w in U-mode?",
-        "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Robin)": "\"tdata3\" should be removed.",
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -709,15 +755,14 @@
         "Feature": "Trigger module registers",
         "Sub Feature": "",
         "Feature Description": "",
-        "Verification Goal": "Access all trigger module registers in M-mode and observe writes have no effects and reads should reflect register content.\n\nAccess registers from D-mode and observe full R/W access.\n\nAccess from U-mode and observe no access at all.",
+        "Verification Goal": "Access all tdata registers in M-mode and observe writes have no effects and reads should reflect register content.\n\nAccess registers from D-mode and observe full R/W access.\n\nAccess from U-mode and observe no access at all.",
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_regs\n",
+        "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_regs.  A: a_dt_no_write_access_to_tdata_in_mmode,\na_dt_read_access_to_tdata1_in_mmode,\na_dt_read_access_to_tdata2_in_mmode,\na_dt_write_access_to_tdata1_in_dmode,\na_dt_write_access_to_tdata2_in_dmode,\na_dt_read_access_to_tdata1_in_dmode,\na_dt_read_access_to_tdata2_in_dmode,\na_dt_no_access_to_tdata_in_umode.\nCOV: c_dt_write_tdata1_in_mmode,\nc_dt_write_tdata2_in_mmode.\n\n",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "Debug 1.0.0",
@@ -732,8 +777,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -745,27 +789,25 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: a_dt_write_0_to_tdata1,\na_dt_enter_dbg_reason",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
-        "Reference document": "",
+        "Reference document": "Debug 1.0.0\nUserManual v0.9.0.",
         "Requirement Location": "",
         "Feature": "Trigger module registers",
-        "Sub Feature": "\"tdata2\" and \"tdata3\"",
-        "Feature Description": "\"tdata2\" should always be RW (any), and \"tdata3\" is always WARL (0x0).",
-        "Verification Goal": "Change the type to 2/5/6/15 and write any data to \"tdata2\", read it back and check that it always gets set. Do the same for \"tdata3\" and check that it always reads back 0.",
+        "Sub Feature": "tdata2",
+        "Feature Description": "\"tdata2\" should always be RW (any) for type 2/6/15.",
+        "Verification Goal": "Change the type to 2/6/15 and write any data to \"tdata2\", read it back and check that it always gets set.",
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
         "Link to Coverage": "",
         "Review (Marton)": "?",
-        "Review (Robin)": "Type 2",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Robin)": "\"tdata3\" should be removed.",
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -773,31 +815,59 @@
         "Feature": "Trigger module registers",
         "Sub Feature": "",
         "Feature Description": "",
-        "Verification Goal": "Change the type to 2/5/6/15 and write any data to \"tdata2\", read it back and check that it always gets set. Do the same for \"tdata3\" and check that it always reads back 0.",
+        "Verification Goal": "Change the type to 2/6/15 and write any data to \"tdata2\", read it back and check that it always gets set.",
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: a_dt_write_tdata2_random_in_dmode_type_2_6_15. COV: c_dt_w_csrrw_tdata2_m2_m6_disabled,\nc_dt_w_csrrs_tdata2_m2_m6_disabled,\nc_dt_w_csrrc_tdata2_m2_m6_disabled,\nc_dt_w_csrrwi_tdata2_m2_m6_disabled,\nc_dt_w_csrrsi_tdata2_m2_m6_disabled,\nc_dt_w_csrrci_tdata2_m2_m6_disabled",
         "Review (Marton)": "?",
         "Review (Robin)": "Type 2",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
+    },
+    {
+        "Reference document": "User Manual v0.9.0.",
+        "Requirement Location": "",
+        "Feature": "Trigger module registers",
+        "Sub Feature": "tdata3",
+        "Feature Description": "\"tdata3\" doesn't exist.",
+        "Verification Goal": "Check that attempts to access \"tdata3\" raise an illegal instruction exception, always. (Unless overruled by a higher priority.)\nVerify that tdata3 is illegal for all tdata2 types.",
+        "Pass/Fail Criteria": "Self Checking Test",
+        "Test Type": "Directed Self-Checking",
+        "Coverage Method": "Testcase",
+        "Link to Coverage": "",
+        "Review (Marton)": "",
+        "Review (Robin)": "",
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
+        "Requirement Location": "",
+        "Feature": "Trigger module registers",
+        "Sub Feature": "",
+        "Feature Description": "",
+        "Verification Goal": "Check that attempts to access \"tdata3\" raise an illegal instruction exception, always. (Unless overruled by a higher priority.)\nVerify that tdata3 is illegal for all tdata2 types.",
+        "Pass/Fail Criteria": "Check against ISS",
+        "Test Type": "Constrained-Random",
+        "Coverage Method": "Functional Coverage",
+        "Link to Coverage": "A: a_dt_tdata3_not_implemented. COV: c_dt_access_tdata3_m2, c_dt_access_tdata3_etrigger, c_dt_access_tdata3_m6, c_dt_access_tdata3_disabled.",
+        "Review (Marton)": "",
+        "Review (Robin)": "",
+        "Review (Henrik)": ""
+    },
+    {
+        "Reference document": "Debug 1.0.0",
         "Requirement Location": "",
         "Feature": "Trigger module registers",
         "Sub Feature": "Other tdata registers",
         "Feature Description": "Writing one \"tdata*\" register must not modify other \"tdata*\" registers, and must not modify other triggers than the currently selected.",
-        "Verification Goal": "Read the state of all triggers, write to tdata1/2/3 (using all types in tdata1), read back the state of all triggers and check that nothing got changes except the one \"tdata*\" register that was written.",
+        "Verification Goal": "Read the state of all triggers, write to tdata1/2 (using all types in tdata1), read back the state of all triggers and check that nothing got changes except the one \"tdata*\" register that was written.",
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
         "Link to Coverage": "",
         "Review (Marton)": "?",
-        "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Robin)": "\"tdata3\" should be removed.",
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -805,15 +875,14 @@
         "Feature": "Trigger module registers",
         "Sub Feature": "",
         "Feature Description": "",
-        "Verification Goal": "Read the state of all triggers, write to tdata1/2/3 (using all types in tdata1), read back the state of all triggers and check that nothing got changes except the one \"tdata*\" register that was written.",
+        "Verification Goal": "Read the state of all triggers, write to tdata1/2 (using all types in tdata1), read back the state of all triggers and check that nothing got changes except the one \"tdata*\" register that was written.",
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: a_dt_write_only_tdata1,\na_dt_write_only_tdata2.",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -825,11 +894,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -844,8 +912,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_irq_in_debug\nA:   uvmt_cv32_tb.u_debug_assert.a_irq_in_debug",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -860,8 +927,7 @@
         "Link to Coverage": "N/A",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -876,8 +942,7 @@
         "Link to Coverage": "N/A",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -889,11 +954,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test\". ",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -905,11 +969,10 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_match_disabled (d_match_with_en)",
+        "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_match_disabled (d_match_with_en) A:a_dt_no_actions_on_trigger_matches_in_debug_dcsr\na_dt_no_actions_on_trigger_matches_in_debug_dpc",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "Debug 1.0.0",
@@ -921,11 +984,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: test_stopcnt_bits",
         "Review (Marton)": "?",
         "Review (Robin)": "Is wrong, need update.",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -940,8 +1002,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_counters_enabled\nA:   uvmt_cv32_tb.u_debug_assert.a_minstret_count\nA:   uvmt_cv32_tb.u_debug_assert.a_mcycle_count",
         "Review (Marton)": "?",
         "Review (Robin)": "Any other \"40p\" outdateds here? Marked them all.",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -956,8 +1017,7 @@
         "Link to Coverage": "N/A",
         "Review (Marton)": "",
         "Review (Robin)": "Fix \"40p\"",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -972,8 +1032,7 @@
         "Link to Coverage": "Covered in DTC \"debug_test\"",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -988,8 +1047,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_wfi_in_debug\nA:   uvmt_cv32_tb.u_debug_assert.a_wfi_in_debug",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1001,11 +1059,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: request_ebreak_3x",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1020,8 +1077,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_ebreak_with_ebreakm (.ebreak_in_debug)\nCG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_cebreak_with_ebreakm (.ebreak_in_debug)\nA:   uvmt_cv32_tb.u_debug_assert.a_ebreak_during_debug_mode",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1036,8 +1092,7 @@
         "Link to Coverage": "N/A",
         "Review (Marton)": "What are we doing here?",
         "Review (Robin)": "Added N/A disclaimer. Striking it.",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1052,8 +1107,7 @@
         "Link to Coverage": "N/A",
         "Review (Marton)": "",
         "Review (Robin)": "Fix \"40p\"",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1068,8 +1122,7 @@
         "Link to Coverage": "N/A",
         "Review (Marton)": "",
         "Review (Robin)": "Fix \"40p\"",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1084,8 +1137,7 @@
         "Link to Coverage": "N/A",
         "Review (Marton)": "",
         "Review (Robin)": "Fix \"40p\"",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1100,8 +1152,7 @@
         "Link to Coverage": "N/A",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1116,8 +1167,7 @@
         "Link to Coverage": "N/A",
         "Review (Marton)": "",
         "Review (Robin)": "Fix \"40p\"",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1132,8 +1182,7 @@
         "Link to Coverage": "N/A",
         "Review (Marton)": "",
         "Review (Robin)": "Fix \"40p\"",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1145,11 +1194,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: wfi_before_dmode",
         "Review (Marton)": "Update reference document, applies to several following points",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1164,8 +1212,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_wfi_debug_req\nA:   uvmt_cv32_tb.u_debug_assert.a_sleep_debug_req_wu\nA:   uvmt_cv32_tb.u_debug_assert.a_sleep_debug_req",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1177,11 +1224,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: single_step",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1196,8 +1242,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_single_step (.mmode_step)\nA:   uvmt_cv32_tb.u_debug_assert.a_single_step\nA:   uvmt_cv32_tb.u_debug_assert.a_enter_debug",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1209,11 +1254,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: single_step",
         "Review (Marton)": "Update to reflect that we are now checking \"future cores\"",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1228,8 +1272,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_single_step (.mmode_step_illegal)\nA:   uvmt_cv32_tb.u_debug_assert.a_single_step_exception",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1241,11 +1284,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: single_step",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1260,8 +1302,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_single_step (.mmode_step_trigger_match)\nA:    uvmt_cv32_tb.u_debug_assert.a_single_step_trigger\nA:   uvmt_cv32_tb.u_debug_assert.a_enter_debug",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1276,8 +1317,7 @@
         "Link to Coverage": "N/A",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1292,8 +1332,7 @@
         "Link to Coverage": "N/A",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1305,11 +1344,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: single_step",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1324,8 +1362,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_single_step (.mmode_step_next_pc_will_match)\nA: uvmt_cv32_tb.u_debug_assert.a_single_step_trigger\nA: uvmt_cv32_tb.u_debug_assert.a_enter_debug",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1337,11 +1374,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: single_step",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1356,8 +1392,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_single_step (.mmode_step_wfi)\nA:   uvmt_cv32_tb.u_debug_assert.a_single_step_wfi",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1372,8 +1407,7 @@
         "Link to Coverage": "Covered in DTC \"debug_test_reset\"",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1388,8 +1422,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_at_reset\nA:   uvmt_cv32_tb.u_debug_assert.a_debug_at_reset",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1401,11 +1434,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: dret_in_mmode",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1420,8 +1452,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_mmode_dret\nA:  uvmt_cv32_tb.u_debug_assert.a_mumode_dret",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2",
@@ -1433,11 +1464,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Covered in DTC \"debug_test\"",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: all testcases that enter and exit debug mode (most)",
         "Review (Marton)": "remove note, this is covered or 40s (U-Mode) in the next point",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1452,8 +1482,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_mmode_dret\nA:   uvmt_cv32_tb.u_debug_assert.a_dmode_dret",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "Debug 1.0.0",
@@ -1465,11 +1494,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: mprv_dret_to_umode",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -1484,8 +1512,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "Debug 1.0.0",
@@ -1497,11 +1524,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: mprv_dret_to_umode",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -1516,8 +1542,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "Debug 1.0.0",
@@ -1529,11 +1554,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"\ntc: mprv_dret_to_umode",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -1548,8 +1572,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "RISC-V ISM vol 1 (unpriv. ISA), 20191213",
@@ -1564,8 +1587,7 @@
         "Link to Coverage": "N/A",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1577,11 +1599,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "With timing=0 the core will not attempt to execute instruction at trigger address",
+        "Link to Coverage": "With \"before timing\" the core will not attempt to execute instruction at trigger address",
         "Review (Marton)": "",
-        "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Robin)": "\"link to coverage\": Is this merely claimed? Can we either test it or change the relevant vplan items?",
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1593,11 +1614,10 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "With timing=0 the core will not attempt to execute instruction at trigger address\n\nA:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause\nA:   uvmt_cv32_tb.u_debug_assert.a_dpc_dbg_trigger",
+        "Link to Coverage": "With \"before timing\" the core will not attempt to execute instruction at trigger address\n\nA:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause\nA:   uvmt_cv32_tb.u_debug_assert.a_dpc_dbg_trigger",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1609,11 +1629,10 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "With timing=0 the core will not attempt to execute instruction at trigger address",
+        "Link to Coverage": "With \"before timing\" the core will not attempt to execute instruction at trigger address",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1625,11 +1644,10 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "With timing=0 the core will not attempt to execute instruction at trigger address\n\nA:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause\nA:   uvmt_cv32_tb.u_debug_assert.a_dpc_dbg_trigger",
+        "Link to Coverage": "With \"before timing\" the core will not attempt to execute instruction at trigger address\n\nA:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause\nA:   uvmt_cv32_tb.u_debug_assert.a_dpc_dbg_trigger",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "40S User Manual 0.8.0\n\nOBI-v1.4",
@@ -1644,8 +1662,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -1660,8 +1677,7 @@
         "Link to Coverage": "A:   uvmt_cv32_tb.u_debug_assert.a_obi_dbg_instr\nA:   uvmt_cv32_tb.u_debug_assert.a_obi_dbg_instr_inv\nA:   uvmt_cv32_tb.u_debug_assert.a_obi_dbg_data\nA:   uvmt_cv32_tb.u_debug_assert.a_obi_dbg_data_inv",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "40S User Manual 0.8.0\n\nDebug 1.0.0",
@@ -1676,8 +1692,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -1692,8 +1707,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "40X/S user manual\n\nDebug 1.0.0\n\nPrivspec 1.12",
@@ -1708,8 +1722,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -1724,8 +1737,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "Silabs Internal",
@@ -1740,8 +1752,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -1756,8 +1767,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "Debug 1.0.0",
@@ -1772,8 +1782,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -1788,8 +1797,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "RISC-V External Debug Support Version 0.13.2\nCV32E40P doc rev 46711ac",
@@ -1804,8 +1812,7 @@
         "Link to Coverage": "Covered in DTC \"debug_test\"",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -1820,8 +1827,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_single_step (mmode_step_stepie)\nA:   uvmt_cv32_tb.u_debug_assert.a_stepie_irq_dis",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -1836,8 +1842,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -1852,8 +1857,7 @@
         "Link to Coverage": "CG: uvmt_cv32_tb.u_debug_assert.cov_step_stepie_nmi\nA:   uvmt_cv32_tb.u_debug_assert.a_stepie_irq_dis",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -1868,8 +1872,7 @@
         "Link to Coverage": "Covered in DTC \"debug_test\"",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1884,8 +1887,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_irq_dreq\n\n\"NOTE: not tested specifically, but is covered in formal verification of:\nA:   uvmt_cv32_tb.u_debug_assert.a_enter_debug\nA:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause\"\n\n\n",
         "Review (Marton)": "What feature is this? Several points in this region lack context, or a merging of left hand cells",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1900,8 +1902,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -1916,8 +1917,7 @@
         "Link to Coverage": "NOTE: not tested specifically, but is covered in formal verification of:\nA:   uvmt_cv32_tb.u_debug_assert.a_enter_debug\nA:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -1932,8 +1932,7 @@
         "Link to Coverage": "Waived",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1948,8 +1947,7 @@
         "Link to Coverage": "Covered in DTC \"debug_test_trigger\"",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1964,8 +1962,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_irq_dreq\n        (.irq_dreq_trig_ill/cebreak/ebreak/branch/multicycle)\n",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1980,8 +1977,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_mode_ext\n",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -1993,11 +1989,10 @@
         "Pass/Fail Criteria": "",
         "Test Type": "",
         "Coverage Method": "",
-        "Link to Coverage": "Not possible with timing=0, core will not execute instruction at match address before entering debug mode.",
+        "Link to Coverage": "Not possible with \"before timing\", core will not execute instruction at match address before entering debug mode.",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2012,8 +2007,7 @@
         "Link to Coverage": "Covered in DTC debug_test_known_miscompares",
         "Review (Marton)": "Lacks verification goal",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2028,8 +2022,7 @@
         "Link to Coverage": "A: uvmt_cv32_tb.u_debug_assert.a_illegal_insn_debug_req",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2044,8 +2037,7 @@
         "Link to Coverage": "Partly covered in DTC \"debug_test\" and \"debug_test_trigger\", the rest will be covered by corev_rand_debug_ebreak and corev_rand_debug_single_step",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -2060,8 +2052,7 @@
         "Link to Coverage": "CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.debug_causes\n        (.trig_vs_ebreak, trig_vs_cebreak, trig_vs_dbg_req, trig_vs_step\n          ebreak_vs_req, cebreak_vs_req, ebreak_vs_step, cebreak_vs_step, dbg_req_vs_step)",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -2076,8 +2067,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2092,8 +2082,7 @@
         "Link to Coverage": "NOTE: not tested specifically, but is covered in formal verification of:\nA:   uvmt_cv32_tb.u_debug_assert.a_enter_debug\nA:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2108,8 +2097,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2124,8 +2112,7 @@
         "Link to Coverage": "NOTE: not tested specifically, but is covered in formal verification of:\nA:   uvmt_cv32_tb.u_debug_assert.a_enter_debug\nA:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2140,8 +2127,7 @@
         "Link to Coverage": "NOTE: not tested specifically, but is covered in formal verification of:\nA:   uvmt_cv32_tb.u_debug_assert.a_enter_debug\nA:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2156,8 +2142,7 @@
         "Link to Coverage": "A: uvmt_cv32_tb.u_debug_assert.a_mumode_dret",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2172,8 +2157,7 @@
         "Link to Coverage": "Covered in DTC debug_test_boot_set",
         "Review (Marton)": "Deprecated as debug_req is now non-sticky",
         "Review (Robin)": "Fix \"40p\"",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "RISC-V Debug Support Version 1.0.0-STABLE 86e748abed738f8878707dc31fe2713f41868f2c",
@@ -2188,8 +2172,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "Any verdict on this now?",
         "Review (Robin)": "?",
-        "Review (Henrik)": "?",
-        "": ""
+        "Review (Henrik)": "?"
     },
     {
         "Reference document": "",
@@ -2204,8 +2187,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2220,8 +2202,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2236,8 +2217,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2252,8 +2232,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2268,8 +2247,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2284,8 +2262,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2300,8 +2277,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2316,8 +2292,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2332,8 +2307,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2348,8 +2322,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2364,8 +2337,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2380,8 +2352,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2396,8 +2367,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2412,8 +2382,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2428,8 +2397,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2444,8 +2412,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2460,8 +2427,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2476,8 +2442,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2492,8 +2457,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2508,8 +2472,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2524,8 +2487,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2540,8 +2502,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2556,8 +2517,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2572,8 +2532,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2588,8 +2547,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2604,8 +2562,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2620,8 +2577,7 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
@@ -2636,12 +2592,11 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     },
     {
         "Reference document": "",
-        "Requirement Location": " -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- END -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------",
+        "Requirement Location": "---- END ----",
         "Feature": "Program Buffer",
         "Sub Feature": "",
         "Feature Description": "",
@@ -2652,55 +2607,6 @@
         "Link to Coverage": "",
         "Review (Marton)": "",
         "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
-    },
-    {
-        "Reference document": "",
-        "Requirement Location": "",
-        "Feature": "Program Buffer",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Attempt all kinds of accesses within the region and observe that it is never disallowed , and also attempt all kinds of accesses outside the region and observe both success and failure based on PMP settings.",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Review (Marton)": "",
-        "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
-    },
-    {
-        "Reference document": "",
-        "Requirement Location": "",
-        "Feature": "Program Buffer",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Attempt all kinds of accesses within the region and observe that it is never disallowed , and also attempt all kinds of accesses outside the region and observe both success and failure based on PMP settings.",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Review (Marton)": "",
-        "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
-    },
-    {
-        "Reference document": "",
-        "Requirement Location": "",
-        "Feature": "Program Buffer",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Attempt all kinds of accesses within the region and observe that it is never disallowed , and also attempt all kinds of accesses outside the region and observe both success and failure based on PMP settings.",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Review (Marton)": "",
-        "Review (Robin)": "",
-        "Review (Henrik)": "",
-        "": ""
+        "Review (Henrik)": ""
     }
 ]
