@@ -117,6 +117,7 @@ EMB_TARGET         ?= 0
 EMB_CPU_MHZ        ?= 1
 EMB_TIMEOUT        ?= 3600
 EMB_PARALLEL_ARG    = $(if $(filter $(YES_VALS),$(EMB_PARALLEL)),YES,NO)
+EMB_ABSOLUTE_ARG    = $(if $(filter $(YES_VALS),$(EMB_ABSOLUTE)),YES,NO)
 EMB_BUILD_ONLY_ARG  = $(if $(filter $(YES_VALS),$(EMB_BUILD_ONLY)),YES,NO)
 EMB_DEBUG_ARG       = $(if $(filter $(YES_VALS),$(EMB_DEBUG)),YES,NO)
 
@@ -345,11 +346,15 @@ dah:
 embench: $(EMBENCH_PKG)
 	$(CORE_V_VERIF)/bin/run_embench.py \
 		-c $(CV_CORE) \
+		-cfg $(CFG) \
 		-cc $(RISCV_EXE_PREFIX)$(RISCV_CC) \
 		-sim $(SIMULATOR) \
 		-t $(EMB_TYPE) \
 		--timeout $(EMB_TIMEOUT) \
 		--parallel $(EMB_PARALLEL_ARG) \
+		--absolute $(EMB_ABSOLUTE_ARG) \
+		--builddir $(SIM_CFG_RESULTS)/bd \
+		--logdir $(SIM_CFG_RESULTS)/logs \
 		-b $(EMB_BUILD_ONLY_ARG) \
 		-tgt $(EMB_TARGET) \
 		-f $(EMB_CPU_MHZ) \
