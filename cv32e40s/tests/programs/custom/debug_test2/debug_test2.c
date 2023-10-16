@@ -215,137 +215,137 @@ typedef union {
 
 typedef union {
   struct {
-    volatile uint16_t load    : 1;
-    volatile uint16_t store   : 1;
-    volatile uint16_t execute : 1;
-    volatile uint16_t u       : 1;
-    volatile uint16_t s       : 1;
-    volatile uint16_t res_5_5 : 1;
-    volatile uint16_t m       : 1;
-    volatile uint16_t match   : 4;
-    volatile uint16_t chain   : 1;
-    volatile uint16_t action  : 4;
-    volatile uint16_t sizelo  : 2;
-    volatile uint16_t timing  : 1;
-    volatile uint16_t select  : 1;
-    volatile uint16_t hit     : 1;
-    volatile uint16_t maskmax : 6;
-    volatile uint16_t dmode   : 1;
-    volatile uint16_t type    : 4;
+    volatile uint32_t load    : 1;
+    volatile uint32_t store   : 1;
+    volatile uint32_t execute : 1;
+    volatile uint32_t u       : 1;
+    volatile uint32_t s       : 1;
+    volatile uint32_t res_5_5 : 1;
+    volatile uint32_t m       : 1;
+    volatile uint32_t match   : 4;
+    volatile uint32_t chain   : 1;
+    volatile uint32_t action  : 4;
+    volatile uint32_t sizelo  : 2;
+    volatile uint32_t timing  : 1;
+    volatile uint32_t select  : 1;
+    volatile uint32_t hit     : 1;
+    volatile uint32_t maskmax : 6;
+    volatile uint32_t dmode   : 1;
+    volatile uint32_t type    : 4;
   } __attribute__((packed)) volatile fields;
   volatile uint32_t raw;
 } __attribute__((packed)) mcontrol_t;
 
 typedef union {
   struct {
-    volatile uint16_t load     : 1;
-    volatile uint16_t store    : 1;
-    volatile uint16_t execute  : 1;
-    volatile uint16_t u        : 1;
-    volatile uint16_t s        : 1;
-    volatile uint16_t res_5_5  : 1;
-    volatile uint16_t m        : 1;
-    volatile uint16_t match    : 4;
-    volatile uint16_t chain    : 1;
-    volatile uint16_t action   : 4;
-    volatile uint16_t size     : 4;
-    volatile uint16_t timing   : 1;
-    volatile uint16_t select   : 1;
-    volatile uint16_t hit      : 1;
-    volatile uint16_t vu       : 1;
-    volatile uint16_t vs       : 1;
-    volatile uint16_t res_26_25: 2;
-    volatile uint16_t dmode    : 1;
-    volatile uint16_t type     : 4;
+    volatile uint32_t load     : 1;
+    volatile uint32_t store    : 1;
+    volatile uint32_t execute  : 1;
+    volatile uint32_t u        : 1;
+    volatile uint32_t s        : 1;
+    volatile uint32_t res_5_5  : 1;
+    volatile uint32_t m        : 1;
+    volatile uint32_t match    : 4;
+    volatile uint32_t chain    : 1;
+    volatile uint32_t action   : 4;
+    volatile uint32_t size     : 4;
+    volatile uint32_t timing   : 1;
+    volatile uint32_t select   : 1;
+    volatile uint32_t hit      : 1;
+    volatile uint32_t vu       : 1;
+    volatile uint32_t vs       : 1;
+    volatile uint32_t res_26_25: 2;
+    volatile uint32_t dmode    : 1;
+    volatile uint32_t type     : 4;
   } __attribute__((packed)) volatile fields;
   volatile uint32_t raw;
 } __attribute__((packed)) mcontrol6_t;
 
 typedef union {
   struct {
-    volatile uint8_t  action     : 6;
-    volatile uint8_t  u          : 1;
-    volatile uint8_t  s          : 1;
-    volatile uint8_t  res_8_8    : 1;
-    volatile uint8_t  m          : 1;
-    volatile uint8_t  res_10_10  : 1;
-    volatile uint8_t  vu         : 1;
-    volatile uint8_t  vs         : 1;
-    volatile uint16_t res_25_13  : 13;
-    volatile uint8_t  hit        : 1;
-    volatile uint8_t  dmode      : 1;
-    volatile uint8_t  type       : 4;
+    volatile uint32_t  action     : 6;
+    volatile uint32_t  u          : 1;
+    volatile uint32_t  s          : 1;
+    volatile uint32_t  res_8_8    : 1;
+    volatile uint32_t  m          : 1;
+    volatile uint32_t  res_10_10  : 1;
+    volatile uint32_t  vu         : 1;
+    volatile uint32_t  vs         : 1;
+    volatile uint32_t  res_25_13  : 13;
+    volatile uint32_t  hit        : 1;
+    volatile uint32_t  dmode      : 1;
+    volatile uint32_t  type       : 4;
   } __attribute__((packed)) volatile fields;
   volatile uint32_t raw;
 } __attribute__((packed)) etrigger_t;
 
 typedef union {
   struct {
-    volatile uint16_t info      : 16;
-    volatile uint16_t res_23_16 : 8;
-    volatile uint16_t version   : 8;
+    volatile uint32_t info      : 16;
+    volatile uint32_t res_23_16 : 8;
+    volatile uint32_t version   : 8;
   } __attribute__((packed)) volatile fields;
   volatile uint32_t raw;
 } __attribute__((packed)) tinfo_t;
 
 typedef union {
   struct {
-    volatile uint8_t uie   : 1;  //     0
-    volatile uint8_t sie   : 1;  //     1
-    volatile uint8_t wpri  : 1;  //     2
-    volatile uint8_t mie   : 1;  //     3
-    volatile uint8_t upie  : 1;  //     4
-    volatile uint8_t spie  : 1;  //     5
-    volatile uint8_t wpri0 : 1;  //     6
-    volatile uint8_t mpie  : 1;  //     7
-    volatile uint8_t spp   : 1;  //     8
-    volatile uint8_t wpri1 : 2;  // 10: 9
-    volatile uint8_t mpp   : 2;  // 12:11
-    volatile uint8_t fs    : 2;  // 14:13
-    volatile uint8_t xs    : 2;  // 16:15
-    volatile uint8_t mprv  : 1;  //    17
-    volatile uint8_t sum   : 1;  //    18
-    volatile uint8_t mxr   : 1;  //    19
-    volatile uint8_t tvm   : 1;  //    20
-    volatile uint8_t tw    : 1;  //    21
-    volatile uint8_t tsr   : 1;  //    22
-    volatile uint8_t wpri3 : 8;  // 30:23
-    volatile uint8_t sd    : 1;  //    31
+    volatile uint32_t uie   : 1;  //     0
+    volatile uint32_t sie   : 1;  //     1
+    volatile uint32_t wpri  : 1;  //     2
+    volatile uint32_t mie   : 1;  //     3
+    volatile uint32_t upie  : 1;  //     4
+    volatile uint32_t spie  : 1;  //     5
+    volatile uint32_t wpri0 : 1;  //     6
+    volatile uint32_t mpie  : 1;  //     7
+    volatile uint32_t spp   : 1;  //     8
+    volatile uint32_t wpri1 : 2;  // 10: 9
+    volatile uint32_t mpp   : 2;  // 12:11
+    volatile uint32_t fs    : 2;  // 14:13
+    volatile uint32_t xs    : 2;  // 16:15
+    volatile uint32_t mprv  : 1;  //    17
+    volatile uint32_t sum   : 1;  //    18
+    volatile uint32_t mxr   : 1;  //    19
+    volatile uint32_t tvm   : 1;  //    20
+    volatile uint32_t tw    : 1;  //    21
+    volatile uint32_t tsr   : 1;  //    22
+    volatile uint32_t wpri3 : 8;  // 30:23
+    volatile uint32_t sd    : 1;  //    31
   } volatile clint;
   volatile uint32_t raw;
 } __attribute__((packed)) mstatus_t;
 
 typedef union {
   struct {
-    volatile uint16_t start_delay      : 15; // 14: 0
-    volatile uint16_t rand_start_delay : 1;  //    15
-    volatile uint16_t pulse_width      : 13; // 28:16
-    volatile uint16_t rand_pulse_width : 1;  //    29
-    volatile uint16_t pulse_mode       : 1;  //    30    0 = level, 1 = pulse
-    volatile uint16_t value            : 1;  //    31
+    volatile uint32_t start_delay      : 15; // 14: 0
+    volatile uint32_t rand_start_delay : 1;  //    15
+    volatile uint32_t pulse_width      : 13; // 28:16
+    volatile uint32_t rand_pulse_width : 1;  //    29
+    volatile uint32_t pulse_mode       : 1;  //    30    0 = level, 1 = pulse
+    volatile uint32_t value            : 1;  //    31
   } volatile fields;
   volatile uint32_t raw;
 }  __attribute__((packed)) debug_req_control_t;
 
 typedef union {
   struct {
-    volatile uint16_t prv       : 2;  // 1:0 WARL (0x0, 0x3) PRV. Returns the privilege mode before debug entry.
-    volatile uint16_t step      : 1;  // 2 RW STEP. Set to enable single stepping.
-    volatile uint16_t nmip      : 1;  // 3 R NMIP. If set, an NMI is pending
-    volatile uint16_t mprven    : 1;  // 4 WARL (0x1) MPRVEN. Hardwired to 1.
-    volatile uint16_t res_5_5   : 1;  // 5 WARL (0x0) V. Hardwired to 0.
-    volatile uint16_t cause     : 3;  // 8:6 R CAUSE. Return the cause of debug entry.
-    volatile uint16_t stoptime  : 1;  // 9 WARL (0x0) STOPTIME. Hardwired to 0.
-    volatile uint16_t stopcount : 1;  // 10 WARL STOPCOUNT.
-    volatile uint16_t stepie    : 1;  // 11 WARL STEPIE. Set to enable interrupts during single stepping.
-    volatile uint16_t ebreaku   : 1;  // 12 WARL EBREAKU. Set to enter debug mode on ebreak during user mode.
-    volatile uint16_t ebreaks   : 1;  // 13 WARL (0x0) EBREAKS. Hardwired to 0.
-    volatile uint16_t res_14_14 : 1;  // 14 WARL (0x0) Hardwired to 0.
-    volatile uint16_t ebreakm   : 1;  // 15 RW EBREAKM. Set to enter debug mode on ebreak during machine mode.
-    volatile uint16_t ebreakvu  : 1;  // 16 WARL (0x0) EBREAKVU. Hardwired to 0.
-    volatile uint16_t ebreakvs  : 1;  // 17 WARL (0x0) EBREAKVS. Hardwired to 0
-    volatile uint16_t res_27_18 : 10; // 27:18 WARL (0x0) Reserved
-    volatile uint16_t xdebugver : 4;  // 31:28 R (0x4) XDEBUGVER. External debug support exists as described in [RISC-V-DEBUG].
+    volatile uint32_t prv       : 2;  // 1:0 WARL (0x0, 0x3) PRV. Returns the privilege mode before debug entry.
+    volatile uint32_t step      : 1;  // 2 RW STEP. Set to enable single stepping.
+    volatile uint32_t nmip      : 1;  // 3 R NMIP. If set, an NMI is pending
+    volatile uint32_t mprven    : 1;  // 4 WARL (0x1) MPRVEN. Hardwired to 1.
+    volatile uint32_t res_5_5   : 1;  // 5 WARL (0x0) V. Hardwired to 0.
+    volatile uint32_t cause     : 3;  // 8:6 R CAUSE. Return the cause of debug entry.
+    volatile uint32_t stoptime  : 1;  // 9 WARL (0x0) STOPTIME. Hardwired to 0.
+    volatile uint32_t stopcount : 1;  // 10 WARL STOPCOUNT.
+    volatile uint32_t stepie    : 1;  // 11 WARL STEPIE. Set to enable interrupts during single stepping.
+    volatile uint32_t ebreaku   : 1;  // 12 WARL EBREAKU. Set to enter debug mode on ebreak during user mode.
+    volatile uint32_t ebreaks   : 1;  // 13 WARL (0x0) EBREAKS. Hardwired to 0.
+    volatile uint32_t res_14_14 : 1;  // 14 WARL (0x0) Hardwired to 0.
+    volatile uint32_t ebreakm   : 1;  // 15 RW EBREAKM. Set to enter debug mode on ebreak during machine mode.
+    volatile uint32_t ebreakvu  : 1;  // 16 WARL (0x0) EBREAKVU. Hardwired to 0.
+    volatile uint32_t ebreakvs  : 1;  // 17 WARL (0x0) EBREAKVS. Hardwired to 0
+    volatile uint32_t res_27_18 : 10; // 27:18 WARL (0x0) Reserved
+    volatile uint32_t xdebugver : 4;  // 31:28 R (0x4) XDEBUGVER. External debug support exists as described in [RISC-V-DEBUG].
   } volatile fields;
   volatile uint32_t raw;
 } __attribute__((packed)) dcsr_t;

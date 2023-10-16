@@ -148,27 +148,27 @@ typedef union {
 
 typedef union {
   struct {
-    volatile uint8_t uie   : 1;  //     0
-    volatile uint8_t sie   : 1;  //     1
-    volatile uint8_t wpri  : 1;  //     2
-    volatile uint8_t mie   : 1;  //     3
-    volatile uint8_t upie  : 1;  //     4
-    volatile uint8_t spie  : 1;  //     5
-    volatile uint8_t wpri0 : 1;  //     6
-    volatile uint8_t mpie  : 1;  //     7
-    volatile uint8_t spp   : 1;  //     8
-    volatile uint8_t wpri1 : 2;  // 10: 9
-    volatile uint8_t mpp   : 2;  // 12:11
-    volatile uint8_t fs    : 2;  // 14:13
-    volatile uint8_t xs    : 2;  // 16:15
-    volatile uint8_t mprv  : 1;  //    17
-    volatile uint8_t sum   : 1;  //    18
-    volatile uint8_t mxr   : 1;  //    19
-    volatile uint8_t tvm   : 1;  //    20
-    volatile uint8_t tw    : 1;  //    21
-    volatile uint8_t tsr   : 1;  //    22
-    volatile uint8_t wpri3 : 8;  // 30:23
-    volatile uint8_t sd    : 1;  //    31
+    volatile uint32_t uie   : 1;  //     0
+    volatile uint32_t sie   : 1;  //     1
+    volatile uint32_t wpri  : 1;  //     2
+    volatile uint32_t mie   : 1;  //     3
+    volatile uint32_t upie  : 1;  //     4
+    volatile uint32_t spie  : 1;  //     5
+    volatile uint32_t wpri0 : 1;  //     6
+    volatile uint32_t mpie  : 1;  //     7
+    volatile uint32_t spp   : 1;  //     8
+    volatile uint32_t wpri1 : 2;  // 10: 9
+    volatile uint32_t mpp   : 2;  // 12:11
+    volatile uint32_t fs    : 2;  // 14:13
+    volatile uint32_t xs    : 2;  // 16:15
+    volatile uint32_t mprv  : 1;  //    17
+    volatile uint32_t sum   : 1;  //    18
+    volatile uint32_t mxr   : 1;  //    19
+    volatile uint32_t tvm   : 1;  //    20
+    volatile uint32_t tw    : 1;  //    21
+    volatile uint32_t tsr   : 1;  //    22
+    volatile uint32_t wpri3 : 8;  // 30:23
+    volatile uint32_t sd    : 1;  //    31
   } volatile fields;
   volatile uint32_t raw;
 } __attribute__((packed)) mstatus_t;
