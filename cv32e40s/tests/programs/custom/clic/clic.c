@@ -2329,6 +2329,7 @@ uint32_t rw_mscratchcsw_illegal(uint32_t index, uint8_t report_name) {
   __asm__ volatile (R"( csrrc zero, mstatus, %[rs1])"
     :: [rs1] "r"(mstatus_rval.raw):);
 
+  *g_expect_illegal = 1;
   __asm__ volatile (R"( csrrs  %[rd], 0x348, sp)"
       : [rd] "=r"(reg_backup_1) ::);
   test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
@@ -3153,7 +3154,7 @@ __attribute__((interrupt("machine"))) void u_sw_irq_handler(void) {
   }
 
   if (mcause.clic.interrupt == 0 && mcause.clic.exccode == 2) {
-    *g_expect_illegal = 0;
+    (*g_expect_illegal)--;
     increment_mepc(0);
     return;
   }
