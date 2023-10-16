@@ -1709,6 +1709,85 @@ uint32_t rw_mnxti_without_irq_illegal(uint32_t index, uint8_t report_name) {
 
   test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
 
+  // CSRRS with rs1 != x0 - illegal
+  *g_expect_illegal = 31;
+  __asm__ volatile ( R"(
+    .option push
+    .option norvc
+    csrrs %[rd], 0x345, x1
+    csrrs %[rd], 0x345, x2
+    csrrs %[rd], 0x345, x3
+    csrrs %[rd], 0x345, x4
+    csrrs %[rd], 0x345, x5
+    csrrs %[rd], 0x345, x6
+    csrrs %[rd], 0x345, x7
+    csrrs %[rd], 0x345, x8
+    csrrs %[rd], 0x345, x9
+    csrrs %[rd], 0x345, x10
+    csrrs %[rd], 0x345, x11
+    csrrs %[rd], 0x345, x12
+    csrrs %[rd], 0x345, x13
+    csrrs %[rd], 0x345, x14
+    csrrs %[rd], 0x345, x15
+    csrrs %[rd], 0x345, x16
+    csrrs %[rd], 0x345, x17
+    csrrs %[rd], 0x345, x18
+    csrrs %[rd], 0x345, x19
+    csrrs %[rd], 0x345, x20
+    csrrs %[rd], 0x345, x21
+    csrrs %[rd], 0x345, x22
+    csrrs %[rd], 0x345, x23
+    csrrs %[rd], 0x345, x24
+    csrrs %[rd], 0x345, x25
+    csrrs %[rd], 0x345, x26
+    csrrs %[rd], 0x345, x27
+    csrrs %[rd], 0x345, x28
+    csrrs %[rd], 0x345, x29
+    csrrs %[rd], 0x345, x30
+    csrrs %[rd], 0x345, x31
+    nop
+    .option pop
+  )":[rd] "=r"(mnxti_rval)
+    ::
+  );
+
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
+  // CSRRSI with imm[0, 2, 4] = 1 - illegal
+  *g_expect_illegal = 11;
+  __asm__ volatile ( R"(
+    .option push
+    .option norvc
+    # bit 0, 2, 4
+    csrrsi %[rd], 0x345, 1 << 0 | 1 << 2 | 1 << 4
+    # bit 0
+    csrrsi %[rd], 0x345, 1 << 0
+    # bit 2
+    csrrsi %[rd], 0x345, 1 << 2
+    # bit 4
+    csrrsi %[rd], 0x345, 1 << 4
+    # all bits
+    csrrsi %[rd], 0x345, 0x1f
+    # all bits without bit 0 and 2
+    csrrsi %[rd], 0x345, 0x1f & ~(1 << 0) & ~(1 << 2)
+    # all bits without bit 2 and 4
+    csrrsi %[rd], 0x345, 0x1f & ~(1 << 2) & ~(1 << 4)
+    # all bits without bit 0 and 4
+    csrrsi %[rd], 0x345, 0x1f & ~(1 << 0) & ~(1 << 4)
+    # all bits without 0
+    csrrsi %[rd], 0x345, 0x1f & ~(1 << 0)
+    # all bits without 2
+    csrrsi %[rd], 0x345, 0x1f & ~(1 << 2)
+    # all bits without 4
+    csrrsi %[rd], 0x345, 0x1f & ~(1 << 4)
+    nop
+    .option pop
+  )":[rd] "=r"(mnxti_rval)
+    ::
+  );
+
+  test_fail += (uint8_t)((*g_expect_illegal ? 1 : 0));
+
   if (test_fail) {
     cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
     return index + 1;
