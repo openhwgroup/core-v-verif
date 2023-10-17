@@ -55,11 +55,6 @@ typedef union {
   volatile uint32_t raw;
 } __attribute__((packed)) csr_instr_t;
 
-#define OPCODE_SYSTEM 0x73
-#define PMPCFG_BASE   0x3a0
-#define PMPADDR_BASE  0x3b0
-#define MSECCFG_BASE  0x747
-
 // Matches funct3 values for CSR instructions
 typedef enum {
   CSRRW  = 1,
@@ -80,6 +75,10 @@ typedef enum {
 // ---------------------------------------------------------------
 // Convenience macros for bit fields
 // ---------------------------------------------------------------
+#define OPCODE_SYSTEM 0x73
+#define PMPCFG_BASE   0x3a0
+#define PMPADDR_BASE  0x3b0
+#define MSECCFG_BASE  0x747
 
 // Verbosity levels (Akin to the uvm verbosity concept)
 typedef enum {
