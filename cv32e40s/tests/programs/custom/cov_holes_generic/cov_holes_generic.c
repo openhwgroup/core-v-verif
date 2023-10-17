@@ -367,6 +367,7 @@ extern volatile uint32_t mtvt_table;
 volatile uint32_t  g_debug_entered = 0;
 volatile uint32_t  g_debug_expected = 0;
 volatile uint32_t  g_debug_function_setup_pushpop_debug_trigger = 0;
+volatile uint32_t  g_debug_function_incr_dpc = 0;
 volatile uint32_t  g_exception_expected = 0;
 
 // Test Data
@@ -538,9 +539,32 @@ void u_sw_irq_handler(void){
 
 // -----------------------------------------------------------------------------
 
-void test_pushpop_debug_trigger(void){
-  printf("TODO test\n");
+__attribute__((naked))
+void push_debug_trigger(void){
+  __asm__ volatile(
+    R"(
+      # Save old "sp"
+      mv t0, sp
 
+      # Setup temporary "sp"
+      la sp, pushpop_area
+      addi sp, sp, 16
+
+      # Push to "sp"
+      cm.push {x1, x8-x9}, -16
+
+      # Restore old "sp"
+      mv sp, t0
+
+      ret
+    )"
+  );
+}
+
+// -----------------------------------------------------------------------------
+
+void test_pushpop_debug_trigger(void){
+  printf("TODO before debug\n");
   g_debug_expected = 1;
   g_debug_entered = 0;
   g_debug_function_setup_pushpop_debug_trigger = 1;
@@ -554,9 +578,12 @@ void test_pushpop_debug_trigger(void){
     ;
   }
 
-  printf("TODO normal mode again\n");
-  __asm__ volatile( "cm.push {x1, x8-x9}, -16" );
-  __asm__ volatile( "cm.pop  {x1, x8-x9},  16" );
+  printf("TODO push trigger\n");
+  g_debug_expected = 1;
+  g_debug_function_incr_dpc = 1;
+  push_debug_trigger();
+
+  //TODO __asm__ volatile( "cm.pop  {x1, x8-x9},  16" );
 }
 
 // -----------------------------------------------------------------------------
@@ -571,8 +598,6 @@ void setup_pushpop_debug_trigger(void){
   mcontrol6.fields.m     = 1;
   mcontrol6.fields.match = 0;
   mcontrol6.fields.type  = 6;
-
-  printf("TODO mcontrol6 = 0x%08lX\n", mcontrol6.raw);
 
   trigger_addr = (uint32_t) &(pushpop_area[2]);  // (arbitrary index)
 
@@ -594,8 +619,6 @@ void setup_pushpop_debug_trigger(void){
     : [mcontrol6] "r" (mcontrol6.raw),
       [trigger_addr] "r" (trigger_addr)
   );
-
-  printf("TODO pushpop setup\n");
 }
 
 // -----------------------------------------------------------------------------
@@ -680,12 +703,17 @@ uint32_t dummy(uint32_t index, uint8_t report_name) {
 /*
  * debug_start
  *
- * Debug handler wrapper.
- * Saves registers, calls debug handler and then restores the registers again.
+ * Debug handler wrapper for preserving non-debug's stack.
+--------------------------------------------------------------------------------
  */
 __attribute__((section(".debugger"), naked))
 void debug_start(void) {
   __asm__ volatile (R"(
+    # Backup "sp", use debug's own stack
+    csrw dscratch0, sp
+    la sp, __debugger_stack_start
+
+    # Backup all GPRs
     sw a0, -4(sp)
     sw a1, -8(sp)
     sw a2, -12(sp)
@@ -704,8 +732,10 @@ void debug_start(void) {
     addi sp, sp, -64
     cm.push {ra, s0-s11}, -64
 
+    # Call the handler actual
     call ra, debug_handler
 
+    # Restore all GPRs
     cm.pop {ra, s0-s11}, 64
     addi sp, sp, 64
     lw a0, -4(sp)
@@ -724,14 +754,44 @@ void debug_start(void) {
     lw t5, -56(sp)
     lw t6, -60(sp)
 
+    # Restore "sp"
+    csrr sp, dscratch0
+
+    # Done
     dret
   )");
 }
 
 // -----------------------------------------------------------------------------
 
+void incr_dpc(void){
+  uint32_t  dpc;
+  uint32_t  instr_word;
+
+  __asm__ volatile(
+    "csrr %[dpc], dpc"
+    : [dpc] "=r" (dpc)
+  );
+
+  instr_word = *(uint32_t *)dpc;
+
+  if ((instr_word & 0x3) == 0x3) {
+    dpc += 4;
+  } else {
+    dpc += 2;
+  }
+
+  __asm__ volatile(
+    "csrw dpc, %[dpc]"
+    : : [dpc] "r" (dpc)
+  );
+}
+
+// -----------------------------------------------------------------------------
+
 void debug_handler(void){
   g_debug_entered = 1;
+  printf("TODO debug handler entered\n");
 
   if (! g_debug_expected) {
     printf("error: debug entered unexpectedly\n");
@@ -741,7 +801,14 @@ void debug_handler(void){
 
   if (g_debug_function_setup_pushpop_debug_trigger) {
     g_debug_function_setup_pushpop_debug_trigger = 0;
+    printf("TODO debug setup trig\n");
     setup_pushpop_debug_trigger();
+    printf("TODO debug setup trig done\n");
+    return;
+  }
+  if (g_debug_function_incr_dpc) {
+    g_debug_function_incr_dpc = 0;
+    incr_dpc();
     return;
   }
 
