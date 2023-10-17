@@ -476,6 +476,12 @@ tests:
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=pmp
 
+  pmp_csr_access_test:
+    description: Test to write to all bits of all 64 PMP CSRs
+    builds: [ uvmt_cv32e40s_clic ]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=pmp_csr_access_test
+
   b_ext_test:
     description: Directed Zb extension test
     builds: [ uvmt_cv32e40s_b_ext_all]
