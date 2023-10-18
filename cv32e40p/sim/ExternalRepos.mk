@@ -32,11 +32,6 @@ EMBENCH_REPO    ?= https://github.com/embench/embench-iot.git
 EMBENCH_BRANCH  ?= master
 EMBENCH_HASH    ?= 6934ddd1ff445245ee032d4258fdeb9828b72af4
 
-COMPLIANCE_REPO   ?= https://github.com/riscv/riscv-compliance
-COMPLIANCE_BRANCH ?= master
-# 2020-08-19
-COMPLIANCE_HASH   ?= c21a2e86afa3f7d4292a2dd26b759f3f29cde497
-
 # SVLIB
 SVLIB_REPO       ?= https://bitbucket.org/verilab/svlib/src/master/svlib
 SVLIB_BRANCH     ?= master
