@@ -25,7 +25,7 @@
 #
 OS_IS_UBUNTU = $(findstring Ubuntu,$(shell lsb_release -d))
 ifeq ($(OS_IS_UBUNTU),Ubuntu)
-    .IGNORE: hello-world comp test compliance comp_corev-dv corev-dv gen_corev-dv
+    .IGNORE: hello-world comp test comp_corev-dv corev-dv gen_corev-dv
 endif
 
 # Executables
@@ -278,39 +278,6 @@ test: $(VCS_SIM_PREREQ) hex gen_ovpsim_ic
 	@echo "* Log: $(SIM_RUN_RESULTS)/vcs-$(TEST_RUN_NAME).log"
 	$(POST_TEST)
 
-###############################################################################
-# Run a single test-program from the RISC-V Compliance Test-suite. The parent
-# Makefile of this <sim>.mk implements "all_compliance", the target that
-# compiles the test-programs.
-#
-# There is a dependancy between RISCV_ISA and COMPLIANCE_PROG which *you* are
-# required to know.  For example, the I-ADD-01 test-program is part of the rv32i
-# testsuite.
-# So this works:
-#                make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ADD-01
-# But this does not:
-#                make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=I-ADD-01
-#
-RISCV_ISA       ?= rv32i
-COMPLIANCE_PROG ?= I-ADD-01
-
-SIG_ROOT      ?= $(SIM_CFG_RESULTS)/$(RISCV_ISA)
-SIG           ?= $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)_$(RUN_INDEX)/$(COMPLIANCE_PROG).signature_output
-REF           ?= $(COMPLIANCE_PKG)/riscv-test-suite/$(RISCV_ISA)/references/$(COMPLIANCE_PROG).reference_output
-TEST_PLUSARGS ?= +signature=$(COMPLIANCE_PROG).signature_output
-
-ifneq ($(call IS_NO,$(COMP)),NO)
-VCS_COMPLIANCE_PREREQ = comp build_compliance
-endif
-
-compliance: $(VCS_COMPLIANCE_PREREQ)
-	mkdir -p $(SIM_RESULTS)/$(COMPLIANCE_PROG)_$(RUN_INDEX) && cd $(SIM_RESULTS)/$(COMPLIANCE_PROG)_$(RUN_INDEX)  && \
-	export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic && \
-	$(SIM_RESULTS)/$(SIMV) -l vcs-$(COMPLIANCE_PROG).log -cm_test riscv-compliance $(VCS_COMP_RUN) $(TEST_PLUSARGS) \
-		+UVM_TESTNAME=uvmt_$(CV_CORE_LC)_firmware_test_c \
-		+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).hex \
-		+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).elf
-
 ################################################################################
 # RISCOF RISCV-ARCH-TEST DUT simulation targets
 VCS_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/$(TEST).elf
@@ -451,4 +418,4 @@ clean_rtl:
 	rm -rf $(CV_CORE_PKG)
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_rtl clean_eclipse clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib clean_riscof_arch_test_suite
+clean_all: clean clean_rtl clean_eclipse clean_riscv-dv clean_test_programs clean_bsp clean_embench clean_dpi_dasm_spike clean_svlib clean_riscof_arch_test_suite

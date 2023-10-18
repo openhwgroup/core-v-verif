@@ -167,9 +167,6 @@ export CV_CORE_COREV_DV_ROOT = $(CV_CORE_COREVDV_PKG)
 
 RISCVDV_CFG ?=
 
-# RISC-V Foundation's RISC-V Compliance Test-suite
-COMPLIANCE_PKG   := $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance
-
 # EMBench benchmarking suite
 EMBENCH_PKG	:= $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/embench
 EMBENCH_TESTS	:= $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs/embench
@@ -245,8 +242,6 @@ clone_riscv-dv: $(RISCVDV_PKG)
 
 clone_embench: $(EMBENCH_PKG)
 
-clone_compliance: $(COMPLIANCE_PKG)
-
 clone_dpi_dasm_spike:
 	$(CLONE_DPI_DASM_SPIKE_CMD)
 
@@ -258,9 +253,6 @@ $(CV_CORE_PKG):
 $(RISCVDV_PKG):
 	$(CLONE_RISCVDV_CMD)
 
-$(COMPLIANCE_PKG):
-	$(CLONE_COMPLIANCE_CMD)
-
 $(EMBENCH_PKG):
 	$(CLONE_EMBENCH_CMD)
 
@@ -269,73 +261,6 @@ $(DPI_DASM_SPIKE_PKG):
 
 $(SVLIB_PKG):
 	$(CLONE_SVLIB_CMD)
-
-###############################################################################
-# RISC-V Compliance Test-suite
-#     As much as possible, the test suite is used "out-of-the-box".  The
-#     "build_compliance" target below uses the Makefile supplied by the suite
-#     to compile all the individual test-programs in the suite to generate the
-#     elf and hex files used in simulation.  Each <sim>.mk is assumed to have a
-#     target to run the compiled test-program.
-
-# RISCV_ISA='rv32i|rv32im|rv32imc|rv32Zicsr|rv32Zifencei'
-RISCV_ISA    ?= rv32i
-RISCV_TARGET ?= OpenHW
-RISCV_DEVICE ?= $(CV_CORE_LC)
-
-clone_compliance:
-	$(CLONE_COMPLIANCE_CMD)
-
-clr_compliance:
-	make clean -C $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance
-
-build_compliance: $(COMPLIANCE_PKG)
-	make simulate -i -C $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance \
-		RISCV_TARGET=${RISCV_TARGET} \
-		RISCV_DEVICE=${RISCV_DEVICE} \
-		PATH=$(RISCV)/bin:$(PATH) \
-		RISCV_PREFIX=$(RISCV_PREFIX) \
-		NOTRAPS=1 \
-		RISCV_ISA=$(RISCV_ISA)
-#		VERBOSE=1
-
-all_compliance: $(COMPLIANCE_PKG)
-	make build_compliance RISCV_ISA=rv32i        && \
-	make build_compliance RISCV_ISA=rv32im       && \
-	make build_compliance RISCV_ISA=rv32imc      && \
-	make build_compliance RISCV_ISA=rv32Zicsr    && \
-	make build_compliance RISCV_ISA=rv32Zifencei
-
-# "compliance" is a simulator-specific target defined in <sim>.mk
-COMPLIANCE_RESULTS = $(SIM_RESULTS)
-
-compliance_check_sig: compliance
-	@echo "Checking Compliance Signature for $(RISCV_ISA)/$(COMPLIANCE_PROG)"
-	@echo "Reference: $(REF)"
-	@echo "Signature: $(SIG)"
-	@export SUITEDIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance/riscv-test-suite/$(RISCV_ISA) && \
-	export REF=$(REF) && export SIG=$(SIG) && export COMPL_PROG=$(COMPLIANCE_PROG) && \
-	export RISCV_TARGET=${RISCV_TARGET} && export RISCV_DEVICE=${RISCV_DEVICE} && \
-	export RISCV_ISA=${RISCV_ISA} export SIG_ROOT=${SIG_ROOT} && \
-	$(CORE_V_VERIF)/bin/diff_signatures.sh | tee $(COMPLIANCE_RESULTS)/$(CFG)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX)/diff_signatures.log
-
-compliance_check_all_sigs:
-	@$(MKDIR_P) $(COMPLIANCE_RESULTS)/$(CFG)/$(RISCV_ISA)
-	@echo "Checking Compliance Signature for all tests in $(CFG)/$(RISCV_ISA)"
-	@export SUITEDIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance/riscv-test-suite/$(RISCV_ISA) && \
-	export RISCV_TARGET=${RISCV_TARGET} && export RISCV_DEVICE=${RISCV_DEVICE} && \
-	export RISCV_ISA=${RISCV_ISA} export SIG_ROOT=${SIG_ROOT} && \
-	$(CORE_V_VERIF)/bin/diff_signatures.sh $(RISCV_ISA) | tee $(COMPLIANCE_RESULTS)/$(CFG)/$(RISCV_ISA)/diff_signatures.log
-
-compliance_regression:
-	make build_compliance RISCV_ISA=$(RISCV_ISA)
-	@export SIM_DIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/sim/uvmt && \
-	$(CORE_V_VERIF)/bin/run_compliance.sh $(RISCV_ISA)
-	make compliance_check_all_sigs RISCV_ISA=$(RISCV_ISA)
-
-dah:
-	@export SIM_DIR=$(CORE_V_VERIF)/cv32/sim/uvmt && \
-	$(CORE_V_VERIF)/bin/run_compliance.sh $(RISCV_ISA)
 
 ###############################################################################
 # EMBench benchmark
@@ -447,9 +372,6 @@ clean_test_programs: clean_bsp
 clean_riscv-dv:
 	rm -rf $(RISCVDV_PKG)
 	rm -rf $(COREVDV_PKG)/out_*
-
-clean_compliance:
-	rm -rf $(COMPLIANCE_PKG)
 
 clean_embench:
 	rm -rf $(EMBENCH_PKG)
