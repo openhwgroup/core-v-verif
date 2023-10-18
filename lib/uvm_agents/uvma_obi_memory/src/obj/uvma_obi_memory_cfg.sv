@@ -245,7 +245,17 @@ class uvma_obi_memory_cfg_c extends uvm_object;
    /**
     * Calculate a random atomic exokay response from random knobs
     */
-   extern function bit calc_random_exokay(bit[31:0] addr);
+   extern function bit calc_random_exokay(bit[31:0] addr, bit is_SCW);
+
+   /**
+    * Invalidate RL.W reservation set
+    */
+   extern function void invalidate_reservation();
+
+   /**
+    * Set RL.W reservation set
+    */
+   extern function void set_reservation(bit[31:0] addr, int nr_words_reserved);
 
    /**
     * Returns 1 if this OBI agent supports version 1.2 or higher
@@ -271,6 +281,8 @@ function uvma_obi_memory_cfg_c::new(string name="uvma_obi_memory_cfg");
    else if ($test$plusargs("rvalid_singles_stall")) begin
       rvalid_singles_stall = 1;
    end
+
+   directed_slv_exokay_valid = 0;
 
 endfunction : new
 
@@ -353,14 +365,15 @@ function bit uvma_obi_memory_cfg_c::calc_random_err(bit[31:0] addr);
 
 endfunction : calc_random_err
 
-function bit uvma_obi_memory_cfg_c::calc_random_exokay(bit[31:0] addr);
+function bit uvma_obi_memory_cfg_c::calc_random_exokay(bit[31:0] addr, bit is_SCW);
 
    bit exokay;
 
    // Check for a directed error reponse first
-   if (directed_slv_exokay_valid &&
-       (addr <= directed_slv_exokay_addr_min) &&
-       (addr <= directed_slv_exokay_addr_min)) begin
+   if (is_SCW &&
+      (!directed_slv_exokay_valid ||
+      ((addr < directed_slv_exokay_addr_min) ||
+      (addr > directed_slv_exokay_addr_max)))) begin
       return 0;
    end
 
@@ -377,6 +390,22 @@ function bit uvma_obi_memory_cfg_c::calc_random_exokay(bit[31:0] addr);
    return exokay;
 
 endfunction : calc_random_exokay
+
+function void uvma_obi_memory_cfg_c::invalidate_reservation();
+
+   directed_slv_exokay_valid = 0;
+
+endfunction : invalidate_reservation
+
+function void uvma_obi_memory_cfg_c::set_reservation(bit[31:0] addr, int nr_words_reserved);
+
+   if (addr[1:0] == 2'b0) begin
+      directed_slv_exokay_valid = 1;
+      directed_slv_exokay_addr_min = addr;
+      directed_slv_exokay_addr_max = addr + 4*(nr_words_reserved-1);
+   end
+
+endfunction : set_reservation
 
 function bit uvma_obi_memory_cfg_c::is_1p2_or_higher();
 

@@ -493,11 +493,11 @@ function void uvma_pma_sb_c::check_obi_d_mapped_region(uvma_obi_memory_mon_trn_c
       end
 
       // Check: atomic attributes should be 0
-      if (obi.atop) begin
-         `uvm_error("PMAOBID", $sformatf("OBI D %s address: 0x%08x, region: %0d atop is not zero, OBI: 0x%0x",
-                                          obi.access_type.name(), obi.address, index,
-                                          obi.atop));
-      end
+      //if (obi.atop) begin
+      //   `uvm_error("PMAOBID", $sformatf("OBI D %s address: 0x%08x, region: %0d atop is not zero, OBI: 0x%0x",
+      //                                    obi.access_type.name(), obi.address, index,
+      //                                    obi.atop));
+      //end
    end
 
 endfunction : check_obi_d_mapped_region

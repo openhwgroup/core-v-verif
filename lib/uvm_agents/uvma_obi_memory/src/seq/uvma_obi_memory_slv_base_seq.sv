@@ -165,13 +165,21 @@ endfunction : add_err
 
 function void uvma_obi_memory_slv_base_seq_c::add_exokay(uvma_obi_memory_mon_trn_c mon_req, uvma_obi_memory_slv_seq_item_c slv_rsp);
 
-   // Only respond exokay == 1 to SC or LR as signaled by atop
+   int nr_words_reserved = 1;
+
    if (mon_req.atop[5] != 1'b1 || !(mon_req.atop[4:0] inside {5'h2, 5'h3})) begin
       slv_rsp.exokay = 0;
-      return;
+   end else begin
+      slv_rsp.exokay = cfg.calc_random_exokay(slv_rsp.orig_trn.address, (mon_req.atop == 6'h23));
    end
 
-   slv_rsp.exokay = cfg.calc_random_exokay(slv_rsp.orig_trn.address);
+   if (slv_rsp.exokay && mon_req.atop == 6'h22) begin //LR.W
+      cfg.set_reservation(slv_rsp.orig_trn.address, nr_words_reserved);
+   end
+
+   if (mon_req.atop == 6'h23) begin //SC.W
+      cfg.invalidate_reservation();
+   end
 
 endfunction : add_exokay
 
