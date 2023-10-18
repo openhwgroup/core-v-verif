@@ -30,10 +30,6 @@ RISCOF_TEST_PLUSARGS ?= +signature=DUT-cv32e40p.signature
 RISCOF_TEST_RUN_DIR ?=$(SIM_CFG_RESULTS)/riscof_dut_work
 SIM_RISCOF_ARCH_TESTS_RESULTS ?= $(RISCOF_TEST_RUN_DIR)
 
-RISCOF_ARCH_TEST_SUITE_REPO    ?= https://github.com/riscv/riscv-arch-test.git
-RISCOF_ARCH_TEST_SUITE_BRANCH  ?= main
-RISCOF_ARCH_TEST_SUITE_TAG     ?= latest
-
 RISCOF_CONFIG_FILE    ?= config.ini
 
 ###############################################################################

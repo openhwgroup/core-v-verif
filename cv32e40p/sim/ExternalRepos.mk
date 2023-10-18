@@ -41,3 +41,8 @@ COMPLIANCE_HASH   ?= c21a2e86afa3f7d4292a2dd26b759f3f29cde497
 SVLIB_REPO       ?= https://bitbucket.org/verilab/svlib/src/master/svlib
 SVLIB_BRANCH     ?= master
 SVLIB_HASH       ?= c25509a7e54a880fe8f58f3daa2f891d6ecf6428
+
+#riscv-arch-test suite with riscof
+RISCOF_ARCH_TEST_SUITE_REPO    ?= https://github.com/riscv/riscv-arch-test.git
+RISCOF_ARCH_TEST_SUITE_BRANCH  ?= main
+RISCOF_ARCH_TEST_SUITE_TAG     ?= latest
