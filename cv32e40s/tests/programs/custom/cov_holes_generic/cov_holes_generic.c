@@ -563,10 +563,35 @@ void push_debug_trigger(void){
 
 // -----------------------------------------------------------------------------
 
+__attribute__((naked))
+void pop_debug_trigger(void){
+  __asm__ volatile(
+    R"(
+      # Save old "sp" and GPRs
+      cm.push {x1, x8-x9}, -16
+      mv t0, sp
+
+      # Setup temporary "sp"
+      la sp, pushpop_area
+
+      # Pop from temporary "sp"
+      cm.pop {x1, x8-x9}, 16
+
+      # Restore old "sp" and GPRs
+      mv sp, t0
+      cm.pop {x1, x8-x9}, 16
+
+      ret
+    )"
+  );
+}
+
+// -----------------------------------------------------------------------------
+
 void test_pushpop_debug_trigger(void){
-  printf("TODO before debug\n");
+  printf("TODO setup trigs\n");
   g_debug_expected = 1;
-  g_debug_entered = 0;
+  g_debug_entered  = 0;
   g_debug_function_setup_pushpop_debug_trigger = 1;
   DEBUG_REQ_CONTROL_REG = (
     CV_VP_DEBUG_CONTROL_DBG_REQ (1)        |
@@ -579,11 +604,26 @@ void test_pushpop_debug_trigger(void){
   }
 
   printf("TODO push trigger\n");
-  g_debug_expected = 1;
+  g_debug_expected          = 1;
   g_debug_function_incr_dpc = 1;
+  g_debug_entered           = 0;
   push_debug_trigger();
+  if (! g_debug_entered) {
+    printf("error: push should trigger debug\n");
+    exit(EXIT_FAILURE);
+  }
 
-  //TODO __asm__ volatile( "cm.pop  {x1, x8-x9},  16" );
+  printf("TODO pop trigger\n");
+  g_debug_expected          = 1;
+  g_debug_function_incr_dpc = 1;
+  g_debug_entered           = 0;
+  pop_debug_trigger();
+  if (! g_debug_entered) {
+    printf("error: pop should trigger debug\n");
+    exit(EXIT_FAILURE);
+  }
+
+  return;
 }
 
 // -----------------------------------------------------------------------------
@@ -801,9 +841,7 @@ void debug_handler(void){
 
   if (g_debug_function_setup_pushpop_debug_trigger) {
     g_debug_function_setup_pushpop_debug_trigger = 0;
-    printf("TODO debug setup trig\n");
     setup_pushpop_debug_trigger();
-    printf("TODO debug setup trig done\n");
     return;
   }
   if (g_debug_function_incr_dpc) {
