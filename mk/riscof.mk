@@ -30,9 +30,9 @@ RISCOF_TEST_PLUSARGS ?= +signature=DUT-cv32e40p.signature
 RISCOF_TEST_RUN_DIR ?=$(SIM_CFG_RESULTS)/riscof_dut_work
 SIM_RISCOF_ARCH_TESTS_RESULTS ?= $(RISCOF_TEST_RUN_DIR)
 
-RISCOF_ARCH_TEST_SUITE_REPO    ?= https://github.com/riscv-non-isa/riscv-arch-test.git
+RISCOF_ARCH_TEST_SUITE_REPO    ?= https://github.com/riscv/riscv-arch-test.git
 RISCOF_ARCH_TEST_SUITE_BRANCH  ?= main
-RISCOF_ARCH_TEST_SUITE_HASH    ?= head
+RISCOF_ARCH_TEST_SUITE_TAG     ?= latest
 
 RISCOF_CONFIG_FILE    ?= config.ini
 
@@ -44,10 +44,10 @@ else
   RISCOF_TEST_SUITE_CLONE_CMD = git clone -b $(RISCOF_ARCH_TEST_SUITE_BRANCH) --single-branch $(RISCOF_ARCH_TEST_SUITE_REPO) --recurse $(RISCOF_ARCH_TEST_SUITE_PKG)
 endif
 
-ifeq ($(RISCOF_ARCH_TEST_SUITE_HASH), head)
+ifeq ($(RISCOF_ARCH_TEST_SUITE_TAG), latest)
   CLONE_RISCOF_ARCH_TEST_SUITE_CMD = $(RISCOF_TEST_SUITE_CLONE_CMD)
 else
-  CLONE_RISCOF_ARCH_TEST_SUITE_CMD = $(RISCOF_TEST_SUITE_CLONE_CMD); cd $(RISCOF_ARCH_TEST_SUITE_PKG); git checkout $(RISCOF_ARCH_TEST_SUITE_HASH)
+  CLONE_RISCOF_ARCH_TEST_SUITE_CMD = $(RISCOF_TEST_SUITE_CLONE_CMD); cd $(RISCOF_ARCH_TEST_SUITE_PKG); git checkout $(RISCOF_ARCH_TEST_SUITE_TAG)
 endif
 
 ###############################################################################
