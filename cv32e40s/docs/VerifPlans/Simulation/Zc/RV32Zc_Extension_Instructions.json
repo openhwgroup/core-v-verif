@@ -8,7 +8,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "Missing",
+        "Link to Coverage": "TODO: Should be checked, probably in an illegal instruction test.",
         "": ""
     },
     {
