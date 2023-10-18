@@ -810,8 +810,10 @@
   // and enumerated abi register names
   // ---------------------------------------------------------------------------
   typedef struct packed {
-    gpr_t gpr;
-    bit   valid;
+    gpr_t   gpr;
+    c_gpr_t c_gpr;
+    bit     valid;
+    bit     c_gpr_valid;
   } reg_operand_t;
 
   // ---------------------------------------------------------------------------
