@@ -54,10 +54,10 @@
   const volatile char * const volatile name = __FUNCTION__; \
   _Pragma("GCC diagnostic pop")
 
-
 // ---------------------------------------------------------------
 // Type definitions
 // ---------------------------------------------------------------
+
 
 // Verbosity levels (Akin to the uvm verbosity concept)
 typedef enum {
@@ -363,16 +363,6 @@ extern volatile uint32_t mtvt_table;
 // Message strings for use in assembly printf
 //const volatile char * const volatile asm_printf_msg_template = "Entered handler %0d\n";
 
-// Handler Flags
-volatile uint32_t  g_debug_entered = 0;
-volatile uint32_t  g_debug_expected = 0;
-volatile uint32_t  g_debug_function_setup_pushpop_debug_trigger = 0;
-volatile uint32_t  g_debug_function_incr_dpc = 0;
-volatile uint32_t  g_exception_expected = 0;
-
-// Test Data
-volatile uint32_t  pushpop_area [32];
-
 // ---------------------------------------------------------------
 // Generic test template:
 // ---------------------------------------------------------------
@@ -432,8 +422,6 @@ void clint_mie_enable(uint8_t irq_num);
 void clint_mie_disable(uint8_t irq_num);
 
 // Debug specific helper code
-void debug_start(void) __attribute__((section(".debugger"), naked));
-void debug_handler(void);
 void disable_debug_req(void) __attribute__((section(".debugger")));
 
 
@@ -481,13 +469,6 @@ int cvprintf(verbosity_t verbosity, const char *format, ...) __attribute((__noin
  */
 void vp_assert_irq(uint32_t mask, uint32_t cycle_delay);
 
-/*
- * test_pushpop_debug_trigger
- *
- * Test pushpop with debug trigger.
- */
-void test_pushpop_debug_trigger(void);
-
 // ---------------------------------------------------------------
 // Test entry point
 // ---------------------------------------------------------------
@@ -510,7 +491,6 @@ int main(int argc, char **argv){
 
   // Run all tests in list above
   cvprintf(V_LOW, "\nDebug test start\n\n");
-  test_pushpop_debug_trigger();
   for (volatile uint32_t i = START_TEST_NUM; i < NUM_TESTS; i++) {
     test_res = set_test_status(tests[i](i, (volatile uint32_t)(0)), test_res);
   }
@@ -522,143 +502,6 @@ int main(int argc, char **argv){
   free((void *)g_has_clic );
 
   return retval; // Nonzero for failing tests
-}
-
-// -----------------------------------------------------------------------------
-
-/*
- *  IRQ handler
- */
-__attribute__((interrupt("machine")))
-void u_sw_irq_handler(void){
-  if (! g_exception_expected) {
-    printf("error: exception handler entered unexpectedly\n");
-    exit(EXIT_FAILURE);
-  }
-}
-
-// -----------------------------------------------------------------------------
-
-__attribute__((naked))
-void push_debug_trigger(void){
-  __asm__ volatile(
-    R"(
-      # Save old "sp"
-      mv t0, sp
-
-      # Setup temporary "sp"
-      la sp, pushpop_area
-      addi sp, sp, 16
-
-      # Push to "sp"
-      cm.push {x1, x8-x9}, -16
-
-      # Restore old "sp"
-      mv sp, t0
-
-      ret
-    )"
-  );
-}
-
-// -----------------------------------------------------------------------------
-
-__attribute__((naked))
-void pop_debug_trigger(void){
-  __asm__ volatile(
-    R"(
-      # Save old "sp" and GPRs
-      cm.push {x1, x8-x9}, -16
-      mv t0, sp
-
-      # Setup temporary "sp"
-      la sp, pushpop_area
-
-      # Pop from temporary "sp"
-      cm.pop {x1, x8-x9}, 16
-
-      # Restore old "sp" and GPRs
-      mv sp, t0
-      cm.pop {x1, x8-x9}, 16
-
-      ret
-    )"
-  );
-}
-
-// -----------------------------------------------------------------------------
-
-void test_pushpop_debug_trigger(void){
-  printf("TODO setup trigs\n");
-  g_debug_expected = 1;
-  g_debug_entered  = 0;
-  g_debug_function_setup_pushpop_debug_trigger = 1;
-  DEBUG_REQ_CONTROL_REG = (
-    CV_VP_DEBUG_CONTROL_DBG_REQ (1)        |
-    CV_VP_DEBUG_CONTROL_REQ_MODE (1)       |
-    CV_VP_DEBUG_CONTROL_PULSE_DURATION (8) |
-    CV_VP_DEBUG_CONTROL_START_DELAY (0)
-  );
-  while (! g_debug_entered) {
-    ;
-  }
-
-  printf("TODO push trigger\n");
-  g_debug_expected          = 1;
-  g_debug_function_incr_dpc = 1;
-  g_debug_entered           = 0;
-  push_debug_trigger();
-  if (! g_debug_entered) {
-    printf("error: push should trigger debug\n");
-    exit(EXIT_FAILURE);
-  }
-
-  printf("TODO pop trigger\n");
-  g_debug_expected          = 1;
-  g_debug_function_incr_dpc = 1;
-  g_debug_entered           = 0;
-  pop_debug_trigger();
-  if (! g_debug_entered) {
-    printf("error: pop should trigger debug\n");
-    exit(EXIT_FAILURE);
-  }
-
-  return;
-}
-
-// -----------------------------------------------------------------------------
-
-void setup_pushpop_debug_trigger(void){
-  mcontrol6_t  mcontrol6;
-  uint32_t     trigger_addr;
-
-  mcontrol6.raw          = 0x00000000;
-  mcontrol6.fields.load  = 1;
-  mcontrol6.fields.store = 1;
-  mcontrol6.fields.m     = 1;
-  mcontrol6.fields.match = 0;
-  mcontrol6.fields.type  = 6;
-
-  trigger_addr = (uint32_t) &(pushpop_area[2]);  // (arbitrary index)
-
-  __asm__ volatile(
-    R"(
-      # Use trigger 0
-      csrwi tselect, 0
-
-      # Disable trigger
-      csrwi tdata1, 0
-
-      # Set trigger address
-      csrw tdata2, %[trigger_addr]
-
-      # Configure trigger
-      csrw tdata1, %[mcontrol6]
-    )"
-    :
-    : [mcontrol6] "r" (mcontrol6.raw),
-      [trigger_addr] "r" (trigger_addr)
-  );
 }
 
 // -----------------------------------------------------------------------------
@@ -737,122 +580,6 @@ uint32_t dummy(uint32_t index, uint8_t report_name) {
 // -----------------------------------------------------------------------------
 
 // New tests here...
-
-// -----------------------------------------------------------------------------
-
-/*
- * debug_start
- *
- * Debug handler wrapper for preserving non-debug's stack.
---------------------------------------------------------------------------------
- */
-__attribute__((section(".debugger"), naked))
-void debug_start(void) {
-  __asm__ volatile (R"(
-    # Backup "sp", use debug's own stack
-    csrw dscratch0, sp
-    la sp, __debugger_stack_start
-
-    # Backup all GPRs
-    sw a0, -4(sp)
-    sw a1, -8(sp)
-    sw a2, -12(sp)
-    sw a3, -16(sp)
-    sw a4, -20(sp)
-    sw a5, -24(sp)
-    sw a6, -28(sp)
-    sw a7, -32(sp)
-    sw t0, -36(sp)
-    sw t1, -40(sp)
-    sw t2, -44(sp)
-    sw t3, -48(sp)
-    sw t4, -52(sp)
-    sw t5, -56(sp)
-    sw t6, -60(sp)
-    addi sp, sp, -64
-    cm.push {ra, s0-s11}, -64
-
-    # Call the handler actual
-    call ra, debug_handler
-
-    # Restore all GPRs
-    cm.pop {ra, s0-s11}, 64
-    addi sp, sp, 64
-    lw a0, -4(sp)
-    lw a1, -8(sp)
-    lw a2, -12(sp)
-    lw a3, -16(sp)
-    lw a4, -20(sp)
-    lw a5, -24(sp)
-    lw a6, -28(sp)
-    lw a7, -32(sp)
-    lw t0, -36(sp)
-    lw t1, -40(sp)
-    lw t2, -44(sp)
-    lw t3, -48(sp)
-    lw t4, -52(sp)
-    lw t5, -56(sp)
-    lw t6, -60(sp)
-
-    # Restore "sp"
-    csrr sp, dscratch0
-
-    # Done
-    dret
-  )");
-}
-
-// -----------------------------------------------------------------------------
-
-void incr_dpc(void){
-  uint32_t  dpc;
-  uint32_t  instr_word;
-
-  __asm__ volatile(
-    "csrr %[dpc], dpc"
-    : [dpc] "=r" (dpc)
-  );
-
-  instr_word = *(uint32_t *)dpc;
-
-  if ((instr_word & 0x3) == 0x3) {
-    dpc += 4;
-  } else {
-    dpc += 2;
-  }
-
-  __asm__ volatile(
-    "csrw dpc, %[dpc]"
-    : : [dpc] "r" (dpc)
-  );
-}
-
-// -----------------------------------------------------------------------------
-
-void debug_handler(void){
-  g_debug_entered = 1;
-  printf("TODO debug handler entered\n");
-
-  if (! g_debug_expected) {
-    printf("error: debug entered unexpectedly\n");
-    exit(EXIT_FAILURE);
-  }
-  g_debug_expected = 0;
-
-  if (g_debug_function_setup_pushpop_debug_trigger) {
-    g_debug_function_setup_pushpop_debug_trigger = 0;
-    setup_pushpop_debug_trigger();
-    return;
-  }
-  if (g_debug_function_incr_dpc) {
-    g_debug_function_incr_dpc = 0;
-    incr_dpc();
-    return;
-  }
-
-  printf("error: debug handler function not specified\n");
-  exit(EXIT_FAILURE);
-}
 
 // -----------------------------------------------------------------------------
 
