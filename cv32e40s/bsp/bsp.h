@@ -1,4 +1,4 @@
-// Copyright 2023 Silicon Laboratories Inc.
+// Copyright 2022 Silicon Laboratories Inc.
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
@@ -28,3 +28,28 @@ enum {
   EXC_CAUSE_INSTR_BUS_FAULT       = 24,
   EXC_CAUSE_INSTR_INTEGRITY_FAULT = 25,
 };
+
+typedef union {
+  struct {
+    volatile uint32_t  load     : 1;
+    volatile uint32_t  store    : 1;
+    volatile uint32_t  execute  : 1;
+    volatile uint32_t  u        : 1;
+    volatile uint32_t  s        : 1;
+    volatile uint32_t  res_5_5  : 1;
+    volatile uint32_t  m        : 1;
+    volatile uint32_t  match    : 4;
+    volatile uint32_t  chain    : 1;
+    volatile uint32_t  action   : 4;
+    volatile uint32_t  size     : 4;
+    volatile uint32_t  timing   : 1;
+    volatile uint32_t  select   : 1;
+    volatile uint32_t  hit      : 1;
+    volatile uint32_t  vu       : 1;
+    volatile uint32_t  vs       : 1;
+    volatile uint32_t  res_26_25: 2;
+    volatile uint32_t  dmode    : 1;
+    volatile uint32_t  type     : 4;
+  } __attribute__((packed)) volatile fields;
+  volatile uint32_t raw;
+} __attribute__((packed)) mcontrol6_t;

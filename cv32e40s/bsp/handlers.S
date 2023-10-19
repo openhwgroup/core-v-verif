@@ -21,6 +21,7 @@
 #define EXCEPTION_LOAD_ACCESS_FAULT 5
 #define EXCEPTION_STORE_ACCESS_FAULT 7
 #define EXCEPTION_ECALL_M 11
+#define EXCEPTION_ECALL_U 8
 #define EXCEPTION_INSN_BUS_FAULT 24
 
 /* NMI interrupt codes */
@@ -77,6 +78,8 @@
 .weak handle_illegal_insn
 .weak handle_insn_access_fault
 .weak handle_insn_bus_fault
+.weak handle_ecall
+.weak handle_ecall_u
 
 /* exception handling */
 __no_irq_handler:
@@ -181,6 +184,8 @@ u_sw_irq_handler:
   beq t0, t1, handle_illegal_insn
   li t1, EXCEPTION_ECALL_M
   beq t0, t1, handle_ecall
+  li t1, EXCEPTION_ECALL_U
+  beq t0, t1, handle_ecall_u
   li t1, EXCEPTION_BREAKPOINT
   beq t0, t1, handle_ebreak
   li t1, EXCEPTION_INSN_BUS_FAULT
@@ -188,6 +193,10 @@ u_sw_irq_handler:
   j handle_unknown
 
 handle_ecall:
+  jal ra, handle_syscall
+  j end_handler_incr_mepc
+
+handle_ecall_u:
   jal ra, handle_syscall
   j end_handler_incr_mepc
 
