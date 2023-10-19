@@ -119,7 +119,7 @@
                 <parameters>
                     <parameter name="t_cfg"           type="tcl">[getParameterByPriority "{{config}}" "{{t.cfg}}" "(%build_config:%)"]</parameter>
                     <parameter name="t_test_cfg"      type="tcl">[getParameterByPriority "" "{{t.test_cfg}}" "(%build_test_cfg:%)"]</parameter>
-                    <parameter name="t_test_cfg_name" type="tcl">[getTestCfgName (%t_test_cfg:%)]</parameter>
+                    <parameter name="t_test_cfg_name" type="tcl">[getTestCfgName "(%t_test_cfg:%)"]</parameter>
                     <parameter name="t_iss"           type="tcl">[getParameterByPriorityYesOrNo "{{iss}}" "{{t.iss}}" "(%build_iss:%)"]</parameter>
                     <parameter name="t_cov"           type="tcl">[getParameterByPriorityYesOrNo "{{coverage}}" "{{t.cov}}" "(%build_cov:%)"]</parameter>
                     <parameter name="seeds"           type="tcl">[GetRandomValues {{t.num}}]</parameter>

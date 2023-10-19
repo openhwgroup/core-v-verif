@@ -22,3 +22,4 @@ plusargs: >
     +enable_debug_single_step=0
     +gen_debug_section=1
     +test_override_riscv_instr_stream=1
+    +test_override_riscv_instr_sequence=1

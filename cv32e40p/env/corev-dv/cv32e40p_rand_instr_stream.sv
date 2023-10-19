@@ -109,7 +109,18 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
 
         rand_cnt++;
         if (rand_cnt >= 200) begin
-          `uvm_fatal(`gfn, $sformatf("rand_cnt hit limit %0d and not able to find space for instr placement. Please revise the stream", rand_cnt))
+          int idx_placement[$];
+          `uvm_info(`gfn, $sformatf("placement limit %0d reached. Place the stream at begining of instr_list", rand_cnt), UVM_NONE)
+          idx = 0;
+          idx_e = (idx + new_instr_cnt-1);
+          idx_start.push_front(idx);
+          idx_end.push_front(idx_e);
+          idx_placement = idx_start.find_first_index(x) with (x == idx);
+          for (int i=idx_placement[0]+1; i<idx_start.size(); i++) begin
+            idx_start[i] = idx_start[i]+new_instr_cnt;
+            idx_end[i]   = idx_end[i]+new_instr_cnt;
+          end
+          break;
         end // rand_cnt
 
       end // while
@@ -135,18 +146,13 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
     if(replace) begin
       new_instr[0].label = instr_list[idx].label;
       new_instr[0].has_label = instr_list[idx].has_label;
-      if (idx == 0) begin
-        instr_list = {new_instr, instr_list[idx+1:current_instr_cnt-1]};
-      end else begin
-        instr_list = {instr_list[0:idx-1], new_instr, instr_list[idx+1:current_instr_cnt-1]};
-      end
+      if (idx == 0) instr_list = {new_instr, instr_list[idx+1:current_instr_cnt-1]};
+      else          instr_list = {instr_list[0:idx-1], new_instr, instr_list[idx+1:current_instr_cnt-1]};
     end else begin
-      if (idx == 0) begin
-        instr_list = {new_instr, instr_list[idx:current_instr_cnt-1]};
-      end else begin
-        instr_list = {instr_list[0:idx-1], new_instr, instr_list[idx:current_instr_cnt-1]};
-      end
+      if (idx == 0) instr_list = {new_instr, instr_list[idx:current_instr_cnt-1]};
+      else          instr_list = {instr_list[0:idx-1], new_instr, instr_list[idx:current_instr_cnt-1]};
     end
+
   endfunction
 
   //Function: cv32e40p_rand_instr_stream::gen_instr()

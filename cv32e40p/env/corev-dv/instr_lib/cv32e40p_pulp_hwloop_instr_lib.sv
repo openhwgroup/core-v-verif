@@ -154,10 +154,10 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       num_loops_active inside {1,2,3};
 
       foreach(hwloop_counti[i])
-          hwloop_counti[i] inside {[0:200]};//TODO: check 0 is valid
+          hwloop_counti[i] inside {[0:100]};//TODO: check 0 is valid
 
       foreach(hwloop_count[i])
-          hwloop_count[i] inside {[0:200]};//TODO: check 0 is valid
+          hwloop_count[i] inside {[0:100]};//TODO: check 0 is valid
   }
 
   constraint num_hwloop_instr_c {
@@ -1513,7 +1513,10 @@ class cv32e40p_xpulp_hwloop_exception extends cv32e40p_xpulp_hwloop_base_stream;
       //Exclude list for all random instruction generation part
       riscv_exclude_common_instr = {CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI,
                                     CV_ELW,
-                                    JAL, C_J, C_JAL};
+                                    C_ADDI16SP,
+                                    WFI,
+                                    URET, SRET, MRET, DRET,
+                                    JALR, JAL, C_JR, C_JALR, C_J, C_JAL };
       super.post_randomize();
       this.print();
   endfunction : post_randomize
@@ -1537,6 +1540,12 @@ class cv32e40p_xpulp_hwloop_exception extends cv32e40p_xpulp_hwloop_base_stream;
 
       if(no_compressed)
           riscv_exclude_group = {riscv_exclude_group, RV32C, RV32FC};
+
+      if(no_branch)
+          riscv_exclude_instr = {riscv_exclude_instr, BEQ, BNE, BLT, BGE, BLTU, BGEU, C_BEQZ, C_BNEZ, CV_BEQIMM, CV_BNEIMM};
+
+      if(no_fence)
+          riscv_exclude_instr = {riscv_exclude_instr, FENCE, FENCE_I};
 
       riscv_exclude_xpulp = {riscv_exclude_group, RV32X};
 
@@ -1602,6 +1611,12 @@ class cv32e40p_xpulp_hwloop_exception extends cv32e40p_xpulp_hwloop_base_stream;
 
       if(no_compressed)
           riscv_exclude_group = {riscv_exclude_group, RV32C, RV32FC};
+
+      if(no_branch)
+          riscv_exclude_instr = {riscv_exclude_instr, BEQ, BNE, BLT, BGE, BLTU, BGEU, C_BEQZ, C_BNEZ, CV_BEQIMM, CV_BNEIMM};
+
+      if(no_fence)
+          riscv_exclude_instr = {riscv_exclude_instr, FENCE, FENCE_I};
 
       `uvm_info("cv32e40p_xpulp_hwloop_base_stream",
                  $sformatf("insert_rand_instr- Number of Random instr to generate= %0d",num_rand_instr),

@@ -16,21 +16,45 @@ builds:
   uvmt_cv32e40p:
     cmd: make comp comp_corev-dv
     dir: cv32e40p/sim/uvmt
-    cfg: pulp
+    cfg: pulp_fpu
 
+# ====================================================================================
 # List of tests
 tests:
-  coremark:
-    build: uvmt_cv32e40p
-    dir: cv32e40p/sim/uvmt
-    cmd: make test TEST=coremark
-
   dhrystone:
     build: uvmt_cv32e40p
+    description: dhrystone
     dir: cv32e40p/sim/uvmt
-    cmd: make test TEST=dhrystone
+    cmd: make test TEST=dhrystone CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    num: 1
 
   fibonacci:
     build: uvmt_cv32e40p
+    description: fibonacci
     dir: cv32e40p/sim/uvmt
-    cmd: make test TEST=fibonacci
+    cmd: make test TEST=fibonacci CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    num: 1
+
+  coremark:
+    build: uvmt_cv32e40p
+    description: coremark
+    dir: cv32e40p/sim/uvmt
+    cmd: make test TEST=coremark CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
+    num: 1
+
+  matmul_32b_float:
+    build: uvmt_cv32e40p
+    description: matmul_32b_float
+    dir: cv32e40p/sim/uvmt
+    cmd: make test TEST=matmul_32b_float CFG_PLUSARGS="+UVM_TIMEOUT=2000000"
+    num: 1
+    skip_sim:
+      - pulp
+      - pulp_cluster
+
+  matmul_32b_int:
+    build: uvmt_cv32e40p
+    description: matmul_32b_int
+    dir: cv32e40p/sim/uvmt
+    cmd: make test TEST=matmul_32b_int CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    num: 1

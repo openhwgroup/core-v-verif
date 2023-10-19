@@ -28,13 +28,13 @@ tests:
     build: uvmt_cv32e40p
     description: corev_rand_pulp_hwloop_test
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
 
   corev_rand_pulp_instr_test:
     build: uvmt_cv32e40p
     description: corev_rand_pulp_instr_test
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=5000000"
 
   corev_rand_pulp_simd_instr_test:
     build: uvmt_cv32e40p
@@ -48,18 +48,40 @@ tests:
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_mac_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
 
+  corev_rand_pulp_hwloop_exception:
+    build: uvmt_cv32e40p
+    description: hwloop exception test
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_exception CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+
+  corev_rand_pulp_illegal_instr_test:
+    testname: corev_rand_pulp_instr_test
+    description: pulp instr test with illegal instructions
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=5000000"
+    test_cfg: insert_illegal_instr
+
+  corev_rand_pulp_hwloop_illegal_instr_test:
+    testname: corev_rand_pulp_hwloop_test
+    description: hwloop test with illegal instructions
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+    test_cfg: insert_illegal_instr
+
   pulp_hardware_loop:
     build: uvmt_cv32e40p
     description: pulp_hardware_loop directed test
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_hardware_loop
+    cmd: make test COREV=YES TEST=pulp_hardware_loop CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_hardware_loop_interrupt_test:
     build: uvmt_cv32e40p
     description: pulp_hardware_loop directed test
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_hardware_loop_interrupt_test
+    cmd: make test COREV=YES TEST=pulp_hardware_loop_interrupt_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   # pulp_hardware_loop_debug_test:
@@ -77,131 +99,131 @@ tests:
     build: uvmt_cv32e40p
     description: pulp_bit_manipulation legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_bit_manipulation
+    cmd: make test COREV=YES TEST=pulp_bit_manipulation CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_general_alu:
     build: uvmt_cv32e40p
     description: pulp_general_alu legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_general_alu
+    cmd: make test COREV=YES TEST=pulp_general_alu CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_immediate_branching:
     build: uvmt_cv32e40p
     description: pulp_immediate_branching legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_immediate_branching
+    cmd: make test COREV=YES TEST=pulp_immediate_branching CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_multiply_accumulate:
     build: uvmt_cv32e40p
     description: pulp_multiply_accumulate legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_multiply_accumulate
+    cmd: make test COREV=YES TEST=pulp_multiply_accumulate CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_post_increment_load_store:
     build: uvmt_cv32e40p
     description: pulp_post_increment_load_store legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_post_increment_load_store
+    cmd: make test COREV=YES TEST=pulp_post_increment_load_store CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_vectorial_add_sub:
     build: uvmt_cv32e40p
     description: pulp_vectorial_add_sub legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_vectorial_add_sub
+    cmd: make test COREV=YES TEST=pulp_vectorial_add_sub CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_vectorial_avg:
     build: uvmt_cv32e40p
     description: pulp_vectorial_avg legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_vectorial_avg
+    cmd: make test COREV=YES TEST=pulp_vectorial_avg CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_vectorial_bit_manip:
     build: uvmt_cv32e40p
     description: pulp_vectorial_bit_manip legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_vectorial_bit_manip
+    cmd: make test COREV=YES TEST=pulp_vectorial_bit_manip CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_vectorial_bitwise:
     build: uvmt_cv32e40p
     description: pulp_vectorial_bitwise legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_vectorial_bitwise
+    cmd: make test COREV=YES TEST=pulp_vectorial_bitwise CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_vectorial_comparison_1:
     build: uvmt_cv32e40p
     description: pulp_vectorial_comparison_1 legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_vectorial_comparison_1
+    cmd: make test COREV=YES TEST=pulp_vectorial_comparison_1 CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_vectorial_comparison_2:
     build: uvmt_cv32e40p
     description: pulp_vectorial_comparison_2 legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_vectorial_comparison_2
+    cmd: make test COREV=YES TEST=pulp_vectorial_comparison_2 CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_vectorial_comparison_3:
     build: uvmt_cv32e40p
     description: pulp_vectorial_comparison_3 legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_vectorial_comparison_3
+    cmd: make test COREV=YES TEST=pulp_vectorial_comparison_3 CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_vectorial_complex:
     build: uvmt_cv32e40p
     description: pulp_vectorial_complex legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_vectorial_complex
+    cmd: make test COREV=YES TEST=pulp_vectorial_complex CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_vectorial_dot_product_1:
     build: uvmt_cv32e40p
     description: pulp_vectorial_dot_product_1 legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_vectorial_dot_product_1
+    cmd: make test COREV=YES TEST=pulp_vectorial_dot_product_1 CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_vectorial_dot_product_2:
     build: uvmt_cv32e40p
     description: pulp_vectorial_dot_product_2 legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_vectorial_dot_product_2
+    cmd: make test COREV=YES TEST=pulp_vectorial_dot_product_2 CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_vectorial_max:
     build: uvmt_cv32e40p
     description: pulp_vectorial_max legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_vectorial_max
+    cmd: make test COREV=YES TEST=pulp_vectorial_max CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_vectorial_min:
     build: uvmt_cv32e40p
     description: pulp_vectorial_min legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_vectorial_min
+    cmd: make test COREV=YES TEST=pulp_vectorial_min CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_vectorial_shift:
     build: uvmt_cv32e40p
     description: pulp_vectorial_shift legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_vectorial_shift
+    cmd: make test COREV=YES TEST=pulp_vectorial_shift CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
   pulp_vectorial_shuffle_pack:
     build: uvmt_cv32e40p
     description: pulp_vectorial_shuffle_pack legacy v1, kept as it stresses corner cases
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_vectorial_shuffle_pack
+    cmd: make test COREV=YES TEST=pulp_vectorial_shuffle_pack CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1

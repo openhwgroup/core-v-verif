@@ -15,7 +15,66 @@
  * limitations under the License.
  */
 
-// This file contains all the macro defines that used in cv32e40p_float_instr_lib.sv
+// This file contains all the macro/type defines that used in cv32e40p_float_instr_lib.sv
+
+// TYPEDEF LIST - START
+
+  typedef enum bit [4:0] {
+    IS_RAND = 0,
+    IS_POSITIVE_ZERO,
+    IS_NEGATIVE_ZERO,
+    IS_POSITIVE_INFINITY,
+    IS_NEGATIVE_INFINITY,
+    IS_POSITIVE_MAX,
+    IS_NEGATIVE_MAX,
+    IS_POSITIVE_MIN,
+    IS_NEGATIVE_MIN,
+    IS_POSITIVE_MIN_DIV2,
+    IS_NEGATIVE_MIN_DIV2,
+    IS_POSITIVE_SUBNORMAL_MAX,
+    IS_NEGATIVE_SUBNORMAL_MAX,
+    IS_POSITIVE_SUBNORMAL_MIN,
+    IS_NEGATIVE_SUBNORMAL_MIN,
+    IS_Q_NAN,
+    IS_S_NAN,
+    IS_FMV_RAND_RS1,
+    IS_FCVT_RAND_RS1
+  } operand_pattens_t;
+  
+  typedef enum bit [1:0] {
+    PREV_RD_IS_CURR_RD = 0,
+    PREV_RD_IS_CURR_RS,
+    PREV_RS_IS_CURR_RD,
+    PREV_RS_IS_CURR_RS /* this is not cover here */
+  } forward_pattern_t;
+
+  typedef enum bit {
+    IS_NON_FP = 0,
+    IS_FP
+  } instr_type_t;
+
+  typedef enum bit [1:0] {
+    STORE_ONLY = 0,
+    LOAD_ONLY,
+    LOAD_STORE,
+    NULL
+  } load_store_opt_t;
+
+  typedef enum logic [31:0] {
+    ALL_ZERO          = 32'h0,
+    F_NEG_ZERO        = 32'h8000_0000, /* not used here because of cv.s|l post increment */
+    F_NEG_ZERO_DIV2   = 32'h4000_0000,
+    F_POS_ONE         = 32'h3F80_0000,
+    F_NEG_ONE         = 32'hBF80_0000,
+    F_POS_FOUR        = 32'h4080_0000,
+    F_POS_VAL1        = 32'h4E80_0000,
+    D_POS_TWO         = 32'h0000_0002
+  } preload_imm_t;
+
+// TYPEDEF LIST - END
+
+
+// MACRO DEFINE LIST - START
 
   // constraint for special pattern operands
   // note: DONOT insert " solve enable_special_operand_patterns before operand_``IDX``_pattern;\" at below code, it will limit the constraints (havent root caused)
@@ -23,19 +82,15 @@
     constraint c_operand_``IDX``_pattern {\
       soft operand_``IDX``_pattern.size() == num_of_instr_per_stream;\
       foreach (operand_``IDX``_pattern[i]) {\
-        if (enable_special_operand_patterns) {\
-          soft operand_``IDX``_pattern[i] dist { IS_RAND                    := 6, \
-                                                 IS_Q_NAN                   := 4, IS_S_NAN                    := 4,  \
-                                                 IS_POSITIVE_ZERO           := 4, IS_NEGATIVE_ZERO            := 4,  \
-                                                 IS_POSITIVE_INFINITY       := 4, IS_NEGATIVE_INFINITY        := 4,  \
-                                                 IS_POSITIVE_MAX            := 4, IS_NEGATIVE_MAX             := 4,  \
-                                                 IS_POSITIVE_MIN            := 4, IS_NEGATIVE_MIN             := 4,  \
-                                                 IS_POSITIVE_MIN_DIV2       := 4, IS_NEGATIVE_MIN_DIV2        := 4,  \
-                                                 IS_POSITIVE_SUBNORMAL_MAX  := 4, IS_NEGATIVE_SUBNORMAL_MAX   := 4,  \
-                                                 IS_POSITIVE_SUBNORMAL_MIN  := 4, IS_NEGATIVE_SUBNORMAL_MIN   := 4 };\
-        } else {\
-          soft operand_``IDX``_pattern[i] == IS_RAND;\
-        }\
+        soft operand_``IDX``_pattern[i] dist { IS_RAND                    := 6, \
+                                               IS_Q_NAN                   := 4, IS_S_NAN                    := 4,  \
+                                               IS_POSITIVE_ZERO           := 4, IS_NEGATIVE_ZERO            := 4,  \
+                                               IS_POSITIVE_INFINITY       := 4, IS_NEGATIVE_INFINITY        := 4,  \
+                                               IS_POSITIVE_MAX            := 4, IS_NEGATIVE_MAX             := 4,  \
+                                               IS_POSITIVE_MIN            := 4, IS_NEGATIVE_MIN             := 4,  \
+                                               IS_POSITIVE_MIN_DIV2       := 4, IS_NEGATIVE_MIN_DIV2        := 4,  \
+                                               IS_POSITIVE_SUBNORMAL_MAX  := 4, IS_NEGATIVE_SUBNORMAL_MAX   := 4,  \
+                                               IS_POSITIVE_SUBNORMAL_MIN  := 4, IS_NEGATIVE_SUBNORMAL_MIN   := 4 };\
       }\
     } 
 
@@ -183,14 +238,20 @@
       instr_list[$].comment = {instr_list[$].comment, $sformatf(`" [``OPERAND`` - %s - 32'h%8h] `", ``OPERAND``_pattern.name(), ``OPERAND``)};\
     end
 
-  // 22 always exclude list within fp stream; 11 are related to hw-loop (total 33)
-  `define   EXCLUDE_INSTR_LIST      {JAL,  JALR, BEQ,  BNE,  BLT, BGE,      BLTU,   BGEU,   ECALL, EBREAK, \
-                                     DRET, MRET, URET, SRET, WFI, C_EBREAK, C_BEQZ, C_BNEZ, C_J,   C_JAL, \
-                                     C_JR, C_JALR, \
-                                     CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW, CV_BEQIMM, CV_BNEIMM}
+  // 22 always exclude list within fp stream + 11 are related to hw-loop (total 33)
+  `define   EXCLUDE_INSTR_LIST      JAL,  JALR, BEQ,  BNE,  BLT, BGE,      BLTU,   BGEU,   ECALL, EBREAK, \
+                                    DRET, MRET, URET, SRET, WFI, C_EBREAK, C_BEQZ, C_BNEZ, C_J,   C_JAL, \
+                                    C_JR, C_JALR, \
+                                    CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW, CV_BEQIMM, CV_BNEIMM
+  
+  // store instruction list
+  `define   STORE_INSTR_LIST        SB, SH, SW, C_SW, C_SWSP, CV_SB, CV_SH, CV_SW, C_FSW, C_FSWSP
+  `define   FP_STORE_INSTR_LIST     FSW, C_FSW, C_FSWSP
+  `define   STORE_INSTR_W_SP_LIST   C_SWSP, C_FSWSP
 
   // refer Table 6-1 user manual
   `define   RV32I_INT_COMP_INSTR_LIST   {ADD, ADDI, SUB, LUI, AUIPC, SLL, SLLI, SRL, SRLI, SRA, SRAI, \
                                          XOR, XORI, OR, ORI, AND, ANDI} /* with deterministic 1 cycle defined */
   `define   RV32M_MULH_INSTR_LIST       {MULH, MULHSU, MULHU} /* with deterministic 5 cycles defined */
 
+// MACRO DEFINE LIST - END

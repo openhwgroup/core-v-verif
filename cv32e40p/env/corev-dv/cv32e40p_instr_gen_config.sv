@@ -80,10 +80,15 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
       dp == ZERO;
     } else {      
       !(dp inside {sp, tp, ra, scratch_reg, GP, RA, ZERO});
-      foreach (gpr[i]) {
-        !(gpr[i] inside {dp});
-      }
     }
+  }
+
+  constraint gpr_c {
+    solve sp, tp, scratch_reg, dp, str_rs1, str_rs3 before gpr;
+    foreach (gpr[i]) {
+      !(gpr[i] inside {sp, tp, scratch_reg, pmp_reg, dp, str_rs1, str_rs3, ZERO, RA, GP});
+    }
+    unique {gpr};
   }
 
   // CV32E40P requires the MTVEC table to be aligned to 256KB boundaries
@@ -118,7 +123,7 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
 
   constraint num_zfinx_reserved_reg_c {
     if (RV32ZFINX inside {riscv_instr_pkg::supported_isa}) {
-      num_zfinx_reserved_reg inside {[5:10]};
+      num_zfinx_reserved_reg inside {[5:8]};
     } else {
       num_zfinx_reserved_reg == 0;
     }
@@ -130,7 +135,7 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
       zfinx_reserved_gpr.size() == num_zfinx_reserved_reg;
       unique {zfinx_reserved_gpr};
       foreach(zfinx_reserved_gpr[i]) {
-        !(zfinx_reserved_gpr[i] inside {ZERO, RA, SP, GP, TP});
+        !(zfinx_reserved_gpr[i] inside {ZERO, RA, SP, GP, TP, S0, S1, A0, A1, A2, A3, A4, A5});
         (zfinx_reserved_gpr[i] != dp);
         (zfinx_reserved_gpr[i] != str_rs1);
         (zfinx_reserved_gpr[i] != str_rs3);
@@ -164,6 +169,7 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
     `uvm_field_int(knob_zero_fast_intr_handlers, UVM_DEFAULT)
     `uvm_field_enum(riscv_reg_t, dp, UVM_DEFAULT)
     `uvm_field_enum(riscv_reg_t, scratch_reg, UVM_DEFAULT)
+    `uvm_field_sarray_enum(riscv_reg_t, gpr, UVM_DEFAULT)
     `uvm_field_int(enable_fast_interrupt_handler, UVM_DEFAULT)
     `uvm_field_int(use_fast_intr_handler, UVM_DEFAULT)
     `uvm_field_int(insert_rand_directed_instr_stream, UVM_DEFAULT)

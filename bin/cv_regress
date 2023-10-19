@@ -137,11 +137,6 @@ def read_file(args, file):
     for k in testlist['tests']:
         t = testlist['tests'][k]
 
-        try:
-            if args.simulator in t['skip_sim']:
-                continue
-        except KeyError:
-            pass
         test = cv_regression.Test(name=k, simulator=args.simulator, **t)
         if args.cov:
             test.set_cov()
@@ -172,6 +167,16 @@ def read_file(args, file):
             test.num = int(args.num or 1)
         elif test.num != 1:
             test.num = int(args.num or test.num)
+
+        try:
+            if test.simulator in t['skip_sim']:
+                logger.info('Skipping test {} due to selected simulator {}'.format(test.name, test.simulator))
+                continue
+            if test.cfg in t['skip_sim']:
+                logger.info('Skipping test {} due to selected cfg {}'.format(test.name, test.cfg))
+                continue
+        except KeyError:
+            pass
 
         regression.add_test(test)
 
