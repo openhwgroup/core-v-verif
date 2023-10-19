@@ -41,6 +41,7 @@ c_xsecure_dummy_instr_is_mul, c_xsecure_dummy_instr_is_bltu.",,,,,,,,,,,,,,,,,
 ,,LFSRx lockup reset,reset to default,Verify a lockup is detected and is reset to default. This can also be triggered after generation of a hint instruction as well as after the generation of a dummy instruction,Assertion check,Constrained-Random,Assertion Coverage,"A: a_xsecure_dummy_hint_instr_LFSR0_lockup_reset,
 a_xsecure_dummy_hint_instr_LFSR1_lockup_reset,
 a_xsecure_dummy_hint_instr_LFSR2_lockup_reset.",,,,,,,,,,,,,,,,,
+,,LFSR Bad Seed,Certain seeds should eventually lead to the LFSR locking up. (This is different from explicitly writing it to 0 and causing an immediate lockup.),"For all secureseed registers, write a value that eventually (but not immediately) leads to a lockup, and let the core run until that happens. (Could maybe be done with only a cover in formal, or with a simple directed test in sim, or both.)",Directed test,Directed Non-Self-Checking,Functional coverage,TODO:WARNING:silabs-robin,,,,,,,,,,,,,,,,,
 ,,Write to LFSR,"LFSR0, LFSR1, LFSR2 shall be seeded by CSR writes to secureseed0, secureseed1, and 
 secureseed2 respectively.",Verify that writing to secureseedN seeds the LFRSN,Assertion check,Constrained-Random,Assertion Coverage,"A: a_xsecure_dummy_hint_instr_LFSR0_write_secureseed0_reg,
 a_xsecure_dummy_hint_instr_LFSR1_write_secureseed1_reg,
