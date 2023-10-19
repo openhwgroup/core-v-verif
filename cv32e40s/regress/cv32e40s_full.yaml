@@ -386,12 +386,6 @@ tests:
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=debug_test_reset
 
-  debug_test_trigger:
-    description: Debug trigger test
-    builds: [ uvmt_cv32e40s, uvmt_cv32e40s_clic]
-    dir: cv32e40s/sim/uvmt
-    cmd: make test TEST=debug_test_trigger
-
   debug_test_boot_set:
     description: Debug test target debug_req at BOOT_SET
     builds: [ uvmt_cv32e40s, uvmt_cv32e40s_clic]
@@ -531,6 +525,12 @@ tests:
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=zc_test
     num: 5
+
+  pushpop_debug_triggers:
+    description: Zc push/pop vs debug triggers
+    builds: [ uvmt_cv32e40s_clic ]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=pushpop_debug_triggers
 
   debug_test_trigger:
     description: Test of debug triggers
