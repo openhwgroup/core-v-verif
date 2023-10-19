@@ -290,14 +290,6 @@ function void uvma_pma_sb_c::check_obi_i_default_region(uvma_obi_memory_mon_trn_
                                          obi.access_type.name(), obi.address, override_region,
                                          obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT], cfg.region_overrides[override_region].cacheable));
      end
-
-     // TODO: this needs to be modified when atomics are introduced for X to preserve code compatibility
-     // Check: atomic attributes should be 0
-     if (obi.atop) begin
-        `uvm_error("PMAOBII", $sformatf("OBI I %s address: 0x%08x, region: %0d atop is not zero, OBI: 0x%0x",
-                                         obi.access_type.name(), obi.address, override_region,
-                                         obi.atop));
-     end
    end else begin
      // Check: Bufferable bit must be 0 in OBI for instruction fetches
      if (obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_BUFFERABLE_BIT]) begin
@@ -310,13 +302,13 @@ function void uvma_pma_sb_c::check_obi_i_default_region(uvma_obi_memory_mon_trn_
         `uvm_error("PMAOBII", $sformatf("OBI I %s address: 0x%08x cacheable bit set for PMA default region",
                                          obi.access_type.name(), obi.address));
      end
+   end
 
-     // Check: atomic attributes should be 0
-     if (obi.atop) begin
-        `uvm_error("PMAOBII", $sformatf("OBI I %s address: 0x%08x atop is not zero, OBI: 0x%0x",
-                                         obi.access_type.name(), obi.address,
-                                         obi.atop));
-     end
+   // Check: atomic attributes should be 0 for all instruction fetches
+   if (obi.atop) begin
+      `uvm_error("PMAOBII", $sformatf("OBI I %s address: 0x%08x, region: %0d atop is not zero, OBI: 0x%0x",
+                                       obi.access_type.name(), obi.address, override_region,
+                                       obi.atop));
    end
 
 endfunction : check_obi_i_default_region
@@ -342,14 +334,6 @@ function void uvma_pma_sb_c::check_obi_i_mapped_region(uvma_obi_memory_mon_trn_c
                                          obi.access_type.name(), obi.address, override_region,
                                          obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT], cfg.region_overrides[override_region].cacheable));
      end
-
-     // TODO: this needs to be modified when atomics are introduced for X to preserve code compatibility
-     // Check: atomic attributes should be 0
-     if (obi.atop) begin
-        `uvm_error("PMAOBII", $sformatf("OBI I %s address: 0x%08x, override region: %0d atop is not zero, OBI: 0x%0x",
-                                         obi.access_type.name(), obi.address, override_region,
-                                         obi.atop));
-     end
    end else begin
      // Check: Must be main memory
      if (!cfg.regions[index].main) begin
@@ -369,13 +353,13 @@ function void uvma_pma_sb_c::check_obi_i_mapped_region(uvma_obi_memory_mon_trn_c
                                          obi.access_type.name(), obi.address, index,
                                          obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT], cfg.regions[index].cacheable));
      end
+   end
 
-     // Check: atomic attributes should be 0
-     if (obi.atop) begin
-        `uvm_error("PMAOBII", $sformatf("OBI I %s address: 0x%08x, region: %0d atop is not zero, OBI: 0x%0x",
-                                         obi.access_type.name(), obi.address, index,
-                                         obi.atop));
-     end
+   // Check: atomic attributes should be 0 for all instruction fetches
+   if (obi.atop) begin
+      `uvm_error("PMAOBII", $sformatf("OBI I %s address: 0x%08x, override region: %0d atop is not zero, OBI: 0x%0x",
+                                       obi.access_type.name(), obi.address, override_region,
+                                       obi.atop));
    end
 
 endfunction : check_obi_i_mapped_region
@@ -413,8 +397,7 @@ function void uvma_pma_sb_c::check_obi_d_default_region(uvma_obi_memory_mon_trn_
                                          obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT], cfg.region_overrides[override_region].cacheable));
      end
 
-     // TODO: this needs to be modified when atomics are introduced for X to preserve code compatibility
-     // Check: atomic attributes should be 0
+     // Check: atomic attributes should be 0 for debug mode
      if (obi.atop) begin
         `uvm_error("PMAOBII", $sformatf("OBI I %s address: 0x%08x, override region: %0d atop is not zero, OBI: 0x%0x",
                                          obi.access_type.name(), obi.address, override_region,
@@ -438,6 +421,7 @@ function void uvma_pma_sb_c::check_obi_d_default_region(uvma_obi_memory_mon_trn_
          `uvm_error("PMAOBID", $sformatf("OBI D %s address: 0x%08x atop is not zero for PMA default region, OBI: 0x%0x",
                                           obi.access_type.name(), obi.address,
                                           obi.atop));
+
       end
    end
 
@@ -461,8 +445,7 @@ function void uvma_pma_sb_c::check_obi_d_mapped_region(uvma_obi_memory_mon_trn_c
                                          obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT], cfg.region_overrides[override_region].cacheable));
      end
 
-     // TODO: this needs to be modified when atomics are introduced for X to preserve code compatibility
-     // Check: atomic attributes should be 0
+     // Check: atomic attributes should be 0 for debug mode
      if (obi.atop) begin
         `uvm_error("PMAOBII", $sformatf("OBI I %s address: 0x%08x, override region: %0d atop is not zero, OBI: 0x%0x",
                                          obi.access_type.name(), obi.address, override_region,
@@ -491,13 +474,6 @@ function void uvma_pma_sb_c::check_obi_d_mapped_region(uvma_obi_memory_mon_trn_c
                                           obi.access_type.name(), obi.address, index,
                                           obi.memtype[UVMA_OBI_MEMORY_MEMTYPE_CACHEABLE_BIT], cfg.regions[index].cacheable));
       end
-
-      // Check: atomic attributes should be 0
-      //if (obi.atop) begin
-      //   `uvm_error("PMAOBID", $sformatf("OBI D %s address: 0x%08x, region: %0d atop is not zero, OBI: 0x%0x",
-      //                                    obi.access_type.name(), obi.address, index,
-      //                                    obi.atop));
-      //end
    end
 
 endfunction : check_obi_d_mapped_region

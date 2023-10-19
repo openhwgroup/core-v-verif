@@ -93,6 +93,11 @@ class uvma_obi_memory_cfg_c extends uvm_object;
    bit [31:0]                                    directed_slv_exokay_addr_max;
    bit                                           directed_slv_exokay_valid;
 
+   bit [31:0]                                    directed_slv_reservation_addr_min;
+   bit [31:0]                                    directed_slv_reservation_addr_max;
+   bit                                           directed_slv_reservation_valid;
+   bit [31:0]                                    directed_slv_nr_reserved_words = 32'b1;
+
 
    `uvm_object_utils_begin(uvma_obi_memory_cfg_c)
       `uvm_field_int (                         enabled          , UVM_DEFAULT)
@@ -145,6 +150,11 @@ class uvma_obi_memory_cfg_c extends uvm_object;
       `uvm_field_int ( directed_slv_exokay_addr_min   , UVM_DEFAULT)
       `uvm_field_int ( directed_slv_exokay_addr_max   , UVM_DEFAULT)
       `uvm_field_int ( directed_slv_exokay_valid      , UVM_DEFAULT)
+
+      `uvm_field_int ( directed_slv_reservation_addr_min , UVM_DEFAULT)
+      `uvm_field_int ( directed_slv_reservation_addr_max , UVM_DEFAULT)
+      `uvm_field_int ( directed_slv_reservation_valid    , UVM_DEFAULT)
+      `uvm_field_int ( directed_slv_nr_reserved_words    , UVM_DEFAULT)
    `uvm_object_utils_end
 
    constraint defaults_cons {
@@ -255,7 +265,7 @@ class uvma_obi_memory_cfg_c extends uvm_object;
    /**
     * Set RL.W reservation set
     */
-   extern function void set_reservation(bit[31:0] addr, int nr_words_reserved);
+   extern function void set_reservation(bit[31:0] addr);
 
    /**
     * Returns 1 if this OBI agent supports version 1.2 or higher
@@ -371,9 +381,9 @@ function bit uvma_obi_memory_cfg_c::calc_random_exokay(bit[31:0] addr, bit is_SC
 
    // Check for a directed error reponse first
    if (is_SCW &&
-      (!directed_slv_exokay_valid ||
-      ((addr < directed_slv_exokay_addr_min) ||
-      (addr > directed_slv_exokay_addr_max)))) begin
+      (!directed_slv_reservation_valid ||
+      ((addr < directed_slv_reservation_addr_min) ||
+      (addr > directed_slv_reservation_addr_max)))) begin
       return 0;
    end
 
@@ -393,16 +403,16 @@ endfunction : calc_random_exokay
 
 function void uvma_obi_memory_cfg_c::invalidate_reservation();
 
-   directed_slv_exokay_valid = 0;
+   directed_slv_reservation_valid = 0;
 
 endfunction : invalidate_reservation
 
-function void uvma_obi_memory_cfg_c::set_reservation(bit[31:0] addr, int nr_words_reserved);
+function void uvma_obi_memory_cfg_c::set_reservation(bit[31:0] addr);
 
    if (addr[1:0] == 2'b0) begin
-      directed_slv_exokay_valid = 1;
-      directed_slv_exokay_addr_min = addr;
-      directed_slv_exokay_addr_max = addr + 4*(nr_words_reserved-1);
+      directed_slv_reservation_valid = 1;
+      directed_slv_reservation_addr_min = addr;
+      directed_slv_reservation_addr_max = addr + 4*(directed_slv_nr_reserved_words-1);
    end
 
 endfunction : set_reservation
