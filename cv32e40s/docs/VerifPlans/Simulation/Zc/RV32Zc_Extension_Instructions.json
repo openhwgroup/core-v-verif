@@ -8,7 +8,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "TODO: Should be checked, probably in an illegal instruction test.",
         "": ""
     },
     {
@@ -32,7 +32,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -43,8 +43,8 @@
         "Verification Goal": "Verify all possible variations of uimm",
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Coverage Method": "Testcase",
+        "Link to Coverage": "No direct coverage, but a lot of variation is output from the debug_test2",
         "": ""
     },
     {
@@ -56,7 +56,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -67,8 +67,8 @@
         "Verification Goal": "Verify all possible variations of uimm",
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Coverage Method": "Testcase",
+        "Link to Coverage": "No direct coverage, but some coverage can be found in corev_rand_instr_test",
         "": ""
     },
     {
@@ -80,7 +80,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -92,7 +92,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "No direct coverage, but some coverage can be found in corev_rand_instr_test",
         "": ""
     },
     {
@@ -104,7 +104,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -116,7 +116,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "No direct coverage, but some coverage can be found in corev_rand_instr_test",
         "": ""
     },
     {
@@ -128,7 +128,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -140,7 +140,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "No direct coverage, but some coverage can be found in corev_rand_instr_test",
         "": ""
     },
     {
@@ -152,7 +152,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -164,7 +164,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -188,7 +188,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -212,7 +212,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -236,7 +236,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -260,7 +260,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -272,7 +272,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -283,8 +283,8 @@
         "Verification Goal": "Verify all possible variations of spimm",
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Coverage Method": "Testcase",
+        "Link to Coverage": "corev_rand_interrupt++",
         "": ""
     },
     {
@@ -296,7 +296,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Link to Coverage": "Covered in directed test \"zc_test\"",
         "": ""
     },
     {
@@ -308,7 +308,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Link to Coverage": "Covered in directed test \"zc_test\"",
         "": ""
     },
     {
@@ -320,7 +320,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.u_zc_assert.a_multiop_exception_stop_dbus_push",
         "": ""
     },
     {
@@ -330,9 +330,9 @@
         "Feature Description": "",
         "Verification Goal": "Verify exception behaviour, partially completed state shall match ISS: when a multi-operation instruction is stopped by an exception, state can have changed. Verify against ISS.\n\nNote: 40s implementation follows the example sequence in the Zc spec. ISS's should match this. (the order might change)\n\nCoverage note: cross between possible register lists and exception arriving between/at all sub-operations would be optimal",
         "Pass/Fail Criteria": "Check against ISS",
-        "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Test Type": "Directed Non-Self-Checking",
+        "Coverage Method": "Testcase",
+        "Link to Coverage": "Coverage hole, evaluate priority",
         "": ""
     },
     {
@@ -344,7 +344,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -356,7 +356,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "corev_rand_interrupt++",
         "": ""
     },
     {
@@ -368,7 +368,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Link to Coverage": "Covered in directed test \"zc_test\"",
         "": ""
     },
     {
@@ -380,7 +380,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Link to Coverage": "Covered in directed test \"zc_test\"",
         "": ""
     },
     {
@@ -392,7 +392,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.u_zc_assert.a_multiop_exception_stop_dbus_pop",
         "": ""
     },
     {
@@ -402,9 +402,9 @@
         "Feature Description": "",
         "Verification Goal": "Verify exception behaviour, partially completed state shall match ISS: when a multi-operation instruction is stopped by an exception, state can have changed. Verify against ISS.\n\nNote: 40s implementation follows the example sequence in the Zc spec. ISS's should match this. \n\nCoverage note: cross between possible register lists and exception arriving between/at all sub-operations would be optimal",
         "Pass/Fail Criteria": "Check against ISS",
-        "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Test Type": "Directed Non-Self-Checking",
+        "Coverage Method": "Testcase",
+        "Link to Coverage": "Coverage hole, evaluate priority",
         "": ""
     },
     {
@@ -416,7 +416,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -428,7 +428,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "corev_rand_interrupt++",
         "": ""
     },
     {
@@ -440,7 +440,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Link to Coverage": "Covered in directed test \"zc_test\"",
         "": ""
     },
     {
@@ -452,7 +452,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.u_zc_assert.a_multiop_exception_stop_dbus_popret",
         "": ""
     },
     {
@@ -462,9 +462,9 @@
         "Feature Description": "",
         "Verification Goal": "Verify exception behaviour, partially completed state shall match ISS: when a multi-operation instruction is stopped by an exception, state can have changed. Verify against ISS.\n\nNote: 40s implementation follows the example sequence in the Zc spec. ISS's should match this. \n\nCoverage note: cross between possible register lists and exception arriving between/at all sub-operations would be optimal",
         "Pass/Fail Criteria": "Check against ISS",
-        "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Test Type": "Directed Non-Self-Checking",
+        "Coverage Method": "Testcase",
+        "Link to Coverage": "Coverage hole, evaluate priority",
         "": ""
     },
     {
@@ -476,7 +476,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -488,7 +488,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "corev_rand_interrupt++",
         "": ""
     },
     {
@@ -500,7 +500,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Link to Coverage": "Covered in directed test \"zc_test\"",
         "": ""
     },
     {
@@ -512,7 +512,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.u_zc_assert.a_multiop_exception_stop_dbus_popretz",
         "": ""
     },
     {
@@ -524,7 +524,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Coverage hole, evaluate priority",
         "": ""
     },
     {
@@ -536,7 +536,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -548,7 +548,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Link to Coverage": "Covered in directed test \"zc_test\"",
         "": ""
     },
     {
@@ -560,7 +560,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.u_zc_assert.a_multiop_exception_stop_dbus_mva01s",
         "": ""
     },
     {
@@ -570,9 +570,9 @@
         "Feature Description": "",
         "Verification Goal": "Verify exception behaviour, partially completed state shall match ISS: when a multi-operation instruction is stopped by an exception, state can have changed. Verify against ISS.\n\nNote: 40s implementation follows the example sequence in the Zc spec. ISS's should match this. \n\nCoverage note: cross between possible register lists and exception arriving between/at all sub-operations would be optimal",
         "Pass/Fail Criteria": "Check against ISS",
-        "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Test Type": "Directed Non-Self-Checking",
+        "Coverage Method": "Testcase",
+        "Link to Coverage": "Coverage hole, evaluate priority",
         "": ""
     },
     {
@@ -584,7 +584,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -596,7 +596,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Link to Coverage": "Covered in directed test \"zc_test\"",
         "": ""
     },
     {
@@ -608,7 +608,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.u_zc_assert.a_multiop_exception_stop_dbus_mvsa01",
         "": ""
     },
     {
@@ -618,9 +618,9 @@
         "Feature Description": "",
         "Verification Goal": "Verify exception behaviour, partially completed state shall match ISS: when a multi-operation instruction is stopped by an exception, state can have changed. Verify against ISS.\n\nNote: 40s implementation follows the example sequence in the Zc spec. ISS's should match this. \n\nCoverage note: cross between possible register lists and exception arriving between/at all sub-operations would be optimal",
         "Pass/Fail Criteria": "Check against ISS",
-        "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Test Type": "Directed Non-Self-Checking",
+        "Coverage Method": "Testcase",
+        "Link to Coverage": "Coverage hole, evaluate priority",
         "": ""
     },
     {
@@ -632,7 +632,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -641,10 +641,10 @@
         "Sub Feature": "",
         "Feature Description": "",
         "Verification Goal": "Verify interrupts(maskable and non-maskable), debug and single stepping can not stop execution after the instruction has started to change state. Make sure external interrupts happen at all stages of execution. Expect atomic execution",
-        "Pass/Fail Criteria": "Check against ISS",
-        "Test Type": "Directed Non-Self-Checking",
-        "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Pass/Fail Criteria": "Assertion Check",
+        "Test Type": "ENV capability, not specific test",
+        "Coverage Method": "Assertion Coverage",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.controller_i.controller_fsm_i.controller_fsm_sva.a_no_sequence_interrupt",
         "": ""
     },
     {
@@ -656,7 +656,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Link to Coverage": "Coverage hole, evaluate priority",
         "": ""
     },
     {
@@ -668,7 +668,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -677,10 +677,10 @@
         "Sub Feature": "",
         "Feature Description": "",
         "Verification Goal": "Verify interrupts(maskable and non-maskable), debug and single stepping can not stop execution after the instruction has started to change state. Make sure external interrupts happen at all stages of execution. Expect atomic execution",
-        "Pass/Fail Criteria": "Check against ISS",
-        "Test Type": "Directed Non-Self-Checking",
-        "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Pass/Fail Criteria": "Assertion Check",
+        "Test Type": "ENV capability, not specific test",
+        "Coverage Method": "Assertion Coverage",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.controller_i.controller_fsm_i.controller_fsm_sva.a_no_sequence_interrupt",
         "": ""
     },
     {
@@ -692,7 +692,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "",
+        "Link to Coverage": "Coverage hole, evaluate priority",
         "": ""
     },
     {
@@ -704,7 +704,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Link to Coverage": "Imperas generated coverage, hierarchy path:\nuvmt_cv32e40s_tb.imperas_dv.idv_trace2cov.cov_1.obj_[instr]",
         "": ""
     },
     {
@@ -714,9 +714,9 @@
         "Feature Description": "",
         "Verification Goal": "JVT can be used to swap jump tables",
         "Pass/Fail Criteria": "Check against ISS",
-        "Test Type": "Directed Non-Self-Checking",
-        "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "",
+        "Test Type": "Constrained-Random",
+        "Coverage Method": "Code Coverage",
+        "Link to Coverage": "N/A",
         "": ""
     },
     {
