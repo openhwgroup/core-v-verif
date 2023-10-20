@@ -282,7 +282,7 @@
     C_X13 = 3'b101,
     C_X14 = 3'b110,
     C_X15 = 3'b111
-  } c_gpr_name_e;
+  } gpr_rvc_name_e;
 
   typedef enum logic [2:0] {
     C_S0 = 3'b000,
@@ -293,13 +293,13 @@
     C_A3 = 3'b101,
     C_A4 = 3'b110,
     C_A5 = 3'b111
-  } c_gpr_abi_name_e;
+  } gpr_rvc_abi_name_e;
 
   typedef union packed {
-    bit [2:0]        raw;
-    c_gpr_name_e     gpr;
-    c_gpr_abi_name_e gpr_abi;
-  } c_gpr_t;
+    bit [2:0]          raw;
+    gpr_rvc_name_e     gpr;
+    gpr_rvc_abi_name_e gpr_abi;
+  } gpr_rvc_t;
 
   typedef union packed {
     bit [4:0]      raw;
@@ -668,42 +668,42 @@
   typedef struct packed {
     logic[15:13] funct3;
     logic[12:7]  imm;
-    gpr_t      rs2;
+    gpr_t        rs2;
   } css_type_t;
 
   typedef struct packed {
     logic[15:13] funct3;
     logic[12:5]  imm;
-    c_gpr_t      rd;
+    gpr_rvc_t    rd;
   } ciw_type_t;
 
   typedef struct packed {
     logic[15:13] funct3;
     logic[12:10] imm_12_10;
-    c_gpr_t      rs1;
+    gpr_rvc_t    rs1;
     logic[6:5]   imm_6_5;
-    c_gpr_t      rd;
+    gpr_rvc_t    rd;
   } cl_type_t;
 
   typedef struct packed {
     logic[15:13] funct3;
     logic[12:10] imm_12_10;
-    c_gpr_t      rs1;
+    gpr_rvc_t    rs1;
     logic[6:5]   imm_6_5;
-    c_gpr_t      rs2;
+    gpr_rvc_t    rs2;
   } cs_type_t;
 
   typedef struct packed {
     logic[15:10] funct6;
-    c_gpr_t      rd_rs1;
+    gpr_rvc_t    rd_rs1;
     logic[6:5]   funct2;
-    c_gpr_t      rs2;
+    gpr_rvc_t    rs2;
   } ca_type_t;
 
   typedef struct packed {
     logic[15:13] funct3;
     logic[12:10] offset_12_10;
-    c_gpr_t      rd_rs1;
+    gpr_rvc_t    rd_rs1;
     logic[6:2]   offset_6_2;
   } cb_type_t;
 
@@ -714,45 +714,45 @@
 
   typedef struct packed {
     logic[15:10] funct6;
-    c_gpr_t      rs1;
+    gpr_rvc_t    rs1;
     logic[6:5]   uimm;
-    c_gpr_t      rd;
+    gpr_rvc_t    rd;
   } clb_type_t;
 
   typedef struct packed {
     logic[15:10] funct6;
-    c_gpr_t      rs1;
+    gpr_rvc_t    rs1;
     logic[6:5]   uimm;
-    c_gpr_t      rs2;
+    gpr_rvc_t    rs2;
   } csb_type_t;
 
   typedef struct packed {
     logic[15:10] funct6;
-    c_gpr_t      rs1;
+    gpr_rvc_t    rs1;
     logic        funct1;
     logic        uimm;
-    c_gpr_t      rd;
+    gpr_rvc_t    rd;
   } clh_type_t;
 
   typedef struct packed {
     logic[15:10] funct6;
-    c_gpr_t      rs1;
+    gpr_rvc_t    rs1;
     logic        funct1;
     logic        uimm;
-    c_gpr_t      rs2;
+    gpr_rvc_t    rs2;
   } csh_type_t;
 
   typedef struct packed {
     logic[15:10] funct6;
-    c_gpr_t      rd_rs1;
+    gpr_rvc_t    rd_rs1;
     logic[6:2]   funct5;
   } cu_type_t;
 
   typedef struct packed {
     logic[15:10] funct6;
-    c_gpr_t      r1s;
+    gpr_rvc_t    r1s;
     logic[6:5]   funct2;
-    c_gpr_t      r2s;
+    gpr_rvc_t    r2s;
   } cmmv_type_t;
 
   typedef struct packed {
@@ -810,10 +810,10 @@
   // and enumerated abi register names
   // ---------------------------------------------------------------------------
   typedef struct packed {
-    gpr_t   gpr;
-    c_gpr_t c_gpr;
-    bit     valid;
-    bit     c_gpr_valid;
+    gpr_t     gpr;
+    gpr_rvc_t gpr_rvc;
+    bit       valid;
+    bit       valid_gpr_rvc;
   } reg_operand_t;
 
   // ---------------------------------------------------------------------------
