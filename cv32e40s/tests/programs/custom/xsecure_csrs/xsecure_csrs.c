@@ -176,6 +176,12 @@ static void test_lfsr_lockup(void){
     printf("error: writing 0 to secureseed2 shouldn't trap\n");
     exit(EXIT_FAILURE);
   }
+
+
+  // These checks of LFSR lockups could include an additional check that a
+  // minor alert gets signaled on each lockup.
+  // (E.g. make a new virtual peripheral for it.)
+  // It is not done now, as the primary goal is only to close a coverage hole.
 }
 
 static void test_secureseed_rs1_x0(void){
