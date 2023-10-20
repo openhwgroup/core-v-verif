@@ -17,6 +17,18 @@
 // limitations under the License.
 
 
+enum {
+  EXC_CAUSE_INSTR_ACC_FAULT       = 1,
+  EXC_CAUSE_ILLEGAL_INSTR         = 2,
+  EXC_CAUSE_BREAKPOINT            = 3,
+  EXC_CAUSE_LOAD_ACC_FAULT        = 5,
+  EXC_CAUSE_STORE_ACC_FAULT       = 7,
+  EXC_CAUSE_ENV_CALL_U            = 8,
+  EXC_CAUSE_ENV_CALL_M            = 11,
+  EXC_CAUSE_INSTR_BUS_FAULT       = 24,
+  EXC_CAUSE_INSTR_INTEGRITY_FAULT = 25,
+};
+
 typedef union {
   struct {
     volatile uint32_t  load     : 1;
@@ -41,4 +53,3 @@ typedef union {
   } __attribute__((packed)) volatile fields;
   volatile uint32_t raw;
 } __attribute__((packed)) mcontrol6_t;
-
