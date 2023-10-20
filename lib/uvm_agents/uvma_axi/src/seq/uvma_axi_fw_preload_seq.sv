@@ -31,22 +31,22 @@ class uvma_axi_fw_preload_seq_c extends uvm_sequence;
    longint address;
    longint len;
    byte buffer[];
-   
+
    `uvm_object_utils(uvma_axi_fw_preload_seq_c)
    `uvm_declare_p_sequencer(uvma_axi_r_sqr_c)
-   
+
    /**
     * Default constructor.
     */
    extern function new(string name="uvma_axi_fw_preload_seq");
-   
+
 
    extern virtual task body();
-   
+
 endclass : uvma_axi_fw_preload_seq_c
 
 function uvma_axi_fw_preload_seq_c::new(string name="uvma_axi_fw_preload_seq");
-   
+
    super.new(name);
    mem = uvml_mem_c::type_id::create("mem");
 
@@ -55,7 +55,7 @@ endfunction : new
 task uvma_axi_fw_preload_seq_c::body();
 
    cfg   = p_sequencer.cfg  ;
-   void'(uvcl.get_arg_value("+PRELOAD=", binary));
+   void'(uvcl.get_arg_value("+elf_file=", binary));
 
    if (binary != "") begin
       void'(read_elf(binary));
@@ -65,7 +65,7 @@ task uvma_axi_fw_preload_seq_c::body();
          automatic int num_words0 = (len+7)/8;
          `uvm_info( "Core Test", $sformatf("Loading Address: %x, Length: %x", address, len), UVM_HIGH)
          buffer = new [num_words0*8];
-         void'(read_section(address, buffer));
+         void'(read_section_sv(address, buffer));
          // preload memories
          // 64-bit
          for (int i = 0; i < num_words0; i++) begin
