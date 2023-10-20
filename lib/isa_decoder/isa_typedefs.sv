@@ -921,16 +921,16 @@
   // Main _decoded_ and _disassembled_ data structure
   // ---------------------------------------------------------------------------
   typedef struct packed {
-    instr_name_e        instr;    // Instruction name
-    instr_format_e      format;  // Instruction format type
-    reg_operand_t       rd;       // Destination register, qualified by rd.valid
-    reg_operand_t       rs1;      // source register 1, qualified by rs1.valid
-    reg_operand_t       rs2;      //      --         2,      --        2
-    reg_operand_t       rs3;      //      --         3,      --        3
-    imm_operand_t       imm;      // Immediate, qualified by imm.valid
-    csr_operand_t       csr;      // CSR register address, qualified by csr.valid
-    logic               is_hint;  // Indicates whether the current instruction is a HINT.
-    rlist_operand_t     rlist;  // structure to handle rlist fields for Zcmp-instructions
+    instr_name_e        instr;     // Instruction name
+    instr_format_e      format;    // Instruction format type
+    reg_operand_t       rd;        // Destination register, qualified by rd.valid
+    reg_operand_t       rs1;       // source register 1, qualified by rs1.valid
+    reg_operand_t       rs2;       //      --         2,      --        2
+    reg_operand_t       rs3;       //      --         3,      --        3
+    imm_operand_t       imm;       // Immediate, qualified by imm.valid
+    csr_operand_t       csr;       // CSR register address, qualified by csr.valid
+    logic               is_hint;   // Indicates whether the current instruction is a HINT.
+    rlist_operand_t     rlist;     // structure to handle rlist fields for Zcmp-instructions
     stack_adj_operand_t stack_adj; // structure to handle stack_adj fields for Zcmp-instructions
     atomic_operand_t    atomic;
   } asm_t;
