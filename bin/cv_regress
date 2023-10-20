@@ -88,7 +88,7 @@ def get_results_path(project, results = None):
             logger.fatal("given results path: {} does not exists".format(results))
             os.sys.exit(2)
 
-def read_file(args, file):
+def read_file(args, file, f_idx=0):
     '''Read a YAML definition filelist'''
     full_regress_file = os.path.join(get_regress_path(args.project), file)
     stream = open(full_regress_file, 'r')
@@ -136,7 +136,10 @@ def read_file(args, file):
         if args.iss != None:
             build.iss = args.iss
         if args.cfg:
-            build.cfg = args.cfg
+            try:
+                build.cfg = args.cfg[f_idx]
+            except IndexError:
+                build.cfg = args.cfg[0]
 
         regression.add_build(build)
 
@@ -152,7 +155,10 @@ def read_file(args, file):
         if args.iss != None:
             test.iss = args.iss
         if args.cfg:
-            test.cfg = args.cfg
+            try:
+                test.cfg = args.cfg[f_idx]
+            except IndexError:
+                test.cfg = args.cfg[0]
         if not test.builds and test.build:
             test.builds = [ test.build ]
 
@@ -171,9 +177,15 @@ def read_file(args, file):
         # if num is not specified in the yaml, it can be overriden by args.num or set to 1 to avoid issues
         # else, if it is not set to 1 (unique), it can be overriden by args.num if argument is defined
         if test.num == None:
-            test.num = int(args.num or 1)
+            try:
+                test.num = int(args.num[f_idx] or 1)
+            except IndexError:
+                test.num = int(args.num[0] or 1)
         elif test.num != 1:
-            test.num = int(args.num or test.num)
+            try:
+                test.num = int(args.num[f_idx] or test.num)
+            except IndexError:
+                test.num = int(args.num[0] or test.num)
 
         try:
             if test.simulator in t['skip_sim']:
@@ -214,13 +226,13 @@ parser.add_argument('-d', '--debug', help='Emit debug messages from logger', act
 parser.add_argument('--results', help='Set a non-standard results directory')
 parser.add_argument('-s', '--simulator', help='Select simulator', choices=VALID_SIMULATORS, default=DEFAULT_SIMULATOR)
 parser.add_argument('-c', '--cov', help='Enable coverage', action='store_true')
-parser.add_argument('--cfg', default=None, help='Override configuration for all builds and tests in regression')
+parser.add_argument('--cfg', default=None, action='append', help='Override configuration for all builds and tests in regression')
 parser.add_argument('--force_test_cfg', default=None, help='Override test_cfg file(s) for all builds and tests in regression. Each cfg file should be separated by a comma')
 parser.add_argument('--add_test_cfg', default=None, help='Additional test_cfg file(s) for all builds and tests in regression. Each cfg file should be separated by a comma')
 parser.add_argument('--iss', default=None, help='Force USE_ISS flag to each test run')
 parser.add_argument('--parallel', default=DEFAULT_PARALLEL, help='For VSIF only, set number of parallel jobs')
 parser.add_argument('-m', '--metrics', help='Select Metrics waves output', action='store_true')
-parser.add_argument('-n', '--num', help='Force number of iterations for tests with multiple iteration')
+parser.add_argument('-n', '--num', action='append', help='Force number of iterations for tests with multiple iteration')
 parser.add_argument('--lsf', help='If applicable for output format, set LSF args to dispatch jobs')
 parser.add_argument('--make', help='Substitute for make command (to use short-cuts)')
 parser.add_argument('--makearg', action='append', help='Arguments to supply to each make command, can be specified multiple times')
@@ -254,11 +266,13 @@ if not args.outfile:
 regressions = []
 unique_builds = OrderedDict()
 unique_tests = OrderedDict()
+
+file_index = 0
 for f in args.file:
     # Add yaml extension if not supplied
     if not os.path.splitext(f)[1] == 'yaml':
         f = os.path.splitext(f)[0] + '.yaml'
-    r = read_file(args, f)
+    r = read_file(args, f, file_index)
     regressions.append(r)
     for b in r.builds.values():
         if not b.name in unique_builds:
@@ -266,6 +280,7 @@ for f in args.file:
     for t in r.tests.values():
         if not t.name in unique_tests:
             unique_tests[t.name] = t
+    file_index = file_index + 1
 
 # Generate output product
 env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__),
@@ -353,7 +368,6 @@ if args.rmdb:
                                  unique_builds=unique_builds,
                                  unique_tests=unique_tests,
                                  coverage=args.cov,
-                                 config=args.cfg,
                                  iss=args.iss,
                                  check_sim_results=args.check_sim_results))
     out_fh.close()
