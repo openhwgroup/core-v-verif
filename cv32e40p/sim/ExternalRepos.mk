@@ -15,7 +15,7 @@ export SHELL = /bin/bash
 
 CV_CORE_REPO   ?= https://github.com/openhwgroup/cv32e40p
 CV_CORE_BRANCH ?= dev
-CV_CORE_HASH   ?= c520546c0cc3f64ef064d52dfdc91abbba63f181
+CV_CORE_HASH   ?= 3023e88a8ce07c6854267031637403ea6a8061bb
 CV_CORE_TAG    ?= none
 
 # The CV_CORE_HASH above points to version of the RTL that is newer.
@@ -32,12 +32,12 @@ EMBENCH_REPO    ?= https://github.com/embench/embench-iot.git
 EMBENCH_BRANCH  ?= master
 EMBENCH_HASH    ?= 6934ddd1ff445245ee032d4258fdeb9828b72af4
 
-COMPLIANCE_REPO   ?= https://github.com/riscv/riscv-compliance
-COMPLIANCE_BRANCH ?= master
-# 2020-08-19
-COMPLIANCE_HASH   ?= c21a2e86afa3f7d4292a2dd26b759f3f29cde497
-
 # SVLIB
 SVLIB_REPO       ?= https://bitbucket.org/verilab/svlib/src/master/svlib
 SVLIB_BRANCH     ?= master
 SVLIB_HASH       ?= c25509a7e54a880fe8f58f3daa2f891d6ecf6428
+
+#riscv-arch-test suite with riscof
+RISCOF_ARCH_TEST_SUITE_REPO    ?= https://github.com/riscv/riscv-arch-test.git
+RISCOF_ARCH_TEST_SUITE_BRANCH  ?= main
+RISCOF_ARCH_TEST_SUITE_TAG     ?= latest

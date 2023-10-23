@@ -24,32 +24,27 @@ tests:
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_data_fwd_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
-    test_cfg: floating_pt_instr_en
 
   corev_rand_fp_instr_mlt_cyc_test:
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_mlt_cyc_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
-    test_cfg: floating_pt_instr_en
 
   corev_rand_fp_instr_sanity_test:
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
-    test_cfg: floating_pt_instr_en
     num: 1
 
   corev_rand_fp_instr_test:
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
-    test_cfg: floating_pt_instr_en
 
   corev_rand_fp_instr_w_special_ops_test:
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_w_special_ops_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
-    test_cfg: floating_pt_instr_en
 
   fpu_bugs_test:
     build: uvmt_cv32e40p

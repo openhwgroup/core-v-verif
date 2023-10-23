@@ -1,4 +1,4 @@
-# CV32E40P: RISCOF Arch-Test-Suite Setup and Flow
+# CV32E40P: RISCOF RISCV-ARCH-TEST Suite Setup and Flow
 
 Read the Documentation for Latest Requirements at [RISCOF Documentation](https://riscof.readthedocs.io/en/stable/).
 
@@ -23,6 +23,20 @@ The riscof work directory path will be available here `riscof_work`.
         - `RISCOF_SIM=YES` Must be given for make. It is added in riscof make at the time of initial flow update for this, to keep riscof related make targets from creating any unexpected issues for usual tb simulations
         - `CFG` : this is same as CFG argument for makefile as used in usual core-v-verif testbench for simulations to select required CORE configuration.
         - `RISCOF_CONFIG_FILE=<riscof_config_ini_file>` : Default value for this is set as config.ini if nothing is provided. This is added to support the need to be able to use and run riscof with different config_x.ini files in future based on needs to run compliance with different DUT versions or just run with different config files added in riscof dir with different config values for same DUT target
+
+### Example Steps:
+
+1. cd core-v-verif/cv32e40p/sim/riscof
+
+2. make setup_riscof_sim CFG=pulp_fpu
+
+3. make comp_dut_rtl_riscof_sim CFG=pulp_fpu (Optional if preceded by Step 2)
+
+4. make riscof_get_testlist RISCOF_SIM=YES CFG=pulp_fpu USE_ISS=no (Optional)
+
+5. make riscof_run_all RISCOF_SIM=YES CFG=pulp_fpu RISCOF_CONFIG_FILE=config_cv32e40p_v2.ini
+
+(NOTE: in case of ISS compile errors, add USE_ISS={no/yes} to the make commands above, matching config value for iss)
  
 ## config.ini:
 
