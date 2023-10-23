@@ -22,7 +22,6 @@ plusargs: >
     +disable_data_independent_timing=1
     +disable_pc_hardening=1
 ovpsim: >
-    --excludem RISCV_CSR_UNIMP
     --override cpu/CLICLEVELS=256
     --override cpu/CLICXCSW=T
     --override cpu/CLICXNXTI=T

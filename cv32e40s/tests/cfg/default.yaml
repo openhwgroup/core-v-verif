@@ -3,7 +3,6 @@ description: Default configuration for CV32E40S simulations
 compile_flags: >
     +define+ZBA_ZBB_ZBC_ZBS
 ovpsim: >
-    --excludem RISCV_CSR_UNIMP
     --override cpu/envcfg_mask=0x0
     --override cpu/PMP_initialparams=T
     --override cpu/PMP_maskparams=T

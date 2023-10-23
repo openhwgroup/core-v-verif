@@ -5,7 +5,6 @@ compile_flags: >
     +define+DBG_NUM_TRIG_2
     +define+ZBA_ZBB_ZBC_ZBS
 ovpsim: >
-    --excludem RISCV_CSR_UNIMP
     --override cpu/trigger_num=2
     --override cpu/PMP_registers=64
     # --showoverrides

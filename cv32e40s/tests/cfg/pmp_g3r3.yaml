@@ -4,7 +4,6 @@ compile_flags:
     +define+PMP_G3R3
     +define+ZBA_ZBB_ZBC_ZBS
 ovpsim: >
-    --excludem RISCV_CSR_UNIMP
     --override cpu/PMP_grain=3
     --override cpu/PMP_registers=64
     --override cpu/PMP_initialparams=T

@@ -3,7 +3,6 @@ description: PMA configuration for regions and attributes
 compile_flags:
     +define+PMA_CUSTOM_CFG
 ovpsim: >
-    --excludem RISCV_CSR_UNIMP
     --override cpu/PMP_registers=64
     # --showoverrides
     # --trace --tracechange --traceshowicount --monitornets
