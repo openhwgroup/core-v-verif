@@ -55,6 +55,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
   bit                     init_gpr = (is_zfinx) ? 1 : 0;      // initialize gpr registers in stream with rand value
   bit                     init_fpr = (is_zfinx) ? 0 : 1;      // initialize fpr registers in stream with rand value
   bit                     en_clr_fflags_af_instr;             // clear fflag to prevent residual fflags status of current f_instr
+  bit                     en_clr_fstate;                      // clean the fstate for current f_instr
   bit                     include_load_store_base_sp;         // include store instr that uses sp
 
     // for use_prev_rd_on_next_operands implementation usage - start
@@ -64,6 +65,14 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
   bit [TOTAL_D_AND_S_REG-1:0] prev_has_r_flags, prev_has_f_flags; // use to store prev instr has_* reg flags
   bit [TOTAL_D_AND_S_REG-1:0] curr_has_r_flags, curr_has_f_flags; // use to store curr instr has_* reg flags
     // for use_prev_rd_on_next_operands implementation usage - end
+
+    // for clr_crs_fflags usage - start
+  bit                 clr_csr_option = $urandom_range(1);
+  bit                 clr_csr_init_done = 0; // reduce overhead
+  riscv_instr_name_t  csr_name = INVALID_INSTR;
+  logic [31:0]        csr_rm = $urandom_range(0,4);
+  logic [31:0]        csr_mstatus_fs = 0;
+    // for clr_crs_fflags usage - end
 
   rand int unsigned       num_of_instr_per_stream;
   rand riscv_reg_t        avail_gp_regs[][];        // regs for extension zfinx and f
@@ -165,6 +174,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     use_prev_rd_on_next_operands        = 0;
     use_no_repetitive_instr_per_stream  = 0;
     en_clr_fflags_af_instr              = 1;
+    en_clr_fstate                       = 0;
     include_load_store_base_sp          = $urandom_range(1);
   endfunction: pre_randomize
 
@@ -295,16 +305,12 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
 
   // clear csr fflags (by through fflags or fcsr)
   // condition: reg rs1 must be keep for csr clr purpose only throughout this stream
-  bit                 clr_csr_option = $urandom_range(1);
-  bit                 clr_csr_init_done = 0; // reduce overhead
-  riscv_instr_name_t  csr_name = INVALID_INSTR;
-  logic [31:0]        csr_rm = $urandom_range(0,4);
-
   virtual function void clr_crs_fflags(riscv_reg_t rs1);
     riscv_reg_t        i_rs1 = rs1;
     logic [31:0]       csrrw_val = 0;
 
-    csrrw_val[7:5] = csr_rm;
+    csrrw_val[7:5]   = csr_rm;
+    csrrw_val[14:13] = csr_mstatus_fs;
     if (!clr_csr_init_done) begin
       if (clr_csr_option) begin `SET_GPR_VALUE(i_rs1,32'h0000_001F); csr_name = CSRRC; end
       else                begin `SET_GPR_VALUE(i_rs1,csrrw_val);     csr_name = CSRRW; end
@@ -357,6 +363,12 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     set_csr_fm(gp_reg_scratch);
   endfunction : initialize_regs
 
+  virtual function void reset_rand_instr_entry();
+    include_instr.delete();     exclude_instr.delete();
+    include_category.delete();  exclude_category.delete();
+    include_group.delete();     exclude_group.delete();
+  endfunction : reset_rand_instr_entry
+
   // for updating the arguments that use in get_rand_instr 
   virtual function void update_current_instr_arg_list(int idx=0);
     bit select_fp_instr, include_fpc, rand_status;
@@ -408,7 +420,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
   // placeholder to insert additonal instr if there is any prior directed instr
   virtual function void add_instr_prior_directed_instr(riscv_instr instr, int idx=0);
     if (is_fp_instr) begin
-      if (en_clr_fflags_af_instr) 
+      if (en_clr_fflags_af_instr)
         clr_crs_fflags(gp_reg_scratch);
     end
   endfunction : add_instr_prior_directed_instr
@@ -1530,12 +1542,6 @@ class cv32e40p_fp_op_fwd_instr_w_loadstore_stream extends cv32e40p_float_zfinx_b
     reserved_rd                         = new[reserved_rd.size()+1] ({reserved_rd, ZERO});
   endfunction: pre_randomize
 
-  virtual function void reset_rand_instr_entry();
-    include_instr.delete();     exclude_instr.delete();
-    include_category.delete();  exclude_category.delete();
-    include_group.delete();     exclude_group.delete();
-  endfunction : reset_rand_instr_entry
- 
   virtual function void update_current_instr_arg_list(int idx=0);
   endfunction: update_current_instr_arg_list
 
@@ -1840,5 +1846,65 @@ class cv32e40p_fp_op_fwd_instr_w_loadstore_stream extends cv32e40p_float_zfinx_b
   endfunction: post_randomize
 
 endclass: cv32e40p_fp_op_fwd_instr_w_loadstore_stream
+
+
+  //
+  // extended class that clce through all the fp instructions that change
+  // fs state from Initial->Dirty and Clean->Dirty
+  // fixme: assess and consider the feedback in https://github.com/XavierAubert/core-v-verif/pull/70
+class cv32e40p_mstatus_fs_stream extends cv32e40p_float_zfinx_base_instr_stream;
+
+  localparam LOOP_CNT_LIMIT = 2; // init->dirty, clean->dirty
+  int unsigned loop_cnt = 0;
+
+  `uvm_object_utils(cv32e40p_mstatus_fs_stream)
+  `uvm_object_new
+
+  constraint ovr_c_others {
+    num_of_instr_per_stream == (TOTAL_INSTR_F_TYPE+TOTAL_INSTR_FC_TYPE) * LOOP_CNT_LIMIT;
+  }
+
+  function void pre_randomize();
+    super.pre_randomize();
+    use_fp_only_for_directed_instr      = 0;
+    use_no_repetitive_instr_per_stream  = 1;
+    include_load_store_base_sp          = 1;
+    clr_csr_option                      = 0; // uses CSRRW
+    en_clr_fstate                       = (!is_zfinx & en_clr_fflags_af_instr & !clr_csr_option);
+    csr_mstatus_fs                      = 32'd1; // Initial 
+  endfunction: pre_randomize
+
+  virtual function void initialize_regs();
+    super.initialize_regs();
+    clr_crs_fflags(gp_reg_scratch);
+    reset_rand_instr_entry();
+  endfunction : initialize_regs
+
+  virtual function void update_current_instr_arg_list(int idx=0);
+    include_group = new[2] ({RV32F, RV32FC});
+    if (idx == 0) loop_cnt++;
+    else if (idx != 0 && idx%(TOTAL_INSTR_F_TYPE+TOTAL_INSTR_FC_TYPE) == 0) begin
+      loop_cnt++;
+      assert (loop_cnt <= LOOP_CNT_LIMIT);
+      exclude_instr.delete();
+      csr_mstatus_fs = 32'd2; // Clean 
+    end
+    // fixme : refine after https://github.com/Imperas/private-dolphindesigns-riscv/issues/15 is resolved
+    case (idx)
+      0: include_instr = new[1] ({FLW});
+      1: include_instr = new[1] ({C_FLW});
+      2: include_instr = new[1] ({C_FLWSP});
+      default: include_instr.delete();
+    endcase
+  endfunction: update_current_instr_arg_list
+
+  virtual function void add_instr_prior_directed_instr(riscv_instr instr, int idx=0);
+    super.add_instr_prior_directed_instr(instr, idx);
+    if (en_clr_fstate)
+      directed_csr_access(.instr_name(CSRRW), .rs1(gp_reg_scratch), .csr(12'h300)); // condition: this must execute before clr_crs_fflags
+  endfunction : add_instr_prior_directed_instr
+
+endclass: cv32e40p_mstatus_fs_stream
+
 
 // ALL FP STREAM CLASSESS - end

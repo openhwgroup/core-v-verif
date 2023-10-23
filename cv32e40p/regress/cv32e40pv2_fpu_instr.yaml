@@ -34,6 +34,7 @@ tests:
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_sanity_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    num: 1
 
   corev_rand_fp_instr_test:
     build: uvmt_cv32e40p
