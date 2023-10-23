@@ -20,6 +20,7 @@ plusargs: >
     +enable_dummy=1
     +enable_hint=1
 ovpsim: >
+    --excludem RISCV_CSR_UNIMP
     --override cpu/CLICLEVELS=256
     --override cpu/CLICXCSW=T
     --override cpu/CLICXNXTI=T

@@ -37,6 +37,9 @@
 
 #define WFE_INSTR 0x8c000073
 
+#define MARCHID_CV32E40X 0x14
+#define MARCHID_CV32E40S 0x15
+
 // __FUNCTION__ is C99 and newer, -Wpedantic flags a warning that
 // this is not ISO C, thus we wrap this instatiation in a macro
 // ignoring this GCC warning to avoid a long list of warnings during
@@ -229,6 +232,13 @@ void set_pmpcfg(pmpsubcfg_t pmpsubcfg, uint32_t reg_no);
 void increment_mepc(volatile uint32_t incr_val);
 
 /*
+ * has_pmp_configured
+ *
+ * Returns 1 if pmp is enabled/supported else returns 0
+ */
+uint32_t has_pmp_configured(void);
+
+/*
  * Non-standard illegal instruction and ecall handlers
  */
 void handle_illegal_insn(void);
@@ -312,6 +322,36 @@ int get_result(uint32_t res, uint32_t (* volatile ptr[])(uint32_t, uint8_t)){
     cvprintf(V_LOW, "\n\tSELF CHECK FAILURES OCCURRED!\n\n");
     return res;
   }
+}
+
+// -----------------------------------------------------------------------------
+
+uint32_t has_pmp_configured(void) {
+  volatile uint32_t pmpaddr0 = 0xffffffff;
+  volatile uint32_t pmpaddr0_backup = 0;
+  volatile uint32_t marchid = 0x0;
+
+  __asm__ volatile (R"(
+    csrrs %[marchid], marchid, zero
+  )":[marchid] "=r"(marchid));
+
+  // CV32E40X does not support PMP, skip
+  switch (marchid) {
+    case (MARCHID_CV32E40X):
+      return 0;
+      break;
+    case (MARCHID_CV32E40S):
+      ;; // Do nothing and continue execution
+      break;
+  }
+
+  __asm__ volatile (R"(
+    csrrw %[pmpaddr0_backup] , pmpaddr0, %[pmpaddr0]
+    csrrw %[pmpaddr0], pmpaddr0, %[pmpaddr0_backup]
+  )" :[pmpaddr0_backup] "+r"(pmpaddr0_backup),
+      [pmpaddr0]        "+r"(pmpaddr0));
+
+  return (pmpaddr0 != 0);
 }
 
 // -----------------------------------------------------------------------------
@@ -711,6 +751,12 @@ uint32_t wfe_wakeup_umode(uint32_t index, uint8_t report_name){
     return 0;
   }
 
+  // Check if there user mode support
+  if (!has_pmp_configured()) {
+    cvprintf(V_LOW, "Skipping test: User mode/PMP not supported\n");
+    return 0;
+  }
+
   // Setup PMP access for u-mode (otherwise all deny)
   set_mseccfg((mseccfg_t){
       .fields.mml  = 0,
@@ -790,6 +836,12 @@ uint32_t wfi_mstatus_tw_umode_illegal(uint32_t index, uint8_t report_name){
 
   if (report_name) {
     cvprintf(V_LOW, "\"%s\"", name);
+    return 0;
+  }
+
+  // Check if there user mode support
+  if (!has_pmp_configured()) {
+    cvprintf(V_LOW, "Skipping test: User mode/pmp not supported\n");
     return 0;
   }
 

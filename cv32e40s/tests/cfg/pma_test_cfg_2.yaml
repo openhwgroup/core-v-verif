@@ -16,6 +16,7 @@ plusargs: >
    +enable_zbc_extension=1
    +enable_zbs_extension=1
 ovpsim: >
+   --excludem RISCV_CSR_UNIMP
    --override cpu/PMP_registers=64
    --override cpu/PMP_undefined=T
    --override cpu/PMP_initialparams=T
