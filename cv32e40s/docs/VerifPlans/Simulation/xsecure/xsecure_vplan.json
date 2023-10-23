@@ -1064,7 +1064,7 @@
         "Pass/Fail Criteria": "Assertion check",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Functional coverage",
-        "Link to Coverage": "A: a_glitch_xsecure_integrity_data_integrity_err_helper_assert, a_glitch_xsecure_integrity_data_integrity_err. COV:c_glitch_xsecure_security_parity_checksum_fault_NMI_load_instruction, c_glitch_xsecure_security_parity_checksum_fault_NMI_store_instruction",
+        "Link to Coverage": "A: a_glitch_xsecure_integrity_data_integrity_err_helper_assert, a_glitch_xsecure_integrity_data_integrity_err. COV:c_glitch_xsecure_integrity_parity_checksum_fault_NMI_load_instruction, c_glitch_xsecure_integrity_parity_checksum_fault_NMI_store_instruction.",
         "": ""
     },
     {
