@@ -24,7 +24,25 @@
  * Virtual sequence implementing the cv32e40x virtual peripherals.
  * TODO Move most of the functionality to a cv32e env base class.
  */
-virtual class uvma_obi_memory_vp_sig_writer_seq_c extends uvma_obi_memory_vp_base_seq_c;
+virtual class uvma_obi_memory_vp_sig_writer_seq_c#(
+   parameter AUSER_WIDTH = `UVMA_OBI_MEMORY_AUSER_DEFAULT_WIDTH, ///< Width of the auser signal. RI5CY, Ibex, CV32E40* do not have the auser signal.
+   parameter WUSER_WIDTH = `UVMA_OBI_MEMORY_WUSER_DEFAULT_WIDTH, ///< Width of the wuser signal. RI5CY, Ibex, CV32E40* do not have the wuser signal.
+   parameter RUSER_WIDTH = `UVMA_OBI_MEMORY_RUSER_DEFAULT_WIDTH, ///< Width of the ruser signal. RI5CY, Ibex, CV32E40* do not have the ruser signal.
+   parameter ADDR_WIDTH  = `UVMA_OBI_MEMORY_ADDR_DEFAULT_WIDTH , ///< Width of the addr signal.
+   parameter DATA_WIDTH  = `UVMA_OBI_MEMORY_DATA_DEFAULT_WIDTH , ///< Width of the rdata and wdata signals. be width is DATA_WIDTH / 8. Valid DATA_WIDTH settings are 32 and 64.
+   parameter ID_WIDTH    = `UVMA_OBI_MEMORY_ID_DEFAULT_WIDTH   , ///< Width of the aid and rid signals.
+   parameter ACHK_WIDTH  = `UVMA_OBI_MEMORY_ACHK_DEFAULT_WIDTH , ///< Width of the achk signal.
+   parameter RCHK_WIDTH  = `UVMA_OBI_MEMORY_RCHK_DEFAULT_WIDTH   ///< Width of the rchk signal.
+) extends uvma_obi_memory_vp_base_seq_c#(
+   .AUSER_WIDTH(AUSER_WIDTH),
+   .WUSER_WIDTH(WUSER_WIDTH),
+   .RUSER_WIDTH(RUSER_WIDTH),
+   .ADDR_WIDTH(ADDR_WIDTH),
+   .DATA_WIDTH(DATA_WIDTH),
+   .ID_WIDTH(ID_WIDTH),
+   .ACHK_WIDTH(ACHK_WIDTH),
+   .RCHK_WIDTH(RCHK_WIDTH)
+) ;
 
    localparam    NUM_WORDS = 3;
 
@@ -34,7 +52,16 @@ virtual class uvma_obi_memory_vp_sig_writer_seq_c extends uvma_obi_memory_vp_bas
    int           sig_fd       = 0;
    bit           use_sig_file = 0;
 
-   `uvm_field_utils_begin(uvma_obi_memory_vp_sig_writer_seq_c)
+   `uvm_field_utils_begin(uvma_obi_memory_vp_sig_writer_seq_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ))
       `uvm_field_int(signature_start_address, UVM_DEFAULT)
       `uvm_field_int(signature_end_address,   UVM_DEFAULT)
    `uvm_field_utils_end
@@ -97,9 +124,9 @@ task uvma_obi_memory_vp_sig_writer_seq_c::vp_body(uvma_obi_memory_mon_trn_c mon_
    if (mon_trn.access_type == UVMA_OBI_MEMORY_ACCESS_WRITE) begin
       case (get_vp_index(mon_trn))
          0: signature_start_address = mon_trn.data;
-         1: signature_end_address = mon_trn.data;
 
-         2: begin
+         1: begin
+            signature_end_address = mon_trn.data;
             for (int unsigned ii=signature_start_address; ii<signature_end_address; ii += 4) begin
                `uvm_info("VP_SIG_WRITER", "Dumping signature", UVM_HIGH/*NONE*/)
                if (use_sig_file) begin

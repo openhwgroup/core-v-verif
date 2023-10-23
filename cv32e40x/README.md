@@ -1,11 +1,8 @@
-# CV32E40X: Verification Environment for the CV32E40X CORE-V processor core.
+The verification specifics for core cv32e40x are in a separate repository, (https://github.com/openhwgroup/cv32e40x-dv). To download the repository, do the following:
 
-## Directories:
-- **bsp**:   the "board support package" for test-programs compiled/assembled/linked for the CV32E40X.  This BSP is used by both the `core` testbench and the `uvmt` UVM verification environment.
-- **env**:   the UVM environment class and its associated infrastrucutre.
-- **sim**:   directory where you run the simulations.
-- **tb**:    the Testbench module that instanitates the core.
-- **tests**: this is where all the testcases are.
+1) Make sure your pwd end folder is core-v-verif:
+pwd = (...)/core-v-verif
+2) Run the clonetb script from the bin folder with the x agrument as shown:
+./bin/clonetb -x
 
-There are README files in each directory with additional information.
-
+The bin/clonetb script populates the cv32e40x folder with the content of cv32e40x-dv on a stable hash. Use git status to check the hash.

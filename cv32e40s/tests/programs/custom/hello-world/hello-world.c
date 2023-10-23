@@ -25,14 +25,16 @@
 */
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 
-#define EXP_MISA 0x40101104
+#define EXP_MISA 0x40901104
 
 int main(int argc, char *argv[])
 {
-    unsigned int misa_rval, mvendorid_rval, marchid_rval, mimpid_rval, mxl;
-             int reserved, tentative, nonstd, user, super;
+
+    volatile unsigned int misa_rval, mvendorid_rval, marchid_rval, mimpid_rval, mxl;
+    volatile          int reserved, tentative, nonstd, user, super;
 
     mxl = 0; reserved = 0; tentative = 0; nonstd = 0; user = 0; super = 0;
 
@@ -54,7 +56,7 @@ int main(int argc, char *argv[])
       return EXIT_FAILURE;
     }
 
-    /* Check MARCHID CSR: 0x4 is the value assigned by the RISC-V Foundation to CV32E40S */
+    /* Check MARCHID CSR: 0x15 is the value assigned by the RISC-V Foundation to CV32E40S */
     if (marchid_rval != 0x15) {
       printf("\tERROR: CSR MARCHID reads as 0x%x - should be 0x00000015 for CV32E40S.\n\n", marchid_rval);
       return EXIT_FAILURE;

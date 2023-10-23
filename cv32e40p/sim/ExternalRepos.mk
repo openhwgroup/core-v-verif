@@ -31,10 +31,13 @@ EMBENCH_REPO    ?= https://github.com/embench/embench-iot.git
 EMBENCH_BRANCH  ?= master
 EMBENCH_HASH    ?= 6934ddd1ff445245ee032d4258fdeb9828b72af4
 
-COMPLIANCE_REPO   ?= https://github.com/riscv/riscv-compliance
-COMPLIANCE_BRANCH ?= master
-# 2020-08-19
-COMPLIANCE_HASH   ?= c21a2e86afa3f7d4292a2dd26b759f3f29cde497
+# TODO: silabs-hfegran: Temporary fork compliance suite to support bitmanip and
+# new repository structure. Revert back to latest mainline when bitmanip PR has
+# been approved and local changes upstreamed.
+# 2022-02-21
+COMPLIANCE_REPO   ?= https://github.com/silabs-hfegran/riscv-arch-test.git
+COMPLIANCE_BRANCH ?= dev_hf_riscv_arch_test
+COMPLIANCE_HASH   ?= 43556e3ae4e98d5e739204f37a11769e14154b7e
 
 # This Spike repo is only cloned when the DPI disassembler needs to be rebuilt.
 # Typically users can simply use the checked-in shared library.

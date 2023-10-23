@@ -14,23 +14,27 @@
  * limitations under the License.
  */
 
+`include "uvmt_cv32e40s_base_test_pkg.sv"
+
 package cv32e40s_instr_test_pkg;
 
   import uvm_pkg::*;
   import riscv_instr_pkg::*;
+  import riscv_instr_pkg::XLEN; // This is needed to avoid conflict with uvmt_cv32e40s_base_test_pkg
   import riscv_instr_test_pkg::*;
   import riscv_signature_pkg::*;
   import corev_instr_test_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
 
-  import cv32e40s_pkg::pma_region_t;
+  import cv32e40s_pkg::pma_cfg_t;
 
-  `include "uvmt_cv32e40s_constants.sv"
   `include "pma_adapted_mem_region_gen.sv"
   `include "cv32e40s_ldgen.sv"
 
   // Instruction streams specific to CV32E40S
 
   // RISCV-DV class override definitions
+  `include "cv32e40s_instr_sequence.sv"
   `include "cv32e40s_pma_cfg.sv"
   `include "cv32e40s_compressed_instr.sv"
   `include "cv32e40s_privil_reg.sv"
@@ -41,6 +45,8 @@ package cv32e40s_instr_test_pkg;
   `include "cv32e40s_instr_base_test.sv"
   `include "cv32e40s_pma_instr_lib.sv"
   `include "cv32e40s_fencei_instr_lib.sv"
+  `include "cv32e40s_zcmp_instr_lib.sv"
+  `include "cv32e40s_zcmt_instr_lib.sv"
 
   // Push general purpose register to the debugger stack
   function automatic void push_gpr_to_debugger_stack(cv32e40s_instr_gen_config cfg_corev,

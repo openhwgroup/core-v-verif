@@ -27,7 +27,6 @@
 .include "user_define.h"
 .section .text.start
 .globl _start
-.section .text
 #.include "user_init.s"
 .type _start, @function
 
@@ -37,8 +36,6 @@ _start:
 .globl _start_main
 .section .text
 _start_main:
-
-  #define EXP_MISA 0x40101104
 
 # CSR 0x340 is a 32-bit R/W scratch-pad
   # Immediates

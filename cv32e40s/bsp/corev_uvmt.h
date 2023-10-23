@@ -62,12 +62,13 @@
 #define CV_VP_OBI_SLV_RESP_D_EXOKAY_ADDR_MAX ((volatile uint32_t*) (CV_VP_OBI_SLV_RESP_BASE + 6*4 + 4*4))
 #define CV_VP_OBI_SLV_RESP_D_EXOKAY_VALID    ((volatile uint32_t*) (CV_VP_OBI_SLV_RESP_BASE + 6*4 + 4*5))
 
-// Bitfields for Debug Control VP register
+// API for Debug Control VP register
 #define CV_VP_DEBUG_CONTROL_DBG_REQ(i)             ((i) << 31)
 #define CV_VP_DEBUG_CONTROL_REQ_MODE(i)            ((i) << 30)
 #define CV_VP_DEBUG_CONTROL_RAND_PULSE_DURATION(i) ((i) << 29)
 #define CV_VP_DEBUG_CONTROL_PULSE_DURATION(i)      ((i) << 16)
 #define CV_VP_DEBUG_CONTROL_RAND_START_DELAY(i)    ((i) << 15)
 #define CV_VP_DEBUG_CONTROL_START_DELAY(i)         ((i) << 0)
+#define CV_VP_DEBUG_CONTROL *((volatile uint32_t * volatile) (CV_VP_DEBUG_CONTROL_BASE))
 
 #endif

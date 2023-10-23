@@ -48,6 +48,9 @@
    // Does this memory support atomics
    rand bit                      atomic;
 
+   // Does this memory support integrity
+   rand bit                      integrity;
+
    `uvm_object_utils_begin(uvma_core_cntrl_pma_region_c);
       `uvm_field_enum(corev_mxl_t,  xlen            , UVM_DEFAULT | UVM_NOPRINT)
       `uvm_field_int(               word_addr_low   , UVM_DEFAULT | UVM_NOPRINT)
@@ -56,6 +59,7 @@
       `uvm_field_int(               bufferable      , UVM_DEFAULT | UVM_NOPRINT)
       `uvm_field_int(               cacheable       , UVM_DEFAULT | UVM_NOPRINT)
       `uvm_field_int(               atomic          , UVM_DEFAULT | UVM_NOPRINT)
+      `uvm_field_int(               integrity       , UVM_DEFAULT | UVM_NOPRINT)
    `uvm_field_utils_end
 
    constraint addr_range_cons {
@@ -85,7 +89,7 @@
    /**
     * Simple lookup if address is in region
     */
-   extern function bit is_addr_in_region(bit [MAX_XLEN-1:0] byte_addr);
+   extern function bit is_addr_in_region(bit [MAX_XLEN-1:0] byte_addr, bit include_upper_word_address = 0);
 
    /**
     * Convert word address to byte address
@@ -111,15 +115,24 @@ function void uvma_core_cntrl_pma_region_c::do_print(uvm_printer printer);
    printer.print_field("bufferable", bufferable, 1);
    printer.print_field("cacheable", cacheable, 1);
    printer.print_field("atomic", atomic, 1);
+   printer.print_field("integrity", integrity, 1);
 
 endfunction : do_print
 
-function bit uvma_core_cntrl_pma_region_c::is_addr_in_region(bit [MAX_XLEN-1:0] byte_addr);
+function bit uvma_core_cntrl_pma_region_c::is_addr_in_region(bit [MAX_XLEN-1:0] byte_addr, bit include_upper_word_address = 0);
 
    // Per User manual, do not include the upper word address
-   if (((byte_addr >> 2) >= word_addr_low) &&
-       ((byte_addr >> 2) < word_addr_high))
-      return 1;
+   if (!include_upper_word_address) begin
+      if (((byte_addr >> 2) >= word_addr_low) &&
+          ((byte_addr >> 2) < word_addr_high)) begin
+         return 1;
+      end
+   end else begin
+      if (((byte_addr >> 2) >= word_addr_low) &&
+          ((byte_addr >> 2) <= word_addr_high)) begin
+         return 1;
+      end
+   end
 
    return 0;
 

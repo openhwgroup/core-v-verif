@@ -295,31 +295,31 @@ file against a reference signature.  As with riscv-dv, the compliance test-suite
 is cloned by the Makefiles to `$(CV_CORE)/vendor_lib/riscv` as needed.  The form of the target to run a single test-program
 from the compliance test suite is as follows:
 ```
-make compliance RISCV_ISA=<ISA> COMPLIANCE_PROG=<test-program>
+make compliance RISCV_DEVICE=<ISA-extension (e.g. I/M/C/privilege/Zifencei/Bitmanip)> COMPLIANCE_PROG=<test-program>
 ```
 To have the signature dumped and checked:
 ```
-make compliance_check_sig RISCV_ISA=<ISA> COMPLIANCE_PROG=<test-program>
+make compliance_check_sig RISCV_DEVICE=<ISA> COMPLIANCE_PROG=<test-program>
 ```
 Note that running either of these targets will invoke the `all_compliance` target which clones riscv-compliance
 and compiles all the test-programs.  Below is an example of running a specific test-program from the suite:
 ```
-make compliance RISCV_ISA=rv32Zifencei COMPLIANCE_PROG=I-FENCE.I-01
+make compliance RISCV_DEVICE=Zifencei COMPLIANCE_PROG=fence
 ```
-**Note:** There is a dependancy between RISCV_ISA and COMPLIANCE_PROG.  For example, because the I-ADD-01 test-program is part of the rv32i testsuite this works:
+**Note:** There is a dependancy between RISCV_DEVICE and COMPLIANCE_PROG.  For example, because the add-01 test-program is part of the rv32i testsuite this works:
 ```
-make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ADD-01
+make compliance RISCV_DEVICE=I COMPLIANCE_PROG=add-01
 ```
 But this does not:
 ```
-make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=I-ADD-01
+make compliance RISCV_ISA=C COMPLIANCE_PROG=add-01
 ```
 The `compliance_check_sig` target can be used in the same way as above to run the simulation plus perform a post-simulation
 check of the signature file and the reference signature provided as part of the compliance test-suite.
 <br><br>
 Per-extension compliance regressions can be run using the `compliance_regression` target.   For example:
 ```
-make compliance_regression RISCV_ISA=rv32imc
+make compliance_regression RISCV_DEVICE=C
 ```
 will run all compressed instruction tests in the compliance test-suite, diff the signature files and produce a summary report. Note that four of the test-programs
 in the rv32i compliance suite are deliberately ignored.  See [issue #412](https://github.com/openhwgroup/core-v-verif/issues/412).

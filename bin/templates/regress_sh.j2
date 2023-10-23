@@ -62,7 +62,7 @@ incr_test_counts () {
 
 {% for b in unique_builds.values() %}
 # Build:{{b.name}} {{b.description}}
-{% set cmd = b.cmd + ' CV_CORE=' + project + ' CFG=' + b.cfg + ' SIMULATOR=' + b.simulator + ' COV=' + regress_macros.yesorno(b.cov) + ' ' + regress_macros.cv_results(results) + ' ' + makeargs %}
+{% set cmd = b.cmd + ' CV_CORE=' + project + ' CFG=' + b.cfg + ' SIMULATOR=' + b.simulator + ' USE_ISS=' + regress_macros.yesorno(iss) + ' COV=' + regress_macros.yesorno(b.cov) + ' ' + regress_macros.cv_results(results) + ' ' + makeargs %}
 echo "{{session}}: Running build: [cd {{b.abs_dir}} && {{cmd}}]"
 pushd {{b.abs_dir}} > /dev/null
 {{cmd}}
@@ -80,7 +80,7 @@ popd > /dev/null
 # --> Test: {{t.name}} : Build: {{build}} : {{t.description}}
 {% if t.precmd %}
 #  Test (Precommand): {{t.name}} {{t.description}}
-{% set cmd = t.precmd + ' CV_CORE=' + project + 'CFG=' + r.builds[build].cfg + ' ' + toolchain|upper + '=1' + ' SIMULATOR=' + t.simulator + ' SEED=random GEN_NUM_TESTS=' + t.num + ' ' + regress_macros.cv_results(results) + ' ' + makeargs + ' ' + t.makearg %}
+{% set cmd = t.precmd + ' CV_CORE=' + project + 'CFG=' + r.builds[build].cfg + ' ' + toolchain|upper + '=1' + ' SIMULATOR=' + t.simulator + ' USE_ISS=' + regress_macros.yesorno(t.iss) + ' SEED=random GEN_NUM_TESTS=' + t.num + ' ' + regress_macros.cv_results(results) + ' ' + makeargs + ' ' + t.makearg %}
 echo "{{session}}: Running precmd: [cd {{t.abs_dir}} && {{cmd}}]
 pushd {{t.abs_dir}} > /dev/null
 {{cmd}} >& /dev/null;

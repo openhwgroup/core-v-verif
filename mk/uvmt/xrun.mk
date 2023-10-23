@@ -28,7 +28,7 @@
 #
 OS_IS_UBUNTU = $(findstring Ubuntu,$(shell lsb_release -d))
 ifeq ($(OS_IS_UBUNTU),Ubuntu)
-    .IGNORE: hello-world comp test compliance comp_corev-dv corev-dv gen_corev-dv
+  .IGNORE: hello-world comp test compliance comp_corev-dv corev-dv gen_corev-dv
 endif
 
 # Executables
@@ -37,35 +37,51 @@ SIMVISION         = $(CV_TOOL_PREFIX) simvision
 INDAGO            = $(CV_TOOL_PREFIX) indago
 IMC               = $(CV_SIM_PREFIX) imc
 
-XRUN_UVMHOME_ARG     ?= CDNS-1.2-ML
+XRUN_UVMHOME_ARG ?= CDNS-1.2-ML
 
 # Flags
-XRUN_COMP_FLAGS  ?= -64bit \
-					-disable_sem2009 \
-					-access +rwc \
-                    -nowarn UEXPSC \
-					-lwdgen \
-                    -sv \
-					-uvm \
-					-uvmhome $(XRUN_UVMHOME_ARG) \
-                    $(TIMESCALE) \
-					$(SV_CMP_FLAGS)
+XRUN_COMP_FLAGS  ?=               \
+    -64bit                        \
+    -disable_sem2009              \
+    -access +rwc                  \
+    -nowarn UEXPSC                \
+    -lwdgen                       \
+    -nocsf                        \
+    -sv                           \
+    -uvm                          \
+    -uvmhome $(XRUN_UVMHOME_ARG)  \
+    $(TIMESCALE)                  \
+    $(SV_CMP_FLAGS)
 
-XRUN_LDGEN_COMP_FLAGS ?= -64bit -disable_sem2009 -access +rwc \
-												 -nowarn UEXPSC \
-												 -nowarn DLCPTH \
-												 -sv \
-												 $(TIMESCALE) $(SV_CMP_FLAGS)
+XRUN_LDGEN_COMP_FLAGS ?=  \
+    -64bit                \
+    -disable_sem2009      \
+    -access +rwc          \
+    -nocsf                \
+    -nowarn UEXPSC        \
+    -nowarn DLCPTH        \
+    -sv                   \
+    -uvm                          \
+    -uvmhome $(XRUN_UVMHOME_ARG)  \
+    $(TIMESCALE)          \
+    $(SV_CMP_FLAGS)
 
 XRUN_RUN_BASE_FLAGS ?= -64bit $(XRUN_GUI) -licqueue +UVM_VERBOSITY=$(XRUN_UVM_VERBOSITY) \
-                       $(XRUN_PLUSARGS) -svseed $(RNDSEED) -sv_lib $(OVP_MODEL_DPI)
+                       $(XRUN_PLUSARGS) -svseed $(RNDSEED)
 XRUN_GUI         ?=
 XRUN_SINGLE_STEP ?=
-XRUN_ELAB_COV     = -covdut uvmt_$(CV_CORE_LC)_tb -coverage b:e:f:u
+XRUN_ELAB_COV     = -covdut uvmt_$(CV_CORE_LC)_tb -coverage b:e:f:t:u
 XRUN_ELAB_COVFILE = -covfile $(abspath $(MAKE_PATH)/../tools/xrun/covfile.tcl)
-XRUN_RUN_COV      = -covscope uvmt_$(CV_CORE_LC)_tb \
-					-nowarn CGDEFN
-XRUN_RUN_BASE_FLAGS += -sv_lib $(DPI_DASM_LIB)
+XRUN_RUN_COV      = -covscope uvmt_$(CV_CORE_LC)_tb -nowarn CGDEFN
+XRUN_RUN_BASE_FLAGS += -nocsf -sv_lib $(DPI_DASM_LIB)
+
+# Only append the IMPERAS_DV_MODEL sv_lib flag if the file actually exists)
+ifneq (,$(wildcard $(IMPERAS_DV_MODEL)))
+  ifeq ($(call IS_YES,$(USE_ISS)),YES)
+    XRUN_RUN_BASE_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
+  endif
+endif
+
 XRUN_RUN_BASE_FLAGS += -sv_lib $(abspath $(SVLIB_LIB))
 
 XRUN_UVM_VERBOSITY ?= UVM_MEDIUM
@@ -75,7 +91,8 @@ XRUN_UVM_VERBOSITY ?= UVM_MEDIUM
 DPI_INCLUDE        ?= $(shell dirname $(shell which xrun))/../include
 
 # Necessary libraries for the PMA generator class
-XRUN_PMA_INC += +incdir+$(TBSRC_HOME)/uvmt \
+XRUN_PMA_INC += +incdir+$(DV_UVM_TESTCASE_PATH)/base-tests \
+                +incdir+$(TBSRC_HOME)/uvmt \
                 +incdir+$(CV_CORE_PKG)/rtl/include \
                 +incdir+$(CV_CORE_COREVDV_PKG)/ldgen \
                 +incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
@@ -83,9 +100,9 @@ XRUN_PMA_INC += +incdir+$(TBSRC_HOME)/uvmt \
 ###############################################################################
 # Common QUIET flag defaults to -quiet unless VERBOSE is set
 ifeq ($(call IS_YES,$(VERBOSE)),YES)
-QUIET=
+  QUIET=
 else
-QUIET=-quiet
+  QUIET=-quiet
 endif
 
 ################################################################################
@@ -93,11 +110,14 @@ endif
 # GUI=YES enables interactive mode
 # ADV_DEBUG=YES will enable Indago, default is to use SimVision
 ifeq ($(call IS_YES,$(GUI)),YES)
-XRUN_GUI += -gui
-XRUN_USER_COMPILE_ARGS += -linedebug
-ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-XRUN_GUI += -indago
-endif
+  XRUN_GUI += -gui
+  ifeq ($(call IS_YES,$(SRC_DEBUG)),YES)
+    XRUN_USER_COMPILE_ARGS += -linedebug -uvmlinedebug -enable_tpe -classlinedebug
+    XRUN_USER_RUN_FLAGS += -linedebug -uvmlinedebug -enable_tpe -classlinedebug
+  endif
+  ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
+    XRUN_GUI += -indago
+  endif
 endif
 
 ################################################################################
@@ -124,9 +144,9 @@ endif
 ################################################################################
 # Waveform (post-process) command line
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-WAVES_CMD = cd $(SIM_RUN_RESULTS) && $(INDAGO) -db ida.db
+  WAVES_CMD = cd $(SIM_RUN_RESULTS) && $(INDAGO) -db ida.db
 else
-WAVES_CMD = cd $(SIM_RUN_RESULTS) && $(SIMVISION) waves.shm
+  WAVES_CMD = cd $(SIM_RUN_RESULTS) && $(SIMVISION) waves.shm
 endif
 
 XRUN_USER_COMPILE_ARGS += $(USER_COMPILE_FLAGS)
@@ -139,31 +159,31 @@ IMC_REPORT_ARGS = -exec $(CORE_V_VERIF)/$(CV_CORE)/sim/tools/xrun/cov_report.tcl
 MERGED_COV_DIR ?= merged_cov
 
 ifeq ($(call IS_YES,$(COV)),YES)
-XRUN_ELAB_COV_FLAGS += $(XRUN_ELAB_COV)
-XRUN_ELAB_COV_FLAGS += $(XRUN_ELAB_COVFILE)
-XRUN_RUN_COV_FLAGS += $(XRUN_RUN_COV)
+  XRUN_ELAB_COV_FLAGS += $(XRUN_ELAB_COV)
+  XRUN_ELAB_COV_FLAGS += $(XRUN_ELAB_COVFILE)
+  XRUN_RUN_COV_FLAGS += $(XRUN_RUN_COV)
 endif
 
 # Find command to gather ucd files
 COV_MERGE_FIND = find "$(SIM_CFG_RESULTS)" -type f -name "*.ucd" | grep -v d_cov | xargs dirname
 
 ifeq ($(call IS_YES,$(MERGE)),YES)
-COV_MERGE = cov_merge
-TEST = $(MERGED_COV_DIR)
+  COV_MERGE = cov_merge
+  TEST = $(MERGED_COV_DIR)
 else
-COV_MERGE =
+  COV_MERGE =
 endif
 
 ifeq ($(call IS_YES,$(MERGE)),YES)
-COV_DIR ?= $(XRUN_RESULTS)/$(CFG)/$(MERGED_COV_DIR)/cov_work/scope/merged
+  COV_DIR ?= $(XRUN_RESULTS)/$(CFG)/$(MERGED_COV_DIR)/cov_work/scope/merged
 else
-COV_DIR ?= cov_work/uvmt_$(CV_CORE_LC)_tb/$(TEST_NAME)
+  COV_DIR ?= cov_work/uvmt_$(CV_CORE_LC)_tb/$(TEST_NAME)
 endif
 
 ifeq ($(call IS_YES,$(GUI)),YES)
-COV_ARGS += -gui
+  COV_ARGS += -gui
 else
-COV_ARGS += $(IMC_REPORT_ARGS)
+  COV_ARGS += $(IMC_REPORT_ARGS)
 endif
 
 ################################################################################
@@ -173,22 +193,31 @@ endif
 XRUN_UVM_MACROS_INC_FILE = $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC)_uvm_macros_inc.sv
 
 XRUN_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-XRUN_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 XRUN_USER_COMPILE_ARGS += +define+UVM
+
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
-	XRUN_PLUSARGS += +USE_ISS
+  ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
+    export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
+  else
+    export FILE_LIST_IDV      ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
+    export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dv_deps.flist
+  endif
+  XRUN_PLUSARGS          += +USE_ISS
+  XRUN_USER_COMPILE_ARGS += +define+USE_IMPERASDV
+  XRUN_USER_COMPILE_ARGS += +define+USE_ISS
 else
-    XRUN_PLUSARGS += +DISABLE_OVPSIM
+  XRUN_PLUSARGS          += +DISABLE_OVPSIM
+  export FILE_LIST_IDV_DEPS   ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
 endif
 ifeq ($(call IS_YES,$(USE_RVVI)),YES)
-    XRUN_PLUSARGS +="+USE_RVVI"
+  XRUN_PLUSARGS +="+USE_RVVI"
 endif
 ifeq ($(call IS_YES,$(TEST_DISABLE_ALL_CSR_CHECKS)),YES)
-    XRUN_PLUSARGS +="+DISABLE_ALL_CSR_CHECKS"
+  XRUN_PLUSARGS +="+DISABLE_ALL_CSR_CHECKS"
 endif
 ifneq ($(TEST_DISABLE_CSR_CHECK),)
-	XRUN_PLUSARGS += +DISABLE_CSR_CHECK=$(TEST_DISABLE_CSR_CHECK)
+  XRUN_PLUSARGS += +DISABLE_CSR_CHECK=$(TEST_DISABLE_CSR_CHECK)
 endif
 
 # Simulate using latest elab
@@ -198,6 +227,10 @@ XRUN_RUN_FLAGS        += $(XRUN_RUN_BASE_FLAGS)
 XRUN_RUN_FLAGS        += $(XRUN_RUN_COV_FLAGS)
 XRUN_RUN_FLAGS        += $(XRUN_USER_RUN_FLAGS)
 XRUN_RUN_FLAGS        += $(USER_RUN_FLAGS)
+
+ifneq ($(CFG_SV_INCLUDE_FILES),)
+XRUN_SV_INCLUDE_FILES += +incdir+$(abspath $(CFG_SV_INCLUDE_FILES))
+endif
 
 ###############################################################################
 # Xcelium warning suppression
@@ -248,6 +281,22 @@ XRUN_COMP_FLAGS += -nowarn CGPIDF
 # deselect_coverage -all warnings
 XRUN_COMP_FLAGS += -nowarn CGNSWA
 
+# Newer tool version has different fsm coverage options than old version. Ok.
+XRUN_COMP_FLAGS += -nowarn COVFDP
+
+# Certain data types are not supported for toggle cov. Ok.
+XRUN_COMP_FLAGS += -nowarn COVUTA
+
+# MORE toggle cov support CAN be enabled.
+XRUN_COMP_FLAGS += -nowarn COVNOEN
+XRUN_COMP_FLAGS += -nowarn COVMDD
+
+# Value Parameters without default values
+XRUN_COMP_FLAGS += -setenv CADENCE_ENABLE_AVSREQ_44905_PHASE_1=1
+
+# Type Parameters without default values
+XRUN_COMP_FLAGS += -setenv CADENCE_ENABLE_AVSREQ_63188_PHASE_1=1
+
 # deselect_coverage -all warnings
 XRUN_COMP_COREV_DV_FLAGS += -nowarn BNDWRN
 XRUN_COMP_COREV_DV_FLAGS += $(CFG_COMPILE_FLAGS)
@@ -263,6 +312,7 @@ XRUN_RUN_COV    += -nowarn WCROSS
 
 # Un-named covergroup instances
 XRUN_RUN_COV    += -nowarn CGDEFN
+
 
 ###############################################################################
 # Targets
@@ -292,6 +342,7 @@ XRUN_COMP = $(XRUN_COMP_FLAGS) \
 		$(XRUN_UVM_MACROS_INC_FILE) \
 		-f $(CV_CORE_MANIFEST) \
 		$(XRUN_FILE_LIST) \
+		$(XRUN_SV_INCLUDE_FILES) \
 		$(UVM_PLUSARGS)
 
 comp: mk_xrun_dir $(CV_CORE_PKG) $(SVLIB_PKG)
@@ -307,7 +358,7 @@ comp: mk_xrun_dir $(CV_CORE_PKG) $(SVLIB_PKG)
 		-elaborate
 
 ifneq ($(call IS_NO,$(COMP)),NO)
-XRUN_SIM_PREREQ = comp
+  XRUN_SIM_PREREQ = comp
 endif
 
 XRUN_COMP_RUN = $(XRUN_RUN_FLAGS)
@@ -323,6 +374,18 @@ endif
 # Standalone tb that generates appropriate linker files based on a given pma
 # configuration. Uses same code as the generator embedded in corev-dv.
 
+# By default, emit results to cfg run directory (Needs CFG set),
+# if TEST is set, then emit results to specific test run directory
+
+LDGEN ?= $(if $(TEST),$(TEST)/$(RUN_INDEX)/test_program,)
+WRITABLE_REGION_IDX ?= -1
+ifeq ($(call IS_YES,$(IS_ROM_RAM_LAYOUT)), YES)
+  ifeq ($(WRITABLE_REGION_IDX), -1)
+    $(error WRITABLE_REGION_IDX undefined)
+  endif
+  LDGEN_CFG_LAYOUT = +writable_region_idx=$(WRITABLE_REGION_IDX)
+endif
+
 ldgen: $(CV_CORE_PKG)
 	@echo "$(BANNER)"
 	@echo "* Generating linker scripts in $(SIM_LDGEN_RESULTS)"
@@ -336,10 +399,13 @@ ldgen: $(CV_CORE_PKG)
 		$(XRUN_PMA_INC) \
 		$(CFG_PLUSARGS) \
 		$(CFG_COMPILE_FLAGS) \
+		$(XRUN_SV_INCLUDE_FILES) \
 		+ldgen_cp_test_path=$(SIM_LDGEN_RESULTS) \
+		+standalone_generate=1 \
+		$(LDGEN_CFG_LAYOUT) \
 		$(TBSRC_HOME)/ldgen/ldgen_tb.sv \
 		-top $(basename $(notdir $(TBSRC_HOME)/ldgen/ldgen_tb.sv))
-	cp $(BSP)/link_pma.ld $(SIM_LDGEN_RESULTS)/link.ld
+	cp $(BSP)/link_corev-dv.ld $(SIM_LDGEN_RESULTS)/link.ld
 
 ################################################################################
 # If the configuration specified OVPSIM arguments, generate an ovpsim.ic file and
@@ -351,6 +417,12 @@ gen_ovpsim_ic:
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
 		echo "$(CFG_OVPSIM)" > $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic; \
 	fi
+	# add glossing of registers
+	@echo "--override cpu/wfi_is_nop=T" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+	#@echo "--trace --tracechange --traceshowicount --monitornetschange --tracemode --tracemem XSA" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+	#@echo "--extlib refRoot/cpu/cat=imperas.com/intercept/cpuContextAwareTracer/1.0"  >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+	#@echo "--override refRoot/cpu/cat/show_changes=T" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+	#@echo "--override refRoot/cpu/cat/definitions_file=${IMPERAS_HOME}/lib/$(IMPERAS_ARCH)/ImperasLib/riscv.ovpworld.org/processor/riscv/1.0/csr_context_info.lis" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
 export IMPERAS_TOOLS=ovpsim.ic
 
 ################################################################################
@@ -379,38 +451,46 @@ test: $(XRUN_SIM_PREREQ) hex gen_ovpsim_ic
 # Makefile of this <sim>.mk implements "all_compliance", the target that
 # compiles the test-programs.
 #
-# There is a dependancy between RISCV_ISA and COMPLIANCE_PROG which *you* are
-# required to know.  For example, the I-ADD-01 test-program is part of the rv32i
-# testsuite.
+# There is a dependancy between RISCV_DEVICE and COMPLIANCE_PROG which *you*
+# are # required to know. For example, the add-01 test-program is part of the
+# RISCV_DEVICE=I testsuite, where device denotes the ISA extension name.
 # So this works:
-#                make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ADD-01
+#                make compliance RISCV_DEVICE=I COMPLIANCE_PROG=add-01
 # But this does not:
-#                make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=I-ADD-01
+#                make compliance RISCV_DEVICE=C COMPLIANCE_PROG=add-01
 #
-RISCV_ISA       ?= rv32i
-COMPLIANCE_PROG ?= I-ADD-01
+RISCV_ISA       ?= rv32i_m
+RISCV_DEVICE    ?= I
+COMPLIANCE_PROG ?= add-01
 
 SIG_ROOT      ?= $(SIM_CFG_RESULTS)/$(RISCV_ISA)
 SIG           ?= $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX)/$(COMPLIANCE_PROG).signature_output
-REF           ?= $(COMPLIANCE_PKG)/riscv-test-suite/$(RISCV_ISA)/references/$(COMPLIANCE_PROG).reference_output
+REF           ?= $(COMPLIANCE_PKG)/riscv-test-suite/$(RISCV_ISA)/$(RISCV_DEVICE)/references/$(COMPLIANCE_PROG).reference_output
 TEST_PLUSARGS ?= +signature=$(COMPLIANCE_PROG).signature_output
 
 ifneq ($(call IS_NO,$(COMP)),NO)
-XRUN_COMPLIANCE_PREREQ = comp build_compliance
+  XRUN_COMPLIANCE_PREREQ = comp build_compliance
+endif
+
+# 40p workaround for ISS configuration
+ifeq ($(CV_CORE_LC),cv32e40p)
+  ISS_CFG = export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic
+else
+  ISS_CFG = export IMPERAS_TOOLS=ovpsim.ic
 endif
 
 compliance: $(XRUN_COMPLIANCE_PREREQ)
 	mkdir -p $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX) && \
     cd $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX)  && \
-	export IMPERAS_TOOLS=$(CORE_V_VERIF)/$(CV_CORE_LC)/tests/cfg/ovpsim_no_pulp.ic && \
+	$(ISS_CFG) && \
 	$(XRUN) -R -xmlibdirname ../../../xcelium.d \
 		-l xrun-$(COMPLIANCE_PROG).log \
 		-covtest riscv-compliance $(XRUN_COMP_RUN) \
 		$(TEST_PLUSARGS) \
 		$(XRUN_RUN_WAVES_FLAGS) \
 		+UVM_TESTNAME=uvmt_$(CV_CORE_LC)_firmware_test_c \
-		+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).hex \
-		+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).elf
+		+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(RISCV_DEVICE)/$(COMPLIANCE_PROG).hex \
+		+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(RISCV_DEVICE)/$(COMPLIANCE_PROG).elf
 
 
 
@@ -434,6 +514,7 @@ comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG)
 		+incdir+$(COREVDV_PKG) \
 		+incdir+$(CV_CORE_COREVDV_PKG) \
 		-f $(COREVDV_PKG)/manifest.f \
+		$(XRUN_SV_INCLUDE_FILES) \
 		-l xrun.log
 
 corev-dv: clean_riscv-dv \

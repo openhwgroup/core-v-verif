@@ -182,13 +182,17 @@ endif
 # SVLIB repo var end
 
 ###############################################################################
-# Imperas Instruction Set Simulator
+# Imperas OVPsim Instruction Set Simulator
 
 DV_OVPM_HOME    = $(CORE_V_VERIF)/vendor_lib/imperas
 DV_OVPM_MODEL   = $(DV_OVPM_HOME)/imperas_DV_COREV
 DV_OVPM_DESIGN  = $(DV_OVPM_HOME)/design
 OVP_MODEL_DPI   = $(DV_OVPM_MODEL)/bin/Linux64/imperas_CV32.dpi.so
 #OVP_CTRL_FILE   = $(DV_OVPM_DESIGN)/riscv_CV32E40P.ic
+
+###############################################################################
+# Imperas OVPsim Instruction Set Simulator
+IMPERAS_DV_MODEL = $(IMPERAS_HOME)/lib/$(IMPERAS_ARCH)/ImperasLib/imperas.com/verification/riscv/1.0/model.so
 
 ###############################################################################
 # Run the yaml2make scripts
@@ -228,10 +232,14 @@ endif
 ###############################################################################
 # cfg
 CFGYAML2MAKE = $(CORE_V_VERIF)/bin/cfgyaml2make
-CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp
+CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp compliance
 ifneq ($(filter $(CFG_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
 ifneq ($(CFG),)
+ifneq ($(CFG_PATH_OVERRIDE),)
+CFG_FLAGS_MAKE := $(shell $(CFGYAML2MAKE) --yaml=$(abspath $(CFG_PATH_OVERRIDE))/$(CFG).yaml $(YAML2MAKE_DEBUG) --prefix=CFG --core=$(CV_CORE))
+else
 CFG_FLAGS_MAKE := $(shell $(CFGYAML2MAKE) --yaml=$(CFG).yaml $(YAML2MAKE_DEBUG) --prefix=CFG --core=$(CV_CORE))
+endif
 ifeq ($(CFG_FLAGS_MAKE),)
 $(error ERROR Error finding or parsing configuration: $(CFG).yaml)
 endif

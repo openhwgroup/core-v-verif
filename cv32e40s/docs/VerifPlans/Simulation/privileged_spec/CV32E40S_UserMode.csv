@@ -1,0 +1,379 @@
+Requirement Location,Feature,Sub Feature,Feature Description,Verification Goal,Pass/Fail Criteria,Test Type,Coverage Method,Link to Coverage,Comment
+privspec,Misc,SupportedLevels,"""At any time, a RISC-V hardware thread (hart) is running at some privilege level encoded as a mode
+in one or more CSRs [User, Supervisor, (Reserved), Machine]""","Run all supported levels (U-mode, M-mode); ensure no unsupported levels can be run (S-mode, reserved).
+
+Coverage: Attempts to set various modes.",Assertion Check,"ENV capability, not specific test",Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_no_unsupported_modes
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_umode
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_mmode
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+,,ResetMode,"""M-mode [...] is the first mode entered at reset.""","Wait for reset to end, ensure that the core is in M-mode.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_initial_mode
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+,,Refetch,"Before a mode change, instructions can have been prefetched and exist in the pipeline but the fetching was done in a different mode than what is changed to. This should not allow for privilege escalation so the instructions must be refetched.","Checking: Handled by ""InstrProt"" below.
+
+Coverage: Instr fetched twice (same pc, different prot).",N/A,N/A,Functional Coverage,"COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cov_refetch_as_umode_notrap
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cov_refetch_as_mmode_notrap
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cov_refetch_as_umode_trap
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cov_refetch_as_mmode_trap",
+obi,,InstrProt,"""prot[2:1]
+User/Application (2’b00), Supervisor (2’b01), Reserved (2’b10), Machine (2’b11)
+This matches the privilege levels from [RISC-V-PRIV].""","Track prot[2:1] on instruction fetches on obi, observe retirements on rvfi, ensure the privilege mode of the instruction's execution matches what it was fetched as on obi.
+
+Coverage: Explicitly observe U/M both.",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_instr_prot
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_instr_prot_legal
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_prot_iside_legal
+
+COV: ???",
+,,DataProt,"""prot[2:1]
+User/Application (2’b00), Supervisor (2’b01), Reserved (2’b10), Machine (2’b11)
+This matches the privilege levels from [RISC-V-PRIV].""","Track prot[2:1] on data loads/stores, observe retirements on rvfi, ensure the effective privilege mode of the retirement matches what was used on obi.
+
+Coverage: Explicitly observe U/M both.",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_data_prot
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_data_prot_legal
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_prot_dside_legal
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_data_prot_equal
+
+COV: ???",
+,,DbgProt,"Since dmode execs as mmode, and obi has corresponding signals, the relationship should be visible on obi.","When obi has a transaction with `dbg` high, check that `prot[2:1]` is M-mode on I-side, and ""effective"" mode on D-side.
+
+Note: Consider checking before MPU.
+
+Coverage: Observe U-/M-mode on D-side.",Assertion Check,"ENV capability, not specific test",Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dbg_prot_iside
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dbg_prot_dside
+
+COV: ???",
+privspec,CSRs,IllegalAccess,"""Attempts to access a CSR without appropriate privilege level […] also raise illegal instruction exceptions""","Try all kinds of accesses (R, W, RW, S, C, …) to all M-level CSRs while in U-level; ensure illegal instruction exception happens.
+
+(Hint: Assert RVFI vs csr[9:8])
+
+Functional coverage can do a full cross of modes vs all CSRs.",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_illegal_csr_access
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_mode_csraddr
+
+DTC: cv32e40s/tests/programs/custom/csr_priv_gen_test/",
+,,AccessLevel,"""The next two bits (csr[9:8]) encode the lowest privilege level that can access the CSR.""","Try all kinds of accesses to all implemented M-level and U-level CSRs while in M-mode and U-mode (cross), ensure appropriate access grant/deny.",Check against RM,Constrained-Random,Functional Coverage,COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_mode_csraddr,
+,,Warl,U-level CSRs may have WARL fields.,"(There is only JVT, and must be handled by the Zc vplan. Link to cov here still.)",Other,N/A,N/A,"A: ???
+COV: ???",Waiting for Zc vplan linkage
+,,MisaU,"""The “U” and “S” bits will be set if there is support for user and supervisor modes respectively.""","Read misa and see that ""U"" is always on.
+
+Coverage: Ensure actual csr read instruction read misa.",Assertion Check,"ENV capability, not specific test",Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_misa_bits
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_csrreadwrite_mode_umodecsrs
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+,,MisaN,"""N   Tentatively reserved for User-Level Interrupts extension""","Read misa and see that ""N"" is always off.
+
+Coverage: Ensure actual csr read instruction read misa.",Assertion Check,"ENV capability, not specific test",Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_misa_bits
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_csrreadwrite_mode_umodecsrs
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+,,UserExtensions,"""If both XS and FS are hardwired to zero, then SD is also always zero.""
+
+""In systems without additional user extensions requiring new state, the XS field is hardwired to zero.""
+
+""If neither the F extension nor S-mode is implemented, then FS is hardwired to zero.""
+
+None of those 3 are implemented, so they should all be zero.","Check that mstatus {XS, FS, SD} are all 0.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_umode_extensions
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+,,MscratchReliable,"""the OS can rely on holding a value in the mscratch register while the user context
+is running.""","Check that mscratch never changes in U-mode.
+
+(CLIC vplan must handle ""mscratchcsw"" and ""mscratchcswl"", but link to coverage of that here too.)
+
+Coverage: See that mscratch is attempted written from umode.",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mscratch_reliable
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_mscratch_changing
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_csrreadwrite_mode_umodecsrs
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+,,Mcsratchcsw,"The clic spec introduces ""conditional swapping"" of mscratch.",(Relevant user-mode related functionality must be handled by the CLIC vplan. Link to cov here still),N/A,N/A,N/A,"A: ???
+COV: ???",Waiting for CLIC vplan linkage.
+,,MppValues,"""xPP fields are WARL fields that can hold only privilege mode x and any implemented privilege
+mode lower than x""
+
+""M-mode software can determine whether a privilege mode is implemented by writing that  mode to MPP then reading it back.""","Checking: Check that MPP can hold ""M"" and ""U"" and that it can hold nothing else.
+
+Coverage: Write and read instrs with each 2-bit permutation.",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mpp_mode
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_mpp_umode
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_mpp_mmode
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.gen_try_goto_mode[*].cov_try_goto_mode
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.gen_try_goto_mode[*].cov_write_mpp",
+,,SppValues,"""If privilege mode x is not implemented, then xPP must be hardwired to 0.""",Check that SPP is always 0.,Assertion Check,Constrained-Random,Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_spp_zero,
+,,MedelegMideleg,"""In systems without S-mode, the medeleg and mideleg registers should not exist.""","Attempt access to these CSRs.
+
+Coverage: Instrs attempt (R/W) access.",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_medeleg_mideleg
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_csrreadwrite_mode_umodecsrs
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+,,Mcounteren,"""In systems with U-mode, the mcounteren must be implemented""","Attempt access to this CSR. (See Counters section below too.)
+
+Coverage: Instrs attempt (R/W) access.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mcounteren_access
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+n-ext,,NExt,N-extension CSRs used to be supported earlier in the legacy of the core's source code.,"Check that the old N-ext CSRs are not accessible (ustatus, uie, utvec, uscratch, uepc, ucause, utval, uip), and traps upon access attempts.",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_next_csrs
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_mode_csraddr
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+manual,,Jvt,"The vector table jump CSR is accessible and effective in U-mode. ""Smstateen"" applies. Both CSR access and instruction execution is affected.","(Zc vplan should be responsible, but link to coverage here too.)",N/A,N/A,N/A,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_jvt_access
+
+COV: ???",Waiting for Zc vplan linkage
+privspec,Traps,SoftwareInterrupts,U-mode software interrupts are not supported.,"Check that the zero-bits in `mie` and `mip` are always zero, and mcause is never S/U-mode software interrupt.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_softwareinterrupts_zeromie
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_softwareinterrupts_zeromip
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_softwareinterrupts_mcausemode
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+,,TrapMpp,"""When a trap is taken from privilege mode y into privilege mode x, […] xPP is set to y.""","Checking: Be in mode y, observe exception and interrupt, check MPP is mode y.
+
+Cover: Cross U/M with Exc/Int.",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_trap_mpp_exception
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_trap_mpp_general
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_trap_mpp_debug
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_mpp_excint",
+,,HigherEnabled,"""Interrupts for higher-privilege modes, y>x ,are always globally enabled regardless of the setting of the global yIE bit for the higher-privilege mode.""",(Responsibility of Interrupts and Clic vplans. Link to coverage here too.),N/A,N/A,N/A,"A: ???
+COV: ???",Waiting for interrupts vplans
+,,HigherDisable,"""Higher-privilege-level code can use separate per-interrupt enable bits to disable selected higher-privilege-mode interrupts before ceding control to a lower-privilege mode.""",(Responsibility of Interrupts and Clic vplans. Link to coverage here too.),N/A,N/A,N/A,"A: ???
+COV: ???",Waiting for interrupts vplans
+,,HigherNone,"""A higher-privilege mode y could disable all of its interrupts before ceding control to a lower-privilege mode""",(Responsibility of Interrupts and Clic vplans. Link to coverage here too.),N/A,N/A,N/A,"A: ???
+
+COV: ???",Waiting for interrupts vplans
+,,LowerLevel,"""Interrupts for lower-privilege modes, w<x, are always globally disabled regardless of the setting of any global wIE bit for the lower-privilege mode.""",(Does not apply to U-mode.),N/A,N/A,N/A,N/A,Waiting for interrupts vplans
+,,ToMmode,"""An interrupt i will trap to M-mode (causing the privilege mode to change to M-mode) [...]""","Ensure that whenever an interrupt is taken, it is handled in M-mode.",Assertion Check,Constrained-Random,Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_interrupt_mmode,
+,,MretMpp,"""When executing an xRET instruction, supposing xPP holds the value y […] the privilege mode is changed to y""","Be in M-mode, execute mret with MPP as U-mode and as M-mode, ensure correct priv mode being executed in.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mret_from_mpp_umode
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mret_from_mpp_mmode",
+,,MretLeastPrivileged,"""When executing an xRET instruction [...] xPP is set to the least-privileged supported mode (U if U-mode is implemented, else M)""","Be in M-mode, execute mret, ensure that MPP is set to U-mode.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mret_to_mpp
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+,,MretMprv,"""When executing an xRET instruction [...] If xPP≠M, xRET also sets MPRV=0.""","Be in M-mode, have xPP=U, execute mret, ensure that MPRV is set to 0.
+
+Conversely, when xPP=M, MPRV does not exhibit such an effect upon MPRV.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mret_mprv_writemstatus_simplified
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mret_mprv_writempp
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mret_mprv_writestate
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mret_mprv_poststate
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mprv_poststate",
+,,Mepc,"""xRET sets the pc to the value stored in the xepc register.""",(Assumed to be covered by the exceptions vplan. Should apply regardless of privilege mode. Link to coverage here too.),N/A,N/A,N/A,"A: ???
+
+COV: ???",Waiting for exceptions vplan linkage.
+,,TrapsMmode,"""By default, all traps at any privilege level are handled in machine mode,""","Observe traps (interrupts and exceptions) getting triggered while in M-mode and U-mode, ensure the handler always starts in M-mode.
+
+Coverage: See rvfi_valid with exception/interrupt, while previous rvfi_valid was U/M. (Works in conjunction with ""TrapMpp"".)",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_traps_mmode
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_interrupt_mmode
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cov_umode_intr
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cov_umode_notrap
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_prevmode_excint
+
+DTC: cv32e40s/tests/programs/custom/interrupt_priv_test/",
+privspec,Instructions,WfiExecute,"""When TW=0, the WFI instruction may execute in lower privilege modes when not prevented for some other reason.""","Be in U-mode, have mstatus.TW=0, execute a WFI, ensure operation works as normal.",Assertion Check,Constrained-Random,Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_wfi_normal,
+,,WfiIllegal,"""When TW=1, then if WFI is executed in any less-privileged mode, and it does not complete within an implementation-specific, bounded time limit, the WFI instruction causes an illegal instruction exception.""
+
+""The time limit is set to 0 for CV32E40S.""","Be in U-mode, have mstatus.TW=1, execute a WFI, ensure illegal instruction exception occurs.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_wfi_illegal
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+,,Ecall,"""The ECALL [...]. When executed in U-mode [...] it generates an environment-call-from-U-mode
+exception [...], and performs no other operation.""
+
+""The mcause register [...]. When a trap is taken into M-mode, mcause is written with a code indicating the event that caused the trap.""","Be in U-mode, execute ECALL, ensure that an exception is taken and mcause is set correctly.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ecall_umode_trap
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ecall_umode_exception
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ecall_umode_cause
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ecall_umode_poststate
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+,,Ebreak,(See ebreak under the debug feature section.),,Other,Other,N/A,N/A,
+,,Mret,"""An xRET instruction can be executed in privilege mode x or higher""","Be in U-mode, execute MRET, ensure that it does not execute like it does in M-mode: Raise illegal exception, priv mode goes to M and not MPP, MPP becomes U, MPRV is unchanged.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mret_umode_exception
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mret_umode_nextmode
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mret_umode_mpp
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mret_umode_mprv
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+,,CustomInstr,"""The subspace of the SYSTEM major opcode shown in Figure 3.30 is designated for custom use.""
+
+""Unprivileged or User-Level""
+
+(40s has no such thing.)","Execute custom SYSTEM ""Unprivileged or User-Level"" instructions, ensure they are illegal instructions.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_custom_instr
+
+DTC: cv32e40s/tests/programs/custom/custom_priv_gen_test/",
+40p,,Uret,"The uret instruction existed earlier in the core's history, but no longer exists.",Executing uret gives an illegal instruction exception.,Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_uret
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",
+privspec,EffectiveMode,ModifyOff,"""When MPRV=0, loads and stores behave as normal, using the translation and protection mechanisms of the current privilege mode.""","(Handled by ""Prot"" items above. PMA/PMP specifics must also be handled by respective vplans.)",Other,Other,N/A,N/A,
+,,ModifyOn,"""When MPRV=1, load and store memory addresses are translated and protected, and endianness is applied, as though the current privilege mode were set to MPP""","(Handled by ""Prot"" items above. PMA/PMP specifics must also be handled by those vplans.)",Other,Other,N/A,N/A,
+,,ModifyIside,"""Instruction address-translation and protection are unaffected by the setting of MPRV.""","(Handled by ""Prot"" items above. PMA/PMP specifics must also be handled by those vplans.)",Other,Other,N/A,N/A,
+,,UmodeUnmodified,Both mret and dret going to umode sets MPRV to 0.,Check that umode never can happen together with MPRV being high.,Assertion Check,"ENV capability, not specific test",Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_umode_unmodified,
+privspec,Counters,McounterenClear,"""When the CY, TM, IR, or HPMn bit in the mcounteren register is clear, attempts to read the cycle, time, instret, or hpmcountern register while executing in S-mode or U-mode will cause an illegal instruction exception.""","Attempt to read all of those from U-mode while the corresponding bit is 0, ensure illegal instruction exception happens.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.gen_mcounteren_clear[*].a_check
+
+DTC: cv32e40s/tests/programs/custom/mcounteren_priv_gen_test/",
+,,McounterenSet,"""When one of these bits is set, access to the corresponding register is permitted in the next implemented privilege mode (S-mode if implemented, otherwise U-mode).""","Check that mcounteren is MRW WARL(0x0).
+
+Coverage: ""mcounteren"" attempt written from M/U mode, ""corresponding register"" attempted read/write from M/U mode. (Let CSRs or Counters vplan have the responsibility, but ""link to coverage"" here.)",Assertion Check,Constrained-Random,Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mcounteren_zeros,
+debug,Debug,TriggersAccess,"""The trigger registers, except scontext and hcontext, are only accessible in machine and Debug Mode to prevent untrusted user code from causing entry into Debug Mode without the OS’s permission.""",(Exceptions vplan should handle this. Link to coverage here too.),N/A,N/A,N/A,"A: ???
+
+COV: ???
+
+DTC: cv32e40s/tests/programs/custom/privilege_test/",Waiting for exceptions vplan linkage.
+,,EbreakuOff,"""ebreak instructions in U-mode behave as described in the Privileged Spec.""","Have dcsr.ebreaku=0, be in U-mode, execute ebreak, ensure ""normal"" ebreak behavior and no debug entry.
+
+Note: Only need to check that correct exception occurs, priv spec exception details should be part of the Exceptions vplan.",Assertion Check,Constrained-Random,Assertion Coverage,"A: A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_off_cause
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_off_exception
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_off_nodebug
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_off_nodebugcause
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_off_trap
+
+DTC: cv32e40s/tests/programs/custom/debug_priv_test/",
+,,EbreakuOn,"""ebreak instructions in U-mode enter Debug Mode.""","Have dcsr.ebreaku=1, be in U-mode, execute ebreak, ensure debug entry happens instead of ""normal"" ebreak behavior.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_on_dbgtrap
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_on_rvfivalid
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_ebreaku_on_noexception
+
+COV: ???
+
+DTC: cv32e40s/tests/programs/custom/debug_priv_test/",
+,,Mcontrol6Umode0,"""When set, enable this trigger in U-mode.""
+
+With ""mcontrol6.u=0"" trigger condition should not be acted upon.",(Is the responsibility of the debug/triggers vplan. Link to coverage here too.),Other,Other,N/A,"A: ???
+
+COV: ???",Waiting for debug vplan linkage.
+,,Mcontrol6Umode1,"""When set, enable this trigger in U-mode.""
+
+With ""mcontrol6.u=1"" trigger condition should be acted upon.",(Is the responsibility of the debug/triggers vplan. Link to coverage here too.),Other,Other,N/A,"A: ???
+
+COV: ???",Waiting for debug vplan linkage.
+,,EtriggerUmode0,"""When set, enable this trigger for exceptions that are taken from U mode.""
+
+With ""etrigger.u=0"" trigger condition should not be acted upon.",(Is the responsibility of the debug/triggers vplan. Link to coverage here too.),Other,Other,N/A,"A: ???
+
+COV: ???",Waiting for debug vplan linkage.
+,,EtriggerUmode1,"""When set, enable this trigger for exceptions that are taken from U mode.""
+
+With ""etrigger.u=1"" trigger condition should be acted upon.",(Is the responsibility of the debug/triggers vplan. Link to coverage here too.),Other,Other,N/A,"A: ???
+
+COV: ???",Waiting for debug vplan linkage.
+,,TriggersMmode,"(Same as Mcontrol6 and Triggers above, but for "".m"" bit.)",(Is the responsibility of the debug/triggers vplan. Link to coverage here too.),Other,Other,N/A,"A: ???
+
+COV: ???",Waiting for debug vplan linkage.
+,,ExecuteMmode,"""All operations are executed with machine mode privilege […]""","Ensure that all rvfi retirements in D-mode also shows M-mode.
+Additionally, check that loads/stores act as if M-mode and that CSRs are accessible as in M-mode.
+
+Note: Mind ExecuteMprven below.
+
+Coverage: Load/store in dmode, csr access in dmode.",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dmode_mmode
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_dmode_csrreadwrite
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_dmode_loadstore
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_dmode_mpp",
+,,ExecuteMprven,"""[...] except that MPRV in mstatus may be ignored according to mprven.""","Check that ""mprven"" is tied ""1"".
+
+Note: Mind ExecuteMmode above.
+
+Coverage: Cross ""mprven"" vs ""MPRV"" vs D-mode vs load/store/instr.",Assertion Check,Other,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mprven_tied
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_dmode_mprv
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_dmode_loadstore_mprv_mpp",
+,,Relaxedpriv,"""Full permission checks, or a relaxed set of permission checks, will apply according to relaxedpriv.""","(This field is in a DM registers and pertains to subsystem integration, not the core itself.)",N/A,N/A,N/A,N/A,
+,,UnspecifiedBehav,"""Almost all instructions that change the privilege mode have unspecified behavior. This includes ecall, mret, sret, and uret.""",(The behavior is specified in the user manual. But the effects are debug-specific and not user-mode-specific so it is the responsibility of the debug vplan. Link to coverage here too.),N/A,N/A,N/A,"A: ???
+
+COV: ???",Waiting for debug vplan linkage.
+,,ResumePriv,"""When a hart resumes [...] The current privilege mode and virtualization mode are changed to that specified by prv and v.""
+
+""prv [...] A debugger can change this value to change the hart’s privilege mode when exiting Debug Mode.""
+
+""When dret is executed, [...] normal execution resumes at the privilege set by prv.""","Transition out of D-mode, ensure that executions starts in the same privilege mode as was indicated in dcsr.prv (dcsr.prv=M and dcsr.prv=U).
+
+Coverage: Observe, spesifically, return to U/M each.",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dret_prv
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_dret_prv_u
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_dret_prv_m
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_prv_u
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_prv_m
+
+DTC: cv32e40s/tests/programs/custom/debug_priv_test/",
+,,ResumeMprv,"""When a hart resumes: [...] If the new privilege mode is less privileged than M-mode, MPRV in mstatus is cleared.""","Transition out of D-mode (dret) into U-mode, while mstatus.mprv=1, ensure that when execution continues outside D-mode that mstatus.mprv=0.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dret_mprv_umode
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dret_mprv_prv
+
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dret_mprv_csr
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cov_umode_mprv
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_dret_mprv_prv
+
+DTC: cv32e40s/tests/programs/custom/debug_priv_test/",
+,,PrvEntry,"""prv Contains the privilege mode the hart was operating in when Debug Mode was entered.""","Transition into D-mode from M-mode and U-mode, ensure dcsr.prv contains the privilege mode that was running before D-mode.
+
+Coverage: Observe, spesifically, dcsr.prv set to to U/M each.",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_prv_entry
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_prv_entry_u
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_prv_entry_m
+
+DTC: cv32e40s/tests/programs/custom/debug_priv_test/",
+,,PrvSupported,"""Not all privilege modes are supported on all harts. If the encoding written is not supported or the debugger is not allowed to change to it, the hart may change to any supported privilege mode.""","Write unsupported modes to dcsr.prv, ensure the value read back is unchanged from the previous value.
+
+Coverage: Observe attempts to write illegal/legal values.",Assertion Check,Directed Non-Self-Checking,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_prv_supported
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_prv_supported_umode
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_prv_supported_mmode
+
+COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.gen_try_set_prv[*].cov_try_set_prv
+
+DTC: cv32e40s/tests/programs/custom/debug_priv_test/",
+,,NativeTriggers,"""Triggers can be used for native debugging when action =0. If supported by the hart and desired by the debugger, triggers will often be programmed to have m=0 so that when they fire they cause a breakpoint exception to trap to a more privileged mode.""",(Must be covered by the debug/triggers vplan. But link to coverage here too.),N/A,N/A,N/A,"A: ???
+
+COV: ???",Waiting for debug vplan linkage.
+,,Mprven0Simulate,"""If hardware ties mprven to 0 then the external debugger is expected to simulate all the effects of MPRV, including any extensions that affect memory accesses. For these reasons it is recommended to tie mprven to 1.""","(""mprven"" is not tied 0.)",N/A,N/A,N/A,N/A,
+,,Mprven0Ignore,"""mprven 0: MPRV in mstatus is ignored in Debug Mode.""","(mprven is tied ""1"". Handled by ExecuteMprven above.)",N/A,N/A,N/A,N/A,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+ -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- END -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------,,,,,,,,,

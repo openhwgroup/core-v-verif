@@ -21,7 +21,7 @@ class pma_adapted_memory_regions_c;
   typedef enum { S_INIT, S_CHK_DONE, S_DONE, S_POP, S_CLASSIFY, S_CLASSIFY_DONE, S_INSERT, S_SPLIT_REGION, S_ADJUST_LOWER_BOUND, S_ADJUST_UPPER_BOUND, S_PUSH } fsm_state_e;
 
   typedef struct {
-    pma_region_t cfg;
+    pma_cfg_t cfg;
     int prio;
     region_status_e flag;
   } classified_region_t;
@@ -65,12 +65,12 @@ class pma_adapted_memory_regions_c;
   /*
   * Function: new
   *
-  * Inputs: pma_region_t pma_region[] - true pma configuration of the core
+  * Inputs: pma_cfg_t pma_region[] - true pma configuration of the core
   *
   * Init function ,adds initial regions to the stack, classifies them as UNCHECKED
   * and initializes FSM
   */
-  function new(pma_region_t pma_region[]);
+  function new(pma_cfg_t pma_region[]);
     for (int i = pma_region.size() - 1; i >= 0; i--) begin
       // Skip zero-length regions
       if (pma_region[i].word_addr_low < pma_region[i].word_addr_high) begin
@@ -160,12 +160,12 @@ class pma_adapted_memory_regions_c;
   /*
   * Function: add_region
   *
-  * Inputs: pma_region_t    pma_region - Region to compute real bounds and insert into modified pma config stack
+  * Inputs: pma_cfg_t    pma_region - Region to compute real bounds and insert into modified pma config stack
   *         int             pma_prio   - Priority of sampled PMA region (index in original array)
   *         region_status_e stack_flag - Region status flag
   *
   */
-  protected virtual function void add_region(pma_region_t pma_region, int pma_prio, region_status_e stack_flag);
+  protected virtual function void add_region(pma_cfg_t pma_region, int pma_prio, region_status_e stack_flag);
     pma_region.word_addr_high -= 1;
     stack.push_back('{cfg: pma_region, flag: stack_flag, prio: pma_prio});
   endfunction : add_region
@@ -434,7 +434,7 @@ class pma_adapted_memory_regions_c;
       // In lieu of creating a typed queue to restrict size of process_stack, do a check on max size here to ensure the queue
       // does not grow beyond expected bounds
       if (process_stack.size() > MAX_PROCESS_STACK_SIZE) begin
-        `uvm_fatal("PMAPROCSTACK", $sformatf("process_stack size of %0d is greater than maximum allowed: %0s", process_stack.size(), MAX_PROCESS_STACK_SIZE));
+        display_fatal($sformatf("process_stack size of %0d is greater than maximum allowed: %0s", process_stack.size(), MAX_PROCESS_STACK_SIZE));
       end
 
       fsm_state_transitions;

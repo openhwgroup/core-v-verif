@@ -24,16 +24,17 @@ parameter int XLEN = 32;
 parameter satp_mode_t SATP_MODE = BARE;
 
 // Supported Privileged mode
-privileged_mode_t supported_privileged_mode[] = {MACHINE_MODE};
+privileged_mode_t supported_privileged_mode[] = {MACHINE_MODE/*, TODO: USER_MODE*/};
 
 // Unsupported instructions
 riscv_instr_name_t unsupported_instr[];
 
 // ISA supported by the processor
-riscv_instr_group_t supported_isa[$] = {RV32I, RV32M, RV32C, RV32ZBA, RV32ZBB, RV32ZBC, RV32ZBS};
+// Note: zcbb and zcbm are the zbb and m/zmmul-dependent instructions in zcb
+riscv_instr_group_t supported_isa[$] = {RV32I, RV32M, RV32ZBA, RV32ZBB, RV32ZBC, RV32ZBS, RV32ZCA, RV32ZCB, RV32ZCBB, RV32ZCBM, RV32ZCMP, RV32ZCMT};
 
 // Interrupt mode support
-mtvec_mode_t supported_interrupt_mode[$] = {DIRECT, VECTORED};
+mtvec_mode_t supported_interrupt_mode[$] = {DIRECT, VECTORED, CLIC};
 
 // The number of interrupt vectors to be generated, only used if VECTORED interrupt mode is
 // supported
@@ -44,6 +45,9 @@ bit [31:0] valid_interrupt_mask = 32'hffff_0888;
 
 // Physical memory protection support
 bit support_pmp = 0;
+
+// Enhanced physical memory protection support
+bit support_epmp = 0;
 
 // Debug mode support
 bit support_debug_mode = 1;

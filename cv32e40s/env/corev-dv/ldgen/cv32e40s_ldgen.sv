@@ -20,7 +20,7 @@
 /*
  * provide UVM environment entry and exit points.
  */
-import cv32e40s_pkg::pma_region_t;
+import cv32e40s_pkg::pma_cfg_t;
 
   class cv32e40s_ldgen_c;
 
@@ -47,8 +47,8 @@ import cv32e40s_pkg::pma_region_t;
     parameter RAM_ORIGIN           = 32'h0000_0000;
     parameter RAM_LENGTH           = 32'h40_0000;
     parameter BOOT_ADDR            = 32'h80;
-    parameter NMI_ADDR             = 32'h0010_0000;
     parameter MTVEC_ADDR           = 32'h0000_0000;
+    parameter NMI_ADDR             = 32'h0010_0000;
     parameter DEBUG_ORIGIN         = 32'h1A11_0800;
     parameter DEBUG_EXCEPTION_ADDR = 32'h1A11_1000;
     parameter DEBUG_STACK_OFFSET   = 32'h80;
@@ -64,10 +64,16 @@ import cv32e40s_pkg::pma_region_t;
     // Path handles
     string ldfiles_path;
 
+    bit standalone_generate;
+
     bit disable_default_ram_region;
     bit disable_default_dbg_region;
     bit enable_large_mem_support;
+    bit enable_rom_exec_writable_region;
+    bit enable_explicit_writable_region;
     bit nmi_separate_region;
+
+    int writable_region_idx;
 
     int disable_section_write_boot = 0;
     int disable_section_write_nmi  = 0;
@@ -96,8 +102,8 @@ import cv32e40s_pkg::pma_region_t;
     int fhandle_dbg;
     int fhandle_fix;
 
-    pma_region_t regions[PMA_NUM_REGIONS][$];
-    pma_region_t temp_region;
+    pma_cfg_t regions[PMA_NUM_REGIONS][$];
+    pma_cfg_t temp_region;
     int temp_region_ctr;
     pma_adapted_memory_regions_c pma_adapted_memory;
 
@@ -118,11 +124,11 @@ import cv32e40s_pkg::pma_region_t;
       if (!($value$plusargs("boot_addr=0x%x", boot_addr))) begin
         boot_addr = BOOT_ADDR;
       end
-      if (!($value$plusargs("nmi_addr=0x%x", nmi_addr))) begin
-        nmi_addr = NMI_ADDR;
-      end
       if (!($value$plusargs("mtvec_addr=0x%x", mtvec_addr))) begin
         mtvec_addr = MTVEC_ADDR;
+      end
+      if (!($value$plusargs("nmi_addr=0x%x", nmi_addr))) begin
+        nmi_addr = mtvec_addr + 4*15;
       end
       if (!($value$plusargs("dm_halt_addr=0x%x", dbg_origin_addr))) begin
         dbg_origin_addr = DEBUG_ORIGIN;
@@ -141,6 +147,19 @@ import cv32e40s_pkg::pma_region_t;
       end
       if (!($value$plusargs("enable_large_mem_support=%d", enable_large_mem_support))) begin
         enable_large_mem_support = LARGE_MEMORY_SUPPORT;
+      end
+      if(!($value$plusargs("rom_exec_writable_region=%d", enable_rom_exec_writable_region))) begin
+        enable_rom_exec_writable_region = 0;
+      end
+      if(!($value$plusargs("writable_region_idx=%d", writable_region_idx))) begin
+        enable_explicit_writable_region = 0;
+      end
+      if(!($value$plusargs("standalone_generate=%d", standalone_generate))) begin
+        standalone_generate = 0;
+      end
+
+      if (writable_region_idx != -1) begin
+        enable_explicit_writable_region = 1;
       end
 
       if ($value$plusargs("ldgen_cp_test_path=%s", ldfiles_path)) begin
@@ -230,6 +249,7 @@ endfunction : indent
 function void cv32e40s_ldgen_c::create_memory_layout_file(string filepath);
   automatic int nmi_region = -1;
   automatic int boot_region = -1;
+  automatic string w_string;
 
   fhandle_mem = $fopen(filepath,  "w");
   if (!fhandle_mem) begin
@@ -238,6 +258,13 @@ function void cv32e40s_ldgen_c::create_memory_layout_file(string filepath);
 
   $fdisplay(fhandle_mem, "MEMORY");
   $fdisplay(fhandle_mem, "{");
+
+  if (enable_rom_exec_writable_region) begin
+    // Main executable region is not writable
+    w_string = "";
+  end else begin
+    w_string = "w";
+  end
 
   // Optionally disable default ram region definition
   if (!disable_default_ram_region) begin
@@ -280,7 +307,11 @@ function void cv32e40s_ldgen_c::create_memory_layout_file(string filepath);
       if (!(pma_adapted_memory.region[i].cfg.main)) begin
         region_attributes = "(!i)";
       end else begin
-        region_attributes = default_attributes;
+        if (i == boot_region) begin
+          region_attributes = $sformatf("(r%sxai)", w_string);
+        end else begin
+          region_attributes = default_attributes;
+        end
       end
 
       // Allow large memory regions if enabled, otherwise restrict to max SMALL_MEM_LIMIT
@@ -311,8 +342,14 @@ function void cv32e40s_ldgen_c::create_memory_layout_file(string filepath);
   $fdisplay(fhandle_mem, "}");
 
   // if the default ram region is enabled, we alias the lowest numbered executable pma region to ram (boot address needs to be set accordingly)
-  if (disable_default_ram_region) begin
+
+  if (disable_default_ram_region && !enable_rom_exec_writable_region && !enable_explicit_writable_region) begin
     $fdisplay(fhandle_mem, { "REGION_ALIAS(\"ram\", region_", $sformatf("%0d", boot_region), ");" });
+  end else if(CORE_PARAM_PMA_NUM_REGIONS > 0) begin
+    $fdisplay(fhandle_mem, { "REGION_ALIAS(\"rom\", region_", $sformatf("%0d", boot_region), ");" });
+    $fdisplay(fhandle_mem, { "REGION_ALIAS(\"ram\", region_", $sformatf("%0d", writable_region_idx >= 0 ? writable_region_idx : 0), ");" });
+  end else begin
+    $fdisplay(fhandle_mem, { "REGION_ALIAS(\"rom\", ram);" });
   end
 
   $fclose(fhandle_mem);
@@ -348,7 +385,7 @@ function void cv32e40s_ldgen_c::create_pma_section_file(string filepath);
         $fdisplay(fhandle_pma, { indent(L1), ".region_", $sformatf("%0d %0s", i, section_location), ":" });
         $fdisplay(fhandle_pma, { indent(L1), "{" });
         $fdisplay(fhandle_pma, { indent(L2), "KEEP(*(.region_", $sformatf("%0d", i), "));" });
-        $fdisplay(fhandle_pma, { indent(L1), "}"});
+        $fdisplay(fhandle_pma, { indent(L1), "} > region_", $sformatf("%0d", i) });
       end
     end
     $fdisplay(fhandle_pma, "}");
@@ -434,7 +471,7 @@ function void cv32e40s_ldgen_c::create_fixed_addr_section_file(string filepath);
     display_fatal($sformatf("Unable to open %s", filepath));
   end
   if (pma_adapted_memory.region.size == 0) begin
-    nmi_separate_region = 1;
+    nmi_separate_region = 0;
   end
 
   foreach (pma_adapted_memory.region[i]) begin
@@ -476,23 +513,43 @@ function void cv32e40s_ldgen_c::create_fixed_addr_section_file(string filepath);
     nmi_memory_area = "";
   end
 
-  $fdisplay(fhandle_fix, "SECTIONS");
-  $fdisplay(fhandle_fix, "{");
-  $fdisplay(fhandle_fix, { indent(L1), "/* CORE-V: interrupt vectors */" });
-  $fdisplay(fhandle_fix, { indent(L1), "PROVIDE(__vector_start = ", $sformatf("0x%08x", mtvec_addr), ");" });
-  $fdisplay(fhandle_fix, { indent(L1), ".mtvec_bootstrap (__vector_start) :" });
-  $fdisplay(fhandle_fix, { indent(L1), "{" });
-  $fdisplay(fhandle_fix, { indent(L2), "KEEP(*(.mtvec_bootstrap));" });
-  $fdisplay(fhandle_fix, { indent(L1), "}", mtvec_memory_area, "\n" });
-  $fdisplay(fhandle_fix, { indent(L1), "/* CORE-V: we want a fixed entry point */" });
-  $fdisplay(fhandle_fix, { indent(L1), "PROVIDE(__boot_address = ", $sformatf("0x%08x", boot_addr), ");\n" });
-  $fdisplay(fhandle_fix, { indent(L1), "/* NMI interrupt handler fixed entry point */" });
-  $fdisplay(fhandle_fix, { indent(L1), "nmi_handler = ABSOLUTE(", $sformatf("0x%08x",  nmi_addr), ");" });
-  $fdisplay(fhandle_fix, { indent(L1), ".nmi (", $sformatf("0x%08x", nmi_addr), ") :" });
-  $fdisplay(fhandle_fix, { indent(L1), "{" });
-  $fdisplay(fhandle_fix, { indent(L2), "KEEP(*(.nmi));" });
-  $fdisplay(fhandle_fix, { indent(L1), "}", nmi_memory_area });
-  $fdisplay(fhandle_fix, "}");
+  if (!standalone_generate) begin
+    $fdisplay(fhandle_fix, "SECTIONS");
+    $fdisplay(fhandle_fix, "{");
+    $fdisplay(fhandle_fix, { indent(L1), "/* CORE-V: interrupt vectors */" });
+    $fdisplay(fhandle_fix, { indent(L1), "PROVIDE(__vector_start = ", $sformatf("0x%08x", mtvec_addr), ");" });
+    $fdisplay(fhandle_fix, { indent(L1), "mtvec_handler = DEFINED(vectored_mode) ? ABSOLUTE(", $sformatf("0x%08x", mtvec_addr), ") : mtvec_handler;"});
+    $fdisplay(fhandle_fix, { indent(L1), ".mtvec_bootstrap (__vector_start) :" });
+    $fdisplay(fhandle_fix, { indent(L1), "{" });
+    $fdisplay(fhandle_fix, { indent(L2), "KEEP(*(.mtvec_bootstrap));" });
+    $fdisplay(fhandle_fix, { indent(L1), "}", mtvec_memory_area, "\n" });
+
+    $fdisplay(fhandle_fix, { indent(L1), ".mtvec_handler (__vector_start) :" });
+    $fdisplay(fhandle_fix, { indent(L1), "{" });
+    $fdisplay(fhandle_fix, { indent(L2), "*(.mtvec*);" });
+    $fdisplay(fhandle_fix, { indent(L2), "KEEP(*(.mtvec_handler));" });
+    $fdisplay(fhandle_fix, { indent(L1), "}", mtvec_memory_area, "\n" });
+
+    $fdisplay(fhandle_fix, { indent(L1), "/* CORE-V: we want a fixed entry point */" });
+    $fdisplay(fhandle_fix, { indent(L1), "PROVIDE(__boot_address = ", $sformatf("0x%08x", boot_addr), ");\n" });
+    $fdisplay(fhandle_fix, { indent(L1), "/* NMI interrupt handler fixed entry point */" });
+    $fdisplay(fhandle_fix, { indent(L1), $sformatf(".nmi_bootstrap ABSOLUTE(0x%08x) ", nmi_addr), " :"});
+    $fdisplay(fhandle_fix, { indent(L1), "{" });
+    $fdisplay(fhandle_fix, { indent(L2), "KEEP(*(.nmi_bootstrap));" });
+    $fdisplay(fhandle_fix, { indent(L1), "}", nmi_memory_area, "\n" });
+    $fdisplay(fhandle_fix, "}");
+  end else begin
+    $fdisplay(fhandle_fix, "SECTIONS");
+    $fdisplay(fhandle_fix, "{");
+    $fdisplay(fhandle_fix, { indent(L1), "PROVIDE(__boot_address = ", $sformatf("0x%08x", boot_addr), ");\n" });
+    $fdisplay(fhandle_fix, { indent(L2), "PROVIDE(__vector_start = ", $sformatf("0x%08x", mtvec_addr), ");\n" });
+    $fdisplay(fhandle_fix, { indent(L1), ".vectors (__vector_start):" });
+    $fdisplay(fhandle_fix, { indent(L1), "{" });
+    $fdisplay(fhandle_fix, { indent(L2), "KEEP(*(.vectors));" });
+    $fdisplay(fhandle_fix, { indent(L1), "}", mtvec_memory_area, "\n"});
+
+    $fdisplay(fhandle_fix, "}");
+  end
 
   $fclose(fhandle_fix);
   display_message({ filepath, " generated" });

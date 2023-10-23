@@ -1,0 +1,5 @@
+name: pushpop_debug_triggers
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+program: pushpop_debug_triggers
+description: >
+    Let Zc push/pop watchpoint triggers cause debug entry.

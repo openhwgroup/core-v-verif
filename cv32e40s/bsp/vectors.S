@@ -15,6 +15,7 @@
 */
 
 .section .vectors, "ax"
+.option push
 .option norvc
 .global vector_table
 
@@ -34,7 +35,7 @@ vector_table:
 	j __no_irq_handler
 	j __no_irq_handler
 	j __no_irq_handler
-	j __no_irq_handler
+	j nmi_handler
 	j m_fast0_irq_handler
 	j m_fast1_irq_handler
 	j m_fast2_irq_handler
@@ -51,4 +52,4 @@ vector_table:
 	j m_fast13_irq_handler
 	j m_fast14_irq_handler
 	j m_fast15_irq_handler
-
+.option pop

@@ -1,0 +1,36 @@
+name: clic_default
+description: Default clic configuration for CV32E40S simulations
+compile_flags:
+    +define+ZBA_ZBB_ZBC_ZBS
+    +define+CLIC_EN
+    +define+PMP_ENABLE_64
+ovpsim: >
+    --override cpu/hpmcounter_undefined=T
+    --override cpu/CLICLEVELS=256
+    --override cpu/CLICXCSW=T
+    --override cpu/CLICXNXTI=T
+    --override cpu/CLICSELHVEC=T
+    --override cpu/CLICINTCTLBITS=8
+    --override cpu/CLIC_version=master
+    --override cpu/externalCLIC=T
+    --override cpu/PMP_registers=64
+    --override cpu/mtvt_mask=0xffffffffffffff80
+    #--trace
+    #--tracechange
+    #--showoverrides
+    # --trace --tracechange --traceshowicount --monitornets
+cflags: >
+    -Wl,--nmagic
+plusargs: >
+    +enable_clic=1
+    +enable_zba_extension=1
+    +enable_zbb_extension=1
+    +enable_zbc_extension=1
+    +enable_zbs_extension=1
+    +fix_ra=1
+    +fix_sp=1
+    +enable_zca_extension=1
+    +enable_zcb_extension=1
+    +enable_zcmt_extension=1
+    +enable_zcmp_extension=1
+cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zca_zcb_zcmp_zcmt_zicsr_zifencei

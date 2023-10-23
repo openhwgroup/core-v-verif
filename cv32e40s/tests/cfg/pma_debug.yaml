@@ -2,3 +2,10 @@ name: pma
 description: PMA configuration for pma_debug test
 compile_flags:
     +define+PMA_DEBUG_CFG
+ovpsim: >
+    --override cpu/PMP_registers=64
+    # --showoverrides
+    # --trace --tracechange --traceshowicount --monitornets
+cflags: >
+    -Wl,--nmagic
+cv_sw_march: rv32im_zicsr_zca_zcb_zcmp_zifencei

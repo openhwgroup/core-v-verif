@@ -205,8 +205,8 @@ class uvme_debug_covg extends uvm_component;
     // Cover that we get a debug_req while in wfi
     covergroup cg_wfi_debug_req;
         `per_instance_fcov
-        inwfi : coverpoint cntxt.debug_cov_vif.mon_cb.in_wfi {
-                bins hit  = {1};
+        inwfi : coverpoint cntxt.debug_cov_vif.mon_cb.ctrl_fsm_cs {
+                bins hit  = {SLEEP};
         }
         dreq: coverpoint cntxt.debug_cov_vif.mon_cb.debug_req_i {
             bins hit = {1};
@@ -294,19 +294,20 @@ class uvme_debug_covg extends uvm_component;
     covergroup cg_debug_regs_d_mode;
         `per_instance_fcov
         mode : coverpoint cntxt.debug_cov_vif.mon_cb.debug_mode_q {
-            bins M = {1};
+            bins M         = {1};
         }
         access : coverpoint (cntxt.debug_cov_vif.mon_cb.csr_access && cntxt.debug_cov_vif.mon_cb.wb_valid) {
-            bins hit = {1};
+            bins hit       = {1};
         }
         op : coverpoint cntxt.debug_cov_vif.mon_cb.csr_op {
-            bins read = {'h0};
-            bins write = {'h1};
-            // TODO:ropeders also SET and CLEAR?
+            bins read      = {cv32e40s_pkg::CSR_OP_READ};
+            bins write     = {cv32e40s_pkg::CSR_OP_WRITE};
+            bins set       = {cv32e40s_pkg::CSR_OP_SET};
+            bins clear     = {cv32e40s_pkg::CSR_OP_CLEAR};
         }
         addr : coverpoint cntxt.debug_cov_vif.mon_cb.wb_stage_instr_rdata_i[31:20] { // csr addr not updated if illegal access
-            bins dcsr = {'h7B0};
-            bins dpc = {'h7B1};
+            bins dcsr      = {'h7B0};
+            bins dpc       = {'h7B1};
             bins dscratch0 = {'h7B2};
             bins dscratch1 = {'h7B3};
         }
@@ -317,19 +318,20 @@ class uvme_debug_covg extends uvm_component;
     covergroup cg_debug_regs_m_mode;
         `per_instance_fcov
         mode : coverpoint cntxt.debug_cov_vif.mon_cb.debug_mode_q {
-            bins M = {0};
+            bins M         = {0};
         }
         access : coverpoint (cntxt.debug_cov_vif.mon_cb.csr_access && cntxt.debug_cov_vif.mon_cb.wb_valid) {
-            bins hit = {1};
+            bins hit       = {1};
         }
         op : coverpoint cntxt.debug_cov_vif.mon_cb.csr_op {
-            bins read = {1'h0};
-            bins write = {1'h1};
-            // TODO:ropeders also SET and CLEAR?
+            bins read      = {cv32e40s_pkg::CSR_OP_READ};
+            bins write     = {cv32e40s_pkg::CSR_OP_WRITE};
+            bins set       = {cv32e40s_pkg::CSR_OP_SET};
+            bins clear     = {cv32e40s_pkg::CSR_OP_CLEAR};
         }
         addr : coverpoint cntxt.debug_cov_vif.mon_cb.wb_stage_instr_rdata_i[31:20] { // csr addr not updated if illegal access
-            bins dcsr = {'h7B0};
-            bins dpc = {'h7B1};
+            bins dcsr      = {'h7B0};
+            bins dpc       = {'h7B1};
             bins dscratch0 = {'h7B2};
             bins dscratch1 = {'h7B3};
         }
@@ -342,17 +344,18 @@ class uvme_debug_covg extends uvm_component;
         `per_instance_fcov
         mode : coverpoint cntxt.debug_cov_vif.mon_cb.debug_mode_q; // Only M and D supported
         access : coverpoint (cntxt.debug_cov_vif.mon_cb.csr_access && cntxt.debug_cov_vif.mon_cb.wb_valid) {
-            bins hit = {1};
+            bins hit    = {1};
         }
         op : coverpoint cntxt.debug_cov_vif.mon_cb.csr_op {
-            bins read = {'h0};
-            bins write = {'h1};
+            bins read   = {cv32e40s_pkg::CSR_OP_READ};
+            bins write  = {cv32e40s_pkg::CSR_OP_WRITE};
+            bins set    = {cv32e40s_pkg::CSR_OP_SET};
+            bins clear  = {cv32e40s_pkg::CSR_OP_CLEAR};
         }
         addr : coverpoint cntxt.debug_cov_vif.mon_cb.wb_stage_instr_rdata_i[31:20] { // csr addr not updated if illegal access
-            bins tsel = {'h7A0};
+            bins tsel   = {'h7A0};
             bins tdata1 = {'h7A1};
             bins tdata2 = {'h7A2};
-            bins tdata3 = {'h7A3};
             bins tinfo  = {'h7A4};
         }
         tregs_access : cross mode, access, op, addr;

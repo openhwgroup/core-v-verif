@@ -3,19 +3,19 @@
 ###############################################################################
 #
 # Copyright 2020 OpenHW Group
-# 
+#
 # Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     https://solderpad.org/licenses/
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
 #
 ###############################################################################
@@ -24,7 +24,7 @@
 # Usage:
 #       run_compliance RISCV_ISA
 #
-# ENV: this script needs the following shell environment variables - 
+# ENV: this script needs the following shell environment variables -
 #       SIM_DIR     : cwd from which to run sims
 ###############################################################################
 
@@ -32,114 +32,158 @@ cd ${SIM_DIR}
 
 # Script starts here
 if [ "$1" == "" ] ; then
-    echo "Please specify RISCV_ISA (rv32i|rv32im|rv32imc|rv32Zicsr|rv32Zifencei)"
+    echo "Please specify RISCV_DEVICE (I|M|C|privilege|Zifencei|Bitmanip)"
     exit 1
 fi
 
-if [ "$1" == "rv32i" ] || [ "$1" == "rv32im" ] || [ "$1" == "rv32imc" ] || [ "$1" == "rv32Zicsr" ] || [ "$1" == "rv32Zifencei" ] ; then
-    echo "nadda"
+if [ "$1" == "I" ] || [ "$1" == "M" ] || [ "$1" == "C" ] || [ "$1" == "privilege" ] || [ "$1" == "Zifencei" ] || [ "$1" == "Bitmanip" ] ; then
+    echo "Running tests for $1"
 else
-    echo "Unknown RISCV_ISA. Please specify one of rv32i|rv32im|rv32imc|rv32Zicsr|rv32Zifencei"
+    echo "Unknown RISCV_DEVICE setting. Please specify one of I|M|C|privilege|Zifencei"
     exit 1
 fi
 
-if [ "$1" == "rv32Zicsr" ] ; then
-    make compliance RISCV_ISA=rv32Zicsr COMPLIANCE_PROG=I-CSRRCI-01
-    make compliance RISCV_ISA=rv32Zicsr COMPLIANCE_PROG=I-CSRRW-01
-    make compliance RISCV_ISA=rv32Zicsr COMPLIANCE_PROG=I-CSRRSI-01
-    make compliance RISCV_ISA=rv32Zicsr COMPLIANCE_PROG=I-CSRRC-01
-    make compliance RISCV_ISA=rv32Zicsr COMPLIANCE_PROG=I-CSRRWI-01
-    make compliance RISCV_ISA=rv32Zicsr COMPLIANCE_PROG=I-CSRRS-01
+if [ "$1" == "Bitmanip" ]; then
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=andn-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=bclr-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=bclri-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=bext-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=bexti-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=binv-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=binvi-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=bset-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=bseti-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=clmul-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=clmulh-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=clmulr-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=clz-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cpop-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=ctz-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=max-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=maxu-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=min-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=minu-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=orc.b-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=orn-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=rev8-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=rol-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=ror-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=rori-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=sext.b-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=sext.h-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=sh1add-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=sh2add-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=sh3add-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=xnor-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=zext.h-01
 fi
 
-if [ "$1" == "rv32Zifencei" ]; then
-    make compliance RISCV_ISA=rv32Zifencei COMPLIANCE_PROG=I-FENCE.I-01
+if [ "$1" == "Zifencei" ]; then
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=Fencei
 fi
 
-if [ "$1" == "rv32im" ]; then
-    make compliance RISCV_ISA=rv32im COMPLIANCE_PROG=DIV
-    make compliance RISCV_ISA=rv32im COMPLIANCE_PROG=MULHU
-    make compliance RISCV_ISA=rv32im COMPLIANCE_PROG=REMU
-    make compliance RISCV_ISA=rv32im COMPLIANCE_PROG=MULH
-    make compliance RISCV_ISA=rv32im COMPLIANCE_PROG=MULHSU
-    make compliance RISCV_ISA=rv32im COMPLIANCE_PROG=DIVU
-    make compliance RISCV_ISA=rv32im COMPLIANCE_PROG=REM
-    make compliance RISCV_ISA=rv32im COMPLIANCE_PROG=MUL
+if [ "$1" == "M" ]; then
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=div-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=divu-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=mul-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=mulh-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=mulhsu-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=mulhu-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=rem-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=remu-01
 fi
 
-if [ "$1" == "rv32i" ]; then
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-LB-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-SUB-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-SRAI-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ADDI-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-BEQ-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-SW-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-RF_size-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-LHU-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-SLL-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-SLTU-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-JALR-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-SH-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-BNE-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-LW-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-LH-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-BGE-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-SLTI-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-BGEU-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ANDI-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-SRL-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-XORI-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ENDIANESS-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-SLT-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-LBU-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-RF_width-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ORI-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-AND-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-LUI-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-BLT-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-NOP-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-XOR-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-AUIPC-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-RF_x0-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-SLTIU-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-IO-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-SRLI-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-SB-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-SLLI-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-BLTU-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-SRA-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-JAL-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ADD-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-DELAY_SLOTS-01
-    make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-OR-01
+if [ "$1" == "I" ]; then
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=add-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=addi-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=and-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=andi-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=auipc-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=beq-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=bge-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=bgeu-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=blt-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=bltu-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=bne-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=fence-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=jal-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=jalr-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=lb-align-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=lbu-align-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=lh-align-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=lhu-align-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=lui-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=lw-align-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=or-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=ori-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=sb-align-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=sh-align-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=sll-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=slli-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=slt-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=slti-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=sltiu-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=sltu-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=sra-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=srai-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=srl-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=srli-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=sub-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=sw-align-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=xor-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=xori-01
 fi
 
-if [ "$1" == "rv32imc" ]; then
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-SUB
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-ADD
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-SRLI
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-BEQZ
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-J
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-JR
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-SWSP
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-LW
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-ADDI4SPN
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-OR
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-BNEZ
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-LWSP
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-ADDI
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-ADDI16SP
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-SW
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-AND
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-SRAI
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-ANDI
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-LI
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-JALR
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-LUI
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-SLLI
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-XOR
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-MV
-    make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=C-JAL
+if [ "$1" == "C" ]; then
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cadd-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=caddi-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=caddi16sp-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=caddi4spn-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cand-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=candi-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cbeqz-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cbnez-01
+    # Waivable - mtvec not fully writable in cv32e40*
+    #make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cebreak-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cj-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cjal-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cjalr-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cjr-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cli-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=clui-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=clw-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=clwsp-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cmv-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cnop-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cor-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cslli-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=csrai-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=csrli-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=csub-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=csw-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cswsp-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=cxor-01
+fi
+
+if [ "$1" == "privilege" ]; then
+    # Waivable - mtvec not fully writable in cv32e40*
+    #make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=ebreak
+    #make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=ecall
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=misalign1-jalr-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=misalign2-jalr-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=misalign-beq-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=misalign-bge-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=misalign-bgeu-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=misalign-blt-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=misalign-bltu-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=misalign-bne-01
+    make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=misalign-jal-01
+    # Waiable - below will fail for targets with hardware support for misaligned load/store
+    #make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=misalign-lh-01
+    #make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=misalign-lhu-01
+    #make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=misalign-lw-01
+    #make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=misalign-sh-01
+    #make compliance RISCV_ISA=rv32i_m COMPLIANCE_PROG=misalign-sw-01
 fi
 
 exit 0

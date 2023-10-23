@@ -19,6 +19,12 @@
 class uvma_pma_cfg_c#(int ILEN=DEFAULT_ILEN,
                       int XLEN=DEFAULT_XLEN) extends uvm_object;
 
+   typedef enum {
+     PMA_OVERRIDE_NONE,
+     PMA_OVERRIDE_CUSTOM,
+     PMA_OVERRIDE_DEBUG
+   } region_override_condition_e;
+
    // Generic options
    rand bit                      enabled;
    rand uvm_active_passive_enum  is_active;
@@ -30,13 +36,21 @@ class uvma_pma_cfg_c#(int ILEN=DEFAULT_ILEN,
    // PMA regions
    uvma_core_cntrl_pma_region_c  regions[];
 
+   // For special cases where an override may be required
+   uvma_core_cntrl_pma_region_c  region_overrides[];
+
+   // Region override cause
+   region_override_condition_e       region_override_condition = PMA_OVERRIDE_NONE;
+
    `uvm_object_param_utils_begin(uvma_pma_cfg_c#(ILEN,XLEN))
-      `uvm_field_int (                         enabled           , UVM_DEFAULT)
-      `uvm_field_enum(uvm_active_passive_enum, is_active         , UVM_DEFAULT)
-      `uvm_field_int (                         scoreboard_enabled, UVM_DEFAULT)
-      `uvm_field_int (                         cov_model_enabled , UVM_DEFAULT)
-      `uvm_field_int (                         trn_log_enabled   , UVM_DEFAULT)
-      `uvm_field_array_object(                 regions           , UVM_DEFAULT)
+      `uvm_field_int (                             enabled                  , UVM_DEFAULT)
+      `uvm_field_enum(uvm_active_passive_enum,     is_active                , UVM_DEFAULT)
+      `uvm_field_int (                             scoreboard_enabled       , UVM_DEFAULT)
+      `uvm_field_int (                             cov_model_enabled        , UVM_DEFAULT)
+      `uvm_field_int (                             trn_log_enabled          , UVM_DEFAULT)
+      `uvm_field_array_object(                     regions                  , UVM_DEFAULT)
+      `uvm_field_array_object(                     region_overrides         , UVM_DEFAULT)
+      `uvm_field_enum(region_override_condition_e, region_override_condition, UVM_DEFAULT)
    `uvm_object_utils_end
 
 
@@ -62,6 +76,11 @@ class uvma_pma_cfg_c#(int ILEN=DEFAULT_ILEN,
     */
    extern virtual function int get_pma_region_for_addr(bit [XLEN-1:0] addr);
 
+   /**
+    * Return PMA override region index for address, returns -1 if not mapped
+    */
+   extern virtual function int get_pma_override_region_for_addr(bit[XLEN-1:0] addr);
+
 endclass : uvma_pma_cfg_c
 
 
@@ -84,5 +103,15 @@ function int uvma_pma_cfg_c::get_pma_region_for_addr(bit[XLEN-1:0] addr);
 
 endfunction : get_pma_region_for_addr
 
+function int uvma_pma_cfg_c::get_pma_override_region_for_addr(bit[XLEN-1:0] addr);
+
+   for (int i = 0; i < region_overrides.size(); i++) begin
+      if (region_overrides[i].is_addr_in_region(addr, 1 /* include upper address boundary*/))
+         return i;
+   end
+
+   return -1;
+
+endfunction : get_pma_override_region_for_addr
 
 `endif // __UVMA_PMA_CFG_SV__

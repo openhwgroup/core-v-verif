@@ -53,7 +53,7 @@ group {{project}} {
     group {{build.name}} {
 
         // Build:{{build.name}} {{build.description}}
-        pre_group_script: 'cd {{build.abs_dir}} && {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} CV_SIM_PREFIX= {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results)}} {{makeargs}}';
+        pre_group_script: 'cd {{build.abs_dir}} && {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} CV_SIM_PREFIX= {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} USE_ISS={{regress_macros.yesorno(iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results)}} {{makeargs}}';
 
 {% for t in r.get_tests_of_build(build.name) %}
 {% set indent = '    '%}
@@ -64,7 +64,7 @@ group {{project}} {
         test precmd {
             sv_seed: gen_random;
             count: 1;
-            run_script: 'cd {{t.abs_dir}} && {{t.precmd}} CV_SIM_PREFIX= CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{t.simulator}} RNDSEED=$RUN_ENV(BRUN_SV_SEED) NUM_TESTS={{t.num}} {{regress_macros.cv_results(results)}} {{makeargs}}';
+            run_script: 'cd {{t.abs_dir}} && {{t.precmd}} CV_SIM_PREFIX= CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{t.simulator}} USE_ISS={{regress_macros.yesorno(t.iss)}} RNDSEED=$RUN_ENV(BRUN_SV_SEED) NUM_TESTS={{t.num}} {{regress_macros.cv_results(results)}} {{makeargs}}';
         };
 {% else %}
 {% endif %}
@@ -73,7 +73,7 @@ group {{project}} {
 {% if t.precmd %}
 {{indent}}        depends_on: ../precmd;
 {% endif %}
-{{indent}}        timeout: 3600;
+{{indent}}        timeout: 7200;
 {{indent}}        test run {
 {{indent}}            sv_seed: gen_random;
 {{indent}}            count: {{t.num}};

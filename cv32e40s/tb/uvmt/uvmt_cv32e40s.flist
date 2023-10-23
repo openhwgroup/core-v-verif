@@ -16,6 +16,7 @@
 // limitations under the License.
 //
 
+
 // Libraries
 -f ${DV_UVML_HRTBT_PATH}/uvml_hrtbt_pkg.flist
 -f ${DV_UVML_TRN_PATH}/uvml_trn_pkg.flist
@@ -23,47 +24,46 @@
 -f ${DV_UVML_SB_PATH}/uvml_sb_pkg.flist
 -f ${DV_UVML_MEM_PATH}/uvml_mem_pkg.flist
 -f ${DV_SVLIB_PATH}/svlib_pkg.flist
+-f ${DV_ISA_DECODER_PATH}/isa_decoder_pkg.flist
+-f ${DV_SUPPORT_PATH}/support_pkg.flist
+
+
+// Imperas dv dependencies (rvvi, idv) or dummy package goes here (later packages depend on this)
+${FILE_LIST_IDV_DEPS}
 
 // Agents
 -f ${DV_UVMA_CORE_CNTRL_PATH}/uvma_core_cntrl_pkg.flist
 -f ${DV_UVMA_OBI_MEMORY_PATH}/src/uvma_obi_memory_pkg.flist
 -f ${DV_UVMA_RVFI_PATH}/uvma_rvfi_pkg.flist
--f ${DV_UVMA_RVVI_PATH}/uvma_rvvi_pkg.flist
 -f ${DV_UVMA_ISACOV_PATH}/uvma_isacov_pkg.flist
 -f ${DV_UVMA_PMA_PATH}/src/uvma_pma_pkg.flist
 -f ${DV_UVMA_CLKNRST_PATH}/uvma_clknrst_pkg.flist
 -f ${DV_UVMA_INTERRUPT_PATH}/uvma_interrupt_pkg.flist
+-f ${DV_UVMA_CLIC_PATH}/uvma_clic_pkg.flist
 -f ${DV_UVMA_DEBUG_PATH}/uvma_debug_pkg.flist
--f ${DV_UVMA_RVVI_OVPSIM_PATH}/uvma_rvvi_ovpsim_pkg.flist
 -f ${DV_UVMA_FENCEI_PATH}/uvma_fencei_pkg.flist
+-f ${DV_UVMA_WFE_WU_PATH}/uvma_wfe_wu_pkg.flist
 
-// Environments
--f ${DV_UVME_PATH}/uvme_cv32e40s_pkg.flist
 
 // CV32E40S test bench Directories
 +incdir+${DV_UVMT_PATH}
-+incdir+${DV_UVMT_PATH}/../../tests/uvmt
-+incdir+${DV_UVMT_PATH}/../../tests/uvmt/base-tests
-+incdir+${DV_UVMT_PATH}/../../tests/uvmt/compliance-tests
-+incdir+${DV_UVMT_PATH}/../../tests/uvmt/vseq
++incdir+${DV_UVM_TESTCASE_PATH}
++incdir+${DV_UVM_TESTCASE_PATH}/base-tests
++incdir+${DV_UVM_TESTCASE_PATH}/compliance-tests
++incdir+${DV_UVM_TESTCASE_PATH}/vseq
+
+${DV_UVM_TESTCASE_PATH}/base-tests/uvmt_cv32e40s_base_test_pkg.sv
 
 // CV32E40S tests (includes constants/macros/types meant for test bench)
 +incdir+${TBSRC_HOME}
+
+// Environments
+-f ${DV_UVME_PATH}/uvme_cv32e40s_pkg.flist
 ${DV_UVMT_PATH}/uvmt_cv32e40s_pkg.sv
 
-// CV32E40S test bench files
-${DV_UVMT_PATH}/uvmt_cv32e40s_dut_wrap.sv
-${DV_UVMT_PATH}/uvmt_cv32e40s_tb.sv
-${TBSRC_HOME}/core/tb_riscv/include/perturbation_defines.sv
-${TBSRC_HOME}/uvmt/uvmt_cv32e40s_tb.sv
-${TBSRC_HOME}/uvmt/uvmt_cv32e40s_dut_wrap.sv
-${TBSRC_HOME}/core/mm_ram.sv
-${TBSRC_HOME}/core/dp_ram.sv
-${TBSRC_HOME}/core/tb_riscv/riscv_gnt_stall.sv
-${TBSRC_HOME}/core/tb_riscv/riscv_rvalid_stall.sv
-${TBSRC_HOME}/core/tb_riscv/riscv_random_interrupt_generator.sv
+// ImperasDV wrapper files (this env var is not set if not using idv)
+// Depends on env
+${FILE_LIST_IDV}
 
-${DV_UVMT_PATH}/uvmt_cv32e40s_interrupt_assert.sv
-${DV_UVMT_PATH}/uvmt_cv32e40s_debug_assert.sv
-${DV_UVMT_PATH}/uvmt_cv32e40s_fencei_assert.sv
-${DV_UVMT_PATH}/uvmt_cv32e40s_integration_assert.sv
+// CV32E40S test bench files
+-f ${DV_UVMT_PATH}/uvmt_cv32e40s_tb_files.flist
