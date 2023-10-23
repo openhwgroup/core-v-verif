@@ -1851,6 +1851,7 @@ endclass: cv32e40p_fp_op_fwd_instr_w_loadstore_stream
   //
   // extended class that clce through all the fp instructions that change
   // fs state from Initial->Dirty and Clean->Dirty
+  // fixme: assess and consider the feedback in https://github.com/XavierAubert/core-v-verif/pull/70
 class cv32e40p_mstatus_fs_stream extends cv32e40p_float_zfinx_base_instr_stream;
 
   localparam LOOP_CNT_LIMIT = 2; // init->dirty, clean->dirty
@@ -1888,6 +1889,13 @@ class cv32e40p_mstatus_fs_stream extends cv32e40p_float_zfinx_base_instr_stream;
       exclude_instr.delete();
       csr_mstatus_fs = 32'd2; // Clean 
     end
+    // fixme : refine after https://github.com/Imperas/private-dolphindesigns-riscv/issues/15 is resolved
+    case (idx)
+      0: include_instr = new[1] ({FLW});
+      1: include_instr = new[1] ({C_FLW});
+      2: include_instr = new[1] ({C_FLWSP});
+      default: include_instr.delete();
+    endcase
   endfunction: update_current_instr_arg_list
 
   virtual function void add_instr_prior_directed_instr(riscv_instr instr, int idx=0);
