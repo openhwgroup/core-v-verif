@@ -183,9 +183,9 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
       mon_trn.instr.rs2     = dasm_rvc_rs2(instr);
       mon_trn.instr.rd      = dasm_rvc_rd(instr);
       mon_trn.instr.c_rdrs1 = dasm_rvc_rd(instr);
-      mon_trn.instr.c_rdp   = dasm_rvc_rs1s(instr);
-      mon_trn.instr.c_rs1s  = dasm_rvc_rs1s(instr);
-      mon_trn.instr.c_rs2s  = dasm_rvc_rs2s(instr);
+      mon_trn.instr.c_rd    = mon_trn.instr.decode_rd_c(instr);
+      mon_trn.instr.c_rs1   = mon_trn.instr.decode_rs1_c(instr);
+      mon_trn.instr.c_rs2   = mon_trn.instr.decode_rs2_c(instr);
     end
     else begin
       mon_trn.instr.rs1  = dasm_rs1(instr);
@@ -217,9 +217,9 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
     // the "get_rx"-functions should no longer be needed if we supply the translated values to
     // the coverage model.
     mon_trn.instr.c_rdrs1 = instr_asm.rd.valid_gpr_rvc  ? instr_asm.rd.gpr_rvc  : instr_asm.rd.gpr;
-    mon_trn.instr.c_rdp   = instr_asm.rd.valid_gpr_rvc  ? instr_asm.rd.gpr_rvc  : instr_asm.rd.gpr;
-    mon_trn.instr.c_rs1s  = instr_asm.rs1.valid_gpr_rvc ? instr_asm.rs1.gpr_rvc : instr_asm.rs1.gpr;
-    mon_trn.instr.c_rs2s  = instr_asm.rs2.valid_gpr_rvc ? instr_asm.rs2.gpr_rvc : instr_asm.rs2.gpr;
+    mon_trn.instr.c_rd    = instr_asm.rd.valid_gpr_rvc  ? instr_asm.rd.gpr_rvc  : instr_asm.rd.gpr;
+    mon_trn.instr.c_rs1   = instr_asm.rs1.valid_gpr_rvc ? instr_asm.rs1.gpr_rvc : instr_asm.rs1.gpr;
+    mon_trn.instr.c_rs2   = instr_asm.rs2.valid_gpr_rvc ? instr_asm.rs2.gpr_rvc : instr_asm.rs2.gpr;
     mon_trn.instr.rs1     = instr_asm.rs1.valid_gpr_rvc ? instr_asm.rs1.gpr_rvc : instr_asm.rs1.gpr;
     mon_trn.instr.rs2     = instr_asm.rs2.valid_gpr_rvc ? instr_asm.rs2.gpr_rvc : instr_asm.rs1.gpr;
     mon_trn.instr.rd      = instr_asm.rd.valid_gpr_rvc  ? instr_asm.rd.gpr_rvc  : instr_asm.rd.gpr;
