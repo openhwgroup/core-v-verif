@@ -177,15 +177,19 @@ def read_file(args, file, f_idx=0):
         # if num is not specified in the yaml, it can be overriden by args.num or set to 1 to avoid issues
         # else, if it is not set to 1 (unique), it can be overriden by args.num if argument is defined
         if test.num == None:
-            try:
-                test.num = int(args.num[f_idx] or 1)
-            except IndexError:
-                test.num = int(args.num[0] or 1)
+            if args.num:
+                try:
+                    test.num = int(args.num[f_idx])
+                except IndexError:
+                    test.num = int(args.num[0])
+            else:
+                test.num = 1
         elif test.num != 1:
-            try:
-                test.num = int(args.num[f_idx] or test.num)
-            except IndexError:
-                test.num = int(args.num[0] or test.num)
+            if args.num:
+                try:
+                    test.num = int(args.num[f_idx])
+                except IndexError:
+                    test.num = int(args.num[0])
 
         try:
             if test.simulator in t['skip_sim']:
