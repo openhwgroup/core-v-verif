@@ -434,7 +434,7 @@ gen_corev-dv: $(VSIM_COREVDV_SIM_PREREQ)
 			$(CV_CORE_LC)_instr_gen_tb_top_vopt \
 			$(DPILIB_VSIM_OPT) \
 			+UVM_TESTNAME=$(GEN_UVM_TEST) \
-			-l $(TEST)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log \
+			-l $(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log \
 			+start_idx=$(GEN_START_INDEX) \
 			+num_of_tests=$(GEN_NUM_TESTS) \
 			+asm_file_name_opts=$(TEST) \
@@ -443,10 +443,11 @@ gen_corev-dv: $(VSIM_COREVDV_SIM_PREREQ)
 			$(TEST_CFG_FILE_PLUSARGS) \
 			$(GEN_PLUSARGS)
 
-	# Copy out final assembler files to test directory
+# copy and move out final assembler files and log to test directory (move to avoid duplicating files)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		cp -f ${BSP}/link_corev-dv.ld ${SIM_TEST_RESULTS}/$$idx/test_program/link.ld; \
-		cp -f ${SIM_COREVDV_RESULTS}/${TEST}/${TEST}_$$idx.S ${SIM_TEST_RESULTS}/$$idx/test_program; \
+		mv -f ${SIM_COREVDV_RESULTS}/${TEST}/${TEST}_$$idx.S ${SIM_TEST_RESULTS}/$$idx/test_program; \
+		mv -f $(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log ${SIM_TEST_RESULTS}/$$idx/test_program; \
 	done
 
 $(SIM_COREVDV_RESULTS)/vlog.log: vlog_corev-dv
@@ -458,58 +459,10 @@ comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG) $(SIM_COREVDV_RESULTS)/vlog.log $(S
 corev-dv: clean_riscv-dv clone_riscv-dv comp_corev-dv
 
 ###############################################################################
-# Run a single test-program from the RISC-V Compliance Test-suite. The parent
-# Makefile of this <sim>.mk implements "all_compliance", the target that
-# compiles the test-programs.
-#
-# There is a dependancy between RISCV_ISA and COMPLIANCE_PROG which *you* are
-# required to know.  For example, the I-ADD-01 test-program is part of the rv32i
-# testsuite.
-# So this works:
-#                make compliance RISCV_ISA=rv32i COMPLIANCE_PROG=I-ADD-01
-# But this does not:
-#                make compliance RISCV_ISA=rv32imc COMPLIANCE_PROG=I-ADD-01
-#
-RISCV_ISA       ?= rv32i
-COMPLIANCE_PROG ?= I-ADD-01
-
-SIG_ROOT          ?= $(SIM_CFG_RESULTS)/$(RISCV_ISA)
-SIG               ?= $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX)/$(COMPLIANCE_PROG).signature_output
-REF               ?= $(COMPLIANCE_PKG)/riscv-test-suite/$(RISCV_ISA)/references/$(COMPLIANCE_PROG).reference_output
-COMPLIANCE_RUN_DIR = $(SIM_CFG_RESULTS)/$(RISCV_ISA)/$(COMPLIANCE_PROG)/$(RUN_INDEX)
-TEST_PLUSARGS     ?= +signature=$(COMPLIANCE_PROG).signature_output
-
-ifneq ($(call IS_NO,$(COMP)),NO)
-VSIM_COMPLIANCE_PREREQ = build_compliance
-endif
-
-# Target to run VSIM (i.e. run the simulation)
-compliance: $(VSIM_COMPLIANCE_PREREQ) $(VSIM_RUN_PREREQ) gen_ovpsim_ic
-	@echo "$(BANNER)"
-	@echo "* Running vsim in $(COMPLIANCE_RUN_DIR)"
-	@echo "* Log: $(COMPLIANCE_RUN_DIR)/vsim-$(COMPLIANCE_PROG).log"
-	@echo "$(BANNER)"
-	mkdir -p $(COMPLIANCE_RUN_DIR) && \
-	cd $(COMPLIANCE_RUN_DIR) && \
-		$(VMAP) work $(SIM_CFG_RESULTS)/work
-	cd $(COMPLIANCE_RUN_DIR) && \
-		$(VSIM) \
-			-work $(VWORK) \
-			$(VSIM_WAVES_FLAGS) \
-			$(VSIM_FLAGS) \
-			-l vsim-$(COMPLIANCE_PROG).log \
-			$(DPILIB_VSIM_OPT) \
-			+UVM_TESTNAME=uvmt_$(CV_CORE_LC)_firmware_test_c \
-			$(RTLSRC_VOPT_TB_TOP) \
-			$(CFG_PLUSARGS) \
-			$(TEST_PLUSARGS) \
-			+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).hex \
-			+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).elf
 
 # This special target is to support the special sanity target in the Common Makefile
 hello-world:
 	$(MAKE) test TEST=hello-world
-
 
 ################################################################################
 # RISCOF RISCV-ARCH-TEST DUT simulation targets
@@ -737,4 +690,4 @@ clean_rtl:
 	rm -rf $(CV_CORE_PKG)
 
 # All generated files plus the clone of the RTL
-clean_all: clean clean_rtl clean_riscv-dv clean_test_programs clean_bsp clean_compliance clean_embench clean_dpi_dasm_spike clean_svlib clean_riscof_arch_test_suite
+clean_all: clean clean_rtl clean_riscv-dv clean_test_programs clean_bsp clean_embench clean_dpi_dasm_spike clean_svlib clean_riscof_arch_test_suite

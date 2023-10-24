@@ -75,10 +75,6 @@ ifndef EMBENCH_REPO
 $(warning Must define a EMBENCH_REPO to use the common makefile)
 endif
 
-ifndef COMPLIANCE_REPO
-$(error Must define a COMPLIANCE_REPO to use the common makefile)
-endif
-
 ifndef DPI_DASM_SPIKE_REPO
 $(warning Must define a DPI_DASM_SPIKE_REPO to use the common makefile)
 endif
@@ -120,21 +116,6 @@ else
   CLONE_RISCVDV_CMD = $(TMP3); cd $(RISCVDV_PKG); git checkout $(RISCVDV_HASH)
 endif
 # RISCV-DV repo var end
-
-###############################################################################
-# Generate command to clone the RISCV Compliance Test-suite
-ifeq ($(COMPLIANCE_BRANCH), master)
-  TMP4 = git clone $(COMPLIANCE_REPO) --recurse $(COMPLIANCE_PKG)
-else
-  TMP4 = git clone -b $(COMPLIANCE_BRANCH) --single-branch $(COMPLIANCE_REPO) --recurse $(COMPLIANCE_PKG)
-endif
-
-ifeq ($(COMPLIANCE_HASH), head)
-  CLONE_COMPLIANCE_CMD = $(TMP4)
-else
-  CLONE_COMPLIANCE_CMD = $(TMP4); cd $(COMPLIANCE_PKG); sleep 2; git checkout $(COMPLIANCE_HASH)
-endif
-# RISCV Compliance repo var end
 
 ###############################################################################
 # Generate command to clone EMBench (Embedded Benchmarking suite)
