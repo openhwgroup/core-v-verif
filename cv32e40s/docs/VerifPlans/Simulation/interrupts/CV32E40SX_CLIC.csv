@@ -256,11 +256,16 @@ ie = mcause.mpie
 mcause.mpil unchanged
 mcause.mpp = least privileged mode
 mcause.mpie = 1","Correct update of CSR values when core returns from an ISR
-Added assertion for formal coverage",Assertion Check,"ENV capability, not specific test",Functional Coverage,
+Added assertion for formal coverage",Assertion Check,"ENV capability, not specific test",Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.clic_assert_i.gen_clic_assertions.a_mret_pc_intended,
+[clic_assert].a_mret_pc_not_vectored, 
+[clic_assert].a_mret_mode_mpp, 
+[clic_assert].a_mret_mil_mpil, 
+[clic_assert].a_mret_mil_mpil_intended, 
+[clic_assert].a_mret_mie_mpie"
 CLIC 0.9-draft 4/11/2023,Return from handler,mret,"""If the hart is currently running at some privilege mode x, an MRET or SRET instruction that changes the privilege mode to a mode less privileged than x also sets xintthresh = 0.""","Use ""mret"" to enter U-mode.
-Check that ""mintthresh"" is written to zero upon executing the mret.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,
+Check that ""mintthresh"" is written to zero upon executing the mret.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.clic_assert_i.gen_clic_assertions.a_mret_umode_clear_mintthresh
 CLIC 0.9-draft 4/11/2023,Return from debug mode,dret,"""Likewise, if the RISC-V debug specification is implemented and the hart is currently running at some privilege mode x, a DRET instruction that changes the privilege mode to a mode less privileged than x also sets xintthresh = 0.""","Use ""dret"" to enter U-mode.
-Check that ""mintthresh"" is written to zero upon executing the dret.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,
+Check that ""mintthresh"" is written to zero upon executing the dret.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.clic_assert_i.gen_clic_assertions.a_dret_umode_clear_mintthresh
 CLIC 8675ec,WFI,Wakeup conditions,"A pending-and-enabled interrupt i causes the hart to resume execution if interrupt i
 • has a higher privilege mode than the current privilege mode and
 • the interrupt priority reduction tree selects interrupt i as the maximum across all pending-and-enabled
