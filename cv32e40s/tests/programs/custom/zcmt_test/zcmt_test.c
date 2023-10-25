@@ -33,7 +33,7 @@
 // status, thus we are limited to 31 tests with this construct.
 #define NUM_TESTS 11
 // Set which test index to start testing at (for quickly running specific tests during development)
-#define START_TEST_IDX 5
+#define START_TEST_IDX 0
 
 
 // __FUNCTION__ is C99 and newer, -Wpedantic flags a warning that
@@ -71,7 +71,6 @@ volatile verbosity_t global_verbosity = V_LOW;
 
 volatile uint32_t * volatile g_expect_illegal;
 volatile uint32_t * volatile g_expect_tablejmp;
-volatile uint32_t * volatile g_expect_tablejmp_idx;
 volatile uint32_t * volatile g_csr_instr;
 volatile uint32_t * volatile g_csr_instr_rd_val;
 volatile uint32_t * volatile g_csr_instr_rs1_val;
@@ -216,7 +215,6 @@ int main(int argc, char **argv){
 
   g_expect_illegal      = calloc(1, sizeof(uint32_t));
   g_expect_tablejmp     = calloc(1, sizeof(uint32_t));
-  g_expect_tablejmp_idx = calloc(1, sizeof(uint32_t));
   g_csr_instr           = calloc(1, sizeof(uint32_t));
   g_csr_instr_rd_val    = calloc(1, sizeof(uint32_t));
   g_csr_instr_rs1_val   = calloc(1, sizeof(uint32_t));
@@ -251,7 +249,6 @@ int main(int argc, char **argv){
   retval = get_result(test_res, tests);
 
   free((void *)g_expect_illegal       );
-  free((void *)g_expect_tablejmp_idx  );
   free((void *)g_csr_instr            );
   free((void *)g_csr_instr_rd_val     );
   free((void *)g_csr_instr_rs1_val    );
