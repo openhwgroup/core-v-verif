@@ -206,25 +206,25 @@ module uvmt_cv32e40s_pmp_assert
           iff (csr_pmp_i.cfg[match_status.val_index].mode == PMP_MODE_NAPOT &&
                match_status.is_matched         == 1'b1 &&
                match_status.is_access_allowed  == 1'b1
-        );
+          );
 
         cp_napot_min_8byte_disallowed: coverpoint { pmp_req_addr_i[2+PMP_GRANULARITY], csr_pmp_i.addr[match_status.val_index][2+PMP_GRANULARITY] }
           iff (csr_pmp_i.cfg[match_status.val_index].mode == PMP_MODE_NAPOT &&
                match_status.is_matched         == 1'b1 &&
                match_status.is_access_allowed  == 1'b0
-        );
+          );
 
         cp_napot_encoding: coverpoint ( pmp_req_addr_i[33:2+PMP_GRANULARITY] == csr_pmp_i.addr[match_status.val_index][33:2+PMP_GRANULARITY] )
           iff (csr_pmp_i.cfg[match_status.val_index].mode == PMP_MODE_NAPOT &&
                match_status.is_matched        == 1'b1 &&
                match_status.is_access_allowed == 1'b1
-        );
+          );
 
         cp_napot_encoding_disallowed: coverpoint ( pmp_req_addr_i[33:2+PMP_GRANULARITY] == csr_pmp_i.addr[match_status.val_index][33:2+PMP_GRANULARITY] )
           iff (csr_pmp_i.cfg[match_status.val_index].mode == PMP_MODE_NAPOT &&
                match_status.is_matched        == 1'b1 &&
                match_status.is_access_allowed == 1'b0
-        );
+          );
 
       endgroup
       cg_internals_common cg_int = new();
@@ -306,6 +306,14 @@ module uvmt_cv32e40s_pmp_assert
       csr_pmp_i.mseccfg.rlb === 1'b1 && csr_pmp_i.cfg[region].lock === 1'b1 ##1
         $changed(csr_pmp_i.cfg[region].read)
     );
+
+    if (region > 0) begin: gen_tor
+      cov_rlb_locked_rules_can_modify_tor : cover property (
+        csr_pmp_i.mseccfg.rlb === 1'b1 && csr_pmp_i.cfg[region].lock === 1'b1 &&
+        csr_pmp_i.cfg[region].mode === PMP_MODE_TOR ##1
+          $changed(csr_pmp_i.cfg[region-1])
+      );
+    end
 
     cov_rlb_locked_rules_can_remove : cover property (
       csr_pmp_i.mseccfg.rlb === 1'b1 &&
@@ -530,6 +538,23 @@ module uvmt_cv32e40s_pmp_assert
       p_suppress_req_data
     ) else `uvm_error(info_tag, "denied data access doesn't reach bus");
     // TODO:silabs-robin  Add covers, or get reviews, and become convinced this is "bullet proof".
+  end
+
+
+  // "mseccfg" has fields hardwired to 0  (vplan:ReservedZero)
+
+  a_reserved_zero_mseccfg_fields: assert property (
+    csr_pmp_i.mseccfg[31:3] == '0
+  ) else `uvm_error(info_tag, "mseccfg fields not zero");
+
+
+  // "Unused" PMP CSRs read as zero  (vplan:UnusedZero)
+
+  for (genvar i = PMP_NUM_REGIONS; i < 64; i++) begin: gen_unused_zero
+    a_unused_zero_pmp_csrs: assert property (
+      csr_pmp_i.cfg[i] == '0  &&
+      csr_pmp_i.addr[i] == '0
+    );
   end
 
 
