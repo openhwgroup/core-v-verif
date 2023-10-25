@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <assert.h>
+#include "bsp.h"
 #include "corev_uvmt.h"
 
 // MUST be 31 or less (bit position-1 in result array determines test pass/fail
@@ -50,81 +51,9 @@
   const volatile char * const volatile name = __FUNCTION__; \
   _Pragma("GCC diagnostic pop")
 
-typedef union {
-  struct {
-    volatile uint32_t uie   : 1;  //     0
-    volatile uint32_t sie   : 1;  //     1
-    volatile uint32_t wpri  : 1;  //     2
-    volatile uint32_t mie   : 1;  //     3
-    volatile uint32_t upie  : 1;  //     4
-    volatile uint32_t spie  : 1;  //     5
-    volatile uint32_t wpri0 : 1;  //     6
-    volatile uint32_t mpie  : 1;  //     7
-    volatile uint32_t spp   : 1;  //     8
-    volatile uint32_t wpri1 : 2;  // 10: 9
-    volatile uint32_t mpp   : 2;  // 12:11
-    volatile uint32_t fs    : 2;  // 14:13
-    volatile uint32_t xs    : 2;  // 16:15
-    volatile uint32_t mprv  : 1;  //    17
-    volatile uint32_t sum   : 1;  //    18
-    volatile uint32_t mxr   : 1;  //    19
-    volatile uint32_t tvm   : 1;  //    20
-    volatile uint32_t tw    : 1;  //    21
-    volatile uint32_t tsr   : 1;  //    22
-    volatile uint32_t wpri3 : 8;  // 30:23
-    volatile uint32_t sd    : 1;  //    31
-  } volatile fields;
-  volatile uint32_t raw;
-} __attribute__((packed)) mstatus_t;
-
-typedef union {
-  struct {
-    volatile uint32_t mml           : 1;
-    volatile uint32_t mmwp          : 1;
-    volatile uint32_t rlb           : 1;
-    volatile uint32_t reserved_31_3 : 29;
-  } __attribute__((packed)) volatile fields;
-  volatile uint32_t raw : 32;
-} mseccfg_t;
-
-typedef union {
-  struct {
-    volatile uint32_t r            : 1;
-    volatile uint32_t w            : 1;
-    volatile uint32_t x            : 1;
-    volatile uint32_t a            : 1;
-    volatile uint32_t reserved_6_5 : 2;
-    volatile uint32_t l            : 1;
-  } __attribute__((packed)) volatile fields;
-  volatile uint32_t raw : 8;
-} __attribute__((packed)) pmpsubcfg_t;
-
-typedef union {
-  struct {
-    volatile uint32_t cfg : 8;
-  } __attribute__((packed)) volatile reg_idx[4];
-  volatile uint32_t raw : 32;
-} __attribute__((packed)) pmpcfg_t;
-
-typedef enum {
-  PMPMODE_OFF   = 0,
-  PMPMODE_TOR   = 1,
-  PMPMODE_NA4   = 2,
-  PMPMODE_NAPOT = 3
-} pmp_mode_t;
-
 // ---------------------------------------------------------------
 // Convenience macros for bit fields
 // ---------------------------------------------------------------
-
-// Verbosity levels (Akin to the uvm verbosity concept)
-typedef enum {
-  V_OFF    = 0,
-  V_LOW    = 1,
-  V_MEDIUM = 2,
-  V_HIGH   = 3,
-  V_DEBUG  = 4
-} verbosity_t;
 
 // ---------------------------------------------------------------
 // Global variables
