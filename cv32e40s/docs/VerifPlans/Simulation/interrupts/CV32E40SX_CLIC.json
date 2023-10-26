@@ -778,7 +778,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.clic_assert_i.gen_clic_assertions.a_mret_pc_intended,\n[clic_assert].a_mret_pc_not_vectored, \n[clic_assert].a_mret_mode_mpp, \n[clic_assert].a_mret_mil_mpil, \n[clic_assert].a_mret_mil_mpil_intended, \n[clic_assert].a_mret_mie_mpie"
     },
     {
         "Requirement Location": "CLIC 0.9-draft 4/11/2023",
@@ -789,7 +789,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.clic_assert_i.gen_clic_assertions.a_mret_umode_clear_mintthresh"
     },
     {
         "Requirement Location": "CLIC 0.9-draft 4/11/2023",
@@ -800,7 +800,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.clic_assert_i.gen_clic_assertions.a_dret_umode_clear_mintthresh"
     },
     {
         "Requirement Location": "CLIC 8675ec",
