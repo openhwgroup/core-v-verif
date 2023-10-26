@@ -48,6 +48,9 @@ set_expr_coverable_statements -all
 # Toggle coverage smart refinement (refinement for toggle with traverse hierarchy)
 set_toggle_smart_refinement
 
+# Score toggle coverage for ports only
+set_toggle_portsonly
+
 # ----------------------------------------------------------------------------------
 # Covergroup coverage configuration
 # ----------------------------------------------------------------------------------
