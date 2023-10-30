@@ -18,6 +18,7 @@
 //
 class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
     string debug_dret[$];
+    cv32e40p_instr_gen_config cfg_corev;
 
     `uvm_object_utils(cv32e40p_debug_rom_gen)
 
@@ -27,17 +28,16 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
 
     virtual function void gen_program();
         string sub_program_name[$] = {};
-        cv32e40p_instr_gen_config cfg_corev;
         privileged_reg_t status = MSTATUS;
+
+        if(!uvm_config_db#(cv32e40p_instr_gen_config)::get(null,get_full_name(),"cv32e40p_instr_cfg", cfg_corev)) begin
+          `uvm_fatal(get_full_name(), "Cannot get cv32e40p_instr_gen_config")
+        end
 
         // CORE-V Addition
         // Insert section info so linker can place
         // debug code at the correct adress        
         instr_stream.push_back(".section .debugger, \"ax\"");
-
-        // CORE-V Addition
-        // Cast CORE-V derived handle to enable fetching core-v config fields
-        `DV_CHECK($cast(cfg_corev, cfg))
 
         // Randomly add a WFI at start of ddebug rom
         // This will be treaed as a NOP always, but added here to close instructon
