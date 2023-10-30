@@ -39,6 +39,18 @@ class cv32e40p_illegal_instr extends riscv_illegal_instr;
 
   function new(string name="");
     super.new(name);
-  endfunction  
+  endfunction
+
+  function void cv32e40p_init(riscv_instr_gen_config cfg);
+    this.cfg = cfg;
+    if (riscv_instr_pkg::RV32ZFINX inside {riscv_instr_pkg::supported_isa}) begin
+      legal_opcode = {legal_opcode, 7'b1000011, 7'b1000111, 7'b1001011,
+                                    7'b1001111, 7'b1010011};
+    end
+    if (riscv_instr_pkg::RV32X inside {riscv_instr_pkg::supported_isa}) begin
+      legal_opcode = {legal_opcode, 7'b0001011, 7'b0101011, 7'b1011011,
+                                    7'b1111011};
+    end
+  endfunction
 
 endclass : cv32e40p_illegal_instr
