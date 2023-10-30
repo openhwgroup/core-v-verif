@@ -530,12 +530,14 @@ function void uvme_cv32e40s_env_c::connect_coverage_model();
 
    isacov_agent.monitor.ap.connect(cov_model.exceptions_covg.isacov_mon_export);
    isacov_agent.monitor.ap.connect(cov_model.counters_covg.isacov_mon_export);
+   isacov_agent.monitor.ap.connect(cov_model.interrupt_covg.isacov_mon_export);
+   isacov_agent.monitor.ap.connect(cov_model.clic_covg.isacov_mon_export);
 
    obi_memory_data_agent.mon_ap.connect(pma_agent.monitor.obi_d_export);
    foreach (rvfi_agent.instr_mon_ap[i]) begin
       rvfi_agent.instr_mon_ap[i].connect(isacov_agent.monitor.rvfi_instr_imp);
       rvfi_agent.instr_mon_ap[i].connect(cov_model.interrupt_covg.interrupt_mon_export);
-      //rvfi_agent.instr_mon_ap[i].connect(cov_model.clic_covg.clic_mon_export); // TODO: silabs-hfegran
+      rvfi_agent.instr_mon_ap[i].connect(cov_model.clic_covg.clic_mon_export);
       rvfi_agent.instr_mon_ap[i].connect(pma_agent.monitor.rvfi_instr_export);
    end
 
