@@ -48,6 +48,10 @@ int main()
 {
   unsigned int i = 0, j = 0, error = 0;
 
+  float *P_INPUT = INPUT;
+  float *P_EXP_RES = EXP_RES;
+  float *P_RES = RES;
+
   // Floating Point enable
   fp_enable();
 
@@ -55,35 +59,55 @@ int main()
   __asm__ volatile("csrw frm, 0x4");
   __asm__ volatile("csrw fflags, 0x0");
   
-  __asm__ volatile("fmadd.s %0, %1, %2, %3" : "=r"(RES[i]) : "r"(INPUT[j++]), "r"(INPUT[j++]), "r"(INPUT[j++]) );
+#ifdef ZFINX 
+  __asm__ volatile("fmadd.s %0, %1, %2, %3" : "=r"(P_RES[i]) : "r"(P_INPUT[j++]), "r"(P_INPUT[j++]), "r"(P_INPUT[j++]) );
+#else
+  __asm__ volatile("fmadd.s %0, %1, %2, %3" : "=f"(P_RES[i]) : "f"(P_INPUT[j++]), "f"(P_INPUT[j++]), "f"(P_INPUT[j++]) );
+#endif
   __asm__ volatile("csrr %0, fflags" : "=r"(FLAGS[i++]));
 
   // #727
   __asm__ volatile("csrw frm, 0x2");
   __asm__ volatile("csrw fflags, 0x0");
   
-  __asm__ volatile("fcvt.w.s %0, %1" : "=r"(RES[i]) : "r"(INPUT[j++]) );
+#ifdef ZFINX 
+  __asm__ volatile("fcvt.w.s %0, %1" : "=r"(P_RES[i]) : "r"(P_INPUT[j++]) );
+#else
+  __asm__ volatile("fcvt.w.s %0, %1" : "=r"(P_RES[i]) : "f"(P_INPUT[j++]) );
+#endif
   __asm__ volatile("csrr %0, fflags" : "=r"(FLAGS[i++]));
 
   // #728
   __asm__ volatile("csrw frm, 0x2");
   __asm__ volatile("csrw fflags, 0x0");
   
-  __asm__ volatile("fmul.s %0, %1, %2" : "=r"(RES[i]) : "r"(INPUT[j++]), "r"(INPUT[j++]) );
+#ifdef ZFINX 
+  __asm__ volatile("fmul.s %0, %1, %2" : "=r"(P_RES[i]) : "r"(P_INPUT[j++]), "r"(P_INPUT[j++]) );
+#else
+  __asm__ volatile("fmul.s %0, %1, %2" : "=f"(P_RES[i]) : "f"(P_INPUT[j++]), "f"(P_INPUT[j++]) );
+#endif
   __asm__ volatile("csrr %0, fflags" : "=r"(FLAGS[i++]));
 
   // #729
   __asm__ volatile("csrw frm, 0x3");
   __asm__ volatile("csrw fflags, 0x0");
   
-  __asm__ volatile("fmul.s %0, %1, %2" : "=r"(RES[i]) : "r"(INPUT[j++]), "r"(INPUT[j++]) );
+#ifdef ZFINX 
+  __asm__ volatile("fmul.s %0, %1, %2" : "=r"(P_RES[i]) : "r"(P_INPUT[j++]), "r"(P_INPUT[j++]) );
+#else
+  __asm__ volatile("fmul.s %0, %1, %2" : "=f"(P_RES[i]) : "f"(P_INPUT[j++]), "f"(P_INPUT[j++]) );
+#endif
   __asm__ volatile("csrr %0, fflags" : "=r"(FLAGS[i++]));
 
   // #94
   __asm__ volatile("csrw frm, 0x0");
   __asm__ volatile("csrw fflags, 0x0");
   
-  __asm__ volatile("fdiv.s %0, %1, %2" : "=r"(RES[i]) : "r"(INPUT[j++]), "r"(INPUT[j++]) );
+#ifdef ZFINX 
+  __asm__ volatile("fdiv.s %0, %1, %2" : "=r"(P_RES[i]) : "r"(P_INPUT[j++]), "r"(P_INPUT[j++]) );
+#else
+  __asm__ volatile("fdiv.s %0, %1, %2" : "=f"(P_RES[i]) : "f"(P_INPUT[j++]), "f"(P_INPUT[j++]) );
+#endif
   __asm__ volatile("csrr %0, fflags" : "=r"(FLAGS[i++]));
 
   for (j = 0; j < i ; j++) {
