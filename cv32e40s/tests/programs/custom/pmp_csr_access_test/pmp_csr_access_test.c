@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <assert.h>
+#include "bsp.h"
 #include "corev_uvmt.h"
 
 // MUST be 31 or less (bit position-1 in result array determines test pass/fail
@@ -44,34 +45,6 @@
   const volatile char * const volatile name = __FUNCTION__; \
   _Pragma("GCC diagnostic pop")
 
-typedef union {
-  struct {
-    volatile uint32_t opcode   : 7;
-    volatile uint32_t rd       : 5;
-    volatile uint32_t funct3   : 3;
-    volatile uint32_t rs1_uimm : 5;
-    volatile uint32_t csr      : 12;
-  } volatile fields;
-  volatile uint32_t raw;
-} __attribute__((packed)) csr_instr_t;
-
-// Matches funct3 values for CSR instructions
-typedef enum {
-  CSRRW  = 1,
-  CSRRS  = 2,
-  CSRRC  = 3,
-  CSRRWI = 5,
-  CSRRSI = 6,
-  CSRRCI = 7
-} csr_instr_access_t;
-
-typedef enum {
-  PMPMODE_OFF   = 0,
-  PMPMODE_TOR   = 1,
-  PMPMODE_NA4   = 2,
-  PMPMODE_NAPOT = 3
-} pmp_mode_t;
-
 // ---------------------------------------------------------------
 // Convenience macros for bit fields
 // ---------------------------------------------------------------
@@ -79,15 +52,6 @@ typedef enum {
 #define PMPCFG_BASE   0x3a0
 #define PMPADDR_BASE  0x3b0
 #define MSECCFG_BASE  0x747
-
-// Verbosity levels (Akin to the uvm verbosity concept)
-typedef enum {
-  V_OFF    = 0,
-  V_LOW    = 1,
-  V_MEDIUM = 2,
-  V_HIGH   = 3,
-  V_DEBUG  = 4
-} verbosity_t;
 
 // ---------------------------------------------------------------
 // Global variables

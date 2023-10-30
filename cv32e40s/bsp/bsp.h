@@ -29,6 +29,43 @@ enum {
   EXC_CAUSE_INSTR_INTEGRITY_FAULT = 25,
 };
 
+typedef enum {
+  PMPMODE_OFF   = 0,
+  PMPMODE_TOR   = 1,
+  PMPMODE_NA4   = 2,
+  PMPMODE_NAPOT = 3
+} pmp_mode_t;
+
+// Verbosity levels (Akin to the uvm verbosity concept)
+typedef enum {
+  V_OFF    = 0,
+  V_LOW    = 1,
+  V_MEDIUM = 2,
+  V_HIGH   = 3,
+  V_DEBUG  = 4
+} verbosity_t;
+
+// Matches funct3 values for CSR instructions
+typedef enum {
+  CSRRW  = 1,
+  CSRRS  = 2,
+  CSRRC  = 3,
+  CSRRWI = 5,
+  CSRRSI = 6,
+  CSRRCI = 7
+} csr_instr_access_t;
+
+typedef union {
+  struct {
+    volatile uint32_t opcode   : 7;
+    volatile uint32_t rd       : 5;
+    volatile uint32_t funct3   : 3;
+    volatile uint32_t rs1_uimm : 5;
+    volatile uint32_t csr      : 12;
+  } volatile fields;
+  volatile uint32_t raw;
+} __attribute__((packed)) csr_instr_t;
+
 typedef union {
   struct {
     volatile uint32_t  load     : 1;
@@ -53,3 +90,76 @@ typedef union {
   } __attribute__((packed)) volatile fields;
   volatile uint32_t raw;
 } __attribute__((packed)) mcontrol6_t;
+
+typedef union {
+  struct {
+    volatile uint32_t uie   : 1;  //     0
+    volatile uint32_t sie   : 1;  //     1
+    volatile uint32_t wpri  : 1;  //     2
+    volatile uint32_t mie   : 1;  //     3
+    volatile uint32_t upie  : 1;  //     4
+    volatile uint32_t spie  : 1;  //     5
+    volatile uint32_t wpri0 : 1;  //     6
+    volatile uint32_t mpie  : 1;  //     7
+    volatile uint32_t spp   : 1;  //     8
+    volatile uint32_t wpri1 : 2;  // 10: 9
+    volatile uint32_t mpp   : 2;  // 12:11
+    volatile uint32_t fs    : 2;  // 14:13
+    volatile uint32_t xs    : 2;  // 16:15
+    volatile uint32_t mprv  : 1;  //    17
+    volatile uint32_t sum   : 1;  //    18
+    volatile uint32_t mxr   : 1;  //    19
+    volatile uint32_t tvm   : 1;  //    20
+    volatile uint32_t tw    : 1;  //    21
+    volatile uint32_t tsr   : 1;  //    22
+    volatile uint32_t wpri3 : 8;  // 30:23
+    volatile uint32_t sd    : 1;  //    31
+  } volatile fields;
+  volatile uint32_t raw;
+} __attribute__((packed)) mstatus_t;
+
+typedef union {
+  struct {
+    volatile uint32_t mml           : 1;
+    volatile uint32_t mmwp          : 1;
+    volatile uint32_t rlb           : 1;
+    volatile uint32_t reserved_31_3 : 29;
+  } __attribute__((packed)) volatile fields;
+  volatile uint32_t raw : 32;
+} __attribute__((packed)) mseccfg_t;
+
+typedef union {
+  struct {
+    volatile uint32_t reserved_1_0  : 2;
+    volatile uint32_t jvt_access    : 1;
+    volatile uint32_t reserved_31_3 : 29;
+  } __attribute__((packed)) volatile fields;
+  volatile uint32_t raw : 32;
+} __attribute__((packed)) mstateen0_t;
+
+typedef union {
+  struct {
+    volatile uint32_t r            : 1;
+    volatile uint32_t w            : 1;
+    volatile uint32_t x            : 1;
+    volatile uint32_t a            : 1;
+    volatile uint32_t reserved_6_5 : 2;
+    volatile uint32_t l            : 1;
+  } __attribute__((packed)) volatile fields;
+  volatile uint32_t raw : 8;
+} __attribute__((packed)) pmpsubcfg_t;
+
+typedef union {
+  struct {
+    volatile uint32_t cfg : 8;
+  } __attribute__((packed)) volatile reg_idx[4];
+  volatile uint32_t raw : 32;
+} __attribute__((packed)) pmpcfg_t;
+
+typedef union {
+  struct {
+    volatile uint32_t mode : 6;
+    volatile uint32_t base : 26;
+  } __attribute__((packed)) volatile fields;
+  volatile uint32_t raw : 32;
+} __attribute__((packed)) jvt_t;
