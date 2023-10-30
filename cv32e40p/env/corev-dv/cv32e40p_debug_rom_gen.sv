@@ -79,6 +79,13 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
             // having to execute unnecessary push/pop of GPRs on the stack ever
             // time a debug request is sent
             gen_signature_handshake(debug_main, CORE_STATUS, IN_DEBUG_MODE);
+            if (cfg_corev.setup_debug_trigger_on_addr_match) begin
+                // Setup tdata1 and tdata2 for trigger breakpoint
+                if (!cfg.enable_debug_single_step)
+                  gen_dbg_trigger_setup_with_addr_match(1); //use_dscratch0=1, num of trigger iterations > 1 allowed
+                else
+                  gen_dbg_trigger_setup_with_addr_match(0); //use_dscratch0=0, num of trigger iterations = 1
+            end
             if (cfg.enable_ebreak_in_debug_rom) begin
                 // send dpc and dcsr to testbench, as this handshake will be
                 // executed twice due to the ebreak loop, there should be no change
@@ -93,7 +100,11 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
                 gen_dcsr_ebreak();
             end
             if (cfg.enable_debug_single_step) begin
-                gen_single_step_logic();
+                if ((cfg_corev.debug_trigger_before_single_step & cfg_corev.setup_debug_trigger_on_addr_match) ||
+                    (cfg_corev.debug_ebreak_before_single_step & cfg_corev.set_dcsr_ebreak))
+                  gen_single_step_logic_if_trigger_ebreak();
+                else
+                  gen_single_step_logic();
             end
             gen_dpc_update();
             // write DCSR to the testbench for any analysis
@@ -167,6 +178,169 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
         // original section
         instr_stream.push_back(".section text");
     endfunction : gen_debug_exception_handler
-    
+
+    // Function: gen_dbg_trigger_setup_with_addr_match
+    // Inputs int use_dscratch0, dscratch0 is used to store number of
+    // iterations and overlaps its usage for single step routine as well
+    // So this input is to differentiate code generation for different
+    // scenrios with or without single step overlap in the tests
+    //
+    // Description: Setup trigger breakpoint setup with instruction address
+    // match. Uses random config item trigger_addr_offset to set trigger
+    // address adding this random offset to depc value
+    // Use config trigger_iterations with use_dscratch0=1 to setup trigger
+    // multiple times in a single test.
+    virtual function void gen_dbg_trigger_setup_with_addr_match(int use_dscratch0=0);
+
+        if(use_dscratch0) begin
+          str = {$sformatf("csrw 0x%0x, x%0d", DSCRATCH1, cfg.scratch_reg),
+                 // Only un-set tdata1.execute if it is 1 and the iterations counter
+                 // is at 0 (has finished expected iterations)
+                 $sformatf("csrr x%0d, 0x%0x", cfg.scratch_reg, TDATA1),
+                 $sformatf("andi x%0d, x%0d, 4", cfg.scratch_reg, cfg.scratch_reg),
+                 // If tdata1.execute is 0, set to 1 and set the counter
+                 $sformatf("beqz x%0d, 1f", cfg.scratch_reg),
+                 // Check DCSR.cause, if cause was trigger-module, continue
+                 // else dont change trigger configuration
+                 $sformatf("csrr x%0d, 0x%0x", cfg.scratch_reg, DCSR),
+                 $sformatf("slli x%0d, x%0d, 0x17", cfg.scratch_reg, cfg.scratch_reg),
+                 $sformatf("srli x%0d, x%0d, 0x1d", cfg.scratch_reg, cfg.scratch_reg),
+                 $sformatf("li x%0d, 0x2", cfg.gpr[0]),
+                 $sformatf("bne x%0d, x%0d, 3f", cfg.scratch_reg, cfg.gpr[0]),
+
+                 $sformatf("csrr x%0d, 0x%0x", cfg.scratch_reg, DSCRATCH0),
+                 // if the counter is greater than 0, decrement and continue further trigger iterations
+                 $sformatf("bgtz x%0d, 2f", cfg.scratch_reg),
+                 $sformatf("csrc 0x%0x, 0x4", TDATA1),
+                 //Set TDATA2 = 0xffff_ffff as a hint for sw to skip any
+                 //subsequent debug rom entry from re-enabling trigger execute
+                 $sformatf("li x%0d, 0xffffffff", cfg.scratch_reg),
+                 $sformatf("csrw 0x%0x, x%0d", TDATA2, cfg.scratch_reg),
+                 $sformatf("beqz x0, 3f"),
+                 // Set tdata1.execute, set tdata2 and the num_iterations counter, if
+                 // TDATA2 != 0xffff_ffff
+                 $sformatf("1: csrr x%0d, 0x%0x", cfg.scratch_reg, TDATA2),
+                 $sformatf("li x%0d, 0xffffffff", cfg.gpr[0]),
+                 $sformatf("beq x%0d, x%0d, 3f", cfg.scratch_reg, cfg.gpr[0]),
+                 $sformatf("csrs 0x%0x, 0x4", TDATA1),
+                 $sformatf("csrr  x%0d, 0x%0x", cfg.scratch_reg, DPC),
+                 $sformatf("addi  x%0d, x%0d, %0d", cfg.scratch_reg, cfg.scratch_reg, cfg_corev.trigger_addr_offset),
+                 $sformatf("csrw 0x%0x, x%0d", TDATA2, cfg.scratch_reg),
+                 $sformatf("li x%0d, %0d", cfg.scratch_reg, cfg_corev.trigger_iterations),
+                 $sformatf("csrw 0x%0x, x%0d", DSCRATCH0, cfg.scratch_reg),
+                 $sformatf("beqz x0, 3f"),
+                 // Decrement dscratch counter and set tdata2
+                 $sformatf("2: csrr x%0d, 0x%0x", cfg.scratch_reg, DSCRATCH0),
+                 $sformatf("addi x%0d, x%0d, -1", cfg.scratch_reg, cfg.scratch_reg),
+                 $sformatf("csrw 0x%0x, x%0d", DSCRATCH0, cfg.scratch_reg),
+                 $sformatf("csrr  x%0d, 0x%0x", cfg.scratch_reg, DPC),
+                 $sformatf("addi  x%0d, x%0d, %0d", cfg.scratch_reg, cfg.scratch_reg, cfg_corev.trigger_addr_offset),
+                 $sformatf("csrw 0x%0x, x%0d", TDATA2, cfg.scratch_reg),
+                 // Restore scratch_reg value from dscratch1
+                 $sformatf("3: csrr x%0d, 0x%0x", cfg.scratch_reg, DSCRATCH1)};
+        end
+        else begin
+          str = {$sformatf("csrw 0x%0x, x%0d", DSCRATCH1, cfg.scratch_reg),
+                 // Only un-set tdata1.execute if it is 1 and the iterations counter
+                 // is at 0 (has finished expected iterations)
+                 $sformatf("csrr x%0d, 0x%0x", cfg.scratch_reg, TDATA1),
+                 $sformatf("andi x%0d, x%0d, 4", cfg.scratch_reg, cfg.scratch_reg),
+                 // If tdata1.execute is 0, set to 1 else clear
+                 $sformatf("beqz x%0d, 1f", cfg.scratch_reg),
+                 // Check DCSR.cause, if cause was trigger-module, continue
+                 // else dont change trigger configuration
+                 $sformatf("csrr x%0d, 0x%0x", cfg.scratch_reg, DCSR),
+                 $sformatf("slli x%0d, x%0d, 0x17", cfg.scratch_reg, cfg.scratch_reg),
+                 $sformatf("srli x%0d, x%0d, 0x1d", cfg.scratch_reg, cfg.scratch_reg),
+                 $sformatf("li x%0d, 0x2", cfg.gpr[0]),
+                 $sformatf("bne x%0d, x%0d, 3f", cfg.scratch_reg, cfg.gpr[0]),
+
+                 $sformatf("csrc 0x%0x, 0x4", TDATA1),
+                 //Set TDATA2 = 0xffff_ffff as a hint for sw to skip any
+                 //subsequent debug rom entry from re-enabling trigger execute
+                 $sformatf("li x%0d, 0xffffffff", cfg.scratch_reg),
+                 $sformatf("csrw 0x%0x, x%0d", TDATA2, cfg.scratch_reg),
+                 $sformatf("beqz x0, 3f"),
+                 // Set tdata1.execute, set tdata2, if
+                 // TDATA2 != 0xffff_ffff
+                 $sformatf("1: csrr x%0d, 0x%0x", cfg.scratch_reg, TDATA2),
+                 $sformatf("li x%0d, 0xffffffff", cfg.gpr[0]),
+                 $sformatf("beq x%0d, x%0d, 3f", cfg.scratch_reg, cfg.gpr[0]),
+                 $sformatf("csrs 0x%0x, 0x4", TDATA1),
+                 $sformatf("csrr  x%0d, 0x%0x", cfg.scratch_reg, DPC),
+                 $sformatf("addi  x%0d, x%0d, %0d", cfg.scratch_reg, cfg.scratch_reg, cfg_corev.trigger_addr_offset),
+                 $sformatf("csrw 0x%0x, x%0d", TDATA2, cfg.scratch_reg),
+                 $sformatf("beqz x0, 3f"),
+                 // Restore scratch_reg value from dscratch1
+                 $sformatf("3: csrr x%0d, 0x%0x", cfg.scratch_reg, DSCRATCH1)};
+        end
+        debug_main = {debug_main, str};
+
+    endfunction
+
+    // Function: gen_single_step_logic_if_trigger_ebreak
+    // Description: The logic in this function is to setup single stepping,
+    // after 1 debug trigger or debug ebreak is triggered.
+    // This covers cases with trigger/ebreak and single step
+    // Debug entry cause Trigger/Ebreak -> Single Step Enable
+    virtual function void gen_single_step_logic_if_trigger_ebreak();
+      str = {$sformatf("csrw 0x%0x, x%0d", DSCRATCH1, cfg.scratch_reg),
+             // Only un-set dcsr.step if it is 1 and the iterations counter
+             // is at 0 (has finished iterating)
+             $sformatf("csrr x%0d, 0x%0x", cfg.scratch_reg, DCSR),
+             $sformatf("andi x%0d, x%0d, 4", cfg.scratch_reg, cfg.scratch_reg),
+             // If dcsr.step is 0, set to 1 and set the counter, if
+             // trigger was the debug entry cause
+             $sformatf("beqz x%0d, 1f", cfg.scratch_reg),
+             // Check DCSR.cause, if cause was step, continue
+             // else dont change step configuration
+             $sformatf("csrr x%0d, 0x%0x", cfg.scratch_reg, DCSR),
+             $sformatf("slli x%0d, x%0d, 0x17", cfg.scratch_reg, cfg.scratch_reg),
+             $sformatf("srli x%0d, x%0d, 0x1d", cfg.scratch_reg, cfg.scratch_reg),
+             $sformatf("li x%0d, 0x4", cfg.gpr[0]),
+             $sformatf("bne x%0d, x%0d, 3f", cfg.scratch_reg, cfg.gpr[0]),
+
+             $sformatf("csrr x%0d, 0x%0x", cfg.scratch_reg, DSCRATCH0),
+             // if the counter is greater than 0, decrement and continue single stepping
+             $sformatf("bgtz x%0d, 2f", cfg.scratch_reg),
+             $sformatf("csrc 0x%0x, 0x4", DCSR),
+             //Set DSCRATCH0 = 0xffff_ffff as a hint for sw to skip any
+             //subsequent debug rom entry from re-enabling step
+             $sformatf("li x%0d, 0xffffffff", cfg.scratch_reg),
+             $sformatf("csrw 0x%0x, x%0d", DSCRATCH0, cfg.scratch_reg),
+             $sformatf("beqz x0, 3f"),
+             // Check DCSR.cause, if cause was trigger-module breakpoint or ebreak, set dcsr.step
+             // else dont change configuration
+             $sformatf("1: csrr x%0d, 0x%0x", cfg.scratch_reg, DCSR),
+             $sformatf("slli x%0d, x%0d, 0x17", cfg.scratch_reg, cfg.scratch_reg),
+             $sformatf("srli x%0d, x%0d, 0x1d", cfg.scratch_reg, cfg.scratch_reg),
+             $sformatf("li x%0d, 0x1", cfg.gpr[0]),
+             $sformatf("beq x%0d, x%0d, 11f", cfg.scratch_reg, cfg.gpr[0]),
+             $sformatf("li x%0d, 0x2", cfg.gpr[0]),
+             $sformatf("beq x%0d, x%0d, 11f", cfg.scratch_reg, cfg.gpr[0]),
+             $sformatf("beqz x0, 3f"),
+             // Set dcsr.step and the num_iterations counter, if
+             // DSCRATCH0 != 0xffff_ffff
+             $sformatf("11: csrr x%0d, 0x%0x", cfg.scratch_reg, DSCRATCH0),
+             $sformatf("li x%0d, 0xffffffff", cfg.gpr[0]),
+             $sformatf("beq x%0d, x%0d, 3f", cfg.scratch_reg, cfg.gpr[0]),
+             $sformatf("csrs 0x%0x, 0x4", DCSR),
+             $sformatf("li x%0d, %0d", cfg.scratch_reg, cfg.single_step_iterations),
+             $sformatf("csrw 0x%0x, x%0d", DSCRATCH0, cfg.scratch_reg),
+             $sformatf("beqz x0, 3f"),
+             // Decrement dscratch counter
+             $sformatf("2: csrr x%0d, 0x%0x", cfg.scratch_reg, DSCRATCH0),
+             $sformatf("addi x%0d, x%0d, -1", cfg.scratch_reg, cfg.scratch_reg),
+             $sformatf("csrw 0x%0x, x%0d", DSCRATCH0, cfg.scratch_reg),
+             // Restore scratch_reg value from dscratch1
+             $sformatf("3: csrr x%0d, 0x%0x", cfg.scratch_reg, DSCRATCH1)
+      };
+      debug_main = {debug_main, str};
+      // write dpc to testbench
+      gen_signature_handshake(.instr(debug_main), .signature_type(WRITE_CSR), .csr(DPC));
+      // write out the counter to the testbench
+      gen_signature_handshake(.instr(debug_main), .signature_type(WRITE_CSR), .csr(DSCRATCH0));
+    endfunction
+
 endclass : cv32e40p_debug_rom_gen
 
