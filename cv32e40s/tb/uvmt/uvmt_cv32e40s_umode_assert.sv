@@ -202,7 +202,7 @@ module  uvmt_cv32e40s_umode_assert
   assign  clk_rvfi = clk_i & was_rvfi_valid;
 
   reg [1:0]  effective_rvfi_privmode;
-  always @(*) begin
+  always_comb begin
     if (rvfi_csr_mstatus_rdata[MPRV_POS+:MPRV_LEN]) begin
       effective_rvfi_privmode = rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN];
     end else begin
@@ -213,7 +213,7 @@ module  uvmt_cv32e40s_umode_assert
   reg [1:0]  was_rvfi_mode;
   reg [1:0]  was_rvfi_mode_wdata;  // Expected next mode (ignoring dmode)
   reg        was_rvfi_dbg_mode;
-  always @(posedge clk_i) begin
+  always_ff @(posedge clk_i) begin
     if (rvfi_valid) begin
       was_rvfi_mode     <= rvfi_mode;
       was_rvfi_dbg_mode <= rvfi_dbg_mode;
@@ -236,11 +236,12 @@ module  uvmt_cv32e40s_umode_assert
     end
   end
 
-  wire logic [MPP_LEN-1:0]  mpp_rdata;
-  wire logic [MPP_LEN-1:0]  mpp_rdata_past;
-  assign  mpp_rdata      = rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN];
-  assign  mpp_rdata_past = $past(mpp_rdata, , ,@(posedge clk_rvfi));
-
+  logic [MPP_LEN-1:0]  mpp_rdata;
+  logic [MPP_LEN-1:0]  mpp_rdata_past;
+  always_comb begin
+    mpp_rdata      = rvfi_csr_mstatus_rdata[MPP_POS+:MPP_LEN];
+    mpp_rdata_past = $past(mpp_rdata, , ,@(posedge clk_rvfi));
+  end
 
   // vplan:MisaU & vplan:MisaN
 
@@ -867,12 +868,16 @@ module  uvmt_cv32e40s_umode_assert
 
 
   // vplan:PrvEntry
-
-  property  p_prv_entry;
+  sequence seq_dbg_entry;
     (rvfi_valid && !rvfi_dbg_mode)
     ##1
-    (rvfi_valid [->1])  ##0
-    rvfi_dbg_mode
+    rvfi_valid[->1]
+    ##0
+    rvfi_dbg_mode;
+  endsequence : seq_dbg_entry
+
+  property  p_prv_entry;
+    seq_dbg_entry
     |->
     if (!rvfi_intr[0]) (
       (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == was_rvfi_mode_wdata)
@@ -887,15 +892,11 @@ module  uvmt_cv32e40s_umode_assert
   ) else `uvm_error(info_tag, "on dbg entry, dcsr.prv should be previous privmode");
 
   cov_prv_entry_u: cover property (
-    reject_on
-      (rvfi_valid && rvfi_dbg_mode && (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] != MODE_U))
-      p_prv_entry
+    seq_dbg_entry ##0 rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == MODE_U
   );
 
   cov_prv_entry_m: cover property (
-    reject_on
-      (rvfi_valid && rvfi_dbg_mode && (rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] != MODE_M))
-      p_prv_entry
+    seq_dbg_entry ##0 rvfi_csr_dcsr_rdata[PRV_POS+:PRV_LEN] == MODE_M
   );
 
 
@@ -972,11 +973,13 @@ module  uvmt_cv32e40s_umode_assert
     obi_dside_prot  inside  {3'b 001, 3'b 111}
   ) else `uvm_error(info_tag, "the prot on loadstore must be legal");
 
-  wire logic [NMEM-1:0]  data_prot_equals;
-  wire logic [NMEM-1:0]  mem_act;
+  logic [NMEM-1:0]  data_prot_equals;
+  logic [NMEM-1:0]  mem_act;
   for (genvar i = 0; i < NMEM; i++) begin: gen_data_prot_equals
-    assign  data_prot_equals[i] = (rvfi_if.mem_prot[i*3+:3] == rvfi_if.mem_prot[2:0]);
-    assign  mem_act[i]          = |rvfi_if.check_mem_act(i);
+    always_comb begin
+      data_prot_equals[i] = (rvfi_if.mem_prot[i*3+:3] == rvfi_if.mem_prot[2:0]);
+      mem_act[i]          = |rvfi_if.check_mem_act(i);
+    end
   end
 
   a_data_prot_equal: assert property (
