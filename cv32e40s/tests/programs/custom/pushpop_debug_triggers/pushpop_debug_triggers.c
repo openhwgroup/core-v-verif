@@ -12,7 +12,7 @@
 // Unless required by applicable law or agreed to in writing, any work
 // distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 // WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// 
+//
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
@@ -34,6 +34,16 @@ volatile uint32_t  g_exception_expected = 0;
 
 volatile uint32_t  g_pushpop_area [32];
 
+void disable_debug_req(void) {
+  CV_VP_DEBUG_CONTROL = (
+    CV_VP_DEBUG_CONTROL_DBG_REQ(0)             |
+    CV_VP_DEBUG_CONTROL_REQ_MODE(0)            |
+    CV_VP_DEBUG_CONTROL_RAND_PULSE_DURATION(0) |
+    CV_VP_DEBUG_CONTROL_PULSE_DURATION(0)      |
+    CV_VP_DEBUG_CONTROL_RAND_START_DELAY(0)    |
+    CV_VP_DEBUG_CONTROL_START_DELAY(0)
+  );
+}
 
 __attribute__((interrupt("machine")))
 void  u_sw_irq_handler(void){
@@ -159,6 +169,7 @@ static void  incr_dpc(void){
 
 void  debug_handler(void){
   g_debug_entered = 1;
+  disable_debug_req();
   printf("debug handler entered\n");
 
   if (! g_debug_expected) {
@@ -234,11 +245,14 @@ static void  let_dmode_setup_triggers(void){
   g_debug_entered  = 0;
   g_debug_function_setup_triggers = 1;
 
+  // Prolonged pulse duration so debug req has a chance to be acked and taken
   CV_VP_DEBUG_CONTROL = (
-    CV_VP_DEBUG_CONTROL_DBG_REQ (1)        |
-    CV_VP_DEBUG_CONTROL_REQ_MODE (1)       |
-    CV_VP_DEBUG_CONTROL_PULSE_DURATION (8) |
-    CV_VP_DEBUG_CONTROL_START_DELAY (0)
+    CV_VP_DEBUG_CONTROL_DBG_REQ(1)             |
+    CV_VP_DEBUG_CONTROL_REQ_MODE(1)            |
+    CV_VP_DEBUG_CONTROL_RAND_PULSE_DURATION(0) |
+    CV_VP_DEBUG_CONTROL_PULSE_DURATION(0x1fff) |
+    CV_VP_DEBUG_CONTROL_RAND_START_DELAY(0)    |
+    CV_VP_DEBUG_CONTROL_START_DELAY(200)
   );
 
   while (! g_debug_entered) {
