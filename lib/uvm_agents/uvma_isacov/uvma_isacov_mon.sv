@@ -26,11 +26,13 @@ class uvma_isacov_mon_c#(int ILEN=DEFAULT_ILEN,
   uvma_isacov_cfg_c                          cfg;
   uvm_analysis_port#(uvma_isacov_mon_trn_c)  ap;
   instr_name_t                               instr_name_lookup[string];
+  asm_t                                      instr_asm;
 
   // Analysis export to receive instructions from RVFI
   uvm_analysis_imp_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvma_isacov_mon_c) rvfi_instr_imp;
 
   extern function new(string name = "uvma_isacov_mon", uvm_component parent = null);
+
   extern virtual function void build_phase(uvm_phase phase);
 
   /**
@@ -42,6 +44,8 @@ class uvma_isacov_mon_c#(int ILEN=DEFAULT_ILEN,
    * Analysis port write from RVFI instruction retirement monitor
    */
   extern virtual function void write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) rvfi_instr);
+
+
 
 endclass : uvma_isacov_mon_c
 
@@ -75,13 +79,16 @@ function void uvma_isacov_mon_c::build_phase(uvm_phase phase);
   dasm_set_config(32, "rv32imc", 0);
 
   // Use the enumerations in <instr_name_t> to setup the instr_name_lookup
-  // convert the enums to lower-case and substitute underscore with . to match
-  // Spike disassembler
   in = in.first;
   repeat(in.num) begin
-    string instr_name_key = convert_instr_to_spike_name(in.name());
+    string instr_name_key = in.name();
+    if(cfg.decoder == SPIKE) begin
+      // convert the enums to lower-case and substitute underscore with . to match
+      // Spike disassembler
+      instr_name_key = convert_instr_to_spike_name(in.name());
+      `uvm_info("ISACOV", $sformatf("Converting: %s to %s", in.name(), instr_name_key), UVM_HIGH);
+    end
 
-    `uvm_info("ISACOV", $sformatf("Converting: %s to %s", in.name(), instr_name_key), UVM_HIGH);
     instr_name_lookup[instr_name_key] = in;
     in = in.next;
   end
@@ -138,12 +145,21 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
   mon_trn = uvma_isacov_mon_trn_c#(.ILEN(ILEN), .XLEN(XLEN))::type_id::create("mon_trn");
   mon_trn.instr = uvma_isacov_instr_c#(ILEN,XLEN)::type_id::create("mon_instr");
   mon_trn.instr.rvfi = rvfi_instr;
-
   // Mark trapped instructions from RVFI
   mon_trn.instr.trap = rvfi_instr.trap;
 
-  // Attempt to decode instruction with Spike DASM
-  instr_name = dasm_name(rvfi_instr.insn);
+  // Get the config
+  void'(uvm_config_db#(uvma_isacov_cfg_c)::get(this, "", "cfg", cfg));
+
+  if (cfg.decoder == SPIKE) begin
+    // Attempt to decode instruction with Spike DASM
+    instr_name = dasm_name(rvfi_instr.insn);
+  end else if (cfg.decoder == ISA_SUPPORT) begin
+    // Attempt to decode instruction with isa_support
+    instr_asm = decode_instr(rvfi_instr.insn);
+    instr_name = instr_asm.instr.name();
+  end
+
   if (instr_name_lookup.exists(instr_name)) begin
     mon_trn.instr.name = instr_name_lookup[instr_name];
   end else begin
@@ -152,48 +168,85 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
     // from OpenHW core-v-verif perspective so set to UNKNOWN
     mon_trn.instr.name = UNKNOWN;
   end
-
   `uvm_info("ISACOVMON", $sformatf("rvfi = 0x%08x %s", rvfi_instr.insn, instr_name), UVM_HIGH);
-
-  mon_trn.instr.itype = get_instr_type(mon_trn.instr.name);
   mon_trn.instr.ext   = get_instr_ext(mon_trn.instr.name);
   mon_trn.instr.group = get_instr_group(mon_trn.instr.name, rvfi_instr.mem_addr);
+  mon_trn.instr.itype = get_instr_type(mon_trn.instr.name);
 
-  instr = $signed(rvfi_instr.insn);
+  if (cfg.decoder == SPIKE) begin
+    // Attempt to decode instruction with Spike DASM
+    instr = $signed(rvfi_instr.insn);
 
-  // Disassemble the instruction using Spike (via DPI)
-  if (mon_trn.instr.ext == C_EXT) begin
-    mon_trn.instr.rs1     = dasm_rvc_rs1(instr);
-    mon_trn.instr.rs2     = dasm_rvc_rs2(instr);
-    mon_trn.instr.rd      = dasm_rvc_rd(instr);
-    mon_trn.instr.c_rdrs1 = dasm_rvc_rd(instr);
-    mon_trn.instr.c_rd    = mon_trn.instr.decode_rd_c(instr);
-    mon_trn.instr.c_rs1   = mon_trn.instr.decode_rs1_c(instr);
-    mon_trn.instr.c_rs2   = mon_trn.instr.decode_rs2_c(instr);
-  end
-  else begin
-    mon_trn.instr.rs1  = dasm_rs1(instr);
-    mon_trn.instr.rs2  = dasm_rs2(instr);
-    mon_trn.instr.rd   = dasm_rd(instr);
-    mon_trn.instr.immi = dasm_i_imm(instr);
-    mon_trn.instr.imms = dasm_s_imm(instr);
-    mon_trn.instr.immb = dasm_sb_imm(instr) >> 1;  // Because dasm gives [12:0], not [12: 1]
-    mon_trn.instr.immu = dasm_u_imm(instr) >> 12;  // Because dasm gives [31:0], not [31:12]
-    mon_trn.instr.immj = dasm_uj_imm(instr) >> 1;  // Because dasm gives [20:0], not [20: 1]
+    //Disassemble the instruction using Spike (via DPI)
+    if (mon_trn.instr.ext == C_EXT) begin
+      mon_trn.instr.rs1     = dasm_rvc_rs1(instr);
+      mon_trn.instr.rs2     = dasm_rvc_rs2(instr);
+      mon_trn.instr.rd      = dasm_rvc_rd(instr);
+      mon_trn.instr.c_rdrs1 = dasm_rvc_rd(instr);
+      mon_trn.instr.c_rd    = mon_trn.instr.decode_rd_c(instr);
+      mon_trn.instr.c_rs1   = mon_trn.instr.decode_rs1_c(instr);
+      mon_trn.instr.c_rs2   = mon_trn.instr.decode_rs2_c(instr);
+    end
+    else begin
+      mon_trn.instr.rs1  = dasm_rs1(instr);
+      mon_trn.instr.rs2  = dasm_rs2(instr);
+      mon_trn.instr.rd   = dasm_rd(instr);
+      mon_trn.instr.immi = dasm_i_imm(instr);
+      mon_trn.instr.imms = dasm_s_imm(instr);
+      mon_trn.instr.immb = dasm_sb_imm(instr) >> 1;  // Because dasm gives [12:0], not [12: 1]
+      mon_trn.instr.immu = dasm_u_imm(instr) >> 12;  // Because dasm gives [31:0], not [31:12]
+      mon_trn.instr.immj = dasm_uj_imm(instr) >> 1;  // Because dasm gives [20:0], not [20: 1]
+    end
+
+    // Make instructions as illegal,
+    // 1. If a CSR instruction is not targeted to a valid CSR
+    if (mon_trn.instr.group == CSR_GROUP) begin
+      mon_trn.instr.csr_val = dasm_csr(instr);
+      if (!$cast(mon_trn.instr.csr, mon_trn.instr.csr_val) ||
+           cfg.core_cfg.unsupported_csr_mask[mon_trn.instr.csr_val]) begin
+        mon_trn.instr.illegal = 1;
+      end
+    end
+
+  end else if (cfg.decoder == ISA_SUPPORT) begin
+    // Attempt to decode instruction with isa_support
+
+    // TODO: silabs-hefegran, isa decoder representation changed for compressed 'rx registers,
+    // we supply the old (non-translated) value to avoid having to rewrite that logic now, which
+    // might also interfere with the spike implementation.
+    // the "get_rx"-functions should no longer be needed if we supply the translated values to
+    // the coverage model.
+    mon_trn.instr.c_rdrs1 = instr_asm.rd.valid_gpr_rvc  ? instr_asm.rd.gpr_rvc  : instr_asm.rd.gpr;
+    mon_trn.instr.c_rd    = instr_asm.rd.valid_gpr_rvc  ? instr_asm.rd.gpr_rvc  : instr_asm.rd.gpr;
+    mon_trn.instr.c_rs1   = instr_asm.rs1.valid_gpr_rvc ? instr_asm.rs1.gpr_rvc : instr_asm.rs1.gpr;
+    mon_trn.instr.c_rs2   = instr_asm.rs2.valid_gpr_rvc ? instr_asm.rs2.gpr_rvc : instr_asm.rs2.gpr;
+    mon_trn.instr.rs1     = instr_asm.rs1.valid_gpr_rvc ? instr_asm.rs1.gpr_rvc : instr_asm.rs1.gpr;
+    mon_trn.instr.rs2     = instr_asm.rs2.valid_gpr_rvc ? instr_asm.rs2.gpr_rvc : instr_asm.rs1.gpr;
+    mon_trn.instr.rd      = instr_asm.rd.valid_gpr_rvc  ? instr_asm.rd.gpr_rvc  : instr_asm.rd.gpr;
+    mon_trn.instr.immi    = instr_asm.imm.imm_raw_sorted;
+    mon_trn.instr.imms    = instr_asm.imm.imm_raw_sorted;
+    mon_trn.instr.immb    = instr_asm.imm.imm_raw_sorted;
+    mon_trn.instr.immu    = instr_asm.imm.imm_raw_sorted;
+    mon_trn.instr.immj    = instr_asm.imm.imm_raw_sorted;
+
+    // Make instructions as illegal,
+    // 1. If a CSR instruction is not targeted to a valid CSR
+    if (mon_trn.instr.group == CSR_GROUP) begin
+      mon_trn.instr.csr_val = instr_asm.csr.address;
+      if (!$cast(mon_trn.instr.csr, mon_trn.instr.csr_val) ||
+           cfg.core_cfg.unsupported_csr_mask[mon_trn.instr.csr_val]) begin
+        mon_trn.instr.illegal = 1;
+      end
+    end
   end
 
   // Make instructions as illegal,
-  // 1. If UNKNOWN (undecodable)
-  if (mon_trn.instr.name == UNKNOWN)
+  // 2. If UNKNOWN (undecodable)
+  if (mon_trn.instr.name == UNKNOWN) begin
     mon_trn.instr.illegal = 1;
-  // 2. If a CSR instruction is not targeted to a valid CSR
-  if (mon_trn.instr.group == CSR_GROUP) begin
-    mon_trn.instr.csr_val = dasm_csr(instr);
-    if (!$cast(mon_trn.instr.csr, mon_trn.instr.csr_val) ||
-         cfg.core_cfg.unsupported_csr_mask[mon_trn.instr.csr_val]) begin
-      mon_trn.instr.illegal = 1;
-    end
   end
+
+  // Make instructions as illegal,
   // 3. Instruction is in unsupported extension
   if ((mon_trn.instr.ext == A_EXT && !cfg.core_cfg.ext_a_supported) ||
       (mon_trn.instr.ext == C_EXT && !cfg.core_cfg.ext_c_supported) ||
@@ -282,7 +335,13 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
     endcase
   end
 
-  mon_trn.instr.set_valid_flags();
+  if (cfg.decoder == SPIKE) begin
+    mon_trn.instr.set_valid_flags();
+  end else begin // if ISA_DECODER
+    mon_trn.instr.rd_valid  = instr_asm.rd.valid;
+    mon_trn.instr.rs1_valid = instr_asm.rs1.valid;
+    mon_trn.instr.rs2_valid = instr_asm.rs2.valid;
+  end
 
   // Set enumerations for register values as reported from RVFI
   if (mon_trn.instr.rs1_valid) begin
@@ -302,5 +361,3 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
   ap.write(mon_trn);
 
 endfunction : write_rvfi_instr
-
-

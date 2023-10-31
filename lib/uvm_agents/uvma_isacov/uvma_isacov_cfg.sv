@@ -33,6 +33,8 @@ class uvma_isacov_cfg_c extends uvm_object;
   rand bit                     reg_crosses_enabled;
   rand bit                     reg_hazards_enabled;
 
+  rand decoder_e               decoder;
+
   // Core configuration object to filter extensions, csrs, modes, supported
   uvma_core_cntrl_cfg_c        core_cfg;
 
@@ -48,8 +50,13 @@ class uvma_isacov_cfg_c extends uvm_object;
     `uvm_field_int(seq_instr_x2_enabled, UVM_DEFAULT);
     `uvm_field_int(reg_crosses_enabled, UVM_DEFAULT);
     `uvm_field_int(reg_hazards_enabled, UVM_DEFAULT);
+
+    `uvm_field_enum(decoder_e, decoder, UVM_DEFAULT);
   `uvm_object_utils_end;
 
+   constraint defaults_cons {
+      soft decoder  == SPIKE;
+   }
   extern function new(string name = "uvma_isacov_cfg");
 
 endclass : uvma_isacov_cfg_c

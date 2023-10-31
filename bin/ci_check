@@ -298,7 +298,7 @@ if (uvm):
                    if (debug):
                        print (json.dumps(list_dict, indent=2, sort_keys=True))
             for key in list_dict:
-                if (key['name'] != 'uvmt_{}'.format(args.core.lower())):
+                if ('uvmt_{}'.format(args.core.lower()) not in key['name'] ):
                     continue
                 build_cmd_list = (key['cmd']).split()
                 build_cmd = ' '.join(build_cmd_list[0:-1])
@@ -340,61 +340,71 @@ if (uvm):
                     print('Cannot parse listCmd: {}'.format(item['tests']['listCmd']))
                     exit(1)
                 lists_dict = load_regress_yaml(m.group(1))['tests']
+                cfg_dict = load_regress_yaml(m.group(1))['builds']
 
                 if (debug):
                     pprint.pprint(lists_dict)
 
                 num_tests = 0
                 for key in lists_dict.values():
-                    run_cmd = key['cmd']
-
-                    if run_cmd == '':
-                        print ('ERROR: cannot find run command in .metrics.json')
-                        exit(1)
-
                     try:
-                        if key['num'] > 1:
-                            num = key['num']
-                    except KeyError:
-                        num = 1
+                        if (type(key['builds']) is not list):
+                            key['builds'] = [key['builds']]
+                    except:
+                        key['builds'] = ['default']
+                    for build in key['builds']:
+                        cfg = (load_regress_yaml(m.group(1))['builds'][build]['cfg'])
+                        run_cmd = key['cmd']
 
-                    # The iss command-line switch takes precedence,
-                    # Otherwise use what is in the regression yaml if defined
-                    # Otherwise set to 1
-                    if args.iss != None:
-                        iss = int(args.iss)
-                    else:
+                        if run_cmd == '':
+                            print ('ERROR: cannot find run command in .metrics.json')
+                            exit(1)
+
                         try:
-                            iss = key['iss']
+                            if key['num'] > 1:
+                                num = key['num']
                         except KeyError:
-                            iss = 1
+                            num = 1
 
-                    for n in range(num):
-                        # Add directory
-                        full_run_cmd = 'cd {}; {}'.format(key['dir'], run_cmd)
-                        # Add SIMULATOR
-                        full_run_cmd += ' SIMULATOR={}'.format(svtool)
-                        # Add indices
-                        full_run_cmd += ' GEN_START_INDEX={} RUN_INDEX={}'.format(n, n)
-                        # Add ISS
-                        full_run_cmd += ' USE_ISS={}'.format('YES' if iss else 'NO')
-
-                        # Only DSIM can run corev-dv (riscv-dv) at present
-                        if ( svtool == 'dsim' or svtool == 'xrun' or svtool == 'vsim' or svtool == 'riviera' or svtool == 'vcs'):
-                            num_tests+=1
-                            if (prcmd or debug):
-                                print(full_run_cmd)
-                            else:
-                                os.system(full_run_cmd)
-                                os.chdir(topdir)      # cmd in .metrics.json assumes all cmds start from here
+                        # The iss command-line switch takes precedence,
+                        # Otherwise use what is in the regression yaml if defined
+                        # Otherwise set to 1
+                        if args.iss != None:
+                            iss = int(args.iss)
                         else:
-                            num_tests+=1
-                            if not ( re.search('corev_', full_run_cmd) ):
+                            try:
+                                iss = key['iss']
+                            except KeyError:
+                                iss = 1
+
+                        for n in range(num):
+                            # Add directory
+                            full_run_cmd = 'cd {}; {}'.format(key['dir'], run_cmd)
+                            # Add cfg
+                            if (cfg is not None):
+                                full_run_cmd += ' CFG={}'.format(cfg)
+                            # Add SIMULATOR
+                            full_run_cmd += ' SIMULATOR={}'.format(svtool)
+                            # Add indices
+                            full_run_cmd += ' GEN_START_INDEX={} RUN_INDEX={}'.format(n, n)
+                            # Add ISS
+                            full_run_cmd += ' USE_ISS={}'.format('YES' if iss else 'NO')
+
+                            if ( svtool == 'dsim' or svtool == 'xrun' or svtool == 'vsim' or svtool == 'riviera' or svtool == 'vcs'):
+                                num_tests+=1
                                 if (prcmd or debug):
                                     print(full_run_cmd)
                                 else:
                                     os.system(full_run_cmd)
                                     os.chdir(topdir)      # cmd in .metrics.json assumes all cmds start from here
+                            else:
+                                num_tests+=1
+                                if not ( re.search('corev_', full_run_cmd) ):
+                                    if (prcmd or debug):
+                                        print(full_run_cmd)
+                                    else:
+                                        os.system(full_run_cmd)
+                                        os.chdir(topdir)      # cmd in .metrics.json assumes all cmds start from here
 
 else:  # if(uvm):
     print ('Not running UVM CI regression')

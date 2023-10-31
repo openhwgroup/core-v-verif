@@ -23,7 +23,7 @@
 
 /**
  * Component sampling transactions from a Clock & Reset virtual interface
- * (uvma_fencei_if).
+ * (uvma_fencei_if_t).
  */
 class uvma_fencei_mon_c extends uvm_monitor;
 

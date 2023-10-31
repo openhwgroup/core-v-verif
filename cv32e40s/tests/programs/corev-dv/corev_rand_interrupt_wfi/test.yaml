@@ -4,3 +4,4 @@ description: >
     Random interrupt generator test with WFI
 plusargs: >
     +gen_irq_noise
+cflags: -mno-relax

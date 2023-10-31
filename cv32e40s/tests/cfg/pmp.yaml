@@ -1,0 +1,19 @@
+name: pmp
+description: Default pmp configuration for CV32E40S simulations
+compile_flags: >
+    +define+PMP_ENABLE_64
+    +define+ZBA_ZBB_ZBC_ZBS
+ovpsim: >
+    --override cpu/hpmcounter_undefined=T
+    --override cpu/PMP_registers=64
+    --override cpu/PMP_grain=0
+    #--showoverrides
+    #--trace
+cflags: >
+    -Wl,--nmagic
+plusargs: >
+    +enable_zba_extension=1
+    +enable_zbb_extension=1
+    +enable_zbc_extension=1
+    +enable_zbs_extension=1
+cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zicsr_zca_zcb_zcmp_zifencei

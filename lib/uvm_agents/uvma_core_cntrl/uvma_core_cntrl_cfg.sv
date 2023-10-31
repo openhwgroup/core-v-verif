@@ -39,7 +39,11 @@
 
    // ISS configuration
    bit                           use_iss;
+   int                           iss_suppress_invalid_msg = 0;
    string                        iss_control_file = "ovpsim.ic";
+
+   // Controls printing of CSR status
+   bit                           csr_print;
 
    // RISC-V ISA Configuration
    rand corev_mxl_t              xlen;
@@ -63,20 +67,31 @@
    rand bit                      ext_zbr_supported;
    rand bit                      ext_zbs_supported;
    rand bit                      ext_zbt_supported;
+   rand bit                      ext_zca_supported;
+   rand bit                      ext_zcb_supported;
+   rand bit                      ext_zcmb_supported;
+   rand bit                      ext_zcmp_supported;
+   rand bit                      ext_zcmt_supported;
    rand bit                      ext_zifencei_supported;
    rand bit                      ext_zicsr_supported;
+   rand bit                      ext_nonstd_supported;
 
    rand bit                      mode_s_supported;
+   rand bit                      mode_h_supported;
    rand bit                      mode_u_supported;
 
    rand bit                      pmp_supported;
    rand bit                      debug_supported;
 
    rand bitmanip_version_t       bitmanip_version;
-
+   rand debug_spec_version_t     debug_spec_version;
    rand priv_spec_version_t      priv_spec_version;
 
    rand endianness_t             endianness;
+
+   rand int unsigned             clic_levels;
+   bit                           clic_interrupt_enable  = 0;
+   bit                           basic_interrupt_enable = 1;
 
    rand bit                      unaligned_access_supported;
    rand bit                      unaligned_access_amo_supported;
@@ -96,6 +111,9 @@
 
    rand bit [MAX_XLEN-1:0]       mimpid;
    bit                           mimpid_plusarg_valid;
+
+   rand bit [MAX_XLEN-1:0]       mimpid_patch;
+   bit                           mimpid_patch_plusarg_valid;
 
    rand bit [MAX_XLEN-1:0]       boot_addr;
    rand bit                      boot_addr_valid;
@@ -147,7 +165,13 @@
       `uvm_field_int(                          ext_zbr_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zbs_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zbt_supported              , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zca_supported              , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zcb_supported              , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zcmb_supported             , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zcmp_supported             , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zcmt_supported             , UVM_DEFAULT          )
       `uvm_field_int(                          mode_s_supported               , UVM_DEFAULT          )
+      `uvm_field_int(                          mode_h_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          mode_u_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          pmp_supported                  , UVM_DEFAULT          )
       `uvm_field_int(                          debug_supported                , UVM_DEFAULT          )
@@ -155,11 +179,14 @@
       `uvm_field_int(                          unaligned_access_amo_supported , UVM_DEFAULT          )
       `uvm_field_enum(bitmanip_version_t,      bitmanip_version               , UVM_DEFAULT          )
       `uvm_field_enum(priv_spec_version_t,     priv_spec_version              , UVM_DEFAULT          )
+      `uvm_field_enum(debug_spec_version_t,    debug_spec_version             , UVM_DEFAULT          )
       `uvm_field_enum(endianness_t,            endianness                     , UVM_DEFAULT          )
+      `uvm_field_int(                          clic_levels                    , UVM_DEFAULT          )
       `uvm_field_int(                          num_mhpmcounters               , UVM_DEFAULT          )
       `uvm_field_array_object(                 pma_regions                    , UVM_DEFAULT          )
       `uvm_field_int(                          mhartid                        , UVM_DEFAULT          )
       `uvm_field_int(                          mimpid                         , UVM_DEFAULT          )
+      `uvm_field_int(                          mimpid_patch                   , UVM_DEFAULT          )
       `uvm_field_int(                          boot_addr                      , UVM_DEFAULT          )
       `uvm_field_int(                          boot_addr_valid                , UVM_DEFAULT          )
       `uvm_field_int(                          boot_addr_plusarg_valid        , UVM_DEFAULT          )
@@ -175,18 +202,39 @@
       `uvm_field_int(                          nmi_addr                       , UVM_DEFAULT          )
       `uvm_field_int(                          nmi_addr_valid                 , UVM_DEFAULT          )
       `uvm_field_int(                          nmi_addr_plusarg_valid         , UVM_DEFAULT          )
+      `uvm_field_int(                          csr_print                      , UVM_DEFAULT          )
    `uvm_field_utils_end
 
    constraint defaults_cons {
-      soft enabled                == 0;
-      soft is_active              == UVM_PASSIVE;
-      soft cov_model_enabled      == 1;
-      soft trn_log_enabled        == 1;
+      soft enabled               == 0;
+      soft is_active             == UVM_PASSIVE;
+      soft cov_model_enabled     == 1;
+      soft trn_log_enabled       == 1;
+      soft ext_nonstd_supported  == 0;
    }
 
    constraint riscv_cons_soft {
-     soft priv_spec_version == PRIV_VERSION_1_11;
-     soft endianness        == ENDIAN_LITTLE;
+     soft priv_spec_version      == PRIV_VERSION_1_11;
+     soft debug_spec_version     == DEBUG_VERSION_0_13_2;
+     soft endianness             == ENDIAN_LITTLE;
+     soft mode_h_supported       == 0;
+     soft ext_nonstd_supported   == 0;
+     soft clic_levels            == 0;
+     soft ext_zba_supported      == 0;
+     soft ext_zbb_supported      == 0;
+     soft ext_zbc_supported      == 0;
+     soft ext_zbs_supported      == 0;
+     soft ext_zbe_supported      == 0;
+     soft ext_zbf_supported      == 0;
+     soft ext_zbm_supported      == 0;
+     soft ext_zbp_supported      == 0;
+     soft ext_zbr_supported      == 0;
+     soft ext_zbt_supported      == 0;
+     soft ext_zca_supported      == 0;
+     soft ext_zcb_supported      == 0;
+     soft ext_zcmb_supported     == 0;
+     soft ext_zcmp_supported     == 0;
+     soft ext_zcmt_supported     == 0;
    }
 
    constraint addr_xlen_align_cons {
@@ -281,10 +329,25 @@ function uvma_core_cntrl_cfg_c::new(string name="uvme_cv_base_cfg");
    if ($test$plusargs("USE_ISS"))
       use_iss = 1;
 
+   if ($test$plusargs("no_csr_print")) begin
+      csr_print = 0;
+   end else begin
+      csr_print = 1;
+   end
+
+   if ($test$plusargs("iss_suppress_invalid_msg")) begin
+     iss_suppress_invalid_msg = 1;
+   end
+
    // Read plusargs for defaults
    if (read_cfg_plusarg_xlen("mhartid", mhartid)) begin
       mhartid_plusarg_valid = 1;
       mhartid.rand_mode(0);
+   end
+
+   if (read_cfg_plusarg_xlen("mimpid_patch", mimpid_patch)) begin
+      mimpid_patch_plusarg_valid = 1;
+      mimpid_patch.rand_mode(0);
    end
 
    if (read_cfg_plusarg_xlen("mimpid", mimpid)) begin
@@ -352,26 +415,27 @@ function void uvma_core_cntrl_cfg_c::do_print(uvm_printer printer);
 
    super.do_print(printer);
 
-   // Print out CSRs that are supported
-   printer.print_string("-----------------------------", "--------------------------------------------------------------------");
-   begin
-      instr_csr_t csr;
+   if (csr_print) begin
+      // Print out CSRs that are supported
+      printer.print_string("-----------------------------", "--------------------------------------------------------------------");
+      begin
+         instr_csr_t csr;
 
-      csr = csr.first();
-      while (1) begin
-         if (unsupported_csr_mask[csr])
-            printer.print_string(csr.name(), "Unsupported");
-         else if (disable_all_csr_checks || disable_csr_check_mask[csr])
-            printer.print_string(csr.name(), "Supported but not checked in scoreboard");
-         else
-            printer.print_string(csr.name(), "Supported and checked in scoreboard");
+         csr = csr.first();
+         while (1) begin
+            if (unsupported_csr_mask[csr])
+               printer.print_string(csr.name(), "Unsupported");
+            else if (disable_all_csr_checks || disable_csr_check_mask[csr])
+               printer.print_string(csr.name(), "Supported but not checked in scoreboard");
+            else
+               printer.print_string(csr.name(), "Supported and checked in scoreboard");
 
-         if (csr == csr.last()) break;
-         csr = csr.next();
+            if (csr == csr.last()) break;
+            csr = csr.next();
+         end
       end
+      printer.print_string("-----------------------------", "--------------------------------------------------------------------");
    end
-   printer.print_string("-----------------------------", "--------------------------------------------------------------------");
-
 endfunction : do_print
 
 function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();
@@ -391,7 +455,7 @@ function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();
       end
    end
 
-   // Remove S-mode CSRs is S mode not supported
+   // Remove S-mode CSRs if S mode not supported
    if (!mode_s_supported) begin
       unsupported_csr_mask[SSTATUS] = 1;
       unsupported_csr_mask[SEDELEG] = 1;
@@ -405,13 +469,16 @@ function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();
       unsupported_csr_mask[STVAL] = 1;
       unsupported_csr_mask[SIP] = 1;
       unsupported_csr_mask[SATP] = 1;
+      if (debug_spec_version == DEBUG_VERSION_1_0_0) begin
+        unsupported_csr_mask[SCONTEXT] = 1;
+      end
 
       unsupported_csr_mask[MEDELEG] = 1;
       unsupported_csr_mask[MIDELEG] = 1;
       unsupported_csr_mask[MCOUNTEREN] = 1;
    end
 
-   // Remove U-mode CSRs is S mode not supported
+   // Remove U-mode CSRs if S mode not supported
    if (!mode_u_supported) begin
       unsupported_csr_mask[USTATUS] = 1;
       unsupported_csr_mask[UIE] = 1;
@@ -466,7 +533,7 @@ function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();
       unsupported_csr_mask[PMPCFG1] = 1;
       unsupported_csr_mask[PMPCFG2] = 1;
       unsupported_csr_mask[PMPCFG3] = 1;
-      if (priv_spec_version == PRIV_VERSION_MASTER) begin
+      if (priv_spec_version == PRIV_VERSION_1_12) begin
          unsupported_csr_mask[PMPCFG4] = 1;
          unsupported_csr_mask[PMPCFG5] = 1;
          unsupported_csr_mask[PMPCFG6] = 1;
@@ -496,7 +563,7 @@ function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();
       unsupported_csr_mask[PMPADDR13] = 1;
       unsupported_csr_mask[PMPADDR14] = 1;
       unsupported_csr_mask[PMPADDR15] = 1;
-      if (priv_spec_version == PRIV_VERSION_MASTER) begin
+      if (priv_spec_version == PRIV_VERSION_1_12) begin
         unsupported_csr_mask[PMPADDR16] = 1;
         unsupported_csr_mask[PMPADDR17] = 1;
         unsupported_csr_mask[PMPADDR18] = 1;
@@ -565,9 +632,18 @@ function void uvma_core_cntrl_cfg_c::set_unsupported_csr_mask();
       unsupported_csr_mask[MHPMCOUNTER3H+i] = 1;
    end
 
-  if (priv_spec_version != PRIV_VERSION_MASTER) begin
+  if (priv_spec_version != PRIV_VERSION_1_12) begin
     unsupported_csr_mask[MSTATUSH] = 1;
     unsupported_csr_mask[MCONFIGPTR] = 1;
+  end
+
+  // Remove support for hcontext alias (mcontext)
+  // when hypervisor mode is not supported
+  if (priv_spec_version == PRIV_VERSION_1_12 &&
+      debug_spec_version == DEBUG_VERSION_1_0_0 &&
+      mode_h_supported == 0)
+  begin
+      unsupported_csr_mask[MCONTEXT] = 1;
   end
 
   // TODO: These needs inclusion parameter classification
@@ -671,6 +747,7 @@ function bit[MAX_XLEN-1:0] uvma_core_cntrl_cfg_c::get_misa();
    if (ext_m_supported)      get_misa[12] = 1;
    if (mode_s_supported)     get_misa[18] = 1;
    if (mode_u_supported)     get_misa[20] = 1;
+   if (ext_nonstd_supported) get_misa[23] = 1;
 
 endfunction : get_misa
 

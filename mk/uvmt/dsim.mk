@@ -35,10 +35,14 @@ DSIM_CODE_COV_SCOPE    ?= $(MAKE_PATH)/../tools/dsim/ccov_scopes.txt
 DSIM_USE_ISS           ?= YES
 
 DSIM_FILE_LIST         ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-DSIM_FILE_LIST         += -f $(DV_UVMT_PATH)/imperas_iss.flist
-DSIM_COMPILE_ARGS      += +define+$(CV_CORE_UC)_TRACE_EXECUTION
+DSIM_COMPILE_ARGS      += +define+$(CV_CORE_UC)_TRACE_EXECUTION+UVM
 
-DSIM_USER_COMPILE_ARGS ?=
+ifeq ($(CV_CORE_UC),CV32E40S)
+DSIM_USER_COMPILE_ARGS = -no-sva
+else
+DSIM_USER_COMPILE_ARGS =
+endif
+
 ifeq ($(USE_ISS),YES)
 	DSIM_RUN_FLAGS     += +USE_ISS
 else
@@ -57,7 +61,7 @@ endif
 DSIM_PMA_INC += +incdir+$(TBSRC_HOME)/uvmt \
                 +incdir+$(CV_CORE_PKG)/rtl/include \
                 +incdir+$(CV_CORE_COREVDV_PKG)/ldgen \
-				+incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
+                +incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
 
 # Seed management for constrained-random sims. This is an intentional repeat
 # of the root Makefile: dsim regressions use random seeds by default.
@@ -146,10 +150,8 @@ comp: mk_results $(CV_CORE_PKG) $(SVLIB_PKG) $(OVP_MODEL_DPI)
 		+$(UVM_PLUSARGS) \
 		-genimage $(DSIM_IMAGE)
 
-
-################################################################################
-# General test execution target "test"
-#
+#		TODO: discuss location of ImperasDV with Imperas.
+#		+incdir+$(CORE_V_VERIF)/vendor_lib/ImperasDV/ImpPublic/include/host \
 
 ################################################################################
 # If the configuration specified OVPSIM arguments, generate an ovpsim.ic file and
@@ -160,8 +162,64 @@ gen_ovpsim_ic:
 	@touch $(SIM_RUN_RESULTS)/ovpsim.ic
 	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
 		echo "$(CFG_OVPSIM)" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
+	else \
+		echo "--override cpu/misa_Extensions=0x001106" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
 	fi
 export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic
+
+#	@rm -f $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@mkdir -p $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX);
+#	@touch -f $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/misa_Extensions=0x001106      "  > $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/tcontrol_undefined=0          " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/bitmanip_version=1.0.0        " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zba=1                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbb=1                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbc=1                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbe=0                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbf=0                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbm=0                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbp=0                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbr=0                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbs=1                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/Zbt=0                         " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/priv_version=master           " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/endianFixed=1                 " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/mhartid=0                     " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/mimpid=0                      " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/startaddress=0x00000080       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/mtvec=0x00000001              " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/nmi_address=0x00100000        " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/debug_address=0x1a110800      " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/dexc_address=0x1a111000       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/noinhibit_mask=0xfffffff0     " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	@echo "--override cpu/extension_*/PMA_NUM_REGIONS=0 " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	
+#	# required for basic arithmetic test
+#	#@echo "--override cpu/mtvec_mask=0xffffff01       " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	#@echo "--override cpu/mtvec=0x00000001            " >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	
+#	#@echo "--trace --tracechange --tracemode --traceshowicount --monitornetschange" >> $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic
+#	
+#	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
+#		echo "$(CFG_OVPSIM)" > $(SIM_CFG_RESULTS)/$(TEST_NAME)/$(RUN_INDEX)/ovpsim.ic; \
+#	fi
+#export IMPERAS_TOOLS=ovpsim.ic
+
+#	@rm -f $(SIM_RUN_RESULTS)/ovpsim.ic
+#	@mkdir -p $(SIM_RUN_RESULTS)
+#	@touch $(SIM_RUN_RESULTS)/ovpsim.ic
+#	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
+#		echo "$(CFG_OVPSIM)" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
+#	else \
+#		echo "--override cpu/misa_Extensions=0x001106" > $(SIM_RUN_RESULTS)/ovpsim.ic; \
+#	fi
+#export IMPERAS_TOOLS=$(SIM_RUN_RESULTS)/ovpsim.ic
+
+
+################################################################################
+# General test execution target "test"
+#
 
 # Skip compile if COMP is specified and negative
 ifneq ($(call IS_NO,$(COMP)),NO)
@@ -183,6 +241,7 @@ test: $(DSIM_SIM_PREREQ) hex gen_ovpsim_ic
 			-sv_lib $(DPI_DASM_LIB) \
 			-sv_lib $(abspath $(SVLIB_LIB)) \
 			-sv_lib $(OVP_MODEL_DPI) \
+			-sv_lib $(IMPERAS_DV_MODEL) \
 			+UVM_TESTNAME=$(TEST_UVM_TEST) \
 			+firmware=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).hex \
 			+elf_file=$(SIM_TEST_PROGRAM_RESULTS)/$(TEST_PROGRAM)$(OPT_RUN_INDEX_SUFFIX).elf \
@@ -196,6 +255,7 @@ asm: comp $(ASM_DIR)/$(ASM_PROG).hex $(ASM_DIR)/$(ASM_PROG).elf
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
 		-sv_lib $(OVP_MODEL_DPI) \
+		-sv_lib $(IMPERAS_DV_MODEL) \
 		+UVM_TESTNAME=$(UVM_TESTNAME) \
 		+firmware=$(ASM_DIR)/$(ASM_PROG).hex \
 		+elf_file=$(ASM_DIR)/$(ASM_PROG).elf
@@ -230,6 +290,7 @@ compliance: comp build_compliance
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
 		-sv_lib $(OVP_MODEL_DPI) \
+		-sv_lib $(IMPERAS_DV_MODEL) \
 		+UVM_TESTNAME=$(UVM_TESTNAME) \
 		+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).hex \
 		+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(COMPLIANCE_PROG).elf
@@ -248,6 +309,7 @@ no-test-program: comp
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
 		-sv_lib $(OVP_MODEL_DPI) \
+		-sv_lib $(IMPERAS_DV_MODEL) \
 		+UVM_TESTNAME=$(UVM_TESTNAME)
 
 ################################################################################
@@ -262,6 +324,7 @@ dsim-firmware-unit-test: comp
 		-sv_lib $(UVM_HOME)/src/dpi/libuvm_dpi.so \
 		-sv_lib $(DPI_DASM_LIB) \
 		-sv_lib $(OVP_MODEL_DPI) \
+		-sv_lib $(IMPERAS_DV_MODEL) \
 		+UVM_TESTNAME=uvmt_$(CV_CORE_LC)_firmware_test_c \
 		+firmware=$(FIRMWARE)/firmware_unit_test.hex \
 		+elf_file=$(FIRMWARE)/firmware_unit_test.elf

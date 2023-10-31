@@ -49,7 +49,7 @@ class uvme_cv32e40s_core_sb_c extends uvm_scoreboard;
    int unsigned csr_checked_cnt;
 
    // Analysis exports
-   uvm_analysis_imp_core_sb_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvme_cv32e40s_core_sb_c) rvfi_instr_export;
+   uvm_analysis_imp_core_sb_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvme_cv32e40s_core_sb_c) rvfi_instr_imp;
    uvm_analysis_imp_core_sb_rvvi_state#(uvma_rvvi_state_seq_item_c#(ILEN,XLEN), uvme_cv32e40s_core_sb_c) rvvi_state_export;
 
    `uvm_component_utils_begin(uvme_cv32e40s_core_sb_c)
@@ -129,7 +129,7 @@ function uvme_cv32e40s_core_sb_c::new(string name="uvme_cv32e40s_core_sb", uvm_c
 
    super.new(name, parent);
 
-   rvfi_instr_export = new("rvfi_instr_export", this);
+   rvfi_instr_imp = new("rvfi_instr_imp", this);
    rvvi_state_export = new("rvvi_state_export", this);
 endfunction : new
 
@@ -187,9 +187,19 @@ function void uvme_cv32e40s_core_sb_c::pre_abort();
 endfunction : pre_abort
 
 function void uvme_cv32e40s_core_sb_c::print_instr_checked_stats();
-   `uvm_info("CORESB", $sformatf("checked %0d instruction retirements", pc_checked_cnt), UVM_NONE);
-   `uvm_info("CORESB", $sformatf("checked %0d GPR updates", gpr_checked_cnt), UVM_NONE);
-   `uvm_info("CORESB", $sformatf("checked %0d CSRs", csr_checked_cnt), UVM_NONE);
+   if ($test$plusargs("USE_ISS")) begin
+     if ((pc_checked_cnt > 0) && cfg.scoreboarding_enabled) begin
+        `uvm_info("CORESB", $sformatf("checked %0d instruction retirements", pc_checked_cnt), UVM_NONE)
+        `uvm_info("CORESB", $sformatf("checked %0d GPR updates", gpr_checked_cnt), UVM_NONE)
+        `uvm_info("CORESB", $sformatf("checked %0d CSRs", csr_checked_cnt), UVM_NONE)
+     end
+     else begin
+        `uvm_error("CORESB", "No Instructions checked!")
+     end
+  end
+  else begin
+      `uvm_info("CORESB", "ISS scoreboard disabled for this test.", UVM_NONE)
+  end
 endfunction : print_instr_checked_stats
 
 function void uvme_cv32e40s_core_sb_c::write_core_sb_rvfi_instr(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) rvfi_instr);
@@ -306,7 +316,7 @@ function void uvme_cv32e40s_core_sb_c::check_instr(uvma_rvfi_instr_seq_item_c#(I
    end
 
    // CHECK: insn
-   if (!rvfi_instr.trap) begin
+   if (!rvfi_instr.trap.trap) begin
       if (rvfi_instr.insn != rvvi_state.insn) begin
          `uvm_error("CORESB", $sformatf("INSN Mismatch, order: %0d, rvfi.pc = 0x%08x, rvfi.insn = 0x%08x, rvvi.insn = 0x%08x",
                                        rvfi_instr.order, rvfi_instr.pc_rdata, rvfi_instr.insn, rvvi_state.insn));
@@ -323,15 +333,16 @@ endfunction : check_instr
 function void uvme_cv32e40s_core_sb_c::check_gpr(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) rvfi_instr,
                                                  uvma_rvvi_state_seq_item_c#(ILEN,XLEN) rvvi_state);
 
-   // gpt_checked_cnt represents the GPR "updates" checked, so skip writes to x0
-   if (rvfi_instr.rd1_addr !=0 || rvfi_instr.rd2_addr != 0)
-      gpr_checked_cnt++;
 
-   // Update the local register map
-   if (rvfi_instr.rd1_addr != 0)
-      x[rvfi_instr.rd1_addr] = rvfi_instr.rd1_wdata;
-   if (rvfi_instr.rd2_addr != 0)
-      x[rvfi_instr.rd2_addr] = rvfi_instr.rd2_wdata;
+   if (rvfi_instr.gpr_wmask[31:1] != 0) begin
+      gpr_checked_cnt++;
+   end
+
+   for (int i = 1; i < 32; i++) begin
+      if (rvfi_instr.gpr_wmask[i]) begin
+         x[i] = rvfi_instr.get_gpr_wdata(i);
+      end
+   end
 
    for (int i = 0; i < 32; i++) begin
       if (x[i] != rvvi_state.x[i]) begin
@@ -342,6 +353,7 @@ function void uvme_cv32e40s_core_sb_c::check_gpr(uvma_rvfi_instr_seq_item_c#(ILE
                                           i, rvvi_state.x[i]));
       end
    end
+
 
 endfunction : check_gpr
 

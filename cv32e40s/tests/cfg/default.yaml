@@ -1,20 +1,97 @@
 name: default
 description: Default configuration for CV32E40S simulations
-compile_flags:
-#TODO:ropeders un-comment when ISS is patched  +define+ZBA_ZBB_ZBC_ZBS
+compile_flags: >
+    +define+ZBA_ZBB_ZBC_ZBS
 ovpsim: >
-    # --showoverrides
-    # --trace --tracechange --traceshowicount --monitornets
+    --override cpu/envcfg_mask=0x0
+    --override cpu/PMP_initialparams=T
+    --override cpu/PMP_maskparams=T
+    --override cpu/hpmcounter_undefined=T
+    --override cpu/PMP_registers=64
+    --override cpu/PMP_grain=0
+    --override cpu/mask_pmpaddr0=0x00000000
+    --override cpu/mask_pmpaddr1=0x00000000
+    --override cpu/mask_pmpaddr2=0x00000000
+    --override cpu/mask_pmpaddr3=0x00000000
+    --override cpu/mask_pmpaddr4=0x00000000
+    --override cpu/mask_pmpaddr5=0x00000000
+    --override cpu/mask_pmpaddr6=0x00000000
+    --override cpu/mask_pmpaddr7=0x00000000
+    --override cpu/mask_pmpaddr8=0x00000000
+    --override cpu/mask_pmpaddr9=0x00000000
+    --override cpu/mask_pmpaddr10=0x00000000
+    --override cpu/mask_pmpaddr11=0x00000000
+    --override cpu/mask_pmpaddr12=0x00000000
+    --override cpu/mask_pmpaddr13=0x00000000
+    --override cpu/mask_pmpaddr14=0x00000000
+    --override cpu/mask_pmpaddr15=0x00000000
+    --override cpu/mask_pmpaddr16=0x00000000
+    --override cpu/mask_pmpaddr17=0x00000000
+    --override cpu/mask_pmpaddr18=0x00000000
+    --override cpu/mask_pmpaddr19=0x00000000
+    --override cpu/mask_pmpaddr20=0x00000000
+    --override cpu/mask_pmpaddr21=0x00000000
+    --override cpu/mask_pmpaddr22=0x00000000
+    --override cpu/mask_pmpaddr23=0x00000000
+    --override cpu/mask_pmpaddr24=0x00000000
+    --override cpu/mask_pmpaddr25=0x00000000
+    --override cpu/mask_pmpaddr26=0x00000000
+    --override cpu/mask_pmpaddr27=0x00000000
+    --override cpu/mask_pmpaddr28=0x00000000
+    --override cpu/mask_pmpaddr29=0x00000000
+    --override cpu/mask_pmpaddr30=0x00000000
+    --override cpu/mask_pmpaddr31=0x00000000
+    --override cpu/mask_pmpaddr32=0x00000000
+    --override cpu/mask_pmpaddr33=0x00000000
+    --override cpu/mask_pmpaddr34=0x00000000
+    --override cpu/mask_pmpaddr35=0x00000000
+    --override cpu/mask_pmpaddr36=0x00000000
+    --override cpu/mask_pmpaddr37=0x00000000
+    --override cpu/mask_pmpaddr38=0x00000000
+    --override cpu/mask_pmpaddr39=0x00000000
+    --override cpu/mask_pmpaddr40=0x00000000
+    --override cpu/mask_pmpaddr41=0x00000000
+    --override cpu/mask_pmpaddr42=0x00000000
+    --override cpu/mask_pmpaddr43=0x00000000
+    --override cpu/mask_pmpaddr44=0x00000000
+    --override cpu/mask_pmpaddr45=0x00000000
+    --override cpu/mask_pmpaddr46=0x00000000
+    --override cpu/mask_pmpaddr47=0x00000000
+    --override cpu/mask_pmpaddr48=0x00000000
+    --override cpu/mask_pmpaddr49=0x00000000
+    --override cpu/mask_pmpaddr50=0x00000000
+    --override cpu/mask_pmpaddr51=0x00000000
+    --override cpu/mask_pmpaddr52=0x00000000
+    --override cpu/mask_pmpaddr53=0x00000000
+    --override cpu/mask_pmpaddr54=0x00000000
+    --override cpu/mask_pmpaddr55=0x00000000
+    --override cpu/mask_pmpaddr56=0x00000000
+    --override cpu/mask_pmpaddr57=0x00000000
+    --override cpu/mask_pmpaddr58=0x00000000
+    --override cpu/mask_pmpaddr59=0x00000000
+    --override cpu/mask_pmpaddr60=0x00000000
+    --override cpu/mask_pmpaddr61=0x00000000
+    --override cpu/mask_pmpaddr62=0x00000000
+    --override cpu/mask_pmpaddr63=0x00000000
+    #--showoverrides
+    #--trace
+    #--trace --tracechange --traceshowicount --monitornets
 cflags: >
+    -Wl,--nmagic
 plusargs: >
-    #TODO:ropeders un-comment when ISS is patched  +enable_zba_extension=1
-    #TODO:ropeders un-comment when ISS is patched  +enable_zbb_extension=1
-    #TODO:ropeders un-comment when ISS is patched  +enable_zbc_extension=1
-    #TODO:ropeders un-comment when ISS is patched  +enable_zbs_extension=1
-cv_sw_march: rv32imc
-#TODO:ropeders un-comment when ISS is patched  cv_sw_march: rv32imc_zba1p00_zbb1p00_zbc1p00_zbs1p00
-# Note: the following are depreciated
-#riscv_march: rv32imc_zba1p00_zbb1p00_zbc1p00_zbs1p00
-#gnu_march:   rv32imc_zba1p00_zbb1p00_zbc1p00_zbs1p00
-#corev_march: rv32imc_zba1p00_zbb1p00_zbc1p00_zbs1p00
-#llvm_march:  rv32imc_zba1p00_zbb1p00_zbc1p00_zbs1p00
+    +enable_zba_extension=1
+    +enable_zbb_extension=1
+    +enable_zbc_extension=1
+    +enable_zbs_extension=1
+    +fix_sp=1
+    +fix_ra=1
+    +enable_zca_extension=1
+    +enable_zcb_extension=1
+    +enable_zcmt_extension=1
+    +enable_zcmp_extension=1
+    #+gen_wfe_wu_noise=1
+    #+enable_write_pmp_csr=1
+    #+pmp_randomize=0
+    #+pmp_num_regions=64
+    #+pmp_granularity=0
+cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zicsr_zca_zcb_zcmp_zcmt_zifencei

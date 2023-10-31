@@ -23,23 +23,59 @@
 
 /**
  * Component sampling transactions from a Open Bus Interface virtual interface
- * (uvma_obi_if).
+ * (uvma_obi_if_t).
  */
-class uvma_obi_memory_mon_c extends uvm_monitor;
+class uvma_obi_memory_mon_c#(
+   parameter AUSER_WIDTH = `UVMA_OBI_MEMORY_AUSER_DEFAULT_WIDTH, ///< Width of the auser signal. RI5CY, Ibex, CV32E40* do not have the auser signal.
+   parameter WUSER_WIDTH = `UVMA_OBI_MEMORY_WUSER_DEFAULT_WIDTH, ///< Width of the wuser signal. RI5CY, Ibex, CV32E40* do not have the wuser signal.
+   parameter RUSER_WIDTH = `UVMA_OBI_MEMORY_RUSER_DEFAULT_WIDTH, ///< Width of the ruser signal. RI5CY, Ibex, CV32E40* do not have the ruser signal.
+   parameter ADDR_WIDTH  = `UVMA_OBI_MEMORY_ADDR_DEFAULT_WIDTH , ///< Width of the addr signal.
+   parameter DATA_WIDTH  = `UVMA_OBI_MEMORY_DATA_DEFAULT_WIDTH , ///< Width of the rdata and wdata signals. be width is DATA_WIDTH / 8. Valid DATA_WIDTH settings are 32 and 64.
+   parameter ID_WIDTH    = `UVMA_OBI_MEMORY_ID_DEFAULT_WIDTH   , ///< Width of the aid and rid signals.
+   parameter ACHK_WIDTH  = `UVMA_OBI_MEMORY_ACHK_DEFAULT_WIDTH , ///< Width of the achk signal.
+   parameter RCHK_WIDTH  = `UVMA_OBI_MEMORY_RCHK_DEFAULT_WIDTH   ///< Width of the rchk signal.
+) extends uvm_monitor;
 
    // Objects
    uvma_obi_memory_cfg_c    cfg;
-   uvma_obi_memory_cntxt_c  cntxt;
+   uvma_obi_memory_cntxt_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ) cntxt;
 
    // TLM
    uvm_analysis_port#(uvma_obi_memory_mon_trn_c)  ap;
    uvm_analysis_port#(uvma_obi_memory_mon_trn_c)  sequencer_ap;
 
    // Handles to virtual interface modport
-   virtual uvma_obi_memory_if.passive_mp  passive_mp;
+   virtual uvma_obi_memory_if_t#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ).passive_mp  passive_mp;
 
 
-   `uvm_component_utils_begin(uvma_obi_memory_mon_c)
+   `uvm_component_utils_begin(uvma_obi_memory_mon_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ))
       `uvm_field_object(cfg  , UVM_DEFAULT)
       `uvm_field_object(cntxt, UVM_DEFAULT)
    `uvm_component_utils_end
@@ -125,7 +161,16 @@ function void uvma_obi_memory_mon_c::build_phase(uvm_phase phase);
       `uvm_fatal("CFG", "Configuration handle is null")
    end
 
-   void'(uvm_config_db#(uvma_obi_memory_cntxt_c)::get(this, "", "cntxt", cntxt));
+   void'(uvm_config_db#(uvma_obi_memory_cntxt_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ))::get(this, "", "cntxt", cntxt));
    if (cntxt == null) begin
       `uvm_fatal("CNTXT", "Context handle is null")
    end
@@ -352,6 +397,11 @@ task uvma_obi_memory_mon_c::sample_trn_a_from_vif(uvma_obi_memory_mon_trn_c trn)
       for (int unsigned ii=0; ii<cfg.achk_width; ii++) begin
          trn.achk = passive_mp.mon_cb.achk[ii];
       end
+   end
+
+   // 1P3 signals
+   if (cfg.is_1p3_or_higher()) begin
+      trn.dbg     = passive_mp.mon_cb.dbg;
    end
 
 endtask : sample_trn_a_from_vif

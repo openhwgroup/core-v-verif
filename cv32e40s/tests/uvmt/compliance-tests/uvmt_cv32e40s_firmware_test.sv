@@ -34,11 +34,11 @@
  */
 class uvmt_cv32e40s_firmware_test_c extends uvmt_cv32e40s_base_test_c;
 
-   //constraint env_cfg_cons {
-   //   env_cfg.enabled         == 1;
-   //   env_cfg.is_active       == UVM_ACTIVE;
-   //   env_cfg.trn_log_enabled == 1;
-   //}
+   constraint env_cfg_cons {
+      env_cfg.enabled         == 1;
+      env_cfg.is_active       == UVM_ACTIVE;
+      env_cfg.trn_log_enabled == 1;
+   }
 
    constraint test_type_cons {
      test_cfg.tpt == PREEXISTING_SELFCHECKING;
@@ -79,6 +79,28 @@ class uvmt_cv32e40s_firmware_test_c extends uvmt_cv32e40s_base_test_c;
     */
    extern virtual task irq_noise();
 
+   /**
+    *  Start the clic interrupt sequencer to apply random clic interrupts during test
+    */
+   extern virtual task clic_noise();
+
+   /**
+    *  Start the wfe wakeup sequencer to apply random wfe events during test
+    */
+   extern virtual task wfe_wu_noise();
+
+   /**
+    *  Start the nmi timeout watchdog to terminate tests a certain number of
+    *  instructions after an nmi
+    */
+   extern virtual task nmi_timeout();
+
+   /**
+    *  Start the irq single-step timeout watchdog to terminate tests after
+    *  a certain number of irqs and single step instructions has occurred
+    */
+   extern virtual task irq_single_step_timeout();
+
 endclass : uvmt_cv32e40s_firmware_test_c
 
 
@@ -116,8 +138,15 @@ task uvmt_cv32e40s_firmware_test_c::run_phase(uvm_phase phase);
 
    if ($test$plusargs("gen_irq_noise")) begin
     fork
+      clic_noise();
       irq_noise();
     join_none
+   end
+
+   if ($test$plusargs("gen_wfe_wu_noise")) begin
+     fork
+       wfe_wu_noise();
+     join_none
    end
 
    if ($test$plusargs("reset_debug")) begin
@@ -129,6 +158,18 @@ task uvmt_cv32e40s_firmware_test_c::run_phase(uvm_phase phase);
     fork
       bootset_debug();
     join_none
+   end
+
+   if (env.cfg.nmi_timeout_instr > 0) begin
+     fork
+       nmi_timeout();
+     join_none
+   end
+
+   if (env.cfg.irq_single_step_threshold > 0) begin
+     fork
+       irq_single_step_timeout();
+     join_none
    end
 
    phase.raise_objection(this);
@@ -174,30 +215,69 @@ task uvmt_cv32e40s_firmware_test_c::bootset_debug();
 endtask
 
 task uvmt_cv32e40s_firmware_test_c::random_debug();
+    uvme_cv32e40s_random_debug_c debug_vseq;
     `uvm_info("TEST", "Starting random debug in thread UVM test", UVM_NONE);
 
-    while (1) begin
-        uvme_cv32e40s_random_debug_c debug_vseq;
-        repeat (100) @(env_cntxt.debug_cntxt.vif.mon_cb);
-        debug_vseq = uvme_cv32e40s_random_debug_c::type_id::create("random_debug_vseqr");
-        void'(debug_vseq.randomize());
-        debug_vseq.start(vsequencer);
-        break;
-    end
+    repeat (100) @(env_cntxt.debug_cntxt.vif.mon_cb);
+
+    debug_vseq = uvme_cv32e40s_random_debug_c::type_id::create("random_debug_vseqr");
+
+    void'(debug_vseq.randomize());
+    debug_vseq.start(vsequencer);
 endtask : random_debug
 
 task uvmt_cv32e40s_firmware_test_c::irq_noise();
+  uvme_cv32e40s_interrupt_noise_c interrupt_noise_vseq;
   `uvm_info("TEST", "Starting IRQ Noise thread in UVM test", UVM_NONE);
-  while (1) begin
-    uvme_cv32e40s_interrupt_noise_c interrupt_noise_vseq;
 
-    interrupt_noise_vseq = uvme_cv32e40s_interrupt_noise_c::type_id::create("interrupt_noise_vseqr");
-    assert(interrupt_noise_vseq.randomize() with {
-      reserved_irq_mask == 32'h0;
-    });
-    interrupt_noise_vseq.start(vsequencer);
-    break;
-  end
+  interrupt_noise_vseq = uvme_cv32e40s_interrupt_noise_c::type_id::create("interrupt_noise_vseqr");
+
+  assert(interrupt_noise_vseq.randomize() with {
+    reserved_irq_mask == 32'h0;
+  });
+  interrupt_noise_vseq.start(vsequencer);
 endtask : irq_noise
+
+task uvmt_cv32e40s_firmware_test_c::clic_noise();
+  uvme_cv32e40s_clic_noise_c clic_noise_vseq;
+  `uvm_info("TEST", "Starting CLIC Noise thread in UVM test", UVM_NONE);
+
+  clic_noise_vseq = uvme_cv32e40s_clic_noise_c::type_id::create("clic_noise_vseqr");
+
+  assert(clic_noise_vseq.randomize() with { });
+  clic_noise_vseq.start(vsequencer);
+
+endtask : clic_noise
+
+task uvmt_cv32e40s_firmware_test_c::wfe_wu_noise();
+  uvme_cv32e40s_wu_wfe_noise_vseq_c wfe_wu_noise_vseq;
+  `uvm_info("TEST", "Starting WFE Wake-up noise thread in UVM test", UVM_NONE);
+
+  wfe_wu_noise_vseq = uvme_cv32e40s_wu_wfe_noise_vseq_c::type_id::create("wfe_wu_noise_vseqr");
+
+  assert(wfe_wu_noise_vseq.randomize() with { });
+  wfe_wu_noise_vseq.start(vsequencer);
+
+endtask : wfe_wu_noise
+
+task uvmt_cv32e40s_firmware_test_c::nmi_timeout();
+  uvme_cv32e40s_nmi_timeout_vseq_c nmi_timeout_vseq;
+  `uvm_info("TEST", "Starting NMI timeout watchdog in UVM test", UVM_NONE);
+
+  nmi_timeout_vseq = uvme_cv32e40s_nmi_timeout_vseq_c::type_id::create("nmi_timout_vseqr");
+
+  assert(nmi_timeout_vseq.randomize() with {});
+  nmi_timeout_vseq.start(vsequencer);
+endtask : nmi_timeout
+
+task uvmt_cv32e40s_firmware_test_c::irq_single_step_timeout();
+  uvme_cv32e40s_irq_ss_timeout_vseq_c irq_ss_timeout_vseq;
+  `uvm_info("TEST", "Starting IRQ/Single step timeout watchdog in UVM test", UVM_NONE);
+
+  irq_ss_timeout_vseq = uvme_cv32e40s_irq_ss_timeout_vseq_c::type_id::create("irq_ss_timout_vseqr");
+
+  assert(irq_ss_timeout_vseq.randomize() with {});
+  irq_ss_timeout_vseq.start(vsequencer);
+endtask : irq_single_step_timeout
 
 `endif // __UVMT_CV32E40S_FIRMWARE_TEST_SV__

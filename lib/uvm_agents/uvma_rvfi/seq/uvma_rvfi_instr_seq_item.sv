@@ -28,9 +28,9 @@ class uvma_rvfi_instr_seq_item_c#(int ILEN=DEFAULT_ILEN,
    rand bit [CYCLE_CNT_WL-1:0]   cycle_cnt;
    rand bit [ORDER_WL-1:0]       order;
    rand bit [ILEN-1:0]           insn;
-   rand bit [TRAP_WL-1:0]        trap;
+   rand rvfi_trap_t              trap;
    rand bit                      halt;
-   rand bit                      intr;
+   rand rvfi_intr_t              intr;
    rand uvma_rvfi_mode           mode;
    rand bit [IXL_WL-1:0]         ixl;
    rand bit [RVFI_DBG_WL-1:0]    dbg;
@@ -40,8 +40,8 @@ class uvma_rvfi_instr_seq_item_c#(int ILEN=DEFAULT_ILEN,
    rand bit                      insn_interrupt;
    rand int unsigned             insn_interrupt_id;
    rand bit                      insn_bus_fault;
-   rand bit                      insn_nmi_store_fault;
-   rand bit                      insn_nmi_load_fault;
+   rand bit                      insn_nmi;
+   rand int unsigned             insn_nmi_cause;
 
    rand bit [XLEN-1:0]           pc_rdata;
    rand bit [XLEN-1:0]           pc_wdata;
@@ -61,11 +61,17 @@ class uvma_rvfi_instr_seq_item_c#(int ILEN=DEFAULT_ILEN,
    rand bit [GPR_ADDR_WL-1:0]    rd2_addr;
    rand bit [XLEN-1:0]           rd2_wdata;
 
-   rand bit [XLEN-1:0]           mem_addr;
-   rand bit [XLEN-1:0]           mem_rdata;
-   rand bit [XLEN-1:0]           mem_rmask;
-   rand bit [XLEN-1:0]           mem_wdata;
-   rand bit [XLEN-1:0]           mem_wmask;
+   rand bit [(32*XLEN)-1:0]      gpr_rdata;
+   rand bit [(32)-1:0]           gpr_rmask;
+   rand bit [(32*XLEN)-1:0]      gpr_wdata;
+   rand bit [(32)-1:0]           gpr_wmask;
+
+
+   rand bit [(NMEM*XLEN)-1:0]    mem_addr;
+   rand bit [(NMEM*XLEN)-1:0]    mem_rdata;
+   rand bit [(NMEM*XLEN/8)-1:0]  mem_rmask;
+   rand bit [(NMEM*XLEN)-1:0]    mem_wdata;
+   rand bit [(NMEM*XLEN/8)-1:0]  mem_wmask;
 
    uvma_rvfi_csr_seq_item_c      csrs[string];
 
@@ -84,8 +90,8 @@ class uvma_rvfi_instr_seq_item_c#(int ILEN=DEFAULT_ILEN,
       `uvm_field_int(insn_interrupt, UVM_DEFAULT)
       `uvm_field_int(insn_interrupt_id, UVM_DEFAULT)
       `uvm_field_int(insn_bus_fault, UVM_DEFAULT)
-      `uvm_field_int(insn_nmi_load_fault, UVM_DEFAULT)
-      `uvm_field_int(insn_nmi_store_fault, UVM_DEFAULT)
+      `uvm_field_int(insn_nmi, UVM_DEFAULT)
+      `uvm_field_int(insn_nmi_cause, UVM_DEFAULT)
       `uvm_field_enum(uvma_rvfi_mode, mode, UVM_DEFAULT)
       `uvm_field_int(ixl, UVM_DEFAULT)
       `uvm_field_int(pc_rdata, UVM_DEFAULT)
@@ -100,6 +106,10 @@ class uvma_rvfi_instr_seq_item_c#(int ILEN=DEFAULT_ILEN,
       `uvm_field_int(rd1_wdata, UVM_DEFAULT)
       `uvm_field_int(rd2_addr, UVM_DEFAULT)
       `uvm_field_int(rd2_wdata, UVM_DEFAULT)
+      `uvm_field_int(gpr_rmask, UVM_DEFAULT)
+      `uvm_field_int(gpr_rdata, UVM_DEFAULT)
+      `uvm_field_int(gpr_wmask, UVM_DEFAULT)
+      `uvm_field_int(gpr_wdata, UVM_DEFAULT)
       `uvm_field_int(mem_addr, UVM_DEFAULT)
       `uvm_field_int(mem_rmask, UVM_DEFAULT)
       `uvm_field_int(mem_rdata, UVM_DEFAULT)
@@ -159,6 +169,46 @@ class uvma_rvfi_instr_seq_item_c#(int ILEN=DEFAULT_ILEN,
     */
    extern function bit [TRAP_DBG_CAUSE_WL-1:0] get_trap_debug_cause();
 
+   /*
+    * Return GPR wdata
+    */
+   extern function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] get_gpr_wdata(int gpr);
+
+   /*
+    * Return GPR rdata
+    */
+   extern function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] get_gpr_rdata(int gpr);
+
+
+   /*
+    * Return memory transaction data
+    */
+   extern function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] get_mem_data_word(int txn);
+
+   /*
+    * Return memory transaction addr
+    */
+   extern function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] get_mem_addr(int txn);
+
+   /*
+    * Return memory transaction wmask
+    */
+   extern function bit [(uvma_rvfi_instr_seq_item_c::XLEN/8)-1:0] get_mem_wmask(int txn);
+
+   /*
+    * Return memory transaction rmask
+    */
+   extern function bit [(uvma_rvfi_instr_seq_item_c::XLEN/8)-1:0] get_mem_rmask(int txn);
+
+   /*
+    * Check memory transaction activity
+    *
+    * Checks if a position in the rvfi memory transaction list
+    * indicates any activity.
+    * return {read, write}
+    */
+   extern function bit [1:0] check_mem_act(int txn);
+
 endclass : uvma_rvfi_instr_seq_item_c
 
 `pragma protect begin
@@ -189,10 +239,10 @@ function string uvma_rvfi_instr_seq_item_c::convert2string();
       convert2string = $sformatf("%s HALT", convert2string);
    if (insn_interrupt)
       convert2string = $sformatf("%s INTR %0d", convert2string, this.insn_interrupt_id);
-   if (insn_nmi_load_fault)
-      convert2string = $sformatf("%s NMI LOAD", convert2string);
-   if (insn_nmi_store_fault)
-      convert2string = $sformatf("%s NMI STORE", convert2string);
+   if (insn_nmi)
+      convert2string = $sformatf("%s NMI DECTED", convert2string);
+   if (insn_nmi_cause)
+      convert2string = $sformatf("%s NMI CAUSE: %0d", convert2string, this.insn_nmi_cause);
    if (insn_bus_fault)
       convert2string = $sformatf("%s INSN_BUS_FAULT", convert2string);
    if (dbg)
@@ -244,33 +294,91 @@ endfunction : is_compressed_insn
 
 function bit uvma_rvfi_instr_seq_item_c::is_trap();
 
-   return trap[TRAP_EXCP_LSB];
+   return trap.trap;
 
 endfunction : is_trap
 
 function bit uvma_rvfi_instr_seq_item_c::is_debug_entry_trap();
 
-   return trap[TRAP_DBG_ENTRY_LSB];
+   return trap.debug;
 
 endfunction : is_debug_entry_trap
 
 function bit uvma_rvfi_instr_seq_item_c::is_nondebug_entry_trap();
 
-   return trap[TRAP_NONDBG_ENTRY_LSB];
+   return trap.exception;
 
 endfunction : is_nondebug_entry_trap
 
 function bit [TRAP_CAUSE_WL-1:0] uvma_rvfi_instr_seq_item_c::get_trap_cause();
 
-   return trap[TRAP_CAUSE_LSB +: TRAP_CAUSE_WL];
+   return trap.exception_cause;
 
 endfunction : get_trap_cause
 
 function bit [TRAP_DBG_CAUSE_WL-1:0] uvma_rvfi_instr_seq_item_c::get_trap_debug_cause();
 
-   return trap[TRAP_DBG_CAUSE_LSB +: TRAP_DBG_CAUSE_WL];
+   return trap.debug_cause;
 
 endfunction : get_trap_debug_cause
+
+
+
+function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] uvma_rvfi_instr_seq_item_c::get_gpr_wdata(int gpr);
+  return gpr_wdata[gpr*XLEN +:XLEN];
+endfunction : get_gpr_wdata
+
+function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] uvma_rvfi_instr_seq_item_c::get_gpr_rdata(int gpr);
+  return gpr_rdata[gpr*XLEN +:XLEN];
+endfunction : get_gpr_rdata
+
+function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] uvma_rvfi_instr_seq_item_c::get_mem_data_word(int txn);
+  bit [XLEN-1:0] ret;
+
+  for (int i = 0; i < XLEN/8; i++) begin
+    if (mem_wmask[(txn*XLEN/8) + i]) begin
+      ret[i*8 +:8] = mem_wdata[((txn*XLEN) + (i*8)) +:8];
+    end else begin
+      ret[i*8 +:8] = mem_rdata[((txn*XLEN) + (i*8)) +:8];
+    end
+  end
+
+  return ret;
+
+endfunction : get_mem_data_word
+
+function bit [uvma_rvfi_instr_seq_item_c::XLEN-1:0] uvma_rvfi_instr_seq_item_c::get_mem_addr(int txn);
+
+  return mem_addr[txn*XLEN +:XLEN];
+
+endfunction : get_mem_addr
+
+function bit [(uvma_rvfi_instr_seq_item_c::XLEN/8)-1:0] uvma_rvfi_instr_seq_item_c::get_mem_rmask(int txn);
+
+   return mem_rmask[(txn*XLEN/8) +:(XLEN/8)];
+
+endfunction : get_mem_rmask
+
+function bit [(uvma_rvfi_instr_seq_item_c::XLEN/8)-1:0] uvma_rvfi_instr_seq_item_c::get_mem_wmask(int txn);
+
+   return mem_wmask[(txn*XLEN/8) +:(XLEN/8)];
+
+endfunction : get_mem_wmask
+
+function bit [1:0] uvma_rvfi_instr_seq_item_c::check_mem_act(int txn);
+   static bit read = 0;
+   static bit write = 0;
+
+   if (mem_rmask[(txn*XLEN/8) +:(XLEN/8)]) begin
+      read = 1;
+   end
+   if (mem_wmask[(txn*XLEN/8) +:(XLEN/8)]) begin
+      write = 1;
+   end
+
+   return {read,write};
+
+endfunction : check_mem_act
 
 `pragma protect end
 

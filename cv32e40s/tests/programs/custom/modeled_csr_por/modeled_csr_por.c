@@ -32,8 +32,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
-#define EXP_MISA 0x40101104
+#define EXP_MISA 0x40901104
 
 int main(int argc, char *argv[])
 {

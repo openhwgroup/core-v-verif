@@ -1,0 +1,8 @@
+name: param_set_0
+description: >
+    Compile with external parameter configuration.
+    USER_COMPILE_FLAGS="+incdir+path_to_your_param_set_0_directory"
+    Tests will fail, but you get the coverage model and data.
+compile_flags: >
+    +define+PARAM_SET_0
+cv_sw_march: rv32im_zba1p00_zbb1p00_zbc1p00_zbs1p00_zicsr_zca_zcb_zcmp_zcmt_zifencei

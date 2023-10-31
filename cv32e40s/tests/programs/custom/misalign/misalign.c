@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <stdint.h>
+#include <string.h>
 
 //#include "../../../core/custom/startup/support.h"
 #include "./support.h"
@@ -84,15 +85,15 @@ int main () {
         printf("\n");
         printf("Load Index=%d off=%d\n", i, i%4);
 
-        bzero(cpa, 32);
+        memset((void *)(cpa-i), 0, 32);
         *spa = *(u16 *)(pLoad + i);
         printf("  (u16 *) =             %04X\n", *spa);
 
-        bzero(cpa, 32);
+        memset((void *)(cpa-i), 0, 32);
         *ipa = *(u32 *)(pLoad + i);
         printf("  (u32 *) =         %08X\n",     *ipa);
 
-        bzero(cpa, 32);
+        memset((void *)(cpa-i), 0, 32);
         *lpa = *(u64 *)(pLoad + i);
         u64_32.u64v = *lpa;
         printf("  (u64 *) = %08X%08X\n",         u64_32.u32v[1], u64_32.u32v[0]);

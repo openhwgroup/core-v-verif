@@ -85,7 +85,7 @@ export RUN_INDEX       ?= 0
 SIM_RESULTS             ?= $(if $(CV_RESULTS),$(abspath $(CV_RESULTS))/$(SIMULATOR)_results,$(MAKE_PATH)/$(SIMULATOR)_results)
 SIM_CFG_RESULTS          = $(SIM_RESULTS)/$(CFG)
 SIM_COREVDV_RESULTS      = $(SIM_CFG_RESULTS)/corev-dv
-SIM_LDGEN_RESULTS        = $(SIM_CFG_RESULTS)/$(LDGEN)
+SIM_LDGEN_RESULTS        = $(if $(LDGEN),$(SIM_CFG_RESULTS)/$(LDGEN),$(SIM_CFG_RESULTS))
 SIM_TEST_RESULTS         = $(SIM_CFG_RESULTS)/$(TEST)
 SIM_RUN_RESULTS          = $(SIM_TEST_RESULTS)/$(RUN_INDEX)
 SIM_TEST_PROGRAM_RESULTS = $(SIM_RUN_RESULTS)/test_program
@@ -102,32 +102,34 @@ EMB_DEBUG_ARG       = $(if $(filter $(YES_VALS),$(EMB_DEBUG)),YES,NO)
 
 # UVM Environment
 export DV_UVMT_PATH             = $(CORE_V_VERIF)/$(CV_CORE_LC)/tb/uvmt
+export DV_UVM_TESTCASE_PATH     = $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/uvmt
 export DV_UVME_PATH             = $(CORE_V_VERIF)/$(CV_CORE_LC)/env/uvme
 export DV_UVML_HRTBT_PATH       = $(CORE_V_VERIF)/lib/uvm_libs/uvml_hrtbt
 export DV_UVMA_CORE_CNTRL_PATH  = $(CORE_V_VERIF)/lib/uvm_agents/uvma_core_cntrl
 export DV_UVMA_ISACOV_PATH      = $(CORE_V_VERIF)/lib/uvm_agents/uvma_isacov
 export DV_UVMA_RVFI_PATH        = $(CORE_V_VERIF)/lib/uvm_agents/uvma_rvfi
-export DV_UVMA_RVVI_PATH        = $(CORE_V_VERIF)/lib/uvm_agents/uvma_rvvi
-export DV_UVMA_RVVI_OVPSIM_PATH = $(CORE_V_VERIF)/lib/uvm_agents/uvma_rvvi_ovpsim
 export DV_UVMA_CLKNRST_PATH     = $(CORE_V_VERIF)/lib/uvm_agents/uvma_clknrst
 export DV_UVMA_INTERRUPT_PATH   = $(CORE_V_VERIF)/lib/uvm_agents/uvma_interrupt
+export DV_UVMA_CLIC_PATH        = $(CORE_V_VERIF)/lib/uvm_agents/uvma_clic
 export DV_UVMA_DEBUG_PATH       = $(CORE_V_VERIF)/lib/uvm_agents/uvma_debug
 export DV_UVMA_PMA_PATH         = $(CORE_V_VERIF)/lib/uvm_agents/uvma_pma
 export DV_UVMA_OBI_MEMORY_PATH  = $(CORE_V_VERIF)/lib/uvm_agents/uvma_obi_memory
 export DV_UVMA_FENCEI_PATH      = $(CORE_V_VERIF)/lib/uvm_agents/uvma_fencei
+export DV_UVMA_WFE_WU_PATH      = $(CORE_V_VERIF)/lib/uvm_agents/uvma_wfe_wu
 export DV_UVML_TRN_PATH         = $(CORE_V_VERIF)/lib/uvm_libs/uvml_trn
 export DV_UVML_LOGS_PATH        = $(CORE_V_VERIF)/lib/uvm_libs/uvml_logs
 export DV_UVML_SB_PATH          = $(CORE_V_VERIF)/lib/uvm_libs/uvml_sb
 export DV_UVML_MEM_PATH         = $(CORE_V_VERIF)/lib/uvm_libs/uvml_mem
+export DV_SUPPORT_PATH          = $(CORE_V_VERIF)/lib/support
+export DV_ISA_DECODER_PATH      = $(CORE_V_VERIF)/lib/isa_decoder
 
-export DV_OVPM_HOME             = $(CORE_V_VERIF)/vendor_lib/imperas
-export DV_OVPM_MODEL            = $(DV_OVPM_HOME)/imperas_DV_COREV
+# ImperasDV
+export IMPERAS_DV_HOME          = $(CORE_V_VERIF)/vendor_lib/ImperasDV
 
-export DV_OVPM_DESIGN           = $(DV_OVPM_HOME)/design
-
+# Verilab SVlib
 export DV_SVLIB_PATH            = $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/verilab
 
-DV_UVMT_SRCS                  = $(wildcard $(DV_UVMT_PATH)/*.sv))
+DV_UVMT_SRCS                    = $(wildcard $(DV_UVMT_PATH)/*.sv))
 
 # Testcase name: must be the CLASS name of the testcase (not the filename).
 # Look in ../../tests/uvmt
@@ -239,9 +241,14 @@ $(SVLIB_PKG):
 #     target to run the compiled test-program.
 
 # RISCV_ISA='rv32i|rv32im|rv32imc|rv32Zicsr|rv32Zifencei'
-RISCV_ISA    ?= rv32i
-RISCV_TARGET ?= OpenHW
-RISCV_DEVICE ?= $(CV_CORE_LC)
+RISCV_ISA    ?= rv32i_m
+RISCV_TARGET ?= $(CV_CORE_LC)
+RISCV_DEVICE ?= I
+ifneq ($(RISCV_TARGET),cv32e40p)
+  COMPLIANCE_BITMANIP=make build_compliance RISCV_DEVICE=Bitmanip
+else
+  COMPLIANCE_BITMANIP=echo "Bitmanip not supported, skipping"
+endif
 
 clone_compliance:
 	$(CLONE_COMPLIANCE_CMD)
@@ -260,11 +267,12 @@ build_compliance: $(COMPLIANCE_PKG)
 #		VERBOSE=1
 
 all_compliance: $(COMPLIANCE_PKG)
-	make build_compliance RISCV_ISA=rv32i        && \
-	make build_compliance RISCV_ISA=rv32im       && \
-	make build_compliance RISCV_ISA=rv32imc      && \
-	make build_compliance RISCV_ISA=rv32Zicsr    && \
-	make build_compliance RISCV_ISA=rv32Zifencei
+	make build_compliance RISCV_DEVICE=I           && \
+	make build_compliance RISCV_DEVICE=M           && \
+	make build_compliance RISCV_DEVICE=C           && \
+	make build_compliance RISCV_DEVICE=Zifencei    && \
+	make build_compliance RISCV_DEVICE=privilege   && \
+	$(COMPLIANCE_BITMANIP)
 
 # "compliance" is a simulator-specific target defined in <sim>.mk
 COMPLIANCE_RESULTS = $(SIM_RESULTS)
@@ -273,7 +281,7 @@ compliance_check_sig: compliance
 	@echo "Checking Compliance Signature for $(RISCV_ISA)/$(COMPLIANCE_PROG)"
 	@echo "Reference: $(REF)"
 	@echo "Signature: $(SIG)"
-	@export SUITEDIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance/riscv-test-suite/$(RISCV_ISA) && \
+	@export SUITEDIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance/riscv-test-suite/$(RISCV_ISA)/$(RISCV_DEVICE) && \
 	export REF=$(REF) && export SIG=$(SIG) && export COMPL_PROG=$(COMPLIANCE_PROG) && \
 	export RISCV_TARGET=${RISCV_TARGET} && export RISCV_DEVICE=${RISCV_DEVICE} && \
 	export RISCV_ISA=${RISCV_ISA} export SIG_ROOT=${SIG_ROOT} && \
@@ -282,15 +290,15 @@ compliance_check_sig: compliance
 compliance_check_all_sigs:
 	@$(MKDIR_P) $(COMPLIANCE_RESULTS)/$(CFG)/$(RISCV_ISA)
 	@echo "Checking Compliance Signature for all tests in $(CFG)/$(RISCV_ISA)"
-	@export SUITEDIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance/riscv-test-suite/$(RISCV_ISA) && \
+	export SUITEDIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/riscv/riscv-compliance/riscv-test-suite/$(RISCV_ISA)/$(RISCV_DEVICE) && \
 	export RISCV_TARGET=${RISCV_TARGET} && export RISCV_DEVICE=${RISCV_DEVICE} && \
 	export RISCV_ISA=${RISCV_ISA} export SIG_ROOT=${SIG_ROOT} && \
 	$(CORE_V_VERIF)/bin/diff_signatures.sh $(RISCV_ISA) | tee $(COMPLIANCE_RESULTS)/$(CFG)/$(RISCV_ISA)/diff_signatures.log
 
 compliance_regression:
-	make build_compliance RISCV_ISA=$(RISCV_ISA)
+	make build_compliance RISCV_ISA=$(RISCV_ISA) RISCV_DEVICE=$(RISCV_DEVICE)
 	@export SIM_DIR=$(CORE_V_VERIF)/$(CV_CORE_LC)/sim/uvmt && \
-	$(CORE_V_VERIF)/bin/run_compliance.sh $(RISCV_ISA)
+	$(CORE_V_VERIF)/bin/run_compliance.sh $(RISCV_DEVICE)
 	make compliance_check_all_sigs RISCV_ISA=$(RISCV_ISA)
 
 dah:

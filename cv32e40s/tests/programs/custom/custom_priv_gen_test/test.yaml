@@ -1,0 +1,4 @@
+name: custom_priv_gen_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Large set of generated instructions to check that the cv32e40s cores handles illegal custom instructions

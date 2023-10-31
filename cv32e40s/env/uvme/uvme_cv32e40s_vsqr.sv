@@ -32,11 +32,31 @@ class uvme_cv32e40s_vsqr_c extends uvm_sequencer#(
    uvme_cv32e40s_cntxt_c  cntxt;
 
    // Sequencer handles
-   uvma_clknrst_sqr_c    clknrst_sequencer;
-   uvma_interrupt_sqr_c  interrupt_sequencer;
-   uvma_debug_sqr_c      debug_sequencer;
-   uvma_obi_memory_sqr_c obi_memory_instr_sequencer;
-   uvma_obi_memory_sqr_c obi_memory_data_sequencer ;
+   uvma_clknrst_sqr_c                         clknrst_sequencer;
+   uvma_interrupt_sqr_c                       interrupt_sequencer;
+   uvma_clic_sqr_c#(CORE_PARAM_CLIC_ID_WIDTH) clic_sequencer;
+   uvma_wfe_wu_sqr_c                          wfe_wu_sequencer;
+   uvma_debug_sqr_c                           debug_sequencer;
+   uvma_obi_memory_sqr_c#(
+     .AUSER_WIDTH(ENV_PARAM_INSTR_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_INSTR_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_INSTR_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_INSTR_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_INSTR_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_INSTR_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_INSTR_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_INSTR_RCHK_WIDTH)
+   ) obi_memory_instr_sequencer;
+   uvma_obi_memory_sqr_c#(
+     .AUSER_WIDTH(ENV_PARAM_DATA_AUSER_WIDTH),
+     .WUSER_WIDTH(ENV_PARAM_DATA_WUSER_WIDTH),
+     .RUSER_WIDTH(ENV_PARAM_DATA_RUSER_WIDTH),
+     .ADDR_WIDTH(ENV_PARAM_DATA_ADDR_WIDTH),
+     .DATA_WIDTH(ENV_PARAM_DATA_DATA_WIDTH),
+     .ID_WIDTH(ENV_PARAM_DATA_ID_WIDTH),
+     .ACHK_WIDTH(ENV_PARAM_DATA_ACHK_WIDTH),
+     .RCHK_WIDTH(ENV_PARAM_DATA_RCHK_WIDTH)
+   ) obi_memory_data_sequencer ;
 
    `uvm_component_utils_begin(uvme_cv32e40s_vsqr_c)
       `uvm_field_object(cfg  , UVM_DEFAULT)

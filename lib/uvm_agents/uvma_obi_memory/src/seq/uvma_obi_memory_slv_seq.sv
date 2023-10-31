@@ -25,15 +25,60 @@
  * Virtual sequence implementing the cv32e40x virtual peripherals.
  * TODO Move most of the functionality to a cv32e env base class.
  */
-class uvma_obi_memory_slv_seq_c extends uvma_obi_memory_slv_base_seq_c;
+class uvma_obi_memory_slv_seq_c#(
+   parameter AUSER_WIDTH = `UVMA_OBI_MEMORY_AUSER_DEFAULT_WIDTH, ///< Width of the auser signal. RI5CY, Ibex, CV32E40* do not have the auser signal.
+   parameter WUSER_WIDTH = `UVMA_OBI_MEMORY_WUSER_DEFAULT_WIDTH, ///< Width of the wuser signal. RI5CY, Ibex, CV32E40* do not have the wuser signal.
+   parameter RUSER_WIDTH = `UVMA_OBI_MEMORY_RUSER_DEFAULT_WIDTH, ///< Width of the ruser signal. RI5CY, Ibex, CV32E40* do not have the ruser signal.
+   parameter ADDR_WIDTH  = `UVMA_OBI_MEMORY_ADDR_DEFAULT_WIDTH , ///< Width of the addr signal.
+   parameter DATA_WIDTH  = `UVMA_OBI_MEMORY_DATA_DEFAULT_WIDTH , ///< Width of the rdata and wdata signals. be width is DATA_WIDTH / 8. Valid DATA_WIDTH settings are 32 and 64.
+   parameter ID_WIDTH    = `UVMA_OBI_MEMORY_ID_DEFAULT_WIDTH   , ///< Width of the aid and rid signals.
+   parameter ACHK_WIDTH  = `UVMA_OBI_MEMORY_ACHK_DEFAULT_WIDTH , ///< Width of the achk signal.
+   parameter RCHK_WIDTH  = `UVMA_OBI_MEMORY_RCHK_DEFAULT_WIDTH   ///< Width of the rchk signal.
+) extends uvma_obi_memory_slv_base_seq_c#(
+   .AUSER_WIDTH(AUSER_WIDTH),
+   .WUSER_WIDTH(WUSER_WIDTH),
+   .RUSER_WIDTH(RUSER_WIDTH),
+   .ADDR_WIDTH(ADDR_WIDTH),
+   .DATA_WIDTH(DATA_WIDTH),
+   .ID_WIDTH(ID_WIDTH),
+   .ACHK_WIDTH(ACHK_WIDTH),
+   .RCHK_WIDTH(RCHK_WIDTH)
+);
 
    // Queue of virtual peripheral sequences to spawn when this sequence is spawned
-   uvma_obi_memory_vp_base_seq_c vp_seq_q[$];
+   uvma_obi_memory_vp_base_seq_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ) vp_seq_q[$];
 
    // Lookup table to trigger sequences when bus address is detected
-   uvma_obi_memory_vp_base_seq_c vp_seq_table[bit[31:0]];
+   uvma_obi_memory_vp_base_seq_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ) vp_seq_table[bit[31:0]];
 
-   `uvm_object_utils_begin(uvma_obi_memory_slv_seq_c)
+   `uvm_object_utils_begin(uvma_obi_memory_slv_seq_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ))
    `uvm_object_utils_end
 
    /**
@@ -45,9 +90,18 @@ class uvma_obi_memory_slv_seq_c extends uvma_obi_memory_slv_base_seq_c;
     * Register sequences with a range of addresses on this OBI
     * Waiving Verissimo SVTB.32.2.0: Pass strings by reference unless otherwise needed
     */
-   extern virtual function uvma_obi_memory_vp_base_seq_c register_vp_vseq(string name,                  //@DVT_LINTER_WAIVER "MT20211228_9" disable SVTB.32.2.0
-                                                                          bit[31:0] start_address,
-                                                                          uvm_object_wrapper seq_type);
+   extern virtual function uvma_obi_memory_vp_base_seq_c#(
+     .AUSER_WIDTH(uvma_obi_memory_slv_seq_c::AUSER_WIDTH),
+     .WUSER_WIDTH(uvma_obi_memory_slv_seq_c::WUSER_WIDTH),
+     .RUSER_WIDTH(uvma_obi_memory_slv_seq_c::RUSER_WIDTH),
+     .ADDR_WIDTH(uvma_obi_memory_slv_seq_c::ADDR_WIDTH),
+     .DATA_WIDTH(uvma_obi_memory_slv_seq_c::DATA_WIDTH),
+     .ID_WIDTH(uvma_obi_memory_slv_seq_c::ID_WIDTH),
+     .ACHK_WIDTH(uvma_obi_memory_slv_seq_c::ACHK_WIDTH),
+     .RCHK_WIDTH(uvma_obi_memory_slv_seq_c::RCHK_WIDTH)
+   ) register_vp_vseq(string name,                  //@DVT_LINTER_WAIVER "MT20211228_9" disable SVTB.32.2.0
+                      bit[31:0] start_address,
+                      uvm_object_wrapper seq_type);
 
    /**
     * Main sequence body
@@ -175,11 +229,29 @@ task uvma_obi_memory_slv_seq_c::do_mem_operation(ref uvma_obi_memory_mon_trn_c m
 
 endtask : do_mem_operation
 
-function uvma_obi_memory_vp_base_seq_c uvma_obi_memory_slv_seq_c::register_vp_vseq(string name,
-                                                                                   bit[31:0] start_address,
-                                                                                   uvm_object_wrapper seq_type);
+function uvma_obi_memory_vp_base_seq_c#(
+     .AUSER_WIDTH(uvma_obi_memory_slv_seq_c::AUSER_WIDTH),
+     .WUSER_WIDTH(uvma_obi_memory_slv_seq_c::WUSER_WIDTH),
+     .RUSER_WIDTH(uvma_obi_memory_slv_seq_c::RUSER_WIDTH),
+     .ADDR_WIDTH(uvma_obi_memory_slv_seq_c::ADDR_WIDTH),
+     .DATA_WIDTH(uvma_obi_memory_slv_seq_c::DATA_WIDTH),
+     .ID_WIDTH(uvma_obi_memory_slv_seq_c::ID_WIDTH),
+     .ACHK_WIDTH(uvma_obi_memory_slv_seq_c::ACHK_WIDTH),
+     .RCHK_WIDTH(uvma_obi_memory_slv_seq_c::RCHK_WIDTH)
+) uvma_obi_memory_slv_seq_c::register_vp_vseq(string name,
+                                              bit[31:0] start_address,
+                                              uvm_object_wrapper seq_type);
 
-   uvma_obi_memory_vp_base_seq_c vp_seq;
+   uvma_obi_memory_vp_base_seq_c#(
+     .AUSER_WIDTH(AUSER_WIDTH),
+     .WUSER_WIDTH(WUSER_WIDTH),
+     .RUSER_WIDTH(RUSER_WIDTH),
+     .ADDR_WIDTH(ADDR_WIDTH),
+     .DATA_WIDTH(DATA_WIDTH),
+     .ID_WIDTH(ID_WIDTH),
+     .ACHK_WIDTH(ACHK_WIDTH),
+     .RCHK_WIDTH(RCHK_WIDTH)
+   ) vp_seq;
 
    // Create an instance of the sequence type passed in,
    // Ensure that the sequence type is derived from uvma_obi_memory_vp_base_seq_c

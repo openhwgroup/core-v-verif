@@ -14,6 +14,8 @@
 // Enable debug messages, note that this will change test timing
 //#define DEBUG_MSG
 
+#define EXIT_SUCCESS   0
+
 #define ERR_CODE_TEST_1      1
 #define ERR_CODE_TEST_2      2
 #define ERR_CODE_TEST_3      3

@@ -1,5 +1,27 @@
+//
+// Copyright 2021 Silicon Labs, Inc.
+//
+// Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://solderpad.org/licenses/
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+///////////////////////////////////////////////////////////////////////////////
+//
+// Tests Zb* extension instructions
+//
+/////////////////////////////////////////////////////////////////////////////////
+
 
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 unsigned int test;
@@ -20,6 +42,11 @@ int test_andn(void);
 int test_orn(void);
 int test_xnor(void);
 int test_rev8(void);
+int test_sext(void);
+int test_zexth(void);
+int test_clmul(void);
+int test_clmulh(void);
+int test_clmulr(void);
 int test_bset(void);
 int test_bseti(void);
 int test_bclr(void);
@@ -50,6 +77,12 @@ int main(int argc, char *argv[])
   failures += test_orn();
   failures += test_xnor();
   failures += test_rev8();
+  failures += test_sext();
+  failures += test_zexth();
+  // Zbc
+  failures += test_clmul();
+  failures += test_clmulh();
+  failures += test_clmulr();
   // Zbs
   failures += test_bset();
   failures += test_bseti();
@@ -255,12 +288,52 @@ int test_rev8(void){
   return failures;
 }
 
+int test_sext(void){
+ int failures = 0;
+
+  __asm__ volatile("addi t3, zero, 15"); // Store 15 in t3
+  __asm__ volatile("sext.b t5, t3");     // Sign-extend the least significant byte in t3 by copying the most significant bit to all of the more significant bits.
+  __asm__ volatile("sw t5, test, t0");   // Store t5 to test
+
+  if (test != 15 ) {
+    printf("ERROR, SEXTB result not as expected: %x\n", test);
+    failures++;
+  }
+
+
+  __asm__ volatile("addi t3, zero, 15"); // Store 15 in t3
+  __asm__ volatile("sext.h t5, t3");     // Sign-extend the least significant halfword in t3 by copying the most significant bit to all of the more significant bits.
+  __asm__ volatile("sw t5, test, t0");   // Store t5 to test
+
+  if (test != 15 ) {
+    printf("ERROR, SEXTH result not as expected: %x\n", test);
+    failures++;
+  }
+
+  return failures;
+}
+
+int test_zexth(void){
+ int failures = 0;
+
+  __asm__ volatile("addi t3, zero, 15"); // Store 15 in t3
+  __asm__ volatile("zext.h t5, t3");     // Zero-extend the least significant halfword in t3 by inserting zeros to all of the more significant bits.
+  __asm__ volatile("sw t5, test, t0");   // Store t5 to test
+
+  if (test != 15 ) {
+    printf("ERROR, ZEXTH result not as expected: %x\n", test);
+    failures++;
+  }
+
+  return failures;
+}
+
 int test_rol(void){
  int failures = 0;
 
   __asm__ volatile("addi t3, zero, 7"); // Store 7 in t3
   __asm__ volatile("addi t4, zero, 1"); // Store 1 in t4
-  __asm__ volatile("rol t5, t3, t4");   // ROtate Left
+  __asm__ volatile("rol t5, t3, t4");   // Rotate Left
   __asm__ volatile("sw t5, test, t0");  // Store t5 to test
 
   if (test != 14 ) {
@@ -303,6 +376,7 @@ int test_rori(void){
 
   return failures;
 }
+
 
 int test_bset(void){
  int failures = 0;
@@ -422,7 +496,58 @@ int test_binvi(void){
   return failures;
 }
 
+int test_clmul(void){
+ int failures = 0;
 
+  __asm__ volatile("addi t3, zero, 4");  // Store 4 in t3
+  __asm__ volatile("addi t4, zero, 1");  // Store 1 in t4
+  __asm__ volatile("clmul t5, t3, t4");  // Carry-less multiply (low-part)
+  __asm__ volatile("sw t5, test, t0");   // Store t5 to test
+
+  if (test != 4 ) {
+    printf("ERROR, CLMUL result not as expected\n");
+    failures++;
+  }
+
+  return failures;
+}
+
+int test_clmulh(void){
+ int failures = 0;
+
+
+  __asm__ volatile("lui t3, 16");       // Store 16 in the upper 20 bits of t3
+  __asm__ volatile("addi t3, t3, 0");   // Store 0 in the lower 12 bits of t3
+  __asm__ volatile("lui t4, 16");       // Store 16 in the upper 20 bits of t4
+  __asm__ volatile("addi t4, t4, 0");   // Store 0 in the lower 12 bits of t4
+  __asm__ volatile("clmulh t5, t3, t4"); // Carry-less multiply (high-part)
+  __asm__ volatile("sw t5, test, t0");   // Store t5 to test
+
+  if (test != 1 ) {
+    printf("ERROR, CLMULH result not as expected\n");
+    failures++;
+  }
+
+  return failures;
+}
+
+int test_clmulr(void){
+ int failures = 0;
+
+  __asm__ volatile("lui t3, 16");       // Store 16 in the upper 20 bits of t3
+  __asm__ volatile("addi t3, t3, 0");   // Store 0 in the lower 12 bits of t3
+  __asm__ volatile("lui t4, 16");       // Store 16 in the upper 20 bits of t4
+  __asm__ volatile("addi t4, t4, 0");   // Store 0 in the lower 12 bits of t4
+  __asm__ volatile("clmulr t5, t3, t4");    // Find min
+  __asm__ volatile("sw t5, test, t0");   // Store t5 to test
+
+  if (test != 2 ) {
+    printf("ERROR, CLMULR result not as expected\n");
+    failures++;
+  }
+
+  return failures;
+}
 
 int test_shnadd(void){
 

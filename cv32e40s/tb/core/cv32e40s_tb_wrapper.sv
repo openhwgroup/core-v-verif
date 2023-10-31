@@ -22,9 +22,7 @@ module cv32e40s_tb_wrapper
                 BOOT_ADDR         = 'h80,
                 DM_HALTADDRESS    = 32'h1A11_0800,
                 HART_ID           = 32'h0000_0000,
-                IMP_ID            = 32'h0000_0000,
-                // Parameters used by DUT
-                NUM_MHPMCOUNTERS  = 1
+                IMP_PATCH_ID      = 4'h0
     )
     (input logic         clk_i,
      input logic         rst_ni,
@@ -72,8 +70,7 @@ module cv32e40s_tb_wrapper
 //          .PULP_XPULP            ( PULP_XPULP            ),
 //          .PULP_CLUSTER          ( PULP_CLUSTER          ),
 //          .FPU                   ( FPU                   ),
-//          .PULP_ZFINX            ( PULP_ZFINX            ),
-//          .NUM_MHPMCOUNTERS      ( NUM_MHPMCOUNTERS      ))
+//          .PULP_ZFINX            ( PULP_ZFINX            ))
 //    core_log_i(
 //          .clk_i              ( cv32e40s_core_i.id_stage_i.clk              ),
 //          .is_decoding_i      ( cv32e40s_core_i.id_stage_i.is_decoding_o    ),
@@ -83,10 +80,7 @@ module cv32e40s_tb_wrapper
 //      );
 
     // instantiate the core
-    cv32e40s_core #(
-                 .NUM_MHPMCOUNTERS (NUM_MHPMCOUNTERS)
-                )
-    cv32e40s_core_i
+    cv32e40s_core cv32e40s_core_i
         (
          .clk_i                  ( clk_i                 ),
          .rst_ni                 ( rst_ni                ),
@@ -96,7 +90,7 @@ module cv32e40s_tb_wrapper
          .boot_addr_i            ( BOOT_ADDR             ),
          .dm_halt_addr_i         ( DM_HALTADDRESS        ),
          .mhartid_i              ( HART_ID               ),
-         .mimpid_i               ( IMP_ID                ),
+         .mimpid_patch_i         ( IMP_PATCH_ID          ),
 
          .instr_req_o            ( instr_req             ),
          .instr_gnt_i            ( instr_gnt             ),

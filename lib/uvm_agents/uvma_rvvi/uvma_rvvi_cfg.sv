@@ -39,6 +39,7 @@ class uvma_rvvi_cfg_c#(int ILEN=DEFAULT_ILEN,
    // Common options
    rand bit                      enabled;
    rand uvm_active_passive_enum  is_active;
+   rand uvma_rvvi_version_enum   rvvi_version;
 
    rand bit                      cov_model_enabled;
    rand bit                      trn_log_enabled;
@@ -48,6 +49,7 @@ class uvma_rvvi_cfg_c#(int ILEN=DEFAULT_ILEN,
    `uvm_object_utils_begin(uvma_rvvi_cfg_c)
       `uvm_field_int (                         enabled                    , UVM_DEFAULT)
       `uvm_field_enum(uvm_active_passive_enum, is_active                  , UVM_DEFAULT)
+      `uvm_field_enum(uvma_rvvi_version_enum,  rvvi_version               , UVM_DEFAULT)
       `uvm_field_int (                         cov_model_enabled          , UVM_DEFAULT)
       `uvm_field_int (                         trn_log_enabled            , UVM_DEFAULT)
    `uvm_object_utils_end
@@ -55,6 +57,7 @@ class uvma_rvvi_cfg_c#(int ILEN=DEFAULT_ILEN,
    constraint defaults_cons {
       soft enabled           == 1;
       soft is_active         == UVM_PASSIVE;
+      soft rvvi_version      == UVMA_RVVI_V1;
       soft cov_model_enabled == 0;
       soft trn_log_enabled   == 1;
    }
@@ -81,6 +84,8 @@ class uvma_rvvi_cfg_c#(int ILEN=DEFAULT_ILEN,
    extern function bit is_mem_addr_volatile(bit [XLEN-1:0] mem_addr);
 
 endclass : uvma_rvvi_cfg_c
+
+/////////IMPLEMENTATION BEGINS//////////////////////////////////////////////////
 
 function uvma_rvvi_cfg_c::new(string name="uvma_rvvi_cfg");
 
