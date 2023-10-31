@@ -29,6 +29,7 @@
 class cv32e40p_instr_sequence extends riscv_instr_sequence;
 
   cv32e40p_instr_gen_config    cv32e40p_cfg;
+  cv32e40p_illegal_instr       cv32_illegal_instr;        // Illegal instruction generator
 
   `uvm_object_utils(cv32e40p_instr_sequence)
 
@@ -37,6 +38,7 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
     if(!uvm_config_db#(cv32e40p_instr_gen_config)::get(null, "*", "cv32e40p_instr_cfg", cv32e40p_cfg)) begin
       `uvm_fatal(get_full_name(), "Cannot get cv32e40p_instr_gen_config")
     end
+    cv32_illegal_instr = cv32e40p_illegal_instr::type_id::create("cv32_illegal_instr");
   endfunction
 
   //Function: cv32e40p_instr_sequence::post_process_instr()
@@ -275,10 +277,47 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
     if (riscv_instr_pkg::support_pmp && !uvm_re_match(uvm_glob_to_re("*main*"), label_name)) begin
       instr_string_list.push_front(".align 2");
     end
-    insert_illegal_hint_instr();
+    cv32e40p_insert_illegal_hint_instr();
     prefix = format_string($sformatf("%0d:", i), LABEL_STR_LEN);
     if(!is_main_program) begin
       generate_return_routine(prefix);
+    end
+  endfunction
+
+  // Similar to base class insert_illegal_hint_instr function
+  // Added cv32_illegal_instr.cv32e40p_init() to include cv32e40p
+  // specific legal opcodes
+  function void cv32e40p_insert_illegal_hint_instr();
+    int bin_instr_cnt;
+    int idx;
+    string str;
+    cv32_illegal_instr.init(cfg);
+    cv32_illegal_instr.cv32e40p_init(cfg); // Init legal_opcode for cv32e40p
+    bin_instr_cnt = instr_cnt * cfg.illegal_instr_ratio / 1000;
+    if (bin_instr_cnt >= 0) begin
+      `uvm_info(`gfn, $sformatf("Injecting %0d illegal instructions, ratio %0d/100",
+                      bin_instr_cnt, cfg.illegal_instr_ratio), UVM_LOW)
+      repeat (bin_instr_cnt) begin
+        `DV_CHECK_RANDOMIZE_WITH_FATAL(cv32_illegal_instr,
+                                       exception != kHintInstr;)
+        str = {indent, $sformatf(".4byte 0x%s # %0s",
+                       cv32_illegal_instr.get_bin_str(), cv32_illegal_instr.comment)};
+               idx = $urandom_range(0, instr_string_list.size());
+        instr_string_list.insert(idx, str);
+      end
+    end
+    bin_instr_cnt = instr_cnt * cfg.hint_instr_ratio / 1000;
+    if (bin_instr_cnt >= 0) begin
+      `uvm_info(`gfn, $sformatf("Injecting %0d HINT instructions, ratio %0d/100",
+                      bin_instr_cnt, cfg.illegal_instr_ratio), UVM_LOW)
+      repeat (bin_instr_cnt) begin
+        `DV_CHECK_RANDOMIZE_WITH_FATAL(cv32_illegal_instr,
+                                       exception == kHintInstr;)
+        str = {indent, $sformatf(".2byte 0x%s # %0s",
+                       cv32_illegal_instr.get_bin_str(), cv32_illegal_instr.comment)};
+        idx = $urandom_range(0, instr_string_list.size());
+        instr_string_list.insert(idx, str);
+      end
     end
   endfunction
 

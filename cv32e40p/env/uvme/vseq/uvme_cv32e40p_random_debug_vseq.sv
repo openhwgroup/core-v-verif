@@ -73,11 +73,12 @@ class uvme_cv32e40p_reduced_rand_debug_req_c extends uvme_cv32e40p_random_debug_
     }
 
     constraint num_dgb_req_c {
-        num_of_debug_req inside {[1:3]};
+        num_of_debug_req inside {[1:5]};
     }
 
     extern function new(string name="uvme_cv32e40p_reduced_rand_debug_req");
     extern virtual task body();
+    extern virtual task rand_delay();
 endclass : uvme_cv32e40p_reduced_rand_debug_req_c
 
 function uvme_cv32e40p_reduced_rand_debug_req_c::new(string name="uvme_cv32e40p_reduced_rand_debug_req");
@@ -86,6 +87,12 @@ function uvme_cv32e40p_reduced_rand_debug_req_c::new(string name="uvme_cv32e40p_
         num_of_debug_req.rand_mode(0);
     end
 endfunction : new
+
+task uvme_cv32e40p_reduced_rand_debug_req_c::rand_delay();
+    std::randomize(dly) with {  dly inside {[1:10000]};
+                             };
+    #(dly);
+endtask : rand_delay
 
 task uvme_cv32e40p_reduced_rand_debug_req_c::body();
     for (int i = 1; i <= num_of_debug_req; i++) begin

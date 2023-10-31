@@ -8,7 +8,7 @@ uvm_test: $(CV_CORE_LC)_instr_base_test
 description: >
     RISCV-DV generated random hwloop test with random debug
 plusargs: >
-    +instr_cnt=1000
+    +instr_cnt=200
     +num_of_sub_program=0
     +insert_rand_directed_instr_stream=1
     +test_rand_directed_instr_stream_num=6

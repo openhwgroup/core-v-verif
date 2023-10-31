@@ -8,4 +8,3 @@ description: >
     Random debug in xpulp hwloop stream
 plusargs: >
     +gen_reduced_rand_dbg_req
-    +num_debug_req=2
