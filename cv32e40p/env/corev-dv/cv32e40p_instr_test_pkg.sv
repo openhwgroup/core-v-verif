@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+`include "cv32e40p_instr_pkg.sv"
+
 package cv32e40p_instr_test_pkg;
 
   parameter int HWLOOP_LABEL_STR_LEN = 32;
 
   import uvm_pkg::*;
   import riscv_instr_pkg::*;
+  import cv32e40p_instr_pkg::*;
   import riscv_instr_test_pkg::*;
   import riscv_signature_pkg::*;
   import corev_instr_test_pkg::*;
