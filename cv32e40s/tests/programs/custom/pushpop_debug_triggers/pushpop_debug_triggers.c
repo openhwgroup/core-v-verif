@@ -245,7 +245,7 @@ static void  let_dmode_setup_triggers(void){
   g_debug_entered  = 0;
   g_debug_function_setup_triggers = 1;
 
-  // Delayed start to ensure we do not trigger prior to while-loop
+  // Prolonged pulse duration so debug req has a chance to be acked and taken
   CV_VP_DEBUG_CONTROL = (
     CV_VP_DEBUG_CONTROL_DBG_REQ(1)             |
     CV_VP_DEBUG_CONTROL_REQ_MODE(1)            |
