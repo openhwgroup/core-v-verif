@@ -270,6 +270,12 @@ module uvmt_cv32e40s_fencei_assert
     !data_req_o
   ) else `uvm_error(info_tag, "obi data req shall not happen while fencei is flushing");
 
+  a_flush_pipeline: assert property (
+    is_rvfiinstr_fencei
+    |=>
+    (! rvfi_valid)[*3]  // (Because, 4-stage.)
+  ) else `uvm_error(info_tag, "fencei must cause flushing");
+
 
   // vplan:MultiCycle
 
