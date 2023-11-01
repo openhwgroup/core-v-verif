@@ -37,10 +37,10 @@ tests:
 #    dir: cv32e20/sim/uvmt
 #    cmd: make test COREV=YES TEST=illegal
 
-#  debug_test:
-#    build: uvmt_cv32e20
-#    dir: cv32e20/sim/uvmt
-#    cmd: make test COREV=YES TEST=debug_test
+  debug_test:
+    build: uvmt_cv32e20
+    dir: cv32e20/sim/uvmt
+    cmd: make test COREV=YES TEST=debug_test
 
   csr_instructions:
     build: uvmt_cv32e20
