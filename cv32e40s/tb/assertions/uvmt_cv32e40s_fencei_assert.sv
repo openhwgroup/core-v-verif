@@ -66,18 +66,26 @@ module uvmt_cv32e40s_fencei_assert
 
   // Helper Signals/Functions
 
+  let  rvfi_valid     = rvfi_if.rvfi_valid;
+  let  rvfi_mem_wmask = rvfi_if.rvfi_mem_wmask;
+  let  rvfi_mem_addr  = rvfi_if.rvfi_mem_addr;
+  let  rvfi_pc_rdata  = rvfi_if.rvfi_pc_rdata;
+  let  rvfi_insn      = rvfi_if.rvfi_insn;
+  let  rvfi_intr      = rvfi_if.rvfi_intr;
+  let  rvfi_dbg_mode  = rvfi_if.rvfi_dbg_mode;
+
   logic  is_fencei_in_wb;
   assign is_fencei_in_wb = wb_sys_fencei_insn && wb_sys_en && wb_instr_valid;
 
   logic  is_rvfiinstr_fencei;
   assign is_rvfiinstr_fencei = (
-    rvfi_if.rvfi_valid  &&
-    ((rvfi_if.rvfi_insn & FENCEI_IMASK) == FENCEI_IDATA)
+    rvfi_valid  &&
+    ((rvfi_insn & FENCEI_IMASK) == FENCEI_IDATA)
   );
 
   logic  is_rvfiinstr_fence;
   assign is_rvfiinstr_fence = (
-    ((rvfi_if.rvfi_insn & FENCE_IMASK) == FENCE_IDATA)
+    ((rvfi_insn & FENCE_IMASK) == FENCE_IDATA)
   );
 
   int obi_outstanding;
@@ -161,7 +169,7 @@ module uvmt_cv32e40s_fencei_assert
   a_req_must_rvfi_fencei: assert property (
     fencei_flush_req_o
     |=>
-    (rvfi_if.rvfi_valid [->1])   ##0
+    (rvfi_valid [->1])   ##0
     is_rvfiinstr_fencei
   ) else `uvm_error(info_tag, "A handshake must results in fencei retire");
 
@@ -169,7 +177,7 @@ module uvmt_cv32e40s_fencei_assert
   a_req_mustnt_rvfi_fence: assert property (
     fencei_flush_req_o
     |=>
-    (rvfi_if.rvfi_valid [->1])   ##0
+    (rvfi_valid [->1])   ##0
     !is_rvfiinstr_fence
   ) else `uvm_error(info_tag, "A handshake must not results in a fence retire");
 
@@ -186,8 +194,8 @@ module uvmt_cv32e40s_fencei_assert
       ##0 (instr_addr_o == pc_next)
     ) or (
       // Exception execution
-      rvfi_if.rvfi_valid [->2:3]  // retire: fencei, (optionally "rvfi_trap"), interrupt/debug handler
-      ##0 (rvfi_if.rvfi_intr || rvfi_if.rvfi_dbg_mode)
+      rvfi_valid [->2:3]  // retire: fencei, (optionally "rvfi_trap"), interrupt/debug handler
+      ##0 (rvfi_intr || rvfi_dbg_mode)
     );
   endproperty
 
@@ -219,14 +227,14 @@ module uvmt_cv32e40s_fencei_assert
   sequence  seq_branch_after_retire_ante;
     $fell(fencei_flush_req_o)
     ##0
-    rvfi_if.rvfi_valid [->2]
+    rvfi_valid [->2]
     ;
   endsequence
 
   sequence  seq_branch_after_retire_conse (pc_at_fencei);
-    (rvfi_if.rvfi_pc_rdata == pc_at_fencei + 32'd 4)
-    || rvfi_if.rvfi_intr
-    || rvfi_if.rvfi_dbg_mode
+    (rvfi_pc_rdata == pc_at_fencei + 32'd 4)
+    || rvfi_intr
+    || rvfi_dbg_mode
     ;
   endsequence
 
@@ -248,9 +256,9 @@ module uvmt_cv32e40s_fencei_assert
   cov_branch_after_retire: cover property (
     seq_branch_after_retire_ante
     ##0
-    ! rvfi_if.rvfi_intr
+    ! rvfi_intr
     ##0
-    ! rvfi_if.rvfi_dbg_mode
+    ! rvfi_dbg_mode
   );
 
 
@@ -342,11 +350,6 @@ module uvmt_cv32e40s_fencei_assert
 
 
   // vplan:StoresVisible
-
-  let  rvfi_valid     = rvfi_if.rvfi_valid;
-  let  rvfi_mem_wmask = rvfi_if.rvfi_mem_wmask;
-  let  rvfi_mem_addr  = rvfi_if.rvfi_mem_addr;
-  let  rvfi_pc_rdata  = rvfi_if.rvfi_pc_rdata;
 
   property p_stores_visible_store_fencei_exec;
     logic [31:0]  addr;
