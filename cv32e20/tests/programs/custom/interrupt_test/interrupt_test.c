@@ -272,7 +272,8 @@ int main(int argc, char *argv[]) {
     if (retval != EXIT_SUCCESS)
         return retval;
 
-    // Repeat test1 (restore vector mode)
+// unused tests. to be removed at clean-up 
+/*    // Repeat test1 (restore vector mode)
     retval = test7();
     if (retval != EXIT_SUCCESS)
         return retval;
@@ -286,7 +287,7 @@ int main(int argc, char *argv[]) {
     retval = test9();
     if (retval != EXIT_SUCCESS)
         return retval;
-
+ */
     return EXIT_SUCCESS;
 }
 
@@ -498,14 +499,14 @@ int test3() {
 // Tests that WFI works regardless of MSTATUS.MIE
 // Tests that IRQ handler is not entered after WFI unless MSTATUS.MIE is set
 int test4() {
-/* 
+ 
     printf("TEST 4 - WFI\n");
     
     // Test 4 is a WFI test
     active_test = 4;
 
     // Iterate through multiple loops
-    for (int irq = 0; irq < 32; irq++) {
+    for (int irq = 1; irq < 32; irq++) {  // NMI is irq[0]
         if (!(((0x1 << irq) & IRQ_MASK))) 
             continue;
 
@@ -530,8 +531,8 @@ int test4() {
             else
                 mstatus_mie_disable();
 
-            // Assert random batch of irqs (w/o selected irq)
-            rand_irq = random_num32() & ~(0x1 << irq);
+            // Assert random batch of irqs (w/o selected irq) and not NMI.
+            rand_irq = random_num32() & ~(0x1 << irq) & ~(0x1);
             mm_ram_assert_irq(rand_irq, 0);
 
             delay(2);
@@ -556,7 +557,6 @@ int test4() {
             }
         }
     }
- */
     return EXIT_SUCCESS;
 }
  
@@ -582,47 +582,13 @@ int test5() {
     return EXIT_SUCCESS;
 }
 
-// Test 6 will repeat the basic interrupt test in test 1
-// But with a relocated vector table via mtvec CSR and DIRECT vector mode
 int test6() {
-/*    volatile uint32_t save_mtvec;
-    int retval;
-
-    printf("TEST 6 - TRIGGER ALL IRQS IN SEQUENCE (DIRECT-MODE MTVEC):\n");
-
-    active_test = 6;
-
-    asm volatile("csrr %0, mtvec" : "=r" (save_mtvec));
-    asm volatile("csrw mtvec, %0" : : "r" ((uint32_t) alt_direct_vector_table)); // Leave mode at 0
-
-    retval = test1_impl(1);
-    asm volatile("csrw mtvec, %0" : : "r" (save_mtvec)); 
-    if (retval != EXIT_SUCCESS) {
-        return ERR_CODE_TEST_6;
-    }
- */
-    return EXIT_SUCCESS;
-}
-
-// Test 7 is a direct repeat of test 1 in vectored mode
-int test7() {
-/*    printf("TEST 7 - TRIGGER ALL IRQS IN SEQUENCE: (REPEAT VECTOR MODE)\n");
-
-    active_test = 7;
-
-    if (test1_impl(0) != EXIT_SUCCESS)
-        return ERR_CODE_TEST_7;
-
-    return EXIT_SUCCESS;
- */
- }
-
-int test8() {
     volatile uint32_t mcausew;
     volatile uint32_t mcauser;
 
     // MCAUSE is writable, this simple check tests this and also fufills code coverage
-    printf("TEST 8 - READ/WRITE TO MCAUSE\n");
+    printf("TEST 6 - READ/WRITE TO MCAUSE\n");
+    active_test = 6;
 
     mcausew = 0x0;
     __asm__ volatile("csrw mcause, %0" : : "r"(mcausew));
@@ -651,14 +617,56 @@ int test8() {
     return EXIT_SUCCESS;
 }
 
+// Test 7 will repeat the basic interrupt test in test 1
+// But with a relocated vector table via mtvec CSR and DIRECT vector mode
+// CV32E20 does not support DIRECT mode.  Saved here until clean up
+int test7() {
+/*
+    volatile uint32_t save_mtvec;
+    int retval;
+
+    printf("TEST 7 - TRIGGER ALL IRQS IN SEQUENCE (DIRECT-MODE MTVEC):\n");
+
+    active_test = 7;
+
+    asm volatile("csrr %0, mtvec" : "=r" (save_mtvec));
+    asm volatile("csrw mtvec, %0" : : "r" ((uint32_t) alt_direct_vector_table)); // Leave mode at 0
+
+    retval = test1_impl(1);
+    asm volatile("csrw mtvec, %0" : : "r" (save_mtvec)); 
+    if (retval != EXIT_SUCCESS) {
+        return ERR_CODE_TEST_7;
+    }
+    return EXIT_SUCCESS;
+ */
+}
+
+// Test 7 is a direct repeat of test 1 in vectored mode
+// why repeat?
+int test8() {
+/*    printf("TEST 8 - TRIGGER ALL IRQS IN SEQUENCE: (REPEAT VECTOR MODE)\n");
+
+    active_test = 8;
+
+    if (test1_impl(0) != EXIT_SUCCESS)
+        return ERR_CODE_TEST_8;
+
+    return EXIT_SUCCESS;
+ */
+ }
+
+// CV32E20 - this test appears to be a coverage filler test. Will wait until we see initial coverage numbers
+
 int test9() {
-/*    volatile uint32_t save_mtvec;
+/*
+    volatile uint32_t save_mtvec;
     printf("TEST 9 - ECALL-WFI Coverage Test\n");
 
     active_test = 9;
 
-    asm volatile("csrr %0, mtvec" : "=r" (save_mtvec));
-    asm volatile("csrw mtvec, %0" : : "r" ((uint32_t) alt_direct_ecall_table)); // Leave mode at 0
+//  Just leave MTVEC =0x0101.  CV32E20 doesn't support DIRECT mode.
+//    asm volatile("csrr %0, mtvec" : "=r" (save_mtvec));
+//    asm volatile("csrw mtvec, %0" : : "r" ((uint32_t) alt_direct_ecall_table)); // Leave mode at 0
 
     mm_ram_assert_irq(0, 0);
 
@@ -716,5 +724,5 @@ int test9() {
     asm volatile("csrw mtvec, %0" : : "r" (save_mtvec)); 
 
     return EXIT_SUCCESS;
-*/
+ */
 }

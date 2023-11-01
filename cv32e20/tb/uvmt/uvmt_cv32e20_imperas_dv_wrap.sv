@@ -532,7 +532,8 @@ module uvmt_cv32e20_imperas_dv_wrap
     `RVVI_WRITE_IRQ(LocalInterrupt13,   29)
     `RVVI_WRITE_IRQ(LocalInterrupt14,   30)
     `RVVI_WRITE_IRQ(LocalInterrupt15,   31)
-    
+// NMI
+    `RVVI_WRITE_IRQ(nmi,   0)
 
 // NMI
 //    wire   nmi;
