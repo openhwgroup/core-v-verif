@@ -71,6 +71,7 @@ module uvmt_cv32e40s_fencei_assert
 
   logic  is_rvfiinstr_fencei;
   assign is_rvfiinstr_fencei = (
+    rvfi_if.rvfi_valid  &&
     ((rvfi_if.rvfi_insn & FENCEI_IMASK) == FENCEI_IDATA)
   );
 
@@ -338,6 +339,34 @@ module uvmt_cv32e40s_fencei_assert
   a_req_wait_buffer: assert property(
     p_req_wait_buffer
   ) else `uvm_error(info_tag, "fencei_flush_req_o should be held low until write buffer is empty");
+
+
+  // vplan:StoresVisible
+
+  let  rvfi_valid     = rvfi_if.rvfi_valid;
+  let  rvfi_mem_wmask = rvfi_if.rvfi_mem_wmask;
+  let  rvfi_mem_addr  = rvfi_if.rvfi_mem_addr;
+  let  rvfi_pc_rdata  = rvfi_if.rvfi_pc_rdata;
+
+  property p_stores_visible_store_fencei_exec;
+    logic [31:0]  addr;
+
+    rvfi_valid      ##0
+    rvfi_mem_wmask  ##0
+    (1, addr = rvfi_mem_addr[31:0])
+    ##1
+
+    (is_rvfiinstr_fencei [->1])
+    ##1
+
+    (rvfi_valid [->1])  ##0
+    (rvfi_pc_rdata == addr)
+    ;
+  endproperty
+
+  cov_stores_visible_store_fencei_exec: cover property (
+    p_stores_visible_store_fencei_exec
+  );
 
 
   // vplan:AckChange
