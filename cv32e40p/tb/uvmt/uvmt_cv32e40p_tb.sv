@@ -517,6 +517,7 @@ module uvmt_cv32e40p_tb;
     .pc_rdata               (dut_wrap.cv32e40p_tb_wrapper_i.rvfi_i.rvfi_pc_rdata),
     .interrupt_if           (interrupt_if),
     .debug_if               (debug_if),
+    .debug_rom              (dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.dm_halt_addr_i),
     `PORTMAP_CSR_RVFI_2_RVVI(lpstart0)
     `PORTMAP_CSR_RVFI_2_RVVI(lpend0)
     `PORTMAP_CSR_RVFI_2_RVVI(lpcount0)
@@ -524,6 +525,7 @@ module uvmt_cv32e40p_tb;
     `PORTMAP_CSR_RVFI_2_RVVI(lpend1)
     `PORTMAP_CSR_RVFI_2_RVVI(lpcount1)
     `PORTMAP_CSR_RVFI_2_RVVI(mie)
+    `PORTMAP_CSR_RVFI_2_RVVI(mcause)
     `PORTMAP_CSR_RVFI_2_RVVI(mip)
     `PORTMAP_CSR_RVFI_2_RVVI(dcsr)
     `PORTMAP_CSR_RVFI_2_RVVI(tdata)
@@ -553,6 +555,15 @@ module uvmt_cv32e40p_tb;
 
      // Specify time format for simulation (units_number, precision_number, suffix_string, minimum_field_width)
      $timeformat(-9, 3, " ns", 8);
+
+
+    // Pass rvvi_if handle to cov_model
+    uvm_config_db#(virtual uvmt_cv32e40p_rvvi_if)::set(
+      .cntxt(null),
+      .inst_name("uvm_test_top.env.cov_model*"),
+      .field_name("cv32e40p_rvvi_vif"),
+      .value(cv32e40p_rvvi)
+    );
 
      // Add interfaces handles to uvm_config_db
      uvm_config_db#(virtual uvma_debug_if                    )::set(.cntxt(null), .inst_name("*.env.debug_agent"),            .field_name("vif"),              .value(debug_if)                                        );

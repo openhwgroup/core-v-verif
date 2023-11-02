@@ -393,6 +393,7 @@ interface uvmt_cv32e40p_rvvi_if #(
 
   uvma_interrupt_if                   interrupt_if,
   uvma_debug_if                       debug_if,
+  input logic [31:0]                  debug_rom,
 
   // Currently only define specific csrs for current usage
   `DEF_CSR_PORTS(lpstart0)
@@ -402,6 +403,7 @@ interface uvmt_cv32e40p_rvvi_if #(
   `DEF_CSR_PORTS(lpend1)
   `DEF_CSR_PORTS(lpcount1)
   `DEF_CSR_PORTS(mie)
+  `DEF_CSR_PORTS(mcause)
   `DEF_CSR_PORTS(mip)
   `DEF_CSR_PORTS(dcsr)
   `DEF_CSR_PORTS_VEC(tdata,4)
@@ -410,21 +412,24 @@ interface uvmt_cv32e40p_rvvi_if #(
  
 );
 
+  wire [31:0]                 valid_irq;
   wire [4095:0][32:0]         csr;
   wire [4095:0]               csr_wb;
-  wire [31:0]                 valid_irq, valid_irq2;
+  wire [4:0]                  csr_mcause_ecp_code;
   wire [2:0]                  csr_dcsr_cause;
   wire [31:0]                 csr_trig_pc;
 
-  assign valid_irq          = csr[`CSR_MIP_ADDR] & csr[`CSR_MIE_ADDR];
-  assign dbg_req            = debug_if.debug_req;
+  assign valid_irq            = csr[`CSR_MIP_ADDR] & csr[`CSR_MIE_ADDR];
+  assign dbg_req              = debug_if.debug_req;
 
-  assign csr_dcsr_ebreakm   = csr[`CSR_DCSR_ADDR][15];
-  assign csr_dcsr_stepie    = csr[`CSR_DCSR_ADDR][11];
-  assign csr_dcsr_cause     = csr[`CSR_DCSR_ADDR][8:6];
-  assign csr_dcsr_step      = csr[`CSR_DCSR_ADDR][2];
-  assign csr_trig_execute   = csr[`CSR_TDATA1_ADDR][2];
-  assign csr_trig_pc        = csr[`CSR_TDATA2_ADDR];
+  assign csr_mcause_irq       = csr[`CSR_MCAUSE_ADDR][31];
+  assign csr_mcause_ecp_code  = csr[`CSR_MCAUSE_ADDR][4:0];
+  assign csr_dcsr_ebreakm     = csr[`CSR_DCSR_ADDR][15];
+  assign csr_dcsr_stepie      = csr[`CSR_DCSR_ADDR][11];
+  assign csr_dcsr_cause       = csr[`CSR_DCSR_ADDR][8:6];
+  assign csr_dcsr_step        = csr[`CSR_DCSR_ADDR][2];
+  assign csr_trig_execute     = csr[`CSR_TDATA1_ADDR][2];
+  assign csr_trig_pc          = csr[`CSR_TDATA2_ADDR];
 
   // can be expanded. Currently only define for current usage
   `ASSIGN_CSR_N_WB(`CSR_LPSTART0_ADDR, lpstart0)
@@ -434,6 +439,7 @@ interface uvmt_cv32e40p_rvvi_if #(
   `ASSIGN_CSR_N_WB(`CSR_LPEND1_ADDR, lpend1)
   `ASSIGN_CSR_N_WB(`CSR_LPCOUNT1_ADDR, lpcount1)
   `ASSIGN_CSR_N_WB(`CSR_MIE_ADDR, mie)
+  `ASSIGN_CSR_N_WB(`CSR_MCAUSE_ADDR, mcause)
   `ASSIGN_CSR_N_WB(`CSR_MIP_ADDR, mip)
   `ASSIGN_CSR_N_WB(`CSR_DCSR_ADDR, dcsr)
   `ASSIGN_CSR_N_WB_VEC(`CSR_TDATA1_ADDR, tdata, 1);
