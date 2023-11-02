@@ -389,11 +389,10 @@ interface uvmt_cv32e40p_rvvi_if #(
   input                               valid,
   input logic [(ILEN-1):0]            insn,
   input                               trap,
-  input logic [(XLEN-1):0]            pc_rdata,
+  input logic [31:0]                  pc_rdata,
 
   uvma_interrupt_if                   interrupt_if,
   uvma_debug_if                       debug_if,
-  input logic [31:0]                  debug_rom,
 
   // Currently only define specific csrs for current usage
   `DEF_CSR_PORTS(lpstart0)
@@ -408,7 +407,7 @@ interface uvmt_cv32e40p_rvvi_if #(
   `DEF_CSR_PORTS(dcsr)
   `DEF_CSR_PORTS_VEC(tdata,4)
 
-  input dummy
+  input logic [31:0]                  dm_halt_addr
  
 );
 
