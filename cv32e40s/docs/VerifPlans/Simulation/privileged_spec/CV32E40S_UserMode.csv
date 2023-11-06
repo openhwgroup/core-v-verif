@@ -52,7 +52,7 @@ COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_mode_csr
 
 DTC: cv32e40s/tests/programs/custom/csr_priv_gen_test/",
 ,,AccessLevel,"""The next two bits (csr[9:8]) encode the lowest privilege level that can access the CSR.""","Try all kinds of accesses to all implemented M-level and U-level CSRs while in M-mode and U-mode (cross), ensure appropriate access grant/deny.",Check against RM,Constrained-Random,Functional Coverage,COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_mode_csraddr,
-,,Warl,U-level CSRs may have WARL fields.,JVT is the only URW CSR. Write and nread operations in User mode must be covered,Check against RM,Constrained-Random,Functional Coverage,TODO,
+,,Warl,U-level CSRs may have WARL fields.,JVT is the only URW CSR. Write and nread operations in User mode must be covered,Check against RM,Constrained-Random,Functional Coverage,"DTC: cv32e40s/tests/programs/custom/zcmt_test :: jvt_rw_m, jvt_rw_u_illegal, jvt_rw_u_legal",
 ,,MisaU,"""The “U” and “S” bits will be set if there is support for user and supervisor modes respectively.""","Read misa and see that ""U"" is always on.
 
 Coverage: Ensure actual csr read instruction read misa.",Assertion Check,"ENV capability, not specific test",Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_misa_bits
@@ -88,8 +88,9 @@ COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_mscratch_ch
 COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_csrreadwrite_mode_umodecsrs
 
 DTC: cv32e40s/tests/programs/custom/privilege_test/",
-,,Mcsratchcsw,"The clic spec introduces ""conditional swapping"" of mscratch.",(Relevant user-mode related functionality must be handled by the CLIC vplan. Link to cov here still),N/A,N/A,N/A,"A: ???
-COV: ???",Waiting for CLIC vplan linkage.
+,,Mcsratchcsw,"The clic spec introduces ""conditional swapping"" of mscratch.",(Relevant user-mode related functionality must be handled by the CLIC vplan. Link to cov here still),N/A,N/A,N/A,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.clic_assert_i.a_mscratchcsw_value
+COV: ???
+DTC: cv32e40s/tests/programs/custom/clic :: rw_mscratchcsw, rw_mscratchcsw_illegal",Waiting for CLIC vplan linkage.
 ,,MppValues,"""xPP fields are WARL fields that can hold only privilege mode x and any implemented privilege
 mode lower than x""
 
@@ -124,7 +125,7 @@ COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.cg_inst.x_mode_csr
 DTC: cv32e40s/tests/programs/custom/privilege_test/",
 manual,,Jvt,"The vector table jump CSR is accessible and effective in U-mode. ""Smstateen"" applies. Both CSR access and instruction execution is affected.","(Zc vplan should be responsible, but link to coverage here too.)",N/A,N/A,N/A,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_jvt_access
 
-COV: TODO",
+DTC: cv32e40s/tests/programs/custom/zcmt_test",
 privspec,Traps,SoftwareInterrupts,U-mode software interrupts are not supported.,"Check that the zero-bits in `mie` and `mip` are always zero, and mcause is never S/U-mode software interrupt.",Assertion Check,Constrained-Random,Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_softwareinterrupts_zeromie
 
 A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_softwareinterrupts_zeromip
