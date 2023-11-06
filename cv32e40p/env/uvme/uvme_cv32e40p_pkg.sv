@@ -81,6 +81,7 @@ package uvme_cv32e40p_pkg;
    // Environment components
    `include "uvma_cv32e40p_core_cntrl_drv.sv"
    `include "uvma_cv32e40p_core_cntrl_agent.sv"
+   `include "uvme_rv32x_hwloop_covg.sv"
    `include "uvme_interrupt_covg.sv"
    `include "uvme_debug_covg.sv"
    `include "uvme_rv32isa_covg.sv"
