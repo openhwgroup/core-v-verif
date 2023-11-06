@@ -418,7 +418,9 @@ interface uvmt_cv32e40p_rvvi_if #(
   wire [2:0]                  csr_dcsr_cause;
   wire [31:0]                 csr_trig_pc;
 
-  assign valid_irq            = csr[`CSR_MIP_ADDR] & csr[`CSR_MIE_ADDR];
+  logic [31:0]                irq_onehot_priority;
+
+  assign valid_irq            = csr[`CSR_MIP_ADDR] & csr[`CSR_MIE_ADDR]; // fixme: rvfi misses mip (pending for resolution)
   assign dbg_req              = debug_if.debug_req;
 
   assign csr_mcause_irq       = csr[`CSR_MCAUSE_ADDR][31];
@@ -443,6 +445,18 @@ interface uvmt_cv32e40p_rvvi_if #(
   `ASSIGN_CSR_N_WB(`CSR_DCSR_ADDR, dcsr)
   `ASSIGN_CSR_N_WB_VEC(`CSR_TDATA1_ADDR, tdata, 1);
   `ASSIGN_CSR_N_WB_VEC(`CSR_TDATA2_ADDR, tdata, 2);
+
+  // irq_onehot_priority assignment
+  // priority order (high->low) is irq[31]...irq[16], irq[11], irq[3], irq[7]
+  always @(valid_irq) begin
+    irq_onehot_priority = 0;
+    for (int i = 31; i != 0; i--) begin
+      if (valid_irq[i] && (i inside {31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16, 11,3,7})) begin
+        if (i == 7 && valid_irq[3]) continue;
+        else begin irq_onehot_priority[i] = valid_irq[i]; break; end
+      end
+    end
+  end
     
 endinterface
 
