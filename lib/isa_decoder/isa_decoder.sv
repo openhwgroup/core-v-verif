@@ -635,6 +635,22 @@
           asm.rs1.valid           = 1;
           asm.rs1.valid_gpr_rvc   = 1;
           asm.imm.valid           = 1;
+        end else if (name inside { C_ANDI }) begin
+          asm.rd.gpr              = get_gpr_from_gpr_rvc(instr.compressed.format.cb.rd_rs1.gpr);
+          asm.rd.gpr_rvc          = instr.compressed.format.cb.rd_rs1.gpr;
+          asm.rs1.gpr             = get_gpr_from_gpr_rvc(instr.compressed.format.cb.rd_rs1.gpr);
+          asm.rs1.gpr_rvc         = instr.compressed.format.cb.rd_rs1.gpr;
+          asm.imm.imm_raw         = { instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 };
+          asm.imm.imm_raw_sorted  = { instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 };
+          asm.imm.imm_type        = IMM;
+          asm.imm.width           = 6;
+          asm.imm.sign_ext        = 1;
+          asm.imm.imm_value       = get_imm_value_cb({ instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 });
+          asm.rd.valid            = 1;
+          asm.rd.valid_gpr_rvc    = 1;
+          asm.rs1.valid           = 1;
+          asm.rs1.valid_gpr_rvc   = 1;
+          asm.imm.valid           = 1;
         end
       end
       CJ_TYPE: begin

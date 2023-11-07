@@ -216,7 +216,8 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
     // might also interfere with the spike implementation.
     // the "get_rx"-functions should no longer be needed if we supply the translated values to
     // the coverage model.
-    mon_trn.instr.c_rdrs1 = instr_asm.rd.valid_gpr_rvc  ? instr_asm.rd.gpr_rvc  : instr_asm.rd.gpr;
+    mon_trn.instr.c_rdrs1 = instr_asm.rd.valid ? ( instr_asm.rd.valid_gpr_rvc  ? instr_asm.rd.gpr_rvc  : instr_asm.rd.gpr )
+                                               : ( instr_asm.rs1.valid_gpr_rvc ? instr_asm.rs1.gpr_rvc : instr_asm.rs1.gpr );
     mon_trn.instr.c_rdp   = instr_asm.rd.valid_gpr_rvc  ? instr_asm.rd.gpr_rvc  : instr_asm.rd.gpr;
     mon_trn.instr.c_rs1s  = instr_asm.rs1.valid_gpr_rvc ? instr_asm.rs1.gpr_rvc : instr_asm.rs1.gpr;
     mon_trn.instr.c_rs2s  = instr_asm.rs2.valid_gpr_rvc ? instr_asm.rs2.gpr_rvc : instr_asm.rs2.gpr;
