@@ -1745,6 +1745,11 @@ module uvmt_cv32e40s_tb;
                                                               );
   `endif
 
+  `ifndef  COREV_ASSERT_OFF
+    `ifdef  PARAM_SET_0
+      `include  "cvverif_sva_binds.svh"
+    `endif
+  `endif
 
     //uvmt_cv32e40s_rvvi_handcar u_rvvi_handcar();
 
