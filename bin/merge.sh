@@ -35,6 +35,7 @@ usage() {
   echo "--xdev_into_sdev  Do a merge of core-v-verif cv32e40x/dev into core-v-verif cv32e40s/dev"
 
   exit 1
+
 }
 
 
@@ -124,38 +125,33 @@ merge_xdev_into_sdev () {
 }
 
 
-check_cv32e40x_repo() {
+clone_x_dv() {
 
-  echo "=== Check if cv32e40x exist ==="
-  if [ ! -d "./cv32e40x/" ]; then
-    echo "Directory cv32e40x does not exists."
-    echo "Run: ./bin/clonetb -x"
-    echo "before running: ./bin/merge_script --s_into_x-dv"
-    exit 1
-  fi
-  printf "OK\n\n"
+  echo "=== Cloning x-dv ==="
 
-  echo "=== Check if cv32e40x is the core-v-verif repo ==="
-  if [ ! -d "./cv32e40x/.git/" ]; then
-    echo "Directory cv32e40x is a 'core-v-verif' repo and not a 'cv32e40x-dv' repo."
-    echo "Run: ./bin/clonetb -x"
-    echo "before running: ./bin/merge_script --s_into_x-dv"
-    exit 1
-  fi
-  printf "OK\n\n"
+  read -p "This overwrites 'cv32e40x/'. Continue? y/n " yn
+  case $yn in
+    [Yy]* ) ;;
+    * ) echo "aborting"; exit;;
+  esac
+
+  ./bin/clonetb --x-main
 
 }
 
 
 check_merge_status() {
+
   git status
+
 }
 
 
 main() {
+
   case $1 in
     "--s_into_x-dv")
-      check_cv32e40x_repo
+      clone_x_dv
       merge_cv32e40s_into_cv32e40x-dv
       move_files_40s_into_40x
       substitute_file_content_40s_into_40x
@@ -176,7 +172,7 @@ main() {
       usage
       ;;
   esac
+
 }
 
 main "$@"
-
