@@ -104,7 +104,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "TODO",
+        "Link to Coverage": "DTC: cv32e40s/tests/programs/custom/zcmt_test :: jvt_rw_m, jvt_rw_u_illegal, jvt_rw_u_legal",
         "Comment": ""
     },
     {
@@ -164,7 +164,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "Link to Coverage": "A: ???\nCOV: ???",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.clic_assert_i.a_mscratchcsw_value\nCOV: ???\nDTC: cv32e40s/tests/programs/custom/clic :: rw_mscratchcsw, rw_mscratchcsw_illegal",
         "Comment": "Waiting for CLIC vplan linkage."
     },
     {
@@ -236,7 +236,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_jvt_access\n\nCOV: TODO",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_jvt_access\n\nDTC: cv32e40s/tests/programs/custom/zcmt_test",
         "Comment": ""
     },
     {
