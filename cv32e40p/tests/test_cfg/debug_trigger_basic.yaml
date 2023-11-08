@@ -1,0 +1,7 @@
+name: debug_trigger_basic
+description: >
+    Use debug trigger with instr address
+plusargs: >
+    +no_dret=1
+    +setup_debug_trigger_on_addr_match=1
+    +gen_debug_section=1

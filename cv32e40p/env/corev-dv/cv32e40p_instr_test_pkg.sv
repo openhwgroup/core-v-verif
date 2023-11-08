@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+`include "cv32e40p_instr_pkg.sv"
+
 package cv32e40p_instr_test_pkg;
 
   parameter int HWLOOP_LABEL_STR_LEN = 32;
 
   import uvm_pkg::*;
   import riscv_instr_pkg::*;
+  import cv32e40p_instr_pkg::*;
   import riscv_instr_test_pkg::*;
   import riscv_signature_pkg::*;
   import corev_instr_test_pkg::*;
@@ -34,9 +37,9 @@ package cv32e40p_instr_test_pkg;
 
   // RISCV-DV class override definitions
   `include "cv32e40p_rand_instr_stream.sv"
+  `include "cv32e40p_illegal_instr.sv"
   `include "cv32e40p_instr_sequence.sv"
   `include "cv32e40p_compressed_instr.sv"
-  `include "cv32e40p_illegal_instr.sv"
   `include "cv32e40p_privil_reg.sv"
   `include "cv32e40p_debug_rom_gen.sv"
   `include "cv32e40p_asm_program_gen.sv"

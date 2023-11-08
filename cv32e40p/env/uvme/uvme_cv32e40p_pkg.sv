@@ -27,7 +27,6 @@
 `include "uvma_clknrst_macros.sv"
 `include "uvme_cv32e40p_macros.sv"
 
-
  /**
  * Encapsulates all the types needed for an UVM environment capable of driving/
  * monitoring and verifying the behavior of an CV32E40P design.
@@ -51,6 +50,7 @@ package uvme_cv32e40p_pkg;
 
    // Constants / Structs / Enums
    `include "uvme_cv32e40p_constants.sv"
+   `include "uvme_cv32e40p_param_all_insn.sv"
    `include "uvme_cv32e40p_tdefs.sv"
 
    // Objects
@@ -81,6 +81,7 @@ package uvme_cv32e40p_pkg;
    // Environment components
    `include "uvma_cv32e40p_core_cntrl_drv.sv"
    `include "uvma_cv32e40p_core_cntrl_agent.sv"
+   `include "uvme_rv32x_hwloop_covg.sv"
    `include "uvme_interrupt_covg.sv"
    `include "uvme_debug_covg.sv"
    `include "uvme_rv32isa_covg.sv"

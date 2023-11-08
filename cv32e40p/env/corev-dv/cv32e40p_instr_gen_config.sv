@@ -59,6 +59,23 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
   rand riscv_reg_t  str_rs1;
   rand riscv_reg_t  str_rs3;
 
+  // Enable debug trigger breakpoint setup in debug rom
+  bit setup_debug_trigger_on_addr_match = 0;
+
+  // Number of trigger iterations in a given test
+  rand int trigger_iterations;
+
+  // Random offset to program next trigger address
+  rand int trigger_addr_offset;
+
+  //random field to enable setting of single stepping only after
+  //a trigger breakpoint causes debug entry
+  rand bit debug_trigger_before_single_step;
+
+  //random field to enable setting of single stepping only after
+  //an ebreak causes debug entry
+  rand bit debug_ebreak_before_single_step;
+
   constraint ss_dbg_high_iteration_cnt_c {
     ss_dbg_high_iteration_cnt dist {0 := 60, 1 := 40};
   }
@@ -164,6 +181,12 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
     }
   }
 
+  constraint trigger_c {
+    trigger_iterations inside {[1:10]};
+    trigger_addr_offset inside {[4:100]};
+    trigger_addr_offset % 4 == 0;
+  }
+
   `uvm_object_utils_begin(cv32e40p_instr_gen_config)
     `uvm_field_enum(mtvec_mode_t, mtvec_mode, UVM_DEFAULT)
     `uvm_field_int(knob_zero_fast_intr_handlers, UVM_DEFAULT)
@@ -181,6 +204,11 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
     `uvm_field_int(xpulp_instr_in_debug_rom, UVM_DEFAULT)
     `uvm_field_enum(riscv_reg_t, str_rs1, UVM_DEFAULT)
     `uvm_field_enum(riscv_reg_t, str_rs3, UVM_DEFAULT)
+    `uvm_field_int(setup_debug_trigger_on_addr_match, UVM_DEFAULT)
+    `uvm_field_int(trigger_iterations, UVM_DEFAULT)
+    `uvm_field_int(trigger_addr_offset, UVM_DEFAULT)
+    `uvm_field_int(debug_trigger_before_single_step, UVM_DEFAULT)
+    `uvm_field_int(debug_ebreak_before_single_step, UVM_DEFAULT)
   `uvm_object_utils_end
 
   function new(string name="");
@@ -190,6 +218,13 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
     get_bool_arg_value("+insert_rand_directed_instr_stream=", insert_rand_directed_instr_stream);
     get_int_arg_value("+test_rand_directed_instr_stream_num=", test_rand_directed_instr_stream_num);
     get_bool_arg_value("+is_hwloop_test=", is_hwloop_test);
+    get_bool_arg_value("+setup_debug_trigger_on_addr_match=", setup_debug_trigger_on_addr_match);
+    get_bool_arg_value("+debug_trigger_before_single_step=", debug_trigger_before_single_step);
+    get_bool_arg_value("+debug_ebreak_before_single_step=", debug_ebreak_before_single_step);
+
+    if ($test$plusargs("debug_trigger_before_single_step")) debug_trigger_before_single_step.rand_mode(0);
+    if ($test$plusargs("debug_ebreak_before_single_step")) debug_ebreak_before_single_step.rand_mode(0);
+
   endfunction : new
 
   function void post_randomize();

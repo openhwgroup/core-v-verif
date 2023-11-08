@@ -550,6 +550,9 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
 
   // Override Illegal instruction handler - gen_illegal_instr_handler
   // Replace pop_gpr_from_kernel_stack with pop_regfile_from_kernel_stack
+  // With RV32X enabled, check for illegal instr on the last instr of hwloop
+  // If true, then set MEPC to first instr of hwloop instead of simply
+  // incrementing by 4.
   virtual function void gen_illegal_instr_handler(int hart);
     string instr[$];
     cv32e40p_instr_gen_config corev_cfg;
@@ -558,11 +561,38 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
 
     gen_signature_handshake(instr, CORE_STATUS, ILLEGAL_INSTR_EXCEPTION);
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
-    instr = {instr,
-            $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC),
-            $sformatf("addi  x%0d, x%0d, 4", cfg.gpr[0], cfg.gpr[0]),
-            $sformatf("csrw  0x%0x, x%0d", MEPC, cfg.gpr[0])
-    };
+    if (riscv_instr_pkg::RV32X inside {riscv_instr_pkg::supported_isa}) begin
+      instr = {instr,
+              $sformatf("csrr x%0d, 0x%0x", cfg.gpr[0], LPCOUNT1),
+              $sformatf("li x%0d, 2", cfg.gpr[1]),
+              $sformatf("bge x%0d, x%0d, 1f", cfg.gpr[0], cfg.gpr[1]),
+              $sformatf("2: csrr x%0d, 0x%0x", cfg.gpr[0], LPCOUNT0),
+              $sformatf("li x%0d, 2", cfg.gpr[1]),
+              $sformatf("bge x%0d, x%0d, 3f", cfg.gpr[0], cfg.gpr[1]),
+              $sformatf("beqz x0, 4f"),
+              $sformatf("1: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC),
+              $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[1], LPEND1),
+              $sformatf("addi x%0d, x%0d, -4", cfg.gpr[1], cfg.gpr[1]),
+              $sformatf("bne x%0d, x%0d, 2b", cfg.gpr[0], cfg.gpr[1]),
+              $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[0], LPSTART1),
+              $sformatf("beqz x0, 5f"),
+              $sformatf("3: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC),
+              $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[1], LPEND0),
+              $sformatf("addi x%0d, x%0d, -4", cfg.gpr[1], cfg.gpr[1]),
+              $sformatf("bne x%0d, x%0d, 4f", cfg.gpr[0], cfg.gpr[1]),
+              $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[0], LPSTART0),
+              $sformatf("beqz x0, 5f"),
+              $sformatf("4: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC),
+              $sformatf("addi  x%0d, x%0d, 4", cfg.gpr[0], cfg.gpr[0]),
+              $sformatf("5: csrw  0x%0x, x%0d", MEPC, cfg.gpr[0])
+      };
+    end else begin
+      instr = {instr,
+              $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC),
+              $sformatf("addi  x%0d, x%0d, 4", cfg.gpr[0], cfg.gpr[0]),
+              $sformatf("csrw  0x%0x, x%0d", MEPC, cfg.gpr[0])
+      };
+    end
     // Replace pop_gpr_from_kernel_stack with pop_regfile_from_kernel_stack
     //pop_gpr_from_kernel_stack(MSTATUS, MSCRATCH, cfg.mstatus_mprv, cfg.sp, cfg.tp, instr);
     pop_regfile_from_kernel_stack(MSTATUS, MSCRATCH, cfg.mstatus_mprv, cfg.sp, cfg.tp, instr, corev_cfg);
