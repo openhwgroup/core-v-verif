@@ -60,7 +60,7 @@ VCS_COMP_FLAGS  ?= -lca -sverilog \
                    +define+CV32E40P_RVFI \
                    -assert svaext -ignore unique_checks -full64 -licwait 20
 VCS_GUI         ?=
-VCS_RUN_COV      = -cm line+cond+tgl+fsm+branch+assert -cm_dir $(MAKECMDGOALS).vdb
+VCS_RUN_COV      = -cm line+cond+tgl+fsm+branch+assert -cm_dir $(MAKECMDGOALS).vdb +uvm_set_config_int=uvm_test_top,cov_model_enabled,1
 
 # Necessary libraries for the PMA generator class
 VCS_PMA_INC += +incdir+$(TBSRC_HOME)/uvmt \

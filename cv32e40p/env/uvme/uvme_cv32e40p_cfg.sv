@@ -363,10 +363,19 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
       }
 
       if (cov_model_enabled) {
-         obi_memory_instr_cfg.cov_model_enabled  == 1;
-         obi_memory_data_cfg.cov_model_enabled   == 1;
+        clknrst_cfg.cov_model_enabled           == 1;
+        interrupt_cfg.cov_model_enabled         == 1;
+        debug_cfg.cov_model_enabled             == 1;
+        obi_memory_instr_cfg.cov_model_enabled  == 1;
+        obi_memory_data_cfg.cov_model_enabled   == 1;
       }
-
+      else {
+        clknrst_cfg.cov_model_enabled           == 0;
+        interrupt_cfg.cov_model_enabled         == 0;
+        debug_cfg.cov_model_enabled             == 0;
+        obi_memory_instr_cfg.cov_model_enabled  == 0;
+        obi_memory_data_cfg.cov_model_enabled   == 0;
+      }
    }
 
    /**
