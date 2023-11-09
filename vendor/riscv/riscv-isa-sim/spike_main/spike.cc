@@ -3,6 +3,7 @@
 #include "config.h"
 #include "cfg.h"
 #include "sim.h"
+#include "Simulation.h"
 #include "mmu.h"
 #include "arith.h"
 #include "remote_bitbang.h"
@@ -571,11 +572,24 @@ int main(int argc, char** argv)
     }
     cfg.hartids = default_hartids;
   }
+  openhw::Params params;
 
-  sim_t s(&cfg, halted,
+  params.set("/top/", "isa", std::string(cfg.isa()));
+
+  if (max_steps != 0) {
+    params.set("/top/", "max_steps", max_steps);
+    params.set("/top/", "max_steps_enabled", bool(true));
+    std::cout << "[SPIKE-TANDEM] Max simulation steps: " << max_steps << std::endl;
+  }
+
+  params.set("/top/core/0/", "boot_addr", 0x10000UL);
+  params.set("/top/core/0/", "isa", std::string(cfg.isa()));
+
+  openhw::Simulation s(&cfg, halted,
           mems, plugin_devices, htif_args, dm_config, log_path, dtb_enabled, dtb_file,
           socket,
-          cmd_file, max_steps);
+          cmd_file, params);
+  s.standalone_mode = 1;
   std::unique_ptr<remote_bitbang_t> remote_bitbang((remote_bitbang_t *) NULL);
   std::unique_ptr<jtag_dtm_t> jtag_dtm(
       new jtag_dtm_t(&s.debug_module, dmi_rti));

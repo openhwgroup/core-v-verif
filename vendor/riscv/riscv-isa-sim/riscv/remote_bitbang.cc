@@ -104,6 +104,30 @@ void remote_bitbang_t::tick()
   }
 }
 
+void remote_bitbang_t::tick(
+                            unsigned char * jtag_tck,
+                            unsigned char * jtag_tms,
+                            unsigned char * jtag_tdi,
+                            unsigned char * jtag_trstn,
+                            unsigned char jtag_tdo
+                            )
+{
+  this->tick();
+
+  * jtag_tck = tck;
+  * jtag_tms = tms;
+  * jtag_tdi = tdi;
+  * jtag_trstn = trstn;
+
+}
+
+void remote_bitbang_t::set_pins(char _tck, char _tms, char _tdi){
+  tck = _tck;
+  tms = _tms;
+  tdi = _tdi;
+  tap->set_pins(_tck, _tms, _tdi);
+}
+
 void remote_bitbang_t::execute_commands()
 {
   static char send_buf[buf_size];
@@ -121,14 +145,14 @@ void remote_bitbang_t::execute_commands()
           case 'B': /* fprintf(stderr, "*BLINK*\n"); */ break;
           case 'b': /* fprintf(stderr, "_______\n"); */ break;
           case 'r': tap->reset(); break;
-          case '0': tap->set_pins(0, 0, 0); break;
-          case '1': tap->set_pins(0, 0, 1); break;
-          case '2': tap->set_pins(0, 1, 0); break;
-          case '3': tap->set_pins(0, 1, 1); break;
-          case '4': tap->set_pins(1, 0, 0); break;
-          case '5': tap->set_pins(1, 0, 1); break;
-          case '6': tap->set_pins(1, 1, 0); break;
-          case '7': tap->set_pins(1, 1, 1); break;
+          case '0': this->set_pins(0, 0, 0); break;
+          case '1': this->set_pins(0, 0, 1); break;
+          case '2': this->set_pins(0, 1, 0); break;
+          case '3': this->set_pins(0, 1, 1); break;
+          case '4': this->set_pins(1, 0, 0); break;
+          case '5': this->set_pins(1, 0, 1); break;
+          case '6': this->set_pins(1, 1, 0); break;
+          case '7': this->set_pins(1, 1, 1); break;
           case 'R': send_buf[send_offset++] = tap->tdo() ? '1' : '0'; break;
           case 'Q': quit = true; break;
           default:
