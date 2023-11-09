@@ -47,9 +47,9 @@ VOPT_COV                ?= +cover=bcsetf+$(RTLSRC_VLOG_CORE_TOP).
 else
 VOPT_COV                ?= +cover=setf+$(RTLSRC_VLOG_TB_TOP).
 endif
-VSIM_COV                ?= -coverage
+VSIM_COV                ?= -coverage +uvm_set_config_int=uvm_test_top,cov_model_enabled,1
 VOPT_WAVES_ADV_DEBUG    ?= -designfile design.bin
-VSIM_WAVES_ADV_DEBUG    ?= -qwavedb=+signal+assertion+ignoretxntime+msgmode=both
+VSIM_WAVES_ADV_DEBUG    ?= -qwavedb=+signal+class+classmemory+assertion+ignoretxntime+msgmode=both
 VSIM_WAVES_DO           ?= $(VSIM_SCRIPT_DIR)/waves.tcl
 
 # Common QUIET flag defaults to -quiet unless VERBOSE is set
@@ -209,7 +209,7 @@ run: 					VSIM_FLAGS += -modelsimini modelsim.ini
 endif
 
 ################################################################################
-# Coverage database generation
+# code coverage and functional coverage enablement
 ifeq ($(call IS_YES,$(COV)),YES)
 VOPT_FLAGS  += $(VOPT_COV)
 VSIM_FLAGS  += $(VSIM_COV)

@@ -64,7 +64,8 @@ XRUN_SINGLE_STEP ?=
 XRUN_ELAB_COV     = -covdut uvmt_$(CV_CORE_LC)_tb -coverage b:e:f:u
 XRUN_ELAB_COVFILE = -covfile $(abspath $(MAKE_PATH)/../tools/xrun/covfile.tcl)
 XRUN_RUN_COV      = -covscope uvmt_$(CV_CORE_LC)_tb \
-					-nowarn CGDEFN
+					-nowarn CGDEFN \
+					+uvm_set_config_int=uvm_test_top,cov_model_enabled,1
 XRUN_RUN_BASE_FLAGS += -sv_lib $(DPI_DASM_LIB)
 XRUN_RUN_BASE_FLAGS += -sv_lib $(abspath $(SVLIB_LIB))
 

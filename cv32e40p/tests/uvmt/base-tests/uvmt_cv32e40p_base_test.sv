@@ -48,12 +48,15 @@ class uvmt_cv32e40p_base_test_c extends uvm_test;
    // Default sequences
    rand uvme_cv32e40p_reset_vseq_c  reset_vseq;
 
+   // knob to enable features
+   bit cov_model_enabled; // enable functional coverage
 
    `uvm_component_utils_begin(uvmt_cv32e40p_base_test_c)
-      `uvm_field_object(test_cfg      , UVM_DEFAULT)
-      `uvm_field_object(test_randvars , UVM_DEFAULT)
-      `uvm_field_object(env_cfg       , UVM_DEFAULT)
-      `uvm_field_object(env_cntxt     , UVM_DEFAULT)
+      `uvm_field_object(test_cfg          , UVM_DEFAULT)
+      `uvm_field_object(test_randvars     , UVM_DEFAULT)
+      `uvm_field_object(env_cfg           , UVM_DEFAULT)
+      `uvm_field_object(env_cntxt         , UVM_DEFAULT)
+      `uvm_field_int   (cov_model_enabled , UVM_DEFAULT)
    `uvm_component_utils_end
 
 
@@ -61,6 +64,10 @@ class uvmt_cv32e40p_base_test_c extends uvm_test;
       env_cfg.enabled               == 1;
       env_cfg.is_active             == UVM_ACTIVE;
       env_cfg.trn_log_enabled       == 1;
+   }
+
+   constraint c_cov_model_enabled {
+      env_cfg.cov_model_enabled == cov_model_enabled;
    }
 
    constraint test_type_default_cons {
