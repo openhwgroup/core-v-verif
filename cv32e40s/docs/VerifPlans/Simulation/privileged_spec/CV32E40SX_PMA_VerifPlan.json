@@ -740,7 +740,7 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "TODO",
+        "Link to Coverage": "Fow now: covered by assertions only.",
         "Comment": ""
     },
     {
@@ -764,7 +764,7 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "TODO",
+        "Link to Coverage": "Fow now: covered by assertions only.",
         "Comment": ""
     },
     {

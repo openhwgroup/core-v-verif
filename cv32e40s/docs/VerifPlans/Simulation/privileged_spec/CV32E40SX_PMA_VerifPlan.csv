@@ -331,11 +331,11 @@ A: (The other cases are covered by all other testing.)
 COV: *.pma_cov_instr_i.cover_item_covergroup_cg_inst_cg_inst_cross_x_dmregion_dmode_*",
 UM 0e447ac,40x: Atomic operations,Atomic operations shall only occur for regions in which Atomic operations are allowed. (Only applies for cores with A-extension),Load-Reserved attempts to a region where atomic operations are not permitted shall cause a precise load access fault (exception code 5),"Attempt arbitrary load-reserved memory operations to regions where atomic operations are not permitted and ensure that these operations trigger precise store/AMO access fault exceptions (code 7). Ensure that these operations do not generate these exceptions when performed on supported regions.
 
-The following CSRs must be verified: Verify mcause, mepc, mtval",Self Checking Test,Directed Self-Checking,Testcase,TODO,
+The following CSRs must be verified: Verify mcause, mepc, mtval",Self Checking Test,Directed Self-Checking,Testcase,Fow now: covered by assertions only.,
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"A:  a_atomic_access_atomic_regions_LRW, a_atomic_access_nonatomic_regions_LRW",
 ,,,Store-Conditional or Atomic Memory Operation (AMO) attempts to a region where Atomic operations are not allowed shall cause a precise store/AMO access fault (exception code 7).,"Attempt arbitrary store-conditional and atomic memory operations to regions where atomic operations are not allowed and ensure that these operations trigger precise store/AMO access fault exceptions (code 7). Ensure that this fault is not triggered when performing these operations on supported regions.
 
-The following CSRs must be verified: Verify mcause, mepc, mtval",Self Checking Test,Directed Self-Checking,Testcase,TODO,
+The following CSRs must be verified: Verify mcause, mepc, mtval",Self Checking Test,Directed Self-Checking,Testcase,Fow now: covered by assertions only.,
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"A: a_atomic_access_atomic_regions_SCW, a_atomic_access_nonatomic_regions_SCW",
 UM 0e447ac,Fence* instructions,Fence instructions disregards distinction between memory and IO,Fence instruction shall not be impacted by PMA memory/IO attribute and execute as a conservative fence on all operations ,"Coverpoint - Fence instructions (Fence, fence.i) should not be impacted by PMA.",Check against RM,Constrained-Random,Functional Coverage,"RTC: TODO
 
