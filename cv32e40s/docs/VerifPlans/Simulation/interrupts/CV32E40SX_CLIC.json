@@ -8,7 +8,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mintstatus_mil_reset_to_zero"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -19,7 +19,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mstatus_mie_reset_to_zero"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -30,7 +30,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mtvec_reset_value_correct"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -41,7 +41,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mstatus_mie_reset_to_zero\na_irq_ack_valid\na_no_irq_no_ack"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -52,7 +52,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_clic_mode_only"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -63,7 +63,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_nmi_to_mtvec_offset"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -74,18 +74,18 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_clic_valid_setting"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
         "Feature": "Constraints",
         "Sub Feature": "Interrupts",
-        "Feature Description": "Interrupt levels inside { 0, 2 .. 255 }",
+        "Feature Description": "Interrupt levels inside { 0 .. 255 }",
         "Verification Goal": "Correct functionality of interrupts of all valid levels",
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Missing covergroup, vc should use all interrupt levels"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -96,7 +96,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_tieoff_zero_irq_i"
     },
     {
         "Requirement Location": "Silabs Internal",
@@ -107,7 +107,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Waived on top level verification due to lack of visibility and precise specification of what prevents interrupts from being taken, and there exist no definite bound. \n\nDesign assertion:\nCore_i.gen_clic_interrupt.clic_int_controller_i.clic_int_controller.sva.a_clic_enable"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -118,7 +118,7 @@
         "Pass/Fail Criteria": "Any/All",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "N/A",
-        "Link to Coverage": ""
+        "Link to Coverage": "N/A"
     },
     {
         "Requirement Location": "Silabs Internal",
@@ -129,7 +129,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_irq_ack_is_always_single_cycle_pulse"
     },
     {
         "Requirement Location": "Silabs Internal",
@@ -140,7 +140,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_irq_ack_valid\na_no_irq_no_ack"
     },
     {
         "Requirement Location": "Silabs Internal",
@@ -151,7 +151,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Waived - Ideally would like to have an assertion for this case, but it is not possible to separate cases on rvfi where the taken interrupts handler is interrupted by nmi, and thus appears to have an ack caused by nmi. \n\na_no_irq_no_ack should suffice to prove that we do not take an interrupt without an actual pending interrupt."
     },
     {
         "Requirement Location": "Silabs Internal",
@@ -162,7 +162,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mintstatus_updated_on_isr_handler_entry"
     },
     {
         "Requirement Location": "Silabs Internal",
@@ -173,7 +173,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "This is not a CLIC requirement"
     },
     {
         "Requirement Location": "Silabs Internal",
@@ -184,7 +184,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Implied proof by\n\na_irq_ack_is_always_single_cycle_pulse (single pulse only) +\na_irq_ack_valid (must be higher priority and enabled) +\na_no_irq_no_ack (must never happen unless higher pri and enabled)"
     },
     {
         "Requirement Location": "Silabs internal",
@@ -195,7 +195,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_every_ack_followed_by_rvfi_intr"
     },
     {
         "Requirement Location": "Silabs Internal",
@@ -206,7 +206,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Outdated req, CSR removed"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -217,7 +217,7 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": ""
+        "Link to Coverage": "clic :: w_mcause_mpp_r_mstatus_mpp\nclic :: w_mstatus_mpp_r_mcause_mpp"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -228,7 +228,7 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": ""
+        "Link to Coverage": "clic :: w_mcause_mpp_r_mstatus_mpp\nclic :: w_mstatus_mpp_r_mcause_mpp"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -239,7 +239,7 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": ""
+        "Link to Coverage": "clic :: w_mcause_mpie_r_mstatus_mpie\nclic :: w_mstatus_mpie_r_mcause_mpie"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -250,7 +250,7 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": ""
+        "Link to Coverage": "clic :: w_mcause_mpie_r_mstatus_mpie\nclic :: w_mstatus_mpie_r_mcause_mpie"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -261,7 +261,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mie_unused_hardcode_zero"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -272,7 +272,7 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": ""
+        "Link to Coverage": "w_mie_notrap_r_zero"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -283,7 +283,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mip_unused_hardcode_zero"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -294,7 +294,7 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": ""
+        "Link to Coverage": "w_mip_notrap_r_zero"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -305,7 +305,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mtvec_aligned_to_128_bytes"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -316,7 +316,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mtvec_mode_always_clic"
     },
     {
         "Requirement Location": "Silabs Internal",
@@ -327,7 +327,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_fencei_guarantee_visible_mtvt_write"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -338,7 +338,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "TODO: Directed clic test should add case to test this"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -349,7 +349,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mtvt_alignment_correct"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -360,7 +360,7 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": ""
+        "Link to Coverage": "clic :: w_mtvt_rd_alignment"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -371,7 +371,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mepc_set_correct_after_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -382,7 +382,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mcause_interupt_always_set_on_taken_irq"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -393,7 +393,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mcause_exccode_always_set_correctly_on_taken_irq"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -404,7 +404,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mcause_mpil_reflects_previous_interrupt_lvl"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -415,7 +415,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mcause_mpp_reflects_previous_privilege_mode"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -426,7 +426,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mcause_mpie_reflects_previous_interrupt_enable"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -437,7 +437,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mnxti_case_1_irq_req_unchanged"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -448,7 +448,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mnxti_case_2_replaced_by_higher_level_non_shv_irq"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -459,7 +459,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "Link to Coverage": ""
+        "Link to Coverage": "N/A - cannot take assertions in U-mode"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -470,7 +470,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mnxti_case_4_replaced_by_lower_level_irq"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -481,7 +481,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mnxti_case_5_1_no_current_irq\na_mnxti_case_5_2_lvl_nonshv_pending"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -492,7 +492,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mnxti_case_6_higher_level_irq_superceed"
     },
     {
         "Requirement Location": "UM v0.9.0 Common",
@@ -503,7 +503,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mintstatus_updated_on_isr_handler_entry"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -514,7 +514,7 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": ""
+        "Link to Coverage": "clic :: r_mnxti_without_irq\nclic :: rw_mnxti_without_irq_legal\nclic :: r_mnxti_with_pending_irq\nclic :: r_mnxti_with_lower_lvl_pending_irq\nclic :: w_mnxti_side_effects\nclic :: rw_mscratchcsw\nclic :: rw_mscratchcsw_illegal\nclic :: rw_mscratchcswl\nclic :: rw_mscratchcswl_illegal\n\nmintthresh write implicitly tested by \nclic :: mintthresh_higher\nclic :: mintthresh_equal\nclic :: mintthresh_lower\nand compared with ISS\n\nmintstatus read implicitly tested by\nclic :: w_mnxti_side_effects"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -525,7 +525,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_mcause_minhv_set_at_failing_ptr_fetch\na_mcause_minhv_set_valid\na_mcause_minhv_clear_valid"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -536,7 +536,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Waived - Outdated requirement"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -547,7 +547,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": ""
+        "Link to Coverage": "clic :: invalid_mtvt_ptr_exec"
     },
     {
         "Requirement Location": "Silabs Internal",
@@ -558,7 +558,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Waived - No RVFI visibility"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -569,7 +569,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_pc_to_mtvt_for_taken_shv_interrupt_outstanding_obi\na_pc_to_mtvt_for_taken_shv_interrupt"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -580,7 +580,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_pc_to_mtvec_for_taken_nonshv_interrupt"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -591,7 +591,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_pc_alignment_of_taken_non_shv_interrupt"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -602,7 +602,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "Link to Coverage": ""
+        "Link to Coverage": "N/A - cannot take assertions in U-mode"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -613,7 +613,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_no_irq_no_ack"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -624,7 +624,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "clicintie is external to core, only mstatus.mie fans in to core assertions/tests\n\na_no_irq_no_ack"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -635,7 +635,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_no_irq_no_ack"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -646,7 +646,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_no_irq_no_ack"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -657,7 +657,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_irq_ack_valid"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -668,7 +668,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_irq_ack_valid"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -679,7 +679,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_irq_ack_valid\na_no_irq_no_ack"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -690,7 +690,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_higher_lvl_than_mintthresh_th_can_preempt"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -701,7 +701,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_lower_lvl_than_mintthresh_th_cannot_preempt"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -712,7 +712,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_wfi_wfe_wakeup_condition_valid"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -723,7 +723,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_wfi_wfe_wakeup_condition_valid"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -734,7 +734,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_wfi_wfe_wakeup_condition_valid"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -745,7 +745,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_wfi_wfe_wakeup_condition_not_valid"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -756,7 +756,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -767,7 +767,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Covered by assertions below"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -800,7 +800,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.clic_assert_i.gen_clic_assertions.a_dret_umode_clear_mintthresh"
+        "Link to Coverage": "Requirement removed"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -811,7 +811,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_wfi_wfe_wakeup_condition_valid"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -822,7 +822,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_wfi_wfe_wakeup_condition_valid"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -833,7 +833,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_wfi_wfe_wakeup_condition_valid"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -844,7 +844,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_wfi_wfe_wakeup_condition_not_valid"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -855,7 +855,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_wfi_wfe_causes_core_to_stop"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -866,7 +866,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_wfi_wfe_causes_clock_gating"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -877,7 +877,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_core_sleep_o_only_during_wfi_wfe"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -888,7 +888,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_horizontal_exception_service"
     },
     {
         "Requirement Location": "CLIC 8675ec",
@@ -899,7 +899,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "a_vertical_exception_service"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -910,7 +910,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_wfi\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_wfi"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -921,7 +921,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "\nShould apply to both wfi and wfe, the following tests use back to back wfe and wfi-instructions + randomly toggled interrupts/wfe-pin. \nwfe_test :: wfe_wakeup_umode\nwfe_test :: wfe_wakeup\nwfe_test :: wfi_mstatus_tw_umode_illegal\n\nTODO: covergroups"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -932,7 +932,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "TODO: Expect this to be covered by assertions taking correct priority into account"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -943,7 +943,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "TODO: Expect this to be covered by assertions taking correct priority into account"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -954,7 +954,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "TODO: Expect this to be covered by assertions taking correct priority into account"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -965,7 +965,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "TODO: Expect this to be covered by assertions taking correct priority into account"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -976,7 +976,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "TODO: Expect this to be covered by assertions taking correct priority into account"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -987,7 +987,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "TODO: Expect this to be covered by assertions taking correct priority into account"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -998,7 +998,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "TODO: Expect this to be covered by assertions taking correct priority into account"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -1009,7 +1009,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "TODO: Expect this to be covered by assertions taking correct priority into account"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -1020,7 +1020,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "TODO: Expect this to be covered by assertions taking correct priority into account"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -1031,7 +1031,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "TODO: Expect this to be covered by assertions taking correct priority into account"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -1042,7 +1042,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "TODO: Expect this to be covered by assertions taking correct priority into account"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -1053,7 +1053,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "TODO: Expect this to be covered by assertions taking correct priority into account"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -1064,7 +1064,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "TODO: Expect this to be covered by assertions taking correct priority into account"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1075,7 +1075,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1086,7 +1086,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1097,7 +1097,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1108,7 +1108,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1119,7 +1119,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1130,7 +1130,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1141,7 +1141,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1152,7 +1152,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq\n\nMissing: ecall, csrrwi, csrrc"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1163,7 +1163,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1174,7 +1174,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1185,7 +1185,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1196,7 +1196,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1207,7 +1207,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1218,7 +1218,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1229,7 +1229,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1240,7 +1240,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1251,7 +1251,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1262,7 +1262,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1273,7 +1273,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1284,7 +1284,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1295,7 +1295,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq\n\nMissing: c.lw"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1306,7 +1306,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1317,7 +1317,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq\n\nSee below, coverage model does not support Zcb, cmp, cmt"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1328,7 +1328,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1339,7 +1339,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1350,7 +1350,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1361,7 +1361,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1372,7 +1372,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1383,7 +1383,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1394,7 +1394,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Needs coverage model update, currently taken/not taken is not tracked\n"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1405,7 +1405,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1416,7 +1416,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1427,7 +1427,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1438,7 +1438,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1449,7 +1449,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1460,7 +1460,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq\n\nMissing: csrrwi, csrrc"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1471,7 +1471,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1482,7 +1482,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "uvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_entry.cp_irq\nuvm_pkg.uvm_test_top.env.cov_model.clic_covg.clic_irq_exit.cp_irq\n\nMissing: c.lw, c.addi16sp, c.addi4spn"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1493,7 +1493,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Awaiting isacov update"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1504,7 +1504,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Awaiting isacov update"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1515,7 +1515,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Awaiting isacov update"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1526,7 +1526,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Awaiting isacov update"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1537,7 +1537,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Awaiting isacov update"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1548,7 +1548,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Missing covergroup"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1559,7 +1559,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "Missing covergroup"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1570,7 +1570,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "N/A"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1581,7 +1581,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "N/A"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1592,7 +1592,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "N/A"
     },
     {
         "Requirement Location": "Risc-V Priv. 1.12",
@@ -1603,7 +1603,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": ""
+        "Link to Coverage": "N/A"
     },
     {
         "Requirement Location": "",
