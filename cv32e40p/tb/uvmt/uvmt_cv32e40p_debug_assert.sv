@@ -169,7 +169,7 @@ module uvmt_cv32e40p_debug_assert
 
     // Trigger match results in debug mode
     property p_trigger_match;
-        cov_assert_if.trigger_match_i ##0 cov_assert_if.tdata1[2] ##0 !cov_assert_if.debug_mode_q ##0 cov_assert_if.id_stage_instr_valid_i ##0 cov_assert_if.is_decoding
+        cov_assert_if.trigger_match_i ##0 cov_assert_if.tdata1[2] ##0 !cov_assert_if.debug_mode_q ##0 cov_assert_if.id_stage_instr_valid_i
         |-> decode_valid [->2] ##0 (cov_assert_if.debug_mode_q && (cov_assert_if.dcsr_q[8:6]=== cv32e40p_pkg::DBG_CAUSE_TRIGGER) && 
                                                             (cov_assert_if.depc_q == tdata2_at_entry)) &&
                                                             (cov_assert_if.id_stage_pc == halt_addr_at_entry);
@@ -460,18 +460,17 @@ module uvmt_cv32e40p_debug_assert
             debug_cause_pri <= 3'b000;
         end else begin
             // Debug evaluated in decode state with valid instructions only
-            //if(cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE & !cov_assert_if.debug_mode_q) begin
-            if((cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE) || (cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE_HWLOOP)) begin
-                if(cov_assert_if.is_decoding & cov_assert_if.id_stage_instr_valid_i) begin
+            if((cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE || cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE_HWLOOP) & !cov_assert_if.debug_mode_q) begin
+                if(cov_assert_if.id_stage_instr_valid_i) begin
                     if(cov_assert_if.trigger_match_i)
                         debug_cause_pri <= 3'b010;
-                    else if((cov_assert_if.dcsr_q[15]) & (cov_assert_if.is_ebreak | cov_assert_if.is_cebreak))
+                    else if(cov_assert_if.is_decoding & (cov_assert_if.dcsr_q[15]) & (cov_assert_if.is_ebreak | cov_assert_if.is_cebreak))
                         debug_cause_pri <= 3'b001;
                     else if(cov_assert_if.debug_req_i) 
                         debug_cause_pri <= 3'b011;
-                    else if(cov_assert_if.dcsr_q[2])
+                    else if(cov_assert_if.is_decoding & cov_assert_if.dcsr_q[2])
                         debug_cause_pri <= 3'b100;
-                    else
+                    else if(cov_assert_if.is_decoding)
                         debug_cause_pri <= 3'b000;
 
                 end
