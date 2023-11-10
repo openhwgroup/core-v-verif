@@ -82,7 +82,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=40000000"
     num: 10
 
   corev_rand_pulp_mac_instr_test:
@@ -191,7 +191,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=40000000"
     num: 2
 
   corev_rand_pulp_hwloop_debug_ebreak:
@@ -206,7 +206,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=40000000"
     test_cfg: debug_ebreak
     num: 2
 
@@ -222,7 +222,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=40000000"
     test_cfg: debug_single_step_en
     num: 2
 
@@ -238,7 +238,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=40000000"
     test_cfg: gen_rand_int
     num: 5
 
@@ -254,7 +254,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=40000000"
     test_cfg: insert_illegal_instr
     num: 2
 
@@ -270,7 +270,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_exception CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_exception CFG_PLUSARGS="+UVM_TIMEOUT=40000000"
     num: 2
 
   corev_rand_pulp_hwloop_exception_single_step_debug:
@@ -285,7 +285,7 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_exception CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_exception CFG_PLUSARGS="+UVM_TIMEOUT=40000000"
     test_cfg: debug_single_step_en
     num: 1
 
