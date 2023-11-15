@@ -66,7 +66,7 @@ merge_cv32e40s_into_cv32e40x-dv () {
 
 move_files_40s_into_40x () {
 
-  echo "=== Replace 40s/S with 40x/S in file names ==="
+  echo "=== Replace 40s/S with 40x/X in file names ==="
 
   find . -type d | egrep -iv '\/\.|40sx|40xs' | grep -i 40s | xargs -n1 dirname | awk '{gsub(/40s/, "40x"); gsub(/40S/, "40X"); print}' | xargs -n2 mkdir -p
   find . -type d | egrep -iv '\/\.|40sx|40xs' | grep -i 40s | awk '{printf $1; printf " "; gsub(/40s/, "40x"); gsub(/40S/, "40X"); print}' | xargs -n2 git mv -f
