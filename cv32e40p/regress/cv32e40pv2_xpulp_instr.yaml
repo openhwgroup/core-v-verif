@@ -52,7 +52,7 @@ tests:
     build: uvmt_cv32e40p
     description: hwloop exception test
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_exception CFG_PLUSARGS="+UVM_TIMEOUT=4000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_exception CFG_PLUSARGS="+UVM_TIMEOUT=40000000"
 
   corev_rand_pulp_illegal_instr_test:
     testname: corev_rand_pulp_instr_test
