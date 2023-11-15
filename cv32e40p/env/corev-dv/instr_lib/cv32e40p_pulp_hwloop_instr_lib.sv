@@ -154,10 +154,10 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       num_loops_active inside {1,2,3};
 
       foreach(hwloop_counti[i])
-          hwloop_counti[i] inside {[0:100]};//TODO: check 0 is valid
+          hwloop_counti[i] inside {[0:64]};
 
       foreach(hwloop_count[i])
-          hwloop_count[i] inside {[0:100]};//TODO: check 0 is valid
+          hwloop_count[i] inside {[0:64]};
   }
 
   constraint num_hwloop_instr_c {
@@ -1226,10 +1226,10 @@ class cv32e40p_xpulp_long_hwloop_stream extends cv32e40p_xpulp_hwloop_base_strea
   constraint gen_hwloop_count_c {
       num_loops_active inside {1};
       foreach(hwloop_counti[i])
-          hwloop_counti[i] inside {[0:50]};//TODO: check 0 is valid
+          hwloop_counti[i] inside {[0:25]};
 
       foreach(hwloop_count[i])
-          hwloop_count[i] inside {[0:50]};//TODO: check 0 is valid
+          hwloop_count[i] inside {[0:25]};
   }
 
 
