@@ -68,12 +68,14 @@ tests:
     description: corev_rand_interrupt_debug
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_debug CFG_PLUSARGS="+UVM_TIMEOUT=2000000"
+    num: 1
 
   corev_rand_interrupt_exception:
     build: uvmt_cv32e40p
     description: corev_rand_interrupt_exception
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_exception CFG_PLUSARGS="+UVM_TIMEOUT=2000000"
+    num: 1
 
   corev_rand_interrupt_nested:
     build: uvmt_cv32e40p
@@ -87,6 +89,7 @@ tests:
     description: corev_rand_interrupt_wfi
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_interrupt_wfi CFG_PLUSARGS="+UVM_TIMEOUT=2000000"
+    num: 1
 
   corev_rand_interrupt_wfi_mem_stress:
     build: uvmt_cv32e40p
