@@ -1187,39 +1187,25 @@ module uvmt_cv32e40s_clic_interrupt_assert
       effective_clic_level = mintthresh_fields.th > mintstatus_fields.mil ? mintthresh_fields.th : mintstatus_fields.mil;
     end
 
-    sequence seq_irq_pend(bit ok = 1'b1);
+    sequence seq_irq_pend_ok();
       @(posedge clk_i)
 
       // valid pending
-      ok ##0 (
-            (mstatus_fields.mie
-         && $past(clic.irq)
-         && $past(clic.priv) == current_priv_mode
-         && $past(clic.level) > effective_clic_level)
-        or
-            ($past(clic.irq)
-         && $past(clic.priv) > current_priv_mode
-         && $past(clic.level) > 0)
-        )
+          (mstatus_fields.mie
+       && $past(clic.irq)
+       && $past(clic.priv) == current_priv_mode
+       && $past(clic.level) > effective_clic_level)
       or
-      // no valid pending
-      !ok ##0 (
-            !(mstatus_fields.mie
-         && $past(clic.irq)
-         && $past(clic.priv) == current_priv_mode
-         && $past(clic.level) > effective_clic_level)
-        and
-            !($past(clic.irq)
-         && $past(clic.priv) > current_priv_mode
-         && $past(clic.level) > 0)
-      )
+          ($past(clic.irq)
+       && $past(clic.priv) > current_priv_mode
+       && $past(clic.level) > 0)
       ;
-    endsequence : seq_irq_pend
+    endsequence : seq_irq_pend_ok
 
     property p_irq_ack_valid;
         irq_ack
       |->
-        seq_irq_pend(1'b1)
+        seq_irq_pend_ok
       ;
     endproperty : p_irq_ack_valid
 
@@ -1231,9 +1217,24 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
     // There should be no irq_ack unless there was a pending and enabled irq
     // ------------------------------------------------------------------------
+
+    sequence seq_irq_pend_notok(bit ok = 1'b1);
+      @(posedge clk_i)
+
+      // no valid pending
+          !(mstatus_fields.mie
+        && $past(clic.irq)
+        && $past(clic.priv) == current_priv_mode
+        && $past(clic.level) > effective_clic_level)
+      and
+          !($past(clic.irq)
+        && $past(clic.priv) > current_priv_mode
+        && $past(clic.level) > 0)
+      ;
+    endsequence : seq_irq_pend_notok
     property p_no_irq_no_ack;
           // Never irq_ack unless we had a valid and pending interrupt present.
-          seq_irq_pend(1'b0).triggered
+          seq_irq_pend_notok.triggered
       |->
           !irq_ack
       ;
