@@ -40,6 +40,16 @@ usage() {
 }
 
 
+die() {
+
+  scriptname=$0
+  message=$1
+  echo "$scriptname: error: $message"
+  exit 1
+
+}
+
+
 merge_cv32e40s_into_cv32e40x-dv () {
 
   echo $'\n======= Merge of cv32e40s into cv32e40x-dv: =======\n'
@@ -158,8 +168,8 @@ rejection_diff() {
   branch_name_merge_normal=$(git branch | grep 'merge')
   branch_name_merge_theirs=$(echo $branch_name_merge_normal | sed 's/merge/theirs/')
 
-  git checkout main
-  git checkout -B $branch_name_merge_theirs
+  git checkout main  ||  die "can't checkout main"
+  git checkout -B $branch_name_merge_theirs  ||  die "can't create branch"
   git merge -X theirs $branch_name_40s_subtree
 
   move_files_40s_into_40x
