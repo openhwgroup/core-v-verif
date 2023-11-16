@@ -15,7 +15,7 @@ plusargs: >
     +rand_directed_instr_0=cv32e40p_xpulp_hwloop_base_stream,1
     +rand_directed_instr_1=cv32e40p_xpulp_hwloop_base_stream,1
     +rand_directed_instr_2=cv32e40p_xpulp_short_hwloop_stream,1
-    +rand_directed_instr_3=cv32e40p_xpulp_long_hwloop_stream,1
+    +rand_directed_instr_3=cv32e40p_xpulp_short_hwloop_stream,1
     +rand_directed_instr_4=cv32e40p_xpulp_hwloop_isa_stress_stream,1
     +rand_directed_instr_5=cv32e40p_xpulp_hwloop_exception,1
     +no_fence=1
