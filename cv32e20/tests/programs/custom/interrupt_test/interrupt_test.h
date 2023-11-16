@@ -29,11 +29,11 @@
 
 #define MCAUSE_IRQ_MASK 0x1f
 
-#define IRQ_NUM 19
+#define IRQ_NUM 20
 #define IRQ_MASK 0xFFFF0888
 
-#define SOFTWARE_IRQ_ID  3
-#define TIMER_IRQ_ID     7
+#define SOFTWARE_IRQ_ID   3
+#define TIMER_IRQ_ID      7
 #define EXTERNAL_IRQ_ID  11
 #define FAST0_IRQ_ID     16
 #define FAST1_IRQ_ID     17
@@ -51,6 +51,7 @@
 #define FAST13_IRQ_ID    29
 #define FAST14_IRQ_ID    30
 #define FAST15_IRQ_ID    31
+#define NMI_IRQ_ID        0
 
 void delay(int count);
 void mstatus_mie_enable();
@@ -85,6 +86,7 @@ __attribute__((interrupt ("machine"))) void m_fast12_irq_handler(void);
 __attribute__((interrupt ("machine"))) void m_fast13_irq_handler(void);
 __attribute__((interrupt ("machine"))) void m_fast14_irq_handler(void);
 __attribute__((interrupt ("machine"))) void m_fast15_irq_handler(void);
+__attribute__((interrupt ("machine"))) void m_nmi_irq_handler(void);
 
 // A Special version of the SW Handler (vector 0) used in the direct mode
 __attribute__((interrupt ("machine"))) void u_sw_direct_irq_handler(void);

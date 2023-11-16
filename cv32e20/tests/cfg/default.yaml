@@ -3,10 +3,8 @@ description: Default configuration for CV32E20 simulations
 compile_flags: 
 # Alternate reference model configuration using parameter overrides and tool control
 ovpsim: >
-  --override cpu/mvendorid=0
-  --override cpu/mimpid=0
-  --override cpu/priv_version=20211203
-  --override cpu/marchid=35
+  --output imperas.log
   --showinstanceparams cpu
+  --override cpu/dexc_address=0x1a140000
   --trace --tracechange --traceshowicount --tracemode --monitornets
 cflags: >
