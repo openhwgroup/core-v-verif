@@ -126,5 +126,17 @@ typedef struct packed {
   logic                        accesses_jvt;
 } pma_status_t;
 
+typedef struct packed {
+  obi_data_req_t  req;
+  obi_data_resp_t resp;
+  logic           valid;
+} obi_data_packet_t;
+
+typedef struct packed {
+  obi_inst_req_t  req;
+  obi_inst_resp_t resp;
+  logic           valid;
+} obi_instr_packet_t;
+
 
 `endif // __UVMT_CV32E40S_BASE_TEST_TDEFS_SV__

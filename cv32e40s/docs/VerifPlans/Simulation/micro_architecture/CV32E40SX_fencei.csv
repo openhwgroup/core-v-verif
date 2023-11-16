@@ -1,20 +1,20 @@
 Requirement Location,Feature,Sub Feature,Feature Description,Verification Goal,Pass/Fail Criteria,Test Type,Coverage Method,Link to Coverage,Comment
 Riscv spec,StoresVisible,StoresVisible,"After a fence.i instruction has been executed, all preceding store instructions shall have their effects visible to the instruction fetch of the instructions that are to be executed after the fence.i instruction.","Do a fencei, but right before the fencei do a store to the instruction following the fencei, then see that the newly stored value is executed instead of the old instruction (e.g. change addi to use a different immediate)",Check against RM,Constrained-Random,Functional Coverage,"RTC: cv32e40s/tests/programs/corev-dv/corev_rand_fencei/
 
-COV: ???",TODO must be added to regression lists
+COV: uvmt_cv32e40s_fencei_assert.sv, ""cov_stores_visible_store_fencei_exec"".",
 ,,,,"Do a fencei followed by any instruction, but let the environment detect when the fencei is being executed and change the memory holding the next instruction, then see that the old instruction is not executed",Check against RM,Directed Non-Self-Checking,Functional Coverage,"DTC: cv32e40s/tests/programs/custom/fencei/
 
-COV: ???",TODO missing cover
+COV: (SKIPPED).","Cover skipped because of low reward/effort ratio, and because other testing is good enough."
 ,,,,"Let the instruction right before a fence.i write a different instruction to the address following the fence.i, then observe that the written instruction is executed instead of the original one and that no side-effects (csr updates or otherwise) occur (can possibly mix 16bit/32bit instructions to force a noticable difference)",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/fencei/,
-,,,,"Check that after having read one value from an address, then after storing a value to that same address, if executing that address then the value shall always be that which was written (should work well in both sim/formal)",Assertion Check,"ENV capability, not specific test",Assertion Coverage,A: ???,TODO missing assert. (Note was ignored because of the difficulty of writing this as an assert for fv.)
+,,,,"Check that after having read one value from an address, then after storing a value to that same address, if executing that address then the value shall always be that which was written (should work well in both sim/formal)",Assertion Check,"ENV capability, not specific test",Assertion Coverage,A: (SKIPPED).,"Assertion skipped because
+1) it makes little sense in formal,
+2) the simulation tests handle this scenario."
 User manual,ExternalHandshake,ReqHigh,"When executing a fence.i instruction, fencei_flush_req_o shall rise sometime before executing the next instruction",Check that when executing a fence.i instruction there will be a rising req before has retired,Assertion Check,"ENV capability, not specific test",Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.a_req_rise_before_retire,
 ,,ReqWaitLsu,"When executing a fence.i instruction, if there is an ongoing store instruction (not limited to rv32i) that has not completed (data_rvalid_i clocked in as 1), then fencei_flush_req_o shall be low","Make sure a store instruction is run right before a fence.i, and (possibly using obi stalls) ensure that the fence.i is pending retirement but holds off until the store's data_rvalid_i is clocked in and that fencei_flush_req_o was low until this point where it now goes high",Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.a_req_wait_bus
 
-COV: ???",TODO missing cover
-,,ReqWaitWritebuffer,"When executing a fence.i instruction, if the write buffer is not empty, then fencei_flush_req_o shall be low until the write buffer has been emptied and the corresponding data_rvalid_i have been clocked in as 1",Fill up the write buffer prior to executing a fence.i and ensure that fencei_flush_req_o holds off going high until the write buffer to has been emptied,Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.a_req_wait_buffer
-
-COV: ???",TODO missing cover
-,,ReqWaitXinterface,"When executing a fence.i instruction, if the X interface is busy with any store operations, then  fencei_flush_req_o shall be low until all the store operations are done",Issue one or more store instructions that uses the X interface and ensure that fencei_flush_req_o waits until the stores have all completed before going high,Assertion Check,Constrained-Random,Functional Coverage,(Not relevant for the 40s),
+COV: uvmt_cv32e40s_fencei_assert.sv, ""cov_req_wait_bus"".",
+,,ReqWaitWritebuffer,"When executing a fence.i instruction, if the write buffer is not empty, then fencei_flush_req_o shall be low until the write buffer has been emptied and the corresponding data_rvalid_i have been clocked in as 1",Fill up the write buffer prior to executing a fence.i and ensure that fencei_flush_req_o holds off going high until the write buffer to has been emptied,Assertion Check,Constrained-Random,Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.a_req_wait_buffer,
+,,ReqWaitXinterface,"When executing a fence.i instruction, if the X interface is busy with any store operations, then  fencei_flush_req_o shall be low until all the store operations are done",Issue one or more store instructions that uses the X interface and ensure that fencei_flush_req_o waits until the stores have all completed before going high,Assertion Check,Constrained-Random,Functional Coverage,(Not relevant for the 40s),40x future!
 ,,ReqWaitObi,fencei_flush_req_o shall not go high while there are outstanding stores on the obi bus,Check vs the OBI monitors that there are no outstanding stores at the time fencei_flush_req_o goes high,Assertion Check,Constrained-Random,Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.a_req_wait_outstanding
 
 COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.gen_c_req_wait_outstanding_1.cov_req_wait_outstanding_1",
@@ -37,22 +37,14 @@ User manual,Fetching,Fetching,Instruction data for the next PC must be fetched a
 User manual,MultiCycle,MultiCycle,"Given zero stalls on neither instr-side and data-side obi nor on fencei_flush_ack_i, then the execution of fence.i takes a fixed number of cycles.","Check that, given ideal conditions, the cycle count of fence.i is as expected",Assertion Check,"ENV capability, not specific test",Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.a_cycle_count_minimum,
 User manual,StoresComplete,StoresComplete,"Any store instruction that is successfully executed before a fence.i will fully complete and have its effect visible (this is not about syncronization with instruction fetch, but rather seeing that the stores are not aborted)","Check that all stores (either to next pc or other places) preceding a fence.i will complete on the bus (excluding exceptions/interrupts/etc) and be readable afterwards (particularly, ensure that the write buffer isn't just purged)",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/fencei/,
 ,,,,,Check against RM,Constrained-Random,Testcase,RTC: cv32e40s/tests/programs/corev-dv/corev_rand_fencei/,
-User manual,Flush,Flush,"When fence.i is executed, then any prefetched instructions shall be flushed; meaning that pipeline stages are flushed, prefetcher is flushed, write buffer is flushed, and data_req_o is eventually supressed","Check that a fence.i will cause flushing of the pipeline, prefetcher, write buffer, and data_req_o",Assertion Check,"ENV capability, not specific test",Assertion Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.a_supress_datareq
+User manual,Flush,Flush,"When fence.i is executed, then any prefetched instructions shall be flushed; meaning that pipeline stages are flushed, prefetcher is flushed, write buffer is flushed, and data_req_o is eventually supressed","Check that a fence.i will cause flushing of the:
+1) pipeline,
+2) prefetcher,
+3) write buffer,
+4) data_req_o.",Assertion Check,"ENV capability, not specific test",Assertion Coverage,"A: uvmt_cv32e40s_fencei_assert.sv, ""a_flush_pipeline"".
 
-A: ???",TODO missing assert. (Have not checked/covered that the pipeline/writebuffer content is actually purged. Or that any memory change WILL be the next instr word.)
+A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.a_supress_datareq","This is somewhat complex to check, so
+1) the pipeline and prefetcher asserts use rvfi retires as a ""proxy"", and
+2) the write buffer and data req asserts use only data req."
 Riscv spec,UnusedFields,UnusedFields,"imm[11:0], rs1, rd are reserved for future extensions, and implementations shall ignore them",Try giving random values in those fields and see that all else works as expected,Check against RM,Constrained-Random,Functional Coverage,COV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.reserved_cg,
 ,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
- -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- END -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------,,,,,,,,,

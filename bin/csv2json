@@ -57,11 +57,16 @@ csv_reader   = csv.DictReader(csv_file)
 csv_rows         = []
 csv_row_previous = None
 
+def should_fill_cell(cell_value, previous_row, row_key):
+    cell_is_empty        = not cell_value
+    previous_row_exists  = previous_row
+    column_should_repeat = row_key in ['Feature', 'Verification Goal']
+    return  cell_is_empty  and  previous_row_exists  and  column_should_repeat
+
 for row in csv_reader:
     for key, value in row.items():
-        if not value and csv_row_previous:
+        if should_fill_cell(value, csv_row_previous, key):
             row[key] = csv_row_previous[key]
-            # TODO not for "link-to-cov" etc
 
     csv_rows.append(row)
     csv_row_previous = row

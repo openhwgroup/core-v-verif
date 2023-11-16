@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 `uvm_analysis_imp_decl(_interrupt)
-`uvm_analysis_imp_decl(_instr)
+`uvm_analysis_imp_decl(_isacov)
 
 /*
 * Covergroups
@@ -115,7 +115,7 @@ class uvme_interrupt_covg extends uvm_component;
     cg_wfi_exit  wfi_exit_cg;
 
     uvm_analysis_imp_interrupt#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvme_interrupt_covg) interrupt_mon_export;
-    uvm_analysis_imp_instr#(uvma_isacov_mon_trn_c, uvme_interrupt_covg) instr_mon_export;
+    uvm_analysis_imp_isacov#(uvma_isacov_mon_trn_c, uvme_interrupt_covg) isacov_mon_export;
 
     `uvm_component_utils(uvme_interrupt_covg);
 
@@ -124,7 +124,7 @@ class uvme_interrupt_covg extends uvm_component;
     extern task run_phase(uvm_phase phase);
 
     extern function void write_interrupt(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) trn);
-    extern function void write_instr(uvma_isacov_mon_trn_c trn);
+    extern function void write_isacov(uvma_isacov_mon_trn_c trn);
 
 endclass : uvme_interrupt_covg
 
@@ -136,7 +136,7 @@ function uvme_interrupt_covg::new(string name = "interrupt_covg", uvm_component 
 
 
     interrupt_mon_export = new("interrupt_mon_export", this);
-    instr_mon_export     = new("instr_mon_export", this);
+    isacov_mon_export    = new("isacov_mon_export", this);
 
 endfunction : new
 
@@ -197,16 +197,19 @@ endtask : run_phase
 
 function void uvme_interrupt_covg::write_interrupt(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) trn);
 
-    if (trn.intr == 1 && last_instr_trn != null) begin
+  if (cfg.basic_interrupt_enable) begin
+    if (trn.intr.intr == 1 && trn.intr.interrupt == 1 && last_instr_trn != null) begin
         `uvm_info("INTERRUPTCOVG", $sformatf("IRQ entered from %s", last_instr_trn.instr.name.name()), UVM_DEBUG)
         irq_entry_cg.sample(last_instr_trn.instr);
         irq_nested_count++;
     end
+  end
 
 endfunction : write_interrupt
 
-function void uvme_interrupt_covg::write_instr(uvma_isacov_mon_trn_c trn);
+function void uvme_interrupt_covg::write_isacov(uvma_isacov_mon_trn_c trn);
 
+  if (cfg.basic_interrupt_enable) begin
     // If this is a WFI, then sample the last instruction
     if (trn.instr.name == WFI && last_instr_trn != null) begin
         wfi_entry_cg.sample(last_instr_trn.instr);
@@ -228,5 +231,6 @@ function void uvme_interrupt_covg::write_instr(uvma_isacov_mon_trn_c trn);
     // When an instruction is sampled, just save the handle here
     // It will be sampled when an interrupt or wfi event occurs
     last_instr_trn = trn;
+  end
 
-endfunction : write_instr
+endfunction : write_isacov

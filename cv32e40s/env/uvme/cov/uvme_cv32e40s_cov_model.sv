@@ -29,6 +29,7 @@ class uvme_cv32e40s_cov_model_c extends uvm_component;
    uvme_cv32e40s_cfg_c    cfg;
    uvme_cv32e40s_cntxt_c  cntxt;
 
+   uvme_clic_covg         clic_covg;
    uvme_interrupt_covg    interrupt_covg;
    uvme_debug_covg        debug_covg;
    uvme_exceptions_covg   exceptions_covg;
@@ -81,6 +82,9 @@ function void uvme_cv32e40s_cov_model_c::build_phase(uvm_phase phase);
    if (!cntxt) begin
       `uvm_fatal("CNTXT", "Context handle is null")
    end
+
+   clic_covg = uvme_clic_covg::type_id::create("clic_covg", this);
+   uvm_config_db#(uvma_core_cntrl_cfg_c)::set(this, "clic_covg", "cfg", cfg);
 
    interrupt_covg = uvme_interrupt_covg::type_id::create("interrupt_covg", this);
    uvm_config_db#(uvma_core_cntrl_cfg_c)::set(this, "interrupt_covg", "cfg", cfg);

@@ -39,8 +39,9 @@
 
 usage() {
   echo "usage: $0 [-x] [--clone] [--ignore] [--unignore]"
-  echo "  -x          clone cv32e40x subtree"
-  echo "  --clone     clone subtree based on env vars"
+  echo "  -x          clone cv32e40x subtree, known stable hash"
+  echo "  --x-main    clone cv32e40x subtree, latest main branch"
+  echo "  --clone     clone a subtree based on env vars"
   echo "  --ignore    tell git to ignore the cloned subtree"
   echo "  --unignore  tell git to not ignore the cloned subtree"
 
@@ -86,6 +87,16 @@ clone_cv32e40x() {
   ignore_cloned_directory
 }
 
+clone_cv32e40x_main() {
+  CV_CORE=cv32e40x
+  VERIF_ENV_REPO=https://github.com/openhwgroup/cv32e40x-dv.git
+  VERIF_ENV_REF=main
+
+  clone
+
+  ignore_cloned_directory
+}
+
 ignore_cloned_directory() {
   check_env_vars_cvcore
 
@@ -113,6 +124,9 @@ main() {
   case $1 in
     "-x")
       clone_cv32e40x
+      ;;
+    "--x-main")
+      clone_cv32e40x_main
       ;;
     "--clone")
       clone

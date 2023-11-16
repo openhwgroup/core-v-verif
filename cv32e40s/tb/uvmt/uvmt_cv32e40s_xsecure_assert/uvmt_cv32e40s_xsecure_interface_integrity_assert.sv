@@ -298,7 +298,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
 
   a_xsecure_integrity_store_data_rchk: assert property (
     p_checksum_data_rchk(
-      support_if.req_was_store,
+      support_if.obi_data_packet.req.we,
       obi_data_rvalid,
       obi_data_resp_packet.rchk[RCHK_STORE],
       rchk_data_calculated[RCHK_STORE])
@@ -307,7 +307,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
 
   a_xsecure_integrity_load_data_rchk: assert property (
     p_checksum_data_rchk(
-    !support_if.req_was_store,
+    !support_if.obi_data_packet.req.we,
     obi_data_rvalid,
     obi_data_resp_packet.rchk,
     rchk_data_calculated)
@@ -394,7 +394,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     ##0 seq_checksum_fault(
       obi_data_rvalid,
       support_if.data_req_had_integrity,
-      support_if.req_was_store,
+      support_if.obi_data_packet.req.we,
       obi_data_resp_packet.rchk[RCHK_STORE],
       rchk_data_calculated[RCHK_STORE])
 
@@ -408,7 +408,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     ##0 seq_checksum_fault(
       obi_data_rvalid,
       support_if.data_req_had_integrity,
-      !support_if.req_was_store,
+      !support_if.obi_data_packet.req.we,
       obi_data_resp_packet.rchk,
       rchk_data_calculated)
 
@@ -442,7 +442,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     ##0 seq_checksum_fault(
       obi_data_rvalid,
       support_if.data_req_had_integrity,
-      support_if.req_was_store,
+      support_if.obi_data_packet.req.we,
       obi_data_resp_packet.rchk[RCHK_STORE],
       rchk_data_calculated[RCHK_STORE])
 
@@ -457,7 +457,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
     ##0 seq_checksum_fault(
       obi_data_rvalid,
       support_if.data_req_had_integrity,
-      !support_if.req_was_store,
+      !support_if.obi_data_packet.req.we,
       obi_data_resp_packet.rchk,
       rchk_data_calculated)
 
@@ -554,7 +554,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   a_glitch_xsecure_integrity_data_rchk_fault_integrity_err_store: assert property (
     p_rchk_fault_integrity_err(
       support_if.data_req_had_integrity,
-      support_if.req_was_store,
+      support_if.obi_data_packet.req.we,
       obi_data_rvalid,
       obi_data_resp_packet.rchk[RCHK_STORE],
       rchk_data_calculated[RCHK_STORE],
@@ -564,7 +564,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   a_glitch_xsecure_integrity_data_rchk_fault_integrity_err_load: assert property (
     p_rchk_fault_integrity_err(
       support_if.data_req_had_integrity,
-      !support_if.req_was_store,
+      !support_if.obi_data_packet.req.we,
       obi_data_rvalid,
       obi_data_resp_packet.rchk,
       rchk_data_calculated,
@@ -706,7 +706,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   ) else `uvm_error(info_tag_glitch, "The NMI caused by an associated parity/checksum error does not have exception code 1027 or 1026.\n");
 
   //Load instructions
-  c_glitch_xsecure_security_parity_checksum_fault_NMI_load_instruction: cover property (
+  c_glitch_xsecure_integrity_parity_checksum_fault_NMI_load_instruction: cover property (
 
     obi_data_rvalid
     && data_integrity_err
@@ -715,7 +715,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   );
 
   //Store instructions
-  c_glitch_xsecure_security_parity_checksum_fault_NMI_store_instruction: cover property (
+  c_glitch_xsecure_integrity_parity_checksum_fault_NMI_store_instruction: cover property (
 
     obi_data_rvalid
     && data_integrity_err
