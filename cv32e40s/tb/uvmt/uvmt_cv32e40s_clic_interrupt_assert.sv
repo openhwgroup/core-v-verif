@@ -1218,7 +1218,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // There should be no irq_ack unless there was a pending and enabled irq
     // ------------------------------------------------------------------------
 
-    sequence seq_irq_pend_notok(bit ok = 1'b1);
+    sequence seq_irq_pend_notok();
       @(posedge clk_i)
 
       // no valid pending
@@ -1873,16 +1873,18 @@ module uvmt_cv32e40s_clic_interrupt_assert
     // ------------------------------------------------------------------------
 
     property p_mtvt_alignment_correct;
-      disable iff (!rst_ni || N_MTVT <= 6) // Disable if field does not exist
+      disable iff (!rst_ni)
       mtvt_fields.base_n_0 == '0;
     endproperty : p_mtvt_alignment_correct
 
-    a_mtvt_alignment_correct: assert property (p_mtvt_alignment_correct)
-    else
-      `uvm_error(info_tag,
-        $sformatf("mtvt alignment should have been %d bytes, mtvt: %08x",
-          (2 ** N_MTVT),
-          mtvt));
+    if (N_MTVT > 6) begin: gen_mtvt_alignment_correct // Disable if field does not exist
+      a_mtvt_alignment_correct: assert property (p_mtvt_alignment_correct)
+      else
+        `uvm_error(info_tag,
+          $sformatf("mtvt alignment should have been %d bytes, mtvt: %08x",
+            (2 ** N_MTVT),
+            mtvt));
+    end
 
     // ------------------------------------------------------------------------
     // mepc is always set correctly when taking an interrupt
