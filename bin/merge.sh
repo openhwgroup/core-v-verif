@@ -33,8 +33,10 @@ usage() {
   echo "--x-dv_into_s     Do a merge of cv32e40x-dv main into core-v-verif cv32e40s/dev cv32e40s (not yet developed)"
   echo "--sdev_into_xdev  Do a merge of core-v-verif cv32e40s/dev into core-v-verif cv32e40x/dev"
   echo "--xdev_into_sdev  Do a merge of core-v-verif cv32e40x/dev into core-v-verif cv32e40s/dev"
+  echo "--rejection-diff  Merge s/dev to x-dv, using 'theirs'"
 
   exit 1
+
 }
 
 
@@ -64,12 +66,12 @@ merge_cv32e40s_into_cv32e40x-dv () {
 
 move_files_40s_into_40x () {
 
-  echo "=== Exchange 40x/X with 40s/S in file names ==="
+  echo "=== Replace 40s/S with 40x/X in file names ==="
 
   find . -type d | egrep -iv '\/\.|40sx|40xs' | grep -i 40s | xargs -n1 dirname | awk '{gsub(/40s/, "40x"); gsub(/40S/, "40X"); print}' | xargs -n2 mkdir -p
-  find . -type d | egrep -iv '\/\.|40sx|40xs' | grep -i 40s | awk '{printf $1; printf " "; gsub(/40s/, "40x"); gsub(/40S/, "40X"); print}' | xargs -n2 git mv
+  find . -type d | egrep -iv '\/\.|40sx|40xs' | grep -i 40s | awk '{printf $1; printf " "; gsub(/40s/, "40x"); gsub(/40S/, "40X"); print}' | xargs -n2 git mv -f
   find . -type f | egrep -iv '\/\.|40sx|40xs' | grep -i 40s | xargs -n1 dirname | awk '{gsub(/40s/, "40x"); gsub(/40S/, "40X"); print}' | xargs -n2 mkdir -p
-  find . -type f | egrep -iv '\/\.|40sx|40xs' | grep -i 40s | awk '{printf $1; printf " "; gsub(/40s/, "40x"); gsub(/40S/, "40X"); print}' | xargs -n2 git mv
+  find . -type f | egrep -iv '\/\.|40sx|40xs' | grep -i 40s | awk '{printf $1; printf " "; gsub(/40s/, "40x"); gsub(/40S/, "40X"); print}' | xargs -n2 git mv -f
 
 }
 
@@ -124,38 +126,53 @@ merge_xdev_into_sdev () {
 }
 
 
-check_cv32e40x_repo() {
+clone_x_dv() {
 
-  echo "=== Check if cv32e40x exist ==="
-  if [ ! -d "./cv32e40x/" ]; then
-    echo "Directory cv32e40x does not exists."
-    echo "Run: ./bin/clonetb -x"
-    echo "before running: ./bin/merge_script --s_into_x-dv"
-    exit 1
-  fi
-  printf "OK\n\n"
+  echo "=== Cloning x-dv ==="
 
-  echo "=== Check if cv32e40x is the core-v-verif repo ==="
-  if [ ! -d "./cv32e40x/.git/" ]; then
-    echo "Directory cv32e40x is a 'core-v-verif' repo and not a 'cv32e40x-dv' repo."
-    echo "Run: ./bin/clonetb -x"
-    echo "before running: ./bin/merge_script --s_into_x-dv"
-    exit 1
-  fi
-  printf "OK\n\n"
+  read -p "This overwrites 'cv32e40x/'. Continue? y/n " yn
+  case $yn in
+    [Yy]* ) ;;
+    * ) echo "aborting"; exit;;
+  esac
+
+  ./bin/clonetb --x-main
 
 }
 
 
 check_merge_status() {
+
   git status
+
+}
+
+
+rejection_diff() {
+
+  echo "=== Merging s/dev to x-dv, using 'theirs' ==="
+  echo "WARNING, this function is crude and makes assumptions."
+
+  cd cv32e40x
+  branch_name_40s_subtree=$(git branch | grep ' cv32e40s')
+  branch_name_merge_normal=$(git branch | grep 'merge')
+  branch_name_merge_theirs=$(echo $branch_name_merge_normal | sed 's/merge/theirs/')
+
+  git checkout main
+  git checkout -B $branch_name_merge_theirs
+  git merge -X theirs $branch_name_40s_subtree
+
+  move_files_40s_into_40x
+  substitute_file_content_40s_into_40x
+
 }
 
 
 main() {
+
   case $1 in
     "--s_into_x-dv")
-      check_cv32e40x_repo
+      clone_x_dv
       merge_cv32e40s_into_cv32e40x-dv
       move_files_40s_into_40x
       substitute_file_content_40s_into_40x
@@ -172,11 +189,14 @@ main() {
       merge_xdev_into_sdev
       check_merge_status
       ;;
+    "--rejection-diff")
+      rejection_diff
+      ;;
     *)
       usage
       ;;
   esac
+
 }
 
 main "$@"
-
