@@ -525,7 +525,7 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
 
   // Override ECALL trap handler - gen_ecall_handler of corev-dv
   // Replace pop_gpr_from_kernel_stack with pop_regfile_from_kernel_stack
-  // With RV32X enabled, check for illegal instr on the last instr of hwloop
+  // With RV32X enabled, check for ecall instr on the last instr of hwloop
   // If true, then set MEPC to first instr of hwloop instead of simply
   // incrementing by 4.
   virtual function void gen_ecall_handler(int hart);
@@ -573,7 +573,7 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
 
   // Override Ebreak trap handler - gen_ebreak_handler
   // Replace pop_gpr_from_kernel_stack with pop_regfile_from_kernel_stack
-  // With RV32X enabled, check for illegal instr on the last instr of hwloop
+  // With RV32X enabled, check for ebreak instr on the last instr of hwloop
   // If true, then set MEPC to first instr of hwloop instead of simply
   // incrementing by 4.
   virtual function void gen_ebreak_handler(int hart);
@@ -625,8 +625,9 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
   // Override Illegal instruction handler - gen_illegal_instr_handler
   // Replace pop_gpr_from_kernel_stack with pop_regfile_from_kernel_stack
   // With RV32X enabled, check for illegal instr on the last instr of hwloop
-  // If true, then set MEPC to first instr of hwloop instead of simply
-  // incrementing by 4.
+  // If true, then
+  // (a) Set MEPC to first instr of hwloop body
+  // (b) Add logic to decrement the LPCOUNT
   virtual function void gen_illegal_instr_handler(int hart);
     string instr[$];
     cv32e40p_instr_gen_config corev_cfg;
@@ -637,27 +638,62 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
     if (riscv_instr_pkg::RV32X inside {riscv_instr_pkg::supported_isa}) begin
       instr = {instr,
+              // Check LPCOUNT1 >= 1
               $sformatf("csrr x%0d, 0x%0x", cfg.gpr[0], LPCOUNT1),
-              $sformatf("li x%0d, 2", cfg.gpr[1]),
+              $sformatf("li x%0d, 1", cfg.gpr[1]),
               $sformatf("bge x%0d, x%0d, 1f", cfg.gpr[0], cfg.gpr[1]),
+              // Check LPCOUNT0 >= 1
               $sformatf("2: csrr x%0d, 0x%0x", cfg.gpr[0], LPCOUNT0),
-              $sformatf("li x%0d, 2", cfg.gpr[1]),
+              $sformatf("li x%0d, 1", cfg.gpr[1]),
               $sformatf("bge x%0d, x%0d, 3f", cfg.gpr[0], cfg.gpr[1]),
+              // Since both LPCOUNT0 & LPCOUNT1 equals 0
+              // Nothing needs to be done for HWLOOPs and its CSRs
               $sformatf("beqz x0, 4f"),
+
+              // HWLOOP1 Handling
+              // Check for ILLEGAL being the LAST HWLOOP Body instr
               $sformatf("1: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC),
               $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[1], LPEND1),
               $sformatf("addi x%0d, x%0d, -4", cfg.gpr[1], cfg.gpr[1]),
               $sformatf("bne x%0d, x%0d, 2b", cfg.gpr[0], cfg.gpr[1]),
+              // Else, If equal this means the illegal instr was the last
+              // hwloop body instr, thus we handle the HWLOOP manually here
+              // First decrement lpcount CSR manually as CSR not updated in HW
+              $sformatf("csrr x%0d, 0x%0x", cfg.gpr[1], LPCOUNT1),
+              $sformatf("addi x%0d, x%0d, -1", cfg.gpr[1], cfg.gpr[1]),
+              $sformatf("cv.count 1, x%0d", cfg.gpr[1]),
+              // Check if the current LPCOUNT1 value == 0, if so, then MEPC=MEPC+4
+              $sformatf("csrr x%0d, 0x%0x", cfg.gpr[1], LPCOUNT1),
+              $sformatf("beqz x%0d, 4f", cfg.gpr[1]),
+              // Else LPCOUNT1 still >=1 and thus next,
+              // Set the next MEPC to LPSTART1 for next HWLOOP iteration
               $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[0], LPSTART1),
               $sformatf("beqz x0, 5f"),
+
+              // HWLOOP0 Handling
+              // Check for ILLEGAL being the LAST HWLOOP Body instr
               $sformatf("3: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC),
               $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[1], LPEND0),
               $sformatf("addi x%0d, x%0d, -4", cfg.gpr[1], cfg.gpr[1]),
               $sformatf("bne x%0d, x%0d, 4f", cfg.gpr[0], cfg.gpr[1]),
+              // Else, If equal this means the illegal instr was the last
+              // hwloop body instr, thus we handle the HWLOOP manually here
+              // First decrement lpcount CSR manually as CSR not updated in HW
+              $sformatf("csrr x%0d, 0x%0x", cfg.gpr[1], LPCOUNT0),
+              $sformatf("addi x%0d, x%0d, -1", cfg.gpr[1], cfg.gpr[1]),
+              $sformatf("cv.count 0, x%0d", cfg.gpr[1]),
+              // Check if the current LPCOUNT0 value == 0, if so, then MEPC=MEPC+4
+              $sformatf("csrr x%0d, 0x%0x", cfg.gpr[1], LPCOUNT0),
+              $sformatf("beqz x%0d, 4f", cfg.gpr[1]),
+              // Else LPCOUNT0 still >=1 and thus next,
+              // Set the next MEPC to LPSTART0 for next HWLOOP iteration
               $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[0], LPSTART0),
               $sformatf("beqz x0, 5f"),
+
+              // Default increment for MEPC by 4
               $sformatf("4: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC),
               $sformatf("addi  x%0d, x%0d, 4", cfg.gpr[0], cfg.gpr[0]),
+              // Write MEPC
               $sformatf("5: csrw  0x%0x, x%0d", MEPC, cfg.gpr[0])
       };
     end else begin
