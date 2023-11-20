@@ -33,6 +33,7 @@ volatile uint32_t  g_debug_function_setup_triggers = 0;
 volatile uint32_t  g_exception_expected = 0;
 
 volatile uint32_t  g_pushpop_area [32];
+volatile uint32_t  g_pushpop_area_index = 0;
 
 void disable_debug_req(void) {
   CV_VP_DEBUG_CONTROL = (
@@ -111,7 +112,7 @@ void  debug_start(void) {
   )");
 }
 
-static void  setup_triggers(void){
+static void  setup_triggers(int index){
   mcontrol6_t  mcontrol6;
   uint32_t     trigger_addr;
 
@@ -122,7 +123,7 @@ static void  setup_triggers(void){
   mcontrol6.fields.match = 0;  // (match exact address)
   mcontrol6.fields.type  = 6;
 
-  trigger_addr = (uint32_t) &(g_pushpop_area[2]);  // (arbitrary index)
+  trigger_addr = (uint32_t) &(g_pushpop_area[index]);  // (arbitrary index)
 
   __asm__ volatile(
     R"(
@@ -180,7 +181,7 @@ void  debug_handler(void){
 
   if (g_debug_function_setup_triggers) {
     g_debug_function_setup_triggers = 0;
-    setup_triggers();
+    setup_triggers(g_pushpop_area_index);
     return;
   }
   if (g_debug_function_incr_dpc) {
@@ -238,12 +239,13 @@ static void  pop_debug_trigger(void){
   );
 }
 
-static void  let_dmode_setup_triggers(void){
+static void  let_dmode_setup_triggers(int index){
   printf("setup trigs\n");
 
   g_debug_expected = 1;
   g_debug_entered  = 0;
   g_debug_function_setup_triggers = 1;
+  g_pushpop_area_index = index; // arbitrary index
 
   // Prolonged pulse duration so debug req has a chance to be acked and taken
   CV_VP_DEBUG_CONTROL = (
@@ -293,7 +295,13 @@ static void  test_pop_debug_trigger(void){
 }
 
 int main(int argc, char **argv){
-  let_dmode_setup_triggers();
+  let_dmode_setup_triggers(2);
+  test_push_debug_trigger();
+  test_pop_debug_trigger();
+  let_dmode_setup_triggers(1); // trigger at first address
+  test_push_debug_trigger();
+  test_pop_debug_trigger();
+  let_dmode_setup_triggers(3); // trigger at last address //TODO find address
   test_push_debug_trigger();
   test_pop_debug_trigger();
 
