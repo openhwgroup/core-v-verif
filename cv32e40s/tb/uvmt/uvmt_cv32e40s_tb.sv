@@ -1484,9 +1484,8 @@ module uvmt_cv32e40s_tb;
     uvmt_cv32e40s_support_logic_module_o_if_t support_logic_module_o_if();
 
   `ifndef  COREV_ASSERT_OFF
-    bind cv32e40s_pmp :
-      uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i
-      uvmt_cv32e40s_pmp_assert #(
+    bind uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i
+      uvmt_cv32e40s_pmp_assert#(
         .PMP_GRANULARITY  (PMP_GRANULARITY),
         .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
         .IS_INSTR_SIDE    (1'b1),
@@ -1503,8 +1502,7 @@ module uvmt_cv32e40s_tb;
   `endif
 
   `ifndef  COREV_ASSERT_OFF
-    bind  cv32e40s_pmp :
-      uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i
+    bind uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i
       uvmt_cv32e40s_pmp_assert#(
         .PMP_GRANULARITY  (PMP_GRANULARITY),
         .PMP_NUM_REGIONS  (PMP_NUM_REGIONS),
