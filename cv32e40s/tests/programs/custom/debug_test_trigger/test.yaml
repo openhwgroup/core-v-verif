@@ -1,6 +1,3 @@
-# Test definition YAML for test
-
-# Debug trigger directed test
 name: debug_test_trigger
 uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
 description: >

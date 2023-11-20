@@ -297,6 +297,8 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          isacov_cfg.cov_model_enabled            == 1;
          debug_cfg.cov_model_enabled             == 1;
          pma_cfg.cov_model_enabled               == 1;
+         clic_cfg.cov_model_enabled              == clic_interrupt_enable;
+         interrupt_cfg.cov_model_enabled         == basic_interrupt_enable;
          obi_memory_instr_cfg.cov_model_enabled  == 1;
          obi_memory_data_cfg.cov_model_enabled   == 1;
       }

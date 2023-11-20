@@ -1,0 +1,9 @@
+name: param_set_1
+description: >
+    Compile with external parameter configuration.
+    USER_COMPILE_FLAGS="+incdir+path_to_your_param_set_1_directory"
+    Tests will fail, but you get the coverage model and data.
+compile_flags: >
+    +define+PARAM_SET_1
+cflags: >
+cv_sw_march: rv32emc

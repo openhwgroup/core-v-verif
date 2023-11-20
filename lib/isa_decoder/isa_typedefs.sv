@@ -27,7 +27,7 @@
     // Unknown for instructions that cannot be decoded
     UNKNOWN_INSTR = 0,
     FENCE,
-    FENCEI,
+    FENCE_I,
     MRET,
     DRET,
     ECALL,
@@ -101,7 +101,7 @@
     MAXU,
     CPOP,
     CTZ,
-    ORCB,
+    ORC_B,
     ORN,
     CLZ,
     ANDN,
@@ -110,9 +110,9 @@
     RORI,
     XNOR,
     REV8,
-    SEXTB,
-    SEXTH,
-    ZEXTH,
+    SEXT_B,
+    SEXT_H,
+    ZEXT_H,
     //Zbc
     CLMUL,
     CLMULH,
@@ -171,10 +171,10 @@
     C_LH,
     C_SB,
     C_SH,
-    C_ZEXTB,
-    C_SEXTB,
-    C_ZEXTH,
-    C_SEXTH,
+    C_ZEXT_B,
+    C_SEXT_B,
+    C_ZEXT_H,
+    C_SEXT_H,
     C_NOT,
     C_MUL,
     //Zcmp
@@ -282,7 +282,7 @@
     C_X13 = 3'b101,
     C_X14 = 3'b110,
     C_X15 = 3'b111
-  } c_gpr_name_e;
+  } gpr_rvc_name_e;
 
   typedef enum logic [2:0] {
     C_S0 = 3'b000,
@@ -293,13 +293,13 @@
     C_A3 = 3'b101,
     C_A4 = 3'b110,
     C_A5 = 3'b111
-  } c_gpr_abi_name_e;
+  } gpr_rvc_abi_name_e;
 
   typedef union packed {
-    bit [2:0]        raw;
-    c_gpr_name_e     gpr;
-    c_gpr_abi_name_e gpr_abi;
-  } c_gpr_t;
+    bit [2:0]          raw;
+    gpr_rvc_name_e     gpr;
+    gpr_rvc_abi_name_e gpr_abi;
+  } gpr_rvc_t;
 
   typedef union packed {
     bit [4:0]      raw;
@@ -438,11 +438,11 @@
 
   // Minor opcodes for logical operators and sign extend (FUNCT3_SEXT)
   typedef enum logic [2:0] {
-    FUNCT3_XNOR = 3'b100,
-    FUNCT3_ORCB = 3'b101,
-    FUNCT3_ORN  = 3'b110,
-    FUNCT3_ANDN = 3'b111,
-    FUNCT3_SEXT = 3'b001
+    FUNCT3_XNOR  = 3'b100,
+    FUNCT3_ORC_B = 3'b101,
+    FUNCT3_ORN   = 3'b110,
+    FUNCT3_ANDN  = 3'b111,
+    FUNCT3_SEXT  = 3'b001
   } zbb_logical_minor_opcode_e;
 
   // Minor opcodes for rotate instructions
@@ -455,9 +455,9 @@
   // and zero extend halfword instruction (FUNCT3_ZEXTH).
   // FUNCT3_C is correct for all count isntructions.
   typedef enum logic [2:0] {
-    FUNCT3_REV8  = 3'b101,
-    FUNCT3_C     = 3'b001,
-    FUNCT3_ZEXTH = 3'b100
+    FUNCT3_REV8   = 3'b101,
+    FUNCT3_C      = 3'b001,
+    FUNCT3_ZEXT_H = 3'b100
   } zbb_rev8_c_zexth_minor_opcode_e;
 
   typedef enum logic [2:0] {
@@ -523,10 +523,10 @@
   } a_minor_opcode_e;
 
   typedef enum logic [4:0] {
-    FUNCT5_C_SEXTB  = 5'b11001,
-    FUNCT5_C_ZEXTB  = 5'b11000,
-    FUNCT5_C_ZEXTH  = 5'b11010,
-    FUNCT5_C_SEXTH  = 5'b11011,
+    FUNCT5_C_SEXT_B  = 5'b11001,
+    FUNCT5_C_ZEXT_B  = 5'b11000,
+    FUNCT5_C_ZEXT_H  = 5'b11010,
+    FUNCT5_C_SEXT_H  = 5'b11011,
     FUNCT5_C_NOT    = 5'b11101
   } funct5_compressed_e;
 
@@ -668,42 +668,42 @@
   typedef struct packed {
     logic[15:13] funct3;
     logic[12:7]  imm;
-    gpr_t      rs2;
+    gpr_t        rs2;
   } css_type_t;
 
   typedef struct packed {
     logic[15:13] funct3;
     logic[12:5]  imm;
-    c_gpr_t      rd;
+    gpr_rvc_t    rd;
   } ciw_type_t;
 
   typedef struct packed {
     logic[15:13] funct3;
     logic[12:10] imm_12_10;
-    c_gpr_t      rs1;
+    gpr_rvc_t    rs1;
     logic[6:5]   imm_6_5;
-    c_gpr_t      rd;
+    gpr_rvc_t    rd;
   } cl_type_t;
 
   typedef struct packed {
     logic[15:13] funct3;
     logic[12:10] imm_12_10;
-    c_gpr_t      rs1;
+    gpr_rvc_t    rs1;
     logic[6:5]   imm_6_5;
-    c_gpr_t      rs2;
+    gpr_rvc_t    rs2;
   } cs_type_t;
 
   typedef struct packed {
     logic[15:10] funct6;
-    c_gpr_t      rd_rs1;
+    gpr_rvc_t    rd_rs1;
     logic[6:5]   funct2;
-    c_gpr_t      rs2;
+    gpr_rvc_t    rs2;
   } ca_type_t;
 
   typedef struct packed {
     logic[15:13] funct3;
     logic[12:10] offset_12_10;
-    c_gpr_t      rd_rs1;
+    gpr_rvc_t    rd_rs1;
     logic[6:2]   offset_6_2;
   } cb_type_t;
 
@@ -714,45 +714,45 @@
 
   typedef struct packed {
     logic[15:10] funct6;
-    c_gpr_t      rs1;
+    gpr_rvc_t    rs1;
     logic[6:5]   uimm;
-    c_gpr_t      rd;
+    gpr_rvc_t    rd;
   } clb_type_t;
 
   typedef struct packed {
     logic[15:10] funct6;
-    c_gpr_t      rs1;
+    gpr_rvc_t    rs1;
     logic[6:5]   uimm;
-    c_gpr_t      rs2;
+    gpr_rvc_t    rs2;
   } csb_type_t;
 
   typedef struct packed {
     logic[15:10] funct6;
-    c_gpr_t      rs1;
+    gpr_rvc_t    rs1;
     logic        funct1;
     logic        uimm;
-    c_gpr_t      rd;
+    gpr_rvc_t    rd;
   } clh_type_t;
 
   typedef struct packed {
     logic[15:10] funct6;
-    c_gpr_t      rs1;
+    gpr_rvc_t    rs1;
     logic        funct1;
     logic        uimm;
-    c_gpr_t      rs2;
+    gpr_rvc_t    rs2;
   } csh_type_t;
 
   typedef struct packed {
     logic[15:10] funct6;
-    c_gpr_t      rd_rs1;
+    gpr_rvc_t    rd_rs1;
     logic[6:2]   funct5;
   } cu_type_t;
 
   typedef struct packed {
     logic[15:10] funct6;
-    c_gpr_t      r1s;
+    gpr_rvc_t    r1s;
     logic[6:5]   funct2;
-    c_gpr_t      r2s;
+    gpr_rvc_t    r2s;
   } cmmv_type_t;
 
   typedef struct packed {
@@ -810,8 +810,10 @@
   // and enumerated abi register names
   // ---------------------------------------------------------------------------
   typedef struct packed {
-    gpr_t gpr;
-    bit   valid;
+    gpr_t     gpr;
+    gpr_rvc_t gpr_rvc;
+    bit       valid;
+    bit       valid_gpr_rvc;
   } reg_operand_t;
 
   // ---------------------------------------------------------------------------
@@ -919,16 +921,16 @@
   // Main _decoded_ and _disassembled_ data structure
   // ---------------------------------------------------------------------------
   typedef struct packed {
-    instr_name_e        instr;    // Instruction name
-    instr_format_e      format;  // Instruction format type
-    reg_operand_t       rd;       // Destination register, qualified by rd.valid
-    reg_operand_t       rs1;      // source register 1, qualified by rs1.valid
-    reg_operand_t       rs2;      //      --         2,      --        2
-    reg_operand_t       rs3;      //      --         3,      --        3
-    imm_operand_t       imm;      // Immediate, qualified by imm.valid
-    csr_operand_t       csr;      // CSR register address, qualified by csr.valid
-    logic               is_hint;  // Indicates whether the current instruction is a HINT.
-    rlist_operand_t     rlist;  // structure to handle rlist fields for Zcmp-instructions
+    instr_name_e        instr;     // Instruction name
+    instr_format_e      format;    // Instruction format type
+    reg_operand_t       rd;        // Destination register, qualified by rd.valid
+    reg_operand_t       rs1;       // source register 1, qualified by rs1.valid
+    reg_operand_t       rs2;       //      --         2,      --        2
+    reg_operand_t       rs3;       //      --         3,      --        3
+    imm_operand_t       imm;       // Immediate, qualified by imm.valid
+    csr_operand_t       csr;       // CSR register address, qualified by csr.valid
+    logic               is_hint;   // Indicates whether the current instruction is a HINT.
+    rlist_operand_t     rlist;     // structure to handle rlist fields for Zcmp-instructions
     stack_adj_operand_t stack_adj; // structure to handle stack_adj fields for Zcmp-instructions
     atomic_operand_t    atomic;
   } asm_t;
