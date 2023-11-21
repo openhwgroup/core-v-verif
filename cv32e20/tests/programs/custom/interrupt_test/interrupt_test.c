@@ -272,7 +272,7 @@ int main(int argc, char *argv[]) {
     if (retval != EXIT_SUCCESS)
         return retval;
 
-// unused tests. to be removed at clean-up 
+// TODO unused tests. to be removed at clean-up 
 /*    // Repeat test1 (restore vector mode)
     retval = test7();
     if (retval != EXIT_SUCCESS)
@@ -619,9 +619,11 @@ int test6() {
 
 // Test 7 will repeat the basic interrupt test in test 1
 // But with a relocated vector table via mtvec CSR and DIRECT vector mode
-// CV32E20 does not support DIRECT mode.  Saved here until clean up
-int test7() {
+// CV32E20 does not support DIRECT mode.  
+// TODO Saved here until clean up
 /*
+int test7() {
+
     volatile uint32_t save_mtvec;
     int retval;
 
@@ -638,13 +640,14 @@ int test7() {
         return ERR_CODE_TEST_7;
     }
     return EXIT_SUCCESS;
- */
-}
 
+}
+ */
 // Test 7 is a direct repeat of test 1 in vectored mode
 // why repeat?
+/* TODO Saved here until clean up
 int test8() {
-/*    printf("TEST 8 - TRIGGER ALL IRQS IN SEQUENCE: (REPEAT VECTOR MODE)\n");
+    printf("TEST 8 - TRIGGER ALL IRQS IN SEQUENCE: (REPEAT VECTOR MODE)\n");
 
     active_test = 8;
 
@@ -652,13 +655,13 @@ int test8() {
         return ERR_CODE_TEST_8;
 
     return EXIT_SUCCESS;
- */
  }
-
+ */
+ 
 // CV32E20 - this test appears to be a coverage filler test. Will wait until we see initial coverage numbers
-
+/* TODO Saved here until clean up
 int test9() {
-/*
+
     volatile uint32_t save_mtvec;
     printf("TEST 9 - ECALL-WFI Coverage Test\n");
 
@@ -724,5 +727,5 @@ int test9() {
     asm volatile("csrw mtvec, %0" : : "r" (save_mtvec)); 
 
     return EXIT_SUCCESS;
- */
 }
+ */
