@@ -8,8 +8,8 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "RTC: cv32e40s/tests/programs/corev-dv/corev_rand_fencei/\n\nCOV: ???",
-        "Comment": "TODO must be added to regression lists"
+        "Link to Coverage": "RTC: cv32e40s/tests/programs/corev-dv/corev_rand_fencei/\n\nCOV: uvmt_cv32e40s_fencei_assert.sv, \"cov_stores_visible_store_fencei_exec\".",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -20,8 +20,8 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "DTC: cv32e40s/tests/programs/custom/fencei/\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "DTC: cv32e40s/tests/programs/custom/fencei/\n\nCOV: (SKIPPED).",
+        "Comment": "Cover skipped because of low reward/effort ratio, and because other testing is good enough."
     },
     {
         "Requirement Location": "",
@@ -44,8 +44,8 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert. (Note was ignored because of the difficulty of writing this as an assert for fv.)"
+        "Link to Coverage": "A: (SKIPPED).",
+        "Comment": "Assertion skipped because\n1) it makes little sense in formal,\n2) the simulation tests handle this scenario."
     },
     {
         "Requirement Location": "User manual",
@@ -68,8 +68,8 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.a_req_wait_bus\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.a_req_wait_bus\n\nCOV: uvmt_cv32e40s_fencei_assert.sv, \"cov_req_wait_bus\".",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -79,9 +79,9 @@
         "Verification Goal": "Fill up the write buffer prior to executing a fence.i and ensure that fencei_flush_req_o holds off going high until the write buffer to has been emptied",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.a_req_wait_buffer\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Coverage Method": "Assertion Coverage",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.a_req_wait_buffer",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -93,7 +93,7 @@
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "Link to Coverage": "(Not relevant for the 40s)",
-        "Comment": ""
+        "Comment": "40x future!"
     },
     {
         "Requirement Location": "",
@@ -220,12 +220,12 @@
         "Feature": "Flush",
         "Sub Feature": "Flush",
         "Feature Description": "When fence.i is executed, then any prefetched instructions shall be flushed; meaning that pipeline stages are flushed, prefetcher is flushed, write buffer is flushed, and data_req_o is eventually supressed",
-        "Verification Goal": "Check that a fence.i will cause flushing of the pipeline, prefetcher, write buffer, and data_req_o",
+        "Verification Goal": "Check that a fence.i will cause flushing of the:\n1) pipeline,\n2) prefetcher,\n3) write buffer,\n4) data_req_o.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.a_supress_datareq\n\nA: ???",
-        "Comment": "TODO missing assert. (Have not checked/covered that the pipeline/writebuffer content is actually purged. Or that any memory change WILL be the next instr word.)"
+        "Link to Coverage": "A: uvmt_cv32e40s_fencei_assert.sv, \"a_flush_pipeline\".\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.fencei_assert_i.a_supress_datareq",
+        "Comment": "This is somewhat complex to check, so\n1) the pipeline and prefetcher asserts use rvfi retires as a \"proxy\", and\n2) the write buffer and data req asserts use only data req."
     },
     {
         "Requirement Location": "Riscv spec",
@@ -241,174 +241,6 @@
     },
     {
         "Requirement Location": "",
-        "Feature": "UnusedFields",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Try giving random values in those fields and see that all else works as expected",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "UnusedFields",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Try giving random values in those fields and see that all else works as expected",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "UnusedFields",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Try giving random values in those fields and see that all else works as expected",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "UnusedFields",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Try giving random values in those fields and see that all else works as expected",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "UnusedFields",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Try giving random values in those fields and see that all else works as expected",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "UnusedFields",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Try giving random values in those fields and see that all else works as expected",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "UnusedFields",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Try giving random values in those fields and see that all else works as expected",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "UnusedFields",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Try giving random values in those fields and see that all else works as expected",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "UnusedFields",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Try giving random values in those fields and see that all else works as expected",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "UnusedFields",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Try giving random values in those fields and see that all else works as expected",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "UnusedFields",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Try giving random values in those fields and see that all else works as expected",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "UnusedFields",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Try giving random values in those fields and see that all else works as expected",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "UnusedFields",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Try giving random values in those fields and see that all else works as expected",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "UnusedFields",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Try giving random values in those fields and see that all else works as expected",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": " -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- END -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------",
         "Feature": "UnusedFields",
         "Sub Feature": "",
         "Feature Description": "",

@@ -21,11 +21,11 @@ covergroup cg_exceptions
 
   `per_instance_fcov
 
-  cp_trap : coverpoint isacov.instr.rvfi.trap {
+  cp_trap : coverpoint isacov.instr.rvfi.trap.trap {
     bins trap = {1};
   }
-  cp_intr : coverpoint isacov.instr.rvfi.intr {
-    bins intr = {1};
+  cp_intr : coverpoint isacov.instr.rvfi.intr.interrupt {
+    bins interrupt = {1};
   }
   cp_imm12 : coverpoint isacov.instr.csr_val {
     bins imm12[16] = {[0:$]};
@@ -41,15 +41,17 @@ covergroup cg_exceptions
   cp_no_ebreakm : coverpoint (isacov.instr.rvfi.csrs["dcsr"].get_csr_retirement_data()[15]) {
     bins no_ebreakm = {0};
   }
-  cp_mcause : coverpoint isacov.instr.rvfi.csrs["mcause"].get_csr_retirement_data() {
+  cp_mcause : coverpoint isacov.instr.rvfi.csrs["mcause"].get_csr_retirement_data()[10:0] {
     bins reset               = {0};
     bins ins_acc_fault       = {1};
     bins illegal_ins         = {2};
     bins breakpoint          = {3};
     bins load_acc_fault      = {5};
     bins store_amo_acc_fault = {7};
+    bins ecall_umode         = {8};
     bins ecall               = {11};
-    bins ins_bus_fault       = {48};
+    bins ins_bus_fault       = {24};
+    bins ins_parity_fault    = {25};
   }
   cp_pcr_mtvec : coverpoint (isacov.instr.rvfi.pc_rdata[31:2] == isacov.instr.rvfi.csrs["mtvec"].get_csr_retirement_data()[31:2]) {
     bins one = {1};

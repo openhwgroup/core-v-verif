@@ -40,11 +40,11 @@
         "Feature": "Misc",
         "Sub Feature": "InstrProt",
         "Feature Description": "\"prot[2:1]\nUser/Application (2\u2019b00), Supervisor (2\u2019b01), Reserved (2\u2019b10), Machine (2\u2019b11)\nThis matches the privilege levels from [RISC-V-PRIV].\"",
-        "Verification Goal": "Track prot[2:1] on instruction fetches on obi, observe retirements on rvfi, ensure the privilege mode of the instruction's execution matches what it was fetched as on obi.\n\nCoverage: Explicitly observe U/M both.",
+        "Verification Goal": "Track prot[2:1] on instruction fetches on obi, observe retirements on rvfi, ensure the privilege mode of the instruction's execution matches what it was fetched as on obi.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_instr_prot\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_instr_prot_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_prot_iside_legal\n\nCOV: ???",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_instr_prot\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_instr_prot_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_prot_iside_legal",
         "Comment": ""
     },
     {
@@ -52,11 +52,11 @@
         "Feature": "Misc",
         "Sub Feature": "DataProt",
         "Feature Description": "\"prot[2:1]\nUser/Application (2\u2019b00), Supervisor (2\u2019b01), Reserved (2\u2019b10), Machine (2\u2019b11)\nThis matches the privilege levels from [RISC-V-PRIV].\"",
-        "Verification Goal": "Track prot[2:1] on data loads/stores, observe retirements on rvfi, ensure the effective privilege mode of the retirement matches what was used on obi.\n\nCoverage: Explicitly observe U/M both.",
+        "Verification Goal": "Track prot[2:1] on data loads/stores, observe retirements on rvfi, ensure the effective privilege mode of the retirement matches what was used on obi.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_data_prot\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_data_prot_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_prot_dside_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_data_prot_equal\n\nCOV: ???",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_data_prot\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_data_prot_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_prot_dside_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_data_prot_equal",
         "Comment": ""
     },
     {
@@ -64,11 +64,11 @@
         "Feature": "Misc",
         "Sub Feature": "DbgProt",
         "Feature Description": "Since dmode execs as mmode, and obi has corresponding signals, the relationship should be visible on obi.",
-        "Verification Goal": "When obi has a transaction with `dbg` high, check that `prot[2:1]` is M-mode on I-side, and \"effective\" mode on D-side.\n\nNote: Consider checking before MPU.\n\nCoverage: Observe U-/M-mode on D-side.",
+        "Verification Goal": "When obi has a transaction with `dbg` high, check that `prot[2:1]` is M-mode on I-side, and \"effective\" mode on D-side.\n\nNote: Consider checking before MPU",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dbg_prot_iside\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dbg_prot_dside\n\nCOV: ???",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dbg_prot_iside\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dbg_prot_dside",
         "Comment": ""
     },
     {
@@ -100,12 +100,12 @@
         "Feature": "CSRs",
         "Sub Feature": "Warl",
         "Feature Description": "U-level CSRs may have WARL fields.",
-        "Verification Goal": "(There is only JVT, and must be handled by the Zc vplan. Link to cov here still.)",
-        "Pass/Fail Criteria": "Other",
-        "Test Type": "N/A",
-        "Coverage Method": "N/A",
-        "Link to Coverage": "A: ???\nCOV: ???",
-        "Comment": "Waiting for Zc vplan linkage"
+        "Verification Goal": "JVT is the only URW CSR. Write and nread operations in User mode must be covered",
+        "Pass/Fail Criteria": "Check against RM",
+        "Test Type": "Constrained-Random",
+        "Coverage Method": "Functional Coverage",
+        "Link to Coverage": "DTC: cv32e40s/tests/programs/custom/zcmt_test :: jvt_rw_m, jvt_rw_u_illegal, jvt_rw_u_legal",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -164,7 +164,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "Link to Coverage": "A: ???\nCOV: ???",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.clic_assert_i.a_mscratchcsw_value\nCOV: ???\nDTC: cv32e40s/tests/programs/custom/clic :: rw_mscratchcsw, rw_mscratchcsw_illegal",
         "Comment": "Waiting for CLIC vplan linkage."
     },
     {
@@ -236,8 +236,8 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_jvt_access\n\nCOV: ???",
-        "Comment": "Waiting for Zc vplan linkage"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_jvt_access\n\nDTC: cv32e40s/tests/programs/custom/zcmt_test",
+        "Comment": ""
     },
     {
         "Requirement Location": "privspec",
@@ -368,8 +368,8 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "Waiting for exceptions vplan linkage."
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.clic_assert_i.gen_clic_assertions.a_mret_pc_intended,\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.clic_assert_i.gen_clic_assertions.a_dret_pc_intended,",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -548,8 +548,8 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "Link to Coverage": "A: ???\n\nCOV: ???\n\nDTC: cv32e40s/tests/programs/custom/privilege_test/",
-        "Comment": "Waiting for exceptions vplan linkage."
+        "Link to Coverage": "A: a_dt_no_access_to_tdata_in_umode\nDTC: cv32e40s/tests/programs/custom/privilege_test/",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -584,8 +584,8 @@
         "Pass/Fail Criteria": "Other",
         "Test Type": "Other",
         "Coverage Method": "N/A",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "Waiting for debug vplan linkage."
+        "Link to Coverage": "A:a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*, a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason, a_dt_tie_offs_*",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -596,8 +596,8 @@
         "Pass/Fail Criteria": "Other",
         "Test Type": "Other",
         "Coverage Method": "N/A",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "Waiting for debug vplan linkage."
+        "Link to Coverage": "A:a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*, a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason, a_dt_tie_offs_*",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -608,8 +608,8 @@
         "Pass/Fail Criteria": "Other",
         "Test Type": "Other",
         "Coverage Method": "N/A",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "Waiting for debug vplan linkage."
+        "Link to Coverage": "A: a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason, a_dt_warl_tselect, a_dt_warl_tdata1_general, a_dt_warl_tdata1_m2, a_dt_warl_tdata1_etrigger, a_dt_warl_tdata1_m6, a_dt_warl_tdata1_disabled, a_dt_warl_tdata2_etrigger, a_dt_warl_tinfo. ",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -620,8 +620,8 @@
         "Pass/Fail Criteria": "Other",
         "Test Type": "Other",
         "Coverage Method": "N/A",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "Waiting for debug vplan linkage."
+        "Link to Coverage": "A: a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason, a_dt_warl_tselect, a_dt_warl_tdata1_general, a_dt_warl_tdata1_m2, a_dt_warl_tdata1_etrigger, a_dt_warl_tdata1_m6, a_dt_warl_tdata1_disabled, a_dt_warl_tdata2_etrigger, a_dt_warl_tinfo. ",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -632,8 +632,8 @@
         "Pass/Fail Criteria": "Other",
         "Test Type": "Other",
         "Coverage Method": "N/A",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "Waiting for debug vplan linkage."
+        "Link to Coverage": "A: a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason, a_dt_warl_tselect, a_dt_warl_tdata1_general, a_dt_warl_tdata1_m2, a_dt_warl_tdata1_etrigger, a_dt_warl_tdata1_m6, a_dt_warl_tdata1_disabled, a_dt_warl_tdata2_etrigger, a_dt_warl_tinfo. ",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -670,18 +670,6 @@
         "Coverage Method": "N/A",
         "Link to Coverage": "N/A",
         "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "Debug",
-        "Sub Feature": "UnspecifiedBehav",
-        "Feature Description": "\"Almost all instructions that change the privilege mode have unspecified behavior. This includes ecall, mret, sret, and uret.\"",
-        "Verification Goal": "(The behavior is specified in the user manual. But the effects are debug-specific and not user-mode-specific so it is the responsibility of the debug vplan. Link to coverage here too.)",
-        "Pass/Fail Criteria": "N/A",
-        "Test Type": "N/A",
-        "Coverage Method": "N/A",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "Waiting for debug vplan linkage."
     },
     {
         "Requirement Location": "",
@@ -730,18 +718,6 @@
         "Coverage Method": "Functional Coverage",
         "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_prv_supported\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_prv_supported_umode\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.cov_prv_supported_mmode\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_cov_i.gen_try_set_prv[*].cov_try_set_prv\n\nDTC: cv32e40s/tests/programs/custom/debug_priv_test/",
         "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "Debug",
-        "Sub Feature": "NativeTriggers",
-        "Feature Description": "\"Triggers can be used for native debugging when action =0. If supported by the hart and desired by the debugger, triggers will often be programmed to have m=0 so that when they fire they cause a breakpoint exception to trap to a more privileged mode.\"",
-        "Verification Goal": "(Must be covered by the debug/triggers vplan. But link to coverage here too.)",
-        "Pass/Fail Criteria": "N/A",
-        "Test Type": "N/A",
-        "Coverage Method": "N/A",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "Waiting for debug vplan linkage."
     },
     {
         "Requirement Location": "",

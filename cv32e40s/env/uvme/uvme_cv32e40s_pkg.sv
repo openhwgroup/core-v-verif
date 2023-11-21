@@ -92,6 +92,7 @@ package uvme_cv32e40s_pkg;
    `include "uvma_cv32e40s_core_cntrl_drv.sv"
    `include "uvma_cv32e40s_core_cntrl_agent.sv"
    `include "uvme_interrupt_covg.sv"
+   `include "uvme_clic_covg.sv"
    `include "uvme_debug_covg.sv"
    `include "uvme_exceptions_covg.sv"
    `include "uvme_counters_covg.sv"

@@ -81,7 +81,6 @@ module uvmt_cv32e40s_pmp_assert
     .*
   );
 
-
   // Extra covers and asserts to comprehensively match the spec
 
   // Cover the helper-RTL internals
@@ -326,14 +325,20 @@ module uvmt_cv32e40s_pmp_assert
     // such pmpcfg writes are ignored, leaving pmpcfg unchanged. This restriction can be temporarily lifted
     // e.g. during the boot process, by setting mseccfg.RLB.
     // (vplan:ExecIgnored)
+
+    property p_mmode_only_or_shared_executable_ignore;
+      logic [3:0] lrwx;
+      csr_pmp_i.mseccfg.mml === 1'b1 &&
+      csr_pmp_i.mseccfg.rlb === 1'b0 ##1
+      ($changed(csr_pmp_i.cfg[region]),
+        lrwx = { csr_pmp_i.cfg[region].lock, csr_pmp_i.cfg[region].read, csr_pmp_i.cfg[region].write, csr_pmp_i.cfg[region].exec }
+      )
+      |->
+        !(lrwx inside { 4'b1?01, 4'b101? });
+    endproperty : p_mmode_only_or_shared_executable_ignore
+
     a_mmode_only_or_shared_executable_ignore: assert property (
-      csr_pmp_i.mseccfg.mml === 1'b1 && csr_pmp_i.mseccfg.rlb === 1'b0 |=>
-        $stable(csr_pmp_i.cfg[region])
-      or
-        not ($changed(csr_pmp_i.cfg[region]) ##0
-        csr_pmp_i.cfg[region].lock === 1'b1 ##0
-        csr_pmp_i.cfg[region].read === 1'b0 ##0
-        csr_pmp_i.cfg[region].write || csr_pmp_i.cfg[region].exec)
+      p_mmode_only_or_shared_executable_ignore
     ) else `uvm_error(info_tag, "certain rules can't be added");
 
     cov_mmode_only_or_shared_executable: cover property (

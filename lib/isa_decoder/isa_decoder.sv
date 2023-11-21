@@ -23,7 +23,7 @@
   // ---------------------------------------------------------------------------
   // Stack_adj for zcmp instructions
   // ---------------------------------------------------------------------------
-  function int get_stack_adj( rlist_t rlist, logic[5:4] spimm);
+  function automatic int get_stack_adj( rlist_t rlist, logic[5:4] spimm);
     int stack_adj_base;
     int stack_adj;
 
@@ -43,7 +43,7 @@
   // ---------------------------------------------------------------------------
   // Non-trivial immediate decoder
   // ---------------------------------------------------------------------------
-  function logic [20:1] get_sort_j_imm(instr_t instr);
+  function automatic logic [20:1] get_sort_j_imm(instr_t instr);
     get_sort_j_imm = {
       instr.uncompressed.format.j.imm[31],
       instr.uncompressed.format.j.imm[21:12],
@@ -52,14 +52,14 @@
     };
   endfunction : get_sort_j_imm
 
-  function logic [11:0] get_sort_s_imm(instr_t instr);
+  function automatic logic [11:0] get_sort_s_imm(instr_t instr);
     get_sort_s_imm = {
       instr.uncompressed.format.s.imm_h,
       instr.uncompressed.format.s.imm_l
     };
   endfunction : get_sort_s_imm
 
-  function logic [12:1] get_sort_b_imm(instr_t instr);
+  function automatic logic [12:1] get_sort_b_imm(instr_t instr);
     get_sort_b_imm = {
       instr.uncompressed.format.b.imm_h[31],
       instr.uncompressed.format.b.imm_l[7],
@@ -68,7 +68,7 @@
     };
   endfunction : get_sort_b_imm
 
-  function logic [5:0] get_sort_ci_imm_lwsp(instr_t instr);
+  function automatic logic [5:0] get_sort_ci_imm_lwsp(instr_t instr);
     get_sort_ci_imm_lwsp = {
       instr.compressed.format.ci.imm_6_2[3:2],
       instr.compressed.format.ci.imm_12,
@@ -76,7 +76,7 @@
     };
   endfunction : get_sort_ci_imm_lwsp
 
-  function logic [5:0] get_sort_ci_imm_addi16sp(instr_t instr);
+  function automatic logic [5:0] get_sort_ci_imm_addi16sp(instr_t instr);
     get_sort_ci_imm_addi16sp = {
       instr.compressed.format.ci.imm_12,
       instr.compressed.format.ci.imm_6_2[4:3],
@@ -86,7 +86,7 @@
     };
   endfunction : get_sort_ci_imm_addi16sp
 
-  function logic [8:0] get_sort_cb_imm_not_sequential(instr_t instr);
+  function automatic logic [7:0] get_sort_cb_imm_not_sequential(instr_t instr);
     get_sort_cb_imm_not_sequential = {
       instr.compressed.format.cb.offset_12_10[12],
       instr.compressed.format.cb.offset_6_2[6:5],
@@ -96,7 +96,7 @@
     };
   endfunction : get_sort_cb_imm_not_sequential
 
-  function logic [5:0] get_sort_cj_imm(instr_t instr);
+  function automatic logic [10:0] get_sort_cj_imm(instr_t instr);
       get_sort_cj_imm = {
         instr.compressed.format.cj.imm[12],
         instr.compressed.format.cj.imm[8],
@@ -109,7 +109,7 @@
       };
   endfunction : get_sort_cj_imm
 
-  function logic [4:0] get_sort_cl_imm(instr_t instr);
+  function automatic logic [4:0] get_sort_cl_imm(instr_t instr);
       get_sort_cl_imm = {
         instr.compressed.format.cl.imm_6_5[5],
         instr.compressed.format.cl.imm_12_10,
@@ -117,7 +117,7 @@
       };
   endfunction : get_sort_cl_imm
 
-  function logic [4:0] get_sort_cs_imm(instr_t instr);
+  function automatic logic [4:0] get_sort_cs_imm(instr_t instr);
       get_sort_cs_imm = {
         instr.compressed.format.cs.imm_6_5[5],
         instr.compressed.format.cs.imm_12_10,
@@ -125,7 +125,7 @@
       };
   endfunction : get_sort_cs_imm
 
-  function logic [7:0] get_sort_ciw_imm(instr_t instr);
+  function automatic logic [7:0] get_sort_ciw_imm(instr_t instr);
     get_sort_ciw_imm = {
       instr.compressed.format.ciw.imm[10:7],
       instr.compressed.format.ciw.imm[12:11],
@@ -134,7 +134,7 @@
       };
   endfunction : get_sort_ciw_imm
 
-  function gpr_t get_gpr_from_gpr_rvc(gpr_rvc_t gpr);
+  function automatic gpr_t get_gpr_from_gpr_rvc(gpr_rvc_t gpr);
     gpr_t uncompressed_gpr;
     casex (gpr.gpr)
       C_X8:    uncompressed_gpr.gpr = X8;
@@ -154,7 +154,7 @@
   // ---------------------------------------------------------------------------
   // Find the value of immediate
   // ---------------------------------------------------------------------------
-  function int get_imm_value_i(logic[11:0] imm);
+  function automatic int get_imm_value_i(logic[11:0] imm);
     if(imm[11] == 1) begin
       get_imm_value_i = {20'hfffff, imm};
     end else begin
@@ -162,7 +162,7 @@
     end
   endfunction : get_imm_value_i
 
-  function int get_imm_value_j(logic[20:1] imm);
+  function automatic int get_imm_value_j(logic[20:1] imm);
     if(imm[20] == 1) begin
       get_imm_value_j = {11'h7ff, imm, 1'b0};
     end else begin
@@ -170,7 +170,7 @@
     end
   endfunction : get_imm_value_j
 
-  function int get_imm_value_b(logic[12:1] imm);
+  function automatic int get_imm_value_b(logic[12:1] imm);
     if(imm[12] == 1) begin
       get_imm_value_b = {19'h7ffff, imm, 1'b0};
     end else begin
@@ -178,7 +178,7 @@
     end
   endfunction : get_imm_value_b
 
-  function int get_imm_value_ci(logic[5:0] imm);
+  function automatic int get_imm_value_ci(logic[5:0] imm);
     if(imm[5] == 1) begin
       get_imm_value_ci = {26'h3ffffff, imm};
     end else begin
@@ -186,7 +186,7 @@
     end
   endfunction : get_imm_value_ci
 
-  function int get_imm_value_ci_lui(logic[17:12] imm);
+  function automatic int get_imm_value_ci_lui(logic[17:12] imm);
     if(imm[17] == 1) begin
       get_imm_value_ci_lui = {14'h3fff, imm, 12'b0};
     end else begin
@@ -194,7 +194,7 @@
     end
   endfunction : get_imm_value_ci_lui
 
-  function int get_imm_value_ci_addi16sp(logic[9:4] imm);
+  function automatic int get_imm_value_ci_addi16sp(logic[9:4] imm);
     if(imm[9] == 1) begin
       get_imm_value_ci_addi16sp = {22'h3fffff, imm, 4'b0};
     end else begin
@@ -202,7 +202,7 @@
     end
   endfunction : get_imm_value_ci_addi16sp
 
-  function int get_imm_value_cb(logic[8:1] imm);
+  function automatic int get_imm_value_cb(logic[8:1] imm);
     if(imm[8] == 1) begin
       get_imm_value_cb = {23'h7fffff, imm, 1'b0};
     end else begin
@@ -210,7 +210,7 @@
     end
   endfunction : get_imm_value_cb
 
-  function int get_imm_value_cj(logic[11:1] imm);
+  function automatic int get_imm_value_cj(logic[11:1] imm);
     if(imm[11] == 1) begin
       get_imm_value_cj = {20'hfffff, imm, 1'b0};
     end else begin
@@ -220,7 +220,7 @@
 
 
   // Get the correspopnding name of the hint instruction
-  function hint_name_e get_hint_name(instr_name_e name);
+  function automatic hint_name_e get_hint_name(instr_name_e name);
     hint_name_e hint_name;
 
     casex(name)
@@ -251,7 +251,7 @@
   endfunction
 
   // Find out if the instruction is a HINT.
-  function logic check_if_hint(instr_name_e name, instr_format_e format, instr_t instr);
+  function automatic logic check_if_hint(instr_name_e name, instr_format_e format, instr_t instr);
     logic hint;
 
     casex (get_hint_name(name))
@@ -282,7 +282,7 @@
   endfunction
 
 
-  function logic[11:0] read_s_imm(logic[31:0] instr);
+  function automatic logic[11:0] read_s_imm(logic[31:0] instr);
     automatic logic [11:0] imm;
     imm = {instr[31:25], instr[11:7]};
     return imm;
@@ -632,6 +632,22 @@
           asm.imm.width           = 8;
           asm.imm.sign_ext        = 1;
           asm.imm.imm_value       = get_imm_value_cb(get_sort_cb_imm_not_sequential(instr));
+          asm.rs1.valid           = 1;
+          asm.rs1.valid_gpr_rvc   = 1;
+          asm.imm.valid           = 1;
+        end else if (name inside { C_ANDI }) begin
+          asm.rd.gpr              = get_gpr_from_gpr_rvc(instr.compressed.format.cb.rd_rs1.gpr);
+          asm.rd.gpr_rvc          = instr.compressed.format.cb.rd_rs1.gpr;
+          asm.rs1.gpr             = get_gpr_from_gpr_rvc(instr.compressed.format.cb.rd_rs1.gpr);
+          asm.rs1.gpr_rvc         = instr.compressed.format.cb.rd_rs1.gpr;
+          asm.imm.imm_raw         = { instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 };
+          asm.imm.imm_raw_sorted  = { instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 };
+          asm.imm.imm_type        = IMM;
+          asm.imm.width           = 6;
+          asm.imm.sign_ext        = 1;
+          asm.imm.imm_value       = get_imm_value_cb({ instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 });
+          asm.rd.valid            = 1;
+          asm.rd.valid_gpr_rvc    = 1;
           asm.rs1.valid           = 1;
           asm.rs1.valid_gpr_rvc   = 1;
           asm.imm.valid           = 1;
@@ -1499,7 +1515,7 @@
   // ---------------------------------------------------------------------------
   // Identify if a given instruction matches an expected instruction name
   // ---------------------------------------------------------------------------
-  function match_instr(instr_t instr, instr_name_e instr_type);
+  function automatic match_instr(instr_t instr, instr_name_e instr_type);
     match_instr = (decode_instr(instr).instr == instr_type);
   endfunction : match_instr
 

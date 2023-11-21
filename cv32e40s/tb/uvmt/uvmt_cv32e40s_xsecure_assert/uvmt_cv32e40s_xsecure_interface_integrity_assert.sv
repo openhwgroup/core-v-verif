@@ -261,7 +261,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   //Verify that the received and generated checksums are correct
 
   property p_checksum(req, chk_input, chk_calculated);
-    if_valid //TODO: do we need this one?
+    if_valid
     && req
     |->
     chk_input == chk_calculated;
@@ -285,6 +285,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
 
   a_xsecure_integrity_instr_rchk: assert property (
     obi_instr_rvalid
+    && support_if.instr_req_had_integrity
     |->
     obi_instr_resp_packet.rchk == rchk_instr_calculated
   );
@@ -292,6 +293,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   property p_checksum_data_rchk(memory_op, rvalid, chk_input, chk_calculated);
     memory_op
     && rvalid
+    && support_if.data_req_had_integrity
     |->
     chk_input == chk_calculated;
   endproperty
