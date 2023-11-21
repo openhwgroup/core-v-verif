@@ -27,6 +27,71 @@ package cv32e40p_instr_test_pkg;
   import riscv_signature_pkg::*;
   import corev_instr_test_pkg::*;
 
+
+  // MACRO for Common HWLOOP handling code for all the exception handlers
+  // Common handler code to ensure all handlers use same code.
+  // Description:
+  // Check for expection (ecall/ebreak/illegal) on the last hwloop body instr
+  // If true, then
+  // (a) Set MEPC to first instr of hwloop body
+  // (b) Add logic to decrement the LPCOUNT
+  `define COMMON_HWLOOP_EXC_HANDLING_CODE \
+      /* Check LPCOUNT1 >= 1 */ \
+      $sformatf("csrr x%0d, 0x%0x", cfg.gpr[0], LPCOUNT1), \
+      $sformatf("li x%0d, 1", cfg.gpr[1]), \
+      $sformatf("bge x%0d, x%0d, 1f", cfg.gpr[0], cfg.gpr[1]), \
+      /* Check LPCOUNT0 >= 1 */ \
+      $sformatf("2: csrr x%0d, 0x%0x", cfg.gpr[0], LPCOUNT0), \
+      $sformatf("li x%0d, 1", cfg.gpr[1]), \
+      $sformatf("bge x%0d, x%0d, 3f", cfg.gpr[0], cfg.gpr[1]), \
+      /* Since both LPCOUNT0 & LPCOUNT1 equals 0 */ \
+      /* Nothing needs to be done for HWLOOPs and its CSRs */ \
+      $sformatf("beqz x0, 4f"), \
+      /* HWLOOP1 Handling */ \
+      /* Check for ILLEGAL being the LAST HWLOOP Body instr */ \
+      $sformatf("1: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC), \
+      $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[1], LPEND1), \
+      $sformatf("addi x%0d, x%0d, -4", cfg.gpr[1], cfg.gpr[1]), \
+      $sformatf("bne x%0d, x%0d, 2b", cfg.gpr[0], cfg.gpr[1]), \
+      /* Else, If equal this means the illegal instr was the last */ \
+      /* hwloop body instr, thus we handle the HWLOOP manually here */ \
+      /* First decrement lpcount CSR manually as CSR not updated in HW */ \
+      $sformatf("csrr x%0d, 0x%0x", cfg.gpr[1], LPCOUNT1), \
+      $sformatf("addi x%0d, x%0d, -1", cfg.gpr[1], cfg.gpr[1]), \
+      $sformatf("cv.count 1, x%0d", cfg.gpr[1]), \
+      /* Check if the current LPCOUNT1 value == 0, if so, then MEPC=MEPC+4 */ \
+      $sformatf("csrr x%0d, 0x%0x", cfg.gpr[1], LPCOUNT1), \
+      $sformatf("beqz x%0d, 4f", cfg.gpr[1]), \
+      /* Else LPCOUNT1 still >=1 and thus next, */ \
+      /* Set the next MEPC to LPSTART1 for next HWLOOP iteration */ \
+      $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[0], LPSTART1), \
+      $sformatf("beqz x0, 5f"), \
+      /* HWLOOP0 Handling */ \
+      /* Check for ILLEGAL being the LAST HWLOOP Body instr */ \
+      $sformatf("3: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC), \
+      $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[1], LPEND0), \
+      $sformatf("addi x%0d, x%0d, -4", cfg.gpr[1], cfg.gpr[1]), \
+      $sformatf("bne x%0d, x%0d, 4f", cfg.gpr[0], cfg.gpr[1]), \
+      /* Else, If equal this means the illegal instr was the last */ \
+      /* hwloop body instr, thus we handle the HWLOOP manually here */ \
+      /* First decrement lpcount CSR manually as CSR not updated in HW */ \
+      $sformatf("csrr x%0d, 0x%0x", cfg.gpr[1], LPCOUNT0), \
+      $sformatf("addi x%0d, x%0d, -1", cfg.gpr[1], cfg.gpr[1]), \
+      $sformatf("cv.count 0, x%0d", cfg.gpr[1]), \
+      /* Check if the current LPCOUNT0 value == 0, if so, then MEPC=MEPC+4 */ \
+      $sformatf("csrr x%0d, 0x%0x", cfg.gpr[1], LPCOUNT0), \
+      $sformatf("beqz x%0d, 4f", cfg.gpr[1]), \
+      /* Else LPCOUNT0 still >=1 and thus next, */ \
+      /* Set the next MEPC to LPSTART0 for next HWLOOP iteration */ \
+      $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[0], LPSTART0), \
+      $sformatf("beqz x0, 5f"), \
+      /* Default increment for MEPC by 4 */ \
+      $sformatf("4: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC), \
+      $sformatf("addi  x%0d, x%0d, 4", cfg.gpr[0], cfg.gpr[0]), \
+      /* Write MEPC */ \
+      $sformatf("5: csrw  0x%0x, x%0d", MEPC, cfg.gpr[0])
+
+
   `include "cv32e40p_instr_gen_config.sv"
   // Instruction streams specific to CV32E40P
   // `include "instr_lib/cv32e40p_load_store_instr_lib.sv"
@@ -406,6 +471,5 @@ package cv32e40p_instr_test_pkg;
       instr.push_back($sformatf("csrrw x%0d, 0x%0x, x%0d", sp, scratch, sp));
     end
   endfunction
-
 
 endpackage : cv32e40p_instr_test_pkg;
