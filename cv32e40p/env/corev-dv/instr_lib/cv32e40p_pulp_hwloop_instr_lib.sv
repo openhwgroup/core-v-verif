@@ -146,7 +146,12 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
   }
 
   constraint avail_regs_pulp_instr_c {
-    num_of_avail_regs inside {[10:19]};
+    if ((cfg.enable_fp_in_x_regs == 1) && (RV32ZFINX inside {riscv_instr_pkg::supported_isa})) {
+      num_of_avail_regs  >= 8;
+      num_of_avail_regs  <= (24 - num_zfinx_gpr - num_str_reserved_gpr);
+    } else {
+      num_of_avail_regs inside {[10:19]};
+    }
   }
 
   constraint gen_hwloop_count_c {
@@ -265,11 +270,13 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
   function void post_randomize();
 
+      cv32e40p_exclude_regs.sort();
+      this.print();
+
       if((cv32e40p_exclude_regs.size() < 2) || (cv32e40p_exclude_regs.size() > 25)) begin
         `uvm_fatal(this.get_type_name(), "cv32e40p_exclude_regs out of range")
       end
 
-      this.print();
       gen_xpulp_hwloop_control_instr();
   endfunction : post_randomize
 
@@ -926,7 +933,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       while (i < num_rand_instr) begin
           //Create and Randomize array for avail_regs each time to ensure randomization
           avail_regs = new[num_of_avail_regs - reserved_rd.size()];
-          randomize_avail_regs();
+          randomize_avail_regs();  //TODO : randomize to exclude cv32e40p_exclude_regs list
 
           instr = riscv_instr::type_id::create($sformatf("instr_%0d", i));
 
