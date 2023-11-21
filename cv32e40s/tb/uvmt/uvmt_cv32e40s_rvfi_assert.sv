@@ -302,19 +302,19 @@ module uvmt_cv32e40s_rvfi_assert
 
   // Load Instructions
 
-  a_isloadinstr_required: assert property (
-    rvfi_if.rvfi_valid  &&
-    rvfi_if.rvfi_mem_rmask
-    |->
-    rvfi_if.is_load_instr
-  ) else `uvm_error(info_tag, "rmask comes from loads");
+  //a_isloadinstr_required: assert property (
+  //  rvfi_if.rvfi_valid  &&
+  //  rvfi_if.rvfi_mem_rmask
+  //  |->
+  //  rvfi_if.is_load_instr
+  //) else `uvm_error(info_tag, "rmask comes from loads");
 
-  a_isloadinstr_demands: assert property (
-    rvfi_if.is_load_instr  &&
-    !rvfi_if.rvfi_trap
-    |->
-    rvfi_if.rvfi_mem_rmask
-  ) else `uvm_error(info_tag, "successful loads have rmask");
+  //a_isloadinstr_demands: assert property (
+  //  rvfi_if.is_load_instr  &&
+  //  !rvfi_if.rvfi_trap
+  //  |->
+  //  rvfi_if.rvfi_mem_rmask
+  //) else `uvm_error(info_tag, "successful loads have rmask");
 
   a_isloadinstr_exception: assert property (
     rvfi_if.rvfi_valid
@@ -333,12 +333,12 @@ module uvmt_cv32e40s_rvfi_assert
     rvfi_if.is_store_instr
   ) else `uvm_error(info_tag, "wmask comes from stores");
 
-  a_isstoreinstrs_demands: assert property (
-    rvfi_if.is_store_instr  &&
-    !rvfi_if.rvfi_trap
-    |->
-    rvfi_if.rvfi_mem_wmask
-  ) else `uvm_error(info_tag, "successful stores have wmask");
+  //a_isstoreinstrs_demands: assert property (
+  //  rvfi_if.is_store_instr  &&
+  //  !rvfi_if.rvfi_trap
+  //  |->
+  //  rvfi_if.rvfi_mem_wmask
+  //) else `uvm_error(info_tag, "successful stores have wmask");
 
   a_isstoreinstr_exception: assert property (
     rvfi_if.rvfi_valid

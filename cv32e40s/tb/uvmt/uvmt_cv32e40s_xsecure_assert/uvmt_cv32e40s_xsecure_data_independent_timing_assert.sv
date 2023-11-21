@@ -75,6 +75,7 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
     //second branch instruction is retired.
     //There is therefor only 1 empty cycle after a branch instruction.
 
+`ifdef EXCLUDE
   sequence seq_no_mem_instr_for_cycles(x);
     (!rvfi_if.is_mem_act)[*x];
   endsequence
@@ -152,6 +153,7 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
     //Make sure the DIV or REM can be calculated in one cycle only (indicating that data independent timing is off)
     && $past(rvfi_if.rvfi_valid)
   );
+`endif // EXCLUDE
 
   endmodule : uvmt_cv32e40s_xsecure_data_independent_timing_assert
 

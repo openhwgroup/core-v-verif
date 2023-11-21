@@ -1515,9 +1515,11 @@
   // ---------------------------------------------------------------------------
   // Identify if a given instruction matches an expected instruction name
   // ---------------------------------------------------------------------------
-  function automatic match_instr(instr_t instr, instr_name_e instr_type);
-    match_instr = (decode_instr(instr).instr == instr_type);
-  endfunction : match_instr
+
+  // I _think_ this is a redundant declaration of match_instr
+  //function automatic match_instr(instr_t instr, instr_name_e instr_type);
+  //  match_instr = (decode_instr(instr).instr == instr_type);
+  //endfunction : match_instr
 
 
 //endpackage

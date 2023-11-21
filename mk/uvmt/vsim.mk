@@ -113,11 +113,15 @@ VLOG_FLAGS    ?= \
 		-suppress 2181 \
 		-suppress 13262 \
 		-suppress vlog-2745 \
+                -suppress vlog-2643 \
+                -suppress vlog-7027 \
+                -suppress vlog-2697 \
 		-timescale "1ns/1ps" \
 		-sv \
 		-64 \
 		-mfcu \
 		+acc=rb \
+                $(SV_CMP_FLAGS) \
 		$(QUIET) \
 		-writetoplevels  uvmt_$(CV_CORE_LC)_tb
 
@@ -158,13 +162,33 @@ VSIM_SCRIPT_DIR	   = $(abspath $(MAKE_PATH)/../tools/vsim)
 
 VSIM_UVM_ARGS      = +incdir+$(UVM_HOME)/src $(UVM_HOME)/src/uvm_pkg.sv
 
-VSIM_FLAGS += -sv_lib $(basename $(abspath $(IMPERAS_DV_MODEL)))
+# Only append the IMPERAS_DV_MODEL sv_lib flag if the file actually exists)
+#ifneq (,$(wildcard $(IMPERAS_DV_MODEL)))
+#  ifeq ($(call IS_YES,$(USE_ISS)),YES)
+#    VSIM_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
+#  endif
+#endif
+
+
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
-VSIM_FLAGS += +USE_ISS
-VLOG_FLAGS += +USE_IMPERASDV
+  ifeq (,$(wildcard $(IMPERAS_HOME)/IMPERAS_LICENSE.pdf))
+    export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
+    export FILE_LIST_IDV        ?=
+  else
+    VSIM_FLAGS += -sv_lib $(IMPERAS_DV_MODEL)
+    export FILE_LIST_IDV      ?= -f $(DV_UVMT_PATH)/imperas_dv.flist
+    export FILE_LIST_IDV_DEPS ?= -f $(DV_UVMT_PATH)/imperas_dv_deps.flist
+  endif
+  VSIM_FLAGS += +USE_ISS
+  VSIM_FLAGS += +define+USE_IMPERASDV
+  VSIM_FLAGS += +define+USE_ISS
 else
-VSIM_FLAGS += +DISABLE_OVPSIM
+  VSIM_PLUSARGS               += +DISABLE_OVPSIM
+  VLOG_FLAGS                  += +DISABLE_OVPSIM
+  export FILE_LIST_IDV_DEPS   ?= -f $(DV_UVMT_PATH)/imperas_dummy_pkg.flist
+  export FILE_LIST_IDV        ?=
 endif
+
 ifeq ($(call IS_YES,$(TEST_DISABLE_ALL_CSR_CHECKS)),YES)
 VSIM_FLAGS +="+DISABLE_ALL_CSR_CHECKS"
 endif
@@ -327,25 +351,50 @@ ldgen: vlog_ldgen vopt_ldgen vsim_ldgen
 # corev-dv generation targets
 
 vlog_corev-dv:
+	@echo "$(BANNER)"
+	@echo "* Running vlog_corev-dv in $(SIM_CFG_RESULTS)"
+	@echo "* Log: $(SIM_CFG_RESULTS)/vlog.log"
+	@echo "* FILE_LIST_IDV_DEPS = $(FILE_LIST_IDV_DEPS)"
+	@echo "* FILE_LIST_IDV      = $(FILE_LIST_IDVS)"
+	@echo "$(BANNER)"
 	$(MKDIR_P) $(SIM_COREVDV_RESULTS)
 	$(MKDIR_P) $(COREVDV_PKG)/out_$(DATE)/run
 	cd $(SIM_COREVDV_RESULTS) && \
 		$(VLIB) $(VWORK)
 	cd $(SIM_COREVDV_RESULTS) && \
 		$(VLOG) \
+			-work $(VWORK) \
+			-l vlog.log \
 			$(VLOG_FLAGS) \
+			$(CFG_COMPILE_FLAGS) \
+			+incdir+$(DV_UVME_PATH) \
+			+incdir+$(DV_UVMT_PATH) \
 			+incdir+$(UVM_HOME) \
-			$(VSIM_PMA_INC) \
-			$(UVM_HOME)/uvm_pkg.sv \
 			+incdir+$(CV_CORE_COREVDV_PKG)/target/$(CV_CORE_LC) \
 			+incdir+$(RISCVDV_PKG)/user_extension \
 			+incdir+$(COREVDV_PKG) \
 			+incdir+$(CV_CORE_COREVDV_PKG) \
-			$(CFG_COMPILE_FLAGS) \
+			$(VSIM_PMA_INC) \
+			$(UVM_HOME)/uvm_pkg.sv \
 			-f $(CV_CORE_MANIFEST) \
 			-f $(COREVDV_PKG)/manifest.f \
-			$(CFG_PLUSARGS) \
-			-l vlog.log
+			$(VLOG_FILE_LIST) \
+			$(TBSRC_PKG)
+
+
+#			$(VLOG_FLAGS) \
+#			+incdir+$(UVM_HOME) \
+#			$(VSIM_PMA_INC) \
+#			$(UVM_HOME)/uvm_pkg.sv \
+#			+incdir+$(CV_CORE_COREVDV_PKG)/target/$(CV_CORE_LC) \
+#			+incdir+$(RISCVDV_PKG)/user_extension \
+#			+incdir+$(COREVDV_PKG) \
+#			+incdir+$(CV_CORE_COREVDV_PKG) \
+#			$(CFG_COMPILE_FLAGS) \
+#			-f $(CV_CORE_MANIFEST) \
+#			-f $(COREVDV_PKG)/manifest.f \
+#			$(CFG_PLUSARGS) \
+#			-l vlog.log
 
 vopt_corev-dv:
 	cd $(SIM_COREVDV_RESULTS) && \
@@ -475,6 +524,8 @@ vlog: lib
 	@echo "$(BANNER)"
 	@echo "* Running vlog in $(SIM_CFG_RESULTS)"
 	@echo "* Log: $(SIM_CFG_RESULTS)/vlog.log"
+	@echo "* FILE_LIST_IDV_DEPS = $(FILE_LIST_IDV_DEPS)"
+	@echo "* FILE_LIST_IDV      = $(FILE_LIST_IDVS)"
 	@echo "$(BANNER)"
 	cd $(SIM_CFG_RESULTS) && \
 		$(VLOG) \
