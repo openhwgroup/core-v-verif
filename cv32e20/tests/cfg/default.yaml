@@ -2,9 +2,14 @@ name: default
 description: Default configuration for CV32E20 simulations
 compile_flags: 
 # Alternate reference model configuration using parameter overrides and tool control
+#  --override cpu/rnmi_version=0.4
 ovpsim: >
   --output imperas.log
   --showinstanceparams cpu
   --override cpu/dexc_address=0x1a140000
+  --override cpu/ecode_mask=0x8000003f
+  --override cpu/ecode_nmi=0x80000020
+  --override cpu/nmi_high_priority=T
+  --override cpu/nmi_address=0x00000180
   --trace --tracechange --traceshowicount --tracemode --monitornets
 cflags: >
