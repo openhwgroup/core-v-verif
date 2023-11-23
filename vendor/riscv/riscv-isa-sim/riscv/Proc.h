@@ -10,7 +10,8 @@ namespace openhw
             Processor(const isa_parser_t *isa, const cfg_t* cfg,
                 simif_t* sim, uint32_t id, bool halt_on_reset,
                 FILE *log_file, std::ostream& sout_, Params& params); // because of command line option --log and -s we need both
-            st_rvfi step(size_t n);
+            ~Processor();
+            st_rvfi step(size_t n, st_rvfi reference);
             void initParams();
         protected:
             bool taken_trap;

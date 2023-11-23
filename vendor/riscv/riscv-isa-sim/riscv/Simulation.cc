@@ -124,7 +124,10 @@ int Simulation::run()
     {
         while(!sim_t::done())
         {
-            st_rvfi rvfi = this->nstep(1);
+            st_rvfi reference;
+            std::vector<st_rvfi> vreference, vspike;
+            vreference.push_back(reference);
+            vspike = this->step(1, vreference);
         }
     }
     catch (std::ios_base::failure e)
@@ -169,26 +172,33 @@ void Simulation::make_mems(const std::vector<mem_cfg_t> &layout)
 
 }
 
-st_rvfi Simulation::nstep(size_t n)
+std::vector<st_rvfi> Simulation::step(size_t n, std::vector<st_rvfi>& vreference)
 {
 
   // The state PC is the *next* insn fetch address.
   // Catch it before exec which yields a new value.
-  st_rvfi rvfi = ((Processor*)procs[0])->step(1);
-
-  host = context_t::current();
-  if (!sim_t::done())
+  std::vector<st_rvfi> vspike (n);
+  for (size_t i = 0; i < n; i++)
   {
-      if (this->max_steps_enabled && (this->max_steps < this->total_steps))
-      {
-          throw std::ios_base::failure("Max steps exceeded");
-      }
+    if (i >= procs.size())
+        continue;
 
-      ++total_steps;
-      target.switch_to();
+    vspike[i] = ((Processor*)procs[i])->step(1, vreference[i]);
+
+    host = context_t::current();
+    if (!sim_t::done())
+    {
+        if (this->max_steps_enabled && (this->max_steps < this->total_steps))
+        {
+            throw std::ios_base::failure("Max steps exceeded");
+        }
+
+        ++total_steps;
+        target.switch_to();
+    }
+
   }
-
-  return rvfi;
+  return vspike;
 }
 
 

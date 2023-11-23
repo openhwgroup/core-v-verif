@@ -22,14 +22,32 @@ import "DPI-C" function void spike_set_param_uint64_t(string base, string name, 
 import "DPI-C" function void spike_set_param_str(string base, string name, string value);
 import "DPI-C" function void spike_set_default_params(string profile);
 
+import "DPI-C" function void spike_step_svOpenArray(inout bit [63:0] core[], inout bit [63:0] reference_model[]);
+import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi reference_model);
+
 localparam config_pkg::cva6_cfg_t CVA6Cfg = cva6_config_pkg::cva6_cfg;
 
-    function void rvfi_initialize_spike(bit testharness);
+    function automatic void rvfi_spike_step(ref st_rvfi s_core, ref st_rvfi s_reference_model);
+
+        union_rvfi u_core;
+        union_rvfi u_reference_model;
+        bit [63:0] a_core [`ST_NUM_WORDS-1:0];
+        bit [63:0] a_reference_model [`ST_NUM_WORDS-1:0];
+
+        u_core.rvfi = s_core;
+
+        spike_step_svOpenArray(a_core, a_reference_model);
+
+        foreach(a_reference_model[i]) begin
+            u_reference_model.array[i] = a_reference_model[i];
+        end
+        s_reference_model = u_reference_model.rvfi;
+
+    endfunction : rvfi_spike_step
+
+    function automatic void rvfi_initialize_spike(bit testharness);
        string binary, rtl_isa;
 
-        `ifdef VERILATOR
-            `uvm_fatal("spike_tandem", "Verilator not supported in tandem mode, please unset SPIKE_TANDEM");
-        `endif
         if ($value$plusargs("elf_file=%s", binary))
             `uvm_info("spike_tandem", $sformatf("Setting up Spike with binary %s...", binary), UVM_LOW);
 
@@ -61,7 +79,7 @@ localparam config_pkg::cva6_cfg_t CVA6Cfg = cva6_config_pkg::cva6_cfg;
 
     endfunction : rvfi_initialize_spike
 
-    function void rvfi_compare(st_rvfi t_core, st_rvfi t_reference_model);
+    function automatic void rvfi_compare(st_rvfi t_core, st_rvfi t_reference_model);
         int core_pc64, reference_model_pc64;
         string cause_str = "";
         bit error;
@@ -110,7 +128,8 @@ localparam config_pkg::cva6_cfg_t CVA6Cfg = cva6_config_pkg::cva6_cfg;
         $cast(mode, t_reference_model.mode);
 
         // TODO Add more fields from Spike side
-        instr = $sformatf(format_instr_str, $sformatf("%t", $time),
+        // This macro avoid glitches in verilator
+        instr = $sformatf(`FORMAT_INSTR_STR_MACRO, $sformatf("%t", $time),
                         0,
                         t_reference_model.trap,
                         t_reference_model.pc_rdata,

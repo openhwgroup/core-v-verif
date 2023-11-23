@@ -154,11 +154,13 @@ std::string dts_compile(const std::string& dts)
       step = write(dts_pipe[1], buf+done, len-done);
       if (step == -1) {
         std::cerr << "Failed to write dts: " << strerror(errno) << std::endl;
-        exit(1);
+        // Verilator fix | exit -> _exit
+        _exit(1);
       }
     }
     close(dts_pipe[1]);
-    exit(0);
+    // Verilator fix | exit -> _exit
+    _exit(0);
   }
 
   pid_t dtb_pid;
@@ -178,7 +180,8 @@ std::string dts_compile(const std::string& dts)
     close(dtb_pipe[1]);
     execlp(DTC, DTC, "-O", "dtb", (char *)0);
     std::cerr << "Failed to run " DTC ": " << strerror(errno) << std::endl;
-    exit(1);
+    // Verilator fix | exit -> _exit
+    _exit(1);
   }
 
   close(dts_pipe[1]);

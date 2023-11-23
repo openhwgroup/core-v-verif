@@ -26,19 +26,19 @@ typedef enum bit[MODE_WL-1:0] {
 } uvma_rvfi_mode;
 
 
-typedef struct {
+typedef struct packed {
    longint unsigned         nret_id;
    longint unsigned         cycle_cnt;
    longint unsigned         order;
    longint unsigned         insn;
-   byte unsigned            trap;
+   longint unsigned         trap;
    longint unsigned         cause;
-   byte unsigned            halt;
-   byte unsigned            intr;
-   int unsigned             mode;
-   int unsigned             ixl;
-   int unsigned             dbg;
-   int unsigned             dbg_mode;
+   longint unsigned         halt;
+   longint unsigned         intr;
+   longint unsigned         mode;
+   longint unsigned         ixl;
+   longint unsigned         dbg;
+   longint unsigned         dbg_mode;
    longint unsigned         nmip;
 
    longint unsigned         insn_interrupt;
@@ -72,6 +72,13 @@ typedef struct {
    longint unsigned         mem_wmask;
 
 } st_rvfi;
+
+`define ST_NUM_WORDS (($size(st_rvfi)/$size(longint unsigned)))
+
+typedef union {
+    st_rvfi rvfi;
+    bit [63:0] array [`ST_NUM_WORDS-1:0] ;
+} union_rvfi;
 
 function string get_mode_str(uvma_rvfi_mode mode);
    case (mode)

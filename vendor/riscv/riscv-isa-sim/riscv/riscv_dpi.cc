@@ -104,10 +104,43 @@ extern "C" void spike_create(const char* filename)
   }
 }
 
-// advance Spike and get the retired instruction
-extern "C" void spike_step(st_rvfi* rvfi)
+// Convert svOpenArrayHandle -> st_rvfi
+void sv2rvfi(st_rvfi& rvfi, svOpenArrayHandle svOpen)
 {
-  st_rvfi tmp_rvfi = sim->nstep(1);
-  *rvfi = tmp_rvfi;
+    size_t size = svSize(svOpen, 1);
+    uint64_t* array_ptr = (uint64_t*) svGetArrayPtr(svOpen);
+    uint64_t* rvfi_ptr = (uint64_t*) &rvfi;
+
+    for(size_t i = 0; i < size; i++) {
+        rvfi_ptr[i] = array_ptr[size-i-1];
+    }
 }
 
+// Convert st_rvfi -> svOpenArrayHandle
+void rvfi2sv(st_rvfi& rvfi, svOpenArrayHandle svOpen)
+{
+    size_t size = sizeof(st_rvfi) / 8; // To match 64 byte fields
+    uint64_t* array_ptr = (uint64_t*) svGetArrayPtr(svOpen);
+    uint64_t* rvfi_ptr = (uint64_t*) &rvfi;
+
+    for(size_t i = 0; i < size; i++) {
+        array_ptr[size-i-1] = rvfi_ptr[i];
+    }
+}
+
+extern "C" void spike_step_struct(st_rvfi& reference, st_rvfi& spike)
+{
+  std::vector<st_rvfi> vreference, vspike;
+  vreference.push_back(reference);
+  vspike = sim->step(1, vreference);
+  spike = vspike[0];
+}
+
+extern "C" void spike_step_svOpenArray(svOpenArrayHandle reference, svOpenArrayHandle spike)
+{
+  st_rvfi reference_rvfi, spike_rvfi;
+
+  sv2rvfi(reference_rvfi, reference);
+  spike_step_struct(reference_rvfi, spike_rvfi);
+  rvfi2sv(spike_rvfi, spike);
+}

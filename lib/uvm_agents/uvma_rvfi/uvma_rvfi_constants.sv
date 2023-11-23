@@ -44,8 +44,9 @@ localparam DEFAULT_ILEN     = 32;
 localparam DEFAULT_XLEN     = 32;
 localparam DEFAULT_NRET     = 1;
 
-const string format_header_str = "%15s | RVFI | %8s | %6s | %8s | %8s | %s | %03s | %08s | %03s | %08s | %03s | %08s | %03s | %08s | %08s | %s";
-const string format_instr_str  = "%15s | RVFI | %8d | %6d | %8x | %8s | %s | x%-2d | %08x | x%-2d | %08x | x%-2d | %08x";
+const string format_header_str = "%8s | RVFI | %8s | %6s | %8s | %8s | %s | %03s | %08s | %03s | %08s | %03s | %08s | %03s | %08s | %08s | %s";
+const string format_instr_str  = "%8s | RVFI | %8d | %6d | %8x | %8s | %s | x%-2d | %08x | x%-2d | %08x | x%-2d | %08x";
+`define FORMAT_INSTR_STR_MACRO "%8s | RVFI | %8d | %6d | %8x | %8s | %s | x%-2d | %08x | x%-2d | %08x | x%-2d | %08x"
 const string format_mem_str    = "| %02s | %08x | %08s |";
 
 `endif // __UVMA_RVFI_CONSTANTS_SV__
