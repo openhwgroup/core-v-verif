@@ -33,7 +33,7 @@
 
 // MUST be 31 or less (bit position-1 in result array determines test pass/fail
 // status, thus we are limited to 31 tests with this construct.
-#define NUM_TESTS 19
+#define NUM_TESTS 21
 // Start at 1 (ignore dummy test that is only used for env sanity checking during dev.)
 #define START_TEST_NUM 1
 // Abort test at first self-check fail, useful for debugging.
@@ -379,6 +379,8 @@ volatile uint32_t * volatile g_trigger_matched;
 volatile uint32_t * volatile g_has_clic;
 volatile uint32_t * volatile g_single_step_unspec_err;
 
+volatile uint32_t            g_pushpop_area [64];
+
 extern volatile uint32_t *trigger_loc;
 extern volatile uint32_t *trigger_loc_dbg;
 extern volatile uint32_t *trigger_exit;
@@ -465,6 +467,8 @@ uint32_t check_stopcnt_bits(uint32_t index, uint8_t report_name);
 uint32_t single_step(uint32_t index, uint8_t report_name);
 uint32_t mprv_dret_to_umode(uint32_t index, uint8_t report_name);
 uint32_t cover_known_iss_mismatches(uint32_t index, uint8_t report_name);
+uint32_t push_haltreq(uint32_t index, uint8_t report_name);
+uint32_t pop_haltreq(uint32_t index, uint8_t report_name);
 
 // ---------------------------------------------------------------
 // Prototypes for functions that are test specific and
@@ -621,7 +625,7 @@ int main(int argc, char **argv){
   setup_clic();
 
   // Add function pointers to new tests here
-  tests[0]  = dummy; // unused, can be used for env sanity checking
+  tests[0] = dummy; // unused, can be used for env sanity checking
   tests[1]  = debug_csr_rw;
   tests[2]  = trigger_default_val;
   tests[3]  = ebreak_behavior_m_mode;
@@ -640,6 +644,8 @@ int main(int argc, char **argv){
   tests[16] = single_step;
   tests[17] = mprv_dret_to_umode;
   tests[18] = cover_known_iss_mismatches;
+  tests[19] = push_haltreq;
+  tests[20] = pop_haltreq;
 
   // Run all tests in list above
   cvprintf(V_LOW, "\nDebug test start\n\n");
@@ -1132,6 +1138,113 @@ uint32_t request_ebreak_3x(uint32_t index, uint8_t report_name) {
   return 0;
 }
 
+// -----------------------------------------------------------------------------
+
+uint32_t push_haltreq(uint32_t index, uint8_t report_name) {
+  volatile uint8_t test_fail = 0;
+  volatile debug_req_control_t debug_req_ctrl;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    cvprintf(V_LOW, "\"%s\"", name);
+    return 0;
+  }
+
+  debug_req_ctrl = (debug_req_control_t) {
+    .fields.value            = 1,
+    .fields.pulse_mode       = 1,
+    .fields.rand_pulse_width = 0,
+    .fields.pulse_width      = 0x1fff,
+    .fields.rand_start_delay = 0,
+    .fields.start_delay      = 15
+  };
+
+  *g_debug_test_num = 1;
+  DEBUG_REQ_CONTROL_REG = debug_req_ctrl.raw;
+
+  __asm__ volatile(
+    R"(
+      # Save old "sp"
+      mv t0, sp
+
+      # Setup temporary "sp"
+      la sp, g_pushpop_area
+      addi sp, sp, 64
+
+      # Push to temporary "sp"
+      cm.push {x1, x8-x9, x18-x27}, -64
+
+      # Restore old "sp"
+      mv sp, t0
+    )"::: "t0"
+  );
+
+  test_fail += *g_debug_status > 1 ? 1 : 0;
+  *g_debug_status = 0;
+
+  if (test_fail) {
+    cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
+    return index + 1;
+  }
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
+  return 0;
+}
+
+
+// -----------------------------------------------------------------------------
+
+uint32_t pop_haltreq(uint32_t index, uint8_t report_name) {
+  volatile uint8_t test_fail = 0;
+  volatile debug_req_control_t debug_req_ctrl;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    cvprintf(V_LOW, "\"%s\"", name);
+    return 0;
+  }
+
+  debug_req_ctrl = (debug_req_control_t) {
+    .fields.value            = 1,
+    .fields.pulse_mode       = 1,
+    .fields.rand_pulse_width = 0,
+    .fields.pulse_width      = 0x1fff,
+    .fields.rand_start_delay = 0,
+    .fields.start_delay      = 25
+  };
+
+  *g_debug_test_num = 1;
+  DEBUG_REQ_CONTROL_REG = debug_req_ctrl.raw;
+
+  __asm__ volatile(
+    R"(
+        # Save old "sp" and GPRs
+      cm.push {x1, x8-x9}, -16
+      mv t0, sp
+
+      # Setup temporary "sp"
+      la sp, g_pushpop_area
+
+      # Pop from temporary "sp"
+      cm.pop {x1, x8-x9, x18-x27}, 64
+
+      # Restore old "sp" and GPRs
+      mv sp, t0
+      cm.pop {x1, x8-x9}, 16
+    )"::: "t0"
+  );
+
+  test_fail += *g_debug_status > 1 ? 1 : 0;
+  *g_debug_status = 0;
+
+  if (test_fail) {
+    cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
+    return index + 1;
+  }
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
+  return 0;
+}
 // -----------------------------------------------------------------------------
 
 __attribute__((naked)) void m_fast14_irq_handler(void) {
