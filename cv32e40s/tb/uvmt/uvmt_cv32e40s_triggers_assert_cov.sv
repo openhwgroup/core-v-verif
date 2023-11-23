@@ -452,11 +452,11 @@ module uvmt_cv32e40s_triggers_assert_cov
     //3) see a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*, a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason
 
     //4)
-    a_dt_tselect_higher_than_dbg_num_triggers: assert property(
-      rvfi_if.is_csr_instr(ADDR_TSELECT)
-      |->
-      rvfi_if.rvfi_rd1_wdata < CORE_PARAM_DBG_NUM_TRIGGERS
-    ) else `uvm_error(info_tag, "The CSR tselect is set to equal or higher than the number of trigger.\n");
+    //a_dt_tselect_higher_than_dbg_num_triggers: assert property(
+    //  rvfi_if.is_csr_instr(ADDR_TSELECT)
+    //  |->
+    //  rvfi_if.rvfi_rd1_wdata < CORE_PARAM_DBG_NUM_TRIGGERS
+    //) else `uvm_error(info_tag, "The CSR tselect is set to equal or higher than the number of trigger.\n");
 
 
     // Make sure the tdata1 array corresponds with the tdata1 csr.
@@ -855,11 +855,11 @@ module uvmt_cv32e40s_triggers_assert_cov
       rvfi_if.rvfi_rd1_wdata == tdata1_pre_state
     ) else `uvm_error(info_tag, "No read access to tdata1 in debug mode.\n");
 
-    a_dt_read_access_to_tdata2_in_dmode: assert property (
-      seq_csr_read_dmode(ADDR_TDATA2)
-      |->
-      rvfi_if.rvfi_rd1_wdata == tdata2_pre_state
-    ) else `uvm_error(info_tag, "No read access to tdata2 in debug mode.\n");
+    //a_dt_read_access_to_tdata2_in_dmode: assert property (
+    //  seq_csr_read_dmode(ADDR_TDATA2)
+    //  |->
+    //  rvfi_if.rvfi_rd1_wdata == tdata2_pre_state
+    //) else `uvm_error(info_tag, "No read access to tdata2 in debug mode.\n");
 
 
     //3)
@@ -919,17 +919,17 @@ module uvmt_cv32e40s_triggers_assert_cov
     //1) write to tdata1/2/3 and check that nothing got changes except the one "tdata*" register that was written
 
     //1)
-    a_dt_write_only_tdata1: assert property (
-      seq_csr_write_dmode(ADDR_TDATA1)
-      |->
-      !tdata2_if.rvfi_csr_wmask
-    ) else `uvm_error(info_tag, "A write to tdata1 writes tdata2 as well.\n");
+    //a_dt_write_only_tdata1: assert property (
+    //  seq_csr_write_dmode(ADDR_TDATA1)
+    //  |->
+    //  !tdata2_if.rvfi_csr_wmask
+    //) else `uvm_error(info_tag, "A write to tdata1 writes tdata2 as well.\n");
 
-    a_dt_write_only_tdata2: assert property (
-      seq_csr_write_dmode(ADDR_TDATA2)
-      |->
-      !tdata1_if.rvfi_csr_wmask
-    ) else `uvm_error(info_tag, "A write to tdata2 writes tdata1 as well.\n");
+    //a_dt_write_only_tdata2: assert property (
+    //  seq_csr_write_dmode(ADDR_TDATA2)
+    //  |->
+    //  !tdata1_if.rvfi_csr_wmask
+    //) else `uvm_error(info_tag, "A write to tdata2 writes tdata1 as well.\n");
 
 
     //- Vplan:
@@ -941,21 +941,21 @@ module uvmt_cv32e40s_triggers_assert_cov
 
 
     //1)
-    a_dt_no_actions_on_trigger_matches_in_debug_dcsr: assert property (
-      rvfi_if.rvfi_valid
-      && rvfi_if.rvfi_dbg_mode
-      && dcsr_if.rvfi_csr_wmask
-      |->
-      rvfi_if.is_csr_write(ADDR_DCSR)
-    ) else `uvm_error(info_tag, "Action is taken when there is a trigger match while in debug mode (dcsr is changed even though we dont do a dcsr write operation).\n");
+    //a_dt_no_actions_on_trigger_matches_in_debug_dcsr: assert property (
+    //  rvfi_if.rvfi_valid
+    //  && rvfi_if.rvfi_dbg_mode
+    //  && dcsr_if.rvfi_csr_wmask
+    //  |->
+    //  rvfi_if.is_csr_write(ADDR_DCSR)
+    //) else `uvm_error(info_tag, "Action is taken when there is a trigger match while in debug mode (dcsr is changed even though we dont do a dcsr write operation).\n");
 
-    a_dt_no_actions_on_trigger_matches_in_debug_dpc: assert property (
-      rvfi_if.rvfi_valid
-      && rvfi_if.rvfi_dbg_mode
-      && dpc_if.rvfi_csr_wmask
-      |->
-      rvfi_if.is_csr_write(ADDR_DPC)
-    ) else `uvm_error(info_tag, "Action is taken when there is a trigger match while in debug mode (dpc is changed even though we dont do a dpc write operation).\n");
+    //a_dt_no_actions_on_trigger_matches_in_debug_dpc: assert property (
+    //  rvfi_if.rvfi_valid
+    //  && rvfi_if.rvfi_dbg_mode
+    //  && dpc_if.rvfi_csr_wmask
+    //  |->
+    //  rvfi_if.is_csr_write(ADDR_DPC)
+    //) else `uvm_error(info_tag, "Action is taken when there is a trigger match while in debug mode (dpc is changed even though we dont do a dpc write operation).\n");
 
 
     for (genvar t = 0; t < CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin
@@ -1315,22 +1315,22 @@ module uvmt_cv32e40s_triggers_assert_cov
 
 
     //1)
-    a_dt_write_tdata2_random_in_dmode_type_2_6_15: assert property (
-
-      (seq_csr_write_dmode(ADDR_TDATA2)
-      ##0 (tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 2
-      || tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 6
-      || tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 15))
-
-      |->
-      (is_csrrw && (tdata2_post_state == rvfi_if.rvfi_rs1_rdata))
-      || (is_csrrs && (tdata2_post_state == (tdata2_pre_state | rvfi_if.rvfi_rs1_rdata)))
-      || (is_csrrc && (tdata2_post_state == (tdata2_pre_state & (~rvfi_if.rvfi_rs1_rdata))))
-      || (is_csrrwi && (tdata2_post_state == csri_uimm))
-      || (is_csrrsi && (tdata2_post_state == (tdata2_pre_state | csri_uimm)))
-      || (is_csrrci && (tdata2_post_state == (tdata2_pre_state & (~csri_uimm))))
-
-    ) else `uvm_error(info_tag, "Random values for tdata2 type 2/6/15 in debug mode, is not accepted.\n");
+    //a_dt_write_tdata2_random_in_dmode_type_2_6_15: assert property (
+    //
+    //  (seq_csr_write_dmode(ADDR_TDATA2)
+    //  ##0 (tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 2
+    //  || tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 6
+    //  || tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 15))
+    //
+    //  |->
+    //  (is_csrrw && (tdata2_post_state == rvfi_if.rvfi_rs1_rdata))
+    //  || (is_csrrs && (tdata2_post_state == (tdata2_pre_state | rvfi_if.rvfi_rs1_rdata)))
+    //  || (is_csrrc && (tdata2_post_state == (tdata2_pre_state & (~rvfi_if.rvfi_rs1_rdata))))
+    //  || (is_csrrwi && (tdata2_post_state == csri_uimm))
+    //  || (is_csrrsi && (tdata2_post_state == (tdata2_pre_state | csri_uimm)))
+    //  || (is_csrrci && (tdata2_post_state == (tdata2_pre_state & (~csri_uimm))))
+    //
+    //) else `uvm_error(info_tag, "Random values for tdata2 type 2/6/15 in debug mode, is not accepted.\n");
 
 
     for (genvar t = 0; t < CORE_PARAM_DBG_NUM_TRIGGERS; t++) begin

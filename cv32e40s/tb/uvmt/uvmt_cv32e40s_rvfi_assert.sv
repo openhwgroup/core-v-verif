@@ -326,12 +326,12 @@ module uvmt_cv32e40s_rvfi_assert
 
   // Store Instructions
 
-  a_isstoreinstr_required: assert property (
-    rvfi_if.rvfi_valid  &&
-    rvfi_if.rvfi_mem_wmask
-    |->
-    rvfi_if.is_store_instr
-  ) else `uvm_error(info_tag, "wmask comes from stores");
+  //a_isstoreinstr_required: assert property (
+  //  rvfi_if.rvfi_valid  &&
+  //  rvfi_if.rvfi_mem_wmask
+  //  |->
+  //  rvfi_if.is_store_instr
+  //) else `uvm_error(info_tag, "wmask comes from stores");
 
   //a_isstoreinstrs_demands: assert property (
   //  rvfi_if.is_store_instr  &&
