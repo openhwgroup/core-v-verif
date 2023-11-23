@@ -105,25 +105,25 @@ VSIM_LDGEN_FLAGS ?= \
 ###############################################################################
 # VLOG (Compilation)
 VLOG_FLAGS    ?= \
-		-suppress 2577 \
-		-suppress 2583 \
-		-suppress 13185 \
-		-suppress 13314 \
-		-suppress 13288 \
-		-suppress 2181 \
-		-suppress 13262 \
-		-suppress vlog-2745 \
-                -suppress vlog-2643 \
-                -suppress vlog-7027 \
-                -suppress vlog-2697 \
-		-timescale "1ns/1ps" \
-		-sv \
-		-64 \
-		-mfcu \
-		+acc=rb \
-                $(SV_CMP_FLAGS) \
-		$(QUIET) \
-		-writetoplevels  uvmt_$(CV_CORE_LC)_tb
+                 -suppress 2577 \
+                 -suppress 2583 \
+                 -suppress 13185 \
+                 -suppress 13314 \
+                 -suppress 13288 \
+                 -suppress 2181 \
+                 -suppress 13262 \
+                 -suppress vlog-2745 \
+                 -suppress vlog-2643 \
+                 -suppress vlog-7027 \
+                 -suppress vlog-2697 \
+                 -timescale "1ns/1ps" \
+                 -sv \
+                 -64 \
+                 -mfcu \
+                 +acc=rb \
+                 $(SV_CMP_FLAGS) \
+                 $(QUIET) \
+                 -writetoplevels uvmt_$(CV_CORE_LC)_tb
 
 VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 
