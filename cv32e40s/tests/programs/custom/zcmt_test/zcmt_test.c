@@ -31,7 +31,7 @@
 
 // MUST be 31 or less (bit position-1 in result array determines test pass/fail
 // status, thus we are limited to 31 tests with this construct.
-#define NUM_TESTS 11
+#define NUM_TESTS 13
 // Set which test index to start testing at (for quickly running specific tests during development)
 #define START_TEST_IDX 0
 
@@ -59,6 +59,8 @@
 #define MSECCFG_ADDR   0x747
 #define PMPCFG0_ADDR   0x3a0
 #define PMPADDR0_ADDR  0x3b0
+#define PMPADDR1_ADDR  0x3b1
+#define PMPADDR2_ADDR  0x3b2
 #define JVT_ADDR       0x017
 
 
@@ -101,6 +103,8 @@ uint32_t cm_jt_u_illegal(uint32_t index, uint8_t report_name);
 uint32_t cm_jalt_u_illegal(uint32_t index, uint8_t report_name);
 uint32_t cm_jt_u_legal(uint32_t index, uint8_t report_name);
 uint32_t cm_jalt_u_legal(uint32_t index, uint8_t report_name);
+uint32_t cm_jt_m_trap(uint32_t index, uint8_t report_name);
+uint32_t cm_jalt_m_trap(uint32_t index, uint8_t report_name);
 
 // ---------------------------------------------------------------
 // Generic test template:
@@ -200,6 +204,7 @@ uint32_t has_pmp_configured(void);
  * Non-standard illegal instruction and ecall handlers
  */
 void handle_illegal_insn(void);
+void handle_insn_access_fault(void);
 void handle_ecall(void);
 void handle_ecall_u(void);
 
@@ -232,11 +237,12 @@ int main(int argc, char **argv){
   tests[8]  = cm_jalt_u_illegal;
   tests[9]  = cm_jt_u_legal;
   tests[10] = cm_jalt_u_legal;
+  tests[11] = cm_jt_m_trap;
+  tests[12] = cm_jalt_m_trap;
 
   // TODO silabs-hfegran: defering these tests to a later PR
   //tests[11] = cm_jt_m_trap_m;
   //tests[12] = cm_jt_u_trap_u;
-  //tests[11] = cm_jalt_m_trap;
   //tests[12] = cm_jalt_u_trap;
 
   // Run all tests in list above
@@ -569,11 +575,12 @@ __attribute__((naked)) void jvt_code(void) {
     jvt_table:
     index_0: .word(jvt_index_0)
     index_1: .word(jvt_index_1)
-    .space 116, 0x0
+    index_2: .word(jvt_index_2)
+    .space 112, 0x0
     index_31: .word(jvt_index_31)
     index_32: .word(jvt_index_32)
     .space 8
-    index_35: nop
+    index_35: .word(jvt_index_35)
     .space 172, 0x0
     index_79: .word(jvt_index_79)
     .space 172, 0x0
@@ -621,6 +628,28 @@ __attribute__((optimize("align-functions=4"), naked)) void jvt_index_1(void) {
 
 // -----------------------------------------------------------------------------
 
+__attribute__((optimize("align-functions=4"), naked)) void jvt_index_2(void) {
+  __asm__ volatile ( R"(
+    addi sp, sp, -8
+    sw a0, 0(sp)
+    sw a1, 4(sp)
+
+    lw a0, g_expect_tablejmp
+    lw a1, 0(a0)
+    addi a1, a1, -2
+    sw a1, 0(a0)
+
+    lw a1, 4(sp)
+    lw a0, 0(sp)
+    addi sp, sp, 8
+    lw a0, g_recovery_cm_jt
+    lw a0, 0(a0)
+    jalr zero, 0(a0)
+  )");
+}
+
+// -----------------------------------------------------------------------------
+
 __attribute__((optimize("align-functions=4"), naked)) void jvt_index_31(void) {
   __asm__ volatile ( R"(
     addi sp, sp, -8
@@ -661,6 +690,26 @@ __attribute__((optimize("align-functions=4"), naked)) void jvt_index_32(void) {
     addi sp, sp, 8
     ret
 
+  )");
+}
+
+// -----------------------------------------------------------------------------
+
+__attribute__((optimize("align-functions=4"), naked)) void jvt_index_35(void) {
+  __asm__ volatile ( R"(
+    addi sp, sp, -8
+    sw a0, 0(sp)
+    sw a1, 4(sp)
+
+    lw a0, g_expect_tablejmp
+    lw a1, 0(a0)
+    addi a1, a1, -35
+    sw a1, 0(a0)
+
+    lw a1, 4(sp)
+    lw a0, 0(sp)
+    addi sp, sp, 8
+    ret
   )");
 }
 
@@ -1742,3 +1791,220 @@ uint32_t cm_jalt_u_legal(uint32_t index, uint8_t report_name){
   return 0;
 }
 
+// -----------------------------------------------------------------------------
+
+uint32_t cm_jt_m_trap(uint32_t index,  uint8_t report_name){
+  volatile uint8_t test_fail = 0;
+  volatile mseccfg_t mseccfg = { 0 };
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    cvprintf(V_LOW, "\"%s\"", name);
+    return 0;
+  }
+
+  (void)csr_instr(CSRRW, JVT_ADDR, ((uint32_t)&jvt_table));
+
+  mseccfg.fields.rlb = 1;
+  (void)csr_instr(CSRRW, MSECCFG_ADDR, mseccfg.raw);
+
+  set_pmpcfg((pmpsubcfg_t){
+      .fields.r = 1,
+      .fields.w = 1,
+      .fields.x = 1,
+      .fields.a = PMPMODE_TOR,
+      .fields.l = 0
+    }, 0);
+
+  set_pmpcfg((pmpsubcfg_t){
+      .fields.r = 0,
+      .fields.w = 0,
+      .fields.x = 0,
+      .fields.a = PMPMODE_TOR,
+      .fields.l = 1
+    }, 1);
+
+  set_pmpcfg((pmpsubcfg_t){
+      .fields.r = 1,
+      .fields.w = 1,
+      .fields.x = 1,
+      .fields.a = PMPMODE_TOR,
+      .fields.l = 0
+    }, 2);
+
+  // Set PMP configuration (lock down index 2 in table)
+  (void)csr_instr(CSRRW, PMPADDR0_ADDR, ((uint32_t)&jvt_table + 2*4) >> 2);
+  (void)csr_instr(CSRRW, PMPADDR1_ADDR, ((uint32_t)&jvt_table + 3*4) >> 2);
+  (void)csr_instr(CSRRW, PMPADDR2_ADDR, 0xffffffffUL >> 2);
+
+  *g_expect_tablejmp = 2;
+  __asm__ volatile ( R"(
+    .global recovery_cm_jt_m_2
+    addi sp, sp, -12
+    sw a0, 0(sp)
+    sw a1, 4(sp)
+    sw a2, 8(sp)
+
+    lw a0, g_recovery_cm_jt
+    la a1, recovery_cm_jt_m_2
+    sw a1, 0(a0)
+
+    cm.jt 2
+    recovery_cm_jt_m_2:
+    lw a2, 8(sp)
+    lw a1, 4(sp)
+    lw a0, 0(sp)
+
+    addi sp, sp, 12
+  )");
+
+  test_fail += (*g_expect_tablejmp != 0) ? 1 : 0;
+  if (test_fail) {
+    // Should never be here in this test case unless something goes really wrong
+    cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
+    return index + 1;
+  }
+  cvprintf(V_MEDIUM, "\nTest: \"%s\" No self checking in this test, OK!\n", name);
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+
+uint32_t cm_jalt_m_trap(uint32_t index,  uint8_t report_name){
+  volatile uint8_t test_fail = 0;
+  volatile mseccfg_t mseccfg = { 0 };
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    cvprintf(V_LOW, "\"%s\"", name);
+    return 0;
+  }
+
+  (void)csr_instr(CSRRW, JVT_ADDR, ((uint32_t)&jvt_table));
+
+  mseccfg.fields.rlb = 1;
+  (void)csr_instr(CSRRW, MSECCFG_ADDR, mseccfg.raw);
+
+  set_pmpcfg((pmpsubcfg_t){
+      .fields.r = 1,
+      .fields.w = 1,
+      .fields.x = 1,
+      .fields.a = PMPMODE_TOR,
+      .fields.l = 0
+    }, 0);
+
+  set_pmpcfg((pmpsubcfg_t){
+      .fields.r = 0,
+      .fields.w = 0,
+      .fields.x = 0,
+      .fields.a = PMPMODE_TOR,
+      .fields.l = 1
+    }, 1);
+
+  set_pmpcfg((pmpsubcfg_t){
+      .fields.r = 1,
+      .fields.w = 1,
+      .fields.x = 1,
+      .fields.a = PMPMODE_TOR,
+      .fields.l = 0
+    }, 2);
+
+  // Set PMP configuration (lock down index 2 in table)
+  (void)csr_instr(CSRRW, PMPADDR0_ADDR, ((uint32_t)&jvt_table + 35*4) >> 2);
+  (void)csr_instr(CSRRW, PMPADDR1_ADDR, ((uint32_t)&jvt_table + 36*4) >> 2);
+  (void)csr_instr(CSRRW, PMPADDR2_ADDR, 0xffffffffUL >> 2);
+
+  *g_expect_tablejmp = 35;
+  __asm__ volatile ( R"(
+    cm.jalt 35
+  )");
+
+  test_fail += (*g_expect_tablejmp != 0) ? 1 : 0;
+  if (test_fail) {
+    // Should never be here in this test case unless something goes really wrong
+    cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
+    return index + 1;
+  }
+  cvprintf(V_MEDIUM, "\nTest: \"%s\" No self checking in this test, OK!\n", name);
+  return 0;
+}
+
+// -----------------------------------------------------------------------------
+
+__attribute__((naked)) void handle_insn_access_fault(void) {
+  __asm__ volatile ( R"(
+    call handle_insn_access_fault_code
+    j end_handler_ret
+  )");
+}
+
+// -----------------------------------------------------------------------------
+
+void handle_insn_access_fault_code(void) {
+  volatile uint32_t mepc;
+  volatile mcause_t mcause = { 0 };
+  volatile jvt_t    jvt    = { 0 };
+
+  // RWX !L & MODE OFF
+  volatile const uint32_t pmp_enable_access_all = 0x07070707;
+
+  __asm__ volatile ( R"(
+     csrrs %[mc], mcause, x0
+     csrrs %[mp], mepc, x0
+     csrrs %[jvt], 0x017, x0
+     )"
+     : [mc] "=r"(mcause.raw),
+       [mp] "=r"(mepc),
+       [jvt] "=r"(jvt.raw)
+     :
+     :
+     );
+
+  cvprintf(V_DEBUG, "In handler, mepc: 0x%08lx, mcause: 0x%08lx\n", mepc, mcause.raw);
+
+  switch (mcause.clic.interrupt) {
+    case 0:
+      switch (mcause.clic.exccode) {
+        case 0x1: cvprintf(V_LOW, "Instruction access fault at 0x%08lx\n", mepc);
+                  break;
+        case 0x2: cvprintf(V_LOW, "Invalid instruction fault at 0x%08lx\n", mepc);
+                  break;
+      }
+      break;
+    case 1:
+      break;
+  }
+
+  // check if address is locked, then unlock
+  // let test be responsible for cleaning up addr-regs to
+  // not clutter code here
+  if ( mcause.clic.exccode == 1 ) {
+    cvprintf(V_LOW, "Encountered read access fault, trying to enable pmp access\n");
+    __asm__ volatile ( R"(
+      csrrw x0, pmpcfg0,  %[access_ena]
+      csrrw x0, pmpcfg1,  %[access_ena]
+      csrrw x0, pmpcfg2,  %[access_ena]
+      csrrw x0, pmpcfg3,  %[access_ena]
+      csrrw x0, pmpcfg4,  %[access_ena]
+      csrrw x0, pmpcfg5,  %[access_ena]
+      csrrw x0, pmpcfg6,  %[access_ena]
+      csrrw x0, pmpcfg7,  %[access_ena]
+      csrrw x0, pmpcfg8,  %[access_ena]
+      csrrw x0, pmpcfg9,  %[access_ena]
+      csrrw x0, pmpcfg10, %[access_ena]
+      csrrw x0, pmpcfg11, %[access_ena]
+      csrrw x0, pmpcfg12, %[access_ena]
+      csrrw x0, pmpcfg13, %[access_ena]
+      csrrw x0, pmpcfg14, %[access_ena]
+      csrrw x0, pmpcfg15, %[access_ena]
+    )"
+    :
+    : [access_ena] "r" (pmp_enable_access_all)
+    :
+      );
+  }
+
+  return;
+}
