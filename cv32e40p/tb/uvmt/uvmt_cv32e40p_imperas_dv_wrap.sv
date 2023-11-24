@@ -452,6 +452,7 @@ module uvmt_cv32e40p_imperas_dv_wrap
     task ref_init;
     string test_program_elf;
     reg [31:0] hart_id;
+    bit [64:0] mtvec_addr_i;
 
     // Select processor name
     void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME, "CV32E40P"));
@@ -524,6 +525,11 @@ module uvmt_cv32e40p_imperas_dv_wrap
 
     // Debug
     rvviRefNetGroupSet(rvviRefNetIndexGet("haltreq"),             4);
+
+    // MTVEC CSR initialization based on TB configuration
+    if ($value$plusargs("mtvec_addr=%0x", mtvec_addr_i)) begin
+      rvviRefCsrSet(hart_id, `CSR_MTVEC_ADDR, mtvec_addr_i);
+    end
 
     void'(rvviRefMemorySetVolatile('h15001000, 'h15001007)); //TODO: deal with int return value
   endtask // ref_init
