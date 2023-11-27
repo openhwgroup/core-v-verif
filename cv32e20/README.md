@@ -19,3 +19,5 @@ There are README files in each directory with additional information.
 
 ## Getting Started
 Check out the Quick Start Guide in the [CORE-V-VERIF Verification Strategy](https://docs.openhwgroup.org/projects/core-v-verif/en/latest/quick_start.html).
+<br>
+You may also find it useful to review the [Common Makefile for the CORE-V-VERIF UVM Verification Environment](https://github.com/openhwgroup/core-v-verif/blob/master/mk/README.md).
