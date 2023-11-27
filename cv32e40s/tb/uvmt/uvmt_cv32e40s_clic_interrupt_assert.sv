@@ -780,6 +780,13 @@ module uvmt_cv32e40s_clic_interrupt_assert
     end
   end
 
+  covergroup cg_clic @(posedge clk_i);
+    option.per_instance = 1;
+    cp_lvl: coverpoint irq_level;
+  endgroup
+
+  cg_clic clic_cg = new;
+
 
   assign core_not_in_debug            = debug_running;
   assign core_in_debug                = !core_not_in_debug;
