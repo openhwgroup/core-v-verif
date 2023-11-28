@@ -93,6 +93,9 @@ GEN_START_INDEX ?= 0
 GEN_NUM_TESTS   ?= 1
 export RUN_INDEX       ?= 0
 
+# Generate Core Trace logs
+ENABLE_TRACE_LOG  ?= YES
+
 # Common test runtime plusargs from external file, used as test-configuration
 # Test Name with test-configuration
 TEST_RUN_NAME =  $(if $(TEST_CFG_FILE_NAME),$(TEST)_$(TEST_CFG_FILE_NAME),$(TEST))

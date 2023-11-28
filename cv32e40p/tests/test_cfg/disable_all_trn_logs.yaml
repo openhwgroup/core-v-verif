@@ -1,0 +1,5 @@
+name: disable_all_trn_logs
+description: >
+    Disable All Transaction Logs
+plusargs: >
+    +disable_all_trn_logs
