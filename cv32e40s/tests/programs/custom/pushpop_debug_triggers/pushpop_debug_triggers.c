@@ -301,7 +301,7 @@ int main(int argc, char **argv){
   let_dmode_setup_triggers(1); // trigger at first address
   test_push_debug_trigger();
   test_pop_debug_trigger();
-  let_dmode_setup_triggers(3); // trigger at last address //TODO find address
+  let_dmode_setup_triggers(3); // trigger at last address
   test_push_debug_trigger();
   test_pop_debug_trigger();
 

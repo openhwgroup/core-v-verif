@@ -794,9 +794,6 @@ uint32_t push_border(uint32_t index, uint8_t report_name) {
 
 
   test_fail += *g_exp_fault;
-  //test_fail += g_mcause->raw != 0;
-  //test_fail += *g_mepc       != 0;
-  //test_fail += *g_mtval      != 0;
   clear_status_csrs();
 
   if (test_fail) {
@@ -847,9 +844,6 @@ uint32_t pop_border(uint32_t index, uint8_t report_name) {
   );
 
   test_fail += *g_exp_fault;
-  //test_fail += g_mcause->raw != 0;
-  //test_fail += *g_mepc       != 0;
-  //test_fail += *g_mtval      != 0;
   clear_status_csrs();
 
   if (test_fail) {
