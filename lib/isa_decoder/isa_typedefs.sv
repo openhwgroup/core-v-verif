@@ -295,11 +295,39 @@
     C_A5 = 3'b111
   } gpr_rvc_abi_name_e;
 
+  typedef enum logic [2:0] {
+    CS_X8  = 3'b000,
+    CS_X9  = 3'b001,
+    CS_X18 = 3'b010,
+    CS_X19 = 3'b011,
+    CS_X20 = 3'b100,
+    CS_X21 = 3'b101,
+    CS_X22 = 3'b110,
+    CS_X23 = 3'b111
+  } gpr_rvc_sreg_name_e;
+
+  typedef enum logic [2:0] {
+    CS_S0 = 3'b000,
+    CS_S1 = 3'b001,
+    CS_S2 = 3'b010,
+    CS_S3 = 3'b011,
+    CS_S4 = 3'b100,
+    CS_S5 = 3'b101,
+    CS_S6 = 3'b110,
+    CS_S7 = 3'b111
+  } gpr_rvc_sreg_abi_name_e;
+
   typedef union packed {
     bit [2:0]          raw;
     gpr_rvc_name_e     gpr;
     gpr_rvc_abi_name_e gpr_abi;
   } gpr_rvc_t;
+
+  typedef union packed {
+    bit [2:0]               raw;
+    gpr_rvc_sreg_name_e     gpr;
+    gpr_rvc_sreg_abi_name_e gpr_abi;
+  } gpr_rvc_sreg_t;
 
   typedef union packed {
     bit [4:0]      raw;
@@ -750,13 +778,6 @@
 
   typedef struct packed {
     logic[15:10] funct6;
-    gpr_rvc_t    r1s;
-    logic[6:5]   funct2;
-    gpr_rvc_t    r2s;
-  } cmmv_type_t;
-
-  typedef struct packed {
-    logic[15:10] funct6;
     logic[9:2]   index;
   } cmjt_type_t;
 
@@ -766,6 +787,13 @@
     rlist_t      urlist;
     logic[5:4]   spimm;
   } cmpp_type_t;
+
+  typedef struct packed {
+    logic[15:10]   funct6;
+    gpr_rvc_sreg_t r1s;
+    logic[6:5]     funct2;
+    gpr_rvc_sreg_t r2s;
+  } cmmv_type_t;
 
   // Compressed instruction types
   typedef struct packed {
@@ -810,10 +838,12 @@
   // and enumerated abi register names
   // ---------------------------------------------------------------------------
   typedef struct packed {
-    gpr_t     gpr;
-    gpr_rvc_t gpr_rvc;
-    bit       valid;
-    bit       valid_gpr_rvc;
+    gpr_t          gpr;
+    gpr_rvc_t      gpr_rvc;
+    gpr_rvc_sreg_t gpr_rvc_sreg;
+    bit            valid;
+    bit            valid_gpr_rvc;
+    bit            valid_gpr_rvc_sreg;
   } reg_operand_t;
 
   // ---------------------------------------------------------------------------
