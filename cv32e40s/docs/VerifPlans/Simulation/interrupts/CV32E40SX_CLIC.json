@@ -85,7 +85,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "Missing covergroup, vc should use all interrupt levels"
+        "Link to Coverage": "clic_cg.cp_lvl"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",

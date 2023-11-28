@@ -348,14 +348,22 @@ module uvmt_cv32e40s_rvfi_assert
   ) else `uvm_error(info_tag, "!store->!exce, exce->store");
 
 
+  // Disassembler
 
-// Disassembler
   a_unknowninstr_trap: assert property (
     (rvfi_if.instr_asm.instr == UNKNOWN_INSTR) && rvfi_if.rvfi_valid
     |->
     rvfi_if.rvfi_trap.trap
   ) else `uvm_error(info_tag, "Unknown instruction is not trapped");
 
+
+  // Exception's don't update GPRs
+
+  a_exceptions_dont_update_gprs: assert property (
+    rvfi_valid && rvfi_trap.exception
+    |->
+    (rvfi_if.rvfi_rd1_addr == 0)
+  ) else `uvm_error(info_tag, "exceptions shouldn't update gprs");
 
 
 endmodule : uvmt_cv32e40s_rvfi_assert

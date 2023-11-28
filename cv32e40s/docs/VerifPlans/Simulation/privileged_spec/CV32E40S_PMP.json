@@ -1,14 +1,14 @@
 [
     {
-        "Requirement Location": "",
+        "Requirement Location": "N/A",
         "Feature": "Comments",
         "Sub Feature": "SmepmpOverrule",
-        "Feature Description": "The \"smepmp\" spec features can overrule the \"privspec\" (e.g. for locking). Both specs are included here, so be mindful that checking of certain vplan items could be conditional.",
+        "Feature Description": "\"smepmp\" features can overrule the \"privspec\" (e.g. locking). Both specs are included here, so be aware that certain vplan items are conditional.",
         "Verification Goal": "N/A",
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -16,12 +16,12 @@
         "Requirement Location": "",
         "Feature": "Comments",
         "Sub Feature": "FunctionalCoverage",
-        "Feature Description": "Functional coverage is encouraged to be creative in capturing a broad set of possible state, and evaluate it towards the checkers, to catch aspects of pmp functionality that this vplan might have overlooked.",
+        "Feature Description": "Functional coverage should capture a broad set of possible state (could be compared with the checkers), to find crosses that this vplan might have overlooked.",
         "Verification Goal": "N/A",
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -29,12 +29,12 @@
         "Requirement Location": "",
         "Feature": "Comments",
         "Sub Feature": "ImplementationChanges",
-        "Feature Description": "If test implementation reveals new knowledge that contradicts or augments this vplan, then the vplan should be updated.",
+        "Feature Description": "If test implementation gains new knowledge, then update this vplan when appropriate.",
         "Verification Goal": "N/A",
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -42,12 +42,12 @@
         "Requirement Location": "",
         "Feature": "Comments",
         "Sub Feature": "TimeAllowance",
-        "Feature Description": "Some verification goals in this plan has a \"base level\" of checking plus some optional tweaks that might be tried. It is up to the testing implementation how to prioritize and potentially skip the extras, according to what time allows.",
+        "Feature Description": "Some of the verification goals have a \"base level\" of checking plus optional tweaks. It is up to implementation to prioritize and potentially skip the extras.",
         "Verification Goal": "N/A",
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -56,13 +56,13 @@
         "Feature": "General",
         "Sub Feature": "Configs",
         "Feature Description": "The pmp must be tested in a wide range of configurations. That includes testing on both instruction-side and data-side, and it includes testing overlapping regions, non-overlaping, no regions, differing settings for overlapping regions, M-mode only, U-mode only, both M-mode and U-mode, etc, etc. Use functional coverage with plenty of crosses.",
-        "Verification Goal": "Run with different configs to test parameters in low/mid/high ranges and in combination with the other parameters, instantiate checking on both instruction-side and data-side, write coverage to see all relevant region overlap combinations and to see an exhaustive combination of block-level input combinations and functional-level states.",
+        "Verification Goal": "Run with different configs to test parameters in low/mid/high ranges and in combination with the other parameters, instantiate checking on both instruction-side and data-side.\n\nCover: see all relevant region overlap combinations and to see an exhaustive combination of block-level input combinations and functional-level states.",
         "Pass/Fail Criteria": "Other",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "COV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "COV: (SKIPPED)",
+        "Comment": "Skipped in favor of using realease-specific configs."
     },
     {
         "Requirement Location": "",
@@ -73,35 +73,35 @@
         "Pass/Fail Criteria": "Other",
         "Test Type": "Other",
         "Coverage Method": "N/A",
-        "High Priority?": "",
-        "Link to Coverage": "N/A",
-        "Comment": ""
+        "High Priority?": "No",
+        "Link to Coverage": "(SKIPPED)",
+        "Comment": "Skipped in favor of considering the normal assertions good enough and using release-specific configs."
     },
     {
         "Requirement Location": "",
         "Feature": "General",
         "Sub Feature": "UmodeAlways",
         "Feature Description": "\"PMP checks are applied to all accesses whose effective privilege mode is S or U, including instruction fetches in S and U mode, data accesses in S and U mode when the MPRV bit in the mstatus register is clear, and data accesses in any mode when the MPRV bit in mstatus is set and the MPP field in mstatus contains S or U.\"\n\nNote: None of those scenarios should let an access bypass the pmp.",
-        "Verification Goal": "Set up the system to match each point in the listing, ensure that the pmp's decision matches all modelled expectations.\n\nNote: Also cover when none of the listed preconditions are active and the pmp's decision can disagree with the modelled expectations.",
+        "Verification Goal": "Set up the system to match each point in the listing, ensure that the pmp's decision matches all modelled expectations.\n\nCover: when none of the listed preconditions are active and the pmp's decision can disagree with the modelled expectations.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_*\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_*\n\nCOV: ???",
-        "Comment": "(Same as for \"MmodeDeny\")"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_*\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_*\n\nCOV: (SKIPPED)",
+        "Comment": "(Same as for \"MmodeDeny\")\n\nCover is skipped because it is not essential, and we have equivalence checking of RTL vs model."
     },
     {
         "Requirement Location": "",
         "Feature": "General",
         "Sub Feature": "DefaultNone",
         "Feature Description": "\"PMP can grant permissions to S and U modes, which by default have none\"",
-        "Verification Goal": "Check that, out of reset, given no extraordinary reset values, and given no change to the pmp csrs, then U-mode has no access permissions.",
+        "Verification Goal": "Given:\n1) out of reset,\n2) no extraordinary reset values,\n3) no change to the pmp csrs.\n\nThen:\nU-mode has no access permissions. (I.e. always excepts.)",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???\n\nDTC: cv32e40s/tests/programs/custom/pmp/",
-        "Comment": "TODO missing assert"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: (SKIPPED).\n\nDTC: cv32e40s/tests/programs/custom/pmp/",
+        "Comment": "Skipped in favor of using realease-specific configs (which have \"extraordinary reset values\")."
     },
     {
         "Requirement Location": "",
@@ -112,9 +112,9 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???\n\nDTC: cv32e40s/tests/programs/custom/pmp/",
-        "Comment": "TODO missing assert"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED)\n\nDTC: cv32e40s/tests/programs/custom/pmp/",
+        "Comment": "Skipped in favor of the directed test and the entire test suite in general."
     },
     {
         "Requirement Location": "",
@@ -125,100 +125,100 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???\n\nDTC: cv32e40s/tests/programs/custom/pmp/",
-        "Comment": "TODO missing assert"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED)\n\nDTC: cv32e40s/tests/programs/custom/pmp/",
+        "Comment": "Skipped in favor of integration-level testing w/ release-specific configs, and the directed test."
     },
     {
         "Requirement Location": "",
         "Feature": "Csrs",
         "Sub Feature": "Warl",
         "Feature Description": "\"All PMP CSR fields are WARL and may be hardwired to zero\".\n\nNote: A field shall also not change its value when an attempt is made to write an illegal value to it. (XWR is one field.)",
-        "Verification Goal": "Try writing any values to the registers and read values out of them, ensure that neither reads nor writes causes exceptions, and ensure that all read values are legal or otherwise as expected and that illegally written fields don't change.",
+        "Verification Goal": "Try writing any values to the registers and read values out of them.\nEnsure that neither reads nor writes causes exceptions.\nAnd ensure that all read values are legal or otherwise as expected and that illegally written fields don't change.\n\nCover: access to all CSRs and all fields.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfg_expected[*].a_cfg_expected\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfgwdata_legal[*].a_cfgwdata_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfgrdata_expected[*].a_cfgrdata_expected\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfg_expected[*].a_cfg_expected\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfgwdata_legal[*].a_cfgwdata_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfgrdata_expected[*].a_cfgrdata_expected\n\nCOV: (SKIPPED)",
+        "Comment": "Cover skipped because the asserts are deemed sufficient."
     },
     {
         "Requirement Location": "",
         "Feature": "Csrs",
         "Sub Feature": "MmodeOnly",
         "Feature Description": "\"PMP CSRs are only accessible to M-mode.\"",
-        "Verification Goal": "Try to access any of the pmp CSRs from U-mode, ensure that it always gives \"illegal instruction exception\" and that the CSRs are not updated.\n\nNote: M-mode accesses are covered by AlwaysAccessible below.",
+        "Verification Goal": "Try to access any of the pmp CSRs from U-mode, ensure that it always gives \"illegal instruction exception\" and that the CSRs are not updated.\n\nCover: For all CSRs.\n\nNote: M-mode accesses are covered by AlwaysAccessible below.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_csrs_mmode_only\n\nCOV: ???\n\nDTC: cv32e40s/tests/programs/custom/pmp/",
-        "Comment": "TODO missing cover (combine with \"Warl\" above)"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_csrs_mmode_only\n\nCOV: (SKIPPED)\n\nDTC: cv32e40s/tests/programs/custom/pmp/",
+        "Comment": "Cover skipped because the asserts and directed test are deemed sufficient."
     },
     {
         "Requirement Location": "",
         "Feature": "Csrs",
         "Sub Feature": "Addr34bit",
         "Feature Description": "\"Each PMP address register encodes bits 33\u20132 of a 34-bit physical address for RV32\"",
-        "Verification Goal": "Ensure that when the pmpaddr MSBs are set, then no NAPOT accesses matches. Cover that all bits have been matched against (\"toggle cross\"). Ensure that there are no attempted accesses to MSBs that the core should not be able to use.",
+        "Verification Goal": "Ensure that when the two pmpaddr MSBs are set, then no NAPOT accesses matches.\nEnsure that there are no attempted accesses to MSBs that the core should not be able to use.\n\nCover: all bits have been matched against (\"toggle cross\").",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "TODO missing assert\n\nTODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED).\n\nCOV: (SKIPPED)",
+        "Comment": "Assert and cover skipped in favor of model equivalence checking."
     },
     {
         "Requirement Location": "",
         "Feature": "Csrs",
         "Sub Feature": "AddrImplemented",
         "Feature Description": "\"Not all physical address bits may be implemented, and so the pmpaddr registers are WARL.\"",
-        "Verification Goal": "Cover (toggle) that all bits can be both written and set. (UnusedZero below covers the WARL(0x0) case.)",
+        "Verification Goal": "Cover: (toggle) that all bits can be both written and set.\n\n(\"UnusedZero\" below covers the WARL(0x0) case.)",
         "Pass/Fail Criteria": "Other",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "COV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "COV: (SKIPPED)",
+        "Comment": "Skipped in favor of integration-level testing w/ release-specific configs."
     },
     {
         "Requirement Location": "",
         "Feature": "AddressMatching",
         "Sub Feature": "MatchDisabled",
         "Feature Description": "\"When A=0, this PMP entry is disabled and matches no addresses\"\nWhen a cfg is set to off but its address(es) (interpreted as napot/tor) is the only rule that matches an attempted access, then it still does not count as a match.",
-        "Verification Goal": "Have a region's address(es) set up as tor and napot (separate runs), have all other regions not include the target address, have the target region's rule be OFF, make an access within that range, ensure that the outcome is the same as for when an access is outside of all address ranges.\n\nNote: For this and several other items, functional coverage is necessary because the checking doesn't necessarily have the above scenario in its antecedent.\n\nCoverage: Capture the above scenario, minus the checking.",
+        "Verification Goal": "Have a region's address(es) set up as tor and napot (separate runs),\nhave all other regions not include the target address,\nhave the target region's rule be OFF,\nmake an access within that range,\nensure that the outcome is the same as for when an access is outside of all address ranges.\n\nNote: For this and several other items, functional coverage is necessary because the checking doesn't necessarily have the above scenario in its antecedent.\n\nCoverage: Capture the above scenario, minus the checking.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA:\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (SKIPPED)",
+        "Comment": "Cover is skipped in favor of integration-level testing w/ release-specific configs, because we have equivalence checking of RTL vs model."
     },
     {
         "Requirement Location": "",
         "Feature": "AddressMatching",
         "Sub Feature": "NapotMatching",
         "Feature Description": "\"NAPOT ranges make use of the low-order bits of the associated address register to encode the size of the range [\"yyyy...yy01\" etc]\"\n\nNote: The napot address matching modes match on addresses that are equal to the requested access when masked to the granularity size.",
-        "Verification Goal": "Configure napot rules of different sizes, try accesses within and outside the regions, ensure that the outcomes corresponds to the designated sizes.\n\nNote: Includes NAPOT and NA4.\n\nNote: Try also max and min.",
+        "Verification Goal": "Configure napot rules of different sizes.\nTry accesses within and outside the regions.\nEnsure that the outcomes corresponds to the designated sizes.\n\nNote: Includes NAPOT and NA4.\n\nCover: Matching inside / outside.\n\nCover: Min / Max of the \"yyy...\" patterns.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_na4is4byte.a_na4_is_4byte\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_cg_common.cover_item_covergroup_cg_internals_common_inst_cg_int_coverpoint_cp_napot_encoding_bin_auto[*]\ndut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_cg_common.cover_item_covergroup_cg_internals_common_inst_cg_int_coverpoint_cp_napot_encoding_disallowed_bin_auto[*]\n\nCOV: ???",
-        "Comment": "TODO missing coverage"
+        "High Priority?": "No",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_na4is4byte.a_na4_is_4byte\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_cg_common.cover_item_covergroup_cg_internals_common_inst_cg_int_coverpoint_cp_napot_encoding_bin_auto[*]\n\nCOV: dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_cg_common.cover_item_covergroup_cg_internals_common_inst_cg_int_coverpoint_cp_napot_encoding_disallowed_bin_auto[*]\n\nCOV: (SKIPPED).",
+        "Comment": "Cover skipped (min/max) in favor of model equivalence checking and trusting formal's capability of exercising the asserts."
     },
     {
         "Requirement Location": "",
         "Feature": "AddressMatching",
         "Sub Feature": "TorMatching",
         "Feature Description": "\"If TOR is selected, the associated address register forms the top of the address range, and the preceding PMP address register forms the bottom of the address range. If PMP entry i\u2019s A field is set to TOR, the entry matches any address y such that pmpaddri\u22121 \u2264 y < pmpaddri (irrespective  of the value of pmpcfgi\u22121)\"",
-        "Verification Goal": "Configure tor regions of different sizes, try accesses within and outside the regions, ensure that the outcomes corresponds to the designated ranges.",
+        "Verification Goal": "Configure tor regions of different sizes.\nTry accesses within and outside the regions.\nEnsure that the outcomes correspond to the designated ranges.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_cg_common.cover_item_covergroup_cg_internals_common_inst_cg_int_coverpoint_cp_ismatch_tor_bin_auto[*]\n\nCOV: ???",
-        "Comment": "TODO missing coverage"
+        "High Priority?": "No",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_cg_common.cover_item_covergroup_cg_internals_common_inst_cg_int_coverpoint_cp_ismatch_tor_bin_auto[*]",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -229,9 +229,9 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???\n\nDTC: cv32e40s/tests/programs/custom/pmp/",
-        "Comment": "TODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (SKIPPED)\n\nDTC: cv32e40s/tests/programs/custom/pmp/",
+        "Comment": "Cover skipped in favor of directed test and equivalence checking vs model."
     },
     {
         "Requirement Location": "",
@@ -242,9 +242,9 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???\n\nDTC: cv32e40s/tests/programs/custom/pmp/",
-        "Comment": "TODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (SKIPPED)\n\nDTC: cv32e40s/tests/programs/custom/pmp/",
+        "Comment": "Cover skipped in favor of directed test and equivalence checking vs model."
     },
     {
         "Requirement Location": "",
@@ -255,9 +255,9 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED)",
+        "Comment": "Assert skipped in favor of the asserts checking the grain in general and model equivalence checking."
     },
     {
         "Requirement Location": "",
@@ -281,7 +281,7 @@
         "Pass/Fail Criteria": "Other",
         "Test Type": "Other",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "High Priority",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -308,8 +308,8 @@
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_all_zeros_g1.gen_all_zeros_i[*].a_all_zeros\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_all_zeros_g1.gen_all_zeros_i[*].a_all_zeros\n\nCOV: uvmt_cv32e40s_pmp_assert.sv,  \"cp_ismatch_tor\".\n\nCOV: uvmt_cv32e40s_pmp_assert.sv, \"cov_rlb_locked_rules_can_remove\".",
+        "Comment": "(The covers are written for a different purpose but should sufficiently hit this.)"
     },
     {
         "Requirement Location": "",
@@ -320,22 +320,22 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED)",
+        "Comment": "Assert skipped in favor of  model equivalence checking."
     },
     {
         "Requirement Location": "",
         "Feature": "AddressMatching",
         "Sub Feature": "StorageUnaffected",
         "Feature Description": "\"Although changing pmpcfgi.A[1] affects the value read from pmpaddri, it does not affect the underlying value stored in that register\"\n\"in particular, pmpaddri[G-1] retains its original value when pmpcfgi.A is changed from NAPOT to TOR/OFF then back to NAPOT.\"",
-        "Verification Goal": "Change in and out of (OFF || TOR) and !(OFF || TOR), ensure that different values can be read without having written anything new to the register.",
+        "Verification Goal": "Change in and out of (OFF || TOR) and !(OFF || TOR), ensure that different values can be read without having written anything new to the register.\n\nCover: All transitions, na4/napot -> off/tor.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_storage_unaffected[*].a_storage_unaffected\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_storage_unaffected[*].a_storage_unaffected\n\nCOV: (SKIPPED)",
+        "Comment": "Cover skipped because assert is deemed sufficient."
     },
     {
         "Requirement Location": "",
@@ -359,7 +359,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -381,37 +381,37 @@
         "Feature": "LockingAndPrivmode",
         "Sub Feature": "IgnoreWrites",
         "Feature Description": "\"If PMP entry i is locked, writes to pmpicfg and pmpaddri are ignored.\"",
-        "Verification Goal": "Lock entry i (for all i, if feasible), ensure that their value can't change, both when written to and otherwise. (Unless if RLB interferes.)",
+        "Verification Goal": "Lock entry i (for all i, if feasible), ensure that their value can't change. (Unless if RLB interferes.)\n\nCover: both when written to and otherwise.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_rlb_locked[*].a_norlb_locked_rules_cannot_modify uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_rlb_locked[*].a_norlb_locked_rules_cannot_modify\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_ignore_writes_notrap[*].a_ignore_writes_notrap\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_ignore_writes_nochange[*].a_ignore_writes_nochange\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_rlb_locked[*].a_norlb_locked_rules_cannot_modify uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_rlb_locked[*].a_norlb_locked_rules_cannot_modify\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_ignore_writes_notrap[*].a_ignore_writes_notrap\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_ignore_writes_nochange[*].a_ignore_writes_nochange\n\nCOV: (SKIPPED)",
+        "Comment": "Cover skipped because the asserts are deemed sufficient."
     },
     {
         "Requirement Location": "",
         "Feature": "LockingAndPrivmode",
         "Sub Feature": "IgnoreTor",
         "Feature Description": "\"Additionally, if PMP entry i is locked and pmpicfg.A is set to TOR, writes to pmpaddri-1 are ignored.\"",
-        "Verification Goal": "Lock entry i (\u2026), have A set and the mode be TOR, ensure that pmpaddri-1 can't change, both for explicit writes and otherwise. (Unless RLB.)",
+        "Verification Goal": "Lock entry i (\u2026), have A set and the mode be TOR, ensure that pmpaddri-1 can't change. (Unless RLB.)\n\nCover: both for explicit writes and otherwise",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_ignore_tor[*].a_ignore_tor_stable\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_ignore_tor[*].a_ignore_tor_wdata\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_ignore_tor[*].a_ignore_tor_stable\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_ignore_tor[*].a_ignore_tor_wdata\n\nCOV: (SKIPPED)",
+        "Comment": "Cover skipped because the asserts are deemed sufficient."
     },
     {
         "Requirement Location": "",
         "Feature": "LockingAndPrivmode",
         "Sub Feature": "NotIgnore",
         "Feature Description": "When neither cfg i is locked, nor is cfg i+1 a locked TOR region, then writes to cfg and addr i are not ignored.",
-        "Verification Goal": "Have cfg i unlocked, write to cfg and addr csr i, check that it changes.",
+        "Verification Goal": "Have cfg i unlocked,\nwrite to cfg and addr csr i,\ncheck that it changes.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
+        "High Priority?": "High Priority",
         "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_addr_writes[*].a_addr_nonlocked\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_addr_tor[*].a_addr_nonlocked_tor",
         "Comment": ""
     },
@@ -425,21 +425,21 @@
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: (Same checking as for \"IgnoreWrites\" and \"IgnoreTor\" above.)\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "A: (Same checking as for \"IgnoreWrites\" and \"IgnoreTor\" above.)\n\nCOV: (SKIPPED).",
+        "Comment": "Cover skipped, trusting formal to exercise the assert."
     },
     {
         "Requirement Location": "",
         "Feature": "LockingAndPrivmode",
         "Sub Feature": "RwxPrivmode",
         "Feature Description": "\"In addition to locking the PMP entry, the L bit  indicates whether the R/W/X permissions are enforced on M-mode accesses. When the L bit is set, these permissions are enforced for all privilege modes.\"",
-        "Verification Goal": "Be in M-mode and U-mode (separate runs), access a region where L is set and where RWX {grant, deny R, deny W, deny X}, ensure that the access is correspondingly granted/denied.",
+        "Verification Goal": "Be in M-mode and U-mode (separate runs),\naccess a region where L is set and where RWX {grant, deny R, deny W, deny X},\nensure that the access is correspondingly granted/denied.\n\nCover: grant, deny R, deny W, deny X.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (SKIPPED)",
+        "Comment": "Cover skipped because the asserts are deemed sufficient."
     },
     {
         "Requirement Location": "",
@@ -450,35 +450,35 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED)",
+        "Comment": "Assert skipped in favor of Smepmp-based assertions."
     },
     {
         "Requirement Location": "",
         "Feature": "LockingAndPrivmode",
         "Sub Feature": "RwxUmode",
         "Feature Description": "\"When the L bit is clear [\u2026] the R/W/X permissions apply only to S and U modes.\"",
-        "Verification Goal": "Be in U-mode, access a region where L is clear, ensure that access is granted/denied based on RWX.",
+        "Verification Goal": "Be in U-mode, access a region where L is clear, ensure that access is granted/denied based on RWX.\n\nCover: granted / denied.\n\nNote: The M-mode part of this is handled by \"MmodeSucceed\" above.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_uorl_onlyif_rwx\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_uorl_onlyif_rwx\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_uorl_onlyif_rwx\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_uorl_onlyif_rwx\n\nCOV: (SKIPPED)",
+        "Comment": "Cover skipped because the asserts are deemed sufficient."
     },
     {
         "Requirement Location": "",
         "Feature": "PriorityAndMatching",
         "Sub Feature": "LowestDetermines",
         "Feature Description": "\"PMP entries are statically prioritized. The lowest-numbered PMP entry that matches any byte of an access determines whether that access succeeds or fails.\"\n\nNote: \"any\" byte.",
-        "Verification Goal": "Access a region that is covered by multiple rules, ensure that the lowest indexed match determines the outcome.\n\nNote: Requires that the rules would disagree on the outcome.",
+        "Verification Goal": "Access a region that is covered by multiple rules, ensure that the lowest indexed match determines the outcome.\n\nNote: Requires that the rules would disagree on the outcome. (One rule allows, other disallows.)\n\nCover: \"winning\" rule allows / disallows.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (SKIPPED).",
+        "Comment": "Cover skipped, trusting formal to exercise the assert."
     },
     {
         "Requirement Location": "",
@@ -489,7 +489,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -498,13 +498,13 @@
         "Feature": "PriorityAndMatching",
         "Sub Feature": "LrwxDetermines",
         "Feature Description": "\"If a PMP entry matches all bytes of an access, then the L, R, W,and X bits determine whether the access succeeds or fails. [...] if the L bit is set or the privilege mode of the access is S or U, then the access succeeds only if the R, W,or X bit corresponding to the access type is set.\"",
-        "Verification Goal": "Access a pmp region where L and the privmode etc is such that nothing else would deny the access, ensure that each of (or a combination of) RWX can either grant or deny the access.",
+        "Verification Goal": "Access a pmp region where L and the privmode etc is such that nothing else would deny the access, ensure that each of (or a combination of) RWX can either grant or deny the access.\n\nCover: U, M, L, grant, deny R, deny W, deny X, etc.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_lrwx_aftermatch\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_lrwx_aftermatch\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_lrwx_aftermatch\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_lrwx_aftermatch\n\nCOV: (SKIPPED)",
+        "Comment": "Cover skipped because the asserts are deemed sufficient. It is partially covered already by the \"general\" covergroup and its crosses."
     },
     {
         "Requirement Location": "",
@@ -515,7 +515,7 @@
         "Pass/Fail Criteria": "Other",
         "Test Type": "Other",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -524,13 +524,13 @@
         "Feature": "PriorityAndMatching",
         "Sub Feature": "MmodeNomatch",
         "Feature Description": "\"If no PMP entry matches an M-mode access, the access succeeds.\"",
-        "Verification Goal": "Be in M-mode, access a region where no rule matches, ensure that the access is granted (where MMWP is off).\n\n(Note, see \"Smepmp\" above.)",
+        "Verification Goal": "Be in M-mode,\naccess a region where no rule matches,\nensure that the access is granted (where MMWP is off).\n\nCover: the checker is generic, so cover this specific scenario.\n\n(Note, see \"Smepmp\" above.)",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nCOV: uvmt_cv32e40s_pmp_assert.sv, \"cp_x_mmode_nomatch_nommwp_x\".\n\nCOV: uvmt_cv32e40s_pmp_assert.sv, \"cp_r_mmode_nomatch_nommwp_r\".\n\nCOV: uvmt_cv32e40s_pmp_assert.sv, \"cp_w_mmode_nomatch_nommwp_w\".",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -540,23 +540,23 @@
         "Verification Goal": "Be in U-mode, do an access that doesn't match any region, ensure that the access fails.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
+        "Coverage Method": "Assertion Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_nomatch_umode_fails\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_nomatch_umode_fails\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_nomatch_umode_fails\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_nomatch_umode_fails",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
         "Feature": "PriorityAndMatching",
         "Sub Feature": "UmodeOff",
         "Feature Description": "\"If at least one PMP entry is implemented, but all PMP entries\u2019 A fields are set to OFF, then all S-mode and U-mode memory accesses will fail.\"",
-        "Verification Goal": "Be in U-mode, have all entries OFF, make an access, ensure that the access fails (for all variations of accesses).",
+        "Verification Goal": "Be in U-mode,\nhave all entries OFF,\nmake an access,\nensure that the access fails.\n\nCover: this specific scenario.\n\nCover: for all variations of accesses",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Coverage Method": "Assertion Coverage",
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_umode_off\".\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (SKIPPED)",
+        "Comment": "Second cover skipped because it should be the responsibility of the \"general\" covergroup and its crosses."
     },
     {
         "Requirement Location": "",
@@ -566,62 +566,62 @@
         "Verification Goal": "Cause failed accesses on instructions/loads/stores, ensure that an exception occurs and that it is the right one.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
+        "Coverage Method": "Assertion Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_*\n\nA: <embedded>::uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_*\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_*\n\nA: <embedded>::uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_*",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
         "Feature": "PriorityAndMatching",
         "Sub Feature": "MultiAccess",
         "Feature Description": "\"Note that a single instruction may generate multiple accesses, which may not be mutually atomic. An access-fault exception is generated if at least one access generated by an instruction fails, though other accesses generated by that instruction may succeed with visible side effects.\"\n\n\"On some implementations, misaligned loads, stores, and instruction fetches may also be decomposed into multiple accesses, some of which may succeed before an access-fault exception occurs. In particular, a portion of a misaligned store that passes the PMP check may become visible, even if another portion fails the PMP check.\"",
-        "Verification Goal": "Induce misaligned word instruction-fetch, load, and store, where the lower and upper (separate runs) parts are either accessible or blocked by pmp, ensure that exceptions occur while parts of the access might reach the bus.\n\nAlso check Zc's push/pop and table jump.\n\nNote: It is up to other vplans to check what happens upon the exception. It is up to this PMP vplan to check that the PMP will cause the exceptions.",
+        "Verification Goal": "Induce misaligned word instruction-fetch, load, and store, where the lower and upper (separate runs) parts are either accessible or blocked by pmp, ensure that exceptions occur while parts of the access might reach the bus.\n\nCover: upper/lower blocked/allowed.\n\nCover: parts reaching the bus.\n\nCover: push/pop and table jump.\n\nNote: It is up to other vplans to check what happens upon the exception. It is up to this PMP vplan to check that the PMP will cause the exceptions.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_splittrap\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_splittrap\n\nA: ???\n\nCOV: ???",
-        "Comment": "TODO missing assert (on split that errs on first)\n\nTODO missing cover"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec*\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore*\n\nA: (SKIPPED)\n\nCOV: (SKIPPED)",
+        "Comment": "Assert skipped (explicitly, split that errs on first) because it is theoretically covered by the generic assert.\n\nSpecific covers skipped, in favor of trusting formal's ability to exercise the asserts."
     },
     {
         "Requirement Location": "smepmp",
         "Feature": "MsecCfg",
         "Sub Feature": "MmodeOnly",
-        "Feature Description": "\"Machine Security Configuration (mseccfg) is [...] only accessible to Machine mode.\"\n\nNote: Includes \"mseccfgh\".",
-        "Verification Goal": "Access (read/write) mseccfg (and mseccfgh) from M-mode, access mseccfg from U-mode, ensure that the first always works (WARL) and the second never works (exception).\n\nNote: Cover with MPRV too.",
+        "Feature Description": "\"Machine SECurity ConFiGuration (mseccfg) is [...] only accessible to Machine mode.\"\n\nNote: Includes \"mseccfgh\".",
+        "Verification Goal": "Access (read/write) mseccfg (and mseccfgh) from M-mode, access mseccfg from U-mode, ensure that the first always works (WARL) and the second never works (exception).\n\nNote: Cover with MPRV too.\n\nCover: read/write, mmode/umode, mprv/no, mseccfg/mseccfgh.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
-        "Coverage Method": "Assertion Coverage",
+        "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "Link to Coverage": "A: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_csrs_mmode_only\".\n\nCOV: (SKIPPED)",
+        "Comment": "Cover skipped, trusting formal to exercise the assert."
     },
     {
         "Requirement Location": "",
         "Feature": "MsecCfg",
         "Sub Feature": "FieldsWarl",
         "Feature Description": "\"All mseccfg fields defined on this proposal are WARL\"",
-        "Verification Goal": "Try writing any values to the fields (the defined ones, but also other bits) and read values out of the fields, ensure that neither reads nor writes causes exceptions, and ensure that all read values are legal or otherwise as expected.\n\nNote: This relates to the \"stickiness\" of those fields. Regardless of their values and current stickiness, the fields are WARL.\n\nNote: It might be difficult, when trying to write a checker for traps, to filter out all other causes for traps that can occur simultaneously. (Either reduce the scope of checking, or write re-usable helper signals for \"trap causality\" info.)\n\nNote: \"WPRI\" on some bits.",
+        "Verification Goal": "Try writing any values to the fields (the defined ones, but also other bits) and read values out of the fields, ensure that neither reads nor writes causes exceptions, and ensure that all read values are legal or otherwise as expected.\n\nNote: This relates to the \"stickiness\" of those fields. Regardless of their values and current stickiness, the fields are WARL.\n\nNote: \"WPRI\" on some bits.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "TODO missing assert\n\nTODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "A: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_csrs_mmode_only\".\n\nA: (SKIPPED)\n\nCOV: (SKIPPED)",
+        "Comment": "Second assert skipped because the features themselves are covered by other asserts and integration testing.\n\nCover skipped for the same reasons as the assert and also because the covergroups in uvmt_cv32e40s_pmp_assert.sv covers parts of it."
     },
     {
         "Requirement Location": "",
         "Feature": "MsecCfg",
         "Sub Feature": "ReservedZero",
-        "Feature Description": "\"the remaining bits are reserved for future standard use and should always read zero.\"\n(This spec can't dictate that about other specs, but the user manual agrees on the hardwiring.)",
+        "Feature Description": "\"the remaining bits are reserved for future standard use and should always read zero.\"\n\n(Note: This spec can't dictate that about other specs, but the user manual agrees on the hardwiring.)",
         "Verification Goal": "Read mseccfg, ensure the non-smepmp-field bits are always zero.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "Link to Coverage": "A: uvmt_cv32e40s_pmp_assert.sv, \"a_reserved_zero_mseccfg_fields\".",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -645,9 +645,9 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].c_rlb_locked_rules_can_modify_addr\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].c_rlb_locked_rules_can_modify_exec\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].c_rlb_locked_rules_can_modify_lock\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].c_rlb_locked_rules_can_modify_mode\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].c_rlb_locked_rules_can_modify_read\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].c_rlb_locked_rules_can_modify_write\n\nCOV: ???",
-        "Comment": "TODO missing assert"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: N/A\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].cov_rlb_locked_rules_can_modify_addr\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].cov_rlb_locked_rules_can_modify_exec\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].cov_rlb_locked_rules_can_modify_lock\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].cov_rlb_locked_rules_can_modify_mode\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].cov_rlb_locked_rules_can_modify_read\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.*.gen_rlb_locked_cov[*].cov_rlb_locked_rules_can_modify_write\n\nCOV: uvmt_cv32e40s_pmp_assert.sv, \"cov_rlb_locked_rules_can_modify_tor\".",
+        "Comment": "The assert is N/A because the covers are the checkers."
     },
     {
         "Requirement Location": "",
@@ -667,13 +667,13 @@
         "Feature": "LockingBypass",
         "Sub Feature": "UntilReset",
         "Feature Description": "The sticky zero and update-ignores last until reset, and do not hold after reset.",
-        "Verification Goal": "Ensure that RLB is modifiable after reset. (Unless if reset values are set to activate the RemainZero condition.)",
+        "Verification Goal": "Ensure that RLB is modifiable after reset. (Unless if reset values are set to activate the RemainZero condition.)\n\nNote: Both enable / disable.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
+        "Coverage Method": "Assertion Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_until_reset_notbefore\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_until_reset_notbefore",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -684,7 +684,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -706,39 +706,39 @@
         "Feature": "WhiteList",
         "Sub Feature": "Denied",
         "Feature Description": "\"When set it changes the default PMP policy for M-mode when accessing memory regions that don\u2019t have a matching PMP rule, to denied instead of ignored.\"",
-        "Verification Goal": "Have MMWP set, be in (effective mode) M-mode, access regions that don't match any rule (including OFF, \"reversed\" TOR, >32bit NAPOT, etc), ensure that the access is denied.",
+        "Verification Goal": "Have MMWP set,\nbe in (effective mode) M-mode,\naccess regions that don't match any rule (including OFF, \"reversed\" TOR, >32bit NAPOT, etc),\nensure that the access is denied.\n\nCover: MPRV/no, off/reversed/napot.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_nomatch_mmode_mmwp_fails\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_nomatch_mmode_mmwp_fails\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_nomatch_mmode_mmwp_fails\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_nomatch_mmode_mmwp_fails\n\nCOV: (SKIPPED)",
+        "Comment": "Cover skipped because assert is deemed sufficient."
     },
     {
         "Requirement Location": "",
         "Feature": "LockdownGeneral",
         "Sub Feature": "StickyUntilReset",
         "Feature Description": "\"[mseccfg.MML] is a sticky bit, meaning that once set it cannot be unset until a PMP reset.\"",
-        "Verification Goal": "Cover: Trying to clear the bit.\n\nCheck: Have MML set, ensure that it remains high forever (til reset).",
+        "Verification Goal": "Check: Have MML set, ensure that it remains high forever (til reset).\n\nCover: Trying to clear the bit.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_mml_never_fall_until_reset\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_mml_never_fall_until_reset\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_pmp_assert.a_mml_never_fall_until_reset\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_mml_never_fall_until_reset\n\nCOV: (Skipped)",
+        "Comment": "Cover skipped because assert is deemed sufficient."
     },
     {
         "Requirement Location": "",
         "Feature": "LockdownGeneral",
         "Sub Feature": "ExecIgnored",
         "Feature Description": "\"[When mseccfg.MML is set.] Adding an M-mode-only or a locked Shared-Region rule with executable privileges is not possible and such pmpcfg writes are ignored, leaving pmpcfg unchanged.\"\n\nNote: \"pmpcfg\" refers to a field, so the write to the CSR itself should still update other fields.",
-        "Verification Goal": "Have MML set, try adding an \"M-mode-only\" rule and a \"locked Shared-Region\" rule with X privileges, ensure that the relevant pmpcfg field is not updated but is left unchanged, ensure also that other fields can still get updated.",
+        "Verification Goal": "Have MML set,\ntry adding an \"M-mode-only\" rule and a \"locked Shared-Region\" rule with X privileges,\nensure that the relevant pmpcfg field is not updated but is left unchanged,\nensure also that other fields can still get updated.\n\nCover: M-mode-only / Shared-Region.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfgwdata_legal[*].a_cfgwdata_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_rlb_locked_cov[0].a_mmode_only_or_shared_executable_ignore\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_rlb_locked_cov[0].a_mmode_only_or_shared_executable_ignore\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfgwdata_legal[*].a_cfgwdata_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_rlb_locked_cov[0].a_mmode_only_or_shared_executable_ignore\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_rlb_locked_cov[0].a_mmode_only_or_shared_executable_ignore\n\nCOV: (SKIPPED)",
+        "Comment": "Cover skipped because assert is deemed sufficient."
     },
     {
         "Requirement Location": "",
@@ -758,13 +758,13 @@
         "Feature": "LockdownGeneral",
         "Sub Feature": "MmodeExec",
         "Feature Description": "\"Executing code with Machine mode privileges is only possible from memory regions with a matching M-mode-only rule or a locked Shared-Region rule with executable privileges. Executing code from a region without a matching rule or with a matching S/U-mode-only rule is denied.\"",
-        "Verification Goal": "Execute from \"M-mode-only\" and \"locked Shared-Region\" regions, attempt execution without matching and from \"U-mode-only\" regions, ensure corresponding grant or deny.",
+        "Verification Goal": "Execute from \"M-mode-only\" and \"locked Shared-Region\" regions,\nattempt execution without matching and from \"U-mode-only\" regions,\nensure corresponding grant or deny.\n\nCover: The different scenarios.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (SKIPPED)",
+        "Comment": "Cover skipped because assert is deemed sufficient."
     },
     {
         "Requirement Location": "",
@@ -784,39 +784,39 @@
         "Feature": "LockdownA",
         "Sub Feature": "MmodeEnforce",
         "Feature Description": "\"[When mseccfg.MML is set.] An M-mode-only rule is enforced on Machine mode\"",
-        "Verification Goal": "Be in M-mode, have MML set, access an \"M-mode-only\" region, ensure that the grant/deny is always in accordance to the rule. (E.g. it is not denied execute despite the execute bit being set.)\n\nNote: Exclude cases of interference from e.g. PMA.",
+        "Verification Goal": "Be in M-mode,\nhave MML set,\naccess an \"M-mode-only\" region,\nensure that the grant/deny is always in accordance to the rule.\n(E.g. it is not denied execute despite the execute bit being set.)\n\nCover: grant / deny for this specific scenario.\n\nNote: Exclude cases of interference from e.g. PMA.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???",
-        "Comment": "(Same as for \"MmodeDeny\")"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (SKIPPED)",
+        "Comment": "(Same as for \"MmodeDeny\")\n\nCover skipped because assert is deemed sufficient."
     },
     {
         "Requirement Location": "",
         "Feature": "LockdownA",
         "Sub Feature": "UmodeDeny",
         "Feature Description": "\"[When mseccfg.MML is set.] An M-mode-only rule is [...] denied in Supervisor or User mode.\"",
-        "Verification Goal": "Be in U-mode, have MML set, access an \"M-mode-only\" region, ensure that the access is always denied.",
+        "Verification Goal": "Be in U-mode,\nhave MML set,\naccess an \"M-mode-only\" region,\nensure that the access is always denied.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: (SKIPPED)",
+        "Comment": "Explicit assert skipped in favor of model equivalence checking."
     },
     {
         "Requirement Location": "",
         "Feature": "LockdownA",
         "Sub Feature": "RemainLocked",
-        "Feature Description": "\"It also remains locked so that any further modifications to its associated configuration or address registers are ignored until a PMP reset\"\n\nCertain rules under MML are sticky. They cannot be modified again.",
-        "Verification Goal": "Configure rules for {\"M-mode-only\", \"U-mode-only, \"Shared-Region rule where pmpcfg.L is set\"(both kinds)}, have MML=1 (and RLB=0), ensure that the configs never change again (until reset).",
+        "Feature Description": "\"[An M-mode-only rule] also remains locked so that any further modifications to its associated configuration or address registers are ignored until a PMP reset\"\n\nCertain rules under MML are sticky. They cannot be modified again.",
+        "Verification Goal": "1) Configure for \"M-mode-only,\n2) have MML=1 (and RLB=0),\n3) ensure that the configs never change again (until reset).\n\nCover: with mml=1. (Since the assert re-uses a different vplan item's assert.)",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "TODO missing assert"
+        "Link to Coverage": "A: (See IgnoreWrites)\n\nCOV: (SKIPPED)",
+        "Comment": "Cover skipped because assert is deemed sufficient."
     },
     {
         "Requirement Location": "",
@@ -828,46 +828,46 @@
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "TODO missing assert"
+        "Link to Coverage": "A: (see \"ModifiableEntries\")\n\nCOV: (See \"ModifiableEntries\")",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
         "Feature": "LockdownA",
         "Sub Feature": "UmodeEnforce",
         "Feature Description": "\"[When mseccfg.MML is set.] An S/U-mode-only rule is enforced on Supervisor and User modes \"",
-        "Verification Goal": "Be in U-mode, have MML=1, access a \"U-mode-only\" region, ensure that the grant/deny is in accordance with the rule (apart from PMA etc).",
+        "Verification Goal": "1) Be in U-mode,\n2) have MML=1,\n3) access a \"U-mode-only\" region,\n4) ensure that the grant/deny is in accordance with the rule (apart from PMA etc).\n\nCover: Grant / deny.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_cp_data_side.cg_data\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_cp_instr_side.cg_instr\n\nCOV: ???",
-        "Comment": "(Same as for \"MmodeDeny\")"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_cp_data_side.cg_data\n\nCOV: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_cp_instr_side.cg_instr\n\nCOV: (SKIPPED)",
+        "Comment": "(Same as for \"MmodeDeny\")\n\nSkipped cover for explicit deny, in favor of model equivalence checking."
     },
     {
         "Requirement Location": "",
         "Feature": "LockdownA",
         "Sub Feature": "MmodeDeny",
         "Feature Description": "\"An S/U-mode-only rule is [...] denied on Machine mode.\"",
-        "Verification Goal": "Be in M-mode, have MML=1, access a \"U-mode-only\" region, ensure that the access is always denied.",
+        "Verification Goal": "1) Be in M-mode,\n2) have MML=1,\n3) access a \"U-mode-only\" region,\n4) ensure that the access is always denied.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???",
-        "Comment": "TODO missing coverage. (Just do a cg with crosses of all of these variables.)"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (SKIPPED)",
+        "Comment": "Cover skipped in favor of model equivalence checking."
     },
     {
         "Requirement Location": "",
         "Feature": "LockdownA",
         "Sub Feature": "SharedEnforced",
         "Feature Description": "\"A Shared-Region rule is enforced on all modes\"",
-        "Verification Goal": "Be in M-mode and U-mode (separate runs), access a \"Shared-Region\", ensure that the grant/deny is in accordance with the rule.",
+        "Verification Goal": "1) Be in M-mode and U-mode (separate runs),\n2) access a \"Shared-Region\",\n3) ensure that the grant/deny is in accordance with the rule.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???",
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (See \"UmodeEnforce\").",
         "Comment": "(Same as for \"MmodeDeny\")"
     },
     {
@@ -875,12 +875,12 @@
         "Feature": "LockdownA",
         "Sub Feature": "SharedNoexec",
         "Feature Description": "\"A Shared-Region rule where pmpcfg.L is not set can be used for sharing data between M-mode and S/U-mode, so is not executable.\"",
-        "Verification Goal": "Be in M-mode and U-mode, try to execute from \"A Shared-Region rule where pmpcfg.L is not set\", ensure that it does not work (exception).",
+        "Verification Goal": "1) Be in M-mode and U-mode,\n2) try to execute from \"A Shared-Region rule where pmpcfg.L is not set\",\n3) ensure that it does not work (exception).",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???",
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (See \"MmodeDeny\").",
         "Comment": "(Same as for \"MmodeDeny\")"
     },
     {
@@ -888,12 +888,12 @@
         "Feature": "LockdownA",
         "Sub Feature": "MmodeReadwrite",
         "Feature Description": "\"[Shared-Region rule where pmpcfg.L is not set.] M-mode has read/write access to that region\"",
-        "Verification Goal": "Be in M-mode, perform reads and writes to such a region, ensure that the intended effects happen and that the accesses do not cause exceptions.",
+        "Verification Goal": "1) Be in M-mode,\n2) perform reads and writes to such a region,\n3) ensure that the intended effects happen and that the accesses do not cause exceptions.\n\nCover: read / write.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???",
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (See \"MmodeDeny\").",
         "Comment": "(Same as for \"MmodeDeny\")"
     },
     {
@@ -905,8 +905,8 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???",
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (See \"MmodeDeny\").",
         "Comment": "(Same as for \"MmodeDeny\")"
     },
     {
@@ -918,8 +918,8 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???",
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (See \"MmodeDeny\").",
         "Comment": "(Same as for \"MmodeDeny\")"
     },
     {
@@ -931,8 +931,8 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???",
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (See \"MmodeDeny\").",
         "Comment": "(Same as for \"MmodeDeny\")"
     },
     {
@@ -944,8 +944,8 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: ???",
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (See \"MmodeDeny\").",
         "Comment": "(Same as for \"MmodeDeny\")"
     },
     {
@@ -957,7 +957,7 @@
         "Pass/Fail Criteria": "Other",
         "Test Type": "Other",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "High Priority",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -970,9 +970,9 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\nuvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_cp_instr_side.cover_item_covergroup_cg_internals_instr_side_inst_cg_instr_coverpoint_cp_r_mmode_mml_lrwx\n\nCOV: dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_cp_data_side.cover_item_covergroup_cg_internals_data_side_inst_cg_instr_coverpoint_cp_r_mmode_mml_lrwx\n\nCOV: dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_cp_data_side.cover_item_covergroup_cg_internals_data_side_inst_cg_instr_coverpoint_cp_r_umode_mml_lrwx\n\nCOV: ???",
-        "Comment": "TODO technically missing the \"the rest \u2026 excepts\" cover"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pmp.pmp_i.u_pmp_assert_if_stage.gen_cp_instr_side.cover_item_covergroup_cg_internals_instr_side_inst_cg_instr_coverpoint_cp_r_mmode_mml_lrwx\n\nCOV: dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_cp_data_side.cover_item_covergroup_cg_internals_data_side_inst_cg_instr_coverpoint_cp_r_mmode_mml_lrwx\n\nCOV: dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_cp_data_side.cover_item_covergroup_cg_internals_data_side_inst_cg_instr_coverpoint_cp_r_umode_mml_lrwx\n\nCOV: (SKIPPED)",
+        "Comment": "Non-exhaustive covers, in favor of model equivalence checking (technically missing the \"the rest \u2026 excepts\" cover)."
     },
     {
         "Requirement Location": "",
@@ -983,7 +983,7 @@
         "Pass/Fail Criteria": "Other",
         "Test Type": "Other",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "High Priority",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -1009,22 +1009,22 @@
         "Pass/Fail Criteria": "Other",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "COV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "COV: uvmt_cv32e40s_pmp_assert.sv, \"cg_internals_*\".\n\nCOV: (SKIPPED)",
+        "Comment": "Cover skipped for all explicit variations of \"denied\", in favor of model equivalence checking."
     },
     {
         "Requirement Location": "manual",
         "Feature": "Parameters",
         "Sub Feature": "MinimumGranularity",
         "Feature Description": "\"The PMP_GRANULARITY parameter is used to configure the minimum granularity of PMP address matching. The minimum granularity is [2^(PMP_GRANULARITY+2)] bytes, so at least 4 bytes.\"",
-        "Verification Goal": "Have runs with max granularity, minimum granularity, and something in between. Make sure all checkers/covers are active for each relevant run configuration, so tor/napot/na4 is tested with different granularities. Cover cases where a match would otherwise occur but the granularity made the access not match.\n\nNote: Ensure TorMatching etc above heed this parameter.",
+        "Verification Goal": "Have runs with max granularity, minimum granularity, and something in between. Make sure all checkers/covers are active for each relevant run configuration, so tor/napot/na4 is tested with different granularities.\n\nCover: cases where a match would otherwise occur but the granularity made the access not match.\n\nNote: Ensure TorMatching etc above heed this parameter.",
         "Pass/Fail Criteria": "Other",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "COV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "COV: (SKIPPED)",
+        "Comment": "Cover skipped in favor of release-specific configs and the rest of the tests/asserts."
     },
     {
         "Requirement Location": "",
@@ -1035,9 +1035,9 @@
         "Pass/Fail Criteria": "Other",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "COV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "COV: (SKIPPED)",
+        "Comment": "Cover skipped in favor of release-specific configs."
     },
     {
         "Requirement Location": "",
@@ -1048,9 +1048,9 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "High Priority",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "TODO missing assert\n\nTODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED)\n\nCOV: (SKIPPED)",
+        "Comment": "Assert and cover skipped in favor of release-specific configs and integration-level testing."
     },
     {
         "Requirement Location": "",
@@ -1061,7 +1061,7 @@
         "Pass/Fail Criteria": "Other",
         "Test Type": "Other",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -1070,24 +1070,24 @@
         "Feature": "CSRs",
         "Sub Feature": "AlwaysAccessible",
         "Feature Description": "\"All PMP CSRs are always implemented\". \"MRW\". The CSRs are M-mode accessible, and their existence does not depend on PMP_NUM_REGIONS.\n\nNote: \"All\" pmp registers, and all fields within them.",
-        "Verification Goal": "Be in M-mode, access (reads/writes) all the pmp csrs, ensure that it always works without excepting (because the csrs exist and the mode is appropriate).\n\nNote: Potential overlap with CSR vplan.",
+        "Verification Goal": "1) Be in M-mode,\n2) access (reads/writes) all the pmp csrs,\n3) ensure that it always works without excepting (because the csrs exist and the mode is appropriate).\n\nNote: Potential overlap with CSR vplan.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "High Priority",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "High Priority?": "No",
+        "Link to Coverage": "A: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_always_accessible_mmode_csrs\".",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
         "Feature": "CSRs",
         "Sub Feature": "ReservedLegal",
         "Feature Description": "Reserved bits/fields have legal values, matching the platform-specified defaults.",
-        "Verification Goal": "(Overlaps with LegalRwx and RwReservedabove.) Read all fields of all pmp-related csrs, ensure there are no unsupported values anywhere (at all times).",
+        "Verification Goal": "(Overlaps with LegalRwx and RwReservedabove.)\nRead all fields of all pmp-related csrs, ensure there are no unsupported values anywhere (at all times).",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
+        "High Priority?": "High Priority",
         "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.gen_cfgrdata_expected[*].a_cfgrdata_expected",
         "Comment": ""
     },
@@ -1101,21 +1101,21 @@
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "Link to Coverage": "A: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_mseccfgh_zero\".",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
         "Feature": "CSRs",
         "Sub Feature": "UnusedZero",
         "Feature Description": "\"CSRs (or bitfields of CSRs) related to PMP entries with number PMP_NUM_REGIONS and above are hardwired to zero.\"\n\nNote: Including upper parts of pmpcfgn and also pmpaddr.",
-        "Verification Goal": "Read pmpcfg and pmpaddr csrs, ensure the values are zero as specified. Cover that the other values can be non-zero.",
+        "Verification Goal": "1) Read pmpcfg and pmpaddr csrs,\n2) ensure the values are zero as specified.\n\nCover: that the other values can be non-zero.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "High Priority",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "TODO missing assert\n\nTODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "A: uvmt_cv32e40s_pmp_assert.sv, \"a_unused_zero_pmp_csrs\".\n\nCOV: (SKIPPED).",
+        "Comment": "Cover skipped as not important."
     },
     {
         "Requirement Location": "",
@@ -1126,7 +1126,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "High Priority",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -1138,10 +1138,10 @@
         "Verification Goal": "The pmp grant/deny checking must be compared vs \"rvfi_csr_<csrname>_rdata\".\n(This will detect whether the actual pmp decision differs from what the rvfi csr data would incidate.)\n\nNote: Compare \"pc_rdata\" for execute, and \"mem_\" signals for read/write. (Might need additional decoding of \"rvfi_insn\".)",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
-        "Coverage Method": "Functional Coverage",
+        "Coverage Method": "Assertion Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_musttrap\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_cause_load\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_cause_store\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_splittrap\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_musttrap\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_cause\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_splittrap\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_musttrap\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_cause_load\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_cause_store\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_splittrap\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_musttrap\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_cause\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_splittrap",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -1152,9 +1152,9 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "COV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "COV: (SKIPPED)",
+        "Comment": "Cover skipped because random testing of pmp proved to be low ROI."
     },
     {
         "Requirement Location": "",
@@ -1178,7 +1178,7 @@
         "Pass/Fail Criteria": "Other",
         "Test Type": "Other",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -1191,7 +1191,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -1204,7 +1204,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -1213,13 +1213,13 @@
         "Feature": "MicroArchitecture",
         "Sub Feature": "WriteBuffer",
         "Feature Description": "Changes to the pmp config should not impact the write buffer such that a transaction can get its grant/deny status altered.",
-        "Verification Goal": "Cover cases of the write buffer being full while the pmp cfg changes. Checking of accidental grants is handled by SuppressReq below. Checking of guaranteed writes is not part of this vplan.\n\nNote: The Write buffer is situated between the pmp and the bus.",
+        "Verification Goal": "Cover cases of the write buffer being full while the pmp cfg changes. Checking of accidental grants is handled by SuppressReq below.\nChecking of guaranteed writes is not part of this vplan.\n\nNote: The Write buffer is situated between the pmp and the bus.",
         "Pass/Fail Criteria": "Other",
         "Test Type": "Other",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "COV: ???",
-        "Comment": "TODO missing cover"
+        "Link to Coverage": "COV: (See \"WaitUpdate\").",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -1243,7 +1243,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -1256,7 +1256,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
+        "High Priority?": "High Priority",
         "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_cause",
         "Comment": ""
     },
@@ -1265,39 +1265,39 @@
         "Feature": "Violations",
         "Sub Feature": "ExceptionLoad",
         "Feature Description": "\"mcause [...] Load access fault [...] Load attempt with address failing PMP check.\"\n\nNote: Holds for load-reserved too.",
-        "Verification Goal": "Attempt loads (and load-reserveds) of a region that pmp denies reading from, ensure that a \"load access fault\" exception occurs (read mcause and rvfi signals).",
+        "Verification Goal": "1) Attempt loads (and load-reserveds) of a region that pmp denies reading from,\n2) ensure that a \"load access fault\" exception occurs (read mcause and rvfi signals).\n\nCover: normal / load-reserved / pop.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_cause_load\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_cause_load\n\nCOV: (SKIPPED).",
+        "Comment": "Cover skipped as \"rvfi_if.is_load_instr\" should handle all load types."
     },
     {
         "Requirement Location": "",
         "Feature": "Violations",
         "Sub Feature": "ExceptionStore",
         "Feature Description": "\"mcause [...] Store/AMO access fault [...] Store attempt with address failing PMP check.\"\n\nNote: Holds for store-conditional and amo too.",
-        "Verification Goal": "Attempt stores (and store-conditionals and amo) to a region that pmp denies writing to, ensure that a \"store/amo access fault\" exception occurs (read mcause and rvfi signals).",
+        "Verification Goal": "1) Attempt stores (and store-conditionals and amo) to a region that pmp denies writing to,\n2) ensure that a \"store/amo access fault\" exception occurs (read mcause and rvfi signals).",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_cause_store\n\nCOV: ???",
-        "Comment": "TODO missing cover"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_cause_store\n\nCOV: (SKIPPED).",
+        "Comment": "Cover skipped as \"rvfi_if.is_store_instr\" should handle all store types."
     },
     {
         "Requirement Location": "",
         "Feature": "Violations",
         "Sub Feature": "TrapPrecisely",
         "Feature Description": "\"All exceptions are precise\".\nMeaning mepc will point to the offending instruction, and exactly previous instructions have their side effects fully visible.\n\nNote: Applies to loads, stores, and executes.",
-        "Verification Goal": "Observe that the pmp causes an exception, ensure that mepc points to the offending instruction.\n\nNote: Let the Exceptions vplan deal with visibility of side effects for earlier instructions. (Zc push/pop does not follow this, but that is mostly the responsibility of the Zc vplan.)\n\nNote: If satisfactory mepc checking already exist then it is acceptable to just add covers for the pmp scenarios.",
+        "Verification Goal": "Observe that the pmp causes an exception, ensure that mepc points to the offending instruction.\n\nNote: Let the Exceptions vplan deal with visibility of side effects for earlier instructions.\n(Zc push/pop does not follow this, but that is mostly the responsibility of the Zc vplan.)\n\nNote: If satisfactory mepc checking already exist then it is acceptable to just add covers for the pmp scenarios.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "TODO missing assert\n\nTODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED).\n\nCOV: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_noexec_cause\".\n\nCOV: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_noloadstore_cause_load\".\n\nCOV: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_noloadstore_cause_store\".",
+        "Comment": "Assertion skipped because 1) we don't have readily-available helper signals for non-clic pointers, and 2) this is not a high priority assert. (It could be easy to write and assert that mepc is pc_rdata, with some exceptions to that rule.)"
     },
     {
         "Requirement Location": "",
@@ -1308,8 +1308,8 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_xsecure_security_alerts_assert.sv, \"a_xsecure_security_alert_non_nmi_exceptions\".\n\nCOV: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_noexec_cause\".\n\nCOV: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_noloadstore_cause_load\".\n\nCOV: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_noloadstore_cause_store\".",
         "Comment": "Waiting for xsecure vplan"
     },
     {
@@ -1321,9 +1321,9 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED).",
+        "Comment": "Assert skipped in favor of deeming the xsecure verification and integration-level testing sufficient."
     },
     {
         "Requirement Location": "",
@@ -1334,48 +1334,48 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "Waiting for exceptions vplan"
+        "High Priority?": "No",
+        "Link to Coverage": "A: uvmt_cv32e40s_rvfi_assert.sv, \"a_exceptions_dont_update_gprs\".",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
         "Feature": "Violations",
         "Sub Feature": "SplitLoadException",
         "Feature Description": "For split loads, regardless of which of the access that fails, the instruction should still cause an exception.",
-        "Verification Goal": "Perform a misaligned load that translates to multiple accesses, let any of the accesses be denied by pmp, ensure an exception occurs.\n\nCoverage: See rvfi retire with exception cause from pmp, while the \"low addr\" model checking gave access granted.",
+        "Verification Goal": "1) Perform a misaligned load that translates to multiple accesses,\n2) let any of the accesses be denied by pmp,\n3) ensure an exception occurs.\n\nCoverage: See rvfi retire with exception cause from pmp, while the \"low addr\" model checking gave access granted.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
-        "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "TODO missing assert\n\nTODO missing cover"
+        "Coverage Method": "Assertion Coverage",
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_noloadstore_splittrap\".",
+        "Comment": "Note: The assert only checks that the 2nd access is denied, not the general case of _any_."
     },
     {
         "Requirement Location": "",
         "Feature": "Violations",
         "Sub Feature": "FirstFail",
         "Feature Description": "If a split load/store fails on its first transaction it should get an exception immediately, so it should not allow the second transaction reach the bus and mcause shall reflect the failing transactions.",
-        "Verification Goal": "Attempt such an instruction, ensure that the denied access does not reach the bus, ensure that following accesses also do not reach the bus.",
+        "Verification Goal": "1 Attempt such an instruction,\n2) ensure that the denied access does not reach the bus,\n3) ensure that following accesses also do not reach the bus.\n\nCover: load / store.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_rvfi_mem_allowed_data\".\n\nA: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_rvfi_mem_allowed_upperdata\".",
+        "Comment": "Note: Trusting RVFI to report OBI actuals truthfully."
     },
     {
         "Requirement Location": "",
         "Feature": "Violations",
         "Sub Feature": "PushPop",
         "Feature Description": "If a push/pop fails on a transaction it should get an exception immediately, so the remaining transactions should not reach the bus and mcause shall reflect the failing transaction.",
-        "Verification Goal": "(Responsibility of the zc vplan. But link to coverage here too.)\n\nNote: Could write a pmp-specific cover, but coordinate with Zc vplan to ensure the checker is written too.",
+        "Verification Goal": "(Responsibility of the zc vplan. But link to coverage here too.)\n\nCover: could write a pmp-specific cover, but coordinate with Zc vplan to ensure the checker is written too.",
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "Waiting for zc vplan"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.u_zc_assert.a_multiop_exception_stop_dbus_push\n\nA: A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.u_zc_assert.a_multiop_exception_stop_dbus_pop\n\nCOV: (SKIPPED).",
+        "Comment": "Cover skipped in favor of trusting that formal will exercise the assert for pmp-specific cases."
     },
     {
         "Requirement Location": "",
@@ -1386,9 +1386,9 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "Waiting for zc vplan"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: (SKIPPED).\n\nCOV: (SKIPPED).",
+        "Comment": "Assert and cover skipped in favor of trusting that formal will exercise the assert for pmp-specific cases."
     },
     {
         "Requirement Location": "",
@@ -1399,22 +1399,22 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "High Priority",
         "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "Waiting for clic vplan"
+        "Comment": "TODO Waiting for clic vplan"
     },
     {
         "Requirement Location": "",
         "Feature": "Violations",
         "Sub Feature": "Priority",
         "Feature Description": "Exceptions priority apply to the PMP as well. Particularily, PMP exception (instruction access fault) gets priority over bus errors (instruction bus fault) if an instruction is the result of two fetches were both of these occurred.\n\nNote: Both could be present in an attempted executed instruction at the same time, because no exception occurs before the point of execution so there is enough time for both to be captured and travel through the pipeline.",
-        "Verification Goal": "Keep track of words fetched with bus error and with pmp execute denied, check retired instructions for a pc that overlaps two such fetches (cover both orders), ensure that \"instruction access fault\" is the taken exception.",
+        "Verification Goal": "1) Keep track of words fetched with bus error and with pmp execute denied,\n2) check retired instructions for a pc that overlaps two such fetches (cover both orders),\n3) ensure that \"instruction access fault\" is the taken exception.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???\n\nCOV: ???",
-        "Comment": "TODO missing assert\n\nTODO missing cover"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED).\n\nCOV: (SKIPPED).",
+        "Comment": "Assert and cover skipped because it would require support logic with an unreasonably low ROI, and we have other exceptions checking."
     },
     {
         "Requirement Location": "",
@@ -1425,9 +1425,9 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED).",
+        "Comment": "Assert skipped in favor of regarding the pmp and pma efforts themselves as sufficient."
     },
     {
         "Requirement Location": "",
@@ -1438,9 +1438,9 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED).",
+        "Comment": "Assert skipped in favor of regarding the pmp and pma efforts themselves as sufficient."
     },
     {
         "Requirement Location": "",
@@ -1451,9 +1451,9 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED).",
+        "Comment": "Assert skipped in favor of regarding the pmp and pma efforts themselves as sufficient."
     },
     {
         "Requirement Location": "",
@@ -1464,25 +1464,25 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
-    },
-    {
-        "Requirement Location": "misc",
-        "Feature": "Misc",
-        "Sub Feature": "DisallowDebug",
-        "Feature Description": "The PMP can deny usage of debug mode by setting up regions for dm_halt_addr and dm_exception_addr.",
-        "Verification Goal": "Set up pmp rules so all D-mode entries are blocked from execution, attempt to enter debug mode, ensure that nohing is executed in debug mode.",
-        "Pass/Fail Criteria": "Assertion Check",
-        "Test Type": "Directed Non-Self-Checking",
-        "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "Waiting for ongoing spec changes to be resolved"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED).",
+        "Comment": "Assert skipped in favor of regarding the pmp and pma efforts themselves as sufficient."
     },
     {
         "Requirement Location": "",
+        "Feature": "Pma",
+        "Sub Feature": "DisallowDebug",
+        "Feature Description": "\"As execution based debug is used, the Debug Module region, as defined by the DM_REGION_START and DM_REGION_END parameters, needs to support code execution, loads and stores when CV32E40S is in debug mode. In order to achieve this CV32E40S overrules the PMA and PMP settings for the Debug Module region when it is in debug mode (see Physical Memory Attribution (PMA) and Physical Memory Protection (PMP)).\"",
+        "Verification Goal": "Check that accesses to the DM region are never blocked.\n\nCover: access within range, would deny / allow.",
+        "Pass/Fail Criteria": "Assertion Check",
+        "Test Type": "Directed Non-Self-Checking",
+        "Coverage Method": "Assertion Coverage",
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_accept_only_legal\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.*.mpu_i.pmp.pmp_i.u_pmp_assert_lsu.gen_pmp_assert.a_deny_only_illegal\n\nCOV: (SKIPPED).",
+        "Comment": "Cover skipped in favor of trusting that formal will exercise the assert for dm region specific cases."
+    },
+    {
+        "Requirement Location": "misc",
         "Feature": "Misc",
         "Sub Feature": "40x",
         "Feature Description": "The 40x does not have PMP.",
@@ -1490,7 +1490,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -1503,7 +1503,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -1516,7 +1516,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_*\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_*\n\n(Indirectly checked by those asserts)",
         "Comment": ""
     },
@@ -1525,13 +1525,13 @@
         "Feature": "Misc",
         "Sub Feature": "RvfiTrap",
         "Feature Description": "The \"rvfi_trap\" table has PMP-specific fields.",
-        "Verification Goal": "Augment the exception checkers above with checking of \"rvfi_trap.cause_type\" to ensure that specifically PMP is reported as the cause.",
+        "Verification Goal": "Augment the exception checkers above with checking of \"rvfi_trap.cause_type\" to ensure that specifically PMP is reported as the cause.\nE.g. \"|-> rvfi_trap\" changed to \"|-> rvfi_trap && <cause equal to \u2026>\".",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "High Priority?": "No",
+        "Link to Coverage": "A: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_noexec_cause\".\n\nA: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_noloadstore_cause_load\".\n\nA: uvmt_cv32e40s_pmprvfi_assert.sv, \"a_noloadstore_cause_store\".",
+        "Comment": ""
     },
     {
         "Requirement Location": "",
@@ -1542,7 +1542,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "No",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -1555,7 +1555,7 @@
         "Pass/Fail Criteria": "N/A",
         "Test Type": "N/A",
         "Coverage Method": "N/A",
-        "High Priority?": "",
+        "High Priority?": "High Priority",
         "Link to Coverage": "N/A",
         "Comment": ""
     },
@@ -1568,151 +1568,34 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "High Priority?": "No",
+        "Link to Coverage": "A: (SKIPPED).",
+        "Comment": "Skipped in favor of trusting \"WaitUpdate\" and \"AffectSuccessors\" and all other functional asserts.."
     },
     {
         "Requirement Location": "",
         "Feature": "Misc",
         "Sub Feature": "UmodeZeroRegions",
         "Feature Description": "If the parameters are set to have 0 pmp regions, then all rules are OFF and U-mode matches nothing and defaults to not have any access.",
-        "Verification Goal": "Be in U-mode, have PMP_NUM_REGIONS=0, ensure all accesses fail (read/write/execute).",
+        "Verification Goal": "Be in U-mode, have PMP_NUM_REGIONS=0, ensure all accesses fail (read/write/execute).\n\nNote: also assert that read/write attempts can not occur.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Assertion Coverage",
-        "High Priority?": "",
-        "Link to Coverage": "A: ???",
-        "Comment": "TODO missing assert"
+        "High Priority?": "High Priority",
+        "Link to Coverage": "A: (SKIPPED).",
+        "Comment": "Skipped in favor of using realease-specific configs."
     },
     {
         "Requirement Location": "debug",
         "Feature": "Mmode",
         "Sub Feature": "",
         "Feature Description": "\"All operations are executed with machine mode privilege\".\nIt is mostly the responsibility of other vplans to check D-mode relationship to M-mode and U-mode, but the pmp inputs should be checked against debug mode.\n\nNote: Refer to user-mode vplan and debug vplan if necessary.\n\nNote: It is assumed that once 1) dmode is shown to be interpreted as mmode by pmp, and 2) all mmode features are verified, then C) the mmode features will work in dmode. But one alternative is to duplicate all the mmode-related checking with dmode variants.",
-        "Verification Goal": "Ensure that the PMP inputs receive the correct mode while in D-mode.\n\nNote: Test w/wo MPRV too.",
+        "Verification Goal": "Ensure that the PMP inputs receive the correct mode while in D-mode.\n\nCover: w/wo MPRV.",
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
         "High Priority?": "High Priority",
-        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_*\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_*\n\n(Indirectly checked by those asserts, together with effective priv mode and umode asserts for dmode/mmode.)\n\nCOV: ???",
-        "Comment": "TODO missing cover"
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "Mmode",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Ensure that the PMP inputs receive the correct mode while in D-mode.\n\nNote: Test w/wo MPRV too.",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "High Priority?": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "Mmode",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Ensure that the PMP inputs receive the correct mode while in D-mode.\n\nNote: Test w/wo MPRV too.",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "High Priority?": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "Mmode",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Ensure that the PMP inputs receive the correct mode while in D-mode.\n\nNote: Test w/wo MPRV too.",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "High Priority?": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "Mmode",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Ensure that the PMP inputs receive the correct mode while in D-mode.\n\nNote: Test w/wo MPRV too.",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "High Priority?": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "Mmode",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Ensure that the PMP inputs receive the correct mode while in D-mode.\n\nNote: Test w/wo MPRV too.",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "High Priority?": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "Mmode",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Ensure that the PMP inputs receive the correct mode while in D-mode.\n\nNote: Test w/wo MPRV too.",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "High Priority?": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "Mmode",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Ensure that the PMP inputs receive the correct mode while in D-mode.\n\nNote: Test w/wo MPRV too.",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "High Priority?": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": "",
-        "Feature": "Mmode",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Ensure that the PMP inputs receive the correct mode while in D-mode.\n\nNote: Test w/wo MPRV too.",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "High Priority?": "",
-        "Link to Coverage": "",
-        "Comment": ""
-    },
-    {
-        "Requirement Location": " -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- END -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------",
-        "Feature": "Mmode",
-        "Sub Feature": "",
-        "Feature Description": "",
-        "Verification Goal": "Ensure that the PMP inputs receive the correct mode while in D-mode.\n\nNote: Test w/wo MPRV too.",
-        "Pass/Fail Criteria": "",
-        "Test Type": "",
-        "Coverage Method": "",
-        "High Priority?": "",
-        "Link to Coverage": "",
-        "Comment": ""
+        "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noexec_*\n\nA: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.rvfi_i.pmprvfi_assert_i.a_noloadstore_*\n\n(Indirectly checked by those asserts, together with effective priv mode and umode asserts for dmode/mmode.)\n\nCOV: (SKIPPED).",
+        "Comment": "Cover skipped because the asserts are deemed sufficient, and because debug has its own new override mechanism."
     }
 ]
