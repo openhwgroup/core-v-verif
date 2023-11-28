@@ -155,7 +155,12 @@ endif
 ################################################################################
 
 VCS_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
+
+ifeq ($(call IS_YES,$(ENABLE_TRACE_LOG)),YES)
+    VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
+    VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_RVFI_TRACE_EXECUTION
+endif
+
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
     VCS_USER_COMPILE_ARGS += +define+USE_ISS
     VCS_USER_COMPILE_ARGS += +define+USE_IMPERASDV

@@ -122,9 +122,9 @@ endif
 ################################################################################
 # Waveform (post-process) command line
 ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-WAVES_CMD = cd $(SIM_RUN_RESULTS) && $(INDAGO) -db ida.db
+WAVES_CMD = cd $(SIM_RUN_RESULTS) && $(INDAGO) -db ida.db &
 else
-WAVES_CMD = cd $(SIM_RUN_RESULTS) && $(SIMVISION) waves.shm
+WAVES_CMD = cd $(SIM_RUN_RESULTS) && $(SIMVISION) waves.shm &
 endif
 
 XRUN_USER_COMPILE_ARGS += $(USER_COMPILE_FLAGS)
@@ -180,9 +180,13 @@ endif
 XRUN_UVM_MACROS_INC_FILE = $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC)_uvm_macros_inc.sv
 
 XRUN_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_RVFI
-XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_RVFI_TRACE_EXECUTION
+
+ifeq ($(call IS_YES,$(ENABLE_TRACE_LOG)),YES)
+    XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
+    XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_RVFI_TRACE_EXECUTION
+endif
+
 XRUN_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_CORE_LOG
 XRUN_USER_COMPILE_ARGS += +define+UVM
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
