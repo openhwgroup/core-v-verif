@@ -782,7 +782,7 @@ module uvmt_cv32e40s_clic_interrupt_assert
 
   covergroup cg_clic @(posedge clk_i);
     option.per_instance = 1;
-    cp_lvl: coverpoint irq_level;
+    cp_lvl: coverpoint irq_level{ bins values[] = {[0:255]};}
   endgroup
 
   cg_clic clic_cg = new;
