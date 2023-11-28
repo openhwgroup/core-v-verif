@@ -23,6 +23,7 @@
 module uvmt_cv32e40s_pmprvfi_assert
   import cv32e40s_pkg::*;
   import support_pkg::*;
+  import isa_decoder_pkg::*;
   import uvm_pkg::*;
   import uvma_rvfi_pkg::*;
   import uvma_rvfi_pkg::EXC_CAUSE_INSTR_BUS_FAULT;
@@ -38,6 +39,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   //RVFI INSTR IF
   uvma_rvfi_instr_if_t    rvfi_if,
+  uvmt_cv32e40s_support_logic_module_o_if_t.slave_mp  support_if,
   // RVFI
   input wire              rvfi_valid,
   input wire [31:0]       rvfi_insn,
@@ -146,7 +148,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   wire  is_rvfi_csr_write_instr =
     is_rvfi_csr_instr  &&
-    !((rvfi_insn[13:12] inside {2'b 10, 2'b 11}) && !rvfi_rs1_addr);  // CSRRS/C[I] w/ rs1=x0/0
+    !((rvfi_insn[13:12] inside {2'b 01, 2'b 10, 2'b 11}) && !rvfi_rs1_addr);  // CSRRW/S/C[I] w/ rs1=x0/0
 
   wire [1:0]  rvfi_effective_mode =
     rvfi_csr_mstatus_rdata[17]      ?  // "mstatus.MPRV", modify privilege?
@@ -498,26 +500,86 @@ module uvmt_cv32e40s_pmprvfi_assert
 
 
   // Stickiness isn't effectuated before triggered  (vplan:LockingBypass:UntilReset)
+  logic first_MSECCFG_access;
 
-  property  p_until_reset_notbefore(logic rlb);
-    $rose(rst_ni)                                               ##0
-    (rvfi_valid [->1])                                          ##0  // First retire
-    (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  ##0  // ..."csrrw"
-    (rvfi_insn[31:20] == CSRADDR_MSECCFG)                       ##0  // ...to mseccfg
-    !rvfi_trap                                                  ##0
-    (rvfi_rs1_rdata[2] == rlb)                                       // (Write-attempt's data)
-    |->
-    pmp_csr_rvfi_wmask.mseccfg.rlb          &&  // Must attempt
-    (pmp_csr_rvfi_wdata.mseccfg.rlb == rlb)     // Must succeed
-    ;
-  endproperty : p_until_reset_notbefore
+  always @(posedge clk_i, negedge rst_ni) begin
+    if (rst_ni == 0) begin
+      first_MSECCFG_access <= 1'b 1;
+    end else if (
+      rvfi_valid &&
+      !rvfi_trap &&
+      (support_if.asm_rvfi.instr == CSRRW ||
+      support_if.asm_rvfi.instr == CSRRS  ||
+      support_if.asm_rvfi.instr == CSRRC  ||
+      support_if.asm_rvfi.instr == CSRRWI  ||
+      support_if.asm_rvfi.instr == CSRRSI ||
+      support_if.asm_rvfi.instr == CSRRCI)
+    ) begin
+      first_MSECCFG_access <= 1'b 0;
+    end
+  end
+
 
   a_until_reset_notbefore_0: assert property (
-    p_until_reset_notbefore(1'b 0)
+    $rose(rst_ni) ##0
+
+    // First write access to MSECCFG:
+    (rvfi_valid &&
+    first_MSECCFG_access &&
+
+    support_if.asm_rvfi.csr.address == MSECCFG &&
+    support_if.asm_rvfi.csr.valid &&
+
+    (support_if.asm_rvfi.instr == CSRRW ||
+    support_if.asm_rvfi.instr == CSRRC ||
+    support_if.asm_rvfi.instr == CSRRWI ||
+    support_if.asm_rvfi.instr == CSRRCI) &&
+
+    !rvfi_trap)[->1]
+
+    ##0
+
+    // Set RLB bit to 0:
+    ((support_if.asm_rvfi.instr == CSRRW && rvfi_rs1_rdata[2] == 1'b0) ||
+    (support_if.asm_rvfi.instr == CSRRC && rvfi_rs1_rdata[2] == 1'b1) ||
+    (support_if.asm_rvfi.instr == CSRRWI && support_if.asm_rvfi.imm.imm_value[2] == 1'b0) ||
+    (support_if.asm_rvfi.instr == CSRRCI && support_if.asm_rvfi.imm.imm_value[2] == 1'b1))
+
+    |->
+    pmp_csr_rvfi_wmask.mseccfg.rlb          &&  // Must attempt
+    (pmp_csr_rvfi_wdata.mseccfg.rlb == 1'b0)     // Must succeed
   ) else `uvm_error(info_tag, "RLB must be changeable after reset");
 
+
   a_until_reset_notbefore_1: assert property (
-    p_until_reset_notbefore(1'b 1)
+    $rose(rst_ni) ##0
+
+    // First write access to MSECCFG:
+    (rvfi_valid &&
+    first_MSECCFG_access &&
+
+    support_if.asm_rvfi.csr.address == MSECCFG &&
+    support_if.asm_rvfi.csr.valid &&
+
+    (support_if.asm_rvfi.instr == CSRRW ||
+    support_if.asm_rvfi.instr == CSRRS ||
+    support_if.asm_rvfi.instr == CSRRWI ||
+    support_if.asm_rvfi.instr == CSRRSI) &&
+
+    !rvfi_trap)[->1]
+
+    ##0
+
+    // Set RLB bit to 1:
+    ((support_if.asm_rvfi.instr == CSRRW || support_if.asm_rvfi.instr == CSRRS) &&
+    rvfi_rs1_rdata[2] == 1'b1) ||
+
+    ((support_if.asm_rvfi.instr == CSRRWI || support_if.asm_rvfi.instr == CSRRSI) &&
+    support_if.asm_rvfi.imm.imm_value[2])
+
+    |->
+    pmp_csr_rvfi_wmask.mseccfg.rlb          &&  // Must attempt
+    (pmp_csr_rvfi_wdata.mseccfg.rlb == 1'b1)     // Must succeed
   ) else `uvm_error(info_tag, "RLB must be changeable after reset");
 
 

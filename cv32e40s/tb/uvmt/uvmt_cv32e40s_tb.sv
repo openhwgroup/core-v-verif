@@ -1526,6 +1526,7 @@ module uvmt_cv32e40s_tb;
         .PMP_NUM_REGIONS (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMP_NUM_REGIONS)
       ) pmprvfi_assert_i (
         .rvfi_if        (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
+        .support_if     (support_logic_module_o_if.slave_mp),
         .rvfi_mem_addr  (rvfi_mem_addr [31:0]),
         .rvfi_mem_wmask (rvfi_mem_wmask[ 3:0]),
         .rvfi_mem_rmask (rvfi_mem_rmask[ 3:0]),
