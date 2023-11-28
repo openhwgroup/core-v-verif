@@ -29,8 +29,8 @@ module uvmt_cv32e40s_pmprvfi_assert
   import uvma_rvfi_pkg::EXC_CAUSE_INSTR_INTEGRITY_FAULT;
   import uvmt_cv32e40s_base_test_pkg::*;
 #(
-  parameter int  PMP_GRANULARITY = 0,
-  parameter int  PMP_NUM_REGIONS = 0
+  parameter int  PMP_GRANULARITY,
+  parameter int  PMP_NUM_REGIONS
 )(
   // Clock and Reset
   input wire  clk_i,
@@ -84,14 +84,14 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   string info_tag = "CV32E40S_PMPRVFI_ASSERT";
 
-  localparam logic [1:0] MODE_U                = 2'b 00;
-  localparam logic [1:0] MODE_M                = 2'b 11;
-  localparam logic [2:0] DBG_TRIGGER           = 3'd 2;
-  localparam int         NUM_CFG_REGS          = 16;
-  localparam int         NUM_ADDR_REGS         = 64;
-  localparam int         CSRADDR_FIRST_PMPCFG  = 12'h 3A0;
-  localparam int         CSRADDR_FIRST_PMPADDR = 12'h 3B0;
-  localparam int         CSRADDR_MSECCFG       = 12'h 747;
+  localparam int           NUM_ADDR_REGS         = 64;
+  localparam int           NUM_CFG_REGS          = 16;
+  localparam logic [11:0]  CSRADDR_FIRST_PMPADDR = 12'h 3B0;
+  localparam logic [11:0]  CSRADDR_FIRST_PMPCFG  = 12'h 3A0;
+  localparam logic [11:0]  CSRADDR_MSECCFG       = 12'h 747;
+  localparam logic [1:0]   MODE_M                = 2'b 11;
+  localparam logic [1:0]   MODE_U                = 2'b 00;
+  localparam logic [2:0]   DBG_TRIGGER           = 3'd 2;
 
   typedef struct packed {
     logic  pc_lower;
@@ -222,6 +222,16 @@ module uvmt_cv32e40s_pmprvfi_assert
   assign  pmp_csr_rvfi_wdata.mseccfg = rvfi_csr_mseccfg_wdata;
   assign  pmp_csr_rvfi_wmask.mseccfg = rvfi_csr_mseccfg_wmask;
 
+  logic  is_all_regions_off;
+  always_comb begin
+    is_all_regions_off = 1;
+    for (int i = 0; i < PMP_NUM_REGIONS; i++) begin
+      if (pmp_csr_rvfi_rdata.cfg[i].mode != '0) begin
+        is_all_regions_off = 0;
+      end
+    end
+  end
+
 
   // Helper models
 
@@ -336,30 +346,22 @@ module uvmt_cv32e40s_pmprvfi_assert
     .*
   );
 
-  var [31:0]  clk_cnt;
-  always @(posedge clk_i, negedge rst_ni) begin
-    if (rst_ni == 0) begin
-      clk_cnt <= 32'd 1;
-    end else if (clk_cnt != '1) begin
-      clk_cnt <= clk_cnt + 32'd 1;
-    end
-  end
 
 
   // Assertions:
 
 
-  // PMP CSRs only accessible from M-mode  (vplan:Csrs:MmodeOnly)
+  // PMP CSRs only accessible from M-mode  (vplan:Csrs:MmodeOnly, vplan:MsecCfg:MmodeOnly)
 
-  sequence seq_csrs_mmode_only_ante;
+  sequence  seq_pmp_csr_access(mode);
     is_rvfi_csr_instr      &&
-    (rvfi_mode == MODE_U)  &&
+    (rvfi_mode == mode)  &&
     (rvfi_insn[31:20] inside {['h3A0 : 'h3EF], 'h747, 'h757})  //PMP regs
     ;
-  endsequence : seq_csrs_mmode_only_ante
+  endsequence
 
   a_csrs_mmode_only: assert property (
-    seq_csrs_mmode_only_ante
+    seq_pmp_csr_access(MODE_U)
     |->
     is_rvfi_exc_ill_instr          ||
     is_rvfi_exc_instr_bus_fault    ||
@@ -370,8 +372,15 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   cov_csrs_mmode_only: cover property (
     // Want to see "the real cause" (ill exc) finishing this property
-    seq_csrs_mmode_only_ante  ##0  is_rvfi_exc_ill_instr
+    seq_pmp_csr_access(MODE_U) ##0  is_rvfi_exc_ill_instr
   );
+
+  // M-mode can always access the csrs  (vplan:AlwaysAccessible)
+  a_always_accessible_mmode_csrs: assert property (
+    seq_pmp_csr_access(MODE_M)
+    |->
+    ! is_rvfi_exc_ill_instr
+  ) else `uvm_error(info_tag, "mmode couldn't access csr");
 
 
   // NAPOT, some bits read as ones, depending on G  (vplan:NapotOnes)
@@ -897,7 +906,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       csr_intended_wdata <=
         rvfi_if.csr_intended_wdata(
           ({24'd 0, pmp_csr_rvfi_rdata.cfg[i]} << 8*(i%4)),
-          (CSRADDR_FIRST_PMPCFG + (i / 3'd4))
+          (CSRADDR_FIRST_PMPCFG + (i[11:0] / 3'd4))
         );
     end
     wire pmpncfg_t  cfg_attempt = csr_intended_wdata[32'd 8 * (i%4) +: 8];
@@ -906,7 +915,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       pmp_csr_rvfi_rdata.mseccfg.rlb  &&
       pmp_csr_rvfi_rdata.mseccfg.mml
       ##0
-      rvfi_if.is_csr_write(CSRADDR_FIRST_PMPCFG + (i / 3'd4))  &&
+      rvfi_if.is_csr_write(CSRADDR_FIRST_PMPCFG + (i[11:0] / 3'd4))  &&
       !rvfi_trap  &&
       !(PMP_GRANULARITY > 0 && cfg_attempt.mode == PMP_MODE_NA4)
       ;
@@ -926,6 +935,23 @@ module uvmt_cv32e40s_pmprvfi_assert
     pmp_csr_rvfi_rdata.mseccfg.rlb  &&
     pmp_csr_rvfi_rdata.mseccfg.mml
   );
+
+
+  // If all regions "OFF", U-mode fails  (vplan:UmodeOff)
+
+  a_umode_off: assert property (
+    rvfi_if.is_umode  &&
+    is_all_regions_off
+    |->
+    rvfi_if.rvfi_trap
+  );
+
+
+  // "mseccfgh" is just zero  (vplan:MseccfghZero)
+
+  a_mseccfgh_zero: assert property (
+    rvfi_csr_mseccfgh_rdata == '0
+  ) else `uvm_error(info_tag, "mseccfgh not zero");
 
 
   // Translate write-attempts to legal values
