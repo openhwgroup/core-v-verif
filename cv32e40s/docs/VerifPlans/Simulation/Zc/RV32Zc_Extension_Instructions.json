@@ -332,7 +332,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Coverage hole, evaluate priority",
+        "Link to Coverage": "DTC: pma",
         "": ""
     },
     {
@@ -404,7 +404,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Coverage hole, evaluate priority",
+        "Link to Coverage": "DTC: pma",
         "": ""
     },
     {
@@ -464,7 +464,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Coverage hole, evaluate priority",
+        "Link to Coverage": "\"push\" and \"pop\" instructions tested, testing every type of instruction is deprioritized",
         "": ""
     },
     {
@@ -524,7 +524,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "Coverage hole, evaluate priority",
+        "Link to Coverage": "\"push\" and \"pop\" instructions tested, testing every type of instruction is deprioritized",
         "": ""
     },
     {
@@ -620,7 +620,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Coverage hole, evaluate priority",
+        "Link to Coverage": "\"push\" and \"pop\" instructions tested, testing every type of instruction is deprioritized",
         "": ""
     },
     {

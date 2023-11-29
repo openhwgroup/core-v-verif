@@ -1644,7 +1644,7 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "TODO: not covered",
+        "Link to Coverage": "Covered in DTC \"debug_test2\"",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
         "Review (Henrik)": "?"
@@ -1659,7 +1659,7 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "DTC: pushpop_debug_triggers\nTODO: Increase coverage by checking triggers at first/last operation",
+        "Link to Coverage": "DTC: pushpop_debug_triggers",
         "Review (Marton)": "?",
         "Review (Robin)": "?",
         "Review (Henrik)": "?"
