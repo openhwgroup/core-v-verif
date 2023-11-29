@@ -123,7 +123,7 @@ static void  setup_triggers(int index){
   mcontrol6.fields.match = 0;  // (match exact address)
   mcontrol6.fields.type  = 6;
 
-  trigger_addr = (uint32_t) &(g_pushpop_area[index]);  // (arbitrary index)
+  trigger_addr = (uint32_t) &(g_pushpop_area[index]);
 
   __asm__ volatile(
     R"(
@@ -245,7 +245,7 @@ static void  let_dmode_setup_triggers(int index){
   g_debug_expected = 1;
   g_debug_entered  = 0;
   g_debug_function_setup_triggers = 1;
-  g_pushpop_area_index = index; // arbitrary index
+  g_pushpop_area_index = index;
 
   // Prolonged pulse duration so debug req has a chance to be acked and taken
   CV_VP_DEBUG_CONTROL = (
@@ -298,10 +298,10 @@ int main(int argc, char **argv){
   let_dmode_setup_triggers(2);
   test_push_debug_trigger();
   test_pop_debug_trigger();
-  let_dmode_setup_triggers(1); // trigger at first address
+  let_dmode_setup_triggers(1); // trigger at last address in actual sequence
   test_push_debug_trigger();
   test_pop_debug_trigger();
-  let_dmode_setup_triggers(3); // trigger at last address
+  let_dmode_setup_triggers(3); // trigger at first address in actual sequence
   test_push_debug_trigger();
   test_pop_debug_trigger();
 

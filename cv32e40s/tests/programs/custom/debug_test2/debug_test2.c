@@ -1160,7 +1160,8 @@ uint32_t push_haltreq(uint32_t index, uint8_t report_name) {
     .fields.start_delay      = 15
   };
 
-  *g_debug_test_num = 1;
+  *g_debug_test_num = 19;
+  *g_debug_status = 0;
   DEBUG_REQ_CONTROL_REG = debug_req_ctrl.raw;
 
   __asm__ volatile(
@@ -1180,7 +1181,7 @@ uint32_t push_haltreq(uint32_t index, uint8_t report_name) {
     )"::: "t0"
   );
 
-  test_fail += *g_debug_status > 1 ? 1 : 0;
+  test_fail += *g_debug_status == 1 ? 0 : 1;
   *g_debug_status = 0;
 
   if (test_fail) {
@@ -1214,7 +1215,8 @@ uint32_t pop_haltreq(uint32_t index, uint8_t report_name) {
     .fields.start_delay      = 25
   };
 
-  *g_debug_test_num = 1;
+  *g_debug_test_num = 20;
+  *g_debug_status = 0;
   DEBUG_REQ_CONTROL_REG = debug_req_ctrl.raw;
 
   __asm__ volatile(
@@ -1235,7 +1237,7 @@ uint32_t pop_haltreq(uint32_t index, uint8_t report_name) {
     )"::: "t0"
   );
 
-  test_fail += *g_debug_status > 1 ? 1 : 0;
+  test_fail += *g_debug_status == 1 ? 0 : 1;
   *g_debug_status = 0;
 
   if (test_fail) {
@@ -1568,6 +1570,10 @@ void __attribute__((naked)) _debugger_start(void) {
     beq s0, s1, 14f
     addi s0, zero, 18
     beq s0, s1, 18f
+    addi s0, zero, 19
+    beq s0, s1, 19f
+    addi s0, zero, 20
+    beq s0, s1, 20f
 
     # no match, exit
     beq zero, zero, 99f
@@ -1609,6 +1615,12 @@ void __attribute__((naked)) _debugger_start(void) {
     beq zero, zero, 99f
 
     18: call cover_known_iss_mismatches_dbg
+    beq zero, zero, 99f
+
+    19: call request_hw_debugger_dbg
+    beq zero, zero, 99f
+
+    20: call request_hw_debugger_dbg
     beq zero, zero, 99f
 
     99: call _debugger_end
