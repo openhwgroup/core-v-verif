@@ -68,6 +68,12 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
    bit                        max_rand_instr_latency; // variable set by plusarg +max_rand_instr_latency=<>
    int                        max_rand_instr_latency_limit;
 
+   rand int                   rv32f_fcov_en;
+   rand int                   zfinx_fcov_en;
+   rand int                   fpu_latency_addmul;
+   rand int                   fpu_latency_others;
+   rand int                   fpu_latency;
+
    // Agent cfg handles
    rand uvma_clknrst_cfg_c          clknrst_cfg;
    rand uvma_interrupt_cfg_c        interrupt_cfg;
@@ -89,6 +95,9 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_int (                         trn_log_enabled           , UVM_DEFAULT          )
       `uvm_field_int (                         sys_clk_period            , UVM_DEFAULT + UVM_DEC)
       //`uvm_field_int (                         debug_clk_period            , UVM_DEFAULT + UVM_DEC)
+      `uvm_field_int (      rv32f_fcov_en,    UVM_DEFAULT    )
+      `uvm_field_int (      zfinx_fcov_en,    UVM_DEFAULT    )
+      `uvm_field_int (      fpu_latency,      UVM_DEFAULT    )
 
       `uvm_field_object(clknrst_cfg          , UVM_DEFAULT)
       `uvm_field_object(interrupt_cfg        , UVM_DEFAULT)
@@ -110,6 +119,11 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
       soft trn_log_enabled        == 1;
       soft sys_clk_period         == uvme_cv32e40p_sys_default_clk_period; // see uvme_cv32e40p_constants.sv
       //soft debug_clk_period       == uvme_cv32e40p_debug_default_clk_period;
+      soft rv32f_fcov_en          == 0;
+      soft zfinx_fcov_en          == 0;
+      soft fpu_latency_addmul     == FPU_ADDMUL_LAT_DV;
+      soft fpu_latency_others     == FPU_OTHERS_LAT_DV;
+      soft fpu_latency            == FPU_ADDMUL_LAT_DV;
    }
 
    constraint zero_stall_sim_dist_cons {
@@ -522,6 +536,18 @@ function void uvme_cv32e40p_cfg_c::post_randomize();
 
    // Disable some CSR checks from all tests
    configure_disable_csr_checks();
+
+   if(fpu_latency_addmul != fpu_latency_others) begin
+       `uvm_fatal("uvme_cv32e40p_cfg_c", "FPU Latency Parameter not equal, fpu_latency config value cant be used");
+   end
+
+   if (cov_model_enabled && (RV32ZFINX inside {uvme_cv32e40p_pkg::cv32e40p_core_isa_list})) begin
+        zfinx_fcov_en = 1;
+        rv32f_fcov_en = 0;
+   end else if (cov_model_enabled && (RV32F inside {uvme_cv32e40p_pkg::cv32e40p_core_isa_list})) begin
+        rv32f_fcov_en = 1;
+        zfinx_fcov_en = 0;
+   end
 
 endfunction : post_randomize
 

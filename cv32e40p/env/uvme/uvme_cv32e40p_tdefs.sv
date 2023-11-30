@@ -124,17 +124,27 @@ typedef enum {
 } fetch_toggle_t;
 
 typedef enum logic [2:0] {
-  EBREAKM = 1,
-  TRIGGER = 2,
-  HALTREQ = 3,
-  STEP = 4,
-  RESETHALTREQ = 5
+    EBREAKM = 1,
+    TRIGGER = 2,
+    HALTREQ = 3,
+    STEP = 4,
+    RESETHALTREQ = 5
 } dcsr_cause_t;
 
 typedef enum logic [4:0] {
-  CODE_ILLEGAL = 2,
-  CODE_EBREAK  = 3,
-  CODE_ECALL   = 11
+    CODE_ILLEGAL = 2,
+    CODE_EBREAK  = 3,
+    CODE_ECALL   = 11
 } exception_code_t;
+
+typedef enum {
+    RV32I,
+    RV32M,
+    RV32C,
+    RV32F,
+    RV32FC,
+    RV32ZFINX,
+    RV32X
+} cv32e40p_isa_ext_t;
 
 `endif // __UVME_CV32E40P_TDEFS_SV__

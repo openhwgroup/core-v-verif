@@ -55,6 +55,55 @@ parameter CV_VP_OBI_SLV_RESP_BASE      = CV_VP_REGISTER_BASE + CV_VP_OBI_SLV_RES
 parameter CV_VP_SIG_WRITER_BASE        = CV_VP_REGISTER_BASE + CV_VP_SIG_WRITER_OFFSET;
 parameter CV_VP_FENCEI_TAMPER_BASE     = CV_VP_REGISTER_BASE + CV_VP_FENCEI_TAMPER_OFFSET;
 
+parameter TB_OPCODE_SYSTEM             =    7'h73;
+parameter TB_OPCODE_FENCE              =    7'h0f;
+parameter TB_OPCODE_OP                 =    7'h33;
+parameter TB_OPCODE_OPIMM              =    7'h13;
+parameter TB_OPCODE_STORE              =    7'h23;
+parameter TB_OPCODE_LOAD               =    7'h03;
+parameter TB_OPCODE_BRANCH             =    7'h63;
+parameter TB_OPCODE_JALR               =    7'h67;
+parameter TB_OPCODE_JAL                =    7'h6f;
+parameter TB_OPCODE_AUIPC              =    7'h17;
+parameter TB_OPCODE_LUI                =    7'h37;
+parameter TB_OPCODE_AMO                =    7'h2F;
+
+parameter TB_OPCODE_OP_FP              =    7'h53;
+parameter TB_OPCODE_OP_FMADD           =    7'h43;
+parameter TB_OPCODE_OP_FNMADD          =    7'h4f;
+parameter TB_OPCODE_OP_FMSUB           =    7'h47;
+parameter TB_OPCODE_OP_FNMSUB          =    7'h4b;
+parameter TB_OPCODE_STORE_FP           =    7'h27;
+parameter TB_OPCODE_LOAD_FP            =    7'h07;
+
+parameter TB_INS_FMADD               =    {5'b?, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FMADD};
+parameter TB_INS_FMSUB               =    {5'b?, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FMSUB};
+parameter TB_INS_FNMSUB              =    {5'b?, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FNMSUB};
+parameter TB_INS_FNMADD              =    {5'b?, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FNMADD};
+parameter TB_INS_FADD                =    {5'b00000, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FSUB                =    {5'b00001, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FMUL                =    {5'b00010, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FDIV                =    {5'b00011, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FSQRT               =    {5'b01011, 2'b00, 5'b0, 5'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FSGNJS              =    {5'b00100, 2'b00, 10'b?, 3'b000, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FSGNJNS             =    {5'b00100, 2'b00, 10'b?, 3'b001, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FSGNJXS             =    {5'b00100, 2'b00, 10'b?, 3'b010, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FMIN                =    {5'b00101, 2'b00, 10'b?, 3'b000, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FMAX                =    {5'b00101, 2'b00, 10'b?, 3'b001, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FCVTWS              =    {5'b11000, 2'b00, 5'b0, 5'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FCVTWUS             =    {5'b11000, 2'b00, 5'b1, 5'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FMVXS               =    {5'b11100, 2'b00, 5'b0, 5'b?, 3'b000, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FEQS                =    {5'b10100, 2'b00, 10'b?, 3'b010, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FLTS                =    {5'b10100, 2'b00, 10'b?, 3'b001, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FLES                =    {5'b10100, 2'b00, 10'b?, 3'b000, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FCLASS              =    {5'b11100, 2'b00, 5'b0, 5'b?, 3'b001, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FCVTSW              =    {5'b11010, 2'b00, 5'b0, 5'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FCVTSWU             =    {5'b11010, 2'b00, 5'b1, 5'b?, 3'b?, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FMVSX               =    {5'b11110, 2'b00, 5'b0, 5'b?, 3'b000, 5'b?, TB_OPCODE_OP_FP};
+parameter TB_INS_FLW                 =    {12'b?,5'b?,3'b010,5'b?,TB_OPCODE_LOAD_FP};
+parameter TB_INS_FSW                 =    {7'b?,5'b?,5'b?,3'b010,5'b?,TB_OPCODE_STORE_FP};
+
+
 //XPULP instructions custom opcodes
 parameter OPCODE_CUSTOM_0 = 7'h0b;
 parameter OPCODE_CUSTOM_1 = 7'h2b;
@@ -442,5 +491,64 @@ parameter INSTR_CV_ADD_DIV8         =    {5'b01101, 1'b1, 1'b0, 5'b?, 5'b?, 3'b1
 parameter INSTR_CV_SUB_DIV2         =    {5'b01110, 1'b1, 1'b0, 5'b?, 5'b?, 3'b010, 5'b?, OPCODE_CUSTOM_3};
 parameter INSTR_CV_SUB_DIV4         =    {5'b01110, 1'b1, 1'b0, 5'b?, 5'b?, 3'b100, 5'b?, OPCODE_CUSTOM_3};
 parameter INSTR_CV_SUB_DIV8         =    {5'b01110, 1'b1, 1'b0, 5'b?, 5'b?, 3'b110, 5'b?, OPCODE_CUSTOM_3};
+
+parameter APU_OP_FMADD              =    {6'h00};
+parameter APU_OP_FNMSUB             =    {6'h01};
+parameter APU_OP_FADD               =    {6'h02};
+parameter APU_OP_FMUL               =    {6'h03};
+parameter APU_OP_FDIV               =    {6'h04};
+parameter APU_OP_FSQRT              =    {6'h05};
+parameter APU_OP_FSGNJ              =    {6'h06};
+parameter APU_OP_FMINMAX            =    {6'h07};
+parameter APU_OP_FCMP               =    {6'h08};
+parameter APU_OP_FCLASSIFY          =    {6'h09};
+parameter APU_OP_F2F                =    {6'h0A};
+parameter APU_OP_F2I                =    {6'h0B};
+parameter APU_OP_I2F                =    {6'h0C};
+
+parameter APU_OP_FMSUB              =    {6'h10};
+parameter APU_OP_FNMADD             =    {6'h11};
+parameter APU_OP_FSUB               =    {6'h12};
+parameter APU_OP_FSGNJ_SE           =    {6'h16};
+parameter APU_OP_F2I_U              =    {6'h1B};
+parameter APU_OP_I2F_U              =    {6'h1C};
+
+//Additional defines based on DUT config parameters
+`ifdef PULP //PULP = 1
+  `ifndef FPU //FPU = 0
+    `define CV32E40P_ISA_DV { RV32I, RV32M, RV32C, RV32X }
+  `else //FPU = 1
+    `ifndef ZFINX
+      `define CV32E40P_ISA_DV { RV32I, RV32M, RV32C, RV32X, RV32F, RV32FC }
+    `else
+      `define CV32E40P_ISA_DV { RV32I, RV32M, RV32C, RV32X, RV32ZFINX }
+    `endif
+  `endif
+`else //PULP = 0, FPU = 1
+  `ifdef FPU
+    `ifndef ZFINX
+      `define CV32E40P_ISA_DV { RV32I, RV32M, RV32C, RV32F, RV32FC }
+    `else
+      `define CV32E40P_ISA_DV { RV32I, RV32M, RV32C, RV32ZFINX }
+    `endif
+  `endif
+`endif
+
+//Base default ISA for tests if nothing else is defined
+`ifndef CV32E40P_ISA_DV
+    `define CV32E40P_ISA_DV { RV32I, RV32M, RV32C }
+`endif
+
+`ifdef FPU_ADDMUL_LAT
+    parameter FPU_ADDMUL_LAT_DV = `FPU_ADDMUL_LAT;
+`else
+    parameter FPU_ADDMUL_LAT_DV = 0;
+`endif
+
+`ifdef FPU_OTHERS_LAT
+    parameter FPU_OTHERS_LAT_DV = `FPU_OTHERS_LAT;
+`else
+    parameter FPU_OTHERS_LAT_DV = 0;
+`endif
 
 `endif // __UVME_CV32E40P_CONSTANTS_SV__
