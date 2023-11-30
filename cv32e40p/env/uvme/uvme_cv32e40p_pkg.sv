@@ -88,6 +88,8 @@ package uvme_cv32e40p_pkg;
    `include "uvme_interrupt_covg.sv"
    `include "uvme_debug_covg.sv"
    `include "uvme_rv32isa_covg.sv"
+   `include "uvme_cv32e40p_fp_instr_covg.sv"
+   `include "uvme_cv32e40p_zfinx_instr_covg.sv"
    `include "uvme_cv32e40p_cov_model.sv"
    `include "uvme_cv32e40p_sb.sv"
    `include "uvme_cv32e40p_vsqr.sv"
