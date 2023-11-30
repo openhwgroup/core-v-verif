@@ -47,6 +47,7 @@
     MSCRATCHCSW   = 12'h348,
     MSCRATCHCSWL  = 12'h349,
     MCLICBASE     = 12'h34A,
+    MSECCFG       = 12'h747,
     TSELECT       = 12'h7A0,
     TDATA1        = 12'h7A1,
     TDATA2        = 12'h7A2,
