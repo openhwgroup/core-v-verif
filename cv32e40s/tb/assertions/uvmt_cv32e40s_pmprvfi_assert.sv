@@ -530,7 +530,6 @@ module uvmt_cv32e40s_pmprvfi_assert
 
 
   a_until_reset_notbefore_0: assert property (
-    $rose(rst_ni) ##0
 
     // First write access to MSECCFG:
     (rvfi_valid &&
@@ -544,7 +543,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     support_if.asm_rvfi.instr == CSRRWI ||
     support_if.asm_rvfi.instr == CSRRCI) &&
 
-    !rvfi_trap)[->1]
+    !rvfi_trap)
 
     ##0
 
@@ -561,7 +560,6 @@ module uvmt_cv32e40s_pmprvfi_assert
 
 
   a_until_reset_notbefore_1: assert property (
-    $rose(rst_ni) ##0
 
     // First write access to MSECCFG:
     (rvfi_valid &&
@@ -575,7 +573,7 @@ module uvmt_cv32e40s_pmprvfi_assert
     support_if.asm_rvfi.instr == CSRRWI ||
     support_if.asm_rvfi.instr == CSRRSI) &&
 
-    !rvfi_trap)[->1]
+    !rvfi_trap)
 
     ##0
 
