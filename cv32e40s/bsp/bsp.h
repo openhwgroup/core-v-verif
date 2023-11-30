@@ -142,7 +142,7 @@ typedef union {
     volatile uint32_t r            : 1;
     volatile uint32_t w            : 1;
     volatile uint32_t x            : 1;
-    volatile uint32_t a            : 1;
+    volatile uint32_t a            : 2;
     volatile uint32_t reserved_6_5 : 2;
     volatile uint32_t l            : 1;
   } __attribute__((packed)) volatile fields;
@@ -163,3 +163,22 @@ typedef union {
   } __attribute__((packed)) volatile fields;
   volatile uint32_t raw : 32;
 } __attribute__((packed)) jvt_t;
+
+typedef union {
+  struct {
+    volatile uint32_t exccode   : 12;
+    volatile uint32_t res_30_12 : 19;
+    volatile uint32_t interrupt : 1;
+  } __attribute__((packed)) volatile clint;
+  struct {
+    volatile uint32_t exccode    : 12;
+    volatile uint32_t res_15_12  : 4;
+    volatile uint32_t mpil       : 8;
+    volatile uint32_t res_26_24  : 3;
+    volatile uint32_t mpie       : 1;
+    volatile uint32_t mpp        : 2;
+    volatile uint32_t minhv      : 1;
+    volatile uint32_t interrupt  : 1;
+  } __attribute__((packed)) volatile clic;
+  volatile uint32_t raw : 32;
+} __attribute__((packed)) mcause_t;
