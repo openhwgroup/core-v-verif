@@ -527,8 +527,10 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
   // Replace pop_gpr_from_kernel_stack with pop_regfile_from_kernel_stack
   // With RV32X enabled, check for ecall instr on the last instr of hwloop
   // If true, then
-  // (a) Set MEPC to first instr of hwloop body
-  // (b) Add logic to decrement the LPCOUNT
+  // (a) Set MEPC to first instr of hwloop body if LPCOUNTx >= 2
+  // (b) Decrement the LPCOUNTx if LPCOUNTx >= 1
+  // Else
+  // By Default for all other cases increment MEPC by 4
   virtual function void gen_ecall_handler(int hart);
     string instr[$];
     cv32e40p_instr_gen_config corev_cfg;
@@ -537,7 +539,7 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
 
     if (riscv_instr_pkg::RV32X inside {riscv_instr_pkg::supported_isa}) begin
       instr = {instr,
-               `COMMON_HWLOOP_EXC_HANDLING_CODE
+               `COMMON_EXCEPTION_XEPC_HANDLING_CODE_WITH_HWLOOP_CHECK(cfg.gpr[0],cfg.gpr[1],MEPC)
       };
     end else begin
       instr = {instr,
@@ -555,8 +557,10 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
   // Replace pop_gpr_from_kernel_stack with pop_regfile_from_kernel_stack
   // With RV32X enabled, check for ebreak instr on the last instr of hwloop
   // If true, then
-  // (a) Set MEPC to first instr of hwloop body
-  // (b) Add logic to decrement the LPCOUNT
+  // (a) Set MEPC to first instr of hwloop body if LPCOUNTx >= 2
+  // (b) Decrement the LPCOUNTx if LPCOUNTx >= 1
+  // Else
+  // By Default for all other cases increment MEPC by 4
   virtual function void gen_ebreak_handler(int hart);
     string instr[$];
     cv32e40p_instr_gen_config corev_cfg;
@@ -567,7 +571,7 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
     if (riscv_instr_pkg::RV32X inside {riscv_instr_pkg::supported_isa}) begin
       instr = {instr,
-               `COMMON_HWLOOP_EXC_HANDLING_CODE
+               `COMMON_EXCEPTION_XEPC_HANDLING_CODE_WITH_HWLOOP_CHECK(cfg.gpr[0],cfg.gpr[1],MEPC)
       };
     end else begin
       instr = {instr,
@@ -586,8 +590,10 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
   // Replace pop_gpr_from_kernel_stack with pop_regfile_from_kernel_stack
   // With RV32X enabled, check for illegal instr on the last instr of hwloop
   // If true, then
-  // (a) Set MEPC to first instr of hwloop body
-  // (b) Add logic to decrement the LPCOUNT
+  // (a) Set MEPC to first instr of hwloop body if LPCOUNTx >= 2
+  // (b) Decrement the LPCOUNTx if LPCOUNTx >= 1
+  // Else
+  // By Default for all other cases increment MEPC by 4
   virtual function void gen_illegal_instr_handler(int hart);
     string instr[$];
     cv32e40p_instr_gen_config corev_cfg;
@@ -598,7 +604,7 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
     if (riscv_instr_pkg::RV32X inside {riscv_instr_pkg::supported_isa}) begin
       instr = {instr,
-               `COMMON_HWLOOP_EXC_HANDLING_CODE
+               `COMMON_EXCEPTION_XEPC_HANDLING_CODE_WITH_HWLOOP_CHECK(cfg.gpr[0],cfg.gpr[1],MEPC)
       };
     end else begin
       instr = {instr,
