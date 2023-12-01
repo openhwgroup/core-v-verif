@@ -692,8 +692,8 @@
         "Pass/Fail Criteria": "Self Checking Test",
         "Test Type": "Directed Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "DTC: TODO",
-        "Comment": "TODO missing directed test?"
+        "Link to Coverage": "Covered in Zc  verif plan",
+        "Comment": ""
     },
     {
         "Requirement Location": "Risc-V Debug spec.",

@@ -656,7 +656,7 @@
         "Pass/Fail Criteria": "Check against ISS",
         "Test Type": "Directed Non-Self-Checking",
         "Coverage Method": "Testcase",
-        "Link to Coverage": "Coverage hole, evaluate priority",
+        "Link to Coverage": "DTC: zcmt_test",
         "": ""
     },
     {

@@ -338,7 +338,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "TODO: Directed clic test should add case to test this"
+        "Link to Coverage": "clic::invalid_mtvt_ptr_exec_mret"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",

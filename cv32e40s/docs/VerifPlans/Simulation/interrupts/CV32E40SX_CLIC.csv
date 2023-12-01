@@ -58,7 +58,7 @@ CLIC 8675ec,Interrupt CSR,mtvt,"Function ptr reads treated as instruction fetch,
 
 Note, instruction fetch is treated as an implicit read, thus do not require PMP read permissions, but execute permission is required.
 
-Both the pointer fetch and the fetch of the actual instruction located at the pointer address should be covered by the above restrictions. ",Assertion Check,"ENV capability, not specific test",Functional Coverage,TODO: Directed clic test should add case to test this
+Both the pointer fetch and the fetch of the actual instruction located at the pointer address should be covered by the above restrictions. ",Assertion Check,"ENV capability, not specific test",Functional Coverage,clic::invalid_mtvt_ptr_exec_mret
 UM v0.3.0 Common,Interrupt CSR,mtvt,"Always aligned to 2^(max(6, 2+SMCLIC_ID_WIDTH)","Assert that mtvt [max(6, 2+SMCLIC_ID_WIDTH)-1:0] = 0",Assertion Check,"ENV capability, not specific test",Functional Coverage,a_mtvt_alignment_correct
 CLIC 8675ec,Interrupt CSR,mtvt,"Determine alignment by software access,
 Write ones to lower order bits and read back",Test that correct alignment can be inferred by writing to these fields and read back.,Self Checking Test,Directed Self-Checking,Testcase,clic :: w_mtvt_rd_alignment
