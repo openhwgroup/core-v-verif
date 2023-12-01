@@ -16,24 +16,16 @@
 
 # Test definition YAML for corev-dv test generator
 
-name: corev_rand_fp_instr_sanity_test
+name: corev_fp_mstatus_fs_test
 uvm_test: $(CV_CORE_LC)_instr_base_test
 description: >
-    RISCV-DV generated random fp streams for sanity run
+    RISCV-DV generated to test on mstatus fs
 plusargs: >
     +instr_cnt=1000
     +num_of_sub_program=0
     +test_override_riscv_instr_stream=1
     +no_branch_jump=1
-    +directed_instr_0=cv32e40p_float_zfinx_base_instr_stream,1
-    +directed_instr_1=cv32e40p_fp_n_mixed_instr_stream,1
-    +directed_instr_2=cv32e40p_fp_n_mixed_instr_more_fdiv_fsqrt_stream,1
-    +directed_instr_3=cv32e40p_fp_w_special_operands_instr_stream,1
-    +directed_instr_4=cv32e40p_fp_w_prev_rd_as_operand_instr_stream,1
-    +directed_instr_5=cv32e40p_constraint_mc_fp_instr_stream,1
-    +directed_instr_6=cv32e40p_fp_op_fwd_instr_stream,1
-    +directed_instr_7=cv32e40p_fp_op_fwd_instr_w_loadstore_stream,1
-    # +directed_instr_8=cv32e40p_mstatus_fs_stream,1
+    +directed_instr_0=cv32e40p_mstatus_fs_stream,1
 
 # note:
   # 1) example yaml template for fp test with f_extension
