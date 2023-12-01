@@ -1172,7 +1172,7 @@ class cv32e40p_constraint_mc_fp_instr_stream extends cv32e40p_float_zfinx_base_i
       FADD_S, FSUB_S:             begin mc_instr_latency = 1 + fpu_addmul_lat; end
       FMUL_S:                     begin mc_instr_latency = 1 + fpu_addmul_lat; end
       FMIN_S, FMAX_S:             begin mc_instr_latency = 1 + fpu_addmul_lat; end
-      FDIV_S, FSQRT_S:            begin mc_instr_latency = $urandom_range(1,12); end // table 12.1
+      FDIV_S, FSQRT_S:            begin mc_instr_latency = $urandom_range(1,19); end // table 12.1
       FSGNJ_S,FSGNJN_S, FSGNJX_S: begin mc_instr_latency = 1 + fpu_others_lat; end // table 12.1
       FCVT_W_S, FCVT_WU_S:        begin mc_instr_latency = 1 + fpu_others_lat; end
       FEQ_S, FLT_S, FLE_S:        begin mc_instr_latency = 1 + fpu_others_lat; end
@@ -1201,7 +1201,7 @@ class cv32e40p_constraint_mc_fp_instr_stream extends cv32e40p_float_zfinx_base_i
 
     while (!(loop_cnt == 100) && rand_mc_latency > 0) begin
       int p_rand_mc_latency = rand_mc_latency;
-      bit skip = 0;
+      bit skip = 0, is_csr = 0;
       unique case ($urandom_range(0,1))
         0:  begin : INSERT_INTEGER_COMPUTATION_INSTR
               rand_instr = new riscv_instr::get_rand_instr(
@@ -1215,10 +1215,29 @@ class cv32e40p_constraint_mc_fp_instr_stream extends cv32e40p_float_zfinx_base_i
                 .include_instr(`RV32M_MULH_INSTR_LIST),
                 .include_group({RV32M})
               );
-              if ((rand_mc_latency - 5) < 0) 
-                skip = 1;
-              else
-                rand_mc_latency = rand_mc_latency - 5; // determistic
+              if ((rand_mc_latency - 5) < 0) skip = 1;
+              else rand_mc_latency = rand_mc_latency - 5; // determistic
+            end
+        2:  begin : INSERT_CSR_ACCCESS // exclude this option because csr access get stalled after mult apu insn
+              bit           is_4mc    = $urandom_range(1);
+              logic [11:0]  addr_csr  = (is_4mc) ? 12'h305 : 12'h340; // mtvec(4) : mscratch(1)
+              is_csr = 1;
+              rand_instr = new riscv_instr::get_rand_instr(
+                .include_instr({CSRRW})
+              );
+              rand_instr.set_rand_mode();
+              rand_instr.csr_c.constraint_mode(0);
+              `DV_CHECK_RANDOMIZE_WITH_FATAL(rand_instr,
+                if (has_rs1) {
+                  rs1 == local::gp_reg_scratch;
+                }
+                if (has_rd) {
+                  rd == ZERO;
+                }
+                csr == local::addr_csr;
+              )
+              if ((rand_mc_latency - 1 - is_4mc*3) < 0) skip = 1;
+              else rand_mc_latency = rand_mc_latency - 1 - is_4mc*3;
             end
       endcase
       if (!skip) begin
@@ -1240,7 +1259,7 @@ class cv32e40p_constraint_mc_fp_instr_stream extends cv32e40p_float_zfinx_base_i
           if (instr_f.has_rs2) begin reserved_rd = new[reserved_rd.size() + 1] ({reserved_rd, instr_f.rs2}); end
           if (instr_f.has_rd)  begin reserved_rd = new[reserved_rd.size() + 1] ({reserved_rd, instr_f.rd}); end
         end
-        randomize_gpr(rand_instr);
+        if (!is_csr) randomize_gpr(rand_instr);
         instr_list.push_back(rand_instr);
         instr_list[$].comment = {instr_list[$].comment, $sformatf(" [rand_fill_mc_latency_w_instrs - %0d cycles] ", p_rand_mc_latency)};
         reserved_rd.delete();
@@ -1851,7 +1870,7 @@ endclass: cv32e40p_fp_op_fwd_instr_w_loadstore_stream
   //
   // extended class that clce through all the fp instructions that change
   // fs state from Initial->Dirty and Clean->Dirty
-  // fixme: assess and consider the feedback in https://github.com/XavierAubert/core-v-verif/pull/70
+  // todo: assess and consider the feedback in https://github.com/XavierAubert/core-v-verif/pull/70 - custom ctest
 class cv32e40p_mstatus_fs_stream extends cv32e40p_float_zfinx_base_instr_stream;
 
   localparam LOOP_CNT_LIMIT = 2; // init->dirty, clean->dirty
