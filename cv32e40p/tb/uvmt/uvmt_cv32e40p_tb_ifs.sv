@@ -552,6 +552,10 @@ interface uvmt_cv32e40p_cov_if
       input apu_perf_wb_o;
       input id_stage_apu_op_ex_o;
       input id_stage_apu_en_ex_o;
+      output is_mulh_ex;
+      output is_misaligned_data_req_ex;
+      output is_post_inc_ld_st_inst_ex;
+      output ex_apu_valid_memorised;
   endclocking : mon_cb
 
   //calculate each APU operation's current clock cycle number during execution for functional coverage use

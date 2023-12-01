@@ -342,5 +342,37 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
       gen_signature_handshake(.instr(debug_main), .signature_type(WRITE_CSR), .csr(DSCRATCH0));
     endfunction
 
+    // Override base class gen_dpc_update()
+    // Check dcsr.cause, for ebreak as debug entry cause.
+    // With RV32X enabled, check for ebreak instr on the last instr of hwloop
+    // If true, then
+    // (a) Set DPC to first instr of hwloop body if LPCOUNTx >= 2
+    // (b) Decrement the LPCOUNTx if LPCOUNTx >= 1
+    // Else
+    // By Default for all other cases increment DPC by 4
+    // as ebreak will set set dpc to its own address, which will cause an
+    // infinite loop.
+    virtual function void gen_dpc_update();
+      str = {$sformatf("csrr x%0d, 0x%0x", cfg.scratch_reg, DCSR),
+             $sformatf("slli x%0d, x%0d, 0x17", cfg.scratch_reg, cfg.scratch_reg),
+             $sformatf("srli x%0d, x%0d, 0x1d", cfg.scratch_reg, cfg.scratch_reg),
+             $sformatf("li x%0d, 0x1", cfg.gpr[0]),
+             $sformatf("bne x%0d, x%0d, 8f", cfg.scratch_reg, cfg.gpr[0])};
+      debug_main = {debug_main, str};
+
+      if (riscv_instr_pkg::RV32X inside {riscv_instr_pkg::supported_isa}) begin
+        str = {
+               `COMMON_EXCEPTION_XEPC_HANDLING_CODE_WITH_HWLOOP_CHECK(cfg.gpr[0], cfg.scratch_reg, DPC)
+               };
+        debug_main = {debug_main, str};
+        str = {"8: nop"};
+        debug_main = {debug_main, str};
+      end else begin
+        increment_csr(DPC, 4, debug_main);
+        str = {"8: nop"};
+        debug_main = {debug_main, str};
+      end
+    endfunction
+
 endclass : cv32e40p_debug_rom_gen
 

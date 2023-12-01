@@ -28,68 +28,72 @@ package cv32e40p_instr_test_pkg;
   import corev_instr_test_pkg::*;
 
 
-  // MACRO for Common HWLOOP handling code for all the exception handlers
+  // MACRO for Common Exception Handling/Debug_Rom code for xEPC CSR management
+  // Including hwloop CSR management. (Used only with XPULP ISA support)
+  //
   // Common handler code to ensure all handlers use same code.
   // Description:
   // Check for expection (ecall/ebreak/illegal) on the last hwloop body instr
   // If true, then
-  // (a) Set MEPC to first instr of hwloop body
-  // (b) Add logic to decrement the LPCOUNT
-  `define COMMON_HWLOOP_EXC_HANDLING_CODE \
+  // (a) Set xEPC to first instr of hwloop body if LPCOUNTx >= 2
+  // (b) Decrement the LPCOUNTx if LPCOUNTx >= 1
+  // Else
+  // By Default for all other cases increment xEPC by 4
+  `define COMMON_EXCEPTION_XEPC_HANDLING_CODE_WITH_HWLOOP_CHECK(SCRATCH_REG0,SCRATCH_REG1,XEPC) \
       /* Check LPCOUNT1 >= 1 */ \
-      $sformatf("csrr x%0d, 0x%0x", cfg.gpr[0], LPCOUNT1), \
-      $sformatf("li x%0d, 1", cfg.gpr[1]), \
-      $sformatf("bge x%0d, x%0d, 1f", cfg.gpr[0], cfg.gpr[1]), \
+      $sformatf("csrr x%0d, 0x%0x", ``SCRATCH_REG0, LPCOUNT1), \
+      $sformatf("li x%0d, 1", ``SCRATCH_REG1), \
+      $sformatf("bge x%0d, x%0d, 1f", ``SCRATCH_REG0, ``SCRATCH_REG1), \
       /* Check LPCOUNT0 >= 1 */ \
-      $sformatf("2: csrr x%0d, 0x%0x", cfg.gpr[0], LPCOUNT0), \
-      $sformatf("li x%0d, 1", cfg.gpr[1]), \
-      $sformatf("bge x%0d, x%0d, 3f", cfg.gpr[0], cfg.gpr[1]), \
+      $sformatf("2: csrr x%0d, 0x%0x", ``SCRATCH_REG0, LPCOUNT0), \
+      $sformatf("li x%0d, 1", ``SCRATCH_REG1), \
+      $sformatf("bge x%0d, x%0d, 3f", ``SCRATCH_REG0, ``SCRATCH_REG1), \
       /* Since both LPCOUNT0 & LPCOUNT1 equals 0 */ \
       /* Nothing needs to be done for HWLOOPs and its CSRs */ \
       $sformatf("beqz x0, 4f"), \
       /* HWLOOP1 Handling */ \
       /* Check for ILLEGAL being the LAST HWLOOP Body instr */ \
-      $sformatf("1: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC), \
-      $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[1], LPEND1), \
-      $sformatf("addi x%0d, x%0d, -4", cfg.gpr[1], cfg.gpr[1]), \
-      $sformatf("bne x%0d, x%0d, 2b", cfg.gpr[0], cfg.gpr[1]), \
+      $sformatf("1: csrr  x%0d, 0x%0x", ``SCRATCH_REG0, ``XEPC), \
+      $sformatf("csrr  x%0d, 0x%0x", ``SCRATCH_REG1, LPEND1), \
+      $sformatf("addi x%0d, x%0d, -4", ``SCRATCH_REG1, ``SCRATCH_REG1), \
+      $sformatf("bne x%0d, x%0d, 2b", ``SCRATCH_REG0, ``SCRATCH_REG1), \
       /* Else, If equal this means the illegal instr was the last */ \
       /* hwloop body instr, thus we handle the HWLOOP manually here */ \
       /* First decrement lpcount CSR manually as CSR not updated in HW */ \
-      $sformatf("csrr x%0d, 0x%0x", cfg.gpr[1], LPCOUNT1), \
-      $sformatf("addi x%0d, x%0d, -1", cfg.gpr[1], cfg.gpr[1]), \
-      $sformatf("cv.count 1, x%0d", cfg.gpr[1]), \
-      /* Check if the current LPCOUNT1 value == 0, if so, then MEPC=MEPC+4 */ \
-      $sformatf("csrr x%0d, 0x%0x", cfg.gpr[1], LPCOUNT1), \
-      $sformatf("beqz x%0d, 4f", cfg.gpr[1]), \
+      $sformatf("csrr x%0d, 0x%0x", ``SCRATCH_REG1, LPCOUNT1), \
+      $sformatf("addi x%0d, x%0d, -1", ``SCRATCH_REG1, ``SCRATCH_REG1), \
+      $sformatf("cv.count 1, x%0d", ``SCRATCH_REG1), \
+      /* Check if the current LPCOUNT1 value == 0, if so, then xEPC=xEPC+4 */ \
+      $sformatf("csrr x%0d, 0x%0x", ``SCRATCH_REG1, LPCOUNT1), \
+      $sformatf("beqz x%0d, 4f", ``SCRATCH_REG1), \
       /* Else LPCOUNT1 still >=1 and thus next, */ \
-      /* Set the next MEPC to LPSTART1 for next HWLOOP iteration */ \
-      $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[0], LPSTART1), \
+      /* Set the next xEPC to LPSTART1 for next HWLOOP iteration */ \
+      $sformatf("csrr  x%0d, 0x%0x", ``SCRATCH_REG0, LPSTART1), \
       $sformatf("beqz x0, 5f"), \
       /* HWLOOP0 Handling */ \
       /* Check for ILLEGAL being the LAST HWLOOP Body instr */ \
-      $sformatf("3: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC), \
-      $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[1], LPEND0), \
-      $sformatf("addi x%0d, x%0d, -4", cfg.gpr[1], cfg.gpr[1]), \
-      $sformatf("bne x%0d, x%0d, 4f", cfg.gpr[0], cfg.gpr[1]), \
+      $sformatf("3: csrr  x%0d, 0x%0x", ``SCRATCH_REG0, ``XEPC), \
+      $sformatf("csrr  x%0d, 0x%0x", ``SCRATCH_REG1, LPEND0), \
+      $sformatf("addi x%0d, x%0d, -4", ``SCRATCH_REG1, ``SCRATCH_REG1), \
+      $sformatf("bne x%0d, x%0d, 4f", ``SCRATCH_REG0, ``SCRATCH_REG1), \
       /* Else, If equal this means the illegal instr was the last */ \
       /* hwloop body instr, thus we handle the HWLOOP manually here */ \
       /* First decrement lpcount CSR manually as CSR not updated in HW */ \
-      $sformatf("csrr x%0d, 0x%0x", cfg.gpr[1], LPCOUNT0), \
-      $sformatf("addi x%0d, x%0d, -1", cfg.gpr[1], cfg.gpr[1]), \
-      $sformatf("cv.count 0, x%0d", cfg.gpr[1]), \
-      /* Check if the current LPCOUNT0 value == 0, if so, then MEPC=MEPC+4 */ \
-      $sformatf("csrr x%0d, 0x%0x", cfg.gpr[1], LPCOUNT0), \
-      $sformatf("beqz x%0d, 4f", cfg.gpr[1]), \
+      $sformatf("csrr x%0d, 0x%0x", ``SCRATCH_REG1, LPCOUNT0), \
+      $sformatf("addi x%0d, x%0d, -1", ``SCRATCH_REG1, ``SCRATCH_REG1), \
+      $sformatf("cv.count 0, x%0d", ``SCRATCH_REG1), \
+      /* Check if the current LPCOUNT0 value == 0, if so, then xEPC=xEPC+4 */ \
+      $sformatf("csrr x%0d, 0x%0x", ``SCRATCH_REG1, LPCOUNT0), \
+      $sformatf("beqz x%0d, 4f", ``SCRATCH_REG1), \
       /* Else LPCOUNT0 still >=1 and thus next, */ \
-      /* Set the next MEPC to LPSTART0 for next HWLOOP iteration */ \
-      $sformatf("csrr  x%0d, 0x%0x", cfg.gpr[0], LPSTART0), \
+      /* Set the next xEPC to LPSTART0 for next HWLOOP iteration */ \
+      $sformatf("csrr  x%0d, 0x%0x", ``SCRATCH_REG0, LPSTART0), \
       $sformatf("beqz x0, 5f"), \
-      /* Default increment for MEPC by 4 */ \
-      $sformatf("4: csrr  x%0d, 0x%0x", cfg.gpr[0], MEPC), \
-      $sformatf("addi  x%0d, x%0d, 4", cfg.gpr[0], cfg.gpr[0]), \
-      /* Write MEPC */ \
-      $sformatf("5: csrw  0x%0x, x%0d", MEPC, cfg.gpr[0])
+      /* Default increment for xEPC by 4 */ \
+      $sformatf("4: csrr  x%0d, 0x%0x", ``SCRATCH_REG0, ``XEPC), \
+      $sformatf("addi  x%0d, x%0d, 4", ``SCRATCH_REG0, ``SCRATCH_REG0), \
+      /* Write xEPC */ \
+      $sformatf("5: csrw  0x%0x, x%0d", ``XEPC, ``SCRATCH_REG0)
 
 
   `include "cv32e40p_instr_gen_config.sv"

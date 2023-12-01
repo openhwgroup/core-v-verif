@@ -27,6 +27,17 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
   protected int         idx_end[$];            
   protected int         idx_min = 0;            
   cv32e40p_instr_gen_config cv32e40p_cfg;
+  rand int unsigned     default_avail_reg;
+
+  constraint def_avail_reg_c {
+    if ((cfg.enable_fp_in_x_regs == 1) && (RV32ZFINX inside {riscv_instr_pkg::supported_isa})) {
+      default_avail_reg >= 8;
+      default_avail_reg <= (22 - cv32e40p_cfg.num_zfinx_reserved_reg);
+    } else {
+      default_avail_reg >= 8;
+      default_avail_reg <= 22;
+    }
+  }
 
   `uvm_object_utils(cv32e40p_rand_instr_stream)
   //`uvm_object_new
@@ -155,11 +166,49 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
 
   endfunction
 
+  // Override base class randomize_avail_regs function
+  // Add randomization for number of registers to be randomized
+  virtual function void randomize_avail_regs();
+    std::randomize(default_avail_reg) with  {  if ((cfg.enable_fp_in_x_regs == 1) && (RV32ZFINX inside {riscv_instr_pkg::supported_isa})) {
+                                                 default_avail_reg >= 8;
+                                                 default_avail_reg <= (22 - cv32e40p_cfg.num_zfinx_reserved_reg);
+                                               } else {
+                                                 default_avail_reg >= 8;
+                                                 default_avail_reg <= 22;
+                                               }
+                                            };
+
+    avail_regs = new[default_avail_reg];
+    if(avail_regs.size() > 0) begin
+      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(avail_regs,
+                                         unique{avail_regs};
+                                         //avail_regs[0] inside {[S0 : A5]};
+                                         foreach(avail_regs[i]) {
+                                           !(avail_regs[i] inside {cfg.reserved_regs, reserved_rd, cfg.gpr[0], cfg.gpr[1], cfg.gpr[2]});
+                                         },
+                                         "Cannot randomize avail_regs")
+    end
+  endfunction
+
+
   //Function: cv32e40p_rand_instr_stream::gen_instr()
   //override the parent class gen_instr() inside cv32e40p_rand_instr_stream
   virtual function void gen_instr(bit no_branch = 1'b0, bit no_load_store = 1'b1,
                                   bit is_debug_program = 1'b0);
     setup_allowed_instr(no_branch, no_load_store);
+
+    // Need to randomize avail_regs[] to ensure the randomize_gpr() call
+    // actually randomize the registers for each instruction.
+    // And this also ensures the randomization is done separately for each
+    // program section.
+    // This also ensures reserved_regs get removed from gpr randomization
+    // for each instruction.
+    randomize_avail_regs();
+
+    `uvm_info("cv32e40p_rand_instr_stream", $sformatf("Randomized default_avail_reg = %d", default_avail_reg), UVM_DEBUG)
+    foreach(avail_regs[i]) begin
+        `uvm_info("cv32e40p_rand_instr_stream", $sformatf("Randomized avail_regs[%d] = %s", i, avail_regs[i]), UVM_DEBUG)
+    end
 
     //Use this plusarg - include_xpulp_instr_in_debug_rom to include xpulp instr
     //In random debug_rom instructions. Added for v2 debug tests with xpulp.
