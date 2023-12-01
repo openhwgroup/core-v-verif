@@ -62,6 +62,8 @@ int write_mhpmcounters()
 int write_mhpmcounterhs()
 {
     uint32_t reg = 0;
+    __asm__ volatile("mv %0, x0" : "=r"(reg));
+    __asm__ volatile("not %0, %0" :: "r"(reg));
     __asm__ volatile("csrrs x0, mhpmcounter3h, %0" :: "r"(reg));
     __asm__ volatile("csrrs x0, mhpmcounter4h, %0" :: "r"(reg));
     __asm__ volatile("csrrs x0, mhpmcounter5h, %0" :: "r"(reg));
