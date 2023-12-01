@@ -6,7 +6,7 @@
   `define IDV_INCLUDE_TRACE2COV
   `define COVER_BASE_RV32I
   `define COVER_LEVEL_COMPL_BAS
-  `define COVER_LEVEL_COMPL_EXT
+  //`define COVER_LEVEL_COMPL_EXT
   `define COVER_LEVEL_DV_UP_BAS
   `define COVER_LEVEL_DV_UP_EXT
   `define COVER_LEVEL_DV_PR_BAS
@@ -31,15 +31,15 @@
     `define COVER_RV32ZCF_ILLEGAL
   `endif
 
-  `ifdef PULP
-    `define COVER_XPULPV2
-    `ifdef CLUSTER
-      `define COVER_XPULPV2C
-    `else
-      `define COVER_XPULPV2C_ILLEGAL
-    `endif
-  `else
-    `define COVER_XPULPV2_ILLEGAL
-    `define COVER_XPULPV2C_ILLEGAL
-  `endif
+  //`ifdef PULP
+  //  `define COVER_XPULPV2
+  //  `ifdef CLUSTER
+  //    `define COVER_XPULPV2C
+  //  `else
+  //    `define COVER_XPULPV2C_ILLEGAL
+  //  `endif
+  //`else
+  //  `define COVER_XPULPV2_ILLEGAL
+  //  `define COVER_XPULPV2C_ILLEGAL
+  //`endif
 `endif
