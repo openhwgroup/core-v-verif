@@ -182,9 +182,9 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
     if(avail_regs.size() > 0) begin
       `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(avail_regs,
                                          unique{avail_regs};
-                                         //avail_regs[0] inside {[S0 : A5]};
+                                         avail_regs[0] inside {[S0 : A5]};
                                          foreach(avail_regs[i]) {
-                                           !(avail_regs[i] inside {cfg.reserved_regs, reserved_rd, cfg.gpr[0], cfg.gpr[1], cfg.gpr[2]});
+                                           !(avail_regs[i] inside {cfg.reserved_regs, reserved_rd});
                                          },
                                          "Cannot randomize avail_regs")
     end
