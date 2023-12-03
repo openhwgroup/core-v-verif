@@ -404,7 +404,8 @@ interface uvma_rvfi_instr_if_t
     is_pma_instr_fault               = is_pma_instr_fault_f();
   end
 
-  always_comb begin
+  //always_comb begin
+  always @(rvfi_trap.exception_cause) begin
     is_instr_bus_valid               = is_instr_bus_valid_f();
   end
 

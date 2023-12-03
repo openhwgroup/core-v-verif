@@ -302,19 +302,19 @@ module uvmt_cv32e40s_rvfi_assert
 
   // Load Instructions
 
-  //a_isloadinstr_required: assert property (
-  //  rvfi_if.rvfi_valid  &&
-  //  rvfi_if.rvfi_mem_rmask
-  //  |->
-  //  rvfi_if.is_load_instr
-  //) else `uvm_error(info_tag, "rmask comes from loads");
+  a_isloadinstr_required: assert property (
+    rvfi_if.rvfi_valid  &&
+    rvfi_if.rvfi_mem_rmask
+    |->
+    rvfi_if.is_load_instr
+  ) else `uvm_error(info_tag, "rmask comes from loads");
 
-  //a_isloadinstr_demands: assert property (
-  //  rvfi_if.is_load_instr  &&
-  //  !rvfi_if.rvfi_trap
-  //  |->
-  //  rvfi_if.rvfi_mem_rmask
-  //) else `uvm_error(info_tag, "successful loads have rmask");
+  a_isloadinstr_demands: assert property (
+    rvfi_if.is_load_instr  &&
+    !rvfi_if.rvfi_trap
+    |->
+    rvfi_if.rvfi_mem_rmask
+  ) else `uvm_error(info_tag, "successful loads have rmask");
 
   a_isloadinstr_exception: assert property (
     rvfi_if.rvfi_valid
@@ -326,19 +326,19 @@ module uvmt_cv32e40s_rvfi_assert
 
   // Store Instructions
 
-  //a_isstoreinstr_required: assert property (
-  //  rvfi_if.rvfi_valid  &&
-  //  rvfi_if.rvfi_mem_wmask
-  //  |->
-  //  rvfi_if.is_store_instr
-  //) else `uvm_error(info_tag, "wmask comes from stores");
+  a_isstoreinstr_required: assert property (
+    rvfi_if.rvfi_valid  &&
+    rvfi_if.rvfi_mem_wmask
+    |->
+    rvfi_if.is_store_instr
+  ) else `uvm_error(info_tag, "wmask comes from stores");
 
-  //a_isstoreinstrs_demands: assert property (
-  //  rvfi_if.is_store_instr  &&
-  //  !rvfi_if.rvfi_trap
-  //  |->
-  //  rvfi_if.rvfi_mem_wmask
-  //) else `uvm_error(info_tag, "successful stores have wmask");
+  a_isstoreinstrs_demands: assert property (
+    rvfi_if.is_store_instr  &&
+    !rvfi_if.rvfi_trap
+    |->
+    rvfi_if.rvfi_mem_wmask
+  ) else `uvm_error(info_tag, "successful stores have wmask");
 
   a_isstoreinstr_exception: assert property (
     rvfi_if.rvfi_valid
@@ -348,14 +348,22 @@ module uvmt_cv32e40s_rvfi_assert
   ) else `uvm_error(info_tag, "!store->!exce, exce->store");
 
 
+  // Disassembler
 
-// Disassembler
   a_unknowninstr_trap: assert property (
     (rvfi_if.instr_asm.instr == UNKNOWN_INSTR) && rvfi_if.rvfi_valid
     |->
     rvfi_if.rvfi_trap.trap
   ) else `uvm_error(info_tag, "Unknown instruction is not trapped");
 
+
+  // Exception's don't update GPRs
+
+  a_exceptions_dont_update_gprs: assert property (
+    rvfi_valid && rvfi_trap.exception
+    |->
+    (rvfi_if.rvfi_rd1_addr == 0)
+  ) else `uvm_error(info_tag, "exceptions shouldn't update gprs");
 
 
 endmodule : uvmt_cv32e40s_rvfi_assert
