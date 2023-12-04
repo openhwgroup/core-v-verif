@@ -1450,7 +1450,7 @@ class cv32e40p_fp_op_fwd_instr_stream extends cv32e40p_float_zfinx_base_instr_st
       riscv_fp_in_x_regs_instr    instr_zfinx;
       riscv_floating_point_instr  instr_f;
       bit has_rd, has_rs1, has_rs2, has_rs3;
-      int unsigned loop_cnt, loop_limit = 50;
+      int unsigned loop_cnt, loop_limit = 100;
 
       if (!(i % num_of_instr_per_block)) begin : RESET_PRIOR_START_OF_BLOCK
         i_instr_list.delete();
