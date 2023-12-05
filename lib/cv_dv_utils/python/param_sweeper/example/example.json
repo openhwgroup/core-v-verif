@@ -1,0 +1,46 @@
+{
+	"PARAMETERS": [{
+			"Name": "FRUIT",
+			"Attributes": [{
+				"TYPE":"enum",
+				"VALUES": "APPLE=10,COCO=2,PEAR=3,BANANA=4"
+			}]
+		},
+		{
+			"Name": "COLOR",
+			"Attributes": [{
+				"TYPE": "enum",
+				"VALUES": "GREEN,YELLOW,RED, WHITE"
+			}]
+		},
+		{
+			"Name": "NUMBERS",
+			"Attributes": [{
+				"TYPE": "int",
+				"MAX": "5",
+				"MIN": "1"
+			}]
+		}
+	],
+	"CROSS_CONSTRAINTS": [{
+			"Name": "C_1",
+			"Constraint": "FRUIT == COCO -> NUMBERS == 1"
+		},
+		{
+			"Name": "C_2",
+			"Constraint": "FRUIT == COCO -> COLOR == WHITE"
+		},
+		{
+			"Name": "C_3",
+			"Constraint": "FRUIT == BANANA -> COLOR == YELLOW"
+		},
+		{
+			"Name": "C_4",
+			"Constraint": "FRUIT == BANANA -> NUMBERS <= 2"
+		},
+		{
+			"Name": "C_5",
+			"Constraint": "COLOR == RED -> FRUIT inside {APPLE, PEAR}"
+		}
+	]
+}
