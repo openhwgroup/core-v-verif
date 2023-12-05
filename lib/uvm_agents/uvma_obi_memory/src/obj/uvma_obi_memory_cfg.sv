@@ -76,27 +76,29 @@ class uvma_obi_memory_cfg_c extends uvm_object;
    rand bit                                       drv_slv_err_one_shot_mode;
    bit                                            drv_slv_err_one_shot_flag;
 
-   rand uvma_obi_memory_drv_slv_exokay_mode_enum drv_slv_exokay_mode;
-   rand int unsigned                             drv_slv_exokay_failure_wgt;
-   rand int unsigned                             drv_slv_exokay_success_wgt;
+   rand uvma_obi_memory_drv_slv_exokay_mode_enum  drv_slv_exokay_mode;
+   rand int unsigned                              drv_slv_exokay_failure_wgt;
+   rand int unsigned                              drv_slv_exokay_success_wgt;
 
    // Directed error generation memory address range
    // If the valid bit is asserted any address in range will repsond with error = 1
-   bit [31:0]                                    directed_slv_err_addr_min;
-   bit [31:0]                                    directed_slv_err_addr_max;
-   bit                                           directed_slv_err_valid;
+   bit [31:0]                                     directed_slv_err_addr_min;
+   bit [31:0]                                     directed_slv_err_addr_max;
+   bit                                            directed_slv_err_valid;
 
    // Directed exokay generation memory address range
    // if the "valid" bit is asserted any address in range will respond
    // with exokay == 0
-   bit [31:0]                                    directed_slv_exokay_addr_min;
-   bit [31:0]                                    directed_slv_exokay_addr_max;
-   bit                                           directed_slv_exokay_valid;
+   bit [31:0]                                     directed_slv_exokay_addr_min;
+   bit [31:0]                                     directed_slv_exokay_addr_max;
+   bit                                            directed_slv_exokay_valid;
 
-   bit [31:0]                                    directed_slv_reservation_addr_min;
-   bit [31:0]                                    directed_slv_reservation_addr_max;
-   bit                                           directed_slv_reservation_valid;
-   bit [31:0]                                    directed_slv_nr_reserved_words = 32'b1;
+   bit [31:0]                                     directed_slv_reservation_addr_min;
+   bit [31:0]                                     directed_slv_reservation_addr_max;
+   bit                                            directed_slv_reservation_valid;
+   bit [31:0]                                     directed_slv_nr_reserved_words = 32'b1;
+
+   rand bit                                       random_err_await_goahead = 0;
 
 
    `uvm_object_utils_begin(uvma_obi_memory_cfg_c)
@@ -191,6 +193,7 @@ class uvma_obi_memory_cfg_c extends uvm_object;
       soft drv_slv_err_mode               == UVMA_OBI_MEMORY_DRV_SLV_ERR_MODE_OK;
       soft drv_slv_err_one_shot_mode      == 0;
       soft drv_slv_exokay_mode            == UVMA_OBI_MEMORY_DRV_SLV_EXOKAY_MODE_SUCCESS;
+      soft random_err_await_goahead       == 0;
    }
 
    constraint stall_disable_cons {
@@ -335,9 +338,14 @@ function int unsigned uvma_obi_memory_cfg_c::calc_random_rvalid_latency();
 
 endfunction : calc_random_rvalid_latency
 
+
 function bit uvma_obi_memory_cfg_c::calc_random_err(bit[31:0] addr);
 
    bit err;
+
+   if (random_err_await_goahead) begin
+      return 0;
+   end
 
    // If we are in "one-shot" mode and have already calculated an error,
    // then skip any new errors (until the code resets the flag)
@@ -374,6 +382,7 @@ function bit uvma_obi_memory_cfg_c::calc_random_err(bit[31:0] addr);
    return err;
 
 endfunction : calc_random_err
+
 
 function bit uvma_obi_memory_cfg_c::calc_random_exokay(bit[31:0] addr, bit is_SCW);
 
