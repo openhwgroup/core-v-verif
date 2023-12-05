@@ -1,0 +1,49 @@
+
+ENV:
+In the env: instantiate and create axi2mem uvm component
+
+axi2mem #(ADDR_WIDTH, 
+          DATA_WIDTH, 
+          ID_WIDTH, USER_WIDTH) m_axi2mem;
+
+in build phase
+
+m_axi2mem = axi2mem #(ADDR_WIDTH, DATA_WIDTH, ID_WIDTH, USER_WIDHT)::type_id::create("axi2mem", this);
+
+AXI2MEM:
+axi2mem component contains three virtual interface 
+
+    virtual memory_response_if#( ADDR_WIDTH, DATA_WIDTH, ID_WIDTH )       mem_rd_vif; 
+    virtual memory_response_if#( ADDR_WIDTH, DATA_WIDTH, ID_WIDTH )       mem_wr_vif; 
+    virtual axi_if#( ADDR_WIDTH, DATA_WIDTH, ID_WIDTH, USER_WIDTH )           axi_vif; 
+
+
+AXI_VIF is to be connected to the DUT. 
+MEM_RD_VIF and MEM_WR_VIF should be connected to a arbiter that drives the interface of memory response model. 
+
+
+TOP MODULE: 
+        uvm_config_db #(virtual axi_if#(
+            dcache_pkg::ADDR_WIDTH, 
+            dcache_pkg::ADDR_WDATA_WIDTH, 
+            dcache_pkg::ADDR_WID_WIDTH, USER_WIDTH
+        ))::set(uvm_root::get( ), "*", "name of the axi2mem component(axi2mem in this case of README)" , axi2mem_if ) ;
+
+        uvm_config_db #(virtual memory_response_if#(
+            dcache_pkg::ADDR_WIDTH, 
+            dcache_pkg::DATA_WIDTH, 
+            dcache_pkg::ID_WIDTH
+        ))::set(uvm_root::get( ), "*", "axi2mem_rd" , mem_rd_if ) ;
+
+        uvm_config_db #(virtual memory_response_if#(
+            dcache_pkg::ADDR_WIDTH, 
+            dcache_pkg::DATA_WIDTH, 
+            dcache_pkg::ID_WIDTH
+        ))::set(uvm_root::get( ), "*", "axi2mem_wr" , mem_wr_if ) ;
+
+
+
+FOR the moment: 
+READ signals are driven to 1. 
+
+
