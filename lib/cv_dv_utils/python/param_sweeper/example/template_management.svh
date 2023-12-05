@@ -1,4 +1,3 @@
-import uvm_pkg::*;
 
 class template_management extends uvm_object;
 
