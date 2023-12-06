@@ -69,7 +69,7 @@ class uvmt_cv32e40s_base_test_c extends uvm_test;
    }
 
    // Additional, temporary constraints to get around known design bugs/constraints
-   `include "uvmt_cv32e40s_base_test_workarounds.sv"
+   `include "uvmt_cv32e40s_base_test_constraint_workarounds.sv"
 
 
    /**
@@ -249,6 +249,9 @@ function void uvmt_cv32e40s_base_test_c::end_of_elaboration_phase(uvm_phase phas
 
    `uvm_info("BASE TEST", $sformatf("Top-level environment configuration:\n%s", env_cfg.sprint()), UVM_NONE)
    `uvm_info("BASE TEST", $sformatf("Testcase configuration:\n%s", test_cfg.sprint()), UVM_NONE)
+
+   // Temporary hacks to get around known design bugs/constraints
+   `include "uvmt_cv32e40s_base_test_elaboration_workarounds.sv"
 
 endfunction : end_of_elaboration_phase
 

@@ -73,15 +73,8 @@ interface uvma_rvfi_instr_if_t
     input logic [(NMEM*XLEN)-1:0]    rvfi_mem_wdata,
     input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask,
 
-    input logic [2:0]                rvfi_instr_prot,
-    input logic [1:0]                rvfi_instr_memtype,
-    input logic                      rvfi_instr_dbg,
-    input logic [ NMEM*3-1:0]        rvfi_mem_prot,
-    input logic [ 1*NMEM-1:0]        rvfi_mem_exokay,
-    input logic [ 1*NMEM-1:0]        rvfi_mem_err,
-    input logic [ 6*NMEM-1:0]        rvfi_mem_atop,
-    input logic [ 2*NMEM-1:0]        rvfi_mem_memtype,
-    input logic [ NMEM-1  :0]        rvfi_mem_dbg
+    input logic [2:0]                instr_prot,
+    input logic [NMEM*3-1:0]         mem_prot
   );
 
   typedef logic[4*NMEM-1:0] mem_mask_t;
@@ -411,7 +404,8 @@ interface uvma_rvfi_instr_if_t
     is_pma_instr_fault               = is_pma_instr_fault_f();
   end
 
-  always_comb begin
+  //always_comb begin
+  always @(rvfi_trap.exception_cause) begin
     is_instr_bus_valid               = is_instr_bus_valid_f();
   end
 
@@ -447,11 +441,13 @@ interface uvma_rvfi_instr_if_t
     rvfi_mem_addr_word0highbyte      = rvfi_mem_addr_word0highbyte_f();
   end
 
-  always_comb begin
+  // TODO: always_comb does not work here with VSIM
+  always @(rvfi_insn) begin
     rvfi_mem_rmask_intended          = rvfi_mem_rmask_intended_f();
   end
 
-  always_comb begin
+  // TODO: always_comb does not work here with VSIM
+  always @(rvfi_insn) begin
     rvfi_mem_wmask_intended          = rvfi_mem_wmask_intended_f();
   end
 
@@ -477,21 +473,21 @@ interface uvma_rvfi_instr_if_t
 
   always_comb begin
     is_amo_instr = rvfi_valid && (
-      match_instr(INSTR_OPCODE_AMOSWAPW,  INSTR_MASK_AMO_TYPE)    ||
-      match_instr(INSTR_OPCODE_AMOADDW,   INSTR_MASK_AMO_TYPE)    ||
-      match_instr(INSTR_OPCODE_AMOXORW,   INSTR_MASK_AMO_TYPE)    ||
-      match_instr(INSTR_OPCODE_AMOANDW,   INSTR_MASK_AMO_TYPE)    ||
-      match_instr(INSTR_OPCODE_AMOORW,    INSTR_MASK_AMO_TYPE)    ||
-      match_instr(INSTR_OPCODE_AMOMINW,   INSTR_MASK_AMO_TYPE)    ||
-      match_instr(INSTR_OPCODE_AMOMAXW,   INSTR_MASK_AMO_TYPE)    ||
-      match_instr(INSTR_OPCODE_AMOMINUW,  INSTR_MASK_AMO_TYPE)    ||
-      match_instr(INSTR_OPCODE_AMOMAXUW,  INSTR_MASK_AMO_TYPE));
+      rvfi_match_instr(INSTR_OPCODE_AMOSWAPW,  INSTR_MASK_AMO_TYPE)    ||
+      rvfi_match_instr(INSTR_OPCODE_AMOADDW,   INSTR_MASK_AMO_TYPE)    ||
+      rvfi_match_instr(INSTR_OPCODE_AMOXORW,   INSTR_MASK_AMO_TYPE)    ||
+      rvfi_match_instr(INSTR_OPCODE_AMOANDW,   INSTR_MASK_AMO_TYPE)    ||
+      rvfi_match_instr(INSTR_OPCODE_AMOORW,    INSTR_MASK_AMO_TYPE)    ||
+      rvfi_match_instr(INSTR_OPCODE_AMOMINW,   INSTR_MASK_AMO_TYPE)    ||
+      rvfi_match_instr(INSTR_OPCODE_AMOMAXW,   INSTR_MASK_AMO_TYPE)    ||
+      rvfi_match_instr(INSTR_OPCODE_AMOMINUW,  INSTR_MASK_AMO_TYPE)    ||
+      rvfi_match_instr(INSTR_OPCODE_AMOMAXUW,  INSTR_MASK_AMO_TYPE));
   end
 
   always_comb begin
     is_atomic_instr = rvfi_valid && (is_amo_instr ||
-      match_instr(INSTR_OPCODE_SCW,  INSTR_MASK_AMO_TYPE) ||
-      match_instr(INSTR_OPCODE_LRW,  INSTR_MASK_AMO_TYPE));
+      rvfi_match_instr(INSTR_OPCODE_SCW,  INSTR_MASK_AMO_TYPE) ||
+      rvfi_match_instr(INSTR_OPCODE_LRW,  INSTR_MASK_AMO_TYPE));
   end
 
   always_comb begin
@@ -608,14 +604,14 @@ interface uvma_rvfi_instr_if_t
   // Check if instruction is of a certain type
   // Usage: instr_mask sets the parts of the instruction you want to compare,
   //        instr_ref is the reference to match
-  function automatic logic match_instr(
+  function automatic logic rvfi_match_instr(
     logic [ XLEN-1:0] instr_ref,
     logic [ XLEN-1:0] instr_mask
   );
 
   return rvfi_valid && is_instr_bus_valid && ((rvfi_insn & instr_mask) == instr_ref);
 
-  endfunction : match_instr
+  endfunction : rvfi_match_instr
 
   // Check if instruction is of a certain type, without verifying the instr word is valid
   // Usage: instr_mask sets the parts of the instruction you want to compare,
@@ -631,7 +627,7 @@ interface uvma_rvfi_instr_if_t
 
 // Match instr types
 function automatic logic match_instr_r(logic [ XLEN-1:0] instr_ref);
-  return match_instr(instr_ref, INSTR_MASK_R_TYPE);
+  return rvfi_match_instr(instr_ref, INSTR_MASK_R_TYPE);
 endfunction : match_instr_r
 
 function automatic logic match_instr_r_var(
@@ -643,7 +639,7 @@ function automatic logic match_instr_r_var(
 endfunction : match_instr_r_var
 
 function automatic logic match_instr_isb(logic [ XLEN-1:0] instr_ref);
-  return match_instr(instr_ref, INSTR_MASK_I_S_B_TYPE);
+  return rvfi_match_instr(instr_ref, INSTR_MASK_I_S_B_TYPE);
 endfunction : match_instr_isb
 
 function automatic logic match_instr_isb_var (
@@ -654,7 +650,7 @@ function automatic logic match_instr_isb_var (
 endfunction : match_instr_isb_var
 
 function automatic logic match_instr_uj(logic [ XLEN-1:0] instr_ref);
-  return  match_instr(instr_ref, INSTR_MASK_U_J_TYPE);
+  return  rvfi_match_instr(instr_ref, INSTR_MASK_U_J_TYPE);
 endfunction : match_instr_uj
 
 function automatic logic match_instr_uj_var(logic [6:0] opcode);
@@ -674,7 +670,7 @@ function automatic logic is_csr_instr(logic [11:0] csr_addr = 0);
             match_instr_isb(INSTR_OPCODE_CSRRSI) ||
             match_instr_isb(INSTR_OPCODE_CSRRCI);
   end else begin
-    return  match_instr(32'h0 | (csr_addr << INSTR_CSRADDR_POS), INSTR_MASK_CSRADDR) &&
+    return  rvfi_match_instr(32'h0 | (csr_addr << INSTR_CSRADDR_POS), INSTR_MASK_CSRADDR) &&
             ( match_instr_isb(INSTR_OPCODE_CSRRW)  ||
               match_instr_isb(INSTR_OPCODE_CSRRS)  ||
               match_instr_isb(INSTR_OPCODE_CSRRC)  ||
@@ -813,69 +809,69 @@ endfunction : is_mem_act_f
 // Short functions for recognising special functions
 
 function automatic logic is_dret_f();
-  return match_instr(INSTR_OPCODE_DRET, INSTR_MASK_FULL);
+  return rvfi_match_instr(INSTR_OPCODE_DRET, INSTR_MASK_FULL);
 endfunction : is_dret_f
 
 function automatic logic is_mret_f();
-  return match_instr(INSTR_OPCODE_MRET, INSTR_MASK_FULL);
+  return rvfi_match_instr(INSTR_OPCODE_MRET, INSTR_MASK_FULL);
 endfunction : is_mret_f
 
 function automatic logic is_uret_f();
-  return match_instr(INSTR_OPCODE_URET, INSTR_MASK_FULL);
+  return rvfi_match_instr(INSTR_OPCODE_URET, INSTR_MASK_FULL);
 endfunction : is_uret_f
 
 function automatic logic is_wfi_f();
-  return match_instr(INSTR_OPCODE_WFI, INSTR_MASK_FULL);
+  return rvfi_match_instr(INSTR_OPCODE_WFI, INSTR_MASK_FULL);
 endfunction : is_wfi_f
 
 function automatic logic is_wfe_f();
-  return match_instr(INSTR_OPCODE_WFE, INSTR_MASK_FULL);
+  return rvfi_match_instr(INSTR_OPCODE_WFE, INSTR_MASK_FULL);
 endfunction : is_wfe_f
 
 function automatic logic is_ebreak_f();
-  return match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL) || match_instr(INSTR_OPCODE_C_EBREAK, INSTR_MASK_FULL);
+  return rvfi_match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL) || rvfi_match_instr(INSTR_OPCODE_C_EBREAK, INSTR_MASK_FULL);
 endfunction : is_ebreak_f
 
 function automatic logic is_ebreak_compr_f();
-  return match_instr(INSTR_OPCODE_C_EBREAK, INSTR_MASK_FULL);
+  return rvfi_match_instr(INSTR_OPCODE_C_EBREAK, INSTR_MASK_FULL);
 endfunction : is_ebreak_compr_f
 
 function automatic logic is_ebreak_noncompr_f();
-  return match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL);
+  return rvfi_match_instr(INSTR_OPCODE_EBREAK, INSTR_MASK_FULL);
 endfunction : is_ebreak_noncompr_f
 
 function automatic logic is_ecall_f();
-  return match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);
+  return rvfi_match_instr(INSTR_OPCODE_ECALL, INSTR_MASK_FULL);
 endfunction : is_ecall_f
 
 function automatic logic is_branch_f(); //TODO
-  return match_instr(INSTR_OPCODE_BEQ, INSTR_MASK_I_S_B_TYPE) ||
-         match_instr(INSTR_OPCODE_BNE, INSTR_MASK_I_S_B_TYPE) ||
-         match_instr(INSTR_OPCODE_BLT, INSTR_MASK_I_S_B_TYPE) ||
-         match_instr(INSTR_OPCODE_BGE, INSTR_MASK_I_S_B_TYPE) ||
-         match_instr(INSTR_OPCODE_BLTU, INSTR_MASK_I_S_B_TYPE) ||
-         match_instr(INSTR_OPCODE_BGEU, INSTR_MASK_I_S_B_TYPE) ||
-         match_instr(INSTR_OPCODE_CBEQZ, INSTR_MASK_CMPR) ||
-         match_instr(INSTR_OPCODE_CBNEZ, INSTR_MASK_CMPR);
+  return rvfi_match_instr(INSTR_OPCODE_BEQ, INSTR_MASK_I_S_B_TYPE) ||
+         rvfi_match_instr(INSTR_OPCODE_BNE, INSTR_MASK_I_S_B_TYPE) ||
+         rvfi_match_instr(INSTR_OPCODE_BLT, INSTR_MASK_I_S_B_TYPE) ||
+         rvfi_match_instr(INSTR_OPCODE_BGE, INSTR_MASK_I_S_B_TYPE) ||
+         rvfi_match_instr(INSTR_OPCODE_BLTU, INSTR_MASK_I_S_B_TYPE) ||
+         rvfi_match_instr(INSTR_OPCODE_BGEU, INSTR_MASK_I_S_B_TYPE) ||
+         rvfi_match_instr(INSTR_OPCODE_CBEQZ, INSTR_MASK_CMPR) ||
+         rvfi_match_instr(INSTR_OPCODE_CBNEZ, INSTR_MASK_CMPR);
 endfunction : is_branch_f
 
 function automatic logic is_div_f();
-  return match_instr(INSTR_OPCODE_DIV, INSTR_MASK_DIV_REM);
+  return rvfi_match_instr(INSTR_OPCODE_DIV, INSTR_MASK_DIV_REM);
 endfunction : is_div_f
 
 function automatic logic is_rem_f();
-  return match_instr(INSTR_OPCODE_REM, INSTR_MASK_DIV_REM);
+  return rvfi_match_instr(INSTR_OPCODE_REM, INSTR_MASK_DIV_REM);
 endfunction : is_rem_f
 
 function automatic logic is_cslli_f();
-  return match_instr(INSTR_OPCODE_CSLLI, INSTR_MASK_CMPR);
+  return rvfi_match_instr(INSTR_OPCODE_CSLLI, INSTR_MASK_CMPR);
 endfunction : is_cslli_f
 
 function automatic logic is_pushpop_f();
-  return  match_instr(INSTR_OPCODE_PUSH,    INSTR_MASK_ZC_PUSHPOP)  ||
-          match_instr(INSTR_OPCODE_POP,     INSTR_MASK_ZC_PUSHPOP)  ||
-          match_instr(INSTR_OPCODE_POPRET,  INSTR_MASK_ZC_PUSHPOP)  ||
-          match_instr(INSTR_OPCODE_POPRETZ, INSTR_MASK_ZC_PUSHPOP);
+  return  rvfi_match_instr(INSTR_OPCODE_PUSH,    INSTR_MASK_ZC_PUSHPOP)  ||
+          rvfi_match_instr(INSTR_OPCODE_POP,     INSTR_MASK_ZC_PUSHPOP)  ||
+          rvfi_match_instr(INSTR_OPCODE_POPRET,  INSTR_MASK_ZC_PUSHPOP)  ||
+          rvfi_match_instr(INSTR_OPCODE_POPRETZ, INSTR_MASK_ZC_PUSHPOP);
 endfunction : is_pushpop_f
 
 function automatic logic is_tablejump_raw_f();
@@ -883,8 +879,8 @@ function automatic logic is_tablejump_raw_f();
 endfunction : is_tablejump_raw_f
 
 function automatic logic is_fencefencei_f();
-  return  match_instr(INSTR_OPCODE_FENCE,  INSTR_MASK_FENCE)  ||
-          match_instr(INSTR_OPCODE_FENCEI, INSTR_MASK_FENCEI);
+  return  rvfi_match_instr(INSTR_OPCODE_FENCE,  INSTR_MASK_FENCE)  ||
+          rvfi_match_instr(INSTR_OPCODE_FENCEI, INSTR_MASK_FENCEI);
 endfunction : is_fencefencei_f
 
 function automatic logic is_nmi_f();
@@ -983,39 +979,39 @@ function automatic logic [4*NMEM-1:0] rvfi_mem_rmask_intended_f();
   rlist = rvfi_insn[7:4];
 
   rmask[0][3] =
-    match_instr(INSTR_OPCODE_LW,        INSTR_MASK_I_S_B_TYPE)  ||
-    match_instr(INSTR_OPCODE_CLW,       INSTR_MASK_CMPR)        ||
-    match_instr(INSTR_OPCODE_CLWSP,     INSTR_MASK_CMPR)        ||
-    match_instr(INSTR_OPCODE_CMPOP,     INSTR_MASK_ZC_PUSHPOP)  ||
-    match_instr(INSTR_OPCODE_CMPOPRET,  INSTR_MASK_ZC_PUSHPOP)  ||
-    match_instr(INSTR_OPCODE_CMPOPRETZ, INSTR_MASK_ZC_PUSHPOP)  ||
-    match_instr(INSTR_OPCODE_LRW,       INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOSWAPW,  INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOADDW,   INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOXORW,   INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOANDW,   INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOORW,    INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOMINW,   INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOMAXW,   INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOMINUW,  INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOMAXUW,  INSTR_MASK_AMO_TYPE);
+    rvfi_match_instr(INSTR_OPCODE_LW,        INSTR_MASK_I_S_B_TYPE)  ||
+    rvfi_match_instr(INSTR_OPCODE_CLW,       INSTR_MASK_CMPR)        ||
+    rvfi_match_instr(INSTR_OPCODE_CLWSP,     INSTR_MASK_CMPR)        ||
+    rvfi_match_instr(INSTR_OPCODE_CMPOP,     INSTR_MASK_ZC_PUSHPOP)  ||
+    rvfi_match_instr(INSTR_OPCODE_CMPOPRET,  INSTR_MASK_ZC_PUSHPOP)  ||
+    rvfi_match_instr(INSTR_OPCODE_CMPOPRETZ, INSTR_MASK_ZC_PUSHPOP)  ||
+    rvfi_match_instr(INSTR_OPCODE_LRW,       INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOSWAPW,  INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOADDW,   INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOXORW,   INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOANDW,   INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOORW,    INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOMINW,   INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOMAXW,   INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOMINUW,  INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOMAXUW,  INSTR_MASK_AMO_TYPE);
 
   rmask[0][2] = rmask[0][3];
 
   rmask[0][1] = rmask[0][2] ||
-    match_instr(INSTR_OPCODE_LH,        INSTR_MASK_I_S_B_TYPE)    ||
-    match_instr(INSTR_OPCODE_LHU,       INSTR_MASK_I_S_B_TYPE)    ||
-    match_instr(INSTR_OPCODE_CLHU,      INSTR_MASK_CLH_CLHU_CSH)  ||
-    match_instr(INSTR_OPCODE_CLH,       INSTR_MASK_CLH_CLHU_CSH);
+    rvfi_match_instr(INSTR_OPCODE_LH,        INSTR_MASK_I_S_B_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_LHU,       INSTR_MASK_I_S_B_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_CLHU,      INSTR_MASK_CLH_CLHU_CSH)  ||
+    rvfi_match_instr(INSTR_OPCODE_CLH,       INSTR_MASK_CLH_CLHU_CSH);
 
   rmask[0][0] = rmask[0][1] ||
-    match_instr(INSTR_OPCODE_LOAD,      INSTR_MASK_OPCODE)  ||
-    match_instr(INSTR_OPCODE_CLBU,      INSTR_MASK_ZC_CLBU_CSB);
+    rvfi_match_instr(INSTR_OPCODE_LOAD,      INSTR_MASK_OPCODE)  ||
+    rvfi_match_instr(INSTR_OPCODE_CLBU,      INSTR_MASK_ZC_CLBU_CSB);
 
   if(rlist > 4 &&
-    (match_instr(INSTR_OPCODE_CMPOP,     INSTR_MASK_ZC_PUSHPOP) ||
-    match_instr(INSTR_OPCODE_CMPOPRET,  INSTR_MASK_ZC_PUSHPOP)  ||
-    match_instr(INSTR_OPCODE_CMPOPRETZ, INSTR_MASK_ZC_PUSHPOP))) begin
+    (rvfi_match_instr(INSTR_OPCODE_CMPOP,     INSTR_MASK_ZC_PUSHPOP) ||
+    rvfi_match_instr(INSTR_OPCODE_CMPOPRET,  INSTR_MASK_ZC_PUSHPOP)  ||
+    rvfi_match_instr(INSTR_OPCODE_CMPOPRETZ, INSTR_MASK_ZC_PUSHPOP))) begin
 
     case (rlist)
       5:  begin
@@ -1076,33 +1072,33 @@ function automatic logic [4*NMEM-1:0] rvfi_mem_wmask_intended_f();
   rlist = rvfi_insn[7:4];
 
   wmask[0][3] =
-    match_instr(INSTR_OPCODE_SW,        INSTR_MASK_I_S_B_TYPE)  ||
-    match_instr(INSTR_OPCODE_CSW,       INSTR_MASK_CMPR)        ||
-    match_instr(INSTR_OPCODE_CSWSP,     INSTR_MASK_CMPR)        ||
-    match_instr(INSTR_OPCODE_PUSH,      INSTR_MASK_ZC_PUSHPOP)  ||
-    match_instr(INSTR_OPCODE_SCW,       INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOSWAPW,  INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOADDW,   INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOXORW,   INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOANDW,   INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOORW,    INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOMINW,   INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOMAXW,   INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOMINUW,  INSTR_MASK_AMO_TYPE)    ||
-    match_instr(INSTR_OPCODE_AMOMAXUW,  INSTR_MASK_AMO_TYPE);
+    rvfi_match_instr(INSTR_OPCODE_SW,        INSTR_MASK_I_S_B_TYPE)  ||
+    rvfi_match_instr(INSTR_OPCODE_CSW,       INSTR_MASK_CMPR)        ||
+    rvfi_match_instr(INSTR_OPCODE_CSWSP,     INSTR_MASK_CMPR)        ||
+    rvfi_match_instr(INSTR_OPCODE_PUSH,      INSTR_MASK_ZC_PUSHPOP)  ||
+    rvfi_match_instr(INSTR_OPCODE_SCW,       INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOSWAPW,  INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOADDW,   INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOXORW,   INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOANDW,   INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOORW,    INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOMINW,   INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOMAXW,   INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOMINUW,  INSTR_MASK_AMO_TYPE)    ||
+    rvfi_match_instr(INSTR_OPCODE_AMOMAXUW,  INSTR_MASK_AMO_TYPE);
 
 
   wmask[0][2] = wmask[0][3];
 
   wmask[0][1] = wmask[0][2] ||
-    match_instr(INSTR_OPCODE_SH,  INSTR_MASK_I_S_B_TYPE)  ||
-    match_instr(INSTR_OPCODE_CSH,    INSTR_MASK_CLH_CLHU_CSH);
+    rvfi_match_instr(INSTR_OPCODE_SH,  INSTR_MASK_I_S_B_TYPE)  ||
+    rvfi_match_instr(INSTR_OPCODE_CSH,    INSTR_MASK_CLH_CLHU_CSH);
 
   wmask[0][0] = wmask[0][1] ||
-    match_instr(INSTR_OPCODE_STORE,    INSTR_MASK_OPCODE)   ||
-    match_instr(INSTR_OPCODE_CSB,      INSTR_MASK_ZC_CLBU_CSB);
+    rvfi_match_instr(INSTR_OPCODE_STORE,    INSTR_MASK_OPCODE)   ||
+    rvfi_match_instr(INSTR_OPCODE_CSB,      INSTR_MASK_ZC_CLBU_CSB);
 
-  if(rlist > 4 && match_instr(INSTR_OPCODE_PUSH, INSTR_MASK_ZC_PUSHPOP)) begin
+  if(rlist > 4 && rvfi_match_instr(INSTR_OPCODE_PUSH, INSTR_MASK_ZC_PUSHPOP)) begin
 
     case (rlist)
       5:  begin

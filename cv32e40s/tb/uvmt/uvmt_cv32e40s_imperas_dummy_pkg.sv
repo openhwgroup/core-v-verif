@@ -17,9 +17,10 @@
 
 `ifndef __UVMT_CV32E40S_IMPERAS_DUMMY_PKG_SV__
 `define __UVMT_CV32E40S_IMPERAS_DUMMY_PKG_SV__
-import uvm_pkg::*;
 
 package rvviApiPkg;
+  import uvm_pkg::*;
+
   function int rvviRefShutdown();
     `uvm_error("ISS_DUMMY", "USE_ISS=1 set but no ISS installation is available");
     return 0;
@@ -52,6 +53,8 @@ module uvmt_cv32e40s_imperas_dv_wrap
 endmodule : uvmt_cv32e40s_imperas_dv_wrap
 
 interface uvmt_imperas_dv_if_t;
+  import uvm_pkg::*;
+
   task ref_init;
     `uvm_info("ISS_DUMMY", "ref_init called from uvmt_cv32e40s_imperas_dummy_pkg.sv", UVM_LOW);
   endtask : ref_init

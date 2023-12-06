@@ -20,9 +20,11 @@
 
 
 module  uvmt_cv32e40s_umode_assert
-  import cv32e40s_pkg::*;
-  import cv32e40s_rvfi_pkg::*;
   import uvm_pkg::*;
+  import cv32e40s_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
+  import cv32e40s_rvfi_pkg::*;
+  import uvmt_cv32e40s_pkg::*;
 #(
   parameter bit  CLIC
 )(
@@ -932,6 +934,7 @@ module  uvmt_cv32e40s_umode_assert
 
   // vplan:InstrProt
 
+`ifndef QUESTA_VSIM
   a_rvfi_instr_prot: assert property (
     rvfi_valid
     |->
@@ -951,10 +954,12 @@ module  uvmt_cv32e40s_umode_assert
   a_prot_iside_legal: assert property (
     obi_iside_prot  inside  {3'b 000, 3'b 110}
   ) else `uvm_error(info_tag, "the prot on fetch must be legal");
+`endif // QUESTA_VSIM
 
 
   // vplan:DataProt
-
+`ifndef QUESTA_VSIM
+  // Questa cannot find rvfi_mem_prot
   a_data_prot: assert property (
     rvfi_valid  &&
     (rvfi_if.rvfi_mem_rmask || rvfi_if.rvfi_mem_wmask)
@@ -981,7 +986,10 @@ module  uvmt_cv32e40s_umode_assert
       mem_act[i]          = |rvfi_if.check_mem_act(i);
     end
   end
+`endif // QUESTA_VSIM
 
+`ifndef QUESTA_VSIM
+  // Questa cannot find data_prot_equals & mem_act
   a_data_prot_equal: assert property (
     rvfi_valid  &&
     (|rvfi_if.rvfi_mem_rmask || |rvfi_if.rvfi_mem_wmask)
@@ -1000,10 +1008,11 @@ module  uvmt_cv32e40s_umode_assert
     ($countones(mem_act) > 1)  &&
     (|rvfi_if.rvfi_mem_wmask)
   );
+`endif // QUESTA_VSIM
 
 
   // vplan:DbgProt
-
+`ifndef QUESTA_VSIM
   a_dbg_prot_iside: assert property (
     rvfi_if.rvfi_valid  &&
     rvfi_if.rvfi_dbg_mode
@@ -1019,6 +1028,7 @@ module  uvmt_cv32e40s_umode_assert
     |->
     (rvfi_if.rvfi_mem_prot[2:1] == effective_rvfi_privmode)
   ) else `uvm_error(info_tag, "dmode should fetch as effective mode");
+`endif // QUESTA_VSIM
 
 
 endmodule : uvmt_cv32e40s_umode_assert
