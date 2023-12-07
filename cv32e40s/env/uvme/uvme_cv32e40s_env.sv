@@ -760,6 +760,37 @@ function void uvme_cv32e40s_env_c::install_vp_register_seqs(uvma_obi_memory_slv_
       vp_seq.cv32e40s_cntxt = cntxt;
    end
 
+   begin
+      uvme_cv32e40s_vp_obi_err_await_goahead_seq_c  new_vp_seq;
+
+/* TODO delete?
+      uvma_obi_memory_vp_base_seq_c#(
+         .AUSER_WIDTH (ENV_PARAM_DATA_AUSER_WIDTH),
+         .WUSER_WIDTH (ENV_PARAM_DATA_WUSER_WIDTH),
+         .RUSER_WIDTH (ENV_PARAM_DATA_RUSER_WIDTH),
+         .ADDR_WIDTH  (ENV_PARAM_DATA_ADDR_WIDTH),
+         .DATA_WIDTH  (ENV_PARAM_DATA_DATA_WIDTH),
+         .ID_WIDTH    (ENV_PARAM_DATA_ID_WIDTH),
+         .ACHK_WIDTH  (ENV_PARAM_DATA_ACHK_WIDTH),
+         .RCHK_WIDTH  (ENV_PARAM_DATA_RCHK_WIDTH)
+      ) registered_vp_base_vseq;
+*/
+
+      void' (
+         data_slv_seq.register_vp_vseq(
+            "vp_obi_err_await_goahead",
+            CV_VP_OBI_ERR_AWAIT_GOAHEAD_BASE,
+            uvme_cv32e40s_vp_obi_err_await_goahead_seq_c::get_type()
+         )
+      );
+
+/* TODO delete?
+      if ( ! $cast(new_vp_seq, registered_vp_base_vseq) ) begin
+         `uvm_fatal("CV32E40SVPSEQ", $sformatf("Could not cast vp_obi_err_await_goahead correctly"));
+      end
+*/
+   end
+
 endfunction : install_vp_register_seqs
 
 `endif // __UVME_CV32E40S_ENV_SV__
