@@ -165,7 +165,7 @@ module uvmt_cv32e40s_dut_wrap
          .alert_minor_o          ( alert_minor                    ),
 
          .fetch_enable_i         ( core_cntrl_if.fetch_en         ),
-        .core_sleep_o           ()
+         .core_sleep_o           ()
         );
 
         // instantiate rchk shim
