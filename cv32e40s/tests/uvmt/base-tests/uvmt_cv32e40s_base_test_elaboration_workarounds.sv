@@ -25,7 +25,9 @@
 
 // A bunch of assertions in cv32e40s/tb/uvmt/uvmt_cv32e40s_triggers_assert_cov.sv
 // are firing with Questasim (do they fire with other simulators?).
+`ifdef QUESTA_VSIM
 uvm_root::get().set_report_severity_id_override(UVM_ERROR,"TRIGGER_ASSERT",UVM_WARNING);
+`endif // QUESTA_VSIM
 
 
 `endif // __UVMT_CV32E40S_BASE_TEST_ELABORATION_WORKAROUNDS_SV__

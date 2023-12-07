@@ -72,9 +72,16 @@ interface uvma_rvfi_instr_if_t
     input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_rmask,
     input logic [(NMEM*XLEN)-1:0]    rvfi_mem_wdata,
     input logic [(NMEM*XLEN/8)-1:0]  rvfi_mem_wmask,
-
-    input logic [2:0]                instr_prot,
-    input logic [NMEM*3-1:0]         mem_prot
+    
+    input logic [2:0]                rvfi_instr_prot,
+    input logic [1:0]                rvfi_instr_memtype,
+    input logic                      rvfi_instr_dbg,
+    input logic [ NMEM*3-1:0]        rvfi_mem_prot,
+    input logic [ 1*NMEM-1:0]        rvfi_mem_exokay,
+    input logic [ 1*NMEM-1:0]        rvfi_mem_err,
+    input logic [ 6*NMEM-1:0]        rvfi_mem_atop,
+    input logic [ 2*NMEM-1:0]        rvfi_mem_memtype,
+    input logic [ NMEM-1  :0]        rvfi_mem_dbg
   );
 
   typedef logic[4*NMEM-1:0] mem_mask_t;
@@ -404,8 +411,12 @@ interface uvma_rvfi_instr_if_t
     is_pma_instr_fault               = is_pma_instr_fault_f();
   end
 
-  //always_comb begin
+  // TODO: always_comb does not work here with VSIM
+`ifndef QUESTA_VSIM
+  always_comb begin
+`else
   always @(rvfi_trap.exception_cause) begin
+`endif // QUESTA_VSIM
     is_instr_bus_valid               = is_instr_bus_valid_f();
   end
 
@@ -442,12 +453,20 @@ interface uvma_rvfi_instr_if_t
   end
 
   // TODO: always_comb does not work here with VSIM
+`ifndef QUESTA_VSIM
+  always_comb begin
+`else
   always @(rvfi_insn) begin
+`endif // QUESTA_VSIM
     rvfi_mem_rmask_intended          = rvfi_mem_rmask_intended_f();
   end
 
   // TODO: always_comb does not work here with VSIM
+`ifndef QUESTA_VSIM
+  always_comb begin
+`else
   always @(rvfi_insn) begin
+`endif // QUESTA_VSIM
     rvfi_mem_wmask_intended          = rvfi_mem_wmask_intended_f();
   end
 

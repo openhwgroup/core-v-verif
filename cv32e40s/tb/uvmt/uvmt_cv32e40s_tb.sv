@@ -202,17 +202,16 @@ module uvmt_cv32e40s_tb;
       .rvfi_mem_rdata (rvfi_i.rvfi_mem_rdata[uvma_rvfi_pkg::NMEM*uvmt_cv32e40s_base_test_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvmt_cv32e40s_base_test_pkg::XLEN]),
       .rvfi_mem_rmask (rvfi_i.rvfi_mem_rmask[uvma_rvfi_pkg::NMEM*uvmt_cv32e40s_base_test_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvmt_cv32e40s_base_test_pkg::XLEN/8]),
       .rvfi_mem_wdata (rvfi_i.rvfi_mem_wdata[uvma_rvfi_pkg::NMEM*uvmt_cv32e40s_base_test_pkg::XLEN*0    +:uvma_rvfi_pkg::NMEM*uvmt_cv32e40s_base_test_pkg::XLEN]),
-      .rvfi_mem_wmask (rvfi_i.rvfi_mem_wmask[uvma_rvfi_pkg::NMEM*uvmt_cv32e40s_base_test_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvmt_cv32e40s_base_test_pkg::XLEN/8])
-      // FIXME: what is happening here?
-      //.rvfi_instr_prot (rvfi_i.rvfi_instr_prot),
-      //.rvfi_instr_memtype (rvfi_i.rvfi_instr_memtype),
-      //.rvfi_instr_dbg (rvfi_i.rvfi_instr_dbg),
-      //.rvfi_mem_prot (rvfi_i.rvfi_mem_prot),
-      //.rvfi_mem_exokay (rvfi_i.rvfi_mem_exokay),
-      //.rvfi_mem_err (rvfi_i.rvfi_mem_err),
-      //.rvfi_mem_atop (rvfi_i.rvfi_mem_atop),
-      //.rvfi_mem_memtype (rvfi_i.rvfi_mem_memtype),
-      //.rvfi_mem_dbg (rvfi_i.rvfi_mem_dbg)
+      .rvfi_mem_wmask (rvfi_i.rvfi_mem_wmask[uvma_rvfi_pkg::NMEM*uvmt_cv32e40s_base_test_pkg::XLEN/8*0  +:uvma_rvfi_pkg::NMEM*uvmt_cv32e40s_base_test_pkg::XLEN/8]),
+      .rvfi_instr_prot (rvfi_i.rvfi_instr_prot),
+      .rvfi_instr_memtype (rvfi_i.rvfi_instr_memtype),
+      .rvfi_instr_dbg (rvfi_i.rvfi_instr_dbg),
+      .rvfi_mem_prot (rvfi_i.rvfi_mem_prot),
+      .rvfi_mem_exokay (rvfi_i.rvfi_mem_exokay),
+      .rvfi_mem_err (rvfi_i.rvfi_mem_err),
+      .rvfi_mem_atop (rvfi_i.rvfi_mem_atop),
+      .rvfi_mem_memtype (rvfi_i.rvfi_mem_memtype),
+      .rvfi_mem_dbg (rvfi_i.rvfi_mem_dbg)
     );
 
   // RVFI CSR binds

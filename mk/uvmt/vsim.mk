@@ -48,6 +48,26 @@ VOPT_WAVES_ADV_DEBUG    ?= -designfile design.bin
 VSIM_WAVES_ADV_DEBUG    ?= -qwavedb=+signal+assertion+ignoretxntime+msgmode=both
 VSIM_WAVES_DO           ?= $(VSIM_SCRIPT_DIR)/waves.tcl
 
+# Warning suppressions. TODO: review
+VSIM_SUPPRESS            = -suppress 2181 \
+                           -suppress 2250 \
+                           -suppress 2577 \
+                           -suppress 2583 \
+                           -suppress 7031 \
+                           -suppress 7034 \
+                           -suppress 8522 \
+                           -suppress 8549 \
+                           -suppress 8550 \
+                           -suppress 8858 \
+                           -suppress 13314 \
+                           -suppress 13185 \
+                           -suppress 13262 \
+                           -suppress 13288 \
+                           -suppress vlog-2643 \
+                           -suppress vlog-2697 \
+                           -suppress vlog-2745 \
+                           -suppress vlog-7027
+
 # Common QUIET flag defaults to -quiet unless VERBOSE is set
 ifeq ($(call IS_YES,$(VERBOSE)),YES)
 QUIET=
@@ -78,13 +98,7 @@ VSIM_PMA_INC += +incdir+$(TBSRC_HOME)/uvmt \
                 +incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
 
 VLOG_LDGEN_FLAGS ?= \
-                    -suppress 2577 \
-                    -suppress 2583 \
-                    -suppress 13185 \
-                    -suppress 13314 \
-                    -suppress 13288 \
-                    -suppress 2181 \
-                    -suppress 13262 \
+					$(VSIM_SUPPRESS) \
                     -timescale "1ns/1ps" \
                     -sv \
                     -mfcu \
@@ -94,7 +108,7 @@ VLOG_LDGEN_FLAGS ?= \
 VOPT_LDGEN_FLAGS ?= \
                     -debugdb \
                     -fsmdebug \
-                    -suppress 7034 \
+					$(VSIM_SUPPRESS) \
                     +acc \
                     $(QUIET)
 
@@ -105,17 +119,7 @@ VSIM_LDGEN_FLAGS ?= \
 ###############################################################################
 # VLOG (Compilation)
 VLOG_FLAGS    ?= \
-                 -suppress 2577 \
-                 -suppress 2583 \
-                 -suppress 13185 \
-                 -suppress 13314 \
-                 -suppress 13288 \
-                 -suppress 2181 \
-                 -suppress 13262 \
-                 -suppress vlog-2745 \
-                 -suppress vlog-2643 \
-                 -suppress vlog-7027 \
-                 -suppress vlog-2697 \
+                 $(VSIM_SUPPRESS) \
                  -timescale "1ns/1ps" \
                  -sv \
                  -64 \
@@ -140,7 +144,7 @@ VOPT_FLAGS    ?= \
                  -64 \
                  -debugdb \
                  -fsmdebug \
-                 -suppress 7034 \
+                 $(VSIM_SUPRESS) \
                  +acc \
                  $(QUIET)
 
@@ -150,12 +154,6 @@ VSIM_FLAGS        += $(VSIM_USER_FLAGS)
 VSIM_FLAGS        += $(USER_RUN_FLAGS)
 VSIM_FLAGS        += -sv_seed $(RNDSEED)
 VSIM_FLAGS        += -64
-VSIM_FLAGS        += -suppress 7031
-VSIM_FLAGS        += -suppress 8858
-VSIM_FLAGS        += -suppress 8522
-VSIM_FLAGS        += -suppress 8550
-VSIM_FLAGS        += -suppress 8549
-VSIM_FLAGS        += -suppress 2250
 VSIM_FLAGS        += -permit_unmatched_virtual_intf
 VSIM_DEBUG_FLAGS  ?= -debugdb
 VSIM_GUI_FLAGS    ?= -gui -debugdb
@@ -351,7 +349,7 @@ ldgen: vlog_ldgen vopt_ldgen vsim_ldgen
 ################################################################################
 # corev-dv generation targets
 
-vlog_corev-dv:
+vlog_corev-dv: svlib
 	@echo "$(BANNER)"
 	@echo "* Running vlog_corev-dv in $(SIM_CFG_RESULTS)"
 	@echo "* Log: $(SIM_CFG_RESULTS)/vlog.log"
