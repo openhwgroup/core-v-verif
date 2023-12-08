@@ -259,7 +259,7 @@ endif
 COV_FLAGS =
 COV_REPORT = cov_report
 COV_MERGE_TARGET =
-COV_MERGE_FIND  = find $(SIM_CFG_RESULTS) -type f -name "*.ucdb" -exec echo {} > $(VSIM_COV_MERGE_DIR)/ucdb.list \;
+COV_MERGE_FIND  = find $(SIM_CFG_RESULTS) -type f -name "*.ucdb" | grep -v corev-dv > $(VSIM_COV_MERGE_DIR)/ucdb.list
 COV_MERGE_FLAGS = merge -testassociated -verbose -64 -out merged.ucdb -inputs ucdb.list
 
 ifeq ($(call IS_YES,$(MERGE)),YES)
