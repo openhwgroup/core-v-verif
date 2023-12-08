@@ -58,11 +58,11 @@ VSIM_SUPPRESS            = -suppress 2181 \
                            -suppress 8522 \
                            -suppress 8549 \
                            -suppress 8550 \
-                           -suppress 8858 \
                            -suppress 13314 \
                            -suppress 13185 \
                            -suppress 13262 \
                            -suppress 13288 \
+						   -suppress vlog-2643 \
                            -suppress vlog-2643 \
                            -suppress vlog-2697 \
                            -suppress vlog-2745 \
@@ -147,6 +147,15 @@ VOPT_FLAGS    ?= \
                  $(VSIM_SUPRESS) \
                  +acc \
                  $(QUIET)
+
+###############################################################################
+# Seed management for constrained-random sims.
+# This is somewhat redundant since this is typically handled in 'uvmt.mk'.
+# However, the command-line arg to pass a random seed to VSIM interpret the
+# seed arg as a signed integer and throws a vsim-3071 error is the seed is negative.
+ifeq ($(SEED),random)
+RNDSEED = random
+endif
 
 ###############################################################################
 # VSIM (Simulaion)

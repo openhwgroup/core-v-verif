@@ -951,7 +951,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       && rvfi_if.rvfi_dbg_mode
       && dcsr_if.rvfi_csr_wmask
       |->
-      ! rvfi_if.is_csr_write(ADDR_DCSR)
+      rvfi_if.is_csr_write(ADDR_DCSR)
     ) else `uvm_error(info_tag, "Action is taken when there is a trigger match while in debug mode (dcsr is changed even though we dont do a dcsr write operation).\n");
 
     // MIKET: how does this property work?
@@ -960,7 +960,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       && rvfi_if.rvfi_dbg_mode
       && dpc_if.rvfi_csr_wmask
       |->
-      ! rvfi_if.is_csr_write(ADDR_DPC)
+      rvfi_if.is_csr_write(ADDR_DPC)
     ) else `uvm_error(info_tag, "Action is taken when there is a trigger match while in debug mode (dpc is changed even though we dont do a dpc write operation).\n");
 
 
@@ -1327,7 +1327,6 @@ module uvmt_cv32e40s_triggers_assert_cov
       ##0 (tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 2
       || tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 6
       || tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 15))
-    
       |->
       (is_csrrw && (tdata2_post_state == rvfi_if.rvfi_rs1_rdata))
       || (is_csrrs && (tdata2_post_state == (tdata2_pre_state | rvfi_if.rvfi_rs1_rdata)))
@@ -1335,7 +1334,6 @@ module uvmt_cv32e40s_triggers_assert_cov
       || (is_csrrwi && (tdata2_post_state == csri_uimm))
       || (is_csrrsi && (tdata2_post_state == (tdata2_pre_state | csri_uimm)))
       || (is_csrrci && (tdata2_post_state == (tdata2_pre_state & (~csri_uimm))))
-    
     ) else `uvm_error(info_tag, "Random values for tdata2 type 2/6/15 in debug mode, is not accepted.\n");
 
 
