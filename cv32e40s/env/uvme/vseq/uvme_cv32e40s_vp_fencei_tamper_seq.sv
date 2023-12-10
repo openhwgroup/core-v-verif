@@ -40,7 +40,7 @@ class uvme_cv32e40s_vp_fencei_tamper_seq_c#(
    .RCHK_WIDTH(RCHK_WIDTH)
 );
 
-  uvme_cv32e40s_cntxt_c    cv32e40s_cntxt;
+  uvme_cv32e40s_cntxt_c  cv32e40s_cntxt;
 
   bit        enabled = 0;
   bit [31:0] addr;

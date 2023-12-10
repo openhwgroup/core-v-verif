@@ -28,19 +28,20 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    // Integrals
    rand int unsigned                sys_clk_period;
    cv32e40s_pkg::b_ext_e            b_ext;
-   bit                              obi_memory_instr_random_err_enabled      = 0;
-   bit                              obi_memory_instr_one_shot_err_enabled    = 0;
-   bit                              obi_memory_data_random_err_enabled       = 0;
-   bit                              obi_memory_data_random_err_await_goahead = 0;
-   bit                              obi_memory_data_one_shot_err_enabled     = 0;
-   bit                              iss_suppress_invalid_msg                 = 0;
-   bit                              nmi_timeout_instr_plusarg_valid          = 0;
-   bit                              irq_min_limit_plusarg_valid              = 0;
-   bit                              single_step_min_limit_plusarg_valid      = 0;
-   bit                              irq_single_step_threshold_plusarg_valid  = 0;
-   bit                              clic_irq_clear_on_ack_plusarg_valid      = 0;
+   bit                              obi_memory_data_one_shot_err_enabled      = 0;
+   bit                              obi_memory_data_random_err_await_goahead  = 0;
+   bit                              obi_memory_data_random_err_enabled        = 0;
+   bit                              obi_memory_instr_one_shot_err_enabled     = 0;
+   bit                              obi_memory_instr_random_err_await_goahead = 0;
+   bit                              obi_memory_instr_random_err_enabled       = 0;
+   bit                              iss_suppress_invalid_msg                  = 0;
+   bit                              nmi_timeout_instr_plusarg_valid           = 0;
+   bit                              irq_min_limit_plusarg_valid               = 0;
+   bit                              single_step_min_limit_plusarg_valid       = 0;
+   bit                              irq_single_step_threshold_plusarg_valid   = 0;
+   bit                              clic_irq_clear_on_ack_plusarg_valid       = 0;
    rand bit                         clic_irq_clear_on_ack;
-   rand bit                         buserr_scoreboarding_enabled             = 1;
+   rand bit                         buserr_scoreboarding_enabled              = 1;
    rand int unsigned                fetch_toggle_initial_delay;
    rand int unsigned                nmi_timeout_instr;
    rand int unsigned                single_step_min_limit;
@@ -67,12 +68,13 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       `uvm_field_int (                         trn_log_enabled,                          UVM_DEFAULT           )
       `uvm_field_int (                         buserr_scoreboarding_enabled,             UVM_DEFAULT           )
       `uvm_field_int (                         sys_clk_period,                           UVM_DEFAULT | UVM_DEC )
-      `uvm_field_enum (b_ext_e,                b_ext,                                    UVM_DEFAULT           )
-      `uvm_field_int (                         obi_memory_instr_random_err_enabled,      UVM_DEFAULT           )
-      `uvm_field_int (                         obi_memory_instr_one_shot_err_enabled,    UVM_DEFAULT           )
-      `uvm_field_int (                         obi_memory_data_random_err_enabled,       UVM_DEFAULT           )
-      `uvm_field_int (                         obi_memory_data_random_err_await_goahead, UVM_DEFAULT            )
+      `uvm_field_enum(b_ext_e,                 b_ext,                                    UVM_DEFAULT           )
       `uvm_field_int (                         obi_memory_data_one_shot_err_enabled,     UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_data_random_err_await_goahead, UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_data_random_err_enabled,       UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_instr_one_shot_err_enabled,    UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_instr_random_err_await_goahead,UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_instr_random_err_enabled,      UVM_DEFAULT           )
       `uvm_field_int (                         iss_suppress_invalid_msg,                 UVM_DEFAULT           )
       `uvm_field_int (                         fetch_toggle_initial_delay,               UVM_DEFAULT           )
       `uvm_field_int (                         nmi_timeout_instr,                        UVM_DEFAULT | UVM_DEC )
@@ -335,9 +337,17 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       obi_memory_data_cfg.drv_slv_err_one_shot_mode == obi_memory_data_one_shot_err_enabled;
    }
 
+
    constraint obi_memory_data_random_err_await_goahead_cons {
-      obi_memory_data_cfg.random_err_await_goahead ==
-         obi_memory_data_random_err_await_goahead;
+      if (obi_memory_data_random_err_await_goahead) {
+         obi_memory_data_cfg.random_err_await_goahead == 1;
+      }
+   }
+
+   constraint obi_memory_instr_random_err_await_goahead_cons {
+      if (obi_memory_instr_random_err_await_goahead) {
+         obi_memory_instr_cfg.random_err_await_goahead == 1;
+      }
    }
 
    /**
@@ -415,6 +425,10 @@ function uvme_cv32e40s_cfg_c::new(string name="uvme_cv32e40s_cfg");
 
    if ($test$plusargs("obi_memory_data_random_err_await_goahead")) begin
       obi_memory_data_random_err_await_goahead = 1;
+   end
+
+   if ($test$plusargs("obi_memory_instr_random_err_await_goahead")) begin
+      obi_memory_instr_random_err_await_goahead = 1;
    end
 
    if ($test$plusargs("obi_memory_data_one_shot_err")) begin

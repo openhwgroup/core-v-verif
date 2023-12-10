@@ -31,6 +31,9 @@ class  uvme_cv32e40s_vp_obi_err_await_goahead_seq_c
 
   `uvm_object_utils( uvme_cv32e40s_vp_obi_err_await_goahead_seq_c )
 
+  uvma_obi_memory_cfg_c  obi_memory_cfg_instr;
+  uvma_obi_memory_cfg_c  obi_memory_cfg_data;
+
 
   function new(string name="uvme_cv32e40s_vp_obi_err_await_goahead_seq_c");
     super.new(name);
@@ -45,7 +48,8 @@ class  uvme_cv32e40s_vp_obi_err_await_goahead_seq_c
   virtual task vp_body(uvma_obi_memory_mon_trn_c  mon_trn);
     uvma_obi_memory_slv_seq_item_c  slv_rsp;
 
-    $display("TODO vp_body");
+    obi_memory_cfg_instr.random_err_await_goahead = 0;
+    obi_memory_cfg_data.random_err_await_goahead  = 0;
 
     `uvm_create(slv_rsp)
     `uvm_send(slv_rsp)

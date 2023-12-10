@@ -603,6 +603,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
 
   virtual function void gen_section(string label, string instr[$]);
     string str;
+
     if(label == "mtvec_handler" && cfg.mtvec_mode == VECTORED) begin
       str = ".section .mtvec_handler, \"ax\"";
       instr_stream.push_back(str);
@@ -612,6 +613,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
       str = format_string($sformatf("%0s:", label), LABEL_STR_LEN);
       instr_stream.push_back(str);
     end
+
     foreach(instr[i]) begin
       str = {indent, instr[i]};
       instr_stream.push_back(str);
@@ -621,14 +623,25 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
         instr_stream.push_back(str);
       end
     end
+
     instr_stream.push_back("");
   endfunction : gen_section
 
 
   virtual function void gen_init_section(int hart);
+    string  instrs[];
+    string  label;
+
     super.gen_init_section(hart);
 
-    //instr_stream.push_back("TODO haha");
+    // After the "init" section, bus errors can safely occur without havoc
+    label = get_label("obi_err_goahead", hart);
+    instrs = {
+      $sformatf("li x%0d, 0x%08x", cfg.gpr[0], CV_VP_OBI_ERR_AWAIT_GOAHEAD_BASE),
+      $sformatf("sw x0, 0(x%0d)", cfg.gpr[0])
+    };
+    gen_section(label, instrs);
   endfunction
+
 
 endclass : cv32e40s_asm_program_gen
