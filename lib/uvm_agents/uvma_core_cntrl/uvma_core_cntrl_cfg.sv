@@ -205,8 +205,9 @@
       }
    }
 
-   constraint boot_addr_cons { //boot addr should be half-word aligned
-      boot_addr % 2 == 0;
+   constraint boot_addr_cons {
+      if (ext_c_supported) boot_addr % 2 == 0; //boot addr should be half-word aligned if C extension is enabled
+      else boot_addr % 4 == 0;                 //boot addr should be word aligned if C extension isn't enabled
    }
 
    /**
