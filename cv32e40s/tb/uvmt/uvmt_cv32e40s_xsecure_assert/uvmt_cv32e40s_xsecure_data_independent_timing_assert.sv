@@ -76,6 +76,7 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
     //There is therefor only 1 empty cycle after a branch instruction.
 
 `ifndef QUESTA_VSIM
+  // Questasim says: "Use of a method on an unclocked sequence is illegal"
   sequence seq_no_mem_instr_for_cycles(x);
     (!rvfi_if.is_mem_act)[*x];
   endsequence
