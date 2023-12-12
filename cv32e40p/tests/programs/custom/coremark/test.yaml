@@ -3,7 +3,8 @@ uvm_test: uvmt_cv32e40p_firmware_test_c
 default_cflags: >
     -O3
     -mabi=ilp32
-    -march=rv32im
+    -march=$(RISCV_MARCH)
+    -msave-restore
     -falign-functions=16
     -funroll-all-loops
     -falign-jumps=4
@@ -14,6 +15,6 @@ default_cflags: >
     -DPERFORMANCE_RUN=1
     -DITERATIONS=30
     -DHAS_STDIO=1 -DHAS_PRINTF=1 -DHAS_FLOAT=1
-    -DFLAGS_STR=\""-mabi=ilp32 -march=rv32im -O3 -falign-functions=16 -funroll-all-loops -falign-jumps=4 -finline-functions -Wall -pedantic -nostartfiles -static -DPERFORMANCE_RUN=1 -DITERATIONS=30 -DHAS_STDIO=1 -DHAS_PRINTF=1 -DHAS_FLOAT=1"\"
+    -DFLAGS_STR=\""-O3 -mabi=ilp32 -march=$(RISCV_MARCH) -msave-restore -falign-functions=16 -funroll-all-loops -falign-jumps=4 -finline-functions -Wall -static -pedantic -nostartfiles -DPERFORMANCE_RUN=1 -DITERATIONS=30 -DHAS_STDIO=1 -DHAS_PRINTF=1 -DHAS_FLOAT=1"\"
 description: >
     Runs the CoreMark benchmark
