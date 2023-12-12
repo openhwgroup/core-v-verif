@@ -258,6 +258,7 @@ endinterface : uvmt_cv32e40s_debug_cov_assert_if_t
 interface uvmt_cv32e40s_support_logic_module_i_if_t
    import cv32e40s_pkg::*;
    import cv32e40s_rvfi_pkg::*;
+   import uvmt_cv32e40s_base_test_pkg::*;
    (
 
    /* obi bus protocol signal information:
@@ -270,6 +271,12 @@ interface uvmt_cv32e40s_support_logic_module_i_if_t
    input logic clk,
    input logic rst_n,
 
+   //Decoder:
+   input logic [31:0] if_instr,
+   input logic [31:0] id_instr,
+   input logic [31:0] ex_instr,
+   input logic [31:0] wb_instr,
+
    //Controller fsm control signals output
    input ctrl_fsm_t ctrl_fsm_o,
 
@@ -280,6 +287,8 @@ interface uvmt_cv32e40s_support_logic_module_i_if_t
    input logic [31:0] wb_tselect,
    input logic [31:0] wb_tdata1,
    input logic [31:0] wb_tdata2,
+   input logic [31:0] tdata1_array[CORE_PARAM_DBG_NUM_TRIGGERS+1],
+   input logic [31:0] tdata2_array[CORE_PARAM_DBG_NUM_TRIGGERS+1],
 
    //Obi signals:
 
@@ -311,16 +320,22 @@ interface uvmt_cv32e40s_support_logic_module_i_if_t
    input logic lrfodi_bus_req,
 
    //Obi request information
-   input logic req_is_store,
    input logic req_instr_integrity,
-   input logic req_data_integrity,
-   input logic [31:0] instr_req_pc
+   input logic req_data_integrity
 
    );
 
    modport driver_mp (
      input  clk,
       rst_n,
+
+      if_instr,
+      id_instr,
+      ex_instr,
+      wb_instr,
+
+      tdata1_array,
+      tdata2_array,
 
       ctrl_fsm_o,
 
@@ -354,10 +369,8 @@ interface uvmt_cv32e40s_support_logic_module_i_if_t
       lrfodi_bus_gnt,
       lrfodi_bus_req,
 
-      req_is_store,
       req_instr_integrity,
-      req_data_integrity,
-      instr_req_pc
+      req_data_integrity
    );
 
 endinterface : uvmt_cv32e40s_support_logic_module_i_if_t
@@ -366,19 +379,28 @@ endinterface : uvmt_cv32e40s_support_logic_module_i_if_t
 interface uvmt_cv32e40s_support_logic_module_o_if_t;
    import cv32e40s_pkg::*;
    import cv32e40s_rvfi_pkg::*;
+   import uvmt_cv32e40s_base_test_pkg::*;
+   import isa_decoder_pkg::*;
+
+   //Decoder:
+   asm_t asm_if;
+   asm_t asm_id;
+   asm_t asm_ex;
+   asm_t asm_wb;
+   asm_t asm_rvfi;
+
+   //OBI packets:
+   obi_data_packet_t obi_data_packet;
+   obi_instr_packet_t obi_instr_packet;
 
    // Indicates that a new obi data req arrives after an exception is triggered.
    // Used to verify exception timing with multiop instruction
    logic req_after_exception;
-   logic is_trigger_match_exception;
-   logic is_trigger_match_load;
-   logic is_trigger_match_store;
-   logic is_trigger_match_execute;
-   logic [4:0] trigger_match_load_array;
-   logic [4:0] trigger_match_store_array;
-   logic [4:0] trigger_match_execute_array;
-   logic [4:0][31:0] tdata1_array;
-   logic [4:0][31:0] tdata2_array;
+   logic [CORE_PARAM_DBG_NUM_TRIGGERS:0] trigger_match_mem;
+   logic [CORE_PARAM_DBG_NUM_TRIGGERS:0] trigger_match_execute;
+   logic [CORE_PARAM_DBG_NUM_TRIGGERS:0] trigger_match_exception;
+   logic [CORE_PARAM_DBG_NUM_TRIGGERS:0] is_trigger_match;
+
 
    // support logic signals for the obi bus protocol:
 
@@ -411,12 +433,10 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    logic [31:0] cnt_rvfi_irqs;
 
    //Signals stating whether the request for the current response had the attribute value or not
-   logic req_was_store;
-   logic instr_req_had_integrity;
-   logic data_req_had_integrity;
-   logic gntpar_error_in_response_instr;
-   logic gntpar_error_in_response_data;
-   logic [31:0] instr_resp_pc;
+   logic              instr_req_had_integrity;
+   logic              data_req_had_integrity;
+   logic              gntpar_error_in_response_instr;
+   logic              gntpar_error_in_response_data;
 
    // indicates that the current rvfi_valid instruction is the first in a debug handler
    logic first_debug_ins;
@@ -429,16 +449,17 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
    logic recorded_dbg_req;
 
    modport master_mp (
-      output req_after_exception,
-         is_trigger_match_exception,
-         is_trigger_match_load,
-         is_trigger_match_store,
-         is_trigger_match_execute,
-         trigger_match_load_array,
-         trigger_match_store_array,
-         trigger_match_execute_array,
-         tdata1_array,
-         tdata2_array,
+      output asm_if,
+         asm_id,
+         asm_ex,
+         asm_wb,
+         asm_rvfi,
+
+         req_after_exception,
+         trigger_match_mem,
+         trigger_match_execute,
+         trigger_match_exception,
+         is_trigger_match,
 
          data_bus_addr_ph_cont,
          data_bus_resp_ph_cont,
@@ -463,28 +484,29 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
          cnt_irq_ack,
          cnt_rvfi_irqs,
 
-         req_was_store,
+         obi_data_packet,
+         obi_instr_packet,
          instr_req_had_integrity,
          data_req_had_integrity,
          gntpar_error_in_response_instr,
          gntpar_error_in_response_data,
-         instr_resp_pc,
          first_debug_ins,
          first_fetch,
          recorded_dbg_req
    );
 
    modport slave_mp (
-      input req_after_exception,
-          is_trigger_match_exception,
-         is_trigger_match_load,
-         is_trigger_match_store,
-         is_trigger_match_execute,
-         trigger_match_load_array,
-         trigger_match_store_array,
-         trigger_match_execute_array,
-         tdata1_array,
-         tdata2_array,
+      input asm_if,
+         asm_id,
+         asm_ex,
+         asm_wb,
+         asm_rvfi,
+
+         req_after_exception,
+         trigger_match_mem,
+         trigger_match_execute,
+         trigger_match_exception,
+         is_trigger_match,
 
          data_bus_addr_ph_cont,
          data_bus_resp_ph_cont,
@@ -508,12 +530,12 @@ interface uvmt_cv32e40s_support_logic_module_o_if_t;
          cnt_irq_ack,
          cnt_rvfi_irqs,
 
-         req_was_store,
+         obi_data_packet,
+         obi_instr_packet,
          instr_req_had_integrity,
          data_req_had_integrity,
          gntpar_error_in_response_instr,
          gntpar_error_in_response_data,
-         instr_resp_pc,
          first_debug_ins,
          first_fetch,
          recorded_dbg_req

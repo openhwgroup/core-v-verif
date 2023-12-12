@@ -31,7 +31,7 @@
 
 // MUST be 31 or less (bit position-1 in result array determines test pass/fail
 // status, thus we are limited to 31 tests with this construct.
-#define NUM_TESTS 9
+#define NUM_TESTS 11
 // Start at 1 (ignore dummy test that is only used for env sanity checking during dev.)
 #define START_TEST_NUM 1
 // Abort test at first self-check fail, useful for debugging.
@@ -160,6 +160,8 @@ uint32_t misaligned_border_io_to_mem(uint32_t index, uint8_t report_name);
 uint32_t misaligned_border_mem_to_io(uint32_t index, uint8_t report_name);
 uint32_t misalign_store_fault_no_bus_access_second(uint32_t index, uint8_t report_name);
 uint32_t misalign_store_fault_io_no_bus_access_first(uint32_t index, uint8_t report_name);
+uint32_t push_border(uint32_t index, uint8_t report_name);
+uint32_t pop_border(uint32_t index, uint8_t report_name);
 
 // ---------------------------------------------------------------
 // Prototypes for functions that are test specific and
@@ -218,6 +220,11 @@ int cvprintf(verbosity_t verbosity, const char *format, ...) __attribute((__noin
 // Test entry point
 // ---------------------------------------------------------------
 int main(int argc, char **argv){
+  // need to use a different stack for the exception handlers, due to testing push/pop
+  __asm__ volatile (R"(
+    la t0, __debugger_stack_start
+    csrw mscratch, t0
+  )");
 
   volatile uint32_t (* volatile tests[NUM_TESTS])(volatile uint32_t, volatile uint8_t);
   volatile uint32_t test_res = 0x1;
@@ -237,15 +244,17 @@ int main(int argc, char **argv){
   setup_clic();
 
   // Add function pointers to new tests here
-  tests[0]  = dummy; // unused, can be used for env sanity checking
-  tests[1]  = exec_only_for_main_regions;
-  tests[2]  = non_natural_aligned_store_to_io;
-  tests[3]  = non_natural_aligned_loads_from_io;
-  tests[4]  = misaligned_fault_nochange_regfile;
-  tests[5]  = misaligned_border_io_to_mem;
-  tests[6]  = misaligned_border_mem_to_io;
-  tests[7]  = misalign_store_fault_no_bus_access_second;
-  tests[8]  = misalign_store_fault_io_no_bus_access_first;
+  tests[0]    = dummy; // unused, can be used for env sanity checking
+  tests[1]    = exec_only_for_main_regions;
+  tests[2]    = non_natural_aligned_store_to_io;
+  tests[3]    = non_natural_aligned_loads_from_io;
+  tests[4]    = misaligned_fault_nochange_regfile;
+  tests[5]    = misaligned_border_io_to_mem;
+  tests[6]    = misaligned_border_mem_to_io;
+  tests[7]    = misalign_store_fault_no_bus_access_second;
+  tests[8]    = misalign_store_fault_io_no_bus_access_first;
+  tests[9]    = push_border;
+  tests[10]   = pop_border;
   // Run all tests in list above
   cvprintf(V_LOW, "\nPMA test start\n\n");
   for (volatile uint32_t i = START_TEST_NUM; i < NUM_TESTS; i++) {
@@ -750,6 +759,102 @@ uint32_t misaligned_border_mem_to_io(uint32_t index, uint8_t report_name) {
 
 // -----------------------------------------------------------------------------
 
+uint32_t push_border(uint32_t index, uint8_t report_name) {
+  volatile uint32_t test_fail  = 0;
+  volatile uint32_t io_addr    = 0x1a111000;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    cvprintf(V_LOW, "\"%s\"", name);
+    return 0;
+  }
+
+  *g_test_num               = index;
+
+  *g_exp_fault = 1;
+
+  __asm__ volatile(R"(
+      # Save old "sp"
+      mv t0, sp
+
+      # Setup temporary "sp" push should pass IO border
+      mv sp, %[addr]
+      addi sp, sp, 8
+
+      # Push to temporary "sp"
+      cm.push {x1, x8-x9}, -16
+
+      # Restore old "sp"
+      mv sp, t0
+  )"
+    :: [addr] "r"(io_addr)
+    : "t0", "memory"
+  );
+
+
+  test_fail += *g_exp_fault;
+  clear_status_csrs();
+
+  if (test_fail) {
+    cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
+    return index + 1;
+  }
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
+  return 0;
+}
+
+
+// -----------------------------------------------------------------------------
+
+uint32_t pop_border(uint32_t index, uint8_t report_name) {
+  volatile uint32_t test_fail  = 0;
+  volatile uint32_t io_addr    = 0x1a110810;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    cvprintf(V_LOW, "\"%s\"", name);
+    return 0;
+  }
+
+  *g_test_num               = index;
+
+  *g_exp_fault = 1;
+
+  __asm__ volatile(
+    R"(
+      # Save old "sp" and GPRs
+      cm.push {x1, x8-x9}, -16
+      mv t0, sp
+
+      # Setup temporary "sp" pop should pass IO border
+      mv sp, %[addr]
+      addi sp, sp, -8
+
+      # Pop from temporary "sp"
+      cm.pop {x1, x8-x9}, 16
+
+      # Restore old "sp" and GPRs
+      mv sp, t0
+      cm.pop {x1, x8-x9}, 16
+    )"
+    :: [addr] "r"(io_addr)
+    : "t0", "memory"
+  );
+
+  test_fail += *g_exp_fault;
+  clear_status_csrs();
+
+  if (test_fail) {
+    cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
+    return index + 1;
+  }
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
+  return 0;
+}
+// -----------------------------------------------------------------------------
+
 uint32_t misalign_store_fault_no_bus_access_second(uint32_t index, uint8_t report_name) {
   volatile uint32_t test_fail  = 0;
   volatile uint32_t io_addr    = 0x1a110810;
@@ -1055,6 +1160,9 @@ uint32_t detect_irq_mode(void) {
 void __attribute__((naked)) u_sw_irq_handler(void) {
   __asm__ volatile (R"(
     .extern u_sw_irq_handler_normal
+
+    csrrw sp, mscratch, sp
+
     cm.push {ra, s0-s11}, -112
     addi sp, sp, -12
 
@@ -1116,6 +1224,9 @@ void __attribute__((naked)) u_sw_irq_handler(void) {
     # Restore stack ptr
     addi sp, sp, 12
     cm.pop {ra, s0-s11}, 112
+
+    csrrw sp, mscratch, sp
+
     mret
   )");
 
@@ -1146,7 +1257,7 @@ void u_sw_irq_handler_normal(void) {
       csrrw zero, mepc, t0
     )" ::: "t0", "memory");
   }
-  else if (*g_test_num >= 2 && *g_test_num <= 9) {
+  else if (*g_test_num >= 2 && *g_test_num <= 11) {
     increment_mepc(0);
     if (*g_exp_fault) {
       *g_exp_fault = 0;

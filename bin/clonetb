@@ -34,13 +34,14 @@
 #   (Typical usage does not require these to be set.)
 #   CV_CORE          - Name of the core to use.
 #   VERIF_ENV_REPO   - URL to external verif env repo.
-#   VERIF_ENV_BRANCH - Branch name of external verif env repo.
+#   VERIF_ENV_REF - Branch/hash/tag of external verif env repo.
 
 
 usage() {
   echo "usage: $0 [-x] [--clone] [--ignore] [--unignore]"
-  echo "  -x          clone cv32e40x subtree"
-  echo "  --clone     clone subtree based on env vars"
+  echo "  -x          clone cv32e40x subtree, known stable hash"
+  echo "  --x-main    clone cv32e40x subtree, latest main branch"
+  echo "  --clone     clone a subtree based on env vars"
   echo "  --ignore    tell git to ignore the cloned subtree"
   echo "  --unignore  tell git to not ignore the cloned subtree"
 
@@ -62,8 +63,8 @@ check_env_vars() {
     exit 1
   fi
 
-  if [ -z "${VERIF_ENV_BRANCH}" ]; then
-    echo "error: 'VERIF_ENV_BRANCH' not defined"
+  if [ -z "${VERIF_ENV_REF}" ]; then
+    echo "error: 'VERIF_ENV_REF' not defined"
     exit 1
   fi
 }
@@ -72,13 +73,24 @@ clone() {
   check_env_vars
 
   rm -rf ${CV_CORE}
-  git clone  -b ${VERIF_ENV_BRANCH}  ${VERIF_ENV_REPO}  ${CV_CORE}
+  git clone  ${VERIF_ENV_REPO}  ${CV_CORE}
+  cd ${CV_CORE} && git checkout ${VERIF_ENV_REF} && cd -
+
 }
 
 clone_cv32e40x() {
   CV_CORE=cv32e40x
   VERIF_ENV_REPO=https://github.com/openhwgroup/cv32e40x-dv.git
-  VERIF_ENV_BRANCH=main
+  VERIF_ENV_REF=be17b8902002f91803abde4bfb8caa91088575e1
+  clone
+
+  ignore_cloned_directory
+}
+
+clone_cv32e40x_main() {
+  CV_CORE=cv32e40x
+  VERIF_ENV_REPO=https://github.com/openhwgroup/cv32e40x-dv.git
+  VERIF_ENV_REF=main
 
   clone
 
@@ -112,6 +124,9 @@ main() {
   case $1 in
     "-x")
       clone_cv32e40x
+      ;;
+    "--x-main")
+      clone_cv32e40x_main
       ;;
     "--clone")
       clone

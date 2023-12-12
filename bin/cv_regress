@@ -151,6 +151,8 @@ def read_file(args, file):
             test.sub_make(args.make)
         if args.iss != None:
             test.iss = args.iss
+        else:
+            args.iss = 'YES'
         if args.cfg:
             test.cfg = args.cfg
         if not test.builds and test.build:
@@ -255,7 +257,8 @@ if args.sh:
                                  results=args.results,
                                  makeargs=' '.join(args.makearg) if args.makearg else '',
                                  session=os.path.splitext(os.path.basename(args.outfile))[0],
-                                 unique_builds=unique_builds))
+                                 unique_builds=unique_builds,
+                                 iss=''.join(args.iss) if args.iss else ''))
     out_fh.close()
     os.chmod(args.outfile, 0o775)
 
@@ -269,6 +272,7 @@ if args.metrics:
                                  cfg=args.cfg,
                                  toolchain=args.toolchain,
                                  makeargs=' '.join(args.makearg) if args.makearg else '',
+                                 iss=''.join(args.iss) if args.iss else '',
                                  unique_builds=unique_builds))
     out_fh.close()
     os.chmod(args.outfile, 0o775)
@@ -291,7 +295,8 @@ if args.vsif:
                                  toolchain=args.toolchain,
                                  simulator=args.simulator,
                                  filter_dir=get_filter_dir(),
-                                 unique_builds=unique_builds))
+                                 unique_builds=unique_builds,
+                                 iss=''.join(args.iss) if args.iss else ''))
     out_fh.close()
 
     # Generate a Vmanager-compatible SVE

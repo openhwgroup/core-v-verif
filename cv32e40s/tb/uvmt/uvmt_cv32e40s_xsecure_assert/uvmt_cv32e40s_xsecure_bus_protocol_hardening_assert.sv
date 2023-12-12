@@ -127,12 +127,11 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
 
   //Verify that major alert is set when there is a response packet even though there are no outstanding requests, in the following OBI protocols
 
-  property p_resp_no_outstanding_req(obi_rvalid, resp_ph_cont, v_addr_ph_cnt);
+  property p_resp_no_outstanding_req(obi_rvalid, v_addr_ph_cnt);
 
     //If there has already been a bus protpcol fault the there will be an underflow error and the system acts strangely
     !bus_protocol_hardening_glitch_sticky
     && obi_rvalid
-    && !resp_ph_cont
     && v_addr_ph_cnt == 0
     |=>
     alert_major;
@@ -141,28 +140,24 @@ module uvmt_cv32e40s_xsecure_bus_protocol_hardening_assert
   a_glitch_xsecure_bus_hardening_no_outstanding_obi_instr_trans: assert property (
     p_resp_no_outstanding_req(
       obi_instr_rvalid,
-      support_if.instr_bus_resp_ph_cont,
       support_if.instr_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag_glitch, "A response before a request in the OBI instruction bus handshake, but the alert major is not set.\n");
 
   a_glitch_xsecure_bus_hardening_no_outstanding_obi_data_trans: assert property (
     p_resp_no_outstanding_req(
       obi_data_rvalid,
-      support_if.data_bus_resp_ph_cont,
       support_if.data_bus_v_addr_ph_cnt)
   ) else `uvm_error(info_tag_glitch, "A response before a request in the OBI data bus handshake, but the alert major is not set.\n");
 
   a_glitch_xsecure_bus_hardening_alignment_buff_receive_instr_if_mpu_resp: assert property (
     p_resp_no_outstanding_req(
       instr_if_mpu_resp,
-      support_if.alignment_buff_resp_ph_cont,
       support_if.alignment_buff_addr_ph_cnt)
   ) else `uvm_error(info_tag_glitch, "The alignment buffer does not have outstanding requests but receives a response from the instruction interface MPU, but the alert major is not set.\n");
 
   a_glitch_xsecure_bus_hardening_lsu_receive_lsu_mpu_resp: assert property (
     p_resp_no_outstanding_req(
       lsu_mpu_resp,
-      support_if.lsu_resp_ph_cont,
       support_if.lsu_addr_ph_cnt)
   ) else `uvm_error(info_tag_glitch, "The load-store unit does not have outstanding requests but receives a response from the load-store unit MPU, but the alert major is not set.\n");
 

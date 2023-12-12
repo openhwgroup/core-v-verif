@@ -54,6 +54,7 @@ function void corev_zcmt_base_stream::generate_jump_table_instr(int entries);
   riscv_csr_instr csr_instr;
   riscv_pseudo_instr pseudo_instr;
   corev_directive_instr raw_instr;
+  riscv_reg_t saved_rdrs1;
   automatic int unsigned instr_loc = 0;
 
   // Backup RA to preserve state
@@ -70,11 +71,12 @@ function void corev_zcmt_base_stream::generate_jump_table_instr(int entries);
   pseudo_instr = riscv_pseudo_instr::type_id::create("la_instr");
   `DV_CHECK_RANDOMIZE_WITH_FATAL(pseudo_instr,
     pseudo_instr_name == LA;
-    rd                == T0;
+    !(rd inside {cfg.reserved_regs, ZERO});
     , "Failed randomizing LA"
   )
   pseudo_instr.atomic = 1'b1;
   pseudo_instr.imm_str = $sformatf("jt_%0d", get_inst_id());
+  saved_rdrs1 = pseudo_instr.rd;
   insert_instr(riscv_instr'(pseudo_instr), instr_loc++);
 
   // Store table address to jvt
@@ -84,7 +86,7 @@ function void corev_zcmt_base_stream::generate_jump_table_instr(int entries);
   csr_instr.format     = R_FORMAT;
   csr_instr.rd         = ZERO;
   csr_instr.csr        = 12'h17;
-  csr_instr.rs1        = T0;
+  csr_instr.rs1        = saved_rdrs1;
   csr_instr.atomic     = 1'b1;
   csr_instr.write_csr  = 1'b1;
   insert_instr(riscv_instr'(csr_instr), instr_loc++);

@@ -33,7 +33,7 @@
 
 // MUST be 31 or less (bit position-1 in result array determines test pass/fail
 // status, thus we are limited to 31 tests with this construct.
-#define NUM_TESTS 19
+#define NUM_TESTS 21
 // Start at 1 (ignore dummy test that is only used for env sanity checking during dev.)
 #define START_TEST_NUM 1
 // Abort test at first self-check fail, useful for debugging.
@@ -43,6 +43,9 @@
 #define TIMER_REG_ADDR         ((volatile uint32_t * volatile) (CV_VP_INTR_TIMER_BASE))
 #define TIMER_VAL_ADDR         ((volatile uint32_t * volatile) (CV_VP_INTR_TIMER_BASE + 4))
 #define DEBUG_REQ_CONTROL_REG *((volatile uint32_t * volatile) (CV_VP_DEBUG_CONTROL_BASE))
+
+#define MARCHID_CV32E40X 0x14
+#define MARCHID_CV32E40S 0x15
 
 // __FUNCTION__ is C99 and newer, -Wpedantic flags a warning that
 // this is not ISO C, thus we wrap this instatiation in a macro
@@ -212,137 +215,137 @@ typedef union {
 
 typedef union {
   struct {
-    volatile uint16_t load    : 1;
-    volatile uint16_t store   : 1;
-    volatile uint16_t execute : 1;
-    volatile uint16_t u       : 1;
-    volatile uint16_t s       : 1;
-    volatile uint16_t res_5_5 : 1;
-    volatile uint16_t m       : 1;
-    volatile uint16_t match   : 4;
-    volatile uint16_t chain   : 1;
-    volatile uint16_t action  : 4;
-    volatile uint16_t sizelo  : 2;
-    volatile uint16_t timing  : 1;
-    volatile uint16_t select  : 1;
-    volatile uint16_t hit     : 1;
-    volatile uint16_t maskmax : 6;
-    volatile uint16_t dmode   : 1;
-    volatile uint16_t type    : 4;
+    volatile uint32_t load    : 1;
+    volatile uint32_t store   : 1;
+    volatile uint32_t execute : 1;
+    volatile uint32_t u       : 1;
+    volatile uint32_t s       : 1;
+    volatile uint32_t res_5_5 : 1;
+    volatile uint32_t m       : 1;
+    volatile uint32_t match   : 4;
+    volatile uint32_t chain   : 1;
+    volatile uint32_t action  : 4;
+    volatile uint32_t sizelo  : 2;
+    volatile uint32_t timing  : 1;
+    volatile uint32_t select  : 1;
+    volatile uint32_t hit     : 1;
+    volatile uint32_t maskmax : 6;
+    volatile uint32_t dmode   : 1;
+    volatile uint32_t type    : 4;
   } __attribute__((packed)) volatile fields;
   volatile uint32_t raw;
 } __attribute__((packed)) mcontrol_t;
 
 typedef union {
   struct {
-    volatile uint16_t load     : 1;
-    volatile uint16_t store    : 1;
-    volatile uint16_t execute  : 1;
-    volatile uint16_t u        : 1;
-    volatile uint16_t s        : 1;
-    volatile uint16_t res_5_5  : 1;
-    volatile uint16_t m        : 1;
-    volatile uint16_t match    : 4;
-    volatile uint16_t chain    : 1;
-    volatile uint16_t action   : 4;
-    volatile uint16_t size     : 4;
-    volatile uint16_t timing   : 1;
-    volatile uint16_t select   : 1;
-    volatile uint16_t hit      : 1;
-    volatile uint16_t vu       : 1;
-    volatile uint16_t vs       : 1;
-    volatile uint16_t res_26_25: 2;
-    volatile uint16_t dmode    : 1;
-    volatile uint16_t type     : 4;
+    volatile uint32_t load     : 1;
+    volatile uint32_t store    : 1;
+    volatile uint32_t execute  : 1;
+    volatile uint32_t u        : 1;
+    volatile uint32_t s        : 1;
+    volatile uint32_t res_5_5  : 1;
+    volatile uint32_t m        : 1;
+    volatile uint32_t match    : 4;
+    volatile uint32_t chain    : 1;
+    volatile uint32_t action   : 4;
+    volatile uint32_t size     : 4;
+    volatile uint32_t timing   : 1;
+    volatile uint32_t select   : 1;
+    volatile uint32_t hit      : 1;
+    volatile uint32_t vu       : 1;
+    volatile uint32_t vs       : 1;
+    volatile uint32_t res_26_25: 2;
+    volatile uint32_t dmode    : 1;
+    volatile uint32_t type     : 4;
   } __attribute__((packed)) volatile fields;
   volatile uint32_t raw;
 } __attribute__((packed)) mcontrol6_t;
 
 typedef union {
   struct {
-    volatile uint8_t  action     : 6;
-    volatile uint8_t  u          : 1;
-    volatile uint8_t  s          : 1;
-    volatile uint8_t  res_8_8    : 1;
-    volatile uint8_t  m          : 1;
-    volatile uint8_t  res_10_10  : 1;
-    volatile uint8_t  vu         : 1;
-    volatile uint8_t  vs         : 1;
-    volatile uint16_t res_25_13  : 13;
-    volatile uint8_t  hit        : 1;
-    volatile uint8_t  dmode      : 1;
-    volatile uint8_t  type       : 4;
+    volatile uint32_t  action     : 6;
+    volatile uint32_t  u          : 1;
+    volatile uint32_t  s          : 1;
+    volatile uint32_t  res_8_8    : 1;
+    volatile uint32_t  m          : 1;
+    volatile uint32_t  res_10_10  : 1;
+    volatile uint32_t  vu         : 1;
+    volatile uint32_t  vs         : 1;
+    volatile uint32_t  res_25_13  : 13;
+    volatile uint32_t  hit        : 1;
+    volatile uint32_t  dmode      : 1;
+    volatile uint32_t  type       : 4;
   } __attribute__((packed)) volatile fields;
   volatile uint32_t raw;
 } __attribute__((packed)) etrigger_t;
 
 typedef union {
   struct {
-    volatile uint16_t info      : 16;
-    volatile uint16_t res_23_16 : 8;
-    volatile uint16_t version   : 8;
+    volatile uint32_t info      : 16;
+    volatile uint32_t res_23_16 : 8;
+    volatile uint32_t version   : 8;
   } __attribute__((packed)) volatile fields;
   volatile uint32_t raw;
 } __attribute__((packed)) tinfo_t;
 
 typedef union {
   struct {
-    volatile uint8_t uie   : 1;  //     0
-    volatile uint8_t sie   : 1;  //     1
-    volatile uint8_t wpri  : 1;  //     2
-    volatile uint8_t mie   : 1;  //     3
-    volatile uint8_t upie  : 1;  //     4
-    volatile uint8_t spie  : 1;  //     5
-    volatile uint8_t wpri0 : 1;  //     6
-    volatile uint8_t mpie  : 1;  //     7
-    volatile uint8_t spp   : 1;  //     8
-    volatile uint8_t wpri1 : 2;  // 10: 9
-    volatile uint8_t mpp   : 2;  // 12:11
-    volatile uint8_t fs    : 2;  // 14:13
-    volatile uint8_t xs    : 2;  // 16:15
-    volatile uint8_t mprv  : 1;  //    17
-    volatile uint8_t sum   : 1;  //    18
-    volatile uint8_t mxr   : 1;  //    19
-    volatile uint8_t tvm   : 1;  //    20
-    volatile uint8_t tw    : 1;  //    21
-    volatile uint8_t tsr   : 1;  //    22
-    volatile uint8_t wpri3 : 8;  // 30:23
-    volatile uint8_t sd    : 1;  //    31
+    volatile uint32_t uie   : 1;  //     0
+    volatile uint32_t sie   : 1;  //     1
+    volatile uint32_t wpri  : 1;  //     2
+    volatile uint32_t mie   : 1;  //     3
+    volatile uint32_t upie  : 1;  //     4
+    volatile uint32_t spie  : 1;  //     5
+    volatile uint32_t wpri0 : 1;  //     6
+    volatile uint32_t mpie  : 1;  //     7
+    volatile uint32_t spp   : 1;  //     8
+    volatile uint32_t wpri1 : 2;  // 10: 9
+    volatile uint32_t mpp   : 2;  // 12:11
+    volatile uint32_t fs    : 2;  // 14:13
+    volatile uint32_t xs    : 2;  // 16:15
+    volatile uint32_t mprv  : 1;  //    17
+    volatile uint32_t sum   : 1;  //    18
+    volatile uint32_t mxr   : 1;  //    19
+    volatile uint32_t tvm   : 1;  //    20
+    volatile uint32_t tw    : 1;  //    21
+    volatile uint32_t tsr   : 1;  //    22
+    volatile uint32_t wpri3 : 8;  // 30:23
+    volatile uint32_t sd    : 1;  //    31
   } volatile clint;
   volatile uint32_t raw;
 } __attribute__((packed)) mstatus_t;
 
 typedef union {
   struct {
-    volatile uint16_t start_delay      : 15; // 14: 0
-    volatile uint16_t rand_start_delay : 1;  //    15
-    volatile uint16_t pulse_width      : 13; // 28:16
-    volatile uint16_t rand_pulse_width : 1;  //    29
-    volatile uint16_t pulse_mode       : 1;  //    30    0 = level, 1 = pulse
-    volatile uint16_t value            : 1;  //    31
+    volatile uint32_t start_delay      : 15; // 14: 0
+    volatile uint32_t rand_start_delay : 1;  //    15
+    volatile uint32_t pulse_width      : 13; // 28:16
+    volatile uint32_t rand_pulse_width : 1;  //    29
+    volatile uint32_t pulse_mode       : 1;  //    30    0 = level, 1 = pulse
+    volatile uint32_t value            : 1;  //    31
   } volatile fields;
   volatile uint32_t raw;
 }  __attribute__((packed)) debug_req_control_t;
 
 typedef union {
   struct {
-    volatile uint16_t prv       : 2;  // 1:0 WARL (0x0, 0x3) PRV. Returns the privilege mode before debug entry.
-    volatile uint16_t step      : 1;  // 2 RW STEP. Set to enable single stepping.
-    volatile uint16_t nmip      : 1;  // 3 R NMIP. If set, an NMI is pending
-    volatile uint16_t mprven    : 1;  // 4 WARL (0x1) MPRVEN. Hardwired to 1.
-    volatile uint16_t res_5_5   : 1;  // 5 WARL (0x0) V. Hardwired to 0.
-    volatile uint16_t cause     : 3;  // 8:6 R CAUSE. Return the cause of debug entry.
-    volatile uint16_t stoptime  : 1;  // 9 WARL (0x0) STOPTIME. Hardwired to 0.
-    volatile uint16_t stopcount : 1;  // 10 WARL STOPCOUNT.
-    volatile uint16_t stepie    : 1;  // 11 WARL STEPIE. Set to enable interrupts during single stepping.
-    volatile uint16_t ebreaku   : 1;  // 12 WARL EBREAKU. Set to enter debug mode on ebreak during user mode.
-    volatile uint16_t ebreaks   : 1;  // 13 WARL (0x0) EBREAKS. Hardwired to 0.
-    volatile uint16_t res_14_14 : 1;  // 14 WARL (0x0) Hardwired to 0.
-    volatile uint16_t ebreakm   : 1;  // 15 RW EBREAKM. Set to enter debug mode on ebreak during machine mode.
-    volatile uint16_t ebreakvu  : 1;  // 16 WARL (0x0) EBREAKVU. Hardwired to 0.
-    volatile uint16_t ebreakvs  : 1;  // 17 WARL (0x0) EBREAKVS. Hardwired to 0
-    volatile uint16_t res_27_18 : 10; // 27:18 WARL (0x0) Reserved
-    volatile uint16_t xdebugver : 4;  // 31:28 R (0x4) XDEBUGVER. External debug support exists as described in [RISC-V-DEBUG].
+    volatile uint32_t prv       : 2;  // 1:0 WARL (0x0, 0x3) PRV. Returns the privilege mode before debug entry.
+    volatile uint32_t step      : 1;  // 2 RW STEP. Set to enable single stepping.
+    volatile uint32_t nmip      : 1;  // 3 R NMIP. If set, an NMI is pending
+    volatile uint32_t mprven    : 1;  // 4 WARL (0x1) MPRVEN. Hardwired to 1.
+    volatile uint32_t res_5_5   : 1;  // 5 WARL (0x0) V. Hardwired to 0.
+    volatile uint32_t cause     : 3;  // 8:6 R CAUSE. Return the cause of debug entry.
+    volatile uint32_t stoptime  : 1;  // 9 WARL (0x0) STOPTIME. Hardwired to 0.
+    volatile uint32_t stopcount : 1;  // 10 WARL STOPCOUNT.
+    volatile uint32_t stepie    : 1;  // 11 WARL STEPIE. Set to enable interrupts during single stepping.
+    volatile uint32_t ebreaku   : 1;  // 12 WARL EBREAKU. Set to enter debug mode on ebreak during user mode.
+    volatile uint32_t ebreaks   : 1;  // 13 WARL (0x0) EBREAKS. Hardwired to 0.
+    volatile uint32_t res_14_14 : 1;  // 14 WARL (0x0) Hardwired to 0.
+    volatile uint32_t ebreakm   : 1;  // 15 RW EBREAKM. Set to enter debug mode on ebreak during machine mode.
+    volatile uint32_t ebreakvu  : 1;  // 16 WARL (0x0) EBREAKVU. Hardwired to 0.
+    volatile uint32_t ebreakvs  : 1;  // 17 WARL (0x0) EBREAKVS. Hardwired to 0
+    volatile uint32_t res_27_18 : 10; // 27:18 WARL (0x0) Reserved
+    volatile uint32_t xdebugver : 4;  // 31:28 R (0x4) XDEBUGVER. External debug support exists as described in [RISC-V-DEBUG].
   } volatile fields;
   volatile uint32_t raw;
 } __attribute__((packed)) dcsr_t;
@@ -375,6 +378,8 @@ volatile uint32_t * volatile g_unexpected_irq;
 volatile uint32_t * volatile g_trigger_matched;
 volatile uint32_t * volatile g_has_clic;
 volatile uint32_t * volatile g_single_step_unspec_err;
+
+volatile uint32_t            g_pushpop_area [64];
 
 extern volatile uint32_t *trigger_loc;
 extern volatile uint32_t *trigger_loc_dbg;
@@ -462,6 +467,8 @@ uint32_t check_stopcnt_bits(uint32_t index, uint8_t report_name);
 uint32_t single_step(uint32_t index, uint8_t report_name);
 uint32_t mprv_dret_to_umode(uint32_t index, uint8_t report_name);
 uint32_t cover_known_iss_mismatches(uint32_t index, uint8_t report_name);
+uint32_t push_haltreq(uint32_t index, uint8_t report_name);
+uint32_t pop_haltreq(uint32_t index, uint8_t report_name);
 
 // ---------------------------------------------------------------
 // Prototypes for functions that are test specific and
@@ -618,7 +625,7 @@ int main(int argc, char **argv){
   setup_clic();
 
   // Add function pointers to new tests here
-  tests[0]  = dummy; // unused, can be used for env sanity checking
+  tests[0] = dummy; // unused, can be used for env sanity checking
   tests[1]  = debug_csr_rw;
   tests[2]  = trigger_default_val;
   tests[3]  = ebreak_behavior_m_mode;
@@ -637,6 +644,8 @@ int main(int argc, char **argv){
   tests[16] = single_step;
   tests[17] = mprv_dret_to_umode;
   tests[18] = cover_known_iss_mismatches;
+  tests[19] = push_haltreq;
+  tests[20] = pop_haltreq;
 
   // Run all tests in list above
   cvprintf(V_LOW, "\nDebug test start\n\n");
@@ -1131,6 +1140,115 @@ uint32_t request_ebreak_3x(uint32_t index, uint8_t report_name) {
 
 // -----------------------------------------------------------------------------
 
+uint32_t push_haltreq(uint32_t index, uint8_t report_name) {
+  volatile uint8_t test_fail = 0;
+  volatile debug_req_control_t debug_req_ctrl;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    cvprintf(V_LOW, "\"%s\"", name);
+    return 0;
+  }
+
+  debug_req_ctrl = (debug_req_control_t) {
+    .fields.value            = 1,
+    .fields.pulse_mode       = 1,
+    .fields.rand_pulse_width = 0,
+    .fields.pulse_width      = 0x1fff,
+    .fields.rand_start_delay = 0,
+    .fields.start_delay      = 15
+  };
+
+  *g_debug_test_num = 19;
+  *g_debug_status = 0;
+  DEBUG_REQ_CONTROL_REG = debug_req_ctrl.raw;
+
+  __asm__ volatile(
+    R"(
+      # Save old "sp"
+      mv t0, sp
+
+      # Setup temporary "sp"
+      la sp, g_pushpop_area
+      addi sp, sp, 64
+
+      # Push to temporary "sp"
+      cm.push {x1, x8-x9, x18-x27}, -64
+
+      # Restore old "sp"
+      mv sp, t0
+    )"::: "t0"
+  );
+
+  test_fail += *g_debug_status == 1 ? 0 : 1;
+  *g_debug_status = 0;
+
+  if (test_fail) {
+    cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
+    return index + 1;
+  }
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
+  return 0;
+}
+
+
+// -----------------------------------------------------------------------------
+
+uint32_t pop_haltreq(uint32_t index, uint8_t report_name) {
+  volatile uint8_t test_fail = 0;
+  volatile debug_req_control_t debug_req_ctrl;
+
+  SET_FUNC_INFO
+
+  if (report_name) {
+    cvprintf(V_LOW, "\"%s\"", name);
+    return 0;
+  }
+
+  debug_req_ctrl = (debug_req_control_t) {
+    .fields.value            = 1,
+    .fields.pulse_mode       = 1,
+    .fields.rand_pulse_width = 0,
+    .fields.pulse_width      = 0x1fff,
+    .fields.rand_start_delay = 0,
+    .fields.start_delay      = 25
+  };
+
+  *g_debug_test_num = 20;
+  *g_debug_status = 0;
+  DEBUG_REQ_CONTROL_REG = debug_req_ctrl.raw;
+
+  __asm__ volatile(
+    R"(
+        # Save old "sp" and GPRs
+      cm.push {x1, x8-x9}, -16
+      mv t0, sp
+
+      # Setup temporary "sp"
+      la sp, g_pushpop_area
+
+      # Pop from temporary "sp"
+      cm.pop {x1, x8-x9, x18-x27}, 64
+
+      # Restore old "sp" and GPRs
+      mv sp, t0
+      cm.pop {x1, x8-x9}, 16
+    )"::: "t0"
+  );
+
+  test_fail += *g_debug_status == 1 ? 0 : 1;
+  *g_debug_status = 0;
+
+  if (test_fail) {
+    cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
+    return index + 1;
+  }
+  cvprintf(V_LOW, "\nTest: \"%s\" OK!\n", name);
+  return 0;
+}
+// -----------------------------------------------------------------------------
+
 __attribute__((naked)) void m_fast14_irq_handler(void) {
 
   __asm__ volatile ( R"(
@@ -1452,6 +1570,10 @@ void __attribute__((naked)) _debugger_start(void) {
     beq s0, s1, 14f
     addi s0, zero, 18
     beq s0, s1, 18f
+    addi s0, zero, 19
+    beq s0, s1, 19f
+    addi s0, zero, 20
+    beq s0, s1, 20f
 
     # no match, exit
     beq zero, zero, 99f
@@ -1493,6 +1615,12 @@ void __attribute__((naked)) _debugger_start(void) {
     beq zero, zero, 99f
 
     18: call cover_known_iss_mismatches_dbg
+    beq zero, zero, 99f
+
+    19: call request_hw_debugger_dbg
+    beq zero, zero, 99f
+
+    20: call request_hw_debugger_dbg
     beq zero, zero, 99f
 
     99: call _debugger_end
@@ -3115,6 +3243,21 @@ void single_step_basic_dbg(void) {
 uint32_t has_pmp_configured(void) {
   volatile uint32_t pmpaddr0 = 0xffffffff;
   volatile uint32_t pmpaddr0_backup = 0;
+  volatile uint32_t marchid = 0x0;
+
+  __asm__ volatile (R"(
+    csrrs %[marchid], marchid, zero
+  )":[marchid] "=r"(marchid));
+
+  // CV32E40X does not support PMP, skip test
+  switch (marchid) {
+    case (MARCHID_CV32E40X):
+      return 0;
+      break;
+    case (MARCHID_CV32E40S):
+      ;; // Do nothing and continue execution
+      break;
+  }
 
   __asm__ volatile (R"(
     csrrw %[pmpaddr0_backup] , pmpaddr0, %[pmpaddr0]
@@ -3144,7 +3287,7 @@ uint32_t mprv_dret_to_umode(uint32_t index, uint8_t report_name) {
 
   // Check if there are configured pmp-regions:
   if (!has_pmp_configured()) {
-    cvprintf(V_LOW, "Skipping test: 0 PMP regions, cannot enter user mode\n");
+    cvprintf(V_LOW, "Skipping test: 0 PMP regions or PMP not supported, cannot enter user mode\n");
     return 0;
   }
 

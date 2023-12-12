@@ -129,17 +129,20 @@ task uvma_obi_memory_slv_base_seq_c::body();
 
 endtask : body
 
+
 task uvma_obi_memory_slv_base_seq_c::do_response(ref uvma_obi_memory_mon_trn_c mon_req);
 
    `uvm_fatal("OBI_MEMORY_SLV_SEQ", "Call to pure virtual task")
 
 endtask : do_response
 
+
 function void uvma_obi_memory_slv_base_seq_c::add_latencies(uvma_obi_memory_slv_seq_item_c slv_rsp);
 
    slv_rsp.rvalid_latency = cfg.calc_random_rvalid_latency();
 
 endfunction : add_latencies
+
 
 function void uvma_obi_memory_slv_base_seq_c::add_r_fields(uvma_obi_memory_mon_trn_c mon_req, uvma_obi_memory_slv_seq_item_c slv_rsp);
 
@@ -157,21 +160,29 @@ function void uvma_obi_memory_slv_base_seq_c::add_r_fields(uvma_obi_memory_mon_t
 
 endfunction : add_r_fields
 
+
 function void uvma_obi_memory_slv_base_seq_c::add_err(uvma_obi_memory_slv_seq_item_c slv_rsp);
 
    slv_rsp.err = cfg.calc_random_err(slv_rsp.orig_trn.address);
 
 endfunction : add_err
 
+
 function void uvma_obi_memory_slv_base_seq_c::add_exokay(uvma_obi_memory_mon_trn_c mon_req, uvma_obi_memory_slv_seq_item_c slv_rsp);
 
-   // Only respond exokay == 1 to SC or LR as signaled by atop
    if (mon_req.atop[5] != 1'b1 || !(mon_req.atop[4:0] inside {5'h2, 5'h3})) begin
       slv_rsp.exokay = 0;
-      return;
+   end else begin
+      slv_rsp.exokay = cfg.calc_random_exokay(slv_rsp.orig_trn.address, (mon_req.atop == 6'h23));
    end
 
-   slv_rsp.exokay = cfg.calc_random_exokay(slv_rsp.orig_trn.address);
+   if (slv_rsp.exokay && mon_req.atop == 6'h22) begin //LR.W
+      cfg.set_reservation(slv_rsp.orig_trn.address);
+   end
+
+   if (mon_req.atop == 6'h23) begin //SC.W
+      cfg.invalidate_reservation();
+   end
 
 endfunction : add_exokay
 
@@ -181,6 +192,7 @@ function void uvma_obi_memory_slv_base_seq_c::add_ruser(uvma_obi_memory_slv_seq_
    slv_rsp.ruser = '0;
 
 endfunction : add_ruser
+
 
 function void uvma_obi_memory_slv_base_seq_c::add_rchk(uvma_obi_memory_slv_seq_item_c slv_rsp);
 

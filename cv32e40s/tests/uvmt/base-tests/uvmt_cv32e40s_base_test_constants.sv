@@ -52,25 +52,27 @@
  parameter CV_VP_REGISTER_BASE          = 32'h0080_0000;
  parameter CV_VP_REGISTER_SIZE          = 32'h0000_1000;
 
- parameter CV_VP_VIRTUAL_PRINTER_OFFSET = 32'h0000_0000;
- parameter CV_VP_RANDOM_NUM_OFFSET      = 32'h0000_0040;
- parameter CV_VP_CYCLE_COUNTER_OFFSET   = 32'h0000_0080;
- parameter CV_VP_STATUS_FLAGS_OFFSET    = 32'h0000_00c0;
- parameter CV_VP_FENCEI_TAMPER_OFFSET   = 32'h0000_0100;
- parameter CV_VP_INTR_TIMER_OFFSET      = 32'h0000_0140;
- parameter CV_VP_DEBUG_CONTROL_OFFSET   = 32'h0000_0180;
- parameter CV_VP_OBI_SLV_RESP_OFFSET    = 32'h0000_01c0;
- parameter CV_VP_SIG_WRITER_OFFSET      = 32'h0000_0200;
+ parameter CV_VP_VIRTUAL_PRINTER_OFFSET        = 32'h0000_0000;
+ parameter CV_VP_RANDOM_NUM_OFFSET             = 32'h0000_0040;
+ parameter CV_VP_STATUS_FLAGS_OFFSET           = 32'h0000_00c0;
+ parameter CV_VP_CYCLE_COUNTER_OFFSET          = 32'h0000_0080;
+ parameter CV_VP_FENCEI_TAMPER_OFFSET          = 32'h0000_0100;
+ parameter CV_VP_INTR_TIMER_OFFSET             = 32'h0000_0140;
+ parameter CV_VP_DEBUG_CONTROL_OFFSET          = 32'h0000_0180;
+ parameter CV_VP_OBI_SLV_RESP_OFFSET           = 32'h0000_01c0;
+ parameter CV_VP_SIG_WRITER_OFFSET             = 32'h0000_0200;
+ parameter CV_VP_OBI_ERR_AWAIT_GOAHEAD_OFFSET  = 32'h0000_0240;
 
- parameter CV_VP_VIRTUAL_PRINTER_BASE   = CV_VP_REGISTER_BASE + CV_VP_VIRTUAL_PRINTER_OFFSET;
- parameter CV_VP_RANDOM_NUM_BASE        = CV_VP_REGISTER_BASE + CV_VP_RANDOM_NUM_OFFSET;
- parameter CV_VP_CYCLE_COUNTER_BASE     = CV_VP_REGISTER_BASE + CV_VP_CYCLE_COUNTER_OFFSET;
- parameter CV_VP_STATUS_FLAGS_BASE      = CV_VP_REGISTER_BASE + CV_VP_STATUS_FLAGS_OFFSET;
- parameter CV_VP_INTR_TIMER_BASE        = CV_VP_REGISTER_BASE + CV_VP_INTR_TIMER_OFFSET;
- parameter CV_VP_DEBUG_CONTROL_BASE     = CV_VP_REGISTER_BASE + CV_VP_DEBUG_CONTROL_OFFSET;
- parameter CV_VP_OBI_SLV_RESP_BASE      = CV_VP_REGISTER_BASE + CV_VP_OBI_SLV_RESP_OFFSET;
- parameter CV_VP_SIG_WRITER_BASE        = CV_VP_REGISTER_BASE + CV_VP_SIG_WRITER_OFFSET;
- parameter CV_VP_FENCEI_TAMPER_BASE     = CV_VP_REGISTER_BASE + CV_VP_FENCEI_TAMPER_OFFSET;
+ parameter CV_VP_CYCLE_COUNTER_BASE         = CV_VP_REGISTER_BASE + CV_VP_CYCLE_COUNTER_OFFSET;
+ parameter CV_VP_DEBUG_CONTROL_BASE         = CV_VP_REGISTER_BASE + CV_VP_DEBUG_CONTROL_OFFSET;
+ parameter CV_VP_FENCEI_TAMPER_BASE         = CV_VP_REGISTER_BASE + CV_VP_FENCEI_TAMPER_OFFSET;
+ parameter CV_VP_INTR_TIMER_BASE            = CV_VP_REGISTER_BASE + CV_VP_INTR_TIMER_OFFSET;
+ parameter CV_VP_OBI_ERR_AWAIT_GOAHEAD_BASE = CV_VP_REGISTER_BASE + CV_VP_OBI_ERR_AWAIT_GOAHEAD_OFFSET;
+ parameter CV_VP_OBI_SLV_RESP_BASE          = CV_VP_REGISTER_BASE + CV_VP_OBI_SLV_RESP_OFFSET;
+ parameter CV_VP_RANDOM_NUM_BASE            = CV_VP_REGISTER_BASE + CV_VP_RANDOM_NUM_OFFSET;
+ parameter CV_VP_SIG_WRITER_BASE            = CV_VP_REGISTER_BASE + CV_VP_SIG_WRITER_OFFSET;
+ parameter CV_VP_STATUS_FLAGS_BASE          = CV_VP_REGISTER_BASE + CV_VP_STATUS_FLAGS_OFFSET;
+ parameter CV_VP_VIRTUAL_PRINTER_BASE       = CV_VP_REGISTER_BASE + CV_VP_VIRTUAL_PRINTER_OFFSET;
 
 `ifdef PARAM_SET_0
    `include  "cvverif_param_set_0.svh"
@@ -99,16 +101,6 @@
    parameter CORE_PARAM_DBG_NUM_TRIGGERS = 1;
 `endif
 
-`ifdef PARAM_SET_0
-   // Sat from the include file
-`elsif PARAM_SET_1
-   // Sat from the include file
-`else
-   parameter logic [31:0] CORE_PARAM_DM_REGION_START = 32'hF0000000;
-   parameter logic [31:0] CORE_PARAM_DM_REGION_END   = 32'hF0003FFF;
-`endif
-
-
 // CLIC
 
 `ifdef PARAM_SET_0
@@ -127,7 +119,6 @@ parameter logic CLIC = CORE_PARAM_CLIC;
 `elsif PARAM_SET_1
    // Sat from the include file
 `else
-   parameter int  CORE_PARAM_CLIC_INTTHRESHBITS = 8;
    parameter int  CORE_PARAM_CLIC_ID_WIDTH = 5;
 `endif
 
@@ -184,10 +175,18 @@ parameter logic CLIC = CORE_PARAM_CLIC;
    parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR1_CFG = cv32e40s_pkg::lfsr_cfg_t'{ coeffs : 32'h80000062, default_seed : 32'hbeef1234 };
    parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR2_CFG = cv32e40s_pkg::lfsr_cfg_t'{ coeffs : 32'h8000007a, default_seed : 32'ha5a5a5a5 };
 `else
-   parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR0_CFG = cv32e40s_pkg::LFSR_CFG_DEFAULT;
-   parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR1_CFG = cv32e40s_pkg::LFSR_CFG_DEFAULT;
-   parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR2_CFG = cv32e40s_pkg::LFSR_CFG_DEFAULT;
+   parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR0_CFG = cv32e40s_pkg::lfsr_cfg_t'{ coeffs : 32'h80000057, default_seed : 32'habbacafe };
+   parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR1_CFG = cv32e40s_pkg::lfsr_cfg_t'{ coeffs : 32'h80000062, default_seed : 32'hbeef1234 };
+   parameter cv32e40s_pkg::lfsr_cfg_t CORE_PARAM_LFSR2_CFG = cv32e40s_pkg::lfsr_cfg_t'{ coeffs : 32'h8000007a, default_seed : 32'ha5a5a5a5 };
 `endif
+
+
+`ifdef INTEGRITY_ERRORS_ENABLED
+   parameter logic INTEGRITY_ERRORS_ENABLED = 1;
+`else
+   parameter logic INTEGRITY_ERRORS_ENABLED = 0;
+`endif
+
 
 
 // PMP
@@ -264,7 +263,10 @@ parameter int  PMA_MAX_REGIONS = 16;
    // Sat from the include file
 `elsif PMA_CUSTOM_CFG
    const string pma_cfg_name = "pma_custom_cfg";
-   parameter int unsigned            CORE_PARAM_PMA_NUM_REGIONS = 3;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_START = 32'h1A11_0000;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_END   = 32'h1A11_1000;
+   parameter int unsigned CORE_PARAM_PMA_NUM_REGIONS = 3;
+
    parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
       // Overlap "shadow" of main code (.text), for testing overlap priority
       cv32e40s_pkg::pma_cfg_t'{
@@ -293,7 +295,10 @@ parameter int  PMA_MAX_REGIONS = 16;
       };
 `elsif PMA_DEBUG_CFG
    const string pma_cfg_name = "pma_debug_cfg";
-   parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 2;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_START = 32'h1A11_0000;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_END   = 32'h1A11_1000;
+   parameter int unsigned CORE_PARAM_PMA_NUM_REGIONS = 2;
+
    parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
       // Everything is initially executable
       cv32e40s_pkg::pma_cfg_t'{
@@ -314,13 +319,19 @@ parameter int  PMA_MAX_REGIONS = 16;
       };
 `elsif PMA_TEST_CFG_1
    const string pma_cfg_name = "pma_test_cfg_1";
-   parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 1;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_START = 32'h1A11_0000;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_END   = 32'h1A11_1000;
+   parameter int unsigned CORE_PARAM_PMA_NUM_REGIONS = 1;
+
    parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[0:CORE_PARAM_PMA_NUM_REGIONS-1] = '{
      '{word_addr_low : 32'h0000_0000>>2, word_addr_high : 32'h7FFF_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b1, integrity : 1'b0}
    };
 `elsif PMA_TEST_CFG_2
    const string pma_cfg_name = "pma_test_cfg_2";
-   parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 7;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_START = 32'h1A11_0000;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_END   = 32'h1A11_1000;
+   parameter int unsigned CORE_PARAM_PMA_NUM_REGIONS = 7;
+
    parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
      '{word_addr_low : 32'hE010_0000>>2, word_addr_high : 32'hFFFF_FFFF>>2, main : 1'b0, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b1},
      '{word_addr_low : 32'hE000_0000>>2, word_addr_high : 32'hE00F_FFFF>>2, main : 1'b0, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b0},
@@ -332,7 +343,10 @@ parameter int  PMA_MAX_REGIONS = 16;
      };
 `elsif PMA_TEST_CFG_3
    const string pma_cfg_name = "pma_test_cfg_3";
-   parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 16;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_START = 32'h1A11_0000;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_END   = 32'h1A11_1000;
+   parameter int unsigned CORE_PARAM_PMA_NUM_REGIONS = 16;
+
    parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
      '{word_addr_low : 32'h0000_A000>>2, word_addr_high : 32'hFFFE_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b1, integrity : 1'b1},
      '{word_addr_low : 32'h0200_0000>>2, word_addr_high : 32'hEFFF_FFFF>>2, main : 1'b1, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b0},
@@ -353,7 +367,10 @@ parameter int  PMA_MAX_REGIONS = 16;
      };
 `elsif PMA_TEST_CFG_4
    const string pma_cfg_name = "pma_test_cfg_4";
-   parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 16;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_START = 32'h3201_0000;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_END   = 32'h3201_1000;
+   parameter int unsigned CORE_PARAM_PMA_NUM_REGIONS = 16;
+
    parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
      '{word_addr_low : 32'hE700_EF00>>2, word_addr_high : 32'hE9FF_FFFF>>2, main : 1'b0, bufferable : 1'b1, cacheable : 1'b0, integrity : 1'b1},
      '{word_addr_low : 32'hC000_0000>>2, word_addr_high : 32'hDFFF_FFFF>>2, main : 1'b0, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b0},
@@ -374,7 +391,10 @@ parameter int  PMA_MAX_REGIONS = 16;
      };
 `elsif PMA_TEST_CFG_5
    const string pma_cfg_name = "pma_test_cfg_5";
-   parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 16;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_START = 32'h0030_1000;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_END   = 32'h0030_2000;
+   parameter int unsigned CORE_PARAM_PMA_NUM_REGIONS = 16;
+
    parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
      '{word_addr_low : 32'h0000_0000>>2, word_addr_high : 32'hFFFF_FFFF>>2, main : 1'b1, bufferable : 1'b1, cacheable : 1'b1, integrity : 1'b1},
      '{word_addr_low : 32'h1249_2492>>2, word_addr_high : 32'h1249_2492>>2, main : 1'b0, bufferable : 1'b0, cacheable : 1'b0, integrity : 1'b0},
@@ -395,7 +415,10 @@ parameter int  PMA_MAX_REGIONS = 16;
      };
 `elsif PMA_TEST_CFG_X1 // Used for memory layout generator debug
    const string pma_cfg_name = "pma_test_cfg_x1";
-   parameter int unsigned               CORE_PARAM_PMA_NUM_REGIONS = 5;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_START = 32'h0030_1000;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_END   = 32'h0030_2000;
+   parameter int unsigned CORE_PARAM_PMA_NUM_REGIONS = 5;
+
    parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[CORE_PARAM_PMA_NUM_REGIONS-1:0] = '{
      '{word_addr_low : 32'h00000000>>2, word_addr_high : 32'h20000000>>2, main : 1'b1, bufferable : 1'b0, cacheable : 1'b1, integrity : 1'b0},
      '{word_addr_low : 32'h30000000>>2, word_addr_high : 32'h40000000>>2, main : 1'b1, bufferable : 1'b0, cacheable : 1'b1, integrity : 1'b0},
@@ -405,7 +428,9 @@ parameter int  PMA_MAX_REGIONS = 16;
      };
 `else
    const string pma_cfg_name = "pma_noregion";
-   parameter int unsigned            CORE_PARAM_PMA_NUM_REGIONS = 0;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_START = 32'h1A11_0000;
+   parameter logic [31:0] CORE_PARAM_DM_REGION_END   = 32'h1A11_1000;
+   parameter int unsigned CORE_PARAM_PMA_NUM_REGIONS = 0;
    parameter cv32e40s_pkg::pma_cfg_t CORE_PARAM_PMA_CFG[-1:0] = '{default:cv32e40s_pkg::PMA_R_DEFAULT};
 `endif
 

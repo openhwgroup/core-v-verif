@@ -290,7 +290,7 @@ module  uvmt_cv32e40s_pma_cov
     option.per_instance = 1;
     option.detect_overlap = 1;
 
-    cp_aligned: coverpoint  rvfi_if.is_split_datatrans
+    cp_aligned: coverpoint  rvfi_if.is_split_datatrans_intended
       iff (rvfi_if.rvfi_valid)
     {
       bins  misaligned = {1};
@@ -371,12 +371,9 @@ module  uvmt_cv32e40s_pma_cov
 
     // Table Jump Crosses
 
-    x_aligned_pmafault_firstfail_tablejump:
-      cross  cp_aligned, cp_pmafault, cp_firstfail, cp_tablejump
-    {
-      ignore_bins  ignore =
-        binsof(cp_firstfail.yes) && binsof(cp_tablejump.jump);
-    }
+    // TODO: silabs-hfegran: these need vector table access on IF side, currently
+    // only data side is used.
+    //x_pmafault_firstfail_tablejump: cross  cp_pmafault, cp_firstfail, cp_tablejump;
 
     x_pmafault_tablejump: cross  cp_pmafault, cp_tablejump;
 
