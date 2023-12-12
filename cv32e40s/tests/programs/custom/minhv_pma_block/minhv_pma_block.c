@@ -24,7 +24,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include "bsp.h"
 
+#define RND_ADDRS_IN_PMA_CFG_2_IO_REGION 0xE0100010
 
 extern volatile uint32_t recovery_pt_mret;
 volatile uint32_t g_entered_trap_handler;
@@ -51,9 +53,9 @@ int main(int argc, char **argv){
 
 int execute_from_io_region() {
 
-  volatile uint32_t io_addr = 0xFFFFEFFF << 2;
+  volatile uint32_t io_addr = RND_ADDRS_IN_PMA_CFG_2_IO_REGION;
   volatile uint32_t mcause_excode = 0x0;
-  volatile uint32_t mcause_excode_expected = 0x1; //Execution attempt from I/O region.
+  volatile uint32_t mcause_excode_expected = EXC_CAUSE_INSTR_ACC_FAULT; //Execution attempt from I/O region.
   volatile uint32_t mret_dont_trap = 0;
   volatile uint32_t test_fail = 0;
   g_entered_trap_handler = 0;
@@ -101,10 +103,6 @@ int execute_from_io_region() {
 __attribute__((interrupt ("machine")))
 void  u_sw_irq_handler(void) {
   __asm__ volatile (R"(
-    # Backup "sp", use debug's own stack
-    # csrw dscratch0, sp
-    # la sp, __debugger_stack_start
-
     # Backup all GPRs
     sw a0, -4(sp)
     sw a1, -8(sp)
