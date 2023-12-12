@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+
+
+# Copyright 2023 Silicon Labs, Inc.
+#
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# Licensed under the Solderpad Hardware License v 2.1 (the "License"); you may
+# not use this file except in compliance with the License, or, at your option,
+# the Apache License version 2.0.
+#
+# You may obtain a copy of the License at
+# https://solderpad.org/licenses/SHL-2.1/
+#
+# Unless required by applicable law or agreed to in writing, any work
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+"""
+Description:
+    Converts ".csv" vplans to ".json".
+
+Rationale:
+    It is an alternative to the ".csv" vplans, which in some cases might be
+    easier to review.
+
+Usage:
+    Run it on a ".csv" vplan.
+"""
+
+
+import csv
+import json
+import sys
+
+
+# Check correct usage
+
+if len(sys.argv) != 2:
+    message = "usage:  {}  <csv vplan>".format(sys.argv[0])
+    sys.exit(message)
+
+
+# Read ".csv"
+
+csv_filename = sys.argv[1]
+csv_file     = open(csv_filename, 'r', encoding='utf-8')
+csv_reader   = csv.DictReader(csv_file)
+
+
+# Fill empty cells  (with value of above cell)
+
+csv_rows         = []
+csv_row_previous = None
+
+def should_fill_cell(cell_value, previous_row, row_key):
+    cell_is_empty        = not cell_value
+    previous_row_exists  = previous_row
+    column_should_repeat = row_key in ['Feature', 'Verification Goal']
+    return  cell_is_empty  and  previous_row_exists  and  column_should_repeat
+
+for row in csv_reader:
+    for key, value in row.items():
+        if should_fill_cell(value, csv_row_previous, key):
+            row[key] = csv_row_previous[key]
+
+    csv_rows.append(row)
+    csv_row_previous = row
+
+
+# Write ".json"
+
+json_string   = json.dumps(csv_rows, indent = 4)
+json_filename = csv_filename.replace(".csv", ".json")
+json_file     = open(json_filename, 'w', encoding='utf-8')
+
+json_file.write(json_string)

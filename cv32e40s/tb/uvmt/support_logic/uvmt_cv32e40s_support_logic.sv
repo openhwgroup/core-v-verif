@@ -20,11 +20,14 @@ module uvmt_cv32e40s_support_logic
   import cv32e40s_pkg::*;
   import uvmt_cv32e40s_pkg::*;
   import uvma_rvfi_pkg::*;
+  import isa_decoder_pkg::*;
   import uvmt_cv32e40s_base_test_pkg::*;
   (
     uvma_rvfi_instr_if_t rvfi,
     uvmt_cv32e40s_support_logic_module_i_if_t.driver_mp in_support_if,
-    uvmt_cv32e40s_support_logic_module_o_if_t.master_mp out_support_if
+    uvmt_cv32e40s_support_logic_module_o_if_t.master_mp out_support_if,
+    uvma_obi_memory_if_t data_obi_if,
+    uvma_obi_memory_if_t instr_obi_if
   );
 
 
@@ -35,30 +38,11 @@ module uvmt_cv32e40s_support_logic
   default clocking @(posedge in_support_if.clk); endclocking
   default disable iff (!in_support_if.rst_n);
 
-
   // ---------------------------------------------------------------------------
   // Local parameters
   // ---------------------------------------------------------------------------
 
-  localparam MAX_NUM_TRIGGERS = 5;
-  localparam TDATA1_DEFAULT = 32'hF800_0000;
-  localparam TDATA1_ET_M_MODE = 9;
-  localparam TDATA1_ET_U_MODE = 6;
-  localparam TDATA1_LSB_TYPE = 28;
-  localparam TDATA1_MSB_TYPE = 31;
-  localparam TDATA1_LOAD = 0;
-  localparam TDATA1_STORE = 1;
-  localparam TDATA1_EXECUTE = 2;
-  localparam TDATA1_M2_M6_U_MODE = 3;
-  localparam TDATA1_M2_M6_M_MODE = 6;
-  localparam TDATA1_LSB_MATCH = 7;
-  localparam TDATA1_MSB_MATCH = 10;
-  localparam TDATA1_MATCH_WHEN_EQUAL = 0;
-  localparam TDATA1_MATCH_WHEN_GREATER_OR_EQUAL = 2;
-  localparam TDATA1_MATCH_WHEN_LESSER = 3;
-
-  localparam MAX_MEM_ACCESS = 13; //Push and pop can do 13 memory access. XIF can potentially do more (TODO (xif): check this when merging to cv32e40x)
-
+  localparam MAX_NUM_OUTSTANDING_OBI_REQUESTS = 2;
 
   // ---------------------------------------------------------------------------
   // Local variables
@@ -81,9 +65,45 @@ module uvmt_cv32e40s_support_logic
   int   req_vs_valid_cnt;
 
 
+  obi_data_req_t data_obi_req;
+  assign data_obi_req.addr      = data_obi_if.addr;
+  assign data_obi_req.we        = data_obi_if.we;
+  assign data_obi_req.be        = data_obi_if.be;
+  assign data_obi_req.wdata     = data_obi_if.wdata;
+  assign data_obi_req.memtype   = data_obi_if.memtype;
+  assign data_obi_req.prot      = data_obi_if.prot;
+  assign data_obi_req.dbg       = data_obi_if.dbg;
+  assign data_obi_req.achk      = data_obi_if.achk;
+  assign data_obi_req.integrity = '0;
+
+  obi_inst_req_t instr_obi_req;
+  assign instr_obi_req.addr      = instr_obi_if.addr;
+  assign instr_obi_req.memtype   = instr_obi_if.memtype;
+  assign instr_obi_req.prot      = instr_obi_if.prot;
+  assign instr_obi_req.dbg       = instr_obi_if.dbg;
+  assign instr_obi_req.achk      = instr_obi_if.achk;
+  assign instr_obi_req.integrity = '0;
+
   // ---------------------------------------------------------------------------
   // Support logic blocks
   // ---------------------------------------------------------------------------
+
+  // Decoder:
+  always_comb begin
+    out_support_if.asm_if = decode_instr(in_support_if.if_instr);
+  end
+  always_comb begin
+    out_support_if.asm_id = decode_instr(in_support_if.id_instr);
+  end
+  always_comb begin
+    out_support_if.asm_ex = decode_instr(in_support_if.ex_instr);
+  end
+  always_comb begin
+    out_support_if.asm_wb = decode_instr(in_support_if.wb_instr);
+  end
+  always_comb begin
+    out_support_if.asm_rvfi = decode_instr(rvfi.rvfi_insn);
+  end
 
 
   // Check if a new obi data req arrives after an exception is triggered.
@@ -174,130 +194,32 @@ module uvmt_cv32e40s_support_logic
       end
   end
 
-  logic [MAX_NUM_TRIGGERS-1:0][31:0] tdata1_array;
-  logic [MAX_NUM_TRIGGERS-1:0][31:0] tdata2_array;
+if (CORE_PARAM_DBG_NUM_TRIGGERS == 0) begin
+  assign trigger_match_mem = '0;
+  assign trigger_match_execute = '0;
+  assign trigger_match_exception = '0;
+  assign is_trigger_match = '0;
 
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_exception;
-  logic [MAX_NUM_TRIGGERS-1:0] pc_addr_match;
-  logic [MAX_NUM_TRIGGERS-1:0][4*MAX_MEM_ACCESS-1:0] mem_addr_match;
-  logic [MAX_NUM_TRIGGERS-1:0] general_trigger_match_conditions;
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_load_array;
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_store_array;
-  logic [MAX_NUM_TRIGGERS-1:0] trigger_match_execute_array;
+end else begin
 
-  always @(posedge in_support_if.clk, negedge in_support_if.rst_n ) begin
-    if(!in_support_if.rst_n) begin
-      tdata1_array[0] = TDATA1_DEFAULT;
-      tdata1_array[1] = TDATA1_DEFAULT;
-      tdata1_array[2] = TDATA1_DEFAULT;
-      tdata1_array[3] = TDATA1_DEFAULT;
-      tdata1_array[4] = TDATA1_DEFAULT;
-      tdata2_array = '0;
+  uvmt_cv32e40s_sl_trigger_match
+  sl_trigger_match
+  (
+    .clk_i (in_support_if.clk),
+    .rst_ni (in_support_if.rst_n),
+    .trigger_match_mem (out_support_if.trigger_match_mem[CORE_PARAM_DBG_NUM_TRIGGERS-1:0]),
+    .trigger_match_execute (out_support_if.trigger_match_execute[CORE_PARAM_DBG_NUM_TRIGGERS-1:0]),
+    .trigger_match_exception (out_support_if.trigger_match_exception[CORE_PARAM_DBG_NUM_TRIGGERS-1:0]),
+    .is_trigger_match (out_support_if.is_trigger_match[CORE_PARAM_DBG_NUM_TRIGGERS-1:0])
+  );
 
-    end else if (in_support_if.wb_valid) begin
-      tdata1_array[in_support_if.wb_tselect[$clog2(MAX_NUM_TRIGGERS)-1:0]] = in_support_if.wb_tdata1;
-      tdata2_array[in_support_if.wb_tselect[$clog2(MAX_NUM_TRIGGERS)-1:0]] = in_support_if.wb_tdata2;
-    end
-  end
+  assign out_support_if.trigger_match_mem[CORE_PARAM_DBG_NUM_TRIGGERS] = 1'b0;
+  assign out_support_if.trigger_match_execute[CORE_PARAM_DBG_NUM_TRIGGERS] = 1'b0;
+  assign out_support_if.trigger_match_exception[CORE_PARAM_DBG_NUM_TRIGGERS] = 1'b0;
+  assign out_support_if.is_trigger_match[CORE_PARAM_DBG_NUM_TRIGGERS] = 1'b0;
 
+end
 
-  for (genvar t = 0; t < MAX_NUM_TRIGGERS; t++) begin
-
-    assign trigger_match_exception[t] =
-      t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-        1'b0 :
-        rvfi.rvfi_valid
-        && rvfi.rvfi_trap.exception
-        && tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 5
-        && tdata2_array[t][rvfi.rvfi_trap.exception_cause]
-        && ((rvfi.is_mmode && tdata1_array[t][TDATA1_ET_M_MODE])
-        || (rvfi.is_umode && tdata1_array[t][TDATA1_ET_U_MODE]));
-
-
-    assign pc_addr_match[t] =
-      t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-        1'b0 :
-        ((tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL && rvfi.rvfi_pc_rdata == tdata2_array[t]) ||
-        (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL && rvfi.rvfi_pc_rdata >= tdata2_array[t]) ||
-        (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER && rvfi.rvfi_pc_rdata < tdata2_array[t]));
-
-    for (genvar i = 0; i < MAX_MEM_ACCESS; i++) begin
-
-      assign mem_addr_match[t][i*4+0] =
-        t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-          1'b0 :
-          ((tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL && rvfi.mem_addr_array[i] == tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL && rvfi.mem_addr_array[i] >= tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER && rvfi.mem_addr_array[i] < tdata2_array[t]));
-
-      assign mem_addr_match[t][i*4+1] =
-        t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-          1'b0 :
-          ((tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL && rvfi.mem_addr_array[i] + 1 == tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL && rvfi.mem_addr_array[i] + 1 >= tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER && rvfi.mem_addr_array[i] + 1 < tdata2_array[t]));
-
-      assign mem_addr_match[t][i*4+2] =
-        t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-          1'b0 :
-          ((tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL && rvfi.mem_addr_array[i] + 2 == tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL && rvfi.mem_addr_array[i] + 2 >= tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER && rvfi.mem_addr_array[i] + 2 < tdata2_array[t]));
-
-      assign mem_addr_match[t][i*4+3] =
-        t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-          1'b0 :
-          ((tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL && rvfi.mem_addr_array[i] +3 == tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL && rvfi.mem_addr_array[i] +3 >= tdata2_array[t]) ||
-          (tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER && rvfi.mem_addr_array[i] +3 < tdata2_array[t]));
-    end
-
-
-    assign general_trigger_match_conditions[t] =
-      t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-        1'b0 :
-        rvfi.rvfi_valid                                          &&
-        (tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 2   ||
-        tdata1_array[t][TDATA1_MSB_TYPE:TDATA1_LSB_TYPE] == 6)   &&
-        ((rvfi.is_mmode && tdata1_array[t][TDATA1_M2_M6_M_MODE]) ||
-        (rvfi.is_umode && tdata1_array[t][TDATA1_M2_M6_U_MODE]));
-
-    assign trigger_match_execute_array[t] =
-      t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-        1'b0 :
-        general_trigger_match_conditions[t] &&
-        tdata1_array[t][TDATA1_EXECUTE] &&
-        pc_addr_match[t];
-
-    assign trigger_match_load_array[t] =
-      t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-        1'b0 :
-        general_trigger_match_conditions[t] &&
-        !out_support_if.is_trigger_match_execute &&
-        tdata1_array[t][TDATA1_LOAD] &&
-        |(rvfi.instr_mem_rmask & mem_addr_match[t]);
-
-    assign trigger_match_store_array[t] =
-      t >= (CORE_PARAM_DBG_NUM_TRIGGERS) ?
-        1'b0 :
-        general_trigger_match_conditions[t] &&
-        !out_support_if.is_trigger_match_execute &&
-        tdata1_array[t][TDATA1_STORE] &&
-        |(rvfi.instr_mem_wmask & mem_addr_match[t]);
-
-  end
-
-  assign out_support_if.tdata1_array = tdata1_array;
-  assign out_support_if.tdata2_array = tdata2_array;
-
-  assign out_support_if.is_trigger_match_exception = |trigger_match_exception;
-  assign out_support_if.is_trigger_match_execute = |trigger_match_execute_array;
-  assign out_support_if.is_trigger_match_load = |trigger_match_load_array;
-  assign out_support_if.is_trigger_match_store = |trigger_match_store_array;
-
-  assign out_support_if.trigger_match_execute_array = trigger_match_execute_array;
-  assign out_support_if.trigger_match_load_array = trigger_match_load_array;
-  assign out_support_if.trigger_match_store_array = trigger_match_store_array;
 
 
   // Count "irq_ack"
@@ -398,80 +320,88 @@ module uvmt_cv32e40s_support_logic
   );
 
 
-  //The submodule instance under will tell if the
-  //the response's request required a store operation.
-
-  uvmt_cv32e40s_sl_req_attribute_fifo
-  #(
-    .XLEN (1)
-  ) req_was_store_i
-  (
-    .clk_i (in_support_if.clk),
-    .rst_ni (in_support_if.rst_n),
-
-    .gnt (in_support_if.data_bus_gnt),
-    .req (in_support_if.data_bus_req),
-    .rvalid (in_support_if.data_bus_rvalid),
-    .req_attribute_i (in_support_if.req_is_store & in_support_if.rst_n),
-
-    .is_req_attribute_in_response_o (out_support_if.req_was_store)
-  );
-
-  uvmt_cv32e40s_sl_req_attribute_fifo
-  #(
-    .XLEN (32)
-  ) instr_resp_pc_i
-  (
-    .clk_i (in_support_if.clk),
-    .rst_ni (in_support_if.rst_n),
-
-    .gnt (in_support_if.instr_bus_gnt),
-    .req (in_support_if.instr_bus_req),
-    .rvalid (in_support_if.instr_bus_rvalid),
-    .req_attribute_i (in_support_if.instr_req_pc & !in_support_if.rst_n),
-
-    .is_req_attribute_in_response_o (out_support_if.instr_resp_pc)
-  );
-
-  //The submodule instance under will tell if the
+  //The submodule instances under will tell if the
   //the response's request had integrity
-  //in the transfere of instructions on the OBI instruction bus.
 
-  uvmt_cv32e40s_sl_req_attribute_fifo
+  uvmt_cv32e40s_sl_fifo
   #(
-    .XLEN (1)
+    .FIFO_TYPE_T (logic),
+    .FIFO_SIZE (MAX_NUM_OUTSTANDING_OBI_REQUESTS)
   ) instr_req_had_integrity_i
   (
     .clk_i (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
 
-    .gnt (in_support_if.instr_bus_gnt),
-    .req (in_support_if.instr_bus_req),
-    .rvalid (in_support_if.instr_bus_rvalid),
-    .req_attribute_i (in_support_if.req_instr_integrity & in_support_if.rst_n),
+    .add_item   (in_support_if.instr_bus_gnt && in_support_if.instr_bus_req),
+    .shift_fifo (in_support_if.instr_bus_rvalid),
 
-    .is_req_attribute_in_response_o (out_support_if.instr_req_had_integrity)
+    .item_in    (in_support_if.req_instr_integrity),
+    .item_out   (out_support_if.instr_req_had_integrity)
   );
 
-  //The submodule instance under will tell if the
-  //the response's request had integrity
-  //in the transfere of data on the OBI data bus.
-
-  uvmt_cv32e40s_sl_req_attribute_fifo
+  uvmt_cv32e40s_sl_fifo
   #(
-    .XLEN (1)
+    .FIFO_TYPE_T (logic),
+    .FIFO_SIZE (MAX_NUM_OUTSTANDING_OBI_REQUESTS)
   ) data_req_had_integrity_i
   (
     .clk_i (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
 
-    .gnt (in_support_if.data_bus_gnt),
-    .req (in_support_if.data_bus_req),
-    .rvalid (in_support_if.data_bus_rvalid),
-    .req_attribute_i (in_support_if.req_data_integrity & in_support_if.rst_n),
+    .add_item   (in_support_if.data_bus_gnt && in_support_if.data_bus_req),
+    .shift_fifo (in_support_if.data_bus_rvalid),
 
-    .is_req_attribute_in_response_o (out_support_if.data_req_had_integrity)
+    .item_in    (in_support_if.req_data_integrity),
+    .item_out   (out_support_if.data_req_had_integrity)
   );
+
+  uvmt_cv32e40s_sl_fifo
+  #(
+    .FIFO_TYPE_T (obi_data_req_t),
+    .FIFO_SIZE (MAX_NUM_OUTSTANDING_OBI_REQUESTS)
+  ) fifo_obi_data_req
+  (
+    .clk_i (in_support_if.clk),
+    .rst_ni (in_support_if.rst_n),
+
+    .add_item   (data_obi_if.gnt && data_obi_if.req),
+    .shift_fifo (data_obi_if.rvalid),
+
+    .item_in    (data_obi_req),
+    .item_out   (out_support_if.obi_data_packet.req)
+  );
+
+  assign out_support_if.obi_data_packet.resp.rdata         = data_obi_if.rdata;
+  assign out_support_if.obi_data_packet.resp.err           = data_obi_if.err;
+  assign out_support_if.obi_data_packet.resp.rchk          = data_obi_if.rchk;
+  assign out_support_if.obi_data_packet.resp.integrity_err = '0;
+  assign out_support_if.obi_data_packet.resp.integrity     = '0;
+  assign out_support_if.obi_data_packet.valid              = data_obi_if.rvalid;
+
+
+  uvmt_cv32e40s_sl_fifo
+  #(
+    .FIFO_TYPE_T (obi_inst_req_t),
+    .FIFO_SIZE (MAX_NUM_OUTSTANDING_OBI_REQUESTS)
+  ) fifo_obi_instr_req
+  (
+    .clk_i (in_support_if.clk),
+    .rst_ni (in_support_if.rst_n),
+
+    .add_item   (instr_obi_if.gnt && instr_obi_if.req),
+    .shift_fifo (instr_obi_if.rvalid),
+
+    .item_in    (instr_obi_req),
+    .item_out   (out_support_if.obi_instr_packet.req)
+  );
+
+  assign out_support_if.obi_instr_packet.resp.rdata         = instr_obi_if.rdata;
+  assign out_support_if.obi_instr_packet.resp.err           = instr_obi_if.err;
+  assign out_support_if.obi_instr_packet.resp.rchk          = instr_obi_if.rchk;
+  assign out_support_if.obi_instr_packet.resp.integrity_err = '0;
+  assign out_support_if.obi_instr_packet.resp.integrity     = '0;
+  assign out_support_if.obi_instr_packet.valid              = instr_obi_if.rvalid;
+
 
   //The submodule instance under will tell if the
   //the response's request had a gntpar error
@@ -506,40 +436,40 @@ module uvmt_cv32e40s_support_logic
     end
   end
 
-  uvmt_cv32e40s_sl_req_attribute_fifo
+  uvmt_cv32e40s_sl_fifo
   #(
-    .XLEN (1)
+    .FIFO_TYPE_T (logic),
+    .FIFO_SIZE (MAX_NUM_OUTSTANDING_OBI_REQUESTS)
   ) sl_req_gntpar_error_in_resp_instr_i
   (
-    .clk_i (in_support_if.clk),
+    .clk_i  (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
 
-    .gnt (in_support_if.instr_bus_gnt),
-    .req (in_support_if.instr_bus_req),
-    .rvalid (in_support_if.instr_bus_rvalid),
-    .req_attribute_i (instr_gntpar_error),
+    .add_item   (in_support_if.instr_bus_gnt && in_support_if.instr_bus_req),
+    .shift_fifo (in_support_if.instr_bus_rvalid),
 
-    .is_req_attribute_in_response_o (out_support_if.gntpar_error_in_response_instr)
+    .item_in    (instr_gntpar_error),
+    .item_out   (out_support_if.gntpar_error_in_response_instr)
   );
 
   //The submodule instance under will tell if the
   //the response's request had a gntpar error
   //in the transfere of data on the OBI data bus.
 
-  uvmt_cv32e40s_sl_req_attribute_fifo
+  uvmt_cv32e40s_sl_fifo
   #(
-    .XLEN (1)
+    .FIFO_TYPE_T (logic),
+    .FIFO_SIZE (MAX_NUM_OUTSTANDING_OBI_REQUESTS)
   ) sl_req_gntpar_error_in_resp_data_i
   (
-    .clk_i (in_support_if.clk),
+    .clk_i  (in_support_if.clk),
     .rst_ni (in_support_if.rst_n),
 
-    .gnt (in_support_if.data_bus_gnt),
-    .req (in_support_if.data_bus_req),
-    .rvalid (in_support_if.data_bus_rvalid),
-    .req_attribute_i (data_gntpar_error),
+    .add_item   (in_support_if.data_bus_gnt && in_support_if.data_bus_req),
+    .shift_fifo (in_support_if.data_bus_rvalid),
 
-    .is_req_attribute_in_response_o (out_support_if.gntpar_error_in_response_data)
+    .item_in    (data_gntpar_error),
+    .item_out   (out_support_if.gntpar_error_in_response_data)
   );
 
 endmodule : uvmt_cv32e40s_support_logic

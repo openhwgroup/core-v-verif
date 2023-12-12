@@ -45,6 +45,7 @@ package uvme_cv32e40s_pkg;
    import uvma_isacov_pkg::*;
    import uvma_clknrst_pkg::*;
    import uvma_clic_pkg::*;
+   import uvma_wfe_wu_pkg::*;
    import uvma_interrupt_pkg::*;
    import uvma_debug_pkg::*;
    import uvma_obi_memory_pkg::*;
@@ -73,15 +74,17 @@ package uvme_cv32e40s_pkg;
    `include "uvme_cv32e40s_nmi_timeout_vseq.sv"
    `include "uvme_cv32e40s_irq_ss_timeout_vseq.sv"
    `include "uvme_cv32e40s_vp_debug_control_seq.sv"
+   `include "uvme_cv32e40s_vp_fencei_tamper_seq.sv"
    `include "uvme_cv32e40s_vp_interrupt_timer_seq.sv"
+   `include "uvme_cv32e40s_vp_obi_err_await_goahead_seq.sv"
    `include "uvme_cv32e40s_vp_sig_writer_seq.sv"
    `include "uvme_cv32e40s_vp_status_flags_seq.sv"
-   `include "uvme_cv32e40s_vp_fencei_tamper_seq.sv"
    `include "uvme_cv32e40s_interrupt_noise_vseq.sv"
    `include "uvme_cv32e40s_clic_noise_vseq.sv"
    `include "uvme_cv32e40s_vseq_lib.sv"
    `include "uvme_cv32e40s_core_cntrl_base_seq.sv"
    `include "uvme_cv32e40s_core_cntrl_fetch_toggle_seq.sv"
+   `include "uvme_cv32e40s_wu_wfe_noise_vseq.sv"
    `include "uvme_cv32e40s_random_debug_vseq.sv"
    `include "uvme_cv32e40s_random_debug_reset_vseq.sv"
    `include "uvme_cv32e40s_random_debug_bootset_vseq.sv"
@@ -90,6 +93,7 @@ package uvme_cv32e40s_pkg;
    `include "uvma_cv32e40s_core_cntrl_drv.sv"
    `include "uvma_cv32e40s_core_cntrl_agent.sv"
    `include "uvme_interrupt_covg.sv"
+   `include "uvme_clic_covg.sv"
    `include "uvme_debug_covg.sv"
    `include "uvme_exceptions_covg.sv"
    `include "uvme_counters_covg.sv"

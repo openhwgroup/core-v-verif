@@ -19,6 +19,11 @@
 `define __UVMA_ISACOV_TDEFS_SV__
 
 typedef enum {
+  SPIKE,
+  ISA_SUPPORT
+} decoder_e;
+
+typedef enum {
   A_EXT,
   B_EXT,
   C_EXT,

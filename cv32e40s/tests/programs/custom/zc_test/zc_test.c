@@ -28,6 +28,7 @@
 
 #include "zc_test.h"
 
+#define DEBUG_PRINT false
 
 //       Program Functions                //
 
@@ -88,12 +89,16 @@ void m_external_irq_handler(void) {
   }
   test_instr_num += 1;
 
-  printf("external interrupt encountered\n");
+  if(DEBUG_PRINT){
+    printf("external interrupt encountered\n");
+  }
   ex_traps_entered += 1;
 
   __asm__ volatile("csrrs %0, mepc, x0" : "=r"(mepc));
-  printf("returning to mepc: 0x%x \n", (unsigned int)mepc);
-  printf("comparing to: 0x%x \n", (unsigned int)ref);
+  if(DEBUG_PRINT){
+    printf("returning to mepc: 0x%x \n", (unsigned int)mepc);
+    printf("comparing to: 0x%x \n", (unsigned int)ref);
+  }
 
   if(mepc == ref){
     printf("ERROR: illegal interrupt detected on mepc: 0x%x\n", (unsigned int)mepc);
@@ -106,6 +111,17 @@ void m_external_irq_handler(void) {
 }
 
 
+static void
+test_mva01s_same_register(void)
+{
+  printf("test_mva01s_same_register: start\n");
+  __asm__ volatile(
+    "cm.mva01s s2, s2"
+    : : : "s2"
+  );
+  printf("test_mva01s_same_register: done\n");
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -115,9 +131,14 @@ int main(int argc, char *argv[])
   test_instr_num = 0;
 
 
+  // Setup
+
   printf("Enabling irq. \n");
 
   enable_all_irq();
+
+
+  // Test: PushPop
 
   printf("\n\nTesting push/pop instructions. \n");
   test_active = pushpop;
@@ -125,43 +146,52 @@ int main(int argc, char *argv[])
   for (int i = PUSH_RLIST_MIN; i <= PUSH_RLIST_MAX; i++)
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
-    glb_irq_delay = vp_random_num(i-2, 1);
-    printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
-
+    glb_irq_delay = vp_random_num(i-1, 2);
+    if(DEBUG_PRINT){
+      printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
+    }
     exp_irq += 2;
     interrupt_push_pop(i);
   }
+
+
+  // Test: Popret
 
   printf("\n\nTesting popret instructions. \n");
   test_active = popret;
   test_instr_num = 0;
 
-
   for (int i = PUSH_RLIST_MIN; i <= PUSH_RLIST_MAX; i++)
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
-    glb_irq_delay = vp_random_num(i-2, 1);
-    printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
-
+    glb_irq_delay = vp_random_num(i-1, 2);
+    if(DEBUG_PRINT){
+      printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
+    }
     exp_irq += 1;
     interrupt_popret(i);
   }
+
+
+  // Test: Popretz
 
   printf("\n\nTesting popretz instructions. \n");
   test_active = popretz;
   test_instr_num = 0;
 
-
   for (int i = PUSH_RLIST_MIN; i <= PUSH_RLIST_MAX; i++)
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
-    glb_irq_delay = vp_random_num(i-2, 1);
-    printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
-
+    glb_irq_delay = vp_random_num(i-1, 2);
+    if(DEBUG_PRINT){
+      printf("\n\ntesting rlist %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
+    }
     exp_irq += 1;
     interrupt_popretz(i);
   }
 
+
+  // Test: Mvsa01
 
   printf("\n\nTesting mvsa01 instructions. \n");
   test_active = mvsa;
@@ -173,7 +203,9 @@ int main(int argc, char *argv[])
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
     glb_irq_delay = 3;
-    printf("\n\ntesting mvsa case %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
+    if(DEBUG_PRINT){
+      printf("\n\ntesting mvsa case %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
+    }
 
     exp_irq += 1;
     iteratorVault = i;
@@ -181,17 +213,25 @@ int main(int argc, char *argv[])
     i = iteratorVault;
   }
 
+
+  // Test: Mva01s
+
   printf("\n\nTesting mva01s instructions. \n");
+
   test_active = mvas;
   test_instr_num = 0;
+
   //creating random values for the target registers
   rnd0 = vp_random_num(0xFFFFFFFE, 0x0);
   rnd1 = vp_random_num(0xFFFFFFFE, 0x0);
+
   for (int i = 0; i < MVAS_INSTR_SIZE; i++)
   {
     glb_irq_line = 0x1 << EX_IRQ_LINE;
     glb_irq_delay = 3;
-    printf("\n\ntesting mvsa case %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
+    if(DEBUG_PRINT){
+      printf("\n\ntesting mvsa case %d, with a delay of %u cycles \n", i, (unsigned int)glb_irq_delay);
+    }
 
     exp_irq += 1;
     iteratorVault = i;
@@ -199,6 +239,13 @@ int main(int argc, char *argv[])
     i = iteratorVault;
   }
 
+
+  // Test: Mva01s - Same Register (Sanity check of RTL bugfix.)
+
+  test_mva01s_same_register();
+
+
+  // ErrorCheck & Exit
 
   if(exp_irq != ex_traps_entered) {
     printf("\tERROR: %u interrupts taken, expected %u", (unsigned int)ex_traps_entered, (unsigned int)exp_irq);

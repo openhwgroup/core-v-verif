@@ -160,17 +160,20 @@ module uvmt_cv32e40s_debug_assert
         rvfi.rvfi_pc_rdata == halt_addr
         ) else `uvm_error(info_tag, $sformatf("Debug mode entered with wrong pc. pc==%08x", rvfi.rvfi_pc_rdata));
 
-    a_debug_mode_pc_dpc: assert property(
-        $rose(support_if.first_debug_ins) &&
-        // ignore CLIC, checked in clic asserts
-        !(rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt && (csr_mtvec.rvfi_csr_rdata[1:0] == 3))
-        |->
-        (rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt
-        ##1
-        dpc_rdata_q == pc_at_dbg_req)
-        or
-        (csr_dpc.rvfi_csr_rdata == pc_at_dbg_req)
-        ) else `uvm_error(info_tag, $sformatf("Debug mode entered with wrong dpc. dpc==%08x", csr_dpc.rvfi_csr_rdata));
+
+    generate // ignore CLIC, checked in clic asserts
+        if (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC==0) begin
+            a_debug_mode_pc_dpc: assert property(
+                $rose(support_if.first_debug_ins)
+                |->
+                (rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt
+                ##1
+                dpc_rdata_q == pc_at_dbg_req)
+                or
+                (csr_dpc.rvfi_csr_rdata == pc_at_dbg_req)
+                ) else `uvm_error(info_tag, $sformatf("Debug mode entered with wrong dpc. dpc==%08x", csr_dpc.rvfi_csr_rdata));
+        end
+    endgenerate
 
     // Breaking down the above assert in to debug causes, to improve runtime
     property p_dpc_dbg_ebreak;
@@ -194,9 +197,7 @@ module uvmt_cv32e40s_debug_assert
     //TODO:MT Fully covered by those below, remove?
      property p_dpc_dbg_step;
         $rose(support_if.first_debug_ins) &&
-        rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP &&
-        // ignore CLIC, checked in clic asserts
-        !(rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt && (csr_mtvec.rvfi_csr_rdata[1:0] == 3))
+        rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_STEP
         |->
         (csr_dpc.rvfi_csr_rdata == dpc_dbg_step)
         or
@@ -204,8 +205,12 @@ module uvmt_cv32e40s_debug_assert
         ##1 dpc_rdata_q == dpc_dbg_step);
     endproperty
 
-    a_dpc_dbg_step: assert property(p_dpc_dbg_step)
-        else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a step, dpc==%08x", csr_dpc.rvfi_csr_rdata));
+    generate // ignore CLIC, checked in clic asserts
+        if (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC==0) begin
+            a_dpc_dbg_step: assert property(p_dpc_dbg_step)
+                else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a step, dpc==%08x", csr_dpc.rvfi_csr_rdata));
+        end
+    endgenerate
 
 
     property p_dpc_dbg_step_notrap;
@@ -252,9 +257,7 @@ module uvmt_cv32e40s_debug_assert
     //TODO:MT Fully covered by those below, remove?
     property p_dpc_dbg_haltreq;
         $rose(support_if.first_debug_ins) &&
-        (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ) &&
-        // ignore CLIC, checked in clic asserts
-        !(rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt && (csr_mtvec.rvfi_csr_rdata[1:0] == 3))
+        (rvfi.rvfi_dbg == cv32e40s_pkg::DBG_CAUSE_HALTREQ)
         |->
         (csr_dpc.rvfi_csr_rdata == dpc_dbg_haltreq)
         or
@@ -262,8 +265,12 @@ module uvmt_cv32e40s_debug_assert
         ##1 dpc_rdata_q == dpc_dbg_haltreq);
     endproperty
 
-    a_dpc_dbg_haltreq: assert property(p_dpc_dbg_haltreq)
-        else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a haltreq, dpc==%08x", csr_dpc.rvfi_csr_rdata));
+    generate // ignore CLIC, checked in clic asserts
+        if (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_CLIC==0) begin
+            a_dpc_dbg_haltreq: assert property(p_dpc_dbg_haltreq)
+                else `uvm_error(info_tag, $sformatf("DPC csr does not match expected on a haltreq, dpc==%08x", csr_dpc.rvfi_csr_rdata));
+        end
+    endgenerate
 
     property p_dpc_dbg_haltreq_notrap;
         $rose(support_if.first_debug_ins) &&
@@ -567,7 +574,6 @@ module uvmt_cv32e40s_debug_assert
 
 
     // dret in D-mode will place dpc in mepc if re-entry is interrupted (excluding nmi)
-    //TODO:MT fails due to irregular behaviour in RVFI. Await 40S bug issue 414 before changing
     property p_dmode_dret_pc_int;
         int dpc;
         (rvfi.is_dret && rvfi.rvfi_dbg_mode,
@@ -705,7 +711,7 @@ module uvmt_cv32e40s_debug_assert
     endproperty
 
     a_stepie_irq_dis : assert property(p_stepie_irq_dis)
-        else `uvm_error(info_tag, "Single stepping should ignore all interrupts if stepie is set");
+        else `uvm_error(info_tag, "Single stepping should ignore all interrupts if stepie is not set");
 
     cov_step_stepie_nmi : cover property (
         rvfi.is_dret
@@ -713,6 +719,19 @@ module uvmt_cv32e40s_debug_assert
         && !csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
         && csr_dcsr.rvfi_csr_rdata[DCSR_NMIP_POS]
     );
+
+    property p_stepie_irq_en;
+        rvfi.is_dret
+        && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]
+        && csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS]
+        && csr_dcsr.rvfi_csr_rdata[DCSR_NMIP_POS]
+        ##1 rvfi.rvfi_valid[->1]
+        |->
+        rvfi.rvfi_intr.intr && rvfi.rvfi_intr.interrupt;
+    endproperty
+
+    a_stepie_irq_en : assert property(p_stepie_irq_en)
+        else `uvm_error(info_tag, "Single stepping should take NMI if stepie is set");
 
     // step trap handler entry, no retire
 
@@ -1070,5 +1089,31 @@ module uvmt_cv32e40s_debug_assert
             end
         end
     end
+
+    sequence s_dbg_with_nmi_dret_stepie(bit stepie_value);
+          rvfi.rvfi_dbg_mode
+       && rvfi.is_dret
+       && rvfi.rvfi_nmip[0]
+       && csr_dcsr.rvfi_csr_rdata[DCSR_STEPIE_POS] == stepie_value
+       && csr_dcsr.rvfi_csr_rdata[DCSR_STEP_POS]
+       && rvfi.rvfi_valid
+      ##1
+       rvfi.rvfi_valid[->1]
+      ;
+    endsequence : s_dbg_with_nmi_dret_stepie
+
+    property p_dbg_with_nmi_dret_stepie(bit stepie_value);
+      reject_on(
+          csr_mtvec.rvfi_csr_rdata[31:2] == 0 // ignore lower bits
+       || csr_dpc.rvfi_csr_rdata == 0
+       || csr_mtvec.rvfi_csr_rdata == csr_dpc.rvfi_csr_rdata
+       || rvfi.rvfi_trap.exception)
+      s_dbg_with_nmi_dret_stepie(stepie_value)
+      ;
+    endproperty : p_dbg_with_nmi_dret_stepie
+
+
+    cov_dbg_with_nmi_dret_stepie:   cover property (p_dbg_with_nmi_dret_stepie(1'b1));
+    cov_dbg_with_nmi_dret_stepie_n: cover property (p_dbg_with_nmi_dret_stepie(1'b0));
 
 endmodule : uvmt_cv32e40s_debug_assert

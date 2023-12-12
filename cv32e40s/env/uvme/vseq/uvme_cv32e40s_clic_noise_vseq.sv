@@ -96,7 +96,7 @@ task uvme_cv32e40s_clic_noise_c::body();
 
       repeat (initial_delay_assert_until_ack) @(cntxt.clic_cntxt.vif.drv_cb);
 
-      while(1) begin
+      forever begin
         uvma_clic_seq_item_c irq_req;
 
         `uvm_create_on(irq_req, p_sequencer.clic_sequencer);
@@ -117,11 +117,11 @@ task uvme_cv32e40s_clic_noise_c::body();
 
       repeat (initial_delay_assert) @(cntxt.clic_cntxt.vif.drv_cb);
 
-      while(1) begin
+      forever begin
         uvma_clic_seq_item_c irq_req;
 
         `uvm_do_on_with(irq_req, p_sequencer.clic_sequencer, {
-          action        == UVMA_CLIC_SEQ_ITEM_ACTION_DEASSERT;
+          action        == UVMA_CLIC_SEQ_ITEM_ACTION_ASSERT;
         })
 
         rand_delay();
@@ -133,11 +133,11 @@ task uvme_cv32e40s_clic_noise_c::body();
 
       repeat (initial_delay_deassert) @(cntxt.clic_cntxt.vif.drv_cb);
 
-      while(1) begin
+      forever begin
         uvma_clic_seq_item_c irq_req;
 
         `uvm_do_on_with(irq_req, p_sequencer.clic_sequencer, {
-          action        == UVMA_CLIC_SEQ_ITEM_ACTION_ASSERT;
+          action        == UVMA_CLIC_SEQ_ITEM_ACTION_DEASSERT;
         })
 
         rand_delay();

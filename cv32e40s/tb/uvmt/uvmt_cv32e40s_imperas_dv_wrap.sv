@@ -37,7 +37,7 @@
     assign rvvi.csr[0][0][``CSR_ADDR]    = csr_``CSR_NAME``_w | csr_``CSR_NAME``_r; \
     assign rvvi.csr_wb[0][0][``CSR_ADDR] = csr_``CSR_NAME``_wb; \
     always @(rvvi.csr[0][0][``CSR_ADDR]) begin \
-      if (`DUT_PATH.rvfi_csr_``CSR_NAME``_if.rvfi_csr_rmask || `DUT_PATH.rvfi_csr_``CSR_NAME``_if.rvfi_csr_wmask ) begin \
+      if ((`DUT_PATH.rvfi_csr_``CSR_NAME``_if.rvfi_csr_rmask || `DUT_PATH.rvfi_csr_``CSR_NAME``_if.rvfi_csr_wmask) && `RVFI_IF.rvfi_valid) begin \
         csr_``CSR_NAME``_wb = 1; \
       end \
     end \
@@ -311,7 +311,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
    )
 
    (
-           rvviTrace  rvvi // RVVI SystemVerilog Interface
+           rvviTrace rvvi // RVVI SystemVerilog Interface
    );
 
    trace2api       #(.CMP_PC      (1),
@@ -636,12 +636,28 @@ module uvmt_cv32e40s_imperas_dv_wrap
    assign rvvi.x_wb[0][0] = `RVFI_IF.rvfi_gpr_wmask;
 
    ////////////////////////////////////////////////////////////////////////////
+   // RESET
+   ////////////////////////////////////////////////////////////////////////////
+   always @`DUT_PATH.rst_ni begin
+       void'(rvvi.net_push("reset", !`DUT_PATH.rst_ni));
+   end
+
+   ////////////////////////////////////////////////////////////////////////////
    // DEBUG REQUESTS,
    ////////////////////////////////////////////////////////////////////////////
    logic debug_req_i;
    assign debug_req_i = `DUT_PATH.debug_req_i;
    always @(debug_req_i) begin
        void'(rvvi.net_push("haltreq", debug_req_i));
+   end
+
+   ////////////////////////////////////////////////////////////////////////////
+   // WFE REQUESTS
+   ////////////////////////////////////////////////////////////////////////////
+   logic wu_wfe_i;
+   assign wu_wfe_i = `DUT_PATH.wu_wfe_i;
+   always @(wu_wfe_i) begin
+     void'(rvvi.net_push("wu_wfe_i", wu_wfe_i));
    end
 
    ////////////////////////////////////////////////////////////////////////////
@@ -793,12 +809,20 @@ module uvmt_cv32e40s_imperas_dv_wrap
        end
    end: Monitor_RVFI
 
-  /////////////////////////////////////////////////////////////////////////////
-  // REF control
-  /////////////////////////////////////////////////////////////////////////////
+endmodule : uvmt_cv32e40s_imperas_dv_wrap
+
+interface uvmt_imperas_dv_if_t;
+  import uvm_pkg::*;
+  import cv32e40s_pkg::*;
+  import uvmt_cv32e40s_base_test_pkg::*;
+  import uvme_cv32e40s_pkg::*;
+  import rvviApiPkg::*;
+
+  string info_tag = "ImperasDV_if";
+
   task ref_init;
     string test_program_elf;
-    reg [31:0] hart_id;
+    logic [31:0] hart_id;
 
     // Select processor name
     void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME, "CVE4S"));
@@ -934,10 +958,12 @@ module uvmt_cv32e40s_imperas_dv_wrap
     rvviRefCsrCompareEnable(hart_id, `CSR_MIP_ADDR, RVVI_FALSE);
     void'(rvviRefCsrSetVolatileMask(hart_id, `CSR_DCSR_ADDR, 'h8));
 
+    // TODO: Set these as volatiles as a temporary fix until
+    // we have a proper fix implemented in the ISS
     if (CORE_PARAM_CLIC == 1) begin
-      rvviRefCsrCompareEnable(hart_id, `CSR_MNXTI_ADDR, RVVI_FALSE);
-      rvviRefCsrCompareEnable(hart_id, `CSR_MSCRATCHCSW_ADDR, RVVI_FALSE);
-      rvviRefCsrCompareEnable(hart_id, `CSR_MSCRATCHCSWL_ADDR, RVVI_FALSE);
+      void'(rvviRefCsrSetVolatile(hart_id, `CSR_MNXTI_ADDR));
+      void'(rvviRefCsrSetVolatile(hart_id, `CSR_MSCRATCHCSW_ADDR));
+      void'(rvviRefCsrSetVolatile(hart_id, `CSR_MSCRATCHCSWL_ADDR));
     end
 
     // define asynchronous grouping
@@ -985,25 +1011,7 @@ module uvmt_cv32e40s_imperas_dv_wrap
 
     `uvm_info(info_tag, "ref_init() complete", UVM_LOW)
   endtask // ref_init
-
-endmodule : uvmt_cv32e40s_imperas_dv_wrap
-
-`else // ! USE_IMPERASDV
-
-    module uvmt_cv32e40s_imperas_dv_wrap
-      import uvm_pkg::*;
-      import uvmt_cv32e40s_base_test_pkg::*;
-      import uvme_cv32e40s_pkg::*;
-      #(
-       )
-
-       (
-               rvviTrace  rvvi // RVVI SystemVerilog Interface
-       );
-
-       task ref_init;
-       endtask
-endmodule : uvmt_cv32e40s_imperas_dv_wrap
+endinterface : uvmt_imperas_dv_if_t
 
 `endif  // USE_IMPERASDV
 

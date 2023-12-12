@@ -46,15 +46,6 @@ SECTIONS
    PROVIDE(__debugger_stack_start = ALIGN(ORIGIN(dbg) + LENGTH(dbg) - 15, 16));
   } >dbg
 
-
-  /* NMI interrupt handler fixed entry point */
-  PROVIDE(__nmi_address = 0x100000);
-
-  .nmi (__nmi_address):
-  {
-    KEEP(*(.nmi));
-  } >ram
-
   /* CORE-V: we want a fixed entry point */
   PROVIDE(__boot_address = 0x80);
 
@@ -267,16 +258,15 @@ SECTIONS
    PROVIDE(__heap_start = .);
    /* If end of ram is not 16-byte aligned, align to previous 16-byte
       boundary */
-   PROVIDE(__heap_end = ALIGN(ORIGIN(ram) + LENGTH(ram) - __heap_start - 15, 16));
+   PROVIDE(__heap_end = ALIGN(ORIGIN(ram) + LENGTH(ram) - 15, 16));
    . = __heap_end;
   } >ram
 
   /* Stack grows downward from end of ram */
-  .stack (__heap_start)    : ALIGN(16) /* this is a requirement of the ABI(?) */
+  .stack (__heap_end)    : ALIGN(16) /* this is a requirement of the ABI(?) */
   {
-   PROVIDE(__stack_start = __heap_start);
-   . = __heap_end;
-   PROVIDE(__stack_end = .);
+   PROVIDE(__stack_start = __heap_end);
+   . = __stack_start;
   } >ram
 
 

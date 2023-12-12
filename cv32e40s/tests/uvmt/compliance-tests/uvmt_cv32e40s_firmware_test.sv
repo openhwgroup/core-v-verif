@@ -85,6 +85,11 @@ class uvmt_cv32e40s_firmware_test_c extends uvmt_cv32e40s_base_test_c;
    extern virtual task clic_noise();
 
    /**
+    *  Start the wfe wakeup sequencer to apply random wfe events during test
+    */
+   extern virtual task wfe_wu_noise();
+
+   /**
     *  Start the nmi timeout watchdog to terminate tests a certain number of
     *  instructions after an nmi
     */
@@ -136,6 +141,12 @@ task uvmt_cv32e40s_firmware_test_c::run_phase(uvm_phase phase);
       clic_noise();
       irq_noise();
     join_none
+   end
+
+   if ($test$plusargs("gen_wfe_wu_noise")) begin
+     fork
+       wfe_wu_noise();
+     join_none
    end
 
    if ($test$plusargs("reset_debug")) begin
@@ -237,6 +248,17 @@ task uvmt_cv32e40s_firmware_test_c::clic_noise();
   clic_noise_vseq.start(vsequencer);
 
 endtask : clic_noise
+
+task uvmt_cv32e40s_firmware_test_c::wfe_wu_noise();
+  uvme_cv32e40s_wu_wfe_noise_vseq_c wfe_wu_noise_vseq;
+  `uvm_info("TEST", "Starting WFE Wake-up noise thread in UVM test", UVM_NONE);
+
+  wfe_wu_noise_vseq = uvme_cv32e40s_wu_wfe_noise_vseq_c::type_id::create("wfe_wu_noise_vseqr");
+
+  assert(wfe_wu_noise_vseq.randomize() with { });
+  wfe_wu_noise_vseq.start(vsequencer);
+
+endtask : wfe_wu_noise
 
 task uvmt_cv32e40s_firmware_test_c::nmi_timeout();
   uvme_cv32e40s_nmi_timeout_vseq_c nmi_timeout_vseq;

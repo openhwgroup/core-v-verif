@@ -28,16 +28,20 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    // Integrals
    rand int unsigned                sys_clk_period;
    cv32e40s_pkg::b_ext_e            b_ext;
-   bit                              obi_memory_instr_random_err_enabled     = 0;
-   bit                              obi_memory_instr_one_shot_err_enabled   = 0;
-   bit                              obi_memory_data_random_err_enabled      = 0;
-   bit                              obi_memory_data_one_shot_err_enabled    = 0;
-   bit                              iss_suppress_invalid_msg                = 0;
-   bit                              nmi_timeout_instr_plusarg_valid         = 0;
-   bit                              irq_min_limit_plusarg_valid             = 0;
-   bit                              single_step_min_limit_plusarg_valid     = 0;
-   bit                              irq_single_step_threshold_plusarg_valid = 0;
-   rand bit                         buserr_scoreboarding_enabled            = 1;
+   bit                              obi_memory_data_one_shot_err_enabled      = 0;
+   bit                              obi_memory_data_random_err_await_goahead  = 0;
+   bit                              obi_memory_data_random_err_enabled        = 0;
+   bit                              obi_memory_instr_one_shot_err_enabled     = 0;
+   bit                              obi_memory_instr_random_err_await_goahead = 0;
+   bit                              obi_memory_instr_random_err_enabled       = 0;
+   bit                              iss_suppress_invalid_msg                  = 0;
+   bit                              nmi_timeout_instr_plusarg_valid           = 0;
+   bit                              irq_min_limit_plusarg_valid               = 0;
+   bit                              single_step_min_limit_plusarg_valid       = 0;
+   bit                              irq_single_step_threshold_plusarg_valid   = 0;
+   bit                              clic_irq_clear_on_ack_plusarg_valid       = 0;
+   rand bit                         clic_irq_clear_on_ack;
+   rand bit                         buserr_scoreboarding_enabled              = 1;
    rand int unsigned                fetch_toggle_initial_delay;
    rand int unsigned                nmi_timeout_instr;
    rand int unsigned                single_step_min_limit;
@@ -50,6 +54,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    rand uvma_interrupt_cfg_c        interrupt_cfg;
    rand uvma_clic_cfg_c             clic_cfg;
    rand uvma_debug_cfg_c            debug_cfg;
+   rand uvma_wfe_wu_cfg_c           wfe_wu_cfg;
    rand uvma_obi_memory_cfg_c       obi_memory_instr_cfg;
    rand uvma_obi_memory_cfg_c       obi_memory_data_cfg;
    rand uvma_fencei_cfg_c           fencei_cfg;
@@ -57,29 +62,32 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    rand uvma_pma_cfg_c#(ILEN,XLEN)  pma_cfg;
 
    `uvm_object_utils_begin(uvme_cv32e40s_cfg_c)
-      `uvm_field_int (                         enabled                     , UVM_DEFAULT          )
-      `uvm_field_enum(uvm_active_passive_enum, is_active                   , UVM_DEFAULT          )
-      `uvm_field_int (                         cov_model_enabled           , UVM_DEFAULT          )
-      `uvm_field_int (                         trn_log_enabled             , UVM_DEFAULT          )
-      `uvm_field_int (                         buserr_scoreboarding_enabled, UVM_DEFAULT          )
-      `uvm_field_int (                         sys_clk_period              , UVM_DEFAULT | UVM_DEC)
-      `uvm_field_enum (b_ext_e,                b_ext                       , UVM_DEFAULT          )
-      `uvm_field_int (                         obi_memory_instr_random_err_enabled,   UVM_DEFAULT  )
-      `uvm_field_int (                         obi_memory_instr_one_shot_err_enabled, UVM_DEFAULT  )
-      `uvm_field_int (                         obi_memory_data_random_err_enabled,    UVM_DEFAULT  )
-      `uvm_field_int (                         obi_memory_data_one_shot_err_enabled,  UVM_DEFAULT  )
-      `uvm_field_int (                         iss_suppress_invalid_msg,              UVM_DEFAULT  )
-      `uvm_field_int (                         fetch_toggle_initial_delay,            UVM_DEFAULT  )
-      `uvm_field_int (                         nmi_timeout_instr,                     UVM_DEFAULT | UVM_DEC )
-      `uvm_field_int (                         single_step_min_limit,                 UVM_DEFAULT | UVM_DEC )
-      `uvm_field_int (                         irq_min_limit,                         UVM_DEFAULT | UVM_DEC )
-      `uvm_field_int (                         irq_single_step_threshold,             UVM_DEFAULT | UVM_DEC )
+      `uvm_field_int (                         enabled,                                  UVM_DEFAULT           )
+      `uvm_field_enum(uvm_active_passive_enum, is_active,                                UVM_DEFAULT           )
+      `uvm_field_int (                         cov_model_enabled,                        UVM_DEFAULT           )
+      `uvm_field_int (                         trn_log_enabled,                          UVM_DEFAULT           )
+      `uvm_field_int (                         buserr_scoreboarding_enabled,             UVM_DEFAULT           )
+      `uvm_field_int (                         sys_clk_period,                           UVM_DEFAULT | UVM_DEC )
+      `uvm_field_enum(b_ext_e,                 b_ext,                                    UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_data_one_shot_err_enabled,     UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_data_random_err_await_goahead, UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_data_random_err_enabled,       UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_instr_one_shot_err_enabled,    UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_instr_random_err_await_goahead,UVM_DEFAULT           )
+      `uvm_field_int (                         obi_memory_instr_random_err_enabled,      UVM_DEFAULT           )
+      `uvm_field_int (                         iss_suppress_invalid_msg,                 UVM_DEFAULT           )
+      `uvm_field_int (                         fetch_toggle_initial_delay,               UVM_DEFAULT           )
+      `uvm_field_int (                         nmi_timeout_instr,                        UVM_DEFAULT | UVM_DEC )
+      `uvm_field_int (                         single_step_min_limit,                    UVM_DEFAULT | UVM_DEC )
+      `uvm_field_int (                         irq_min_limit,                            UVM_DEFAULT | UVM_DEC )
+      `uvm_field_int (                         irq_single_step_threshold,                UVM_DEFAULT | UVM_DEC )
 
       `uvm_field_object(isacov_cfg           , UVM_DEFAULT)
       `uvm_field_object(clknrst_cfg          , UVM_DEFAULT)
       `uvm_field_object(interrupt_cfg        , UVM_DEFAULT)
       `uvm_field_object(clic_cfg             , UVM_DEFAULT)
       `uvm_field_object(debug_cfg            , UVM_DEFAULT)
+      `uvm_field_object(wfe_wu_cfg           , UVM_DEFAULT)
       `uvm_field_object(obi_memory_instr_cfg , UVM_DEFAULT)
       `uvm_field_object(obi_memory_data_cfg  , UVM_DEFAULT)
       `uvm_field_object(rvfi_cfg             , UVM_DEFAULT)
@@ -101,6 +109,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       soft irq_min_limit                   == 0; // no timeout
       soft single_step_min_limit           == 0; // no timeout
       soft irq_single_step_threshold       == 0; // no timeout
+      soft clic_irq_clear_on_ack           == 1;
    }
 
    constraint cv32e40s_riscv_cons {
@@ -168,14 +177,15 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
    }
 
    constraint default_cv32e40s_boot_cons {
-      (!mhartid_plusarg_valid)           -> (mhartid           == 'h0000_0000);
-      (!mimpid_patch_plusarg_valid)      -> (mimpid_patch      == 'h0        );
-      (!mimpid_plusarg_valid)            -> (mimpid            == {12'b0, MIMPID_MAJOR, 4'b0, MIMPID_MINOR, 4'b0, mimpid_patch[3:0]});
-      (!boot_addr_plusarg_valid)         -> (boot_addr         == 'h0000_0080);
-      (!mtvec_addr_plusarg_valid)        -> (mtvec_addr        == 'h0000_0000);
-      (!nmi_addr_plusarg_valid)          -> (nmi_addr          == 'h0010_0000);
-      (!dm_halt_addr_plusarg_valid)      -> (dm_halt_addr      == 'h1a11_0800);
-      (!dm_exception_addr_plusarg_valid) -> (dm_exception_addr == 'h1a11_1000);
+      (!mhartid_plusarg_valid)               -> (mhartid               == 'h0000_0000);
+      (!mimpid_patch_plusarg_valid)          -> (mimpid_patch          == 'h0        );
+      (!mimpid_plusarg_valid)                -> (mimpid                == {12'b0, MIMPID_MAJOR, 4'b0, MIMPID_MINOR, 4'b0, mimpid_patch[3:0]});
+      (!boot_addr_plusarg_valid)             -> (boot_addr             == 'h0000_0080);
+      (!mtvec_addr_plusarg_valid)            -> (mtvec_addr            == 'h0000_0000);
+      (!nmi_addr_plusarg_valid)              -> (nmi_addr              == 'h0010_0000);
+      (!dm_halt_addr_plusarg_valid)          -> (dm_halt_addr          == 'h1a11_0800);
+      (!dm_exception_addr_plusarg_valid)     -> (dm_exception_addr     == 'h1a11_1000);
+      (!clic_irq_clear_on_ack_plusarg_valid) -> (clic_irq_clear_on_ack == 1'b1);
       solve mimpid_patch before mimpid;
    }
 
@@ -185,6 +195,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          interrupt_cfg.enabled         == basic_interrupt_enable;
          clic_cfg.enabled              == clic_interrupt_enable;
          debug_cfg.enabled             == 1;
+         wfe_wu_cfg.enabled            == 1;
          rvfi_cfg.enabled              == 1;
          obi_memory_instr_cfg.enabled  == 1;
          obi_memory_data_cfg.enabled   == 1;
@@ -192,13 +203,14 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       }
 
       clic_cfg.is_mmode_irq_only         == 1;
+      clic_cfg.clear_irq_on_ack          == clic_irq_clear_on_ack;
 
       obi_memory_data_cfg.clic_interrupts_enabled   == clic_interrupt_enable;
       obi_memory_instr_cfg.clic_interrupts_enabled  == clic_interrupt_enable;
       obi_memory_data_cfg.basic_interrupts_enabled  == basic_interrupt_enable;
       obi_memory_instr_cfg.basic_interrupts_enabled == basic_interrupt_enable;
 
-      obi_memory_instr_cfg.version       == UVMA_OBI_MEMORY_VERSION_1P2;
+      obi_memory_instr_cfg.version       == UVMA_OBI_MEMORY_VERSION_1P3;
       obi_memory_instr_cfg.drv_mode      == UVMA_OBI_MEMORY_MODE_SLV;
       obi_memory_instr_cfg.chk_scheme    == UVMA_OBI_MEMORY_CHK_CV32E40S;
       obi_memory_instr_cfg.write_enabled == 0;
@@ -215,7 +227,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       soft obi_memory_instr_cfg.drv_slv_gnt_random_latency_max    <= 3;
       soft obi_memory_instr_cfg.drv_slv_rvalid_random_latency_max <= 6;
 
-      obi_memory_data_cfg.version        == UVMA_OBI_MEMORY_VERSION_1P2;
+      obi_memory_data_cfg.version        == UVMA_OBI_MEMORY_VERSION_1P3;
       obi_memory_data_cfg.drv_mode       == UVMA_OBI_MEMORY_MODE_SLV;
       obi_memory_data_cfg.chk_scheme     == UVMA_OBI_MEMORY_CHK_CV32E40S;
       obi_memory_data_cfg.addr_width     == XLEN;
@@ -238,6 +250,8 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       isacov_cfg.seq_instr_x2_enabled       == 1;
       isacov_cfg.reg_crosses_enabled        == 0;
       isacov_cfg.reg_hazards_enabled        == 1;
+      isacov_cfg.decoder                    == ISA_SUPPORT;
+
 
       rvfi_cfg.nret                    == RVFI_NRET;
       rvfi_cfg.nmi_load_fault_enabled  == 1;
@@ -252,6 +266,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          clknrst_cfg.is_active          == UVM_ACTIVE;
          interrupt_cfg.is_active        == UVM_ACTIVE;
          clic_cfg.is_active             == UVM_ACTIVE;
+         wfe_wu_cfg.is_active           == UVM_ACTIVE;
          debug_cfg.is_active            == UVM_ACTIVE;
          obi_memory_instr_cfg.is_active == UVM_ACTIVE;
          obi_memory_data_cfg.is_active  == UVM_ACTIVE;
@@ -265,6 +280,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          debug_cfg.trn_log_enabled             == 0;
          interrupt_cfg.trn_log_enabled         == 0;
          clic_cfg.trn_log_enabled              == 0;
+         wfe_wu_cfg.trn_log_enabled            == 0;
          isacov_cfg.trn_log_enabled            == 0;
          obi_memory_data_cfg.trn_log_enabled   == 1;
          obi_memory_instr_cfg.trn_log_enabled  == 1;
@@ -274,6 +290,7 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          debug_cfg.trn_log_enabled             == 0;
          interrupt_cfg.trn_log_enabled         == 0;
          clic_cfg.trn_log_enabled              == 0;
+         wfe_wu_cfg.trn_log_enabled            == 0;
          isacov_cfg.trn_log_enabled            == 0;
          obi_memory_data_cfg.trn_log_enabled   == 0;
          obi_memory_instr_cfg.trn_log_enabled  == 0;
@@ -284,6 +301,8 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
          isacov_cfg.cov_model_enabled            == 1;
          debug_cfg.cov_model_enabled             == 1;
          pma_cfg.cov_model_enabled               == 1;
+         clic_cfg.cov_model_enabled              == clic_interrupt_enable;
+         interrupt_cfg.cov_model_enabled         == basic_interrupt_enable;
          obi_memory_instr_cfg.cov_model_enabled  == 1;
          obi_memory_data_cfg.cov_model_enabled   == 1;
       }
@@ -316,6 +335,19 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
       }
 
       obi_memory_data_cfg.drv_slv_err_one_shot_mode == obi_memory_data_one_shot_err_enabled;
+   }
+
+
+   constraint obi_memory_data_random_err_await_goahead_cons {
+      if (obi_memory_data_random_err_await_goahead) {
+         obi_memory_data_cfg.random_err_await_goahead == 1;
+      }
+   }
+
+   constraint obi_memory_instr_random_err_await_goahead_cons {
+      if (obi_memory_instr_random_err_await_goahead) {
+         obi_memory_instr_cfg.random_err_await_goahead == 1;
+      }
    }
 
    /**
@@ -355,19 +387,25 @@ class uvme_cv32e40s_cfg_c extends uvma_core_cntrl_cfg_c;
 
 endclass : uvme_cv32e40s_cfg_c
 
+
 function uvme_cv32e40s_cfg_c::new(string name="uvme_cv32e40s_cfg");
 
    super.new(name);
 
    core_name = "CV32E40S";
 
+
+   // Read Plusargs
+
    if ($test$plusargs("USE_ISS")) begin
       use_iss = 1;
    end
+
    if ($test$plusargs("trn_log_disabled")) begin
       trn_log_enabled = 0;
       trn_log_enabled.rand_mode(0);
    end
+
    if ($test$plusargs("buserr_sb_disabled")) begin
       buserr_scoreboarding_enabled = 0;
       buserr_scoreboarding_enabled.rand_mode(0);
@@ -376,49 +414,74 @@ function uvme_cv32e40s_cfg_c::new(string name="uvme_cv32e40s_cfg");
    if ($test$plusargs("obi_memory_instr_random_err")) begin
       obi_memory_instr_random_err_enabled = 1;
    end
+
    if ($test$plusargs("obi_memory_instr_one_shot_err")) begin
       obi_memory_instr_one_shot_err_enabled = 1;
    end
+
    if ($test$plusargs("obi_memory_data_random_err")) begin
       obi_memory_data_random_err_enabled = 1;
    end
+
+   if ($test$plusargs("obi_memory_data_random_err_await_goahead")) begin
+      obi_memory_data_random_err_await_goahead = 1;
+   end
+
+   if ($test$plusargs("obi_memory_instr_random_err_await_goahead")) begin
+      obi_memory_instr_random_err_await_goahead = 1;
+   end
+
    if ($test$plusargs("obi_memory_data_one_shot_err")) begin
       obi_memory_data_one_shot_err_enabled = 1;
    end
+
    if ($value$plusargs("nmi_timeout_instr=%d", nmi_timeout_instr)) begin
       nmi_timeout_instr_plusarg_valid = 1;
       nmi_timeout_instr.rand_mode(0);
    end
+
    if ($value$plusargs("irq_single_step_threshold=%0d", irq_single_step_threshold)) begin
      irq_single_step_threshold_plusarg_valid = 1;
      irq_single_step_threshold.rand_mode(0);
    end
+
    if ($value$plusargs("irq_min_limit=%0d", irq_min_limit)) begin
      irq_min_limit_plusarg_valid = 1;
      irq_min_limit.rand_mode(0);
    end
+
    if ($value$plusargs("single_step_min_limit=%0d", single_step_min_limit)) begin
      single_step_min_limit_plusarg_valid = 1;
      single_step_min_limit.rand_mode(0);
    end
-
 
    if ($test$plusargs("enable_clic")) begin
      clic_interrupt_enable  = 1;
      basic_interrupt_enable = 0;
    end
 
+   if ($value$plusargs("clic_irq_clear_on_ack=%0d", clic_irq_clear_on_ack)) begin
+     clic_irq_clear_on_ack_plusarg_valid = 1;
+     clic_irq_clear_on_ack.rand_mode(0);
+   end
+
+
+   // Create Configs
+
    isacov_cfg           = uvma_isacov_cfg_c::type_id::create("isacov_cfg");
    clknrst_cfg          = uvma_clknrst_cfg_c::type_id::create("clknrst_cfg");
    interrupt_cfg        = uvma_interrupt_cfg_c::type_id::create("interrupt_cfg");
    clic_cfg             = uvma_clic_cfg_c::type_id::create("clic_cfg");
    debug_cfg            = uvma_debug_cfg_c::type_id::create("debug_cfg");
+   wfe_wu_cfg           = uvma_wfe_wu_cfg_c::type_id::create("wfe_wu_cfg");
    obi_memory_instr_cfg = uvma_obi_memory_cfg_c::type_id::create("obi_memory_instr_cfg");
    obi_memory_data_cfg  = uvma_obi_memory_cfg_c::type_id::create("obi_memory_data_cfg" );
    rvfi_cfg             = uvma_rvfi_cfg_c#(ILEN,XLEN)::type_id::create("rvfi_cfg");
    fencei_cfg           = uvma_fencei_cfg_c::type_id::create("fencei_cfg");
    pma_cfg              = uvma_pma_cfg_c#(ILEN,XLEN)::type_id::create("pma_cfg");
 
+
+   // Assign loggers and configs
 
    obi_memory_instr_cfg.mon_logger_name = "OBII";
    obi_memory_data_cfg.mon_logger_name  = "OBID";
@@ -428,11 +491,13 @@ function uvme_cv32e40s_cfg_c::new(string name="uvme_cv32e40s_cfg");
 
 endfunction : new
 
+
 function void uvme_cv32e40s_cfg_c::pre_randomize();
 
    `uvm_info("CFG", $sformatf("Pre-randomize num_mhpmcounters = %0d", num_mhpmcounters), UVM_LOW);
 
 endfunction : pre_randomize
+
 
 function void uvme_cv32e40s_cfg_c::post_randomize();
 
@@ -472,7 +537,17 @@ function void uvme_cv32e40s_cfg_c::sample_parameters(uvma_core_cntrl_cntxt_c cnt
    foreach (pma_cfg.regions[i])
       pma_cfg.regions[i] = pma_regions[i];
 
-endfunction : sample_parameters
+   // Debug region overrides
+   pma_cfg.region_override_condition = uvma_pma_cfg_c#(ILEN,XLEN)::PMA_OVERRIDE_DEBUG;
+   pma_cfg.region_overrides = new[1];
+   pma_cfg.region_overrides[0] = uvma_core_cntrl_pma_region_c::type_id::create("debug_pma_region_override");
+   pma_cfg.region_overrides[0].word_addr_low  = CORE_PARAM_DM_REGION_START >> 2;
+   pma_cfg.region_overrides[0].word_addr_high = CORE_PARAM_DM_REGION_END >> 2;
+   pma_cfg.region_overrides[0].main = 1;
+   pma_cfg.region_overrides[0].bufferable = 0;
+   pma_cfg.region_overrides[0].cacheable = 0;
+   pma_cfg.region_overrides[0].integrity = 0;
+endfunction: sample_parameters
 
 function bit uvme_cv32e40s_cfg_c::is_csr_check_disabled(string name);
 

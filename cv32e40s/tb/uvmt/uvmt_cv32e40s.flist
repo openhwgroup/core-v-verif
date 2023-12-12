@@ -24,9 +24,12 @@
 -f ${DV_UVML_SB_PATH}/uvml_sb_pkg.flist
 -f ${DV_UVML_MEM_PATH}/uvml_mem_pkg.flist
 -f ${DV_SVLIB_PATH}/svlib_pkg.flist
+-f ${DV_ISA_DECODER_PATH}/isa_decoder_pkg.flist
 -f ${DV_SUPPORT_PATH}/support_pkg.flist
 
-${DV_UVM_TESTCASE_PATH}/base-tests/uvmt_cv32e40s_base_test_pkg.sv
+
+// Imperas dv dependencies (rvvi, idv) or dummy package goes here (later packages depend on this)
+${FILE_LIST_IDV_DEPS}
 
 // Agents
 -f ${DV_UVMA_CORE_CNTRL_PATH}/uvma_core_cntrl_pkg.flist
@@ -39,6 +42,7 @@ ${DV_UVM_TESTCASE_PATH}/base-tests/uvmt_cv32e40s_base_test_pkg.sv
 -f ${DV_UVMA_CLIC_PATH}/uvma_clic_pkg.flist
 -f ${DV_UVMA_DEBUG_PATH}/uvma_debug_pkg.flist
 -f ${DV_UVMA_FENCEI_PATH}/uvma_fencei_pkg.flist
+-f ${DV_UVMA_WFE_WU_PATH}/uvma_wfe_wu_pkg.flist
 
 
 // CV32E40S test bench Directories
@@ -48,6 +52,8 @@ ${DV_UVM_TESTCASE_PATH}/base-tests/uvmt_cv32e40s_base_test_pkg.sv
 +incdir+${DV_UVM_TESTCASE_PATH}/compliance-tests
 +incdir+${DV_UVM_TESTCASE_PATH}/vseq
 
+${DV_UVM_TESTCASE_PATH}/base-tests/uvmt_cv32e40s_base_test_pkg.sv
+
 // CV32E40S tests (includes constants/macros/types meant for test bench)
 +incdir+${TBSRC_HOME}
 
@@ -55,7 +61,8 @@ ${DV_UVM_TESTCASE_PATH}/base-tests/uvmt_cv32e40s_base_test_pkg.sv
 -f ${DV_UVME_PATH}/uvme_cv32e40s_pkg.flist
 ${DV_UVMT_PATH}/uvmt_cv32e40s_pkg.sv
 
-// ImperasDV  (this env var is not set if not using idv)
+// ImperasDV wrapper files (this env var is not set if not using idv)
+// Depends on env
 ${FILE_LIST_IDV}
 
 // CV32E40S test bench files

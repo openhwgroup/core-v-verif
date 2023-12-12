@@ -5,6 +5,7 @@ compile_flags:
     +define+CLIC_EN
     +define+PMP_ENABLE_64
 ovpsim: >
+    --override cpu/hpmcounter_undefined=T
     --override cpu/CLICLEVELS=256
     --override cpu/CLICXCSW=T
     --override cpu/CLICXNXTI=T
@@ -19,6 +20,7 @@ ovpsim: >
     #--showoverrides
     # --trace --tracechange --traceshowicount --monitornets
 cflags: >
+    -Wl,--nmagic
 plusargs: >
     +enable_clic=1
     +enable_zba_extension=1

@@ -1,4 +1,4 @@
-Reference document,Requirement Location,Feature,Sub Feature,Feature Description,Verification Goal,Pass/Fail Criteria,Test Type,Coverage Method,Link to Coverage,Review (Marton),Review (Robin),Review (Henrik),,,,,,
+Reference document,Requirement Location,Feature,Sub Feature,Feature Description,Verification Goal,Pass/Fail Criteria,Test Type,Coverage Method,Link to Coverage,Review (Marton),Review (Robin),Review (Henrik)
 "RISC-V ISM vol 1 (unpriv. ISA), 20191213
 
 CV32E40P doc rev 46711ac","Section 2.8
@@ -13,14 +13,15 @@ Core switches into debug mode.
 Current PC must be saved to DPC
 Cause of debug must be saved to DCSR (cause=1)
 PC is updated to value on dm_haltaddr_i input
-Core starts executing debug cod
+Core starts executing debug code
 
-Ensure exception routine is not enterred",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",?,Are Lee's corner cases handled in this vplan?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"
+Ensure exception routine is not enterred",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2"" 
+tc: mmode_ebreak_executes_debug_code",?,Are Lee's corner cases handled in this vplan?,?
+,,,,,,Assertion Check,Other,Assertion Coverage,"
 CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_ebreak_execute_with_ebreakm
 CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_cebreak_execute_with_ebreakm
 A  :uvmt_cv32_tb.u_debug_assert.a_enter_debug
-A: uvmt_cv32_tb.u_debug_assert.dcsr_cause",?,Is Mike's gh issue handled in this vplan?,?,,,,,,
+A: uvmt_cv32_tb.u_debug_assert.dcsr_cause",?,Is Mike's gh issue handled in this vplan?,?
 "RISC-V ISM vol 1 (unpriv. ISA), 20191213
 
 CV32E40P doc rev 46711ac","Section 2.8
@@ -37,11 +38,12 @@ PC of EBREAK instruction must be saved to DPC
 Cause of debug must be saved to DCSR (cause=1)
 PC is updated to value on dm_haltaddr_i input
 Core starts executing debug code
-Ensure exception routine is not entered",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",?,Is the PMA overrule handled in this vplan?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"N/A: Hard to detect that we are executing an exception handler.
+Ensure exception routine is not entered",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: exception_enters_debug_mode",?,Is the PMA overrule handled in this vplan?,?
+,,,,,,Assertion Check,Other,Assertion Coverage,"N/A: Hard to detect that we are executing an exception handler.
 Covered in debug_test with ISS enabled.
 A: uvmt_cv32_tb.u_debug_assert.a_enter_debug
-A: uvmt_cv32_tb.u_debug_assert.dcsr_cause",?,"Note: From OE about counters, ""vi burde også ha assert som sjekker at vi IKKE teller nå countinhibit, sleep, eller stopcount... de assertionene jeg har endre sjekker bare at de teller... vet du om vi har andre sjekker på dette?""",?,,,,,,
+A: uvmt_cv32_tb.u_debug_assert.dcsr_cause",?,"Note: From OE about counters, ""vi burde også ha assert som sjekker at vi IKKE teller nå countinhibit, sleep, eller stopcount... de assertionene jeg har endre sjekker bare at de teller... vet du om vi har andre sjekker på dette?""",?
 "RISC-V ISM vol 1 (unpriv. ISA), 20191213
 
 CV32E40P doc rev 46711ac","Section 2.8
@@ -52,12 +54,13 @@ Debug chapter",Enter ebreak exception,EBREAK instruction,"Enter ebreak exception
 40S, same is true for ""dcsr.ebreaku"".","Add EBREAK or/and C.EBREAK to arbitrary code while ebreakm/u==0.
 
 Verify that:
-Core does not switch to debug mode, but exception routine is entered as normal.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",?,?,"""[ebreakm=1?]""",,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"
+Core does not switch to debug mode, but exception routine is entered as normal.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: ebreak_behavior_m_mode",?,?,"""[ebreakm=1?]"""
+,,,,,,Assertion Check,Other,Assertion Coverage,"
 CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_ebreak_execute_without_ebreakm (ebreak_regular_nodebug)
 CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_cebreak_execute_without_ebreakm (cebreak_regular_nodebug)
 A: uvmt_cv32_tb.u_debug_assert.a_ebreak_umode_exception
-A: uvmt_cv32_tb.u_debug_assert.a.ebreak_mmode_exception",?,?,"""[ebreakm=1?]""",,,,,,
+A: uvmt_cv32_tb.u_debug_assert.a.ebreak_mmode_exception",?,?,"""[ebreakm=1?]"""
 "RISC-V ISM vol 1 (unpriv. ISA), 20191213
 
 CV32E40P doc rev 46711ac","Section 2.8
@@ -73,13 +76,13 @@ DPC set to handler.
 Debug cause must be step (unless something else happened simultaneously).
 PC is updated to value on dm_haltaddr_i input
 Core starts executing debug code
-Ensure exception routine is not entered",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test_known_miscompares""",?,?,"""[ebreakm=1?]""",,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"
+Ensure exception routine is not entered",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test_known_miscompares""",?,?,"""[ebreakm=1?]"""
+,,,,,,Assertion Check,Other,Assertion Coverage,"
 CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_ebreak_execute_without_ebreakm (ebreak_step_nodebug)
 CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_cebreak_execute_without_ebreakm (cebreak_step_nodebug)
 
 A: uvmt_cv32_tb.u_debug_assert.a_ebreak_umode_exception
-A: uvmt_cv32_tb.u_debug_assert.a.ebreak_mmode_exception",?,?,"""[ebreakm=1?]""",,,,,,
+A: uvmt_cv32_tb.u_debug_assert.a.ebreak_mmode_exception",?,?,"""[ebreakm=1?]"""
 CV32E40P doc rev 46711ac,Debug chapter,Enter DEBUG mode,External debug event,"Debug mode can be entered by asserting the external signal debug_req_i
 cause is set to = 3 (also see verification goal)","Assert debug_req_i while executing arbitrary code
 Verify that:
@@ -87,13 +90,14 @@ Core switches into debug mode.
 Current PC must be saved to DPC
 Cause of debug must be saved to DCSR (cause=debugger(0x3))
 PC is updated to value on dm_haltaddr_i input
-Core starts executing debug code",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",,,,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_mode_ext
+Core starts executing debug code",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: request_hw_debugger",,,
+,,,,,,Assertion Check,Other,Assertion Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_mode_ext
 A:   uvmt_cv32_tb.u_debug_assert.a_enter_debug
 A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause
 A:   uvmt_cv32_tb.u_debug_assert.a_debug_mode_pc
 A: uvmt_cv32_tb.u_debug_assert.a_dpc_dbg_haltreq
-A: uvmt_cv32_tb.u_debug_assert.a_debug_req_taken",,,,,,,,,
+A: uvmt_cv32_tb.u_debug_assert.a_debug_req_taken",,,
 "CV32E40P doc rev 46711ac
 
 RISCV-V External Debug Support Version 0.13.2","Debug chapter 
@@ -112,11 +116,11 @@ Verify that core enters debug mode on breakpoint addr
 Current PC is saved to DPC
 Cause of debug must be saved to DCSR (cause=2)
 PC is updated to value on dm_haltaddr_i input
-Core starts executing debug code",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test_trigger""",?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_match
+Core starts executing debug code",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test_trigger""",?,?,?
+,,,,,,Assertion Check,Other,Assertion Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_match
 A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause
 A:  uvmt_cv32_tb.u_debug_assert.a_dpc_dbg_trigger
-A:  uvmt_cv32_tb.u_debug_assert.a_enter_debug",?,?,?,,,,,,
+A:  uvmt_cv32_tb.u_debug_assert.a_enter_debug A:a_dt_instr_trigger_hit_*",?,?,?
 "CV32E40P doc rev 46711ac
 
 RISCV-V External Debug Support Version 0.13.2","Debug chapter 
@@ -127,177 +131,224 @@ Chapter 5",Trigger module,Trigger module match event,"When trigger module is dis
 Write (randomized) breakpoint addr to tdata2 and disable breakpoint in tdata1
 Exit debug mode (dret instruction)
 Verify that core does not enter debug mode on breakpoint addr
-",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test_trigger""",,,,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: cg_trigger_match_disabled
+",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test_trigger""",,"Why is the ""Trigger module"" Feature in red text?",
+,,,,,,Assertion Check,Other,Assertion Coverage,"CG: cg_trigger_match_disabled
 A:   uvmt_cv32_tb.u_debug_assert.a_trigger_match_disabled
-",,,,,,,,,
+",,,
 40S User Manual 0.8.0,Debug & Trigger,Trigger module,Number of triggers,"The number of triggers is determined by DBG_NUM_TRIGGERS.
 When num triggers is 0, accessing the trigger registers causes illegal instruction exception.
 Triggers never fire.
-""tselect"" is 0.","Have 0 triggers, access any trigger register and check that illegal instruction exception occurs. Check that no triggers ever fire. Check that ""tselect"" is 0.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,"""[40x? Also below.]""",,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
+""tselect"" is 0.","Have 0 triggers, access any trigger register and check that illegal instruction exception occurs. Check that no triggers ever fire. Check that ""tselect"" is 0.",Self Checking Test,Directed Self-Checking,Testcase,DTC: debug_test_0_trigger,?,?,"""[40x? Also below.]"""
+,,,,,,Assertion Check,Other,Assertion Coverage,"A:a_dt_0_triggers_tdata1_access, a_dt_0_triggers_no_triggering",?,?,?
 ,,,,"The number of triggers is determined by DBG_NUM_TRIGGERS.
 DBG_NUM_TRIGGERS can be any value within 0-4.
 ""tselect"" is WARL (0x0 - (DBG_NUM_TRIGGERS-1)).
-""tcontrol"" is WARL (0x0).
 All selectable triggers are functional.
-All trigger registers are accessible except for ""mcontext"", ""mscontext"", ""hcontext"", and ""scontext"" (those four trap upon access).","For all number of triggers, use tselect to exercise each trigger with each supported type. (Also try writing to higher ""tselect"" than supported and check that a supported number is read back.) Make the triggers fire and check that debug mode is entered. Check also that the four context registers trap when accessed.",Self Checking Test,Directed Self-Checking,Testcase,,"There are a lot of things to check in a single point here. Nothing is wrong with this point as I see it, so there is no need to change, but ideally this point should be split up.",?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
-"40S User Manual
-
-Debug 1.0.0","Control and Status Registers
-
-Match Control Type 6",Trigger module,"""mcontrol6"" match types","The ""load"" and ""store"" bits are supported (so load/store addr matching is supported).
-The ""execute"" bit is also supported.
-The only supported match types are ""address match"" for {instr execution, load, store}, all using ""before"" timing so ""mcontrol6.timing"" is always 0.
-Data matching is not supported (only addr matching), so ""mcontrol6.select"" is always 0.","Configure triggers for load/store/execute and combinations of them, configure tdata2, cause triggers to fire and check that debug mode is entered correctly. Also check that the tied fields are tied. All of these configurations must be crossed, also against match conditions.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
-,,,"""mcontrol6"" match conditions","Supported match conditions in ""mcontrol6.match"" are {0 (eq), 2 (geq), 3 (less)}.","Configure triggers using all three match conditions, exercise them within and outside of the conditions, check that debug mode is/isn't entered. Must also cross against the ""match types"" item above.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
+All trigger registers are accessible except for ""mcontext"", ""mscontext"", ""hcontext"", and ""scontext"" (those four trap upon access).","For all number of triggers, use tselect to exercise each trigger with each supported type. (Also try writing to higher ""tselect"" than supported and check that a supported number is read back.) Make the triggers fire and check that debug mode is entered. Check also that the four context registers trap when accessed.",Self Checking Test,Directed Self-Checking,Testcase,DTC: debug_test_trigger,"There are a lot of things to check in a single point here. Nothing is wrong with this point as I see it, so there is no need to change, but ideally this point should be split up.",?,?
+,,,,,,Assertion Check,Other,Assertion Coverage,"A: a_dt_access_context, a_dt_tselect_higher_than_dbg_num_triggers, a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*, a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason. COV: c_trigger_i_has_type_mcontrol, c_trigger_i_has_type_etrigger, c_trigger_i_has_type_mcontrol6, c_trigger_i_has_type_disable",?,?,?
+User Manual v0.9.0.,Control and Status Registers,Trigger module,tcontrol,"""tcontrol"" doesn't exist.","Check that attempts to access ""tcontrol"" raise an illegal instruction exception, always. (Unless overruled by a higher priority.)",Self Checking Test,Directed Self-Checking,Testcase,DTC: debug_test_trigger,,,
+,,,,,,Assertion Check,Other,Assertion Coverage,A: a_dt_tcontrol_not_implemented,,,
 ,,,"""mcontrol6"" compare values","
 Instr execute matching uses only one ""compare value"" (the PC itself).
-Load/Store matching uses compare values depending on the size of the access {A, A+1, etc}.","Exercise address match triggers for instr/load/store with different sizes (16/32 for instr, 8/16/32 for loadstore). Check that instr match only happens on the exact address. Check that loadstore addr matching triggers on any byte.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
-,,,"""mcontrol6"" enable","Triggers can be en/disabled in M-mode, ""mcontrol6.m"", default is 0.
+Load/Store matching uses compare values depending on the size of the access {A, A+1, etc}.","Exercise address match triggers for instr/load/store with different sizes (16/32 for instr, 8/16/32 for loadstore). Check that instr match only happens on the exact address. Check that loadstore addr matching triggers on any byte.",Self Checking Test,Directed Self-Checking,Testcase,DTC: debug_test_trigger,?,?,?
+,,,,,,Assertion Check,Other,Assertion Coverage,"A: a_dt_enter_dbg_reason, a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*",?,?,?
+"User Manual v0.9.0.
+
+Debug 1.0-STABLE fb7025",,,Mcontrol6Hit,"When a trigger fires, it's ""mcontrol6.hit"" field gets set to 1.
+(This is also true when multiple triggers fire at once.)","Induce firing of a trigger.
+Check that the corresponding ""hit"" field gets set.
+Do the same for variations of multiple triggers firing at once.
+Check that the field is WARL 0x0, 0x1.",Self Checking Test,Directed Self-Checking,Testcase,DTC: debug_test_trigger,,,
+,,,,,,Assertion Check,Other,Assertion Coverage,"A: a_dt_m6_hit_bit
+a_dt_warl_tdata1_m6",,,
+,,,Mcontrol6Match,"Supported match conditions in ""mcontrol6.match"" are {0 (eq), 2 (geq), 3 (less)}.","Configure triggers using all three match conditions, exercise them within and outside of the conditions, check that debug mode is/isn't entered. Must also cross against the ""match types"" item above.",Self Checking Test,Directed Self-Checking,Testcase,DTC: debug_test_trigger,?,?,?
+,,,,,,Assertion Check,Other,Assertion Coverage,"A: a_dt_enter_dbg_reason, a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*",?,?,?
+,,,Mcontrol6UM,"Triggers can be en/disabled in M-mode, ""mcontrol6.m"", default is 0.
 40S, triggers can be en/disabled in U-mode, ""mcontrol6.u"", default is 0.
 40X, triggers cannot be enabled in U-mode, ""mcontrol6.u"", WARL (0x0).
-The trigger action is always to enter D-mode, so ""mcontrol6.action"" is always 1.","Have triggers configured to be able to match, but enable/disable their corresponding mode bit, check that the trigger is either able to fire or is blocked from firing accordingly. Also check the tied values.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
-,,,"""mcontrol6"" atomics","40X, ""mcontrol6"" trigger behavior has specific descriptions for ""A"" extension.","40X, this section must be filled out when the time comes for planning atomics verification.",,,,,?,?,?,,,,,,
+The trigger action is always to enter D-mode, so ""mcontrol6.action"" is always 1.","Have triggers configured to be able to match, but enable/disable their corresponding mode bit, check that the trigger is either able to fire or is blocked from firing accordingly. Also check the tied values.",Self Checking Test,Directed Self-Checking,Testcase,DTC: debug_test_trigger,?,?,?
+,,,,,,Assertion Check,Other,Assertion Coverage,"A:a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*, a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason, a_dt_tie_offs_*",?,?,?
+,,,Mcontrol6LoadStoreExecute,"The ""load"" and ""store"" bits are supported (so load/store addr matching is supported).
+The ""execute"" bit is also supported.
+The only supported match types are ""address match"" for {instr execution, load, store}, all using ""before"" timing.
+Data matching is not supported (only addr matching), so ""mcontrol6.select"" is always 0.","Configure triggers for load/store/execute and combinations of them, configure tdata2, cause triggers to fire and check that debug mode is entered correctly.  All of these configurations must be crossed, also against match conditions.",Self Checking Test,Directed Self-Checking,Testcase,DTC: debug_test_trigger,?,"""tdata3"" and ""tcontrol"" should be removed.",?
+,,,,,,Assertion Check,Other,Assertion Coverage,"A: a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*. ",?,?,?
+User Manual v0.9.0.,,,trigger csrs,Some fields in the trigger csrs are hardwired.,Check that the tied fields are tied.,Assertion Check,Other,Assertion Coverage,"A: a_dt_tie_offs_tselect, a_dt_tie_offs_tdata1_mcontrol, a_dt_tie_offs_tdata1_etrigger, a_dt_tie_offs_tdata1_mcontrol6, a_dt_tie_offs_tdata1_disabled, a_dt_tie_offs_tdata2_etrigger. a_dt_tie_offs_tinfo.",,,
+,,,"""mcontrol6"" and ""mcontrol"" atomics","40X, ""mcontrol"" and ""mcontrol6"" trigger behavior has specific descriptions for ""A"" extension.","40X, TODO AMO.",Assertion Check,Other,Assertion Coverage,Not yet prioritized (TODO).,,,
+,,,,"LR.W have same trigger match rules as any other loads, no matter what the destination register is. ","Inspect that LR.W is treated like any other load instruction, no matter what the destination register is.",N/A,Other,inspection,This seems to be correct. And incorrect behaviour should therefore be triggered by the a_dt_load_trigger_hit_* assertions,,,
+,,,,"SC.W have same trigger match rules as any other store, no matter if it is successful or failing.","Inspect that SC.W is treated like any other store instruction, no matter if it is successful or failing.",N/A,Other,Assertion Coverage/inspection,This seems to be correct. And incorrect behaviour should therefore be triggered by the a_dt_store_trigger_hit_* assertions,?,?,?
 "40S User Manual
 
 Debug 1.0.0","Control and Status Registers
 
-Trigger Data 1",Trigger module,"""tdata1.type""","The only supported types are ""2 = address match legacy"", ""5 = Exception trigger"", ""6 = Address match"",  and ""15 = Disabled"".","Check that these types can be selected, and check that no other types can be selected. (Functionality of these types should be handled by other items in this plan.) Check also that the default is ""15"".",Self Checking Test,Directed Self-Checking,Testcase,,?,?,"""[type 2]""",,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,"""[type 2]""",,,,,,
-,,,"""tdata1.dmode""","This bit is WARL (0x1), so only D-mode can write tdata registers. And this bit is still WARL (0x1) regardless of ""type"" (2, 5, 6, 15).","Try to write tdata registers outside of debug mode, check that it traps. Try changing ""tdata1.dmode"" and check that it is WARL (0x1). Cross the above checks with all supported types.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
+Trigger Data 1",Trigger module,"""tdata1.type""","The only supported types are ""2 = address match legacy"", ""5 = Exception trigger"", ""6 = Address match"",  and ""15 = Disabled"".","Check that these types can be selected, and check that no other types can be selected. (Functionality of these types should be handled by other items in this plan.) Check also that the default is ""15"".",Self Checking Test,Directed Self-Checking,Testcase,DTC: debug_test_trigger,?,?,"""[type 2]"""
+,,,,,,Assertion Check,Other,Assertion Coverage,A: a_dt_tdata1_types,?,?,"""[type 2]"""
+,,,"""tdata1.dmode""","This bit is WARL (0x1), so only D-mode can write tdata registers. And this bit is still WARL (0x1) regardless of ""type"" (2, 5, 6, 15).","Try to write tdata registers outside of debug mode, check that they are not writable. Try changing ""tdata1.dmode"" and check that it is WARL (0x1). Cross the above checks with all supported types.",Self Checking Test,Directed Self-Checking,Testcase,DTC: debug_test_trigger,?,?,?
+,,,,,,Assertion Check,Other,Assertion Coverage,"A: a_dt_not_access_tdata1_dbg_mode,  a_dt_not_access_tdata2_dbg_mode, a_dt_dmode",?,?,?
 "40S User Manual
 
 Debug 1.0.0","Control and Status Registers
 
-Trigger Info",Trigger module,"""tinfo""","""tinfo.info"" holds the  supported types {2, 5, 6, 15}, and the register is otherwise WARL (0x0).","When num triggers is 0, check that ""tinfo"" is 0.
-For any other num triggers, check that ""tinfo.info"" is ""1"" for the three supported types, and that the remaining bits are 0.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,"""[type 2]""",,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,"""[type 2]""",,,,,,
+Trigger Info",Trigger module,"""tinfo""","""tinfo.info"" holds the  supported types {2, 5, 6, 15},
+""tinfo.version"" holds the ""Sdtrig"" spec version,
+and the register is otherwise WARL (0x0).","
+When num triggers is more than 0, check that ""tinfo.info"" is ""1"" for the three supported types,
+""tinfo.version"" is 0x1,
+and that the remaining bits are 0.",Self Checking Test,Directed Self-Checking,Testcase,DTC: debug_test_trigger,?,?,"""[type 2]"""
+,,,,,,Assertion Check,Other,Assertion Coverage,A: a_dt_triggers_tinfo,?,?,"""[type 2]"""
 "40S User Manual
 
 Debug 1.0.0","Control and Status Registers
 
-Exception Trigger",Trigger module,"""etrigger""","A trigger (""tdata1"") can be configured as an exception trigger (""etrigger""). Where ""tdata2"" configures the exceptions to fire upon.","Configure ""tdata1"" and ""tdata2"" to fire on exceptions, try both individual and multiple exceptions in addition to supported and unsupported. Exercise scenarios that would trigger or not trigger according to the configuration and check that debug mode is either entered or not entered accordingly, and that the entry goes correctly (pc, dpc, cause, etc).",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
+Exception Trigger",Trigger module,"""etrigger""","A trigger (""tdata1"") can be configured as an exception trigger (""etrigger""). Where ""tdata2"" configures the exceptions to fire upon.","Configure ""tdata1"" and ""tdata2"" to fire on exceptions, try both individual and multiple exceptions in addition to supported and unsupported. Exercise scenarios that would trigger or not trigger according to the configuration and check that debug mode is either entered or not entered accordingly, and that the entry goes correctly (pc, dpc, cause, etc).",Self Checking Test,Directed Self-Checking,Testcase,DTC: debug_test_trigger,?,?,?
+,,,,,,Assertion Check,Other,Assertion Coverage,"A: a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason, a_glitch_dt_exception_trigger_hit_*",?,?,?
 ,,,,"The bits {""hit"", ""vs"", ""vu"", ""s""} are not supported (WARL 0).
 ""nmi"" does not exist (mentioned because it briefly did).
 ""m"" is fully supported.
 40S, ""u"" is fully supported.
 40X, ""u"" is not supported (WARL0).
-The triggers always enter D-mode, so ""etrigger.action"" is WARL 1.","Configure an exception trigger, use the privmode bits to disable/enable the trigger, exercise the trigger conditions, check that it fires/not accordingly. Also check the WARL fields.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
-40s User Manual 0.8.0,Debug Chapter,debug_pc_o,,"Signal ""debug_pc_o"" is the PC of the last retired instruction The signal is only valid when ""debug_pc_valid_o"" is equal to 1",Verify that the signal can be matched with related rvfi signals,Assertion Check,Assertion Check,Assertion Coverage,"A:   uvmt_cv32_tb.u_debug_assert.a_debug_pc_o
-A:   uvmt_cv32_tb.u_debug_assert.a_debug_pc_o_inv",,,,,,,,,
+The triggers always enter D-mode, so ""etrigger.action"" is WARL 1.","Configure an exception trigger, use the privmode bits to disable/enable the trigger, exercise the trigger conditions, check that it fires/not accordingly. Also check the WARL fields.",Self Checking Test,Directed Self-Checking,Testcase,DTC: debug_test_trigger,?,"""tdata3"" and ""tcontrol"" should be removed.",?
+,,,,,,Assertion Check,Other,Assertion Coverage,"A: a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason, a_dt_warl_tselect, a_dt_warl_tdata1_general, a_dt_warl_tdata1_m2, a_dt_warl_tdata1_etrigger, a_dt_warl_tdata1_m6, a_dt_warl_tdata1_disabled, a_dt_warl_tdata2_etrigger, a_dt_warl_tinfo. ",?,?,?
+40s User Manual 0.8.0,Debug Chapter,debug_pc_o,,"Signal ""debug_pc_o"" is the PC of the last retired instruction The signal is only valid when ""debug_pc_valid_o"" is equal to 1",Verify that the signal can be matched with related rvfi signals,Assertion Check,Other,Assertion Coverage,"A:   uvmt_cv32_tb.u_debug_assert.a_debug_pc_o
+A:   uvmt_cv32_tb.u_debug_assert.a_debug_pc_o_inv",,,
 40S User Manual 0.8.0,Debug chapter,Debug exception addr,,"If an exception occurs during debug mode, the PC should be set to the dm_exception_addr_i input without changing the status registers","Bring core into debug mode, generate all exception types and observe that the PC jumps to the address given by dm_exception_addr_i. Observe no change in status registers
-According to specification, the core supports several types of exceptions: {instr access fault, illegal instruction, ... etc}",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""","Point mentions the exceptions supported by the e40p, need to match 40s/x capabilities and update text","""0.8.0""",,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_mode_exception
+According to specification, the core supports several types of exceptions: {instr access fault, illegal instruction, ... etc}",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: illegal_csr_in_dmode
+tc: ecall_in_dmode
+tc: mret_in_dmode
+tc: single_step","Point mentions the exceptions supported by the e40p, need to match 40s/x capabilities and update text","""0.8.0""",
+,,,,,,Assertion Check,Other,Assertion Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_mode_exception
 CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_mode_ecall
-A:   uvmt_cv32_tb.u_debug_assert.a_debug_mode_exception",,,,,,,,,
-40S User Manual 0.8.0,Debug chapter,Core debug registers,Illegal access,"Accessing the core debug registers - DCSR, DPC and DSCRATCH0/1 while NOT in debug mode causes an illegal instruction",Access all debug registers in M-mode and observe that illegal instruction exception is triggered.,Self Checking Test,Directed Non-Self-Checking,Testcase,"Covered in DTC ""debug_test""",,,,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_regs_m_mode
-A:   uvmt_cv32_tb.u_debug_assert.a_debug_regs_mmode",,,,,,,,,
-Debug 1.0.0,Debug Control and Status,"""dcsr"" writability",,"All fields of ""dcsr"" (except some) are only writable by the external debugger. Exceptions are {""v"", ""prv"", ""cause"", ""nmip""}.","Keep track of whether an external debug request has happened, check that if there is a change in ""dcsr"" (except some) then there must have been an external debug request.",Assertion Check,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
-40S User Manual 0.8.0,Debug chapter,Trigger module registers,Access from M-mode,"Accessing the trigger module registers - tselect, tdata1/2/3, tinfo, tcontrol are readable from M-mode, but not writeable. (And is not accessible at all from U-mode.)","Access all trigger module registers in M-mode and observe writes have no effects and reads should reflect register content.
+A:   uvmt_cv32_tb.u_debug_assert.a_debug_mode_exception",,,
+40S User Manual 0.8.0,Debug chapter,Core debug registers,Illegal access,"Accessing the core debug registers - DCSR, DPC and DSCRATCH0/1 while NOT in debug mode causes an illegal instruction",Access all debug registers in M-mode and observe that illegal instruction exception is triggered.,Self Checking Test,Directed Non-Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: debug_csr_rw",,,
+,,,,,,Assertion Check,Other,Assertion Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_regs_m_mode
+A:   uvmt_cv32_tb.u_debug_assert.a_debug_regs_mmode",,,
+Debug 1.0.0,Debug Control and Status,"""dcsr"" writability",,"All fields of ""dcsr"" (except some) are only writable by the external debugger. Exceptions are {""v"", ""prv"", ""cause"", ""nmip""}.","Keep track of whether an external debug request has happened, check that if there is a change in ""dcsr"" (except some) then there must have been an external debug request.",Assertion Check,Constrained-Random,Functional Coverage,"TODO: might be covered by directed/random testing, no assert found",?,?,?
+40S User Manual 0.8.0,Debug chapter,Trigger module registers,Access from M-mode,"Accessing the tdata1/2 registers are readable from M-mode, but not writeable. (And is not accessible at all from U-mode.)","Access all tdata registers in M-mode and observe writes have no effects and reads should reflect register content.
 
 Access registers from D-mode and observe full R/W access.
 
-Access from U-mode and observe no access at all.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",Should we also check r/w in U-mode?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_regs
-",?,?,?,,,,,,
-Debug 1.0.0,Trigger Registers,Trigger module registers,"""tdata1"", writing zero","""it is guaranteed that writing 0 to tdata1 disables the trigger, and leaves it in a state where tdata2 and tdata3 can be written with any value that makes sense for any trigger type supported by this trigger.""
+Access from U-mode and observe no access at all.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test"".",Should we also check r/w in U-mode?,"""tdata3"" should be removed.",?
+,,,,,,Assertion Check,Other,Assertion Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_regs.  A: a_dt_no_write_access_to_tdata_in_mmode,
+a_dt_read_access_to_tdata1_in_mmode,
+a_dt_read_access_to_tdata2_in_mmode,
+a_dt_write_access_to_tdata1_in_dmode,
+a_dt_write_access_to_tdata2_in_dmode,
+a_dt_read_access_to_tdata1_in_dmode,
+a_dt_read_access_to_tdata2_in_dmode,
+a_dt_no_access_to_tdata_in_umode.
+COV: c_dt_write_tdata1_in_mmode,
+c_dt_write_tdata2_in_mmode.
 
-More generally, ""When a selected trigger is disabled [type 15], tdata2 and tdata3 can be written with any value supported by any of the types this trigger supports"".","Write 0 to ""tdata1"", ensure that its state becomes disabled (type 15). Write values to ""tdata2"" (addresses and/or exception causes) and exercise would-have-been triggers and check that the trigger does not fire.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
-,,,"""tdata2"" and ""tdata3""","""tdata2"" should always be RW (any), and ""tdata3"" is always WARL (0x0).","Change the type to 2/5/6/15 and write any data to ""tdata2"", read it back and check that it always gets set. Do the same for ""tdata3"" and check that it always reads back 0.",Self Checking Test,Directed Self-Checking,Testcase,,?,Type 2,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,Type 2,?,,,,,,
-,,,Other tdata registers,"Writing one ""tdata*"" register must not modify other ""tdata*"" registers, and must not modify other triggers than the currently selected.","Read the state of all triggers, write to tdata1/2/3 (using all types in tdata1), read back the state of all triggers and check that nothing got changes except the one ""tdata*"" register that was written.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
+",?,?,?
+Debug 1.0.0,Trigger Registers,Trigger module registers,"""tdata1"", writing zero","""it is guaranteed that writing 0 to tdata1 disables the trigger, and leaves it in a state where tdata2 can be written with any value that makes sense for any trigger type supported by this trigger.""
+
+More generally, ""When a selected trigger is disabled [type 15], tdata2 can be written with any value supported by any of the types this trigger supports"".","Write 0 to ""tdata1"", ensure that its state becomes disabled (type 15). Write values to ""tdata2"" (addresses and/or exception causes) and exercise would-have-been triggers and check that the trigger does not fire.",Assertion Check,Other,Assertion Coverage,"A: a_dt_write_0_to_tdata1,
+a_dt_enter_dbg_reason",?,?,?
+"Debug 1.0.0
+UserManual v0.9.0.",,,tdata2,"""tdata2"" should always be RW (any) for type 2/6/15.","Change the type to 2/6/15 and write any data to ""tdata2"", read it back and check that it always gets set.",Assertion Check,Other,Assertion Coverage,"A: a_dt_write_tdata2_random_in_dmode_type_2_6_15. COV: c_dt_w_csrrw_tdata2_m2_m6_disabled,
+c_dt_w_csrrs_tdata2_m2_m6_disabled,
+c_dt_w_csrrc_tdata2_m2_m6_disabled,
+c_dt_w_csrrwi_tdata2_m2_m6_disabled,
+c_dt_w_csrrsi_tdata2_m2_m6_disabled,
+c_dt_w_csrrci_tdata2_m2_m6_disabled",?,"""tdata3"" should be removed.",?
+User Manual v0.9.0.,,,tdata3,"""tdata3"" doesn't exist.","Check that attempts to access ""tdata3"" raise an illegal instruction exception, always. (Unless overruled by a higher priority.)",Assertion Check,Other,Assertion Coverage,A: a_dt_tdata3_not_implemented.,,,
+Debug 1.0.0,,,Other tdata registers,"Writing one ""tdata*"" register must not modify other ""tdata*"" registers, and must not modify other triggers than the currently selected.","Read the state of all triggers, write to tdata1/2 (using all types in tdata1), read back the state of all triggers and check that nothing got changes except the one ""tdata*"" register that was written.",Assertion Check,Other,Assertion Coverage,"A: a_dt_write_only_tdata1,
+a_dt_write_only_tdata2.",?,"""tdata3"" should be removed.",?
 RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt2,Program Buffer,Interrupts,"While in debug mode and executing from the program buffer, all interrupts are masked.","Enable interrupts (setting mstatus.mie field and mie register).
 Bring core into debug mode and start executing from program buffer.
-Generate interrupts while in debug mode and ensure they are masked.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",,,,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_irq_in_debug
-A:   uvmt_cv32_tb.u_debug_assert.a_irq_in_debug",,,,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt3,Program Buffer,Exceptions,"While in debug mode and executing from the program buffer, exceptions don’t update any registers but they DO end execution of PB (TBD: goes back to M-mode or restarts in debug(?)) [PZ] this is redundnant with dm_exception_addr_i (on line 10 & 11)","Bring core into debug mode and start executing from program buffer. Make sure PB includes code that will hit an exception. Make sure core doesn’t update any registers, and jumps out of debug mode into M-mode",Self Checking Test,,,N/A,,,,,,,,,
-,,,,,,Check against ISS,,,N/A,,,,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt4,Program Buffer,Triggers,"While in debug mode and executing from the program buffer, no action is taken on any trigger match.","Bring core into debug and enable a trigger on the PC (pointing to the debug program buffer). Continue execution in debug, and observe that no action is taken when the trigger matches.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",,,,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_match_disabled (d_match_with_en),,,,,,,,,
-Debug 1.0.0,dcsr,Counters,,"Spec:Counters may be stopped, depending on stopcount in dscr","""dcsr.stopcount"" is WARL and we must test the counter bevaior for both values of stopcount.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",?,"Is wrong, need update.",?,,,,,,
+Generate interrupts while in debug mode and ensure they are masked.",Assertion Check,Other,Assertion Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_irq_in_debug
+A:   uvmt_cv32_tb.u_debug_assert.a_irq_in_debug",,,
+RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt3,Program Buffer,Exceptions,"While in debug mode and executing from the program buffer, exceptions don’t update any registers but they DO end execution of PB (TBD: goes back to M-mode or restarts in debug(?)) [PZ] this is redundnant with dm_exception_addr_i (on line 10 & 11)","Bring core into debug mode and start executing from program buffer. Make sure PB includes code that will hit an exception. Make sure core doesn’t update any registers, and jumps out of debug mode into M-mode",Self Checking Test,,,N/A,,,
+,,,,,,Check against ISS,,,N/A,,,
+RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt4,Program Buffer,Triggers,"While in debug mode and executing from the program buffer, no action is taken on any trigger match.","Bring core into debug and enable a trigger on the PC (pointing to the debug program buffer). Continue execution in debug, and observe that no action is taken when the trigger matches.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test"". ",,,
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_trigger_match_disabled (d_match_with_en) A:a_dt_no_actions_on_trigger_matches_in_debug_dcsr
+a_dt_no_actions_on_trigger_matches_in_debug_dpc",,,
+Debug 1.0.0,dcsr,Counters,,"Spec:Counters may be stopped, depending on stopcount in dscr","""dcsr.stopcount"" is WARL and we must test the counter bevaior for both values of stopcount.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: test_stopcnt_bits",?,"Is wrong, need update.",?
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_counters_enabled
 A:   uvmt_cv32_tb.u_debug_assert.a_minstret_count
-A:   uvmt_cv32_tb.u_debug_assert.a_mcycle_count",?,"Any other ""40p"" outdateds here? Marked them all.",?,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt6,Program Buffer,Timers,"Timers may be stopped, depending on stoptime in dcsr","(See ""Counters"" above.)",,,,N/A,,"Fix ""40p""",,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt7,Program Buffer,WFI instruction,"In debug, the WFI instruction acts as a NOP instruction","Bring core into debug mode. Ensure that an WFI instruction will be executed from the program buffer. Ensure that the WFI will act as a nop, not waiting for an interrupt to occur.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_mcycle_count",?,"Any other ""40p"" outdateds here? Marked them all.",?
+RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt6,Program Buffer,Timers,"Timers may be stopped, depending on stoptime in dcsr","(See ""Counters"" above.)",,,,N/A,,"Fix ""40p""",
+RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt7,Program Buffer,WFI instruction,"In debug, the WFI instruction acts as a NOP instruction","Bring core into debug mode. Ensure that an WFI instruction will be executed from the program buffer. Ensure that the WFI will act as a nop, not waiting for an interrupt to occur.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",,,
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_wfi_in_debug
-A:   uvmt_cv32_tb.u_debug_assert.a_wfi_in_debug",,,,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt8,Program Buffer,Priv. lvl changes,An ebreak instruction during debug shall result in relaunching the debugger entry code by setting the PC to the halt_addr_i and will not change any CSR in doing this.,"Bring hart into debug mode and start executing from the Program Buffer. Make sure the PB code includes an ebreak instruction. When the ebreak is executed, the hart must halt and not update dpc or dcsr. Ensure relaunch of debugger entry",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_wfi_in_debug",,,
+RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt8,Program Buffer,Priv. lvl changes,An ebreak instruction during debug shall result in relaunching the debugger entry code by setting the PC to the halt_addr_i and will not change any CSR in doing this.,"Bring hart into debug mode and start executing from the Program Buffer. Make sure the PB code includes an ebreak instruction. When the ebreak is executed, the hart must halt and not update dpc or dcsr. Ensure relaunch of debugger entry",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: request_ebreak_3x",,,
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_ebreak_with_ebreakm (.ebreak_in_debug)
 CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_cebreak_with_ebreakm (.ebreak_in_debug)
-A:   uvmt_cv32_tb.u_debug_assert.a_ebreak_during_debug_mode",,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_ebreak_during_debug_mode",,,
 RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt9,Program Buffer,Fence instructions,Completing program buffer execution is considered output for the purpose of the fence instruction.,"TBD - need to understand the fence instruction in cv32e40s. Is ""completing program buffer execution"" the same as executing dret? [PZ] waiting for more clarity from RISCV Foundation debug task group (see https://lists.riscv.org/g/tech-debug/topic/clarification_request/75725318?p=,,,20,0,0,0::recentpostdate%2Fsticky,,,20,2,0,75725318 )
 
-Nothing to do. That sentence was retracted here https://github.com/riscv/riscv-debug-spec/pull/601/files . Now it seems they just recommend debug software to do a fence when completing abstract commands.",,,,N/A,What are we doing here?,Added N/A disclaimer. Striking it.,,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt10,Program Buffer,Ctrl. Transfer instr.,"All control transfer instructions may act as illegal instructions if destination is within program buffer. If one does, all must.",N/A for CV32E40s : need Arjan/Davide to sign-off on this. [PZ] This is not supported and it is mentioned in the CV32E40s debug spec. No verification needed to prove nor dis-prove this behavior,,,,N/A,,"Fix ""40p""",,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt11,Program Buffer,Ctrl. Transfer instr.,"All control transfer instructions may as illegal instructions if destination is outside the program buffer. If one does, all must.",N/A for CV32E40s : need Arjan/Davide to sign-off on this. [PZ] This is not supported and it is mentioned in the CV32E40s debug spec. No verification needed to prove nor dis-prove this behavior,,,,N/A,,"Fix ""40p""",,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt12,Program Buffer,Instr. Dependent of PC,Instructions that depend on the PC may act as illegal instructions,N/A for CV32E40s : need Arjan/Davide to sign-off on this. [PZ] This is not supported and it is mentioned in the CV32E40s debug spec. No verification needed to prove nor dis-prove this behavior,,,,N/A,,"Fix ""40p""",,,,,,,
+Nothing to do. That sentence was retracted here https://github.com/riscv/riscv-debug-spec/pull/601/files . Now it seems they just recommend debug software to do a fence when completing abstract commands.",,,,N/A,What are we doing here?,Added N/A disclaimer. Striking it.,
+RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt10,Program Buffer,Ctrl. Transfer instr.,"All control transfer instructions may act as illegal instructions if destination is within program buffer. If one does, all must.",N/A for CV32E40s : need Arjan/Davide to sign-off on this. [PZ] This is not supported and it is mentioned in the CV32E40s debug spec. No verification needed to prove nor dis-prove this behavior,,,,N/A,,"Fix ""40p""",
+RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt11,Program Buffer,Ctrl. Transfer instr.,"All control transfer instructions may as illegal instructions if destination is outside the program buffer. If one does, all must.",N/A for CV32E40s : need Arjan/Davide to sign-off on this. [PZ] This is not supported and it is mentioned in the CV32E40s debug spec. No verification needed to prove nor dis-prove this behavior,,,,N/A,,"Fix ""40p""",
+RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt12,Program Buffer,Instr. Dependent of PC,Instructions that depend on the PC may act as illegal instructions,N/A for CV32E40s : need Arjan/Davide to sign-off on this. [PZ] This is not supported and it is mentioned in the CV32E40s debug spec. No verification needed to prove nor dis-prove this behavior,,,,N/A,,"Fix ""40p""",
 RISC-V External Debug Support Version 0.13.2,4.1 Debug mode pt13,Program Buffer,Effective XLEN,Effective XLEN = DXLEN,"CV32E40s XLEN=1 (32 bits).  DXLEN is defined as the widest supported XLEN. For now, this will be 1 (32 bits). Check XLEN M- and D-mode
 Mike: what exactly would a testcase actually do to check this?
-ØK: As discussed in the meeting 02.July, this is probably a SW/DM problem. Leaving it here for reference.",,,,N/A,,,,,,,,,
-,,,,,,,,,N/A,,"Fix ""40p""",,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.2 Load-Reserved/Store-Conditional,,,,"N/A for CV32E40s (requires A-extention) : need Arjan/Davide to sign-off on this. [PZ] This is not a test but a warning or assumption that debug entry should not occur between a lr and sc instruction pair. Moreover, CV32E40s does not support A-extension",,,,N/A,,"Fix ""40p""",,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.3 Wait for interrupt,Debug mode,WFI instruction,"If debug_req_i is asserted while waiting for interrupt (core_sleep_o = 1), WFI instruction must complete (core_sleep_o -> 0) and hart enters debug mode.","Insert WFI instruction into arbitrary code. While the hart is waiting for an interrupt, request debug mode. The hart must stop waiting for interrupt and enter debug mode. WFI at trigger will be converted to a NOP and should be a dedicated test. See #pz_ref2 in this sheet below",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""","Update reference document, applies to several following points",,,,,,,,
+ØK: As discussed in the meeting 02.July, this is probably a SW/DM problem. Leaving it here for reference.",,,,N/A,,,
+,,,,,,,,,N/A,,"Fix ""40p""",
+RISC-V External Debug Support Version 0.13.2,4.2 Load-Reserved/Store-Conditional,,,,"N/A for CV32E40s (requires A-extention) : need Arjan/Davide to sign-off on this. [PZ] This is not a test but a warning or assumption that debug entry should not occur between a lr and sc instruction pair. Moreover, CV32E40s does not support A-extension",,,,N/A,,"Fix ""40p""",
+RISC-V External Debug Support Version 0.13.2,4.3 Wait for interrupt,Debug mode,WFI instruction,"If debug_req_i is asserted while waiting for interrupt (core_sleep_o = 1), WFI instruction must complete (core_sleep_o -> 0) and hart enters debug mode.","Insert WFI instruction into arbitrary code. While the hart is waiting for an interrupt, request debug mode. The hart must stop waiting for interrupt and enter debug mode. WFI at trigger will be converted to a NOP and should be a dedicated test. See #pz_ref2 in this sheet below",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: wfi_before_dmode","Update reference document, applies to several following points",,
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_wfi_debug_req
 A:   uvmt_cv32_tb.u_debug_assert.a_sleep_debug_req_wu
-A:   uvmt_cv32_tb.u_debug_assert.a_sleep_debug_req",,,,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.4 Single step,Debug mode,Single stepping,"By setting step in dcsr[2] before resuming execution, a debugger can cause the hart to execute a single instructin before re-entering debug mode.",Bring the hart into debug mode. Set the step bit in dcsr[2] and then resume execution. Observe that the hart runs a single instruction and the goes back to debug mode.,Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_sleep_debug_req",,,
+RISC-V External Debug Support Version 0.13.2,4.4 Single step,Debug mode,Single stepping,"By setting step in dcsr[2] before resuming execution, a debugger can cause the hart to execute a single instructin before re-entering debug mode.",Bring the hart into debug mode. Set the step bit in dcsr[2] and then resume execution. Observe that the hart runs a single instruction and the goes back to debug mode.,Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: single_step",,,
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_single_step (.mmode_step)
 A:   uvmt_cv32_tb.u_debug_assert.a_single_step
-A:   uvmt_cv32_tb.u_debug_assert.a_enter_debug",,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_enter_debug",,,
 RISC-V External Debug Support Version 0.13.2,4.4 Single step,Debug mode,Single stepping,"If the instruction being fetched or executed in a single step casues an exception, debug mode is entered immediately after the PC is changed to the exception handler and registers tval and cause are updated.
 
 Note: CV32E40S does not support tval (this might be supported in future cores)","Perform a single step. Make sure the instruction executed in the step will cause an exception. PC must jump to the exception handler address and update tval and cause and then immediately enter debug mode.
 
-Check tval==0",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""","Update to reflect that we are now checking ""future cores""",,,,,,,,
+Check tval==0",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: single_step","Update to reflect that we are now checking ""future cores""",,
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_single_step (.mmode_step_illegal)
-A:   uvmt_cv32_tb.u_debug_assert.a_single_step_exception",,,,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.4 Single step,Debug mode,Single stepping,"If the instruction being fetched or executed in a single step causes a trigger, debug mode is entered immediately after the trigger fired. Cause is set to 2 instead of 4","Set up the trigger module to match on instruction address. Set up single stepping such that the match address will be executed in a step. The trigger module must fire during the step, and debug mode entered with cause = 2 to identify that the trigger was fired. (#1)",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_single_step_exception",,,
+RISC-V External Debug Support Version 0.13.2,4.4 Single step,Debug mode,Single stepping,"If the instruction being fetched or executed in a single step causes a trigger, debug mode is entered immediately after the trigger fired. Cause is set to 2 instead of 4","Set up the trigger module to match on instruction address. Set up single stepping such that the match address will be executed in a step. The trigger module must fire during the step, and debug mode entered with cause = 2 to identify that the trigger was fired. (#1)",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: single_step",,,
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_single_step (.mmode_step_trigger_match)
 A:    uvmt_cv32_tb.u_debug_assert.a_single_step_trigger
-A:   uvmt_cv32_tb.u_debug_assert.a_enter_debug",,,,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.4 Single step,Debug mode,Single stepping,"If the intruction executed in the single step results in a PC that will cause an exception, the exception will not execute until the next time the hart resumes.","Make sure that an instruction in the instruction memory will generate a PC that causes an exception. Set up single stepping and make sure to step through this specific instruction. Hart must go back to debug mode after stepping, and the exception must not start executing until the next time the hart resumes (either single step or exit debug mode)",Self Checking Test,,,N/A,,,,,,,,,
-,,,,,,Check against ISS,,,N/A,,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_enter_debug",,,
+RISC-V External Debug Support Version 0.13.2,4.4 Single step,Debug mode,Single stepping,"If the intruction executed in the single step results in a PC that will cause an exception, the exception will not execute until the next time the hart resumes.","Make sure that an instruction in the instruction memory will generate a PC that causes an exception. Set up single stepping and make sure to step through this specific instruction. Hart must go back to debug mode after stepping, and the exception must not start executing until the next time the hart resumes (either single step or exit debug mode)",Self Checking Test,,,N/A,,,
+,,,,,,Check against ISS,,,N/A,,,
 RISC-V External Debug Support Version 0.13.2,4.4 Single step,Debug mode,Single stepping,"If the intruction executed in the single step results in a PC that will cause a trigger event, the trigger event will not take place until the instruction is executed.","This can be verified in the same steps as marked with (#1).
-Mike: this may be difficult to accurately predict in the ISS.  This is good input for the Imperas team.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",,,,,,,,,
+Mike: this may be difficult to accurately predict in the ISS.  This is good input for the Imperas team.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: single_step",,,
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_single_step (.mmode_step_next_pc_will_match)
 A: uvmt_cv32_tb.u_debug_assert.a_single_step_trigger
-A: uvmt_cv32_tb.u_debug_assert.a_enter_debug",,,,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.4 Single step,Debug mode,Single stepping,"If the single step instruction is WFI, it must be treated as a nop instead of stalling and waiting for interrupt. [PZ] #pz_ref2","Perform a single step where the instruction to be executed is a WFI instruction. The hart must not wait for interrupt, but treat the instruction as as NOP and re-enter debug after finishing the step.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",,,,,,,,,
+A: uvmt_cv32_tb.u_debug_assert.a_enter_debug",,,
+RISC-V External Debug Support Version 0.13.2,4.4 Single step,Debug mode,Single stepping,"If the single step instruction is WFI, it must be treated as a nop instead of stalling and waiting for interrupt. [PZ] #pz_ref2","Perform a single step where the instruction to be executed is a WFI instruction. The hart must not wait for interrupt, but treat the instruction as as NOP and re-enter debug after finishing the step.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: single_step",,,
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_single_step (.mmode_step_wfi)
-A:   uvmt_cv32_tb.u_debug_assert.a_single_step_wfi",,,,,,,,,
-RISC-V External Debug Support Version 0.13.2,4.5 Reset,Debug mode,Reset,"When the hart comes out of reset, it must immediately enter debug mode without executing any instructions if the halt signal or debug_req_i is asserted.","Assert the core reset AND the debug_req_i signal. The hart must not execute any instructions, but immediately enter debug mode.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test_reset""",,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_single_step_wfi",,,
+RISC-V External Debug Support Version 0.13.2,4.5 Reset,Debug mode,Reset,"When the hart comes out of reset, it must immediately enter debug mode without executing any instructions if the halt signal or debug_req_i is asserted.","Assert the core reset AND the debug_req_i signal. The hart must not execute any instructions, but immediately enter debug mode.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test_reset""",,,
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_at_reset
-A:   uvmt_cv32_tb.u_debug_assert.a_debug_at_reset",,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_debug_at_reset",,,
 RISC-V External Debug Support Version 0.13.2,4.6 dret instruction,Debug mode,dret instruction,Executing dret while NOT in debug mode will cause an illegal instruction exception.,"Insert dret into arbitrary code running in m-mode, observe that the illegal insctruction exception is thrown.
-Can be tested in the same test as for debug entry",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",,,,,,,,,
+Can be tested in the same test as for debug entry",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: dret_in_mmode",,,
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_mmode_dret
-A:  uvmt_cv32_tb.u_debug_assert.a_mumode_dret",,,,,,,,,
+A:  uvmt_cv32_tb.u_debug_assert.a_mumode_dret",,,
 RISC-V External Debug Support Version 0.13.2,4.6 dret instruction,Debug mode,dret instruction,Executing dret while in debug mode will restore PC to the value in dpc and exit debug mode.,"Bring hart into debug mode. Execute a dret instruction and observe that the hart resumes executing from the correct address as given by dpc. 
-Can be tested in the same test as for debug entry.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""","remove note, this is covered or 40s (U-Mode) in the next point",,,,,,,,
+Can be tested in the same test as for debug entry.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: all testcases that enter and exit debug mode (most)","remove note, this is covered or 40s (U-Mode) in the next point",,
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_mmode_dret
-A:   uvmt_cv32_tb.u_debug_assert.a_dmode_dret",,,,,,,,,
-Debug 1.0.0,Execution Based,Debug mode,dret instruction,"40S, ""When dret is executed, […] normal execution resumes at the privilege set by prv""","Be in debug mode, note the value in ""dcsr.prv"", exit debug mode with a ""dret"", check that the mode being executed in is the one indicated by ""dcsr.prv"". (Note overlap with user mode vplan.)",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
-Debug 1.0.0,Resume,Debug mode,dret instruction,"40S, ""If the new privilege mode is less privileged than M-mode, MPRV in mstatus is cleared.""","Be in debug mode, set ""dcsr.prv"" to U-mode, let ""mstatus.MPRV"" be set and clear (different runs), exit debug mode with a ""dret"", check that ""mstatus.MPRV"" ends up cleared. (Note overlap with user mode vplan.)",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_dmode_dret",,,
+Debug 1.0.0,Execution Based,Debug mode,dret instruction,"40S, ""When dret is executed, […] normal execution resumes at the privilege set by prv""","Be in debug mode, note the value in ""dcsr.prv"", exit debug mode with a ""dret"", check that the mode being executed in is the one indicated by ""dcsr.prv"". (Note overlap with user mode vplan.)",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: mprv_dret_to_umode",?,?,?
+,,,,,,Assertion Check,Other,Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dret_prv,?,?,?
+Debug 1.0.0,Resume,Debug mode,dret instruction,"40S, ""If the new privilege mode is less privileged than M-mode, MPRV in mstatus is cleared.""","Be in debug mode, set ""dcsr.prv"" to U-mode, let ""mstatus.MPRV"" be set and clear (different runs), exit debug mode with a ""dret"", check that ""mstatus.MPRV"" ends up cleared. (Note overlap with user mode vplan.)",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: mprv_dret_to_umode",?,?,?
+,,,,,,Assertion Check,Other,Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_dret_mprv_umode,?,?,?
 Debug 1.0.0,Debug Control and Status,Debug mode,dret instruction,"""Upon entry into Debug Mode, v and prv are updated with the privilege level the hart was previously in""","40S, enter debug mode from different modes, check that ""dcsr.prv"" represents the previous mode. (Note overlap with user mode vplan.)
 
-40X, check that ""dcsr.prv"" is always M-mode.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
+40X, check that ""dcsr.prv"" is always M-mode.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""
+tc: mprv_dret_to_umode",?,?,?
+,,,,,,Assertion Check,Other,Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_prv_entry,?,?,?
 "RISC-V ISM vol 1 (unpriv. ISA), 20191213","Section 2.8
 
 
@@ -307,35 +358,33 @@ slli x0, x0, 0x1f # Entry NOP
 ebreak # Break to debugger
 srai x0, x0, 7 # NOP encoding the semihosting call number 7
 
-[PZ] This is a software convention and need not be tested in verification. As long as the above instructions work in general, then no need for dedicated semihosting testing.","If all points above passes, there should be nothing to verify here. Semihosting will be handled from SW.",,,,N/A,,,,,,,,,
-,,Trigger,Exception handling,"If the trigger matches on an illegal instruction, PC must be set to the exception handler prior to entering debug mode.","Set up the trigger to match on an address containing an illegal instruction. When the trigger fires, ensure that cause=0x2(trigger) and that PC is set to the exception handler before entering debug mode.",Self Checking Test,Directed Self-Checking,Testcase,With timing=0 the core will not attempt to execute instruction at trigger address,,,,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"With timing=0 the core will not attempt to execute instruction at trigger address
+[PZ] This is a software convention and need not be tested in verification. As long as the above instructions work in general, then no need for dedicated semihosting testing.","If all points above passes, there should be nothing to verify here. Semihosting will be handled from SW.",,,,N/A,,,
+,,Trigger,Exception handling,"If the trigger matches on an illegal instruction, PC must be set to the exception handler prior to entering debug mode.","Set up the trigger to match on an address containing an illegal instruction. When the trigger fires, ensure that cause=0x2(trigger) and that PC is set to the exception handler before entering debug mode.",Self Checking Test,Directed Self-Checking,Testcase,"With ""before timing"" the core will not attempt to execute instruction at trigger address",,"""link to coverage"": Is this merely claimed? Can we either test it or change the relevant vplan items?",
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"With ""before timing"" the core will not attempt to execute instruction at trigger address
 
 A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause
-A:   uvmt_cv32_tb.u_debug_assert.a_dpc_dbg_trigger",,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_dpc_dbg_trigger",,,
 ,,"Trigger, single step",Exception handling,"If the trigger matches on an illegal instruction, PC must be set to the exception handler prior to entering debug mode.","Set up the trigger to match on an address containing an illegal instruction. 
 Set up single stepping such that the match address will be executed in the next step.
-When the trigger fires, ensure that cause=0x2(trigger) and that PC is set to the exception handler before entering debug mode.",Self Checking Test,Directed Self-Checking,Testcase,With timing=0 the core will not attempt to execute instruction at trigger address,,,,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"With timing=0 the core will not attempt to execute instruction at trigger address
+When the trigger fires, ensure that cause=0x2(trigger) and that PC is set to the exception handler before entering debug mode.",Self Checking Test,Directed Self-Checking,Testcase,"With ""before timing"" the core will not attempt to execute instruction at trigger address",,,
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"With ""before timing"" the core will not attempt to execute instruction at trigger address
 
 A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause
-A:   uvmt_cv32_tb.u_debug_assert.a_dpc_dbg_trigger",,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_dpc_dbg_trigger",,,
 "40S User Manual 0.8.0
 
 OBI-v1.4","Core Integration
 
-dbg",OBI,,"OBI bus accesses shall indicate whether the core is in D-mode or not, signaled via ""instr_dbg_o"" and ""data_dbg_o"".","Be in debug mode and be out of debug mode, execute regular instructions and execute loads/stores, check that the corresponding OBI buses have ""dbg"" set correspondingly.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"A:   uvmt_cv32_tb.u_debug_assert.a_obi_dbg_instr
+dbg",OBI,,"OBI bus accesses shall indicate whether the core is in D-mode or not, signaled via ""instr_dbg_o"" and ""data_dbg_o"".","Be in debug mode and be out of debug mode, execute regular instructions and execute loads/stores, check that the corresponding OBI buses have ""dbg"" set correspondingly.",Assertion Check,Other,Assertion Coverage,"A:   uvmt_cv32_tb.u_debug_assert.a_obi_dbg_instr
 A:   uvmt_cv32_tb.u_debug_assert.a_obi_dbg_instr_inv
 A:   uvmt_cv32_tb.u_debug_assert.a_obi_dbg_data
-A:   uvmt_cv32_tb.u_debug_assert.a_obi_dbg_data_inv",?,?,?,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_obi_dbg_data_inv",?,?,?
 "40S User Manual 0.8.0
 
 Debug 1.0.0","Control and Status Registers
 
 Debug Control and Status",NMI,,"The ""dcsr.nmip"" bit is supported.
-When a non-maskable interrupt is pending, then this bit must be high.","Cause an NMI to occur, read ""dcsr.nmip"", check that it is high as expected. Have no NMI pending, read ""dsr.nmip"", check that it is low.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
+When a non-maskable interrupt is pending, then this bit must be high.","Cause an NMI to occur, read ""dcsr.nmip"", check that it is high as expected. Have no NMI pending, read ""dsr.nmip"", check that it is low.",Assertion Check,Other,Functional Coverage,A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_nmip,?,?,?
 "40X/S user manual
 
 Debug 1.0.0
@@ -347,23 +396,19 @@ Debug Control and Status
 Machine Status Registers",MPRV,,"""dcsr.mprven"" is WARL 1.
 Since ""mprven"" is 1, then ""mstatus.MPRV"" always takes effect in D-mode.","Read ""dcsr.mprven"", check that it is always 1.
 
-40S, be in debug mode, have ""mstatus.MPRV"" disabled, check that all instructions are treated as M-mode. Be in debug mode, have ""mstatus.MPRV"" enabled, have ""mstatus.MPP"" set to M/U-mode (different runs), check that instructions take effect with the modified privilege mode.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
-Silabs Internal,,Instruction boundaries,Haltreq and stepping,"External debug requests and single stepping can only cause debug entry on ""instruction boundaries"", so a multi-step instruction cannot be interrupted by this.","While single stepping, execute misaligned loads/stores, push/pops, and table jumps, cause an external debug request while the instruction has started its sub operations, check that the external debug request does not interrupt the instructions.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
-Debug 1.0.0,,Instruction boundaries,Synchronous entry,"Trigger matching can cause synchronous debug entry, and can interrupt ""within"" and instruction.","Set up triggers to match the following scenario, execute misaligned loads/stores, push/pops, and table jumps, have a trigger fire while the instruction has started its sub operations, check that the instruction gets interrupted ""midway"" and that debug mode is entered correctly.",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,?,?,?,,,,,,
+40S, be in debug mode, have ""mstatus.MPRV"" disabled, check that all instructions are treated as M-mode. Be in debug mode, have ""mstatus.MPRV"" enabled, have ""mstatus.MPP"" set to M/U-mode (different runs), check that instructions take effect with the modified privilege mode.",Assertion Check,Other,Assertion Coverage,A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.umode_assert_i.a_mprven_tied,?,?,?
+Silabs Internal,,Instruction boundaries,Haltreq and stepping,"External debug requests and single stepping can only cause debug entry on ""instruction boundaries"", so a multi-step instruction cannot be interrupted by this.","While single stepping, execute misaligned loads/stores, push/pops, and table jumps, cause an external debug request while the instruction has started its sub operations, check that the external debug request does not interrupt the instructions.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test2""",?,?,?
+Debug 1.0.0,,Instruction boundaries,Synchronous entry,"Trigger matching can cause synchronous debug entry, and can interrupt ""within"" and instruction.","Set up triggers to match the following scenario, execute misaligned loads/stores, push/pops, and table jumps, have a trigger fire while the instruction has started its sub operations, check that the instruction gets interrupted ""midway"" and that debug mode is entered correctly.",Self Checking Test,Directed Self-Checking,Testcase,DTC: pushpop_debug_triggers,?,?,?
 "RISC-V External Debug Support Version 0.13.2
 CV32E40P doc rev 46711ac","4.8.1 DCSR
 
-Control and Status Registers",Single step,Interrupts,"While single stepping, interrupts (maskable and non-maskable) may be enabled or disabled using the dcsr.stepie bit. ","Set up single stepping. Ensure interrupt is asserted while performing a step. Ensure that the interrupt is taken when dcsr.stepie = 1, and not taken when dcsr.stepie = 0.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",?,?,?,,,,,,
+Control and Status Registers",Single step,Interrupts,"While single stepping, interrupts (maskable and non-maskable) may be enabled or disabled using the dcsr.stepie bit. ","Set up single stepping. Ensure interrupt is asserted while performing a step. Ensure that the interrupt is taken when dcsr.stepie = 1, and not taken when dcsr.stepie = 0.",Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",?,?,?
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_single_step (mmode_step_stepie)
-A:   uvmt_cv32_tb.u_debug_assert.a_stepie_irq_dis",?,?,?,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_stepie_irq_dis",?,?,?
 ,,,,,"Set up single stepping. Ensure NMI is asserted while performing a step. Ensure that the NMI is taken when dcsr.stepie = 1, and not taken when dcsr.stepie = 0.
-",Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvmt_cv32_tb.u_debug_assert.cov_step_stepie_nmi
-A:   uvmt_cv32_tb.u_debug_assert.a_stepie_irq_dis",?,?,?,,,,,,
-,,Interrupts,Simultaneous Interrupt,,Have debug_req_i and interrupt asserted on same clock cycle. Ensure debugger entered with PC reflecting normal PC thread (not the interrupt exception address),Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",,,,,,,,,
+",Assertion Check,Other,Assertion Coverage,"CG: uvmt_cv32_tb.u_debug_assert.cov_step_stepie_nmi
+A:   uvmt_cv32_tb.u_debug_assert.a_stepie_irq_dis, uvmt_cv32_tb.u_debug_assert.a_stepie_irq_en",?,?,?
+,,Interrupts,Simultaneous Interrupt,,Have debug_req_i and interrupt asserted on same clock cycle. Ensure debugger entered with PC reflecting normal PC thread (not the interrupt exception address),Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test""",,,
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_irq_dreq
 
 ""NOTE: not tested specifically, but is covered in formal verification of:
@@ -371,27 +416,27 @@ A:   uvmt_cv32_tb.u_debug_assert.a_enter_debug
 A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause""
 
 
-","What feature is this? Several points in this region lack context, or a merging of left hand cells",,,,,,,,
-,,,Simultaneous NMI,,Have debug_req_i and NMI asserted on same clock cycle. Ensure debugger entered with PC reflecting normal PC thread (not the NMI exception address),Self Checking Test,Directed Self-Checking,Testcase,,?,?,?,,,,,,
+","What feature is this? Several points in this region lack context, or a merging of left hand cells",,
+,,,Simultaneous NMI,,Have debug_req_i and NMI asserted on same clock cycle. Ensure debugger entered with PC reflecting normal PC thread (not the NMI exception address),Self Checking Test,Directed Self-Checking,Testcase,,?,?,?
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"NOTE: not tested specifically, but is covered in formal verification of:
 A:   uvmt_cv32_tb.u_debug_assert.a_enter_debug
-A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause",?,?,?,,,,,,
-,,RISCV compliance,,All RISCV code should run in debug mode as well as M mode,[PZ] Run RISCV compliance tests all in debug mode,Self Checking Test,Directed Self-Checking,Testcase,Waived,,,,,,,,,
-,,Corner Cases,Corner Cases,,[PZ] assert debug_req and interrupt at the same time as trigger is matching an address (with trigger enabled) and the instruction being 1) illegal instruction 2) exception call (e.g. ebreak with ebreakm==0) 3) branch 4) multicycle instruction (e.g. mulh),Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test_trigger""",,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause",?,?,?
+,,RISCV compliance,,All RISCV code should run in debug mode as well as M mode,[PZ] Run RISCV compliance tests all in debug mode,Self Checking Test,Directed Self-Checking,Testcase,Waived,,,
+,,Corner Cases,Corner Cases,,[PZ] assert debug_req and interrupt at the same time as trigger is matching an address (with trigger enabled) and the instruction being 1) illegal instruction 2) exception call (e.g. ebreak with ebreakm==0) 3) branch 4) multicycle instruction (e.g. mulh),Self Checking Test,Directed Self-Checking,Testcase,"Covered in DTC ""debug_test_trigger""",,,
 ,,,,,,Check against ISS,Constrained-Random,Functional coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_irq_dreq
         (.irq_dreq_trig_ill/cebreak/ebreak/branch/multicycle)
-",,,,,,,,,
+",,,
 ,,,,,[PZ] Add coverage to ensure debug_req asserted on every FSM state,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.cg_debug_mode_ext
-",,,,,,,,,
-,,,,,[PZ] Have trigger address match an instruction that has an illegal instruction (both in normal and single step mode). Ensure debug is enterred with cause set to trigger and PC is set to exception handler prior to debug entry,,,,"Not possible with timing=0, core will not execute instruction at match address before entering debug mode.",,,,,,,,,
-,,,,"If a debug_req_i is asserted when an illegal instructions is being executed, the address of the trap handler must be stored to dpc instead of the address of the illegal instruction","Assert debug_req_i at the same time as an illegal instruction is being executed, observe that dpc is updated with the address of the trap handler instead of the address of the illegal instruction",Self Checking Test,Directed Self-Checking,Testcase,Covered in DTC debug_test_known_miscompares,Lacks verification goal,,,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,A: uvmt_cv32_tb.u_debug_assert.a_illegal_insn_debug_req,,,,,,,,,
+",,,
+,,,,,[PZ] Have trigger address match an instruction that has an illegal instruction (both in normal and single step mode). Ensure debug is enterred with cause set to trigger and PC is set to exception handler prior to debug entry,,,,"Not possible with ""before timing"", core will not execute instruction at match address before entering debug mode.",,,
+,,,,"If a debug_req_i is asserted when an illegal instructions is being executed, the address of the trap handler must be stored to dpc instead of the address of the illegal instruction","Assert debug_req_i at the same time as an illegal instruction is being executed, observe that dpc is updated with the address of the trap handler instead of the address of the illegal instruction",Self Checking Test,Directed Self-Checking,Testcase,Covered in DTC debug_test_known_miscompares,Lacks verification goal,,
+,,,,,,Check against ISS,Constrained-Random,Functional Coverage,A: uvmt_cv32_tb.u_debug_assert.a_illegal_insn_debug_req,,,
 ,,,,"Several causes exist for entering debug, the priority is specified in a table in the ""dcsr"" section of the debug spec.
 
-Note: This changed going to v1.0.0","Ensure combinations of reasons exist simultaneously, and observer that the correct cause is stored to dcsr.",Self Checking Test,Directed Self-Checking,Testcase,"Partly covered in DTC ""debug_test"" and ""debug_test_trigger"", the rest will be covered by corev_rand_debug_ebreak and corev_rand_debug_single_step",?,?,?,,,,,,
+Note: This changed going to v1.0.0","Ensure combinations of reasons exist simultaneously, and observer that the correct cause is stored to dcsr.",Self Checking Test,Directed Self-Checking,Testcase,"Partly covered in DTC ""debug_test"" and ""debug_test_trigger"", the rest will be covered by corev_rand_debug_ebreak and corev_rand_debug_single_step",?,?,?
 ,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"CG: uvm_pkg.uvm_test_top.env.cov_model.debug_covg.debug_causes
         (.trig_vs_ebreak, trig_vs_cebreak, trig_vs_dbg_req, trig_vs_step
-          ebreak_vs_req, cebreak_vs_req, ebreak_vs_step, cebreak_vs_step, dbg_req_vs_step)",?,?,?,,,,,,
+          ebreak_vs_req, cebreak_vs_req, ebreak_vs_step, cebreak_vs_step, dbg_req_vs_step)",?,?,?
 ,,,3-way Corners,"* Haltreq, then single-step ebreak
 * Single-step ebreak, then haltreq
 * Single-step ebreak with trigger
@@ -400,53 +445,47 @@ Note: This changed going to v1.0.0","Ensure combinations of reasons exist simult
 * Haltreq, then ebreak, then trigger on next instr
 * Haltreq during ebreak with trigger
 * Haltreq during ebreak, then tirgger on next instr
-(More 3-way corners could be possible, see ""Generated Corners"" below.)","Stimulate occurances of all cases, model the outcome (wrt dpc, cause priority, etc), check expectations.",Self Checking Test,Directed Self-Checking,Testcase,,,,,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"NOTE: not tested specifically, but is covered in formal verification of:
+(More 3-way corners could be possible, see ""Generated Corners"" below.)","Stimulate occurances of all cases, model the outcome (wrt dpc, cause priority, etc), check expectations.",Assertion Check,Other,Assertion Coverage,"NOTE: not tested specifically, but is covered in formal verification of:
 A:   uvmt_cv32_tb.u_debug_assert.a_enter_debug
-A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause",,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause",,,
 ,,,4-way Corners,"* Haltreq, then single-step ebreak with trigger
 * Haltreq, then single-step ebreak, then trigger on next instr
 * Single-step ebreak with trigger, then haltreq
 * Single-step ebreak, then haltreq and trigger on next instr
-(More 4-way corners could be possible, see ""Generated Corners"" below.)","Stimulate occurances of all cases, model the outcome (wrt dpc, cause priority, etc), check expectations.",Self Checking Test,Directed Self-Checking,Testcase,,,,,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,"NOTE: not tested specifically, but is covered in formal verification of:
+(More 4-way corners could be possible, see ""Generated Corners"" below.)","Stimulate occurances of all cases, model the outcome (wrt dpc, cause priority, etc), check expectations.",Assertion Check,Other,Assertion Coverage,"NOTE: not tested specifically, but is covered in formal verification of:
 A:   uvmt_cv32_tb.u_debug_assert.a_enter_debug
-A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause",,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause",,,
 ,,,Generated Corners,There are many corners,"Write a covergroup with all events that can cause debug entry {haltreq, step, etc…} and include timing aspects of first/then (""e.g. haltreq right after step"", etc…). Then, create a cross of all of these, as that should in principle generate all possible corners if written comprehensively. Finally, review if all of these corners are covered by the assertion set.",Assertion Check,Constrained-Random,Functional Coverage,"NOTE: not tested specifically, but is covered in formal verification of:
 A:   uvmt_cv32_tb.u_debug_assert.a_enter_debug
-A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause",,,,,,,,,
-,,,Dret,https://github.com/openhwgroup/core-v-verif/issues/1476,"Execute ""dret"" in M-mode, followed by a haltreq (as early as possible), so D-mode is entered before the exception handler. Ensure the rest of debug modelling has predictions on all csr and rvfi signals needed for checking this outcome.",Assertion Check,Constrained-Random,Functional Coverage,A: uvmt_cv32_tb.u_debug_assert.a_mumode_dret,,,,,,,,,
-,,External debug request,Startup / clock gating,"When the reset signal is deasserted, but before the fetch_enable_i signal is active, the internal clock of the core is gated. The cv32e40p would not miss this request, but on the 40s haltreq is no longer sticky and so it should not cause debug entry.","Assert short (1 cycle) debug_req_i randomly after reset, before the core starts executing. Observe that the core does not enter debug mode but instead starts executing instructions.",Self Checking Test,Directed Self-Checking,Testcase,Covered in DTC debug_test_boot_set,Deprecated as debug_req is now non-sticky,"Fix ""40p""",?,,,,,,
-RISC-V Debug Support Version 1.0.0-STABLE 86e748abed738f8878707dc31fe2713f41868f2c,A.2 Execution Based,Program Buffer,PMP,"""the PMP must not disallow fetches, loads, or stores in the address range associated with the Debug Module when the hart is in Debug Mode, regardless of how the PMP is configured""","Attempt all kinds of accesses within the region and observe that it is never disallowed , and also attempt all kinds of accesses outside the region and observe both success and failure based on PMP settings.",Self Checking Test,Directed Self-Checking,Testcase,,Any verdict on this now?,?,?,,,,,,
-,,,,,,Check against ISS,Constrained-Random,Functional Coverage,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-, -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- END -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,
+A:   uvmt_cv32_tb.u_debug_assert.a_dcsr_cause",,,
+,,,Dret,https://github.com/openhwgroup/core-v-verif/issues/1476,"Execute ""dret"" in M-mode, followed by a haltreq (as early as possible), so D-mode is entered before the exception handler. Ensure the rest of debug modelling has predictions on all csr and rvfi signals needed for checking this outcome.",Assertion Check,Constrained-Random,Functional Coverage,A: uvmt_cv32_tb.u_debug_assert.a_mumode_dret,,,
+,,External debug request,Startup / clock gating,"When the reset signal is deasserted, but before the fetch_enable_i signal is active, the internal clock of the core is gated. The cv32e40p would not miss this request, but on the 40s haltreq is no longer sticky and so it should not cause debug entry.","Assert short (1 cycle) debug_req_i randomly after reset, before the core starts executing. Observe that the core does not enter debug mode but instead starts executing instructions.",Self Checking Test,Directed Self-Checking,Testcase,Covered in DTC debug_test_boot_set,Deprecated as debug_req is now non-sticky,"Fix ""40p""",?
+RISC-V Debug Support Version 1.0.0-STABLE 86e748abed738f8878707dc31fe2713f41868f2c,A.2 Execution Based,Program Buffer,PMP,"""the PMP must not disallow fetches, loads, or stores in the address range associated with the Debug Module when the hart is in Debug Mode, regardless of how the PMP is configured""","Attempt all kinds of accesses within the region and observe that it is never disallowed , and also attempt all kinds of accesses outside the region and observe both success and failure based on PMP settings.",Assertion Check,Other,Assertion Coverage,"A: [uvmt_cv32e40s_pmp_assert].a_accept_only_legal, [uvmt_cv32e40s_pmp_assert].a_deny_only_illegal",Any verdict on this now?,?,?
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,,,,,,,,,,,,
+,---- END ----,,,,,,,,,,,

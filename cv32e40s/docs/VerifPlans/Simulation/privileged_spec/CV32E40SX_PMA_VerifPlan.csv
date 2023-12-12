@@ -124,11 +124,11 @@ Address map may be modified to better suit actual implementations, but R[15] mus
 Note: Not very feasible to match on every single cfg index, because some are overshadowed by overlapping regions and to model this is expensive."
 ,,,Load instruction coverpoint,Region index or default IO unmapped region crossed with passing load instruction,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: *.pma_cov_data_i.cover_item_covergroup_cg_mpu_inst_mpu_cg_cross_x_multimatch_aligned_loadstoreexec_allow_*,
 ,,,Store instruction coverpoint,Region index or default IO unmapped region crossed with passing store instruction,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: *.pma_cov_data_i.cover_item_covergroup_cg_mpu_inst_mpu_cg_cross_x_multimatch_aligned_loadstoreexec_allow_*,
-,,,Atomic instruction coverpoint,Region index or default IO unmapped region crossed with atomic operation,N/A,N/A,N/A,,
+,,,(40X) Atomic instruction coverpoint,Region index or default IO unmapped region crossed with atomic operation,N/A,N/A,N/A,,
 ,,,Load alignment error coverpoint,Region index or default IO unmapped region crossed with load alignment error,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: *.pma_cov_data_i.cover_item_covergroup_cg_mpu_inst_mpu_cg_cross_x_multimatch_aligned_loadstoreexec_allow_*,
 ,,,Store alignment error coverpoint,Region index or default IO unmapped region crossed with store alignment error,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: *.pma_cov_data_i.cover_item_covergroup_cg_mpu_inst_mpu_cg_cross_x_multimatch_aligned_loadstoreexec_allow_*,
-,,,Atomic load-reserved unallowed error coverpoint,Region index or default IO unmapped region crossed with atomic load-reserved unallowed error,N/A,N/A,N/A,,
-,,,Atomic store-conditional unallowed error coverpoint,Region index or default IO unmapped region crossed with atomic store-conditional unallowed error,N/A,N/A,N/A,,
+,,,(40X )Atomic load-reserved unallowed error coverpoint,Region index or default IO unmapped region crossed with atomic load-reserved unallowed error,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: *x_lrw_firstfail*,
+,,,(40X) Atomic store-conditional unallowed error coverpoint,Region index or default IO unmapped region crossed with atomic store-conditional unallowed error,Check against RM,"ENV capability, not specific test",Functional Coverage,COV: *x_scw_firstfail*,
 Risc-V Priv. spec,PMA Readability,PMA readable by SW,Design must support SW readback of attributes,"N/A. Can be SW-readable via a C-header, or is otherwise the responsibility of integration- or system-level testing.",N/A,N/A,N/A,,
 UM 0e447ac,Code Execution,Code Execution only from main memory,"Code execution is not allowed from IO region, any attempts to do so should result in an instruction access fault (exception code 1)","Verify that attempted code execution from an address located in a PMA region classified as IO always yields an instruction access fault (code 1). Accesses from Memory should never yield this access fault as no eXecutable flag exists, only Memory/IO classification
 
@@ -166,14 +166,14 @@ Accesses not matching attribute regions should be treated as:
 Memory
 Non-Bufferable
 Non-Cacheable
-Atomic operations not allowed","Arbitrary accesses to non-configured PMA-areas.
+Atomic operations allowed","Arbitrary accesses to non-configured PMA-areas.
 Self checking test should attempt the following: 
 - Non-aligned load/store accesses: should pass
-- Atomic lr/sc operations (if supported by core): should fail
+- Atomic lr/sc operations (if supported by core): should pass
 - Cacheable/Bufferable operations - verify instr and data_memtype[x] for correct behavior. (Assertions in OBI section should apply)
 - Instruction fetch and execute: should pass",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/pma_0reg/,
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"RTC: TODO
-
+A: TODO, a_atomic_access_no_pma_regions_LRW, a_atomic_access_no_pma_regions_SCW
 COV: *pma_cov_*_i.cover_item_covergroup_cg_inst_cg_inst_cross_x_multimatch_aligned_loadstoreexec_*",TODO is the random stream run without pma regions?
 ,,,"PMA_NUM_REGIONS>0
 Accesses not matching attribute regions should be treated as: 
@@ -187,6 +187,8 @@ Self checking test should attempt the following:
 - Cacheable/Bufferable operations - verify instr and data_memtype[x] for correct behavior. (Assertions in OBI section should apply)
 - Instruction fetch and execute: should fail",Self Checking Test,Directed Self-Checking,Testcase,DTC: TODO,TODO missing directed test?
 ,,,,,Check against RM,Constrained-Random,Functional Coverage,"RTC: cv32e40s/tests/programs/corev-dv/corev_rand_pma_test/
+
+A: TODO, a_atomic_access_outside_pma_regions_LRW, a_atomic_access_outside_pma_regions_SCW
 
 COV: *pma_cov_*_i.cover_item_covergroup_cg_inst_cg_inst_cross_x_multimatch_aligned_loadstoreexec_*",
 UM 0e447ac,OBI transfer flags,InstructionFetches,"Bufferable flag effects - For any instruction fetch marked bufferable, the corresponding OBI transfer  instr_memtype[0] signal should be set to match the bufferable flag.","Ensure that instr_memtype[0] is set to 1 when an instruction fetch attempt is performed with the bufferable flag set to 1. (Which is never, because ""Accesses to regions marked as bufferable (bufferable=1) will result in the OBI mem_type[0] bit being set, except if the access was an instruction fetch [...]"".)",Assertion Check,"ENV capability, not specific test",Functional Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.mpu_if_sva.a_pma_obi_bufoff
@@ -317,7 +319,7 @@ COV: *.pma_cov_data_i.gen_rvfi_cg.cover_item_covergroup_cg_rvfi_inst_rvfi_cg_cro
 COV: *.pma_cov_instr_i.cover_item_covergroup_cg_mpu_inst_mpu_cg_cross_x_allow_jvt_*","TODO missing random test?
 
 Note: This is not maximally comprehensive, but the modelling that would otherwise be required is disproportionately complex."
-Zce spec. proposal,,,"Instruction fetch exceptions occurring when executing an address in the jump table should lead to mepc being set to the C.TBLJ* instruction, and mtval to the address in the jump table entry",Verify that an instruction fetch exception resulting from a jump table entry leads to mepc being set to the C.TBLJ* instruction and mtval to the address in the jump table entry.,Self Checking Test,Directed Self-Checking,Testcase,DTC: TODO,TODO missing directed test?
+Zce spec. proposal,,,"Instruction fetch exceptions occurring when executing an address in the jump table should lead to mepc being set to the C.TBLJ* instruction, and mtval to the address in the jump table entry",Verify that an instruction fetch exception resulting from a jump table entry leads to mepc being set to the C.TBLJ* instruction and mtval to the address in the jump table entry.,Self Checking Test,Directed Self-Checking,Testcase,Covered in Zc  verif plan,
 Risc-V Debug spec.,Debug mode,Single step PMA exceptions,"Any instruction fetch exception that occurs while single stepping, causes debug mode to be re-entered after PC is changed to the exception handler and the appropriate tval and cause registers are updated","Verify that instruction fetches to PMA IO regions fails, the appropriate CSRs and PC is updated to the appropriate values and debug mode is reentered. ",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/pma_debug/,
 ,,Program buffer PMA exceptions,Exceptions in the program buffer should cause the program buffer code to end and cmderr set to 3 (exception error),"Verify that program buffer code attempting to fetch instructions from PMA IO region fails, PC is set to dm_exception_addr_i and cmderr is set to 3 (exception error). No other registers should be changed due to this exception.",Self Checking Test,Directed Self-Checking,Testcase,DTC: cv32e40s/tests/programs/custom/pma_debug/,
 40s UM 0.8.0,DebugRange,DebugRange,"""CV32E40S overrules the PMA and PMP settings for the Debug Module region when it is in debug mode""","Attempt access within/outside the dm region, in both dmode/not, check that the combo within/dmode never gets blocked and that the other combos follow the ordinary rules.",Assertion Check,Constrained-Random,Code Coverage,"A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.if_stage_i.mpu_i.pma_assert_instr_i.a_dm_region
@@ -327,14 +329,14 @@ A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.load_store_unit_i.mpu_i.p
 A: (The other cases are covered by all other testing.)
 
 COV: *.pma_cov_instr_i.cover_item_covergroup_cg_inst_cg_inst_cross_x_dmregion_dmode_*",
-UM 0e447ac,Atomic operations,Atomic operations shall only occur for regions in which Atomic operations are allowed. (Only applies for cores with A-extension),Load-Reserved attempts to a region where atomic operations are not permitted shall cause a precise load access fault (exception code 5),"Attempt arbitrary load-reserved memory operations to regions where atomic operations are not permitted and ensure that these operations trigger precise store/AMO access fault exceptions (code 7). Ensure that these operations do not generate these exceptions when performed on supported regions.
+UM 0e447ac,40x: Atomic operations,Atomic operations shall only occur for regions in which Atomic operations are allowed. (Only applies for cores with A-extension),Load-Reserved attempts to a region where atomic operations are not permitted shall cause a precise load access fault (exception code 5),"Attempt arbitrary load-reserved memory operations to regions where atomic operations are not permitted and ensure that these operations trigger precise store/AMO access fault exceptions (code 7). Ensure that these operations do not generate these exceptions when performed on supported regions.
 
-The following CSRs must be verified: Verify mcause, mepc, mtval",Self Checking Test,Directed Self-Checking,Testcase,(N/A for 40s),
-,,,,,Check against RM,Constrained-Random,Functional Coverage,(N/A for 40s),
+The following CSRs must be verified: Verify mcause, mepc, mtval",Self Checking Test,Directed Self-Checking,Testcase,Fow now: covered by assertions only.,
+,,,,,Check against RM,Constrained-Random,Functional Coverage,"A:  a_atomic_access_atomic_regions_LRW, a_atomic_access_nonatomic_regions_LRW",
 ,,,Store-Conditional or Atomic Memory Operation (AMO) attempts to a region where Atomic operations are not allowed shall cause a precise store/AMO access fault (exception code 7).,"Attempt arbitrary store-conditional and atomic memory operations to regions where atomic operations are not allowed and ensure that these operations trigger precise store/AMO access fault exceptions (code 7). Ensure that this fault is not triggered when performing these operations on supported regions.
 
-The following CSRs must be verified: Verify mcause, mepc, mtval",Self Checking Test,Directed Self-Checking,Testcase,(N/A for 40s),
-,,,,,Check against RM,Constrained-Random,Functional Coverage,(N/A for 40s),
+The following CSRs must be verified: Verify mcause, mepc, mtval",Self Checking Test,Directed Self-Checking,Testcase,Fow now: covered by assertions only.,
+,,,,,Check against RM,Constrained-Random,Functional Coverage,"A: a_atomic_access_atomic_regions_SCW, a_atomic_access_nonatomic_regions_SCW",
 UM 0e447ac,Fence* instructions,Fence instructions disregards distinction between memory and IO,Fence instruction shall not be impacted by PMA memory/IO attribute and execute as a conservative fence on all operations ,"Coverpoint - Fence instructions (Fence, fence.i) should not be impacted by PMA.",Check against RM,Constrained-Random,Functional Coverage,"RTC: TODO
 
 COV: *.pma_cov_data_i.gen_rvfi_cg.cover_item_covergroup_cg_rvfi_inst_rvfi_cg_cross_x_waspmafault_wasmain_wasloadstore_fence_*",TODO missing random test?

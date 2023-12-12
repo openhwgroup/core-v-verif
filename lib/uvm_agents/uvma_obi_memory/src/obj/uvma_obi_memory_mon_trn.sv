@@ -44,6 +44,7 @@ class uvma_obi_memory_mon_trn_c extends uvml_trn_mon_trn_c;
    uvma_obi_memory_prot_l_t          prot       ; ///< Memory access type and privilege level of transaction
    uvma_obi_memory_achk_l_t          achk       ; ///< Address signal checksum
    uvma_obi_memory_rchk_l_t          rchk       ; ///< Response signal checksum
+   uvma_obi_memory_dbg_l_t           dbg        ; ///< Transaction in debug mode
 
    // Metadata
    uvma_obi_memory_cfg_c  cfg           ; ///< Handle to agent's configuration object
@@ -67,6 +68,7 @@ class uvma_obi_memory_mon_trn_c extends uvml_trn_mon_trn_c;
       `uvm_field_int (                                  prot       , UVM_DEFAULT          )
       `uvm_field_int (                                  achk       , UVM_DEFAULT          )
       `uvm_field_int (                                  rchk       , UVM_DEFAULT          )
+      `uvm_field_int (                                  dbg        , UVM_DEFAULT          )
 
       `uvm_field_int(gnt_latency   , UVM_DEFAULT + UVM_DEC + UVM_NOCOMPARE)
       `uvm_field_int(rvalid_latency, UVM_DEFAULT + UVM_DEC + UVM_NOCOMPARE)

@@ -38,7 +38,7 @@ SECTIONS
   {
     KEEP (*(SORT_NONE(.init)))
     KEEP (*(.text.start))
-  } >ram
+  } >rom
 
   /* Read-only sections, merged into text segment: */
   PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x10000)); . = SEGMENT_START("text-segment", 0x10000) + SIZEOF_HEADERS;
@@ -71,11 +71,11 @@ SECTIONS
       PROVIDE_HIDDEN (__rela_iplt_start = .);
       *(.rela.iplt)
       PROVIDE_HIDDEN (__rela_iplt_end = .);
-    } >ram
+    } >rom
   .rela.plt       :
     {
       *(.rela.plt)
-    } >ram
+    } >rom
 
   .plt            : { *(.plt) }
   .iplt           : { *(.iplt) }
@@ -89,11 +89,11 @@ SECTIONS
     *(.text .stub .text.* .gnu.linkonce.t.*)
     /* .gnu.warning sections are handled specially by elf.em.  */
     *(.gnu.warning)
-  } >ram
+  } >rom
   .fini           :
   {
     KEEP (*(SORT_NONE(.fini)))
-  } >ram
+  } >rom
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
@@ -102,7 +102,7 @@ SECTIONS
   .sdata2         :
   {
     *(.sdata2 .sdata2.* .gnu.linkonce.s2.*)
-  } >ram
+  } >rom
   .sbss2          : { *(.sbss2 .sbss2.* .gnu.linkonce.sb2.*) } >ram
   .eh_frame_hdr   : { *(.eh_frame_hdr) *(.eh_frame_entry .eh_frame_entry.*) } >ram
   .eh_frame       : ONLY_IF_RO { KEEP (*(.eh_frame)) *(.eh_frame.*) } >ram
@@ -231,16 +231,15 @@ SECTIONS
    PROVIDE(__heap_start = .);
    /* If end of ram is not 16-byte aligned, align to previous 16-byte
       boundary */
-   PROVIDE(__heap_end = ALIGN(ORIGIN(ram) + LENGTH(ram) - __heap_start - 15, 16));
+   PROVIDE(__heap_end = ALIGN(ORIGIN(ram) + LENGTH(ram) - 15, 16));
    . = __heap_end;
   } >ram
 
   /* Stack grows downward from end of ram */
-  .stack (__heap_start)    : ALIGN(16) /* this is a requirement of the ABI(?) */
+  .stack (__heap_end)    : ALIGN(16) /* this is a requirement of the ABI(?) */
   {
-   PROVIDE(__stack_start = __heap_start);
-   . = __heap_end;
-   PROVIDE(__stack_end = .);
+   PROVIDE(__stack_start = __heap_end);
+   . = __stack_start;
   } >ram
 
   /* Stabs debugging sections.  */
