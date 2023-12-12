@@ -4,4 +4,5 @@
  */
 void interrupt_csr_check();
 void machine_mode_check();
+void csr_check_unimplemented();
 void user_mode_check();
