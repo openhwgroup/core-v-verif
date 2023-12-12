@@ -219,6 +219,7 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
             1: randomize_debug_rom_instr(.instr(instr_list[i]), .is_in_debug(is_debug_program), .disable_dist());
             2: randomize_instr(instr_list[i], is_debug_program);
           endcase
+          store_instr_gpr_handling(instr_list[i]);
         end
     end
     else begin
@@ -264,6 +265,15 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
     instr = riscv_instr::get_rand_instr(.exclude_instr(exclude_instr));
     instr.m_cfg = cfg;
     randomize_gpr(instr);
+  endfunction
+
+  // Function to assign reserved reg for store instr from cfg to avoid random
+  // reg operands for stores which may result in corruption of instr memory
+  function void store_instr_gpr_handling(riscv_instr instr);
+    if (instr.instr_name inside {SB, SH, SW, C_SW, C_FSW, FSW, CV_SB, CV_SH, CV_SW}) begin
+      instr.rs1 = cv32e40p_cfg.str_rs1;
+      instr.rd  = cv32e40p_cfg.str_rs3;
+    end
   endfunction
 
 endclass
