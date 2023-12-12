@@ -175,12 +175,6 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
           instr_stream.instr_list[i].has_label = 1'b0;
         end
       end
-      // Remove all pulp store instructions inside debug_program
-      if(is_debug_program == 1) begin
-        if (instr_stream.instr_list[i].instr_name inside {CV_SB, CV_SH, CV_SW} ) begin
-            instr_stream.instr_list.delete(i);
-        end
-      end
       i++;
     end // while
     `uvm_info(get_full_name(), "Finished post-processing instructions", UVM_HIGH)
