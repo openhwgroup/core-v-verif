@@ -107,6 +107,8 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
                   gen_single_step_logic();
             end
             gen_dpc_update();
+            init_dbg_rom_str_reserved_gpr();
+
             // write DCSR to the testbench for any analysis
             gen_signature_handshake(.instr(debug_main), .signature_type(WRITE_CSR), .csr(DCSR));
             if (cfg.enable_ebreak_in_debug_rom || cfg.set_dcsr_ebreak) begin
@@ -370,6 +372,25 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
       end else begin
         increment_csr(DPC, 4, debug_main);
         str = {"8: nop"};
+        debug_main = {debug_main, str};
+      end
+    endfunction
+
+    // Function to initialize GPR reserved for stores
+    virtual function void init_dbg_rom_str_reserved_gpr();
+      string reg_name;
+      bit [31:0] reg_val;
+
+      // Initialize reserved registers for store instr
+      if (!cfg_corev.no_load_store) begin
+        reg_name = cfg_corev.str_rs1.name();
+        reg_val = 32'h88000000; // FIXME : Remove hardcoded value to allow configuration based on linker
+        str = {$sformatf("li %0s, 0x%0x", reg_name.tolower(), reg_val)};
+        debug_main = {debug_main, str};
+
+        reg_name = cfg_corev.str_rs3.name();
+        reg_val = $urandom_range(0,255); // FIXME : include negative also
+        str = {$sformatf("li %0s, 0x%0x", reg_name.tolower(), reg_val)};
         debug_main = {debug_main, str};
       end
     endfunction
