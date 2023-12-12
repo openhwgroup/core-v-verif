@@ -682,4 +682,54 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
     gen_section(get_label("store_fault_handler", hart), instr);
   endfunction
 
+  // Function to initialize GPR reserved for stores
+  virtual function void init_str_reserved_gpr();
+    string str;
+    string reg_name;
+    bit [DATA_WIDTH-1:0] reg_val;
+    cv32e40p_instr_gen_config corev_cfg;
+
+    `DV_CHECK($cast(corev_cfg, cfg))
+    // Initialize reserved registers for store instr
+    if (!corev_cfg.no_load_store) begin
+      reg_name = corev_cfg.str_rs1.name();
+      reg_val = 32'h80000000; // FIXME : Remove hardcoded value to allow configuration based on linker
+      str = $sformatf("%0sli%0s %0s, 0x%0x", indent, indent, reg_name.tolower(), reg_val);
+      instr_stream.push_back(str);
+
+      reg_name = corev_cfg.str_rs3.name();
+      reg_val = $urandom_range(0,255); // FIXME : include negative also
+      str = $sformatf("%0sli%0s %0s, 0x%0x", indent, indent, reg_name.tolower(), reg_val);
+      instr_stream.push_back(str);
+    end
+  endfunction
+
+  // Override gen_init_section
+  // Add init_str_reserved_gpr() before other fpr/gpr initialization
+  virtual function void gen_init_section(int hart);
+    string str;
+    str = format_string(get_label("init:", hart), LABEL_STR_LEN);
+    instr_stream.push_back(str);
+
+    // First initialize the store reserved register to minimize issues due to random stores
+    init_str_reserved_gpr();
+
+    if (cfg.enable_floating_point) begin
+      init_floating_point_gpr();
+    end
+    init_gpr();
+    // Init stack pointer to point to the end of the user stack
+    str = {indent, $sformatf("la x%0d, %0suser_stack_end", cfg.sp, hart_prefix(hart))};
+    instr_stream.push_back(str);
+    if (cfg.enable_vector_extension) begin
+      randomize_vec_gpr_and_csr();
+    end
+    core_is_initialized();
+    gen_dummy_csr_write(); // TODO add a way to disable xStatus read
+    if (riscv_instr_pkg::support_pmp) begin
+      str = {indent, "j main"};
+      instr_stream.push_back(str);
+    end
+  endfunction
+
 endclass : cv32e40p_asm_program_gen
