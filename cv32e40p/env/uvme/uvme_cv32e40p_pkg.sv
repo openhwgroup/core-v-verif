@@ -50,7 +50,7 @@ package uvme_cv32e40p_pkg;
 
    // Constants / Structs / Enums
    `include "uvme_cv32e40p_constants.sv"
-   `include "uvme_cv32e40p_param_all_insn.sv"
+   `include "uvme_cv32e40p_param_all_insn.sv" // fixme: remove this and import package from core-v-cores (e.g cv32e40p_tracer_pkg.sv)
    `include "uvme_cv32e40p_tdefs.sv"
 
    // Objects

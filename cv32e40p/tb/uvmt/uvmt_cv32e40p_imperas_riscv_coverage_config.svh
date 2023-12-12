@@ -17,6 +17,9 @@
   `define COVER_RVVI_METRICS
 
   `ifdef FPU
+    `define COVER_CSR_FCSR
+    `define COVER_CSR_FFLAGS
+    `define COVER_CSR_FRM
     `ifndef ZFINX
       `define COVER_RV32F
       `define COVER_RV32ZCF

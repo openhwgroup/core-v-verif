@@ -60,7 +60,7 @@ VCS_COMP_FLAGS  ?= -lca -sverilog \
                    +define+CV32E40P_RVFI \
                    -assert svaext -ignore unique_checks -full64 -licwait 20
 VCS_GUI         ?=
-VCS_RUN_COV      = -cm line+cond+tgl+fsm+branch+assert -cm_dir $(MAKECMDGOALS).vdb
+VCS_RUN_COV      = -cm line+cond+tgl+fsm+branch+assert -cm_dir $(MAKECMDGOALS).vdb +uvm_set_config_int=uvm_test_top,cov_model_enabled,1
 
 # Necessary libraries for the PMA generator class
 VCS_PMA_INC += +incdir+$(TBSRC_HOME)/uvmt \
@@ -155,7 +155,12 @@ endif
 ################################################################################
 
 VCS_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
+
+ifeq ($(call IS_YES,$(ENABLE_TRACE_LOG)),YES)
+    VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
+    VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_RVFI_TRACE_EXECUTION
+endif
+
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
     VCS_USER_COMPILE_ARGS += +define+USE_ISS
     VCS_USER_COMPILE_ARGS += +define+USE_IMPERASDV

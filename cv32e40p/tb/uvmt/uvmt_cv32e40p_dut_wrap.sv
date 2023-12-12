@@ -131,7 +131,9 @@ module uvmt_cv32e40p_dut_wrap
     //always @(irq_agt) $display("%m: @%0t; irq_agt = %8x", $time, irq_agt);
 
     assign irq = interrupt_if.irq_drv;
-    always @(irq) $display("%m: @%0t; irq = %8x", $time, irq);
+    always @(irq) begin
+      `uvm_info("uvmt_cv32e40p_dut_wrap", $sformatf("irq = %8x", irq), UVM_HIGH);
+    end
 
     // -------------------------------------------------------------
     // Instantiate the Core and optional FPU plus logger and tracers

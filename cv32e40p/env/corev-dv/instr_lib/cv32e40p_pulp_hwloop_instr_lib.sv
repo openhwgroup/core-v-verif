@@ -146,7 +146,12 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
   }
 
   constraint avail_regs_pulp_instr_c {
-    num_of_avail_regs inside {[10:19]};
+    if ((cfg.enable_fp_in_x_regs == 1) && (RV32ZFINX inside {riscv_instr_pkg::supported_isa})) {
+      num_of_avail_regs  >= 8;
+      num_of_avail_regs  <= (24 - num_zfinx_gpr - num_str_reserved_gpr);
+    } else {
+      num_of_avail_regs inside {[10:19]};
+    }
   }
 
   constraint gen_hwloop_count_c {
@@ -154,10 +159,10 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       num_loops_active inside {1,2,3};
 
       foreach(hwloop_counti[i])
-          hwloop_counti[i] inside {[0:100]};//TODO: check 0 is valid
+          hwloop_counti[i] inside {[0:64]};
 
       foreach(hwloop_count[i])
-          hwloop_count[i] inside {[0:100]};//TODO: check 0 is valid
+          hwloop_count[i] inside {[0:64]};
   }
 
   constraint num_hwloop_instr_c {
@@ -216,10 +221,10 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
           } else {
             if (use_setup_inst[1] && use_loop_setupi_inst[1]) { //with setupi only [4:0] uimmS range avail for end label
                 if(use_setup_inst[0]) {
-                  num_hwloop_instr[0] inside {[3:27]}; //TODO:in nested hwloop0 with setupi instr more than 27 instructions will have issue if setupi used for hwloop1?
+                  num_hwloop_instr[0] inside {[3:27]}; //For nested hwloop0 with setupi instr more than 27 instructions will have issue if setupi used for hwloop1
                   num_hwloop_instr[1] >= num_hwloop_instr[0] + 1 + 2; // num_hwloop_ctrl_instr[0] == 1 ; 2 for end of loop req
                 } else {
-                  num_hwloop_instr[0] inside {[3:25]}; //TODO:in nested hwloop0 with setupi instr more than 27 instructions will have issue if setupi used for hwloop1?
+                  num_hwloop_instr[0] inside {[3:25]}; //For nested hwloop0 with setupi instr more than 27 instructions will have issue if setupi used for hwloop1
                   num_hwloop_instr[1] >= num_hwloop_instr[0] + 3 + 2; // num_hwloop_ctrl_instr[0] == 3 ; 2 for end of loop req
                 }
                 //num_hwloop_instr[1] inside {[6:30]};
@@ -265,11 +270,13 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
   function void post_randomize();
 
+      cv32e40p_exclude_regs.sort();
+      this.print();
+
       if((cv32e40p_exclude_regs.size() < 2) || (cv32e40p_exclude_regs.size() > 25)) begin
         `uvm_fatal(this.get_type_name(), "cv32e40p_exclude_regs out of range")
       end
 
-      this.print();
       gen_xpulp_hwloop_control_instr();
   endfunction : post_randomize
 
@@ -428,7 +435,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
               insert_rand_instr(.num_rand_instr(num_fill_instr_loop_ctrl_to_loop_start[1]),
                                 .no_branch(1),
                                 .no_compressed(0),
-                                .no_fence(0));  //TODO: Fence instr allowed here?
+                                .no_fence(0));  //Fence instr allowed here
           end
           else begin
               set_label_at_next_instr = 1; //no rand instr so next instruction must have a label
@@ -498,7 +505,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                                        .label_is_pulp_hwloop_body_label(1),
                                        .no_branch(1),
                                        .no_compressed(0),
-                                       .no_fence(0)); //TODO: Fence instr allowed here?
+                                       .no_fence(0)); //Fence instr allowed here
 
           insert_rand_instr(.num_rand_instr($urandom_range(0,20)),
                             .no_branch(1),
@@ -561,7 +568,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
               //Insert Random instructions till Loop HWLOOP_START0/1 label ->  use_setup_inst ? 0 : num_fill_instr_loop_ctrl_to_loop_start[0/1]
               if(!use_setup_inst[hwloop_L])
-                  insert_rand_instr((num_fill_instr_loop_ctrl_to_loop_start[hwloop_L]),1,0,0);  // allow compressed instructions here ; TODO: Fence instr allowed here?
+                  insert_rand_instr((num_fill_instr_loop_ctrl_to_loop_start[hwloop_L]),1,0,0);  // allow compressed instructions here ; Fence instr allowed here
 
               //LABEL HWLOOP_START0/1:
               insert_rand_instr_with_label(start_label_s,1); // no branch, no compressed, no fence instructions inside hwloop
@@ -575,7 +582,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                                            .label_is_pulp_hwloop_body_label(1),
                                            .no_branch(1),
                                            .no_compressed(0),
-                                           .no_fence(0)); //TODO: Fence instr allowed here?
+                                           .no_fence(0)); //Fence instr allowed here
 
               //<Some more Random instructions>
               // allow compressed, fence instructions here
@@ -926,7 +933,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       while (i < num_rand_instr) begin
           //Create and Randomize array for avail_regs each time to ensure randomization
           avail_regs = new[num_of_avail_regs - reserved_rd.size()];
-          randomize_avail_regs();
+          randomize_avail_regs();  //TODO : randomize to exclude cv32e40p_exclude_regs list
 
           instr = riscv_instr::type_id::create($sformatf("instr_%0d", i));
 
@@ -1079,7 +1086,7 @@ class cv32e40p_xpulp_short_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stre
       if(gen_nested_loop) {
         if(loop0_high_count) {
           hwloop_counti[0] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                                 [2048:4095] := 50, 4095 := 300};
+                                 [2048:4094] := 50, 4095 := 300};
 
           hwloop_count[0] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
                                 [2048:4094] := 50, 4095 := 300};
@@ -1092,7 +1099,7 @@ class cv32e40p_xpulp_short_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stre
           hwloop_count[0] inside {[0:5]};
 
           hwloop_counti[1] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                                 [2048:4095] := 50, 4095 := 300};
+                                 [2048:4094] := 50, 4095 := 300};
 
           hwloop_count[1] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
                                 [2048:4094] := 50, 4095 := 300};
@@ -1102,12 +1109,13 @@ class cv32e40p_xpulp_short_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stre
       } else {
         foreach(hwloop_counti[i])
           hwloop_counti[i] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                                 [2048:4095] := 50, 4095 := 300}; //TODO: check 0 is valid
+                                 [2048:4094] := 50, 4095 := 300};
 
-        //TODO: for rs1 32 bit count ?
+        //For rs1 32 bit count, not planned to exercise whole range in these streams
+        //due to long run times
         foreach(hwloop_count[i])
           hwloop_count[i] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                                [2048:4094] := 50, 4095 := 300};//TODO: check 0 is valid
+                                [2048:4094] := 50, 4095 := 300};
       }
   }
 
@@ -1226,10 +1234,10 @@ class cv32e40p_xpulp_long_hwloop_stream extends cv32e40p_xpulp_hwloop_base_strea
   constraint gen_hwloop_count_c {
       num_loops_active inside {1};
       foreach(hwloop_counti[i])
-          hwloop_counti[i] inside {[0:50]};//TODO: check 0 is valid
+          hwloop_counti[i] inside {[0:25]};
 
       foreach(hwloop_count[i])
-          hwloop_count[i] inside {[0:50]};//TODO: check 0 is valid
+          hwloop_count[i] inside {[0:25]};
   }
 
 

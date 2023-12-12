@@ -115,7 +115,7 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
             format_section(debug_main);
             gen_sub_program(hart, sub_program[hart], sub_program_name,
                             cfg.num_debug_sub_program, 1'b1, "debug_sub");
-            main_program[hart] = riscv_instr_sequence::type_id::create("debug_program");
+            main_program[hart] = cv32e40p_instr_sequence::type_id::create("debug_program");
             main_program[hart].instr_cnt = cfg.debug_program_instr_cnt;            
             main_program[hart].is_debug_program = 1;
             main_program[hart].cfg = cfg;

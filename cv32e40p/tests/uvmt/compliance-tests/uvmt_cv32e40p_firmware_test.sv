@@ -35,10 +35,22 @@
  */
 class uvmt_cv32e40p_firmware_test_c extends uvmt_cv32e40p_base_test_c;
 
+   bit disable_all_trn_logs;
+
    constraint env_cfg_cons {
       env_cfg.enabled         == 1;
       env_cfg.is_active       == UVM_ACTIVE;
-      env_cfg.trn_log_enabled == 1;
+      if (disable_all_trn_logs) {
+       env_cfg.trn_log_enabled                       == 0;
+       env_cfg.clknrst_cfg.trn_log_enabled           == 0;
+       env_cfg.interrupt_cfg.trn_log_enabled         == 0;
+       env_cfg.debug_cfg.trn_log_enabled             == 0;
+       env_cfg.obi_memory_instr_cfg.trn_log_enabled  == 0;
+       env_cfg.obi_memory_data_cfg.trn_log_enabled   == 0;
+       env_cfg.rvfi_cfg.trn_log_enabled              == 0;
+      } else {
+       env_cfg.trn_log_enabled == 1;
+      }
    }
    `uvm_component_utils_begin(uvmt_cv32e40p_firmware_test_c)
    `uvm_object_utils_end
@@ -86,7 +98,11 @@ function uvmt_cv32e40p_firmware_test_c::new(string name="uvmt_cv32e40p_firmware_
 
    super.new(name, parent);
    if ($test$plusargs("gen_reduced_rand_dbg_req")) begin
-        uvme_cv32e40p_random_debug_c::type_id::set_type_override(uvme_cv32e40p_reduced_rand_debug_req_c::get_type());
+    uvme_cv32e40p_random_debug_c::type_id::set_type_override(uvme_cv32e40p_reduced_rand_debug_req_c::get_type());
+   end
+   disable_all_trn_logs = 0;
+   if ($test$plusargs("disable_all_trn_logs")) begin
+    disable_all_trn_logs = 1;
    end
    `uvm_info("TEST", "This is the FIRMWARE TEST", UVM_NONE)
 
