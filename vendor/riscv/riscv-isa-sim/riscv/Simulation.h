@@ -58,7 +58,7 @@ namespace openhw
         * * @param n:  Number of instructions to be finished
         * *
         * */
-        st_rvfi nstep(size_t n);
+        std::vector<st_rvfi> step(size_t n, std::vector<st_rvfi>& vreference);
 
         /*
         * Proposed consturctor for the Simulation class

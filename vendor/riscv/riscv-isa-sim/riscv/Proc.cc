@@ -3,13 +3,10 @@
 
 namespace openhw
 {
-    st_rvfi Processor::step(size_t n)
+    st_rvfi Processor::step(size_t n, st_rvfi reference)
     {
         st_rvfi rvfi;
-        rvfi.insn = 0; rvfi.pc_rdata = 0;
-        rvfi.rd1_addr = 0; rvfi.rd1_wdata = 0;
-        rvfi.rs1_addr = 0; rvfi.rs1_rdata = 0;
-        rvfi.rs2_addr = 0; rvfi.rs2_rdata = 0;
+        memset(&rvfi, 0, sizeof(st_rvfi));
 
         this->taken_trap = false;
 
@@ -99,6 +96,11 @@ namespace openhw
         this->taken_trap = true;
         this->which_trap = t.cause();
         processor_t::take_trap(t, epc);
+    }
+
+    Processor::~Processor()
+    {
+        delete this->isa;
     }
 
 }

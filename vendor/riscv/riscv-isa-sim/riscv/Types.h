@@ -9,19 +9,20 @@
 #include <sys/types.h>
 #include "Params.h"
 
-typedef struct {
+
+typedef struct  {
    uint64_t                 nret_id;
    uint64_t                 cycle_cnt;
    uint64_t                 order;
    uint64_t                 insn;
-   uint8_t                  trap;
+   uint64_t                 trap;
    uint64_t                 cause;
-   uint8_t                  halt;
-   uint8_t                  intr;
-   uint32_t                 mode;
-   uint32_t                 ixl;
-   uint32_t                 dbg;
-   uint32_t                 dbg_mode;
+   uint64_t                 halt;
+   uint64_t                 intr;
+   uint64_t                 mode;
+   uint64_t                 ixl;
+   uint64_t                 dbg;
+   uint64_t                 dbg_mode;
    uint64_t                 nmip;
 
    uint64_t                 insn_interrupt;

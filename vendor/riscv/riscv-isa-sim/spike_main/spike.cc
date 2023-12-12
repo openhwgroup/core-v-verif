@@ -21,6 +21,12 @@
 #include <cinttypes>
 #include "../VERSION"
 
+static void version(int exit_code = 1)
+{
+  fprintf(stderr, SPIKE_VERSION " %x\n", SPIKE_HASH_VERSION);
+  exit(exit_code);
+}
+
 static void help(int exit_code = 1)
 {
   fprintf(stderr, "Spike RISC-V ISA Simulator " SPIKE_VERSION "\n\n");
@@ -30,6 +36,7 @@ static void help(int exit_code = 1)
   fprintf(stderr, "  -m<n>                 Provide <n> MiB of target memory [default 2048]\n");
   fprintf(stderr, "  -m<a:m,b:n,...>       Provide memory regions of size m and n bytes\n");
   fprintf(stderr, "                          at base addresses a and b (with 4 KiB alignment)\n");
+  fprintf(stderr, "  -v                    Print Spike version\n");
   fprintf(stderr, "  -d                    Interactive debug mode\n");
   fprintf(stderr, "  -g                    Track histogram of PCs\n");
   fprintf(stderr, "  -l                    Generate a log of execution\n");
@@ -428,6 +435,7 @@ int main(int argc, char** argv)
   option_parser_t parser;
   parser.help(&suggest_help);
   parser.option('h', "help", 0, [&](const char UNUSED *s){help(0);});
+  parser.option('v', "version", 0, [&](const char UNUSED *s){version(0);});
   parser.option('d', 0, 0, [&](const char UNUSED *s){debug = true;});
   parser.option('g', 0, 0, [&](const char UNUSED *s){histogram = true;});
   parser.option('l', 0, 0, [&](const char UNUSED *s){log = true;});

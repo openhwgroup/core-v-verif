@@ -20,7 +20,6 @@
  * Component that implements reference model functionality with Spike
  */
 
-import "DPI-C" function void spike_step(output st_rvfi rvfi);
 
 class uvmc_rvfi_spike#(int ILEN=DEFAULT_ILEN,
                                   int XLEN=DEFAULT_XLEN
@@ -55,13 +54,15 @@ class uvmc_rvfi_spike#(int ILEN=DEFAULT_ILEN,
     */
    virtual function uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) step (int i, uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) t);
 
-       st_rvfi rvfi;
+       st_rvfi s_core, s_reference_model;
        uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) t_reference_model;
 
-       spike_step(rvfi);
+       s_core = t.seq2rvfi();
+
+       rvfi_spike_step(s_core, s_reference_model);
 
        t_reference_model = new("t_reference_model");
-       t_reference_model.rvfi2seq(rvfi);
+       t_reference_model.rvfi2seq(s_reference_model);
        return t_reference_model;
 
    endfunction : step
