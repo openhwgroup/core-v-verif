@@ -1,0 +1,8 @@
+name: minhv_pma_block
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Use CFG=p,a_test_cfg_2. Test minhv=1 and pma block of mepc address
+plusargs: >
+  +clic_irq_clear_on_ack=0
+cflags: >
+  -mno-relax
