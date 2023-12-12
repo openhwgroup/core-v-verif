@@ -132,7 +132,7 @@ module uvmt_cv32e40p_dut_wrap
 
     assign irq = interrupt_if.irq_drv;
     always @(irq) begin
-      `uvm_info("uvmt_cv32e40p_dut_wrap", $sformatf(" @%0t; irq = %8x", $time, irq), UVM_HIGH);
+      `uvm_info("uvmt_cv32e40p_dut_wrap", $sformatf("irq = %8x", irq), UVM_HIGH);
     end
 
     // -------------------------------------------------------------
