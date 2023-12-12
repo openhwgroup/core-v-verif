@@ -47,8 +47,9 @@ int checkInt (long int *B, long int *A, long int n)
 void fp_enable ()
 {
   unsigned int fs = MSTATUS_FS_INITIAL;
-  __asm__ volatile("csrs mstatus, %0;"
-                   "csrwi fcsr, 0;"
+
+  __asm__ volatile("csrwi fcsr, 0;"
+                   "csrs mstatus, %0;"
                    : : "r"(fs));
 }
 #endif

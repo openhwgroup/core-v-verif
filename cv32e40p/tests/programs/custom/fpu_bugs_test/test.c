@@ -26,9 +26,10 @@
 void fp_enable ()
 {
   unsigned int fs = MSTATUS_FS_INITIAL;
-  __asm__ volatile("csrs mstatus, %0;"
-                   "csrwi fcsr, 0;"
-                   : : "r"(fs));
+
+  asm volatile("csrwi fcsr, 0;"
+               "csrs mstatus, %0;"
+               : : "r"(fs));
 }
 
 const long int INPUT[10] __attribute__ ((aligned (4))) = {

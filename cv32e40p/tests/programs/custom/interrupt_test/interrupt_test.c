@@ -46,8 +46,8 @@ void fp_enable ()
 {
   unsigned int fs = MSTATUS_FS_INITIAL;
 
-  asm volatile("csrs mstatus, %0;"
-               "csrwi fcsr, 0;"
+  asm volatile("csrwi fcsr, 0;"
+               "csrs mstatus, %0;"
                : : "r"(fs));
 }
 #endif
