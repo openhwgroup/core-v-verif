@@ -5,6 +5,7 @@ compile_flags: >
    +define+CLIC_EN
    +define+ZBA_ZBB_ZBC_ZBS
 plusargs: >
+   +enable_clic=1
    +enable_pma=1
    +enable_zca_extension=1
    +enable_zcb_extension=1
@@ -17,6 +18,13 @@ plusargs: >
    +enable_zbc_extension=1
    +enable_zbs_extension=1
 ovpsim: >
+   --override cpu/CLICLEVELS=256
+   --override cpu/CLICXCSW=T
+   --override cpu/CLICXNXTI=T
+   --override cpu/CLICSELHVEC=T
+   --override cpu/CLICINTCTLBITS=8
+   --override cpu/CLIC_version=master
+   --override cpu/externalCLIC=T
    --override cpu/PMP_registers=64
    --override cpu/PMP_undefined=T
    --override cpu/PMP_initialparams=T
