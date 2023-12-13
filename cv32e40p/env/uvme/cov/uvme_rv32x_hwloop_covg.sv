@@ -91,26 +91,29 @@ class uvme_rv32x_hwloop_covg # (
   // PROPERTIES - START
 
   `define DEF_LOCAL_VARS(TYPE) \
-  local s_csr_hwloop        csr_hwloop_``TYPE               = '{default:0}; \
-  local s_hwloop_stat       hwloop_stat_``TYPE              = '{default:0, hwloop_type:NULL_TYPE, hwloop_setup:'{default:NULL_SETUP}}; \
-  local logic [31:0]        prev_pc_rdata_``TYPE            = '{default:0}; \
-  local hwloop_evt_loc_t    hwloop_evt_loc_``TYPE           [HWLOOP_NB][hwloop_evt_t][$]; \
-  local bit [(ILEN-1):0]    insn_list_in_hwloop_``TYPE      [HWLOOP_NB][$]; \
-  local bit [(ILEN-1):0]    mc_insn_list_in_hwloop_``TYPE   [HWLOOP_NB][$]; \
-  local bit [31:0]          irq_vect_``TYPE                 [HWLOOP_NB][$]; \
-  local bit                 done_insn_list_capture_``TYPE   [HWLOOP_NB] = '{default:0}; \
-  local s_hwloop_cov        hwloop_cov_``TYPE               [HWLOOP_NB] = '{default:0};
+  local s_csr_hwloop        csr_hwloop_``TYPE                 = '{default:0}; \
+  local s_hwloop_stat       hwloop_stat_``TYPE                = '{default:0, hwloop_type:NULL_TYPE, hwloop_setup:'{default:NULL_SETUP}}; \
+  local logic [31:0]        prev_pc_rdata_``TYPE              = '{default:0}; \
+  local hwloop_evt_loc_t    hwloop_evt_loc_``TYPE             [HWLOOP_NB][hwloop_evt_t][$]; \
+  local bit [(ILEN-1):0]    insn_list_in_hwloop_``TYPE        [HWLOOP_NB][$]; \
+  local bit [(ILEN-1):0]    mc_insn_list_in_hwloop_``TYPE     [HWLOOP_NB][$]; \
+  local bit [31:0]          irq_vect_``TYPE                   [HWLOOP_NB][$]; \
+  local bit                 done_insn_list_capture_``TYPE     [HWLOOP_NB] = '{default:0}; \
+  local bit                 done_insn_list_capture_d1_``TYPE  [HWLOOP_NB] = '{default:0}; \
+  local s_hwloop_cov        hwloop_cov_``TYPE                 [HWLOOP_NB] = '{default:0};
   
   `DEF_LOCAL_VARS(main)
   `DEF_LOCAL_VARS(sub)
   `DEF_LOCAL_VARS(init)
 
-  virtual uvmt_cv32e40p_rvvi_if #( .XLEN(XLEN), .ILEN(ILEN)) cv32e40p_rvvi_vif;
-  string  _header = "XPULPV2_HWLOOP_COV";
-  bit     en_cvg_sampling = 1;
-  bit     in_nested_loop0 = 0, in_nested_loop0_d1 = 0;
-  bit     is_ebreak = 0, is_ebreakm = 0, is_ecall = 0, is_illegal = 0, is_irq = 0, is_dbg_mode = 0, is_mc_insn = 0;;
-  bit     enter_hwloop_sub = 0;
+  virtual       uvmt_cv32e40p_rvvi_if #( .XLEN(XLEN), .ILEN(ILEN)) cv32e40p_rvvi_vif;
+  string        _header = "XPULPV2_HWLOOP_COV";
+  bit           en_cvg_sampling = 1;
+  bit           in_nested_loop0 = 0, in_nested_loop0_d1 = 0;
+  bit           is_ebreak = 0, is_ebreakm = 0, is_ecall = 0, is_illegal = 0, is_irq = 0, is_dbg_mode = 0, is_mc_insn = 0;
+  bit           enter_hwloop_sub = 0;
+  bit           pending_irq = 0;
+  logic [31:0]  prev_irq_onehot_priority = 0, prev_irq_onehot_priority_always = 0;
 
   dcsr_cause_t      dcsr_cause;
   exception_code_t  exception_code;
@@ -740,35 +743,35 @@ class uvme_rv32x_hwloop_covg # (
       unique case (``EVT``) \
         EXCP_EBREAK: begin \
           hwloop_stat_main.excp_ebreak_cnt[``LOOP_IDX``]++; \
-          if      (`CHECK_PC_EQUAL_LPSTART(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 0, cv32e40p_rvvi_vif.pc_rdata)) hwloop_evt_loc_main[``LOOP_IDX``][EXCP_EBREAK].push_back(LOC_LPSTART); \
-          else if (`CHECK_PC_EQUAL_LPSTART(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 1, cv32e40p_rvvi_vif.pc_rdata)) hwloop_evt_loc_main[``LOOP_IDX``][EXCP_EBREAK].push_back(LOC_LPSTART_P4); \
-          else if (  `CHECK_PC_EQUAL_LPEND(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 0, cv32e40p_rvvi_vif.pc_rdata)) hwloop_evt_loc_main[``LOOP_IDX``][EXCP_EBREAK].push_back(LOC_LPEND); \
-          else if (  `CHECK_PC_EQUAL_LPEND(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 1, cv32e40p_rvvi_vif.pc_rdata)) hwloop_evt_loc_main[``LOOP_IDX``][EXCP_EBREAK].push_back(LOC_LPEND_M4); \
+          if      (`CHECK_PC_EQUAL_LPSTART(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 0, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][EXCP_EBREAK].push_back(LOC_LPSTART); \
+          else if (`CHECK_PC_EQUAL_LPSTART(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 1, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][EXCP_EBREAK].push_back(LOC_LPSTART_P4); \
+          else if (  `CHECK_PC_EQUAL_LPEND(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 0, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][EXCP_EBREAK].push_back(LOC_LPEND); \
+          else if (  `CHECK_PC_EQUAL_LPEND(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 1, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][EXCP_EBREAK].push_back(LOC_LPEND_M4); \
           else                                                                                                        hwloop_evt_loc_main[``LOOP_IDX``][EXCP_EBREAK].push_back(LOC_OTHERS); \
         end \
         EXCP_ECALL : begin \
           hwloop_stat_main.excp_ecall_cnt[``LOOP_IDX``]++; \
-          if      (`CHECK_PC_EQUAL_LPSTART(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 0, cv32e40p_rvvi_vif.pc_rdata)) hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ECALL].push_back(LOC_LPSTART); \
-          else if (`CHECK_PC_EQUAL_LPSTART(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 1, cv32e40p_rvvi_vif.pc_rdata)) hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ECALL].push_back(LOC_LPSTART_P4); \
-          else if (  `CHECK_PC_EQUAL_LPEND(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 0, cv32e40p_rvvi_vif.pc_rdata)) hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ECALL].push_back(LOC_LPEND); \
-          else if (  `CHECK_PC_EQUAL_LPEND(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 1, cv32e40p_rvvi_vif.pc_rdata)) hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ECALL].push_back(LOC_LPEND_M4); \
+          if      (`CHECK_PC_EQUAL_LPSTART(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 0, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ECALL].push_back(LOC_LPSTART); \
+          else if (`CHECK_PC_EQUAL_LPSTART(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 1, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ECALL].push_back(LOC_LPSTART_P4); \
+          else if (  `CHECK_PC_EQUAL_LPEND(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 0, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ECALL].push_back(LOC_LPEND); \
+          else if (  `CHECK_PC_EQUAL_LPEND(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 1, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ECALL].push_back(LOC_LPEND_M4); \
           else                                                                                                        hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ECALL].push_back(LOC_OTHERS); \
         end \
         EXCP_ILLEGAL : begin \
           hwloop_stat_main.excp_illegal_cnt[``LOOP_IDX``]++; \
-          if      (`CHECK_PC_EQUAL_LPSTART(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 0, cv32e40p_rvvi_vif.pc_rdata)) hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ILLEGAL].push_back(LOC_LPSTART); \
-          else if (`CHECK_PC_EQUAL_LPSTART(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 1, cv32e40p_rvvi_vif.pc_rdata)) hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ILLEGAL].push_back(LOC_LPSTART_P4); \
-          else if (  `CHECK_PC_EQUAL_LPEND(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 0, cv32e40p_rvvi_vif.pc_rdata)) hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ILLEGAL].push_back(LOC_LPEND); \
-          else if (  `CHECK_PC_EQUAL_LPEND(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 1, cv32e40p_rvvi_vif.pc_rdata)) hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ILLEGAL].push_back(LOC_LPEND_M4); \
+          if      (`CHECK_PC_EQUAL_LPSTART(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 0, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ILLEGAL].push_back(LOC_LPSTART); \
+          else if (`CHECK_PC_EQUAL_LPSTART(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 1, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ILLEGAL].push_back(LOC_LPSTART_P4); \
+          else if (  `CHECK_PC_EQUAL_LPEND(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 0, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ILLEGAL].push_back(LOC_LPEND); \
+          else if (  `CHECK_PC_EQUAL_LPEND(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 1, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ILLEGAL].push_back(LOC_LPEND_M4); \
           else                                                                                                        hwloop_evt_loc_main[``LOOP_IDX``][EXCP_ILLEGAL].push_back(LOC_OTHERS); \
         end \
         IS_IRQ : begin \
-          is_irq = 1; irq_vect_main[``LOOP_IDX``].push_back(cv32e40p_rvvi_vif.irq_onehot_priority); \
           if      (`CHECK_PC_EQUAL_LPSTART(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 0, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][IS_IRQ].push_back(LOC_LPSTART); \
           else if (`CHECK_PC_EQUAL_LPSTART(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 1, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][IS_IRQ].push_back(LOC_LPSTART_P4); \
           else if (  `CHECK_PC_EQUAL_LPEND(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 0, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][IS_IRQ].push_back(LOC_LPEND); \
           else if (  `CHECK_PC_EQUAL_LPEND(hwloop_stat_main.hwloop_csr, ``LOOP_IDX``, 1, prev_pc_rdata_main))         hwloop_evt_loc_main[``LOOP_IDX``][IS_IRQ].push_back(LOC_LPEND_M4); \
           else                                                                                                        hwloop_evt_loc_main[``LOOP_IDX``][IS_IRQ].push_back(LOC_OTHERS); \
+          irq_vect_main[``LOOP_IDX``].push_back(prev_irq_onehot_priority); \
         end \
         DBG_HALTREQ : begin \
           is_dbg_mode = 1; hwloop_stat_main.dbg_haltreq_cnt[``LOOP_IDX``]++; \
@@ -885,6 +888,7 @@ class uvme_rv32x_hwloop_covg # (
     end // UPDATE_HWLOOP_STAT \
     for (int i=0; i<HWLOOP_NB; i++) begin : COLLECT_INSTR \
       if (hwloop_stat_``TYPE``.execute_instr_in_hwloop[i]) begin \
+        done_insn_list_capture_d1_``TYPE``[i] = done_insn_list_capture_``TYPE``[i]; \
         unique case (i) \
           0 : begin // nested or single is the same \
                 if (!done_insn_list_capture_``TYPE``[i]) begin \
@@ -901,11 +905,11 @@ class uvme_rv32x_hwloop_covg # (
                     end \
                   end \
                   else is_mc_insn = 0; \
-                  check_exception_entry(i); \
+                  check_ebreakm_entry(i); \
                 end \
                 else if (is_ebreakm) begin \
                   insn_list_in_hwloop_``TYPE``[i].push_back(INSN_EBREAKM); \
-                  check_exception_entry(i); \
+                  check_ebreakm_entry(i); \
                 end \
                 if (is_pc_equal_lpend(hwloop_stat_``TYPE``.hwloop_csr, i, 0, cv32e40p_rvvi_vif.pc_rdata) && hwloop_stat_``TYPE``.track_lp_cnt[i] != 0) begin \
                   hwloop_stat_``TYPE``.track_lp_cnt[i]--; \
@@ -935,11 +939,11 @@ class uvme_rv32x_hwloop_covg # (
                     end \
                   end \
                   else is_mc_insn = 0; \
-                  check_exception_entry(i); \
+                  check_ebreakm_entry(i); \
                 end \
                 else if (is_ebreakm) begin \
                   insn_list_in_hwloop_``TYPE``[i].push_back(INSN_EBREAKM); \
-                  check_exception_entry(i); \
+                  check_ebreakm_entry(i); \
                 end \
                 if (is_pc_equal_lpend(hwloop_stat_``TYPE``.hwloop_csr, i, 0, cv32e40p_rvvi_vif.pc_rdata) && hwloop_stat_``TYPE``.track_lp_cnt[i] != 0) begin \
                   hwloop_stat_``TYPE``.track_lp_cnt[i]--; \
@@ -1144,6 +1148,7 @@ class uvme_rv32x_hwloop_covg # (
         hwloop_evt_loc_``TYPE``[i][MC_INSN].delete(); \
         hwloop_cov_``TYPE``[i].en_cov_mc_insn = 0; \
         done_insn_list_capture_``TYPE``[i]    = 0; \
+        done_insn_list_capture_d1_``TYPE``[i] = 0; \
         hwloop_cov_``TYPE``[i]                = hwloop_cov_init[i]; \
       end // for HWLOOP_NB \
       csr_hwloop_``TYPE``     = csr_hwloop_init; \
@@ -1158,33 +1163,30 @@ class uvme_rv32x_hwloop_covg # (
 
 
   function void check_exception_entry(int lp_idx);
-    if (cv32e40p_rvvi_vif.trap && exception_code_t'(cv32e40p_rvvi_vif.csr_mcause_ecp_code) inside {CODE_ILLEGAL, CODE_EBREAK, CODE_ECALL}) begin
-      bit is_exception = 1;
       exception_code = exception_code_t'(cv32e40p_rvvi_vif.csr_mcause_ecp_code);
-      case (cv32e40p_rvvi_vif.insn)
-        INSTR_EBREAK : if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm) is_exception = 0;
-        else begin
-          if (lp_idx) begin `IF_CURRENT_IS_MAIN_HWLOOP(1, EXCP_EBREAK) end
-          else        begin `IF_CURRENT_IS_MAIN_HWLOOP(0, EXCP_EBREAK) end 
+      case (exception_code)
+        CODE_EBREAK :  begin
+          if (lp_idx)  begin `IF_CURRENT_IS_MAIN_HWLOOP(1, EXCP_EBREAK) end
+          else         begin `IF_CURRENT_IS_MAIN_HWLOOP(0, EXCP_EBREAK) end 
         end
-        INSTR_ECALL : begin
-          if (lp_idx) begin `IF_CURRENT_IS_MAIN_HWLOOP(1, EXCP_ECALL) end
-          else        begin `IF_CURRENT_IS_MAIN_HWLOOP(0, EXCP_ECALL) end 
+        CODE_ECALL :   begin
+          if (lp_idx)  begin `IF_CURRENT_IS_MAIN_HWLOOP(1, EXCP_ECALL) end
+          else         begin `IF_CURRENT_IS_MAIN_HWLOOP(0, EXCP_ECALL) end 
         end
-        default : begin
-          if (lp_idx) begin `IF_CURRENT_IS_MAIN_HWLOOP(1, EXCP_ILLEGAL) end
-          else        begin `IF_CURRENT_IS_MAIN_HWLOOP(0, EXCP_ILLEGAL) end 
+        CODE_ILLEGAL : begin
+          if (lp_idx)  begin `IF_CURRENT_IS_MAIN_HWLOOP(1, EXCP_ILLEGAL) end
+          else         begin `IF_CURRENT_IS_MAIN_HWLOOP(0, EXCP_ILLEGAL) end 
         end
+        default: begin `uvm_error(_header, $sformatf("DEBUG - Invalid csr_mcause_ecp_code %5d", cv32e40p_rvvi_vif.csr_mcause_ecp_code)); end
       endcase
-      if (is_exception) begin
-        `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Entry due to %s", exception_code.name()), UVM_DEBUG);
-      end
-    end
+  endfunction : check_exception_entry
+
+  function void check_ebreakm_entry(int lp_idx);
     if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm && cv32e40p_rvvi_vif.insn == INSTR_EBREAK) begin
       if (lp_idx) begin `IF_CURRENT_IS_MAIN_HWLOOP(1, DBG_EBREAKM) end
       else        begin `IF_CURRENT_IS_MAIN_HWLOOP(0, DBG_EBREAKM) end 
     end
-  endfunction : check_exception_entry
+  endfunction : check_ebreakm_entry
 
   function void check_exception_exit();
     if (cv32e40p_rvvi_vif.valid && cv32e40p_rvvi_vif.insn == INSTR_MRET) begin
@@ -1193,30 +1195,59 @@ class uvme_rv32x_hwloop_covg # (
     end
   endfunction : check_exception_exit
 
+  function void update_prev_irq_onehot_priority();
+    prev_irq_onehot_priority = cv32e40p_rvvi_vif.irq_onehot_priority;
+  endfunction : update_prev_irq_onehot_priority
+
+  function bit pc_is_mtvec_base_addr();
+    if (cv32e40p_rvvi_vif.pc_rdata == cv32e40p_rvvi_vif.mtvec_base_addr) return 1;
+    else return 0;
+  endfunction : pc_is_mtvec_base_addr
+
+  function bit is_mcause_irq();
+    return cv32e40p_rvvi_vif.csr_mcause_irq;
+  endfunction : is_mcause_irq
+
   task run_phase(uvm_phase phase);
     super.run_phase(phase);
 
     fork // Background threads - START
+
       forever begin : SET_EXCEPTION_FLAG
         wait (cv32e40p_rvvi_vif.clk && cv32e40p_rvvi_vif.valid && cv32e40p_rvvi_vif.trap);
-        case (cv32e40p_rvvi_vif.insn)
-          INSTR_EBREAK : if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm) begin 
-                          @(posedge cv32e40p_rvvi_vif.clk); continue; 
-                         end 
-                         else 
-                          is_ebreak  = 1;
-          INSTR_ECALL :   is_ecall   = 1;
-          default     :   is_illegal = 1;
-        endcase
-        wait (!(is_ebreak | is_ecall | is_illegal));
+        if (cv32e40p_rvvi_vif.irq_onehot_priority == 0 && prev_irq_onehot_priority == 0 && !pending_irq) begin // set excep flag only if no pending irq
+          case (cv32e40p_rvvi_vif.insn)
+            INSTR_EBREAK : if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm) begin 
+                            @(posedge cv32e40p_rvvi_vif.clk); continue; 
+                           end 
+                           else begin is_ebreak  = 1; `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Entry due to EBREAK"), UVM_DEBUG); end
+            INSTR_ECALL :  begin      is_ecall   = 1; `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Entry due to ECALL"), UVM_DEBUG); end
+            default     :  begin      is_illegal = 1; `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Entry due to ILLEGAL"), UVM_DEBUG); end
+          endcase
+          wait (!(is_ebreak | is_ecall | is_illegal));
+        end
+        else wait (!cv32e40p_rvvi_vif.trap); // bypass if pending irq exist
       end // EXCEPTION_HANDLING
-      forever begin : IRQ_ENTRY
-        wait (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]);
-        wait (cv32e40p_rvvi_vif.irq_onehot_priority != 0 && !is_irq);
-        `IF_CURRENT_IS_MAIN_HWLOOP(0, IS_IRQ)
-        `IF_CURRENT_IS_MAIN_HWLOOP(1, IS_IRQ)
-        `uvm_info(_header, $sformatf("DEBUG - IRQ Entry"), UVM_DEBUG);
-      end // IRQ_ENTRY
+
+      forever begin : SET_PENDING_IRQ_FLAG
+        @(negedge cv32e40p_rvvi_vif.clk);
+        if (cv32e40p_rvvi_vif.irq_onehot_priority !== prev_irq_onehot_priority) begin
+          pending_irq = 0;
+          if (enter_hwloop_sub) update_prev_irq_onehot_priority(); // within excp period
+          else if ((hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1])) begin // within main loop
+            if (prev_irq_onehot_priority === 0) begin update_prev_irq_onehot_priority(); end // new pending
+            else begin // last irq or any pending irq(s)
+              if (!is_irq) pending_irq = 1;
+              else begin 
+                repeat(2) @(negedge cv32e40p_rvvi_vif.clk);
+                if (!is_irq) pending_irq = 1;
+                else update_prev_irq_onehot_priority();
+              end
+            end
+          end
+          else begin update_prev_irq_onehot_priority(); end // outside hwloop period
+        end
+      end // SET_PENDING_IRQ_FLAG
       forever begin : IRQ_EXIT
         wait (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]);
         @(posedge cv32e40p_rvvi_vif.clk);
@@ -1225,6 +1256,7 @@ class uvme_rv32x_hwloop_covg # (
           is_irq = 0;
         end
       end // IRQ_EXIT
+
       forever begin : DBG_ENTRY
         wait (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]);
         wait (!is_dbg_mode);
@@ -1257,27 +1289,66 @@ class uvme_rv32x_hwloop_covg # (
           is_dbg_mode = 0; is_ebreakm = 0;
         end
       end // DBG_EXIT
+
     join_none // Background threads - END
 
     forever begin
       @(posedge cv32e40p_rvvi_vif.clk);
       if (cv32e40p_rvvi_vif.valid) begin : VALID_DETECTED
+
         if (enter_hwloop_sub) begin 
-          // [optional] for hwloops that outside main code (e.g irq only, dbg only, or irq->dbg); currently commented out due to pending for implementation
+          if (pc_is_mtvec_base_addr() && !is_mcause_irq()) begin : EXCEPTION_ENTRY
+            for (int i=0; i<HWLOOP_NB; i++) begin
+              if (hwloop_stat_main.execute_instr_in_hwloop[i] && !done_insn_list_capture_d1_main[i]) begin
+              case (i)
+                0: check_exception_entry(i);
+                1: begin
+                    if (in_nested_loop0) continue;
+                    else check_exception_entry(i);
+                   end
+              endcase
+              end
+            end
+          end // EXCEPTION_ENTRY
+          else if (pc_is_mtvec_base_addr() && is_mcause_irq()) begin : IRQ_ENTRY
+          if (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]) begin
+            is_ebreak = 0; is_ecall = 0; is_illegal = 0; enter_hwloop_sub = 0;
+            pending_irq = 0;
+            `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Entry is replaced with IRQ Entry (higher priority)"), UVM_DEBUG);
+            `IF_CURRENT_IS_MAIN_HWLOOP(0, IS_IRQ)
+            `IF_CURRENT_IS_MAIN_HWLOOP(1, IS_IRQ)
+            update_prev_irq_onehot_priority();
+            is_irq = 1; wait (!is_irq); continue; 
+          end
+          end // IRQ_ENTRY
+
+          // [optional] todo: for hwloops that outside main code (e.g irq only, dbg only, or irq->dbg); currently commented out due to pending for implementation
           // `CHECK_N_SAMPLE_CSR_HWLOOP(sub);
           // `CHECK_N_SAMPLE_HWLOOP(sub);
+          // [optional] todo: mie has effect on irq during exception. Current hwloop tests do not exercise nested irq with mie enabled
+
           check_exception_exit();
           if (!(is_ebreak || is_ecall || is_illegal)) enter_hwloop_sub = 0;
         end
+
         else begin : MAIN
-          if (is_irq && cv32e40p_rvvi_vif.insn[6:0] == OPCODE_JAL) begin wait (!is_irq); continue; end
-          if (is_dbg_mode)                                         begin wait (!is_dbg_mode); continue; end
+          if (pc_is_mtvec_base_addr() && is_mcause_irq()) begin : IRQ_ENTRY
+          if (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]) begin
+            pending_irq = 0;
+            `IF_CURRENT_IS_MAIN_HWLOOP(0, IS_IRQ)
+            `IF_CURRENT_IS_MAIN_HWLOOP(1, IS_IRQ)
+            update_prev_irq_onehot_priority();
+            is_irq = 1; wait (!is_irq); continue; 
+          end // IRQ_ENTRY
+          end
+          if (is_dbg_mode)  begin wait (!is_dbg_mode); continue; end
           if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm && cv32e40p_rvvi_vif.insn == INSTR_EBREAK) is_ebreakm = 1; else is_ebreakm = 0;
           `CHECK_N_SAMPLE_CSR_HWLOOP(main);
           `CHECK_N_SAMPLE_HWLOOP(main);
           if (is_ebreak || is_ecall || is_illegal) enter_hwloop_sub = 1;
           prev_pc_rdata_main = cv32e40p_rvvi_vif.pc_rdata;
         end
+
       end // VALID_DETECTED
     end // forever
 

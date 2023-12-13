@@ -390,6 +390,7 @@ interface uvmt_cv32e40p_rvvi_if #(
   input logic [(ILEN-1):0]            insn,
   input                               trap,
   input logic [31:0]                  pc_rdata,
+  input logic [31:0]                  wa_csr_mip,
 
   uvma_interrupt_if                   interrupt_if,
   uvma_debug_if                       debug_if,
@@ -401,7 +402,9 @@ interface uvmt_cv32e40p_rvvi_if #(
   `DEF_CSR_PORTS(lpstart1)
   `DEF_CSR_PORTS(lpend1)
   `DEF_CSR_PORTS(lpcount1)
+  `DEF_CSR_PORTS(mstatus)
   `DEF_CSR_PORTS(mie)
+  `DEF_CSR_PORTS(mtvec)
   `DEF_CSR_PORTS(mcause)
   `DEF_CSR_PORTS(mip)
   `DEF_CSR_PORTS(dcsr)
@@ -419,9 +422,14 @@ interface uvmt_cv32e40p_rvvi_if #(
   wire [31:0]                 csr_trig_pc;
 
   logic [31:0]                irq_onehot_priority;
+  logic [31:0]                mtvec_base_addr;
+  logic [31:0]                mip;
 
-  assign valid_irq            = csr[`CSR_MIP_ADDR] & csr[`CSR_MIE_ADDR]; // fixme: rvfi misses mip (pending for resolution)
+  // assign valid_irq            = csr[`CSR_MIP_ADDR] & csr[`CSR_MIE_ADDR]; // fixme: rvfi misses mip (pending rvfi fixes; workaround probe rtl signals - wa_csr_mip)
+  assign valid_irq            = wa_csr_mip & csr[`CSR_MIE_ADDR];
   assign dbg_req              = debug_if.debug_req;
+  assign mie                  = csr[`CSR_MSTATUS_ADDR][3];
+  assign mip                  = csr[`CSR_MIP_ADDR];
 
   assign csr_mcause_irq       = csr[`CSR_MCAUSE_ADDR][31];
   assign csr_mcause_ecp_code  = csr[`CSR_MCAUSE_ADDR][4:0];
@@ -432,6 +440,8 @@ interface uvmt_cv32e40p_rvvi_if #(
   assign csr_trig_execute     = csr[`CSR_TDATA1_ADDR][2];
   assign csr_trig_pc          = csr[`CSR_TDATA2_ADDR];
 
+  assign mtvec_base_addr      = {csr[`CSR_MTVEC_ADDR][31:8], 8'h0};
+
   // can be expanded. Currently only define for current usage
   `ASSIGN_CSR_N_WB(`CSR_LPSTART0_ADDR, lpstart0)
   `ASSIGN_CSR_N_WB(`CSR_LPEND0_ADDR, lpend0)
@@ -439,14 +449,16 @@ interface uvmt_cv32e40p_rvvi_if #(
   `ASSIGN_CSR_N_WB(`CSR_LPSTART1_ADDR, lpstart1)
   `ASSIGN_CSR_N_WB(`CSR_LPEND1_ADDR, lpend1)
   `ASSIGN_CSR_N_WB(`CSR_LPCOUNT1_ADDR, lpcount1)
+  `ASSIGN_CSR_N_WB(`CSR_MSTATUS_ADDR, mstatus)
   `ASSIGN_CSR_N_WB(`CSR_MIE_ADDR, mie)
+  `ASSIGN_CSR_N_WB(`CSR_MTVEC_ADDR, mtvec)
   `ASSIGN_CSR_N_WB(`CSR_MCAUSE_ADDR, mcause)
   `ASSIGN_CSR_N_WB(`CSR_MIP_ADDR, mip)
   `ASSIGN_CSR_N_WB(`CSR_DCSR_ADDR, dcsr)
   `ASSIGN_CSR_N_WB_VEC(`CSR_TDATA1_ADDR, tdata, 1);
   `ASSIGN_CSR_N_WB_VEC(`CSR_TDATA2_ADDR, tdata, 2);
 
-  // irq_onehot_priority assignment
+  // irq_onehot_priority assignment (refer cv32e40p user manual, section 10.2)
   // priority order (high->low) is irq[31]...irq[16], irq[11], irq[3], irq[7]
   always @(valid_irq) begin
     irq_onehot_priority = 0;
