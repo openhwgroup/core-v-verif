@@ -150,6 +150,9 @@ ifeq ($(call IS_YES,$(COV)),YES)
 VLOG_FLAGS += +define+IMPERAS_COV
 endif
 endif
+ifeq ($(call IS_YES,$(COV)),YES)
+VLOG_FLAGS += -covermultiuserenv
+endif
 
 ###############################################################################
 # VOPT (Optimization)
