@@ -548,13 +548,16 @@ module uvmt_cv32e40p_tb;
     .pc_rdata               (dut_wrap.cv32e40p_tb_wrapper_i.rvfi_i.rvfi_pc_rdata),
     .interrupt_if           (interrupt_if),
     .debug_if               (debug_if),
+    .wa_csr_mip             (dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.mip),
     `PORTMAP_CSR_RVFI_2_RVVI(lpstart0)
     `PORTMAP_CSR_RVFI_2_RVVI(lpend0)
     `PORTMAP_CSR_RVFI_2_RVVI(lpcount0)
     `PORTMAP_CSR_RVFI_2_RVVI(lpstart1)
     `PORTMAP_CSR_RVFI_2_RVVI(lpend1)
     `PORTMAP_CSR_RVFI_2_RVVI(lpcount1)
+    `PORTMAP_CSR_RVFI_2_RVVI(mstatus)
     `PORTMAP_CSR_RVFI_2_RVVI(mie)
+    `PORTMAP_CSR_RVFI_2_RVVI(mtvec)
     `PORTMAP_CSR_RVFI_2_RVVI(mcause)
     `PORTMAP_CSR_RVFI_2_RVVI(mip)
     `PORTMAP_CSR_RVFI_2_RVVI(dcsr)
