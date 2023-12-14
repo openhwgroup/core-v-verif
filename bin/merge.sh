@@ -90,6 +90,12 @@ substitute_file_content_40s_into_40x () {
 
   echo "=== Exchange 40x/X with 40s/S in file content ==="
 
+  read -p "Exchange 40x/X with 40s/S in file content? y/n " yn
+  case $yn in
+    [Yy]* ) ;;
+    * ) echo "Skip content substitution"; return;;
+  esac
+
   find . -type f -exec grep -Il . {} + | egrep -iv '\/\.|40sx|40xs' | xargs -n1 sed -i 's/40s/40x/g'
   find . -type f -exec grep -Il . {} + | egrep -iv '\/\.|40sx|40xs' | xargs -n1 sed -i 's/40S/40X/g'
 
