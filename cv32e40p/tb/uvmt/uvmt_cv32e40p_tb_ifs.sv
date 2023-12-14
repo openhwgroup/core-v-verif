@@ -207,6 +207,9 @@ interface uvmt_cv32e40p_debug_cov_assert_if
     input  [31:0] id_stage_pc, // Program counter in decode
     input  [31:0] if_stage_pc, // Program counter in fetch
     input         is_decoding,
+    input         branch_taken_ex_i,
+    input         data_err_i,
+    input         is_fetch_failed_i,
     input         id_valid,
     input wire ctrl_state_e  ctrl_fsm_cs,            // Controller FSM states with debug_req
     input         illegal_insn_i,
@@ -283,6 +286,10 @@ interface uvmt_cv32e40p_debug_cov_assert_if
     id_stage_is_compressed,
     id_stage_pc,
     if_stage_pc,
+    is_decoding,
+    branch_taken_ex_i,
+    is_fetch_failed_i,
+    id_valid,
     ctrl_fsm_cs,
     illegal_insn_i,
     illegal_insn_q,

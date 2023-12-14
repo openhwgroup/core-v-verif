@@ -53,7 +53,10 @@ module uvmt_cv32e40p_debug_assert
   // ---------------------------------------------------------------------------
 
   assign is_decoding_v1 = cov_assert_if.is_decoding ||
-                          ((cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE || cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE_HWLOOP) &&
+                          (((cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE && !cov_assert_if.branch_taken_ex_i &&
+                             !cov_assert_if.data_err_i && !cov_assert_if.is_fetch_failed_i) ||
+                            cov_assert_if.ctrl_fsm_cs == cv32e40p_pkg::DECODE_HWLOOP
+                           ) && cov_assert_if.id_stage_instr_valid_i &&
                            (cov_assert_if.debug_req_i || cov_assert_if.trigger_match_i) && !cov_assert_if.debug_mode_q
                           );
 
