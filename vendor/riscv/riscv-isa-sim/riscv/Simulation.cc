@@ -35,6 +35,34 @@ debug_module_config_t dm_config = {.progbufsize = 2,
                                    .support_haltgroups = true,
                                    .support_impebreak = true};
 
+void Simulation::default_params(openhw::Params &params) {
+  params.set("/top/", "generic_core_config", std::any(true), "bool", "true",
+             "Make generic configuration for all cores");
+
+  params.set("/top/", "bootrom", std::any(true), "bool", "true",
+             "bootrom enable");
+  params.set("/top/", "bootrom_base", std::any(0x10000UL), "uint64_t",
+             "0x10000", "bootrom address");
+  params.set("/top/", "bootrom_size", std::any(0x1000UL), "uint64_t", "0x1000",
+             "bootrom size");
+
+  params.set("/top/", "dram", std::any(true), "bool", "true", "DRAM enable");
+  params.set("/top/", "dram_base", std::any(0x80000000UL), "uint64_t",
+             "0x80000000", "DRAM base address");
+  params.set("/top/", "dram_size", std::any(0x400UL * 1024 * 1024), "uint64_t",
+             "0x40000000", "DRAM size");
+
+  params.set("/top/", "log_commits", std::any(true), "bool", "False",
+             "Log commit enable");
+
+  params.set("/top/", "max_steps_enabled", std::any(false), "bool", "False",
+             "Maximum steps enable");
+  params.set("/top/", "max_steps", std::any(200000UL), "uint64_t", "200000",
+             "Maximum steps that the simulation can do ");
+
+  Processor::default_params("/top/cores/", params);
+}
+
 Simulation::Simulation(
     const cfg_t *cfg, bool halted, std::vector<std::pair<reg_t, mem_t *>> mems,
     std::vector<std::pair<reg_t, abstract_device_t *>> plugin_devices,
@@ -45,28 +73,14 @@ Simulation::Simulation(
     openhw::Params &params)
     : sim_t(cfg, halted, mems, plugin_devices, args, dm_config, log_path,
             dtb_enabled, dtb_file, socket_enabled, cmd_file, params) {
+
+  Simulation::default_params(this->params);
   // It seems mandatory to set cache block size for MMU.
   // FIXME TODO: Use actual cache configuration (on/off, # of ways/sets).
   // FIXME TODO: Support multiple cores.
   get_core(0)->get_mmu()->set_cache_blocksz(reg_t(64));
 
-  this->params.set("/top/", "isa", any(std::string("RV32GC")));
-  this->params.set("/top/", "priv", any(std::string(DEFAULT_PRIV)));
-
-  this->params.set("/top/", "bootrom", std::any(true));
-  this->params.set("/top/", "bootrom_base", std::any(0x10000UL));
-  this->params.set("/top/", "bootrom_size", std::any(0x1000UL));
-
-  this->params.set("/top/", "dram", std::any(true));
-  this->params.set("/top/", "dram_base", std::any(0x80000000UL));
-  this->params.set("/top/", "dram_size", std::any(0x40000000UL));
-
-  this->params.set("/top/", "log_commits", std::any(true));
-
-  this->params.set("/top/", "max_steps_enabled", std::any(false));
-  this->params.set("/top/", "max_steps", std::any(200000UL));
-
-  ParseParams("/top/", this->params, params);
+  Params::parse_params("/top/", this->params, params);
 
   const std::vector<mem_cfg_t> layout;
 

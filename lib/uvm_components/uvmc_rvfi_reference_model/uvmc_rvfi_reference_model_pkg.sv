@@ -26,6 +26,7 @@
 package uvmc_rvfi_reference_model_pkg;
 
   import uvm_pkg       ::*;
+  import uvma_core_cntrl_pkg::*;
   import uvma_rvfi_pkg::*;
 
   `include "uvma_rvfi_constants.sv"

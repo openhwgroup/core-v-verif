@@ -33,6 +33,7 @@ class uvma_rvfi_cfg_c#(int ILEN=DEFAULT_ILEN,
 
    // Common options
    rand bit                      enabled;
+   rand bit                      csr_enabled;
    rand uvm_active_passive_enum  is_active;
 
    rand bit                      cov_model_enabled;
@@ -80,6 +81,7 @@ class uvma_rvfi_cfg_c#(int ILEN=DEFAULT_ILEN,
 
    constraint defaults_cons {
       soft enabled                 == 1;
+      soft csr_enabled             == 1;
       soft is_active               == UVM_PASSIVE;
       soft cov_model_enabled       == 0;
       soft trn_log_enabled         == 1;

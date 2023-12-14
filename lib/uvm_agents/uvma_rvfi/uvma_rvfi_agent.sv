@@ -168,23 +168,23 @@ function void uvma_rvfi_agent_c::retrieve_vif();
    cntxt.instr_vif = new[cfg.nret];
    for (int i = 0; i < cfg.nret; i++) begin
       if (!uvm_config_db#(virtual uvma_rvfi_instr_if#(ILEN,XLEN))::get(this, "", $sformatf("instr_vif%0d", i), cntxt.instr_vif[i])) begin
-         `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s in uvm_config_db",
-                                     $typename(cntxt.instr_vif[i])))
+          `uvm_fatal("VIF", $sformatf("Could not find vif handle of type %s in uvm_config_db",
+                                      $typename(cntxt.instr_vif[i])))
       end
       else begin
-         `uvm_info("VIF", $sformatf("Found vif handle of type %s in uvm_config_db",
-                                    $typename(cntxt.instr_vif[i])), UVM_DEBUG)
+          `uvm_info("VIF", $sformatf("Found vif handle of type %s in uvm_config_db",
+                                      $typename(cntxt.instr_vif[i])), UVM_DEBUG)
       end
    end
 
    // Create virtual interface and fetch virtual interface for each supported CSR
-   begin
+   if (cfg.csr_enabled) begin
       string csrs[$];
 
       cfg.core_cfg.get_supported_csrs(csrs);
 
       foreach (csrs[c]) begin
-         string csr = csrs[c].tolower();;
+         string csr = csrs[c].tolower();
          cntxt.csr_vif[csr] = new[cfg.nret];
 
          for (int i = 0; i < cfg.nret; i++) begin

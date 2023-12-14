@@ -20,12 +20,11 @@ import "DPI-C" function int spike_create(string filename);
 
 import "DPI-C" function void spike_set_param_uint64_t(string base, string name, longint unsigned value);
 import "DPI-C" function void spike_set_param_str(string base, string name, string value);
+import "DPI-C" function void spike_set_param_bool(string base, string name, bit value);
 import "DPI-C" function void spike_set_default_params(string profile);
 
 import "DPI-C" function void spike_step_svOpenArray(inout bit [63:0] core[], inout bit [63:0] reference_model[]);
 import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi reference_model);
-
-localparam config_pkg::cva6_cfg_t CVA6Cfg = cva6_config_pkg::cva6_cfg;
 
     function automatic void rvfi_spike_step(ref st_rvfi s_core, ref st_rvfi s_reference_model);
 
@@ -49,57 +48,54 @@ localparam config_pkg::cva6_cfg_t CVA6Cfg = cva6_config_pkg::cva6_cfg;
 
     endfunction : rvfi_spike_step
 
-    function automatic void rvfi_initialize_spike(bit testharness);
+    function automatic void rvfi_initialize_spike(string core_name, st_core_cntrl_cfg core_cfg);
        string binary, rtl_isa, rtl_priv;
+        string base = $sformatf("/top/core/%0d/", core_cfg.mhartid);
 
         if ($value$plusargs("elf_file=%s", binary))
             `uvm_info("spike_tandem", $sformatf("Setting up Spike with binary %s...", binary), UVM_LOW);
 
-        rtl_priv = "M";
         rtl_isa = $sformatf("RV%-2dIM",
-                             riscv::XLEN);
-        if (CVA6Cfg.RVA) begin
-            rtl_isa = {rtl_isa, "A"};
-        end
-        if (CVA6Cfg.RVF | CVA6Cfg.FpuEn) begin
-            rtl_isa = {rtl_isa, "F"};
-        end
-        if (CVA6Cfg.RVD) begin
-            rtl_isa = {rtl_isa, "D"};
-        end
-        if (CVA6Cfg.RVC) begin
-            rtl_isa = {rtl_isa, "C"};
-        end
-        if (cva6_config_pkg::CVA6ConfigBExtEn) begin
-            rtl_isa = $sformatf("%s_zba_zbb_zbc_zbs", rtl_isa);
-        end
-        if (cva6_config_pkg::CVA6ConfigZcbExtEn) begin
-            rtl_isa = $sformatf("%s_zcb", rtl_isa);
-        end
-        // TODO Put a parameter, currently we do not have it
-        rtl_isa = $sformatf("%s_zicntr", rtl_isa);
+                            riscv::XLEN);
+        rtl_priv = "M";
+        if (core_cfg.ext_a_supported)       rtl_isa = {rtl_isa, "A"};
+        if (core_cfg.ext_f_supported)       rtl_isa = {rtl_isa, "F"};
+        if (core_cfg.ext_d_supported)       rtl_isa = {rtl_isa, "D"};
+        if (core_cfg.ext_c_supported)       rtl_isa = {rtl_isa, "C"};
+        if (core_cfg.ext_zba_supported)     rtl_isa = {rtl_isa, "_zba"};
+        if (core_cfg.ext_zbb_supported)     rtl_isa = {rtl_isa, "_zbb"};
+        if (core_cfg.ext_zbc_supported)     rtl_isa = {rtl_isa, "_zbc"};
+        if (core_cfg.ext_zbs_supported)     rtl_isa = {rtl_isa, "_zbs"};
+        if (core_cfg.ext_zcb_supported)     rtl_isa = {rtl_isa, "_zcb"};
+        if (core_cfg.ext_zicsr_supported)     rtl_isa = {rtl_isa, "_zicsr"};
+        if (core_cfg.ext_zicntr_supported)     rtl_isa = {rtl_isa, "_zicntr"};
 
-        if (CVA6Cfg.RVS) begin
-            rtl_priv = {rtl_priv, "S"};
-        end
-        if (CVA6Cfg.RVU) begin
-            rtl_priv = {rtl_priv, "U"};
-        end
+        if (core_cfg.mode_s_supported)      rtl_priv = {rtl_priv, "S"};
+        if (core_cfg.mode_u_supported)      rtl_priv = {rtl_priv, "U"};
 
-        // TODO Put a parameter, currently we do not have it // dcache / icache
-        if ('b1) begin
+        if (core_cfg.ext_cv32a60x_supported) begin
             void'(spike_set_param_str("/top/core/0/", "extensions", "cv32a60x"));
         end
 
+        assert(binary != "") else `uvm_error("spike_tandem", "We need a preloaded binary for tandem verification");
+        void'(spike_set_default_params(core_name));
 
-        assert(binary != "") else `uvm_fatal("spike_tandem", "We need a preloaded binary for tandem verification");
+        void'(spike_set_param_uint64_t("/top/", "num_procs", 64'h1));
 
-        void'(spike_set_default_params("cva6"));
-        void'(spike_set_param_uint64_t("/top/core/0/", "boot_addr", testharness ? 'h10000 : 'h80000000));
         void'(spike_set_param_str("/top/", "isa", rtl_isa));
+        void'(spike_set_param_str(base, "isa", rtl_isa));
         void'(spike_set_param_str("/top/", "priv", rtl_priv));
-        void'(spike_set_param_str("/top/core/0/", "isa", rtl_isa));
-        void'(spike_set_param_str("/top/core/0/", "priv", rtl_priv));
+        void'(spike_set_param_str(base, "priv", rtl_priv));
+        void'(spike_set_param_bool("/top/", "misaligned", core_cfg.unaligned_access_supported));
+
+        if (core_cfg.boot_addr_valid)
+            void'(spike_set_param_uint64_t(base, "boot_addr", core_cfg.boot_addr));
+        void'(spike_set_param_uint64_t(base, "pmpregions", core_cfg.pmp_regions));
+        if (core_cfg.mhartid_valid) begin
+            void'(spike_set_param_uint64_t(base, "mhartid", core_cfg.mhartid));
+        if (core_cfg.mvendorid_valid) void'(spike_set_param_uint64_t(base, "mvendorid", core_cfg.mvendorid));
+            void'(spike_set_param_bool(base, "misaligned", core_cfg.unaligned_access_supported));
+         end
         void'(spike_create(binary));
 
     endfunction : rvfi_initialize_spike
@@ -117,37 +113,37 @@ localparam config_pkg::cva6_cfg_t CVA6Cfg = cva6_config_pkg::cva6_cfg;
         if (t_core.trap || t_reference_model.trap) begin
             if (t_core.trap !== t_reference_model.trap) begin
                 error = 1;
-                cause_str = $sformatf("%s\nException Mismatch [REF]: 0x%-16h [CVA6]: 0x%-16h", cause_str, t_reference_model.trap, t_core.trap);
+                cause_str = $sformatf("%s\nException Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.trap, t_core.trap);
             end
             if (t_core.cause !== t_reference_model.cause) begin
                 error = 1;
-                cause_str = $sformatf("%s\nException Cause Mismatch [REF]: 0x%-16h [CVA6]: 0x%-16h", cause_str, t_reference_model.cause, t_core.cause);
+                cause_str = $sformatf("%s\nException Cause Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.cause, t_core.cause);
             end
         end
         else begin
             if (t_core.insn !== t_reference_model.insn) begin
                 error = 1;
-                cause_str = $sformatf("%s\nINSN Mismatch    [REF]: 0x%-16h [CVA6]: 0x%-16h", cause_str, t_reference_model.insn, t_core.insn);
+                cause_str = $sformatf("%s\nINSN Mismatch    [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.insn, t_core.insn);
             end
             if (t_core.rd1_addr != 0 || t_reference_model.rd1_addr != 0) begin
                 if (t_core.rd1_addr[4:0] !== t_reference_model.rd1_addr[4:0]) begin
                     error = 1;
-                    cause_str = $sformatf("%s\nRD ADDR Mismatch [REF]: 0x%-16h [CVA6]: 0x%-16h", cause_str, t_reference_model.rd1_addr[4:0], t_core.rd1_addr[4:0]);
+                    cause_str = $sformatf("%s\nRD ADDR Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.rd1_addr[4:0], t_core.rd1_addr[4:0]);
                 end
                 if (t_core.rd1_wdata !== t_reference_model.rd1_wdata) begin
                     error = 1;
-                    cause_str = $sformatf("%s\nRD VAL Mismatch  [REF]: 0x%-16h [CVA6]: 0x%-16h", cause_str, t_reference_model.rd1_wdata, t_core.rd1_wdata);
+                    cause_str = $sformatf("%s\nRD VAL Mismatch  [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.rd1_wdata, t_core.rd1_wdata);
                 end
             end
             if (t_core.mode !== t_reference_model.mode) begin
                 error = 1;
-                cause_str = $sformatf("%s\nPRIV Mismatch    [REF]: 0x%-16h [CVA6]: 0x%-16h", cause_str, t_reference_model.mode, t_core.mode);
+                cause_str = $sformatf("%s\nPRIV Mismatch    [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.mode, t_core.mode);
             end
         end
 
         if (core_pc64 !== reference_model_pc64) begin
             error = 1;
-            cause_str = $sformatf("%s\nPC Mismatch      [REF]: 0x%-16h [CVA6]: 0x%-16h", cause_str, reference_model_pc64, core_pc64);
+            cause_str = $sformatf("%s\nPC Mismatch      [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, reference_model_pc64, core_pc64);
         end
 
         $cast(mode, t_reference_model.mode);
@@ -164,7 +160,7 @@ localparam config_pkg::cva6_cfg_t CVA6Cfg = cva6_config_pkg::cva6_cfg;
                         t_reference_model.rd1_addr, t_reference_model.rd1_wdata);
         `uvm_info("spike_tandem", instr, UVM_NONE)
         if (error) begin
-            `uvm_fatal("spike_tandem", cause_str)
+            `uvm_error("spike_tandem", cause_str)
         end
 
     endfunction : rvfi_compare

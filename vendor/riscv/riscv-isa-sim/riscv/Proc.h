@@ -13,6 +13,8 @@ public:
   ~Processor();
   st_rvfi step(size_t n, st_rvfi reference);
 
+  static void default_params(string base, openhw::Params &params);
+
   inline void set_XPR(reg_t num, reg_t value);
   inline void set_FPR(reg_t num, float128_t value);
 
