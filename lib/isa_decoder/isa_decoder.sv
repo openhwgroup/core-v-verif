@@ -136,6 +136,7 @@
 
   function automatic gpr_t get_gpr_from_gpr_rvc(gpr_rvc_t gpr);
     gpr_t uncompressed_gpr;
+
     casex (gpr.gpr)
       C_X8:    uncompressed_gpr.gpr = X8;
       C_X9:    uncompressed_gpr.gpr = X9;
@@ -150,6 +151,24 @@
 
     return uncompressed_gpr;
   endfunction : get_gpr_from_gpr_rvc
+
+  function automatic gpr_t get_gpr_from_gpr_rvc_sreg(gpr_rvc_sreg_t gpr);
+    gpr_t uncompressed_gpr;
+
+    casex (gpr.gpr)
+      CS_X8:    uncompressed_gpr.gpr = X8;
+      CS_X9:    uncompressed_gpr.gpr = X9;
+      CS_X18:   uncompressed_gpr.gpr = X18;
+      CS_X19:   uncompressed_gpr.gpr = X19;
+      CS_X20:   uncompressed_gpr.gpr = X20;
+      CS_X21:   uncompressed_gpr.gpr = X21;
+      CS_X22:   uncompressed_gpr.gpr = X22;
+      CS_X23:   uncompressed_gpr.gpr = X23;
+      default: uncompressed_gpr.gpr = X0; // Function used wrong if we ever end up here
+    endcase
+
+    return uncompressed_gpr;
+  endfunction : get_gpr_from_gpr_rvc_sreg
 
   // ---------------------------------------------------------------------------
   // Find the value of immediate
@@ -311,463 +330,463 @@
     casex (format)
       I_TYPE: begin
         if (asm.instr inside { FENCE_I, ECALL, EBREAK, MRET, DRET, WFI, WFE }) begin
-          asm.rd.valid            = 0;
-          asm.rs1.valid           = 0;
-          asm.rs2.valid           = 0;
-          asm.imm.valid           = 0;
+          asm.rd.valid              = 0;
+          asm.rs1.valid             = 0;
+          asm.rs2.valid             = 0;
+          asm.imm.valid             = 0;
         end else if (asm.instr inside { FENCE }) begin
-          asm.imm.imm_raw         = instr.uncompressed.format.i.imm;
-          asm.imm.imm_raw_sorted  = instr.uncompressed.format.i.imm;
-          asm.imm.imm_type        = IMM;
-          asm.imm.width           = 12;
-          asm.imm.sign_ext        = 1;
-          asm.imm.imm_value       = get_imm_value_i(instr.uncompressed.format.i.imm);
-          asm.imm.valid           = 1;
+          asm.imm.imm_raw           = instr.uncompressed.format.i.imm;
+          asm.imm.imm_raw_sorted    = instr.uncompressed.format.i.imm;
+          asm.imm.imm_type          = IMM;
+          asm.imm.width             = 12;
+          asm.imm.sign_ext          = 1;
+          asm.imm.imm_value         = get_imm_value_i(instr.uncompressed.format.i.imm);
+          asm.imm.valid             = 1;
         end else if (asm.instr inside { CSRRW, CSRRS, CSRRC }) begin
-          asm.rd.gpr              = instr.uncompressed.format.i.rd.gpr;
-          asm.rs1.gpr             = instr.uncompressed.format.i.rs1.gpr;
-          asm.csr.address         = instr.uncompressed.format.i.imm;
-          asm.rd.valid            = 1;
-          asm.rs1.valid           = 1;
-          asm.csr.valid           = 1;
+          asm.rd.gpr                = instr.uncompressed.format.i.rd.gpr;
+          asm.rs1.gpr               = instr.uncompressed.format.i.rs1.gpr;
+          asm.csr.address           = instr.uncompressed.format.i.imm;
+          asm.rd.valid              = 1;
+          asm.rs1.valid             = 1;
+          asm.csr.valid             = 1;
         end else if (asm.instr inside { CSRRWI, CSRRSI, CSRRCI }) begin
-          asm.rd.gpr              = instr.uncompressed.format.i.rd.gpr;
-          asm.imm.imm_raw         = instr.uncompressed.format.i.rs1;
-          asm.imm.imm_raw_sorted  = instr.uncompressed.format.i.rs1;
-          asm.imm.imm_type        = UIMM;
-          asm.imm.width           = 5;
-          asm.imm.imm_value       = instr.uncompressed.format.i.rs1;
-          asm.csr.address         = instr.uncompressed.format.i.imm;
-          asm.rd.valid            = 1;
-          asm.imm.valid           = 1;
-          asm.csr.valid           = 1;
+          asm.rd.gpr                = instr.uncompressed.format.i.rd.gpr;
+          asm.imm.imm_raw           = instr.uncompressed.format.i.rs1;
+          asm.imm.imm_raw_sorted    = instr.uncompressed.format.i.rs1;
+          asm.imm.imm_type          = UIMM;
+          asm.imm.width             = 5;
+          asm.imm.imm_value         = instr.uncompressed.format.i.rs1;
+          asm.csr.address           = instr.uncompressed.format.i.imm;
+          asm.rd.valid              = 1;
+          asm.imm.valid             = 1;
+          asm.csr.valid             = 1;
         end else if (asm.instr inside { RORI, BEXTI, BCLRI, BINVI, BSETI, SLLI, SRLI, SRAI }) begin
-          asm.rd.gpr              = instr.uncompressed.format.i.rd.gpr;
-          asm.rs1.gpr             = instr.uncompressed.format.i.rs1.gpr;
-          asm.imm.imm_raw         = instr.uncompressed.format.i.imm.shamt;
-          asm.imm.imm_raw_sorted  = instr.uncompressed.format.i.imm.shamt;
-          asm.imm.imm_type        = SHAMT;
-          asm.imm.width           = 5;
-          asm.imm.imm_value       = instr.uncompressed.format.i.imm.shamt;
-          asm.rd.valid            = 1;
-          asm.rs1.valid           = 1;
-          asm.imm.valid           = 1;
+          asm.rd.gpr                = instr.uncompressed.format.i.rd.gpr;
+          asm.rs1.gpr               = instr.uncompressed.format.i.rs1.gpr;
+          asm.imm.imm_raw           = instr.uncompressed.format.i.imm.shamt;
+          asm.imm.imm_raw_sorted    = instr.uncompressed.format.i.imm.shamt;
+          asm.imm.imm_type          = SHAMT;
+          asm.imm.width             = 5;
+          asm.imm.imm_value         = instr.uncompressed.format.i.imm.shamt;
+          asm.rd.valid              = 1;
+          asm.rs1.valid             = 1;
+          asm.imm.valid             = 1;
         end else begin
-          asm.rd.gpr              = instr.uncompressed.format.i.rd.gpr;
-          asm.rs1.gpr             = instr.uncompressed.format.i.rs1.gpr;
-          asm.imm.imm_raw         = instr.uncompressed.format.i.imm;
-          asm.imm.imm_raw_sorted  = instr.uncompressed.format.i.imm;
-          asm.imm.imm_type        = IMM;
-          asm.imm.width           = 12;
-          asm.imm.sign_ext        = 1;
-          asm.imm.imm_value       = get_imm_value_i(instr.uncompressed.format.i.imm);
-          asm.rd.valid            = 1;
-          asm.rs1.valid           = 1;
-          asm.imm.valid           = 1;
+          asm.rd.gpr                = instr.uncompressed.format.i.rd.gpr;
+          asm.rs1.gpr               = instr.uncompressed.format.i.rs1.gpr;
+          asm.imm.imm_raw           = instr.uncompressed.format.i.imm;
+          asm.imm.imm_raw_sorted    = instr.uncompressed.format.i.imm;
+          asm.imm.imm_type          = IMM;
+          asm.imm.width             = 12;
+          asm.imm.sign_ext          = 1;
+          asm.imm.imm_value         = get_imm_value_i(instr.uncompressed.format.i.imm);
+          asm.rd.valid              = 1;
+          asm.rs1.valid             = 1;
+          asm.imm.valid             = 1;
         end
       end
       J_TYPE: begin
-        asm.rd.gpr                = instr.uncompressed.format.j.rd.gpr;
-        asm.imm.imm_raw           = instr.uncompressed.format.j.imm;
-        asm.imm.imm_raw_sorted    = get_sort_j_imm(instr);
-        asm.imm.imm_type          = OFFSET;
-        asm.imm.width             = 20;
-        asm.imm.sign_ext          = 1;
-        asm.imm.imm_value         = get_imm_value_j(get_sort_j_imm(instr));
-        asm.rd.valid              = 1;
-        asm.imm.valid             = 1;
+        asm.rd.gpr                  = instr.uncompressed.format.j.rd.gpr;
+        asm.imm.imm_raw             = instr.uncompressed.format.j.imm;
+        asm.imm.imm_raw_sorted      = get_sort_j_imm(instr);
+        asm.imm.imm_type            = OFFSET;
+        asm.imm.width               = 20;
+        asm.imm.sign_ext            = 1;
+        asm.imm.imm_value           = get_imm_value_j(get_sort_j_imm(instr));
+        asm.rd.valid                = 1;
+        asm.imm.valid               = 1;
       end
       S_TYPE: begin
-        asm.rs1.gpr               = instr.uncompressed.format.s.rs1.gpr;
-        asm.rs2.gpr               = instr.uncompressed.format.s.rs2.gpr;
-        asm.imm.imm_raw           = get_sort_s_imm(instr);
-        asm.imm.imm_raw_sorted    = get_sort_s_imm(instr);
-        asm.imm.imm_type          = IMM;
-        asm.imm.width             = 12;
-        asm.imm.sign_ext          = 1;
-        asm.imm.imm_value         = get_imm_value_i(get_sort_s_imm(instr));
-        asm.rs1.valid             = 1;
-        asm.rs2.valid             = 1;
-        asm.imm.valid             = 1;
+        asm.rs1.gpr                 = instr.uncompressed.format.s.rs1.gpr;
+        asm.rs2.gpr                 = instr.uncompressed.format.s.rs2.gpr;
+        asm.imm.imm_raw             = get_sort_s_imm(instr);
+        asm.imm.imm_raw_sorted      = get_sort_s_imm(instr);
+        asm.imm.imm_type            = IMM;
+        asm.imm.width               = 12;
+        asm.imm.sign_ext            = 1;
+        asm.imm.imm_value           = get_imm_value_i(get_sort_s_imm(instr));
+        asm.rs1.valid               = 1;
+        asm.rs2.valid               = 1;
+        asm.imm.valid               = 1;
       end
       R_TYPE: begin
         if ( asm.instr inside { LR_W, SC_W, AMOSWAP_W, AMOADD_W, AMOXOR_W, AMOAND_W, AMOOR_W, AMOMIN_W, AMOMAX_W, AMOMINU_W, AMOMAXU_W } ) begin
-          asm.rd.gpr              = instr.uncompressed.format.r.rd.gpr;
-          asm.rs1.gpr             = instr.uncompressed.format.r.rs1.gpr;
-          asm.rs2.gpr             = instr.uncompressed.format.r.rs2.gpr;
-          asm.atomic.aq           = instr.uncompressed.format.r.funct7[26];
-          asm.atomic.rl           = instr.uncompressed.format.r.funct7[25];
-          asm.rd.valid            = 1;
-          asm.rs1.valid           = 1;
-          asm.rs2.valid           = 1;
-          asm.atomic.valid        = 1;
+          asm.rd.gpr                = instr.uncompressed.format.r.rd.gpr;
+          asm.rs1.gpr               = instr.uncompressed.format.r.rs1.gpr;
+          asm.rs2.gpr               = instr.uncompressed.format.r.rs2.gpr;
+          asm.atomic.aq             = instr.uncompressed.format.r.funct7[26];
+          asm.atomic.rl             = instr.uncompressed.format.r.funct7[25];
+          asm.rd.valid              = 1;
+          asm.rs1.valid             = 1;
+          asm.rs2.valid             = 1;
+          asm.atomic.valid          = 1;
         end else begin
-          asm.rd.gpr              = instr.uncompressed.format.r.rd.gpr;
-          asm.rs1.gpr             = instr.uncompressed.format.r.rs1.gpr;
-          asm.rs2.gpr             = instr.uncompressed.format.r.rs2.gpr;
-          asm.rd.valid            = 1;
-          asm.rs1.valid           = 1;
-          asm.rs2.valid           = 1;
+          asm.rd.gpr                = instr.uncompressed.format.r.rd.gpr;
+          asm.rs1.gpr               = instr.uncompressed.format.r.rs1.gpr;
+          asm.rs2.gpr               = instr.uncompressed.format.r.rs2.gpr;
+          asm.rd.valid              = 1;
+          asm.rs1.valid             = 1;
+          asm.rs2.valid             = 1;
         end
       end
       R4_TYPE: begin
-        asm.rd.gpr                = instr.uncompressed.format.r4.rd.gpr;
-        asm.rs1.gpr               = instr.uncompressed.format.r4.rs1.gpr;
-        asm.rs2.gpr               = instr.uncompressed.format.r4.rs2.gpr;
-        asm.rs3.gpr               = instr.uncompressed.format.r4.rs3.gpr;
-        asm.rd.valid              = 1;
-        asm.rs1.valid             = 1;
-        asm.rs2.valid             = 1;
-        asm.rs3.valid             = 1;
+        asm.rd.gpr                  = instr.uncompressed.format.r4.rd.gpr;
+        asm.rs1.gpr                 = instr.uncompressed.format.r4.rs1.gpr;
+        asm.rs2.gpr                 = instr.uncompressed.format.r4.rs2.gpr;
+        asm.rs3.gpr                 = instr.uncompressed.format.r4.rs3.gpr;
+        asm.rd.valid                = 1;
+        asm.rs1.valid               = 1;
+        asm.rs2.valid               = 1;
+        asm.rs3.valid               = 1;
       end
       B_TYPE: begin
-        asm.rs1.gpr               = instr.uncompressed.format.b.rs1.gpr;
-        asm.rs2.gpr               = instr.uncompressed.format.b.rs2.gpr;
-        asm.imm.imm_raw           = {instr.uncompressed.format.b.imm_h, instr.uncompressed.format.b.imm_l};
-        asm.imm.imm_raw_sorted    = get_sort_b_imm(instr);
-        asm.imm.imm_type          = IMM;
-        asm.imm.width             = 12;
-        asm.imm.sign_ext          = 1;
-        asm.imm.imm_value         = get_imm_value_b(get_sort_b_imm(instr));
-        asm.rs1.valid             = 1;
-        asm.rs2.valid             = 1;
-        asm.imm.valid             = 1;
+        asm.rs1.gpr                 = instr.uncompressed.format.b.rs1.gpr;
+        asm.rs2.gpr                 = instr.uncompressed.format.b.rs2.gpr;
+        asm.imm.imm_raw             = {instr.uncompressed.format.b.imm_h, instr.uncompressed.format.b.imm_l};
+        asm.imm.imm_raw_sorted      = get_sort_b_imm(instr);
+        asm.imm.imm_type            = IMM;
+        asm.imm.width               = 12;
+        asm.imm.sign_ext            = 1;
+        asm.imm.imm_value           = get_imm_value_b(get_sort_b_imm(instr));
+        asm.rs1.valid               = 1;
+        asm.rs2.valid               = 1;
+        asm.imm.valid               = 1;
       end
       U_TYPE: begin
-        asm.rd.gpr                = instr.uncompressed.format.u.rd.gpr;
-        asm.imm.imm_raw           = instr.uncompressed.format.u.imm;
-        asm.imm.imm_raw_sorted    = instr.uncompressed.format.u.imm;
-        asm.imm.imm_type          = IMM;
-        asm.imm.width             = 20;
-        asm.imm.imm_value         = { instr.uncompressed.format.u.imm, 12'b0000_0000_0000 };
-        asm.rd.valid              = 1;
-        asm.imm.valid             = 1;
+        asm.rd.gpr                  = instr.uncompressed.format.u.rd.gpr;
+        asm.imm.imm_raw             = instr.uncompressed.format.u.imm;
+        asm.imm.imm_raw_sorted      = instr.uncompressed.format.u.imm;
+        asm.imm.imm_type            = IMM;
+        asm.imm.width               = 20;
+        asm.imm.imm_value           = { instr.uncompressed.format.u.imm, 12'b0000_0000_0000 };
+        asm.rd.valid                = 1;
+        asm.imm.valid               = 1;
       end
       // Compressed
       CR_TYPE: begin
         if (name inside { C_EBREAK }) begin
-          asm.rd.valid            = 0;
-          asm.rs1.valid           = 0;
-          asm.rs2.valid           = 0;
-          asm.rs3.valid           = 0;
-          asm.imm.valid           = 0;
+          asm.rd.valid              = 0;
+          asm.rs1.valid             = 0;
+          asm.rs2.valid             = 0;
+          asm.rs3.valid             = 0;
+          asm.imm.valid             = 0;
         end else if (name inside { C_MV }) begin
-          asm.rd.gpr              = instr.compressed.format.cr.rd_rs1.gpr;
-          asm.rs1.gpr             = instr.compressed.format.cr.rd_rs1.gpr;
-          asm.rs2.gpr             = instr.compressed.format.cr.rs2.gpr;
-          asm.rd.valid            = 1;
-          asm.rs2.valid           = 1;
-          asm.rs1.valid           = 1;
+          asm.rd.gpr                = instr.compressed.format.cr.rd_rs1.gpr;
+          asm.rs1.gpr               = instr.compressed.format.cr.rd_rs1.gpr;
+          asm.rs2.gpr               = instr.compressed.format.cr.rs2.gpr;
+          asm.rd.valid              = 1;
+          asm.rs2.valid             = 1;
+          asm.rs1.valid             = 1;
         end else if (name inside { C_ADD }) begin
-          asm.rd.gpr              = instr.compressed.format.cr.rd_rs1.gpr;
-          asm.rs1.gpr             = instr.compressed.format.cr.rd_rs1.gpr;
-          asm.rs2.gpr             = instr.compressed.format.cr.rs2.gpr;
-          asm.rd.valid            = 1;
-          asm.rs1.valid           = 1;
-          asm.rs2.valid           = 1;
+          asm.rd.gpr                = instr.compressed.format.cr.rd_rs1.gpr;
+          asm.rs1.gpr               = instr.compressed.format.cr.rd_rs1.gpr;
+          asm.rs2.gpr               = instr.compressed.format.cr.rs2.gpr;
+          asm.rd.valid              = 1;
+          asm.rs1.valid             = 1;
+          asm.rs2.valid             = 1;
         end else if (name inside { C_JR, C_JALR }) begin
-          asm.rs1.gpr             = instr.compressed.format.cr.rd_rs1.gpr;
-          asm.rs2.gpr             = instr.compressed.format.cr.rs2.gpr;
-          asm.rs1.valid           = 1;
-          asm.rs2.valid           = 1;
+          asm.rs1.gpr               = instr.compressed.format.cr.rd_rs1.gpr;
+          asm.rs2.gpr               = instr.compressed.format.cr.rs2.gpr;
+          asm.rs1.valid             = 1;
+          asm.rs2.valid             = 1;
         end
       end
       CI_TYPE: begin
         if (name inside { C_NOP, C_ADDI }) begin
-          asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
-          asm.rs1.gpr             = instr.compressed.format.ci.rd_rs1.gpr;
-          asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
-          asm.imm.imm_raw_sorted  = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
-          asm.imm.imm_type        = IMM;
-          asm.imm.width           = 6;
-          asm.imm.sign_ext        = 1;
-          asm.imm.imm_value       = get_imm_value_ci({ instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 });
-          asm.rd.valid            = 1;
-          asm.rs1.valid           = 1;
-          asm.imm.valid           = 1;
-        end else if (name        == C_LI) begin
-          asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
-          asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
-          asm.imm.imm_raw_sorted  = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
-          asm.imm.imm_type        = IMM;
-          asm.imm.width           = 6;
-          asm.imm.sign_ext        = 1;
-          asm.imm.imm_value       = get_imm_value_ci({ instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 });
-          asm.rd.valid            = 1;
-          asm.imm.valid           = 1;
-        end else if (name        == C_LUI) begin
-          asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
-          asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
-          asm.imm.imm_raw_sorted  = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
-          asm.imm.imm_type        = NZIMM;
-          asm.imm.width           = 6;
-          asm.imm.sign_ext        = 1;
-          asm.imm.imm_value       = get_imm_value_ci_lui({ instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 });
-          asm.rd.valid            = 1;
-          asm.imm.valid           = 1;
+          asm.rd.gpr                = instr.compressed.format.ci.rd_rs1.gpr;
+          asm.rs1.gpr               = instr.compressed.format.ci.rd_rs1.gpr;
+          asm.imm.imm_raw           = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.imm.imm_raw_sorted    = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.imm.imm_type          = IMM;
+          asm.imm.width             = 6;
+          asm.imm.sign_ext          = 1;
+          asm.imm.imm_value         = get_imm_value_ci({ instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 });
+          asm.rd.valid              = 1;
+          asm.rs1.valid             = 1;
+          asm.imm.valid             = 1;
+        end else if (name          == C_LI) begin
+          asm.rd.gpr                = instr.compressed.format.ci.rd_rs1.gpr;
+          asm.imm.imm_raw           = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.imm.imm_raw_sorted    = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.imm.imm_type          = IMM;
+          asm.imm.width             = 6;
+          asm.imm.sign_ext          = 1;
+          asm.imm.imm_value         = get_imm_value_ci({ instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 });
+          asm.rd.valid              = 1;
+          asm.imm.valid             = 1;
+        end else if (name          == C_LUI) begin
+          asm.rd.gpr                = instr.compressed.format.ci.rd_rs1.gpr;
+          asm.imm.imm_raw           = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.imm.imm_raw_sorted    = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.imm.imm_type          = NZIMM;
+          asm.imm.width             = 6;
+          asm.imm.sign_ext          = 1;
+          asm.imm.imm_value         = get_imm_value_ci_lui({ instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 });
+          asm.rd.valid              = 1;
+          asm.imm.valid             = 1;
         end else if (name inside { C_LWSP }) begin
-          asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
-          asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
-          asm.imm.imm_raw_sorted  = get_sort_ci_imm_lwsp(instr);
-          asm.imm.imm_type        = OFFSET;
-          asm.imm.width           = 6;
-          asm.imm.imm_value       = {24'b0, get_sort_ci_imm_lwsp(instr), 2'b0};
-          asm.rd.valid            = 1;
-          asm.imm.valid           = 1;
+          asm.rd.gpr                = instr.compressed.format.ci.rd_rs1.gpr;
+          asm.imm.imm_raw           = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.imm.imm_raw_sorted    = get_sort_ci_imm_lwsp(instr);
+          asm.imm.imm_type          = OFFSET;
+          asm.imm.width             = 6;
+          asm.imm.imm_value         = {24'b0, get_sort_ci_imm_lwsp(instr), 2'b0};
+          asm.rd.valid              = 1;
+          asm.imm.valid             = 1;
         end else if (name inside { C_ADDI16SP }) begin
-          asm.rs1.gpr             = instr.compressed.format.ci.rd_rs1.gpr;
-          asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
-          asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
-          asm.imm.imm_raw_sorted  = get_sort_ci_imm_addi16sp(instr);
-          asm.imm.imm_type        = NZIMM;
-          asm.imm.width           = 6;
-          asm.imm.sign_ext        = 1;
-          asm.imm.imm_value       = get_imm_value_ci_addi16sp(get_sort_ci_imm_addi16sp(instr));
-          asm.rs1.valid           = 1;
-          asm.rd.valid            = 1;
-          asm.imm.valid           = 1;
+          asm.rs1.gpr               = instr.compressed.format.ci.rd_rs1.gpr;
+          asm.rd.gpr                = instr.compressed.format.ci.rd_rs1.gpr;
+          asm.imm.imm_raw           = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.imm.imm_raw_sorted    = get_sort_ci_imm_addi16sp(instr);
+          asm.imm.imm_type          = NZIMM;
+          asm.imm.width             = 6;
+          asm.imm.sign_ext          = 1;
+          asm.imm.imm_value         = get_imm_value_ci_addi16sp(get_sort_ci_imm_addi16sp(instr));
+          asm.rs1.valid             = 1;
+          asm.rd.valid              = 1;
+          asm.imm.valid             = 1;
         end else if (name inside { C_SLLI }) begin
-          asm.rs1.gpr             = instr.compressed.format.ci.rd_rs1.gpr;
-          asm.rd.gpr              = instr.compressed.format.ci.rd_rs1.gpr;
-          asm.imm.imm_raw         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
-          asm.imm.imm_raw_sorted  = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
-          asm.imm.imm_type        = SHAMT;
-          asm.imm.width           = 6;
-          asm.imm.imm_value       = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
-          asm.rs1.valid           = 1;
-          asm.rd.valid            = 1;
-          asm.imm.valid           = 1;
+          asm.rs1.gpr               = instr.compressed.format.ci.rd_rs1.gpr;
+          asm.rd.gpr                = instr.compressed.format.ci.rd_rs1.gpr;
+          asm.imm.imm_raw           = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.imm.imm_raw_sorted    = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.imm.imm_type          = SHAMT;
+          asm.imm.width             = 6;
+          asm.imm.imm_value         = { instr.compressed.format.ci.imm_12, instr.compressed.format.ci.imm_6_2 };
+          asm.rs1.valid             = 1;
+          asm.rd.valid              = 1;
+          asm.imm.valid             = 1;
         end
       end
       CSS_TYPE: begin
-        asm.rs2.gpr               = instr.compressed.format.css.rs2.gpr;
-        asm.imm.imm_raw           = instr.compressed.format.css.imm;
-        asm.imm.imm_raw_sorted    = { instr.compressed.format.css.imm[9:7], instr.compressed.format.css.imm[12:10] };
-        asm.imm.imm_type          = OFFSET;
-        asm.imm.width             = 6;
-        asm.imm.imm_value         = { 24'b0, instr.compressed.format.css.imm[9:7], instr.compressed.format.css.imm[12:10], 2'b0 };
-        asm.rs2.valid             = 1;
-        asm.imm.valid             = 1;
+        asm.rs2.gpr                 = instr.compressed.format.css.rs2.gpr;
+        asm.imm.imm_raw             = instr.compressed.format.css.imm;
+        asm.imm.imm_raw_sorted      = { instr.compressed.format.css.imm[9:7], instr.compressed.format.css.imm[12:10] };
+        asm.imm.imm_type            = OFFSET;
+        asm.imm.width               = 6;
+        asm.imm.imm_value           = { 24'b0, instr.compressed.format.css.imm[9:7], instr.compressed.format.css.imm[12:10], 2'b0 };
+        asm.rs2.valid               = 1;
+        asm.imm.valid               = 1;
       end
       CIW_TYPE: begin
-        asm.rd.gpr                = get_gpr_from_gpr_rvc(instr.compressed.format.ciw.rd.gpr);
-        asm.rd.gpr_rvc            = instr.compressed.format.ciw.rd.gpr;
-        asm.imm.imm_raw           = instr.compressed.format.ciw.imm;
-        asm.imm.imm_raw_sorted    = get_sort_ciw_imm(instr);
-        asm.imm.imm_type          = NZUIMM;
-        asm.imm.width             = 8;
-        asm.imm.imm_value         = { 22'b0, get_sort_ciw_imm(instr), 2'b0 };
-        asm.imm.valid             = 1;
-        asm.rd.valid              = 1;
-        asm.rd.valid_gpr_rvc      = 1;
+        asm.rd.gpr                  = get_gpr_from_gpr_rvc(instr.compressed.format.ciw.rd.gpr);
+        asm.rd.gpr_rvc              = instr.compressed.format.ciw.rd.gpr;
+        asm.imm.imm_raw             = instr.compressed.format.ciw.imm;
+        asm.imm.imm_raw_sorted      = get_sort_ciw_imm(instr);
+        asm.imm.imm_type            = NZUIMM;
+        asm.imm.width               = 8;
+        asm.imm.imm_value           = { 22'b0, get_sort_ciw_imm(instr), 2'b0 };
+        asm.imm.valid               = 1;
+        asm.rd.valid                = 1;
+        asm.rd.valid_gpr_rvc        = 1;
       end
       CL_TYPE: begin
-        asm.rd.gpr                = get_gpr_from_gpr_rvc(instr.compressed.format.cl.rd.gpr);
-        asm.rd.gpr_rvc            = instr.compressed.format.cl.rd.gpr;
-        asm.rs1.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.cl.rs1.gpr);
-        asm.rs1.gpr_rvc           = instr.compressed.format.cl.rs1.gpr;
-        asm.imm.imm_raw           = { instr.compressed.format.cl.imm_12_10, instr.compressed.format.cl.imm_6_5 };
-        asm.imm.imm_raw_sorted    = get_sort_cl_imm(instr);
-        asm.imm.imm_type          = OFFSET;
-        asm.imm.width             = 5;
-        asm.imm.imm_value         = { 25'b0, get_sort_cl_imm(instr), 2'b0 };
-        asm.rd.valid              = 1;
-        asm.rd.valid_gpr_rvc      = 1;
-        asm.rs1.valid             = 1;
-        asm.rs1.valid_gpr_rvc     = 1;
-        asm.imm.valid             = 1;
+        asm.rd.gpr                  = get_gpr_from_gpr_rvc(instr.compressed.format.cl.rd.gpr);
+        asm.rd.gpr_rvc              = instr.compressed.format.cl.rd.gpr;
+        asm.rs1.gpr                 = get_gpr_from_gpr_rvc(instr.compressed.format.cl.rs1.gpr);
+        asm.rs1.gpr_rvc             = instr.compressed.format.cl.rs1.gpr;
+        asm.imm.imm_raw             = { instr.compressed.format.cl.imm_12_10, instr.compressed.format.cl.imm_6_5 };
+        asm.imm.imm_raw_sorted      = get_sort_cl_imm(instr);
+        asm.imm.imm_type            = OFFSET;
+        asm.imm.width               = 5;
+        asm.imm.imm_value           = { 25'b0, get_sort_cl_imm(instr), 2'b0 };
+        asm.rd.valid                = 1;
+        asm.rd.valid_gpr_rvc        = 1;
+        asm.rs1.valid               = 1;
+        asm.rs1.valid_gpr_rvc       = 1;
+        asm.imm.valid               = 1;
       end
       CS_TYPE: begin
-        asm.rs2.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.cs.rs2.gpr);
-        asm.rs2.gpr_rvc           = instr.compressed.format.cs.rs2.gpr;
-        asm.rs1.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.cs.rs1.gpr);
-        asm.rs1.gpr_rvc           = instr.compressed.format.cs.rs1.gpr;
-        asm.imm.imm_raw           = { instr.compressed.format.cs.imm_12_10, instr.compressed.format.cs.imm_6_5 };
-        asm.imm.imm_raw_sorted    = get_sort_cs_imm(instr);
-        asm.imm.imm_type          = OFFSET;
-        asm.imm.width             = 5;
-        asm.imm.imm_value         = { 25'b0, get_sort_cs_imm(instr), 2'b0 };
-        asm.rs2.valid             = 1;
-        asm.rs2.valid_gpr_rvc     = 1;
-        asm.rs1.valid             = 1;
-        asm.rs1.valid_gpr_rvc     = 1;
-        asm.imm.valid             = 1;
+        asm.rs2.gpr                 = get_gpr_from_gpr_rvc(instr.compressed.format.cs.rs2.gpr);
+        asm.rs2.gpr_rvc             = instr.compressed.format.cs.rs2.gpr;
+        asm.rs1.gpr                 = get_gpr_from_gpr_rvc(instr.compressed.format.cs.rs1.gpr);
+        asm.rs1.gpr_rvc             = instr.compressed.format.cs.rs1.gpr;
+        asm.imm.imm_raw             = { instr.compressed.format.cs.imm_12_10, instr.compressed.format.cs.imm_6_5 };
+        asm.imm.imm_raw_sorted      = get_sort_cs_imm(instr);
+        asm.imm.imm_type            = OFFSET;
+        asm.imm.width               = 5;
+        asm.imm.imm_value           = { 25'b0, get_sort_cs_imm(instr), 2'b0 };
+        asm.rs2.valid               = 1;
+        asm.rs2.valid_gpr_rvc       = 1;
+        asm.rs1.valid               = 1;
+        asm.rs1.valid_gpr_rvc       = 1;
+        asm.imm.valid               = 1;
       end
       CA_TYPE: begin
-        asm.rd.gpr                = get_gpr_from_gpr_rvc(instr.compressed.format.ca.rd_rs1.gpr);
-        asm.rd.gpr_rvc            = instr.compressed.format.ca.rd_rs1.gpr;
-        asm.rs1.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.ca.rd_rs1.gpr);
-        asm.rs1.gpr_rvc           = instr.compressed.format.ca.rd_rs1.gpr;
-        asm.rs2.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.ca.rs2.gpr);
-        asm.rs2.gpr_rvc           = instr.compressed.format.ca.rs2.gpr;
-        asm.rd.valid              = 1;
-        asm.rd.valid_gpr_rvc      = 1;
-        asm.rs1.valid             = 1;
-        asm.rs1.valid_gpr_rvc     = 1;
-        asm.rs2.valid             = 1;
-        asm.rs2.valid_gpr_rvc     = 1;
+        asm.rd.gpr                  = get_gpr_from_gpr_rvc(instr.compressed.format.ca.rd_rs1.gpr);
+        asm.rd.gpr_rvc              = instr.compressed.format.ca.rd_rs1.gpr;
+        asm.rs1.gpr                 = get_gpr_from_gpr_rvc(instr.compressed.format.ca.rd_rs1.gpr);
+        asm.rs1.gpr_rvc             = instr.compressed.format.ca.rd_rs1.gpr;
+        asm.rs2.gpr                 = get_gpr_from_gpr_rvc(instr.compressed.format.ca.rs2.gpr);
+        asm.rs2.gpr_rvc             = instr.compressed.format.ca.rs2.gpr;
+        asm.rd.valid                = 1;
+        asm.rd.valid_gpr_rvc        = 1;
+        asm.rs1.valid               = 1;
+        asm.rs1.valid_gpr_rvc       = 1;
+        asm.rs2.valid               = 1;
+        asm.rs2.valid_gpr_rvc       = 1;
       end
       CB_TYPE: begin
         if (name inside { C_SRLI, C_SRAI }) begin
-          asm.rd.gpr              = get_gpr_from_gpr_rvc(instr.compressed.format.cb.rd_rs1.gpr);
-          asm.rd.gpr_rvc          = instr.compressed.format.cb.rd_rs1.gpr;
-          asm.rs1.gpr             = get_gpr_from_gpr_rvc(instr.compressed.format.cb.rd_rs1.gpr);
-          asm.rs1.gpr_rvc         = instr.compressed.format.cb.rd_rs1.gpr;
-          asm.imm.imm_raw         = { instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 };
-          asm.imm.imm_raw_sorted  = { instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 };
-          asm.imm.imm_type        = SHAMT;
-          asm.imm.width           = 6;
-          asm.imm.imm_value       = { instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 };
-          asm.rd.valid            = 1;
-          asm.rd.valid_gpr_rvc    = 1;
-          asm.rs1.valid           = 1;
-          asm.rs1.valid_gpr_rvc   = 1;
-          asm.imm.valid           = 1;
+          asm.rd.gpr                = get_gpr_from_gpr_rvc(instr.compressed.format.cb.rd_rs1.gpr);
+          asm.rd.gpr_rvc            = instr.compressed.format.cb.rd_rs1.gpr;
+          asm.rs1.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.cb.rd_rs1.gpr);
+          asm.rs1.gpr_rvc           = instr.compressed.format.cb.rd_rs1.gpr;
+          asm.imm.imm_raw           = { instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 };
+          asm.imm.imm_raw_sorted    = { instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 };
+          asm.imm.imm_type          = SHAMT;
+          asm.imm.width             = 6;
+          asm.imm.imm_value         = { instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 };
+          asm.rd.valid              = 1;
+          asm.rd.valid_gpr_rvc      = 1;
+          asm.rs1.valid             = 1;
+          asm.rs1.valid_gpr_rvc     = 1;
+          asm.imm.valid             = 1;
         end else if (name inside { C_BEQZ, C_BNEZ }) begin
-          asm.rs1.gpr             = get_gpr_from_gpr_rvc(instr.compressed.format.cb.rd_rs1.gpr);
-          asm.rs1.gpr_rvc         = instr.compressed.format.cb.rd_rs1.gpr;
-          asm.imm.imm_raw         = { instr.compressed.format.cb.offset_12_10, instr.compressed.format.cb.offset_6_2 };
-          asm.imm.imm_raw_sorted  = get_sort_cb_imm_not_sequential(instr);
-          asm.imm.imm_type        = OFFSET;
-          asm.imm.width           = 8;
-          asm.imm.sign_ext        = 1;
-          asm.imm.imm_value       = get_imm_value_cb(get_sort_cb_imm_not_sequential(instr));
-          asm.rs1.valid           = 1;
-          asm.rs1.valid_gpr_rvc   = 1;
-          asm.imm.valid           = 1;
+          asm.rs1.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.cb.rd_rs1.gpr);
+          asm.rs1.gpr_rvc           = instr.compressed.format.cb.rd_rs1.gpr;
+          asm.imm.imm_raw           = { instr.compressed.format.cb.offset_12_10, instr.compressed.format.cb.offset_6_2 };
+          asm.imm.imm_raw_sorted    = get_sort_cb_imm_not_sequential(instr);
+          asm.imm.imm_type          = OFFSET;
+          asm.imm.width             = 8;
+          asm.imm.sign_ext          = 1;
+          asm.imm.imm_value         = get_imm_value_cb(get_sort_cb_imm_not_sequential(instr));
+          asm.rs1.valid             = 1;
+          asm.rs1.valid_gpr_rvc     = 1;
+          asm.imm.valid             = 1;
         end else if (name inside { C_ANDI }) begin
-          asm.rd.gpr              = get_gpr_from_gpr_rvc(instr.compressed.format.cb.rd_rs1.gpr);
-          asm.rd.gpr_rvc          = instr.compressed.format.cb.rd_rs1.gpr;
-          asm.rs1.gpr             = get_gpr_from_gpr_rvc(instr.compressed.format.cb.rd_rs1.gpr);
-          asm.rs1.gpr_rvc         = instr.compressed.format.cb.rd_rs1.gpr;
-          asm.imm.imm_raw         = { instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 };
-          asm.imm.imm_raw_sorted  = { instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 };
-          asm.imm.imm_type        = IMM;
-          asm.imm.width           = 6;
-          asm.imm.sign_ext        = 1;
-          asm.imm.imm_value       = get_imm_value_cb({ instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 });
-          asm.rd.valid            = 1;
-          asm.rd.valid_gpr_rvc    = 1;
-          asm.rs1.valid           = 1;
-          asm.rs1.valid_gpr_rvc   = 1;
-          asm.imm.valid           = 1;
+          asm.rd.gpr                = get_gpr_from_gpr_rvc(instr.compressed.format.cb.rd_rs1.gpr);
+          asm.rd.gpr_rvc            = instr.compressed.format.cb.rd_rs1.gpr;
+          asm.rs1.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.cb.rd_rs1.gpr);
+          asm.rs1.gpr_rvc           = instr.compressed.format.cb.rd_rs1.gpr;
+          asm.imm.imm_raw           = { instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 };
+          asm.imm.imm_raw_sorted    = { instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 };
+          asm.imm.imm_type          = IMM;
+          asm.imm.width             = 6;
+          asm.imm.sign_ext          = 1;
+          asm.imm.imm_value         = get_imm_value_cb({ instr.compressed.format.cb.offset_12_10[12], instr.compressed.format.cb.offset_6_2 });
+          asm.rd.valid              = 1;
+          asm.rd.valid_gpr_rvc      = 1;
+          asm.rs1.valid             = 1;
+          asm.rs1.valid_gpr_rvc     = 1;
+          asm.imm.valid             = 1;
         end
       end
       CJ_TYPE: begin
-        asm.imm.imm_raw           = instr.compressed.format.cj.imm;
-        asm.imm.imm_raw_sorted    = get_sort_cj_imm(instr);
-        asm.imm.imm_type          = OFFSET;
-        asm.imm.width             = 11;
-        asm.imm.sign_ext          = 1;
-        asm.imm.imm_value         = get_imm_value_cj(get_sort_cj_imm(instr));
-        asm.imm.valid             = 1;
+        asm.imm.imm_raw             = instr.compressed.format.cj.imm;
+        asm.imm.imm_raw_sorted      = get_sort_cj_imm(instr);
+        asm.imm.imm_type            = OFFSET;
+        asm.imm.width               = 11;
+        asm.imm.sign_ext            = 1;
+        asm.imm.imm_value           = get_imm_value_cj(get_sort_cj_imm(instr));
+        asm.imm.valid               = 1;
       end
       CLB_TYPE: begin
-        asm.imm.imm_raw           = instr.compressed.format.clb.uimm;
-        asm.imm.imm_raw_sorted    = { instr.compressed.format.clb.uimm[5], instr.compressed.format.clb.uimm[6] };
-        asm.imm.imm_type          = UIMM;
-        asm.imm.width             = 2;
-        asm.imm.imm_value         = { instr.compressed.format.clb.uimm[5], instr.compressed.format.clb.uimm[6] };
-        asm.rs1.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.clb.rs1.gpr);
-        asm.rs1.gpr_rvc           = instr.compressed.format.clb.rs1.gpr;
-        asm.rd.gpr                = get_gpr_from_gpr_rvc(instr.compressed.format.clb.rd.gpr);
-        asm.rd.gpr_rvc            = instr.compressed.format.clb.rd.gpr;
-        asm.rs1.valid             = 1;
-        asm.rs1.valid_gpr_rvc     = 1;
-        asm.rd.valid              = 1;
-        asm.rd.valid_gpr_rvc      = 1;
-        asm.imm.valid             = 1;
+        asm.imm.imm_raw             = instr.compressed.format.clb.uimm;
+        asm.imm.imm_raw_sorted      = { instr.compressed.format.clb.uimm[5], instr.compressed.format.clb.uimm[6] };
+        asm.imm.imm_type            = UIMM;
+        asm.imm.width               = 2;
+        asm.imm.imm_value           = { instr.compressed.format.clb.uimm[5], instr.compressed.format.clb.uimm[6] };
+        asm.rs1.gpr                 = get_gpr_from_gpr_rvc(instr.compressed.format.clb.rs1.gpr);
+        asm.rs1.gpr_rvc             = instr.compressed.format.clb.rs1.gpr;
+        asm.rd.gpr                  = get_gpr_from_gpr_rvc(instr.compressed.format.clb.rd.gpr);
+        asm.rd.gpr_rvc              = instr.compressed.format.clb.rd.gpr;
+        asm.rs1.valid               = 1;
+        asm.rs1.valid_gpr_rvc       = 1;
+        asm.rd.valid                = 1;
+        asm.rd.valid_gpr_rvc        = 1;
+        asm.imm.valid               = 1;
       end
       CSB_TYPE: begin
-        asm.imm.imm_raw           = instr.compressed.format.csb.uimm;
-        asm.imm.imm_raw_sorted    = { instr.compressed.format.csb.uimm[5], instr.compressed.format.csb.uimm[6] };
-        asm.imm.imm_type          = UIMM;
-        asm.imm.width             = 2;
-        asm.imm.imm_value         = { instr.compressed.format.csb.uimm[5], instr.compressed.format.csb.uimm[6] };
-        asm.rs1.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.csb.rs1.gpr);
-        asm.rs1.gpr_rvc           = instr.compressed.format.csb.rs1.gpr;
-        asm.rs2.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.csb.rs2.gpr);
-        asm.rs2.gpr_rvc           = instr.compressed.format.csb.rs2.gpr;
-        asm.rs1.valid             = 1;
-        asm.rs1.valid_gpr_rvc     = 1;
-        asm.rs2.valid             = 1;
-        asm.rs2.valid_gpr_rvc     = 1;
-        asm.imm.valid             = 1;
+        asm.imm.imm_raw             = instr.compressed.format.csb.uimm;
+        asm.imm.imm_raw_sorted      = { instr.compressed.format.csb.uimm[5], instr.compressed.format.csb.uimm[6] };
+        asm.imm.imm_type            = UIMM;
+        asm.imm.width               = 2;
+        asm.imm.imm_value           = { instr.compressed.format.csb.uimm[5], instr.compressed.format.csb.uimm[6] };
+        asm.rs1.gpr                 = get_gpr_from_gpr_rvc(instr.compressed.format.csb.rs1.gpr);
+        asm.rs1.gpr_rvc             = instr.compressed.format.csb.rs1.gpr;
+        asm.rs2.gpr                 = get_gpr_from_gpr_rvc(instr.compressed.format.csb.rs2.gpr);
+        asm.rs2.gpr_rvc             = instr.compressed.format.csb.rs2.gpr;
+        asm.rs1.valid               = 1;
+        asm.rs1.valid_gpr_rvc       = 1;
+        asm.rs2.valid               = 1;
+        asm.rs2.valid_gpr_rvc       = 1;
+        asm.imm.valid               = 1;
       end
       CLH_TYPE: begin
-        asm.imm.imm_raw           = instr.compressed.format.clh.uimm;
-        asm.imm.imm_raw_sorted    = instr.compressed.format.clh.uimm;
-        asm.imm.imm_type          = UIMM;
-        asm.imm.width             = 1;
-        asm.imm.imm_value         = { 30'b0, instr.compressed.format.clh.uimm };
-        asm.rs1.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.clh.rs1.gpr);
-        asm.rs1.gpr_rvc           = instr.compressed.format.clh.rs1.gpr;
-        asm.rd.gpr                = get_gpr_from_gpr_rvc(instr.compressed.format.clh.rd.gpr);
-        asm.rd.gpr_rvc            = instr.compressed.format.clh.rd.gpr;
-        asm.rs1.valid             = 1;
-        asm.rs1.valid_gpr_rvc     = 1;
-        asm.rd.valid              = 1;
-        asm.rd.valid_gpr_rvc      = 1;
-        asm.imm.valid             = 1;
+        asm.imm.imm_raw             = instr.compressed.format.clh.uimm;
+        asm.imm.imm_raw_sorted      = instr.compressed.format.clh.uimm;
+        asm.imm.imm_type            = UIMM;
+        asm.imm.width               = 1;
+        asm.imm.imm_value           = { 30'b0, instr.compressed.format.clh.uimm };
+        asm.rs1.gpr                 = get_gpr_from_gpr_rvc(instr.compressed.format.clh.rs1.gpr);
+        asm.rs1.gpr_rvc             = instr.compressed.format.clh.rs1.gpr;
+        asm.rd.gpr                  = get_gpr_from_gpr_rvc(instr.compressed.format.clh.rd.gpr);
+        asm.rd.gpr_rvc              = instr.compressed.format.clh.rd.gpr;
+        asm.rs1.valid               = 1;
+        asm.rs1.valid_gpr_rvc       = 1;
+        asm.rd.valid                = 1;
+        asm.rd.valid_gpr_rvc        = 1;
+        asm.imm.valid               = 1;
       end
       CSH_TYPE: begin
-        asm.imm.imm_raw           = instr.compressed.format.csh.uimm;
-        asm.imm.imm_raw_sorted    = instr.compressed.format.csh.uimm;
-        asm.imm.imm_type          = UIMM;
-        asm.imm.width             = 1;
-        asm.imm.imm_value         = {30'b0, instr.compressed.format.csh.uimm, 1'b0};
-        asm.rs1.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.csh.rs1.gpr);
-        asm.rs1.gpr_rvc           = instr.compressed.format.csh.rs1.gpr;
-        asm.rs2.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.csh.rs2.gpr);
-        asm.rs2.gpr_rvc           = instr.compressed.format.csh.rs2.gpr;
-        asm.rs1.valid             = 1;
-        asm.rs1.valid_gpr_rvc     = 1;
-        asm.rs2.valid             = 1;
-        asm.rs2.valid_gpr_rvc     = 1;
-        asm.imm.valid             = 1;
+        asm.imm.imm_raw             = instr.compressed.format.csh.uimm;
+        asm.imm.imm_raw_sorted      = instr.compressed.format.csh.uimm;
+        asm.imm.imm_type            = UIMM;
+        asm.imm.width               = 1;
+        asm.imm.imm_value           = {30'b0, instr.compressed.format.csh.uimm, 1'b0};
+        asm.rs1.gpr                 = get_gpr_from_gpr_rvc(instr.compressed.format.csh.rs1.gpr);
+        asm.rs1.gpr_rvc             = instr.compressed.format.csh.rs1.gpr;
+        asm.rs2.gpr                 = get_gpr_from_gpr_rvc(instr.compressed.format.csh.rs2.gpr);
+        asm.rs2.gpr_rvc             = instr.compressed.format.csh.rs2.gpr;
+        asm.rs1.valid               = 1;
+        asm.rs1.valid_gpr_rvc       = 1;
+        asm.rs2.valid               = 1;
+        asm.rs2.valid_gpr_rvc       = 1;
+        asm.imm.valid               = 1;
       end
       CU_TYPE: begin
-        asm.rs1.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.cu.rd_rs1.gpr);
-        asm.rs1.gpr_rvc           = instr.compressed.format.cu.rd_rs1.gpr;
-        asm.rd.gpr                = get_gpr_from_gpr_rvc(instr.compressed.format.cu.rd_rs1.gpr);
-        asm.rd.gpr_rvc            = instr.compressed.format.cu.rd_rs1.gpr;
-        asm.rs1.valid             = 1;
-        asm.rs1.valid_gpr_rvc     = 1;
-        asm.rd.valid              = 1;
-        asm.rd.valid_gpr_rvc      = 1;
+        asm.rs1.gpr                 = get_gpr_from_gpr_rvc(instr.compressed.format.cu.rd_rs1.gpr);
+        asm.rs1.gpr_rvc             = instr.compressed.format.cu.rd_rs1.gpr;
+        asm.rd.gpr                  = get_gpr_from_gpr_rvc(instr.compressed.format.cu.rd_rs1.gpr);
+        asm.rd.gpr_rvc              = instr.compressed.format.cu.rd_rs1.gpr;
+        asm.rs1.valid               = 1;
+        asm.rs1.valid_gpr_rvc       = 1;
+        asm.rd.valid                = 1;
+        asm.rd.valid_gpr_rvc        = 1;
       end
       CMMV_TYPE: begin
-        asm.rs1.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.cmmv.r1s.gpr);
-        asm.rs1.gpr_rvc           = instr.compressed.format.cmmv.r1s.gpr;
-        asm.rs2.gpr               = get_gpr_from_gpr_rvc(instr.compressed.format.cmmv.r2s.gpr);
-        asm.rs2.gpr_rvc           = instr.compressed.format.cmmv.r2s.gpr;
-        asm.rs1.valid             = 1;
-        asm.rs1.valid_gpr_rvc     = 1;
-        asm.rs2.valid             = 1;
-        asm.rs2.valid_gpr_rvc     = 1;
+        asm.rs1.gpr                 = get_gpr_from_gpr_rvc_sreg(instr.compressed.format.cmmv.r1s.gpr);
+        asm.rs1.gpr_rvc_sreg        = instr.compressed.format.cmmv.r1s.gpr;
+        asm.rs2.gpr                 = get_gpr_from_gpr_rvc_sreg(instr.compressed.format.cmmv.r2s.gpr);
+        asm.rs2.gpr_rvc_sreg        = instr.compressed.format.cmmv.r2s.gpr;
+        asm.rs1.valid               = 1;
+        asm.rs1.valid_gpr_rvc_sreg  = 1;
+        asm.rs2.valid               = 1;
+        asm.rs2.valid_gpr_rvc_sreg  = 1;
       end
       CMJT_TYPE: begin
-        asm.imm.imm_raw           = instr.compressed.format.cmjt.index;
-        asm.imm.imm_raw_sorted    = instr.compressed.format.cmjt.index;
-        asm.imm.imm_type          = INDEX;
-        asm.imm.width             = 1;
-        asm.imm.imm_value         = instr.compressed.format.cmjt.index;
-        asm.imm.valid             = 1;
+        asm.imm.imm_raw             = instr.compressed.format.cmjt.index;
+        asm.imm.imm_raw_sorted      = instr.compressed.format.cmjt.index;
+        asm.imm.imm_type            = INDEX;
+        asm.imm.width               = 1;
+        asm.imm.imm_value           = instr.compressed.format.cmjt.index;
+        asm.imm.valid               = 1;
       end
       CMPP_TYPE: begin
-        asm.imm.imm_raw           = instr.compressed.format.cmpp.spimm;
-        asm.imm.imm_raw_sorted    = instr.compressed.format.cmpp.spimm;
-        asm.imm.imm_type          = SPIMM;
-        asm.imm.width             = 1;
-        asm.rlist.rlist           = instr.compressed.format.cmpp.urlist;
-        asm.stack_adj.stack_adj   = get_stack_adj(instr.compressed.format.cmpp.urlist, instr.compressed.format.cmpp.spimm);
-        asm.imm.valid             = 1;
-        asm.rs1.gpr               = instr.compressed.format.csh.rs1.gpr;
-        asm.rs2.gpr               = instr.compressed.format.csh.rs2.gpr;
-        asm.rs1.valid             = 1;
-        asm.rs2.valid             = 1;
-        asm.rlist.valid           = 1;
-        asm.stack_adj.valid       = 1;
+        asm.imm.imm_raw             = instr.compressed.format.cmpp.spimm;
+        asm.imm.imm_raw_sorted      = instr.compressed.format.cmpp.spimm;
+        asm.imm.imm_type            = SPIMM;
+        asm.imm.width               = 1;
+        asm.rlist.rlist             = instr.compressed.format.cmpp.urlist;
+        asm.stack_adj.stack_adj     = get_stack_adj(instr.compressed.format.cmpp.urlist, instr.compressed.format.cmpp.spimm);
+        asm.imm.valid               = 1;
+        asm.rs1.gpr                 = instr.compressed.format.csh.rs1.gpr;
+        asm.rs2.gpr                 = instr.compressed.format.csh.rs2.gpr;
+        asm.rs1.valid               = 1;
+        asm.rs2.valid               = 1;
+        asm.rlist.valid             = 1;
+        asm.stack_adj.valid         = 1;
       end
 
       default : ;
@@ -1515,11 +1534,12 @@
   // ---------------------------------------------------------------------------
   // Identify if a given instruction matches an expected instruction name
   // ---------------------------------------------------------------------------
-
   // FIXME: is this a redundant declaration of match_instr?
-  //function automatic match_instr(instr_t instr, instr_name_e instr_type);
-  //  match_instr = (decode_instr(instr).instr == instr_type);
-  //endfunction : match_instr
+`ifndef QUESTA_VSIM
+  function automatic match_instr(instr_t instr, instr_name_e instr_type);
+    match_instr = (decode_instr(instr).instr == instr_type);
+  endfunction : match_instr
+`endif // QUESTA_VSIM
 
 
 //endpackage
