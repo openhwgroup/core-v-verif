@@ -44,9 +44,9 @@
 
 module uvmt_cv32e40s_dut_wrap
 #(
-    parameter INSTR_ADDR_WIDTH  =  32,
-    parameter INSTR_RDATA_WIDTH =  32,
-    parameter RAM_ADDR_WIDTH    =  20
+    parameter INSTR_ADDR_WIDTH  = 32,
+    parameter INSTR_RDATA_WIDTH = 32,
+    parameter RAM_ADDR_WIDTH    = 20
   )
   (
     uvma_clknrst_if_t               clknrst_if,
@@ -55,7 +55,6 @@ module uvmt_cv32e40s_dut_wrap
     uvma_wfe_wu_if_t                wfe_wu_if,
     uvmt_cv32e40s_vp_status_if_t    vp_status_if,
     uvme_cv32e40s_core_cntrl_if_t   core_cntrl_if,
-    uvmt_cv32e40s_core_status_if_t  core_status_if,
     uvma_obi_memory_if_t            obi_instr_if,
     uvma_obi_memory_if_t            obi_data_if,
     uvma_fencei_if_t                fencei_if
@@ -67,8 +66,11 @@ module uvmt_cv32e40s_dut_wrap
     logic         debug_pc_valid;
     logic [31:0]  debug_pc;
 
-    logic  alert_major;
-    logic  alert_minor;
+    logic alert_major;
+    logic alert_minor;
+
+    logic [4:0] instr_rchk_shim;
+    logic [4:0] data_rchk_shim;
 
 
     // instantiate the core
@@ -115,7 +117,7 @@ module uvmt_cv32e40s_dut_wrap
          .instr_dbg_o            ( obi_instr_if.dbg               ),
          .instr_memtype_o        ( obi_instr_if.memtype           ),
          .instr_rdata_i          ( obi_instr_if.rdata             ),
-         .instr_rchk_i           ( obi_instr_if.rchk              ),
+         .instr_rchk_i           ( instr_rchk_shim                ),
          .instr_rvalid_i         ( obi_instr_if.rvalid            ),
          .instr_rvalidpar_i      ( obi_instr_if.rvalidpar         ),
          .instr_err_i            ( obi_instr_if.err               ),
@@ -135,7 +137,7 @@ module uvmt_cv32e40s_dut_wrap
          .data_dbg_o             ( obi_data_if.dbg                ),
          .data_memtype_o         ( obi_data_if.memtype            ),
          .data_rdata_i           ( obi_data_if.rdata              ),
-         .data_rchk_i            ( obi_data_if.rchk               ),
+         .data_rchk_i            ( data_rchk_shim                 ),
          .data_err_i             ( obi_data_if.err                ),
 
          .mcycle_o               ( /*todo: connect */             ),
@@ -163,7 +165,54 @@ module uvmt_cv32e40s_dut_wrap
          .alert_minor_o          ( alert_minor                    ),
 
          .fetch_enable_i         ( core_cntrl_if.fetch_en         ),
-         .core_sleep_o           ( core_status_if.core_busy       )
+         .core_sleep_o           ()
+        );
+
+        // instantiate rchk shim
+        uvmt_cv32e40s_rchk_shim#(
+          .MAX_OUTSTANDING     (2),
+          .PMA_NUM_REGIONS     (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+          .PMA_CFG             (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_CFG),
+          .GENERATE_VALID_RCHK (0)
+        ) cv32e40s_rchk_shim_instr_i(
+          .clk      ( clknrst_if.clk     ),
+          .rst_n    ( clknrst_if.reset_n ),
+
+          // OBI address phase handshake
+          .req_i    ( obi_instr_if.req ),
+          .gnt_i    ( obi_instr_if.gnt ),
+          .dbg_i    ( obi_instr_if.dbg ),
+          .addr_i   ( obi_instr_if.addr ),
+
+          // OBI response phase signals
+          .rdata_i  ( obi_instr_if.rdata ),
+          .rvalid_i ( obi_instr_if.rvalid ),
+          .err_i    ( obi_instr_if.err ),
+          .rchk_i   ( obi_instr_if.rchk ),
+          .rchk_o   ( instr_rchk_shim  )
+        );
+
+        uvmt_cv32e40s_rchk_shim#(
+          .MAX_OUTSTANDING     (2),
+          .PMA_NUM_REGIONS     (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_NUM_REGIONS),
+          .PMA_CFG             (uvmt_cv32e40s_base_test_pkg::CORE_PARAM_PMA_CFG),
+          .GENERATE_VALID_RCHK (0)
+        ) cv32e40s_rchk_shim_data_i(
+          .clk      ( clknrst_if.clk     ),
+          .rst_n    ( clknrst_if.reset_n ),
+
+          // OBI address phase handshake
+          .req_i    ( obi_data_if.req ),
+          .gnt_i    ( obi_data_if.gnt ),
+          .dbg_i    ( obi_data_if.dbg ),
+          .addr_i   ( obi_data_if.addr ),
+
+          // OBI response phase signals
+          .rdata_i  ( obi_data_if.rdata ),
+          .rvalid_i ( obi_data_if.rvalid ),
+          .err_i    ( obi_data_if.err ),
+          .rchk_i   ( obi_data_if.rchk ),
+          .rchk_o   ( data_rchk_shim  )
         );
 
 endmodule : uvmt_cv32e40s_dut_wrap

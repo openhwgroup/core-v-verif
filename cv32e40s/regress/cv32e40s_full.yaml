@@ -576,3 +576,16 @@ tests:
     builds: [ uvmt_cv32e40s_clic ]
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=zcmt_test
+
+  mhpmcounter_write_test:
+    description: test writing to mhpm counters
+    builds: [ uvmt_cv32e40s_clic ]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=mhpmcounter_write_test
+
+  minhv_pma_block:
+    description: test minhv=1 and pma block of mepc address
+    builds: [ uvmt_cv32e40s_pma_2 ]
+    dir: cv32e40s/sim/uvmt
+    cmd: make test TEST=minhv_pma_block
+

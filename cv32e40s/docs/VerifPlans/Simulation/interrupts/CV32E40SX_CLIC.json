@@ -85,7 +85,7 @@
         "Pass/Fail Criteria": "Check against RM",
         "Test Type": "Constrained-Random",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "Missing covergroup, vc should use all interrupt levels"
+        "Link to Coverage": "clic_cg.cp_lvl"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",
@@ -338,7 +338,7 @@
         "Pass/Fail Criteria": "Assertion Check",
         "Test Type": "ENV capability, not specific test",
         "Coverage Method": "Functional Coverage",
-        "Link to Coverage": "TODO: Directed clic test should add case to test this"
+        "Link to Coverage": "clic::invalid_mtvt_ptr_exec_mret, minhv_pma_block.c"
     },
     {
         "Requirement Location": "UM v0.3.0 Common",

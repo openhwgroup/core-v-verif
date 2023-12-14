@@ -760,6 +760,37 @@ function void uvme_cv32e40s_env_c::install_vp_register_seqs(uvma_obi_memory_slv_
       vp_seq.cv32e40s_cntxt = cntxt;
    end
 
+   begin
+      uvma_obi_memory_vp_base_seq_c#(
+         .ACHK_WIDTH  (ENV_PARAM_DATA_ACHK_WIDTH),
+         .ADDR_WIDTH  (ENV_PARAM_DATA_ADDR_WIDTH),
+         .AUSER_WIDTH (ENV_PARAM_DATA_AUSER_WIDTH),
+         .DATA_WIDTH  (ENV_PARAM_DATA_DATA_WIDTH),
+         .ID_WIDTH    (ENV_PARAM_DATA_ID_WIDTH),
+         .RCHK_WIDTH  (ENV_PARAM_DATA_RCHK_WIDTH),
+         .RUSER_WIDTH (ENV_PARAM_DATA_RUSER_WIDTH),
+         .WUSER_WIDTH (ENV_PARAM_DATA_WUSER_WIDTH)
+      ) new_created_base_seq;
+
+      uvme_cv32e40s_vp_obi_err_await_goahead_seq_c  casted_seq_handle;
+
+      new_created_base_seq = data_slv_seq.register_vp_vseq(
+         "vp_obi_err_await_goahead",
+         CV_VP_OBI_ERR_AWAIT_GOAHEAD_BASE,
+         uvme_cv32e40s_vp_obi_err_await_goahead_seq_c::get_type()
+      );
+
+      if (!$cast(casted_seq_handle, new_created_base_seq)) begin
+         `uvm_fatal(
+            "CV32E40SVPSEQ",
+            $sformatf("Could not cast/assign vp_obi_err_await_goahead")
+         );
+      end
+
+      casted_seq_handle.obi_memory_cfg_instr = cfg.obi_memory_instr_cfg;
+      casted_seq_handle.obi_memory_cfg_data  = cfg.obi_memory_data_cfg;
+   end
+
 endfunction : install_vp_register_seqs
 
 `endif // __UVME_CV32E40S_ENV_SV__

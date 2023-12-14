@@ -23,14 +23,15 @@
 module uvmt_cv32e40s_pmprvfi_assert
   import cv32e40s_pkg::*;
   import support_pkg::*;
+  import isa_decoder_pkg::*;
   import uvm_pkg::*;
   import uvma_rvfi_pkg::*;
   import uvma_rvfi_pkg::EXC_CAUSE_INSTR_BUS_FAULT;
   import uvma_rvfi_pkg::EXC_CAUSE_INSTR_INTEGRITY_FAULT;
   import uvmt_cv32e40s_base_test_pkg::*;
 #(
-  parameter int  PMP_GRANULARITY = 0,
-  parameter int  PMP_NUM_REGIONS = 0
+  parameter int  PMP_GRANULARITY,
+  parameter int  PMP_NUM_REGIONS
 )(
   // Clock and Reset
   input wire  clk_i,
@@ -38,6 +39,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   //RVFI INSTR IF
   uvma_rvfi_instr_if_t    rvfi_if,
+  uvmt_cv32e40s_support_logic_module_o_if_t.slave_mp  support_if,
   // RVFI
   input wire              rvfi_valid,
   input wire [31:0]       rvfi_insn,
@@ -84,14 +86,14 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   string info_tag = "CV32E40S_PMPRVFI_ASSERT";
 
-  localparam logic [1:0] MODE_U                = 2'b 00;
-  localparam logic [1:0] MODE_M                = 2'b 11;
-  localparam logic [2:0] DBG_TRIGGER           = 3'd 2;
-  localparam int         NUM_CFG_REGS          = 16;
-  localparam int         NUM_ADDR_REGS         = 64;
-  localparam int         CSRADDR_FIRST_PMPCFG  = 12'h 3A0;
-  localparam int         CSRADDR_FIRST_PMPADDR = 12'h 3B0;
-  localparam int         CSRADDR_MSECCFG       = 12'h 747;
+  localparam int           NUM_ADDR_REGS         = 64;
+  localparam int           NUM_CFG_REGS          = 16;
+  localparam logic [11:0]  CSRADDR_FIRST_PMPADDR = 12'h 3B0;
+  localparam logic [11:0]  CSRADDR_FIRST_PMPCFG  = 12'h 3A0;
+  localparam logic [11:0]  CSRADDR_MSECCFG       = 12'h 747;
+  localparam logic [1:0]   MODE_M                = 2'b 11;
+  localparam logic [1:0]   MODE_U                = 2'b 00;
+  localparam logic [2:0]   DBG_TRIGGER           = 3'd 2;
 
   typedef struct packed {
     logic  pc_lower;
@@ -146,7 +148,7 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   wire  is_rvfi_csr_write_instr =
     is_rvfi_csr_instr  &&
-    !((rvfi_insn[13:12] inside {2'b 10, 2'b 11}) && !rvfi_rs1_addr);  // CSRRS/C[I] w/ rs1=x0/0
+    !((rvfi_insn[13:12] inside {2'b 01, 2'b 10, 2'b 11}) && !rvfi_rs1_addr);  // CSRRW/S/C[I] w/ rs1=x0/0
 
   wire [1:0]  rvfi_effective_mode =
     rvfi_csr_mstatus_rdata[17]      ?  // "mstatus.MPRV", modify privilege?
@@ -221,6 +223,16 @@ module uvmt_cv32e40s_pmprvfi_assert
   assign  pmp_csr_rvfi_rdata.mseccfg = rvfi_csr_mseccfg_rdata;
   assign  pmp_csr_rvfi_wdata.mseccfg = rvfi_csr_mseccfg_wdata;
   assign  pmp_csr_rvfi_wmask.mseccfg = rvfi_csr_mseccfg_wmask;
+
+  logic  is_all_regions_off;
+  always_comb begin
+    is_all_regions_off = 1;
+    for (int i = 0; i < PMP_NUM_REGIONS; i++) begin
+      if (pmp_csr_rvfi_rdata.cfg[i].mode != '0) begin
+        is_all_regions_off = 0;
+      end
+    end
+  end
 
 
   // Helper models
@@ -336,30 +348,22 @@ module uvmt_cv32e40s_pmprvfi_assert
     .*
   );
 
-  var [31:0]  clk_cnt;
-  always @(posedge clk_i, negedge rst_ni) begin
-    if (rst_ni == 0) begin
-      clk_cnt <= 32'd 1;
-    end else if (clk_cnt != '1) begin
-      clk_cnt <= clk_cnt + 32'd 1;
-    end
-  end
 
 
   // Assertions:
 
 
-  // PMP CSRs only accessible from M-mode  (vplan:Csrs:MmodeOnly)
+  // PMP CSRs only accessible from M-mode  (vplan:Csrs:MmodeOnly, vplan:MsecCfg:MmodeOnly)
 
-  sequence seq_csrs_mmode_only_ante;
+  sequence  seq_pmp_csr_access(mode);
     is_rvfi_csr_instr      &&
-    (rvfi_mode == MODE_U)  &&
+    (rvfi_mode == mode)  &&
     (rvfi_insn[31:20] inside {['h3A0 : 'h3EF], 'h747, 'h757})  //PMP regs
     ;
-  endsequence : seq_csrs_mmode_only_ante
+  endsequence
 
   a_csrs_mmode_only: assert property (
-    seq_csrs_mmode_only_ante
+    seq_pmp_csr_access(MODE_U)
     |->
     is_rvfi_exc_ill_instr          ||
     is_rvfi_exc_instr_bus_fault    ||
@@ -370,8 +374,15 @@ module uvmt_cv32e40s_pmprvfi_assert
 
   cov_csrs_mmode_only: cover property (
     // Want to see "the real cause" (ill exc) finishing this property
-    seq_csrs_mmode_only_ante  ##0  is_rvfi_exc_ill_instr
+    seq_pmp_csr_access(MODE_U) ##0  is_rvfi_exc_ill_instr
   );
+
+  // M-mode can always access the csrs  (vplan:AlwaysAccessible)
+  a_always_accessible_mmode_csrs: assert property (
+    seq_pmp_csr_access(MODE_M)
+    |->
+    ! is_rvfi_exc_ill_instr
+  ) else `uvm_error(info_tag, "mmode couldn't access csr");
 
 
   // NAPOT, some bits read as ones, depending on G  (vplan:NapotOnes)
@@ -498,26 +509,84 @@ module uvmt_cv32e40s_pmprvfi_assert
 
 
   // Stickiness isn't effectuated before triggered  (vplan:LockingBypass:UntilReset)
+  logic first_MSECCFG_access;
 
-  property  p_until_reset_notbefore(logic rlb);
-    $rose(rst_ni)                                               ##0
-    (rvfi_valid [->1])                                          ##0  // First retire
-    (is_rvfi_csr_write_instr && (rvfi_insn[14:12] == 3'b 001))  ##0  // ..."csrrw"
-    (rvfi_insn[31:20] == CSRADDR_MSECCFG)                       ##0  // ...to mseccfg
-    !rvfi_trap                                                  ##0
-    (rvfi_rs1_rdata[2] == rlb)                                       // (Write-attempt's data)
-    |->
-    pmp_csr_rvfi_wmask.mseccfg.rlb          &&  // Must attempt
-    (pmp_csr_rvfi_wdata.mseccfg.rlb == rlb)     // Must succeed
-    ;
-  endproperty : p_until_reset_notbefore
+  always @(posedge clk_i, negedge rst_ni) begin
+    if (rst_ni == 0) begin
+      first_MSECCFG_access <= 1'b 1;
+    end else if (
+      rvfi_valid &&
+      !rvfi_trap &&
+      (support_if.asm_rvfi.instr == CSRRW ||
+      support_if.asm_rvfi.instr == CSRRS  ||
+      support_if.asm_rvfi.instr == CSRRC  ||
+      support_if.asm_rvfi.instr == CSRRWI  ||
+      support_if.asm_rvfi.instr == CSRRSI ||
+      support_if.asm_rvfi.instr == CSRRCI)
+    ) begin
+      first_MSECCFG_access <= 1'b 0;
+    end
+  end
+
 
   a_until_reset_notbefore_0: assert property (
-    p_until_reset_notbefore(1'b 0)
+
+    // First write access to MSECCFG:
+    (rvfi_valid &&
+    first_MSECCFG_access &&
+
+    support_if.asm_rvfi.csr.address == MSECCFG &&
+    support_if.asm_rvfi.csr.valid &&
+
+    (support_if.asm_rvfi.instr == CSRRW ||
+    support_if.asm_rvfi.instr == CSRRC ||
+    support_if.asm_rvfi.instr == CSRRWI ||
+    support_if.asm_rvfi.instr == CSRRCI) &&
+
+    !rvfi_trap)
+
+    ##0
+
+    // Set RLB bit to 0:
+    ((support_if.asm_rvfi.instr == CSRRW && rvfi_rs1_rdata[2] == 1'b0) ||
+    (support_if.asm_rvfi.instr == CSRRC && rvfi_rs1_rdata[2] == 1'b1) ||
+    (support_if.asm_rvfi.instr == CSRRWI && support_if.asm_rvfi.imm.imm_value[2] == 1'b0) ||
+    (support_if.asm_rvfi.instr == CSRRCI && support_if.asm_rvfi.imm.imm_value[2] == 1'b1))
+
+    |->
+    pmp_csr_rvfi_wmask.mseccfg.rlb          &&  // Must attempt
+    (pmp_csr_rvfi_wdata.mseccfg.rlb == 1'b0)     // Must succeed
   ) else `uvm_error(info_tag, "RLB must be changeable after reset");
 
+
   a_until_reset_notbefore_1: assert property (
-    p_until_reset_notbefore(1'b 1)
+
+    // First write access to MSECCFG:
+    (rvfi_valid &&
+    first_MSECCFG_access &&
+
+    support_if.asm_rvfi.csr.address == MSECCFG &&
+    support_if.asm_rvfi.csr.valid &&
+
+    (support_if.asm_rvfi.instr == CSRRW ||
+    support_if.asm_rvfi.instr == CSRRS ||
+    support_if.asm_rvfi.instr == CSRRWI ||
+    support_if.asm_rvfi.instr == CSRRSI) &&
+
+    !rvfi_trap)
+
+    ##0
+
+    // Set RLB bit to 1:
+    ((support_if.asm_rvfi.instr == CSRRW || support_if.asm_rvfi.instr == CSRRS) &&
+    rvfi_rs1_rdata[2] == 1'b1) ||
+
+    ((support_if.asm_rvfi.instr == CSRRWI || support_if.asm_rvfi.instr == CSRRSI) &&
+    support_if.asm_rvfi.imm.imm_value[2])
+
+    |->
+    pmp_csr_rvfi_wmask.mseccfg.rlb          &&  // Must attempt
+    (pmp_csr_rvfi_wdata.mseccfg.rlb == 1'b1)     // Must succeed
   ) else `uvm_error(info_tag, "RLB must be changeable after reset");
 
 
@@ -897,7 +966,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       csr_intended_wdata <=
         rvfi_if.csr_intended_wdata(
           ({24'd 0, pmp_csr_rvfi_rdata.cfg[i]} << 8*(i%4)),
-          (CSRADDR_FIRST_PMPCFG + (i / 3'd4))
+          (CSRADDR_FIRST_PMPCFG + (i[11:0] / 3'd4))
         );
     end
     wire pmpncfg_t  cfg_attempt = csr_intended_wdata[32'd 8 * (i%4) +: 8];
@@ -906,7 +975,7 @@ module uvmt_cv32e40s_pmprvfi_assert
       pmp_csr_rvfi_rdata.mseccfg.rlb  &&
       pmp_csr_rvfi_rdata.mseccfg.mml
       ##0
-      rvfi_if.is_csr_write(CSRADDR_FIRST_PMPCFG + (i / 3'd4))  &&
+      rvfi_if.is_csr_write(CSRADDR_FIRST_PMPCFG + (i[11:0] / 3'd4))  &&
       !rvfi_trap  &&
       !(PMP_GRANULARITY > 0 && cfg_attempt.mode == PMP_MODE_NA4)
       ;
@@ -926,6 +995,23 @@ module uvmt_cv32e40s_pmprvfi_assert
     pmp_csr_rvfi_rdata.mseccfg.rlb  &&
     pmp_csr_rvfi_rdata.mseccfg.mml
   );
+
+
+  // If all regions "OFF", U-mode fails  (vplan:UmodeOff)
+
+  a_umode_off: assert property (
+    rvfi_if.is_umode  &&
+    is_all_regions_off
+    |->
+    rvfi_if.rvfi_trap
+  );
+
+
+  // "mseccfgh" is just zero  (vplan:MseccfghZero)
+
+  a_mseccfgh_zero: assert property (
+    rvfi_csr_mseccfgh_rdata == '0
+  ) else `uvm_error(info_tag, "mseccfgh not zero");
 
 
   // Translate write-attempts to legal values
