@@ -46,13 +46,14 @@ localparam config_pkg::cva6_cfg_t CVA6Cfg = cva6_config_pkg::cva6_cfg;
     endfunction : rvfi_spike_step
 
     function automatic void rvfi_initialize_spike(bit testharness);
-       string binary, rtl_isa;
+       string binary, rtl_isa, rtl_priv;
 
         if ($value$plusargs("elf_file=%s", binary))
             `uvm_info("spike_tandem", $sformatf("Setting up Spike with binary %s...", binary), UVM_LOW);
 
-       rtl_isa = $sformatf("RV%-2dIM",
-                            riscv::XLEN);
+        rtl_priv = "M";
+        rtl_isa = $sformatf("RV%-2dIM",
+                             riscv::XLEN);
         if (CVA6Cfg.RVA) begin
             rtl_isa = {rtl_isa, "A"};
         end
@@ -65,17 +66,29 @@ localparam config_pkg::cva6_cfg_t CVA6Cfg = cva6_config_pkg::cva6_cfg;
         if (CVA6Cfg.RVC) begin
             rtl_isa = {rtl_isa, "C"};
         end
-       if (cva6_config_pkg::CVA6ConfigBExtEn) begin
-           rtl_isa = $sformatf("%s_zba_zbb_zbc_zbs", rtl_isa);
-       end
+        if (cva6_config_pkg::CVA6ConfigBExtEn) begin
+            rtl_isa = $sformatf("%s_zba_zbb_zbc_zbs", rtl_isa);
+        end
+        if (cva6_config_pkg::CVA6ConfigZcbExtEn) begin
+            rtl_isa = $sformatf("%s_zcb", rtl_isa);
+        end
+        if (CVA6Cfg.RVS) begin
+            rtl_priv = {rtl_priv, "S"};
+        end
+        if (CVA6Cfg.RVU) begin
+            rtl_priv = {rtl_priv, "U"};
+        end
 
-       assert(binary != "") else `uvm_fatal("spike_tandem", "We need a preloaded binary for tandem verification");
 
-       void'(spike_set_default_params("cva6"));
-       void'(spike_set_param_uint64_t("/top/core/0/", "boot_addr", testharness ? 'h10000 : 'h80000000));
-       void'(spike_set_param_str("/top/", "isa", rtl_isa));
-       void'(spike_set_param_str("/top/core/0/", "isa", rtl_isa));
-       void'(spike_create(binary));
+        assert(binary != "") else `uvm_fatal("spike_tandem", "We need a preloaded binary for tandem verification");
+
+        void'(spike_set_default_params("cva6"));
+        void'(spike_set_param_uint64_t("/top/core/0/", "boot_addr", testharness ? 'h10000 : 'h80000000));
+        void'(spike_set_param_str("/top/", "isa", rtl_isa));
+        void'(spike_set_param_str("/top/", "priv", rtl_priv));
+        void'(spike_set_param_str("/top/core/0/", "isa", rtl_isa));
+        void'(spike_set_param_str("/top/core/0/", "priv", rtl_priv));
+        void'(spike_create(binary));
 
     endfunction : rvfi_initialize_spike
 
