@@ -429,13 +429,14 @@ class uvme_debug_covg extends uvm_component;
     covergroup cg_debug_with_f_inst;
         `per_instance_fcov
 
-        dbg_req : coverpoint cntxt.debug_cov_vif.mon_cb.debug_req_i {
+        dbg_req : coverpoint cntxt.debug_cov_vif.mon_cb.debug_req_i & !cntxt.debug_cov_vif.mon_cb.debug_mode_q {
             bins dbg_req_active = {1'b1};
             bins dbg_req_0_to_1 = (0 => 1);
         }
 
         step : coverpoint cntxt.debug_cov_vif.mon_cb.dcsr_q[2] & !cntxt.debug_cov_vif.mon_cb.debug_mode_q {
-            bins debug_step_mode_set = {1'b1};
+            bins dbg_step_mode_set = {1'b1};
+            bins dbg_step_mode_not_set = {1'b0};
         }
 
         ebreak: coverpoint cntxt.debug_cov_vif.mon_cb.is_ebreak {
@@ -462,7 +463,7 @@ class uvme_debug_covg extends uvm_component;
             bins ill_inst_hit = {1};
         }
 
-        f_inst : coverpoint cntxt.debug_cov_vif.mon_cb.rvfi_insn {
+        f_inst : coverpoint cntxt.debug_cov_vif.mon_cb.id_stage_instr_rdata_i iff (cntxt.debug_cov_vif.mon_cb.id_stage_instr_valid_i == 1) {
             `RV32F_INSTR_BINS
         }
 
@@ -511,20 +512,21 @@ class uvme_debug_covg extends uvm_component;
     covergroup cg_debug_with_xpulp_inst;
         `per_instance_fcov
 
-        dbg_req : coverpoint cntxt.debug_cov_vif.mon_cb.debug_req_i {
+        dbg_req : coverpoint cntxt.debug_cov_vif.mon_cb.debug_req_i & !cntxt.debug_cov_vif.mon_cb.debug_mode_q {
             bins dbg_req_active = {1'b1};
             bins dbg_req_0_to_1 = (0 => 1);
         }
 
         step : coverpoint cntxt.debug_cov_vif.mon_cb.dcsr_q[2] & !cntxt.debug_cov_vif.mon_cb.debug_mode_q {
-            bins debug_step_mode_set = {1'b1};
+            bins dbg_step_mode_set = {1'b1};
+            bins dbg_step_mode_not_set = {1'b0};
         }
 
         dm : coverpoint cntxt.debug_cov_vif.mon_cb.debug_mode_q {
                 bins in_debug_mode = {1};
         }
 
-        xpulp_instruction : coverpoint cntxt.debug_cov_vif.mon_cb.rvfi_insn {
+        xpulp_instruction : coverpoint cntxt.debug_cov_vif.mon_cb.id_stage_instr_rdata_i iff (cntxt.debug_cov_vif.mon_cb.id_stage_instr_valid_i == 1) {
             `RV32X_PULP_INSTR_BINS
         }
 
