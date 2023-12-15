@@ -40,6 +40,7 @@
 .global u_sw_irq_handler
 .global csr_mismatch
 .global csr_user_unauth
+.global csr_bad_impl
 .global csr_unexpected_int
 .global switch_to_user_mode
 .global switch_to_machine_mode
@@ -185,6 +186,21 @@ csr_user_unauth:
 	la a0, csr_user_unauth_msg
 	jal ra, printf
 	j csr_fail_loop
+	
+csr_bad_impl:
+	addi sp, sp,-8
+	sw ra, 0(sp)
+	sw t1, 4(sp)
+	la a0, csr_bad_impl_msg
+	jal ra, printf
+	la a0, glb_fail_count
+	lw a1, 0(a0)
+	addi a1, a1, 1
+	sw a1, 0(a0)
+	lw ra, 0(sp)
+	lw t1, 4(sp)
+	addi sp, sp, 8
+	ret
 
 csr_unexpected_int:
 	la a0, csr_unexpected_int_msg
@@ -215,6 +231,8 @@ csr_mismatch_msg:
 	.string "ERROR: Mismatch on CSR 0x%03x Expected 0x%08x Actual 0x%08x\n"
 csr_user_unauth_msg:
 	.string "ERROR: Access to CSR 0x%03x did NOT cause an exception, but was expected to.\n"
+csr_bad_impl_msg:
+	.string "ERROR: Access to unimplemented CSR address 0x%03x did NOT cause an exception, but was expected to.\n"
 csr_unexpected_int_msg:
 	.string "ERROR: Unexpected exception while accessing CSR 0x%03x\n"
 csr_unexpected_illegal_inst_msg:

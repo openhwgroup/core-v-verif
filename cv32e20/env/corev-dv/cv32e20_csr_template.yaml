@@ -77,7 +77,7 @@
     (HPM) Cycle Counter
   address: 0xC00
   privilege_mode: URO
-  SKIP_ME: Confriming all User mode accesses are bugged.
+  volatile: Yes
   rv32:
     - field_name: cycle
       description: >
@@ -91,7 +91,7 @@
     (HPM) Instruction-Retired Counter
   address: 0xC02
   privilege_mode: URO
-  SKIP_ME: Confriming all User mode accesses are bugged.
+  volatile: Yes
   rv32:
     - field_name: instret
       description: >
@@ -105,7 +105,7 @@
     (HPM) Upper 32 Cycle Counter
   address: 0xC80
   privilege_mode: URO
-  SKIP_ME: Confriming all User mode accesses are bugged.
+  volatile: Yes
   rv32:
     - field_name: cycleh
       description: >
@@ -119,7 +119,7 @@
     (HPM) Upper 32 Instruction-Retired Counter
   address: 0xC82
   privilege_mode: URO
-  SKIP_ME: Confriming all User mode accesses are bugged.
+  volatile: Yes
   rv32:
     - field_name: instreth
       description: >
@@ -194,7 +194,6 @@
       msb: 31
       lsb: 0
 - csr: mhpmcounter3
-  #SKIP_ME: Performance counters not currently implemented
   volatile: Yes
   description: >
     Lower 32-bit Machine Performance Monitoring Counter
@@ -209,10 +208,10 @@
       msb: 31
       lsb: 0
 - csr: mhpmcounter4
-  SKIP_ME: Seeing a value in this counter at first read.
   description: >
     Lower 32-bit Machine Performance Monitoring Counter
   address: 0xB04
+  volatile: Yes
   privilege_mode: MRW
   rv32:
     - field_name: Count
@@ -223,10 +222,10 @@
       msb: 31
       lsb: 0
 - csr: mhpmcounter5
-  SKIP_ME: Performance counters not currently implemented
   description: >
     Lower 32-bit Machine Performance Monitoring Counter
   address: 0xB05
+  volatile: Yes
   privilege_mode: MRW
   rv32:
     - field_name: Count
@@ -237,7 +236,6 @@
       msb: 31
       lsb: 0
 - csr: mhpmcounter6
-  #SKIP_ME: Performance counters not currently implemented
   description: >
     Lower 32-bit Machine Performance Monitoring Counter
   address: 0xB06
@@ -252,7 +250,6 @@
       msb: 31
       lsb: 0
 - csr: mhpmcounter7
-  #SKIP_ME: Performance counters not currently implemented
   description: >
     Lower 32-bit Machine Performance Monitoring Counter
   address: 0xB07
@@ -267,10 +264,10 @@
       msb: 31
       lsb: 0
 - csr: mhpmcounter8
-  SKIP_ME: Seeing a value in this counter at first read.
   description: >
     Lower 32-bit Machine Performance Monitoring Counter
   address: 0xB08
+  volatile: Yes
   privilege_mode: MRW
   rv32:
     - field_name: Count
@@ -281,10 +278,10 @@
       msb: 31
       lsb: 0
 - csr: mhpmcounter9
-  SKIP_ME: Seeing a value in this counter at first read.
   description: >
     Lower 32-bit Machine Performance Monitoring Counter
   address: 0xB09
+  volatile: Yes
   privilege_mode: MRW
   rv32:
     - field_name: Count
@@ -295,7 +292,6 @@
       msb: 31
       lsb: 0
 - csr: mhpmcounter10
-  #SKIP_ME: Performance counters not currently implemented
   description: >
     Lower 32-bit Machine Performance Monitoring Counter
   address: 0xB0A
@@ -310,7 +306,6 @@
       msb: 31
       lsb: 0
 - csr: mhpmcounter11
-  #SKIP_ME: Performance counters not currently implemented
   description: >
     Lower 32-bit Machine Performance Monitoring Counter
   address: 0xB0B
@@ -324,7 +319,6 @@
       msb: 31
       lsb: 0
 - csr: mhpmcounter12
-  #SKIP_ME: Performance counters not currently implemented
   description: >
     Lower 32-bit Machine Performance Monitoring Counter
   address: 0xB0C
@@ -338,7 +332,6 @@
       msb: 31
       lsb: 0      
 - csr: mhpmcounter3h
-  #SKIP_ME: Performance counters not currently implemented
   description: >
     Upper 8 bits of 40-bit Machine Performance Monitoring Counter
   address: 0xB83
@@ -352,7 +345,6 @@
       msb: 7
       lsb: 0
 - csr: mhpmcounter4h
-  #SKIP_ME: Performance counters not currently implemented
   description: >
     Upper 8 bits of 40-bit Machine Performance Monitoring Counter
   address: 0xB84
@@ -366,7 +358,6 @@
       msb: 7
       lsb: 0
 - csr: mhpmcounter5h
-  #SKIP_ME: Performance counters not currently implemented
   description: >
     Upper 8 bits of 40-bit Machine Performance Monitoring Counter
   address: 0xB85
@@ -380,7 +371,6 @@
       msb: 7
       lsb: 0
 - csr: mhpmcounter6h
-  SKIP_ME: Performance counters not currently implemented
   description: >
     Upper 8 bits of 40-bit Machine Performance Monitoring Counter
   address: 0xB86
@@ -394,7 +384,6 @@
       msb: 7
       lsb: 0
 - csr: mhpmcounter7h
-  #SKIP_ME: Performance counters not currently implemented
   description: >
     Upper 8 bits of 40-bit Machine Performance Monitoring Counter
   address: 0xB87
@@ -408,7 +397,6 @@
       msb: 7
       lsb: 0
 - csr: mhpmcounter8h
-  SKIP_ME: Performance counters not currently implemented
   description: >
     Upper 8 bits of 40-bit Machine Performance Monitoring Counter
   address: 0xB88
@@ -422,7 +410,6 @@
       msb: 7
       lsb: 0
 - csr: mhpmcounter9h
-  SKIP_ME: Performance counters not currently implemented
   description: >
     Upper 8 bits of 40-bit Machine Performance Monitoring Counter
   address: 0xB89
@@ -436,7 +423,6 @@
       msb: 7
       lsb: 0
 - csr: mhpmcounter10h
-  #SKIP_ME: Performance counters not currently implemented
   description: >
     Upper 8 bits of 40-bit Machine Performance Monitoring Counter
   address: 0xB8A
@@ -450,7 +436,6 @@
       msb: 7
       lsb: 0
 - csr: mhpmcounter11h
-  #SKIP_ME: Performance counters not currently implemented
   description: >
     Upper 8 bits of 40-bit Machine Performance Monitoring Counter
   address: 0xB8B
@@ -464,7 +449,6 @@
       msb: 7
       lsb: 0
 - csr: mhpmcounter12h
-  #SKIP_ME: Performance counters not currently implemented
   description: >
     Upper 8 bits of 40-bit Machine Performance Monitoring Counter
   address: 0xB8C
@@ -482,7 +466,6 @@
     Machine ISA Register
   address: 0x300
   privilege_mode: MRW
-  SKIP_ME: Imperas model does not have U bit set to 1
   rv32:
     - field_name: TW
       description: >
@@ -552,7 +535,6 @@
       msb: 25
       lsb: 0
 - csr: mie
-  SKIP_ME: Imperas checker has bit 31 writeable 
   description: >
     Machine Interrupt Enable
   address: 0x304
@@ -563,7 +545,7 @@
         Machine Fast Interrupt Enables
       type: WARL
       reset_val: 0
-      msb: 30
+      msb: 31
       lsb: 16
     - field_name: MEIE
       description: >
@@ -615,12 +597,75 @@
       reset_val: 1
       msb: 1
       lsb: 0
+- csr: mcounteren
+  description: >
+    Machine Counter enable
+  address: 0x306
+  privilege_mode: MRW
+  rv32:
+    - field_name: RESERVED[31:0]
+      reset_val: 0x0
+      type: R
+      msb: 31
+      lsb: 0
+- csr: mstatush
+  description: >
+    Machine ISA Register High Word
+  address: 0x310
+  privilege_mode: MRW
+  rv32:
+    - field_name: RESERVED[31:0]
+      reset_val: 0x0
+      type: R
+      msb: 31
+      lsb: 0
+- csr: menvcfg
+  description: >
+    Machine Counter enable
+  address: 0x30a
+  privilege_mode: MRW
+  rv32:
+    - field_name: CBZE
+      reset_val: 0
+      type: R
+      msb: 7
+      lsb: 7
+    - field_name: CBCFE
+      reset_val: 0
+      type: R
+      msb: 6
+      lsb: 6
+    - field_name: CBIE
+      reset_val: 0
+      type: R
+      msb: 5
+      lsb: 4
+    - field_name: FIOM
+      reset_val: 0
+      type: R
+      msb: 0
+      lsb: 0
+- csr: menvcfgh
+  description: >
+    Machine Counter enable High
+  address: 0x31a
+  privilege_mode: MRW
+  rv32:
+    - field_name: XTCE
+      reset_val: 0
+      type: R
+      msb: 31
+      lsb: 31
+    - field_name: PBMTE
+      reset_val: 0
+      type: R
+      msb: 30
+      lsb: 30
 - csr: mcountinhibit
   description: >
     Machine Counter-Inhibit
   address: 0x320
   privilege_mode: MRW
-  SKIP_ME: Imperas checker has this reading as 0's DUT has non zero values.
   rv32:
     - field_name: Selectors 31..13
       description: >
@@ -696,14 +741,14 @@
       description: >
         Selectors for mhpmcounter3 inhibit 
       type: WARL
-      reset_val: 0
+      reset_val: 1
       msb:  3
       lsb:  3
     - field_name: minstret inhibit
       description: >
         Inhibit minstret counting
       type: WARL
-      reset_val: 0
+      reset_val: 1
       msb:  2
       lsb:  2
     - field_name: zero
@@ -717,14 +762,13 @@
       description: >
         Inhibit mcycle counting
       type: WARL
-      reset_val: 0
+      reset_val: 1
       msb:  0
       lsb:  0
 - csr: mhpmevent3
   description: >
     (HPM) Machine Performance-Monitoring Event Selector 3
   address: 0x323
-  SKIP_ME: Appears to be unimplemented in RTL.
   privilege_mode: MRW
   rv32:
     - field_name: Zero
@@ -759,7 +803,6 @@
   description: >
     (HPM) Machine Performance-Monitoring Event Selector 4
   address: 0x324
-  SKIP_ME: Appears to be unimplemented in RTL.
   privilege_mode: MRW
   rv32:
     - field_name: Zero
@@ -794,7 +837,6 @@
   description: >
     (HPM) Machine Performance-Monitoring Event Selector 5
   address: 0x325
-  SKIP_ME: Appears to be unimplemented in RTL.
   privilege_mode: MRW
   rv32:
     - field_name: Zero
@@ -829,7 +871,6 @@
   description: >
     (HPM) Machine Performance-Monitoring Event Selector 6
   address: 0x326
-  SKIP_ME: Appears to be unimplemented in RTL.
   privilege_mode: MRW
   rv32:
     - field_name: Zero
@@ -864,7 +905,6 @@
   description: >
     (HPM) Machine Performance-Monitoring Event Selector 7
   address: 0x327
-  SKIP_ME: Appears to be unimplemented in RTL.
   privilege_mode: MRW
   rv32:
     - field_name: Zero
@@ -899,7 +939,6 @@
   description: >
     (HPM) Machine Performance-Monitoring Event Selector 8
   address: 0x328
-  SKIP_ME: Appears to be unimplemented in RTL.
   privilege_mode: MRW
   rv32:
     - field_name: Zero
@@ -934,7 +973,6 @@
   description: >
     (HPM) Machine Performance-Monitoring Event Selector 9
   address: 0x329
-  SKIP_ME: Appears to be unimplemented in RTL.
   privilege_mode: MRW
   rv32:
     - field_name: Zero
@@ -969,7 +1007,6 @@
   description: >
     (HPM) Machine Performance-Monitoring Event Selector 10
   address: 0x32A
-  SKIP_ME: Appears to be unimplemented in RTL.
   privilege_mode: MRW
   rv32:
     - field_name: Zero
@@ -1004,7 +1041,6 @@
   description: >
     (HPM) Machine Performance-Monitoring Event Selector 11
   address: 0x32B
-  SKIP_ME: Appears to be unimplemented in RTL.
   privilege_mode: MRW
   rv32:
     - field_name: Zero
@@ -1039,7 +1075,6 @@
   description: >
     (HPM) Machine Performance-Monitoring Event Selector 12
   address: 0x32C
-  SKIP_ME: Appears to be unimplemented in RTL.
   privilege_mode: MRW
   rv32:
     - field_name: Zero
@@ -1128,13 +1163,12 @@
           Exception Code
       type: WARL
       reset_val: 0
-      msb: 4
+      msb: 5
       lsb: 0
 - csr: mtval
   description: >
     Machine Trap Value
   address: 0x343
-  SKIP_ME: Imperas does not have this CSR writeable
   privilege_mode: MRW
   rv32:
     - field_name: Trap value
@@ -1211,7 +1245,6 @@
     Trigger Data Register 1
   address: 0x7A1
   privilege_mode: MRW
-  SKIP_ME: DUT hardcodes U-mode to 1, Imperas has it as  0
   rv32:
     - field_name: Type
       description: >
@@ -1385,6 +1418,20 @@
       msb: 31
       lsb: 0
 
+- csr: secureseed
+  description: >
+     secure seed - Implemented but not documented. 
+  address: 0x7C1
+  privilege_mode: MRW
+  rv32:
+    - field_name: Zero
+      description: >
+        CV32E20 does not support the features requiring this register.
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+
 ###############################################################################
 # mvendorid, marchid, mimpid and mhartid are temporarily excluded from auto-
 # generation of access testing as all bits in these CSRs are RO, so any attempt
@@ -1401,14 +1448,14 @@
       description: >
        Number of continuation codes in JEDEC manufacturer ID 
       type: R
-      reset_val: 0
+      reset_val: 0xc
       msb: 31
       lsb: 7
     - field_name: ID
       description: >
        Final byte of JEDEC manufacturer ID, discarding the parity bit.
       type: R
-      reset_val: 0
+      reset_val: 2
       msb: 6
       lsb: 0
 - csr: marchid
@@ -1421,7 +1468,7 @@
       description: >
         Machine Architecture ID of CV32E20 is 4
       type: R
-      reset_val: 0x16
+      reset_val: 0x23
       msb: 31
       lsb: 0
 - csr: mimpid
@@ -1446,6 +1493,19 @@
     - field_name: Hart
       description: >
         hart_id_i
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
+- csr: mconfigptr
+  description: >
+    Machine Configuration Pointer
+  address: 0xF15
+  privilege_mode: MRO
+  rv32:
+    - field_name: mconfigptr
+      description: >
+        Machine Configuration Pointer
       type: R
       reset_val: 0
       msb: 31

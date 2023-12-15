@@ -35,8 +35,9 @@
 #include "riscv_csr_test_0.h"
 
 volatile int glb_expect_illegal_insn    = 0;
-
+volatile int glb_fail_count             = 0;
 volatile int  glb_csr_address = 0;
+
 
 #define TEST_FAILED  *(volatile int*)(0x20000000) = 1
 #define TEST_PASSED  *(volatile int*)(0x20000000) = 123456789
@@ -50,11 +51,28 @@ int main(int argc, char *argv[]) {
       printf ("ERROR: Still expecting %d illegal instruction interrupt(s) at machine mode check.",
 	      glb_expect_illegal_insn);
       TEST_FAILED;
-    }	
+    }
+    csr_check_unimplemented();
+    if (glb_fail_count > 0) {
+      printf ("ERROR: Got responses from %d CSR address that are not expected.",
+	      glb_fail_count);
+      TEST_FAILED;
+    }
+    if (glb_expect_illegal_insn != 0) {
+      printf ("ERROR: Still expecting %d illegal instruction interrupt(s) after checking unimplmented addresses.",
+	      glb_expect_illegal_insn);
+      TEST_FAILED;
+    }
     switch_to_user_mode();
     user_mode_check();
     if (glb_expect_illegal_insn != 0) {
       printf ("ERROR: Still expecting %d illegal instruction interrupt(s) at user mode check.",
+	      glb_expect_illegal_insn);
+      TEST_FAILED;
+    }
+    csr_check_unimplemented();
+    if (glb_expect_illegal_insn != 0) {
+      printf ("ERROR: Still expecting %d illegal instruction interrupt(s) after checking unimplmented addresses.",
 	      glb_expect_illegal_insn);
       TEST_FAILED;
     }	
