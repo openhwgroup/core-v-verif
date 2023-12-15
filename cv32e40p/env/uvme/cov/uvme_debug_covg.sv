@@ -426,118 +426,176 @@ class uvme_debug_covg extends uvm_component;
         dbg_req_vs_step : cross dbg_req, step;
     endgroup
 
-    covergroup cg_debug_with_f_inst;
+    covergroup cg_debug_with_rv32f_inst;
         `per_instance_fcov
 
-        dbg_req : coverpoint cntxt.debug_cov_vif.mon_cb.debug_req_i & !cntxt.debug_cov_vif.mon_cb.debug_mode_q {
+        cp_dbg_req : coverpoint cntxt.debug_cov_vif.mon_cb.debug_req_i & !cntxt.debug_cov_vif.mon_cb.debug_mode_q {
             bins dbg_req_active = {1'b1};
             bins dbg_req_0_to_1 = (0 => 1);
         }
 
-        step : coverpoint cntxt.debug_cov_vif.mon_cb.dcsr_q[2] & !cntxt.debug_cov_vif.mon_cb.debug_mode_q {
+        cp_step : coverpoint cntxt.debug_cov_vif.mon_cb.dcsr_q[2] & !cntxt.debug_cov_vif.mon_cb.debug_mode_q {
             bins dbg_step_mode_set = {1'b1};
             bins dbg_step_mode_not_set = {1'b0};
         }
 
-        ebreak: coverpoint cntxt.debug_cov_vif.mon_cb.is_ebreak {
+        cp_ebreak: coverpoint cntxt.debug_cov_vif.mon_cb.is_ebreak {
                 bins ebreak_ex = {1};
         }
 
-        cebreak : coverpoint cntxt.debug_cov_vif.mon_cb.is_cebreak {
+        cp_cebreak : coverpoint cntxt.debug_cov_vif.mon_cb.is_cebreak {
             bins cebreak_ex= {1'b1};
         }
 
-        ebreakm_set: coverpoint cntxt.debug_cov_vif.mon_cb.dcsr_q[15] {
+        cp_ebreakm_set: coverpoint cntxt.debug_cov_vif.mon_cb.dcsr_q[15] {
                 bins ebreakm_is_set = {1};
         }
 
-        dm : coverpoint cntxt.debug_cov_vif.mon_cb.debug_mode_q {
+        cp_trigger_match : coverpoint cntxt.debug_cov_vif.mon_cb.trigger_match_i {
+            bins not_match = {0};
+            bins match = {1};
+        }
+
+        cp_trigger_en : coverpoint cntxt.debug_cov_vif.mon_cb.tdata1[2] {
+            bins trig_en = {1};
+        }
+
+        cp_dm : coverpoint cntxt.debug_cov_vif.mon_cb.debug_mode_q {
                 bins in_debug_mode = {1};
         }
 
-        irq  : coverpoint |cntxt.debug_cov_vif.mon_cb.irq_i {
-                bins irq_trans_0_to_1 = (1'b0 => 1'b1);
+        cp_irq  : coverpoint (cntxt.debug_cov_vif.mon_cb.irq_i & cntxt.debug_cov_vif.mon_cb.mie_q) {
+                wildcard bins irq_31_trans_0_to_1    =   ( {1'b0,31'b?}                 =>  {1'b1,31'b?} );
+                wildcard bins irq_30_trans_0_to_1    =   ( {1'b0,1'b0,30'b?}            =>  {1'b0,1'b1,30'b?} );
+                wildcard bins irq_29_trans_0_to_1    =   ( {2'b0,1'b0,29'b?}            =>  {2'b0,1'b1,29'b?} );
+                wildcard bins irq_28_trans_0_to_1    =   ( {3'b0,1'b0,28'b?}            =>  {3'b0,1'b1,28'b?} );
+                wildcard bins irq_27_trans_0_to_1    =   ( {4'b0,1'b0,27'b?}            =>  {4'b0,1'b1,27'b?} );
+                wildcard bins irq_26_trans_0_to_1    =   ( {5'b0,1'b0,26'b?}            =>  {5'b0,1'b1,26'b?} );
+                wildcard bins irq_25_trans_0_to_1    =   ( {6'b0,1'b0,25'b?}            =>  {6'b0,1'b1,25'b?} );
+                wildcard bins irq_24_trans_0_to_1    =   ( {7'b0,1'b0,24'b?}            =>  {7'b0,1'b1,24'b?} );
+                wildcard bins irq_23_trans_0_to_1    =   ( {8'b0,1'b0,23'b?}            =>  {8'b0,1'b1,23'b?} );
+                wildcard bins irq_22_trans_0_to_1    =   ( {9'b0,1'b0,22'b?}            =>  {9'b0,1'b1,22'b?} );
+                wildcard bins irq_21_trans_0_to_1    =   ( {10'b0,1'b0,21'b?}           =>  {10'b0,1'b1,21'b?} );
+                wildcard bins irq_20_trans_0_to_1    =   ( {11'b0,1'b0,20'b?}           =>  {11'b0,1'b1,20'b?} );
+                wildcard bins irq_19_trans_0_to_1    =   ( {12'b0,1'b0,19'b?}           =>  {12'b0,1'b1,19'b?} );
+                wildcard bins irq_18_trans_0_to_1    =   ( {13'b0,1'b0,18'b?}           =>  {13'b0,1'b1,18'b?} );
+                wildcard bins irq_17_trans_0_to_1    =   ( {14'b0,1'b0,17'b?}           =>  {14'b0,1'b1,17'b?} );
+                wildcard bins irq_16_trans_0_to_1    =   ( {15'b0,1'b0,16'b?}           =>  {15'b0,1'b1,16'b?} );
+                wildcard bins irq_11_trans_0_to_1    =   ( {20'b0,1'b0,11'b?}           =>  {20'b0,1'b1,11'b?} );
+                wildcard bins irq_3_trans_0_to_1     =   ( {24'b0,1'b0,3'b?,1'b0,3'b?}  =>  {24'b0,1'b?,3'b?,1'b1,3'b?} );
+                wildcard bins irq_7_trans_0_to_1     =   ( {24'b0,1'b0,3'b?,1'b0,3'b?}  =>  {24'b0,1'b1,3'b?,1'b0,3'b?} );
         }
 
-        ill : coverpoint cntxt.debug_cov_vif.mon_cb.illegal_insn_i {
+        cp_ill : coverpoint cntxt.debug_cov_vif.mon_cb.illegal_insn_i {
             bins ill_inst_hit = {1};
         }
 
-        f_inst : coverpoint cntxt.debug_cov_vif.mon_cb.id_stage_instr_rdata_i iff (cntxt.debug_cov_vif.mon_cb.id_stage_instr_valid_i == 1) {
+        cp_rv32f_inst : coverpoint cntxt.debug_cov_vif.mon_cb.id_stage_instr_rdata_i iff (cntxt.debug_cov_vif.mon_cb.id_stage_instr_valid_i == 1) {
             `RV32F_INSTR_BINS
         }
 
-        apu_req_valid : coverpoint cntxt.debug_cov_vif.mon_cb.apu_req {
+        cp_apu_req_valid : coverpoint cntxt.debug_cov_vif.mon_cb.apu_req {
             bins apu_req_valid = {1'b1};
         }
 
-        apu_grant_valid : coverpoint cntxt.debug_cov_vif.mon_cb.apu_gnt {
+        cp_apu_grant_valid : coverpoint cntxt.debug_cov_vif.mon_cb.apu_gnt {
             bins apu_gnt_valid[] = {1'b1};
         }
 
-        apu_busy : coverpoint cntxt.debug_cov_vif.mon_cb.apu_busy {
+        cp_apu_busy : coverpoint cntxt.debug_cov_vif.mon_cb.apu_busy {
             bins apu_busy[] = {1'b0, 1'b1};
             bins apu_busy_0_to_1 = (0 => 1);
             bins apu_busy_1_to_0 = (1 => 0);
         }
 
-        dbg_x_finst : cross dbg_req, f_inst;
+        // cross rv32f instr execution at debug req only - no trigger
+        cr_dbg_x_rv32f : cross cp_dbg_req, cp_rv32f_inst, cp_trigger_match {
+            ignore_bins no_trigger_match = binsof(cp_trigger_match) intersect {1};
+        }
 
-        step_x_finst : cross step, f_inst;
+        // cross debug single stepping for each rv32f instr - no trigger
+        cr_step_x_rv32f : cross cp_step, cp_rv32f_inst, cp_trigger_match {
+            ignore_bins single_step_disable = binsof(cp_step) intersect {0};
+            ignore_bins no_trigger_match = binsof(cp_trigger_match) intersect {1};
+        }
 
-        f_inst_in_dbg_mode : cross dm, f_inst;
+        // cross debug entry with trigger addr match at rv32f inst
+        cr_trigger_with_rv32f : cross cp_trigger_match, cp_trigger_en, cp_rv32f_inst;
 
-        //debug mode entry with debug_halt_req during multi cycle fp inst
-        dbg_while_multi_cyc_f_A : cross apu_req_valid, apu_grant_valid, dbg_req;
-        dbg_while_multi_cyc_f_B : cross apu_busy, dbg_req;
+        cr_rv32f_in_dbg_mode : cross cp_dm, cp_rv32f_inst;
 
-        //debug_halt_req with irq during multi cycle fp inst
-        dbg_irq_while_multi_cyc_f_A : cross apu_req_valid, apu_grant_valid, dbg_req, irq;
-        dbg_irq_while_multi_cyc_f_B : cross apu_busy, dbg_req, irq;
+        // debug mode entry with debug_halt_req during multi cycle fp inst
+        cr_dbg_while_multi_cyc_f_A : cross cp_apu_req_valid, cp_apu_grant_valid, cp_dbg_req;
+        cr_dbg_while_multi_cyc_f_B : cross cp_apu_busy, cp_dbg_req;
 
-        //debug_halt_req with illegal instr during multi cycle fp inst
-        dbg_ill_while_multi_cyc_f_A : cross apu_req_valid, apu_grant_valid, dbg_req, ill;
-        dbg_ill_while_multi_cyc_f_B : cross apu_busy, dbg_req, ill;
+        // debug_halt_req with irq during multi cycle fp inst
+        cr_dbg_irq_while_multi_cyc_f_A : cross cp_apu_req_valid, cp_apu_grant_valid, cp_dbg_req, cp_irq;
+        cr_dbg_irq_while_multi_cyc_f_B : cross cp_apu_busy, cp_dbg_req, cp_irq;
 
-        //debug mode entry with ebreak during multi cycle fp inst
-        ebreak_while_multi_cyc_f_A : cross apu_req_valid, apu_grant_valid, ebreak, ebreakm_set;
-        ebreak_while_multi_cyc_f_B : cross apu_busy, ebreak, ebreakm_set;
+        // debug_halt_req with illegal instr during multi cycle fp inst
+        cr_dbg_ill_while_multi_cyc_f_A : cross cp_apu_req_valid, cp_apu_grant_valid, cp_dbg_req, cp_ill;
+        cr_dbg_ill_while_multi_cyc_f_B : cross cp_apu_busy, cp_dbg_req, cp_ill;
 
-        //debug mode entry with cebreak during multi cycle fp inst
-        cebreak_while_multi_cyc_f_A : cross apu_req_valid, apu_grant_valid, cebreak, ebreakm_set;
-        cebreak_while_multi_cyc_f_B : cross apu_busy, cebreak, ebreakm_set;
+        // debug mode entry with ebreak during multi cycle fp inst
+        cr_ebreak_while_multi_cyc_f_A : cross cp_apu_req_valid, cp_apu_grant_valid, cp_ebreak, cp_ebreakm_set;
+        cr_ebreak_while_multi_cyc_f_B : cross cp_apu_busy, cp_ebreak, cp_ebreakm_set;
+
+        // debug mode entry with cebreak during multi cycle fp inst
+        cr_cebreak_while_multi_cyc_f_A : cross cp_apu_req_valid, cp_apu_grant_valid, cp_cebreak, cp_ebreakm_set;
+        cr_cebreak_while_multi_cyc_f_B : cross cp_apu_busy, cp_cebreak, cp_ebreakm_set;
+
+        // debug mode entry with trigger during multi cycle fp inst
+        cr_dbg_trig_while_multi_cyc_f_A : cross cp_apu_req_valid, cp_apu_grant_valid, cp_trigger_match, cp_trigger_en;
+        cr_dbg_trig_while_multi_cyc_f_B : cross cp_apu_busy, cp_trigger_match, cp_trigger_en;
 
     endgroup
 
     covergroup cg_debug_with_xpulp_inst;
         `per_instance_fcov
 
-        dbg_req : coverpoint cntxt.debug_cov_vif.mon_cb.debug_req_i & !cntxt.debug_cov_vif.mon_cb.debug_mode_q {
+        cp_dbg_req : coverpoint cntxt.debug_cov_vif.mon_cb.debug_req_i & !cntxt.debug_cov_vif.mon_cb.debug_mode_q {
             bins dbg_req_active = {1'b1};
             bins dbg_req_0_to_1 = (0 => 1);
         }
 
-        step : coverpoint cntxt.debug_cov_vif.mon_cb.dcsr_q[2] & !cntxt.debug_cov_vif.mon_cb.debug_mode_q {
+        cp_step : coverpoint cntxt.debug_cov_vif.mon_cb.dcsr_q[2] & !cntxt.debug_cov_vif.mon_cb.debug_mode_q {
             bins dbg_step_mode_set = {1'b1};
             bins dbg_step_mode_not_set = {1'b0};
         }
 
-        dm : coverpoint cntxt.debug_cov_vif.mon_cb.debug_mode_q {
+        cp_trigger_match : coverpoint cntxt.debug_cov_vif.mon_cb.trigger_match_i {
+            bins not_match = {0};
+            bins match = {1};
+        }
+
+        cp_trigger_en : coverpoint cntxt.debug_cov_vif.mon_cb.tdata1[2] {
+            bins trig_en = {1};
+        }
+
+        cp_dm : coverpoint cntxt.debug_cov_vif.mon_cb.debug_mode_q {
                 bins in_debug_mode = {1};
         }
 
-        xpulp_instruction : coverpoint cntxt.debug_cov_vif.mon_cb.id_stage_instr_rdata_i iff (cntxt.debug_cov_vif.mon_cb.id_stage_instr_valid_i == 1) {
+        cp_xpulp_instr : coverpoint cntxt.debug_cov_vif.mon_cb.id_stage_instr_rdata_i iff (cntxt.debug_cov_vif.mon_cb.id_stage_instr_valid_i == 1) {
             `RV32X_PULP_INSTR_BINS
         }
 
-        //cross xpulp instr while in debug mode
-        xpulp_instructions_in_dbg_mode : cross dm, xpulp_instruction;
+        // cross xpulp instr while in debug mode
+        cr_xpulp_instructions_in_dbg_mode : cross cp_dm, cp_xpulp_instr;
 
-        //cross xpulp instr excution at debug req
-        dbg_req_at_xpulp_instr : cross dbg_req, xpulp_instruction;
+        // cross xpulp instr execution at debug req only - no trigger
+        cr_dbg_req_at_xpulp_instr : cross cp_dbg_req, cp_xpulp_instr, cp_trigger_match {
+            ignore_bins no_trigger_match = binsof(cp_trigger_match) intersect {1};
+        }
 
-        //cross debug single stepping for each xpulp instr
-        dbg_single_step_xpulp_instr : cross step, xpulp_instruction;
+        // cross debug single stepping for each xpulp instr - no trigger
+        cr_dbg_single_step_xpulp_instr : cross cp_step, cp_xpulp_instr, cp_trigger_match {
+            ignore_bins single_step_disable = binsof(cp_step) intersect {0};
+            ignore_bins no_trigger_match = binsof(cp_trigger_match) intersect {1};
+        }
+
+        // cross debug entry with trigger addr match at xpulp inst
+        cr_trigger_with_xpulp_instr : cross cp_trigger_match, cp_trigger_en, cp_xpulp_instr;
 
     endgroup
 
@@ -568,7 +626,7 @@ function uvme_debug_covg::new(string name = "debug_covg", uvm_component parent =
     cg_debug_at_reset = new();
     cg_fence_in_debug = new();
     cg_debug_causes = new();
-    cg_debug_with_f_inst = new();
+    cg_debug_with_rv32f_inst = new();
     cg_debug_with_xpulp_inst = new();
 endfunction : new
 
@@ -625,7 +683,7 @@ task uvme_debug_covg::sample_clk_i();
     cg_debug_at_reset.sample();
     cg_fence_in_debug.sample();
     cg_debug_causes.sample();
-    cg_debug_with_f_inst.sample();
+    cg_debug_with_rv32f_inst.sample();
     cg_debug_with_xpulp_inst.sample();
   end
 endtask  : sample_clk_i
