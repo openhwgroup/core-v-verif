@@ -535,7 +535,11 @@ module uvmt_cv32e40p_tb;
     .ex_data_rvalid_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.data_rvalid_i),
     .ex_regfile_alu_we_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.regfile_alu_we_i),
     .ex_apu_valid(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.apu_valid),
-    .ex_apu_rvalid_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.apu_rvalid_q)
+    .ex_apu_rvalid_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.apu_rvalid_q),
+    .debug_req_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.debug_req_pending),
+    .debug_mode_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.debug_mode_q),
+    .dcsr_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.dcsr_q),
+    .trigger_match_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.trigger_match_i)
   );
 
   // Instantiate debug assertions

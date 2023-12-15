@@ -180,10 +180,10 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 5;
         }
 
-        cp_fpu_lat_0_and_2_ex_regfile_alu_wr_no_stall : coverpoint ((cntxt.cov_vif.is_mulh_ex == 0) &&
-                                                                    (cntxt.cov_vif.is_misaligned_data_req_ex == 0) &&
-                                                                    (cntxt.cov_vif.is_post_inc_ld_st_inst_ex == 0) &&
-                                                                    (cntxt.cov_vif.ex_apu_valid_memorised == 0)) {
+        cp_fpu_lat_0_and_2_ex_regfile_alu_wr_no_stall : coverpoint ((`COVIF_CB.is_mulh_ex == 0) &&
+                                                                    (`COVIF_CB.is_misaligned_data_req_ex == 0) &&
+                                                                    (`COVIF_CB.is_post_inc_ld_st_inst_ex == 0) &&
+                                                                    (`COVIF_CB.ex_apu_valid_memorised == 0)) {
 
             bins no_alu_wr_stall = {1};
             option.weight = 1;
@@ -808,7 +808,10 @@ endtask : run_phase
 task uvme_cv32e40p_fp_instr_covg::sample_clk_i();
     while (1) begin
         @(`COVIF_CB);
-        cg_f_multicycle.sample();
-        cg_f_inst_reg.sample();
+        if ((`COVIF_CB.debug_req_i == 0) && (`COVIF_CB.debug_mode_q == 0) &&
+            (`COVIF_CB.trigger_match_i == 0) && (cntxt.debug_cov_vif.mon_cb.dcsr_q[2] == 0)) begin // Only sample in M-mode without debug entry cases
+            cg_f_multicycle.sample();
+            cg_f_inst_reg.sample();
+        end
     end
 endtask  : sample_clk_i
