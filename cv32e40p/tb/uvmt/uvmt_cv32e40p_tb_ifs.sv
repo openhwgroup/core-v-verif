@@ -514,6 +514,10 @@ interface uvmt_cv32e40p_cov_if
     input               ex_regfile_alu_we_i,
     input               ex_apu_valid,
     input               ex_apu_rvalid_q,
+    input               debug_req_i,
+    input               debug_mode_q,
+    input  [31:0]       dcsr_q,
+    input               trigger_match_i,
 
     output logic[5:0]   o_curr_fpu_apu_op_if,
     output logic[5:0]   o_last_fpu_apu_op_if,
@@ -571,10 +575,14 @@ interface uvmt_cv32e40p_cov_if
       input apu_perf_wb_o;
       input id_stage_apu_op_ex_o;
       input id_stage_apu_en_ex_o;
-      output is_mulh_ex;
-      output is_misaligned_data_req_ex;
-      output is_post_inc_ld_st_inst_ex;
-      output ex_apu_valid_memorised;
+      input debug_req_i;
+      input debug_mode_q;
+      input trigger_match_i;
+      input dcsr_q;
+      inout is_mulh_ex;
+      inout is_misaligned_data_req_ex;
+      inout is_post_inc_ld_st_inst_ex;
+      inout ex_apu_valid_memorised;
   endclocking : mon_cb
 
   //calculate each APU operation's current clock cycle number during execution for functional coverage use

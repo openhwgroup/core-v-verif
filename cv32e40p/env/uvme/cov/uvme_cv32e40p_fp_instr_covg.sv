@@ -99,11 +99,6 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
         `per_instance_fcov
         option.at_least = 10;
 
-        cp_if_stage_f_inst : coverpoint `COVIF_CB.if_stage_instr_rdata_i iff (`COVIF_CB.if_stage_instr_rvalid_i == 1) {
-            `RV32F_INSTR_BINS
-            option.weight = 5;
-        }
-
         cp_id_stage_f_inst : coverpoint `COVIF_CB.id_stage_instr_rdata_i iff (`COVIF_CB.id_stage_instr_valid_i == 1) {
             `RV32F_INSTR_BINS
             option.weight = 5;
@@ -146,11 +141,6 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 1;
         }
 
-        cp_if_stage_inst_valid : coverpoint `COVIF_CB.if_stage_instr_rvalid_i {
-            bins if_stage_instr_valid = {1};
-            option.weight = 1;
-        }
-
         cp_id_stage_apu_en_ex_o : coverpoint `COVIF_CB.id_stage_apu_en_ex_o {
             bins id_stage_apu_en_ex_1 = {1};
             bins id_stage_apu_en_ex_0_to_1 = (0 => 1);
@@ -190,10 +180,10 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 5;
         }
 
-        cp_fpu_lat_0_and_2_ex_regfile_alu_wr_no_stall : coverpoint ((cntxt.cov_vif.is_mulh_ex == 0) &&
-                                                                    (cntxt.cov_vif.is_misaligned_data_req_ex == 0) &&
-                                                                    (cntxt.cov_vif.is_post_inc_ld_st_inst_ex == 0) &&
-                                                                    (cntxt.cov_vif.ex_apu_valid_memorised == 0)) {
+        cp_fpu_lat_0_and_2_ex_regfile_alu_wr_no_stall : coverpoint ((`COVIF_CB.is_mulh_ex == 0) &&
+                                                                    (`COVIF_CB.is_misaligned_data_req_ex == 0) &&
+                                                                    (`COVIF_CB.is_post_inc_ld_st_inst_ex == 0) &&
+                                                                    (`COVIF_CB.ex_apu_valid_memorised == 0)) {
 
             bins no_alu_wr_stall = {1};
             option.weight = 1;
@@ -245,30 +235,6 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
         // Note: Added 2 separate similar cross coverages ID stage because of different
         // arrival times of next instruction w.r.t APU Req
         cr_f_inst_at_id_stage_out_with_cyc_window_of_ongoing_fpu_calc : cross cp_id_stage_apu_op_ex_o,
-                                                                              cp_f_multicycle_clk_window,
-                                                                              cp_curr_fpu_apu_op,
-                                                                              cp_fpu_lat_0_and_2_ex_regfile_alu_wr_no_stall {
-
-            option.weight = 50;
-            `FPU_MULTICYCLE_WINDOW_ILLEGAL_CASES
-        }
-
-        // cross coverage for F-inst at IF-stage with preceeding F-multicycle instr
-        cr_f_inst_at_if_stage_inp_with_fpu_multicycle_req : cross cp_if_stage_f_inst,
-                                                                  cp_curr_fpu_apu_op_at_apu_req
-        {option.weight = 50;}
-
-        // cross coverage for F-inst at IF-stage with preceeding F-multicycle
-        // case with apu_busy or APU needing more than 1 clock cycle 
-        cr_f_inst_at_if_stage_inp_while_fpu_busy : cross cp_if_stage_f_inst,
-                                                         cp_curr_fpu_apu_op_multicycle {
-            option.weight = 50;
-            `FPU_ZERO_LATENCY_ILLEGAL_BUSY
-        }
-
-        // cross coverage for F-inst arriving at IF-stage output at various stages of
-        // APU latency clk-cycles of the ongoing/preceeding F-multicycle instr
-        cr_f_inst_at_if_stage_inp_with_cyc_window_of_ongoing_fpu_calc : cross cp_if_stage_f_inst,
                                                                               cp_f_multicycle_clk_window,
                                                                               cp_curr_fpu_apu_op,
                                                                               cp_fpu_lat_0_and_2_ex_regfile_alu_wr_no_stall {
@@ -842,7 +808,10 @@ endtask : run_phase
 task uvme_cv32e40p_fp_instr_covg::sample_clk_i();
     while (1) begin
         @(`COVIF_CB);
-        cg_f_multicycle.sample();
-        cg_f_inst_reg.sample();
+        if ((`COVIF_CB.debug_req_i == 0) && (`COVIF_CB.debug_mode_q == 0) &&
+            (`COVIF_CB.trigger_match_i == 0) && (cntxt.debug_cov_vif.mon_cb.dcsr_q[2] == 0)) begin // Only sample in M-mode without debug entry cases
+            cg_f_multicycle.sample();
+            cg_f_inst_reg.sample();
+        end
     end
 endtask  : sample_clk_i
