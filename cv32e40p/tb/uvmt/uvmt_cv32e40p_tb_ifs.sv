@@ -579,10 +579,10 @@ interface uvmt_cv32e40p_cov_if
       input debug_mode_q;
       input trigger_match_i;
       input dcsr_q;
-      output is_mulh_ex;
-      output is_misaligned_data_req_ex;
-      output is_post_inc_ld_st_inst_ex;
-      output ex_apu_valid_memorised;
+      inout is_mulh_ex;
+      inout is_misaligned_data_req_ex;
+      inout is_post_inc_ld_st_inst_ex;
+      inout ex_apu_valid_memorised;
   endclocking : mon_cb
 
   //calculate each APU operation's current clock cycle number during execution for functional coverage use
