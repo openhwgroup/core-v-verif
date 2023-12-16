@@ -1,0 +1,8 @@
+version: 0.2
+
+phases:
+
+  build:
+    commands:
+      - chown -R florian:florian .
+      - su florian -c "source /synopsys/scripts/env.sh; echo $PATH"
