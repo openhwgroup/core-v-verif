@@ -369,6 +369,7 @@ module uvmt_cv32e40s_xsecure_interface_integrity_assert
   //But only if integrity checking is enabled
 
   sequence seq_checksum_fault(rvalid, req_had_integrity, memory_op, rchk_input, rchk_calculated);
+    @(posedge clk_i)
     rvalid
     && req_had_integrity
     && memory_op
