@@ -562,9 +562,6 @@ endfunction : is_csr_check_disabled
 
 function void uvme_cv32e40s_cfg_c::configure_disable_csr_checks();
 
-   // TODO: remove when fixed in ISS
-   disable_csr_check("misa");
-
    // Need to check
    disable_csr_check("mcountinhibit");
 
