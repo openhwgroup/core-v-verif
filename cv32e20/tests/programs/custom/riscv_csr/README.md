@@ -1,5 +1,5 @@
 <!--
-Copyright 2023 Cadence
+Copyright 2023 Intrinsix
 SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 -->
 
