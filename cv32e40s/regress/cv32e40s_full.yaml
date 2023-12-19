@@ -54,6 +54,11 @@ builds:
     cfg: pma_test_cfg_2
     dir: cv32e40s/sim/uvmt
 
+  uvmt_cv32e40s_pma_2_clic:
+    cmd: make comp_corev-dv comp
+    cfg: pma_test_cfg_2_clic
+    dir: cv32e40s/sim/uvmt
+
   uvmt_cv32e40s_pma_3:
     cmd: make comp_corev-dv comp
     cfg: pma_test_cfg_3
@@ -585,7 +590,7 @@ tests:
 
   minhv_pma_block:
     description: test minhv=1 and pma block of mepc address
-    builds: [ uvmt_cv32e40s_pma_2 ]
+    builds: [ uvmt_cv32e40s_pma_2_clic ]
     dir: cv32e40s/sim/uvmt
     cmd: make test TEST=minhv_pma_block
 

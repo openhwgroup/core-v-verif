@@ -76,7 +76,7 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
     //There is therefor only 1 empty cycle after a branch instruction.
 
   sequence seq_no_mem_instr_for_cycles(x);
-    (!rvfi_if.is_mem_act)[*x];
+    @(posedge clk_i) (!rvfi_if.is_mem_act)[*x];
   endsequence
 
   a_xsecure_dataindtiming_branch_timing_pc_hardening_disabled: assert property (
@@ -114,7 +114,7 @@ module uvmt_cv32e40s_xsecure_data_independent_timing_assert
   //Verify that execution of division or (division)-remainder have non-varying timing when the data independent timing feature is enabled
 
   sequence seq_no_rvalid_for_past_34_cycles;
-    (!rvfi_if.rvfi_valid[*34] ##1 1);
+    @(posedge clk_i) (!rvfi_if.rvfi_valid[*34] ##1 1);
   endsequence
 
   a_xsecure_dataindtiming_div_rem_timing: assert property (
