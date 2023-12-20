@@ -202,28 +202,33 @@ module uvmt_cv32e40s_triggers_assert_cov
   /////////// Sequences ///////////
 
   sequence seq_csr_read_mmode(csr_addr);
+    @(posedge clknrst_if.clk)
     valid_instr_in_mmode
     && rvfi_if.is_csr_read(csr_addr)
     && rvfi_if.rvfi_rd1_addr != 0;
   endsequence
 
   sequence seq_csr_write_mmode(csr_addr);
+    @(posedge clknrst_if.clk)
     valid_instr_in_mmode
     && rvfi_if.is_csr_write(csr_addr);
   endsequence
 
   sequence seq_csr_read_dmode(csr_addr);
+    @(posedge clknrst_if.clk)
     valid_instr_in_dmode
     && rvfi_if.is_csr_read(csr_addr)
     && rvfi_if.rvfi_rd1_addr != 0;
   endsequence
 
   sequence seq_csr_write_dmode(csr_addr);
+    @(posedge clknrst_if.clk)
     valid_instr_in_dmode
     && rvfi_if.is_csr_write(csr_addr);
   endsequence
 
   sequence seq_tdata1_m2_m6_or_disabled(t);
+    @(posedge clknrst_if.clk)
     valid_instr_in_dmode
     && tselect_pre_state == t
     && (tdata1_pre_state[MSB_TYPE:LSB_TYPE] == TTYPE_MCONTROL
@@ -232,6 +237,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   endsequence
 
   sequence seq_etrigger_hit(t, priv_lvl, exception);
+    @(posedge clknrst_if.clk)
     support_if.trigger_match_exception[t]
     && !rvfi_if.rvfi_dbg_mode
     && priv_lvl
@@ -309,7 +315,7 @@ module uvmt_cv32e40s_triggers_assert_cov
 
   /////////// Assertions and Coverages ///////////
 
-  //Verify that it isonly possible to do 13 Memory transactions:
+  //Verify that it is only possible to do 13 Memory transactions:
   //TODO XIF: this might not be the case for xif, as it can potentionally do more:
 
   a_dt_max_memory_transaction: assert property (
@@ -453,9 +459,9 @@ module uvmt_cv32e40s_triggers_assert_cov
 
     //4)
     a_dt_tselect_higher_than_dbg_num_triggers: assert property(
-      rvfi_if.is_csr_instr(ADDR_TSELECT)
+      rvfi_if.rvfi_valid
       |->
-      rvfi_if.rvfi_rd1_wdata < CORE_PARAM_DBG_NUM_TRIGGERS
+      tselect_post_state < CORE_PARAM_DBG_NUM_TRIGGERS
     ) else `uvm_error(info_tag, "The CSR tselect is set to equal or higher than the number of trigger.\n");
 
 
@@ -946,6 +952,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       && rvfi_if.rvfi_dbg_mode
       && dcsr_if.rvfi_csr_wmask
       |->
+      //If DCSR is written (wmask != 0) there must have been a csr write operation, and not due to a sideeffect of a trigger match
       rvfi_if.is_csr_write(ADDR_DCSR)
     ) else `uvm_error(info_tag, "Action is taken when there is a trigger match while in debug mode (dcsr is changed even though we dont do a dcsr write operation).\n");
 
@@ -954,6 +961,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       && rvfi_if.rvfi_dbg_mode
       && dpc_if.rvfi_csr_wmask
       |->
+      //If DPC is written (wmask != 0) there must have been a csr write operation, and not due to a sideeffect of a trigger match
       rvfi_if.is_csr_write(ADDR_DPC)
     ) else `uvm_error(info_tag, "Action is taken when there is a trigger match while in debug mode (dpc is changed even though we dont do a dpc write operation).\n");
 
