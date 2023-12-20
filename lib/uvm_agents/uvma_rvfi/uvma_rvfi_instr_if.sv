@@ -242,6 +242,9 @@ interface uvma_rvfi_instr_if_t
   logic                             is_umode;
   logic                             is_not_umode;
   logic                             is_pma_instr_fault;
+  logic                             is_pma_data_fault;
+  logic                             is_pma_load_fault;
+  logic                             is_pma_store_fault;
   logic                             is_instr_acc_fault_pmp;
   logic                             is_instr_bus_valid;
   logic                             is_pushpop;
@@ -409,6 +412,28 @@ interface uvma_rvfi_instr_if_t
 
   always_comb begin
     is_pma_instr_fault               = is_pma_instr_fault_f();
+  end
+
+  always_comb begin
+    is_pma_data_fault = is_pma_load_fault || is_pma_store_fault;
+  end
+
+  always_comb begin
+    is_pma_load_fault =
+      rvfi_valid  &&
+      rvfi_trap.trap  &&
+      rvfi_trap.exception  &&
+      (rvfi_trap.exception_cause == EXC_CAUSE_LOAD_ACC_FAULT)  &&
+      (rvfi_trap.cause_type == 'h 0);
+  end
+
+  always_comb begin
+    is_pma_store_fault =
+      rvfi_valid  &&
+      rvfi_trap.trap  &&
+      rvfi_trap.exception  &&
+      (rvfi_trap.exception_cause == EXC_CAUSE_STORE_ACC_FAULT)  &&
+      (rvfi_trap.cause_type == 'h 0);
   end
 
   always_comb begin
