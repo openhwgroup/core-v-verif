@@ -38,6 +38,7 @@ class uvme_rv32x_hwloop_covg # (
   localparam CSR_LPSTART0_ADDR = 32'hCC0;
   localparam CSR_LPEND0_ADDR   = 32'hCC1;
   localparam CSR_LPCOUNT0_ADDR = 32'hCC2;
+  localparam INSTR_CBREAK      = 32'h9002;
   localparam INSN_ILLEGAL      = 32'hFFFFFFFF; // user-defined for any illegal insn that leads to illegal exception
   localparam INSN_EBREAKM      = 32'hFFFFFFFE; // user-defined
 
@@ -1199,10 +1200,10 @@ class uvme_rv32x_hwloop_covg # (
     prev_irq_onehot_priority = cv32e40p_rvvi_vif.irq_onehot_priority;
   endfunction : update_prev_irq_onehot_priority
 
-  function bit pc_is_mtvec_base_addr();
-    if (cv32e40p_rvvi_vif.pc_rdata == cv32e40p_rvvi_vif.mtvec_base_addr) return 1;
+  function bit pc_is_mtvec_addr();
+    if (cv32e40p_rvvi_vif.pc_rdata >= cv32e40p_rvvi_vif.mtvec_base_addr && cv32e40p_rvvi_vif.pc_rdata < (cv32e40p_rvvi_vif.mtvec_base_addr + 32*4)) return 1; // direct or vector mode
     else return 0;
-  endfunction : pc_is_mtvec_base_addr
+  endfunction : pc_is_mtvec_addr
 
   function bit is_mcause_irq();
     return cv32e40p_rvvi_vif.csr_mcause_irq;
@@ -1217,7 +1218,7 @@ class uvme_rv32x_hwloop_covg # (
         wait (cv32e40p_rvvi_vif.clk && cv32e40p_rvvi_vif.valid && cv32e40p_rvvi_vif.trap);
         if (cv32e40p_rvvi_vif.irq_onehot_priority == 0 && prev_irq_onehot_priority == 0 && !pending_irq) begin // set excep flag only if no pending irq
           case (cv32e40p_rvvi_vif.insn)
-            INSTR_EBREAK : if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm) begin 
+            INSTR_EBREAK, INSTR_CBREAK : if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm) begin 
                             @(posedge cv32e40p_rvvi_vif.clk); continue; 
                            end 
                            else begin is_ebreak  = 1; `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Entry due to EBREAK"), UVM_DEBUG); end
@@ -1297,7 +1298,7 @@ class uvme_rv32x_hwloop_covg # (
       if (cv32e40p_rvvi_vif.valid) begin : VALID_DETECTED
 
         if (enter_hwloop_sub) begin 
-          if (pc_is_mtvec_base_addr() && !is_mcause_irq()) begin : EXCEPTION_ENTRY
+          if (pc_is_mtvec_addr() && !is_mcause_irq()) begin : EXCEPTION_ENTRY
             for (int i=0; i<HWLOOP_NB; i++) begin
               if (hwloop_stat_main.execute_instr_in_hwloop[i] && !done_insn_list_capture_d1_main[i]) begin
               case (i)
@@ -1310,7 +1311,7 @@ class uvme_rv32x_hwloop_covg # (
               end
             end
           end // EXCEPTION_ENTRY
-          else if (pc_is_mtvec_base_addr() && is_mcause_irq()) begin : IRQ_ENTRY
+          else if (pc_is_mtvec_addr() && is_mcause_irq()) begin : IRQ_ENTRY
           if (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]) begin
             is_ebreak = 0; is_ecall = 0; is_illegal = 0; enter_hwloop_sub = 0;
             pending_irq = 0;
@@ -1332,12 +1333,13 @@ class uvme_rv32x_hwloop_covg # (
         end
 
         else begin : MAIN
-          if (pc_is_mtvec_base_addr() && is_mcause_irq()) begin : IRQ_ENTRY
+          if (pc_is_mtvec_addr() && is_mcause_irq()) begin : IRQ_ENTRY
           if (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]) begin
             pending_irq = 0;
             `IF_CURRENT_IS_MAIN_HWLOOP(0, IS_IRQ)
             `IF_CURRENT_IS_MAIN_HWLOOP(1, IS_IRQ)
             update_prev_irq_onehot_priority();
+            `uvm_info(_header, $sformatf("DEBUG - IRQ Entry"), UVM_DEBUG);
             is_irq = 1; wait (!is_irq); continue; 
           end // IRQ_ENTRY
           end
