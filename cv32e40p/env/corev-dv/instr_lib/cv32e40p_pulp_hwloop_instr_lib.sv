@@ -1086,7 +1086,7 @@ class cv32e40p_xpulp_short_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stre
       if(gen_nested_loop) {
         if(loop0_high_count) {
           hwloop_counti[0] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                                 [2048:4095] := 50, 4095 := 300};
+                                 [2048:4094] := 50, 4095 := 300};
 
           hwloop_count[0] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
                                 [2048:4094] := 50, 4095 := 300};
@@ -1099,7 +1099,7 @@ class cv32e40p_xpulp_short_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stre
           hwloop_count[0] inside {[0:5]};
 
           hwloop_counti[1] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                                 [2048:4095] := 50, 4095 := 300};
+                                 [2048:4094] := 50, 4095 := 300};
 
           hwloop_count[1] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
                                 [2048:4094] := 50, 4095 := 300};
@@ -1109,9 +1109,10 @@ class cv32e40p_xpulp_short_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stre
       } else {
         foreach(hwloop_counti[i])
           hwloop_counti[i] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                                 [2048:4095] := 50, 4095 := 300};
+                                 [2048:4094] := 50, 4095 := 300};
 
-        //TODO: for rs1 32 bit count ?
+        //For rs1 32 bit count, not planned to exercise whole range in these streams
+        //due to long run times
         foreach(hwloop_count[i])
           hwloop_count[i] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
                                 [2048:4094] := 50, 4095 := 300};
