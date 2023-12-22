@@ -109,7 +109,7 @@ tests:
     build: uvmt_cv32e40p
     description: debug_test_boot_set (adapted from v1)
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=debug_test_boot_set CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
+    cmd: make test COREV=YES TEST=debug_test_boot_set CFG_PLUSARGS="+UVM_TIMEOUT=20000000" SEED=1 VSIM_USER_FLAGS=+fixed_instr_gnt_stall=10
     num: 1
 
   debug_test_known_miscompares:
