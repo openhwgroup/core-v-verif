@@ -261,7 +261,7 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
       exclude_instr = {exclude_instr, CV_BEQIMM, CV_BNEIMM, BEQ, BNE, BLT, BGE, BLTU, BGEU, C_BEQZ, C_BNEZ, JALR, JAL, C_JR, C_JALR, C_J, C_JAL};
     end
 
-    exclude_instr = {exclude_instr, CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW, C_ADDI16SP, URET, SRET, MRET, DRET, ECALL};
+    exclude_instr = {exclude_instr, CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW, C_ADDI16SP, C_SWSP, C_FSWSP, URET, SRET, MRET, DRET, ECALL};
     instr = riscv_instr::get_rand_instr(.exclude_instr(exclude_instr));
     instr.m_cfg = cfg;
     randomize_gpr(instr);
