@@ -1216,7 +1216,13 @@ class uvme_rv32x_hwloop_covg # (
 
       forever begin : SET_EXCEPTION_FLAG
         wait (cv32e40p_rvvi_vif.clk && cv32e40p_rvvi_vif.valid && cv32e40p_rvvi_vif.trap);
-        if (cv32e40p_rvvi_vif.irq_onehot_priority == 0 && prev_irq_onehot_priority == 0 && !pending_irq) begin // set excep flag only if no pending irq
+        if (
+          cv32e40p_rvvi_vif.pc_rdata == prev_pc_rdata_main || // set excep when not garbage data during trap (main)
+          cv32e40p_rvvi_vif.pc_rdata == prev_pc_rdata_sub     // set excep when not garbage data during trap (sub) - todo: revise is needed when sub is fully implement
+        ) begin
+          wait (!cv32e40p_rvvi_vif.trap); // bypass if garbage data exist
+        end
+        else if (cv32e40p_rvvi_vif.irq_onehot_priority == 0 && prev_irq_onehot_priority == 0 && !pending_irq) begin // set excep flag only if no pending irq
           case (cv32e40p_rvvi_vif.insn)
             INSTR_EBREAK, INSTR_CBREAK : if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm) begin 
                             @(posedge cv32e40p_rvvi_vif.clk); continue; 
@@ -1312,15 +1318,15 @@ class uvme_rv32x_hwloop_covg # (
             end
           end // EXCEPTION_ENTRY
           else if (pc_is_mtvec_addr() && is_mcause_irq()) begin : IRQ_ENTRY
-          if (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]) begin
-            is_ebreak = 0; is_ecall = 0; is_illegal = 0; enter_hwloop_sub = 0;
-            pending_irq = 0;
-            `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Entry is replaced with IRQ Entry (higher priority)"), UVM_DEBUG);
-            `IF_CURRENT_IS_MAIN_HWLOOP(0, IS_IRQ)
-            `IF_CURRENT_IS_MAIN_HWLOOP(1, IS_IRQ)
-            update_prev_irq_onehot_priority();
-            is_irq = 1; wait (!is_irq); continue; 
-          end
+            if (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]) begin
+              is_ebreak = 0; is_ecall = 0; is_illegal = 0; enter_hwloop_sub = 0;
+              pending_irq = 0;
+              `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Entry is replaced with IRQ Entry (higher priority)"), UVM_DEBUG);
+              `IF_CURRENT_IS_MAIN_HWLOOP(0, IS_IRQ)
+              `IF_CURRENT_IS_MAIN_HWLOOP(1, IS_IRQ)
+              update_prev_irq_onehot_priority();
+              is_irq = 1; wait (!is_irq); continue; 
+            end
           end // IRQ_ENTRY
 
           // [optional] todo: for hwloops that outside main code (e.g irq only, dbg only, or irq->dbg); currently commented out due to pending for implementation
@@ -1330,6 +1336,7 @@ class uvme_rv32x_hwloop_covg # (
 
           check_exception_exit();
           if (!(is_ebreak || is_ecall || is_illegal)) enter_hwloop_sub = 0;
+          prev_pc_rdata_sub = cv32e40p_rvvi_vif.pc_rdata;
         end
 
         else begin : MAIN
@@ -1362,7 +1369,7 @@ class uvme_rv32x_hwloop_covg # (
       `uvm_info(_header, $sformatf("DEBUG - No prematured hwloops when test done"), UVM_DEBUG);
     end
     else begin
-      `uvm_error(_header, $sformatf("Detected prematured hwloops when test done. Please debug ... "));
+      `uvm_error(_header, $sformatf("Detected prematured hwloops when test done. Please debug ... ")); // fixme: to be commented out
     end
   endfunction : final_phase
 
