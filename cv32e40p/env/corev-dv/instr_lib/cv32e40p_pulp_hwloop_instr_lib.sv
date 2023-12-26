@@ -277,6 +277,34 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
         `uvm_fatal(this.get_type_name(), "cv32e40p_exclude_regs out of range")
       end
 
+      // Ensure the illegal inserted in the sequence function cv32e40p_insert_illegal_hint_instr()
+      // does not violate the hwloop end label offset limits with cv.setupi instr
+      // As a workaround here if illegal_instr_ratio is non-zero,
+      // The number of instructions in hwloop are reduced by 3(Change if
+      // needed), to allow illegal/hint instr insertion in the sequence.
+      // The coverage here is not critical as the max range with cv.setupi
+      // will be exercised in tests without illegals.
+      if (cfg.illegal_instr_ratio > 0) begin
+        if(gen_nested_loop) begin
+          if (use_setup_inst[1] && use_loop_setupi_inst[1] && (num_hwloop_instr[1] >= 28)) begin
+            num_hwloop_instr[1] = num_hwloop_instr[1] - 3;
+            if (num_hwloop_instr[0] >= 6)
+              num_hwloop_instr[0] = num_hwloop_instr[0] - 3;
+            else
+              num_hwloop_instr[0] = 3;
+          end else if (use_setup_inst[0] && use_loop_setupi_inst[0] && (num_hwloop_instr[0] >= 28)) begin
+            num_hwloop_instr[0] = num_hwloop_instr[0] - 3;
+          end
+        end else begin
+          if (use_setup_inst[1] && use_loop_setupi_inst[1] && (num_hwloop_instr[1] >= 28)) begin
+            num_hwloop_instr[1] = num_hwloop_instr[1] - 3;
+          end
+          if (use_setup_inst[0] && use_loop_setupi_inst[0] && (num_hwloop_instr[0] >= 28)) begin
+            num_hwloop_instr[0] = num_hwloop_instr[0] - 3;
+          end
+        end
+      end
+
       gen_xpulp_hwloop_control_instr();
   endfunction : post_randomize
 

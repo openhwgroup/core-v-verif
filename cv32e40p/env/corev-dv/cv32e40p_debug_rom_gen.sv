@@ -174,7 +174,26 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
         // Insert section info so linker can place
         // debug exception code at the correct adress
         instr_stream.push_back(".section .debugger_exception, \"ax\"");
-        super.gen_debug_exception_handler();
+
+        // In CV32E40P there is no way to know the Instruction address
+        // that caused the debug exception entry.
+        // In these tests, this scenario is simply handled with assumptions:
+        //    - The random illegal exception in debug program is generated
+        //      as part of random instructions
+        //    - And debug stack pointer is not used in any other random
+        //      instruction in debug program
+        //  With these 2 assumptions to ensure smooth continuity of rest of
+        //  the test program, we simply jump to "debug_end" section to exit
+        //  the debug rom properly.
+
+        if (cfg.gen_debug_section) begin
+          str = {$sformatf("la x%0d, debug_end", cfg.scratch_reg),
+                 $sformatf("jalr x0, x%0d, 0", cfg.scratch_reg),
+                 "dret"};
+          gen_section($sformatf("%0sdebug_exception", hart_prefix(hart)), str);
+        end else begin
+          super.gen_debug_exception_handler();
+        end
 
         // Inser section info to place remaining code in the 
         // original section

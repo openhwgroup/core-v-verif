@@ -2,4 +2,4 @@ name: gen_rand_debug_req
 description: >
     Generate Random debug halt request
 plusargs: >
-    +gen_reduced_rand_dbg_req
+    +gen_random_debug
