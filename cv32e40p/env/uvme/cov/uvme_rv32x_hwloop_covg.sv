@@ -1222,7 +1222,7 @@ class uvme_rv32x_hwloop_covg # (
         ) begin
           wait (!cv32e40p_rvvi_vif.trap); // bypass if garbage data exist
         end
-        else if (cv32e40p_rvvi_vif.irq_onehot_priority == 0 && prev_irq_onehot_priority == 0 && !pending_irq) begin // set excep flag only if no pending irq
+        else if (cv32e40p_rvvi_vif.irq_onehot_priority == 0 && prev_irq_onehot_priority == 0 && !pending_irq && !is_dbg_mode) begin // set excep flag only if no pending irq and not in dbg mode
           case (cv32e40p_rvvi_vif.insn)
             INSTR_EBREAK, INSTR_CBREAK : if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm) begin 
                             @(posedge cv32e40p_rvvi_vif.clk); continue; 
