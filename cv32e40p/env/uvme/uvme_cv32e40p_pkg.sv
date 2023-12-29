@@ -51,7 +51,6 @@ package uvme_cv32e40p_pkg;
 
    // Constants / Structs / Enums
    `include "uvme_cv32e40p_constants.sv"
-   `include "uvme_cv32e40p_param_all_insn.sv" // fixme: remove this and import package from core-v-cores (e.g cv32e40p_tracer_pkg.sv)
    `include "uvme_cv32e40p_tdefs.sv"
 
    cv32e40p_isa_ext_t   cv32e40p_core_isa_list[$] = `CV32E40P_ISA_DV; // CV32E40P supported ISAs

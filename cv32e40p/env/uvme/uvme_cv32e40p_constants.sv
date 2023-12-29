@@ -76,6 +76,7 @@ parameter TB_OPCODE_OP_FNMSUB          =    7'h4b;
 parameter TB_OPCODE_STORE_FP           =    7'h27;
 parameter TB_OPCODE_LOAD_FP            =    7'h07;
 
+// RV32F
 parameter TB_INS_FMADD               =    {5'b?, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FMADD};
 parameter TB_INS_FMSUB               =    {5'b?, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FMSUB};
 parameter TB_INS_FNMSUB              =    {5'b?, 2'b00, 10'b?, 3'b?, 5'b?, TB_OPCODE_OP_FNMSUB};
@@ -103,6 +104,74 @@ parameter TB_INS_FMVSX               =    {5'b11110, 2'b00, 5'b0, 5'b?, 3'b000, 
 parameter TB_INS_FLW                 =    {12'b?,5'b?,3'b010,5'b?,TB_OPCODE_LOAD_FP};
 parameter TB_INS_FSW                 =    {7'b?,5'b?,5'b?,3'b010,5'b?,TB_OPCODE_STORE_FP};
 
+
+parameter TB_INSTR_LUI      = {25'b?,               TB_OPCODE_LUI};
+parameter TB_INSTR_AUIPC    = {25'b?,               TB_OPCODE_AUIPC};
+parameter TB_INSTR_JAL      = {25'b?,               TB_OPCODE_JAL};
+parameter TB_INSTR_JALR     = {17'b?, 3'b000, 5'b?, TB_OPCODE_JALR};
+// BRANCH
+parameter TB_INSTR_BEQ      = {17'b?, 3'b000, 5'b?, TB_OPCODE_BRANCH};
+parameter TB_INSTR_BNE      = {17'b?, 3'b001, 5'b?, TB_OPCODE_BRANCH};
+parameter TB_INSTR_BLT      = {17'b?, 3'b100, 5'b?, TB_OPCODE_BRANCH};
+parameter TB_INSTR_BGE      = {17'b?, 3'b101, 5'b?, TB_OPCODE_BRANCH};
+parameter TB_INSTR_BLTU     = {17'b?, 3'b110, 5'b?, TB_OPCODE_BRANCH};
+parameter TB_INSTR_BGEU     = {17'b?, 3'b111, 5'b?, TB_OPCODE_BRANCH};
+// OPIMM
+parameter TB_INSTR_ADDI     = {17'b?, 3'b000, 5'b?,             TB_OPCODE_OPIMM};
+parameter TB_INSTR_SLTI     = {17'b?, 3'b010, 5'b?,             TB_OPCODE_OPIMM};
+parameter TB_INSTR_SLTIU    = {17'b?, 3'b011, 5'b?,             TB_OPCODE_OPIMM};
+parameter TB_INSTR_XORI     = {17'b?, 3'b100, 5'b?,             TB_OPCODE_OPIMM};
+parameter TB_INSTR_ORI      = {17'b?, 3'b110, 5'b?,             TB_OPCODE_OPIMM};
+parameter TB_INSTR_ANDI     = {17'b?, 3'b111, 5'b?,             TB_OPCODE_OPIMM};
+parameter TB_INSTR_SLLI     = {7'b0000000, 10'b?, 3'b001, 5'b?, TB_OPCODE_OPIMM};
+parameter TB_INSTR_SRLI     = {7'b0000000, 10'b?, 3'b101, 5'b?, TB_OPCODE_OPIMM};
+parameter TB_INSTR_SRAI     = {7'b0100000, 10'b?, 3'b101, 5'b?, TB_OPCODE_OPIMM};
+// OP
+parameter TB_INSTR_ADD      = {7'b0000000, 10'b?, 3'b000, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_SUB      = {7'b0100000, 10'b?, 3'b000, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_SLL      = {7'b0000000, 10'b?, 3'b001, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_SLT      = {7'b0000000, 10'b?, 3'b010, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_SLTU     = {7'b0000000, 10'b?, 3'b011, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_XOR      = {7'b0000000, 10'b?, 3'b100, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_SRL      = {7'b0000000, 10'b?, 3'b101, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_SRA      = {7'b0100000, 10'b?, 3'b101, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_OR       = {7'b0000000, 10'b?, 3'b110, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_AND      = {7'b0000000, 10'b?, 3'b111, 5'b?, TB_OPCODE_OP};
+// FENCE
+parameter TB_INSTR_FENCE    = {4'b0, 8'b?, 13'b0,   TB_OPCODE_FENCE};
+parameter TB_INSTR_FENCEI   = {17'b0, 3'b001, 5'b0, TB_OPCODE_FENCE};
+// SYSTEM
+parameter TB_INSTR_CSRRW    = {17'b?, 3'b001, 5'b?,     TB_OPCODE_SYSTEM};
+parameter TB_INSTR_CSRRS    = {17'b?, 3'b010, 5'b?,     TB_OPCODE_SYSTEM};
+parameter TB_INSTR_CSRRC    = {17'b?, 3'b011, 5'b?,     TB_OPCODE_SYSTEM};
+parameter TB_INSTR_CSRRWI   = {17'b?, 3'b101, 5'b?,     TB_OPCODE_SYSTEM};
+parameter TB_INSTR_CSRRSI   = {17'b?, 3'b110, 5'b?,     TB_OPCODE_SYSTEM};
+parameter TB_INSTR_CSRRCI   = {17'b?, 3'b111, 5'b?,     TB_OPCODE_SYSTEM};
+parameter TB_INSTR_ECALL    = {12'b000000000000, 13'b0, TB_OPCODE_SYSTEM};
+parameter TB_INSTR_EBREAK   = {12'b000000000001, 13'b0, TB_OPCODE_SYSTEM};
+parameter TB_INSTR_URET     = {12'b000000000010, 13'b0, TB_OPCODE_SYSTEM};
+parameter TB_INSTR_SRET     = {12'b000100000010, 13'b0, TB_OPCODE_SYSTEM};
+parameter TB_INSTR_MRET     = {12'b001100000010, 13'b0, TB_OPCODE_SYSTEM};
+parameter TB_INSTR_DRET     = {12'b011110110010, 13'b0, TB_OPCODE_SYSTEM};
+parameter TB_INSTR_WFI      = {12'b000100000101, 13'b0, TB_OPCODE_SYSTEM};
+// RV32M
+parameter TB_INSTR_DIV      = {7'b0000001, 10'b?, 3'b100, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_DIVU     = {7'b0000001, 10'b?, 3'b101, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_REM      = {7'b0000001, 10'b?, 3'b110, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_REMU     = {7'b0000001, 10'b?, 3'b111, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_PMUL     = {7'b0000001, 10'b?, 3'b000, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_PMUH     = {7'b0000001, 10'b?, 3'b001, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_PMULHSU  = {7'b0000001, 10'b?, 3'b010, 5'b?, TB_OPCODE_OP};
+parameter TB_INSTR_PMULHU   = {7'b0000001, 10'b?, 3'b011, 5'b?, TB_OPCODE_OP};
+// LOAD STORE
+parameter TB_INSTR_LB       = {17'b?, 3'b000, 5'b?, TB_OPCODE_LOAD};
+parameter TB_INSTR_LH       = {17'b?, 3'b001, 5'b?, TB_OPCODE_LOAD};
+parameter TB_INSTR_LW       = {17'b?, 3'b010, 5'b?, TB_OPCODE_LOAD};
+parameter TB_INSTR_LBU      = {17'b?, 3'b100, 5'b?, TB_OPCODE_LOAD};
+parameter TB_INSTR_LHU      = {17'b?, 3'b101, 5'b?, TB_OPCODE_LOAD};
+parameter TB_INSTR_SB       = {17'b?, 3'b000, 5'b?, TB_OPCODE_STORE};
+parameter TB_INSTR_SH       = {17'b?, 3'b001, 5'b?, TB_OPCODE_STORE};
+parameter TB_INSTR_SW       = {17'b?, 3'b010, 5'b?, TB_OPCODE_STORE};
 
 //XPULP instructions custom opcodes
 parameter OPCODE_CUSTOM_0 = 7'h0b;
