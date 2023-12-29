@@ -368,3 +368,36 @@ class cv32e40p_xpulp_mac_stream_test extends cv32e40p_xpulp_rand_stream;
   endfunction : post_randomize
 
 endclass : cv32e40p_xpulp_mac_stream_test
+
+// Class : cv32e40p_xpulp_with_priv_instr
+// extended from cv32e40p_xpulp_rand_stream
+// Generate Random pulp instr mixed with m-mode priv instr such as WFI, ECALL,
+// EBREAK etc. The test must be run with random interrupt traffic to ensure WFI
+// does not cause a test stall
+class cv32e40p_xpulp_with_priv_instr extends cv32e40p_xpulp_rand_stream;
+  `uvm_object_utils_begin(cv32e40p_xpulp_with_priv_instr)
+      `uvm_field_int(num_of_xpulp_instr, UVM_DEFAULT)
+      `uvm_field_int(num_of_riscv_instr, UVM_DEFAULT)
+      `uvm_field_int(num_of_avail_regs, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_avail_regs, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_exclude_regs, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_name_t,xpulp_exclude_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_name_t,riscv_exclude_common_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_name_t,riscv_exclude_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_group_t,riscv_exclude_group, UVM_DEFAULT)
+  `uvm_object_utils_end
+
+  function new(string name = "cv32e40p_xpulp_with_priv_instr");
+    super.new(name);
+  endfunction : new
+
+  function void post_randomize();
+    riscv_exclude_common_instr = { CV_START, CV_STARTI, CV_END, CV_ENDI, CV_SETUP, CV_SETUPI,
+                                   CV_ELW,
+                                   C_ADDI16SP,
+                                   URET, SRET, MRET, DRET,
+                                   JALR, JAL, C_JR, C_JALR, C_J, C_JAL };
+    super.post_randomize();
+  endfunction : post_randomize
+
+endclass : cv32e40p_xpulp_with_priv_instr
