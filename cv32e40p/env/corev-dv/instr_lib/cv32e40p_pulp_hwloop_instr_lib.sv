@@ -1711,3 +1711,72 @@ class cv32e40p_xpulp_hwloop_exception extends cv32e40p_xpulp_hwloop_base_stream;
   endfunction
 endclass : cv32e40p_xpulp_hwloop_exception
 
+// Class: cv32e40p_xpulp_hwloop_count_range
+// Hwloop stream to exercise the lpcount high range
+class cv32e40p_xpulp_hwloop_count_range extends cv32e40p_xpulp_hwloop_base_stream;
+
+  `uvm_object_utils_begin(cv32e40p_xpulp_hwloop_count_range)
+      `uvm_field_int(num_of_xpulp_instr, UVM_DEFAULT)
+      `uvm_field_int(num_of_riscv_instr, UVM_DEFAULT)
+      `uvm_field_int(num_of_avail_regs, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_avail_regs, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_reg_t,cv32e40p_exclude_regs, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_name_t,xpulp_exclude_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_name_t,riscv_exclude_common_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_name_t,riscv_exclude_instr, UVM_DEFAULT)
+      `uvm_field_sarray_enum(riscv_instr_group_t,riscv_exclude_group, UVM_DEFAULT)
+      `uvm_field_int(num_loops_active, UVM_DEFAULT)
+      `uvm_field_int(gen_nested_loop, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_setup_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_counti_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_starti_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_endi_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_setupi_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(hwloop_count, UVM_DEFAULT)
+      `uvm_field_sarray_int(hwloop_counti, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_hwloop_instr, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_hwloop_ctrl_instr, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_fill_instr_loop_ctrl_to_loop_start, UVM_DEFAULT)
+      `uvm_field_int(num_fill_instr_in_loop1_till_loop0_setup, UVM_DEFAULT)
+      `uvm_field_int(setup_l0_before_l1_start, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_instr_cv_start_to_loop_start_label, UVM_DEFAULT)
+  `uvm_object_utils_end
+
+  constraint gen_hwloop_count_c {
+
+      num_loops_active inside {1};
+
+      foreach(hwloop_counti[i])
+          hwloop_counti[i] inside {[4000:4095]};
+
+      foreach(hwloop_count[i])
+          hwloop_count[i] dist {['hFFFFFF00:'hFFFFFFFE] := 5, 'hFFFFFFFF := 100};
+  }
+
+  constraint no_imm_hwloop_setup_instr_c {
+      use_loop_counti_inst[0] == 0;
+      use_loop_counti_inst[1] == 0;
+      use_loop_setupi_inst[0] == 0;
+      use_loop_setupi_inst[1] == 0;
+  }
+
+  constraint no_nested_loop {
+      gen_nested_loop == 0;
+  }
+
+  function new(string name = "cv32e40p_xpulp_hwloop_count_range");
+      super.new(name);
+  endfunction : new
+
+  function void pre_randomize();
+      super.pre_randomize();
+  endfunction : pre_randomize
+
+  function void post_randomize();
+      cv32e40p_exclude_regs = {cv32e40p_exclude_regs, cfg.reserved_regs};
+      super.post_randomize();
+      this.print();
+  endfunction : post_randomize
+
+endclass : cv32e40p_xpulp_hwloop_count_range
+

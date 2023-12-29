@@ -325,6 +325,10 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
     };
     gen_plic_section(interrupt_handler_instr);
 
+    if(corev_cfg.insert_handler_for_hwloop_count_range_test) begin
+      gen_hwloop_count_range_test_handler(interrupt_handler_instr);
+    end
+
     if (cfg.enable_nested_interrupt) begin
       string load_instr = (XLEN == 32) ? "lw" : "ld";
 
@@ -499,6 +503,7 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
         add_directed_instr_stream(stream_name, stream_freq);
       end
     end
+
   endfunction
 
   // Override init_floating_point_gpr
@@ -702,6 +707,17 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
       str = {indent, "j main"};
       instr_stream.push_back(str);
     end
+  endfunction
+
+  // Right shift the lpcount1 and lpcount0 by 1
+  // This is used for random scenrio to test large lpcount in simulation
+  virtual function void gen_hwloop_count_range_test_handler(ref string interrupt_handler_instr[$]);
+    interrupt_handler_instr.push_back($sformatf("csrr x%0d, 0x%0x", corev_cfg.gpr[0], LPCOUNT1));
+    interrupt_handler_instr.push_back($sformatf("srli x%0d, x%0d, 1", corev_cfg.gpr[0], corev_cfg.gpr[0]));
+    interrupt_handler_instr.push_back($sformatf("cv.count 1, x%0d", corev_cfg.gpr[0]));
+    interrupt_handler_instr.push_back($sformatf("csrr x%0d, 0x%0x", corev_cfg.gpr[0], LPCOUNT0));
+    interrupt_handler_instr.push_back($sformatf("srli x%0d, x%0d, 1", corev_cfg.gpr[0], corev_cfg.gpr[0]));
+    interrupt_handler_instr.push_back($sformatf("cv.count 0, x%0d", corev_cfg.gpr[0]));
   endfunction
 
 endclass : cv32e40p_asm_program_gen
