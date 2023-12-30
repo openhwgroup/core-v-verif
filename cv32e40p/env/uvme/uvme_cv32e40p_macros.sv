@@ -87,6 +87,49 @@
  wildcard bins fnmsub     =    {TB_INS_FNMSUB}; \
  wildcard bins fnmadd     =    {TB_INS_FNMADD};
 
+`define OPIMM_INSTR_BINS \
+  wildcard bins addi     = {TB_INSTR_ADDI}; \
+  wildcard bins slti     = {TB_INSTR_SLTI}; \
+  wildcard bins sltiu    = {TB_INSTR_SLTIU}; \
+  wildcard bins xori     = {TB_INSTR_XORI}; \
+  wildcard bins ori      = {TB_INSTR_ORI}; \
+  wildcard bins andi     = {TB_INSTR_ANDI}; \
+  wildcard bins slli     = {TB_INSTR_SLLI}; \
+  wildcard bins srli     = {TB_INSTR_SRLI}; \
+  wildcard bins srai     = {TB_INSTR_SRAI};
+
+`define OP_INSTR_BINS \
+  wildcard bins _add      = {TB_INSTR_ADD}; \
+  wildcard bins _sub      = {TB_INSTR_SUB}; \
+  wildcard bins _sll      = {TB_INSTR_SLL}; \
+  wildcard bins _slt      = {TB_INSTR_SLT}; \
+  wildcard bins _sltu     = {TB_INSTR_SLTU}; \
+  wildcard bins _xor      = {TB_INSTR_XOR}; \
+  wildcard bins _srl      = {TB_INSTR_SRL}; \
+  wildcard bins _sra      = {TB_INSTR_SRA}; \
+  wildcard bins _or       = {TB_INSTR_OR}; \
+  wildcard bins _and      = {TB_INSTR_AND}; \
+
+`define RV32M_INSTR_BINS \
+  wildcard bins div      = {TB_INSTR_DIV}; \
+  wildcard bins divu     = {TB_INSTR_DIVU}; \
+  wildcard bins rem      = {TB_INSTR_REM}; \
+  wildcard bins remu     = {TB_INSTR_REMU}; \
+  wildcard bins pmul     = {TB_INSTR_PMUL}; \
+  wildcard bins pmuh     = {TB_INSTR_PMUH}; \
+  wildcard bins pmulhsu  = {TB_INSTR_PMULHSU}; \
+  wildcard bins pmulhu   = {TB_INSTR_PMULHU};
+
+`define LOAD_STORE_INSTR_BINS \
+  wildcard bins lb       = {TB_INSTR_LB}; \
+  wildcard bins lh       = {TB_INSTR_LH}; \
+  wildcard bins lw       = {TB_INSTR_LW}; \
+  wildcard bins lbu      = {TB_INSTR_LBU}; \
+  wildcard bins lhu      = {TB_INSTR_LHU}; \
+  wildcard bins sb       = {TB_INSTR_SB}; \
+  wildcard bins sh       = {TB_INSTR_SH}; \
+  wildcard bins sw       = {TB_INSTR_SW};
+
 `define FPU_OP_BINS \
  bins apu_op_fmadd      =    {APU_OP_FMADD}; \
  bins apu_op_fnmsub     =    {APU_OP_FNMSUB}; \
