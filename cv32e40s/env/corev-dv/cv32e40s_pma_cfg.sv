@@ -30,8 +30,10 @@ class cv32e40s_pma_cfg extends uvm_object;
 
   `uvm_object_utils(cv32e40s_pma_cfg)
 
-  function new(string name="cv32e40s_pma_cfg");
+  function new(string name = "cv32e40s_pma_cfg");
+
     pma_adapted_memory_regions_c pma_memory;
+
     super.new(name);
     pma_memory = new(CORE_PARAM_PMA_CFG);
     foreach (pma_memory.region[i]) begin

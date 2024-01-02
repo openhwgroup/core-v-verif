@@ -349,7 +349,7 @@ function void cv32e40s_ldgen_c::create_memory_layout_file(string filepath);
     $fdisplay(fhandle_mem, { "REGION_ALIAS(\"rom\", region_", $sformatf("%0d", boot_region), ");" });
     $fdisplay(fhandle_mem, { "REGION_ALIAS(\"ram\", region_", $sformatf("%0d", writable_region_idx >= 0 ? writable_region_idx : 0), ");" });
   end else begin
-    $fdisplay(fhandle_mem, { "REGION_ALIAS(\"rom\", ram);" });
+      $fdisplay(fhandle_mem, "REGION_ALIAS(\"rom\", ram);");
   end
 
   $fclose(fhandle_mem);
