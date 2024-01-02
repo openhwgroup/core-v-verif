@@ -115,7 +115,8 @@ typedef struct {
 } ins_t;
 
 
-typedef logic [7:0]  mem_arr[2**22];
+// UVME_CV32E40P_MEM_SIZE is defined in uvme_cv32e40p_macros.sv
+typedef logic [7:0]  mem_arr[2**`UVME_CV32E40P_MEM_SIZE];
 
 typedef enum {
     FETCH_CONSTANT,
