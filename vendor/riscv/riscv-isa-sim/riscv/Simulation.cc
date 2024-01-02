@@ -57,6 +57,7 @@ Simulation::Simulation(const cfg_t *cfg, bool halted,
   get_core(0)->get_mmu()->set_cache_blocksz(reg_t(64));
 
   this->params.set("/top/", "isa", any(std::string("RV32GC")));
+  this->params.set("/top/", "priv", any(std::string(DEFAULT_PRIV)));
 
   this->params.set("/top/", "bootrom", std::any(true));
   this->params.set("/top/", "bootrom_base", std::any(0x10000UL));
@@ -64,7 +65,7 @@ Simulation::Simulation(const cfg_t *cfg, bool halted,
 
   this->params.set("/top/", "dram", std::any(true));
   this->params.set("/top/", "dram_base", std::any(0x80000000UL));
-  this->params.set("/top/", "dram_size", std::any(0x64UL * 1024 * 1024));
+  this->params.set("/top/", "dram_size", std::any(0x40000000UL));
 
   this->params.set("/top/", "log_commits", std::any(true));
 
@@ -81,7 +82,8 @@ Simulation::Simulation(const cfg_t *cfg, bool halted,
     bus.add_device(x.first, x.second);
 
   string isa_str = std::any_cast<string>(this->params["/top/isa"]);
-  this->isa = isa_parser_t (isa_str.c_str(), DEFAULT_PRIV);
+  string priv_str = std::any_cast<string>(this->params["/top/priv"]);
+  this->isa = isa_parser_t (isa_str.c_str(), priv_str.c_str());
 
   this->reset();
 
@@ -132,7 +134,7 @@ int Simulation::run()
     }
     catch (std::ios_base::failure e)
     {
-        std::cout << "[SPIKE-TANDEM] Max steps exceed" << std::endl;
+        std::cout << "[SPIKE] Max steps exceed" << std::endl;
     }
     return sim_t::exit_code();
 }
@@ -148,15 +150,15 @@ void Simulation::make_mems(const std::vector<mem_cfg_t> &layout)
   if (bootrom) {
     auto bootrom_device = std::make_pair(bootrom_base, new mem_t(bootrom_size));
 
-    std::cerr << "[SPIKE-TANDEM] Initializing memories...\n";
+    std::cerr << "[SPIKE] Initializing memories...\n";
     uint8_t rom_check_buffer[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
   // Populate the ROM.  Reset vector size is in 32-bit words and must be scaled.
 #include "bootrom.h"
     if (!bootrom_device.second->store(reg_t(0), reset_vec_size << 2, (const uint8_t *) reset_vec))
     {
-        std::cerr << "[SPIKE-TANDEM] *** ERROR: Failed to initialize ROM!\n";
+        std::cerr << "[SPIKE] *** ERROR: Failed to initialize ROM!\n";
         bootrom_device.second->load(reg_t(0), 8, rom_check_buffer);
-    fprintf(stderr, "[SPIKE-TANDEM] ROM content head(8) = %02x %02x %02x %02x %02x %02x %02x %02x\n",
+    fprintf(stderr, "[SPIKE] ROM content head(8) = %02x %02x %02x %02x %02x %02x %02x %02x\n",
         rom_check_buffer[0], rom_check_buffer[1], rom_check_buffer[2], rom_check_buffer[3],
         rom_check_buffer[4], rom_check_buffer[5], rom_check_buffer[6], rom_check_buffer[7]);
     }

@@ -592,6 +592,7 @@ int main(int argc, char** argv)
 
   params.set("/top/core/0/", "boot_addr", 0x10000UL);
   params.set("/top/core/0/", "isa", std::string(cfg.isa()));
+  params.set("/top/core/0/", "priv", std::string(cfg.priv()));
 
   openhw::Simulation s(&cfg, halted,
           mems, plugin_devices, htif_args, dm_config, log_path, dtb_enabled, dtb_file,

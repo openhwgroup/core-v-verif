@@ -73,7 +73,9 @@ namespace openhw
         ParseParams("/top/core/0/", this->params, params);
 
         string isa_str = std::any_cast<string>(this->params["/top/core/0/isa"]);
-        this->isa = (const isa_parser_t*) new isa_parser_t (isa_str.c_str(), DEFAULT_PRIV);
+        string priv_str = std::any_cast<string>(this->params["/top/core/0/priv"]);
+        std::cout << "[SPIKE] Proc 0 | isa: " << isa_str << " priv: " << priv_str << std::endl;
+        this->isa = (const isa_parser_t*) new isa_parser_t (isa_str.c_str(), priv_str.c_str());
 
         disassembler = new disassembler_t(isa);
         for (auto e : isa->get_extensions())

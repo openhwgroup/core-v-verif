@@ -57,7 +57,7 @@ extern "C" void spike_set_param_str(const char* base, const char* name, const ch
 
 extern "C" void spike_create(const char* filename)
 {
-  std::cerr << "[Spike Tandem] Starting 'spike_create'...\n" ;
+  std::cerr << "[SPIKE] Starting 'spike_create'...\n" ;
 
   // TODO parse params from yaml
   string isa_str = std::any_cast<string>(params["/top/isa"]);
