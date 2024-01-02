@@ -114,8 +114,10 @@ class uvme_rv32x_hwloop_covg # (
   bit           is_ebreak = 0, is_ebreakm = 0, is_ecall = 0, is_illegal = 0, is_irq = 0, is_dbg_mode = 0, is_mc_insn = 0;
   bit           is_trap = 0; // trap any period that is redundant due to handling entry which causes data flush
   bit           enter_hwloop_sub = 0;
+  int           enter_hwloop_sub_cnt = 0;
   bit           pending_irq = 0;
   logic [31:0]  prev_irq_onehot_priority = 0, prev_irq_onehot_priority_always = 0;
+  bit           prev_irq_onehot_priority_is_0 = 0;
 
   dcsr_cause_t      dcsr_cause;
   exception_code_t  exception_code;
@@ -801,7 +803,7 @@ class uvme_rv32x_hwloop_covg # (
           is_trap = 0;
           wait (!cv32e40p_rvvi_vif.trap); // bypass if garbage data exist
         end
-        else if (cv32e40p_rvvi_vif.irq_onehot_priority == 0 && prev_irq_onehot_priority == 0 && !pending_irq && !is_dbg_mode) begin // set excep flag only if no pending irq and not in dbg mode
+        else if (((cv32e40p_rvvi_vif.irq_onehot_priority == 0 && prev_irq_onehot_priority == 0) || prev_irq_onehot_priority_is_0) && !pending_irq && !is_dbg_mode && !is_irq) begin // set excep flag only if no pending irq and not in dbg mode
           is_trap = 1;
           case (cv32e40p_rvvi_vif.insn)
             TB_INSTR_EBREAK, INSTR_CBREAK : if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm) begin 
@@ -823,9 +825,10 @@ class uvme_rv32x_hwloop_covg # (
         @(negedge cv32e40p_rvvi_vif.clk);
         if (cv32e40p_rvvi_vif.irq_onehot_priority !== prev_irq_onehot_priority) begin
           pending_irq = 0;
+          prev_irq_onehot_priority_is_0 = 0;
           if (enter_hwloop_sub) update_prev_irq_onehot_priority(); // within excp period
           else if ((hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1])) begin // within main loop
-            if (prev_irq_onehot_priority === 0) begin update_prev_irq_onehot_priority(); end // new pending
+            if (prev_irq_onehot_priority === 0) begin prev_irq_onehot_priority_is_0 = 1; update_prev_irq_onehot_priority(); end // new pending
             else begin // last irq or any pending irq(s)
               if (!is_irq) pending_irq = 1;
               else begin 
@@ -888,7 +891,8 @@ class uvme_rv32x_hwloop_covg # (
       if (cv32e40p_rvvi_vif.valid) begin : VALID_DETECTED
 
         if (enter_hwloop_sub) begin 
-          if (is_trap && is_dbg_mode) begin : TRAP_DUETO_DBG_ENTRY
+          enter_hwloop_sub_cnt++;
+          if (is_trap && is_dbg_mode && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_DBG_ENTRY // trap cycle and debug are b2b
             is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0;
             for (int j=0; j<HWLOOP_NB; j++) begin
               bit temp_in_nested_loop0 = (j == 0) ? 0 : in_nested_loop0;
@@ -934,7 +938,7 @@ class uvme_rv32x_hwloop_covg # (
           // [optional] todo: mie has effect on irq during exception. Current hwloop tests do not exercise nested irq with mie enabled
 
           check_exception_exit();
-          if (!(is_ebreak || is_ecall || is_illegal)) enter_hwloop_sub = 0;
+          if (!(is_ebreak || is_ecall || is_illegal)) begin enter_hwloop_sub = 0; enter_hwloop_sub_cnt = 0; end
           prev_pc_rdata_sub = cv32e40p_rvvi_vif.pc_rdata;
         end
 
