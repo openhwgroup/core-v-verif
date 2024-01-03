@@ -116,6 +116,18 @@ module uvmt_cv32e40p_debug_assert
         else
             `uvm_error(info_tag,$sformatf("Debug mode with wrong cause after ebreak, case = %d",cov_assert_if.dcsr_q[8:6]));
 
+    ////////////////////////////////////////////////////////////////////////////
+    // FIXME: start
+    //        It appears that the properties "p_cebreak_exception" and
+    //        "p_ebreak_exception" are identical in all but name.  However, at
+    //        the time of this writting (2024-01-03) it has been deemed too
+    //        risky to clean this up as the CV32E40P v2.0.0 is driving toward
+    //        closing coverage.
+    //
+    //        Before conducting any future maintenance of this code, refactor with <name of other property>.
+    //        See GitHub issue #1084.
+
+
     // c.ebreak without dcsr.ebreakm results in exception at mtvec
     // Exclude single stepping as the sequence gets very complicated
     property p_cebreak_exception;
@@ -126,7 +138,7 @@ module uvmt_cv32e40p_debug_assert
                                                                 && (cov_assert_if.mepc_q == pc_at_ebreak) &&
                                                                    (cov_assert_if.id_stage_pc == cov_assert_if.mtvec);
     endproperty
-    
+
     a_cebreak_exception: assert property(p_cebreak_exception)
         else
             `uvm_error(info_tag,$sformatf("Exception not entered correctly after c.ebreak with dcsr.ebreak=0"));
@@ -141,12 +153,15 @@ module uvmt_cv32e40p_debug_assert
                                                                 && (cov_assert_if.mepc_q == pc_at_ebreak) &&
                                                                    (cov_assert_if.id_stage_pc == cov_assert_if.mtvec);
     endproperty
-    
+
     // TODO: Fails formal as above
     a_ebreak_exception: assert property(p_ebreak_exception)
         else
             `uvm_error(info_tag,$sformatf("Exception not entered correctly after ebreak with dcsr.ebreak=0"));
     // c.ebreak during debug mode results in relaunch of debug mode
+
+    // FIXME: end
+    ////////////////////////////////////////////////////////////////////////////
 
     property p_cebreak_during_debug_mode;
         $rose(cov_assert_if.is_cebreak) ##0 cov_assert_if.debug_mode_q  |-> decode_valid [->2] ##0 cov_assert_if.debug_mode_q  &&
