@@ -91,26 +91,26 @@ The AXI4 slave agent provides following components:
 
 Only SLAVE mode is supported, features are:
 
--   Out of order transactions (Private): Transactions with different IDs
+-   Out of order transactions : Transactions with different IDs
     can complete in any order
 
--   Outstanding transactions (Private): Multiple writes or reads
+-   Outstanding transactions : Multiple writes or reads
     transactions run at the same time.
 
--   Channel delay: Randomize the ready to valid latency, for AW, W and
+-   Channel delay : Randomize the ready to valid latency, for AW, W and
     AR channels.
 
--   Randomize error injection: inject error by randomizing response
+-   Randomize error injection : inject error by randomizing response
     signal, or by injection error from the sequences.
 
--   Atomics transactions: the agent support this feature from AXI5.
+-   Atomics transactions : the agent support this feature from AXI5.
 
--   Multiple region signaling (Private): A region identifier, sent on
+-   Multiple region signaling : A region identifier, sent on
     the address channel for each transaction. If the master doesn't
     support this feature, the user must configure the memory mapping in
     the test class.
 
--   Access permissions (Private): access permissions signals can be used
+-   Access permissions : access permissions signals can be used
     to protect against illegal transactions. If the master doesn't
     support this feature, the user must configure the memory attribution
     in the test class and the agent will check the access permission
