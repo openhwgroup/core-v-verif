@@ -84,4 +84,10 @@
       UVMA_AXI_ORDERING_MODE_FIFO
    } uvma_axi_slv_drv_ordering_mode;
 
+   typedef enum {
+      UVMA_AXI_VERSION_1P1,
+      UVMA_AXI_VERSION_1P2,
+      UVMA_AXI_VERSION_1P3
+   } uvma_axi_version_enum;
+
 `endif // __UVMA_AXI_TDEFS_SV__
