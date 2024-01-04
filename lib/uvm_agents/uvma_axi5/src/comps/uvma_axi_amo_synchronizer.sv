@@ -526,7 +526,7 @@ function void uvma_axi_amo_synchronizer_c::write_burst_complete(int selected_id,
 
    do begin
       mon_req = new w_trs_queue[selected_id][0].mon_req;
-      w_trs_queue[selected_id].pop_front();
+	   void'(w_trs_queue[selected_id].pop_front());
    end while(!mon_req.w_last);
 
 endfunction : write_burst_complete
