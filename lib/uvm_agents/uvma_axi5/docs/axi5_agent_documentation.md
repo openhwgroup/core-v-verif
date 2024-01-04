@@ -1,5 +1,17 @@
 #AXI Agent documentation
 
+<!---
+Copyright 2024 Thales DIS SAS
+
+Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
+You may obtain a copy of the License at https://solderpad.org/licenses/
+
+Original Author: Alae Eddine EZ ZEJJARI (alae-eddine.ez-zejjari@external.thalesgroup.com) – sub-contractor MU-Electronics for Thales group
+
+-->
+
 ## Contents
 
 [1- Introduction](#introduction)
@@ -172,26 +184,34 @@ interface:
                                       );`
 
 //DUT connection Active mode
+
    `assign dut.aw_ready = axi_if.aw_ready;`
+
    `assign dut.ar_ready = axi_if.ar_ready;`
+
 ...
+
    `assign axi_if.aw_valid = dut.aw_valid;`
+
    `assign axi_if.w_valid  = dut.w_valid;`
 
 Then set the VIF to agent instantiation in env:
 
-     `uvm_config_db#(virtual uvma_axi_intf)::set(.cntxt(null),.inst_name(\"\*\"), .field_name(\"axi_vif\"), .value(axi_if));`
+     `uvm_config_db#(virtual uvma_axi_intf)::set(.cntxt(null),.inst_name("*"), .field_name("axi_vif"), .value(axi_if));`
 
 In env instantiate and create the AXI agent:
 
-   `uvma_axi_agent_c       axi_agent;`
-   `axi_agent     = uvma_axi_agent_c::type_id::create(\"axi_agent\",this);`
+   `uvma_axi_agent_c       axi_agent;
+`
+   `axi_agent     = uvma_axi_agent_c::type_id::create("axi_agent",this);`
 
 Instantiate, create and set the config to the agent:
 
    `uvma_axi_cfg_c        axi_cfg;`
-   `axi_cfg      = uvma_axi_cfg_c::type_id::create(\"axi_cfg\");`
-   `uvm_config_db#(uvma_axi_cfg_c)::set(this, \"\*axi_agent\", \"cfg\",cfg.axi_cfg);`
+   
+   `axi_cfg      = uvma_axi_cfg_c::type_id::create("axi_cfg");`
+
+   `uvm_config_db#(uvma_axi_cfg_c)::set(this, "*axi_agent", "cfg",cfg.axi_cfg);`
 
 ## Sequences lib
 
