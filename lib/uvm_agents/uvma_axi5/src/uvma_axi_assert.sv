@@ -73,8 +73,8 @@ module  uvma_axi_assert (uvma_axi_intf axi_assert);
                   `uvm_error("AXI4 protocol checks assertion", "Violation of w_data_num");
                   cov_w_data_num++;
                end
-               data_count.pop_front();
-               burst_len.pop_front();
+		   void'(data_count.pop_front());
+		   void'(burst_len.pop_front());
             end else begin
                w_data_num_not : assert(!axi_assert.psv_axi_cb.w_last) begin     // Check if The Master don't assert the WLAST signal when the WDATA count is not equal to AWLEN
                   cov_w_data_num_not++;
@@ -214,14 +214,14 @@ module  uvma_axi_assert (uvma_axi_intf axi_assert);
                start_add[0] = aligned_address + tr_size[0];
             end
          end
-         strb_req.pop_front();
+         void'(strb_req.pop_front());
          w_enable--;
          if(tr_len[0] == (tr_count[0]-1)) begin
-            tr_count.pop_front();
-            tr_len.pop_front();
-            start_add.pop_front();
-            tr_size.pop_front();
-            burst.pop_front();
+            void'(tr_count.pop_front());
+            void'(tr_len.pop_front());
+	    void'(start_add.pop_front());
+	    void'(tr_size.pop_front());
+	    void'(burst.pop_front());
             aw_enable--;
          end
       end
