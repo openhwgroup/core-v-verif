@@ -13,8 +13,7 @@
 
 
 /**
- * Virtual sequence implementing the cv32e40x virtual peripherals.
- * TODO Move most of the functionality to a cv32e env base class.
+ * Virtual sequence preload the CVA6 memory.
  */
 class uvma_axi_fw_preload_seq_c extends uvm_sequence;
 
