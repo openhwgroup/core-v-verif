@@ -24,9 +24,6 @@ class uvma_axi_drv_c extends uvm_driver #(uvma_axi_slv_seq_item_c);
    uvma_axi_cfg_c                      cfg;
    uvma_axi_cntxt_c                    cntxt;
 
-   //Handle to the items to be drived
-   uvma_axi_slv_seq_item_c             item;
-
    // Handles to virtual interface modport
    virtual uvma_axi_intf.slave        slave_mp;
 
@@ -103,7 +100,6 @@ function void uvma_axi_drv_c::build_phase(uvm_phase phase);
    end
 
    this.slave_mp = this.cntxt.axi_vi.slave;
-   item  = uvma_axi_slv_seq_item_c::type_id::create("item", this);
 
    void'(uvm_config_db#(uvma_axi_cfg_c)::get(this, "", "cfg", cfg));
    if (cfg == null) begin
@@ -177,14 +173,14 @@ endtask: drv_in_reset
 task uvma_axi_drv_c::drv_post_reset();
 
    `uvm_info(get_type_name(), $sformatf("start drv_post_reset"), UVM_HIGH)
-	seq_item_port.get_next_item(item);
+	      seq_item_port.get_next_item(req);
     `uvm_info(get_type_name(), $sformatf("start getting sequence"), UVM_HIGH)
 
        fork
           begin
              if(aw_latency_status == 0) begin
                 `uvm_info(get_type_name(), $sformatf("start driving aw"), UVM_HIGH)
-                aw_drv(item);
+                aw_drv(req);
              end
 	      end
        join_none
@@ -193,7 +189,7 @@ task uvma_axi_drv_c::drv_post_reset();
           begin
              if(w_latency_status == 0) begin
                 `uvm_info(get_type_name(), $sformatf("start driving w"), UVM_HIGH)
-                w_drv(item);
+                w_drv(req);
              end
           end
        join_none
@@ -201,7 +197,7 @@ task uvma_axi_drv_c::drv_post_reset();
        fork
           begin
              `uvm_info(get_type_name(), $sformatf("start driving b"), UVM_HIGH)
-             b_drv(item);
+             b_drv(req);
           end
        join_none
 
@@ -209,7 +205,7 @@ task uvma_axi_drv_c::drv_post_reset();
           begin
              if(ar_latency_status == 0) begin
                 `uvm_info(get_type_name(), $sformatf("start driving ar"), UVM_HIGH)
-                ar_drv(item);
+                ar_drv(req);
              end
           end
        join_none
@@ -217,7 +213,7 @@ task uvma_axi_drv_c::drv_post_reset();
        fork
           begin
              `uvm_info(get_type_name(), $sformatf("start driving r"), UVM_HIGH)
-             r_drv(item);
+             r_drv(req);
           end
        join_none
 
@@ -280,12 +276,12 @@ task uvma_axi_drv_c:: r_drv(uvma_axi_slv_seq_item_c item);
 
    `uvm_info(get_type_name(),$sformatf("response, send r_data to DUT"), UVM_HIGH)
 
-   this.slave_mp.slv_axi_cb.r_id    <= this.item.r_id;
-   this.slave_mp.slv_axi_cb.r_resp  <= this.item.r_resp;
-   this.slave_mp.slv_axi_cb.r_user  <= this.item.r_user;
-   this.slave_mp.slv_axi_cb.r_last  <= this.item.r_last;
-   this.slave_mp.slv_axi_cb.r_valid <= this.item.r_valid;
-   this.slave_mp.slv_axi_cb.r_data  <= this.item.r_data;
+   this.slave_mp.slv_axi_cb.r_id    <= item.r_id;
+   this.slave_mp.slv_axi_cb.r_resp  <= item.r_resp;
+   this.slave_mp.slv_axi_cb.r_user  <= item.r_user;
+   this.slave_mp.slv_axi_cb.r_last  <= item.r_last;
+   this.slave_mp.slv_axi_cb.r_valid <= item.r_valid;
+   this.slave_mp.slv_axi_cb.r_data  <= item.r_data;
    @(slave_mp.slv_axi_cb);
 
    `uvm_info(get_type_name(), $sformatf("finish driving r_item"), UVM_HIGH)
@@ -296,11 +292,11 @@ task uvma_axi_drv_c:: b_drv(uvma_axi_slv_seq_item_c item);
 
    `uvm_info(get_type_name(),$sformatf("response, send resp to DUT"), UVM_HIGH)
 
-   this.slave_mp.slv_axi_cb.b_id    <= this.item.b_id;
-   this.slave_mp.slv_axi_cb.b_resp  <= this.item.b_resp;
-   this.slave_mp.slv_axi_cb.b_user  <= this.item.b_user;
-   this.slave_mp.slv_axi_cb.b_user  <= this.item.b_user;
-   this.slave_mp.slv_axi_cb.b_valid <= this.item.b_valid;
+   this.slave_mp.slv_axi_cb.b_id    <= item.b_id;
+   this.slave_mp.slv_axi_cb.b_resp  <= item.b_resp;
+   this.slave_mp.slv_axi_cb.b_user  <= item.b_user;
+   this.slave_mp.slv_axi_cb.b_user  <= item.b_user;
+   this.slave_mp.slv_axi_cb.b_valid <= item.b_valid;
    @(slave_mp.slv_axi_cb);
 
    `uvm_info(get_type_name(), $sformatf("finish driving b_item"), UVM_HIGH)
