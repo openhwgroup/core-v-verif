@@ -22,6 +22,7 @@ riscv_install_hdrs = \
 	cfg.h \
 	common.h \
 	csrs.h \
+	cva6.h \
 	cvxif.h \
 	debug_defines.h \
 	debug_module.h \
@@ -66,6 +67,7 @@ riscv_srcs = \
 	extension.cc \
 	extensions.cc \
 	rocc.cc \
+	cva6_base.cc \
 	cvxif_base.cc \
 	devices.cc \
 	rom.cc \

@@ -1,0 +1,169 @@
+diff --git a/vendor/riscv/riscv-isa-sim/customext/customext.mk.in b/vendor/riscv/riscv-isa-sim/customext/customext.mk.in
+index 888634b4..b63a0172 100644
+--- a/vendor/riscv/riscv-isa-sim/customext/customext.mk.in
++++ b/vendor/riscv/riscv-isa-sim/customext/customext.mk.in
+@@ -8,5 +8,6 @@ customext_srcs = \
+ 	dummy_rocc.cc \
+ 	cflush.cc \
+ 	cvxif.cc \
++	cv32a60x.cc \
+ 
+ customext_install_shared_lib = yes
+diff --git a/vendor/riscv/riscv-isa-sim/customext/cv32a60x.cc b/vendor/riscv/riscv-isa-sim/customext/cv32a60x.cc
+new file mode 100644
+index 00000000..85786b05
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/customext/cv32a60x.cc
+@@ -0,0 +1,61 @@
++// Copyright (C) 2023 Thales DIS France SAS
++//
++// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0.
++//
++// Original Author: Zbigniew CHAMSKI <zbigniew.chamski@thalesgroup.com>
++
++#include "csrs.h"
++#include "processor.h"
++#include "cva6.h"
++#include <cstdlib>
++
++// Define CSR addresses.
++#define CSR_ICACHE 0x7c0
++#define CSR_DCACHE 0x7c1
++
++// Define CSR field masks/values.
++#define ICACHE_EN  0x1
++#define DCACHE_EN  0x1
++
++// This class instantiates the CV32A60X (CV32A6 "embedded") control&status extension.
++class cv32a60x_extn_t : public cva6_extn_t
++{
++ public:
++  const char* name() { return "cv32a60x"; }
++
++  cv32a60x_extn_t()
++  {
++  }
++  ~cv32a60x_extn_t() {}
++
++  void reset()
++  {
++    std::cerr << "[Extension '" << name() << "'] reset()" << std::endl;
++
++    // Complain if processor is not set.
++    if (!p || !p->get_state()) {
++      std::cerr << "ERROR: processor/state not set in cv32a60x_extn_t::reset()!" << std::endl;
++      exit(1);
++    }
++
++    state_t *state = p->get_state();
++
++    // Create ICACHE CSR.  Only bit 0 is writable. Initialize to 1.
++    reg_t icache_mask = ICACHE_EN;
++    state->csrmap[CSR_ICACHE] =
++      icache_reg = std::make_shared<masked_csr_t>(p, CSR_ICACHE, icache_mask, 1);
++
++    // Create DCACHE CSR.  Only bit 0 is writable. Initialize to 1.
++    reg_t dcache_mask = DCACHE_EN;
++    state->csrmap[CSR_DCACHE] =
++      dcache_reg = std::make_shared<masked_csr_t>(p, CSR_DCACHE, dcache_mask, 1);
++  }
++
++private:
++  // State variables go here.
++  csr_t_p icache_reg = NULL;
++  csr_t_p dcache_reg = NULL;
++
++};
++
++REGISTER_EXTENSION(cv32a60x, []() { return new cv32a60x_extn_t; })
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/cva6.h b/vendor/riscv/riscv-isa-sim/riscv/cva6.h
+new file mode 100644
+index 00000000..48d10281
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/riscv/cva6.h
+@@ -0,0 +1,20 @@
++// Copyright (C) 2023 Thales DIS France SAS
++//
++// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0.
++//
++// Original Author: Zbigniew CHAMSKI <zbigniew.chamski@thalesgroup.com>
++
++#ifndef _CVA6_H
++#define _CVA6_H
++
++#include "extension.h"
++
++class cva6_extn_t : public extension_t
++{
++ public:
++  std::vector<insn_desc_t> get_instructions() override;
++  std::vector<disasm_insn_t*> get_disasms() override;
++  virtual void reset() override {};
++};
++
++#endif
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/cva6_base.cc b/vendor/riscv/riscv-isa-sim/riscv/cva6_base.cc
+new file mode 100644
+index 00000000..4e2e77ce
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/riscv/cva6_base.cc
+@@ -0,0 +1,21 @@
++// Copyright (C) 2023 Thales DIS France SAS
++//
++// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0.
++//
++// Original Author: Zbigniew CHAMSKI <zbigniew.chamski@thalesgroup.com>
++
++#include "extension.h"
++#include "cva6.h"
++
++
++std::vector<insn_desc_t> cva6_extn_t::get_instructions()
++{
++  std::vector<insn_desc_t> insns;
++  return insns;
++}
++
++std::vector<disasm_insn_t*> cva6_extn_t::get_disasms()
++{
++  std::vector<disasm_insn_t*> insns;
++  return insns;
++}
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in b/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
+index baebaee1..37bf3da1 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
++++ b/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
+@@ -22,6 +22,7 @@ riscv_install_hdrs = \
+ 	cfg.h \
+ 	common.h \
+ 	csrs.h \
++	cva6.h \
+ 	cvxif.h \
+ 	debug_defines.h \
+ 	debug_module.h \
+@@ -66,6 +67,7 @@ riscv_srcs = \
+ 	extension.cc \
+ 	extensions.cc \
+ 	rocc.cc \
++	cva6_base.cc \
+ 	cvxif_base.cc \
+ 	devices.cc \
+ 	rom.cc \
+diff --git a/vendor/riscv/riscv-isa-sim/spike_main/spike.cc b/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
+index 89e93cb7..65b807c3 100644
+--- a/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
++++ b/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
+@@ -621,8 +621,11 @@ int main(int argc, char** argv)
+     s.get_core(i)->set_nb_register_source(number_register_source);
+     if (ic) s.get_core(i)->get_mmu()->register_memtracer(&*ic);
+     if (dc) s.get_core(i)->get_mmu()->register_memtracer(&*dc);
+-    for (auto e : extensions)
+-      s.get_core(i)->register_extension(e());
++    for (auto e : extensions) {
++      extension_t *ext = e();
++      s.get_core(i)->register_extension(ext);
++      ext->reset();
++    }
+     s.get_core(i)->get_mmu()->set_cache_blocksz(blocksz);
+   }
+ 
