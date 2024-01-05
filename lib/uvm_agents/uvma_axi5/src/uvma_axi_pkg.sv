@@ -35,10 +35,6 @@ package uvma_axi_pkg;
    import uvml_trn_pkg  ::*;
    import uvml_logs_pkg ::*;
 
-   import "DPI-C" function read_elf(input string filename);
-   import "DPI-C" function byte get_section(output longint address, output longint len);
-   import "DPI-C" context function void read_section_sv(input longint address, inout byte buffer[]);
-
    localparam NrSlaves      = 2; // actually masters, but slaves on the crossbar
    localparam IdWidth       = 4; // 4 is recommended by AXI standard, so lets stick to it, do not change
    localparam IdWidthSlave  = IdWidth + $clog2(NrSlaves);
