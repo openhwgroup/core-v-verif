@@ -38,6 +38,7 @@ class uvma_axi_cfg_c extends uvm_object;
    rand int                      m_num_axi_region;
 
    rand uvma_axi_version_enum    version;
+   rand uvma_axi_version_enum    preload_mem;
 
    typedef struct{
             rand longint  unsigned    m_part_addr_start;
@@ -66,6 +67,7 @@ class uvma_axi_cfg_c extends uvm_object;
       `uvm_field_int (m_num_part, UVM_DEFAULT)
       `uvm_field_int (m_num_axi_region, UVM_DEFAULT)
       `uvm_field_enum(uvma_axi_version_enum, version, UVM_DEFAULT);
+      `uvm_field_int (preload_mem, UVM_DEFAULT)
    `uvm_object_utils_end
 
    constraint defaults_config {
@@ -83,6 +85,7 @@ class uvma_axi_cfg_c extends uvm_object;
       soft axi_region_enabled          == 0;
       soft axi_prot_enabled            == 0;
       soft version                     == UVMA_AXI_VERSION_1P2;
+      soft preload_mem                 == 0;
      }
 
    // Number of RAM partitions
