@@ -1084,6 +1084,7 @@ class cv32e40p_constraint_mc_fp_instr_stream extends cv32e40p_float_zfinx_base_i
     use_fp_only_for_directed_instr  = 1;
     en_clr_fflags_af_instr          = 0;
     use_same_instr_per_stream       = 1;
+    include_load_store_base_sp      = 1; // store sp is randomly used here
   endfunction: pre_randomize
 
   virtual function void act_post_directed_instr(
