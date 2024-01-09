@@ -206,7 +206,7 @@
                 </method>
 {% endif %}
                 <execScript launch="exec" usestderr="no">
-                    <command> echo " TEST RUNCMD: (%t_cmd%) CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} COMP=0 CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR=(%t_simulator%) USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%t_iteration%) GEN_START_INDEX=(%t_iteration%) SEED=(%t_iteration%) {{regress_macros.cv_results(results_path)}} {{makeargs}} (%t_makearg%)"</command>
+                    <command> echo " TEST RUNCMD: (%t_cmd%) CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR=(%t_simulator%) USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%t_iteration%) GEN_START_INDEX=(%t_iteration%) SEED=(%t_iteration%) {{regress_macros.cv_results(results_path)}} {{makeargs}} (%t_makearg%)"</command>
                     <command> echo "     logfile: (%log_file%)"</command>
                     <command> echo "     RTL repo: CV_CORE_REPO  : ${CV_CORE_REPO}"</command>
                     <command> echo "               CV_CORE_BRANCH: ${CV_CORE_BRANCH}"</command>

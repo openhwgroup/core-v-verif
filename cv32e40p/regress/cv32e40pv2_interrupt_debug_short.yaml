@@ -149,6 +149,65 @@ tests:
     cmd: make gen_corev-dv test TEST=corev_rand_pulp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
     test_cfg: gen_rand_int,debug_trigger_basic,debug_single_step_en
 
+# Add corev_rand_fp_instr_debug similar to corev_rand_pulp_instr_debug/test with f/zfinx insn included - START
+
+  corev_rand_fp_instr_debug_test_with_int_and_debug:
+    testname: corev_rand_fp_instr_debug
+    description: fp instr random test with random interrupt and debug trigger
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+    test_cfg: gen_rand_int,gen_rand_debug_req
+    skip_sim: pulp
+
+  corev_rand_fp_instr_debug_test_with_int_and_debug_trigger:
+    testname: corev_rand_fp_instr_debug
+    description: fp instr random test with random interrupt and debug trigger
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+    test_cfg: gen_rand_int,debug_trigger_basic,gen_rand_debug_req
+    skip_sim: pulp
+
+  corev_rand_fp_instr_debug_test_with_int_and_debug_single_step:
+    testname: corev_rand_fp_instr_debug
+    description: fp instr random test with random interrupt and debug trigger
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+    test_cfg: gen_rand_int,debug_single_step_en,gen_rand_debug_req
+    skip_sim: pulp
+
+# note: current fp streams excluding ebreak insn
+#  corev_rand_fp_instr_debug_test_with_int_and_debug_ebreak:
+#    testname: corev_rand_fp_instr_debug
+#    description: pulp instr random test with random interrupt and debug ebreak
+#    build: uvmt_cv32e40p
+#    dir: cv32e40p/sim/uvmt
+#    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+#    test_cfg: gen_rand_int,debug_ebreak,gen_rand_debug_req
+#    skip_sim: pulp
+#
+#  corev_rand_fp_instr_debug_test_with_int_debug_trigger_and_ebreak:
+#    testname: corev_rand_fp_instr_debug
+#    description: pulp instr random test with random interrupt, debug trigger and debug ebreak
+#    build: uvmt_cv32e40p
+#    dir: cv32e40p/sim/uvmt
+#    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+#    test_cfg: gen_rand_int,debug_trigger_basic,debug_ebreak,gen_rand_debug_req
+#    skip_sim: pulp
+
+  corev_rand_fp_instr_debug_test_with_int_debug_trigger_and_single_step:
+    testname: corev_rand_fp_instr_debug
+    description: fp instr random test with random interrupt, debug trigger and single step
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
+    test_cfg: gen_rand_int,debug_trigger_basic,debug_single_step_en,gen_rand_debug_req
+    skip_sim: pulp
+
+# Add corev_rand_fp_instr_debug similar to corev_rand_pulp_instr_debug with f/zfinx insn included - END
+
   corev_rand_pulp_hwloop_debug:
     build: uvmt_cv32e40p
     description: hwloop debug random test

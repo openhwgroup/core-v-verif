@@ -894,6 +894,7 @@ class uvme_rv32x_hwloop_covg # (
           enter_hwloop_sub_cnt++;
           if (is_trap && is_dbg_mode && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_DBG_ENTRY // trap cycle and debug are b2b
             is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0;
+            prev_pc_rdata_main = prev_pc_rdata_main-4;
             for (int j=0; j<HWLOOP_NB; j++) begin
               bit temp_in_nested_loop0 = (j == 0) ? 0 : in_nested_loop0;
               if (hwloop_stat_main.execute_instr_in_hwloop[j] && hwloop_stat_main.track_lp_cnt[j] >= 0 && !temp_in_nested_loop0) begin
@@ -923,6 +924,7 @@ class uvme_rv32x_hwloop_covg # (
           else if (pc_is_mtvec_addr() && is_mcause_irq()) begin : IRQ_ENTRY
             if (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]) begin
               is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0;
+              prev_pc_rdata_main = prev_pc_rdata_main-4;
               pending_irq = 0;
               `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Entry is replaced with IRQ Entry (higher priority)"), UVM_DEBUG);
               `IF_CURRENT_IS_MAIN_HWLOOP(0, IS_IRQ)
