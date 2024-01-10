@@ -42,10 +42,11 @@ VSIM_COV_ONLY_PASS_TEST ?= YES
 VSIM_LOCAL_MODELSIMINI  ?= YES
 VOPT_CODE_COV_DUT_ONLY  ?= YES
 VSIM_USER_FLAGS         ?=
+# note: t or toggle is excluded in cv32e40p_v2
 ifeq ($(call IS_YES,$(VOPT_CODE_COV_DUT_ONLY)),YES)
-VOPT_COV                ?= +cover=bcsetf+$(RTLSRC_VLOG_CORE_TOP).
+VOPT_COV                ?= +cover=bcsef+$(RTLSRC_VLOG_CORE_TOP).
 else
-VOPT_COV                ?= +cover=setf+$(RTLSRC_VLOG_TB_TOP).
+VOPT_COV                ?= +cover=sef+$(RTLSRC_VLOG_TB_TOP).
 endif
 VSIM_COV                ?= -coverage +uvm_set_config_int=uvm_test_top,cov_model_enabled,1
 VOPT_WAVES_ADV_DEBUG    ?= -designfile design.bin
