@@ -141,6 +141,7 @@
 
 
     <!-- =========== Builds =========== START -->
+            <!-- Note: ENABLE_TRACE_LOG=NO is removed from print msg as rerun is require tracer to be enable -->
 {% for build in r.get_builds() %}
         <runnable name="{{r.name}}_{{build.name}}" type="group" sequential="no">
             <!-- set of parameters to be given to leaf runnables -->
@@ -158,8 +159,8 @@
 {% endfor %}
             </members>
             <preScript launch="exec">
-                <command> echo "BUILD RUNCMD: {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results_path)}} {{makeargs}}"</command>
-                <command> cd {{build.abs_dir}} &amp;&amp; {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results_path)}} {{makeargs}} </command>
+                <command> echo "BUILD RUNCMD: {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} ENABLE_TRACE_LOG=NO USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results_path)}} {{makeargs}}"</command>
+                <command> cd {{build.abs_dir}} &amp;&amp; {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} ENABLE_TRACE_LOG=NO USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results_path)}} {{makeargs}} </command>
             </preScript>
         </runnable>
 {% endfor %}
@@ -199,6 +200,7 @@
 
 {% endfor %}
 
+            <!-- Note: COMP=0 is removed form print msg as rerun is require recompile all the time-->
             <runnable name="simulation" type="task">
 {% if lsf != None %}
                 <method name="grid" gridtype="lsf" action="execScript">
