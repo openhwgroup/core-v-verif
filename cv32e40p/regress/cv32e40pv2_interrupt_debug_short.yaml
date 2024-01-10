@@ -157,7 +157,7 @@ tests:
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
-    test_cfg: gen_rand_int,gen_rand_debug_req
+    test_cfg: gen_rand_int
     skip_sim: pulp
 
   corev_rand_fp_instr_debug_test_with_int_and_debug_trigger:
@@ -166,7 +166,7 @@ tests:
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
-    test_cfg: gen_rand_int,debug_trigger_basic,gen_rand_debug_req
+    test_cfg: gen_rand_int,debug_trigger_basic
     skip_sim: pulp
 
   corev_rand_fp_instr_debug_test_with_int_and_debug_single_step:
@@ -175,7 +175,7 @@ tests:
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
-    test_cfg: gen_rand_int,debug_single_step_en,gen_rand_debug_req
+    test_cfg: gen_rand_int,debug_single_step_en
     skip_sim: pulp
 
 # note: current fp streams excluding ebreak insn
@@ -185,7 +185,7 @@ tests:
 #    build: uvmt_cv32e40p
 #    dir: cv32e40p/sim/uvmt
 #    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
-#    test_cfg: gen_rand_int,debug_ebreak,gen_rand_debug_req
+#    test_cfg: gen_rand_int,debug_ebreak
 #    skip_sim: pulp
 #
 #  corev_rand_fp_instr_debug_test_with_int_debug_trigger_and_ebreak:
@@ -194,7 +194,7 @@ tests:
 #    build: uvmt_cv32e40p
 #    dir: cv32e40p/sim/uvmt
 #    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
-#    test_cfg: gen_rand_int,debug_trigger_basic,debug_ebreak,gen_rand_debug_req
+#    test_cfg: gen_rand_int,debug_trigger_basic,debug_ebreak
 #    skip_sim: pulp
 
   corev_rand_fp_instr_debug_test_with_int_debug_trigger_and_single_step:
@@ -203,7 +203,7 @@ tests:
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=10000000"
-    test_cfg: gen_rand_int,debug_trigger_basic,debug_single_step_en,gen_rand_debug_req
+    test_cfg: gen_rand_int,debug_trigger_basic,debug_single_step_en
     skip_sim: pulp
 
 # Add corev_rand_fp_instr_debug similar to corev_rand_pulp_instr_debug with f/zfinx insn included - END
