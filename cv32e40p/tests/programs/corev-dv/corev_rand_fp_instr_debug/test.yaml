@@ -5,6 +5,6 @@
 name: corev_rand_fp_instr_debug
 uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
 description: >
-    Random debug in xpulp instruction stream
+    Random debug in fp instruction stream
 plusargs: >
-  #    +gen_reduced_rand_dbg_req
+    +gen_reduced_rand_dbg_req
