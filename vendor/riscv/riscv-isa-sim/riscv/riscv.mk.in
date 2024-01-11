@@ -78,6 +78,7 @@ riscv_srcs = \
 	remote_bitbang.cc \
 	jtag_dtm.cc \
 	csrs.cc \
+	csrs_ext.cc \
 	triggers.cc \
 	vector_unit.cc \
 	socketif.cc \

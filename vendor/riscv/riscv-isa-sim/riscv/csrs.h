@@ -12,25 +12,19 @@
 #include "memtracer.h"
 #include <cassert>
 
+#include "csrs_ext.h"
+
 class processor_t;
+namespace openhw { class Processor; }
 struct state_t;
 
 // Parent, abstract class for all CSRs
-class csr_t {
+class csr_t : public openhw::reg {
  public:
   csr_t(processor_t* const proc, const reg_t addr);
 
   // Throw exception if read/write disallowed.
   virtual void verify_permissions(insn_t insn, bool write) const;
-
-  // read() returns the architectural value of this CSR. No permission
-  // checking needed or allowed. Side effects not allowed.
-  virtual reg_t read() const noexcept = 0;
-
-  // write() updates the architectural value of this CSR. No
-  // permission checking needed or allowed.
-  // Child classes must implement unlogged_write()
-  void write(const reg_t val) noexcept;
 
   virtual ~csr_t();
 
@@ -68,14 +62,9 @@ class basic_csr_t: public csr_t {
  public:
   basic_csr_t(processor_t* const proc, const reg_t addr, const reg_t init);
 
-  virtual reg_t read() const noexcept override {
-    return val;
-  }
-
  protected:
   virtual bool unlogged_write(const reg_t val) noexcept override;
  private:
-  reg_t val;
 };
 
 class pmpaddr_csr_t: public csr_t {
@@ -115,7 +104,6 @@ class pmpaddr_csr_t: public csr_t {
   reg_t napot_mask() const noexcept;
 
   bool next_locked_and_tor() const noexcept;
-  reg_t val;
   friend class pmpcfg_csr_t;  // so he can access cfg
   uint8_t cfg;
   const size_t pmpidx;
@@ -177,7 +165,6 @@ class epc_csr_t: public csr_t {
  protected:
   virtual bool unlogged_write(const reg_t val) noexcept override;
  private:
-  reg_t val;
 };
 
 // For mtvec, stvec, and vstvec
@@ -189,7 +176,6 @@ class tvec_csr_t: public csr_t {
  protected:
   virtual bool unlogged_write(const reg_t val) noexcept override;
  private:
-  reg_t val;
 };
 
 // For mcause, scause, and vscause
@@ -217,6 +203,7 @@ class base_status_csr_t: public csr_t {
   const reg_t sstatus_read_mask;
  private:
   reg_t compute_sstatus_write_mask() const noexcept;
+
 };
 
 typedef std::shared_ptr<base_status_csr_t> base_status_csr_t_p;
@@ -228,13 +215,12 @@ class vsstatus_csr_t final: public base_status_csr_t {
   vsstatus_csr_t(processor_t* const proc, const reg_t addr);
 
   reg_t read() const noexcept override {
-    return val;
+    return openhw::reg::unlogged_read();
   }
 
  protected:
   virtual bool unlogged_write(const reg_t val) noexcept override;
  private:
-  reg_t val;
 };
 
 typedef std::shared_ptr<vsstatus_csr_t> vsstatus_csr_t_p;
@@ -244,14 +230,13 @@ class mstatus_csr_t final: public base_status_csr_t {
   mstatus_csr_t(processor_t* const proc, const reg_t addr);
 
   reg_t read() const noexcept override {
-    return val;
+    return openhw::reg::unlogged_read();
   }
 
  protected:
   virtual bool unlogged_write(const reg_t val) noexcept override;
  private:
   reg_t compute_mstatus_initial_value() const noexcept;
-  reg_t val;
 };
 
 typedef std::shared_ptr<mstatus_csr_t> mstatus_csr_t_p;
@@ -349,7 +334,6 @@ class mip_or_mie_csr_t: public csr_t {
 
  protected:
   virtual bool unlogged_write(const reg_t val) noexcept override final;
-  reg_t val;
  private:
   virtual reg_t write_mask() const noexcept = 0;
 };
@@ -518,7 +502,6 @@ class wide_counter_csr_t: public csr_t {
   virtual bool unlogged_write(const reg_t val) noexcept override;
   virtual reg_t written_value() const noexcept override;
  private:
-  reg_t val;
 };
 
 typedef std::shared_ptr<wide_counter_csr_t> wide_counter_csr_t_p;
@@ -557,7 +540,6 @@ class const_csr_t: public csr_t {
  protected:
   bool unlogged_write(const reg_t val) noexcept override;
  private:
-  const reg_t val;
 };
 
 // For a CSR that is an unprivileged accessor of a privileged counter
