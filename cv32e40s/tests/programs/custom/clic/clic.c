@@ -35,7 +35,7 @@
 
 // MUST be 31 or less (bit position-1 in result array determines test pass/fail
 // status, thus we are limited to 31 tests with this construct.
-#define NUM_TESTS 24
+#define NUM_TESTS 25
 // Set which test index to start testing at (for quickly running specific tests during development)
 #define START_TEST_IDX 0
 // Abort test at first self-check fail, useful for debugging.
@@ -220,6 +220,8 @@ volatile uint32_t * volatile g_asserted_irq_lvl;
 volatile uint32_t * volatile g_irq_handler_reported_error;
 volatile uint32_t * volatile g_mepc_triggered;
 volatile uint32_t * volatile g_recovery_enable;
+volatile uint32_t * volatile g_checker;
+
 // ---------------------------------------------------------------
 // Test prototypes - should match
 // uint32_t <name>(uint32_t index, uint8_t report_name)
@@ -250,6 +252,7 @@ uint32_t mret_with_minhv(uint32_t index, uint8_t report_name);
 uint32_t mintthresh_higher(uint32_t index, uint8_t report_name);
 uint32_t mintthresh_lower(uint32_t index, uint8_t report_name);
 uint32_t mintthresh_equal(uint32_t index, uint8_t report_name);
+uint32_t mret_with_minhv_and_unaligned_mepc(uint32_t index, uint8_t report_name);
 
 // ---------------------------------------------------------------
 // Generic test template:
@@ -377,6 +380,7 @@ int main(int argc, char **argv){
   g_irq_handler_reported_error = calloc(1, sizeof(uint32_t));
   g_mepc_triggered             = calloc(1, sizeof(uint32_t));
   g_recovery_enable            = calloc(1, sizeof(uint32_t));
+  g_checker                    = calloc(1, sizeof(uint32_t));
 
   // Add function pointers to new tests here
   tests[0]  = mcause_mstatus_mirror_init;
@@ -403,6 +407,7 @@ int main(int argc, char **argv){
   tests[21] = mintthresh_lower;
   tests[22] = mintthresh_higher;
   tests[23] = mintthresh_equal;
+  tests[24] = mret_with_minhv_and_unaligned_mepc;
 
   // Run all tests in list above
   cvprintf(V_LOW, "\nCLIC Test start\n\n");
@@ -420,6 +425,7 @@ int main(int argc, char **argv){
   free((void *)g_irq_handler_reported_error);
   free((void *)g_mepc_triggered            );
   free((void *)g_recovery_enable           );
+  free((void *)g_checker                   );
   return retval; // Nonzero for failing tests
 }
 
@@ -3052,6 +3058,7 @@ uint32_t mret_with_minhv(uint32_t index, uint8_t report_name) {
     mret
     addi %[check_val], zero, 42
     jal zero, 2f
+    .align 4
     1: .word(2f)
     .space 0x100, 0x0
     2: addi %[result], %[check_val], 0
@@ -3326,6 +3333,75 @@ uint32_t mintthresh_equal(uint32_t index, uint8_t report_name) {
   return 0;
 }
 
+// This function should cover corner cases encountered by broken code during
+// test development that made the ISS and RTL deviate. After resolving issues,
+// leave this function in place to ensure that these issues do not return.
+uint32_t mret_with_minhv_and_unaligned_mepc(uint32_t index, uint8_t report_name) {
+  volatile uint8_t test_fail  = 0;
+  volatile mcause_t mcause    = { 0 };
+  volatile uint32_t result    = 0;
+  volatile uint32_t all_set   = 0xFFFFFFFF;
+
+  SET_FUNC_INFO
+  if (report_name) {
+    cvprintf(V_LOW, "\"%s\"", name);
+    return 0;
+  }
+
+  *g_special_handler_idx = 7;
+
+  __asm__ volatile ( R"(
+    csrrs %[rd1], mcause, zero
+  )":[rd1] "=r"(mcause.raw)
+    ::);
+
+  mcause.clic.minhv = 1;
+  mcause.clic.mpp = 0x3;
+  mcause.clic.mpie = 0;
+
+  *g_checker = 0;
+
+  __asm__ volatile (R"(
+    csrrw zero, mcause, %[mcause]
+    la t0, 1f
+    lw t1, (t0)
+    csrrw zero, mepc, t0
+    # Store instruction mepc aims to execute in mscratch register.
+    csrrw zero, mscratch, t1
+    mret
+
+    # Write 0xFFFF_FFFF to where g_checker points.
+    lw t2, g_checker
+    sw %[all_set], 0(t2)
+
+    jal zero, 2f
+    .align 4
+    .byte(0xFF)
+    .byte(0xFF)
+    1: .word(2f)
+    .space 0x100, 0x0
+
+    2:
+    # Fetch the value g_checker points to.
+    lw t2, g_checker
+    lw t2, 0(t2)
+
+    addi %[result], t2, 0
+
+  )":[result] "=r"(result)
+    :[mcause] "r"(mcause.raw), [all_set] "r"(all_set)
+    :"t0", "t1", "t2");
+
+  test_fail += (result != 0);
+
+  if (test_fail) {
+    cvprintf(V_LOW, "\nTest: \"%s\" FAIL!\n", name);
+    return index + 1;
+  }
+  cvprintf(V_MEDIUM, "\nTest: \"%s\" OK!\n", name);
+  return 0;
+}
+
 // -----------------------------------------------------------------------------
 // Note that the following interrupt/exception handler is not generic and specific
 // to this test.
@@ -3408,6 +3484,16 @@ __attribute__((interrupt("machine"))) void u_sw_irq_handler(void) {
     case 6:
       *g_irq_handler_reported_error = 1;
       vp_assert_irq(0, 0);
+      *g_special_handler_idx = 0;
+      return;
+      break;
+    case 7:
+    *g_special_handler_idx = 0;
+    //Write mscratch value to mepc
+    __asm__ volatile ( R"(
+      csrrw t0, mscratch, zero
+      csrrw zero, mepc, t0
+    )"::: "t0");
       return;
       break;
   }
