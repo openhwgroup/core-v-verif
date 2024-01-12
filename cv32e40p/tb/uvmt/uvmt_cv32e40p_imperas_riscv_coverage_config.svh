@@ -7,7 +7,7 @@
   `define COVER_BASE_RV32I
   `define COVER_LEVEL_COMPL_BAS
   //`define COVER_LEVEL_COMPL_EXT
-  `define COVER_LEVEL_DV_UP_BAS
+  // `define COVER_LEVEL_DV_UP_BAS // fixme: this is needed for some f/zfinx cp
   //`define COVER_LEVEL_DV_UP_EXT
   //`define COVER_LEVEL_DV_PR_BAS
   //`define COVER_LEVEL_DV_PR_EXT
