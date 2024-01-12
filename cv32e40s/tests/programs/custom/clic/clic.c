@@ -3486,14 +3486,14 @@ __attribute__((interrupt("machine"))) void u_sw_irq_handler(void) {
       return;
       break;
     case 7:
-    *g_special_handler_idx = 0;
-    //Write mscratch value to mepc
-    __asm__ volatile ( R"(
-      csrrw t0, mscratch, zero
-      csrrw zero, mepc, t0
-    )"::: "t0");
-      return;
-      break;
+      *g_special_handler_idx = 0;
+      //Write mscratch value to mepc
+      __asm__ volatile ( R"(
+        csrrw t0, mscratch, zero
+        csrrw zero, mepc, t0
+      )"::: "t0");
+        return;
+        break;
   }
 
   if (mcause.clic.interrupt == 0 && mcause.clic.exccode == 2) {
