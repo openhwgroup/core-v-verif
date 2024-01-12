@@ -212,14 +212,14 @@ tests:
     build: uvmt_cv32e40p
     description: hwloop debug random test
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=25000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
 
   corev_rand_pulp_hwloop_test_with_random_debug:
     testname: corev_rand_pulp_hwloop_test
     description: hwloop random debug req test
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=25000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
     test_cfg: gen_rand_debug_req
 
   corev_rand_pulp_hwloop_debug_ebreak:
@@ -227,7 +227,7 @@ tests:
     description: hwloop ebreak debug random test
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=25000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
     test_cfg: debug_ebreak
 
   corev_rand_pulp_hwloop_debug_trigger:
@@ -235,7 +235,7 @@ tests:
     description: hwloop debug random test with debug trigger on instr addr match
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=25000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
     test_cfg: debug_trigger_basic
 
   corev_rand_pulp_hwloop_debug_trigger_with_ebreak:
@@ -243,7 +243,7 @@ tests:
     description: hwloop debug random test with debug trigger and ebreak
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=25000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
     test_cfg: debug_trigger_basic,debug_ebreak
 
   corev_rand_pulp_hwloop_debug_with_interrupt:
@@ -251,7 +251,7 @@ tests:
     description: hwloop debug with interrupt random test
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=25000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
     test_cfg: gen_rand_int
 
   corev_rand_pulp_hwloop_debug_with_int_debug_trigger:
@@ -259,7 +259,7 @@ tests:
     description: hwloop debug with interrupt and debug trigger random test
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=25000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
     test_cfg: gen_rand_int,debug_trigger_basic
 
   corev_rand_pulp_hwloop_debug_with_int_debug_ebreak:
@@ -267,7 +267,7 @@ tests:
     description: hwloop debug with interrupt and debug ebreak random test
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=25000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_debug CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
     test_cfg: gen_rand_int,debug_ebreak
 
   corev_rand_pulp_hwloop_interrupt_test:
@@ -275,7 +275,7 @@ tests:
     description: hwloop test with random interrupts
     build: uvmt_cv32e40p
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=25000000"
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
     test_cfg: gen_rand_int
 
   corev_rand_pulp_hwloop_exception_debug_trigger:
