@@ -792,6 +792,17 @@
         "Link to Coverage": "A: uvmt_cv32e40s_tb.dut_wrap.cv32e40s_wrapper_i.core_i.clic_assert_i.gen_clic_assertions.a_mret_umode_clear_mintthresh"
     },
     {
+        "Requirement Location": "CLIC 0.9-draft 12/19/2023",
+        "Feature": "Return from handler",
+        "Sub Feature": "mret minhv=1",
+        "Feature Description": "\"If the xinhv bit is set, the hart resumes the trap handler memory access to retrieve the function pointer for vectoring with permissions corresponding to the previous privilege mode. The trap handler function address is obtained from the current privilege mode\u2019s xepc with the low bits of the address cleared to force the access to be naturally aligned to an XLEN/8-byte table entry.\"",
+        "Verification Goal": "Run mret when minhv is set. Check that the next instruction to be executed is the address pointed to by the mepc, and check that mepc gets naturally aligned to XLEN/8 byte.",
+        "Pass/Fail Criteria": "Self Checking Test",
+        "Test Type": "Directed Self-Checking",
+        "Coverage Method": "Testcase",
+        "Link to Coverage": "DTC: clic :: mret_with_minhv\nclic ::mret_with_minhv_and_unaligned_mepc"
+    },
+    {
         "Requirement Location": "CLIC 0.9-draft 4/11/2023",
         "Feature": "Return from debug mode",
         "Sub Feature": "dret",
