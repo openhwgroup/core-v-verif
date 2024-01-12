@@ -3492,8 +3492,8 @@ __attribute__((interrupt("machine"))) void u_sw_irq_handler(void) {
         csrrw t0, mscratch, zero
         csrrw zero, mepc, t0
       )"::: "t0");
-        return;
-        break;
+      return;
+      break;
   }
 
   if (mcause.clic.interrupt == 0 && mcause.clic.exccode == 2) {
