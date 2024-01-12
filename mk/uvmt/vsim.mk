@@ -42,10 +42,11 @@ VSIM_COV_ONLY_PASS_TEST ?= YES
 VSIM_LOCAL_MODELSIMINI  ?= YES
 VOPT_CODE_COV_DUT_ONLY  ?= YES
 VSIM_USER_FLAGS         ?=
-# note: t or toggle is excluded in cv32e40p_v2
 ifeq ($(call IS_YES,$(VOPT_CODE_COV_DUT_ONLY)),YES)
+# note: t/toggle is excluded in cv32e40p_v2
 VOPT_COV                ?= +cover=bcsef+$(RTLSRC_VLOG_CORE_TOP).
 else
+# note: t/toggle is excluded in cv32e40p_v2
 VOPT_COV                ?= +cover=sef+$(RTLSRC_VLOG_TB_TOP).
 endif
 VSIM_COV                ?= -coverage +uvm_set_config_int=uvm_test_top,cov_model_enabled,1
@@ -148,7 +149,7 @@ VLOG_FLAGS += +define+USE_ISS
 VLOG_FLAGS += +define+USE_IMPERASDV
 VLOG_FILE_LIST_IDV = -f $(DV_UVMT_PATH)/imperas_dv.flist
 ifeq ($(call IS_YES,$(COV)),YES)
-VLOG_FLAGS += +define+IMPERAS_COV
+# VLOG_FLAGS += +define+IMPERAS_COV // fixme: add granuality for this enablement
 endif
 endif
 ifeq ($(call IS_YES,$(COV)),YES)
