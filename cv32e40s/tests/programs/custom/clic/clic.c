@@ -3333,9 +3333,7 @@ uint32_t mintthresh_equal(uint32_t index, uint8_t report_name) {
   return 0;
 }
 
-// This function should cover corner cases encountered by broken code during
-// test development that made the ISS and RTL deviate. After resolving issues,
-// leave this function in place to ensure that these issues do not return.
+
 uint32_t mret_with_minhv_and_unaligned_mepc(uint32_t index, uint8_t report_name) {
   volatile uint8_t test_fail  = 0;
   volatile mcause_t mcause    = { 0 };
