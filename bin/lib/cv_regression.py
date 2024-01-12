@@ -96,6 +96,11 @@ class Test:
         if not hasattr(self, 'log'):
             self.log = self.name
 
+        if hasattr(self, 'seed'):
+            self.seed_override = 1
+        else:
+            self.seed_override = 0
+
     def set_cov(self):
         '''Set the coverage flag based on app setting.
         If cov already defined (from testlist), then ignore'''

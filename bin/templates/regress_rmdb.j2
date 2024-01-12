@@ -61,7 +61,10 @@
     </usertcl>
 
     <usertcl name="seedGen">
-        proc getSeeds { num mode regr_name } {
+        proc getSeeds { num mode regr_name seed_override seed_value } {
+            if { $seed_override == "1" } {
+                return $seed_value
+            }
             if {[string equal $mode "FIXED"]} {
                 return [GetRandomValues $num]
             }
@@ -183,7 +186,7 @@
                     <parameter name="t_test_cfg_name" type="tcl">[getTestCfgName "(%t_test_cfg:%)"]</parameter>
                     <parameter name="t_iss"           type="tcl">[getParameterByPriorityYesOrNo "{{iss}}" "{{t.iss}}" "(%build_iss:%)"]</parameter>
                     <parameter name="t_cov"           type="tcl">[getParameterByPriorityYesOrNo "{{coverage}}" "{{t.cov}}" "(%build_cov:%)"]</parameter>
-                    <parameter name="seeds"           type="tcl">[getSeeds "{{t.num}}" "(%SEED_MODE:RAND%)" "(%reg_name%)"]</parameter>
+                    <parameter name="seeds"           type="tcl">[getSeeds "{{t.num}}" "(%SEED_MODE:RAND%)" "(%reg_name%)" "{{t.seed_override}}" "{{t.seed}}"]</parameter>
                     <parameter name="ucdb_path"       type="tcl">[file join "(%results_sim_path%)" "(%t_cfg%)" "{{t.testname}}" "(%t_test_cfg_name:%)" (%t_iteration%)]</parameter>
                     <parameter name="testname"        type="tcl">[getTestName "{{t.testname}}" "(%t_cfg%)" "(%t_test_cfg_name:%)" (%t_iteration%)]</parameter>
                     <parameter name="ucdb_basename"   type="tcl">[getUCDBFilename "{{t.testname}}" "(%t_test_cfg_name:%)"]</parameter>
