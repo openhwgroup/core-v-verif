@@ -21,6 +21,7 @@
 
 #Variables:
 date_time=$(date +%Y.%m.%d-%H.%M)
+your_cvv_branch=$(git rev-parse --abbrev-ref HEAD)
 
 
 usage() {
@@ -165,7 +166,7 @@ merge_xdev_into_sdev () {
 
 clone_x_dv() {
 
-  echo "=== Cloning x-dv ==="
+  echo "======= Cloning x-dv ======="
 
   read -p "This overwrites 'cv32e40x/'. Continue? (default: y, n) " yn
   continue_check $yn
@@ -185,7 +186,7 @@ check_merge_status() {
 
 rejection_diff() {
 
-  echo "=== Merging s/dev to x-dv, using 'theirs' ==="
+  echo "======= Merging s/dev to x-dv, using 'theirs' ======="
   echo "WARNING, this function is crude and makes assumptions."
 
   cd cv32e40x
@@ -203,7 +204,7 @@ rejection_diff() {
 }
 
 need_40s_40x-dv_merge(){
-  echo -e "\n=== Check if there are new commits i cv32e40s to merge to cv32e40x-dv ==="
+  echo -e "\n======= Check if there are new commits i cv32e40s to merge to cv32e40x-dv ======="
 
   missing_commits=()
   nr_commits=100
@@ -259,11 +260,16 @@ need_40s_40x-dv_merge(){
 
 checkout_update_cv32e40s_dev_branch() {
 
-  echo -e "\n== Checkout an updated cv32e40s/dev branch =="
+  echo -e "\n======= Checkout an updated cv32e40s/dev branch ======="
   git remote add ohw_cvv git@github.com:openhwgroup/core-v-verif.git
   git fetch ohw_cvv
   git checkout ohw_cvv/cv32e40s/dev
 
+}
+
+checkout_your_ccv_branch() {
+  echo -e "\n======= Go back to your ccv branch ======="
+  git checkout your_cvv_branch
 }
 
 continue_check() {
@@ -279,6 +285,16 @@ continue_check() {
   esac
 }
 
+recommended_way_forward() {
+  echo "======= Recommended way forward ======="
+
+  echo "1) Evaluate all git conflict"
+  echo "2) Run git diff HEAD on all files (red and green files) to see all merge changes"
+  echo "3) If some files are not renamed from 40s to 40x, the file content is too different to be recognized as the same file."
+  echo "   Compare the 40s and 40x version of the same file and know there are new changes in the 40s version"
+  echo "   that must manualy be merged to the 40x version. Delete the 40s version of the file after the manual merge is finished."
+
+}
 
 main() {
   case $1 in
@@ -286,10 +302,12 @@ main() {
       clone_x_dv
       checkout_update_cv32e40s_dev_branch
       need_40s_40x-dv_merge
+      checkout_your_ccv_branch
       merge_cv32e40s_into_cv32e40x-dv
       move_files_40s_into_40x
       substitute_file_content_40s_into_40x
       check_merge_status
+      recommended_way_forward
       ;;
     "--sdev_into_xdev")
       merge_sdev_into_xdev
