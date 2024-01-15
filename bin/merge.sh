@@ -206,8 +206,8 @@ need_40s_40x-dv_merge(){
   echo -e "\n=== Check if there are new commits i cv32e40s to merge to cv32e40x-dv ==="
 
   missing_commits=()
-  nr_commits=10
-  nr_commits_to_check=10
+  nr_commits=100
+  nr_commits_to_check=100
 
   # Get commit shas from cv32e40s:
   cv32e40s_commits_shas=$(git log --pretty=format:'%H' -$nr_commits -- cv32e40s)
@@ -233,16 +233,23 @@ need_40s_40x-dv_merge(){
   # Print commits needed to be merged,
   if [[ -n $missing_commits ]]; then
     echo -e "\n== Commits needed to be merged: =="
-    echo "There is a chance more commits need merge"
-    echo "The commits with similar name to another commit in cv32e40x-dv is not listed"
     for ((i=0; i <= ${#missing_commits[@]} ; i++)); do
       echo ${missing_commits[$i]}
     done
 
   else
     echo -e "\n== No commits needs to be merged =="
-    echo "(Unless there is a commit without -m message that needs to be merged)"
   fi
+
+  echo "== WARNING 1: =="
+  echo "The script use commit message to identify merged commits"
+  echo "If a new commit in cv32e40s has the same commit message as a commit in cv32e40x-dv or no -m at all,"
+  echo -e "the commit is not in the list of commits that need to be merged.\n"
+
+  echo "== WARNING 2: =="
+  echo "The script compares only the 100 latest commits in cv32e40s and cv32e40x-dv"
+  echo -e "If there has been a lot of activity in the reposetories, the result of the above check can be faulty.\n"
+
 
   # Ask to continue merge
   read -p "Merge commits into cv32e40x-dv? (default: y, n) " yn
@@ -250,9 +257,9 @@ need_40s_40x-dv_merge(){
 
 }
 
-get_branch_cv32e40s_dev() {
+checkout_update_cv32e40s_dev_branch() {
 
-  echo -e "\n== Enter an updated cv32e40s/dev branch =="
+  echo -e "\n== Checkout an updated cv32e40s/dev branch =="
   git remote add ohw_cvv git@github.com:openhwgroup/core-v-verif.git
   git fetch ohw_cvv
   git checkout ohw_cvv/cv32e40s/dev
@@ -277,7 +284,7 @@ main() {
   case $1 in
     "--s_into_x-dv")
       clone_x_dv
-      get_branch_cv32e40s_dev
+      checkout_update_cv32e40s_dev_branch
       need_40s_40x-dv_merge
       merge_cv32e40s_into_cv32e40x-dv
       move_files_40s_into_40x
