@@ -187,8 +187,8 @@ int main(int argc, char *argv[]) {
     int retval;
 
 #ifdef FPU
-  // Floating Point enable
-  fp_enable();
+    // Floating Point enable
+    fp_enable();
 #endif
 
     // Trash the "default" 0 table
