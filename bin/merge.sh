@@ -276,6 +276,7 @@ continue_check() {
   case $1 in
     [Nn])
       echo "Exit merge!"
+      checkout_your_ccv_branch
       exit 1
       ;;
     *)
