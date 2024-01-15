@@ -269,7 +269,7 @@ checkout_update_cv32e40s_dev_branch() {
 
 checkout_your_ccv_branch() {
   echo -e "\n======= Go back to your ccv branch ======="
-  git checkout your_cvv_branch
+  git checkout $your_cvv_branch
 }
 
 continue_check() {
