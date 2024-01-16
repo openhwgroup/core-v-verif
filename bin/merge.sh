@@ -76,7 +76,7 @@ merge_cv32e40s_into_cv32e40x-dv () {
 move_files_40s_into_40x () {
 
   echo "======= Replace 40s/S with 40x/X in file names? (recommended) ======="
-  read -p "(default: y, n)?" yn
+  read -p "y/n? [default: y] " yn
 
   case $yn in
     [Nn])
@@ -99,7 +99,7 @@ move_files_40s_into_40x () {
 substitute_file_content_40s_into_40x () {
 
   echo "======= Exchange 40x/X with 40s/S in file content? (not recommended) ======="
-  read -p "(y, default: n)?" yn
+  read -p "y/n? [default: n] " yn
   case $yn in
     [Yy])
       echo "=== Content substitution ===";
@@ -168,7 +168,7 @@ clone_x_dv() {
 
   echo "======= Cloning x-dv ======="
 
-  read -p "This overwrites 'cv32e40x/'. Continue? (default: y, n) " yn
+  read -p "This overwrites 'cv32e40x/'. Continue? y/n [default: y] " yn
   continue_check $yn
 
   ./bin/clonetb --x-main
@@ -206,42 +206,47 @@ rejection_diff() {
 need_40s_40x-dv_merge(){
   echo -e "\n======= Check if there are new commits i cv32e40s to merge to cv32e40x-dv ======="
 
-  missing_commits=()
-  nr_commits=100
-  nr_commits_to_check=100
+  new_40s_commits=()
+  num_40s_commits_to_check=100
+  num_40x_commits_to_check=100
 
-  # Get commit shas from cv32e40s:
-  cv32e40s_commits_shas=$(git log --pretty=format:'%H' -$nr_commits -- cv32e40s)
-  for sha in $cv32e40s_commits_shas; do
-    commit_message=$(git show -s --format=%s%b $sha)
+  # Get the updated commit messages from cv32e40s
+  echo -e "\n== Checkout an updated cv32e40s/dev branch =="
+  git remote add ohw_cvv git@github.com:openhwgroup/core-v-verif.git
+  git fetch ohw_cvv
+  git checkout ohw_cvv/cv32e40s/dev
+  commit_messages_40s=$(git log --format=%s -$num_40s_commits_to_check -- cv32e40s)
 
-    # If the commit is signed off search for the commit's -m message in cv32e40x-dv
-    # to check if the commit is merged or not.
-    if [[ $commit_message  =~ "Signed-off-by" ]]; then
-      commit_m_message=${commit_message%Signed-off-by*}
+  for commit_message in $commit_messages_40s; do
 
-      cd cv32e40x
-      search_commit=$(git log -$nr_commits_to_check --grep="$commit_m_message" --format=oneline)
-      cd ..
+    # Check if the commit message exist in cv32e40x (checks only the <num_40x_commits_to_check> last commits of 40x)
+    cd cv32e40x
+    is_commit_message_in_40x=$(git log -$num_40x_commits_to_check --grep="$commit_message" --format=oneline)
+    cd ..
 
-      if [[ -z $search_commit ]]; then
-        missing_commit="$sha: $commit_message"
-        missing_commits+=("$missing_commit")
-      fi
+    if [[ -z $is_commit_message_in_40x ]]; then
+      # Add new 40s commit to list. Display the new item with sha and commit message
+      new_40s_commit_wit_both_sha_and_message=$(git log -$num_40s_commits_to_check --grep="$commit_message" --format=oneline)
+      new_40s_commits+=("$new_40s_commit_wit_both_sha_and_message")
     fi
+
   done
 
+  echo -e "\n== Restore your cvv branch =="
+  git checkout $your_cvv_branch
+
   # Print commits needed to be merged,
-  if [[ -n $missing_commits ]]; then
-    echo -e "\n== Commits needed to be merged: =="
-    for ((i=0; i <= ${#missing_commits[@]} ; i++)); do
-      echo ${missing_commits[$i]}
+  if [[ -n $new_40s_commits ]]; then
+    echo -e "\n== New commits in cv32e40s that need to be merged: =="
+    for ((i=0; i <= ${#new_40s_commits[@]} ; i++)); do
+      echo ${new_40s_commits[$i]}
     done
 
   else
-    echo -e "\n== No commits needs to be merged =="
+    echo -e "\n== No new commits in cv32e40s that need to be merged =="
   fi
 
+  # List warnings and ask to continue merge
   echo "== WARNING 1: =="
   echo "The script use commit message to identify merged commits"
   echo "If a new commit in cv32e40s has the same commit message as a commit in cv32e40x-dv or no -m at all,"
@@ -251,32 +256,15 @@ need_40s_40x-dv_merge(){
   echo "The script compares only the 100 latest commits in cv32e40s and cv32e40x-dv"
   echo -e "If there has been a lot of activity in the reposetories, the result of the above check can be faulty.\n"
 
-
-  # Ask to continue merge
-  read -p "Merge commits into cv32e40x-dv? (default: y, n) " yn
+  read -p "Merge the commits into cv32e40x-dv? y/n [default: y] " yn
   continue_check $yn
 
-}
-
-checkout_update_cv32e40s_dev_branch() {
-
-  echo -e "\n======= Checkout an updated cv32e40s/dev branch ======="
-  git remote add ohw_cvv git@github.com:openhwgroup/core-v-verif.git
-  git fetch ohw_cvv
-  git checkout ohw_cvv/cv32e40s/dev
-
-}
-
-checkout_your_ccv_branch() {
-  echo -e "\n======= Go back to your ccv branch ======="
-  git checkout $your_cvv_branch
 }
 
 continue_check() {
   case $1 in
     [Nn])
       echo "Exit merge!"
-      checkout_your_ccv_branch
       exit 1
       ;;
     *)
@@ -301,9 +289,7 @@ main() {
   case $1 in
     "--s_into_x-dv")
       clone_x_dv
-      checkout_update_cv32e40s_dev_branch
       need_40s_40x-dv_merge
-      checkout_your_ccv_branch
       merge_cv32e40s_into_cv32e40x-dv
       move_files_40s_into_40x
       substitute_file_content_40s_into_40x
