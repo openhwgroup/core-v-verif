@@ -808,7 +808,9 @@ class uvme_rv32x_hwloop_covg # (
           is_trap = 0;
           wait (!cv32e40p_rvvi_vif.trap); // bypass if garbage data exist
         end
-        else if (((cv32e40p_rvvi_vif.irq_onehot_priority == 0 && prev_irq_onehot_priority == 0) || prev_irq_onehot_priority_is_0) && !pending_irq && !is_dbg_mode && !is_irq) begin // set excep flag only if no pending irq and not in dbg mode
+        else if (
+            ((cv32e40p_rvvi_vif.irq_onehot_priority == 0 && prev_irq_onehot_priority == 0) || prev_irq_onehot_priority_is_0 || cv32e40p_rvvi_vif.csr_dcsr_step) && 
+            !pending_irq && !is_dbg_mode && !is_irq) begin // set excep flag only if no pending irq and not in dbg mode
           is_trap = 1;
           case (cv32e40p_rvvi_vif.insn)
             TB_INSTR_EBREAK, INSTR_CBREAK : if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm) begin 
@@ -916,7 +918,7 @@ class uvme_rv32x_hwloop_covg # (
 
         if (enter_hwloop_sub) begin 
           enter_hwloop_sub_cnt++;
-          if (is_trap && is_dbg_mode && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_DBG_ENTRY // trap (exception) cycle and debug are b2b
+          if (is_trap && is_dbg_mode && !cv32e40p_rvvi_vif.csr_dcsr_step && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_DBG_ENTRY // exception trap and debug are b2b cycles (except debug step)
             is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0;
             prev_pc_rdata_main = prev_pc_rdata_main-4;
             for (int j=0; j<HWLOOP_NB; j++) begin
@@ -947,7 +949,7 @@ class uvme_rv32x_hwloop_covg # (
           end // EXCEPTION_ENTRY
           else if (pc_is_mtvec_addr() && is_mcause_irq()) begin : IRQ_ENTRY
             if (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]) begin
-              if (is_trap && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_IRQ_ENTRY // trap (exception) cycle and irq are b2b
+              if (is_trap && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_IRQ_ENTRY // exception trap and irq are b2b cycles
                 if (hwloop_stat_main.execute_instr_in_hwloop[0] && lpend_has_pending_irq_main[0]) begin hwloop_stat_main.track_lp_cnt[0]++; lpend_has_pending_irq_main[0] = 0; end
                 if (hwloop_stat_main.execute_instr_in_hwloop[1] && lpend_has_pending_irq_main[1]) begin hwloop_stat_main.track_lp_cnt[1]++; lpend_has_pending_irq_main[1] = 0; end
               end // TRAP_DUETO_IRQ_ENTRY
