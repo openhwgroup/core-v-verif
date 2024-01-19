@@ -36,3 +36,4 @@ plusargs: >
     +enable_misaligned_instr=1
     +test_override_riscv_instr_stream=1
     +test_override_riscv_instr_sequence=1
+    +gen_debug_section=1

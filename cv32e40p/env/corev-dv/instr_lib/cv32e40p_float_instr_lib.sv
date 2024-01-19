@@ -36,27 +36,28 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
   `include "instr_lib/cv32e40p_float_instr_lib_defines.sv"
 
   // properties - start
-  string                  _header;
-  bit                     is_zfinx = riscv_instr_pkg::RV32ZFINX inside {riscv_instr_pkg::supported_isa};
-  bit                     is_fp_instr, is_fpc_instr;
-  riscv_instr_name_t      include_instr[];
-  riscv_instr_name_t      exclude_instr[];
-  riscv_instr_category_t  include_category[];
-  riscv_instr_category_t  exclude_category[];
-  riscv_instr_group_t     include_group[];
-  riscv_instr_group_t     exclude_group[];
-  bit                     use_special_operand_patterns;       // use special pattern opeands on directed instrs
-  bit                     use_fp_only_for_directed_instr;     // use fp instr only as directed instrs in stream
-  bit                     use_no_repetitive_instr_per_stream; // directed instr is not allow to repeat in a stream
-  bit                     use_same_instr_per_stream;          // same directed is use within a stream
-  bit                     use_prev_rd_on_next_operands;       // previous instr rd is used for directed instr operands
-  bit                     use_diff_regs_for_operands = 0;     // to control rand instr uses different registers for instr oeprands
-  bit                     more_weight_for_fdiv_fsqrt_gen;     // more weight on generating fdiv and fsqrt directed_instr
-  bit                     init_gpr = (is_zfinx) ? 1 : 0;      // initialize gpr registers in stream with rand value
-  bit                     init_fpr = (is_zfinx) ? 0 : 1;      // initialize fpr registers in stream with rand value
-  bit                     en_clr_fflags_af_instr;             // clear fflag to prevent residual fflags status of current f_instr
-  bit                     en_clr_fstate;                      // clean the fstate for current f_instr
-  bit                     include_load_store_base_sp;         // include store instr that uses sp
+  string                      _header;
+  cv32e40p_instr_gen_config   cfg_cv32e40p;
+  bit                         is_zfinx = riscv_instr_pkg::RV32ZFINX inside {riscv_instr_pkg::supported_isa};
+  bit                         is_fp_instr, is_fpc_instr;
+  riscv_instr_name_t          include_instr[];
+  riscv_instr_name_t          exclude_instr[];
+  riscv_instr_category_t      include_category[];
+  riscv_instr_category_t      exclude_category[];
+  riscv_instr_group_t         include_group[];
+  riscv_instr_group_t         exclude_group[];
+  bit                         use_special_operand_patterns;       // use special pattern opeands on directed instrs
+  bit                         use_fp_only_for_directed_instr;     // use fp instr only as directed instrs in stream
+  bit                         use_no_repetitive_instr_per_stream; // directed instr is not allow to repeat in a stream
+  bit                         use_same_instr_per_stream;          // same directed is use within a stream
+  bit                         use_prev_rd_on_next_operands;       // previous instr rd is used for directed instr operands
+  bit                         use_diff_regs_for_operands = 0;     // to control rand instr uses different registers for instr oeprands
+  bit                         more_weight_for_fdiv_fsqrt_gen;     // more weight on generating fdiv and fsqrt directed_instr
+  bit                         init_gpr = (is_zfinx) ? 1 : 0;      // initialize gpr registers in stream with rand value
+  bit                         init_fpr = (is_zfinx) ? 0 : 1;      // initialize fpr registers in stream with rand value
+  bit                         en_clr_fflags_af_instr;             // clear fflag to prevent residual fflags status of current f_instr
+  bit                         en_clr_fstate;                      // clean the fstate for current f_instr
+  bit                         include_load_store_base_sp;         // include store instr that uses sp
 
     // for use_prev_rd_on_next_operands implementation usage - start
   riscv_reg_t                 prev_rd;
@@ -116,7 +117,11 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       soft avail_gp_regs[i][0] inside {[S0:A5]}; // MUST: RV32C only uses 8 most common xregs
       soft avail_gp_regs[i][1] inside {SP};      // MUST: some random instr uses SP as rd
       foreach (avail_gp_regs[i][j]) {
+        if (cfg.gen_debug_section) {
+        !(avail_gp_regs[i][j] inside {cfg.reserved_regs, reserved_rd, gp_reg_scratch, gp_reg_sp, cfg_cv32e40p.dp});
+        } else {
         !(avail_gp_regs[i][j] inside {cfg.reserved_regs, reserved_rd, gp_reg_scratch, gp_reg_sp});
+        }
       }
     }
   }
@@ -176,6 +181,11 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     en_clr_fflags_af_instr              = 1;
     en_clr_fstate                       = 0;
     include_load_store_base_sp          = $urandom_range(1);
+    if (cfg.gen_debug_section) begin
+      if (!$cast(cfg_cv32e40p, cfg)) begin
+        `uvm_fatal(_header, $sformatf("pre_randomize - cfg_cv32e40p casting failed"));
+      end
+    end
   endfunction: pre_randomize
 
   function void post_randomize();
@@ -347,6 +357,11 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       logic [31:0] i_imm;
       for (int i=1; i<32; i++) begin
         riscv_reg_t i_gpr = riscv_reg_t'(i);
+        if (cfg.gen_debug_section) begin
+          if (i == int'(cfg_cv32e40p.dp)) begin
+            continue;
+          end
+        end
         rand_fp_val(i_imm);
         `SET_GPR_VALUE(i_gpr,i_imm);
       end
