@@ -65,6 +65,7 @@
    rand bit                      ext_zbt_supported;
    rand bit                      ext_zifencei_supported;
    rand bit                      ext_zicsr_supported;
+   rand bit                      ext_zcb_supported;
 
    rand bit                      mode_s_supported;
    rand bit                      mode_u_supported;
@@ -147,6 +148,7 @@
       `uvm_field_int(                          ext_zbr_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zbs_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zbt_supported              , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zcb_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          mode_s_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          mode_u_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          pmp_supported                  , UVM_DEFAULT          )
