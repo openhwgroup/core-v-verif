@@ -2,3 +2,6 @@
 # SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
 sphinx==4.2.0
 sphinx_rtd_theme==1.0.0
+recommonmark
+#sphinxcontrib-svg2pdfconverter
+#sphinx_github_changelog
