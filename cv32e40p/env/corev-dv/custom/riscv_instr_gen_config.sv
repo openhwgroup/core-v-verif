@@ -415,6 +415,7 @@ class riscv_instr_gen_config extends uvm_object;
     if (fix_sp) {
       sp == SP;
     }
+    sp dist {SP := 15, [TP:T6] := 1}; // higher change assign to reg x2
     sp != tp;
     !(sp inside {GP, RA, ZERO});
     !(tp inside {GP, RA, ZERO});
