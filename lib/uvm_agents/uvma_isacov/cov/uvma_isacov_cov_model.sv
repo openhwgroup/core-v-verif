@@ -110,7 +110,7 @@ covergroup cg_zb_itype_shift (
     ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (rs_is_signed);
   }
 
-  cp_shamt: coverpoint instr.immi {
+  cp_shamt: coverpoint instr.immi[4:0] {
     bins SHAMT[] = {[0:31]};
   }
 
@@ -206,7 +206,7 @@ covergroup cg_zb_itype_ext(
     ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (rs_is_signed);
   }
 
-  cp_shift: coverpoint instr.immi {
+  cp_shift: coverpoint instr.immi[4:0] {
     bins SHIFT[] = {[0:31]};
   }
 
