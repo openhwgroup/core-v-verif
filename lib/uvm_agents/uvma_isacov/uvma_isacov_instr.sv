@@ -245,7 +245,29 @@ function string uvma_isacov_instr_c::convert2string();
   if (name inside {C_MUL}) begin
     instr_str = $sformatf("x%0d, x%0d", this.decode_rs1_c($signed(this.rvfi.insn)), this.decode_rs2_c($signed(this.rvfi.insn)));
   end
-
+  if (itype == ZBA_TYPE) begin
+    instr_str = $sformatf("x%0d, x%0d, x%0d",  rd, rs1, rs2);
+  end
+  if (itype ==  ZBC_TYPE) begin
+    instr_str = $sformatf("x%0d, x%0d, x%0d",  rd, rs1, rs2);
+  end
+  if (itype == ZBS_TYPE) begin
+    if (name inside {BCLR, BEXT, BINV, BSET}) begin
+      instr_str = $sformatf("x%0d, x%0d, x%0d",  rd, rs1, rs2);
+    end
+    else begin
+      instr_str = $sformatf("x%0d, x%0d, x%0x",  rd, rs1, rs2);
+    end
+  end
+  if (name inside {CLZ, CTZ, CPOP, SEXT_B,
+                  SEXT_H, ZEXT_H, ORC_B, REV8}) begin
+    instr_str = $sformatf("x%0d, x%0d",  rd, rs1);
+  end
+  else if (name inside {MIN, MINU, MAX, MAXU,
+                        ANDN, ORN, XNOR, ROL,
+                        ROR, RORI}) begin
+    instr_str = $sformatf("x%0d, x%0d, x%0d",  rd, rs1, rs2);
+  end
   // Default printing of just the instruction name
   begin
     instr_name_t  nm = (name == C_NOP) ? C_ADDI : name;
@@ -366,6 +388,40 @@ function void uvma_isacov_instr_c::set_valid_flags();
     end
     if (name inside {C_SB, C_SH, C_MUL}) begin
        rs2_valid = 1;
+    end
+    return;
+  end
+
+  if (itype == ZBA_TYPE) begin
+    rs1_valid = 1;
+    rs2_valid = 1;
+    rd_valid = 1;
+    return;
+  end
+
+  if (itype == ZBB_TYPE) begin
+    rs1_valid = 1;
+    rd_valid = 1;
+    if (name inside {MIN, MINU, MAX, MAXU,
+                     ANDN, ORN, XNOR, ROL,
+                     ROR}) begin
+      rs2_valid = 1;
+    end
+    return;
+  end
+
+  if (itype == ZBC_TYPE) begin
+    rs1_valid = 1;
+    rs2_valid = 1;
+    rd_valid = 1;
+    return;
+  end
+
+  if (itype == ZBS_TYPE) begin
+    rs1_valid = 1;
+    rd_valid = 1;
+    if (name inside {BCLR, BEXT, BINV, BSET}) begin
+      rs2_valid = 1;
     end
     return;
   end
