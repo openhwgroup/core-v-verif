@@ -73,7 +73,6 @@
 class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
   localparam MAX_HWLOOP_INSTR_GEN = 4095;
-
   rand riscv_reg_t      hwloop_avail_regs[];
   rand bit[1:0]         num_loops_active;
   rand bit              gen_nested_loop; //nested or not-nested hwloop
@@ -155,14 +154,43 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
   }
 
   constraint gen_hwloop_count_c {
+    solve num_loops_active before gen_nested_loop;
+    solve gen_nested_loop  before hwloop_count, hwloop_counti;
 
-      num_loops_active inside {1,2,3};
+    num_loops_active inside {1,2};
 
-      foreach(hwloop_counti[i])
-          hwloop_counti[i] inside {[0:64]};
+    if (num_loops_active > 1) {
+      // num_loops_active == 2
+      if (gen_nested_loop) {
+        // nested loop
+        foreach (hwloop_count[i]) {
+          hwloop_count[i]  inside {[0:10]}; // max 100*2
+          hwloop_counti[i] inside {[0:10]};
+        }
+      } else {
+        // single loop
+        foreach (hwloop_count[i]) {
+          hwloop_count[i]  inside {[0:50]}; // max 50*2
+          hwloop_counti[i] inside {[0:50]};
+        }
+      }
+    } else {
+      // num_loops_active == 1
+      if (gen_nested_loop) {
+        // nested loop
+        foreach (hwloop_count[i]) {
+          hwloop_count[i]  inside {[0:15]}; // max 225
+          hwloop_counti[i] inside {[0:15]};
+        }
+      } else {
+        // single loop
+        foreach (hwloop_count[i]) {
+          hwloop_count[i]  inside {[51:100]}; // max 100
+          hwloop_counti[i] inside {[51:100]};
+        }
+      }
+    } // num_loops_active
 
-      foreach(hwloop_count[i])
-          hwloop_count[i] inside {[0:64]};
   }
 
   constraint num_hwloop_instr_c {
@@ -1078,9 +1106,10 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
 endclass : cv32e40p_xpulp_hwloop_base_stream
 
-//Class: cv32e40p_xpulp_short_hwloop_stream
+//Class: cv32e40p_xpulp_short_hwloop_stream[_directed]
 //Running with <= 20 instructions in HWLOOP
-//Increase Loop Count range to excersize upto 4095 (12-bit) uimmL value
+//Increase Loop Count range to excersize upto 1024
+//Cover high Loop Count upto 4096 (12-bit) uimmL value [for _directed]
 class cv32e40p_xpulp_short_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stream;
 
   rand bit              loop0_high_count;
@@ -1111,39 +1140,26 @@ class cv32e40p_xpulp_short_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stre
 
       num_loops_active inside {1};
 
+      //  For rs1 32 bit count (long setup), not planned to exercise whole range in these streams
+      //  due to long run times
       if(gen_nested_loop) {
         if(loop0_high_count) {
-          hwloop_counti[0] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                                 [2048:4094] := 50, 4095 := 300};
-
-          hwloop_count[0] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                                [2048:4094] := 50, 4095 := 300};
-
-          hwloop_counti[1] inside {[0:5]};
-          hwloop_count[1] inside {[0:5]};
+          hwloop_counti[0] dist {[0:400] := 50, [401:1023] := 5};
+          hwloop_count[0]  dist {[0:400] := 50, [401:1023] := 5};
+          hwloop_counti[1] inside {[0:3]};
+          hwloop_count[1]  inside {[0:3]};
 
         } else {
-          hwloop_counti[0] inside {[0:5]};
-          hwloop_count[0] inside {[0:5]};
-
-          hwloop_counti[1] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                                 [2048:4094] := 50, 4095 := 300};
-
-          hwloop_count[1] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                                [2048:4094] := 50, 4095 := 300};
+          hwloop_counti[0] inside {[0:3]};
+          hwloop_count[0]  inside {[0:3]};
+          hwloop_counti[1] dist {[0:400] := 50, [401:1023] := 5};
+          hwloop_count[1]  dist {[0:400] := 50, [401:1023] := 5};
         }
-
-
       } else {
         foreach(hwloop_counti[i])
-          hwloop_counti[i] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                                 [2048:4094] := 50, 4095 := 300};
-
-        //For rs1 32 bit count, not planned to exercise whole range in these streams
-        //due to long run times
+          hwloop_counti[i] dist {[0:400] := 50, [401:1023] := 5};
         foreach(hwloop_count[i])
-          hwloop_count[i] dist {[0:400] := 10, [401:1023] := 300, [1024:2047] := 150,
-                                [2048:4094] := 50, 4095 := 300};
+          hwloop_count[i]  dist {[0:400] := 50, [401:1023] := 5};
       }
   }
 
@@ -1233,13 +1249,70 @@ class cv32e40p_xpulp_short_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stre
   endfunction : post_randomize
 
 endclass : cv32e40p_xpulp_short_hwloop_stream
+// directed test for higher count/counti
+class cv32e40p_xpulp_short_hwloop_stream_directed extends cv32e40p_xpulp_short_hwloop_stream;
+
+  `uvm_object_utils_begin(cv32e40p_xpulp_short_hwloop_stream_directed)
+      `uvm_field_int(num_loops_active, UVM_DEFAULT)
+      `uvm_field_int(gen_nested_loop, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_setup_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_counti_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_starti_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_endi_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_setupi_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(hwloop_count, UVM_DEFAULT)
+      `uvm_field_sarray_int(hwloop_counti, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_hwloop_instr, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_hwloop_ctrl_instr, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_fill_instr_loop_ctrl_to_loop_start, UVM_DEFAULT)
+      `uvm_field_int(num_fill_instr_in_loop1_till_loop0_setup, UVM_DEFAULT)
+      `uvm_field_int(setup_l0_before_l1_start, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_instr_cv_start_to_loop_start_label, UVM_DEFAULT)
+      `uvm_field_int(loop0_high_count, UVM_DEFAULT)
+  `uvm_object_utils_end
+  
+  constraint gen_hwloop_count_c {
+
+      solve gen_nested_loop, loop0_high_count before hwloop_count, hwloop_counti;
+      solve gen_nested_loop before loop0_high_count;
+
+      num_loops_active inside {1};
+
+      // higher count/counti will be covered in directed test to improve simtime
+      //  For rs1 32 bit count (long setup), not planned to exercise whole range in these streams
+      //  due to long run times
+      if(gen_nested_loop) {
+        if(loop0_high_count) {
+          hwloop_counti[0] dist {[1024:4094] := 50, 4095 := 5};
+          hwloop_count[0]  dist {[1024:4094] := 50, 4095 := 5};
+          hwloop_counti[1] inside {[1:2]};
+          hwloop_count[1]  inside {[1:2]};
+        } else {
+          hwloop_counti[0] inside {[1:2]};
+          hwloop_count[0]  inside {[1:2]};
+          hwloop_counti[1] dist {[1024:4094] := 50, 4095 := 5};
+          hwloop_count[1]  dist {[1024:4094] := 50, 4095 := 5};
+        }
+      } else {
+        foreach(hwloop_counti[i])
+          hwloop_counti[i] dist {[1024:4094] := 50, 4095 := 5};
+        foreach(hwloop_count[i])
+          hwloop_count[i]  dist {[1024:4094] := 50, 4095 := 5};
+      }
+  }
+
+  function new(string name = "cv32e40p_xpulp_short_hwloop_stream_directed");
+      super.new(name);
+  endfunction : new
+
+endclass : cv32e40p_xpulp_short_hwloop_stream_directed
 
 
 //Class: cv32e40p_xpulp_long_hwloop_stream
 //Running with large instruction number in HWLOOP upto 4094 corresponding to 12-bit uimmL for end label.
 //Max num inside HWLOOP body can be 4094 only as End label is on instruction after last instr of HWLOOP.
-//Reduce Loop Count range to upto 50.
-class cv32e40p_xpulp_long_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stream;
+//Reduce Loop Count range to upto 25.
+class cv32e40p_xpulp_long_hwloop_stream extends cv32e40p_xpulp_hwloop_base_stream; // fixme
 
   `uvm_object_utils_begin(cv32e40p_xpulp_long_hwloop_stream)
       `uvm_field_int(num_loops_active, UVM_DEFAULT)
@@ -1260,12 +1333,21 @@ class cv32e40p_xpulp_long_hwloop_stream extends cv32e40p_xpulp_hwloop_base_strea
   `uvm_object_utils_end
 
   constraint gen_hwloop_count_c {
+      solve num_hwloop_instr before hwloop_count, hwloop_counti;
       num_loops_active inside {1};
-      foreach(hwloop_counti[i])
-          hwloop_counti[i] inside {[0:25]};
+      foreach(hwloop_counti[i]) {
+          if (num_hwloop_instr[i] < 200)                                  hwloop_counti[i] inside {[0:25]};
+          if (num_hwloop_instr[i] >= 200  && num_hwloop_instr[i] < 1000)  hwloop_counti[i] inside {[0:10]};
+          if (num_hwloop_instr[i] >= 1000 && num_hwloop_instr[i] < 1500)  hwloop_counti[i] inside {[0:3]};
+          if (num_hwloop_instr[i] >= 1500 )                               hwloop_counti[i] inside {[0:2]};
+      }
 
-      foreach(hwloop_count[i])
-          hwloop_count[i] inside {[0:25]};
+      foreach(hwloop_count[i]) {
+          if (num_hwloop_instr[i] < 200)                                  hwloop_count[i] inside {[0:25]};
+          if (num_hwloop_instr[i] >= 200  && num_hwloop_instr[i] < 1000)  hwloop_count[i] inside {[0:10]};
+          if (num_hwloop_instr[i] >= 1000 && num_hwloop_instr[i] < 1500)  hwloop_count[i] inside {[0:3]};
+          if (num_hwloop_instr[i] >= 1500 )                               hwloop_count[i] inside {[0:2]};
+      }
   }
 
 

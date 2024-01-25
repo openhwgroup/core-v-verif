@@ -1554,6 +1554,7 @@ class cv32e40p_fp_op_fwd_instr_w_loadstore_stream extends cv32e40p_float_zfinx_b
   load_store_opt_t  load_store_option=NULL;
   bit               use_load_store_w_sp_only;
   bit               use_compress_load_store_only;
+  bit               use_post_inc_load_store;
   int unsigned      num_of_load_store_instr;
   bit               post_fp_src_is_load_dest;
   int unsigned      cnt, cnt_limit=100;
@@ -1575,7 +1576,17 @@ class cv32e40p_fp_op_fwd_instr_w_loadstore_stream extends cv32e40p_float_zfinx_b
     en_clr_fflags_af_instr              = 0;
     include_load_store_base_sp          = 0; // do not reserved SP
     reserved_rd                         = new[reserved_rd.size()+1] ({reserved_rd, ZERO});
+    use_post_inc_load_store             = $urandom_range(1);
   endfunction: pre_randomize
+
+  virtual function void rand_fp_val(output logic [31:0] val);
+    if (!use_post_inc_load_store) super.rand_fp_val(val);
+    else begin
+      void'(std::randomize(val) with {
+        val[31:23] == 0; val[22:18] != 0; val[17:13] == 0; val[12:8] == 0; val[7:0] == 0;
+      });
+    end
+  endfunction : rand_fp_val
 
   virtual function void update_current_instr_arg_list(int idx=0);
   endfunction: update_current_instr_arg_list
@@ -1668,8 +1679,8 @@ class cv32e40p_fp_op_fwd_instr_w_loadstore_stream extends cv32e40p_float_zfinx_b
             rand_avail_fp_regs[j] inside {[FS0:FA5]};
           }
         });
-        avail_gp_regs[i] = rand_avail_gp_regs;
-        avail_fp_regs[i] = rand_avail_fp_regs;
+        avail_gp_regs[i] = rand_avail_gp_regs; // override c_avail_gp_regs
+        avail_fp_regs[i] = rand_avail_fp_regs; // override c_avail_gp_regs
       end
 
 
@@ -1717,11 +1728,20 @@ class cv32e40p_fp_op_fwd_instr_w_loadstore_stream extends cv32e40p_float_zfinx_b
         else                                                exclude_instr = new[8] ({C_LW, C_SW, C_FLW, C_FSW, C_LWSP, C_SWSP, C_FLWSP, C_FSWSP});
         if      (use_load_store_w_sp_only && !is_zfinx)     include_instr = new[4] ({C_LWSP, C_SWSP, C_FLWSP, C_FSWSP});
         else if (use_load_store_w_sp_only && is_zfinx)      include_instr = new[2] ({C_LWSP, C_SWSP});
-        unique case (load_store_option)
-          STORE_ONLY : include_category = new[2] ({STORE, POST_INC_STORE});
-          LOAD_ONLY  : include_category = new[2] ({LOAD, POST_INC_LOAD});
-          LOAD_STORE : include_category = new[4] ({LOAD, POST_INC_LOAD, STORE, POST_INC_STORE});
-        endcase
+        if (use_post_inc_load_store) begin : INCLUDE_CV_LOAD_STORE
+          unique case (load_store_option)
+            STORE_ONLY : include_category = new[2] ({STORE, POST_INC_STORE});
+            LOAD_ONLY  : include_category = new[2] ({LOAD, POST_INC_LOAD});
+            LOAD_STORE : include_category = new[4] ({LOAD, POST_INC_LOAD, STORE, POST_INC_STORE});
+          endcase
+        end 
+        else begin : EXCLUDE_CV_LOAD_STORE
+          unique case (load_store_option)
+            STORE_ONLY : include_category = new[1] ({STORE});
+            LOAD_ONLY  : include_category = new[1] ({LOAD});
+            LOAD_STORE : include_category = new[2] ({LOAD, STORE});
+          endcase
+        end
         // note: include_category cannot mixed with inclue_group else it will have no effect (group override cat)
         // if (!is_zfinx) include_group = new[4] ({RV32I, RV32C, RV32F, RV32FC});
         // else           include_group = new[3] ({RV32I, RV32C, RV32ZFINX});
