@@ -125,6 +125,17 @@ module uvmt_cv32e40p_debug_assert
         else
             `uvm_error(info_tag,$sformatf("Debug mode with wrong cause after ebreak, case = %d",cov_assert_if.dcsr_q[8:6]));
 
+    ////////////////////////////////////////////////////////////////////////////
+    // It appears that the properties "p_cebreak_exception" and
+    // "p_ebreak_exception" are identical in all but name.  However, those two
+    // properties are not duplicate as they are using two different instruction
+    // decoding signals:
+    //    - property p_ebreak_exception uses i_ebreak.
+    //    - property p_cebreak_exception uses i_cebreak which differs thanks to
+    //      cov_assert_if.id_stage_is_compressed value.
+    //
+
+
     // c.ebreak without dcsr.ebreakm results in exception at mtvec
     // Exclude single stepping as the sequence gets very complicated
     property p_cebreak_exception;
@@ -135,7 +146,7 @@ module uvmt_cv32e40p_debug_assert
                                                                 && (cov_assert_if.mepc_q == pc_at_ebreak) &&
                                                                    (cov_assert_if.id_stage_pc == cov_assert_if.mtvec);
     endproperty
-    
+
     a_cebreak_exception: assert property(p_cebreak_exception)
         else
             `uvm_error(info_tag,$sformatf("Exception not entered correctly after c.ebreak with dcsr.ebreak=0"));
@@ -150,7 +161,7 @@ module uvmt_cv32e40p_debug_assert
                                                                 && (cov_assert_if.mepc_q == pc_at_ebreak) &&
                                                                    (cov_assert_if.id_stage_pc == cov_assert_if.mtvec);
     endproperty
-    
+
     // TODO: Fails formal as above
     a_ebreak_exception: assert property(p_ebreak_exception)
         else
