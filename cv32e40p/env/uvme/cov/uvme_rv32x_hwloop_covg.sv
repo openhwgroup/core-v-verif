@@ -148,10 +148,10 @@ class uvme_rv32x_hwloop_covg # (
     } \
     cp_lpcount_``LOOP_IDX : coverpoint (csr_hwloop.lp_count[``LOOP_IDX``]) iff (csr_hwloop.lp_start_wb[``LOOP_IDX``] && csr_hwloop.lp_end_wb[``LOOP_IDX``] && csr_hwloop.lp_count_wb[``LOOP_IDX``]) { \
       // bins lpcount_zero           = {32'h0}; // valid CSR writes to sample should be when lpcount{0/1}.value != 0 \
-      bins lpcount_range_low_1    = {[32'h0000_00FF : 32'h0000_0001]}; // 1 <= x <255 \
-      bins lpcount_range_low_2    = {[32'h0000_1FFF : 32'h0000_0100]}; // 256 <= x < 4K \
-      // bins lpcount_range_middle   = {[32'h00FF_FFFF : 32'h0000_1000]}; // 4K <= x < 16M \
-      // bins lpcount_range_high     = {[32'hFFFF_FFFF : 32'h0100_0000]}; // 16M <= x < 4G \
+      bins lpcount_range_low_1    = {[32'h0000_0190 : 32'h0000_0001]}; // count 0-400 \
+      bins lpcount_range_low_2    = {[32'h0000_03FF : 32'h0000_0191]}; // count 401-1023 \
+      bins lpcount_range_low_3    = {[32'h0000_0FFE : 32'h0000_0400]}; // count 1024-4094 \
+      bins lpcount_range_low_4    = {32'h0000_0FFF}; // 4095 \
       // higher counts are not covered now to reduced simtime (amend if needed) \
     } \
     ccp_lpstart_0_lpend_lpcount_``LOOP_IDX : cross cp_lpstart_``LOOP_IDX``, cp_lpend_``LOOP_IDX``, cp_lpcount_``LOOP_IDX`` { \
