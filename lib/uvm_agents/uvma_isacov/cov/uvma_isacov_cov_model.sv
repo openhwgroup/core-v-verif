@@ -1840,6 +1840,7 @@ covergroup cg_sequential(string name,
   cross_seq_instr_x2: cross cp_instr, cp_instr_prev_x2;
 
   cp_group: coverpoint (instr.group) {
+    illegal_bins ILL_UNKNOWN = {UNKNOWN_GROUP};
     illegal_bins ILL_EXT_M = {MUL_GROUP, MULTI_MUL_GROUP, DIV_GROUP} `WITH (!ext_m_supported);
     illegal_bins ILL_EXT_A = {ALOAD_GROUP, ASTORE_GROUP, AMEM_GROUP} `WITH (!ext_a_supported);
     illegal_bins ILL_MISALIGN = {MISALIGN_LOAD_GROUP, MISALIGN_STORE_GROUP} `WITH (!unaligned_access_supported);
@@ -1847,6 +1848,7 @@ covergroup cg_sequential(string name,
 
   cp_group_pipe_x2:  coverpoint (instr_prev.group) iff (instr_prev != null) {
     ignore_bins IGN_X2_OFF = {[0:$]} `WITH (!seq_instr_group_x2_enabled);
+    illegal_bins ILL_UNKNOWN = {UNKNOWN_GROUP};
     illegal_bins ILL_EXT_M = {MUL_GROUP, MULTI_MUL_GROUP, DIV_GROUP} `WITH (!ext_m_supported);
     illegal_bins ILL_EXT_A = {ALOAD_GROUP, ASTORE_GROUP, AMEM_GROUP} `WITH (!ext_a_supported);
     illegal_bins ILL_MISALIGN = {MISALIGN_LOAD_GROUP, MISALIGN_STORE_GROUP} `WITH (!unaligned_access_supported);
@@ -1854,6 +1856,7 @@ covergroup cg_sequential(string name,
 
   cp_group_pipe_x3: coverpoint (instr_prev2.group) iff (instr_prev2 != null) {
     ignore_bins IGN_X3_OFF = {[0:$]} `WITH (!seq_instr_group_x3_enabled);
+    illegal_bins ILL_UNKNOWN = {UNKNOWN_GROUP};
     illegal_bins ILL_EXT_M = {MUL_GROUP, MULTI_MUL_GROUP, DIV_GROUP} `WITH (!ext_m_supported);
     illegal_bins ILL_EXT_A = {ALOAD_GROUP, ASTORE_GROUP, AMEM_GROUP} `WITH (!ext_a_supported);
     illegal_bins ILL_MISALIGN = {MISALIGN_LOAD_GROUP, MISALIGN_STORE_GROUP} `WITH (!unaligned_access_supported);
@@ -1861,6 +1864,7 @@ covergroup cg_sequential(string name,
 
   cp_group_pipe_x4: coverpoint (instr_prev3.group) iff (instr_prev3 != null) {
     ignore_bins IGN_X4_OFF = {[0:$]} `WITH (!seq_instr_group_x4_enabled);
+    illegal_bins ILL_UNKNOWN = {UNKNOWN_GROUP};
     illegal_bins ILL_EXT_M = {MUL_GROUP, MULTI_MUL_GROUP, DIV_GROUP} `WITH (!ext_m_supported);
     illegal_bins ILL_EXT_A = {ALOAD_GROUP, ASTORE_GROUP, AMEM_GROUP} `WITH (!ext_a_supported);
     illegal_bins ILL_MISALIGN = {MISALIGN_LOAD_GROUP, MISALIGN_STORE_GROUP} `WITH (!unaligned_access_supported);
