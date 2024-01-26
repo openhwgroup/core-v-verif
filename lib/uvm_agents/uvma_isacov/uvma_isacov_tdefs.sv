@@ -144,8 +144,7 @@ typedef enum {
   DIV_GROUP,
   ALOAD_GROUP,
   ASTORE_GROUP,
-  AMEM_GROUP,
-  ZCB_GROUP
+  AMEM_GROUP
 } instr_group_t;
 
 typedef enum bit[CSR_ADDR_WL-1:0] {

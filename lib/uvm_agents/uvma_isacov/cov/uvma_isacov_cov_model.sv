@@ -1774,6 +1774,36 @@ covergroup cg_zcb_sext(
 
 endgroup : cg_zcb_sext
 
+covergroup cg_zcb_mul(
+    string name,
+    bit rs1_is_signed,
+    bit rs2_is_signed
+) with function sample (
+    uvma_isacov_instr_c instr
+);
+  option.per_instance = 1;
+  option.name = name;
+
+  cp_rsdc: coverpoint instr.c_rs1;
+  cp_rs2: coverpoint instr.c_rs2;
+
+  cp_rsdc_value: coverpoint instr.rs1_value_type {
+    ignore_bins POS_OFF = {POSITIVE} `WITH (!rs1_is_signed);
+    ignore_bins NEG_OFF = {NEGATIVE} `WITH (!rs1_is_signed);
+    ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (rs1_is_signed);
+  }
+
+  cp_rs2_value: coverpoint instr.rs2_value_type {
+    ignore_bins POS_OFF = {POSITIVE} `WITH (!rs2_is_signed);
+    ignore_bins NEG_OFF = {NEGATIVE} `WITH (!rs2_is_signed);
+    ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (rs2_is_signed);
+  }
+
+  `ISACOV_CP_BITWISE(cp_rs1_toggle, instr.rs1_value, 1)
+  `ISACOV_CP_BITWISE(cp_rs2_toggle, instr.rs2_value, 1)
+
+endgroup : cg_zcb_mul
+
 covergroup cg_sequential(string name,
                          bit seq_instr_group_x2_enabled,
                          bit seq_instr_group_x3_enabled,
@@ -1781,6 +1811,7 @@ covergroup cg_sequential(string name,
                          bit seq_instr_x2_enabled,
                          bit [CSR_MASK_WL-1:0] cfg_illegal_csr,
                          bit unaligned_access_supported,
+                         bit debug_supported,
                          bit ext_m_supported,
                          bit ext_c_supported,
                          bit ext_zba_supported,
@@ -2067,7 +2098,7 @@ class uvma_isacov_cov_model_c extends uvm_component;
   cg_zcb_sext       rv32zcb_sext_h_cg;
   cg_zcb_zextb      rv32zcb_zext_b_cg;
   cg_zcb_zexth      rv32zcb_zext_h_cg;
-  cg_ca             rv32zcb_mul_cg;
+  cg_zcb_mul        rv32zcb_mul_cg;
   cg_zcb_sext       rv32zcb_not_cg;
 
   // Sequential instruction coverage
@@ -2301,7 +2332,10 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
       rv32i_fence_cg  = new("rv32i_fence_cg",  FENCE);
       rv32i_wfi_cg    = new("rv32i_wfi_cg",    WFI);
       rv32i_mret_cg   = new("rv32i_mret_cg",   MRET);
-      rv32i_dret_cg   = new("rv32i_dret_cg",   DRET);
+      // DRET is an illegal instruction if Debug isn't supported
+      if (cfg.core_cfg.debug_supported) begin
+        rv32i_dret_cg   = new("rv32i_dret_cg",   DRET);
+      end
       rv32i_ecall_cg  = new("rv32i_ecall_cg",  ECALL);
       rv32i_ebreak_cg = new("rv32i_ebreak_cg", EBREAK);
     end
@@ -2831,11 +2865,8 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
                              .rs_is_signed(rs1_is_signed[C_SEXT_H]));
       if (cfg.core_cfg.ext_m_supported) begin
         rv32zcb_mul_cg = new("rv32zcb_mul_cg",
-                              .reg_crosses_enabled(cfg.reg_crosses_enabled),
-                              .reg_hazards_enabled(cfg.reg_hazards_enabled),
                               .rs1_is_signed(rs1_is_signed[C_MUL]),
-                              .rs2_is_signed(rs2_is_signed[C_MUL]),
-                              .rd_is_signed(rd_is_signed[C_MUL]));
+                              .rs2_is_signed(rs2_is_signed[C_MUL]));
       end
       rv32zcb_not_cg = new("rv32zcb_not_cg",
                              .rs_is_signed(rs1_is_signed[C_NOT]));
@@ -2851,6 +2882,7 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
                       .seq_instr_x2_enabled(cfg.seq_instr_x2_enabled),
                       .cfg_illegal_csr(cfg.core_cfg.unsupported_csr_mask),
                       .unaligned_access_supported(cfg.core_cfg.unaligned_access_supported),
+                      .debug_supported(cfg.core_cfg.debug_supported),
                       .ext_m_supported(cfg.core_cfg.ext_m_supported),
                       .ext_c_supported(cfg.core_cfg.ext_c_supported),
                       .ext_zba_supported(cfg.core_cfg.ext_zba_supported),
@@ -2887,10 +2919,11 @@ function void uvma_isacov_cov_model_c::sample (uvma_isacov_instr_c instr);
 
   logic have_sampled = 0;
   logic is_ecall_or_ebreak =
-    ( instr.trap[ 8:3] ==  8)                              ||  // Ecall U-mode
-    ( instr.trap[ 8:3] == 11)                              ||  // Ecall M-mode
-    ((instr.trap[ 8:3] ==  3) && (instr.trap[13:12] == 0)) ||  // Ebreak (ebreakm==0)
-    ( instr.trap[11:9] ==  1);                                 // Ebreak to* or in D-mode (* ebreakm==1)
+    ((instr.trap[ 8:3] ==  8) || (instr.cause ==  8))       ||  // Ecall U-mode
+    ((instr.trap[ 8:3] == 11) || (instr.cause ==  11))      ||  // Ecall M-mode
+    ((instr.trap[ 8:3] ==  3) && (instr.trap[13:12] == 0))  ||  // Ebreak (ebreakm==0)
+    ((instr.cause == 3))  ||                                   // Ebreak (ebreakm==0)
+    ( instr.trap[11:9] ==  1);                                // Ebreak to* or in D-mode (* ebreakm==1)
   logic is_normal_instr =
     (instr.trap[0] == 0) ||                              // No rvfi_trap
     ((instr.trap[11:9] == 4) && (instr.trap[1] == 0));   // Single-step, without any exception

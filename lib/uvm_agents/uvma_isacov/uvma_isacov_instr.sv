@@ -24,7 +24,8 @@ class uvma_isacov_instr_c#(int ILEN=DEFAULT_ILEN,
   bit           illegal;
 
   // Set for traped instructions, determines what should not be considered for coverage
-  bit [13:0]    trap;
+  bit [13:0]     trap;
+  bit [XLEN-1:0] cause;
 
   // Enumeration
   instr_name_t  name;
@@ -82,6 +83,7 @@ class uvma_isacov_instr_c#(int ILEN=DEFAULT_ILEN,
 
     `uvm_field_int(illegal,   UVM_ALL_ON | UVM_NOPRINT);
     `uvm_field_int(trap,      UVM_ALL_ON | UVM_NOPRINT);
+    `uvm_field_int(cause,      UVM_ALL_ON | UVM_NOPRINT);
     `uvm_field_int(csr_val,   UVM_ALL_ON | UVM_NOPRINT);
     `uvm_field_int(rs1,       UVM_ALL_ON | UVM_NOPRINT);
     `uvm_field_int(rs1_value, UVM_ALL_ON | UVM_NOPRINT);

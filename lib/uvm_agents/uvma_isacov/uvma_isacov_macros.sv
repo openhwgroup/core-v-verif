@@ -27,6 +27,7 @@
 
 `define ISACOV_IGN_BINS \
     ignore_bins IGN_UNKNOWN = {UNKNOWN}; \
+    ignore_bins IGN_DRET = {DRET} `WITH (!debug_supported); \
     ignore_bins IGN_M = {MUL, MULH, MULHSU, MULHU, \
                          DIV, DIVU, REM, REMU, C_MUL} `WITH (!ext_m_supported); \
     ignore_bins IGN_C = {C_ADDI4SPN, C_LW, C_SW, C_NOP, \
