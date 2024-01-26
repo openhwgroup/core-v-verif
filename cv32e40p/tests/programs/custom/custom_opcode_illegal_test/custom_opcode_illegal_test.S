@@ -87,7 +87,14 @@ main:             fence.i
                   addi                 t2, t0, 337
                   sll                  t0, t2, t0
                   c.nop
-                  # .4byte 0x80fe4c33 # manual: opcode = OP, func7 = 1000000
+
+                  # Manual instructions
+                  .4byte 0x80fe4c33 # manual: opcode = OP, func7 = 1000000
+                  .4byte 0x00200073 # manual: instr uret, opcode = SYSTEM, [31:20] = h002
+                  .4byte 0xb1600073 # manual: random [31:20], opcode = SYSTEM
+                  
+
+                  # Generated instructions
                   .4byte 0x3e0003fb # custom-3
                   .4byte 0xb286bdfb # all the groups of 8 illegal instr in custom-3
                   .4byte 0x5f57cbfb # custom-3 cv.cplxconj block
