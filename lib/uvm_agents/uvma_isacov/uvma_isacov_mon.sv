@@ -102,29 +102,6 @@ function string uvma_isacov_mon_c::convert_instr_to_spike_name(string instr_name
     spike_instr_name = { spike_instr_name, chr };
   end
 
-  // But fence.i is encoded as fence_i in the disassembler
-  if (spike_instr_name == "fence.i")
-    spike_instr_name = "fence_i";
-  // Ugh
-  if (spike_instr_name == "lr.w")
-    spike_instr_name = "lr_w";
-  if (spike_instr_name == "bset")
-    spike_instr_name = "bset (args unknown)";
-  if (spike_instr_name == "bseti")
-    spike_instr_name = "bseti (args unknown)";
-  if (spike_instr_name == "bclr")
-    spike_instr_name = "bclr (args unknown)";
-  if (spike_instr_name == "bclri")
-    spike_instr_name = "bclri (args unknown)";
-  if (spike_instr_name == "binv")
-    spike_instr_name = "binv (args unknown)";
-  if (spike_instr_name == "binvi")
-    spike_instr_name = "binvi (args unknown)";
-  if (spike_instr_name == "bext")
-    spike_instr_name = "bext (args unknown)";
-  if (spike_instr_name == "bexti")
-    spike_instr_name = "bexti (args unknown)";
-
   return spike_instr_name;
 
 endfunction : convert_instr_to_spike_name
