@@ -167,6 +167,7 @@ main:             fence.i
                   .4byte 0xca413e0b # cv.elw
                   .4byte 0x21bd452b # custom-1 plane B
                   .4byte 0xe2a0c1fb # custom-3 cv.shuffleI(1-3) blocks
+                  .4byte 0x7659c37b # custom-3 cv.sub.div
                   .4byte 0xfcbf0e5b # custom-2
                   .4byte 0xbfe4caab # custom-1 plane B
                   .4byte 0x6b3d3eab # custom-1 Plane A illegal func7
@@ -183,6 +184,7 @@ main:             fence.i
                   .4byte 0x338b9efb # custom-3
                   .4byte 0x3202257b # custom-3
                   .4byte 0x503deaab # custom-1 func3 = 110
+                  .4byte 0x752290fb # custom-3 cv.sub.div
                   .4byte 0x794274fb # all the groups of 8 illegal instr in custom-3
                   .4byte 0xed218d5b # custom-2
                   .4byte 0x54f6957b # custom-3 cv.cplxmul block
@@ -196,12 +198,14 @@ main:             fence.i
                   .4byte 0x4a4e5b7b # custom-3
                   .4byte 0xfaba2c7b # custom-3 cv.shuffleI(1-3) blocks
                   .4byte 0xf32bb72b # custom-1 Plane A illegal func7
+                  .4byte 0x778c567b # custom-3 cv.sub.div
                   .4byte 0xae4fc3ab # custom-1 plane B
                   .4byte 0xeac39a7b # all the groups of 8 illegal instr in custom-3
                   .4byte 0x93df50fb # custom-3
                   .4byte 0xf0c65d7b # custom-3 cv.shuffleI(1-3) blocks
                   .4byte 0xaa7c4efb # custom-3
                   .4byte 0x6bdcbd7b # custom-3
+                  .4byte 0x76bb9b7b # custom-3 cv.sub.div
                   .4byte 0xd1c442ab # custom-1 plane B
                   .4byte 0x4fad05fb # custom-3
                   .4byte 0x477c157b # custom-3
@@ -262,6 +266,7 @@ main:             fence.i
                   .4byte 0x074dbefb # custom-3
                   .4byte 0xd0434dfb # custom-3 cv.shuffleI(1-3) blocks
                   .4byte 0x82a022fb # custom-3
+                  .4byte 0x76283d7b # custom-3 cv.sub.div
                   .4byte 0x1bf15f7b # custom-3
                   .4byte 0xd1bcd9fb # custom-3 cv.shuffleI(1-3) blocks
                   .4byte 0xd85888fb # custom-3 cv.shuffleI(1-3) blocks
@@ -291,6 +296,7 @@ main:             fence.i
                   .4byte 0x5e3fe8fb # custom-3 cv.cplxconj block
                   .4byte 0x07afa9fb # custom-3
                   .4byte 0x6af8227b # custom-3
+                  .4byte 0x7441847b # custom-3 cv.sub.div
                   .4byte 0x32be3a7b # custom-3
                   .4byte 0x569f1e7b # custom-3 cv.cplxmul block
                   .4byte 0x1a8fbc7b # custom-3
@@ -300,6 +306,7 @@ main:             fence.i
                   .4byte 0x94754e2b # custom-1 plane B
                   .4byte 0x80d54fab # custom-1 plane B
                   .4byte 0xf0ce3d2b # custom-1 Plane A illegal func7
+                  .4byte 0x75ffb4fb # custom-3 cv.sub.div
                   .4byte 0xcddc00db # custom-2
                   .4byte 0x42a1beab # legal func7 but non-zero value for rs2
                   .4byte 0xe7debc2b # custom-1 Plane A illegal func7
@@ -322,6 +329,7 @@ main:             fence.i
                   .4byte 0x2211aafb # custom-3
                   .4byte 0xce96855b # custom-2
                   .4byte 0x9247c87b # custom-3
+                  .4byte 0x7467537b # custom-3 cv.sub.div
                   .4byte 0x7b824bab # custom-1 plane B
                   .4byte 0xfeffc82b # custom-1 plane B
                   .4byte 0xd8c235fb # custom-3 cv.shuffleI(1-3) blocks
@@ -336,6 +344,7 @@ main:             fence.i
                   .4byte 0x07a2537b # custom-3
                   .4byte 0x2bdf11fb # custom-3
                   .4byte 0xc05e422b # custom-1 plane B
+                  .4byte 0x76a022fb # custom-3 cv.sub.div
                   .4byte 0xfc454e2b # custom-1 plane B
                   .4byte 0x3f895afb # custom-3
                   .4byte 0x1fc79efb # custom-3
@@ -370,6 +379,7 @@ main:             fence.i
                   .4byte 0x3a351efb # custom-3
                   .4byte 0xb862115b # custom-2
                   .4byte 0xe7f24cab # custom-1 plane B
+                  .4byte 0x7738e07b # custom-3 cv.sub.div
                   .4byte 0x7318f9fb # custom-3 cv.abs(.h/.b) & below
                   .4byte 0xd2bf25fb # custom-3 cv.shuffleI(1-3) blocks
                   .4byte 0xe993175b # custom-2 bitrev 29:27
@@ -395,6 +405,7 @@ main:             fence.i
                   .4byte 0x5289827b # custom-3
                   .4byte 0x26114c7b # custom-3
                   .4byte 0x64394eab # custom-1 plane B
+                  .4byte 0x765675fb # custom-3 cv.sub.div
                   .4byte 0xcde78edb # custom-2
                   .4byte 0x7dcab4fb # all the groups of 8 illegal instr in custom-3
                   .4byte 0x87e91adb # custom-2
@@ -412,6 +423,7 @@ main:             fence.i
                   .4byte 0x0e0f967b # custom-3
                   .4byte 0x92e1aefb # custom-3
                   .4byte 0x4e1754fb # custom-3
+                  .4byte 0x7694847b # custom-3 cv.sub.div
                   .4byte 0x1632d6fb # custom-3
                   .4byte 0x279423fb # custom-3
                   .4byte 0x6e47f27b # custom-3 cv.add/sub.div blocks
@@ -456,6 +468,7 @@ main:             fence.i
                   .4byte 0xd28313fb # custom-3 cv.shuffleI(1-3) blocks
                   .4byte 0xe15fd87b # custom-3 cv.shuffleI(1-3) blocks
                   .4byte 0xa1bb9bdb # custom-2
+                  .4byte 0x750f777b # custom-3 cv.sub.div
                   .4byte 0x8bb891fb # custom-3
                   .4byte 0x3e4f307b # custom-3
                   .4byte 0x7f75eb7b # all the groups of 8 illegal instr in custom-3
