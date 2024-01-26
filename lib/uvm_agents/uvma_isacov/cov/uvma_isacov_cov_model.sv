@@ -1055,12 +1055,11 @@ covergroup cg_csritype(
   `ISACOV_CP_BITWISE_4_0(cp_uimm_toggle, instr.rs1, 1)
 endgroup : cg_csritype
 
-covergroup cg_cr(
+covergroup cg_cr_add(
     string name,
     bit reg_crosses_enabled,
     bit reg_hazards_enabled,
     bit rdrs1_is_signed,
-    bit has_rs1,
     bit rs2_is_signed
 ) with function sample (
     uvma_isacov_instr_c instr
@@ -1076,7 +1075,6 @@ covergroup cg_cr(
   }
 
   cp_rs1_value: coverpoint instr.rs1_value_type {
-    ignore_bins  OFF     = cp_rs1_value    `WITH (!has_rs1);
     ignore_bins POS_OFF = {POSITIVE} `WITH (!rdrs1_is_signed);
     ignore_bins NEG_OFF = {NEGATIVE} `WITH (!rdrs1_is_signed);
     ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (rdrs1_is_signed);
@@ -1095,20 +1093,66 @@ covergroup cg_cr(
   }
 
 
-  cp_rd_rs2_hazard: coverpoint instr.rd {
+  cp_rd_rs2_hazard: coverpoint instr.c_rdrs1 {
     ignore_bins IGN_RS2_HAZARD_OFF = {[0:$]} `WITH (!reg_hazards_enabled);
-    bins RD[] = {[1:31]} iff (instr.rd == instr.rs2);
+    bins RD[] = {[1:31]} iff (instr.c_rdrs1 == instr.rs2);
   }
 
   cross_rdrs1_rs2: cross cp_c_rdrs1, cp_rs2 {
     ignore_bins IGN_OFF = cross_rdrs1_rs2 `WITH (!reg_crosses_enabled);
   }
 
-  `ISACOV_CP_BITWISE(cp_rs1_toggle, instr.rs1_value, has_rs1)
+  `ISACOV_CP_BITWISE(cp_rs1_toggle, instr.rs1_value, 1)
   `ISACOV_CP_BITWISE(cp_rs2_toggle, instr.rs2_value, 1)
   `ISACOV_CP_BITWISE(cp_rd_toggle, instr.rd_value, 1)
 
-endgroup : cg_cr
+endgroup : cg_cr_add
+
+covergroup cg_cr_mv(
+    string name,
+    bit reg_crosses_enabled,
+    bit reg_hazards_enabled,
+    bit rdrs1_is_signed,
+    bit rs2_is_signed
+) with function sample (
+    uvma_isacov_instr_c instr
+);
+  option.per_instance = 1;
+  option.name = name;
+
+  cp_c_rdrs1: coverpoint instr.c_rdrs1 {
+    ignore_bins RDRS1_NOT_ZERO = {0};
+  }
+  cp_rs2: coverpoint instr.rs2 {
+    ignore_bins RS2_NOT_ZERO = {0};
+  }
+
+  cp_rs2_value: coverpoint instr.rs2_value_type {
+    ignore_bins POS_OFF = {POSITIVE} `WITH (!rs2_is_signed);
+    ignore_bins NEG_OFF = {NEGATIVE} `WITH (!rs2_is_signed);
+    ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (rs2_is_signed);
+  }
+
+  cp_rd_value: coverpoint instr.rd_value_type {
+    ignore_bins POS_OFF = {POSITIVE} `WITH (!rdrs1_is_signed);
+    ignore_bins NEG_OFF = {NEGATIVE} `WITH (!rdrs1_is_signed);
+    ignore_bins NON_ZERO_OFF = {NON_ZERO} `WITH (rdrs1_is_signed);
+  }
+
+
+  cp_rd_rs2_hazard: coverpoint instr.c_rdrs1 {
+    ignore_bins IGN_RS2_HAZARD_OFF = {[0:$]} `WITH (!reg_hazards_enabled);
+    bins RD[] = {[1:31]} iff (instr.c_rdrs1 == instr.rs2);
+  }
+
+  cross_rdrs1_rs2: cross cp_c_rdrs1, cp_rs2 {
+    ignore_bins IGN_OFF = cross_rdrs1_rs2 `WITH (!reg_crosses_enabled);
+  }
+
+  `ISACOV_CP_BITWISE(cp_rs2_toggle, instr.rs2_value, 1)
+  `ISACOV_CP_BITWISE(cp_rd_toggle, instr.rd_value, 1)
+
+endgroup : cg_cr_mv
 
 covergroup cg_cr_j(
     string name,
@@ -2001,8 +2045,8 @@ class uvma_isacov_cov_model_c extends uvm_component;
   cg_ci_li    rv32c_li_cg;
   cg_ci_lui   rv32c_lui_cg;
 
-  cg_cr       rv32c_mv_cg;
-  cg_cr       rv32c_add_cg;
+  cg_cr_mv    rv32c_mv_cg;
+  cg_cr_add   rv32c_add_cg;
   cg_cr_j     rv32c_jr_cg;
   cg_cr_j     rv32c_jalr_cg;
 
@@ -2442,13 +2486,11 @@ function void uvma_isacov_cov_model_c::build_phase(uvm_phase phase);
                               .reg_crosses_enabled(cfg.reg_crosses_enabled),
                               .reg_hazards_enabled(cfg.reg_hazards_enabled),
                               .rdrs1_is_signed(0),
-                              .has_rs1(c_has_rs1[C_MV]),
                               .rs2_is_signed(0));
       rv32c_add_cg      = new("rv32c_add_cg",
                               .reg_crosses_enabled(cfg.reg_crosses_enabled),
                               .reg_hazards_enabled(cfg.reg_hazards_enabled),
                               .rdrs1_is_signed(1),
-                              .has_rs1(c_has_rs1[C_ADD]),
                               .rs2_is_signed(1));
       rv32c_jr_cg       = new("rv32c_jr_cg",
                               .reg_crosses_enabled(cfg.reg_crosses_enabled),
