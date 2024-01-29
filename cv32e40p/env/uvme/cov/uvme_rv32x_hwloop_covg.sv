@@ -114,6 +114,7 @@ class uvme_rv32x_hwloop_covg # (
   bit           in_nested_loop0 = 0, in_nested_loop0_d1 = 0;
   bit           is_ebreak = 0, is_ebreakm = 0, is_ecall = 0, is_illegal = 0, is_irq = 0, is_dbg_mode = 0, is_mc_insn = 0;
   bit           is_trap = 0; // trap any period that is redundant due to handling entry which causes data flush
+  bit           has_pending_trap_due2_dbg = 0; // trap pending due to debug mode entry
   bit           enter_hwloop_sub = 0;
   int           enter_hwloop_sub_cnt = 0;
   bit           pending_irq = 0;
@@ -919,20 +920,22 @@ class uvme_rv32x_hwloop_covg # (
         if (enter_hwloop_sub) begin 
           enter_hwloop_sub_cnt++;
           if (is_trap && is_dbg_mode && !cv32e40p_rvvi_vif.csr_dcsr_step && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_DBG_ENTRY // exception trap and debug are b2b cycles (except debug step)
-            is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0;
-            prev_pc_rdata_main = prev_pc_rdata_main-4;
-            for (int j=0; j<HWLOOP_NB; j++) begin
-              bit temp_in_nested_loop0 = (j == 0) ? 0 : in_nested_loop0;
-              if (hwloop_stat_main.execute_instr_in_hwloop[j] && hwloop_stat_main.track_lp_cnt[j] >= 0 && !temp_in_nested_loop0) begin
-                logic [31:0] discarded_insn;
-                if (!done_insn_list_capture_main[j]) begin
-                  discarded_insn = insn_list_in_hwloop_main[j].pop_back();
-                  `uvm_info(_header, $sformatf("DEBUG - HWLOOP_NB_%0d Discarded insn %8h due to Trap triggered by Debug Entery", j, discarded_insn), UVM_DEBUG);
-                  assert (discarded_insn inside {TB_INSTR_ECALL, TB_INSTR_EBREAK, INSN_ILLEGAL});
-                end
-                `uvm_info(_header, $sformatf("DEBUG - HWLOOP_NB_%0d Trap due to Debug Entry detected", j), UVM_DEBUG);
-              end
-            end
+            has_pending_trap_due2_dbg = 1; enter_hwloop_sub = 0;
+            // todo: remove this when regression is stable
+            // todo is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0;
+            // todo prev_pc_rdata_main = prev_pc_rdata_main-4;
+            // todo for (int j=0; j<HWLOOP_NB; j++) begin
+            // todo   bit temp_in_nested_loop0 = (j == 0) ? 0 : in_nested_loop0;
+            // todo   if (hwloop_stat_main.execute_instr_in_hwloop[j] && hwloop_stat_main.track_lp_cnt[j] >= 0 && !temp_in_nested_loop0) begin
+            // todo     logic [31:0] discarded_insn;
+            // todo     if (!done_insn_list_capture_main[j]) begin
+            // todo       discarded_insn = insn_list_in_hwloop_main[j].pop_back();
+            // todo       `uvm_info(_header, $sformatf("DEBUG - HWLOOP_NB_%0d Discarded insn %8h due to Trap triggered by Debug Entery", j, discarded_insn), UVM_DEBUG);
+            // todo       assert (discarded_insn inside {TB_INSTR_ECALL, TB_INSTR_EBREAK, INSN_ILLEGAL});
+            // todo     end
+            // todo     `uvm_info(_header, $sformatf("DEBUG - HWLOOP_NB_%0d Trap due to Debug Entry detected", j), UVM_DEBUG);
+            // todo   end
+            // todo end
           end // TRAP_DUETO_DBG_ENTRY
           else if (pc_is_mtvec_addr() && !is_mcause_irq()) begin : EXCEPTION_ENTRY
             for (int i=0; i<HWLOOP_NB; i++) begin
@@ -948,6 +951,8 @@ class uvme_rv32x_hwloop_covg # (
             end
           end // EXCEPTION_ENTRY
           else if (pc_is_mtvec_addr() && is_mcause_irq()) begin : IRQ_ENTRY
+            // todo: remove this when regression is stable
+            // todo: what if the trap is valid before irq handling (no repeatition trap after irq exit) ?
             if (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]) begin
               if (is_trap && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_IRQ_ENTRY // exception trap and irq are b2b cycles
                 if (hwloop_stat_main.execute_instr_in_hwloop[0] && lpend_has_pending_irq_main[0]) begin hwloop_stat_main.track_lp_cnt[0]++; lpend_has_pending_irq_main[0] = 0; end
@@ -971,22 +976,27 @@ class uvme_rv32x_hwloop_covg # (
           // [optional] todo: mie has effect on irq during exception. Current hwloop tests do not exercise nested irq with mie enabled
 
           check_exception_exit();
-          if (!(is_ebreak || is_ecall || is_illegal)) begin enter_hwloop_sub = 0; enter_hwloop_sub_cnt = 0; end
+          if (!(is_ebreak || is_ecall || is_illegal || has_pending_trap_due2_dbg)) begin enter_hwloop_sub = 0; enter_hwloop_sub_cnt = 0; end
           prev_pc_rdata_sub = cv32e40p_rvvi_vif.pc_rdata;
         end
 
         else begin : MAIN
           if (pc_is_mtvec_addr() && is_mcause_irq()) begin : IRQ_ENTRY
-          if (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]) begin
-            pending_irq = 0;
-            `IF_CURRENT_IS_MAIN_HWLOOP(0, IS_IRQ)
-            `IF_CURRENT_IS_MAIN_HWLOOP(1, IS_IRQ)
-            update_prev_irq_onehot_priority();
-            `uvm_info(_header, $sformatf("DEBUG - IRQ Entry"), UVM_DEBUG);
-            is_irq = 1; wait (!is_irq); continue; 
+            if (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]) begin
+              pending_irq = 0;
+              `IF_CURRENT_IS_MAIN_HWLOOP(0, IS_IRQ)
+              `IF_CURRENT_IS_MAIN_HWLOOP(1, IS_IRQ)
+              update_prev_irq_onehot_priority();
+              `uvm_info(_header, $sformatf("DEBUG - IRQ Entry"), UVM_DEBUG);
+              is_irq = 1; wait (!is_irq); continue; 
+            end
           end // IRQ_ENTRY
+          if (is_dbg_mode)                begin wait (!is_dbg_mode); continue; end
+          if (has_pending_trap_due2_dbg)  begin 
+            assert(!cv32e40p_rvvi_vif.csr_dcsr_step); // this is not mean for step debug
+            if (pc_is_mtvec_addr() || cv32e40p_rvvi_vif.trap) begin enter_hwloop_sub = 1; has_pending_trap_due2_dbg = 0; continue; end 
+            else begin          is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; has_pending_trap_due2_dbg = 0; continue; end
           end
-          if (is_dbg_mode)  begin wait (!is_dbg_mode); continue; end
           if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm && cv32e40p_rvvi_vif.insn == TB_INSTR_EBREAK) is_ebreakm = 1; else is_ebreakm = 0;
           `CHECK_N_SAMPLE_CSR_HWLOOP(main);
           `CHECK_N_SAMPLE_HWLOOP(main);
