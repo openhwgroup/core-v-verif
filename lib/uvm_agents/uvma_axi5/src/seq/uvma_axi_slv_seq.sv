@@ -33,6 +33,9 @@ class uvma_axi_slv_seq_c extends uvma_axi_slv_base_seq_c;
    int w_rand_status = 0;
    int r_rand_status = 0;
 
+   int r_done = 1;
+   int w_done = 1;
+
    `uvm_object_utils_begin(uvma_axi_slv_seq_c)
    `uvm_object_utils_end
 
@@ -142,6 +145,7 @@ task uvma_axi_slv_seq_c::do_mem_operation(ref uvma_axi_base_seq_item_c mon_req);
 
    //TODO : slv_rsp_bp.r_copy(slv_rsp);
    //slv_rsp_bp.do_copy(slv_rsp);
+
    slv_rsp_bp.r_id    = slv_rsp.r_id;
    slv_rsp_bp.r_data  = slv_rsp.r_data;
    slv_rsp_bp.r_last  = slv_rsp.r_last;
@@ -167,18 +171,32 @@ function void uvma_axi_slv_seq_c::prepare_w_resp(ref uvma_axi_slv_seq_item_c slv
    int exc_resp = 0;
    if(slv_rsp_bp.b_resp_status == UVMA_AXI_RESP_WAITING_HANDSHAKE) begin
       if(slv_resp.mon_req.b_ready) begin
+
+         w_done = 1;
          `uvm_info(get_type_name(), $sformatf("size of w_finished_trs_id = %d  ||  selected id = %d", synchronizer.w_finished_trs_id.size(), w_selected_id), UVM_HIGH)
          synchronizer.write_burst_complete(w_selected_id, slv_rsp_bp);
          w_selected_id = synchronizer.w_select_id(synchronizer.w_finished_trs_id);
          w_rand_status = 0;
+
+      end else begin
+
+         slv_resp.b_id    = slv_rsp_bp.b_id;
+         slv_resp.b_valid = slv_rsp_bp.b_valid;
+         slv_resp.b_resp  = slv_rsp_bp.b_resp;
+         slv_resp.b_user  = slv_rsp_bp.b_user;
+         slv_resp.b_resp_status  = slv_rsp_bp.b_resp_status;
 
       end
    end else begin
 
       `uvm_info(get_type_name(), $sformatf("NEW trs"), UVM_HIGH)
       w_selected_id = synchronizer.w_select_id(synchronizer.w_finished_trs_id);
+
    end
-   if(w_selected_id != -1) begin
+   if(w_selected_id != -1 && w_done == 1) begin
+
+      w_done = 0;
+      `uvm_info(get_type_name(), $sformatf("Write Transaction response is created"), UVM_HIGH)
       exc_resp = synchronizer.check_exclusive_resp(w_selected_id);
       if(exc_resp == 1) w_slv_resp.b_resp  = 1;
       else if(exc_resp == 0) w_slv_resp.b_resp  = 0;
@@ -214,7 +232,7 @@ function void uvma_axi_slv_seq_c::prepare_w_resp(ref uvma_axi_slv_seq_item_c slv
       slv_resp.b_channel_constraint.constraint_mode(0);
       w_rand_status = 1;
 
-   end else begin
+   end else if(w_selected_id == -1 && w_done == 1) begin
 
       slv_resp.b_valid.rand_mode(1);
       slv_resp.b_id.rand_mode(1);
@@ -224,6 +242,12 @@ function void uvma_axi_slv_seq_c::prepare_w_resp(ref uvma_axi_slv_seq_item_c slv
       slv_resp.b_channel_constraint.constraint_mode(1);
       w_rand_status= 0;
 
+   end else begin
+      slv_resp.b_valid.rand_mode(0);
+      slv_resp.b_id.rand_mode(0);
+      slv_resp.b_resp.rand_mode(0);
+      slv_resp.b_user.rand_mode(0);
+      slv_resp.b_channel_constraint.constraint_mode(0);
    end
 
 endfunction : prepare_w_resp
@@ -234,6 +258,7 @@ function void uvma_axi_slv_seq_c::prepare_r_resp(ref uvma_axi_slv_seq_item_c slv
    if(slv_rsp_bp.r_resp_status == UVMA_AXI_RESP_WAITING_HANDSHAKE) begin
       if(slv_resp.mon_req.r_ready) begin
 
+         r_done = 1;
          if(r_slv_resp.mon_req.r_trs_status == LAST_READ_DATA) begin
             `uvm_info(get_type_name(), $sformatf("Read burst complete"), UVM_HIGH)
             synchronizer.read_burst_complete(r_selected_id, slv_rsp_bp);
@@ -244,6 +269,16 @@ function void uvma_axi_slv_seq_c::prepare_r_resp(ref uvma_axi_slv_seq_item_c slv
          r_selected_id = synchronizer.r_select_id(synchronizer.r_finished_trs_id);
          r_rand_status = 0;
 
+      end else begin
+
+         slv_resp.r_id    = slv_rsp_bp.r_id;
+         slv_resp.r_data  = slv_rsp_bp.r_data;
+         slv_resp.r_last  = slv_rsp_bp.r_last;
+         slv_resp.r_valid = slv_rsp_bp.r_valid;
+         slv_resp.r_resp  = slv_rsp_bp.r_resp;
+         slv_resp.r_user  = slv_rsp_bp.r_user;
+         slv_resp.r_resp_status  = slv_rsp_bp.r_resp_status;
+
       end
    end else begin
 
@@ -252,7 +287,8 @@ function void uvma_axi_slv_seq_c::prepare_r_resp(ref uvma_axi_slv_seq_item_c slv
 
    end
 
-   if(r_selected_id != -1) begin
+   if(r_selected_id != -1 && r_done == 1) begin
+      r_done = 0;
       //TODO : Use find method
       foreach(synchronizer.r_trs_queue[r_selected_id][i]) begin
          if(synchronizer.r_trs_queue[r_selected_id][i].mon_req.r_trs_status == READ_DATA_NOT_COMPLETE || synchronizer.r_trs_queue[r_selected_id][i].mon_req.r_trs_status == LAST_READ_DATA) begin
@@ -317,7 +353,7 @@ function void uvma_axi_slv_seq_c::prepare_r_resp(ref uvma_axi_slv_seq_item_c slv
       slv_resp.r_channel_constraint.constraint_mode(0);
       r_rand_status = 1;
 
-   end else begin
+   end else if(r_selected_id == -1 && r_done == 1) begin
 
       slv_resp.r_valid.rand_mode(1);
       slv_resp.r_id.rand_mode(1);
@@ -329,7 +365,18 @@ function void uvma_axi_slv_seq_c::prepare_r_resp(ref uvma_axi_slv_seq_item_c slv
       slv_resp.r_channel_constraint.constraint_mode(1);
       r_rand_status = 0;
 
+   end else begin
+
+      slv_resp.r_data.rand_mode(0);
+      slv_resp.r_id.rand_mode(0);
+      slv_resp.r_last.rand_mode(0);
+      slv_resp.r_user.rand_mode(0);
+      slv_resp.r_resp.rand_mode(0);
+      slv_resp.r_valid.rand_mode(0);
+      slv_resp.r_channel_constraint.constraint_mode(0);
+
    end
+
 endfunction : prepare_r_resp
 
 task uvma_axi_slv_seq_c::do_axi_operation(ref uvma_axi_base_seq_item_c mon_req);

@@ -135,8 +135,6 @@ function void uvma_axi_amo_synchronizer_c::add_w_trs(uvma_axi_base_seq_item_c ax
                amo_slv_rsp.mon_req.r_trs_status = READ_DATA_NOT_COMPLETE;
             end
 
-            axi_item.ar_id=axi_item.aw_id;
-
             for(int i = axi_item.Aw_Lower_Byte_Lane; i <= axi_item.Aw_Upper_Byte_Lane; i++) begin
                amo_slv_rsp.r_data [((i+1)*8-1)-:8]   = cntxt.mem.read(axi_item.aw_addr + i);
             end
