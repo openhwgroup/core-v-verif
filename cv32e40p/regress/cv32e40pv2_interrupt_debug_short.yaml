@@ -373,6 +373,13 @@ tests:
 
 # list of corev_directed_pulp_hwloop_test - END
 
+  corev_rand_pulp_hwloop_in_debug_rom:
+    description: hwloop stream in debug rom
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_in_debug_rom CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+    num: 4
+
   corev_rand_pulp_hwloop_exception_debug_trigger:
     testname: corev_rand_pulp_hwloop_exception
     description: hwloop exception test with debug trigger
