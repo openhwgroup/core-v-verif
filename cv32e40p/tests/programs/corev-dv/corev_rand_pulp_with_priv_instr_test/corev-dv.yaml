@@ -1,0 +1,30 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Test definition YAML for corev-dv test generator
+# corev-dv generator test
+name: corev_rand_pulp_with_priv_instr_test
+uvm_test: $(CV_CORE_LC)_instr_base_test
+description: >
+    RISCV-DV generated random hwloop test with priv instructions like wfi
+plusargs: >
+    +instr_cnt=2000
+    +num_of_sub_program=0
+    +directed_instr_0=cv32e40p_xpulp_with_priv_instr,2
+    +directed_instr_1=cv32e40p_xpulp_rand_stream,1
+    +no_fence=0
+    +no_data_page=0
+    +randomize_csr=1
+    +no_branch_jump=1
+    +boot_mode=m
+    +no_csr_instr=0
+    +no_wfi=0
+    +no_ebreak=0
+    +no_dret=1
+    +fix_sp=1
+    +enable_misaligned_instr=1
+    +illegal_instr_ratio=1
+    +test_override_riscv_instr_stream=1
+    +test_override_riscv_instr_sequence=1
+    +enable_interrupt=1
+    +enable_fast_interrupt_handler=1
