@@ -34,7 +34,7 @@ SECTIONS
   {
     KEEP(*(.debugger));
   } >dbg
-  .debugger_exception (0x1A111000):
+  .debugger_exception (0x1A111600):
   {
     KEEP(*(.debugger_exception));
   } >dbg
