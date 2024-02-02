@@ -1,1 +1,0 @@
-../../../../bsp/link_gp_relax.ld
