@@ -29,8 +29,8 @@ class uvme_cv32e40p_cov_model_c extends uvm_component;
    uvme_cv32e40p_cfg_c    cfg;
    uvme_cv32e40p_cntxt_c  cntxt;
 
-   uvme_rv32isa_covg                    isa_covg;
-   uvme_interrupt_covg                  interrupt_covg;
+   // uvme_rv32isa_covg                    isa_covg;        // not used in cv32e40p v2 env 
+   // uvme_interrupt_covg                  interrupt_covg;  // not used in cv32e40p v2 env
    uvme_debug_covg                      debug_covg;
    uvme_rv32x_hwloop_covg               rv32x_hwloop_covg;
    uvme_cv32e40p_fp_instr_covg          cv32e40p_fp_instr_covg;
@@ -104,11 +104,11 @@ function void uvme_cv32e40p_cov_model_c::build_phase(uvm_phase phase);
       `uvm_fatal("CNTXT", "Context handle is null")
    end
 
-   isa_covg = uvme_rv32isa_covg::type_id::create("isa_covg", this);
-   uvm_config_db#(uvme_cv32e40p_cntxt_c)::set(this, "isa_covg", "cntxt", cntxt);
+   // isa_covg = uvme_rv32isa_covg::type_id::create("isa_covg", this);
+   // uvm_config_db#(uvme_cv32e40p_cntxt_c)::set(this, "isa_covg", "cntxt", cntxt);
    
-   interrupt_covg = uvme_interrupt_covg::type_id::create("interrupt_covg", this);
-   uvm_config_db#(uvme_cv32e40p_cntxt_c)::set(this, "interrupt_covg", "cntxt", cntxt);
+   // interrupt_covg = uvme_interrupt_covg::type_id::create("interrupt_covg", this);
+   // uvm_config_db#(uvme_cv32e40p_cntxt_c)::set(this, "interrupt_covg", "cntxt", cntxt);
 
    debug_covg = uvme_debug_covg::type_id::create("debug_covg", this);
    uvm_config_db#(uvme_cv32e40p_cntxt_c)::set(this, "debug_covg", "cntxt", cntxt);
@@ -131,7 +131,7 @@ function void uvme_cv32e40p_cov_model_c::connect_phase(uvm_phase phase);
    
    super.connect_phase(phase);
 
-   isa_covg.ap.connect(interrupt_covg.rv32isa_export);
+   // isa_covg.ap.connect(interrupt_covg.rv32isa_export);
 endfunction : connect_phase
 
 task uvme_cv32e40p_cov_model_c::run_phase(uvm_phase phase);
