@@ -37,9 +37,9 @@ class cv32e40p_illegal_instr extends riscv_illegal_instr;
 
   constraint reserved_when_rv32FC_c {
     if (riscv_instr_pkg::RV32FC inside {riscv_instr_pkg::supported_isa}) {
-    if (exception == kReservedCompressedInstr) {
-      reserved_c != kReservedLdsp;
-    }
+      if (exception == kReservedCompressedInstr) {
+        reserved_c != kReservedLdsp;
+      }
     }
   }
 

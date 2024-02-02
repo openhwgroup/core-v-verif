@@ -312,6 +312,10 @@ class uvme_rv32x_hwloop_covg # (
     if (!(uvm_config_db#(virtual uvmt_cv32e40p_rvvi_if)::get(this, "", "cv32e40p_rvvi_vif", cv32e40p_rvvi_vif))) begin
         `uvm_fatal(_header, "cv32e40p_rvvi_vif no found in uvm_config_db");
     end
+    if ($test$plusargs("skip_sampling_uvme_rv32x_hwloop_covg")) begin
+      `uvm_info(_header, "Skip uvme_rv32x_hwloop_covg cvg sampling due to test intention", UVM_WARNING);
+      en_cvg_sampling = 0;
+    end
   endfunction : build_phase
 
 
@@ -797,6 +801,7 @@ class uvme_rv32x_hwloop_covg # (
 
   task run_phase(uvm_phase phase);
     super.run_phase(phase);
+    wait(en_cvg_sampling);
 
     fork // Background threads - START
 
@@ -815,7 +820,8 @@ class uvme_rv32x_hwloop_covg # (
           is_trap = 1;
           case (cv32e40p_rvvi_vif.insn)
             TB_INSTR_EBREAK, INSTR_CBREAK : if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm) begin 
-                                             @(posedge cv32e40p_rvvi_vif.clk); continue; 
+                                              is_trap = 0;
+                                              @(posedge cv32e40p_rvvi_vif.clk); continue; 
                                             end 
                                             else begin is_ebreak  = 1; `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Entry due to EBREAK"), UVM_DEBUG); end
             TB_INSTR_ECALL                : begin      is_ecall   = 1; `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Entry due to ECALL"), UVM_DEBUG); end
@@ -920,7 +926,7 @@ class uvme_rv32x_hwloop_covg # (
         if (enter_hwloop_sub) begin 
           enter_hwloop_sub_cnt++;
           if (is_trap && is_dbg_mode && !cv32e40p_rvvi_vif.csr_dcsr_step && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_DBG_ENTRY // exception trap and debug are b2b cycles (except debug step)
-            has_pending_trap_due2_dbg = 1; enter_hwloop_sub = 0;
+            has_pending_trap_due2_dbg = 1; is_trap = 0; enter_hwloop_sub = 0;
             // todo: remove this when regression is stable
             // todo is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0;
             // todo prev_pc_rdata_main = prev_pc_rdata_main-4;
@@ -994,8 +1000,8 @@ class uvme_rv32x_hwloop_covg # (
           if (is_dbg_mode)                begin wait (!is_dbg_mode); continue; end
           if (has_pending_trap_due2_dbg)  begin 
             assert(!cv32e40p_rvvi_vif.csr_dcsr_step); // this is not mean for step debug
-            if (pc_is_mtvec_addr() || cv32e40p_rvvi_vif.trap) begin enter_hwloop_sub = 1; has_pending_trap_due2_dbg = 0; continue; end 
-            else begin          is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; has_pending_trap_due2_dbg = 0; continue; end
+            if (pc_is_mtvec_addr() || (cv32e40p_rvvi_vif.trap && is_trap)) begin is_trap = 1; enter_hwloop_sub = 1; has_pending_trap_due2_dbg = 0; continue; end 
+            else begin              is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0; has_pending_trap_due2_dbg = 0; continue; end
           end
           if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm && cv32e40p_rvvi_vif.insn == TB_INSTR_EBREAK) is_ebreakm = 1; else is_ebreakm = 0;
           `CHECK_N_SAMPLE_CSR_HWLOOP(main);
