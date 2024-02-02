@@ -1,3 +1,6 @@
+# Copyright 2024 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 .include "user_define.h"
 .section .text.start
 
@@ -92,7 +95,7 @@ main:             fence.i
                   .4byte 0x80fe4c33 # manual: opcode = OP, func7 = 1000000
                   .4byte 0x00200073 # manual: instr uret, opcode = SYSTEM, [31:20] = h002
                   .4byte 0xb1600073 # manual: random [31:20], opcode = SYSTEM
-                  
+
 
                   # Generated instructions
                   .4byte 0x3e0003fb # custom-3
