@@ -12,6 +12,7 @@ ovpsim: >
     --override cpu/extension_CVE4P/CORE_VERSION=2
     --override cpu/extension_CVE4P/COREV_PULP=T
     --override cpu/extension_CVE4P/COREV_CLUSTER=T
+    --override cpu/extension_CVE4P/hwloop_severity=Warning
     --override cpu/add_Extensions=XF
     --override cpu/Zcf=T
     --override cpu/Zfinx_version=0.41
