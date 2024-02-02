@@ -61,7 +61,10 @@
     </usertcl>
 
     <usertcl name="seedGen">
-        proc getSeeds { num mode regr_name } {
+        proc getSeeds { num mode regr_name seed_value } {
+            if { $seed_value != "" } {
+                return $seed_value
+            }
             if {[string equal $mode "FIXED"]} {
                 return [GetRandomValues $num]
             }
@@ -141,6 +144,7 @@
 
 
     <!-- =========== Builds =========== START -->
+            <!-- Note: ENABLE_TRACE_LOG=NO is removed from print msg as rerun is require tracer to be enable -->
 {% for build in r.get_builds() %}
         <runnable name="{{r.name}}_{{build.name}}" type="group" sequential="no">
             <!-- set of parameters to be given to leaf runnables -->
@@ -158,8 +162,8 @@
 {% endfor %}
             </members>
             <preScript launch="exec">
-                <command> echo "BUILD RUNCMD: {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results_path)}} {{makeargs}}"</command>
-                <command> cd {{build.abs_dir}} &amp;&amp; {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results_path)}} {{makeargs}} </command>
+                <command> echo "BUILD RUNCMD: {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} ENABLE_TRACE_LOG=NO USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results_path)}} {{makeargs}}"</command>
+                <command> cd {{build.abs_dir}} &amp;&amp; {{build.cmd}} CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{build.simulator}} ENABLE_TRACE_LOG=NO USE_ISS={{regress_macros.yesorno(build.iss)}} COV={{regress_macros.yesorno(build.cov)}} {{regress_macros.cv_results(results_path)}} {{makeargs}} </command>
             </preScript>
         </runnable>
 {% endfor %}
@@ -182,7 +186,7 @@
                     <parameter name="t_test_cfg_name" type="tcl">[getTestCfgName "(%t_test_cfg:%)"]</parameter>
                     <parameter name="t_iss"           type="tcl">[getParameterByPriorityYesOrNo "{{iss}}" "{{t.iss}}" "(%build_iss:%)"]</parameter>
                     <parameter name="t_cov"           type="tcl">[getParameterByPriorityYesOrNo "{{coverage}}" "{{t.cov}}" "(%build_cov:%)"]</parameter>
-                    <parameter name="seeds"           type="tcl">[getSeeds "{{t.num}}" "(%SEED_MODE:RAND%)" "(%reg_name%)"]</parameter>
+                    <parameter name="seeds"           type="tcl">[getSeeds "{{t.num}}" "(%SEED_MODE:RAND%)" "(%reg_name%)" "{{t.seed}}"]</parameter>
                     <parameter name="ucdb_path"       type="tcl">[file join "(%results_sim_path%)" "(%t_cfg%)" "{{t.testname}}" "(%t_test_cfg_name:%)" (%t_iteration%)]</parameter>
                     <parameter name="testname"        type="tcl">[getTestName "{{t.testname}}" "(%t_cfg%)" "(%t_test_cfg_name:%)" (%t_iteration%)]</parameter>
                     <parameter name="ucdb_basename"   type="tcl">[getUCDBFilename "{{t.testname}}" "(%t_test_cfg_name:%)"]</parameter>
@@ -199,6 +203,7 @@
 
 {% endfor %}
 
+            <!-- Note: COMP=0 is removed form print msg as rerun is require recompile all the time-->
             <runnable name="simulation" type="task">
 {% if lsf != None %}
                 <method name="grid" gridtype="lsf" action="execScript">
@@ -206,7 +211,7 @@
                 </method>
 {% endif %}
                 <execScript launch="exec" usestderr="no">
-                    <command> echo " TEST RUNCMD: (%t_cmd%) CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} COMP=0 CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR=(%t_simulator%) USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%t_iteration%) GEN_START_INDEX=(%t_iteration%) SEED=(%t_iteration%) {{regress_macros.cv_results(results_path)}} {{makeargs}} (%t_makearg%)"</command>
+                    <command> echo " TEST RUNCMD: (%t_cmd%) CHECK_SIM_RESULT={{regress_macros.yesorno(check_sim_results)}} CV_CORE={{project}} {{toolchain|upper}}=1 CFG=(%t_cfg%) TEST_CFG_FILE=(%t_test_cfg:%) SIMULATOR=(%t_simulator%) USE_ISS=(%t_iss:%) COV=(%t_cov:%) RUN_INDEX=(%t_iteration%) GEN_START_INDEX=(%t_iteration%) SEED=(%t_iteration%) {{regress_macros.cv_results(results_path)}} {{makeargs}} (%t_makearg%)"</command>
                     <command> echo "     logfile: (%log_file%)"</command>
                     <command> echo "     RTL repo: CV_CORE_REPO  : ${CV_CORE_REPO}"</command>
                     <command> echo "               CV_CORE_BRANCH: ${CV_CORE_BRANCH}"</command>

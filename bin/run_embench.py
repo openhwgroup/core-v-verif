@@ -190,6 +190,7 @@ def main():
          f'--ldflags=-T{paths["bsp"]}/link.ld',
          f'--builddir={args.builddir}',
          f'--logdir={args.logdir}',
+         f'--timeout=15',
          '--clean']
   logger.info(f"Calling build script: {' '.join(cmd)}")
   try:

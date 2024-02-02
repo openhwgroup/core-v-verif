@@ -1,0 +1,5 @@
+name: gen_limit_debug_req
+description: >
+    Generate few random debug halt requests in range 1 to 5, or use plusarg num_debug_req=val to set number 
+plusargs: >
+    +gen_reduced_rand_dbg_req

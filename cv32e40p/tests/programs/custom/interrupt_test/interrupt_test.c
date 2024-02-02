@@ -48,7 +48,10 @@ void fp_enable ()
 
   asm volatile("csrs mstatus, %0;"
                "csrwi fcsr, 0;"
-               : : "r"(fs));
+               "csrs mstatus, %0;"
+               : : "r"(fs)
+              );
+
 }
 #endif
 

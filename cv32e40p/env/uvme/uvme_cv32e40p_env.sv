@@ -377,6 +377,11 @@ function void uvme_cv32e40p_env_c::retrieve_vifs();
       `uvm_fatal("UVME_CV32E40P_ENV", $sformatf("No uvmt_cv32e40p_debug_cov_assert_if found in config database"))
    end
 
+   void'(uvm_config_db#(virtual uvmt_cv32e40p_cov_if)::get(this, "", "cov_vif", cntxt.cov_vif));
+   if (cntxt.cov_vif == null) begin
+      `uvm_fatal("UVME_CV32E40P_ENV", $sformatf("No uvmt_cv32e40p_cov_if found in config database"))
+   end
+
 endfunction: retrieve_vifs
 
 

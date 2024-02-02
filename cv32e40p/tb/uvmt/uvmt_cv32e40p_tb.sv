@@ -441,6 +441,9 @@ module uvmt_cv32e40p_tb;
     .id_stage_is_compressed(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.is_compressed_i),
     .id_valid(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.id_valid_i),
     .is_decoding(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.is_decoding_o),
+    .branch_taken_ex_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.branch_taken_ex_i),
+    .data_err_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.data_err_i),
+    .is_fetch_failed_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.is_fetch_failed_i),
     .id_stage_pc(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.pc_id_i),
     .if_stage_pc(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.if_stage_i.pc_if_o),
     .mie_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.mie_q),
@@ -504,6 +507,41 @@ module uvmt_cv32e40p_tb;
     .pending_enabled_irq()
   );
 
+  //Interface for coverage components
+  uvmt_cv32e40p_cov_if cov_if(
+    .clk_i(clknrst_if.clk),
+    .rst_ni(clknrst_if.reset_n),
+    .if_stage_instr_rvalid_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.if_stage_i.instr_rvalid_i),
+    .if_stage_instr_rdata_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.if_stage_i.instr_rdata_i),
+    .id_stage_instr_valid_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.instr_valid_i),
+    .id_stage_instr_rdata_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.instr_rdata_i),
+    .apu_req(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.apu_req_o),
+    .apu_gnt(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.apu_gnt_i),
+    .apu_busy(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.apu_busy_i),
+    .apu_op(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.apu_op_o),
+    .apu_rvalid_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.apu_rvalid_i),
+    .apu_perf_wb_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.apu_perf_wb_o),
+    .id_stage_apu_op_ex_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.apu_op_ex_o),
+    .id_stage_apu_en_ex_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.apu_en_ex_o),
+    .regfile_waddr_wb_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.regfile_waddr_wb_o),
+    .regfile_we_wb_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.regfile_we_wb_o),
+    .regfile_alu_waddr_ex_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.regfile_alu_waddr_fw_o),
+    .regfile_alu_we_ex_o(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.regfile_alu_we_fw_o),
+    .ex_mulh_active(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.mulh_active),
+    .ex_mult_op_ex(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.mult_operator_i),
+    .ex_data_misaligned_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.data_misaligned_i),
+    .ex_data_misaligned_ex_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.data_misaligned_ex_i),
+    .ex_data_req_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.data_req_i),
+    .ex_data_rvalid_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.data_rvalid_i),
+    .ex_regfile_alu_we_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.regfile_alu_we_i),
+    .ex_apu_valid(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.apu_valid),
+    .ex_apu_rvalid_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.ex_stage_i.apu_rvalid_q),
+    .debug_req_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.debug_req_pending),
+    .debug_mode_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.debug_mode_q),
+    .dcsr_q(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.dcsr_q),
+    .trigger_match_i(dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.id_stage_i.controller_i.trigger_match_i)
+  );
+
   // Instantiate debug assertions
   uvmt_cv32e40p_debug_assert u_debug_assert(.cov_assert_if(debug_cov_assert_if));
 
@@ -517,13 +555,16 @@ module uvmt_cv32e40p_tb;
     .pc_rdata               (dut_wrap.cv32e40p_tb_wrapper_i.rvfi_i.rvfi_pc_rdata),
     .interrupt_if           (interrupt_if),
     .debug_if               (debug_if),
+    .wa_csr_mip             (dut_wrap.cv32e40p_tb_wrapper_i.cv32e40p_top_i.core_i.cs_registers_i.mip),
     `PORTMAP_CSR_RVFI_2_RVVI(lpstart0)
     `PORTMAP_CSR_RVFI_2_RVVI(lpend0)
     `PORTMAP_CSR_RVFI_2_RVVI(lpcount0)
     `PORTMAP_CSR_RVFI_2_RVVI(lpstart1)
     `PORTMAP_CSR_RVFI_2_RVVI(lpend1)
     `PORTMAP_CSR_RVFI_2_RVVI(lpcount1)
+    `PORTMAP_CSR_RVFI_2_RVVI(mstatus)
     `PORTMAP_CSR_RVFI_2_RVVI(mie)
+    `PORTMAP_CSR_RVFI_2_RVVI(mtvec)
     `PORTMAP_CSR_RVFI_2_RVVI(mcause)
     `PORTMAP_CSR_RVFI_2_RVVI(mip)
     `PORTMAP_CSR_RVFI_2_RVVI(dcsr)
@@ -601,6 +642,7 @@ module uvmt_cv32e40p_tb;
      uvm_config_db#(virtual uvmt_cv32e40p_debug_cov_assert_if)::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_cov_vif"),    .value(debug_cov_assert_if)                             );
      uvm_config_db#(virtual uvmt_cv32e40p_isa_covg_if        )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("isa_covg_vif"),     .value(isa_covg_if)                                     );
      uvm_config_db#(virtual uvma_debug_if                    )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("debug_vif"),        .value(debug_if)                                        );
+     uvm_config_db#(virtual uvmt_cv32e40p_cov_if             )::set(.cntxt(null), .inst_name("*.env"),                        .field_name("cov_vif"),          .value(cov_if)                                          );
 
      `RVFI_CSR_UVM_CONFIG_DB_SET(fflags)
      `RVFI_CSR_UVM_CONFIG_DB_SET(frm)

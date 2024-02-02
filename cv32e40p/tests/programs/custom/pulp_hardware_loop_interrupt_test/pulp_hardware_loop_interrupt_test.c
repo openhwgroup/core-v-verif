@@ -216,8 +216,28 @@ __attribute__((interrupt ("machine"))) void u_sw_direct_irq_handler(void)  {
 	    "j u_sw_irq_handler\n"	
     );
 
+#ifdef FPU
+#define MSTATUS_FS_INITIAL 0x00002000
+
+void fp_enable ()
+{
+  unsigned int fs = MSTATUS_FS_INITIAL;
+
+  asm volatile("csrs mstatus, %0;"
+               "csrwi fcsr, 0;"
+               "csrs mstatus, %0;"
+               : : "r"(fs)
+              );
+}
+#endif
+
 int main(int argc, char *argv[]) {
     int retval;
+
+#ifdef FPU
+    // Floating Point enable
+    fp_enable();
+#endif
 
     // Test 1
     retval = test1();

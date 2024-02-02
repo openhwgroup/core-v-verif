@@ -27,6 +27,17 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
   protected int         idx_end[$];            
   protected int         idx_min = 0;            
   cv32e40p_instr_gen_config cv32e40p_cfg;
+  rand int unsigned     default_avail_reg;
+
+  constraint def_avail_reg_c {
+    if ((cfg.enable_fp_in_x_regs == 1) && (RV32ZFINX inside {riscv_instr_pkg::supported_isa})) {
+      default_avail_reg >= 8;
+      default_avail_reg <= (22 - cv32e40p_cfg.num_zfinx_reserved_reg);
+    } else {
+      default_avail_reg >= 8;
+      default_avail_reg <= 22;
+    }
+  }
 
   `uvm_object_utils(cv32e40p_rand_instr_stream)
   //`uvm_object_new
@@ -155,11 +166,49 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
 
   endfunction
 
+  // Override base class randomize_avail_regs function
+  // Add randomization for number of registers to be randomized
+  virtual function void randomize_avail_regs();
+    std::randomize(default_avail_reg) with  {  if ((cfg.enable_fp_in_x_regs == 1) && (RV32ZFINX inside {riscv_instr_pkg::supported_isa})) {
+                                                 default_avail_reg >= 8;
+                                                 default_avail_reg <= (22 - cv32e40p_cfg.num_zfinx_reserved_reg);
+                                               } else {
+                                                 default_avail_reg >= 8;
+                                                 default_avail_reg <= 22;
+                                               }
+                                            };
+
+    avail_regs = new[default_avail_reg];
+    if(avail_regs.size() > 0) begin
+      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(avail_regs,
+                                         unique{avail_regs};
+                                         avail_regs[0] inside {[S0 : A5]};
+                                         foreach(avail_regs[i]) {
+                                           !(avail_regs[i] inside {cfg.reserved_regs, reserved_rd});
+                                         },
+                                         "Cannot randomize avail_regs")
+    end
+  endfunction
+
+
   //Function: cv32e40p_rand_instr_stream::gen_instr()
   //override the parent class gen_instr() inside cv32e40p_rand_instr_stream
   virtual function void gen_instr(bit no_branch = 1'b0, bit no_load_store = 1'b1,
                                   bit is_debug_program = 1'b0);
     setup_allowed_instr(no_branch, no_load_store);
+
+    // Need to randomize avail_regs[] to ensure the randomize_gpr() call
+    // actually randomize the registers for each instruction.
+    // And this also ensures the randomization is done separately for each
+    // program section.
+    // This also ensures reserved_regs get removed from gpr randomization
+    // for each instruction.
+    randomize_avail_regs();
+
+    `uvm_info("cv32e40p_rand_instr_stream", $sformatf("Randomized default_avail_reg = %d", default_avail_reg), UVM_DEBUG)
+    foreach(avail_regs[i]) begin
+        `uvm_info("cv32e40p_rand_instr_stream", $sformatf("Randomized avail_regs[%d] = %s", i, avail_regs[i]), UVM_DEBUG)
+    end
 
     //Use this plusarg - include_xpulp_instr_in_debug_rom to include xpulp instr
     //In random debug_rom instructions. Added for v2 debug tests with xpulp.
@@ -170,6 +219,7 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
             1: randomize_debug_rom_instr(.instr(instr_list[i]), .is_in_debug(is_debug_program), .disable_dist());
             2: randomize_instr(instr_list[i], is_debug_program);
           endcase
+          store_instr_gpr_handling(instr_list[i]);
         end
     end
     else begin
@@ -211,10 +261,19 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
       exclude_instr = {exclude_instr, CV_BEQIMM, CV_BNEIMM, BEQ, BNE, BLT, BGE, BLTU, BGEU, C_BEQZ, C_BNEZ, JALR, JAL, C_JR, C_JALR, C_J, C_JAL};
     end
 
-    exclude_instr = {exclude_instr, CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW, C_ADDI16SP, URET, SRET, MRET, DRET, ECALL};
+    exclude_instr = {exclude_instr, CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW, C_ADDI16SP, C_SWSP, C_FSWSP, URET, SRET, MRET, DRET, ECALL};
     instr = riscv_instr::get_rand_instr(.exclude_instr(exclude_instr));
     instr.m_cfg = cfg;
     randomize_gpr(instr);
+  endfunction
+
+  // Function to assign reserved reg for store instr from cfg to avoid random
+  // reg operands for stores which may result in corruption of instr memory
+  function void store_instr_gpr_handling(riscv_instr instr);
+    if (instr.instr_name inside {SB, SH, SW, C_SW, C_FSW, FSW, CV_SB, CV_SH, CV_SW}) begin
+      instr.rs1 = cv32e40p_cfg.str_rs1;
+      instr.rd  = cv32e40p_cfg.str_rs3;
+    end
   endfunction
 
 endclass

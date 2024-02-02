@@ -223,6 +223,10 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
     if(no_floating_point_instr)
         riscv_exclude_group = {riscv_exclude_group, RV32F, RV32ZFINX};
 
+    if(cfg.sp != SP) begin // prevent corruption due to sw(sp)
+      riscv_exclude_instr = {riscv_exclude_instr, C_SWSP, C_FSWSP};
+    end
+
     `uvm_info("cv32e40p_xpulp_rand_stream",
                $sformatf("Total XPULP+RISCV instr gen in test %0d + %0d",num_of_xpulp_instr,num_of_riscv_instr),UVM_HIGH)
 
@@ -285,6 +289,7 @@ class cv32e40p_xpulp_rand_stream extends cv32e40p_base_instr_stream;
 
           end
       endcase
+      instr_list[$].comment = {$sformatf(" Inserted %0s - idx[%0d]", get_name(), i)};
 
       i++;
 

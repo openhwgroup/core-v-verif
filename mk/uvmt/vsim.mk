@@ -43,9 +43,11 @@ VSIM_LOCAL_MODELSIMINI  ?= YES
 VOPT_CODE_COV_DUT_ONLY  ?= YES
 VSIM_USER_FLAGS         ?=
 ifeq ($(call IS_YES,$(VOPT_CODE_COV_DUT_ONLY)),YES)
-VOPT_COV                ?= +cover=bcsetf+$(RTLSRC_VLOG_CORE_TOP).
+# note: t/toggle is excluded in cv32e40p_v2
+VOPT_COV                ?= +cover=bcsef+$(RTLSRC_VLOG_CORE_TOP).
 else
-VOPT_COV                ?= +cover=setf+$(RTLSRC_VLOG_TB_TOP).
+# note: t/toggle is excluded in cv32e40p_v2
+VOPT_COV                ?= +cover=sef+$(RTLSRC_VLOG_TB_TOP).
 endif
 VSIM_COV                ?= -coverage +uvm_set_config_int=uvm_test_top,cov_model_enabled,1
 VOPT_WAVES_ADV_DEBUG    ?= -designfile design.bin
@@ -147,8 +149,11 @@ VLOG_FLAGS += +define+USE_ISS
 VLOG_FLAGS += +define+USE_IMPERASDV
 VLOG_FILE_LIST_IDV = -f $(DV_UVMT_PATH)/imperas_dv.flist
 ifeq ($(call IS_YES,$(COV)),YES)
-VLOG_FLAGS += +define+IMPERAS_COV
+# VLOG_FLAGS += +define+IMPERAS_COV // fixme: add granuality for this enablement
 endif
+endif
+ifeq ($(call IS_YES,$(COV)),YES)
+VLOG_FLAGS += -covermultiuserenv
 endif
 
 ###############################################################################
@@ -259,8 +264,8 @@ endif
 COV_FLAGS =
 COV_REPORT = cov_report
 COV_MERGE_TARGET =
-COV_MERGE_FIND  = find $(SIM_CFG_RESULTS) -type f -name "*.ucdb" -exec echo {} > $(VSIM_COV_MERGE_DIR)/ucdb.list \;
-COV_MERGE_FLAGS = merge -testassociated -verbose -64 -out merged.ucdb -inputs ucdb.list
+COV_MERGE_FIND  = find $(SIM_CFG_RESULTS) -type f -name "*.ucdb" | grep -v corev-dv > $(VSIM_COV_MERGE_DIR)/ucdb.list
+COV_MERGE_FLAGS = merge -testassociated -verbose -64 -multiuserenv -out merged.ucdb -inputs ucdb.list
 
 ifeq ($(call IS_YES,$(MERGE)),YES)
 COV_DIR=$(VSIM_COV_MERGE_DIR)

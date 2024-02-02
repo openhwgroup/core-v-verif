@@ -33,14 +33,20 @@
 //   - gen_instr_fault_handler()
 //   - gen_load_fault_handler()
 //   - gen_store_fault_handler()
+//   - gen_init_section()
 //-----------------------------------------------------------------------------------------
 
 class cv32e40p_asm_program_gen extends corev_asm_program_gen;
+
+  cv32e40p_instr_gen_config corev_cfg;
 
   `uvm_object_utils(cv32e40p_asm_program_gen)
 
   function new (string name = "");
     super.new(name);
+    if(!uvm_config_db#(cv32e40p_instr_gen_config)::get(null,get_full_name(),"cv32e40p_instr_cfg", corev_cfg)) begin
+      `uvm_fatal(get_full_name(), "Cannot get cv32e40p_instr_gen_config")
+    end
   endfunction
 
   // Override the gen_trap_handler_section function from riscv_asm_program_gen.sv
@@ -54,9 +60,6 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
     bit is_interrupt = 'b1;
     string tvec_name;
     string instr[$];
-    cv32e40p_instr_gen_config corev_cfg;
-
-    `DV_CHECK_FATAL($cast(corev_cfg, cfg), "Could not cast cfg into corev_cfg")
 
     if (cfg.mtvec_mode == VECTORED) begin
       gen_interrupt_vector_table(hart, mode, status, cause, ie, ip, scratch, instr);
@@ -166,8 +169,6 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
     // software interrupts, are vectored to the same location as synchronous exceptions. This
     // ambiguity does not arise in practice, since user-mode software interrupts are either
     // disabled or delegated
-    cv32e40p_instr_gen_config corev_cfg;
-    `DV_CHECK_FATAL($cast(corev_cfg, cfg), "Could not cast cfg into corev_cfg")
 
     instr = {instr, ".option norvc;",
                     $sformatf("j %0s%0smode_exception_handler", hart_prefix(hart), mode)};
@@ -249,9 +250,6 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
     string ls_unit;
     privileged_reg_t status, ip, ie, scratch;
     string interrupt_handler_instr[$];
-
-    cv32e40p_instr_gen_config corev_cfg;
-    `DV_CHECK_FATAL($cast(corev_cfg, cfg), "Could not cast cfg into corev_cfg")
 
     ls_unit = (XLEN == 32) ? "w" : "d";
     if (mode < cfg.init_privileged_mode) return;
@@ -406,14 +404,12 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
     string str;
     string reg_name;
     bit [DATA_WIDTH-1:0] reg_val;
-    cv32e40p_instr_gen_config cfg_corev;
     bit [31:0] imm;
 
-    `DV_CHECK($cast(cfg_corev, cfg))    
     // Init general purpose registers with random values
     for(int i = 0; i < NUM_GPR; i++) begin
       if (i inside {cfg.sp, cfg.tp}) continue;
-      if (cfg.gen_debug_section && (i inside {cfg_corev.dp})) continue;
+      if (cfg.gen_debug_section && (i inside {corev_cfg.dp})) continue;
       
       `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(reg_val,
         reg_val dist {
@@ -429,23 +425,23 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
     //after initializing all gprs, for zfinx extention tests again initialize
     //gprs for floating point instructions
     if(RV32ZFINX inside {supported_isa}) begin
-      foreach(cfg_corev.zfinx_reserved_gpr[i]) begin
-        if (cfg_corev.zfinx_reserved_gpr[i] inside {ZERO, RA, SP, GP, TP}) continue;
+      foreach(corev_cfg.zfinx_reserved_gpr[i]) begin
+        if (corev_cfg.zfinx_reserved_gpr[i] inside {ZERO, RA, SP, GP, TP}) continue;
         imm = get_rand_spf_value();
-        reg_name = cfg_corev.zfinx_reserved_gpr[i].name();
+        reg_name = corev_cfg.zfinx_reserved_gpr[i].name();
         str = $sformatf("%0sli%0s %0s, 0x%0x", indent, indent, reg_name.tolower(), imm);
         instr_stream.push_back(str);
       end
     end
 
     // Initialize reserved registers for store instr
-    if (!cfg_corev.no_load_store) begin
-      reg_name = cfg_corev.str_rs1.name();
+    if (!corev_cfg.no_load_store) begin
+      reg_name = corev_cfg.str_rs1.name();
       reg_val = 32'h80000000; // FIXME : Remove hardcoded value to allow configuration based on linker
       str = $sformatf("%0sli%0s %0s, 0x%0x", indent, indent, reg_name.tolower(), reg_val);
       instr_stream.push_back(str);
 
-      reg_name = cfg_corev.str_rs3.name();
+      reg_name = corev_cfg.str_rs3.name();
       reg_val = $urandom_range(0,255); // FIXME : include negative also
       str = $sformatf("%0sli%0s %0s, 0x%0x", indent, indent, reg_name.tolower(), reg_val);
       instr_stream.push_back(str);
@@ -463,9 +459,6 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
     int stream_freq;
     string opts[$];
     int dir_stream_id = 0;
-
-    cv32e40p_instr_gen_config corev_cfg;
-    `DV_CHECK_FATAL($cast(corev_cfg, cfg), "Could not cast cfg into corev_cfg")
 
     if(corev_cfg.insert_rand_directed_instr_stream) begin
       //test_rand_directed_instr_stream_num specify the total num of rand_* streams to select from
@@ -527,17 +520,16 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
   // Replace pop_gpr_from_kernel_stack with pop_regfile_from_kernel_stack
   // With RV32X enabled, check for ecall instr on the last instr of hwloop
   // If true, then
-  // (a) Set MEPC to first instr of hwloop body
-  // (b) Add logic to decrement the LPCOUNT
+  // (a) Set MEPC to first instr of hwloop body if LPCOUNTx >= 2
+  // (b) Decrement the LPCOUNTx if LPCOUNTx >= 1
+  // Else
+  // By Default for all other cases increment MEPC by 4
   virtual function void gen_ecall_handler(int hart);
     string instr[$];
-    cv32e40p_instr_gen_config corev_cfg;
-
-    `DV_CHECK_FATAL($cast(corev_cfg, cfg), "Could not cast cfg into corev_cfg")
 
     if (riscv_instr_pkg::RV32X inside {riscv_instr_pkg::supported_isa}) begin
       instr = {instr,
-               `COMMON_HWLOOP_EXC_HANDLING_CODE
+               `COMMON_EXCEPTION_XEPC_HANDLING_CODE_WITH_HWLOOP_CHECK(cfg.gpr[0],cfg.gpr[1],MEPC)
       };
     end else begin
       instr = {instr,
@@ -555,19 +547,18 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
   // Replace pop_gpr_from_kernel_stack with pop_regfile_from_kernel_stack
   // With RV32X enabled, check for ebreak instr on the last instr of hwloop
   // If true, then
-  // (a) Set MEPC to first instr of hwloop body
-  // (b) Add logic to decrement the LPCOUNT
+  // (a) Set MEPC to first instr of hwloop body if LPCOUNTx >= 2
+  // (b) Decrement the LPCOUNTx if LPCOUNTx >= 1
+  // Else
+  // By Default for all other cases increment MEPC by 4
   virtual function void gen_ebreak_handler(int hart);
     string instr[$];
-    cv32e40p_instr_gen_config corev_cfg;
-
-    `DV_CHECK_FATAL($cast(corev_cfg, cfg), "Could not cast cfg into corev_cfg")
 
     gen_signature_handshake(instr, CORE_STATUS, EBREAK_EXCEPTION);
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
     if (riscv_instr_pkg::RV32X inside {riscv_instr_pkg::supported_isa}) begin
       instr = {instr,
-               `COMMON_HWLOOP_EXC_HANDLING_CODE
+               `COMMON_EXCEPTION_XEPC_HANDLING_CODE_WITH_HWLOOP_CHECK(cfg.gpr[0],cfg.gpr[1],MEPC)
       };
     end else begin
       instr = {instr,
@@ -586,19 +577,18 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
   // Replace pop_gpr_from_kernel_stack with pop_regfile_from_kernel_stack
   // With RV32X enabled, check for illegal instr on the last instr of hwloop
   // If true, then
-  // (a) Set MEPC to first instr of hwloop body
-  // (b) Add logic to decrement the LPCOUNT
+  // (a) Set MEPC to first instr of hwloop body if LPCOUNTx >= 2
+  // (b) Decrement the LPCOUNTx if LPCOUNTx >= 1
+  // Else
+  // By Default for all other cases increment MEPC by 4
   virtual function void gen_illegal_instr_handler(int hart);
     string instr[$];
-    cv32e40p_instr_gen_config corev_cfg;
-
-    `DV_CHECK_FATAL($cast(corev_cfg, cfg), "Could not cast cfg into corev_cfg")
 
     gen_signature_handshake(instr, CORE_STATUS, ILLEGAL_INSTR_EXCEPTION);
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
     if (riscv_instr_pkg::RV32X inside {riscv_instr_pkg::supported_isa}) begin
       instr = {instr,
-               `COMMON_HWLOOP_EXC_HANDLING_CODE
+               `COMMON_EXCEPTION_XEPC_HANDLING_CODE_WITH_HWLOOP_CHECK(cfg.gpr[0],cfg.gpr[1],MEPC)
       };
     end else begin
       instr = {instr,
@@ -617,9 +607,6 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
   // Replace pop_gpr_from_kernel_stack with pop_regfile_from_kernel_stack
   virtual function void gen_instr_fault_handler(int hart);
     string instr[$];
-    cv32e40p_instr_gen_config corev_cfg;
-
-    `DV_CHECK_FATAL($cast(corev_cfg, cfg), "Could not cast cfg into corev_cfg")
 
     gen_signature_handshake(instr, CORE_STATUS, INSTR_FAULT_EXCEPTION);
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
@@ -638,9 +625,6 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
   // Replace pop_gpr_from_kernel_stack with pop_regfile_from_kernel_stack
   virtual function void gen_load_fault_handler(int hart);
     string instr[$];
-    cv32e40p_instr_gen_config corev_cfg;
-
-    `DV_CHECK_FATAL($cast(corev_cfg, cfg), "Could not cast cfg into corev_cfg")
 
     gen_signature_handshake(instr, CORE_STATUS, LOAD_FAULT_EXCEPTION);
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
@@ -659,9 +643,6 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
   // Replace pop_gpr_from_kernel_stack with pop_regfile_from_kernel_stack
   virtual function void gen_store_fault_handler(int hart);
     string instr[$];
-    cv32e40p_instr_gen_config corev_cfg;
-
-    `DV_CHECK_FATAL($cast(corev_cfg, cfg), "Could not cast cfg into corev_cfg")
 
     gen_signature_handshake(instr, CORE_STATUS, STORE_FAULT_EXCEPTION);
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
@@ -674,6 +655,53 @@ class cv32e40p_asm_program_gen extends corev_asm_program_gen;
     pop_regfile_from_kernel_stack(MSTATUS, MSCRATCH, cfg.mstatus_mprv, cfg.sp, cfg.tp, instr, corev_cfg);
     instr.push_back("mret");
     gen_section(get_label("store_fault_handler", hart), instr);
+  endfunction
+
+  // Function to initialize GPR reserved for stores
+  virtual function void init_str_reserved_gpr();
+    string str;
+    string reg_name;
+    bit [DATA_WIDTH-1:0] reg_val;
+    // Initialize reserved registers for store instr
+    if (!corev_cfg.no_load_store) begin
+      reg_name = corev_cfg.str_rs1.name();
+      reg_val = 32'h80000000; // FIXME : Remove hardcoded value to allow configuration based on linker
+      str = $sformatf("%0sli%0s %0s, 0x%0x", indent, indent, reg_name.tolower(), reg_val);
+      instr_stream.push_back(str);
+
+      reg_name = corev_cfg.str_rs3.name();
+      reg_val = $urandom_range(0,255); // FIXME : include negative also
+      str = $sformatf("%0sli%0s %0s, 0x%0x", indent, indent, reg_name.tolower(), reg_val);
+      instr_stream.push_back(str);
+    end
+  endfunction
+
+  // Override gen_init_section
+  // Add init_str_reserved_gpr() before other fpr/gpr initialization
+  virtual function void gen_init_section(int hart);
+    string str;
+    str = format_string(get_label("init:", hart), LABEL_STR_LEN);
+    instr_stream.push_back(str);
+
+    // First initialize the store reserved register to minimize issues due to random stores
+    init_str_reserved_gpr();
+
+    if (cfg.enable_floating_point) begin
+      init_floating_point_gpr();
+    end
+    init_gpr();
+    // Init stack pointer to point to the end of the user stack
+    str = {indent, $sformatf("la x%0d, %0suser_stack_end", cfg.sp, hart_prefix(hart))};
+    instr_stream.push_back(str);
+    if (cfg.enable_vector_extension) begin
+      randomize_vec_gpr_and_csr();
+    end
+    core_is_initialized();
+    gen_dummy_csr_write(); // TODO add a way to disable xStatus read
+    if (riscv_instr_pkg::support_pmp) begin
+      str = {indent, "j main"};
+      instr_stream.push_back(str);
+    end
   endfunction
 
 endclass : cv32e40p_asm_program_gen

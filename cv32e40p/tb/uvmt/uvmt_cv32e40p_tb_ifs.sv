@@ -207,6 +207,9 @@ interface uvmt_cv32e40p_debug_cov_assert_if
     input  [31:0] id_stage_pc, // Program counter in decode
     input  [31:0] if_stage_pc, // Program counter in fetch
     input         is_decoding,
+    input         branch_taken_ex_i,
+    input         data_err_i,
+    input         is_fetch_failed_i,
     input         id_valid,
     input wire ctrl_state_e  ctrl_fsm_cs,            // Controller FSM states with debug_req
     input         illegal_insn_i,
@@ -283,6 +286,10 @@ interface uvmt_cv32e40p_debug_cov_assert_if
     id_stage_is_compressed,
     id_stage_pc,
     if_stage_pc,
+    is_decoding,
+    branch_taken_ex_i,
+    is_fetch_failed_i,
+    id_valid,
     ctrl_fsm_cs,
     illegal_insn_i,
     illegal_insn_q,
@@ -390,6 +397,7 @@ interface uvmt_cv32e40p_rvvi_if #(
   input logic [(ILEN-1):0]            insn,
   input                               trap,
   input logic [31:0]                  pc_rdata,
+  input logic [31:0]                  wa_csr_mip,
 
   uvma_interrupt_if                   interrupt_if,
   uvma_debug_if                       debug_if,
@@ -401,7 +409,9 @@ interface uvmt_cv32e40p_rvvi_if #(
   `DEF_CSR_PORTS(lpstart1)
   `DEF_CSR_PORTS(lpend1)
   `DEF_CSR_PORTS(lpcount1)
+  `DEF_CSR_PORTS(mstatus)
   `DEF_CSR_PORTS(mie)
+  `DEF_CSR_PORTS(mtvec)
   `DEF_CSR_PORTS(mcause)
   `DEF_CSR_PORTS(mip)
   `DEF_CSR_PORTS(dcsr)
@@ -419,9 +429,14 @@ interface uvmt_cv32e40p_rvvi_if #(
   wire [31:0]                 csr_trig_pc;
 
   logic [31:0]                irq_onehot_priority;
+  logic [31:0]                mtvec_base_addr;
+  logic [31:0]                mip;
 
-  assign valid_irq            = csr[`CSR_MIP_ADDR] & csr[`CSR_MIE_ADDR]; // fixme: rvfi misses mip (pending for resolution)
+  // assign valid_irq            = csr[`CSR_MIP_ADDR] & csr[`CSR_MIE_ADDR]; // fixme: rvfi misses mip (pending rvfi fixes; workaround probe rtl signals - wa_csr_mip)
+  assign valid_irq            = wa_csr_mip & csr[`CSR_MIE_ADDR];
   assign dbg_req              = debug_if.debug_req;
+  assign mie                  = csr[`CSR_MSTATUS_ADDR][3];
+  assign mip                  = csr[`CSR_MIP_ADDR];
 
   assign csr_mcause_irq       = csr[`CSR_MCAUSE_ADDR][31];
   assign csr_mcause_ecp_code  = csr[`CSR_MCAUSE_ADDR][4:0];
@@ -432,6 +447,8 @@ interface uvmt_cv32e40p_rvvi_if #(
   assign csr_trig_execute     = csr[`CSR_TDATA1_ADDR][2];
   assign csr_trig_pc          = csr[`CSR_TDATA2_ADDR];
 
+  assign mtvec_base_addr      = {csr[`CSR_MTVEC_ADDR][31:8], 8'h0};
+
   // can be expanded. Currently only define for current usage
   `ASSIGN_CSR_N_WB(`CSR_LPSTART0_ADDR, lpstart0)
   `ASSIGN_CSR_N_WB(`CSR_LPEND0_ADDR, lpend0)
@@ -439,14 +456,16 @@ interface uvmt_cv32e40p_rvvi_if #(
   `ASSIGN_CSR_N_WB(`CSR_LPSTART1_ADDR, lpstart1)
   `ASSIGN_CSR_N_WB(`CSR_LPEND1_ADDR, lpend1)
   `ASSIGN_CSR_N_WB(`CSR_LPCOUNT1_ADDR, lpcount1)
+  `ASSIGN_CSR_N_WB(`CSR_MSTATUS_ADDR, mstatus)
   `ASSIGN_CSR_N_WB(`CSR_MIE_ADDR, mie)
+  `ASSIGN_CSR_N_WB(`CSR_MTVEC_ADDR, mtvec)
   `ASSIGN_CSR_N_WB(`CSR_MCAUSE_ADDR, mcause)
   `ASSIGN_CSR_N_WB(`CSR_MIP_ADDR, mip)
   `ASSIGN_CSR_N_WB(`CSR_DCSR_ADDR, dcsr)
   `ASSIGN_CSR_N_WB_VEC(`CSR_TDATA1_ADDR, tdata, 1);
   `ASSIGN_CSR_N_WB_VEC(`CSR_TDATA2_ADDR, tdata, 2);
 
-  // irq_onehot_priority assignment
+  // irq_onehot_priority assignment (refer cv32e40p user manual, section 10.2)
   // priority order (high->low) is irq[31]...irq[16], irq[11], irq[3], irq[7]
   always @(valid_irq) begin
     irq_onehot_priority = 0;
@@ -459,5 +478,253 @@ interface uvmt_cv32e40p_rvvi_if #(
   end
     
 endinterface
+
+//
+//Interface for custom TB coverage component
+//
+interface uvmt_cv32e40p_cov_if
+
+  import uvm_pkg::*;
+  import uvme_cv32e40p_pkg::*;
+  (
+    input               clk_i,
+    input               rst_ni,
+    input               if_stage_instr_rvalid_i,
+    input  [31:0]       if_stage_instr_rdata_i,
+    input               id_stage_instr_valid_i,
+    input  [31:0]       id_stage_instr_rdata_i,
+    input               apu_req,
+    input               apu_gnt,
+    input               apu_busy,
+    input  [5:0]        apu_op,
+    input               apu_rvalid_i,
+    input               apu_perf_wb_o,
+    input  [5:0]        id_stage_apu_op_ex_o,
+    input               id_stage_apu_en_ex_o,
+    input  [5:0]        regfile_waddr_wb_o,  // regfile write port A addr from WB stage
+    input               regfile_we_wb_o,
+    input  [5:0]        regfile_alu_waddr_ex_o, // regfile write port B addr from EX stage
+    input               regfile_alu_we_ex_o,
+    input               ex_mulh_active,
+    input  [2:0]        ex_mult_op_ex,
+    input               ex_data_misaligned_i,
+    input               ex_data_misaligned_ex_i,
+    input               ex_data_req_i,
+    input               ex_data_rvalid_i,
+    input               ex_regfile_alu_we_i,
+    input               ex_apu_valid,
+    input               ex_apu_rvalid_q,
+    input               debug_req_i,
+    input               debug_mode_q,
+    input  [31:0]       dcsr_q,
+    input               trigger_match_i,
+
+    output logic[5:0]   o_curr_fpu_apu_op_if,
+    output logic[5:0]   o_last_fpu_apu_op_if,
+    output logic[4:0]   if_clk_cycle_window,
+    output [4:0]        curr_fpu_fd,
+    output [4:0]        curr_fpu_rd,
+    output [5:0]        curr_rd_at_ex_regfile_wr_contention,
+    output [5:0]        curr_rd_at_wb_regfile_wr_contention,
+    output [5:0]        prev_rd_waddr_contention,
+    output logic[1:0]   contention_state,
+    output              b2b_contention,
+    output              is_mulh_ex,
+    output              is_misaligned_data_req_ex,
+    output              is_post_inc_ld_st_inst_ex,
+    output              ex_apu_valid_memorised
+  );
+
+  logic [4:0]       clk_cycle_window;
+  logic [5:0]       curr_fpu_apu_op_if;
+  logic [5:0]       last_fpu_contention_op_if;
+  logic [5:0]       prev_regfile_waddr_contention;
+  logic [4:0]       regfile_waddr_wb_fd;
+  logic [4:0]       regfile_alu_waddr_ex_fd;
+  logic [4:0]       regfile_waddr_wb_rd;
+  logic [4:0]       regfile_alu_waddr_ex_rd;
+  logic [5:0]       regfile_waddr_ex_contention;
+  logic [5:0]       regfile_waddr_wb_contention;
+  logic [1:0]       contention_valid;
+  logic             b2b_contention_valid;
+
+  initial begin
+      clk_cycle_window = 0;
+      curr_fpu_apu_op_if = 0;
+      regfile_waddr_wb_fd = 0;
+      regfile_alu_waddr_ex_fd = 0;
+      regfile_waddr_wb_rd = 0;
+      regfile_alu_waddr_ex_rd = 0;
+      regfile_waddr_ex_contention = 0;
+      regfile_waddr_wb_contention = 0;
+      contention_valid = 0;
+      b2b_contention_valid = 0;
+  end
+
+  clocking mon_cb @(posedge clk_i);
+      default input #1step output #1ns;
+      input if_stage_instr_rvalid_i;
+      input if_stage_instr_rdata_i;
+      input id_stage_instr_valid_i;
+      input id_stage_instr_rdata_i;
+      input apu_req;
+      input apu_gnt;
+      input apu_busy;
+      input apu_op;
+      input apu_rvalid_i;
+      input apu_perf_wb_o;
+      input id_stage_apu_op_ex_o;
+      input id_stage_apu_en_ex_o;
+      input debug_req_i;
+      input debug_mode_q;
+      input trigger_match_i;
+      input dcsr_q;
+      inout is_mulh_ex;
+      inout is_misaligned_data_req_ex;
+      inout is_post_inc_ld_st_inst_ex;
+      inout ex_apu_valid_memorised;
+  endclocking : mon_cb
+
+  //calculate each APU operation's current clock cycle number during execution for functional coverage use
+  always @(posedge clk_i or negedge rst_ni) begin
+      if(!rst_ni) begin
+          clk_cycle_window = 0;
+          curr_fpu_apu_op_if = 0;
+      end
+      else begin
+          if((clk_cycle_window == 0) && (apu_req == 1)) begin
+              clk_cycle_window = 1;
+              curr_fpu_apu_op_if = apu_op;
+          end
+          else if((clk_cycle_window != 0) && (apu_req == 1)) begin
+              clk_cycle_window = 1;
+              curr_fpu_apu_op_if = apu_op;
+          end
+          else if((clk_cycle_window != 0) && (apu_busy == 1)) begin
+              clk_cycle_window += 1;
+          end
+          else begin
+              clk_cycle_window = 0;
+          end
+      end
+  end
+
+  //Model APU contention state in EX/WB for functional coverage
+  always @(posedge clk_i or negedge rst_ni) begin
+      if(!rst_ni) begin
+          contention_valid <= 0;
+          b2b_contention_valid <= 0;
+          last_fpu_contention_op_if <= 0;
+          prev_regfile_waddr_contention <= 0;
+      end
+      else begin
+          if (((contention_valid == 0) || (contention_valid == 2)) && (apu_perf_wb_o)) begin
+              contention_valid <= 1; //set contention_valid
+              b2b_contention_valid <= 0;
+ `ifndef FPU_LAT_1_CYC
+              prev_regfile_waddr_contention <= regfile_alu_waddr_ex_o;
+ `else
+              prev_regfile_waddr_contention <= regfile_waddr_wb_o;
+              last_fpu_contention_op_if <= curr_fpu_apu_op_if;
+ `endif
+          end
+          else if((contention_valid == 1) && (apu_perf_wb_o)) begin
+              contention_valid <= 1; //reset contention_valid
+              b2b_contention_valid <= 1;
+              //if no APU execution during contention then nothing to do
+              //else TODO: check if during contention another APU transaction
+              //can go through?
+ `ifndef FPU_LAT_1_CYC
+              prev_regfile_waddr_contention <= regfile_alu_waddr_ex_o;
+ `else
+              prev_regfile_waddr_contention <= regfile_waddr_wb_o;
+ `endif
+          end
+          else if((contention_valid == 1) && (!apu_perf_wb_o)) begin
+              contention_valid <= 2; //stalled write complete after contention
+              b2b_contention_valid <= 0;
+          end
+          else begin
+              contention_valid <= 0;
+              b2b_contention_valid <= 0;
+          end
+      end
+  end
+
+
+  //sample each APU operation's destination register address for functional coverage
+  always @(posedge clk_i or negedge rst_ni) begin
+      if(!rst_ni) begin
+          regfile_alu_waddr_ex_fd <= 0;
+          regfile_alu_waddr_ex_rd <= 0;
+          regfile_waddr_wb_fd <= 0;
+          regfile_waddr_wb_rd <= 0;
+          regfile_waddr_wb_contention <= 0;
+          regfile_waddr_ex_contention <= 0;
+      end
+      else begin
+`ifndef FPU_LAT_1_CYC //Case for FPU Latency {0,2,3,4}, with regfile write from EX stage with highest priority of APU
+          if (((apu_req == 1) || (apu_busy == 1)) && (regfile_alu_we_ex_o == 1) && (apu_rvalid_i == 1)) begin
+              regfile_alu_waddr_ex_fd <= (regfile_alu_waddr_ex_o - 32);
+              regfile_alu_waddr_ex_rd <= (regfile_alu_waddr_ex_o < 32) ? regfile_alu_waddr_ex_o : 0;
+              regfile_waddr_ex_contention <= 0;
+              regfile_waddr_wb_contention <= 0;
+          end
+          else if ((contention_valid == 1) && (regfile_alu_we_ex_o == 1) && !apu_perf_wb_o) begin // write for stalled regfile wr at contention
+              regfile_alu_waddr_ex_fd <= 0;
+              regfile_alu_waddr_ex_rd <= 0;
+              regfile_waddr_ex_contention <= regfile_alu_waddr_ex_o; //should not be >31, check for illegal in coverage
+              regfile_waddr_wb_contention <= 0;
+          end
+ `else
+          //Case FPU Latency = 1; regfile wr from WB;LSU > priority;no LSU contention, F-inst regfile wr succeed
+          if ((apu_busy == 1) && (regfile_we_wb_o == 1) && (apu_rvalid_i == 1) && (!apu_perf_wb_o)) begin
+              regfile_waddr_wb_fd <= (regfile_waddr_wb_o - 32);
+              regfile_waddr_wb_rd <= (regfile_waddr_wb_o < 32) ? regfile_waddr_wb_o : 0;
+              regfile_waddr_ex_contention <= 0;
+              regfile_waddr_wb_contention <= 0;
+          end
+          //Case FPU Latency = 1; regfile wr from WB;LSU > priority;LSU contention,F-inst regfile wr stall
+          else if((apu_busy == 1) && (regfile_we_wb_o == 1) && (apu_rvalid_i == 1) && (apu_perf_wb_o)) begin
+              regfile_waddr_wb_fd <= 0
+              regfile_waddr_wb_rd <= 0;
+              regfile_waddr_ex_contention <= 0;
+              regfile_waddr_wb_contention = regfile_waddr_wb_o; //should not be >31, check for illegal in coverage
+          end
+          //Case FPU Latency = 1;regfile wr from WB;LSU > priority;LSU contention - FPU reg write cycle after contention
+          else if((contention_valid == 1) && (regfile_we_wb_o == 1) && !apu_perf_wb_o) begin
+              regfile_waddr_wb_fd <= (regfile_waddr_wb_o - 32);
+              regfile_waddr_wb_rd <= (regfile_waddr_wb_o < 32) ? regfile_waddr_wb_o : 0;
+              regfile_waddr_ex_contention <= 0;
+              regfile_waddr_wb_contention <= 0;
+          end
+ `endif
+          else begin
+              regfile_alu_waddr_ex_fd <= 0;
+              regfile_alu_waddr_ex_rd <= 0;
+              regfile_waddr_wb_fd <= 0;
+              regfile_waddr_wb_rd <= 0;
+              regfile_waddr_ex_contention <= 0;
+              regfile_waddr_wb_contention <= 0;
+          end
+      end
+  end
+
+  assign curr_fpu_fd = regfile_alu_waddr_ex_fd | regfile_waddr_wb_fd;
+  assign curr_fpu_rd = regfile_alu_waddr_ex_rd | regfile_waddr_wb_rd;
+  assign if_clk_cycle_window = clk_cycle_window;
+  assign o_curr_fpu_apu_op_if = curr_fpu_apu_op_if;
+  assign o_last_fpu_apu_op_if = last_fpu_contention_op_if;
+  assign curr_rd_at_ex_regfile_wr_contention = regfile_waddr_ex_contention;
+  assign curr_rd_at_wb_regfile_wr_contention = regfile_waddr_wb_contention;
+  assign contention_state = contention_valid;
+  assign b2b_contention = b2b_contention_valid;
+  assign prev_rd_waddr_contention = prev_regfile_waddr_contention;
+  assign is_mulh_ex = ex_mulh_active && (ex_mult_op_ex == 3'h6);
+  assign is_misaligned_data_req_ex = ex_data_misaligned_i || ex_data_misaligned_ex_i;
+  assign is_post_inc_ld_st_inst_ex = (ex_data_req_i || ex_data_rvalid_i) && ex_regfile_alu_we_i;
+  assign ex_apu_valid_memorised = ex_apu_valid & ex_apu_rvalid_q;
+
+endinterface : uvmt_cv32e40p_cov_if
 
 `endif // __UVMT_CV32E40P_TB_IFS_SV__

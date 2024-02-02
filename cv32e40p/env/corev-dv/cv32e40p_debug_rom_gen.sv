@@ -107,6 +107,8 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
                   gen_single_step_logic();
             end
             gen_dpc_update();
+            init_dbg_rom_str_reserved_gpr();
+
             // write DCSR to the testbench for any analysis
             gen_signature_handshake(.instr(debug_main), .signature_type(WRITE_CSR), .csr(DCSR));
             if (cfg.enable_ebreak_in_debug_rom || cfg.set_dcsr_ebreak) begin
@@ -172,7 +174,26 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
         // Insert section info so linker can place
         // debug exception code at the correct adress
         instr_stream.push_back(".section .debugger_exception, \"ax\"");
-        super.gen_debug_exception_handler();
+
+        // In CV32E40P there is no way to know the Instruction address
+        // that caused the debug exception entry.
+        // In these tests, this scenario is simply handled with assumptions:
+        //    - The random illegal exception in debug program is generated
+        //      as part of random instructions
+        //    - And debug stack pointer is not used in any other random
+        //      instruction in debug program
+        //  With these 2 assumptions to ensure smooth continuity of rest of
+        //  the test program, we simply jump to "debug_end" section to exit
+        //  the debug rom properly.
+
+        if (cfg.gen_debug_section) begin
+          str = {$sformatf("la x%0d, debug_end", cfg.scratch_reg),
+                 $sformatf("jalr x0, x%0d, 0", cfg.scratch_reg),
+                 "dret"};
+          gen_section($sformatf("%0sdebug_exception", hart_prefix(hart)), str);
+        end else begin
+          super.gen_debug_exception_handler();
+        end
 
         // Inser section info to place remaining code in the 
         // original section
@@ -340,6 +361,57 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
       gen_signature_handshake(.instr(debug_main), .signature_type(WRITE_CSR), .csr(DPC));
       // write out the counter to the testbench
       gen_signature_handshake(.instr(debug_main), .signature_type(WRITE_CSR), .csr(DSCRATCH0));
+    endfunction
+
+    // Override base class gen_dpc_update()
+    // Check dcsr.cause, for ebreak as debug entry cause.
+    // With RV32X enabled, check for ebreak instr on the last instr of hwloop
+    // If true, then
+    // (a) Set DPC to first instr of hwloop body if LPCOUNTx >= 2
+    // (b) Decrement the LPCOUNTx if LPCOUNTx >= 1
+    // Else
+    // By Default for all other cases increment DPC by 4
+    // as ebreak will set set dpc to its own address, which will cause an
+    // infinite loop.
+    virtual function void gen_dpc_update();
+      str = {$sformatf("csrr x%0d, 0x%0x", cfg.scratch_reg, DCSR),
+             $sformatf("slli x%0d, x%0d, 0x17", cfg.scratch_reg, cfg.scratch_reg),
+             $sformatf("srli x%0d, x%0d, 0x1d", cfg.scratch_reg, cfg.scratch_reg),
+             $sformatf("li x%0d, 0x1", cfg.gpr[0]),
+             $sformatf("bne x%0d, x%0d, 8f", cfg.scratch_reg, cfg.gpr[0])};
+      debug_main = {debug_main, str};
+
+      if (riscv_instr_pkg::RV32X inside {riscv_instr_pkg::supported_isa}) begin
+        str = {
+               `COMMON_EXCEPTION_XEPC_HANDLING_CODE_WITH_HWLOOP_CHECK(cfg.gpr[0], cfg.scratch_reg, DPC)
+               };
+        debug_main = {debug_main, str};
+        str = {"8: nop"};
+        debug_main = {debug_main, str};
+      end else begin
+        increment_csr(DPC, 4, debug_main);
+        str = {"8: nop"};
+        debug_main = {debug_main, str};
+      end
+    endfunction
+
+    // Function to initialize GPR reserved for stores
+    virtual function void init_dbg_rom_str_reserved_gpr();
+      string reg_name;
+      bit [31:0] reg_val;
+
+      // Initialize reserved registers for store instr
+      if (!cfg_corev.no_load_store) begin
+        reg_name = cfg_corev.str_rs1.name();
+        reg_val = 32'h88000000; // FIXME : Remove hardcoded value to allow configuration based on linker
+        str = {$sformatf("li %0s, 0x%0x", reg_name.tolower(), reg_val)};
+        debug_main = {debug_main, str};
+
+        reg_name = cfg_corev.str_rs3.name();
+        reg_val = $urandom_range(0,255); // FIXME : include negative also
+        str = {$sformatf("li %0s, 0x%0x", reg_name.tolower(), reg_val)};
+        debug_main = {debug_main, str};
+      end
     endfunction
 
 endclass : cv32e40p_debug_rom_gen

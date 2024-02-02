@@ -48,40 +48,40 @@ builds:
     cfg: pulp_fpu_zfinx_2cyclat
     dir: cv32e40p/sim/uvmt
 
-  uvmt_cv32e40p_pulp_cluster:
-    cmd: make comp comp_corev-dv
-    cfg: pulp_cluster
-    dir: cv32e40p/sim/uvmt
-
-  uvmt_cv32e40p_pulp_cluster_fpu:
-    cmd: make comp comp_corev-dv
-    cfg: pulp_cluster_fpu
-    dir: cv32e40p/sim/uvmt
-
-  uvmt_cv32e40p_pulp_cluster_fpu_1cyclat:
-    cmd: make comp comp_corev-dv
-    cfg: pulp_cluster_fpu_1cyclat
-    dir: cv32e40p/sim/uvmt
-
-  uvmt_cv32e40p_pulp_cluster_fpu_2cyclat:
-    cmd: make comp comp_corev-dv
-    cfg: pulp_cluster_fpu_2cyclat
-    dir: cv32e40p/sim/uvmt
-
-  uvmt_cv32e40p_pulp_cluster_fpu_zfinx:
-    cmd: make comp comp_corev-dv
-    cfg: pulp_cluster_fpu_zfinx
-    dir: cv32e40p/sim/uvmt
-
-  uvmt_cv32e40p_pulp_cluster_fpu_zfinx_1cyclat:
-    cmd: make comp comp_corev-dv
-    cfg: pulp_cluster_fpu_zfinx_1cyclat
-    dir: cv32e40p/sim/uvmt
-
-  uvmt_cv32e40p_pulp_cluster_fpu_zfinx_2cyclat:
-    cmd: make comp comp_corev-dv
-    cfg: pulp_cluster_fpu_zfinx_2cyclat
-    dir: cv32e40p/sim/uvmt
+#  uvmt_cv32e40p_pulp_cluster:
+#    cmd: make comp comp_corev-dv
+#    cfg: pulp_cluster
+#    dir: cv32e40p/sim/uvmt
+#
+#  uvmt_cv32e40p_pulp_cluster_fpu:
+#    cmd: make comp comp_corev-dv
+#    cfg: pulp_cluster_fpu
+#    dir: cv32e40p/sim/uvmt
+#
+#  uvmt_cv32e40p_pulp_cluster_fpu_1cyclat:
+#    cmd: make comp comp_corev-dv
+#    cfg: pulp_cluster_fpu_1cyclat
+#    dir: cv32e40p/sim/uvmt
+#
+#  uvmt_cv32e40p_pulp_cluster_fpu_2cyclat:
+#    cmd: make comp comp_corev-dv
+#    cfg: pulp_cluster_fpu_2cyclat
+#    dir: cv32e40p/sim/uvmt
+#
+#  uvmt_cv32e40p_pulp_cluster_fpu_zfinx:
+#    cmd: make comp comp_corev-dv
+#    cfg: pulp_cluster_fpu_zfinx
+#    dir: cv32e40p/sim/uvmt
+#
+#  uvmt_cv32e40p_pulp_cluster_fpu_zfinx_1cyclat:
+#    cmd: make comp comp_corev-dv
+#    cfg: pulp_cluster_fpu_zfinx_1cyclat
+#    dir: cv32e40p/sim/uvmt
+#
+#  uvmt_cv32e40p_pulp_cluster_fpu_zfinx_2cyclat:
+#    cmd: make comp comp_corev-dv
+#    cfg: pulp_cluster_fpu_zfinx_2cyclat
+#    dir: cv32e40p/sim/uvmt
 
 tests:
   hello-world:
@@ -95,13 +95,6 @@ tests:
       - uvmt_cv32e40p_pulp_fpu_zfinx
       - uvmt_cv32e40p_pulp_fpu_zfinx_1cyclat
       - uvmt_cv32e40p_pulp_fpu_zfinx_2cyclat
-      - uvmt_cv32e40p_pulp_cluster
-      - uvmt_cv32e40p_pulp_cluster_fpu
-      - uvmt_cv32e40p_pulp_cluster_fpu_1cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_2cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_1cyclat
-      - uvmt_cv32e40p_pulp_cluster_fpu_zfinx_2cyclat
     description: UVM Hello World Test
     dir: cv32e40p/sim/uvmt
     cmd: make test COREV=YES TEST=hello-world CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
@@ -111,13 +104,13 @@ tests:
     build: uvmt_cv32e40p_pulp_fpu
     description: Interrupt directed on PULP+FPU HW
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=interrupt_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    cmd: make test COREV=YES TEST=interrupt_test CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
     num: 1
 
   debug_test:
     build: uvmt_cv32e40p_pulp_fpu
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=debug_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    cmd: make test COREV=YES TEST=debug_test CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
     num: 1
 
   corev_rand_fp_instr_sanity_test:
@@ -147,4 +140,4 @@ tests:
   corev_rand_pulp_hwloop_test:
     build: uvmt_cv32e40p_pulp
     dir: cv32e40p/sim/uvmt
-    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=20000000"

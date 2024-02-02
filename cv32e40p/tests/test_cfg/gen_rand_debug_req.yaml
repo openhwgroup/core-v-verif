@@ -1,0 +1,5 @@
+name: gen_rand_debug_req
+description: >
+    Generate Random debug halt request
+plusargs: >
+    +gen_random_debug

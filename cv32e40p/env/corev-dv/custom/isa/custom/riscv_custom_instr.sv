@@ -230,7 +230,7 @@ class cv32e40p_instr extends riscv_instr;
     // special overrides for xcorev
 
     // for ALU, there exists variations for R and S types
-    if (category == ALU) begin
+    if (category inside {ALU,MAC}) begin
       if (instr_name inside {CV_CLIP, CV_CLIPU}) has_imm = 1'b1;
       if (format == S_FORMAT) has_rd = 1'b1;
     end
@@ -698,7 +698,7 @@ class cv32e40p_instr extends riscv_instr;
         imm_str = $sformatf("%0d", $signed(imm[5:0]));
       end
     end else
-    super.update_imm_str();
+      super.update_imm_str();
   endfunction
 
   // `include "isa/riscv_instr_cov.svh"
