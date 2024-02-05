@@ -72,13 +72,13 @@ test1:
 
     .balign 4
 
-    cv.counti 1, 10
-    cv.endi 1, endO_1
     cv.starti 1, startO_1
-    cv.endi 0, endZ_1
+    cv.endi 1, endO_1
+    cv.counti 1, 10
     cv.starti 0, startZ_1
-    cv.counti 0, 10
+    cv.endi 0, endZ_1
 startO_1:
+    cv.counti 0, 10
 
     .option norvc
 
@@ -87,8 +87,8 @@ startZ_1:
     addi x17, x17, 1
     addi x17, x17, 1
 endZ_1:
-    cv.counti 0, 10
-    addi x18, x18, 2
+    addi x18, x18, 1
+    addi x18, x18, 1
 endO_1:
 
     .option rvc
@@ -118,11 +118,11 @@ test2:
 
     .balign 4
 
-    cv.count 1, x5
-    cv.end 1, x6
     cv.start 1, x7
-    cv.end 0, x8
+    cv.end 1, x6
+    cv.count 1, x5
     cv.start 0, x9
+    cv.end 0, x8
 startO_2:
     cv.count 0, x5
 
