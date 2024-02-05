@@ -1,7 +1,7 @@
-diff --git a/Makefile.in b/Makefile.in
-index c3e1822d..0a8837f5 100644
---- a/Makefile.in
-+++ b/Makefile.in
+diff --git a/vendor/riscv/riscv-isa-sim/Makefile.in b/vendor/riscv/riscv-isa-sim/Makefile.in
+index c3e1822d..f9c4b09a 100644
+--- a/vendor/riscv/riscv-isa-sim/Makefile.in
++++ b/vendor/riscv/riscv-isa-sim/Makefile.in
 @@ -69,11 +69,13 @@ install_exes_dir := $(INSTALLDIR)/bin
  sprojs         := @subprojects@
  sprojs_enabled := @subprojects_enabled@
@@ -18,7 +18,18 @@ index c3e1822d..0a8837f5 100644
  #-------------------------------------------------------------------------
  
  # C++ compiler
-@@ -163,7 +165,7 @@ dist_junk += $(sprojs_mk)
+@@ -92,8 +94,9 @@ VPATH := $(addprefix $(src_dir)/, $(sprojs_enabled))
+ #
+ # These all appear on the command line, from lowest precedence to
+ # highest.
++SPIKE_HASH_VERSION:= $(shell git log -1 --pretty=tformat:"%h" -- .. )
+ 
+-default-CFLAGS   := -DPREFIX=\"$(prefix)\" -Wall -Wno-unused -Wno-nonportable-include-path -g -O2 -fPIC
++default-CFLAGS   := -DPREFIX=\"$(prefix)\" -Wall -Wno-unused -Wno-nonportable-include-path -g -O2 -fPIC -DSPIKE_HASH_VERSION=0x$(SPIKE_HASH_VERSION)
+ default-CXXFLAGS := $(default-CFLAGS) -std=c++17
+ 
+ mcppbs-CPPFLAGS := @CPPFLAGS@
+@@ -163,7 +166,7 @@ dist_junk += $(sprojs_mk)
  #-------------------------------------------------------------------------
  # This function is used by the subproject template to reverse the list
  # of dependencies. It uses recursion to perform the reversal.
@@ -27,7 +38,7 @@ index c3e1822d..0a8837f5 100644
  # Arguments:
  #  $(1)   : space separated input list
  #  retval : input list in reverse order
-@@ -185,7 +187,7 @@ endef
+@@ -185,7 +188,7 @@ endef
  # subprojects defining a certain set of make variables which are all
  # prefixed with the subproject name. Since subproject names can have
  # dashes in them (and the make variables are assumed to only use
@@ -36,7 +47,7 @@ index c3e1822d..0a8837f5 100644
  # subproject name and one with dashes replaced with underscores.
  #
  # Arguments:
-@@ -441,7 +443,7 @@ dist_junk += config.status config.h Makefile config.log
+@@ -441,7 +444,7 @@ dist_junk += config.status config.h Makefile config.log
  # Distribution
  #-------------------------------------------------------------------------
  # The distribution tarball is named project-ver.tar.gz and it includes
@@ -45,10 +56,10 @@ index c3e1822d..0a8837f5 100644
  
  dist_files = \
    $(sprojs) \
-diff --git a/disasm/disasm.mk.in b/disasm/disasm.mk.in
+diff --git a/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in b/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in
 index 9eafb12f..4ef09a29 100644
---- a/disasm/disasm.mk.in
-+++ b/disasm/disasm.mk.in
+--- a/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in
++++ b/vendor/riscv/riscv-isa-sim/disasm/disasm.mk.in
 @@ -1,5 +1,10 @@
  disasm_srcs = \
    disasm.cc \
@@ -60,11 +71,11 @@ index 9eafb12f..4ef09a29 100644
  
  disasm_install_lib = yes
 +disasm_install_shared_lib = yes
-diff --git a/disasm/dpi_dasm.cc b/disasm/dpi_dasm.cc
+diff --git a/vendor/riscv/riscv-isa-sim/disasm/dpi_dasm.cc b/vendor/riscv/riscv-isa-sim/disasm/dpi_dasm.cc
 new file mode 100644
 index 00000000..f88723e6
 --- /dev/null
-+++ b/disasm/dpi_dasm.cc
++++ b/vendor/riscv/riscv-isa-sim/disasm/dpi_dasm.cc
 @@ -0,0 +1,654 @@
 +// Copyright 2021 OpenHW Group
 +// Copyright 2021 Silicon Labs, Inc.
@@ -720,11 +731,11 @@ index 00000000..f88723e6
 +
 +//--------------------------------------------------------------------------------
 +
-diff --git a/disasm/dpi_dasm_imports.svh b/disasm/dpi_dasm_imports.svh
+diff --git a/vendor/riscv/riscv-isa-sim/disasm/dpi_dasm_imports.svh b/vendor/riscv/riscv-isa-sim/disasm/dpi_dasm_imports.svh
 new file mode 100644
 index 00000000..8a0bfbd9
 --- /dev/null
-+++ b/disasm/dpi_dasm_imports.svh
++++ b/vendor/riscv/riscv-isa-sim/disasm/dpi_dasm_imports.svh
 @@ -0,0 +1,75 @@
 +// Copyright 2021 OpenHW Group
 +// Copyright 2021 Silicon Labs, Inc.
@@ -801,11 +812,11 @@ index 00000000..8a0bfbd9
 +import "DPI-C" v_vta = function longint unsigned dasm_v_vta(longint instruction);
 +import "DPI-C" v_vma = function longint unsigned dasm_v_vma(longint instruction);
 +import "DPI-C" v_mew = function longint unsigned dasm_v_mew(longint instruction);
-diff --git a/fesvr/SimDTM.cc b/fesvr/SimDTM.cc
+diff --git a/vendor/riscv/riscv-isa-sim/fesvr/SimDTM.cc b/vendor/riscv/riscv-isa-sim/fesvr/SimDTM.cc
 new file mode 100644
 index 00000000..a6898ba2
 --- /dev/null
-+++ b/fesvr/SimDTM.cc
++++ b/vendor/riscv/riscv-isa-sim/fesvr/SimDTM.cc
 @@ -0,0 +1,95 @@
 +// See LICENSE.SiFive for license details.
 +
@@ -902,10 +913,10 @@ index 00000000..a6898ba2
 +
 +  return dtm->done() ? (dtm->exit_code() << 1 | 1) : 0;
 +}
-diff --git a/fesvr/fesvr.mk.in b/fesvr/fesvr.mk.in
+diff --git a/vendor/riscv/riscv-isa-sim/fesvr/fesvr.mk.in b/vendor/riscv/riscv-isa-sim/fesvr/fesvr.mk.in
 index c8549399..1d6bc866 100644
---- a/fesvr/fesvr.mk.in
-+++ b/fesvr/fesvr.mk.in
+--- a/vendor/riscv/riscv-isa-sim/fesvr/fesvr.mk.in
++++ b/vendor/riscv/riscv-isa-sim/fesvr/fesvr.mk.in
 @@ -22,6 +22,7 @@ fesvr_install_shared_lib = yes
  
  fesvr_srcs = \
@@ -922,11 +933,11 @@ index c8549399..1d6bc866 100644
  
  fesvr_install_prog_srcs = \
    elf2hex.cc \
-diff --git a/fesvr/fesvr_dpi.cc b/fesvr/fesvr_dpi.cc
+diff --git a/vendor/riscv/riscv-isa-sim/fesvr/fesvr_dpi.cc b/vendor/riscv/riscv-isa-sim/fesvr/fesvr_dpi.cc
 new file mode 100644
 index 00000000..9c3e692a
 --- /dev/null
-+++ b/fesvr/fesvr_dpi.cc
++++ b/vendor/riscv/riscv-isa-sim/fesvr/fesvr_dpi.cc
 @@ -0,0 +1,121 @@
 +#include "config.h"
 +#include "elf.h"
@@ -1049,10 +1060,10 @@ index 00000000..9c3e692a
 +
 +    symbols = load_elf(filename, memif, entry);
 +}
-diff --git a/fesvr/htif.cc b/fesvr/htif.cc
+diff --git a/vendor/riscv/riscv-isa-sim/fesvr/htif.cc b/vendor/riscv/riscv-isa-sim/fesvr/htif.cc
 index 3f93f7b5..4555b192 100644
---- a/fesvr/htif.cc
-+++ b/fesvr/htif.cc
+--- a/vendor/riscv/riscv-isa-sim/fesvr/htif.cc
++++ b/vendor/riscv/riscv-isa-sim/fesvr/htif.cc
 @@ -116,7 +116,7 @@ std::map<std::string, uint64_t> htif_t::load_payload(const std::string& payload,
      else
        throw std::runtime_error(
@@ -1062,11 +1073,11 @@ index 3f93f7b5..4555b192 100644
          "\t" + PREFIX TARGET_DIR + " (based on configured --prefix and --with-target)"
        );
    }
-diff --git a/riscv/Params.cc b/riscv/Params.cc
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Params.cc b/vendor/riscv/riscv-isa-sim/riscv/Params.cc
 new file mode 100644
 index 00000000..5b468700
 --- /dev/null
-+++ b/riscv/Params.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Params.cc
 @@ -0,0 +1,18 @@
 +#include "Params.h"
 +
@@ -1086,11 +1097,11 @@ index 00000000..5b468700
 +        }
 +    }
 +}
-diff --git a/riscv/Params.h b/riscv/Params.h
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Params.h b/vendor/riscv/riscv-isa-sim/riscv/Params.h
 new file mode 100644
 index 00000000..914bbafe
 --- /dev/null
-+++ b/riscv/Params.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Params.h
 @@ -0,0 +1,71 @@
 +#include <iostream>
 +#include <string>
@@ -1163,24 +1174,21 @@ index 00000000..914bbafe
 +
 +    void ParseParams(string base, Params& baseParams, Params& newParams);
 +}
-diff --git a/riscv/Proc.cc b/riscv/Proc.cc
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
 new file mode 100644
-index 00000000..d91b0068
+index 00000000..6ecc4b80
 --- /dev/null
-+++ b/riscv/Proc.cc
-@@ -0,0 +1,104 @@
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -0,0 +1,108 @@
 +#include "Proc.h"
 +#include "disasm.h"
 +
 +namespace openhw
 +{
-+    st_rvfi Processor::step(size_t n)
++    st_rvfi Processor::step(size_t n, st_rvfi reference)
 +    {
 +        st_rvfi rvfi;
-+        rvfi.insn = 0; rvfi.pc_rdata = 0;
-+        rvfi.rd1_addr = 0; rvfi.rd1_wdata = 0;
-+        rvfi.rs1_addr = 0; rvfi.rs1_rdata = 0;
-+        rvfi.rs2_addr = 0; rvfi.rs2_rdata = 0;
++        memset(&rvfi, 0, sizeof(st_rvfi));
 +
 +        this->taken_trap = false;
 +
@@ -1247,7 +1255,9 @@ index 00000000..d91b0068
 +        ParseParams("/top/core/0/", this->params, params);
 +
 +        string isa_str = std::any_cast<string>(this->params["/top/core/0/isa"]);
-+        this->isa = (const isa_parser_t*) new isa_parser_t (isa_str.c_str(), DEFAULT_PRIV);
++        string priv_str = std::any_cast<string>(this->params["/top/core/0/priv"]);
++        std::cout << "[SPIKE] Proc 0 | isa: " << isa_str << " priv: " << priv_str << std::endl;
++        this->isa = (const isa_parser_t*) new isa_parser_t (isa_str.c_str(), priv_str.c_str());
 +
 +        disassembler = new disassembler_t(isa);
 +        for (auto e : isa->get_extensions())
@@ -1272,13 +1282,18 @@ index 00000000..d91b0068
 +        processor_t::take_trap(t, epc);
 +    }
 +
++    Processor::~Processor()
++    {
++        delete this->isa;
++    }
++
 +}
-diff --git a/riscv/Proc.h b/riscv/Proc.h
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.h b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
 new file mode 100644
-index 00000000..2ecb335e
+index 00000000..917d2ea9
 --- /dev/null
-+++ b/riscv/Proc.h
-@@ -0,0 +1,22 @@
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+@@ -0,0 +1,23 @@
 +
 +#include "Types.h"
 +#include "processor.h"
@@ -1291,7 +1306,8 @@ index 00000000..2ecb335e
 +            Processor(const isa_parser_t *isa, const cfg_t* cfg,
 +                simif_t* sim, uint32_t id, bool halt_on_reset,
 +                FILE *log_file, std::ostream& sout_, Params& params); // because of command line option --log and -s we need both
-+            st_rvfi step(size_t n);
++            ~Processor();
++            st_rvfi step(size_t n, st_rvfi reference);
 +            void initParams();
 +        protected:
 +            bool taken_trap;
@@ -1301,11 +1317,11 @@ index 00000000..2ecb335e
 +    };
 +
 +}
-diff --git a/riscv/SimJTAG.cc b/riscv/SimJTAG.cc
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/SimJTAG.cc b/vendor/riscv/riscv-isa-sim/riscv/SimJTAG.cc
 new file mode 100644
 index 00000000..80cdc219
 --- /dev/null
-+++ b/riscv/SimJTAG.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/SimJTAG.cc
 @@ -0,0 +1,25 @@
 +// See LICENSE.SiFive for license details.
 +
@@ -1332,12 +1348,12 @@ index 00000000..80cdc219
 +  return jtag->done() ? (jtag->exit_code() << 1 | 1) : 0;
 +
 +}
-diff --git a/riscv/Simulation.cc b/riscv/Simulation.cc
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc b/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
 new file mode 100644
-index 00000000..88a0ac6b
+index 00000000..79d0e1c6
 --- /dev/null
-+++ b/riscv/Simulation.cc
-@@ -0,0 +1,253 @@
++++ b/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
+@@ -0,0 +1,265 @@
 +// See LICENSE for license details.
 +
 +#include "Simulation.h"
@@ -1397,6 +1413,7 @@ index 00000000..88a0ac6b
 +  get_core(0)->get_mmu()->set_cache_blocksz(reg_t(64));
 +
 +  this->params.set("/top/", "isa", any(std::string("RV32GC")));
++  this->params.set("/top/", "priv", any(std::string(DEFAULT_PRIV)));
 +
 +  this->params.set("/top/", "bootrom", std::any(true));
 +  this->params.set("/top/", "bootrom_base", std::any(0x10000UL));
@@ -1404,7 +1421,7 @@ index 00000000..88a0ac6b
 +
 +  this->params.set("/top/", "dram", std::any(true));
 +  this->params.set("/top/", "dram_base", std::any(0x80000000UL));
-+  this->params.set("/top/", "dram_size", std::any(0x64UL * 1024 * 1024));
++  this->params.set("/top/", "dram_size", std::any(0x40000000UL));
 +
 +  this->params.set("/top/", "log_commits", std::any(true));
 +
@@ -1421,7 +1438,8 @@ index 00000000..88a0ac6b
 +    bus.add_device(x.first, x.second);
 +
 +  string isa_str = std::any_cast<string>(this->params["/top/isa"]);
-+  this->isa = isa_parser_t (isa_str.c_str(), DEFAULT_PRIV);
++  string priv_str = std::any_cast<string>(this->params["/top/priv"]);
++  this->isa = isa_parser_t (isa_str.c_str(), priv_str.c_str());
 +
 +  this->reset();
 +
@@ -1464,12 +1482,15 @@ index 00000000..88a0ac6b
 +    {
 +        while(!sim_t::done())
 +        {
-+            st_rvfi rvfi = this->nstep(1);
++            st_rvfi reference;
++            std::vector<st_rvfi> vreference, vspike;
++            vreference.push_back(reference);
++            vspike = this->step(1, vreference);
 +        }
 +    }
 +    catch (std::ios_base::failure e)
 +    {
-+        std::cout << "[SPIKE-TANDEM] Max steps exceed" << std::endl;
++        std::cout << "[SPIKE] Max steps exceed" << std::endl;
 +    }
 +    return sim_t::exit_code();
 +}
@@ -1485,15 +1506,15 @@ index 00000000..88a0ac6b
 +  if (bootrom) {
 +    auto bootrom_device = std::make_pair(bootrom_base, new mem_t(bootrom_size));
 +
-+    std::cerr << "[SPIKE-TANDEM] Initializing memories...\n";
++    std::cerr << "[SPIKE] Initializing memories...\n";
 +    uint8_t rom_check_buffer[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 +  // Populate the ROM.  Reset vector size is in 32-bit words and must be scaled.
 +#include "bootrom.h"
 +    if (!bootrom_device.second->store(reg_t(0), reset_vec_size << 2, (const uint8_t *) reset_vec))
 +    {
-+        std::cerr << "[SPIKE-TANDEM] *** ERROR: Failed to initialize ROM!\n";
++        std::cerr << "[SPIKE] *** ERROR: Failed to initialize ROM!\n";
 +        bootrom_device.second->load(reg_t(0), 8, rom_check_buffer);
-+    fprintf(stderr, "[SPIKE-TANDEM] ROM content head(8) = %02x %02x %02x %02x %02x %02x %02x %02x\n",
++    fprintf(stderr, "[SPIKE] ROM content head(8) = %02x %02x %02x %02x %02x %02x %02x %02x\n",
 +        rom_check_buffer[0], rom_check_buffer[1], rom_check_buffer[2], rom_check_buffer[3],
 +        rom_check_buffer[4], rom_check_buffer[5], rom_check_buffer[6], rom_check_buffer[7]);
 +    }
@@ -1509,26 +1530,33 @@ index 00000000..88a0ac6b
 +
 +}
 +
-+st_rvfi Simulation::nstep(size_t n)
++std::vector<st_rvfi> Simulation::step(size_t n, std::vector<st_rvfi>& vreference)
 +{
 +
 +  // The state PC is the *next* insn fetch address.
 +  // Catch it before exec which yields a new value.
-+  st_rvfi rvfi = ((Processor*)procs[0])->step(1);
-+
-+  host = context_t::current();
-+  if (!sim_t::done())
++  std::vector<st_rvfi> vspike (n);
++  for (size_t i = 0; i < n; i++)
 +  {
-+      if (this->max_steps_enabled && (this->max_steps < this->total_steps))
-+      {
-+          throw std::ios_base::failure("Max steps exceeded");
-+      }
++    if (i >= procs.size())
++        continue;
 +
-+      ++total_steps;
-+      target.switch_to();
++    vspike[i] = ((Processor*)procs[i])->step(1, vreference[i]);
++
++    host = context_t::current();
++    if (!sim_t::done())
++    {
++        if (this->max_steps_enabled && (this->max_steps < this->total_steps))
++        {
++            throw std::ios_base::failure("Max steps exceeded");
++        }
++
++        ++total_steps;
++        target.switch_to();
++    }
++
 +  }
-+
-+  return rvfi;
++  return vspike;
 +}
 +
 +
@@ -1591,11 +1619,11 @@ index 00000000..88a0ac6b
 +  return NULL;
 +}
 +#endif
-diff --git a/riscv/Simulation.h b/riscv/Simulation.h
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Simulation.h b/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
 new file mode 100644
-index 00000000..80742519
+index 00000000..5471abfb
 --- /dev/null
-+++ b/riscv/Simulation.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
 @@ -0,0 +1,80 @@
 +// See LICENSE for license details.
 +
@@ -1657,7 +1685,7 @@ index 00000000..80742519
 +        * * @param n:  Number of instructions to be finished
 +        * *
 +        * */
-+        st_rvfi nstep(size_t n);
++        std::vector<st_rvfi> step(size_t n, std::vector<st_rvfi>& vreference);
 +
 +        /*
 +        * Proposed consturctor for the Simulation class
@@ -1677,12 +1705,12 @@ index 00000000..80742519
 +
 +
 +#endif
-diff --git a/riscv/Types.h b/riscv/Types.h
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Types.h b/vendor/riscv/riscv-isa-sim/riscv/Types.h
 new file mode 100644
-index 00000000..85116d23
+index 00000000..55ece7df
 --- /dev/null
-+++ b/riscv/Types.h
-@@ -0,0 +1,58 @@
++++ b/vendor/riscv/riscv-isa-sim/riscv/Types.h
+@@ -0,0 +1,59 @@
 +#pragma once
 +
 +#include <fesvr/htif.h>
@@ -1694,19 +1722,20 @@ index 00000000..85116d23
 +#include <sys/types.h>
 +#include "Params.h"
 +
-+typedef struct {
++
++typedef struct  {
 +   uint64_t                 nret_id;
 +   uint64_t                 cycle_cnt;
 +   uint64_t                 order;
 +   uint64_t                 insn;
-+   uint8_t                  trap;
++   uint64_t                 trap;
 +   uint64_t                 cause;
-+   uint8_t                  halt;
-+   uint8_t                  intr;
-+   uint32_t                 mode;
-+   uint32_t                 ixl;
-+   uint32_t                 dbg;
-+   uint32_t                 dbg_mode;
++   uint64_t                 halt;
++   uint64_t                 intr;
++   uint64_t                 mode;
++   uint64_t                 ixl;
++   uint64_t                 dbg;
++   uint64_t                 dbg_mode;
 +   uint64_t                 nmip;
 +
 +   uint64_t                 insn_interrupt;
@@ -1741,11 +1770,11 @@ index 00000000..85116d23
 +
 +} st_rvfi;
 +
-diff --git a/riscv/bootrom.h b/riscv/bootrom.h
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/bootrom.h b/vendor/riscv/riscv-isa-sim/riscv/bootrom.h
 new file mode 100644
 index 00000000..5b3031f3
 --- /dev/null
-+++ b/riscv/bootrom.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/bootrom.h
 @@ -0,0 +1,377 @@
 +
 +const int reset_vec_size = 372;
@@ -2124,10 +2153,10 @@ index 00000000..5b3031f3
 +    0x00000068,
 +    0x00000000
 +};
-diff --git a/riscv/csrs.cc b/riscv/csrs.cc
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/csrs.cc b/vendor/riscv/riscv-isa-sim/riscv/csrs.cc
 index 2e01983b..417802bf 100644
---- a/riscv/csrs.cc
-+++ b/riscv/csrs.cc
+--- a/vendor/riscv/riscv-isa-sim/riscv/csrs.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/csrs.cc
 @@ -876,7 +876,7 @@ bool medeleg_csr_t::unlogged_write(const reg_t val) noexcept {
      | (1 << CAUSE_BREAKPOINT)
      | (1 << CAUSE_MISALIGNED_LOAD)
@@ -2137,10 +2166,40 @@ index 2e01983b..417802bf 100644
      | (1 << CAUSE_STORE_ACCESS)
      | (1 << CAUSE_USER_ECALL)
      | (1 << CAUSE_SUPERVISOR_ECALL)
-diff --git a/riscv/execute.cc b/riscv/execute.cc
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/dts.cc b/vendor/riscv/riscv-isa-sim/riscv/dts.cc
+index 200288ef..9acf329a 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/dts.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/dts.cc
+@@ -154,11 +154,13 @@ std::string dts_compile(const std::string& dts)
+       step = write(dts_pipe[1], buf+done, len-done);
+       if (step == -1) {
+         std::cerr << "Failed to write dts: " << strerror(errno) << std::endl;
+-        exit(1);
++        // Verilator fix | exit -> _exit
++        _exit(1);
+       }
+     }
+     close(dts_pipe[1]);
+-    exit(0);
++    // Verilator fix | exit -> _exit
++    _exit(0);
+   }
+ 
+   pid_t dtb_pid;
+@@ -178,7 +180,8 @@ std::string dts_compile(const std::string& dts)
+     close(dtb_pipe[1]);
+     execlp(DTC, DTC, "-O", "dtb", (char *)0);
+     std::cerr << "Failed to run " DTC ": " << strerror(errno) << std::endl;
+-    exit(1);
++    // Verilator fix | exit -> _exit
++    _exit(1);
+   }
+ 
+   close(dts_pipe[1]);
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/execute.cc b/vendor/riscv/riscv-isa-sim/riscv/execute.cc
 index acf0e908..02b27c50 100644
---- a/riscv/execute.cc
-+++ b/riscv/execute.cc
+--- a/vendor/riscv/riscv-isa-sim/riscv/execute.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/execute.cc
 @@ -278,6 +278,7 @@ void processor_t::step(size_t n)
  
            in_wfi = false;
@@ -2157,10 +2216,10 @@ index acf0e908..02b27c50 100644
            pc = execute_insn_fast(this, pc, fetch);
            ic_entry = ic_entry->next;
            if (unlikely(ic_entry->tag != pc))
-diff --git a/riscv/processor.h b/riscv/processor.h
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/processor.h b/vendor/riscv/riscv-isa-sim/riscv/processor.h
 index 2f7b8bbf..618c4d56 100644
---- a/riscv/processor.h
-+++ b/riscv/processor.h
+--- a/vendor/riscv/riscv-isa-sim/riscv/processor.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/processor.h
 @@ -17,6 +17,7 @@
  #include "triggers.h"
  #include "../fesvr/memif.h"
@@ -2206,10 +2265,10 @@ index 2f7b8bbf..618c4d56 100644
    void take_trigger_action(triggers::action_t action, reg_t breakpoint_tval, reg_t epc);
    void disasm(insn_t insn); // disassemble and print an instruction
    int paddr_bits();
-diff --git a/riscv/remote_bitbang.cc b/riscv/remote_bitbang.cc
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.cc b/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.cc
 index 8453e85a..908bcb2b 100644
---- a/riscv/remote_bitbang.cc
-+++ b/riscv/remote_bitbang.cc
+--- a/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.cc
 @@ -104,6 +104,30 @@ void remote_bitbang_t::tick()
    }
  }
@@ -2264,10 +2323,10 @@ index 8453e85a..908bcb2b 100644
            case 'R': send_buf[send_offset++] = tap->tdo() ? '1' : '0'; break;
            case 'Q': quit = true; break;
            default:
-diff --git a/riscv/remote_bitbang.h b/riscv/remote_bitbang.h
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.h b/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.h
 index 1db4d550..8cca28d4 100644
---- a/riscv/remote_bitbang.h
-+++ b/riscv/remote_bitbang.h
+--- a/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/remote_bitbang.h
 @@ -2,6 +2,7 @@
  #define REMOTE_BITBANG_H
  
@@ -2311,10 +2370,10 @@ index 1db4d550..8cca28d4 100644
  };
  
  #endif
-diff --git a/riscv/riscv.mk.in b/riscv/riscv.mk.in
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in b/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
 index 5765a91f..baebaee1 100644
---- a/riscv/riscv.mk.in
-+++ b/riscv/riscv.mk.in
+--- a/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
++++ b/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
 @@ -14,6 +14,8 @@ riscv_install_shared_lib = yes
  riscv_install_prog_srcs = \
  
@@ -2359,12 +2418,12 @@ index 5765a91f..baebaee1 100644
  	$(riscv_gen_srcs) \
  
  riscv_test_srcs =
-diff --git a/riscv/riscv_dpi.cc b/riscv/riscv_dpi.cc
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
 new file mode 100644
-index 00000000..86a7218b
+index 00000000..ea3093cb
 --- /dev/null
-+++ b/riscv/riscv_dpi.cc
-@@ -0,0 +1,113 @@
++++ b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+@@ -0,0 +1,146 @@
 +#include <fesvr/elf.h>
 +#include <fesvr/memif.h>
 +
@@ -2424,7 +2483,7 @@ index 00000000..86a7218b
 +
 +extern "C" void spike_create(const char* filename)
 +{
-+  std::cerr << "[Spike Tandem] Starting 'spike_create'...\n" ;
++  std::cerr << "[SPIKE] Starting 'spike_create'...\n" ;
 +
 +  // TODO parse params from yaml
 +  string isa_str = std::any_cast<string>(params["/top/isa"]);
@@ -2471,17 +2530,50 @@ index 00000000..86a7218b
 +  }
 +}
 +
-+// advance Spike and get the retired instruction
-+extern "C" void spike_step(st_rvfi* rvfi)
++// Convert svOpenArrayHandle -> st_rvfi
++void sv2rvfi(st_rvfi& rvfi, svOpenArrayHandle svOpen)
 +{
-+  st_rvfi tmp_rvfi = sim->nstep(1);
-+  *rvfi = tmp_rvfi;
++    size_t size = svSize(svOpen, 1);
++    uint64_t* array_ptr = (uint64_t*) svGetArrayPtr(svOpen);
++    uint64_t* rvfi_ptr = (uint64_t*) &rvfi;
++
++    for(size_t i = 0; i < size; i++) {
++        rvfi_ptr[i] = array_ptr[size-i-1];
++    }
 +}
 +
-diff --git a/riscv/sim.cc b/riscv/sim.cc
++// Convert st_rvfi -> svOpenArrayHandle
++void rvfi2sv(st_rvfi& rvfi, svOpenArrayHandle svOpen)
++{
++    size_t size = sizeof(st_rvfi) / 8; // To match 64 byte fields
++    uint64_t* array_ptr = (uint64_t*) svGetArrayPtr(svOpen);
++    uint64_t* rvfi_ptr = (uint64_t*) &rvfi;
++
++    for(size_t i = 0; i < size; i++) {
++        array_ptr[size-i-1] = rvfi_ptr[i];
++    }
++}
++
++extern "C" void spike_step_struct(st_rvfi& reference, st_rvfi& spike)
++{
++  std::vector<st_rvfi> vreference, vspike;
++  vreference.push_back(reference);
++  vspike = sim->step(1, vreference);
++  spike = vspike[0];
++}
++
++extern "C" void spike_step_svOpenArray(svOpenArrayHandle reference, svOpenArrayHandle spike)
++{
++  st_rvfi reference_rvfi, spike_rvfi;
++
++  sv2rvfi(reference_rvfi, reference);
++  spike_step_struct(reference_rvfi, spike_rvfi);
++  rvfi2sv(spike_rvfi, spike);
++}
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/sim.cc b/vendor/riscv/riscv-isa-sim/riscv/sim.cc
 index 9179ee4e..713b0e00 100644
---- a/riscv/sim.cc
-+++ b/riscv/sim.cc
+--- a/vendor/riscv/riscv-isa-sim/riscv/sim.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/sim.cc
 @@ -41,7 +41,7 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
               bool dtb_enabled, const char *dtb_file,
               bool socket_enabled,
@@ -2539,10 +2631,10 @@ index 9179ee4e..713b0e00 100644
      if (current_step == INTERLEAVE)
      {
        current_step = 0;
-diff --git a/riscv/sim.h b/riscv/sim.h
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/sim.h b/vendor/riscv/riscv-isa-sim/riscv/sim.h
 index 377e9651..06bed908 100644
---- a/riscv/sim.h
-+++ b/riscv/sim.h
+--- a/vendor/riscv/riscv-isa-sim/riscv/sim.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/sim.h
 @@ -7,10 +7,12 @@
  #include "debug_module.h"
  #include "devices.h"
@@ -2603,10 +2695,10 @@ index 377e9651..06bed908 100644
    size_t current_proc;
    bool debug;
    bool histogram_enabled; // provide a histogram of PCs
-diff --git a/spike_main/spike.cc b/spike_main/spike.cc
-index dc3fc348..59298113 100644
---- a/spike_main/spike.cc
-+++ b/spike_main/spike.cc
+diff --git a/vendor/riscv/riscv-isa-sim/spike_main/spike.cc b/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
+index dc3fc348..89e93cb7 100644
+--- a/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
++++ b/vendor/riscv/riscv-isa-sim/spike_main/spike.cc
 @@ -3,6 +3,7 @@
  #include "config.h"
  #include "cfg.h"
@@ -2615,13 +2707,41 @@ index dc3fc348..59298113 100644
  #include "mmu.h"
  #include "arith.h"
  #include "remote_bitbang.h"
-@@ -571,11 +572,24 @@ int main(int argc, char** argv)
+@@ -20,6 +21,12 @@
+ #include <cinttypes>
+ #include "../VERSION"
+ 
++static void version(int exit_code = 1)
++{
++  fprintf(stderr, SPIKE_VERSION " %x\n", SPIKE_HASH_VERSION);
++  exit(exit_code);
++}
++
+ static void help(int exit_code = 1)
+ {
+   fprintf(stderr, "Spike RISC-V ISA Simulator " SPIKE_VERSION "\n\n");
+@@ -29,6 +36,7 @@ static void help(int exit_code = 1)
+   fprintf(stderr, "  -m<n>                 Provide <n> MiB of target memory [default 2048]\n");
+   fprintf(stderr, "  -m<a:m,b:n,...>       Provide memory regions of size m and n bytes\n");
+   fprintf(stderr, "                          at base addresses a and b (with 4 KiB alignment)\n");
++  fprintf(stderr, "  -v                    Print Spike version\n");
+   fprintf(stderr, "  -d                    Interactive debug mode\n");
+   fprintf(stderr, "  -g                    Track histogram of PCs\n");
+   fprintf(stderr, "  -l                    Generate a log of execution\n");
+@@ -427,6 +435,7 @@ int main(int argc, char** argv)
+   option_parser_t parser;
+   parser.help(&suggest_help);
+   parser.option('h', "help", 0, [&](const char UNUSED *s){help(0);});
++  parser.option('v', "version", 0, [&](const char UNUSED *s){version(0);});
+   parser.option('d', 0, 0, [&](const char UNUSED *s){debug = true;});
+   parser.option('g', 0, 0, [&](const char UNUSED *s){histogram = true;});
+   parser.option('l', 0, 0, [&](const char UNUSED *s){log = true;});
+@@ -571,11 +580,25 @@ int main(int argc, char** argv)
      }
      cfg.hartids = default_hartids;
    }
 +  openhw::Params params;
- 
--  sim_t s(&cfg, halted,
++
 +  params.set("/top/", "isa", std::string(cfg.isa()));
 +
 +  if (max_steps != 0) {
@@ -2632,7 +2752,9 @@ index dc3fc348..59298113 100644
 +
 +  params.set("/top/core/0/", "boot_addr", 0x10000UL);
 +  params.set("/top/core/0/", "isa", std::string(cfg.isa()));
-+
++  params.set("/top/core/0/", "priv", std::string(cfg.priv()));
+ 
+-  sim_t s(&cfg, halted,
 +  openhw::Simulation s(&cfg, halted,
            mems, plugin_devices, htif_args, dm_config, log_path, dtb_enabled, dtb_file,
            socket,

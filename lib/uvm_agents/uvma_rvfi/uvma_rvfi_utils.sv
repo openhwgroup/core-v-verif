@@ -36,6 +36,10 @@ localparam config_pkg::cva6_cfg_t CVA6Cfg = cva6_config_pkg::cva6_cfg;
 
         u_core.rvfi = s_core;
 
+        foreach(u_core.array[i]) begin
+            a_core[i] = u_core.array[i];
+        end
+
         spike_step_svOpenArray(a_core, a_reference_model);
 
         foreach(a_reference_model[i]) begin
@@ -72,11 +76,19 @@ localparam config_pkg::cva6_cfg_t CVA6Cfg = cva6_config_pkg::cva6_cfg;
         if (cva6_config_pkg::CVA6ConfigZcbExtEn) begin
             rtl_isa = $sformatf("%s_zcb", rtl_isa);
         end
+        // TODO Put a parameter, currently we do not have it
+        rtl_isa = $sformatf("%s_zicntr", rtl_isa);
+
         if (CVA6Cfg.RVS) begin
             rtl_priv = {rtl_priv, "S"};
         end
         if (CVA6Cfg.RVU) begin
             rtl_priv = {rtl_priv, "U"};
+        end
+
+        // TODO Put a parameter, currently we do not have it // dcache / icache
+        if ('b1) begin
+            void'(spike_set_param_str("/top/core/0/", "extensions", "cv32a60x"));
         end
 
 
@@ -103,43 +115,42 @@ localparam config_pkg::cva6_cfg_t CVA6Cfg = cva6_config_pkg::cva6_cfg;
         reference_model_pc64 = {{riscv::XLEN-riscv::VLEN{t_reference_model.pc_rdata[riscv::VLEN-1]}}, t_reference_model.pc_rdata};
 
         if (t_core.trap || t_reference_model.trap) begin
-            assert (t_core.trap === t_reference_model.trap) else begin
+            if (t_core.trap !== t_reference_model.trap) begin
                 error = 1;
                 cause_str = $sformatf("%s\nException Mismatch [REF]: 0x%-16h [CVA6]: 0x%-16h", cause_str, t_reference_model.trap, t_core.trap);
             end
-            assert (t_core.cause === t_reference_model.cause) else begin
+            if (t_core.cause !== t_reference_model.cause) begin
                 error = 1;
                 cause_str = $sformatf("%s\nException Cause Mismatch [REF]: 0x%-16h [CVA6]: 0x%-16h", cause_str, t_reference_model.cause, t_core.cause);
             end
         end
         else begin
-            assert (t_core.insn === t_reference_model.insn) else begin
+            if (t_core.insn !== t_reference_model.insn) begin
                 error = 1;
                 cause_str = $sformatf("%s\nINSN Mismatch    [REF]: 0x%-16h [CVA6]: 0x%-16h", cause_str, t_reference_model.insn, t_core.insn);
             end
             if (t_core.rd1_addr != 0 || t_reference_model.rd1_addr != 0) begin
-                assert (t_core.rd1_addr[4:0] === t_reference_model.rd1_addr[4:0]) else begin
+                if (t_core.rd1_addr[4:0] !== t_reference_model.rd1_addr[4:0]) begin
                     error = 1;
                     cause_str = $sformatf("%s\nRD ADDR Mismatch [REF]: 0x%-16h [CVA6]: 0x%-16h", cause_str, t_reference_model.rd1_addr[4:0], t_core.rd1_addr[4:0]);
                 end
-                assert (t_core.rd1_wdata === t_reference_model.rd1_wdata) else begin
+                if (t_core.rd1_wdata !== t_reference_model.rd1_wdata) begin
                     error = 1;
                     cause_str = $sformatf("%s\nRD VAL Mismatch  [REF]: 0x%-16h [CVA6]: 0x%-16h", cause_str, t_reference_model.rd1_wdata, t_core.rd1_wdata);
                 end
             end
-            assert (t_core.mode === t_reference_model.mode) else begin
+            if (t_core.mode !== t_reference_model.mode) begin
                 error = 1;
                 cause_str = $sformatf("%s\nPRIV Mismatch    [REF]: 0x%-16h [CVA6]: 0x%-16h", cause_str, t_reference_model.mode, t_core.mode);
             end
         end
 
-        assert (core_pc64 === reference_model_pc64) else begin
+        if (core_pc64 !== reference_model_pc64) begin
             error = 1;
             cause_str = $sformatf("%s\nPC Mismatch      [REF]: 0x%-16h [CVA6]: 0x%-16h", cause_str, reference_model_pc64, core_pc64);
         end
 
         $cast(mode, t_reference_model.mode);
-
         // TODO Add more fields from Spike side
         // This macro avoid glitches in verilator
         instr = $sformatf(`FORMAT_INSTR_STR_MACRO, $sformatf("%t", $time),

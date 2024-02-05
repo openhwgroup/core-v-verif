@@ -1,0 +1,1354 @@
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+index 6ecc4b80..1dbdddfc 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -1,108 +1,217 @@
+ #include "Proc.h"
+ #include "disasm.h"
+-
+-namespace openhw
+-{
+-    st_rvfi Processor::step(size_t n, st_rvfi reference)
+-    {
+-        st_rvfi rvfi;
+-        memset(&rvfi, 0, sizeof(st_rvfi));
+-
+-        this->taken_trap = false;
+-
+-        rvfi.pc_rdata = this->get_state()->pc;
+-        processor_t::step(n);
+-        rvfi.mode = this->get_state()->last_inst_priv;
+-        rvfi.insn = (uint32_t) (this->get_state()->last_inst_fetched.bits() & 0xffffffffULL);
+-
+-        // TODO FIXME Handle multiple/zero writes in a single insn.
+-        auto& reg_commits = this->get_state()->log_reg_write;
+-        int xlen = this->get_state()->last_inst_xlen;
+-        int flen = this->get_state()->last_inst_flen;
+-
+-        rvfi.rs1_addr = this->get_state()->last_inst_fetched.rs1();
+-        // TODO add rs1_value
+-        rvfi.rs2_addr = this->get_state()->last_inst_fetched.rs2();
+-        // TODO add rs2_value
+-
+-        bool got_commit = false;
+-        for (auto& reg : reg_commits) {
+-
+-            if (!got_commit) {
+-                rvfi.rd1_addr = reg.first >> 4;
+-                if (rvfi.rd1_addr > 32) continue;
+-                // TODO FIXME Take into account the XLEN/FLEN for int/FP values.
+-                rvfi.rd1_wdata = reg.second.v[0];
+-                // TODO FIXME Handle multiple register commits per cycle.
+-                // TODO FIXME This must be handled on the RVFI side as well.
+-                got_commit = true; // FORNOW Latch only the first commit.
+-            }
+-        }
+-
+-        // Remove sign extension applied by Spike in 32b mode.
+-        if (this->get_xlen() == 32) {
+-            rvfi.pc_rdata &= 0xffffffffULL;
+-            rvfi.rd1_wdata &= 0xffffffffULL;
+-        }
+-
+-        // TODO FIXME There's no direct access to the exception status anymore.
+-        //commit_log.was_exception = this->get_state()->was_exception;
+-        rvfi.trap = this->taken_trap;
+-        rvfi.cause = this->which_trap;
+-
+-        return rvfi;
++#include "extension.h"
++#include <algorithm>
++#include <assert.h>
++#include <cinttypes>
++#include <cmath>
++#include <cstdlib>
++#include <iomanip>
++#include <iostream>
++#include <limits.h>
++#include <stdexcept>
++#include <string>
++
++namespace openhw {
++st_rvfi Processor::step(size_t n, st_rvfi reference) {
++  st_rvfi rvfi;
++  memset(&rvfi, 0, sizeof(st_rvfi));
++
++  this->taken_trap = false;
++
++  rvfi.pc_rdata = this->get_state()->pc;
++  processor_t::step(n);
++
++  rvfi.mode = this->get_state()->last_inst_priv;
++  rvfi.insn =
++      (uint32_t)(this->get_state()->last_inst_fetched.bits() & 0xffffffffULL);
++
++  // TODO FIXME Handle multiple/zero writes in a single insn.
++  auto &reg_commits = this->get_state()->log_reg_write;
++  int xlen = this->get_state()->last_inst_xlen;
++  int flen = this->get_state()->last_inst_flen;
++
++  rvfi.rs1_addr = this->get_state()->last_inst_fetched.rs1();
++  // TODO add rs1_value
++  rvfi.rs2_addr = this->get_state()->last_inst_fetched.rs2();
++  // TODO add rs2_value
++
++  rvfi.trap = this->taken_trap;
++  rvfi.cause = this->which_trap;
++
++  bool got_commit = false;
++  for (auto &reg : reg_commits) {
++
++    if (!got_commit) {
++      rvfi.rd1_addr = reg.first >> 4;
++      if (rvfi.rd1_addr > 32)
++        continue;
++      // TODO FIXME Take into account the XLEN/FLEN for int/FP values.
++      rvfi.rd1_wdata = reg.second.v[0];
++      // TODO FIXME Handle multiple register commits per cycle.
++      // TODO FIXME This must be handled on the RVFI side as well.
++      got_commit = true; // FORNOW Latch only the first commit.
+     }
++  }
++
++  // Inject values comming from the reference
++  if ((rvfi.insn & MASK_CSRRS) == MATCH_CSRRS) {
++    if (rvfi.rs1_addr == 0) {
++      reg_t read_csr = this->get_state()->last_inst_fetched.csr();
++      switch (read_csr) {
++      case 0xC00: // cycle
++      case 0xC80: // cycleh
++      case 0xB00: // mcycle
++      case 0xB80: // mcycleh
++        this->set_XPR(reference.rd1_addr, reference.rd1_wdata);
++        rvfi.rd1_wdata = reference.rd1_wdata;
++        break;
++      default:
++        break;
++      }
++    }
++  }
+ 
+-    Processor::Processor(const isa_parser_t *isa, const cfg_t* cfg,
+-        simif_t* sim, uint32_t id, bool halt_on_reset,
+-        FILE *log_file, std::ostream& sout_,
+-        Params& params) // because of command line option --log and -s we need both
+-      :  processor_t::processor_t(isa, cfg, sim, id, halt_on_reset, log_file, sout_)
+-    {
+-
+-        this->params.set("/top/core/0/", "isa", any(std::string("RV32GC")));
+-        this->params.set("/top/core/0/", "boot_addr", any(0x80000000UL));
+-        this->params.set("/top/core/0/", "mmu_mode", any(std::string("sv39")));
+-        this->params.set("/top/core/0/", "misa", any(""));
+-        this->params.set("/top/core/0/", "pmpaddr0", any(0x0UL));
+-        this->params.set("/top/core/0/", "pmpcfg0", any(0x0UL));
+-        this->params.set("/top/core/0/", "marchid", any(0x3UL));
+-        this->params.set("/top/core/0/", "mvendorid", any(0x00000602UL));
+-
+-        // Process User Params
+-        ParseParams("/top/core/0/", this->params, params);
+-
+-        string isa_str = std::any_cast<string>(this->params["/top/core/0/isa"]);
+-        string priv_str = std::any_cast<string>(this->params["/top/core/0/priv"]);
+-        std::cout << "[SPIKE] Proc 0 | isa: " << isa_str << " priv: " << priv_str << std::endl;
+-        this->isa = (const isa_parser_t*) new isa_parser_t (isa_str.c_str(), priv_str.c_str());
+-
+-        disassembler = new disassembler_t(isa);
+-        for (auto e : isa->get_extensions())
+-            register_extension(e.second);
+-
+-        this->reset();
+-
+-        uint64_t new_pc = std::any_cast<uint64_t>(this->params["/top/core/0/boot_addr"]);
+-        this->state.pc = new_pc;
++  // Remove sign extension applied by Spike in 32b mode.
++  if (this->get_xlen() == 32) {
++    rvfi.pc_rdata &= 0xffffffffULL;
++    rvfi.rd1_wdata &= 0xffffffffULL;
++  }
+ 
+-        this->put_csr(CSR_PMPADDR0, std::any_cast<uint64_t>(this->params["/top/core/0/pmpaddr0"]));
+-        this->put_csr(CSR_PMPCFG0, std::any_cast<uint64_t>(this->params["/top/core/0/pmpcfg0"]));
++  return rvfi;
++}
+ 
+-        this->put_csr(CSR_MVENDORID, std::any_cast<uint64_t>(this->params["/top/core/0/mvendorid"]));
+-        this->put_csr(CSR_MARCHID, std::any_cast<uint64_t>(this->params["/top/core/0/marchid"]));
++Processor::Processor(
++    const isa_parser_t *isa, const cfg_t *cfg, simif_t *sim, uint32_t id,
++    bool halt_on_reset, FILE *log_file, std::ostream &sout_,
++    Params &params) // because of command line option --log and -s we need both
++    : processor_t::processor_t(isa, cfg, sim, id, halt_on_reset, log_file,
++                               sout_) {
++
++  this->params.set("/top/core/0/", "isa", any(std::string("RV32GC")));
++  this->params.set("/top/core/0/", "priv", DEFAULT_PRIV);
++  this->params.set("/top/core/0/", "boot_addr", any(0x80000000UL));
++  this->params.set("/top/core/0/", "mmu_mode", any(std::string("sv39")));
++
++  this->params.set("/top/core/0/", "pmpregions", any(0x0UL));
++  this->params.set("/top/core/0/", "pmpaddr0", any(0x0UL));
++  this->params.set("/top/core/0/", "pmpcfg0", any(0x0UL));
++  this->params.set("/top/core/0/", "marchid", any(0x3UL));
++  this->params.set("/top/core/0/", "mvendorid", any(0x00000602UL));
++  this->params.set("/top/core/0/", "status_fs_field_we_enable", any(false));
++  this->params.set("/top/core/0/", "status_fs_field_we", any(false));
++  this->params.set("/top/core/0/", "status_vs_field_we_enable", any(false));
++  this->params.set("/top/core/0/", "status_vs_field_we", any(false));
++  this->params.set("/top/core/0/", "misa_we_enable", any(true));
++  this->params.set("/top/core/0/", "misa_we", any(false));
++
++  this->params.set("/top/core/0/", "extensions", any(std::string("")));
++
++  std::map<string, bool> registered_extensions_v;
++  registered_extensions_v["cv32a60x"] = false;
++
++  // Process User Params
++  ParseParams("/top/core/0/", this->params, params);
++
++  string isa_str = std::any_cast<string>(this->params["/top/core/0/isa"]);
++  string priv_str = std::any_cast<string>(this->params["/top/core/0/priv"]);
++  std::cout << "[SPIKE] Proc 0 | ISA: " << isa_str << " PRIV: " << priv_str
++            << std::endl;
++  this->isa =
++      (const isa_parser_t *)new isa_parser_t(isa_str.c_str(), priv_str.c_str());
++
++  disassembler = new disassembler_t(isa);
++
++  for (auto e : isa->get_extensions()) {
++    register_extension(e.second);
++  }
++
++  string extensions_str =
++      std::any_cast<string>(this->params["/top/core/0/extensions"]);
++  string delimiter = ",";
++  size_t found = extensions_str.rfind(delimiter);
++
++  if (found == string::npos && extensions_str != "") {
++    extensions_str = extensions_str + delimiter;
++  }
++
++  while (found != string::npos) {
++    string token = extensions_str.substr(found + delimiter.length(),
++                                         extensions_str.length() - 1);
++    extensions_str = extensions_str.substr(0, found);
++    auto it = registered_extensions_v.find(token);
++    if (it != registered_extensions_v.end())
++      it->second = true;
++    else
++      std::cout << "[SPIKE] Extension \"" << token << "\" can not be registered"
++                << std::endl;
++
++    found = extensions_str.rfind(delimiter);
++  }
++
++  for (auto ext : registered_extensions_v) {
++    if (ext.second) {
++      extension_t *extension = find_extension(ext.first.c_str())();
++      this->register_extension(extension);
++      extension->reset();
+     }
++  }
++
++  this->reset();
++
++  uint64_t new_pc =
++      std::any_cast<uint64_t>(this->params["/top/core/0/boot_addr"]);
++  this->state.pc = new_pc;
++
++  this->put_csr(CSR_PMPADDR0,
++                std::any_cast<uint64_t>(this->params["/top/core/0/pmpaddr0"]));
++  this->put_csr(CSR_PMPCFG0,
++                std::any_cast<uint64_t>(this->params["/top/core/0/pmpcfg0"]));
++
++  this->put_csr(CSR_MVENDORID,
++                std::any_cast<uint64_t>(this->params["/top/core/0/mvendorid"]));
++  this->put_csr(CSR_MARCHID,
++                std::any_cast<uint64_t>(this->params["/top/core/0/marchid"]));
++
++  bool fs_field_we_enable = std::any_cast<bool>(
++      this->params["/top/core/0/status_fs_field_we_enable"]);
++  bool fs_field_we =
++      std::any_cast<bool>(this->params["/top/core/0/status_fs_field_we"]);
++  bool vs_field_we_enable = std::any_cast<bool>(
++      this->params["/top/core/0/status_vs_field_we_enable"]);
++  bool vs_field_we =
++      std::any_cast<bool>(this->params["/top/core/0/status_vs_field_we"]);
++
++  reg_t sstatus_mask = this->state.mstatus->get_param_write_mask();
++  if (fs_field_we_enable)
++    sstatus_mask = (fs_field_we ? (sstatus_mask | MSTATUS_FS)
++                                : (sstatus_mask & ~MSTATUS_FS));
++  if (vs_field_we_enable)
++    sstatus_mask = (vs_field_we ? (sstatus_mask | MSTATUS_VS)
++                                : (sstatus_mask & ~MSTATUS_VS));
++  this->state.mstatus->set_param_write_mask(sstatus_mask);
++
++  bool misa_we_enable =
++      std::any_cast<bool>(this->params["/top/core/0/misa_we_enable"]);
++  bool misa_we = std::any_cast<bool>(this->params["/top/core/0/misa_we"]);
++  if (misa_we_enable)
++    this->state.misa->set_we(misa_we);
++}
+ 
+-    void Processor::take_trap(trap_t& t, reg_t epc)
+-    {
+-        this->taken_trap = true;
+-        this->which_trap = t.cause();
+-        processor_t::take_trap(t, epc);
+-    }
++void Processor::take_trap(trap_t &t, reg_t epc) {
++  this->taken_trap = true;
++  this->which_trap = t.cause();
++  processor_t::take_trap(t, epc);
++}
+ 
+-    Processor::~Processor()
+-    {
+-        delete this->isa;
+-    }
++Processor::~Processor() { delete this->isa; }
++
++inline void Processor::set_XPR(reg_t num, reg_t value) {
++  this->state.XPR.write(num, value);
++}
+ 
++inline void Processor::set_FPR(reg_t num, float128_t value) {
++  this->state.FPR.write(num, value);
+ }
++
++} // namespace openhw
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.h b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+index 917d2ea9..6b5e4177 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.h
+@@ -2,22 +2,24 @@
+ #include "Types.h"
+ #include "processor.h"
+ 
+-namespace openhw
+-{
+-    class Processor : public processor_t
+-    {
+-        public:
+-            Processor(const isa_parser_t *isa, const cfg_t* cfg,
+-                simif_t* sim, uint32_t id, bool halt_on_reset,
+-                FILE *log_file, std::ostream& sout_, Params& params); // because of command line option --log and -s we need both
+-            ~Processor();
+-            st_rvfi step(size_t n, st_rvfi reference);
+-            void initParams();
+-        protected:
+-            bool taken_trap;
+-            uint8_t which_trap;
+-            virtual void take_trap(trap_t& t, reg_t epc); // take an exception
++namespace openhw {
++class Processor : public processor_t {
++public:
++  Processor(const isa_parser_t *isa, const cfg_t *cfg, simif_t *sim,
++            uint32_t id, bool halt_on_reset, FILE *log_file,
++            std::ostream &sout_,
++            Params &params); // because of command line option --log and -s we
++                             // need both
++  ~Processor();
++  st_rvfi step(size_t n, st_rvfi reference);
+ 
+-    };
++  inline void set_XPR(reg_t num, reg_t value);
++  inline void set_FPR(reg_t num, float128_t value);
+ 
+-}
++protected:
++  bool taken_trap;
++  uint8_t which_trap;
++  virtual void take_trap(trap_t &t, reg_t epc); // take an exception
++};
++
++} // namespace openhw
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc b/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
+index 79d0e1c6..16a60654 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
+@@ -2,55 +2,49 @@
+ 
+ #include "Simulation.h"
+ #include "mmu.h"
+-#include <map>
+-#include <iostream>
+-#include <sstream>
++#include <cassert>
+ #include <climits>
+ #include <cstdlib>
+-#include <cassert>
+-#include <signal.h>
+-#include <unistd.h>
+-#include <sys/wait.h>
+-#include <sys/types.h>
+ #include <inttypes.h>
++#include <iostream>
++#include <map>
++#include <signal.h>
++#include <sstream>
+ #include <stdio.h>
+-#include "Simulation.h"
++#include <sys/types.h>
++#include <sys/wait.h>
++#include <unistd.h>
+ 
+ using namespace openhw;
+ 
+-std::vector<std::pair<reg_t, abstract_device_t*>> plugin_devs;
++std::vector<std::pair<reg_t, abstract_device_t *>> plugin_devs;
+ 
+-void sim_thread_main(void* arg)
+-{
+-      ((sim_t*)arg)->run();
+-      ((sim_t*)arg)->switch_to_host(); // To get the first point
++void sim_thread_main(void *arg) {
++  ((sim_t *)arg)->run();
++  ((sim_t *)arg)->switch_to_host(); // To get the first point
+ }
+ 
+ // FIXME TODO Review settings of dm_config below.
+-debug_module_config_t dm_config = {
+-  .progbufsize = 2,
+-  .max_sba_data_width = 0,
+-  .require_authentication = false,
+-  .abstract_rti = 0,
+-  .support_hasel = true,
+-  .support_abstract_csr_access = true,
+-  .support_abstract_fpr_access = true,
+-  .support_haltgroups = true,
+-  .support_impebreak = true
+-};
+-
+-Simulation::Simulation(const cfg_t *cfg, bool halted,
+-        std::vector<std::pair<reg_t, mem_t*>> mems,
+-        std::vector<std::pair<reg_t, abstract_device_t*>> plugin_devices,
+-        const std::vector<std::string>& args,
+-        const debug_module_config_t &dm_config, const char *log_path,
+-        bool dtb_enabled, const char *dtb_file,
+-        bool socket_enabled,
+-        FILE *cmd_file, // needed for command line option --cmd
+-        openhw::Params& params)
++debug_module_config_t dm_config = {.progbufsize = 2,
++                                   .max_sba_data_width = 0,
++                                   .require_authentication = false,
++                                   .abstract_rti = 0,
++                                   .support_hasel = true,
++                                   .support_abstract_csr_access = true,
++                                   .support_abstract_fpr_access = true,
++                                   .support_haltgroups = true,
++                                   .support_impebreak = true};
++
++Simulation::Simulation(
++    const cfg_t *cfg, bool halted, std::vector<std::pair<reg_t, mem_t *>> mems,
++    std::vector<std::pair<reg_t, abstract_device_t *>> plugin_devices,
++    const std::vector<std::string> &args,
++    const debug_module_config_t &dm_config, const char *log_path,
++    bool dtb_enabled, const char *dtb_file, bool socket_enabled,
++    FILE *cmd_file, // needed for command line option --cmd
++    openhw::Params &params)
+     : sim_t(cfg, halted, mems, plugin_devices, args, dm_config, log_path,
+-            dtb_enabled, dtb_file, socket_enabled, cmd_file, params)
+-{
++            dtb_enabled, dtb_file, socket_enabled, cmd_file, params) {
+   // It seems mandatory to set cache block size for MMU.
+   // FIXME TODO: Use actual cache configuration (on/off, # of ways/sets).
+   // FIXME TODO: Support multiple cores.
+@@ -78,12 +72,12 @@ Simulation::Simulation(const cfg_t *cfg, bool halted,
+ 
+   this->make_mems(layout);
+ 
+-  for (auto& x : this->mems)
++  for (auto &x : this->mems)
+     bus.add_device(x.first, x.second);
+ 
+   string isa_str = std::any_cast<string>(this->params["/top/isa"]);
+   string priv_str = std::any_cast<string>(this->params["/top/priv"]);
+-  this->isa = isa_parser_t (isa_str.c_str(), priv_str.c_str());
++  this->isa = isa_parser_t(isa_str.c_str(), priv_str.c_str());
+ 
+   this->reset();
+ 
+@@ -91,76 +85,71 @@ Simulation::Simulation(const cfg_t *cfg, bool halted,
+   this->configure_log(commitlog, commitlog);
+ 
+   this->max_steps = std::any_cast<uint64_t>(this->params["/top/max_steps"]);
+-  this->max_steps_enabled = std::any_cast<bool>(this->params["/top/max_steps_enabled"]);
++  this->max_steps_enabled =
++      std::any_cast<bool>(this->params["/top/max_steps_enabled"]);
+ 
+   target.init(sim_thread_main, this);
+   host = context_t::current();
+   target.switch_to(); // To get the first point
+-
+ }
+ 
+ Simulation::Simulation(const cfg_t *cfg, string elf_path,
+-             Params& params)
+-    : Simulation(cfg,   // cfg
+-          false,  // halted
+-          std::vector<std::pair<reg_t, mem_t*>>(),  // mems
+-          plugin_devs,
+-          std::vector<std::string>() = {elf_path},
+-          dm_config,
+-          "tandem.log",  // log_path
+-          true, // dtb_enabled
+-          nullptr,  // dtb_file
+-          false, // socket_enabled
+-          NULL,  // cmd_file
+-          params)
+-{
+-}
+-
+-Simulation::~Simulation()
+-{
+-}
+-
+-int Simulation::run()
+-{
+-    try
+-    {
+-        while(!sim_t::done())
+-        {
+-            st_rvfi reference;
+-            std::vector<st_rvfi> vreference, vspike;
+-            vreference.push_back(reference);
+-            vspike = this->step(1, vreference);
+-        }
++                       Params &params)
++    : Simulation(cfg,                                      // cfg
++                 false,                                    // halted
++                 std::vector<std::pair<reg_t, mem_t *>>(), // mems
++                 plugin_devs, std::vector<std::string>() = {elf_path},
++                 dm_config,
++                 "tandem.log", // log_path
++                 true,         // dtb_enabled
++                 nullptr,      // dtb_file
++                 false,        // socket_enabled
++                 NULL,         // cmd_file
++                 params) {}
++
++Simulation::~Simulation() {}
++
++int Simulation::run() {
++  try {
++    while (!sim_t::done()) {
++      st_rvfi reference;
++      std::vector<st_rvfi> vreference, vspike;
++      vreference.push_back(reference);
++      vspike = this->step(1, vreference);
+     }
+-    catch (std::ios_base::failure e)
+-    {
+-        std::cout << "[SPIKE] Max steps exceed" << std::endl;
+-    }
+-    return sim_t::exit_code();
++  } catch (std::ios_base::failure e) {
++    std::cout << "[SPIKE] Max steps exceed" << std::endl;
++  }
++  return sim_t::exit_code();
+ }
+ 
+-void Simulation::make_mems(const std::vector<mem_cfg_t> &layout)
+-{
++void Simulation::make_mems(const std::vector<mem_cfg_t> &layout) {
+   for (const auto &cfg : layout)
+     mems.push_back(std::make_pair(cfg.get_base(), new mem_t(cfg.get_size())));
+ 
+   bool bootrom = std::any_cast<bool>(this->params["/top/bootrom"]);
+-  uint64_t bootrom_base = std::any_cast<uint64_t>(this->params["/top/bootrom_base"]);
+-  uint64_t bootrom_size = std::any_cast<uint64_t>(this->params["/top/bootrom_size"]);
++  uint64_t bootrom_base =
++      std::any_cast<uint64_t>(this->params["/top/bootrom_base"]);
++  uint64_t bootrom_size =
++      std::any_cast<uint64_t>(this->params["/top/bootrom_size"]);
+   if (bootrom) {
+     auto bootrom_device = std::make_pair(bootrom_base, new mem_t(bootrom_size));
+ 
+     std::cerr << "[SPIKE] Initializing memories...\n";
+-    uint8_t rom_check_buffer[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+-  // Populate the ROM.  Reset vector size is in 32-bit words and must be scaled.
++    uint8_t rom_check_buffer[8] = {0, 0, 0, 0, 0, 0, 0, 0};
++    // Populate the ROM.  Reset vector size is in 32-bit words and must be
++    // scaled.
+ #include "bootrom.h"
+-    if (!bootrom_device.second->store(reg_t(0), reset_vec_size << 2, (const uint8_t *) reset_vec))
+-    {
+-        std::cerr << "[SPIKE] *** ERROR: Failed to initialize ROM!\n";
+-        bootrom_device.second->load(reg_t(0), 8, rom_check_buffer);
+-    fprintf(stderr, "[SPIKE] ROM content head(8) = %02x %02x %02x %02x %02x %02x %02x %02x\n",
+-        rom_check_buffer[0], rom_check_buffer[1], rom_check_buffer[2], rom_check_buffer[3],
+-        rom_check_buffer[4], rom_check_buffer[5], rom_check_buffer[6], rom_check_buffer[7]);
++    if (!bootrom_device.second->store(reg_t(0), reset_vec_size << 2,
++                                      (const uint8_t *)reset_vec)) {
++      std::cerr << "[SPIKE] *** ERROR: Failed to initialize ROM!\n";
++      bootrom_device.second->load(reg_t(0), 8, rom_check_buffer);
++      fprintf(stderr,
++              "[SPIKE] ROM content head(8) = %02x %02x %02x %02x %02x %02x "
++              "%02x %02x\n",
++              rom_check_buffer[0], rom_check_buffer[1], rom_check_buffer[2],
++              rom_check_buffer[3], rom_check_buffer[4], rom_check_buffer[5],
++              rom_check_buffer[6], rom_check_buffer[7]);
+     }
+ 
+     this->mems.push_back(bootrom_device);
+@@ -171,39 +160,33 @@ void Simulation::make_mems(const std::vector<mem_cfg_t> &layout)
+   uint64_t dram_size = std::any_cast<uint64_t>(this->params["/top/dram_size"]);
+   if (dram)
+     this->mems.push_back(std::make_pair(dram_base, new mem_t(dram_size)));
+-
+ }
+ 
+-std::vector<st_rvfi> Simulation::step(size_t n, std::vector<st_rvfi>& vreference)
+-{
++std::vector<st_rvfi> Simulation::step(size_t n,
++                                      std::vector<st_rvfi> &vreference) {
+ 
+   // The state PC is the *next* insn fetch address.
+   // Catch it before exec which yields a new value.
+-  std::vector<st_rvfi> vspike (n);
+-  for (size_t i = 0; i < n; i++)
+-  {
++  std::vector<st_rvfi> vspike(n);
++  for (size_t i = 0; i < n; i++) {
+     if (i >= procs.size())
+-        continue;
++      continue;
+ 
+-    vspike[i] = ((Processor*)procs[i])->step(1, vreference[i]);
++    vspike[i] = ((Processor *)procs[i])->step(1, vreference[i]);
+ 
+     host = context_t::current();
+-    if (!sim_t::done())
+-    {
+-        if (this->max_steps_enabled && (this->max_steps < this->total_steps))
+-        {
+-            throw std::ios_base::failure("Max steps exceeded");
+-        }
+-
+-        ++total_steps;
+-        target.switch_to();
+-    }
++    if (!sim_t::done()) {
++      if (this->max_steps_enabled && (this->max_steps < this->total_steps)) {
++        throw std::ios_base::failure("Max steps exceeded");
++      }
+ 
++      ++total_steps;
++      target.switch_to();
++    }
+   }
+   return vspike;
+ }
+ 
+-
+ #if 0 // FORNOW Unused code, disable until needed.
+ void Simulation::set_debug(bool value)
+ {
+@@ -247,7 +230,7 @@ void Simulation::make_bootrom()
+ {
+   start_pc = 0x80000000;
+ 
+-  #include "bootrom.h"
++#include "bootrom.h"
+ 
+   std::vector<char> rom((char*)reset_vec, (char*)reset_vec + sizeof(reset_vec));
+ 
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Simulation.h b/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
+index 5471abfb..95a6d136 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
+@@ -11,70 +11,65 @@
+ #include "processor.h"
+ #include "sim.h"
+ 
+-#include <fesvr/htif.h>
+ #include <fesvr/context.h>
+-#include <vector>
++#include <fesvr/htif.h>
+ #include <map>
+-#include <string>
+ #include <memory>
+-#include <thread>
++#include <string>
+ #include <sys/types.h>
++#include <thread>
++#include <vector>
+ 
+ class mmu_t;
+ class remote_bitbang_t;
+ class socketif_t;
+ 
+-namespace openhw
+-{
+-    // this class encapsulates the processors in a RISC-V machine.
+-    class Simulation : public sim_t
+-    {
+-    protected:
+-    public:
+-        bool standalone_mode;
+-
+-        Simulation(const cfg_t *cfg, bool halted,
+-                std::vector<std::pair<reg_t, mem_t*>> mems,
+-                std::vector<std::pair<reg_t, abstract_device_t*>> plugin_devices,
+-                const std::vector<std::string>& args,
+-                const debug_module_config_t &dm_config, const char *log_path,
+-                bool dtb_enabled, const char *dtb_file,
+-                bool socket_enabled,
+-                FILE *cmd_file, // needed for command line option --cmd
+-                openhw::Params& params);
+-        Simulation(const cfg_t *cfg, string elf_path, Params& params);
+-        ~Simulation();
+-
+-        void make_mems(const std::vector<mem_cfg_t> &layout);
++namespace openhw {
++// this class encapsulates the processors in a RISC-V machine.
++class Simulation : public sim_t {
++protected:
++public:
++  bool standalone_mode;
+ 
+-        /*
+-        * Run function that runs the whole program while in standalone mode
+-        * */
+-        int run();
++  Simulation(const cfg_t *cfg, bool halted,
++             std::vector<std::pair<reg_t, mem_t *>> mems,
++             std::vector<std::pair<reg_t, abstract_device_t *>> plugin_devices,
++             const std::vector<std::string> &args,
++             const debug_module_config_t &dm_config, const char *log_path,
++             bool dtb_enabled, const char *dtb_file, bool socket_enabled,
++             FILE *cmd_file, // needed for command line option --cmd
++             openhw::Params &params);
++  Simulation(const cfg_t *cfg, string elf_path, Params &params);
++  ~Simulation();
+ 
+-        /*
+-        * Step function
+-        * *
+-        * * @param n:  Number of instructions to be finished
+-        * *
+-        * */
+-        std::vector<st_rvfi> step(size_t n, std::vector<st_rvfi>& vreference);
++  void make_mems(const std::vector<mem_cfg_t> &layout);
+ 
+-        /*
+-        * Proposed consturctor for the Simulation class
+-        * *
+-        * * @param params: parameters to configure the simulation behaviour
+-        * *
+-        * */
+-        Simulation(Params& params);
++  /*
++   * Run function that runs the whole program while in standalone mode
++   * */
++  int run();
+ 
+-    private:
+-        uint64_t total_steps = 0;
+-        uint64_t max_steps;
+-        bool max_steps_enabled;
++  /*
++   * Step function
++   * *
++   * * @param n:  Number of instructions to be finished
++   * *
++   * */
++  std::vector<st_rvfi> step(size_t n, std::vector<st_rvfi> &vreference);
+ 
+-    };
+-}
++  /*
++   * Proposed constuctor for the Simulation class
++   * *
++   * * @param params: parameters to configure the simulation behaviour
++   * *
++   * */
++  Simulation(Params &params);
+ 
++private:
++  uint64_t total_steps = 0;
++  uint64_t max_steps;
++  bool max_steps_enabled;
++};
++} // namespace openhw
+ 
+ #endif
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/csrs.cc b/vendor/riscv/riscv-isa-sim/riscv/csrs.cc
+index 417802bf..f71e61fa 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/csrs.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/csrs.cc
+@@ -20,6 +20,7 @@
+ 
+ // implement class csr_t
+ csr_t::csr_t(processor_t* const proc, const reg_t addr):
++  reg::reg(proc, addr, 0),
+   proc(proc),
+   state(proc->get_state()),
+   address(addr),
+@@ -44,18 +45,12 @@ void csr_t::verify_permissions(insn_t insn, bool write) const {
+       throw trap_virtual_instruction(insn.bits());
+     throw trap_illegal_instruction(insn.bits());
+   }
++  this->custom_verify_permissions(insn, write);
+ }
+ 
+ csr_t::~csr_t() {
+ }
+ 
+-void csr_t::write(const reg_t val) noexcept {
+-  const bool success = unlogged_write(val);
+-  if (success) {
+-    log_write();
+-  }
+-}
+-
+ void csr_t::log_write() const noexcept {
+   log_special_write(address, written_value());
+ }
+@@ -71,19 +66,18 @@ reg_t csr_t::written_value() const noexcept {
+ 
+ // implement class basic_csr_t
+ basic_csr_t::basic_csr_t(processor_t* const proc, const reg_t addr, const reg_t init):
+-  csr_t(proc, addr),
+-  val(init) {
++  csr_t(proc, addr) {
++  openhw::reg::unlogged_write(init);
+ }
+ 
+ bool basic_csr_t::unlogged_write(const reg_t val) noexcept {
+-  this->val = val;
++  openhw::reg::unlogged_write(val);
+   return true;
+ }
+ 
+ // implement class pmpaddr_csr_t
+ pmpaddr_csr_t::pmpaddr_csr_t(processor_t* const proc, const reg_t addr):
+   csr_t(proc, addr),
+-  val(0),
+   cfg(0),
+   pmpidx(address - CSR_PMPADDR0) {
+ }
+@@ -100,8 +94,8 @@ void pmpaddr_csr_t::verify_permissions(insn_t insn, bool write) const {
+ 
+ reg_t pmpaddr_csr_t::read() const noexcept {
+   if ((cfg & PMP_A) >= PMP_NAPOT)
+-    return val | (~proc->pmp_tor_mask() >> 1);
+-  return val & proc->pmp_tor_mask();
++    return openhw::reg::unlogged_read() | (~proc->pmp_tor_mask() >> 1);
++  return openhw::reg::unlogged_read() & proc->pmp_tor_mask();
+ }
+ 
+ bool pmpaddr_csr_t::unlogged_write(const reg_t val) noexcept {
+@@ -117,7 +111,7 @@ bool pmpaddr_csr_t::unlogged_write(const reg_t val) noexcept {
+   const bool locked = !lock_bypass && (cfg & PMP_L);
+ 
+   if (pmpidx < proc->n_pmp && !locked && !next_locked_and_tor()) {
+-    this->val = val & ((reg_t(1) << (MAX_PADDR_BITS - PMP_SHIFT)) - 1);
++      openhw::reg::unlogged_write(val & ((reg_t(1) << (MAX_PADDR_BITS - PMP_SHIFT)) - 1));
+   }
+   else
+     return false;
+@@ -134,7 +128,7 @@ bool pmpaddr_csr_t::next_locked_and_tor() const noexcept {
+ }
+ 
+ reg_t pmpaddr_csr_t::tor_paddr() const noexcept {
+-  return (val & proc->pmp_tor_mask()) << PMP_SHIFT;
++  return (openhw::reg::unlogged_read() & proc->pmp_tor_mask()) << PMP_SHIFT;
+ }
+ 
+ reg_t pmpaddr_csr_t::tor_base_paddr() const noexcept {
+@@ -144,7 +138,7 @@ reg_t pmpaddr_csr_t::tor_base_paddr() const noexcept {
+ 
+ reg_t pmpaddr_csr_t::napot_mask() const noexcept {
+   bool is_na4 = (cfg & PMP_A) == PMP_NA4;
+-  reg_t mask = (val << 1) | (!is_na4) | ~proc->pmp_tor_mask();
++  reg_t mask = (openhw::reg::unlogged_read() << 1) | (!is_na4) | ~proc->pmp_tor_mask();
+   return ~(mask & ~(mask + 1)) << PMP_SHIFT;
+ }
+ 
+@@ -348,31 +342,29 @@ bool virtualized_csr_t::unlogged_write(const reg_t val) noexcept {
+ 
+ // implement class epc_csr_t
+ epc_csr_t::epc_csr_t(processor_t* const proc, const reg_t addr):
+-  csr_t(proc, addr),
+-  val(0) {
++  csr_t(proc, addr) {
+ }
+ 
+ reg_t epc_csr_t::read() const noexcept {
+-  return val & proc->pc_alignment_mask();
++  return openhw::reg::unlogged_read() & proc->pc_alignment_mask();
+ }
+ 
+ bool epc_csr_t::unlogged_write(const reg_t val) noexcept {
+-  this->val = val & ~(reg_t)1;
++  openhw::reg::unlogged_write(val & ~(reg_t)1);
+   return true;
+ }
+ 
+ // implement class tvec_csr_t
+ tvec_csr_t::tvec_csr_t(processor_t* const proc, const reg_t addr):
+-  csr_t(proc, addr),
+-  val(0) {
++  csr_t(proc, addr) {
+ }
+ 
+ reg_t tvec_csr_t::read() const noexcept {
+-  return val;
++  return openhw::reg::unlogged_read();
+ }
+ 
+ bool tvec_csr_t::unlogged_write(const reg_t val) noexcept {
+-  this->val = val & ~(reg_t)2;
++  openhw::reg::unlogged_write(val & ~(reg_t)2);
+   return true;
+ }
+ 
+@@ -387,8 +379,8 @@ reg_t cause_csr_t::read() const noexcept {
+   // not generally support dynamic xlen, but this code was (partly)
+   // there since at least 2015 (ea58df8 and c4350ef).
+   if (proc->get_isa().get_max_xlen() > proc->get_xlen()) // Move interrupt bit to top of xlen
+-    return val | ((val >> (proc->get_isa().get_max_xlen()-1)) << (proc->get_xlen()-1));
+-  return val;
++    return openhw::reg::unlogged_read() | ((openhw::reg::unlogged_read() >> (proc->get_isa().get_max_xlen()-1)) << (proc->get_xlen()-1));
++  return openhw::reg::unlogged_read();
+ }
+ 
+ // implement class base_status_csr_t
+@@ -450,14 +442,14 @@ namespace {
+ 
+ // implement class vsstatus_csr_t
+ vsstatus_csr_t::vsstatus_csr_t(processor_t* const proc, const reg_t addr):
+-  base_status_csr_t(proc, addr),
+-  val(proc->get_state()->mstatus->read() & sstatus_read_mask) {
++  base_status_csr_t(proc, addr) {
++    openhw::reg::unlogged_write(proc->get_state()->mstatus->read() & sstatus_read_mask);
+ }
+ 
+ bool vsstatus_csr_t::unlogged_write(const reg_t val) noexcept {
+-  const reg_t newval = (this->val & ~sstatus_write_mask) | (val & sstatus_write_mask);
++  const reg_t newval = (openhw::reg::unlogged_read() & ~sstatus_write_mask) | (val & sstatus_write_mask);
+   if (state->v) maybe_flush_tlb(newval);
+-  this->val = adjust_sd(newval);
++  openhw::reg::unlogged_write(adjust_sd(newval));
+   return true;
+ }
+ 
+@@ -480,8 +472,8 @@ bool sstatus_proxy_csr_t::unlogged_write(const reg_t val) noexcept {
+ 
+ // implement class mstatus_csr_t
+ mstatus_csr_t::mstatus_csr_t(processor_t* const proc, const reg_t addr):
+-  base_status_csr_t(proc, addr),
+-  val(compute_mstatus_initial_value()) {
++  base_status_csr_t(proc, addr) {
++  openhw::reg::unlogged_write(compute_mstatus_initial_value());
+ }
+ 
+ bool mstatus_csr_t::unlogged_write(const reg_t val) noexcept {
+@@ -501,7 +493,7 @@ bool mstatus_csr_t::unlogged_write(const reg_t val) noexcept {
+   const reg_t adjusted_val = set_field(val, MSTATUS_MPP, requested_mpp);
+   const reg_t new_mstatus = (read() & ~mask) | (adjusted_val & mask);
+   maybe_flush_tlb(new_mstatus);
+-  this->val = adjust_sd(new_mstatus);
++  openhw::reg::unlogged_write(adjust_sd(new_mstatus));
+   return true;
+ }
+ 
+@@ -697,16 +689,15 @@ bool misa_csr_t::extension_enabled_const(unsigned char ext) const noexcept {
+ 
+ // implement class mip_or_mie_csr_t
+ mip_or_mie_csr_t::mip_or_mie_csr_t(processor_t* const proc, const reg_t addr):
+-  csr_t(proc, addr),
+-  val(0) {
++  csr_t(proc, addr) {
+ }
+ 
+ reg_t mip_or_mie_csr_t::read() const noexcept {
+-  return val;
++  return openhw::reg::unlogged_read();
+ }
+ 
+ void mip_or_mie_csr_t::write_with_mask(const reg_t mask, const reg_t val) noexcept {
+-  this->val = (this->val & ~mask) | (val & mask);
++  openhw::reg::unlogged_write((openhw::reg::unlogged_read() & ~mask) | (val & mask));
+   log_write();
+ }
+ 
+@@ -720,7 +711,7 @@ mip_csr_t::mip_csr_t(processor_t* const proc, const reg_t addr):
+ }
+ 
+ void mip_csr_t::backdoor_write_with_mask(const reg_t mask, const reg_t val) noexcept {
+-  this->val = (this->val & ~mask) | (val & mask);
++  openhw::reg::unlogged_write((openhw::reg::unlogged_read() & ~mask) | (val & mask));
+ }
+ 
+ reg_t mip_csr_t::write_mask() const noexcept {
+@@ -984,31 +975,30 @@ bool virtualized_satp_csr_t::unlogged_write(const reg_t val) noexcept {
+ 
+ // implement class wide_counter_csr_t
+ wide_counter_csr_t::wide_counter_csr_t(processor_t* const proc, const reg_t addr):
+-  csr_t(proc, addr),
+-  val(0) {
++  csr_t(proc, addr) {
+ }
+ 
+ reg_t wide_counter_csr_t::read() const noexcept {
+-  return val;
++  return openhw::reg::unlogged_read();
+ }
+ 
+ void wide_counter_csr_t::bump(const reg_t howmuch) noexcept {
+-  val += howmuch;  // to keep log reasonable size, don't log every bump
++  openhw::reg::unlogged_write(openhw::reg::unlogged_read() + howmuch);  // to keep log reasonable size, don't log every bump
+ }
+ 
+ bool wide_counter_csr_t::unlogged_write(const reg_t val) noexcept {
+-  this->val = val;
++   openhw::reg::unlogged_write(val);
+   // The ISA mandates that if an instruction writes instret, the write
+   // takes precedence over the increment to instret.  However, Spike
+   // unconditionally increments instret after executing an instruction.
+   // Correct for this artifact by decrementing instret here.
+-  this->val--;
++   openhw::reg::unlogged_write( openhw::reg::unlogged_read()-1);
+   return true;
+ }
+ 
+ reg_t wide_counter_csr_t::written_value() const noexcept {
+   // Re-adjust for upcoming bump()
+-  return this->val + 1;
++  return  openhw::reg::unlogged_read() + 1;
+ }
+ 
+ // implement class time_counter_csr_t
+@@ -1050,12 +1040,12 @@ bool proxy_csr_t::unlogged_write(const reg_t val) noexcept {
+ }
+ 
+ const_csr_t::const_csr_t(processor_t* const proc, const reg_t addr, reg_t val):
+-  csr_t(proc, addr),
+-  val(val) {
++  csr_t(proc, addr) {
++      openhw::reg::unlogged_write(val);
+ }
+ 
+ reg_t const_csr_t::read() const noexcept {
+-  return val;
++  return openhw::reg::unlogged_read();
+ }
+ 
+ bool const_csr_t::unlogged_write(const reg_t UNUSED val) noexcept {
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/csrs.h b/vendor/riscv/riscv-isa-sim/riscv/csrs.h
+index 65be7993..d8ceafcd 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/csrs.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/csrs.h
+@@ -12,26 +12,20 @@
+ #include "memtracer.h"
+ #include <cassert>
+ 
++#include "csrs_ext.h"
++
+ class processor_t;
++namespace openhw { class Processor; }
+ struct state_t;
+ 
+ // Parent, abstract class for all CSRs
+-class csr_t {
++class csr_t : public openhw::reg {
+  public:
+   csr_t(processor_t* const proc, const reg_t addr);
+ 
+   // Throw exception if read/write disallowed.
+   virtual void verify_permissions(insn_t insn, bool write) const;
+ 
+-  // read() returns the architectural value of this CSR. No permission
+-  // checking needed or allowed. Side effects not allowed.
+-  virtual reg_t read() const noexcept = 0;
+-
+-  // write() updates the architectural value of this CSR. No
+-  // permission checking needed or allowed.
+-  // Child classes must implement unlogged_write()
+-  void write(const reg_t val) noexcept;
+-
+   virtual ~csr_t();
+ 
+  protected:
+@@ -68,14 +62,9 @@ class basic_csr_t: public csr_t {
+  public:
+   basic_csr_t(processor_t* const proc, const reg_t addr, const reg_t init);
+ 
+-  virtual reg_t read() const noexcept override {
+-    return val;
+-  }
+-
+  protected:
+   virtual bool unlogged_write(const reg_t val) noexcept override;
+  private:
+-  reg_t val;
+ };
+ 
+ class pmpaddr_csr_t: public csr_t {
+@@ -115,7 +104,6 @@ class pmpaddr_csr_t: public csr_t {
+   reg_t napot_mask() const noexcept;
+ 
+   bool next_locked_and_tor() const noexcept;
+-  reg_t val;
+   friend class pmpcfg_csr_t;  // so he can access cfg
+   uint8_t cfg;
+   const size_t pmpidx;
+@@ -177,7 +165,6 @@ class epc_csr_t: public csr_t {
+  protected:
+   virtual bool unlogged_write(const reg_t val) noexcept override;
+  private:
+-  reg_t val;
+ };
+ 
+ // For mtvec, stvec, and vstvec
+@@ -189,7 +176,6 @@ class tvec_csr_t: public csr_t {
+  protected:
+   virtual bool unlogged_write(const reg_t val) noexcept override;
+  private:
+-  reg_t val;
+ };
+ 
+ // For mcause, scause, and vscause
+@@ -217,6 +203,7 @@ class base_status_csr_t: public csr_t {
+   const reg_t sstatus_read_mask;
+  private:
+   reg_t compute_sstatus_write_mask() const noexcept;
++
+ };
+ 
+ typedef std::shared_ptr<base_status_csr_t> base_status_csr_t_p;
+@@ -228,13 +215,12 @@ class vsstatus_csr_t final: public base_status_csr_t {
+   vsstatus_csr_t(processor_t* const proc, const reg_t addr);
+ 
+   reg_t read() const noexcept override {
+-    return val;
++    return openhw::reg::unlogged_read();
+   }
+ 
+  protected:
+   virtual bool unlogged_write(const reg_t val) noexcept override;
+  private:
+-  reg_t val;
+ };
+ 
+ typedef std::shared_ptr<vsstatus_csr_t> vsstatus_csr_t_p;
+@@ -244,14 +230,13 @@ class mstatus_csr_t final: public base_status_csr_t {
+   mstatus_csr_t(processor_t* const proc, const reg_t addr);
+ 
+   reg_t read() const noexcept override {
+-    return val;
++    return openhw::reg::unlogged_read();
+   }
+ 
+  protected:
+   virtual bool unlogged_write(const reg_t val) noexcept override;
+  private:
+   reg_t compute_mstatus_initial_value() const noexcept;
+-  reg_t val;
+ };
+ 
+ typedef std::shared_ptr<mstatus_csr_t> mstatus_csr_t_p;
+@@ -349,7 +334,6 @@ class mip_or_mie_csr_t: public csr_t {
+ 
+  protected:
+   virtual bool unlogged_write(const reg_t val) noexcept override final;
+-  reg_t val;
+  private:
+   virtual reg_t write_mask() const noexcept = 0;
+ };
+@@ -518,7 +502,6 @@ class wide_counter_csr_t: public csr_t {
+   virtual bool unlogged_write(const reg_t val) noexcept override;
+   virtual reg_t written_value() const noexcept override;
+  private:
+-  reg_t val;
+ };
+ 
+ typedef std::shared_ptr<wide_counter_csr_t> wide_counter_csr_t_p;
+@@ -557,7 +540,6 @@ class const_csr_t: public csr_t {
+  protected:
+   bool unlogged_write(const reg_t val) noexcept override;
+  private:
+-  const reg_t val;
+ };
+ 
+ // For a CSR that is an unprivileged accessor of a privileged counter
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.cc b/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.cc
+new file mode 100644
+index 00000000..f64dbfa3
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.cc
+@@ -0,0 +1,84 @@
++// See LICENSE for license details.
++
++// For std::any_of
++#include <algorithm>
++
++#include "csrs.h"
++// For processor_t:
++#include "mmu.h"
++#include "processor.h"
++// For get_field():
++#include "decode_macros.h"
++// For trap_virtual_instruction and trap_illegal_instruction:
++#include "trap.h"
++// For require():
++#include "insn_macros.h"
++
++// STATE macro used by require_privilege() macro:
++#undef STATE
++#define STATE (*state)
++
++namespace openhw {
++// implement a middle csr class
++reg::reg(processor_t *const proc, const reg_t addr, const reg_t init)
++    : address(addr), value(init), param_write_mask(-1), param_we(true),
++      proc(proc), state(proc->get_state()) {}
++
++void reg::set_we(bool we) noexcept { this->param_we = we; }
++
++bool reg::get_we() noexcept { return this->param_we; }
++
++void reg::set_param_write_mask(reg_t mask) noexcept {
++  this->param_write_mask = mask;
++}
++
++reg_t reg::get_param_write_mask() noexcept { return this->param_write_mask; }
++
++bool reg::post_read(const reg_t &val) const noexcept { return true; }
++
++bool reg::pre_write(const reg_t &val) const noexcept {
++  const reg_t curr = this->unlogged_read();
++  const reg_t new_val =
++      (val & this->param_write_mask) | (curr & ~this->param_write_mask);
++  *((reg_t *)&val) = new_val;
++
++  return true;
++}
++bool reg::post_write(const reg_t &val) const noexcept { return true; }
++
++bool reg::custom_verify_permissions(insn_t insn, bool write) const {
++  return true;
++}
++
++inline reg_t reg::unlogged_read() const noexcept {
++  auto val = this->value;
++  this->post_read(val);
++  return val;
++}
++
++inline bool reg::unlogged_write(reg_t val) noexcept {
++  this->value = val;
++  return true;
++}
++
++void reg::write(const reg_t val) noexcept {
++  if (!this->param_we)
++    return;
++
++  this->pre_write(val);
++  const bool success = unlogged_write(val);
++  this->post_write(val);
++
++  if (success) {
++    log_write();
++  }
++}
++void reg::log_write() const noexcept {}
++
++reg_t reg::read() const noexcept {
++  auto val = this->unlogged_read();
++  this->post_read(val);
++  return val;
++}
++
++} // namespace openhw
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.h b/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.h
+new file mode 100644
+index 00000000..8bcbcb2c
+--- /dev/null
++++ b/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.h
+@@ -0,0 +1,69 @@
++// See LICENSE for license details.
++#ifndef _RISCV_CSRS_EXT_H
++#define _RISCV_CSRS_EXT_H
++
++#include "common.h"
++#include "encoding.h"
++// For reg_t:
++#include "decode.h"
++// For std::shared_ptr
++#include <memory>
++// For access_type:
++#include "memtracer.h"
++#include <cassert>
++
++class processor_t;
++namespace openhw {
++class Processor;
++}
++struct state_t;
++
++namespace openhw {
++class reg {
++public:
++  reg(processor_t *const proc, const reg_t addr, reg_t init);
++
++  virtual bool post_read(const reg_t &val) const noexcept;
++
++  virtual bool pre_write(const reg_t &val) const noexcept;
++
++  virtual bool post_write(const reg_t &val) const noexcept;
++
++  bool custom_verify_permissions(insn_t insn, bool write) const;
++
++  void set_we(bool we) noexcept;
++
++  bool get_we() noexcept;
++
++  void set_param_write_mask(reg_t mask) noexcept;
++
++  reg_t get_param_write_mask() noexcept;
++
++  virtual bool unlogged_write(const reg_t val) noexcept;
++
++  virtual reg_t unlogged_read() const noexcept;
++
++  virtual void write(const reg_t val) noexcept;
++
++  virtual reg_t read() const noexcept;
++
++  virtual void log_write() const noexcept;
++
++  const reg_t address;
++
++private:
++  reg_t value;
++
++protected:
++  reg_t param_write_mask;
++  bool param_we;
++
++  processor_t *const proc;
++  state_t *const state;
++
++  friend class Processor;
++};
++
++} // namespace openhw
++
++#endif
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in b/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
+index 37bf3da1..3144c77a 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
++++ b/vendor/riscv/riscv-isa-sim/riscv/riscv.mk.in
+@@ -78,6 +78,7 @@ riscv_srcs = \
+ 	remote_bitbang.cc \
+ 	jtag_dtm.cc \
+ 	csrs.cc \
++	csrs_ext.cc \
+ 	triggers.cc \
+ 	vector_unit.cc \
+ 	socketif.cc \
