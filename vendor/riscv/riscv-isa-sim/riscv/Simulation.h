@@ -58,7 +58,7 @@ public:
   std::vector<st_rvfi> step(size_t n, std::vector<st_rvfi> &vreference);
 
   /*
-   * Proposed consturctor for the Simulation class
+   * Proposed constuctor for the Simulation class
    * *
    * * @param params: parameters to configure the simulation behaviour
    * *

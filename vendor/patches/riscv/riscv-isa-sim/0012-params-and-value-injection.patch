@@ -655,7 +655,7 @@ index 79d0e1c6..16a60654 100644
    std::vector<char> rom((char*)reset_vec, (char*)reset_vec + sizeof(reset_vec));
  
 diff --git a/vendor/riscv/riscv-isa-sim/riscv/Simulation.h b/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
-index 5471abfb..a2626f0c 100644
+index 5471abfb..95a6d136 100644
 --- a/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
 +++ b/vendor/riscv/riscv-isa-sim/riscv/Simulation.h
 @@ -11,70 +11,65 @@
@@ -759,7 +759,7 @@ index 5471abfb..a2626f0c 100644
 -    };
 -}
 +  /*
-+   * Proposed consturctor for the Simulation class
++   * Proposed constuctor for the Simulation class
 +   * *
 +   * * @param params: parameters to configure the simulation behaviour
 +   * *
@@ -1177,7 +1177,7 @@ index 65be7993..d8ceafcd 100644
  // For a CSR that is an unprivileged accessor of a privileged counter
 diff --git a/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.cc b/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.cc
 new file mode 100644
-index 00000000..829dd86a
+index 00000000..f64dbfa3
 --- /dev/null
 +++ b/vendor/riscv/riscv-isa-sim/riscv/csrs_ext.cc
 @@ -0,0 +1,84 @@
@@ -1225,7 +1225,7 @@ index 00000000..829dd86a
 +      (val & this->param_write_mask) | (curr & ~this->param_write_mask);
 +  *((reg_t *)&val) = new_val;
 +
-+  return this->param_we;
++  return true;
 +}
 +bool reg::post_write(const reg_t &val) const noexcept { return true; }
 +

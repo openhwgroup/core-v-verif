@@ -42,7 +42,7 @@ bool reg::pre_write(const reg_t &val) const noexcept {
       (val & this->param_write_mask) | (curr & ~this->param_write_mask);
   *((reg_t *)&val) = new_val;
 
-  return this->param_we;
+  return true;
 }
 bool reg::post_write(const reg_t &val) const noexcept { return true; }
 
