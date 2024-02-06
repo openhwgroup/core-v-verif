@@ -19,16 +19,18 @@
 //-----------------------------------------------------------------------------------------
 // CV32E40S CORE-V assembly program generator - extension of the RISC-V assembly program generator.
 //
-// Overrides gen_program_header() and gen_test_done()
+// Overrides gen_program_header() and gen_test_done() and other riscv-dv functions.
 //-----------------------------------------------------------------------------------------
 
 class cv32e40s_asm_program_gen extends corev_asm_program_gen;
 
   `uvm_object_utils(cv32e40s_asm_program_gen)
 
+
   function new (string name = "");
     super.new(name);
   endfunction
+
 
   virtual function void gen_program_header();
     string instr[];
@@ -99,6 +101,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
 
   endfunction : gen_program_header
 
+
   virtual function void trap_vector_init(int hart);
     string instr[];
     privileged_reg_t trap_vec_reg;
@@ -153,6 +156,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
     gen_section(get_label("trap_vec_init", hart), instr);
   endfunction : trap_vector_init
 
+
   virtual function void gen_illegal_instr_handler(int hart);
     string instr[$];
     string load_instr = (XLEN == 32) ? "lw" : "ld";
@@ -195,6 +199,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
     gen_section(get_label("illegal_instr_handler", hart), instr);
   endfunction
 
+
   virtual function void gen_instr_fault_handler(int hart);
     string instr[$];
     string load_instr = (XLEN == 32) ? "lw" : "ld";
@@ -232,6 +237,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
     gen_section(get_label("instr_fault_handler", hart), instr);
   endfunction
 
+
   // TODO: handshake correct csr based on delegation
   virtual function void gen_load_fault_handler(int hart);
     string instr[$];
@@ -253,6 +259,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
     gen_section(get_label("load_fault_handler", hart), instr);
   endfunction
 
+
   // TODO: handshake correct csr based on delegation
   virtual function void gen_store_fault_handler(int hart);
     string instr[$];
@@ -272,6 +279,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
     instr.push_back("mret");
     gen_section(get_label("store_fault_handler", hart), instr);
   endfunction
+
 
   virtual function void gen_interrupt_vector_table(int              hart,
                                                    string           mode,
@@ -344,6 +352,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
     end
   endfunction : gen_interrupt_vector_table
 
+
   // Setup EPC before entering target privileged mode
   virtual function void setup_epc(int hart);
     string instr[$];
@@ -361,6 +370,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
     instr.push_back($sformatf("csrw mepc, x%0d", cfg.gpr[0]));
     gen_section(get_label("mepc_setup", hart), instr);
   endfunction
+
 
   // Interrupt handler routine
   // Override from risc-dv:
@@ -516,6 +526,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
 
   endfunction : gen_interrupt_handler_section
 
+
   // Override gen_stack_section to add debugger stack generation section
   // Implmeneted as a post-step to super.gen_stack_section()
   virtual function void gen_stack_section(int hart);
@@ -534,6 +545,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
     instr_stream.push_back($sformatf(".%0dbyte 0x0", XLEN/8));
 
   endfunction : gen_stack_section
+
 
   // Override of init_gpr to remove cfg.dp from initiailization if a debug section is generated
   virtual function void init_gpr();
@@ -559,6 +571,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
       instr_stream.push_back(str);
     end
   endfunction
+
 
   // generate NMI handler.
   // will be placed at a fixed address in memory, set in linker file
@@ -587,8 +600,10 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
                 nmi_handler_instr);
   endfunction : gen_nmi_handler_section
 
+
   virtual function void gen_section(string label, string instr[$]);
     string str;
+
     if(label == "mtvec_handler" && cfg.mtvec_mode == VECTORED) begin
       str = ".section .mtvec_handler, \"ax\"";
       instr_stream.push_back(str);
@@ -598,6 +613,7 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
       str = format_string($sformatf("%0s:", label), LABEL_STR_LEN);
       instr_stream.push_back(str);
     end
+
     foreach(instr[i]) begin
       str = {indent, instr[i]};
       instr_stream.push_back(str);
@@ -607,7 +623,25 @@ class cv32e40s_asm_program_gen extends corev_asm_program_gen;
         instr_stream.push_back(str);
       end
     end
+
     instr_stream.push_back("");
   endfunction : gen_section
+
+
+  virtual function void gen_init_section(int hart);
+    string  instrs[];
+    string  label;
+
+    super.gen_init_section(hart);
+
+    // After the "init" section, bus errors can safely occur without havoc
+    label = get_label("obi_err_goahead", hart);
+    instrs = {
+      $sformatf("li x%0d, 0x%08x", cfg.gpr[0], CV_VP_OBI_ERR_AWAIT_GOAHEAD_BASE),
+      $sformatf("sw x0, 0(x%0d)", cfg.gpr[0])
+    };
+    gen_section(label, instrs);
+  endfunction
+
 
 endclass : cv32e40s_asm_program_gen

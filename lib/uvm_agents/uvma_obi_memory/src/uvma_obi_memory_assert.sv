@@ -239,5 +239,27 @@ module uvma_obi_memory_assert
     `uvm_error(info_tag, $sformatf("be of 0x%01x not consistent with addr 0x%08x", $sampled(be), $sampled(addr)));
 
 
+  // Observing Grant Delays
+
+  cov_gnt_delay_0: cover property (
+    $rose(req)  ##0
+    gnt
+  );
+
+  cov_gnt_delay_1: cover property (
+    $rose(req)  ##0
+    !gnt [*1]
+    ##1
+    gnt
+  );
+
+  cov_gnt_delay_2: cover property (
+    $rose(req)  ##0
+    !gnt [*2]
+    ##1
+    gnt
+  );
+
+
 endmodule : uvma_obi_memory_assert
 
