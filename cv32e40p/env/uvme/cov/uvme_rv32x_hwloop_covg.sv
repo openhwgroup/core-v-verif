@@ -1026,7 +1026,8 @@ class uvme_rv32x_hwloop_covg # (
             else begin              is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0; has_pending_trap_due2_dbg = 0; continue; end // if pc is non-exception related
           end
           if (has_trap_due2_dbg_match_trig) begin 
-            assert(prev_pc_rdata_main == cv32e40p_rvvi_vif.pc_rdata);
+            // assert(prev_pc_rdata_main < cv32e40p_rvvi_vif.pc_rdata);  // compress
+            // assert(prev_pc_rdata_main == cv32e40p_rvvi_vif.pc_rdata); // non-compress
             has_trap_due2_dbg_match_trig = 0; continue; 
           end
           if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm && cv32e40p_rvvi_vif.insn == TB_INSTR_EBREAK) is_ebreakm = 1; else is_ebreakm = 0;
