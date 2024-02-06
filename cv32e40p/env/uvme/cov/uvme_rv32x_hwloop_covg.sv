@@ -25,8 +25,6 @@
 // 4) Has covergroup for hwloops features and events within hwloops such as exception, irq and debug entry (debug covers haltreq, trigger, ebreakm, step)
 // 5) Improvement[Optional]: hwloop_stat_sub for handle (irq/debug) implementation
 
-// fixme: pending cleanup after NR is stable
-
 `ifndef UVME_RV32X_HWLOOP_COVG
 `define UVME_RV32X_HWLOOP_COVG
 
@@ -811,15 +809,6 @@ class uvme_rv32x_hwloop_covg # (
 
       forever begin : SET_EXCEPTION_FLAG
         wait (cv32e40p_rvvi_vif.clk && cv32e40p_rvvi_vif.valid && cv32e40p_rvvi_vif.trap);
-        // fixme: the rvfi fixes in for garbage trap on same insn. commented out workaround below and, remove once NR is stable
-        // if (
-        //   cv32e40p_rvvi_vif.pc_rdata == prev_pc_rdata_main || // set excep when not garbage data during trap (main)
-        //   cv32e40p_rvvi_vif.pc_rdata == prev_pc_rdata_sub     // set excep when not garbage data during trap (sub) - todo: revise is needed when sub is fully implement
-        // ) begin
-        //   is_trap = 0;
-        //   wait (!cv32e40p_rvvi_vif.trap); // bypass and do nothing
-        // end
-        // else if (
         if (
           cv32e40p_rvvi_vif.csr_trig_execute && cv32e40p_rvvi_vif.csr_trig_pc == cv32e40p_rvvi_vif.pc_rdata // debug trig match assert trap
         ) begin
@@ -941,21 +930,6 @@ class uvme_rv32x_hwloop_covg # (
           if (is_trap && is_dbg_mode && !cv32e40p_rvvi_vif.csr_dcsr_step && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_DBG_ENTRY // exception trap and debug are b2b cycles (except debug step)
             has_pending_trap_due2_dbg = 1; is_trap = 0; 
             enter_hwloop_sub = 0; enter_hwloop_sub_cnt = 0;
-            // todo: remove this when regression is stable
-            // todo is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0;
-            // todo prev_pc_rdata_main = prev_pc_rdata_main-4;
-            // todo for (int j=0; j<HWLOOP_NB; j++) begin
-            // todo   bit temp_in_nested_loop0 = (j == 0) ? 0 : in_nested_loop0;
-            // todo   if (hwloop_stat_main.execute_instr_in_hwloop[j] && hwloop_stat_main.track_lp_cnt[j] >= 0 && !temp_in_nested_loop0) begin
-            // todo     logic [31:0] discarded_insn;
-            // todo     if (!done_insn_list_capture_main[j]) begin
-            // todo       discarded_insn = insn_list_in_hwloop_main[j].pop_back();
-            // todo       `uvm_info(_header, $sformatf("DEBUG - HWLOOP_NB_%0d Discarded insn %8h due to Trap triggered by Debug Entery", j, discarded_insn), UVM_DEBUG);
-            // todo       assert (discarded_insn inside {TB_INSTR_ECALL, TB_INSTR_EBREAK, INSN_ILLEGAL});
-            // todo     end
-            // todo     `uvm_info(_header, $sformatf("DEBUG - HWLOOP_NB_%0d Trap due to Debug Entry detected", j), UVM_DEBUG);
-            // todo   end
-            // todo end
           end // TRAP_DUETO_DBG_ENTRY
           else if (pc_is_mtvec_addr() && !is_mcause_irq()) begin : EXCEPTION_ENTRY
             for (int i=0; i<HWLOOP_NB; i++) begin
@@ -971,17 +945,12 @@ class uvme_rv32x_hwloop_covg # (
             end
           end // EXCEPTION_ENTRY
           else if (pc_is_mtvec_addr() && is_mcause_irq()) begin : IRQ_ENTRY
-            // todo: remove this when regression is stable
-            // todo: what if the trap is valid before irq handling (no repeatition trap after irq exit) ?
             if (hwloop_stat_main.execute_instr_in_hwloop[0] | hwloop_stat_main.execute_instr_in_hwloop[1]) begin
               if (is_trap && enter_hwloop_sub_cnt == 1) begin : TRAP_DUETO_IRQ_ENTRY // exception trap and irq are b2b cycles
                 if (hwloop_stat_main.execute_instr_in_hwloop[0] && lpend_has_pending_irq_main[0]) begin hwloop_stat_main.track_lp_cnt[0]++; lpend_has_pending_irq_main[0] = 0; end
                 if (hwloop_stat_main.execute_instr_in_hwloop[1] && lpend_has_pending_irq_main[1]) begin hwloop_stat_main.track_lp_cnt[1]++; lpend_has_pending_irq_main[1] = 0; end
-              // end // TRAP_DUETO_IRQ_ENTRY // fixme
-                // is_ebreak = 0; is_ecall = 0; is_illegal = 0; // fixme
                 has_pending_trap_due2_irq = 1; is_trap = 0;
                 enter_hwloop_sub = 0; enter_hwloop_sub_cnt = 0;
-                // prev_pc_rdata_main = prev_pc_rdata_main-4; // fixme
                 pending_irq = 0;
                 `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Entry is replaced with IRQ Entry (higher priority)"), UVM_DEBUG);
                 `IF_CURRENT_IS_MAIN_HWLOOP(0, IS_IRQ)
@@ -1020,15 +989,13 @@ class uvme_rv32x_hwloop_covg # (
             else begin              is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0; has_pending_trap_due2_irq = 0; continue; end // if pc is non-exception related
           end
           if (is_dbg_mode)                begin wait (!is_dbg_mode); continue; end
-          if (has_pending_trap_due2_dbg)  begin 
+          if (has_pending_trap_due2_dbg)  begin // e.g exception event intercept with debug step
             assert(!cv32e40p_rvvi_vif.csr_dcsr_step); // this is not mean for step debug
             if (pc_is_mtvec_addr() || (cv32e40p_rvvi_vif.trap && is_trap)) begin is_trap = 1; enter_hwloop_sub = 1; has_pending_trap_due2_dbg = 0; continue; end // if pc is exception related
             else begin              is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0; enter_hwloop_sub = 0; has_pending_trap_due2_dbg = 0; continue; end // if pc is non-exception related
           end
-          if (has_trap_due2_dbg_match_trig) begin 
-            // assert(prev_pc_rdata_main < cv32e40p_rvvi_vif.pc_rdata);  // compress
-            // assert(prev_pc_rdata_main == cv32e40p_rvvi_vif.pc_rdata); // non-compress
-            has_trap_due2_dbg_match_trig = 0; continue; 
+          if (has_trap_due2_dbg_match_trig) begin // e.g exception event intercept with debug trigger
+            has_trap_due2_dbg_match_trig = 0;
           end
           if (cv32e40p_rvvi_vif.csr_dcsr_ebreakm && cv32e40p_rvvi_vif.insn == TB_INSTR_EBREAK) is_ebreakm = 1; else is_ebreakm = 0;
           `CHECK_N_SAMPLE_CSR_HWLOOP(main);
