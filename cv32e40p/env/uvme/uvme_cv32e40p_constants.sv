@@ -173,6 +173,53 @@ parameter TB_INSTR_SB       = {17'b?, 3'b000, 5'b?, TB_OPCODE_STORE};
 parameter TB_INSTR_SH       = {17'b?, 3'b001, 5'b?, TB_OPCODE_STORE};
 parameter TB_INSTR_SW       = {17'b?, 3'b010, 5'b?, TB_OPCODE_STORE};
 
+// RV32C
+// parameter TB_INSTR_C_ILLEGAL   = {16'b?, 3'b000, 11'b0, 2'b00};
+// parameter TB_INSTR_C_ADDI4SPN  = {16'b?, 3'b000, 11'b?, 2'b00}; // [12:2] != 0 (moved to user-defined insn)
+parameter TB_INSTR_C_LW           = {16'b?, 3'b010, 11'b?, 2'b00};
+parameter TB_INSTR_C_FLW          = {16'b?, 3'b011, 11'b?, 2'b00};
+parameter TB_INSTR_C_SW           = {16'b?, 3'b110, 11'b?, 2'b00};
+parameter TB_INSTR_C_FSW          = {16'b?, 3'b111, 11'b?, 2'b00};
+parameter TB_INSTR_C_NOP          = {16'b?, 3'b000, 11'b0, 2'b01};
+// parameter TB_INSTR_C_ADDI      = {16'b?, 3'b000, 11'b?, 2'b01}; // [11:7] != 0 (moved to user-defined insn)
+parameter TB_INSTR_C_JAL          = {16'b?, 3'b001, 11'b?, 2'b01};
+// parameter TB_INSTR_C_LI        = {16'b?, 3'b010, 11'b?, 2'b01}; // [11:7] != 0 (moved to user-defined insn)
+// parameter TB_INSTR_C_ADDI16SP  = {16'b?, 3'b011, 1'b?, 5'b00010, 5'b?, 2'b01}; // {[12],[6:2]} != 0 (moved to user-defined insn)
+// parameter TB_INSTR_C_LUI       = {16'b?, 3'b011, 11'b?, 2'b01}; // [11:7] != 0/2 and {[12],[6:2]} != 0 (moved to user-defined insn)
+parameter TB_INSTR_C_SRLI         = {16'b?, 3'b100, 1'b0, 2'b00, 3'b?, 5'b?, 2'b01};
+parameter TB_INSTR_C_SRAI         = {16'b?, 3'b100, 1'b0, 2'b01, 3'b?, 5'b?, 2'b01};
+parameter TB_INSTR_C_ANDI         = {16'b?, 3'b100, 1'b?, 2'b10, 3'b?, 5'b?, 2'b01};
+parameter TB_INSTR_C_SUB          = {16'b?, 3'b100, 1'b0, 2'b11, 3'b?, 2'b00, 3'b?, 2'b01};
+parameter TB_INSTR_C_XOR          = {16'b?, 3'b100, 1'b0, 2'b11, 3'b?, 2'b01, 3'b?, 2'b01};
+parameter TB_INSTR_C_OR           = {16'b?, 3'b100, 1'b0, 2'b11, 3'b?, 2'b10, 3'b?, 2'b01};
+parameter TB_INSTR_C_AND          = {16'b?, 3'b100, 1'b0, 2'b11, 3'b?, 2'b11, 3'b?, 2'b01};
+parameter TB_INSTR_C_J            = {16'b?, 3'b101, 11'b?, 2'b01};
+parameter TB_INSTR_C_BEQZ         = {16'b?, 3'b110, 11'b?, 2'b01};
+parameter TB_INSTR_C_BNEZ         = {16'b?, 3'b111, 11'b?, 2'b01};
+// parameter TB_INSTR_C_SLLI      = {16'b?, 3'b000, 1'b1, 5'b?, 5'b?, 2'b10}; // [11:7] != 0 (moved to user-defined insn)
+// parameter TB_INSTR_C_LWSP      = {16'b?, 3'b010, 11'b?, 2'b10}; // [11:7] != 0 (moved to user-defined insn)
+parameter TB_INSTR_C_FLWSP        = {16'b?, 3'b011, 11'b?, 2'b10};
+// parameter TB_INSTR_C_JR        = {16'b?, 3'b100, 1'b0, 5'b?, 5'b0, 2'b10}; // [11:7] != 0 (moved to user-defined insn)
+// parameter TB_INSTR_C_MV        = {16'b?, 3'b100, 1'b0, 5'b?, 5'b?, 2'b10}; // [11:7] != 0 [6:2] != 0 (moved to user-defined insn)
+// parameter TB_INSTR_C_JALR      = {16'b?, 3'b100, 1'b1, 5'b?, 5'b0, 2'b10}; // [11:7] != 0 (moved to user-defined insn)
+parameter TB_INSTR_C_EBREAK       = {16'b0, 3'b100, 1'b1, 5'b0, 5'b0, 2'b10}; // note: to be able to use as ignore bin wildcard 16'b? is not allow
+// parameter TB_INSTR_C_ADD       = {16'b?, 3'b100, 1'b1, 5'b?, 5'b?, 2'b10}; // [11:7] != 0 [6:2] != 0 (moved to user-defined insn)
+parameter TB_INSTR_C_SWSP         = {16'b?, 3'b110, 11'b?, 2'b10};
+parameter TB_INSTR_C_FSWSP        = {16'b?, 3'b111, 11'b?, 2'b10};
+  // below are using reserved func3[3'b100] and op[2'b00] for user-defined for tb func coverage purpose
+  // refer function get_user_def_c_insn_if_true() to get below assignment
+parameter TB_USER_DEF_C_ADDI4SPN  = {16'b0, 3'b100, 11'd0,  2'b00}; 
+parameter TB_USER_DEF_C_ADDI      = {16'b0, 3'b100, 11'd1,  2'b00}; 
+parameter TB_USER_DEF_C_LI        = {16'b0, 3'b100, 11'd2,  2'b00}; 
+parameter TB_USER_DEF_C_ADDI16SP  = {16'b0, 3'b100, 11'd3,  2'b00}; 
+parameter TB_USER_DEF_C_LUI       = {16'b0, 3'b100, 11'd4,  2'b00}; 
+parameter TB_USER_DEF_C_SLLI      = {16'b0, 3'b100, 11'd5,  2'b00}; 
+parameter TB_USER_DEF_C_LWSP      = {16'b0, 3'b100, 11'd6,  2'b00}; 
+parameter TB_USER_DEF_C_JR        = {16'b0, 3'b100, 11'd7,  2'b00}; 
+parameter TB_USER_DEF_C_MV        = {16'b0, 3'b100, 11'd8,  2'b00}; 
+parameter TB_USER_DEF_C_JALR      = {16'b0, 3'b100, 11'd9,  2'b00}; 
+parameter TB_USER_DEF_C_ADD       = {16'b0, 3'b100, 11'd10, 2'b00}; 
+
 //XPULP instructions custom opcodes
 parameter OPCODE_CUSTOM_0 = 7'h0b;
 parameter OPCODE_CUSTOM_1 = 7'h2b;
