@@ -31,6 +31,7 @@ class uvme_cv32e40p_cov_model_c extends uvm_component;
 
    // uvme_rv32isa_covg                    isa_covg;        // not used in cv32e40p v2 env 
    // uvme_interrupt_covg                  interrupt_covg;  // not used in cv32e40p v2 env
+   uvme_interrupt_covg_v2               interrupt_covg_v2;
    uvme_debug_covg                      debug_covg;
    uvme_rv32x_hwloop_covg               rv32x_hwloop_covg;
    uvme_cv32e40p_fp_instr_covg          cv32e40p_fp_instr_covg;
@@ -114,6 +115,7 @@ function void uvme_cv32e40p_cov_model_c::build_phase(uvm_phase phase);
    uvm_config_db#(uvme_cv32e40p_cntxt_c)::set(this, "debug_covg", "cntxt", cntxt);
    
    rv32x_hwloop_covg = uvme_rv32x_hwloop_covg::type_id::create("rv32x_hwloop_covg", this);
+   interrupt_covg_v2 = uvme_interrupt_covg_v2::type_id::create("interrupt_covg_v2", this);
 
    if( (cfg.rv32f_fcov_en == 1) && (cfg.zfinx_fcov_en == 0) ) begin
       cv32e40p_fp_instr_covg = uvme_cv32e40p_fp_instr_covg::type_id::create("cv32e40p_fp_instr_covg", this);
