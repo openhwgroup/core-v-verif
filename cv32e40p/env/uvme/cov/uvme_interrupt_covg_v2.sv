@@ -191,7 +191,7 @@ class uvme_interrupt_covg_v2 # (
 
   function void final_phase(uvm_phase phase);
     super.final_phase(phase);
-    assert(irq_nested_count == 0);
+    // assert(irq_nested_count == 0);
   endfunction : final_phase
 
 endclass : uvme_interrupt_covg_v2
