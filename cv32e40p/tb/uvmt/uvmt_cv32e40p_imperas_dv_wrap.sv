@@ -320,10 +320,71 @@ module uvmt_cv32e40p_imperas_dv_wrap
     `RVVI_SET_CSR( `CSR_MCAUSE_ADDR,        mcause        )
     //  `RVVI_SET_CSR( `CSR_MTVAL_ADDR,         mtval         )
     `RVVI_SET_CSR( `CSR_MIP_ADDR,           mip           )
-    //  `RVVI_SET_CSR( `CSR_MCYCLE_ADDR,        mcycle        )
+    // `RVVI_SET_CSR( `CSR_MCYCLE_ADDR,        mcycle        )
     `RVVI_SET_CSR( `CSR_MINSTRET_ADDR,      minstret      )
     //  `RVVI_SET_CSR( `CSR_MCYCLEH_ADDR,       mcycleh       )
-    //  `RVVI_SET_CSR( `CSR_MINSTRETH_ADDR,     minstreth     )
+    `RVVI_SET_CSR( `CSR_MINSTRETH_ADDR,     minstreth     )
+    `RVVI_SET_CSR( `CSR_INSTRET_ADDR,      instret      )
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER3_ADDR, mhpmcounter, 3)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER3H_ADDR, mhpmcounterh, 3)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER4_ADDR,  mhpmcounter,  4)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER4H_ADDR, mhpmcounterh, 4)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER5_ADDR,  mhpmcounter,  5)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER5H_ADDR, mhpmcounterh, 5)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER6_ADDR,  mhpmcounter,  6)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER6H_ADDR, mhpmcounterh, 6)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER7_ADDR,  mhpmcounter,  7)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER7H_ADDR, mhpmcounterh, 7)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER8_ADDR,  mhpmcounter,  8)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER8H_ADDR, mhpmcounterh, 8)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER9_ADDR,  mhpmcounter,  9)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER9H_ADDR, mhpmcounterh, 9)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER10_ADDR,  mhpmcounter,  10)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER10H_ADDR, mhpmcounterh, 10)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER11_ADDR,  mhpmcounter,  11)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER11H_ADDR, mhpmcounterh, 11)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER12_ADDR,  mhpmcounter,  12)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER12H_ADDR, mhpmcounterh, 12)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER13_ADDR,  mhpmcounter,  13)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER13H_ADDR, mhpmcounterh, 13)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER14_ADDR,  mhpmcounter,  14)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER14H_ADDR, mhpmcounterh, 14)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER15_ADDR,  mhpmcounter,  15)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER15H_ADDR, mhpmcounterh, 15)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER16_ADDR,  mhpmcounter,  16)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER16H_ADDR, mhpmcounterh, 16)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER17_ADDR,  mhpmcounter,  17)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER17H_ADDR, mhpmcounterh, 17)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER18_ADDR,  mhpmcounter,  18)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER18H_ADDR, mhpmcounterh, 18)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER19_ADDR,  mhpmcounter,  19)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER19H_ADDR, mhpmcounterh, 19)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER20_ADDR,  mhpmcounter,  20)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER20H_ADDR, mhpmcounterh, 20)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER21_ADDR,  mhpmcounter,  21)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER21H_ADDR, mhpmcounterh, 21)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER22_ADDR,  mhpmcounter,  22)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER22H_ADDR, mhpmcounterh, 22)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER23_ADDR,  mhpmcounter,  23)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER23H_ADDR, mhpmcounterh, 23)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER24_ADDR,  mhpmcounter,  24)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER24H_ADDR, mhpmcounterh, 24)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER25_ADDR,  mhpmcounter,  25)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER25H_ADDR, mhpmcounterh, 25)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER26_ADDR,  mhpmcounter,  26)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER26H_ADDR, mhpmcounterh, 26)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER27_ADDR,  mhpmcounter,  27)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER27H_ADDR, mhpmcounterh, 27)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER28_ADDR,  mhpmcounter,  28)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER28H_ADDR, mhpmcounterh, 28)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER29_ADDR,  mhpmcounter,  29)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER29H_ADDR, mhpmcounterh, 29)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER30_ADDR,  mhpmcounter,  30)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER30H_ADDR, mhpmcounterh, 30)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER31_ADDR,  mhpmcounter,  31)
+    `RVVI_SET_CSR_VEC( `CSR_MHPMCOUNTER31H_ADDR, mhpmcounterh, 31)
+
+    `RVVI_SET_CSR( `CSR_INSTRETH_ADDR,     instreth     )
     `RVVI_SET_CSR( `CSR_MVENDORID_ADDR,     mvendorid     )
     `RVVI_SET_CSR( `CSR_MARCHID_ADDR,       marchid       )
     //  `RVVI_SET_CSR( `CSR_MIMPID_ADDR,        mimpid        )
@@ -486,10 +547,14 @@ module uvmt_cv32e40p_imperas_dv_wrap
     hart_id = 32'h0000_0000;
 
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLE_ADDR        ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_CYCLEH_ADDR        ));
 
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_INSTRET_ADDR      ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER3_ADDR      ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER3H_ADDR      ));
 
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLE_ADDR       ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLEH_ADDR       ));
 
     // cannot predict this register due to latency between
     // pending and taken
