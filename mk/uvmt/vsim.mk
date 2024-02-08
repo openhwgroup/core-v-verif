@@ -149,7 +149,7 @@ VLOG_FLAGS += +define+USE_ISS
 VLOG_FLAGS += +define+USE_IMPERASDV
 VLOG_FILE_LIST_IDV = -f $(DV_UVMT_PATH)/imperas_dv.flist
 ifeq ($(call IS_YES,$(COV)),YES)
-# VLOG_FLAGS += +define+IMPERAS_COV // fixme: add granuality for this enablement
+VLOG_FLAGS += +define+IMPERAS_COV
 endif
 endif
 ifeq ($(call IS_YES,$(COV)),YES)

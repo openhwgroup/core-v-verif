@@ -3,23 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
  */
 `ifdef IMPERAS_COV
+
   `define IDV_INCLUDE_TRACE2COV
   `define COVER_BASE_RV32I
-  `define COVER_LEVEL_COMPL_BAS
-  //`define COVER_LEVEL_COMPL_EXT
-  // `define COVER_LEVEL_DV_UP_BAS // fixme: this is needed for some f/zfinx cp
-  //`define COVER_LEVEL_DV_UP_EXT
-  //`define COVER_LEVEL_DV_PR_BAS
-  //`define COVER_LEVEL_DV_PR_EXT
   `define COVER_RV32I
   `define COVER_RV32M
   `define COVER_RV32C
-  `define COVER_RVVI_METRICS
 
   `ifdef FPU
-    `define COVER_CSR_FCSR
-    `define COVER_CSR_FFLAGS
-    `define COVER_CSR_FRM
     `ifndef ZFINX
       `define COVER_RV32F
       `define COVER_RV32ZCF
@@ -42,4 +33,25 @@
     `define COVER_XPULPV2_ILLEGAL
     `define COVER_XPULPV2C_ILLEGAL
   `endif
+
+  `define COVER_TYPE_ASM_COUNT
+  `define COVER_TYPE_ASSIGNMENTS
+  `define COVER_TYPE_CSR_VALUE
+  `define COVER_TYPE_FRM
+  `define COVER_TYPE_SIGNS
+  `define COVER_TYPE_VALUES
+  // `define COVER_TYPE_ILLEGAL_INST
+
+  // `define  COVER_TYPE_CROSS_VALUES
+  `define COVER_TYPE_EQUAL
+  // `define COVER_TYPE_FAULTS
+  `define COVER_TYPE_MAXVALS
+  `define COVER_TYPE_REG_COMPARE
+  // `define COVER_TYPE_TOGGLE
+
+  // `define COVER_TYPE_CSR
+  // `define COVER_TYPE_METRIC
+  `define COVER_TYPE_FPVALUES
+  `define COVER_TYPE_HAZARD
+
 `endif
