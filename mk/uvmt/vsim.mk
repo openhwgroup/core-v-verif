@@ -458,7 +458,7 @@ gen_corev-dv: $(VSIM_COREVDV_SIM_PREREQ)
 			cp -pf $(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log ${SIM_TEST_RESULTS}/$$idx/test_program; \
 		else \
 			echo "Log file not present: $(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log"; \
-		fi
+		fi; \
 	done
 	if [ -f "$(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX).ucdb" ]; then \
 		rm -f $(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX).ucdb; \
