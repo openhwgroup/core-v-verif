@@ -36,7 +36,7 @@
 
 #define MSTATUS_FS_INITIAL 0x00003800
 
-#define BASE_EXPECTED_ILLEGAL_INSTRUCTIONS 414
+#define BASE_EXPECTED_ILLEGAL_INSTRUCTIONS 576
 #define FPU_EXPECTED_ILLEGAL_INSTRUCTIONS 21
 #define NO_FPU_EXPECTED_ILLEGAL_INSTRUCTIONS 21
 #define PULP_EXPECTED_ILLEGAL_INSTRUCTIONS 36
@@ -564,6 +564,222 @@ main:
  	csrrsi x0,  0xC83, 0x0a   # illegal instruction: attempt to write RO CSR
  	csrrw  x0,  0xC83, x0     # illegal instruction: attempt to write RO CSR
 	csrrwi x0,  0xC83, 0x0a   # illegal instruction: attempt to write RO CSR
+
+   csrrc  x5,  0xC84, x0
+   csrrc  x0,  0xC84, x5
+   csrrci x0,  0xC84, 0x0a
+   csrrs  x0,  0xC84, x5
+   csrrsi x0,  0xC84, 0x0a
+   csrrw  x0,  0xC84, x0
+   csrrwi x0,  0xC84, 0x0a
+
+   csrrc  x5,  0xC85, x0
+   csrrc  x0,  0xC85, x5
+   csrrci x0,  0xC85, 0x0a
+   csrrs  x0,  0xC85, x5
+   csrrsi x0,  0xC85, 0x0a
+   csrrw  x0,  0xC85, x0
+   csrrwi x0,  0xC85, 0x0a
+
+   csrrc  x5,  0xC86, x0
+   csrrc  x0,  0xC86, x5
+   csrrci x0,  0xC86, 0x0a
+   csrrs  x0,  0xC86, x5
+   csrrsi x0,  0xC86, 0x0a
+   csrrw  x0,  0xC86, x0
+   csrrwi x0,  0xC86, 0x0a
+
+   csrrc  x5,  0xC87, x0
+   csrrc  x0,  0xC87, x5
+   csrrci x0,  0xC87, 0x0a
+   csrrs  x0,  0xC87, x5
+   csrrsi x0,  0xC87, 0x0a
+   csrrw  x0,  0xC87, x0
+   csrrwi x0,  0xC87, 0x0a
+
+   csrrc  x5,  0xC88, x0
+   csrrc  x0,  0xC88, x5
+   csrrci x0,  0xC88, 0x0a
+   csrrs  x0,  0xC88, x5
+   csrrsi x0,  0xC88, 0x0a
+   csrrw  x0,  0xC88, x0
+   csrrwi x0,  0xC88, 0x0a
+
+   csrrc  x5,  0xC89, x0
+   csrrc  x0,  0xC89, x5
+   csrrci x0,  0xC89, 0x0a
+   csrrs  x0,  0xC89, x5
+   csrrsi x0,  0xC89, 0x0a
+   csrrw  x0,  0xC89, x0
+   csrrwi x0,  0xC89, 0x0a
+
+   csrrc  x5,  0xC8A, x0
+   csrrc  x0,  0xC8A, x5
+   csrrci x0,  0xC8A, 0x0a
+   csrrs  x0,  0xC8A, x5
+   csrrsi x0,  0xC8A, 0x0a
+   csrrw  x0,  0xC8A, x0
+   csrrwi x0,  0xC8A, 0x0a
+
+   csrrc  x5,  0xC8B, x0
+   csrrc  x0,  0xC8B, x5
+   csrrci x0,  0xC8B, 0x0a
+   csrrs  x0,  0xC8B, x5
+   csrrsi x0,  0xC8B, 0x0a
+   csrrw  x0,  0xC8B, x0
+   csrrwi x0,  0xC8B, 0x0a
+
+   csrrc  x5,  0xC8C, x0
+   csrrc  x0,  0xC8C, x5
+   csrrci x0,  0xC8C, 0x0a
+   csrrs  x0,  0xC8C, x5
+   csrrsi x0,  0xC8C, 0x0a
+   csrrw  x0,  0xC8C, x0
+   csrrwi x0,  0xC8C, 0x0a
+
+   csrrc  x5,  0xC8D, x0
+   csrrc  x0,  0xC8D, x5
+   csrrci x0,  0xC8D, 0x0a
+   csrrs  x0,  0xC8D, x5
+   csrrsi x0,  0xC8D, 0x0a
+   csrrw  x0,  0xC8D, x0
+   csrrwi x0,  0xC8D, 0x0a
+
+   csrrc  x5,  0xC8E, x0
+   csrrc  x0,  0xC8E, x5
+   csrrci x0,  0xC8E, 0x0a
+   csrrs  x0,  0xC8E, x5
+   csrrsi x0,  0xC8E, 0x0a
+   csrrw  x0,  0xC8E, x0
+   csrrwi x0,  0xC8E, 0x0a
+
+   csrrc  x5,  0xC8F, x0
+   csrrc  x0,  0xC8F, x5
+   csrrci x0,  0xC8F, 0x0a
+   csrrs  x0,  0xC8F, x5
+   csrrsi x0,  0xC8F, 0x0a
+   csrrw  x0,  0xC8F, x0
+   csrrwi x0,  0xC8F, 0x0a
+
+   csrrc  x5,  0xC90, x0
+   csrrc  x0,  0xC90, x5
+   csrrci x0,  0xC90, 0x0a
+   csrrs  x0,  0xC90, x5
+   csrrsi x0,  0xC90, 0x0a
+   csrrw  x0,  0xC90, x0
+   csrrwi x0,  0xC90, 0x0a
+
+   csrrc  x5,  0xC91, x0
+   csrrc  x0,  0xC91, x5
+   csrrci x0,  0xC91, 0x0a
+   csrrs  x0,  0xC91, x5
+   csrrsi x0,  0xC91, 0x0a
+   csrrw  x0,  0xC91, x0
+   csrrwi x0,  0xC91, 0x0a
+
+   csrrc  x5,  0xC92, x0
+   csrrc  x0,  0xC92, x5
+   csrrci x0,  0xC92, 0x0a
+   csrrs  x0,  0xC92, x5
+   csrrsi x0,  0xC92, 0x0a
+   csrrw  x0,  0xC92, x0
+   csrrwi x0,  0xC92, 0x0a
+
+   csrrc  x5,  0xC93, x0
+   csrrc  x0,  0xC93, x5
+   csrrci x0,  0xC93, 0x0a
+   csrrs  x0,  0xC93, x5
+   csrrsi x0,  0xC93, 0x0a
+   csrrw  x0,  0xC93, x0
+   csrrwi x0,  0xC93, 0x0a
+
+   csrrc  x5,  0xC94, x0
+   csrrc  x0,  0xC94, x5
+   csrrci x0,  0xC94, 0x0a
+   csrrs  x0,  0xC94, x5
+   csrrsi x0,  0xC94, 0x0a
+   csrrw  x0,  0xC94, x0
+   csrrwi x0,  0xC94, 0x0a
+
+   csrrc  x5,  0xC95, x0
+   csrrc  x0,  0xC95, x5
+   csrrci x0,  0xC95, 0x0a
+   csrrs  x0,  0xC95, x5
+   csrrsi x0,  0xC95, 0x0a
+   csrrw  x0,  0xC95, x0
+   csrrwi x0,  0xC95, 0x0a
+
+   csrrc  x5,  0xC96, x0
+   csrrc  x0,  0xC96, x5
+   csrrci x0,  0xC96, 0x0a
+   csrrs  x0,  0xC96, x5
+   csrrsi x0,  0xC96, 0x0a
+   csrrw  x0,  0xC96, x0
+   csrrwi x0,  0xC96, 0x0a
+
+   csrrc  x5,  0xC97, x0
+   csrrc  x0,  0xC97, x5
+   csrrci x0,  0xC97, 0x0a
+   csrrs  x0,  0xC97, x5
+   csrrsi x0,  0xC97, 0x0a
+   csrrw  x0,  0xC97, x0
+   csrrwi x0,  0xC97, 0x0a
+
+   csrrc  x5,  0xC98, x0
+   csrrc  x0,  0xC98, x5
+   csrrci x0,  0xC98, 0x0a
+   csrrs  x0,  0xC98, x5
+   csrrsi x0,  0xC98, 0x0a
+   csrrw  x0,  0xC98, x0
+   csrrwi x0,  0xC98, 0x0a
+
+   csrrc  x5,  0xC99, x0
+   csrrc  x0,  0xC99, x5
+   csrrci x0,  0xC99, 0x0a
+   csrrs  x0,  0xC99, x5
+   csrrsi x0,  0xC99, 0x0a
+   csrrw  x0,  0xC99, x0
+   csrrwi x0,  0xC99, 0x0a
+
+   csrrc  x5,  0xC9A, x0
+   csrrc  x0,  0xC9A, x5
+   csrrci x0,  0xC9A, 0x0a
+   csrrs  x0,  0xC9A, x5
+   csrrsi x0,  0xC9A, 0x0a
+   csrrw  x0,  0xC9A, x0
+   csrrwi x0,  0xC9A, 0x0a
+
+   csrrc  x5,  0xC9B, x0
+   csrrc  x0,  0xC9B, x5
+   csrrci x0,  0xC9B, 0x0a
+   csrrs  x0,  0xC9B, x5
+   csrrsi x0,  0xC9B, 0x0a
+   csrrw  x0,  0xC9B, x0
+   csrrwi x0,  0xC9B, 0x0a
+
+   csrrc  x5,  0xC9C, x0
+   csrrc  x0,  0xC9C, x5
+   csrrci x0,  0xC9C, 0x0a
+   csrrs  x0,  0xC9C, x5
+   csrrsi x0,  0xC9C, 0x0a
+   csrrw  x0,  0xC9C, x0
+   csrrwi x0,  0xC9C, 0x0a
+
+   csrrc  x5,  0xC9D, x0
+   csrrc  x0,  0xC9D, x5
+   csrrci x0,  0xC9D, 0x0a
+   csrrs  x0,  0xC9D, x5
+   csrrsi x0,  0xC9D, 0x0a
+   csrrw  x0,  0xC9D, x0
+   csrrwi x0,  0xC9D, 0x0a
+
+   csrrc  x5,  0xC9E, x0
+   csrrc  x0,  0xC9E, x5
+   csrrci x0,  0xC9E, 0x0a
+   csrrs  x0,  0xC9E, x5
+   csrrsi x0,  0xC9E, 0x0a
+   csrrw  x0,  0xC9E, x0
+   csrrwi x0,  0xC9E, 0x0a
 
    csrrc  x5,  0xC9F, x0     # not illegal instruction: no attempt to write RO CSR
 	csrrc  x0,  0xC9F, x5     # illegal instruction: attempt to write RO CSR
