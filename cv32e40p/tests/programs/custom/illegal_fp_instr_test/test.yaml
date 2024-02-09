@@ -1,0 +1,6 @@
+# Test definition YAML for test
+
+name: illegal_fp_instr_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    Script-generated test contributed by em-micro & Dolphin-Design to exercise all FP illegal instruction types

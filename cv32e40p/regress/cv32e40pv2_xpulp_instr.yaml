@@ -105,6 +105,19 @@ tests:
     cmd: make test COREV=YES TEST=custom_opcode_illegal_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
+  cv32e40pv2_illegal_ro_csr_access_test:
+    build: uvmt_cv32e40p
+    description: directed test for illegal and ro CSR access
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=cv32e40pv2_illegal_ro_csr_access_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    num: 1
+
+  cv32e40p_csr_access_test:
+    build: uvmt_cv32e40p
+    description: R/W acces to a list of legal CSR
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=cv32e40p_csr_access_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    num: 1
 
   # pulp_hardware_loop_debug_test:
   #   build: uvmt_cv32e40p
