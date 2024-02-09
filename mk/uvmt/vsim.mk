@@ -451,13 +451,14 @@ gen_corev-dv: $(VSIM_COREVDV_SIM_PREREQ)
 			$(CFG_PLUSARGS) \
 			$(TEST_CFG_FILE_PLUSARGS) \
 			$(GEN_PLUSARGS)
-
-# copy and move out final assembler files and log to test directory (move to avoid duplicating files)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		cp -f ${BSP}/link_corev-dv.ld ${SIM_TEST_RESULTS}/$$idx/test_program/link.ld; \
-		mv -f ${SIM_COREVDV_RESULTS}/${TEST}/${TEST}_$$idx.S ${SIM_TEST_RESULTS}/$$idx/test_program; \
-		mv -f $(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log ${SIM_TEST_RESULTS}/$$idx/test_program; \
+		cp -f ${SIM_COREVDV_RESULTS}/${TEST}/${TEST}_$$idx.S ${SIM_TEST_RESULTS}/$$idx/test_program; \
+		cp -f $(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log ${SIM_TEST_RESULTS}/$$idx/test_program;\
 	done
+	if [ ! -z "$(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX).ucdb" ]; then \
+		rm -f $(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX).ucdb; \
+	fi
 
 $(SIM_COREVDV_RESULTS)/vlog.log: vlog_corev-dv
 
