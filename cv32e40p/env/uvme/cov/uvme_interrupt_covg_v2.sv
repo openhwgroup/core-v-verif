@@ -83,10 +83,11 @@ class uvme_interrupt_covg_v2 # (
       `RV32C_INSTR_BINS \
       // RV32F/ZFINX - \
       `ifdef FPU \
-        `RV32F_INSTR_BINS \
-      `endif \
-      `ifdef ZFINX \
-        `ZFINX_INSTR_BINS \
+        `ifdef ZFINX \
+          `ZFINX_INSTR_BINS \
+        `else \
+          `RV32F_INSTR_BINS \
+        `endif \
       `endif \
       // RV32X - \
       `RV32X_PULP_INSTR_BINS \
