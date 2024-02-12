@@ -63,14 +63,19 @@
    rand bit                      ext_zbr_supported;
    rand bit                      ext_zbs_supported;
    rand bit                      ext_zbt_supported;
+   rand bit                      ext_zcb_supported;
    rand bit                      ext_zifencei_supported;
    rand bit                      ext_zicsr_supported;
-   rand bit                      ext_zcb_supported;
+   rand bit                      ext_zicntr_supported;
+
+   // Core specific extensions
+   rand bit                      ext_cv32a60x_supported;
 
    rand bit                      mode_s_supported;
    rand bit                      mode_u_supported;
 
    rand bit                      pmp_supported;
+   rand int unsigned             pmp_regions;
    rand bit                      debug_supported;
 
    rand bitmanip_version_t       bitmanip_version;
@@ -94,6 +99,9 @@
    // The valid bits should be constrained if the bootstrap signal is not valid for this core configuration
    rand bit [MAX_XLEN-1:0]       mhartid;
    bit                           mhartid_plusarg_valid;
+
+   rand bit [MAX_XLEN-1:0]       mvendorid;
+   bit                           mvendorid_plusarg_valid;
 
    rand bit [MAX_XLEN-1:0]       mimpid;
    bit                           mimpid_plusarg_valid;
@@ -136,8 +144,6 @@
       `uvm_field_int(                          ext_f_supported                , UVM_DEFAULT          )
       `uvm_field_int(                          ext_d_supported                , UVM_DEFAULT          )
       `uvm_field_int(                          ext_v_supported                , UVM_DEFAULT          )
-      `uvm_field_int(                          ext_zifencei_supported         , UVM_DEFAULT          )
-      `uvm_field_int(                          ext_zicsr_supported            , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zba_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zbb_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zbc_supported              , UVM_DEFAULT          )
@@ -149,9 +155,14 @@
       `uvm_field_int(                          ext_zbs_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zbt_supported              , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zcb_supported              , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zifencei_supported         , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zicsr_supported            , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zicntr_supported           , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_cv32a60x_supported         , UVM_DEFAULT          )
       `uvm_field_int(                          mode_s_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          mode_u_supported               , UVM_DEFAULT          )
       `uvm_field_int(                          pmp_supported                  , UVM_DEFAULT          )
+      `uvm_field_int(                          pmp_regions                    , UVM_DEFAULT          )
       `uvm_field_int(                          debug_supported                , UVM_DEFAULT          )
       `uvm_field_int(                          unaligned_access_supported     , UVM_DEFAULT          )
       `uvm_field_int(                          unaligned_access_amo_supported , UVM_DEFAULT          )
@@ -161,6 +172,7 @@
       `uvm_field_int(                          num_mhpmcounters               , UVM_DEFAULT          )
       `uvm_field_array_object(                 pma_regions                    , UVM_DEFAULT          )
       `uvm_field_int(                          mhartid                        , UVM_DEFAULT          )
+      `uvm_field_int(                          mvendorid                      , UVM_DEFAULT          )
       `uvm_field_int(                          mimpid                         , UVM_DEFAULT          )
       `uvm_field_int(                          boot_addr                      , UVM_DEFAULT          )
       `uvm_field_int(                          boot_addr_valid                , UVM_DEFAULT          )
@@ -275,6 +287,10 @@
     */
    extern virtual function bit[31:0] get_noinhibit_mask();
 
+   extern virtual function st_core_cntrl_cfg to_struct();
+
+   extern virtual function void from_struct(st_core_cntrl_cfg st);
+
  endclass : uvma_core_cntrl_cfg_c
 
 function uvma_core_cntrl_cfg_c::new(string name="uvme_cv_base_cfg");
@@ -288,6 +304,11 @@ function uvma_core_cntrl_cfg_c::new(string name="uvme_cv_base_cfg");
    if (read_cfg_plusarg_xlen("mhartid", mhartid)) begin
       mhartid_plusarg_valid = 1;
       mhartid.rand_mode(0);
+   end
+
+   if (read_cfg_plusarg_xlen("mvendorid", mvendorid)) begin
+      mvendorid_plusarg_valid = 1;
+      mvendorid.rand_mode(0);
    end
 
    if (read_cfg_plusarg_xlen("mimpid", mimpid)) begin
@@ -677,6 +698,188 @@ function bit[MAX_XLEN-1:0] uvma_core_cntrl_cfg_c::get_misa();
 
 endfunction : get_misa
 
+function st_core_cntrl_cfg uvma_core_cntrl_cfg_c::to_struct();
+    st_core_cntrl_cfg st;
+
+    st.enabled = enabled;
+    st.is_active = is_active;
+    st.scoreboarding_enabled = scoreboarding_enabled;
+    st.disable_all_csr_checks = disable_all_csr_checks;
+    st.disable_csr_check_mask = disable_csr_check_mask;
+    st.cov_model_enabled = cov_model_enabled;
+    st.trn_log_enabled = trn_log_enabled;
+
+    st.use_iss = use_iss;
+
+    st.xlen = xlen;
+    st.ilen = ilen;
+
+    st.ext_i_supported = ext_i_supported;
+    st.ext_a_supported = ext_a_supported;
+    st.ext_m_supported = ext_m_supported;
+    st.ext_c_supported = ext_c_supported;
+    st.ext_p_supported = ext_p_supported;
+    st.ext_v_supported = ext_v_supported;
+    st.ext_f_supported = ext_f_supported;
+    st.ext_d_supported = ext_d_supported;
+    st.ext_zba_supported = ext_zba_supported;
+    st.ext_zbb_supported = ext_zbb_supported;
+    st.ext_zbc_supported = ext_zbc_supported;
+    st.ext_zbe_supported = ext_zbe_supported;
+    st.ext_zbf_supported = ext_zbf_supported;
+    st.ext_zbm_supported = ext_zbm_supported;
+    st.ext_zbp_supported = ext_zbp_supported;
+    st.ext_zbr_supported = ext_zbr_supported;
+    st.ext_zbs_supported = ext_zbs_supported;
+    st.ext_zbt_supported = ext_zbt_supported;
+    st.ext_zcb_supported = ext_zcb_supported;
+    st.ext_zifencei_supported = ext_zifencei_supported;
+    st.ext_zicsr_supported = ext_zicsr_supported;
+    st.ext_zicntr_supported = ext_zicntr_supported;
+    st.ext_cv32a60x_supported = ext_cv32a60x_supported;
+
+    st.mode_s_supported = mode_s_supported;
+    st.mode_u_supported = mode_u_supported;
+
+    st.pmp_supported = pmp_supported;
+    st.pmp_regions = pmp_regions;
+    st.debug_supported = debug_supported;
+
+    st.bitmanip_version = bitmanip_version;
+
+    st.priv_spec_version = priv_spec_version;
+
+    st.endianness = endianness;
+
+    st.unaligned_access_supported = unaligned_access_supported;
+    st.unaligned_access_amo_supported = unaligned_access_amo_supported;
+
+    st.unsupported_csr_mask = unsupported_csr_mask;
+
+    st.num_mhpmcounters = num_mhpmcounters;
+
+    st.mhartid = mhartid;
+    st.mhartid_plusarg_valid = mhartid_plusarg_valid;
+
+    st.mvendorid = mvendorid;
+    st.mvendorid_plusarg_valid = mvendorid_plusarg_valid;
+
+    st.mimpid = mimpid;
+    st.mimpid_plusarg_valid = mimpid_plusarg_valid;
+
+    st.boot_addr = boot_addr;
+    st.boot_addr_valid = boot_addr_valid;
+    st.boot_addr_plusarg_valid = boot_addr_plusarg_valid;
+
+    st.mtvec_addr = mtvec_addr;
+    st.mtvec_addr_valid = mtvec_addr_valid;
+    st.mtvec_addr_plusarg_valid = mtvec_addr_plusarg_valid;
+
+    st.dm_halt_addr = dm_halt_addr;
+    st.dm_halt_addr_valid = dm_halt_addr_valid;
+    st.dm_halt_addr_plusarg_valid = dm_halt_addr_plusarg_valid;
+
+    st.dm_exception_addr = dm_exception_addr;
+    st.dm_exception_addr_valid = dm_exception_addr_valid;
+    st.dm_exception_addr_plusarg_valid = dm_exception_addr_plusarg_valid;
+
+    st.nmi_addr = nmi_addr;
+    st.nmi_addr_valid = nmi_addr_valid;
+    st.nmi_addr_plusarg_valid = nmi_addr_plusarg_valid;
+
+    return st;
+
+endfunction : to_struct
+
+function void uvma_core_cntrl_cfg_c::from_struct(st_core_cntrl_cfg st);
+    enabled = st.enabled;
+    is_active = st.is_active;
+    scoreboarding_enabled = st.scoreboarding_enabled;
+    disable_all_csr_checks = st.disable_all_csr_checks;
+    disable_csr_check_mask = st.disable_csr_check_mask;
+    cov_model_enabled = st.cov_model_enabled;
+    trn_log_enabled = st.trn_log_enabled;
+
+    use_iss = st.use_iss;
+    iss_control_file  = "ovpsim.ic";
+
+    xlen = st.xlen;
+    ilen = st.ilen;
+
+    ext_i_supported = st.ext_i_supported;
+    ext_a_supported = st.ext_a_supported;
+    ext_m_supported = st.ext_m_supported;
+    ext_c_supported = st.ext_c_supported;
+    ext_p_supported = st.ext_p_supported;
+    ext_v_supported = st.ext_v_supported;
+    ext_f_supported = st.ext_f_supported;
+    ext_d_supported = st.ext_d_supported;
+    ext_zba_supported = st.ext_zba_supported;
+    ext_zbb_supported = st.ext_zbb_supported;
+    ext_zbc_supported = st.ext_zbc_supported;
+    ext_zbe_supported = st.ext_zbe_supported;
+    ext_zbf_supported = st.ext_zbf_supported;
+    ext_zbm_supported = st.ext_zbm_supported;
+    ext_zbp_supported = st.ext_zbp_supported;
+    ext_zbr_supported = st.ext_zbr_supported;
+    ext_zbs_supported = st.ext_zbs_supported;
+    ext_zbt_supported = st.ext_zbt_supported;
+    ext_zcb_supported = st.ext_zcb_supported;
+    ext_zifencei_supported = st.ext_zifencei_supported;
+    ext_zicsr_supported = st.ext_zicsr_supported;
+    ext_zicntr_supported = st.ext_zicntr_supported;
+    ext_cv32a60x_supported = st.ext_cv32a60x_supported;
+
+    mode_s_supported = st.mode_s_supported;
+    mode_u_supported = st.mode_u_supported;
+
+    pmp_supported = st.pmp_supported;
+    pmp_regions = st.pmp_regions;
+    debug_supported = st.debug_supported;
+
+    bitmanip_version = st.bitmanip_version;
+
+    priv_spec_version = st.priv_spec_version;
+
+    endianness = st.endianness;
+
+    unaligned_access_supported = st.unaligned_access_supported;
+    unaligned_access_amo_supported = st.unaligned_access_amo_supported;
+
+    unsupported_csr_mask = st.unsupported_csr_mask;
+
+    num_mhpmcounters = st.num_mhpmcounters;
+
+    mhartid = st.mhartid;
+    mhartid_plusarg_valid = st.mhartid_plusarg_valid;
+
+    mvendorid = st.mvendorid;
+    mvendorid_plusarg_valid = st.mvendorid_plusarg_valid;
+
+    mimpid = st.mimpid;
+    mimpid_plusarg_valid = st.mimpid_plusarg_valid;
+
+    boot_addr = st.boot_addr;
+    boot_addr_valid = st.boot_addr_valid;
+    boot_addr_plusarg_valid = st.boot_addr_plusarg_valid;
+
+    mtvec_addr = st.mtvec_addr;
+    mtvec_addr_valid = st.mtvec_addr_valid;
+    mtvec_addr_plusarg_valid = st.mtvec_addr_plusarg_valid;
+
+    dm_halt_addr = st.dm_halt_addr;
+    dm_halt_addr_valid = st.dm_halt_addr_valid;
+    dm_halt_addr_plusarg_valid = st.dm_halt_addr_plusarg_valid;
+
+    dm_exception_addr = st.dm_exception_addr;
+    dm_exception_addr_valid = st.dm_exception_addr_valid;
+    dm_exception_addr_plusarg_valid = st.dm_exception_addr_plusarg_valid;
+
+    nmi_addr = st.nmi_addr;
+    nmi_addr_valid = st.nmi_addr_valid;
+    nmi_addr_plusarg_valid = st.nmi_addr_plusarg_valid;
+
+endfunction : from_struct
 `endif // __UVMA_CORE_CNTRL_CFG_SV__
 
 

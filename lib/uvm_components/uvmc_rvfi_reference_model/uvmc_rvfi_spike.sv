@@ -27,8 +27,6 @@ class uvmc_rvfi_spike#(int ILEN=DEFAULT_ILEN,
 
    `uvm_component_param_utils(uvmc_rvfi_spike)
 
-    localparam config_pkg::cva6_cfg_t CVA6Cfg = cva6_config_pkg::cva6_cfg;
-
    /**
     * Default constructor.
     */
@@ -36,17 +34,19 @@ class uvmc_rvfi_spike#(int ILEN=DEFAULT_ILEN,
 
        super.new(name, parent);
 
-       rvfi_initialize_spike(0);
-
    endfunction : new
 
    /**
     * Build phase
     */
    function void build_phase(uvm_phase phase);
+       st_core_cntrl_cfg st;
 
        super.build_phase(phase);
 
+       st = cfg.to_struct();
+
+       rvfi_initialize_spike(cfg.core_name, st);
    endfunction : build_phase
 
    /**

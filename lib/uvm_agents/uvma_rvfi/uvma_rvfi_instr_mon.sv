@@ -174,17 +174,19 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
               mon_trn.mem_wmask = cntxt.instr_vif[nret_id].mon_cb.rvfi_mem_wmask;
 
               // Get the CSRs
-              foreach (cntxt.csr_vif[csr]) begin
-                  uvma_rvfi_csr_seq_item_c csr_trn = uvma_rvfi_csr_seq_item_c#(XLEN)::type_id::create({csr, "_trn"});
+              if (cfg.csr_enabled) begin
+                foreach (cntxt.csr_vif[csr]) begin
+                    uvma_rvfi_csr_seq_item_c csr_trn = uvma_rvfi_csr_seq_item_c#(XLEN)::type_id::create({csr, "_trn"});
 
-                  csr_trn.csr = csr;
-                  csr_trn.nret_id = nret_id;
-                  csr_trn.rmask = cntxt.csr_vif[csr][nret_id].mon_cb.rvfi_csr_rmask;
-                  csr_trn.wmask = cntxt.csr_vif[csr][nret_id].mon_cb.rvfi_csr_wmask;
-                  csr_trn.rdata = cntxt.csr_vif[csr][nret_id].mon_cb.rvfi_csr_rdata;
-                  csr_trn.wdata = cntxt.csr_vif[csr][nret_id].mon_cb.rvfi_csr_wdata;
+                    csr_trn.csr = csr;
+                    csr_trn.nret_id = nret_id;
+                    csr_trn.rmask = cntxt.csr_vif[csr][nret_id].mon_cb.rvfi_csr_rmask;
+                    csr_trn.wmask = cntxt.csr_vif[csr][nret_id].mon_cb.rvfi_csr_wmask;
+                    csr_trn.rdata = cntxt.csr_vif[csr][nret_id].mon_cb.rvfi_csr_rdata;
+                    csr_trn.wdata = cntxt.csr_vif[csr][nret_id].mon_cb.rvfi_csr_wdata;
 
-                  mon_trn.csrs[csr] = csr_trn;
+                    mon_trn.csrs[csr] = csr_trn;
+                end
               end
 
               // Decode interrupts that need to be communicated to ISS (external or NMI bus faults)

@@ -44,6 +44,8 @@ public:
 
   void make_mems(const std::vector<mem_cfg_t> &layout);
 
+  static void default_params(openhw::Params &params);
+
   /*
    * Run function that runs the whole program while in standalone mode
    * */

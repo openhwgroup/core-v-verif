@@ -22,11 +22,21 @@
 class uvmc_rvfi_reference_model#(int ILEN=DEFAULT_ILEN,
                                   int XLEN=DEFAULT_XLEN) extends uvm_component;
 
-   `uvm_component_param_utils(uvmc_rvfi_reference_model)
+   `uvm_component_utils_begin(uvmc_rvfi_reference_model)
+      `uvm_field_object(cfg,         UVM_DEFAULT | UVM_REFERENCE)
+   `uvm_component_utils_end
 
 
     uvm_analysis_imp_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvmc_rvfi_reference_model) m_analysis_imp;
     uvm_analysis_port#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvmc_rvfi_reference_model) m_analysis_port;
+
+   // Core configuration (used to extract list of CSRs)
+   uvma_core_cntrl_cfg_c         cfg;
+
+   /**
+    * Uses uvm_config_db to retrieve cfg and hand out to sub-components.
+    */
+   extern function void get_and_set_cfg();
 
    /**
     * Default constructor.
@@ -45,6 +55,8 @@ class uvmc_rvfi_reference_model#(int ILEN=DEFAULT_ILEN,
    function void build_phase(uvm_phase phase);
 
         super.build_phase(phase);
+
+        get_and_set_cfg();
 
    endfunction : build_phase
 
@@ -68,6 +80,18 @@ class uvmc_rvfi_reference_model#(int ILEN=DEFAULT_ILEN,
    endfunction : write_rvfi_instr
 
 endclass : uvmc_rvfi_reference_model
+
+function void uvmc_rvfi_reference_model::get_and_set_cfg();
+
+   if (uvm_config_db#(uvma_core_cntrl_cfg_c)::get(this, "", "cfg", cfg)) begin
+      `uvm_info("CFG", $sformatf("Found configuration handle:\n%s", cfg.sprint()), UVM_DEBUG)
+      uvm_config_db#(uvma_core_cntrl_cfg_c)::set(this, "*", "cfg", cfg);
+   end
+   else begin
+      `uvm_fatal("CFG", $sformatf("%s: Could not find configuration handle", this.get_full_name()));
+   end
+
+endfunction : get_and_set_cfg
 
 `endif // __UVMC_RVFI_REFERENCE_MODEL_SV__
 

@@ -88,33 +88,15 @@ Processor::Processor(
     : processor_t::processor_t(isa, cfg, sim, id, halt_on_reset, log_file,
                                sout_) {
 
-  this->params.set("/top/core/0/", "isa", any(std::string("RV32GC")));
-  this->params.set("/top/core/0/", "priv", DEFAULT_PRIV);
-  this->params.set("/top/core/0/", "boot_addr", any(0x80000000UL));
-  this->params.set("/top/core/0/", "mmu_mode", any(std::string("sv39")));
-
-  this->params.set("/top/core/0/", "pmpregions", any(0x0UL));
-  this->params.set("/top/core/0/", "pmpaddr0", any(0x0UL));
-  this->params.set("/top/core/0/", "pmpcfg0", any(0x0UL));
-  this->params.set("/top/core/0/", "marchid", any(0x3UL));
-  this->params.set("/top/core/0/", "mvendorid", any(0x00000602UL));
-  this->params.set("/top/core/0/", "status_fs_field_we_enable", any(false));
-  this->params.set("/top/core/0/", "status_fs_field_we", any(false));
-  this->params.set("/top/core/0/", "status_vs_field_we_enable", any(false));
-  this->params.set("/top/core/0/", "status_vs_field_we", any(false));
-  this->params.set("/top/core/0/", "misa_we_enable", any(true));
-  this->params.set("/top/core/0/", "misa_we", any(false));
-
-  this->params.set("/top/core/0/", "extensions", any(std::string("")));
-
   std::map<string, bool> registered_extensions_v;
   registered_extensions_v["cv32a60x"] = false;
 
-  // Process User Params
-  ParseParams("/top/core/0/", this->params, params);
+  string base = "/top/core/" + std::to_string(id) + "/";
+  Processor::default_params(base, this->params);
+  Params::parse_params(base, this->params, params);
 
-  string isa_str = std::any_cast<string>(this->params["/top/core/0/isa"]);
-  string priv_str = std::any_cast<string>(this->params["/top/core/0/priv"]);
+  string isa_str = std::any_cast<string>(this->params[base + "isa"]);
+  string priv_str = std::any_cast<string>(this->params[base + "priv"]);
   std::cout << "[SPIKE] Proc 0 | ISA: " << isa_str << " PRIV: " << priv_str
             << std::endl;
   this->isa =
@@ -126,8 +108,13 @@ Processor::Processor(
     register_extension(e.second);
   }
 
+  this->n_pmp = std::any_cast<uint64_t>(this->params[base + "pmpregions"]);
+
+  ((cfg_t *)cfg)->misaligned =
+      std::any_cast<bool>(this->params[base + "misaligned"]);
+
   string extensions_str =
-      std::any_cast<string>(this->params["/top/core/0/extensions"]);
+      std::any_cast<string>(this->params[base + "extensions"]);
   string delimiter = ",";
   size_t found = extensions_str.rfind(delimiter);
 
@@ -159,28 +146,27 @@ Processor::Processor(
 
   this->reset();
 
-  uint64_t new_pc =
-      std::any_cast<uint64_t>(this->params["/top/core/0/boot_addr"]);
+  uint64_t new_pc = std::any_cast<uint64_t>(this->params[base + "boot_addr"]);
   this->state.pc = new_pc;
 
   this->put_csr(CSR_PMPADDR0,
-                std::any_cast<uint64_t>(this->params["/top/core/0/pmpaddr0"]));
+                std::any_cast<uint64_t>(this->params[base + "pmpaddr0"]));
   this->put_csr(CSR_PMPCFG0,
-                std::any_cast<uint64_t>(this->params["/top/core/0/pmpcfg0"]));
+                std::any_cast<uint64_t>(this->params[base + "pmpcfg0"]));
 
   this->put_csr(CSR_MVENDORID,
-                std::any_cast<uint64_t>(this->params["/top/core/0/mvendorid"]));
+                std::any_cast<uint64_t>(this->params[base + "mvendorid"]));
   this->put_csr(CSR_MARCHID,
-                std::any_cast<uint64_t>(this->params["/top/core/0/marchid"]));
+                std::any_cast<uint64_t>(this->params[base + "marchid"]));
 
-  bool fs_field_we_enable = std::any_cast<bool>(
-      this->params["/top/core/0/status_fs_field_we_enable"]);
+  bool fs_field_we_enable =
+      std::any_cast<bool>(this->params[base + "status_fs_field_we_enable"]);
   bool fs_field_we =
-      std::any_cast<bool>(this->params["/top/core/0/status_fs_field_we"]);
-  bool vs_field_we_enable = std::any_cast<bool>(
-      this->params["/top/core/0/status_vs_field_we_enable"]);
+      std::any_cast<bool>(this->params[base + "status_fs_field_we"]);
+  bool vs_field_we_enable =
+      std::any_cast<bool>(this->params[base + "status_vs_field_we_enable"]);
   bool vs_field_we =
-      std::any_cast<bool>(this->params["/top/core/0/status_vs_field_we"]);
+      std::any_cast<bool>(this->params[base + "status_vs_field_we"]);
 
   reg_t sstatus_mask = this->state.mstatus->get_param_write_mask();
   if (fs_field_we_enable)
@@ -192,8 +178,8 @@ Processor::Processor(
   this->state.mstatus->set_param_write_mask(sstatus_mask);
 
   bool misa_we_enable =
-      std::any_cast<bool>(this->params["/top/core/0/misa_we_enable"]);
-  bool misa_we = std::any_cast<bool>(this->params["/top/core/0/misa_we"]);
+      std::any_cast<bool>(this->params[base + "misa_we_enable"]);
+  bool misa_we = std::any_cast<bool>(this->params[base + "misa_we"]);
   if (misa_we_enable)
     this->state.misa->set_we(misa_we);
 }
@@ -205,6 +191,45 @@ void Processor::take_trap(trap_t &t, reg_t epc) {
 }
 
 Processor::~Processor() { delete this->isa; }
+
+void Processor::default_params(string base, openhw::Params &params) {
+  params.set(base, "isa", any(std::string("RV32GC")), "string", "RV32GC",
+             "ISA");
+  params.set(base, "priv", any(std::string(DEFAULT_PRIV)), "string",
+             DEFAULT_PRIV, "Privilege Level");
+  params.set(base, "boot_addr", any(0x80000000UL), "uint64_t", "0x80000000UL",
+             "First PC of the core");
+  params.set(base, "mmu_mode", any(std::string("sv39")), "string", "sv39",
+             "Memory virtualization mode");
+
+  params.set(base, "pmpregions", std::any(0x0UL), "uint64_t", "0x0",
+             "Number of PMP regions");
+  params.set(base, "pmpaddr0", any(0x0UL), "uint64_t", "0x0",
+             "Default PMPADDR0 value");
+  params.set(base, "pmpcfg0", any(0x0UL), "uint64_t", "0x0",
+             "Default PMPCFG0 value");
+  params.set(base, "marchid", any(0x3UL), "uint64_t", "0x3", "MARCHID value");
+  params.set(base, "mvendorid", any(0x00000602UL), "uint64_t", "0x00000602UL",
+             "MVENDORID value");
+  params.set(base, "extensions", any(std::string("")), "string",
+             "\"extension1,extension2\"", "Possible extensions: cv32a60x");
+
+  params.set(base, "status_fs_field_we_enable", any(false), "bool", "false",
+             "XSTATUS CSR FS Write Enable param enable");
+  params.set(base, "status_fs_field_we", any(false), "bool", "false",
+             "XSTATUS CSR FS Write Enable");
+  params.set(base, "status_vs_field_we_enable", any(false), "bool", "false",
+             "XSTATUS CSR VS Write Enable param enable");
+  params.set(base, "status_vs_field_we", any(false), "bool", "false",
+             "XSTATUS CSR VS Write Enable");
+  params.set(base, "misa_we_enable", any(true), "bool", "true",
+             "MISA CSR Write Enable param enable");
+  params.set(base, "misa_we", any(false), "bool", "false",
+             "MISA CSR Write Enable value");
+
+  params.set(base, "misaligned", std::any(false), "bool", "false",
+             "Support for misaligned memory operations");
+}
 
 inline void Processor::set_XPR(reg_t num, reg_t value) {
   this->state.XPR.write(num, value);
