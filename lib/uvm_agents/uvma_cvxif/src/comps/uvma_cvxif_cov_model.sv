@@ -12,7 +12,7 @@
 `define __UVMA_CVXIF_COV_MODEL_SV__
 
 `ifdef UNSUPPORTED_WITH //TODO - Remove ifdef when the issue in VCS simulator is fixed
-  `define WITH `WITH
+  `define WITH iff
 `else
    `define WITH with
 `endif
