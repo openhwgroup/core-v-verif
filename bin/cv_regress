@@ -200,8 +200,23 @@ def read_file(args, file, f_idx=0):
                 continue
         except KeyError:
             pass
+        except AttributeError as ex:
+            # no simulator or cfg in test Object, need to check build parameter, and remove the build
+            # from test build list before adding the test to the regress list
+            if ex.args[0].find('cfg') > 0:
+                new_list_of_builds = [b for b in test.builds if regression.builds[b].cfg not in t['skip_sim']]
+                logger.info('Regression: builds {} have been removed for test {} due to cfg skipped'.format([b for b in test.builds if b not in new_list_of_builds], test.name))
+                test.builds = new_list_of_builds
+
+        if not test.builds:
+            logger.warning('Regression: Test {} has no build and will be skipped'.format(test.name))
+            continue
 
         regression.add_test(test)
+
+    if not regression.tests:
+            logger.fatal('Regression: No test in the regression {}'.format(regression.name))
+            os.sys.exit(2)
 
     return regression
 
