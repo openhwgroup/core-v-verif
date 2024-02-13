@@ -27,8 +27,6 @@ class uvmc_rvfi_reference_model#(int ILEN=DEFAULT_ILEN,
    `uvm_component_utils_end
 
 
-//     uvm_analysis_imp_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvmc_rvfi_reference_model) m_analysis_imp;
-//     uvm_analysis_port#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvmc_rvfi_reference_model) m_analysis_port;
     uvm_analysis_imp_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvmc_rvfi_reference_model) m_analysis_imp;
     uvm_analysis_port#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN)) m_analysis_port;
 

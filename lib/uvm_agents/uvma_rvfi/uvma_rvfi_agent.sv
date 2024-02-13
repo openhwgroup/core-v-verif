@@ -95,10 +95,10 @@ class uvma_rvfi_agent_c#(int ILEN=DEFAULT_ILEN,
     */
    extern function void connect_trn_loggers();
 
-//    /**
-//     * Connects reference model port to monitor analysis ports.
-//     */
-//    extern function void connect_reference_model();
+   /**
+    * Connects reference model port to monitor analysis ports.
+    */
+   //extern function void connect_reference_model();
 
 endclass : uvma_rvfi_agent_c
 
