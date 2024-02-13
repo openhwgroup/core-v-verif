@@ -184,12 +184,6 @@ def read_file(args, file, f_idx=0):
                     test.num = int(args.num[0])
             else:
                 test.num = 1
-        elif test.num != 1:
-            if args.num:
-                try:
-                    test.num = int(args.num[f_idx])
-                except IndexError:
-                    test.num = int(args.num[0])
 
         try:
             if test.simulator in t['skip_sim']:
