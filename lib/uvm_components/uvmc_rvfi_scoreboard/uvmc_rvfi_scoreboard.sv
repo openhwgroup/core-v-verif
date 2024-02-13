@@ -23,12 +23,14 @@
  * Scoreboard component which compares RVFI transactions comming from the
  * core and the reference model
  */
+// class uvmc_rvfi_scoreboard_c#(int ILEN=DEFAULT_ILEN,
+//                                   int XLEN=DEFAULT_XLEN) extends uvm_scoreboard#(
+//    .T_TRN  (uvml_trn_seq_item_c),
+//    .T_CFG  (uvma_rvfi_cfg_c    ),
+//    .T_CNTXT(uvma_rvfi_cntxt_c  )
+// );
 class uvmc_rvfi_scoreboard_c#(int ILEN=DEFAULT_ILEN,
-                                  int XLEN=DEFAULT_XLEN) extends uvm_scoreboard#(
-   .T_TRN  (uvml_trn_seq_item_c),
-   .T_CFG  (uvma_rvfi_cfg_c    ),
-   .T_CNTXT(uvma_rvfi_cntxt_c  )
-);
+                                  int XLEN=DEFAULT_XLEN) extends uvm_scoreboard;
 
    uvm_analysis_imp_rvfi_instr_reference_model#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvmc_rvfi_scoreboard_c) m_imp_reference_model;
    uvm_analysis_imp_rvfi_instr_core#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvmc_rvfi_scoreboard_c) m_imp_core;
