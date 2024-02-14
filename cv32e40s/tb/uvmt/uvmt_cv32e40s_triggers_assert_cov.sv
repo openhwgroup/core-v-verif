@@ -40,7 +40,7 @@ module uvmt_cv32e40s_triggers_assert_cov
   default clocking @(posedge clknrst_if.clk); endclocking
   default disable iff !(clknrst_if.reset_n);
 
-  string info_tag = "TRIGGER ASSERT: ";
+  string info_tag = "TRIGGER_ASSERT";
 
   /////////// Local Parameters ///////////
 
@@ -458,6 +458,7 @@ module uvmt_cv32e40s_triggers_assert_cov
     //3) see a_dt_instr_trigger_hit_*, a_dt_load_trigger_hit_*, a_dt_store_trigger_hit_*, a_dt_exception_trigger_hit_*, a_dt_enter_dbg_reason
 
     //4)
+    // MIKET: this assertion fires, and I think it should (so maybe that's an error?).
     a_dt_tselect_higher_than_dbg_num_triggers: assert property(
       rvfi_if.rvfi_valid
       |->
@@ -947,6 +948,7 @@ module uvmt_cv32e40s_triggers_assert_cov
 
 
     //1)
+    // MIKET: how does this property work?
     a_dt_no_actions_on_trigger_matches_in_debug_dcsr: assert property (
       rvfi_if.rvfi_valid
       && rvfi_if.rvfi_dbg_mode
@@ -956,6 +958,7 @@ module uvmt_cv32e40s_triggers_assert_cov
       rvfi_if.is_csr_write(ADDR_DCSR)
     ) else `uvm_error(info_tag, "Action is taken when there is a trigger match while in debug mode (dcsr is changed even though we dont do a dcsr write operation).\n");
 
+    // MIKET: how does this property work?
     a_dt_no_actions_on_trigger_matches_in_debug_dpc: assert property (
       rvfi_if.rvfi_valid
       && rvfi_if.rvfi_dbg_mode
@@ -1324,12 +1327,11 @@ module uvmt_cv32e40s_triggers_assert_cov
 
     //1)
     a_dt_write_tdata2_random_in_dmode_type_2_6_15: assert property (
-
+    
       (seq_csr_write_dmode(ADDR_TDATA2)
       ##0 (tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 2
       || tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 6
       || tdata1_pre_state[MSB_TYPE:LSB_TYPE] == 15))
-
       |->
       (is_csrrw && (tdata2_post_state == rvfi_if.rvfi_rs1_rdata))
       || (is_csrrs && (tdata2_post_state == (tdata2_pre_state | rvfi_if.rvfi_rs1_rdata)))
@@ -1337,7 +1339,6 @@ module uvmt_cv32e40s_triggers_assert_cov
       || (is_csrrwi && (tdata2_post_state == csri_uimm))
       || (is_csrrsi && (tdata2_post_state == (tdata2_pre_state | csri_uimm)))
       || (is_csrrci && (tdata2_post_state == (tdata2_pre_state & (~csri_uimm))))
-
     ) else `uvm_error(info_tag, "Random values for tdata2 type 2/6/15 in debug mode, is not accepted.\n");
 
 

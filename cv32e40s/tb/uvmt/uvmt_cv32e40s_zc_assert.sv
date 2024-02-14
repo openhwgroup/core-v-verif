@@ -80,7 +80,7 @@ module uvmt_cv32e40s_zc_assert
   // no subsequent suboperation of the instruction causes
   // any activity on the data bus
   property p_multiop_exception_stop_dbus(logic[31:0] ins_mask, logic[31:0] ins_ref);
-    (rvfi.rvfi_valid && rvfi.rvfi_trap[0] && rvfi.match_instr(ins_ref, ins_mask))
+    (rvfi.rvfi_valid && rvfi.rvfi_trap[0] && rvfi.rvfi_match_instr(ins_ref, ins_mask))
     |->
     support_if.req_after_exception == 0;
 

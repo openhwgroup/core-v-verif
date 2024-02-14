@@ -1534,9 +1534,12 @@
   // ---------------------------------------------------------------------------
   // Identify if a given instruction matches an expected instruction name
   // ---------------------------------------------------------------------------
+  // FIXME: is this a redundant declaration of match_instr?
+`ifndef QUESTA_VSIM
   function automatic match_instr(instr_t instr, instr_name_e instr_type);
     match_instr = (decode_instr(instr).instr == instr_type);
   endfunction : match_instr
+`endif // QUESTA_VSIM
 
 
 //endpackage
