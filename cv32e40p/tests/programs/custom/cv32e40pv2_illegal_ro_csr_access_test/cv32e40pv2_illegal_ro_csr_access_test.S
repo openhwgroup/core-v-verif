@@ -1,6 +1,7 @@
 #
 # Copyright (C) EM Microelectronic US Inc.
 # Copyright (C) 2020 OpenHW Group
+# Copyright (C) 2024 Dolphin Design
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 ###############################################################################
-# READ ONLY CSRs: access read-only CSRs and check for side-effects.
+# NOT-PRESENT & READ ONLY CSRs: access read-only and not-present CSRs and check for side-effects.
 ###############################################################################
 
 .globl _start
@@ -36,7 +37,7 @@
 
 #define MSTATUS_FS_INITIAL 0x00003800
 
-#define BASE_EXPECTED_ILLEGAL_INSTRUCTIONS 576
+#define BASE_EXPECTED_ILLEGAL_INSTRUCTIONS 611
 #define FPU_EXPECTED_ILLEGAL_INSTRUCTIONS 21
 #define NO_FPU_EXPECTED_ILLEGAL_INSTRUCTIONS 21
 #define PULP_EXPECTED_ILLEGAL_INSTRUCTIONS 36
@@ -133,40 +134,88 @@ main:
 
 ######### N-extension registers
     # ustatus
-    csrrc  x5,  0x001, x0   # illegal instruction : register not present
-    csrrc  x0,  0x001, x5   # illegal instruction : register not present
-    csrrci x0,  0x001, 0x0a # illegal instruction : register not present
-    csrrs  x0,  0x001, x5   # illegal instruction : register not present
-    csrrsi x0,  0x001, 0x0a # illegal instruction : register not present
-    csrrw  x0,  0x001, x0   # illegal instruction : register not present
-    csrrwi x0,  0x001, 0x0a # illegal instruction : register not present
+    csrrc  x5,  0x000, x0   # illegal instruction : register not present
+    csrrc  x0,  0x000, x5   # illegal instruction : register not present
+    csrrci x0,  0x000, 0x0a # illegal instruction : register not present
+    csrrs  x0,  0x000, x5   # illegal instruction : register not present
+    csrrsi x0,  0x000, 0x0a # illegal instruction : register not present
+    csrrw  x0,  0x000, x0   # illegal instruction : register not present
+    csrrwi x0,  0x000, 0x0a # illegal instruction : register not present
+
+    # uie
+    csrrc  x5,  0x004, x0   # illegal instruction : register not present
+    csrrc  x0,  0x004, x5   # illegal instruction : register not present
+    csrrci x0,  0x004, 0x0a # illegal instruction : register not present
+    csrrs  x0,  0x004, x5   # illegal instruction : register not present
+    csrrsi x0,  0x004, 0x0a # illegal instruction : register not present
+    csrrw  x0,  0x004, x0   # illegal instruction : register not present
+    csrrwi x0,  0x004, 0x0a # illegal instruction : register not present
+
+   # utvec
+    csrrc  x5,  0x005, x0   # illegal instruction : register not present
+    csrrc  x0,  0x005, x5   # illegal instruction : register not present
+    csrrci x0,  0x005, 0x0a # illegal instruction : register not present
+    csrrs  x0,  0x005, x5   # illegal instruction : register not present
+    csrrsi x0,  0x005, 0x0a # illegal instruction : register not present
+    csrrw  x0,  0x005, x0   # illegal instruction : register not present
+    csrrwi x0,  0x005, 0x0a # illegal instruction : register not present
+
+    # uscratch
+    csrrc  x5,  0x040, x0   # illegal instruction : register not present
+    csrrc  x0,  0x040, x5   # illegal instruction : register not present
+    csrrci x0,  0x040, 0x0a # illegal instruction : register not present
+    csrrs  x0,  0x040, x5   # illegal instruction : register not present
+    csrrsi x0,  0x040, 0x0a # illegal instruction : register not present
+    csrrw  x0,  0x040, x0   # illegal instruction : register not present
+    csrrwi x0,  0x040, 0x0a # illegal instruction : register not present
 
     # uepc
-    csrrc  x5,  0x001, x0   # illegal instruction : register not present
-    csrrc  x0,  0x001, x5   # illegal instruction : register not present
-    csrrci x0,  0x001, 0x0a # illegal instruction : register not present
-    csrrs  x0,  0x001, x5   # illegal instruction : register not present
-    csrrsi x0,  0x001, 0x0a # illegal instruction : register not present
-    csrrw  x0,  0x001, x0   # illegal instruction : register not present
-    csrrwi x0,  0x001, 0x0a # illegal instruction : register not present
+    csrrc  x5,  0x041, x0   # illegal instruction : register not present
+    csrrc  x0,  0x041, x5   # illegal instruction : register not present
+    csrrci x0,  0x041, 0x0a # illegal instruction : register not present
+    csrrs  x0,  0x041, x5   # illegal instruction : register not present
+    csrrsi x0,  0x041, 0x0a # illegal instruction : register not present
+    csrrw  x0,  0x041, x0   # illegal instruction : register not present
+    csrrwi x0,  0x041, 0x0a # illegal instruction : register not present
 
     # ucause
-    csrrc  x5,  0x001, x0   # illegal instruction : register not present
-    csrrc  x0,  0x001, x5   # illegal instruction : register not present
-    csrrci x0,  0x001, 0x0a # illegal instruction : register not present
-    csrrs  x0,  0x001, x5   # illegal instruction : register not present
-    csrrsi x0,  0x001, 0x0a # illegal instruction : register not present
-    csrrw  x0,  0x001, x0   # illegal instruction : register not present
-    csrrwi x0,  0x001, 0x0a # illegal instruction : register not present
+    csrrc  x5,  0x042, x0   # illegal instruction : register not present
+    csrrc  x0,  0x042, x5   # illegal instruction : register not present
+    csrrci x0,  0x042, 0x0a # illegal instruction : register not present
+    csrrs  x0,  0x042, x5   # illegal instruction : register not present
+    csrrsi x0,  0x042, 0x0a # illegal instruction : register not present
+    csrrw  x0,  0x042, x0   # illegal instruction : register not present
+    csrrwi x0,  0x042, 0x0a # illegal instruction : register not present
 
-    # utvec
-    csrrc  x5,  0x001, x0   # illegal instruction : register not present
-    csrrc  x0,  0x001, x5   # illegal instruction : register not present
-    csrrci x0,  0x001, 0x0a # illegal instruction : register not present
-    csrrs  x0,  0x001, x5   # illegal instruction : register not present
-    csrrsi x0,  0x001, 0x0a # illegal instruction : register not present
-    csrrw  x0,  0x001, x0   # illegal instruction : register not present
-    csrrwi x0,  0x001, 0x0a # illegal instruction : register not present
+    # utval
+    csrrc  x5,  0x043, x0   # illegal instruction : register not present
+    csrrc  x0,  0x043, x5   # illegal instruction : register not present
+    csrrci x0,  0x043, 0x0a # illegal instruction : register not present
+    csrrs  x0,  0x043, x5   # illegal instruction : register not present
+    csrrsi x0,  0x043, 0x0a # illegal instruction : register not present
+    csrrw  x0,  0x043, x0   # illegal instruction : register not present
+    csrrwi x0,  0x043, 0x0a # illegal instruction : register not present
+
+    # uip
+    csrrc  x5,  0x044, x0   # illegal instruction : register not present
+    csrrc  x0,  0x044, x5   # illegal instruction : register not present
+    csrrci x0,  0x044, 0x0a # illegal instruction : register not present
+    csrrs  x0,  0x044, x5   # illegal instruction : register not present
+    csrrsi x0,  0x044, 0x0a # illegal instruction : register not present
+    csrrw  x0,  0x044, x0   # illegal instruction : register not present
+    csrrwi x0,  0x044, 0x0a # illegal instruction : register not present
+
+######### Other User-mode-only registers
+    # mcounteren
+    csrrc  x5,  0x306, x0   # illegal instruction : register not present
+    csrrc  x0,  0x306, x5   # illegal instruction : register not present
+    csrrci x0,  0x306, 0x0a # illegal instruction : register not present
+    csrrs  x0,  0x306, x5   # illegal instruction : register not present
+    csrrsi x0,  0x306, 0x0a # illegal instruction : register not present
+    csrrw  x0,  0x306, x0   # illegal instruction : register not present
+    csrrwi x0,  0x306, 0x0a # illegal instruction : register not present
+
+
 
 ######### FPU RELATED
 # Start FPU disabled => some CSR access are illegal
