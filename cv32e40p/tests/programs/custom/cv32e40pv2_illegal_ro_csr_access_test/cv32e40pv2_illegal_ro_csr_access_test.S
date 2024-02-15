@@ -36,7 +36,7 @@
 
 #define MSTATUS_FS_INITIAL 0x00003800
 
-#define BASE_EXPECTED_ILLEGAL_INSTRUCTIONS 604
+#define BASE_EXPECTED_ILLEGAL_INSTRUCTIONS 611
 #define FPU_EXPECTED_ILLEGAL_INSTRUCTIONS 21
 #define NO_FPU_EXPECTED_ILLEGAL_INSTRUCTIONS 21
 #define PULP_EXPECTED_ILLEGAL_INSTRUCTIONS 36
@@ -203,6 +203,18 @@ main:
     csrrsi x0,  0x044, 0x0a # illegal instruction : register not present
     csrrw  x0,  0x044, x0   # illegal instruction : register not present
     csrrwi x0,  0x044, 0x0a # illegal instruction : register not present
+
+######### N-extension registers
+    # mcounteren
+    csrrc  x5,  0x306, x0   # illegal instruction : register not present
+    csrrc  x0,  0x306, x5   # illegal instruction : register not present
+    csrrci x0,  0x306, 0x0a # illegal instruction : register not present
+    csrrs  x0,  0x306, x5   # illegal instruction : register not present
+    csrrsi x0,  0x306, 0x0a # illegal instruction : register not present
+    csrrw  x0,  0x306, x0   # illegal instruction : register not present
+    csrrwi x0,  0x306, 0x0a # illegal instruction : register not present
+
+
 
 ######### FPU RELATED
 # Start FPU disabled => some CSR access are illegal
