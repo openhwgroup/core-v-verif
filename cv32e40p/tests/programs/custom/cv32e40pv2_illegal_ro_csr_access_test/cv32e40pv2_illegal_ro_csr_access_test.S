@@ -1,6 +1,7 @@
 #
 # Copyright (C) EM Microelectronic US Inc.
 # Copyright (C) 2020 OpenHW Group
+# Copyright (C) 2024 Dolphin Design
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 ###############################################################################
-# READ ONLY CSRs: access read-only CSRs and check for side-effects.
+# NOT-PRESENT & READ ONLY CSRs: access read-only and not-present CSRs and check for side-effects.
 ###############################################################################
 
 .globl _start
@@ -204,7 +205,7 @@ main:
     csrrw  x0,  0x044, x0   # illegal instruction : register not present
     csrrwi x0,  0x044, 0x0a # illegal instruction : register not present
 
-######### N-extension registers
+######### Other User-mode-only registers
     # mcounteren
     csrrc  x5,  0x306, x0   # illegal instruction : register not present
     csrrc  x0,  0x306, x5   # illegal instruction : register not present
