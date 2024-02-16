@@ -76,11 +76,11 @@ module uvmt_cv32e40s_sl_trigger_match
         (rvfi.is_umode && in_support_if.tdata1_array[t][TDATA1_ET_U_MODE]));
 
 
-        // Trigger match instruction:
+      // Trigger match instruction:
       assign trigger_match_execute[t] = csr_conditions_m2_m6[t]
         && in_support_if.tdata1_array[t][TDATA1_EXECUTE]
         && system_conditions
-        && !rvfi.rvfi_trap.clicptr //TODO: KD: burde finne ut hvorfor clicptr er et unntak.
+        && !rvfi.rvfi_trap.clicptr
         && (((rvfi.rvfi_pc_rdata == in_support_if.tdata2_array[t]) && in_support_if.tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_EQUAL)
         || ((rvfi.rvfi_pc_rdata >= in_support_if.tdata2_array[t]) && in_support_if.tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_GREATER_OR_EQUAL)
         || ((rvfi.rvfi_pc_rdata < in_support_if.tdata2_array[t]) && in_support_if.tdata1_array[t][TDATA1_MSB_MATCH:TDATA1_LSB_MATCH] == TDATA1_MATCH_WHEN_LESSER));

@@ -195,6 +195,7 @@ module uvmt_cv32e40s_xsecure_hardened_pc_assert
   //Verify that the major alert is set due to pc hardening fault when the PC target of a jump instruction or a branch decision is unstable, and the PC hardening feature is enabled
 
   sequence seq_non_hardened_jump(kill, halt, instr, first_op, jump_addr);
+    @(posedge clk_i)
 
     (!kill && !halt) throughout
 
