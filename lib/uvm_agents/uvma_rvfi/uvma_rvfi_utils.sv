@@ -26,99 +26,46 @@ import "DPI-C" function void spike_set_default_params(string profile);
 import "DPI-C" function void spike_step_svOpenArray(inout bit [63:0] core[], inout bit [63:0] reference_model[]);
 import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi reference_model);
 
-    function automatic void rvfi_spike_step(ref st_rvfi s_core, ref st_rvfi s_reference_model);
+    st_core_cntrl_cfg m_core_cfg;
 
-        union_rvfi u_core;
-        union_rvfi u_reference_model;
-        bit [63:0] a_core [`ST_NUM_WORDS-1:0];
-        bit [63:0] a_reference_model [`ST_NUM_WORDS-1:0];
+    function automatic string print_st_rvfi(ref st_rvfi st);
+            uvma_rvfi_mode mode;
 
-        u_core.rvfi = s_core;
+            $cast(mode, st.mode);
 
-        foreach(u_core.array[i]) begin
-            a_core[i] = u_core.array[i];
-        end
+            return $sformatf(`FORMAT_INSTR_STR_MACRO, $sformatf("%t", $time), 0,
+                            st.trap,
+                            st.pc_rdata,
+                            $sformatf("%08x", st.insn),
+                            get_mode_str(mode),
+                            st.rs1_addr, st.rs1_rdata,
+                            st.rs2_addr, st.rs2_rdata,
+                            st.rd1_addr, st.rd1_wdata,
+                            dasm_insn(st.insn));
 
-        spike_step_svOpenArray(a_core, a_reference_model);
+    endfunction : print_st_rvfi
 
-        foreach(a_reference_model[i]) begin
-            u_reference_model.array[i] = a_reference_model[i];
-        end
-        s_reference_model = u_reference_model.rvfi;
+    function automatic void rvfi_set_core_cfg(st_core_cntrl_cfg core_cfg);
 
-    endfunction : rvfi_spike_step
+        m_core_cfg = core_cfg;
 
-    function automatic void rvfi_initialize_spike(string core_name, st_core_cntrl_cfg core_cfg);
-       string binary, rtl_isa, rtl_priv;
-        string base = $sformatf("/top/core/%0d/", core_cfg.mhartid);
-
-        if ($value$plusargs("elf_file=%s", binary))
-            `uvm_info("spike_tandem", $sformatf("Setting up Spike with binary %s...", binary), UVM_LOW);
-
-        rtl_isa = $sformatf("RV%-2dIM",
-                            riscv::XLEN);
-        rtl_priv = "M";
-        if (core_cfg.ext_a_supported)       rtl_isa = {rtl_isa, "A"};
-        if (core_cfg.ext_f_supported)       rtl_isa = {rtl_isa, "F"};
-        if (core_cfg.ext_d_supported)       rtl_isa = {rtl_isa, "D"};
-        if (core_cfg.ext_c_supported)       rtl_isa = {rtl_isa, "C"};
-        if (core_cfg.ext_zba_supported)     rtl_isa = {rtl_isa, "_zba"};
-        if (core_cfg.ext_zbb_supported)     rtl_isa = {rtl_isa, "_zbb"};
-        if (core_cfg.ext_zbc_supported)     rtl_isa = {rtl_isa, "_zbc"};
-        if (core_cfg.ext_zbs_supported)     rtl_isa = {rtl_isa, "_zbs"};
-        if (core_cfg.ext_zcb_supported)     rtl_isa = {rtl_isa, "_zcb"};
-        if (core_cfg.ext_zicsr_supported)     rtl_isa = {rtl_isa, "_zicsr"};
-        if (core_cfg.ext_zicntr_supported)     rtl_isa = {rtl_isa, "_zicntr"};
-
-        if (core_cfg.mode_s_supported)      rtl_priv = {rtl_priv, "S"};
-        if (core_cfg.mode_u_supported)      rtl_priv = {rtl_priv, "U"};
-
-        if (core_cfg.ext_cv32a60x_supported) begin
-            void'(spike_set_param_str("/top/core/0/", "extensions", "cv32a60x"));
-        end
-
-        assert(binary != "") else `uvm_error("spike_tandem", "We need a preloaded binary for tandem verification");
-        void'(spike_set_default_params(core_name));
-
-        void'(spike_set_param_uint64_t("/top/", "num_procs", 64'h1));
-
-        void'(spike_set_param_str("/top/", "isa", rtl_isa));
-        void'(spike_set_param_str(base, "isa", rtl_isa));
-        void'(spike_set_param_str("/top/", "priv", rtl_priv));
-        void'(spike_set_param_str(base, "priv", rtl_priv));
-        void'(spike_set_param_bool("/top/", "misaligned", core_cfg.unaligned_access_supported));
-
-        if (core_cfg.boot_addr_valid)
-            void'(spike_set_param_uint64_t(base, "boot_addr", core_cfg.boot_addr));
-        void'(spike_set_param_uint64_t(base, "pmpregions", core_cfg.pmp_regions));
-        if (core_cfg.mhartid_valid) begin
-            void'(spike_set_param_uint64_t(base, "mhartid", core_cfg.mhartid));
-        if (core_cfg.mvendorid_valid) void'(spike_set_param_uint64_t(base, "mvendorid", core_cfg.mvendorid));
-            void'(spike_set_param_bool(base, "misaligned", core_cfg.unaligned_access_supported));
-         end
-        void'(spike_create(binary));
-
-    endfunction : rvfi_initialize_spike
+    endfunction : rvfi_set_core_cfg
 
     function automatic void rvfi_compare(st_rvfi t_core, st_rvfi t_reference_model);
         int core_pc64, reference_model_pc64;
         string cause_str = "";
         bit error;
-        string instr;
-        uvma_rvfi_mode mode;
 
-        core_pc64 = {{riscv::XLEN-riscv::VLEN{t_core.pc_rdata[riscv::VLEN-1]}}, t_core.pc_rdata};
-        reference_model_pc64 = {{riscv::XLEN-riscv::VLEN{t_reference_model.pc_rdata[riscv::VLEN-1]}}, t_reference_model.pc_rdata};
+        core_pc64 = t_core.pc_rdata;
+        reference_model_pc64 = t_reference_model.pc_rdata;
+        if (m_core_cfg.xlen == MXL_32) begin
+            core_pc64 = core_pc64 & 'hFFFFFFFF;
+            reference_model_pc64 = reference_model_pc64 & 'hFFFFFFFF;
+        end
 
-        if (t_core.trap || t_reference_model.trap) begin
-            if (t_core.trap !== t_reference_model.trap) begin
-                error = 1;
-                cause_str = $sformatf("%s\nException Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.trap, t_core.trap);
-            end
-            if (t_core.cause !== t_reference_model.cause) begin
-                error = 1;
-                cause_str = $sformatf("%s\nException Cause Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.cause, t_core.cause);
-            end
+        if (t_core.trap[0] !== t_reference_model.trap[0]) begin
+            error = 1;
+            cause_str = $sformatf("%s\nException Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.trap[0], t_core.trap[0]);
         end
         else begin
             if (t_core.insn !== t_reference_model.insn) begin
@@ -146,21 +93,35 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
             cause_str = $sformatf("%s\nPC Mismatch      [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, reference_model_pc64, core_pc64);
         end
 
-        $cast(mode, t_reference_model.mode);
-        // TODO Add more fields from Spike side
-        // This macro avoid glitches in verilator
-        instr = $sformatf(`FORMAT_INSTR_STR_MACRO, $sformatf("%t", $time),
-                        0,
-                        t_reference_model.trap,
-                        t_reference_model.pc_rdata,
-                        $sformatf("%08x", t_reference_model.insn),
-                        get_mode_str(mode),
-                        t_reference_model.rs1_addr, t_reference_model.rs1_rdata,
-                        t_reference_model.rs2_addr, t_reference_model.rs2_rdata,
-                        t_reference_model.rd1_addr, t_reference_model.rd1_wdata);
-        `uvm_info("spike_tandem", instr, UVM_NONE)
+        if (!m_core_cfg.disable_all_csr_checks) begin
+            for (int i = 0; i < CSR_QUEUE_SIZE; i++) begin
+                bit found = 0;
+                longint unsigned addr = t_reference_model.csr_addr[i];
+                bit valid = t_reference_model.csr_valid[i] & ~m_core_cfg.unsupported_csr_mask[addr];
+
+                for (int j = 0; j < CSR_QUEUE_SIZE && !found && valid; j++) begin
+                    if (addr == t_core.csr_addr[j] && t_core.csr_valid[j]) begin
+                        found = 1;
+                        if (t_reference_model.csr_wdata[i] !== t_core.csr_wdata[j]) begin
+                            error = 1; cause_str = $sformatf("%s\nCSR %-4h Mismatch   [REF]: 0x%-16h [CORE]: 0x%-16h",
+                                cause_str, addr, t_reference_model.csr_wdata[i], t_core.csr_wdata[j]);
+                        end
+                    end
+                end
+                if (!found && valid) begin
+                    error = 1; cause_str = $sformatf("%s\nCSR %-4h not found  [REF]: 0x%-16h [CORE]: 0x%-16h",
+                        cause_str, addr, t_reference_model.csr_wdata[i], 0);
+                end
+            end
+        end
+
         if (error) begin
-            `uvm_error("spike_tandem", cause_str)
+            string instr_core = print_st_rvfi(t_core);
+            string instr_rm =   print_st_rvfi(t_reference_model);
+            `uvm_error("spike_tandem", {instr_rm, "\n", instr_rm, " <- CORE\n", cause_str});
+        end
+        else begin
+            `uvm_info("spike_tandem", print_st_rvfi(t_reference_model) , UVM_LOW)
         end
 
     endfunction : rvfi_compare

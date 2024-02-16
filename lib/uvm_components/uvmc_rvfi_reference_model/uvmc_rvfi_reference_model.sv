@@ -22,16 +22,15 @@
 class uvmc_rvfi_reference_model#(int ILEN=DEFAULT_ILEN,
                                   int XLEN=DEFAULT_XLEN) extends uvm_component;
 
-   `uvm_component_utils_begin(uvmc_rvfi_reference_model)
-      `uvm_field_object(cfg,         UVM_DEFAULT | UVM_REFERENCE)
-   `uvm_component_utils_end
-
-
     uvm_analysis_imp_rvfi_instr#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvmc_rvfi_reference_model) m_analysis_imp;
     uvm_analysis_port#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN)) m_analysis_port;
 
    // Core configuration (used to extract list of CSRs)
    uvma_core_cntrl_cfg_c         cfg;
+
+   `uvm_component_utils_begin(uvmc_rvfi_reference_model)
+      `uvm_field_object(cfg,         UVM_DEFAULT | UVM_REFERENCE)
+   `uvm_component_utils_end
 
    /**
     * Uses uvm_config_db to retrieve cfg and hand out to sub-components.

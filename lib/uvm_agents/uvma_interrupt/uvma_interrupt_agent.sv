@@ -202,14 +202,18 @@ endfunction : create_components
 function void uvma_interrupt_agent_c::connect_sequencer_and_driver();
 
    //sequencer.set_arbitration(cfg.sqr_arb_mode);
-   driver.seq_item_port.connect(sequencer.seq_item_export);
+   if (cfg.is_active == UVM_ACTIVE) begin
+      driver.seq_item_port.connect(sequencer.seq_item_export);
+   end
 
 endfunction : connect_sequencer_and_driver
 
 
 function void uvma_interrupt_agent_c::connect_analysis_ports();
 
-   drv_ap = driver .ap;
+   if (cfg.is_active == UVM_ACTIVE) begin
+      drv_ap = driver .ap;
+   end
    mon_ap = monitor.ap;
 
 endfunction : connect_analysis_ports
@@ -218,7 +222,9 @@ endfunction : connect_analysis_ports
 function void uvma_interrupt_agent_c::connect_cov_model();
 
    mon_ap.connect(cov_model.mon_trn_fifo.analysis_export);
-   drv_ap.connect(cov_model.seq_item_fifo.analysis_export);
+   if (cfg.is_active == UVM_ACTIVE) begin
+      drv_ap.connect(cov_model.seq_item_fifo.analysis_export);
+   end
 
 endfunction : connect_cov_model
 
@@ -226,7 +232,9 @@ endfunction : connect_cov_model
 function void uvma_interrupt_agent_c::connect_trn_loggers();
 
    mon_ap.connect(mon_trn_logger .analysis_export);
-   drv_ap.connect(seq_item_logger.analysis_export);
+   if (cfg.is_active == UVM_ACTIVE) begin
+      drv_ap.connect(seq_item_logger.analysis_export);
+   end
 
 endfunction : connect_trn_loggers
 

@@ -38,6 +38,9 @@ package uvma_rvfi_pkg;
    import uvml_logs_pkg ::*;
    import uvma_core_cntrl_pkg::*;
 
+   // DPI imports
+   `include "dpi_dasm_imports.svh"
+
    // Analysis implementation declarations
    `uvm_analysis_imp_decl(_rvfi_instr)
 

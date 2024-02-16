@@ -132,6 +132,8 @@ typedef enum bit[CSR_ADDR_WL-1:0] {
   MCAUSE         = 'h342,
   MTVAL          = 'h343,
   MIP            = 'h344,
+  MTINST         = 'h34A,
+  MTVAL2         = 'h34B,
   PMPCFG0        = 'h3A0,
   PMPCFG1        = 'h3A1,
   PMPCFG2        = 'h3A2,
@@ -668,7 +670,7 @@ typedef struct packed {
     // Major mode enable controls
    bit                          enabled;
    bit                          is_active;
-   bit                          scoreboarding_enabled;
+   bit                          scoreboard_enabled;
    bit                          disable_all_csr_checks;
    bit [CSR_MASK_WL-1:0]        disable_csr_check_mask;
    bit                          cov_model_enabled;
@@ -729,16 +731,21 @@ typedef struct packed {
    // Common parameters
    int unsigned                 num_mhpmcounters;
    //uvma_core_cntrl_pma_region_c  pma_regions[];
+    //
+   bit  unsigned                 dram_valid;
+   longint unsigned              dram_base;
+   longint unsigned              dram_size;
 
    // Common bootstrap addresses
    // The valid bits should be constrained if the bootstrap signal is not valid for this core configuration
    bit [MAX_XLEN-1:0]           mhartid;
-   bit                          mhartid_valid;
    bit                          mhartid_plusarg_valid;
 
    bit [MAX_XLEN-1:0]           mvendorid;
-   bit                          mvendorid_valid;
    bit                          mvendorid_plusarg_valid;
+
+   bit [MAX_XLEN-1:0]           marchid;
+   bit                          marchid_plusarg_valid;
 
    bit [MAX_XLEN-1:0]           mimpid;
    bit                          mimpid_plusarg_valid;
