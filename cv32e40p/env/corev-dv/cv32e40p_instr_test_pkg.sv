@@ -103,6 +103,7 @@ package cv32e40p_instr_test_pkg;
   `include "instr_lib/cv32e40p_pulp_instr_lib.sv"
   `include "instr_lib/cv32e40p_pulp_hwloop_instr_lib.sv"
   `include "instr_lib/cv32e40p_float_instr_lib.sv"
+  `include "instr_lib/cv32e40p_instr_for_func_cvg_lib.sv" // directed streams to improve functional coverage holes in v2
 
   // RISCV-DV class override definitions
   `include "cv32e40p_rand_instr_stream.sv"
