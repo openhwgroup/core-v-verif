@@ -358,6 +358,11 @@ isacov_logdiff:
 		@(test ! -s $(ISACOV_LOGDIR)/isacov_logdiff && echo OK) || (echo FAIL; false)
 
 ###############################################################################
+# RISCOF Makefile:
+#    - RISCOF Compliance Test Suite and Variables for build and simulations
+include $(CORE_V_VERIF)/mk/riscof.mk
+
+###############################################################################
 # Include the targets/rules for the selected SystemVerilog simulator
 #ifeq ($(SIMULATOR), unsim)
 #include unsim.mk
