@@ -1,0 +1,29 @@
+# Copyright 2023 Dolphin Design
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Header
+name: cv32e40pv2_for_func_cvg_improvement
+description: regression for CV32E40Pv2, focused on improving the functional coverage holes
+
+# List of builds
+# cfg is set to pulp by default but can be overriden by arg command to any cfg.
+builds:
+  clean_fw:
+    cmd: make clean-bsp clean_test_programs
+    dir: cv32e40p/sim/uvmt
+  clean_corev-dv:
+    cmd: make clean_riscv-dv clone_riscv-dv
+    dir: cv32e40p/sim/uvmt
+  uvmt_cv32e40p:
+    cmd: make comp comp_corev-dv
+    dir: cv32e40p/sim/uvmt
+    cfg: pulp
+
+# List of tests
+tests:
+  corev_directed_for_interrupt_covg_test:
+    build: uvmt_cv32e40p
+    description: This test is to improve func coverage holes in uvme_interrupt_covg_v2
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_directed_for_interrupt_covg_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+    num: 5

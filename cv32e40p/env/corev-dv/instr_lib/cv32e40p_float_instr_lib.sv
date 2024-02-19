@@ -821,6 +821,15 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     end
   endfunction: insert_nop_instr
 
+  // add wfi
+  virtual function void insert_wfi_instr();
+      riscv_instr wfi_instr = new riscv_instr::get_rand_instr(
+        .include_instr({WFI})
+      );
+      instr_list.push_back(wfi_instr);
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(" [WFI Insertion] ")};
+  endfunction: insert_wfi_instr
+
   // for overriding direct instr operands with previous instruc rd/fd
   virtual function void f_use_prev_rd_on_next_operands(
     riscv_instr                 p_instr=null,

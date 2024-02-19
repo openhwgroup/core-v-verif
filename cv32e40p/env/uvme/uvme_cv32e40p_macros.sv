@@ -87,6 +87,18 @@
  wildcard bins fnmsub     =    {TB_INS_FNMSUB}; \
  wildcard bins fnmadd     =    {TB_INS_FNMADD};
 
+`define JUMP_INSTR_BINS \
+  wildcard bins jal     = {TB_INSTR_JAL}; \
+  wildcard bins jalr    = {TB_INSTR_JALR};
+
+`define BRANCH_INSTR_BINS \
+  wildcard bins beq     = {TB_INSTR_BEQ}; \
+  wildcard bins bne     = {TB_INSTR_BNE}; \
+  wildcard bins blt     = {TB_INSTR_BLT}; \
+  wildcard bins bge     = {TB_INSTR_BGE}; \
+  wildcard bins bltu    = {TB_INSTR_BLTU}; \
+  wildcard bins bgeu    = {TB_INSTR_BGEU};
+
 `define OPIMM_INSTR_BINS \
   wildcard bins addi     = {TB_INSTR_ADDI}; \
   wildcard bins slti     = {TB_INSTR_SLTI}; \
@@ -110,6 +122,10 @@
   wildcard bins _or       = {TB_INSTR_OR}; \
   wildcard bins _and      = {TB_INSTR_AND}; \
 
+`define FENCE_INSTR_BINS \
+  wildcard bins fence     = {TB_INSTR_FENCE}; \
+  wildcard bins fencei    = {TB_INSTR_FENCEI};
+
 `define RV32M_INSTR_BINS \
   wildcard bins div      = {TB_INSTR_DIV}; \
   wildcard bins divu     = {TB_INSTR_DIVU}; \
@@ -129,6 +145,39 @@
   wildcard bins sb       = {TB_INSTR_SB}; \
   wildcard bins sh       = {TB_INSTR_SH}; \
   wildcard bins sw       = {TB_INSTR_SW};
+
+`define RV32C_INSTR_BINS \
+ wildcard bins c_lw       = {TB_INSTR_C_LW}; \
+ wildcard bins c_flw      = {TB_INSTR_C_FLW}; \
+ wildcard bins c_sw       = {TB_INSTR_C_SW}; \
+ wildcard bins c_fsw      = {TB_INSTR_C_FSW}; \
+ wildcard bins c_nop      = {TB_INSTR_C_NOP}; \
+ wildcard bins c_jal      = {TB_INSTR_C_JAL}; \
+ wildcard bins c_srli     = {TB_INSTR_C_SRLI}; \
+ wildcard bins c_srai     = {TB_INSTR_C_SRAI}; \
+ wildcard bins c_andi     = {TB_INSTR_C_ANDI}; \
+ wildcard bins c_sub      = {TB_INSTR_C_SUB}; \
+ wildcard bins c_xor      = {TB_INSTR_C_XOR}; \
+ wildcard bins c_or       = {TB_INSTR_C_OR}; \
+ wildcard bins c_and      = {TB_INSTR_C_AND}; \
+ wildcard bins c_j        = {TB_INSTR_C_J}; \
+ wildcard bins c_beqz     = {TB_INSTR_C_BEQZ}; \
+ wildcard bins c_bnez     = {TB_INSTR_C_BNEZ}; \
+ wildcard bins c_flwsp    = {TB_INSTR_C_FLWSP}; \
+ wildcard bins c_ebreak   = {TB_INSTR_C_EBREAK}; \
+ wildcard bins c_swsp     = {TB_INSTR_C_SWSP}; \
+ wildcard bins c_fswsp    = {TB_INSTR_C_FSWSP}; \
+ wildcard bins c_addi4spn = {TB_USER_DEF_C_ADDI4SPN}; \
+ wildcard bins c_addi     = {TB_USER_DEF_C_ADDI}; \
+ wildcard bins c_li       = {TB_USER_DEF_C_LI}; \
+ wildcard bins c_addi16sp = {TB_USER_DEF_C_ADDI16SP}; \
+ wildcard bins c_lui      = {TB_USER_DEF_C_LUI}; \
+ wildcard bins c_slli     = {TB_USER_DEF_C_SLLI}; \
+ wildcard bins c_lwsp     = {TB_USER_DEF_C_LWSP}; \
+ wildcard bins c_jr       = {TB_USER_DEF_C_JR}; \
+ wildcard bins c_mv       = {TB_USER_DEF_C_MV}; \
+ wildcard bins c_jalr     = {TB_USER_DEF_C_JALR}; \
+ wildcard bins c_add      = {TB_USER_DEF_C_ADD};
 
 `define FPU_OP_BINS \
  bins apu_op_fmadd      =    {APU_OP_FMADD}; \

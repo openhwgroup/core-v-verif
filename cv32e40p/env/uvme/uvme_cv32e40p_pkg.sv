@@ -52,6 +52,8 @@ package uvme_cv32e40p_pkg;
    // Constants / Structs / Enums
    `include "uvme_cv32e40p_constants.sv"
    `include "uvme_cv32e40p_tdefs.sv"
+   // functions
+   `include "uvme_cv32e40p_functions.sv"
 
    cv32e40p_isa_ext_t   cv32e40p_core_isa_list[$] = `CV32E40P_ISA_DV; // CV32E40P supported ISAs
 
@@ -84,9 +86,10 @@ package uvme_cv32e40p_pkg;
    `include "uvma_cv32e40p_core_cntrl_drv.sv"
    `include "uvma_cv32e40p_core_cntrl_agent.sv"
    `include "uvme_rv32x_hwloop_covg.sv"
-   `include "uvme_interrupt_covg.sv"
+   // `include "uvme_interrupt_covg.sv" // not used in cv32e40p v2 env
+   `include "uvme_interrupt_covg_v2.sv"
    `include "uvme_debug_covg.sv"
-   `include "uvme_rv32isa_covg.sv"
+   // `include "uvme_rv32isa_covg.sv" // not used in cv32e40p v2 env
    `include "uvme_cv32e40p_fp_instr_covg.sv"
    `include "uvme_cv32e40p_zfinx_instr_covg.sv"
    `include "uvme_cv32e40p_cov_model.sv"

@@ -76,6 +76,12 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
   //an ebreak causes debug entry
   rand bit debug_ebreak_before_single_step;
 
+  // Config to insert random directed stream in debug program
+  bit insert_rand_directed_instr_stream_in_debug_program = 0;
+
+  // Config to insert interrupt handler to shift hwloop count by 1
+  bit insert_handler_for_hwloop_count_range_test = 0;
+
   constraint ss_dbg_high_iteration_cnt_c {
     ss_dbg_high_iteration_cnt dist {0 := 60, 1 := 40};
   }
@@ -209,6 +215,8 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
     `uvm_field_int(trigger_addr_offset, UVM_DEFAULT)
     `uvm_field_int(debug_trigger_before_single_step, UVM_DEFAULT)
     `uvm_field_int(debug_ebreak_before_single_step, UVM_DEFAULT)
+    `uvm_field_int(insert_rand_directed_instr_stream_in_debug_program, UVM_DEFAULT)
+    `uvm_field_int(insert_handler_for_hwloop_count_range_test, UVM_DEFAULT)
   `uvm_object_utils_end
 
   function new(string name="");
@@ -221,6 +229,8 @@ class cv32e40p_instr_gen_config extends riscv_instr_gen_config;
     get_bool_arg_value("+setup_debug_trigger_on_addr_match=", setup_debug_trigger_on_addr_match);
     get_bool_arg_value("+debug_trigger_before_single_step=", debug_trigger_before_single_step);
     get_bool_arg_value("+debug_ebreak_before_single_step=", debug_ebreak_before_single_step);
+    get_bool_arg_value("+insert_rand_directed_instr_stream_in_debug_program=", insert_rand_directed_instr_stream_in_debug_program);
+    get_bool_arg_value("+insert_handler_for_hwloop_count_range_test=", insert_handler_for_hwloop_count_range_test);
 
     if ($test$plusargs("debug_trigger_before_single_step")) debug_trigger_before_single_step.rand_mode(0);
     if ($test$plusargs("debug_ebreak_before_single_step")) debug_ebreak_before_single_step.rand_mode(0);

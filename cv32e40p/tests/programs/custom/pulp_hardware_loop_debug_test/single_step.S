@@ -25,13 +25,26 @@
 
 
 _single_step:        
-        addi sp,sp,-30
+        addi sp,sp,-80
         sw t0, 0(sp)
         sw t1, 4(sp)
         sw a0, 8(sp)
         sw a1, 12(sp)
         sw a2, 16(sp)
         sw ra, 20(sp)
+        sw x15, 24(sp)
+        sw x17, 28(sp)
+        sw x18, 32(sp)
+        sw x19, 36(sp)
+        sw x20, 40(sp)
+        sw x21, 44(sp)
+        sw x22, 48(sp)
+        sw x4, 52(sp)
+        sw x5, 56(sp)
+        sw x6, 60(sp)
+        sw x7, 64(sp)
+        sw x8, 68(sp)
+        sw x9, 72(sp)
 
     // Expect debug
     la a1, glb_expect_debug_entry        
@@ -174,21 +187,21 @@ test2_5:
 
     .balign 4
 
-    cv.count 1, x4
-    cv.end 1, x6
     cv.start 1, x7
-    cv.end 0, x8
+    cv.end 1, x6
+    cv.count 1, x4
     cv.start 0, x9
-    cv.count 0, x5
+    cv.end 0, x8
 startO_3:
     .option norvc
+    cv.count 0, x5
 startZ_3:
     addi x17, x17, 5
     addi x18, x18, 6
     fdiv.s x19, x18, x17
 endZ_3:
-    cv.count 0, x5
-    addi x20, x20, 8
+    addi x20, x20, 4
+    addi x20, x20, 4
 endO_3:
 
     .option rvc
@@ -244,5 +257,18 @@ _single_step_done:
         lw a1, 12(sp)
         lw a2, 16(sp)
         lw ra, 20(sp)
-        addi sp,sp,30
+        lw x15, 24(sp)
+        lw x17, 28(sp)
+        lw x18, 32(sp)
+        lw x19, 36(sp)
+        lw x20, 40(sp)
+        lw x21, 44(sp)
+        lw x22, 48(sp)
+        lw x4, 52(sp)
+        lw x5, 56(sp)
+        lw x6, 60(sp)
+        lw x7, 64(sp)
+        lw x8, 68(sp)
+        lw x9, 72(sp)
+        addi sp,sp,80
 	ret

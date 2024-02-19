@@ -149,7 +149,7 @@ VLOG_FLAGS += +define+USE_ISS
 VLOG_FLAGS += +define+USE_IMPERASDV
 VLOG_FILE_LIST_IDV = -f $(DV_UVMT_PATH)/imperas_dv.flist
 ifeq ($(call IS_YES,$(COV)),YES)
-# VLOG_FLAGS += +define+IMPERAS_COV // fixme: add granuality for this enablement
+VLOG_FLAGS += +define+IMPERAS_COV
 endif
 endif
 ifeq ($(call IS_YES,$(COV)),YES)
@@ -451,13 +451,18 @@ gen_corev-dv: $(VSIM_COREVDV_SIM_PREREQ)
 			$(CFG_PLUSARGS) \
 			$(TEST_CFG_FILE_PLUSARGS) \
 			$(GEN_PLUSARGS)
-
-# copy and move out final assembler files and log to test directory (move to avoid duplicating files)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		cp -f ${BSP}/link_corev-dv.ld ${SIM_TEST_RESULTS}/$$idx/test_program/link.ld; \
-		mv -f ${SIM_COREVDV_RESULTS}/${TEST}/${TEST}_$$idx.S ${SIM_TEST_RESULTS}/$$idx/test_program; \
-		mv -f $(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log ${SIM_TEST_RESULTS}/$$idx/test_program; \
+		cp -pf ${SIM_COREVDV_RESULTS}/${TEST}/${TEST}_$$idx.S ${SIM_TEST_RESULTS}/$$idx/test_program; \
+		if [ -f "$(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log" ]; then \
+			cp -pf $(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log ${SIM_TEST_RESULTS}/$$idx/test_program; \
+		else \
+			echo "Log file not present: $(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX)_$(GEN_START_INDEX)_$(GEN_NUM_TESTS).log"; \
+		fi; \
 	done
+	if [ -f "$(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX).ucdb" ]; then \
+		rm -f $(SIM_COREVDV_RESULTS)/$(TEST)/$(TEST_PROGRAM)$(TEST_CFG_FILE_SUFFIX).ucdb; \
+	fi
 
 $(SIM_COREVDV_RESULTS)/vlog.log: vlog_corev-dv
 

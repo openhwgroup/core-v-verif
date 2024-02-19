@@ -192,7 +192,11 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
    constraint random_data_stall_sim_cons {
       if (random_data_stall) {
          obi_memory_data_cfg.drv_slv_gnt_mode    == UVMA_OBI_MEMORY_DRV_SLV_GNT_MODE_RANDOM_LATENCY;
+         obi_memory_data_cfg.drv_slv_gnt_random_latency_min == 1;
+         obi_memory_data_cfg.drv_slv_gnt_random_latency_max == 8;
          obi_memory_data_cfg.drv_slv_rvalid_mode == UVMA_OBI_MEMORY_DRV_SLV_RVALID_MODE_RANDOM_LATENCY;
+         obi_memory_data_cfg.drv_slv_rvalid_random_latency_min == 1;
+         obi_memory_data_cfg.drv_slv_rvalid_random_latency_max == 8;
       }
 
       if (max_rand_data_latency) {
@@ -205,6 +209,8 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
       if (random_instr_stall) {
          obi_memory_instr_cfg.drv_slv_gnt_mode     == UVMA_OBI_MEMORY_DRV_SLV_GNT_MODE_RANDOM_LATENCY;
          obi_memory_instr_cfg.drv_slv_rvalid_mode  == UVMA_OBI_MEMORY_DRV_SLV_RVALID_MODE_RANDOM_LATENCY;
+         obi_memory_instr_cfg.drv_slv_gnt_random_latency_min == 1;
+         obi_memory_instr_cfg.drv_slv_gnt_random_latency_max == 8;
       }
       if (max_rand_instr_latency) {
          obi_memory_instr_cfg.drv_slv_gnt_random_latency_max == max_rand_instr_latency_limit;
@@ -306,7 +312,7 @@ class uvme_cv32e40p_cfg_c extends uvma_core_cntrl_cfg_c;
       (!boot_addr_plusarg_valid)         -> (boot_addr         == 'h0000_0080);
       (!mtvec_addr_plusarg_valid)        -> (mtvec_addr        == 'h0000_0000);
       (!dm_halt_addr_plusarg_valid)      -> (dm_halt_addr      == 'h1A11_0800);
-      (!dm_exception_addr_plusarg_valid) -> (dm_exception_addr == 'h1A11_1000);
+      (!dm_exception_addr_plusarg_valid) -> (dm_exception_addr == 'h1A11_1600);
    }
 
    constraint agent_cfg_cons {

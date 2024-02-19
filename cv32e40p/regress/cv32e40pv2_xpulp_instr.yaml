@@ -70,11 +70,25 @@ tests:
     cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_test CFG_PLUSARGS="+UVM_TIMEOUT=25000000"
     test_cfg: insert_illegal_instr
 
+  corev_rand_pulp_with_priv_instr_test:
+    build: uvmt_cv32e40p
+    description: hwloop stream with priv insn such as wfi
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_with_priv_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+    num: 4
+
+  corev_rand_pulp_hwloop_count_range_test:
+    build: uvmt_cv32e40p
+    description: hwloop stream with large lpcount
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_pulp_hwloop_count_range_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000" VSIM_USER_FLAGS=+skip_sampling_uvme_rv32x_hwloop_covg
+    num: 1
+
   pulp_hardware_loop:
     build: uvmt_cv32e40p
     description: pulp_hardware_loop directed test
     dir: cv32e40p/sim/uvmt
-    cmd: make test COREV=YES TEST=pulp_hardware_loop CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    cmd: make test COREV=YES TEST=pulp_hardware_loop CFG_PLUSARGS="+UVM_TIMEOUT=1000000" VSIM_USER_FLAGS=+skip_sampling_uvme_rv32x_hwloop_covg
     num: 1
 
   pulp_hardware_loop_interrupt_test:
@@ -91,6 +105,27 @@ tests:
     cmd: make test COREV=YES TEST=custom_opcode_illegal_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
+  cv32e40pv2_illegal_ro_csr_access_test:
+    build: uvmt_cv32e40p
+    description: directed test for illegal and ro CSR access
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=cv32e40pv2_illegal_ro_csr_access_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    num: 1
+
+  cv32e40p_csr_access_test:
+    build: uvmt_cv32e40p
+    description: R/W acces to a list of legal CSR
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=cv32e40p_csr_access_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    num: 1
+
+  test_w_tb_hack_1_obi_gnt_signal:
+    testname: corev_rand_pulp_instr_test
+    build: uvmt_cv32e40p
+    description: any test exercise specific obi gnt scenario (by plusagrs tb_hack_1_obi_gnt_signal) to cover directive holes
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000" VSIM_USER_FLAGS="+random_instr_stall +random_data_stall +tb_hack_1_obi_gnt_signal"
+    num: 1
 
   # pulp_hardware_loop_debug_test:
   #   build: uvmt_cv32e40p

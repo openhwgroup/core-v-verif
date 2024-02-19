@@ -20,6 +20,9 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
     string debug_dret[$];
     cv32e40p_instr_gen_config cfg_corev;
 
+    // Directed instruction ratio, occurance per 1000 instructions
+    int unsigned             directed_instr_stream_ratio_for_debug_prog[string];
+
     `uvm_object_utils(cv32e40p_debug_rom_gen)
 
     function new (string name = "");
@@ -120,6 +123,14 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
             main_program[hart] = cv32e40p_instr_sequence::type_id::create("debug_program");
             main_program[hart].instr_cnt = cfg.debug_program_instr_cnt;            
             main_program[hart].is_debug_program = 1;
+            if(cfg_corev.insert_rand_directed_instr_stream_in_debug_program) begin
+              get_directed_instr_stream_for_debug_program();
+              generate_directed_instr_stream_for_debug_program(.hart(hart),
+                                                               .label(main_program[hart].label_name),
+                                                               .original_instr_cnt(main_program[hart].instr_cnt),
+                                                               .min_insert_cnt(1),
+                                                               .instr_stream(main_program[hart].directed_instr));
+            end
             main_program[hart].cfg = cfg;
             `DV_CHECK_RANDOMIZE_FATAL(main_program[hart])
             main_program[hart].gen_instr(.is_main_program(1'b1), .no_branch(cfg.no_branch_jump));
@@ -412,6 +423,99 @@ class cv32e40p_debug_rom_gen extends riscv_debug_rom_gen;
         str = {$sformatf("li %0s, 0x%0x", reg_name.tolower(), reg_val)};
         debug_main = {debug_main, str};
       end
+    endfunction
+
+    // Generate directed instruction stream in debug program based on the ratio setting
+    virtual function void generate_directed_instr_stream_for_debug_program(input int hart,
+                                                                           input string label,
+                                                                           input int unsigned original_instr_cnt,
+                                                                           input int unsigned min_insert_cnt = 0,
+                                                                           input bit kernel_mode = 0,
+                                                                           output riscv_instr_stream instr_stream[]);
+      uvm_object object_h;
+      riscv_rand_instr_stream new_instr_stream;
+      int unsigned instr_insert_cnt;
+      int unsigned idx;
+      uvm_coreservice_t coreservice = uvm_coreservice_t::get();
+      uvm_factory factory = coreservice.get_factory();
+      if(cfg.no_directed_instr) return;
+      foreach(directed_instr_stream_ratio_for_debug_prog[instr_stream_name]) begin
+        instr_insert_cnt = original_instr_cnt * directed_instr_stream_ratio_for_debug_prog[instr_stream_name] / 1000;
+        if(instr_insert_cnt <= min_insert_cnt) begin
+          instr_insert_cnt = min_insert_cnt;
+        end
+        `ifdef DSIM
+          // Temporarily skip loop instruction for dsim as it cannot support dynamic array
+          // randomization
+          if (uvm_is_match("*loop*", instr_stream_name)) begin
+            `uvm_info(`gfn, $sformatf("%0s is skipped", instr_stream_name), UVM_LOW)
+            continue;
+          end
+        `endif
+        `uvm_info(get_full_name(), $sformatf("Insert directed instr stream %0s %0d/%0d times",
+                                   instr_stream_name, instr_insert_cnt, original_instr_cnt), UVM_LOW)
+        for(int i = 0; i < instr_insert_cnt; i++) begin
+          string name = $sformatf("%0s_%0d", instr_stream_name, i);
+          object_h = factory.create_object_by_name(instr_stream_name, get_full_name(), name);
+          if(object_h == null) begin
+            `uvm_fatal(get_full_name(), $sformatf("Cannot create instr stream %0s", name))
+          end
+          if($cast(new_instr_stream, object_h)) begin
+            new_instr_stream.cfg = cfg;
+            new_instr_stream.hart = hart;
+            new_instr_stream.label = $sformatf("%0s_%0d", label, idx);
+            new_instr_stream.kernel_mode = kernel_mode;
+            `DV_CHECK_RANDOMIZE_FATAL(new_instr_stream)
+            instr_stream = {instr_stream, new_instr_stream};
+          end else begin
+            `uvm_fatal(get_full_name(), $sformatf("Cannot cast instr stream %0s", name))
+          end
+          idx++;
+        end
+      end
+      instr_stream.shuffle();
+    endfunction
+
+    virtual function void add_directed_instr_stream_in_debug_program(string name, int unsigned ratio);
+      directed_instr_stream_ratio_for_debug_prog[name] = ratio;
+      `uvm_info(`gfn, $sformatf("Adding directed instruction stream for debug program:%0s ratio:%0d/1000", name, ratio),
+                UVM_LOW)
+    endfunction
+
+    // Similar to get_directed_instr_stream is asm_program
+    // Use this plusarg cfg along with "test_rand_directed_instr_stream_num" and
+    // "rand_directed_instr_*" to select 1 single directed_instr_stream randomly
+    // and insert in the generated instruction stream.
+    virtual function void get_directed_instr_stream_for_debug_program();
+      string args, val;
+      string stream_name_opts, stream_freq_opts;
+      string stream_name;
+      int stream_freq;
+      string opts[$];
+      int dir_stream_id = 0;
+
+      if(cfg_corev.insert_rand_directed_instr_stream_in_debug_program) begin
+        //test_rand_directed_instr_stream_num specify the total num of rand_* streams to select from
+        dir_stream_id = $urandom_range(0,cfg_corev.test_rand_directed_instr_stream_num-1);
+        //Specify rand_directed_instr_0="" to rand_directed_instr_n="" as streams to randomize
+        args = $sformatf("rand_directed_instr_%0d=", dir_stream_id);
+        stream_name_opts = $sformatf("rand_stream_name_%0d=", dir_stream_id);
+        stream_freq_opts = $sformatf("rand_stream_freq_%0d=", dir_stream_id);
+        `uvm_info("cv32e40p_debug_rom_gen", $sformatf("Randomly selected dir_stream_id : %0d", dir_stream_id), UVM_NONE)
+        if ($value$plusargs({args,"%0s"}, val)) begin
+          uvm_split_string(val, ",", opts);
+          if (opts.size() != 2) begin
+            `uvm_fatal(`gfn, $sformatf(
+              "Incorrect directed instruction format : %0s, expect: name,ratio", val))
+          end else begin
+            add_directed_instr_stream_in_debug_program(opts[0], opts[1].atoi());
+          end
+        end else if ($value$plusargs({stream_name_opts,"%0s"}, stream_name) &&
+                     $value$plusargs({stream_freq_opts,"%0d"}, stream_freq)) begin
+          add_directed_instr_stream_in_debug_program(stream_name, stream_freq);
+        end
+      end
+
     endfunction
 
 endclass : cv32e40p_debug_rom_gen

@@ -1,0 +1,4 @@
+name: cv32e40pv2_illegal_ro_csr_access_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    CSR access test for illegal and RO CSRs of cv32e40pv2

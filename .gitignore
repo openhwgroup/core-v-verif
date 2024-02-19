@@ -66,3 +66,9 @@ transcript
 .opt-rtl
 tools/spike
 tools/verilator*
+VRMDATA
+*fir_q31*
+*float32_division_test*
+*whetstone*
+*.do
+*eembc*
