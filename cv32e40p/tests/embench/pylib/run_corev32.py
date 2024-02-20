@@ -100,16 +100,11 @@ def build_benchmark_cmd(bench, args):
     global cpu_per 
     cpu_per = float(1/(args.cpu_mhz*1_000_000))
     
-    if args.cfg == 'default':
-      core_config = f'CFG=default'
-    else:
-      core_config = f'CFG=pulp'
-
     #Utilize "make test" environment in core-v-verif
     if args.sim_parallel == 'YES':
-      return ['make', '-C', args.make_path, 'test', f"TEST=emb_{bench}", f"SIMULATOR={args.simulator}", 'USE_ISS=NO', core_config, 'COMP=NO', 'USER_RUN_FLAGS=+rand_stall_obi_disable']
+      return ['make', '-C', args.make_path, 'test', f"TEST=emb_{bench}", f"SIMULATOR={args.simulator}", 'USE_ISS=NO', f"CFG={args.cfg}", 'COMP=NO']
     else:
-      return ['make', '-C', args.make_path, 'test', f"TEST=emb_{bench}", f"SIMULATOR={args.simulator}", 'USE_ISS=NO', core_config, 'USER_RUN_FLAGS=+rand_stall_obi_disable']
+      return ['make', '-C', args.make_path, 'test', f"TEST=emb_{bench}", f"SIMULATOR={args.simulator}", 'USE_ISS=NO', f"CFG={args.cfg}"]
 
 
 def decode_results(stdout_str, stderr_str):

@@ -64,8 +64,12 @@ def main():
     core_config = 'corev32'
   elif args.cfg == 'pulp':
     core_config = 'corev32_pulp'
+  elif args.cfg == 'pulp_fpu':
+    core_config = 'corev32_pulp_fpu'
+  elif args.cfg == 'pulp_fpu_zfinx':
+    core_config = 'corev32_pulp_fpu_zfinx'
   else:
-    logger.info(f"Invalid config selected: {args.cfg}, must be 'default' or 'pulp'")
+    logger.info(f"Invalid config selected: {args.cfg}, must be 'default', 'pulp', 'pulp_fpu' or 'pulp_fpu_zfinx'")
     sys.exit(1)
 
   if args.ccomp == 'notset':
@@ -229,14 +233,21 @@ def main():
         logger.fatal(f"Failed to generate folder {paths['testsem']}/{folder_ext}")
         sys.exit(1)
 
+      logger.debug(f"Creating folder {args.builddir}/{folder_ext}")
+      try:
+        subprocess.run(['mkdir', f"{args.builddir}/{folder_ext}"])
+      except:
+        logger.fatal(f"Failed to generate folder {args.builddir}/{folder_ext}")
+        sys.exit(1)
+
       # copy test files into the tests/programs/embench directories
       for file in os.listdir(f"{paths['emres']}/{folder}"):
         if not file.endswith('.o'):
           logger.debug(f"Copying file {file}")
           try:
-            subprocess.run(['cp', f"{paths['emres']}/{folder}/{file}", f"{paths['testsem']}/{folder_ext}/emb_{file}.elf"])
+            subprocess.run(['cp', f"{paths['emres']}/{folder}/{file}", f"{args.builddir}/{folder_ext}/emb_{file}.elf"])
           except:
-            logger.fatal(f"Copying file {file} to {paths['emres']}/{folder_ext}/ failed")
+            logger.fatal(f"Copying file {file} to {args.builddir}/{folder_ext}/ failed")
             sys.exit(1)
 
           break

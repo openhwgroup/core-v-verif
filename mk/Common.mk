@@ -215,6 +215,9 @@ TEST_FLAGS_MAKE := $(shell $(YAML2MAKE) --test=$(TEST) --yaml=test.yaml  $(YAML2
 ifeq ($(TEST_FLAGS_MAKE),)
 $(error ERROR Could not find test.yaml for test: $(TEST))
 endif
+ifeq (,$(findstring "emb_",$(TEST)))
+  $(shell sed -i "s?TEST_TEST_DIR.*emb_?TEST_TEST_DIR=$(SIM_CFG_RESULTS)/bd/emb_?" $(TEST_FLAGS_MAKE))
+endif
 include $(TEST_FLAGS_MAKE)
 endif
 
