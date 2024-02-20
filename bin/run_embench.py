@@ -191,7 +191,7 @@ def main():
          f'--cc={args.ccomp}',
          f'--warmup-heat=0',
          f'--cpu-mhz={args.cpu_mhz}',
-         f'--ldflags=-T{paths["bsp"]}/link.ld',
+         f'--ldflags=-T{paths["bsp"]}/link_gp_relax.ld',
          f'--builddir={args.builddir}',
          f'--logdir={args.logdir}',
          f'--timeout=15',
