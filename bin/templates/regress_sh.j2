@@ -105,8 +105,12 @@ popd > /dev/null
 {% else %}
   {% set test_cfg = "" %}
 {% endif %}
+{% set test_cfg_list = test_cfg|replace(" ",",")|replace("+",",") %}
+{% set test_cfg_list = test_cfg_list.split(",")|unique|sort %}
+{% set test_cfg_path = test_cfg_list|join("__") %}
+
 # --> Test (Index: {{run_index}}): {{t.cmd}} : {{t.description}}
-{% set cmd = test_cmd + ' CV_CORE=' + project + ' CFG=' + r.builds[build].cfg + ' ' + toolchain|upper + '=1' + ' RISCVDV_CFG=' + t.riscvdv_cfg + ' SIMULATOR=' + t.simulator + ' COMP=0 USE_ISS=' + regress_macros.yesorno(t.iss) + ' COV=' + regress_macros.yesorno(t.cov) + ' SEED=random GEN_START_INDEX=' + run_index|string + ' RUN_INDEX=' + run_index|string + ' TEST_CFG_FILE=' + test_cfg + ' ' + regress_macros.cv_results(results) + ' ' + makeargs %}
+{% set cmd = test_cmd + ' CV_CORE=' + project + ' CFG=' + r.builds[build].cfg + ' ' + toolchain|upper + '=1' + ' RISCVDV_CFG=' + t.riscvdv_cfg + ' SIMULATOR=' + t.simulator + ' COMP=0 USE_ISS=' + regress_macros.yesorno(t.iss) + ' COV=' + regress_macros.yesorno(t.cov) + ' SEED=random GEN_START_INDEX=' + run_index|string + ' RUN_INDEX=' + run_index|string + ' TEST_CFG_FILE=\"' + test_cfg + '\" ' + regress_macros.cv_results(results) + ' ' + makeargs %}
 echo "{{session}}: Running test [cd {{t.abs_dir}} && {{cmd}}]"
 pushd {{t.abs_dir}} > /dev/null
 {{cmd}} >& /dev/null;
@@ -118,13 +122,7 @@ popd > /dev/null
 {% else %}
 {% set results_dir = t.simulator + '_results' %}
 {% endif %}
-{% if t.test_cfg is defined %}
-  {% set sim_log = t.simulator + '-' + test_log + '_' + t.test_cfg + '.log' %}
-  {% set test_cfg_path = t.test_cfg %}
-{% else %}
-  {% set sim_log = t.simulator + '-' + test_log + '.log' %}
-  {% set test_cfg_path = '' %}
-{% endif %}
+{% set sim_log = t.simulator + '-' + test_log + '.log' %}
 
 {# Determine log location #}
 {% if t.results %}
