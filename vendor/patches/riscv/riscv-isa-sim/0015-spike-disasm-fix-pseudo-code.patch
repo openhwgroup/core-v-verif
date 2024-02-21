@@ -1,0 +1,46 @@
+From 5117c266b1867cac40c90836b800ca40eb60786f Mon Sep 17 00:00:00 2001
+From: ajalali <ayoub.jalali@external.thalesgroup.com>
+Date: Tue, 20 Feb 2024 14:04:41 +0100
+Subject: [PATCH 2849/2849] Fix SLTU & BRANCH & CSR pseudo-code instructions
+ decode
+
+---
+ vendor/riscv/riscv-isa-sim/disasm/disasm.cc | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/vendor/riscv/riscv-isa-sim/disasm/disasm.cc b/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
+index 9a3ecc292..f5c4cf6d3 100644
+--- a/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
++++ b/vendor/riscv/riscv-isa-sim/disasm/disasm.cc
+@@ -807,10 +807,6 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
+   add_insn(new disasm_insn_t("jal", match_jal | match_rd_ra, mask_jal | mask_rd, {&jump_target}));
+   add_insn(new disasm_insn_t("jal", match_jal, mask_jal, {&xrd, &jump_target}));
+ 
+-  DEFINE_B1TYPE("beqz", beq);
+-  DEFINE_B1TYPE("bnez", bne);
+-  DEFINE_B1TYPE("bltz", blt);
+-  DEFINE_B1TYPE("bgez", bge);
+   DEFINE_BTYPE(beq)
+   DEFINE_BTYPE(bne)
+   DEFINE_BTYPE(blt)
+@@ -853,7 +849,6 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
+   DEFINE_RTYPE(sub);
+   DEFINE_RTYPE(sll);
+   DEFINE_RTYPE(slt);
+-  add_insn(new disasm_insn_t("snez", match_sltu, mask_sltu | mask_rs1, {&xrd, &xrs2}));
+   DEFINE_RTYPE(sltu);
+   DEFINE_RTYPE(xor);
+   DEFINE_RTYPE(srl);
+@@ -874,9 +869,6 @@ void disassembler_t::add_instructions(const isa_parser_t* isa)
+   add_insn(new disasm_insn_t("fence", match_fence, mask_fence, {&iorw}));
+   DEFINE_NOARG(fence_i);
+ 
+-  add_insn(new disasm_insn_t("csrwi", match_csrrwi, mask_csrrwi | mask_rd, {&csr, &zimm5}));
+-  add_insn(new disasm_insn_t("csrsi", match_csrrsi, mask_csrrsi | mask_rd, {&csr, &zimm5}));
+-  add_insn(new disasm_insn_t("csrci", match_csrrci, mask_csrrci | mask_rd, {&csr, &zimm5}));
+   add_insn(new disasm_insn_t("csrrw", match_csrrw, mask_csrrw, {&xrd, &csr, &xrs1}));
+   add_insn(new disasm_insn_t("csrrs", match_csrrs, mask_csrrs, {&xrd, &csr, &xrs1}));
+   add_insn(new disasm_insn_t("csrrc", match_csrrc, mask_csrrc, {&xrd, &csr, &xrs1}));
+-- 
+2.39.3
+
