@@ -22,11 +22,23 @@
 #include <stdio.h>
 #include "chipsupport.h"
 
+static uint32_t start_time, stop_time;
+
 void
 initialise_board ()
 {
   printf("Initialize board corev32 \n");
   __asm__ volatile ("li a0, 0" : : : "memory");
+
+  printf("Initialize mstatus.fs to intial \n");
+
+  unsigned int fs = 0x00002000;
+
+  asm volatile("csrs mstatus, %0;"
+               "csrwi fcsr, 0;"
+               "csrs mstatus, %0;"
+               : : "r"(fs)
+              );
 }
 
 void __attribute__ ((noinline)) __attribute__ ((externally_visible))

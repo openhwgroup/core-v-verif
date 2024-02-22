@@ -76,9 +76,9 @@ int main()
   static volatile int nb_cycles;
   int error = 0;
 
-  float *A = A_int;
-  float *B = B_int;
-  float *C = C_int;
+  float *A = (float *)A_int;
+  float *B = (float *)B_int;
+  float *C = (float *)C_int;
 
   volatile float fdiv;
 

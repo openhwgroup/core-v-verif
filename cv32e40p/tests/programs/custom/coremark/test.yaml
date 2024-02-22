@@ -4,7 +4,6 @@ default_cflags: >
     -O3
     -mabi=ilp32
     -march=$(RISCV_MARCH)
-    -msave-restore
     -falign-functions=16
     -funroll-all-loops
     -falign-jumps=4
