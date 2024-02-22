@@ -57,6 +57,7 @@
    rand bit                      ext_v_supported;
    rand bit                      ext_f_supported;
    rand bit                      ext_d_supported;
+   rand bit                      ext_zalrsc_supported;
    rand bit                      ext_zba_supported;
    rand bit                      ext_zbb_supported;
    rand bit                      ext_zbc_supported;
@@ -153,6 +154,7 @@
       `uvm_field_int(                          ext_f_supported                , UVM_DEFAULT          )
       `uvm_field_int(                          ext_d_supported                , UVM_DEFAULT          )
       `uvm_field_int(                          ext_v_supported                , UVM_DEFAULT          )
+      `uvm_field_int(                          ext_zalrsc_supported           , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zifencei_supported         , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zicsr_supported            , UVM_DEFAULT          )
       `uvm_field_int(                          ext_zba_supported              , UVM_DEFAULT          )
