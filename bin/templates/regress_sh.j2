@@ -118,11 +118,10 @@ popd > /dev/null
 {% else %}
 {% set results_dir = t.simulator + '_results' %}
 {% endif %}
+{% set sim_log = t.simulator + '-' + test_log + '.log' %}
 {% if t.test_cfg is defined %}
-  {% set sim_log = t.simulator + '-' + test_log + '_' + t.test_cfg + '.log' %}
   {% set test_cfg_path = t.test_cfg %}
 {% else %}
-  {% set sim_log = t.simulator + '-' + test_log + '.log' %}
   {% set test_cfg_path = '' %}
 {% endif %}
 
