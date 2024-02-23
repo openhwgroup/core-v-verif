@@ -222,6 +222,7 @@
      soft mode_h_supported       == 0;
      soft ext_nonstd_supported   == 0;
      soft clic_levels            == 0;
+     soft ext_zalrsc_supported   == 0;
      soft ext_zba_supported      == 0;
      soft ext_zbb_supported      == 0;
      soft ext_zbc_supported      == 0;
