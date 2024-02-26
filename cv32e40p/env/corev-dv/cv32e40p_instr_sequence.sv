@@ -210,7 +210,7 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
         end
         instr_stream.instr_list[i].has_label = 1'b1;
       end else begin
-        if(instr_stream.instr_list[i].has_label) begin
+        if(instr_stream.instr_list[i].has_label) begin : HAS_LABEL
           //check if it is hwloop label
           label_is_pulp_hwloop_body_label = check_str_pattern_match(instr_stream.instr_list[i].label, "hwloop");
           if(!label_is_pulp_hwloop_body_label) begin
@@ -265,14 +265,26 @@ class cv32e40p_instr_sequence extends riscv_instr_sequence;
               format_str_len = LABEL_STR_LEN;
             end
           end
-        end else begin
+          str = {prefix, instr_stream.instr_list[i].convert2asm()};
+        end // HAS_LABEL
+        else if (instr_stream.instr_list[i].is_illegal_instr) begin : IS_ILLEGAL_INSTR
+          // insert illegal insn in directed stream
+          cv32_illegal_instr.init(cfg);
+          cv32_illegal_instr.cv32e40p_init(cfg); // Init legal_opcode for cv32e40p
+          `DV_CHECK_RANDOMIZE_WITH_FATAL(cv32_illegal_instr, exception != kHintInstr;)
+          str = {indent, $sformatf(".4byte 0x%s # %0s", cv32_illegal_instr.get_bin_str(), cv32_illegal_instr.comment)};
+        end // IS_ILLEGAL_INSTR
+        else begin
           prefix = format_string(" ", format_str_len);
+          str = {prefix, instr_stream.instr_list[i].convert2asm()};
         end
-      end
-      str = {prefix, instr_stream.instr_list[i].convert2asm()};
+      end // i != 0
+
+      // str = {prefix, instr_stream.instr_list[i].convert2asm()};
       instr_string_list.push_back(str);
 
-    end
+    end // instr_stream.instr_list.size
+
     // If PMP is supported, need to align <main> to a 4-byte boundary.
     if (riscv_instr_pkg::support_pmp && !uvm_re_match(uvm_glob_to_re("*main*"), label_name)) begin
       instr_string_list.push_front(".align 2");
