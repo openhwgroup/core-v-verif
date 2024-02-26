@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Dolphin Design
+ * Copyright 2024 Dolphin Design
  * SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,9 @@
  */
 
 // [Dolphin Design updates]
-// This file contains stream classes that use to generate streams that improve functional coverage holes
+// Note:
+// 1) This file contains streams that use to improve functional coverage holes
+// 2) They are optional to be included in regression list
 
 // this stream is to improve func coverage for in uvme_interrupt_covg_v2 by cycle through all cv_* instructions multiple times for irq and wfi coverage purpose - START
 class cv32e40p_cv_instrs_multi_loops_streams extends cv32e40p_float_zfinx_base_instr_stream;
@@ -43,7 +45,7 @@ class cv32e40p_cv_instrs_multi_loops_streams extends cv32e40p_float_zfinx_base_i
     reset_rand_instr_entry();
 
     include_group   = new[1] ({RV32X});
-    exclude_instr   = new[9] ({CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW}); // TBD: exclude hwloop and cluster insn from wfi cg
+    exclude_instr   = new[9] ({CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW});
 
     // these already covered in all cvg, can be ignored meantime - Start (note: users can modify this to focus on insn list to b ecovered)
     ignored_instr_cnt = 4;
@@ -181,3 +183,67 @@ class cv32e40p_cv_instrs_w_wfi_multi_loops_streams extends cv32e40p_cv_instrs_mu
 endclass: cv32e40p_cv_instrs_w_wfi_multi_loops_streams
 // this stream is to improve func coverage for in uvme_interrupt_covg_v2 by cycle through all cv_* instructions multiple times for irq and wfi coverage purpose - END
 
+
+// this stream is to improve func coverage for in uvme_rv32x_hwloop_covg - START
+class cv32e40p_xpulp_single_hwloop_stream_directed extends cv32e40p_xpulp_hwloop_base_stream;
+
+  `uvm_object_utils(cv32e40p_xpulp_single_hwloop_stream_directed)
+  `uvm_object_new
+  
+  constraint gen_hwloop_count_c {
+    solve num_loops_active before gen_nested_loop;
+    solve gen_nested_loop  before hwloop_count, hwloop_counti;
+    solve num_hwloop_instr before hwloop_count, hwloop_counti;
+    gen_nested_loop == 0;
+    num_loops_active == 1;
+    foreach(hwloop_count[i]) {
+      if (num_hwloop_instr[i] == 3) {
+        hwloop_count[i]  == 4095;
+      }
+      else {
+        hwloop_count[i]  inside {401, 1024};
+      }
+      hwloop_counti[i] == hwloop_count[i];
+    }
+  }
+
+  constraint no_imm_hwloop_setup_instr_c {
+      use_loop_counti_inst[0] == 0;
+      use_loop_counti_inst[1] == 0;
+      use_loop_setupi_inst[0] == 0;
+      use_loop_setupi_inst[1] == 0;
+  }
+
+  constraint num_hwloop_instr_c {
+    foreach (num_hwloop_instr[i]) {
+      num_hwloop_instr[i] dist { 3 := 1, 3074 := 5, 4092 := 1 };
+      num_fill_instr_loop_ctrl_to_loop_start[i] inside {[0:7]};
+    }
+    num_fill_instr_in_loop1_till_loop0_setup == 0;
+  }
+
+endclass : cv32e40p_xpulp_single_hwloop_stream_directed
+// this stream is to improve func coverage for in uvme_rv32x_hwloop_covg - END
+
+// this stream is to improve func coverage for in uvme_debug_covg - START
+class cv32e40p_fp_only_fdiv_fsqrt_stream extends cv32e40p_fp_n_mixed_instr_stream;
+
+  `uvm_object_utils(cv32e40p_fp_only_fdiv_fsqrt_stream)
+  `uvm_object_new
+
+  function void pre_randomize();
+    super.pre_randomize();
+    use_fp_only_for_directed_instr  = 1;
+    use_only_for_fdiv_fsqrt_gen     = 1;
+    en_clr_fflags_af_instr          = 0;
+  endfunction: pre_randomize
+
+  virtual function void add_instr_prior_directed_instr(riscv_instr instr, int idx=0);
+    if ($test$plusargs("add_b2b_illegal_insn")) begin
+      insert_illegal_instr();
+    end
+    super.add_instr_prior_directed_instr(instr, idx);
+  endfunction : add_instr_prior_directed_instr
+
+endclass: cv32e40p_fp_only_fdiv_fsqrt_stream
+// this stream is to improve func coverage for in uvme_debug_covg - END
