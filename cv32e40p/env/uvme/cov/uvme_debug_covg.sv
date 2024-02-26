@@ -288,11 +288,11 @@ class uvme_debug_covg extends uvm_component;
         }
         dreq_and_ill : cross dreq, ill;
         irq_and_dreq : cross dreq, irq;
-        irq_dreq_trig_ill : cross dreq, irq, trigger, ill;
-        irq_dreq_trig_cebreak : cross dreq, irq, trigger, cebreak;
-        irq_dreq_trig_ebreak : cross dreq, irq, trigger, ebreak;
-        irq_dreq_trig_branch : cross dreq, irq, trigger, branch;
-        irq_dreq_trig_multicycle : cross dreq, irq, trigger, mulhsu;
+        irq_dreq_trig_ill : cross dreq, irq, trigger, ill; // irq + haltreq + trigger (illegal)
+        irq_dreq_trig_cebreak : cross dreq, irq, trigger, cebreak; // irq + haltreq + trigger (cbreak)
+        irq_dreq_trig_ebreak : cross dreq, irq, trigger, ebreak; // irq + haltreq + trigger (ebreak)
+        irq_dreq_trig_branch : cross dreq, irq, trigger, branch; // irq + haltreq + trigger (branch)
+        irq_dreq_trig_multicycle : cross dreq, irq, trigger, mulhsu; // irq + haltreq + trigger (mc)
     endgroup
 
     // Cover access to dcsr, dpc and dscratch0/1 in D-mode
@@ -528,9 +528,40 @@ class uvme_debug_covg extends uvm_component;
         cr_dbg_while_multi_cyc_f_A : cross cp_apu_req_valid, cp_apu_grant_valid, cp_dbg_req;
         cr_dbg_while_multi_cyc_f_B : cross cp_apu_busy, cp_dbg_req;
 
-        // debug_halt_req with irq during multi cycle fp inst
-        cr_dbg_irq_while_multi_cyc_f_A : cross cp_apu_req_valid, cp_apu_grant_valid, cp_dbg_req, cp_irq;
-        cr_dbg_irq_while_multi_cyc_f_B : cross cp_apu_busy, cp_dbg_req, cp_irq;
+        // debug_halt_req with irq during multi cycle fp inst (fixme: what is the benefit cross with this irq?)
+        cr_dbg_irq_while_multi_cyc_f_A : cross cp_apu_req_valid, cp_apu_grant_valid, cp_dbg_req, cp_irq {
+          bins irq_grp_upper16_multi_cyc_f_A = binsof(cp_dbg_req.dbg_req_active) && binsof(cp_apu_grant_valid) && (
+                                 binsof(cp_irq.irq_31_trans_0_to_1) || binsof(cp_irq.irq_30_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_29_trans_0_to_1) || binsof(cp_irq.irq_28_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_27_trans_0_to_1) || binsof(cp_irq.irq_26_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_25_trans_0_to_1) || binsof(cp_irq.irq_24_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_23_trans_0_to_1) || binsof(cp_irq.irq_22_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_21_trans_0_to_1) || binsof(cp_irq.irq_20_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_19_trans_0_to_1) || binsof(cp_irq.irq_18_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_17_trans_0_to_1) || binsof(cp_irq.irq_16_trans_0_to_1));
+          bins irq_grp_lower16_multi_cyc_f_A = binsof(cp_dbg_req.dbg_req_active) && binsof(cp_apu_grant_valid) && (
+                                 binsof(cp_irq.irq_11_trans_0_to_1) || 
+                                 binsof(cp_irq.irq_3_trans_0_to_1)  ||
+                                 binsof(cp_irq.irq_7_trans_0_to_1));
+          ignore_bins dbg_req_others = binsof(cp_dbg_req.dbg_req_0_to_1);
+        }
+        cr_dbg_irq_while_multi_cyc_f_B : cross cp_apu_busy, cp_dbg_req, cp_irq {
+          bins irq_grp_upper16_multi_cyc_f_B = binsof(cp_dbg_req.dbg_req_active) && (binsof(cp_apu_busy.apu_busy) intersect {1}) && (
+                                 binsof(cp_irq.irq_31_trans_0_to_1) || binsof(cp_irq.irq_30_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_29_trans_0_to_1) || binsof(cp_irq.irq_28_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_27_trans_0_to_1) || binsof(cp_irq.irq_26_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_25_trans_0_to_1) || binsof(cp_irq.irq_24_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_23_trans_0_to_1) || binsof(cp_irq.irq_22_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_21_trans_0_to_1) || binsof(cp_irq.irq_20_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_19_trans_0_to_1) || binsof(cp_irq.irq_18_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_17_trans_0_to_1) || binsof(cp_irq.irq_16_trans_0_to_1));
+          bins irq_grp_lower16_multi_cyc_f_B = binsof(cp_dbg_req.dbg_req_active) && (binsof(cp_apu_busy.apu_busy) intersect {1}) && (
+                                 binsof(cp_irq.irq_11_trans_0_to_1) || 
+                                 binsof(cp_irq.irq_3_trans_0_to_1) ||
+                                 binsof(cp_irq.irq_7_trans_0_to_1));
+          ignore_bins dbg_apu_busy_others = (binsof(cp_apu_busy.apu_busy) intersect {0}) || binsof(cp_apu_busy.apu_busy_0_to_1) || binsof(cp_apu_busy.apu_busy_1_to_0);
+          ignore_bins dbg_req_others = binsof(cp_dbg_req.dbg_req_0_to_1);
+        }
 
         // debug_halt_req with illegal instr during multi cycle fp inst
         cr_dbg_ill_while_multi_cyc_f_A : cross cp_apu_req_valid, cp_apu_grant_valid, cp_dbg_req, cp_ill;
