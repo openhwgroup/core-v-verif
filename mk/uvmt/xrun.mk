@@ -71,7 +71,7 @@ XRUN_RUN_BASE_FLAGS ?= -64bit $(XRUN_GUI) -licqueue +UVM_VERBOSITY=$(XRUN_UVM_VE
 XRUN_GUI         ?=
 XRUN_SINGLE_STEP ?=
 XRUN_ELAB_COV     = -covdut uvmt_$(CV_CORE_LC)_tb -coverage b:e:f:t:u
-XRUN_ELAB_COVFILE = -covfile $(abspath $(MAKE_PATH)/../tools/xrun/covfile.tcl)
+XRUN_ELAB_COVFILE = -covfile $(CORE_V_VERIF)/$(CV_CORE)/sim/tools/xrun/covfile.tcl
 XRUN_RUN_COV      = -covscope uvmt_$(CV_CORE_LC)_tb -nowarn CGDEFN
 XRUN_RUN_BASE_FLAGS += -nocsf -sv_lib $(DPI_DASM_LIB)
 
@@ -95,7 +95,7 @@ XRUN_PMA_INC += +incdir+$(DV_UVM_TESTCASE_PATH)/base-tests \
                 +incdir+$(TBSRC_HOME)/uvmt \
                 +incdir+$(CV_CORE_PKG)/rtl/include \
                 +incdir+$(CV_CORE_COREVDV_PKG)/ldgen \
-                +incdir+$(abspath $(MAKE_PATH)/../../../lib/mem_region_gen)
+                +incdir+$(CORE_V_VERIF)/lib/mem_region_gen
 
 ###############################################################################
 # Common QUIET flag defaults to -quiet unless VERBOSE is set
@@ -127,16 +127,16 @@ endif
 # ADV_DEBUG=YES will enable Indago waves, default is to generate SimVision waves
 ifeq ($(call IS_YES,$(WAVES_MEM)),YES)
   ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-    XRUN_RUN_WAVES_FLAGS = -input $(abspath $(MAKE_PATH)/../tools/xrun/indago_mem.tcl)
+    XRUN_RUN_WAVES_FLAGS = -input $(CORE_V_VERIF)/$(CV_CORE)/sim/tools/xrun/indago_mem.tcl
   else
-    XRUN_RUN_WAVES_FLAGS = -input $(abspath $(MAKE_PATH)/../tools/xrun/probe_mem.tcl)
+    XRUN_RUN_WAVES_FLAGS = -input $(CORE_V_VERIF)/$(CV_CORE)/sim/tools/xrun/probe_mem.tcl
   endif
 else
   ifeq ($(call IS_YES,$(WAVES)),YES)
     ifeq ($(call IS_YES,$(ADV_DEBUG)),YES)
-      XRUN_RUN_WAVES_FLAGS = -input $(abspath $(MAKE_PATH)/../tools/xrun/indago.tcl)
+      XRUN_RUN_WAVES_FLAGS = -input $(CORE_V_VERIF)/$(CV_CORE)/sim/tools/xrun/indago.tcl
     else
-      XRUN_RUN_WAVES_FLAGS = -input $(abspath $(MAKE_PATH)/../tools/xrun/probe.tcl)
+      XRUN_RUN_WAVES_FLAGS = -input $(CORE_V_VERIF)/$(CV_CORE)/sim/tools/xrun/probe.tcl
     endif
   endif
 endif
