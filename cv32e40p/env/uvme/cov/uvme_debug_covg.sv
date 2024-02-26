@@ -528,7 +528,7 @@ class uvme_debug_covg extends uvm_component;
         cr_dbg_while_multi_cyc_f_A : cross cp_apu_req_valid, cp_apu_grant_valid, cp_dbg_req;
         cr_dbg_while_multi_cyc_f_B : cross cp_apu_busy, cp_dbg_req;
 
-        // debug_halt_req with irq during multi cycle fp inst (fixme: what is the benefit cross with this irq?)
+        // debug_halt_req with irq during multi cycle fp inst
         cr_dbg_irq_while_multi_cyc_f_A : cross cp_apu_req_valid, cp_apu_grant_valid, cp_dbg_req, cp_irq {
           bins irq_grp_upper16_multi_cyc_f_A = binsof(cp_dbg_req.dbg_req_active) && binsof(cp_apu_grant_valid) && (
                                  binsof(cp_irq.irq_31_trans_0_to_1) || binsof(cp_irq.irq_30_trans_0_to_1) ||
