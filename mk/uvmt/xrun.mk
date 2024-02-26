@@ -492,6 +492,55 @@ compliance: $(XRUN_COMPLIANCE_PREREQ)
 		+firmware=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(RISCV_DEVICE)/$(COMPLIANCE_PROG).hex \
 		+elf_file=$(COMPLIANCE_PKG)/work/$(RISCV_ISA)/$(RISCV_DEVICE)/$(COMPLIANCE_PROG).elf
 
+################################################################################
+# RISCOF RISCV-ARCH-TEST DUT simulation targets
+XRUN_RISCOF_SIM_PREREQ = $(RISCOF_TEST_RUN_DIR)/$(TEST).elf
+
+comp_dut_riscof_sim:
+	@echo "$(BANNER)"
+	@echo "* Compiling xrun in $(SIM_RISCOF_ARCH_TESTS_RESULTS)"
+	@echo "* Log: $(SIM_RISCOF_ARCH_TESTS_RESULTS)/xrun.log"
+	@echo "$(BANNER)"
+	mkdir -p $(SIM_RISCOF_ARCH_TESTS_RESULTS) && \
+	cd $(SIM_RISCOF_ARCH_TESTS_RESULTS) && $(XRUN) \
+		$(XRUN_COMP) \
+		$(XRUN_ELAB_COV_FLAGS) \
+		-top $(RTLSRC_VLOG_TB_TOP) \
+		-l xrun.log \
+		-elaborate
+
+comp_dut_rtl_riscof_sim: $(CV_CORE_PKG) $(SVLIB_PKG) comp_dut_riscof_sim
+
+setup_riscof_sim: clean_riscof_arch_test_suite clone_riscof_arch_test_suite comp_dut_rtl_riscof_sim
+
+gen_riscof_ovpsim_ic:
+	@touch -f $(RISCOF_TEST_RUN_DIR)/ovpsim.ic
+	@if [ ! -z "$(CFG_OVPSIM)" ]; then \
+		echo "$(CFG_OVPSIM)" > $(RISCOF_TEST_RUN_DIR)/ovpsim.ic; \
+	fi
+
+# Target to run RISCOF DUT sim with XRUN
+riscof_sim_run: $(XRUN_RISCOF_SIM_PREREQ) comp_dut_rtl_riscof_sim gen_riscof_ovpsim_ic
+	@echo "$(BANNER)"
+	@echo "* Running xrun in $(RISCOF_TEST_RUN_DIR)"
+	@echo "* Log: $(RISCOF_TEST_RUN_DIR)/xrun-$(TEST).log"
+	@echo "$(BANNER)"
+	cd $(RISCOF_TEST_RUN_DIR) && \
+	export IMPERAS_TOOLS=$(RISCOF_TEST_RUN_DIR)/ovpsim.ic && \
+	export IMPERAS_QUEUE_LICENSE=1 && \
+	$(XRUN) \
+		-R -xmlibdirname xcelium.d \
+		-l xrun-$(TEST).log \
+		$(XRUN_COMP_RUN) \
+		$(XRUN_RUN_WAVES_FLAGS) \
+		-covtest $(TEST) \
+		+UVM_TESTNAME=uvmt_cv32e40x_riscof_firmware_test_c \
+		$(CFG_PLUSARGS) \
+		$(RISCOF_TEST_PLUSARGS) \
+		+firmware=$(TEST).hex \
+		+elf_file=$(TEST).elf \
+		+itb_file=$(TEST).itb
+	@echo "* Log: $(RISCOF_TEST_RUN_DIR)/xrun-$(TEST).log"
 
 
 ###############################################################################

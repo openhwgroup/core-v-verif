@@ -232,7 +232,7 @@ endif
 ###############################################################################
 # cfg
 CFGYAML2MAKE = $(CORE_V_VERIF)/bin/cfgyaml2make
-CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp compliance
+CFG_YAML_PARSE_TARGETS=comp ldgen comp_corev-dv gen_corev-dv test hex clean_hex corev-dv sanity-veri-run bsp compliance riscof_sim_run
 ifneq ($(filter $(CFG_YAML_PARSE_TARGETS),$(MAKECMDGOALS)),)
 ifneq ($(CFG),)
 ifneq ($(CFG_PATH_OVERRIDE),)
