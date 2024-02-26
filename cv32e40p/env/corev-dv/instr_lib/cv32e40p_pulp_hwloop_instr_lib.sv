@@ -505,8 +505,9 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
               num_fill_instr_in_loop1_till_loop0_setup = num_fill_instr_in_loop1_till_loop0_setup-1;
 
-              if(num_fill_instr_in_loop1_till_loop0_setup>0)
+              if(num_fill_instr_in_loop1_till_loop0_setup>0) begin
                   insert_rand_instr(num_fill_instr_in_loop1_till_loop0_setup);
+              end
           end
           else begin
               set_label_at_next_instr = 1; //no fill instr so next instr must have label
@@ -536,8 +537,9 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
           //reserved_rd = {hwloop_avail_regs[2]}; //preserve count0 reg for nested loop
 
-          if(!use_setup_inst[0])
+            if(!use_setup_inst[0]) begin
               insert_rand_instr(num_fill_instr_loop_ctrl_to_loop_start[0]);
+            end
 
           //LABEL HWLOOP0_NESTED_START:
           label_s = $sformatf("hwloop0_nested_start_stream%0d",stream_count);
@@ -620,7 +622,6 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                                        .set_label_for_first_instr(1),
                                        .str_lbl_str(start_label_s),
                                        .end_lbl_str(end_label_s),
-                                       .instr_label(label_s));
 
               //Insert Random instructions till Loop HWLOOP_START0/1 label ->  use_setup_inst ? 0 : num_fill_instr_loop_ctrl_to_loop_start[0/1]
               if(!use_setup_inst[hwloop_L])
@@ -1283,21 +1284,21 @@ class cv32e40p_xpulp_short_hwloop_stream_directed extends cv32e40p_xpulp_short_h
       //  due to long run times
       if(gen_nested_loop) {
         if(loop0_high_count) {
-          hwloop_counti[0] dist {[1024:4094] := 50, 4095 := 5};
-          hwloop_count[0]  dist {[1024:4094] := 50, 4095 := 5};
+          hwloop_counti[0] dist {[1024:4094] := 15, 4095 := 5};
+          hwloop_count[0]  dist {[1024:4094] := 15, 4095 := 5};
           hwloop_counti[1] inside {[1:2]};
           hwloop_count[1]  inside {[1:2]};
         } else {
           hwloop_counti[0] inside {[1:2]};
           hwloop_count[0]  inside {[1:2]};
-          hwloop_counti[1] dist {[1024:4094] := 50, 4095 := 5};
-          hwloop_count[1]  dist {[1024:4094] := 50, 4095 := 5};
+          hwloop_counti[1] dist {[1024:4094] := 15, 4095 := 5};
+          hwloop_count[1]  dist {[1024:4094] := 15, 4095 := 5};
         }
       } else {
         foreach(hwloop_counti[i])
-          hwloop_counti[i] dist {[1024:4094] := 50, 4095 := 5};
+          hwloop_counti[i] dist {[1024:4094] := 15, 4095 := 5};
         foreach(hwloop_count[i])
-          hwloop_count[i]  dist {[1024:4094] := 50, 4095 := 5};
+          hwloop_count[i]  dist {[1024:4094] := 15, 4095 := 5};
       }
   }
 

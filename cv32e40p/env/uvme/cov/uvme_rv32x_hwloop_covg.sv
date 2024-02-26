@@ -158,19 +158,25 @@ class uvme_rv32x_hwloop_covg # (
       // higher counts are not covered now to reduced simtime (amend if needed) \
     } \
     ccp_lpstart_0_lpend_lpcount_``LOOP_IDX : cross cp_lpstart_``LOOP_IDX``, cp_lpend_``LOOP_IDX``, cp_lpcount_``LOOP_IDX`` { \
-      ignore_bins ignore__lpstart_range_1 = binsof (cp_lpstart_``LOOP_IDX``) intersect {[32'h0000_0FFC : 32'h0000_0400]}; \
-      ignore_bins ignore__lpstart_range_2 = binsof (cp_lpstart_``LOOP_IDX``) intersect {[32'h0000_FFFC : 32'h0000_1000]}; \
+      ignore_bins ignore__lpstart_range_1 = binsof (cp_lpstart_``LOOP_IDX``.lpstart_range_1); \
+      ignore_bins ignore__lpstart_range_2 = binsof (cp_lpstart_``LOOP_IDX``.lpstart_range_2); \
+      // ignore below due to long simtime if cross higher count with large loop \
+      ignore_bins ignore__lpcount_low4    = binsof (cp_lpcount_``LOOP_IDX``.lpcount_range_low_4); \
     } \
     ccp_lpstart_1_lpend_lpcount_``LOOP_IDX : cross cp_lpstart_``LOOP_IDX``, cp_lpend_``LOOP_IDX``, cp_lpcount_``LOOP_IDX`` { \
-      ignore_bins ignore__lpstart_range_0 = binsof (cp_lpstart_``LOOP_IDX``) intersect {[32'h0000_03FC : 32'h0000_0004]}; \
-      ignore_bins ignore__lpstart_range_2 = binsof (cp_lpstart_``LOOP_IDX``) intersect {[32'h0000_FFFC : 32'h0000_1000]}; \
-      ignore_bins ignore__lpend_range_0   = binsof (cp_lpend_``LOOP_IDX``)   intersect {[32'h0000_03FC : 32'h0000_0004]}; \
+      ignore_bins ignore__lpstart_range_0 = binsof (cp_lpstart_``LOOP_IDX``.lpstart_range_0); \
+      ignore_bins ignore__lpstart_range_2 = binsof (cp_lpstart_``LOOP_IDX``.lpstart_range_2); \
+      ignore_bins ignore__lpend_range_0   = binsof (cp_lpend_``LOOP_IDX``.lpend_range_0); \
+      // ignore below due to long simtime if cross higher count with large loop \
+      ignore_bins ignore__lpcount_low4    = binsof (cp_lpcount_``LOOP_IDX``.lpcount_range_low_4); \
     } \
     ccp_lpstart_2_lpend_lpcount_``LOOP_IDX : cross cp_lpstart_``LOOP_IDX``, cp_lpend_``LOOP_IDX``, cp_lpcount_``LOOP_IDX`` { \
-      ignore_bins ignore__lpstart_range_0 = binsof (cp_lpstart_``LOOP_IDX``) intersect {[32'h0000_03FC : 32'h0000_0004]}; \
-      ignore_bins ignore__lpstart_range_1 = binsof (cp_lpstart_``LOOP_IDX``) intersect {[32'h0000_0FFC : 32'h0000_0400]}; \
-      ignore_bins ignore__lpend_range_0   = binsof (cp_lpend_``LOOP_IDX``)   intersect {[32'h0000_03FC : 32'h0000_0004]}; \
-      ignore_bins ignore__lpend_range_1   = binsof (cp_lpend_``LOOP_IDX``)   intersect {[32'h0000_0FFC : 32'h0000_0400]}; \
+      ignore_bins ignore__lpstart_range_0 = binsof (cp_lpstart_``LOOP_IDX``.lpstart_range_0); \
+      ignore_bins ignore__lpstart_range_1 = binsof (cp_lpstart_``LOOP_IDX``.lpstart_range_1); \
+      ignore_bins ignore__lpend_range_0   = binsof (cp_lpend_``LOOP_IDX``.lpend_range_0); \
+      ignore_bins ignore__lpend_range_1   = binsof (cp_lpend_``LOOP_IDX``.lpend_range_1); \
+      // ignore below due to long simtime if cross higher count with large loop \
+      ignore_bins ignore__lpcount_low4    = binsof (cp_lpcount_``LOOP_IDX``.lpcount_range_low_4); \
     } \
   endgroup : cg_csr_hwloop_``LOOP_IDX
 

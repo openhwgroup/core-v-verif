@@ -53,6 +53,7 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
   bit                         use_prev_rd_on_next_operands;       // previous instr rd is used for directed instr operands
   bit                         use_diff_regs_for_operands = 0;     // to control rand instr uses different registers for instr oeprands
   bit                         more_weight_for_fdiv_fsqrt_gen;     // more weight on generating fdiv and fsqrt directed_instr
+  bit                         use_only_for_fdiv_fsqrt_gen;        // use only fdiv and fsqrt directed_instr
   bit                         init_gpr = (is_zfinx) ? 1 : 0;      // initialize gpr registers in stream with rand value
   bit                         init_fpr = (is_zfinx) ? 0 : 1;      // initialize fpr registers in stream with rand value
   bit                         en_clr_fflags_af_instr;             // clear fflag to prevent residual fflags status of current f_instr
@@ -415,9 +416,9 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       end
     end
 
-    if (more_weight_for_fdiv_fsqrt_gen) begin
+    if (more_weight_for_fdiv_fsqrt_gen || use_only_for_fdiv_fsqrt_gen) begin
       if (select_fp_instr) // is fp
-        if ($urandom_range(1)) // 50% rate of getting fdiv/fsqrt
+        if ($urandom_range(1) || use_only_for_fdiv_fsqrt_gen)
           include_instr = new[1] ($urandom_range(1) ? {FDIV_S} : {FSQRT_S});
     end
 
@@ -829,6 +830,17 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
       instr_list.push_back(wfi_instr);
       instr_list[$].comment = {instr_list[$].comment, $sformatf(" [WFI Insertion] ")};
   endfunction: insert_wfi_instr
+
+  // add illegal
+  virtual function void insert_illegal_instr();
+      riscv_instr illegal_instr;
+      illegal_instr = new riscv_instr::get_rand_instr(
+        .include_instr({NOP}) // create a placholder insn
+      );
+      illegal_instr.is_illegal_instr = 1; // tag this as illegal 
+      instr_list.push_back(illegal_instr);
+      instr_list[$].comment = {instr_list[$].comment, $sformatf(" [Illegal Insertion] ")};
+  endfunction: insert_illegal_instr
 
   // for overriding direct instr operands with previous instruc rd/fd
   virtual function void f_use_prev_rd_on_next_operands(
