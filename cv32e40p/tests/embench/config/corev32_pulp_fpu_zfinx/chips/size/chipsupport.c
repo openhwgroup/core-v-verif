@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include "chipsupport.h"
 
+static uint32_t start_time, stop_time;
+
 void
 initialise_board ()
 {

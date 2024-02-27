@@ -19,6 +19,7 @@
 
 #include <support.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "chipsupport.h"
 
 void
@@ -31,8 +32,6 @@ initialise_board ()
 void __attribute__ ((noinline)) __attribute__ ((externally_visible))
 start_trigger ()
 {
- 
-  
   __asm__ volatile ("li a0, 0" : : : "memory");
 }
 

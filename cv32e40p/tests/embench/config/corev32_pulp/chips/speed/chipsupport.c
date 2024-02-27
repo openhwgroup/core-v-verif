@@ -19,7 +19,12 @@
 
 #include <support.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "chipsupport.h"
+
+extern void _exit();
+
+static uint32_t start_time, stop_time;
 
 void
 initialise_board ()
@@ -32,16 +37,19 @@ void __attribute__ ((noinline)) __attribute__ ((externally_visible))
 start_trigger ()
 {
   printf("start of test \n");
-  //reset cycle counter
-  TICKS_ADDR = 0;
-  
+
+  // Enable mcycle counter and read value
+  __asm__ volatile("csrci mcountinhibit, 0x1"); // mcountinhibit.cy = 0
+  __asm__ volatile("rdcycle %0" : "=r"(start_time));
+
   __asm__ volatile ("li a0, 0" : : : "memory");
 }
 
 void __attribute__ ((noinline)) __attribute__ ((externally_visible))
 stop_trigger ()
 {
-  uint32_t cycle_cnt = TICKS_ADDR;
+  __asm__ volatile("rdcycle %0" : "=r"(stop_time));
+  uint32_t cycle_cnt = stop_time - start_time;
   printf("end of test \n");
   printf("Result is given in CPU cycles \n");
   printf("RES: %d \n", cycle_cnt);

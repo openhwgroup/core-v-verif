@@ -75,12 +75,14 @@
 
 # - we garbage collect unused sections on linking
 
+# '-ffunction-sections', '-fdata-sections', '-msave-restore', 
+
 cflags = [
-  '-c', '-Os', '-ffunction-sections', '-msave-restore', '-mabi=ilp32', '-march=rv32imc_zicsr'
+  '-c', '-Os', '-ffunction-sections', '-mabi=ilp32', '-march=rv32imc_zicsr_zifencei_xcvmem_xcvmac_xcvbi_xcvalu_xcvsimd_xcvbitmanip'
 ]
 
 ldflags = [
-    '-Wl,-gc-sections', '-Wl,-A,elf32lriscv', '-nostartfiles', '-nostdlib', '-mabi=ilp32', '-march=rv32imc_zicsr'
+    '-Wl,-gc-sections', '-Wl,-A,elf32lriscv', '-nostartfiles', '-nostdlib', '-mabi=ilp32', '-march=rv32imc_zicsr_zifencei_xcvmem_xcvmac_xcvbi_xcvalu_xcvsimd_xcvbitmanip'
 ]
 
 dummy_libs = ['crt0', 'libm', 'libc', 'libgcc']

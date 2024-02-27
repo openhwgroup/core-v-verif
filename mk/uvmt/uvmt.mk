@@ -371,8 +371,8 @@ clean_hex:
 	rm -rf $(SIM_TEST_PROGRAM_RESULTS)
 
 clean_test_programs: clean_bsp
-	if [ -d "$(SIM_RESULTS)" ]; then \
-		find $(SIM_RESULTS) -depth -type d -name test_program | xargs rm -rf; \
+	if [ -d "$(SIM_CFG_RESULTS)" ]; then \
+		find $(SIM_CFG_RESULTS) -depth -type d -name test_program | xargs rm -rf; \
 	fi
 
 clean_riscv-dv:
@@ -383,8 +383,8 @@ clean_embench:
 	rm -rf $(EMBENCH_PKG)
 	cd $(EMBENCH_TESTS) && \
 		find . ! -path . ! -path ./README.md -delete
-	if [ -d "$(SIM_RESULTS)" ]; then \
-		cd $(SIM_RESULTS) && find . -depth -type d -name "emb_*" | xargs rm -rf; \
+	if [ -d "$(SIM_CFG_RESULTS)" ]; then \
+		cd $(SIM_CFG_RESULTS) && find . -depth -type d -name "emb_*" | xargs rm -rf; \
 	fi
 
 clean_dpi_dasm_spike:
