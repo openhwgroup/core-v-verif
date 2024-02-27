@@ -127,7 +127,7 @@ task uvmt_cv32e40p_firmware_test_c::run_phase(uvm_phase phase);
    // start_clk() and watchdog_timer() are called in the base_test
    super.run_phase(phase);
 
-   if ($test$plusargs("gen_random_debug")) begin
+   if ($test$plusargs("gen_random_debug") || $test$plusargs("gen_reduced_rand_dbg_req")) begin
     fork
       random_debug();
     join_none
@@ -147,12 +147,6 @@ task uvmt_cv32e40p_firmware_test_c::run_phase(uvm_phase phase);
    if ($test$plusargs("debug_boot_set")) begin
     fork
       bootset_debug();
-    join_none
-   end
-
-   if ($test$plusargs("gen_reduced_rand_dbg_req")) begin
-    fork
-      random_debug();
     join_none
    end
 

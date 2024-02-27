@@ -221,4 +221,30 @@
 `define CSR_MCONFIGPTR_ADDR     32'hF15
 
 
+  // BELOW ARE USE FOR SPECIAL HACKS PURPOSE - START
+
+    // 1 - To cover directives instr/data gnt assert-deassert when req is low
+    `define TB_HACK_1_OBI_GNT(TYPE) initial begin : hack_obi_intf_gnt_signal_1_``TYPE \
+      if ($test$plusargs("tb_hack_1_obi_gnt_signal")) begin \
+        int success_addr_phase_cnt = 0, hack_cnt = 0; \
+        forever begin \
+          @(posedge obi_memory_``TYPE``_if.clk); \
+            if (obi_memory_``TYPE``_if.req && obi_memory_``TYPE``_if.gnt) success_addr_phase_cnt++; \
+            if (success_addr_phase_cnt > 5) begin \
+              if (!obi_memory_``TYPE``_if.req & !obi_memory_``TYPE``_if.gnt) begin \
+              #1ps; \
+              if (!obi_memory_``TYPE``_if.req & !obi_memory_``TYPE``_if.gnt) begin \
+                force   obi_memory_``TYPE``_if.gnt = 1; \
+                @(posedge obi_memory_``TYPE``_if.clk); release obi_memory_``TYPE``_if.gnt; hack_cnt++; \
+              end \
+              end \
+            end \
+            if (hack_cnt > 2) break; \
+        end // forever \
+      end \
+    end
+
+  // BELOW ARE USE FOR SPECIAL HACKS PURPOSE - END
+
+
 `endif // __UVMT_CV32E40P_MACROS_SV__
