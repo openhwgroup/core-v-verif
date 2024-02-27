@@ -54,3 +54,10 @@ tests:
     test_cfg: gen_rand_int
     skip_sim: pulp
     num: 5
+
+  debug_test_trigger:
+    build: uvmt_cv32e40p
+    description: This custom legacy test is needed to improve func coverage holes in uvme_debug_covg
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=debug_test_trigger
+    num: 1

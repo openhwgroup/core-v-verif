@@ -622,6 +622,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
                                        .set_label_for_first_instr(1),
                                        .str_lbl_str(start_label_s),
                                        .end_lbl_str(end_label_s),
+                                       .instr_label(label_s));
 
               //Insert Random instructions till Loop HWLOOP_START0/1 label ->  use_setup_inst ? 0 : num_fill_instr_loop_ctrl_to_loop_start[0/1]
               if(!use_setup_inst[hwloop_L])
