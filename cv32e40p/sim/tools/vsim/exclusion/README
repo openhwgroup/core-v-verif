@@ -1,0 +1,47 @@
+This directory contains waiver files for cv32e40p v2 verification.
+Tool specific: Visualizer. 
+
+----------------------------------------------------
+Filenames are in following format for easy reference: 
+cv32e40pv2_<func/code>_<module/cfg>_waiver.do
+----------------------------------------------------
+
+e.g.
+1. for RTL code coverage waiver
+
+    cv32e40pv2_code_all_cfg_waiver.do   : code coverage waiver common to all configurations. 
+    cv32e40pv2_code_pulp_cfg_waiver.do  : additional code coverage waiver applicable to pulp config only. 
+
+2. For function coverage waiver
+
+    cv32e40pv2_func_asrt_n_directive_waiver.do  : func coverage waiver related to assert & directive.
+    cv32e40pv2_func_uvme_interrupt_waiver.do    : func coverage waiver related to interrupt.
+
+3. One consolidated exclusion.do is available for each of the configurations. User shall load only this exclusion.do that will automatically load all the necessary waivers specific for that config. This helps to avoid possilibity of missing out or loading wrong exclusions. 
+
+    cv32e40p/sim/tools/vsim/exclusion/pulp/exclusion.do       : for pulp config
+    cv32e40p/sim/tools/vsim/exclusion/pulp_fpu/exclusion.do   : for pulp_fpu config
+
+
+----------------------------------------------------
+Steps to load ucdb and apply exclusions:
+----------------------------------------------------
+==========================
+GUI mode - post-processing
+==========================
+1. Open ucdb file, change RTL source path to your repo (only needed if you want to view source code in the visualizer GUI)
+visualizer -ucdbfile <your.ucdb> +change_file_path+<old_rtl_path>=<new_rtl_path>
+
+2. Load waivers
+    a. In visualizer command line, type:
+        do <your_repo>/cv32e40p/sim/tools/vsim/exclusion/<cfg>/exclusion.do
+    b. In "Pending Exclusions" window, click "Execute All Commands".
+
+===========================
+batch mode - automatic apply waiver 
+===========================
+Currently our Make flow does not take in waiver automatically. 
+To do this, the vsim.mk need to be enhance with following:
+    compile with +cover switch
+    vsim -coverage <design_name> -do exclusions.do
+    run -all

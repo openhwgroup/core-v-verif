@@ -64,7 +64,7 @@ group {{project}} {
         test precmd {
             sv_seed: gen_random;
             count: 1;
-            run_script: 'cd {{t.abs_dir}} && {{t.precmd}} CV_SIM_PREFIX= CV_CORE={{project}} CFG={{build.cfg}} RISCVDV_CFG={{t.riscvdv_cfg}} {{toolchain|upper}}=1 SIMULATOR={{t.simulator}} RNDSEED=$RUN_ENV(BRUN_SV_SEED) NUM_TESTS={{t.num}} {{regress_macros.cv_results(results)}} {{makeargs}}';
+            run_script: 'cd {{t.abs_dir}} && {{t.precmd}} CV_SIM_PREFIX= CV_CORE={{project}} CFG={{build.cfg}} {{toolchain|upper}}=1 SIMULATOR={{t.simulator}} RNDSEED=$RUN_ENV(BRUN_SV_SEED) NUM_TESTS={{t.num}} {{regress_macros.cv_results(results)}} {{makeargs}}';
         };
 {% else %}
 {% endif %}

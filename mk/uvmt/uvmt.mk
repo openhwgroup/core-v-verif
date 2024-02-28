@@ -169,8 +169,6 @@ export RISCV_DV_ROOT         = $(RISCVDV_PKG)
 export COREV_DV_ROOT         = $(COREVDV_PKG)
 export CV_CORE_COREV_DV_ROOT = $(CV_CORE_COREVDV_PKG)
 
-RISCVDV_CFG ?=
-
 # EMBench benchmarking suite
 EMBENCH_PKG	:= $(CORE_V_VERIF)/$(CV_CORE_LC)/vendor_lib/embench
 EMBENCH_TESTS	:= $(CORE_V_VERIF)/$(CV_CORE_LC)/tests/programs/embench
