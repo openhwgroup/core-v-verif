@@ -1800,6 +1800,10 @@ class cv32e40p_fp_op_fwd_instr_w_loadstore_stream extends cv32e40p_float_zfinx_b
             unique case (instr2.category)
               STORE, POST_INC_STORE : begin // S[B|H|WW], C_SW[SP], C_FSW[SP], CV_S[B|H|W]
                         instr2.rs1 = (is_zfinx) ? instr_zfinx.rd : instr_f.rd;
+                        if (instr2.category == POST_INC_STORE && j != num_of_load_store_instr-1) begin // no special handle on last load/store
+                          assert(instr2.has_rd); // rd here is rs3 in spec
+                          instr2.rd = ZERO;      // prevent post incr to update rs1 that target into code space
+                        end
                         last_store_rs1 = instr2.rs1; has_store = 1;
                       end
               LOAD, POST_INC_LOAD : begin // L[B|H|W], C_LW[SP], C_FLW[SP], CV_L[B|H|W|BU|HU]
@@ -1810,6 +1814,10 @@ class cv32e40p_fp_op_fwd_instr_w_loadstore_stream extends cv32e40p_float_zfinx_b
                           if (instr2.has_rs1 && instr_zfinx.has_rd)   begin instr2.rs1 = instr_zfinx.rd;  last_store_rs1 = instr2.rs1; end
                         end
                         if (instr2.has_rd)                            begin last_load_rd = instr2.rd;     has_load_rd = 1; end
+                        if (instr2.category == POST_INC_LOAD && j != num_of_load_store_instr-1) begin // no special handle on last load/store
+                          assert(instr2.has_rs2);
+                          instr2.rs2 = ZERO;     // prevent post incr to update rs1 that target into code space
+                        end
                         cnt = 0;
                         while (instr2.rd == instr2.rs1) begin
                           int unsigned idx = $urandom_range(avail_gp_regs[i].size()-1);
