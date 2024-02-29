@@ -18,30 +18,27 @@ module pipeline_shell
     end
 
     logic [31:0] irq_drv_ff;
-    logic irq_prev;
+    logic irq_pending;
 
     assign rvfi_o.clk = clk_i;
 
     always_ff @(posedge clk_i) begin
+        irq_drv_ff <= interrupt_if_i.irq_drv;
+        if (irq_drv_ff != interrupt_if_i.irq_drv) begin
+            iss_intr(interrupt_if_i.irq_drv);
+            if(interrupt_if_i.irq_drv)
+                irq_pending = 1'b1; //set if not 0
+        end
+
         if(rvfi_i.rvfi_valid) begin
-            if(rvfi_i.rvfi_intr) begin
-                iss_intr(32'h00000008);
-                irq_prev = 1'b1;
-
-
+            if (irq_pending) begin
+                //take interrupt
                 rvfi_o.intr.intr = 1'b1;
                 rvfi_o.intr.exception = 1'b0;
                 rvfi_o.intr.interrupt = 1'b1;
                 rvfi_o.intr.cause = 11'h003;
-            end
-            else if(irq_prev) begin
-                iss_intr(32'h00000000);
-                irq_prev = 1'b0;
 
-                rvfi_o.intr.intr = 1'b0;
-                rvfi_o.intr.exception = 1'b0;
-                rvfi_o.intr.interrupt = 1'b0;
-                rvfi_o.intr.cause = 11'h000;
+                irq_pending = 1'b0;
             end
             else begin
                 rvfi_o.intr.intr = 1'b0;
