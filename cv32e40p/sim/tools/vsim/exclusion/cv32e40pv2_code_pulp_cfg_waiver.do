@@ -26,7 +26,6 @@ coverage exclude -line 1558 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_t
 coverage exclude -line 920 -code e -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i -comment {No FPU in this configuration.}
 coverage exclude -line 1675 -code e -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i -comment {No FPU in this configuration.}
 coverage exclude -line 529 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i -comment {No FPU in this configuration.}
-coverage exclude -line 724 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i -comment {No FPU in this configuration. }
 coverage exclude -line 1553 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i -comment {No FPU in this configuration. }
 coverage exclude -line 236 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {No FPU in this configuration.}
 coverage exclude -line 242 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {No FPU in this configuration.}
