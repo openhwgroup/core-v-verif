@@ -58,6 +58,7 @@ coverage exclude -line 528 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb
 coverage exclude -line 645 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i -comment {IMB_S3 never exists in the decoder. This is unreachable.}
 coverage exclude -line 528 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i -comment {reg_c = S1 never exist in the decoder. This is unreachable.}
 coverage exclude -line 645 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i -comment {IMB_S3 never exists in the decoder. This is unreachable.}
+coverage exclude -line 724 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i -comment {scalar_replication_c is never asserted. Can olny be asserted for vector float instruction. Unreachable in all conf we verify for v2. Reachable only in vector conf.}
 coverage exclude -line 362 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i -comment {No user mode in this configuration.}
 coverage exclude -line 362 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i -comment {No user mode in this configuration. }
 coverage exclude -line 81 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/if_stage_i/prefetch_buffer_i/fifo_i -comment {We never overflow the fifo.}
