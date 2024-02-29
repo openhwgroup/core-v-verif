@@ -111,11 +111,11 @@ function void check_4bit(input string compared, input bit [3:0] core, input logi
       if(~(rvfi_core.mem_rmask[511:4] || rvfi_core.mem_wmask[511:4])) begin
         //Disable checking of rd1 if a trap occurs, since core and Spike mismatch
         if(~(rvfi_core.trap || rvfi_rm.trap)) begin
-        check_32bit("rd1_addr", rvfi_core.rd1_addr, rvfi_rm.rd1_addr);
+          check_32bit("rd1_addr", rvfi_core.rd1_addr, rvfi_rm.rd1_addr);
 
-        // rd1_wdata is not guaranteed to be 0 even though rd1_addr is 0
-        if(rvfi_core.rd1_addr != 0) begin
-          check_32bit("rd1_wdata", rvfi_core.rd1_wdata, rvfi_rm.rd1_wdata);
+          // rd1_wdata is not guaranteed to be 0 even though rd1_addr is 0
+          if(rvfi_core.rd1_addr != 0) begin
+            check_32bit("rd1_wdata", rvfi_core.rd1_wdata, rvfi_rm.rd1_wdata);
           end
         end
 
@@ -180,7 +180,7 @@ module uvmt_cv32e40s_reference_model_wrap
 
     rvfi_if_t rvfi_o();
     rvfi_if_t rvfi_core();
-    //int clock_cnt;
+    int clock_cnt;
 
     reference_model reference_model_i(
        .clk_i(`RVFI_IF.clk),
@@ -198,6 +198,10 @@ module uvmt_cv32e40s_reference_model_wrap
 
    uvme_cv32e40s_cfg_c  uvm_env_cfg;
 
+   int fd; 
+   string line;
+   logic [31:0] irq_drv_ff;
+
    initial begin
      @(`RVFI_IF.clk);
      void'(uvm_config_db#(uvme_cv32e40s_cfg_c)::get(null, "uvm_test_top.env", "cfg", uvm_env_cfg));
@@ -207,10 +211,36 @@ module uvmt_cv32e40s_reference_model_wrap
      else begin
       `uvm_info(info_tag, $sformatf("Found UVM environment configuration handle:\n%s", uvm_env_cfg.sprint()), UVM_DEBUG)
      end
+
+     fd = $fopen("reference_model.log", "w");
+     $fdisplay(fd, "Reference model logging");
+
    end
 
+    always_ff @(posedge rvfi_o.clk) begin
+      $sformat(line, "");
+      irq_drv_ff <= `INTERRUPT_IF.irq_drv;
+      if (irq_drv_ff != `INTERRUPT_IF.irq_drv) begin
+        $sformat(line, "MIP set to: %x",`INTERRUPT_IF.irq_drv);
+        $fdisplay(fd, line);
+      end
 
-    always_ff @(posedge `RVFI_IF.clk) begin
+      if(rvfi_o.valid) begin
+        $sformat(line, " %-8s | %d | %x (%x) | %x, (%x) |",`RVFI_IF.instr_asm.instr.name(), clock_cnt, rvfi_core.pc_rdata, rvfi_core.insn, rvfi_o.pc_rdata, rvfi_o.insn);
+        if (rvfi_core.intr) begin
+          $sformat(line, "%s Core INTR Taken", line);
+        end
+        if (rvfi_o.intr) begin
+          $sformat(line, "%s RM INTR Taken", line);
+        end
+        $fdisplay(fd, line);
+
+        clock_cnt = 0;
+      end
+      else
+        clock_cnt++;
+    end
+
     assign rvfi_core.clk = `RVFI_IF.clk;
     assign rvfi_core.valid = `RVFI_IF.rvfi_valid;
 
@@ -249,11 +279,8 @@ module uvmt_cv32e40s_reference_model_wrap
 
       //`uvm_info("RM count", $sformatf("PC: %x | CNT: %d", rvfi_core.pc_rdata, clock_cnt), UVM_NONE)
 
-      //clock_cnt = 0;
      end
-     else begin
-      //clock_cnt = clock_cnt + 1;
-     end
+      
     end
 
     /*
