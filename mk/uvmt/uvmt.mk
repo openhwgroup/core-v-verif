@@ -130,7 +130,8 @@ export IMPERAS_DV_HOME          = $(CORE_V_VERIF)/vendor_lib/ImperasDV
 # Reference Model
 export RM_HOME 					= $(CORE_V_VERIF)/lib/reference_model
 #SPIKE_HOME 						= $(RM_HOME)/riscv-isa-sim
-SPIKE_HOME 						= $(HOME)/cva6/verif/core-v-verif/vendor/riscv/riscv-isa-sim
+#Temporary use spike from different branch until cv32e40s branch is merged with main
+SPIKE_HOME 						= $(HOME)/spike-core-v-verif/vendor/riscv/riscv-isa-sim
 
 SPIKE_INSTALL_DIR 				= $(CORE_V_VERIF)/tools/spike
 
