@@ -1,0 +1,178 @@
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+index 62dd261e7..c047446d5 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Proc.cc
+@@ -18,6 +18,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
+   memset(&rvfi, 0, sizeof(st_rvfi));
+ 
+   this->taken_trap = false;
++  this->which_trap = 0;
+ 
+   rvfi.pc_rdata = this->get_state()->pc;
+   processor_t::step(n);
+@@ -37,21 +38,30 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
+   // TODO add rs2_value
+ 
+   rvfi.trap = this->taken_trap;
+-  rvfi.cause = this->which_trap;
++  rvfi.trap |= (this->which_trap << 1);
+ 
+   bool got_commit = false;
+   for (auto &reg : reg_commits) {
+-
+-    if (!got_commit) {
+-      rvfi.rd1_addr = reg.first >> 4;
+-      if (rvfi.rd1_addr > 32)
+-        continue;
+-      // TODO FIXME Take into account the XLEN/FLEN for int/FP values.
+-      rvfi.rd1_wdata = reg.second.v[0];
+-      // TODO FIXME Handle multiple register commits per cycle.
+-      // TODO FIXME This must be handled on the RVFI side as well.
+-      got_commit = true; // FORNOW Latch only the first commit.
+-    }
++      if ((reg.first >> 4) > 32) {
++          if ((reg.first >> 4) < 0xFFF) {
++            for (size_t i = 0; i < CSR_SIZE; i++) {
++                if (!rvfi.csr_valid[i]) {
++                    rvfi.csr_valid[i] = 1;
++                    rvfi.csr_addr[i] = reg.first >> 4;
++                    rvfi.csr_wdata[i] = reg.second.v[0];
++                    rvfi.csr_wmask[i] = -1;
++                    break;
++                }
++            }
++          }
++      }
++      else {
++        // TODO FIXME Take into account the XLEN/FLEN for int/FP values.
++        rvfi.rd1_addr = reg.first >> 4;
++        rvfi.rd1_wdata = reg.second.v[0];
++        // TODO FIXME Handle multiple register commits per cycle.
++        // TODO FIXME This must be handled on the RVFI side as well.
++      }
+   }
+ 
+   // Inject values comming from the reference
+@@ -77,7 +87,6 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
+     rvfi.pc_rdata &= 0xffffffffULL;
+     rvfi.rd1_wdata &= 0xffffffffULL;
+   }
+-
+   return rvfi;
+ }
+ 
+@@ -97,8 +106,7 @@ Processor::Processor(
+ 
+   string isa_str = std::any_cast<string>(this->params[base + "isa"]);
+   string priv_str = std::any_cast<string>(this->params[base + "priv"]);
+-  std::cout << "[SPIKE] Proc 0 | ISA: " << isa_str << " PRIV: " << priv_str
+-            << std::endl;
++  std::cout << "[SPIKE] Proc 0 | ISA: " << isa_str << " PRIV: " << priv_str << std::endl;
+   this->isa =
+       (const isa_parser_t *)new isa_parser_t(isa_str.c_str(), priv_str.c_str());
+ 
+@@ -154,10 +162,12 @@ Processor::Processor(
+   this->put_csr(CSR_PMPCFG0,
+                 std::any_cast<uint64_t>(this->params[base + "pmpcfg0"]));
+ 
+-  this->put_csr(CSR_MVENDORID,
+-                std::any_cast<uint64_t>(this->params[base + "mvendorid"]));
+-  this->put_csr(CSR_MARCHID,
+-                std::any_cast<uint64_t>(this->params[base + "marchid"]));
++  this->state.csrmap[CSR_MVENDORID] =
++      std::make_shared<const_csr_t>(this, CSR_MVENDORID, std::any_cast<uint64_t>(this->params[base + "mvendorid"]));
++  this->state.csrmap[CSR_MHARTID] =
++      std::make_shared<const_csr_t>(this, CSR_MHARTID, std::any_cast<uint64_t>(this->params[base + "mhartid"]));
++  this->state.csrmap[CSR_MARCHID] =
++      std::make_shared<const_csr_t>(this, CSR_MHARTID, std::any_cast<uint64_t>(this->params[base + "marchid"]));
+ 
+   bool fs_field_we_enable =
+       std::any_cast<bool>(this->params[base + "status_fs_field_we_enable"]);
+@@ -209,6 +219,7 @@ void Processor::default_params(string base, openhw::Params &params) {
+   params.set(base, "pmpcfg0", any(0x0UL), "uint64_t", "0x0",
+              "Default PMPCFG0 value");
+   params.set(base, "marchid", any(0x3UL), "uint64_t", "0x3", "MARCHID value");
++  params.set(base, "mhartid", any(0x0UL), "uint64_t", "0x0", "MHARTID value");
+   params.set(base, "mvendorid", any(0x00000602UL), "uint64_t", "0x00000602UL",
+              "MVENDORID value");
+   params.set(base, "extensions", any(std::string("")), "string",
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc b/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
+index 4610b9b6a..8886e5dea 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/Simulation.cc
+@@ -172,8 +172,9 @@ void Simulation::make_mems(const std::vector<mem_cfg_t> &layout) {
+   bool dram = std::any_cast<bool>(this->params["/top/dram"]);
+   uint64_t dram_base = std::any_cast<uint64_t>(this->params["/top/dram_base"]);
+   uint64_t dram_size = std::any_cast<uint64_t>(this->params["/top/dram_size"]);
+-  if (dram)
++  if (dram) {
+     this->mems.push_back(std::make_pair(dram_base, new mem_t(dram_size)));
++  }
+ }
+ 
+ std::vector<st_rvfi> Simulation::step(size_t n,
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/Types.h b/vendor/riscv/riscv-isa-sim/riscv/Types.h
+index 55ece7df5..90bbff619 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/Types.h
++++ b/vendor/riscv/riscv-isa-sim/riscv/Types.h
+@@ -9,14 +9,14 @@
+ #include <sys/types.h>
+ #include "Params.h"
+ 
++#define CSR_SIZE 10
+ 
+-typedef struct  {
++typedef struct {
+    uint64_t                 nret_id;
+    uint64_t                 cycle_cnt;
+    uint64_t                 order;
+    uint64_t                 insn;
+    uint64_t                 trap;
+-   uint64_t                 cause;
+    uint64_t                 halt;
+    uint64_t                 intr;
+    uint64_t                 mode;
+@@ -55,5 +55,12 @@ typedef struct  {
+    uint64_t                 mem_wdata;
+    uint64_t                 mem_wmask;
+ 
++   uint64_t                 csr_valid   [CSR_SIZE];
++   uint64_t                 csr_addr    [CSR_SIZE];
++   uint64_t                 csr_rdata   [CSR_SIZE];
++   uint64_t                 csr_rmask   [CSR_SIZE];
++   uint64_t                 csr_wdata   [CSR_SIZE];
++   uint64_t                 csr_wmask   [CSR_SIZE];
++
+ } st_rvfi;
+ 
+diff --git a/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+index de95d4df7..2654f4271 100644
+--- a/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
++++ b/vendor/riscv/riscv-isa-sim/riscv/riscv_dpi.cc
+@@ -148,22 +148,22 @@ extern "C" void spike_create(const char *filename) {
+ // Convert svOpenArrayHandle -> st_rvfi
+ void sv2rvfi(st_rvfi &rvfi, svOpenArrayHandle svOpen) {
+   size_t size = svSize(svOpen, 1);
+-  uint64_t *array_ptr = (uint64_t *)svGetArrayPtr(svOpen);
+   uint64_t *rvfi_ptr = (uint64_t *)&rvfi;
+ 
+   for (size_t i = 0; i < size; i++) {
+-    rvfi_ptr[i] = array_ptr[size - i - 1];
++    uint64_t *array_ptr = (uint64_t *)svGetArrElemPtr1(svOpen, size - i - 1);
++    rvfi_ptr[i] = array_ptr[0];
+   }
+ }
+ 
+ // Convert st_rvfi -> svOpenArrayHandle
+ void rvfi2sv(st_rvfi &rvfi, svOpenArrayHandle svOpen) {
+   size_t size = sizeof(st_rvfi) / 8; // To match 64 byte fields
+-  uint64_t *array_ptr = (uint64_t *)svGetArrayPtr(svOpen);
+   uint64_t *rvfi_ptr = (uint64_t *)&rvfi;
+ 
+   for (size_t i = 0; i < size; i++) {
+-    array_ptr[size - i - 1] = rvfi_ptr[i];
++    uint64_t *array_ptr = (uint64_t *)svGetArrElemPtr1(svOpen, size - i - 1);
++    array_ptr[0] = rvfi_ptr[i];
+   }
+ }
+ 
