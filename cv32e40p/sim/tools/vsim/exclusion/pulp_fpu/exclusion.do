@@ -9,3 +9,6 @@ do ../cv32e40pv2_func_uvme_debug_waiver.do
 
 # code coverage : common waiver
 do ../cv32e40pv2_code_all_cfg_waiver.do
+
+# code coverage : fpu cfg specific waiver
+do ../cv32e40pv2_code_fpu_cfg_waiver.do
