@@ -832,6 +832,14 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
   endfunction: insert_wfi_instr
 
   // add illegal
+  /* Description:
+  *     Directed stream class is to generate a stream of valid riscv_instructions which will be stored in the instr_list.
+  *     In order to insert illegal instruction in directed stream, following is the workaround used in this function.
+  *     - create a valid riscv_instr (it is just a placeholder to allocate a place for illegal instruction insertion).
+  *     - set the helper field "is_illegal_instr" on this valid riscv_instr for post processing of directed stream in cv32e40p_instr_sequence.
+  *     - in sequece, once detected valid riscv_instr with is_illegal_instr==1, it will be replaced with illegal instruction generated from riscv_illegal_instr.
+  *       (note: riscv_illegal_instr which generate a random illegal instruction based on configuration and return it as string)
+  */
   virtual function void insert_illegal_instr();
       riscv_instr illegal_instr;
       illegal_instr = new riscv_instr::get_rand_instr(
