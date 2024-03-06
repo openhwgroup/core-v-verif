@@ -187,6 +187,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
         cp_curr_fpu_apu_op_multicycle : coverpoint cntxt.cov_vif.o_curr_fpu_apu_op_if iff (`COVIF_CB.apu_busy == 1)
         {
             `FPU_OP_BINS
+            ignore_bins cfg_0cyclat_insns = {`RV32F_OP_WITHOUT_FDIV_FSQRT} with (fpu_latency == 0);
             option.weight = 5;
         }
 
