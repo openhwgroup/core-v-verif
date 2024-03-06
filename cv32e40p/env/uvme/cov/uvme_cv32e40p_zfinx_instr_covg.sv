@@ -71,7 +71,7 @@ class uvme_cv32e40p_zfinx_instr_covg extends uvm_component;
      ignore_bins no_contention = binsof(cp_apu_contention) intersect {1};
 
     `define IGNORE_BINS_NON_RS3_ZFINX_INSTR \
-     ignore_bins non_rs3_f_inst = !binsof(cp_id_stage_f_inst) intersect {`RV32F_INSTR_WITH_NO_FS3};
+     ignore_bins non_rs3_f_inst = !binsof(cp_id_stage_f_inst) intersect {`RV32F_INSTR_WITH_FS3};
 
     `define IGNORE_BINS_NO_CONTENTION_LSU \
      ignore_bins no_contention_lsu_wr = binsof(cp_apu_contention) intersect {0};
