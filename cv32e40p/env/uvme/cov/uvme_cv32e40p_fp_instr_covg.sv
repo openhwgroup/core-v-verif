@@ -58,14 +58,20 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
      ignore_bins in_contention_lsu_wr = ( binsof(cp_apu_contention) intersect {1} ) \
                                         with ( ((cp_curr_fpu_apu_op + 1) * (fpu_latency == 1)) != 0 );
 
+    `define IGNORE_BINS_NON_FS1_F_INSTR \
+     ignore_bins non_fs3_f_inst = !binsof(cp_id_stage_f_inst) intersect {`RV32F_INSTR_WITH_FS1};
+
+    `define IGNORE_BINS_NON_FS2_F_INSTR \
+     ignore_bins non_fs3_f_inst = !binsof(cp_id_stage_f_inst) intersect {`RV32F_INSTR_WITH_FS2};
+
     `define IGNORE_BINS_NON_FS3_F_INSTR \
-     ignore_bins non_fs3_f_inst = !binsof(cp_id_stage_f_inst) intersect {`RV32F_INSTR_WITH_NO_FS3};
+     ignore_bins non_fs3_f_inst = !binsof(cp_id_stage_f_inst) intersect {`RV32F_INSTR_WITH_FS3};
 
     `define IGNORE_BINS_NON_RD_F_INSTR \
      ignore_bins non_rd_f_inst = !binsof(cp_curr_fpu_apu_op) intersect {`APU_INSTR_WITH_NO_FD};
 
     `define IGNORE_BINS_NON_RS_F_INSTR_IN_ID \
-     ignore_bins non_rs_id_stage_f_inst = !binsof(cp_id_stage_f_inst) intersect {APU_OP_I2F, APU_OP_I2F_U};
+     ignore_bins non_rs_id_stage_f_inst = !binsof(cp_id_stage_f_inst) intersect {TB_INS_FCVTSW, TB_INS_FCVTSWU};
 
     `define IGNORE_BINS_NON_RS1_CV32E40P_INSTR \
      ignore_bins non_rs1_rv32_instr = binsof(cp_id_stage_non_rv32fc_inst) intersect {TB_OPCODE_LUI,TB_OPCODE_AUIPC,TB_OPCODE_JAL};
@@ -109,6 +115,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 5;
         }
 
+        // from bhv_logic_1
         cp_f_multicycle_clk_window : coverpoint cntxt.cov_vif.if_clk_cycle_window iff ((`COVIF_CB.is_mulh_ex == 0) &&
                                                                                        (`COVIF_CB.is_misaligned_data_req_ex == 0) &&
                                                                                        (`COVIF_CB.is_post_inc_ld_st_inst_ex == 0) &&
@@ -162,11 +169,13 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 1;
         }
 
+        // from bhv_logic_1
         cp_curr_fpu_apu_op : coverpoint cntxt.cov_vif.o_curr_fpu_apu_op_if {
             `FPU_OP_BINS
             option.weight = 5;
         }
 
+        // from bhv_logic_1
         cp_curr_fpu_apu_op_at_apu_req : coverpoint cntxt.cov_vif.o_curr_fpu_apu_op_if iff ( (`COVIF_CB.apu_req == 1) &&
                                                                                             (`COVIF_CB.apu_gnt == 1) )
         {
@@ -174,6 +183,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 5;
         }
 
+        // from bhv_logic_1
         cp_curr_fpu_apu_op_multicycle : coverpoint cntxt.cov_vif.o_curr_fpu_apu_op_if iff (`COVIF_CB.apu_busy == 1)
         {
             `FPU_OP_BINS
@@ -241,6 +251,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
 
             option.weight = 50;
             `FPU_MULTICYCLE_WINDOW_ILLEGAL_CASES
+            ignore_bins nolatency = binsof(cp_f_multicycle_clk_window.clk1); // for latency == 1 (a.k.a no latency), cp_id_stage_apu_op_ex_o == cp_curr_fpu_apu_op
         }
 
     endgroup : cg_f_multicycle
@@ -275,11 +286,13 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 1;
         }
 
+        // from bhv_logic_1
         cp_curr_fpu_apu_op : coverpoint cntxt.cov_vif.o_curr_fpu_apu_op_if {
             `FPU_OP_BINS
             option.weight = 5;
         }
 
+        // from bhv_logic_2 -- only for 1cyclat
         cp_last_fpu_apu_op_at_contention : coverpoint cntxt.cov_vif.o_last_fpu_apu_op_if {
             bins curr_apu_op_fmadd        =    {APU_OP_FMADD}       with ( ((item + 1) * (fpu_latency == 1)) != 0 );
             bins curr_apu_op_fnmsub       =    {APU_OP_FNMSUB}      with ( ((item + 1) * (fpu_latency == 1)) != 0 );
@@ -333,11 +346,13 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 1;
         }
 
+        // from bhv_logic_3
         cp_curr_fpu_inst_fd : coverpoint cntxt.cov_vif.curr_fpu_fd {
             bins fd[] = {[0:31]};
             option.weight = 1;
         }
 
+        // from bhv_logic_3
         cp_curr_fpu_inst_fd_for_0_lat_apu_result : coverpoint cntxt.cov_vif.curr_fpu_fd
                                                               iff ( (`COVIF_CB.apu_req == 1) &&
                                                                     (`COVIF_CB.apu_gnt == 1) &&
@@ -347,6 +362,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 1;
         }
 
+        // from bhv_logic_3
         cp_curr_fpu_inst_fd_for_multicyc_lat_apu_result : coverpoint cntxt.cov_vif.curr_fpu_fd
                                                                      iff ( (`COVIF_CB.apu_busy == 1) &&
                                                                            (`COVIF_CB.apu_rvalid_i == 1) ) {
@@ -355,11 +371,13 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 1;
         }
 
+        // from bhv_logic_3
         cp_curr_fpu_inst_rd : coverpoint cntxt.cov_vif.curr_fpu_rd {
             bins rd[] = {[0:31]};
             option.weight = 1;
         }
 
+        // from bhv_logic_3
         cp_curr_fpu_inst_rd_for_0_lat_apu_result : coverpoint cntxt.cov_vif.curr_fpu_rd
                                                               iff ( (`COVIF_CB.apu_req == 1) &&
                                                                     (`COVIF_CB.apu_gnt == 1) &&
@@ -369,6 +387,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 1;
         }
 
+        // from bhv_logic_3
         cp_curr_fpu_inst_rd_for_multicyc_lat_apu_result : coverpoint cntxt.cov_vif.curr_fpu_rd
                                                                      iff ( (`COVIF_CB.apu_busy == 1) &&
                                                                            (`COVIF_CB.apu_rvalid_i == 1) ) {
@@ -383,14 +402,20 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 1;
         }
 
+        // from bhv_logic_3
         cp_lsu_apu_contention_wr_rd : coverpoint cntxt.cov_vif.curr_rd_at_wb_regfile_wr_contention {
             bins rd[] = {[0:31]}                        with ( ((item + 1) * (fpu_latency == 1)) != 0 );
             illegal_bins rd_addr_32_63 = {[32:63]}      with ( ((item + 1) * (fpu_latency == 1)) != 0 );
             option.weight = 1;
         }
 
+        // from bhv_logic_2 (revised)
+        // [optional] this cp is optional as contention has no relation with rd/fd
+        // note: retain this cp and 100% on cp is not necessary
         cp_prev_rd_waddr_contention : coverpoint cntxt.cov_vif.prev_rd_waddr_contention {
-            bins rd[] = {[0:63]};
+            bins rd[] = {[1:31]} with ( ((item + 1) * (fpu_latency == 1)) != 0 );
+            bins fd[] = {[32:63]};
+            ignore_bins zero = {0};
             option.weight = 1;
         }
 
@@ -407,30 +432,40 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 5;
         }
 
+        // from bhv_logic_3
+        // next fp_insn fs1 is fd of current fp_insn
         cp_fd_fs1_eq : coverpoint (`COVIF_CB.id_stage_instr_rdata_i[19:15] == cntxt.cov_vif.curr_fpu_fd)
                                   iff (`COVIF_CB.id_stage_instr_valid_i == 1) {
 
             bins fd_fs1_equal = {1};
         }
 
+        // from bhv_logic_3
+        // next fp_insn fs2 is fd of current fp_insn
         cp_fd_fs2_eq : coverpoint (`COVIF_CB.id_stage_instr_rdata_i[24:20] == cntxt.cov_vif.curr_fpu_fd)
                                   iff (`COVIF_CB.id_stage_instr_valid_i == 1) {
 
             bins fd_fs2_equal = {1};
         }
 
+        // from bhv_logic_3
+        // next fp_insn fs3 is fd of current fp_insn
         cp_fd_fs3_eq : coverpoint (`COVIF_CB.id_stage_instr_rdata_i[31:27] == cntxt.cov_vif.curr_fpu_fd)
                                   iff (`COVIF_CB.id_stage_instr_valid_i == 1) {
 
             bins fd_fs3_equal = {1};
         }
 
+        // from bhv_logic_3
+        // next insn rs1 is rd of current fp_insn
         cp_rd_rs1_eq : coverpoint (`COVIF_CB.id_stage_instr_rdata_i[19:15] == cntxt.cov_vif.curr_fpu_rd)
                                   iff (`COVIF_CB.id_stage_instr_valid_i == 1) {
 
             bins rd_rs1_equal = {1};
         }
 
+        // from bhv_logic_3
+        // next insn rs2 is rd of current fp_insn
         cp_rd_rs2_eq : coverpoint (`COVIF_CB.id_stage_instr_rdata_i[24:20] == cntxt.cov_vif.curr_fpu_rd)
                                   iff (`COVIF_CB.id_stage_instr_valid_i == 1) {
 
@@ -449,93 +484,77 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
         
         //*********************************************************************************************************
         // CASES WITH/WITHOUT CONTENTION AT THE TIME OF APU RESULT WRITE TO REGFILE
-        // WHERE APU WRITE WILL WIN (APU LATENCY = 0,2,3,4)
+        // WHERE APU WRITE WILL WIN (APU LATENCY = 0,2)
         //*********************************************************************************************************
 
-        // cross coverage for F-instr following F-instr with fd to fs1 dependency
-        // case with APU latency > 0
+        // cross coverage for F-instr following F-instr with fd to fs1 dependency - for 1/2 latency
         cr_fd_fs1_eq_nonzero_lat : cross cp_fd_fs1_eq,
                                          cp_id_stage_f_inst,
                                          cp_curr_fpu_inst_fd_for_multicyc_lat_apu_result,
-                                         cp_curr_fpu_apu_op,
-                                         cp_apu_contention {
+                                         cp_curr_fpu_apu_op {
 
             option.weight = 50;
-            `IGNORE_BINS_NON_FD_F_INSTR
-            `IGNORE_BINS_ZERO_LAT_FPU_OP
-            `IGNORE_BINS_CONTENTION_IN_LSU_WITH_APU
+            `IGNORE_BINS_NON_FS1_F_INSTR            // ignore insn that no fs1
+            `IGNORE_BINS_NON_FD_F_INSTR             // ignore insn APU_OP_FCMP, APU_OP_FCLASSIFY, APU_OP_F2I, APU_OP_F2I_U
+            `IGNORE_BINS_ZERO_LAT_FPU_OP            // only apply in 0cyclat - ignore insn except div and sqrt
         }
 
-        // cross coverage for F-instr following F-instr with fd to fs2 dependency
-        // case with APU latency > 0
+        // cross coverage for F-instr following F-instr with fd to fs2 dependency - for 1/2 latency
         cr_fd_fs2_eq_nonzero_lat : cross cp_fd_fs2_eq,
                                          cp_id_stage_f_inst,
                                          cp_curr_fpu_inst_fd_for_multicyc_lat_apu_result,
-                                         cp_curr_fpu_apu_op,
-                                         cp_apu_contention {
+                                         cp_curr_fpu_apu_op {
 
             option.weight = 50;
+            `IGNORE_BINS_NON_FS2_F_INSTR            // ignore insn that no fs2
             `IGNORE_BINS_NON_FD_F_INSTR
             `IGNORE_BINS_ZERO_LAT_FPU_OP
-            `IGNORE_BINS_CONTENTION_IN_LSU_WITH_APU
         }
 
-        // cross coverage for F-instr following F-instr with fd to fs3 dependency
-        // case with APU latency > 0
+        // cross coverage for F-instr following F-instr with fd to fs3 dependency - for 1/2 latency
         cr_fd_fs3_eq_nonzero_lat : cross cp_fd_fs3_eq,
                                          cp_id_stage_f_inst,
                                          cp_curr_fpu_inst_fd_for_multicyc_lat_apu_result,
-                                         cp_curr_fpu_apu_op,
-                                         cp_apu_contention {
+                                         cp_curr_fpu_apu_op {
 
             option.weight = 50;
+            `IGNORE_BINS_NON_FS3_F_INSTR            // ignore insn that no fs3
             `IGNORE_BINS_NON_FD_F_INSTR
             `IGNORE_BINS_ZERO_LAT_FPU_OP
-            `IGNORE_BINS_CONTENTION_IN_LSU_WITH_APU
-            `IGNORE_BINS_NON_FS3_F_INSTR
         }
 
-        // cross coverage for F-instr following F-instr with rd to rs1 dependency
-        // case with APU latency > 0
+        // cross coverage for F-instr following F-instr with rd to rs1 dependency - for 1/2 latency
         cr_rd_rs1_eq_nonzero_lat  :  cross cp_rd_rs1_eq,
                                            cp_id_stage_f_inst,
                                            cp_curr_fpu_inst_rd_for_multicyc_lat_apu_result,
-                                           cp_curr_fpu_apu_op,
-                                           cp_apu_contention {
+                                           cp_curr_fpu_apu_op {
 
             option.weight = 50;
-            `IGNORE_BINS_ZERO_LAT_FPU_OP
-            `IGNORE_BINS_CONTENTION_IN_LSU_WITH_APU
-            `IGNORE_BINS_NON_RD_F_INSTR
-            `IGNORE_BINS_NON_RS_F_INSTR_IN_ID
+            `IGNORE_BINS_ZERO_LAT_FPU_OP            // only apply in 0cyclat - ignore insn except div and sqrt
+            `IGNORE_BINS_NON_RD_F_INSTR             // ignore insn except APU_OP_FCMP, APU_OP_FCLASSIFY, APU_OP_F2I, APU_OP_F2I_U in ex_state
+            `IGNORE_BINS_NON_RS_F_INSTR_IN_ID       // ignore insn except TB_INS_FCVTSW, TB_INS_FCVTSWU in dec_state
         }
 
-        // cross coverage for Non F-instr following F-instr with rd to rs1 dependency
-        // case with APU latency > 0
+        // cross coverage for Non F-instr following F-instr with rd to rs1 dependency - for 1/2 latency
         cr_rv32f_rd_non_rv32f_rs1_eq_nonzero_lat : cross cp_rd_rs1_eq,
                                                          cp_id_stage_non_rv32fc_inst,
                                                          cp_curr_fpu_inst_rd_for_multicyc_lat_apu_result,
-                                                         cp_curr_fpu_apu_op,
-                                                         cp_apu_contention {
+                                                         cp_curr_fpu_apu_op {
 
             option.weight = 50;
             `IGNORE_BINS_ZERO_LAT_FPU_OP
-            `IGNORE_BINS_CONTENTION_IN_LSU_WITH_APU
             `IGNORE_BINS_NON_RD_F_INSTR
             `IGNORE_BINS_NON_RS1_CV32E40P_INSTR
         }
 
-        // cross coverage for Non F-instr following F-instr with rd to rs2 dependency
-        // case with APU latency > 0
+        // cross coverage for Non F-instr following F-instr with rd to rs2 dependency - for 1/2 latency
         cr_rv32f_rd_non_rv32f_rs2_eq_nonzero_lat : cross cp_rd_rs2_eq,
                                                          cp_id_stage_non_rv32fc_inst,
                                                          cp_curr_fpu_inst_rd_for_multicyc_lat_apu_result,
-                                                         cp_curr_fpu_apu_op,
-                                                         cp_apu_contention {
+                                                         cp_curr_fpu_apu_op {
 
             option.weight = 50;
             `IGNORE_BINS_ZERO_LAT_FPU_OP
-            `IGNORE_BINS_CONTENTION_IN_LSU_WITH_APU
             `IGNORE_BINS_NON_RD_F_INSTR
             `IGNORE_BINS_NON_RS2_CV32E40P_INSTR
         }
@@ -561,8 +580,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
         cr_fd_fs1_eq_no_lat  :  cross cp_fd_fs1_eq,
                                       cp_id_stage_f_inst,
                                       cp_curr_fpu_inst_fd_for_0_lat_apu_result,
-                                      cp_curr_fpu_apu_op,
-                                      cp_apu_contention {
+                                      cp_curr_fpu_apu_op {
 
             option.weight = 50;
             bins main_cr_bin = cr_fd_fs1_eq_no_lat with ( (cp_fd_fs1_eq == 1) & (fpu_latency == 0) );
@@ -574,8 +592,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
         cr_fd_fs2_eq_no_lat  :  cross cp_fd_fs2_eq,
                                       cp_id_stage_f_inst,
                                       cp_curr_fpu_inst_fd_for_0_lat_apu_result,
-                                      cp_curr_fpu_apu_op,
-                                      cp_apu_contention {
+                                      cp_curr_fpu_apu_op {
 
             option.weight = 50;
             bins main_cr_bin = cr_fd_fs2_eq_no_lat with ( (cp_fd_fs2_eq == 1) & (fpu_latency == 0) );
@@ -587,8 +604,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
         cr_fd_fs3_eq_no_lat  :  cross cp_fd_fs3_eq,
                                       cp_id_stage_f_inst,
                                       cp_curr_fpu_inst_fd_for_0_lat_apu_result,
-                                      cp_curr_fpu_apu_op,
-                                      cp_apu_contention {
+                                      cp_curr_fpu_apu_op {
 
             option.weight = 50;
             bins main_cr_bin =  cr_fd_fs3_eq_no_lat with ( (cp_fd_fs3_eq == 1) & (fpu_latency == 0) );
@@ -597,12 +613,12 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             `IGNORE_BINS_NON_FS3_F_INSTR
         }
 
-        // cross coverage for F-instr following F-instr with rd to rs1 dependency - 0 Latency
+        // cross coverage for F-instr following F-instr with rd to rs1 dependency - 0 latency
+        // example: insn[0].rd == insn[1].rs1 (both are fp_insn)
         cr_rd_rs1_eq_no_lat  :  cross cp_rd_rs1_eq,
                                       cp_id_stage_f_inst,
                                       cp_curr_fpu_inst_rd_for_0_lat_apu_result,
-                                      cp_curr_fpu_apu_op,
-                                      cp_apu_contention {
+                                      cp_curr_fpu_apu_op {
 
             option.weight = 50;
             bins main_cr_bin =  cr_rd_rs1_eq_no_lat with ( (cp_rd_rs1_eq == 1) & (fpu_latency == 0) );
@@ -615,8 +631,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
         cr_rv32f_rd_non_rv32fc_rs1_eq_no_lat  :  cross cp_rd_rs1_eq,
                                                        cp_id_stage_non_rv32fc_inst,
                                                        cp_curr_fpu_inst_rd_for_0_lat_apu_result,
-                                                       cp_curr_fpu_apu_op,
-                                                       cp_apu_contention {
+                                                       cp_curr_fpu_apu_op {
 
             option.weight = 50;
             bins main_cr_bin =  cr_rv32f_rd_non_rv32fc_rs1_eq_no_lat
@@ -629,8 +644,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
         cr_rv32f_rd_non_rv32fc_rs2_eq_no_lat  :  cross cp_rd_rs2_eq,
                                                        cp_id_stage_non_rv32fc_inst,
                                                        cp_curr_fpu_inst_rd_for_0_lat_apu_result,
-                                                       cp_curr_fpu_apu_op,
-                                                       cp_apu_contention {
+                                                       cp_curr_fpu_apu_op {
 
             option.weight = 50;
             bins main_cr_bin = cr_rv32f_rd_non_rv32fc_rs2_eq_no_lat
@@ -702,7 +716,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             `IGNORE_BINS_CONTENTION_AT_LSU_REGFILE_WR
         }
 
-        // cross coverage for F-instr following F-instr with rd to rs1 dependency
+        // cross coverage for F-instr following F-instr with rd to rs1 dependency - 1 latency
         // case with APU latency = 1 and contention with LSU
         cr_rd_rs1_eq_nonzero_lat_with_contention : cross cp_rd_rs1_eq,
                                                          cp_id_stage_f_inst,
