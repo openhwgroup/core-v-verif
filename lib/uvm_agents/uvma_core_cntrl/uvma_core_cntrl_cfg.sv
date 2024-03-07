@@ -31,7 +31,7 @@
     // Major mode enable controls
    rand bit                      enabled;
    rand uvm_active_passive_enum  is_active;
-   rand bit                      scoreboarding_enabled;
+   rand bit                      scoreboard_enabled;
    bit                           disable_all_csr_checks;
    bit [CSR_MASK_WL-1:0]         disable_csr_check_mask;
    rand bit                      cov_model_enabled;
@@ -95,10 +95,17 @@
    int unsigned                  num_mhpmcounters;
    uvma_core_cntrl_pma_region_c  pma_regions[];
 
+   rand bit  unsigned            dram_valid;
+   rand longint unsigned         dram_base;
+   rand longint unsigned         dram_size;
+
    // Common bootstrap addresses
    // The valid bits should be constrained if the bootstrap signal is not valid for this core configuration
    rand bit [MAX_XLEN-1:0]       mhartid;
    bit                           mhartid_plusarg_valid;
+
+   rand bit [MAX_XLEN-1:0]       marchid;
+   bit                           marchid_plusarg_valid;
 
    rand bit [MAX_XLEN-1:0]       mvendorid;
    bit                           mvendorid_plusarg_valid;
@@ -129,7 +136,7 @@
    `uvm_field_utils_begin(uvma_core_cntrl_cfg_c);
       `uvm_field_int (                         enabled                        , UVM_DEFAULT          )
       `uvm_field_enum(uvm_active_passive_enum, is_active                      , UVM_DEFAULT          )
-      `uvm_field_int (                         scoreboarding_enabled          , UVM_DEFAULT          )
+      `uvm_field_int (                         scoreboard_enabled             , UVM_DEFAULT          )
       `uvm_field_int (                         disable_all_csr_checks         , UVM_DEFAULT          )
       `uvm_field_int (                         disable_csr_check_mask         , UVM_DEFAULT | UVM_NOPRINT )
       `uvm_field_int (                         cov_model_enabled              , UVM_DEFAULT          )
@@ -171,7 +178,11 @@
       `uvm_field_enum(endianness_t,            endianness                     , UVM_DEFAULT          )
       `uvm_field_int(                          num_mhpmcounters               , UVM_DEFAULT          )
       `uvm_field_array_object(                 pma_regions                    , UVM_DEFAULT          )
+      `uvm_field_int(                          dram_valid                     , UVM_DEFAULT          )
+      `uvm_field_int(                          dram_base                      , UVM_DEFAULT          )
+      `uvm_field_int(                          dram_size                      , UVM_DEFAULT          )
       `uvm_field_int(                          mhartid                        , UVM_DEFAULT          )
+      `uvm_field_int(                          marchid                        , UVM_DEFAULT          )
       `uvm_field_int(                          mvendorid                      , UVM_DEFAULT          )
       `uvm_field_int(                          mimpid                         , UVM_DEFAULT          )
       `uvm_field_int(                          boot_addr                      , UVM_DEFAULT          )
@@ -196,6 +207,7 @@
       soft is_active              == UVM_PASSIVE;
       soft cov_model_enabled      == 1;
       soft trn_log_enabled        == 1;
+      soft dram_valid             == 0;
    }
 
    constraint riscv_cons_soft {
@@ -269,7 +281,8 @@
    /**
     * Get list of supported CSRs
     */
-   extern function void get_supported_csrs(ref string csrs[$]);
+   extern function void get_supported_csrs_names(ref string csrs[$]);
+   extern function void get_supported_csrs_addrs(ref longint unsigned csrs[$]);
 
    /**
     * Since B extension is broken into subsections, this is a convenience function to determine
@@ -304,6 +317,11 @@ function uvma_core_cntrl_cfg_c::new(string name="uvme_cv_base_cfg");
    if (read_cfg_plusarg_xlen("mhartid", mhartid)) begin
       mhartid_plusarg_valid = 1;
       mhartid.rand_mode(0);
+   end
+
+   if (read_cfg_plusarg_xlen("marchid", marchid)) begin
+      marchid_plusarg_valid = 1;
+      marchid.rand_mode(0);
    end
 
    if (read_cfg_plusarg_xlen("mvendorid", mvendorid)) begin
@@ -632,7 +650,7 @@ function void uvma_core_cntrl_cfg_c::read_disable_csr_check_plusargs();
 
 endfunction : read_disable_csr_check_plusargs
 
-function void uvma_core_cntrl_cfg_c::get_supported_csrs(ref string csrs[$]);
+function void uvma_core_cntrl_cfg_c::get_supported_csrs_names(ref string csrs[$]);
 
    instr_csr_t csr;
 
@@ -649,7 +667,26 @@ function void uvma_core_cntrl_cfg_c::get_supported_csrs(ref string csrs[$]);
       csr = csr.next();
    end
 
-endfunction : get_supported_csrs
+endfunction : get_supported_csrs_names
+
+function void uvma_core_cntrl_cfg_c::get_supported_csrs_addrs(ref longint unsigned csrs[$]);
+
+   instr_csr_t csr;
+
+   // Start from empty queue
+   csrs.delete();
+
+   csr = csr.first();
+   while (1) begin
+      if (!unsupported_csr_mask[csr])
+         csrs.push_back(csr);
+
+      if (csr == csr.last()) break;
+
+      csr = csr.next();
+   end
+
+endfunction : get_supported_csrs_addrs
 
 function bit uvma_core_cntrl_cfg_c::is_ext_b_supported();
 
@@ -703,7 +740,7 @@ function st_core_cntrl_cfg uvma_core_cntrl_cfg_c::to_struct();
 
     st.enabled = enabled;
     st.is_active = is_active;
-    st.scoreboarding_enabled = scoreboarding_enabled;
+    st.scoreboard_enabled = scoreboard_enabled;
     st.disable_all_csr_checks = disable_all_csr_checks;
     st.disable_csr_check_mask = disable_csr_check_mask;
     st.cov_model_enabled = cov_model_enabled;
@@ -758,7 +795,14 @@ function st_core_cntrl_cfg uvma_core_cntrl_cfg_c::to_struct();
 
     st.num_mhpmcounters = num_mhpmcounters;
 
+    st.dram_valid = dram_valid;
+    st.dram_base  = dram_base;
+    st.dram_size  = dram_size;
+
     st.mhartid = mhartid;
+    st.mhartid_plusarg_valid = mhartid_plusarg_valid;
+
+    st.marchid = marchid;
     st.mhartid_plusarg_valid = mhartid_plusarg_valid;
 
     st.mvendorid = mvendorid;
@@ -794,7 +838,7 @@ endfunction : to_struct
 function void uvma_core_cntrl_cfg_c::from_struct(st_core_cntrl_cfg st);
     enabled = st.enabled;
     is_active = st.is_active;
-    scoreboarding_enabled = st.scoreboarding_enabled;
+    scoreboard_enabled = st.scoreboard_enabled;
     disable_all_csr_checks = st.disable_all_csr_checks;
     disable_csr_check_mask = st.disable_csr_check_mask;
     cov_model_enabled = st.cov_model_enabled;
@@ -850,7 +894,14 @@ function void uvma_core_cntrl_cfg_c::from_struct(st_core_cntrl_cfg st);
 
     num_mhpmcounters = st.num_mhpmcounters;
 
+    dram_valid = st.dram_valid;
+    dram_base  = st.dram_base;
+    dram_size  = st.dram_size;
+
     mhartid = st.mhartid;
+    mhartid_plusarg_valid = st.mhartid_plusarg_valid;
+
+    marchid = st.marchid;
     mhartid_plusarg_valid = st.mhartid_plusarg_valid;
 
     mvendorid = st.mvendorid;
@@ -881,6 +932,4 @@ function void uvma_core_cntrl_cfg_c::from_struct(st_core_cntrl_cfg st);
 
 endfunction : from_struct
 `endif // __UVMA_CORE_CNTRL_CFG_SV__
-
-
 

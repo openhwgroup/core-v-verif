@@ -172,8 +172,9 @@ void Simulation::make_mems(const std::vector<mem_cfg_t> &layout) {
   bool dram = std::any_cast<bool>(this->params["/top/dram"]);
   uint64_t dram_base = std::any_cast<uint64_t>(this->params["/top/dram_base"]);
   uint64_t dram_size = std::any_cast<uint64_t>(this->params["/top/dram_size"]);
-  if (dram)
+  if (dram) {
     this->mems.push_back(std::make_pair(dram_base, new mem_t(dram_size)));
+  }
 }
 
 std::vector<st_rvfi> Simulation::step(size_t n,

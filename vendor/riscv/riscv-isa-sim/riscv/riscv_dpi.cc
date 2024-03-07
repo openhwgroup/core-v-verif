@@ -148,22 +148,22 @@ extern "C" void spike_create(const char *filename) {
 // Convert svOpenArrayHandle -> st_rvfi
 void sv2rvfi(st_rvfi &rvfi, svOpenArrayHandle svOpen) {
   size_t size = svSize(svOpen, 1);
-  uint64_t *array_ptr = (uint64_t *)svGetArrayPtr(svOpen);
   uint64_t *rvfi_ptr = (uint64_t *)&rvfi;
 
   for (size_t i = 0; i < size; i++) {
-    rvfi_ptr[i] = array_ptr[size - i - 1];
+    uint64_t *array_ptr = (uint64_t *)svGetArrElemPtr1(svOpen, size - i - 1);
+    rvfi_ptr[i] = array_ptr[0];
   }
 }
 
 // Convert st_rvfi -> svOpenArrayHandle
 void rvfi2sv(st_rvfi &rvfi, svOpenArrayHandle svOpen) {
   size_t size = sizeof(st_rvfi) / 8; // To match 64 byte fields
-  uint64_t *array_ptr = (uint64_t *)svGetArrayPtr(svOpen);
   uint64_t *rvfi_ptr = (uint64_t *)&rvfi;
 
   for (size_t i = 0; i < size; i++) {
-    array_ptr[size - i - 1] = rvfi_ptr[i];
+    uint64_t *array_ptr = (uint64_t *)svGetArrElemPtr1(svOpen, size - i - 1);
+    array_ptr[0] = rvfi_ptr[i];
   }
 }
 

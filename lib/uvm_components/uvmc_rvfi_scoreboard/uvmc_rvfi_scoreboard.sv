@@ -29,7 +29,12 @@ class uvmc_rvfi_scoreboard_c#(int ILEN=DEFAULT_ILEN,
    uvm_analysis_imp_rvfi_instr_reference_model#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvmc_rvfi_scoreboard_c) m_imp_reference_model;
    uvm_analysis_imp_rvfi_instr_core#(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN), uvmc_rvfi_scoreboard_c) m_imp_core;
 
-   `uvm_component_param_utils(uvmc_rvfi_scoreboard_c)
+   // Core configuration (used to extract list of CSRs)
+   uvma_core_cntrl_cfg_c         cfg;
+
+   `uvm_component_utils_begin(uvmc_rvfi_scoreboard_c)
+      `uvm_field_object(cfg,         UVM_DEFAULT | UVM_REFERENCE)
+   `uvm_component_utils_end
 
     uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) core[$];
     uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) reference_model[$];
@@ -46,6 +51,16 @@ class uvmc_rvfi_scoreboard_c#(int ILEN=DEFAULT_ILEN,
 
     endfunction : new
 
+   /**
+    * Uses uvm_config_db to retrieve cfg and hand out to sub-components.
+    */
+   extern function void get_and_set_cfg();
+
+   /*
+    *  Build Phase
+    */
+   extern function void build_phase(uvm_phase phase);
+
    /*
     *  Run Phase
     */
@@ -56,6 +71,17 @@ class uvmc_rvfi_scoreboard_c#(int ILEN=DEFAULT_ILEN,
    extern virtual function void write_rvfi_instr_core(uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) t);
 
 endclass : uvmc_rvfi_scoreboard_c
+
+function void uvmc_rvfi_scoreboard_c::build_phase(uvm_phase phase);
+    st_core_cntrl_cfg st;
+
+    get_and_set_cfg();
+
+    st = cfg.to_struct();
+
+    rvfi_initialize(st);
+
+endfunction : build_phase
 
 task uvmc_rvfi_scoreboard_c::run_phase(uvm_phase phase);
 
@@ -87,6 +113,18 @@ function void uvmc_rvfi_scoreboard_c::write_rvfi_instr_core(uvma_rvfi_instr_seq_
     core.push_back(t);
 
 endfunction : write_rvfi_instr_core
+
+function void uvmc_rvfi_scoreboard_c::get_and_set_cfg();
+
+   if (uvm_config_db#(uvma_core_cntrl_cfg_c)::get(this, "", "cfg", cfg)) begin
+      `uvm_info("CFG", $sformatf("Found configuration handle:\n%s", cfg.sprint()), UVM_DEBUG)
+      uvm_config_db#(uvma_core_cntrl_cfg_c)::set(this, "*", "cfg", cfg);
+   end
+   else begin
+      `uvm_fatal("CFG", $sformatf("%s: Could not find configuration handle", this.get_full_name()));
+   end
+
+endfunction : get_and_set_cfg
 
 `endif // __UVMA_RVFI_MON_TRN_LOGGER_SV__
 

@@ -218,8 +218,18 @@ module uvma_obi_memory_assert
     endcase
   endfunction : get_addr_lsb
 
+  // R-8 Data address LSBs must be consistent with byte enables on writes
+  function bit [3:0] get_min_be(bit [ADDR_WIDTH-1:0] addr);
+    casex (addr)
+      4'b???1: return 'b0000;
+      4'b??10: return 'b0010;
+      4'b?100: return 'b0100;
+      4'b1000: return 'b1000;
+    endcase
+  endfunction : get_min_be
+
   property p_addr_be_consistent;
-    req |-> addr[1:0] == get_addr_lsb(be);
+    disable iff (DATA_WIDTH !== 32) req |-> (get_min_be(addr) <= be);
   endproperty : p_addr_be_consistent
   a_addr_be_consistent: assert property(p_addr_be_consistent)
   else

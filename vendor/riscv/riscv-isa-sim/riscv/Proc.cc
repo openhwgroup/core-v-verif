@@ -18,6 +18,7 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
   memset(&rvfi, 0, sizeof(st_rvfi));
 
   this->taken_trap = false;
+  this->which_trap = 0;
 
   rvfi.pc_rdata = this->get_state()->pc;
   processor_t::step(n);
@@ -37,21 +38,30 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
   // TODO add rs2_value
 
   rvfi.trap = this->taken_trap;
-  rvfi.cause = this->which_trap;
+  rvfi.trap |= (this->which_trap << 1);
 
   bool got_commit = false;
   for (auto &reg : reg_commits) {
-
-    if (!got_commit) {
-      rvfi.rd1_addr = reg.first >> 4;
-      if (rvfi.rd1_addr > 32)
-        continue;
-      // TODO FIXME Take into account the XLEN/FLEN for int/FP values.
-      rvfi.rd1_wdata = reg.second.v[0];
-      // TODO FIXME Handle multiple register commits per cycle.
-      // TODO FIXME This must be handled on the RVFI side as well.
-      got_commit = true; // FORNOW Latch only the first commit.
-    }
+      if ((reg.first >> 4) > 32) {
+          if ((reg.first >> 4) < 0xFFF) {
+            for (size_t i = 0; i < CSR_SIZE; i++) {
+                if (!rvfi.csr_valid[i]) {
+                    rvfi.csr_valid[i] = 1;
+                    rvfi.csr_addr[i] = reg.first >> 4;
+                    rvfi.csr_wdata[i] = reg.second.v[0];
+                    rvfi.csr_wmask[i] = -1;
+                    break;
+                }
+            }
+          }
+      }
+      else {
+        // TODO FIXME Take into account the XLEN/FLEN for int/FP values.
+        rvfi.rd1_addr = reg.first >> 4;
+        rvfi.rd1_wdata = reg.second.v[0];
+        // TODO FIXME Handle multiple register commits per cycle.
+        // TODO FIXME This must be handled on the RVFI side as well.
+      }
   }
 
   // Inject values comming from the reference
@@ -77,7 +87,6 @@ st_rvfi Processor::step(size_t n, st_rvfi reference) {
     rvfi.pc_rdata &= 0xffffffffULL;
     rvfi.rd1_wdata &= 0xffffffffULL;
   }
-
   return rvfi;
 }
 
@@ -97,8 +106,7 @@ Processor::Processor(
 
   string isa_str = std::any_cast<string>(this->params[base + "isa"]);
   string priv_str = std::any_cast<string>(this->params[base + "priv"]);
-  std::cout << "[SPIKE] Proc 0 | ISA: " << isa_str << " PRIV: " << priv_str
-            << std::endl;
+  std::cout << "[SPIKE] Proc 0 | ISA: " << isa_str << " PRIV: " << priv_str << std::endl;
   this->isa =
       (const isa_parser_t *)new isa_parser_t(isa_str.c_str(), priv_str.c_str());
 
@@ -154,10 +162,12 @@ Processor::Processor(
   this->put_csr(CSR_PMPCFG0,
                 std::any_cast<uint64_t>(this->params[base + "pmpcfg0"]));
 
-  this->put_csr(CSR_MVENDORID,
-                std::any_cast<uint64_t>(this->params[base + "mvendorid"]));
-  this->put_csr(CSR_MARCHID,
-                std::any_cast<uint64_t>(this->params[base + "marchid"]));
+  this->state.csrmap[CSR_MVENDORID] =
+      std::make_shared<const_csr_t>(this, CSR_MVENDORID, std::any_cast<uint64_t>(this->params[base + "mvendorid"]));
+  this->state.csrmap[CSR_MHARTID] =
+      std::make_shared<const_csr_t>(this, CSR_MHARTID, std::any_cast<uint64_t>(this->params[base + "mhartid"]));
+  this->state.csrmap[CSR_MARCHID] =
+      std::make_shared<const_csr_t>(this, CSR_MHARTID, std::any_cast<uint64_t>(this->params[base + "marchid"]));
 
   bool fs_field_we_enable =
       std::any_cast<bool>(this->params[base + "status_fs_field_we_enable"]);
@@ -209,6 +219,7 @@ void Processor::default_params(string base, openhw::Params &params) {
   params.set(base, "pmpcfg0", any(0x0UL), "uint64_t", "0x0",
              "Default PMPCFG0 value");
   params.set(base, "marchid", any(0x3UL), "uint64_t", "0x3", "MARCHID value");
+  params.set(base, "mhartid", any(0x0UL), "uint64_t", "0x0", "MHARTID value");
   params.set(base, "mvendorid", any(0x00000602UL), "uint64_t", "0x00000602UL",
              "MVENDORID value");
   params.set(base, "extensions", any(std::string("")), "string",

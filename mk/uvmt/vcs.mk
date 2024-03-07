@@ -147,7 +147,13 @@ endif
 ################################################################################
 
 VCS_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
-VCS_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
+
+ifeq ($(call IS_YES,$(USE_ISS)),YES)
+    ifeq ($(ISS)),IMPERAS)
+	VCS_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
+    endif
+endif
+
 VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
     VCS_PLUSARGS += +USE_ISS

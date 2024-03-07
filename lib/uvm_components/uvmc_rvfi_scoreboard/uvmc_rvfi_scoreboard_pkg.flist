@@ -16,8 +16,9 @@
 
 
 // Directories
-+incdir+${DV_UVMC_RVFI_SB_PATH}
++incdir+${DV_UVMC_RVFI_SCOREBOARD_PATH}
++incdir+${SPIKE_PATH}/disasm/
 +incdir+${DV_UVMA_RVFI_PATH}
 
 // Files
-${DV_UVMC_RVFI_SB_PATH}/uvmc_rvfi_scoreboard_pkg.sv
+${DV_UVMC_RVFI_SCOREBOARD_PATH}/uvmc_rvfi_scoreboard_pkg.sv

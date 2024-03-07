@@ -57,7 +57,6 @@ package uvma_rvfi_pkg;
    // Agent components
    `include "uvma_rvfi_mon_trn_logger.sv"
    `include "uvma_rvfi_instr_mon.sv"
-   `include "uvma_rvfi_utils.sv"
    `include "uvma_rvfi_agent.sv"
 
 endpackage : uvma_rvfi_pkg

@@ -112,6 +112,8 @@ VLOG_FLAGS    ?= \
 		-suppress 13288 \
 		-suppress 2181 \
 		-suppress 13262 \
+		-suppress 13071 \
+		-suppress 13401 \
 		-suppress vlog-2745 \
 		-timescale "1ns/1ps" \
 		-sv \
@@ -125,10 +127,24 @@ VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 
 VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 
-# Add the ISS to compilation
-VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
+ifeq ($(call IS_YES,$(USE_ISS)),YES)
+    ifeq ($(ISS)),IMPERAS)
+	VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
+    endif
+    ifeq ($(ISS),SPIKE)
+	VSIM_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
+	LIBS = spike_lib
+    endif
+endif
+
+ifeq ($(call IS_YES,$(COMPILE_SPIKE)),YES)
+    VSIM_FLAGS += -sv_lib $(SPIKE_FESVR_LIB)
+    LIBS = spike_lib
+endif
+
 VLOG_FLAGS += "+define+$(CV_CORE_UC)_TRACE_EXECUTION"
 VLOG_FLAGS += "+define+UVM"
+VLOG_FLAGS += "+define+$(CORE_DEFINES)"
 
 ###############################################################################
 # VOPT (Optimization)
@@ -142,6 +158,7 @@ VOPT_FLAGS    ?= \
 
 ###############################################################################
 # VSIM (Simulaion)
+
 VSIM_FLAGS        += $(VSIM_USER_FLAGS)
 VSIM_FLAGS        += $(USER_RUN_FLAGS)
 VSIM_FLAGS        += -sv_seed $(RNDSEED)
@@ -463,7 +480,7 @@ lib: mk_vsim_dir $(CV_CORE_PKG) $(SVLIB_PKG) $(TBSRC_PKG) $(TBSRC)
 	fi
 
 # Target to run vlog over SystemVerilog source in $(VSIM_RESULTS)/
-vlog: lib
+vlog: $(LIBS) lib
 	@echo "$(BANNER)"
 	@echo "* Running vlog in $(SIM_CFG_RESULTS)"
 	@echo "* Log: $(SIM_CFG_RESULTS)/vlog.log"
