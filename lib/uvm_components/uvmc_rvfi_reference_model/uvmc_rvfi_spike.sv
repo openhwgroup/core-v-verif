@@ -46,8 +46,6 @@ class uvmc_rvfi_spike#(int ILEN=DEFAULT_ILEN,
 
        st = cfg.to_struct();
 
-       rvfi_set_core_cfg(st);
-
        rvfi_initialize_spike(cfg.core_name, st);
    endfunction : build_phase
 

@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-`ifndef __UVMA_RVFI_UTILS_SV__
-`define __UVMA_RVFI_UTILS_SV__
+`ifndef __UVMC_RVFI_UTILS_SV__
+`define __UVMC_RVFI_UTILS_SV__
 
 import "DPI-C" function int spike_create(string filename);
 
@@ -28,7 +27,7 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
 
     st_core_cntrl_cfg m_core_cfg;
 
-    function automatic string print_st_rvfi(ref st_rvfi st);
+    function automatic string rvfi_print_struct(ref st_rvfi st);
             uvma_rvfi_mode mode;
 
             $cast(mode, st.mode);
@@ -43,13 +42,14 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
                             st.rd1_addr, st.rd1_wdata,
                             dasm_insn(st.insn));
 
-    endfunction : print_st_rvfi
+    endfunction : rvfi_print_struct
 
-    function automatic void rvfi_set_core_cfg(st_core_cntrl_cfg core_cfg);
+    function automatic void rvfi_initialize(st_core_cntrl_cfg core_cfg);
 
         m_core_cfg = core_cfg;
+        void '(dasm_set_config(core_cfg.xlen, rvfi_get_isa_str(core_cfg), 0));
 
-    endfunction : rvfi_set_core_cfg
+    endfunction : rvfi_initialize
 
     function automatic void rvfi_compare(st_rvfi t_core, st_rvfi t_reference_model);
         int core_pc64, reference_model_pc64;
@@ -116,12 +116,12 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
         end
 
         if (error) begin
-            string instr_core = print_st_rvfi(t_core);
-            string instr_rm =   print_st_rvfi(t_reference_model);
+            string instr_core = rvfi_print_struct(t_core);
+            string instr_rm =   rvfi_print_struct(t_reference_model);
             `uvm_error("spike_tandem", {instr_rm, "\n", instr_rm, " <- CORE\n", cause_str});
         end
         else begin
-            `uvm_info("spike_tandem", print_st_rvfi(t_reference_model) , UVM_LOW)
+            `uvm_info("spike_tandem", rvfi_print_struct(t_reference_model) , UVM_LOW)
         end
 
     endfunction : rvfi_compare

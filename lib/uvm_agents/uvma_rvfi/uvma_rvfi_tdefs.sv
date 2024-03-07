@@ -79,6 +79,7 @@ typedef struct packed {
 } st_rvfi;
 
 `define ST_NUM_WORDS (($size(st_rvfi)/$size(longint unsigned)))
+parameter ST_NUM_WORDS =  (($size(st_rvfi)/$size(longint unsigned)));
 
 typedef union {
     st_rvfi rvfi;

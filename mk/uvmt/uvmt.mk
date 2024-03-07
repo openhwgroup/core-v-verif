@@ -72,6 +72,7 @@ SIMULATOR    ?= $(CV_SIMULATOR)
 
 # Optionally exclude the OVPsim (not recommended)
 USE_ISS      ?= YES
+ISS          ?= SPIKE
 
 # Common configuration variables
 CFG             ?= default

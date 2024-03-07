@@ -19,7 +19,6 @@
 
 // Directories
 +incdir+${DV_UVMA_RVFI_PATH}
-+incdir+${SPIKE_INSTALL_DIR}/include/disasm/
 
 // Files
 ${DV_UVMA_RVFI_PATH}/uvma_rvfi_pkg.sv

@@ -34,30 +34,16 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
         if ($value$plusargs("elf_file=%s", binary))
             `uvm_info("spike_tandem", $sformatf("Setting up Spike with binary %s...", binary), UVM_LOW);
 
-        rtl_isa = $sformatf("RV%-2dIM",
-                            core_cfg.xlen);
-        rtl_priv = "M";
-        if (core_cfg.ext_a_supported)       rtl_isa = {rtl_isa, "A"};
-        if (core_cfg.ext_f_supported)       rtl_isa = {rtl_isa, "F"};
-        if (core_cfg.ext_d_supported)       rtl_isa = {rtl_isa, "D"};
-        if (core_cfg.ext_c_supported)       rtl_isa = {rtl_isa, "C"};
-        if (core_cfg.ext_zba_supported)     rtl_isa = {rtl_isa, "_zba"};
-        if (core_cfg.ext_zbb_supported)     rtl_isa = {rtl_isa, "_zbb"};
-        if (core_cfg.ext_zbc_supported)     rtl_isa = {rtl_isa, "_zbc"};
-        if (core_cfg.ext_zbs_supported)     rtl_isa = {rtl_isa, "_zbs"};
-        if (core_cfg.ext_zcb_supported)     rtl_isa = {rtl_isa, "_zcb"};
-        if (core_cfg.ext_zicsr_supported)     rtl_isa = {rtl_isa, "_zicsr"};
-        if (core_cfg.ext_zicntr_supported)     rtl_isa = {rtl_isa, "_zicntr"};
+        if (binary == "") begin
+            `uvm_error("spike_tandem", "We need a preloaded binary for tandem verification");
+        end
 
-        if (core_cfg.mode_s_supported)      rtl_priv = {rtl_priv, "S"};
-        if (core_cfg.mode_u_supported)      rtl_priv = {rtl_priv, "U"};
+        rtl_isa = rvfi_get_isa_str(core_cfg);
+
+        rtl_priv = rvfi_get_priv_str(core_cfg);
 
         if (core_cfg.ext_cv32a60x_supported) begin
             void'(spike_set_param_str("/top/core/0/", "extensions", "cv32a60x"));
-        end
-
-        if (binary == "") begin
-            `uvm_error("spike_tandem", "We need a preloaded binary for tandem verification");
         end
 
         void'(spike_set_default_params(core_name));
@@ -87,16 +73,14 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
 
         void'(spike_create(binary));
 
-        void '(dasm_set_config(core_cfg.xlen, rtl_isa, 0));
-
     endfunction : rvfi_initialize_spike
 
     function automatic void rvfi_spike_step(ref st_rvfi s_core, ref st_rvfi s_reference_model);
 
         union_rvfi u_core;
         union_rvfi u_reference_model;
-        bit [63:0] a_core [`ST_NUM_WORDS-1:0];
-        bit [63:0] a_reference_model [`ST_NUM_WORDS-1:0];
+        bit [63:0] a_core [ST_NUM_WORDS-1:0];
+        bit [63:0] a_reference_model [ST_NUM_WORDS-1:0];
 
         u_core.rvfi = s_core;
 
