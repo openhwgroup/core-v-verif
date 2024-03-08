@@ -352,12 +352,11 @@ class uvme_cv32e40p_zfinx_instr_covg extends uvm_component;
             bins rd[] = {[0:31]};
         }
 
-      // fixme
         cp_curr_fpu_inst_rd_for_0_lat_apu_result : coverpoint cntxt.cov_vif.curr_fpu_rd
                                                               iff ( (`COVIF_CB.apu_req == 1) && 
                                                                     (`COVIF_CB.apu_gnt == 1) &&         
                                                                     (`COVIF_CB.apu_rvalid_i == 1) ) {
-            bins rd[] = {[0:31]};
+            bins rd[] = {[0:31]} with (fpu_latency == 0);
         }
 
         cp_curr_fpu_inst_rd_for_multicyc_lat_apu_result : coverpoint cntxt.cov_vif.curr_fpu_rd
