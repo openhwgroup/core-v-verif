@@ -22,7 +22,7 @@ import "DPI-C" function void spike_set_param_str(string base, string name, strin
 import "DPI-C" function void spike_set_param_bool(string base, string name, bit value);
 import "DPI-C" function void spike_set_default_params(string profile);
 
-import "DPI-C" function void spike_step_svOpenArray(inout bit [63:0] core[], inout bit [63:0] reference_model[]);
+import "DPI-C" function void spike_step_svLogic(inout vector_rvfi core, inout vector_rvfi reference_model);
 import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi reference_model);
 
     function automatic void rvfi_initialize_spike(string core_name, st_core_cntrl_cfg core_cfg);
@@ -79,20 +79,15 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
 
         union_rvfi u_core;
         union_rvfi u_reference_model;
-        bit [63:0] a_core [ST_NUM_WORDS-1:0];
-        bit [63:0] a_reference_model [ST_NUM_WORDS-1:0];
+        bit [ST_NUM_WORDS-1:0][63:0] a_core;
+        bit [ST_NUM_WORDS-1:0][63:0] a_reference_model;
 
         u_core.rvfi = s_core;
 
-        foreach(u_core.array[i]) begin
-            a_core[i] = u_core.array[i];
-        end
+        spike_step_svLogic(a_core, a_reference_model);
 
-        spike_step_svOpenArray(a_core, a_reference_model);
+        u_reference_model.array = a_reference_model;
 
-        foreach(a_reference_model[i]) begin
-            u_reference_model.array[i] = a_reference_model[i];
-        end
         s_reference_model = u_reference_model.rvfi;
 
     endfunction : rvfi_spike_step

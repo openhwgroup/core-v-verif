@@ -18,6 +18,6 @@
 
 +incdir+${DV_UVMA_ISACOV_PATH}
 +incdir+${DV_UVMA_ISACOV_PATH}/cov
-+incdir+${SPIKE_PATH}/riscv/disasm/
++incdir+${SPIKE_PATH}/disasm/
 
 ${DV_UVMA_ISACOV_PATH}/uvma_isacov_pkg.sv

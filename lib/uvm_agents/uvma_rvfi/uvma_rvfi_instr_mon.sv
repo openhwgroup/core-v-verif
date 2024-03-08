@@ -140,7 +140,7 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
 
           nret_id = i;
           monitor_condition = (!cfg.unified_exceptions) ?
-                              (cntxt.instr_vif[nret_id].mon_cb.rvfi_valid || cntxt.instr_vif[nret_id].mon_cb.rvfi_trap) :
+                              (cntxt.instr_vif[nret_id].mon_cb.rvfi_valid || cntxt.instr_vif[nret_id].mon_cb.rvfi_trap[0]) :
                               (cntxt.instr_vif[nret_id].mon_cb.rvfi_valid);
 
           if (monitor_condition) begin
@@ -216,11 +216,9 @@ task uvma_rvfi_instr_mon_c::monitor_rvfi_instr();
                           addr = supported_csrs_addrs[i];
                           csr_trn = uvma_rvfi_csr_seq_item_c#(XLEN)::type_id::create({addr, "_trn"});
                           csr_trn.addr = addr;
-                          if (cntxt.csr_unified_vif[nret_id].mon_cb.rvfi_named_csr_wmask[addr] != 0 && !mon_trn.addr_csrs.exists(addr)) begin
-                              csr_trn.wmask = cntxt.csr_unified_vif[nret_id].mon_cb.rvfi_named_csr_wmask[addr];
-                              csr_trn.wdata = cntxt.csr_unified_vif[nret_id].mon_cb.rvfi_named_csr_wdata[addr];
-                              mon_trn.addr_csrs[addr] = csr_trn;
-                          end
+                          csr_trn.wmask = cntxt.csr_unified_vif[nret_id].mon_cb.rvfi_named_csr_wmask[addr];
+                          csr_trn.wdata = cntxt.csr_unified_vif[nret_id].mon_cb.rvfi_named_csr_wdata[addr];
+                          mon_trn.addr_csrs[addr] = csr_trn;
                       end
                   end
 

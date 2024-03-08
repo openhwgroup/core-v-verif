@@ -117,8 +117,8 @@ function void uvma_isacov_mon_c::write_rvfi_instr(uvma_rvfi_instr_seq_item_c#(IL
   mon_trn.instr.rvfi = rvfi_instr;
 
   // Mark trapped instructions from RVFI
-  mon_trn.instr.trap = rvfi_instr.trap;
-  mon_trn.instr.cause = rvfi_instr.cause;
+  mon_trn.instr.trap = rvfi_instr.trap[0];
+  mon_trn.instr.cause = rvfi_instr.trap >> 1;
 
   // Attempt to decode instruction with Spike DASM
   instr_name = dasm_name(rvfi_instr.insn);

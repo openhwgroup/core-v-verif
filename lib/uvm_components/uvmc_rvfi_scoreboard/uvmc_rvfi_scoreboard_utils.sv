@@ -22,15 +22,12 @@ import "DPI-C" function void spike_set_param_str(string base, string name, strin
 import "DPI-C" function void spike_set_param_bool(string base, string name, bit value);
 import "DPI-C" function void spike_set_default_params(string profile);
 
-import "DPI-C" function void spike_step_svOpenArray(inout bit [63:0] core[], inout bit [63:0] reference_model[]);
-import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi reference_model);
-
     st_core_cntrl_cfg m_core_cfg;
 
     function automatic string rvfi_print_struct(ref st_rvfi st);
             uvma_rvfi_mode mode;
 
-            $cast(mode, st.mode);
+            $cast(mode, st.mode[1:0]);
 
             return $sformatf(`FORMAT_INSTR_STR_MACRO, $sformatf("%t", $time), 0,
                             st.trap,
@@ -63,9 +60,11 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
             reference_model_pc64 = reference_model_pc64 & 'hFFFFFFFF;
         end
 
-        if (t_core.trap[0] !== t_reference_model.trap[0]) begin
-            error = 1;
-            cause_str = $sformatf("%s\nException Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.trap[0], t_core.trap[0]);
+        if (t_core.trap[0] | t_reference_model.trap[0]) begin
+            if (t_core.trap[0] !== t_reference_model.trap[0]) begin
+                error = 1;
+                cause_str = $sformatf("%s\nException Mismatch [REF]: 0x%-16h [CORE]: 0x%-16h", cause_str, t_reference_model.trap[0], t_core.trap[0]);
+            end
         end
         else begin
             if (t_core.insn !== t_reference_model.insn) begin
@@ -118,7 +117,8 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
         if (error) begin
             string instr_core = rvfi_print_struct(t_core);
             string instr_rm =   rvfi_print_struct(t_reference_model);
-            `uvm_error("spike_tandem", {instr_rm, "\n", instr_rm, " <- CORE\n", cause_str});
+            `uvm_info("spike_tandem", {instr_rm}, UVM_LOW);
+            `uvm_error("spike_tandem", {instr_core, " <- CORE\n", cause_str});
         end
         else begin
             `uvm_info("spike_tandem", rvfi_print_struct(t_reference_model) , UVM_LOW)

@@ -146,24 +146,24 @@ extern "C" void spike_create(const char *filename) {
 }
 
 // Convert svOpenArrayHandle -> st_rvfi
-void sv2rvfi(st_rvfi &rvfi, svOpenArrayHandle svOpen) {
-  size_t size = svSize(svOpen, 1);
+void sv2rvfi(st_rvfi &rvfi, svLogicVecVal* svOpen) {
+  size_t size = sizeof(st_rvfi) / 8;
+  uint64_t *array_ptr = (uint64_t *)(svOpen);
   uint64_t *rvfi_ptr = (uint64_t *)&rvfi;
 
   for (size_t i = 0; i < size; i++) {
-    uint64_t *array_ptr = (uint64_t *)svGetArrElemPtr1(svOpen, size - i - 1);
-    rvfi_ptr[i] = array_ptr[0];
+    rvfi_ptr[i] = array_ptr[size - i - 1];
   }
 }
 
 // Convert st_rvfi -> svOpenArrayHandle
-void rvfi2sv(st_rvfi &rvfi, svOpenArrayHandle svOpen) {
-  size_t size = sizeof(st_rvfi) / 8; // To match 64 byte fields
+void rvfi2sv(st_rvfi &rvfi, svLogicVecVal* svOpen) {
+  size_t size = sizeof(st_rvfi) / 8;
+  uint64_t *array_ptr = (uint64_t *)(svOpen);
   uint64_t *rvfi_ptr = (uint64_t *)&rvfi;
 
   for (size_t i = 0; i < size; i++) {
-    uint64_t *array_ptr = (uint64_t *)svGetArrElemPtr1(svOpen, size - i - 1);
-    array_ptr[0] = rvfi_ptr[i];
+      array_ptr[size - i - 1] = rvfi_ptr[i];
   }
 }
 
@@ -174,8 +174,8 @@ extern "C" void spike_step_struct(st_rvfi &reference, st_rvfi &spike) {
   spike = vspike[0];
 }
 
-extern "C" void spike_step_svOpenArray(svOpenArrayHandle reference,
-                                       svOpenArrayHandle spike) {
+extern "C" void spike_step_svLogic(svLogicVecVal* reference,
+                                       svLogicVecVal* spike) {
   st_rvfi reference_rvfi, spike_rvfi;
 
   sv2rvfi(reference_rvfi, reference);
