@@ -451,6 +451,8 @@ int main(int argc, char** argv)
   };
 
   option_parser_t parser;
+  openhw::Params params;
+
   parser.help(&suggest_help);
   parser.option('h', "help", 0, [&](const char UNUSED *s){help(0);});
   parser.option('v', "version", 0, [&](const char UNUSED *s){version(0);});
@@ -499,6 +501,7 @@ int main(int argc, char** argv)
     }
   });
   parser.option(0, "steps", 1, [&](const char* s){max_steps = strtoull(s, 0, 0);});
+  parser.option(0, "param", 1, [&](const char* s){params.setFromCmdline(s);});
   parser.option(0, "dm-progsize", 1,
       [&](const char* s){dm_config.progbufsize = atoul_safe(s);});
   parser.option(0, "dm-no-impebreak", 0,
@@ -599,7 +602,6 @@ int main(int argc, char** argv)
     }
     cfg.hartids = default_hartids;
   }
-  openhw::Params params;
 
   if (max_steps != 0) {
     params.set("/top/", "max_steps", max_steps);

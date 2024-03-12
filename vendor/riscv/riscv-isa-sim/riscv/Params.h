@@ -38,6 +38,15 @@ public:
 
   void set(string base, string name, Param &p) { v[base][name] = p; }
 
+  // Set arbitrary parameter from cmdline expression PATH=VALUE.
+  void setFromCmdline(string pathEqVal) {
+    regex regexp("(.+)/([^/=]+)=([^=]+)");
+    std::smatch match;
+
+    std::regex_match(pathEqVal, match, regexp);
+    set(match[1].str(), match[2].str(), match[3].str());
+  }
+
   Param get(string base, string name) {
     auto it = v.find(base);
     if (it != this->v.end()) {
