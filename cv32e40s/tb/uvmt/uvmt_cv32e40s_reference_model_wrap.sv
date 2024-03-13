@@ -275,110 +275,11 @@ module uvmt_cv32e40s_reference_model_wrap
       rvfi_core.mem_rmask = `RVFI_IF.rvfi_mem_rmask;
       rvfi_core.mem_wdata = `RVFI_IF.rvfi_mem_wdata;
       rvfi_core.mem_wmask = `RVFI_IF.rvfi_mem_wmask;
-
-
-      //`uvm_info("RM count", $sformatf("PC: %x | CNT: %d", rvfi_core.pc_rdata, clock_cnt), UVM_NONE)
-
-     end
-      
+    end
     end
 
-    /*
-   assign rvvi.clk            = `RVFI_IF.clk;
-   assign rvvi.valid[0][0]    = `RVFI_IF.rvfi_valid;
-   assign rvvi.order[0][0]    = `RVFI_IF.rvfi_order;
-   assign rvvi.insn[0][0]     = `RVFI_IF.rvfi_insn;
-   assign rvvi.trap[0][0]     =  (`RVFI_IF.rvfi_trap.trap && `RVFI_IF.rvfi_trap.exception == 1'b1)                                      || // Exceptions never retire
-                                 (`RVFI_IF.rvfi_trap.trap && `RVFI_IF.rvfi_trap.debug == 1'b1 && `RVFI_IF.rvfi_trap.debug_cause == 'h1) || // Ebreak never retires
-                                 (`RVFI_IF.rvfi_trap.trap && `RVFI_IF.rvfi_trap.debug == 1'b1 && `RVFI_IF.rvfi_trap.debug_cause == 'h2);   // Trigger match never retires
-   assign rvvi.intr[0][0]     = `RVFI_IF.rvfi_intr;
-   assign rvvi.mode[0][0]     = `RVFI_IF.rvfi_mode;
-   assign rvvi.ixl[0][0]      = `RVFI_IF.rvfi_ixl;
-   assign rvvi.pc_rdata[0][0] = `RVFI_IF.rvfi_pc_rdata;
-   assign rvvi.pc_wdata[0][0] = `RVFI_IF.rvfi_pc_wdata;
-
-
-   ////////////////////////////////////////////////////////////////////////////
-   // Assign the RVVI GPR registers
-   ////////////////////////////////////////////////////////////////////////////
-   bit [31:0] XREG[32];
-   genvar gi;
-   generate
-       for(gi=0; gi<32; gi++)
-           assign rvvi.x_wdata[0][0][gi] = XREG[gi];
-   endgenerate
-
-   always_comb begin
-     int i;
-     if (|`RVFI_IF.rvfi_gpr_wmask[31:1] && `RVFI_IF.rvfi_valid) begin
-       for (i=1; i<32; i++) begin
-         if (`RVFI_IF.rvfi_gpr_wmask[i]) begin
-           XREG[i] = `RVFI_IF.rvfi_gpr_wdata[i*XLEN+:XLEN];
-         end
-         else begin
-           XREG[i] = 32'h0;
-         end
-       end
-     end
-   end
-
-   assign rvvi.x_wb[0][0] = `RVFI_IF.rvfi_gpr_wmask;
-*/
 
 endmodule : uvmt_cv32e40s_reference_model_wrap
-
-interface uvmt_reference_model_if_t;
-  import uvm_pkg::*;
-  import cv32e40s_pkg::*;
-  import uvmt_cv32e40s_base_test_pkg::*;
-  import uvme_cv32e40s_pkg::*;
-  //import rvviApiPkg::*;
-
-  string info_tag = "reference_model_if";
-
-
-  task ref_init;
-    string test_program_elf;
-    logic [31:0] hart_id;
-
-    // Select processor name
-    //void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME, "CVE4S"));
-    // Worst case propagation of events 4 retirements (actually 3 observed)
-    //void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 4));
-    // Redirect stdout to parent systemverilog simulator
-    //void'(rvviRefConfigSetInt(IDV_CONFIG_REDIRECT_STDOUT, RVVI_TRUE));
-
-    // Initialize REF and load the test-program into it's memory (do this before initializing the DUT).
-    // TODO: is this the best place for this?
-    //if (!rvviVersionCheck(RVVI_API_VERSION)) begin
-    //  `uvm_fatal(info_tag, $sformatf("Expecting RVVI API version %0d.", RVVI_API_VERSION))
-    //end
-    //// Test-program must have been compiled before we got here...
-    //if ($value$plusargs("elf_file=%s", test_program_elf)) begin
-    //  `uvm_info(info_tag, $sformatf("RM loading test_program %0s", test_program_elf), UVM_LOW)
-    //  //void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,  "openhwgroup.ovpworld.org"));
-    //  //void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT, "CV32E40S_DEV"));
-    //  if (!rvviRefInit(test_program_elf)) begin
-    //    `uvm_fatal(info_tag, "rvviRefInit failed")
-    //  end
-    //  else begin
-    //    `uvm_info(info_tag, "rvviRefInit() succeed", UVM_LOW)
-    //  end
-    //end
-    //else begin
-    //  `uvm_fatal(info_tag, "No test_program specified")
-    //end
-
-
-
-    hart_id = 32'h0000_0000;
-
-    `uvm_info(info_tag, "ref_init() complete", UVM_LOW)
-  endtask // ref_init
-
-
-
-endinterface : uvmt_reference_model_if_t
 
 //`endif // USE_RM
 

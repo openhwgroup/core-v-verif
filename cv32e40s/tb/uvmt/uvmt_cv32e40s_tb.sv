@@ -88,7 +88,6 @@ module uvmt_cv32e40s_tb;
       //rvviTrace #( .NHART(1), .RETIRE(1)) rvvi_if();
       //uvmt_imperas_dv_if_t imperas_dv_if();
    `endif
-    uvmt_reference_model_if_t reference_model_if();
 
 
   // "dut_wrap"
@@ -1776,7 +1775,6 @@ module uvmt_cv32e40s_tb;
      $timeformat(-9, 3, " ns", 8);
 
      //uvm_config_db#(virtual uvmt_imperas_dv_if_t)::set(.cntxt(null), .inst_name("uvm_test_top"), .field_name("idv_support_vif"), .value(imperas_dv_if));
-     uvm_config_db#(virtual uvmt_reference_model_if_t)::set(.cntxt(null), .inst_name("uvm_test_top"), .field_name("rm_support_vif"), .value(reference_model_if));
      // Add interfaces handles to uvm_config_db
      uvm_config_db#(virtual uvma_debug_if_t             )::set(.cntxt(null), .inst_name("*.env.debug_agent"),            .field_name("vif"),           .value(debug_if));
      uvm_config_db#(virtual uvma_clknrst_if_t           )::set(.cntxt(null), .inst_name("*.env.clknrst_agent"),          .field_name("vif"),           .value(clknrst_if));
