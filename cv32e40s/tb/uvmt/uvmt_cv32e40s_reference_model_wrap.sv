@@ -183,7 +183,7 @@ module uvmt_cv32e40s_reference_model_wrap
     int clock_cnt;
 
     reference_model reference_model_i(
-       .clk_i(`RVFI_IF.clk),
+       .clknrst_if(`CLKNRST_IF),
        .rvfi_i(`RVFI_IF),
        .interrupt_if_i(`INTERRUPT_IF),
        .rvfi_o(rvfi_o)

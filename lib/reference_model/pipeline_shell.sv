@@ -5,7 +5,7 @@ module pipeline_shell
     import uvma_rvfi_pkg::*;
     import iss_wrap_pkg::*;
     (
-        input logic clk_i,
+        uvma_clknrst_if_t clknrst_if,
         uvma_rvfi_instr_if_t rvfi_i,
         uvma_interrupt_if_t interrupt_if_i,
         rvfi_if_t rvfi_o
@@ -19,9 +19,9 @@ module pipeline_shell
 
     logic [31:0] irq_drv_ff;
 
-    assign rvfi_o.clk = clk_i;
+    assign rvfi_o.clk = clknrst_if.clk;
 
-    always_ff @(posedge clk_i) begin
+    always_ff @(posedge clknrst_if.clk) begin
         irq_drv_ff <= interrupt_if_i.irq_drv;
         if (irq_drv_ff != interrupt_if_i.irq_drv) begin
             iss_intr(interrupt_if_i.irq_drv);

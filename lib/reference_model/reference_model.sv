@@ -6,7 +6,7 @@ module reference_model
     import iss_wrap_pkg::*;
     import uvma_rvfi_pkg::*;
     (
-        input logic clk_i,
+        uvma_clknrst_if_t clknrst_if,
         uvma_rvfi_instr_if_t rvfi_i,
         uvma_interrupt_if_t interrupt_if_i,
         rvfi_if_t rvfi_o
@@ -24,7 +24,7 @@ module reference_model
     end
 
     pipeline_shell pipeline_shell_i(
-        .clk_i(clk_i),
+        .clknrst_if(clknrst_if),
         .rvfi_i(rvfi_i),
         .interrupt_if_i(interrupt_if_i),
         .rvfi_o(rvfi_o)
