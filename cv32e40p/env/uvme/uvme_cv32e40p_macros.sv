@@ -27,11 +27,26 @@
 `define APU_INSTR_WITH_NO_FD \
  APU_OP_FCMP, APU_OP_FCLASSIFY, APU_OP_F2I, APU_OP_F2I_U
 
-`define RV32F_INSTR_WITH_NO_FS3 \
- TB_INS_FMADD,TB_INS_FMSUB,TB_INS_FNMSUB,TB_INS_FNMADD
-
 `define RV32_INSTR_WITH_NO_RS2 \
  TB_OPCODE_LUI,TB_OPCODE_AUIPC,TB_OPCODE_JAL,TB_OPCODE_JALR,TB_OPCODE_LOAD,TB_OPCODE_OPIMM,TB_OPCODE_FENCE,TB_OPCODE_SYSTEM
+
+`define RV32F_INSTR_WITH_FS1 \
+  TB_INS_FMADD, TB_INS_FNMADD, TB_INS_FMSUB, TB_INS_FNMSUB, TB_INS_FADD, TB_INS_FSUB, TB_INS_FMUL, TB_INS_FDIV, TB_INS_FSQRT, \
+  TB_INS_FSGNJS, TB_INS_FSGNJNS, TB_INS_FSGNJXS, TB_INS_FMIN, TB_INS_FMAX, TB_INS_FCVTWS, TB_INS_FCVTWUS, TB_INS_FMVXS, \
+  TB_INS_FEQS, TB_INS_FLTS, TB_INS_FLES, TB_INS_FCLASS
+
+`define RV32F_INSTR_WITH_FS2 \
+  TB_INS_FMADD, TB_INS_FNMADD, TB_INS_FMSUB, TB_INS_FNMSUB, TB_INS_FADD, TB_INS_FSUB, TB_INS_FMUL, TB_INS_FDIV, \
+  TB_INS_FSGNJS, TB_INS_FSGNJNS, TB_INS_FSGNJXS, TB_INS_FMIN, TB_INS_FMAX, \
+  TB_INS_FEQS, TB_INS_FLTS, TB_INS_FLES
+
+`define RV32F_INSTR_WITH_FS3 \
+  TB_INS_FMADD, TB_INS_FNMADD, TB_INS_FMSUB, TB_INS_FNMSUB
+  
+`define RV32F_OP_WITHOUT_FDIV_FSQRT \
+  APU_OP_FMADD, APU_OP_FNMSUB, APU_OP_FADD, APU_OP_FMUL, APU_OP_FSGNJ, APU_OP_FMINMAX, APU_OP_FCMP, \
+  APU_OP_FCLASSIFY, APU_OP_F2I, APU_OP_I2F, APU_OP_FMSUB, APU_OP_FNMADD, APU_OP_FSUB, APU_OP_FSGNJ_SE, \
+  APU_OP_F2I_U, APU_OP_I2F_U
 
 `define RV32F_INSTR_BINS \
  wildcard bins fadd       =    {TB_INS_FADD}; \
@@ -74,14 +89,12 @@
  wildcard bins fmax       =    {TB_INS_FMAX}; \
  wildcard bins fcvtws     =    {TB_INS_FCVTWS}; \
  wildcard bins fcvtwus    =    {TB_INS_FCVTWUS}; \
- wildcard bins fmvxs      =    {TB_INS_FMVXS}; \
  wildcard bins feqs       =    {TB_INS_FEQS}; \
  wildcard bins flts       =    {TB_INS_FLTS}; \
  wildcard bins fles       =    {TB_INS_FLES}; \
  wildcard bins fclass     =    {TB_INS_FCLASS}; \
  wildcard bins fcvtsw     =    {TB_INS_FCVTSW}; \
  wildcard bins fcvtswu    =    {TB_INS_FCVTSWU}; \
- wildcard bins fmvsw      =    {TB_INS_FMVSX}; \
  wildcard bins fmadd      =    {TB_INS_FMADD}; \
  wildcard bins fmsub      =    {TB_INS_FMSUB}; \
  wildcard bins fnmsub     =    {TB_INS_FNMSUB}; \
@@ -190,7 +203,6 @@
  bins apu_op_fminmax    =    {APU_OP_FMINMAX}; \
  bins apu_op_fcmp       =    {APU_OP_FCMP}; \
  bins apu_op_fclassify  =    {APU_OP_FCLASSIFY}; \
- bins apu_op_f2f        =    {APU_OP_F2F}; \
  bins apu_op_f2i        =    {APU_OP_F2I}; \
  bins apu_op_i2f        =    {APU_OP_I2F}; \
  bins apu_op_fmsub      =    {APU_OP_FMSUB}; \
@@ -199,6 +211,28 @@
  bins apu_op_fsgnj_se   =    {APU_OP_FSGNJ_SE}; \
  bins apu_op_f2i_u      =    {APU_OP_F2I_U}; \
  bins apu_op_i2f_u      =    {APU_OP_I2F_U};
+ // bins apu_op_f2f        =    {APU_OP_F2F}; \ exclude this from above macro because it is for RV32D
+
+`define ZFINX_OP_BINS \
+ bins apu_op_fmadd      =    {APU_OP_FMADD}; \
+ bins apu_op_fnmsub     =    {APU_OP_FNMSUB}; \
+ bins apu_op_fadd       =    {APU_OP_FADD}; \
+ bins apu_op_fmul       =    {APU_OP_FMUL}; \
+ bins apu_op_fdiv       =    {APU_OP_FDIV}; \
+ bins apu_op_fsqrt      =    {APU_OP_FSQRT}; \
+ bins apu_op_fsgnj      =    {APU_OP_FSGNJ}; \
+ bins apu_op_fminmax    =    {APU_OP_FMINMAX}; \
+ bins apu_op_fcmp       =    {APU_OP_FCMP}; \
+ bins apu_op_fclassify  =    {APU_OP_FCLASSIFY}; \
+ bins apu_op_f2i        =    {APU_OP_F2I}; \
+ bins apu_op_i2f        =    {APU_OP_I2F}; \
+ bins apu_op_fmsub      =    {APU_OP_FMSUB}; \
+ bins apu_op_fnmadd     =    {APU_OP_FNMADD}; \
+ bins apu_op_fsub       =    {APU_OP_FSUB}; \
+ bins apu_op_f2i_u      =    {APU_OP_F2I_U}; \
+ bins apu_op_i2f_u      =    {APU_OP_I2F_U};
+ // bins apu_op_fsgnj_se   =    {APU_OP_FSGNJ_SE}; \ exclude this from macro because it is fmv for RV32F
+ // bins apu_op_f2f        =    {APU_OP_F2F};      \ exclude this from above macro because it is for RV32D
 
 `define CV32E40P_INSTR_OPCODE_BIT_6_0_BINS__NO_RV32C_FC \
  bins system_opcode          =    {TB_OPCODE_SYSTEM}; \
@@ -219,6 +253,28 @@
  bins fpu_fnmsub_opcode      =    {TB_OPCODE_OP_FNMSUB}; \
  bins fpu_str_opcode         =    {TB_OPCODE_STORE_FP}; \
  bins fpu_ld_opcode          =    {TB_OPCODE_LOAD_FP}; \
+ bins xpulp_custom_0         =    {OPCODE_CUSTOM_0}; \
+ bins xpulp_custom_1         =    {OPCODE_CUSTOM_1}; \
+ bins xpulp_custom_2         =    {OPCODE_CUSTOM_2}; \
+ bins xpulp_custom_3         =    {OPCODE_CUSTOM_3};
+
+`define CV32E40P_INSTR_OPCODE_BIT_6_0_BINS__NO_RV32C_FC_FPLS \
+ bins system_opcode          =    {TB_OPCODE_SYSTEM}; \
+ bins fence_opcode           =    {TB_OPCODE_FENCE}; \
+ bins op_opcode              =    {TB_OPCODE_OP}; \
+ bins opimm_opcode           =    {TB_OPCODE_OPIMM}; \
+ bins store_opcode           =    {TB_OPCODE_STORE}; \
+ bins load_opcode            =    {TB_OPCODE_LOAD}; \
+ bins branch_opcode          =    {TB_OPCODE_BRANCH}; \
+ bins jalr_opcode            =    {TB_OPCODE_JALR}; \
+ bins jal_opcode             =    {TB_OPCODE_JAL}; \
+ bins auipc_opcode           =    {TB_OPCODE_AUIPC}; \
+ bins lui_opcode             =    {TB_OPCODE_LUI}; \
+ bins fpu_fp_opcode          =    {TB_OPCODE_OP_FP}; \
+ bins fpu_fmadd_opcode       =    {TB_OPCODE_OP_FMADD}; \
+ bins fpu_fnmadd_opcode      =    {TB_OPCODE_OP_FNMADD}; \
+ bins fpu_fmsub_opcode       =    {TB_OPCODE_OP_FMSUB}; \
+ bins fpu_fnmsub_opcode      =    {TB_OPCODE_OP_FNMSUB}; \
  bins xpulp_custom_0         =    {OPCODE_CUSTOM_0}; \
  bins xpulp_custom_1         =    {OPCODE_CUSTOM_1}; \
  bins xpulp_custom_2         =    {OPCODE_CUSTOM_2}; \
