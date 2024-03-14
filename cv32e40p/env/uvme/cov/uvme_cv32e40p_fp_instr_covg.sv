@@ -70,14 +70,20 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
     `define IGNORE_BINS_NON_RD_F_INSTR \
      ignore_bins non_rd_f_inst = !binsof(cp_curr_fpu_apu_op) intersect {`APU_INSTR_WITH_NO_FD};
 
+    `define IGNORE_BINS_PREV_NON_FPU_OPCODE_WO_RD \
+     ignore_bins prev_non_fpu_wo_rd = !binsof(cp_prev_is_non_fpu_opcode) intersect {`RV32_OPCODE_LIST1_WITH_RD};
+
+    `define IGNORE_BINS_CUR_FPU_OPCODE_WO_RS1 \
+     ignore_bins cur_fpu_wo_rs1 = !binsof(cp_cur_is_fpu_instr) intersect {`RV32F_INSTR_WITH_RS1};
+
     `define IGNORE_BINS_NON_RS1_F_INSTR_IN_ID \
-     ignore_bins non_rs_id_stage_f_inst = !binsof(cp_id_stage_f_inst) intersect {TB_INS_FCVTSW, TB_INS_FCVTSWU};
+     ignore_bins non_rs_id_stage_f_inst = !binsof(cp_id_stage_f_inst) intersect {`RV32F_INSTR_WITH_RS1};
 
     `define IGNORE_BINS_NON_RS1_CV32E40P_INSTR \
      ignore_bins non_rs1_rv32_instr = binsof(cp_id_stage_non_rv32fc_inst) intersect {TB_OPCODE_LUI,TB_OPCODE_AUIPC,TB_OPCODE_JAL};
 
     `define IGNORE_BINS_NON_RS2_CV32E40P_INSTR \
-     ignore_bins non_rs2_rv32_instr = binsof(cp_id_stage_non_rv32fc_inst) intersect {`RV32_INSTR_WITH_NO_RS2};
+     ignore_bins non_rs2_rv32_instr = binsof(cp_id_stage_non_rv32fc_inst) intersect {`RV32_OPCODE_WITH_NO_RS2};
 
     `define IGNORE_BINS_NON_STALLED_CONTENTION_WR_STATE \
      ignore_bins non_stalled_contention_wr_state = binsof(cp_contention_state) intersect {0,1};
@@ -283,27 +289,44 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 5;
         }
 
-        // from bhv_logic_2 -- only for 1cyclat
+        // from bhv_logic_1a
+        // f-ext instr only uses rs1 for xreg
+        cp_cur_fp_rs1_match_prev_nonfp_rd : coverpoint (cntxt.cov_vif.current_instr_rdata[19:15] == cntxt.cov_vif.previous_instr_rdata[11:7])
+          iff (cntxt.cov_vif.current_instr_rdata       inside {`RV32F_INSTR_WITH_RS1} && 
+               cntxt.cov_vif.previous_instr_rdata[6:0] inside {`RV32_OPCODE_LIST1_WITH_RD} &&
+               cntxt.cov_vif.current_instr_rdata != cntxt.cov_vif.previous_instr_rdata) {
+          bins cur_rs1_match_prev_rd = {1};
+        }
+        cp_cur_is_fpu_instr : coverpoint cntxt.cov_vif.current_instr_rdata {
+          `RV32F_INSTR_BINS
+        }
+        cp_prev_is_non_fpu_opcode : coverpoint cntxt.cov_vif.previous_instr_rdata[6:0] {
+          `CV32E40P_INSTR_OPCODE_BIT_6_0_BINS__NO_RV32C_FC_F
+        }
+        cp_prev_is_non_fpu_rd : coverpoint cntxt.cov_vif.previous_instr_rdata[11:7] {
+          bins rd[] = {[0:31]};
+        }
+
+        // from bhv_logic_2
         cp_last_fpu_apu_op_at_contention : coverpoint cntxt.cov_vif.o_last_fpu_apu_op_if {
-            bins curr_apu_op_fmadd        =    {APU_OP_FMADD}       with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_fnmsub       =    {APU_OP_FNMSUB}      with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_fadd         =    {APU_OP_FADD}        with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_fmul         =    {APU_OP_FMUL}        with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_fdiv         =    {APU_OP_FDIV}        with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_fsqrt        =    {APU_OP_FSQRT}       with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_fsgnj        =    {APU_OP_FSGNJ}       with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_fminmax      =    {APU_OP_FMINMAX}     with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_fcmp         =    {APU_OP_FCMP}        with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_fclassify    =    {APU_OP_FCLASSIFY}   with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_f2f          =    {APU_OP_F2F}         with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_f2i          =    {APU_OP_F2I}         with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_i2f          =    {APU_OP_I2F}         with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_fmsub        =    {APU_OP_FMSUB}       with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_fnmadd       =    {APU_OP_FNMADD}      with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_fsub         =    {APU_OP_FSUB}        with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_fsgnj_se     =    {APU_OP_FSGNJ_SE}    with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_f2i_u        =    {APU_OP_F2I_U}       with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            bins curr_apu_op_i2f_u        =    {APU_OP_I2F_U}       with ( ((item + 1) * (fpu_latency == 1)) != 0 );
+            bins curr_apu_op_fmadd        =    {APU_OP_FMADD}     with (fpu_latency != 0);
+            bins curr_apu_op_fnmsub       =    {APU_OP_FNMSUB}    with (fpu_latency != 0);
+            bins curr_apu_op_fadd         =    {APU_OP_FADD}      with (fpu_latency != 0);
+            bins curr_apu_op_fmul         =    {APU_OP_FMUL}      with (fpu_latency != 0);
+            bins curr_apu_op_fdiv         =    {APU_OP_FDIV}      ;
+            bins curr_apu_op_fsqrt        =    {APU_OP_FSQRT}     ;
+            bins curr_apu_op_fsgnj        =    {APU_OP_FSGNJ}     with (fpu_latency != 0);
+            bins curr_apu_op_fminmax      =    {APU_OP_FMINMAX}   with (fpu_latency != 0);
+            bins curr_apu_op_fcmp         =    {APU_OP_FCMP}      with (fpu_latency != 0);
+            bins curr_apu_op_fclassify    =    {APU_OP_FCLASSIFY} with (fpu_latency != 0);
+            bins curr_apu_op_f2i          =    {APU_OP_F2I}       with (fpu_latency != 0);
+            bins curr_apu_op_i2f          =    {APU_OP_I2F}       with (fpu_latency != 0);
+            bins curr_apu_op_fmsub        =    {APU_OP_FMSUB}     with (fpu_latency != 0);
+            bins curr_apu_op_fnmadd       =    {APU_OP_FNMADD}    with (fpu_latency != 0);
+            bins curr_apu_op_fsub         =    {APU_OP_FSUB}      with (fpu_latency != 0);
+            bins curr_apu_op_fsgnj_se     =    {APU_OP_FSGNJ_SE}  with (fpu_latency != 0);
+            bins curr_apu_op_f2i_u        =    {APU_OP_F2I_U}     with (fpu_latency != 0);
+            bins curr_apu_op_i2f_u        =    {APU_OP_I2F_U}     with (fpu_latency != 0);
             option.weight = 5;
         }
 
@@ -392,13 +415,13 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
 
         // from bhv_logic_2 (revised)
         // [optional] this cp is optional as contention has no relation with rd/fd
-        // note: retain this cp and 100% on cp is not necessary
         cp_prev_rd_waddr_contention : coverpoint cntxt.cov_vif.prev_rd_waddr_contention {
             bins rd[] = {[1:31]};
             bins fd[] = {[32:63]};
             ignore_bins zero = {0};
         }
 
+        // from bhv_logic_2
         cp_contention_state : coverpoint cntxt.cov_vif.contention_state {
             bins no_contention = {0};
             bins contention_1st_cyc_done = {1};
@@ -511,7 +534,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             option.weight = 5;
             `IGNORE_BINS_ZERO_LAT_FPU_OP            // only apply in 0cyclat - ignore insn except div and sqrt
             `IGNORE_BINS_NON_RD_F_INSTR             // ignore insn except APU_OP_FCMP, APU_OP_FCLASSIFY, APU_OP_F2I, APU_OP_F2I_U in ex_state
-            `IGNORE_BINS_NON_RS1_F_INSTR_IN_ID      // ignore insn except TB_INS_FCVTSW, TB_INS_FCVTSWU in dec_state
+            `IGNORE_BINS_NON_RS1_F_INSTR_IN_ID      // ignore insn except TB_INS_FLW, TB_INS_FSW, TB_INS_FMVSX, TB_INS_FCVTSW, TB_INS_FCVTSWU in dec_state
         }
 
         // cross coverage for Non F-instr following F-instr with rd to rs1 dependency
@@ -538,6 +561,18 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             `IGNORE_BINS_NON_RS2_CV32E40P_INSTR
         }
 
+        // cross coverage for F-instr following Non F-instr with rd to rs1 dependency
+        // e.g prev.non_fp(rd) == cur.fp(rs1)
+        cr_non_rv32f_rd_rv32f_rs1                : cross cp_cur_fp_rs1_match_prev_nonfp_rd,
+                                                         cp_cur_is_fpu_instr,
+                                                         cp_prev_is_non_fpu_opcode,
+                                                         cp_prev_is_non_fpu_rd {
+
+            option.weight = 5;
+            `IGNORE_BINS_PREV_NON_FPU_OPCODE_WO_RD
+            `IGNORE_BINS_CUR_FPU_OPCODE_WO_RS1
+        }
+
         // cross coverage for contention case 2nd cycle with ALU regfile write
         cr_waddr_rd_apu_alu_ex_contention : cross cp_apu_alu_contention_wr_rd,
                                                   cp_contention_state,
@@ -549,7 +584,6 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
             `IGNORE_BINS_NON_STALLED_CONTENTION_WR_STATE
             `IGNORE_BINS_NO_CONTENTION
         }
-
 
         //*********************************************************************************************************
         // CASES WITH/WITHOUT CONTENTION AT APU RESULT WRITE TO REGFILE. APU_LATENCY=0 PRIOIRTY APU WRITE WINS
