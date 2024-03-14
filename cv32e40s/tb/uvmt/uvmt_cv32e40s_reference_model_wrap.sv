@@ -25,6 +25,7 @@ import uvm_pkg::*;
 `define DUT_PATH dut_wrap.cv32e40s_wrapper_i
 `define RVFI_IF  `DUT_PATH.rvfi_instr_if
 `define INTERRUPT_IF dut_wrap.interrupt_if
+`define CLKNRST_IF dut_wrap.clknrst_if
 
 //`define STRINGIFY(x) `"x`"
 
