@@ -23,7 +23,8 @@
 
 +incdir+${IMPERAS_HOME}
 +incdir+${IMPERAS_HOME}/ImpProprietary/include/host
-+incdir+${IMPERAS_HOME}/ImpProprietary/source/host/riscvISACOV/source
++incdir+${IMPERAS_HOME}/ImpProprietary/source/host/CV32E40Pv2_riscvISACOV/source
+// +incdir+${IMPERAS_HOME}/ImpProprietary/source/host/riscvISACOV/source
 
 ${TBSRC_HOME}/uvmt/uvmt_cv32e40p_imperas_riscv_coverage_config.svh
 -f ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/rvvi.f
