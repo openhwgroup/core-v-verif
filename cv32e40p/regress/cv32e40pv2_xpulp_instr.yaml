@@ -134,13 +134,24 @@ tests:
     cmd: make test COREV=YES TEST=jalr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
     num: 1
 
+  pulp_hardware_loop_debug_test:
+    build: uvmt_cv32e40p
+    description: pulp_hardware_loop directed test
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=pulp_hardware_loop_debug_test
+    num: 1
+    skip_sim:
+      - pulp
+      - pulp_fpu
+      - pulp_fpu_1cyclat
+      - pulp_fpu_2cyclat
+      - pulp_cluster
+      - pulp_cluster_fpu
+      - pulp_cluster_fpu_1cyclat
+      - pulp_cluster_fpu_2cyclat
+      - default
+      - no_pulp
 
-  # pulp_hardware_loop_debug_test:
-  #   build: uvmt_cv32e40p
-  #   description: pulp_hardware_loop directed test
-  #   dir: cv32e40p/sim/uvmt
-  #   cmd: make test COREV=YES TEST=pulp_hardware_loop_debug_test
-  #   num: 1
 
 # ====================================================================================
 # V1 legacy pulp tests
