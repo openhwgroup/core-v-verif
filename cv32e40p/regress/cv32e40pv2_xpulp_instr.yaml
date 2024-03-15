@@ -127,6 +127,14 @@ tests:
     cmd: make gen_corev-dv test COREV=YES TEST=corev_rand_pulp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000" VSIM_USER_FLAGS="+random_instr_stall +random_data_stall +tb_hack_1_obi_gnt_signal"
     num: 1
 
+  jalr_test:
+    build: uvmt_cv32e40p
+    description: directed test to cover all stall case for JALR
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=jalr_test CFG_PLUSARGS="+UVM_TIMEOUT=1000000"
+    num: 1
+
+
   # pulp_hardware_loop_debug_test:
   #   build: uvmt_cv32e40p
   #   description: pulp_hardware_loop directed test
