@@ -38,7 +38,7 @@ import "DPI-C" function void spike_set_mip(int unsigned mip);
         void'(spike_create(binary));
     endfunction
 
-    function automatic void iss_step(ref st_rvfi s_reference_model);
+    function automatic st_rvfi iss_step();
             union_rvfi u_core;
             union_rvfi u_reference_model;
             bit [63:0] a_core [`ST_NUM_WORDS-1:0];
@@ -55,7 +55,7 @@ import "DPI-C" function void spike_set_mip(int unsigned mip);
                 u_reference_model.array[i] = a_reference_model[i];
             end
 
-            s_reference_model = u_reference_model.rvfi;
+            return u_reference_model.rvfi;
 
     endfunction
 

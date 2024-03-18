@@ -248,10 +248,10 @@ module uvmt_cv32e40s_reference_model_wrap
     end
 
     assign rvfi_core.clk = `RVFI_IF.clk;
-    assign rvfi_core.valid = `RVFI_IF.rvfi_valid;
 
     always_ff @(posedge rvfi_core.clk) begin
-     if (rvfi_core.valid) begin
+      rvfi_core.valid = `RVFI_IF.rvfi_valid;
+      if (`RVFI_IF.rvfi_valid) begin
 
       rvfi_core.pc_rdata = `RVFI_IF.rvfi_pc_rdata;
       rvfi_core.insn = `RVFI_IF.rvfi_insn;
