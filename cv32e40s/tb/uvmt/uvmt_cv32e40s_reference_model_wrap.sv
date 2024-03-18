@@ -62,52 +62,61 @@ function void check_4bit(input string compared, input bit [3:0] core, input logi
    endfunction // check_4bit
 
   //use assertion to compare the RVFI signals
+  rvfi_pc_a: assert property(@ (posedge rvfi_rm.clk)
+    rvfi_rm.valid |-> (rvfi_rm.pc_rdata == rvfi_core.pc_rdata))
+    else `uvm_error("RVFI_PC", $sformatf("rvfi_rm.pc_rdata=%0h rvfi_core.pc_rdata=%0h",rvfi_rm.pc_rdata, rvfi_core.pc_rdata));
+  
+
+  rvfi_insn_a: assert property(@ (posedge rvfi_rm.clk)
+    rvfi_rm.valid |-> (rvfi_rm.insn == rvfi_core.insn))
+    else `uvm_error("RVFI_INSN", $sformatf("rvfi_rm.insn=%0h rvfi_core.insn=%0h",rvfi_rm.insn, rvfi_core.insn));
+
+  rvfi_trap_a: assert property(@ (posedge rvfi_rm.clk)
+    rvfi_rm.valid |-> (rvfi_rm.trap == rvfi_core.trap))
+    else `uvm_error("RVFI_TRAP", $sformatf("rvfi_rm.trap=%0h rvfi_core.trap=%0h",rvfi_rm.trap, rvfi_core.trap));
+
+  rvfi_halt_a: assert property(@ (posedge rvfi_rm.clk)
+    rvfi_rm.valid |-> (rvfi_rm.halt == rvfi_core.halt))
+    else `uvm_error("RVFI_HALT", $sformatf("rvfi_rm.halt=%0h rvfi_core.halt=%0h",rvfi_rm.halt, rvfi_core.halt));
+
+  rvfi_dbg_a: assert property(@ (posedge rvfi_rm.clk)
+    rvfi_rm.valid |-> (rvfi_rm.dbg == rvfi_core.dbg))
+    else `uvm_error("RVFI_DBG", $sformatf("rvfi_rm.dbg=%0h rvfi_core.dbg=%0h",rvfi_rm.dbg, rvfi_core.dbg));
+
+  rvfi_dbg_mode_a: assert property(@ (posedge rvfi_rm.clk)
+    rvfi_rm.valid |-> (rvfi_rm.dbg_mode == rvfi_core.dbg_mode))
+    else `uvm_error("RVFI_DBG_MODE", $sformatf("rvfi_rm.dbg_mode=%0h rvfi_core.dbg_mode=%0h",rvfi_rm.dbg_mode, rvfi_core.dbg_mode));
+
+  rvfi_nmip_a: assert property(@ (posedge rvfi_rm.clk)
+    rvfi_rm.valid |-> (rvfi_rm.nmip == rvfi_core.nmip))
+    else `uvm_error("RVFI_NMIP", $sformatf("rvfi_rm.nmip=%0h rvfi_core.nmip=%0h",rvfi_rm.nmip, rvfi_core.nmip));
+  
+  rvfi_intr_a: assert property(@ (posedge rvfi_rm.clk)
+    rvfi_rm.valid |-> (rvfi_rm.intr == rvfi_core.intr))
+    else `uvm_error("RVFI_INTR", $sformatf("rvfi_rm.intr=%0h rvfi_core.intr=%0h",rvfi_rm.intr, rvfi_core.intr));
+
+  rvfi_mode_a: assert property(@ (posedge rvfi_rm.clk)
+    rvfi_rm.valid |-> (rvfi_rm.mode == rvfi_core.mode))
+    else `uvm_error("RVFI_MODE", $sformatf("rvfi_rm.mode=%0h rvfi_core.mode=%0h",rvfi_rm.mode, rvfi_core.mode));
+
+  /*TODO: 
+  ixl
+  pc_wdata
+  rs1_addr
+  rs1_rdata;
+  rs2_addr
+  rs2_rdata
+  rs3_addr
+  rs3_rdata
+  rd2_addr
+  rd2_wdata
+
+  CSRs
+  */
+
+/* TODO: implement these with assertions
   always_comb begin
     if (rvfi_rm.valid) begin
-      
-      check_32bit("PC", rvfi_core.pc_rdata, rvfi_rm.pc_rdata);
-
-      check_32bit("insn", rvfi_core.insn, rvfi_rm.insn);
-
-      check_32bit("trap", rvfi_core.trap, rvfi_rm.trap);
-
-      check_32bit("halt", rvfi_core.halt, rvfi_rm.halt);
-
-      check_32bit("dbg", rvfi_core.dbg, rvfi_rm.dbg);
-
-      check_32bit("dbg_mode", rvfi_core.dbg_mode, rvfi_rm.dbg_mode);
-
-      check_32bit("nmip", rvfi_core.nmip, rvfi_rm.nmip);
-
-      check_32bit("intr", rvfi_core.intr, rvfi_rm.intr);
-
-      check_32bit("mode", rvfi_core.mode, rvfi_rm.mode);
-
-      //check_32bit("ixl", rvfi_core.ixl, rvfi_rm.ixl);
-
-      //check_32bit("pc_wdata", rvfi_core.pc_wdata, rvfi_rm.pc_wdata);
-
-      //check_32bit("rs1_addr", rvfi_core.rs1_addr, rvfi_rm.rs1_addr);
-
-      //check_32bit("rs1_rdata", rvfi_core.rs1_rdata, rvfi_rm.rs1_rdata);
-
-      //check_32bit("rs2_addr", rvfi_core.rs2_addr, rvfi_rm.rs2_addr);
-
-      //check_32bit("rs2_rdata", rvfi_core.rs2_rdata, rvfi_rm.rs2_rdata);
-
-      //check_32bit("rs3_addr", rvfi_core.rs3_addr, rvfi_rm.rs3_addr);
-
-      //check_32bit("rs3_rdata", rvfi_core.rs3_rdata, rvfi_rm.rs3_rdata);
-
-
-
-      //check_32bit("rd2_addr", rvfi_core.rd2_addr, rvfi_rm.rd2_addr);
-
-      //check_32bit("rd2_wdata", rvfi_core.rd2_wdata, rvfi_rm.rd2_wdata);
-
-
-
-
       //Disable instructions with multiple memory accesses
       if(~(rvfi_core.mem_rmask[511:4] || rvfi_core.mem_wmask[511:4])) begin
         //Disable checking of rd1 if a trap occurs, since core and Spike mismatch
@@ -149,16 +158,12 @@ function void check_4bit(input string compared, input bit [3:0] core, input logi
 
       end
 
-
-
-        
-
-
       end
 
     end
 
   end
+  */
   
 
 
