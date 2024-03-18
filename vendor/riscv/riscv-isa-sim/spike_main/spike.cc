@@ -115,6 +115,8 @@ static void help(int exit_code = 1)
   fprintf(stderr, "  --steps=<n>           Stop simulation after reaching specified number of steps "
           "(default: unlimited)\n");
   fprintf(stderr, "  --nb_register_source=<n>     Set the number of register source usable(2 or 3)\n");
+  fprintf(stderr, "  --param <path>=<val>  Set parameter to specified value (see 'spike --print-params' for a full list.)\n"
+                  "                          This flag can be used multiple times.\n");
 
   exit(exit_code);
 }
