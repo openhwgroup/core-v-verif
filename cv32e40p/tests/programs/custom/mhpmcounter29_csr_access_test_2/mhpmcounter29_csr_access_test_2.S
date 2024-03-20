@@ -39,12 +39,24 @@ _start:
 .section .text
 _start_main:
 
-	#ifdef NO_PULP
-	#define EXP_MISA 0x40001104
-	#else
-	#define EXP_MISA 0x40801104
-	#endif
+#define ADD_X(val) ((val) | (1 << 23))
+#define ADD_F(val) ((val) | (1 <<  5))
 
+#define BASE_MISA 0x40001104
+
+#if defined(NO_PULP)
+#define EXP_MISA BASE_MISA
+#else
+  #if defined(PULP) && defined(FPU) && !defined(ZFINX)
+    #define EXP_MISA ADD_X(ADD_F(BASE_MISA))
+  #elif defined(PULP) && defined(FPU) && defined(ZFINX)
+    #define EXP_MISA ADD_X((BASE_MISA))
+  #elif defined(PULP)
+    #define EXP_MISA ADD_X((BASE_MISA))
+  #else
+    #define EXP_MISA BASE_MISA
+  #endif
+#endif
 
 ###############################################################################
 # Script generated code to verify write/read access of these CSRs.
