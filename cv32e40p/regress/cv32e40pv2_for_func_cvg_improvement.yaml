@@ -26,6 +26,7 @@ tests:
     description: This test is to improve func coverage holes in uvme_interrupt_covg_v2
     dir: cv32e40p/sim/uvmt
     cmd: make gen_corev-dv test COREV=YES TEST=corev_directed_for_interrupt_covg_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+    skip_sim: pulp
     num: 5
 
   corev_directed_for_hwloop_covg_test:
