@@ -343,7 +343,8 @@ class axi2mem#(int unsigned w_addr = 0,  int unsigned w_data = 0, int unsigned w
                  AXI_ATOMIC_SMIN  : mem_wr_vif.amo_op = MEM_ATOMIC_SMIN;
                  AXI_ATOMIC_UMAX  : mem_wr_vif.amo_op = MEM_ATOMIC_UMAX;
                  AXI_ATOMIC_UMIN  : mem_wr_vif.amo_op = MEM_ATOMIC_UMIN;
-               endcase              
+               endcase  
+               q_num_ar_chan_req[req.aw_chan.id].push_back(0);
              end
              AXI_ATOMIC_LOAD   : begin
                // Requires a read response 
@@ -368,6 +369,7 @@ class axi2mem#(int unsigned w_addr = 0,  int unsigned w_data = 0, int unsigned w
                  AXI_ATOMIC_SWAP : mem_wr_vif.amo_op = MEM_ATOMIC_SWAP;
                  AXI_ATOMIC_CMP  : mem_wr_vif.amo_op = MEM_ATOMIC_CMP;                
                endcase
+               q_num_ar_chan_req[req.aw_chan.id].push_back(0);
              end
 
            endcase
@@ -407,7 +409,7 @@ class axi2mem#(int unsigned w_addr = 0,  int unsigned w_data = 0, int unsigned w
              req.user   = axi_vif.ar_user   ;
            
              mb_ar_chan.push_back(req);
-             q_num_ar_chan_req[axi_vif.ar_id].push_back(axi_vif.ar_len);
+             q_num_ar_chan_req[axi_vif.ar_id].push_back(req);
              `uvm_info("AXI2MEM AR CHAN REQ", $sformatf("ADDR %0x(x) ID %0x(x)", req.addr, req.id), UVM_HIGH);
          end
        end
@@ -603,11 +605,11 @@ class axi2mem#(int unsigned w_addr = 0,  int unsigned w_data = 0, int unsigned w
     // send multiple responses 
     // ----------------------------------
     virtual task write_r_chan_fifo( );
-       aw_ar_chan_t    ar_req; 
+       aw_ar_chan_t    ar_req[integer]; 
        r_chan_t         req;
-       int              cnt;
+       r_chan_t         q_rsp[integer][$];
+       int              cnt[integer];
        // Drive axi iterface
-       cnt = 0;
        forever begin
           @ (posedge mem_rd_vif.clk);
           if(mem_rd_vif.rd_res_valid ) begin
@@ -615,19 +617,20 @@ class axi2mem#(int unsigned w_addr = 0,  int unsigned w_data = 0, int unsigned w
             req.data        =  mem_rd_vif.rd_res_data;
             req.id          =  mem_rd_vif.rd_res_id;
 
-            if(cnt == 0) begin
-              ar_req = q_num_ar_chan_req[mem_rd_vif.rd_res_id].pop_front();
+            if(!cnt.exists(req.id)) cnt[req.id] = 0;
+            if(cnt[req.id] == 0) begin
+              ar_req[req.id] = q_num_ar_chan_req[mem_rd_vif.rd_res_id].pop_front();
             end 
 
-            if(cnt == ar_req.len) begin 
+            if(cnt[req.id] == ar_req[req.id].len) begin 
               req.last = 1;
-              cnt = 0; 
+              cnt[req.id] = 0; 
             end else begin
               req.last = 0; 
-              cnt++; 
+              cnt[req.id]++; 
             end
 
-            if(ar_req.lock == 1) begin
+            if(ar_req[req.id].lock == 1) begin
               if(mem_rd_vif.rd_res_err == 0 && mem_rd_vif.rd_res_ex_fail == 0) begin
                 req.resp = RESP_EXOKAY;
               end 
@@ -647,10 +650,17 @@ class axi2mem#(int unsigned w_addr = 0,  int unsigned w_data = 0, int unsigned w
             end
 
 
-            req.user        =  'h0;;
-  
-            mb_r_chan.push_back(req);
-          end
+            req.user        =  'h0;
+ 
+            q_rsp[req.id].push_back(req);
+
+            if(req.last == 1) begin
+              while(q_rsp[req.id].size() > 0) begin
+                mb_r_chan.push_back(q_rsp[req.id].pop_front());
+              end 
+            end // last
+
+          end // if mem_req_valid
 
        end
     endtask

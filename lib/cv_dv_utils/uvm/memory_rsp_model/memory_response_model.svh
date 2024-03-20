@@ -384,7 +384,8 @@ class memory_response_model#(int w_addr = 64, int w_data = 512, int w_id = 16)  
       m_mem_rsp_vif.rd_res_id      <= m_memory_rsp.id;
       m_mem_rsp_vif.rd_res_err     <= m_memory_rsp.err;    
       m_mem_rsp_vif.rd_res_data    <= m_memory_rsp.data;
-      m_mem_rsp_vif.rd_res_addr    <= m_memory_rsp.addr;    
+      m_mem_rsp_vif.rd_res_addr    <= m_memory_rsp.addr;
+      m_mem_rsp_vif.rd_res_ex_fail <= m_memory_rsp.err;   
       m_mem_rsp_vif.rd_res_valid   <= 1'b1; 
       `uvm_info( "MEMORY RESPONSE MODEL", $sformatf("READ RSP : %s ", m_memory_rsp.convert2string()), UVM_LOW );
 
