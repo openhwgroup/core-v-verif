@@ -788,7 +788,7 @@ class uvme_rv32x_hwloop_covg # (
   endfunction : check_ebreakm_entry
 
   function void check_exception_exit();
-    if (cv32e40p_rvvi_vif.valid && cv32e40p_rvvi_vif.insn == TB_INSTR_MRET) begin
+    if (cv32e40p_rvvi_vif.valid && cv32e40p_rvvi_vif.insn == TB_INSTR_MRET && !cv32e40p_rvvi_vif.trap) begin
       is_ebreak = 0; is_ecall = 0; is_illegal = 0; is_trap = 0;
       `uvm_info(_header, $sformatf("DEBUG - EXCEPTION Exit"), UVM_DEBUG);
     end
@@ -880,7 +880,7 @@ class uvme_rv32x_hwloop_covg # (
               discarded_insn = insn_list_in_hwloop_main[j].pop_back();
               assert(discarded_insn == INSN_EBREAKM);
               void'(hwloop_evt_loc_main[j][DBG_EBREAKM].pop_back());
-              hwloop_stat_main.track_lp_cnt[j]++; lpend_has_pending_irq_main[j] = 0; 
+              hwloop_stat_main.track_lp_cnt[j]++; lpend_has_pending_irq_main[j] = 0;
             end
           end // for
         end
@@ -986,6 +986,8 @@ class uvme_rv32x_hwloop_covg # (
               `IF_CURRENT_IS_MAIN_HWLOOP(1, IS_IRQ)
               update_prev_irq_onehot_priority();
               `uvm_info(_header, $sformatf("DEBUG - IRQ Entry"), UVM_DEBUG);
+              if (lpend_has_pending_irq_main[0]) begin hwloop_stat_main.track_lp_cnt[0]++; lpend_has_pending_irq_main[0] = 0; end
+              if (lpend_has_pending_irq_main[1]) begin hwloop_stat_main.track_lp_cnt[1]++; lpend_has_pending_irq_main[1] = 0; end
               is_irq = 1; wait (!is_irq); continue; 
             end
           end // IRQ_ENTRY
@@ -1021,7 +1023,7 @@ class uvme_rv32x_hwloop_covg # (
       `uvm_info(_header, $sformatf("DEBUG - No prematured hwloops when test done"), UVM_DEBUG);
     end
     else begin
-      `uvm_error(_header, $sformatf("Detected prematured hwloops when test done. Please debug ... ")); // fixme: to be commented out
+      `uvm_error(_header, $sformatf("Detected prematured hwloops when test done. Please debug ... "));
     end
   endfunction : final_phase
 
