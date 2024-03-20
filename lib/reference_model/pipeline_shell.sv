@@ -24,7 +24,7 @@ module if_stage
         end
         else begin
             if_id_pipe_o.rvfi = if_id_pipe_o.rvfi;
-            if_id_pipe_o.valid = 1'b0;
+            if_id_pipe_o.valid = if_id_pipe_o.valid;
         end
     end
 endmodule
@@ -42,10 +42,12 @@ module id_stage
 
     always_ff @(posedge clk) begin
         if(step) begin
-            pipe_o = pipe_i;
+            pipe_o.rvfi = pipe_i.rvfi;
+            pipe_o.valid = pipe_i.valid;
         end
         else begin
-            pipe_o = pipe_o;
+            pipe_o.rvfi = pipe_o.rvfi;
+            pipe_o.valid = pipe_o.valid;
         end
     end
 endmodule
@@ -63,10 +65,12 @@ module ex_stage
 
     always_ff @(posedge clk) begin
         if(step) begin
-            pipe_o = pipe_i;
+            pipe_o.rvfi = pipe_i.rvfi;
+            pipe_o.valid = pipe_i.valid;
         end
         else begin
-            pipe_o = pipe_o;
+            pipe_o.rvfi = pipe_o.rvfi;
+            pipe_o.valid = 1'b0; //Only output valid at first valid clock cycle
         end
     end
 endmodule
@@ -82,7 +86,8 @@ module wb_stage
         output pipe_stage_t pipe_o
     );
 
-    assign pipe_o = pipe_i;
+    assign pipe_o.rvfi = pipe_i.rvfi;
+    assign pipe_o.valid = pipe_i.valid;
 
 endmodule
 

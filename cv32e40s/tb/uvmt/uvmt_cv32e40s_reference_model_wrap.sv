@@ -62,6 +62,10 @@ function void check_4bit(input string compared, input bit [3:0] core, input logi
    endfunction // check_4bit
 
   //use assertion to compare the RVFI signals
+  rvfi_valid_a: assert property(@ (posedge rvfi_rm.clk)
+    rvfi_core.valid |-> rvfi_rm.valid)
+    else `uvm_error("RVFI_VALID", $sformatf("rvfi_rm.valid=%0h rvfi_core.valid=%0h",rvfi_rm.valid, $past(rvfi_core.valid)));
+
   rvfi_pc_a: assert property(@ (posedge rvfi_rm.clk)
     rvfi_rm.valid |-> (rvfi_rm.pc_rdata == rvfi_core.pc_rdata))
     else `uvm_error("RVFI_PC", $sformatf("rvfi_rm.pc_rdata=%0h rvfi_core.pc_rdata=%0h",rvfi_rm.pc_rdata, rvfi_core.pc_rdata));
