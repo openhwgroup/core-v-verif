@@ -66,6 +66,8 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
         void'(spike_set_param_uint64_t(base, "mvendorid", core_cfg.mvendorid));
         void'(spike_set_param_bool(base, "misaligned", core_cfg.unaligned_access_supported));
 
+        void'(spike_set_param_bool(base, "csr_counters_injection", 1'h1));
+
         if (core_cfg.dram_valid) begin
             void'(spike_set_param_uint64_t("/top/", "dram_base", core_cfg.dram_base));
             void'(spike_set_param_uint64_t("/top/", "dram_size", core_cfg.dram_size));
@@ -83,6 +85,8 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
         bit [ST_NUM_WORDS-1:0][63:0] a_reference_model;
 
         u_core.rvfi = s_core;
+
+        a_core = u_core.array;
 
         spike_step_svLogic(a_core, a_reference_model);
 
