@@ -36,6 +36,7 @@ package uvmc_rvfi_scoreboard_pkg;
   `include "dpi_dasm_imports.svh"
 
   `include "uvma_rvfi_constants.sv"
+  `include "uvma_rvfi_tdefs.sv"
   `include "uvmc_rvfi_scoreboard_utils.sv"
   `include "uvmc_rvfi_scoreboard.sv"
 

@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include "Params.h"
 
-#define CSR_SIZE 10
+#define CSR_SIZE 250
 
 typedef struct {
    uint64_t                 nret_id;

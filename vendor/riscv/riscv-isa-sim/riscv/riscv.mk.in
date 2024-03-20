@@ -54,7 +54,6 @@ riscv_precompiled_hdrs = \
 
 riscv_srcs = \
 	Params.cc \
-	isa_parser.cc \
 	processor.cc \
 	Proc.cc \
 	execute.cc \

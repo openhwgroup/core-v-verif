@@ -78,12 +78,13 @@ typedef struct packed {
 
 } st_rvfi;
 
-`define ST_NUM_WORDS (($size(st_rvfi)/$size(longint unsigned)))
-parameter ST_NUM_WORDS =  (($size(st_rvfi)/$size(longint unsigned)));
+`define ST_NUM_WORDS ($size(st_rvfi)/MAX_XLEN)
+parameter ST_NUM_WORDS =  ($size(st_rvfi)/MAX_XLEN);
 
+    typedef bit [ST_NUM_WORDS-1:0] [63:0] vector_rvfi;
 typedef union {
     st_rvfi rvfi;
-    bit [63:0] array [`ST_NUM_WORDS-1:0] ;
+    vector_rvfi array;
 } union_rvfi;
 
 function string get_mode_str(uvma_rvfi_mode mode);
