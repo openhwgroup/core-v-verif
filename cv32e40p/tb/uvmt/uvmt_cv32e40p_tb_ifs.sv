@@ -492,6 +492,7 @@ interface uvmt_cv32e40p_cov_if
     input               if_stage_instr_rvalid_i,
     input  [31:0]       if_stage_instr_rdata_i,
     input               id_stage_instr_valid_i,
+    input               id_stage_id_valid_o,
     input  [31:0]       id_stage_instr_rdata_i,
     input               apu_req,
     input               apu_gnt,
@@ -553,6 +554,8 @@ interface uvmt_cv32e40p_cov_if
   logic [5:0]       regfile_waddr_wb_contention;
   logic [1:0]       contention_valid;
   logic             b2b_contention_valid;
+  logic [31:0]      current_instr_rdata;
+  logic [31:0]      previous_instr_rdata;
 
   initial begin
       clk_cycle_window = 0;
@@ -572,6 +575,7 @@ interface uvmt_cv32e40p_cov_if
       input if_stage_instr_rvalid_i;
       input if_stage_instr_rdata_i;
       input id_stage_instr_valid_i;
+      input id_stage_id_valid_o;
       input id_stage_instr_rdata_i;
       input apu_req;
       input apu_gnt;
@@ -617,6 +621,24 @@ interface uvmt_cv32e40p_cov_if
       end
   end
 
+  // bhv_logic_1a
+  // sample decoded instr that execute in progress
+  always @(posedge clk_i or negedge rst_ni) begin
+    if(!rst_ni) begin
+      previous_instr_rdata <= 0;
+      current_instr_rdata  <= 0;
+    end
+    else begin
+      if (id_stage_instr_valid_i && id_stage_id_valid_o) begin
+        previous_instr_rdata <= current_instr_rdata;
+        current_instr_rdata  <= id_stage_instr_rdata_i;
+      end
+      else begin
+        previous_instr_rdata <= current_instr_rdata;
+      end
+    end
+  end
+
   // bhv_logic_2 (revised)
   // Model APU contention state in EX/WB for functional coverage
   // input(s): apu_perf_wb_o, regfile_waddr_wb_o, regfile_alu_waddr_ex_o
@@ -631,11 +653,7 @@ interface uvmt_cv32e40p_cov_if
           if (((contention_valid == 0) || (contention_valid == 2)) && (apu_perf_wb_o)) begin
             contention_valid <= 1; //set contention_valid
             b2b_contention_valid <= 0;
-            if (FPU_LAT_1_CYC != 1) begin // IS_0_OR_2_CYCLAT
-            end
-            else begin // IS_1_CYCLAT
-              last_fpu_contention_op_if <= curr_fpu_apu_op_if;
-            end
+            last_fpu_contention_op_if <= curr_fpu_apu_op_if;
           end
           else if((contention_valid == 1) && (apu_perf_wb_o)) begin
             contention_valid <= 1; //reset contention_valid

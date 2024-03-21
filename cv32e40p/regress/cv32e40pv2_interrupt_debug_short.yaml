@@ -437,3 +437,47 @@ tests:
     dir: cv32e40p/sim/uvmt
     cmd: make test COREV=YES TEST=riscv_ebreak_test_0 CFG_PLUSARGS="+UVM_TIMEOUT=20000000"
     num: 1
+
+
+  # fixme: temporary park here for regression purpose. need to reloacate again once below tests are stable
+  corev_directed_for_interrupt_covg_test:
+    build: uvmt_cv32e40p
+    description: This test is to improve func coverage holes in uvme_interrupt_covg_v2
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test COREV=YES TEST=corev_directed_for_interrupt_covg_test CFG_PLUSARGS="+UVM_TIMEOUT=30000000"
+    skip_sim: pulp
+    num: 5
+
+  corev_directed_for_hwloop_covg_test:
+    description: This test is to improve func coverage holes in uvme_rv32x_hwloop_covg
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_directed_for_hwloop_covg_test CFG_PLUSARGS="+UVM_TIMEOUT=60000000"
+    num: 5
+ 
+  corev_directed_fp_mulcyc_interleave_illegal_test_with_int_and_debug:
+    testname: corev_rand_fp_instr_debug
+    description: This test is to improve func coverage holes in uvme_debug_covg
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=40000000" VSIM_USER_FLAGS=+add_b2b_illegal_insn
+    test_cfg: gen_rand_int
+    skip_sim: pulp
+    num: 1
+
+  corev_directed_fp_mulcyc_test_with_int_and_debug:
+    testname: corev_rand_fp_instr_debug
+    description: This test is to improve func coverage holes in uvme_debug_covg
+    build: uvmt_cv32e40p
+    dir: cv32e40p/sim/uvmt
+    cmd: make gen_corev-dv test TEST=corev_rand_fp_instr_debug CFG_PLUSARGS="+UVM_TIMEOUT=40000000"
+    test_cfg: gen_rand_int
+    skip_sim: pulp
+    num: 5
+
+  debug_test_trigger:
+    build: uvmt_cv32e40p
+    description: This custom legacy test is needed to improve func coverage holes in uvme_debug_covg
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=debug_test_trigger
+    num: 1

@@ -31,10 +31,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define ADD_X(val) ((val) | (1 << 23))
+#define ADD_F(val) ((val) | (1 <<  5))
+
+#define BASE_MISA 0x40001104
+
 #ifdef NO_PULP
-#define EXP_MISA 0x40001104
+#define EXP_MISA BASE_MISA
 #else
-#define EXP_MISA 0x40801104
+  #if defined(PULP) && defined(FPU) && !defined(ZFINX)
+    #define EXP_MISA ADD_X(ADD_F(BASE_MISA))
+  #elif defined(PULP) && defined(FPU) && defined(ZFINX)
+    #define EXP_MISA ADD_X((BASE_MISA))
+  #elif defined(PULP)
+    #define EXP_MISA ADD_X((BASE_MISA))
+  #else
+    #define EXP_MISA BASE_MISA
+  #endif
 #endif
 
 int main(int argc, char *argv[])

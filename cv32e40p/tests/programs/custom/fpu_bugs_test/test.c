@@ -51,9 +51,9 @@ int main()
 {
   unsigned int i = 0, j = 0, error = 0;
 
-  float *P_INPUT = INPUT;
-  float *P_EXP_RES = EXP_RES;
-  float *P_RES = RES;
+  float *P_INPUT = (float *)INPUT;
+  float *P_EXP_RES = (float *)EXP_RES;
+  float *P_RES = (float *)RES;
 
   // Floating Point enable
   fp_enable();
