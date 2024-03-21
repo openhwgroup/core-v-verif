@@ -19,6 +19,7 @@ public:
   inline void set_FPR(reg_t num, float128_t value);
 
 protected:
+  bool csr_counters_injection;
   bool taken_trap;
   uint8_t which_trap;
   virtual void take_trap(trap_t &t, reg_t epc); // take an exception
