@@ -27,6 +27,8 @@ import uvm_pkg::*;
 `define INTERRUPT_IF dut_wrap.interrupt_if
 `define CLKNRST_IF dut_wrap.clknrst_if
 
+`define CORE_I `DUT_PATH.core_i
+
 //`define STRINGIFY(x) `"x`"
 
 //`ifdef USE_RM 
@@ -209,7 +211,9 @@ module uvmt_cv32e40s_reference_model_wrap
    uvme_cv32e40s_cfg_c  uvm_env_cfg;
 
    int fd; 
+   int pl; 
    string line;
+   string pipelineLine;
    logic [31:0] irq_drv_ff;
 
    initial begin
@@ -223,6 +227,8 @@ module uvmt_cv32e40s_reference_model_wrap
      end
 
      fd = $fopen("reference_model.log", "w");
+     pl = $fopen("pipeline.log", "w");
+
      $fdisplay(fd, "Reference model logging");
 
    end
@@ -234,9 +240,13 @@ module uvmt_cv32e40s_reference_model_wrap
         $sformat(line, "MIP set to: %x",`INTERRUPT_IF.irq_drv);
         $fdisplay(fd, line);
       end
+      $sformat(pipelineLine, "| IF %x  | ID %x | EX %x | WB %x |", `CORE_I.if_id_pipe.pc,  `CORE_I.id_ex_pipe.pc, `CORE_I.ex_wb_pipe.pc, rvfi_core.pc_rdata);
+      $sformat(pipelineLine, "%s| IF %8x | ID %8x | EX %8x | WB %8x |",pipelineLine, reference_model_i.pipeline_shell_i.if_id_pipe.rvfi.pc_rdata ,reference_model_i.pipeline_shell_i.id_ex_pipe.rvfi.pc_rdata ,reference_model_i.pipeline_shell_i.ex_wb_pipe.rvfi.pc_rdata,rvfi_o.pc_rdata);
 
       if(rvfi_o.valid) begin
-        $sformat(line, " %-8s | %d | %x (%x) | %x, (%x) |",`RVFI_IF.instr_asm.instr.name(), clock_cnt, rvfi_core.pc_rdata, rvfi_core.insn, rvfi_o.pc_rdata, rvfi_o.insn);
+        $sformat(line, " %-8s | %d | %x (%x) | %x, (%x) | IF %x | ID %x | EX %x | WB %x |",`RVFI_IF.instr_asm.instr.name(), clock_cnt, rvfi_core.pc_rdata, rvfi_core.insn, rvfi_o.pc_rdata, rvfi_o.insn, `CORE_I.if_id_pipe.pc, `CORE_I.id_ex_pipe.pc, `CORE_I.ex_wb_pipe.pc, rvfi_core.pc_rdata);
+        $sformat(pipelineLine, "%s RVFI | %-8s", pipelineLine, `RVFI_IF.instr_asm.instr.name());
+
         if (rvfi_core.intr) begin
           $sformat(line, "%s Core INTR Taken", line);
         end
@@ -249,6 +259,8 @@ module uvmt_cv32e40s_reference_model_wrap
       end
       else
         clock_cnt++;
+
+      $fdisplay(pl, pipelineLine);
     end
 
     assign rvfi_core.clk = `RVFI_IF.clk;
