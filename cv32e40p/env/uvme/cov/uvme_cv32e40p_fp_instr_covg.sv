@@ -410,7 +410,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
         // from bhv_logic_3
         cp_lsu_apu_contention_wr_rd : coverpoint cntxt.cov_vif.curr_rd_at_wb_regfile_wr_contention {
             bins rd[] = {[0:31]}                        with ( ((item + 1) * (fpu_latency == 1)) != 0 );
-            illegal_bins rd_addr_32_63 = {[32:63]}      with ( ((item + 1) * (fpu_latency == 1)) != 0 );
+            bins fd[] = {[32:63]}                       with ( ((item + 1) * (fpu_latency == 1)) != 0 ); // flw uses ls path for load to freq
         }
 
         // from bhv_logic_2 (revised)
