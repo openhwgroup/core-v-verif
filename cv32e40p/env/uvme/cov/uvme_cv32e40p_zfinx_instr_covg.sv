@@ -421,7 +421,7 @@ class uvme_cv32e40p_zfinx_instr_covg extends uvm_component;
         // from bhv_logic_3
         cp_lsu_apu_contention_wr_rd : coverpoint cntxt.cov_vif.curr_rd_at_wb_regfile_wr_contention {
             bins rd[] = {[0:31]} with ( (item < 32) & (fpu_latency == 1) );
-            illegal_bins rd_addr_32_63 = {[32:63]};
+            illegal_bins rd_addr_32_63 = {[32:63]}; // zfinx does not use freg
         }
 
         // from bhv_logic_2 (revised)
