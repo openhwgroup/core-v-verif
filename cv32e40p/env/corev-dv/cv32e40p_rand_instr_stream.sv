@@ -66,10 +66,11 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
       bit idx_search_done = 0;
       int rand_cnt = 0;
 
-      idx = $urandom_range(0, current_instr_cnt-1);
+      do begin 
+        idx = $urandom_range(0, current_instr_cnt-1); 
+      end while (instr_list[idx].atomic);
       while (!instr_list[idx].atomic && !idx_search_done) begin
         int idx_e = 0;
-        idx = $urandom_range(0, current_instr_cnt-1);
         idx_e = (idx + new_instr_cnt-1);
 
         if (idx_start.size() == 0) begin : SEARCH_IDX_FOR_NEW_INSTR
@@ -133,6 +134,10 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
           end
           break;
         end // rand_cnt
+
+        do begin 
+          idx = $urandom_range(0, current_instr_cnt-1); 
+        end while (instr_list[idx].atomic);
 
       end // while
 
