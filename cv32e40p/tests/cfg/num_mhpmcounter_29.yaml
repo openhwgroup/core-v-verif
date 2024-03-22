@@ -5,6 +5,7 @@ compile_flags:
 ovpsim: >
     --override cpu/misa_Extensions=0x001104
     --override cpu/compress_version=1.0.0-RC5.7
+    --override cpu/show_c_prefix=T
     --override cpu/noinhibit_mask=0000000000
     --override cpu/marchid=4
     --override cpu/extension_CVE4P/CORE_VERSION=1
