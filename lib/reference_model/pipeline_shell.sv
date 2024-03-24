@@ -91,6 +91,63 @@ module wb_stage
 
 endmodule
 
+module controller
+    (
+        input logic clk, 
+        input logic rst_n,
+        input logic valid,
+
+        input pipe_stage_t if_id_pipe_i,
+        input pipe_stage_t id_ex_pipe_i,
+        input pipe_stage_t ex_wb_pipe_i, 
+
+        output logic if_step_o,
+        output logic id_step_o,
+        output logic ex_step_o,
+        output logic wb_step_o
+    );
+
+
+    int     pipe_count; // Count the number of filled pipeline stages
+    logic   step;
+
+    ////////////////////////////////////////////////////////////////////////////
+    // STEP CONTROL
+    ////////////////////////////////////////////////////////////////////////////
+
+    // Count the amount of filled pipeline stages at the start 
+    always_ff @(posedge clk) begin
+        if (rst_n == 1'b0)begin 
+            pipe_count <= 0;
+        end else if (pipe_count < 2) begin
+            pipe_count <= pipe_count + 1;
+        end else begin
+            pipe_count <= pipe_count;
+        end
+    end
+
+    // step the pipeline until the first stages are filled up to be in sync with the core
+    always_comb begin
+        if (pipe_count < 2) begin
+            step <= 1'b1;
+        end
+        else begin
+            step <= rvfi_i.rvfi_valid;
+        end
+    end
+
+    assign if_step_o = step;
+    assign id_step_o = step;
+    assign ex_step_o = step;
+    assign wb_step_o = step;
+
+
+
+
+
+
+endmodule
+
 module pipeline_shell 
     import uvma_rvfi_pkg::*;
     import iss_wrap_pkg::*;
@@ -105,41 +162,56 @@ module pipeline_shell
     pipe_stage_t id_ex_pipe;
     pipe_stage_t ex_wb_pipe;
     pipe_stage_t wb_pipe;
-    logic step;
-    int pipe_count;
+    logic if_step;
+    logic id_step;
+    logic ex_step;
+    logic wb_step;
+
+    controller controller_i(
+        .clk            (clknrst_if.clk     ),
+        .rst_n          (clknrst_if.reset_n ),
+        .valid          (                   ),
+        .if_id_pipe_i   (if_id_pipe         ),
+        .id_ex_pipe_i   (id_ex_pipe         ),
+        .ex_wb_pipe_i   (ex_wb_pipe         ),
+        .if_step_o      (if_step            ),
+        .id_step_o      (id_step            ),
+        .ex_step_o      (ex_step            ),
+        .wb_step_o      (wb_step            )
+
+    );
 
     if_stage if_stage_i(
-        .clk            (clknrst_if.clk ),
-        .rst_n          (clk            ),
-        .step           (step           ),
-        .if_id_pipe_o   (if_id_pipe     )
+        .clk            (clknrst_if.clk     ),
+        .rst_n          (clknrst_if.reset_n ),
+        .step           (if_step            ),
+        .if_id_pipe_o   (if_id_pipe         )
         );
     
     id_stage id_stage_i(
-        .clk            (clknrst_if.clk ),
-        .rst_n          (clk            ),
-        .step           (step           ),
-        .pipe_i         (if_id_pipe     ),
-        .pipe_o         (id_ex_pipe     )
+        .clk            (clknrst_if.clk     ),
+        .rst_n          (clknrst_if.reset_n ),
+        .step           (id_step            ),
+        .pipe_i         (if_id_pipe         ),
+        .pipe_o         (id_ex_pipe         )
     );
 
     ex_stage ex_stage_i(
-        .clk            (clknrst_if.clk ),
-        .rst_n          (clk            ),
-        .step           (step           ),
-        .pipe_i         (id_ex_pipe     ),
-        .pipe_o         (ex_wb_pipe     )
+        .clk            (clknrst_if.clk     ),
+        .rst_n          (clknrst_if.reset_n ),
+        .step           (ex_step            ),
+        .pipe_i         (id_ex_pipe         ),
+        .pipe_o         (ex_wb_pipe         )
     );
 
     wb_stage wb_stage_i(
-        .clk            (clknrst_if.clk ),
-        .rst_n          (clk            ),
-        .step           (step           ),
-        .pipe_i         (ex_wb_pipe     ),
-        .pipe_o         (wb_pipe        )
+        .clk            (clknrst_if.clk     ),
+        .rst_n          (clknrst_if.reset_n ),
+        .step           (wb_step            ),
+        .pipe_i         (ex_wb_pipe         ),
+        .pipe_o         (wb_pipe            )
     );
 
-    assign rvfi_o.valid = wb_pipe.valid;
 
 
     initial begin
@@ -148,23 +220,6 @@ module pipeline_shell
 
     logic [31:0] irq_drv_ff;
 
-    assign rvfi_o.clk = clknrst_if.clk;
-
-    // Fill the first pipeline stages to be in sync when the core retires the first instruction
-    always_ff @(posedge clknrst_if.clk) begin
-        if (pipe_count < 2) begin
-            pipe_count = pipe_count + 1;
-        end
-    end
-
-    always_comb begin
-        if (pipe_count < 2) begin
-            step = 1'b1;
-        end
-        else begin
-            step <= rvfi_i.rvfi_valid;
-        end
-    end
 
 
     always_ff @(posedge clknrst_if.clk) begin
@@ -175,6 +230,9 @@ module pipeline_shell
     end
 
     always_comb begin
+        rvfi_o.clk <= clknrst_if.clk;
+
+        rvfi_o.valid <= wb_pipe.valid;
         rvfi_o.order <= wb_pipe.rvfi.order;
         rvfi_o.insn <= wb_pipe.rvfi.insn;
         rvfi_o.trap <= wb_pipe.rvfi.trap;
