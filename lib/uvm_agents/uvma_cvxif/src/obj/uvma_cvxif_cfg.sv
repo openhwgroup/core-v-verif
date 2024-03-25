@@ -31,6 +31,9 @@ class uvma_cvxif_cfg_c extends uvm_object;
    rand bit seq_cus_instr_x2_enabled;
    rand bit reg_cus_crosses_enabled;
 
+   rand bit mode_s_supported;
+   rand bit mode_u_supported;
+
    constraint reasonable_values {
       soft uvma_cvxif_issue_ready inside     {[4:10]};
       soft uvma_cvxif_issue_not_ready inside {[1:2]};
@@ -64,6 +67,8 @@ class uvma_cvxif_cfg_c extends uvm_object;
       `uvm_field_int ( load_store_support_x,           UVM_DEFAULT)
       `uvm_field_int ( seq_cus_instr_x2_enabled,       UVM_DEFAULT)
       `uvm_field_int ( reg_cus_crosses_enabled,        UVM_DEFAULT)
+      `uvm_field_int ( mode_s_supported,               UVM_DEFAULT)
+      `uvm_field_int ( mode_u_supported,               UVM_DEFAULT)
    `uvm_object_utils_end
 
    /**

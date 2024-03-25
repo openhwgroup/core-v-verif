@@ -25,7 +25,9 @@
    //covergroup instances
 
 covergroup cg_request(
-    string name
+    string name,
+    bit mode_s_supported,
+    bit mode_u_supported
     ) with function sample(uvma_cvxif_req_item_c req_item);
 
     option.per_instance = 1;
@@ -48,6 +50,8 @@ covergroup cg_request(
    }
 
    cp_mode : coverpoint req_item.issue_req.mode {
+    ignore_bins IGN_S_MODE = {PRIV_LVL_S} iff (!mode_s_supported);
+    ignore_bins IGN_U_MODE = {PRIV_LVL_U} iff (!mode_u_supported);
     bins MODE [] = {[0:$]};
    }
 
@@ -255,7 +259,9 @@ function void uvma_cvxif_cov_model_c::build_phase(uvm_phase phase);
       `uvm_fatal("CNTXT", "Context handle is null")
    end
 
-   request_cg  = new("request_cg");
+   request_cg  = new("request_cg",
+                     .mode_s_supported(cfg.mode_s_supported),
+                     .mode_u_supported(cfg.mode_u_supported));
    response_cg = new("response_cg",
                     .dual_read_write_support(cfg.dual_read_write_support_x),
                     .load_store_support(cfg.load_store_support_x));
