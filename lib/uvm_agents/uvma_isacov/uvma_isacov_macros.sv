@@ -19,6 +19,13 @@
 `define __UVMA_ISACOV_MACROS_SV__
 
 // Macro to remove instrucitons that are not supported based on standard ext_*_supported variable names (from commmon core control cfg class)
+`ifdef UNSUPPORTED_WITH
+  `define WITH iff
+`else
+   `define WITH with
+`endif
+
+// Macro to remove instrucitons that are not supported based on standard ext_*_supported variable names (from commmon core control cfg class)
 `define ISACOV_IGN_BINS \
     ignore_bins IGN_UNKNOWN = {UNKNOWN}; \
     ignore_bins IGN_M = {MUL, MULH, MULHSU, MULHU, \

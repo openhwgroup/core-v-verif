@@ -156,6 +156,9 @@ endif
 
 VCS_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 
+# FIXME: this is a kludge to work-around a known VCS bug
+VCS_USER_COMPILE_ARGS += +define+UNSUPPORTED_WITH
+
 ifeq ($(call IS_YES,$(ENABLE_TRACE_LOG)),YES)
     VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
     VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_RVFI_TRACE_EXECUTION
