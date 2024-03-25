@@ -70,6 +70,11 @@ def read_file(test, type, run_index):
     matches = [os.path.join(TOPDIR, p, test, type) for p in TEST_PATHS 
                 if os.path.exists(os.path.join(TOPDIR, p, test, type))]
 
+    # Allow the user to specify full path to test folder
+    test_path = os.path.abspath(os.path.join(test, type))
+    if os.path.exists(test_path):
+        matches.append(test_path)
+
     # It is a fatal error to find less than 1 or more than 1 match
     if len(matches) == 0:
         logger.fatal('Could not find [{}] in any directories:'.format(type))
