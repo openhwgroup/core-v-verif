@@ -256,8 +256,8 @@ function void uvmt_cv32e40p_base_test_c::end_of_elaboration_phase(uvm_phase phas
 
    super.end_of_elaboration_phase(phase);
 
-   `uvm_info("BASE TEST", $sformatf("Top-level environment configuration:\n%s", env_cfg.sprint()), UVM_NONE)
-   `uvm_info("BASE TEST", $sformatf("Testcase configuration:\n%s", test_cfg.sprint()), UVM_NONE)
+   `uvm_info("BASE TEST", $sformatf("Top-level environment configuration:\n%s", env_cfg.sprint()), UVM_DEBUG)
+   `uvm_info("BASE TEST", $sformatf("Testcase configuration:\n%s", test_cfg.sprint()), UVM_DEBUG)
 
 endfunction : end_of_elaboration_phase
 

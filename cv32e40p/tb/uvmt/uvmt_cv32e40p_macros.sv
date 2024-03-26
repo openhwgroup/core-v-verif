@@ -226,7 +226,7 @@
     // 1 - To cover directives instr/data gnt assert-deassert when req is low
     `define TB_HACK_1_OBI_GNT(TYPE) initial begin : hack_obi_intf_gnt_signal_1_``TYPE \
       if ($test$plusargs("tb_hack_1_obi_gnt_signal")) begin \
-        int success_addr_phase_cnt = 0, hack_cnt = 0; \
+        automatic int success_addr_phase_cnt = 0, hack_cnt = 0; \
         forever begin \
           @(posedge obi_memory_``TYPE``_if.clk); \
             if (obi_memory_``TYPE``_if.req && obi_memory_``TYPE``_if.gnt) success_addr_phase_cnt++; \
