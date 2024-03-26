@@ -419,7 +419,13 @@ class cv32e40p_float_zfinx_base_instr_stream extends cv32e40p_base_instr_stream;
     if (more_weight_for_fdiv_fsqrt_gen || use_only_for_fdiv_fsqrt_gen) begin
       if (select_fp_instr) // is fp
         if ($urandom_range(1) || use_only_for_fdiv_fsqrt_gen)
-          include_instr = new[1] ($urandom_range(1) ? {FDIV_S} : {FSQRT_S});
+          // Metrics DSim throws an "InvalidTypeAssign" error given the conditional
+          // assigment below, so it has been expanded into two assignments.
+          //     include_instr = new[1] ($urandom_range(1) ? {FDIV_S} : {FSQRT_S});
+          if ($urandom_range(1))
+            include_instr = new[1] ({FDIV_S});
+          else
+            include_instr = new[1] ({FSQRT_S});
     end
 
     if (!include_load_store_base_sp) begin
@@ -1155,9 +1161,19 @@ class cv32e40p_constraint_mc_fp_instr_stream extends cv32e40p_float_zfinx_base_i
 
     if (instr.group inside {RV32F, RV32FC, RV32ZFINX}) begin : BODY
 
+      // Metrics DSim throws an "InvalidTypeAssign" error given the conditional
+      // assigment below, so it has been expanded into two assignments.
+      //  .include_group((is_zfinx) ? {RV32ZFINX} : {RV32F, RV32FC})
+
+      riscv_instr_group_t tmp_include_group[];
+      if (is_zfinx)
+        tmp_include_group = new[1] ({RV32ZFINX});
+      else
+        tmp_include_group = new[2] ({RV32F, RV32FC});
       mc_instr = new riscv_instr::get_rand_instr(
         .exclude_instr(mc_exclude_instr),
-        .include_group((is_zfinx) ? {RV32ZFINX} : {RV32F, RV32FC})
+        //.include_group((is_zfinx) ? {RV32ZFINX} : {RV32F, RV32FC})
+        .include_group(tmp_include_group)
       );
       update_next_mc_instr(mc_instr);
 
@@ -1392,7 +1408,14 @@ class cv32e40p_fp_op_fwd_instr_stream extends cv32e40p_float_zfinx_base_instr_st
     exclude_group = new[2] ({RV32C, RV32FC});
     // 
     if (instr_order_per_block[idx] == IS_FP) begin
-      include_group = new[1] ((is_zfinx) ? {RV32ZFINX} : {RV32F});
+      // Metrics DSim throws an "InvalidTypeAssign" error given the conditional
+      // assigment below, so it has been expanded into two assignments.
+      //    include_group = new[1] ((is_zfinx) ? {RV32ZFINX} : {RV32F});
+      if (is_zfinx)
+        include_group = new[1] ({RV32ZFINX});
+      else
+        include_group = new[1] ({RV32F});
+
       // f_type has limited instr that uses gpr
       if (!is_zfinx) include_instr = new[7] ({FCVT_W_S, FCVT_WU_S, FCVT_S_W, FCVT_S_WU, FLW, FMV_X_W, FMV_W_X}); // rd,rd,rs,rs,rs,rd,rs
       else           include_instr.delete();
