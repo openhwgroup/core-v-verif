@@ -99,8 +99,8 @@ sim_t::sim_t(const cfg_t *cfg, bool halted,
 
   debug_mmu = new mmu_t(this, cfg->endianness, NULL);
 
-  std::any a_num_procs = params["/top/num_procs"];;
-  uint64_t num_procs = a_num_procs.has_value() ? std::any_cast<uint64_t>(a_num_procs) : cfg->nprocs();
+  openhw::Param a_num_procs = params["/top/num_procs"];
+  uint64_t num_procs = a_num_procs.a_uint64_t ? (a_num_procs).a_uint64_t : cfg->nprocs();
 
   for (size_t i = 0; i < num_procs; i++) {
     procs[i] = new openhw::Processor(&isa, cfg, this, cfg->hartids()[i], halted,

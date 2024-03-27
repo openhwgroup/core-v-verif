@@ -606,16 +606,19 @@ int main(int argc, char** argv)
   }
 
   if (max_steps != 0) {
-    params.set("/top/", "max_steps", max_steps);
-    params.set("/top/", "max_steps_enabled", bool(true));
+    params.set_uint64_t("/top/", "max_steps", max_steps);
+    params.set_bool("/top/", "max_steps_enabled", true);
     std::cout << "[SPIKE] Max simulation steps: " << max_steps << std::endl;
   }
   openhw::Params::cfg_to_params(cfg, params);
-  params.set("/top/", "num_procs", cfg.nprocs());
-  params.set("/top/core/0/", "boot_addr", 0x10000UL);
-  params.set("/top/core/0/", "pmpregions", 0x0UL);
-  params.set("/top/core/0/", "isa", std::string(cfg.isa()));
-  params.set("/top/core/0/", "priv", std::string(cfg.priv()));
+  params.set_uint64_t("/top/", "num_procs", cfg.nprocs());
+  params.set_uint64_t("/top/core/0/", "boot_addr", 0x10000UL);
+  params.set_uint64_t("/top/core/0/", "pmpregions", 0x0UL);
+  params.set_string("/top/core/0/", "isa", std::string(cfg.isa()));
+  params.set_string("/top/core/0/", "priv", std::string(cfg.priv()));
+
+  openhw::Param param = params.get("/top/core/0/misa_we");
+  std::cerr << "[spike.cc:main()] Value of '/top/core/0/misa_we' = " << (param.name != "" ? (param.a_bool ? "true" : "false") : "UNDEFINED") << "\n";
 
   openhw::Simulation s(&cfg, halted,
           mems, plugin_devices, htif_args, dm_config, log_path, dtb_enabled, dtb_file,

@@ -38,39 +38,41 @@ Params params;
 
 extern "C" void spike_set_default_params(const char *profile) {
   if (strcmp(profile, "cva6") == 0) {
-    params.set("/top/", "isa", std::any(std::string("RV64GC")));
-    params.set("/top/", "priv", any(std::string(DEFAULT_PRIV))); // MSU
-    params.set("/top/", "num_procs", std::any(0x1UL));
-    params.set("/top/", "bootrom", std::any(true));
-    params.set("/top/", "generic_core_config", std::any(true));
-    params.set("/top/", "dram_base", std::any(0x80000000UL));
-    params.set("/top/", "dram_size", std::any(0x400UL * 1024 * 1024));
-    params.set("/top/", "max_steps_enabled", std::any(false));
-    params.set("/top/", "max_steps", std::any(2000000UL));
+    params.set_string("/top/", "isa", std::string("RV64GC"));
+    params.set_string("/top/", "priv", std::string(DEFAULT_PRIV)); // MSU
+    params.set_uint64_t("/top/", "num_procs", 0x1UL);
+    params.set_bool("/top/", "bootrom", true);
+    params.set_bool("/top/", "generic_core_config", true);
+    params.set_uint64_t("/top/", "dram_base", 0x80000000UL);
+    params.set_uint64_t("/top/", "dram_size", 0x400UL * 1024 * 1024);
+    params.set_bool("/top/", "max_steps_enabled", false);
+    params.set_uint64_t("/top/", "max_steps", 2000000UL);
 
-    params.set("/top/core/0/", "name", std::any(std::string("cva6")));
-    params.set("/top/core/0/", "isa", std::any(std::string("RV64GC")));
+    params.set_string("/top/core/0/", "name", std::string("cva6"));
+    params.set_string("/top/core/0/", "isa", std::string("RV64GC"));
   }
 }
 
 extern "C" void spike_set_param_uint64_t(const char *base, const char *name,
                                          uint64_t value) {
-  params.set(base, name, value);
+  params.set_uint64_t(base, name, value);
 }
+
 extern "C" void spike_set_param_str(const char *base, const char *name,
                                     const char *value) {
-  params.set(base, name, std::string(value));
+  params.set_string(base, name, std::string(value));
 }
+
 extern "C" void spike_set_param_bool(const char *base, const char *name,
                                      bool value) {
-  params.set(base, name, std::any(value));
+  params.set_bool(base, name, value);
 }
 
 extern "C" void spike_create(const char *filename) {
   std::cerr << "[SPIKE] Starting 'spike_create'...\n";
 
   // TODO parse params from yaml
-  string isa_str = std::any_cast<string>(params["/top/isa"]);
+  string isa_str = (params["/top/isa"]).a_string;
 
   cfg_t *config = new cfg_t(
       /*default_initrd_bounds=*/std::make_pair((reg_t)0, (reg_t)0),
@@ -105,15 +107,12 @@ extern "C" void spike_create(const char *filename) {
       std::cerr << "  " << s << ",\n";
     std::cerr << "}\n";
 
-    std::any a_num_procs = params["/top/num_procs"];
-    ;
-    uint64_t num_procs = a_num_procs.has_value()
-                             ? std::any_cast<uint64_t>(a_num_procs)
+    Param a_num_procs = params["/top/num_procs"];
+    uint64_t num_procs = (a_num_procs).a_uint64_t
+                             ? (a_num_procs).a_uint64_t
                              : config->nprocs();
-    std::any a_generic_config = params["/top/generic_core_config"];
-    bool generic_config = a_generic_config.has_value()
-                              ? std::any_cast<bool>(a_generic_config)
-                              : false;
+    Param a_generic_config = params["/top/generic_core_config"];
+    bool generic_config = (a_generic_config).a_bool;
 
     mapParam coreParams = params.get_base("/top/cores/");
 
