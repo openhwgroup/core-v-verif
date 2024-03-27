@@ -242,7 +242,11 @@ int main(int argc, char *argv[]) {
     __asm__ volatile ("csrwi 0xB03, 0x0");
     __asm__ volatile ("csrwi 0x320, 0x0");
 
-    // Test0
+    retval = memTest();
+    if (retval != EXIT_SUCCESS) {
+      return retval;
+    }
+
     retval = customTest();
     if (retval != EXIT_SUCCESS) {
       return retval;
@@ -309,53 +313,97 @@ int main(int argc, char *argv[]) {
     return EXIT_SUCCESS;
 }
 
+
+
 int customTest() {
-    uint8_t interrupt = 3;
-    volatile uint32_t count = 0;
+    uint8_t interrupt = 16;
     
-    printf("CustomTest \n");
+    printf("Division Test \n");
 
     active_test = 0;
 
     mstatus_mie_enable();
 
-    mie_enable(interrupt);
+    //Enable all interrupts
+    volatile uint32_t mie = (uint32_t) -1;
+    __asm__ volatile("csrw mie, %0" : : "r" (mie));
 
-    mm_ram_assert_irq(0x1 << interrupt, 8);
+    uint32_t a = 0x12341234;
+    uint32_t b = 0x00004567;
+    uint32_t result;
 
-    count++;
-    count++;
-    count++;
-    count++;
-    count++;
-    count++;
-    count++;
-    count++;
-    count++;
-    count++;
-    count++;
-    count++;
-    count++;
-    count++;
-    count++;
-    count++;
-    count++;
+    __asm__ volatile("divu %0, %1, %2\n\t" : "=r" (result) : "r" (a), "r" (b));
 
-
+    //Time interrupt in the middle of the division instruction
+    mm_ram_assert_irq(0x1 << 16, 55);
+    __asm__ volatile("divu %0, %1, %2\n\t" : "=r" (result) : "r" (a), "r" (b));
+    __asm__ volatile("divu %0, %1, %2\n\t" : "=r" (result) : "r" (a), "r" (b));
+    __asm__ volatile("divu %0, %1, %2\n\t" : "=r" (result) : "r" (a), "r" (b));
 
     mstatus_mie_disable();
 
     mie_disable(interrupt);
 
-    mm_ram_assert_irq(0x1 << interrupt, 1);
-
-    mm_ram_assert_irq(0, 0);
-
-    printf("count: %d\n", count);
-
     return EXIT_SUCCESS;
 }
 
+int memTest() {
+    uint8_t interrupt = 16;
+    
+    printf("Memory Test \n");
+
+    active_test = 0;
+
+    mstatus_mie_enable();
+
+    //Enable all interrupts
+    volatile uint32_t mie = (uint32_t) -1;
+    __asm__ volatile("csrw mie, %0" : : "r" (mie));
+
+    int array[5] = {0x111, 0x22, 0x33, 0x44, 0x55};
+    int load_value;
+    int store_value = 0xAAAAAAAA;
+
+    int count = 0;
+    
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("lw %0, 0(%1)\n\t" : "=r" (load_value) : "r" (&array[0]));
+
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+
+    printf("count %d\n", count);
+
+
+    //Time interrupt in the middle of the load instruction
+    mm_ram_assert_irq(0x1 << 16, 4);
+    __asm__ volatile("lw %0, 0(%1)\n\t" : "=r" (load_value) : "r" (&array[0]));
+    __asm__ volatile("lw %0, 0(%1)\n\t" : "=r" (load_value) : "r" (&array[1]));
+    __asm__ volatile("lw %0, 0(%1)\n\t" : "=r" (load_value) : "r" (&array[2]));
+    __asm__ volatile("lw %0, 0(%1)\n\t" : "=r" (load_value) : "r" (&array[3]));
+    __asm__ volatile("lw %0, 0(%1)\n\t" : "=r" (load_value) : "r" (&array[4]));
+
+
+    __asm__ volatile("sw %0, 0(%1)\n\t": : "r" (store_value), "r" (&array[0]));
+
+    printf("array[0]: %x\n", array[0]);
+
+    mstatus_mie_disable();
+
+    mie_disable(interrupt);
+
+    return EXIT_SUCCESS;
+}
 
 // Test 1 will issue individual interrupts one at a time and ensure that each ISR is entered
 int test1() {

@@ -101,6 +101,7 @@ extern void alt_direct_ecall_table();
 
 // Function prototypes for individual tests
 
+int memTest();
 int customTest();
 int test1();
 int test2();
