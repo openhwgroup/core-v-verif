@@ -64,46 +64,45 @@ function void check_4bit(input string compared, input bit [3:0] core, input logi
    endfunction // check_4bit
 
   //use assertion to compare the RVFI signals
-  rvfi_valid_a: assert property(@ (posedge rvfi_rm.clk)
-    rvfi_core.valid |-> rvfi_rm.valid)
-    else `uvm_error("RVFI_VALID", $sformatf("rvfi_rm.valid=%0h rvfi_core.valid=%0h",rvfi_rm.valid, $past(rvfi_core.valid)));
+  rvfi_valid_a: assert property( @(posedge rvfi_core.clk)
+    rvfi_rm.valid |-> rvfi_core.valid)
+    else `uvm_error("RVFI_VALID", $sformatf("rvfi_rm.valid=%0h rvfi_core.valid=%0h",$sampled(rvfi_rm.valid), $sampled(rvfi_core.valid)));
 
-  rvfi_pc_a: assert property(@ (posedge rvfi_rm.clk)
+  rvfi_pc_a: assert property( @(posedge rvfi_core.clk)
     rvfi_rm.valid |-> (rvfi_rm.pc_rdata == rvfi_core.pc_rdata))
-    else `uvm_error("RVFI_PC", $sformatf("rvfi_rm.pc_rdata=%0h rvfi_core.pc_rdata=%0h",rvfi_rm.pc_rdata, rvfi_core.pc_rdata));
+    else `uvm_error("RVFI_PC", $sformatf("rvfi_rm.pc_rdata=%0h rvfi_core.pc_rdata=%0h",$sampled(rvfi_rm.pc_rdata), $sampled(rvfi_core.pc_rdata)));
   
-
-  rvfi_insn_a: assert property(@ (posedge rvfi_rm.clk)
+  rvfi_insn_a: assert property(@ (posedge rvfi_core.clk)
     rvfi_rm.valid |-> (rvfi_rm.insn == rvfi_core.insn))
-    else `uvm_error("RVFI_INSN", $sformatf("rvfi_rm.insn=%0h rvfi_core.insn=%0h",rvfi_rm.insn, rvfi_core.insn));
+    else `uvm_error("RVFI_INSN", $sformatf("rvfi_rm.insn=%0h rvfi_core.insn=%0h",$sampled(rvfi_rm.insn), $sampled(rvfi_core.insn)));
 
-  rvfi_trap_a: assert property(@ (posedge rvfi_rm.clk)
+  rvfi_trap_a: assert property(@ (posedge rvfi_core.clk)
     rvfi_rm.valid |-> (rvfi_rm.trap == rvfi_core.trap))
-    else `uvm_error("RVFI_TRAP", $sformatf("rvfi_rm.trap=%0h rvfi_core.trap=%0h",rvfi_rm.trap, rvfi_core.trap));
+    else `uvm_error("RVFI_TRAP", $sformatf("rvfi_rm.trap=%0h rvfi_core.trap=%0h",$sampled(rvfi_rm.trap), $sampled(rvfi_core.trap)));
 
-  rvfi_halt_a: assert property(@ (posedge rvfi_rm.clk)
+  rvfi_halt_a: assert property(@ (posedge rvfi_core.clk)
     rvfi_rm.valid |-> (rvfi_rm.halt == rvfi_core.halt))
-    else `uvm_error("RVFI_HALT", $sformatf("rvfi_rm.halt=%0h rvfi_core.halt=%0h",rvfi_rm.halt, rvfi_core.halt));
+    else `uvm_error("RVFI_HALT", $sformatf("rvfi_rm.halt=%0h rvfi_core.halt=%0h",$sampled(rvfi_rm.halt), $sampled(rvfi_core.halt)));
 
-  rvfi_dbg_a: assert property(@ (posedge rvfi_rm.clk)
+  rvfi_dbg_a: assert property(@ (posedge rvfi_core.clk)
     rvfi_rm.valid |-> (rvfi_rm.dbg == rvfi_core.dbg))
-    else `uvm_error("RVFI_DBG", $sformatf("rvfi_rm.dbg=%0h rvfi_core.dbg=%0h",rvfi_rm.dbg, rvfi_core.dbg));
+    else `uvm_error("RVFI_DBG", $sformatf("rvfi_rm.dbg=%0h rvfi_core.dbg=%0h",$sampled(rvfi_rm.dbg), $sampled(rvfi_core.dbg)));
 
-  rvfi_dbg_mode_a: assert property(@ (posedge rvfi_rm.clk)
+  rvfi_dbg_mode_a: assert property(@ (posedge rvfi_core.clk)
     rvfi_rm.valid |-> (rvfi_rm.dbg_mode == rvfi_core.dbg_mode))
-    else `uvm_error("RVFI_DBG_MODE", $sformatf("rvfi_rm.dbg_mode=%0h rvfi_core.dbg_mode=%0h",rvfi_rm.dbg_mode, rvfi_core.dbg_mode));
+    else `uvm_error("RVFI_DBG_MODE", $sformatf("rvfi_rm.dbg_mode=%0h rvfi_core.dbg_mode=%0h",$sampled(rvfi_rm.dbg_mode), $sampled(rvfi_core.dbg_mode)));
 
-  rvfi_nmip_a: assert property(@ (posedge rvfi_rm.clk)
+  rvfi_nmip_a: assert property(@ (posedge rvfi_core.clk)
     rvfi_rm.valid |-> (rvfi_rm.nmip == rvfi_core.nmip))
-    else `uvm_error("RVFI_NMIP", $sformatf("rvfi_rm.nmip=%0h rvfi_core.nmip=%0h",rvfi_rm.nmip, rvfi_core.nmip));
+    else `uvm_error("RVFI_NMIP", $sformatf("rvfi_rm.nmip=%0h rvfi_core.nmip=%0h",$sampled(rvfi_rm.nmip), $sampled(rvfi_core.nmip)));
   
-  rvfi_intr_a: assert property(@ (posedge rvfi_rm.clk)
+  rvfi_intr_a: assert property(@ (posedge rvfi_core.clk)
     rvfi_rm.valid |-> (rvfi_rm.intr == rvfi_core.intr))
-    else `uvm_error("RVFI_INTR", $sformatf("rvfi_rm.intr=%0h rvfi_core.intr=%0h",rvfi_rm.intr, rvfi_core.intr));
+    else `uvm_error("RVFI_INTR", $sformatf("rvfi_rm.intr=%0h rvfi_core.intr=%0h",$sampled(rvfi_rm.intr), $sampled(rvfi_core.intr)));
 
-  rvfi_mode_a: assert property(@ (posedge rvfi_rm.clk)
+  rvfi_mode_a: assert property(@ (posedge rvfi_core.clk)
     rvfi_rm.valid |-> (rvfi_rm.mode == rvfi_core.mode))
-    else `uvm_error("RVFI_MODE", $sformatf("rvfi_rm.mode=%0h rvfi_core.mode=%0h",rvfi_rm.mode, rvfi_core.mode));
+    else `uvm_error("RVFI_MODE", $sformatf("rvfi_rm.mode=%0h rvfi_core.mode=%0h",$sampled(rvfi_rm.mode), $sampled(rvfi_core.mode)));
 
   /*TODO: 
   ixl
@@ -120,8 +119,8 @@ function void check_4bit(input string compared, input bit [3:0] core, input logi
   CSRs
   */
 
-/* TODO: implement these with assertions
-  always_comb begin
+  // TODO: implement these with assertions
+  always_ff @(posedge rvfi_core.clk) begin
     if (rvfi_rm.valid) begin
       //Disable instructions with multiple memory accesses
       if(~(rvfi_core.mem_rmask[511:4] || rvfi_core.mem_wmask[511:4])) begin
@@ -169,7 +168,6 @@ function void check_4bit(input string compared, input bit [3:0] core, input logi
     end
 
   end
-  */
   
 
 
@@ -185,17 +183,13 @@ module uvmt_cv32e40s_reference_model_wrap
   import uvme_cv32e40s_pkg::*;
   import uvma_rvfi_pkg::*;
   ();
-  //import rvviApiPkg::*;
 
-    //uvma_rvfi_instr_if_t#(ILEN,XLEN) rvfi_o();  
-    //st_rvfi rvfi_o;
-
-    rvfi_if_t rvfi_o();
+    uvma_clknrst_if_t clknrst_if_rm();
     rvfi_if_t rvfi_core();
     int clock_cnt;
 
     reference_model reference_model_i(
-       .clknrst_if(`CLKNRST_IF),
+       .clknrst_if(clknrst_if_rm),
        .rvfi_i(`RVFI_IF),
        .interrupt_if_i(`INTERRUPT_IF),
        .rvfi_o(rvfi_o)
@@ -233,7 +227,19 @@ module uvmt_cv32e40s_reference_model_wrap
 
    end
 
-    always_ff @(posedge rvfi_o.clk) begin
+  initial begin
+    clknrst_if_rm.clk = 1'b0;
+    #1;  // time for clknrst_if to set the clk_period
+    wait (`CLKNRST_IF.clk_period != 0.0);
+    `uvm_info("RM_WRAP", "Starting RM clock", UVM_LOW)
+    #0.5 // Slightly offset the rm clock
+    clknrst_if_rm.set_period(`CLKNRST_IF.clk_period);
+    clknrst_if_rm.start_clk();
+  end
+
+  assign clknrst_if_rm.reset_n = `CLKNRST_IF.reset_n;
+
+    always_ff @(posedge rvfi_core.clk) begin
       $sformat(line, "");
       irq_drv_ff <= `INTERRUPT_IF.irq_drv;
       if (irq_drv_ff != `INTERRUPT_IF.irq_drv) begin
@@ -276,39 +282,37 @@ module uvmt_cv32e40s_reference_model_wrap
 
     assign rvfi_core.clk = `RVFI_IF.clk;
 
-    always_ff @(posedge rvfi_core.clk) begin
-      rvfi_core.valid = `RVFI_IF.rvfi_valid;
-      if (`RVFI_IF.rvfi_valid) begin
+    always_comb begin
+      rvfi_core.valid     <= `RVFI_IF.rvfi_valid;
 
-      rvfi_core.pc_rdata = `RVFI_IF.rvfi_pc_rdata;
-      rvfi_core.insn = `RVFI_IF.rvfi_insn;
-      rvfi_core.trap = `RVFI_IF.rvfi_trap;
-      rvfi_core.halt = `RVFI_IF.rvfi_halt;
-      rvfi_core.dbg = `RVFI_IF.rvfi_dbg;
-      rvfi_core.dbg_mode = `RVFI_IF.rvfi_dbg_mode;
-      rvfi_core.nmip = `RVFI_IF.rvfi_nmip;
-      rvfi_core.intr = `RVFI_IF.rvfi_intr;
-      rvfi_core.mode = `RVFI_IF.rvfi_mode;
-      rvfi_core.ixl = `RVFI_IF.rvfi_ixl;
-      rvfi_core.pc_rdata = `RVFI_IF.rvfi_pc_rdata;
-      rvfi_core.pc_wdata = `RVFI_IF.rvfi_pc_wdata;
-      rvfi_core.rs1_addr = `RVFI_IF.rvfi_rs1_addr;
-      rvfi_core.rs1_rdata = `RVFI_IF.rvfi_rs1_rdata;
-      rvfi_core.rs2_addr = `RVFI_IF.rvfi_rs2_addr;
-      rvfi_core.rs2_rdata = `RVFI_IF.rvfi_rs2_rdata;
-      rvfi_core.rs3_addr = `RVFI_IF.rvfi_rs3_addr;
-      rvfi_core.rs3_rdata = `RVFI_IF.rvfi_rs3_rdata;
-      rvfi_core.rd1_addr = `RVFI_IF.rvfi_rd1_addr;
-      rvfi_core.rd1_wdata = `RVFI_IF.rvfi_rd1_wdata;
-      rvfi_core.rd2_addr = `RVFI_IF.rvfi_rd2_addr;
-      rvfi_core.rd2_wdata = `RVFI_IF.rvfi_rd2_wdata;
+      rvfi_core.pc_rdata  <= `RVFI_IF.rvfi_pc_rdata;
+      rvfi_core.insn      <= `RVFI_IF.rvfi_insn;
+      rvfi_core.trap      <= `RVFI_IF.rvfi_trap;
+      rvfi_core.halt      <= `RVFI_IF.rvfi_halt;
+      rvfi_core.dbg       <= `RVFI_IF.rvfi_dbg;
+      rvfi_core.dbg_mode  <= `RVFI_IF.rvfi_dbg_mode;
+      rvfi_core.nmip      <= `RVFI_IF.rvfi_nmip;
+      rvfi_core.intr      <= `RVFI_IF.rvfi_intr;
+      rvfi_core.mode      <= `RVFI_IF.rvfi_mode;
+      rvfi_core.ixl       <= `RVFI_IF.rvfi_ixl;
+      rvfi_core.pc_rdata  <= `RVFI_IF.rvfi_pc_rdata;
+      rvfi_core.pc_wdata  <= `RVFI_IF.rvfi_pc_wdata;
+      rvfi_core.rs1_addr  <= `RVFI_IF.rvfi_rs1_addr;
+      rvfi_core.rs1_rdata <= `RVFI_IF.rvfi_rs1_rdata;
+      rvfi_core.rs2_addr  <= `RVFI_IF.rvfi_rs2_addr;
+      rvfi_core.rs2_rdata <= `RVFI_IF.rvfi_rs2_rdata;
+      rvfi_core.rs3_addr  <= `RVFI_IF.rvfi_rs3_addr;
+      rvfi_core.rs3_rdata <= `RVFI_IF.rvfi_rs3_rdata;
+      rvfi_core.rd1_addr  <= `RVFI_IF.rvfi_rd1_addr;
+      rvfi_core.rd1_wdata <= `RVFI_IF.rvfi_rd1_wdata;
+      rvfi_core.rd2_addr  <= `RVFI_IF.rvfi_rd2_addr;
+      rvfi_core.rd2_wdata <= `RVFI_IF.rvfi_rd2_wdata;
 
-      rvfi_core.mem_addr = `RVFI_IF.rvfi_mem_addr;
-      rvfi_core.mem_rdata = `RVFI_IF.rvfi_mem_rdata;
-      rvfi_core.mem_rmask = `RVFI_IF.rvfi_mem_rmask;
-      rvfi_core.mem_wdata = `RVFI_IF.rvfi_mem_wdata;
-      rvfi_core.mem_wmask = `RVFI_IF.rvfi_mem_wmask;
-    end
+      rvfi_core.mem_addr  <= `RVFI_IF.rvfi_mem_addr;
+      rvfi_core.mem_rdata <= `RVFI_IF.rvfi_mem_rdata;
+      rvfi_core.mem_rmask <= `RVFI_IF.rvfi_mem_rmask;
+      rvfi_core.mem_wdata <= `RVFI_IF.rvfi_mem_wdata;
+      rvfi_core.mem_wmask <= `RVFI_IF.rvfi_mem_wmask;
     end
 
 
