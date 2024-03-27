@@ -71,7 +71,7 @@ function void check_4bit(input string compared, input bit [3:0] core, input logi
   rvfi_pc_a: assert property( @(posedge rvfi_core.clk)
     rvfi_rm.valid |-> (rvfi_rm.pc_rdata == rvfi_core.pc_rdata))
     else `uvm_error("RVFI_PC", $sformatf("rvfi_rm.pc_rdata=%0h rvfi_core.pc_rdata=%0h",$sampled(rvfi_rm.pc_rdata), $sampled(rvfi_core.pc_rdata)));
-  
+
   rvfi_insn_a: assert property(@ (posedge rvfi_core.clk)
     rvfi_rm.valid |-> (rvfi_rm.insn == rvfi_core.insn))
     else `uvm_error("RVFI_INSN", $sformatf("rvfi_rm.insn=%0h rvfi_core.insn=%0h",$sampled(rvfi_rm.insn), $sampled(rvfi_core.insn)));
@@ -185,6 +185,7 @@ module uvmt_cv32e40s_reference_model_wrap
   ();
 
     uvma_clknrst_if_t clknrst_if_rm();
+    rvfi_if_t rvfi_rm();
     rvfi_if_t rvfi_core();
     int clock_cnt;
 
@@ -192,12 +193,12 @@ module uvmt_cv32e40s_reference_model_wrap
        .clknrst_if(clknrst_if_rm),
        .rvfi_i(`RVFI_IF),
        .interrupt_if_i(`INTERRUPT_IF),
-       .rvfi_o(rvfi_o)
+       .rvfi_o(rvfi_rm)
     );
 
     rvfi_compare rvfi_compare_i(
       .rvfi_core(rvfi_core),
-      .rvfi_rm(rvfi_o)
+      .rvfi_rm(rvfi_rm)
     );
 
    string info_tag = "RM_wrap";
@@ -248,26 +249,36 @@ module uvmt_cv32e40s_reference_model_wrap
         $fdisplay(fd, line);
         $fdisplay(pl, pipelineLine);
       end
-      $sformat(pipelineLine, "| IF %x  | ID %x | EX %x | WB %x ", `CORE_I.if_stage_i.pc_if_o, `CORE_I.if_id_pipe.pc,  `CORE_I.id_ex_pipe.pc, `CORE_I.ex_wb_pipe.pc);
-      $sformat(pipelineLine, "%s| IF %8x | ID %8x | EX %8x | WB %8x |",pipelineLine, reference_model_i.pipeline_shell_i.if_id_pipe.rvfi.pc_rdata ,reference_model_i.pipeline_shell_i.id_ex_pipe.rvfi.pc_rdata ,reference_model_i.pipeline_shell_i.ex_wb_pipe.rvfi.pc_rdata,rvfi_o.pc_rdata);
-      $sformat(pipelineLine, "%s| ia %x | li %x | db %x | f %x | cp %x | si %x | ib %x |",pipelineLine,
+      $sformat(pipelineLine, "%15s | IF %x  %x| ID %x %x| EX %x %x | WB %x %x | RVFI %x %x|",$sformatf("%t", $time), 
+              `CORE_I.if_stage_i.pc_if_o, `CORE_I.if_stage_i.instr_valid,  
+              `CORE_I.if_id_pipe.pc, `CORE_I.id_stage_i.instr_valid, 
+              `CORE_I.id_ex_pipe.pc, `CORE_I.ex_stage_i.instr_valid,
+              `CORE_I.ex_wb_pipe.pc, `CORE_I.wb_stage_i.instr_valid,
+              `RVFI_IF.rvfi_pc_rdata, `RVFI_IF.rvfi_valid);
+      $sformat(pipelineLine, "%s| ID %8x | EX %8x | WB %8x |",pipelineLine, 
+              reference_model_i.pipeline_shell_i.if_id_pipe.rvfi.pc_rdata,
+              reference_model_i.pipeline_shell_i.id_ex_pipe.rvfi.pc_rdata,
+              reference_model_i.pipeline_shell_i.ex_wb_pipe.rvfi.pc_rdata);
+      $sformat(pipelineLine, "%s| ia %x | li %x / %x | db %x | f %x | cp %x | si %x | ib %x | cf %x | sl %x |",pipelineLine,
               `CORE_I.controller_i.controller_fsm_i.interrupt_allowed,
               `CORE_I.controller_i.controller_fsm_i.lsu_interruptible_i,
+              reference_model_i.pipeline_shell_i.controller_i.lsu_interruptible,
               `CORE_I.controller_i.controller_fsm_i.debug_interruptible,
               `CORE_I.controller_i.controller_fsm_i.fencei_ongoing,
               `CORE_I.controller_i.controller_fsm_i.clic_ptr_in_pipeline,
               `CORE_I.controller_i.controller_fsm_i.sequence_interruptible,
-              `CORE_I.controller_i.controller_fsm_i.interrupt_blanking_q
-              );
+              `CORE_I.controller_i.controller_fsm_i.interrupt_blanking_q,
+              `CORE_I.controller_i.controller_fsm_i.csr_flush_ack_q,
+              (`CORE_I.controller_i.controller_fsm_i.ctrl_fsm_cs == SLEEP));
 
-      if(rvfi_o.valid) begin
-        $sformat(line, " %-8s | %d | %x (%x) | %x, (%x) | IF %x | ID %x | EX %x | WB %x |",`RVFI_IF.instr_asm.instr.name(), clock_cnt, rvfi_core.pc_rdata, rvfi_core.insn, rvfi_o.pc_rdata, rvfi_o.insn, `CORE_I.if_id_pipe.pc, `CORE_I.id_ex_pipe.pc, `CORE_I.ex_wb_pipe.pc, rvfi_core.pc_rdata);
-        $sformat(pipelineLine, "%s RVFI | %-8s", pipelineLine, `RVFI_IF.instr_asm.instr.name());
+      if(rvfi_rm.valid) begin
+        $sformat(line, " %-8s | %d | %x (%x) | %x, (%x) | IF %x | ID %x | EX %x | WB %x |",`RVFI_IF.instr_asm.instr.name(), clock_cnt, rvfi_core.pc_rdata, rvfi_core.insn, rvfi_rm.pc_rdata, rvfi_rm.insn, `CORE_I.if_id_pipe.pc, `CORE_I.id_ex_pipe.pc, `CORE_I.ex_wb_pipe.pc, rvfi_core.pc_rdata);
+        $sformat(pipelineLine, "%s RVFI | %-8s | %x", pipelineLine, `RVFI_IF.instr_asm.instr.name(), rvfi_core.pc_rdata);
 
         if (rvfi_core.intr) begin
           $sformat(line, "%s Core INTR Taken", line);
         end
-        if (rvfi_o.intr) begin
+        if (rvfi_rm.intr) begin
           $sformat(line, "%s RM INTR Taken", line);
         end
         $fdisplay(fd, line);
