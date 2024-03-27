@@ -107,9 +107,23 @@ module controller
         output logic wb_step_o
     );
 
+    localparam LSU_DEPTH = 2;
+    localparam LSU_CNT_WIDTH = $clog2(LSU_DEPTH+1);
+
+    logic interrupt_allowed;
+
+    logic lsu_interruptible;
+    logic [LSU_CNT_WIDTH-1:0] lsu_cnt;
+    logic [LSU_CNT_WIDTH-1:0] lsu_cnt_q;
+    logic lsu_cnt_up;
+    logic lsu_cnt_down;
+    logic mem_in_ex;
+    logic mem_in_wb;
+    logic mem_in_lsu;
 
     int     pipe_count; // Count the number of filled pipeline stages
     logic   step;
+    logic   step_q;
 
     ////////////////////////////////////////////////////////////////////////////
     // STEP CONTROL
@@ -146,6 +160,66 @@ module controller
     assign wb_step_o = step;
 
 
+    ////////////////////////////////////////////////////////////////////////////
+    // LSU INTERRUPTIBLE
+    ////////////////////////////////////////////////////////////////////////////
+
+    // lsu_cnt holds the amount of memory requests without a response in the LSU
+
+    // Increase lsu_cnt when a memory operation is in EX
+    assign mem_in_ex = id_ex_pipe_i.rvfi.mem_rmask || id_ex_pipe_i.rvfi.mem_wmask;
+    assign lsu_cnt_up = mem_in_ex && step_q;
+
+    //assign mem_in_wb = ex_wb_pipe_i.rvfi.mem_rmask || ex_wb_pipe_i.rvfi.mem_wmask;
+
+    // Decrease lsu_cnt from the first clock when a memory operation is moved to WB
+    assign lsu_cnt_down = mem_in_ex && step;
+
+    always_comb begin
+        case ({lsu_cnt_up, lsu_cnt_down})
+            2'b00: begin
+                lsu_cnt <= lsu_cnt_q;
+            end
+            2'b01: begin 
+                lsu_cnt <= lsu_cnt_q - 1'b1;
+            end
+            2'b10: begin
+                lsu_cnt <= lsu_cnt_q + 1'b1;
+            end
+            2'b11: begin
+                lsu_cnt <= lsu_cnt_q;
+            end
+            default:;
+        endcase 
+    end
+
+    always_ff @(posedge clk, negedge rst_n) begin
+        if (rst_n == 1'b0)begin 
+            lsu_cnt_q <= '0;
+        end else begin
+            lsu_cnt_q <= lsu_cnt;
+        end
+    end
+
+    always_ff @(posedge clk, negedge rst_n) begin
+        if (rst_n == 1'b0) begin 
+            step_q <= 1'b0;
+        end else begin
+            step_q <= step;
+        end
+    end
+
+    assign lsu_interruptible = (lsu_cnt_q == '0);
+
+    ////////////////////////////////////////////////////////////////////////////
+    // INTERRUPT ALLOWED
+    ////////////////////////////////////////////////////////////////////////////
+
+    assign interrupt_allowed = lsu_interruptible; 
+    // TODO:    && debug_interruptible && !fencei_ongoing && !clic_ptr_in_pipeline && 
+    //          sequence_interruptible && !interrupt_blanking_q && !csr_flush_ack_q && !(ctrl_fsm_cs == SLEEP);
+
+    //TODO: take interrupt if interrupt_allowed && pending_interrupt
 
 
 
