@@ -90,7 +90,7 @@ module uvma_cvxif_assert #(parameter X_ID_WIDTH    = cvxif_pkg::X_ID_WIDTH,
    property p_issue_commit;
       bit [X_ID_WIDTH-1:0] id;
       ((cvxif_assert.cvxif_resp_o.x_issue_ready && cvxif_assert.cvxif_req_i.x_issue_valid), id=cvxif_assert.cvxif_req_i.x_issue_req.id)
-      |-> (s_eventually (cvxif_assert.cvxif_req_i.x_commit_valid && cvxif_assert.cvxif_req_i.x_commit.id==id));
+      |-> (##[0:$] (cvxif_assert.cvxif_req_i.x_commit_valid && cvxif_assert.cvxif_req_i.x_commit.id==id));
    endproperty
    a_issue_commit:assert property (p_issue_commit)
       else `uvm_error(info_tag, "Failure: for every issue transaction, a commit transaction shall present ");
