@@ -57,43 +57,48 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
       `uvm_fatal(`gfn, $sformatf("Function implementation is not ready for replace==1"))
     end
 
-    if(current_instr_cnt == 0) begin
+    if (current_instr_cnt == 0) begin
       instr_list = new_instr;
       return;
     end
-    if(idx == -1) begin
+
+    if (idx == -1) begin
 
       bit idx_search_done = 0;
       int rand_cnt = 0;
 
-      idx = $urandom_range(0, current_instr_cnt-1);
-      while (!instr_list[idx].atomic && !idx_search_done) begin
+      do begin : STREAM_PLACEMENT
         int idx_e = 0;
+
         idx = $urandom_range(0, current_instr_cnt-1);
         idx_e = (idx + new_instr_cnt-1);
 
-        if (idx_start.size() == 0) begin : SEARCH_IDX_FOR_NEW_INSTR
+        if (idx_start.size() == 0) begin
           idx_min = idx;
           idx_search_done = 1;
-        end // SEARCH_IDX_FOR_NEW_INSTR
-        else begin
+        end
+        else if (instr_list[idx].atomic)begin : CHECK_IDX_OVERLAP_WITH_ATOMIC
+          idx_search_done = 0;
+        end // DETECT_OVERLAP_IDX_WITH_ATOMIC
+        else begin : CHECK_IDX_OVERLAP_WITH_PREV_STREAM
           foreach (idx_start[i]) begin
             if (
               (idx          >= idx_start[i]   &&  idx           <= idx_end[i])  ||
               (idx_e        >= idx_start[i]   &&  idx_e         <= idx_end[i])  ||
               (idx_start[i] >= idx            &&  idx_start[i]  <= idx_e)       ||
-              (idx_end[i]   >= idx            &&  idx_end[i]    <= idx_e)
-            ) begin : DETECT_OVERLAP_IDX_FOR_NEW_INSTR
+              (idx_end[i]   >= idx            &&  idx_end[i]    <= idx_e)) 
+            begin : OVERLAP_IDX_AGAINST_PREV_STREAMS
+              idx_search_done = 0;
               break;
-            end // DETECT_OVERLAP_IDX_FOR_NEW_INSTR
-            else begin : NON_OVERLAP_IDX_FOR_NEW_INSTR
+            end // OVERLAP_IDX_AGAINST_PREV_STREAMS
+            else begin : NO_OVERLAP_IDX_AGAINST_PREV_STREAMS
               if (i == (idx_start.size()-1)) begin
                 idx_search_done = 1;
                 break;
               end
-            end // NON_OVERLAP_IDX_FOR_NEW_INSTR
+            end // NO_OVERLAP_IDX_AGAINST_PREV_STREAMS
           end // foreach
-        end // SEARCH_IDX_FOR_NEW_INSTR
+        end // CHECK_IDX_OVERLAP_WITH_PREV_STREAM
 
         if (idx_search_done) begin
           int idx_placement[$];
@@ -122,7 +127,7 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
         if (rand_cnt >= 200) begin
           int idx_placement[$];
           `uvm_info(`gfn, $sformatf("placement limit %0d reached. Place the stream at begining of instr_list", rand_cnt), UVM_NONE)
-          idx = 0;
+          idx = 1;
           idx_e = (idx + new_instr_cnt-1);
           idx_start.push_front(idx);
           idx_end.push_front(idx_e);
@@ -134,19 +139,8 @@ class cv32e40p_rand_instr_stream extends riscv_rand_instr_stream;
           break;
         end // rand_cnt
 
-      end // while
-
-      if (instr_list[idx].atomic) begin
-        foreach (instr_list[i]) begin
-          if (!instr_list[i].atomic) begin
-            idx = i;
-            break;
-          end
-        end
-        if (instr_list[idx].atomic) begin
-          `uvm_fatal(`gfn, $sformatf("Cannot inject the instruction"))
-        end
-      end // instr_list[idx].atomic
+      end // STREAM_PLACEMENT
+      while (!idx_search_done);
 
     end else if((idx > current_instr_cnt) || (idx < 0)) begin
       `uvm_error(`gfn, $sformatf("Cannot insert instr stream at idx %0d", idx))
