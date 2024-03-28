@@ -15,15 +15,15 @@ void Params::parse_params(string base, Params &baseParams, Params &newParams) {
   }
 }
 void Params::cfg_to_params(cfg_t &cfg, Params &params) {
-  params.set("/top/", "isa", std::string(cfg.isa()));
-  params.set("/top/", "priv", std::string(cfg.priv()));
-  params.set("/top/", "boot_addr",
+  params.set_string("/top/", "isa", std::string(cfg.isa()));
+  params.set_string("/top/", "priv", std::string(cfg.priv()));
+  params.set_uint64_t("/top/", "boot_addr",
              (unsigned long)cfg.start_pc.value_or(0x10000UL));
 
-  params.set("/top/core/0/", "isa", std::string(cfg.isa()));
-  params.set("/top/core/0/", "priv", std::string(cfg.priv()));
-  params.set("/top/core/0/", "misaligned", cfg.misaligned);
-  params.set("/top/core/0/", "pmpregions", (cfg.pmpregions));
+  params.set_string("/top/core/0/", "isa", std::string(cfg.isa()));
+  params.set_string("/top/core/0/", "priv", std::string(cfg.priv()));
+  params.set_bool("/top/core/0/", "misaligned", cfg.misaligned);
+  params.set_uint64_t("/top/core/0/", "pmpregions", (cfg.pmpregions));
 }
 
 void print_center(string &str, const size_t line_length) {
@@ -68,7 +68,7 @@ void print_row_separator(size_t size) {
 
 void print_header() {
   print_row_separator(table_size);
-  Param table_header = {"Name", "", "", "Default", "Type", "Description"};
+  Param table_header = {"Name", "", "", 0, false, "Default", "Type", "Description"};
   print_param(table_header);
   print_row_separator(table_size);
 }
