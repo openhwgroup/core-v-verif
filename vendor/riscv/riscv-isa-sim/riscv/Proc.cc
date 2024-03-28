@@ -240,7 +240,7 @@ void Processor::default_params(string base, openhw::Params &params) {
   params.set_bool(base, "misaligned", false, "false",
              "Support for misaligned memory operations");
 
-  params.set(base, "csr_counters_injection", std::any(false), "bool", "false",
+  params.set_bool(base, "csr_counters_injection", false, "false",
              "Allow to set CSRs getting values from a DPI");
 }
 
