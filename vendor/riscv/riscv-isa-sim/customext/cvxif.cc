@@ -4,6 +4,9 @@
 //
 // Original Author: Zbigniew CHAMSKI <zbigniew.chamski@thalesgroup.com>
 
+// Name of this extension as seen internally by Spike
+#define EXTENSION_NAME "cvxif"
+
 #define DECODE_MACRO_USAGE_LOGGED 1
 #include "decode_macros.h"
 #include "cvxif.h"
@@ -20,7 +23,7 @@
 #define customX(n) \
 static reg_t c##n(processor_t* p, insn_t insn, reg_t pc) \
   { \
-    cvxif_t* cvxif = static_cast<cvxif_t*>(p->get_extension()); \
+    cvxif_t* cvxif = static_cast<cvxif_t*>(p->get_extension(EXTENSION_NAME)); \
     cvxif_insn_t custom_insn; \
     custom_insn.i = insn; \
     reg_t xd = cvxif->default_custom##n(custom_insn); \
@@ -38,7 +41,7 @@ static reg_t c##n(processor_t* p, insn_t insn, reg_t pc) \
 class cvxif_t : public cvxif_extn_t
 {
  public:
-  const char* name() { return "cvxif_spike"; }
+  const char* name() { return EXTENSION_NAME; }
 
   bool do_writeback_p(cvxif_insn_t copro_insn)
   {
