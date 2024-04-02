@@ -106,8 +106,8 @@ Processor::Processor(
   Processor::default_params(base, this->params);
   Params::parse_params(base, this->params, params);
 
-  string isa_str = std::any_cast<string>(this->params[base + "isa"]);
-  string priv_str = std::any_cast<string>(this->params[base + "priv"]);
+  string isa_str = this->params[base + "isa"].a_string;
+  string priv_str = this->params[base + "priv"].a_string;
   std::cout << "[SPIKE] Proc 0 | ISA: " << isa_str << " PRIV: " << priv_str << std::endl;
   this->isa =
       (const isa_parser_t *)new isa_parser_t(isa_str.c_str(), priv_str.c_str());
@@ -118,15 +118,17 @@ Processor::Processor(
     register_extension(e.second);
   }
 
-  this->n_pmp = std::any_cast<uint64_t>(this->params[base + "pmpregions"]);
+  this->n_pmp = (this->params[base + "pmpregions"]).a_uint64_t;
 
   ((cfg_t *)cfg)->misaligned =
-      std::any_cast<bool>(this->params[base + "misaligned"]);
+      (this->params[base + "misaligned"]).a_bool;
+
 
   this->csr_counters_injection =
-      std::any_cast<bool>(this->params[base + "csr_counters_injection"]);
+      (this->params[base + "csr_counters_injection"]).a_bool;
   string extensions_str =
-      std::any_cast<string>(this->params[base + "extensions"]);
+      (this->params[base + "extensions"]).a_string;
+
   string delimiter = ",";
   size_t found = extensions_str.rfind(delimiter);
 
@@ -158,29 +160,23 @@ Processor::Processor(
 
   this->reset();
 
-  uint64_t new_pc = std::any_cast<uint64_t>(this->params[base + "boot_addr"]);
+  uint64_t new_pc = (this->params[base + "boot_addr"]).a_uint64_t;
   this->state.pc = new_pc;
 
-  this->put_csr(CSR_PMPADDR0,
-                std::any_cast<uint64_t>(this->params[base + "pmpaddr0"]));
-  this->put_csr(CSR_PMPCFG0,
-                std::any_cast<uint64_t>(this->params[base + "pmpcfg0"]));
+  this->put_csr(CSR_PMPADDR0, (this->params[base + "pmpaddr0"]).a_uint64_t);
+  this->put_csr(CSR_PMPCFG0, (this->params[base + "pmpcfg0"]).a_uint64_t);
 
   this->state.csrmap[CSR_MVENDORID] =
-      std::make_shared<const_csr_t>(this, CSR_MVENDORID, std::any_cast<uint64_t>(this->params[base + "mvendorid"]));
+      std::make_shared<const_csr_t>(this, CSR_MVENDORID, (this->params[base + "mvendorid"]).a_uint64_t);
   this->state.csrmap[CSR_MHARTID] =
-      std::make_shared<const_csr_t>(this, CSR_MHARTID, std::any_cast<uint64_t>(this->params[base + "mhartid"]));
+      std::make_shared<const_csr_t>(this, CSR_MHARTID, (this->params[base + "mhartid"]).a_uint64_t);
   this->state.csrmap[CSR_MARCHID] =
-      std::make_shared<const_csr_t>(this, CSR_MHARTID, std::any_cast<uint64_t>(this->params[base + "marchid"]));
+      std::make_shared<const_csr_t>(this, CSR_MHARTID, (this->params[base + "marchid"]).a_uint64_t);
 
-  bool fs_field_we_enable =
-      std::any_cast<bool>(this->params[base + "status_fs_field_we_enable"]);
-  bool fs_field_we =
-      std::any_cast<bool>(this->params[base + "status_fs_field_we"]);
-  bool vs_field_we_enable =
-      std::any_cast<bool>(this->params[base + "status_vs_field_we_enable"]);
-  bool vs_field_we =
-      std::any_cast<bool>(this->params[base + "status_vs_field_we"]);
+  bool fs_field_we_enable = (this->params[base + "status_fs_field_we_enable"]).a_bool;
+  bool fs_field_we = (this->params[base + "status_fs_field_we"]).a_bool;
+  bool vs_field_we_enable = (this->params[base + "status_vs_field_we_enable"]).a_bool;
+  bool vs_field_we = (this->params[base + "status_vs_field_we"]).a_bool;
 
   reg_t sstatus_mask = this->state.mstatus->get_param_write_mask();
   if (fs_field_we_enable)
@@ -192,8 +188,8 @@ Processor::Processor(
   this->state.mstatus->set_param_write_mask(sstatus_mask);
 
   bool misa_we_enable =
-      std::any_cast<bool>(this->params[base + "misa_we_enable"]);
-  bool misa_we = std::any_cast<bool>(this->params[base + "misa_we"]);
+      (this->params[base + "misa_we_enable"]).a_bool;
+  bool misa_we = (this->params[base + "misa_we"]).a_bool;
   if (misa_we_enable)
     this->state.misa->set_we(misa_we);
 }
@@ -207,45 +203,44 @@ void Processor::take_trap(trap_t &t, reg_t epc) {
 Processor::~Processor() { delete this->isa; }
 
 void Processor::default_params(string base, openhw::Params &params) {
-  params.set(base, "isa", any(std::string("RV32GC")), "string", "RV32GC",
+  params.set_string(base, "isa", "RV32GC", "RV32GC",
              "ISA");
-  params.set(base, "priv", any(std::string(DEFAULT_PRIV)), "string",
+  params.set_string(base, "priv", DEFAULT_PRIV,
              DEFAULT_PRIV, "Privilege Level");
-  params.set(base, "boot_addr", any(0x80000000UL), "uint64_t", "0x80000000UL",
+  params.set_uint64_t(base, "boot_addr", 0x80000000UL, "0x80000000UL",
              "First PC of the core");
-  params.set(base, "mmu_mode", any(std::string("sv39")), "string", "sv39",
+  params.set_string(base, "mmu_mode", "sv39", "sv39",
              "Memory virtualization mode");
 
-  params.set(base, "pmpregions", std::any(0x0UL), "uint64_t", "0x0",
+  params.set_uint64_t(base, "pmpregions", 0x0UL, "0x0",
              "Number of PMP regions");
-  params.set(base, "pmpaddr0", any(0x0UL), "uint64_t", "0x0",
+  params.set_uint64_t(base, "pmpaddr0", 0x0UL, "0x0",
              "Default PMPADDR0 value");
-  params.set(base, "pmpcfg0", any(0x0UL), "uint64_t", "0x0",
+  params.set_uint64_t(base, "pmpcfg0", 0x0UL, "0x0",
              "Default PMPCFG0 value");
-  params.set(base, "marchid", any(0x3UL), "uint64_t", "0x3", "MARCHID value");
-  params.set(base, "mhartid", any(0x0UL), "uint64_t", "0x0", "MHARTID value");
-  params.set(base, "mvendorid", any(0x00000602UL), "uint64_t", "0x00000602UL",
+  params.set_uint64_t(base, "marchid", 0x3UL, "0x3", "MARCHID value");
+  params.set_uint64_t(base, "mhartid", 0x0UL, "0x0", "MHARTID value");
+  params.set_uint64_t(base, "mvendorid", 0x00000602UL, "0x00000602UL",
              "MVENDORID value");
-  params.set(base, "extensions", any(std::string("")), "string",
-             "\"extension1,extension2\"", "Possible extensions: cv32a60x");
+  params.set_string(base, "extensions", "", "", "Possible extensions: cv32a60x, cvxif");
 
-  params.set(base, "status_fs_field_we_enable", any(false), "bool", "false",
+  params.set_bool(base, "status_fs_field_we_enable", false, "false",
              "XSTATUS CSR FS Write Enable param enable");
-  params.set(base, "status_fs_field_we", any(false), "bool", "false",
+  params.set_bool(base, "status_fs_field_we", false, "false",
              "XSTATUS CSR FS Write Enable");
-  params.set(base, "status_vs_field_we_enable", any(false), "bool", "false",
+  params.set_bool(base, "status_vs_field_we_enable", false, "false",
              "XSTATUS CSR VS Write Enable param enable");
-  params.set(base, "status_vs_field_we", any(false), "bool", "false",
+  params.set_bool(base, "status_vs_field_we", false, "false",
              "XSTATUS CSR VS Write Enable");
-  params.set(base, "misa_we_enable", any(true), "bool", "true",
+  params.set_bool(base, "misa_we_enable", true, "true",
              "MISA CSR Write Enable param enable");
-  params.set(base, "misa_we", any(false), "bool", "false",
+  params.set_bool(base, "misa_we", false, "false",
              "MISA CSR Write Enable value");
 
-  params.set(base, "misaligned", std::any(false), "bool", "false",
+  params.set_bool(base, "misaligned", false, "false",
              "Support for misaligned memory operations");
 
-  params.set(base, "csr_counters_injection", std::any(false), "bool", "false",
+  params.set_bool(base, "csr_counters_injection", false, "false",
              "Allow to set CSRs getting values from a DPI");
 }
 
