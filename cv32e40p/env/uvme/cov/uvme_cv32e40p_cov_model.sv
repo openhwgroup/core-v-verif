@@ -113,9 +113,13 @@ function void uvme_cv32e40p_cov_model_c::build_phase(uvm_phase phase);
 
    debug_covg = uvme_debug_covg::type_id::create("debug_covg", this);
    uvm_config_db#(uvme_cv32e40p_cntxt_c)::set(this, "debug_covg", "cntxt", cntxt);
-   
-   rv32x_hwloop_covg = uvme_rv32x_hwloop_covg::type_id::create("rv32x_hwloop_covg", this);
-   interrupt_covg_v2 = uvme_interrupt_covg_v2::type_id::create("interrupt_covg_v2", this);
+
+   // The Metrics DSim compiler says:
+   // A name of the form uvme_rv32x_hwloop_covg::type_id where uvme_rv32x_hwloop_covg is
+   // the default specialization of a parameterized class is not valid.
+   // Try uvme_rv32x_hwloop_covg#()::type_id instead.
+   rv32x_hwloop_covg = uvme_rv32x_hwloop_covg#()::type_id::create("rv32x_hwloop_covg", this);
+   interrupt_covg_v2 = uvme_interrupt_covg_v2#()::type_id::create("interrupt_covg_v2", this);
 
    if( (cfg.rv32f_fcov_en == 1) && (cfg.zfinx_fcov_en == 0) ) begin
       cv32e40p_fp_instr_covg = uvme_cv32e40p_fp_instr_covg::type_id::create("cv32e40p_fp_instr_covg", this);
