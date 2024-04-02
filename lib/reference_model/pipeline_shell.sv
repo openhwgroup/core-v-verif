@@ -13,12 +13,16 @@ module if_stage
         input logic clk,
         input logic rst_n,
         input logic step, 
+        input logic flush_i,
 
         output pipe_stage_t if_id_pipe_o
     );
 
     always_ff @(posedge clk) begin
-        if(step) begin
+        if(flush_i) begin
+            if_id_pipe_o.rvfi <= '0;
+            if_id_pipe_o.valid <= 1'b0;
+        end else if(step) begin
             if_id_pipe_o.rvfi <= iss_step();
             if_id_pipe_o.valid <= 1'b1;
         end
@@ -35,13 +39,17 @@ module id_stage
         input logic clk,
         input logic rst_n,
         input logic step, 
+        input logic flush_i,
         input pipe_stage_t pipe_i,
 
         output pipe_stage_t pipe_o
     );
 
     always_ff @(posedge clk) begin
-        if(step) begin
+        if (flush_i) begin
+            pipe_o.rvfi <= '0;
+            pipe_o.valid <= 1'b0;
+        end else if(step) begin
             pipe_o.rvfi <= pipe_i.rvfi;
             pipe_o.valid <= pipe_i.valid;
         end
@@ -58,13 +66,17 @@ module ex_stage
         input logic clk,
         input logic rst_n,
         input logic step, 
+        input logic flush_i,
         input pipe_stage_t pipe_i,
 
         output pipe_stage_t pipe_o
     );
 
     always_ff @(posedge clk) begin
-        if(step) begin
+        if (flush_i) begin
+            pipe_o.rvfi <= '0;
+            pipe_o.valid <= 1'b0;
+        end else if(step) begin
             pipe_o.rvfi <= pipe_i.rvfi;
             pipe_o.valid <= pipe_i.valid;
         end
@@ -81,6 +93,7 @@ module wb_stage
         input logic clk,
         input logic rst_n,
         input logic step, 
+        input logic flush_i,
         input pipe_stage_t pipe_i,
 
         output pipe_stage_t pipe_o
@@ -96,6 +109,7 @@ module controller
         input logic clk, 
         input logic rst_n,
         input logic valid,
+        input logic interrupt_taken_i,
 
         input pipe_stage_t if_id_pipe_i,
         input pipe_stage_t id_ex_pipe_i,
@@ -104,13 +118,19 @@ module controller
         output logic if_step_o,
         output logic id_step_o,
         output logic ex_step_o,
-        output logic wb_step_o
+        output logic wb_step_o,
+
+        output logic if_flush_o,
+        output logic id_flush_o,
+        output logic ex_flush_o,
+        output logic wb_flush_o,
+
+        output interrupt_allowed_o
     );
 
     localparam LSU_DEPTH = 2;
     localparam LSU_CNT_WIDTH = $clog2(LSU_DEPTH+1);
 
-    logic interrupt_allowed;
 
     logic lsu_interruptible;
     logic [LSU_CNT_WIDTH-1:0] lsu_cnt;
@@ -122,6 +142,7 @@ module controller
     logic mem_in_lsu;
 
     int     pipe_count; // Count the number of filled pipeline stages
+    logic   flush_pipeline;
     logic   step;
     logic   step_q;
 
@@ -129,9 +150,11 @@ module controller
     // STEP CONTROL
     ////////////////////////////////////////////////////////////////////////////
 
-    // Count the amount of filled pipeline stages at the start 
+    assign flush_pipeline = interrupt_taken_i;
+
+    // Count the amount of filled pipeline stages at the start or after a flush 
     always_ff @(posedge clk) begin
-        if (rst_n == 1'b0)begin 
+        if (rst_n == 1'b0 || flush_pipeline)begin 
             pipe_count <= 0;
         end else if (pipe_count < 2) begin
             pipe_count <= pipe_count + 1;
@@ -215,13 +238,23 @@ module controller
     // INTERRUPT ALLOWED
     ////////////////////////////////////////////////////////////////////////////
 
-    assign interrupt_allowed = lsu_interruptible; 
+    assign interrupt_allowed_o = lsu_interruptible; 
     // TODO:    && debug_interruptible && !fencei_ongoing && !clic_ptr_in_pipeline && 
     //          sequence_interruptible && !interrupt_blanking_q && !csr_flush_ack_q && !(ctrl_fsm_cs == SLEEP);
 
     //TODO: take interrupt if interrupt_allowed && pending_interrupt
 
 
+    ////////////////////////////////////////////////////////////////////////////
+    // INTERRUPT TAKING
+    ////////////////////////////////////////////////////////////////////////////
+
+    always_comb begin
+        if_flush_o <= interrupt_taken_i;
+        id_flush_o <= interrupt_taken_i;
+        ex_flush_o <= interrupt_taken_i;
+        wb_flush_o <= interrupt_taken_i;
+    end
 
 
 endmodule
@@ -244,18 +277,30 @@ module pipeline_shell
     logic id_step;
     logic ex_step;
     logic wb_step;
+    logic if_flush;
+    logic id_flush;
+    logic ex_flush;
+    logic wb_flush;
+    logic interrupt_allowed;
+    logic interrupt_taken;
 
     controller controller_i(
-        .clk            (clknrst_if.clk     ),
-        .rst_n          (clknrst_if.reset_n ),
-        .valid          (                   ),
-        .if_id_pipe_i   (if_id_pipe         ),
-        .id_ex_pipe_i   (id_ex_pipe         ),
-        .ex_wb_pipe_i   (ex_wb_pipe         ),
-        .if_step_o      (if_step            ),
-        .id_step_o      (id_step            ),
-        .ex_step_o      (ex_step            ),
-        .wb_step_o      (wb_step            )
+        .clk                    (clknrst_if.clk     ),
+        .rst_n                  (clknrst_if.reset_n ),
+        .valid                  (                   ),
+        .interrupt_taken_i      (interrupt_taken    ),  
+        .if_id_pipe_i           (if_id_pipe         ),
+        .id_ex_pipe_i           (id_ex_pipe         ),
+        .ex_wb_pipe_i           (ex_wb_pipe         ),
+        .if_step_o              (if_step            ),
+        .id_step_o              (id_step            ),
+        .ex_step_o              (ex_step            ),
+        .wb_step_o              (wb_step            ),
+        .if_flush_o              (if_flush            ),
+        .id_flush_o              (id_flush            ),
+        .ex_flush_o              (ex_flush            ),
+        .wb_flush_o              (wb_flush            ),
+        .interrupt_allowed_o    (interrupt_allowed  )
 
     );
 
@@ -263,6 +308,7 @@ module pipeline_shell
         .clk            (clknrst_if.clk     ),
         .rst_n          (clknrst_if.reset_n ),
         .step           (if_step            ),
+        .flush_i         (if_flush            ),
         .if_id_pipe_o   (if_id_pipe         )
         );
     
@@ -270,6 +316,7 @@ module pipeline_shell
         .clk            (clknrst_if.clk     ),
         .rst_n          (clknrst_if.reset_n ),
         .step           (id_step            ),
+        .flush_i         (id_flush            ),
         .pipe_i         (if_id_pipe         ),
         .pipe_o         (id_ex_pipe         )
     );
@@ -278,6 +325,7 @@ module pipeline_shell
         .clk            (clknrst_if.clk     ),
         .rst_n          (clknrst_if.reset_n ),
         .step           (ex_step            ),
+        .flush_i         (ex_flush            ),
         .pipe_i         (id_ex_pipe         ),
         .pipe_o         (ex_wb_pipe         )
     );
@@ -286,6 +334,7 @@ module pipeline_shell
         .clk            (clknrst_if.clk     ),
         .rst_n          (clknrst_if.reset_n ),
         .step           (wb_step            ),
+        .flush_i         (wb_flush            ),
         .pipe_i         (ex_wb_pipe         ),
         .pipe_o         (wb_pipe            )
     );
@@ -296,15 +345,20 @@ module pipeline_shell
         $display("Pipeline Shell: Starting");
     end
 
-    logic [31:0] irq_drv_ff;
+    logic [31:0] irq_q;
 
-
+    always_ff @(posedge clknrst_if.clk, negedge clknrst_if.reset_n)
+    begin
+      if (clknrst_if.reset_n == 1'b0) begin
+        irq_q <= '0;
+      end else begin
+        irq_q <= interrupt_if_i.irq;
+      end
+    end
 
     always_ff @(posedge clknrst_if.clk) begin
-        irq_drv_ff <= interrupt_if_i.irq_drv;
-        if (irq_drv_ff != interrupt_if_i.irq_drv) begin
-            iss_intr(interrupt_if_i.irq_drv);
-        end
+        interrupt_taken = iss_intr(interrupt_if_i.irq, interrupt_allowed);
+
     end
 
     always_comb begin
