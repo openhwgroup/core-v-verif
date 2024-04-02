@@ -119,15 +119,18 @@ package cv32e40p_instr_test_pkg;
   function automatic void push_gpr_to_debugger_stack(cv32e40p_instr_gen_config cfg_corev,
                                                      ref string instr[$]);
     string store_instr = (XLEN == 32) ? "sw" : "sd";
-    // Reserve space from kernel stack to save all 32 GPR except for x0
-    instr.push_back($sformatf("1: addi x%0d, x%0d, -%0d", cfg_corev.dp, cfg_corev.dp, 31 * (XLEN/8)));
-    // Push all GPRs to kernel stack
+    // Reserve space from debugger stack to save all 32 GPR except for x0 + MSCRATCH
+    instr.push_back($sformatf("1: addi x%0d, x%0d, -%0d", cfg_corev.dp, cfg_corev.dp, 32 * (XLEN/8)));
+    // Push all GPRs to debugger stack
     for(int i = 1; i < 32; i++) begin
       if (i == cfg_corev.dp) continue;
       if (i == cfg_corev.sp) continue;
       if (i == cfg_corev.tp) continue;
       instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, i, (i-1) * (XLEN/8), cfg_corev.dp));
     end
+    // Read and Push MSCRATCH to debugger stack
+    instr.push_back($sformatf("csrrw x5, 0x340, x5 # MSCRATCH"));
+    instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", store_instr, 5, 31 * (XLEN/8), cfg_corev.dp));
   endfunction : push_gpr_to_debugger_stack
 
   // Push floating point registers to the debugger stack
@@ -217,6 +220,9 @@ package cv32e40p_instr_test_pkg;
       if (i == cfg_corev.tp) continue;
       instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, i, (i-1) * (XLEN/8), cfg_corev.dp));
     end
+    // Pop and Write MSCRATCH from debugger stack
+    instr.push_back($sformatf("%0s  x%0d, %0d(x%0d)", load_instr, 5, 31 * (XLEN/8), cfg_corev.dp));
+    instr.push_back($sformatf("csrrw x5, 0x340, x5 # MSCRATCH"));
     // Restore debugger stack pointer
     instr.push_back($sformatf("addi x%0d, x%0d, %0d", cfg_corev.dp, cfg_corev.dp, 31 * (XLEN/8)));
   endfunction : pop_gpr_from_debugger_stack
