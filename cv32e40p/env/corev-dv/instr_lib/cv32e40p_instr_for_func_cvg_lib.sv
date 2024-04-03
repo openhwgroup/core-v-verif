@@ -215,8 +215,16 @@ class cv32e40p_xpulp_single_hwloop_stream_directed extends cv32e40p_xpulp_hwloop
   }
 
   constraint num_hwloop_instr_c {
+    solve use_loop_endi_inst before num_hwloop_instr;
     foreach (num_hwloop_instr[i]) {
-      num_hwloop_instr[i] dist { 3 := 1, 3074 := 5, 4092 := 1 };
+      // the max setting of Uimm[11:0] is 4092 however the the hwloop start label is not immediately following after cv.endi, 
+      // there is randomize numberof instr inserted between cv.endi and hwloop start label we need to keep some buffer from 
+      // max value so that the number instr can never be max 4092 (-5 buffer for instrs prior hwloop)
+      if (use_loop_endi_inst[i]) {
+        num_hwloop_instr[i] dist { 3 := 1, 3074 := 5, 4087 := 1 };
+      } else {
+        num_hwloop_instr[i] dist { 3 := 1, 3074 := 5, 4092 := 1 };
+      }
       num_fill_instr_loop_ctrl_to_loop_start[i] inside {[0:7]};
     }
     num_fill_instr_in_loop1_till_loop0_setup == 0;
