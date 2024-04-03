@@ -132,8 +132,9 @@ ifeq ($(call IS_YES,$(USE_ISS)),YES)
 	VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
     endif
     ifeq ($(ISS),SPIKE)
+	VSIM_FLAGS += -sv_lib $(SPIKE_CUSTOMEXT_LIB)
 	VSIM_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
-	VSIM_FLAGS += -sv_lib $(SPIKE_DASM_LIB)
+	VSIM_FLAGS += -sv_lib $(SPIKE_DISASM_LIB)
 	LIBS = spike_lib
     endif
 endif

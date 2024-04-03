@@ -314,6 +314,10 @@ comp_corev-dv: $(RISCVDV_PKG) $(CV_CORE_PKG)
 corev-dv: clean_riscv-dv clone_riscv-dv comp_corev-dv
 
 gen_corev-dv:
+	@echo "$(BANNER)"
+	@echo "* Generating $(TEST) with corev-dv..."
+	@echo "* with VCS_RUN_FLAGS = $(VCS_RUN_FLAGS) "
+	@echo "$(BANNER)"
 	mkdir -p $(SIM_COREVDV_RESULTS)/$(TEST)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		mkdir -p $(SIM_TEST_RESULTS)/$$idx/test_program; \
@@ -327,6 +331,7 @@ gen_corev-dv:
 			+asm_file_name_opts=$(TEST) \
 			+ldgen_cp_test_path=$(SIM_TEST_RESULTS) \
 			$(CFG_PLUSARGS) \
+			$(TEST_CFG_FILE_PLUSARGS) \
 			$(GEN_PLUSARGS)
 	for (( idx=${GEN_START_INDEX}; idx < $$((${GEN_START_INDEX} + ${GEN_NUM_TESTS})); idx++ )); do \
 		cp -f ${BSP}/link_corev-dv.ld ${SIM_TEST_RESULTS}/$$idx/test_program/link.ld; \

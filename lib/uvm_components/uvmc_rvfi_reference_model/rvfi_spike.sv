@@ -38,15 +38,19 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
             `uvm_error("spike_tandem", "We need a preloaded binary for tandem verification");
         end
 
-        rtl_isa = rvfi_get_isa_str(core_cfg);
+        rtl_isa = get_isa_str(core_cfg);
 
-        rtl_priv = rvfi_get_priv_str(core_cfg);
+        rtl_priv = get_priv_str(core_cfg);
 
         if (core_cfg.ext_cv32a60x_supported) begin
             void'(spike_set_param_str("/top/core/0/", "extensions", "cv32a60x"));
         end
 
         void'(spike_set_default_params(core_name));
+
+        if (core_cfg.boot_addr_valid) begin
+            void'(spike_set_param_uint64_t(base, "boot_addr", core_cfg.boot_addr));
+        end
 
         void'(spike_set_param_uint64_t("/top/", "num_procs", 64'h1));
 
@@ -56,22 +60,53 @@ import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi
         void'(spike_set_param_str(base, "priv", rtl_priv));
         void'(spike_set_param_bool("/top/", "misaligned", core_cfg.unaligned_access_supported));
 
-        if (core_cfg.boot_addr_valid) begin
-            void'(spike_set_param_uint64_t(base, "boot_addr", core_cfg.boot_addr));
-        end
-
         void'(spike_set_param_uint64_t(base, "pmpregions", core_cfg.pmp_regions));
         void'(spike_set_param_uint64_t(base, "mhartid", core_cfg.mhartid));
         void'(spike_set_param_uint64_t(base, "marchid", core_cfg.marchid));
         void'(spike_set_param_uint64_t(base, "mvendorid", core_cfg.mvendorid));
         void'(spike_set_param_bool(base, "misaligned", core_cfg.unaligned_access_supported));
 
+        void'(spike_set_param_uint64_t("/top/", "num_procs", 64'h1));
+        void'(spike_set_param_uint64_t(base, "pmpregions", core_cfg.pmp_regions));
+
+        void'(spike_set_param_uint64_t(base, "mhartid_override_mask", 64'hFFFFFFFF));
+        void'(spike_set_param_uint64_t(base, "mhartid_override_value", core_cfg.mhartid));
+
+        void'(spike_set_param_uint64_t(base, "marchid_override_mask", 64'hFFFFFFFF));
+        void'(spike_set_param_uint64_t(base, "marchid_override_value", core_cfg.marchid));
+
+        void'(spike_set_param_uint64_t(base, "mvendorid_override_mask", 64'hFFFFFFFF));
+        void'(spike_set_param_uint64_t(base, "mvendorid_override_value", core_cfg.mvendorid));
+
+        void'(spike_set_param_uint64_t(base, "mvendorid_override_mask", 64'hFFFFFFFF));
+        void'(spike_set_param_uint64_t(base, "mvendorid_override_value", core_cfg.mvendorid));
+
         void'(spike_set_param_bool(base, "csr_counters_injection", 1'h1));
 
         if (core_cfg.dram_valid) begin
+            void'(spike_set_param_bool("/top/", "dram_enable", core_cfg.dram_valid));
             void'(spike_set_param_uint64_t("/top/", "dram_base", core_cfg.dram_base));
             void'(spike_set_param_uint64_t("/top/", "dram_size", core_cfg.dram_size));
         end
+
+        if (core_cfg.boot_addr_valid) begin
+            void'(spike_set_param_uint64_t(base, "boot_addr", core_cfg.boot_addr));
+        end
+
+        `uvm_info("spike_tandem", $sformatf("core_name : %s", core_name), UVM_LOW);
+
+        if (core_name == "cve2") begin
+            void'(spike_set_param_uint64_t(base, "mstatus_override_mask", 64'hFFFFFFFF));
+            void'(spike_set_param_uint64_t(base, "mstatus_override_value", 64'h1800));
+            void'(spike_set_param_uint64_t(base, "tdata1_override_mask", 64'hFFFFFFFF));
+            void'(spike_set_param_uint64_t(base, "tdata1_override_value", 64'h28001048));
+            void'(spike_set_param_bool(base, "tdata1_we", 1'h0));
+            void'(spike_set_param_bool(base, "tdata1_we_enable", 1'h1));
+            void'(spike_set_param_bool(base, "non_standard_interrupts", 1'h1));
+            void'(spike_set_param_bool(base, "tinfo_presence", 1'h0));
+            void'(spike_set_param_uint64_t(base, "trigger_count", 64'h0001));
+        end
+        void'(spike_set_param_bool(base, "unified_traps", core_cfg.unified_traps));
 
         void'(spike_create(binary));
 

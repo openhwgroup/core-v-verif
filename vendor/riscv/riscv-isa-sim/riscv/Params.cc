@@ -40,7 +40,7 @@ void print_center(string &str, const size_t line_length) {
 static size_t name_column = 50;
 static size_t type_column = 30;
 static size_t default_type_column = 40;
-static size_t description_column = 60;
+static size_t description_column = 100;
 static size_t table_size =
     name_column + type_column + default_type_column + description_column;
 
@@ -81,6 +81,7 @@ void Params::print_table(string param_set) {
   std::vector<string> keys;
   for (auto it2 = it->second.begin(); it2 != it->second.end(); ++it2)
     keys.push_back(it2->first);
+
   sort(keys.begin(), keys.end());
 
   // Print each param

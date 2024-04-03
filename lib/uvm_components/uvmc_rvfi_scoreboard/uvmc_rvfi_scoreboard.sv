@@ -31,6 +31,8 @@ class uvmc_rvfi_scoreboard_c#(int ILEN=DEFAULT_ILEN,
 
    // Core configuration (used to extract list of CSRs)
    uvma_core_cntrl_cfg_c         cfg;
+   bit [XLEN-1:0] sentinel_value;
+   bit            sentinel_enable;
 
    `uvm_component_utils_begin(uvmc_rvfi_scoreboard_c)
       `uvm_field_object(cfg,         UVM_DEFAULT | UVM_REFERENCE)
@@ -81,6 +83,12 @@ function void uvmc_rvfi_scoreboard_c::build_phase(uvm_phase phase);
 
     rvfi_initialize(st);
 
+    if($test$plusargs("sentinel_value")) begin
+        if ($value$plusargs("sentinel_value=%h", sentinel_value)) begin
+            sentinel_enable = '1;
+        end
+    end
+
 endfunction : build_phase
 
 task uvmc_rvfi_scoreboard_c::run_phase(uvm_phase phase);
@@ -88,17 +96,26 @@ task uvmc_rvfi_scoreboard_c::run_phase(uvm_phase phase);
     uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) t_reference_model;
     uvma_rvfi_instr_seq_item_c#(ILEN,XLEN) t_core;
 
+    bit sim_finished;
+
     t_reference_model = new("t_reference_model");
     t_core = new("t_core");
-    forever begin
+
+    sim_finished = 0;
+    phase.raise_objection(this);
+    while (!sim_finished) begin
         @(reference_model.size > 0)
-        while (reference_model.size > 0)
+        while (reference_model.size > 0 && !sim_finished)
         begin
             t_reference_model = reference_model.pop_front();
             t_core = core.pop_front();
             rvfi_compare(t_core.seq2rvfi(), t_reference_model.seq2rvfi());
+
+            if (t_reference_model.halt || (sentinel_enable && (sentinel_value == t_reference_model.insn)))
+                sim_finished = 1;
         end
     end
+    phase.drop_objection(this);
 
 endtask : run_phase
 

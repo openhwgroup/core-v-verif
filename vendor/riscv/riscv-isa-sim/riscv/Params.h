@@ -33,7 +33,7 @@ public:
   //              Base                 Name
   std::unordered_map<string, mapParam> v;
 
-  Param operator[](string str) { return this->get(str); }
+  Param operator[](string str) const { return this->get(str); }
 
 #if 0
   void set(string base, string name, any value, string type = "",
@@ -126,17 +126,38 @@ public:
     }
   }
 
-  Param get(string base, string name) {
+  bool exist(string base, string name) {
+    auto it = v.find(base);
+    if (it != v.end()) {
+      auto it2 = it->second.find(name);
+      if (it2 != it->second.end())
+        return true;
+    }
+    return false;
+  }
+
+  bool exist(string str) {
+    string base, name;
+    std::size_t n_base = str.find_last_of("/");
+    if (n_base != std::string::npos) {
+      base = str.substr(0, n_base + 1);
+      name = str.substr(n_base + 1, str.length());
+      return this->exist(base, name);
+    }
+    return false;
+  }
+
+  Param get(string base, string name) const {
     auto it = v.find(base);
     if (it != this->v.end()) {
       auto it2 = it->second.find(name);
       if (it2 != it->second.end())
-        return v[base][name];
+        return it2->second;
     }
     return Param();
   }
 
-  Param get(string str) {
+  Param get(string str) const {
     string base, name;
     std::size_t n_base = str.find_last_of("/");
     if (n_base != std::string::npos) {

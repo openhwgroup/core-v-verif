@@ -45,7 +45,7 @@ localparam DEFAULT_XLEN     = 32;
 localparam MAX_XLEN         = 64;
 localparam DEFAULT_NRET     = 1;
 
-localparam CSR_QUEUE_SIZE = 250;
+localparam CSR_MAX_SIZE = 4096;
 
 const string format_header_str = "%8s | RVFI | %8s | %6s | %8s | %8s | %s | %03s | %08s | %03s | %08s | %03s | %08s | %03s | %08s | %08s | %s";
 const string format_instr_str  = "%8s | RVFI | %8d | %6d | %8x | %8s | %s | x%-2d | %8x | x%-2d | %8x | x%-2d | %16x";

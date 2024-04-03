@@ -732,6 +732,8 @@ typedef struct packed {
    int unsigned                 num_mhpmcounters;
    //uvma_core_cntrl_pma_region_c  pma_regions[];
     //
+   bit  unsigned                 unified_traps;
+
    bit  unsigned                 dram_valid;
    longint unsigned              dram_base;
    longint unsigned              dram_size;

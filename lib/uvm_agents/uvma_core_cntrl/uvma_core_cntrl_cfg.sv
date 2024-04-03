@@ -99,6 +99,8 @@
    rand longint unsigned         dram_base;
    rand longint unsigned         dram_size;
 
+   rand bit                      unified_traps;
+
    // Common bootstrap addresses
    // The valid bits should be constrained if the bootstrap signal is not valid for this core configuration
    rand bit [MAX_XLEN-1:0]       mhartid;
@@ -181,6 +183,7 @@
       `uvm_field_int(                          dram_valid                     , UVM_DEFAULT          )
       `uvm_field_int(                          dram_base                      , UVM_DEFAULT          )
       `uvm_field_int(                          dram_size                      , UVM_DEFAULT          )
+      `uvm_field_int(                          unified_traps                  , UVM_DEFAULT          )
       `uvm_field_int(                          mhartid                        , UVM_DEFAULT          )
       `uvm_field_int(                          marchid                        , UVM_DEFAULT          )
       `uvm_field_int(                          mvendorid                      , UVM_DEFAULT          )
@@ -208,6 +211,7 @@
       soft cov_model_enabled      == 1;
       soft trn_log_enabled        == 1;
       soft dram_valid             == 0;
+      soft ext_cv32a60x_supported == 0;
    }
 
    constraint riscv_cons_soft {
@@ -799,6 +803,8 @@ function st_core_cntrl_cfg uvma_core_cntrl_cfg_c::to_struct();
     st.dram_base  = dram_base;
     st.dram_size  = dram_size;
 
+    st.unified_traps = unified_traps;
+
     st.mhartid = mhartid;
     st.mhartid_plusarg_valid = mhartid_plusarg_valid;
 
@@ -897,6 +903,8 @@ function void uvma_core_cntrl_cfg_c::from_struct(st_core_cntrl_cfg st);
     dram_valid = st.dram_valid;
     dram_base  = st.dram_base;
     dram_size  = st.dram_size;
+
+    unified_traps = st.unified_traps;
 
     mhartid = st.mhartid;
     mhartid_plusarg_valid = st.mhartid_plusarg_valid;

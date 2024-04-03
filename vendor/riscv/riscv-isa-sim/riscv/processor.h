@@ -197,9 +197,9 @@ public:
   bool get_log_commits_enabled() const { return log_commits_enabled; }
   void reset();
   void step(size_t n); // run for n cycles
-  void put_csr(int which, reg_t val);
+  virtual void put_csr(int which, reg_t val);
   uint32_t get_id() const { return id; }
-  reg_t get_csr(int which, insn_t insn, bool write, bool peek = 0);
+  virtual reg_t get_csr(int which, insn_t insn, bool write, bool peek = 0);
   reg_t get_csr(int which) { return get_csr(which, insn_t(0), false, true); }
   mmu_t* get_mmu() { return mmu; }
   state_t* get_state() { return &state; }
@@ -217,7 +217,7 @@ public:
   }
   extension_t* get_extension();
   extension_t* get_extension(const char* name);
-  bool any_custom_extensions() const {
+  virtual bool any_custom_extensions() const {
     return !custom_extensions.empty();
   }
   bool extension_enabled(unsigned char ext) const {
@@ -334,7 +334,7 @@ protected:
   static const size_t OPCODE_CACHE_SIZE = 8191;
   insn_desc_t opcode_cache[OPCODE_CACHE_SIZE];
 
-  void take_pending_interrupt() { take_interrupt(state.mip->read() & state.mie->read()); }
+  virtual void take_pending_interrupt() { take_interrupt(state.mip->read() & state.mie->read()); }
   void take_interrupt(reg_t mask); // take first enabled interrupt in mask
   virtual void take_trap(trap_t& t, reg_t epc); // take an exception
   void take_trigger_action(triggers::action_t action, reg_t breakpoint_tval, reg_t epc);
