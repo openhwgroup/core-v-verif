@@ -71,18 +71,18 @@ coverage exclude -line 90 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_
 coverage exclude -line 126 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/if_stage_i/prefetch_buffer_i/fifo_i -comment {flush_but_first is dependent on !fifo_empty so this is unreachable.}
 coverage exclude -line 127 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/if_stage_i/prefetch_buffer_i/fifo_i -comment {flush_but_first is dependent on !fifo_empty so this is unreachable.}
 coverage exclude -line 128 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/if_stage_i/prefetch_buffer_i/fifo_i -comment {flush_but_first is dependent on !fifo_empty so this is unreachable.}
-coverage exclude -line 132 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {Case 2'b00 has been added for completion but is never used.}
+coverage exclude -line 135 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {Case 2'b00 has been added for completion but is never used.}
 coverage exclude -line 203 -code e -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {No cv.elw in this configuration.}
 coverage exclude -line 204 -code e -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {No cv.elw in this configuration.}
 coverage exclude -line 321 -code e -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {Data error not used.}
 coverage exclude -line 322 -code e -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {Data error not used.}
 coverage exclude -line 397 -code e -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {We are in PULP_OBI == 0 configuration. In this configuration, trans_valid is always asserted when used in this expression.}
-coverage exclude -line 132 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {Case 2'b00 has been added for completion but is never used.}
+coverage exclude -line 135 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {Case 2'b00 has been added for completion but is never used.}
 coverage exclude -line 155 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {2'b11 choice that never exists in the decoder.}
 coverage exclude -line 295 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/load_store_unit_i -comment {2'b11 choice that never exists in the decoder.}
-coverage exclude -line 2770 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreacheable code as cur_priv_lvl_i is at maximum value.}
-coverage exclude -line 2768 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreacheable code as cur_priv_lvl_i is at maximum value.}
-coverage exclude -line 2768 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreacheable code as cur_priv_lvl_i is at maximum value.}
+coverage exclude -line 2767 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreacheable code as cur_priv_lvl_i is at maximum value.}
+coverage exclude -line 2765 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreacheable code as cur_priv_lvl_i is at maximum value.}
+coverage exclude -line 2765 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/decoder_i -comment {Unreacheable code as cur_priv_lvl_i is at maximum value.}
 coverage exclude -line 419 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No Secure interrupt line. irq_sec_i tied to 0. }
 coverage exclude -line 451 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
 coverage exclude -line 452 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
