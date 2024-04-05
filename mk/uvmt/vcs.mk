@@ -52,7 +52,8 @@ VCS_UVM_VERBOSITY ?= UVM_MEDIUM
 
 # Flags
 VCS_VERSION     ?= S-2021.09-SP1
-VCS_UVMHOME_ARG ?= /synopsys/vcs/$(VCS_VERSION)/etc/uvm-1.2
+VCS_HOME        ?= /synopsys/vcs/$(VCS_VERSION)
+VCS_UVMHOME_ARG ?= $(VCS_HOME)/etc/uvm-1.2
 VCS_UVM_ARGS    ?= +incdir+$(VCS_UVMHOME_ARG)/src $(VCS_UVMHOME_ARG)/src/uvm_pkg.sv +UVM_VERBOSITY=$(VCS_UVM_VERBOSITY) -ntb_opts uvm-1.2
 
 VCS_COMP_FLAGS  ?= -lca -sverilog \
@@ -156,9 +157,6 @@ endif
 
 VCS_FILE_LIST ?= -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 
-# FIXME: this is a kludge to work-around a known VCS bug
-VCS_USER_COMPILE_ARGS += +define+UNSUPPORTED_WITH
-
 ifeq ($(call IS_YES,$(ENABLE_TRACE_LOG)),YES)
     VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_TRACE_EXECUTION
     VCS_USER_COMPILE_ARGS += +define+$(CV_CORE_UC)_RVFI_TRACE_EXECUTION
@@ -191,9 +189,16 @@ VCS_RUN_BASE_FLAGS   ?= $(VCS_GUI) \
                         -assert nopostproc \
                         -sv_lib $(abspath $(VCS_SVLIB_LIB))
 
+# The following INFO message appeared in the run-logs as of VCS Runtime version V-2023.12-1_Full64:
+#    Info: [VCS_SAVE_RESTORE_INFO] ASLR (Address Space Layout Randomization) is detected on the machine.
+#    To enable $save functionality, ASLR will be switched off and simv re-executed.
+#    Please use '-no_save' simv switch to avoid re-execution or '-suppress=ASLR_DETECTED_INFO' to suppress this message.
+VCS_SAVE_RESTORE_INFO_FLAGS ?= -no_save
+
 # Simulate using latest elab
 VCS_RUN_FLAGS        ?=
 VCS_RUN_FLAGS        += $(VCS_RUN_BASE_FLAGS)
+VCS_RUN_FLAGS        += $(VCS_SAVE_RESTORE_INFO_FLAGS)
 VCS_RUN_FLAGS        += $(VCS_RUN_WAVES_FLAGS)
 VCS_RUN_FLAGS        += $(VCS_RUN_COV_FLAGS)
 

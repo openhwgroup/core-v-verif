@@ -393,9 +393,7 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
                                                                     (`COVIF_CB.apu_gnt == 1) &&
                                                                     (`COVIF_CB.apu_rvalid_i == 1) ) {
 
-            // FIXME: this is a kludge for a known VCS issue
-            //bins rd[] = {[0:31]} with (fpu_latency == 0);
-            bins rd[] = {[0:31]} `WITH (fpu_latency == 0);
+            bins rd[] = {[0:31]} with (fpu_latency == 0);
         }
 
         // from bhv_logic_3
