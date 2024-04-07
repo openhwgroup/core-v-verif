@@ -12,7 +12,6 @@
 `define __UVMA_AXI_SEQ_LIB_SV__
 
 `include "uvma_axi_base_seq.sv"
-`include "uvma_axi_slv_base_seq.sv"
 `include "uvma_axi_slv_seq.sv"
 
 `include "uvma_axi_fw_preload_seq.sv"

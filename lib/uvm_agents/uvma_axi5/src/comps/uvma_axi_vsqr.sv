@@ -16,7 +16,7 @@
  * Component running AXI sequences extending uvma_obi_base_seq_c.
  * Provides sequence items for uvma_axi_drv_c.
  */
-class uvma_axi_vsqr_c extends uvm_sequencer#(uvma_axi_slv_seq_item_c);
+class uvma_axi_vsqr_c extends uvm_sequencer#(uvma_axi_transaction_c);
 
    // Objects
    uvma_axi_cfg_c    cfg;
@@ -26,12 +26,16 @@ class uvma_axi_vsqr_c extends uvm_sequencer#(uvma_axi_slv_seq_item_c);
    uvma_axi_synchronizer_c    synchronizer;
 
    //Handles to sequencer FIFOS
-   uvm_tlm_analysis_fifo#(uvma_axi_base_seq_item_c)       mon2seq_fifo;
-   uvm_tlm_analysis_fifo #(uvma_axi_base_seq_item_c)      mon_req_fifo;
+   uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)      ar_mon2seq_fifo_port;
+   uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)      aw_mon2seq_fifo_port;
+   uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)      w_mon2seq_fifo_port;
+   uvm_tlm_analysis_fifo #(uvma_axi_transaction_c)      mon2seq_fifo_port;
 
    //Handles to sequencer port connected to the FIFOS
-   uvm_get_port#(uvma_axi_base_seq_item_c)                mon2seq_export;
-   uvm_analysis_export   #(uvma_axi_base_seq_item_c)      mon_req_export;
+   uvm_analysis_export #(uvma_axi_transaction_c)      aw_mon2seq_export;
+   uvm_analysis_export #(uvma_axi_transaction_c)      w_mon2seq_export;
+   uvm_analysis_export #(uvma_axi_transaction_c)      ar_mon2seq_export;
+   uvm_analysis_export #(uvma_axi_transaction_c)      mon2seq_export;
 
    `uvm_component_utils_begin(uvma_axi_vsqr_c)
       `uvm_field_object(cfg  , UVM_DEFAULT)
@@ -61,10 +65,14 @@ class uvma_axi_vsqr_c extends uvm_sequencer#(uvma_axi_slv_seq_item_c);
       if (cntxt == null) begin
          `uvm_fatal("CNTXT", "Context handle is null")
       end
-      this.mon2seq_export      = new("mon2seq_export", this);
-      this.mon2seq_fifo        = new("mon2seq_fifo", this);
-      this.mon_req_export      = new("mon_req_export", this);
-      this.mon_req_fifo        = new("mon_req_fifo", this);
+      this.ar_mon2seq_export      = new("ar_mon2seq_export", this);
+      this.aw_mon2seq_export      = new("aw_mon2seq_export", this);
+      this.w_mon2seq_export       = new("w_mon2seq_export", this);
+      this.mon2seq_export         = new("mon2seq_export", this);
+      this.ar_mon2seq_fifo_port   = new("ar_mon2seq_fifo_port", this);
+      this.aw_mon2seq_fifo_port   = new("aw_mon2seq_fifo_port", this);
+      this.w_mon2seq_fifo_port    = new("w_mon2seq_fifo_port", this);
+      this.mon2seq_fifo_port      = new("mon2seq_fifo_port", this);
 
       synchronizer = uvma_axi_synchronizer_c::type_id::create("synchronizer", this);
 
@@ -78,8 +86,10 @@ class uvma_axi_vsqr_c extends uvm_sequencer#(uvma_axi_slv_seq_item_c);
       super.connect_phase(phase);
       // Connect get ports to FIFO get peek_export ports
 
-      this.mon2seq_export.connect(mon2seq_fifo.get_peek_export);
-      this.mon_req_export.connect(this.mon_req_fifo.analysis_export);
+      this.ar_mon2seq_export.connect(this.ar_mon2seq_fifo_port.analysis_export);
+      this.aw_mon2seq_export.connect(this.aw_mon2seq_fifo_port.analysis_export);
+      this.w_mon2seq_export.connect(this.w_mon2seq_fifo_port.analysis_export);
+      this.mon2seq_export.connect(this.mon2seq_fifo_port.analysis_export);
 
    endfunction
 

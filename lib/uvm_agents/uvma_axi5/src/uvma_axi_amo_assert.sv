@@ -20,7 +20,7 @@ module  uvma_axi_amo_assert (uvma_axi_intf axi_assert);
 
   // check if an atomic operation has a burst length greater than one, AWSIZE is full data bus width. (Section E1.1.3)
    property AXI_ATOP_LEN_SIZE;
-      @(posedge axi_assert.clk && axi_assert.axi_amo_assertion_enabled) disable iff (!axi_assert.rst_n) (axi_assert.aw_valid && axi_assert.aw_len > 0) |-> axi_assert.aw_size == `UVMA_AXI_DATA_MAX_WIDTH;
+      @(posedge axi_assert.clk && axi_assert.axi_amo_assertion_enabled) disable iff (!axi_assert.rst_n) (axi_assert.aw_valid && axi_assert.aw_len > 0) |-> 2**axi_assert.aw_size == ($size(axi_assert.w_data)/8);
    endproperty
 
    // check if AWADDR is aligned to the data size for AtomicStore, AtomicLoad, and AtomicSwap  (Section E1.1.3)
@@ -101,7 +101,7 @@ module  uvma_axi_amo_assert (uvma_axi_intf axi_assert);
    int cov_w_data_num = 0;
 
    int ar_id_tr[];   //Store the number of transaction
-   int ar_len_tr[][];   //Store the lenght of every burst
+   int ar_len_tr[][];   //Store the length of every burst
    int tab[];
    int ass_ar_id;   //Store ar_id every clock cycle
    int ass_r_id;   //Store ar_id every clock cycle

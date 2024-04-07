@@ -15,11 +15,9 @@
 
 // Pre-processor macros
 `include "uvm_macros.svh"
-`include "uvma_axi_macros.sv"
 
 
 // Interfaces / Modules / Checkers
-`include "uvma_axi_intf.sv"
 `include "uvma_axi_aw_assert.sv"
 `include "uvma_axi_w_assert.sv"
 `include "uvma_axi_ar_assert.sv"
@@ -35,20 +33,21 @@ package uvma_axi_pkg;
    import uvml_trn_pkg  ::*;
    import uvml_logs_pkg ::*;
 
-   localparam NrSlaves      = 2; // actually masters, but slaves on the crossbar
-   localparam IdWidth       = 4; // 4 is recommended by AXI standard, so lets stick to it, do not change
-   localparam IdWidthSlave  = IdWidth + $clog2(NrSlaves);
-   parameter AXI_ADDR_WIDTH = `UVMA_AXI_ADDR_MAX_WIDTH;
-   parameter AXI_DATA_WIDTH = `UVMA_AXI_DATA_MAX_WIDTH;
-   parameter AXI_USER_WIDTH = `UVMA_AXI_USER_MAX_WIDTH;
-   parameter AXI_ID_WIDTH   = IdWidthSlave;
-   parameter NUM_WORDS      = 2**24;
+   // Package Parameters
+   parameter int MAX_NB_TXN_BURST = 256 ; // Maximum value from the protocol
+
+   parameter int MAX_ID_WIDTH   = 64   ; // subjective maximum
+   parameter int MAX_ADDR_WIDTH = 64   ; // subjective maximum
+   parameter int MAX_DATA_WIDTH = 64   ; // subjective maximum
+   parameter int MAX_USER_WIDTH = 512  ; // subjective maximum
+
+   parameter int MAX_LOOP_WIDTH    = 8  ; // Maximum from the protocol
+   parameter int MAX_MMUSID_WIDTH  = 32 ; // Maximum from the protocol
+   parameter int MAX_MMUSSID_WIDTH = 20 ; // Maximum from the protocol
 
    `include "uvma_axi_tdefs.sv"
 
-
-   `include "uvma_axi_base_seq_item.sv"
-   `include "uvma_axi_slv_seq_item.sv"
+   `include "uvma_axi_transaction_cfg.sv"
    `include "uvma_axi_transaction.sv"
 
     // Objects
@@ -59,12 +58,13 @@ package uvma_axi_pkg;
 
    `include "uvma_axi_synchronizer.sv"
    `include "uvma_axi_amo_synchronizer.sv"
-   `include "uvma_axi_ext_synchronizer.sv"
 
    `include "uvma_axi_vsqr.sv"
    `include "uvma_axi_drv.sv"
    `include "uvma_axi_mon.sv"
+   `include "uvma_axi_covg.sv"
    `include "uvma_axi_agent.sv"
+
     // Sequences
    `include "uvma_axi_seq_lib.sv"
 

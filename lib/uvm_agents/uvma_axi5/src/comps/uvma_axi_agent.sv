@@ -22,6 +22,7 @@ class uvma_axi_agent_c extends uvm_agent;
    uvma_axi_drv_c             driver;
    uvma_axi_vsqr_c            vsequencer;
    uvma_axi_seq_item_logger_c seq_item_logger;
+   uvma_axi_covg_c            axi_covg;
 
    // Objects handles
    uvma_axi_cfg_c      cfg;
@@ -105,6 +106,10 @@ class uvma_axi_agent_c extends uvm_agent;
          this.driver  = uvma_axi_drv_c  :: type_id :: create("driver",  this);
       end
 
+      if(cfg.cov_model_enabled) begin
+         this.axi_covg = uvma_axi_covg_c::type_id::create("axi_covg", this);
+      end
+
    endfunction : create_components
 
    /**
@@ -121,7 +126,10 @@ class uvma_axi_agent_c extends uvm_agent;
          this.driver.seq_item_port.connect(vsequencer.seq_item_export);
 
          //Establishing connections between monitor ports and sequencer
-         this.monitor.uvma_mon_port.connect(vsequencer.mon_req_export);
+         this.monitor.m_axi_superset_read_req_packets_collected.connect(vsequencer.ar_mon2seq_export);
+         this.monitor.m_axi_superset_write_add_req_packets_collected.connect(vsequencer.aw_mon2seq_export);
+         this.monitor.m_axi_superset_write_data_req_packets_collected.connect(vsequencer.w_mon2seq_export);
+         this.monitor.m_axi_superset_req_packets_collected.connect(vsequencer.mon2seq_export);
 
          `uvm_info(get_type_name(), $sformatf("ACTIVE MODE"), UVM_LOW)
 
@@ -131,10 +139,20 @@ class uvma_axi_agent_c extends uvm_agent;
       if (cfg.trn_log_enabled) begin
 
          //Establishing connections between synchronizer ports and logger
-         this.vsequencer.synchronizer.uvma_sqr_trs_port.connect(seq_item_logger.analysis_export);
+         this.monitor.m_axi_superset_read_req_packets_collected.connect(seq_item_logger.analysis_export);
+         this.monitor.m_axi_superset_write_req_packets_collected.connect(seq_item_logger.analysis_export);
+         this.monitor.m_axi_superset_read_rsp_packets_collected.connect(seq_item_logger.analysis_export);
+         this.monitor.m_axi_superset_write_rsp_packets_collected.connect(seq_item_logger.analysis_export);
 
          `uvm_info(get_type_name(), $sformatf("Transaction Loger enable"), UVM_LOW)
 
+      end
+
+      if(cfg.cov_model_enabled) begin
+         monitor.m_axi_superset_write_rsp_packets_collected.connect(axi_covg.uvma_axi_cov_b_resp_fifo.analysis_export);
+         monitor.m_axi_superset_read_rsp_packets_collected .connect(axi_covg.uvma_axi_cov_r_resp_fifo.analysis_export);
+         monitor.m_axi_superset_read_req_packets_collected .connect(axi_covg.uvma_axi_cov_ar_req_fifo.analysis_export);
+         monitor.m_axi_superset_write_req_packets_collected.connect(axi_covg.uvma_axi_cov_aw_req_fifo.analysis_export);
       end
 
    endfunction
