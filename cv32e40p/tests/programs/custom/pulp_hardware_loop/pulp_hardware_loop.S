@@ -335,21 +335,21 @@ test7:
     cv.endi 0, endZ_7
 startO_7:
     cv.counti 0, 10
-    csrrw x5, 0x300, x0 # mstatus
+    csrr x5, 0x300 # mstatus
 
     .option norvc
 
 startZ_7:
     addi x17, x17, 1
-    csrrw x5, 0x300, x0 # mstatus
+    csrr x5, 0x300 # mstatus
     addi x17, x17, 1
     addi x17, x17, 1
-    csrrw x6, 0x300, x0 # mstatus
+    csrr x6, 0x300 # mstatus
 endZ_7:
     addi x18, x18, 1
-    csrrw x7, 0x300, x0 # mstatus
+    csrr x7, 0x300 # mstatus
     addi x18, x18, 1
-    csrrw x8, 0x300, x0 # mstatus
+    csrr x8, 0x300 # mstatus
 endO_7:
 
     .option rvc
