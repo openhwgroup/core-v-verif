@@ -729,7 +729,7 @@ interface uvmt_cv32e40p_cov_if
               regfile_waddr_wb_fd <= 0;
               regfile_waddr_wb_rd <= 0;
               regfile_waddr_ex_contention <= 0;
-              regfile_waddr_wb_contention = regfile_waddr_wb_o; //should not be >31, check for illegal in coverage
+              regfile_waddr_wb_contention = regfile_waddr_wb_o; // contention between lsu and fpu using wb path
           end
           //Case FPU Latency = 1;regfile wr from WB;LSU > priority;LSU contention - FPU reg write cycle after contention
           else if((contention_valid == 1) && (regfile_we_wb_o == 1) && !apu_perf_wb_o) begin

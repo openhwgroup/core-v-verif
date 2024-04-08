@@ -18,6 +18,6 @@ ovpsim: >
     -showinstanceparams cpu
 # Debug options (add to ovpsim section as needed)
 #    --trace --tracechange --traceshowicount --tracemode --monitornets
-cv_sw_march: rv32imc_zicsr_zifencei_xcvhwlp1p0_xcvmem1p0_xcvmac1p0_xcvbi1p0_xcvalu1p0_xcvsimd1p0_xcvbitmanip1p0
+cv_sw_march: rv32imc_zicsr_zifencei_xcvhwlp_xcvmem_xcvmac_xcvbi_xcvalu_xcvsimd_xcvbitmanip
 cflags: >
     -DPULP

@@ -90,6 +90,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
   rand int unsigned     num_fill_instr_in_loop1_till_loop0_setup;
   rand bit              setup_l0_before_l1_start;
 
+  riscv_reg_t           compress_regs[8] = {S0, S1, A0, A1, A2, A3, A4, A5};
   int unsigned          num_instr_cv_start_to_loop_start_label[2];
   cv32e40p_instr        hwloop_setupi_instr[2];
   cv32e40p_instr        hwloop_setup_instr[2];
@@ -395,6 +396,8 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
       //*************************************************************
 
       if(gen_nested_loop) begin  //NESTED HWLOOP
+          bit std_rand_done = 0;
+          int unsigned std_rand_cnt = 0;
           gen_cv_count0_instr = $urandom();
 
           //calculate num_rem_hwloop1_instr
@@ -418,12 +421,25 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
           //Initialize GPRs used as RS1 in HWLOOP Instructions
           hwloop_avail_regs = new[6];  //index fixed for this stream from 0:2 for start0,end0,count0=setup0; 3:5 for start1,end1,count1=setup1 respectively
-          std::randomize(hwloop_avail_regs) with  {   unique {hwloop_avail_regs};
-                                                       foreach(hwloop_avail_regs[i]) {
-                                                           !(hwloop_avail_regs[i] inside {ZERO, RA, SP, GP, TP});
-                                                           !(hwloop_avail_regs[i] inside {cfg.reserved_regs});
-                                                       }
-                                                   };
+          std_rand_cnt = 0;
+          do begin
+            int unsigned is_compress_reg_cnt = 0;
+            if (std_rand_cnt == 100) begin
+              `uvm_fatal(this.get_type_name(), "std randomization count limit hit, please review")
+            end
+            std::randomize(hwloop_avail_regs) with  {   unique {hwloop_avail_regs};
+                                                         foreach(hwloop_avail_regs[i]) {
+                                                             !(hwloop_avail_regs[i] inside {ZERO, RA, SP, GP, TP});
+                                                             !(hwloop_avail_regs[i] inside {cfg.reserved_regs});
+                                                         }
+                                                     };
+            foreach (compress_regs[i]) begin
+              if (compress_regs[i] inside {cfg.reserved_regs, hwloop_avail_regs}) is_compress_reg_cnt++;
+            end
+            if (is_compress_reg_cnt == $size(compress_regs)) std_rand_done = 0; else std_rand_done = 1;
+            if (!std_rand_done) std_rand_cnt++;
+          end
+          while (!std_rand_done);
 
           reserved_rd = hwloop_avail_regs;
 

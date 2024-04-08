@@ -508,7 +508,8 @@ class uvme_rv32x_hwloop_covg # (
                   check_ebreakm_entry(i); \
                 end \
                 if (is_pc_equal_lpend(hwloop_stat_``TYPE``.hwloop_csr, i, 0, cv32e40p_rvvi_vif.pc_rdata) && hwloop_stat_``TYPE``.track_lp_cnt[i] != 0) begin \
-                  if (pending_irq) lpend_has_pending_irq_``TYPE``[i] = 1; \
+                  // if (pending_irq) lpend_has_pending_irq_``TYPE``[i] = 1; \
+                  if (pending_irq && cv32e40p_rvvi_vif.trap) lpend_has_pending_irq_``TYPE``[i] = 1; \
                   hwloop_stat_``TYPE``.track_lp_cnt[i]--; \
                   done_insn_list_capture_``TYPE``[i] = 1; \
                   assert(hwloop_stat_``TYPE``.track_lp_cnt[i] >= 0); \
@@ -543,7 +544,8 @@ class uvme_rv32x_hwloop_covg # (
                   check_ebreakm_entry(i); \
                 end \
                 if (is_pc_equal_lpend(hwloop_stat_``TYPE``.hwloop_csr, i, 0, cv32e40p_rvvi_vif.pc_rdata) && hwloop_stat_``TYPE``.track_lp_cnt[i] != 0) begin \
-                  if (pending_irq) lpend_has_pending_irq_``TYPE``[i] = 1; \
+                  // if (pending_irq) lpend_has_pending_irq_``TYPE``[i] = 1; \
+                  if (pending_irq && cv32e40p_rvvi_vif.trap) lpend_has_pending_irq_``TYPE``[i] = 1; \
                   hwloop_stat_``TYPE``.track_lp_cnt[i]--; \
                   done_insn_list_capture_``TYPE``[i] = 1; \
                   assert(hwloop_stat_``TYPE``.track_lp_cnt[i] >= 0); \
@@ -873,7 +875,7 @@ class uvme_rv32x_hwloop_covg # (
       end // IRQ_EXIT
       forever begin : SIGNALS_CHG_WHEN_IS_IRQ_ASSERT
         @(posedge is_irq);
-        if (is_ebreakm) begin
+        if (is_ebreakm) begin // TBD: will ebreakm assert trap?
           for (int j=0; j<HWLOOP_NB; j++) begin
             logic [31:0] discarded_insn;
             if (hwloop_stat_main.execute_instr_in_hwloop[j] && lpend_has_pending_irq_main[j]) begin 

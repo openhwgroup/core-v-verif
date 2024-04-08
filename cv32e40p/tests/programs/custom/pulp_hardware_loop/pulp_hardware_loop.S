@@ -15,9 +15,9 @@
 // limitations under the License.
 //
 // SPDX-License-Identifier:Apache-2.0 WITH SHL-2.0
-// 
+//
 // Description : PULP Hardware Loops instructions test
-// 
+//
 
 .globl _start
 .globl main
@@ -312,7 +312,57 @@ test6_4:
     c.addi x15, 0x1
 test6_5:
     csrr x20, 0xCC6
-    beq x20, x10, exit_check
+    beq x20, x10, test7
+    c.addi x15, 0x1
+
+# test7 CSR read accesses during HWloop (same as test1 but with CSR reads to mstatus)
+
+test7:
+    cv.counti 0, 0
+    cv.counti 1, 0
+    li x5, 0
+    li x6, 0
+    li x7, 0
+    li x8, 0
+    li x17, 0
+    li x18, 0
+    li x30, 0x80
+    li x31, 0
+
+    .balign 4
+
+    cv.starti 1, startO_7
+    cv.endi 1, endO_7
+    cv.counti 1, 10
+    cv.starti 0, startZ_7
+    cv.endi 0, endZ_7
+startO_7:
+    cv.counti 0, 10
+    csrr x5, 0x300 # mstatus
+
+    .option norvc
+
+startZ_7:
+    addi x17, x17, 1
+    csrr x5, 0x300 # mstatus
+    addi x17, x17, 1
+    lw x31, 0(x30)
+    csrr x6, 0x300 # mstatus
+endZ_7:
+    addi x18, x18, 1
+    csrr x7, 0x300 # mstatus
+    addi x18, x18, 1
+    csrr x8, 0x300 # mstatus
+endO_7:
+
+    .option rvc
+
+    li x20, 200
+    beq x20, x17, test7_1
+    c.addi x15, 0x1
+test7_1:
+    li x21, 20
+    beq x21, x18, exit_check
     c.addi x15, 0x1
 
 exit_check:
