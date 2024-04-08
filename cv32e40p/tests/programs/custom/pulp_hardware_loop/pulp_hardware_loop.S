@@ -315,7 +315,6 @@ test6_5:
     beq x20, x10, test7
     c.addi x15, 0x1
 
-
 # test7 CSR read accesses during HWloop (same as test1 but with CSR reads to mstatus)
 
 test7:
@@ -327,6 +326,8 @@ test7:
     li x8, 0
     li x17, 0
     li x18, 0
+    li x30, 0x80
+    li x31, 0
 
     .balign 4
 
@@ -345,7 +346,7 @@ startZ_7:
     addi x17, x17, 1
     csrr x5, 0x300 # mstatus
     addi x17, x17, 1
-    addi x17, x17, 1
+    lw x31, 0(x30)
     csrr x6, 0x300 # mstatus
 endZ_7:
     addi x18, x18, 1
@@ -356,7 +357,7 @@ endO_7:
 
     .option rvc
 
-    li x20, 300
+    li x20, 200
     beq x20, x17, test7_1
     c.addi x15, 0x1
 test7_1:
