@@ -89,8 +89,9 @@ function uvme_cv32e40p_reduced_rand_debug_req_c::new(string name="uvme_cv32e40p_
 endfunction : new
 
 task uvme_cv32e40p_reduced_rand_debug_req_c::rand_delay();
-    std::randomize(dly) with {  dly inside {[1:10000]};
-                             };
+    if (! std::randomize(dly) with {  dly inside {[1:10000]}; } ) begin
+        `uvm_fatal("RAND_DEBUG_RAND_DELAY", "Cannot randomize dly")
+    end
     #(dly);
 endtask : rand_delay
 

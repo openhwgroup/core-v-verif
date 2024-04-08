@@ -35,6 +35,8 @@ class uvme_cv32e40p_fp_instr_covg extends uvm_component;
     extern task run_phase(uvm_phase phase);
     extern task sample_clk_i();
 
+    `include "uvme_cv32e40p_cov_model_macros.sv"
+
     `define FPU_MULTICYCLE_WINDOW_ILLEGAL_CASES \
      illegal_bins clk_2_19_group_NON_DIVSQRT  = ( (!binsof(cp_curr_fpu_apu_op) intersect {APU_OP_FDIV, APU_OP_FSQRT}) && (!binsof(cp_f_multicycle_clk_window) intersect {1}) ) \
                                                    with ( (cp_f_multicycle_clk_window != 0) & (fpu_latency == 0) ); \
