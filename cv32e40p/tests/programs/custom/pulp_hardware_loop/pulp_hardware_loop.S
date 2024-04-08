@@ -319,6 +319,8 @@ test6_5:
 # test7 CSR read accesses during HWloop (same as test1 but with CSR reads to mstatus)
 
 test7:
+    cv.counti 0, 0
+    cv.counti 1, 0
     li x5, 0
     li x6, 0
     li x7, 0
