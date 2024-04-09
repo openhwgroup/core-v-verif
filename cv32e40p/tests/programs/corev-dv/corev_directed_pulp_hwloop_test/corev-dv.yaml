@@ -13,7 +13,7 @@ plusargs: >
     +insert_rand_directed_instr_stream=1
     +test_rand_directed_instr_stream_num=2
     +rand_directed_instr_0=cv32e40p_xpulp_short_hwloop_stream_directed,1
-    +rand_directed_instr_1=cv32e40p_xpulp_short_hwloop_stream_directed,1
+    +rand_directed_instr_1=cv32e40p_xpulp_short_single_hwloop_stream_directed,1
     +no_fence=0
     +no_data_page=0
     +randomize_csr=1

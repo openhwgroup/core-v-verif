@@ -31,7 +31,6 @@ class cv32e40p_cv_instrs_multi_loops_streams extends cv32e40p_float_zfinx_base_i
   int unsigned        loop_cnt           = 0;
   int unsigned        total_instr        = 0;
   int unsigned        loop_cnt_limit     = 0;
-  int unsigned        ignored_instr_cnt  = 0;
 
   `uvm_object_utils(cv32e40p_cv_instrs_multi_loops_streams)
   `uvm_object_new
@@ -47,14 +46,14 @@ class cv32e40p_cv_instrs_multi_loops_streams extends cv32e40p_float_zfinx_base_i
     include_group   = new[1] ({RV32X});
     exclude_instr   = new[9] ({CV_START, CV_STARTI, CV_END, CV_ENDI, CV_COUNT, CV_COUNTI, CV_SETUP, CV_SETUPI, CV_ELW});
 
-    // these already covered in all cvg, can be ignored meantime - Start (note: users can modify this to focus on insn list to b ecovered)
-    ignored_instr_cnt = 4;
-    exclude_instr   = new[exclude_instr.size()+ignored_instr_cnt] ({exclude_instr, CV_MAX, CV_ADDN, CV_AVG_SCI_H, CV_SHUFFLEI3_SCI_B});
+    // these already covered in all cvg, can be ignored meantime - Start (note: users can modify this to focus on insn list to be covered)
+      // example coding to reduce already covered instrs in previous accumulated coverage
+      // exclude_instr   = new[exclude_instr.size()+4] ({exclude_instr, CV_MAX, CV_ADDN, CV_AVG_SCI_H, CV_SHUFFLEI3_SCI_B});
     // these already covered in all cvg, can be ignored meantime - End
 
     if (include_load_store_base_sp) begin // cover c_[s|l]wsp insn only
       include_group   = new[include_group.size()+1] ({include_group, RV32C});
-      // these already covered in all cvg, can be ignored meantime - Start (note: users can modify this to focus on insn list to b ecovered)
+      // these already covered in all cvg, can be ignored meantime - Start (note: users can modify this to focus on insn list to be covered)
       exclude_instr   = new[exclude_instr.size()+25] ({exclude_instr, C_LW, C_SW, C_ADDI4SPN, C_ADDI, C_LI, C_ADDI16SP, C_LUI,
         C_SRLI, C_SRAI, C_ANDI, C_SUB, C_XOR, C_OR, C_AND, C_BEQZ, C_BNEZ, C_SLLI, C_MV, C_EBREAK, C_ADD, C_NOP, C_J,
         C_JAL, C_JR, C_JALR});
