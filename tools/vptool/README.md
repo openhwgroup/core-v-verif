@@ -1,6 +1,9 @@
 <!--
 Copyright 2022 Thales DIS Design Services SAS
+
 SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0
+
+Original Author: Zbigniew Chamski (Thales)
 -->
 # VPtool Introduction
 
@@ -24,7 +27,8 @@ concepts.
 ## Issue Reporting
 
 VPTOOL is in active development and is not fully tested.
-If you encounter a problem with VPTOOL, please open an issue on this repository (with our thanks!).
+If you encounter a problem with VPTOOL, please open an issue on the
+[OpenHW Group `core-v-verif` repository](https://github.com/openhwgroup/core-v-verif) (with our thanks!).
 
 ## Prerequisites
 
@@ -52,20 +56,27 @@ If you encounter a problem with VPTOOL, please open an issue on this repository 
 
 [To be completed (lots of work ahead:-D)]
 
-`VPTOOL` queries the presence and the value of shell environment variable `PLATFORM_TOP_DIR`.
-This variable must be defined before launching VPTOOL.  It shall point to the top-level directory
-of the platform-related tree that contains:
+`VPTOOL` can be configured by setting three shell environment variables:
 
-- the verification database files of the project
-- an administrative directory named `vptool` that contains the project-specific `VPTOOL` configuration
-  file `vp_config.py` and the lock files for concurrent multi-user editing of the database.
+- `PLATFORM_TOP_DIR` shall point to the platform-related directory that contains:
+  - the verification database files of the project, stored in YAML format;
+  - OPTIONALLY: an administrative directory named `vptool` that contains the project-specific
+    `VPTOOL` configuration file `vp_config.py` and the lock files for concurrent
+    multi-user editing of the database.
+- `PROJECT_NAME` is a free-form string that sets the project name used in the GUI;
+- `PROJECT_IDENT` is an alpha-numerical identifier (C-style) that will be used to set unique Verification
+  Item tags.
+
+### Python-level configuration
 
 The key configuration information is stored in file `$PLATFORM_TOP_DIR/vptool/vp_config.py`.  This file
 contains a series of Python variable assignments which define the operation mode of VPTOOL and the path
 to database files.
 
 The key Python variables are:
-* `PROJECT_NAME`: a free-form string that identifies the project targeted by the verification plan
+* `PROJECT_NAME`: a free-form string that identifies the project targeted by the verification plan.
+* `PROJECT_IDENT`: an alpha-numerical identifier (C-style) that will be used to generate unique
+  Verification Item tags.
 * `SAVED_DB_LOCATION`: path to the databases (either a file name, or a directory name).  It is constructed
   from the value of `PLATFORM_TOP_DIR` in `vptool/vp_config.py` so that it can be tailored to any
   organization- or site-specific directory naming conventions.
@@ -87,20 +98,18 @@ shell script named `vptool-example.sh` which can be invoked from any location.
 
 ### Directory structure
 
-- README.md                   this file
-- vptool                      the code of `VPTOOL`
-- vptool-example              an example of `VPTOOL` configuration with a verification database
-  - runme.sh                  a shell script to run `VPTOOL` with the example database
-  - example-database          Verification Plan data and `VPTOOL` administrative files for the example
-    - vptool                  location of `VPTOOL` configuration and lock files
-      - vp_config.py          `VPTOOL` configuration file for the example
-      - locked_ip.pick        `VPTOOL` lock file (identifies which user has exclusive access to which feature)
-    - ip_dir                  directory holding the Verification Plan database
-      - core-v                arbitrary subdirectory level (to accommodate site/organization conventions)
-        - cva6                another arbitrary subdirectory level
-          - VP_IP000.pck      database file of first feature
-          - VP_IP001.pck      database file of second feature
-          - ...               ...
+- `README.md`:                   this file
+- `vptool`:                      the code of `VPTOOL`
+- `vptool-example`:              an example of `VPTOOL` configuration with a verification database
+  - `runme.sh`:                  a shell script to run `VPTOOL` with the example database
+  - `example-database`:          Verification Plan data and `VPTOOL` administrative files for the example
+    - `ip_dir`:                  arbitrary subdirectory level (to accommodate site/organization conventions)
+      - `core-v`:                another arbitrary subdirectory level (to accommodate, e.g., project architecture)
+        - `cva6`:                another arbitrary subdirectory level
+          - `locked_ip.pick`:    `VPTOOL` lock file (created upon first `VPTOOL` invocation)
+          - `VP_IP000.yml`:      database file of first feature
+          - `VP_IP001.yml`:      database file of second feature
+          - `...`:               ...
 
 ### Basic use
 
@@ -109,12 +118,11 @@ shell script named `vptool-example.sh` which can be invoked from any location.
     sh vptool-example/runme.sh
 
   This will load all per-feature Verification Plans present in the `SAVED_DB_LOCATION` variable.
-  The corresponding path is `vptool-example/example-database/ip_dir/core-v/cva6/\*.pck` as defined
-  in the configuration file `vptool-example/example-database/vptool/vp_config.py`.
+  The corresponding path is `vptool-example/example-database/ip_dir/core-v/cva6/\*.yml`.
 
   The New and Delete buttons at the bottom of the Feature, Sub-Feature and Verification Item selectors
   are greyed out except for the `New` button of the Feature selector.  This indicates that the user does
-  not hold the lock(s) permitting to edit the Feature that is currently selected.
+  not hold the lock(s) permitting to edit the Feature that may be currently selected.
 
 - Select another Feature to see if you or someone else hold a lock on it:
   - a feature locked by you will have its name colored in green
