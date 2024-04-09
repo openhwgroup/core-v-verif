@@ -582,6 +582,37 @@ module uvmt_cv32e40p_imperas_dv_wrap
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER3_ADDR      ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMCOUNTER3H_ADDR      ));
 
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT3_ADDR      ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT4_ADDR      ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT5_ADDR      ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT6_ADDR      ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT7_ADDR      ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT8_ADDR      ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT9_ADDR      ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT10_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT11_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT12_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT13_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT14_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT15_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT16_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT17_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT18_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT19_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT20_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT21_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT22_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT23_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT24_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT25_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT26_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT27_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT28_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT29_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT30_ADDR     ));
+    void'(rvviRefCsrSetVolatile(hart_id, `CSR_MHPMEVENT31_ADDR     ));
+
+
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLE_ADDR       ));
     void'(rvviRefCsrSetVolatile(hart_id, `CSR_MCYCLEH_ADDR       ));
 
