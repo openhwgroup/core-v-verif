@@ -1,3 +1,4 @@
+#!/bin/sh
 #############################################################################
 # Copyright (C) 2023 Thales DIS France SAS
 #
@@ -5,7 +6,6 @@
 #
 # Original Author: Zbigniew Chamski (Thales)
 #############################################################################
-#!/bin/sh
 
 # Set the canonical path of the current script.
 VPTOOL_DIR=$(dirname $(readlink -f $0))
