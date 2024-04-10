@@ -315,9 +315,71 @@ test6_5:
     beq x20, x10, test7
     c.addi x15, 0x1
 
-# test7 CSR read accesses during HWloop (same as test1 but with CSR reads to mstatus)
+# test7 CSR read accesses during single HWloop (same as test1 but with CSR reads to mstatus)
 
 test7:
+    cv.counti 0, 0
+    cv.counti 1, 0
+    li x5, 0
+    li x6, 0
+    li x17, 0
+    li x30, 0x80
+    li x31, 0
+
+    .balign 4
+
+    cv.starti 0, startZ_7_1
+    cv.endi 0, endZ_7_1
+    cv.counti 0, 10
+
+    .option norvc
+
+startZ_7_1:
+    addi x17, x17, 1
+    csrr x5, 0x300 # mstatus
+    addi x17, x17, 1
+    lw x31, 0(x30)
+    csrr x6, 0x300 # mstatus
+endZ_7_1:
+
+    .option rvc
+
+    li x20, 20
+    beq x20, x17, test7_2
+    c.addi x15, 0x1
+
+test7_2:
+    li x5, 0
+    li x6, 0
+    li x17, 0
+    li x30, 0x80
+    li x31, 0
+
+    .balign 4
+
+    cv.starti 1, startZ_7_2
+    cv.endi 1, endZ_7_2
+    cv.counti 1, 10
+
+    .option norvc
+
+startZ_7_2:
+    addi x17, x17, 1
+    csrr x5, 0x300 # mstatus
+    addi x17, x17, 1
+    lw x31, 0(x30)
+    csrr x6, 0x300 # mstatus
+endZ_7_2:
+
+    .option rvc
+
+    li x20, 20
+    beq x20, x17, test8
+    c.addi x15, 0x1
+
+# test8 CSR read accesses during nested HWloop (same as test1 but with CSR reads to mstatus)
+
+test8:
     cv.counti 0, 0
     cv.counti 1, 0
     li x5, 0
@@ -331,36 +393,37 @@ test7:
 
     .balign 4
 
-    cv.starti 1, startO_7
-    cv.endi 1, endO_7
+    cv.starti 1, startO_8
+    cv.endi 1, endO_8
     cv.counti 1, 10
-    cv.starti 0, startZ_7
-    cv.endi 0, endZ_7
-startO_7:
+    cv.starti 0, startZ_8
+    cv.endi 0, endZ_8
+startO_8:
     cv.counti 0, 10
     csrr x5, 0x300 # mstatus
 
     .option norvc
 
-startZ_7:
+startZ_8:
     addi x17, x17, 1
     csrr x5, 0x300 # mstatus
     addi x17, x17, 1
     lw x31, 0(x30)
     csrr x6, 0x300 # mstatus
-endZ_7:
+endZ_8:
     addi x18, x18, 1
     csrr x7, 0x300 # mstatus
     addi x18, x18, 1
     csrr x8, 0x300 # mstatus
-endO_7:
+endO_8:
 
     .option rvc
 
     li x20, 200
-    beq x20, x17, test7_1
+    beq x20, x17, test8_1
     c.addi x15, 0x1
-test7_1:
+
+test8_1:
     li x21, 20
     beq x21, x18, exit_check
     c.addi x15, 0x1
