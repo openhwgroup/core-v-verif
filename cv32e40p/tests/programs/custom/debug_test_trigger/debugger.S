@@ -69,6 +69,13 @@ _debugger_start:
         la a2, glb_hart_status
         lw t2, 0(a2)
 
+  // extra codes in debug rom for coverage purpose
+#if defined(PULP)
+        cv.bneimm x0, 0, b1_position
+b1_position:
+        cv.beqimm x0, 0x01, b2_position
+b2_position:
+#endif
 
 	// For all other tests,
 	// Set debug status = hart status
