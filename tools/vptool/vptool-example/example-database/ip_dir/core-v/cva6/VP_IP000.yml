@@ -1,0 +1,84 @@
+#############################################################################
+# Copyright (C) 2024 Thales DIS France SAS
+#
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0.
+#
+# Original Author: Zbigniew Chamski (Thales)
+#############################################################################
+!Feature
+next_elt_id: 2
+name: Issue interface
+id: 0
+display_order: 0
+subfeatures: !!omap
+- 000_issue_req signals stable: !Subfeature
+    name: 000_issue_req signals stable
+    tag: VP_IP000_P000
+    next_elt_id: 1
+    display_order: 0
+    items: !!omap
+    - '000': !VerifItem
+        name: '000'
+        tag: VP_VPTOOL_example_F000_S000_I000
+        description: The “instr” and “mode” signals remain stable during an Issue
+          request transaction.
+        reqt_doc: This is a pointer to the source Requirements document of the Features
+          in question.  The pointer should state the version of the target document.
+        ref_mode: ''
+        ref_page: ''
+        ref_section: ''
+        ref_viewer: ''
+        verif_goals: Check that “mode” and “instr” are stable during an issue transaction
+          (cannot be modified by an instruction when transaction issue is in process)
+        pfc: 4
+        test_type: 3
+        cov_method: 1
+        cores: -1
+        coverage_loc: 'CG: uvm_pkg.uvm_test_top.env.cov_model.cvxif_covg.mode_covg'
+        comments: In CVA6, this feature is always true.
+- 001_mode signal value: !Subfeature
+    name: 001_mode signal value
+    tag: VP_IP000_P001
+    next_elt_id: 2
+    display_order: 1
+    items: !!omap
+    - '000': !VerifItem
+        name: '000'
+        tag: VP_VPTOOL_example_F000_S001_I000
+        description: When issue transaction starts, instruction and current CPU mode
+          are provided
+        reqt_doc: ''
+        ref_mode: ''
+        ref_page: ''
+        ref_section: ''
+        ref_viewer: ''
+        verif_goals: Check that a mode modification coming from execution of a first
+          instruction is well provided to the following offloaded instruction
+        pfc: 3
+        test_type: 3
+        cov_method: 1
+        cores: -1
+        coverage_loc: 'CG: uvm_pkg.uvm_test_top.env.cov_model.cvxif_covg.mode_covg'
+        comments: ' For CVA6, RM is Spike.'
+    - '001': !VerifItem
+        name: '001'
+        tag: VP_VPTOOL_example_F000_S001_I001
+        description: Check “mode” signal values
+        reqt_doc: ''
+        ref_mode: ''
+        ref_page: ''
+        ref_section: ''
+        ref_viewer: ''
+        verif_goals: "Check that 'mode' takes a value that the CPU supports : Privilege
+          level (2’b00 = User, 2’b01 = Supervisor, 2’b10 = Reserved, 2’b11 = Machine)."
+        pfc: 11
+        test_type: 10
+        cov_method: 0
+        cores: -1
+        coverage_loc: ''
+        comments: 'PFC, Test Type and Coverage Method: See integration sheet.  In
+          CVA6, this feature is always true.'
+vptool_gitrev: '$Id: a8b561f68549658061625891c533e7d45996bc9e $'
+io_fmt_gitrev: '$Id: 61ab4e53ca49e21d56c416f0af0fa04d148e8001 $'
+config_gitrev: '$Id: 5192fced2cfa10be5e18e827922e31e7489ed987 $'
+ymlcfg_gitrev: '$Id: ce5e73bd5e8e0099334cb657afb7a624a99afbda $'

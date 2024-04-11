@@ -1,0 +1,39 @@
+#############################################################################
+# Copyright (C) 2024 Thales DIS France SAS
+#
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.0.
+#
+# Original Author: Zbigniew Chamski (Thales)
+#############################################################################
+!Feature
+next_elt_id: 1
+name: Fourth feature
+id: 2
+display_order: 2
+subfeatures: !!omap
+- 000_subfeature 1: !Subfeature
+    name: 000_subfeature 1
+    tag: VP_IP002_P000
+    next_elt_id: 1
+    display_order: 0
+    items: !!omap
+    - '000': !VerifItem
+        name: '000'
+        tag: VP_VPTOOL_example_F002_S000_I000
+        description: BB
+        reqt_doc: A
+        ref_mode: ''
+        ref_page: ''
+        ref_section: ''
+        ref_viewer: ''
+        verif_goals: CCC
+        pfc: 3
+        test_type: 0
+        cov_method: 0
+        cores: 29
+        coverage_loc: foo
+        comments: bar
+vptool_gitrev: '$Id: a8b561f68549658061625891c533e7d45996bc9e $'
+io_fmt_gitrev: '$Id: 61ab4e53ca49e21d56c416f0af0fa04d148e8001 $'
+config_gitrev: '$Id: 5192fced2cfa10be5e18e827922e31e7489ed987 $'
+ymlcfg_gitrev: '$Id: ce5e73bd5e8e0099334cb657afb7a624a99afbda $'
