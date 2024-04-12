@@ -79,10 +79,5 @@ interface axi_if ( input bit clk, input bit rstn );
   axi_resp_t                 r_resp;
   logic [wd_user-1:0]        r_user;
  
-  initial begin
-    assign aw_ready = 1'b1; 
-    assign ar_ready = 1'b1; 
-    assign w_ready  = 1'b1; 
-  end
 endinterface
 

@@ -48,6 +48,8 @@ Following is an example of a TB which requirs two clocks, CLK_A (freq=20Mhz,duty
 ### 1. In the top ENV: Instantiate and create clock driver and clock configuration class. 
 
 ```
+	import clock_driver_pkg::*;
+	
 	clock_driver_c			clock_driver_CLK_A;
 	clock_config_c			clock_cfg_CLK_A;
 
@@ -82,6 +84,8 @@ Following is an example of a TB which requirs two clocks, CLK_A (freq=20Mhz,duty
 ### 2. In the TestBench Top
 
 ```
+	import clock_driver_pkg::*;
+	
 	wire logic	clk_A;
 	wire logic	clk_B;
 	

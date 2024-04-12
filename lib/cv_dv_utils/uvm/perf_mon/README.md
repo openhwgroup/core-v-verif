@@ -116,5 +116,8 @@ can call the check_bw_per_flow() function to ensure that the actual
 bandwidth achieved in the simulation meets the requirements specified
 for the DUT.
 
+Don't forget to import the package:
+import perf_mon_pkg::*;
+
 ## Licensing
 The perf_mon is released under the Apache License, Version 2.0.

@@ -65,6 +65,8 @@ Following is an example of a TB which monitors two clocks, CLK_A and CLK_B
 ### 1. In the top ENV: Instantiate and create clock configuration class. 
 
 ```
+	import clock_monitor_pkg::*;
+	
 	clock_monitor_config_c        clk_mon_CLK_A_cfg;
 	clock_monitor_config_c        clk_mon_CLK_B_cfg;
 
@@ -93,6 +95,8 @@ Following is an example of a TB which monitors two clocks, CLK_A and CLK_B
 ### 2. In the TestBench Top
 
 ```
+	import clock_monitor_pkg::*;
+	
 	bit reset;
 	logic  clk;
 	bit post_shutdown_phase;

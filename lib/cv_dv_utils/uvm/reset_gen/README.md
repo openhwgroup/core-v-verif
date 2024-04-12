@@ -119,6 +119,7 @@ Here is an example of a TB which required one reset, RESETN_A (value when reset 
 
 ### 1. In the top ENV: Instantiate and create clock driver
 ```
+	import reset_driver_pkg::*;
 	reset_driver_c #(1'b1,150,0)	reset_driver_RESETN_A;
 ```
 
@@ -129,6 +130,8 @@ Here is an example of a TB which required one reset, RESETN_A (value when reset 
 
 ### 2. In the TestBench Top
 ```
+	import reset_driver_pkg::*;
+	
 	bit		reset;
 	wire logic	clk; // Either provided by the user or generated with the dv_utils Clock Generator
 	wire logic	rst_n_A;

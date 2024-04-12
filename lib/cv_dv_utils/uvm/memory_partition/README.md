@@ -105,6 +105,8 @@ Following APIs are provided to access different information regarding the divide
 
  * In the top ENV: Declare and create memory partition class 
 ```
+  import memory_partitions_pkg::*;
+   
   // ----------------------------------------------
   // Memory partition 
   // Divides the memory in small partitions 
