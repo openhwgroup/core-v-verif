@@ -82,7 +82,7 @@ module ex_stage
         end
         else begin
             pipe_o.rvfi <= pipe_o.rvfi;
-            pipe_o.valid <= 1'b0; //Only output valid at first valid clock cycle
+            pipe_o.valid <= pipe_i.valid; 
         end
     end
 endmodule
@@ -99,12 +99,21 @@ module wb_stage
         output pipe_stage_t pipe_o
     );
 
-    assign pipe_o.rvfi = pipe_i.rvfi;
-    assign pipe_o.valid = pipe_i.valid;
+    always_ff @(posedge clk) begin
+        if(step) begin
+            pipe_o.rvfi <= pipe_i.rvfi;
+            pipe_o.valid <= pipe_i.valid;
+        end
+        else begin
+            pipe_o.rvfi <= pipe_o.rvfi;
+            pipe_o.valid <= 1'b0; //Only output valid at first valid clock cycle
+        end
+    end
 
 endmodule
 
 module controller
+    import iss_wrap_pkg::*;
     (
         input logic clk, 
         input logic rst_n,
@@ -130,6 +139,7 @@ module controller
 
     localparam LSU_DEPTH = 2;
     localparam LSU_CNT_WIDTH = $clog2(LSU_DEPTH+1);
+    localparam PIPELINE_DEPTH = 4;
 
 
     logic lsu_interruptible;
@@ -143,6 +153,7 @@ module controller
 
     int     pipe_count; // Count the number of filled pipeline stages
     logic   flush_pipeline;
+    logic   flush_pipeline_q;
     logic   step;
     logic   step_q;
 
@@ -156,16 +167,19 @@ module controller
     always_ff @(posedge clk) begin
         if (rst_n == 1'b0 || flush_pipeline)begin 
             pipe_count <= 0;
-        end else if (pipe_count < 2) begin
+            flush_pipeline_q <= 1'b0;
+        end else if (pipe_count < (PIPELINE_DEPTH - 1)) begin
             pipe_count <= pipe_count + 1;
+            flush_pipeline_q <= flush_pipeline;
         end else begin
             pipe_count <= pipe_count;
+            flush_pipeline_q <= flush_pipeline;
         end
     end
 
     // step the pipeline until the first stages are filled up to be in sync with the core
     always_comb begin
-        if (pipe_count < 2) begin
+        if (pipe_count < (PIPELINE_DEPTH - 1)) begin
             step <= 1'b1;
         end
         else if (rvfi_i.rvfi_valid) begin
@@ -250,10 +264,10 @@ module controller
     ////////////////////////////////////////////////////////////////////////////
 
     always_comb begin
-        if_flush_o <= interrupt_taken_i;
-        id_flush_o <= interrupt_taken_i;
-        ex_flush_o <= interrupt_taken_i;
-        wb_flush_o <= interrupt_taken_i;
+        if_flush_o <= flush_pipeline;
+        id_flush_o <= flush_pipeline;
+        ex_flush_o <= flush_pipeline;
+        wb_flush_o <= flush_pipeline;
     end
 
 
