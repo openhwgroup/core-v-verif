@@ -65,7 +65,7 @@ function void check_4bit(input string compared, input bit [3:0] core, input logi
 
   //use assertion to compare the RVFI signals
   rvfi_valid_a: assert property( @(posedge rvfi_core.clk)
-    rvfi_rm.valid |-> rvfi_core.valid)
+    rvfi_core.valid |-> rvfi_rm.valid)
     else `uvm_error("RVFI_VALID", $sformatf("rvfi_rm.valid=%0h rvfi_core.valid=%0h",$sampled(rvfi_rm.valid), $sampled(rvfi_core.valid)));
 
   rvfi_pc_a: assert property( @(posedge rvfi_core.clk)
@@ -255,10 +255,14 @@ module uvmt_cv32e40s_reference_model_wrap
               `CORE_I.id_ex_pipe.pc, `CORE_I.ex_stage_i.instr_valid,
               `CORE_I.ex_wb_pipe.pc, `CORE_I.wb_stage_i.instr_valid,
               `RVFI_IF.rvfi_pc_rdata, `RVFI_IF.rvfi_valid);
-      $sformat(pipelineLine, "%s| ID %8x | EX %8x | WB %8x |",pipelineLine, 
+      $sformat(pipelineLine, "%s| ID %8x  %x| EX %8x %x | WB %8x %x | RVFI %x %x",pipelineLine, 
               reference_model_i.pipeline_shell_i.if_id_pipe.rvfi.pc_rdata,
+              reference_model_i.pipeline_shell_i.if_id_pipe.valid,
               reference_model_i.pipeline_shell_i.id_ex_pipe.rvfi.pc_rdata,
-              reference_model_i.pipeline_shell_i.ex_wb_pipe.rvfi.pc_rdata);
+              reference_model_i.pipeline_shell_i.id_ex_pipe.valid,
+              reference_model_i.pipeline_shell_i.ex_wb_pipe.rvfi.pc_rdata,
+              reference_model_i.pipeline_shell_i.ex_wb_pipe.valid,
+              rvfi_rm.pc_rdata, rvfi_rm.valid);
       $sformat(pipelineLine, "%s| ia %x | li %x / %x | db %x | f %x | cp %x | si %x | ib %x | cf %x | sl %x |",pipelineLine,
               `CORE_I.controller_i.controller_fsm_i.interrupt_allowed,
               `CORE_I.controller_i.controller_fsm_i.lsu_interruptible_i,
@@ -271,7 +275,7 @@ module uvmt_cv32e40s_reference_model_wrap
               `CORE_I.controller_i.controller_fsm_i.csr_flush_ack_q,
               (`CORE_I.controller_i.controller_fsm_i.ctrl_fsm_cs == SLEEP));
 
-      if(rvfi_rm.valid) begin
+      if(rvfi_core.valid) begin
         $sformat(line, " %-8s | %d | %x (%x) | %x, (%x) | IF %x | ID %x | EX %x | WB %x |",`RVFI_IF.instr_asm.instr.name(), clock_cnt, rvfi_core.pc_rdata, rvfi_core.insn, rvfi_rm.pc_rdata, rvfi_rm.insn, `CORE_I.if_id_pipe.pc, `CORE_I.id_ex_pipe.pc, `CORE_I.ex_wb_pipe.pc, rvfi_core.pc_rdata);
         $sformat(pipelineLine, "%s RVFI | %-8s | %x", pipelineLine, `RVFI_IF.instr_asm.instr.name(), rvfi_core.pc_rdata);
 

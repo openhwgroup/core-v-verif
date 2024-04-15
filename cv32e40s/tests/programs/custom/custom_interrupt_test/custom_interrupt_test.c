@@ -242,12 +242,19 @@ int main(int argc, char *argv[]) {
     __asm__ volatile ("csrwi 0xB03, 0x0");
     __asm__ volatile ("csrwi 0x320, 0x0");
 
-    retval = memTest();
+    retval = divisionTest();
+    if (retval != EXIT_SUCCESS) {
+      return retval;
+    }
+    retval = revertTest();
     if (retval != EXIT_SUCCESS) {
       return retval;
     }
 
-    retval = customTest();
+
+/*
+
+    retval = memTest();
     if (retval != EXIT_SUCCESS) {
       return retval;
     }
@@ -263,7 +270,6 @@ int main(int argc, char *argv[]) {
     if (retval != EXIT_SUCCESS) {
       return retval;
     }
-/*
     // Test 3
     retval = test3();
     if (retval != EXIT_SUCCESS) {
@@ -315,7 +321,7 @@ int main(int argc, char *argv[]) {
 
 
 
-int customTest() {
+int divisionTest() {
     uint8_t interrupt = 16;
     
     printf("Division Test \n");
@@ -330,15 +336,77 @@ int customTest() {
 
     uint32_t a = 0x12341234;
     uint32_t b = 0x00004567;
+    uint32_t c;
+    uint32_t result;
+    int count = 0;
+
+    __asm__ volatile("divu %0, %1, %2\n\t" : "=r" (a) : "r" (a), "r" (b));
+
+    __asm__ volatile("sw %0, 0(%1)\n\t": : "r" (a), "r" (&c));
+
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+
+
+    //Time interrupt in the middle of the second division instruction
+    mm_ram_assert_irq(0x1 << 16, 15);
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("divu %0, %1, %2\n\t" : "=r" (a) : "r" (a), "r" (b));
+    __asm__ volatile("divu %0, %1, %2\n\t" : "=r" (a) : "r" (a), "r" (b));
+    __asm__ volatile("divu %0, %1, %2\n\t" : "=r" (a) : "r" (a), "r" (b));
+
+    mstatus_mie_disable();
+
+    mie_disable(interrupt);
+
+    return EXIT_SUCCESS;
+}
+
+int revertTest() {
+    uint8_t interrupt = 16;
+    
+    printf("Revertion Test \n");
+
+    active_test = 0;
+
+    mstatus_mie_enable();
+
+    //Enable all interrupts
+    volatile uint32_t mie = (uint32_t) -1;
+    __asm__ volatile("csrw mie, %0" : : "r" (mie));
+
+    uint32_t a = 0x12341234;
+    uint32_t b = 0x00004567;
+    uint32_t c;
     uint32_t result;
 
-    __asm__ volatile("divu %0, %1, %2\n\t" : "=r" (result) : "r" (a), "r" (b));
+    int count = 0;
+    printf("count %d\n", count);   
 
-    //Time interrupt in the middle of the division instruction
-    mm_ram_assert_irq(0x1 << 16, 55);
-    __asm__ volatile("divu %0, %1, %2\n\t" : "=r" (result) : "r" (a), "r" (b));
-    __asm__ volatile("divu %0, %1, %2\n\t" : "=r" (result) : "r" (a), "r" (b));
-    __asm__ volatile("divu %0, %1, %2\n\t" : "=r" (result) : "r" (a), "r" (b));
+    mm_ram_assert_irq(0x1 << 16, 6);
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+    __asm__ volatile("addi %0, %1, 1\n\t" : "=r" (count) : "r" (count));
+
+    count++;
+
+    printf("count %d\n", count);
+
+    //mm_ram_assert_irq(0x1 << 16, 3);
+    __asm__ volatile("sw %0, 0(%1)\n\t": : "r" (b), "r" (&c));
+    __asm__ volatile("sw %0, 0(%1)\n\t": : "r" (b), "r" (&c));
+    __asm__ volatile("sw %0, 0(%1)\n\t": : "r" (b), "r" (&c));
+    __asm__ volatile("divu %0, %1, %2\n\t" : "=r" (b) : "r" (b), "r" (b));
 
     mstatus_mie_disable();
 
