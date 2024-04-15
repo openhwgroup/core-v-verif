@@ -3,5 +3,6 @@ description: >
     Enable and Trigger Interrupts
 plusargs: >
     +enable_interrupt=1
+    +enable_timer_irq=1
     +enable_fast_interrupt_handler=1
     +gen_irq_noise
