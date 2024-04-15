@@ -17,6 +17,7 @@ import "DPI-C" function void spike_step_svOpenArray(inout bit [63:0] core[], ino
 import "DPI-C" function void spike_step_struct(inout st_rvfi core, inout st_rvfi reference_model);
 
 import "DPI-C" function bit spike_set_mip(int unsigned mip);
+import "DPI-C" function void spike_revert_state(int num_steps);
 
 
 
@@ -73,6 +74,11 @@ import "DPI-C" function bit spike_set_mip(int unsigned mip);
         end
 
         return interrupt_taken;
+    endfunction
+
+
+    function automatic void iss_revert_state(int num_steps);
+        spike_revert_state(num_steps);
     endfunction
 
 endpackage : iss_wrap_pkg
