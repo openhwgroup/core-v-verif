@@ -16,6 +16,8 @@ Here is the example of a TB into which user want to have a watchdog managing a t
 
 ### 1. In the top ENV
 ```
+	import watchdog_pkg::*;
+	
 	watchdog_c      m_wd;
 ```
 #### Build phase

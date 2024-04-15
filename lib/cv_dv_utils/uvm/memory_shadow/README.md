@@ -77,6 +77,8 @@ User needs to provide following function to read/write memory by backdoor
 Create Shadow Memory (usualy in scoreboard) 
 
 ```
+    import memory_shadow_pkg::*;
+    
     memory_shadow_c #(addr_width, data_width)               mem_shadow;
     mem_shadow           =  memory_shadow_c #(addr_width, data_width)::type_id::create("MEM SHADOW", this); 
 

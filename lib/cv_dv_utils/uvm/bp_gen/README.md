@@ -3,15 +3,15 @@
 ## Introduction
 
 The Back Pressure (BP) Gererator is a SystemVerilog UVM module which can generate back-pressure.
-It is important to note that virtual sequencer / sequences are not provided with the bp_gen package. It is up to the user to implement his/her own virtual sequencer / sequences to be able to chose between one of the four sequences provided (see sequence's part hereafter)
+The bp_gen package provides a virtual sequencer that user can use to be able to choses between one of the four sequences provided (see sequence's part hereafter).
 
 ## Configuration
 
-Users can either use one the existing sequences (see in the next part below) or create their own sequence to configure the BP type() (OFF or ON, the duration cycle and the percentage (or frequency rate))
+Users can either use one of the existing sequences (see in the next part below) or create their own sequence to configure the BP type() (OFF or ON, the duration cycle and the percentage (or frequency rate))
 
 ```
 	typedef enum {	BP_OFF=0,      // BP OFF - for N, number of indicated clocks
-			BP_ON=1,       // BP ON  - for N, number of indicated clocks,
+			        BP_ON=1,       // BP ON  - for N, number of indicated clocks,
                		BP_TOGGLE=2,   // BP toggles every Mth cycles for N clocks
                		BP_PERCENT=3 } // BP is asserted M% of the time for N clocks
 					bp_drive_type_t;
@@ -24,6 +24,31 @@ Users can either use one the existing sequences (see in the next part below) or 
 	rand int		        m_N;   // duration
 	rand int		        m_M;   // either percent or toggle freq
 
+```
+
+If user uses the virtual sequence provided with the bp_gen, s(h)e should configure following fields (see example in the section "integration guide")  
+```
+    typedef enum {
+        NO_BP, // selects no_bp_sequence
+        HEAVY_BP, // selects heavy_bp_sequence 
+        OCCASSIONAL_BP, // selects occassional_bp_sequence 
+        MOSTLY_BP // selects mostly_bp sequence 
+    } bp_type_t;
+
+    // In the virtual sequence following fields need to be passe 
+
+    // Type of the back pressure to be applied
+    bp_type_t    which_bp;
+    /// Target Agent Sequencers
+    bp_sequencer bp_sqr;
+
+```
+
+## APIs 
+The virtual sequence provides following APIs to set bp_type and sequencer 
+```
+ function void set_bp_type(bp_type_t bp);
+ function void set_bp_sequencer(bp_sequencer sqr);
 ```
 
 ## Sequence
@@ -55,6 +80,8 @@ This guide is based on the example of a AXI interface
 ### 1. In the top ENV: Instantiate and create clock driver
 
 ```
+	import bp_driver_pkg::*;
+	
 	bp_agent              aw_bp_agent ;
 	bp_agent              w_bp_agent  ;
 	bp_agent              b_bp_agent  ;
@@ -88,16 +115,26 @@ This guide is based on the example of a AXI interface
 #### Connect phase
 
 ```
-	aw_bp_vseq.bp_sqr = aw_bp_agent.m_sequencer ;
-	w_bp_vseq.bp_sqr  = w_bp_agent.m_sequencer  ;
-	b_bp_vseq.bp_sqr  = b_bp_agent.m_sequencer  ;
-	ar_bp_vseq.bp_sqr = ar_bp_agent.m_sequencer ;
-	r_bp_vseq.bp_sqr  = r_bp_agent.m_sequencer  ;
+	// Sequencer to virtual sequence 
+	aw_bp_vseq.set_bp_sequencer(aw_bp_agent.m_sequencer);
+	w_bp_vseq.set_bp_sequencer(w_bp_agent.m_sequencer ) ;
+	b_bp_vseq.set_bp_sequencer(b_bp_agent.m_sequencer ) ;
+	ar_bp_vseq.set_bp_sequencer(ar_bp_agent.m_sequencer);
+	r_bp_vseq.set_bp_sequencer(r_bp_agent.m_sequencer ) ;
+
+	// BP type to virtuals sequence 
+	aw_bp_vseq.set_bp_type(aw_bp_cfg.m_bp_type) ;
+	w_bp_vseq.set_bp_type(w_bp_cfg.m_bp_type)   ;
+	b_bp_vseq.set_bp_type(b_bp_cfg.m_bp_type)   ;
+	ar_bp_vseq.set_bp_type(ar_bp_cfg.m_bp_type) ;
+	r_bp_vseq.set_bp_type(r_bp_cfg.m_bp_type)   ;
 ```
 
 ### 2. In the TestBench Top
 
 ```
+	import bp_driver_pkg::*;
+	
 	bp_vif #(1) aw_bp   ( .clk( clk_i ), .rstn( reset_n ) );
 	bp_vif #(1) w_bp    ( .clk( clk_i ), .rstn( reset_n ) );
 	bp_vif #(1) b_bp    ( .clk( clk_i ), .rstn( reset_n ) );

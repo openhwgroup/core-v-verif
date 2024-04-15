@@ -16,32 +16,30 @@
 //[END OF HEADER]
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
-//  Description : Package containing back pressure generator classes
-//                
-// 
+//  Description : Puls gen interface.
+//
+//
 // ----------------------------------------------------------------------------
 
-package bp_driver_pkg;
+interface pulse_if ( input bit clk, input bit rstn );
 
-   timeunit 1ns;
+timeunit 1ns;
+timeprecision 1ps;
 
-   import bp_vif_xrtl_pkg::*;
-   import uvm_pkg::*;
-typedef enum {
-    NO_BP,
-    HEAVY_BP,
-    OCCASSIONAL_BP,
-    MOSTLY_BP
-} bp_type_t;
 
-   `include "uvm_macros.svh";
-   `include "bp_txn.svh";
-   `include "bp_driver.svh";
-   `include "bp_sequencer.svh";
-   `include "bp_sequences.svh";
-   `include "bp_virtual_sequence.svh";
-   `include "bp_agent.svh";
+   // generated output pulse 
+   logic m_pulse_out; 
+   
+   
+   // ------------------------------------------------------------------------
+   // Delay Task 
+   // ------------------------------------------------------------------------
+   task automatic wait_n_clocks( int N );         
+   begin
+       @( posedge clk );
+       repeat (N-1) @( posedge clk );
+   end
+   endtask : wait_n_clocks
 
-endpackage : bp_driver_pkg
-
+endinterface : pulse_if
 

@@ -374,6 +374,8 @@ Following APIs porivde access to some internal variables of MRM.
 ## Following steps need to be taken to integrate
  * In the top ENV: Instantiation and create memory response mode
 ```
+    import memory_rsp_model_pkg::*;
+    
     m_dram_rsp            = memory_response_model#(w_addr, w_data, w_id)::type_id::create("mem_rsp_model", this);
 ```
 
@@ -397,6 +399,8 @@ Following APIs porivde access to some internal variables of MRM.
 
  * Declare memory response interface in the TB Top And pass it on using config db 
 ```
+    import memory_rsp_model_pkg::*;
+    
     memory_response_if#(w_addr, w_data, w_id)             mem_rsp_if ( .clk( clk), .rstn( testbench_resetn ) );
     uvm_config_db #(virtual memory_response_if#(w_addr, w_data, w_id))::set(null, "uvm_test_top*", "mem_rsp_model" , mem_rsp_if ) ;
 ```

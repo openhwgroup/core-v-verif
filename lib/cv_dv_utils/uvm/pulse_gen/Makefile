@@ -43,16 +43,14 @@ endif # ifneq(,${UVM_LOCAL_LIB},)
 AM_VSIM_OPTIONS += $(LIB_LIST)
 AM_VOPT_OPTIONS += $(LIB_LIST)
 AM_SVLOG_OPTIONS += $(LIB_LIST)
-
 ########################################################
 # List Source FIles
 ########################################################
-VERILOG_VPATH += $(CV_DV_UTILS_DIR)/uvm/bp_gen
-
 SVLOG_SOURCES := \
-bp_vif_xrtl_pkg.sv \
-bp_vif.sv \
-bp_driver_pkg.sv
+pulse_gen_pkg.sv \
+pulse_if.sv
+
+VERILOG_VPATH += $(CV_DV_UTILS_DIR)/uvm/pulse_gen
 
 ########################################################
 # Include Template

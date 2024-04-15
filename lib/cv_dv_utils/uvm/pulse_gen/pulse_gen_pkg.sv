@@ -16,32 +16,22 @@
 //[END OF HEADER]
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
-//  Description : Package containing back pressure generator classes
+//  Description : 
 //                
 // 
 // ----------------------------------------------------------------------------
 
-package bp_driver_pkg;
+package pulse_gen_pkg;
 
-   timeunit 1ns;
+    timeunit 1ns;
 
-   import bp_vif_xrtl_pkg::*;
-   import uvm_pkg::*;
-typedef enum {
-    NO_BP,
-    HEAVY_BP,
-    OCCASSIONAL_BP,
-    MOSTLY_BP
-} bp_type_t;
+    import uvm_pkg::*;
+    
 
-   `include "uvm_macros.svh";
-   `include "bp_txn.svh";
-   `include "bp_driver.svh";
-   `include "bp_sequencer.svh";
-   `include "bp_sequences.svh";
-   `include "bp_virtual_sequence.svh";
-   `include "bp_agent.svh";
+    `include "uvm_macros.svh";
+    `include "pulse_gen_cfg.svh";
+    `include "pulse_gen_driver.svh";
 
-endpackage : bp_driver_pkg
+endpackage :pulse_gen_pkg
 
 

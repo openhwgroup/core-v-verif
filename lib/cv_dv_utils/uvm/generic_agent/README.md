@@ -74,6 +74,8 @@ The class generic_sequences provide following API to generate and drive a sequen
 ## Following steps need to be taken to integrate
  * In the top pkg: Declare the struck/class of the type of request (req_t) and response(rsp_t) to be driven for example:  
 ```
+  import generic_agent_pkg::*;
+  
   // Structure for the config bus
   typedef struct packed {
     logic [ADDR_WIDTH -1  : 0] m_addr;
