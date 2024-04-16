@@ -52,6 +52,7 @@ proc cvfv_rerun {} {
     # ^ Not used because sv2012 can not be set and has a bug(?) where it uses 
     #   set_read_hdl_option instead of add_read_hdl_option, overwriting the 
     #   include paths when setting "set_read_hdl_option -verilog_compilation_unit one".
+    # TODO: Contact Onespin about this
 
     # Instead we manually import all the files from fv.flist below
 
@@ -236,12 +237,6 @@ proc cvfv_rerun {} {
     # Cutpoints for general control signals
     add_compile_option -cut_signal debug_if/debug_req
     add_compile_option -cut_signal interrupt_if/irq
-    add_compile_option -cut_signal core_cntrl_if/boot_addr
-    add_compile_option -cut_signal core_cntrl_if/mtvec_addr
-    add_compile_option -cut_signal core_cntrl_if/dm_halt_addr
-    add_compile_option -cut_signal core_cntrl_if/dm_exception_addr
-    add_compile_option -cut_signal core_cntrl_if/mhartid
-    add_compile_option -cut_signal core_cntrl_if/mimpid_patch
 
     # Cutpoints for the OBI interface
     add_compile_option -cut_signal obi_instr_if/err
