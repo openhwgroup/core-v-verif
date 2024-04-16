@@ -63,3 +63,21 @@ tests:
     dir: cv32e40p/sim/uvmt
     cmd: make test TEST=illegal_fp_instr_test CFG_PLUSARGS="+UVM_TIMEOUT=100000000"
     num: 1
+
+  fpu_func_cov_improve_test:
+    build: uvmt_cv32e40p
+    description: directed custom test to improve missing coverage in cfg pulp_fpu
+    dir: cv32e40p/sim/uvmt
+    cmd: make test TEST=fpu_func_cov_improve_test CFG_PLUSARGS="+UVM_TIMEOUT=100000000"
+    num: 1
+    skip_sim:
+      - pulp
+      - pulp_zfinx
+      - pulp_zfinx_1cyclat
+      - pulp_zfinx_2cyclat
+      - pulp_cluster
+      - pulp_cluster_fpu
+      - pulp_cluster_fpu_1cyclat
+      - pulp_cluster_fpu_2cyclat
+      - default
+      - no_pulp
