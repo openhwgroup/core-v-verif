@@ -100,46 +100,46 @@ coverage exclude -line 473 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb
 coverage exclude -line 477 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0.}
 coverage exclude -line 478 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0.}
 coverage exclude -line 520 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No Secure interrupt line. irq_sec_i tied to 0. }
-coverage exclude -line 604 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw}
-coverage exclude -line 605 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw}
-coverage exclude -line 742 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No Secure interrupt line. irq_sec_i tied to 0.}
-coverage exclude -line 798 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
-coverage exclude -line 799 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
-coverage exclude -line 893 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
-coverage exclude -line 894 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
-coverage exclude -line 895 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
-coverage exclude -line 897 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
-coverage exclude -line 898 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
-coverage exclude -line 901 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
-coverage exclude -line 1006 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
-coverage exclude -line 1007 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
-coverage exclude -line 1008 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
-coverage exclude -line 1010 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
-coverage exclude -line 1011 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
-coverage exclude -line 1016 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
-coverage exclude -line 1017 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
-coverage exclude -line 1018 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
-coverage exclude -line 1019 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
-coverage exclude -line 1020 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0.}
-coverage exclude -line 1061 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Can't be reached as uret instruction is illegal instruction.}
-coverage exclude -line 1062 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Can't be reached as uret instruction is illegal instruction.}
-coverage exclude -line 1117 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
-coverage exclude -line 1118 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
-coverage exclude -line 1119 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
-coverage exclude -line 1219 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error. data_err_i tied to 0. }
-coverage exclude -line 1220 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error. data_err_i tied to 0. }
-coverage exclude -line 1221 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error. data_err_i tied to 0. }
-coverage exclude -line 1223 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error. data_err_i tied to 0. }
-coverage exclude -line 1224 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error. data_err_i tied to 0. }
+coverage exclude -line 614 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw}
+coverage exclude -line 615 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw}
+coverage exclude -line 752 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No Secure interrupt line. irq_sec_i tied to 0.}
+coverage exclude -line 818 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
+coverage exclude -line 819 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
+coverage exclude -line 913 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
+coverage exclude -line 914 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
+coverage exclude -line 915 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
+coverage exclude -line 917 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
+coverage exclude -line 918 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
+coverage exclude -line 921 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
+coverage exclude -line 1026 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
+coverage exclude -line 1027 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
+coverage exclude -line 1028 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
+coverage exclude -line 1030 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
+coverage exclude -line 1031 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error.}
+coverage exclude -line 1036 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
+coverage exclude -line 1037 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
+coverage exclude -line 1038 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
+coverage exclude -line 1039 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
+coverage exclude -line 1040 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0.}
+coverage exclude -line 1081 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Can't be reached as uret instruction is illegal instruction.}
+coverage exclude -line 1082 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Can't be reached as uret instruction is illegal instruction.}
+coverage exclude -line 1131 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
+coverage exclude -line 1132 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
+coverage exclude -line 1133 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
+coverage exclude -line 1233 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error. data_err_i tied to 0. }
+coverage exclude -line 1234 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error. data_err_i tied to 0. }
+coverage exclude -line 1235 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error. data_err_i tied to 0. }
+coverage exclude -line 1237 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error. data_err_i tied to 0. }
+coverage exclude -line 1238 -code s -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI data error. data_err_i tied to 0. }
 coverage exclude -line 421 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
 coverage exclude -line 522 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
-coverage exclude -line 744 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
-coverage exclude -line 921 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
-coverage exclude -line 1031 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Single-step not possible during debug mode.}
-coverage exclude -line 1042 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Single-step not possible during debug mode.}
-coverage exclude -line 1052 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Single-step not possible during debug mode.}
+coverage exclude -line 754 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
+coverage exclude -line 941 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
+coverage exclude -line 1051 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Single-step not possible during debug mode.}
+coverage exclude -line 1062 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Single-step not possible during debug mode.}
+coverage exclude -line 1072 -code c -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Single-step not possible during debug mode.}
 coverage exclude -line 299 -code e -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
-coverage exclude -line 824 -code e -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No PC = Hwloop1 end & Hwloop 1 counter = 0 in DECODE_HWLOOP FSM state.}
+coverage exclude -line 844 -code e -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No PC = Hwloop1 end & Hwloop 1 counter = 0 in DECODE_HWLOOP FSM state.}
 coverage exclude -line 418 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No Secure interrupt line. irq_sec_i tied to 0. }
 coverage exclude -line 421 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
 coverage exclude -line 447 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
@@ -148,34 +148,34 @@ coverage exclude -line 459 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv3
 coverage exclude -line 464 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
 coverage exclude -line 519 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No Secure interrupt line. irq_sec_i tied to 0. }
 coverage exclude -line 522 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
-coverage exclude -line 603 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
-coverage exclude -line 604 -code b -item 1 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
-coverage exclude -line 604 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
-coverage exclude -line 741 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No Secure interrupt line. irq_sec_i tied to 0.}
-coverage exclude -line 744 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
-coverage exclude -line 797 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
-coverage exclude -line 798 -code b -item 1 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
-coverage exclude -line 798 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
-coverage exclude -line 890 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
-coverage exclude -line 897 -code b -item 1 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
-coverage exclude -line 897 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
-coverage exclude -line 921 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
-coverage exclude -line 930 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
-coverage exclude -line 970 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
-coverage exclude -line 1004 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
-coverage exclude -line 1011 -code b -item 1 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
-coverage exclude -line 1011 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
-coverage exclude -line 1014 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
-coverage exclude -line 1019 -code b -item 1 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
-coverage exclude -line 1019 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
-coverage exclude -line 1060 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Can't be reached as uret instruction is illegal instruction.}
-coverage exclude -line 1097 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Unreacheable default code.}
-coverage exclude -line 1128 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Unreacheable default code.}
-coverage exclude -line 1115 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
-coverage exclude -line 1117 -code b -item 1 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
-coverage exclude -line 1117 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
-coverage exclude -line 1216 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
-coverage exclude -line 1223 -code b -item 1 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
-coverage exclude -line 1223 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
+coverage exclude -line 613 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
+coverage exclude -line 614 -code b -item 1 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
+coverage exclude -line 614 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
+coverage exclude -line 751 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No Secure interrupt line. irq_sec_i tied to 0.}
+coverage exclude -line 754 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
+coverage exclude -line 817 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
+coverage exclude -line 818 -code b -item 1 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
+coverage exclude -line 818 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
+coverage exclude -line 910 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
+coverage exclude -line 917 -code b -item 1 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
+coverage exclude -line 917 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
+coverage exclude -line 941 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
+coverage exclude -line 950 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
+coverage exclude -line 990 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No cv.elw.}
+coverage exclude -line 1024 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
+coverage exclude -line 1031 -code b -item 1 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
+coverage exclude -line 1031 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
+coverage exclude -line 1034 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
+coverage exclude -line 1039 -code b -item 1 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
+coverage exclude -line 1039 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Instr error. instr_err_i tied to 0. }
+coverage exclude -line 1080 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Can't be reached as uret instruction is illegal instruction.}
+coverage exclude -line 1111 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Unreacheable default code.}
+coverage exclude -line 1142 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {Unreacheable default code.}
+coverage exclude -line 1129 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
+coverage exclude -line 1131 -code b -item 1 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
+coverage exclude -line 1131 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No User Privilege Mode.}
+coverage exclude -line 1230 -code b -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
+coverage exclude -line 1237 -code b -item 1 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
+coverage exclude -line 1237 -code b -item 2 -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/id_stage_i/controller_i -comment {No OBI Data error. data_err_i tied to 0. }
 coverage exclude -code bcefs -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/interrupt_assert_i -recursive -comment {this is TB module bind to RTL. No need code coverage.}
 coverage exclude -code bcefs -scope /uvmt_cv32e40p_tb/dut_wrap/cv32e40p_tb_wrapper_i/cv32e40p_top_i/core_i/if_stage_i/prefetch_buffer_i/prefetch_controller_i/prefetch_controller_sva -recursive -comment {this is TB module bind to RTL. No need code coverage.}
