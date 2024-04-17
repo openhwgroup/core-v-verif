@@ -20,6 +20,7 @@ class cv32e40p_instr extends riscv_instr;
   // additionnal helper fields
   bit is_post_incr;
   bit is_r_format ;
+  bit is_simd_imm_legal = 1;
 
   bit hw_loop_label;
 
@@ -676,7 +677,30 @@ class cv32e40p_instr extends riscv_instr;
     this.is_r_format       = rhs_.is_r_format;
   endfunction : do_copy
 
+  virtual function void override_imm();
+    if (category == SIMD) begin
+      if (is_simd_imm_legal) begin
+        case (instr_name) 
+          CV_EXTRACT_H, CV_EXTRACTU_H, CV_INSERT_H                    : imm[5:1] = 5'd0;
+          CV_EXTRACT_B, CV_EXTRACTU_B, CV_INSERT_B, CV_SHUFFLE_SCI_H  : imm[5:2] = 4'd0;
+          CV_SLL_SCI_B, CV_SRL_SCI_B, CV_SRA_SCI_B                    : imm[5:3] = 3'd0;
+          CV_SLL_SCI_H, CV_SRL_SCI_H, CV_SRA_SCI_H                    : imm[5:4] = 2'd0;
+        endcase
+      end
+      else begin
+        // below imms value lead to illegal exception
+        case (instr_name) 
+          CV_EXTRACT_H, CV_EXTRACTU_H, CV_INSERT_H                    : imm[5:1] = $urandom_range(1, 31);
+          CV_EXTRACT_B, CV_EXTRACTU_B, CV_INSERT_B, CV_SHUFFLE_SCI_H  : imm[5:2] = $urandom_range(1, 15);
+          CV_SLL_SCI_B, CV_SRL_SCI_B, CV_SRA_SCI_B                    : imm[5:3] = $urandom_range(1, 7);
+          CV_SLL_SCI_H, CV_SRL_SCI_H, CV_SRA_SCI_H                    : imm[5:4] = $urandom_range(1, 3);
+        endcase
+      end
+    end
+  endfunction : override_imm
+
   virtual function void update_imm_str();
+    override_imm();
     if (category == BRANCH_IMM) begin
       // for branch imm, immediate is split in two parts
       imm_str = $sformatf("%0d, %0d", $signed(imm[16:12]), $signed(imm[11:0]));
