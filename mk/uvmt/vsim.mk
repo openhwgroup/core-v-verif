@@ -128,11 +128,12 @@ VLOG_FILE_LIST = -f $(DV_UVMT_PATH)/uvmt_$(CV_CORE_LC).flist
 VLOG_FLAGS += $(DPILIB_VLOG_OPT)
 
 ifeq ($(call IS_YES,$(USE_ISS)),YES)
-    ifeq ($(ISS)),IMPERAS)
+    ifeq ($(ISS),IMPERAS)
 	VLOG_FILE_LIST += -f $(DV_UVMT_PATH)/imperas_iss.flist
     endif
     ifeq ($(ISS),SPIKE)
 	VSIM_FLAGS += -sv_lib $(SPIKE_RISCV_LIB)
+	VSIM_FLAGS += -sv_lib $(SPIKE_DASM_LIB)
 	LIBS = spike_lib
     endif
 endif
