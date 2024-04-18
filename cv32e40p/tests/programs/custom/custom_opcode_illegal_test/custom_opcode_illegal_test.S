@@ -810,6 +810,19 @@ main:             fence.i
                   .4byte 0x16794e2b # custom-1 plane B
                   .4byte 0xdd363aab # custom-1 Plane A illegal func7
                   .4byte 0x6667f4fb # custom-3 cv.subrotmj block
+                  .4byte 0xba45807b # custom-3 cv.extract.h illegal imm6
+                  .4byte 0xba5a91fb # custom-3 cv.extract.b illegal imm6
+                  .4byte 0xbad6a0fb # custom-3 cv.extractu.h illegal imm6
+                  .4byte 0xba96b0fb # custom-3 cv.extractu.b illegal imm6
+                  .4byte 0xba1e44fb # custom-3 cv.insert.h illegal imm6
+                  .4byte 0xba2e54fb # custom-3 cv.insert.b illegal imm6
+                  .4byte 0xc288e8fb # custom-3 cv.shuffle.sci.h illegal imm6
+                  .4byte 0x509f6f7b # custom-3 cv.sll.sci.h illegal imm6
+                  .4byte 0x5102727b # custom-3 cv.sll.sci.b illegal imm6
+                  .4byte 0x40c1e8fb # custom-3 cv.srl.sci.h illegal imm6
+                  .4byte 0x404ef6fb # custom-3 cv.srl.sci.b illegal imm6
+                  .4byte 0x4953637b # custom-3 cv.sra.sci.h illegal imm6
+                  .4byte 0x4b1f767b # custom-3 cv.sra.sci.b illegal imm6
                   la x16, test_done
                   jalr x0, x16, 0
 
