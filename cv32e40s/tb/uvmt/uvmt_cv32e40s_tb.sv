@@ -794,12 +794,15 @@ module uvmt_cv32e40s_tb;
 
   // Core integration assertions
 
+  // TODO:ERROR:silabs-robin Binds needed in Jasper formal, but conflicts with OneSpin formal. See 2410
+  `ifndef  COREV_ASSERT_OFF
   bind cv32e40s_wrapper
     uvmt_cv32e40s_integration_assert  integration_assert_i (
       .rvfi_if    (dut_wrap.cv32e40s_wrapper_i.rvfi_instr_if),
       .support_if (support_logic_module_o_if.slave_mp),
       .*
     );
+  `endif
 
 
   `ifndef  COREV_ASSERT_OFF
@@ -1701,13 +1704,15 @@ module uvmt_cv32e40s_tb;
 
   // Support Logic
 
+  // TODO:ERROR:silabs-robin Binds needed in Jasper formal, but conflicts with OneSpin formal. See 2410
+  `ifndef  COREV_ASSERT_OFF
   bind cv32e40s_wrapper uvmt_cv32e40s_support_logic u_support_logic(.rvfi (rvfi_instr_if),
                                                                     .in_support_if (support_logic_module_i_if.driver_mp),
                                                                     .out_support_if (support_logic_module_o_if.master_mp),
                                                                     .data_obi_if (dut_wrap.obi_data_if),
                                                                     .instr_obi_if (dut_wrap.obi_instr_if)
                                                                     );
-
+  `endif
 
   `ifndef  COREV_ASSERT_OFF
     bind cv32e40s_wrapper uvmt_cv32e40s_debug_assert u_debug_assert(.rvfi(rvfi_instr_if),
