@@ -118,7 +118,7 @@ module controller
         input logic clk, 
         input logic rst_n,
         input logic valid,
-        input logic interrupt_taken_i,
+        input logic [31:0] irq_i,
 
         input pipe_stage_t if_id_pipe_i,
         input pipe_stage_t id_ex_pipe_i,
@@ -157,11 +157,14 @@ module controller
     logic   step;
     logic   step_q;
 
+    logic   interrupt_taken;
+    logic   [31:0] irq_q;
+
     ////////////////////////////////////////////////////////////////////////////
     // STEP CONTROL
     ////////////////////////////////////////////////////////////////////////////
 
-    assign flush_pipeline = interrupt_taken_i;
+    assign flush_pipeline = interrupt_taken;
 
     // Count the amount of filled pipeline stages at the start or after a flush 
     always_ff @(posedge clk) begin
@@ -263,6 +266,14 @@ module controller
     // INTERRUPT TAKING
     ////////////////////////////////////////////////////////////////////////////
 
+    always_ff @(posedge clk) begin
+        if (step_q) begin
+            interrupt_taken = iss_intr(irq_i, interrupt_allowed_o, 1);
+        end else begin
+            interrupt_taken = iss_intr(irq_i, interrupt_allowed_o, 2);
+        end
+    end
+
     always_comb begin
         if_flush_o <= flush_pipeline;
         id_flush_o <= flush_pipeline;
@@ -302,7 +313,7 @@ module pipeline_shell
         .clk                    (clknrst_if.clk     ),
         .rst_n                  (clknrst_if.reset_n ),
         .valid                  (                   ),
-        .interrupt_taken_i      (interrupt_taken    ),  
+        .irq_i                  (interrupt_if_i.irq ),
         .if_id_pipe_i           (if_id_pipe         ),
         .id_ex_pipe_i           (id_ex_pipe         ),
         .ex_wb_pipe_i           (ex_wb_pipe         ),
@@ -359,21 +370,7 @@ module pipeline_shell
         $display("Pipeline Shell: Starting");
     end
 
-    logic [31:0] irq_q;
 
-    always_ff @(posedge clknrst_if.clk, negedge clknrst_if.reset_n)
-    begin
-      if (clknrst_if.reset_n == 1'b0) begin
-        irq_q <= '0;
-      end else begin
-        irq_q <= interrupt_if_i.irq;
-      end
-    end
-
-    always_ff @(posedge clknrst_if.clk) begin
-        interrupt_taken = iss_intr(interrupt_if_i.irq, interrupt_allowed);
-
-    end
 
     always_comb begin
         rvfi_o.clk          <= clknrst_if.clk;
