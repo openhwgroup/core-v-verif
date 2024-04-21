@@ -263,8 +263,10 @@ module uvmt_cv32e40s_reference_model_wrap
               reference_model_i.pipeline_shell_i.ex_wb_pipe.rvfi.pc_rdata,
               reference_model_i.pipeline_shell_i.ex_wb_pipe.valid,
               rvfi_rm.pc_rdata, rvfi_rm.valid);
-      $sformat(pipelineLine, "%s| ia %x | li %x / %x | db %x | f %x | cp %x | si %x | ib %x | cf %x | sl %x |",pipelineLine,
+      $sformat(pipelineLine, "%s| ia %x / %x | it %x |  li %x / %x | db %x | f %x | cp %x | si %x | ib %x | cf %x | sl %x |",pipelineLine,
               `CORE_I.controller_i.controller_fsm_i.interrupt_allowed,
+              reference_model_i.pipeline_shell_i.controller_i.interrupt_allowed_o,
+              reference_model_i.pipeline_shell_i.controller_i.interrupt_taken,
               `CORE_I.controller_i.controller_fsm_i.lsu_interruptible_i,
               reference_model_i.pipeline_shell_i.controller_i.lsu_interruptible,
               `CORE_I.controller_i.controller_fsm_i.debug_interruptible,

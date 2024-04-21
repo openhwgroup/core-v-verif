@@ -2,6 +2,9 @@
 `define __PIPELINE_SHELL_SV__
 
 
+`define DUT_PATH dut_wrap.cv32e40s_wrapper_i
+`define CONTROLLER_FSM `DUT_PATH.core_i.controller_i.controller_fsm_i
+
 typedef struct packed {
     st_rvfi rvfi;
     logic valid;
@@ -255,7 +258,7 @@ module controller
     // INTERRUPT ALLOWED
     ////////////////////////////////////////////////////////////////////////////
 
-    assign interrupt_allowed_o = lsu_interruptible; 
+    assign interrupt_allowed_o = `CONTROLLER_FSM.interrupt_allowed; 
     // TODO:    && debug_interruptible && !fencei_ongoing && !clic_ptr_in_pipeline && 
     //          sequence_interruptible && !interrupt_blanking_q && !csr_flush_ack_q && !(ctrl_fsm_cs == SLEEP);
 
