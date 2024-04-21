@@ -130,7 +130,7 @@ m_fast15_irq_handler:
 u_sw_irq_handler:
 	/* While we are still using puts in handlers, save all caller saved
 	   regs.  Eventually, some of these saves could be deferred.  */
-	addi sp,sp,-64
+	addi sp,sp,-76
 	sw ra, 0(sp)
 	sw a0, 4(sp)
 	sw a1, 8(sp)
@@ -147,6 +147,14 @@ u_sw_irq_handler:
 	sw t4, 52(sp)
 	sw t5, 56(sp)
 	sw t6, 60(sp)
+#ifdef PULP
+  csrr t6, 0xCC0
+	sw t6, 64(sp)
+  csrr t6, 0xCC1
+	sw t6, 68(sp)
+  csrr t6, 0xCC2
+	sw t6, 72(sp)
+#endif
 	csrr t0, mcause
 	li t1, EXCEPTION_ILLEGAL_INSN
 	beq t0, t1, handle_illegal_insn
@@ -191,6 +199,14 @@ end_handler_incr_mepc2:
 	addi t0, t0, 2
 	csrw mepc, t0
 end_handler_ret:
+#ifdef PULP
+	lw t6, 64(sp)
+  cv.start 0, t6
+	lw t6, 68(sp)
+  cv.end 0, t6
+	lw t6, 72(sp)
+  cv.count 0, t6
+#endif
 	lw ra, 0(sp)
 	lw a0, 4(sp)
 	lw a1, 8(sp)
@@ -207,7 +223,7 @@ end_handler_ret:
 	lw t4, 52(sp)
 	lw t5, 56(sp)
 	lw t6, 60(sp)
-	addi sp,sp,64
+	addi sp,sp,76
 	mret
 
 .section .rodata
