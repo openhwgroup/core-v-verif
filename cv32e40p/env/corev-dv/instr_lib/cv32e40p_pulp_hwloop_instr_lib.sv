@@ -74,7 +74,7 @@ class cv32e40p_xpulp_hwloop_base_stream extends cv32e40p_xpulp_rand_stream;
 
   localparam MAX_HWLOOP_INSTR_GEN = 4095;
   rand riscv_reg_t      hwloop_avail_regs[];
-  rand bit[1:0]         num_loops_active;
+  rand int unsigned     num_loops_active;
   rand bit              gen_nested_loop; //nested or not-nested hwloop
   rand bit              use_setup_inst[2];
   rand bit              use_loop_counti_inst[2];
@@ -1324,6 +1324,49 @@ class cv32e40p_xpulp_short_hwloop_stream_directed extends cv32e40p_xpulp_short_h
   endfunction : new
 
 endclass : cv32e40p_xpulp_short_hwloop_stream_directed
+// directed test for more non-nested hwloop only with small loop count and lesser instrs
+class cv32e40p_xpulp_short_single_hwloop_stream_directed extends cv32e40p_xpulp_short_hwloop_stream;
+
+  `uvm_object_utils_begin(cv32e40p_xpulp_short_single_hwloop_stream_directed)
+      `uvm_field_int(num_loops_active, UVM_DEFAULT)
+      `uvm_field_int(gen_nested_loop, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_setup_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_counti_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_starti_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_endi_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(use_loop_setupi_inst, UVM_DEFAULT)
+      `uvm_field_sarray_int(hwloop_count, UVM_DEFAULT)
+      `uvm_field_sarray_int(hwloop_counti, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_hwloop_instr, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_hwloop_ctrl_instr, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_fill_instr_loop_ctrl_to_loop_start, UVM_DEFAULT)
+      `uvm_field_int(num_fill_instr_in_loop1_till_loop0_setup, UVM_DEFAULT)
+      `uvm_field_int(setup_l0_before_l1_start, UVM_DEFAULT)
+      `uvm_field_sarray_int(num_instr_cv_start_to_loop_start_label, UVM_DEFAULT)
+      `uvm_field_int(loop0_high_count, UVM_DEFAULT)
+  `uvm_object_utils_end
+  
+  constraint gen_hwloop_count_c {
+
+      solve gen_nested_loop, loop0_high_count before hwloop_count, hwloop_counti;
+      solve gen_nested_loop before loop0_high_count;
+
+      gen_nested_loop == 0;
+      num_loops_active inside {[800:1000]};
+
+      foreach(hwloop_counti[i]) {
+        hwloop_counti[i] inside {2,3};
+      }
+      foreach(hwloop_count[i]) {
+        hwloop_count[i]  inside {2,3};
+      }
+  }
+
+  function new(string name = "cv32e40p_xpulp_short_single_hwloop_stream_directed");
+      super.new(name);
+  endfunction : new
+
+endclass : cv32e40p_xpulp_short_single_hwloop_stream_directed
 
 
 //Class: cv32e40p_xpulp_long_hwloop_stream

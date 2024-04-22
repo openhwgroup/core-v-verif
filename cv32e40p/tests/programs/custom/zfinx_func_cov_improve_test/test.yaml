@@ -1,0 +1,6 @@
+# Test definition YAML for test
+
+name: zfinx_func_cov_improve_test
+uvm_test: uvmt_$(CV_CORE_LC)_firmware_test_c
+description: >
+    This test is to close coverage holes for uvme_cv32e40p_zfinx_instr_covg.
