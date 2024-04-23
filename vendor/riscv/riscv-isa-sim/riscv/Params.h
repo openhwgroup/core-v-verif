@@ -87,9 +87,9 @@ public:
     std::regex_match(pathColonTypeEqVal, match, regexp);
     std::cerr << "Params::setFromCmdLine(): setting parameter '" << match[1].str() << "/" << match[2].str() << "' of type '" << match[3].str() << "' to value '" << match[4].str() << "'\n";
     if (match[3].str() == "uint64_t") {
-      // 64-bit unsigned integer
+      // 64-bit unsigned integer.  Use base 0 to support any C-style format.
       errno = 0;
-      unsigned long uintval = strtoul(match[4].str().c_str(), NULL, 10);
+      unsigned long uintval = strtoul(match[4].str().c_str(), NULL, 0);
       std::cerr << "### Using unsigned long uintval = " << uintval << "\n";
       if (errno == 0)
         set_uint64_t(match[1].str() + "/", match[2].str(), uintval, match[3].str());

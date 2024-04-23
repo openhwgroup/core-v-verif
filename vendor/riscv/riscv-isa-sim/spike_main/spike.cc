@@ -115,8 +115,13 @@ static void help(int exit_code = 1)
   fprintf(stderr, "  --steps=<n>           Stop simulation after reaching specified number of steps "
           "(default: unlimited)\n");
   fprintf(stderr, "  --nb_register_source=<n>     Set the number of register source usable(2 or 3)\n");
-  fprintf(stderr, "  --param <path>=<val>  Set parameter to specified value (see 'spike --print-params' for a full list.)\n"
-                  "                          This flag can be used multiple times.\n");
+  fprintf(stderr, "  --param <path>:<type>=<val>  Set parameter to specified value (see 'spike --print-params' for a full list.)\n"
+                  "                        <type> can be any of 'bool', 'str', or 'uint64_t'.\n"
+                  "                        Supported bool values are 0, 1, 'false' and 'true'.\n"
+                  "                        String values need to be duly quoted where needed.\n"
+                  "                        A uint64_t value can be any unsigned number literal\n"
+                  "                        in C/C++ syntax (42, 0x2a, etc.)\n"
+                  "                        This flag can be used multiple times.\n");
 
   exit(exit_code);
 }
@@ -549,6 +554,10 @@ int main(int argc, char** argv)
     number_register_source = (uint8_t)atoi(s);
   });
 
+  // Set default param values prior to parsing the cmdline.
+  params.set_uint64_t("/top/core/0/", "boot_addr", 0x10000UL);
+  params.set_uint64_t("/top/core/0/", "pmpregions", 0x0UL);
+
   auto argv1 = parser.parse(argv);
   std::vector<std::string> htif_args(argv1, (const char*const*)argv + argc);
 
@@ -612,8 +621,6 @@ int main(int argc, char** argv)
   }
   openhw::Params::cfg_to_params(cfg, params);
   params.set_uint64_t("/top/", "num_procs", cfg.nprocs());
-  params.set_uint64_t("/top/core/0/", "boot_addr", 0x10000UL);
-  params.set_uint64_t("/top/core/0/", "pmpregions", 0x0UL);
   params.set_string("/top/core/0/", "isa", std::string(cfg.isa()));
   params.set_string("/top/core/0/", "priv", std::string(cfg.priv()));
 
