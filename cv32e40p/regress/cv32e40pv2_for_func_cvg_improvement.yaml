@@ -71,9 +71,9 @@ tests:
     num: 1
     skip_sim:
       - pulp
-      - pulp_zfinx
-      - pulp_zfinx_1cyclat
-      - pulp_zfinx_2cyclat
+      - pulp_fpu_zfinx
+      - pulp_fpu_zfinx_1cyclat
+      - pulp_fpu_zfinx_2cyclat
       - pulp_cluster
       - pulp_cluster_fpu
       - pulp_cluster_fpu_1cyclat
