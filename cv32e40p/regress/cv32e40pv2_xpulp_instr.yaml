@@ -152,6 +152,12 @@ tests:
       - default
       - no_pulp
 
+  debug_hwloop_test:
+    build: uvmt_cv32e40p
+    description: debug_hwloop_test directed test
+    dir: cv32e40p/sim/uvmt
+    cmd: make test COREV=YES TEST=debug_hwloop_test
+    num: 1
 
 # ====================================================================================
 # V1 legacy pulp tests
