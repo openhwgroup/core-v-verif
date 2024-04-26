@@ -11,7 +11,7 @@
 #define TEST_FAIL                              1
 #define VIRT_PERIPH_STATUS_FLAG_ADDR  0x20000000
 
-#define EXPECTED_ILLEGAL_INSTRUCTIONS 31738
+#define EXPECTED_ILLEGAL_INSTRUCTIONS 31741
 
 main:
     li        t0, (0x1 << 3)
@@ -31764,6 +31764,12 @@ main:
     .word(0x015a8abb)
 
     ######### END OF GENERATED CODE #########
+
+    ######### Manually added #########
+    csrwi frm, 5
+    .word(0x0151dfd3)
+    .word(0xadf06543)
+    .word(0xadf05543)
 
     li x18, TEST_PASS
     li x16, EXPECTED_ILLEGAL_INSTRUCTIONS
