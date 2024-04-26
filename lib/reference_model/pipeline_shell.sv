@@ -126,6 +126,7 @@ module controller
         input pipe_stage_t if_id_pipe_i,
         input pipe_stage_t id_ex_pipe_i,
         input pipe_stage_t ex_wb_pipe_i, 
+        input pipe_stage_t wb_pipe_i, 
 
         output logic if_step_o,
         output logic id_step_o,
@@ -162,6 +163,9 @@ module controller
 
     logic   interrupt_taken;
     logic   [31:0] irq_q;
+
+    logic   [MAX_XLEN-1:0] mstatus;
+    logic   mie;
 
     ////////////////////////////////////////////////////////////////////////////
     // STEP CONTROL
@@ -258,7 +262,26 @@ module controller
     // INTERRUPT ALLOWED
     ////////////////////////////////////////////////////////////////////////////
 
-    assign interrupt_allowed_o = `CONTROLLER_FSM.interrupt_allowed; 
+    always_ff @(posedge clk, negedge rst_n) begin
+        if (rst_n == 1'b0) begin
+            irq_q <= 1'b0;
+        end else begin
+            irq_q <= irq_i;
+        end
+    end
+
+    always_comb begin
+        foreach(wb_pipe_i.rvfi.csr_valid[i]) begin
+            if(wb_pipe_i.rvfi.csr_valid[i]) begin 
+                if(wb_pipe_i.rvfi.csr_addr[i] == 12'h300) begin // IF MSTATUS
+                    mstatus = wb_pipe_i.rvfi.csr_wdata[i];
+                    mie = (wb_pipe_i.rvfi.csr_wdata[i] & (32'h00000008 )) != 0;
+                end            
+            end
+        end
+    end
+
+    assign interrupt_allowed_o = `CONTROLLER_FSM.interrupt_allowed && mie; 
     // TODO:    && debug_interruptible && !fencei_ongoing && !clic_ptr_in_pipeline && 
     //          sequence_interruptible && !interrupt_blanking_q && !csr_flush_ack_q && !(ctrl_fsm_cs == SLEEP);
 
@@ -270,11 +293,7 @@ module controller
     ////////////////////////////////////////////////////////////////////////////
 
     always_ff @(posedge clk) begin
-        if (step_q) begin
-            interrupt_taken = iss_intr(irq_i, interrupt_allowed_o, 1);
-        end else begin
-            interrupt_taken = iss_intr(irq_i, interrupt_allowed_o, 2);
-        end
+        interrupt_taken = iss_intr(irq_q, interrupt_allowed_o, 2);
     end
 
     always_comb begin
@@ -320,6 +339,7 @@ module pipeline_shell
         .if_id_pipe_i           (if_id_pipe         ),
         .id_ex_pipe_i           (id_ex_pipe         ),
         .ex_wb_pipe_i           (ex_wb_pipe         ),
+        .wb_pipe_i              (wb_pipe            ),
         .if_step_o              (if_step            ),
         .id_step_o              (id_step            ),
         .ex_step_o              (ex_step            ),
