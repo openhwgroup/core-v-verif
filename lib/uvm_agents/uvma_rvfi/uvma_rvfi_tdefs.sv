@@ -19,57 +19,68 @@
 `define __UVMA_RVFI_TDEFS_SV__
 
 typedef struct packed {
-   longint unsigned         nret_id;
-   longint unsigned         cycle_cnt;
-   longint unsigned         order;
-   longint unsigned         insn;
-   longint unsigned         trap;
-   longint unsigned         cause;
-   longint unsigned         halt;
-   longint unsigned         intr;
-   longint unsigned         mode;
-   longint unsigned         ixl;
-   longint unsigned         dbg;
-   longint unsigned         dbg_mode;
-   longint unsigned         nmip;
+   bit [MAX_XLEN-1:0]         nret_id;
+   bit [MAX_XLEN-1:0]         cycle_cnt;
+   bit [MAX_XLEN-1:0]         order;
+   bit [MAX_XLEN-1:0]         insn;
+   bit [MAX_XLEN-1:0]         trap;
+   bit [MAX_XLEN-1:0]         cause;
+   bit [MAX_XLEN-1:0]         halt;
+   bit [MAX_XLEN-1:0]         intr;
+   bit [MAX_XLEN-1:0]         mode;
+   bit [MAX_XLEN-1:0]         ixl;
+   bit [MAX_XLEN-1:0]         dbg;
+   bit [MAX_XLEN-1:0]         dbg_mode;
+   bit [MAX_XLEN-1:0]         nmip;
 
-   longint unsigned         insn_interrupt;
-   longint unsigned         insn_interrupt_id;
-   longint unsigned         insn_bus_fault;
-   longint unsigned         insn_nmi_store_fault;
-   longint unsigned         insn_nmi_load_fault;
+   bit [MAX_XLEN-1:0]         insn_interrupt;
+   bit [MAX_XLEN-1:0]         insn_interrupt_id;
+   bit [MAX_XLEN-1:0]         insn_bus_fault;
+   bit [MAX_XLEN-1:0]         insn_nmi_store_fault;
+   bit [MAX_XLEN-1:0]         insn_nmi_load_fault;
 
-   longint unsigned         pc_rdata;
-   longint unsigned         pc_wdata;
+   bit [MAX_XLEN-1:0]         pc_rdata;
+   bit [MAX_XLEN-1:0]         pc_wdata;
 
-   longint unsigned         rs1_addr;
-   longint unsigned         rs1_rdata;
+   bit [MAX_XLEN-1:0]         rs1_addr;
+   bit [MAX_XLEN-1:0]         rs1_rdata;
 
-   longint unsigned         rs2_addr;
-   longint unsigned         rs2_rdata;
+   bit [MAX_XLEN-1:0]         rs2_addr;
+   bit [MAX_XLEN-1:0]         rs2_rdata;
 
-   longint unsigned         rs3_addr;
-   longint unsigned         rs3_rdata;
+   bit [MAX_XLEN-1:0]         rs3_addr;
+   bit [MAX_XLEN-1:0]         rs3_rdata;
 
-   longint unsigned         rd1_addr;
-   longint unsigned         rd1_wdata;
+   bit [MAX_XLEN-1:0]         rd1_addr;
+   bit [MAX_XLEN-1:0]         rd1_wdata;
 
-   longint unsigned         rd2_addr;
-   longint unsigned         rd2_wdata;
+   bit [MAX_XLEN-1:0]         rd2_addr;
+   bit [MAX_XLEN-1:0]         rd2_wdata;
 
-   longint unsigned         mem_addr;
-   longint unsigned         mem_rdata;
-   longint unsigned         mem_rmask;
-   longint unsigned         mem_wdata;
-   longint unsigned         mem_wmask;
+   bit [MAX_XLEN-1:0]         mem_addr;
+   bit [MAX_XLEN-1:0]         mem_rdata;
+   bit [MAX_XLEN-1:0]         mem_rmask;
+   bit [MAX_XLEN-1:0]         mem_wdata;
+   bit [MAX_XLEN-1:0]         mem_wmask;
+
+   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_valid;
+   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_addr;
+   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_rdata;
+   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_rmask;
+   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_wdata;
+   bit [CSR_QUEUE_SIZE-1:0] [MAX_XLEN-1:0] csr_wmask;
 
 } st_rvfi;
 
-`define ST_NUM_WORDS (($size(st_rvfi)/$size(longint unsigned)))
+`define ST_NUM_WORDS ($size(st_rvfi)/MAX_XLEN)
+parameter ST_NUM_WORDS =  ($size(st_rvfi)/MAX_XLEN);
+
+typedef bit [ST_NUM_WORDS-1:0] [63:0] vector_rvfi;
+
 
 typedef union {
-    st_rvfi rvfi;
-    bit [63:0] array [`ST_NUM_WORDS-1:0] ;
+   st_rvfi rvfi;
+   vector_rvfi array;
 } union_rvfi;
 
 typedef enum bit[MODE_WL-1:0] {

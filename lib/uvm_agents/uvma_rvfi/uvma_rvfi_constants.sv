@@ -45,7 +45,10 @@ localparam TRAP_DBG_CAUSE_WL     = 3;
 // Lengths & Sizes
 localparam DEFAULT_ILEN     = 32;
 localparam DEFAULT_XLEN     = 32;
+localparam MAX_XLEN         = 64;
 localparam DEFAULT_NRET     = 1;
+
+localparam CSR_QUEUE_SIZE   = 250;
 
 // RISC-V Constants
 parameter logic[ 2:0]  DBG_CAUSE_TRIGGER               =  3'h 2;
