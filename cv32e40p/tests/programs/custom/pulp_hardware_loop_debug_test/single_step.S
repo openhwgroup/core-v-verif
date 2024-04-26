@@ -198,7 +198,9 @@ startO_3:
 startZ_3:
     addi x17, x17, 5
     addi x18, x18, 6
+#ifdef ZFINX
     fdiv.s x19, x18, x17
+#endif
 endZ_3:
     addi x20, x20, 4
     addi x20, x20, 4

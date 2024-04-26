@@ -22,6 +22,8 @@
 .globl _start
 .globl main
 .globl exit
+.global endO_9
+.global startO_9
 .section .text
 .global test_results
 test_results:
@@ -424,6 +426,34 @@ endO_8:
     c.addi x15, 0x1
 
 test8_1:
+    li x21, 20
+    beq x21, x18, test9
+    c.addi x15, 0x1
+
+# test9 
+
+test9:
+    cv.counti 0, 0
+    cv.counti 1, 0
+    li x17, 0
+    li x18, 0
+
+    .balign 4
+
+    cv.starti 1, startO_9
+    cv.endi 1, endO_9
+    cv.counti 1, 10
+startO_9:
+
+    .option norvc
+
+    addi x18, x18, 1
+    ecall
+    addi x18, x18, 1
+endO_9:
+
+    .option rvc
+
     li x21, 20
     beq x21, x18, exit_check
     c.addi x15, 0x1
